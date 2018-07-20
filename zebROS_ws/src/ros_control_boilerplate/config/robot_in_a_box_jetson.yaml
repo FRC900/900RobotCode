@@ -1,0 +1,97 @@
+# ros_control_boilerplate Settings -----------------------
+# Settings for ros_control control loop
+generic_hw_control_loop:
+  loop_hz: 100
+  cycle_time_error_threshold: 0.01
+
+hardware_interface:
+   run_hal_robot: false
+   can_interface: can0
+   joints:
+       - {name: talon3, type: can_talon_srx, local: true, can_id: 3}
+       - {name: talon9, type: can_talon_srx, local: true, can_id: 9}
+       - {name: pdp, local: true, type: pdp}
+       - {name: compressor, local: true, type: compressor, pcm_id: 0}
+       - {name: robot_code_ready_jetson, local: true, type: ready}
+       - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
+       - {name: do1, local: false, type: digital_output, dio_channel: 1}
+       - {name: do2, local_update: true, local_hardware: false, type: digital_output, dio_channel: 2}
+       
+joint_state_controller:
+   type:         joint_state_controller/JointStateController
+   publish_rate: 100
+# Settings for ros_control hardware interface
+# Map a name for each valid joint to a CAN id
+# For future expansion, change hw_id to specify one
+# of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
+
+# Create controllers for each joint
+#
+# Entry is the name of the controller. It can be anything.  
+# It will create a namespace with that name under the main
+# controller namespace. Subscribed topics for that controller
+# will be most often show up under 
+# <top level controller manager ns>/<controller ns>/topic
+# e.g.
+# /frcrobot/joint1_talon_controller/command
+# /frcrobot/joint2_talon_controller/command
+# /frcrobot/talon_states
+#
+# This one creates the /talon_states topic necessary in ROS
+# It doesn't actually control anything, just takes the internal
+# encoder state used by the hw manager and publishes it as
+# a ROS topic.  This is generic ROS stuff, so we'll have
+# to figure out what to map e.g. effort to in the Talon world
+talon_state_controller:
+   type:         talon_state_controller/TalonStateController
+   publish_rate: 100
+
+# Similar to above, but this one prints non-Talon state
+# (stuff that fits into the more standard ROS position/
+
+# Create a controller called talon1_controller
+#  That name is used by spawner in the launch file to 
+#  actually start this controller
+# The joint it controls is talon_1. This should match
+# up with one of the names in the top-level joints list
+# above.  
+# The type is a talon_controllers/TalonController
+talon3_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: talon3
+    feedback_type: CTRE_MagEncoder_Absolute
+
+talon9_controller:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: talon9
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 0.0, i: 0.0, d: 0, f: 0.25, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0, f: 0.0, i_zone: 0}
+    sensor_phase: False
+    invert_output: False
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+# Used to listen for joint state published from the given topic
+# (in this case the rio) and copy them to internal copies of 
+# joint data
+joint_state_listener_controller:
+    type:      state_listener_controller/JointStateListenerController
+    topic:     /frcrobot_rio/joint_states
+
+match_state_listener_controller:
+    type:      state_listener_controller/MatchStateListenerController
+    topic:     /frcrobot_rio/match_data
+
+do2_controller:
+    type: position_controllers/JointPositionController
+    joint: do2
+
+pdp_state_controller:
+   type:         pdp_state_controller/PDPStateController
+   publish_rate: 20
+
+pcm_state_controller:
+   type : pcm_state_controller/PCMStateController
+   publish_rate: 20

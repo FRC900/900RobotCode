@@ -9,6 +9,7 @@ project(talon_interface)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   hardware_interface
+  state_handle
   roscpp
 )
 
@@ -104,7 +105,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES talon_interface
-  CATKIN_DEPENDS hardware_interface roscpp
+  CATKIN_DEPENDS hardware_interface state_handle roscpp
 #  DEPENDS system_lib
 )
 

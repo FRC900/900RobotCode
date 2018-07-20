@@ -3,7 +3,7 @@
 #include "ros/ros.h"
 #include "ros/console.h"
 #include "ros_control_boilerplate/AutoMode.h"
-#include "ros_control_boilerplate/MatchSpecificData.h"
+#include "match_data_controller/MatchSpecificData.h"
 #include "actionlib/client/simple_action_client.h"
 #include "actionlib/client/terminal_state.h"
 #include "behaviors/RobotAction.h"
@@ -98,7 +98,7 @@ bool parkingConfig(void);
 bool runTrajectory(void);
 void auto_mode_cb(const ros_control_boilerplate::AutoMode::ConstPtr &AutoMode);
 void queue_slot_cb(const std_msgs::UInt16::ConstPtr &msg);
-void match_data_cb(const ros_control_boilerplate::MatchSpecificData::ConstPtr &MatchData);
+void match_data_cb(const match_data_controller::MatchSpecificData::ConstPtr &MatchData);
 void run_auto(int auto_select, int layout, int start_pos, double initial_delay, const FullMode &auto_run_data, std::vector<int> start_of_buffer_ids);
 void run_auto(int auto_select, int layout, int start_pos, double initial_delay, const std::vector<CmdVel> &segments);
 

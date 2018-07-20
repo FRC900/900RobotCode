@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   controller_manager
   roscpp
   std_msgs
-  ros_control_boilerplate
 )
 
 #add_message_files (
@@ -29,7 +28,6 @@ catkin_package(
     controller_manager
     roscpp
     std_msgs
-    ros_control_boilerplate
   LIBRARIES
   DEPENDS 
 )
@@ -38,13 +36,9 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-
-
-
 ###########
 ## Build ##
 ###########
-
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above. This is needed to force
@@ -76,7 +70,7 @@ target_link_libraries(heartbeat
 #DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 #)
 
-install(TARGETS heartbeat heartbeat
+install(TARGETS heartbeat
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

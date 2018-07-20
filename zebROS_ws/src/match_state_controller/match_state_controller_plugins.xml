@@ -1,0 +1,8 @@
+<library path="lib/libmatch_state_controller">
+
+	<class name="match_state_controller/MatchStateController" type="match_state_controller::MatchStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read match info from the driver station 
+		</description>
+	</class>
+</library>

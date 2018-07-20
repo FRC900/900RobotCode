@@ -30,10 +30,13 @@
   <depend>sensor_msgs</depend>
   <depend>rosparam_shortcuts</depend>
   <depend>talon_interface</depend>
-  <depend>pdp_state_controller</depend>
+  <depend>pdp_state_interface</depend>
   <depend>elevator_controller</depend>
   <depend>message_runtime</depend>
   <depend>robot_controller_interface</depend>
+  <depend>remote_joint_interface</depend>
+  <depend>pcm_state_interface</depend>
+  <depend>match_state_controller</depend>
 
   <export>
   </export>

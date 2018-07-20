@@ -274,15 +274,15 @@ int main(int argc, char **argv)
 
 	ros::Subscriber joystick_sub  = n.subscribe("joystick_states", 1, &evaluateCommands);
 	//ros::Subscriber joint_states_sub = n.subscribe("/frcrobot/joint_states", 1, &jointStateCallback);
-	ros::Subscriber talon_states_sub = n.subscribe("/frcrobot/talon_states", 1, &talonStateCallback);
+	ros::Subscriber talon_states_sub = n.subscribe("talon_states", 1, &talonStateCallback);
         ros::Subscriber most_recent_command_sub = n.subscribe("/frcrobot/arm_controller/arm_command", 1, &most_recent_command_cb);
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
 	//JoystickRumble = n.advertise<std_msgs::Float64>("rumble_controller/command", 1);
-	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot/swerve_drive_controller/brake", false, service_connection_header);
-	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("/frcrobot/swerve_drive_controller/cmd_vel", 1);
-        ros::Subscriber navX_heading  = n.subscribe("/frcrobot/navx_mxp", 1, &navXCallback);
+	BrakeSrv = n.serviceClient<std_srvs::Empty>("swerve_drive_controller/brake", false, service_connection_header);
+	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+        ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
         intake_srv_ = n.serviceClient<intake_controller::IntakeSrv>("/frcrobot/intake_controller/intake_command", false, service_connection_header);
 
 	/*//JoystickTestVel = n.advertise<std_msgs::Header>("test_header", 3);

@@ -7,7 +7,7 @@
 #include <realtime_tools/realtime_publisher.h>
 #include <pdp_state_controller/PDPData.h>
 #include <boost/shared_ptr.hpp>
-#include <pdp_state_controller/pdp_state_interface.h>
+#include <pdp_state_interface/pdp_state_interface.h>
 #include <pluginlib/class_list_macros.h>
 #include <sensor_msgs/JointState.h>
 
@@ -21,7 +21,7 @@ class PDPStateController: public controller_interface::Controller<hardware_inter
                 }
 
 		virtual bool init(hardware_interface::PDPStateInterface *hw,
-							ros::NodeHandle 					&root_nh,
+							ros::NodeHandle						&root_nh,
 							ros::NodeHandle						&controller_nh);
 		virtual void starting(const ros::Time &time);
 		virtual void update(const ros::Time &time, const ros::Duration & );

@@ -16,6 +16,7 @@ add_message_files (
 generate_messages(
   DEPENDENCIES
   std_msgs
+  talon_state_controller
 )
 # Declare catkin package
 catkin_package(

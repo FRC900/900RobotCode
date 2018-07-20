@@ -346,7 +346,7 @@ bool runTrajectory(const swerve_point_generator::FullGenCoefs::Response &traj)
 		return true;
 }
 
-void match_data_callback(const ros_control_boilerplate::MatchSpecificData::ConstPtr &MatchData)
+void match_data_callback(const match_data_controller::MatchSpecificData::ConstPtr &MatchData)
 {
 	//Joystick Rumble
 	const double localMatchTimeRemaining = MatchData->matchTimeRemaining;
@@ -1357,7 +1357,7 @@ void elevCmdCallback(const elevator_controller::ReturnElevatorCmd::ConstPtr &msg
    }
    */
 /*
-   void evaluateTime(const ros_control_boilerplate::MatchSpecificData::ConstPtr &MatchData) {
+   void evaluateTime(const match_specific_data::MatchSpecificData::ConstPtr &MatchData) {
    uint16_t leftRumble=0, rightRumble=0;
    double matchTimeRemaining = MatchData->matchTimeRemaining;
 // TODO : make these a set of else if blocks?

@@ -131,6 +131,10 @@ uint8[]   status_12_feedback1_period
 uint8[]   status_13_base_pidf0_period
 uint8[]   status_14_turn_pidf1_period
 uint8[]   status_15_firmwareapistatus_period
+uint8[]   control_3_general_period
+uint8[]   control_4_advanced_period
+uint8[]   control_5_feedbackoutputoverride_period
+uint8[]   control_6_motprofaddtrajpoint_period
 float64[] motion_profile_trajectory_period
 string[]  faults
 string[]  sticky_faults

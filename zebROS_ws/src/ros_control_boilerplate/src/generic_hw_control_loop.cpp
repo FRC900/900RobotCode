@@ -67,42 +67,80 @@ GenericHWControlLoop::GenericHWControlLoop(
 void GenericHWControlLoop::run(void)
 {
 	ros::Rate rate(loop_hz_);
-	while(ros::ok()) 
+	while(ros::ok())
 	{
 		update();
 		rate.sleep();
 	}
 }
 
+#define DEBUG_TIMING
 void GenericHWControlLoop::update(void)
 {
 	// Get change in time
 	clock_gettime(CLOCK_MONOTONIC, &current_time_);
 	elapsed_time_ =
-		ros::Duration((double)current_time_.tv_sec - (double)last_time_.tv_sec + ((double)current_time_.tv_nsec - (double)last_time_.tv_nsec) / BILLION);
+		ros::Duration((double)current_time_.tv_sec - (double)last_time_.tv_sec +
+				      ((double)current_time_.tv_nsec - (double)last_time_.tv_nsec) / BILLION);
 	last_time_ = current_time_;
+
 	// ROS_DEBUG_STREAM_THROTTLE_NAMED(1, "generic_hw_main","Sampled update loop with elapsed
 	// time " << elapsed_time_.toSec());
 
-#if 0
 	// Error check cycle time
 	const double cycle_time_error = (elapsed_time_ - desired_update_period_).toSec();
 	if (cycle_time_error > cycle_time_error_threshold_)
-	{
 		ROS_WARN_STREAM_NAMED(name_, "Cycle time exceeded error threshold by: "
-							  << cycle_time_error << ", cycle time: " << elapsed_time_
+							  << std::setprecision(3) << cycle_time_error
+							  << ", cycle time: " << std::setprecision(3) << elapsed_time_
 							  << ", threshold: " << cycle_time_error_threshold_);
-	}
-#endif
+
+#ifdef DEBUG_TIMING
+	struct timespec start_time;
+
+	clock_gettime(CLOCK_MONOTONIC, &start_time);
+	static double read_time_sum;
+	static double update_time_sum;
+	static double write_time_sum;
+	static int read_iteration_count;
+	static int update_iteration_count;
+	static int write_iteration_count;
 
 	// Input
 	hardware_interface_->read(elapsed_time_);
+	struct timespec end_time;
+	clock_gettime(CLOCK_MONOTONIC, &end_time);
+	read_time_sum +=
+		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
+		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
+	read_iteration_count += 1;
+	start_time = end_time;
+#endif
 
 	// Control
 	controller_manager_->update(ros::Time::now(), elapsed_time_);
+#ifdef DEBUG_TIMING
+	clock_gettime(CLOCK_MONOTONIC, &end_time);
+	update_time_sum +=
+		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
+		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
+	update_iteration_count += 1;
+	start_time = end_time;
+#endif
 
 	// Output
 	hardware_interface_->write(elapsed_time_);
+
+#ifdef DEBUG_TIMING
+	clock_gettime(CLOCK_MONOTONIC, &end_time);
+	write_time_sum +=
+		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
+		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
+	write_iteration_count += 1;
+	ROS_INFO_STREAM_THROTTLE(2, "Main loop read = " << read_time_sum / read_iteration_count
+			<< " update = " << update_time_sum / update_iteration_count
+			<< " write = " << write_time_sum / write_iteration_count);
+#endif
 }
 
 }  // namespace

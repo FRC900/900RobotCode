@@ -41,6 +41,37 @@
 
 namespace ros_control_boilerplate
 {
+
+void FRCRobotInterface::readJointLocalParams(XmlRpc::XmlRpcValue joint_params,
+											 const bool local,
+											 const bool saw_local_keyword,
+											 bool &local_update,
+											 bool &local_hardware)
+{
+	local_update = local;
+	if (joint_params.hasMember("local_update"))
+	{
+		if (saw_local_keyword)
+			throw std::runtime_error("local can't be combined with local_update");
+		XmlRpc::XmlRpcValue &xml_joint_local_update = joint_params["local_update"];
+		if (!xml_joint_local_update.valid() ||
+			xml_joint_local_update.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
+			throw std::runtime_error("An invalid joint local_update was specified (expecting a boolean).");
+		local_update = xml_joint_local_update;
+	}
+	local_hardware = local;
+	if (joint_params.hasMember("local_hardware"))
+	{
+		if (saw_local_keyword)
+			throw std::runtime_error("local can't be combined with local_hardware");
+		XmlRpc::XmlRpcValue &xml_joint_local_hardware = joint_params["local_hardware"];
+		if (!xml_joint_local_hardware.valid() ||
+			xml_joint_local_hardware.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
+			throw std::runtime_error("An invalid joint local_hardware was specified (expecting a boolean).");
+		local_hardware = xml_joint_local_hardware;
+	}
+}
+
 FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_model) :
 	  name_("generic_hw_interface")
 	, nh_(nh)
@@ -52,11 +83,12 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 	, num_solenoids_(0)
 	, num_double_solenoids_(0)
 	, num_compressors_(0)
-	, num_rumble_(0)
+	, num_rumbles_(0)
 	, num_navX_(0)
 	, num_analog_inputs_(0)
 	, num_dummy_joints_(0)
-    , robot_code_ready_(0.0)
+    , num_ready_signals_(0)
+	, robot_code_ready_(false)
 {
 	// Check if the URDF model needs to be loaded
 	if (urdf_model == NULL)
@@ -81,7 +113,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			throw std::runtime_error("A joint name was not specified");
 		XmlRpc::XmlRpcValue &xml_joint_name = joint_params["name"];
 		if (!xml_joint_name.valid() ||
-				xml_joint_name.getType() != XmlRpc::XmlRpcValue::TypeString)
+			xml_joint_name.getType() != XmlRpc::XmlRpcValue::TypeString)
 			throw std::runtime_error("An invalid joint name was specified (expecting a string)");
 		const std::string joint_name = xml_joint_name;
 
@@ -89,9 +121,23 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			throw std::runtime_error("A joint type was not specified");
 		XmlRpc::XmlRpcValue &xml_joint_type = joint_params["type"];
 		if (!xml_joint_type.valid() ||
-				xml_joint_type.getType() != XmlRpc::XmlRpcValue::TypeString)
+			xml_joint_type.getType() != XmlRpc::XmlRpcValue::TypeString)
 			throw std::runtime_error("An invalid joint type was specified (expecting a string).");
 		const std::string joint_type = xml_joint_type;
+
+		bool saw_local_keyword = false;
+		bool local = true;
+		bool local_update;
+		bool local_hardware;
+		if (joint_params.hasMember("local"))
+		{
+			XmlRpc::XmlRpcValue &xml_joint_local = joint_params["local"];
+			if (!xml_joint_local.valid() ||
+				xml_joint_local.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
+				throw std::runtime_error("An invalid joint local was specified (expecting a boolean).");
+			local = xml_joint_local;
+			saw_local_keyword = true;
+		}
 
 		if (joint_type == "can_talon_srx")
 		{
@@ -99,12 +145,16 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A CAN Talon SRX can_id was not specified");
 			XmlRpc::XmlRpcValue &xml_can_id = joint_params["can_id"];
 			if (!xml_can_id.valid() ||
-					xml_can_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_can_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint can_id was specified (expecting an int).");
 			const int can_id = xml_can_id;
 
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
+
 			can_talon_srx_names_.push_back(joint_name);
 			can_talon_srx_can_ids_.push_back(can_id);
+			can_talon_srx_local_updates_.push_back(local_update);
+			can_talon_srx_local_hardwares_.push_back(local_hardware);
 		}
 		else if (joint_type == "nidec_brushless")
 		{
@@ -112,7 +162,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A Nidec Brushless pwm_channel was not specified");
 			XmlRpc::XmlRpcValue &xml_pwm_channel = joint_params["pwm_channel"];
 			if (!xml_pwm_channel.valid() ||
-					xml_pwm_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_pwm_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint pwm_channel was specified (expecting an int).");
 			const int pwm_channel = xml_pwm_channel;
 
@@ -120,7 +170,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A Nidec Brushless dio_channel was not specified");
 			XmlRpc::XmlRpcValue &xml_dio_channel = joint_params["dio_channel"];
 			if (!xml_dio_channel.valid() ||
-					xml_dio_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_dio_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint dio_channel was specified (expecting an int).");
 			const int dio_channel = xml_dio_channel;
 
@@ -129,15 +179,19 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			{
 				XmlRpc::XmlRpcValue &xml_invert = joint_params["invert"];
 				if (!xml_invert.valid() ||
-						xml_invert.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
+					xml_invert.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
 					throw std::runtime_error("An invalid Nidec brushless joint invert was specified (expecting a boolean).");
 				invert = xml_invert;
 			}
+
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
 
 			nidec_brushless_names_.push_back(joint_name);
 			nidec_brushless_pwm_channels_.push_back(pwm_channel);
 			nidec_brushless_dio_channels_.push_back(dio_channel);
 			nidec_brushless_inverts_.push_back(invert);
+			nidec_brushless_local_updates_.push_back(local_update);
+			nidec_brushless_local_hardwares_.push_back(local_hardware);
 		}
 		else if (joint_type == "digital_input")
 		{
@@ -145,7 +199,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A Digital Input dio_channel was not specified");
 			XmlRpc::XmlRpcValue &xml_digital_input_dio_channel = joint_params["dio_channel"];
 			if (!xml_digital_input_dio_channel.valid() ||
-					xml_digital_input_dio_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_digital_input_dio_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint dio_channel was specified (expecting an int).");
 
 			const int digital_input_dio_channel = xml_digital_input_dio_channel;
@@ -155,7 +209,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			{
 				XmlRpc::XmlRpcValue &xml_invert = joint_params["invert"];
 				if (!xml_invert.valid() ||
-						xml_invert.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
+					xml_invert.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
 					throw std::runtime_error("An invalid digital input joint invert was specified (expecting a boolean).");
 				invert = xml_invert;
 			}
@@ -163,6 +217,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			digital_input_names_.push_back(joint_name);
 			digital_input_dio_channels_.push_back(digital_input_dio_channel);
 			digital_input_inverts_.push_back(invert);
+			digital_input_locals_.push_back(local);
 		}
 		else if (joint_type == "digital_output")
 		{
@@ -170,7 +225,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A Digital Output dio_channel was not specified");
 			XmlRpc::XmlRpcValue &xml_digital_output_dio_channel = joint_params["dio_channel"];
 			if (!xml_digital_output_dio_channel.valid() ||
-					xml_digital_output_dio_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_digital_output_dio_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint dio_channel was specified (expecting an int).");
 
 			const int digital_output_dio_channel = xml_digital_output_dio_channel;
@@ -180,14 +235,18 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			{
 				XmlRpc::XmlRpcValue &xml_invert = joint_params["invert"];
 				if (!xml_invert.valid() ||
-						xml_invert.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
+					xml_invert.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
 					throw std::runtime_error("An invalid digital output joint invert was specified (expecting a boolean).");
 				invert = xml_invert;
 			}
 
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
+
 			digital_output_names_.push_back(joint_name);
 			digital_output_dio_channels_.push_back(digital_output_dio_channel);
 			digital_output_inverts_.push_back(invert);
+			digital_output_local_updates_.push_back(local_update);
+			digital_output_local_hardwares_.push_back(local_hardware);
 		}
 		else if (joint_type == "pwm")
 		{
@@ -195,7 +254,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A PWM pwm_channel was not specified");
 			XmlRpc::XmlRpcValue &xml_pwm_pwm_channel = joint_params["pwm_channel"];
 			if (!xml_pwm_pwm_channel.valid() ||
-					xml_pwm_pwm_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_pwm_pwm_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint pwm_channel was specified (expecting an int).");
 
 			const int pwm_pwm_channel = xml_pwm_pwm_channel;
@@ -205,14 +264,18 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			{
 				XmlRpc::XmlRpcValue &xml_invert = joint_params["invert"];
 				if (!xml_invert.valid() ||
-						xml_invert.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
+					xml_invert.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
 					throw std::runtime_error("An invalid pwm joint invert was specified (expecting a boolean).");
 				invert = xml_invert;
 			}
 
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
+
 			pwm_names_.push_back(joint_name);
 			pwm_pwm_channels_.push_back(pwm_pwm_channel);
 			pwm_inverts_.push_back(invert);
+			pwm_local_updates_.push_back(local_update);
+			pwm_local_hardwares_.push_back(local_hardware);
 		}
 		else if (joint_type == "solenoid")
 		{
@@ -220,23 +283,25 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A solenoid id was not specified");
 			XmlRpc::XmlRpcValue &xml_solenoid_id = joint_params["id"];
 			if (!xml_solenoid_id.valid() ||
-					xml_solenoid_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_solenoid_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint solenoid id was specified (expecting an int).");
-
 			const int solenoid_id = xml_solenoid_id;
 
 			if (!joint_params.hasMember("pcm"))
 				throw std::runtime_error("A pcm was not specified");
 			XmlRpc::XmlRpcValue &xml_solenoid_pcm = joint_params["pcm"];
 			if (!xml_solenoid_pcm.valid() ||
-					xml_solenoid_pcm.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_solenoid_pcm.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint solenoid pcm was specified (expecting an int).");
-
 			const int solenoid_pcm = xml_solenoid_pcm;
+
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
 
 			solenoid_names_.push_back(joint_name);
 			solenoid_ids_.push_back(solenoid_id);
 			solenoid_pcms_.push_back(solenoid_pcm);
+			solenoid_local_updates_.push_back(local_update);
+			solenoid_local_hardwares_.push_back(local_hardware);
 		}
 		else if (joint_type == "double_solenoid")
 		{
@@ -244,7 +309,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A double_solenoid forward_id was not specified");
 			XmlRpc::XmlRpcValue &xml_double_solenoid_forward_id = joint_params["forward_id"];
 			if (!xml_double_solenoid_forward_id.valid() ||
-					xml_double_solenoid_forward_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_double_solenoid_forward_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint double solenoid forward_id was specified (expecting an int).");
 
 			const int double_solenoid_forward_id = xml_double_solenoid_forward_id;
@@ -253,7 +318,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A double_solenoid reverse_id was not specified");
 			XmlRpc::XmlRpcValue &xml_double_solenoid_reverse_id = joint_params["reverse_id"];
 			if (!xml_double_solenoid_reverse_id.valid() ||
-					xml_double_solenoid_reverse_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_double_solenoid_reverse_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint double solenoid reverse_id was specified (expecting an int).");
 
 			const int double_solenoid_reverse_id = xml_double_solenoid_reverse_id;
@@ -262,15 +327,19 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A pcm was not specified");
 			XmlRpc::XmlRpcValue &xml_double_solenoid_pcm = joint_params["pcm"];
 			if (!xml_double_solenoid_pcm.valid() ||
-					xml_double_solenoid_pcm.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_double_solenoid_pcm.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint double solenoid pcm was specified (expecting an int).");
 
 			const int double_solenoid_pcm = xml_double_solenoid_pcm;
+
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
 
 			double_solenoid_names_.push_back(joint_name);
 			double_solenoid_forward_ids_.push_back(double_solenoid_forward_id);
 			double_solenoid_reverse_ids_.push_back(double_solenoid_reverse_id);
 			double_solenoid_pcms_.push_back(double_solenoid_pcm);
+			double_solenoid_local_updates_.push_back(local_update);
+			double_solenoid_local_hardwares_.push_back(local_hardware);
 
 		}
 		else if (joint_type == "rumble")
@@ -279,13 +348,17 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A rumble_port was not specified");
 			XmlRpc::XmlRpcValue &xml_rumble_port = joint_params["rumble_port"];
 			if (!xml_rumble_port.valid() ||
-					xml_rumble_port.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_rumble_port.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint rumble_port was specified (expecting an int).");
 
 			const int rumble_port = xml_rumble_port;
 
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
+
 			rumble_names_.push_back(joint_name);
 			rumble_ports_.push_back(rumble_port);
+			rumble_local_updates_.push_back(local_update);
+			rumble_local_hardwares_.push_back(local_hardware);
 		}
 		else if (joint_type == "navX")
 		{
@@ -295,7 +368,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A navX id was not specified");
 			XmlRpc::XmlRpcValue &xml_navX_id = joint_params["id"];
 			if (!xml_navX_id.valid() ||
-					xml_navX_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_navX_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint id was specified (expecting an int).");
 
 			const int navX_id = xml_navX_id;
@@ -304,13 +377,14 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A navX frame ID was not specified");
 			XmlRpc::XmlRpcValue &xml_joint_frame_id= joint_params["frame_id"];
 			if (!xml_joint_frame_id.valid() ||
-					xml_joint_frame_id.getType() != XmlRpc::XmlRpcValue::TypeString)
+				xml_joint_frame_id.getType() != XmlRpc::XmlRpcValue::TypeString)
 				throw std::runtime_error("An invalid navX frame_id was specified (expecting a string).");
 			const std::string frame_id = xml_joint_frame_id;
 
 			navX_names_.push_back(joint_name);
 			navX_frame_ids_.push_back(frame_id);
 			navX_ids_.push_back(navX_id);
+			navX_locals_.push_back(local);
 		}
 		else if (joint_type == "analog_input")
 		{
@@ -318,7 +392,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A Analog input analog_channel was not specified");
 			XmlRpc::XmlRpcValue &xml_analog_input_analog_channel = joint_params["analog_channel"];
 			if (!xml_analog_input_analog_channel.valid() ||
-					xml_analog_input_analog_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_analog_input_analog_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid joint analog_channel was specified (expecting an int).");
 
 			const int analog_input_analog_channel = xml_analog_input_analog_channel;
@@ -336,7 +410,6 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				analog_input_a = xml_analog_input_a;
 			}
 
-
 			double analog_input_b;
 			if (!joint_params.hasMember("analog_b"))
 				analog_input_b = 0;
@@ -353,6 +426,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			analog_input_b_.push_back(analog_input_b);
 			analog_input_names_.push_back(joint_name);
 			analog_input_analog_channels_.push_back(analog_input_analog_channel);
+			analog_input_locals_.push_back(local);
 		}
 		else if (joint_type == "compressor")
 		{
@@ -360,17 +434,56 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 				throw std::runtime_error("A compressor pcm id was not specified");
 			XmlRpc::XmlRpcValue &xml_compressor_pcm_id = joint_params["pcm_id"];
 			if (!xml_compressor_pcm_id.valid() ||
-					xml_compressor_pcm_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				xml_compressor_pcm_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
 				throw std::runtime_error("An invalid compressor joint pcm id was specified (expecting an int).");
 
 			const int compressor_pcm_id = xml_compressor_pcm_id;
 
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
+
 			compressor_names_.push_back(joint_name);
 			compressor_pcm_ids_.push_back(compressor_pcm_id);
+			compressor_local_updates_.push_back(local_update);
+			compressor_local_hardwares_.push_back(local_hardware);
+		}
+		else if (joint_type == "pdp")
+		{
+			int32_t pdp_module = 0;
+			if (joint_params.hasMember("module"))
+			{
+				XmlRpc::XmlRpcValue &xml_pdp_module = joint_params["module"];
+				if (!xml_pdp_module.valid() ||
+					 xml_pdp_module.getType() != XmlRpc::XmlRpcValue::TypeInt)
+					throw std::runtime_error("An invalid PDP joint module id was specified (expecting an int).");
+				pdp_module = xml_pdp_module;
+			}
+
+			pdp_names_.push_back(joint_name);
+			pdp_locals_.push_back(local);
+			pdp_modules_.push_back(pdp_module);
 		}
 		else if (joint_type == "dummy")
 		{
 			dummy_joint_names_.push_back(joint_name);
+			dummy_joint_locals_.push_back(local);
+		}
+		else if (joint_type == "ready")
+		{
+			ready_signal_names_.push_back(joint_name);
+			ready_signal_locals_.push_back(local);
+		}
+		else if (joint_type == "joystick")
+		{
+			if (!joint_params.hasMember("id"))
+				throw std::runtime_error("A joystick ID was not specified");
+			XmlRpc::XmlRpcValue &xml_id = joint_params["id"];
+			if (!xml_id.valid() ||
+				xml_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				throw std::runtime_error("An invalid joystick id was specified (expecting an int).");
+			const int id = xml_id;
+			joystick_names_.push_back(joint_name);
+			joystick_ids_.push_back(id);
+			joystick_locals_.push_back(local);
 		}
 		else
 		{
@@ -379,6 +492,8 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			throw std::runtime_error(s.str());
 		}
 	}
+	run_hal_robot_ = rpnh.param<bool>("run_hal_robot", true);
+	can_interface_ = rpnh.param<std::string>("can_interface", "can0");
 }
 
 void FRCRobotInterface::init()
@@ -398,7 +513,7 @@ void FRCRobotInterface::init()
 	// set for that motor controller in config files.
 	for (size_t i = 0; i < num_can_talon_srxs_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering Talon Interface for " << can_talon_srx_names_[i] << " at hw ID " << can_talon_srx_can_ids_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Talon Interface for " << can_talon_srx_names_[i] << " at hw ID " << can_talon_srx_can_ids_[i]);
 
 		// Create joint state interface
 		// Also register as JointStateInterface so that legacy
@@ -421,6 +536,11 @@ void FRCRobotInterface::init()
 		// the same talon
 		hardware_interface::TalonCommandHandle tch(tsh, &talon_command_[i]);
 		talon_command_interface_.registerHandle(tch);
+		if (!can_talon_srx_local_updates_[i])
+		{
+			hardware_interface::TalonWritableStateHandle twsh(can_talon_srx_names_[i], &talon_state_[i]); /// writing directly to state?
+			talon_remote_state_interface_.registerHandle(twsh);
+		}
 	}
 
 	// Set vectors to correct size to hold data
@@ -431,7 +551,7 @@ void FRCRobotInterface::init()
 	brushless_vel_.resize(num_nidec_brushlesses_);
 	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering interface for : " << nidec_brushless_names_[i] << " at PWM channel " << nidec_brushless_pwm_channels_[i] << " / DIO channel " << nidec_brushless_dio_channels_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << nidec_brushless_names_[i] << " at PWM channel " << nidec_brushless_pwm_channels_[i] << " / DIO channel " << nidec_brushless_dio_channels_[i]);
 
 		brushless_command_[i] = 0;
 
@@ -445,18 +565,25 @@ void FRCRobotInterface::init()
 		// the same brushless motor
 		hardware_interface::JointHandle jh(jsh, &brushless_command_[i]);
 		joint_velocity_interface_.registerHandle(jh);
+		if (!nidec_brushless_local_updates_[i])
+			joint_remote_interface_.registerHandle(jh);
 	}
 
 	num_digital_inputs_ = digital_input_names_.size();
 	digital_input_state_.resize(num_digital_inputs_);
 	for (size_t i = 0; i < num_digital_inputs_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering interface for : " << digital_input_names_[i] << " at DIO channel " << digital_input_dio_channels_[i] << " / invert " << digital_input_inverts_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << digital_input_names_[i] << " at DIO channel " << digital_input_dio_channels_[i] << " / invert " << digital_input_inverts_[i]);
 		// Create state interface for the given digital input
 		// and point it to the data stored in the
 		// corresponding brushless_state array entry
 		hardware_interface::JointStateHandle dish(digital_input_names_[i], &digital_input_state_[i], &digital_input_state_[i], &digital_input_state_[i]);
 		joint_state_interface_.registerHandle(dish);
+		if (!digital_input_locals_[i])
+		{
+			hardware_interface::JointHandle dih(dish, &digital_input_state_[i]); /// writing directly to state?
+			joint_remote_interface_.registerHandle(dih);
+		}
 	}
 
 	num_digital_outputs_ = digital_output_names_.size();
@@ -467,7 +594,7 @@ void FRCRobotInterface::init()
 		digital_output_state_[i] = std::numeric_limits<double>::max();
 		digital_output_command_[i] = 0;
 
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering interface for : " << digital_output_names_[i] << " at DIO channel " << digital_output_dio_channels_[i] << " / invert " << digital_output_inverts_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << digital_output_names_[i] << " at DIO channel " << digital_output_dio_channels_[i] << " / invert " << digital_output_inverts_[i]);
 
 		hardware_interface::JointStateHandle dosh(digital_output_names_[i], &digital_output_state_[i], &digital_output_state_[i], &digital_output_state_[i]);
 		joint_state_interface_.registerHandle(dosh);
@@ -476,6 +603,8 @@ void FRCRobotInterface::init()
 		// the digital output
 		hardware_interface::JointHandle doh(dosh, &digital_output_command_[i]);
 		joint_position_interface_.registerHandle(doh);
+		if (!digital_output_local_updates_[i])
+			joint_remote_interface_.registerHandle(doh);
 	}
 
 	num_pwm_ = pwm_names_.size();
@@ -483,7 +612,7 @@ void FRCRobotInterface::init()
 	pwm_command_.resize(num_pwm_);
 	for (size_t i = 0; i < num_pwm_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering interface for : " << pwm_names_[i] << " at PWM channel " << pwm_pwm_channels_[i] << " / invert " << pwm_inverts_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << pwm_names_[i] << " at PWM channel " << pwm_pwm_channels_[i] << " / invert " << pwm_inverts_[i]);
 		pwm_state_[i] = std::numeric_limits<double>::max();
 		pwm_command_[i] = 0;
 
@@ -492,13 +621,15 @@ void FRCRobotInterface::init()
 
 		hardware_interface::JointHandle ph(psh, &pwm_command_[i]);
 		joint_velocity_interface_.registerHandle(ph);
+		if (!pwm_local_updates_[i])
+			joint_remote_interface_.registerHandle(ph);
 	}
 	num_solenoids_ = solenoid_names_.size();
 	solenoid_state_.resize(num_solenoids_);
 	solenoid_command_.resize(num_solenoids_);
 	for (size_t i = 0; i < num_solenoids_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering interface for : " << solenoid_names_[i] << " at id " << solenoid_ids_[i]<< " at pcm " << solenoid_pcms_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << solenoid_names_[i] << " at id " << solenoid_ids_[i]<< " at pcm " << solenoid_pcms_[i]);
 
 		solenoid_state_[i] = std::numeric_limits<double>::max();
 		solenoid_command_[i] = 0;
@@ -508,6 +639,8 @@ void FRCRobotInterface::init()
 
 		hardware_interface::JointHandle soh(ssh, &solenoid_command_[i]);
 		joint_position_interface_.registerHandle(soh);
+		if (!solenoid_local_updates_[i])
+			joint_remote_interface_.registerHandle(soh);
 	}
 
 	num_double_solenoids_ = double_solenoid_names_.size();
@@ -515,7 +648,7 @@ void FRCRobotInterface::init()
 	double_solenoid_command_.resize(num_double_solenoids_);
 	for (size_t i = 0; i < num_double_solenoids_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering interface for : " << double_solenoid_names_[i] << " at forward id " << double_solenoid_forward_ids_[i] << " at reverse id " << double_solenoid_reverse_ids_[i] << " at pcm " << double_solenoid_pcms_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << double_solenoid_names_[i] << " at forward id " << double_solenoid_forward_ids_[i] << " at reverse id " << double_solenoid_reverse_ids_[i] << " at pcm " << double_solenoid_pcms_[i]);
 
 		double_solenoid_state_[i] = std::numeric_limits<double>::max();
 		double_solenoid_command_[i] = 0;
@@ -525,13 +658,15 @@ void FRCRobotInterface::init()
 
 		hardware_interface::JointHandle dsoh(dssh, &double_solenoid_command_[i]);
 		joint_position_interface_.registerHandle(dsoh);
+		if (!double_solenoid_local_updates_[i])
+			joint_remote_interface_.registerHandle(dsoh);
 	}
-	num_rumble_ = rumble_names_.size();
-	rumble_state_.resize(num_rumble_);
-	rumble_command_.resize(num_rumble_);
-	for (size_t i = 0; i < num_rumble_; i++)
+	num_rumbles_ = rumble_names_.size();
+	rumble_state_.resize(num_rumbles_);
+	rumble_command_.resize(num_rumbles_);
+	for (size_t i = 0; i < num_rumbles_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering interface for : " << rumble_names_[i] << " at port " << rumble_ports_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << rumble_names_[i] << " at port " << rumble_ports_[i]);
 
 		rumble_state_[i] = std::numeric_limits<double>::max();
 		rumble_command_[i] = 0;
@@ -540,6 +675,8 @@ void FRCRobotInterface::init()
 
 		hardware_interface::JointHandle rh(rsh, &rumble_command_[i]);
 		joint_position_interface_.registerHandle(rh);
+		if (!rumble_local_updates_[i])
+			joint_remote_interface_.registerHandle(rh);
 	}
 
 	// Differentiate between navX and IMU here
@@ -559,7 +696,7 @@ void FRCRobotInterface::init()
 
 	for (size_t i = 0; i < num_navX_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering navX interface for : " << navX_names_[i] << " at id " << navX_ids_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering navX interface for : " << navX_names_[i] << " at id " << navX_ids_[i]);
 
 		// Create state interface for the given IMU
 		// and point it to the data stored in the
@@ -584,6 +721,12 @@ void FRCRobotInterface::init()
 		hardware_interface::ImuSensorHandle imuh(imu_data);
 		imu_interface_.registerHandle(imuh);
 
+		if (!navX_locals_[i])
+		{
+			hardware_interface::ImuWritableSensorHandle ish(imu_data);
+			imu_remote_interface_.registerHandle(ish);
+		}
+
 		// Set up a command interface to set an
 		// offset for reported heading
 		hardware_interface::JointStateHandle nxsh(navX_names_[i], &navX_state_[i], &navX_state_[i], &navX_state_[i]);
@@ -596,20 +739,27 @@ void FRCRobotInterface::init()
 	analog_input_state_.resize(num_analog_inputs_);
 	for (size_t i = 0; i < num_analog_inputs_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering interface for : " << analog_input_names_[i] << " at analog channel " << analog_input_analog_channels_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << analog_input_names_[i] << " at analog channel " << analog_input_analog_channels_[i]);
 		// Create state interface for the given analog input
 		// and point it to the data stored in the
 		// corresponding brushless_state array entry
 		hardware_interface::JointStateHandle aish(analog_input_names_[i], &analog_input_state_[i], &analog_input_state_[i], &analog_input_state_[i]);
 		joint_state_interface_.registerHandle(aish);
+		if (!analog_input_locals_[i])
+		{
+			hardware_interface::JointHandle aih(aish, &analog_input_state_[i]); /// writing directly to state?
+			joint_remote_interface_.registerHandle(aih);
+		}
 	}
 	num_compressors_ = compressor_names_.size();
 	compressor_state_.resize(num_compressors_);
 	compressor_command_.resize(num_compressors_);
 	last_compressor_command_.resize(num_compressors_);
 	for (size_t i = 0; i < num_compressors_; i++)
+		pcm_state_.push_back(hardware_interface::PCMState(compressor_pcm_ids_[i]));
+	for (size_t i = 0; i < num_compressors_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering interface for : " << compressor_names_[i] << " at pcm_id " << compressor_pcm_ids_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for compressor / PCM : " << compressor_names_[i] << " at pcm_id " << compressor_pcm_ids_[i]);
 
 		last_compressor_command_[i] = std::numeric_limits<double>::max();
 		compressor_command_[i] = 0;
@@ -620,6 +770,31 @@ void FRCRobotInterface::init()
 
 		hardware_interface::JointHandle cch(csh, &compressor_command_[i]);
 		joint_position_interface_.registerHandle(cch);
+		if (!compressor_local_updates_[i])
+			joint_remote_interface_.registerHandle(cch);
+
+		hardware_interface::PCMStateHandle pcmsh(compressor_names_[i], &pcm_state_[i]);
+		pcm_state_interface_.registerHandle(pcmsh);
+		if (!compressor_local_updates_[i])
+		{
+			hardware_interface::PCMWritableStateHandle rpcmsh(compressor_names_[i], &pcm_state_[i]);
+			pcm_remote_state_interface_.registerHandle(rpcmsh);
+		}
+	}
+
+	num_pdps_ = pdp_names_.size();
+	pdp_state_.resize(num_pdps_);
+	for (size_t i = 0; i < num_pdps_; i++)
+	{
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for PDP : " << pdp_names_[i]);
+
+		hardware_interface::PDPStateHandle csh(pdp_names_[i], &pdp_state_[i]);
+		pdp_state_interface_.registerHandle(csh);
+		if (!pdp_locals_[i])
+		{
+			hardware_interface::PDPWritableStateHandle psh(pdp_names_[i], &pdp_state_[i]);
+			pdp_remote_state_interface_.registerHandle(psh);
+		}
 	}
 
 	num_dummy_joints_ = dummy_joint_names_.size();
@@ -629,7 +804,7 @@ void FRCRobotInterface::init()
 	dummy_joint_command_.resize(num_dummy_joints_);
 	for (size_t i = 0; i < num_dummy_joints_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering interface for dummy joint : " << dummy_joint_names_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for dummy joint : " << dummy_joint_names_[i]);
 
 		dummy_joint_command_[i] = 0;
 		dummy_joint_position_[i] = 0;
@@ -643,24 +818,64 @@ void FRCRobotInterface::init()
 		joint_command_interface_.registerHandle(dch);
 		joint_position_interface_.registerHandle(dch);
 		joint_velocity_interface_.registerHandle(dch);
+		if (!dummy_joint_locals_[i])
+			joint_remote_interface_.registerHandle(dch);
 	}
 
-	hardware_interface::PDPStateHandle psh("pdp_name", &pdp_state_);
-	pdp_state_interface_.registerHandle(psh);
+	num_ready_signals_ = ready_signal_names_.size();
+	robot_ready_signals_.resize(num_ready_signals_);
+	for (size_t i = 0; i < num_ready_signals_; i++)
+	{
+		// Add a flag which indicates we should signal
+		// the driver station that robot code is initialized
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for ready signal : " << ready_signal_names_[i]);
+		hardware_interface::JointStateHandle sh(ready_signal_names_[i], &robot_ready_signals_[i],&robot_ready_signals_[i],&robot_ready_signals_[i]);
+		joint_state_interface_.registerHandle(sh);
 
-	hardware_interface::RobotControllerStateHandle rcsh("robot_controller_name", &robot_controller_state_);
-	robot_controller_state_interface_.registerHandle(rcsh);
+		hardware_interface::JointHandle ch(sh, &robot_ready_signals_[i]);
+		joint_command_interface_.registerHandle(ch);
+		joint_position_interface_.registerHandle(ch);
+		joint_velocity_interface_.registerHandle(ch);
+		if (!ready_signal_locals_[i])
+			joint_remote_interface_.registerHandle(ch);
+	}
 
-	// Add a flag which indicates we should signal
-	// the driver station that robot code is initialized
-	hardware_interface::JointStateHandle sh("robot_code_ready", &robot_code_ready_, &robot_code_ready_, &robot_code_ready_);
-	joint_state_interface_.registerHandle(sh);
+	auto dummy_joints = getDummyJoints();
+	for (auto d : dummy_joints)
+	{
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for DummyVar: " << d.name_);
 
-	hardware_interface::JointHandle ch(sh, &robot_code_ready_);
-	joint_command_interface_.registerHandle(ch);
-	joint_position_interface_.registerHandle(ch);
-	joint_velocity_interface_.registerHandle(ch);
-	joint_effort_interface_.registerHandle(ch);
+		*d.address_ = 0;
+
+		hardware_interface::JointStateHandle dsh(d.name_, d.address_, d.address_, d.address_);
+		joint_state_interface_.registerHandle(dsh);
+
+		hardware_interface::JointHandle dch(dsh, d.address_);
+		joint_command_interface_.registerHandle(dch);
+		joint_position_interface_.registerHandle(dch);
+		joint_velocity_interface_.registerHandle(dch);
+		if (!run_hal_robot_)
+			joint_remote_interface_.registerHandle(dch);
+	}
+	if (run_hal_robot_)
+	{
+		hardware_interface::MatchStateHandle msh("match_name", &match_data_);
+		match_state_interface_.registerHandle(msh);
+	}
+	else
+	{
+		hardware_interface::MatchStateWritableHandle msh("match_name", &match_data_);
+		match_remote_state_interface_.registerHandle(msh);
+	}
+
+	// TODO : add joint interface for joysticks
+	num_joysticks_ = joystick_names_.size();
+
+	if (run_hal_robot_)
+	{
+		hardware_interface::RobotControllerStateHandle rcsh("robot_controller_name", &robot_controller_state_);
+		robot_controller_state_interface_.registerHandle(rcsh);
+	}
 
 	// Publish various FRC-specific data using generic joint state for now
 	// For simple things this might be OK, but for more complex state
@@ -668,6 +883,7 @@ void FRCRobotInterface::init()
 	// RealtimePublisher() for the data coming in from
 	// the DS
 	registerInterface(&talon_state_interface_);
+	registerInterface(&talon_remote_state_interface_);
 	registerInterface(&joint_state_interface_);
 	registerInterface(&talon_command_interface_);
 	registerInterface(&joint_command_interface_);
@@ -676,7 +892,15 @@ void FRCRobotInterface::init()
 	registerInterface(&joint_effort_interface_); // empty for now
 	registerInterface(&imu_interface_);
 	registerInterface(&pdp_state_interface_);
+	registerInterface(&pcm_state_interface_);
 	registerInterface(&robot_controller_state_interface_);
+	registerInterface(&match_state_interface_);
+
+	registerInterface(&joint_remote_interface_); // list of Joints defined as remote
+	registerInterface(&pdp_remote_state_interface_);
+	registerInterface(&pcm_remote_state_interface_);
+	registerInterface(&imu_remote_interface_);
+	registerInterface(&match_remote_state_interface_);
 
 	ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface Ready.");
 }
@@ -717,7 +941,7 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 		// Maybe clear out demand1Type, demand1Value, just to be safe?
 	}
 	else
-	{	
+	{
 		// TODO - not needed after integrating with write(), handled by setMode() below
 		customProfileSetMode(joint_id, mode, setpoint, hardware_interface::DemandType::DemandType_ArbitraryFeedForward, fTerm);
 
@@ -730,10 +954,10 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 
 		talon_state_[joint_id].setDemand1Type(demand1_type_internal);
 		talon_state_[joint_id].setDemand1Value(fTerm);
-	}	
+	}
 
 	//ROS_INFO_STREAM("setpoint: " << setpoint << " fterm: " << fTerm << " id: " << joint_id << " offset " << pos_offset << " slot: " << pidSlot << " pos mode? " << posMode);
-	
+
 	// Make sure talon_command is in sync with data set above
 	talon_command_[joint_id].setMode(mode);
 	talon_command_[joint_id].newMode(mode);
@@ -747,10 +971,8 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 	// verify this is needed ... it should be handled by
 	// the write() code which sets mode and setpoint
 	talon_state_[joint_id].setNeutralOutput(false); // maybe make this a part of setSetpoint?
-	
-
 	// The check for .3 seconds after starting is to make
-	// sure PIDf values stick? Verify this is needed 
+	// sure PIDf values stick? Verify this is needed
 	// after unthreading and moving to write()
 	if ((ros::Time::now().toSec() - start_run < .3) || (slot_last != pidSlot))
     {
@@ -766,7 +988,7 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 
 		// All of this should just be calls to setP/I/D/f/etc
 		talon_command_[joint_id].pidfChanged(p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period, pidSlot);
-		
+
 		customProfileSetPIDF(joint_id, pidSlot, p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period);
 
 		// Set talon_state status to match data written to hardware above
@@ -796,12 +1018,12 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 
 // TODO : convert the following into a method which can be called
 // from write() instead of being a thread.  Make it not a loop, just
-// common code shared between the sim and hw write() loop. Each time 
+// common code shared between the sim and hw write() loop. Each time
 // through write() this will be called once, effectively looping it
 // without needing an explicit while (ros::ok()) loop.
 // Local vars will have to be made into a vector, 1 entry per talon,
 // and stored as a member var so their state remains between
-// calls. 
+// calls.
 // Yeah, given they're already vectors of vectors it'll get
 // a bit strange.
 // In init() resize each of these vectors to num_talons_.
@@ -812,10 +1034,10 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 // talon_command_.  The later code in write() will read those
 // values and update the actual talon hardware.  This will
 // simplify things a good bit - no need for all of the nonsense
-// in talon_profile_set_talon which also does writes to the 
+// in talon_profile_set_talon which also does writes to the
 // talon HW and has to fake out a bunch of other code to make
-// it work. Instead, have that code just set talon_command 
-// and let later code in the write call actually write to 
+// it work. Instead, have that code just set talon_command
+// and let later code in the write call actually write to
 // HW.
 // Hopefully the threaded read will allow us to run the read/
 // update/write loop at 50+ hz.  If not, add code to skip every
@@ -825,8 +1047,22 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 // get?
 void FRCRobotInterface::custom_profile_thread(int joint_id)
 {
-	//I wonder how inefficient it is to have all of these threads 
+	if (talon_state_[joint_id].getCANID() == 51)
+	{
+		ROS_INFO("Exiting custom_profile_thread since id == 51");
+		return;
+	}
+
+	if (!can_talon_srx_local_hardwares_[joint_id])
+	{
+		ROS_INFO_STREAM("Exiting custom_profile_thread since joint id " << joint_id << "is not local hardware");
+		return;
+	}
+
+	//I wonder how inefficient it is to have all of these threads
 	//running at the specified hz just copying to the status
+	double time_sum = 0;
+	int iteration_count = 0;
 
 	double time_start = ros::Time::now().toSec();
 	hardware_interface::CustomProfileStatus status; //Status is also used to store info from last loop
@@ -842,14 +1078,12 @@ void FRCRobotInterface::custom_profile_thread(int joint_id)
 
 	while (ros::ok())
 	{
+	    struct timespec start_time;
+	    clock_gettime(CLOCK_MONOTONIC, &start_time);
+
 		if (talon_command_[joint_id].getCustomProfileDisable())
 		{
 			ROS_INFO_STREAM("Exiting custom_profile_thread since CustomProfileDisable is set for joint id " << joint_id);
-			return;
-		}
-		if (talon_state_[joint_id].getCANID() == 51)
-		{
-			ROS_INFO("Exiting custom_profile_thread since id == 51");
 			return;
 		}
 
@@ -859,15 +1093,15 @@ void FRCRobotInterface::custom_profile_thread(int joint_id)
 		bool run = talon_command_[joint_id].getCustomProfileRun();
 
 		if(status.running && !run)
-		{		
+		{
 			std::vector<hardware_interface::CustomProfilePoint> empty_points;
-			talon_command_[joint_id].overwriteCustomProfilePoints(empty_points, status.slotRunning);	
+			talon_command_[joint_id].overwriteCustomProfilePoints(empty_points, status.slotRunning);
 			//Right now we wipe everything if the profile is stopped
 			//This could be changed to a pause type feature in which the first point has zeroPos set and the other
 			//positions get shifted
 			points_run = 0;
 		}
-		if((run && !status.running) || !run) 
+		if((run && !status.running) || !run)
 		{
 			time_start = ros::Time::now().toSec();
 		}
@@ -877,13 +1111,13 @@ void FRCRobotInterface::custom_profile_thread(int joint_id)
 		{
 			ROS_WARN("transitioned between two profile slots without any break between. Intended?");
 			std::vector<hardware_interface::CustomProfilePoint> empty_points;
-			talon_command_[joint_id].overwriteCustomProfilePoints(empty_points, status.slotRunning);	
+			talon_command_[joint_id].overwriteCustomProfilePoints(empty_points, status.slotRunning);
 			//Right now we wipe everything if the slots are flipped
 			//Should try to be analagous to having a break between
 			points_run = 0;
 			time_start = ros::Time::now().toSec();
 		}
-		status.slotRunning = slot;	
+		status.slotRunning = slot;
 		static int fail_flag = 0;
 		if(run)
 		{
@@ -906,7 +1140,7 @@ void FRCRobotInterface::custom_profile_thread(int joint_id)
 			double time_since_start = ros::Time::now().toSec() - time_start;
 			for(; start < (int)saved_points[slot].size(); start++)
 			{
-				//Find the point just greater than time since start	
+				//Find the point just greater than time since start
 				if(saved_times[slot][start] > time_since_start)
 				{
 					status.outOfPoints = false;
@@ -920,7 +1154,7 @@ void FRCRobotInterface::custom_profile_thread(int joint_id)
 			}
 			else
 			{
-				points_run = end - 1;	
+				points_run = end - 1;
 				if(points_run < 0) points_run = 0;
 			}
 			if(status.outOfPoints)
@@ -929,7 +1163,7 @@ void FRCRobotInterface::custom_profile_thread(int joint_id)
 
 				//If all points have been exhausted, just use the last point
 				custom_profile_set_talon(saved_points[slot].back().mode, saved_points[slot].back().setpoint, saved_points[slot].back().fTerm, joint_id, saved_points[slot].back().pidSlot, saved_points[slot].back().zeroPos, time_start, slot_last);
-				if (next_slot.size() > 0) 
+				if (next_slot.size() > 0)
 				{
 					talon_command_[joint_id].setCustomProfileSlot(next_slot[0]);
 					next_slot.erase(next_slot.begin());
@@ -954,11 +1188,11 @@ void FRCRobotInterface::custom_profile_thread(int joint_id)
 				else
 				{
 					//linear interpolation
-					double setpoint = saved_points[slot][end - 1].setpoint + (saved_points[slot][end].setpoint - saved_points[slot][end - 1].setpoint) / 
+					double setpoint = saved_points[slot][end - 1].setpoint + (saved_points[slot][end].setpoint - saved_points[slot][end - 1].setpoint) /
 						(saved_times[slot][end] - saved_times[slot][end-1]) * (time_since_start - saved_times[slot][end-1]);
 
 
-					double fTerm = saved_points[slot][end - 1].fTerm + (saved_points[slot][end].fTerm - saved_points[slot][end - 1].fTerm) / 
+					double fTerm = saved_points[slot][end - 1].fTerm + (saved_points[slot][end].fTerm - saved_points[slot][end - 1].fTerm) /
 						(saved_times[slot][end] - saved_times[slot][end-1]) * (time_since_start - saved_times[slot][end-1]);
 
 					custom_profile_set_talon(saved_points[slot][end].mode, setpoint, fTerm, joint_id, saved_points[slot][end].pidSlot, saved_points[slot][end-1].zeroPos, time_start, slot_last);
@@ -994,6 +1228,15 @@ void FRCRobotInterface::custom_profile_thread(int joint_id)
 
 		status.running = run;
 		talon_state_[joint_id].setCustomProfileStatus(status);
+
+		struct timespec end_time;
+		clock_gettime(CLOCK_MONOTONIC, &end_time);
+		time_sum +=
+			((double)end_time.tv_sec -  (double)start_time.tv_sec) +
+			((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
+		iteration_count += 1;
+		ROS_INFO_STREAM_THROTTLE(2, "mp_thread " << joint_id << " = " << time_sum / iteration_count);
+
 		rate.sleep();
 	}
 }

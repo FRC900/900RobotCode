@@ -47,14 +47,35 @@
 // ROS Controls
 #include <controller_manager/controller_manager.h>
 #include <hardware_interface/joint_command_interface.h>
-#include <hardware_interface/imu_sensor_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <talon_interface/talon_command_interface.h>
-#include "pdp_state_controller/pdp_state_interface.h"
 #include "robot_controller_interface/robot_controller_interface.hpp"
+#include "pdp_state_interface/pdp_state_interface.h"
+#include "pcm_state_interface/pcm_state_interface.h"
+#include "remote_hardware_interface/remote_joint_interface.h"
+#include "robot_controller_interface/robot_controller_interface.hpp"
+#include "match_state_controller/match_data_interface.h"
 
 namespace ros_control_boilerplate
 {
+
+// Joint used to communicate internally in the hw
+// interface(s) by name rather than via some index
+// in an array. Typically used for communicating with
+// the DS in some way
+class DummyJoint
+{
+	public :
+		DummyJoint(const std::string &name, double *address) :
+			name_(name), address_(address)
+		{
+			name_.erase(name.find_last_not_of('_') + 1);
+		}
+		std::string name_;
+		double *address_;
+};
+#define Dumify(name) ros_control_boilerplate::DummyJoint(#name, &name)
+
 /// \brief Hardware interface for a robot
 class FRCRobotInterface : public hardware_interface::RobotHW
 {
@@ -113,6 +134,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 	protected:
 		/** \brief Get the URDF XML from the parameter server */
 		virtual void loadURDF(ros::NodeHandle &nh, std::string param_name);
+		virtual std::vector<DummyJoint> getDummyJoints(void) { return std::vector<DummyJoint>();}
 
 		// Short name of this class
 		std::string name_;
@@ -121,17 +143,27 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		ros::NodeHandle nh_;
 
 		// Hardware interfaces
-		hardware_interface::JointStateInterface joint_state_interface_;
-		hardware_interface::TalonStateInterface talon_state_interface_;
-		hardware_interface::PDPStateInterface	pdp_state_interface_;
+		hardware_interface::JointStateInterface       joint_state_interface_;
+		hardware_interface::TalonStateInterface       talon_state_interface_;
+		hardware_interface::RemoteTalonStateInterface talon_remote_state_interface_;
+		hardware_interface::PDPStateInterface	      pdp_state_interface_;
+		hardware_interface::RemotePDPStateInterface	  pdp_remote_state_interface_;
+		hardware_interface::PCMStateInterface	      pcm_state_interface_;
+		hardware_interface::RemotePCMStateInterface	  pcm_remote_state_interface_;
+
+		hardware_interface::MatchStateInterface       match_state_interface_;
+		hardware_interface::RemoteMatchStateInterface match_remote_state_interface_;
 
 		hardware_interface::JointCommandInterface  joint_command_interface_;
 		hardware_interface::PositionJointInterface joint_position_interface_;
 		hardware_interface::VelocityJointInterface joint_velocity_interface_;
 		hardware_interface::EffortJointInterface   joint_effort_interface_;
+		hardware_interface::RemoteJointInterface   joint_remote_interface_;
 		hardware_interface::TalonCommandInterface  talon_command_interface_;
 
 		hardware_interface::ImuSensorInterface imu_interface_;
+		hardware_interface::RemoteImuSensorInterface imu_remote_interface_;
+
 		hardware_interface::RobotControllerStateInterface robot_controller_state_interface_;
 
 		void custom_profile_thread(int joint_id);
@@ -163,6 +195,11 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 										  int    /*closed_loop_period*/)
 		{
 		}
+		void readJointLocalParams(XmlRpc::XmlRpcValue joint_params,
+								  const bool local,
+								  const bool saw_local_keyword,
+								  bool &local_update,
+								  bool &local_hardware);
 
 		std::vector<std::thread> custom_profile_threads_;
 
@@ -170,63 +207,101 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<std::string> can_talon_srx_names_;
 		std::vector<int>         can_talon_srx_can_ids_;
 		std::vector<double>      can_talon_srx_run_profile_stop_time_;
+		std::vector<bool>        can_talon_srx_local_updates_;
+		std::vector<bool>        can_talon_srx_local_hardwares_;
 		std::size_t              num_can_talon_srxs_;
 
 		std::vector<std::string> nidec_brushless_names_;
 		std::vector<int>         nidec_brushless_pwm_channels_;
 		std::vector<int>         nidec_brushless_dio_channels_;
 		std::vector<bool>        nidec_brushless_inverts_;
+		std::vector<bool>        nidec_brushless_local_updates_;
+		std::vector<bool>        nidec_brushless_local_hardwares_;
 		std::size_t              num_nidec_brushlesses_;
 
 		//I think inverts are worth having on below 3
 		std::vector<std::string> digital_input_names_;
 		std::vector<int>         digital_input_dio_channels_;
 		std::vector<bool>        digital_input_inverts_;
+		std::vector<bool>        digital_input_locals_;
 		std::size_t              num_digital_inputs_;
 
 		std::vector<std::string> digital_output_names_;
 		std::vector<int>         digital_output_dio_channels_;
 		std::vector<bool>        digital_output_inverts_;
+		std::vector<bool>        digital_output_local_updates_;
+		std::vector<bool>        digital_output_local_hardwares_;
 		std::size_t              num_digital_outputs_;
 
 		std::vector<std::string> pwm_names_;
 		std::vector<int>         pwm_pwm_channels_;
 		std::vector<bool>        pwm_inverts_;
+		std::vector<bool>        pwm_local_updates_;
+		std::vector<bool>        pwm_local_hardwares_;
 		std::size_t              num_pwm_;
 
 		std::vector<std::string> solenoid_names_;
 		std::vector<int>         solenoid_ids_;
 		std::vector<int>         solenoid_pcms_;
+		std::vector<bool>        solenoid_local_updates_;
+		std::vector<bool>        solenoid_local_hardwares_;
 		std::size_t              num_solenoids_;
-		
+
 		std::vector<std::string> double_solenoid_names_;
 		std::vector<int>         double_solenoid_forward_ids_;
 		std::vector<int>         double_solenoid_reverse_ids_;
 		std::vector<int>         double_solenoid_pcms_;
+		std::vector<bool>        double_solenoid_local_updates_;
+		std::vector<bool>        double_solenoid_local_hardwares_;
 		std::size_t              num_double_solenoids_;
-		
+
 		std::vector<std::string> compressor_names_;
 		std::vector<int>         compressor_pcm_ids_;
+		std::vector<bool>        compressor_local_updates_;
+		std::vector<bool>        compressor_local_hardwares_;
 		std::size_t              num_compressors_;
-		
+
+		std::vector<std::string> pdp_names_;
+		std::vector<int32_t>     pdp_modules_;
+		std::vector<bool>        pdp_locals_;
+		std::size_t              num_pdps_;
+
 		std::vector<std::string> rumble_names_;
 		std::vector<int>         rumble_ports_;
-		std::size_t              num_rumble_;
+		std::vector<int>         rumble_local_updates_;
+		std::vector<int>         rumble_local_hardwares_;
+		std::size_t              num_rumbles_;
 
 		std::vector<std::string> navX_names_;
 		std::vector<std::string> navX_frame_ids_;
-		std::vector<int>	 	 navX_ids_;
-		std::size_t		 		 num_navX_;
-		
+		std::vector<int>         navX_ids_;
+		std::vector<bool>        navX_locals_;
+
+		std::size_t              num_navX_;
+
 		std::vector<std::string> analog_input_names_;
 		std::vector<int>         analog_input_analog_channels_;
 		std::vector<double>      analog_input_a_;
 		std::vector<double>      analog_input_b_;
+		std::vector<bool>        analog_input_locals_;
 		std::size_t              num_analog_inputs_;
 
 		std::vector<std::string> dummy_joint_names_;
+		std::vector<bool>        dummy_joint_locals_; // Not sure if this is needed?
 		std::size_t              num_dummy_joints_;
-		
+
+		std::vector<std::string> ready_signal_names_;
+		std::vector<bool>        ready_signal_locals_;
+		std::size_t              num_ready_signals_;
+
+		std::vector<std::string> joystick_names_;
+		std::vector<int>         joystick_ids_; // pretty sure this is montonic increasing by default?
+		std::vector<bool>        joystick_locals_;
+		std::size_t              num_joysticks_;
+
+		bool run_hal_robot_;
+		std::string can_interface_;
+
 		urdf::Model *urdf_model_;
 
 		// Array holding master cached state of hardware
@@ -242,8 +317,10 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<double> rumble_state_; //No actual data
 		std::vector<double> navX_state_;
 		std::vector<double> compressor_state_;
-		hardware_interface::PDPHWState pdp_state_;
+		std::vector<hardware_interface::PDPHWState> pdp_state_;
+		std::vector<hardware_interface::PCMState> pcm_state_;
 		hardware_interface::RobotControllerState robot_controller_state_;
+		hardware_interface::MatchHWState match_data_;
 
 		// Each entry in the vector is an array. That array holds
 		// the data returned from one particular imu
@@ -273,7 +350,9 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<double> dummy_joint_effort_;
 		std::vector<double> dummy_joint_command_;
 
-		double robot_code_ready_;
+		std::vector<double> robot_ready_signals_;
+		bool                robot_code_ready_;
+
 };  // class
 
 }  // namespace
