@@ -5,18 +5,18 @@ if [ -f /.dockerenv ] ; then
     # Docker-specific configuration
     echo "Sourcing Docker environment"
     source /opt/ros/kinetic/setup.bash
-    source /home/ubuntu/2018RobotCode/zebROS_ws/devel/setup.bash
+    source /home/ubuntu/2018Offseason/zebROS_ws/devel/setup.bash
     export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 8`
-elif [ -f /home/ubuntu/2018RobotCode/zebROS_ws/devel/setup.bash ] ; then
+elif [ -f /home/ubuntu/2018Offseason/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Jetson / native Linux environment"
     source /opt/ros/kinetic/setup.bash
-    source /home/ubuntu/2018RobotCode/zebROS_ws/devel/setup.bash
+    source /home/ubuntu/2018Offseason/zebROS_ws/devel/setup.bash
     export ROS_IP=10.9.0.8
-elif [ -f /home/ryan/2018RobotCode/zebROS_ws/devel/setup.bash ] ; then
+elif [ -f /home/ryan/2018Offseason/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Ryan / native Linux environment"
-    source /home/ryan/2018RobotCode/zebROS_ws/devel/setup.bash
+    source /home/ryan/2018Offseason/zebROS_ws/devel/setup.bash
     export ROS_IP=10.9.0.12
 elif [ -f /home/admin/rio_bashrc.sh ] ; then
     # roboRIO-specific configuration
@@ -28,7 +28,7 @@ elif [ -f /home/admin/rio_bashrc.sh ] ; then
 else
     echo "Unknown environment! Trying to proceed anyway using local environment."
     source /opt/ros/kinetic/setup.bash
-    source $HOME/2018RobotCode/zebROS_ws/devel/setup.bash
+    source $HOME/2018Offseason/zebROS_ws/devel/setup.bash
     export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 8`
 fi
 

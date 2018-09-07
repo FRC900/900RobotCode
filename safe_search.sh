@@ -29,7 +29,7 @@ do
 	fi
 
 	echo Writing data to file
-	$HOME/2018RobotCode/zebROS_ws/devel/lib/rosbag_scripts/rosbag_scripts_node $var
+	$HOME/2018Offseason/zebROS_ws/devel/lib/rosbag_scripts/rosbag_scripts_node $var
 	filename=$(basename $var)
 
 	any_data=$(rosbag info $var | grep /frcrobot/match_data)
@@ -40,7 +40,7 @@ do
 		if [ $matchNumber = 0 ]
 		then
 			echo Match number is zero -- renaming
-			mv $var $HOME/2018RobotCode/practice$(basename $var)
+			mv $var $HOME/2018Offseason/practice$(basename $var)
 			continue
 		fi
 
@@ -50,14 +50,14 @@ do
 			echo This has alliance data.
 			bag_name=Match${matchNumber}
 			echo Renaming bag file to ${bag_name}_${count}.bag
-			cp $var $HOME/2018RobotCode/${bag_name}.bag
+			cp $var $HOME/2018Offseason/${bag_name}.bag
 		else
 			echo This does not have alliance data but match numer != 0 -- renaming to prematch${var}
-			cp $var $HOME/2018RobotCode/prematch$(basename $var)
+			cp $var $HOME/2018Offseason/prematch$(basename $var)
 		fi
 	else
 		echo This does not have match data -- renaming to practice${var} 
-		cp $var $HOME/2018RobotCode/practice$(basename $var)
+		cp $var $HOME/2018Offseason/practice$(basename $var)
 	fi
 	#rm temp_file.txt
 

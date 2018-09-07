@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Launch rqt_plot and input rosbag data from rosbag_rqt_graphing.launch data
 source /opt/ros/kinetic/setup.bash
-source ~/2018RobotCode/zebROS_ws/devel/setup.bash
+source ~/2018Offseason/zebROS_ws/devel/setup.bash
 
 export ROS_MASTER_URI=http://localhost:11311
 
@@ -33,7 +33,7 @@ sleep 4
 cd
 gnome-terminal -- rosbag play --clock -s 200 $1
 #rqt_bag Downloads/$1
-cd ../2018RobotCode/zebROS_ws
+cd ../2018Offseason/zebROS_ws
 rosrun plotjuggler PlotJuggler
 cd
 sleep 3

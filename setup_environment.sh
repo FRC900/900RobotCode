@@ -101,16 +101,16 @@ rm ./$zed_fn
 #TODO : rethink this - how are we getting the script if the
 #       repo isn't there in the first place?
 cd
-git clone https://github.com/FRC900/2018RobotCode.git
-cd 2018RobotCode
+git clone https://github.com/FRC900/2018Offseason.git
+cd 2018Offseason
 git submodule init
 git submodule update
 
 # Set up prereqs for deploy script
-mv ~/2018RobotCode ~/2018RobotCode.orig
-ln -s ~/2018RobotCode.orig ~/2018RobotCode
-mkdir -p ~/2018RobotCode.prod/zebROS_ws
-mkdir -p ~/2018RobotCode.dev/zebROS_ws
+mv ~/2018Offseason ~/2018Offseason.orig
+ln -s ~/2018Offseason.orig ~/2018Offseason
+mkdir -p ~/2018Offseason.prod/zebROS_ws
+mkdir -p ~/2018Offseason.dev/zebROS_ws
 
 #mount and setup autostart script
 if [ "$jetson" = true ] ; then
@@ -128,7 +128,7 @@ if [ "$jetson" = true ] ; then
 		sudo depmod -a
         sudo apt-get install ntp # TODO work on this NIALL or OLIVIA
         # edit /etc/init.d/ntp to contain the line: <ntpd -gq> before all content already there.
-        sudo cp ntp-client.conf /etc/ntp.conf  # edit /etc/ntp.conf to be a copy of ntp-client.conf in 2018RobotCode
+        sudo cp ntp-client.conf /etc/ntp.conf  # edit /etc/ntp.conf to be a copy of ntp-client.conf in 2018Offseason
 	fi
 
 	# Set up ssh host config (add port 5801) 
@@ -138,11 +138,11 @@ if [ "$jetson" = true ] ; then
 	# connections to Rio
 	mkdir -p ~/.ssh
 	cd ~/.ssh
-	tar -xjf ~/2018RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 
+	tar -xjf ~/2018Offseason/jetson_setup/jetson_dot_ssh.tar.bz2 
 
 	sudo mkdir -p /root/.ssh
 	sudo cd /root/.ssh
-	sudo tar -xjf /home/ubuntu/2018RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 
+	sudo tar -xjf /home/ubuntu/2018Offseason/jetson_setup/jetson_dot_ssh.tar.bz2 
 
 	# Kernel module build steps for TX2 : https://gist.github.com/sauhaardac/9d7a82c23e4b283a1e79009903095655
 	# Not needed unless Jetpack is updated with a new kernel version and modules
@@ -180,11 +180,11 @@ fi
 
 sudo mkdir -p /usr/local/zed/settings
 sudo chmod 755 /usr/local/zed/settings
-sudo cp ~/2018RobotCode/calibration_files/*.conf /usr/local/zed/settings
+sudo cp ~/2018Offseason/calibration_files/*.conf /usr/local/zed/settings
 sudo chmod 644 /usr/local/zed/settings/*
 
-cp ~/2018RobotCode/.vimrc ~/2018RobotCode/.gvimrc ~
-sudo cp ~/2018RobotCode/kjaget.vim /usr/share/vim/vim74/colors
+cp ~/2018Offseason/.vimrc ~/2018Offseason/.gvimrc ~
+sudo cp ~/2018Offseason/kjaget.vim /usr/share/vim/vim74/colors
 
 git config --global user.email "progammers@team900.org"
 git config --global user.name "Team900 Jetson TX2"

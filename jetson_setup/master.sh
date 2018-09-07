@@ -6,7 +6,7 @@ sudo sysctl -p
 sudo rfkill block wifi  
 sudo rfkill block bluetooth
 
-. /home/ubuntu/2018RobotCode/zebROS_ws/ROSJetsonMaster.sh
+. /home/ubuntu/2018Offseason/zebROS_ws/ROSJetsonMaster.sh
 #echo 1100-1200,443,80,554,1735 > /proc/sys/net/ipv4/ip_local_reserved_ports
 
 #echo 5800 5810 > /proc/sys/net/ipv4/ip_local_port_range
@@ -34,5 +34,5 @@ top -b > /mnt/900_2/$(date +%Y%m%d%H%M%S)_top_log.txt
 
 nvpmodel -m 0
 /home/ubuntu/jetson_clocks.sh
-/home/ubuntu/2018RobotCode/jetson_setup/clocks.sh &
+/home/ubuntu/2018Offseason/jetson_setup/clocks.sh &
 

@@ -13,8 +13,8 @@ install:
 script:
   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
     "cd ~ &&
-     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018RobotCode/ &&
-     cd ./2018RobotCode/ &&
+     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason/ &&
+     cd ./2018Offseason/ &&
      git checkout $TRAVIS_COMMIT &&
      git log -n1 &&
      git submodule update --init --recursive &&
@@ -28,8 +28,8 @@ script:
      echo \"Finished Ubuntu compile.\""
   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
     "cd ~ &&
-     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018RobotCode/ &&
-     cd ./2018RobotCode/ &&
+     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason/ &&
+     cd ./2018Offseason/ &&
      git checkout $TRAVIS_COMMIT &&
      git log -n1 &&
      git submodule update --init --recursive &&
