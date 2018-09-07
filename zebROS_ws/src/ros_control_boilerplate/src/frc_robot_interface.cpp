@@ -677,6 +677,7 @@ void FRCRobotInterface::init()
 	ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface Ready.");
 }
 
+
 // Note - there are two commented-out can_talon calls here.  If
 // they're put back in, make customProfileFoo() methods which
 // are virtual in the frc_robot_interface def.  For a Set()
@@ -685,6 +686,11 @@ void FRCRobotInterface::init()
 // with a method which makes the actual talon call
 // For get, not sure what to do exactly?  The hw one is obvious-
 // get the value from the talon. For sim, maybe grab it from state?
+//
+// TODO - when changing the thread below to a call to write,
+// simplify this code greatly.  It should just set talon_command
+// via set calls. No calls to actually write the HW, no resetting
+// the talon_command stuff by calling *Changed, etc.
 void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode mode, double setpoint, double fTerm, int joint_id, int pidSlot, bool zeroPos, double start_run, int &slot_last)
 {
 	// TODO : really consider a mutex for each talon.  Add lock guards here,
@@ -693,6 +699,7 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 	{
 		//pos_offset = can_talons_[joint_id]->GetSelectedSensorPosition(pidIdx) /* radians_scale*/;
 
+		// TODO - replace with a simple call to talon_command_[joint_id].setPosition(0)
 		customProfileSetSensorPosition(joint_id, 0);
 		talon_state_[joint_id].setPosition(0);
 		ROS_WARN_STREAM("zeroing talon:" <<  joint_id);
@@ -700,10 +707,14 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 	//set talon
 	if(mode == hardware_interface::TalonMode_PercentOutput)
 	{
+		// TODO - not needed after integrating with write(), handled by setMode() below
 		customProfileSetMode(joint_id, mode, setpoint, hardware_interface::DemandType::DemandType_Neutral, 0);
+
+		// Maybe clear out demand1Type, demand1Value, just to be safe?
 	}
 	else
 	{	
+		// TODO - not needed after integrating with write(), handled by setMode() below
 		customProfileSetMode(joint_id, mode, setpoint, hardware_interface::DemandType::DemandType_ArbitraryFeedForward, fTerm);
 
 		// Make sure talon_command is in sync with data set above
@@ -728,8 +739,15 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 	talon_command_[joint_id].commandChanged(setpoint);
 	talon_state_[joint_id].setSetpoint(setpoint);
 
+	// TODO - after moving this to the write loop,
+	// verify this is needed ... it should be handled by
+	// the write() code which sets mode and setpoint
 	talon_state_[joint_id].setNeutralOutput(false); // maybe make this a part of setSetpoint?
+	
 
+	// The check for .3 seconds after starting is to make
+	// sure PIDf values stick? Verify this is needed 
+	// after unthreading and moving to write()
 	if ((ros::Time::now().toSec() - start_run < .3) || (slot_last != pidSlot))
     {
 		double p;
@@ -742,6 +760,7 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 		double closed_loop_peak_output;
 		int    closed_loop_period;
 
+		// All of this should just be calls to setP/I/D/f/etc
 		talon_command_[joint_id].pidfChanged(p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period, pidSlot);
 		
 		customProfileSetPIDF(joint_id, pidSlot, p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period);
@@ -771,6 +790,35 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
     }
 }
 
+// TODO : convert the following into a method which can be called
+// from write() instead of being a thread.  Make it not a loop, just
+// common code shared between the sim and hw write() loop. Each time 
+// through write() this will be called once, effectively looping it
+// without needing an explicit while (ros::ok()) loop.
+// Local vars will have to be made into a vector, 1 entry per talon,
+// and stored as a member var so their state remains between
+// calls. 
+// Yeah, given they're already vectors of vectors it'll get
+// a bit strange.
+// In init() resize each of these vectors to num_talons_.
+// Initialize them to the values to match what they'd be intitialized
+// to here (0, -1, false, whatever).
+// Call this very early in write() for each talon.  That will
+// make the eventual calls it make set various options int
+// talon_command_.  The later code in write() will read those
+// values and update the actual talon hardware.  This will
+// simplify things a good bit - no need for all of the nonsense
+// in talon_profile_set_talon which also does writes to the 
+// talon HW and has to fake out a bunch of other code to make
+// it work. Instead, have that code just set talon_command 
+// and let later code in the write call actually write to 
+// HW.
+// Hopefully the threaded read will allow us to run the read/
+// update/write loop at 50+ hz.  If not, add code to skip every
+// other (or 2 of 3) calls of the guts of read() for talons
+// to speed this up enough to write the talons @ 50hz?
+// Or maybe move the read() loop to a Jetson and see what we
+// get?
 void FRCRobotInterface::custom_profile_thread(int joint_id)
 {
 	//I wonder how inefficient it is to have all of these threads 
