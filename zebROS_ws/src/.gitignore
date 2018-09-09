@@ -10,3 +10,4 @@ control_toolbox
 *.plist
 *.orig
 rospy_message_converter
+ydlidar

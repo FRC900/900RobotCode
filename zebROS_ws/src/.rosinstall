@@ -39,3 +39,6 @@
 - git:
     local-name: zed-ros-wrapper
     uri: https://github.com/FRC900/zed-ros-wrapper.git
+- git:
+    local-name: ydlidar
+    uri: https://github.com/EAIBOT/ydlidar.git
