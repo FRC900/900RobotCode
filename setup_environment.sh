@@ -144,6 +144,12 @@ if [ "$jetson" = true ] ; then
 	sudo cd /root/.ssh
 	sudo tar -xjf /home/ubuntu/2018Offseason/jetson_setup/jetson_dot_ssh.tar.bz2 
 
+	cd ~/2018Offseason
+	sudo cp ./jetson_setup/10-local.rules
+	sudo service udev reload
+	sleep 2
+	sudo service udev restart
+
 	# Kernel module build steps for TX2 : https://gist.github.com/sauhaardac/9d7a82c23e4b283a1e79009903095655
 	# Not needed unless Jetpack is updated with a new kernel version and modules
 	# for a given kernel version aren't already built
