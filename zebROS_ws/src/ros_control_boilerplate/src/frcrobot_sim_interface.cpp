@@ -1015,17 +1015,31 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 	for (size_t i = 0; i < num_digital_outputs_; i++)
 	{
 		bool converted_command = (digital_output_command_[i] > 0) ^ digital_output_inverts_[i];
-		digital_output_state_[i] = converted_command;
+		if (converted_command != digital_output_state_[i])
+		{
+			digital_output_state_[i] = converted_command;
+			ROS_INFO_STREAM("DIO " << digital_output_names_[i] << 
+					"at channel" <<  digital_output_dio_channels_[i] << 
+					" set to " << converted_command);
+		}
 	}
 	for (size_t i = 0; i < num_pwm_; i++)
 	{
-		int inverter  = (pwm_inverts_[i]) ? -1 : 1;
+		int inverter = (pwm_inverts_[i]) ? -1 : 1;
 		pwm_state_[i] = pwm_command_[i]*inverter;
 	}
+
 	for (size_t i = 0; i< num_solenoids_; i++)
 	{
 		bool setpoint = solenoid_command_[i] > 0;
-		solenoid_state_[i] = setpoint;
+		if (solenoid_state_[i] != setpoint)
+		{
+			solenoid_state_[i] = setpoint;
+			ROS_INFO_STREAM("Solenoid " << solenoid_names_[i] <<
+							" at id " << solenoid_ids_[i] <<
+							" / pcm " << solenoid_pcms_[i] <<
+							" = " << setpoint);
+		}
 	}
 
 	for (size_t i = 0; i< num_double_solenoids_; i++)
@@ -1040,21 +1054,32 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		else
 			setpoint = 0.;
 
-		double_solenoid_state_[i] = setpoint;
+		if (double_solenoid_state_[i] != setpoint)
+		{
+			double_solenoid_state_[i] = setpoint;
+			ROS_INFO_STREAM("Double solenoid " << double_solenoid_names_[i] <<  
+					"at forward id " << double_solenoid_forward_ids_[i] <<  
+					"/ reverse id " << double_solenoid_reverse_ids_[i] <<
+				   	" / pcm " << double_solenoid_pcms_[i] <<
+					" = " << setpoint);
+		}
 	}
+
 	for (size_t i = 0; i < num_rumble_; i++)
 	{
-		unsigned int rumbles = *((unsigned int*)(&rumble_command_[i]));
-		unsigned int left_rumble  = (rumbles >> 16) & 0xFFFF;
-		unsigned int right_rumble = (rumbles      ) & 0xFFFF;
-#if 0
-		ROS_INFO_STREAM_THROTTLE(1,
-				"Joystick at port " << rumble_ports_[i] <<
+		if (rumble_state_[i] != rumble_command_[i])
+		{
+			const unsigned int rumbles = *((unsigned int*)(&rumble_command_[i]));
+			const unsigned int left_rumble  = (rumbles >> 16) & 0xFFFF;
+			const unsigned int right_rumble = (rumbles      ) & 0xFFFF;
+			rumble_state_[i] = rumble_command_[i];
+
+			ROS_INFO_STREAM("Joystick at port " << rumble_ports_[i] <<
 				" left rumble = " << std::dec << left_rumble << "(" << std::hex << left_rumble <<
 				") right rumble = " << std::dec << right_rumble << "(" << std::hex << right_rumble <<  ")" << std::dec);
-#endif
+		}
 	}
-	//std::stringstream s;
+
 	for (size_t i = 0; i < num_dummy_joints_; i++)
 	{
 		//s << dummy_joint_command_[i] << " ";

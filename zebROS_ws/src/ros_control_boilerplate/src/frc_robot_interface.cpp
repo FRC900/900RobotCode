@@ -531,7 +531,7 @@ void FRCRobotInterface::init()
 	rumble_command_.resize(num_rumble_);
 	for (size_t i = 0; i < num_rumble_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering interface for : " << rumble_names_[i] << " at port " <<rumble_ports_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotHWInterface: Registering interface for : " << rumble_names_[i] << " at port " << rumble_ports_[i]);
 
 		rumble_state_[i] = std::numeric_limits<double>::max();
 		rumble_command_[i] = 0;
