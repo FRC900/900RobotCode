@@ -1,7 +1,7 @@
 # ros_control_boilerplate Settings -----------------------
 # Settings for ros_control control loop
 generic_hw_control_loop:
-  loop_hz: 100
+  loop_hz: 50
   cycle_time_error_threshold: 0.01
 
 # Settings for ros_control hardware interface
@@ -11,6 +11,7 @@ generic_hw_control_loop:
 hardware_interface:
    joints:
        - {name: joystick_rumble, type: rumble, rumble_port: 0}
+       - {name: haptic_rumble,   type: rumble, rumble_port: 1}
 
 # Create controllers for each joint
 #
@@ -23,16 +24,19 @@ hardware_interface:
 # /frcrobot/joint1_talon_controller/command
 # /frcrobot/joint2_talon_controller/command
 # /frcrobot/talon_states
-#
 
 # Similar to above, but this one prints non-Talon state
 # (stuff that fits into the more standard ROS position/
 # speed/effort paradigm)
 joint_state_controller:
    type:         joint_state_controller/JointStateController
-   publish_rate: 100
+   publish_rate: 20
 
 # Create a controller to test rumble
-rumble_controller:
+joystick_rumble_controller:
     type: position_controllers/JointPositionController
     joint: joystick_rumble
+
+haptic_rumble_controller:
+    type: position_controllers/JointPositionController
+    joint: haptic_rumble
