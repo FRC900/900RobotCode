@@ -34,7 +34,7 @@ hi Title		  term=bold  cterm=bold  ctermfg=darkmagenta  gui=bold	guifg=Magenta
 hi Visual		  term=reverse	cterm=reverse  gui=reverse
 hi WarningMsg	  term=standout  cterm=bold  ctermfg=darkblue  guifg=Red
 "hi Cursor		  guifg=bg	guibg=Green
-hi Error		  term=reverse	ctermfg=darkcyan  ctermbg=black  guifg=Red	guibg=Black
+hi Error		  term=reverse	ctermfg=Red guifg=Red
 hi Todo			  term=standout  ctermfg=black	ctermbg=darkcyan  guifg=Blue  guibg=Yellow
 hi link IncSearch		Visual
 hi link String			Constant
