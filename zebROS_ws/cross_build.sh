@@ -1,7 +1,6 @@
 #!/bin/bash
 
 if [ -z $ROS_ROOT ]; then
-	echo "Sourcing cross build environment"
 	source /usr/arm-frc-linux-gnueabi/opt/ros/kinetic/setup.bash
 elif [[ ! $ROS_ROOT = "/usr/arm-frc-linux-gnueabi/opt/ros/kinetic/share/ros" ]]; then
 	echo "ROS is not configured for a cross build (maybe set up for a native build instead?)"
