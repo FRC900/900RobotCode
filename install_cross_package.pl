@@ -16,7 +16,7 @@ sub install_package
 	my $dirname = File::Temp->newdir;
     # Go to the temporary directory
 	chdir $dirname  || die("Can not chdir($dirname) : $!");
-	`wget $url`;
+	`wget $url` || die("Could not run wget?");
 
 	# ipk files are an ar archive. Inside is a file
 	# called data.tar.gz which is the actual contents
