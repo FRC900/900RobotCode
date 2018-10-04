@@ -6,7 +6,7 @@
 	<arg unless="$(arg debug)" name="launch_prefix" value="" />
 	<arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
 
-	<arg name="hw_or_sim" default="hw" />
+	<arg name="hw_or_sim" default="sim" />
 	<arg name="static_map" default="True"/>
 
 	<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node> 
@@ -54,7 +54,7 @@
         <node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
     </group>
         
-	<node name="auto_loop" pkg="auto_preseason" type="auto_loop" output="screen" />
+    <!-- <node name="auto_loop" pkg="auto_preseason" type="auto_loop" output="screen" /> -->
 
 	<node name="cube_detection_node" pkg="cube_detection" type="cube_detection_node" output="screen"/>
 
