@@ -42,3 +42,8 @@
 - git:
     local-name: ydlidar
     uri: https://github.com/EAIBOT/ydlidar.git
+- git:
+    local-name: sick_tim
+    uri: https://github.com/uos/sick_tim.git
+    version: kinetic
+
