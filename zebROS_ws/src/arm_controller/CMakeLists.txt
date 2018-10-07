@@ -14,9 +14,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 
-add_message_files (
+#add_message_files (
 	
-)
+#)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
