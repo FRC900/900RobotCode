@@ -12,7 +12,7 @@ std::shared_ptr<actionlib::SimpleActionClient<path_to_goal::PathAction>> ac_path
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> ac_intake;
 
 /*
- * TODO
+ ://files.slack.com/files-pri/T09M61H4Z-FD7E129SR/screen_shot_2018-10-04_at_10.34.51_am.png * TODO
  * make pathing actionlib into "go to a place" instaed of cube vs exchange
  * what needs to be services and what needs to be actionlib?
  *  - pathing to exchange/cube
@@ -193,162 +193,140 @@ int main(int argc, char **argv)
 			cube_dist = cube_detection_msg.location[0].z;
 		exchange_dist = 5.0; //figure out which sensor this will be
 
-		switch(state)
-		{
-			case STARTING_STATE : 
-							{
-								ROS_INFO_STREAM("starting state");
-								if(haz_cube)
-								  {
-									  if(qr_found)
-									  {
-										  if(exchange_dist < 1) //TODO: figure out which sensor is going to be used for distance to wall (ultrasonic)
-											  state = EXCHANGE_SEEN_CLOSE;
-										  else
-											  state = EXCHANGE_SEEN_FAR;
-									  }
-									  else
-										  state = NO_EXCHANGE_SEEN;
-								  }
-								  else if(!haz_cube && cube_dist >= min_pathing_dist && cube_found)
-									  state = CUBE_SEEN_FAR;
-								  else if(!haz_cube && cube_dist <= min_pathing_dist  && cube_found)
-									  state = CUBE_SEEN_CLOSE;
-								  else if(!cube_found)
-									  state = NO_CUBE_SEEN;
-							}
-			case NO_CUBE_SEEN :
-							{
-								  ROS_INFO_STREAM("no cube seen");
-								  angle_to_cube();
-								  if(cube_found)
-								  {
-									  if(cube_dist < 5)
-										  state = CUBE_SEEN_CLOSE;
-									  if(cube_dist >= 5)
-										  state = CUBE_SEEN_FAR;
-								  }
-								  else
-									  state = RECOVERY_MODE_CUBE;
-							}
-			case RECOVERY_MODE_CUBE : 
-							{
-								  ROS_INFO_STREAM("recovery mode cube");
-								  recovery_mode();
-								  cube_found = true; //for simulation
-								  if(cube_found)
-								  {
-									  if(cube_dist < 5)
-										  state = CUBE_SEEN_CLOSE;
-									  if(cube_dist >= 5)
-										  state = CUBE_SEEN_FAR;
-								  }
-							}
-			case CUBE_SEEN_FAR : 
-							{
-								  ROS_INFO_STREAM("cube seen far");
-								  start_path_to_cube(); 
-								  state = PATHING_TO_CUBE;
-							}
-			case PATHING_TO_CUBE : 
-							{
-								  ROS_INFO_STREAM("pathing to cube");
-								  actionlib::SimpleClientGoalState path_state = ac_path->getState();
-								  if(path_state.toString() == "SUCCEEDED")
-								  {
-									  //wait a certain amount of time before checking for a cube?
-									  state = CUBE_SEEN_CLOSE;
-								  }
-								  else
-									  ROS_INFO_STREAM("path_to_cube has failed. state: " << path_state.toString());
-							}
-			case CUBE_SEEN_CLOSE :
-							{
-								  ROS_INFO_STREAM("cube seen close");
-								  start_intake_cube();
-								  state = INTAKING_CUBE;
-							}
-			case INTAKING_CUBE :
-							{
-								  drive_forward_slowly();
-								  ROS_INFO_STREAM("intaking cube");
-								  actionlib::SimpleClientGoalState intake_state = ac_intake->getState();
-								  if(intake_state.toString() == "SUCCEEDED")
-								  {
-									  if(qr_found)
-									  {
-										  if(exchange_dist < 1)
-											  state = EXCHANGE_SEEN_CLOSE;
-										  else
-											  state = EXCHANGE_SEEN_FAR;
-									  }
-									  else
-										  state = NO_EXCHANGE_SEEN;
-								  }
-							}
-			case NO_EXCHANGE_SEEN :
-							{
-								  ROS_INFO_STREAM("no exchange seen");
-								  angle_to_exchange();
-								  if(qr_found)
-								  {
-									  if(exchange_dist < 1)
-										  state = EXCHANGE_SEEN_CLOSE;
-									  else
-										  state = EXCHANGE_SEEN_FAR;
-								  }
-								  else
-									  state = RECOVERY_MODE_EXCHANGE;
-							}
-			case RECOVERY_MODE_EXCHANGE :
-							{
-								  ROS_INFO_STREAM("recovery_mode_exchange");
-								  recovery_mode();
-								  qr_found = true; //for simulation
-								  if(qr_found)
-								  {
-									  if(exchange_dist < 1)
-										  state = EXCHANGE_SEEN_CLOSE;
-									  else
-										  state = EXCHANGE_SEEN_FAR;
-								  }
-							}
-			case EXCHANGE_SEEN_FAR : 
-							{
-								  ROS_INFO_STREAM("exchange seen far");
-								  start_path_to_exchange(); //TODO: needs to be an actionlib thing -- can start and then run in the background
-								  state = PATHING_TO_EXCHANGE;
-							}
-			case PATHING_TO_EXCHANGE :
-							{
-								  ROS_INFO_STREAM("pathing to exchange");
-								  actionlib::SimpleClientGoalState exchange_state = ac_path->getState();
-								  if(exchange_state.toString() == "SUCCEEDED") //TODO: check pathing sending back actionlib stuff
-								  {
-									  //wait until you see the exchange?
-									  state = EXCHANGE_SEEN_CLOSE;
-								  }
-								  else
-									  ROS_INFO_STREAM("path_to_cube has failed. state: " << exchange_state.toString());
-							}
-			case EXCHANGE_SEEN_CLOSE :
-							{
-								  ROS_INFO_STREAM("exchange seen close");
-								  start_vault_cube(); //TODO: some actionlib stuff
-								  state = VAULTING_CUBE;
-								  ROS_INFO_STREAM("vaulting cube");
-							}
-			case VAULTING_CUBE :
-							{
-								  actionlib::SimpleClientGoalState intake_state = ac_intake->getState();
-								  if(intake_state.toString() == "SUCCEEDED") //TODO: some actionlib stuff
-								  {
-									  if(true) //TODO: figure out what sensor needs to determine this
-										  state = NO_CUBE_SEEN; //has to ignore the cube that it's looking at
-									  if(false)
-										  state = CUBE_SEEN_CLOSE;
-								  }
-							}
+		switch(state) {
+			case STARTING_STATE : {
+				ROS_INFO_STREAM("starting state");
+				if(haz_cube)  {
+					if(qr_found)  {
+						if(exchange_dist < 1) //TODO: figure out which sensor is going to be used for distance to wall (ultrasonic)
+						state = EXCHANGE_SEEN_CLOSE;
+						
+						else
+						state = EXCHANGE_SEEN_FAR;
+					}
+					else
+					state = NO_EXCHANGE_SEEN;
+				}
+				else if(!haz_cube && cube_dist >= min_pathing_dist && cube_found)
+					state = CUBE_SEEN_FAR;
+				else if(!haz_cube && cube_dist <= min_pathing_dist  && cube_found)
+					state = CUBE_SEEN_CLOSE;
+				else if(!cube_found)
+					state = NO_CUBE_SEEN;
+			}
+			case NO_CUBE_SEEN : {
+				ROS_INFO_STREAM("no cube seen");
+				angle_to_cube();
+				if(cube_found) {
+					if(cube_dist < 5)
+						state = CUBE_SEEN_CLOSE;
+					if(cube_dist >= 5)
+						state = CUBE_SEEN_FAR;
+				}
+				else
+					state = RECOVERY_MODE_CUBE;
+			}
+			case RECOVERY_MODE_CUBE : {
+				ROS_INFO_STREAM("recovery mode cube");
+				recovery_mode();
+				cube_found = true; //for simulation
+				if(cube_found) {
+					if(cube_dist < 5)
+						state = CUBE_SEEN_CLOSE;
+					if(cube_dist >= 5)
+						state = CUBE_SEEN_FAR;
+				}
+			}
+			case CUBE_SEEN_FAR : {
+				ROS_INFO_STREAM("cube seen far");
+				start_path_to_cube(); 
+				state = PATHING_TO_CUBE;
+			}
+			case PATHING_TO_CUBE : {
+				ROS_INFO_STREAM("pathing to cube");
+				actionlib::SimpleClientGoalState path_state = ac_path->getState();
+				if(path_state.toString() == "SUCCEEDED") {
+					//wait a certain amount of time before checking for a cube?
+					state = CUBE_SEEN_CLOSE;
+				}
+				else
+					ROS_INFO_STREAM("path_to_cube has failed. state: " << path_state.toString());
+				}
+			case CUBE_SEEN_CLOSE : {
+				ROS_INFO_STREAM("cube seen close");
+				start_intake_cube();
+				state = INTAKING_CUBE;
+			}
+			case INTAKING_CUBE : {
+				drive_forward_slowly();
+				ROS_INFO_STREAM("intaking cube");
+				actionlib::SimpleClientGoalState intake_state = ac_intake->getState();
+				if(intake_state.toString() == "SUCCEEDED") {
+					if(qr_found) {
+						if(exchange_dist < 1)
+							state = EXCHANGE_SEEN_CLOSE;
+						else
+							state = EXCHANGE_SEEN_FAR;
+				}
+					else
+						state = NO_EXCHANGE_SEEN;
+				}
+			}
+			case NO_EXCHANGE_SEEN :	{
+				ROS_INFO_STREAM("no exchange seen");
+				angle_to_exchange();
+				if(qr_found) {
+					if(exchange_dist < 1)
+						state = EXCHANGE_SEEN_CLOSE;
+					else
+						state = EXCHANGE_SEEN_FAR;
+				}
+				else
+					state = RECOVERY_MODE_EXCHANGE;
+			}
+			case RECOVERY_MODE_EXCHANGE : {
+				ROS_INFO_STREAM("recovery_mode_exchange");
+				recovery_mode();
+				qr_found = true; //for simulation
+				if(qr_found) {
+					if(exchange_dist < 1)
+						state = EXCHANGE_SEEN_CLOSE;
+					else
+						state = EXCHANGE_SEEN_FAR;
+				}
+			}
+			case EXCHANGE_SEEN_FAR : {
+				ROS_INFO_STREAM("exchange seen far");
+				start_path_to_exchange(); //TODO: needs to be an actionlib thing -- can start and then run in the background
+				state = PATHING_TO_EXCHANGE;
+			}
+			case PATHING_TO_EXCHANGE : {
+				ROS_INFO_STREAM("pathing to exchange");
+				actionlib::SimpleClientGoalState exchange_state = ac_path->getState();
+				if(exchange_state.toString() == "SUCCEEDED") //TODO: check pathing sending back actionlib stuff
+				{
+					//wait until you see the exchange?
+					state = EXCHANGE_SEEN_CLOSE;
+				}
+				else
+					ROS_INFO_STREAM("path_to_cube has failed. state: " << exchange_state.toString())
+			}
+			case EXCHANGE_SEEN_CLOSE : {
+				ROS_INFO_STREAM("exchange seen close");
+				start_vault_cube(); //TODO: some actionlib stuff
+				state = VAULTING_CUBE;
+				ROS_INFO_STREAM("vaulting cube");
+			}
+			case VAULTING_CUBE : {
+				actionlib::SimpleClientGoalState intake_state = ac_intake->getState();
+				if(intake_state.toString() == "SUCCEEDED") //TODO: some actionlib stuff
+				{
+					if(true) //TODO: figure out what sensor needs to determine this
+						state = NO_CUBE_SEEN; //has to ignore the cube that it's looking at
+					if(false)
+						state = CUBE_SEEN_CLOSE;
+				}
+			}
 		}
 	}
 }
