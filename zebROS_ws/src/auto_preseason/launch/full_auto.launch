@@ -6,12 +6,9 @@
 	<arg unless="$(arg debug)" name="launch_prefix" value="" />
 	<arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
 
-	<arg name="hw_or_sim" default="hw" />
+	<arg name="hw_or_sim" default="sim" />
 	<arg name="static_map" default="True"/>
 
-	<!-- Load example URDF 
-	<param name="robot_description" command="$(find xacro)/xacro - -inorder '$(find ros_control_boilerplate)/urdf/base_trajectory.xacro'" />
-	-->
 	<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node> 
 	<group ns="frcrobot">
 
@@ -36,16 +33,8 @@
 
 		<!-- Load controller manager -->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn joint_state_controller talon_state_controller imu_sensor_controller pdp_state_controller compressor_controller swerve_drive_controller elevator_controller rumble_controller robot_code_ready_controller auto_state_controller_0 auto_state_controller_1 auto_state_controller_2 auto_state_controller_3" />
+			output="screen" args="spawn joint_state_controller talon_state_controller imu_sensor_controller pdp_state_controller compressor_controller swerve_drive_controller elevator_controller rumble_controller robot_code_ready_controller" />
 
-		<node name="teleopJoystickCommands" pkg="teleop_joystick_control" type="teleopJoystickCommands" output="screen" />
-        	
-		<node name="autoInterpreterClient" pkg="behaviors" type="autoInterpreterClient" output="screen" />
-		<node name="autoInterpreterServerLift" pkg="behaviors" type="autoInterpreterServerLift" output="screen" />
-		<node name="autoInterpreterServerIntake" pkg="behaviors" type="autoInterpreterServerIntake" output="screen" />
-		<node name="autoInterpreterServer" pkg="behaviors" type="autoInterpreterServer" output="screen" />
-        	
-		<node name="regulate_compressor" pkg="compressor_control_node" type="regulate_compressor" output="screen" />
 		<node name="point_gen" pkg="swerve_point_generator" type="point_gen" output="screen" />
 	
 		<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/2018FRC_field.yaml" output="screen" if="$(arg static_map)">
@@ -54,11 +43,7 @@
 
 		<node name="robot_visualize" pkg="robot_visualizer" type="robot_visualize" output="screen" />
 		<node name="profile_follow" pkg="robot_visualizer" type="profile_follow" output="screen" />
-		
-		<!-- <node name="debug_cmd_vel" pkg="teleop_joystick_control" type="debug_cmd_vel" output="screen" /> -->
 
-		<!-- Convert joint states to /tf tranforms -->
-		<!-- <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/-->
 	</group>
 
     <group ns="rio">
@@ -69,5 +54,12 @@
         <node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
     </group>
         
+    <!-- <node name="auto_loop" pkg="auto_preseason" type="auto_loop" output="screen" /> -->
+
+	<node name="cube_detection_node" pkg="cube_detection" type="cube_detection_node" output="screen"/>
+
+	<node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/ofugikawa/Documents/Match-2_1.bag --topics /zed_goal/depth/depth_registered /zed_goal/left/image_rect_color -l"/>
+
+	<node name="path_to_cube_server" pkg="path_to_cube" type="path_to_cube_server" output="screen"/>
 
 </launch>
