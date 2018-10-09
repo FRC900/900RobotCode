@@ -1018,8 +1018,8 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		if (converted_command != digital_output_state_[i])
 		{
 			digital_output_state_[i] = converted_command;
-			ROS_INFO_STREAM("DIO " << digital_output_names_[i] << 
-					"at channel" <<  digital_output_dio_channels_[i] << 
+			ROS_INFO_STREAM("DIO " << digital_output_names_[i] <<
+					"at channel" <<  digital_output_dio_channels_[i] <<
 					" set to " << converted_command);
 		}
 	}

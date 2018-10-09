@@ -63,10 +63,6 @@ cd ~/2018Offseason/zebROS_ws/src
 # Pull latest version of merged repos 
 wstool update
 
-# Temporarily use devel branch of the ZED code
-cd zed-ros-wrapper
-git checkout devel
-
 # Install deb dependencies.
 # The command 'sudo rosdep init' will print an error if you have already
 # executed it since installing ROS. This error can be ignored.
