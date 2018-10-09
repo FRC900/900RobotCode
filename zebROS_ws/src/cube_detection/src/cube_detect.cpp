@@ -34,6 +34,14 @@ using namespace std;
 using namespace sensor_msgs;
 using namespace message_filters;
 
+
+//MAIN VALUES
+//int hLo = 22;
+//int sLo = 45;
+//int vLo = 45;
+//int hUp = 47;
+
+//TEST VALUES
 int hLo = 22;
 int sLo = 45;
 int vLo = 45;
@@ -158,6 +166,8 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 		cd_msg.header.frame_id = frameMsg->header.frame_id;
 	for(size_t i = 0; i< contours.size(); i++)
 	{
+		
+		
 		double minArea = sqrt(193695.3745 * (pow(0.2226,contourDepth[i]))) + minTrans; 
 		//double maxArea = sqrt(193695.3745 * (pow(0.2226,contourDepth[i])) + maxTrans); 
 		double areaContour = boundRect[i].height * boundRect[i].width;
@@ -169,15 +179,25 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 			continue;
 		} else if (areaContour <= (drawing.rows * drawing.cols * pixelError)) {
 			continue;
-		} else if (abs((boundRect[i].height/boundRect[i].width)) > 2.5) {
-			continue;
-		} else if (abs((boundRect[i].width/boundRect[i].height)) > 2.5) {
+		} else if (abs((boundRect[i].height/boundRect[i].width)) > 1.5) {
+			putText(drawing, to_string(contourDepth[i]), Point(boundRect[i].x, boundRect[i].y - 15), FONT_HERSHEY_SIMPLEX, 0.45, (0,0,255), 1);
+			drawContours(drawing, contours,i,color,2,8,rank,0,Point());
+			rectangle(drawing, boundRect[i].tl(), boundRect[i].br()*2, rect_color, 2, 8, 0);
+			const Point3f world_location = objType.screenToWorldCoords(boundRect[i], contourDepth[i], fov, framePtr->size(), camera_elevation);
+			geometry_msgs::Point32 world_location_in; 
+			world_location_in.x = world_location.y;
+			world_location_in.y = world_location.x;
+			world_location_in.z = world_location.z;
+			cd_msg.location.push_back(world_location_in);
+			cd_msg.angle = atan(world_location.y/world_location.x);
+			//continue;
+		} else if (abs((boundRect[i].width/boundRect[i].height)) > 1.5) {
 			continue;
 		} else if (contours_poly[i].size() < 4) {
 			continue;
 		} else {
 			
-			putText(drawing, to_string(contourDepth[i]), Point(boundRect[i].x, boundRect[i].y 		- 15), FONT_HERSHEY_SIMPLEX, 0.45, (0,0,255), 1);
+			putText(drawing, to_string(contourDepth[i]), Point(boundRect[i].x, boundRect[i].y - 15), FONT_HERSHEY_SIMPLEX, 0.45, (0,0,255), 1);
 			drawContours(drawing, contours,i,color,2,8,rank,0,Point());
 			rectangle(drawing, boundRect[i].tl(), boundRect[i].br(), rect_color, 2, 8, 0);
 			const Point3f world_location = objType.screenToWorldCoords(boundRect[i], contourDepth[i], fov, framePtr->size(), camera_elevation);
