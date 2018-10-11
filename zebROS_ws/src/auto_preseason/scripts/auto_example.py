@@ -4,6 +4,8 @@ import roslib
 import rospy
 import smach
 import smach_ros
+from smach_ros import SimpleActionState
+# import all the actions
 
 # define state Foo
 class Init(smach.State):
@@ -49,28 +51,9 @@ class HazNoCube(smach.State):
         else:
             return 'sees_no_cube'
 
-class PathToExchange(smach.State): # ACTIONLIB
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['success'])
-
-    def execute(self, userdata):
-        rospy.loginfo('Executing state PathToExchange')
-        ## execute actionlib here
-        return 'success'
-
-
-class ExchangeCube(smach.State): # ACTIONLIB
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['success'])
-
-    def execute(self, userdata):
-        rospy.loginfo('Executing state ExchangeCube')
-        ## execute actionlib here
-        return 'success'
-
 class CheckCenter(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['centered', 'not_centered'])
+        smach.State.__init__(self, outcomes=['centered_look_for_cube', 'centered_look_for_exchange', 'not_centered'])
 
     def execute(self, userdata):
         rospy.loginfo('Executing state ExchangeCube')
@@ -79,17 +62,13 @@ class CheckCenter(smach.State):
         else:
             return 'not_centered'
 
-#unfinished
-class TurnForCube(smach.State):
+class Exit(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['centered', 'not_centered'])
+        smach.State.__init__(self, outcomes=['exit'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state ExchangeCube')
-        if True: #check for center. LIDAR?
-            return 'centered'
-        else:
-            return 'not_centered'
+        rospy.loginfo('EXITED AUTONOMOUS')
+        return 'exit'
 
 def main():
     rospy.init_node('smach_example_state_machine')
@@ -99,11 +78,57 @@ def main():
 
     # Open the container
     with sm:
-        # Add states to the container
-        smach.StateMachine.add('FOO', Foo(), 
-                               transitions={'outcome1':'BAR', 'outcome2':'outcome4'})
-        smach.StateMachine.add('BAR', Bar(), 
-                               transitions={'outcome1':'FOO'})
+        #not actions, logic states
+        smach.StateMachine.add('Init', Init(), 
+                               transitions={'success':'CheckForCube'})
+        smach.StateMachine.add('CheckForCube', CheckForCube(), 
+                                transitions={'haz_cube':'HazCube', 'haz_no_cube':'HazNoCube'})
+        smach.StateMachine.add('HazCube', HazCube(), 
+                                transitions={'sees_exchange':'pathToExchange', 'sees_no_exchange':'CheckForCenter'})
+        smach.StateMachine.add('HazNoCube', HazNoCube(), 
+                                transitions={'sees_cube':'pathToCube', 'sees_no_cube':'CheckForCenter'})
+        smach.StateMachine.add('CheckForCenter', CheckCenter(),
+                transitions={'centered_look_for_cube':'TurnForCube', 'centered_look_for_exchange':'TurnForExchange', 'not_centered':'PathToCenter'})
+        smach.StateMachine.add('Exit', Exit(),
+                                transitions={'exit':'Init'})
+        #actions!
+        smach.StateMachine.add('PathToExchange', 
+                                SimpleActionState('auto_loop_as',
+                                            PathToExchange),
+                                transitions={'success':'ExchangeCube'})
+        smach.StateMachine.add('PathToCube', 
+                                SimpleActionState('auto_loop_as',
+                                            PathToCube),
+                                transitions={'success':'IntakeCube'})
+        smach.StateMachine.add('ExchangeCube', 
+                                SimpleActionState('auto_loop_as',
+                                            ExchangeCube),
+                                transitions={'success':'CheckForCube'})
+        smach.StateMachine.add('IntakeCube',
+                                SimpleActionState('auto_loop_as',
+                                            IntakeCube),
+                                transitions={'success':'CheckForCube'})
+        smach.StateMachine.add('PathToCenter',
+                                SimpleActionState('auto_loop_as',
+                                            PathToCenter),
+                                transitions={'success':'CheckForCube'})
+        smach.StateMachine.add('TurnToCube',
+                                SimpleActionState('auto_loop_as',
+                                            TurnToCube),
+                                transitions={'success':'PathToCube'})
+        smach.StateMachine.add('TurnToExchange',
+                                SimpleActionState('auto_loop_as',
+                                            TurnToExchange),
+                                transitions={'success':'PathToExchange'})
+        smach.StateMachine.add('SpinOut',
+                                SimpleActionState('auto_loop_as',
+                                            SpinOut),
+                                transitions={'success':'CheckForCube'})
+        smach.StateMachine.add('PARTY',
+                                SimpleActionState('auto_loop_as',
+                                            TurnToExchange),
+                                transitions={'abort':'Init'})
+
 
     # Create and start the introspection server
     sis = smach_ros.IntrospectionServer('server_name', sm, '/SM_ROOT')
