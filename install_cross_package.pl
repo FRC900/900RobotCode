@@ -16,7 +16,7 @@ sub install_package
 	my $dirname = File::Temp->newdir;
     # Go to the temporary directory
 	chdir $dirname  || die("Can not chdir($dirname) : $!");
-	`wget $url` || die("Could not run wget?");
+	`wget $url`;
 
 	# ipk files are an ar archive. Inside is a file
 	# called data.tar.gz which is the actual contents
@@ -153,3 +153,7 @@ install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-
 install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/rsync_3.1.2-r0.3_cortexa9-vfpv3.ipk");
 
 install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libidn11_1.32-r0.7_cortexa9-vfpv3.ipk");
+
+install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libusb-1.0-dev_1.0.20-r0.7_cortexa9-vfpv3.ipk");
+install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libusb-1.0-0_1.0.20-r0.7_cortexa9-vfpv3.ipk");
+install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libusb-1.0-staticdev_1.0.20-r0.7_cortexa9-vfpv3.ipk");
