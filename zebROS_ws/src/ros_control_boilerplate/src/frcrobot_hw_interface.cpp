@@ -137,9 +137,15 @@ void FRCRobotHWInterface::hal_keepalive_thread(void)
 	bool game_specific_message_seen = false;
 	bool last_received = false;
 
+	ros::Rate r(100);
 	while (ros::ok())
 	{
 		robot_.OneIteration();
+		if (!DriverStation::GetInstance().IsNewControlData())
+		{
+			r.sleep();
+			continue;
+		}
 		const ros::Time time_now_t = ros::Time::now();
 		//ROS_INFO("%f", ros::Time::now().toSec());
 		// Network tables work!
@@ -169,7 +175,6 @@ void FRCRobotHWInterface::hal_keepalive_thread(void)
 				realtime_pub_nt.msg_.delays[3] = (int)driveTable->GetNumber("delay_3", 0);
 				realtime_pub_nt.msg_.position = (int)driveTable->GetNumber("robot_start_position", 0);
 
-				
 				frc::SmartDashboard::PutNumber("auto_mode_0_ret", realtime_pub_nt.msg_.mode[0]);
 				frc::SmartDashboard::PutNumber("auto_mode_1_ret", realtime_pub_nt.msg_.mode[1]);
 				frc::SmartDashboard::PutNumber("auto_mode_2_ret", realtime_pub_nt.msg_.mode[2]);
@@ -294,7 +299,7 @@ void FRCRobotHWInterface::hal_keepalive_thread(void)
 			realtime_pub_joystick.msg_.buttonStartPress = joystick.GetRawButtonPressed(1);
 			realtime_pub_joystick.msg_.buttonStartRelease = joystick.GetRawButtonReleased(1);
 			*/
-		
+
 			switch (joystick.GetPOV(0))
 			{
 				default:{
@@ -310,62 +315,62 @@ void FRCRobotHWInterface::hal_keepalive_thread(void)
 						joystick_left_ = false;
 						joystick_right_ = false;
 						break;
-					} 
+					}
 				case 45:{
 						joystick_up_ = true;
 						joystick_down_ = false;
 						joystick_left_ = false;
 						joystick_right_ = true;
 						break;
-					} 
+					}
 				case 90:{
 						joystick_up_ = false;
 						joystick_down_ = false;
 						joystick_left_ = false;
 						joystick_right_ = true;
 						break;
-					} 
+					}
 				case 135:{
 						joystick_up_ = false;
 						joystick_down_ = true;
 						joystick_left_ = false;
 						joystick_right_ = true;
 						break;
-					} 
+					}
 				case 180:{
 						joystick_up_ = false;
 						joystick_down_ = true;
 						joystick_left_ = false;
 						joystick_right_ = false;
 						break;
-					} 
+					}
 				case 225:{
 						joystick_up_ = false;
 						joystick_down_ = true;
 						joystick_left_ = true;
 						joystick_right_ = false;
 						break;
-					} 
+					}
 				case 270:{
 						joystick_up_ = false;
 						joystick_down_ = false;
 						joystick_left_ = true;
 						joystick_right_ = false;
 						break;
-					} 
+					}
 				case 315:{
 						joystick_up_ = true;
 						joystick_down_ = false;
 						joystick_left_ = true;
 						joystick_right_ = false;
 						break;
-					} 
+					}
 			}
-			
+
 			realtime_pub_joystick.msg_.directionUpButton = joystick_up_;
 			realtime_pub_joystick.msg_.directionUpPress = joystick_up_ && !joystick_up_last_;
 			realtime_pub_joystick.msg_.directionUpRelease = !joystick_up_ && joystick_up_last_;
-			
+
 			realtime_pub_joystick.msg_.directionDownButton = joystick_down_;
 			realtime_pub_joystick.msg_.directionDownPress = joystick_down_ && !joystick_down_last_;
 			realtime_pub_joystick.msg_.directionDownRelease = !joystick_down_ && joystick_down_last_;
@@ -388,9 +393,9 @@ void FRCRobotHWInterface::hal_keepalive_thread(void)
 
 		// Run at full speed until we see the game specific message.
 		// This guaratees we react as quickly as possible to it.
-		// After that is seen, slow down processing since there's nothing 
+		// After that is seen, slow down processing since there's nothing
 		// that changes that quickly in the data.
-		if ((!game_specific_message_seen || (last_match_data_publish_time + ros::Duration(1.0 / match_data_publish_rate) < time_now_t)) && 
+		if ((!game_specific_message_seen || (last_match_data_publish_time + ros::Duration(1.0 / match_data_publish_rate) < time_now_t)) &&
 			realtime_pub_match_data.trylock())
 		{
             //ROS_INFO("AA:%f", ros::Time::now().toSec());
@@ -425,7 +430,7 @@ void FRCRobotHWInterface::hal_keepalive_thread(void)
 				game_specific_message_seen = false;
 			}
 		}
-
+		r.sleep();
 	}
 }
 
@@ -433,7 +438,7 @@ void FRCRobotHWInterface::process_motion_profile_buffer_thread(double hz)
 {
 	return;
 #if 0
-	ros::Duration(3).sleep();	
+	ros::Duration(3).sleep();
 	bool set_frame_period[num_can_talon_srxs_];
 	for (size_t i = 0; i < num_can_talon_srxs_; i++)
 		set_frame_period[i] = false;
