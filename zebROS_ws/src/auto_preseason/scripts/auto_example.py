@@ -13,54 +13,49 @@ class Init(smach.State):
         smach.State.__init__(self, outcomes=['success'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state FOO')
         return 'success'
 
 
 # define state Bar
-class CheckForCube(smach.State):
+class TestHasCube(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['haz_cube', 'haz_no_cube'])
+        smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state BAR')
         if True:#line_break_sensor:
-            return 'haz_cube'
+            return 'testTrue'
         else:
-            return 'haz_no_cube'
+            return 'testFalse'
 
-class HazCube(smach.State):
+class TestSeesExchange(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['sees_exchange', 'sees_no_exchange'])
+        smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state BAR')
         if True: #len(exchange_msg) > 0:
-            return 'sees_exchange'
+            return 'testTrue'
         else:
-            return 'sees_no_exchange'
+            return 'testFalse'
   
-class HazNoCube(smach.State):
+class TestSeesCube(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['sees_cube', 'sees_no_cube'])
+        smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state BAR')
         if True: #len(cube_msg) > 0:
-            return 'sees_cube'
+            return 'testTrue'
         else:
-            return 'sees_no_cube'
+            return 'testFalse'
 
-class CheckCenter(smach.State):
+class TestAtCenter(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['centered_look_for_cube', 'centered_look_for_exchange', 'not_centered'])
+        smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
 
     def execute(self, userdata):
-        rospy.loginfo('Executing state ExchangeCube')
         if True: #check for center. LIDAR?
-            return 'centered'
+            return 'testTrue'
         else:
-            return 'not_centered'
+            return 'testFalse'
 
 class Exit(smach.State):
     def __init__(self):
@@ -80,15 +75,18 @@ def main():
     with sm:
         #not actions, logic states
         smach.StateMachine.add('Init', Init(), 
-                               transitions={'success':'CheckForCube'})
-        smach.StateMachine.add('CheckForCube', CheckForCube(), 
-                                transitions={'haz_cube':'HazCube', 'haz_no_cube':'HazNoCube'})
-        smach.StateMachine.add('HazCube', HazCube(), 
-                                transitions={'sees_exchange':'pathToExchange', 'sees_no_exchange':'CheckForCenter'})
-        smach.StateMachine.add('HazNoCube', HazNoCube(), 
-                                transitions={'sees_cube':'pathToCube', 'sees_no_cube':'CheckForCenter'})
-        smach.StateMachine.add('CheckForCenter', CheckCenter(),
-                transitions={'centered_look_for_cube':'TurnForCube', 'centered_look_for_exchange':'TurnForExchange', 'not_centered':'PathToCenter'})
+                                transitions={'success':'TestHasCube','failure':'Exit'})
+        smach.StateMachine.add('TestHasCube', TestHasCube(), 
+                                transitions={'testTrue':'TestSeesExchange', 'testFalse':'TestSeesCube'})
+        smach.StateMachine.add('TestSeesExchange', TestSeesExchange(), 
+                                transitions={'testTrue':'PathToExchange', 'testFalse':'TestAtCenterE'})
+        smach.StateMachine.add('TestSeesCube', TestSeesCube(), 
+                                transitions={'testTrue':'PathToCube', 'testFalse':'TestAtCenterC'})
+        smach.StateMachine.add('TestAtCenterC', TestAtCenter(),
+                transitions={'testTrue':'TurnToCube', 'testFalse':'PathToCenter'})
+        smach.StateMachine.add('TestAtCenterE', TestAtCenter(),
+                transitions={'testTrue':'TurnToExchange', 'testFalse':'PathToCenter'})
+
         smach.StateMachine.add('Exit', Exit(),
                                 transitions={'exit':'Init'})
         #actions!
@@ -100,9 +98,9 @@ def main():
                                 SimpleActionState('auto_loop_as',
                                             PathToCube),
                                 transitions={'success':'IntakeCube'})
-        smach.StateMachine.add('ExchangeCube', 
+        smach.StateMachine.add('ScoreCube', 
                                 SimpleActionState('auto_loop_as',
-                                            ExchangeCube),
+                                            ScoreCube),
                                 transitions={'success':'CheckForCube'})
         smach.StateMachine.add('IntakeCube',
                                 SimpleActionState('auto_loop_as',
@@ -124,9 +122,9 @@ def main():
                                 SimpleActionState('auto_loop_as',
                                             SpinOut),
                                 transitions={'success':'CheckForCube'})
-        smach.StateMachine.add('PARTY',
+        smach.StateMachine.add('Party',
                                 SimpleActionState('auto_loop_as',
-                                            TurnToExchange),
+                                            Party),
                                 transitions={'abort':'Init'})
 
 
