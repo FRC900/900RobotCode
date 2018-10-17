@@ -3,18 +3,18 @@
 
 #include <ros/ros.h>
 #include <vector>
-#include <hardware_interface/joint_state_interface.h>
-#include <realtime_tools/realtime_publisher.h>
+#include <hardware_interface/joint_state_interface.h> //other than talon data
+#include <realtime_tools/realtime_publisher.h> //code for real-time buffer - stop multple things writing to same variable at same time
 #include <boost/shared_ptr.hpp>
-#include <controller_interface/controller.h>
-#include <talon_interface/talon_state_interface.h>
-#include <talon_controllers/talon_controller.h>
-#include <talon_controllers/talon_controller_interface.h>
-#include <mech_controller/SetTwoMotors.h>
+#include <controller_interface/controller.h> //for writing controllers
+#include <talon_interface/talon_state_interface.h> // "
+#include <talon_controllers/talon_controller.h> // "
+#include <talon_controllers/talon_controller_interface.h> // "
+#include <mech_controller/SetTwoMotors.h> //specific to this controller - write these
 #include <mech_controller/TwoMotor.h>
 #include <atomic>
 #include <std_msgs/Float64.h>
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.h> //to compile as a controller
 
 namespace mech_controller
 { 
