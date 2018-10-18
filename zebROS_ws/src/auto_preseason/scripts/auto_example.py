@@ -27,27 +27,7 @@ class TestHasCube(smach.State):
         else:
             return 'testFalse'
 
-class TestSeesExchange(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
-
-    def execute(self, userdata):
-        if True: #len(exchange_msg) > 0:
-            return 'testTrue'
-        else:
-            return 'testFalse'
-  
-class TestSeesCube(smach.State):
-    def __init__(self):
-        smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
-
-    def execute(self, userdata):
-        if True: #len(cube_msg) > 0:
-            return 'testTrue'
-        else:
-            return 'testFalse'
-
-class TestAtCenter(smach.State):
+class TestAtCenterC(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
 
@@ -56,7 +36,15 @@ class TestAtCenter(smach.State):
             return 'testTrue'
         else:
             return 'testFalse'
+class TestAtCenterE(smach.State):
+    def __init__(self):
+        smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
 
+    def execute(self, userdata):
+        if True: #check for center. LIDAR?
+            return 'testTrue'
+        else:
+            return 'testFalse'
 class Exit(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['exit'])
@@ -77,15 +65,11 @@ def main():
         smach.StateMachine.add('Init', Init(), 
                                 transitions={'success':'TestHasCube','failure':'Exit'})
         smach.StateMachine.add('TestHasCube', TestHasCube(), 
-                                transitions={'testTrue':'TestSeesExchange', 'testFalse':'TestSeesCube'})
-        smach.StateMachine.add('TestSeesExchange', TestSeesExchange(), 
-                                transitions={'testTrue':'PathToExchange', 'testFalse':'TestAtCenterE'})
-        smach.StateMachine.add('TestSeesCube', TestSeesCube(), 
-                                transitions={'testTrue':'PathToCube', 'testFalse':'TestAtCenterC'})
-        smach.StateMachine.add('TestAtCenterC', TestAtCenter(),
-                transitions={'testTrue':'TurnToCube', 'testFalse':'PathToCenter'})
-        smach.StateMachine.add('TestAtCenterE', TestAtCenter(),
-                transitions={'testTrue':'TurnToExchange', 'testFalse':'PathToCenter'})
+                                transitions={'testTrue':'TestAtCenterE', 'testFalse':'TestAtCenterC'})
+        smach.StateMachine.add('TestAtCenterC', TestAtCenterC(),
+                transitions={'testTrue':'TurnToCube', 'testFalse':'PathToCenterC'})
+        smach.StateMachine.add('TestAtCenterE', TestAtCenterE(),
+                transitions={'testTrue':'TurnToExchange', 'testFalse':'PathToCenterE'})
 
         smach.StateMachine.add('Exit', Exit(),
                                 transitions={'exit':'Init'})
@@ -93,40 +77,43 @@ def main():
         smach.StateMachine.add('PathToExchange', 
                                 SimpleActionState('auto_loop_as',
                                             PathToExchange),
-                                transitions={'success':'ExchangeCube'})
+                                transitions={'success':'ScoreCube'})
         smach.StateMachine.add('PathToCube', 
                                 SimpleActionState('auto_loop_as',
                                             PathToCube),
-                                transitions={'success':'IntakeCube'})
+                                transitions={'success':'IntakeCube','failure':'TestAtCenterC'})
         smach.StateMachine.add('ScoreCube', 
                                 SimpleActionState('auto_loop_as',
                                             ScoreCube),
-                                transitions={'success':'CheckForCube'})
+                                transitions={'success':'TestHasCube'})
         smach.StateMachine.add('IntakeCube',
                                 SimpleActionState('auto_loop_as',
                                             IntakeCube),
-                                transitions={'success':'CheckForCube'})
-        smach.StateMachine.add('PathToCenter',
+                                transitions={'success':'TestHasCube','failure':'SpinOut'})
+        smach.StateMachine.add('PathToCenterC',
                                 SimpleActionState('auto_loop_as',
-                                            PathToCenter),
-                                transitions={'success':'CheckForCube'})
+                                            PathToCenterC),
+                                transitions={'success':'TurnToCube','seeEarly':'PathToCube'})
+        smach.StateMachine.add('PathToCenterE',
+                                SimpleActionState('auto_loop_as',
+                                            PathToCenterE),
+                                transitions={'success':'TurnToExchange','seeEarly':'PathToExchange'})
         smach.StateMachine.add('TurnToCube',
                                 SimpleActionState('auto_loop_as',
                                             TurnToCube),
-                                transitions={'success':'PathToCube'})
+                                transitions={'success':'PathToCube','failure':'Party'})
         smach.StateMachine.add('TurnToExchange',
                                 SimpleActionState('auto_loop_as',
                                             TurnToExchange),
                                 transitions={'success':'PathToExchange'})
         smach.StateMachine.add('SpinOut',
                                 SimpleActionState('auto_loop_as',
-                                            SpinOut),
-                                transitions={'success':'CheckForCube'})
+                                           SpinOut),
+                                transitions={'success':'TestHasCube'})
         smach.StateMachine.add('Party',
                                 SimpleActionState('auto_loop_as',
                                             Party),
-                                transitions={'abort':'Init'})
-
+                                transitions={'success':'PathToCube'})
 
     # Create and start the introspection server
     sis = smach_ros.IntrospectionServer('server_name', sm, '/SM_ROOT')
