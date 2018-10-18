@@ -77,11 +77,20 @@ include_directories(
 # )
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+add_action_files(
+    DIRECTORY
+    action
+    FILES
+    IntakeCube.action
+    Party.action
+    PathToCenter.action
+    PathToCube.action
+    PathToExchange.action
+    ScoreCube.action
+    SpinOut.action
+    TurnToCube.action
+    TurnToExchange.action
+)
 
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
@@ -122,7 +131,6 @@ include_directories(
 # ACTIONLIB STUFF
 
 #find_package(catkin REQUIRED genmsg actionlib_msgs actionlib)
-add_action_files(DIRECTORY action FILES Robot.action Intake.action  Lift.action)
 generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
 
 catkin_package(
