@@ -34,6 +34,19 @@ bool PDPStateController::init(hardware_interface::PDPStateInterface *hw,
 	m.totalCurrent = 0.0;
 	m.totalPower = 0.0;
 	m.totalEnergy = 0.0;
+
+        /*int count = 0;
+        while(count < 10)
+        {
+            print(count);
+            count = count + 1;
+            //some code here
+        }
+
+        for(int count = 0; count < 10; count++)
+        {
+            print(count);
+        }*/
 	
 	for(int channel = 0; channel <= 15; channel++)
 	{

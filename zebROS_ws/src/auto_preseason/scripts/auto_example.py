@@ -60,7 +60,7 @@ def main():
     rospy.init_node('smach_example_state_machine')
 
     # Create a SMACH state machine
-    sm = smach.StateMachine(outcomes=['outcome4'])
+    sm = smach.StateMachine(outcomes=['exited'])
 
     # Open the container
     with sm:
@@ -75,7 +75,7 @@ def main():
                 transitions={'testTrue':'TurnToExchange', 'testFalse':'PathToCenterE'})
 
         smach.StateMachine.add('Exit', Exit(),
-                                transitions={'exit':'Init'})
+                                transitions={'exit':'exited'})
         #actions!
         smach.StateMachine.add('PathToExchange', 
                                 SimpleActionState('auto_loop_as',
@@ -95,11 +95,11 @@ def main():
                                 transitions={'succeeded':'TestHasCube','aborted':'SpinOut', 'preempted':'Exit'})
         smach.StateMachine.add('PathToCenterC',
                                 SimpleActionState('auto_loop_as',
-                                            PathToCenterCAction),
+                                            PathToCenterAction),
                                 transitions={'succeeded':'TurnToCube','aborted':'PathToCube', 'preempted':'Exit'})
         smach.StateMachine.add('PathToCenterE',
                                 SimpleActionState('auto_loop_as',
-                                            PathToCenterEAction),
+                                            PathToCenterAction),
                                 transitions={'succeeded':'TurnToExchange','aborted':'PathToExchange', 'preempted':'Exit'})
         smach.StateMachine.add('TurnToCube',
                                 SimpleActionState('auto_loop_as',
@@ -111,7 +111,7 @@ def main():
                                 transitions={'succeeded':'PathToExchange', 'aborted':'Exit', 'preempted':'Exit'})
         smach.StateMachine.add('SpinOut',
                                 SimpleActionState('auto_loop_as',
-                                           SpinOutAction),
+                                            SpinOutAction),
                                 transitions={'succeeded':'TestHasCube', 'aborted':'Exit', 'preempted':'Exit'})
         smach.StateMachine.add('Party',
                                 SimpleActionState('auto_loop_as',
