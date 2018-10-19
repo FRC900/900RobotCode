@@ -56,6 +56,12 @@ class PDPHWState
 
 };
 
+/* PDPHWState pdp_state_;
+pdp_state_.voltage_ = 4; //wrong and sad
+volts = 4;
+pdp_state_.setVoltage(4);
+volts = pdp_state_.getVoltage();*/
+
 class PDPStateHandle
 {
 	public:
@@ -66,7 +72,7 @@ class PDPStateHandle
 			state_(state)
 		{
 			if (!state)
-				throw HardwareInterfaceException("Cannot create Talon state handle '" + name + "'. State pointer is null.");
+				throw HardwareInterfaceException("Cannot create PDP state handle '" + name + "'. State pointer is null.");
 		}
 		std::string getName(void) const {return name_;}
 

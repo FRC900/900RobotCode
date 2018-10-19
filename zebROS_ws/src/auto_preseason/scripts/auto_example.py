@@ -60,7 +60,7 @@ def main():
     rospy.init_node('smach_example_state_machine')
 
     # Create a SMACH state machine
-    sm = smach.StateMachine(outcomes=['outcome4'])
+    sm = smach.StateMachine(outcomes=['exited'])
 
     # Open the container
     with sm:
@@ -75,7 +75,7 @@ def main():
                 transitions={'testTrue':'TurnToExchange', 'testFalse':'PathToCenterE'})
 
         smach.StateMachine.add('Exit', Exit(),
-                                transitions={'exit':'Init'})
+                                transitions={'exit':'exited'})
         #actions!
         smach.StateMachine.add('PathToExchange', 
                                 SimpleActionState('pathToExchange_as',
@@ -110,6 +110,7 @@ def main():
                                             SingleExitAction),
                                 transitions={'succeeded':'PathToExchange', 'aborted':'Exit', 'preempted':'Exit'})
         smach.StateMachine.add('SpinOut',
+
                                 SimpleActionState('spinOut_as',
                                             SpinOutAction, goal=5.0),
                                 transitions={'succeeded':'TestHasCube', 'aborted':'Exit', 'preempted':'Exit'})
