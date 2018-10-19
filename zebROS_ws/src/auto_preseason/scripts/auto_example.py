@@ -66,7 +66,7 @@ def main():
     with sm:
         #not actions, logic states
         smach.StateMachine.add('Init', Init(), 
-                                transitions={'success':'TestHasCube','failure':'Exit'})
+                                transitions={'success':'testHasCube','failure':'Exit'})
         smach.StateMachine.add('TestHasCube', TestHasCube(), 
                                 transitions={'testTrue':'TestAtCenterE', 'testFalse':'TestAtCenterC'})
         smach.StateMachine.add('TestAtCenterC', TestAtCenterC(),
@@ -78,44 +78,44 @@ def main():
                                 transitions={'exit':'Init'})
         #actions!
         smach.StateMachine.add('PathToExchange', 
-                                SimpleActionState('auto_loop_as',
-                                            PathToExchangeAction),
+                                SimpleActionState('pathToExchange_as',
+                                            SingleExitAction),
                                 transitions={'succeeded':'ScoreCube', 'aborted':'Exit', 'preempted':'Exit'})
         smach.StateMachine.add('PathToCube', 
-                                SimpleActionState('auto_loop_as',
-                                            PathToCubeAction),
+                                SimpleActionState('pathToCube_as',
+                                            DualExitAction),
                                 transitions={'succeeded':'IntakeCube','aborted':'TestAtCenterC', 'preempted':'Exit'})
         smach.StateMachine.add('ScoreCube', 
-                                SimpleActionState('auto_loop_as',
-                                            ScoreCubeAction),
+                                SimpleActionState('scoreCube_as',
+                                            SingleExitAction),
                                 transitions={'succeeded':'TestHasCube', 'aborted':'Exit', 'preempted':'Exit'})
         smach.StateMachine.add('IntakeCube',
-                                SimpleActionState('auto_loop_as',
-                                            IntakeCubeAction),
+                                SimpleActionState('intakeCube_as',
+                                            DualExitAction),
                                 transitions={'succeeded':'TestHasCube','aborted':'SpinOut', 'preempted':'Exit'})
         smach.StateMachine.add('PathToCenterC',
-                                SimpleActionState('auto_loop_as',
-                                            PathToCenterCAction),
+                                SimpleActionState('pathToCenter_as',
+                                            PathToCenterAction,goal=True),
                                 transitions={'succeeded':'TurnToCube','aborted':'PathToCube', 'preempted':'Exit'})
         smach.StateMachine.add('PathToCenterE',
-                                SimpleActionState('auto_loop_as',
-                                            PathToCenterEAction),
+                                SimpleActionState('pathToCenter_as',
+                                            PathToCenterAction,goal=False),
                                 transitions={'succeeded':'TurnToExchange','aborted':'PathToExchange', 'preempted':'Exit'})
         smach.StateMachine.add('TurnToCube',
-                                SimpleActionState('auto_loop_as',
-                                            TurnToCubeAction),
+                                SimpleActionState('turnToCube_as',
+                                            DualExitAction),
                                 transitions={'succeeded':'PathToCube', 'aborted':'Party', 'preempted':'Exit'})
         smach.StateMachine.add('TurnToExchange',
-                                SimpleActionState('auto_loop_as',
-                                            TurnToExchangeAction),
+                                SimpleActionState('turnToExchange_as',
+                                            SingleExitAction),
                                 transitions={'succeeded':'PathToExchange', 'aborted':'Exit', 'preempted':'Exit'})
         smach.StateMachine.add('SpinOut',
-                                SimpleActionState('auto_loop_as',
-                                           SpinOutAction),
+                                SimpleActionState('spinOut_as',
+                                            SpinOutAction, goal=5.0),
                                 transitions={'succeeded':'TestHasCube', 'aborted':'Exit', 'preempted':'Exit'})
         smach.StateMachine.add('Party',
-                                SimpleActionState('auto_loop_as',
-                                            PartyAction),
+                                SimpleActionState('party_as',
+                                            SingleExitAction),
                                 transitions={'succeeded':'PathToCube', 'aborted':'Exit', 'preempted':'Exit'})
 
     # Create and start the introspection server
