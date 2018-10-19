@@ -1,22 +1,30 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(arm_controller)
 
+include("../cmake_modules/CMakeOpt.cmake")
+
+## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
+
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  actionlib
+  roscpp
+  rospy
+  std_msgs
+  realtime_tools
+  hardware_interface
   controller_interface
   message_generation
-  roscpp
-  std_msgs
-  std_srvs
-  talon_controllers
+  message_runtime
+  pluginlib
   talon_interface
+  talon_controllers
 )
 
+#TO MAKE A CONTROLLER YOU NEED A PLUGIN.XML FILE
 
-#add_message_files (
-	
-#)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -51,18 +59,13 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+## (no messages defined in 'msg' folder)
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+   FILES
+   SetArmState.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -72,10 +75,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+generate_messages(
+   DEPENDENCIES
+   std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -107,9 +110,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+   INCLUDE_DIRS include
 #  LIBRARIES arm_controller
-#  CATKIN_DEPENDS actionlib controller_interface message_genereation roscpp std_msgs std_srvs talon_controllers talon_interface
+  CATKIN_DEPENDS roscpp rospy std_msgs realtime_tools hardware_interface controller_interface message_generation message_runtime pluginlib talon_interface talon_controllers
 #  DEPENDS system_lib
 )
 
@@ -124,21 +127,21 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/arm_controller.cpp
-# )
+## it's a library because it's a controller and not necessarily an always-running node
+add_library(${PROJECT_NAME}
+   src/arm_controller.cpp
+)
+target_link_libraries(arm_controller ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-##add_dependencies(arm_controller arm_controller_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} arm_controller_generate_messages_cpp)
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_library(arm_controller_node src/arm_control.cpp)
+# add_executable(${PROJECT_NAME}_node src/arm_controller_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -151,9 +154,9 @@ add_library(arm_controller_node src/arm_control.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(arm_controller_node
-   ${catkin_LIBRARIES}
- )
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -170,25 +173,24 @@ add_library(arm_controller_node src/arm_control.cpp)
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}
+   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY include/${PROJECT_NAME}/
+   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+   FILES_MATCHING PATTERN "*.h"
+   PATTERN ".svn" EXCLUDE
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(FILES
+    arm_controller_plugins.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 #############
 ## Testing ##
