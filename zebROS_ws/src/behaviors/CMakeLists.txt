@@ -90,6 +90,9 @@ add_action_files(
     SpinOut.action
     TurnToCube.action
     TurnToExchange.action
+    Arm.action
+    Intake.action
+    Forearm.action
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -139,50 +142,13 @@ catkin_package(
    CATKIN_DEPENDS actionlib nav_msgs roscpp rospy std_msgs
    DEPENDS 
 )
-add_executable(autoInterpreterClient src/autoInterpreterClient.cpp)
-target_link_libraries(
-    autoInterpreterClient
-    ${catkin_LIBRARIES}
-)
-add_dependencies(
-	autoInterpreterClient
-    ${behaviors_EXPORTED_TARGETS}
-	${catkin_EXPORTED_TARGETS}
-)
-add_executable(autoInterpreterServer src/autoInterpreterServer.cpp)
-target_link_libraries(
-    autoInterpreterServer
-    ${catkin_LIBRARIES}
-)
-add_dependencies(
-	autoInterpreterServer
-    ${behaviors_EXPORTED_TARGETS}
-	${catkin_EXPORTED_TARGETS}
-)
+add_executable(arm_server_node src/arm_server.cpp)
+target_link_libraries(arm_server_node ${catkin_LIBRARIES})
+add_dependencies(arm_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-
-add_executable(autoInterpreterServerIntake src/autoInterpreterServerIntake.cpp)
-target_link_libraries(
-    autoInterpreterServerIntake
-    ${catkin_LIBRARIES}
-)
-add_dependencies(
-	autoInterpreterServerIntake
-    ${behaviors_EXPORTED_TARGETS}
-	${catkin_EXPORTED_TARGETS}
-)
-
-add_executable(autoInterpreterServerLift src/autoInterpreterServerLift.cpp)
-target_link_libraries(
-    autoInterpreterServerLift
-    ${catkin_LIBRARIES}
-)
-add_dependencies(
-	autoInterpreterServerLift
-    ${behaviors_EXPORTED_TARGETS}
-	${catkin_EXPORTED_TARGETS}
-)
-
+add_executable(forearm_server_node src/forearm_server.cpp)
+target_link_libraries(forearm_server_node ${catkin_LIBRARIES})
+add_dependencies(forearm_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #add_executable(dummy src/dummy.cpp)
 #target_link_libraries(
@@ -243,15 +209,15 @@ add_dependencies(
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS autoInterpreterClient autoInterpreterServer autoInterpreterServerLift autoInterpreterServerIntake
-   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
- )
- install(DIRECTORY
-    config
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+# install(TARGETS autoInterpreterClient autoInterpreterServer autoInterpreterServerLift autoInterpreterServerIntake
+#    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#  )
+#  install(DIRECTORY
+#     config
+#     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/

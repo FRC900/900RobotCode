@@ -6,9 +6,7 @@ import smach
 import smach_ros
 from smach_ros import SimpleActionState
 from behaviors.msg import *
-# import all the actions
 
-# define state Foo
 class Init(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['success', 'failure'])

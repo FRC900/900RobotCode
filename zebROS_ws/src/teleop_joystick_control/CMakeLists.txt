@@ -44,21 +44,21 @@ include_directories(
   ${Eigen3_INCLUDE_DIRS}
 )
 
-add_executable(teleopJoystickCommands src/teleopJoystickCommands.cpp)
-set_target_properties(teleopJoystickCommands PROPERTIES OUTPUT_NAME 
-teleopJoystickCommands PREFIX "")
-target_link_libraries(teleopJoystickCommands
-  ${catkin_LIBRARIES}
-)
+# add_executable(teleopJoystickCommands src/teleopJoystickCommands.cpp)
+# set_target_properties(teleopJoystickCommands PROPERTIES OUTPUT_NAME 
+# teleopJoystickCommands PREFIX "")
+# target_link_libraries(teleopJoystickCommands
+#   ${catkin_LIBRARIES}
+# )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above. This is needed to force
 ## talon controller messages to be built before the
 ## talon controller code tries to use them
-add_dependencies(teleopJoystickCommands
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
-)
+# add_dependencies(teleopJoystickCommands
+#   ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#   ${catkin_EXPORTED_TARGETS}
+# )
 
 add_executable(debug_cmd_vel src/debug_cmd_vel.cpp)
 set_target_properties(debug_cmd_vel PROPERTIES OUTPUT_NAME
@@ -73,11 +73,11 @@ add_dependencies(debug_cmd_vel ${${PROJECT_NAME}_EXPORTED_TARGETS}
 
 # Install ------------------------------------------------------------
 #Install header files
-install(TARGETS teleopJoystickCommands debug_cmd_vel
-   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+# install(TARGETS teleopJoystickCommands debug_cmd_vel
+#    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 #install(DIRECTORY
 #launch
