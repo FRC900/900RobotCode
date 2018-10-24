@@ -39,9 +39,9 @@ class ArmController : public controller_interface::MultiInterfaceController<hard
 
 	private:
         std::vector<std::string> joint_names;
-		std::vector<talon_controllers::TalonPercentOutputControllerInterface> joints; //interface for the actual joint
-		realtime_tools::RealtimeBuffer<arm_controller::TwoMotor> command_; //this is the buffer for percent output commands to be published. 
-		ros::ServiceServer service_command_;
+		std::vector<talon_controllers::TalonPercentOutputControllerInterface> joints; //interface for the actual joint 
+		ros::ServiceServer arm_state_service;
+		int service_command;
 }; //class
 
 } //namespace

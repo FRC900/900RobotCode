@@ -38,7 +38,7 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 	joint_1.setMotionAcceleration(1); //TODO
 	joint_1.setMotionCruiseVelocity(1); //TODO*/
     	
-	service_command_ = controller_nh.advertiseService("arm_state_service", &ArmController::cmdService, this);
+	arm_state_service = controller_nh.advertiseService("arm_state_service", &ArmController::cmdService, this);
 
 	return true;
 }
@@ -50,11 +50,10 @@ void ArmController::starting(const ros::Time &time) {
 void ArmController::update(const ros::Time &time, const ros::Duration &period) {
 	//float curr_cmd = *(command_.readFromRT()); //why do we put it into a new variable
 	//ROS_ERROR_STREAM("curr_cmd : " << curr_cmd);
-	int final_cmd = *(command_.readFromRT()); //the type of the service request (SetArmState) is an 8 bit int
         for(int i = 0; i<joints.size(); i++){ //iterate through joint interfaces and set values to the hardware
-		joints[i].setCommand(final_cmd);
+		joints[i].setCommand(service_command);
 	}
-       	ROS_INFO("Hi, I'm alive don't delete me %d", final_cmd);
+       	ROS_INFO("Hi, I'm alive don't delete me %d", service_cmd);
 }
 
 void ArmController::stopping(const ros::Time &time) {
@@ -63,7 +62,7 @@ void ArmController::stopping(const ros::Time &time) {
 bool ArmController::cmdService(arm_controller::SetArmState::Request &req, arm_controller::SetArmState::Response &res) {
 	if(isRunning())
 	{
-		command_.writeFromNonRT(req.value); //write service request to the real time buffer (command_)
+		service_command = req.value; //write service request
 	}
 	else
 	{
