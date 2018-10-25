@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(mech_controller)
+cmake_minimum_required(VERSION 2.8.3etet
+`project(mech_controller)
 
 include("../cmake_modules/CMakeOpt.cmake")
 
