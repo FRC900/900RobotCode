@@ -53,7 +53,7 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
         for(int i = 0; i<joints.size(); i++){ //iterate through joint interfaces and set values to the hardware
 		joints[i].setCommand(service_command);
 	}
-       	ROS_INFO("Hi, I'm alive don't delete me %d", service_cmd);
+       	ROS_INFO("Hi, I'm alive don't delete me %d", service_command);
 }
 
 void ArmController::stopping(const ros::Time &time) {
