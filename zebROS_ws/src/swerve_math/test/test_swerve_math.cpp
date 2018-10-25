@@ -2,6 +2,7 @@
 #include "swerve_math/900Math.h"
 #include <gtest/gtest.h>
 
+<<<<<<< HEAD
 const double ERROR_MARGIN = 1e-4; // Error margin for floating comparisons
 
 TEST(Math900, SignTests)
@@ -27,5 +28,11 @@ TEST(Math900, NormAngle_UpperBound)
 int main(int argc, char ** argv) 
 {
     testing::InitGoogleTest(&argc, argv);
+=======
+int main(int argc, char ** argv) {
+    testing::InitGoogleTest(&argc, argv);
+
+    ros::init(argc, argv, "test");
+>>>>>>> Adding initial setup for GTest stuff
     return RUN_ALL_TESTS();
 }

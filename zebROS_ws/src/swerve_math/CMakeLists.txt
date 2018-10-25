@@ -12,7 +12,11 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
 )
 find_package(Eigen3 REQUIRED)
+<<<<<<< HEAD
 # find_package(GTest REQUIRED)
+=======
+find_package(GTest REQUIRED)
+>>>>>>> Adding initial setup for GTest stuff
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
