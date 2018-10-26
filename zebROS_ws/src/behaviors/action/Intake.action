@@ -1,4 +1,5 @@
 #goal
 int8 power
+int32 msActive
 ---
 ---
