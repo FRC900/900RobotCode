@@ -17,11 +17,15 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 	//if I had to read values from fake joints (like line break sensors) I would initialize a JointStateInterface, then getHandle
 	//if I had to change non-Talon joint values (like pneumatics) I would initialize a PositionJointInterface, then getHandle
 	
+	ROS_ERROR_STREAM("i'm alive on line 20");
     	controller_nh.param("joint_names", joint_names, std::vector<std::string>());
+	ROS_ERROR_STREAM("alove2");
 	joints.resize(joint_names.size());
+	ROS_ERROR_STREAM("alive3");
 	//init the joint with the tci, tsi (not used), the node handle, and dynamic reconfigure (t/f)
     for(int i = 0; i<joint_names.size(); i++) {
         ros::NodeHandle l_nh(controller_nh, joint_names[i]);
+	ROS_ERROR_STREAM("alive4");
         if (!joints[i].initWithNode(talon_command_iface, nullptr, l_nh))
         {
             ROS_ERROR("Cannot initialize joint %d!", i);
@@ -44,7 +48,7 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 }
 
 void ArmController::starting(const ros::Time &time) {
-	ROS_ERROR_STREAM("MechController was started");
+	ROS_ERROR_STREAM("ArmController was started");
 }
 
 void ArmController::update(const ros::Time &time, const ros::Duration &period) {
