@@ -59,10 +59,9 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
- add_message_files(
-   FILES
-   power.msg
- )
+#add_message_files(
+#   FILES
+# )
 
 ## Generate services in the 'srv' folder
  add_service_files(
@@ -135,12 +134,12 @@ include_directories(
 add_library(${PROJECT_NAME}
    src/intake_controller.cpp
  )
-target_link_libraries(intake_contoller ${catkin_LIBRARIES})
+target_link_libraries(intake_controller ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -177,7 +176,7 @@ target_link_libraries(intake_contoller ${catkin_LIBRARIES})
 # )
 
 ## Mark executables and/or libraries for installation
- install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
+ install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

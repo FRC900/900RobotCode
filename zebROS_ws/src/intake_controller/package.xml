@@ -65,7 +65,7 @@
   <depend>message_runtime</depend>
   <depend>pluginlib</depend>
   <depend>talon_interface</depend>
-  <depend>talon_controller</depend>
+  <depend>talon_controllers</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

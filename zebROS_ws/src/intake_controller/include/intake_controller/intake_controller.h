@@ -1,4 +1,4 @@
-i#ifndef INTAKE_CONTROLLER
+#ifndef INTAKE_CONTROLLER
 #define INTAKE_CONTROLLER
 
 #include <ros/ros.h>
@@ -39,8 +39,8 @@ class IntakeController : public controller_interface::MultiInterfaceController<h
 
         private:
         std::vector<std::string> joint_names;
-                std::vector<talon_controllers::TalonPercentOutputControllerInterface> joints; //interface for the actual joint
-                realtime_tools::RealtimeBuffer<intake_controller::IntakeSrv> command_; //this is the buffer for percent output commands to be published. 
+                talon_controllers::TalonPercentOutputControllerInterface intake_joint; //interface for the actual joint
+                int command_; //this is the buffer for percent output commands to be published. 
                 ros::ServiceServer service_command_;
 }; //class
 

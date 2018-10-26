@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 2.8.3etet
-`project(mech_controller)
+cmake_minimum_required(VERSION 2.8.3)
+project(mech_controller)
 
 include("../cmake_modules/CMakeOpt.cmake")
 
@@ -207,3 +207,4 @@ install(FILES
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+

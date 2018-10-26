@@ -13,12 +13,12 @@ bool IntakeController::init(hardware_interface::RobotHW *hw,
 
         if (!intake_joint.initWithNode(talon_command_iface, nullptr, controller_nh))
         {
-            ROS_ERROR("Cannot initialize joint %d!", i);
+            ROS_ERROR("Cannot initialize intake joint!");
             return false;
         }
         else
         {
-            ROS_INFO("Initialized joint %d!!", i);
+            ROS_INFO("Initialized intake joint!");
         }
         //set soft limits, deadband, neutral mode, PIDF slots, acceleration and cruise velocity, all the things HERE
 
@@ -38,14 +38,12 @@ void IntakeController::starting(const ros::Time &time) {
 void IntakeController::update(const ros::Time &time, const ros::Duration &period) {
         //float curr_cmd = *(command_.readFromRT()); //why do we put it into a new variable
         //ROS_ERROR_STREAM("curr_cmd : " << curr_cmd);
-        int final_cmd = *(command_.readFromRT());
-	intake_joint.setCommand(final_cmd/2);
+	intake_joint.setCommand(command_/2);
 }
 bool IntakeController::cmdService(intake_controller::IntakeSrv::Request &req, intake_controller::IntakeSrv::Response &/*response*/) {
         if(isRunning())
         {
-		int temp_cmd = req.power;
-                command_.writeFromNonRT(temp_cmd);
+                command_ = req.power;
         }
         else
         {
