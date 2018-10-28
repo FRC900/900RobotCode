@@ -55,9 +55,9 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
 	//float curr_cmd = *(command_.readFromRT()); //why do we put it into a new variable
 	//ROS_ERROR_STREAM("curr_cmd : " << curr_cmd);
         for(int i = 0; i<joints.size(); i++){ //iterate through joint interfaces and set values to the hardware
-		joints[i].setCommand(service_command);
+		joints[i].setCommand(service_command_);
 	}
-       	ROS_INFO("Hi, I'm alive don't delete me %d", service_command);
+       	ROS_INFO("Hi, I'm alive don't delete me %d", service_command_);
 }
 
 void ArmController::stopping(const ros::Time &time) {
@@ -66,7 +66,7 @@ void ArmController::stopping(const ros::Time &time) {
 bool ArmController::cmdService(arm_controller::SetArmState::Request &req, arm_controller::SetArmState::Response &res) {
 	if(isRunning())
 	{
-		service_command = req.value; //write service request
+		service_command_ = req.value; //write service request
 	}
 	else
 	{
