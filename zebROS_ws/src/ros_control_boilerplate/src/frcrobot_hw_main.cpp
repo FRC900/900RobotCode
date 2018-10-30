@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Dave Coleman
+/* Original Author: Dave Coleman
    Desc:   Example ros_control main() entry point for controlling robots in ROS
 */
 

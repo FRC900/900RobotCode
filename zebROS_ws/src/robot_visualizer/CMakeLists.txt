@@ -69,8 +69,6 @@ add_dependencies(robot_visualize
   ${catkin_EXPORTED_TARGETS}
 )
 
-
-
 add_executable(profile_follow src/profile_follow.cpp)
 set_target_properties(profile_follow PROPERTIES OUTPUT_NAME 
 profile_follow PREFIX "")
@@ -86,14 +84,11 @@ add_dependencies(profile_follow
   ${catkin_EXPORTED_TARGETS}
 )
 
-
-
-
 ## TOOLS ------------------------------------------------------
 
 # Install ------------------------------------------------------------
 #Install header files
-install(TARGETS robot_visualize
+install(TARGETS robot_visualize profile_follow
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -103,14 +98,3 @@ install(DIRECTORY
     config
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-
-
-
-
-
-
-
-
-
-
-

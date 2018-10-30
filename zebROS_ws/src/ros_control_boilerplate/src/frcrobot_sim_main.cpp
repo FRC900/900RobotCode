@@ -32,14 +32,12 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Dave Coleman
+/* Original Author: Dave Coleman
    Desc:   Example ros_control main() entry point for controlling robots in ROS
 */
 
 #include <ros_control_boilerplate/generic_hw_control_loop.h>
 #include <ros_control_boilerplate/frcrobot_sim_interface.h>
-
-
 
 int main(int argc, char **argv)
 {

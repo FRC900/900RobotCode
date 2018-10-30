@@ -14,9 +14,9 @@ find_package(catkin REQUIRED COMPONENTS
   dynamic_reconfigure
 )
 
-generate_dynamic_reconfigure_options( cfg/TalonConfig.cfg)
+generate_dynamic_reconfigure_options(cfg/TalonConfig.cfg)
 
-add_message_files(FILES CloseLoopControllerMsg.msg)
+add_service_files(FILES PidfSlot.srv)
 generate_messages(DEPENDENCIES talon_controllers)
 
 # Declare catkin package
