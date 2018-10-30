@@ -8,10 +8,11 @@ bool IntakeController::init(hardware_interface::RobotHW *hw,
                                                         ros::NodeHandle                 &controller_nh)
 {
         hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
-        //if I had to read values from fake joints (like line break sensors) I would initialize a JointStateInterface, then getHandle
-        //if I had to change non-Talon joint values (like pneumatics) I would initialize a PositionJointInterface, then getHandle
+        hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
+        
+        intake_in_ = pos_joint_iface->getHandle("clamp");
 
-        if (!intake_joint.initWithNode(talon_command_iface, nullptr, controller_nh))
+        if (!intake_joint_.initWithNode(talon_command_iface, nullptr, controller_nh))
         {
             ROS_ERROR("Cannot initialize intake joint!");
             return false;
@@ -36,14 +37,15 @@ void IntakeController::starting(const ros::Time &time) {
 }
 
 void IntakeController::update(const ros::Time &time, const ros::Duration &period) {
-        //float curr_cmd = *(command_.readFromRT()); //why do we put it into a new variable
-        //ROS_ERROR_STREAM("curr_cmd : " << curr_cmd);
-	intake_joint.setCommand(command_/2);
+	intake_joint_.setCommand(*(spin_command_.readFromRT())/2); // set the command to the spinny part of the intake
+        intake_in_.setCommand(*(intake_in_cmd_.readFromRT())); // set the in/out command to the clampy part of the intake
 }
+
 bool IntakeController::cmdService(intake_controller::IntakeSrv::Request &req, intake_controller::IntakeSrv::Response &/*response*/) {
         if(isRunning())
         {
-                command_ = req.power;
+                spin_command_.writeFromNonRT(req.power); //take the service request for a certain amount of power (-1 to 1) and write it to the command variable
+                intake_in_cmd_.writeFromNonRT(req.intake_in); //take the service request for in/out (true/false???) and write to a command variable
         }
         else
         {

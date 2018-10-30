@@ -1,2 +1,3 @@
-int8 power
+float64 power
+bool intake_in
 ---
