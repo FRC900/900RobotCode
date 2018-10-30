@@ -39,8 +39,8 @@ class ArmController : public controller_interface::MultiInterfaceController<hard
 		
 
 	private:
-        	std::vector<std::string> joint_names;
-		std::vector<talon_controllers::TalonPercentOutputControllerInterface> joints; //interface for the actual joint 
+        	//std::vector<std::string> joint_names; //not used yet
+		talon_controllers::TalonPositionCloseLoopControllerInterface arm_joint_; //interface for the actual joint 
 		ros::ServiceServer arm_state_service;
 
                 realtime_tools::RealtimeBuffer<double> service_command_; //stores most recent request value for the arm angle, in degrees

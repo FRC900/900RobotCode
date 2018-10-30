@@ -15,22 +15,18 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 {
 	hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
 	
-    	controller_nh.param("joint_names", joint_names, std::vector<std::string>());
-	joints.resize(joint_names.size());
+    	//controller_nh.param("joint_names", joint_names, std::vector<std::string>());
+	//joints.resize(joint_names.size());
 
 	//init the joint with the tci, tsi (not used), the node handle, and dynamic reconfigure (t/f)
-        for(int i = 0; i<joint_names.size(); i++) {
-            ros::NodeHandle l_nh(controller_nh, joint_names[i]);
-            ROS_ERROR_STREAM("alive4");
-            if (!joints[i].initWithNode(talon_command_iface, nullptr, l_nh))
-            {
-                ROS_ERROR("Cannot initialize joint %d!", i);
-                return false;
-            }
-            else
-            {
-                ROS_INFO("Initialized joint %d!!", i);
-            }
+        if (!arm_joint_.initWithNode(talon_command_iface, nullptr, controller_nh))
+        {
+            ROS_ERROR("Cannot initialize arm_joint");
+            return false;
+        }
+        else
+        {
+            ROS_INFO("Initialized arm_joint");
         }
 	//set soft limits, deadband, neutral mode, PIDF slots, acceleration and cruise velocity, all the things HERE
 
@@ -48,10 +44,7 @@ void ArmController::starting(const ros::Time &time) {
 }
 
 void ArmController::update(const ros::Time &time, const ros::Duration &period) {
-        for(int i = 0; i<joints.size(); i++){ //iterate through joint interfaces and set values to the hardware
-		joints[i].setCommand(service_command_);
-	}
-       	ROS_INFO("Hi, I'm alive don't delete me %d", service_command_);
+        arm_joint_.setCommand(*(service_command_.readFromRT()));
 }
 
 void ArmController::stopping(const ros::Time &time) {
@@ -60,7 +53,7 @@ void ArmController::stopping(const ros::Time &time) {
 bool ArmController::cmdService(arm_controller::SetArmState::Request &req, arm_controller::SetArmState::Response &res) {
 	if(isRunning())
 	{
-		service_command_.writeToNonRT(req.value); //write service request
+		service_command_.writeFromNonRT(req.value); //write service request
 	}
 	else
 	{
