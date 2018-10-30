@@ -14,28 +14,24 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 							ros::NodeHandle			&controller_nh)
 {
 	hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
-	//if I had to read values from fake joints (like line break sensors) I would initialize a JointStateInterface, then getHandle
-	//if I had to change non-Talon joint values (like pneumatics) I would initialize a PositionJointInterface, then getHandle
 	
-	ROS_ERROR_STREAM("i'm alive on line 20");
     	controller_nh.param("joint_names", joint_names, std::vector<std::string>());
-	ROS_ERROR_STREAM("alove2");
 	joints.resize(joint_names.size());
-	ROS_ERROR_STREAM("alive3");
+
 	//init the joint with the tci, tsi (not used), the node handle, and dynamic reconfigure (t/f)
-    for(int i = 0; i<joint_names.size(); i++) {
-        ros::NodeHandle l_nh(controller_nh, joint_names[i]);
-	ROS_ERROR_STREAM("alive4");
-        if (!joints[i].initWithNode(talon_command_iface, nullptr, l_nh))
-        {
-            ROS_ERROR("Cannot initialize joint %d!", i);
-            return false;
+        for(int i = 0; i<joint_names.size(); i++) {
+            ros::NodeHandle l_nh(controller_nh, joint_names[i]);
+            ROS_ERROR_STREAM("alive4");
+            if (!joints[i].initWithNode(talon_command_iface, nullptr, l_nh))
+            {
+                ROS_ERROR("Cannot initialize joint %d!", i);
+                return false;
+            }
+            else
+            {
+                ROS_INFO("Initialized joint %d!!", i);
+            }
         }
-        else
-        {
-            ROS_INFO("Initialized joint %d!!", i);
-        }
-    }
 	//set soft limits, deadband, neutral mode, PIDF slots, acceleration and cruise velocity, all the things HERE
 
 	/*joint_1.setPIDFSlot(0);
@@ -52,8 +48,6 @@ void ArmController::starting(const ros::Time &time) {
 }
 
 void ArmController::update(const ros::Time &time, const ros::Duration &period) {
-	//float curr_cmd = *(command_.readFromRT()); //why do we put it into a new variable
-	//ROS_ERROR_STREAM("curr_cmd : " << curr_cmd);
         for(int i = 0; i<joints.size(); i++){ //iterate through joint interfaces and set values to the hardware
 		joints[i].setCommand(service_command_);
 	}
@@ -66,7 +60,7 @@ void ArmController::stopping(const ros::Time &time) {
 bool ArmController::cmdService(arm_controller::SetArmState::Request &req, arm_controller::SetArmState::Response &res) {
 	if(isRunning())
 	{
-		service_command_ = req.value; //write service request
+		service_command_.writeToNonRT(req.value); //write service request
 	}
 	else
 	{

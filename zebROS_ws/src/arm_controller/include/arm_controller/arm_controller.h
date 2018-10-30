@@ -37,12 +37,13 @@ class ArmController : public controller_interface::MultiInterfaceController<hard
 		//define function that executes the service
 		virtual bool cmdService(arm_controller::SetArmState::Request &req, arm_controller::SetArmState::Response &res);
 		
-		int service_command_; //stores most recent request value for the arm angle, in degrees
 
 	private:
         	std::vector<std::string> joint_names;
 		std::vector<talon_controllers::TalonPercentOutputControllerInterface> joints; //interface for the actual joint 
 		ros::ServiceServer arm_state_service;
+
+                realtime_tools::RealtimeBuffer<double> service_command_; //stores most recent request value for the arm angle, in degrees
 }; //class
 
 } //namespace
