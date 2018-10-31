@@ -44,7 +44,14 @@ void ArmController::starting(const ros::Time &time) {
 }
 
 void ArmController::update(const ros::Time &time, const ros::Duration &period) {
-        arm_joint_.setCommand(*(service_command_.readFromRT()));
+	// TODO : translate from a number to an arm posttion
+	// An idea - create a param which is an array.  Use the value
+	// read here to index into the array. That is, the command here is the
+	// index of an array, and the value at that index is the position to move
+	// the arm to. Be sure to do bounds checking - make sure you don't index
+	// past the end of the array.  But this will make it very easy
+	// to configure different positions for the arm simply by changing a config file
+	arm_joint_.setCommand(*(service_command_.readFromRT()));
 }
 
 void ArmController::stopping(const ros::Time &time) {
