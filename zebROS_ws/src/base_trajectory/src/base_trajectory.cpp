@@ -58,15 +58,14 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 
 	// Set this to false to prevent the code
 	// from thinking we're driving rotation joints
-	// rather than running linear mition
+	// rather than running linear motion
 	for (size_t i = 0; i < n_joints; i++)
 		angle_wraparound.push_back(false);
 
-	// Allocate memory to hold an
-	// initial trajectory
+	// Allocate memory to hold an initial trajectory
 	Trajectory hold_trajectory;
 	typename Segment::State current_joint_state = typename Segment::State(1);
-	for (unsigned int i = 0; i < n_joints; ++i)
+	for (size_t i = 0; i < n_joints; ++i)
 	{
 		current_joint_state.position[0] = 0;
 		current_joint_state.velocity[0] = 0;
@@ -81,12 +80,16 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	// with the robot sitting still at location 0,0,0.
 	// It is needed as an initial condition for the
 	// robot to connect it to the first waypoint
-	// TODO : make the starting position and 
-	// velocity a variable passed in to the 
+	//
+	// TODO : make the starting position and
+	// velocity a variable passed in to the
 	// path generation request.
-	
+
 
 	//TODO: WHAT BE THIS BRACKET
+	// Adding scope for these var names - they're repeated
+	// in other bits of code taken from various functions
+	// in other source files.  Easier than renaming them
 	{
 		typename Segment::State hold_start_state = typename Segment::State(1);
 		typename Segment::State hold_end_state = typename Segment::State(1);
@@ -134,8 +137,6 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	// Actually generate the new trajectory
 	// This will create spline coefficents for
 	// each of the x,y,z paths
-	// TODO : take input from a service rather
-	// than a topic
 	Trajectory trajectory;
 	try
 	{
@@ -168,12 +169,12 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	{
 		for (size_t joint = 0; joint < n_joints; joint++)
 		{
-			std::cout << "joint = " << joint_names[joint] << " seg = " << seg;
-			std::cout << " start_time = " << trajectory[joint][seg].startTime();
-			std::cout << " end_time = " << trajectory[joint][seg].endTime() << std::endl;
+			ROS_INFO_STREAM("joint = " << joint_names[joint] << " seg = " << seg <<
+			                " start_time = " << trajectory[joint][seg].startTime() <<
+			                " end_time = " << trajectory[joint][seg].endTime());
 			auto coefs = trajectory[joint][seg].getCoefs();
 
-			std::cout << "coefs: " << coefs[0][0] << " " << coefs[0][1] << " " << coefs[0][2] << " " << coefs[0][3] << " " << coefs[0][4] << " " << coefs[0][5];
+			ROS_INFO_STREAM("coefs: " << coefs[0][0] << " " << coefs[0][1] << " " << coefs[0][2] << " " << coefs[0][3] << " " << coefs[0][4] << " " << coefs[0][5]);
 
 			std::vector<double> *m;
 
@@ -184,21 +185,47 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 			else if (joint == 2)
 				m = &out_msg.orient_coefs[seg].spline;
 			else
+			{
+				ROS_WARN("Unexpected joint number constructing out_msg in base_trajectory");
 				continue;
+			}
 
+			// Push in reverse order to match expectations
+			// of point_gen code?
 			m->clear();
-			m->push_back(coefs[0][5]);
-			m->push_back(coefs[0][4]);
-			m->push_back(coefs[0][3]);
-			m->push_back(coefs[0][2]);
-			m->push_back(coefs[0][1]);
-			m->push_back(coefs[0][0]);
+			for (int i = 5; i >= 0; i--)
+				m->push_back(coefs[0][i]);
 
 			std::cout << std::endl;
 		}
+
 		// All splines in a waypoint end at the same time?
 		out_msg.end_points.push_back(trajectory[0][seg].endTime());
 	}
+#if 0
+	// Test using middle switch auto spline
+	out_msg.x_coefs[1].spline[0] = 6.0649999999999995;
+	out_msg.x_coefs[1].spline[1] = -15.510000000000002;
+	out_msg.x_coefs[1].spline[2] = 10.205;
+	out_msg.x_coefs[1].spline[3] = 0.42;
+	out_msg.x_coefs[1].spline[4] = 0.10999999999999999;
+	out_msg.x_coefs[1].spline[5] = 0.18;
+
+	out_msg.y_coefs[1].spline[0] = 1.9250000000000025;
+	out_msg.y_coefs[1].spline[1] = -5.375;
+	out_msg.y_coefs[1].spline[2] = 4.505000000000003;
+	out_msg.y_coefs[1].spline[3] = -0.8149999999999998;
+	out_msg.y_coefs[1].spline[4] = 2.4299999999999997;
+	out_msg.y_coefs[1].spline[5] = 0.45;
+
+	out_msg.orient_coefs[1].spline[0] = 0.0;
+	out_msg.orient_coefs[1].spline[1] = 0.0;
+	out_msg.orient_coefs[1].spline[2] = 0.0;
+	out_msg.orient_coefs[1].spline[3] = 0.0;
+	out_msg.orient_coefs[1].spline[4] = 0.0;
+	out_msg.orient_coefs[1].spline[5] = -3.14159;
+	out_msg.end_points[1] = 1.0; // change me to 4 to match end time in yaml and break point_gen
+#endif
 }
 
 int main(int argc, char **argv)
