@@ -83,17 +83,17 @@ def main():
                                             DualExitAction),
                                 transitions={'succeeded':'IntakeCube','aborted':'TestAtCenterC', 'preempted':'Exit'})
         goalArmE = ArmActionGoal()
-        goalArmE.intake = False
-        goalArmE.exchange = True
-        goalArmE.starting = False
+        goalArmE.arm_position = 2
+        goalArmE.intake_cube = False
+        goalArmE.intake_timeout = 10
         smach.StateMachine.add('ScoreCube', 
                                 SimpleActionState('arm_server',
                                             ArmAction,goal=goalArmE),
                                 transitions={'succeeded':'TestHasCube', 'aborted':'Exit', 'preempted':'Exit'})
         goalArmI = ArmActionGoal()
-        goalArmI.intake = True
-        goalArmI.exchange = False
-        goalArmI.starting = False
+        goalArmI.arm_position = 0
+        goalArmI.intake_cube = True
+        goalArmI.intake_timeout = 10
         smach.StateMachine.add('IntakeCube',
                                 SimpleActionState('arm_server',
                                             ArmAction,goal=goalArmI),
@@ -118,12 +118,13 @@ def main():
                                 SimpleActionState('turnToExchange_as',
                                             SingleExitAction),
                                 transitions={'succeeded':'PathToExchange', 'aborted':'Exit', 'preempted':'Exit'})
-        goalSpinOut = IntakeActionGoal()
-        goalSpinOut.power = 100
-        goalSpinOut.msActive = 5000
+        #define a goal for ejecting cubes
+        goalIntake = IntakeActionGoal()
+        goalIntake.intake_cube = False #because ejecting cube
+        goalIntake.intake_timeout = 5
         smach.StateMachine.add('SpinOut',
                                 SimpleActionState('intake_server',
-                                            SpinOutAction, goal=goalSpinOut),
+                                            IntakeAction, goal=goalIntake),
                                 transitions={'succeeded':'TestHasCube', 'aborted':'Exit', 'preempted':'Exit'})
         smach.StateMachine.add('Party',
                                 SimpleActionState('party_as',

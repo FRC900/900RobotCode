@@ -84,6 +84,9 @@ add_action_files(
     Arm.action
     Intake.action
     Forearm.action
+    PathToCenter.action
+    SingleExit.action
+    DualExit.action
 )
 
 ## Generate added messages and services with any dependencies listed here
