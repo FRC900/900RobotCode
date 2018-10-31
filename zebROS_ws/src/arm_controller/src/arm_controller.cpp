@@ -15,10 +15,25 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 {
 	hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
 	
-    	//controller_nh.param("joint_names", joint_names, std::vector<std::string>());
-	//joints.resize(joint_names.size());
-
-	//init the joint with the tci, tsi (not used), the node handle, and dynamic reconfigure (t/f)
+        //read parameters
+        if (!controller_nh.getParam("position_array", arm_positions_))
+        {
+            ROS_ERROR_STREAM("Could not read arm_positions");
+            return false;
+        }
+        double forward_soft_limit;
+        if (!controller_nh.getParam("forward_soft_limit", forward_soft_limit))
+        {
+            ROS_ERROR_STREAM("Could not read forward_soft_limit");
+            return false;
+        }
+        double reverse_soft_limit;
+        if (!controller_nh.getParam("reverse_soft_limit", reverse_soft_limit))
+        {
+            ROS_ERROR_STREAM("Could not read reverse_soft_limit");
+            return false;
+        }
+        //initialize the joint
         if (!arm_joint_.initWithNode(talon_command_iface, nullptr, controller_nh))
         {
             ROS_ERROR("Cannot initialize arm_joint");
@@ -28,13 +43,13 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
         {
             ROS_INFO("Initialized arm_joint");
         }
-	//set soft limits, deadband, neutral mode, PIDF slots, acceleration and cruise velocity, all the things HERE
 
-	/*joint_1.setPIDFSlot(0);
-	joint_1.setMotionAcceleration(1); //TODO
-	joint_1.setMotionCruiseVelocity(1); //TODO*/
+        arm_joint_.setForwardSoftLimitThreshold(forward_soft_limit);
+        arm_joint_.setReverseSoftLimitThreshold(reverse_soft_limit);
+        arm_joint_.setForwardSoftLimitEnable(true);
+        arm_joint_.setReverseSoftLimitEnable(true);
     	
-	arm_state_service = controller_nh.advertiseService("arm_state_service", &ArmController::cmdService, this);
+	arm_state_service_ = controller_nh.advertiseService("arm_state_service", &ArmController::cmdService, this);
 
 	return true;
 }
@@ -52,8 +67,9 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
 	// past the end of the array.  But this will make it very easy
 	// to configure different positions for the arm simply by changing a config file
         int command = *(service_command_.readFromRT());
-        ROS_INFO_STREAM("arm_joint command = " << command);
-	arm_joint_.setCommand(command);
+        double position = arm_positions_[command];
+        ROS_INFO_STREAM("arm_joint command = " << position);
+	arm_joint_.setCommand(position);
 }
 
 void ArmController::stopping(const ros::Time &time) {

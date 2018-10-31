@@ -15,7 +15,7 @@ hardware_interface:
        - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 3, reverse_id: 7} 
        - {name: arm, type: can_talon_srx, can_id: 42}
        - {name: arm_follower, type: can_talon_srx, can_id: 43}
-       - {name: intake_line_break_high, type: digital_input, dio_channel: 1, invert: true}
+       - {name: intake_line_break, type: digital_input, dio_channel: 1, invert: true}
        - {name: fl_drive, type: can_talon_srx, can_id: 21}
        - {name: fl_angle, type: can_talon_srx, can_id: 11}
        - {name: fr_drive, type: can_talon_srx, can_id: 22}
@@ -66,7 +66,14 @@ intake_controller:
 
 arm_controller:
     type: arm_controller/ArmController
-    joint: arm
+    arm: "arm_joint"
+    position_array: [00, 10, 20]
+    forward_soft_limit: 00
+    reverse_soft_limit: 20
+    arm_joint:
+        joint: arm
+        motion_cruise_velocity: 3 # wrong
+        motion_acceleration: 3 # wrong
 
 imu_sensor_controller:
    type:         imu_sensor_controller/ImuSensorController

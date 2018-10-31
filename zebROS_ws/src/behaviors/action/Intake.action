@@ -1,6 +1,6 @@
 #goal
-int8 power
-bool intake_in
-int8 intake_timeout
+bool intake_cube
+float64 intake_timeout
 ---
+bool timed_out
 ---

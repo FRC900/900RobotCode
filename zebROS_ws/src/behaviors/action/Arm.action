@@ -1,7 +1,6 @@
 #goal
 int8 arm_position
-int8 power
-bool intake_in
+bool intake_cube
 int8 intake_timeout
 ---
 #feedback

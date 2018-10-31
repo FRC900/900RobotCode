@@ -71,7 +71,6 @@ def main():
                 transitions={'testTrue':'TurnToCube', 'testFalse':'PathToCenterC'})
         smach.StateMachine.add('TestAtCenterE', TestAtCenterE(),
                 transitions={'testTrue':'TurnToExchange', 'testFalse':'PathToCenterE'})
-
         smach.StateMachine.add('Exit', Exit(),
                                 transitions={'exit':'exited'})
         #actions!

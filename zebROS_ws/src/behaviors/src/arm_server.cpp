@@ -56,8 +56,7 @@ class ArmAction
             
             //spin in
             behaviors::IntakeGoal intake_goal;
-            intake_goal.power = goal->power;
-            intake_goal.intake_in = goal->intake_in;
+            intake_goal.intake_cube = goal->intake_cube;
             intake_goal.intake_timeout = goal->intake_timeout;
             ai_.sendGoal(intake_goal);
 

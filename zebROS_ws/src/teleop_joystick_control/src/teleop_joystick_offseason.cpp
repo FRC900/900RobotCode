@@ -58,9 +58,8 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 
         behaviors::ArmGoal arm_goal;
         arm_goal.arm_position = 0;
-        arm_goal.power = -1;
-        arm_goal.intake_in = 1;
-        arm_goal.intake_timeout = 10; //seconds
+        arm_goal.intake_cube = true;
+        arm_goal.intake_timeout = 10;
         ac->sendGoal(arm_goal);
     }
 
@@ -83,9 +82,8 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 
         behaviors::ArmGoal arm_goal;
         arm_goal.arm_position = 2;
-        arm_goal.power = 1;
-        arm_goal.intake_in = 1;
-        arm_goal.intake_timeout = 10; //seconds
+        arm_goal.intake_cube = true;
+        arm_goal.intake_timeout = 10;
         ac->sendGoal(arm_goal);
     }
 
@@ -102,12 +100,9 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
         else
             target_position = 0;
 
-        behaviors::ArmGoal arm_goal;
-        arm_goal.arm_position = target_position;
-        arm_goal.power = 0;
-        arm_goal.intake_in = 1;
-        arm_goal.intake_timeout = 0; //seconds
-        ac->sendGoal(arm_goal);
+        behaviors::ForearmGoal forearm_goal;
+        forearm_goal.position = target_position;
+        ac_arm->sendGoal(forearm_goal);
     }
 
 ///////////////////// Drivetrain and Elevator Control \\\\\\\\\\\\\\\\\\\
