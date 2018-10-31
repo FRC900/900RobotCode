@@ -81,15 +81,6 @@ add_action_files(
     DIRECTORY
     action
     FILES
-    IntakeCube.action
-    Party.action
-    PathToCenter.action
-    PathToCube.action
-    PathToExchange.action
-    ScoreCube.action
-    SpinOut.action
-    TurnToCube.action
-    TurnToExchange.action
     Arm.action
     Intake.action
     Forearm.action
@@ -149,6 +140,10 @@ add_dependencies(arm_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED
 add_executable(forearm_server_node src/forearm_server.cpp)
 target_link_libraries(forearm_server_node ${catkin_LIBRARIES})
 add_dependencies(forearm_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(intake_server_node src/intake_server.cpp)
+target_link_libraries(intake_server_node ${catkin_LIBRARIES})
+add_dependencies(intake_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #add_executable(dummy src/dummy.cpp)
 #target_link_libraries(

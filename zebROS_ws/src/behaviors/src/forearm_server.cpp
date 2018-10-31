@@ -1,16 +1,7 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <behaviors/ForearmAction.h>
-//#include <arm_controller/PositionSrv.h>
-
-enum ArmPosition
-{
-    LOWER_RIGHT,
-    UPPER_RIGHT,
-    STARTING,
-    UPPER_LEFT,
-    LOWER_LEFT,
-};
+#include <arm_controller/SetArmState.h>
 
 class ForearmAction
 {
@@ -38,13 +29,15 @@ class ForearmAction
 
         void executeCB(const behaviors::ForearmGoalConstPtr &goal)
         {
+            ROS_INFO_STREAM("forearm_server running callback");
             ros::Rate r(10);
             bool success = true;
             
-            if(goal->position != 0)
-            {
-                //do the service calls I guess
-            }
+            arm_controller::SetArmState srv;
+            srv.request.position = goal->position;
+            forearm_srv_.call(srv);
+
+            as_.setSucceeded();
         }
 };
 

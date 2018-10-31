@@ -36,17 +36,19 @@ bool IntakeController::init(hardware_interface::RobotHW *hw,
         joint_1.setMotionAcceleration(1); //TODO
         joint_1.setMotionCruiseVelocity(1); //TODO*/
 
-        service_command_ = controller_nh.advertiseService("intake_posS", &IntakeController::cmdService, this);
+        service_command_ = controller_nh.advertiseService("intake_command", &IntakeController::cmdService, this);
 
         return true;
 }
 
 void IntakeController::starting(const ros::Time &/*time*/) {
-        ROS_ERROR_STREAM("something happened");
         ROS_ERROR_STREAM("IntakeController was started");
 }
 
 void IntakeController::update(const ros::Time &time, const ros::Duration &period) {
+        double spin_command = *(spin_command_.readFromRT());
+        bool intake_in = *(intake_in_cmd_.readFromRT());
+        ROS_INFO_STREAM("spin command = " << spin_command << "intake_in = " << intake_in);
 	intake_joint_.setCommand(*(spin_command_.readFromRT())); // set the command to the spinny part of the intake
         intake_in_.setCommand(*(intake_in_cmd_.readFromRT())); // set the in/out command to the clampy part of the intake
 }

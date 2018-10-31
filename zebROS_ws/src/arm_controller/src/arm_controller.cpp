@@ -51,7 +51,9 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
 	// the arm to. Be sure to do bounds checking - make sure you don't index
 	// past the end of the array.  But this will make it very easy
 	// to configure different positions for the arm simply by changing a config file
-	arm_joint_.setCommand(*(service_command_.readFromRT()));
+        int command = *(service_command_.readFromRT());
+        ROS_INFO_STREAM("arm_joint command = " << command);
+	arm_joint_.setCommand(command);
 }
 
 void ArmController::stopping(const ros::Time &time) {
@@ -60,7 +62,7 @@ void ArmController::stopping(const ros::Time &time) {
 bool ArmController::cmdService(arm_controller::SetArmState::Request &req, arm_controller::SetArmState::Response &res) {
 	if(isRunning())
 	{
-		service_command_.writeFromNonRT(req.value); //write service request
+		service_command_.writeFromNonRT(req.position); //write service request
 	}
 	else
 	{

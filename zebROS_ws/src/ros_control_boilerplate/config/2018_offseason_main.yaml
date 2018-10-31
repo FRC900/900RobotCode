@@ -11,17 +11,20 @@ generic_hw_control_loop:
 hardware_interface:
    joints:
        - {name: intake, type: can_talon_srx, can_id: 41}
+       - {name: intake_follower, type: can_talon_srx, can_id: 33}
        - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 3, reverse_id: 7} 
-         #        - {name: intake_line_break_high, type: digital_input, dio_channel: 1, invert: true}
-         #        - {name: fl_drive, type: can_talon_srx, can_id: 21}
-         #        - {name: fl_angle, type: can_talon_srx, can_id: 11}
-         #        - {name: fr_drive, type: can_talon_srx, can_id: 22}
-         #        - {name: fr_angle, type: can_talon_srx, can_id: 12}
-         #        - {name: br_drive, type: can_talon_srx, can_id: 24}
-         #        - {name: br_angle, type: can_talon_srx, can_id: 14}
-         #        - {name: bl_drive, type: can_talon_srx, can_id: 23}
-         #        - {name: bl_angle, type: can_talon_srx, can_id: 13}
-         #        - {name: joystick_rumble, type: rumble, rumble_port: 0}
+       - {name: arm, type: can_talon_srx, can_id: 42}
+       - {name: arm_follower, type: can_talon_srx, can_id: 43}
+       - {name: intake_line_break_high, type: digital_input, dio_channel: 1, invert: true}
+       - {name: fl_drive, type: can_talon_srx, can_id: 21}
+       - {name: fl_angle, type: can_talon_srx, can_id: 11}
+       - {name: fr_drive, type: can_talon_srx, can_id: 22}
+       - {name: fr_angle, type: can_talon_srx, can_id: 12}
+       - {name: br_drive, type: can_talon_srx, can_id: 24}
+       - {name: br_angle, type: can_talon_srx, can_id: 14}
+       - {name: bl_drive, type: can_talon_srx, can_id: 23}
+       - {name: bl_angle, type: can_talon_srx, can_id: 13}
+       - {name: joystick_rumble, type: rumble, rumble_port: 0}
 
 # Create controllers for each joint
 #
@@ -61,63 +64,18 @@ intake_controller:
     clamp_joint: 
         joint: clamp
 
-        # intake_up_controller:
-        #     type: position_controllers/JointPositionController
-        #     joint: intake_up
-        # 
-        # shift_controller:
-        #     type: position_controllers/JointPositionController
-        #     joint: shift
-        # 
-        # clamp_controller:
-        #     type: position_controllers/JointPositionController
-        #     joint: clamp
-        # 
-        # intake_spring_soft_controller:
-        #     type: position_controllers/JointPositionController
-        #     joint: intake_spring_soft
-        # 
-        # intake_spring_hard_controller:
-        #     type: position_controllers/JointPositionController
-        #     joint: intake_spring_hard
-        # 
-        # end_game_deploy_controller:
-        #     type: position_controllers/JointPositionController
-        #     joint: end_game_deploy
-        # 
-        # 
-        # end_game_deploy_wings_controller:
-        #     type: position_controllers/JointPositionController
-        #     joint: end_game_deploy_wings
-        # 
-        # imu_sensor_controller:
-        #    type:         imu_sensor_controller/ImuSensorController
-        #    publish_rate: 20
-        # 
-        # pdp_state_controller:
-        #    type:         pdp_state_controller/PDPStateController
-        #    publish_rate: 20
-        # 
-        # compressor_controller:
-        #    type: position_controllers/JointPositionController
-        #    joint: compressor1
-        # 
-        # rumble_controller:
-        #     type: position_controllers/JointPositionController
-        #     joint: joystick_rumble
-        # 
-        # auto_state_controller_0:
-        #     type: position_controllers/JointPositionController
-        #     joint: auto_state_0
-        # 
-        # auto_state_controller_1:
-        #     type: position_controllers/JointPositionController
-        #     joint: auto_state_1
-        # 
-        # auto_state_controller_2:
-        #     type: position_controllers/JointPositionController
-        #     joint: auto_state_2
-        # 
-        # auto_state_controller_3:
-        #     type: position_controllers/JointPositionController
-        #     joint: auto_state_3
+arm_controller:
+    type: arm_controller/ArmController
+    joint: arm
+
+imu_sensor_controller:
+   type:         imu_sensor_controller/ImuSensorController
+   publish_rate: 20
+
+pdp_state_controller:
+   type:         pdp_state_controller/PDPStateController
+   publish_rate: 20
+
+rumble_controller:
+    type: position_controllers/JointPositionController
+    joint: joystick_rumble

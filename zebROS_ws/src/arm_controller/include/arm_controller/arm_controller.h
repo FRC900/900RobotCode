@@ -43,7 +43,7 @@ class ArmController : public controller_interface::MultiInterfaceController<hard
 		talon_controllers::TalonPositionCloseLoopControllerInterface arm_joint_; //interface for the actual joint 
 		ros::ServiceServer arm_state_service;
 
-                realtime_tools::RealtimeBuffer<double> service_command_; //stores most recent request value for the arm angle, in degrees
+                realtime_tools::RealtimeBuffer<int> service_command_; //stores most recent request value for the arm angle, in degrees
 }; //class
 
 } //namespace

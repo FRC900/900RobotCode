@@ -1,7 +1,8 @@
 #goal
-bool intake
-bool exchange
-bool starting
+int8 arm_position
+int8 power
+bool intake_in
+int8 intake_timeout
 ---
 #feedback
 ---

@@ -50,42 +50,23 @@ class ArmAction
 
         void executeCB(const behaviors::ArmGoalConstPtr &goal)
         {
+            ROS_INFO_STREAM("arm_server running callback");
             ros::Rate r(10);
             bool success = true;
             
-            if(goal->intake)
-            {
-                //spin in
-                behaviors::IntakeGoal intake_goal;
-                intake_goal.power = -2;
-                ai_.sendGoal(intake_goal);
-                //move arm
-                behaviors::ForearmGoal forearm_goal;
-                forearm_goal.position = LOWER_RIGHT;
-                af_.sendGoal(forearm_goal);
-            }
-            if(goal->exchange)
-            {
-                //spin out
-                behaviors::IntakeGoal intake_goal;
-                intake_goal.power = 2;
-                ai_.sendGoal(intake_goal);
-                //move arm
-                behaviors::ForearmGoal forearm_goal;
-                forearm_goal.position = LOWER_LEFT;
-                af_.sendGoal(forearm_goal);
-            }
-            if(goal->starting)
-            {
-                //stop moving intake
-                behaviors::IntakeGoal intake_goal;
-                intake_goal.power = 0;
-                ai_.sendGoal(intake_goal);
-                //move arm
-                behaviors::ForearmGoal forearm_goal;
-                forearm_goal.position = STARTING;
-                af_.sendGoal(forearm_goal);
-            }
+            //spin in
+            behaviors::IntakeGoal intake_goal;
+            intake_goal.power = goal->power;
+            intake_goal.intake_in = goal->intake_in;
+            intake_goal.intake_timeout = goal->intake_timeout;
+            ai_.sendGoal(intake_goal);
+
+            //move arm
+            behaviors::ForearmGoal forearm_goal;
+            forearm_goal.position = goal->arm_position;
+            af_.sendGoal(forearm_goal);
+
+            as_.setSucceeded();
         }
 };
 
