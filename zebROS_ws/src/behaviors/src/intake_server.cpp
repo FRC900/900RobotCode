@@ -61,7 +61,7 @@ class IntakeAction {
                         ROS_WARN("%s: Preempted", action_name_.c_str());
                         as_.setPreempted();
                         aborted = true;
-                        break;
+                        return;
                     }
                     if (!aborted) {
                         r.sleep();
@@ -88,12 +88,15 @@ class IntakeAction {
                 bool success = false;
                 while(!success && !timed_out && !aborted) {
                     success = cube_state_true > linebreak_debounce_iterations;
-                    if(as_.isPreemptRequested() || !ros::ok()) {
-                        ROS_WARN("%s: Preempted", action_name_.c_str());
+                    if(as_.isPreemptRequested())
+                        ROS_WARN("preempt requested");
+                    if (!ros::ok())
+                        ROS_WARN("ROS is not okay");
+                        /*ROS_WARN("%s: Preempted", action_name_.c_str());
                         as_.setPreempted();
                         aborted = true;
-                        break;
-                    }
+                        return;
+                    }*/
                     if (!aborted) {
                         r.sleep();
                         ros::spinOnce();
@@ -141,13 +144,13 @@ int main(int argc, char** argv) {
     ros::NodeHandle n_auto_interpreter_server_intake_params(n, "auto_interpreter_server_intake_params");
 
     if (!n_params.getParam("intake_power", intake_power))
-		ROS_ERROR("Could not read intake_power in autoInterpreterServerIntake");
+		ROS_ERROR("Could not read intake_power in intake_server");
 
     if (!n_params.getParam("intake_hold_power", intake_hold_power))
-		ROS_ERROR("Could not read intake_hold_power in autoInterpreterServerIntake");
+		ROS_ERROR("Could not read intake_hold_power in intake_server");
 
     if (!n_auto_interpreter_server_intake_params.getParam("linebreak_debounce_iterations", linebreak_debounce_iterations))
-		ROS_ERROR("Could not read linebreak_debounce_iterations in autoInterpreterServerIntake");
+		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
     ros::spin();
     return 0;
 }

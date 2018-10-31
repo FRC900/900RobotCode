@@ -3,6 +3,6 @@ int8 arm_position
 bool intake_cube
 int8 intake_timeout
 ---
-#feedback
----
 #result
+---
+#feedback

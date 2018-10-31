@@ -15,7 +15,7 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 {
 	hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
 	
-        //read parameters
+        //read parameters and names
         if (!controller_nh.getParam("position_array", arm_positions_))
         {
             ROS_ERROR_STREAM("Could not read arm_positions");
@@ -33,8 +33,14 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
             ROS_ERROR_STREAM("Could not read reverse_soft_limit");
             return false;
         }
+        XmlRpc::XmlRpcValue arm_params;
+        if(!controller_nh.getParam("arm_joint", arm_params))
+        {
+            ROS_ERROR_STREAM("Could not read arm_joint name");
+        }
+
         //initialize the joint
-        if (!arm_joint_.initWithNode(talon_command_iface, nullptr, controller_nh))
+        if (!arm_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, arm_params))
         {
             ROS_ERROR("Cannot initialize arm_joint");
             return false;
@@ -67,7 +73,10 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
 	// past the end of the array.  But this will make it very easy
 	// to configure different positions for the arm simply by changing a config file
         int command = *(service_command_.readFromRT());
-        double position = arm_positions_[command];
+        if (command < arm_positions_.size())
+            double position = arm_positions_[command];
+        else 
+            ROS_ERROR_STREAM("the command to arm_controller needs to be 0, 1, or 2");
         ROS_INFO_STREAM("arm_joint command = " << position);
 	arm_joint_.setCommand(position);
 }
