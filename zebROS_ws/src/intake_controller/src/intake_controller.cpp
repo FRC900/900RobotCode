@@ -12,7 +12,15 @@ bool IntakeController::init(hardware_interface::RobotHW *hw,
         
         intake_in_ = pos_joint_iface->getHandle("clamp");
 
-        if (!intake_joint_.initWithNode(talon_command_iface, nullptr, controller_nh))
+        //read intake name from config file
+        XmlRpc::XmlRpcValue intake_params;
+        if (!controller_nh.getParam("intake", intake_params))
+        {
+            ROS_ERROR_STREAM("Can not read intake name");
+            return false;
+        }
+        //initialize joint with that name
+        if (!intake_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, intake_params))
         {
             ROS_ERROR("Cannot initialize intake joint!");
             return false;
@@ -21,6 +29,7 @@ bool IntakeController::init(hardware_interface::RobotHW *hw,
         {
             ROS_INFO("Initialized intake joint!");
         }
+
         //set soft limits, deadband, neutral mode, PIDF slots, acceleration and cruise velocity, all the things HERE
 
         /*joint_1.setPIDFSlot(0);
@@ -32,13 +41,17 @@ bool IntakeController::init(hardware_interface::RobotHW *hw,
         return true;
 }
 
-void IntakeController::starting(const ros::Time &time) {
+void IntakeController::starting(const ros::Time &/*time*/) {
+        ROS_ERROR_STREAM("something happened");
         ROS_ERROR_STREAM("IntakeController was started");
 }
 
 void IntakeController::update(const ros::Time &time, const ros::Duration &period) {
-	intake_joint_.setCommand(*(spin_command_.readFromRT())/2); // set the command to the spinny part of the intake
+	intake_joint_.setCommand(*(spin_command_.readFromRT())); // set the command to the spinny part of the intake
         intake_in_.setCommand(*(intake_in_cmd_.readFromRT())); // set the in/out command to the clampy part of the intake
+}
+
+void IntakeController::stopping(const ros::Time &time) {
 }
 
 bool IntakeController::cmdService(intake_controller::IntakeSrv::Request &req, intake_controller::IntakeSrv::Response &/*response*/) {
@@ -58,5 +71,4 @@ bool IntakeController::cmdService(intake_controller::IntakeSrv::Request &req, in
 }//namespace
 
 //DON'T FORGET TO EXPORT THE CLASS SO CONTROLLER_MANAGER RECOGNIZES THIS AS A TYPE
-PLUGINLIB_EXPORT_CLASS( intake_controller::IntakeController, controller_interface::ControllerBase)
-
+PLUGINLIB_EXPORT_CLASS(intake_controller::IntakeController, controller_interface::ControllerBase)
