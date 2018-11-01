@@ -7,6 +7,10 @@ compiler: gcc
 services:
   - docker
 
+before-install:
+  - ls -la
+  - echo "almost certainly a test" > test.txt
+
 install:
   - travis_wait 45 docker pull frc900/zebros-dev:latest
 
