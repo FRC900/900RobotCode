@@ -7,16 +7,13 @@ compiler: gcc
 services:
   - docker
 
-before-install:
-  - ls -la
-  - echo "almost certainly a test" > test.txt
-
 install:
   - travis_wait 45 docker pull frc900/zebros-dev:latest
 
 script:
   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
     "cd ~ &&
+        echo "thisisatest" > test.txt &&
      git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git &&
          echo "Clone success." &&
      cd ./2018Offseason/ &&
