@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "YOU PROBABLY FORGOT TO RUN THIS WITH -O"
+
 set -e
 set -o pipefail
 

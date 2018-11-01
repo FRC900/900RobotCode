@@ -21,7 +21,8 @@ class ForearmAction
         {
             std::map<std::string, std::string> service_connection_header;
             service_connection_header["tcp_nodelay"] = "1";
-            //forearm_srv_ = nh_.serviceClient<arm_controller::PositionSrv>("/frcrobot/arm_controller/position", false, service_connection_header);
+
+            forearm_srv_ = nh_.serviceClient<arm_controller::SetArmState>("/frcrobot/arm_controller/arm_state_service", false, service_connection_header);
             as_.start();
         }
 
