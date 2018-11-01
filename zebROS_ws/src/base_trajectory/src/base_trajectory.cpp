@@ -225,6 +225,7 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	out_msg.orient_coefs[1].spline[5] = -3.14159;
 	out_msg.end_points[1] = 1.0; // change me to 4 to match end time in yaml and break point_gen
 #endif
+	return true;
 }
 
 int main(int argc, char **argv)
