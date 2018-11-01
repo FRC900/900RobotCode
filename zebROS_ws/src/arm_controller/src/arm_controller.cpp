@@ -73,11 +73,13 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
 	// past the end of the array.  But this will make it very easy
 	// to configure different positions for the arm simply by changing a config file
         int command = *(service_command_.readFromRT());
-        if (command < arm_positions_.size())
-            double position = arm_positions_[command];
+        double position; //define in correct scope
+	if (command < arm_positions_.size())
+            position = arm_positions_[command];
         else 
             ROS_ERROR_STREAM("the command to arm_controller needs to be 0, 1, or 2");
-        ROS_INFO_STREAM("arm_joint command = " << position);
+        
+	ROS_INFO_STREAM("arm_joint command = " << position);
 	arm_joint_.setCommand(position);
 }
 

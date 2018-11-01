@@ -4,5 +4,6 @@ bool intake_cube
 int8 intake_timeout
 ---
 #result
+bool is_true
 ---
 #feedback
