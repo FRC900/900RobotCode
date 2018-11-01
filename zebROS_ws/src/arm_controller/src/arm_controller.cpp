@@ -14,6 +14,10 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 							ros::NodeHandle			&controller_nh)
 {
 	hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
+        hardware_interface::JointStateInterface *const joint_state_iface = hw->get<hardware_interface::JointStateInterface>();
+
+        //limit_switch_intake_ = joint_state_iface->getHandle("limit_switch_intake");
+        //limit_switch_exchange_ = joint_state_iface->getHandle("limit_switch_exchange");
 	
         //read parameters and names
         if (!controller_nh.getParam("position_array", arm_positions_))
@@ -50,12 +54,16 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
             ROS_INFO("Initialized arm_joint");
         }
 
-        arm_joint_.setForwardSoftLimitThreshold(forward_soft_limit);
+        /*arm_joint_.setForwardSoftLimitThreshold(forward_soft_limit);
         arm_joint_.setReverseSoftLimitThreshold(reverse_soft_limit);
         arm_joint_.setForwardSoftLimitEnable(true);
-        arm_joint_.setReverseSoftLimitEnable(true);
+        arm_joint_.setReverseSoftLimitEnable(true);*/
+        arm_joint_.setPIDFSlot(0);
+
+        ROS_INFO_STREAM("arm_joint_.getMotionCruiseVelocity = " << arm_joint_.getMotionCruiseVelocity());
     	
 	arm_state_service_ = controller_nh.advertiseService("arm_state_service", &ArmController::cmdService, this);
+        command_pub_ = controller_nh.advertise<std_msgs::Float64>("arm_command", 1);
 
 	return true;
 }
@@ -77,6 +85,9 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
         {
             double position = arm_positions_[command];
             ROS_INFO_STREAM("arm_joint command = " << position);
+            std_msgs::Float64 msg;
+            msg.data = position;
+            command_pub_.publish(msg);
             arm_joint_.setCommand(position);
         }
         else 
