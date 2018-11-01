@@ -16,14 +16,14 @@ hardware_interface:
        - {name: arm_joint, type: can_talon_srx, can_id: 42}
          #- {name: arm_follower, type: can_talon_srx, can_id: 43}
        - {name: intake_line_break, type: digital_input, dio_channel: 1, invert: true}
-         #- {name: fl_drive, type: can_talon_srx, can_id: 21}
-         # - {name: fl_angle, type: can_talon_srx, can_id: 11}
-         # - {name: fr_drive, type: can_talon_srx, can_id: 22}
-         # - {name: fr_angle, type: can_talon_srx, can_id: 12}
-         # - {name: br_drive, type: can_talon_srx, can_id: 24}
-         # - {name: br_angle, type: can_talon_srx, can_id: 14}
-         # - {name: bl_drive, type: can_talon_srx, can_id: 23}
-         # - {name: bl_angle, type: can_talon_srx, can_id: 13}
+       - {name: fl_drive, type: can_talon_srx, can_id: 21}
+       - {name: fl_angle, type: can_talon_srx, can_id: 11}
+       - {name: fr_drive, type: can_talon_srx, can_id: 22}
+       - {name: fr_angle, type: can_talon_srx, can_id: 12}
+       - {name: br_drive, type: can_talon_srx, can_id: 24}
+       - {name: br_angle, type: can_talon_srx, can_id: 14}
+       - {name: bl_drive, type: can_talon_srx, can_id: 23}
+       - {name: bl_angle, type: can_talon_srx, can_id: 13}
        - {name: joystick_rumble, type: rumble, rumble_port: 0}
 
 # Create controllers for each joint

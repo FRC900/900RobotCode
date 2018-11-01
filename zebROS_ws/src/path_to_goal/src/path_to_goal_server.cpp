@@ -131,7 +131,7 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "path_server");
 	ros::NodeHandle n;
-	PathAction path("path_action", n);
+	PathAction path("path_server", n);
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = 1;

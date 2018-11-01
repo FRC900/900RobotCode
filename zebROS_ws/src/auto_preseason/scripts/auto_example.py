@@ -6,6 +6,7 @@ import smach
 import smach_ros
 from smach_ros import SimpleActionState
 from behaviors.msg import *
+from path_to_goal.msg import *
 
 class Init(smach.State):
     def __init__(self):
@@ -74,13 +75,25 @@ def main():
         smach.StateMachine.add('Exit', Exit(),
                                 transitions={'exit':'exited'})
         #actions!
+        goalPathToExchange = PathActionGoal()
+        goalPathToExchange.goal.goal_index = 2
+        goalPathToExchange.goal.x = 0
+        goalPathToExchange.goal.y = 0
+        goalPathToExchange.goal.rotation = 0
+        goalPathToExchange.goal.time_to_run = 50
         smach.StateMachine.add('PathToExchange', 
-                                SimpleActionState('pathToExchange_as',
-                                            SingleExitAction),
+                                SimpleActionState('path_server',
+                                            PathAction, goal=goalPathToExchange),
                                 transitions={'succeeded':'ScoreCube', 'aborted':'Exit', 'preempted':'Exit'})
+        goalPathToCube = PathActionGoal()
+        goalPathToCube.goal.goal_index = 2
+        goalPathToCube.goal.x = 0
+        goalPathToCube.goal.y = 0
+        goalPathToCube.goal.rotation = 0
+        goalPathToCube.goal.time_to_run = 50
         smach.StateMachine.add('PathToCube', 
-                                SimpleActionState('pathToCube_as',
-                                            DualExitAction),
+                                SimpleActionState('path_server',
+                                            PathAction, goal=goalPathToCube),
                                 transitions={'succeeded':'IntakeCube','aborted':'TestAtCenterC', 'preempted':'Exit'})
         goalArmE = ArmActionGoal()
         goalArmE.goal.arm_position = 2
@@ -110,13 +123,25 @@ def main():
                                 SimpleActionState('pathToCenter_as',
                                             PathToCenterAction,goal=goalPTCE),
                                 transitions={'succeeded':'TurnToExchange','aborted':'PathToExchange', 'preempted':'Exit'})
+        goalTurnCube = PathActionGoal()
+        goalTurnCube.goal.goal_index = 0
+        goalTurnCube.goal.x = 0
+        goalTurnCube.goal.y = 0
+        goalTurnCube.goal.rotation = 90 #essentially snap to angle; rework
+        goalTurnCube.goal.time_to_run = 50
         smach.StateMachine.add('TurnToCube',
                                 SimpleActionState('turnToCube_as',
-                                            DualExitAction),
+                                            PathAction, goal=goalTurnCube),
                                 transitions={'succeeded':'PathToCube', 'aborted':'Party', 'preempted':'Exit'})
+        goalTurnExchange = PathActionGoal()
+        goalTurnExchange.goal.goal_index = 0
+        goalTurnExchange.goal.x = 0
+        goalTurnExchange.goal.y = 0
+        goalTurnExchange.goal.rotation = 90 #essentially snap to angle; rework
+        goalTurnExchange.goal.time_to_run = 50
         smach.StateMachine.add('TurnToExchange',
-                                SimpleActionState('turnToExchange_as',
-                                            SingleExitAction),
+                                SimpleActionState('path_server',
+                                            PathAction, goal=goalTurnExchange),
                                 transitions={'succeeded':'PathToExchange', 'aborted':'Exit', 'preempted':'Exit'})
         #define a goal for ejecting cubes
         goalIntake = IntakeActionGoal()
