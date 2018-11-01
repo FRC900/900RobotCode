@@ -33,6 +33,8 @@ static ros::ServiceClient BrakeSrv;
 std::atomic<double> navX_angle;
 std::atomic<int> arm_position;
 
+int most_recent_arm_command;
+
 // Use a realtime buffer to store the odom callback data
 // The main teleop code isn't technically realtime but we
 // want it to be the fast part of the code, so for now
@@ -58,6 +60,7 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 
         behaviors::ArmGoal arm_goal;
         arm_goal.arm_position = 0;
+        most_recent_arm_command = 0;
         arm_goal.intake_cube = true;
         arm_goal.intake_timeout = 10;
         ac->sendGoal(arm_goal);
@@ -71,6 +74,7 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 
         behaviors::ForearmGoal forearm_goal;
         forearm_goal.position = 1;
+        most_recent_arm_command = 1;
         ac_arm->sendGoal(forearm_goal);
     }
 
@@ -82,6 +86,7 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 
         behaviors::ArmGoal arm_goal;
         arm_goal.arm_position = 2;
+        most_recent_arm_command = 2;
         arm_goal.intake_cube = false;
         arm_goal.intake_timeout = 10;
         ac->sendGoal(arm_goal);
@@ -95,7 +100,7 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 
         static int target_position;
 
-        if ((arm_position.load(std::memory_order_relaxed) == 0) || (arm_position.load(std::memory_order_relaxed) == 1))
+        if(most_recent_arm_command != 2)
             target_position = 2;
         else
             target_position = 0;
