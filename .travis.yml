@@ -13,7 +13,7 @@ install:
 script:
   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
     "cd ~ &&
-     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git &&
+     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git && echo "Clone success."
      cd ./2018Offseason/ &&
      git checkout $TRAVIS_COMMIT &&
      git log -n1 &&
@@ -28,7 +28,7 @@ script:
      echo \"Finished Ubuntu compile.\""
   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
     "cd ~ &&
-     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git &&
+     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git && echo "Clone success."
      cd ./2018Offseason/ &&
      git checkout $TRAVIS_COMMIT &&
      git log -n1 &&
