@@ -15,12 +15,12 @@ swerve_profiler::swerve_profiler(double max_wheel_dist, double max_wheel_mid_acc
 
 	max_wheel_dist_(max_wheel_dist),
 	max_wheel_mid_accel_(max_wheel_mid_accel),
-	max_wheel_brake_accel_(max_wheel_brake_accel),
 	max_wheel_vel_(max_wheel_vel),
 	max_steering_accel_(max_steering_accel),
 	max_steering_vel_(max_steering_vel),
 	dt_(dt),
-	ang_accel_conv_(ang_accel_conv)
+	ang_accel_conv_(ang_accel_conv),
+	max_wheel_brake_accel_(max_wheel_brake_accel)
 
 {
 }
@@ -400,7 +400,7 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 		if(!coerce(current_v, -v_curve_max, v_curve_max) & !coerce(current_v, -v_curve_max_2, v_curve_max_2) & !coerce(current_v, -v_general_max, v_general_max)) //If we need to threshhold, we don't need to iterate using accel
 		{
 			const double max_wheel_orientation_accel = fabs(path.angular_accel * current_v * current_v);
-			const double max_wheel_orientation_vel = fabs(path.angular_velocity * current_v);
+			//const double max_wheel_orientation_vel = fabs(path.angular_velocity * current_v);
 			const double path_induced_a = current_v * current_v / path.radius;
 			double cos_term = cos_term_simple * max_wheel_orientation_accel;
 			double sin_term = sin_term_simple * max_wheel_orientation_accel;
@@ -568,7 +568,7 @@ tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &
 	tk::spline s;
 
 	s.set_points(s_vals, t_vals);
-	for(int i = 0; i < t_vals.size(); i++)
+	for(size_t i = 0; i < t_vals.size(); i++)
 	{
 		ROS_INFO_STREAM("t_val = " << t_vals[i] << " s vals = " << s_vals[i]);
 		//ROS_INFO_STREAM("s_vale = " << s_vals[i] << " s vals = " << s(s_vals[i]));

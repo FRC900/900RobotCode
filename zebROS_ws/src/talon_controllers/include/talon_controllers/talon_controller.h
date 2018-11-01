@@ -219,13 +219,13 @@ class TalonFollowerController:
 // to the Talon
 class TalonLinearPositionCloseLoopController :
 	public TalonCloseLoopController<TalonPositionCloseLoopControllerInterface>
-{	
-	//Used radius	
+{
+	//Used radius
 	private:
 		double radius_;
 	public:
 		TalonLinearPositionCloseLoopController(void) {}
-		
+
 		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n)
 		{
 			// Read params from command line / config file
@@ -234,6 +234,7 @@ class TalonLinearPositionCloseLoopController :
 
 			//radius for length
 			n.getParam("radius", radius_);
+			return true;
 		}
 
 		// Same as TalonClosedLoopController but setCommand
@@ -249,14 +250,14 @@ class TalonLinearPositionCloseLoopController :
 };
 class TalonLinearMotionMagicCloseLoopController :
 	public TalonCloseLoopController<TalonMotionMagicCloseLoopControllerInterface>
-{	
-	//Used radius	
+{
+	//Used radius
 	private:
 		double radius_;
 		double gear_ratio_from_encoder_;
 	public:
 		TalonLinearMotionMagicCloseLoopController(void) {}
-		
+
 		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n)
 		{
 			// Read params from command line / config file
@@ -284,13 +285,13 @@ class TalonLinearMotionMagicCloseLoopController :
 };
 class TalonAnglePositionCloseLoopController :
 	public TalonCloseLoopController<TalonPositionCloseLoopControllerInterface>
-{	
-	//Ratio	
+{
+	//Ratio
 	private:
 		double gear_ratio_from_encoder_;
 	public:
 		TalonAnglePositionCloseLoopController(void) {}
-		
+
 		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n)
 		{
 			// Read params from command line / config file
@@ -315,13 +316,13 @@ class TalonAnglePositionCloseLoopController :
 };
 class TalonAngleMotionMagicCloseLoopController :
 	public TalonCloseLoopController<TalonMotionMagicCloseLoopControllerInterface>
-{	
-	//Used ratio	
+{
+	//Used ratio
 	private:
 		double gear_ratio_from_encoder_;
 	public:
 		TalonAngleMotionMagicCloseLoopController(void) {}
-		
+
 		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n)
 		{
 			// Read params from command line / config file
