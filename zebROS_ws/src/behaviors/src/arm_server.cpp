@@ -64,8 +64,11 @@ class ArmAction
             behaviors::ForearmGoal forearm_goal;
             forearm_goal.position = goal->arm_position;
             af_.sendGoal(forearm_goal);
+	    
+	    //set result
+	    result_.is_true = true; //true is test value
 
-            as_.setSucceeded();
+            as_.setSucceeded(result_);
         }
 };
 
