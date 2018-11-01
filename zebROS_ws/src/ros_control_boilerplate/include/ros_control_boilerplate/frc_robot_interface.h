@@ -122,7 +122,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		// Hardware interfaces
 		hardware_interface::JointStateInterface joint_state_interface_;
 		hardware_interface::TalonStateInterface talon_state_interface_;
-		hardware_interface::PDPStateInterface 	pdp_state_interface_;
+		hardware_interface::PDPStateInterface	pdp_state_interface_;
 
 		hardware_interface::JointCommandInterface  joint_command_interface_;
 		hardware_interface::PositionJointInterface joint_position_interface_;
@@ -135,30 +135,30 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		void custom_profile_thread(int joint_id);
 		void custom_profile_set_talon(hardware_interface::TalonMode mode, double setpoint, double fTerm, int joint_id, int pidSlot, bool zeroPos, double start_run, int &pid_slot);
 
-		// These are overridden in hw_interface to actually 
+		// These are overridden in hw_interface to actually
 		// write to talon HW
-		virtual void customProfileSetMode(int joint_id,
-				 						  hardware_interface::TalonMode mode,
-										  double setpoint,
-										  hardware_interface::DemandType demandtype,
-										  double demandvalue)
+		virtual void customProfileSetMode(int /*joint_id*/,
+										  hardware_interface::TalonMode /*mode*/,
+										  double /*setpoint*/,
+										  hardware_interface::DemandType /*demandtype*/,
+										  double /*demandvalue*/)
 		{
 		}
 
-		virtual void customProfileSetSensorPosition(int joint_id, double position)
+		virtual void customProfileSetSensorPosition(int /*joint_id*/, double /*position*/)
 		{
 		}
-		virtual void customProfileSetPIDF(int    joint_id,
-										  int    pid_slot,
-										  double p,
-										  double i,
-										  double d,
-										  double f,
-										  int    iz,
-										  int    allowable_closed_loop_error,
-										  double max_integral_accumulator,
-										  double closed_loop_peak_output,
-										  int    closed_loop_period)
+		virtual void customProfileSetPIDF(int    /*joint_id*/,
+										  int    /*pid_slot*/,
+										  double /*p*/,
+										  double /*i*/,
+										  double /*d*/,
+										  double /*f*/,
+										  int    /*iz*/,
+										  int    /*allowable_closed_loop_error*/,
+										  double /*max_integral_accumulator*/,
+										  double /*closed_loop_peak_output*/,
+										  int    /*closed_loop_period*/)
 		{
 		}
 

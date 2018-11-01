@@ -14,7 +14,7 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 							ros::NodeHandle			&controller_nh)
 {
 	hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
-	
+
         //read parameters and names
         if (!controller_nh.getParam("position_array", arm_positions_))
         {
@@ -54,7 +54,7 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
         arm_joint_.setReverseSoftLimitThreshold(reverse_soft_limit);
         arm_joint_.setForwardSoftLimitEnable(true);
         arm_joint_.setReverseSoftLimitEnable(true);
-    	
+
 	arm_state_service_ = controller_nh.advertiseService("arm_state_service", &ArmController::cmdService, this);
 
 	return true;
@@ -72,14 +72,14 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
 	// the arm to. Be sure to do bounds checking - make sure you don't index
 	// past the end of the array.  But this will make it very easy
 	// to configure different positions for the arm simply by changing a config file
-        int command = *(service_command_.readFromRT());
+        size_t command = *(service_command_.readFromRT());
         if (command < arm_positions_.size())
         {
             double position = arm_positions_[command];
             ROS_INFO_STREAM("arm_joint command = " << position);
             arm_joint_.setCommand(position);
         }
-        else 
+        else
             ROS_ERROR_STREAM("the command to arm_controller needs to be 0, 1, or 2");
 }
 
