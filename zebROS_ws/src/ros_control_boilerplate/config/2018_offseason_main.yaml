@@ -11,19 +11,19 @@ generic_hw_control_loop:
 hardware_interface:
    joints:
        - {name: intake, type: can_talon_srx, can_id: 41}
-       - {name: intake_follower, type: can_talon_srx, can_id: 33}
+         #- {name: intake_follower, type: can_talon_srx, can_id: 33}
        - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 3, reverse_id: 7} 
-       - {name: arm, type: can_talon_srx, can_id: 42}
-       - {name: arm_follower, type: can_talon_srx, can_id: 43}
+       - {name: arm_joint, type: can_talon_srx, can_id: 42}
+         #- {name: arm_follower, type: can_talon_srx, can_id: 43}
        - {name: intake_line_break, type: digital_input, dio_channel: 1, invert: true}
-       - {name: fl_drive, type: can_talon_srx, can_id: 21}
-       - {name: fl_angle, type: can_talon_srx, can_id: 11}
-       - {name: fr_drive, type: can_talon_srx, can_id: 22}
-       - {name: fr_angle, type: can_talon_srx, can_id: 12}
-       - {name: br_drive, type: can_talon_srx, can_id: 24}
-       - {name: br_angle, type: can_talon_srx, can_id: 14}
-       - {name: bl_drive, type: can_talon_srx, can_id: 23}
-       - {name: bl_angle, type: can_talon_srx, can_id: 13}
+         #- {name: fl_drive, type: can_talon_srx, can_id: 21}
+         # - {name: fl_angle, type: can_talon_srx, can_id: 11}
+         # - {name: fr_drive, type: can_talon_srx, can_id: 22}
+         # - {name: fr_angle, type: can_talon_srx, can_id: 12}
+         # - {name: br_drive, type: can_talon_srx, can_id: 24}
+         # - {name: br_angle, type: can_talon_srx, can_id: 14}
+         # - {name: bl_drive, type: can_talon_srx, can_id: 23}
+         # - {name: bl_angle, type: can_talon_srx, can_id: 13}
        - {name: joystick_rumble, type: rumble, rumble_port: 0}
 
 # Create controllers for each joint
@@ -70,8 +70,9 @@ arm_controller:
     position_array: [00, 10, 20]
     forward_soft_limit: 00
     reverse_soft_limit: 20
-    arm_joint:
-        joint: arm
+    arm_joint: "arm"
+    arm:
+        joint: arm_joint
         motion_cruise_velocity: 3 # wrong
         motion_acceleration: 3 # wrong
 
