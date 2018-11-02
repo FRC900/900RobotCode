@@ -7,9 +7,6 @@ compiler: gcc
 services:
   - docker
 
-before_install:
-  - true
-
 install:
   - travis_wait 45 docker pull frc900/zebros-dev:latest
 
