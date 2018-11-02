@@ -1,5 +1,6 @@
 auto_interpreter_server_intake_params:
     linebreak_debounce_iterations: 5
+    spit_out_time: 1
 teleop_params:
     intake_power: 1
     intake_hold_power: 0.1
