@@ -62,7 +62,7 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
         arm_joint_.setPIDFSlot(0);
 
         ROS_INFO_STREAM("arm_joint_.getMotionCruiseVelocity = " << arm_joint_.getMotionCruiseVelocity());
-    	
+
 	arm_state_service_ = controller_nh.advertiseService("arm_state_service", &ArmController::cmdService, this);
         stop_arm_srv_ = controller_nh.advertiseService("stop_arm_srv", &ArmController::stop_arm_service, this);
         command_pub_ = controller_nh.advertise<std_msgs::Float64>("arm_command", 1);
@@ -82,7 +82,7 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
 	// the arm to. Be sure to do bounds checking - make sure you don't index
 	// past the end of the array.  But this will make it very easy
 	// to configure different positions for the arm simply by changing a config file
-        int command = *(service_command_.readFromRT());
+        size_t command = *(service_command_.readFromRT());
         ROS_INFO_STREAM("arm_joint command = " << command );
         bool stop_arm = *(stop_arm_.readFromRT());
         ROS_INFO_STREAM("stop_arm = " << stop_arm);

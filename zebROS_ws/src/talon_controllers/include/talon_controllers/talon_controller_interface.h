@@ -73,7 +73,7 @@ class TalonCIParams
 			softlimit_forward_enable_(false),
 			softlimit_reverse_threshold_(0.0),
 			softlimit_reverse_enable_(false),
-			softlimits_override_enable_(true),
+			override_limit_switches_enable_(true),
 			current_limit_peak_amps_(0),
 			current_limit_peak_msec_(10), // to avoid errata - see https://github.com/CrossTheRoadElec/Phoenix-Documentation/blob/master/README.md#motor-output-direction-is-incorrect-or-accelerates-when-current-limit-is-enabled and https://github.com/CrossTheRoadElec/Phoenix-Examples-Languages/blob/master/C%2B%2B/Current%20Limit/src/Robot.cpp#L37
 			current_limit_continuous_amps_(0),
@@ -82,9 +82,9 @@ class TalonCIParams
 			motion_acceleration_(0),
 			motion_control_frame_period_(20), // Guess at 50Hz default?
 			motion_profile_trajectory_period_(0),
-			
+
 			conversion_factor_(1.0),
-			
+
 			custom_profile_hz_(20.0)
 		{
 		}
@@ -143,7 +143,7 @@ class TalonCIParams
 			softlimit_forward_enable_ = config.softlimit_forward_enable;
 			softlimit_reverse_threshold_ = config.softlimit_reverse_threshold;
 			softlimit_reverse_enable_ = config.softlimit_reverse_enable;
-			softlimits_override_enable_ = config.softlimits_override_enable;
+			override_limit_switches_enable_ = config.softlimits_override_enable;
 
 			current_limit_peak_amps_ = config.current_limit_peak_amps;
 			current_limit_peak_msec_ = config.current_limit_peak_msec;
@@ -209,7 +209,7 @@ class TalonCIParams
 			config.softlimit_forward_enable = softlimit_forward_enable_;
 			config.softlimit_reverse_threshold = softlimit_reverse_threshold_;
 			config.softlimit_reverse_enable = softlimit_reverse_enable_;
-			config.softlimits_override_enable = softlimits_override_enable_;
+			config.softlimits_override_enable = override_limit_switches_enable_;
 			config.current_limit_peak_amps = current_limit_peak_amps_;
 			config.current_limit_peak_msec = current_limit_peak_msec_;
 			config.current_limit_continuous_amps = current_limit_continuous_amps_;
@@ -447,6 +447,7 @@ class TalonCIParams
 			if (n.getParam("softlimit_reverse_enable", softlimit_reverse_enable_) &&
 				softlimit_reverse_enable_ && (param_count == 0))
 					ROS_WARN("Enabling forward softlimits without setting threshold");
+			n.getParam("override_limit_switches_enable", override_limit_switches_enable_);
 			return true;
 		}
 
@@ -521,7 +522,7 @@ class TalonCIParams
 		bool   softlimit_forward_enable_;
 		double softlimit_reverse_threshold_;
 		bool   softlimit_reverse_enable_;
-		bool   softlimits_override_enable_;
+		bool   override_limit_switches_enable_;
 		int    current_limit_peak_amps_;
 		int    current_limit_peak_msec_;
 		int    current_limit_continuous_amps_;
@@ -530,7 +531,7 @@ class TalonCIParams
 		double motion_acceleration_;
 		int    motion_control_frame_period_;
 		int    motion_profile_trajectory_period_;
-		
+
 		double conversion_factor_;
 
 		double custom_profile_hz_;
@@ -836,9 +837,9 @@ class TalonControllerInterface
 
 		virtual void setOverrideSoftLimitsEnable(bool enable)
 		{
-			if (enable == params_.softlimits_override_enable_)
+			if (enable == params_.override_limit_switches_enable_)
 				return;
-			params_.softlimits_override_enable_ = enable;
+			params_.override_limit_switches_enable_ = enable;
 			syncDynamicReconfigure();
 			talon_->setOverrideSoftLimitsEnable(enable);
 		}
@@ -1257,13 +1258,13 @@ class TalonControllerInterface
 			talon->setVoltageCompensationSaturation(params.voltage_compensation_saturation_);
 			talon->setVoltageMeasurementFilter(params.voltage_measurement_filter_);
 			talon->setVoltageCompensationEnable(params.voltage_compensation_enable_);
-			
+
 			talon->setVelocityMeasurementPeriod(params.velocity_measurement_period_);
 			talon->setVelocityMeasurementWindow(params.velocity_measurement_window_);
 
 			talon->setForwardLimitSwitchSource(params.limit_switch_local_forward_source_, params.limit_switch_local_forward_normal_);
 			talon->setReverseLimitSwitchSource(params.limit_switch_local_reverse_source_, params.limit_switch_local_reverse_normal_);
-			talon->setOverrideSoftLimitsEnable(params.softlimits_override_enable_);
+			talon->setOverrideSoftLimitsEnable(params.override_limit_switches_enable_);
 			talon->setForwardSoftLimitThreshold(params.softlimit_forward_threshold_);
 			talon->setForwardSoftLimitEnable(params.softlimit_forward_enable_);
 			talon->setReverseSoftLimitThreshold(params.softlimit_reverse_threshold_);
