@@ -6,7 +6,7 @@
 #include <behaviors/IntakeAction.h>
 #include <behaviors/ForearmGoal.h>
 #include <behaviors/ForearmAction.h>
-
+/*
 enum ArmPosition
 {
     LOWER_RIGHT,
@@ -15,7 +15,7 @@ enum ArmPosition
     UPPER_LEFT,
     LOWER_LEFT,
 };
-
+*/
 class ArmAction
 {
     protected:

@@ -144,12 +144,14 @@ class IntakeAction {
         }
 
         void cubeCallback(const std_msgs::Bool &msg) {
-            if(msg.data) 
+            if(msg.data) {
                 cube_state_true += 1;
                 cube_state_false = 0;
-            else
+            }
+            else {
                 cube_state_true = 0;
                 cube_state_false += 1;
+            }
 	}
 };
 
