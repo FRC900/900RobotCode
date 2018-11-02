@@ -67,9 +67,11 @@ intake_controller:
     intake_follower_joint: "intake_follower"
     intake:
         joint: intake_joint
+        feedback_type: CTRE_MagEncoder_Absolute
         invert_output: False
     intake_follower:
         joint: intake_follower_joint
+        feedback_type: CTRE_MagEncoder_Absolute
         invert_output: True
     clamp_joint: 
         joint: clamp
@@ -97,6 +99,7 @@ arm_controller:
         current_limit_enable: True
     arm_follower:
         joint: arm_follower_joint
+        feedback_type: CTRE_MagEncoder_Absolute
         invert_output: True
 
 imu_sensor_controller:

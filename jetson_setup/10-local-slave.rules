@@ -1,0 +1,2 @@
+ACTION=="add", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", SYMLINK+="NAVX", MODE="0777"
+ACTION=="add", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="RPLIDAR", MODE="0777"
