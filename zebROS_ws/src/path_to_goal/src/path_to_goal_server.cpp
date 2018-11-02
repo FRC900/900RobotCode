@@ -97,7 +97,7 @@ public:
 
 		swerve_point_generator::FullGenCoefs traj;
 
-		ros::Duration time_to_run = ros::Duration(5); //TODO: make this an actual thing
+		ros::Duration time_to_run = ros::Duration(goal->time_to_run); //TODO: make this an actual thing
 
 		switch(goal->goal_index) {
 		case 0 : //user input data
@@ -148,7 +148,7 @@ public:
 		{
 			if (qr_location.location.size() == 0)
 			{
-				ROS_ERROR_STREAM("NO CUBES FOUND - generateCoefs");
+				ROS_ERROR_STREAM("NO eXCHANGE FOUND - generateCoefs");
 				success = false;
 				break;
 			}
@@ -252,11 +252,6 @@ void cubeCallback(cube_detection::CubeDetection sub_location)
 		cube_location.location[0].z = sub_location.location[0].z;
 		cube_location.angle = sub_location.angle;
 	}
-	else
-	{
-		ROS_ERROR_STREAM("NO CUBES FOUND");
-	}
-
 }
 
 void talonStateCallback(const talon_state_controller::TalonState &talon_state)

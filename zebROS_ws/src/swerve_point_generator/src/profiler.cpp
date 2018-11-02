@@ -200,7 +200,7 @@ const std::vector<double> &end_points, double t_shift, bool flip_dirc)
 			//ROS_INFO_STREAM("num points: " << point_count );
 
 		t_raw2 = spline(i); //Get t value from the cubic spline interpolation of t vs arc length
-		ROS_INFO_STREAM(/*"curr_v: " <<*/ curr_v /*<< " i val: " << i << " t val: " << t_raw2 << " also: " << spline(i)*/);
+		ROS_INFO_STREAM("curr_v: " << curr_v /*<< " i val: " << i << " t val: " << t_raw2 << " also: " << spline(i)*/);
 		//ROS_WARN("even_now");
 		
 		//Compute all the path info

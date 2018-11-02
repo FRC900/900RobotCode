@@ -39,6 +39,8 @@
 
                 <node name="robot_visualize" pkg="robot_visualizer" type="robot_visualize" output="screen" />
                 <node name="profile_follow" pkg="robot_visualizer" type="profile_follow" output="screen" />
+
+                <node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
 		
 		<!-- Convert joint states to /tf tranforms -->
 		<!-- <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/-->
