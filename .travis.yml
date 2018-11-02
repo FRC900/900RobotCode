@@ -13,7 +13,7 @@ install:
 script:
   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
     "cd ~ &&
-        echo "thisisatest" > test.txt &&
+     sudo chown ubuntu:ubuntu 2018Offseason &&
      git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git &&
          echo "Clone success." &&
      cd ./2018Offseason/ &&
