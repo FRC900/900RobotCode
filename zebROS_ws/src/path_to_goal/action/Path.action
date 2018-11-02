@@ -6,5 +6,7 @@ float32 rotation
 float32 time_to_run
 ---
 #result definition
+bool success
+bool timeout
 ---
 #feedback
