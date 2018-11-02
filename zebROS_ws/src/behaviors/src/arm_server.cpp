@@ -65,8 +65,22 @@ class ArmAction
             forearm_goal.position = goal->arm_position;
             af_.sendGoal(forearm_goal);
 	    
-	    //set result
-	    result_.is_true = true; //true is test value
+
+            while(!success && !timed_out && !aborted) {
+                //sucess = ai_.getResult() && af_.getResult();
+                success = intake_goal.
+                if(as_.isPreemptRequested() || !ros::ok()) {
+                    ROS_WARN("%s: Preempted", action_name_.c_str());
+                    as_.setPreempted();
+                    aborted = true;
+                    break;
+                }
+                r.sleep()
+                ros::spinOnce();
+                timed_out = (ros::Time::now().toSec() - startTime) > goal->time_out;
+            }
+            //wait for result
+            result_.is_true = true; //true is test value
 
             as_.setSucceeded(result_);
         }

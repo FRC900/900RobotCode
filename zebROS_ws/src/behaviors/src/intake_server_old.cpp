@@ -105,11 +105,9 @@ class IntakeAction
                         aborted = true;
                         break;
                     }
-                    if (!aborted) {
-                        r.sleep();
-                        ros::spinOnce();
-                        timed_out = (ros::Time::now().toSec()-startTime) > goal->time_out;
-                    }
+                    r.sleep();
+                    ros::spinOnce();
+                    timed_out = (ros::Time::now().toSec()-startTime) > goal->time_out;
                 /*
                 else
                 {
