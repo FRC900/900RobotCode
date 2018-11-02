@@ -9,9 +9,6 @@
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="static_map" default="True"/>
 
-	<!-- Load example URDF 
-	<param name="robot_description" command="$(find xacro)/xacro - -inorder '$(find ros_control_boilerplate)/urdf/base_trajectory.xacro'" />
-	-->
 	<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node> 
 	<group ns="frcrobot">
 
@@ -30,11 +27,8 @@
 
 		<!-- Load controller manager -->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-                    output="screen" args="spawn joint_state_controller talon_state_controller imu_sensor_controller pdp_state_controller rumble_controller robot_code_ready_controller intake_controller arm_controller swerve_drive_controller" /> 
+                    output="screen" args="spawn joint_state_controller talon_state_controller imu_sensor_controller pdp_state_controller rumble_controller robot_code_ready_controller swerve_drive_controller" /> 
 
-                <node name="arm_server_node" pkg="behaviors" type="arm_server_node" output="screen"/>
-                <node name="intake_server_node" pkg="behaviors" type="intake_server_node" output="screen"/>
-                <node name="forearm_server_node" pkg="behaviors" type="forearm_server_node" output="screen"/>
                 <node name="path_to_goal_server" pkg="path_to_goal" type="path_to_goal_server" output="screen"/>
         	
 		<node name="point_gen" pkg="swerve_point_generator" type="point_gen" output="screen" />
@@ -44,11 +38,10 @@
 		</node>
 
                 <node name="robot_visualize" pkg="robot_visualizer" type="robot_visualize" output="screen" />
-                <!-- <node name="profile_follow" pkg="robot_visualizer" type="profile_follow" output="screen" />-->
+                <node name="profile_follow" pkg="robot_visualizer" type="profile_follow" output="screen" />
 		
 		<!-- Convert joint states to /tf tranforms -->
 		<!-- <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/-->
-		<node name="auto_example.py" pkg="auto_preseason" type="auto_example.py" output="screen" />
 	</group>
 
     <group ns="rio">

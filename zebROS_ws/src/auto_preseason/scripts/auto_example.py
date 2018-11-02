@@ -92,7 +92,7 @@ def main():
     with sm:
         #not actions, logic states
         smach.StateMachine.add('Init', Init(), 
-                                transitions={'success':'ScoreCube','failure':'Exit'})
+                                transitions={'success':'TestHasCube','failure':'Exit'})
         smach.StateMachine.add('TestHasCube', TestHasCube(), 
                                 transitions={'testTrue':'TestAtCenterE', 'testFalse':'TestAtCenterC'})
         smach.StateMachine.add('TestCollectedCube', MultipleSuccesses(),
