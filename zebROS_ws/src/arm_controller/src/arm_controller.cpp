@@ -58,11 +58,14 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
         arm_joint_.setReverseSoftLimitThreshold(reverse_soft_limit);
         arm_joint_.setForwardSoftLimitEnable(true);
         arm_joint_.setReverseSoftLimitEnable(true);*/
+        arm_joint_.setPeakOutputForward(1);
+        arm_joint_.setPeakOutputReverse(-1);
         arm_joint_.setPIDFSlot(0);
 
         ROS_INFO_STREAM("arm_joint_.getMotionCruiseVelocity = " << arm_joint_.getMotionCruiseVelocity());
     	
 	arm_state_service_ = controller_nh.advertiseService("arm_state_service", &ArmController::cmdService, this);
+        stop_arm_srv_ = controller_nh.advertiseService("stop_arm_srv", &ArmController::stop_arm_service, this);
         command_pub_ = controller_nh.advertise<std_msgs::Float64>("arm_command", 1);
 
 	return true;
@@ -81,14 +84,31 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
 	// past the end of the array.  But this will make it very easy
 	// to configure different positions for the arm simply by changing a config file
         int command = *(service_command_.readFromRT());
+        ROS_INFO_STREAM("arm_joint command = " << command );
+        bool stop_arm = *(stop_arm_.readFromRT());
+        ROS_INFO_STREAM("stop_arm = " << stop_arm);
+
+        //stop arm
+        if(stop_arm)
+        {
+            arm_joint_.setPeakOutputForward(0);
+            arm_joint_.setPeakOutputReverse(0);
+        }
+        else
+        {
+            arm_joint_.setPeakOutputForward(1);
+            arm_joint_.setPeakOutputReverse(-1);
+        }
+
+        //set to motor
         if (command < arm_positions_.size())
         {
             double position = arm_positions_[command];
-            ROS_INFO_STREAM("arm_joint command = " << position);
-            std_msgs::Float64 msg;
-            msg.data = position;
-            command_pub_.publish(msg);
             arm_joint_.setCommand(position);
+            //pub most recent command
+            std_msgs::Float64 msg;
+            msg.data = command;
+            command_pub_.publish(msg);
         }
         else 
             ROS_ERROR_STREAM("the command to arm_controller needs to be 0, 1, or 2");
@@ -101,6 +121,19 @@ bool ArmController::cmdService(arm_controller::SetArmState::Request &req, arm_co
 	if(isRunning())
 	{
 		service_command_.writeFromNonRT(req.position); //write service request
+	}
+	else
+	{
+		ROS_ERROR_STREAM("Can't accept new commands. ArmController is not running.");
+		return false;
+	}
+	return true;
+}
+
+bool ArmController::stop_arm_service(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res) {
+	if(isRunning())
+	{
+            stop_arm_.writeFromNonRT(req.data);
 	}
 	else
 	{

@@ -13,6 +13,7 @@
 #include <arm_controller/SetArmState.h>
 #include <std_msgs/Float64.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
+#include <std_srvs/SetBool.h>
 
 namespace arm_controller
 { 
@@ -41,13 +42,18 @@ class ArmController : public controller_interface::MultiInterfaceController<hard
 		ros::ServiceServer arm_state_service_;
                 std::vector<double> arm_positions_;
                 ros::Publisher command_pub_;
+                
+                ros::ServiceServer stop_arm_srv_;
 
                 //hardware_interface::JointStateHandle limit_switch_intake_;
                 //hardware_interface::JointStateHandle limit_switch_exchange_;
 
                 realtime_tools::RealtimeBuffer<int> service_command_; //stores most recent request value for the arm angle, in degrees
+                realtime_tools::RealtimeBuffer<bool> stop_arm_;
+
 		//define function that executes the service
 		bool cmdService(arm_controller::SetArmState::Request &req, arm_controller::SetArmState::Response &res);
+                bool stop_arm_service(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
 		
 }; //class
 

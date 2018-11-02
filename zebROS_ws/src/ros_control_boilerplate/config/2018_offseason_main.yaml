@@ -4,26 +4,31 @@ generic_hw_control_loop:
   loop_hz: 23
   cycle_time_error_threshold: 0.01
 
+# 1 is back left
+# 2 is front left
+# 3 is back right
+# 4 is front right
+
 # Settings for ros_control hardware interface
 # Map a name for each valid joint to a CAN id
 # For future expansion, change hw_id to specify one
 # of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
 hardware_interface:
    joints:
-       #- {name: intake, type: can_talon_srx, can_id: 9}
-         #- {name: intake_follower, type: can_talon_srx, can_id: 33}
-         #- {name: clamp, type: double_solenoid, pcm: 0, forward_id: 3, reverse_id: 7} 
-         - {name: arm_joint, type: can_talon_srx, can_id: 9}
-         #- {name: arm_follower, type: can_talon_srx, can_id: 43}
-         #- {name: intake_line_break, type: digital_input, dio_channel: 1, invert: true}
-        #   - {name: fl_drive, type: can_talon_srx, can_id: 21}
-        #   - {name: fl_angle, type: can_talon_srx, can_id: 11}
-        #   - {name: fr_drive, type: can_talon_srx, can_id: 22}
-        #   - {name: fr_angle, type: can_talon_srx, can_id: 12}
-        #   - {name: br_drive, type: can_talon_srx, can_id: 24}
-        #   - {name: br_angle, type: can_talon_srx, can_id: 14}
-        #   - {name: bl_drive, type: can_talon_srx, can_id: 23}
-        #   - {name: bl_angle, type: can_talon_srx, can_id: 13}
+         - {name: intake, type: can_talon_srx, can_id: 41}
+         - {name: intake_follower, type: can_talon_srx, can_id: 42}
+         - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1} 
+         - {name: arm_joint, type: can_talon_srx, can_id: 31}
+         - {name: arm_follower, type: can_talon_srx, can_id: 32}
+         - {name: intake_line_break, type: digital_input, dio_channel: 0, invert: true}
+         - {name: fl_drive, type: can_talon_srx, can_id: 22}
+         - {name: fl_angle, type: can_talon_srx, can_id: 12}
+         - {name: fr_drive, type: can_talon_srx, can_id: 24}
+         - {name: fr_angle, type: can_talon_srx, can_id: 14}
+         - {name: br_drive, type: can_talon_srx, can_id: 23}
+         - {name: br_angle, type: can_talon_srx, can_id: 13}
+         - {name: bl_drive, type: can_talon_srx, can_id: 21}
+         - {name: bl_angle, type: can_talon_srx, can_id: 11}
         # - {name: joystick_rumble, type: rumble, rumble_port: 0}
 
 # Create controllers for each joint
@@ -54,15 +59,15 @@ joint_state_controller:
    type:         joint_state_controller/JointStateController
    publish_rate: 20
 
-# intake_controller:
-#     type: intake_controller/IntakeController
-#     clamp: "clamp_joint"
-#     intake: "intake_joint"
-#     intake_joint:
-#         joint: intake
-#         invert_output: "True"
-#     clamp_joint: 
-#         joint: clamp
+intake_controller:
+    type: intake_controller/IntakeController
+    clamp: "clamp_joint"
+    intake: "intake_joint"
+    intake_joint:
+        joint: intake
+        invert_output: "True"
+    clamp_joint: 
+        joint: clamp
 
 arm_controller:
     type: arm_controller/ArmController
@@ -93,6 +98,6 @@ pdp_state_controller:
    type:         pdp_state_controller/PDPStateController
    publish_rate: 20
 
-# rumble_controller:
-#     type: position_controllers/JointPositionController
-#     joint: joystick_rumble
+rumble_controller:
+    type: position_controllers/JointPositionController
+    joint: joystick_rumble

@@ -64,6 +64,7 @@
   <depend>message_generation</depend>
   <depend>message_runtime</depend>
   <depend>pluginlib</depend>
+  <depend>std_srvs</depend>
   <depend>talon_interface</depend>
   <depend>talon_controllers</depend>
 
