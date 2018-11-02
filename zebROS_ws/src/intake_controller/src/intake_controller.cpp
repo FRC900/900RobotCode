@@ -18,7 +18,7 @@ bool IntakeController::init(hardware_interface::RobotHW *hw,
 
     //read intake name from config file
     XmlRpc::XmlRpcValue intake_params;
-    if (!controller_nh.getParam("intake", intake_params))
+    if (!controller_nh.getParam("intake_joint", intake_params))
     {
         ROS_ERROR_STREAM("Can not read intake name");
         return false;
