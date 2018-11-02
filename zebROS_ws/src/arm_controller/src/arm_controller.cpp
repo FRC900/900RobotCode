@@ -18,7 +18,6 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 
         //limit_switch_intake_ = joint_state_iface->getHandle("limit_switch_intake");
         //limit_switch_exchange_ = joint_state_iface->getHandle("limit_switch_exchange");
-	
         //read parameters and names
         if (!controller_nh.getParam("position_array", arm_positions_))
         {
@@ -57,6 +56,7 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
         /*arm_joint_.setForwardSoftLimitThreshold(forward_soft_limit);
         arm_joint_.setReverseSoftLimitThreshold(reverse_soft_limit);
         arm_joint_.setForwardSoftLimitEnable(true);
+<<<<<<< HEAD
         arm_joint_.setReverseSoftLimitEnable(true);*/
         arm_joint_.setPeakOutputForward(1);
         arm_joint_.setPeakOutputReverse(-1);
@@ -64,6 +64,10 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 
         ROS_INFO_STREAM("arm_joint_.getMotionCruiseVelocity = " << arm_joint_.getMotionCruiseVelocity());
     	
+=======
+        arm_joint_.setReverseSoftLimitEnable(true);
+
+>>>>>>> 6e8082d0bd6bd19339741bfd87bb9071602e0602
 	arm_state_service_ = controller_nh.advertiseService("arm_state_service", &ArmController::cmdService, this);
         stop_arm_srv_ = controller_nh.advertiseService("stop_arm_srv", &ArmController::stop_arm_service, this);
         command_pub_ = controller_nh.advertise<std_msgs::Float64>("arm_command", 1);
@@ -83,6 +87,7 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
 	// the arm to. Be sure to do bounds checking - make sure you don't index
 	// past the end of the array.  But this will make it very easy
 	// to configure different positions for the arm simply by changing a config file
+<<<<<<< HEAD
         int command = *(service_command_.readFromRT());
         ROS_INFO_STREAM("arm_joint command = " << command );
         bool stop_arm = *(stop_arm_.readFromRT());
@@ -101,6 +106,9 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
         }
 
         //set to motor
+=======
+        size_t command = *(service_command_.readFromRT());
+>>>>>>> 6e8082d0bd6bd19339741bfd87bb9071602e0602
         if (command < arm_positions_.size())
         {
             double position = arm_positions_[command];
@@ -110,7 +118,7 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
             msg.data = command;
             command_pub_.publish(msg);
         }
-        else 
+        else
             ROS_ERROR_STREAM("the command to arm_controller needs to be 0, 1, or 2");
 }
 

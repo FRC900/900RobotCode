@@ -177,7 +177,7 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 			continue;
 		} else {
 			
-			putText(drawing, to_string(contourDepth[i]), Point(boundRect[i].x, boundRect[i].y 		- 15), FONT_HERSHEY_SIMPLEX, 0.45, (0,0,255), 1);
+			putText(drawing, to_string(contourDepth[i]), Point(boundRect[i].x, boundRect[i].y 		- 15), FONT_HERSHEY_SIMPLEX, 0.45, Scalar(0,0,255), 1);
 			drawContours(drawing, contours,i,color,2,8,rank,0,Point());
 			rectangle(drawing, boundRect[i].tl(), boundRect[i].br(), rect_color, 2, 8, 0);
 			const Point3f world_location = objType.screenToWorldCoords(boundRect[i], contourDepth[i], fov, framePtr->size(), camera_elevation);
