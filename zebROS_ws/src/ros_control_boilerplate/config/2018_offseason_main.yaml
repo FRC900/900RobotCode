@@ -63,27 +63,27 @@ joint_state_controller:
 intake_controller:
     type: intake_controller/IntakeController
     clamp: "clamp_joint"
-    intake_joint: "intake"
-    intake_follower_joint: "intake_follower"
+    intake_joint: ["intake", "intake_follower"]
     intake:
         joint: intake_joint
+        type: talon_controllers/TalonPercentOutputController
         feedback_type: CTRE_MagEncoder_Absolute
         invert_output: False
     intake_follower:
         joint: intake_follower_joint
+        type: talon_controllers/TalonFollowerController
+        follow_joint: intake_joint
         feedback_type: CTRE_MagEncoder_Absolute
-        invert_output: True
+        invert_output: False
     clamp_joint: 
         joint: clamp
 
 arm_controller:
     type: arm_controller/ArmController
-    arm: "arm_joint"
-    position_array: [-3.25512, -1.78401, -0.17947]
+    arm_joint: ["arm", "arm_follower"]
+    position_array: [0.024, 0.11068, 0.199]
     forward_soft_limit: 0.0
-    reverse_soft_limit: -3.4
-    arm_joint: "arm"
-    arm_follower_joint: "arm_follower"
+    reverse_soft_limit: 0.223
     arm:
         joint: arm_joint
         motion_cruise_velocity: 3 # wrong
