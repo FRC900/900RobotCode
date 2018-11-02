@@ -14,9 +14,9 @@ script:
   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
     "cd ~ &&
      sudo chown ubuntu:ubuntu 2018Offseason &&
-     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git &&
+     cd ~/2018Offseason &&
+     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git . &&
          echo "Clone success." &&
-     cd ./2018Offseason/ &&
      git checkout $TRAVIS_COMMIT &&
          echo "git checkout" &&
      git log -n1 &&
