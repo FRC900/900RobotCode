@@ -2,13 +2,13 @@
 #include "actionlib/server/simple_action_server.h"
 #include "behaviors/IntakeAction.h"
 #include "intake_controller/IntakeSrv.h"
-#include "std_msgs/Bool.h"
+#include "sensor_msgs/JointState.h"
 #include <atomic>
 #include <ros/console.h>
 
 double intake_power;
 double intake_hold_power;
-double linebreak_debounce_iterations; 
+double linebreak_debounce_iterations;
 double spit_out_time;
 
 class IntakeAction {
@@ -33,8 +33,8 @@ class IntakeAction {
             as_.start();
             std::map<std::string, std::string> service_connection_header;
             service_connection_header["tcp_nodelay"] = "1";
-            intake_srv_ = nh_.serviceClient<intake_controller::IntakeSrv>("/frcrobot/intake_controller/intake_command", false, service_connection_header); 
-            cube_state_ = nh_.subscribe("/frcrobot/intake_controller/cube_state", 1, &IntakeAction::cubeCallback, this); 
+            intake_srv_ = nh_.serviceClient<intake_controller::IntakeSrv>("/frcrobot/intake_controller/intake_command", false, service_connection_header);
+            cube_state_ = nh_.subscribe("/frcrobot/joint_states", 1, &IntakeAction::jointStateCallback, this);
             //proceed_ = nh_.subscribe("/frcrobot/auto_interpreter_server/proceed", 1, &IntakeAction::proceedCallback, this);
 	}
 
@@ -143,22 +143,45 @@ class IntakeAction {
             return;
         }
 
-        void cubeCallback(const std_msgs::Bool &msg) {
-            if(msg.data) {
-                cube_state_true += 1;
-                cube_state_false = 0;
-            }
-            else {
-                cube_state_true = 0;
-                cube_state_false += 1;
-            }
-	}
+		// Grab various info from hw_interface using
+		// dummy joint position values
+		void jointStateCallback(const sensor_msgs::JointState &joint_state)
+		{
+			static size_t cube_idx = std::numeric_limits<size_t>::max();
+			if ((cube_idx >= joint_state.name.size()))
+			{
+				for (size_t i = 0; i < joint_state.name.size(); i++)
+				{
+					if (joint_state.name[i] == "intake_line_break")
+						cube_idx = i;
+				}
+			}
+			if (cube_idx < joint_state.position.size())
+			{
+				bool cube_state = (joint_state.position[cube_idx] != 0);
+				if(cube_state)
+				{
+					cube_state_true += 1;
+					cube_state_false = 0;
+				}
+				else
+				{
+					cube_state_true = 0;
+					cube_state_false += 1;
+				}
+			}
+			else
+			{
+				cube_state_true = 0;
+				cube_state_false += 1;
+			}
+		}
 };
 
 int main(int argc, char** argv) {
     ros::init(argc, argv, "intake_server");
     IntakeAction intake_action("intake_server");
-    
+
     ros::NodeHandle n;
     ros::NodeHandle n_params(n, "teleop_params");
     ros::NodeHandle n_auto_interpreter_server_intake_params(n, "auto_interpreter_server_intake_params");
