@@ -27,7 +27,7 @@ std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> ac_intak
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ForearmAction>> ac_arm;
 
 static ros::Publisher JoystickRobotVel;
-static ros::Publisher JoystickRumble;
+//static ros::Publisher JoystickRumble;
 static ros::ServiceClient BrakeSrv;
 
 std::atomic<double> navX_angle;
@@ -42,6 +42,17 @@ realtime_tools::RealtimeBuffer<double> most_recent_arm_command;
 /*realtime_tools::RealtimeBuffer<ElevatorPos> elevatorPos;
 realtime_tools::RealtimeBuffer<CubeState> cubeState;
 realtime_tools::RealtimeBuffer<ElevatorPos> elevatorCmd;*/
+void navXCallback(const sensor_msgs::Imu &navXState)
+{
+    const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
+    double roll;
+    double pitch;
+    double yaw; 
+    tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
+
+    if (yaw == yaw) // ignore NaN results
+        navX_angle.store(yaw, std::memory_order_relaxed);
+}
 
 
 void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &JoystickState)
@@ -228,14 +239,15 @@ int main(int argc, char **argv)
 	ros::Subscriber joystick_sub  = n.subscribe("joystick_states", 1, &evaluateCommands);
 	//ros::Subscriber joint_states_sub = n.subscribe("/frcrobot/joint_states", 1, &jointStateCallback);
 	ros::Subscriber talon_states_sub = n.subscribe("/frcrobot/talon_states", 1, &talonStateCallback);
-	//ros::Subscriber match_data    = n.subscribe("match_data", 1, &match_data_callback);
-        ros::Subscriber most_recent_command_sub = n.subscribe("/frcrobot/arm_controller/arm_command", 1, &most_recent_command_cb);
+    ros::Subscriber most_recent_command_sub = n.subscribe("/frcrobot/arm_controller/arm_command", 1, &most_recent_command_cb);
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
-	JoystickRumble = n.advertise<std_msgs::Float64>("rumble_controller/command", 1);
+	//JoystickRumble = n.advertise<std_msgs::Float64>("rumble_controller/command", 1);
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot/swerve_drive_controller/brake", false, service_connection_header);
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("/frcrobot/swerve_drive_controller/cmd_vel", 1);
+    ros::Subscriber navX_heading  = n.subscribe("/frcrobot/navx_mxp", 1, &navXCallback);
+    
 
 	/*//JoystickTestVel = n.advertise<std_msgs::Header>("test_header", 3);
 	JoystickElevatorPos = n.advertise<elevator_controller::ElevatorControl>("/frcrobot/elevator_controller/cmd_pos", 1);
