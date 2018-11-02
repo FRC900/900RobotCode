@@ -64,7 +64,7 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
      * a = toggle arm position between right and left
      */
 /*-------------------------- press x for intake until line break sensor ------------------------*/
-    if (JoystickState->buttonXButton) {
+    if (JoystickState->buttonXPress) {
         ac->cancelAllGoals();
         ac_intake->cancelAllGoals();
         ac_arm->cancelAllGoals();
@@ -77,7 +77,7 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
     }
 
 /*-------------------------- press y for starting position ------------------------*/
-    if (JoystickState->buttonYButton) {
+    if (JoystickState->buttonYPress) {
         ac->cancelAllGoals();
         ac_intake->cancelAllGoals();
         ac_arm->cancelAllGoals();
@@ -87,8 +87,8 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
         ac_arm->sendGoal(forearm_goal);
     }
 
-/*-------------------------- press b for spit out cube ------------------------*/
-    if (JoystickState->buttonBButton) {
+/*-------------------------- press b to exchange cube ------------------------*/
+    if (JoystickState->buttonBPress) {
         ac->cancelAllGoals();
         ac_intake->cancelAllGoals();
         ac_arm->cancelAllGoals();
@@ -118,6 +118,23 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
         ac_arm->sendGoal(forearm_goal);
     }
 
+/*-------------------------- press direction right press for toggle arm position ------------------------*/
+    if (JoystickState->directionRightPress) {
+        ac->cancelAllGoals();
+        ac_intake->cancelAllGoals();
+        ac_arm->cancelAllGoals();
+
+        static int target_position;
+
+        if(*(most_recent_arm_command.readFromRT()) != 2)
+            target_position = 2;
+        else
+            target_position = 0;
+
+        behaviors::ForearmGoal forearm_goal;
+        forearm_goal.position = target_position;
+        ac_arm->sendGoal(forearm_goal);
+    }
 ///////////////////// Drivetrain and Elevator Control \\\\\\\\\\\\\\\\\\\
 
 	double leftStickX = JoystickState->leftStickX;

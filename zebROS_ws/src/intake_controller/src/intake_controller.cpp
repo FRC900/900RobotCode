@@ -44,7 +44,7 @@ void IntakeController::starting(const ros::Time &/*time*/) {
 
 void IntakeController::update(const ros::Time &time, const ros::Duration &period) {
     std_msgs::Bool cube_msg;
-    cube_msg.data = true; //(line_break_intake_.getPosition() != 0);
+    cube_msg.data = (line_break_intake_.getPosition() != 0);
     cube_state_pub.publish(cube_msg); //make this a joint as well?
 
     double spin_command = *(spin_command_.readFromRT());

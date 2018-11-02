@@ -6,9 +6,10 @@
 #include <atomic>
 #include <ros/console.h>
 
-static double intake_power;
-static double intake_hold_power;
+double intake_power;
+double intake_hold_power;
 double linebreak_debounce_iterations; 
+double spit_out_time;
 
 class IntakeAction {
     protected:
@@ -18,6 +19,7 @@ class IntakeAction {
         std::string action_name_;
         ros::ServiceClient intake_srv_;
 	std::atomic<int> cube_state_true;
+	std::atomic<int> cube_state_false;
 	behaviors::IntakeResult result_;
 	ros::Subscriber cube_state_;
 	ros::Subscriber proceed_;
@@ -70,14 +72,14 @@ class IntakeAction {
                     }
                 }
 
-                srv.request.power = success ? 0.15 : 0;
+                srv.request.power = 0;
                 srv.request.intake_in = true; //soft in
                 if(!intake_srv_.call(srv)) 
                     ROS_ERROR("Srv intake call failed in auto interpreter server intake");
             }
             else
             {
-                cube_state_true = 0;
+                cube_state_false = 0;
                 intake_controller::IntakeSrv srv;
                 srv.request.power = -1;
                 srv.request.intake_in = true; //soft in
@@ -87,16 +89,30 @@ class IntakeAction {
 
                 bool success = false;
                 while(!success && !timed_out && !aborted) {
-                    success = cube_state_true > linebreak_debounce_iterations;
-                    if(as_.isPreemptRequested())
-                        ROS_WARN("preempt requested");
-                    if (!ros::ok())
-                        ROS_WARN("ROS is not okay");
-                        /*ROS_WARN("%s: Preempted", action_name_.c_str());
+                    success = cube_state_false > linebreak_debounce_iterations;
+
+                    if(as_.isPreemptRequested() || !ros::ok()) {
+                        ROS_WARN("%s: Preempted", action_name_.c_str());
                         as_.setPreempted();
                         aborted = true;
                         return;
-                    }*/
+                    }
+                    if (!aborted) {
+                        r.sleep();
+                        ros::spinOnce();
+                        timed_out = (ros::Time::now().toSec()-startTime) > goal->intake_timeout;
+                    }
+                }
+                //wait another config time before stopping motors to ensure cube is out
+                while(!success && !timed_out && !aborted) {
+                    success = cube_state_false > linebreak_debounce_iterations;
+
+                    if(as_.isPreemptRequested() || !ros::ok()) {
+                        ROS_WARN("%s: Preempted", action_name_.c_str());
+                        as_.setPreempted();
+                        aborted = true;
+                        return;
+                    }
                     if (!aborted) {
                         r.sleep();
                         ros::spinOnce();
@@ -104,7 +120,7 @@ class IntakeAction {
                     }
                 }
 
-                srv.request.power = success ? 0.15 : 0;
+                srv.request.power = 0;
                 srv.request.intake_in = true; //soft in
                 if(!intake_srv_.call(srv)) 
                     ROS_ERROR("Srv intake call failed in auto interpreter server intake");
@@ -130,8 +146,10 @@ class IntakeAction {
         void cubeCallback(const std_msgs::Bool &msg) {
             if(msg.data) 
                 cube_state_true += 1;
+                cube_state_false = 0;
             else
                 cube_state_true = 0;
+                cube_state_false += 1;
 	}
 };
 
@@ -151,6 +169,8 @@ int main(int argc, char** argv) {
 
     if (!n_auto_interpreter_server_intake_params.getParam("linebreak_debounce_iterations", linebreak_debounce_iterations))
 		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
+    if (!n_auto_interpreter_server_intake_params.getParam("spit_out_time", spit_out_time))
+		ROS_ERROR("Could not read spit_out_time in intake_sever");
     ros::spin();
     return 0;
 }
