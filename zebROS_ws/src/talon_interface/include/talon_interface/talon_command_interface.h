@@ -945,13 +945,13 @@ class TalonHWCommand
 					(normal != limit_switch_local_forward_normal_))
 			{
 				if ((source <= LimitSwitchSource_Uninitialized) ||
-						(source >= LimitSwitchSource_Last))
+					(source >= LimitSwitchSource_Last))
 				{
 					ROS_WARN("Invalid source in setForwardLimitSwitchSource");
 					return;
 				}
 				if ((normal <= LimitSwitchNormal_Uninitialized) ||
-						(normal >= LimitSwitchNormal_Last))
+					(normal >= LimitSwitchNormal_Last))
 				{
 					ROS_WARN("Invalid normal in setForwardLimitSwitchSource");
 					return;
