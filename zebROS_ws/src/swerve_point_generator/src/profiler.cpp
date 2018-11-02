@@ -676,6 +676,8 @@ const std::vector<double> &arc_length_by_spline, const double t, const double ar
 	{
 		holder_point.radius = 10000000000000000;
 	}
+	// Later math dies if radius is too large, FP overflow?
+	holder_point.radius = std::min(holder_point.radius, 10000000000000000.);
 
 	if (fabs(holder_point.pos[0]) > 100 || fabs(holder_point.pos[1]) > 100)
 	{
