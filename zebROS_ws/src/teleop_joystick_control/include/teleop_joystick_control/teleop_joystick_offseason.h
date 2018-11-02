@@ -31,7 +31,7 @@
 #include <behaviors/IntakeAction.h>
 
 void rumbleTypeConverterPublish(uint16_t leftRumble, uint16_t rightRumble);
-void arm_position_callback(const std_msgs::Float64 &msg);
+void most_recent_command_cb(const std_msgs::Float64 &msg);
 void navXCallback(const sensor_msgs::Imu &navXState);
 void cubeCallback(const elevator_controller::CubeState &cube);
 void jointStateCallback(const sensor_msgs::JointState &joint_state);

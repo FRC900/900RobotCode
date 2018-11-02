@@ -15,12 +15,6 @@ generic_hw_control_loop:
 # of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
 hardware_interface:
    joints:
-         - {name: intake, type: can_talon_srx, can_id: 41}
-         - {name: intake_follower, type: can_talon_srx, can_id: 42}
-         - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1} 
-         - {name: arm_joint, type: can_talon_srx, can_id: 31}
-         - {name: arm_follower, type: can_talon_srx, can_id: 32}
-         - {name: intake_line_break, type: digital_input, dio_channel: 0, invert: true}
          - {name: fl_drive, type: can_talon_srx, can_id: 22}
          - {name: fl_angle, type: can_talon_srx, can_id: 12}
          - {name: fr_drive, type: can_talon_srx, can_id: 24}
@@ -29,8 +23,6 @@ hardware_interface:
          - {name: br_angle, type: can_talon_srx, can_id: 13}
          - {name: bl_drive, type: can_talon_srx, can_id: 21}
          - {name: bl_angle, type: can_talon_srx, can_id: 11}
-       # - {name: joystick_rumble, type: rumble, rumble_port: 0}
-         - {name: navx_mxp, type: navX, frame_id: navx, id: 0}
 
 # Create controllers for each joint
 #
@@ -60,37 +52,6 @@ joint_state_controller:
    type:         joint_state_controller/JointStateController
    publish_rate: 20
 
-intake_controller:
-    type: intake_controller/IntakeController
-    clamp: "clamp_joint"
-    intake: "intake_joint"
-    intake_joint:
-        joint: intake
-        invert_output: "True"
-    clamp_joint: 
-        joint: clamp
-
-arm_controller:
-    type: arm_controller/ArmController
-    arm: "arm_joint"
-    position_array: [-3.25512, -1.78401, -0.17947]
-    forward_soft_limit: 0.0
-    reverse_soft_limit: -3.4
-    arm_joint: "arm"
-    arm:
-        joint: arm_joint
-        motion_cruise_velocity: 3 # wrong
-        motion_acceleration: 3 # wrong
-        close_loop_values:
-            - {p: .4, i: 0.0005, d: 0.2, f: 0.1669, i_zone: 750, closed_loop_peak_output: .5}
-            - {p: .5, i: 0.0005, d: 7.5, f: 0.0235389351901052, i_zone: 750, closed_loop_peak_output: 1.0}
-        invert_output: False
-        sensor_phase: False
-        feedback_type: CTRE_MagEncoder_Absolute
-        conversion_factor: 0.0454676
-        current_limit_continuous_amps: 15
-        current_limit_enable: True
-
 imu_sensor_controller:
    type:         imu_sensor_controller/ImuSensorController
    publish_rate: 20
@@ -98,7 +59,3 @@ imu_sensor_controller:
 pdp_state_controller:
    type:         pdp_state_controller/PDPStateController
    publish_rate: 20
-
-rumble_controller:
-    type: position_controllers/JointPositionController
-    joint: joystick_rumble

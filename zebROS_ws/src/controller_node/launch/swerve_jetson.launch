@@ -19,9 +19,9 @@
 	<group ns="frcrobot">
 
 		<!-- Load controller settings -->
-		<rosparam file="$(find ros_control_boilerplate)/config/2018_offseason_main.yaml" command="load"/>
-                <rosparam file="$(find ros_control_boilerplate)/config/talon_swerve_offsets.yaml" command="load"/> <!-- not updated to offseason-->
-		<rosparam file="$(find ros_control_boilerplate)/config/2018_swerve_drive.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/swerve_test.yaml" command="load"/>
+                <rosparam file="$(find ros_control_boilerplate)/config/talon_swerve_offsets_new_1.yaml" command="load"/> <!-- not updated to offseason-->
+		<rosparam file="$(find ros_control_boilerplate)/config/2018_offseason_swerve.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller.yaml" command="load"/>
                 <rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
                 <rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
@@ -33,7 +33,7 @@
 
 		<!-- Load controller manager -->
 		<node machine="roboRIO" name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-                    output="screen" args="spawn joint_state_controller talon_state_controller imu_sensor_controller pdp_state_controller rumble_controller robot_code_ready_controller intake_controller arm_controller" /> <!--swerve_drive_controller-->
+                    output="screen" args="spawn joint_state_controller talon_state_controller imu_sensor_controller pdp_state_controller robot_code_ready_controller arm_controller swerve_drive_controller intake_controller rumble_controller" />
 
 		<node name="teleop_joystick_offseason" pkg="teleop_joystick_control" type="teleop_joystick_offseason" output="screen" />
                 <node name="arm_server_node" pkg="behaviors" type="arm_server_node" output="screen"/>

@@ -33,7 +33,7 @@ static ros::ServiceClient BrakeSrv;
 std::atomic<double> navX_angle;
 std::atomic<int> arm_position;
 
-int most_recent_arm_command;
+realtime_tools::RealtimeBuffer<double> most_recent_arm_command;
 
 // Use a realtime buffer to store the odom callback data
 // The main teleop code isn't technically realtime but we
@@ -60,7 +60,6 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 
         behaviors::ArmGoal arm_goal;
         arm_goal.arm_position = 0;
-        most_recent_arm_command = 0;
         arm_goal.intake_cube = true;
         arm_goal.intake_timeout = 10;
         ac->sendGoal(arm_goal);
@@ -74,7 +73,6 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 
         behaviors::ForearmGoal forearm_goal;
         forearm_goal.position = 1;
-        most_recent_arm_command = 1;
         ac_arm->sendGoal(forearm_goal);
     }
 
@@ -86,7 +84,6 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 
         behaviors::ArmGoal arm_goal;
         arm_goal.arm_position = 2;
-        most_recent_arm_command = 2;
         arm_goal.intake_cube = false;
         arm_goal.intake_timeout = 10;
         ac->sendGoal(arm_goal);
@@ -100,7 +97,7 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 
         static int target_position;
 
-        if(most_recent_arm_command != 2)
+        if(*(most_recent_arm_command.readFromRT()) != 2)
             target_position = 2;
         else
             target_position = 0;
@@ -230,9 +227,9 @@ int main(int argc, char **argv)
 
 	ros::Subscriber joystick_sub  = n.subscribe("joystick_states", 1, &evaluateCommands);
 	//ros::Subscriber joint_states_sub = n.subscribe("/frcrobot/joint_states", 1, &jointStateCallback);
-	//ros::Subscriber talon_states_sub = n.subscribe("/frcrobot/talon_states", 1, &talonStateCallback);
+	ros::Subscriber talon_states_sub = n.subscribe("/frcrobot/talon_states", 1, &talonStateCallback);
 	//ros::Subscriber match_data    = n.subscribe("match_data", 1, &match_data_callback);
-        ros::Subscriber arm_position_sub = n.subscribe("/frcrobot/arm_controller/arm_odom", 1, &arm_position_callback);
+        ros::Subscriber most_recent_command_sub = n.subscribe("/frcrobot/arm_controller/arm_command", 1, &most_recent_command_cb);
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
@@ -265,10 +262,6 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-void arm_position_callback(const std_msgs::Float64 &msg)
-{
-    arm_position.store(msg.data);
-}
 
 /*void rumbleTypeConverterPublish(uint16_t leftRumble, uint16_t rightRumble)
 {
@@ -354,25 +347,28 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 		clamped_c.store(joint_state.position[clamp_idx] <= 0, std::memory_order_relaxed);
 	if (override_arm_limits_idx < joint_state.position.size())
 		disableArmLimits.store(joint_state.position[override_arm_limits_idx], std::memory_order_relaxed);
-}
+}*/
 
 void talonStateCallback(const talon_state_controller::TalonState &talon_state)
 {
-	// TODO : This shouldn't be hard-coded
-	static size_t bl_angle_idx = std::numeric_limits<size_t>::max();
+	static size_t arm_joint_idx = std::numeric_limits<size_t>::max();
 
-	if (bl_angle_idx >= talon_state.name.size())
+	if (arm_joint_idx >= talon_state.name.size())
 	{
 		for (size_t i = 0; i < talon_state.name.size(); i++)
 		{
-			if (talon_state.name[i] == "bl_angle")
+			if (talon_state.name[i] == "arm_joint")
 			{
-				bl_angle_idx = i;
+				arm_joint_idx = i;
 				break;
 			}
 		}
 	}
 
-	if (bl_angle_idx < talon_state.custom_profile_status.size())
-		outOfPoints.store(talon_state.custom_profile_status[bl_angle_idx].outOfPoints, std::memory_order_relaxed);
-}*/
+        arm_position.store(talon_state.position[arm_joint_idx], std::memory_order_relaxed);
+}
+
+void most_recent_command_cb(const std_msgs::Float64 &msg)
+{
+    most_recent_arm_command.writeFromNonRT(msg.data);
+}
