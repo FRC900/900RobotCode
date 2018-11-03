@@ -89,11 +89,18 @@ check_clockdiff() {
     #    echo "Could not parse clockdiff output!"
     #    exit 1
     #fi
+    #echo "10"
     LOCALDATE=`date +%s`
+    echo "local date = $LOCALDATE"
     REMOTEDATE=`ssh $1 date +%s`
-    let TIMEDIFF=$LOCALDATE-$REMOTEDATE
+    echo "remote date = $REMOTEDATE"
+    let TIMEDIFF=$LOCALDATE-$REMOTEDATE #fails on this line
+    echo "TIMEDIFF = $TIMEDIFF"
     TIMEDIFF=${TIMEDIFF#-}
+    echo "TIMEDIFF2 = $TIMEDIFF"
+    echo "30"
     if [[ $TIMEDIFF -ge 600 ]]; then
+        echo "40"
         REMOTE_TIME=`ssh $1 date`
         echo "Clock difference greater than 10 minutes."
         echo "    Local time: `date`"
@@ -102,15 +109,19 @@ check_clockdiff() {
     fi
 }
 
+echo "going oing"
 update_links
 if [ $UPDATE_LINKS_ONLY -ne 0 ]; then
     exit 0
 fi
 
 echo "Checking time synchronization..."
-check_clockdiff "$ROBORIO_ADDR" "roboRIO"
+# check_clockdiff "$ROBORIO_ADDR" "roboRIO"
+#echo "1"
 check_clockdiff "$JETSON_ADDR" "Jetson"
+#echo "2"
 check_clockdiff "$JETSON_ADDR2" "Jetson"
+echo "3"
 echo "Time synchronized."
 
 # Bidirectional synchronization of the selected environment.
