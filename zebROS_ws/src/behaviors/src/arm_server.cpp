@@ -87,6 +87,7 @@ class ArmAction
             if(!forearm_result.success) {
                 result_.success = false;
                 as_.setAborted(result_);
+                ROS_ERROR("Forearm actionlib did not succeed in arm_server. ABORTING!");
                 return;
             }
             
@@ -109,7 +110,9 @@ class ArmAction
             if(intake_result.success) {
                 result_.success = true;
                 as_.setSucceeded(result_);
+                ROS_WARN("arm_server succeeded!!");
             }
+        ROS_WARN("arm_server exiting!");
         return;
       }
 };

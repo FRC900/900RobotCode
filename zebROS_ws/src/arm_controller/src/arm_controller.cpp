@@ -133,7 +133,7 @@ bool ArmController::cmdService(arm_controller::SetArmState::Request &req, arm_co
 
 bool ArmController::arm_cur_command_service(arm_controller::CurArmCommand::Request &req, arm_controller::CurArmCommand::Response &res) {
     size_t cur_command = *(service_command_.readFromRT());
-    if (command < arm_positions_.size())
+    if (cur_command < arm_positions_.size())
     {
         double position = arm_positions_[command];
         res.cur_command = position;
