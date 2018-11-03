@@ -19,6 +19,7 @@ enum ArmPosition
 
 double intake_timeout;
 double arm_timeout;
+double arm_angle_deadzone;
 
 class ArmAction
 {
@@ -124,10 +125,19 @@ int main(int argc, char** argv)
   ros::NodeHandle n;
   ros::NodeHandle n_params(n, "actionlib_arm_params");
 
-  if(!n_params.getParam("intake_timeout", intake_timeout));
+
+  ros::NodeHandle n_params_fake(n, "actionlib_forearm_params");
+  if(!n_params_fake.getParam("arm_angle_deadzone", arm_angle_deadzone))
+    ROS_ERROR("Could not read arm_angle_deadzone in forearm_server");
+
+  /*
+  if(!n_params_fake.getParam("help_me", intake_timeout));
     ROS_ERROR("Could not read intake_timeout in arm_server");
-  if(!n_params.getParam("forearm_timeout", arm_timeout));
+  if(!n_params_fake.getParam("help_me2", arm_timeout));
     ROS_ERROR("Could not read arm_timeout in arm_server");
+  */
+  intake_timeout = 5;
+  arm_timeout = 4;
   ArmAction arm_server("arm_server");
   ros::spin();
 
