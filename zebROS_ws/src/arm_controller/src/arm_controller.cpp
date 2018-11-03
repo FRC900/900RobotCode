@@ -135,7 +135,7 @@ bool ArmController::arm_cur_command_service(arm_controller::CurArmCommand::Reque
     size_t cur_command = *(service_command_.readFromRT());
     if (cur_command < arm_positions_.size())
     {
-        double position = arm_positions_[command];
+        double position = arm_positions_[cur_command];
         res.cur_command = position;
     }
     else
