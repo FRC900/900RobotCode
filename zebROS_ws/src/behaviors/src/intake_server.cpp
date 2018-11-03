@@ -105,8 +105,9 @@ class IntakeAction {
                     }
                 }
                 //wait another config time before stopping motors to ensure cube is out
-                while(!success && !timed_out && !aborted) {
-                    success = cube_state_false > linebreak_debounce_iterations;
+                double start_time_extra = ros::Time::now().toSec();
+                while(!timed_out && !aborted) {
+                    success = (ros::Time::now().toSec() - start_time_extra) > 1;
 
                     if(as_.isPreemptRequested() || !ros::ok()) {
                         ROS_WARN("%s: Preempted", action_name_.c_str());

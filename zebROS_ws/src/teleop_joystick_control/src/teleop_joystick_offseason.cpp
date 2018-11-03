@@ -116,22 +116,16 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
         ac_arm->sendGoal(forearm_goal);
     }
 
-/*-------------------------- press direction right press for toggle arm position ------------------------*/
-    if (JoystickState->directionRightPress) {
+/*-------------------------- press bumper right press for spit out cube ------------------------*/
+    if (JoystickState->bumperRightPress) {
         ac->cancelAllGoals();
         ac_intake->cancelAllGoals();
         ac_arm->cancelAllGoals();
 
-        static int target_position;
-
-        if(*(most_recent_arm_command.readFromRT()) != 2)
-            target_position = 2;
-        else
-            target_position = 0;
-
-        behaviors::ForearmGoal forearm_goal;
-        forearm_goal.position = target_position;
-        ac_arm->sendGoal(forearm_goal);
+        behaviors::IntakeGoal intake_goal;
+        intake_goal.intake_cube = false;
+        intake_goal.timeout = 5;
+        ac_intake->sendGoal(intake_goal);
     }
 ///////////////////// Drivetrain and Elevator Control \\\\\\\\\\\\\\\\\\\
 
