@@ -8,7 +8,6 @@ set -o pipefail
 # IP addresses of the roboRIO and Jetson to deploy code on.
 ROBORIO_ADDR=10.9.0.2
 JETSON_ADDR=10.9.0.8
-JETSON_ADDR2=10.9.0.9
 
 # Environment to deploy to (prod or dev).
 INSTALL_ENV=dev
@@ -76,8 +75,6 @@ update_links() {
         ln -s $RIO_ENV_LOCATION $RIO_CLONE_LOCATION"
     ssh $JETSON_ADDR "rm $JETSON_CLONE_LOCATION && \
         ln -s $JETSON_ENV_LOCATION $JETSON_CLONE_LOCATION"
-    ssh $JETSON_ADDR2 "rm $JETSON_CLONE_LOCATION && \
-        ln -s $JETSON_ENV_LOCATION $JETSON_CLONE_LOCATION"
     echo "Symlinks updated."
 }
 
@@ -89,18 +86,11 @@ check_clockdiff() {
     #    echo "Could not parse clockdiff output!"
     #    exit 1
     #fi
-    #echo "10"
     LOCALDATE=`date +%s`
-    echo "local date = $LOCALDATE"
     REMOTEDATE=`ssh $1 date +%s`
-    echo "remote date = $REMOTEDATE"
-    let TIMEDIFF=$LOCALDATE-$REMOTEDATE #fails on this line
-    echo "TIMEDIFF = $TIMEDIFF"
+    let TIMEDIFF=$LOCALDATE-$REMOTEDATE
     TIMEDIFF=${TIMEDIFF#-}
-    echo "TIMEDIFF2 = $TIMEDIFF"
-    echo "30"
     if [[ $TIMEDIFF -ge 600 ]]; then
-        echo "40"
         REMOTE_TIME=`ssh $1 date`
         echo "Clock difference greater than 10 minutes."
         echo "    Local time: `date`"
@@ -109,40 +99,26 @@ check_clockdiff() {
     fi
 }
 
-echo "going oing"
 update_links
 if [ $UPDATE_LINKS_ONLY -ne 0 ]; then
     exit 0
 fi
 
 echo "Checking time synchronization..."
-# check_clockdiff "$ROBORIO_ADDR" "roboRIO"
-#echo "1"
+check_clockdiff "$ROBORIO_ADDR" "roboRIO"
 check_clockdiff "$JETSON_ADDR" "Jetson"
-#echo "2"
-check_clockdiff "$JETSON_ADDR2" "Jetson"
-echo "3"
 echo "Time synchronized."
 
 # Bidirectional synchronization of the selected environment.
 echo "Synchronizing local changes TO $INSTALL_ENV environment."
 scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $JETSON_ADDR:$JETSON_ROS_CODE_LOCATION
-scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $JETSON_ADDR2:$JETSON_ROS_CODE_LOCATION
 scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $ROBORIO_ADDR:$RIO_ROS_CODE_LOCATION
 rsync -avzru $RSYNC_OPTIONS --exclude '.git' --exclude 'zebROS_ws/build*' \
     --exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
     --exclude '*~' --exclude '*.sw[op]' --exclude '*CMakeFiles*' \
     $LOCAL_CLONE_LOCATION/ $JETSON_ADDR:$JETSON_ENV_LOCATION/
 if [ $? -ne 0 ]; then
-	echo "Failed to synchronize source code TO $INSTALL_ENV on Jetson!"
-    exit 1
-fi
-rsync -avzru $RSYNC_OPTIONS --exclude '.git' --exclude 'zebROS_ws/build*' \
-    --exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
-    --exclude '*~' --exclude '*.sw[op]' --exclude '*CMakeFiles*' \
-    $LOCAL_CLONE_LOCATION/ $JETSON_ADDR2:$JETSON_ENV_LOCATION/
-if [ $? -ne 0 ]; then
-	echo "Failed to synchronize source code TO $INSTALL_ENV on Jetson2!"
+    echo "Failed to synchronize source code TO $INSTALL_ENV on Jetson!"
     exit 1
 fi
 echo "Synchronization complete"
@@ -152,15 +128,6 @@ if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
         --exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
         --exclude '*~' --exclude '*.sw[op]'  --exclude '*CMakeFiles*' \
         $JETSON_ADDR:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/
-    if [ $? -ne 0 ]; then
-        echo "Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
-        exit 1
-    fi
-    echo "Synchronizing remote changes FROM $INSTALL_ENV environment."
-    rsync -avzru --exclude '.git' --exclude 'zebROS_ws/build*' \
-        --exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
-        --exclude '*~' --exclude '*.sw[op]'  --exclude '*CMakeFiles*' \
-        $JETSON_ADDR2:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/
     if [ $? -ne 0 ]; then
         echo "Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
         exit 1
@@ -188,11 +155,6 @@ ssh $JETSON_ADDR "cd $JETSON_CLONE_LOCATION/zebROS_ws && \
     catkin_make" && \
 echo "Jetson native build complete") &
 
-(echo "Starting Jetson native build" && \
-ssh $JETSON_ADDR2 "cd $JETSON_CLONE_LOCATION/zebROS_ws && \
-    source /opt/ros/kinetic/setup.bash && \
-    catkin_make" && \
-echo "Jetson native build complete") &
 wait
 
 update_links

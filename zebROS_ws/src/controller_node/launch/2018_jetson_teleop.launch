@@ -15,7 +15,7 @@
 
         <!-- Jetson 1 Sensors-->
         <include file="$(find sick_tim)/launch/sick_tim571_2050101.launch"/>
-        <include file="$(find controller_node)/launch/cube_detection.launch"/>
+        <!-- <include file="$(find controller_node)/launch/cube_detection.launch"/> -->
 
 	<group ns="frcrobot">
 		<!-- Load controller settings -->

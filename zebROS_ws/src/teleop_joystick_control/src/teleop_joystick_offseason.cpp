@@ -127,6 +127,17 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
         intake_goal.timeout = 5;
         ac_intake->sendGoal(intake_goal);
     }
+    
+    if (JoystickState->bumperLeftPress) {
+        ac->cancelAllGoals();
+        ac_intake->cancelAllGoals();
+        ac_arm->cancelAllGoals();
+
+        behaviors::IntakeGoal intake_goal;
+        intake_goal.intake_cube = true;
+        intake_goal.timeout = 5;
+        ac_intake->sendGoal(intake_goal);
+    }
 ///////////////////// Drivetrain and Elevator Control \\\\\\\\\\\\\\\\\\\
 
 	double leftStickX = JoystickState->leftStickX;

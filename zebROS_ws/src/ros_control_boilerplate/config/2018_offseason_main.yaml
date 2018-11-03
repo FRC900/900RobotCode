@@ -125,3 +125,9 @@ rumble_controller:
 compressor_controller:
    type: position_controllers/JointPositionController
    joint: compressor1
+
+    
+   # pneumatics_controller:
+   #     type: position_controllers/JointPositionController
+   #     joint: clamp
+
