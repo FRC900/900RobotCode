@@ -200,7 +200,7 @@ const std::vector<double> &end_points, double t_shift, bool flip_dirc)
 			//ROS_INFO_STREAM("num points: " << point_count );
 
 		t_raw2 = spline(i); //Get t value from the cubic spline interpolation of t vs arc length
-		ROS_INFO_STREAM(/*"curr_v: " <<*/ curr_v /*<< " i val: " << i << " t val: " << t_raw2 << " also: " << spline(i)*/);
+		ROS_INFO_STREAM("curr_v: " << curr_v /*<< " i val: " << i << " t val: " << t_raw2 << " also: " << spline(i)*/);
 		//ROS_WARN("even_now");
 		
 		//Compute all the path info
@@ -399,6 +399,7 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 
 		if(!coerce(current_v, -v_curve_max, v_curve_max) & !coerce(current_v, -v_curve_max_2, v_curve_max_2) & !coerce(current_v, -v_general_max, v_general_max)) //If we need to threshhold, we don't need to iterate using accel
 		{
+                        //this is where it all breaks
 			const double max_wheel_orientation_accel = fabs(path.angular_accel * current_v * current_v);
 			//const double max_wheel_orientation_vel = fabs(path.angular_velocity * current_v);
 			const double path_induced_a = current_v * current_v / path.radius;
@@ -424,6 +425,7 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 			//ROS_ERROR_STREAM("num: " << accelerations.size());
 
 
+                        ROS_INFO_STREAM("accelerations size = " << accelerations.size());
 
 			//Implementation of adams-bashforth:
 			if(accelerations.size() == 0)
@@ -676,6 +678,8 @@ const std::vector<double> &arc_length_by_spline, const double t, const double ar
 	{
 		holder_point.radius = 10000000000000000;
 	}
+	// Later math dies if radius is too large, FP overflow?
+	holder_point.radius = std::min(holder_point.radius, 10000000000000000.);
 
 	if (fabs(holder_point.pos[0]) > 100 || fabs(holder_point.pos[1]) > 100)
 	{

@@ -149,6 +149,12 @@ target_link_libraries(path_to_goal_server
 	${catkin_LIBRARIES}
 )
 
+add_executable(test_client src/test_client.cpp)
+add_dependencies(test_client ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_client
+	${catkin_LIBRARIES}
+)
+
 #############
 ## Install ##
 #############
@@ -165,6 +171,12 @@ target_link_libraries(path_to_goal_server
 
 ## Mark executables and/or libraries for installation
 install(TARGETS ${PROJECT_NAME}_server
+   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS test_client
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
