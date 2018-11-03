@@ -63,8 +63,9 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 
         ROS_INFO_STREAM("arm_joint_.getMotionCruiseVelocity = " << arm_joint_.getMotionCruiseVelocity());
 
-	arm_state_service_ = controller_nh.advertiseService("arm_state_service", &ArmController::cmdService, this);
+        arm_state_service_ = controller_nh.advertiseService("arm_state_service", &ArmController::cmdService, this);
         stop_arm_srv_ = controller_nh.advertiseService("stop_arm_srv", &ArmController::stop_arm_service, this);
+        arm_cur_command_srv_ = controller_nh.advertiseService("arm_cur_command_srv", &ArmController::arm_cur_command_service, this);
         command_pub_ = controller_nh.advertise<std_msgs::Float64>("arm_command", 1);
 
 	return true;
@@ -127,6 +128,11 @@ bool ArmController::cmdService(arm_controller::SetArmState::Request &req, arm_co
 		return false;
 	}
 	return true;
+}
+
+bool ArmController::arm_cur_command_service(arm_controller::CurArmCommand::Request &req, arm_controller::CurArmCommand::Response &res) {
+   res.cur_command = *(service_command_.readFromRT());
+   return true;
 }
 
 bool ArmController::stop_arm_service(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res) {

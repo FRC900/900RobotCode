@@ -11,6 +11,7 @@
 #include <talon_controllers/talon_controller.h> // "
 #include <talon_controllers/talon_controller_interface.h> // "
 #include <arm_controller/SetArmState.h>
+#include <arm_controller/CurArmCommand.h>
 #include <std_msgs/Float64.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <std_srvs/SetBool.h>
@@ -44,6 +45,7 @@ class ArmController : public controller_interface::MultiInterfaceController<hard
                 ros::Publisher command_pub_;
                 
                 ros::ServiceServer stop_arm_srv_;
+                ros::ServiceServer arm_cur_command_srv_;
 
                 //hardware_interface::JointStateHandle limit_switch_intake_;
                 //hardware_interface::JointStateHandle limit_switch_exchange_;
@@ -53,7 +55,9 @@ class ArmController : public controller_interface::MultiInterfaceController<hard
 
 		//define function that executes the service
 		bool cmdService(arm_controller::SetArmState::Request &req, arm_controller::SetArmState::Response &res);
-                bool stop_arm_service(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
+        bool stop_arm_service(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
+        bool arm_cur_command_service(arm_controller::CurArmCommand::Request &req, arm_controller::CurArmCommand::Response &res);
+
 		
 }; //class
 

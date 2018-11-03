@@ -1,6 +1,8 @@
 #goal
 int8 position
+int8 timeout
 ---
 #result
+bool success
 ---
 #feedback

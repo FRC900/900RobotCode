@@ -10,11 +10,8 @@ bool IntakeController::init(hardware_interface::RobotHW *hw,
     hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
     hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
     hardware_interface::JointStateInterface *const joint_state_iface = hw->get<hardware_interface::JointStateInterface>();
-    
-    line_break_intake_ = joint_state_iface->getHandle("intake_line_break");
-    intake_in_ = pos_joint_iface->getHandle("clamp");
 
-    cube_state_pub = controller_nh.advertise<std_msgs::Bool>("cube_state", 1);
+    intake_in_ = pos_joint_iface->getHandle("clamp");
 
     //read intake name from config file
     XmlRpc::XmlRpcValue intake_params;
@@ -43,13 +40,6 @@ void IntakeController::starting(const ros::Time &/*time*/) {
 }
 
 void IntakeController::update(const ros::Time &time, const ros::Duration &period) {
-    std_msgs::Bool cube_msg;
-
-    //ROS_INFO_STREAM(line_break_intake_.getPosition());
-
-    cube_msg.data = (static_cast<int>(line_break_intake_.getPosition()) != 0);
-    cube_state_pub.publish(cube_msg); //make this a joint as well?
-
     double spin_command = *(spin_command_.readFromRT());
     bool intake_in_cmd = *(intake_in_cmd_.readFromRT());
 

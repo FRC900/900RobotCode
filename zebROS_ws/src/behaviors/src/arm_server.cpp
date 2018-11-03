@@ -16,6 +16,10 @@ enum ArmPosition
     LOWER_LEFT,
 };
 */
+
+double intake_timeout;
+double arm_timeout;
+
 class ArmAction
 {
     protected:
@@ -52,44 +56,75 @@ class ArmAction
         {
             ROS_INFO_STREAM("arm_server running callback");
             ros::Rate r(10);
-            bool success = true;
+            double start_time = ros::Time::now().toSec();
             
+            /*
             //spin in
             behaviors::IntakeGoal intake_goal;
             intake_goal.intake_cube = goal->intake_cube;
-            intake_goal.intake_timeout = goal->intake_timeout;
+            intake_goal.time_out = goal->intake_timeout;
             ai_.sendGoal(intake_goal);
+            */
 
             //move arm
             behaviors::ForearmGoal forearm_goal;
             forearm_goal.position = goal->arm_position;
+            forearm_goal.timeout = arm_timeout;
             af_.sendGoal(forearm_goal);
 	    
-
-            while(!success && !timed_out && !aborted) {
-                //sucess = ai_.getResult() && af_.getResult();
-                success = intake_goal.
-                if(as_.isPreemptRequested() || !ros::ok()) {
-                    ROS_WARN("%s: Preempted", action_name_.c_str());
-                    as_.setPreempted();
-                    aborted = true;
-                    break;
-                }
-                r.sleep()
-                ros::spinOnce();
-                timed_out = (ros::Time::now().toSec() - startTime) > goal->time_out;
+            bool arm_finished_before_timeout = af_.waitForResult(ros::Duration(arm_timeout));
+            
+            if(!arm_finished_before_timeout) {
+                result_.success = false;
+                as_.setAborted(result_);
+                ROS_ERROR("Forearm actionlib timed out in arm_server. ABORTING!");
+                return;
             }
-            //wait for result
-            result_.is_true = true; //true is test value
 
-            as_.setSucceeded(result_);
-        }
+            behaviors::ForearmResult forearm_result;
+            forearm_result = *af_.getResult();
+            
+            if(!forearm_result.success) {
+                result_.success = false;
+                as_.setAborted(result_);
+                return;
+            }
+            
+            behaviors::IntakeGoal intake_goal;
+            intake_goal.intake_cube = goal->intake_cube;
+            intake_goal.timeout = intake_timeout;
+            ai_.sendGoal(intake_goal);
+
+            bool intake_finished_before_timeout = ai_.waitForResult(ros::Duration(intake_timeout)); 
+            if(!intake_finished_before_timeout) {
+                result_.success = false;
+                as_.setAborted(result_); 
+                ROS_ERROR("Intake actionlib timed out in arm_server. ABORTING!");
+                return;
+            }
+            
+            behaviors::IntakeResult intake_result;
+            intake_result = *ai_.getResult();
+
+            if(intake_result.success) {
+                result_.success = true;
+                as_.setSucceeded(result_);
+            }
+        return;
+      }
 };
 
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "arm_server");
 
+  ros::NodeHandle n;
+  ros::NodeHandle n_params(n, "actionlib_arm_params");
+
+  if(!n_params.getParam("intake_timeout", intake_timeout));
+    ROS_ERROR("Could not read intake_timeout in arm_server");
+  if(!n_params.getParam("arm_timeout", arm_timeout));
+    ROS_ERROR("Could not read arm_timeout in arm_server");
   ArmAction arm_server("arm_server");
   ros::spin();
 

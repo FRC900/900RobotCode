@@ -72,7 +72,6 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
         behaviors::ArmGoal arm_goal;
         arm_goal.arm_position = 0;
         arm_goal.intake_cube = true;
-        arm_goal.intake_timeout = 10;
         ac->sendGoal(arm_goal);
     }
 
@@ -96,7 +95,6 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
         behaviors::ArmGoal arm_goal;
         arm_goal.arm_position = 2;
         arm_goal.intake_cube = false;
-        arm_goal.intake_timeout = 10;
         ac->sendGoal(arm_goal);
     }
 

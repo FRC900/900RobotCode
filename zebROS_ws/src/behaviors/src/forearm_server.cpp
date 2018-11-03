@@ -1,8 +1,12 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <behaviors/ForearmAction.h>
+#include <arm_controller/CurArmCommand.h>
 #include <arm_controller/SetArmState.h>
+#include <talon_state_controller/TalonState.h>
 
+
+double arm_angle_deadzone;
 class ForearmAction
 {
     protected:
@@ -12,8 +16,14 @@ class ForearmAction
         behaviors::ForearmFeedback feedback_;
         behaviors::ForearmResult result_;
 
+        
         ros::ServiceClient forearm_srv_;
+        ros::ServiceClient arm_cur_command_srv_;
 
+        ros::Subscriber talon_states_sub;
+
+        double arm_angle;
+        double cur_arm_command;
     public:
         ForearmAction(std::string name) :
             as_(nh_, name, boost::bind(&ForearmAction::executeCB, this, _1), false),
@@ -23,7 +33,9 @@ class ForearmAction
             service_connection_header["tcp_nodelay"] = "1";
 
             forearm_srv_ = nh_.serviceClient<arm_controller::SetArmState>("/frcrobot/arm_controller/arm_state_service", false, service_connection_header);
+            arm_cur_command_srv_ = nh_.serviceClient<arm_controller::CurArmCommand>("/frcrobot/arm_controller/cur_arm_command_service", false, service_connection_header);
             as_.start();
+            talon_states_sub = nh_.subscribe("/frcrobot/talon_states",1, &ForearmAction::talonStateCallback, this);
         }
 
         ~ForearmAction(void) {}
@@ -32,19 +44,68 @@ class ForearmAction
         {
             ROS_INFO_STREAM("forearm_server running callback");
             ros::Rate r(10);
-            bool success = true;
+            double start_time = ros::Time::now().toSec();
+            bool success = false;
+            bool timed_out = false;
+            bool aborted = false;
             
             arm_controller::SetArmState srv;
             srv.request.position = goal->position;
             forearm_srv_.call(srv);
+            
+            arm_controller::CurArmCommand srv_arm_command;
+            if(arm_cur_command_srv_.call(srv_arm_command)) {
+                cur_arm_command = srv_arm_command.response.cur_command; 
+            }
+            else {
+                ROS_ERROR("Failed to call service cur_arm_command_Srv");
+            }
 
-            as_.setSucceeded();
+            while(!success && !timed_out && !aborted) {
+                success = fabs(arm_angle - cur_arm_command) < arm_angle_deadzone;
+                if(as_.isPreemptRequested() || !ros::ok()) {
+                    ROS_WARN("%s: Preempted", action_name_.c_str());
+                    as_.setPreempted();
+                    aborted = true;
+                    break;
+                }
+                r.sleep();
+                ros::spinOnce();
+                timed_out = (ros::Time::now().toSec() - start_time) > goal->timeout;
+            }
+            result_.success = success;
+            as_.setSucceeded(result_);
+        }
+        void talonStateCallback(const talon_state_controller::TalonState &talon_state)
+        {
+            static size_t arm_master_idx = std::numeric_limits<size_t>::max();
+
+            if (arm_master_idx >= talon_state.name.size())
+            {    
+                for (size_t i = 0; i < talon_state.name.size(); i++) 
+                {
+                    if (talon_state.name[i] == "arm_master")
+                    {
+                        arm_master_idx = i; 
+                        break;
+                    }
+                }
+            }    
+
+            else {
+                arm_angle = talon_state.position[arm_master_idx];
+            }
         }
 };
 
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "forearm_server");
+
+  ros::NodeHandle n;
+  ros::NodeHandle n_params(n, "actionlib_forearm_params");
+  if(!n_params.getParam("arm_angle_deadzone", arm_angle_deadzone))
+    ROS_ERROR("Could not read arm_angle_deadzone in forearm_server");
 
   ForearmAction forearm_server("forearm_server");
   ros::spin();
