@@ -12,10 +12,11 @@
   <arg name="exposure" default="-1" />
   <arg name="whitebalance" default="-1" />
   <arg name="name" default="zed_goal" />
-
   <arg name="record" default="False" />
   <arg name="down_sample" default="False" />
   <arg name="sub_rate" default="10" />
+  <arg name="camera_flip" default="True" />
+
   <arg name="pub_rate" default="1" />
 
   <arg name="file_path" default="../../../../../media/hanskhatri/5522-557D/PalmettoVideos/cap17_3.zms"/>  
@@ -34,6 +35,7 @@
       <arg name="gain" value="$(arg gain)" />
       <arg name="exposure" value="$(arg exposure)" />
       <arg name="whitebalance" value="$(arg whitebalance)" />
+      <arg name="camera_flip" value="$(arg camera_flip)" />
     </include>
 </group>
 

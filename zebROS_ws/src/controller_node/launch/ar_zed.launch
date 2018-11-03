@@ -55,6 +55,4 @@
 
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_artoexchange" args="0 -1.17 0 0 0 0 1 ar_marker_0 exchange_frame" />
 
-	
-
 </launch>
