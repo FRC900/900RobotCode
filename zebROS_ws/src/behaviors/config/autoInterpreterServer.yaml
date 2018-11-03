@@ -2,7 +2,7 @@ actionlib_intake_params:
     linebreak_debounce_iterations: 5
     spit_out_time: 1
 actionlib_forearm_params:
-    arm_angle_deadzone: .1
+    arm_angle_deadzone: .02
 actionlib_arm_params:
     intake_timeout: 5
     forearm_timeout: 4

@@ -7,8 +7,10 @@
           /ar_pose_marker
         /cube_detection_node/cube_detect_msg
         /frcrobot/arm_controller/arm_command
+		/frcrobot/intake_server/goal
         /frcrobot/joint_states
         /frcrobot/joystick_states
+        /mmWaveDataHdl/RScan
         /frcrobot/match_data
         /frcrobot/navx_mxp
         /frcrobot/pdp_states

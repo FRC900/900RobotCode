@@ -103,6 +103,7 @@ arm_controller:
         conversion_factor: 0.0454676
         current_limit_continuous_amps: 15
         current_limit_enable: True
+        closed_loop_ramp: 0.1
         limit_switch_local_reverse_normal: "NormallyOpen"
         limit_switch_local_reverse_source: "FeedbackConnector"
         limit_switch_local_forward_normal: "NormallyOpen"
