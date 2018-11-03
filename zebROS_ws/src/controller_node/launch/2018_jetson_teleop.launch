@@ -10,6 +10,7 @@
 	<arg name="static_map" default="True"/>
 
         <machine name="roboRIO" address="10.9.0.2" env-loader="/home/admin/2018Offseason/zebROS_ws/ROSJetsonMaster.sh" user="admin" password="admin"/>
+		<machine name="jetson_2" address="10.9.0.9" env-loader="/home/ubuntu/2018Offseason/zebROS_ws/ROSJetsonMaster.sh" user="ubuntu" password="ubuntu"/>
 
         <!-- Jetson 1 Sensors-->
 		<include file="$(find sick_tim)/launch/sick_tim571_2050101.launch"/>
@@ -17,8 +18,7 @@
 
         <!-- Jetson 2 Sensors -->
 		<group>
-			<machine name="jetson_2" address="10.9.0.9" env-loader="/home/ubuntu/2018Offseason/zebROS_ws/ROSJetsonMaster.sh" user="ubuntu" password="ubuntu"/>
-			<include file="$(find rplidar_ros)/launch/rplidar.launch"/>
+			<include file="$(find controller_node)/launch/rplidar.launch"/>
 			<!-- <include file="$(find controller_node)/launch/ar_zed.launch"/>-->
 		</group>
 
