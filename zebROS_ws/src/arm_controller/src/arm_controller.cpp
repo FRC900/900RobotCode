@@ -132,8 +132,15 @@ bool ArmController::cmdService(arm_controller::SetArmState::Request &req, arm_co
 }
 
 bool ArmController::arm_cur_command_service(arm_controller::CurArmCommand::Request &req, arm_controller::CurArmCommand::Response &res) {
-   res.cur_command = *(service_command_.readFromRT());
-   return true;
+    size_t cur_command = *(service_command_.readFromRT());
+    if (command < arm_positions_.size())
+    {
+        double position = arm_positions_[command];
+        res.cur_command = position;
+    }
+    else
+        ROS_ERROR_STREAM("the command to arm_controller needs to be 0, 1, or 2");
+    return true;
 }
 
 bool ArmController::stop_arm_service(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res) {
