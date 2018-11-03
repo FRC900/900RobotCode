@@ -87,7 +87,7 @@ class ArmAction
             if(!forearm_result.success) {
                 result_.success = false;
                 as_.setAborted(result_);
-                ROS_ERROR("Forearm actionlib did not succeed in arm_server. ABORTING!");
+                ROS_ERROR("Forearm actionlib did not succeed in arm_server. Dit it succeed: %d  Did it time out: %d ABORTING!", forearm_result.success, forearm_result.timed_out);
                 return;
             }
             

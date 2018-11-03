@@ -33,7 +33,7 @@ class ForearmAction
             service_connection_header["tcp_nodelay"] = "1";
 
             forearm_srv_ = nh_.serviceClient<arm_controller::SetArmState>("/frcrobot/arm_controller/arm_state_service", false, service_connection_header);
-            arm_cur_command_srv_ = nh_.serviceClient<arm_controller::CurArmCommand>("/frcrobot/arm_controller/arm_cur_command_service", false, service_connection_header);
+            arm_cur_command_srv_ = nh_.serviceClient<arm_controller::CurArmCommand>("/frcrobot/arm_controller/arm_cur_command_srv", false, service_connection_header);
             as_.start();
             talon_states_sub = nh_.subscribe("/frcrobot/talon_states",1, &ForearmAction::talonStateCallback, this);
         }
@@ -74,6 +74,7 @@ class ForearmAction
                 timed_out = (ros::Time::now().toSec() - start_time) > goal->timeout;
             }
             result_.success = success;
+            result_.timed_out = timed_out;
             as_.setSucceeded(result_);
         }
         void talonStateCallback(const talon_state_controller::TalonState &talon_state)
