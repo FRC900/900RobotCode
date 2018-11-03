@@ -11,6 +11,7 @@
 #include "actionlib/client/terminal_state.h"
 #include "std_msgs/Bool.h"
 #include "robot_visualizer/ProfileFollower.h"
+#include "intake_controller/IntakeSrv.h"
 
 static double dead_zone = .2, slow_mode = .33, max_speed = 3.6, max_rot = 8.8, joystick_scale = 3, rotation_scale = 4;
 void dead_zone_check(double &val1, double &val2)
@@ -30,6 +31,7 @@ static ros::Publisher JoystickRobotVel;
 //static ros::Publisher JoystickRumble;
 static ros::ServiceClient BrakeSrv;
 
+ros::ServiceClient intake_srv_;
 std::atomic<double> navX_angle;
 std::atomic<int> arm_position;
 
@@ -81,6 +83,12 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
         ac_intake->cancelAllGoals();
         ac_arm->cancelAllGoals();
 
+        intake_controller::IntakeSrv srv;
+        srv.request.power = 0;
+        srv.request.intake_in = true; //soft in
+        if(!intake_srv_.call(srv)) 
+            ROS_ERROR("Srv intake call failed in auto interpreter server intake");
+
         behaviors::ForearmGoal forearm_goal;
         forearm_goal.position = 1;
         ac_arm->sendGoal(forearm_goal);
@@ -111,6 +119,13 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
         else
             target_position = 0;
 
+        intake_controller::IntakeSrv srv;
+        srv.request.power = 0;
+        srv.request.intake_in = true; //soft in
+        if(!intake_srv_.call(srv)) 
+            ROS_ERROR("Srv intake call failed in auto interpreter server intake");
+
+
         behaviors::ForearmGoal forearm_goal;
         forearm_goal.position = target_position;
         ac_arm->sendGoal(forearm_goal);
@@ -128,6 +143,7 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
         ac_intake->sendGoal(intake_goal);
     }
     
+/*-------------------------- press bumper left press for spit in cube ------------------------*/
     if (JoystickState->bumperLeftPress) {
         ac->cancelAllGoals();
         ac_intake->cancelAllGoals();
@@ -267,6 +283,8 @@ int main(int argc, char **argv)
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot/swerve_drive_controller/brake", false, service_connection_header);
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("/frcrobot/swerve_drive_controller/cmd_vel", 1);
     ros::Subscriber navX_heading  = n.subscribe("/frcrobot/navx_mxp", 1, &navXCallback);
+    intake_srv_ = n.serviceClient<intake_controller::IntakeSrv>("/frcrobot/intake_controller/intake_command", false, service_connection_header);
+
     
 
 	/*//JoystickTestVel = n.advertise<std_msgs::Header>("test_header", 3);

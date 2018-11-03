@@ -37,6 +37,8 @@ bool IntakeController::init(hardware_interface::RobotHW *hw,
 }
 
 void IntakeController::starting(const ros::Time &/*time*/) {
+    intake_joint_.setCommand(0.0); // set the command to the spinny part of the intake
+    intake_in_.setCommand(-1); // set the in/out command to the clampy part of the intake
 }
 
 void IntakeController::update(const ros::Time &time, const ros::Duration &period) {
