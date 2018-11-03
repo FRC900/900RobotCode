@@ -16,6 +16,8 @@
         <!-- Jetson 1 Sensors-->
         <include file="$(find sick_tim)/launch/sick_tim571_2050101.launch"/>
         <!-- <include file="$(find controller_node)/launch/cube_detection.launch"/> -->
+        <include file="$(find controller_node)/launch/ar_zed.launch"/>
+        <include file="$(find ti_mmwave_rospkg)/launch/rviz_1443_3d.launch"/>
 
 	<group ns="frcrobot">
 		<!-- Load controller settings -->
@@ -63,12 +65,11 @@
     </group>
 
     <!-- jetson 2 stuffs -->
-    <machine name="jetson_2" address="10.9.0.9" env-loader="/home/ubuntu/2018Offseason/zebROS_ws/ROSJetsonMaster.sh" user="ubuntu" password="ubuntu" default="true"/>
-        <!-- Jetson 2 Sensors -->
+	<!-- <machine name="jetson_2" address="10.9.0.9" env-loader="/home/ubuntu/2018Offseason/zebROS_ws/ROSJetsonMaster.sh" user="ubuntu" password="ubuntu" default="true"/>
+         Jetson 2 Sensors
         <include file="$(find controller_node)/launch/rplidar.launch"/>
-        <include file="$(find controller_node)/launch/ar_zed.launch"/>
         <group ns="jetson_2">
             <node name="heartbeat_jetson_2" pkg="heartbeat_node" type="heartbeat" output="screen" />
-        </group>
+		</group>-->
 
 </launch>
