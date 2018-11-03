@@ -12,7 +12,8 @@ elif [ -f /home/ubuntu/2018Offseason/zebROS_ws/devel/setup.bash ] ; then
     echo "Sourcing Jetson / native Linux environment"
     source /opt/ros/kinetic/setup.bash
     source /home/ubuntu/2018Offseason/zebROS_ws/devel/setup.bash
-    export ROS_IP=10.9.0.8
+    #export ROS_IP=10.9.0.8
+    export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 8`
 elif [ -f /home/ryan/2018Offseason/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Ryan / native Linux environment"
