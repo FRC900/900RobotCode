@@ -13,24 +13,24 @@ install:
 script:
   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
     "cd ~ &&
-        echo "thisisatest" > test.txt &&
-     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git &&
-         echo "Clone success." &&
-     cd ./2018Offseason/ &&
+     sudo chown ubuntu:ubuntu 2018Offseason &&
+     cd ~/2018Offseason &&
+     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git . &&
+     echo "Clone success." &&
      git checkout $TRAVIS_COMMIT &&
-         echo "git checkout" &&
+     echo "git checkout" &&
      git log -n1 &&
      git submodule update --init --recursive &&
-         echo "git submodule init" &&
+     echo "git submodule init" &&
      ./install_ros_desktop_packages.sh &&
-         echo "install_ros_desktop_packages.sh" &&
+     echo "install_ros_desktop_packages.sh" &&
      cd zebROS_ws &&
      wstool update -t src &&
-        echo "wstool update" &&
+     echo "wstool update" &&
      source /opt/ros/kinetic/setup.bash &&
-        echo "source setup.bash" &&
+     echo "source setup.bash" &&
      catkin_make &&
-        echo "catkin make" &&
+     echo "catkin make" &&
      source devel/setup.bash &&
      timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen &&
      echo \"Finished Ubuntu compile.\""
