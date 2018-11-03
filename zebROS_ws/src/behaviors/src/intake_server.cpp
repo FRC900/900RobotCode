@@ -48,16 +48,18 @@ class IntakeAction {
             bool timed_out = false;
             bool aborted = false;
             bool success = false;
+
+            //Intakek cube
             if(goal->intake_cube) {
-                cube_state_true = 0;
                 intake_controller::IntakeSrv srv;
                 srv.request.power = intake_power;
-                srv.request.intake_in = false;
+                srv.request.intake_in = false; //soft out
                 if(!intake_srv_.call(srv)) 
                     ROS_ERROR("Srv intake call failed in auto interpreter server intake");
+
                 ros::spinOnce();
 
-                success = false;
+                cube_state_true = 0;
                 while(!success && !timed_out && !aborted) {
                     success = cube_state_true > linebreak_debounce_iterations;
                     if(as_.isPreemptRequested() || !ros::ok()) {
@@ -78,6 +80,7 @@ class IntakeAction {
                 if(!intake_srv_.call(srv)) 
                     ROS_ERROR("Srv intake call failed in auto interpreter server intake");
             }
+            //Spit out cube
             else
             {
                 cube_state_false = 0;
@@ -106,8 +109,9 @@ class IntakeAction {
                 }
                 //wait another config time before stopping motors to ensure cube is out
                 double start_time_extra = ros::Time::now().toSec();
-                while(!timed_out && !aborted) {
-                    success = (ros::Time::now().toSec() - start_time_extra) > 1;
+                bool wait_done = false;
+                while(!wait_done && !timed_out && !aborted) {
+                    wait_done = (ros::Time::now().toSec() - start_time_extra) > 1;
 
                     if(as_.isPreemptRequested() || !ros::ok()) {
                         ROS_WARN("%s: Preempted", action_name_.c_str());
