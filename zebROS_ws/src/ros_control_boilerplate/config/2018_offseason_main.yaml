@@ -89,7 +89,7 @@ arm_controller:
         close_loop_values:
             - {p: .4, i: 0.0005, d: 0.2, f: 0.1669, i_zone: 750, closed_loop_peak_output: .5}
             - {p: .5, i: 0.0005, d: 7.5, f: 0.0235389351901052, i_zone: 750, closed_loop_peak_output: 1.0}
-        invert_output: False
+        invert_output: True
         sensor_phase: False
         feedback_type: CTRE_MagEncoder_Absolute
         peak_output_forward: 1.0
@@ -108,7 +108,7 @@ arm_controller:
         limit_switch_local_forward_source: "FeedbackConnector"
     arm_follower:
         joint: arm_follower_joint
-        invert_output: True
+        invert_output: False
 
 imu_sensor_controller:
    type:         imu_sensor_controller/ImuSensorController

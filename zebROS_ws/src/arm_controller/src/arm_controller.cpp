@@ -72,6 +72,7 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
 
 void ArmController::starting(const ros::Time &time) {
 	ROS_ERROR_STREAM("ArmController was started");
+        service_command_.writeFromNonRT(1);
 }
 
 void ArmController::update(const ros::Time &time, const ros::Duration &period) {
