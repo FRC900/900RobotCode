@@ -4,5 +4,6 @@ int8 timeout
 ---
 #result
 bool success
+bool timed_out
 ---
 #feedback

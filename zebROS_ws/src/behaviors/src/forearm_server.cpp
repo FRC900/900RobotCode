@@ -74,6 +74,7 @@ class ForearmAction
                 timed_out = (ros::Time::now().toSec() - start_time) > goal->timeout;
             }
             result_.success = success;
+            result_.timed_out = timed_out;
             as_.setSucceeded(result_);
         }
         void talonStateCallback(const talon_state_controller::TalonState &talon_state)
