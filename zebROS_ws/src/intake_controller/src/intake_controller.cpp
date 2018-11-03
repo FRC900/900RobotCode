@@ -42,9 +42,14 @@ void IntakeController::starting(const ros::Time &/*time*/) {
 void IntakeController::update(const ros::Time &time, const ros::Duration &period) {
     double spin_command = *(spin_command_.readFromRT());
     bool intake_in_cmd = *(intake_in_cmd_.readFromRT());
-    double intake_in_cmd_double = intake_in_cmd;
-    if(intake_in_cmd) {
+    double intake_in_cmd_double;
+    if(intake_in_cmd == true) {
+        ROS_WARN("intake in");
         intake_in_cmd_double = -1;
+    }
+    else if (intake_in_cmd == false) {
+        intake_in_cmd_double = 1;
+        ROS_WARN("intake out");
     }
 
     

@@ -51,6 +51,7 @@ class IntakeAction {
 
             //Intakek cube
             if(goal->intake_cube) {
+                ROS_ERROR("intake server 54: intaking cub3");
                 intake_controller::IntakeSrv srv;
                 srv.request.power = intake_power;
                 srv.request.intake_in = false; //soft out
