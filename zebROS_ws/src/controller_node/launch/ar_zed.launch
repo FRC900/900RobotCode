@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
 	  <arg name="resolution" default="3" />
 	  <arg name="frame_rate" default="30" />
