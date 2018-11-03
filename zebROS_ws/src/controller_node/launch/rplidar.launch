@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+    <group ns="rplidar">
 
   <node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
   <param name="serial_port"         type="string" value="/dev/ttyUSB0"/>
@@ -9,4 +10,5 @@
   <param name="inverted"            type="bool"   value="false"/>
   <param name="angle_compensate"    type="bool"   value="true"/>
   </node>
+  </group>
 </launch>
