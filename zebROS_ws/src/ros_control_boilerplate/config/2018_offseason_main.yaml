@@ -31,6 +31,7 @@ hardware_interface:
          - {name: bl_angle, type: can_talon_srx, can_id: 11}
        # - {name: joystick_rumble, type: rumble, rumble_port: 0}
          - {name: navx_mxp, type: navX, frame_id: navx, id: 0}
+         - {name: compressor1, type: compressor, pcm_id: 0}
 
 # Create controllers for each joint
 #
@@ -121,3 +122,6 @@ pdp_state_controller:
 rumble_controller:
     type: position_controllers/JointPositionController
     joint: joystick_rumble
+compressor_controller:
+   type: position_controllers/JointPositionController
+   joint: compressor1
