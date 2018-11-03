@@ -12,6 +12,10 @@
 #include <std_msgs/Header.h>
 #include "cube_detection/CubeDetection.h"
 
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+
 #include <sstream>
 #include <vector>
 
@@ -34,13 +38,16 @@ using namespace std;
 using namespace sensor_msgs;
 using namespace message_filters;
 
-int hLo = 22;
-int sLo = 45;
+
+
+//TEST VALUES
+int hLo = 25;
+int sLo = 102;
 int vLo = 45;
 int hUp = 47;
 
 int maxTrans = 15900;
-int minTrans = 1000;
+int minTrans = 7000;
 
 int pixelError = .06;
 
@@ -54,8 +61,23 @@ static bool down_sample = false;
 //This funtion along with the commented out slider code is useful when getting new HSV values for the threshold
 //To get the trackbars active, comment out the lines marked "mark1", uncomment the lines marked "mark2",
 //multiline comment from "markS" to "markE"
-void on_trackbar(int, void*){}
 
+/*
+void cubeDivision(Rect boundRect, Rect vRect){
+		int numOfCubes;
+		switch(abs((float)(boundRect.height)/(float)(boundRect.width)))
+			case >= 1.3 and <= 2.3: numofCubes = 2
+
+				Point bl = Point(boundRect.tl() + Point(0, vRect.height));
+				Point tr = Point(boundRect.tl() + Point(vRect.width, 0));
+		
+		drawContours(drawing, contours,i,color,2,8,rank,0,Point());
+		rectangle(drawing, boundRect[i].tl(), vRect.br(), rect_color, 2, 8, 0);
+		rectangle(drawing, bl, boundRect[i].br(), rect_color, 2, 8, 0);
+
+
+}
+*/
 void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 {
 	cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
@@ -88,6 +110,22 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	Mat hsv;
 	Mat threshold;
 	Mat contour;
+	
+	// Create a kernel that we will use to sharpen our image
+   	Mat kernel = (Mat_<float>(3,3) <<
+        	          1,  1, 1,
+        	          1, -8, 1,
+        	          1,  1, 1); 
+    	//Mat imgLaplacian;
+    	//filter2D(frame, imgLaplacian, CV_32F, kernel);
+    	//Mat sharp;
+	//frame.convertTo(sharp, CV_32F);
+    	//Mat imgResult = sharp - imgLaplacian;
+    	// convert back to 8bits gray scale
+    	//imgResult.convertTo(imgResult, CV_8UC3);
+    	//imgLaplacian.convertTo(imgLaplacian, CV_8UC3);
+   	// imshow( "Laplace Filtered Image", imgLaplacian);
+    	//imshow( "New Sharped Image", imgResult);
 
 	cvtColor(*framePtr,hsv,COLOR_BGR2HSV);
 	cvtColor(*framePtr, gray, COLOR_BGR2GRAY);
@@ -98,6 +136,8 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 
 	dilate(threshold,threshold,getStructuringElement(MORPH_ELLIPSE,Size(6,6)));
 	erode(threshold,threshold,getStructuringElement(MORPH_ELLIPSE,Size(5,5)));
+
+	blur(gray, gray, Size(3,3));
 
 	vector<vector<Point> > contours;
 	vector<Vec4i> rank;
@@ -128,8 +168,8 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 
 	for(size_t i = 0; i < contours.size(); i++)
 	{
-		const int x = boundRect[i].x + (boundRect[i].width/2);
-		const int y = boundRect[i].y + (boundRect[i].height/2);
+		const float x = boundRect[i].x + (boundRect[i].width/2);
+		const float y = boundRect[i].y + (boundRect[i].height/2);
 		vector<float> depth_sample;
 		for(size_t idx = boundRect[i].width/3; idx < (boundRect[i].width/3)*2; idx++){
 			for(size_t idy = boundRect[i].height/3; idy < (boundRect[i].height/3)*2; idy++){
@@ -158,28 +198,110 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 		cd_msg.header.frame_id = frameMsg->header.frame_id;
 	for(size_t i = 0; i< contours.size(); i++)
 	{
+		
+		
 		double minArea = sqrt(193695.3745 * (pow(0.2226,contourDepth[i]))) + minTrans; 
 		//double maxArea = sqrt(193695.3745 * (pow(0.2226,contourDepth[i])) + maxTrans); 
-		double areaContour = boundRect[i].height * boundRect[i].width;
+		double areaRect = boundRect[i].height * boundRect[i].width;
 		Scalar rect_color = Scalar(0,0,255);
 		Scalar color = Scalar(0,255,0);	
-
 		//filter contours by area based on depth and side ratio
-		if (areaContour < minArea) {
+		if (areaRect < minArea) {
 			continue;
-		} else if (areaContour <= (drawing.rows * drawing.cols * pixelError)) {
+		} else if (areaRect <= (drawing.rows * drawing.cols * pixelError)) {
 			continue;
-		} else if (abs((boundRect[i].height/boundRect[i].width)) > 2.5) {
-			continue;
-		} else if (abs((boundRect[i].width/boundRect[i].height)) > 2.5) {
-			continue;
+		} else if (abs((float)(boundRect[i].height)/(float)(boundRect[i].width)) > 1.35 && 
+			   abs((float)(boundRect[i].height)/(float)(boundRect[i].width)) < 2.2) {
+			Rect vRect = Rect(boundRect[i].x, boundRect[i].y, boundRect[i].width, boundRect[i].height / 2);
+
+			Point bl = Point(boundRect[i].tl() + Point(0, vRect.height));
+			Point tr = Point(boundRect[i].tl() + Point(vRect.width, 0));
+			
+			drawContours(drawing, contours,i,color,2,8,rank,0,Point());
+			rectangle(drawing, boundRect[i].tl(), vRect.br(), rect_color, 2, 8, 0);
+			rectangle(drawing, bl, boundRect[i].br(), rect_color, 2, 8, 0);
+
+			const Point3f world_location = objType.screenToWorldCoords(boundRect[i], contourDepth[i], fov, framePtr->size(), camera_elevation);
+			geometry_msgs::Point32 world_location_in; 
+			world_location_in.x = world_location.y;
+			world_location_in.y = world_location.x;
+			world_location_in.z = world_location.z;
+			cd_msg.location.push_back(world_location_in);
+			cd_msg.angle = atan(world_location.y/world_location.x);
+
+		} else if (abs(((float)boundRect[i].width/(float)boundRect[i].height)) > 1.35 && 
+			   abs(((float)boundRect[i].width/(float)boundRect[i].height)) < 2.2) {
+			Rect hRect = Rect(boundRect[i].x, boundRect[i].y, boundRect[i].width / 2, boundRect[i].height);
+
+			//Point bl = Point(boundRect[i].tl() + Point(0, hRect.height));
+			Point tr = Point(boundRect[i].tl() + Point(hRect.width, 0));
+
+			drawContours(drawing, contours,i,color,2,8,rank,0,Point());
+			rectangle(drawing, boundRect[i].tl(), hRect.br(), rect_color, 2, 8, 0);
+			rectangle(drawing, tr, boundRect[i].br(), rect_color, 2, 8, 0);
+
+			const Point3f world_location = objType.screenToWorldCoords(boundRect[i], contourDepth[i], fov, framePtr->size(), camera_elevation);
+			geometry_msgs::Point32 world_location_in; 
+			world_location_in.x = world_location.y;
+			world_location_in.y = world_location.x;
+			world_location_in.z = world_location.z;
+			cd_msg.location.push_back(world_location_in);
+			cd_msg.angle = atan(world_location.y/world_location.x);
+			
+		} else if (abs((float)(boundRect[i].height)/(float)(boundRect[i].width)) > 2.2) {
+			Rect vRect = Rect(boundRect[i].x, boundRect[i].y, boundRect[i].width, boundRect[i].height / 3);
+
+			Point bl = Point(boundRect[i].tl() + Point(0, vRect.height));
+			Point tr = Point(boundRect[i].tl() + Point(vRect.width, 0));
+			Point bbl = Point(boundRect[i].tl() + Point(0, vRect.height * 2));
+			Point bbr = Point(boundRect[i].tl() + Point(vRect.width, vRect.height * 2));			
+
+			drawContours(drawing, contours,i,color,2,8,rank,0,Point());
+			rectangle(drawing, boundRect[i].tl(), vRect.br(), rect_color, 2, 8, 0);
+
+			rectangle(drawing, bl, bbr, rect_color, 2, 8, 0);
+
+			rectangle(drawing, bbl, boundRect[i].br(), rect_color, 2, 8, 0);
+
+			const Point3f world_location = objType.screenToWorldCoords(boundRect[i], contourDepth[i], fov, framePtr->size(), camera_elevation);
+			geometry_msgs::Point32 world_location_in; 
+			world_location_in.x = world_location.y;
+			world_location_in.y = world_location.x;
+			world_location_in.z = world_location.z;
+			cd_msg.location.push_back(world_location_in);
+			cd_msg.angle = atan(world_location.y/world_location.x);
+
+		} else if (abs(((float)boundRect[i].width/(float)boundRect[i].height)) > 2.2) {
+			Rect hRect = Rect(boundRect[i].x, boundRect[i].y, boundRect[i].width / 3, boundRect[i].height);	
+
+			Point bl = Point(boundRect[i].tl() + Point(0, hRect.height));
+			Point tr = Point(boundRect[i].tl() + Point(hRect.width, 0));
+			Point rrb = Point(boundRect[i].tl() + Point(hRect.width * 2, hRect.height));
+			Point rrt = Point(boundRect[i].tl() + Point(hRect.width * 2, 0));
+
+			drawContours(drawing, contours,i,color,2,8,rank,0,Point());
+			rectangle(drawing, boundRect[i].tl(), hRect.br(), rect_color, 2, 8, 0);
+			
+			rectangle(drawing, tr, rrb, rect_color, 2, 8, 0);
+
+			rectangle(drawing, rrt, boundRect[i].br(), rect_color, 2, 8, 0);
+
+			const Point3f world_location = objType.screenToWorldCoords(boundRect[i], contourDepth[i], fov, framePtr->size(), camera_elevation);
+			geometry_msgs::Point32 world_location_in; 
+			world_location_in.x = world_location.y;
+			world_location_in.y = world_location.x;
+			world_location_in.z = world_location.z;
+			cd_msg.location.push_back(world_location_in);
+			cd_msg.angle = atan(world_location.y/world_location.x);
+
 		} else if (contours_poly[i].size() < 4) {
 			continue;
 		} else {
-			
-			putText(drawing, to_string(contourDepth[i]), Point(boundRect[i].x, boundRect[i].y 		- 15), FONT_HERSHEY_SIMPLEX, 0.45, Scalar(0,0,255), 1);
+			double areaContour = contourArea(contours[i]);
+			putText(drawing, to_string(contourDepth[i]), Point(boundRect[i].x, boundRect[i].y - 15), FONT_HERSHEY_SIMPLEX, 0.45, (0,0,255), 1);
 			drawContours(drawing, contours,i,color,2,8,rank,0,Point());
 			rectangle(drawing, boundRect[i].tl(), boundRect[i].br(), rect_color, 2, 8, 0);
+			
 			const Point3f world_location = objType.screenToWorldCoords(boundRect[i], contourDepth[i], fov, framePtr->size(), camera_elevation);
 			geometry_msgs::Point32 world_location_in; 
 			world_location_in.x = world_location.y;
@@ -190,7 +312,7 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 		}
 	}
 
-	//imshow("threshold",threshold); 
+	imshow("threshold",threshold); 
 	//imshow("hsv",hsv);
 	imshow("drawing",drawing); 
 	imshow("image", *framePtr);
