@@ -399,6 +399,7 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 
 		if(!coerce(current_v, -v_curve_max, v_curve_max) & !coerce(current_v, -v_curve_max_2, v_curve_max_2) & !coerce(current_v, -v_general_max, v_general_max)) //If we need to threshhold, we don't need to iterate using accel
 		{
+                        //this is where it all breaks
 			const double max_wheel_orientation_accel = fabs(path.angular_accel * current_v * current_v);
 			//const double max_wheel_orientation_vel = fabs(path.angular_velocity * current_v);
 			const double path_induced_a = current_v * current_v / path.radius;
@@ -424,6 +425,7 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 			//ROS_ERROR_STREAM("num: " << accelerations.size());
 
 
+                        ROS_INFO_STREAM("accelerations size = " << accelerations.size());
 
 			//Implementation of adams-bashforth:
 			if(accelerations.size() == 0)

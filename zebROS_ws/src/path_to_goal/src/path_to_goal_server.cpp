@@ -111,7 +111,10 @@ public:
 			srvBaseTrajectory.request.points[0].velocities.push_back(0);
 			srvBaseTrajectory.request.points[0].accelerations.push_back(0);
 			//z-rotation
-			srvBaseTrajectory.request.points[0].positions.push_back(goal->rotation);
+                        if (goal->rotation < 0.001)
+                            srvBaseTrajectory.request.points[0].positions.push_back(0.001);
+                        else
+                            srvBaseTrajectory.request.points[0].positions.push_back(goal->rotation);
 			srvBaseTrajectory.request.points[0].velocities.push_back(0); //velocity at the end point
 			srvBaseTrajectory.request.points[0].accelerations.push_back(0); //acceleration at the end point
 			//time for profile to run
@@ -138,7 +141,7 @@ public:
 			srvBaseTrajectory.request.points[0].velocities.push_back(0);
 			srvBaseTrajectory.request.points[0].accelerations.push_back(0);
 			//z-rotation
-			srvBaseTrajectory.request.points[0].positions.push_back(0);
+			srvBaseTrajectory.request.points[0].positions.push_back(0.001);
 			srvBaseTrajectory.request.points[0].velocities.push_back(0); //velocity at the end point
 			srvBaseTrajectory.request.points[0].accelerations.push_back(0); //acceleration at the end point
 			//time for profile to run
@@ -165,7 +168,7 @@ public:
 			srvBaseTrajectory.request.points[0].velocities.push_back(0);
 			srvBaseTrajectory.request.points[0].accelerations.push_back(0);
 			//z-rotation
-			srvBaseTrajectory.request.points[0].positions.push_back(0);
+			srvBaseTrajectory.request.points[0].positions.push_back(0.001);
 			srvBaseTrajectory.request.points[0].velocities.push_back(0); //velocity at the end point
 			srvBaseTrajectory.request.points[0].accelerations.push_back(0); //acceleration at the end point
 			//time for profile to run

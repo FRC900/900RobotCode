@@ -11,10 +11,10 @@ bool trigger_pathing_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Resp
 {
     path_to_goal::PathGoal goal;
     goal.goal_index = 0;
-    goal.x = 3;
-    goal.y = 10;
-    goal.rotation = 0;
-    goal.time_to_run = 1;
+    goal.x = 3.0;
+    goal.y = 5.0;
+    goal.rotation = 0.0001;
+    goal.time_to_run = 0.5;
     ac->sendGoal(goal);
 
     bool finished_before_timeout = ac->waitForResult(ros::Duration(15));
