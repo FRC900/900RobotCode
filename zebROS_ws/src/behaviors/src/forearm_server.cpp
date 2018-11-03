@@ -44,7 +44,6 @@ class ForearmAction
         {
             ROS_INFO_STREAM("forearm_server running callback");
             ros::Rate r(10);
-            double start_time = ros::Time::now().toSec();
             bool success = false;
             bool timed_out = false;
             bool aborted = false;
@@ -61,6 +60,8 @@ class ForearmAction
                 ROS_ERROR("Failed to call service arm_cur_command_srv");
             }
 
+            double start_time = ros::Time::now().toSec();
+            ROS_ERROR("Timeout: %d", goal->timeout);
             while(!success && !timed_out && !aborted) {
                 success = fabs(arm_angle - arm_cur_command) < arm_angle_deadzone;
                 if(as_.isPreemptRequested() || !ros::ok()) {
@@ -71,7 +72,11 @@ class ForearmAction
                 }
                 r.sleep();
                 ros::spinOnce();
-                timed_out = (ros::Time::now().toSec() - start_time) > goal->timeout;
+                double cur_time = ros::Time::now().toSec();
+                ROS_INFO("arm_server.cpp 75: time elapsed: %f", (ros::Time::now().toSec() - start_time));
+                ROS_INFO("arm_server.cpp 75: time elapsed2: %f",(cur_time - start_time));
+                ROS_WARN("------------------------------");
+                timed_out = cur_time - start_time > goal->timeout;
             }
             result_.success = success;
             result_.timed_out = timed_out;
