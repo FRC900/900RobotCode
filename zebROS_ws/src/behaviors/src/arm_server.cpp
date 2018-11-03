@@ -126,7 +126,7 @@ int main(int argc, char** argv)
 
   if(!n_params.getParam("intake_timeout", intake_timeout));
     ROS_ERROR("Could not read intake_timeout in arm_server");
-  if(!n_params.getParam("arm_timeout", arm_timeout));
+  if(!n_params.getParam("forearm_timeout", arm_timeout));
     ROS_ERROR("Could not read arm_timeout in arm_server");
   ArmAction arm_server("arm_server");
   ros::spin();
