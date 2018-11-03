@@ -23,7 +23,7 @@ class ForearmAction
         ros::Subscriber talon_states_sub;
 
         double arm_angle;
-        double cur_arm_command;
+        double arm_cur_command;
     public:
         ForearmAction(std::string name) :
             as_(nh_, name, boost::bind(&ForearmAction::executeCB, this, _1), false),
@@ -33,7 +33,7 @@ class ForearmAction
             service_connection_header["tcp_nodelay"] = "1";
 
             forearm_srv_ = nh_.serviceClient<arm_controller::SetArmState>("/frcrobot/arm_controller/arm_state_service", false, service_connection_header);
-            arm_cur_command_srv_ = nh_.serviceClient<arm_controller::CurArmCommand>("/frcrobot/arm_controller/cur_arm_command_service", false, service_connection_header);
+            arm_cur_command_srv_ = nh_.serviceClient<arm_controller::CurArmCommand>("/frcrobot/arm_controller/arm_cur_command_service", false, service_connection_header);
             as_.start();
             talon_states_sub = nh_.subscribe("/frcrobot/talon_states",1, &ForearmAction::talonStateCallback, this);
         }
@@ -55,14 +55,14 @@ class ForearmAction
             
             arm_controller::CurArmCommand srv_arm_command;
             if(arm_cur_command_srv_.call(srv_arm_command)) {
-                cur_arm_command = srv_arm_command.response.cur_command; 
+                arm_cur_command = srv_arm_command.response.cur_command; 
             }
             else {
-                ROS_ERROR("Failed to call service cur_arm_command_Srv");
+                ROS_ERROR("Failed to call service arm_cur_command_srv");
             }
 
             while(!success && !timed_out && !aborted) {
-                success = fabs(arm_angle - cur_arm_command) < arm_angle_deadzone;
+                success = fabs(arm_angle - arm_cur_command) < arm_angle_deadzone;
                 if(as_.isPreemptRequested() || !ros::ok()) {
                     ROS_WARN("%s: Preempted", action_name_.c_str());
                     as_.setPreempted();
