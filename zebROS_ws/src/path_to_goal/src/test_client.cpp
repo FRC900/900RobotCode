@@ -3,17 +3,18 @@
 #include <path_to_goal/PathGoal.h>
 #include <path_to_goal/PathResult.h>
 #include <actionlib/client/simple_action_client.h>
-#include <std_srvs/Trigger.h>
+#include <path_to_goal/TwistSrv.h>
 
 std::shared_ptr<actionlib::SimpleActionClient<path_to_goal::PathAction>> ac;
 
-bool trigger_pathing_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+bool trigger_pathing_cb(path_to_goal::TwistSrv::Request &req, path_to_goal::TwistSrv::Response &res)
 {
+    ROS_WARN("In trigger callback");
     path_to_goal::PathGoal goal;
     goal.goal_index = 0;
-    goal.x = 3.0;
-    goal.y = 5.0;
-    goal.rotation = 0.0001;
+    goal.x = req.y; //blame ryan
+    goal.y = req.x; //im sad
+    goal.rotation = req.rotation;
     goal.time_to_run = 0.5;
     ac->sendGoal(goal);
 
@@ -27,7 +28,7 @@ bool trigger_pathing_cb(std_srvs::Trigger::Request &req, std_srvs::Trigger::Resp
     else
         ROS_INFO_STREAM("timed out");
 
-    return 0;
+    return true;
 }
     
 

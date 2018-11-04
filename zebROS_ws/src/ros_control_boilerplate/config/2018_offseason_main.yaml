@@ -80,7 +80,7 @@ intake_controller:
 arm_controller:
     type: arm_controller/ArmController
     arm_joint: ["arm", "arm_follower"]
-    position_array: [0.024, 0.11068, 0.199]
+    position_array: [0.029, 0.11068, 0.194]
     forward_soft_limit: 0.0
     reverse_soft_limit: 0.223
     arm:

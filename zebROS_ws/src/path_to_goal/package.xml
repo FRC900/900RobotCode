@@ -71,6 +71,7 @@
   <exec_depend>message_generation</exec_depend>
   <depend>actionlib</depend>
   <depend>genmsg</depend>
+  <depend>geometry_msgs</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

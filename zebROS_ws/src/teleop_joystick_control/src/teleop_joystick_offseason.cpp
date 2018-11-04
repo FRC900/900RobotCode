@@ -107,7 +107,7 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
     }
 
 /*-------------------------- press a for toggle arm position ------------------------*/
-    if (JoystickState->buttonAButton) {
+    if (JoystickState->buttonAPress) {
         ac->cancelAllGoals();
         ac_intake->cancelAllGoals();
         ac_arm->cancelAllGoals();

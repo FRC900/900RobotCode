@@ -12,7 +12,7 @@
   <arg name="exposure" default="-1" />
   <arg name="whitebalance" default="-1" />
   <arg name="name" default="zed_goal" />
-  <arg name="camera_flip" default="True" />
+  <!--<arg name="camera_flip" default="True" /> -->
   <arg name="record" default="False" />
   <arg name="down_sample" default="False" />
   <arg name="sub_rate" default="10" />
@@ -34,7 +34,7 @@
       <arg name="gain" value="$(arg gain)" />
       <arg name="exposure" value="$(arg exposure)" />
       <arg name="whitebalance" value="$(arg whitebalance)" />
-      <arg name="camera_flip" value="$(arg camera_flip)" />
+      <!--<arg name="camera_flip" value="$(arg camera_flip)" /> -->
     </include>
 </group>
 

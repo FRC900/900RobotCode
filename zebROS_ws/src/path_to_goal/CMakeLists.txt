@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   talon_swerve_drive_controller
   robot_visualizer
   std_srvs
+  geometry_msgs
   actionlib_msgs
   actionlib
   genmsg
@@ -64,11 +65,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  TwistSrv.srv
+)
 
 ## Generate actions in the 'action' folder
 add_action_files(
@@ -115,7 +115,7 @@ generate_messages(
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES path_to_goal
-   CATKIN_DEPENDS roscpp rospy std_msgs swerve_point_generator talon_controllers talon_swerve_drive_controller robot_visualizer std_srvs actionlib_msgs actionlib genmsg
+   CATKIN_DEPENDS roscpp rospy std_msgs swerve_point_generator talon_controllers talon_swerve_drive_controller geometry_msgs robot_visualizer std_srvs actionlib_msgs actionlib genmsg
 #  DEPENDS system_lib
 )
 
