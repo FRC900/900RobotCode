@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(sick_tim)
 
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 find_package(catkin REQUIRED
     COMPONENTS
       diagnostic_updater
@@ -100,3 +101,5 @@ install(DIRECTORY urdf/
 if(CATKIN_ENABLE_TESTING)
   roslaunch_add_file_check(launch)
 endif(CATKIN_ENABLE_TESTING)
+
+endif()

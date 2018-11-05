@@ -81,8 +81,8 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	// It is needed as an initial condition for the
 	// robot to connect it to the first waypoint
 	//
-	// TODO : make the starting position and
-	// velocity a variable passed in to the
+	// TODO : make the starting position and 
+	// velocity a variable passed in to the 
 	// path generation request.
 
 

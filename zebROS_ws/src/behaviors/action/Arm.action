@@ -1,0 +1,8 @@
+#goal
+int8 arm_position
+bool intake_cube
+---
+#result
+bool success
+---
+#feedback

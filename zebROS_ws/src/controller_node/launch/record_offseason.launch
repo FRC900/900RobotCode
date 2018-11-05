@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <node name="rosbag_record_node" pkg="rosbag" type="record"
+	  args="record -o /mnt/900_2/ --lz4
+          /ar_pose_marker
+        /cube_detection_node/cube_detect_msg
+        /frcrobot/arm_controller/arm_command
+		/frcrobot/intake_server/goal
+        /frcrobot/joint_states
+        /frcrobot/joystick_states
+        /mmWaveDataHdl/RScan
+        /frcrobot/match_data
+        /frcrobot/navx_mxp
+        /frcrobot/pdp_states
+        /frcrobot/swerve_drive_controller/cmd_vel
+        /frcrobot/swerve_drive_controller/odom
+        /frcrobot/talon_states
+        /jetson_1/heartbeat
+        /jetson_2/heartbeat
+        /rio/heartbeat
+        /rosout
+        /rosout_agg
+        /rplidar/scan
+        /sick_tim/joint_states
+        /sick_tim/scan
+        /sick_tim/sick_tim571_2050101/parameter_descriptions
+        /sick_tim/sick_tim571_2050101/parameter_updates
+        /tf
+        /tf_static
+        /zed_goal/depth/depth_registered
+        /zed_goal/left/image_rect_color" />
+</launch>

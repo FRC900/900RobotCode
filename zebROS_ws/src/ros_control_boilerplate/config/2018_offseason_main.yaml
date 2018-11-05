@@ -1,0 +1,134 @@
+# ros_control_boilerplate Settings -----------------------
+# Settings for ros_control control loop
+generic_hw_control_loop:
+  loop_hz: 23
+  cycle_time_error_threshold: 0.01
+
+# 1 is back left
+# 2 is front left
+# 3 is back right
+# 4 is front right
+
+# Settings for ros_control hardware interface
+# Map a name for each valid joint to a CAN id
+# For future expansion, change hw_id to specify one
+# of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
+hardware_interface:
+   joints:
+         - {name: intake_joint, type: can_talon_srx, can_id: 41}
+         - {name: intake_follower_joint, type: can_talon_srx, can_id: 42}
+         - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1} 
+         - {name: arm_joint, type: can_talon_srx, can_id: 31}
+         - {name: arm_follower_joint, type: can_talon_srx, can_id: 32}
+         - {name: intake_line_break, type: digital_input, dio_channel: 0, invert: true}
+         - {name: fl_drive, type: can_talon_srx, can_id: 22}
+         - {name: fl_angle, type: can_talon_srx, can_id: 12}
+         - {name: fr_drive, type: can_talon_srx, can_id: 24}
+         - {name: fr_angle, type: can_talon_srx, can_id: 14}
+         - {name: br_drive, type: can_talon_srx, can_id: 23}
+         - {name: br_angle, type: can_talon_srx, can_id: 13}
+         - {name: bl_drive, type: can_talon_srx, can_id: 21}
+         - {name: bl_angle, type: can_talon_srx, can_id: 11}
+       # - {name: joystick_rumble, type: rumble, rumble_port: 0}
+         - {name: navx_mxp, type: navX, frame_id: navx, id: 0}
+         - {name: compressor1, type: compressor, pcm_id: 0}
+
+# Create controllers for each joint
+#
+# Entry is the name of the controller. It can be anything.  
+# It will create a namespace with that name under the main
+# controller namespace. Subscribed topics for that controller
+# will be most often show up under 
+# <top level controller manager ns>/<controller ns>/topic
+# e.g.
+# /frcrobot/joint1_talon_controller/command
+# /frcrobot/joint2_talon_controller/command
+# /frcrobot/talon_states
+#
+# This one creates the /talon_states topic necessary in ROS
+# It doesn't actually control anything, just takes the internal
+# encoder state used by the hw manager and publishes it as
+# a ROS topic.  This is generic ROS stuff, so we'll have
+# to figure out what to map e.g. effort to in the Talon world
+talon_state_controller:
+   type:         talon_state_controller/TalonStateController
+   publish_rate: 20
+
+# Similar to above, but this one prints non-Talon state
+# (stuff that fits into the more standard ROS position/
+# speed/effort paradigm)
+joint_state_controller:
+   type:         joint_state_controller/JointStateController
+   publish_rate: 20
+
+intake_controller:
+    type: intake_controller/IntakeController
+    clamp: "clamp_joint"
+    intake_joint: ["intake", "intake_follower"]
+    intake:
+        joint: intake_joint
+        type: talon_controllers/TalonPercentOutputController
+        invert_output: False
+    intake_follower:
+        joint: intake_follower_joint
+        type: talon_controllers/TalonFollowerController
+        follow_joint: intake_joint
+        invert_output: False
+    clamp_joint: 
+        joint: clamp
+
+arm_controller:
+    type: arm_controller/ArmController
+    arm_joint: ["arm", "arm_follower"]
+    position_array: [0.029, 0.11068, 0.194]
+    forward_soft_limit: 0.0
+    reverse_soft_limit: 0.223
+    arm:
+        joint: arm_joint
+        motion_cruise_velocity: 3 # wrong
+        motion_acceleration: 3 # wrong
+        close_loop_values:
+            - {p: 1.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: .5, i: 0.0005, d: 7.5, f: 0.0235389351901052, i_zone: 750, closed_loop_peak_output: 1.0}
+        invert_output: True
+        sensor_phase: True
+        feedback_type: CTRE_MagEncoder_Absolute
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.0
+        nominal_output_reverse: 0.0
+        motion_cruise_velocity: 16
+        motion_acceleration: 75
+        voltage_compensation_enable: true
+        conversion_factor: 0.0454676
+        current_limit_continuous_amps: 15
+        current_limit_enable: True
+        closed_loop_ramp: 0.1
+        limit_switch_local_reverse_normal: "NormallyOpen"
+        limit_switch_local_reverse_source: "FeedbackConnector"
+        limit_switch_local_forward_normal: "NormallyOpen"
+        limit_switch_local_forward_source: "FeedbackConnector"
+    arm_follower:
+        joint: arm_follower_joint
+        invert_output: False
+
+imu_sensor_controller:
+   type:         imu_sensor_controller/ImuSensorController
+   publish_rate: 20
+
+pdp_state_controller:
+   type:         pdp_state_controller/PDPStateController
+   publish_rate: 20
+
+rumble_controller:
+    type: position_controllers/JointPositionController
+    joint: joystick_rumble
+compressor_controller:
+   type: position_controllers/JointPositionController
+   joint: compressor1
+
+    
+   # pneumatics_controller:
+   #     type: position_controllers/JointPositionController
+   #     joint: clamp
+

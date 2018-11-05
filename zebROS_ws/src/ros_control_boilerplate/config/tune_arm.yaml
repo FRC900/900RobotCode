@@ -1,0 +1,75 @@
+# ros_control_boilerplate Settings -----------------------
+# Settings for ros_control control loop
+generic_hw_control_loop:
+  loop_hz: 50
+  cycle_time_error_threshold: 0.01
+
+# Settings for ros_control hardware interface
+# Map a name for each valid joint to a CAN id
+# For future expansion, change hw_id to specify one
+# of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
+hardware_interface:
+   joints:
+         - {name: arm_joint, type: can_talon_srx, can_id: 31}
+         - {name: arm_follower_joint, type: can_talon_srx, can_id: 32}
+
+# Create controllers for each joint
+#
+# Entry is the name of the controller. It can be anything.  
+# It will create a namespace with that name under the main
+# controller namespace. Subscribed topics for that controller
+# will be most often show up under 
+# <top level controller manager ns>/<controller ns>/topic
+# e.g.
+# /frcrobot/joint1_talon_controller/command
+# /frcrobot/joint2_talon_controller/command
+# /frcrobot/talon_states
+#
+# This one creates the /talon_states topic necessary in ROS
+# It doesn't actually control anything, just takes the internal
+# encoder state used by the hw manager and publishes it as
+# a ROS topic.  This is generic ROS stuff, so we'll have
+# to figure out what to map e.g. effort to in the Talon world
+talon_state_controller:
+   type:         talon_state_controller/TalonStateController
+   publish_rate: 50
+
+# Similar to above, but this one prints non-Talon state
+# (stuff that fits into the more standard ROS position/
+# speed/effort paradigm)
+joint_state_controller:
+   type:         joint_state_controller/JointStateController
+   publish_rate: 20
+
+
+pdp_state_controller:
+   type:         pdp_state_controller/PDPStateController
+   publish_rate: 50
+
+arm_angle_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: arm_joint 
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 4.2, i: 0.006, d: 45.0, f: 0.47, i_zone: 500} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
+        - {p: 4.2, i: 0.006, d: 45.0, f: 0.47, i_zone: 500}
+    invert_output: True
+    sensor_phase: True
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    limit_switch_local_reverse_normal: "NormallyOpen"
+    limit_switch_local_reverse_source: "FeedbackConnector"
+    limit_switch_local_forward_normal: "NormallyOpen"
+    limit_switch_local_forward_source: "FeedbackConnector"
+
+arm_follower_controller:
+    type: talon_controllers/TalonFollowerController
+    joint: arm_follower_joint 
+    feedback_type: CTRE_MagEncoder_Absolute
+    invert_output: False
+    follow_joint: arm_joint

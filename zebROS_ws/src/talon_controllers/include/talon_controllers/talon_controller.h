@@ -196,6 +196,7 @@ class TalonLinearPositionCloseLoopController :
 
 			//radius for length
 			n.getParam("radius", radius_);
+			return true;
 		}
 
 		// Same as TalonClosedLoopController but setCommand

@@ -185,13 +185,13 @@ class TalonHWCommand
 			max_integral_accumulator_{0, 0},
 			closed_loop_peak_output_{1, 1},
 			closed_loop_period_{1, 1},
+			pidf_changed_{true, true},
 			aux_pid_polarity_(false),
 			aux_pid_polarity_changed_(true),
-			pidf_changed_{true, true},
 
 			conversion_factor_(1.0),
 			conversion_factor_changed_(true),
-			
+
 			custom_profile_disable_(false),
 			custom_profile_run_(false),
 			custom_profile_slot_(0),
@@ -945,13 +945,13 @@ class TalonHWCommand
 					(normal != limit_switch_local_forward_normal_))
 			{
 				if ((source <= LimitSwitchSource_Uninitialized) ||
-						(source >= LimitSwitchSource_Last))
+					(source >= LimitSwitchSource_Last))
 				{
 					ROS_WARN("Invalid source in setForwardLimitSwitchSource");
 					return;
 				}
 				if ((normal <= LimitSwitchNormal_Uninitialized) ||
-						(normal >= LimitSwitchNormal_Last))
+					(normal >= LimitSwitchNormal_Last))
 				{
 					ROS_WARN("Invalid normal in setForwardLimitSwitchSource");
 					return;
@@ -1350,9 +1350,9 @@ class TalonHWCommand
 				ROS_ERROR("Custom profile disabled via param (getCustomProfileNextSlot)");
 				return std::vector<int>();
 			}
-			std::lock_guard<std::mutex>(*custom_profile_next_slot_mutex_ptr_);
+			std::lock_guard<std::mutex> l(*custom_profile_next_slot_mutex_ptr_);
 			return custom_profile_next_slot_;
-		}	
+		}
 		void setCustomProfileNextSlot(const std::vector<int> &next_slot)
 		{
 			if (custom_profile_disable_)
@@ -1360,7 +1360,7 @@ class TalonHWCommand
 				ROS_ERROR("Custom profile disabled via param (setCustomProfileNextSlot)");
 				return;
 			}
-			std::lock_guard<std::mutex>(*custom_profile_next_slot_mutex_ptr_);
+			std::lock_guard<std::mutex> l(*custom_profile_next_slot_mutex_ptr_);
 			custom_profile_next_slot_ = next_slot;
 		}
 		double getCustomProfileHz(void) const
@@ -1390,7 +1390,7 @@ class TalonHWCommand
 			}
 			custom_profile_run_ = run;
 		}
-		bool getCustomProfileRun(void) 
+		bool getCustomProfileRun(void)
 		{
 			if (custom_profile_disable_)
 			{
@@ -1428,7 +1428,7 @@ class TalonHWCommand
 				ROS_ERROR("Custom profile disabled via param (pushCustomProfilePoint)");
 				return;
 			}
-			std::lock_guard<std::mutex>(*custom_profile_vectors_mutex_ptr_);
+			std::lock_guard<std::mutex> l(*custom_profile_vectors_mutex_ptr_);
 
 			// Make sure there are enough slots allocated to
 			// hold the point about to be added
@@ -1450,7 +1450,7 @@ class TalonHWCommand
 			while (custom_profile_points_changed_.size() <= slot)
 				custom_profile_points_changed_.push_back(true);
 			custom_profile_points_changed_[slot] = true;
-		} 
+		}
 		void pushCustomProfilePoints(const std::vector<CustomProfilePoint> &points, size_t slot)
 		{
 			if (custom_profile_disable_)
@@ -1462,7 +1462,7 @@ class TalonHWCommand
 			if (!points.size())
 				return;
 
-			std::lock_guard<std::mutex>(*custom_profile_vectors_mutex_ptr_);
+			std::lock_guard<std::mutex> l(*custom_profile_vectors_mutex_ptr_);
 
 			// Make sure there are enough slots allocated to
 			// hold the point about to be added
@@ -1481,7 +1481,7 @@ class TalonHWCommand
 				}
 				else
 				{
-					custom_profile_total_time_[slot].push_back(points[prev_size].duration);	
+					custom_profile_total_time_[slot].push_back(points[prev_size].duration);
 				}
 			}
 
@@ -1498,7 +1498,7 @@ class TalonHWCommand
 				ROS_ERROR("Custom profile disabled via param (overwriteCustomProfilePoints)");
 				return;
 			}
-			std::lock_guard<std::mutex>(*custom_profile_vectors_mutex_ptr_);
+			std::lock_guard<std::mutex> l(*custom_profile_vectors_mutex_ptr_);
 
 #if 0
 			for(size_t i = 0; i < custom_profile_points_changed_.size(); i++)
@@ -1527,7 +1527,7 @@ class TalonHWCommand
 				{
 					custom_profile_total_time_[slot][i] = points[i].duration;
 				}
-			}	
+			}
 			ROS_INFO_STREAM("override points at slot: " << slot);
 			while (custom_profile_points_changed_.size() <= slot)
 				custom_profile_points_changed_.push_back(true);
@@ -1541,7 +1541,7 @@ class TalonHWCommand
 				ROS_ERROR("Custom profile disabled via param (getCustomProfilePoints)");
 				return std::vector<CustomProfilePoint>();
 			}
-			std::lock_guard<std::mutex>(*custom_profile_vectors_mutex_ptr_);
+			std::lock_guard<std::mutex> l(*custom_profile_vectors_mutex_ptr_);
 
 			if (slot >= custom_profile_points_.size())
 				return std::vector<CustomProfilePoint>();
@@ -1556,7 +1556,7 @@ class TalonHWCommand
 				ROS_ERROR("Custom profile disabled via param (getCustomProfilePointsTimesChanged)");
 				return std::vector<bool>();
 			}
-			std::lock_guard<std::mutex>(*custom_profile_vectors_mutex_ptr_);
+			std::lock_guard<std::mutex> l(*custom_profile_vectors_mutex_ptr_);
 			std::vector<bool> returner = custom_profile_points_changed_;
 
 			bool args_resized = false;
@@ -1575,13 +1575,13 @@ class TalonHWCommand
 			}
 
 			for(size_t i = 0; i < slots; i++)
-			{	
+			{
 				if (args_resized || custom_profile_points_changed_[i])
 				{
 					if (args_resized)
 						returner[i] = true;
-					//ROS_INFO_STREAM("actually changed in interface " << custom_profile_points_changed_[i] << " slot: " << i); 
-					ret_points[i] = custom_profile_points_[i]; 
+					//ROS_INFO_STREAM("actually changed in interface " << custom_profile_points_changed_[i] << " slot: " << i);
+					ret_points[i] = custom_profile_points_[i];
 					ret_times[i]  = custom_profile_total_time_[i];
 					custom_profile_points_changed_[i] = false;
 				}
@@ -1596,21 +1596,21 @@ class TalonHWCommand
 				ROS_ERROR("Custom profile disabled via param (getCustomProfileTime)");
 				return std::vector<double>();
 			}
-			std::lock_guard<std::mutex>(*custom_profile_vectors_mutex_ptr_);
+			std::lock_guard<std::mutex> l(*custom_profile_vectors_mutex_ptr_);
 
 			if (slot >= custom_profile_total_time_.size())
 				return std::vector<double>();
 
 			return custom_profile_total_time_[slot];
 		}
-		double getCustomProfileEndTime(int slot)
+		double getCustomProfileEndTime(size_t slot)
 		{
 			if (custom_profile_disable_)
 			{
 				ROS_ERROR("Custom profile disabled via param (getCustomProfileEndTime)");
 				return -1;
 			}
-			std::lock_guard<std::mutex>(*custom_profile_vectors_mutex_ptr_);
+			std::lock_guard<std::mutex> l(*custom_profile_vectors_mutex_ptr_);
 
 			if (slot >= custom_profile_total_time_.size())
 				return -1;
@@ -1626,7 +1626,7 @@ class TalonHWCommand
 				ROS_ERROR("Custom profile disabled via param (getCustomProfileTimeCount)");
 				return 0;
 			}
-			std::lock_guard<std::mutex>(*custom_profile_vectors_mutex_ptr_);
+			std::lock_guard<std::mutex> l(*custom_profile_vectors_mutex_ptr_);
 
 			if (slot >= custom_profile_points_.size())
 				return 0;
@@ -1640,7 +1640,7 @@ class TalonHWCommand
 				ROS_ERROR("Custom profile disabled via param (getCustomProfileCount)");
 				return 0;
 			}
-			std::lock_guard<std::mutex>(*custom_profile_vectors_mutex_ptr_);
+			std::lock_guard<std::mutex> l(*custom_profile_vectors_mutex_ptr_);
 
 			if (slot >= custom_profile_points_.size())
 				return 0;

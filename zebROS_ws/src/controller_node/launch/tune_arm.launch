@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<launch>
+
+	<!-- GDB functionality -->
+	<arg name="debug" default="false" />
+	<arg unless="$(arg debug)" name="launch_prefix" value="" />
+	<arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+	<arg name="hw_or_sim" default="hw" />
+	<arg name="static_map" default="True"/>
+
+        <machine name="roboRIO" address="10.9.0.2" env-loader="/home/admin/2018Offseason/zebROS_ws/ROSJetsonMaster.sh" user="admin" password="admin"/>
+	<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node> 
+	<group ns="frcrobot">
+
+		<!-- Load controller settings -->
+		<rosparam file="$(find ros_control_boilerplate)/config/tune_arm.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller.yaml" command="load"/>
+
+		<!-- Load hardware interface -->
+		<node machine="roboRIO" name="frcrobot_hardware_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
+			output="screen" launch-prefix="$(arg launch_prefix)">
+		</node>
+
+		<!-- Load controller manager -->
+		<node machine="roboRIO" name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
+                    output="screen" args="spawn joint_state_controller talon_state_controller pdp_state_controller robot_code_ready_controller arm_angle_controller arm_follower_controller" /> 
+
+                <!-- <node name="robot_visualize" pkg="robot_visualizer" type="robot_visualize" output="screen" />-->
+                <!-- <node name="profile_follow" pkg="robot_visualizer" type="profile_follow" output="screen" />-->
+		
+		<!-- Convert joint states to /tf tranforms -->
+		<!-- <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/-->
+	</group>
+
+    <group ns="rio">
+        <node name="heartbeat_rio" pkg="heartbeat_node" type="heartbeat" output="screen" />
+    </group>
+
+    <group ns="jetson">
+        <node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
+    </group>
+        
+
+</launch>

@@ -503,7 +503,7 @@ Modes load_all_trajectories(int max_mode_num, int max_mode_cmd_vel, int max_star
 							XmlRpc::XmlRpcValue shift_xml;
 							if(auto_data.getParam(identifier_with_wait + "_t_shifts", shift_xml))
 							{
-								ROS_INFO_STREAM("Custom shifts for identifier: " << identifier_with_wait << " found");
+								//ROS_INFO_STREAM("Custom shifts for identifier: " << identifier_with_wait << " found");
 								for(int i = 0; i < group_xml.size(); i++)
 								{
 									profiled_modes[mode][layout][start_pos].srv_msgs[wait_for_action].request.t_shift.push_back(shift_xml[i]);

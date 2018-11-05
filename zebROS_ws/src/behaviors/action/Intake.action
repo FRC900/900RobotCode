@@ -1,9 +1,9 @@
-#goal definition
-bool IntakeCube #what others?
-float64 time_out
-bool wait_to_proceed
+#goal
+bool intake_cube
+float64 timeout
 ---
-#result definition
+#result
 bool timed_out
+bool success
 ---
 #feedback
