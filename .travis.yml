@@ -11,7 +11,7 @@ install:
   - travis_wait 45 docker pull frc900/zebros-dev:latest
 
 script:
-  - docker run -name fancy_unicorn --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
+  - docker run --name=fancy_unicorn --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
     "{cd ~ &&
      sudo chown ubuntu:ubuntu 2018Offseason &&
      cd ~/2018Offseason &&
