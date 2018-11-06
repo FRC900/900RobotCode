@@ -32,8 +32,8 @@
 #include <algorithm>
 #include <cstddef>
 
+#include <pluginlib/class_list_macros.h>
 #include "talon_state_controller/talon_state_controller.h"
-#include "talon_state_controller/TalonState.h"
 
 namespace talon_state_controller
 {
