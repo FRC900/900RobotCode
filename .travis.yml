@@ -66,6 +66,10 @@ script:
      catkin_make &&
      echo "catkin make" &&
      source devel/setup.bash &&
+     catkin_make test &&
+     echo "catkin make tests" &&
+     catkin_make run_tests &&
+     echo "catkin run tests" &&
      timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen &&
      echo \"Finished Ubuntu compile.\""
 #   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
