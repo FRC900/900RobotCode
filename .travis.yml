@@ -34,19 +34,20 @@ script:
      source devel/setup.bash &&
      timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen &&
      echo \"Finished Ubuntu compile.\""
-#   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
-#     "cd ~ &&
-#      git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git && echo "Clone success."
-#      cd ./2018Offseason/ &&
-#      git checkout $TRAVIS_COMMIT &&
-#      git log -n1 &&
-#      git submodule update --init --recursive &&
-#      cd zebROS_ws &&
-#      wstool update -t src &&
-#      source /usr/arm-frc-linux-gnueabi/opt/ros/kinetic/setup.bash &&
-#      ./cross_build.sh &&
-#      echo \"Finished RoboRIO compile.\""
-#   - echo "Completed all tests successfully."
+  - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
+    "cd ~ &&
+     sudo chown ubuntu:ubuntu 2018Offseason &&
+     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git && echo "Clone success."
+     cd ./2018Offseason/ &&
+     git checkout $TRAVIS_COMMIT &&
+     git log -n1 &&
+     git submodule update --init --recursive &&
+     cd zebROS_ws &&
+     wstool update -t src &&
+     source /usr/arm-frc-linux-gnueabi/opt/ros/kinetic/setup.bash &&
+     ./cross_build.sh &&
+     echo \"Finished RoboRIO compile.\""
+  - echo "Completed all tests successfully."
 
 build:
   - true
