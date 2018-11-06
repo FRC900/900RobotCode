@@ -3,7 +3,6 @@ rplidar_ros
 teleop_twist_joy
 zed-ros-wrapper
 /CMakeLists.txt
-px-ros-pkg
 px_ros_pkg
 ros_controllers
 control_toolbox
@@ -11,3 +10,4 @@ control_toolbox
 *.orig
 rospy_message_converter
 ydlidar
+sick_tim
