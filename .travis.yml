@@ -70,7 +70,7 @@ script:
      echo "catkin make tests" &&
      catkin_make run_tests &&
      echo "catkin run tests" &&
-     catkin_test_results build/test_results > ~/2018Offseason/test_results.log &&
+     catkin_test_results build/test_results &&
      timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen &&
      echo \"Finished Ubuntu compile.\"; } > ~/2018Offseason/test_results.log 2>&1"
   - docker cp fancy_unicorn:~/2018Offseason/test_results.log ~/2018Offseason/test_results.log
