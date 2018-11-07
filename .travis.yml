@@ -70,11 +70,11 @@ script:
      echo "catkin make tests" &&
      catkin_make run_tests &&
      echo "catkin run tests" &&
-     catkin_test_results build/test_results > ~/2018Offseason/build_$TRAVIS_BUILD_NUMBER.log &&
+     catkin_test_results build/test_results > ~/2018Offseason/test_results.log &&
      timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen &&
      echo \"Finished Ubuntu compile.\""
-  - docker cp fancy_unicorn:~/2018Offseason/build_$TRAVIS_BUILD_NUMBER.log ~/2018Offseason/build_$TRAVIS_BUILD_NUMBER.log
-  - cat ~/2018Offseason/build_$TRAVIS_BUILD_NUMBER.log
+  - docker cp fancy_unicorn:~/2018Offseason/test_results.log ~/2018Offseason/test_results.log
+  - cat ~/2018Offseason/test_results.log
 #   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
 #     "cd ~ &&
 #      git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git && echo "Clone success."
