@@ -66,7 +66,7 @@ class RobotControllerState
 		int      GetCANTxFullCount(void) const           { return can_tx_full_count_; }
 		int      GetCANReceiveErrorCount(void) const     { return can_receive_error_count_; }
 		int      GetCANTransmitErrorCount(void) const    { return can_transmit_error_count_; }
-		
+
 		void SetFPGAVersion(int fpga_version)                                { fpga_version_ = fpga_version; }
 		void SetFPGARevision(int64_t fpga_revision)                          { fpga_revision_ = fpga_revision; }
 		void SetFPGATime(uint64_t fpga_time)                                 { fpga_time_ = fpga_time; }
@@ -130,7 +130,7 @@ class RobotControllerStateHandle
 	public:
 		RobotControllerStateHandle(void) : state_(0) {}
 
-		RobotControllerStateHandle(const std::string &name, const RobotControllerState *state) : 
+		RobotControllerStateHandle(const std::string &name, const RobotControllerState *state) :
 			name_(name),
 			state_(state)
 		{
@@ -146,7 +146,7 @@ class RobotControllerStateHandle
 		}
 
 	private:
-		std::string 	            name_;
+		std::string		            name_;
 		const RobotControllerState *state_;
 };
 

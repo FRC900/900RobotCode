@@ -430,6 +430,47 @@ void FRCRobotHWInterface::hal_keepalive_thread(void)
 				game_specific_message_seen = false;
 			}
 		}
+		RobotControllerState rcs;
+		int32 status;
+		rcs.SetFPGAVersion(HAL_GetFPGAVersion(&status));
+		rcs.SetFPGARevision(HAL_GetFPGARevision(&status));
+		rcs.SetFPGATime(HAL_GetFPGATime(&status));
+		rcs.SetUserButton(HAL_GetFPGAButton(&status));
+		rcs.SetIsSysActive(HAL_GetSystemActive(&status));
+		rcs.SetIsBrownedOut(HAL_GetBrownedOut(&status));
+		rcs.SetInputVoltage(HAL_GetVinVoltage(&status));
+		rcs.SetInputCurrent(HAL_GetVinCurrent(&status));
+		rcs.SetVoltage3V3(HAL_GetUserVolatage3V3(&status));
+		rcs.SetCurrent3V3(HAL_GetUserCurrent3V3(&status));
+		rcs.SetEnabled3V3(HAL_GetUserActive3V3(&status));
+		rcs.SetFaultCount3V3(HAL_GetUserCurrentFaults3V3(&status));
+		rcs.SetVoltage5V(HAL_GetUserVolatage5V(&status));
+		rcs.SetCurrent5V(HAL_GetUserCurrent5V(&status));
+		rcs.SetEnabled5V(HAL_GetUserActive5V(&status));
+		rcs.SetFaultCount5V(HAL_GetUserCurrentFaults5V(&status));
+		rcs.SetVoltage6V(HAL_GetUserVolatage6V(&status));
+		rcs.SetCurrent6V(HAL_GetUserCurrent6V(&status));
+		rcs.SetEnabled6V(HAL_GetUserActive6V(&status));
+		rcs.SetFaultCount6V(HAL_GetUserCurrentFaults6V(&status));
+		float percent_bus_utilization;
+		uint32_t bus_off_count;
+		uint32_t tx_full_count;
+		uint32_t receive_error_count;
+		uint32_t transmit_error_count;
+		HAL_CAN_GetCANStatus(&percent_bus_utilization, &bus_off_count,
+							 &tx_full_count, &receive_error_count,
+							 &transmit_error_count, &status);
+
+		rcs.SetCANPercentBusUtilization(percent_bus_utilization);
+		rcs.SetCANBusOffCount(bus_off_count);
+		rcs.SetCANTxFullCount(tx_full_count);
+		rcs.SetCANReceiveErrorCount(receive_error_count);
+		rcs.SetCANTransmitErrorCount(transmit_error_count);
+		{
+			std::lock_guard<std::mutex> l(robot_controller_state_mutex);
+			shared_robot_controller_state_ = rcs;
+		}
+
 		r.sleep();
 	}
 }
@@ -1079,6 +1120,10 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		}
 	}
 
+	{
+		std::lock_guard<std::mutex> l(robot_controller_state_mutex_);
+		robot_controller_state_ = shared_robot_controller_state_
+	}
 }
 
 double FRCRobotHWInterface::getConversionFactor(int encoder_ticks_per_rotation,
