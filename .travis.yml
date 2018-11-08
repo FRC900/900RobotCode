@@ -11,8 +11,10 @@ install:
   - travis_wait 45 docker pull frc900/zebros-dev:latest
 
 script:
-  - docker run --name=fancy_unicorn --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
-    "{ cd ~ &&
+  - docker run --name=fancy_unicorn --user ubuntu frc900/zebros-dev:latest /bin/bash -l -d
+  - docker logs fancy_unicorn
+  - docker exec -it -c
+    "cd ~ &&
      sudo chown ubuntu:ubuntu 2018Offseason &&
      cd ~/2018Offseason &&
      git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git . &&
@@ -38,7 +40,7 @@ script:
      echo "catkin run tests" &&
      catkin_test_results build/test_results &&
      timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen &&
-     echo \"Finished Ubuntu compile.\"; } > ~/2018Offseason/test_results.log 2>&1"
+     echo \"Finished Ubuntu compile.\""
   - docker cp fancy_unicorn:~/2018Offseason/test_results.log ~/2018Offseason/test_results.log
   - cat ~/2018Offseason/test_results.log
 #   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
