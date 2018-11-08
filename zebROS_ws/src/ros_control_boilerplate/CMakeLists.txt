@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   pdp_state_controller
   elevator_controller
+  robot_controller_interface
 )
 
 add_message_files (

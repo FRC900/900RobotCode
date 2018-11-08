@@ -132,7 +132,7 @@ if [ "$jetson" = true ] ; then
 	fi
 
 	# Set up ssh host config (add port 5801) 
-	sudo sed "s/Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && mv sshd_config /etc/ssh
+	sudo sed "s/Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && sudo mv sshd_config /etc/ssh
 	
 	# and keys for 
 	# connections to Rio
