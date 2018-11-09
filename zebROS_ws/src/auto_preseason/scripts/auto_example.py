@@ -51,6 +51,14 @@ class TestAtCenterC(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
 
+        #set up subscriber to read data
+        #self.sub = rospy.Subscriber('topic_name',String,self.callback)
+
+        self.test_result = "default"
+    
+    def callback(self,msg):
+        self.test_result = msg
+
     def execute(self, userdata):
         if True: #check for center. LIDAR?
             return 'testTrue'
@@ -59,6 +67,14 @@ class TestAtCenterC(smach.State):
 class TestAtCenterE(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
+
+        #set up subscriber to receive sensor data
+        #self.sub = rospy.Subscriber('topic_name',String,self.callback)
+
+        self.test_result = "default"
+    
+    def callback(self,msg):
+        self.test_result = msg
 
     def execute(self, userdata):
         if True: #check for center. LIDAR?
@@ -69,6 +85,14 @@ class TestAtCenterE(smach.State):
 class TestSeesCubes(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
+        
+        #set up subscriber to receive data
+        #self.sub = rospy.Subscriber('topic_name',String,self.callback)
+
+        self.test_result = "default"
+    
+    def callback(self,msg):
+        self.test_result = msg
 
     def execute(self, userdata):
         if True:
@@ -112,8 +136,8 @@ def main():
                                 transitions={'success':'TestHasCube','failure':'Exit'})
         smach.StateMachine.add('TestHasCube', TestHasCube(), 
                                 transitions={'testTrue':'TestAtCenterE', 'testFalse':'TestAtCenterC'})
-        smach.StateMachine.add('TestCollectedCube', MultipleSuccesses(),
-                                transitions={'success0':'TestAtCenterE', 'success1':'SpinOut'})
+        smach.StateMachine.add('TestCollectedCube', TestHasCube(),
+                                transitions={'testTrue':'TestAtCenterE', 'testFalse':'SpinOut'})
         smach.StateMachine.add('TestAtCenterC', TestAtCenterC(),
                 transitions={'testTrue':'TurnToCube', 'testFalse':'PathToCenterC'})
         smach.StateMachine.add('TestAtCenterE', TestAtCenterE(),
@@ -174,7 +198,7 @@ def main():
         goalArmI.intake_timeout = 10
         smach.StateMachine.add('IntakeCube',
                                 SimpleActionState('arm_server',
-                                            ArmAction,goal=goalArmI,result_cb=test_callback),
+                                            ArmAction,goal=goalArmI),
                                 transitions={'succeeded':'TestCollectedCube','aborted':'Exit', 'preempted':'Exit'})
         goalPTCC = PathToCenterGoal()
         goalPTCC.usingCubeCenter = True
@@ -215,7 +239,7 @@ def main():
         smach.StateMachine.add('SpinOut',
                                 SimpleActionState('intake_server',
                                             IntakeAction, goal=goalIntake),
-                                transitions={'succeeded':'IntakeCube', 'aborted':'Exit', 'preempted':'Exit'})
+                                transitions={'succeeded':'PathToCube', 'aborted':'Exit', 'preempted':'Exit'})
         smach.StateMachine.add('Party',
                                 SimpleActionState('party_as',
                                             SingleExitAction),
