@@ -27,7 +27,7 @@ script:
      ./install_ros_desktop_packages.sh &&
      echo \"install_ros_desktop_packages.sh\" &&
      cd zebROS_ws &&
-     wstool update -t src &&
+     wstool update -t src --continue-on-error&&
      echo \"wstool update\" &&
      source /opt/ros/kinetic/setup.bash &&
      echo \"source setup.bash\" &&
