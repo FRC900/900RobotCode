@@ -57,6 +57,7 @@
 #include "HAL/HAL.h"
 #include "HAL/PDP.h"
 #include "HAL/Ports.h"
+#include "HAL/Power.h"
 #include "Joystick.h"
 #include <networktables/NetworkTable.h>
 #include <SmartDashboard/SmartDashboard.h>
@@ -430,8 +431,8 @@ void FRCRobotHWInterface::hal_keepalive_thread(void)
 				game_specific_message_seen = false;
 			}
 		}
-		RobotControllerState rcs;
-		int32 status;
+		hardware_interface::RobotControllerState rcs;
+		int32_t status;
 		rcs.SetFPGAVersion(HAL_GetFPGAVersion(&status));
 		rcs.SetFPGARevision(HAL_GetFPGARevision(&status));
 		rcs.SetFPGATime(HAL_GetFPGATime(&status));
@@ -440,15 +441,15 @@ void FRCRobotHWInterface::hal_keepalive_thread(void)
 		rcs.SetIsBrownedOut(HAL_GetBrownedOut(&status));
 		rcs.SetInputVoltage(HAL_GetVinVoltage(&status));
 		rcs.SetInputCurrent(HAL_GetVinCurrent(&status));
-		rcs.SetVoltage3V3(HAL_GetUserVolatage3V3(&status));
+		rcs.SetVoltage3V3(HAL_GetUserVoltage3V3(&status));
 		rcs.SetCurrent3V3(HAL_GetUserCurrent3V3(&status));
 		rcs.SetEnabled3V3(HAL_GetUserActive3V3(&status));
 		rcs.SetFaultCount3V3(HAL_GetUserCurrentFaults3V3(&status));
-		rcs.SetVoltage5V(HAL_GetUserVolatage5V(&status));
+		rcs.SetVoltage5V(HAL_GetUserVoltage5V(&status));
 		rcs.SetCurrent5V(HAL_GetUserCurrent5V(&status));
 		rcs.SetEnabled5V(HAL_GetUserActive5V(&status));
 		rcs.SetFaultCount5V(HAL_GetUserCurrentFaults5V(&status));
-		rcs.SetVoltage6V(HAL_GetUserVolatage6V(&status));
+		rcs.SetVoltage6V(HAL_GetUserVoltage6V(&status));
 		rcs.SetCurrent6V(HAL_GetUserCurrent6V(&status));
 		rcs.SetEnabled6V(HAL_GetUserActive6V(&status));
 		rcs.SetFaultCount6V(HAL_GetUserCurrentFaults6V(&status));
@@ -467,7 +468,7 @@ void FRCRobotHWInterface::hal_keepalive_thread(void)
 		rcs.SetCANReceiveErrorCount(receive_error_count);
 		rcs.SetCANTransmitErrorCount(transmit_error_count);
 		{
-			std::lock_guard<std::mutex> l(robot_controller_state_mutex);
+			std::lock_guard<std::mutex> l(robot_controller_state_mutex_);
 			shared_robot_controller_state_ = rcs;
 		}
 
@@ -1122,7 +1123,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 
 	{
 		std::lock_guard<std::mutex> l(robot_controller_state_mutex_);
-		robot_controller_state_ = shared_robot_controller_state_
+		robot_controller_state_ = shared_robot_controller_state_;
 	}
 }
 

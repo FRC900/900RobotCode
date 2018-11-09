@@ -60,7 +60,7 @@
 #include <SmartDashboard/SmartDashboard.h>
 #include <std_msgs/Float64.h>
 
-#include <robot_controller_interface/include/robot_controller_interface.hpp>
+#include <robot_controller_interface/robot_controller_interface.hpp>
 
 namespace frcrobot_control
 {
@@ -253,7 +253,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::thread motion_profile_thread_;
 
 		PowerDistributionPanel pdp_joint_;
-		RobotControllerState shared_robot_controller_state_;
+		hardware_interface::RobotControllerState shared_robot_controller_state_;
 		std::mutex robot_controller_state_mutex_;
 
 		ROSIterativeRobot robot_;
