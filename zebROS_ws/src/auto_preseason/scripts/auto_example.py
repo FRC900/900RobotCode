@@ -8,6 +8,8 @@ from smach_ros import SimpleActionState
 from behaviors.msg import *
 from path_to_goal.msg import *
 from actionlib_msgs.msg import GoalStatus
+from std_msgs.msg import String
+from sensor_msgs.msg import JointState
 
 class Init(smach.State):
     def __init__(self):
@@ -24,8 +26,23 @@ class TestHasCube(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
 
+        #set up subscriber to receive sensor data
+        self.sub = rospy.Subscriber('/frcrobot/joint_states',JointState,self.callback)
+        
+        self.test_result = "default"  #initialize variable to store received msgs
+
+    def callback(self,msg):
+        sensor_index = 0
+        for i in range(len(msg.position)):
+            if msg.name[i] == "intake_line_break":
+                sensor_index = i
+
+        self.test_result = msg.position[sensor_index]
+
     def execute(self, userdata):
-        if True:#line_break_sensor:
+        rospy.loginfo("testhascube %f",self.test_result)
+        
+        if self.test_result == 1.0: #line_break_sensor:
             return 'testTrue'
         else:
             return 'testFalse'
