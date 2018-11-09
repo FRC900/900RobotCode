@@ -101,17 +101,16 @@ class TestSeesCubes(smach.State):
             return 'testFalse'
 
 successType = 0;
-class MultipleSuccesses(smach.State):
+class TestArmStuck(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['success0', 'success1'])
-
+        smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
     def execute(self, userdata):
         print("MultipleSuccesses, successType")
         print(successType)
-        if successType == 0:
-            return 'success0'
+        if successType == 0: #0 means stuck, 1 means fine
+            return 'testTrue'
         else:
-            return 'success1'
+            return 'testFalse'
 
 
 
@@ -137,11 +136,13 @@ def main():
         smach.StateMachine.add('TestHasCube', TestHasCube(), 
                                 transitions={'testTrue':'TestAtCenterE', 'testFalse':'TestAtCenterC'})
         smach.StateMachine.add('TestCollectedCube', TestHasCube(),
-                                transitions={'testTrue':'TestAtCenterE', 'testFalse':'SpinOut'})
+                transitions={'testTrue':'TestAtCenterE', 'testFalse':'TestArmStuck'})
         smach.StateMachine.add('TestAtCenterC', TestAtCenterC(),
                 transitions={'testTrue':'TurnToCube', 'testFalse':'PathToCenterC'})
         smach.StateMachine.add('TestAtCenterE', TestAtCenterE(),
                 transitions={'testTrue':'TurnToExchange', 'testFalse':'PathToCenterE'})
+        smach.StateMachine.add('TestArmStuck', TestArmStuck(),
+                transitions={'testTrue':'ResetArmPos', 'testFalse': 'SpinOut'})
         smach.StateMachine.add('Exit', Exit(),               
                                 transitions={'exit':'exited'})
         smach.StateMachine.add('TestSeesCubes', TestSeesCubes(),
@@ -200,6 +201,24 @@ def main():
                                 SimpleActionState('arm_server',
                                             ArmAction,goal=goalArmI),
                                 transitions={'succeeded':'TestCollectedCube','aborted':'Exit', 'preempted':'Exit'})
+        goalArmR = ArmGoal()
+        goalArmR.arm_position = 1
+        goalArmR.intake_cube = True
+        goalArmR.intake_timeout = 2
+        smach.StateMachine.add('ResetArmPos',
+                                SimpleActionState('arm_server',
+                                            ArmAction,goal=goalArmR),
+                                transitions={'succeeded':'MoveRobotBack','aborted':'Exit','preempted':'Exit'})
+        goalMoveBack = PathGoal()
+        goalMoveBack.goal_index = 0
+        goalMoveBack.x = 0
+        goalMoveBack.y = -0.5
+        goalMoveBack.rotation = 90
+        goalMoveBack.time_to_run = 50
+        smach.StateMachine.add('MoveRobotBack',
+                                SimpleActionState('path_server',
+                                            PathAction, goal=goalMoveBack, result_cb=test_callback()),
+                                transitions={'succeeded':'PathToCube','aborted':'Exit','preempted':'Exit'})
         goalPTCC = PathToCenterGoal()
         goalPTCC.usingCubeCenter = True
         smach.StateMachine.add('PathToCenterC',
