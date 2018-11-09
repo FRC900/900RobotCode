@@ -80,7 +80,7 @@ intake_controller:
 arm_controller:
     type: arm_controller/ArmController
     arm_joint: ["arm", "arm_follower"]
-    position_array: [0.029, 0.11068, 0.194]
+    position_array: [4.34116, 2.4175537217077703, 0.56297]
     forward_soft_limit: 0.0
     reverse_soft_limit: 0.223
     arm:
@@ -100,7 +100,6 @@ arm_controller:
         motion_cruise_velocity: 16
         motion_acceleration: 75
         voltage_compensation_enable: true
-        conversion_factor: 0.0454676
         current_limit_continuous_amps: 15
         current_limit_enable: True
         closed_loop_ramp: 0.1
