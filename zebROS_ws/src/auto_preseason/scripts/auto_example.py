@@ -201,6 +201,7 @@ def main():
                                 SimpleActionState('arm_server',
                                             ArmAction,goal=goalArmI),
                                 transitions={'succeeded':'TestCollectedCube','aborted':'Exit', 'preempted':'Exit'})
+        #below- this should be forearm goal, not arm goal, fix!!!
         goalArmR = ArmGoal()
         goalArmR.arm_position = 1
         goalArmR.intake_cube = True
@@ -218,7 +219,7 @@ def main():
         smach.StateMachine.add('MoveRobotBack',
                                 SimpleActionState('path_server',
                                             PathAction, goal=goalMoveBack, result_cb=test_callback()),
-                                transitions={'succeeded':'PathToCube','aborted':'Exit','preempted':'Exit'})
+                                transitions={'succeeded':'TestSeesCubes','aborted':'Exit','preempted':'Exit'})
         goalPTCC = PathToCenterGoal()
         goalPTCC.usingCubeCenter = True
         smach.StateMachine.add('PathToCenterC',
