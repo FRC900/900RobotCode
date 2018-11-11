@@ -16,8 +16,6 @@ script:
      sudo chown ubuntu:ubuntu 2018Offseason &&
      cd ~/2018Offseason &&
      git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git . &&
-<<<<<<< HEAD
-<<<<<<< HEAD
      echo \"Clone success.\" &&
      git checkout $TRAVIS_COMMIT &&
      echo \"git checkout\" &&
@@ -28,42 +26,6 @@ script:
      echo \"install_ros_desktop_packages.sh\" &&
      cd zebROS_ws &&
      wstool update -t src --continue-on-error&&
-     echo \"wstool update\" &&
-     source /opt/ros/kinetic/setup.bash &&
-     echo \"source setup.bash\" &&
-     catkin_make &&
-     echo \"catkin make\" &&
-     source devel/setup.bash &&
-     timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen &&
-     echo \"Finished Ubuntu compile.\""
-  - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
-    "cd ~ &&
-     sudo chown ubuntu:ubuntu 2018Offseason &&
-     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git &&
-     cd ./2018Offseason/ &&
-     git checkout $TRAVIS_COMMIT &&
-     git log -n1 &&
-     git submodule update --init --recursive &&
-     cd zebROS_ws &&
-     wstool update -t src &&
-     source /usr/arm-frc-linux-gnueabi/opt/ros/kinetic/setup.bash &&
-     ./cross_build.sh &&
-     echo \"Finished RoboRIO compile.\""
-  - echo "Completed all tests successfully."
-=======
-     echo "Clone success." &&
-=======
-     echo \"Clone success.\" &&
->>>>>>> Using backslash quote, instead of just quote
-     git checkout $TRAVIS_COMMIT &&
-     echo \"git checkout\" &&
-     git log -n1 &&
-     git submodule update --init --recursive &&
-     echo \"git submodule init\" &&
-     ./install_ros_desktop_packages.sh &&
-     echo \"install_ros_desktop_packages.sh\" &&
-     cd zebROS_ws &&
-     wstool update -t src &&
      echo \"wstool update\" &&
      source /opt/ros/kinetic/setup.bash &&
      echo \"source setup.bash\" &&
@@ -88,7 +50,6 @@ script:
 #      ./cross_build.sh &&
 #      echo \"Finished RoboRIO compile.\""
 #   - echo "Completed all tests successfully."
->>>>>>> merged .travis.yml into gtest_dev
 
 build:
   - true
