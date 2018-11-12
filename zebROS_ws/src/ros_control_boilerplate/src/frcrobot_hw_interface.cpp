@@ -941,10 +941,10 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 
 			//closed-loop
 			if ((talon_mode == hardware_interface::TalonMode_Position) ||
-					(talon_mode == hardware_interface::TalonMode_Velocity) ||
-					(talon_mode == hardware_interface::TalonMode_Current ) ||
-					(talon_mode == hardware_interface::TalonMode_MotionProfile) ||
-					(talon_mode == hardware_interface::TalonMode_MotionMagic))
+				(talon_mode == hardware_interface::TalonMode_Velocity) ||
+				(talon_mode == hardware_interface::TalonMode_Current ) ||
+				(talon_mode == hardware_interface::TalonMode_MotionProfile) ||
+				(talon_mode == hardware_interface::TalonMode_MotionMagic))
 			{
 				//const double closed_loop_scale = getConversionFactor(encoder_ticks_per_rotation, encoder_feedback, talon_mode, joint_id)* conversion_factor;
 
@@ -965,7 +965,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			}
 
 			if ((talon_mode == hardware_interface::TalonMode_MotionProfile) ||
-					(talon_mode == hardware_interface::TalonMode_MotionMagic))
+				(talon_mode == hardware_interface::TalonMode_MotionMagic))
 			{
 				//const double active_trajectory_position = talon->GetActiveTrajectoryPosition() * radians_scale;
 				//safeTalonCall(talon->GetLastError(), "GetActiveTrajectoryPosition");

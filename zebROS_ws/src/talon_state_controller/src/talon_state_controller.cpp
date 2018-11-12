@@ -112,6 +112,10 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 		m.integral_accumulator.push_back(0);
 		m.error_derivative.push_back(0);
 		m.closed_loop_target.push_back(0);
+		m.p_term.push_back(0);
+		m.i_term.push_back(0);
+		m.d_term.push_back(0);
+		m.f_term.push_back(0);
 		m.active_trajectory_position.push_back(0);
 		m.active_trajectory_velocity.push_back(0);
 		m.active_trajectory_heading.push_back(0);
@@ -330,6 +334,10 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				m.error_derivative[i] = ts->getErrorDerivative();
 				m.closed_loop_error[i] = ts->getClosedLoopError();
 				m.closed_loop_target[i] = ts->getClosedLoopTarget();
+				m.p_term[i] = ts->getPTerm();
+				m.i_term[i] = ts->getITerm();
+				m.d_term[i] = ts->getDTerm();
+				m.f_term[i] = ts->getFTerm();
 				m.active_trajectory_position[i] = ts->getActiveTrajectoryPosition();
 				m.active_trajectory_velocity[i] = ts->getActiveTrajectoryVelocity();
 				m.active_trajectory_heading[i] = ts->getActiveTrajectoryHeading();
