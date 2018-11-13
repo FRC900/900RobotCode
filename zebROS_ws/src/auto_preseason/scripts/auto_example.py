@@ -136,7 +136,7 @@ def main():
         smach.StateMachine.add('TestHasCube', TestHasCube(), 
                                 transitions={'testTrue':'TestAtCenterE', 'testFalse':'TestAtCenterC'})
         smach.StateMachine.add('TestCollectedCube', TestHasCube(),
-                transitions={'testTrue':'TestAtCenterE', 'testFalse':'TestArmStuck'})
+                transitions={'testTrue':'TestAtCenterE', 'testFalse':'SpinOut'}) #TestArmStuck
         smach.StateMachine.add('TestAtCenterC', TestAtCenterC(),
                 transitions={'testTrue':'TurnToCube', 'testFalse':'PathToCenterC'})
         smach.StateMachine.add('TestAtCenterE', TestAtCenterE(),
@@ -159,7 +159,7 @@ def main():
                                             PathAction, goal=goalPathToExchange),
                                 transitions={'succeeded':'ScoreCube', 'aborted':'Exit', 'preempted':'Exit'})
         goalPathToCube = PathGoal()
-        goalPathToCube.goal_index = 2
+        goalPathToCube.goal_index = 1
         goalPathToCube.x = 0
         goalPathToCube.y = 0
         goalPathToCube.rotation = 0
@@ -218,19 +218,27 @@ def main():
         goalMoveBack.time_to_run = 50
         smach.StateMachine.add('MoveRobotBack',
                                 SimpleActionState('path_server',
-                                            PathAction, goal=goalMoveBack, result_cb=test_callback()),
+                                            PathAction, goal=goalMoveBack),
                                 transitions={'succeeded':'TestSeesCubes','aborted':'Exit','preempted':'Exit'})
-        goalPTCC = PathToCenterGoal()
-        goalPTCC.usingCubeCenter = True
+        goalPTCC = PathGoal()
+        goalPTCC.goal_index = 3
+        goalPTCC.x = 0
+        goalPTCC.y = 0
+        goalPTCC.rotation = 90
+        goalPTCC.time_to_run = 50
         smach.StateMachine.add('PathToCenterC',
-                                SimpleActionState('pathToCenter_as',
-                                            PathToCenterAction,goal=goalPTCC),
+                                SimpleActionState('path_server',
+                                            PathAction,goal=goalPTCC),
                                 transitions={'succeeded':'TurnToCube','aborted':'Exit','preempted':'Exit'})
-        goalPTCE = PathToCenterGoal()
-        goalPTCE.usingCubeCenter = False
+        goalPTCE = PathGoal()
+        goalPTCE.goal_index = 3
+        goalPTCE.x = 0
+        goalPTCE.y = 0
+        goalPTCE.rotation = 90
+        goalPTCE.time_to_run = 50
         smach.StateMachine.add('PathToCenterE',
-                                SimpleActionState('pathToCenter_as',
-                                            PathToCenterAction,goal=goalPTCE),
+                                SimpleActionState('path_server',
+                                            PathAction,goal=goalPTCE),
                                 transitions={'succeeded':'TurnToExchange','aborted':'Exit','preempted':'Exit'})
         goalTurnCube = PathGoal()
         goalTurnCube.goal_index = 0
