@@ -24,11 +24,6 @@ TEST(Math900, NormAngle_UpperBound)
     EXPECT_NEAR(0, normalizeAngle(2 * M_PI), ERROR_MARGIN);
 }
 
-TEST(Math900, NormAngle_UpperBound)
-{
-    EXPECT_NEAR(0, normalizeAngle(2 * M_PI), ERROR_MARGIN);
-}
-
 int main(int argc, char ** argv) 
 {
     testing::InitGoogleTest(&argc, argv);
