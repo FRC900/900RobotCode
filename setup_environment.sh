@@ -182,6 +182,8 @@ if [ "$jetson" = true ] ; then
 
 	# Clean up Jetson
 	sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/TensorRT /home/nvidia/libvisionworkd*
+	# Save ~400MB
+	sudo apt remove --purge thunderbird libreoffice-*
 fi
 
 sudo mkdir -p /usr/local/zed/settings
