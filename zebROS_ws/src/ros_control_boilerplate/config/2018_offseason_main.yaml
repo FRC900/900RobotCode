@@ -100,7 +100,6 @@ arm_controller:
         motion_cruise_velocity: 16
         motion_acceleration: 75
         voltage_compensation_enable: true
-        conversion_factor: 0.0454676
         current_limit_continuous_amps: 15
         current_limit_enable: True
         closed_loop_ramp: 0.1
