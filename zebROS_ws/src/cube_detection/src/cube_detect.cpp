@@ -30,6 +30,7 @@
 
 int erosion_size = 1;
 const int sliderMax = 255;
+bool visualization;
 
 static ros::Publisher pub;
 
@@ -312,11 +313,27 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 		}
 	}
 
+
+	if(visualization == true) {
 	imshow("threshold",threshold); 
 	//imshow("hsv",hsv);
 	imshow("drawing",drawing); 
 	imshow("image", *framePtr);
 	//imshow("depth", *depthPtr);
+	
+	namedWindow("drawing",1);
+		
+	//trackbars for testing hsv and range values
+	createTrackbar( "Lower H", "drawing", &hLo, 180);
+	createTrackbar( "Lower S", "drawing", &sLo, 255);  
+	createTrackbar( "Lower V", "drawing", &vLo, 255);
+	createTrackbar( "Higher H", "drawing", &hUp, 180);
+	createTrackbar( "minTrans", "drawing", &minTrans, 30000);
+	createTrackbar( "maxTrans", "drawing", &maxTrans, 30000);	
+	//createTrackbar( "minArea", "drawing", &minArea, 5000);
+	//createTrackbar( "maxArea", "drawing", &maxArea, 1000000);
+
+	}
 	pub.publish(cd_msg);
 	waitKey(5);
 
@@ -340,17 +357,10 @@ int main(int argc, char **argv)
 
 	pub = nh.advertise<cube_detection::CubeDetection>("cube_detect_msg", pub_rate);
 
-	namedWindow("drawing",1);
-		
-	//trackbars for testing hsv and range values
-	createTrackbar( "Lower H", "drawing", &hLo, 180);
-	createTrackbar( "Lower S", "drawing", &sLo, 255);  
-	createTrackbar( "Lower V", "drawing", &vLo, 255);
-	createTrackbar( "Higher H", "drawing", &hUp, 180);
-	createTrackbar( "minTrans", "drawing", &minTrans, 30000);
-	createTrackbar( "maxTrans", "drawing", &maxTrans, 30000);	
-	//createTrackbar( "minArea", "drawing", &minArea, 5000);
-	//createTrackbar( "maxArea", "drawing", &maxArea, 1000000);
+	
+	nh.getParam("visualization", visualization);
+
+	
 
 	ros::spin();
 
