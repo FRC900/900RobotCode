@@ -174,6 +174,19 @@ public:
 			//time for profile to run
 			srvBaseTrajectory.request.points[0].time_from_start = time_to_run;
 		}
+		case 3 : //lidar data (INCOMPLETE)
+		{
+			srvBaseTrajectory.request.points[0].positions.push_back(0);
+			srvBaseTrajectory.request.points[0].velocities.push_back(0);
+			srvBaseTrajectory.request.points[0].accelerations.push_back(0);
+			srvBaseTrajectory.request.points[0].positions.push_back(0);
+	                srvBaseTrajectory.request.points[0].velocities.push_back(0);
+                        srvBaseTrajectory.request.points[0].accelerations.push_back(0);
+			srvBaseTrajectory.request.points[0].positions.push_back(0.001);
+			srvBaseTrajectory.request.points[0].velocities.push_back(0);
+			srvBaseTrajectory.request.points[0].accelerations.push_back(0);
+			srvBaseTrajectory.request.points[0].time_from_start = time_to_run;
+		}
 		default :
 			ROS_ERROR_STREAM("goal index of " << goal->goal_index << " is not recognized");
 		}

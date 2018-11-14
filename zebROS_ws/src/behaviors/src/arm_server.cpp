@@ -73,6 +73,7 @@ class ArmAction
             forearm_goal.timeout = arm_timeout;
             af_.sendGoal(forearm_goal);
 	    
+            /*
             bool arm_finished_before_timeout = af_.waitForResult(ros::Duration(arm_timeout));
             
             if(!arm_finished_before_timeout) {
@@ -81,7 +82,6 @@ class ArmAction
                 ROS_ERROR("Forearm actionlib timed out in arm_server. ABORTING!");
                 return;
             }
-
             behaviors::ForearmResult forearm_result;
             forearm_result = *af_.getResult();
             
@@ -91,6 +91,7 @@ class ArmAction
                 ROS_ERROR("Forearm actionlib did not succeed in arm_server. Dit it succeed: %d  Did it time out: %d ABORTING!", forearm_result.success, forearm_result.timed_out);
                 return;
             }
+            */
             
             behaviors::IntakeGoal intake_goal;
             intake_goal.intake_cube = goal->intake_cube;

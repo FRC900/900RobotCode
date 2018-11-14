@@ -23,6 +23,7 @@ hardware_interface:
          - {name: br_angle, type: can_talon_srx, can_id: 13}
          - {name: bl_drive, type: can_talon_srx, can_id: 21}
          - {name: bl_angle, type: can_talon_srx, can_id: 11}
+         - {name: navx_mxp, type: navX, frame_id: navx, id: 0}
 
 # Create controllers for each joint
 #

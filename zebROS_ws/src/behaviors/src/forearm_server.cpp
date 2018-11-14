@@ -73,6 +73,8 @@ class ForearmAction
                 r.sleep();
                 ros::spinOnce();
                 double cur_time = ros::Time::now().toSec();
+                ROS_WARN("cur_position: %f", arm_angle);
+                ROS_WARN("cur_command: %f", arm_cur_command);
                 ROS_INFO("arm_server.cpp 75: time elapsed: %f", (ros::Time::now().toSec() - start_time));
                 ROS_INFO("arm_server.cpp 75: time elapsed2: %f",(cur_time - start_time));
                 ROS_WARN("------------------------------");
@@ -90,7 +92,7 @@ class ForearmAction
             {    
                 for (size_t i = 0; i < talon_state.name.size(); i++) 
                 {
-                    if (talon_state.name[i] == "arm_master")
+                    if (talon_state.name[i] == "arm_joint")
                     {
                         arm_master_idx = i; 
                         break;

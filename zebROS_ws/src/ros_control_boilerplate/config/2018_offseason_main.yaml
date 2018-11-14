@@ -31,6 +31,7 @@ hardware_interface:
          - {name: bl_angle, type: can_talon_srx, can_id: 11}
        # - {name: joystick_rumble, type: rumble, rumble_port: 0}
          - {name: navx_mxp, type: navX, frame_id: navx, id: 0}
+         - {name: compressor1, type: compressor, pcm_id: 0}
 
 # Create controllers for each joint
 #
@@ -79,7 +80,7 @@ intake_controller:
 arm_controller:
     type: arm_controller/ArmController
     arm_joint: ["arm", "arm_follower"]
-    position_array: [0.024, 0.11068, 0.199]
+    position_array: [0.029, 0.11068, 0.194]
     forward_soft_limit: 0.0
     reverse_soft_limit: 0.223
     arm:
@@ -102,6 +103,7 @@ arm_controller:
         conversion_factor: 0.0454676
         current_limit_continuous_amps: 15
         current_limit_enable: True
+        closed_loop_ramp: 0.1
         limit_switch_local_reverse_normal: "NormallyOpen"
         limit_switch_local_reverse_source: "FeedbackConnector"
         limit_switch_local_forward_normal: "NormallyOpen"
@@ -121,3 +123,12 @@ pdp_state_controller:
 rumble_controller:
     type: position_controllers/JointPositionController
     joint: joystick_rumble
+compressor_controller:
+   type: position_controllers/JointPositionController
+   joint: compressor1
+
+    
+   # pneumatics_controller:
+   #     type: position_controllers/JointPositionController
+   #     joint: clamp
+
