@@ -49,15 +49,15 @@ public:
 
         // Setup the joint state interface
         hardware_interface::RobotHW state_handle();
-        robo_iface_.registerHandle(state_handle);
+        // robo_iface_.registerHandle(state_handle);
 
         // Subscribe to the messages
-        sub_ = root_nh_.subscribe<std_msgs::Float64>(
-            "talon_states",
-            1,
-            &ArmControllerTest::armControllerCallback,
-            this
-        );
+        // sub_ = root_nh_.subscribe<std_msgs::Float64>(
+        //     "talon_states",
+        //     1,
+        //     &ArmControllerTest::armControllerCallback,
+        //     this
+        // );
 
     }
 
@@ -71,8 +71,14 @@ protected:
     int recv_msg_count_; //!< Counter for received messages
     std_msgs::Float64 last_msg_; //!< Last received message
 
+    // void armControllerCallback(const sensor_msgs::JointStateConstPtr& msg)
+    // {
+    //     last_msg_ = *msg;
+    //     ++rec_msgs_;
+    // }
 
-} // end ArmControllerTest
+
+}; // end ArmControllerTest
 
 /**
  * @brief 
