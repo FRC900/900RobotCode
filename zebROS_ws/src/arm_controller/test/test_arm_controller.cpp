@@ -32,47 +32,47 @@
  **/
 using namespace arm_controller;
 
-// class ArmControllerTest : public ::testing:Test
-// {
+class ArmControllerTest : public ::testing::Test
+{
 
-// public:
+public:
 
-//     ArmControllerTest() : 
-//         root_nh_(ros::NodeHandle()),
-//         controller_nh_(""),
-//         robo_iface_(),
-//         sub_(),
-//         recv_msg_count_(0),
-//         last_msg_()
-//     {
-
-
-//         // Setup the joint state interface
-//         hardware_interface::RobotHW state_handle();
-//         robo_iface_.registerHandle(state_handle);
-
-//         // Subscribe to the messages
-//         sub_ = root_nh_.subscribe<std_msgs::Float64>(
-//             "talon_states",
-//             1,
-//             &ArmControllerTest::armControllerCallback,
-//             this
-//         );
-
-//     }
+    ArmControllerTest() : 
+        root_nh_(ros::NodeHandle()),
+        controller_nh_(""),
+        robo_iface_(),
+        sub_(),
+        recv_msg_count_(0),
+        last_msg_()
+    {
 
 
-// protected:
-//     ros::NodeHandle root_nh_; //!< Root node handle
-//     ros::NodeHandle controller_nh_; //!< Controller node handle
-//     ros::Subscriber sub_;
-//     hardware_interface::RobotHW robo_iface_;
+        // Setup the joint state interface
+        hardware_interface::RobotHW state_handle();
+        robo_iface_.registerHandle(state_handle);
 
-//     int recv_msg_count_; //!< Counter for received messages
-//     std_msgs::Float64 last_msg_; //!< Last received message
+        // Subscribe to the messages
+        sub_ = root_nh_.subscribe<std_msgs::Float64>(
+            "talon_states",
+            1,
+            &ArmControllerTest::armControllerCallback,
+            this
+        );
+
+    }
 
 
-// } // end ArmControllerTest
+protected:
+    ros::NodeHandle root_nh_; //!< Root node handle
+    ros::NodeHandle controller_nh_; //!< Controller node handle
+    ros::Subscriber sub_;
+    hardware_interface::RobotHW robo_iface_;
+
+    int recv_msg_count_; //!< Counter for received messages
+    std_msgs::Float64 last_msg_; //!< Last received message
+
+
+} // end ArmControllerTest
 
 /**
  * @brief 
@@ -83,10 +83,10 @@ using namespace arm_controller;
  **/
 int main(int argc, char **argv)
 {
-    // testing::InitGoogleTest(&argc, argv);
-    // ros::init(argc, argv, "talon_state_controller_test");
+    testing::InitGoogleTest(&argc, argv);
+    ros::init(argc, argv, "talon_state_controller_test");
 
-    // int ret = RUN_ALL_TESTS();
-    // ros::shutdown();
+    int ret = RUN_ALL_TESTS();
+    ros::shutdown();
     return 0;
 }
