@@ -4,7 +4,7 @@ node {
       // Get some code from a GitHub repository
       checkout changelog: false, poll: false, scm: [
           $class: 'GitSCM', 
-          branches: [[name: '**']], 
+          branches: scm.branches, 
           doGenerateSubmoduleConfigurations: false, 
           extensions: [], 
           submoduleCfg: [], 
@@ -12,7 +12,6 @@ node {
                 [credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git']
               ]
           ]
-      git credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git'
    }
    
    try {
