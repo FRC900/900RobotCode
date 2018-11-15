@@ -16,7 +16,7 @@ node {
    }
    
    try {
-       docker.image('frc900/zebros-dev:latest').inside('--name=fancy_unicorn --user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
+       docker.image('frc900/zebros-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
             
             stage('Build') {
             
