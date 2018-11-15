@@ -53,7 +53,7 @@ node {
             }
         }
     } finally {
-        junit 'zebROS_ws/build/test_results/**/*.xml'
+        junit allowEmptyResults: true, testResults: 'zebROS_ws/build/test_results/**/*.xml'
     }
 
 }
