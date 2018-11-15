@@ -761,7 +761,6 @@ class TalonControllerInterface
 		}
 #endif
 
-
 		void callback(talon_controllers::TalonConfigConfig &config, uint32_t /*level*/)
 		{
 			// TODO : this list is rapidly getting out of date.
@@ -924,6 +923,7 @@ class TalonControllerInterface
 			syncDynamicReconfigure();
 			talon_->setReverseSoftLimitEnable(enable);
 		}
+
 		virtual void setSelectedSensorPosition(double position)
 		{
 			talon_->setSelectedSensorPosition(position);
@@ -955,6 +955,7 @@ class TalonControllerInterface
 
 			talon_->setMotionAcceleration(params_.motion_acceleration_);
 		}
+
 		virtual double getMotionCruiseVelocity(void)
 		{
 			return params_.motion_cruise_velocity_;
@@ -1024,6 +1025,7 @@ class TalonControllerInterface
 			syncDynamicReconfigure();
 			talon_->setPeakOutputForward(peak);
 		}
+
 		void setPeakOutputReverse(double peak)
 		{
 			if (peak == params_.peak_output_reverse_)
@@ -1060,10 +1062,12 @@ class TalonControllerInterface
 		{
 			talon_->setDemand1Type(demand_type);
 		}
+
 		void setDemand1Value(double value)
 		{
 			talon_->setDemand1Value(value);
 		}
+
 		virtual void setCustomProfileHz(const double &hz)
 		{
 			if (hz == params_.custom_profile_hz_)
@@ -1073,46 +1077,57 @@ class TalonControllerInterface
             syncDynamicReconfigure();
 			talon_->setCustomProfileHz(params_.custom_profile_hz_);
 		}
+
 		double getCustomProfileHz(void) const
 		{
 			return params_.custom_profile_hz_;
 		}
+
 		virtual void setCustomProfileRun(const bool &run)
         {
 			talon_->setCustomProfileRun(run);
         }
+
         bool getCustomProfileRun(void)
         {
 			return talon_->getCustomProfileRun();
         }
+
         virtual void setCustomProfileNextSlot(const std::vector<int> &next_slot)
         {
             talon_->setCustomProfileNextSlot(next_slot);
         }
+
         std::vector<int> getCustomProfileNextSlot(void)
         {
 			return talon_->getCustomProfileNextSlot();
         }
+
         virtual void setCustomProfileSlot(const int &slot)
         {
             talon_->setCustomProfileSlot(slot);
         }
+
         int getCustomProfileSlot(void)
         {
 			return talon_->getCustomProfileSlot();
         }
+
         void pushCustomProfilePoint(const hardware_interface::CustomProfilePoint &point, int slot)
         {
             talon_->pushCustomProfilePoint(point, slot);
         }
+
         void pushCustomProfilePoints(const std::vector<hardware_interface::CustomProfilePoint> &points, int slot)
         {
             talon_->pushCustomProfilePoints(points, slot);
         }
+
         void overwriteCustomProfilePoints(const std::vector<hardware_interface::CustomProfilePoint> &points, int slot)
         {
             talon_->overwriteCustomProfilePoints(points, slot);
         }
+
 		//Does the below function need to be accessable?
 		//#if 0
         std::vector<hardware_interface::CustomProfilePoint> getCustomProfilePoints(int slot) /*const*/ //TODO, can be const?
@@ -1140,7 +1155,6 @@ class TalonControllerInterface
 			ROS_INFO_STREAM("Talon " << talon_.getName() << " Base class setInitialMode");
 			return true;
 		}
-
 
 	private :
 		virtual bool init(hardware_interface::TalonCommandInterface *tci,
@@ -1189,6 +1203,7 @@ class TalonControllerInterface
 
 			return true;
 		}
+
 		// If dynamic reconfigure is running then update
 		// the reported config there with the new internal
 		// state
