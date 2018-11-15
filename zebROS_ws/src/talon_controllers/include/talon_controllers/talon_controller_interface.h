@@ -92,7 +92,7 @@ class TalonCIParams
 		// Update params set by a dynamic reconfig config
 		// Also pass in current params for ones which aren't
 		// dynamically reconfigurable - pass them through
-		// to the new one 
+		// to the new one
 		TalonCIParams(const TalonConfigConfig &config)
 		{
 			p_[0] = config.p0;
@@ -153,9 +153,9 @@ class TalonCIParams
 			motion_acceleration_ = config.motion_acceleration;
 			motion_control_frame_period_ = config.motion_control_frame_period;
 			motion_profile_trajectory_period_ = config.motion_profile_trajectory_period;
-		
+
 			conversion_factor_ = config.conversion_factor;
-		
+
 			custom_profile_hz_ = config.custom_profile_hz;
 		}
 
@@ -474,7 +474,7 @@ class TalonCIParams
 			n.getParam("motion_profile_trajectory_period", motion_profile_trajectory_period_);
 			return true;
 		}
-	
+
 		bool readCustomProfile(ros::NodeHandle &n)
 		{
 			n.getParam("custom_profile_hz", custom_profile_hz_);
@@ -624,7 +624,7 @@ class TalonControllerInterface
 {
 	public:
 		TalonControllerInterface(void) :
-			srv_(nullptr), 
+			srv_(nullptr),
 			srv_mutex_(nullptr)
 		{
 		}
@@ -659,7 +659,7 @@ class TalonControllerInterface
 								  ros::NodeHandle &n,
 								  bool dynamic_reconfigure = false)
 		{
-			return init(tci, n, talon_, srv_mutex_, srv_, true, dynamic_reconfigure) && 
+			return init(tci, n, talon_, srv_mutex_, srv_, true, dynamic_reconfigure) &&
 				   setInitialMode();
 		}
 
@@ -806,12 +806,10 @@ class TalonControllerInterface
 			}
 			if (slot == params_.pidf_slot_)
 			{
-			
 				//ROS_WARN_STREAM("controller set of PID slot:  (true): " << slot);
 
 				talon_->setPidfSlot(slot);
 				return true;
-			
 			}
 			params_.pidf_slot_ = slot;
 
@@ -819,7 +817,6 @@ class TalonControllerInterface
 			// the reported config there with the new internal
 			// state
 			syncDynamicReconfigure();
-
 
 			talon_->setPidfSlot(params_.pidf_slot_);
 			return true;
@@ -1069,12 +1066,11 @@ class TalonControllerInterface
 		}
 		virtual void setCustomProfileHz(const double &hz)
 		{
-			
 			if (hz == params_.custom_profile_hz_)
                 return;
             params_.custom_profile_hz_ = hz;
 
-            syncDynamicReconfigure();	
+            syncDynamicReconfigure();
 			talon_->setCustomProfileHz(params_.custom_profile_hz_);
 		}
 		double getCustomProfileHz(void) const
@@ -1082,7 +1078,7 @@ class TalonControllerInterface
 			return params_.custom_profile_hz_;
 		}
 		virtual void setCustomProfileRun(const bool &run)
-        {	
+        {
 			talon_->setCustomProfileRun(run);
         }
         bool getCustomProfileRun(void)
@@ -1122,10 +1118,8 @@ class TalonControllerInterface
         std::vector<hardware_interface::CustomProfilePoint> getCustomProfilePoints(int slot) /*const*/ //TODO, can be const?
         {
             return talon_->getCustomProfilePoints(slot);
-        }	
+        }
 		//#endif
-
-
 
 	protected:
 		hardware_interface::TalonCommandHandle                          talon_;
@@ -1203,7 +1197,7 @@ class TalonControllerInterface
 			if (srv_)
 			{
 				TalonConfigConfig config(params_.toConfig());
-				// first call in updateConfig is another lock, this is probably 
+				// first call in updateConfig is another lock, this is probably
 				// redundant
 				// boost::recursive_mutex::scoped_lock lock(*srv_mutex_);
 				srv_->updateConfig(config);
@@ -1377,7 +1371,6 @@ class TalonFollowerControllerInterface : public TalonFixedModeControllerInterfac
 // Close Loop modes, if any
 class TalonCloseLoopControllerInterface : public TalonFixedModeControllerInterface
 {
-
 };
 
 class TalonPositionCloseLoopControllerInterface : public TalonCloseLoopControllerInterface
