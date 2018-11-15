@@ -155,7 +155,7 @@ def main():
         goalPathToExchange.rotation = 0
         goalPathToExchange.time_to_run = 50
         smach.StateMachine.add('PathToExchange', 
-                                SimpleActionState('path_to_goal_server',
+                                SimpleActionState('/frcrobot/path_server',
                                             PathAction, goal=goalPathToExchange),
                                 transitions={'succeeded':'ScoreCube', 'aborted':'Exit', 'preempted':'Exit'})
         goalPathToCube = PathGoal()
@@ -165,7 +165,7 @@ def main():
         goalPathToCube.rotation = 0
         goalPathToCube.time_to_run = 50
         smach.StateMachine.add('PathToCube', 
-                                SimpleActionState('path_to_goal_server',
+                                SimpleActionState('/frcrobot/path_server',
                                             PathAction, goal=goalPathToCube),
                                 transitions={'succeeded':'IntakeCube','aborted':'Exit', 'preempted':'Exit'})
         
@@ -190,7 +190,7 @@ def main():
         goalArmE.intake_cube = False
         goalArmE.intake_timeout = 10
         smach.StateMachine.add('ScoreCube', 
-                                SimpleActionState('arm_server',
+                                SimpleActionState('/frcrobot/arm_server',
                                             ArmAction,goal=goalArmE),
                                 transitions={'succeeded':'TestHasCube', 'aborted':'Exit', 'preempted':'Exit'})
         goalArmI = ArmGoal()
@@ -198,7 +198,7 @@ def main():
         goalArmI.intake_cube = True
         goalArmI.intake_timeout = 10
         smach.StateMachine.add('IntakeCube',
-                                SimpleActionState('arm_server',
+                                SimpleActionState('/frcrobot/arm_server',
                                             ArmAction,goal=goalArmI),
                                 transitions={'succeeded':'TestCollectedCube','aborted':'Exit', 'preempted':'Exit'})
         #below- this should be forearm goal, not arm goal, fix!!!
@@ -207,7 +207,7 @@ def main():
         goalArmR.intake_cube = True
         goalArmR.intake_timeout = 2
         smach.StateMachine.add('ResetArmPos',
-                                SimpleActionState('arm_server',
+                                SimpleActionState('/frcrobot/arm_server',
                                             ArmAction,goal=goalArmR),
                                 transitions={'succeeded':'MoveRobotBack','aborted':'Exit','preempted':'Exit'})
         goalMoveBack = PathGoal()
@@ -217,7 +217,7 @@ def main():
         goalMoveBack.rotation = 90
         goalMoveBack.time_to_run = 50
         smach.StateMachine.add('MoveRobotBack',
-                                SimpleActionState('path_to_goal_server',
+                                SimpleActionState('/frcrobot/path_server',
                                             PathAction, goal=goalMoveBack),
                                 transitions={'succeeded':'TestSeesCubes','aborted':'Exit','preempted':'Exit'})
         goalPTCC = PathGoal()
@@ -227,7 +227,7 @@ def main():
         goalPTCC.rotation = 90
         goalPTCC.time_to_run = 50
         smach.StateMachine.add('PathToCenterC',
-                                SimpleActionState('path_to_goal_server',
+                                SimpleActionState('/frcrobot/path_server',
                                             PathAction,goal=goalPTCC),
                                 transitions={'succeeded':'TurnToCube','aborted':'Exit','preempted':'Exit'})
         goalPTCE = PathGoal()
@@ -237,7 +237,7 @@ def main():
         goalPTCE.rotation = 90
         goalPTCE.time_to_run = 50
         smach.StateMachine.add('PathToCenterE',
-                                SimpleActionState('path_to_goal_server',
+                                SimpleActionState('/frcrobot/path_server',
                                             PathAction,goal=goalPTCE),
                                 transitions={'succeeded':'TurnToExchange','aborted':'Exit','preempted':'Exit'})
         goalTurnCube = PathGoal()
@@ -247,7 +247,7 @@ def main():
         goalTurnCube.rotation = 90 #essentially snap to angle; rework
         goalTurnCube.time_to_run = 50
         smach.StateMachine.add('TurnToCube',
-                                SimpleActionState('path_to_goal_server',
+                                SimpleActionState('/frcrobot/path_server',
                                             PathAction, goal=goalTurnCube),
                                 transitions={'succeeded':'TestSeesCubes', 'aborted':'Exit', 'preempted':'Exit'})
         goalTurnExchange = PathGoal()
@@ -257,7 +257,7 @@ def main():
         goalTurnExchange.rotation = 90 #essentially snap to angle; rework
         goalTurnExchange.time_to_run = 50
         smach.StateMachine.add('TurnToExchange',
-                                SimpleActionState('path_to_goal_server',
+                                SimpleActionState('/frcrobot/path_server',
                                             PathAction, goal=goalTurnExchange),
                                 transitions={'succeeded':'PathToExchange', 'aborted':'Exit', 'preempted':'Exit'})
         #define a goal for ejecting cubes
@@ -265,11 +265,11 @@ def main():
         goalIntake.intake_cube = False #because ejecting cube
         goalIntake.timeout = 5
         smach.StateMachine.add('SpinOut',
-                                SimpleActionState('intake_server',
+                                SimpleActionState('/frcrobot/intake_server',
                                             IntakeAction, goal=goalIntake),
                                 transitions={'succeeded':'PathToCube', 'aborted':'Exit', 'preempted':'Exit'})
         smach.StateMachine.add('Party',
-                                SimpleActionState('party_as',
+                                SimpleActionState('/frcrobot/party_as',
                                             SingleExitAction),
                                 transitions={'succeeded':'Exit', 'aborted':'Exit', 'preempted':'Exit'})
 
