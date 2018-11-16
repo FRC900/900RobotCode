@@ -2,7 +2,6 @@ node {
 
    stage('Preparation') { 
       // Get some code from a GitHub repository
-      deleteDir()
       checkout changelog: true, poll: false, scm: [
           $class: 'GitSCM', 
           branches: [[name: '**']], 
@@ -53,6 +52,7 @@ node {
             }
         }
     } finally {
+        deleteDir()
         junit allowEmptyResults: true, testResults: 'zebROS_ws/build/test_results/**/*.xml'
     }
 
