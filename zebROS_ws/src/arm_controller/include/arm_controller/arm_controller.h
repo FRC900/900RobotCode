@@ -42,7 +42,8 @@ class ArmController : public controller_interface::MultiInterfaceController<hard
 		talon_controllers::TalonMotionMagicCloseLoopControllerInterface arm_joint_; //interface for the actual joint 
 		ros::ServiceServer arm_state_service_;
                 std::vector<double> arm_positions_;
-                ros::Publisher command_pub_;
+		std::vector<double> arm_positions_with_cube_;
+		ros::Publisher command_pub_;
                 
                 ros::ServiceServer stop_arm_srv_;
                 ros::ServiceServer arm_cur_command_srv_;
