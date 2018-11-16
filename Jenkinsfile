@@ -2,11 +2,12 @@ node {
 
    stage('Preparation') { 
       // Get some code from a GitHub repository
+      deleteDir()
       checkout changelog: true, poll: false, scm: [
           $class: 'GitSCM', 
           branches: [[name: '**']], 
           doGenerateSubmoduleConfigurations: false, 
-          extensions: [[$class: 'CleanCheckout']], 
+          extensions: [], 
           submoduleCfg: [], 
           userRemoteConfigs: [
                 [credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git']
