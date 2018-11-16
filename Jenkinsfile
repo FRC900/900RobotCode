@@ -2,9 +2,9 @@ node {
 
    stage('Preparation') { 
       // Get some code from a GitHub repository
-      checkout changelog: false, poll: false, scm: [
+      checkout changelog: true, poll: false, scm: [
           $class: 'GitSCM', 
-          branches: scm.branches, 
+          branches: [[name: '**']], 
           doGenerateSubmoduleConfigurations: false, 
           extensions: [], 
           submoduleCfg: [], 
