@@ -2,7 +2,7 @@ node {
 
     stage('Preparation') { 
       // Get some code from a GitHub repository
-      checkout changelog: false, poll: false, scm: [
+      checkout changelog: true, poll: false, scm: [
           $class: 'GitSCM', 
           branches: [[name: '**']], 
           doGenerateSubmoduleConfigurations: false, 
@@ -12,7 +12,6 @@ node {
                 [credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git']
               ]
           ]
-    //   git credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git'
    }
    
    try {
