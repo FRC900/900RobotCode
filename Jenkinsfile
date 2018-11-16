@@ -1,18 +1,18 @@
 node {
 
-   stage('Preparation') { 
-      // Get some code from a GitHub repository
-      checkout changelog: true, poll: false, scm: [
-          $class: 'GitSCM', 
-          branches: [[name: '**']], 
-          doGenerateSubmoduleConfigurations: false, 
-          extensions: [], 
-          submoduleCfg: [], 
-          userRemoteConfigs: [
-                [credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git']
-              ]
-          ]
-   }
+//    stage('Preparation') { 
+//       // Get some code from a GitHub repository
+//       checkout changelog: true, poll: false, scm: [
+//           $class: 'GitSCM', 
+//           branches: [[name: '**']], 
+//           doGenerateSubmoduleConfigurations: false, 
+//           extensions: [], 
+//           submoduleCfg: [], 
+//           userRemoteConfigs: [
+//                 [credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git']
+//               ]
+//           ]
+//    }
    
    try {
        docker.image('frc900/zebros-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
