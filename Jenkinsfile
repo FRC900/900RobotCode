@@ -52,9 +52,6 @@ node {
             }
         }
     } finally {
-        sh '''#!/bin/bash
-            chown -R jenkins:jenkins .
-        '''
         deleteDir()
         junit allowEmptyResults: true, testResults: 'zebROS_ws/build/test_results/**/*.xml'
     }
