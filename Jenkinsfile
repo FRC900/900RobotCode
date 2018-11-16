@@ -6,7 +6,7 @@ node {
           $class: 'GitSCM', 
           branches: [[name: '**']], 
           doGenerateSubmoduleConfigurations: false, 
-          extensions: [], 
+          extensions: [[$class: 'CleanCheckout']], 
           submoduleCfg: [], 
           userRemoteConfigs: [
                 [credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git']
