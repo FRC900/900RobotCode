@@ -2,16 +2,18 @@ node {
 
     stage('Preparation') { 
       // Get some code from a GitHub repository
-      checkout changelog: true, poll: false, scm: [
-          $class: 'GitSCM', 
-          branches: [[name: '**']], 
-          doGenerateSubmoduleConfigurations: false, 
-          extensions: [], 
-          submoduleCfg: [], 
-          userRemoteConfigs: [
-                [credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git']
-              ]
-          ]
+    //   checkout changelog: true, poll: false, scm: [
+    //       $class: 'GitSCM', 
+    //       branches: [[name: '**']], 
+    //       doGenerateSubmoduleConfigurations: false, 
+    //       extensions: [], 
+    //       submoduleCfg: [], 
+    //       userRemoteConfigs: [
+    //             [credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git']
+    //           ]
+    //       ]
+    git branch: env.BRANCH_NAME, credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git'
+
    }
    
    try {
