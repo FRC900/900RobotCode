@@ -6,7 +6,7 @@ node {
    }
    
    try {
-       docker.image('frc900/zebros-dev:latest').inside('--user jenkins:jenkins -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
+       docker.image('frc900/zebros-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
             
             stage('Build') {
             
@@ -39,6 +39,7 @@ node {
                     source devel/setup.bash
                     catkin_make run_tests
                     catkin_test_results build/test_results 
+                    sudo chown -R jenkins:jenkins .
                 '''
             }
         }
