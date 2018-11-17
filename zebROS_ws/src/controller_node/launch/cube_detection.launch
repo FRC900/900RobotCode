@@ -18,7 +18,7 @@
   <arg name="camera_flip" default="True" />
 
   <arg name="pub_rate" default="1" />
-
+  <arg name="visualization" default="True" />
   <arg name="file_path" default="../../../../../media/hanskhatri/5522-557D/PalmettoVideos/cap17_3.zms"/>  
 
 
@@ -44,6 +44,7 @@
   	<param name="down_sample" value="$(arg down_sample)" />
   	<param name="sub_rate" value="$(arg sub_rate)" />
   	<param name="pub_rate" value="$(arg pub_rate)" />
+	<param name="visualization" value="$(arg visualization)" />
   </node>
 
 <!--

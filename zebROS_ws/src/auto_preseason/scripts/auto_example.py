@@ -8,6 +8,8 @@ from smach_ros import SimpleActionState
 from behaviors.msg import *
 from path_to_goal.msg import *
 from actionlib_msgs.msg import GoalStatus
+from std_msgs.msg import String
+from sensor_msgs.msg import JointState
 
 class Init(smach.State):
     def __init__(self):
@@ -24,8 +26,23 @@ class TestHasCube(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
 
+        #set up subscriber to receive sensor data
+        self.sub = rospy.Subscriber('/frcrobot/joint_states',JointState,self.callback)
+        
+        self.test_result = "default"  #initialize variable to store received msgs
+
+    def callback(self,msg):
+        sensor_index = 0
+        for i in range(len(msg.position)):
+            if msg.name[i] == "intake_line_break":
+                sensor_index = i
+
+        self.test_result = msg.position[sensor_index]
+
     def execute(self, userdata):
-        if True:#line_break_sensor:
+        rospy.loginfo("testhascube "+str(self.test_result))
+        
+        if self.test_result == 1.0: #line_break_sensor:
             return 'testTrue'
         else:
             return 'testFalse'
@@ -33,6 +50,14 @@ class TestHasCube(smach.State):
 class TestAtCenterC(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
+
+        #set up subscriber to read data
+        #self.sub = rospy.Subscriber('topic_name',String,self.callback)
+
+        self.test_result = "default"
+    
+    def callback(self,msg):
+        self.test_result = msg
 
     def execute(self, userdata):
         if True: #check for center. LIDAR?
@@ -43,6 +68,14 @@ class TestAtCenterE(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
 
+        #set up subscriber to receive sensor data
+        #self.sub = rospy.Subscriber('topic_name',String,self.callback)
+
+        self.test_result = "default"
+    
+    def callback(self,msg):
+        self.test_result = msg
+
     def execute(self, userdata):
         if True: #check for center. LIDAR?
             return 'testTrue'
@@ -52,6 +85,14 @@ class TestAtCenterE(smach.State):
 class TestSeesCubes(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
+        
+        #set up subscriber to receive data
+        #self.sub = rospy.Subscriber('topic_name',String,self.callback)
+
+        self.test_result = "default"
+    
+    def callback(self,msg):
+        self.test_result = msg
 
     def execute(self, userdata):
         if True:
@@ -60,17 +101,16 @@ class TestSeesCubes(smach.State):
             return 'testFalse'
 
 successType = 0;
-class MultipleSuccesses(smach.State):
+class TestArmStuck(smach.State):
     def __init__(self):
-        smach.State.__init__(self, outcomes=['success0', 'success1'])
-
+        smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
     def execute(self, userdata):
         print("MultipleSuccesses, successType")
         print(successType)
-        if successType == 0:
-            return 'success0'
+        if successType == 0: #0 means stuck, 1 means fine
+            return 'testTrue'
         else:
-            return 'success1'
+            return 'testFalse'
 
 
 
@@ -95,12 +135,14 @@ def main():
                                 transitions={'success':'TestHasCube','failure':'Exit'})
         smach.StateMachine.add('TestHasCube', TestHasCube(), 
                                 transitions={'testTrue':'TestAtCenterE', 'testFalse':'TestAtCenterC'})
-        smach.StateMachine.add('TestCollectedCube', MultipleSuccesses(),
-                                transitions={'success0':'TestAtCenterE', 'success1':'SpinOut'})
+        smach.StateMachine.add('TestCollectedCube', TestHasCube(),
+                transitions={'testTrue':'TestAtCenterE', 'testFalse':'SpinOut'}) #TestArmStuck
         smach.StateMachine.add('TestAtCenterC', TestAtCenterC(),
                 transitions={'testTrue':'TurnToCube', 'testFalse':'PathToCenterC'})
         smach.StateMachine.add('TestAtCenterE', TestAtCenterE(),
                 transitions={'testTrue':'TurnToExchange', 'testFalse':'PathToCenterE'})
+        smach.StateMachine.add('TestArmStuck', TestArmStuck(),
+                transitions={'testTrue':'ResetArmPos', 'testFalse': 'SpinOut'})
         smach.StateMachine.add('Exit', Exit(),               
                                 transitions={'exit':'exited'})
         smach.StateMachine.add('TestSeesCubes', TestSeesCubes(),
@@ -113,17 +155,17 @@ def main():
         goalPathToExchange.rotation = 0
         goalPathToExchange.time_to_run = 50
         smach.StateMachine.add('PathToExchange', 
-                                SimpleActionState('path_server',
+                                SimpleActionState('/frcrobot/path_server',
                                             PathAction, goal=goalPathToExchange),
                                 transitions={'succeeded':'ScoreCube', 'aborted':'Exit', 'preempted':'Exit'})
         goalPathToCube = PathGoal()
-        goalPathToCube.goal_index = 2
+        goalPathToCube.goal_index = 1
         goalPathToCube.x = 0
         goalPathToCube.y = 0
         goalPathToCube.rotation = 0
         goalPathToCube.time_to_run = 50
         smach.StateMachine.add('PathToCube', 
-                                SimpleActionState('path_server',
+                                SimpleActionState('/frcrobot/path_server',
                                             PathAction, goal=goalPathToCube),
                                 transitions={'succeeded':'IntakeCube','aborted':'Exit', 'preempted':'Exit'})
         
@@ -148,7 +190,7 @@ def main():
         goalArmE.intake_cube = False
         goalArmE.intake_timeout = 10
         smach.StateMachine.add('ScoreCube', 
-                                SimpleActionState('arm_server',
+                                SimpleActionState('/frcrobot/arm_server',
                                             ArmAction,goal=goalArmE),
                                 transitions={'succeeded':'TestHasCube', 'aborted':'Exit', 'preempted':'Exit'})
         goalArmI = ArmGoal()
@@ -156,20 +198,47 @@ def main():
         goalArmI.intake_cube = True
         goalArmI.intake_timeout = 10
         smach.StateMachine.add('IntakeCube',
-                                SimpleActionState('arm_server',
-                                            ArmAction,goal=goalArmI,result_cb=test_callback),
+                                SimpleActionState('/frcrobot/arm_server',
+                                            ArmAction,goal=goalArmI),
                                 transitions={'succeeded':'TestCollectedCube','aborted':'Exit', 'preempted':'Exit'})
-        goalPTCC = PathToCenterGoal()
-        goalPTCC.usingCubeCenter = True
+        #below- this should be forearm goal, not arm goal, fix!!!
+        goalArmR = ArmGoal()
+        goalArmR.arm_position = 1
+        goalArmR.intake_cube = True
+        goalArmR.intake_timeout = 2
+        smach.StateMachine.add('ResetArmPos',
+                                SimpleActionState('/frcrobot/arm_server',
+                                            ArmAction,goal=goalArmR),
+                                transitions={'succeeded':'MoveRobotBack','aborted':'Exit','preempted':'Exit'})
+        goalMoveBack = PathGoal()
+        goalMoveBack.goal_index = 0
+        goalMoveBack.x = 0
+        goalMoveBack.y = -0.5
+        goalMoveBack.rotation = 90
+        goalMoveBack.time_to_run = 50
+        smach.StateMachine.add('MoveRobotBack',
+                                SimpleActionState('/frcrobot/path_server',
+                                            PathAction, goal=goalMoveBack),
+                                transitions={'succeeded':'TestSeesCubes','aborted':'Exit','preempted':'Exit'})
+        goalPTCC = PathGoal()
+        goalPTCC.goal_index = 3
+        goalPTCC.x = 0
+        goalPTCC.y = 0
+        goalPTCC.rotation = 90
+        goalPTCC.time_to_run = 50
         smach.StateMachine.add('PathToCenterC',
-                                SimpleActionState('pathToCenter_as',
-                                            PathToCenterAction,goal=goalPTCC),
+                                SimpleActionState('/frcrobot/path_server',
+                                            PathAction,goal=goalPTCC),
                                 transitions={'succeeded':'TurnToCube','aborted':'Exit','preempted':'Exit'})
-        goalPTCE = PathToCenterGoal()
-        goalPTCE.usingCubeCenter = False
+        goalPTCE = PathGoal()
+        goalPTCE.goal_index = 3
+        goalPTCE.x = 0
+        goalPTCE.y = 0
+        goalPTCE.rotation = 90
+        goalPTCE.time_to_run = 50
         smach.StateMachine.add('PathToCenterE',
-                                SimpleActionState('pathToCenter_as',
-                                            PathToCenterAction,goal=goalPTCE),
+                                SimpleActionState('/frcrobot/path_server',
+                                            PathAction,goal=goalPTCE),
                                 transitions={'succeeded':'TurnToExchange','aborted':'Exit','preempted':'Exit'})
         goalTurnCube = PathGoal()
         goalTurnCube.goal_index = 0
@@ -178,7 +247,7 @@ def main():
         goalTurnCube.rotation = 90 #essentially snap to angle; rework
         goalTurnCube.time_to_run = 50
         smach.StateMachine.add('TurnToCube',
-                                SimpleActionState('path_server',
+                                SimpleActionState('/frcrobot/path_server',
                                             PathAction, goal=goalTurnCube),
                                 transitions={'succeeded':'TestSeesCubes', 'aborted':'Exit', 'preempted':'Exit'})
         goalTurnExchange = PathGoal()
@@ -188,19 +257,19 @@ def main():
         goalTurnExchange.rotation = 90 #essentially snap to angle; rework
         goalTurnExchange.time_to_run = 50
         smach.StateMachine.add('TurnToExchange',
-                                SimpleActionState('path_server',
+                                SimpleActionState('/frcrobot/path_server',
                                             PathAction, goal=goalTurnExchange),
                                 transitions={'succeeded':'PathToExchange', 'aborted':'Exit', 'preempted':'Exit'})
         #define a goal for ejecting cubes
         goalIntake = IntakeGoal()
         goalIntake.intake_cube = False #because ejecting cube
-        goalIntake.intake_timeout = 5
+        goalIntake.timeout = 5
         smach.StateMachine.add('SpinOut',
-                                SimpleActionState('intake_server',
+                                SimpleActionState('/frcrobot/intake_server',
                                             IntakeAction, goal=goalIntake),
-                                transitions={'succeeded':'IntakeCube', 'aborted':'Exit', 'preempted':'Exit'})
+                                transitions={'succeeded':'PathToCube', 'aborted':'Exit', 'preempted':'Exit'})
         smach.StateMachine.add('Party',
-                                SimpleActionState('party_as',
+                                SimpleActionState('/frcrobot/party_as',
                                             SingleExitAction),
                                 transitions={'succeeded':'Exit', 'aborted':'Exit', 'preempted':'Exit'})
 
