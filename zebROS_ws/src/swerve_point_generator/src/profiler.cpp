@@ -83,9 +83,6 @@ const std::vector<double> &end_points, double t_shift, bool flip_dirc)
 	positions.reserve(155 / dt_); //For full auto :)
 
 
-	std::vector<double> accelerations;
-	accelerations.reserve(155 / dt_);
-
 	path_point holder_point;
 	spline_coefs holder_spline;
 
@@ -179,7 +176,7 @@ const std::vector<double> &end_points, double t_shift, bool flip_dirc)
 	spline = parametrize_spline(x_splines_first_deriv, y_splines_first_deriv, end_points, 
 	total_arc, dtds_for_spline, arc_length_for_spline);
 	int point_count = 0;
-	accelerations.resize(0);
+	std::vector<double> accelerations;
 	//back pass
 	//ROS_INFO_STREAM("total arc: " <<total_arc);
 	//i is the arc length we are at in the loop
@@ -304,12 +301,12 @@ const std::vector<double> &end_points, double t_shift, bool flip_dirc)
 			}
 			if(coerce(curr_v, -100000000000, vel_cap))
 			{
-				accelerations.resize(0);
+				accelerations.clear();
 			}
 		}
 		else
 		{
-			accelerations.resize(0);
+			accelerations.clear();
 		}
 
 		//ROS_INFO_STREAM("post cut max: " << curr_v);
@@ -397,6 +394,7 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 		//
 		//}
 
+		// ROS_INFO_STREAM("solve_for_next_V, current_v:" << current_v << " v_general_max:" << v_general_max << " v_curve_max:" << v_curve_max << " v_curve_max_2:" << v_curve_max_2);
 		if(!coerce(current_v, -v_curve_max, v_curve_max) & !coerce(current_v, -v_curve_max_2, v_curve_max_2) & !coerce(current_v, -v_general_max, v_general_max)) //If we need to threshhold, we don't need to iterate using accel
 		{
                         //this is where it all breaks
@@ -428,23 +426,24 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
                         ROS_INFO_STREAM("accelerations size = " << accelerations.size());
 
 			//Implementation of adams-bashforth:
-			if(accelerations.size() == 0)
+			const size_t s = accelerations.size();
+			if(s == 0)
 			{
 
 			
 				current_v += accel * dt_;
 			}
-			else if(accelerations.size() == 1)
+			else if(s == 1)
 			{
 				current_v += dt_ / 2 * (3 * accel - accelerations[0]);
 			}
-			else if(accelerations.size() == 2)
+			else if(s == 2)
 			{
 				current_v += dt_ / 12 * (23 * accel - 16 * accelerations[1] + 5 *accelerations[0]);
 			}
-			else 
+			else
 			{
-				current_v += dt_ / 24 * ( 55 * accel - 59 * accelerations[-1] + 37 * accelerations[-2] - 9 * accelerations[-3] );
+				current_v += dt_ / 24 * ( 55 * accel - 59 * accelerations[2] + 37 * accelerations[1] - 9 * accelerations[0] );
 			}
 			//Threshold again
 
@@ -452,11 +451,16 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 
 			if(coerce(current_v, -v_curve_max, v_curve_max) | coerce(current_v, -v_general_max, v_general_max))
 			{
-				accelerations.resize(0);
+				accelerations.clear();
 			}
 			else
 			{
-				accelerations.push_back(accel);  
+				// Maintain up to 3 of the most recent acceleration values
+				// Should never have more than 3 entries, but use a while
+				// loop just to be safe
+				while (accelerations.size() > 2)
+					accelerations.erase(accelerations.begin());
+				accelerations.push_back(accel);
 			}
 			//ROS_INFO_STREAM("curve max: " << current_v);
 
@@ -466,7 +470,7 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 		}
 		else
 		{
-			accelerations.resize(0);
+			accelerations.clear();
 		}
 	}
 	else
