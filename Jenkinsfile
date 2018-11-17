@@ -4,7 +4,7 @@ node {
       // Get some code from a GitHub repository
       checkout changelog: true, poll: false, scm: [
           $class: 'GitSCM', 
-          branches: [[name: '**']], 
+          branches: [[name: '*/' + env.BRANCH_NAME]], 
           doGenerateSubmoduleConfigurations: false, 
           extensions: [[$class: 'CleanBeforeCheckout']], 
           submoduleCfg: [], 
