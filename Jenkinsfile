@@ -2,23 +2,11 @@ node {
 
     stage('Preparation') { 
       // Get some code from a GitHub repository
-    //   checkout changelog: true, poll: false, scm: [
-    //       $class: 'GitSCM', 
-    //       branches: [[name: '*/' + env.BRANCH_NAME]], 
-    //       doGenerateSubmoduleConfigurations: false, 
-    //       extensions: [[$class: 'CleanBeforeCheckout']], 
-    //       submoduleCfg: [], 
-    //       userRemoteConfigs: [
-    //             [credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git']
-    //           ]
-    //       ]
-    // git branch: env.BRANCH_NAME, credentialsId: 'zebra_build_user', url: 'https://github.com/FRC900/2018Offseason.git'
         checkout scm
-
    }
    
    try {
-       docker.image('frc900/zebros-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
+       docker.image('frc900/zebros-dev:latest').inside('--user jenkins:jenkins -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
             
             stage('Build') {
             
