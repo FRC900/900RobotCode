@@ -39,7 +39,8 @@ node {
                     source devel/setup.bash
                     catkin_make run_tests
                     catkin_test_results build/test_results 
-                    sudo chown -R jenkins:jenkins .
+                    cd ..
+                    rm -rf zebROS_ws
                 '''
             }
         }
