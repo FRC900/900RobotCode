@@ -74,10 +74,16 @@ node {
     finally {
         sh "echo ${currentBuild.currentResult}"
 
-        build_result = currentBuild.currentResult
+        build_result = currentBuild.result
+        
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
+        
+        git_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+        git_full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%H'").trim()
+        git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
+
         deleteDir()
-        notifySlack(build_result)
+        notifySlack(build_result, git_full_commit, git_commit, git_author)
 
     } // end finally
     sh "echo ${currentBuild.currentResult}"
@@ -85,7 +91,7 @@ node {
 } // end Node
 
 
-def notifySlack(String buildStatus = 'STARTED') {
+def notifySlack(String buildStatus = 'STARTED', String short_commit='', String commit='', String author='') {
     // Build status of null means success.
     buildStatus = buildStatus ?: 'SUCCESS'
 
@@ -101,20 +107,18 @@ def notifySlack(String buildStatus = 'STARTED') {
         color = 'danger'
     }
 
-    git_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
-    git_full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%H'").trim()
-    git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
+    
 
     tokens = "${env.JOB_NAME}".tokenize('/')
     org = tokens[tokens.size()-3]
     repo = tokens[tokens.size()-2]
     branch = tokens[tokens.size()-1]
 
-    commit_url = "https://github.com/FRC900/${repo}/commit/${git_full_commit}"
+    commit_url = "https://github.com/FRC900/${repo}/commit/${commit}"
     repo_slug = "${org}/${repo}@${branch}"
     build_url = "https://${env.BUILD_URL}"
 
-    msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${git_commit}>) of ${repo_slug} by ${git_author} ${buildStatus} in ${currentBuild.durationString}."
+    msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${short_commit}>) of ${repo_slug} by ${author} ${buildStatus} in ${currentBuild.durationString}."
     slackSend(
         color: color,
         baseUrl: 'https://frc900.slack.com/services/hooks/jenkins-ci/', 
