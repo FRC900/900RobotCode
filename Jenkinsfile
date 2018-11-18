@@ -64,6 +64,7 @@ node {
                 // It's okay because even though we give anyone on earth permission to touch
                 // these files, jenkins will soon delete them.
                 // Reference: https://issues.jenkins-ci.org/browse/JENKINS-24440
+                sh "echo ${currentBuild.currentResult}"
                 sh '''#!/bin/bash
                     chmod -R 777 .
                 '''
@@ -71,6 +72,8 @@ node {
         } // end Docker Image
     } // end try
     finally {
+        sh "echo ${currentBuild.currentResult}"
+
         build_result = currentBuild.currentResult
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
         notifySlack(build_result)
