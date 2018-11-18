@@ -76,11 +76,12 @@ node {
 
         build_result = currentBuild.currentResult
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
-        notifySlack(build_result)
         deleteDir()
+        notifySlack(build_result)
 
     } // end finally
-
+    sh "echo ${currentBuild.currentResult}"
+    
 } // end Node
 
 
