@@ -71,8 +71,9 @@ node {
         } // end Docker Image
     } // end try
     finally {
+        build_result = currentBuild.currentResult
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
-        notifySlack(currentBuild.currentResult)
+        notifySlack(build_result)
         deleteDir()
 
     } // end finally
@@ -109,7 +110,7 @@ def notifySlack(String buildStatus = 'STARTED') {
     repo_slug = "${org}/${repo}@${branch}"
     build_url = "https://${env.BUILD_URL}"
 
-    msg = "Build <${build_url}|#${env.BUILD_NUMBER}> (<${commit_url}|${git_commit}>) of ${repo_slug} by ${git_author} ${currentBuild.currentResult} in ${currentBuild.durationString}."
+    msg = "Build <${currentBuild.absoluteUrl}|#${env.BUILD_NUMBER}> (<${commit_url}|${git_commit}>) of ${repo_slug} by ${git_author} ${currentBuild.currentResult} in ${currentBuild.durationString}."
     slackSend(
         color: color,
         baseUrl: 'https://frc900.slack.com/services/hooks/jenkins-ci/', 
