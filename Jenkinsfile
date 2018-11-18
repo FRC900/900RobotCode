@@ -3,10 +3,6 @@ node {
     stage('Preparation') { 
       // Get some code from a GitHub repository
         checkout scm
-        sh ''' #!/bin/bash
-            whoami
-            ll
-        '''
    }
    
    try {
@@ -17,7 +13,7 @@ node {
                 sh '''#!/bin/bash
                     whoami
                     cd /home/ubuntu/2018Offseason
-                    ll
+                    ls -l
                     git log -n1
                     git submodule update --init --recursive
                     echo \"git submodule init\"
