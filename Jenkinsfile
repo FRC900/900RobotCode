@@ -1,11 +1,12 @@
 node {
 
+            
     stage('Preparation') { 
       // Get some code from a GitHub repository
         checkout scm
     } // end Preparation stage
    
-   // Encapsulated builds in try block to allow execution of unit test publication
+   // Encapsulated builds in try block to allow unconditional execution of unit test publication
    // and workspace cleanup
    try {
 
@@ -21,32 +22,37 @@ node {
        // code inside the image, it would stay in there (unless we delete it in the docker image I guess).
        docker.image('frc900/zebros-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
             
-            stage('Build') {
+            // This try-finally block is required to always change permissions
+            // inside the docker image to allow Jenkins to finally delete it at the end.
+            try {
+                stage('Build') {
+                
+                    sh '''#!/bin/bash
+                        cd /home/ubuntu/2018Offseason
+                        git log -n1
+                        git submodule update --init --recursive
+                        ./install_ros_desktop_packages.sh
+                        cd zebROS_ws
+                        wstool update -t src --continue-on-error
+                        source /opt/ros/kinetic/setup.bash
+                        catkin_make
+                        source devel/setup.bash
+                        timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen
+                    '''
+                } // end Build stage
             
-                sh '''#!/bin/bash
-                    cd /home/ubuntu/2018Offseason
-                    git log -n1
-                    git submodule update --init --recursive
-                    ./install_ros_desktop_packages.sh
-                    cd zebROS_ws
-                    wstool update -t src --continue-on-error
-                    source /opt/ros/kinetic/setup.bash
-                    catkin_make
-                    source devel/setup.bash
-                    timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen
-                '''
-            } // end Build stage
-        
-        
-            stage('Test') {
-                sh '''#!/bin/bash
-                    chmod -R 777 .
-                    cd zebROS_ws
-                    wstool update -t src --continue-on-error
-                    source /opt/ros/kinetic/setup.bash
-                    source devel/setup.bash
-                    catkin_make run_tests
-                '''
+            
+                stage('Test') {
+                    sh '''#!/bin/bash
+                        cd zebROS_ws
+                        wstool update -t src --continue-on-error
+                        source /opt/ros/kinetic/setup.bash
+                        source devel/setup.bash
+                        catkin_make run_tests
+                    '''
+                } // end Test stage
+
+            } finally {
 
                 // We want to be able to clean the workspace with deleteDir() or similar option
                 // at the end of the build. We cannot delete the directory here since
@@ -58,13 +64,62 @@ node {
                 // It's okay because even though we give anyone on earth permission to touch
                 // these files, jenkins will soon delete them.
                 // Reference: https://issues.jenkins-ci.org/browse/JENKINS-24440
-
-            } // end Test Stage
+                sh "echo ${currentBuild.currentResult}"
+                sh '''#!/bin/bash
+                    chmod -R 777 .
+                '''
+            } // end try-finally (always update perms)
         } // end Docker Image
     } // end try
     finally {
-        junit testResults: 'zebROS_ws/build/test_results/**/*.xml'
-        deleteDir()
-    } // end finally
+        sh "echo ${currentBuild.currentResult}"
 
+        build_result = currentBuild.currentResult
+        junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
+        deleteDir()
+        notifySlack(build_result)
+
+    } // end finally
+    sh "echo ${currentBuild.currentResult}"
+    
 } // end Node
+
+
+def notifySlack(String buildStatus = 'STARTED') {
+    // Build status of null means success.
+    buildStatus = buildStatus ?: 'SUCCESS'
+
+    def color
+
+    if (buildStatus == 'STARTED') {
+        color = '#D4DADF'
+    } else if (buildStatus == 'SUCCESS') {
+        color = 'good'
+    } else if (buildStatus == 'UNSTABLE') {
+        color = 'warning'
+    } else {
+        color = 'danger'
+    }
+
+    git_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+    git_full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%H'").trim()
+    git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
+
+    tokens = "${env.JOB_NAME}".tokenize('/')
+    org = tokens[tokens.size()-3]
+    repo = tokens[tokens.size()-2]
+    branch = tokens[tokens.size()-1]
+
+    commit_url = "https://github.com/FRC900/${repo}/commit/${git_full_commit}"
+    repo_slug = "${org}/${repo}@${branch}"
+    build_url = "https://${env.BUILD_URL}"
+
+    msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${git_commit}>) of ${repo_slug} by ${git_author} ${buildStatus} in ${currentBuild.durationString}."
+    slackSend(
+        color: color,
+        baseUrl: 'https://frc900.slack.com/services/hooks/jenkins-ci/', 
+        message: msg, 
+        tokenCredentialId: 'slack-token'
+    )
+
+} // end notifySlack()
