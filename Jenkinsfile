@@ -40,13 +40,13 @@ node {
                     catkin_make run_tests
                     catkin_test_results build/test_results 
                     cd ..
-                    rm -rf zebROS_ws
+                    sudo chown -R ubuntu:ubuntu .
                 '''
             }
         }
     } finally {
-        deleteDir()
         junit allowEmptyResults: true, testResults: 'zebROS_ws/build/test_results/**/*.xml'
+        deleteDir()
     }
 
 }
