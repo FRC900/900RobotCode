@@ -2,8 +2,9 @@ node {
 
             
     stage('Preparation') { 
+        sh "echo ${env}"
       // Get some code from a GitHub repository
-        env.scmVars = checkout scm
+        checkout scm
     } // end Preparation stage
    
    // Encapsulated builds in try block to allow execution of unit test publication
@@ -79,7 +80,6 @@ node {
                 
         sh "echo ${git_author}"
         sh "echo ${git_commit}"
-
         deleteDir()
 
     } // end finally
