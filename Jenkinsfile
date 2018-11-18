@@ -2,6 +2,9 @@ node {
 
             
     stage('Preparation') { 
+
+        sh "echo ${env.CHANGE_ID}"
+        sh "echo ${env.CHANGE_URL}"
         sh "echo ${env}"
       // Get some code from a GitHub repository
         checkout scm
@@ -45,7 +48,6 @@ node {
             
                 stage('Test') {
                     sh '''#!/bin/bash
-                        chmod -R 777 .
                         cd zebROS_ws
                         wstool update -t src --continue-on-error
                         source /opt/ros/kinetic/setup.bash
