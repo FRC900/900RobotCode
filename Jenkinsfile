@@ -1,11 +1,6 @@
 node {
 
-    withEnv(['scmVars=""',
-             'git_commit=""',
-             'git_author=""',
-             'git_url=""']) {
-        
-    
+            
     stage('Preparation') { 
       // Get some code from a GitHub repository
         env.scmVars = checkout scm
@@ -73,20 +68,20 @@ node {
                 sh '''#!/bin/bash
                     chmod -R 777 .
                 '''
-                env.git_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
-                env.git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
             } // end try-finally (always update perms)
 
         } // end Docker Image
     } // end try
     finally {
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
+        git_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+        git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
+                
+        sh "echo ${git_author}"
+        sh "echo ${git_commit}"
+
         deleteDir()
-        sh "echo ${env.git_author}"
-        sh "echo ${env.git_commit}"
 
     } // end finally
-
-}
 
 } // end Node
