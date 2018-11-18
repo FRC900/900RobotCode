@@ -6,7 +6,7 @@ node {
         checkout scm
     } // end Preparation stage
    
-   // Encapsulated builds in try block to allow execution of unit test publication
+   // Encapsulated builds in try block to allow unconditional execution of unit test publication
    // and workspace cleanup
    try {
 
@@ -68,32 +68,11 @@ node {
                     chmod -R 777 .
                 '''
             } // end try-finally (always update perms)
-
         } // end Docker Image
     } // end try
     finally {
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
-        
-        git_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
-        git_full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
-        git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
-
-        tokens = "${env.JOB_NAME}".tokenize('/')
-        org = tokens[tokens.size()-3]
-        repo = tokens[tokens.size()-2]
-        branch = tokens[tokens.size()-1]
-
-        commit_url = "https://github.com/${org}/${repo}/commit/${git_full_commit}"
-        repo_slug = "${org}/${repo}@${branch}"
-
-        msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${git_commit}>) of ${repo_slug} by ${git_author} ${currentBuild.currentResult} in ${currentBuild.durationString}."
-        slackSend(
-            baseUrl: 'https://frc900.slack.com/services/hooks/jenkins-ci/', 
-            message: msg, 
-            tokenCredentialId: 'slack-token'
-        )
-
-        notifySlack(currentBuild.result)
+        notifySlack(currentBuild.currentResult)
         deleteDir()
 
     } // end finally
@@ -110,15 +89,15 @@ def notifySlack(String buildStatus = 'STARTED') {
     if (buildStatus == 'STARTED') {
         color = '#D4DADF'
     } else if (buildStatus == 'SUCCESS') {
-        color = '#BDFFC3'
+        color = 'good'
     } else if (buildStatus == 'UNSTABLE') {
-        color = '#FFFE89'
+        color = 'warning'
     } else {
-        color = '#FF9FA1'
+        color = 'danger'
     }
 
     git_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
-    git_full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+    git_full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%H'").trim()
     git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
 
     tokens = "${env.JOB_NAME}".tokenize('/')
@@ -126,7 +105,7 @@ def notifySlack(String buildStatus = 'STARTED') {
     repo = tokens[tokens.size()-2]
     branch = tokens[tokens.size()-1]
 
-    commit_url = "https://github.com/${org}/${repo}/commit/${git_full_commit}"
+    commit_url = "https://github.com/FRC900/${repo}/commit/${git_full_commit}"
     repo_slug = "${org}/${repo}@${branch}"
 
     msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${git_commit}>) of ${repo_slug} by ${git_author} ${currentBuild.currentResult} in ${currentBuild.durationString}."
@@ -137,4 +116,4 @@ def notifySlack(String buildStatus = 'STARTED') {
         tokenCredentialId: 'slack-token'
     )
 
-}
+} // end notifySlack()
