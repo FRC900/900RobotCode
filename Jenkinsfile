@@ -52,6 +52,8 @@ node {
                     '''
                 } // end Test stage
 
+            } finally {
+
                 // We want to be able to clean the workspace with deleteDir() or similar option
                 // at the end of the build. We cannot delete the directory here since
                 // we have to publish the jUnit test reports that catkin so lovingly made for us.
@@ -62,8 +64,6 @@ node {
                 // It's okay because even though we give anyone on earth permission to touch
                 // these files, jenkins will soon delete them.
                 // Reference: https://issues.jenkins-ci.org/browse/JENKINS-24440
-
-            } finally {
                 sh '''#!/bin/bash
                     chmod -R 777 .
                 '''
@@ -73,13 +73,68 @@ node {
     } // end try
     finally {
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
+        
         git_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+        git_full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
         git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
 
-        slackSend "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> ${git_commit} @${env. BRANCH_NAME} by ${git_author} ${currentBuild.currentResult} in ${currentBuild.durationString}."
+        tokens = "${env.JOB_NAME}".tokenize('/')
+        org = tokens[tokens.size()-3]
+        repo = tokens[tokens.size()-2]
+        branch = tokens[tokens.size()-1]
 
+        commit_url = "https://github.com/${org}/${repo}/commit/${git_full_commit}"
+        repo_slug = "${org}/${repo}@${branch}"
+
+        msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${git_commit}>) of ${repo_slug} by ${git_author} ${currentBuild.currentResult} in ${currentBuild.durationString}."
+        slackSend(
+            baseUrl: 'https://frc900.slack.com/services/hooks/jenkins-ci/', 
+            message: msg, 
+            tokenCredentialId: 'slack-token'
+        )
+
+        notifySlack(currentBuild.result)
         deleteDir()
 
     } // end finally
 
 } // end Node
+
+
+def notifySlack(String buildStatus = 'STARTED') {
+    // Build status of null means success.
+    buildStatus = buildStatus ?: 'SUCCESS'
+
+    def color
+
+    if (buildStatus == 'STARTED') {
+        color = '#D4DADF'
+    } else if (buildStatus == 'SUCCESS') {
+        color = '#BDFFC3'
+    } else if (buildStatus == 'UNSTABLE') {
+        color = '#FFFE89'
+    } else {
+        color = '#FF9FA1'
+    }
+
+    git_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+    git_full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+    git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
+
+    tokens = "${env.JOB_NAME}".tokenize('/')
+    org = tokens[tokens.size()-3]
+    repo = tokens[tokens.size()-2]
+    branch = tokens[tokens.size()-1]
+
+    commit_url = "https://github.com/${org}/${repo}/commit/${git_full_commit}"
+    repo_slug = "${org}/${repo}@${branch}"
+
+    msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${git_commit}>) of ${repo_slug} by ${git_author} ${currentBuild.currentResult} in ${currentBuild.durationString}."
+    slackSend(
+        color: color,
+        baseUrl: 'https://frc900.slack.com/services/hooks/jenkins-ci/', 
+        message: msg, 
+        tokenCredentialId: 'slack-token'
+    )
+
+}
