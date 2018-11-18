@@ -1,9 +1,14 @@
 node {
 
+    withEnv(['scmVars=""',
+             'git_commit=""',
+             'git_author=""',
+             'git_url=""']) {
+        
+    
     stage('Preparation') { 
       // Get some code from a GitHub repository
-        def scmVars = checkout scm
-        sh "echo ${scmVars}"
+        env.scmVars = checkout scm
     } // end Preparation stage
    
    // Encapsulated builds in try block to allow execution of unit test publication
@@ -68,6 +73,8 @@ node {
                 sh '''#!/bin/bash
                     chmod -R 777 .
                 '''
+                env.git_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+                env.git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
             } // end try-finally (always update perms)
 
         } // end Docker Image
@@ -75,8 +82,11 @@ node {
     finally {
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
         deleteDir()
-        sh "echo ${scmVars}"
+        sh "echo ${env.git_author}"
+        sh "echo ${env.git_commit}"
 
     } // end finally
+
+}
 
 } // end Node
