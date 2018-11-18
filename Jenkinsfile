@@ -2,8 +2,8 @@ node {
 
     stage('Preparation') { 
       // Get some code from a GitHub repository
-        final scmVars = checkout scm
-        sh 'echo ${scmVars}'
+        def scmVars = checkout scm
+        sh "echo ${scmVars}"
     } // end Preparation stage
    
    // Encapsulated builds in try block to allow execution of unit test publication
@@ -75,7 +75,7 @@ node {
     finally {
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
         deleteDir()
-        sh 'echo ${scmVars}'
+        sh "echo ${scmVars}"
 
     } // end finally
 
