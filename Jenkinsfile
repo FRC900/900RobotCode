@@ -40,14 +40,12 @@ node {
         
             stage('Test') {
                 sh '''#!/bin/bash
+                    chmod -R 777 .
                     cd zebROS_ws
                     wstool update -t src --continue-on-error
                     source /opt/ros/kinetic/setup.bash
                     source devel/setup.bash
                     catkin_make run_tests
-                    catkin_test_results build/test_results 
-                    cd ..
-                    chmod -R 777 .
                 '''
 
                 // We want to be able to clean the workspace with deleteDir() or similar option
