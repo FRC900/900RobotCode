@@ -3,15 +3,21 @@ node {
     stage('Preparation') { 
       // Get some code from a GitHub repository
         checkout scm
+        sh ''' #!/bin/bash
+            whoami
+            ll
+        '''
    }
    
    try {
-       docker.image('frc900/zebros-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
+       docker.image('frc900/zebros-dev:latest').inside('--user jenkins -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
             
             stage('Build') {
             
                 sh '''#!/bin/bash
+                    whoami
                     cd /home/ubuntu/2018Offseason
+                    ll
                     git log -n1
                     git submodule update --init --recursive
                     echo \"git submodule init\"
@@ -40,7 +46,6 @@ node {
                     catkin_make run_tests
                     catkin_test_results build/test_results 
                     cd ..
-                    sudo chown -R ubuntu:ubuntu .
                 '''
             }
         }
