@@ -107,8 +107,9 @@ def notifySlack(String buildStatus = 'STARTED') {
 
     commit_url = "https://github.com/FRC900/${repo}/commit/${git_full_commit}"
     repo_slug = "${org}/${repo}@${branch}"
+    build_url = "https://${env.BUILD_URL}"
 
-    msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${git_commit}>) of ${repo_slug} by ${git_author} ${currentBuild.currentResult} in ${currentBuild.durationString}."
+    msg = "Build <${build_url}|#${env.BUILD_NUMBER}> (<${commit_url}|${git_commit}>) of ${repo_slug} by ${git_author} ${currentBuild.currentResult} in ${currentBuild.durationString}."
     slackSend(
         color: color,
         baseUrl: 'https://frc900.slack.com/services/hooks/jenkins-ci/', 
