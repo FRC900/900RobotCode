@@ -65,7 +65,7 @@ node {
         } // end Docker Image
     } // end try
     finally {
-        junit allowEmptyResults: true, testResults: 'zebROS_ws/build/test_results/**/*.xml'
+        junit testResults: 'zebROS_ws/build/test_results/**/*.xml'
         deleteDir()
     } // end finally
 
