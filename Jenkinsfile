@@ -2,7 +2,8 @@ node {
 
     stage('Preparation') { 
       // Get some code from a GitHub repository
-        checkout scm
+        final scmVars = checkout scm
+        sh 'echo ${scmVars}'
     } // end Preparation stage
    
    // Encapsulated builds in try block to allow execution of unit test publication
@@ -21,6 +22,8 @@ node {
        // code inside the image, it would stay in there (unless we delete it in the docker image I guess).
        docker.image('frc900/zebros-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
             
+            // This try-finally block is required to always change permissions
+            // inside the docker image to allow Jenkins to finally delete it at the end.
             try {
                 stage('Build') {
                 
@@ -70,8 +73,10 @@ node {
         } // end Docker Image
     } // end try
     finally {
-        junit testResults: 'zebROS_ws/build/test_results/**/*.xml'
+        junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
         deleteDir()
+        sh 'echo ${scmVars}'
+
     } // end finally
 
 } // end Node
