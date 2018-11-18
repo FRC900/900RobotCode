@@ -6,14 +6,12 @@ node {
    }
    
    try {
-       docker.image('frc900/zebros-dev:latest').inside('--user jenkins -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
+       docker.image('frc900/zebros-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
             
             stage('Build') {
             
                 sh '''#!/bin/bash
-                    whoami
                     cd /home/ubuntu/2018Offseason
-                    ls -l
                     git log -n1
                     git submodule update --init --recursive
                     echo \"git submodule init\"
@@ -42,6 +40,7 @@ node {
                     catkin_make run_tests
                     catkin_test_results build/test_results 
                     cd ..
+                    chmod -R 777 .
                 '''
             }
         }
