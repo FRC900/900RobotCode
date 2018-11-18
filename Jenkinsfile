@@ -1,16 +1,13 @@
-node 
-{
+node {
 
-    stage('Preparation') 
-    { 
+    stage('Preparation') { 
       // Get some code from a GitHub repository
         checkout scm
     } // end Preparation stage
    
    // Encapsulated builds in try block to allow execution of unit test publication
    // and workspace cleanup
-   try 
-   {
+   try {
 
        // Both Build and Test stages require the same docker image.
        //
@@ -22,11 +19,9 @@ node
        // is so that we can delete the workspace. Since the docker image
        // persists, we want to try to keep it as clean as possible. If we checked out
        // code inside the image, it would stay in there (unless we delete it in the docker image I guess).
-       docker.image('frc900/zebros-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') 
-       { c ->
+       docker.image('frc900/zebros-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
             
-            stage('Build') 
-            {
+            stage('Build') {
             
                 sh '''#!/bin/bash
                     cd /home/ubuntu/2018Offseason
@@ -43,8 +38,7 @@ node
             } // end Build stage
         
         
-            stage('Test') 
-            {
+            stage('Test') {
                 sh '''#!/bin/bash
                     cd zebROS_ws
                     wstool update -t src --continue-on-error
@@ -70,8 +64,7 @@ node
             } // end Test Stage
         } // end Docker Image
     } // end try
-    finally 
-    {
+    finally {
         junit allowEmptyResults: true, testResults: 'zebROS_ws/build/test_results/**/*.xml'
         deleteDir()
     } // end finally
