@@ -2,10 +2,6 @@ node {
 
             
     stage('Preparation') { 
-
-        sh "echo ${env.CHANGE_ID}"
-        sh "echo ${env.CHANGE_URL}"
-        sh "echo ${env}"
       // Get some code from a GitHub repository
         checkout scm
     } // end Preparation stage
@@ -79,9 +75,9 @@ node {
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
         git_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
         git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
-                
-        sh "echo ${git_author}"
-        sh "echo ${git_commit}"
+
+        slackSend "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> ${git_commit} @${env. BRANCH_NAME} by ${git_author} ${currentBuild.currentResult} in ${currentBuild.durationString}."
+
         deleteDir()
 
     } // end finally
