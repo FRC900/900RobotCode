@@ -1,12 +1,12 @@
 node {
-    sh ''' #!/bin/bash
-            whoami
-            ll
-        '''
+
     stage('Preparation') { 
       // Get some code from a GitHub repository
         checkout scm
-        
+        sh ''' #!/bin/bash
+            whoami
+            ll
+        '''
    }
    
    try {
