@@ -21,32 +21,34 @@ node {
        // code inside the image, it would stay in there (unless we delete it in the docker image I guess).
        docker.image('frc900/zebros-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2018Offseason -l /bin/bash') { c ->
             
-            stage('Build') {
+            try {
+                stage('Build') {
+                
+                    sh '''#!/bin/bash
+                        cd /home/ubuntu/2018Offseason
+                        git log -n1
+                        git submodule update --init --recursive
+                        ./install_ros_desktop_packages.sh
+                        cd zebROS_ws
+                        wstool update -t src --continue-on-error
+                        source /opt/ros/kinetic/setup.bash
+                        catkin_make
+                        source devel/setup.bash
+                        timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen
+                    '''
+                } // end Build stage
             
-                sh '''#!/bin/bash
-                    cd /home/ubuntu/2018Offseason
-                    git log -n1
-                    git submodule update --init --recursive
-                    ./install_ros_desktop_packages.sh
-                    cd zebROS_ws
-                    wstool update -t src --continue-on-error
-                    source /opt/ros/kinetic/setup.bash
-                    catkin_make
-                    source devel/setup.bash
-                    timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen
-                '''
-            } // end Build stage
-        
-        
-            stage('Test') {
-                sh '''#!/bin/bash
-                    chmod -R 777 .
-                    cd zebROS_ws
-                    wstool update -t src --continue-on-error
-                    source /opt/ros/kinetic/setup.bash
-                    source devel/setup.bash
-                    catkin_make run_tests
-                '''
+            
+                stage('Test') {
+                    sh '''#!/bin/bash
+                        chmod -R 777 .
+                        cd zebROS_ws
+                        wstool update -t src --continue-on-error
+                        source /opt/ros/kinetic/setup.bash
+                        source devel/setup.bash
+                        catkin_make run_tests
+                    '''
+                } // end Test stage
 
                 // We want to be able to clean the workspace with deleteDir() or similar option
                 // at the end of the build. We cannot delete the directory here since
@@ -59,7 +61,12 @@ node {
                 // these files, jenkins will soon delete them.
                 // Reference: https://issues.jenkins-ci.org/browse/JENKINS-24440
 
-            } // end Test Stage
+            } finally {
+                sh '''#!/bin/bash
+                    chmod -R 777 .
+                '''
+            } // end try-finally (always update perms)
+
         } // end Docker Image
     } // end try
     finally {
