@@ -64,7 +64,7 @@ node {
                 // It's okay because even though we give anyone on earth permission to touch
                 // these files, jenkins will soon delete them.
                 // Reference: https://issues.jenkins-ci.org/browse/JENKINS-24440
-                sh "echo ${currentBuild.currentResult}"
+                sh "echo ${currentBuild.result}"
                 sh '''#!/bin/bash
                     chmod -R 777 .
                 '''
@@ -72,7 +72,7 @@ node {
         } // end Docker Image
     } // end try
     finally {
-        sh "echo ${currentBuild.currentResult}"
+        sh "echo ${currentBuild.result}"
 
         build_result = currentBuild.result
         
@@ -83,10 +83,10 @@ node {
         git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
 
         deleteDir()
-        notifySlack(build_result, git_full_commit, git_commit, git_author)
+        // notifySlack(build_result, git_full_commit, git_commit, git_author)
 
     } // end finally
-    sh "echo ${currentBuild.currentResult}"
+    sh "echo ${currentBuild.result}"
     
 } // end Node
 
