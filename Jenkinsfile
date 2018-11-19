@@ -86,7 +86,7 @@ node {
         // notifySlack(build_result, git_full_commit, git_commit, git_author)
 
     } // end finally
-    sh "echo ${currentBuild.result}"
+    sh "echo ${currentBuild.currentResult}"
     
 } // end Node
 
