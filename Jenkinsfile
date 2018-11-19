@@ -1,8 +1,10 @@
 node {
 
-            
+    failed_stage = ''
+
     stage('Preparation') { 
       // Get some code from a GitHub repository
+        failed_stage = env.STAGE_NAME
         checkout scm
     } // end Preparation stage
    
@@ -26,6 +28,8 @@ node {
             // inside the docker image to allow Jenkins to finally delete it at the end.
             try {
                 stage('Build') {
+                    
+                    failed_stage = env.STAGE_NAME
                 
                     sh '''#!/bin/bash
                         cd /home/ubuntu/2018Offseason
@@ -43,6 +47,7 @@ node {
             
             
                 stage('Test') {
+                    failed_stage = env.STAGE_NAME
                     sh '''#!/bin/bash
                         cd zebROS_ws
                         wstool update -t src --continue-on-error
@@ -83,6 +88,7 @@ node {
         git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
 
         deleteDir()
+        echo "${failed_stage}"
         notifySlack(build_result, git_full_commit, git_commit, git_author)
 
     } // end finally
@@ -91,7 +97,7 @@ node {
 } // end Node
 
 
-def notifySlack(String buildStatus = 'STARTED', String short_commit='', String commit='', String author='') {
+def notifySlack(String buildStatus = 'STARTED', String short_commit='', String commit='', String author='', String failed_stage = '') {
     // Build status of null means success.
     buildStatus = buildStatus ?: 'SUCCESS'
 
