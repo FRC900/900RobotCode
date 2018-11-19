@@ -76,6 +76,27 @@ class IntakeAction {
                     }
                 }
 
+srv.request.power = 1;
+srv.request.intake_in = true; //soft in
+if(!intake_srv_.call(srv)) 
+ROS_ERROR("srv intake call failed in timer after intake");
+
+                double start_time_extra = ros::Time::now().toSec();
+                bool wait_done = false;
+                while(!wait_done && !timed_out && !aborted) {
+                    wait_done = (ros::Time::now().toSec() - start_time_extra) > 1;
+
+                    if(as_.isPreemptRequested() || !ros::ok()) {
+                        ROS_WARN("%s: Preempted", action_name_.c_str());
+                        as_.setPreempted();
+                        aborted = true;
+                        return;
+                    }
+                    if (!aborted) {
+                        r.sleep();
+                        ros::spinOnce();
+                    }
+                }
                 srv.request.power = 0;
                 srv.request.intake_in = true; //soft in
                 if(!intake_srv_.call(srv)) 

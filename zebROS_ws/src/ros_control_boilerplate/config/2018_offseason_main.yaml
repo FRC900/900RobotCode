@@ -81,6 +81,7 @@ arm_controller:
     type: arm_controller/ArmController
     arm_joint: ["arm", "arm_follower"]
     position_array: [4.34116, 2.4175537217077703, 0.56297]
+    position_array_with_cube: [4.29054, 2.41755372, 0.61359]
     forward_soft_limit: 0.0
     reverse_soft_limit: 0.223
     arm:

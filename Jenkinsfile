@@ -69,15 +69,17 @@ node {
                 // It's okay because even though we give anyone on earth permission to touch
                 // these files, jenkins will soon delete them.
                 // Reference: https://issues.jenkins-ci.org/browse/JENKINS-24440
-                sh "echo ${currentBuild.currentResult}"
+                echo "${currentBuild.result}"
                 sh '''#!/bin/bash
                     chmod -R 777 .
                 '''
             } // end try-finally (always update perms)
         } // end Docker Image
     } // end try
+    catch(exc) {
+        currentBuild.result = 'FAILURE'
+    }
     finally {
-        sh "echo ${currentBuild.currentResult}"
 
         build_result = currentBuild.result
         
@@ -92,12 +94,11 @@ node {
         notifySlack(build_result, git_full_commit, git_commit, git_author)
 
     } // end finally
-    sh "echo ${currentBuild.currentResult}"
     
 } // end Node
 
 
-def notifySlack(String buildStatus = 'STARTED', String short_commit='', String commit='', String author='', String failed_stage = '') {
+def notifySlack(String buildStatus = 'STARTED', String short_commit='', String commit='', String author='') {
     // Build status of null means success.
     buildStatus = buildStatus ?: 'SUCCESS'
 

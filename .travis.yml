@@ -53,6 +53,10 @@ script:
 
 build:
   - true
+  
+branches:
+  only:
+  - master
 
 notifications:
   email: false
