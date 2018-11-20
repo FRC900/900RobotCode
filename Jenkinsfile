@@ -153,7 +153,7 @@ def notifySlack(String buildStatus = 'STARTED', String short_commit='', String c
     }
 
     commit_url = "https://github.com/FRC900/${repo}/commit/${commit}"
-    repo_slug = "${org}/${repo}@${branch}"
+    repo_slug = "${repo}@${branch}"
     build_url = "https://${env.BUILD_URL}"
 
     duration = currentBuild.durationString
