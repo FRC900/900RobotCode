@@ -54,6 +54,7 @@ node {
                         source /opt/ros/kinetic/setup.bash
                         source devel/setup.bash
                         catkin_make run_tests
+                        exit 1
                     '''
                 } // end Test stage
 
