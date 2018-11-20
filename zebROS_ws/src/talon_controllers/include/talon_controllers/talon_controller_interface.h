@@ -11,7 +11,7 @@ namespace talon_controllers
 // controller itself.  But consider a more complex controller, for example
 // swerve. The swerve controller runs a number of wheels, and each wheel
 // has both position and velocity.  The wheel class might create a
-// TalonPosisionPIDControllerInterface member var for the position moter and
+// TalonPosisionPIDControllerInterface member var for the position motor and
 // also a TalonVelocityPIDControllerInterface member var for the velocity.
 // And since it will be creating one per wheel, it makes sense to wrap the common
 // init code into a class rather than duplicate it for each wheel. Another

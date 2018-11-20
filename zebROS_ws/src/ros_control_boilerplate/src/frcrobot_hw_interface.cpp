@@ -962,6 +962,23 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 				const double closed_loop_target = talon->GetClosedLoopTarget(pidIdx) * closed_loop_scale;
 				safeTalonCall(talon->GetLastError(), "GetClosedLoopTarget");
 				ts.setClosedLoopTarget(closed_loop_target);
+				//
+				//const int pidf_slot = ts.getSlot();
+				//const double kp = ts.getPidfP(pidf_slot);
+				//const double ki = ts.getPidfI(pidf_slot);
+				//const double kd = ts.getPidfD(pidf_slot);
+				//const double kf = ts.getPidfF(pidf_slot);
+				//
+				//const double native_closed_loop_error = closed_loop_error / closed_loop_scale;
+				//ts.setPTerm(native_closed_loop_error * kp);
+				//const double max_integral_accumulator = ts.getMaxIntegralAccumulator(slot);
+				//double iterm = integral_accumulator * ki;
+				//if (max_integral_accumulator > 0)
+				//	iterm = std::min(iterm, max_integral_accumulator;
+				//ts.setITerm(iterm);
+				//ts.setDTerm(error_derivative * kd)
+				//ts.setFTerm(closed_loop_target / closed_loop_scale * kf);
+				//
 			}
 
 			if ((talon_mode == hardware_interface::TalonMode_MotionProfile) ||
