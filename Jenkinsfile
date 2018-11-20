@@ -137,16 +137,12 @@ def notifySlack(String buildStatus = 'STARTED', String short_commit='', String c
 
         test_details = summary.tokenize(',')
         errors = test_details[1]
-        echo "${errors}"
         errors = errors.drop(1)
-        echo "${errors}"
         errors = errors.split()[0]
-        echo "${errors}"
         errors = errors.toInteger()
-        echo "${errors}"
         
 
-        fails = test_details[4].toInteger()
+        fails = test_details[2].toInteger()
         fails = fails.drop(1)
         fails = fails.split()[0].toInteger()
 
