@@ -97,7 +97,7 @@ pipeline {
                 tokenCredentialId: 'slack-token'
             )
         }
-        success {
+        failure {
             slackSend(
                 color: 'danger',
                 baseUrl: 'https://frc900.slack.com/services/hooks/jenkins-ci/', 
