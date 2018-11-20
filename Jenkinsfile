@@ -1,6 +1,7 @@
 node {
 
     failed_stage = ''
+    test_results = ''
 
     stage('Preparation') { 
       // Get some code from a GitHub repository
@@ -54,8 +55,14 @@ node {
                         source /opt/ros/kinetic/setup.bash
                         source devel/setup.bash
                         catkin_make run_tests
-                        exit 1
                     '''
+                    
+                    test_results = sh(returnStdout: true, script: '''#!/bin/bash
+                            cd zebROS_ws
+                            source /opt/ros/kinetic/setup.bash
+                            catkin_test_results build/test_results
+                        '''
+                    ).trim()
                 } // end Test stage
 
             } finally {
@@ -70,7 +77,6 @@ node {
                 // It's okay because even though we give anyone on earth permission to touch
                 // these files, jenkins will soon delete them.
                 // Reference: https://issues.jenkins-ci.org/browse/JENKINS-24440
-                echo "${currentBuild.result}"
                 sh '''#!/bin/bash
                     chmod -R 777 .
                 '''
@@ -119,22 +125,26 @@ def notifySlack(String buildStatus = 'STARTED', String short_commit='', String c
     repo = tokens[tokens.size()-2]
     branch = tokens[tokens.size()-1]
 
+    results = "${test_results}".tokenize("\n")
+    summary = results[results.size()-1]
+
     commit_url = "https://github.com/FRC900/${repo}/commit/${commit}"
     repo_slug = "${org}/${repo}@${branch}"
     build_url = "https://${env.BUILD_URL}"
 
     duration = currentBuild.durationString
-    duration.reverse().drop(13).reverse() // Remove ' and counting' (12 chars)
+    duration = duration.reverse().drop(13).reverse() // Remove ' and counting' (12 chars)
     
-    def msg
-    msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${short_commit}>) of ${repo_slug} by ${author} ${buildStatus}"
+    msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${short_commit}>)\n${repo_slug} by ${author}\n${buildStatus}"
 
     if (buildStatus == 'FAILURE') {
-        msg = msg + " at stage ${failed_stage}"
+        msg = msg + " at stage ${failed_stage}\n"
     }
 
-    msg = msg + " in ${duration}."
+    msg = msg + "${duration}\n"
+    msg = msg + "${summary}"
 
+    //Summary: 208 tests, 0 errors, 0 failures, 0 skipped
 
     slackSend(
         color: color,
