@@ -142,7 +142,7 @@ def notifySlack(String buildStatus = 'STARTED', String short_commit='', String c
         errors = errors.toInteger()
         
 
-        fails = test_details[2].toInteger()
+        fails = test_details[2]
         fails = fails.drop(1)
         fails = fails.split()[0].toInteger()
 
