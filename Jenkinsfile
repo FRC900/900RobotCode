@@ -61,6 +61,7 @@ node {
                             cd zebROS_ws
                             source /opt/ros/kinetic/setup.bash
                             catkin_test_results build/test_results
+                            echo "Stop a failure"
                         '''
                     ).trim()
                 } // end Test stage
@@ -128,7 +129,7 @@ def notifySlack(String buildStatus = 'STARTED', String short_commit='', String c
     branch = tokens[tokens.size()-1]
 
     results = "${test_results}".tokenize("\n")
-    summary = results[results.size()-1]
+    summary = results[results.size()-2]
 
     test_details = summary.tokenize(', ')
     errors = test_details[2].toInteger()
