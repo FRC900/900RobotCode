@@ -1,10 +1,12 @@
 pipeline {
 
-    def author
-    def commit
-    def short_commit
-    def color
-    def msg
+    environment {
+        author = ""
+        commit = ""
+        short_commit = ""
+        color = ""
+        msg = ""
+    }
 
     agent {
         docker {
