@@ -108,6 +108,8 @@ def notifySlack(String buildStatus = 'STARTED', String short_commit='', String c
     // Build status of null means success.
     buildStatus = buildStatus ?: 'SUCCESS'
 
+
+
     def color
     if (buildStatus == 'STARTED') {
         color = '#D4DADF'
@@ -128,6 +130,14 @@ def notifySlack(String buildStatus = 'STARTED', String short_commit='', String c
     results = "${test_results}".tokenize("\n")
     summary = results[results.size()-1]
 
+    test_details = summary.split(/\d+/)
+    errors = test_details[1].toInteger()
+    fails = test_details[2].toInteger()
+
+    if (errors + fails > 0) {
+        color = 'warning'
+    }
+
     commit_url = "https://github.com/FRC900/${repo}/commit/${commit}"
     repo_slug = "${org}/${repo}@${branch}"
     build_url = "https://${env.BUILD_URL}"
@@ -135,14 +145,16 @@ def notifySlack(String buildStatus = 'STARTED', String short_commit='', String c
     duration = currentBuild.durationString
     duration = duration.reverse().drop(13).reverse() // Remove ' and counting' (12 chars)
     
-    msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${short_commit}>)\n${repo_slug} by ${author}\n${buildStatus}"
+    msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${short_commit}>)\n"
+    msg = msg + "${repo_slug} by ${author}\n"
+    msg = msg + "${buildStatus}"
 
     if (buildStatus == 'FAILURE') {
         msg = msg + " at stage ${failed_stage}\n"
     }
 
     msg = msg + "${duration}\n"
-    msg = msg + "${summary}"
+    msg = msg + "Test ${summary}"
 
     //Summary: 208 tests, 0 errors, 0 failures, 0 skipped
 
