@@ -32,18 +32,18 @@ node {
                     
                     failed_stage = env.STAGE_NAME
                 
-                    // sh '''#!/bin/bash
-                    //     cd /home/ubuntu/2018Offseason
-                    //     git log -n1
-                    //     git submodule update --init --recursive
-                    //     ./install_ros_desktop_packages.sh
-                    //     cd zebROS_ws
-                    //     wstool update -t src --continue-on-error
-                    //     source /opt/ros/kinetic/setup.bash
-                    //     catkin_make
-                    //     source devel/setup.bash
-                    //     timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen
-                    // '''
+                    sh '''#!/bin/bash
+                        cd /home/ubuntu/2018Offseason
+                        git log -n1
+                        git submodule update --init --recursive
+                        ./install_ros_desktop_packages.sh
+                        cd zebROS_ws
+                        wstool update -t src --continue-on-error
+                        source /opt/ros/kinetic/setup.bash
+                        catkin_make
+                        source devel/setup.bash
+                        timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen
+                    '''
                 } // end Build stage
             
             
