@@ -130,9 +130,9 @@ def notifySlack(String buildStatus = 'STARTED', String short_commit='', String c
     results = "${test_results}".tokenize("\n")
     summary = results[results.size()-1]
 
-    test_details = summary.split(/\d+/)
-    errors = test_details[1].toInteger()
-    fails = test_details[2].toInteger()
+    test_details = summary.tokenize(', ')
+    errors = test_details[2].toInteger()
+    fails = test_details[4].toInteger()
 
     if (errors + fails > 0) {
         color = 'warning'
