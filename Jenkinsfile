@@ -145,15 +145,15 @@ def notifySlack(String buildStatus = 'STARTED', String short_commit='', String c
     duration = currentBuild.durationString
     duration = duration.reverse().drop(13).reverse() // Remove ' and counting' (12 chars)
     
-    msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${short_commit}>)\n"
+    msg = "Build <${env.RUN_DISPLAY_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${short_commit}>)\n"
     msg = msg + "${repo_slug} by ${author}\n"
     msg = msg + "${buildStatus}"
 
     if (buildStatus == 'FAILURE') {
-        msg = msg + " at stage ${failed_stage}\n"
+        msg = msg + " at stage ${failed_stage}"
     }
 
-    msg = msg + "${duration}\n"
+    msg = msg + " in ${duration}.\n"
     msg = msg + "Test ${summary}"
 
     //Summary: 208 tests, 0 errors, 0 failures, 0 skipped
