@@ -128,15 +128,25 @@ def notifySlack(String buildStatus = 'STARTED', String short_commit='', String c
     repo = tokens[tokens.size()-2]
     branch = tokens[tokens.size()-1]
 
-    results = "${test_results}".tokenize("\n")
-    summary = results[results.size()-2]
+    
 
-    test_details = summary.tokenize(', ')
-    errors = test_details[2].toInteger()
-    fails = test_details[4].toInteger()
+    if (buildStatus != 'FAILURE') {
 
-    if (errors + fails > 0) {
-        color = 'warning'
+        results = "${test_results}".tokenize("\n")
+        summary = results[results.size()-2]
+
+        test_details = summary.tokenize(',')
+        errors = test_details[1]
+        errors = errors.drop(1)
+        errors = errors.split()[0].toInteger()
+
+        fails = test_details[4].toInteger()
+        fails = fails.drop(1)
+        fails = fails.split()[0].toInteger()
+
+        if (errors + fails > 0) {
+            color = 'warning'
+        }
     }
 
     commit_url = "https://github.com/FRC900/${repo}/commit/${commit}"
