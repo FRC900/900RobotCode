@@ -20,21 +20,21 @@ pipeline {
         stage('Preparation') {
             steps {
                 scm checkout
-                short_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
-                commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%H'").trim()
-                author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
+                // short_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
+                // commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%H'").trim()
+                // author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
 
-                tokens = "${env.JOB_NAME}".tokenize('/')
-                org = tokens[tokens.size()-3]
-                repo = tokens[tokens.size()-2]
-                branch = tokens[tokens.size()-1]
+                // tokens = "${env.JOB_NAME}".tokenize('/')
+                // org = tokens[tokens.size()-3]
+                // repo = tokens[tokens.size()-2]
+                // branch = tokens[tokens.size()-1]
 
-                commit_url = "https://github.com/FRC900/${repo}/commit/${commit}"
-                repo_slug = "${org}/${repo}@${branch}"
-                build_url = "https://${env.BUILD_URL}"
+                // commit_url = "https://github.com/FRC900/${repo}/commit/${commit}"
+                // repo_slug = "${org}/${repo}@${branch}"
+                // build_url = "https://${env.BUILD_URL}"
 
 
-                msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${short_commit}>) of ${repo_slug} by ${author} ${buildStatus} in ${currentBuild.durationString}."
+                // msg = "Build <${env.BUILD_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${short_commit}>) of ${repo_slug} by ${author} ${buildStatus} in ${currentBuild.durationString}."
 
             }
         }
@@ -85,7 +85,7 @@ pipeline {
             slackSend(
                 color: 'good',
                 baseUrl: 'https://frc900.slack.com/services/hooks/jenkins-ci/', 
-                message: msg, 
+                message: "Success!", 
                 tokenCredentialId: 'slack-token'
             )
         }
@@ -93,7 +93,7 @@ pipeline {
             slackSend(
                 color: 'warning',
                 baseUrl: 'https://frc900.slack.com/services/hooks/jenkins-ci/', 
-                message: msg, 
+                message: "Unstable", 
                 tokenCredentialId: 'slack-token'
             )
         }
@@ -101,7 +101,7 @@ pipeline {
             slackSend(
                 color: 'danger',
                 baseUrl: 'https://frc900.slack.com/services/hooks/jenkins-ci/', 
-                message: msg, 
+                message: "Failing!", 
                 tokenCredentialId: 'slack-token'
             )
         }
