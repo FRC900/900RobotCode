@@ -4,21 +4,18 @@ node {
     test_results = ''
     full_commit = ''
     author = ''
-    def scmVars
 
     stage('Preparation') { 
       // Get some code from a GitHub repository
         failed_stage = env.STAGE_NAME
-        scmVars = checkout scm
-
-        echo "${scmVars}"
+        checkout scm
 
         full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%H'").trim()
         author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
 
     } // end Preparation stage
    
-   // Encapsulated builds in try block to allow unconditional execution of unit test publication
+   // Encapsulate builds in try block to allow unconditional execution of unit test publication
    // and workspace cleanup
    try {
 
@@ -50,8 +47,6 @@ node {
                         wstool update -t src --continue-on-error
                         source /opt/ros/kinetic/setup.bash
                         catkin_make
-                        source devel/setup.bash
-                        timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen
                     '''
                 } // end Build stage
             
@@ -64,13 +59,17 @@ node {
                         source /opt/ros/kinetic/setup.bash
                         source devel/setup.bash
                         catkin_make run_tests
+                        timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen
                     '''
                     
+                    // This script forces an exit 0 because the catkin test
+                    // results will set the exit code to 1 if there are any failing
+                    // tests. This has the effect of failing the build, which we don't want.
                     test_results = sh(returnStdout: true, script: '''#!/bin/bash
                             cd zebROS_ws
                             source /opt/ros/kinetic/setup.bash
                             catkin_test_results build/test_results
-                            echo "Stop a failure"
+                            exit 0
                         '''
                     ).trim()
                 } // end Test stage
@@ -87,17 +86,21 @@ node {
                 // It's okay because even though we give anyone on earth permission to touch
                 // these files, jenkins will soon delete them.
                 // Reference: https://issues.jenkins-ci.org/browse/JENKINS-24440
-                sh '''#!/bin/bash
-                    chmod -R 777 .
-                '''
+                sh "chmod -R 777 ."
+
             } // end try-finally (always update perms)
         } // end Docker Image
     } // end try
     catch(exc) {
+
+        // Build must be set manually to a failure here because the result is not
+        // stored until the end of the pipeline, after we send the notification
+        // to Slack. As a result, we have to set it prematurely here.
+        // Reference: https://issues.jenkins-ci.org/browse/JENKINS-47403
         currentBuild.result = 'FAILURE'
     }
     finally {
-
+        
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
         deleteDir()
         notifySlack(currentBuild.result, full_commit, author, failed_stage)
@@ -140,35 +143,40 @@ def notifySlack(
 
     if (buildStatus != 'FAILURE') {
 
+        // This is what the test results message looks like for parsing purposes.
+        //Summary: 208 tests, 0 errors, 0 failures, 0 skipped
         results = "${test_results}".tokenize("\n")
         summary = results[results.size()-2]
 
+        // test_details = ['208 tests', ' 0 errors', ' 0 failures', ' 0 skipped']
         test_details = summary.tokenize(',')
-        errors = test_details[1]
-        errors = errors.drop(1)
+
+        // Get the errors message
+        // Split by space, first element in array is the number we want
+        errors = test_details[1].trim()
         errors = errors.split()[0]
         errors = errors.toInteger()
         
+        // Do the same for number of failures
+        failures = test_details[2].trim()
+        failures = fails.split()[0].toInteger()
 
-        fails = test_details[2]
-        fails = fails.drop(1)
-        fails = fails.split()[0].toInteger()
-
-        if (errors + fails > 0) {
+        if (errors || failures) {
             color = 'warning'
             buildStatus = 'UNSTABLE'
         }
-    }
+    } // end if build not a failure
 
     commit_url = "https://github.com/FRC900/${repo}/commit/${commit}"
     repo_slug = "${repo}@${branch}"
-    build_url = "https://${env.BUILD_URL}"
 
     duration = currentBuild.durationString
-    duration = duration.reverse().drop(13).reverse() // Remove ' and counting' (12 chars)
+    duration = duration.reverse().drop(13).reverse() // Remove ' and counting' (13 chars)
 
     short_commit = commit.take(7) // The first 7 chars are the shorthand for a Git commit
     
+
+    // Start building the notification
     msg = "Build <${env.RUN_DISPLAY_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${short_commit}>)\n"
     msg = msg + "${repo_slug} by ${author}\n"
     msg = msg + "${buildStatus}"
@@ -180,7 +188,6 @@ def notifySlack(
     msg = msg + " in ${duration}.\n"
     msg = msg + "Test ${summary}"
 
-    //Summary: 208 tests, 0 errors, 0 failures, 0 skipped
 
     slackSend(
         color: color,
