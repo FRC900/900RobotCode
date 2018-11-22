@@ -2,11 +2,20 @@ node {
 
     failed_stage = ''
     test_results = ''
+    full_commit = ''
+    author = ''
+    def scmVars
 
     stage('Preparation') { 
       // Get some code from a GitHub repository
         failed_stage = env.STAGE_NAME
-        checkout scm
+        scmVars = checkout scm
+
+        echo "${scmVars}"
+
+        full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%H'").trim()
+        author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
+
     } // end Preparation stage
    
    // Encapsulated builds in try block to allow unconditional execution of unit test publication
@@ -89,23 +98,22 @@ node {
     }
     finally {
 
-        build_result = currentBuild.result
-        
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
-        
-        git_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%h'").trim()
-        git_full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%H'").trim()
-        git_author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
-
         deleteDir()
-        notifySlack(build_result, git_commit, git_full_commit, git_author, failed_stage)
+        notifySlack(currentBuild.result, full_commit, author, failed_stage)
 
     } // end finally
     
 } // end Node
 
 
-def notifySlack(String buildStatus = 'STARTED', String short_commit='', String commit='', String author='', failed_stage='') {
+def notifySlack(
+    String buildStatus = 'STARTED',
+    String commit='', 
+    String author='', 
+    String failed_stage=''
+    ) {
+    
     // Build status of null means success.
     buildStatus = buildStatus ?: 'SUCCESS'
 
@@ -158,6 +166,8 @@ def notifySlack(String buildStatus = 'STARTED', String short_commit='', String c
 
     duration = currentBuild.durationString
     duration = duration.reverse().drop(13).reverse() // Remove ' and counting' (12 chars)
+
+    short_commit = commit.take(7) // The first 7 chars are the shorthand for a Git commit
     
     msg = "Build <${env.RUN_DISPLAY_URL}|#${env.BUILD_NUMBER}> (<${commit_url}|${short_commit}>)\n"
     msg = msg + "${repo_slug} by ${author}\n"
