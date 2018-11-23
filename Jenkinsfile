@@ -147,7 +147,7 @@ def notifySlack(
         // This is what the test results message looks like for parsing purposes.
         //Summary: 208 tests, 0 errors, 0 failures, 0 skipped
         results = "${test_results}".tokenize("\n")
-        summary = results[results.size()-2]
+        summary = results[results.size()-1]
 
         // test_details = ['208 tests', ' 0 errors', ' 0 failures', ' 0 skipped']
         test_details = summary.tokenize(',')
