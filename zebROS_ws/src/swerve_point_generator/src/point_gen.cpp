@@ -85,13 +85,13 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 			temp_holder_s.c = req.x_coefs[i].spline[2] * neg_x;
 			temp_holder_s.d = req.x_coefs[i].spline[3] * neg_x;
 			temp_holder_s.e = req.x_coefs[i].spline[4] * neg_x;
+			temp_holder_s.f = req.x_coefs[i].spline[5] * neg_x;
 			ROS_INFO_STREAM("x_coefs[" << i << "].spline=" << req.x_coefs[i].spline[0] << " " <<
 					req.x_coefs[i].spline[1] << " " <<
 					req.x_coefs[i].spline[2] << " " <<
 					req.x_coefs[i].spline[3] << " " <<
 					req.x_coefs[i].spline[4] << " " <<
 					req.x_coefs[i].spline[5]);
-			temp_holder_s.f = req.x_coefs[i].spline[5] * neg_x;
 
 			x_splines.push_back(temp_holder_s);
 		}

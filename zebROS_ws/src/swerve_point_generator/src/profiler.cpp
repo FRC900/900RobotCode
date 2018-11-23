@@ -18,7 +18,6 @@ swerve_profiler::swerve_profiler(double max_wheel_dist, double max_wheel_mid_acc
 	dt_(dt),
 	ang_accel_conv_(ang_accel_conv),
 	max_wheel_brake_accel_(max_wheel_brake_accel)
-
 {
 }
 
@@ -74,15 +73,13 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	t_total_ = end_points[end_points.size()-1]; //assumes t starts at 0
 	tk::spline spline;
 
-	ROS_WARN("called");
+	ROS_WARN("generate_profile called");
 
 	double curr_v = final_v;
 	std::vector<double> velocities;
 	velocities.reserve(155 / dt_); //For full auto :)
 	std::vector<double> positions;
 	positions.reserve(155 / dt_); //For full auto :)
-
-	path_point holder_point;
 
 	std::vector<spline_coefs> x_splines_first_deriv;
 	std::vector<spline_coefs> y_splines_first_deriv;
@@ -134,6 +131,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 			total_arc, dtds_for_spline, arc_length_for_spline);
 	int point_count = 0;
 	std::vector<double> accelerations;
+	path_point holder_point;
 	//back pass
 	//ROS_INFO_STREAM("total arc: " <<total_arc);
 	//i is the arc length we are at in the loop
@@ -402,9 +400,13 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 			{
 				current_v += dt_ / 12 * (23 * accel - 16 * accelerations[1] + 5 * accelerations[0]);
 			}
-			else
+			else if(s == 3)
 			{
 				current_v += dt_ / 24 * (55 * accel - 59 * accelerations[2] + 37 * accelerations[1] - 9 * accelerations[0]);
+			}
+			else
+			{
+				current_v += dt_ / (1901./720. * accel - 1387./360. * accelerations[3] + 109./30. * accelerations[2] - 637./360. * accelerations[1] + 251./720. * accelerations[0]);
 			}
 
 			//Threshold again
@@ -417,10 +419,10 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 			}
 			else
 			{
-				// Maintain up to 3 of the most recent acceleration values
-				// Should never have more than 3 entries, but use a while
+				// Maintain up to 4 of the most recent acceleration values
+				// Should never have more than 4 entries, but use a while
 				// loop just to be safe
-				while (accelerations.size() > 2)
+				while (accelerations.size() > 3)
 					accelerations.erase(accelerations.begin());
 				accelerations.push_back(accel);
 			}
@@ -454,15 +456,8 @@ tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &
 	total_arc_length = 0;
 	double period_t = (end_points[0] - 0.0) / 100.0;
 	double start = 0;
-	double a_val;
-	double b_val;
-	double x_at_a;
-	double x_at_b;
-	double y_at_a;
-	double y_at_b;
-	double x_at_avg;
-	double y_at_avg;
 	double arc_before = 0;
+	double b_val = 0;
 	std::vector<double> t_vals;
 	std::vector<double> s_vals;
 	t_vals.reserve(x_splines_first_deriv.size() * 101);
@@ -494,11 +489,17 @@ tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &
 		ROS_INFO_STREAM("arc_before: " << arc_before);
 		for (size_t k = 0; k < 100; k++)
 		{
-			a_val = k * period_t + start;
+			const double a_val = k * period_t + start;
 			b_val = (k + 1) * period_t + start;
 			t_vals.push_back(a_val);
 			s_vals.push_back(total_arc_length);
 			//TODO: improve efficiency here
+			double x_at_a;
+			double x_at_b;
+			double y_at_a;
+			double y_at_b;
+			double x_at_avg;
+			double y_at_avg;
 			calc_point(x_splines_first_deriv[i], a_val, x_at_a);
 			calc_point(x_splines_first_deriv[i], b_val, x_at_b);
 			calc_point(y_splines_first_deriv[i], a_val, y_at_a);
@@ -598,7 +599,6 @@ void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs>
 	{
 		t_o = (arc_length - arc_length_by_spline[which_spline - 1]) * dtds_by_spline[which_spline]
 			+ end_points[which_spline - 1];
-
 	}
 	else
 	{
@@ -610,7 +610,6 @@ void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs>
 	double first_deriv_y;
 	double second_deriv_x;
 	double second_deriv_y;
-
 
 	//Calculate all the points
 	calc_point(x_splines[which_spline], t, holder_point.pos[0]);

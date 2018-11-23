@@ -1160,7 +1160,7 @@ class TalonControllerInterface
 		virtual bool init(hardware_interface::TalonCommandInterface *tci,
 							ros::NodeHandle &n,
 							hardware_interface::TalonCommandHandle &talon,
-							std::shared_ptr<boost::recursive_mutex> srv_mutex,
+							std::shared_ptr<boost::recursive_mutex> &srv_mutex,
 							std::shared_ptr<dynamic_reconfigure::Server<talon_controllers::TalonConfigConfig>> &srv,
 							bool update_params,
 							bool dynamic_reconfigure = false)
