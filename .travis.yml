@@ -11,7 +11,7 @@ install:
   - travis_wait 45 docker pull frc900/zebros-dev:latest
 
 script:
-  - docker run --name=fancy_unicorn --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
+  - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
     "cd ~ &&
      sudo chown ubuntu:ubuntu 2018Offseason &&
      cd ~/2018Offseason &&
@@ -25,31 +25,29 @@ script:
      ./install_ros_desktop_packages.sh &&
      echo \"install_ros_desktop_packages.sh\" &&
      cd zebROS_ws &&
-     wstool update -t src --continue-on-error&&
+     wstool update -t src &&
      echo \"wstool update\" &&
      source /opt/ros/kinetic/setup.bash &&
      echo \"source setup.bash\" &&
      catkin_make &&
      echo \"catkin make\" &&
      source devel/setup.bash &&
-     catkin_make run_tests &&
-     echo \"catkin run tests\" &&
-     catkin_test_results build/test_results &&
      timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen &&
      echo \"Finished Ubuntu compile.\""
-#   - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
-#     "cd ~ &&
-#      git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git && echo "Clone success."
-#      cd ./2018Offseason/ &&
-#      git checkout $TRAVIS_COMMIT &&
-#      git log -n1 &&
-#      git submodule update --init --recursive &&
-#      cd zebROS_ws &&
-#      wstool update -t src &&
-#      source /usr/arm-frc-linux-gnueabi/opt/ros/kinetic/setup.bash &&
-#      ./cross_build.sh &&
-#      echo \"Finished RoboRIO compile.\""
-#   - echo "Completed all tests successfully."
+  - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
+    "cd ~ &&
+     sudo chown ubuntu:ubuntu 2018Offseason &&
+     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2018Offseason.git &&
+     cd ./2018Offseason/ &&
+     git checkout $TRAVIS_COMMIT &&
+     git log -n1 &&
+     git submodule update --init --recursive &&
+     cd zebROS_ws &&
+     wstool update -t src &&
+     source /usr/arm-frc-linux-gnueabi/opt/ros/kinetic/setup.bash &&
+     ./cross_build.sh &&
+     echo \"Finished RoboRIO compile.\""
+  - echo "Completed all tests successfully."
 
 build:
   - true

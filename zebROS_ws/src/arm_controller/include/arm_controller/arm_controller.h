@@ -22,43 +22,43 @@ namespace arm_controller
 //if it was only one type, controller_interface::Controller<TalonCommandInterface> here
 class ArmController : public controller_interface::MultiInterfaceController<hardware_interface::TalonCommandInterface, hardware_interface::JointStateInterface>
 {
-    public:
-        ArmController()
-        {
-        }
+	public:
+		ArmController()
+		{
+		}
 
-        //should this be hardware_interface::TalonCommandInterface instead? What's the reason to import RobotHW then get CommandInterface from that instead of just importing TalonCommandIface?
-        //answer to my question: the TalonCommandInterface is passed in if it's not a multiInterfaceController, and just one kind of joint is made!
-        virtual bool init(hardware_interface::RobotHW *hw,
-                            ros::NodeHandle	&root_nh,
-                            ros::NodeHandle	&controller_nh);
-        virtual void starting(const ros::Time &time);
-        virtual void update(const ros::Time & time, const ros::Duration& period);
-        virtual void stopping(const ros::Time &time);
-        
+		//should this be hardware_interface::TalonCommandInterface instead? What's the reason to import RobotHW then get CommandInterface from that instead of just importing TalonCommandIface?
+		//answer to my question: the TalonCommandInterface is passed in if it's not a multiInterfaceController, and just one kind of joint is made!
+		virtual bool init(hardware_interface::RobotHW *hw,
+							ros::NodeHandle	&root_nh,
+							ros::NodeHandle	&controller_nh);
+		virtual void starting(const ros::Time &time);
+		virtual void update(const ros::Time & time, const ros::Duration& period);
+		virtual void stopping(const ros::Time &time);
+		
 
-    private:
-            //std::vector<std::string> joint_names; //not used yet
-        talon_controllers::TalonMotionMagicCloseLoopControllerInterface arm_joint_; //interface for the actual joint 
-        ros::ServiceServer arm_state_service_;
-        std::vector<double> arm_positions_;
-        ros::Publisher command_pub_;
-        
-        ros::ServiceServer stop_arm_srv_;
-        ros::ServiceServer arm_cur_command_srv_;
+	private:
+        	//std::vector<std::string> joint_names; //not used yet
+		talon_controllers::TalonMotionMagicCloseLoopControllerInterface arm_joint_; //interface for the actual joint 
+		ros::ServiceServer arm_state_service_;
+                std::vector<double> arm_positions_;
+                ros::Publisher command_pub_;
+                
+                ros::ServiceServer stop_arm_srv_;
+                ros::ServiceServer arm_cur_command_srv_;
 
-        //hardware_interface::JointStateHandle limit_switch_intake_;
-        //hardware_interface::JointStateHandle limit_switch_exchange_;
+                //hardware_interface::JointStateHandle limit_switch_intake_;
+                //hardware_interface::JointStateHandle limit_switch_exchange_;
 
-        realtime_tools::RealtimeBuffer<int> service_command_; //stores most recent request value for the arm angle, in degrees
-        realtime_tools::RealtimeBuffer<bool> stop_arm_;
+                realtime_tools::RealtimeBuffer<int> service_command_; //stores most recent request value for the arm angle, in degrees
+                realtime_tools::RealtimeBuffer<bool> stop_arm_;
 
-        //define function that executes the service
-        bool cmdService(arm_controller::SetArmState::Request &req, arm_controller::SetArmState::Response &res);
+		//define function that executes the service
+		bool cmdService(arm_controller::SetArmState::Request &req, arm_controller::SetArmState::Response &res);
         bool stop_arm_service(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
         bool arm_cur_command_service(arm_controller::CurArmCommand::Request &req, arm_controller::CurArmCommand::Response &res);
 
-        
+		
 }; //class
 
 } //namespace

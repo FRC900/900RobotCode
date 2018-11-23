@@ -1,9 +1,0 @@
-joint_state_controller/rostest-test_joint_state_controller.xml: 1 tests, 1 errors, 0 failures, 0 skipped
-joint_trajectory_controller/rostest-test_joint_trajectory_controller.xml: 1 tests, 1 errors, 0 failures, 0 skipped
-joint_trajectory_controller/rostest-test_joint_trajectory_controller_stopramp.xml: 1 tests, 1 errors, 0 failures, 0 skipped
-joint_trajectory_controller/rostest-test_joint_trajectory_controller_vel.xml: 1 tests, 1 errors, 0 failures, 0 skipped
-joint_trajectory_controller/rostest-test_joint_trajectory_controller_wrapping.xml: 1 tests, 1 errors, 0 failures, 0 skipped
-joint_trajectory_controller/rostest-test_tolerances.xml: 1 tests, 1 errors, 0 failures, 0 skipped
-rospy_message_converter/rostest-test_test_all.xml: 2 tests, 2 errors, 0 failures, 0 skipped
-talon_state_controller/rostest-test_talon_state_controller.xml: 1 tests, 1 errors, 0 failures, 0 skipped
-Summary: 62 tests, 9 errors, 0 failures, 0 skipped

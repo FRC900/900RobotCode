@@ -628,7 +628,7 @@ void FRCRobotHWInterface::init(void)
 							  " as CAN id " << can_talon_srx_can_ids_[i]);
 		can_talons_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_talon_srx_can_ids_[i]));
 		can_talons_[i]->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0);
-		can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_10_MotionMagic, 10, 50);
+		can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_13_Base_PIDF0, 10, 50);
 		//TODO: test above sketchy change
 		//safeTalonCall(can_talons_[i]->ClearStickyFaults(timeoutMs), "ClearStickyFaults()");
 		// TODO : if the talon doesn't initialize - maybe known
@@ -927,9 +927,9 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			//safeTalonCall(talon->GetLastError(), "GetBusVoltage");
 			//ts.setBusVoltage(bus_voltage);
 
-			//const double motor_output_percent = talon->GetMotorOutputPercent();
-			//safeTalonCall(talon->GetLastError(), "GetMotorOutputPercent");
-			//ts.setMotorOutputPercent(motor_output_percent);
+			const double motor_output_percent = talon->GetMotorOutputPercent();
+			safeTalonCall(talon->GetLastError(), "GetMotorOutputPercent");
+			ts.setMotorOutputPercent(motor_output_percent);
 
 			//const double output_voltage = talon->GetMotorOutputVoltage();
 			//safeTalonCall(talon->GetLastError(), "GetMotorOutputVoltage");
@@ -946,22 +946,22 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 				(talon_mode == hardware_interface::TalonMode_MotionProfile) ||
 				(talon_mode == hardware_interface::TalonMode_MotionMagic))
 			{
-				//const double closed_loop_scale = getConversionFactor(encoder_ticks_per_rotation, encoder_feedback, talon_mode, joint_id)* conversion_factor;
+				const double closed_loop_scale = getConversionFactor(encoder_ticks_per_rotation, encoder_feedback, talon_mode)* conversion_factor;
 
-				//const double closed_loop_error = talon->GetClosedLoopError(pidIdx) * closed_loop_scale;
-				//safeTalonCall(talon->GetLastError(), "GetClosedLoopError");
-				//ts.setClosedLoopError(closed_loop_error);
-				//const double integral_accumulator = talon->GetIntegralAccumulator(pidIdx);
-				//safeTalonCall(talon->GetLastError(), "GetIntegralAccumulator");
-				//ts.setIntegralAccumulator(integral_accumulator);
+				const double closed_loop_error = talon->GetClosedLoopError(pidIdx) * closed_loop_scale;
+				safeTalonCall(talon->GetLastError(), "GetClosedLoopError");
+				ts.setClosedLoopError(closed_loop_error);
+				const double integral_accumulator = talon->GetIntegralAccumulator(pidIdx) * closed_loop_scale;
+				safeTalonCall(talon->GetLastError(), "GetIntegralAccumulator");
+				ts.setIntegralAccumulator(integral_accumulator);
 
-				//const double error_derivative = talon->GetErrorDerivative(pidIdx);
-				//safeTalonCall(talon->GetLastError(), "GetErrorDerivative");
-				//ts.setErrorDerivative(error_derivative);
+				const double error_derivative = talon->GetErrorDerivative(pidIdx) * closed_loop_scale;
+				safeTalonCall(talon->GetLastError(), "GetErrorDerivative");
+				ts.setErrorDerivative(error_derivative);
 
-				//const double closed_loop_target = talon->GetClosedLoopTarget(pidIdx) * closed_loop_scale;
-				//safeTalonCall(talon->GetLastError(), "GetClosedLoopTarget");
-				//ts.setClosedLoopTarget(closed_loop_target);
+				const double closed_loop_target = talon->GetClosedLoopTarget(pidIdx) * closed_loop_scale;
+				safeTalonCall(talon->GetLastError(), "GetClosedLoopTarget");
+				ts.setClosedLoopTarget(closed_loop_target);
 				//
 				//const int pidf_slot = ts.getSlot();
 				//const double kp = ts.getPidfP(pidf_slot);
