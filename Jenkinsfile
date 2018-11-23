@@ -155,12 +155,11 @@ def notifySlack(
         // Get the errors message
         // Split by space, first element in array is the number we want
         errors = test_details[1].trim()
-        errors = errors.split()[0]
-        errors = errors.toInteger()
+        errors = errors.split()[0].toInteger()
         
         // Do the same for number of failures
         failures = test_details[2].trim()
-        failures = fails.split()[0].toInteger()
+        failures = failures.split()[0].toInteger()
 
         if (errors || failures) {
             color = 'warning'
