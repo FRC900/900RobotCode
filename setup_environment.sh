@@ -145,7 +145,7 @@ if [ "$jetson" = true ] ; then
 	sudo tar -xjf /home/ubuntu/2018Offseason/jetson_setup/jetson_dot_ssh.tar.bz2 
 
 	cd ~/2018Offseason
-	sudo cp ./jetson_setup/10-local.rules
+	sudo cp ./jetson_setup/10-local.rules /etc/udev/rules.d/
 	sudo service udev reload
 	sleep 2
 	sudo service udev restart
