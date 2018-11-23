@@ -6,12 +6,12 @@
 using namespace std;
 using namespace cv;
 
-ObjectType::ObjectType(int contour_type_id=1) {
+ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 	switch(contour_type_id) {
 		//loads one of the preset shapes into the
 		//object
 
-		case 1: //a ball!
+		case BALL_2017: //a ball!
 			depth_ = 0.2476; // meters
 			contour_.push_back(Point2f(0,0));
 			contour_.push_back(Point2f(0, depth_));
@@ -20,7 +20,7 @@ ObjectType::ObjectType(int contour_type_id=1) {
 			name_="ball";
 			break;
 
-		case 2: //a bin (just because)
+		case BIN_2016: //a bin (just because)
 			depth_ = 0.5588;
 			contour_.push_back(Point2f(0,0));
 			contour_.push_back(Point2f(0,0.5842));
@@ -29,7 +29,7 @@ ObjectType::ObjectType(int contour_type_id=1) {
 			name_="bin";
 			break;
 
-		case 3: //2016 Goal
+		case GOAL_2016: //2016 Goal
 			{
 				depth_ = 0;
 				float max_y = .3048;
@@ -44,7 +44,7 @@ ObjectType::ObjectType(int contour_type_id=1) {
 				name_="goal";
 			}
 			break;
-		case 4: //top piece of tape (2017)
+		case TOP_TAPE_2017: //top piece of tape (2017)
 			depth_ = 0;
 			real_height_ = 1.9812;  //76 inches + 4 * 1/2 height
 			real_height_ -= .22225; // 8.75 in camera height
@@ -113,7 +113,7 @@ ObjectType::ObjectType(int contour_type_id=1) {
 			contour_.push_back(Point2f(0,0.0122875187586));
 			name_ = "top_boiler_tape";
 			break;	
-		case 5: //bottom piece of tape (2017)
+		case BOTTOM_TAPE_2017: //bottom piece of tape (2017)
 			depth_ = 0;
 			real_height_ = 1.7272; //5ft 7inches + 1/2 * 2in height
 			real_height_ -= .22225; // 8.75 in camera height
@@ -181,7 +181,7 @@ ObjectType::ObjectType(int contour_type_id=1) {
 			contour_.push_back(Point2f(0,0.0122875187586));
 			name_ = "bottom_boiler_tape";
 			break;
-		case 6: //target on the switch fence (2018)
+		case SWITCH_2018: //target on the switch fence (2018)
 			depth_ = 0;
 			contour_.push_back(Point2f(0,0));
 			contour_.push_back(Point2f(0,0.41));
@@ -189,7 +189,7 @@ ObjectType::ObjectType(int contour_type_id=1) {
 			contour_.push_back(Point2f(0.0508,0));
 			name_ = "plate_location_tape";
 			break;
-		case 7: //Cube (2018)
+		case CUBE_2018: //Cube (2018)
 			depth_ = 0.3048;
 			contour_.push_back(Point2f(0,0));
 			contour_.push_back(Point2f(0,0.2794));

@@ -52,15 +52,15 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 	const vector<vector<Point>> goal_contours = getContours(image);
 	if (goal_contours.size() == 0)
 		return;
-	const vector<DepthInfo> goal_depths = getDepths(depth,goal_contours,6, ObjectType(6).real_height());
+	const vector<DepthInfo> goal_depths = getDepths(depth,goal_contours, TOP_TAPE_2017, ObjectType(TOP_TAPE_2017).real_height());
 
 
 	//compute confidences for both the left piece of 
 	//tape and the right piece of tape
-	const vector<GoalInfo> left_info = getInfo(goal_contours,goal_depths,6);
+	const vector<GoalInfo> left_info = getInfo(goal_contours,goal_depths,TOP_TAPE_2017);
 	if(left_info.size() == 0)
 		return;
-	const vector<GoalInfo> right_info = getInfo(goal_contours,goal_depths,6);
+	const vector<GoalInfo> right_info = getInfo(goal_contours,goal_depths,TOP_TAPE_2017);
 	if(right_info.size() == 0)
 		return;
 #ifdef VERBOSE
@@ -299,7 +299,7 @@ const vector< vector < Point > > GoalDetector::getContours(const Mat& image) {
 	return return_contours;
 }
 
-const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< vector< Point > > &contours, int objtype, float expected_height) {
+const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< vector< Point > > &contours, ObjectNum objtype, float expected_height) {
 	// Use to mask the contour off from the rest of the
 	// image - used when grabbing depth data for the contour
 	Mat contour_mask(_frame_size, CV_8UC1, Scalar(0));
@@ -341,7 +341,7 @@ const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< 
 	return return_vec;
 }
 
-const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contours, const vector<DepthInfo> &depth_maxs, int objtype) {
+const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contours, const vector<DepthInfo> &depth_maxs, ObjectNum objtype) {
 	ObjectType _goal_shape(objtype);
 	vector<GoalInfo> return_info;
 	// Create some target stats based on our idealized goal model
