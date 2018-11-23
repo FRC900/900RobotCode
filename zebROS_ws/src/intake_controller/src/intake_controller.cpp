@@ -45,15 +45,14 @@ void IntakeController::update(const ros::Time &time, const ros::Duration &period
     bool intake_in_cmd = *(intake_in_cmd_.readFromRT());
     double intake_in_cmd_double;
     if(intake_in_cmd == true) {
-        ROS_WARN("intake in");
+        //ROS_WARN("intake in");
         intake_in_cmd_double = -1;
     }
     else if (intake_in_cmd == false) {
         intake_in_cmd_double = 1;
-        ROS_WARN("intake out");
+        //ROS_WARN("intake out");
     }
 
-    ROS_INFO_STREAM("spin command = " << spin_command << "; intake_in = " << intake_in_cmd);
     intake_joint_.setCommand(spin_command); // set the command to the spinny part of the intake
     intake_in_.setCommand(intake_in_cmd_double); // set the in/out command to the clampy part of the intake
 }

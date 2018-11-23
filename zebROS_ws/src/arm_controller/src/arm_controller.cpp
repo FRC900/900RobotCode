@@ -85,9 +85,9 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
 	// past the end of the array.  But this will make it very easy
 	// to configure different positions for the arm simply by changing a config file
         size_t command = *(service_command_.readFromRT());
-        ROS_INFO_STREAM("arm_joint command = " << command );
+        //ROS_INFO_STREAM("arm_joint command = " << command );
         bool stop_arm = *(stop_arm_.readFromRT());
-        ROS_INFO_STREAM("stop_arm = " << stop_arm);
+        //ROS_INFO_STREAM("stop_arm = " << stop_arm);
 
         //stop arm
         if(stop_arm)
