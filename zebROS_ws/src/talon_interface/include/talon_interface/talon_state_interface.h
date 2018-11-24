@@ -98,6 +98,26 @@ enum VelocityMeasurementPeriod {
 	Period_100Ms = 100,
 };
 
+enum StatusFrame
+{
+	Status_1_General,
+	Status_2_Feedback0,
+	Status_3_Quadrature,
+	Status_4_AinTempVbat,
+	Status_6_Misc,
+	Status_7_CommStatus,
+	Status_8_PulseWidth,
+	Status_9_MotProfBuffer,
+	Status_10_MotionMagic,
+	Status_10_Targets = Status_10_MotionMagic,
+	Status_11_UartGadgeteer,
+	Status_12_Feedback1,
+	Status_13_Base_PIDF0,
+	Status_14_Turn_PIDF1,
+	Status_15_FirmareApiStatus,
+	Status_Last
+};
+
 // Match up with CTRE Motion profile struct
 enum SetValueMotionProfile
 {
@@ -271,6 +291,20 @@ class TalonHWState
 
 			conversion_factor_(1.0)
 		{
+			status_frame_periods_[Status_1_General] = 10.;
+			status_frame_periods_[Status_2_Feedback0] = 20.;
+			status_frame_periods_[Status_3_Quadrature] = 160.;
+			status_frame_periods_[Status_4_AinTempVbat] = 160.;
+			status_frame_periods_[Status_6_Misc] = -1;
+			status_frame_periods_[Status_7_CommStatus] = -1;
+			status_frame_periods_[Status_8_PulseWidth] = 160.;
+			status_frame_periods_[Status_9_MotProfBuffer] = -1;
+			status_frame_periods_[Status_10_MotionMagic] = 160.;
+			status_frame_periods_[Status_11_UartGadgeteer] = -1;
+			status_frame_periods_[Status_12_Feedback1] = -1;
+			status_frame_periods_[Status_13_Base_PIDF0] =160. ;
+			status_frame_periods_[Status_14_Turn_PIDF1] = -1;
+			status_frame_periods_[Status_15_FirmareApiStatus] = -1;
 		}
 
 		double getSetpoint(void) const
@@ -1137,6 +1171,8 @@ class TalonHWState
 		CustomProfileStatus custom_profile_status_;
 		int motion_control_frame_period_;
 		int motion_profile_trajectory_period_;
+
+		std::array<double, Status_Last> status_frame_periods_;
 
 		unsigned int faults_;
 		unsigned int sticky_faults_;
