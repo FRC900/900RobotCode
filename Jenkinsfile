@@ -120,7 +120,7 @@ def notifySlack(
     
     // Build status of null means success.
     buildStatus = buildStatus ?: 'SUCCESS'
-
+    summary = ''
 
 
     def color
@@ -186,8 +186,10 @@ def notifySlack(
     }
 
     msg = msg + " in ${duration}.\n"
-    msg = msg + "Test ${summary}"
 
+    if (buildStatus != 'FAILURE') {
+        msg = msg + "Test ${summary}"
+    }
 
     slackSend(
         color: color,
