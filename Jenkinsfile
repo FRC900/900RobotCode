@@ -75,7 +75,14 @@ node {
                     ).trim()
                 } // end Test stage
 
-            } finally {
+            } 
+            catch(exc) {
+                // Build must be set manually to a failure here because the result is not
+                // stored until the end of the pipeline, after we send the notification
+                // to Slack. As a result, we have to set it prematurely here.
+                // Reference: https://issues.jenkins-ci.org/browse/JENKINS-47403
+                currentBuild.result = 'FAILURE'
+            }finally {
 
                 // We want to be able to clean the workspace with deleteDir() or similar option
                 // at the end of the build. We cannot delete the directory here since
