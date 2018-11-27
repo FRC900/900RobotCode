@@ -1,4 +1,4 @@
-://TO DO:V
+//TO DO:V
 //make siure the controller_nh.param is reading talons correctly
 //configure talons in YAML file correctly
 //figure out service response
