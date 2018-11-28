@@ -62,6 +62,10 @@ float64[] closed_loop_error
 float64[] integral_accumulator
 float64[] error_derivative
 float64[] closed_loop_target
+float64[] p_term
+float64[] i_term
+float64[] d_term
+float64[] f_term
 float64[] active_trajectory_position
 float64[] active_trajectory_velocity
 float64[] active_trajectory_heading

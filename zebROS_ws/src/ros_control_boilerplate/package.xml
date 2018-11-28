@@ -33,6 +33,7 @@
   <depend>pdp_state_controller</depend>
   <depend>elevator_controller</depend>
   <depend>message_runtime</depend>
+  <depend>robot_controller_interface</depend>
 
   <export>
   </export>

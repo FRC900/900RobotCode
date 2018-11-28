@@ -132,7 +132,7 @@ if [ "$jetson" = true ] ; then
 	fi
 
 	# Set up ssh host config (add port 5801) 
-	sudo sed "s/Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && mv sshd_config /etc/ssh
+	sudo sed "s/Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && sudo mv sshd_config /etc/ssh
 	
 	# and keys for 
 	# connections to Rio
@@ -145,7 +145,7 @@ if [ "$jetson" = true ] ; then
 	sudo tar -xjf /home/ubuntu/2018Offseason/jetson_setup/jetson_dot_ssh.tar.bz2 
 
 	cd ~/2018Offseason
-	sudo cp ./jetson_setup/10-local.rules
+	sudo cp ./jetson_setup/10-local.rules /etc/udev/rules.d/
 	sudo service udev reload
 	sleep 2
 	sudo service udev restart
@@ -182,6 +182,8 @@ if [ "$jetson" = true ] ; then
 
 	# Clean up Jetson
 	sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/TensorRT /home/nvidia/libvisionworkd*
+	# Save ~400MB
+	sudo apt remove --purge thunderbird libreoffice-*
 fi
 
 sudo mkdir -p /usr/local/zed/settings

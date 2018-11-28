@@ -3,6 +3,18 @@
 #include <vector>
 #include "opencv2_3_shim.hpp"
 
+enum ObjectNum
+{
+    UNINITIALIZED,
+    BALL_2017,
+    BIN_2016,
+    GOAL_2016,
+    TOP_TAPE_2017,
+    BOTTOM_TAPE_2017,
+    SWITCH_2018,
+    CUBE_2018,
+};
+
 //class to hold the type of object that a detected object is
 //main information is the contour that is the shape of the object
 //stores properties to make matching easy
@@ -12,8 +24,8 @@ class ObjectType
 		//in this constructor there are contours prebuilt for game objects
 		//1 - ball (2016 Game)
 		//2 - bin (2015 Game)
-		//// TODO : turn this into an enum 
-		ObjectType(int contour_type_id);
+
+		ObjectType(ObjectNum contour_type_id);
 
 		//this constructor takes a custom contour
 		ObjectType(const std::vector< cv::Point2f > &contour_in, const std::string &name_in, const float &depth_in);

@@ -32,7 +32,7 @@ ssh -p 22 admin@$1 'opkg install python-pkgutil python-dateutil python-argparse 
 ssh -p 22 admin@$1 'opkg clean'
 ssh -p 22 admin@$1 'opkg install python-netifaces libglog0 python-pip coreutils gdb i2c-tools '
 ssh -p 22 admin@$1 'opkg clean'
-ssh -p 22 admin@$1 'opkg install ntp ntp-tickadj ntp-utils ntpdate rsync htop curl'
+ssh -p 22 admin@$1 'opkg install ntp ntp-tickadj ntp-utils ntpdate rsync htop curl libusb-1.0-dev'
 ssh -p 22 admin@$1 'opkg clean'
 
 ssh -p 22 admin@$1 'pip install catkin_pkg rospkg rosdistro vcstools rosdep wstool rosinstall rosinstall_generator defusedxml empy'

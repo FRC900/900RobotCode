@@ -154,7 +154,7 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	cube_detection::CubeDetection cd_msg;
 
 	
-	const ObjectType objType = 7;
+	const ObjectType objType = CUBE_2018;
 	const float hFov = 105.;
 	const Point2f fov(hFov * (M_PI / 180.), hFov * (M_PI / 180.) * ((float)framePtr->rows / framePtr->cols));
 	float camera_elevation = 0.0;

@@ -107,7 +107,6 @@ fi
 echo "Checking time synchronization..."
 check_clockdiff "$ROBORIO_ADDR" "roboRIO"
 check_clockdiff "$JETSON_ADDR" "Jetson"
-check_clockdiff "$JETSON_ADDR2" "Jetson2"
 echo "Time synchronized."
 
 # Bidirectional synchronization of the selected environment.

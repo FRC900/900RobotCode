@@ -87,8 +87,6 @@ enum LimitSwitchNormal
 	LimitSwitchNormal_Last
 };
 
-
-
 enum VelocityMeasurementPeriod {
 	Period_1Ms = 1,
 	Period_2Ms = 2,
@@ -142,7 +140,7 @@ struct CustomProfileStatus
 	bool running;
 	int slotRunning;
 	std::vector<int> remainingPoints;
-	double remainingTime;	//Should this be a ROS duration? 
+	double remainingTime;	//Should this be a ROS duration?
 							//Note: will be set based on slotRunning
 	bool outOfPoints;
 	CustomProfileStatus():
@@ -194,6 +192,10 @@ class TalonHWState
 			integral_accumulator_(0.0),
 			error_derivative_(0.0),
 			closed_loop_target_(0.0),
+			p_term_(0.0),
+			i_term_(0.0),
+			d_term_(0.0),
+			f_term_(0.0),
 			active_trajectory_position_(0.0),
 			active_trajectory_velocity_(0.0),
 			active_trajectory_heading_(0.0),
@@ -270,7 +272,7 @@ class TalonHWState
 			conversion_factor_(1.0)
 		{
 		}
-		
+
 		double getSetpoint(void) const
 		{
 			return setpoint_;
@@ -417,6 +419,22 @@ class TalonHWState
 		double getClosedLoopTarget(void) const
 		{
 			return closed_loop_target_;
+		}
+		double getPTerm(void) const
+		{
+			return p_term_;
+		}
+		double getITerm(void) const
+		{
+			return i_term_;
+		}
+		double getDTerm(void) const
+		{
+			return d_term_;
+		}
+		double getFTerm(void) const
+		{
+			return f_term_;
 		}
 		double getActiveTrajectoryPosition(void) const
 		{
@@ -900,6 +918,22 @@ class TalonHWState
 		{
 			closed_loop_target_ = closed_loop_target;
 		}
+		void setPTerm(double p_term)
+		{
+			p_term_ = p_term;
+		}
+		void setITerm(double i_term)
+		{
+			i_term_ = i_term;
+		}
+		void setDTerm(double d_term)
+		{
+			d_term_ = d_term;
+		}
+		void setFTerm(double f_term)
+		{
+			f_term_ = f_term;
+		}
 		void setActiveTrajectoryPosition(double active_trajectory_position)
 		{
 			active_trajectory_position_ = active_trajectory_position;
@@ -1012,8 +1046,8 @@ class TalonHWState
 		double pidf_i_[2];
 		double pidf_d_[2];
 		double pidf_f_[2];
-		int   pidf_izone_[2];
-		int   allowable_closed_loop_error_[2];
+		int    pidf_izone_[2];
+		int    allowable_closed_loop_error_[2];
 		double max_integral_accumulator_[2];
 		double closed_loop_peak_output_[2];
 		int    closed_loop_period_[2];
@@ -1022,20 +1056,25 @@ class TalonHWState
 		double integral_accumulator_;
 		double error_derivative_;
 		double closed_loop_target_;
+		double p_term_;
+		double i_term_;
+		double d_term_;
+		double f_term_;
 		double active_trajectory_position_;
 		double active_trajectory_velocity_;
 		double active_trajectory_heading_;
-		bool forward_limit_switch_closed_;
-		bool reverse_limit_switch_closed_;
-		bool forward_softlimit_hit_;
-		bool reverse_softlimit_hit_;
-		TalonMode talon_mode_;
+		bool   forward_limit_switch_closed_;
+		bool   reverse_limit_switch_closed_;
+		bool   forward_softlimit_hit_;
+		bool   reverse_softlimit_hit_;
+
+		TalonMode  talon_mode_;
 		DemandType demand1_type_;
-		double demand1_value_;
+		double     demand1_value_;
 
 		int can_id_;
 
-		int slot_;
+		int  slot_;
 		bool invert_;
 		bool sensor_phase_;
 

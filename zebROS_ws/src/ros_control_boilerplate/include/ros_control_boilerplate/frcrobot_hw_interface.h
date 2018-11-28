@@ -56,9 +56,11 @@
 #include <DoubleSolenoid.h>
 #include <AHRS.h>
 #include <Compressor.h>
-#include "LiveWindow/LiveWindow.h"
-#include "SmartDashboard/SmartDashboard.h"
+#include <LiveWindow/LiveWindow.h>
+#include <SmartDashboard/SmartDashboard.h>
 #include <std_msgs/Float64.h>
+
+#include <robot_controller_interface/robot_controller_interface.hpp>
 
 namespace frcrobot_control
 {
@@ -179,7 +181,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		void process_motion_profile_buffer_thread(double hz);
 		void customProfileSetMode(int joint_id,
-				 				  hardware_interface::TalonMode mode,
+								  hardware_interface::TalonMode mode,
 								  double setpoint,
 								  hardware_interface::DemandType demandtype,
 								  double demandvalue) override;
@@ -251,6 +253,8 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::thread motion_profile_thread_;
 
 		PowerDistributionPanel pdp_joint_;
+		hardware_interface::RobotControllerState shared_robot_controller_state_;
+		std::mutex robot_controller_state_mutex_;
 
 		ROSIterativeRobot robot_;
 };  // class

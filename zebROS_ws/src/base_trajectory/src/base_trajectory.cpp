@@ -84,9 +84,12 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	// TODO : make the starting position and 
 	// velocity a variable passed in to the 
 	// path generation request.
-	
+
 
 	//TODO: WHAT BE THIS BRACKET
+	// Adding scope for these var names - they're repeated
+	// in other bits of code taken from various functions
+	// in other source files.  Easier than renaming them
 	{
 		typename Segment::State hold_start_state = typename Segment::State(1);
 		typename Segment::State hold_end_state = typename Segment::State(1);
@@ -134,8 +137,6 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	// Actually generate the new trajectory
 	// This will create spline coefficents for
 	// each of the x,y,z paths
-	// TODO : take input from a service rather
-	// than a topic
 	Trajectory trajectory;
 	try
 	{
@@ -225,7 +226,6 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	out_msg.orient_coefs[1].spline[5] = -3.14159;
 	out_msg.end_points[1] = 1.0; // change me to 4 to match end time in yaml and break point_gen
 #endif
-	return true;
 }
 
 int main(int argc, char **argv)

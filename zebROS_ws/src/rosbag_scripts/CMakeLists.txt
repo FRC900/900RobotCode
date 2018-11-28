@@ -139,9 +139,9 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node src/search_bag.cpp)
-
 add_executable(error_search_node src/error_search.cpp)
 add_executable(encoder_search_node src/encoder_search.cpp)
+add_executable(rename_frame_id src/rename_frame_id.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -151,14 +151,16 @@ add_executable(encoder_search_node src/encoder_search.cpp)
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(encoder_search_node talon_state_controller ${catkin_EXPORTED_TARGETS})
+add_dependencies(rename_frame_id ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES} )
-
 target_link_libraries(error_search_node
    ${catkin_LIBRARIES} )
 target_link_libraries(encoder_search_node
+   ${catkin_LIBRARIES} )
+target_link_libraries(rename_frame_id
    ${catkin_LIBRARIES} )
 #############
 ## Install ##

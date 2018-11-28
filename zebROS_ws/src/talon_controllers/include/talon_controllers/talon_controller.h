@@ -6,7 +6,7 @@
 #include <realtime_tools/realtime_buffer.h>
 #include <std_msgs/Float64.h>
 #include <talon_controllers/talon_controller_interface.h>
-#include <talon_controllers/CloseLoopControllerMsg.h>
+#include <talon_controllers/PidfSlot.h>
 
 namespace talon_controllers
 {
@@ -68,15 +68,16 @@ class TalonController:
 			talon_if_.setCommand(*command_buffer_.readFromRT());
 		}
 
-	private:
+	protected:
 		TALON_IF talon_if_;
-		ros::Subscriber sub_command_;
 
 		// Real-time buffer holds the last command value read from the
 		// "command" topic.  This buffer is read in each call to update()
 		// to get the command to send to the Talon
 		realtime_tools::RealtimeBuffer<double> command_buffer_;
 
+	private:
+		ros::Subscriber sub_command_;
 		// Take each message read from the "command" topic and push
 		// it into the command buffer. This buffer will later be
 		// read by update() and sent to the Talon.  The buffer
@@ -92,75 +93,35 @@ class TalonController:
 
 class TalonPercentOutputController: public TalonController<TalonPercentOutputControllerInterface>
 {
-		// Override or add methods different from the base class here
+	// Override or add methods different from the base class here
 };
 
-// Generic Close Loop controller. Allow users to specify
-// slot for PID values plus command per message. Trust lower
-// level code will prevent repeatedly switching PID slot if
-// it doesn't actually change from message to message.
-class CloseLoopCommand
-{
-	public:
-		CloseLoopCommand(void) :
-			config_slot_(0),
-			command_(0.0)
-		{
-		}
-		CloseLoopCommand(int config_slot, double command) :
-			config_slot_(config_slot),
-			command_(command)
-		{
-		}
-
-		int config_slot_;
-		double command_;
-};
-
+// Add a service to set PIDF config slot for all close-loop controllers
 template <class TALON_IF>
 class TalonCloseLoopController :
-	public controller_interface::Controller<hardware_interface::TalonCommandInterface>
+	public TalonController<TALON_IF>
 {
 	public:
-		TalonCloseLoopController() {}
-		~TalonCloseLoopController()
-		{
-			sub_command_.shutdown();
-		}
+		TalonCloseLoopController() { }
+		~TalonCloseLoopController() { }
 
-		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n)
+		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n) override
 		{
 			// Read params from command line / config file
-			if (!talon_if_.initWithNode(hw, nullptr, n))
+			if (!TalonController<TALON_IF>::init(hw,n))
 				return false;
 
-			sub_command_ = n.subscribe<CloseLoopControllerMsg>("command", 1, &TalonCloseLoopController::commandCB, this);
-			return true;
+			pidf_service_ = n.advertiseService("pidf_slot", &TalonCloseLoopController::pidf_slot_service, this);
 		}
 
-		virtual void starting(const ros::Time & /*time*/)
+	private:
+		ros::ServiceServer pidf_service_;
+		bool pidf_slot_service(talon_controllers::PidfSlot::Request  &req,
+		                       talon_controllers::PidfSlot::Response &res)
 		{
-			// Start controller with motor stopped
-			// for great safety
-			command_buffer_.writeFromNonRT(CloseLoopCommand());
-		}
-		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/)
-		{
-			// Write both PID config slot and
-			// output to talon interface
-			CloseLoopCommand cmd = *command_buffer_.readFromRT();
-			talon_if_.setPIDFSlot(cmd.config_slot_);
-			talon_if_.setCommand(cmd.command_);
+			return this->talon_if_.setPIDFSlot(req.pidf_slot);
 		}
 
-	protected:
-		TALON_IF talon_if_;
-		ros::Subscriber sub_command_;
-		realtime_tools::RealtimeBuffer<CloseLoopCommand> command_buffer_;
-		void commandCB(const CloseLoopControllerMsgConstPtr &msg)
-		{
-			command_buffer_.writeFromNonRT(CloseLoopCommand(msg->config_slot, msg->command));
-		}
 };
 
 class TalonPositionCloseLoopController: public TalonCloseLoopController<TalonPositionCloseLoopControllerInterface>
@@ -181,13 +142,13 @@ class TalonVelocityCloseLoopController: public TalonCloseLoopController<TalonVel
 // params/yaml config.
 class TalonFollowerController:
 	public controller_interface::MultiInterfaceController<hardware_interface::TalonCommandInterface,
-	hardware_interface::TalonStateInterface>
+														  hardware_interface::TalonStateInterface>
 {
 	public:
 		TalonFollowerController() {}
 		~TalonFollowerController() {}
 
-		bool init(hardware_interface::RobotHW *hw, ros::NodeHandle &n)
+		bool init(hardware_interface::RobotHW *hw, ros::NodeHandle &n) override
 		{
 			// Read params from command line / config file
 			if (!talon_if_.initWithNode(hw->get<hardware_interface::TalonCommandInterface>(),
@@ -197,10 +158,10 @@ class TalonFollowerController:
 			return true;
 		}
 
-		void starting(const ros::Time & /*time*/)
+		void starting(const ros::Time & /*time*/) override
 		{
 		}
-		void update(const ros::Time & /*time*/, const ros::Duration & /*period*/)
+		void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
 		{
 		}
 
@@ -211,6 +172,7 @@ class TalonFollowerController:
 		// from grabbing that Talon until this controller is
 		// explicitly unloaded.
 		TalonFollowerControllerInterface talon_if_;
+
 };
 
 // Convert Linear Position and Displacement to radians
@@ -218,7 +180,7 @@ class TalonFollowerController:
 // Use of Positional PID and the radius of the gear next
 // to the Talon
 class TalonLinearPositionCloseLoopController :
-	public TalonCloseLoopController<TalonPositionCloseLoopControllerInterface>
+	public TalonPositionCloseLoopController
 {
 	//Used radius
 	private:
@@ -226,7 +188,7 @@ class TalonLinearPositionCloseLoopController :
 	public:
 		TalonLinearPositionCloseLoopController(void) {}
 
-		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n)
+		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n) override
 		{
 			// Read params from command line / config file
 			if (!TalonCloseLoopController<TalonPositionCloseLoopControllerInterface>::init(hw,n))
@@ -241,13 +203,10 @@ class TalonLinearPositionCloseLoopController :
 		// has converted radians as input
 		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
 		{
-			// Write both PID config slot and
-			// output to talon interface
-			CloseLoopCommand cmd = *command_buffer_.readFromRT();
-			talon_if_.setPIDFSlot(cmd.config_slot_);
-			talon_if_.setCommand(cmd.command_ / radius_);
+			talon_if_.setCommand(*command_buffer_.readFromRT() / radius_);
 		}
 };
+
 class TalonLinearMotionMagicCloseLoopController :
 	public TalonCloseLoopController<TalonMotionMagicCloseLoopControllerInterface>
 {
@@ -258,7 +217,7 @@ class TalonLinearMotionMagicCloseLoopController :
 	public:
 		TalonLinearMotionMagicCloseLoopController(void) {}
 
-		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n)
+		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n) override
 		{
 			// Read params from command line / config file
 			if (!TalonCloseLoopController<TalonMotionMagicCloseLoopControllerInterface>::init(hw,n))
@@ -275,11 +234,7 @@ class TalonLinearMotionMagicCloseLoopController :
 		// has converted radians as input
 		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
 		{
-			// Write both PID config slot and
-			// output to talon interface
-			CloseLoopCommand cmd = *command_buffer_.readFromRT();
-			talon_if_.setPIDFSlot(cmd.config_slot_);
-			talon_if_.setCommand(cmd.command_ / radius_ / gear_ratio_from_encoder_);
+			talon_if_.setCommand(*command_buffer_.readFromRT() / radius_ / gear_ratio_from_encoder_);
 			//ROS_INFO_STREAM(cmd.command_ / radius_ << "works?");
 		}
 };
@@ -292,7 +247,7 @@ class TalonAnglePositionCloseLoopController :
 	public:
 		TalonAnglePositionCloseLoopController(void) {}
 
-		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n)
+		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n) override
 		{
 			// Read params from command line / config file
 			if (!TalonCloseLoopController<TalonPositionCloseLoopControllerInterface>::init(hw,n))
@@ -307,13 +262,10 @@ class TalonAnglePositionCloseLoopController :
 		// has converted radians as input
 		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
 		{
-			// Write both PID config slot and
-			// output to talon interface
-			CloseLoopCommand cmd = *command_buffer_.readFromRT();
-			talon_if_.setPIDFSlot(cmd.config_slot_);
-			talon_if_.setCommand(cmd.command_ / gear_ratio_from_encoder_);
+			talon_if_.setCommand(*command_buffer_.readFromRT() / gear_ratio_from_encoder_);
 		}
 };
+
 class TalonAngleMotionMagicCloseLoopController :
 	public TalonCloseLoopController<TalonMotionMagicCloseLoopControllerInterface>
 {
@@ -323,7 +275,7 @@ class TalonAngleMotionMagicCloseLoopController :
 	public:
 		TalonAngleMotionMagicCloseLoopController(void) {}
 
-		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n)
+		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n) override
 		{
 			// Read params from command line / config file
 			if (!TalonCloseLoopController<TalonMotionMagicCloseLoopControllerInterface>::init(hw,n))
@@ -338,11 +290,7 @@ class TalonAngleMotionMagicCloseLoopController :
 		// has converted radians as input
 		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
 		{
-			// Write both PID config slot and
-			// output to talon interface
-			CloseLoopCommand cmd = *command_buffer_.readFromRT();
-			talon_if_.setPIDFSlot(cmd.config_slot_);
-			talon_if_.setCommand(cmd.command_ / gear_ratio_from_encoder_);
+			talon_if_.setCommand(*command_buffer_.readFromRT() / gear_ratio_from_encoder_);
 		}
 };
 

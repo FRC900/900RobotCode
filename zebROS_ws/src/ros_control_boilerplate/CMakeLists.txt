@@ -3,10 +3,6 @@ project(ros_control_boilerplate)
 
 include ("../cmake_modules/CMakeOpt.cmake")
 
-# NIDEC NIDEC NIDEC NIDEC NIDEC NIDEC
-# 3) This is a CMakeLists.txt file, which defines everything that a package needs to run.
-# Find out what year this team was founded from our website. That year is hidden somewhere in our code...
-
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   realtime_tools
@@ -24,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   pdp_state_controller
   elevator_controller
+  robot_controller_interface
 )
 
 add_message_files (
@@ -71,7 +68,7 @@ catkin_package(
 ## Build ##
 ###########
 
-include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
+#include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 
 include_directories(
   include/
@@ -125,6 +122,7 @@ if (DEFINED CMAKE_TOOLCHAIN_FILE)
 	)
 
     include_directories(
+		${catkin_INCLUDE_DIRS}
       $ENV{HOME}/wpilib/user/cpp/include
       $ENV{HOME}/wpilib/cpp/current/include
     )
