@@ -18,8 +18,8 @@ class IntakeAction {
         actionlib::SimpleActionServer<behaviors::IntakeAction> as_;
         std::string action_name_;
         ros::ServiceClient intake_srv_;
-	std::atomic<int> cube_state_true;
-	std::atomic<int> cube_state_false;
+	std::atomic<int> cube_state_true_count; //counts how many times in a row the linebreak reported there's a cube since we started trying to intake/outtake
+	std::atomic<int> cube_state_false_count; //same, but how many times in a row no cube
 	behaviors::IntakeResult result_;
 	ros::Subscriber cube_state_;
 	ros::Subscriber proceed_;
@@ -46,13 +46,14 @@ class IntakeAction {
             ros::Rate r(10);
             double start_time = ros::Time::now().toSec();
             bool timed_out = false;
-            bool aborted = false;
-            bool success = false;
+            bool preempted = false;
+	    bool success = false;
 
-            //Intakek cube
+            //Intake cube
             if(goal->intake_cube) {
-                ROS_ERROR("intake server 54: intaking cub3");
-                intake_controller::IntakeSrv srv;
+                ROS_ERROR("intake server 54: intaking cube");
+                //define request to send to intake controller
+		intake_controller::IntakeSrv srv;
                 srv.request.power = intake_power;
                 srv.request.intake_in = false; //soft out
                 if(!intake_srv_.call(srv)) 
@@ -60,16 +61,15 @@ class IntakeAction {
 
                 ros::spinOnce();
 
-                cube_state_true = 0;
-                while(!success && !timed_out && !aborted) {
-                    success = cube_state_true > linebreak_debounce_iterations;
+                cube_state_true_count = 0;
+                while(!success && !timed_out && !preempted) {
+                    success = cube_state_true_count > linebreak_debounce_iterations;
                     if(as_.isPreemptRequested() || !ros::ok()) {
                         ROS_WARN("%s: Preempted", action_name_.c_str());
                         as_.setPreempted();
-                        aborted = true;
-                        return;
+                        preempted = true;
                     }
-                    if (!aborted) {
+                    if (!preempted) {
                         r.sleep();
                         ros::spinOnce();
                         timed_out = (ros::Time::now().toSec()-start_time) > goal->timeout;
@@ -77,32 +77,35 @@ class IntakeAction {
                 }
 
                 srv.request.power = 0;
-                srv.request.intake_in = true; //soft in
+                if(!preempted) {
+			srv.request.intake_in = true;
+		} else {
+			srv.request.intake_in = false;
+		}
                 if(!intake_srv_.call(srv)) 
                     ROS_ERROR("Srv intake call failed in auto interpreter server intake");
             }
-            //Spit out cube
+            //Spit out cube if goal is not intake_cube
             else
             {
-                cube_state_false = 0;
+                cube_state_false_count = 0;
                 intake_controller::IntakeSrv srv;
                 srv.request.power = -1;
-                srv.request.intake_in = true; //soft in
+                srv.request.intake_in = true;
                 if(!intake_srv_.call(srv)) 
                     ROS_ERROR("Srv intake call failed in auto interpreter server intake");
                 ros::spinOnce();
 
-                success = false;
-                while(!success && !timed_out && !aborted) {
-                    success = cube_state_false > linebreak_debounce_iterations;
+                success = false; //assume didn't succeed until we know it succeeded
+                while(!success && !timed_out && !preempted) {
+                    success = cube_state_false_count > linebreak_debounce_iterations;
 
                     if(as_.isPreemptRequested() || !ros::ok()) {
                         ROS_WARN("%s: Preempted", action_name_.c_str());
                         as_.setPreempted();
-                        aborted = true;
-                        return;
+                        preempted = true;
                     }
-                    if (!aborted) {
+                    if (!preempted) {
                         r.sleep();
                         ros::spinOnce();
                         timed_out = (ros::Time::now().toSec()-start_time) > goal->timeout;
@@ -111,16 +114,15 @@ class IntakeAction {
                 //wait another config time before stopping motors to ensure cube is out
                 double start_time_extra = ros::Time::now().toSec();
                 bool wait_done = false;
-                while(!wait_done && !timed_out && !aborted) {
+                while(!wait_done && !timed_out && !preempted) {
                     wait_done = (ros::Time::now().toSec() - start_time_extra) > 1;
 
                     if(as_.isPreemptRequested() || !ros::ok()) {
                         ROS_WARN("%s: Preempted", action_name_.c_str());
                         as_.setPreempted();
-                        aborted = true;
-                        return;
+                        preempted = true;
                     }
-                    if (!aborted) {
+                    if (!preempted) {
                         r.sleep();
                         ros::spinOnce();
                         timed_out = (ros::Time::now().toSec()-start_time) > goal->timeout;
@@ -128,7 +130,7 @@ class IntakeAction {
                 }
 
                 srv.request.power = 0;
-                srv.request.intake_in = true; //soft in
+		srv.request.intake_in = true; //do this regardless of if everything's good or if preempted
                 if(!intake_srv_.call(srv)) 
                     ROS_ERROR("Srv intake call failed in auto interpreter server intake");
             }
@@ -136,13 +138,14 @@ class IntakeAction {
             {
                 ROS_INFO("%s: Timed Out", action_name_.c_str());
             }
-            else if(!aborted)
+            else if(!preempted)
             {
                 ROS_INFO("%s: Succeeded", action_name_.c_str());
             }
             else
             {
-                ROS_INFO("%s: Aborted", action_name_.c_str());
+                ROS_INFO("%s: Preempted", action_name_.c_str());
+		return; //don't go on to set it to succeeded below, b/c it was preempted
             }
 
             result_.timed_out = timed_out;
@@ -151,39 +154,39 @@ class IntakeAction {
             return;
         }
 
-		// Grab various info from hw_interface using
-		// dummy joint position values
-		void jointStateCallback(const sensor_msgs::JointState &joint_state)
+	// Grab various info from hw_interface using
+	// dummy joint position values
+	void jointStateCallback(const sensor_msgs::JointState &joint_state)
+	{
+		static size_t cube_idx = std::numeric_limits<size_t>::max();
+		if ((cube_idx >= joint_state.name.size()))
 		{
-			static size_t cube_idx = std::numeric_limits<size_t>::max();
-			if ((cube_idx >= joint_state.name.size()))
+			for (size_t i = 0; i < joint_state.name.size(); i++)
 			{
-				for (size_t i = 0; i < joint_state.name.size(); i++)
-				{
-					if (joint_state.name[i] == "intake_line_break")
-						cube_idx = i;
-				}
+				if (joint_state.name[i] == "intake_line_break")
+					cube_idx = i;
 			}
-			if (cube_idx < joint_state.position.size())
+		}
+		if (cube_idx < joint_state.position.size())
+		{
+			bool cube_state = (joint_state.position[cube_idx] != 0);
+			if(cube_state)
 			{
-				bool cube_state = (joint_state.position[cube_idx] != 0);
-				if(cube_state)
-				{
-					cube_state_true += 1;
-					cube_state_false = 0;
-				}
-				else
-				{
-					cube_state_true = 0;
-					cube_state_false += 1;
-				}
+				cube_state_true_count += 1;
+				cube_state_false_count = 0;
 			}
 			else
 			{
-				cube_state_true = 0;
-				cube_state_false += 1;
+				cube_state_true_count = 0;
+				cube_state_false_count += 1;
 			}
 		}
+		else
+		{
+			cube_state_true_count = 0;
+			cube_state_false_count += 1;
+		}
+	}
 };
 
 int main(int argc, char** argv) {
