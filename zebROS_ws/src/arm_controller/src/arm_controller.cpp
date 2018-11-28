@@ -5,6 +5,7 @@
 //process state integer to actual talon input
 
 #include "arm_controller/arm_controller.h"
+#include "sensor_msgs/JointState.h"
 
 namespace arm_controller
 {
