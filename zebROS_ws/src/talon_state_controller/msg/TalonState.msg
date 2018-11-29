@@ -46,8 +46,8 @@ int32[] pid_allowable_closed_loop_error0
 float64[] pid_max_integral_accumulator0
 float64[] pid_closed_loop_peak_output0
 int32[]   pid_closed_loop_period0
-float64[] pid_i1
 float64[] pid_p1
+float64[] pid_i1
 float64[] pid_d1
 float64[] pid_f1
 int32[] pid_izone1
