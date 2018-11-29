@@ -656,10 +656,9 @@ class TalonControllerInterface
 		// them
 		virtual bool initWithNode(hardware_interface::TalonCommandInterface *tci,
 								  hardware_interface::TalonStateInterface * /*tsi*/,
-								  ros::NodeHandle &n,
-								  bool dynamic_reconfigure = false)
+								  ros::NodeHandle &n)
 		{
-			return init(tci, n, talon_, srv_mutex_, srv_, true, dynamic_reconfigure) &&
+			return init(tci, n, talon_, srv_mutex_, srv_, true) &&
 				   setInitialMode();
 		}
 
@@ -669,10 +668,9 @@ class TalonControllerInterface
 		// the leader
 		virtual bool initWithNode(hardware_interface::TalonCommandInterface *tci,
 								  hardware_interface::TalonStateInterface *tsi,
-								  std::vector<ros::NodeHandle> &n,
-								  bool dynamic_reconfigure = false)
+								  std::vector<ros::NodeHandle> &n)
 		{
-			if (!initWithNode(tci, tsi, n[0], dynamic_reconfigure))
+			if (!initWithNode(tci, tsi, n[0]))
 				return false;
 
 			const int follow_can_id = talon_.state()->getCANID();
@@ -682,7 +680,7 @@ class TalonControllerInterface
 			{
 				follower_srv_mutexes_.push_back(nullptr);
 				follower_srvs_.push_back(nullptr);
-				if (!init(tci, n[i], follower_talons_[i-1], follower_srv_mutexes_[i-1], follower_srvs_[i-1], false, dynamic_reconfigure))
+				if (!init(tci, n[i], follower_talons_[i-1], follower_srv_mutexes_[i-1], follower_srvs_[i-1], false))
 					return false;
 				follower_talons_[i-1]->setMode(hardware_interface::TalonMode_Follower);
 				follower_talons_[i-1]->set(follow_can_id);
@@ -699,8 +697,7 @@ class TalonControllerInterface
 		virtual bool initWithNode(hardware_interface::TalonCommandInterface *tci,
 								  hardware_interface::TalonStateInterface *tsi,
 								  ros::NodeHandle &controller_nh,
-								  XmlRpc::XmlRpcValue param,
-								  bool dynamic_reconfigure = false)
+								  XmlRpc::XmlRpcValue param)
 		{
 			std::vector<ros::NodeHandle> joint_nodes;
 
@@ -736,7 +733,7 @@ class TalonControllerInterface
 				return false;
 			}
 
-			return initWithNode(tci, tsi, joint_nodes, dynamic_reconfigure);
+			return initWithNode(tci, tsi, joint_nodes);
 		}
 
 #if 0
@@ -1162,14 +1159,15 @@ class TalonControllerInterface
 							hardware_interface::TalonCommandHandle &talon,
 							std::shared_ptr<boost::recursive_mutex> &srv_mutex,
 							std::shared_ptr<dynamic_reconfigure::Server<talon_controllers::TalonConfigConfig>> &srv,
-							bool update_params,
-							bool dynamic_reconfigure = false)
+							bool update_params)
 		{
 			ROS_WARN("init start");
 			// Read params from startup and intialize Talon using them
 			TalonCIParams params;
 			if (!readParams(n, params))
 			   return false;
+			bool dynamic_reconfigure;
+			n.param<bool>("dynamic_reconfigure", dynamic_reconfigure, false);
 			ROS_WARN("init past readParams");
 
 			talon = tci->getHandle(params.joint_name_);
@@ -1336,8 +1334,7 @@ class TalonFollowerControllerInterface : public TalonFixedModeControllerInterfac
 	public:
 		bool initWithNode(hardware_interface::TalonCommandInterface *tci,
 						  hardware_interface::TalonStateInterface   *tsi,
-						  ros::NodeHandle &n,
-						  bool dynamic_reconfigure = false) override
+						  ros::NodeHandle &n) override
 		{
 			if (!tsi)
 			{
@@ -1346,7 +1343,7 @@ class TalonFollowerControllerInterface : public TalonFixedModeControllerInterfac
 			}
 
 			// Call base-class init to load config params
-			if (!TalonControllerInterface::initWithNode(tci, tsi, n, dynamic_reconfigure))
+			if (!TalonControllerInterface::initWithNode(tci, tsi, n))
 			{
 				ROS_ERROR("TalonFollowerController base initWithNode failed");
 				return false;
