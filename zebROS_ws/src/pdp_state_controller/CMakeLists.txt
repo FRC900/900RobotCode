@@ -40,8 +40,6 @@ catkin_package(
 include_directories(
   include/
   ${catkin_INCLUDE_DIRS}
-  $ENV{HOME}/wpilib/cpp/current/include
-  $ENV{HOME}/wpilib/user/cpp/include
 )
 
 add_library(pdp_state_controller src/pdp_state_controller.cpp)
