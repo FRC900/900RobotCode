@@ -98,6 +98,7 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
         
         //set the arbitrary F term based on the position of the arm
         double calculated_F = sin(arm_joint_.getPosition() - arm_positions_[1]) * gravity_constant_;
+        arm_joint_.setDemand1Type(hardware_interface::DemandType::DemandType_ArbitraryFeedForward);
         arm_joint_.setDemand1Value(calculated_F);
 
         //stop arm
