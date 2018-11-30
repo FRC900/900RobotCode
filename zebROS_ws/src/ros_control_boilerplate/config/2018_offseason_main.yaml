@@ -80,17 +80,18 @@ intake_controller:
 arm_controller:
     type: arm_controller/ArmController
     arm_joint: ["arm", "arm_follower"]
-    position_array: [4.34116, 2.4175537217077703, 0.56297]
+    position_array: [4.29, 2.4175537217077703, 0.65]
     position_array_with_cube: [4.29054, 2.41755372, 0.61359]
     forward_soft_limit: 0.0
     reverse_soft_limit: 0.223
-    gravity_constant: -0.125
+    gravity_constant: -0.1
+    gravity_constant_cube: -0.15
     arm:
         joint: arm_joint
         motion_cruise_velocity: 3 # wrong
         motion_acceleration: 3 # wrong
         close_loop_values:
-            - {p: 1.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: 0.5, i: 0.0, d: 7.5, f: 2.94, i_zone: 0, closed_loop_peak_output: 1.0}
             - {p: .5, i: 0.0005, d: 7.5, f: 0.0235389351901052, i_zone: 750, closed_loop_peak_output: 1.0}
         invert_output: True
         sensor_phase: True
