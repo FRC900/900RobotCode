@@ -5,8 +5,6 @@
 //process state integer to actual talon input
 
 #include "arm_controller/arm_controller.h"
-#include "sensor_msgs/JointState.h"
-
 namespace arm_controller
 {
 
@@ -76,18 +74,18 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
         stop_arm_srv_ = controller_nh.advertiseService("stop_arm_srv", &ArmController::stop_arm_service, this);
         arm_cur_command_srv_ = controller_nh.advertiseService("arm_cur_command_srv", &ArmController::arm_cur_command_service, this);
         command_pub_ = controller_nh.advertise<std_msgs::Float64>("arm_command", 1);
-	joint_states_sub = controller_nh.subscribe("joint_states", &ArmController::joint_states_callback,this);
+	joint_states_sub = controller_nh.subscribe("joint_states", 100, &ArmController::joint_states_callback, this);
 
 	return true;
 }
 
-void joint_states_callback(const sensor_msgs::JointState &joint_state)
+void ArmController::joint_states_callback(const sensor_msgs::JointState &joint_state)
 {
-	static size t cube idx = std::numeric_limits<size t>::max();
+	static size_t cube_idx = std::numeric_limits<size_t>::max();
 	if ((cube_idx >= joint_state.name.size()))
 	
 	{
-		for (size t i=0; i < joint_state.name.size(); i++)
+		for (size_t i=0; i < joint_state.name.size(); i++)
 		{
 			if (joint_state.name[i] == "intake_line_break")
 				cube_idx =i;
