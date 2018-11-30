@@ -993,7 +993,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 				//const double active_trajectory_heading = talon->GetActiveTrajectoryHeading() * 2.*M_PI / 360.; //returns in degrees
 				//safeTalonCall(talon->GetLastError(), "GetActiveTrajectoryHeading");
 				//ts.setActiveTrajectoryHeading(active_trajectory_heading);
-
 			}
 
 			if (talon_mode == hardware_interface::TalonMode_MotionProfile)
