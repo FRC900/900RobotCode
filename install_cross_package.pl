@@ -39,7 +39,6 @@ sub install_package
 # on our development systems.
 #
 
-
 install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/lz4-dev_131+git0+d86dc91677-r0.4_cortexa9-vfpv3.ipk");
 install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/lz4-staticdev_131+git0+d86dc91677-r0.4_cortexa9-vfpv3.ipk");
 install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/lz4_131+git0+d86dc91677-r0.4_cortexa9-vfpv3.ipk");
@@ -157,3 +156,13 @@ install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-
 install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libusb-1.0-dev_1.0.20-r0.7_cortexa9-vfpv3.ipk");
 install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libusb-1.0-0_1.0.20-r0.7_cortexa9-vfpv3.ipk");
 install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libusb-1.0-staticdev_1.0.20-r0.7_cortexa9-vfpv3.ipk");
+
+install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libgnutls-openssl27_3.4.9-r0.7_cortexa9-vfpv3.ipk");
+install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-conf_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
+install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-dbg_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
+install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-dev_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
+install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-doc_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
+install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-engines_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
+install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-misc_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
+install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-staticdev_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
+
