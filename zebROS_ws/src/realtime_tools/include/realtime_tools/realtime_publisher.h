@@ -193,9 +193,7 @@ private:
 #ifdef NON_POLLING
 	    boost::unique_lock<boost::mutex> lk(msg_mutex_);
 #else
-        // never actually block on the lock
-        while (!msg_mutex_.try_lock())
-          usleep(200);
+		lock();
 #endif
         while (turn_ != NON_REALTIME && keep_running_)
 	    {
@@ -240,6 +238,12 @@ private:
   enum {REALTIME, NON_REALTIME};
   int turn_;  // Who's turn is it to use msg_?
 };
+
+#if __cplusplus >= 201103L
+#include <memory>
+template <class Msg>
+using RealtimePublisherSharedPtr = std::shared_ptr<RealtimePublisher<Msg> >;
+#endif
 
 }
 
