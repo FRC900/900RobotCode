@@ -91,7 +91,7 @@ void ArmController::joint_states_callback(const sensor_msgs::JointState &joint_s
 				cube_idx =i;
 		}
 	} 
-	bool cube_state = (joint_state.position[cube_idx] !=0);
+	cube_state = (joint_state.position[cube_idx] !=0);
 }
 
 
@@ -128,10 +128,15 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
         //set to motor
         if (command < arm_positions_.size())
         {
-         if(!cube_state) 
-	 {double position = arm_positions_[command];}
+        double position;
+	if(!cube_state) 
+	 {
+		 position = arm_positions_[command];
+	 }
 	 else 
-		{ double position = arm_position_with_cube_[command];}
+	{ 
+	    position = arm_positions_with_cube_[command];
+	}
             arm_joint_.setCommand(position);
             //pub most recent command
             std_msgs::Float64 msg;
@@ -162,9 +167,10 @@ bool ArmController::cmdService(arm_controller::SetArmState::Request &req, arm_co
 
 bool ArmController::arm_cur_command_service(arm_controller::CurArmCommand::Request &req, arm_controller::CurArmCommand::Response &res) {
     size_t cur_command = *(service_command_.readFromRT());
+    double position;
     if (cur_command < arm_positions_.size())
     {
-        double position = arm_positions_[cur_command];
+        position = arm_positions_[cur_command];
         res.cur_command = position;
     }
     else

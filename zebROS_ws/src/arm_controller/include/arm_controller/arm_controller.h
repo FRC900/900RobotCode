@@ -60,7 +60,7 @@ class ArmController : public controller_interface::MultiInterfaceController<hard
 		bool cmdService(arm_controller::SetArmState::Request &req, arm_controller::SetArmState::Response &res);
         	bool stop_arm_service(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
         	bool arm_cur_command_service(arm_controller::CurArmCommand::Request &req, arm_controller::CurArmCommand::Response &res);
-
+		bool cube_state;
 		void joint_states_callback(const sensor_msgs::JointState &joint_state);	
 }; //class
 
