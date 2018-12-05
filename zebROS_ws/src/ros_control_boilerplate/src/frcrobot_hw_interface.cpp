@@ -628,7 +628,8 @@ void FRCRobotHWInterface::init(void)
 							  " as CAN id " << can_talon_srx_can_ids_[i]);
 		can_talons_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_talon_srx_can_ids_[i]));
 		can_talons_[i]->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0);
-		can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_13_Base_PIDF0, 10, 50);
+		//can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_13_Base_PIDF0, 20, 10);
+		can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_10_MotionMagic, 20, 10);
 		//TODO: test above sketchy change
 		//safeTalonCall(can_talons_[i]->ClearStickyFaults(timeoutMs), "ClearStickyFaults()");
 		// TODO : if the talon doesn't initialize - maybe known
