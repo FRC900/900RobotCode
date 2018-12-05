@@ -4,7 +4,7 @@
 
 launch_sim_code()
 {
-    roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim
+    roslaunch ros_control_boilerplate 2018_offseason_teleop.launch hw_or_sim:=sim
 }
 launch_robot_code()
 {
