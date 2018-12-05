@@ -36,6 +36,11 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
             ROS_ERROR_STREAM("Could not read reverse_soft_limit");
             return false;
         }
+        if (!controller_nh.getParam("gravity_constant", gravity_constant_))
+        {
+            ROS_ERROR_STREAM("Could not read gravity_constant");
+            return false;
+        }
         XmlRpc::XmlRpcValue arm_params;
         if(!controller_nh.getParam("arm_joint", arm_params))
         {
@@ -60,6 +65,7 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
         arm_joint_.setPeakOutputForward(1);
         arm_joint_.setPeakOutputReverse(-1);
         arm_joint_.setPIDFSlot(0);
+        arm_joint_.setDemand1Type(hardware_interface::DemandType::DemandType_ArbitraryFeedForward);
 
         ROS_INFO_STREAM("arm_joint_.getMotionCruiseVelocity = " << arm_joint_.getMotionCruiseVelocity());
 
@@ -88,6 +94,12 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
         //ROS_INFO_STREAM("arm_joint command = " << command );
         bool stop_arm = *(stop_arm_.readFromRT());
         //ROS_INFO_STREAM("stop_arm = " << stop_arm);
+        //
+        
+        //set the arbitrary F term based on the position of the arm
+        double calculated_F = sin(arm_joint_.getPosition() - arm_positions_[1]) * gravity_constant_;
+        arm_joint_.setDemand1Type(hardware_interface::DemandType::DemandType_ArbitraryFeedForward);
+        arm_joint_.setDemand1Value(calculated_F);
 
         //stop arm
         if(stop_arm)

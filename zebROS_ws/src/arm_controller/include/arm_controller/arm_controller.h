@@ -46,6 +46,7 @@ class ArmController : public controller_interface::MultiInterfaceController<hard
                 
                 ros::ServiceServer stop_arm_srv_;
                 ros::ServiceServer arm_cur_command_srv_;
+                double gravity_constant_;
 
                 //hardware_interface::JointStateHandle limit_switch_intake_;
                 //hardware_interface::JointStateHandle limit_switch_exchange_;

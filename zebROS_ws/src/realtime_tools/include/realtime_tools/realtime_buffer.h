@@ -78,7 +78,7 @@ class RealtimeBuffer
       delete realtime_data_;
   }
 
-  RealtimeBuffer(RealtimeBuffer &source)
+  RealtimeBuffer(const RealtimeBuffer &source)
   {
     // allocate memory
     non_realtime_data_ = new T();
@@ -111,9 +111,9 @@ class RealtimeBuffer
       if (new_data_available_)
       {
         T* tmp = realtime_data_;
-	realtime_data_ = non_realtime_data_;
+				realtime_data_ = non_realtime_data_;
         non_realtime_data_ = tmp;
-	new_data_available_ = false;
+				new_data_available_ = false;
       }
       mutex_.unlock();
     }
@@ -145,8 +145,8 @@ class RealtimeBuffer
 
   void initRT(const T& data)
   {
-    *non_realtime_data_ = data;    
-    *realtime_data_ = data;    
+    *non_realtime_data_ = data;
+    *realtime_data_ = data;
   }
 
  private:
