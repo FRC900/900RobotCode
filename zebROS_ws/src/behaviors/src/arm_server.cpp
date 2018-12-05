@@ -73,6 +73,8 @@ class ArmAction
             forearm_goal.timeout = arm_timeout;
             af_.sendGoal(forearm_goal);
 	    
+
+
             /*
             bool arm_finished_before_timeout = af_.waitForResult(ros::Duration(arm_timeout));
             
