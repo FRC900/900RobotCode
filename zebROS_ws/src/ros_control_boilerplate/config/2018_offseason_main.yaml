@@ -84,8 +84,8 @@ arm_controller:
     position_array_with_cube: [4.29054, 2.41755372, 0.61359]
     forward_soft_limit: 0.0
     reverse_soft_limit: 0.223
-    gravity_constant: -0.1
-    gravity_constant_cube: -0.15
+    gravity_constant_no_cube: -0.1
+    gravity_constant_with_cube: -0.15
     arm:
         joint: arm_joint
         close_loop_values:

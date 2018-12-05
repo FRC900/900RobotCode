@@ -43,7 +43,12 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
             ROS_ERROR_STREAM("Could not read reverse_soft_limit");
             return false;
         }
-        if (!controller_nh.getParam("gravity_constant", gravity_constant_))
+        if (!controller_nh.getParam("gravity_constant_no_cube", gravity_constant_no_cube_))
+        {
+            ROS_ERROR_STREAM("Could not read gravity_constant");
+            return false;
+        }
+        if (!controller_nh.getParam("gravity_constant_with_cube", gravity_constant_with_cube_))
         {
             ROS_ERROR_STREAM("Could not read gravity_constant");
             return false;
@@ -120,10 +125,7 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
         //ROS_INFO_STREAM("stop_arm = " << stop_arm);
         //
         
-        //set the arbitrary F term based on the position of the arm
-        double calculated_F = sin(arm_joint_.getPosition() - arm_positions_[1]) * gravity_constant_;
         arm_joint_.setDemand1Type(hardware_interface::DemandType::DemandType_ArbitraryFeedForward);
-        arm_joint_.setDemand1Value(calculated_F);
 
         //stop arm
         if(stop_arm)
@@ -142,12 +144,20 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
         {
         double position;
 	if(!cube_state) 
-	 {
-		 position = arm_positions_[command];
-	 }
+	{
+            //set the arbitrary F term based on the position of the arm
+            double calculated_F = sin(arm_joint_.getPosition() - arm_positions_[1]) * gravity_constant_no_cube_;
+            arm_joint_.setDemand1Value(calculated_F);
+	    
+            position = arm_positions_[command];
+	}
 	 else 
 	{ 
-	    position = arm_positions_with_cube_[command];
+            //set the arbitrary F term based on the position of the arm
+            double calculated_F = sin(arm_joint_.getPosition() - arm_positions_[1]) * gravity_constant_with_cube_;
+            arm_joint_.setDemand1Value(calculated_F);
+	
+            position = arm_positions_with_cube_[command];
 	}
             arm_joint_.setCommand(position);
             //pub most recent command
