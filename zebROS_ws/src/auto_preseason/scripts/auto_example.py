@@ -100,17 +100,32 @@ class TestSeesCubes(smach.State):
         else:
             return 'testFalse'
 
-successType = 0;
+# define state Bar
 class TestArmStuck(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
+
+        #set up subscriber to receive sensor data
+        self.sub = rospy.Subscriber('/frcrobot/talon_states',TalonState,self.callback)
+
+        self.test_result = "default"  #initialize variable to store received msgs
+
+    def callback(self,msg):
+        sensor_index = 0
+        for i in range(len(msg.position)):
+            if msg.name[i] == "arm_joint":
+                sensor_index = i
+
+        self.test_result = msg.position[sensor_index]
+
     def execute(self, userdata):
-        print("MultipleSuccesses, successType")
-        print(successType)
-        if successType == 0: #0 means stuck, 1 means fine
+        rospy.loginfo("testarmstuck "+str(self.test_result))
+
+        if self.test_result < 3: #if arm is not fully down:
             return 'testTrue'
         else:
             return 'testFalse'
+
 
 
 

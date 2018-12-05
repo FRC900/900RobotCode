@@ -120,9 +120,9 @@ pdp_state_controller:
    type:         pdp_state_controller/PDPStateController
    publish_rate: 20
 
-rumble_controller:
-    type: position_controllers/JointPositionController
-    joint: joystick_rumble
+   #rumble_controller:
+   #    type: position_controllers/JointPositionController
+   #    joint: joystick_rumble
 
 compressor_controller:
    type: position_controllers/JointPositionController
