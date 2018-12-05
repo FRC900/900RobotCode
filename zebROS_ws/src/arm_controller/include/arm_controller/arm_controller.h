@@ -1,6 +1,7 @@
 #ifndef ARM_CONTROLLER
 #define ARM_CONTROLLER
 
+#include "sensor_msgs/JointState.h"
 #include <ros/ros.h>
 #include <vector>
 #include <hardware_interface/joint_state_interface.h> //other than talon data
@@ -42,8 +43,10 @@ class ArmController : public controller_interface::MultiInterfaceController<hard
 		talon_controllers::TalonMotionMagicCloseLoopControllerInterface arm_joint_; //interface for the actual joint 
 		ros::ServiceServer arm_state_service_;
                 std::vector<double> arm_positions_;
-                ros::Publisher command_pub_;
-                
+		std::vector<double> arm_positions_with_cube_;
+		ros::Publisher command_pub_;
+		ros::Subscriber joint_states_sub;
+
                 ros::ServiceServer stop_arm_srv_;
                 ros::ServiceServer arm_cur_command_srv_;
                 double gravity_constant_;
@@ -56,10 +59,10 @@ class ArmController : public controller_interface::MultiInterfaceController<hard
 
 		//define function that executes the service
 		bool cmdService(arm_controller::SetArmState::Request &req, arm_controller::SetArmState::Response &res);
-        bool stop_arm_service(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
-        bool arm_cur_command_service(arm_controller::CurArmCommand::Request &req, arm_controller::CurArmCommand::Response &res);
-
-		
+        	bool stop_arm_service(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
+        	bool arm_cur_command_service(arm_controller::CurArmCommand::Request &req, arm_controller::CurArmCommand::Response &res);
+		bool cube_state;
+		void joint_states_callback(const sensor_msgs::JointState &joint_state);	
 }; //class
 
 } //namespace

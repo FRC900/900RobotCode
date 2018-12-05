@@ -1,11 +1,10 @@
-//TO DO:
-//make sure the controller_nh.param is reading talons correctly
+//TO DO:V
+//make siure the controller_nh.param is reading talons correctly
 //configure talons in YAML file correctly
 //figure out service response
 //process state integer to actual talon input
 
 #include "arm_controller/arm_controller.h"
-
 namespace arm_controller
 {
 
@@ -24,6 +23,14 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
             ROS_ERROR_STREAM("Could not read arm_positions");
             return false;
         }
+	
+
+	if (!controller_nh.getParam("position_array_with_cube", arm_positions_with_cube_))
+	{
+		ROS_ERROR_STREAM("Could not read arm_positions_with_cube");
+
+	}
+
         double forward_soft_limit;
         if (!controller_nh.getParam("forward_soft_limit", forward_soft_limit))
         {
@@ -73,9 +80,26 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
         stop_arm_srv_ = controller_nh.advertiseService("stop_arm_srv", &ArmController::stop_arm_service, this);
         arm_cur_command_srv_ = controller_nh.advertiseService("arm_cur_command_srv", &ArmController::arm_cur_command_service, this);
         command_pub_ = controller_nh.advertise<std_msgs::Float64>("arm_command", 1);
+	joint_states_sub = controller_nh.subscribe("joint_states", 100, &ArmController::joint_states_callback, this);
 
 	return true;
 }
+
+void ArmController::joint_states_callback(const sensor_msgs::JointState &joint_state)
+{
+	static size_t cube_idx = std::numeric_limits<size_t>::max();
+	if ((cube_idx >= joint_state.name.size()))
+	
+	{
+		for (size_t i=0; i < joint_state.name.size(); i++)
+		{
+			if (joint_state.name[i] == "intake_line_break")
+				cube_idx =i;
+		}
+	} 
+	cube_state = (joint_state.position[cube_idx] !=0);
+}
+
 
 void ArmController::starting(const ros::Time &time) {
 	ROS_ERROR_STREAM("ArmController was started");
@@ -116,15 +140,25 @@ void ArmController::update(const ros::Time &time, const ros::Duration &period) {
         //set to motor
         if (command < arm_positions_.size())
         {
-            double position = arm_positions_[command];
+        double position;
+	if(!cube_state) 
+	 {
+		 position = arm_positions_[command];
+	 }
+	 else 
+	{ 
+	    position = arm_positions_with_cube_[command];
+	}
             arm_joint_.setCommand(position);
             //pub most recent command
             std_msgs::Float64 msg;
             msg.data = command;
             command_pub_.publish(msg);
-        }
+        
+	}
         else
             ROS_ERROR_STREAM("the command to arm_controller needs to be 0, 1, or 2");
+	
 }
 
 void ArmController::stopping(const ros::Time &time) {
@@ -145,9 +179,10 @@ bool ArmController::cmdService(arm_controller::SetArmState::Request &req, arm_co
 
 bool ArmController::arm_cur_command_service(arm_controller::CurArmCommand::Request &req, arm_controller::CurArmCommand::Response &res) {
     size_t cur_command = *(service_command_.readFromRT());
+    double position;
     if (cur_command < arm_positions_.size())
     {
-        double position = arm_positions_[cur_command];
+        position = arm_positions_[cur_command];
         res.cur_command = position;
     }
     else
