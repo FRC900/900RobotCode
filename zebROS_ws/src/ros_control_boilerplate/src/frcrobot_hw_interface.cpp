@@ -1679,6 +1679,22 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" peak current");
 		}
 
+		for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
+		{
+			uint8_t period;
+			const hardware_interface::StatusFrame status_frame = static_cast<hardware_interface::StatusFrame>(i);
+			if (tc.getStatusFramePeriod(status_frame, period))
+			{
+				ctre::phoenix::motorcontrol::StatusFrameEnhanced status_frame_enhanced;
+				if (convertStatusFrame(status_frame, status_frame_enhanced))
+				{
+					talon->SetStatusFramePeriod(status_frame_enhanced, period);
+					ts.setStatusFramePeriod(status_frame, period);
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i);
+				}
+			}
+		}
+
 		if (motion_profile_mode)
 		{
 			double motion_cruise_velocity;
@@ -1695,19 +1711,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" cruise velocity / acceleration");
 			}
-
-#if 0 // DISABLE FOR NOW UNTIL WE CAN FIND A SAFE DEFAULT
-			// Do this before rest of motion profile stuff
-			// so it takes effect before starting a buffer?
-			int motion_control_frame_period;
-			if (tc.motionControlFramePeriodChanged(motion_control_frame_period))
-			{
-				//ROS_WARN("profile frame period");
-				safeTalonCall(talon->ChangeMotionControlFramePeriod(motion_control_frame_period),"ChangeMotionControlFramePeriod");
-				ts.setMotionControlFramePeriod(motion_control_frame_period);
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion control frame period");
-			}
-#endif
 
 			int motion_profile_trajectory_period;
 			if (tc.motionProfileTrajectoryPeriodChanged(motion_profile_trajectory_period))
@@ -2183,4 +2186,57 @@ bool FRCRobotHWInterface::convertVelocityMeasurementPeriod(const hardware_interf
 	return true;
 }
 
-} // namespace 
+bool FRCRobotHWInterface::convertStatusFrame(const hardware_interface::StatusFrame input, ctre::phoenix::motorcontrol::StatusFrameEnhanced &output)
+{
+	switch (input)
+	{
+	case hardware_interface::Status_1_General:
+		output = ctre::phoenix::motorcontrol::Status_1_General;
+		break;
+	case hardware_interface::Status_2_Feedback0:
+		output = ctre::phoenix::motorcontrol::Status_2_Feedback0;
+		break;
+	case hardware_interface::Status_3_Quadrature:
+		output = ctre::phoenix::motorcontrol::Status_3_Quadrature;
+		break;
+	case hardware_interface::Status_4_AinTempVbat:
+		output = ctre::phoenix::motorcontrol::Status_4_AinTempVbat;
+		break;
+	case hardware_interface::Status_6_Misc:
+		output = ctre::phoenix::motorcontrol::Status_6_Misc;
+		break;
+	case hardware_interface::Status_7_CommStatus:
+		output = ctre::phoenix::motorcontrol::Status_7_CommStatus;
+		break;
+	case hardware_interface::Status_8_PulseWidth:
+		output = ctre::phoenix::motorcontrol::Status_8_PulseWidth;
+		break;
+	case hardware_interface::Status_9_MotProfBuffer:
+		output = ctre::phoenix::motorcontrol::Status_9_MotProfBuffer;
+		break;
+	case hardware_interface::Status_10_MotionMagic:
+		output = ctre::phoenix::motorcontrol::Status_10_MotionMagic;
+		break;
+	case hardware_interface::Status_11_UartGadgeteer:
+		output = ctre::phoenix::motorcontrol::Status_11_UartGadgeteer;
+		break;
+	case hardware_interface::Status_12_Feedback1:
+		output = ctre::phoenix::motorcontrol::Status_12_Feedback1;
+		break;
+	case hardware_interface::Status_13_Base_PIDF0:
+		output = ctre::phoenix::motorcontrol::Status_13_Base_PIDF0;
+		break;
+	case hardware_interface::Status_14_Turn_PIDF1:
+		output = ctre::phoenix::motorcontrol::Status_14_Turn_PIDF1;
+		break;
+	case hardware_interface::Status_15_FirmwareApiStatus:
+		output = ctre::phoenix::motorcontrol::Status_15_FirmareApiStatus;
+		break;
+	default:
+		ROS_ERROR("Invalid input in convertStatusFrame");
+		return false;
+	}
+	return true;
+}
+
+} // namespace

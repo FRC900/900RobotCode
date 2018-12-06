@@ -6,7 +6,7 @@
 
 namespace hardware_interface
 {
-enum TrajectoryDuration 
+enum TrajectoryDuration
 {
 	TrajectoryDuration_0ms = 0,
 	TrajectoryDuration_5ms = 5,
@@ -19,12 +19,12 @@ enum TrajectoryDuration
 };
 
 //Below struct contains all the info we want for our profile
-//Later it might include some more complex settings (current limits?, peak output limits?, 
+//Later it might include some more complex settings (current limits?, peak output limits?,
 //some f params to calc on the fly based on sensor data?)
 struct CustomProfilePoint
 {
 	CustomProfilePoint() :
-		mode(TalonMode_Position), 
+		mode(TalonMode_Position),
 		pidSlot(0),
 		setpoint(0.0),
 		fTerm(0),
@@ -40,7 +40,6 @@ struct CustomProfilePoint
 	bool zeroPos;
 };
 
-	
 struct TrajectoryPoint
 {
 	// Sane? defaults
@@ -170,7 +169,6 @@ class TalonHWCommand
 
 			motion_profile_clear_trajectories_(false),
 			motion_profile_clear_has_underrun_(false),
-			motion_profile_control_frame_period_(20),
 			motion_profile_control_frame_period_changed_(true),
 			motion_profile_profile_trajectory_period_(0),
 			motion_profile_profile_trajectory_period_changed_(true),
@@ -199,6 +197,34 @@ class TalonHWCommand
 			custom_profile_hz_(50.0),
 			custom_profile_vectors_mutex_ptr_(std::make_shared<std::mutex>())
 		{
+			status_frame_periods_[Status_1_General] = 10;
+			status_frame_periods_changed_[Status_1_General] = true;
+			status_frame_periods_[Status_2_Feedback0] = 20;
+			status_frame_periods_changed_[Status_2_Feedback0] = true;
+			status_frame_periods_[Status_3_Quadrature] = 160;
+			status_frame_periods_changed_[Status_3_Quadrature] = true;
+			status_frame_periods_[Status_4_AinTempVbat] = 160;
+			status_frame_periods_changed_[Status_4_AinTempVbat] = true;
+			status_frame_periods_[Status_6_Misc] = 0;
+			status_frame_periods_changed_[Status_6_Misc] = false;
+			status_frame_periods_[Status_7_CommStatus] = 0;
+			status_frame_periods_changed_[Status_7_CommStatus] = false;
+			status_frame_periods_[Status_8_PulseWidth] = 160;
+			status_frame_periods_changed_[Status_8_PulseWidth] = true;
+			status_frame_periods_[Status_9_MotProfBuffer] = 0;
+			status_frame_periods_changed_[Status_9_MotProfBuffer] = false;
+			status_frame_periods_[Status_10_MotionMagic] = 160;
+			status_frame_periods_changed_[Status_10_MotionMagic] = true;
+			status_frame_periods_[Status_11_UartGadgeteer] = 0;
+			status_frame_periods_changed_[Status_11_UartGadgeteer] = false;
+			status_frame_periods_[Status_12_Feedback1] = 0;
+			status_frame_periods_changed_[Status_12_Feedback1] = false;
+			status_frame_periods_[Status_13_Base_PIDF0] =160 ;
+			status_frame_periods_changed_[Status_13_Base_PIDF0] = true;
+			status_frame_periods_[Status_14_Turn_PIDF1] = 0;
+			status_frame_periods_changed_[Status_14_Turn_PIDF1] = false;
+			status_frame_periods_[Status_15_FirmwareApiStatus] = 0;
+			status_frame_periods_changed_[Status_15_FirmwareApiStatus] = false;
 		}
 
 		// This gets the requested setpoint, not the
@@ -1254,25 +1280,39 @@ class TalonHWCommand
 			return true;
 		}
 
-		void setMotionControlFramePeriod(int msec)
+		void setStatusFramePeriod(StatusFrame status_frame, uint8_t period)
 		{
-			if (msec != motion_profile_control_frame_period_)
+			if ((status_frame >= Status_1_General) && (status_frame < Status_Last))
 			{
-				motion_profile_control_frame_period_ = msec;
-				motion_profile_control_frame_period_changed_ = true;
+				status_frame_periods_[status_frame] = period;
+				status_frame_periods_changed_[status_frame] = true;
 			}
+			else
+				ROS_ERROR("Invalid status_frame value passed to TalonHWCommand::setStatusFramePeriod()");
 		}
-		int getMotionControlFramePeriod(void) const
+
+		uint8_t getStatusFramePeriod(StatusFrame status_frame) const
 		{
-			return motion_profile_control_frame_period_;
+			if ((status_frame >= Status_1_General) && (status_frame < Status_Last))
+				return status_frame_periods_[status_frame];
+
+			ROS_ERROR("Invalid status_frame value passed to TalonHWCommand::setStatusFramePeriod()");
+			return 0;
 		}
-		bool motionControlFramePeriodChanged(int &msec)
+
+		bool getStatusFramePeriod(StatusFrame status_frame, uint8_t &period)
 		{
-			msec = motion_profile_control_frame_period_;
-			if (!motion_profile_control_frame_period_changed_)
-				return false;
-			motion_profile_control_frame_period_changed_ = false;
-			return true;
+			if ((status_frame >= Status_1_General) && (status_frame < Status_Last))
+			{
+				period = status_frame_periods_[status_frame];
+				if (!status_frame_periods_changed_[status_frame])
+					return false;
+				status_frame_periods_changed_[status_frame] = false;
+				return true;
+			}
+
+			ROS_ERROR("Invalid status_frame value passed to TalonHWCommand::setStatusFramePeriod()");
+			return false;
 		}
 
 		void setMotionProfileTrajectoryPeriod(int msec)
@@ -1731,10 +1771,11 @@ class TalonHWCommand
 		bool motion_profile_clear_trajectories_;
 		bool motion_profile_clear_has_underrun_;
 		std::vector<TrajectoryPoint> motion_profile_trajectory_points_;
-		int motion_profile_control_frame_period_;
 		bool motion_profile_control_frame_period_changed_;
 		int motion_profile_profile_trajectory_period_;
 		bool motion_profile_profile_trajectory_period_changed_;
+		std::array<uint8_t, Status_Last> status_frame_periods_;
+		std::array<bool, Status_Last> status_frame_periods_changed_;
 
 		bool clear_sticky_faults_;
 
@@ -1754,7 +1795,7 @@ class TalonHWCommand
 
 		double conversion_factor_;
 		bool   conversion_factor_changed_;
-		
+
 		// TODO : do these need atomic or mutex protection?
 		bool custom_profile_disable_;
 		bool custom_profile_run_;
@@ -1772,7 +1813,7 @@ class TalonHWCommand
 		std::shared_ptr<std::mutex> custom_profile_vectors_mutex_ptr_;
 		std::vector<std::vector<CustomProfilePoint>> custom_profile_points_;
 		std::vector<std::vector<double>> custom_profile_total_time_;
-		
+
 		std::vector<bool> custom_profile_points_changed_;
 };
 

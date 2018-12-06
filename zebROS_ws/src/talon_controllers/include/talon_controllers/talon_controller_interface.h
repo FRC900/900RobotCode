@@ -78,15 +78,28 @@ class TalonCIParams
 			current_limit_peak_msec_(10), // to avoid errata - see https://github.com/CrossTheRoadElec/Phoenix-Documentation/blob/master/README.md#motor-output-direction-is-incorrect-or-accelerates-when-current-limit-is-enabled and https://github.com/CrossTheRoadElec/Phoenix-Examples-Languages/blob/master/C%2B%2B/Current%20Limit/src/Robot.cpp#L37
 			current_limit_continuous_amps_(0),
 			current_limit_enable_(false),
-			motion_cruise_velocity_(0), // No idea at a guess
+			motion_cruise_velocity_(0),
 			motion_acceleration_(0),
-			motion_control_frame_period_(20), // Guess at 50Hz default?
 			motion_profile_trajectory_period_(0),
 
 			conversion_factor_(1.0),
 
 			custom_profile_hz_(20.0)
 		{
+			status_frame_periods_[hardware_interface::Status_1_General] = 10;
+			status_frame_periods_[hardware_interface::Status_2_Feedback0] = 20;
+			status_frame_periods_[hardware_interface::Status_3_Quadrature] = 160;
+			status_frame_periods_[hardware_interface::Status_4_AinTempVbat] = 160;
+			status_frame_periods_[hardware_interface::Status_6_Misc] = 0;
+			status_frame_periods_[hardware_interface::Status_7_CommStatus] = 0;
+			status_frame_periods_[hardware_interface::Status_8_PulseWidth] = 160;
+			status_frame_periods_[hardware_interface::Status_9_MotProfBuffer] = 0;
+			status_frame_periods_[hardware_interface::Status_10_MotionMagic] = 160;
+			status_frame_periods_[hardware_interface::Status_11_UartGadgeteer] = 0;
+			status_frame_periods_[hardware_interface::Status_12_Feedback1] = 0;
+			status_frame_periods_[hardware_interface::Status_13_Base_PIDF0] = 160;
+			status_frame_periods_[hardware_interface::Status_14_Turn_PIDF1] = 0;
+			status_frame_periods_[hardware_interface::Status_15_FirmwareApiStatus] = 0;
 		}
 
 		// Update params set by a dynamic reconfig config
@@ -151,8 +164,22 @@ class TalonCIParams
 			current_limit_enable_ = config.current_limit_enable;
 			motion_cruise_velocity_ = config.motion_cruise_velocity;
 			motion_acceleration_ = config.motion_acceleration;
-			motion_control_frame_period_ = config.motion_control_frame_period;
 			motion_profile_trajectory_period_ = config.motion_profile_trajectory_period;
+
+			status_frame_periods_[hardware_interface::Status_1_General] = config.status_1_general_period;
+			status_frame_periods_[hardware_interface::Status_2_Feedback0] = config.status_2_feedback0_period;
+			status_frame_periods_[hardware_interface::Status_3_Quadrature] = config.status_3_quadrature_period;
+			status_frame_periods_[hardware_interface::Status_4_AinTempVbat] = config.status_4_aintempvbat_period;
+			status_frame_periods_[hardware_interface::Status_6_Misc] = config.status_6_misc_period;
+			status_frame_periods_[hardware_interface::Status_7_CommStatus] = config.status_7_commstatus_period;
+			status_frame_periods_[hardware_interface::Status_8_PulseWidth] = config.status_8_pulsewidth_period;
+			status_frame_periods_[hardware_interface::Status_9_MotProfBuffer] = config.status_9_motprofbuffer_period;
+			status_frame_periods_[hardware_interface::Status_10_MotionMagic] = config.status_10_motionmagic_period;
+			status_frame_periods_[hardware_interface::Status_11_UartGadgeteer] = config.status_11_uartgadgeteer_period;
+			status_frame_periods_[hardware_interface::Status_12_Feedback1] = config.status_12_feedback1_period;
+			status_frame_periods_[hardware_interface::Status_13_Base_PIDF0] = config.status_13_base_pidf0_period;
+			status_frame_periods_[hardware_interface::Status_14_Turn_PIDF1] = config.status_14_turn_pidf1_period;
+			status_frame_periods_[hardware_interface::Status_15_FirmwareApiStatus] = config.status_15_firmwareapistatus_period;
 
 			conversion_factor_ = config.conversion_factor;
 
@@ -216,8 +243,23 @@ class TalonCIParams
 			config.current_limit_enable = current_limit_enable_;
 			config.motion_cruise_velocity = motion_cruise_velocity_;
 			config.motion_acceleration = motion_acceleration_;
-			config.motion_control_frame_period = motion_control_frame_period_;
 			config.motion_profile_trajectory_period = motion_profile_trajectory_period_;
+
+			config.status_1_general_period = status_frame_periods_[hardware_interface::Status_1_General];
+			config.status_2_feedback0_period = status_frame_periods_[hardware_interface::Status_2_Feedback0];
+			config.status_3_quadrature_period = status_frame_periods_[hardware_interface::Status_3_Quadrature];
+			config.status_4_aintempvbat_period = status_frame_periods_[hardware_interface::Status_4_AinTempVbat];
+			config.status_6_misc_period = status_frame_periods_[hardware_interface::Status_6_Misc];
+			config.status_7_commstatus_period = status_frame_periods_[hardware_interface::Status_7_CommStatus];
+			config.status_8_pulsewidth_period = status_frame_periods_[hardware_interface::Status_8_PulseWidth];
+			config.status_9_motprofbuffer_period = status_frame_periods_[hardware_interface::Status_9_MotProfBuffer];
+			config.status_10_motionmagic_period = status_frame_periods_[hardware_interface::Status_10_MotionMagic];
+			config.status_11_uartgadgeteer_period = status_frame_periods_[hardware_interface::Status_11_UartGadgeteer];
+			config.status_12_feedback1_period = status_frame_periods_[hardware_interface::Status_12_Feedback1];
+			config.status_13_base_pidf0_period = status_frame_periods_[hardware_interface::Status_13_Base_PIDF0];
+			config.status_14_turn_pidf1_period = status_frame_periods_[hardware_interface::Status_14_Turn_PIDF1];
+			config.status_15_firmwareapistatus_period = status_frame_periods_[hardware_interface::Status_15_FirmwareApiStatus];
+
 			config.conversion_factor = conversion_factor_;
 			config.custom_profile_hz =   custom_profile_hz_;
 			return config;
@@ -470,8 +512,26 @@ class TalonCIParams
 		{
 			n.getParam("motion_cruise_velocity", motion_cruise_velocity_);
 			n.getParam("motion_acceleration", motion_acceleration_);
-			n.getParam("motion_control_frame_period", motion_control_frame_period_);
 			n.getParam("motion_profile_trajectory_period", motion_profile_trajectory_period_);
+			return true;
+		}
+
+		bool readStatusFramePeriods(ros::NodeHandle &n)
+		{
+			n.getParam("status_1_general_period", status_frame_periods_[hardware_interface::Status_1_General]);
+			n.getParam("status_2_feedback0_period", status_frame_periods_[hardware_interface::Status_2_Feedback0]);
+			n.getParam("status_3_quadrature_period", status_frame_periods_[hardware_interface::Status_3_Quadrature]);
+			n.getParam("status_4_aintempvbat_period", status_frame_periods_[hardware_interface::Status_4_AinTempVbat]);
+			n.getParam("status_6_misc_period", status_frame_periods_[hardware_interface::Status_6_Misc]);
+			n.getParam("status_7_commstatus_period", status_frame_periods_[hardware_interface::Status_7_CommStatus]);
+			n.getParam("status_8_pulsewidth_period", status_frame_periods_[hardware_interface::Status_8_PulseWidth]);
+			n.getParam("status_9_motprofbuffer_period", status_frame_periods_[hardware_interface::Status_9_MotProfBuffer]);
+			n.getParam("status_10_motionmagic_period", status_frame_periods_[hardware_interface::Status_10_MotionMagic]);
+			n.getParam("status_11_uartgadgeteer_period", status_frame_periods_[hardware_interface::Status_11_UartGadgeteer]);
+			n.getParam("status_12_feedback1_period", status_frame_periods_[hardware_interface::Status_12_Feedback1]);
+			n.getParam("status_13_base_pidf0_period", status_frame_periods_[hardware_interface::Status_13_Base_PIDF0]);
+			n.getParam("status_14_turn_pidf1_period", status_frame_periods_[hardware_interface::Status_14_Turn_PIDF1]);
+			n.getParam("status_15_firmwareapistatus_period", status_frame_periods_[hardware_interface::Status_15_FirmwareApiStatus]);
 			return true;
 		}
 
@@ -529,8 +589,8 @@ class TalonCIParams
 		bool   current_limit_enable_;
 		double motion_cruise_velocity_;
 		double motion_acceleration_;
-		int    motion_control_frame_period_;
 		int    motion_profile_trajectory_period_;
+		std::array<int, hardware_interface::Status_Last> status_frame_periods_;
 
 		double conversion_factor_;
 
@@ -646,6 +706,7 @@ class TalonControllerInterface
 				   params.readSoftLimits(n) &&
 				   params.readCurrentLimits(n) &&
 				   params.readMotionControl(n) &&
+				   params.readStatusFramePeriods(n) &&
 				   params.readCustomProfile(n);
 		}
 
@@ -962,15 +1023,22 @@ class TalonControllerInterface
 		{
 			return params_.motion_acceleration_;
 		}
-		virtual void setMotionControlFramePeriod(int msec)
+
+		virtual void setStatusFramePeriod(hardware_interface::StatusFrame status_frame, uint8_t period)
 		{
-			if (msec == params_.motion_control_frame_period_)
+			if ((status_frame < hardware_interface::Status_1_General) ||
+				(status_frame >= hardware_interface::Status_Last))
+			{
+				ROS_ERROR("Invalid status_frame value in TalonController::setStatusFramePeriod()");
 				return;
-			params_.motion_control_frame_period_ = msec;
+			}
+			if (period == params_.status_frame_periods_[status_frame])
+				return;
+			params_.status_frame_periods_[status_frame] = period;
 
 			syncDynamicReconfigure();
 
-			talon_->setMotionControlFramePeriod(params_.motion_control_frame_period_);
+			talon_->setMotionProfileTrajectoryPeriod(params_.status_frame_periods_[status_frame]);
 		}
 
 		virtual void setMotionProfileTrajectoryPeriod(int msec)
@@ -1284,8 +1352,9 @@ class TalonControllerInterface
 
 			talon->setMotionCruiseVelocity(params.motion_cruise_velocity_);
 			talon->setMotionAcceleration(params.motion_acceleration_);
-			talon->setMotionControlFramePeriod(params.motion_control_frame_period_);
 			talon->setMotionProfileTrajectoryPeriod(params.motion_profile_trajectory_period_);
+			for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
+				talon->setStatusFramePeriod(static_cast<hardware_interface::StatusFrame>(i), params.status_frame_periods_[i]);
 
 			talon->setConversionFactor(params.conversion_factor_);
 

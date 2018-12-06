@@ -173,7 +173,21 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 		m.motion_profile_status_profile_slot_select1.push_back(0);
 		m.motion_profile_status_output_enable.push_back("");
 		m.motion_profile_time_dur_ms.push_back(0);
-		m.motion_profile_control_frame_period.push_back(0);
+		m.status_1_general_period.push_back(0);
+		m.status_2_feedback0_period.push_back(0);
+		m.status_3_quadrature_period.push_back(0);
+		m.status_4_aintempvbat_period.push_back(0);
+		m.status_6_misc_period.push_back(0);
+		m.status_7_commstatus_period.push_back(0);
+		m.status_8_pulsewidth_period.push_back(0);
+		m.status_9_motprofbuffer_period.push_back(0);
+		m.status_10_motionmagic_period.push_back(0);
+		m.status_11_uartgadgeteer_period.push_back(0);
+		m.status_12_feedback1_period.push_back(0);
+		m.status_13_base_pidf0_period.push_back(0);
+		m.status_14_turn_pidf1_period.push_back(0);
+		m.status_15_firmwareapistatus_period.push_back(0);
+
 		m.motion_profile_trajectory_period.push_back(0);
 		m.faults.push_back("");
 		m.sticky_faults.push_back("");
@@ -491,7 +505,21 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				}
 				m.motion_profile_time_dur_ms[i] = mp_status.timeDurMs;
 
-				m.motion_profile_control_frame_period[i] = ts->getMotionControlFramePeriod();
+				m.status_1_general_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_1_General);
+				m.status_2_feedback0_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_2_Feedback0);
+				m.status_3_quadrature_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_3_Quadrature);
+				m.status_4_aintempvbat_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_4_AinTempVbat);
+				m.status_6_misc_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_6_Misc);
+				m.status_7_commstatus_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_7_CommStatus);
+				m.status_8_pulsewidth_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_8_PulseWidth);
+				m.status_9_motprofbuffer_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_9_MotProfBuffer);
+				m.status_10_motionmagic_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_10_MotionMagic);
+				m.status_11_uartgadgeteer_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_11_UartGadgeteer);
+				m.status_12_feedback1_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_12_Feedback1);
+				m.status_13_base_pidf0_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_13_Base_PIDF0);
+				m.status_14_turn_pidf1_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_14_Turn_PIDF1);
+				m.status_15_firmwareapistatus_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_15_FirmwareApiStatus);
+
 				m.motion_profile_trajectory_period[i] = ts->getMotionProfileTrajectoryPeriod();
 				{
 					unsigned faults = ts->getFaults();
