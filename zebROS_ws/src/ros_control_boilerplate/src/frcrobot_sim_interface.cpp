@@ -637,6 +637,9 @@ void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
             if(digital_input_names_[i] == "intake_line_break_low") {
                 digital_input_state_[i] = (intake_low) ? 1 : 0; 
             }
+            if(digital_input_names_[i] == "intake_line_break") {
+                digital_input_state_[i] = (has_cube) ? 1 : 0;
+            }
         }    
 
     // Simulated state is updated in write, so just
