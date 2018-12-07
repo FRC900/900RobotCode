@@ -630,6 +630,7 @@ void FRCRobotHWInterface::init(void)
 		can_talons_[i]->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0);
 		//can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_13_Base_PIDF0, 20, 10);
 		can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_10_MotionMagic, 20, 10);
+		talon_state_[i].setStatusFramePeriod(hardware_interface::Status_10_MotionMagic, 20);
 		//TODO: test above sketchy change
 		//safeTalonCall(can_talons_[i]->ClearStickyFaults(timeoutMs), "ClearStickyFaults()");
 		// TODO : if the talon doesn't initialize - maybe known
@@ -1842,23 +1843,36 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				//ROS_WARN_STREAM("set at: " << ts.getCANID() << " new mode: " << b1 << " command_changed: " << b2 << " cmd: " << command);
 			}
 		}
-		else if (last_robot_enabled)
+		else
 		{
-			// If this is a switch from enabled to
-			// disabled, set talon command to current
-			// talon mode and then disable the talon.
-			// This will set up the talon to return
-			// to the current mode once the robot is
-			// re-enabled
-			// Need to first setMode to disabled because there's
-			// a check in setMode to see if requested_mode == current_mode
-			// If that check is true setMode does nothing - assumes
-			// that the mode won't need to be reset back to the
-			// same mode it is already in
-			tc.setMode(hardware_interface::TalonMode_Disabled);
-			tc.setMode(ts.getTalonMode());
-			talon->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0);
-			ts.setTalonMode(hardware_interface::TalonMode_Disabled);
+			// Update talon state with requested setpoints for
+			// debugging. Don't actually write them to the physical
+			// Talons until the robot is re-enabled, though.
+			double command;
+			hardware_interface::DemandType demand1_type_internal;
+			double demand1_value;
+
+			ts.setCommand(tc.getCommand(command));
+			ts.setDemand1Type(tc.getDemand1Type());
+			ts.setDemand1Value(tc.getDemand1Value());
+			if (last_robot_enabled)
+			{
+				// If this is a switch from enabled to
+				// disabled, set talon command to current
+				// talon mode and then disable the talon.
+				// This will set up the talon to return
+				// to the current mode once the robot is
+				// re-enabled
+				// Need to first setMode to disabled because there's
+				// a check in setMode to see if requested_mode == current_mode
+				// If that check is true setMode does nothing - assumes
+				// that the mode won't need to be reset back to the
+				// same mode it is already in
+				tc.setMode(hardware_interface::TalonMode_Disabled);
+				tc.setMode(ts.getTalonMode());
+				talon->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0);
+				ts.setTalonMode(hardware_interface::TalonMode_Disabled);
+			}
 		}
 
 		if (tc.clearStickyFaultsChanged())
