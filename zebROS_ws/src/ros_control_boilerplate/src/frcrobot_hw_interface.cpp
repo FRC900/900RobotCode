@@ -1684,14 +1684,17 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		{
 			uint8_t period;
 			const hardware_interface::StatusFrame status_frame = static_cast<hardware_interface::StatusFrame>(i);
-			if (tc.getStatusFramePeriod(status_frame, period))
+			if (tc.statusFramePeriodChanged(status_frame, period))
 			{
-				ctre::phoenix::motorcontrol::StatusFrameEnhanced status_frame_enhanced;
-				if (convertStatusFrame(status_frame, status_frame_enhanced))
+				if (period > 0)
 				{
-					talon->SetStatusFramePeriod(status_frame_enhanced, period);
-					ts.setStatusFramePeriod(status_frame, period);
-					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i);
+					ctre::phoenix::motorcontrol::StatusFrameEnhanced status_frame_enhanced;
+					if (convertStatusFrame(status_frame, status_frame_enhanced))
+					{
+						talon->SetStatusFramePeriod(status_frame_enhanced, period);
+						ts.setStatusFramePeriod(status_frame, period);
+						ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i);
+					}
 				}
 			}
 		}
@@ -1852,7 +1855,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			hardware_interface::DemandType demand1_type_internal;
 			double demand1_value;
 
-			ts.setCommand(tc.getCommand(command));
+			ts.setSetpoint(tc.get());
 			ts.setDemand1Type(tc.getDemand1Type());
 			ts.setDemand1Value(tc.getDemand1Value());
 			if (last_robot_enabled)
