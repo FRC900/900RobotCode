@@ -85,7 +85,7 @@ bool ArmController::init(hardware_interface::RobotHW *hw,
         stop_arm_srv_ = controller_nh.advertiseService("stop_arm_srv", &ArmController::stop_arm_service, this);
         arm_cur_command_srv_ = controller_nh.advertiseService("arm_cur_command_srv", &ArmController::arm_cur_command_service, this);
         command_pub_ = controller_nh.advertise<std_msgs::Float64>("arm_command", 1);
-	joint_states_sub = controller_nh.subscribe("joint_states", 100, &ArmController::joint_states_callback, this);
+	joint_states_sub = controller_nh.subscribe("/frcrobot/joint_states", 100, &ArmController::joint_states_callback, this);
 
 	return true;
 }
