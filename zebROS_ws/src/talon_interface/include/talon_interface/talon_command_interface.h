@@ -1300,7 +1300,7 @@ class TalonHWCommand
 			return 0;
 		}
 
-		bool getStatusFramePeriod(StatusFrame status_frame, uint8_t &period)
+		bool statusFramePeriodChanged(StatusFrame status_frame, uint8_t &period)
 		{
 			if ((status_frame >= Status_1_General) && (status_frame < Status_Last))
 			{
