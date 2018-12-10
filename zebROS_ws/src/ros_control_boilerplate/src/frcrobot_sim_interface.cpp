@@ -928,7 +928,6 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 
-
 		if (motion_profile_mode)
 		{
 			double motion_cruise_velocity;
