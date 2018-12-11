@@ -139,12 +139,13 @@ echo "Synchronization complete"
 # Then synchronize cross build products to roboRIO.
 (echo "Starting roboRIO cross build" &&
 bash -c "cd $ROS_CODE_LOCATION && \
-    source /usr/arm-frc-linux-gnueabi/opt/ros/kinetic/setup.bash && \
     ./cross_build.sh" && \
 echo "roboRIO cross build complete" && \
 echo "Synchronizing $INSTALL_ENV cross build to roboRIO" && \
 ssh $ROBORIO_ADDR "/etc/init.d/nilvrt stop" && \
-rsync -avz --delete $ROS_CODE_LOCATION/install_isolated/ \
+rsync -avz --delete \
+	--exclude '*~' --exclude '*.sw[op]' \
+	$ROS_CODE_LOCATION/install_isolated/ \
     $ROBORIO_ADDR:$RIO_INSTALL_LOCATION && \
 echo "Synchronization of the RIO complete") &
 

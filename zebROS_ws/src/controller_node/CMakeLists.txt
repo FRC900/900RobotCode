@@ -148,7 +148,10 @@ include_directories(
 
 install(DIRECTORY launch urdf configuration_files config maps
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  PATTERN *~ EXCLUDE
+  PATTERN *.sw? EXCLUDE
 )
+
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
