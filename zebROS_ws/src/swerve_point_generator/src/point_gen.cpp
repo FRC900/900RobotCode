@@ -27,7 +27,6 @@ double f_a;
 double f_s_s;
 double f_s_v;
 
-
 swerveVar::driveModel model;
 
 bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_generator::FullGenCoefs::Response &res)
@@ -43,8 +42,7 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 	}
 	for (int i = 0; i < WHEELCOUNT; i++)
 		curPos[i] = pos_msg.response.positions[i]; //TODO: FILL THIS OUT SOMEHOW
-	int n = 8;
-	int k_p = 1;
+	const int k_p = 1;
 	res.points.resize(155/defined_dt);
 	int prev_point_count = 0;
 	talon_swerve_drive_controller::MotionProfile graph_msg;
@@ -55,20 +53,21 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		{
 			priv_num = req.spline_groups[s-1];
 		}
-		n = round(req.wait_before_group[s] / defined_dt);
-		std::vector<swerve_profile::spline_coefs> x_splines, y_splines, orient_splines;
-		swerve_profile::spline_coefs temp_holder_s;
+		const int n = round(req.wait_before_group[s] / defined_dt);
+		std::vector<swerve_profile::spline_coefs> x_splines;
+		std::vector<swerve_profile::spline_coefs> y_splines;
+		std::vector<swerve_profile::spline_coefs> orient_splines;
 
-		int neg_x = req.x_invert[s] ? -1 : 1;
+		const int neg_x = req.x_invert[s] ? -1 : 1;
+		std::vector<double> end_points_holder;
+		double shift_by = 0;
+		if(s!=0)
+		{
+			shift_by = req.end_points[priv_num-1];
+		}
 
 		for (int i = priv_num; i < req.spline_groups[s]; i++)
 		{
-			temp_holder_s.a = req.orient_coefs[i].spline[0] * neg_x;
-			temp_holder_s.b = req.orient_coefs[i].spline[1] * neg_x;
-			temp_holder_s.c = req.orient_coefs[i].spline[2] * neg_x;
-			temp_holder_s.d = req.orient_coefs[i].spline[3] * neg_x;
-			temp_holder_s.e = req.orient_coefs[i].spline[4] * neg_x;
-			temp_holder_s.f = req.orient_coefs[i].spline[5] * neg_x;
 			ROS_INFO_STREAM("orient_coefs[" << i << "].spline=" << req.orient_coefs[i].spline[0] << " " <<
 					req.orient_coefs[i].spline[1] << " " <<
 					req.orient_coefs[i].spline[2] << " " <<
@@ -76,16 +75,15 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 					req.orient_coefs[i].spline[4] << " " <<
 					req.orient_coefs[i].spline[5]);
 
-			orient_splines.push_back(temp_holder_s);
-		}
-		for (int i = priv_num; i < req.spline_groups[s]; i++)
-		{
-			temp_holder_s.a = req.x_coefs[i].spline[0] * neg_x;
-			temp_holder_s.b = req.x_coefs[i].spline[1] * neg_x;
-			temp_holder_s.c = req.x_coefs[i].spline[2] * neg_x;
-			temp_holder_s.d = req.x_coefs[i].spline[3] * neg_x;
-			temp_holder_s.e = req.x_coefs[i].spline[4] * neg_x;
-			temp_holder_s.f = req.x_coefs[i].spline[5] * neg_x;
+			orient_splines.push_back(swerve_profile::spline_coefs(
+						req.orient_coefs[i].spline[0] * neg_x,
+						req.orient_coefs[i].spline[1] * neg_x,
+						req.orient_coefs[i].spline[2] * neg_x,
+						req.orient_coefs[i].spline[3] * neg_x,
+						req.orient_coefs[i].spline[4] * neg_x,
+						req.orient_coefs[i].spline[5] * neg_x));
+			ROS_INFO_STREAM("orient_coefs[" << i << "].spline=" << orient_splines.back());
+
 			ROS_INFO_STREAM("x_coefs[" << i << "].spline=" << req.x_coefs[i].spline[0] << " " <<
 					req.x_coefs[i].spline[1] << " " <<
 					req.x_coefs[i].spline[2] << " " <<
@@ -93,16 +91,15 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 					req.x_coefs[i].spline[4] << " " <<
 					req.x_coefs[i].spline[5]);
 
-			x_splines.push_back(temp_holder_s);
-		}
-		for (int i = priv_num; i < req.spline_groups[s]; i++)
-		{
-			temp_holder_s.a = req.y_coefs[i].spline[0];
-			temp_holder_s.b = req.y_coefs[i].spline[1];
-			temp_holder_s.c = req.y_coefs[i].spline[2];
-			temp_holder_s.d = req.y_coefs[i].spline[3];
-			temp_holder_s.e = req.y_coefs[i].spline[4];
-			temp_holder_s.f = req.y_coefs[i].spline[5];
+			x_splines.push_back(swerve_profile::spline_coefs(
+						req.x_coefs[i].spline[0] * neg_x,
+						req.x_coefs[i].spline[1] * neg_x,
+						req.x_coefs[i].spline[2] * neg_x,
+						req.x_coefs[i].spline[3] * neg_x,
+						req.x_coefs[i].spline[4] * neg_x,
+						req.x_coefs[i].spline[5] * neg_x));
+			ROS_INFO_STREAM("x_coefs[" << i << "].spline=" << x_splines.back());
+
 			ROS_INFO_STREAM("y_coefs[" << i << "].spline=" << req.y_coefs[i].spline[0] << " " <<
 					req.y_coefs[i].spline[1] << " " <<
 					req.y_coefs[i].spline[2] << " " <<
@@ -110,21 +107,21 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 					req.y_coefs[i].spline[4] << " " <<
 					req.y_coefs[i].spline[5]);
 
-			y_splines.push_back(temp_holder_s);
-		}
-		std::vector<double> end_points_holder;
-		double shift_by = 0;
-		if(s!=0)
-		{
-			shift_by = req.end_points[priv_num-1];
-		}
-		for (int i = priv_num; i < req.spline_groups[s]; i++)
-		{
+			y_splines.push_back(swerve_profile::spline_coefs(
+						req.y_coefs[i].spline[0],
+						req.y_coefs[i].spline[1],
+						req.y_coefs[i].spline[2],
+						req.y_coefs[i].spline[3],
+						req.y_coefs[i].spline[4],
+						req.y_coefs[i].spline[5]));
+			ROS_INFO_STREAM("y_coefs[" << i << "].spline=" << y_splines.back());
+
 			ROS_INFO_STREAM("hrer: " << req.end_points[i] - shift_by<< " r_s: " <<  req.spline_groups[s] <<  " s: "<< s);
 			end_points_holder.push_back(req.end_points[i] - shift_by);
 		}
-		double t_shift = req.t_shift[s];
-		bool flip_dirc = req.flip[s];	
+
+		const double t_shift = req.t_shift[s];
+		const bool flip_dirc = req.flip[s];	
 	
 		swerve_point_generator::GenerateSwerveProfile::Response srv_msg; //TODO FIX THIS, HACK
 		//srv_msg.points.resize(0);
@@ -173,7 +170,7 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 				return false;
 			}
 		}
-		std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions  = swerve_math->motorOutputs({srv_msg.points[1].positions[0] - srv_msg.points[0].positions[0], srv_msg.points[1].positions[1] - srv_msg.points[0].positions[1]}, srv_msg.points[1].positions[2] - srv_msg.points[0].positions[2], srv_msg.points[1].positions[2], false, holder, false, curPos, false);
+		const std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions  = swerve_math->motorOutputs({srv_msg.points[1].positions[0] - srv_msg.points[0].positions[0], srv_msg.points[1].positions[1] - srv_msg.points[0].positions[1]}, srv_msg.points[1].positions[2] - srv_msg.points[0].positions[2], srv_msg.points[1].positions[2], false, holder, false, curPos, false);
 		//TODO: angles on the velocity array below are superfluous, could remove
 		//std::array<Eigen::Vector2d, WHEELCOUNT> angles_velocities  = swerve_math->motorOutputs({srv_msg.points[1].velocities[0], srv_msg.points[1].velocities[1]}, -srv_msg.points[1].velocities[2], /*srv_msg.points[1].positions[2]*/ M_PI / 2.0, false, holder, false, curPos, false);
 		for (size_t k = 0; k < WHEELCOUNT; k++)
@@ -224,7 +221,7 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		}		
 		for (int i = 0; i < point_count - k_p; i++)
 		{
-			std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions  = swerve_math->motorOutputs({srv_msg.points[i + 1].positions[0] - srv_msg.points[i].positions[0], srv_msg.points[i + 1].positions[1] - srv_msg.points[i].positions[1]}, srv_msg.points[i + 1].positions[2] - srv_msg.points[i].positions[2], srv_msg.points[i + 1].positions[2], false, holder, false, curPos, false);
+			const std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions  = swerve_math->motorOutputs({srv_msg.points[i + 1].positions[0] - srv_msg.points[i].positions[0], srv_msg.points[i + 1].positions[1] - srv_msg.points[i].positions[1]}, srv_msg.points[i + 1].positions[2] - srv_msg.points[i].positions[2], srv_msg.points[i + 1].positions[2], false, holder, false, curPos, false);
 			//TODO: angles on the velocity array below are superfluous, could remove
 			std::array<Eigen::Vector2d, WHEELCOUNT> angles_velocities  = swerve_math->motorOutputs({srv_msg.points[i + 1].velocities[0], srv_msg.points[i + 1].velocities[1]}, srv_msg.points[i + 1].velocities[2], srv_msg.points[i + 1].positions[2], false, holder, false, curPos, false);
 			for (size_t k = 0; k < WHEELCOUNT; k++)

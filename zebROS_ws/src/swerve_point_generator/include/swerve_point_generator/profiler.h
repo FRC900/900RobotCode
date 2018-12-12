@@ -15,15 +15,17 @@ namespace swerve_profile
 struct path_point
 {
 	double radius;
-	Eigen::Vector2d pos;
+	double pos_x;
+	double pos_y;
 	double path_angle;
 	//double path_angle_deriv;
 	double orientation;
 	double angular_velocity;
 	double angular_accel;
 	path_point(void):
-		radius(1000000000000000000.0),
-		pos({0,0}),
+		radius(1000000000000000000.0), //TODO : make a constant for "infinite radius" and use it throughout the code
+		pos_x(0),
+		pos_y(0),
 		path_angle(0),
 		orientation(0),
 		angular_velocity(0),
@@ -64,8 +66,21 @@ struct spline_coefs
 	{
 		return spline_coefs(0, 5 * a, 4 * b, 3 * c, 2 * d, 1 * e);
 	}
+
+	void print(std::ostream &os) const
+	{
+		os << "a:" << a << " b:" << b << " c:" << c << " d:" << d << " e:" << e << " f:" << f;
+	}
 };
 
+// Add operator << which calls print() for all classes which
+// have that method defined
+template<class T>
+auto operator<<(std::ostream& os, const T& t) -> decltype(t.print(os), os)
+{
+    t.print(os);
+    return os;
+}
 
 class swerve_profiler
 {
@@ -101,7 +116,7 @@ class swerve_profiler
 
 		//Creates cubic spline interpolation
 		tk::spline parametrize_spline(const std::vector<spline_coefs> &x_spline,
-		const std::vector<spline_coefs> &y_spline,std::vector<double> end_points, 
+		const std::vector<spline_coefs> &y_spline,const std::vector<double> &end_points, 
 		double &total_arc_length,std::vector<double> &dtds_by_spline, 
 		std::vector<double> &arc_length_by_spline);
 
