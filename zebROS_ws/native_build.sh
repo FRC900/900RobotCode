@@ -8,7 +8,7 @@ if [ -z $ROS_ROOT ]; then
 elif [[ ! $ROS_ROOT = "/opt/ros/kinetic/share/ros" ]]; then
 	echo "ROS is not configured for a native build (maybe set up for a cross build instead?)"
 	echo "Run ./native_build.sh in a new terminal window"
-	exit 0
+	exit 1
 fi
 
 
