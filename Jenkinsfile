@@ -62,6 +62,7 @@ node {
                         source devel/setup.bash
                         catkin_make run_tests
                     '''
+		    sh "catkin_make roslint 2> lint.txt"
                     
                     // This script forces an exit 0 because the catkin test
                     // results will set the exit code to 1 if there are any failing
@@ -112,11 +113,11 @@ node {
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
         deleteDir()
         notifySlack(currentBuild.result, full_commit, author, failed_stage)
+	//publish reports
 
     } // end finally
     
 } // end Node
-
 
 def notifySlack(
     String buildStatus = 'STARTED',
@@ -146,8 +147,6 @@ def notifySlack(
     org = tokens[tokens.size()-3]
     repo = tokens[tokens.size()-2]
     branch = tokens[tokens.size()-1]
-
-    
 
     if (buildStatus != 'FAILURE') {
 

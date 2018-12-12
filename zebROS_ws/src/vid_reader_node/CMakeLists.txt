@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
      roscpp
      sensor_msgs
      cv_bridge
+     roslint
 )
 find_package(OpenCV REQUIRED)
 find_package(Boost COMPONENTS filesystem system serialization iostreams thread REQUIRED)
@@ -229,4 +230,5 @@ target_link_libraries(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+   roslint_cpp()
  endif()
