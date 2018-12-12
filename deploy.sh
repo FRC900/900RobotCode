@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+#set -e
 set -o pipefail
 
 # IP addresses of the roboRIO and Jetson to deploy code on.
@@ -15,16 +15,7 @@ INSTALL_ENV=dev
 # Whether we're doing a build or just updating symlinks.
 UPDATE_LINKS_ONLY=0
 
-# Location of the code.
-LOCAL_CLONE_LOCATION=$HOME/2018Offseason
-ROS_CODE_LOCATION=$LOCAL_CLONE_LOCATION/zebROS_ws
-RSYNC_OPTIONS="--delete"
-
-usage() {
-    echo "Usage: $0 [-d|-p]"
-    exit 1
-}
-
+# Location of the code == location of deploy script
 # Get directory where the deploy.sh script is located
 # https://stackoverflow.com/questions/59895/getting-the-source-directory-of-a-bash-script-from-within
 SOURCE="${BASH_SOURCE[0]}"
@@ -33,8 +24,15 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
   SOURCE="$(readlink "$SOURCE")"
   [[ $SOURCE != /* ]] && SOURCE="$THIS_DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 done
-THIS_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null && pwd )"
-echo "Running from $THIS_DIR"
+LOCAL_CLONE_LOCATION="$( cd -P "$( dirname "$SOURCE" )" >/dev/null && pwd )"
+ROS_CODE_LOCATION=$LOCAL_CLONE_LOCATION/zebROS_ws
+RSYNC_OPTIONS="--delete"
+
+usage() {
+    echo "Usage: $0 [-d|-p]"
+    exit 1
+}
+
 
 # Command line argument parsing.
 POSITIONAL=()
@@ -169,11 +167,11 @@ echo "Synchronization complete"
 
 # Run local roboRIO cross build as one process.
 # Then synchronize cross build products to roboRIO.
-$THIS_DIR/deploy_rio_build.sh $ROS_CODE_LOCATION $INSTALL_ENV $ROBORIO_ADDR $RIO_INSTALL_LOCATION &
+$LOCAL_CLONE_LOCATION/deploy_rio_build.sh $ROS_CODE_LOCATION $INSTALL_ENV $ROBORIO_ADDR $RIO_INSTALL_LOCATION &
 RIO_BUILD_PROCESS=$!
 
 # Run Jetson native build(s) as a separate process(es).
-JETSON_BUILD_PROCESS=()
+JETSON_BUILD_PROCESSES=()
 for i in "${JETSON_ADDR[@]}"
 do
 	(echo "Starting Jetson $i native build" && \
@@ -181,25 +179,44 @@ do
 		source /opt/ros/kinetic/setup.bash && \
 		catkin_make" && \
 		echo "Jetson $i native build complete") &
-	JETSON_BUILD_PROCESS+=($1)
+	JETSON_BUILD_PROCESSES+=($!)
 done
 
+# Capture return code from Rio build processes
+echo "Waiting for RIO_BUILD_PROCESS $RIO_BUILD_PROCESS"
 wait $RIO_BUILD_PROCESS
+RIO_RC=$?
+echo " ... RIO_BUILD_PROCESS $RIO_BUILD_PROCESS returned $RIO_RC"
 
-if [ $! -ne 0] ; then
+# Capture return code from Jetson build process(es)
+JETSON_RCS=()
+for i in "${JETSON_BUILD_PROCESSES[@]}"
+do
+	echo "Waiting for JETSON_BUILD_PROCESS $i"
+	wait $i
+	JETSON_RCS+=($?)
+	echo " ... JETSON_BUILD_PROCESS $i returned $?"
+done
+
+# Print diagnostic info after all builds / deploys
+# have run their course to make errors easier to see
+EXIT_FAIL=0
+if [ $RIO_RC -ne 0 ] ; then
 	echo "Rio build/deploy failed"
-	exit 1
+	EXIT_FAIL=1
 fi
 
-for i in "${JETSON_BUILD_PROCESS[@]}"
+for i in "${JETSON_RCS[@]}"
 do
-	wait $JETSON_BUILD_PROCESS
-
-	if [ $! -ne 0] ; then
-		echo "Jetson build failed"
-		exit 1
+	if [ $i -ne 0 ] ; then
+		echo "Jetson build/deploy failed"
+		EXIT_FAIL=1
 	fi
 done
+
+if [ $EXIT_FAIL -ne 0 ] ; then
+	exit 1
+fi
 
 update_links
 echo "FINISHED SUCCESSFULLY"
