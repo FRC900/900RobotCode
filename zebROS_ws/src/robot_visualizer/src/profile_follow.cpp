@@ -18,7 +18,6 @@ double x_offset = 0.5955;
 double y_offset = 4.59;
 double theta_offset = M_PI/2;
 
-
 int main(int argc, char **argv) {
     ros::init(argc, argv, "profile_follow");
     ros::NodeHandle n;
@@ -39,17 +38,15 @@ int main(int argc, char **argv) {
 		if(!(running && slot_run >= local_req.start_id)) {continue;}
 
 		//ROS_WARN("5");
-		
+
 		static int count = 0;
 		count++;
 		if(count % 50 == 0)
 		{
-			ROS_INFO_STREAM("running?: " << running << " slot: " << slot_run << " start_id: " << local_req.start_id << " traj size: " << local_req.joint_trajectories.size() ); 
+			ROS_INFO_STREAM("running?: " << running << " slot: " << slot_run << " start_id: " << local_req.start_id << " traj size: " << local_req.joint_trajectories.size() );
 		    ROS_INFO_STREAM(" indexing at: " << local_req.joint_trajectories[slot_run - local_req.start_id].points.size() - remaining_points[slot_run] - 1 << " remaining points: " << remaining_points[slot_run] << " total_points: " <<  local_req.joint_trajectories[slot_run - local_req.start_id].points.size());
 		}
 
-
-		
 		state_msg.x = x_offset + local_req.joint_trajectories[slot_run - local_req.start_id].points[local_req.joint_trajectories[slot_run - local_req.start_id].points.size() - remaining_points[slot_run] - 1 ].positions[1];
 
 		//ROS_WARN("1");
@@ -58,37 +55,33 @@ int main(int argc, char **argv) {
 
 		state_msg.theta = theta_offset + local_req.joint_trajectories[slot_run - local_req.start_id].points[local_req.joint_trajectories[slot_run - local_req.start_id].points.size() - remaining_points[slot_run] - 1 ].positions[2];
 		//ROS_WARN("3");
-		
 
-		state_msg.arm_pos = 1; 
+		state_msg.arm_pos = 1;
 		state_msg.intake_pos = 0; //TODO fix these
 
 		//ROS_WARN("4");
 		robot_state_pub.publish(state_msg);
-		
 	}
 };
 
-bool follow_service(robot_visualizer::ProfileFollower::Request &req, robot_visualizer::ProfileFollower::Response &res)
+bool follow_service(robot_visualizer::ProfileFollower::Request &req, robot_visualizer::ProfileFollower::Response &/*res*/)
 {
 	msg_recieved = true;
 	ROS_ERROR_STREAM("srv_Called_real with size: "<< req.joint_trajectories.size());
-	
-	local_req = req;	
+
+	local_req = req;
 	return true;
 }
 
 void talon_cb(const talon_state_controller::TalonState &msg)
 {
-
-
 	if(index_talon == -1)
-	{ 
+	{
 		for(size_t i = 0; i < msg.can_id.size(); i++)
 		{
 			ROS_INFO_STREAM("id: " << msg.can_id[i]);
 			if(msg.can_id[i] == 14)
-			{		
+			{
 				index_talon = i;
 				break;
 			}
@@ -104,6 +97,4 @@ void talon_cb(const talon_state_controller::TalonState &msg)
 	time_remaining = msg.custom_profile_status[index_talon].slotRunning;
 	remaining_points = msg.custom_profile_status[index_talon].remainingPoints;
 }
-
-
 

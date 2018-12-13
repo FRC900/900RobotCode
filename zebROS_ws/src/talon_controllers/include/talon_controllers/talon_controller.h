@@ -112,12 +112,13 @@ class TalonCloseLoopController :
 				return false;
 
 			pidf_service_ = n.advertiseService("pidf_slot", &TalonCloseLoopController::pidf_slot_service, this);
+			return true;
 		}
 
 	private:
 		ros::ServiceServer pidf_service_;
 		bool pidf_slot_service(talon_controllers::PidfSlot::Request  &req,
-		                       talon_controllers::PidfSlot::Response &res)
+		                       talon_controllers::PidfSlot::Response &/*res*/)
 		{
 			return this->talon_if_.setPIDFSlot(req.pidf_slot);
 		}
