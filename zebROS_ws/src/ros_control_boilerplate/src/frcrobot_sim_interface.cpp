@@ -918,13 +918,10 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		{
 			uint8_t period;
 			const hardware_interface::StatusFrame status_frame = static_cast<hardware_interface::StatusFrame>(i);
-			if (tc.statusFramePeriodChanged(status_frame, period))
+			if (tc.statusFramePeriodChanged(status_frame, period) && (period != 0))
 			{
-				if (period > 0)
-				{
-					ts.setStatusFramePeriod(status_frame, period);
-					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i);
-				}
+				ts.setStatusFramePeriod(status_frame, period);
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i << "=" << static_cast<int>(period) << "mSec");
 			}
 		}
 

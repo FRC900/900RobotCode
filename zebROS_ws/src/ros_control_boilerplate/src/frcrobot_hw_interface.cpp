@@ -629,9 +629,9 @@ void FRCRobotHWInterface::init(void)
 		can_talons_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_talon_srx_can_ids_[i]));
 		can_talons_[i]->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0);
 		//can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_13_Base_PIDF0, 20, 10);
-		can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_10_MotionMagic, 20, 10);
-		talon_state_[i].setStatusFramePeriod(hardware_interface::Status_10_MotionMagic, 20);
-		//TODO: test above sketchy change
+		//can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_10_MotionMagic, 20, 10);
+		//talon_state_[i].setStatusFramePeriod(hardware_interface::Status_10_MotionMagic, 20);
+
 		//safeTalonCall(can_talons_[i]->ClearStickyFaults(timeoutMs), "ClearStickyFaults()");
 		// TODO : if the talon doesn't initialize - maybe known
 		// by -1 from firmware version read - somehow tag
@@ -1684,17 +1684,14 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		{
 			uint8_t period;
 			const hardware_interface::StatusFrame status_frame = static_cast<hardware_interface::StatusFrame>(i);
-			if (tc.statusFramePeriodChanged(status_frame, period))
+			if (tc.statusFramePeriodChanged(status_frame, period) && (period != 0))
 			{
-				if (period > 0)
+				ctre::phoenix::motorcontrol::StatusFrameEnhanced status_frame_enhanced;
+				if (convertStatusFrame(status_frame, status_frame_enhanced))
 				{
-					ctre::phoenix::motorcontrol::StatusFrameEnhanced status_frame_enhanced;
-					if (convertStatusFrame(status_frame, status_frame_enhanced))
-					{
-						talon->SetStatusFramePeriod(status_frame_enhanced, period);
-						ts.setStatusFramePeriod(status_frame, period);
-						ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i);
-					}
+					talon->SetStatusFramePeriod(status_frame_enhanced, period);
+					ts.setStatusFramePeriod(status_frame, period);
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i << "=" << static_cast<int>(period) << "mSec");
 				}
 			}
 		}
