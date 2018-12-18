@@ -99,6 +99,9 @@ public:
 
 		ros::Duration time_to_run = ros::Duration(goal->time_to_run); //TODO: make this an actual thing
 
+                ros::spinOnce();
+
+
 		switch(goal->goal_index) {
 		case 0 : //user input data
 		{
@@ -122,6 +125,7 @@ public:
 		}
 		case 1 : //cube data
 		{
+                        ROS_INFO_STREAM("in callback, cube_location.size = " << cube_location.location.size());
 			if (cube_location.location.size() == 0)
 			{
 				ROS_ERROR_STREAM("NO CUBES FOUND - generateCoefs");
@@ -249,7 +253,7 @@ int main(int argc, char** argv)
 	swerve_controller = n.serviceClient<talon_swerve_drive_controller::MotionProfilePoints>("/frcrobot/swerve_drive_controller/run_profile", false, service_connection_header);
 	spline_gen = n.serviceClient<base_trajectory::GenerateSpline>("/base_trajectory/spline_gen", false, service_connection_header);
 	VisualizeService = n.serviceClient<robot_visualizer::ProfileFollower>("/frcrobot/visualize_auto", false, service_connection_header);
-	cube_sub = n.subscribe("/cube_detect/cube_detect_msg", 10, &cubeCallback);
+	cube_sub = n.subscribe("/frcrobot/cube_detection_node/cube_detect_msg", 10, &cubeCallback);
 	talon_sub = n.subscribe("/frcrobot/talon_states", 10, talonStateCallback);
 
 	ros::spin();
