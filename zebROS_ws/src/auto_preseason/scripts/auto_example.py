@@ -50,7 +50,7 @@ class TestHasCube(smach.State):
             self.streaktype = currentBreak
     def execute(self, userdata):
         while self.streaklen < 10:
-            rospy.loginfo("testhascube line break reports: "+str(self.streaktype)+" for "str(self.streaklen)+" times in a row")
+            rospy.loginfo("testhascube line break reports: "+str(self.streaktype)+" for "+str(self.streaklen)+" times in a row")
         if self.streaktype: #line_break_sensor:
             rospy.sleep(3.0)
             return 'testTrue'
@@ -295,7 +295,7 @@ def main():
                                 transitions={'succeeded':'PathToCube', 'aborted':'Exit', 'preempted':'Exit'})
         smach.StateMachine.add('Party',
                                 SimpleActionState('/frcrobot/party_as',
-                                            SingleExitAction),
+                                            PathAction, goal=goalTurnExchange), #placeholder goal
                                 transitions={'succeeded':'Exit', 'aborted':'Exit', 'preempted':'Exit'})
 
     # Create and start the introspection server
