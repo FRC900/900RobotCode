@@ -10,6 +10,7 @@ from path_to_goal.msg import *
 from actionlib_msgs.msg import GoalStatus
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState
+from talon_state_controller.msg import TalonState
 
 class Init(smach.State):
     def __init__(self):
