@@ -23,7 +23,8 @@ class Init(smach.State):
 # define state Bar
 class TestHasCube(smach.State):
     streaklen = 0 #how many times has it done same output in a row
-    streaktype = True #what kind of streak is it on
+    streaktype = True #what kind of streak is it on, true means has cube
+    sensor_index = -1
 
     def __init__(self):
         smach.State.__init__(self, outcomes=['testTrue', 'testFalse'])
@@ -34,23 +35,23 @@ class TestHasCube(smach.State):
         self.test_result = "default"  #initialize variable to store received msgs
         
     def callback(self,msg):
-        sensor_index = 0
+        if self.sensor_index == -1:
+            for i in range(len(msg.position)):
+                if msg.name[i] == "intake_line_break":
+                    self.sensor_index = i
 
-        for i in range(len(msg.position)):
-            if msg.name[i] == "intake_line_break":
-                sensor_index = i
+        currentBreak = msg.position[sensor_index]==1.0
 
-        self.test_result = msg.position[sensor_index]
-
-        if self.streaktype == (self.test_result==1.0):
+        if self.streaktype == currentBreak:
             self.streaklen += 1
         else:
             self.streaklen = 0
-            self.streaktype = self.test_result==1.0
+            self.streaktype = currentBreak
     def execute(self, userdata):
         while self.streaklen < 10:
-            rospy.loginfo("testhascube "+str(self.test_result)+" "+str(self.streaktype)+str(self.streaklen))
-        if self.test_result == 1.0: #line_break_sensor:
+            rospy.loginfo("testhascube line break reports: "+str(self.streaktype)+" for "str(self.streaklen)+" times in a row")
+        if self.streaktype: #line_break_sensor:
+            rospy.sleep(3.0)
             return 'testTrue'
         else:
             return 'testFalse'
