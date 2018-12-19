@@ -117,7 +117,20 @@ int32[]   motion_profile_status_profile_slot_select0
 int32[]   motion_profile_status_profile_slot_select1
 string[]  motion_profile_status_output_enable
 int32[]   motion_profile_time_dur_ms
-float64[] motion_profile_control_frame_period
+uint8[]   status_1_general_period
+uint8[]   status_2_feedback0_period
+uint8[]   status_3_quadrature_period
+uint8[]   status_4_aintempvbat_period
+uint8[]   status_6_misc_period
+uint8[]   status_7_commstatus_period
+uint8[]   status_8_pulsewidth_period
+uint8[]   status_9_motprofbuffer_period
+uint8[]   status_10_motionmagic_period
+uint8[]   status_11_uartgadgeteer_period
+uint8[]   status_12_feedback1_period
+uint8[]   status_13_base_pidf0_period
+uint8[]   status_14_turn_pidf1_period
+uint8[]   status_15_firmwareapistatus_period
 float64[] motion_profile_trajectory_period
 string[]  faults
 string[]  sticky_faults
@@ -125,4 +138,3 @@ float64[] conversion_factor
 talon_state_controller/CustomProfileStatus[] custom_profile_status
 bool[]    water_game
 
-#TODO: add custom profile status struct by breaking it up etc.

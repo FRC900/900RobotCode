@@ -114,7 +114,7 @@ enum StatusFrame
 	Status_12_Feedback1,
 	Status_13_Base_PIDF0,
 	Status_14_Turn_PIDF1,
-	Status_15_FirmareApiStatus,
+	Status_15_FirmwareApiStatus,
 	Status_Last
 };
 
@@ -282,7 +282,6 @@ class TalonHWState
 			// motion profiling
 			motion_profile_top_level_buffer_count_(0),
 			motion_profile_top_level_buffer_full_(false),
-			motion_control_frame_period_(20), // Guess at 50Hz?
 			motion_profile_trajectory_period_(0),
 
 			// faults
@@ -291,20 +290,20 @@ class TalonHWState
 
 			conversion_factor_(1.0)
 		{
-			status_frame_periods_[Status_1_General] = 10.;
-			status_frame_periods_[Status_2_Feedback0] = 20.;
-			status_frame_periods_[Status_3_Quadrature] = 160.;
-			status_frame_periods_[Status_4_AinTempVbat] = 160.;
-			status_frame_periods_[Status_6_Misc] = -1;
-			status_frame_periods_[Status_7_CommStatus] = -1;
-			status_frame_periods_[Status_8_PulseWidth] = 160.;
-			status_frame_periods_[Status_9_MotProfBuffer] = -1;
-			status_frame_periods_[Status_10_MotionMagic] = 160.;
-			status_frame_periods_[Status_11_UartGadgeteer] = -1;
-			status_frame_periods_[Status_12_Feedback1] = -1;
-			status_frame_periods_[Status_13_Base_PIDF0] =160. ;
-			status_frame_periods_[Status_14_Turn_PIDF1] = -1;
-			status_frame_periods_[Status_15_FirmareApiStatus] = -1;
+			status_frame_periods_[Status_1_General] = 10;
+			status_frame_periods_[Status_2_Feedback0] = 20;
+			status_frame_periods_[Status_3_Quadrature] = 160;
+			status_frame_periods_[Status_4_AinTempVbat] = 160;
+			status_frame_periods_[Status_6_Misc] = 0;
+			status_frame_periods_[Status_7_CommStatus] = 0;
+			status_frame_periods_[Status_8_PulseWidth] = 160;
+			status_frame_periods_[Status_9_MotProfBuffer] = 0;
+			status_frame_periods_[Status_10_MotionMagic] = 160;
+			status_frame_periods_[Status_11_UartGadgeteer] = 0;
+			status_frame_periods_[Status_12_Feedback1] = 0;
+			status_frame_periods_[Status_13_Base_PIDF0] = 160;
+			status_frame_periods_[Status_14_Turn_PIDF1] = 0;
+			status_frame_periods_[Status_15_FirmwareApiStatus] = 0;
 		}
 
 		double getSetpoint(void) const
@@ -539,7 +538,7 @@ class TalonHWState
 		{
 			return feedback_coefficient_;
 		}
-		int getEncoderTicksPerRotation(void) 	const
+		int getEncoderTicksPerRotation(void) const
 		{
 			return encoder_ticks_per_rotation_;
 		}
@@ -559,7 +558,7 @@ class TalonHWState
 		void setConversionFactor(double conversion_factor)
 		{
 			conversion_factor_ = conversion_factor;
-		}		
+		}
 		void setSetpoint(double setpoint)
 		{
 			setpoint_ = setpoint;
@@ -844,14 +843,24 @@ class TalonHWState
 		{
 			return motion_profile_status_;
 		}
-		void setMotionControlFramePeriod(int msec)
+
+		void setStatusFramePeriod(StatusFrame status_frame, uint8_t period)
 		{
-			motion_control_frame_period_ = msec;
+			if ((status_frame >= Status_1_General) && (status_frame < Status_Last))
+				status_frame_periods_[status_frame] = period;
+			else
+				ROS_ERROR("Invalid status_frame value passed to TalonHWState::setStatusFramePeriod()");
 		}
-		int getMotionControlFramePeriod(void) const
+
+		uint8_t getStatusFramePeriod(StatusFrame status_frame) const
 		{
-			return motion_control_frame_period_;
+			if ((status_frame >= Status_1_General) && (status_frame < Status_Last))
+				return status_frame_periods_[status_frame];
+
+			ROS_ERROR("Invalid status_frame value passed to TalonHWState::setStatusFramePeriod()");
+			return 0;
 		}
+
 		void setMotionProfileTrajectoryPeriod(int msec)
 		{
 			motion_profile_trajectory_period_ = msec;
@@ -864,10 +873,10 @@ class TalonHWState
 		{
 			return custom_profile_status_;
 		}
-		void setCustomProfileStatus(const CustomProfileStatus &status) 
+		void setCustomProfileStatus(const CustomProfileStatus &status)
 		{
 			custom_profile_status_ = status;
-		}		
+		}
 		void setPidfP(double pidf_p, size_t index)
 		{
 			if ((index == 0) || (index == 1))
@@ -1169,10 +1178,9 @@ class TalonHWState
 		bool motion_profile_top_level_buffer_full_;
 		MotionProfileStatus motion_profile_status_;
 		CustomProfileStatus custom_profile_status_;
-		int motion_control_frame_period_;
 		int motion_profile_trajectory_period_;
 
-		std::array<double, Status_Last> status_frame_periods_;
+		std::array<uint8_t, Status_Last> status_frame_periods_;
 
 		unsigned int faults_;
 		unsigned int sticky_faults_;

@@ -15,20 +15,21 @@ bool RobotControllerStateController::init(hardware_interface::RobotControllerSta
 	// get all joint names from the hardware interface,
 	// hope there is only one defined
 	std::vector<std::string> rc_names = hw->getNames();
-	if (rc_names.size() > 1) 
+	if (rc_names.size() > 1)
 	{
 		ROS_ERROR_STREAM("Cannot initialize multiple RobotControllers.");
-		return false; 
+		return false;
 	}
-	else if (rc_names.size() < 1) 
+	else if (rc_names.size() < 1)
 	{
 		ROS_ERROR_STREAM("Cannot initialize zero RobotControllers.");
-		return false; 
+		return false;
 	}
 
 	rc_state_ = hw->getHandle(rc_names[0]);
 
 	realtime_pub_.reset(new realtime_tools::RealtimePublisher<robot_controller_state_controller::RobotControllerData>(root_nh, "robot_controller_states", 4));
+	return true;
 }
 
 void RobotControllerStateController::starting(const ros::Time &time)
@@ -81,7 +82,7 @@ void RobotControllerStateController::update(const ros::Time &time, const ros::Du
 	}
 }
 
-void RobotControllerStateController::stopping(const ros::Time & ) 
+void RobotControllerStateController::stopping(const ros::Time & )
 {
 }
 

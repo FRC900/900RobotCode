@@ -16,7 +16,7 @@ namespace trajectory_interface
 template<class ScalarType>
 class MyQuinticSplineSegment: public QuinticSplineSegment<ScalarType>
 {
-	public: 
+	public:
 		std::vector<typename QuinticSplineSegment<ScalarType>::SplineCoefficients> getCoefs(void) const
 		{
 			return this->coefs_;
@@ -81,8 +81,8 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	// It is needed as an initial condition for the
 	// robot to connect it to the first waypoint
 	//
-	// TODO : make the starting position and 
-	// velocity a variable passed in to the 
+	// TODO : make the starting position and
+	// velocity a variable passed in to the
 	// path generation request.
 
 
@@ -226,6 +226,7 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	out_msg.orient_coefs[1].spline[5] = -3.14159;
 	out_msg.end_points[1] = 1.0; // change me to 4 to match end time in yaml and break point_gen
 #endif
+	return true;
 }
 
 int main(int argc, char **argv)

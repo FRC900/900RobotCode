@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Record -->
+    <include file="$(find controller_node)/launch/record_offseason.launch"/>
+
+    <!-- Jetson 1 Sensors-->
+    <!-- <include file="$(find controller_node)/launch/sick_tim571_2050101.launch"/> -->
+    <!-- <include file="$(find controller_node)/launch/cube_detection.launch"/> -->
+    <include file="$(find controller_node)/launch/ar_zed.launch"/>
+    <include file="$(find ti_mmwave_rospkg)/launch/rviz_1443_3d.launch"/>
+
+    <!--Heartbeat Node -->
+    <group ns="jetson_1">
+        <node name="heartbeat_jetson_1" pkg="heartbeat_node" type="heartbeat" output="screen" />
+    </group>
+    
+</launch>

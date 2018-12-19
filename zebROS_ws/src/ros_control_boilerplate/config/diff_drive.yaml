@@ -48,17 +48,13 @@ talon_state_controller:
 # speed/effort paradigm)
 joint_state_controller:
    type:         joint_state_controller/JointStateController
-   publish_rate: 20
-
-pdp_state_controller:
-   type:         pdp_state_controller/PDPStateController
-   publish_rate: 20
+   publish_rate: 50
 
 diff_drive_controller:
     type:       talon_diff_drive_controller/TalonDiffDriveController
-    left_wheel: ['left_drive_joint', 'left_follow_joint']
-    right_wheel: ['right_drive_joint', 'right_follow_joint']
-    publish_rate: 20
+    left_wheel: ['left_drive_joint']
+    right_wheel: ['right_drive_joint']
+    publish_rate: 50
     pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
     twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
     # fix me
@@ -72,9 +68,6 @@ diff_drive_controller:
             - {p: 0.3, i: 0, d: 0, f: 0.49, i_zone: 0}
             - {p: 2, i: 0, d: 0, f: 0, i_zone: 0}
         sensor_phase: True
-    left_follow_joint:
-        joint: left_follower
-        sensor_phase: True
     right_drive_joint:
         joint: right_drive
         close_loop_values:
@@ -82,7 +75,14 @@ diff_drive_controller:
             - {p: 2, i: 0, d: 0, f: 0, i_zone: 0}
         invert_output: True
         sensor_phase: True
-    right_follow_joint:
-        joint: right_follower
-        invert_output: True # Same as right drive
-        sensor_phase: True
+
+left_follower_controller:
+    type: talon_controllers/TalonFollowerController
+    joint: left_follower
+    follow_joint: left_drive
+
+right_follower_controller:
+    type: talon_controllers/TalonFollowerController
+    joint: right_follower
+    follow_joint: right_drive
+    invert_output: True # Same as right drive

@@ -628,8 +628,10 @@ void FRCRobotHWInterface::init(void)
 							  " as CAN id " << can_talon_srx_can_ids_[i]);
 		can_talons_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_talon_srx_can_ids_[i]));
 		can_talons_[i]->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0);
-		can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_13_Base_PIDF0, 10, 50);
-		//TODO: test above sketchy change
+		//can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_13_Base_PIDF0, 20, 10);
+		//can_talons_[i]->SetStatusFramePeriod(ctre::phoenix::motorcontrol::StatusFrameEnhanced::Status_10_MotionMagic, 20, 10);
+		//talon_state_[i].setStatusFramePeriod(hardware_interface::Status_10_MotionMagic, 20);
+
 		//safeTalonCall(can_talons_[i]->ClearStickyFaults(timeoutMs), "ClearStickyFaults()");
 		// TODO : if the talon doesn't initialize - maybe known
 		// by -1 from firmware version read - somehow tag
@@ -1678,6 +1680,22 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" peak current");
 		}
 
+		for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
+		{
+			uint8_t period;
+			const hardware_interface::StatusFrame status_frame = static_cast<hardware_interface::StatusFrame>(i);
+			if (tc.statusFramePeriodChanged(status_frame, period) && (period != 0))
+			{
+				ctre::phoenix::motorcontrol::StatusFrameEnhanced status_frame_enhanced;
+				if (convertStatusFrame(status_frame, status_frame_enhanced))
+				{
+					talon->SetStatusFramePeriod(status_frame_enhanced, period);
+					ts.setStatusFramePeriod(status_frame, period);
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i << "=" << static_cast<int>(period) << "mSec");
+				}
+			}
+		}
+
 		if (motion_profile_mode)
 		{
 			double motion_cruise_velocity;
@@ -1694,19 +1712,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" cruise velocity / acceleration");
 			}
-
-#if 0 // DISABLE FOR NOW UNTIL WE CAN FIND A SAFE DEFAULT
-			// Do this before rest of motion profile stuff
-			// so it takes effect before starting a buffer?
-			int motion_control_frame_period;
-			if (tc.motionControlFramePeriodChanged(motion_control_frame_period))
-			{
-				//ROS_WARN("profile frame period");
-				safeTalonCall(talon->ChangeMotionControlFramePeriod(motion_control_frame_period),"ChangeMotionControlFramePeriod");
-				ts.setMotionControlFramePeriod(motion_control_frame_period);
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion control frame period");
-			}
-#endif
 
 			int motion_profile_trajectory_period;
 			if (tc.motionProfileTrajectoryPeriodChanged(motion_profile_trajectory_period))
@@ -1838,23 +1843,36 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				//ROS_WARN_STREAM("set at: " << ts.getCANID() << " new mode: " << b1 << " command_changed: " << b2 << " cmd: " << command);
 			}
 		}
-		else if (last_robot_enabled)
+		else
 		{
-			// If this is a switch from enabled to
-			// disabled, set talon command to current
-			// talon mode and then disable the talon.
-			// This will set up the talon to return
-			// to the current mode once the robot is
-			// re-enabled
-			// Need to first setMode to disabled because there's
-			// a check in setMode to see if requested_mode == current_mode
-			// If that check is true setMode does nothing - assumes
-			// that the mode won't need to be reset back to the
-			// same mode it is already in
-			tc.setMode(hardware_interface::TalonMode_Disabled);
-			tc.setMode(ts.getTalonMode());
-			talon->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0);
-			ts.setTalonMode(hardware_interface::TalonMode_Disabled);
+			// Update talon state with requested setpoints for
+			// debugging. Don't actually write them to the physical
+			// Talons until the robot is re-enabled, though.
+			double command;
+			hardware_interface::DemandType demand1_type_internal;
+			double demand1_value;
+
+			ts.setSetpoint(tc.get());
+			ts.setDemand1Type(tc.getDemand1Type());
+			ts.setDemand1Value(tc.getDemand1Value());
+			if (last_robot_enabled)
+			{
+				// If this is a switch from enabled to
+				// disabled, set talon command to current
+				// talon mode and then disable the talon.
+				// This will set up the talon to return
+				// to the current mode once the robot is
+				// re-enabled
+				// Need to first setMode to disabled because there's
+				// a check in setMode to see if requested_mode == current_mode
+				// If that check is true setMode does nothing - assumes
+				// that the mode won't need to be reset back to the
+				// same mode it is already in
+				tc.setMode(hardware_interface::TalonMode_Disabled);
+				tc.setMode(ts.getTalonMode());
+				talon->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0);
+				ts.setTalonMode(hardware_interface::TalonMode_Disabled);
+			}
 		}
 
 		if (tc.clearStickyFaultsChanged())
@@ -2182,4 +2200,57 @@ bool FRCRobotHWInterface::convertVelocityMeasurementPeriod(const hardware_interf
 	return true;
 }
 
-} // namespace 
+bool FRCRobotHWInterface::convertStatusFrame(const hardware_interface::StatusFrame input, ctre::phoenix::motorcontrol::StatusFrameEnhanced &output)
+{
+	switch (input)
+	{
+	case hardware_interface::Status_1_General:
+		output = ctre::phoenix::motorcontrol::Status_1_General;
+		break;
+	case hardware_interface::Status_2_Feedback0:
+		output = ctre::phoenix::motorcontrol::Status_2_Feedback0;
+		break;
+	case hardware_interface::Status_3_Quadrature:
+		output = ctre::phoenix::motorcontrol::Status_3_Quadrature;
+		break;
+	case hardware_interface::Status_4_AinTempVbat:
+		output = ctre::phoenix::motorcontrol::Status_4_AinTempVbat;
+		break;
+	case hardware_interface::Status_6_Misc:
+		output = ctre::phoenix::motorcontrol::Status_6_Misc;
+		break;
+	case hardware_interface::Status_7_CommStatus:
+		output = ctre::phoenix::motorcontrol::Status_7_CommStatus;
+		break;
+	case hardware_interface::Status_8_PulseWidth:
+		output = ctre::phoenix::motorcontrol::Status_8_PulseWidth;
+		break;
+	case hardware_interface::Status_9_MotProfBuffer:
+		output = ctre::phoenix::motorcontrol::Status_9_MotProfBuffer;
+		break;
+	case hardware_interface::Status_10_MotionMagic:
+		output = ctre::phoenix::motorcontrol::Status_10_MotionMagic;
+		break;
+	case hardware_interface::Status_11_UartGadgeteer:
+		output = ctre::phoenix::motorcontrol::Status_11_UartGadgeteer;
+		break;
+	case hardware_interface::Status_12_Feedback1:
+		output = ctre::phoenix::motorcontrol::Status_12_Feedback1;
+		break;
+	case hardware_interface::Status_13_Base_PIDF0:
+		output = ctre::phoenix::motorcontrol::Status_13_Base_PIDF0;
+		break;
+	case hardware_interface::Status_14_Turn_PIDF1:
+		output = ctre::phoenix::motorcontrol::Status_14_Turn_PIDF1;
+		break;
+	case hardware_interface::Status_15_FirmwareApiStatus:
+		output = ctre::phoenix::motorcontrol::Status_15_FirmareApiStatus;
+		break;
+	default:
+		ROS_ERROR("Invalid input in convertStatusFrame");
+		return false;
+	}
+	return true;
+}
+
+} // namespace

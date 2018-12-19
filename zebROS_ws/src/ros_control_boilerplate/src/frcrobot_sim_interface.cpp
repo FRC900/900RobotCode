@@ -637,6 +637,9 @@ void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
             if(digital_input_names_[i] == "intake_line_break_low") {
                 digital_input_state_[i] = (intake_low) ? 1 : 0; 
             }
+            if(digital_input_names_[i] == "intake_line_break") {
+                digital_input_state_[i] = (has_cube) ? 1 : 0;
+            }
         }    
 
     // Simulated state is updated in write, so just
@@ -911,6 +914,17 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			ts.setCurrentLimitEnable(enable);
 		}
 
+		for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
+		{
+			uint8_t period;
+			const hardware_interface::StatusFrame status_frame = static_cast<hardware_interface::StatusFrame>(i);
+			if (tc.statusFramePeriodChanged(status_frame, period) && (period != 0))
+			{
+				ts.setStatusFramePeriod(status_frame, period);
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i << "=" << static_cast<int>(period) << "mSec");
+			}
+		}
+
 		if (motion_profile_mode)
 		{
 			double motion_cruise_velocity;
@@ -920,15 +934,6 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" cruise velocity / acceleration");
 				ts.setMotionCruiseVelocity(motion_cruise_velocity);
 				ts.setMotionAcceleration(motion_acceleration);
-			}
-
-			// Do this before rest of motion profile stuff
-			// so it takes effect before starting a buffer?
-			int motion_control_frame_period;
-			if (tc.motionControlFramePeriodChanged(motion_control_frame_period))
-			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion control frame period");
-				ts.setMotionControlFramePeriod(motion_control_frame_period);
 			}
 
 			int motion_profile_trajectory_period;

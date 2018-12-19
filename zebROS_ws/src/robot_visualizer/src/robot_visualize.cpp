@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     ros::NodeHandle n;
 
     ros::NodeHandle n_params(n, "robot_visual");
-	
+
 	if (!n_params.getParam("width", width))
         ROS_ERROR("could not read width in robot_visualize");
 	if (!n_params.getParam("length", length))
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
 	if (!n_params.getParam("arm_length_intake", arm_length_intake))
         ROS_ERROR("could not read arm_length_intake in robot_visualize");
 	if (!n_params.getParam("arm_pivot_position", arm_pivot_position))
-        ROS_ERROR("Could not read arm_pivot_position in robot_visualize");	
+        ROS_ERROR("Could not read arm_pivot_position in robot_visualize");
 
 	arm_pub = n.advertise<geometry_msgs::PolygonStamped>("arm_state_viz", 10);
 	intake_pub = n.advertise<geometry_msgs::PolygonStamped>("intake_state_viz", 10);
@@ -65,9 +65,9 @@ int main(int argc, char **argv) {
 
 	intake_polys.resize(2);
 	arm_polys.resize(4);
-	
+
 	for(size_t i = 0; i < arm_polys.size(); i++)
-	{		
+	{
 		arm_polys[i].header.frame_id = "/robot_viz";
 		int size = i < 1 ? 5 : 9;
 		arm_polys[i].polygon.points.resize(size);
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 		arm_polys[i].polygon.points[size - 1].x = .0125;
 	}
 	for(size_t i = 0; i < intake_polys.size(); i++)
-	{		
+	{
 		intake_polys[i].header.frame_id = "/robot_viz";
 		intake_polys[i].polygon.points.resize(9);
 		intake_polys[i].polygon.points[0].y = intake_position;
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
 	}
 	robot_poly.header.frame_id = "/robot_viz";
 	robot_poly.polygon.points.resize(5);
-	
+
 	robot_poly.polygon.points[0].x = -width/2.0;
 	robot_poly.polygon.points[0].y = -length/2.0 + wheel_base_pos_offset;
 	robot_poly.polygon.points[0].z = 0.0;
@@ -116,8 +116,7 @@ int main(int argc, char **argv) {
 	arm_polys[0].polygon.points[2].y = arm_length_intake + arm_pivot_position;
 	arm_polys[0].polygon.points[3].x = .0125;
 	arm_polys[0].polygon.points[3].y = arm_length_intake + arm_pivot_position;
-	
-	
+
 	arm_polys[1].polygon.points[2].x = -.0125;
 	arm_polys[1].polygon.points[2].y = arm_length_place_forward + arm_pivot_position;
 	arm_polys[1].polygon.points[3].x = -cube / 2;
@@ -157,32 +156,31 @@ int main(int argc, char **argv) {
 	arm_polys[3].polygon.points[6].y = arm_length_place_switch + arm_pivot_position;
 	arm_polys[3].polygon.points[7].x = .0125;
 	arm_polys[3].polygon.points[7].y = arm_length_place_switch + arm_pivot_position;
-	
-	intake_polys[0].polygon.points[2].x = cos(intake_angle_in)*intake_length - intake_width / 2;	
-	intake_polys[0].polygon.points[2].y = sin(intake_angle_in)*intake_length + intake_position;	
-	intake_polys[0].polygon.points[3].x = cos(intake_angle_in)*intake_length - intake_width / 2 + .03;	
-	intake_polys[0].polygon.points[3].y = sin(intake_angle_in)*intake_length + intake_position;	
-	intake_polys[0].polygon.points[6].x = -cos(intake_angle_in)*intake_length + intake_width / 2 - .03;	
-	intake_polys[0].polygon.points[6].y = sin(intake_angle_in)*intake_length + intake_position;	
-	intake_polys[0].polygon.points[7].x = -cos(intake_angle_in)*intake_length + intake_width / 2;	
-	intake_polys[0].polygon.points[7].y = sin(intake_angle_in)*intake_length + intake_position;	
 
-	
-	intake_polys[1].polygon.points[2].x = cos(intake_angle_out)*intake_length - intake_width / 2;	
-	intake_polys[1].polygon.points[2].y = sin(intake_angle_out)*intake_length + intake_position;	
-	intake_polys[1].polygon.points[3].x = cos(intake_angle_out)*intake_length - intake_width / 2 + .03;	
-	intake_polys[1].polygon.points[3].y = sin(intake_angle_out)*intake_length + intake_position;	
-	intake_polys[1].polygon.points[6].x = -cos(intake_angle_out)*intake_length + intake_width / 2 - .03;	
-	intake_polys[1].polygon.points[6].y = sin(intake_angle_out)*intake_length + intake_position;	
-	intake_polys[1].polygon.points[7].x = -cos(intake_angle_out)*intake_length + intake_width / 2;	
-	intake_polys[1].polygon.points[7].y = sin(intake_angle_out)*intake_length + intake_position;	
+	intake_polys[0].polygon.points[2].x = cos(intake_angle_in)*intake_length - intake_width / 2;
+	intake_polys[0].polygon.points[2].y = sin(intake_angle_in)*intake_length + intake_position;
+	intake_polys[0].polygon.points[3].x = cos(intake_angle_in)*intake_length - intake_width / 2 + .03;
+	intake_polys[0].polygon.points[3].y = sin(intake_angle_in)*intake_length + intake_position;
+	intake_polys[0].polygon.points[6].x = -cos(intake_angle_in)*intake_length + intake_width / 2 - .03;
+	intake_polys[0].polygon.points[6].y = sin(intake_angle_in)*intake_length + intake_position;
+	intake_polys[0].polygon.points[7].x = -cos(intake_angle_in)*intake_length + intake_width / 2;
+	intake_polys[0].polygon.points[7].y = sin(intake_angle_in)*intake_length + intake_position;
+
+	intake_polys[1].polygon.points[2].x = cos(intake_angle_out)*intake_length - intake_width / 2;
+	intake_polys[1].polygon.points[2].y = sin(intake_angle_out)*intake_length + intake_position;
+	intake_polys[1].polygon.points[3].x = cos(intake_angle_out)*intake_length - intake_width / 2 + .03;
+	intake_polys[1].polygon.points[3].y = sin(intake_angle_out)*intake_length + intake_position;
+	intake_polys[1].polygon.points[6].x = -cos(intake_angle_out)*intake_length + intake_width / 2 - .03;
+	intake_polys[1].polygon.points[6].y = sin(intake_angle_out)*intake_length + intake_position;
+	intake_polys[1].polygon.points[7].x = -cos(intake_angle_out)*intake_length + intake_width / 2;
+	intake_polys[1].polygon.points[7].y = sin(intake_angle_out)*intake_length + intake_position;
 
 	ros::spin();
 }
 
 void rotate_polygon(geometry_msgs::Polygon &poly, double angle)
 {
-	for( int i = 0; i < poly.points.size(); i++)
+	for(size_t  i = 0; i < poly.points.size(); i++)
 	{
 		Eigen::Rotation2Dd r(angle);
 		Eigen::Vector2d point = {poly.points[i].x, poly.points[i].y};
@@ -194,18 +192,16 @@ void rotate_polygon(geometry_msgs::Polygon &poly, double angle)
 
 void translate_polygon(geometry_msgs::Polygon &poly, double x, double y)
 {
-	for( int i = 0; i < poly.points.size(); i++)
+	for(size_t i = 0; i < poly.points.size(); i++)
 	{
 		poly.points[i].x = poly.points[i].x + x;
 		poly.points[i].y = poly.points[i].y + y;
 	}
 }
 
-
-
 void plot_robot_cb(const robot_visualizer::RobotVisualizeState &robot_viz)
-{	
-	std::vector<geometry_msgs::PolygonStamped> pub_polys;	
+{
+	std::vector<geometry_msgs::PolygonStamped> pub_polys;
 	pub_polys.push_back(robot_poly);
 	pub_polys.push_back(arm_polys[robot_viz.arm_pos]);
 	pub_polys.push_back(intake_polys[robot_viz.intake_pos]);

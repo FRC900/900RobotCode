@@ -1,13 +1,13 @@
 #!/bin/bash
 
-echo "YOU PROBABLY FORGOT TO RUN THIS WITH -O"
-
-set -e
+#set -e
 set -o pipefail
 
 # IP addresses of the roboRIO and Jetson to deploy code on.
 ROBORIO_ADDR=10.9.0.2
-JETSON_ADDR=10.9.0.8
+
+# This can be an array of IP address if there are multiple Jetsons
+JETSON_ADDR=(10.9.0.8)
 
 # Environment to deploy to (prod or dev).
 INSTALL_ENV=dev
@@ -15,15 +15,24 @@ INSTALL_ENV=dev
 # Whether we're doing a build or just updating symlinks.
 UPDATE_LINKS_ONLY=0
 
-# Location of the code.
-LOCAL_CLONE_LOCATION=$HOME/2018Offseason
+# Location of the code == location of deploy script
+# Get directory where the deploy.sh script is located
+# https://stackoverflow.com/questions/59895/getting-the-source-directory-of-a-bash-script-from-within
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  THIS_DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$THIS_DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+LOCAL_CLONE_LOCATION="$( cd -P "$( dirname "$SOURCE" )" >/dev/null && pwd )"
 ROS_CODE_LOCATION=$LOCAL_CLONE_LOCATION/zebROS_ws
-RSYNC_OPTIONS=""
+RSYNC_OPTIONS="--delete"
 
 usage() {
     echo "Usage: $0 [-d|-p]"
     exit 1
 }
+
 
 # Command line argument parsing.
 POSITIONAL=()
@@ -45,6 +54,10 @@ while [[ $# -gt 0 ]] ; do
         ;;
     -o|--one-dir-sync)
         RSYNC_OPTIONS="--delete"
+        shift
+        ;;
+    -t|--two-way-sync)
+        RSYNC_OPTIONS=""
         shift
         ;;
     -u|--update-links-only)
@@ -73,8 +86,12 @@ update_links() {
     # Update symlinks on the roboRIO and Jetson.
     ssh $ROBORIO_ADDR "rm $RIO_CLONE_LOCATION && \
         ln -s $RIO_ENV_LOCATION $RIO_CLONE_LOCATION"
-    ssh $JETSON_ADDR "rm $JETSON_CLONE_LOCATION && \
-        ln -s $JETSON_ENV_LOCATION $JETSON_CLONE_LOCATION"
+
+	for i in "${JETSON_ADDR[@]}"
+	do
+		ssh $i "rm $JETSON_CLONE_LOCATION && \
+			ln -s $JETSON_ENV_LOCATION $JETSON_CLONE_LOCATION"
+	done
     echo "Symlinks updated."
 }
 
@@ -106,57 +123,100 @@ fi
 
 echo "Checking time synchronization..."
 check_clockdiff "$ROBORIO_ADDR" "roboRIO"
-check_clockdiff "$JETSON_ADDR" "Jetson"
+for i in "${JETSON_ADDR[@]}"
+do
+	check_clockdiff "$i" "Jetson.$i"
+done
 echo "Time synchronized."
 
 # Bidirectional synchronization of the selected environment.
 echo "Synchronizing local changes TO $INSTALL_ENV environment."
-scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $JETSON_ADDR:$JETSON_ROS_CODE_LOCATION
+for i in "${JETSON_ADDR[@]}"
+do
+	scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $i:$JETSON_ROS_CODE_LOCATION
+done
 scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $ROBORIO_ADDR:$RIO_ROS_CODE_LOCATION
-rsync -avzru $RSYNC_OPTIONS --exclude '.git' --exclude 'zebROS_ws/build*' \
-    --exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
-    --exclude '*~' --exclude '*.sw[op]' --exclude '*CMakeFiles*' \
-    $LOCAL_CLONE_LOCATION/ $JETSON_ADDR:$JETSON_ENV_LOCATION/
-if [ $? -ne 0 ]; then
-    echo "Failed to synchronize source code TO $INSTALL_ENV on Jetson!"
-    exit 1
-fi
+
+for i in "${JETSON_ADDR[@]}"
+do
+	rsync -avzru $RSYNC_OPTIONS --exclude '.git' --exclude 'zebROS_ws/build*' \
+		--exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
+		--exclude '*~' --exclude '*.sw[op]' --exclude '*CMakeFiles*' \
+		$LOCAL_CLONE_LOCATION/ $i:$JETSON_ENV_LOCATION/
+	if [ $? -ne 0 ]; then
+		echo "Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"
+		exit 1
+	fi
+done
 echo "Synchronization complete"
 if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
-    echo "Synchronizing remote changes FROM $INSTALL_ENV environment."
-    rsync -avzru --exclude '.git' --exclude 'zebROS_ws/build*' \
-        --exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
-        --exclude '*~' --exclude '*.sw[op]'  --exclude '*CMakeFiles*' \
-        $JETSON_ADDR:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/
-    if [ $? -ne 0 ]; then
-        echo "Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
-        exit 1
-    fi
+	echo "Synchronizing remote changes FROM $INSTALL_ENV environment."
+	for i in "${JETSON_ADDR[@]}"
+	do
+		rsync -avzru --exclude '.git' --exclude 'zebROS_ws/build*' \
+			--exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
+			--exclude '*~' --exclude '*.sw[op]'  --exclude '*CMakeFiles*' \
+			$i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/
+		if [ $? -ne 0 ]; then
+			echo "Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
+			exit 1
+		fi
+	done
 fi
 echo "Synchronization complete"
 
 # Run local roboRIO cross build as one process.
 # Then synchronize cross build products to roboRIO.
-(echo "Starting roboRIO cross build" &&
-bash -c "cd $ROS_CODE_LOCATION && \
-    source /usr/arm-frc-linux-gnueabi/opt/ros/kinetic/setup.bash && \
-    ./cross_build.sh" && \
-echo "roboRIO cross build complete" && \
-echo "Synchronizing $INSTALL_ENV cross build to roboRIO" && \
-ssh $ROBORIO_ADDR "/etc/init.d/nilvrt stop" && \
-rsync -avz --delete $ROS_CODE_LOCATION/install_isolated/ \
-    $ROBORIO_ADDR:$RIO_INSTALL_LOCATION && \
-echo "Synchronization of the RIO complete") &
+$LOCAL_CLONE_LOCATION/deploy_rio_build.sh $ROS_CODE_LOCATION $INSTALL_ENV $ROBORIO_ADDR $RIO_INSTALL_LOCATION &
+RIO_BUILD_PROCESS=$!
 
-# Run Jetson native build as a separate process.
-(echo "Starting Jetson native build" && \
-ssh $JETSON_ADDR "cd $JETSON_CLONE_LOCATION/zebROS_ws && \
-    source /opt/ros/kinetic/setup.bash && \
-    catkin_make" && \
-echo "Jetson native build complete") &
+# Run Jetson native build(s) as a separate process(es).
+JETSON_BUILD_PROCESSES=()
+for i in "${JETSON_ADDR[@]}"
+do
+	(echo "Starting Jetson $i native build" && \
+		ssh $i "cd $JETSON_CLONE_LOCATION/zebROS_ws && \
+		source /opt/ros/kinetic/setup.bash && \
+		catkin_make" && \
+		echo "Jetson $i native build complete") &
+	JETSON_BUILD_PROCESSES+=($!)
+done
 
-wait
+# Capture return code from Rio build processes
+echo "Waiting for RIO_BUILD_PROCESS $RIO_BUILD_PROCESS"
+wait $RIO_BUILD_PROCESS
+RIO_RC=$?
+echo " ... RIO_BUILD_PROCESS $RIO_BUILD_PROCESS returned $RIO_RC"
+
+# Capture return code from Jetson build process(es)
+JETSON_RCS=()
+for i in "${JETSON_BUILD_PROCESSES[@]}"
+do
+	echo "Waiting for JETSON_BUILD_PROCESS $i"
+	wait $i
+	JETSON_RCS+=($?)
+	echo " ... JETSON_BUILD_PROCESS $i returned $?"
+done
+
+# Print diagnostic info after all builds / deploys
+# have run their course to make errors easier to see
+EXIT_FAIL=0
+if [ $RIO_RC -ne 0 ] ; then
+	echo "Rio build/deploy failed"
+	EXIT_FAIL=1
+fi
+
+for i in "${JETSON_RCS[@]}"
+do
+	if [ $i -ne 0 ] ; then
+		echo "Jetson build/deploy failed"
+		EXIT_FAIL=1
+	fi
+done
+
+if [ $EXIT_FAIL -ne 0 ] ; then
+	exit 1
+fi
 
 update_links
 echo "FINISHED SUCCESSFULLY"
-
