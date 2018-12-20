@@ -53,8 +53,8 @@
                 <node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node> 
                 <node name="robot_visualize" pkg="robot_visualizer" type="robot_visualize" output="screen" />
                 <node name="profile_follow" pkg="robot_visualizer" type="profile_follow" output="screen" />
-				<node name="path_to_goal_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
-				<node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
+                <node name="path_to_goal_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
+                <node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
 
 	</group>
 
