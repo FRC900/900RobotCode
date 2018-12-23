@@ -209,6 +209,10 @@ class IntakeAction {
 		}
 		else
 		{
+                        static int count = 0;
+                        if(count % 100 == 0)
+                                ROS_WARN("intake line break sensor not found in joint_states");
+                        count++;
 			cube_state_true_count = 0;
 			cube_state_false_count += 1;
 		}

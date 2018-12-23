@@ -1680,7 +1680,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" peak current");
 		}
 
-		for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
+		/*for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
 		{
 			uint8_t period;
 			const hardware_interface::StatusFrame status_frame = static_cast<hardware_interface::StatusFrame>(i);
@@ -1694,7 +1694,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i << "=" << static_cast<int>(period) << "mSec");
 				}
 			}
-		}
+		}*/
 
 		if (motion_profile_mode)
 		{
