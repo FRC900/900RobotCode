@@ -4,7 +4,7 @@
 #include <std_msgs/String.h>
 #include <fstream>
 #include <ros_control_boilerplate/MatchSpecificData.h>
-#include <pdp_state_controller/PDPData.h>
+#include <frc_msgs/PDPData.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
@@ -31,13 +31,13 @@ int main(int argc, char **argv)
 
 	rosbag::View view(bag, rosbag::TopicQuery(topics));
 
-	pdp_state_controller::PDPData::ConstPtr s = view[0].instantiate<pdp_state_controller::PDPData>();
+	frc_msgs::PDPData::ConstPtr s = view[0].instantiate<frc_msgs::PDPData>();
 	if (s != NULL) 
 		int start_time = floor(s->header.stamp.toSec());
 
 	foreach(rosbag::MessageInstance const m, view)
 	{
-		pdp_state_controller::PDPData::ConstPtr s = m.instantiate<pdp_state_controller::PDPData>();
+		frc_msgs::PDPData::ConstPtr s = m.instantiate<frc_msgs::PDPData>();
 		if (s != NULL){
 			temp_file << "current at " << current_needed << ": " <<  s->current[current_needed] << std::endl;
 			if  (s->current[current_needed] > 0)

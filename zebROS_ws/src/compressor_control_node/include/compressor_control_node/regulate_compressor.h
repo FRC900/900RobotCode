@@ -11,11 +11,11 @@
 #include <cmath>
 #include <sensor_msgs/JointState.h>
 #include <match_state_controller/MatchSpecificData.h>
-#include <pdp_state_controller/PDPData.h>
+#include <frc_msgs/PDPData.h>
 
 //BE WARNED. THIS NODE USES IMPERIAL UNITS..........
 
 void pressureCallback(const sensor_msgs::JointState &joint_state);
 void matchDataCallback(const match_state_controller::MatchSpecificData &matchData);
-void currentCallback(const pdp_state_controller::PDPData &current);
+void currentCallback(const frc_msgs::PDPData &current);
 

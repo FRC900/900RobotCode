@@ -1,9 +1,0 @@
-#goal
-bool intake_cube
-float64 timeout
----
-#result
-bool timed_out
-bool success
----
-#feedback

@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  frc_msgs
   ros_control_boilerplate
   rosbag
   talon_state_controller
@@ -113,7 +114,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    LIBRARIES
-   CATKIN_DEPENDS roscpp rospy std_msgs ros_control_boilerplate rosbag talon_state_controller rospy_message_converter
+   CATKIN_DEPENDS roscpp rospy std_msgs ros_control_boilerplate rosbag frc_msgs talon_state_controller rospy_message_converter
 #  DEPENDS system_lib
 )
 

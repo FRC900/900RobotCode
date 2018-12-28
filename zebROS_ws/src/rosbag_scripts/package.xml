@@ -61,6 +61,7 @@
   <depend>ros_control_boilerplate</depend>
   <depend>rosbag</depend>
   <depend>talon_state_controller</depend>
+  <depend>frc_msgs</depend>
   <depend>rospy_message_converter</depend>
   <depend>message_generation</depend>
 

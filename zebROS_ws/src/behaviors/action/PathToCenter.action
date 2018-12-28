@@ -1,7 +1,0 @@
-#goal
-bool usingCubeCenter
----
-#result
-bool sawEarly
----
-#feedback

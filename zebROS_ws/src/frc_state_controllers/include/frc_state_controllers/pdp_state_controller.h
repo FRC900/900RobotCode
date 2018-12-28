@@ -5,7 +5,7 @@
 #include <hardware_interface/joint_state_interface.h>
 #include <iostream>
 #include <realtime_tools/realtime_publisher.h>
-#include <pdp_state_controller/PDPData.h>
+#include <frc_msgs/PDPData.h>
 #include <boost/shared_ptr.hpp>
 #include <frc_interfaces/pdp_state_interface.h>
 #include <pluginlib/class_list_macros.h>
@@ -29,7 +29,7 @@ class PDPStateController: public controller_interface::Controller<hardware_inter
 
 	private:
 		hardware_interface::PDPStateHandle pdp_state_;
-		boost::shared_ptr<realtime_tools::RealtimePublisher<pdp_state_controller::PDPData> > realtime_pub_;
+		boost::shared_ptr<realtime_tools::RealtimePublisher<frc_msgs::PDPData> > realtime_pub_;
 		ros::Time last_publish_time_;
 		double publish_rate_;
 

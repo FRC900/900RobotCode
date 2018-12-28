@@ -28,6 +28,7 @@ add_message_files (
   FILES
   JoystickState.msg
   AutoMode.msg
+  MatchSpecificData.msg
   AutoModeStatus.msg
 )
 

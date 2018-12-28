@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
   ros_control_boilerplate
+  frc_msgs
 )
 
 #add_message_files (
@@ -31,6 +32,7 @@ catkin_package(
     controller_manager
     roscpp
     std_msgs
+    frc_msgs
     ros_control_boilerplate
   LIBRARIES
   DEPENDS 

@@ -161,7 +161,7 @@ void matchDataCallback(const match_state_controller::MatchSpecificData &matchDat
 }
 
 // consider a boost::circular_buffer
-void currentCallback(const pdp_state_controller::PDPData &msg)
+void currentCallback(const frc_msgs::PDPData &msg)
 {
 	static std::vector<double> currents;
 

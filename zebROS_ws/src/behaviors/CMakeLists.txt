@@ -80,10 +80,6 @@ add_action_files(
     DIRECTORY
     action
     FILES
-    Arm.action
-    Intake.action
-    Forearm.action
-    PathToCenter.action
     Path.action
 )
 
@@ -134,17 +130,17 @@ catkin_package(
    CATKIN_DEPENDS actionlib nav_msgs roscpp rospy std_msgs
    DEPENDS 
 )
-add_executable(arm_server_node src/arm_server.cpp)
-target_link_libraries(arm_server_node ${catkin_LIBRARIES})
-add_dependencies(arm_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-add_executable(forearm_server_node src/forearm_server.cpp)
-target_link_libraries(forearm_server_node ${catkin_LIBRARIES})
-add_dependencies(forearm_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-add_executable(intake_server_node src/intake_server.cpp)
-target_link_libraries(intake_server_node ${catkin_LIBRARIES})
-add_dependencies(intake_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# add_executable(arm_server_node src/arm_server.cpp)
+# target_link_libraries(arm_server_node ${catkin_LIBRARIES})
+# add_dependencies(arm_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# 
+# add_executable(forearm_server_node src/forearm_server.cpp)
+# target_link_libraries(forearm_server_node ${catkin_LIBRARIES})
+# add_dependencies(forearm_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+# 
+# add_executable(intake_server_node src/intake_server.cpp)
+# target_link_libraries(intake_server_node ${catkin_LIBRARIES})
+# add_dependencies(intake_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #add_executable(dummy src/dummy.cpp)
 #target_link_libraries(

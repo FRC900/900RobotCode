@@ -1,5 +1,5 @@
 #include "pdp_state_controller/pdp_state_controller.h"
-#include "pdp_state_controller/PDPData.h"
+#include "frc_msgs/PDPData.h"
 #include <cstddef>
 #include <algorithm>
 
@@ -25,7 +25,7 @@ bool PDPStateController::init(hardware_interface::PDPStateInterface *hw,
 	if (!controller_nh.getParam("publish_rate", publish_rate_))
                 ROS_ERROR("Could not read publish_rate in PDP state controller");
 
-	realtime_pub_.reset(new realtime_tools::RealtimePublisher<pdp_state_controller::PDPData>(root_nh, "pdp_states", 4));
+	realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::PDPData>(root_nh, "pdp_states", 4));
 
 	auto &m = realtime_pub_->msg_;
 

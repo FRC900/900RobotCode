@@ -16,6 +16,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <depend>frc_msgs</depend>
   <depend>hardware_interface</depend>
   <depend>controller_manager</depend>
   <depend>roscpp</depend>

@@ -106,7 +106,7 @@ add_message_files(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES frc_msgs
-#  CATKIN_DEPENDS message_generation message_runtime roscpp std_msgs
+   CATKIN_DEPENDS message_generation message_runtime roscpp std_msgs
 #  DEPENDS system_lib
 )
 
