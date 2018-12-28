@@ -68,8 +68,8 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 		virtual void write(ros::Duration &elapsed_time) override;
 
 	private:
-        ros::Subscriber cube_state_sub_;
-        void cube_state_callback(const frc_msgs::CubeState &cube);
+        //ros::Subscriber cube_state_sub_;
+        //void cube_state_callback(const frc_msgs::CubeState &cube);
 		std::atomic<bool> clamp;
 		std::atomic<bool> intake_high;
 		std::atomic<bool> intake_low;

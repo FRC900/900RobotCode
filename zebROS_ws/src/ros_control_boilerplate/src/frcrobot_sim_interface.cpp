@@ -506,12 +506,12 @@ void FRCRobotSimInterface::loop_joy(void)
     teleop.keyboardLoop();
 }
 
-void FRCRobotSimInterface::cube_state_callback(const frc_msgs::CubeState &cube) {
+/*void FRCRobotSimInterface::cube_state_callback(const frc_msgs::CubeState &cube) {
     clamp = cube.clamp;
     intake_high = cube.intake_high;
     intake_low = cube.intake_low;
     has_cube = cube.has_cube;
-}
+}*/
 
 void FRCRobotSimInterface::match_data_callback(const match_state_controller::MatchSpecificData &match_data) {
 	std::lock_guard<std::mutex> l(match_data_mutex_);
@@ -545,7 +545,7 @@ void FRCRobotSimInterface::init(void)
 	// TODO : make this depend on joystick joints being defined
 	if (run_hal_robot_)
 		sim_joy_thread_ = std::thread(&FRCRobotSimInterface::loop_joy, this);
-    cube_state_sub_ = nh_.subscribe("/frcrobot/cube_state_sim", 1, &FRCRobotSimInterface::cube_state_callback, this);
+    //cube_state_sub_ = nh_.subscribe("/frcrobot/cube_state_sim", 1, &FRCRobotSimInterface::cube_state_callback, this);
     match_data_sub_ = nh_.subscribe("match_data", 1, &FRCRobotSimInterface::match_data_callback, this);
 
 	ROS_WARN("fails here?1");
