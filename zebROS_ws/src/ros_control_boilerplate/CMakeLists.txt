@@ -20,8 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosparam_shortcuts
   talon_interface
   message_generation
-  elevator_controller
-  robot_controller_interface
+  frc_msgs
   frc_interfaces
 )
 
@@ -59,8 +58,6 @@ catkin_package(
 	sensor_msgs
 	rosparam_shortcuts
 	talon_interface
-	pdp_state_interface
-	elevator_controller
 	message_runtime
   LIBRARIES
 )

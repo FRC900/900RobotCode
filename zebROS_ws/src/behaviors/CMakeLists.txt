@@ -18,7 +18,6 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   message_filters
   ros_control_boilerplate
-  elevator_controller
   talon_swerve_drive_controller
   swerve_point_generator
 )

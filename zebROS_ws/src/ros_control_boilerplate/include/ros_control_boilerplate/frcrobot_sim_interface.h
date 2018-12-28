@@ -42,8 +42,8 @@
 #include <ros_control_boilerplate/frc_robot_interface.h>
 #include <atomic>
 #include <thread>
-#include <elevator_controller/CubeState.h>
-#include <match_state_controller/MatchSpecificData.h>
+#include <frc_msgs/CubeState.h>
+#include <frc_msgs/MatchSpecificData.h>
 
 namespace frcrobot_control
 {
@@ -69,7 +69,7 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 
 	private:
         ros::Subscriber cube_state_sub_;
-        void cube_state_callback(const elevator_controller::CubeState &cube);
+        void cube_state_callback(const frc_msgs::CubeState &cube);
 		std::atomic<bool> clamp;
 		std::atomic<bool> intake_high;
 		std::atomic<bool> intake_low;

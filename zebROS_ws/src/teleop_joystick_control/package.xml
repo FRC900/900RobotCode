@@ -22,7 +22,6 @@
   <depend>cmake_modules</depend>
   <depend>ros_control_boilerplate</depend>
   <depend>behaviors</depend>
-  <depend>elevator_controller</depend>
   <depend>std_srvs</depend>
   <depend>talon_state_controller</depend>
 

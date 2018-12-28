@@ -50,7 +50,6 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <depend>ros_control_boilerplate</depend>
-  <depend>elevator_controller</depend>
   <depend>message_filters</depend>
   <depend>talon_swerve_drive_controller</depend>
   <depend>std_srvs</depend>

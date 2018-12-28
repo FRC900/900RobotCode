@@ -506,7 +506,7 @@ void FRCRobotSimInterface::loop_joy(void)
     teleop.keyboardLoop();
 }
 
-void FRCRobotSimInterface::cube_state_callback(const elevator_controller::CubeState &cube) {
+void FRCRobotSimInterface::cube_state_callback(const frc_msgs::CubeState &cube) {
     clamp = cube.clamp;
     intake_high = cube.intake_high;
     intake_low = cube.intake_low;

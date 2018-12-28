@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   ros_control_boilerplate
   behaviors
-  elevator_controller
   std_srvs
   talon_state_controller
   robot_visualizer
@@ -44,21 +43,21 @@ include_directories(
   ${Eigen3_INCLUDE_DIRS}
 )
 
-add_executable(teleop_joystick_offseason src/teleop_joystick_offseason.cpp)
-set_target_properties(teleop_joystick_offseason PROPERTIES OUTPUT_NAME 
-teleop_joystick_offseason PREFIX "")
-target_link_libraries(teleop_joystick_offseason
-  ${catkin_LIBRARIES}
-)
+# add_executable(teleop_joystick_offseason src/teleop_joystick_offseason.cpp)
+# set_target_properties(teleop_joystick_offseason PROPERTIES OUTPUT_NAME 
+# teleop_joystick_offseason PREFIX "")
+# target_link_libraries(teleop_joystick_offseason
+#   ${catkin_LIBRARIES}
+# )
 
 # Add cmake target dependencies of the executable
 # same as for the library above. This is needed to force
 # talon controller messages to be built before the
 # talon controller code tries to use them
- add_dependencies(teleop_joystick_offseason
-   ${${PROJECT_NAME}_EXPORTED_TARGETS}
-   ${catkin_EXPORTED_TARGETS}
- )
+# add_dependencies(teleop_joystick_offseason
+#   ${${PROJECT_NAME}_EXPORTED_TARGETS}
+#   ${catkin_EXPORTED_TARGETS}
+# )
 
 ## TOOLS ------------------------------------------------------
 
