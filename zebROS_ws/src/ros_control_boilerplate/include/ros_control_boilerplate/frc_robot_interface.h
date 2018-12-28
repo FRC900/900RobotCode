@@ -49,6 +49,7 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <talon_interface/talon_command_interface.h>
+#include "frc_interfaces/pdp_state_interface.h"
 #include "robot_controller_interface/robot_controller_interface.hpp"
 #include "pdp_state_interface/pdp_state_interface.h"
 #include "pcm_state_interface/pcm_state_interface.h"
