@@ -34,9 +34,7 @@
   <depend>elevator_controller</depend>
   <depend>message_runtime</depend>
   <depend>robot_controller_interface</depend>
-  <depend>remote_joint_interface</depend>
-  <depend>pcm_state_interface</depend>
-  <depend>match_state_controller</depend>
+  <depend>frc_interfaces</depend>
 
   <export>
   </export>

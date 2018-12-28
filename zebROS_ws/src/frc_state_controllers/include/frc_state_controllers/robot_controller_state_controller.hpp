@@ -1,7 +1,7 @@
 #pragma once
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_publisher.h>
-#include <robot_controller_interface/robot_controller_interface.hpp>
+#include <frc_interfaces/robot_controller_interface.h>
 #include <robot_controller_state_controller/RobotControllerData.h>
 
 namespace robot_controller_state_controller

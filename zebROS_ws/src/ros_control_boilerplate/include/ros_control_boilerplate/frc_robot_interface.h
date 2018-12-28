@@ -50,12 +50,12 @@
 #include <hardware_interface/robot_hw.h>
 #include <talon_interface/talon_command_interface.h>
 #include "frc_interfaces/pdp_state_interface.h"
-#include "robot_controller_interface/robot_controller_interface.hpp"
-#include "pdp_state_interface/pdp_state_interface.h"
-#include "pcm_state_interface/pcm_state_interface.h"
-#include "remote_hardware_interface/remote_joint_interface.h"
-#include "robot_controller_interface/robot_controller_interface.hpp"
-#include "match_state_controller/match_data_interface.h"
+#include "frc_interfaces/robot_controller_interface.hpp"
+#include "frc_interfaces/pdp_state_interface.h"
+#include "frc_interfaces/pcm_state_interface.h"
+#include "frc_interface/remote_joint_interface.h"
+#include "frc_interfaces/robot_controller_interface.hpp"
+#include "frc_interfaces/match_data_interface.h"
 
 namespace ros_control_boilerplate
 {

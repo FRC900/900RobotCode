@@ -22,10 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   elevator_controller
   robot_controller_interface
-  pdp_state_interface
-  remote_hardware_interface
-  robot_controller_interface
-  pcm_state_interface
+  frc_interfaces
 )
 
 add_message_files (
