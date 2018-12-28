@@ -1,8 +1,0 @@
-<library path="lib/libarm_controller">
-	
-	<class name="arm_controller/ArmController" type="arm_controller::ArmController" base_class_type="controller_interface::ControllerBase">
-		<description>
-			Library file. Does stuff to make arm_controller exist.
-		</description>
-	</class>
-</library>

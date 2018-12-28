@@ -1,9 +1,0 @@
- <library path="lib/libintake_controller">
-
-	 <class name="intake_controller/IntakeController" type="intake_controller::IntakeController" base_class_type="controller_interface::ControllerBase">
-	  <description>
-              here's a description!!
-		 </description>
-         </class>
- </library>
-~              
