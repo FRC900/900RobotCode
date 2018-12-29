@@ -12,6 +12,8 @@
 #include "std_msgs/Bool.h"
 #include "robot_visualizer/ProfileFollower.h"
 #include "intake_controller/IntakeSrv.h"
+#include "path_to_goal/PathAction.h"
+#include "path_to_goal/PathGoal.h"
 
 static double dead_zone = .2, slow_mode = .33, max_speed = 3.6, max_rot = 8.8, joystick_scale = 3, rotation_scale = 4;
 void dead_zone_check(double &val1, double &val2)
@@ -26,6 +28,7 @@ void dead_zone_check(double &val1, double &val2)
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ArmAction>> ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> ac_intake;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ForearmAction>> ac_arm;
+std::shared_ptr<actionlib::SimpleActionClient<path_to_goal::PathAction>> ac_path;
 
 static ros::Publisher JoystickRobotVel;
 //static ros::Publisher JoystickRumble;
@@ -33,6 +36,7 @@ static ros::ServiceClient BrakeSrv;
 
 ros::ServiceClient intake_srv_;
 std::atomic<double> navX_angle;
+std::atomic<bool> outOfPoints;
 std::atomic<int> arm_position;
 
 realtime_tools::RealtimeBuffer<double> most_recent_arm_command;
@@ -174,38 +178,33 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 	double rotation = (pow(JoystickState->leftTrigger, rotation_scale) - pow(JoystickState->rightTrigger, rotation_scale)) * max_rot;
 
 	static bool sendRobotZero = false;
+
 	/******* Snap to angle *********/
-	/*if(JoystickState->stickRightPress == true)
+	if(JoystickState->stickRightPress == true)
 	{
-		ROS_INFO_STREAM("outOfPoints = " << outOfPoints);
 		static bool orient_running = false;
 		if(!orient_running || outOfPoints.load(std::memory_order_relaxed))
 		{
 			orient_running = false;
 			sendRobotZero = false;
-			const double angle = -navX_angle.load(std::memory_order_relaxed) - M_PI / 2;
-			//const double angle = M_PI; //for testing
+			double angle = -navX_angle.load(std::memory_order_relaxed) - M_PI / 2;
+			//angle = M_PI/3; //for testing
 			ROS_INFO_STREAM("angle = " << angle);
 			// TODO: look at using ros::angles package
-			//const double least_dist_angle = round(angle/(M_PI/2))*M_PI/2;
-			const double least_dist_angle = angle + 2* M_PI;
+			double least_dist_angle = round(angle/(M_PI/2))*M_PI/2;
 			const double max_rotational_velocity = 8.8; //radians/sec TODO: find this in config
 
 			ROS_INFO_STREAM("delta angle = " << least_dist_angle - angle);
-			const ros::Duration time_to_run((fabs(least_dist_angle - angle) / max_rotational_velocity) * .5); //TODO: needs testing
-			ROS_INFO_STREAM("time_to_run = " << time_to_run.toSec());
+			float time_to_run = (fabs(least_dist_angle - angle) / max_rotational_velocity) * 2; //TODO: needs testing
+			ROS_INFO_STREAM("time_to_run = " << time_to_run);
 
-			base_trajectory::GenerateSpline srvBaseTrajectory;
-			swerve_point_generator::FullGenCoefs traj;
-			
-			if (!generateCoefs(least_dist_angle - angle, time_to_run, srvBaseTrajectory)) //generate coefficients for the spline from the endpoints 
-				ROS_INFO_STREAM("spline_gen died in teleopJoystickCommands generateCoefs");
-			else if (!generateTrajectory(srvBaseTrajectory, traj)) //generate a motion profile from the coefs
-				ROS_INFO_STREAM("point_gen died in teleopJoystickCommands generateTrajectory");
-			else if (!runTrajectory(traj.response)) //run on swerve_control
-				ROS_ERROR("swerve_control failed in teleopJoystickCommands runTrajectory");
-			else
-				orient_running = true;
+                        path_to_goal::PathGoal path_goal;
+                        path_goal.goal_index = 0;
+                        path_goal.x = 0.01;
+                        path_goal.y = 0.01;
+                        path_goal.rotation = least_dist_angle;
+                        path_goal.time_to_run = time_to_run;
+                        ac_path->sendGoal(path_goal);
 		}
 		else 
 		{
@@ -213,7 +212,7 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 			if (outOfPoints.load(std::memory_order_relaxed))
 				orient_running = false;
 		}
-	}*/
+	}
 
 	if (fabs(leftStickX) == 0.0 && fabs(leftStickY) == 0.0 && rotation == 0.0)
 	{
@@ -271,6 +270,7 @@ int main(int argc, char **argv)
 	ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ArmAction>>("arm_server", true);
 	ac_intake = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>>("intake_server", true);
 	ac_arm = std::make_shared<actionlib::SimpleActionClient<behaviors::ForearmAction>> ("forearm_server", true);
+        ac_path = std::make_shared<actionlib::SimpleActionClient<path_to_goal::PathAction>>("path_server", true);
 
 	ros::Subscriber joystick_sub  = n.subscribe("joystick_states", 1, &evaluateCommands);
 	//ros::Subscriber joint_states_sub = n.subscribe("/frcrobot/joint_states", 1, &jointStateCallback);
@@ -299,7 +299,6 @@ int main(int argc, char **argv)
 	spline_gen = n.serviceClient<base_trajectory::GenerateSpline>("/base_trajectory/spline_gen", false, service_connection_header);
 
 	VisualizeService = n.serviceClient<robot_visualizer::ProfileFollower>("/frcrobot/visualize_auto", false, service_connection_header);    
-	ros::Subscriber navX_heading  = n.subscribe("/frcrobot/navx_mxp", 1, &navXCallback);
 	ros::Subscriber elevator_odom = n.subscribe("/frcrobot/elevator_controller/odom", 1, &OdomCallback);
 	ros::Subscriber elevator_cmd  = n.subscribe("/frcrobot/elevator_controller/return_cmd_pos", 1, &elevCmdCallback);
 	ros::Subscriber cube_state    = n.subscribe("/frcrobot/elevator_controller/cube_state", 1, &cubeCallback); */
@@ -327,19 +326,8 @@ void match_data_callback(const ros_control_boilerplate::MatchSpecificData::Const
 	matchTimeRemaining.store(localMatchTimeRemaining, std::memory_order_relaxed);
 }
 
-
-void navXCallback(const sensor_msgs::Imu &navXState)
-{
-	const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
-	double roll;
-	double pitch;
-	double yaw;
-	tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
-
-	if (yaw == yaw) // ignore NaN results
-		navX_angle.store(yaw, std::memory_order_relaxed);
-}
-
+*/
+/*
 void cube_rumble(bool has_cube)
 {
 	static double start_has_cube = 0;
@@ -400,6 +388,7 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 void talonStateCallback(const talon_state_controller::TalonState &talon_state)
 {
 	static size_t arm_joint_idx = std::numeric_limits<size_t>::max();
+        static size_t bl_drive_idx = std::numeric_limits<size_t>::max();
 
 	if (arm_joint_idx >= talon_state.name.size())
 	{
@@ -408,11 +397,15 @@ void talonStateCallback(const talon_state_controller::TalonState &talon_state)
 			if (talon_state.name[i] == "arm_joint")
 			{
 				arm_joint_idx = i;
-				break;
+			}
+			if (talon_state.name[i] == "bl_drive")
+			{
+				bl_drive_idx = i;
 			}
 		}
 	}
 
+        outOfPoints.store(talon_state.custom_profile_status[bl_drive_idx].outOfPoints, std::memory_order_relaxed);
         arm_position.store(talon_state.position[arm_joint_idx], std::memory_order_relaxed);
 }
 

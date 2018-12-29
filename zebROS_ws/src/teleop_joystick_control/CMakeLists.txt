@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   talon_state_controller
   robot_visualizer
+  path_to_goal
 )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
