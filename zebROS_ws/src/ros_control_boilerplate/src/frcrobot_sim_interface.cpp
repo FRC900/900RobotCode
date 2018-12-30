@@ -513,7 +513,7 @@ void FRCRobotSimInterface::loop_joy(void)
     has_cube = cube.has_cube;
 }*/
 
-void FRCRobotSimInterface::match_data_callback(const match_state_controller::MatchSpecificData &match_data) {
+void FRCRobotSimInterface::match_data_callback(const frc_msgs::MatchSpecificData &match_data) {
 	std::lock_guard<std::mutex> l(match_data_mutex_);
 	match_data_.setMatchTimeRemaining(match_data.matchTimeRemaining);
 	match_data_.setGameSpecificData(match_data.gameSpecificData);

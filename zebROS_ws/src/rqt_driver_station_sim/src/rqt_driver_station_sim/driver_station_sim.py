@@ -12,7 +12,7 @@ from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget
 
 from ros_control_boilerplate.msg import AutoMode
-from ros_control_boilerplate.msg import MatchSpecificData
+from frc_msgs.msg import MatchSpecificData
 
 
 class DriverStationSim(Plugin):

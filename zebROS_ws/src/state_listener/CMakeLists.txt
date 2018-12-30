@@ -10,12 +10,12 @@ find_package(catkin REQUIRED COMPONENTS
   controller_interface
   realtime_tools
   hardware_interface
-  remote_hardware_interface
-  pdp_state_controller
   talon_interface
   talon_state_controller
   roscpp
   message_generation
+  frc_msgs
+  frc_interfaces
 )
 
 ## System dependencies are found with CMake's conventions
@@ -109,8 +109,8 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES state_listener
-#  CATKIN_DEPENDS controller_interface realtime_tools remote_interface roscpp
-  DEPENDS system_lib message_runtime talon_state_controller pdp_state_controller
+#  CATKIN_DEPENDS controller_interface realtime_tools roscpp
+  DEPENDS system_lib message_runtime talon_state_controller frc_msgs frc_interfaces 
 )
 
 ###########

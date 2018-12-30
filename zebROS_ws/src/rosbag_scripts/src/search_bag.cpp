@@ -3,7 +3,7 @@
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
 #include <fstream>
-#include <match_data_controller/MatchSpecificData.h>
+#include <frc_msgs/MatchSpecificData.h>
 
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 
 	foreach(rosbag::MessageInstance const m, view)
 	{
-		match_data_controller::MatchSpecificData::ConstPtr s = m.instantiate<match_data_controller::MatchSpecificData>();
+		frc_msgs::MatchSpecificData::ConstPtr s = m.instantiate<frc_msgs::MatchSpecificData>();
 		if (s != NULL){
 			if (s->allianceData != "")
 			{

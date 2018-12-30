@@ -52,6 +52,8 @@ add_message_files(
   FILES
   CubeState.msg
   PDPData.msg
+  MatchSpecificData.msg
+  PCMState.msg
 )
 
 ## Generate services in the 'srv' folder

@@ -190,8 +190,8 @@ int main(int argc, char** argv) {
     VelPub = n.advertise<geometry_msgs::Twist>("/frcrobot/swerve_drive_controller/cmd_vel", 1);
 
     message_filters::Subscriber<ros_control_boilerplate::AutoMode> auto_mode_sub(n, "Autonomous_Mode", 1);
-    message_filters::Subscriber<ros_control_boilerplate::MatchSpecificData> match_data_sub(n, "match_data", 1);
-    typedef message_filters::sync_policies::ApproximateTime<ros_control_boilerplate::AutoMode, ros_control_boilerplate::MatchSpecificData> data_sync;
+    message_filters::Subscriber<frc_msgs::MatchSpecificData> match_data_sub(n, "match_data", 1);
+    typedef message_filters::sync_policies::ApproximateTime<ros_control_boilerplate::AutoMode, frc_msgs::MatchSpecificData> data_sync;
     message_filters::Synchronizer<data_sync> sync(data_sync(10), auto_mode_sub, match_data_sub);
     sync.registerCallback(boost::bind(&auto_modes, _1, _2));
     ROS_WARN("Auto Client loaded");

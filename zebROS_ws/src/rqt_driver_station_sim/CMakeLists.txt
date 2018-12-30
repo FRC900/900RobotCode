@@ -10,6 +10,7 @@ project(rqt_driver_station_sim)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  frc_msgs
 )
 
 ## System dependencies are found with CMake's conventions

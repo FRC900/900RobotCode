@@ -9,7 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
   realtime_tools
   hardware_interface
   controller_manager
-  match_state_controller
   roscpp
   control_msgs
   trajectory_msgs
@@ -28,7 +27,6 @@ add_message_files (
   FILES
   JoystickState.msg
   AutoMode.msg
-  MatchSpecificData.msg
   AutoModeStatus.msg
 )
 

@@ -5,10 +5,10 @@
 #include <realtime_tools/realtime_buffer.h>
 #include <sensor_msgs/JointState.h>
 #include <sensor_msgs/Imu.h>
-#include "remote_hardware_interface/remote_joint_interface.h"
-#include "pdp_state_controller/PDPData.h"
+#include "frc_interfaces/remote_joint_interface.h"
+#include "frc_msgs/PDPData.h"
 #include "talon_state_controller/TalonState.h"
-#include "match_state_controller/MatchSpecificData.h"
+#include "frc_msgs/MatchSpecificData.h"
 
 namespace state_listener_controller
 {
@@ -156,7 +156,7 @@ class PDPStateListenerController :
 				return false;
 			}
 
-			sub_command_ = n.subscribe<pdp_state_controller::PDPData>(topic, 1, &PDPStateListenerController::commandCB, this);
+			sub_command_ = n.subscribe<frc_msgs::PDPData>(topic, 1, &PDPStateListenerController::commandCB, this);
 			return true;
 		}
 
@@ -185,7 +185,7 @@ class PDPStateListenerController :
 		// Iterate through each desired joint state.  If it is found in
 		// the message, save the value here in the realtime buffer.
 		// // TODO : figure out how to hack this to use a ConstPtr type instead
-		virtual void commandCB(const pdp_state_controller::PDPDataConstPtr &msg)
+		virtual void commandCB(const frc_msgs::PDPDataConstPtr &msg)
 		{
 			hardware_interface::PDPHWState data;
 
@@ -230,7 +230,7 @@ class MatchStateListenerController :
 				return false;
 			}
 
-			sub_command_ = n.subscribe<match_state_controller::MatchSpecificData>(topic, 1, &MatchStateListenerController::commandCB, this);
+			sub_command_ = n.subscribe<frc_msgs::MatchSpecificData>(topic, 1, &MatchStateListenerController::commandCB, this);
 			return true;
 		}
 
@@ -259,7 +259,7 @@ class MatchStateListenerController :
 		// Iterate through each desired joint state.  If it is found in
 		// the message, save the value here in the realtime buffer.
 		// // TODO : figure out how to hack this to use a ConstPtr type instead
-		virtual void commandCB(const match_state_controller::MatchSpecificDataConstPtr &msg)
+		virtual void commandCB(const frc_msgs::MatchSpecificDataConstPtr &msg)
 		{
 			hardware_interface::MatchHWState data;
 			data.setMatchTimeRemaining(msg->matchTimeRemaining);

@@ -26,7 +26,7 @@ namespace match_state_controller
 			 ROS_ERROR("Could not read publish_rate in match state controller");
 
 	     //set up publisher
-	     realtime_pub_.reset(new realtime_tools::RealtimePublisher<match_state_controller::MatchSpecificData>(root_nh, "match_data", 4));
+	     realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::MatchSpecificData>(root_nh, "match_data", 4));
 
 	     auto &m = realtime_pub_->msg_;
 

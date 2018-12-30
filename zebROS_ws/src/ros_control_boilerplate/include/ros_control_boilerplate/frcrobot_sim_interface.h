@@ -76,7 +76,7 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::atomic<bool> has_cube;
 
         ros::Subscriber match_data_sub_;
-        void match_data_callback(const match_state_controller::MatchSpecificData &match_data);
+        void match_data_callback(const frc_msgs::MatchSpecificData &match_data);
 		std::mutex match_data_mutex_;
 
 		void loop_joy(void);

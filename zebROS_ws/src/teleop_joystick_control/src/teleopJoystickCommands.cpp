@@ -346,7 +346,7 @@ bool runTrajectory(const swerve_point_generator::FullGenCoefs::Response &traj)
 		return true;
 }
 
-void match_data_callback(const match_data_controller::MatchSpecificData::ConstPtr &MatchData)
+void match_data_callback(const frc_msgs::MatchSpecificData::ConstPtr &MatchData)
 {
 	//Joystick Rumble
 	const double localMatchTimeRemaining = MatchData->matchTimeRemaining;

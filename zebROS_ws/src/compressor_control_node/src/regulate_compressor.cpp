@@ -153,7 +153,7 @@ void pressureCallback(const sensor_msgs::JointState &joint_state)
 		disable_.store(joint_state.position[disable_index], std::memory_order_relaxed);
 }
 
-void matchDataCallback(const match_state_controller::MatchSpecificData &matchData)
+void matchDataCallback(const frc_msgs::MatchSpecificData &matchData)
 {
 	match_time_.store(matchData.matchTimeRemaining, std::memory_order_relaxed);
 	fms_connected_.store(matchData.matchTimeRemaining >= 0, std::memory_order_relaxed);

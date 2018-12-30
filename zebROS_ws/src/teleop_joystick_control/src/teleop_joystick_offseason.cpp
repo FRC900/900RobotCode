@@ -319,7 +319,7 @@ int main(int argc, char **argv)
 	JoystickRumble.publish(rumbleMsg);
 }
 
-void match_data_callback(const ros_control_boilerplate::MatchSpecificData::ConstPtr &MatchData)
+void match_data_callback(const frc_msgs::MatchSpecificData::ConstPtr &MatchData)
 {
 	//Joystick Rumble
 	const double localMatchTimeRemaining = MatchData->matchTimeRemaining;

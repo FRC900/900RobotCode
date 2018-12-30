@@ -2,8 +2,8 @@
 
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_publisher.h>
-#include <pcm_state_interface/pcm_state_interface.h>
-#include <pcm_state_controller/PCMState.h>
+#include <frc_interfaces/pcm_state_interface.h>
+#include <frc_msgs/PCMState.h>
 
 namespace pcm_state_controller
 {
