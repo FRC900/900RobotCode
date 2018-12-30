@@ -7,7 +7,7 @@
 #include <robot_visualizer/ProfileFollower.h>
 #include <std_msgs/Bool.h>
 #include <std_srvs/Empty.h>
-#include <path_to_goal/PathAction.h>
+#include <behaviors/PathAction.h>
 #include <actionlib/server/simple_action_server.h>
 
 ros::Subscriber cube_sub;

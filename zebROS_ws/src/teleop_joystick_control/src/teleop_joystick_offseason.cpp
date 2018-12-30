@@ -12,8 +12,8 @@
 #include "std_msgs/Bool.h"
 #include "robot_visualizer/ProfileFollower.h"
 #include "intake_controller/IntakeSrv.h"
-#include "path_to_goal/PathAction.h"
-#include "path_to_goal/PathGoal.h"
+#include "behaviors/PathAction.h"
+#include "behaviors/PathGoal.h"
 
 static double dead_zone = .2, slow_mode = .33, max_speed = 3.6, max_rot = 8.8, joystick_scale = 3, rotation_scale = 4;
 void dead_zone_check(double &val1, double &val2)
@@ -28,7 +28,7 @@ void dead_zone_check(double &val1, double &val2)
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ArmAction>> ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> ac_intake;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ForearmAction>> ac_arm;
-std::shared_ptr<actionlib::SimpleActionClient<path_to_goal::PathAction>> ac_path;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::PathAction>> ac_path;
 
 static ros::Publisher JoystickRobotVel;
 //static ros::Publisher JoystickRumble;
@@ -198,10 +198,10 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 			float time_to_run = (fabs(least_dist_angle - angle) / max_rotational_velocity) * 2; //TODO: needs testing
 			ROS_INFO_STREAM("time_to_run = " << time_to_run);
 
-                        path_to_goal::PathGoal path_goal;
+                        behaviors::PathGoal path_goal;
                         path_goal.goal_index = 0;
-                        path_goal.x = 0.01;
-                        path_goal.y = 0.01;
+                        path_goal.x = 0.05;
+                        path_goal.y = 0.05;
                         path_goal.rotation = least_dist_angle;
                         path_goal.time_to_run = time_to_run;
                         ac_path->sendGoal(path_goal);
@@ -270,7 +270,7 @@ int main(int argc, char **argv)
 	ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ArmAction>>("arm_server", true);
 	ac_intake = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>>("intake_server", true);
 	ac_arm = std::make_shared<actionlib::SimpleActionClient<behaviors::ForearmAction>> ("forearm_server", true);
-        ac_path = std::make_shared<actionlib::SimpleActionClient<path_to_goal::PathAction>>("path_server", true);
+        ac_path = std::make_shared<actionlib::SimpleActionClient<behaviors::PathAction>>("path_server", true);
 
 	ros::Subscriber joystick_sub  = n.subscribe("joystick_states", 1, &evaluateCommands);
 	//ros::Subscriber joint_states_sub = n.subscribe("/frcrobot/joint_states", 1, &jointStateCallback);

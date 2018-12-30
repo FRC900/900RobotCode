@@ -85,6 +85,7 @@ add_action_files(
     Intake.action
     Forearm.action
     PathToCenter.action
+    Path.action
 )
 
 ## Generate added messages and services with any dependencies listed here

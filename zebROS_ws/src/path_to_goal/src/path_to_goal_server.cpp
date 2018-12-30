@@ -70,11 +70,11 @@ bool runTrajectory(const swerve_point_generator::FullGenCoefs::Response &traj)
 class PathAction
 {
 protected:
-	actionlib::SimpleActionServer<path_to_goal::PathAction> as_;
+	actionlib::SimpleActionServer<behaviors::PathAction> as_;
 	std::string action_name_;
 
-	path_to_goal::PathFeedback feedback_;
-	path_to_goal::PathResult result_;
+	behaviors::PathFeedback feedback_;
+	behaviors::PathResult result_;
 
 public:
 	PathAction(std::string name, ros::NodeHandle n_) :
@@ -88,7 +88,7 @@ public:
 	{
 	}
 
-	void executeCB(const path_to_goal::PathGoalConstPtr &goal) //make a state thing so that it just progresses to the next service call
+	void executeCB(const behaviors::PathGoalConstPtr &goal) //make a state thing so that it just progresses to the next service call
 	{
 		bool success = true;
 

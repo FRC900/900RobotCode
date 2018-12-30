@@ -25,7 +25,6 @@
   <depend>elevator_controller</depend>
   <depend>std_srvs</depend>
   <depend>talon_state_controller</depend>
-  <depend>path_to_goal</depend>
 
   <export>
   </export>

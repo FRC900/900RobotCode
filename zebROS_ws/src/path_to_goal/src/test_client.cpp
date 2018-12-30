@@ -1,16 +1,16 @@
 #include <ros/ros.h>
-#include <path_to_goal/PathAction.h>
-#include <path_to_goal/PathGoal.h>
-#include <path_to_goal/PathResult.h>
+#include <behaviors/PathAction.h>
+#include <behaviors/PathGoal.h>
+#include <behaviors/PathResult.h>
 #include <actionlib/client/simple_action_client.h>
 #include <path_to_goal/TwistSrv.h>
 
-std::shared_ptr<actionlib::SimpleActionClient<path_to_goal::PathAction>> ac;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::PathAction>> ac;
 
 bool trigger_pathing_cb(path_to_goal::TwistSrv::Request &req, path_to_goal::TwistSrv::Response &res)
 {
     ROS_WARN("In trigger callback");
-    path_to_goal::PathGoal goal;
+    behaviors::PathGoal goal;
     goal.goal_index = req.index;
     goal.x = req.y; //blame ryan
     goal.y = req.x; //im sad
@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "test_client");
     ros::NodeHandle n;
 
-    ac = std::make_shared<actionlib::SimpleActionClient<path_to_goal::PathAction>>("path_server", true);
+    ac = std::make_shared<actionlib::SimpleActionClient<behaviors::PathAction>>("path_server", true);
     ros::ServiceServer trigger_pathing = n.advertiseService("trigger_pathing", &trigger_pathing_cb);
 
     ac->waitForServer();

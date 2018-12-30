@@ -8,7 +8,7 @@ static ros::ServiceClient path_to_cube_srv;
 static ros::ServiceClient turn_to_angle_srv;
 static ros::ServiceClient intake_srv;
 
-std::shared_ptr<actionlib::SimpleActionClient<path_to_goal::PathAction>> ac_path;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::PathAction>> ac_path;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> ac_intake;
 
 /*
@@ -24,7 +24,7 @@ std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> ac_intak
 bool angle_to_exchange()//different for echange and cubes, include navX angle 
 {
 	ROS_INFO_NAMED("auto loop", "recovery_mode_exchange");
-	path_to_goal::PathGoal goal;
+	behaviors::PathGoal goal;
 	goal.goal_index = 0; //cube index
 	goal.x = 0;
 	goal.y = 0;
@@ -37,7 +37,7 @@ bool angle_to_exchange()//different for echange and cubes, include navX angle
 bool angle_to_cube()//different for echange and cubes, include navX angle 
 {
 	ROS_INFO_NAMED("auto loop", "recovery_mode_cube");
-	path_to_goal::PathGoal goal;
+	behaviors::PathGoal goal;
 	goal.goal_index = 0; //cube index
 	goal.x = 0;
 	goal.y = 0;
@@ -65,7 +65,7 @@ bool recovery_mode()
 bool start_path_to_cube()
 {
 	ROS_INFO_NAMED("auto loop", "path_to_cube");
-	path_to_goal::PathGoal goal;
+	behaviors::PathGoal goal;
 	goal.goal_index = 1; //cube index
 	ac_path->sendGoal(goal);
 	return true; //these should maybe just be voids
@@ -116,7 +116,7 @@ bool drive_forward_slowly()
 bool start_path_to_exchange()
 {
 	ROS_INFO_NAMED("auto loop", "path_to_exchange");
-	path_to_goal::PathGoal goal; 
+	behaviors::PathGoal goal; 
 	goal.goal_index = 2; //path to exchange
 	ac_path->sendGoal(goal);
 	return true;
@@ -142,7 +142,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "auto_loop");
 	ros::NodeHandle n;
 
-	ac_path = std::make_shared<actionlib::SimpleActionClient<path_to_goal::PathAction>> ("path_goal", true);
+	ac_path = std::make_shared<actionlib::SimpleActionClient<behaviors::PathAction>> ("path_goal", true);
 	ac_intake = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>> ("intake", true);
 
 	ROS_INFO_STREAM("waiting for server to start");
