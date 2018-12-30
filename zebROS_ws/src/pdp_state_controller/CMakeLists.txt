@@ -5,7 +5,6 @@ include("../cmake_modules/CMakeOpt.cmake")
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  rospy
   std_msgs
   realtime_tools
   hardware_interface
@@ -13,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   message_runtime
   pluginlib
+  pdp_state_interface
 )
 
 ## Generate messages in the 'msg' folder
@@ -25,12 +25,13 @@ add_message_files(
 generate_messages(
    DEPENDENCIES
    std_msgs
+   pdp_state_controller
 )
 
 catkin_package(
    INCLUDE_DIRS include
    #LIBRARIES ${PROJECT_NAME}
-   CATKIN_DEPENDS roscpp rospy std_msgs realtime_tools hardware_interface pluginlib message_runtime
+   CATKIN_DEPENDS roscpp std_msgs realtime_tools hardware_interface pluginlib message_runtime pdp_state_interface
 )
 
 ###########

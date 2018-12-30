@@ -32,7 +32,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-/* Author: Dave Coleman
+/* Original Author: Dave Coleman
    Desc:   Example ros_control hardware interface blank template for the FRCRobot
            For a more detailed simulation example, see sim_hw_interface.h
 */
@@ -45,20 +45,29 @@
 #include <ros_control_boilerplate/frc_robot_interface.h>
 #include <realtime_tools/realtime_publisher.h>
 
-#include <ctre/phoenix/MotorControl/CAN/TalonSRX.h>
-#include <IterativeRobotBase.h>
-#include <DriverStation.h>
-#include <NidecBrushless.h>
-#include <DigitalInput.h>
-#include <DigitalOutput.h>
-#include <SafePWM.h>
-#include <Solenoid.h>
-#include <DoubleSolenoid.h>
-#include <AHRS.h>
-#include <Compressor.h>
-#include <LiveWindow/LiveWindow.h>
-#include <SmartDashboard/SmartDashboard.h>
+#include <robot_controller_interface/robot_controller_interface.hpp>
+#include "ros_control_boilerplate/AutoMode.h"
+#include "ros_control_boilerplate/JoystickState.h"
+#include "match_state_controller/MatchSpecificData.h"
 #include <std_msgs/Float64.h>
+
+#include <ctre/phoenix/motorcontrol/can/TalonSRX.h>
+#include <frc/IterativeRobotBase.h>
+#include <frc/DriverStation.h>
+#include <frc/NidecBrushless.h>
+#include <frc/DigitalInput.h>
+#include <frc/DigitalOutput.h>
+#include <frc/PWMSpeedController.h>
+#include <frc/Solenoid.h>
+#include <frc/DoubleSolenoid.h>
+#include <frc/Compressor.h>
+#include <frc/livewindow/LiveWindow.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+#include <hal/HALBase.h>
+#include <hal/DriverStation.h>
+#include <hal/FRCUsageReporting.h>
+
+#include <AHRS.h>
 
 #include <robot_controller_interface/robot_controller_interface.hpp>
 
@@ -66,13 +75,13 @@ namespace frcrobot_control
 {
 // Very simple code to communicate with the HAL. This recieves
 // packets from the driver station and lets the field management
-// know our robot is alive.  
+// know our robot is alive.
 class ROSIterativeRobot : public frc::IterativeRobotBase
 {
 	public:
-		ROSIterativeRobot(void)
+		ROSIterativeRobot(void) : IterativeRobotBase(0.02)
 		{
-			HAL_Report(HALUsageReporting::kResourceType_Framework, 900, 0, "https://www.ros.org");
+			HAL_Report(HALUsageReporting::kResourceType_Framework, HALUsageReporting::kFramework_ROS);
 			HAL_Report(HALUsageReporting::kResourceType_RobotDrive, 900, 0, "field centric swerve");
 #if 0
 			for (int i = 0; i < 900; i++)
@@ -86,12 +95,14 @@ class ROSIterativeRobot : public frc::IterativeRobotBase
 		{
 			RobotInit();
 			HAL_ObserveUserProgramStarting();
+			LiveWindow::GetInstance()->SetEnabled(false);
+			LiveWindow::GetInstance()->DisableAllTelemetry();
 		}
 
 		void OneIteration(void)
 		{
 			// wait for driver station data so the loop doesn't hog the CPU
-			DriverStation::GetInstance().WaitForData();
+			//DriverStation::GetInstance().WaitForData(.01);
 			LoopFunc();
 		}
 
@@ -129,7 +140,7 @@ class ROSIterativeRobot : public frc::IterativeRobotBase
 						LiveWindow::GetInstance()->SetEnabled(false);
 					TeleopInit();
 					m_lastMode = Mode::kTeleop;
-					Scheduler::GetInstance()->SetEnabled(true);
+					//Scheduler::GetInstance()->SetEnabled(true);
 				}
 				HAL_ObserveUserProgramTeleop();
 				TeleopPeriodic();
@@ -156,6 +167,18 @@ class ROSIterativeRobot : public frc::IterativeRobotBase
 		Mode m_lastMode = Mode::kNone;
 };
 
+class DoubleSolenoidHandle
+{
+	public:
+		DoubleSolenoidHandle(HAL_SolenoidHandle forward, HAL_SolenoidHandle reverse)
+			: forward_(forward)
+		    , reverse_(reverse)
+	{
+	}
+		HAL_SolenoidHandle forward_;
+		HAL_SolenoidHandle reverse_;
+};
+
 /// \brief Hardware interface for a robot
 class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 {
@@ -176,9 +199,10 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		/** \brief Write the command to the robot hardware. */
 		virtual void write(ros::Duration &elapsed_time) override;
 
-	private:
-		void hal_keepalive_thread(void);
+	protected:
+		virtual std::vector<ros_control_boilerplate::DummyJoint> getDummyJoints(void) override;
 
+	private:
 		void process_motion_profile_buffer_thread(double hz);
 		void customProfileSetMode(int joint_id,
 								  hardware_interface::TalonMode mode,
@@ -204,6 +228,8 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		bool convertControlMode(const hardware_interface::TalonMode input_mode,
 								ctre::phoenix::motorcontrol::ControlMode &output_mode);
+		bool convertDemand1Type( const hardware_interface::DemandType input,
+				ctre::phoenix::motorcontrol::DemandType &output);
 		bool convertNeutralMode(const hardware_interface::NeutralMode input_mode,
 								ctre::phoenix::motorcontrol::NeutralMode &output_mode);
 		bool convertFeedbackDevice(
@@ -220,45 +246,79 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 			ctre::phoenix::motorcontrol::VelocityMeasPeriod &output_v_m_period);
 		bool convertStatusFrame(const hardware_interface::StatusFrame input,
 			ctre::phoenix::motorcontrol::StatusFrameEnhanced &output);
+		bool convertControlFrame(const hardware_interface::ControlFrame input,
+			ctre::phoenix::motorcontrol::ControlFrame &output);
 
 		bool safeTalonCall(ctre::phoenix::ErrorCode error_code,
 				const std::string &talon_method_name);
 
-		std::atomic<bool> stop_arm_;
-		std::atomic<bool> override_arm_limits_;
-		std::atomic<bool> cube_state_;
-		std::atomic<bool> auto_state_0_;
-		std::atomic<bool> auto_state_1_;
-		std::atomic<bool> auto_state_2_;
-		std::atomic<bool> auto_state_3_;
-		std::atomic<bool> disable_compressor_;
-		std::atomic<bool> starting_config_;
-		std::atomic<double> navX_zero_;
-		std::atomic<double> navX_angle_;
-		std::atomic<double> pressure_;
-		std::atomic<bool> match_data_enabled_;
+		double cube_state_;
+		double auto_state_0_;
+		double auto_state_1_;
+		double auto_state_2_;
+		double auto_state_3_;
+		double stop_arm_;
+		double override_arm_limits_;
+		double disable_compressor_;
+		double starting_config_;
+		double navX_zero_;
+		double navX_angle_;
+		double pressure_;
 
 		std::vector<std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonSRX>> can_talons_;
-		std::shared_ptr<std::vector<std::atomic<bool>>> can_talons_mp_written_;
-		std::shared_ptr<std::vector<std::atomic<bool>>> can_talons_mp_writing_;
-		std::shared_ptr<std::vector<std::atomic<bool>>> can_talons_mp_running_;
+
+		// Maintain a separate read thread for each talon SRX
+		std::vector<std::shared_ptr<std::mutex>> talon_read_state_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::TalonHWState>> talon_read_thread_states_;
+		std::vector<std::thread> talon_read_threads_;
+		void talon_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonSRX> talon, std::shared_ptr<hardware_interface::TalonHWState> state, std::shared_ptr<std::atomic<bool>> mp_written, std::shared_ptr<std::mutex> mutex);
+		std::atomic<bool> profile_is_live_;
+		std::atomic<bool> writing_points_;
+
+		std::vector<std::shared_ptr<std::atomic<bool>>> can_talons_mp_written_;
+		std::vector<std::shared_ptr<std::atomic<bool>>> can_talons_mp_running_;
 		std::vector<std::shared_ptr<frc::NidecBrushless>> nidec_brushlesses_;
 		std::vector<std::shared_ptr<frc::DigitalInput>> digital_inputs_;
 		std::vector<std::shared_ptr<frc::DigitalOutput>> digital_outputs_;
-		std::vector<std::shared_ptr<frc::SafePWM>> PWMs_;
-		std::vector<std::shared_ptr<frc::Solenoid>> solenoids_;
-		std::vector<std::shared_ptr<frc::DoubleSolenoid>> double_solenoids_;
+		std::vector<std::shared_ptr<frc::PWM>> PWMs_;
+		std::vector<HAL_SolenoidHandle> solenoids_;
+		std::vector<DoubleSolenoidHandle> double_solenoids_;
 		std::vector<std::shared_ptr<AHRS>> navXs_;
 		std::vector<std::shared_ptr<frc::AnalogInput>> analog_inputs_;
-		std::vector<std::shared_ptr<frc::Compressor>> compressors_;
-		std::thread hal_thread_;
+
+		std::vector<std::shared_ptr<std::mutex>> pcm_read_thread_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::PCMState>> pcm_read_thread_state_;
+		void pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_id, std::shared_ptr<hardware_interface::PCMState> state, std::shared_ptr<std::mutex> mutex);
+		std::vector<std::thread> pcm_thread_;
+		std::vector<HAL_CompressorHandle> compressors_;
+
 		std::thread motion_profile_thread_;
+		std::vector<std::shared_ptr<std::mutex>> motion_profile_mutexes_;
 
-		PowerDistributionPanel pdp_joint_;
-		hardware_interface::RobotControllerState shared_robot_controller_state_;
-		std::mutex robot_controller_state_mutex_;
+		std::vector<std::shared_ptr<std::mutex>> pdp_read_thread_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::PDPHWState>> pdp_read_thread_state_;
+		void pdp_read_thread(int32_t pdp, std::shared_ptr<hardware_interface::PDPHWState> state, std::shared_ptr<std::mutex> mutex);
+		std::vector<std::thread> pdp_thread_;
+		std::vector<int32_t> pdps_;
 
-		ROSIterativeRobot robot_;
+		std::vector<std::shared_ptr<Joystick>> joysticks_;
+		std::vector<bool> joystick_up_last_;
+		std::vector<bool> joystick_down_last_;
+		std::vector<bool> joystick_left_last_;
+		std::vector<bool> joystick_right_last_;
+		std::shared_ptr<realtime_tools::RealtimePublisher<ros_control_boilerplate::JoystickState>> realtime_pub_joystick_;
+
+		std::unique_ptr<ROSIterativeRobot> robot_;
+		std::shared_ptr<realtime_tools::RealtimePublisher<ros_control_boilerplate::AutoMode>> realtime_pub_nt_;
+		std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64>> realtime_pub_error_;
+
+		bool error_msg_last_received_;
+
+		// Same thing for network tables - they only need to update
+		// at human-usable scales
+		ros::Time last_nt_publish_time_;
+
+		double error_pub_start_time_;
 };  // class
 
 }  // namespace

@@ -7,8 +7,8 @@ namespace pdp_state_controller
 {
 
 bool PDPStateController::init(hardware_interface::PDPStateInterface *hw,
-								ros::NodeHandle 					&root_nh,
-								ros::NodeHandle 					&controller_nh)
+								ros::NodeHandle						&root_nh,
+								ros::NodeHandle						&controller_nh)
 {
 	ROS_INFO_STREAM_NAMED("pdp_state_controller", "init is running");
 
@@ -35,19 +35,6 @@ bool PDPStateController::init(hardware_interface::PDPStateInterface *hw,
 	m.totalPower = 0.0;
 	m.totalEnergy = 0.0;
 
-        /*int count = 0;
-        while(count < 10)
-        {
-            print(count);
-            count = count + 1;
-            //some code here
-        }
-
-        for(int count = 0; count < 10; count++)
-        {
-            print(count);
-        }*/
-	
 	for(int channel = 0; channel <= 15; channel++)
 	{
 		m.current[channel] = 0;
@@ -56,7 +43,6 @@ bool PDPStateController::init(hardware_interface::PDPStateInterface *hw,
 	pdp_state_ = hw->getHandle(pdp_name);
 
 	return true;
-	
 }
 
 void PDPStateController::starting(const ros::Time &time)
@@ -72,32 +58,32 @@ void PDPStateController::update(const ros::Time &time, const ros::Duration & )
 		if (realtime_pub_->trylock())
 		{
 			last_publish_time_ = last_publish_time_ + ros::Duration(1.0 / publish_rate_);
-			
+
 			auto &m = realtime_pub_->msg_;
 
 			m.header.stamp = time;
 
 			auto &ps = pdp_state_;
-			
+
 			//read from the object and stuff it in a msg
 			m.voltage = ps->getVoltage();
 			m.temperature = ps->getTemperature();
 			m.totalCurrent = ps->getTotalCurrent();
 			m.totalPower = ps->getTotalPower();
 			m.totalEnergy = ps->getTotalEnergy();
-	
+
 			for(int channel = 0; channel <= 15; channel++)
 			{
 				m.current[channel] = ps->getCurrent(channel);
 			}
-	
+
 			realtime_pub_->unlockAndPublish();
-			
+
 		}
 	}
 }
 
-void PDPStateController::stopping(const ros::Time & ) 
+void PDPStateController::stopping(const ros::Time & )
 {}
 }
 

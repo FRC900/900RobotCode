@@ -15,9 +15,14 @@ sub install_package
 	# Create a temporary directory
 	my $dirname = File::Temp->newdir;
     # Go to the temporary directory
-	chdir $dirname  || die("Can not chdir($dirname) : $!");
+	chdir $dirname;
 	`wget $url`;
 
+	if ($? != 0)
+	{
+		print("****** Error - could not download $url\n");
+		return;
+	}
 	# ipk files are an ar archive. Inside is a file
 	# called data.tar.gz which is the actual contents
 	# that have to be extracted. Put them in the
@@ -26,7 +31,7 @@ sub install_package
 	{
 		my $filename = substr $url, rindex($url, "/")+1;
 		`ar xv $filename`;
-		print `sudo tar xzvf data.tar.gz -C /usr/arm-frc-linux-gnueabi`;
+		print `tar xzvf data.tar.gz -C ~/frc2019/roborio/arm-frc2019-linux-gnueabi`;
 	}
 	
 	chdir $oldcwd;
@@ -37,132 +42,145 @@ sub install_package
 # some are static libs which get linked into ROS programs.  Still,
 # be safe rather than sorry since disk space isn't at a huge premium 
 # on our development systems.
-#
 
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/lz4-dev_131+git0+d86dc91677-r0.4_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/lz4-staticdev_131+git0+d86dc91677-r0.4_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/lz4_131+git0+d86dc91677-r0.4_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libcurl4_7.51.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/curl-dev_7.51.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/curl-staticdev_7.51.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/curl_7.51.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/boost-dev_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/boost-serialization_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/boost-staticdev_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/boost-test_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/boost_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libboost-atomic1.60.0_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libboost-chrono1.60.0_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libboost-date-time1.60.0_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libboost-filesystem1.60.0_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libboost-graph1.60.0_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libboost-iostreams1.60.0_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libboost-program-options1.60.0_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libboost-regex1.60.0_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libboost-signals1.60.0_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libboost-system1.60.0_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libboost-thread1.60.0_1.60.0-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libeigen-dev_3.2.6-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libeigen_3.2.6-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libpython2_2.7.11-r1.49_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/python-core_2.7.11-r1.49_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/python-dev_2.7.11-r1.49_cortexa9-vfpv3.ipk");
+my $base_uri = "http://download.ni.com/ni-linux-rt/feeds/2018/arm/cortexa9-vfpv3/";
 
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libcurl4_7.51.0-r0.3_cortexa9-vfpv3.ipk");
+install_package($base_uri . "lz4-dev_131+git0+d86dc91677-r0.16_cortexa9-vfpv3.ipk");
+install_package($base_uri . "lz4-staticdev_131+git0+d86dc91677-r0.16_cortexa9-vfpv3.ipk");
+install_package($base_uri . "lz4_131+git0+d86dc91677-r0.16_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libcurl4_7.53.1-r0.4_cortexa9-vfpv3.ipk");
+install_package($base_uri . "curl-dev_7.53.1-r0.4_cortexa9-vfpv3.ipk");
+install_package($base_uri . "curl-staticdev_7.53.1-r0.4_cortexa9-vfpv3.ipk");
+install_package($base_uri . "curl_7.53.1-r0.4_cortexa9-vfpv3.ipk");
+install_package($base_uri . "boost-dev_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "boost-serialization_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "boost-staticdev_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "boost-test_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "boost_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libboost-atomic1.63.0_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libboost-chrono1.63.0_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libboost-date-time1.63.0_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libboost-filesystem1.63.0_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libboost-graph1.63.0_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libboost-iostreams1.63.0_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libboost-program-options1.63.0_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libboost-regex1.63.0_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libboost-signals1.63.0_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libboost-system1.63.0_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libboost-thread1.63.0_1.63.0-r1.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libeigen-dev_3.2.8-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libeigen_3.2.8-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libpython2_2.7.13-r1.13_cortexa9-vfpv3.ipk");
+install_package($base_uri . "python-core_2.7.13-r1.13_cortexa9-vfpv3.ipk");
+install_package($base_uri . "python-dev_2.7.13-r1.13_cortexa9-vfpv3.ipk");
 
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/bzip2-dev_1.0.6-r5.326_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/bzip2-staticdev_1.0.6-r5.326_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/bzip2_1.0.6-r5.326_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libbz2-1_1.0.6-r5.326_cortexa9-vfpv3.ipk");
+install_package($base_uri . "bzip2-dev_1.0.6-r5.451_cortexa9-vfpv3.ipk");
+install_package($base_uri . "bzip2-staticdev_1.0.6-r5.451_cortexa9-vfpv3.ipk");
+install_package($base_uri . "bzip2_1.0.6-r5.451_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libbz2-1_1.0.6-r5.451_cortexa9-vfpv3.ipk");
 
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/cmake-dev_3.4.3-r0.3_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/cmake_3.4.3-r0.3_cortexa9-vfpv3.ipk");
+install_package($base_uri . "cmake-dev_3.7.2-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "cmake_3.7.2-r0.2_cortexa9-vfpv3.ipk");
 
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libxml2-dev_2.9.4-r0.49_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libxml2-staticdev_2.9.4-r0.49_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libxml2_2.9.4-r0.49_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libgnutls-bin_3.4.9-r0.7_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libgnutls-dev_3.4.9-r0.7_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libgnutls-openssl27_3.4.9-r0.7_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libgnutls30_3.4.9-r0.7_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libgnutlsxx28_3.4.9-r0.7_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/nettle-dev_3.2-r0.7_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/nettle-staticdev_3.2-r0.7_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/nettle_3.2-r0.7_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libxml2-dev_2.9.4-r0.150_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libxml2-staticdev_2.9.4-r0.150_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libxml2_2.9.4-r0.150_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libgnutls-bin_3.5.9-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libgnutls-dev_3.5.9-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libgnutls-openssl27_3.5.9-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libgnutls30_3.5.9-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libgnutlsxx28_3.5.9-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libunistring-dev_0.9.7-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libunistring-dev_0.9.7-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libunistring-staticdev_0.9.7-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libunistring2_0.9.7-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "nettle-dev_3.3-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "nettle-staticdev_3.3-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "nettle_3.3-r0.6_cortexa9-vfpv3.ipk");
 
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libgmp-dev_6.1.0-r0.44_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libgmp-staticdev_6.1.0-r0.44_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libgmp10_6.1.0-r0.44_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libgmpxx4_6.1.0-r0.44_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libgmp-dev_6.1.2-r0.23_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libgmp-staticdev_6.1.2-r0.23_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libgmp10_6.1.2-r0.23_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libgmpxx4_6.1.2-r0.23_cortexa9-vfpv3.ipk");
 
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libz-dev_1.2.8-r0.329_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libz-staticdev_1.2.8-r0.329_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libz1_1.2.8-r0.329_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/protobuf-dev_2.6.1-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/protobuf-staticdev_2.6.1-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/protobuf_2.6.1-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libz-dev_1.2.11-r0.13_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libz-staticdev_1.2.11-r0.13_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libz1_1.2.11-r0.13_cortexa9-vfpv3.ipk");
+install_package($base_uri . "protobuf-dev_3.1.0-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "protobuf-staticdev_3.1.0-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "protobuf_3.1.0-r0.2_cortexa9-vfpv3.ipk");
+
+install_package($base_uri . "gflags-bash-completion_2.2.0-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "gflags-dbg_2.2.0-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "gflags-dev_2.2.0-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "gflags_2.2.0-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libglog-dev_0.3.4-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libglog-staticdev_0.3.4-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libglog0_0.3.4-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libunwind-dev_1.1+git0+bc8698fd7e-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libunwind-dev_1.1+git0+bc8698fd7e-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libunwind-staticdev_1.1+git0+bc8698fd7e-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libunwind_1.1+git0+bc8698fd7e-r0.2_cortexa9-vfpv3.ipk");
+>>>>>>> Builds with 2019 beta
 
 # OpenCV - needed for WPILib
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-calib3d-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-calib3d3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-core-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-core3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-features2d-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-features2d3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-flann-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-flann3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-highgui-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-highgui3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-imgcodecs-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-imgcodecs3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-imgproc-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-imgproc3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-ml-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-ml3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-objdetect-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-objdetect3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-photo-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-photo3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-shape-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-shape3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-stitching-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-stitching3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-superres-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-superres3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-video-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-video3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-videoio-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-videoio3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-videostab-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libopencv-videostab3.1_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/opencv-apps_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/opencv-dbg_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/opencv-dev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/opencv-samples-dbg_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/opencv-samples_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/opencv-staticdev_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/opencv_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/python-opencv_3.1+git0+92387b1ef8-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-calib3d-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-calib3d3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-core-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-core3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-features2d-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-features2d3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-flann-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-flann3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-highgui-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-highgui3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-imgcodecs-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-imgcodecs3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-imgproc-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-imgproc3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-ml-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-ml3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-objdetect-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-objdetect3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-photo-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-photo3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-shape-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-shape3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-stitching-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-stitching3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-superres-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-superres3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-video-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-video3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-videoio-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-videoio3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-videostab-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libopencv-videostab3.2_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "opencv-apps_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "opencv-dbg_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "opencv-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "opencv-samples_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
+install_package($base_uri . "opencv_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
 
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/tbb-dev_4.1-r20130314.8_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/tbb_4.1-r20130314.8_cortexa9-vfpv3.ipk");
+install_package($base_uri . "tbb-dev_20170412+0+a2cfdfe946-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "tbb_20170412+0+a2cfdfe946-r0.2_cortexa9-vfpv3.ipk");
 
 # rsync packages needed for deployment script
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libacl1_2.2.52-r0.105_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/rsync_3.1.2-r0.3_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libacl1_2.2.52-r0.126_cortexa9-vfpv3.ipk");
+install_package($base_uri . "rsync_3.1.2-r0.10_cortexa9-vfpv3.ipk");
 
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libidn11_1.32-r0.7_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libidn11_1.33-r0.6_cortexa9-vfpv3.ipk");
 
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libusb-1.0-dev_1.0.20-r0.7_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libusb-1.0-0_1.0.20-r0.7_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libusb-1.0-staticdev_1.0.20-r0.7_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libusb-1.0-dev_1.0.21-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libusb-1.0-0_1.0.21-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libusb-1.0-staticdev_1.0.21-r0.6_cortexa9-vfpv3.ipk");
 
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/libgnutls-openssl27_3.4.9-r0.7_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-conf_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-dbg_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-dev_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-doc_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-engines_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-misc_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
-install_package("http://download.ni.com/ni-linux-rt/feeds/2017/arm/ipk/cortexa9-vfpv3/openssl-staticdev_1.0.2h-r0.49_cortexa9-vfpv3.ipk");
-
+install_package($base_uri . "libgnutls-openssl27_3.5.9-r0.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "openssl-conf_1.0.2k-r0.13_cortexa9-vfpv3.ipk");
+install_package($base_uri . "openssl-dbg_1.0.2k-r0.13_cortexa9-vfpv3.ipk");
+install_package($base_uri . "openssl-dev_1.0.2k-r0.13_cortexa9-vfpv3.ipk");
+install_package($base_uri . "openssl-doc_1.0.2k-r0.13_cortexa9-vfpv3.ipk");
+install_package($base_uri . "openssl-engines_1.0.2k-r0.13_cortexa9-vfpv3.ipk");
+install_package($base_uri . "openssl-misc_1.0.2k-r0.13_cortexa9-vfpv3.ipk");
+install_package($base_uri . "openssl-staticdev_1.0.2k-r0.13_cortexa9-vfpv3.ipk");
+install_package($base_uri . "openssl_1.0.2k-r0.13_cortexa9-vfpv3.ipk");

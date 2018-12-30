@@ -15,14 +15,11 @@
   <depend>sensor_msgs</depend>
   <depend>realtime_tools</depend>
   <depend>roscpp</depend>
-  <depend>talon_interface</depend>
   <depend>std_msgs</depend>
-  <depend>rospy</depend>
-
+  <depend>pdp_state_interface</depend>
 
   <depend>message_generation</depend>
   <depend>message_runtime</depend>
-
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

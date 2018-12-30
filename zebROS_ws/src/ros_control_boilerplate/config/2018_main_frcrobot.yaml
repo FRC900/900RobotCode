@@ -37,8 +37,8 @@ hardware_interface:
        - {name: navx_mxp, type: navX, frame_id: navx, id: 0}
        - {name: analog_pressure_sensor, type: analog_input, analog_channel: 0, analog_a: .0633897, analog_b: -24.9}
        - {name: compressor1, type: compressor, pcm_id: 0}
+       - {name: pdp, type: pdp}
        - {name: joystick_rumble, type: rumble, rumble_port: 0}
-       - {name: cube_state, type: dummy}
        - {name: stop_arm, type: dummy}
        - {name: override_arm_limits, type: dummy}
        - {name: starting_config, type: dummy}

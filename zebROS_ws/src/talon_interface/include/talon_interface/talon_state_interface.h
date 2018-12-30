@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cassert>
-#include <string>
 #include <hardware_interface/internal/hardware_resource_manager.h>
+#include <state_handle/state_handle.h>
 
 namespace hardware_interface
 {
@@ -117,6 +117,34 @@ enum StatusFrame
 	Status_15_FirmwareApiStatus,
 	Status_Last
 };
+static const uint8_t status_1_general_default = 10;
+static const uint8_t status_2_feedback0_default = 20;
+static const uint8_t status_3_quadrature_default = 160;
+static const uint8_t status_4_aintempvbat_default = 160;
+static const uint8_t status_6_misc_default = 0;
+static const uint8_t status_7_commstatus_default = 0;
+static const uint8_t status_8_pulsewidth_default = 160;
+static const uint8_t status_9_motprofbuffer_default = 50;
+static const uint8_t status_10_motionmagic_default = 160;
+static const uint8_t status_11_uartgadgeteer_default = 250;
+static const uint8_t status_12_feedback1_default = 250;
+static const uint8_t status_13_base_pidf0_default = 160;
+static const uint8_t status_14_turn_pidf1_default = 250;
+static const uint8_t status_15_firmwareapistatus_default = 160;
+
+enum ControlFrame
+{
+	Control_3_General,
+	Control_4_Advanced,
+	Control_5_FeedbackOutputOverride,
+	Control_6_MotProfAddTrajPoint,
+	Control_Last
+};
+// TODO : what should these defaults be?
+static const uint8_t control_3_general_default = 0;
+static const uint8_t control_4_advanced_default = 0;
+static const uint8_t control_5_feedbackoutputoverride_default = 0;
+static const uint8_t control_6_motprofaddtrajpoint_default = 0;
 
 // Match up with CTRE Motion profile struct
 enum SetValueMotionProfile
@@ -288,22 +316,30 @@ class TalonHWState
 			faults_(0),
 			sticky_faults_(0),
 
-			conversion_factor_(1.0)
+			conversion_factor_(1.0),
+
+			// control of read thread
+			enable_read_thread_(true)
 		{
-			status_frame_periods_[Status_1_General] = 10;
-			status_frame_periods_[Status_2_Feedback0] = 20;
-			status_frame_periods_[Status_3_Quadrature] = 160;
-			status_frame_periods_[Status_4_AinTempVbat] = 160;
-			status_frame_periods_[Status_6_Misc] = 0;
-			status_frame_periods_[Status_7_CommStatus] = 0;
-			status_frame_periods_[Status_8_PulseWidth] = 160;
-			status_frame_periods_[Status_9_MotProfBuffer] = 0;
-			status_frame_periods_[Status_10_MotionMagic] = 160;
-			status_frame_periods_[Status_11_UartGadgeteer] = 0;
-			status_frame_periods_[Status_12_Feedback1] = 0;
-			status_frame_periods_[Status_13_Base_PIDF0] = 160;
-			status_frame_periods_[Status_14_Turn_PIDF1] = 0;
-			status_frame_periods_[Status_15_FirmwareApiStatus] = 0;
+			status_frame_periods_[Status_1_General] = status_1_general_default;
+			status_frame_periods_[Status_2_Feedback0] = status_2_feedback0_default;
+			status_frame_periods_[Status_3_Quadrature] = status_3_quadrature_default;
+			status_frame_periods_[Status_4_AinTempVbat] = status_4_aintempvbat_default;
+			status_frame_periods_[Status_6_Misc] = status_6_misc_default;
+			status_frame_periods_[Status_7_CommStatus] = status_7_commstatus_default;
+			status_frame_periods_[Status_8_PulseWidth] = status_8_pulsewidth_default;
+			status_frame_periods_[Status_9_MotProfBuffer] = status_9_motprofbuffer_default;
+			status_frame_periods_[Status_10_MotionMagic] = status_10_motionmagic_default;
+			status_frame_periods_[Status_11_UartGadgeteer] = status_11_uartgadgeteer_default;
+			status_frame_periods_[Status_12_Feedback1] = status_12_feedback1_default;
+			status_frame_periods_[Status_13_Base_PIDF0] = status_13_base_pidf0_default;
+			status_frame_periods_[Status_14_Turn_PIDF1] = status_14_turn_pidf1_default;
+			status_frame_periods_[Status_15_FirmwareApiStatus] = status_15_firmwareapistatus_default;
+
+			control_frame_periods_[Control_3_General] = control_3_general_default;
+			control_frame_periods_[Control_4_Advanced] = control_4_advanced_default;
+			control_frame_periods_[Control_5_FeedbackOutputOverride] = control_5_feedbackoutputoverride_default;
+			control_frame_periods_[Control_6_MotProfAddTrajPoint] = control_6_motprofaddtrajpoint_default;
 		}
 
 		double getSetpoint(void) const
@@ -555,9 +591,9 @@ class TalonHWState
 		{
 			return conversion_factor_;
 		}
-		void setConversionFactor(double conversion_factor)
+		bool getEnableReadThread(void) const
 		{
-			conversion_factor_ = conversion_factor;
+			return enable_read_thread_;
 		}
 		void setSetpoint(double setpoint)
 		{
@@ -861,6 +897,23 @@ class TalonHWState
 			return 0;
 		}
 
+		void setControlFramePeriod(ControlFrame control_frame, uint8_t period)
+		{
+			if ((control_frame >= Control_3_General) && (control_frame < Control_Last))
+				control_frame_periods_[control_frame] = period;
+			else
+				ROS_ERROR("Invalid control_frame value passed to TalonHWState::setControlFramePeriod()");
+		}
+
+		uint8_t getControlFramePeriod(ControlFrame control_frame) const
+		{
+			if ((control_frame >= Control_3_General) && (control_frame < Control_Last))
+				return control_frame_periods_[control_frame];
+
+			ROS_ERROR("Invalid control_frame value passed to TalonHWState::setControlFramePeriod()");
+			return 0;
+		}
+
 		void setMotionProfileTrajectoryPeriod(int msec)
 		{
 			motion_profile_trajectory_period_ = msec;
@@ -1075,6 +1128,14 @@ class TalonHWState
 		{
 			sticky_faults_ = sticky_faults;
 		}
+		void setConversionFactor(double conversion_factor)
+		{
+			conversion_factor_ = conversion_factor;
+		}
+		void setEnableReadThread(bool enable_read_thread)
+		{
+			enable_read_thread_ = enable_read_thread;
+		}
 
 	private:
 		double setpoint_;
@@ -1181,68 +1242,22 @@ class TalonHWState
 		int motion_profile_trajectory_period_;
 
 		std::array<uint8_t, Status_Last> status_frame_periods_;
+		std::array<uint8_t, Control_Last> control_frame_periods_;
 
 		unsigned int faults_;
 		unsigned int sticky_faults_;
 
 		double conversion_factor_;
-};
 
-// Handle - used by each controller to get, by name of the
-// corresponding joint, an interface with which to get state
-// info about a Talon
-class TalonStateHandle
-{
-	public:
-		TalonStateHandle(void) :
-			state_(0)
-		{}
-
-		// Initialize the base JointStateHandle with pointers
-		// from the state data object.  Since the standard ROS
-		// code uses JointStateHandles in some places to display
-		// robot state support that code as much as possible.  We'll
-		// have to figure out what effort maps to in the Talon
-		// Anything above and beyond the 3 standard ROS state
-		// vars (position, velocity, effort) will require support
-		// in the controller as well as the HWState object pointed
-		// to by a given handle.
-		TalonStateHandle(const std::string &name, const TalonHWState *state) :
-			name_(name),
-			state_(state)
-		{
-			if (!state)
-				throw HardwareInterfaceException("Cannot create Talon state handle '" + name + "'. state pointer is null.");
-		}
-		std::string getName(void) const
-		{
-			return name_;
-		}
-
-		// Operator which allows access to methods from
-		// the TalonHWState member var associated with this
-		// handle
-		// Note that we could create separate methods in
-		// the handle class for every method in the HWState
-		// class, e.g.
-		//     double getFoo(void) const {assert(_state); return state_->getFoo();}
-		// but if each of them just pass things unchanged between
-		// the calling code and the HWState method there's no
-		// harm in making a single method to do so rather than
-		// dozens of getFoo() one-line methods
-		const TalonHWState *operator->() const
-		{
-			assert(state_);
-			return state_;
-		}
-
-	private:
-		std::string         name_;
-		const TalonHWState *state_; // leave this const since state should never change the Talon itself
+		bool enable_read_thread_;
 };
 
 // Glue code to let this be registered in the list of
 // hardware resources on the robot.  Since state is
 // read-only, allow multiple controllers to register it.
+typedef StateHandle<const TalonHWState> TalonStateHandle;
+typedef StateHandle<TalonHWState> TalonWritableStateHandle;
 class TalonStateInterface : public HardwareResourceManager<TalonStateHandle> {};
+
 }
+

@@ -195,36 +195,49 @@ class TalonHWCommand
 			custom_profile_slot_(0),
 			custom_profile_next_slot_mutex_ptr_(std::make_shared<std::mutex>()),
 			custom_profile_hz_(50.0),
-			custom_profile_vectors_mutex_ptr_(std::make_shared<std::mutex>())
+			custom_profile_vectors_mutex_ptr_(std::make_shared<std::mutex>()),
+
+			enable_read_thread_(true),
+			enable_read_thread_changed_(false)
 		{
-			status_frame_periods_[Status_1_General] = 10;
-			status_frame_periods_changed_[Status_1_General] = true;
-			status_frame_periods_[Status_2_Feedback0] = 20;
-			status_frame_periods_changed_[Status_2_Feedback0] = true;
-			status_frame_periods_[Status_3_Quadrature] = 160;
-			status_frame_periods_changed_[Status_3_Quadrature] = true;
-			status_frame_periods_[Status_4_AinTempVbat] = 160;
-			status_frame_periods_changed_[Status_4_AinTempVbat] = true;
-			status_frame_periods_[Status_6_Misc] = 0;
+			status_frame_periods_[Status_1_General] = status_1_general_default;
+			status_frame_periods_[Status_2_Feedback0] = status_2_feedback0_default;
+			status_frame_periods_[Status_3_Quadrature] = status_3_quadrature_default;
+			status_frame_periods_[Status_4_AinTempVbat] = status_4_aintempvbat_default;
+			status_frame_periods_[Status_6_Misc] = status_6_misc_default;
+			status_frame_periods_[Status_7_CommStatus] = status_7_commstatus_default;
+			status_frame_periods_[Status_8_PulseWidth] = status_8_pulsewidth_default;
+			status_frame_periods_[Status_9_MotProfBuffer] = status_9_motprofbuffer_default;
+			status_frame_periods_[Status_10_MotionMagic] = status_10_motionmagic_default;
+			status_frame_periods_[Status_11_UartGadgeteer] = status_11_uartgadgeteer_default;
+			status_frame_periods_[Status_12_Feedback1] = status_12_feedback1_default;
+			status_frame_periods_[Status_13_Base_PIDF0] = status_13_base_pidf0_default;
+			status_frame_periods_[Status_14_Turn_PIDF1] = status_14_turn_pidf1_default;
+			status_frame_periods_[Status_15_FirmwareApiStatus] = status_15_firmwareapistatus_default;
+
+			status_frame_periods_changed_[Status_1_General] = false;
+			status_frame_periods_changed_[Status_2_Feedback0] = false;
+			status_frame_periods_changed_[Status_3_Quadrature] = false;
+			status_frame_periods_changed_[Status_4_AinTempVbat] = false;
 			status_frame_periods_changed_[Status_6_Misc] = false;
-			status_frame_periods_[Status_7_CommStatus] = 0;
 			status_frame_periods_changed_[Status_7_CommStatus] = false;
-			status_frame_periods_[Status_8_PulseWidth] = 160;
-			status_frame_periods_changed_[Status_8_PulseWidth] = true;
-			status_frame_periods_[Status_9_MotProfBuffer] = 0;
+			status_frame_periods_changed_[Status_8_PulseWidth] = false;
 			status_frame_periods_changed_[Status_9_MotProfBuffer] = false;
-			status_frame_periods_[Status_10_MotionMagic] = 160;
-			status_frame_periods_changed_[Status_10_MotionMagic] = true;
-			status_frame_periods_[Status_11_UartGadgeteer] = 0;
+			status_frame_periods_changed_[Status_10_MotionMagic] = false;
 			status_frame_periods_changed_[Status_11_UartGadgeteer] = false;
-			status_frame_periods_[Status_12_Feedback1] = 0;
 			status_frame_periods_changed_[Status_12_Feedback1] = false;
-			status_frame_periods_[Status_13_Base_PIDF0] =160 ;
-			status_frame_periods_changed_[Status_13_Base_PIDF0] = true;
-			status_frame_periods_[Status_14_Turn_PIDF1] = 0;
 			status_frame_periods_changed_[Status_14_Turn_PIDF1] = false;
-			status_frame_periods_[Status_15_FirmwareApiStatus] = 0;
 			status_frame_periods_changed_[Status_15_FirmwareApiStatus] = false;
+
+			control_frame_periods_[Control_3_General] = control_3_general_default;
+			control_frame_periods_[Control_4_Advanced] = control_4_advanced_default;
+			control_frame_periods_[Control_5_FeedbackOutputOverride] = control_5_feedbackoutputoverride_default;
+			control_frame_periods_[Control_6_MotProfAddTrajPoint] = control_6_motprofaddtrajpoint_default;
+
+			control_frame_periods_changed_[Control_3_General] = false;
+			control_frame_periods_changed_[Control_4_Advanced] = false;
+			control_frame_periods_changed_[Control_5_FeedbackOutputOverride] = false;
+			control_frame_periods_changed_[Control_6_MotProfAddTrajPoint] = false;
 		}
 
 		// This gets the requested setpoint, not the
@@ -1284,8 +1297,11 @@ class TalonHWCommand
 		{
 			if ((status_frame >= Status_1_General) && (status_frame < Status_Last))
 			{
-				status_frame_periods_[status_frame] = period;
-				status_frame_periods_changed_[status_frame] = true;
+				if (status_frame_periods_[status_frame] != period)
+				{
+					status_frame_periods_[status_frame] = period;
+					status_frame_periods_changed_[status_frame] = true;
+				}
 			}
 			else
 				ROS_ERROR("Invalid status_frame value passed to TalonHWCommand::setStatusFramePeriod()");
@@ -1312,6 +1328,44 @@ class TalonHWCommand
 			}
 
 			ROS_ERROR("Invalid status_frame value passed to TalonHWCommand::setStatusFramePeriod()");
+			return false;
+		}
+
+		void setControlFramePeriod(ControlFrame control_frame, uint8_t period)
+		{
+			if ((control_frame >= Control_3_General) && (control_frame < Control_Last))
+			{
+				if (control_frame_periods_[control_frame] != period)
+				{
+					control_frame_periods_[control_frame] = period;
+					control_frame_periods_changed_[control_frame] = true;
+				}
+			}
+			else
+				ROS_ERROR("Invalid control_frame value passed to TalonHWCommand::setControlFramePeriod()");
+		}
+
+		uint8_t getControlFramePeriod(ControlFrame control_frame) const
+		{
+			if ((control_frame >= Control_3_General) && (control_frame < Control_Last))
+				return control_frame_periods_[control_frame];
+
+			ROS_ERROR("Invalid control_frame value passed to TalonHWCommand::setControlFramePeriod()");
+			return 0;
+		}
+
+		bool controlFramePeriodChanged(ControlFrame control_frame, uint8_t &period)
+		{
+			if ((control_frame >= Control_3_General) && (control_frame < Control_Last))
+			{
+				period = control_frame_periods_[control_frame];
+				if (!control_frame_periods_changed_[control_frame])
+					return false;
+				control_frame_periods_changed_[control_frame] = false;
+				return true;
+			}
+
+			ROS_ERROR("Invalid control_frame value passed to TalonHWCommand::setControlFramePeriod()");
 			return false;
 		}
 
@@ -1688,6 +1742,25 @@ class TalonHWCommand
 			return custom_profile_points_[slot].size();
 		}
 
+		void setEnableReadThread(bool enable_read_thread)
+		{
+			enable_read_thread_ = enable_read_thread;
+			enable_read_thread_changed_ = true;
+		}
+		double getEnableReadThread(void) const
+		{
+			return enable_read_thread_;
+		}
+
+		bool enableReadThreadChanged(bool &enable_read_thread)
+		{
+			enable_read_thread = enable_read_thread_;
+			if (!enable_read_thread_changed_)
+				return false;
+			enable_read_thread_changed_ = false;
+			return true;
+		}
+
 	private:
 		double    command_; // motor setpoint - % vbus, velocity, position, etc
 		bool      command_changed_;
@@ -1777,6 +1850,9 @@ class TalonHWCommand
 		std::array<uint8_t, Status_Last> status_frame_periods_;
 		std::array<bool, Status_Last> status_frame_periods_changed_;
 
+		std::array<uint8_t, Control_Last> control_frame_periods_;
+		std::array<bool, Control_Last> control_frame_periods_changed_;
+
 		bool clear_sticky_faults_;
 
 		// 2 entries in the Talon HW for each of these settings
@@ -1815,6 +1891,9 @@ class TalonHWCommand
 		std::vector<std::vector<double>> custom_profile_total_time_;
 
 		std::vector<bool> custom_profile_points_changed_;
+
+		bool enable_read_thread_;
+		bool enable_read_thread_changed_;
 };
 
 // Handle - used by each controller to get, by name of the

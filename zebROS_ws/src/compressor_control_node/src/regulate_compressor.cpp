@@ -153,11 +153,11 @@ void pressureCallback(const sensor_msgs::JointState &joint_state)
 		disable_.store(joint_state.position[disable_index], std::memory_order_relaxed);
 }
 
-void matchDataCallback(const ros_control_boilerplate::MatchSpecificData &MatchData)
+void matchDataCallback(const match_state_controller::MatchSpecificData &matchData)
 {
-	match_time_.store(MatchData.matchTimeRemaining, std::memory_order_relaxed);
-	fms_connected_.store(MatchData.matchTimeRemaining >= 0, std::memory_order_relaxed);
-	is_auto_ = MatchData.isAutonomous;
+	match_time_.store(matchData.matchTimeRemaining, std::memory_order_relaxed);
+	fms_connected_.store(matchData.matchTimeRemaining >= 0, std::memory_order_relaxed);
+	is_auto_ = matchData.Autonomous;
 }
 
 // consider a boost::circular_buffer

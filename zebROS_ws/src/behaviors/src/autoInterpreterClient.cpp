@@ -59,20 +59,20 @@ std::vector<std::vector<trajectory_msgs::JointTrajectory>> joint_trajectories;
 
 struct MatchData {
     MatchData():
-        isEnabled_(false),
-        isAutonomous_(false),
+        Enabled_(false),
+        Autonomous_(false),
         alliance_data_("")
     {
     }
     
-    MatchData(bool isEnabled, bool isAutonomous, const std::string &alliance_data):
-        isEnabled_(isEnabled),
-        isAutonomous_(isAutonomous),
+    MatchData(bool Enabled, bool Autonomous, const std::string &alliance_data):
+        Enabled_(Enabled),
+        Autonomous_(Autonomous),
         alliance_data_(alliance_data)
     {
     }
-    bool isEnabled_;
-    bool isAutonomous_;
+    bool Enabled_;
+    bool Autonomous_;
     std::string alliance_data_;
 };
 
@@ -864,14 +864,14 @@ bool runTrajectory(int slot) {
 	return true;
 }
 
-void match_data_cb(const ros_control_boilerplate::MatchSpecificData::ConstPtr &msg) {
-    matchData.writeFromNonRT(MatchData(msg->isEnabled, msg->isAutonomous, msg->allianceData));
+void match_data_cb(const match_data_controller::MatchSpecificData::ConstPtr &msg) {
+    matchData.writeFromNonRT(MatchData(msg->Enabled, msg->Autonomous, msg->allianceData));
 
-	// Not sure about the msg->isEnabled part - robot
+	// Not sure about the msg->Enabled part - robot
 	// will stop driving if disabled and it might be
 	// nice for testing to continue the code for
 	// debugging
-	if (!(msg->isAutonomous && msg->isEnabled))
+	if (!(msg->Autonomous && msg->Enabled))
 		exit_auto = true;
 
 }
@@ -1394,9 +1394,9 @@ int main(int argc, char** argv) {
             MatchData match_data = *(matchData.readFromRT());
             AutoMode auto_mode_data = *(autoMode.readFromRT());
 
-			//ROS_INFO_STREAM("in auto: " << match_data.isAutonomous_ << " enabled? " << 
+			//ROS_INFO_STREAM("in auto: " << match_data.Autonomous_ << " enabled? " << 
 
-			if(match_data.isAutonomous_ && !match_data.isEnabled_)
+			if(match_data.Autonomous_ && !match_data.Enabled_)
 			{
 				static int reset_counter = 0;
 				reset_counter ++;
@@ -1498,7 +1498,7 @@ int main(int argc, char** argv) {
 				last_start_pos = start_pos;
             }
 
-            if(in_auto && match_data.isAutonomous_ == false) {
+            if(in_auto && match_data.Autonomous_ == false) {
                 //ROS_ERROR_STREAM("Leaving Autonomous to teleop");
                 in_teleop = true;
             }
@@ -1537,7 +1537,7 @@ int main(int argc, char** argv) {
             if(!in_auto) { //check for auto to start and set a start time
                 //ROS_INFO("Not in auto yet");
 
-                if(match_data.isAutonomous_ && match_data.isEnabled_) {
+                if(match_data.Autonomous_ && match_data.Enabled_) {
                     //ROS_ERROR_STREAM("Entering Auto");
                     in_auto = true;
                     auto_start_time = ros::Time::now().toSec();
@@ -1566,7 +1566,7 @@ int main(int argc, char** argv) {
 
 
 				//ROS_INFO("In auto");
-                if(!match_data.isAutonomous_ || !match_data.isEnabled_) {
+                if(!match_data.Autonomous_ || !match_data.Enabled_) {
                     //ROS_ERROR_STREAM("Disabled in Auto");
                     in_auto = false;
                     auto_start_time = DBL_MAX;
@@ -1622,9 +1622,9 @@ int main(int argc, char** argv) {
         while(end_auto) {
             //ROS_INFO("Between auto and teleop or robot disabled");
             MatchData match_data = *(matchData.readFromRT());
-            if(!match_data.isAutonomous_ || !match_data.isEnabled_) {
+            if(!match_data.Autonomous_ || !match_data.Enabled_) {
                 end_auto = false;
-                in_teleop = !match_data.isAutonomous_ && match_data.isEnabled_;
+                in_teleop = !match_data.Autonomous_ && match_data.Enabled_;
             }
 			else
 				slow.sleep(); //I think you want this.....
@@ -1632,7 +1632,7 @@ int main(int argc, char** argv) {
         while(in_teleop) {
             ROS_INFO("Exited auto into teleop");
             MatchData match_data = *(matchData.readFromRT());
-            if(!match_data.isEnabled_ || match_data.isAutonomous_) {
+            if(!match_data.Enabled_ || match_data.Autonomous_) {
                 in_teleop = false;
             }
 			else

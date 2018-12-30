@@ -187,6 +187,10 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 		m.status_13_base_pidf0_period.push_back(0);
 		m.status_14_turn_pidf1_period.push_back(0);
 		m.status_15_firmwareapistatus_period.push_back(0);
+		m.control_3_general_period.push_back(0);
+		m.control_4_advanced_period.push_back(0);
+		m.control_5_feedbackoutputoverride_period.push_back(0);
+		m.control_6_motprofaddtrajpoint_period.push_back(0);
 
 		m.motion_profile_trajectory_period.push_back(0);
 		m.faults.push_back("");
@@ -520,6 +524,10 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				m.status_14_turn_pidf1_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_14_Turn_PIDF1);
 				m.status_15_firmwareapistatus_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_15_FirmwareApiStatus);
 
+				m.control_3_general_period[i] = ts->getControlFramePeriod(hardware_interface::Control_3_General);
+				m.control_4_advanced_period[i] = ts->getControlFramePeriod(hardware_interface::Control_4_Advanced);
+				m.control_5_feedbackoutputoverride_period[i] = ts->getControlFramePeriod(hardware_interface::Control_5_FeedbackOutputOverride);
+				m.control_6_motprofaddtrajpoint_period[i] = ts->getControlFramePeriod(hardware_interface::Control_6_MotProfAddTrajPoint);
 				m.motion_profile_trajectory_period[i] = ts->getMotionProfileTrajectoryPeriod();
 				{
 					unsigned faults = ts->getFaults();

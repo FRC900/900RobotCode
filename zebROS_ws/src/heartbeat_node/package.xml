@@ -22,7 +22,6 @@
   <depend>message_filters</depend>
   <depend>std_msgs</depend>
   <depend>cmake_modules</depend>
-  <depend>ros_control_boilerplate</depend>
   
   <export>
   </export>

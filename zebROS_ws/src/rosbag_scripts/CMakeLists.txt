@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rosbag_scripts)
 
+if(FALSE)
+
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
@@ -16,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   ros_control_boilerplate
   rosbag
   talon_state_controller
+  message_generation
   rospy_message_converter
 )
 
@@ -150,8 +153,9 @@ add_executable(rename_frame_id src/rename_frame_id.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(encoder_search_node talon_state_controller ${catkin_EXPORTED_TARGETS})
+add_dependencies(encoder_search_node ${catkin_EXPORTED_TARGETS})
 add_dependencies(rename_frame_id ${catkin_EXPORTED_TARGETS})
+add_dependencies(error_search_node ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
@@ -209,5 +213,7 @@ install(PROGRAMS
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+endif()
 
 endif()
