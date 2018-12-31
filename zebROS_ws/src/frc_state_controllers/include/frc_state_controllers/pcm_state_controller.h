@@ -35,7 +35,7 @@ class PCMStateController: public controller_interface::Controller<hardware_inter
 
 	private:
 		std::vector<hardware_interface::PCMStateHandle> pcm_state_;
-		std::shared_ptr<realtime_tools::RealtimePublisher<pcm_state_controller::PCMState> > realtime_pub_;
+		std::shared_ptr<realtime_tools::RealtimePublisher<frc_msgs::PCMState> > realtime_pub_;
 		ros::Time last_publish_time_;
 		double publish_rate_;
 		size_t num_pcms_;

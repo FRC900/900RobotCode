@@ -2,7 +2,7 @@
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <frc_interfaces/robot_controller_interface.h>
-#include <robot_controller_state_controller/RobotControllerData.h>
+#include <frc_msgs/RobotControllerData.h>
 
 namespace robot_controller_state_controller
 {
@@ -20,7 +20,7 @@ namespace robot_controller_state_controller
 
 	private:
 		hardware_interface::RobotControllerStateHandle rc_state_;
-		std::shared_ptr<realtime_tools::RealtimePublisher<robot_controller_state_controller::RobotControllerData>> realtime_pub_;
+		std::shared_ptr<realtime_tools::RealtimePublisher<frc_msgs::RobotControllerData>> realtime_pub_;
 		ros::Time last_publish_time_;
 		double publish_rate_;
 	};

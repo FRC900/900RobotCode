@@ -9,6 +9,7 @@ project(frc_interfaces)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  state_handle
 )
 
 ## System dependencies are found with CMake's conventions
@@ -103,7 +104,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES frc_interfaces
-   CATKIN_DEPENDS roscpp
+   CATKIN_DEPENDS state_handle roscpp
 #  DEPENDS system_lib
 )
 

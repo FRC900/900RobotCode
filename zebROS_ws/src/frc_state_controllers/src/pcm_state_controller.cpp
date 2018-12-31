@@ -33,9 +33,9 @@
 #include <cstddef>
 
 #include <pluginlib/class_list_macros.h>
-#include "pcm_state_controller/pcm_state_controller.h"
+#include "frc_state_controllers/pcm_state_controller.h"
 
-namespace pcm_state_controller
+namespace pcm_state_controller 
 {
 
 bool PCMStateController::init(hardware_interface::PCMStateInterface *hw,
@@ -63,7 +63,7 @@ bool PCMStateController::init(hardware_interface::PCMStateInterface *hw,
 
 	// realtime publisher
 	realtime_pub_.reset(new
-						realtime_tools::RealtimePublisher<pcm_state_controller::PCMState>(root_nh, "pcm_states", 4));
+						realtime_tools::RealtimePublisher<frc_msgs::PCMState>(root_nh, "pcm_states", 4));
 
 	// get joints and allocate message
 	auto &m = realtime_pub_->msg_;

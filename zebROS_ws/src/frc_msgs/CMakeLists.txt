@@ -54,6 +54,8 @@ add_message_files(
   PDPData.msg
   MatchSpecificData.msg
   PCMState.msg
+  RobotControllerData.msg
+  RobotControllerCANData.msg
 )
 
 ## Generate services in the 'srv' folder

@@ -1,7 +1,7 @@
 #include <pluginlib/class_list_macros.h>
-#include "robot_controller_state_controller/robot_controller_state_controller.hpp"
+#include "frc_state_controllers/robot_controller_state_controller.h"
 
-namespace robot_controller_state_controller
+namespace robot_controller_state_controller 
 {
 bool RobotControllerStateController::init(hardware_interface::RobotControllerStateInterface *hw,
 										  ros::NodeHandle                                   &root_nh,
@@ -28,7 +28,7 @@ bool RobotControllerStateController::init(hardware_interface::RobotControllerSta
 
 	rc_state_ = hw->getHandle(rc_names[0]);
 
-	realtime_pub_.reset(new realtime_tools::RealtimePublisher<robot_controller_state_controller::RobotControllerData>(root_nh, "robot_controller_states", 4));
+	realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::RobotControllerData>(root_nh, "robot_controller_states", 4));
 	return true;
 }
 
@@ -88,4 +88,4 @@ void RobotControllerStateController::stopping(const ros::Time & )
 
 }
 
-PLUGINLIB_EXPORT_CLASS( robot_controller_state_controller::RobotControllerStateController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(robot_controller_state_controller::RobotControllerStateController, controller_interface::ControllerBase)

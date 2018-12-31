@@ -4,7 +4,7 @@
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <boost/shared_ptr.hpp>
-#include <match_state_controller/match_data_interface.h>
+#include <frc_interfaces/match_data_interface.h>
 #include "frc_msgs/MatchSpecificData.h"
 
 namespace match_state_controller
