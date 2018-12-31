@@ -6,6 +6,7 @@
 // for details
 
 #include <hardware_interface/internal/hardware_resource_manager.h>
+#include <state_handle/state_handle.h>
 
 namespace hardware_interface
 {
@@ -119,36 +120,8 @@ class RobotControllerState
 		int      can_tx_full_count_;
 		int      can_receive_error_count_;
 		int      can_transmit_error_count_;
-
 };
 
-// Match up a name with a pointer to RobotControllerState data
-// Used by the controller_manager to give access to controllers
-// who want to access RobotControllerState
-class RobotControllerStateHandle
-{
-	public:
-		RobotControllerStateHandle(void) : state_(0) {}
-
-		RobotControllerStateHandle(const std::string &name, const RobotControllerState *state) :
-			name_(name),
-			state_(state)
-		{
-			if (!state)
-				throw HardwareInterfaceException("Cannot create RobotController state handle '" + name + "'. State pointer is null.");
-		}
-		std::string getName(void) const {return name_;}
-
-		const RobotControllerState *operator->() const
-		{
-			assert(state_);
-			return state_;
-		}
-
-	private:
-		std::string		            name_;
-		const RobotControllerState *state_;
-};
-
+typedef StateHandle<const RobotControllerState> RobotControllerStateHandle;
 class RobotControllerStateInterface: public HardwareResourceManager<RobotControllerStateHandle> {};
 }
