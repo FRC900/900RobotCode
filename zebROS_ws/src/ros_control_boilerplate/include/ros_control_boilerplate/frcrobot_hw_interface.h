@@ -45,7 +45,7 @@
 #include <ros_control_boilerplate/frc_robot_interface.h>
 #include <realtime_tools/realtime_publisher.h>
 
-#include <frc_interfaces/robot_controller_interface.hpp>
+#include <frc_interfaces/robot_controller_interface.h>
 #include "ros_control_boilerplate/AutoMode.h"
 #include "ros_control_boilerplate/JoystickState.h"
 #include "frc_msgs/MatchSpecificData.h"
@@ -69,7 +69,7 @@
 
 #include <AHRS.h>
 
-#include <frc_interfaces/robot_controller_interface.hpp>
+#include <frc_interfaces/robot_controller_interface.h>
 
 namespace frcrobot_control
 {

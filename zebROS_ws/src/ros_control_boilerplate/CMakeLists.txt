@@ -54,7 +54,8 @@ catkin_package(
 	actionlib
 	urdf
 	std_msgs
-        frc_msgs
+	frc_msgs
+	frc_interfaces
 	sensor_msgs
 	rosparam_shortcuts
 	talon_interface
