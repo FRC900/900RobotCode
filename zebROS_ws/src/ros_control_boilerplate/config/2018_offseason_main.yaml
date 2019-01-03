@@ -32,6 +32,8 @@ hardware_interface:
        # - {name: joystick_rumble, type: rumble, rumble_port: 0}
          - {name: navx_mxp, type: navX, frame_id: navx, id: 0}
          - {name: compressor1, type: compressor, pcm_id: 0}
+         - {name: robot_code_ready, local: true, type: ready}
+         - {name: pdp, type: pdp}
 
 # Create controllers for each joint
 #

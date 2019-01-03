@@ -1,5 +1,5 @@
 <library path="lib/librobot_controller_state_controller">
-	<class name="robot_controller_state_controller/RobotControllerStateController" type="frc_msgs::RobotControllerStateController" base_class_type="controller_interface::ControllerBase">
+	<class name="robot_controller_state_controller/RobotControllerStateController" type="robot_controller_state_controller::RobotControllerStateController" base_class_type="controller_interface::ControllerBase">
 		<description>
 			Controller to read robot controller state and publish it
 		</description>
