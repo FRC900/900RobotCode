@@ -39,13 +39,7 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 
 #include <ros_control_boilerplate/frcrobot_sim_interface.h>
 #include <ros_control_boilerplate/nextVelocity.h>
-#include <ros_control_boilerplate/nextVelocity.h>
-#include <ros_control_boilerplate/JoystickState.h>
 #include <termios.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <thread>
 
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
@@ -96,13 +90,407 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 #define KEYCODE_CARROT 0x5E
 #define KEYCODE_SPACE 0x20
 
-
 namespace frcrobot_control
 {
+
+TeleopJointsKeyboard::TeleopJointsKeyboard(ros::NodeHandle &nh)
+{
+	joints_pub_ = nh.advertise<ros_control_boilerplate::JoystickState>("joystick_states", 1);
+}
+
+TeleopJointsKeyboard::~TeleopJointsKeyboard()
+{
+}
+
+// Code which waits for a set period of time for a keypress.  If
+// the keyboard is pressed in that time, read the key press and set
+// it equal to c, then return 1 character read.  If nothing is seen,
+// return 0.  Return <0 on error.
+int TeleopJointsKeyboard::pollKeyboard(int kfd, char &c) const
+{
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = 20*1000; // 20 mSec keyboard polling rate
+
+	// read_fds is an array of file descriptors to wait for
+	// In this case, we only want to wait for 1 - the keyboard
+	// fd passed in as kfd
+	fd_set read_fds;
+	FD_ZERO(&read_fds);
+	FD_SET(kfd, &read_fds);
+
+	// Select returns when
+	//   1. there is data present on one of the requested fds (returns > 0)
+	//   2. the timeout is exceeded (returns 0)
+	int rc = select(kfd + 1, &read_fds, NULL, NULL, &tv);
+	if (rc < 0)
+	{
+		perror("select():");
+	}
+	else if (rc > 0)  // if select didn't timeout
+	{
+		rc = read(kfd, &c, 1);
+		if (rc < 0)
+		{
+			perror("read():");
+		}
+	}
+	return rc;
+}
+
+void TeleopJointsKeyboard::keyboardLoop()
+{
+	int kfd = 0; // stdin
+	char c;
+	// get the console in raw mode
+	struct termios cooked;
+	tcgetattr(kfd, &cooked);
+	struct termios raw;
+	memcpy(&raw, &cooked, sizeof(struct termios));
+	raw.c_lflag &= ~ (ICANON | ECHO);
+	// Setting a new line, then end of file
+	raw.c_cc[VEOL] = 1;
+	raw.c_cc[VEOF] = 2;
+	// Set read() to return immediately so we
+	// can break out of the loop immediately rather than waiting
+	// on a timeout from reading stdin
+	raw.c_cc[VMIN] = 0;
+	raw.c_cc[VTIME] = 0;
+
+	tcsetattr(kfd, TCSANOW, &raw);
+
+	bool processing_bracket = false;
+	while (ros::ok())
+	{
+		int rc = pollKeyboard(kfd, c);
+		if (rc < 0)
+			break;
+		else if (rc == 0)
+			continue;
+
+		cmd_.rightStickY = 0;
+		cmd_.rightStickX = 0;
+
+		cmd_.leftStickY = 0;
+		cmd_.leftStickX = 0;
+
+		cmd_.leftTrigger = 0;
+		cmd_.rightTrigger = 0;
+		cmd_.buttonXButton = false;
+		cmd_.buttonXPress = false;
+		cmd_.buttonXRelease = false;
+		cmd_.buttonYButton = false;
+		cmd_.buttonYPress = false;
+		cmd_.buttonYRelease = false;
+
+		cmd_.bumperLeftButton = false;
+		cmd_.bumperLeftPress = false;
+		cmd_.bumperLeftRelease = false;
+
+		cmd_.bumperRightButton = false;
+		cmd_.bumperRightPress = false;
+		cmd_.bumperRightRelease = false;
+
+		cmd_.stickLeftButton = false;
+		cmd_.stickLeftPress = false;
+		cmd_.stickLeftRelease = false;
+
+		cmd_.stickRightButton = false;
+		cmd_.stickRightPress = false;
+		cmd_.stickRightRelease = false;
+
+		cmd_.buttonAButton = false;
+		cmd_.buttonAPress = false;
+		cmd_.buttonARelease = false;
+		cmd_.buttonBButton = false;
+		cmd_.buttonBPress = false;
+		cmd_.buttonBRelease = false;
+		cmd_.buttonBackButton = false;
+		cmd_.buttonBackPress = false;
+		cmd_.buttonBackRelease = false;
+
+		cmd_.buttonStartButton = false;
+		cmd_.buttonStartPress = false;
+		cmd_.buttonStartRelease = false;
+
+		cmd_.directionUpButton = false;
+		cmd_.directionUpPress = false;
+		cmd_.directionUpRelease = false;
+
+		cmd_.directionDownButton = false;
+		cmd_.directionDownPress = false;
+		cmd_.directionDownRelease = false;
+
+		cmd_.directionRightButton = false;
+		cmd_.directionRightPress = false;
+		cmd_.directionRightRelease = false;
+
+		cmd_.directionLeftButton = false;
+		cmd_.directionLeftPress = false;
+		cmd_.directionLeftRelease = false;
+
+		// Assume keypress will be a valid command / cause
+		// to update the published joystick data. Set this to false
+		// for cases where it isn't true.
+		bool dirty = true;
+		if (!processing_bracket)
+		{
+			switch (c)
+			{
+				case KEYCODE_i:
+					cmd_.rightStickY += .5;
+					break;
+				case KEYCODE_k:
+					cmd_.rightStickY -= .5;
+					break;
+				case KEYCODE_j:
+					cmd_.rightStickX += .5;
+					break;
+				case KEYCODE_l:
+					cmd_.rightStickX -= .5;
+					break;
+
+				case KEYCODE_d:
+					cmd_.leftStickY += .5;
+					break;
+				case KEYCODE_a:
+					cmd_.leftStickY -= .5;
+					break;
+				case KEYCODE_w:
+					cmd_.leftStickX += .5;
+					break;
+				case KEYCODE_s:
+					cmd_.leftStickX -= .5;
+					break;
+				case KEYCODE_ONE:
+
+					// TODO : use something like
+					// cmd_.buttonAPress = !cmd_last_.buttonAButton;
+					// to simplify the code here
+					if(cmd_last_.buttonAButton) {
+						cmd_.buttonAPress = false;
+					}
+					else {
+						cmd_.buttonAPress = true;
+					}
+					cmd_.buttonAButton = true;
+					break;
+				case KEYCODE_TWO:
+					if(cmd_last_.buttonBButton) {
+						cmd_.buttonBPress = false;
+					}
+					else {
+						cmd_.buttonBPress = true;
+					}
+					cmd_.buttonBButton = true;
+					break;
+				case KEYCODE_THREE:
+					if(cmd_last_.buttonXButton) {
+						cmd_.buttonXPress = false;
+					}
+					else {
+						cmd_.buttonXPress = true;
+					}
+					cmd_.buttonXButton = true;
+					break;
+				case KEYCODE_FOUR:
+					if(cmd_last_.buttonYButton) {
+						cmd_.buttonYPress = false;
+					}
+					else {
+						cmd_.buttonYPress = true;
+					}
+					cmd_.buttonYButton = true;
+					break;
+				/*case KEYCODE_q:
+				  cmd_.leftTrigger = .5;
+				  dirty = true;
+				  break;
+				  */
+				case KEYCODE_e:
+					cmd_.rightTrigger = .5;
+					break;
+				case KEYCODE_SEVEN:
+					if(cmd_last_.stickLeftButton) {
+						cmd_.stickLeftPress = false;
+					}
+					else {
+						cmd_.stickLeftPress = true;
+					}
+					cmd_.stickLeftButton = true;
+					break;
+				case KEYCODE_EIGHT:
+					if(cmd_last_.stickRightButton) {
+						cmd_.stickRightPress = false;
+					}
+					else {
+						cmd_.stickRightPress = true;
+					}
+					cmd_.stickRightButton = true;
+					break;
+				case KEYCODE_FIVE:
+					if(cmd_last_.buttonBackButton) {
+						cmd_.buttonBackPress = false;
+					}
+					else {
+						cmd_.buttonBackPress = true;
+					}
+					cmd_.buttonBackButton = true;
+					break;
+				case KEYCODE_SIX:
+					if(cmd_last_.buttonStartButton) {
+						cmd_.buttonStartPress = false;
+					}
+					else {
+						cmd_.buttonStartPress = true;
+					}
+					cmd_.buttonStartButton = true;
+					break;
+				case KEYCODE_MINUS:
+					if(cmd_last_.bumperLeftButton) {
+						cmd_.bumperLeftPress = false;
+					}
+					else {
+						cmd_.bumperLeftPress = true;
+					}
+					cmd_.bumperLeftButton = true;
+					break;
+				case KEYCODE_EQUALS:
+					if(cmd_last_.bumperRightButton) {
+						cmd_.bumperRightPress = false;
+					}
+					else {
+						cmd_.bumperRightPress = true;
+					}
+					cmd_.bumperRightButton = true;
+					break;
+				case KEYCODE_LEFT_BRACKET:
+					processing_bracket = true;
+					dirty = false;
+				case  KEYCODE_ESCAPE:
+					//std::cout << std::endl;
+					//std::cout << "Exiting " << std::endl;
+					//quit(0);
+					break;
+				case KEYCODE_CARROT:
+					ROS_WARN("It's a carrot");
+					dirty = false;
+					break;
+				case KEYCODE_SPACE:  // Force a re-publish of joystick msg?
+					break;
+				default:
+					dirty = false;
+					break;
+			}
+		}
+		else // Processing bracket
+		{
+			switch (c)
+			{
+				case KEYCODE_B:
+					if(cmd_last_.directionDownButton) {
+						cmd_.directionDownPress = false; // radians
+					}
+					else {
+						cmd_.directionDownPress = true; // radians
+					}
+					cmd_.directionDownButton = true;
+					processing_bracket = false;
+					break;
+				case KEYCODE_A:
+					if(cmd_last_.directionUpButton) {
+						cmd_.directionUpPress = false; // radians
+					}
+					else {
+						cmd_.directionUpPress = true; // radians
+					}
+					cmd_.directionUpButton = true;
+					processing_bracket = false;
+					break;
+				case KEYCODE_D:
+					if(cmd_last_.directionLeftButton) {
+						cmd_.directionLeftPress = false; // radians
+					}
+					else {
+						cmd_.directionLeftPress = true; // radians
+					}
+					cmd_.directionLeftButton = true;
+					processing_bracket = false;
+					break;
+				case KEYCODE_C:
+					if(cmd_last_.directionRightButton) {
+						cmd_.directionRightPress = false; // radians
+					}
+					else {
+						cmd_.directionRightPress = true; // radians
+					}
+					cmd_.directionRightButton = true;
+					processing_bracket = false;
+					break;
+				default:
+					dirty = false;
+			}
+			break;
+		}
+		if(cmd_last_.buttonAButton && !cmd_.buttonAButton) {
+			cmd_.buttonARelease = true;
+		}
+		if(cmd_last_.buttonBButton && !cmd_.buttonBButton) {
+			cmd_.buttonBRelease = true;
+		}
+		if(cmd_last_.buttonXButton && !cmd_.buttonXButton) {
+			cmd_.buttonXRelease = true;
+		}
+		if(cmd_last_.buttonYButton && !cmd_.buttonYButton) {
+			cmd_.buttonYRelease = true;
+		}
+		if(cmd_last_.buttonStartButton && !cmd_.buttonStartButton) {
+			cmd_.buttonARelease = true;
+		}
+		if(cmd_last_.buttonBackButton && !cmd_.buttonBackButton) {
+			cmd_.buttonARelease = true;
+		}
+		if(cmd_last_.stickLeftButton && !cmd_.stickLeftButton) {
+			cmd_.stickLeftRelease = true;
+		}
+		if(cmd_last_.stickRightButton && !cmd_.stickRightButton) {
+			cmd_.stickRightRelease = true;
+		}
+		if(cmd_last_.bumperLeftButton && !cmd_.bumperLeftButton) {
+			cmd_.bumperLeftRelease = true;
+		}
+		if(cmd_last_.bumperRightButton && !cmd_.bumperRightButton) {
+			cmd_.bumperRightRelease = true;
+		}
+		if(cmd_last_.directionRightButton && !cmd_.directionRightButton) {
+			cmd_.directionRightRelease = true;
+		}
+		if(cmd_last_.directionLeftButton && !cmd_.directionLeftButton) {
+			cmd_.directionLeftRelease = true;
+		}
+		if(cmd_last_.directionUpButton && !cmd_.directionUpButton) {
+			cmd_.directionUpRelease = true;
+		}
+		if(cmd_last_.directionDownButton && !cmd_.directionDownButton) {
+			cmd_.directionDownRelease = true;
+		}
+		// Publish command
+		if (dirty)
+		{
+			cmd_.header.stamp = ros::Time::now();
+			joints_pub_.publish(cmd_);
+			cmd_last_ = cmd_;
+		}
+	}
+	// Restore sanity to keyboard input
+	tcsetattr(kfd, TCSANOW, &cooked);
+}
+
 
 FRCRobotSimInterface::FRCRobotSimInterface(ros::NodeHandle &nh,
 		urdf::Model *urdf_model)
 	: ros_control_boilerplate::FRCRobotInterface(nh, urdf_model)
+    , teleop_joy_(nh)
 {
 }
 FRCRobotSimInterface::~FRCRobotSimInterface()
@@ -112,398 +500,6 @@ FRCRobotSimInterface::~FRCRobotSimInterface()
     {
         custom_profile_threads_[i].join();
     }
-}
-
-int kfd = 0;
-struct termios cooked, raw;
-
-void quit(int /*sig*/)
-{
-	tcsetattr(kfd, TCSANOW, &cooked);
-	exit(0);
-}
-
-class TeleopJointsKeyboard
-{
-	public:
-
-		TeleopJointsKeyboard()
-			: has_recieved_joints_(false)
-		{
-			std::cout << "init " << std::endl;
-			// TODO: make this robot agonistic
-			joints_pub_ = nh_.advertise<ros_control_boilerplate::JoystickState>("joystick_states", 1);
-		}
-
-		~TeleopJointsKeyboard()
-		{ }
-
-		void keyboardLoop()
-		{
-			char c;
-			// get the console in raw mode
-			tcgetattr(kfd, &cooked);
-			memcpy(&raw, &cooked, sizeof(struct termios));
-			raw.c_lflag &= ~ (ICANON | ECHO);
-			// Setting a new line, then end of file
-			raw.c_cc[VEOL] = 1;
-			raw.c_cc[VEOF] = 2;
-			tcsetattr(kfd, TCSANOW, &raw);
-
-			for (;;)
-			{
-				// get the next event from the keyboard
-				if (read(kfd, &c, 1) < 0)
-				{
-					perror("read():");
-					exit(-1);
-				}
-
-                cmd_.rightStickY = 0;
-                cmd_.rightStickX = 0;
-
-                cmd_.leftStickY = 0;
-                cmd_.leftStickX = 0;
-
-                cmd_.leftTrigger = 0;
-                cmd_.rightTrigger = 0;
-                cmd_.buttonXButton = false;
-                cmd_.buttonXPress = false;
-                cmd_.buttonXRelease = false;
-                cmd_.buttonYButton = false;
-                cmd_.buttonYPress = false;
-                cmd_.buttonYRelease = false;
-
-                cmd_.bumperLeftButton = false;
-                cmd_.bumperLeftPress = false;
-                cmd_.bumperLeftRelease = false;
-
-                cmd_.bumperRightButton = false;
-                cmd_.bumperRightPress = false;
-                cmd_.bumperRightRelease = false;
-
-                cmd_.stickLeftButton = false;
-                cmd_.stickLeftPress = false;
-                cmd_.stickLeftRelease = false;
-
-                cmd_.stickRightButton = false;
-                cmd_.stickRightPress = false;
-                cmd_.stickRightRelease = false;
-
-                cmd_.buttonAButton = false;
-                cmd_.buttonAPress = false;
-                cmd_.buttonARelease = false;
-                cmd_.buttonBButton = false;
-                cmd_.buttonBPress = false;
-                cmd_.buttonBRelease = false;
-                cmd_.buttonBackButton = false;
-                cmd_.buttonBackPress = false;
-                cmd_.buttonBackRelease = false;
-
-                cmd_.buttonStartButton = false;
-                cmd_.buttonStartPress = false;
-                cmd_.buttonStartRelease = false;
-
-                cmd_.directionUpButton = false;
-                cmd_.directionUpPress = false;
-                cmd_.directionUpRelease = false;
-
-                cmd_.directionDownButton = false;
-                cmd_.directionDownPress = false;
-                cmd_.directionDownRelease = false;
-
-                cmd_.directionRightButton = false;
-                cmd_.directionRightPress = false;
-                cmd_.directionRightRelease = false;
-
-                cmd_.directionLeftButton = false;
-                cmd_.directionLeftPress = false;
-                cmd_.directionLeftRelease = false;
-
-				bool dirty = false;
-				switch (c)
-				{
-                case KEYCODE_i:
-                    cmd_.rightStickY += .5;
-                    dirty = true;
-                    break;
-                case KEYCODE_k:
-                    cmd_.rightStickY -= .5;
-                    dirty = true;
-                    break;
-                case KEYCODE_j:
-                    cmd_.rightStickX += .5;
-                    dirty = true;
-                    break;
-                case KEYCODE_l:
-                    cmd_.rightStickX -= .5;
-                    dirty = true;
-                    break;
-
-                case KEYCODE_d:
-                    cmd_.leftStickY += .5;
-                    dirty = true;
-                    break;
-                case KEYCODE_a:
-                    cmd_.leftStickY -= .5;
-                    dirty = true;
-                    break;
-                case KEYCODE_w:
-                    cmd_.leftStickX += .5;
-                    dirty = true;
-                    break;
-                case KEYCODE_s:
-                    cmd_.leftStickX -= .5;
-                    dirty = true;
-                    break;
-				case KEYCODE_ONE:
-                    if(cmd_last_.buttonAButton) {
-                        cmd_.buttonAPress = false; // radians
-                    }
-                    else {
-                        cmd_.buttonAPress = true; // radians
-                    }
-					cmd_.buttonAButton = true; // radians
-                    dirty = true;
-					break;
-				case KEYCODE_TWO:
-                    if(cmd_last_.buttonBButton) {
-                        cmd_.buttonBPress = false; // radians
-                    }
-                    else {
-                        cmd_.buttonBPress = true; // radians
-                    }
-					cmd_.buttonBButton = true; // radians
-                    dirty = true;
-					break;
-				case KEYCODE_THREE:
-                    if(cmd_last_.buttonXButton) {
-                        cmd_.buttonXPress = false; // radians
-                    }
-                    else {
-                        cmd_.buttonXPress = true; // radians
-                    }
-					cmd_.buttonXButton = true; // radians
-                    dirty = true;
-					break;
-				case KEYCODE_FOUR:
-                    if(cmd_last_.buttonYButton) {
-                        cmd_.buttonYPress = false; // radians
-                    }
-                    else {
-                        cmd_.buttonYPress = true; // radians
-                    }
-					cmd_.buttonYButton = true; // radians
-                    dirty = true;
-					break;
-				/*case KEYCODE_q:
-					cmd_.leftTrigger = .5; // radians
-                    dirty = true;
-					break;
-				*/
-				case KEYCODE_e:
-					cmd_.rightTrigger = .5; // radians
-                    dirty = true;
-					break;
-				case KEYCODE_SEVEN:
-                    if(cmd_last_.stickLeftButton) {
-                        cmd_.stickLeftPress = false; // radians
-                    }
-                    else {
-                        cmd_.stickLeftPress = true; // radians
-                    }
-					cmd_.stickLeftButton = true; // radians
-                    dirty = true;
-					break;
-				case KEYCODE_EIGHT:
-                    if(cmd_last_.stickRightButton) {
-                        cmd_.stickRightPress = false; // radians
-                    }
-                    else {
-                        cmd_.stickRightPress = true; // radians
-                    }
-					cmd_.stickRightButton = true; // radians
-                    dirty = true;
-					break;
-				case KEYCODE_FIVE:
-                    if(cmd_last_.buttonBackButton) {
-                        cmd_.buttonBackPress = false; // radians
-                    }
-                    else {
-                        cmd_.buttonBackPress = true; // radians
-                    }
-					cmd_.buttonBackButton = true; // radians
-                    dirty = true;
-					break;
-				case KEYCODE_SIX:
-                    if(cmd_last_.buttonStartButton) {
-                        cmd_.buttonStartPress = false; // radians
-                    }
-                    else {
-                        cmd_.buttonStartPress = true; // radians
-                    }
-					cmd_.buttonStartButton = true; // radians
-                    dirty = true;
-					break;
-				case KEYCODE_MINUS:
-                    if(cmd_last_.bumperLeftButton) {
-                        cmd_.bumperLeftPress = false; // radians
-                    }
-                    else {
-                        cmd_.bumperLeftPress = true; // radians
-                    }
-					cmd_.bumperLeftButton = true; // radians
-                    dirty = true;
-					break;
-				case KEYCODE_EQUALS:
-                    if(cmd_last_.bumperRightButton) {
-                        cmd_.bumperRightPress = false; // radians
-                    }
-                    else {
-                        cmd_.bumperRightPress = true; // radians
-                    }
-					cmd_.bumperRightButton = true; // radians
-                    dirty = true;
-					break;
-
-				case KEYCODE_LEFT_BRACKET:
-                    if (read(kfd, &c, 1) < 0)
-                    {
-                        perror("read():");
-                        exit(-1);
-                    }
-                    switch (c)
-                    {
-                        case KEYCODE_B:
-                            if(cmd_last_.directionDownButton) {
-                                cmd_.directionDownPress = false; // radians
-                            }
-                            else {
-                                cmd_.directionDownPress = true; // radians
-                            }
-                            cmd_.directionDownButton = true;
-                            dirty = true;
-                            break;
-                        case KEYCODE_A:
-                            if(cmd_last_.directionUpButton) {
-                                cmd_.directionUpPress = false; // radians
-                            }
-                            else {
-                                cmd_.directionUpPress = true; // radians
-                            }
-                            cmd_.directionUpButton = true;
-                            dirty = true;
-                            break;
-                        case KEYCODE_D:
-                            if(cmd_last_.directionLeftButton) {
-                                cmd_.directionLeftPress = false; // radians
-                            }
-                            else {
-                                cmd_.directionLeftPress = true; // radians
-                            }
-                            cmd_.directionLeftButton = true;
-                            dirty = true;
-                            break;
-                        case KEYCODE_C:
-                            if(cmd_last_.directionRightButton) {
-                                cmd_.directionRightPress = false; // radians
-                            }
-                            else {
-                                cmd_.directionRightPress = true; // radians
-                            }
-                            cmd_.directionRightButton = true;
-                            dirty = true;
-                            break;
-                    }
-					break;
-
-				case  KEYCODE_ESCAPE:
-					//std::cout << std::endl;
-					//std::cout << "Exiting " << std::endl;
-					//quit(0);
-					break;
-                case KEYCODE_CARROT:
-                    ROS_WARN("I'ts a carrot");
-                    dirty = false;
-                    break;
-                case KEYCODE_SPACE:
-                    dirty = true;
-                }
-                if(cmd_last_.buttonAButton && !cmd_.buttonAButton) {
-                    cmd_.buttonARelease = true;
-                }
-                if(cmd_last_.buttonBButton && !cmd_.buttonBButton) {
-                    cmd_.buttonBRelease = true;
-                }
-                if(cmd_last_.buttonXButton && !cmd_.buttonXButton) {
-                    cmd_.buttonXRelease = true;
-                }
-                if(cmd_last_.buttonYButton && !cmd_.buttonYButton) {
-                    cmd_.buttonYRelease = true;
-                }
-                if(cmd_last_.buttonStartButton && !cmd_.buttonStartButton) {
-                    cmd_.buttonARelease = true;
-                }
-                if(cmd_last_.buttonBackButton && !cmd_.buttonBackButton) {
-                    cmd_.buttonARelease = true;
-                }
-                if(cmd_last_.stickLeftButton && !cmd_.stickLeftButton) {
-                    cmd_.stickLeftRelease = true;
-                }
-                if(cmd_last_.stickRightButton && !cmd_.stickRightButton) {
-                    cmd_.stickRightRelease = true;
-                }
-                if(cmd_last_.bumperLeftButton && !cmd_.bumperLeftButton) {
-                    cmd_.bumperLeftRelease = true;
-                }
-                if(cmd_last_.bumperRightButton && !cmd_.bumperRightButton) {
-                    cmd_.bumperRightRelease = true;
-                }
-                if(cmd_last_.directionRightButton && !cmd_.directionRightButton) {
-                    cmd_.directionRightRelease = true;
-                }
-                if(cmd_last_.directionLeftButton && !cmd_.directionLeftButton) {
-                    cmd_.directionLeftRelease = true;
-                }
-                if(cmd_last_.directionUpButton && !cmd_.directionUpButton) {
-                    cmd_.directionUpRelease = true;
-                }
-                if(cmd_last_.directionDownButton && !cmd_.directionDownButton) {
-                    cmd_.directionDownRelease = true;
-                }
-				// Publish command
-				if (dirty)
-				{
-					// Important safety feature
-					//if (!has_recieved_joints_)
-					//{
-					//	ROS_ERROR_STREAM_NAMED("joint_teleop", "Unable to send joint commands because robot state is invalid");
-					//}
-					//else
-					//{
-					    cmd_.header.stamp = ros::Time::now();
-						joints_pub_.publish(cmd_);
-                        cmd_last_ = cmd_;
-					//}
-				}
-		}
-    }
-
-	private:
-
-		ros::NodeHandle nh_;
-		ros::Publisher joints_pub_;
-		ros_control_boilerplate::JoystickState cmd_;
-		ros_control_boilerplate::JoystickState cmd_last_;
-		bool has_recieved_joints_;
-
-};
-
-void FRCRobotSimInterface::loop_joy(void)
-{
-	signal(SIGINT, quit);
-    TeleopJointsKeyboard teleop;
-    teleop.keyboardLoop();
 }
 
 /*void FRCRobotSimInterface::cube_state_callback(const frc_msgs::CubeState &cube) {
@@ -540,11 +536,10 @@ void FRCRobotSimInterface::init(void)
 	ROS_WARN("Passes");
 	FRCRobotInterface::init();
 	ROS_WARN("Passes");
-    ros::NodeHandle nh_;
 
 	// TODO : make this depend on joystick joints being defined
 	if (run_hal_robot_)
-		sim_joy_thread_ = std::thread(&FRCRobotSimInterface::loop_joy, this);
+		sim_joy_thread_ = std::thread(std::bind(&TeleopJointsKeyboard::keyboardLoop, &teleop_joy_));
     //cube_state_sub_ = nh_.subscribe("/frcrobot/cube_state_sim", 1, &FRCRobotSimInterface::cube_state_callback, this);
     match_data_sub_ = nh_.subscribe("match_data", 1, &FRCRobotSimInterface::match_data_callback, this);
 
@@ -693,7 +688,7 @@ void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
 		if(digital_input_names_[i] == "intake_line_break") {
 			digital_input_state_[i] = (has_cube) ? 1 : 0;
 		}
-	}    
+	}
 
     // Simulated state is updated in write, so just
 	// display it here for debugging

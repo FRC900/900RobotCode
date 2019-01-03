@@ -44,9 +44,24 @@
 #include <thread>
 #include <frc_msgs/CubeState.h>
 #include <frc_msgs/MatchSpecificData.h>
+#include <ros_control_boilerplate/JoystickState.h>
 
 namespace frcrobot_control
 {
+class TeleopJointsKeyboard
+{
+	public:
+		TeleopJointsKeyboard(ros::NodeHandle &nh);
+		~TeleopJointsKeyboard();
+		void keyboardLoop();
+		int pollKeyboard(int kfd, char &c) const;
+
+	private:
+		ros::Publisher joints_pub_;
+		ros_control_boilerplate::JoystickState cmd_;
+		ros_control_boilerplate::JoystickState cmd_last_;
+		//bool has_recieved_joints_;
+};
 
 /// \brief Hardware interface for a robot
 class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
@@ -79,8 +94,8 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
         void match_data_callback(const frc_msgs::MatchSpecificData &match_data);
 		std::mutex match_data_mutex_;
 
-		void loop_joy(void);
 		std::thread sim_joy_thread_;
+		TeleopJointsKeyboard teleop_joy_;
 
 };  // class
 
