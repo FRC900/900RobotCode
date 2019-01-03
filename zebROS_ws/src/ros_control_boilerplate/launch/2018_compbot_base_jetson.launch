@@ -37,6 +37,9 @@
 			<param name="frame_id" value="/map"/>
 		</node>
 
+                <node name="path_to_goal_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
+                <node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
+
 		<node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
 
 	</group>

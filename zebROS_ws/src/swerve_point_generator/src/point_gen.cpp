@@ -396,13 +396,13 @@ int main(int argc, char **argv)
 	graph_prof = nh.serviceClient<talon_swerve_drive_controller::MotionProfile>("/visualize_profile", false, service_connection_header);
 	graph_swerve_prof = nh.serviceClient<talon_swerve_drive_controller::MotionProfilePoints>("/visualize_swerve_profile", false, service_connection_header);
 
-	ros::service::waitForService("/frcrobot/swerve_drive_controller/wheel_pos");
+	ros::service::waitForService("swerve_drive_controller/wheel_pos");
 	ROS_ERROR("DONE WAITING FOR wheel_pos");
-	get_pos = nh.serviceClient<talon_swerve_drive_controller::WheelPos>("/frcrobot/swerve_drive_controller/wheel_pos", false, service_connection_header);
+	get_pos = nh.serviceClient<talon_swerve_drive_controller::WheelPos>("swerve_drive_controller/wheel_pos", false, service_connection_header);
 
 	// Once everything this node needs is available, open
 	// it up to connections from the outside
-	//ROS_ERROR("BEFORE advertiseService");
+        //ROS_ERROR("BEFORE advertiseService");
 	ros::ServiceServer service = nh.advertiseService("/point_gen/command", full_gen);
 	//ROS_ERROR("AFTER advertiseService");
 

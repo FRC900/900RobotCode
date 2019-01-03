@@ -106,21 +106,21 @@ class DriverStationSim(Plugin):
                     if(not self._widget.timer_pause.isChecked()):
                         self._widget.time.setText(time[:7])
                     match_msg.matchTimeRemaining = 150-time_diff
-                    match_msg.isDisabled = False
-                    match_msg.isEnabled = True
+                    match_msg.Disabled = False
+                    match_msg.Enabled = True
                 else:
                     match_msg.matchTimeRemaining = 0
-                    match_msg.isDisabled = True
-                    match_msg.isEnabled = False
+                    match_msg.Disabled = True
+                    match_msg.Enabled = False
 
                 #Publish Data
-                match_msg.allianceData = self._widget.match_data.text()
+                # match_msg.allianceData = self._widget.match_data.text()
                 match_msg.allianceColor = 1
                 match_msg.driverStationLocation = 1
                 match_msg.matchNumber = 1
-                match_msg.isAutonomous = auto
+                match_msg.Autonomous = auto
 
-                enable_last = match_msg.isEnabled
+                enable_last = match_msg.Enabled
                 auto_last = auto
                 practice_last = practice
 
