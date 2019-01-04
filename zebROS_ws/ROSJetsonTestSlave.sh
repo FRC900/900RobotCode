@@ -2,7 +2,7 @@
 
 # Setup ROS for Jetson Slave
 source /opt/ros/kinetic/setup.bash
-source /home/ubuntu/2018Offseason/zebROS_ws/devel/setup.bash
+source /home/ubuntu/2019RobotCode/zebROS_ws/devel/setup.bash
 export ROS_MASTER_URI=http://10.9.0.12:5802
 export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 8`
 export ROSLAUNCH_SSH_UNKNOWN=1

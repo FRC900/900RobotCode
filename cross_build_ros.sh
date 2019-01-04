@@ -58,7 +58,7 @@ wstool update -j8
 sed -i -e '/<\/package>/i  <depend>urdfdom_headers<\/depend>' urdf/urdf_parser_plugin/package.xml 
 
 # In a docker container : 
-# docker run -it --user ubuntu -v /home/kjaget/2018Offseason:/home/ubuntu/2018Offseason -v ~/catkin_arm_cross_ws:/home/ubuntu/catkin_arm_cross_ws  frc900/zebros-beta2019-dev /bin/bash
+# docker run -it --user ubuntu -v /home/kjaget/2019RobotCode:/home/ubuntu/2019RobotCode -v ~/catkin_arm_cross_ws:/home/ubuntu/catkin_arm_cross_ws  frc900/zebros-beta2019-dev /bin/bash
 
 # Do a fresh build - kill off any lingering dependencies
 rm -rf ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/kinetic devel_isolated build_isolated
@@ -66,12 +66,12 @@ rm -rf ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/kinetic devel_isolate
 # Note - if this fails looking for gencpp*cmake, run from a new terminal
 # window where no ROS setup.bash has previously been sourced
 cd ~/catkin_arm_cross_ws
-./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/kinetic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2018Offseason/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
+./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/kinetic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2019RobotCode/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
 
 # Add newly built cross-libs to git repo so they are
 # used for subsequent Rio imagings
 cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi
-tar -cjf ~/2018Offseason/roscore_roborio_2018.tar.bz2 opt/ros/kinetic
+tar -cjf ~/2019RobotCode/roscore_roborio_2018.tar.bz2 opt/ros/kinetic
 
 # I needed to add "-DYAML_CPP_INCLUDE_DIRS=/$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include
 # -DYAML_CPP_LIBRARIES=/$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/libyaml-cpp.a" to

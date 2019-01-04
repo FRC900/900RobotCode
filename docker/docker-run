@@ -7,5 +7,5 @@ set -e
 set -o pipefail
 
 docker run -it --privileged --net=host -v /tmp/.X11-unix:/tmp/.X11-unix \
- -v $dev_dir/2018Offseason:/home/ubuntu/2018Offseason \
+ -v $dev_dir/2019RobotCode:/home/ubuntu/2019RobotCode \
  -e DISPLAY=$DISPLAY --user ubuntu frc900/zebros-beta2019-dev:latest /bin/bash

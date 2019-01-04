@@ -40,7 +40,7 @@ do
 		if [ $matchNumber = 0 ]
 		then
 			echo Match number is zero -- renaming
-			cp $var $HOME/2018Offseason/practice$(basename $var)
+			cp $var $HOME/2019RobotCode/practice$(basename $var)
 			continue
 		fi
 
@@ -50,14 +50,14 @@ do
 			echo This has alliance data.
 			bag_name=Match${matchNumber}
 			echo Renaming bag file to ${bag_name}.bag
-			cp $var $HOME/2018Offseason/${bag_name}.bag
+			cp $var $HOME/2019RobotCode/${bag_name}.bag
 		else
 			echo This does not have alliance data but match numer != 0 -- renaming to prematch${var}
-			cp $var $HOME/2018Offseason/prematch$(basename $var)
+			cp $var $HOME/2019RobotCode/prematch$(basename $var)
 		fi
 	else
 		echo This does not have match data -- renaming to practice${var} 
-		cp $var $HOME/2018Offseason/practice$(basename $var)
+		cp $var $HOME/2019RobotCode/practice$(basename $var)
 	fi
 	#rm temp_file.txt
 

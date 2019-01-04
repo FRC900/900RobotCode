@@ -53,16 +53,16 @@ rm $HOME/navx-cpp-3.1.340-linuxathenastatic.zip
 
 # Get ros for RoboRIO libraries
 cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi
-sudo tar -xjf $HOME/2018Offseason/roscore_roborio_2018.tar.bz2
+sudo tar -xjf $HOME/2019RobotCode/roscore_roborio_2018.tar.bz2
 cd
 rm roscore_roborio_2018.tar.bz2
 
-# Clone 2018Offseason repo
+# Clone 2019RobotCode repo
 cd
-git clone https://github.com/FRC900/2018Offseason.git
+git clone https://github.com/FRC900/2019RobotCode.git
 
 # Install roboRIO packages into the cross-root
-sudo perl $HOME/2018Offseason/install_cross_package.pl
+sudo perl $HOME/2019RobotCode/install_cross_package.pl
 
 # Build/install cross version of console_bridge
 cd
@@ -71,7 +71,7 @@ cd console_bridge
 git checkout 0.3.2
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2018Offseason/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=~/frc2019/roborio/arm-frc2019-linux-gnueabi -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2019RobotCode/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=~/frc2019/roborio/arm-frc2019-linux-gnueabi -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
 make -j4 install
 cd
 sudo rm -rf console_bridge
@@ -107,7 +107,7 @@ sudo rm -rf sip-4.17.tar.gz sip-4.17
 wget https://github.com/leethomason/tinyxml2/archive/6.0.0.tar.gz
 tar -xzvf 6.0.0.tar.gz
 cd tinyxml2-6.0.0
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2018Offseason/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=~/frc2019/roborio/arm-frc2019-linux-gnueabi -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS:BOOL=OFF -DBUILD_STATIC_LIBS:BOOL=ON -DBUILD_TESTS:BOOL=OFF .
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2019RobotCode/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=~/frc2019/roborio/arm-frc2019-linux-gnueabi -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS:BOOL=OFF -DBUILD_STATIC_LIBS:BOOL=ON -DBUILD_TESTS:BOOL=OFF .
 make -j8 install
 cd
 rm -rf 6.0.0.tar.gz tinyxml2-6.0.0
@@ -123,7 +123,7 @@ mv TinyXML-CmakeLists.txt CMakeLists.txt
 sed -i "14i  set_target_properties(tinyxml PROPERTIES PUBLIC_HEADER \"tinyxml.h;tinystr.h\")" CMakeLists.txt
 #add a line to tinyxml.h before line 46 :
 sed -i '45i  #define TIXML_USE_STL' tinyxml.h
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2018Offseason/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi -DCMAKE_POSITION_INDEPENDENT_CODE=ON .
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2019RobotCode/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi -DCMAKE_POSITION_INDEPENDENT_CODE=ON .
 make -j8 install
 cd
 sudo rm -rf tinyxml_2_6_2.zip tinyxml
@@ -133,7 +133,7 @@ cd
 wget http://www.qhull.org/download/qhull-2015-src-7.2.0.tgz
 tar -xzvf qhull-2015-src-7.2.0.tgz
 cd qhull-2015.2/
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2018Offseason/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi .
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2019RobotCode/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi .
 make -j8 install
 cd
 sudo rm -rf qhull-2015-src-7.2.0.tgz qhull-2015.2
@@ -144,7 +144,7 @@ git clone https://github.com/assimp/assimp.git
 cd assimp
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2018Offseason/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2019RobotCode/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi ..
 make -j8 install
 cd
 sudo rm -rf assimp
@@ -164,7 +164,7 @@ git clone https://github.com/jbeder/yaml-cpp.git
 cd yaml-cpp
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2018Offseason/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS:BOOL=OFF -DYAML_CPP_BUILD_TESTS=OFF ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2019RobotCode/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS:BOOL=OFF -DYAML_CPP_BUILD_TESTS=OFF ..
 make -j8 install
 cd
 sudo rm -rf yaml-cpp
@@ -172,7 +172,7 @@ sudo rm -rf yaml-cpp
 cd
 git clone https://github.com/rdiankov/collada-dom.git
 cd collada-dom
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2018Offseason/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi .
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$HOME/2019RobotCode/zebROS_ws/rostoolchain.cmake -DCMAKE_INSTALL_PREFIX:PATH=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi .
 make -j8 install
 cd
 sudo rm -rf collada-dom
