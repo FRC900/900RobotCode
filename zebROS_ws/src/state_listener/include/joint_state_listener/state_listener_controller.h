@@ -282,6 +282,7 @@ class MatchStateListenerController :
 			data.setTest(msg->Test);
 
 			data.setBatteryVoltage(msg->BatteryVoltage);
+			command_buffer_.writeFromNonRT(data);
 		}
 };
 
