@@ -2,33 +2,55 @@
 # script to install cross-development environment on a laptop
 # This should let people build robot (roboRIO) code on a laptop
 
-# Install toolchain 
-# wget frc2019
-# extract to $HOME/frc2019
-# run scripts/ToolsUpdater.sh
-# add $HOME/frc2019/roborio/bin to path
-
-# Install CTRE libraries for TalonSRX controller
-# included in above for now but keep handy
-# for upgrading if needed
-#
-# Grab using maven?
-
 # Install wpilib env
 # Extract maven zip files into lib/wpilib & include/wpilib
-mkdir -p $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib
-cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib
-find ../../../../maven/ -name \*head\*zip | xargs -n1 unzip -o
-mkdir -p $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib
-cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib
-find ../../../../maven/ -name \*athena\*zip | xargs -n1 unzip -o
+cd $HOME 
+wget https://github.com/wpilibsuite/allwpilib/releases/download/v2019.1.1/WPILib_Linux-2019.1.1.tar.gz 
+mkdir -p $HOME/frc2019 
+cd $HOME/frc2019 
+tar -xzf $HOME/WPILib_Linux-2019.1.1.tar.gz 
+rm $HOME/WPILib_Linux-2019.1.1.tar.gz 
+cd $HOME/frc2019/tools 
+python ToolsUpdater.py 
+mkdir -p $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
+cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
+find ../../../../../ -name \*athena\*zip | xargs -n1 unzip -o 
+mkdir -p $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
+cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
+find ../../../../../ -name \*headers\*zip | xargs -n1 unzip -o
 
-# Same for CTRE headers
-http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix
+# Install CTRE libs
+mkdir -p $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
+mkdir -p $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
+cd $HOME 
+wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.12.0*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*" 
+cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
+find $HOME/devsite.ctr-electronics.com -name \*headers\*zip | xargs -n 1 unzip -o 
+cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
+find $HOME/devsite.ctr-electronics.com -name \*linux\*zip | xargs -n 1 unzip -o 
+rm -rf $HOME/devsite.ctr-electronics.com 
 
-# And navX
-http://www.kauailabs.com/maven2/com/kauailabs/navx/navx/
-http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/
+# Install navx libs from Maven
+cd $HOME 
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.340/navx-cpp-3.1.340-headers.zip 
+mkdir -p $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
+cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
+unzip -o $HOME/navx-cpp-3.1.340-headers.zip 
+rm $HOME/navx-cpp-3.1.340-headers.zip 
+cd $HOME 
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.340/navx-cpp-3.1.340-linuxathena.zip 
+mkdir -p $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
+cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
+unzip -o $HOME/navx-cpp-3.1.340-linuxathena.zip 
+rm $HOME/navx-cpp-3.1.340-linuxathena.zip 
+cd $HOME 
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.340/navx-cpp-3.1.340-linuxathenastatic.zip 
+mkdir -p $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
+cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
+unzip -o $HOME/navx-cpp-3.1.340-linuxathenastatic.zip 
+rm $HOME/navx-cpp-3.1.340-linuxathenastatic.zip 
+
+
 # Get ros for RoboRIO libraries
 cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi
 sudo tar -xjf $HOME/2018Offseason/roscore_roborio_2018.tar.bz2
