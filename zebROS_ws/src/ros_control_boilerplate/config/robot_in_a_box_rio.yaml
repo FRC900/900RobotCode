@@ -10,10 +10,11 @@ generic_hw_control_loop:
 # of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
 hardware_interface:
    joints:
-       - {name: talon3, local: false, type: can_talon_srx, can_id: 3}
-       - {name: talon9, local: false, type: can_talon_srx, can_id: 9}
-       - {name: pdp, local: true, type: pdp }
-       - {name: compressor, local: true, type: compressor, pcm_id: 0}
+       # Add a single unused talon on the rio to make sure keepalive signals are sent
+       - {name: dummy_talon, local: false, type: can_talon_srx, can_id: 0}
+         #- {name: talon9, local: false, type: can_talon_srx, can_id: 9}
+         #- {name: pdp, local: true, type: pdp }
+         #- {name: compressor, local: true, type: compressor, pcm_id: 0}
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
        - {name: do1, local: true, type: digital_output, dio_channel: 1}

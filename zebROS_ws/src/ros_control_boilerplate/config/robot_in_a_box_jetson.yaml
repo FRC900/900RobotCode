@@ -11,7 +11,7 @@ hardware_interface:
        - {name: talon3, type: can_talon_srx, local: true, can_id: 3}
        - {name: talon9, type: can_talon_srx, local: true, can_id: 9}
        - {name: pdp, local: true, type: pdp}
-       - {name: compressor, local: true, type: compressor, pcm_id: 0}
+         #- {name: compressor, local: true, type: compressor, pcm_id: 0}
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
        - {name: do1, local: false, type: digital_output, dio_channel: 1}
@@ -60,8 +60,17 @@ talon3_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: talon3
     feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
 
-talon9_controller:
+talon9_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: talon9
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+talon9_motionmagic_controller:
     type: talon_controllers/TalonMotionMagicCloseLoopController
     joint: talon9
     feedback_type: CTRE_MagEncoder_Absolute
