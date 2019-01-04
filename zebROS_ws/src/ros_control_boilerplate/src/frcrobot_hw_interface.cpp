@@ -2543,7 +2543,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			const bool b3 = tc.demand1Changed(demand1_type_internal, demand1_value);
 
 			// TODO : unconditionally use the 4-param version of Set()
-			//ROS_INFO_STREAM("b1 = " << b1 << " b2 = " << b2 << " b3 = " << b3);
+			// ROS_INFO_STREAM("b1 = " << b1 << " b2 = " << b2 << " b3 = " << b3);
 			if (b1 || b2 || b3 || ros::Time::now().toSec() - can_talon_srx_run_profile_stop_time_[joint_id] < .2)
 			{
 				ctre::phoenix::motorcontrol::ControlMode out_mode;
@@ -2567,17 +2567,15 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 							break;
 					}
 
-					can_talons_mp_running_[joint_id]->store(out_mode == ctre::phoenix::motorcontrol::ControlMode::MotionProfile && command == 1, std::memory_order_relaxed);
-
 					ts.setDemand1Type(demand1_type_internal);
 					ts.setDemand1Value(demand1_value);
 
-					//ROS_INFO_STREAM c("in mode: " << in_mode);
 					if (b3)
 					{
 						ctre::phoenix::motorcontrol::DemandType demand1_type_phoenix;
 						if (convertDemand1Type(demand1_type_internal, demand1_type_phoenix))
 						{
+//#define DEBUG_WRITE
 #ifndef DEBUG_WRITE
 							ROS_INFO_STREAM("called Set() on " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
 									" out_mode = " << static_cast<int>(out_mode) << " command = " << command <<
@@ -2586,16 +2584,16 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 							talon->Set(out_mode, command, demand1_type_phoenix, demand1_value);
 						}
 						else
-							ROS_ERROR("Invalid Demand1 Type in hadrare_interface write()");
+							ROS_ERROR("Invalid Demand1 Type in hardware_interface write()");
 					}
 					else
 					{
 #ifdef DEBUG_WRITE
-						ROS_INFO_STREAM("called Set(2) on " << joint_id << "=" << can_talon_srx_names_[joint_id]);
+						ROS_INFO_STREAM("called Set(2) on " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
+								" out_mode = " << static_cast<int>(out_mode) << " command = " << command);
 #endif
 						talon->Set(out_mode, command);
 					}
-					can_talons_mp_running_[joint_id]->store((in_mode == hardware_interface::TalonMode_MotionProfile) && (command == 1), std::memory_order_relaxed);
 				}
 
 #ifdef USE_TALON_MOTION_PROFILE
@@ -2609,20 +2607,10 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					profile_is_live = true;
 					can_talons_mp_running_[joint_id]->store(true, std::memory_order_relaxed);
 				}
+				else
+					can_talons_mp_running_[joint_id]->store(false, std::memory_order_relaxed);
 #endif
 			}
-
-#ifdef USE_TALON_MOTION_PROFILE
-			// If any of the talons are set to MotionProfile and
-			// command == 1 to start the profile, set
-			// profile_is_live_ to true. If this is false
-			// for all of them, set profile_is_live_ to false.
-			if ((in_mode == hardware_interface::TalonMode_MotionProfile) &&
-				(command == 1))
-			{
-				profile_is_live = true;
-			}
-#endif
 		}
 		else
 		{
