@@ -72,3 +72,7 @@ pcm_state_controller:
    type : pcm_state_controller/PCMStateController
    publish_rate: 20
 
+match_state_listener_controller:
+    type:      state_listener_controller/MatchStateListenerController
+    topic:     /frcrobot_rio/match_data
+

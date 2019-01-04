@@ -65,6 +65,10 @@ imu_sensor_controller:
    type:         imu_sensor_controller/ImuSensorController
    publish_rate: 20
 
+match_state_controller:
+   type:         match_state_controller/MatchStateController
+   publish_rate: 20
+
 pdp_state_controller:
    type:         pdp_state_controller/PDPStateController
    publish_rate: 20
