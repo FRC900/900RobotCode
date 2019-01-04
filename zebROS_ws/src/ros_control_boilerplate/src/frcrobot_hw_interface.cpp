@@ -1149,12 +1149,13 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 		std::shared_ptr<std::mutex> mutex)
 {
 	ros::Rate r(20); // TODO : Tune me?
-	hardware_interface::PDPHWState pdp_state;
 	int32_t status = 0;
 	double time_sum = 0.;
 	unsigned iteration_count = 0;
 	HAL_ClearPDPStickyFaults(pdp, &status);
 	HAL_ResetPDPTotalEnergy(pdp, &status);
+	if (status)
+		ROS_ERROR_STREAM("pdp_read_thread error clearing sticky faults : status = " << status);
 	while (ros::ok())
 	{
 		struct timespec start_time;
@@ -1165,8 +1166,8 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 #endif
 		{
 			//read info from the PDP hardware
-			// TODO - error checking?
 			status = 0;
+			hardware_interface::PDPHWState pdp_state;
 			pdp_state.setVoltage(HAL_GetPDPVoltage(pdp, &status));
 			pdp_state.setTemperature(HAL_GetPDPTemperature(pdp, &status));
 			pdp_state.setTotalCurrent(HAL_GetPDPTotalCurrent(pdp, &status));
@@ -1176,10 +1177,14 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 			{
 				pdp_state.setCurrent(HAL_GetPDPChannelCurrent(pdp, channel, &status), channel);
 			}
-
-			// Copy to state shared with read() thread
-			std::lock_guard<std::mutex> l(*mutex);
-			*state = pdp_state;
+			if (status)
+				ROS_ERROR_STREAM("pdp_read_thread error : status = " << status);
+			else
+			{
+				// Copy to state shared with read() thread
+				std::lock_guard<std::mutex> l(*mutex);
+				*state = pdp_state;
+			}
 		}
 		struct timespec end_time;
 		clock_gettime(CLOCK_MONOTONIC, &end_time);
@@ -1202,11 +1207,12 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_
 										  std::shared_ptr<std::mutex> mutex)
 {
 	ros::Rate r(20); // TODO : Tune me?
-	hardware_interface::PCMState pcm_state(pcm_id);
 	int32_t status = 0;
 	double time_sum = 0.;
 	unsigned iteration_count = 0;
 	HAL_ClearAllPCMStickyFaults(pcm, &status);
+	if (status)
+		ROS_ERROR_STREAM("pcm_read_thread error clearing sticky faults : status = " << status);
 	while (ros::ok())
 	{
 		struct timespec start_time;
@@ -1217,6 +1223,8 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_
 #endif
 		{
 			// TODO : error checking?
+			hardware_interface::PCMState pcm_state(pcm_id);
+			status = 0;
 			pcm_state.setEnabled(HAL_GetCompressor(pcm, &status));
 			pcm_state.setPressureSwitch(HAL_GetCompressorPressureSwitch(pcm, &status));
 			pcm_state.setCompressorCurrent(HAL_GetCompressorCurrent(pcm, &status));
@@ -1232,9 +1240,16 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_
 			pcm_state.setVoltageStickFault(HAL_GetPCMSolenoidVoltageStickyFault(pcm, &status));
 			pcm_state.setSolenoidBlacklist(HAL_GetPCMSolenoidBlackList(pcm, &status));
 
-			// Copy to state shared with read() thread
-			std::lock_guard<std::mutex> l(*mutex);
-			*state = pcm_state;
+			if (status)
+			{
+				ROS_ERROR_STREAM("pcm_read_thread error : status = " << status);
+			}
+			else
+			{
+				// Copy to state shared with read() thread
+				std::lock_guard<std::mutex> l(*mutex);
+				*state = pcm_state;
+			}
 		}
 		struct timespec end_time;
 		clock_gettime(CLOCK_MONOTONIC, &end_time);
@@ -1963,7 +1978,7 @@ bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, con
 			}
 
 	}
-	//ROS_ERROR_STREAM("Error calling " << talon_method_name << " : " << error_name);
+	ROS_ERROR_STREAM("Error calling " << talon_method_name << " : " << error_name);
 	return false;
 }
 
@@ -2020,11 +2035,22 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		if (tc.encoderFeedbackChanged(internal_feedback_device, feedback_coefficient) &&
 			convertFeedbackDevice(internal_feedback_device, talon_feedback_device))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] << " feedback");
-			safeTalonCall(talon->ConfigSelectedFeedbackSensor(talon_feedback_device, pidIdx, timeoutMs),"ConfigSelectedFeedbackSensor");
-			safeTalonCall(talon->ConfigSelectedFeedbackCoefficient(feedback_coefficient, pidIdx, timeoutMs),"ConfigSelectedFeedbackCoefficient");
-			ts.setEncoderFeedback(internal_feedback_device);
-			ts.setFeedbackCoefficient(feedback_coefficient);
+			// Check for errors on Talon writes. If it fails, used the reset() call to
+			// set the changed var for the config items to true. This will trigger a re-try
+			// the next time through the loop.
+			bool rc = true;
+			rc &= safeTalonCall(talon->ConfigSelectedFeedbackSensor(talon_feedback_device, pidIdx, timeoutMs),"ConfigSelectedFeedbackSensor");
+			rc &= safeTalonCall(talon->ConfigSelectedFeedbackCoefficient(feedback_coefficient, pidIdx, timeoutMs),"ConfigSelectedFeedbackCoefficient");
+			if (rc)
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] << " feedback");
+				ts.setEncoderFeedback(internal_feedback_device);
+				ts.setFeedbackCoefficient(feedback_coefficient);
+			}
+			else
+			{
+				tc.resetEncoderFeedback();
+			}
 		}
 		// 1
 	clock_gettime(CLOCK_MONOTONIC, &end_time);
@@ -2089,42 +2115,62 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 			if (tc.pidfChanged(p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period, slot) || ros::Time::now().toSec() - can_talon_srx_run_profile_stop_time_[joint_id] < .2)
 			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" PIDF slot " << slot << " config values");
-				safeTalonCall(talon->Config_kP(slot, p, timeoutMs),"Config_kP");
-				safeTalonCall(talon->Config_kI(slot, i, timeoutMs),"Config_kI");
-				safeTalonCall(talon->Config_kD(slot, d, timeoutMs),"Config_kD");
-				safeTalonCall(talon->Config_kF(slot, f, timeoutMs),"Config_kF");
-				safeTalonCall(talon->Config_IntegralZone(slot, iz, timeoutMs),"Config_IntegralZone");
+				bool rc = true;
+				rc &= safeTalonCall(talon->Config_kP(slot, p, timeoutMs),"Config_kP");
+				rc &= safeTalonCall(talon->Config_kI(slot, i, timeoutMs),"Config_kI");
+				rc &= safeTalonCall(talon->Config_kD(slot, d, timeoutMs),"Config_kD");
+				rc &= safeTalonCall(talon->Config_kF(slot, f, timeoutMs),"Config_kF");
+				rc &= safeTalonCall(talon->Config_IntegralZone(slot, iz, timeoutMs),"Config_IntegralZone");
 				// TODO : Scale these two?
-				safeTalonCall(talon->ConfigAllowableClosedloopError(slot, allowable_closed_loop_error, timeoutMs),"ConfigAllowableClosedloopError");
-				safeTalonCall(talon->ConfigMaxIntegralAccumulator(slot, max_integral_accumulator, timeoutMs),"ConfigMaxIntegralAccumulator");
-				safeTalonCall(talon->ConfigClosedLoopPeakOutput(slot, closed_loop_peak_output, timeoutMs),"ConfigClosedLoopPeakOutput");
-				safeTalonCall(talon->ConfigClosedLoopPeriod(slot, closed_loop_period, timeoutMs),"ConfigClosedLoopPeriod");
+				rc &= safeTalonCall(talon->ConfigAllowableClosedloopError(slot, allowable_closed_loop_error, timeoutMs),"ConfigAllowableClosedloopError");
+				rc &= safeTalonCall(talon->ConfigMaxIntegralAccumulator(slot, max_integral_accumulator, timeoutMs),"ConfigMaxIntegralAccumulator");
+				rc &= safeTalonCall(talon->ConfigClosedLoopPeakOutput(slot, closed_loop_peak_output, timeoutMs),"ConfigClosedLoopPeakOutput");
+				rc &= safeTalonCall(talon->ConfigClosedLoopPeriod(slot, closed_loop_period, timeoutMs),"ConfigClosedLoopPeriod");
 
-				ts.setPidfP(p, slot);
-				ts.setPidfI(i, slot);
-				ts.setPidfD(d, slot);
-				ts.setPidfF(f, slot);
-				ts.setPidfIzone(iz, slot);
-				ts.setAllowableClosedLoopError(allowable_closed_loop_error, slot);
-				ts.setMaxIntegralAccumulator(max_integral_accumulator, slot);
-				ts.setClosedLoopPeakOutput(closed_loop_peak_output, slot);
-				ts.setClosedLoopPeriod(closed_loop_period, slot);
+				if (rc)
+				{
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" PIDF slot " << slot << " config values");
+					ts.setPidfP(p, slot);
+					ts.setPidfI(i, slot);
+					ts.setPidfD(d, slot);
+					ts.setPidfF(f, slot);
+					ts.setPidfIzone(iz, slot);
+					ts.setAllowableClosedLoopError(allowable_closed_loop_error, slot);
+					ts.setMaxIntegralAccumulator(max_integral_accumulator, slot);
+					ts.setClosedLoopPeakOutput(closed_loop_peak_output, slot);
+					ts.setClosedLoopPeriod(closed_loop_period, slot);
+				}
+				else
+				{
+					tc.resetPIDF(slot);
+				}
 			}
 
 			bool aux_pid_polarity;
 			if (tc.auxPidPolarityChanged(aux_pid_polarity))
 			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << " PIDF polarity to " << aux_pid_polarity << std::endl);
-				safeTalonCall(talon->ConfigAuxPIDPolarity(aux_pid_polarity, timeoutMs), "ConfigAuxPIDPolarity");
-				ts.setAuxPidPolarity(aux_pid_polarity);
+				if (safeTalonCall(talon->ConfigAuxPIDPolarity(aux_pid_polarity, timeoutMs), "ConfigAuxPIDPolarity"))
+				{
+					ROS_INFO_STREAM("Updated joint " << joint_id << " PIDF polarity to " << aux_pid_polarity << std::endl);
+					ts.setAuxPidPolarity(aux_pid_polarity);
+				}
+				else
+				{
+					tc.resetAuxPidPolarity();
+				}
 			}
 
 			if (slot_changed)
 			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << " PIDF slot to " << slot << std::endl);
-				safeTalonCall(talon->SelectProfileSlot(slot, pidIdx),"SelectProfileSlot");
-				ts.setSlot(slot);
+				if (safeTalonCall(talon->SelectProfileSlot(slot, pidIdx),"SelectProfileSlot"))
+				{
+					ROS_INFO_STREAM("Updated joint " << joint_id << " PIDF slot to " << slot << std::endl);
+					ts.setSlot(slot);
+				}
+				else
+				{
+					tc.resetPidfSlot();
+				}
 			}
 		}
 
@@ -2142,6 +2188,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		{
 			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
 							" invert = " << invert << " phase = " << sensor_phase);
+			// TODO : can these calls fail. If so, what to do if they do?
 			talon->SetInverted(invert);
 			safeTalonCall(talon->GetLastError(), "SetInverted");
 			talon->SetSensorPhase(sensor_phase);
@@ -2197,12 +2244,16 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		double iaccum;
 		if (close_loop_mode && tc.integralAccumulatorChanged(iaccum))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" integral accumulator");
-			safeTalonCall(talon->SetIntegralAccumulator(iaccum / closed_loop_scale, pidIdx, timeoutMs), "SetIntegralAccumulator");
-			//The units on this aren't really right
+			//The units on this aren't really right?
+			if (safeTalonCall(talon->SetIntegralAccumulator(iaccum / closed_loop_scale, pidIdx, timeoutMs), "SetIntegralAccumulator"))
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" integral accumulator");
+				// Do not set talon state - this changes
+				// dynamically so read it in read() above instead
+			}
+			else
+				tc.resetIntegralAccumulator();
 
-			// Do not set talon state - this changes
-			// dynamically so read it in read() above instead
 		}
 
 		//7
@@ -2228,22 +2279,30 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 									nominal_output_reverse,
 									neutral_deadband))
 		{
-			safeTalonCall(talon->ConfigOpenloopRamp(open_loop_ramp, timeoutMs),"ConfigOpenloopRamp");
-			safeTalonCall(talon->ConfigClosedloopRamp(closed_loop_ramp, timeoutMs),"ConfigClosedloopRamp");
-			safeTalonCall(talon->ConfigPeakOutputForward(peak_output_forward, timeoutMs),"ConfigPeakOutputForward");          // 100
-			safeTalonCall(talon->ConfigPeakOutputReverse(peak_output_reverse, timeoutMs),"ConfigPeakOutputReverse");          // -100
-			safeTalonCall(talon->ConfigNominalOutputForward(nominal_output_forward, timeoutMs),"ConfigNominalOutputForward"); // 0
-			safeTalonCall(talon->ConfigNominalOutputReverse(nominal_output_reverse, timeoutMs),"ConfigNominalOutputReverse"); // 0
-			safeTalonCall(talon->ConfigNeutralDeadband(neutral_deadband, timeoutMs),"ConfigNeutralDeadband");                 // 0
+			bool rc = true;
+			rc &= safeTalonCall(talon->ConfigOpenloopRamp(open_loop_ramp, timeoutMs),"ConfigOpenloopRamp");
+			rc &= safeTalonCall(talon->ConfigClosedloopRamp(closed_loop_ramp, timeoutMs),"ConfigClosedloopRamp");
+			rc &= safeTalonCall(talon->ConfigPeakOutputForward(peak_output_forward, timeoutMs),"ConfigPeakOutputForward");          // 100
+			rc &= safeTalonCall(talon->ConfigPeakOutputReverse(peak_output_reverse, timeoutMs),"ConfigPeakOutputReverse");          // -100
+			rc &= safeTalonCall(talon->ConfigNominalOutputForward(nominal_output_forward, timeoutMs),"ConfigNominalOutputForward"); // 0
+			rc &= safeTalonCall(talon->ConfigNominalOutputReverse(nominal_output_reverse, timeoutMs),"ConfigNominalOutputReverse"); // 0
+			rc &= safeTalonCall(talon->ConfigNeutralDeadband(neutral_deadband, timeoutMs),"ConfigNeutralDeadband");                 // 0
 
-			ts.setOpenloopRamp(open_loop_ramp);
-			ts.setClosedloopRamp(closed_loop_ramp);
-			ts.setPeakOutputForward(peak_output_forward);
-			ts.setPeakOutputReverse(peak_output_reverse);
-			ts.setNominalOutputForward(nominal_output_forward);
-			ts.setNominalOutputReverse(nominal_output_reverse);
-			ts.setNeutralDeadband(neutral_deadband);
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" output shaping");
+			if (rc)
+			{
+				ts.setOpenloopRamp(open_loop_ramp);
+				ts.setClosedloopRamp(closed_loop_ramp);
+				ts.setPeakOutputForward(peak_output_forward);
+				ts.setPeakOutputReverse(peak_output_reverse);
+				ts.setNominalOutputForward(nominal_output_forward);
+				ts.setNominalOutputReverse(nominal_output_reverse);
+				ts.setNeutralDeadband(neutral_deadband);
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" output shaping");
+			}
+			else
+			{
+				tc.resetOutputShaping();
+			}
 		}
 		//8
 	clock_gettime(CLOCK_MONOTONIC, &end_time);
@@ -2260,15 +2319,25 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 										  v_measurement_filter,
 										  v_c_enable))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" voltage compensation");
-			safeTalonCall(talon->ConfigVoltageCompSaturation(v_c_saturation, timeoutMs),"ConfigVoltageCompSaturation");
-			safeTalonCall(talon->ConfigVoltageMeasurementFilter(v_measurement_filter, timeoutMs),"ConfigVoltageMeasurementFilter");
-			talon->EnableVoltageCompensation(v_c_enable);
-			safeTalonCall(talon->GetLastError(), "EnableVoltageCompensation");
+			bool rc = true;
+			rc &= safeTalonCall(talon->ConfigVoltageCompSaturation(v_c_saturation, timeoutMs),"ConfigVoltageCompSaturation");
+			rc &= safeTalonCall(talon->ConfigVoltageMeasurementFilter(v_measurement_filter, timeoutMs),"ConfigVoltageMeasurementFilter");
 
-			ts.setVoltageCompensationSaturation(v_c_saturation);
-			ts.setVoltageMeasurementFilter(v_measurement_filter);
-			ts.setVoltageCompensationEnable(v_c_enable);
+			if (rc)
+			{
+				// Only enable once settings are correctly written to the Talon
+				talon->EnableVoltageCompensation(v_c_enable);
+				rc &= safeTalonCall(talon->GetLastError(), "EnableVoltageCompensation");
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" voltage compensation");
+
+				ts.setVoltageCompensationSaturation(v_c_saturation);
+				ts.setVoltageMeasurementFilter(v_measurement_filter);
+				ts.setVoltageCompensationEnable(v_c_enable);
+			}
+			else
+			{
+				tc.resetVoltageCompensation();
+			}
 		}
 
 		//9
@@ -2286,12 +2355,20 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		if (tc.velocityMeasurementChanged(internal_v_m_period, v_m_window) &&
 			convertVelocityMeasurementPeriod(internal_v_m_period, phoenix_v_m_period))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" velocity measurement period / window");
-			safeTalonCall(talon->ConfigVelocityMeasurementPeriod(phoenix_v_m_period, timeoutMs),"ConfigVelocityMeasurementPeriod");
-			safeTalonCall(talon->ConfigVelocityMeasurementWindow(v_m_window, timeoutMs),"ConfigVelocityMeasurementWindow");
+			bool rc = true;
+			rc &= safeTalonCall(talon->ConfigVelocityMeasurementPeriod(phoenix_v_m_period, timeoutMs),"ConfigVelocityMeasurementPeriod");
+			rc &= safeTalonCall(talon->ConfigVelocityMeasurementWindow(v_m_window, timeoutMs),"ConfigVelocityMeasurementWindow");
 
-			ts.setVelocityMeasurementPeriod(internal_v_m_period);
-			ts.setVelocityMeasurementWindow(v_m_window);
+			if (rc)
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" velocity measurement period / window");
+				ts.setVelocityMeasurementPeriod(internal_v_m_period);
+				ts.setVelocityMeasurementWindow(v_m_window);
+			}
+			else
+			{
+				tc.resetVelocityMeasurement();
+			}
 		}
 		//10
 	clock_gettime(CLOCK_MONOTONIC, &end_time);
@@ -2305,9 +2382,15 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		double sensor_position;
 		if (tc.sensorPositionChanged(sensor_position))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" selected sensor position");
-			safeTalonCall(talon->SetSelectedSensorPosition(sensor_position / radians_scale, pidIdx, timeoutMs),
-					"SetSelectedSensorPosition");
+			if (safeTalonCall(talon->SetSelectedSensorPosition(sensor_position / radians_scale, pidIdx, timeoutMs),
+					"SetSelectedSensorPosition"))
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" selected sensor position");
+			}
+			else
+			{
+				tc.resetSensorPosition();
+			}
 		}
 
 		hardware_interface::LimitSwitchSource internal_local_forward_source;
@@ -2325,11 +2408,20 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				convertLimitSwitchSource(internal_local_reverse_source, talon_local_reverse_source) &&
 				convertLimitSwitchNormal(internal_local_reverse_normal, talon_local_reverse_normal) )
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" limit switches");
-			safeTalonCall(talon->ConfigForwardLimitSwitchSource(talon_local_forward_source, talon_local_forward_normal, timeoutMs),"ConfigForwardLimitSwitchSource");
-			safeTalonCall(talon->ConfigReverseLimitSwitchSource(talon_local_reverse_source, talon_local_reverse_normal, timeoutMs),"ConfigReverseLimitSwitchSource");
-			ts.setForwardLimitSwitchSource(internal_local_forward_source, internal_local_forward_normal);
-			ts.setReverseLimitSwitchSource(internal_local_reverse_source, internal_local_reverse_normal);
+			bool rc = true;
+			rc &= safeTalonCall(talon->ConfigForwardLimitSwitchSource(talon_local_forward_source, talon_local_forward_normal, timeoutMs),"ConfigForwardLimitSwitchSource");
+			rc &= safeTalonCall(talon->ConfigReverseLimitSwitchSource(talon_local_reverse_source, talon_local_reverse_normal, timeoutMs),"ConfigReverseLimitSwitchSource");
+
+			if (rc)
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" limit switches");
+				ts.setForwardLimitSwitchSource(internal_local_forward_source, internal_local_forward_normal);
+				ts.setReverseLimitSwitchSource(internal_local_reverse_source, internal_local_reverse_normal);
+			}
+			else
+			{
+				tc.resetLimitSwitchesSource();
+			}
 		}
 		//11
 	clock_gettime(CLOCK_MONOTONIC, &end_time);
@@ -2345,7 +2437,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		double softlimit_reverse_threshold;
 		bool softlimit_reverse_enable;
 		bool softlimit_override_enable;
-		if (tc.SoftLimitChanged(softlimit_forward_threshold,
+		if (tc.softLimitChanged(softlimit_forward_threshold,
 				softlimit_forward_enable,
 				softlimit_reverse_threshold,
 				softlimit_reverse_enable,
@@ -2354,21 +2446,29 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			double softlimit_forward_threshold_NU = softlimit_forward_threshold / radians_scale; //native units
 			double softlimit_reverse_threshold_NU = softlimit_reverse_threshold / radians_scale;
 			talon->OverrideSoftLimitsEnable(softlimit_override_enable);
-			safeTalonCall(talon->GetLastError(), "OverrideSoftLimitsEnable");
-			safeTalonCall(talon->ConfigForwardSoftLimitThreshold(softlimit_forward_threshold_NU, timeoutMs),"ConfigForwardSoftLimitThreshold");
-			safeTalonCall(talon->ConfigForwardSoftLimitEnable(softlimit_forward_enable, timeoutMs),"ConfigForwardSoftLimitEnable");
-			safeTalonCall(talon->ConfigReverseSoftLimitThreshold(softlimit_reverse_threshold_NU, timeoutMs),"ConfigReverseSoftLimitThreshold");
-			safeTalonCall(talon->ConfigReverseSoftLimitEnable(softlimit_reverse_enable, timeoutMs),"ConfigReverseSoftLimitEnable");
+			bool rc = true;
+			rc &= safeTalonCall(talon->GetLastError(), "OverrideSoftLimitsEnable");
+			rc &= safeTalonCall(talon->ConfigForwardSoftLimitThreshold(softlimit_forward_threshold_NU, timeoutMs),"ConfigForwardSoftLimitThreshold");
+			rc &= safeTalonCall(talon->ConfigForwardSoftLimitEnable(softlimit_forward_enable, timeoutMs),"ConfigForwardSoftLimitEnable");
+			rc &= safeTalonCall(talon->ConfigReverseSoftLimitThreshold(softlimit_reverse_threshold_NU, timeoutMs),"ConfigReverseSoftLimitThreshold");
+			rc &= safeTalonCall(talon->ConfigReverseSoftLimitEnable(softlimit_reverse_enable, timeoutMs),"ConfigReverseSoftLimitEnable");
 
-			ts.setOverrideSoftLimitsEnable(softlimit_override_enable);
-			ts.setForwardSoftLimitThreshold(softlimit_forward_threshold);
-			ts.setForwardSoftLimitEnable(softlimit_forward_enable);
-			ts.setReverseSoftLimitThreshold(softlimit_reverse_threshold);
-			ts.setReverseSoftLimitEnable(softlimit_reverse_enable);
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" soft limits " <<
-					std::endl << "\tforward enable=" << softlimit_forward_enable << " forward threshold=" << softlimit_forward_threshold <<
-					std::endl << "\treverse enable=" << softlimit_reverse_enable << " reverse threshold=" << softlimit_reverse_threshold <<
-					std::endl << "\toverride_enable=" << softlimit_override_enable);
+			if (rc)
+			{
+				ts.setOverrideSoftLimitsEnable(softlimit_override_enable);
+				ts.setForwardSoftLimitThreshold(softlimit_forward_threshold);
+				ts.setForwardSoftLimitEnable(softlimit_forward_enable);
+				ts.setReverseSoftLimitThreshold(softlimit_reverse_threshold);
+				ts.setReverseSoftLimitEnable(softlimit_reverse_enable);
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" soft limits " <<
+						std::endl << "\tforward enable=" << softlimit_forward_enable << " forward threshold=" << softlimit_forward_threshold <<
+						std::endl << "\treverse enable=" << softlimit_reverse_enable << " reverse threshold=" << softlimit_reverse_threshold <<
+						std::endl << "\toverride_enable=" << softlimit_override_enable);
+			}
+			else
+			{
+				tc.resetSoftLimit();
+			}
 		}
 
 		//12
@@ -2385,17 +2485,25 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		bool enable;
 		if (tc.currentLimitChanged(peak_amps, peak_msec, continuous_amps, enable))
 		{
-			safeTalonCall(talon->ConfigPeakCurrentLimit(peak_amps, timeoutMs),"ConfigPeakCurrentLimit");
-			safeTalonCall(talon->ConfigPeakCurrentDuration(peak_msec, timeoutMs),"ConfigPeakCurrentDuration");
-			safeTalonCall(talon->ConfigContinuousCurrentLimit(continuous_amps, timeoutMs),"ConfigContinuousCurrentLimit");
-			talon->EnableCurrentLimit(enable);
-			safeTalonCall(talon->GetLastError(), "EnableCurrentLimit");
+			bool rc = true;
+			rc &= safeTalonCall(talon->ConfigPeakCurrentLimit(peak_amps, timeoutMs),"ConfigPeakCurrentLimit");
+			rc &= safeTalonCall(talon->ConfigPeakCurrentDuration(peak_msec, timeoutMs),"ConfigPeakCurrentDuration");
+			rc &= safeTalonCall(talon->ConfigContinuousCurrentLimit(continuous_amps, timeoutMs),"ConfigContinuousCurrentLimit");
+			if (rc)
+			{
+				talon->EnableCurrentLimit(enable);
+				safeTalonCall(talon->GetLastError(), "EnableCurrentLimit");
 
-			ts.setPeakCurrentLimit(peak_amps);
-			ts.setPeakCurrentDuration(peak_msec);
-			ts.setContinuousCurrentLimit(continuous_amps);
-			ts.setCurrentLimitEnable(enable);
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" peak current");
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" peak current");
+				ts.setPeakCurrentLimit(peak_amps);
+				ts.setPeakCurrentDuration(peak_msec);
+				ts.setContinuousCurrentLimit(continuous_amps);
+				ts.setCurrentLimitEnable(enable);
+			}
+			else
+			{
+				tc.resetCurrentLimit();
+			}
 		}
 		//13
 	clock_gettime(CLOCK_MONOTONIC, &end_time);
@@ -2415,11 +2523,14 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				ctre::phoenix::motorcontrol::StatusFrameEnhanced status_frame_enhanced;
 				if (convertStatusFrame(status_frame, status_frame_enhanced))
 				{
-					talon->SetStatusFramePeriod(status_frame_enhanced, period);
-					ts.setStatusFramePeriod(status_frame, period);
-					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i << "=" << static_cast<int>(period) << "mSec");
+					if (safeTalonCall(talon->SetStatusFramePeriod(status_frame_enhanced, period), "SetStatusFramePeriod"))
+					{
+						ts.setStatusFramePeriod(status_frame, period);
+						ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i << "=" << static_cast<int>(period) << "mSec");
+					}
+					else
+						tc.resetStatusFramePeriod(status_frame);
 				}
-
 			}
 		}
 
@@ -2432,9 +2543,13 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				ctre::phoenix::motorcontrol::ControlFrame control_frame_phoenix;
 				if (convertControlFrame(control_frame, control_frame_phoenix))
 				{
-					talon->SetControlFramePeriod(control_frame_phoenix, period);
-					ts.setControlFramePeriod(control_frame, period);
-					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" control_frame " << i << "=" << static_cast<int>(period) << "mSec");
+					if (safeTalonCall(talon->SetControlFramePeriod(control_frame_phoenix, period), "SetControlFramePeriod"))
+					{
+						ts.setControlFramePeriod(control_frame, period);
+						ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" control_frame " << i << "=" << static_cast<int>(period) << "mSec");
+					}
+					else
+						tc.setControlFramePeriod(control_frame, period);
 				}
 
 			}
@@ -2454,35 +2569,61 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				double motion_acceleration;
 				if (tc.motionCruiseChanged(motion_cruise_velocity, motion_acceleration))
 				{
+					bool rc = true;
 					//converted from rad/sec to native units
-					safeTalonCall(talon->ConfigMotionCruiseVelocity(motion_cruise_velocity / radians_per_second_scale, timeoutMs),"ConfigMotionCruiseVelocity(");
-					safeTalonCall(talon->ConfigMotionAcceleration(motion_acceleration / radians_per_second_scale, timeoutMs),"ConfigMotionAcceleration(");
+					rc &= safeTalonCall(talon->ConfigMotionCruiseVelocity(motion_cruise_velocity / radians_per_second_scale, timeoutMs),"ConfigMotionCruiseVelocity(");
+					rc &= safeTalonCall(talon->ConfigMotionAcceleration(motion_acceleration / radians_per_second_scale, timeoutMs),"ConfigMotionAcceleration(");
 
-					ts.setMotionCruiseVelocity(motion_cruise_velocity);
-					ts.setMotionAcceleration(motion_acceleration);
+					if (rc)
+					{
+						ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" cruise velocity / acceleration");
+						ts.setMotionCruiseVelocity(motion_cruise_velocity);
+						ts.setMotionAcceleration(motion_acceleration);
+					}
+					else
+					{
+						tc.resetMotionCruise();
+					}
 
-					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" cruise velocity / acceleration");
 				}
 
 				int motion_profile_trajectory_period;
 				if (tc.motionProfileTrajectoryPeriodChanged(motion_profile_trajectory_period))
 				{
-					safeTalonCall(talon->ConfigMotionProfileTrajectoryPeriod(motion_profile_trajectory_period, timeoutMs),"ConfigMotionProfileTrajectoryPeriod");
-					ts.setMotionProfileTrajectoryPeriod(motion_profile_trajectory_period);
-					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectory period");
+					if (safeTalonCall(talon->ConfigMotionProfileTrajectoryPeriod(motion_profile_trajectory_period, timeoutMs),"ConfigMotionProfileTrajectoryPeriod"))
+					{
+						ts.setMotionProfileTrajectoryPeriod(motion_profile_trajectory_period);
+						ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectory period");
+					}
+					else
+					{
+						tc.resetMotionProfileTrajectoryPeriod();
+					}
 				}
 
 				if (tc.clearMotionProfileTrajectoriesChanged())
 				{
-					safeTalonCall(talon->ClearMotionProfileTrajectories(), "ClearMotionProfileTrajectories");
-					can_talons_mp_written_[joint_id]->store(false, std::memory_order_relaxed);
-					ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectories");
+					if (safeTalonCall(talon->ClearMotionProfileTrajectories(), "ClearMotionProfileTrajectories"))
+					{
+						can_talons_mp_written_[joint_id]->store(false, std::memory_order_relaxed);
+						ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectories");
+					}
+					else
+					{
+						tc.setClearMotionProfileTrajectories();
+					}
 				}
 
 				if (tc.clearMotionProfileHasUnderrunChanged())
 				{
-					safeTalonCall(talon->ClearMotionProfileHasUnderrun(timeoutMs),"ClearMotionProfileHasUnderrun");
-					ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile underrun changed");
+					if (safeTalonCall(talon->ClearMotionProfileHasUnderrun(timeoutMs),"ClearMotionProfileHasUnderrun"))
+					{
+						ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile underrun changed");
+					}
+					else
+					{
+						tc.setClearMotionProfileHasUnderrun();
+					}
 				}
 
 				// TODO : check that Talon motion buffer is not full
@@ -2508,6 +2649,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					pt.zeroPos = it->zeroPos;
 					pt.timeDur = static_cast<ctre::phoenix::motion::TrajectoryDuration>(it->trajectoryDuration);
 					safeTalonCall(talon->PushMotionProfileTrajectory(pt),"PushMotionProfileTrajectory");
+					// TODO: not sure what to do if this fails?
 					//ROS_INFO_STREAM("id: " << joint_id << " pos: " << pt.position << " i: " << i++);
 				}
 				// Copy the 1st profile trajectory point from
@@ -2626,19 +2768,10 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			ts.setDemand1Value(tc.getDemand1Value());
 			if (last_robot_enabled)
 			{
-				// If this is a switch from enabled to
-				// disabled, set talon command to current
-				// talon mode and then disable the talon.
-				// This will set up the talon to return
-				// to the current mode once the robot is
-				// re-enabled
-				// Need to first setMode to disabled because there's
-				// a check in setMode to see if requested_mode == current_mode
-				// If that check is true setMode does nothing - assumes
-				// that the mode won't need to be reset back to the
-				// same mode it is already in
-				tc.setMode(hardware_interface::TalonMode_Disabled);
-				tc.setMode(ts.getTalonMode());
+				// On the switch from robot enabled to robot disabled, set Talons to ControlMode::Disabled
+				// call resetMode() to queue up a change back to the correct mode / setpoint
+				// when the robot switches from disabled back to enabled
+				tc.resetMode();
 				talon->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0);
 				ts.setTalonMode(hardware_interface::TalonMode_Disabled);
 				ROS_INFO_STREAM("Robot disabled - called Set(Disabled) on " << joint_id << "=" << can_talon_srx_names_[joint_id]);
@@ -2655,8 +2788,14 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 		if (tc.clearStickyFaultsChanged())
 		{
-			safeTalonCall(talon->ClearStickyFaults(timeoutMs), "ClearStickyFaults");
-			ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" sticky_faults");
+			if (safeTalonCall(talon->ClearStickyFaults(timeoutMs), "ClearStickyFaults"))
+			{
+				ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" sticky_faults");
+			}
+			else
+			{
+				tc.setClearStickyFaults();
+			}
 		}
 		//16
 	clock_gettime(CLOCK_MONOTONIC, &end_time);

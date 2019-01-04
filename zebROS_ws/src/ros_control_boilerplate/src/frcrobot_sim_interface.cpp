@@ -944,7 +944,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		double softlimit_reverse_threshold;
 		bool softlimit_reverse_enable;
 		bool softlimit_override_enable;
-		if (tc.SoftLimitChanged(softlimit_forward_threshold,
+		if (tc.softLimitChanged(softlimit_forward_threshold,
 				softlimit_forward_enable,
 				softlimit_reverse_threshold,
 				softlimit_reverse_enable,

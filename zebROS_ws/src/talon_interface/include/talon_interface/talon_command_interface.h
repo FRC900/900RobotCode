@@ -215,19 +215,19 @@ class TalonHWCommand
 			status_frame_periods_[Status_14_Turn_PIDF1] = status_14_turn_pidf1_default;
 			status_frame_periods_[Status_15_FirmwareApiStatus] = status_15_firmwareapistatus_default;
 
-			status_frame_periods_changed_[Status_1_General] = false;
-			status_frame_periods_changed_[Status_2_Feedback0] = false;
-			status_frame_periods_changed_[Status_3_Quadrature] = false;
-			status_frame_periods_changed_[Status_4_AinTempVbat] = false;
-			status_frame_periods_changed_[Status_6_Misc] = false;
-			status_frame_periods_changed_[Status_7_CommStatus] = false;
-			status_frame_periods_changed_[Status_8_PulseWidth] = false;
-			status_frame_periods_changed_[Status_9_MotProfBuffer] = false;
-			status_frame_periods_changed_[Status_10_MotionMagic] = false;
-			status_frame_periods_changed_[Status_11_UartGadgeteer] = false;
-			status_frame_periods_changed_[Status_12_Feedback1] = false;
-			status_frame_periods_changed_[Status_14_Turn_PIDF1] = false;
-			status_frame_periods_changed_[Status_15_FirmwareApiStatus] = false;
+			status_frame_periods_changed_[Status_1_General] = true;
+			status_frame_periods_changed_[Status_2_Feedback0] = true;
+			status_frame_periods_changed_[Status_3_Quadrature] = true;
+			status_frame_periods_changed_[Status_4_AinTempVbat] = true;
+			status_frame_periods_changed_[Status_6_Misc] = true;
+			status_frame_periods_changed_[Status_7_CommStatus] = true;
+			status_frame_periods_changed_[Status_8_PulseWidth] = true;
+			status_frame_periods_changed_[Status_9_MotProfBuffer] = true;
+			status_frame_periods_changed_[Status_10_MotionMagic] = true;
+			status_frame_periods_changed_[Status_11_UartGadgeteer] = true;
+			status_frame_periods_changed_[Status_12_Feedback1] = true;
+			status_frame_periods_changed_[Status_14_Turn_PIDF1] = true;
+			status_frame_periods_changed_[Status_15_FirmwareApiStatus] = true;
 
 			control_frame_periods_[Control_3_General] = control_3_general_default;
 			control_frame_periods_[Control_4_Advanced] = control_4_advanced_default;
@@ -466,6 +466,36 @@ class TalonHWCommand
 			}
 			return closed_loop_period_[index];
 		}
+		bool pidfChanged(double &p, double &i, double &d, double &f, int &iz, int &allowable_closed_loop_error, double &max_integral_accumulator, double &closed_loop_peak_output, int &closed_loop_period, size_t index)
+		{
+			if (index >= (sizeof(p_) / sizeof(p_[0])))
+			{
+				ROS_WARN("Invalid index passed to TalonHWCommand::pidfChanged()");
+				return false;
+			}
+			p = p_[index];
+			i = i_[index];
+			d = d_[index];
+			f = f_[index];
+			iz = i_zone_[index];
+			allowable_closed_loop_error = allowable_closed_loop_error_[index];
+			max_integral_accumulator = max_integral_accumulator_[index];
+			closed_loop_peak_output = closed_loop_peak_output_[index];
+			closed_loop_period = closed_loop_period_[index];
+			if (!pidf_changed_[index])
+				return false;
+			pidf_changed_[index] = false;
+			return true;
+		}
+		void resetPIDF(size_t index)
+		{
+			if (index >= (sizeof(closed_loop_period_) / sizeof(closed_loop_period_[0])))
+			{
+				ROS_WARN("Invalid index passed to TalonHWCommand::resetPIDF()");
+				return;
+			}
+			pidf_changed_[index] = true;
+		}
 
 		void setAuxPidPolarity(bool aux_pid_polarity)
 		{
@@ -478,6 +508,18 @@ class TalonHWCommand
 		bool getAuxPidPolarity(void) const
 		{
 			return aux_pid_polarity_;
+		}
+		bool auxPidPolarityChanged(bool &aux_pid_polarity)
+		{
+			aux_pid_polarity = aux_pid_polarity_;
+			if (!aux_pid_polarity_changed_)
+				return false;
+			aux_pid_polarity_changed_ = false;
+			return true;
+		}
+		void resetAuxPidPolarity(void)
+		{
+			aux_pid_polarity_changed_ = true;
 		}
 
 		void setIntegralAccumulator(double iaccum)
@@ -496,6 +538,10 @@ class TalonHWCommand
 				return false;
 			iaccum_changed_ = false;
 			return true;
+		}
+		void resetIntegralAccumulator(void)
+		{
+			iaccum_changed_ = true;
 		}
 
 		void set(double command)
@@ -516,6 +562,26 @@ class TalonHWCommand
 				mode_         = mode;
 				mode_changed_ = true;
 			}
+		}
+		// Check to see if mode changed since last call
+		// If so, return true and set mode to new desired
+		// talon mode
+		// If mode hasn't changed, return false
+		// Goal here is to prevent writes to the CAN
+		// bus to repeatedly set the mode to the same value.
+		// Instead, only send a setMode to a given Talon if
+		// the mode has actually changed.
+		bool newMode(TalonMode &mode)
+		{
+			mode = mode_;
+			if (!mode_changed_)
+				return false;
+			mode_changed_ = false;
+			return true;
+		}
+		void resetMode(void)
+		{
+			mode_changed_ = true;
 		}
 
 		void setDemand1Type(DemandType demand_type)
@@ -579,65 +645,27 @@ class TalonHWCommand
 		{
 			return neutral_mode_;
 		}
+		bool neutralModeChanged(NeutralMode &neutral_mode)
+		{
+			neutral_mode = neutral_mode_;
+			if (!neutral_mode_changed_)
+				return false;
+			neutral_mode_changed_ = false;
+			return true;
+		}
 
 		void setNeutralOutput(void)
 		{
 			neutral_output_ = true;
 		}
-
-		bool slotChanged(int &newpidfSlot)
+		// Set motor controller to neutral output
+		// This should be a one-shot ... only
+		// write it to the motor controller once
+		bool neutralOutputChanged(void)
 		{
-			newpidfSlot = pidf_slot_;
-			if (!pidf_slot_changed_)
+			if (!neutral_output_)
 				return false;
-			pidf_slot_changed_ = false;
-			return true;
-		}
-		bool pidfChanged(double &p, double &i, double &d, double &f, int &iz, int &allowable_closed_loop_error, double &max_integral_accumulator, double &closed_loop_peak_output, int &closed_loop_period, size_t index)
-		{
-			if (index >= (sizeof(p_) / sizeof(p_[0])))
-			{
-				ROS_WARN("Invalid index passed to TalonHWCommand::pidfChanged()");
-				return false;
-			}
-			p = p_[index];
-			i = i_[index];
-			d = d_[index];
-			f = f_[index];
-			iz = i_zone_[index];
-			allowable_closed_loop_error = allowable_closed_loop_error_[index];
-			max_integral_accumulator = max_integral_accumulator_[index];
-			closed_loop_peak_output = closed_loop_peak_output_[index];
-			closed_loop_period = closed_loop_period_[index];
-			if (!pidf_changed_[index])
-				return false;
-			pidf_changed_[index] = false;
-			return true;
-		}
-
-		bool auxPidPolarityChanged(bool &aux_pid_polarity)
-		{
-			aux_pid_polarity = aux_pid_polarity_;
-			if (!aux_pid_polarity_changed_)
-				return false;
-			aux_pid_polarity_changed_ = false;
-			return true;
-		}
-
-		// Check to see if mode changed since last call
-		// If so, return true and set mode to new desired
-		// talon mode
-		// If mode hasn't changed, return false
-		// Goal here is to prevent writes to the CAN
-		// bus to repeatedly set the mode to the same value.
-		// Instead, only send a setMode to a given Talon if
-		// the mode has actually changed.
-		bool newMode(TalonMode &mode)
-		{
-			mode = mode_;
-			if (!mode_changed_)
-				return false;
-			mode_changed_ = false;
+			neutral_output_ = false;
 			return true;
 		}
 
@@ -652,6 +680,18 @@ class TalonHWCommand
 		int getPidfSlot(void)const
 		{
 			return pidf_slot_;
+		}
+		bool slotChanged(int &newpidfSlot)
+		{
+			newpidfSlot = pidf_slot_;
+			if (!pidf_slot_changed_)
+				return false;
+			pidf_slot_changed_ = false;
+			return true;
+		}
+		void resetPidfSlot(void)
+		{
+			pidf_slot_changed_ = true;
 		}
 
 		void setInvert(bool invert)
@@ -677,48 +717,6 @@ class TalonHWCommand
 			if (!invert_changed_)
 				return false;
 			invert_changed_ = false;
-			return true;
-		}
-
-		bool neutralModeChanged(NeutralMode &neutral_mode)
-		{
-			neutral_mode = neutral_mode_;
-			if (!neutral_mode_changed_)
-				return false;
-			neutral_mode_changed_ = false;
-			return true;
-		}
-
-		//output shaping
-		bool outputShapingChanged(double &closed_loop_ramp,
-								  double &open_loop_ramp,
-								  double &peak_output_forward,
-								  double &peak_output_reverse,
-								  double &nominal_output_forward,
-								  double &nominal_output_reverse,
-								  double &neutral_deadband)
-		{
-			closed_loop_ramp = closed_loop_ramp_;
-			open_loop_ramp = open_loop_ramp_;
-			peak_output_forward = peak_output_forward_;
-			peak_output_reverse = peak_output_reverse_;
-			nominal_output_forward = nominal_output_forward_;
-			nominal_output_reverse = nominal_output_reverse_;
-			neutral_deadband = neutral_deadband_;
-			if (!output_shaping_changed_)
-				return false;
-			output_shaping_changed_ = false;
-			return true;
-		}
-
-		// Set motor controller to neutral output
-		// This should be a one-shot ... only
-		// write it to the motor controller once
-		bool neutralOutputChanged(void)
-		{
-			if (!neutral_output_)
-				return false;
-			neutral_output_ = false;
 			return true;
 		}
 
@@ -760,6 +758,10 @@ class TalonHWCommand
 				return false;
 			encoder_feedback_changed_ = false;
 			return true;
+		}
+		void resetEncoderFeedback(void)
+		{
+			encoder_feedback_changed_ = true;
 		}
 
 		int getEncoderTicksPerRotation(void) const
@@ -862,6 +864,30 @@ class TalonHWCommand
 		{
 			return neutral_deadband_;
 		}
+		bool outputShapingChanged(double &closed_loop_ramp,
+								  double &open_loop_ramp,
+								  double &peak_output_forward,
+								  double &peak_output_reverse,
+								  double &nominal_output_forward,
+								  double &nominal_output_reverse,
+								  double &neutral_deadband)
+		{
+			closed_loop_ramp = closed_loop_ramp_;
+			open_loop_ramp = open_loop_ramp_;
+			peak_output_forward = peak_output_forward_;
+			peak_output_reverse = peak_output_reverse_;
+			nominal_output_forward = nominal_output_forward_;
+			nominal_output_reverse = nominal_output_reverse_;
+			neutral_deadband = neutral_deadband_;
+			if (!output_shaping_changed_)
+				return false;
+			output_shaping_changed_ = false;
+			return true;
+		}
+		void resetOutputShaping(void)
+		{
+			output_shaping_changed_ = true;
+		}
 
 		void setVoltageCompensationSaturation(double voltage)
 		{
@@ -917,6 +943,10 @@ class TalonHWCommand
 			}
 			return false;
 		}
+		void resetVoltageCompensation(void)
+		{
+			voltage_compensation_changed_ = true;
+		}
 
 		void setVelocityMeasurementPeriod(hardware_interface::VelocityMeasurementPeriod period)
 		{
@@ -958,6 +988,10 @@ class TalonHWCommand
 			}
 			return false;
 		}
+		void resetVelocityMeasurement(void)
+		{
+			velocity_measurement_changed_ = true;
+		}
 
 		void setSelectedSensorPosition(double position)
 		{
@@ -977,6 +1011,11 @@ class TalonHWCommand
 			sensor_position_changed_ = false;
 			return true;
 		}
+		void resetSensorPosition(void)
+		{
+			sensor_position_changed_ = true;
+		}
+
 
 		void setForwardLimitSwitchSource(LimitSwitchSource source, LimitSwitchNormal normal)
 		{
@@ -1037,7 +1076,7 @@ class TalonHWCommand
 			}
 		}
 
-		void getReverseLimitSwitchSourceSource(LimitSwitchSource &source, LimitSwitchNormal &normal) const
+		void getReverseLimitSwitchSource(LimitSwitchSource &source, LimitSwitchNormal &normal) const
 		{
 			source = limit_switch_local_reverse_source_;
 			normal = limit_switch_local_reverse_normal_;
@@ -1053,6 +1092,10 @@ class TalonHWCommand
 				return false;
 			limit_switch_local_changed_ = false;
 			return true;
+		}
+		void resetLimitSwitchesSource(void)
+		{
+			limit_switch_local_changed_ = true;
 		}
 
 		// softlimits
@@ -1120,7 +1163,7 @@ class TalonHWCommand
 			return softlimits_override_enable_;
 		}
 
-		bool SoftLimitChanged(double &forward_threshold, bool &forward_enable, double &reverse_threshold, bool &reverse_enable, bool &override_enable)
+		bool softLimitChanged(double &forward_threshold, bool &forward_enable, double &reverse_threshold, bool &reverse_enable, bool &override_enable)
 		{
 			forward_threshold = softlimit_forward_threshold_;
 			forward_enable = softlimit_forward_enable_;
@@ -1131,6 +1174,10 @@ class TalonHWCommand
 				return false;
 			softlimit_changed_ = false;
 			return true;
+		}
+		void resetSoftLimit(void)
+		{
+			softlimit_changed_ = true;
 		}
 
 		// current limits
@@ -1195,6 +1242,10 @@ class TalonHWCommand
 			current_limit_changed_ = false;
 			return true;
 		}
+		void resetCurrentLimit(void)
+		{
+			current_limit_changed_ = false;
+		}
 
 		void setMotionCruiseVelocity(double velocity)
 		{
@@ -1229,6 +1280,10 @@ class TalonHWCommand
 				return false;
 			motion_cruise_changed_ = false;
 			return true;
+		}
+		void resetMotionCruise(void)
+		{
+			motion_cruise_changed_ = true;
 		}
 
 		// This is a one shot - when set, it needs to
@@ -1330,6 +1385,17 @@ class TalonHWCommand
 			ROS_ERROR("Invalid status_frame value passed to TalonHWCommand::setStatusFramePeriod()");
 			return false;
 		}
+		void resetStatusFramePeriod(StatusFrame status_frame)
+		{
+			if ((status_frame >= Status_1_General) && (status_frame < Status_Last))
+			{
+				status_frame_periods_changed_[status_frame] = true;
+			}
+			else
+			{
+				ROS_ERROR("Invalid status_frame value passed to TalonHWCommand::resetStatusFramePeriod()");
+			}
+		}
 
 		void setControlFramePeriod(ControlFrame control_frame, uint8_t period)
 		{
@@ -1368,6 +1434,13 @@ class TalonHWCommand
 			ROS_ERROR("Invalid control_frame value passed to TalonHWCommand::setControlFramePeriod()");
 			return false;
 		}
+		void resetControlFramePeriod(ControlFrame control_frame)
+		{
+			if ((control_frame >= Control_3_General) && (control_frame < Control_Last))
+				control_frame_periods_changed_[control_frame] = true;
+			else
+				ROS_ERROR("Invalid control_frame value passed to TalonHWCommand::resetControlFramePeriod()");
+		}
 
 		void setMotionProfileTrajectoryPeriod(int msec)
 		{
@@ -1388,6 +1461,10 @@ class TalonHWCommand
 				return false;
 			motion_profile_profile_trajectory_period_changed_ = false;
 			return true;
+		}
+		void resetMotionProfileTrajectoryPeriod(void)
+		{
+			motion_profile_profile_trajectory_period_changed_ = true;
 		}
 
 		void setClearStickyFaults(void)
