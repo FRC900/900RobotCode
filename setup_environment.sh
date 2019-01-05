@@ -206,237 +206,34 @@ if [ "$jetson" = true ] ; then
 	sudo apt remove --purge thunderbird libreoffice-*
 
 	# Install CTRE & navX libs
-	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include
-	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/api-cpp/5.10.0/api-cpp-5.10.0-headers.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include
-	unzip -o /home/ubuntu/api-cpp-5.10.0-headers.zip
-	rm /home/ubuntu/api-cpp-5.10.0-headers.zip
+    mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
+	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
+    cd /home/ubuntu 
+	wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.12.0*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*" 
+	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
+	find /home/ubuntu/devsite.ctr-electronics.com -name \*headers\*zip | xargs -n 1 unzip -o 
+	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
+	find /home/ubuntu/devsite.ctr-electronics.com -name \*linux\*zip | xargs -n 1 unzip -o 
+    rm -rf /home/ubuntu/devsite.ctr-electronics.com 
 
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/canutils/5.10.0/canutils-5.10.0-headers.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include
-	unzip -o /home/ubuntu/canutils-5.10.0-headers.zip
-	rm /home/ubuntu/canutils-5.10.0-headers.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/cci/5.10.0/cci-5.10.0-headers.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include
-	unzip -o /home/ubuntu/cci-5.10.0-headers.zip
-	rm /home/ubuntu/cci-5.10.0-headers.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/core/5.10.0/core-5.10.0-headers.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include
-	unzip -o /home/ubuntu/core-5.10.0-headers.zip
-	rm /home/ubuntu/core-5.10.0-headers.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-ics/5.10.0/platform-ics-5.10.0-headers.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include
-	unzip -o /home/ubuntu/platform-ics-5.10.0-headers.zip
-	rm /home/ubuntu/platform-ics-5.10.0-headers.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-sim/5.10.0/platform-sim-5.10.0-headers.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include
-	unzip -o /home/ubuntu/platform-sim-5.10.0-headers.zip
-	rm /home/ubuntu/platform-sim-5.10.0-headers.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-socketcan/5.10.0/platform-socketcan-5.10.0-headers.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include
-	unzip -o /home/ubuntu/platform-socketcan-5.10.0-headers.zip
-	rm /home/ubuntu/platform-socketcan-5.10.0-headers.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-stub/5.10.0/platform-stub-5.10.0-headers.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include
-	unzip -o /home/ubuntu/platform-stub-5.10.0-headers.zip
-	rm /home/ubuntu/platform-stub-5.10.0-headers.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/api-cpp/5.10.0/api-cpp-5.10.0-linuxaarch64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/api-cpp-5.10.0-linuxaarch64.zip
-	rm /home/ubuntu/api-cpp-5.10.0-linuxaarch64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/api-cpp/5.10.0/api-cpp-5.10.0-linuxathena.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/api-cpp-5.10.0-linuxathena.zip
-	rm /home/ubuntu/api-cpp-5.10.0-linuxathena.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/api-cpp/5.10.0/api-cpp-5.10.0-linuxarmhf.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/api-cpp-5.10.0-linuxarmhf.zip
-	rm /home/ubuntu/api-cpp-5.10.0-linuxarmhf.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/api-cpp/5.10.0/api-cpp-5.10.0-linuxx86-64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/api-cpp-5.10.0-linuxx86-64.zip
-	rm /home/ubuntu/api-cpp-5.10.0-linuxx86-64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/canutils/5.10.0/canutils-5.10.0-linuxaarch64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/canutils-5.10.0-linuxaarch64.zip
-	rm /home/ubuntu/canutils-5.10.0-linuxaarch64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/canutils/5.10.0/canutils-5.10.0-linuxarmhf.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/canutils-5.10.0-linuxarmhf.zip
-	rm /home/ubuntu/canutils-5.10.0-linuxarmhf.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/canutils/5.10.0/canutils-5.10.0-linuxx86-64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/canutils-5.10.0-linuxx86-64.zip
-	rm /home/ubuntu/canutils-5.10.0-linuxx86-64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/cci/5.10.0/cci-5.10.0-linuxaarch64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/cci-5.10.0-linuxaarch64.zip
-	rm /home/ubuntu/cci-5.10.0-linuxaarch64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/cci/5.10.0/cci-5.10.0-linuxathena.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/cci-5.10.0-linuxathena.zip
-	rm /home/ubuntu/cci-5.10.0-linuxathena.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/cci/5.10.0/cci-5.10.0-linuxarmhf.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/cci-5.10.0-linuxarmhf.zip
-	rm /home/ubuntu/cci-5.10.0-linuxarmhf.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/cci/5.10.0/cci-5.10.0-linuxx86-64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/cci-5.10.0-linuxx86-64.zip
-	rm /home/ubuntu/cci-5.10.0-linuxx86-64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/firmware-sim/0.1.0/firmware-sim-0.1.0-headers.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/ctre
-	unzip -o /home/ubuntu/firmware-sim-0.1.0-headers.zip
-	rm /home/ubuntu/firmware-sim-0.1.0-headers.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/firmware-sim/0.1.0/firmware-sim-0.1.0-linuxaarch64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/firmware-sim-0.1.0-linuxaarch64.zip
-	rm /home/ubuntu/firmware-sim-0.1.0-linuxaarch64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/firmware-sim/0.1.0/firmware-sim-0.1.0-linuxarmhf.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/firmware-sim-0.1.0-linuxarmhf.zip
-	rm /home/ubuntu/firmware-sim-0.1.0-linuxarmhf.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/firmware-sim/0.1.0/firmware-sim-0.1.0-linuxathena.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/firmware-sim-0.1.0-linuxathena.zip
-	rm /home/ubuntu/firmware-sim-0.1.0-linuxathena.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/firmware-sim/0.1.0/firmware-sim-0.1.0-linuxx86-64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/firmware-sim-0.1.0-linuxx86-64.zip
-	rm /home/ubuntu/firmware-sim-0.1.0-linuxx86-64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-ics/5.10.0/platform-ics-5.10.0-linuxaarch64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/platform-ics-5.10.0-linuxaarch64.zip
-	rm /home/ubuntu/platform-ics-5.10.0-linuxaarch64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-ics/5.10.0/platform-ics-5.10.0-linuxarmhf.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/platform-ics-5.10.0-linuxarmhf.zip
-	rm /home/ubuntu/platform-ics-5.10.0-linuxarmhf.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-ics/5.10.0/platform-ics-5.10.0-linuxx86-64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/platform-ics-5.10.0-linuxx86-64.zip
-	rm /home/ubuntu/platform-ics-5.10.0-linuxx86-64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-sim/5.10.0/platform-sim-5.10.0-linuxaarch64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/platform-sim-5.10.0-linuxaarch64.zip
-	rm /home/ubuntu/platform-sim-5.10.0-linuxaarch64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-sim/5.10.0/platform-sim-5.10.0-linuxarmhf.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/platform-sim-5.10.0-linuxarmhf.zip
-	rm /home/ubuntu/platform-sim-5.10.0-linuxarmhf.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-sim/5.10.0/platform-sim-5.10.0-linuxx86-64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/platform-sim-5.10.0-linuxx86-64.zip
-	rm /home/ubuntu/platform-sim-5.10.0-linuxx86-64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-socketcan/5.10.0/platform-socketcan-5.10.0-linuxaarch64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/platform-socketcan-5.10.0-linuxaarch64.zip
-	rm /home/ubuntu/platform-socketcan-5.10.0-linuxaarch64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-socketcan/5.10.0/platform-socketcan-5.10.0-linuxarmhf.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/platform-socketcan-5.10.0-linuxarmhf.zip
-	rm /home/ubuntu/platform-socketcan-5.10.0-linuxarmhf.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-socketcan/5.10.0/platform-socketcan-5.10.0-linuxx86-64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/platform-socketcan-5.10.0-linuxx86-64.zip
-	rm /home/ubuntu/platform-socketcan-5.10.0-linuxx86-64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-stub/5.10.0/platform-stub-5.10.0-linuxaarch64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/platform-stub-5.10.0-linuxaarch64.zip
-	rm /home/ubuntu/platform-stub-5.10.0-linuxaarch64.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-stub/5.10.0/platform-stub-5.10.0-linuxarmhf.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/platform-stub-5.10.0-linuxarmhf.zip
-	rm /home/ubuntu/platform-stub-5.10.0-linuxarmhf.zip
-
-    cd /home/ubuntu
-	wget http://devsite.ctr-electronics.com/maven/release/com/ctre/frcbeta/phoenix/platform-stub/5.10.0/platform-stub-5.10.0-linuxx86-64.zip
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre
-	unzip -o /home/ubuntu/platform-stub-5.10.0-linuxx86-64.zip
-	rm /home/ubuntu/platform-stub-5.10.0-linuxx86-64.zip
-
-	cd /home/ubuntu
-	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.336/navx-cpp-3.1.336-headers.zip
-	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx
-	unzip -o /home/ubuntu/navx-cpp-3.1.336-headers.zip
-	rm /home/ubuntu/navx-cpp-3.1.336-headers.zip
-
-    cd /home/ubuntu
-	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.336/navx-cpp-3.1.336-linuxathena.zip
-	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx
-	unzip -o /home/ubuntu/navx-cpp-3.1.336-linuxathena.zip
-	rm /home/ubuntu/navx-cpp-3.1.336-linuxathena.zip 
+    cd /home/ubuntu 
+	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.340/navx-cpp-3.1.340-headers.zip 
+	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
+	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
+	unzip -o /home/ubuntu/navx-cpp-3.1.340-headers.zip 
+	rm /home/ubuntu/navx-cpp-3.1.340-headers.zip 
+    cd /home/ubuntu 
+	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.340/navx-cpp-3.1.340-linuxathena.zip 
+	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
+	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
+	unzip -o /home/ubuntu/navx-cpp-3.1.340-linuxathena.zip 
+	rm /home/ubuntu/navx-cpp-3.1.340-linuxathena.zip 
+    cd /home/ubuntu 
+	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.340/navx-cpp-3.1.340-linuxathenastatic.zip 
+	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
+	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
+	unzip -o /home/ubuntu/navx-cpp-3.1.340-linuxathenastatic.zip 
+	rm /home/ubuntu/navx-cpp-3.1.340-linuxathenastatic.zip 
 fi
 
 sudo mkdir -p /usr/local/zed/settings
