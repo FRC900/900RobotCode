@@ -142,22 +142,22 @@ if ("${ARM_PREFIX}" STREQUAL "arm-frc2019-linux-gnueabi")
 		${WPI_SHARED_LIB_DIR}/libNiRioSrv.so.18.0.0
 		${WPI_SHARED_LIB_DIR}/libniriodevenum.so.18.0.0
 		${WPI_SHARED_LIB_DIR}/libniriosession.so.18.0.0
-		${WPI_SHARED_LIB_DIR}/libopencv_calib3d.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_imgproc.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_superres.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_core.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_ml.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_videoio.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_features2d.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_objdetect.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_video.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_flann.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_photo.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_videostab.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_highgui.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_shape.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_imgcodecs.so.3.4
-		${WPI_SHARED_LIB_DIR}/libopencv_stitching.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_calib3dd.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_imgprocd.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_superresd.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_cored.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_mld.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_videoiod.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_features2dd.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_objdetectd.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_videod.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_flannd.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_photod.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_videostabd.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_highguid.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_shaped.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_imgcodecsd.so.3.4
+		${WPI_SHARED_LIB_DIR}/libopencv_stitchingd.so.3.4
 		${WPI_SHARED_LIB_DIR}/libwpiHald.so
 		${WPI_SHARED_LIB_DIR}/libwpiutild.so
 		${WPI_SYSROOT}/lib/navx/linux/athena/static/libnavx_frc.a

@@ -2642,12 +2642,16 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					pt.position = it->position / radians_scale;
 					pt.velocity = it->velocity / radians_per_second_scale;
 					pt.headingDeg = it->headingRad * 180. / M_PI;
+					pt.arbFeedFwd = it->arbFeedFwd;
 					pt.auxiliaryPos = it->auxiliaryPos; // TODO : unit conversion?
+					pt.auxiliaryVel = it->auxiliaryVel; // TODO : unit conversion?
+					pt.auxiliaryArbFeedFwd = it->auxiliaryArbFeedFwd; // TODO : unit conversion?
 					pt.profileSlotSelect0 = it->profileSlotSelect0;
 					pt.profileSlotSelect1 = it->profileSlotSelect1;
 					pt.isLastPoint = it->isLastPoint;
 					pt.zeroPos = it->zeroPos;
-					pt.timeDur = static_cast<ctre::phoenix::motion::TrajectoryDuration>(it->trajectoryDuration);
+					pt.timeDur =it->timeDur;
+					pt.useAuxPID =it->useAuxPID;
 					safeTalonCall(talon->PushMotionProfileTrajectory(pt),"PushMotionProfileTrajectory");
 					// TODO: not sure what to do if this fails?
 					//ROS_INFO_STREAM("id: " << joint_id << " pos: " << pt.position << " i: " << i++);
