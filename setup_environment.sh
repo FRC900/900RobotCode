@@ -125,8 +125,10 @@ if [ "$jetson" = true ] ; then
 		sudo cp jetson_setup/cp210x.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/usb/serial/cp210x.ko
 		sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/class
 		sudo cp jetson_setup/cdc-acm.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/usb/class/cdc-acm.ko
+		sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/net/can/usb
+		sudo cp jetson_setup/gs_usb.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/net/can/usb/gs_usb.ko
+
 		sudo depmod -a
-        sudo apt-get install ntp # TODO work on this NIALL or OLIVIA
         # edit /etc/init.d/ntp to contain the line: <ntpd -gq> before all content already there.
         sudo cp ntp-client.conf /etc/ntp.conf  # edit /etc/ntp.conf to be a copy of ntp-client.conf in 2019RobotCode
 
@@ -171,30 +173,31 @@ if [ "$jetson" = true ] ; then
 	# Not needed unless Jetpack is updated with a new kernel version and modules
 	# for a given kernel version aren't already built
 	# cd ~
-	# mkdir l4t-kernel-surgery
-	# mkdir kernel-stuff
-	# cd kernel-stuff
-	# wget http://developer.nvidia.com/embedded/dlc/l4t-sources-28-1 -O source.tbz2
-	# tar xjf source.tbz2
-	# tar xjf sources/kernel_src-tx2.tbz2 -C ~/l4t-kernel-surgery/
+	# wget -N https://developer.download.nvidia.com/embedded/L4T/r28_Release_v2.1/public_sources.tbz2
+	# sudo tar -xvf public_sources.tbz2 public_release/kernel_src.tbz2
+	# tar -xvf public_release/kernel_src.tbz2
 	# cd ..
-	# rm -rf kernel-stuff
-	# cd ~/l4t-kernel-surgery/kernel/kernel-4.4
-	# Add EXTRAVERSION=-tegra to Makefile
+	# cd ~/kernel/kernel-4.4
 	# zcat /proc/config.gz > .config
 	# echo "CONFIG_USB_ACM=m" >> .config
 	# echo "CONFIG_USB_SERIAL_CP210X=m" >> .config
+	# echo "CONFIG_CAN_GS_USB=m" >> .config
+	# echo "CONFIG_JOYSTICK_XPAD=m" >> .config
 	# make -j6 clean
 	# make -j6 prepare
 	# make -j6 modules_prepare
 	# make -j6 M=drivers/usb/class
 	# make -j6 M=drivers/usb/serial
+	# make -j6 M=drivers/net/can/usb
 	# sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/serial
-	# sudo cp drivers/usb/class/cp210x-acm.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/usb/serial/cp210x-acm.ko
+	# sudo cp drivers/usb/class/cp210x-acm.ko /lib/modules/`uname -r`/kernel/drivers/usb/serial/cp210x-acm.ko
 	# sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/class
-	# sudo cp drivers/usb/serial/cdc-acm.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/usb/class/cdc-acm.ko
+	# sudo cp drivers/usb/serial/cdc-acm.ko /lib/modules/`uname -r`/kernel/drivers/usb/class/cdc-acm.ko
+	# sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/class
+	# sudo cp drivers/net/can/usb/gs_usb.ko /lib/modules/`uname -r`/kernel/drivers/net/can/usb
+
 	# sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/joystick
-	# sudo cp xpad.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/joystick/xpad.ko
+	# sudo cp xpad.ko /lib/modules/`uname -r`/kernel/drivers/joystick/xpad.ko
 	# sudo depmod -a
 
 	# Clean up Jetson
