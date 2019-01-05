@@ -121,7 +121,6 @@ install_package($base_uri . "libunwind-dev_1.1+git0+bc8698fd7e-r0.2_cortexa9-vfp
 install_package($base_uri . "libunwind-dev_1.1+git0+bc8698fd7e-r0.2_cortexa9-vfpv3.ipk");
 install_package($base_uri . "libunwind-staticdev_1.1+git0+bc8698fd7e-r0.2_cortexa9-vfpv3.ipk");
 install_package($base_uri . "libunwind_1.1+git0+bc8698fd7e-r0.2_cortexa9-vfpv3.ipk");
->>>>>>> Builds with 2019 beta
 
 # OpenCV - needed for WPILib
 install_package($base_uri . "libopencv-calib3d-dev_3.2+git0+70bbf17b13-r0.5_cortexa9-vfpv3.ipk");
