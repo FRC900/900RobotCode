@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z $ROS_ROOT ]; then
-	PATH=$PATH:~/frc2019/roborio/bin
+	PATH=$PATH:$HOME/frc2019/roborio/bin
 	source ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/kinetic/setup.bash
 elif [[ ! $ROS_ROOT = "$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/kinetic/share/ros" ]]; then
 	echo "ROS is not configured for a cross build (maybe set up for a native build instead?)"
