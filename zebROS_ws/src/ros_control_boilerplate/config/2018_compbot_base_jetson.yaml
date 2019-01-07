@@ -23,9 +23,9 @@ hardware_interface:
        - {name: br_angle, type: can_talon_srx, can_id: 14, local: true}
        - {name: bl_drive, type: can_talon_srx, can_id: 23, local: true}
        - {name: bl_angle, type: can_talon_srx, can_id: 13, local: true}
-       - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: false}
-       - {name: compressor, type: compressor, pcm_id: 0}
-       - {name: pdp, type: pdp}
+         #- {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: false}
+         #- {name: compressor, type: compressor, pcm_id: 0}
+         #- {name: pdp, type: pdp}
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
          
@@ -76,3 +76,60 @@ match_state_listener_controller:
     type:      state_listener_controller/MatchStateListenerController
     topic:     /frcrobot_rio/match_data
 
+# These controllers are defined for testing indivudal motors 
+# but are not actually used for normal swerve drive control
+fl_drive_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: fl_drive
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+fl_angle_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: fl_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+fr_drive_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: fr_drive
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+fr_angle_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: fr_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+bl_drive_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: bl_drive
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+bl_angle_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: bl_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+br_drive_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: br_drive
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+br_angle_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: br_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
