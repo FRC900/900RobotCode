@@ -50,6 +50,13 @@ target_link_libraries(teleop_joystick_comp
   ${catkin_LIBRARIES}
 )
 
+add_executable(translate_joystick_data src/translate_joystick_data.cpp)
+set_target_properties(translate_joystick_data PROPERTIES OUTPUT_NAME 
+translate_joystick_data PREFIX "")
+target_link_libraries(translate_joystick_data
+  ${catkin_LIBRARIES}
+)
+
 # Add cmake target dependencies of the executable
 # same as for the library above. This is needed to force
 # talon controller messages to be built before the

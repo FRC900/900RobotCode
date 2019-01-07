@@ -670,7 +670,7 @@ void FRCRobotHWInterface::init(void)
 			joysticks_.push_back(std::make_shared<Joystick>(joystick_ids_[i]));
 			if (!started_pub)
 			{
-				realtime_pub_joystick_ = std::make_shared<realtime_tools::RealtimePublisher<ros_control_boilerplate::JoystickState>>(nh_, "joystick_states", 1);
+				realtime_pub_joystick_ = std::make_shared<realtime_tools::RealtimePublisher<sensor_msgs::Joy>>(nh_, "joystick_states_raw", 1);
 				started_pub = true;
 			}
 		}
@@ -1388,7 +1388,17 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			auto &m = realtime_pub_joystick_->msg_;
 			m.header.stamp = time_now_t;
 
-			m.rightStickY = joysticks_[0]->GetRawAxis(5);
+                        for(int i = 0; i < 6; i++)
+                        {
+                            m.axes.push_back(joysticks_[0]->GetRawAxis(i));
+                        }
+                        
+                        for(int i = 0; i < 10; i++)
+                        {
+                            m.buttons.push_back(joysticks_[0]->GetRawButton(i));
+                        }
+
+			/*m.rightStickY = joysticks_[0]->GetRawAxis(5);
 			m.rightStickX = joysticks_[0]->GetRawAxis(4);
 			m.leftStickY = joysticks_[0]->GetRawAxis(1);
 			m.leftStickX = joysticks_[0]->GetRawAxis(0);
@@ -1487,7 +1497,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			joystick_up_last_[0] = joystick_up;
 			joystick_down_last_[0] = joystick_down;
 			joystick_left_last_[0] = joystick_left;
-			joystick_right_last_[0] = joystick_right;
+			joystick_right_last_[0] = joystick_right;*/
 
 			realtime_pub_joystick_->unlockAndPublish();
 		}
