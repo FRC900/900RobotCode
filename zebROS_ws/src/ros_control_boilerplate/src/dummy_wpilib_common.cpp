@@ -591,13 +591,17 @@ extern "C"
 	}
 }
 
+frc::MotorSafety::MotorSafety()
+{
+	ROS_ERROR("Called MotorSafety::MotorSafety on unsupported platform");
+}
+frc::MotorSafety::~MotorSafety()
+{
+	ROS_ERROR("Called MotorSafety::~MotorSafety on unsupported platform");
+}
 void frc::MotorSafety::SetSafetyEnabled(bool)
 {
 	ROS_ERROR("Called MotorSafety::SetSafetyEnabled(bool) on unsupported platform");
-}
-void frc::MotorSafety::TimeoutFunc()
-{
-	ROS_ERROR("Called MotorSafety::TimeoutFunc() on unsupported platform");
 }
 
 #include <frc/PWM.h>
