@@ -6,17 +6,6 @@
 
 namespace hardware_interface
 {
-enum TrajectoryDuration
-{
-	TrajectoryDuration_0ms = 0,
-	TrajectoryDuration_5ms = 5,
-	TrajectoryDuration_10ms = 10,
-	TrajectoryDuration_20ms = 20,
-	TrajectoryDuration_30ms = 30,
-	TrajectoryDuration_40ms = 40,
-	TrajectoryDuration_50ms = 50,
-	TrajectoryDuration_100ms = 100,
-};
 
 //Below struct contains all the info we want for our profile
 //Later it might include some more complex settings (current limits?, peak output limits?,
@@ -43,27 +32,35 @@ struct CustomProfilePoint
 struct TrajectoryPoint
 {
 	// Sane? defaults
-	TrajectoryPoint() :
-		position(0),
-		velocity(0),
-		headingRad(0),
-		auxiliaryPos(0),
-		profileSlotSelect0(0),
-		profileSlotSelect1(0),
-		isLastPoint(false),
-		zeroPos(false),
-		trajectoryDuration(TrajectoryDuration::TrajectoryDuration_0ms)
+	TrajectoryPoint()
+		: position(0)
+		, velocity(0)
+		, arbFeedFwd(0)
+		, headingRad(0)
+		, auxiliaryPos(0)
+		, auxiliaryVel(0)
+		, auxiliaryArbFeedFwd(0)
+		, profileSlotSelect0(0)
+		, profileSlotSelect1(0)
+		, isLastPoint(false)
+		, zeroPos(false)
+		, timeDur(0)
+		, useAuxPID(false)
 	{
 	}
-	double position;
-	double velocity;
-	double headingRad;
-	double auxiliaryPos;
+	double   position;
+	double   velocity;
+	double   headingRad;
+	double   arbFeedFwd;
+	double   auxiliaryPos;
+	double   auxiliaryVel;
+	double   auxiliaryArbFeedFwd;
 	uint32_t profileSlotSelect0;
 	uint32_t profileSlotSelect1;
-	bool isLastPoint;
-	bool zeroPos;
-	TrajectoryDuration trajectoryDuration;
+	bool     isLastPoint;
+	bool     zeroPos;
+	int      timeDur;
+	bool     useAuxPID;
 };
 
 // Class to buffer data needed to set the state of the

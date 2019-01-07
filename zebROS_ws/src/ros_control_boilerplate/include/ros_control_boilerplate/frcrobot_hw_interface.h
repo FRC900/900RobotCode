@@ -54,6 +54,7 @@
 
 #include <ctre/phoenix/motorcontrol/can/TalonSRX.h>
 #include <frc/IterativeRobotBase.h>
+#include <frc/AnalogInput.h>
 #include <frc/DriverStation.h>
 #include <frc/NidecBrushless.h>
 #include <frc/DigitalInput.h>
@@ -62,6 +63,7 @@
 #include <frc/Solenoid.h>
 #include <frc/DoubleSolenoid.h>
 #include <frc/Compressor.h>
+#include <frc/Joystick.h>
 #include <frc/livewindow/LiveWindow.h>
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <hal/HALBase.h>
