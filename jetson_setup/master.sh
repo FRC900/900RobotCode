@@ -23,7 +23,7 @@ if sudo mount /dev/nvme0n1p1 /mnt/900_2; then
 		date >> /home/ubuntu/mounted.txt
 		echo worked >> /home/ubuntu/mounted.txt
 		sudo chmod a+rw /mnt/900_2/
-		roslaunch controller_node 2018_jetson_teleop.launch output:=screen record:=true
+		roslaunch controller_node 2019_compbot_combined.launch output:=screen record:=true
 else
 		date >> /home/ubuntu/mounted.txt
 		echo did not mount >> /home/ubuntu/mounted.txt
