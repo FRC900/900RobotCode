@@ -152,7 +152,6 @@ FRCRobotHWInterface::~FRCRobotHWInterface()
 	{
 		if (can_talon_srx_local_hardwares_[i])
 		{
-			custom_profile_threads_[i].join();
 			talon_read_threads_[i].join();
 		}
 	}
@@ -237,78 +236,6 @@ void FRCRobotHWInterface::process_motion_profile_buffer_thread(double hz)
 #endif
 }
 
-// Stuff to support generalized custom profile code
-void FRCRobotHWInterface::customProfileSetSensorPosition(int joint_id, double position)
-{
-	can_talons_[joint_id]->SetSelectedSensorPosition(position, pidIdx, timeoutMs);
-}
-
-// Maybe find a way to make use of this in write() as well?
-void FRCRobotHWInterface::customProfileSetMode(int joint_id,
-		hardware_interface::TalonMode mode,
-		double setpoint,
-		hardware_interface::DemandType demandtype,
-		double demandvalue)
-{
-	ctre::phoenix::motorcontrol::ControlMode out_mode;
-
-	if (!convertControlMode(mode, out_mode))
-		return;
-
-	const hardware_interface::FeedbackDevice encoder_feedback = talon_state_[joint_id].getEncoderFeedback();
-	const int encoder_ticks_per_rotation = talon_state_[joint_id].getEncoderTicksPerRotation();
-	const double conversion_factor = talon_state_[joint_id].getConversionFactor();
-
-	const double radians_scale = getConversionFactor(encoder_ticks_per_rotation, encoder_feedback, hardware_interface::TalonMode_Position) * conversion_factor;
-	const double radians_per_second_scale = getConversionFactor(encoder_ticks_per_rotation, encoder_feedback, hardware_interface::TalonMode_Velocity)* conversion_factor;
-	switch (out_mode)
-	{
-		case ctre::phoenix::motorcontrol::ControlMode::Velocity:
-			setpoint /= radians_per_second_scale;
-			break;
-		case ctre::phoenix::motorcontrol::ControlMode::Position:
-			setpoint /= radians_scale;
-			break;
-		case ctre::phoenix::motorcontrol::ControlMode::MotionMagic:
-			setpoint /= radians_scale;
-			break;
-	}
-
-	ctre::phoenix::motorcontrol::DemandType out_demandtype;
-	if (!convertDemand1Type(demandtype, out_demandtype))
-	{
-		ROS_ERROR("Invalid demand type in hw_interface :: customProfileSetMode");
-		return;
-	}
-	can_talons_[joint_id]->Set(out_mode, setpoint, out_demandtype, demandvalue); //TODO: unit conversion
-}
-
-void FRCRobotHWInterface::customProfileSetPIDF(int    joint_id,
-											   int    pid_slot,
-											   double p,
-											   double i,
-											   double d,
-											   double f,
-											   int    iz,
-											   int    allowable_closed_loop_error,
-											   double max_integral_accumulator,
-											   double closed_loop_peak_output,
-											   int    closed_loop_period)
-{
-	can_talons_[joint_id]->Config_kP(pid_slot, p, timeoutMs);
-	can_talons_[joint_id]->Config_kI(pid_slot, i, timeoutMs);
-	can_talons_[joint_id]->Config_kD(pid_slot, d, timeoutMs);
-	can_talons_[joint_id]->Config_kF(pid_slot, f, timeoutMs);
-	can_talons_[joint_id]->Config_IntegralZone(pid_slot, iz, timeoutMs);
-	// TODO : Scale these two?
-	can_talons_[joint_id]->ConfigAllowableClosedloopError(pid_slot, allowable_closed_loop_error, timeoutMs);
-	can_talons_[joint_id]->ConfigMaxIntegralAccumulator(pid_slot, max_integral_accumulator, timeoutMs);
-	can_talons_[joint_id]->ConfigClosedLoopPeakOutput(pid_slot, closed_loop_peak_output, timeoutMs);
-	can_talons_[joint_id]->ConfigClosedLoopPeriod(pid_slot, closed_loop_period, timeoutMs);
-
-	can_talons_[joint_id]->SelectProfileSlot(pid_slot, pidIdx);
-}
-
 // TODO : Think some more on how this will work.  Previous idea of making them
 // definable joints was good as well, but required some hard coding to
 // convert from name to an actual variable. This requires hard-coding here
@@ -364,7 +291,6 @@ void FRCRobotHWInterface::init(void)
 		ctre::phoenix::platform::can::SetCANInterface(can_interface_.c_str());
 	}
 
-	custom_profile_threads_.resize(num_can_talon_srxs_);
 #ifdef USE_TALON_MOTION_PROFILE
 	profile_is_live_.store(false, std::memory_order_relaxed);
 #endif
@@ -395,10 +321,6 @@ void FRCRobotHWInterface::init(void)
 			ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
 								  "\tTalon SRX firmware version " << can_talons_[i]->GetFirmwareVersion());
 
-			custom_profile_threads_[i] = std::thread(&FRCRobotHWInterface::custom_profile_thread, this, i);
-
-			// Create a thread for each talon that is responsible for reading
-			// status data from that controller.
 			talon_read_state_mutexes_.push_back(std::make_shared<std::mutex>());
 			talon_read_thread_states_.push_back(std::make_shared<hardware_interface::TalonHWState>(can_talon_srx_can_ids_[i]));
 			talon_read_threads_.push_back(std::thread(&FRCRobotHWInterface::talon_read_thread, this,
@@ -2033,6 +1955,9 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 	{
 		if (!can_talon_srx_local_hardwares_[joint_id])
 			continue;
+
+		custom_profile_write(joint_id);
+
 		//TODO : skip over most or all of this if the talon is in follower mode
 		//       Only do the Set() call and then never do anything else?
 
@@ -2049,13 +1974,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		bool enable_read_thread;
 		if (tc.enableReadThreadChanged(enable_read_thread))
 			ts.setEnableReadThread(enable_read_thread);
-
-		if (tc.getCustomProfileRun())
-		{
-			can_talon_srx_run_profile_stop_time_[joint_id] = ros::Time::now().toSec();
-
-			continue; //Don't mess with talons running in custom profile mode
-		}
 
 		hardware_interface::FeedbackDevice internal_feedback_device;
 		double feedback_coefficient;
@@ -2142,7 +2060,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			double closed_loop_peak_output;
 			int    closed_loop_period;
 
-			if (tc.pidfChanged(p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period, slot) || ros::Time::now().toSec() - can_talon_srx_run_profile_stop_time_[joint_id] < .2)
+			if (tc.pidfChanged(p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period, slot))
 			{
 				bool rc = true;
 				rc &= safeTalonCall(talon->Config_kP(slot, p, timeoutMs),"Config_kP");
@@ -2719,7 +2637,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 			// TODO : unconditionally use the 4-param version of Set()
 			// ROS_INFO_STREAM("b1 = " << b1 << " b2 = " << b2 << " b3 = " << b3);
-			if (b1 || b2 || b3 || ros::Time::now().toSec() - can_talon_srx_run_profile_stop_time_[joint_id] < .2)
+			if (b1 || b2 || b3)
 			{
 				ctre::phoenix::motorcontrol::ControlMode out_mode;
 				if (convertControlMode(in_mode, out_mode))
