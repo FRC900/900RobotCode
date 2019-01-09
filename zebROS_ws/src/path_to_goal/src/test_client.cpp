@@ -11,8 +11,8 @@ bool trigger_pathing_cb(path_to_goal::TwistSrv::Request &req, path_to_goal::Twis
 {
     ROS_WARN("In trigger callback");
     behaviors::PathGoal goal;
-    goal.x = req.y; //blame ryan
-    goal.y = req.x; //im sad
+    goal.x = req.x; //blame ryan
+    goal.y = req.y; //im sad
     goal.rotation = req.rotation;
     goal.time_to_run = req.time_to_run;
     ac->sendGoal(goal);

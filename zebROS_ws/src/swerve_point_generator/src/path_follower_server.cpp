@@ -42,11 +42,12 @@ class PathFollowAction
 			double next_time;
 			std::vector<double> last_velocities;
 			std::vector<double> next_velocities;
+			int num_points = goal->joint_trajectory.points.size();
 
+			ROS_INFO_STREAM("max_time = " << goal->joint_trajectory.points[num_points - 1].time_from_start.toSec());
 			while(ros::ok())
 			{
 				double elapsed_time = ros::Time::now().toSec() - start_time;
-				int num_points = goal->joint_trajectory.points.size();
 
 				if(elapsed_time > goal->joint_trajectory.points[num_points - 1].time_from_start.toSec())
 				{

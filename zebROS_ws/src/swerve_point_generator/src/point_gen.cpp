@@ -130,7 +130,7 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		profile_gen->generate_profile(x_splines, y_splines, orient_splines, req.initial_v, req.final_v, srv_msg, end_points_holder, t_shift, flip_dirc);
 
 		res.joint_trajectory.points = srv_msg.points;
-		ROS_INFO_STREAM("*****************" << srv_msg.points[6].velocities[0]);
+		ROS_INFO_STREAM("*****************" << srv_msg.points[100].time_from_start.toSec());
 		/*const int point_count = srv_msg.points.size();
 		//ROS_WARN("TEST2");
 

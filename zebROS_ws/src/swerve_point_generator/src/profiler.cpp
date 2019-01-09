@@ -76,6 +76,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	}
 
 	t_total_ = end_points[end_points.size() - 1]; //assumes t starts at 0
+	ROS_INFO_STREAM("t_tota; = " << t_total_);
 	tk::spline spline;
 
 	ROS_WARN("generate_profile called");
@@ -131,9 +132,10 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	std::vector<double> dtds_for_spline;
 	std::vector<double> arc_length_for_spline;
 	double total_arc;
+	double period_t;
 	//Run spline parametrizing code - also gets dtds and arc lengths
 	spline = parametrize_spline(x_splines_first_deriv, y_splines_first_deriv, end_points,
-								total_arc, dtds_for_spline, arc_length_for_spline);
+								total_arc, dtds_for_spline, arc_length_for_spline, period_t);
 	int point_count = 0;
 	std::vector<double> accelerations;
 	path_point holder_point;
@@ -217,7 +219,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		//out_msg.points[point_count].velocities.push_back(holder_point.path_angle_deriv * (current_v));
 		out_msg.points[point_count].time_from_start = now;
 		//ROS_INFO_STREAM(now);
-		now += period;
+		now += ros::Duration(period_t);
 		point_count++;
 		ROS_ERROR_STREAM("1: " << curr_v);
 		if (!solve_for_next_V(holder_point, total_arc, curr_v, i, max_wheel_mid_accel_, accelerations)) //originally not the right number of arguments
@@ -455,11 +457,11 @@ tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &
 		const std::vector<spline_coefs> &y_splines_first_deriv,
 		const std::vector<double> &end_points, double &total_arc_length,
 		std::vector<double> &dtds_by_spline,
-		std::vector<double> &arc_length_by_spline)
+		std::vector<double> &arc_length_by_spline, double &period_t)
 {
 	//
 	total_arc_length = 0;
-	double period_t = (end_points[0] - 0.0) / 100.0;
+	period_t = (end_points[0] - 0.0) / 100.0;
 	double start = 0;
 	double arc_before = 0;
 	double b_val = 0;
@@ -654,7 +656,7 @@ void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs>
 						 << holder_point.pos_y << " t: " << t);
 	}
 
-	holder_point.path_angle = atan2(first_deriv_y, first_deriv_x) - (holder_point.orientation - M_PI / 2.0);
+	holder_point.path_angle = atan2(first_deriv_y, first_deriv_x) - (holder_point.orientation /*- M_PI / 2.0*/);
 	holder_point.angular_velocity = first_deriv_orient * dtds_by_spline[which_spline] * max_wheel_dist_;
 	holder_point.angular_accel = fabs(second_deriv_orient * dtds_by_spline[which_spline] *
 									  dtds_by_spline[which_spline] * max_wheel_dist_ * ang_accel_conv_);
