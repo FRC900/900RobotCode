@@ -60,9 +60,10 @@ class Tracer
 			entry->second.started_ = true;
 		}
 
+		// Stop all previously started timers,
+		// then start the requested one
 		void start_unique(const std::string &label)
 		{
-			// Stop all previously started timers
 			stop();
 			start(label);
 		}
