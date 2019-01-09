@@ -1842,6 +1842,7 @@ double FRCRobotHWInterface::getConversionFactor(int encoder_ticks_per_rotation,
 
 bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name)
 {
+	return true;
 	std::string error_name;
 	switch (error_code)
 	{
@@ -1865,7 +1866,10 @@ bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, con
 			error_name = "UnexpectedArbId/CAN_NO_SESSIONS_AVAIL";
 			break;
 		case ctre::phoenix::BufferFull :
-			error_name = "BufferFull/CAN_OVERFLOW";
+			error_name = "BufferFull";
+			break;
+		case ctre::phoenix::CAN_OVERFLOW:
+			error_name = "CAN_OVERFLOW";
 			break;
 		case ctre::phoenix::SensorNotPresent :
 			error_name = "SensorNotPresent";
@@ -1875,6 +1879,9 @@ bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, con
 			break;
 		case ctre::phoenix::CouldNotChangePeriod :
 			error_name = "CouldNotChangePeriod";
+			break;
+		case ctre::phoenix::BufferFailure :
+			error_name = "BufferFailure";
 			break;
 
 		case ctre::phoenix::GENERAL_ERROR :
@@ -1917,6 +1924,10 @@ bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, con
 		case ctre::phoenix::GainsAreNotSet :
 			error_name = "GainsAreNotSet";
 			break;
+		case ctre::phoenix::WrongRemoteLimitSwitchSource :
+			error_name = "WrongRemoteLimitSwitchSource";
+			break;
+
 		case ctre::phoenix::IncompatibleMode :
 			error_name = "IncompatibleMode";
 			break;
@@ -1929,6 +1940,18 @@ bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, con
 			break;
 		case ctre::phoenix::TalonFeatureRequiresHigherFirm:
 			error_name = "TalonFeatureRequiresHigherFirm";
+			break;
+		case ctre::phoenix::ConfigFactoryDefaultRequiresHigherFirm:
+			error_name = "ConfigFactoryDefaultRequiresHigherFirm";
+			break;
+		case ctre::phoenix::LibraryCouldNotBeLoaded :
+			error_name = "LibraryCouldNotBeLoaded";
+			break;
+		case ctre::phoenix::MissingRoutineInLibrary :
+			error_name = "MissingRoutineInLibrary";
+			break;
+		case ctre::phoenix::ResourceNotAvailable :
+			error_name = "ResourceNotAvailable";
 			break;
 
 		case ctre::phoenix::PulseWidthSensorNotPresent :
@@ -1954,7 +1977,7 @@ bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, con
 			break;
 
 		case ctre::phoenix::ControlModeNotSupportedYet :
-			error_name = "case";
+			error_name = "ConrolModeNotSupportedYet";
 			break;
 		case ctre::phoenix::CascadedPIDNotSupporteYet:
 			error_name = "CascadedPIDNotSupporteYet/AuxiliaryPIDNotSupportedYet";

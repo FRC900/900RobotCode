@@ -617,6 +617,12 @@ int32_t HAL_SetJoystickOutputs(int32_t joystickNum, int64_t outputs,
 	return -1;
 }
 
+#include <frc/Timer.h>
+double frc::Timer::GetFPGATimestamp()
+{
+	ROS_ERROR("Called frc::Timer::GetFPGATimestamp() on unsupported platform");
+	return -1;
+}
 
 
 // From wpilib HAL.cpp

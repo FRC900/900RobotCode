@@ -14,10 +14,10 @@ cd $HOME/frc2019/tools
 python ToolsUpdater.py 
 mkdir -p $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
 cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
-find ../../../../../ -name \*athena\*zip | xargs -n1 unzip -o 
+find ../../../.. -name \*athena\*zip | xargs -n1 unzip -o 
 mkdir -p $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
 cd $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
-find ../../../../../ -name \*headers\*zip | xargs -n1 unzip -o
+find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
 
 # Install CTRE libs
 mkdir -p $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include 

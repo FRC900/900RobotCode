@@ -58,3 +58,8 @@ void InitializeSPI()
 }
 }
 
+#include <frc/MotorSafety.h>
+void frc::MotorSafety::CheckMotors()
+{
+	ROS_INFO("Called frc::MotorSafety::CheckMotors()");
+}

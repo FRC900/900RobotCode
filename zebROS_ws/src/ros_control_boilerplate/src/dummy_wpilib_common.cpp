@@ -347,6 +347,7 @@ uint8_t AHRS::GetActualUpdateRateInternal(uint8_t update_rate)
 	ROS_ERROR("Called AHRS::GetActualUpdateRateInternal(uint8_t update_rate) on unsupported platform");
 }
 
+#include <frc/DriverStation.h>
 #include <frc/GenericHID.h>
 frc::GenericHID::GenericHID(int) : m_ds(DriverStation::GetInstance())
 {
@@ -591,13 +592,17 @@ extern "C"
 	}
 }
 
+frc::MotorSafety::MotorSafety()
+{
+	ROS_ERROR("Called MotorSafety::MotorSafety on unsupported platform");
+}
+frc::MotorSafety::~MotorSafety()
+{
+	ROS_ERROR("Called MotorSafety::~MotorSafety on unsupported platform");
+}
 void frc::MotorSafety::SetSafetyEnabled(bool)
 {
 	ROS_ERROR("Called MotorSafety::SetSafetyEnabled(bool) on unsupported platform");
-}
-void frc::MotorSafety::TimeoutFunc()
-{
-	ROS_ERROR("Called MotorSafety::TimeoutFunc() on unsupported platform");
 }
 
 #include <frc/PWM.h>

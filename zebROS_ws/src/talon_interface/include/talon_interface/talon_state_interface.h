@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cassert>
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include <state_handle/state_handle.h>
 
