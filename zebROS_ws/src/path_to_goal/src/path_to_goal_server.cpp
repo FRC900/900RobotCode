@@ -1,4 +1,10 @@
 #include "path_to_goal/path_to_goal.h"
+#include <actionlib/client/simple_action_client.h>
+#include <swerve_point_generator/PathFollowAction.h>
+#include <swerve_point_generator/PathFollowGoal.h>
+#include <swerve_point_generator/GenerateSwerveProfile.h>
+
+std::shared_ptr<actionlib::SimpleActionClient<swerve_point_generator::PathFollowAction>> ac;
 
 bool generateTrajectory(const base_trajectory::GenerateSpline &srvBaseTrajectory, swerve_point_generator::FullGenCoefs &traj)
 {
@@ -29,38 +35,18 @@ bool generateTrajectory(const base_trajectory::GenerateSpline &srvBaseTrajectory
 		return false;
 	else
 		return true;
+
 }
 
 bool runTrajectory(const swerve_point_generator::FullGenCoefs::Response &traj)
 {
     ROS_INFO_STREAM("started runTrajectory");
-    //visualization stuff
-    robot_visualizer::ProfileFollower srv_viz_msg;
-    srv_viz_msg.request.joint_trajectories.push_back(traj.joint_trajectory);
 
-    srv_viz_msg.request.start_id = 0;
+	swerve_point_generator::PathFollowGoal path_follow_goal;
+	path_follow_goal.joint_trajectory = traj.joint_trajectory;
+	ac->sendGoal(path_follow_goal);
 
-    if(!VisualizeService.call(srv_viz_msg))
-    {
-        ROS_ERROR("failed to call viz srv");
-    }
-    else
-    {
-        ROS_ERROR("succeded in call to viz srv");
-    }
-
-    talon_swerve_drive_controller::MotionProfilePoints swerve_control_srv;
-    swerve_control_srv.request.profiles.resize(1);
-    swerve_control_srv.request.profiles[0].points = traj.points;
-    swerve_control_srv.request.profiles[0].dt = 0.02;
-    swerve_control_srv.request.buffer = true;
-    swerve_control_srv.request.run = true;
-    swerve_control_srv.request.profiles[0].slot = 0;
-
-    if (!swerve_controller.call(swerve_control_srv))
-        return false;
-    else
-        return true;
+	return true;
 }
 
 class PathAction
@@ -84,7 +70,7 @@ public:
 	{
 	}
 
-	void executeCB(const behaviors::PathGoalConstPtr &goal) //make a state thing so that it just progresses to the next service call
+	void executeCB(const behaviors::PathGoalConstPtr &goal) 
 	{
 		bool success = true;
 
@@ -95,26 +81,26 @@ public:
 
 		ros::Duration time_to_run = ros::Duration(goal->time_to_run); //TODO: make this an actual thing
 
-                ros::spinOnce();
+		ros::spinOnce();
 
 
-                //x-movement
-                srvBaseTrajectory.request.points[0].positions.push_back(goal->x);
-                srvBaseTrajectory.request.points[0].velocities.push_back(0);
-                srvBaseTrajectory.request.points[0].accelerations.push_back(0);
-                //y-movement
-                srvBaseTrajectory.request.points[0].positions.push_back(goal->y);
-                srvBaseTrajectory.request.points[0].velocities.push_back(0);
-                srvBaseTrajectory.request.points[0].accelerations.push_back(0);
-                //z-rotation
-                if (goal->rotation < 0.001)
-                    srvBaseTrajectory.request.points[0].positions.push_back(0.001);
-                else
-                    srvBaseTrajectory.request.points[0].positions.push_back(goal->rotation);
-                srvBaseTrajectory.request.points[0].velocities.push_back(0); //velocity at the end point
-                srvBaseTrajectory.request.points[0].accelerations.push_back(0); //acceleration at the end point
-                //time for profile to run
-                srvBaseTrajectory.request.points[0].time_from_start = time_to_run;
+		//x-movement
+		srvBaseTrajectory.request.points[0].positions.push_back(goal->x);
+		srvBaseTrajectory.request.points[0].velocities.push_back(0);
+		srvBaseTrajectory.request.points[0].accelerations.push_back(0);
+		//y-movement
+		srvBaseTrajectory.request.points[0].positions.push_back(goal->y);
+		srvBaseTrajectory.request.points[0].velocities.push_back(0);
+		srvBaseTrajectory.request.points[0].accelerations.push_back(0);
+		//z-rotation
+		if (goal->rotation < 0.001)
+			srvBaseTrajectory.request.points[0].positions.push_back(0.001);
+		else
+			srvBaseTrajectory.request.points[0].positions.push_back(goal->rotation);
+		srvBaseTrajectory.request.points[0].velocities.push_back(0); //velocity at the end point
+		srvBaseTrajectory.request.points[0].accelerations.push_back(0); //acceleration at the end point
+		//time for profile to run
+		srvBaseTrajectory.request.points[0].time_from_start = time_to_run;
 
 		bool running = false;
 		if(!spline_gen.call(srvBaseTrajectory))
@@ -175,6 +161,9 @@ int main(int argc, char** argv)
 	spline_gen = n.serviceClient<base_trajectory::GenerateSpline>("/base_trajectory/spline_gen", false, service_connection_header);
 	VisualizeService = n.serviceClient<robot_visualizer::ProfileFollower>("/frcrobot/visualize_auto", false, service_connection_header);
 	talon_sub = n.subscribe("/frcrobot/talon_states", 10, talonStateCallback);
+    ac = std::make_shared<actionlib::SimpleActionClient<swerve_point_generator::PathFollowAction>>("path_follower", true);
+
+	ac->waitForServer();
 
 	ros::spin();
 

@@ -14,6 +14,9 @@ find_package(catkin REQUIRED COMPONENTS
   trajectory_msgs
   talon_swerve_drive_controller
   message_generation
+  actionlib
+  actionlib_msgs
+  geometry_msgs
 )
 
 find_package(Eigen3 REQUIRED)
@@ -36,11 +39,10 @@ add_service_files (
 ## Generate services in the 'srv' folder
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+add_action_files(
+  FILES
+  PathFollow.action
+)
 
 generate_messages(
   DEPENDENCIES
@@ -48,6 +50,9 @@ generate_messages(
   trajectory_msgs
   swerve_point_generator
   talon_swerve_drive_controller
+  actionlib_msgs
+  geometry_msgs
+  actionlib
 )
 
 ## System dependencies are found with CMake's conventions
@@ -58,6 +63,9 @@ catkin_package(
     std_msgs
 	message_runtime
 	talon_swerve_drive_controller
+	actionlib
+	actionlib_msgs
+	geometry_msgs
 	INCLUDE_DIRS include
 	#LIBRARIES ${PROJECT_NAME} trajectory_msgs
   DEPENDS
@@ -93,6 +101,16 @@ install(TARGETS point_gen
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+add_executable(path_follower src/path_follower_server.cpp)
+target_link_libraries(path_follower
+  ${catkin_LIBRARIES}
+)
+
+add_dependencies(path_follower
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
 )
 
 #install(DIRECTORY include/${PROJECT_NAME}/

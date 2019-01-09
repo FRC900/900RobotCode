@@ -204,6 +204,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 								   x_splines_second_deriv, y_splines_second_deriv, orient_splines, orient_splines_first_deriv,
 								   orient_splines_second_deriv, holder_point, end_points, dtds_for_spline, arc_length_for_spline,
 								   t_raw3, i);
+		ROS_INFO_STREAM("holder_point.pos_x = " << holder_point.pos_x << " holder_point.pos_y = " << holder_point.pos_y); 
 
 		//save output values
 		out_msg.points[point_count].positions.push_back(holder_point.pos_x);
@@ -456,10 +457,7 @@ tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &
 		std::vector<double> &dtds_by_spline,
 		std::vector<double> &arc_length_by_spline)
 {
-	//for( int i = 0; i < end_points.size(); i++)
-	//{
-	//ROS_WARN_STREAM("end: " << end_points[i]);
-	//}
+	//
 	total_arc_length = 0;
 	double period_t = (end_points[0] - 0.0) / 100.0;
 	double start = 0;
