@@ -32,7 +32,8 @@ class Tracer
 		}
 
 		// Mark the start of an event to time.  If the named event exists,
-		// 
+		// use it. Otherwise create a new event entry in the map of events
+		// tracked by this Tracer object
 		void start(const std::string &label)
 		{
 			auto entry = map_.find(label);
@@ -59,6 +60,13 @@ class Tracer
 			entry->second.started_ = true;
 		}
 
+		void start_unique(const std::string &label)
+		{
+			// Stop all previously started timers
+			stop();
+			start(label);
+		}
+
 		void stop(const std::string &label)
 		{
 			auto entry = map_.find(label);
@@ -80,7 +88,15 @@ class Tracer
 			entry->second.started_ = false;
 		}
 
-		std::string report(const std::string &label) const
+		// Stop all previously started timers
+		void stop(void)
+		{
+			for (auto &it : map_)
+				if (it.second.started_)
+					stop(it.first);
+		}
+
+		std::string report(const std::string &label, const bool auto_stop = true)
 		{
 			auto entry = map_.find(label);
 
@@ -90,18 +106,23 @@ class Tracer
 				ROS_ERROR_STREAM("Tracer::report : couldn't find label " << label);
 				return std::string();
 			}
+			if (auto_stop && entry->second.started_)
+				stop(label);
+
 			std::stringstream s;
 			const double avg_time = entry->second.total_time_ / std::chrono::duration<double>(entry->second.count_);
 			s << name_ << ":" << label << " = " << avg_time;
 			return s.str();
 		}
 
-		std::string report(void) const
+		std::string report(const bool auto_stop = true)
 		{
 			std::stringstream s;
 			s << name_ << ":" << std::endl;
-			for (const auto &it : map_)
+			for (auto &it : map_)
 			{
+				if (auto_stop && it.second.started_)
+					stop(it.first);
 				const double avg_time = it.second.total_time_ / std::chrono::duration<double>(it.second.count_);
 				s << "\t" << it.first << " = " << avg_time << std::endl;
 			}

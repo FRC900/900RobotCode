@@ -43,6 +43,7 @@
 #include <thread>
 
 #include <ros_control_boilerplate/frc_robot_interface.h>
+#include <ros_control_boilerplate/tracer.h>
 #include <realtime_tools/realtime_publisher.h>
 
 #include <frc_interfaces/robot_controller_interface.h>
@@ -256,7 +257,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::vector<std::shared_ptr<std::mutex>> talon_read_state_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::TalonHWState>> talon_read_thread_states_;
 		std::vector<std::thread> talon_read_threads_;
-		void talon_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonSRX> talon, std::shared_ptr<hardware_interface::TalonHWState> state, std::shared_ptr<std::atomic<bool>> mp_written, std::shared_ptr<std::mutex> mutex);
+		void talon_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonSRX> talon, std::shared_ptr<hardware_interface::TalonHWState> state, std::shared_ptr<std::atomic<bool>> mp_written, std::shared_ptr<std::mutex> mutex, Tracer tracer);
 		std::atomic<bool> profile_is_live_;
 		std::atomic<bool> writing_points_;
 
@@ -273,7 +274,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		std::vector<std::shared_ptr<std::mutex>> pcm_read_thread_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::PCMState>> pcm_read_thread_state_;
-		void pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_id, std::shared_ptr<hardware_interface::PCMState> state, std::shared_ptr<std::mutex> mutex);
+		void pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_id, std::shared_ptr<hardware_interface::PCMState> state, std::shared_ptr<std::mutex> mutex, Tracer tracer);
 		std::vector<std::thread> pcm_thread_;
 		std::vector<HAL_CompressorHandle> compressors_;
 
@@ -282,7 +283,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		std::vector<std::shared_ptr<std::mutex>> pdp_read_thread_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::PDPHWState>> pdp_read_thread_state_;
-		void pdp_read_thread(int32_t pdp, std::shared_ptr<hardware_interface::PDPHWState> state, std::shared_ptr<std::mutex> mutex);
+		void pdp_read_thread(int32_t pdp, std::shared_ptr<hardware_interface::PDPHWState> state, std::shared_ptr<std::mutex> mutex, Tracer tracer);
 		std::vector<std::thread> pdp_thread_;
 		std::vector<int32_t> pdps_;
 
@@ -304,6 +305,11 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		ros::Time last_nt_publish_time_;
 
 		double error_pub_start_time_;
+
+		std::vector<Tracer> talon_thread_tracers_;
+		std::vector<Tracer> pdp_thread_tracers_;
+		std::vector<Tracer> pcm_thread_tracers_;
+
 };  // class
 
 }  // namespace

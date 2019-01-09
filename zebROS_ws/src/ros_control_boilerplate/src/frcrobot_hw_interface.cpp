@@ -72,6 +72,7 @@
 
 #include <tf2/LinearMath/Matrix3x3.h>
 #include "ros_control_boilerplate/frcrobot_hw_interface.h"
+#include "ros_control_boilerplate/tracer.h"
 
 //HAL / wpilib includes
 #include <HALInitializer.h>
@@ -323,9 +324,11 @@ void FRCRobotHWInterface::init(void)
 
 			talon_read_state_mutexes_.push_back(std::make_shared<std::mutex>());
 			talon_read_thread_states_.push_back(std::make_shared<hardware_interface::TalonHWState>(can_talon_srx_can_ids_[i]));
+			talon_thread_tracers_.push_back("talon_read_" + can_talon_srx_names_[i] + " " + nh_.getNamespace());
 			talon_read_threads_.push_back(std::thread(&FRCRobotHWInterface::talon_read_thread, this,
 										  can_talons_[i], talon_read_thread_states_[i],
-										  can_talons_mp_written_[i], talon_read_state_mutexes_[i]));
+										  can_talons_mp_written_[i], talon_read_state_mutexes_[i],
+										  talon_thread_tracers_[i]));
 		}
 		else
 		{
@@ -524,9 +527,10 @@ void FRCRobotHWInterface::init(void)
 				if (compressors_[i] != HAL_kInvalidHandle)
 				{
 					pcm_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
+					pcm_thread_tracers_.push_back("PCM " + compressor_names_[i] + " " + nh_.getNamespace());
 					pcm_thread_.push_back(std::thread(&FRCRobotHWInterface::pcm_read_thread, this,
 								compressors_[i], compressor_pcm_ids_[i], pcm_read_thread_state_[i],
-								pcm_read_thread_mutexes_[i]));
+								pcm_read_thread_mutexes_[i], pcm_thread_tracers_[i]));
 					HAL_Report(HALUsageReporting::kResourceType_Compressor, compressor_pcm_ids_[i]);
 				}
 			}
@@ -569,8 +573,10 @@ void FRCRobotHWInterface::init(void)
 				else
 				{
 					pdp_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
+					pdp_thread_tracers_.push_back("PDP " + pdp_names_[i] + " " + nh_.getNamespace());
 					pdp_thread_.push_back(std::thread(&FRCRobotHWInterface::pdp_read_thread, this,
-										  pdps_[i], pdp_read_thread_state_[i], pdp_read_thread_mutexes_[i]));
+										  pdps_[i], pdp_read_thread_state_[i], pdp_read_thread_mutexes_[i],
+										  pdp_thread_tracers_[i]));
 					HAL_Report(HALUsageReporting::kResourceType_PDP, pdp_modules_[i]);
 				}
 			}
@@ -627,7 +633,8 @@ void FRCRobotHWInterface::init(void)
 void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonSRX> talon,
 											std::shared_ptr<hardware_interface::TalonHWState> state,
 											std::shared_ptr<std::atomic<bool>> mp_written,
-											std::shared_ptr<std::mutex> mutex)
+											std::shared_ptr<std::mutex> mutex,
+											Tracer tracer)
 {
 	ros::Rate rate(100); // TODO : configure me from a file or
 						 // be smart enough to run at the rate of the fastest status update?
@@ -654,9 +661,6 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 	ros::Time last_sensor_collection_time = ros::Time::now();
 	ros::Duration sensor_collection_period;
 
-	double time_sum = 0.;
-	unsigned iteration_count = 0;
-
 	// This never changes so read it once when the thread is started
 	int can_id;
 	{
@@ -666,8 +670,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 
 	while(ros::ok())
 	{
-		struct timespec start_time;
-		clock_gettime(CLOCK_MONOTONIC, &start_time);
+		tracer.start("main_loop");
 
 #if 0
 		if(mp_written->load(std::memory_order_relaxed))
@@ -1053,13 +1056,8 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 				state->setReverseLimitSwitch(reverse_limit_switch);
 			}
 		}
-		struct timespec end_time;
-		clock_gettime(CLOCK_MONOTONIC, &end_time);
-		time_sum +=
-			((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-			((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-		iteration_count += 1;
-		ROS_INFO_STREAM_THROTTLE(2, "Read thread " << can_id << " = " << time_sum / iteration_count);
+		tracer.stop();
+		ROS_INFO_STREAM_THROTTLE(2, tracer.report());
 		rate.sleep();
 	}
 }
@@ -1071,20 +1069,18 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 // thread.
 void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 		std::shared_ptr<hardware_interface::PDPHWState> state,
-		std::shared_ptr<std::mutex> mutex)
+		std::shared_ptr<std::mutex> mutex,
+		Tracer tracer)
 {
 	ros::Rate r(20); // TODO : Tune me?
 	int32_t status = 0;
-	double time_sum = 0.;
-	unsigned iteration_count = 0;
 	HAL_ClearPDPStickyFaults(pdp, &status);
 	HAL_ResetPDPTotalEnergy(pdp, &status);
 	if (status)
 		ROS_ERROR_STREAM("pdp_read_thread error clearing sticky faults : status = " << status);
 	while (ros::ok())
 	{
-		struct timespec start_time;
-		clock_gettime(CLOCK_MONOTONIC, &start_time);
+		tracer.start("main loop");
 #ifdef USE_TALON_MOTION_PROFILE
 		if (!profile_is_live_.load(std::memory_order_relaxed) &&
 			!writing_points_.load(std::memory_order_relaxed))
@@ -1111,13 +1107,8 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 				*state = pdp_state;
 			}
 		}
-		struct timespec end_time;
-		clock_gettime(CLOCK_MONOTONIC, &end_time);
-		time_sum +=
-			((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-			((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-		iteration_count += 1;
-		ROS_INFO_STREAM_THROTTLE(2, "pdp_read = " << time_sum / iteration_count);
+		tracer.stop();
+		ROS_INFO_STREAM_THROTTLE(2, tracer.report());
 		r.sleep();
 	}
 }
@@ -1129,19 +1120,17 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 // thread.
 void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_id,
 										  std::shared_ptr<hardware_interface::PCMState> state,
-										  std::shared_ptr<std::mutex> mutex)
+										  std::shared_ptr<std::mutex> mutex,
+										  Tracer tracer)
 {
 	ros::Rate r(20); // TODO : Tune me?
 	int32_t status = 0;
-	double time_sum = 0.;
-	unsigned iteration_count = 0;
 	HAL_ClearAllPCMStickyFaults(pcm, &status);
 	if (status)
 		ROS_ERROR_STREAM("pcm_read_thread error clearing sticky faults : status = " << status);
 	while (ros::ok())
 	{
-		struct timespec start_time;
-		clock_gettime(CLOCK_MONOTONIC, &start_time);
+		tracer.start("main loop");
 #ifdef USE_TALON_MOTION_PROFILE
 		if (!profile_is_live_.load(std::memory_order_relaxed) &&
 			!writing_points_.load(std::memory_order_relaxed))
@@ -1176,25 +1165,14 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_
 				*state = pcm_state;
 			}
 		}
-		struct timespec end_time;
-		clock_gettime(CLOCK_MONOTONIC, &end_time);
-		time_sum +=
-			((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-			((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-		iteration_count += 1;
-		ROS_INFO_STREAM_THROTTLE(2, "pcm_read = " << time_sum / iteration_count);
+		tracer.stop();
+		ROS_INFO_STREAM_THROTTLE(2, tracer.report());
 		r.sleep();
 	}
 }
 
 void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 {
-	static double time_sum = 0;
-	static int iteration_count = 0;
-
-	struct timespec start_time;
-	clock_gettime(CLOCK_MONOTONIC, &start_time);
-
 	if (run_hal_robot_ && !robot_code_ready_)
 	{
 		bool ready = true;
@@ -1215,16 +1193,8 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 	{
 		robot_->OneIteration();
 
-		static double time_sum_nt = 0.;
-		static double time_sum_joystick = 0.;
-		static unsigned iteration_count_nt = 0;
-		static unsigned iteration_count_joystick = 0;
-
 		const ros::Time time_now_t = ros::Time::now();
 		const double nt_publish_rate = 10;
-
-		struct timespec start_timespec;
-		clock_gettime(CLOCK_MONOTONIC, &start_timespec);
 
 		// Throttle NT updates since these are mainly for human
 		// UI and don't have to run at crazy speeds
@@ -1297,15 +1267,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 
 			last_nt_publish_time_ += ros::Duration(1.0 / nt_publish_rate);
 		}
-
-		struct timespec end_time;
-		clock_gettime(CLOCK_MONOTONIC, &end_time);
-		time_sum_nt +=
-			((double)end_time.tv_sec -  (double)start_timespec.tv_sec) +
-			((double)end_time.tv_nsec - (double)start_timespec.tv_nsec) / 1000000000.;
-		iteration_count_nt += 1;
-
-		start_timespec = end_time;
 
 		// Update joystick state as often as possible
 		for (size_t i = 0; i < num_joysticks_; i++)
@@ -1419,14 +1380,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 				realtime_pub_joysticks_[i]->unlockAndPublish();
 			}
 		}
-		clock_gettime(CLOCK_MONOTONIC, &end_time);
-		time_sum_joystick +=
-			((double)end_time.tv_sec -  (double)start_timespec.tv_sec) +
-			((double)end_time.tv_nsec - (double)start_timespec.tv_nsec) / 1000000000.;
-		iteration_count_joystick += 1;
-
-		ROS_INFO_STREAM_THROTTLE(2, "hw_keepalive nt = " << time_sum_nt / iteration_count_nt
-				<< " joystick = " << time_sum_joystick / iteration_count_joystick);
 
 		int32_t status = 0;
 		match_data_.setMatchTimeRemaining(HAL_GetMatchTime(&status));
@@ -1697,14 +1650,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			pdp_state_[i] = *pdp_read_thread_state_[i];
 		}
 	}
-
-	struct timespec end_time;
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count += 1;
-	ROS_INFO_STREAM_THROTTLE(2, "read() = " << time_sum / iteration_count);
 }
 
 
@@ -1943,14 +1888,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 	bool profile_is_live = false;
 #endif
 
-	static std::array<double, 250> time_sum{};
-	static std::array<int, 250> iteration_count{};
-	int time_idx = 0;
-
-	struct timespec start_time;
-	clock_gettime(CLOCK_MONOTONIC, &start_time);
-	struct timespec end_time;
-
 	for (std::size_t joint_id = 0; joint_id < num_can_talon_srxs_; ++joint_id)
 	{
 		if (!can_talon_srx_local_hardwares_[joint_id])
@@ -1999,14 +1936,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				tc.resetEncoderFeedback();
 			}
 		}
-		// 1
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 
 		// Get mode that is about to be commanded
 		const hardware_interface::TalonMode talon_mode = tc.getMode();
@@ -2017,14 +1946,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		if (tc.conversionFactorChanged(conversion_factor))
 			ts.setConversionFactor(conversion_factor);
 
-		//2
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 		const double radians_scale = getConversionFactor(encoder_ticks_per_rotation, internal_feedback_device, hardware_interface::TalonMode_Position) * conversion_factor;
 		const double radians_per_second_scale = getConversionFactor(encoder_ticks_per_rotation, internal_feedback_device, hardware_interface::TalonMode_Velocity) * conversion_factor;
 		const double closed_loop_scale = getConversionFactor(encoder_ticks_per_rotation, internal_feedback_device, talon_mode) * conversion_factor;
@@ -2121,14 +2042,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 
-		//3
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 		bool invert;
 		bool sensor_phase;
 		if (tc.invertChanged(invert, sensor_phase))
@@ -2143,14 +2056,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			ts.setInvert(invert);
 			ts.setSensorPhase(sensor_phase);
 		}
-		//4
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 
 		hardware_interface::NeutralMode neutral_mode;
 		ctre::phoenix::motorcontrol::NeutralMode ctre_neutral_mode;
@@ -2163,14 +2068,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			safeTalonCall(talon->GetLastError(), "SetNeutralMode");
 			ts.setNeutralMode(neutral_mode);
 		}
-		//5
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 
 		if (tc.neutralOutputChanged())
 		{
@@ -2180,14 +2077,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			ts.setNeutralOutput(true);
 		}
 
-		//6
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 		double iaccum;
 		if (close_loop_mode && tc.integralAccumulatorChanged(iaccum))
 		{
@@ -2203,14 +2092,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 		}
 
-		//7
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 		double closed_loop_ramp;
 		double open_loop_ramp;
 		double peak_output_forward;
@@ -2251,14 +2132,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				tc.resetOutputShaping();
 			}
 		}
-		//8
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
+
 		double v_c_saturation;
 		int v_measurement_filter;
 		bool v_c_enable;
@@ -2287,14 +2161,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 
-		//9
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 		hardware_interface::VelocityMeasurementPeriod internal_v_m_period;
 		ctre::phoenix::motorcontrol::VelocityMeasPeriod phoenix_v_m_period;
 		int v_m_window;
@@ -2317,14 +2183,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				tc.resetVelocityMeasurement();
 			}
 		}
-		//10
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 
 		double sensor_position;
 		if (tc.sensorPositionChanged(sensor_position))
@@ -2370,14 +2228,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				tc.resetLimitSwitchesSource();
 			}
 		}
-		//11
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 
 		double softlimit_forward_threshold;
 		bool softlimit_forward_enable;
@@ -2418,14 +2268,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 
-		//12
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 		int peak_amps;
 		int peak_msec;
 		int continuous_amps;
@@ -2452,14 +2294,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				tc.resetCurrentLimit();
 			}
 		}
-		//13
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 
 		for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
 		{
@@ -2613,14 +2447,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				ROS_INFO_STREAM("Added joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectories");
 			}
 		}
-		//14
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 
 		// Set new motor setpoint if either the mode or
 		// the setpoint has been changed
@@ -2728,14 +2554,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				ROS_INFO_STREAM("Robot disabled - called Set(Disabled) on " << joint_id << "=" << can_talon_srx_names_[joint_id]);
 			}
 		}
-		//15
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 
 		if (tc.clearStickyFaultsChanged())
 		{
@@ -2748,14 +2566,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				tc.setClearStickyFaults();
 			}
 		}
-		//16
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-	start_time = end_time;
 	}
 	last_robot_enabled = match_data_.isEnabled();
 
@@ -2914,19 +2724,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 	}
-
-#if 0
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	time_sum[time_idx] +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	iteration_count[time_idx] += 1;
-	time_idx += 1;
-#endif
-	std::stringstream s;
-	for (int i = 0; i < time_idx; i++)
-		s << time_sum[i]/iteration_count[i] << " ";
-	ROS_INFO_STREAM_THROTTLE(2, "write() = " << s.str());
 }
 
 // Convert from internal version of hardware mode ID
