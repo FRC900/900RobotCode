@@ -46,7 +46,7 @@ namespace ros_control_boilerplate
 {
 GenericHWControlLoop::GenericHWControlLoop(
 	ros::NodeHandle &nh, boost::shared_ptr<ros_control_boilerplate::FRCRobotInterface> hardware_interface)
-	: nh_(nh), hardware_interface_(hardware_interface)
+	: nh_(nh), hardware_interface_(hardware_interface), tracer_("GenericHWControlLoop")
 {
 	// Create the controller manager
 	controller_manager_.reset(new controller_manager::ControllerManager(hardware_interface_.get(), nh_));
@@ -74,7 +74,6 @@ void GenericHWControlLoop::run(void)
 	}
 }
 
-#define DEBUG_TIMING
 void GenericHWControlLoop::update(void)
 {
 	// Get change in time
@@ -95,52 +94,22 @@ void GenericHWControlLoop::update(void)
 							  << ", cycle time: " << std::setprecision(3) << elapsed_time_
 							  << ", threshold: " << cycle_time_error_threshold_);
 
-#ifdef DEBUG_TIMING
-	struct timespec start_time;
-
-	clock_gettime(CLOCK_MONOTONIC, &start_time);
-	static double read_time_sum;
-	static double update_time_sum;
-	static double write_time_sum;
-	static int read_iteration_count;
-	static int update_iteration_count;
-	static int write_iteration_count;
-
 	// Input
+	tracer_.start("read");
 	hardware_interface_->read(elapsed_time_);
-	struct timespec end_time;
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	read_time_sum +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	read_iteration_count += 1;
-	start_time = end_time;
-#endif
+	tracer_.stop("read");
 
 	// Control
+	tracer_.start("update");
 	controller_manager_->update(ros::Time::now(), elapsed_time_);
-#ifdef DEBUG_TIMING
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	update_time_sum +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	update_iteration_count += 1;
-	start_time = end_time;
-#endif
+	tracer_.stop("update");
 
 	// Output
+	tracer_.start("write");
 	hardware_interface_->write(elapsed_time_);
+	tracer_.stop("write");
 
-#ifdef DEBUG_TIMING
-	clock_gettime(CLOCK_MONOTONIC, &end_time);
-	write_time_sum +=
-		((double)end_time.tv_sec -  (double)start_time.tv_sec) +
-		((double)end_time.tv_nsec - (double)start_time.tv_nsec) / 1000000000.;
-	write_iteration_count += 1;
-	ROS_INFO_STREAM_THROTTLE(2, "Main loop read = " << read_time_sum / read_iteration_count
-			<< " update = " << update_time_sum / update_iteration_count
-			<< " write = " << write_time_sum / write_iteration_count);
-#endif
+	ROS_INFO_STREAM_THROTTLE(2, tracer_.report());
 }
 
 }  // namespace
