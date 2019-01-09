@@ -65,6 +65,8 @@
 	copy of that data each time through the read/update/write loop
 */
 
+//PURPOSE: File that reads and writes to hardware
+
 #include <cmath>
 #include <iostream>
 #include <math.h>
