@@ -36,6 +36,8 @@
    Desc:   Helper ros_control hardware interface that loads configurations
 */
 
+//PURPOSE: Stuff used by to run both hw and sim interfaces
+
 #include <ros_control_boilerplate/frc_robot_interface.h>
 #include <limits>
 

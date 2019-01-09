@@ -36,6 +36,9 @@
    Desc:   Example ros_control main() entry point for controlling robots in ROS
 */
 
+
+//PURPOSE: Pulls togther stuff needed to run hw interface 
+
 #include <ros_control_boilerplate/generic_hw_control_loop.h>
 #include <ros_control_boilerplate/frcrobot_hw_interface.h>
 
