@@ -29,7 +29,7 @@ bool generateTrajectory(const base_trajectory::GenerateSpline &srvBaseTrajectory
 	traj.request.end_points[0] = srvBaseTrajectory.response.end_points[1];
 	traj.request.initial_v = 0;
 	traj.request.final_v = 0;
-	traj.request.x_invert.push_back(0);
+	traj.request.x_invert.push_back(false);
 
 	if(!point_gen.call(traj))
 		return false;
@@ -72,6 +72,7 @@ public:
 
 	void executeCB(const behaviors::PathGoalConstPtr &goal) 
 	{
+		ROS_INFO_STREAM("executeCB in path_to_goal_server");
 		bool success = true;
 
 		base_trajectory::GenerateSpline srvBaseTrajectory;
@@ -82,7 +83,6 @@ public:
 		ros::Duration time_to_run = ros::Duration(goal->time_to_run); //TODO: make this an actual thing
 
 		ros::spinOnce();
-
 
 		//x-movement
 		srvBaseTrajectory.request.points[0].positions.push_back(goal->x);
@@ -103,6 +103,7 @@ public:
 		srvBaseTrajectory.request.points[0].time_from_start = time_to_run;
 
 		bool running = false;
+		ROS_INFO_STREAM("calling spline gen");
 		if(!spline_gen.call(srvBaseTrajectory))
 		{
 			ROS_ERROR_STREAM("spline_gen died");
@@ -163,7 +164,9 @@ int main(int argc, char** argv)
 	talon_sub = n.subscribe("/frcrobot/talon_states", 10, talonStateCallback);
     ac = std::make_shared<actionlib::SimpleActionClient<swerve_point_generator::PathFollowAction>>("path_follower", true);
 
+	ROS_INFO_STREAM("waiting for server... ");
 	ac->waitForServer();
+	ROS_INFO_STREAM("found server");
 
 	ros::spin();
 

@@ -59,6 +59,7 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		std::vector<swerve_profile::spline_coefs> orient_splines;
 
 		const int neg_x = req.x_invert[s] ? -1 : 1;
+		ROS_INFO_STREAM("neg x = " << neg_x);
 		std::vector<double> end_points_holder;
 		double shift_by = 0;
 		if (s != 0)
@@ -129,6 +130,7 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		profile_gen->generate_profile(x_splines, y_splines, orient_splines, req.initial_v, req.final_v, srv_msg, end_points_holder, t_shift, flip_dirc);
 
 		res.joint_trajectory.points = srv_msg.points;
+		ROS_INFO_STREAM("*****************" << srv_msg.points[6].velocities[0]);
 		/*const int point_count = srv_msg.points.size();
 		//ROS_WARN("TEST2");
 

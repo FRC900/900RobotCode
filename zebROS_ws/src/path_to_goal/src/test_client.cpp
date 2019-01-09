@@ -14,7 +14,7 @@ bool trigger_pathing_cb(path_to_goal::TwistSrv::Request &req, path_to_goal::Twis
     goal.x = req.y; //blame ryan
     goal.y = req.x; //im sad
     goal.rotation = req.rotation;
-    goal.time_to_run = 0.5;
+    goal.time_to_run = req.time_to_run;
     ac->sendGoal(goal);
 
     bool finished_before_timeout = ac->waitForResult(ros::Duration(15));
@@ -25,7 +25,7 @@ bool trigger_pathing_cb(path_to_goal::TwistSrv::Request &req, path_to_goal::Twis
         ROS_INFO_STREAM("state = " << state.toString());
     }
     else
-        ROS_INFO_STREAM("timed out");
+        ROS_INFO_STREAM("timed out in test_client");
 
     return true;
 }

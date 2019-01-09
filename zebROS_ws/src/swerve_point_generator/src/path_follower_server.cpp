@@ -38,22 +38,41 @@ class PathFollowAction
 			int point_index = 0;
 			ros::Rate r(100);
 
+			double last_time;
+			double next_time;
+			std::vector<double> last_velocities;
+			std::vector<double> next_velocities;
+
 			while(ros::ok())
 			{
 				double elapsed_time = ros::Time::now().toSec() - start_time;
+				int num_points = goal->joint_trajectory.points.size();
 
-				double last_time = goal->joint_trajectory.points[point_index].time_from_start.toSec();
-				double next_time = goal->joint_trajectory.points[point_index + 1].time_from_start.toSec();
-				std::vector<double> last_velocity = goal->joint_trajectory.points[point_index].velocities; //x, y, rotation
-				std::vector<double> next_velocity  = goal->joint_trajectory.points[point_index + 1].velocities; //x, y, rotation
+				if(elapsed_time > goal->joint_trajectory.points[num_points - 1].time_from_start.toSec())
+				{
+					ROS_INFO_STREAM("finished executing path_follow");
+					break;
+				}
+
+				for(int i = 0; i < num_points; i++)
+				{
+					if(goal->joint_trajectory.points[i].time_from_start.toSec() > elapsed_time)
+					{
+						last_time = goal->joint_trajectory.points[i - 1].time_from_start.toSec();
+						next_time = goal->joint_trajectory.points[i].time_from_start.toSec();
+						last_velocities = goal->joint_trajectory.points[i - 1].velocities;//x, y, rotation
+						next_velocities = goal->joint_trajectory.points[i].velocities;//x, y, rotation
+						break;
+					}
+				}
 
 				if(elapsed_time < last_time || elapsed_time > next_time)
-					ROS_ERROR_STREAM("elapsed time does not fall between the current trajectory points");
+					ROS_ERROR_STREAM("elapsed time " << elapsed_time << "does not fall between the current trajectory points " << last_time << " and " << next_time);
 
 				geometry_msgs::Twist cmd_vel;
-				cmd_vel.linear.x = last_velocity[0] + (next_velocity[0] - last_velocity[0]) * (next_time - last_time)/(elapsed_time - last_time);
-				cmd_vel.linear.y = last_velocity[1] + (next_velocity[1] - last_velocity[1]) * (next_time - last_time)/(elapsed_time - last_time);
-				cmd_vel.angular.z = last_velocity[2] + (next_velocity[2] - last_velocity[2]) * (next_time - last_time)/(elapsed_time - last_time);
+				cmd_vel.linear.x = last_velocities[0] + (next_velocities[0] - last_velocities[0]) / (next_time - last_time) * (elapsed_time - last_time);
+				cmd_vel.linear.y = last_velocities[1] + (next_velocities[1] - last_velocities[1]) / (next_time - last_time) * (elapsed_time - last_time);
+				cmd_vel.angular.z = last_velocities[2] + (next_velocities[2] - last_velocities[2]) / (next_time - last_time) * (elapsed_time - last_time);
 
 				cmd_vel_pub.publish(cmd_vel);
 
@@ -71,7 +90,7 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "path_follower");
 	ros::NodeHandle n;
 
-	PathFollowAction path("path_follow_action", n);
+	PathFollowAction path("path_follower", n);
 
 	cmd_vel_pub = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1000);
 
