@@ -658,7 +658,6 @@ void FRCRobotHWInterface::init(void)
 	}
 
 	// TODO : better support for multiple joysticks?
-	bool started_pub = false;
 	for (size_t i = 0; i < num_joysticks_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
@@ -668,14 +667,18 @@ void FRCRobotHWInterface::init(void)
 		if (joystick_locals_[i])
 		{
 			joysticks_.push_back(std::make_shared<Joystick>(joystick_ids_[i]));
-			if (!started_pub)
-			{
-				realtime_pub_joystick_ = std::make_shared<realtime_tools::RealtimePublisher<ros_control_boilerplate::JoystickState>>(nh_, "joystick_states", 1);
-				started_pub = true;
-			}
+			std::stringstream pub_name;
+			// TODO : maybe use pub_names instead, or joy id unconditionally?
+			pub_name << "joystick_states";
+			if (num_joysticks_ > 1)
+				pub_name << joystick_ids_[i];
+			realtime_pub_joysticks_.push_back(std::make_unique<realtime_tools::RealtimePublisher<ros_control_boilerplate::JoystickState>>(nh_, pub_name.str(), 1));
 		}
 		else
+		{
 			joysticks_.push_back(nullptr);
+			realtime_pub_joysticks_.push_back(nullptr);
+		}
 
 		joystick_up_last_.push_back(false);
 		joystick_down_last_.push_back(false);
@@ -1383,113 +1386,116 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		start_timespec = end_time;
 
 		// Update joystick state as often as possible
-		if ((joysticks_.size() > 0) && realtime_pub_joystick_->trylock())
+		for (size_t i = 0; i < num_joysticks_; i++)
 		{
-			auto &m = realtime_pub_joystick_->msg_;
-			m.header.stamp = time_now_t;
-
-			m.rightStickY = joysticks_[0]->GetRawAxis(5);
-			m.rightStickX = joysticks_[0]->GetRawAxis(4);
-			m.leftStickY = joysticks_[0]->GetRawAxis(1);
-			m.leftStickX = joysticks_[0]->GetRawAxis(0);
-
-			m.leftTrigger = joysticks_[0]->GetRawAxis(2);
-			m.rightTrigger = joysticks_[0]->GetRawAxis(3);
-			m.buttonXButton = joysticks_[0]->GetRawButton(3);
-			m.buttonXPress = joysticks_[0]->GetRawButtonPressed(3);
-			m.buttonXRelease = joysticks_[0]->GetRawButtonReleased(3);
-			m.buttonYButton = joysticks_[0]->GetRawButton(4);
-			m.buttonYPress = joysticks_[0]->GetRawButtonPressed(4);
-			m.buttonYRelease = joysticks_[0]->GetRawButtonReleased(4);
-
-			m.bumperLeftButton = joysticks_[0]->GetRawButton(5);
-			m.bumperLeftPress = joysticks_[0]->GetRawButtonPressed(5);
-			m.bumperLeftRelease = joysticks_[0]->GetRawButtonReleased(5);
-
-			m.bumperRightButton = joysticks_[0]->GetRawButton(6);
-			m.bumperRightPress = joysticks_[0]->GetRawButtonPressed(6);
-			m.bumperRightRelease = joysticks_[0]->GetRawButtonReleased(6);
-
-			m.stickLeftButton = joysticks_[0]->GetRawButton(9);
-			m.stickLeftPress = joysticks_[0]->GetRawButtonPressed(9);
-			m.stickLeftRelease = joysticks_[0]->GetRawButtonReleased(9);
-
-			m.stickRightButton = joysticks_[0]->GetRawButton(10);
-			m.stickRightPress = joysticks_[0]->GetRawButtonPressed(10);
-			m.stickRightRelease = joysticks_[0]->GetRawButtonReleased(10);
-
-			m.buttonAButton = joysticks_[0]->GetRawButton(1);
-			m.buttonAPress = joysticks_[0]->GetRawButtonPressed(1);
-			m.buttonARelease = joysticks_[0]->GetRawButtonReleased(1);
-			m.buttonBButton = joysticks_[0]->GetRawButton(2);
-			m.buttonBPress = joysticks_[0]->GetRawButtonPressed(2);
-			m.buttonBRelease = joysticks_[0]->GetRawButtonReleased(2);
-			m.buttonBackButton = joysticks_[0]->GetRawButton(7);
-			m.buttonBackPress = joysticks_[0]->GetRawButtonPressed(7);
-			m.buttonBackRelease = joysticks_[0]->GetRawButtonReleased(7);
-
-			m.buttonStartButton = joysticks_[0]->GetRawButton(8);
-			m.buttonStartPress = joysticks_[0]->GetRawButtonPressed(8);
-			m.buttonStartRelease = joysticks_[0]->GetRawButtonReleased(8);
-
-			bool joystick_up = false;
-			bool joystick_down = false;
-			bool joystick_left = false;
-			bool joystick_right = false;
-			switch (joysticks_[0]->GetPOV(0))
+			if (realtime_pub_joysticks_[i]->trylock())
 			{
-				case 0 :
+				auto &m = realtime_pub_joysticks_[i]->msg_;
+				m.header.stamp = time_now_t;
+
+				m.rightStickY = joysticks_[i]->GetRawAxis(5);
+				m.rightStickX = joysticks_[i]->GetRawAxis(4);
+				m.leftStickY = joysticks_[i]->GetRawAxis(1);
+				m.leftStickX = joysticks_[i]->GetRawAxis(0);
+
+				m.leftTrigger = joysticks_[i]->GetRawAxis(2);
+				m.rightTrigger = joysticks_[i]->GetRawAxis(3);
+				m.buttonXButton = joysticks_[i]->GetRawButton(3);
+				m.buttonXPress = joysticks_[i]->GetRawButtonPressed(3);
+				m.buttonXRelease = joysticks_[i]->GetRawButtonReleased(3);
+				m.buttonYButton = joysticks_[i]->GetRawButton(4);
+				m.buttonYPress = joysticks_[i]->GetRawButtonPressed(4);
+				m.buttonYRelease = joysticks_[i]->GetRawButtonReleased(4);
+
+				m.bumperLeftButton = joysticks_[i]->GetRawButton(5);
+				m.bumperLeftPress = joysticks_[i]->GetRawButtonPressed(5);
+				m.bumperLeftRelease = joysticks_[i]->GetRawButtonReleased(5);
+
+				m.bumperRightButton = joysticks_[i]->GetRawButton(6);
+				m.bumperRightPress = joysticks_[i]->GetRawButtonPressed(6);
+				m.bumperRightRelease = joysticks_[i]->GetRawButtonReleased(6);
+
+				m.stickLeftButton = joysticks_[i]->GetRawButton(9);
+				m.stickLeftPress = joysticks_[i]->GetRawButtonPressed(9);
+				m.stickLeftRelease = joysticks_[i]->GetRawButtonReleased(9);
+
+				m.stickRightButton = joysticks_[i]->GetRawButton(10);
+				m.stickRightPress = joysticks_[i]->GetRawButtonPressed(10);
+				m.stickRightRelease = joysticks_[i]->GetRawButtonReleased(10);
+
+				m.buttonAButton = joysticks_[i]->GetRawButton(1);
+				m.buttonAPress = joysticks_[i]->GetRawButtonPressed(1);
+				m.buttonARelease = joysticks_[i]->GetRawButtonReleased(1);
+				m.buttonBButton = joysticks_[i]->GetRawButton(2);
+				m.buttonBPress = joysticks_[i]->GetRawButtonPressed(2);
+				m.buttonBRelease = joysticks_[i]->GetRawButtonReleased(2);
+				m.buttonBackButton = joysticks_[i]->GetRawButton(7);
+				m.buttonBackPress = joysticks_[i]->GetRawButtonPressed(7);
+				m.buttonBackRelease = joysticks_[i]->GetRawButtonReleased(7);
+
+				m.buttonStartButton = joysticks_[i]->GetRawButton(8);
+				m.buttonStartPress = joysticks_[i]->GetRawButtonPressed(8);
+				m.buttonStartRelease = joysticks_[i]->GetRawButtonReleased(8);
+
+				bool joystick_up = false;
+				bool joystick_down = false;
+				bool joystick_left = false;
+				bool joystick_right = false;
+				switch (joysticks_[i]->GetPOV(0))
+				{
+					case 0 :
 						joystick_up = true;
 						break;
-				case 45:
+					case 45:
 						joystick_up = true;
 						joystick_right = true;
 						break;
-				case 90:
+					case 90:
 						joystick_right = true;
 						break;
-				case 135:
+					case 135:
 						joystick_down = true;
 						joystick_right = true;
 						break;
-				case 180:
+					case 180:
 						joystick_down = true;
 						break;
-				case 225:
+					case 225:
 						joystick_down = true;
 						joystick_left = true;
 						break;
-				case 270:
+					case 270:
 						joystick_left = true;
 						break;
-				case 315:
+					case 315:
 						joystick_up = true;
 						joystick_left = true;
 						break;
+				}
+
+				m.directionUpButton = joystick_up;
+				m.directionUpPress = joystick_up && !joystick_up_last_[i];
+				m.directionUpRelease = !joystick_up && joystick_up_last_[i];
+
+				m.directionDownButton = joystick_down;
+				m.directionDownPress = joystick_down && !joystick_down_last_[i];
+				m.directionDownRelease = !joystick_down && joystick_down_last_[i];
+
+				m.directionLeftButton = joystick_left;
+				m.directionLeftPress = joystick_left && !joystick_left_last_[i];
+				m.directionLeftRelease = !joystick_left && joystick_left_last_[i];
+
+				m.directionRightButton = joystick_right;
+				m.directionRightPress = joystick_right && !joystick_right_last_[i];
+				m.directionRightRelease = !joystick_right && joystick_right_last_[i];
+
+				joystick_up_last_[i] = joystick_up;
+				joystick_down_last_[i] = joystick_down;
+				joystick_left_last_[i] = joystick_left;
+				joystick_right_last_[i] = joystick_right;
+
+				realtime_pub_joysticks_[i]->unlockAndPublish();
 			}
-
-			m.directionUpButton = joystick_up;
-			m.directionUpPress = joystick_up && !joystick_up_last_[0];
-			m.directionUpRelease = !joystick_up && joystick_up_last_[0];
-
-			m.directionDownButton = joystick_down;
-			m.directionDownPress = joystick_down && !joystick_down_last_[0];
-			m.directionDownRelease = !joystick_down && joystick_down_last_[0];
-
-			m.directionLeftButton = joystick_left;
-			m.directionLeftPress = joystick_left && !joystick_left_last_[0];
-			m.directionLeftRelease = !joystick_left && joystick_left_last_[0];
-
-			m.directionRightButton = joystick_right;
-			m.directionRightPress = joystick_right && !joystick_right_last_[0];
-			m.directionRightRelease = !joystick_right && joystick_right_last_[0];
-
-			joystick_up_last_[0] = joystick_up;
-			joystick_down_last_[0] = joystick_down;
-			joystick_left_last_[0] = joystick_left;
-			joystick_right_last_[0] = joystick_right;
-
-			realtime_pub_joystick_->unlockAndPublish();
 		}
 		clock_gettime(CLOCK_MONOTONIC, &end_time);
 		time_sum_joystick +=
