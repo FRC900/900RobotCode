@@ -230,10 +230,32 @@ if [ "$jetson" = true ] ; then
 	rm /home/ubuntu/navx-cpp-3.1.340-linuxathena.zip 
     cd /home/ubuntu 
 	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.340/navx-cpp-3.1.340-linuxathenastatic.zip 
-	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
 	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
 	unzip -o /home/ubuntu/navx-cpp-3.1.340-linuxathenastatic.zip 
 	rm /home/ubuntu/navx-cpp-3.1.340-linuxathenastatic.zip 
+
+	# Install wpilip headers by copying them from the local maven dir
+	mkdir ~/wpiheaders
+	scp `find ~/frc2019/maven -name \*headers\*` 10.9.0.8:wpiheaders
+	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib
+	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib
+	find ~/wpiheaders -name \*headers\*zip | xargs -n1 unzip
+
+	cd /home/ubuntu 
+	wget https://github.com/wpilibsuite/allwpilib/releases/download/v2019.1.1/WPILib_Linux-2019.1.1.tar.gz 
+	mkdir -p /home/ubuntu/frc2019
+    cd /home/ubuntu/frc2019
+	tar -xzf /home/ubuntu/WPILib_Linux-2019.1.1.tar.gz
+	rm /home/ubuntu/WPILib_Linux-2019.1.1.tar.gz
+    cd /home/ubuntu/frc2019/tools
+	python ToolsUpdater.py
+    mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib
+	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib
+	find ../../../.. -name \*athena\*zip | xargs -n1 unzip -o
+    mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib
+	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib
+	find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
+    rm -rf /home/ubuntu/frc2019/maven /home/ubuntu/frc2019/jdk
 fi
 
 sudo mkdir -p /usr/local/zed/settings
