@@ -308,7 +308,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::vector<bool> joystick_down_last_;
 		std::vector<bool> joystick_left_last_;
 		std::vector<bool> joystick_right_last_;
-		std::shared_ptr<realtime_tools::RealtimePublisher<ros_control_boilerplate::JoystickState>> realtime_pub_joystick_;
+		std::vector<std::unique_ptr<realtime_tools::RealtimePublisher<ros_control_boilerplate::JoystickState>>> realtime_pub_joysticks_;
 
 		std::unique_ptr<ROSIterativeRobot> robot_;
 		std::shared_ptr<realtime_tools::RealtimePublisher<ros_control_boilerplate::AutoMode>> realtime_pub_nt_;
