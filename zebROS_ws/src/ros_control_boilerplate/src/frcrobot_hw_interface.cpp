@@ -180,7 +180,7 @@ FRCRobotHWInterface::~FRCRobotHWInterface()
  * access to motion profile config to insure only
  * one thread is working with it at a time - perhaps
  * that will help? Need to test
- * also, experiment with 1 thread per talon rather that
+ * also, experiment with 1 thread per talon rather than
  * 1 thread for all of them
  */
 void FRCRobotHWInterface::process_motion_profile_buffer_thread(double hz)
@@ -292,10 +292,6 @@ void FRCRobotHWInterface::init(void)
 		ctre::phoenix::platform::can::SetCANInterface(can_interface_.c_str());
 	}
 
-#ifdef USE_TALON_MOTION_PROFILE
-	profile_is_live_.store(false, std::memory_order_relaxed);
-#endif
-
 	for (size_t i = 0; i < num_can_talon_srxs_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
@@ -304,8 +300,6 @@ void FRCRobotHWInterface::init(void)
 							  (can_talon_srx_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
 							  " as CAN id " << can_talon_srx_can_ids_[i]);
 
-		can_talons_mp_written_.push_back(std::make_shared<std::atomic<bool>>(false));
-		can_talons_mp_running_.push_back(std::make_shared<std::atomic<bool>>(false));
 		if (can_talon_srx_local_hardwares_[i])
 		{
 			can_talons_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_talon_srx_can_ids_[i]));
@@ -327,7 +321,7 @@ void FRCRobotHWInterface::init(void)
 			talon_thread_tracers_.push_back("talon_read_" + can_talon_srx_names_[i] + " " + nh_.getNamespace());
 			talon_read_threads_.push_back(std::thread(&FRCRobotHWInterface::talon_read_thread, this,
 										  can_talons_[i], talon_read_thread_states_[i],
-										  can_talons_mp_written_[i], talon_read_state_mutexes_[i],
+										  talon_read_state_mutexes_[i],
 										  talon_thread_tracers_[i]));
 		}
 		else
@@ -632,7 +626,6 @@ void FRCRobotHWInterface::init(void)
 // data given the update rate of various CAN messages.
 void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonSRX> talon,
 											std::shared_ptr<hardware_interface::TalonHWState> state,
-											std::shared_ptr<std::atomic<bool>> mp_written,
 											std::shared_ptr<std::mutex> mutex,
 											Tracer tracer)
 {
@@ -672,10 +665,6 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 	{
 		tracer.start("main_loop");
 
-#if 0
-		if(mp_written->load(std::memory_order_relaxed))
-			ROS_INFO_STREAM("written");
-#endif
 		hardware_interface::TalonMode talon_mode;
 		hardware_interface::FeedbackDevice encoder_feedback;
 		int encoder_ticks_per_rotation;
@@ -718,88 +707,6 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 		const double radians_scale = getConversionFactor(encoder_ticks_per_rotation, encoder_feedback, hardware_interface::TalonMode_Position) * conversion_factor;
 		const double radians_per_second_scale = getConversionFactor(encoder_ticks_per_rotation, encoder_feedback, hardware_interface::TalonMode_Velocity) * conversion_factor;
 
-		bool update_mp_status = false;
-		hardware_interface::MotionProfileStatus internal_status;
-
-#ifdef USE_TALON_MOTION_PROFILE
-		if (profile_is_live_.load(std::memory_order_relaxed))
-		{
-			// TODO - this should be if (!drivebase)
-			// Don't bother reading status while running
-			// drive base motion profile code
-			if (can_id == 51 || can_id == 41) //All we care about are the arm and lift
-			{
-				const double position = talon->GetSelectedSensorPosition(pidIdx) * radians_scale;
-				safeTalonCall(talon->GetLastError(), "GetSelectedSensorPosition");
-				std::lock_guard<std::mutex> l(*mutex);
-				state->setPosition(position);
-			}
-			rate.sleep();
-			continue;
-		}
-
-		// Vastly reduce the stuff being read while
-		// buffering motion profile poinstate-> This lets CAN
-		// bus bandwidth be used for writing points as
-		// quickly as possible
-		if (writing_points_.load(std::memory_order_relaxed))
-		{
-			// TODO : get rid of this hard-coded canID stuff
-			if (can_id == 51 || can_id == 41) //All we care about are the arm and lift
-			{
-				const double position = talon->GetSelectedSensorPosition(pidIdx) * radians_scale;
-				safeTalonCall(talon->GetLastError(), "GetSelectedSensorPosition");
-				std::lock_guard<std::mutex> l(*mutex);
-				state->setPosition(position);
-			}
-			// TODO - don't hard code
-			// This is a check to see if the talon is a drive base one
-			else if (can_id <= 30)
-			{
-				ctre::phoenix::motion::MotionProfileStatus talon_status;
-				safeTalonCall(talon->GetMotionProfileStatus(talon_status), "GetMotionProfileStatus");
-
-				internal_status.topBufferRem = talon_status.topBufferRem;
-				internal_status.topBufferCnt = talon_status.topBufferCnt;
-				internal_status.btmBufferCnt = talon_status.btmBufferCnt;
-				internal_status.hasUnderrun = talon_status.hasUnderrun;
-				internal_status.isUnderrun = talon_status.isUnderrun;
-				internal_status.activePointValid = talon_status.activePointValid;
-				internal_status.isLast = talon_status.isLast;
-				internal_status.profileSlotSelect0 = talon_status.profileSlotSelect0;
-				internal_status.profileSlotSelect1 = talon_status.profileSlotSelect1;
-				internal_status.outputEnable = static_cast<hardware_interface::SetValueMotionProfile>(talon_status.outputEnable);
-				internal_status.timeDurMs = talon_status.timeDurMs;
-
-				std::lock_guard<std::mutex> l(*mutex);
-				state->setMotionProfileStatus(internal_status);
-			}
-
-			rate.sleep();
-			continue;
-		}
-		// TODO : don't hard-code this
-		// Code to handle status read for drive base motion
-		// profile mode
-		else if (can_id < 30 && mp_written->load(std::memory_order_relaxed))
-		{
-			ctre::phoenix::motion::MotionProfileStatus talon_status;
-			safeTalonCall(talon->GetMotionProfileStatus(talon_status), "GetMotionProfileStatus");
-
-			internal_status.topBufferRem = talon_status.topBufferRem;
-			internal_status.topBufferCnt = talon_status.topBufferCnt;
-			internal_status.btmBufferCnt = talon_status.btmBufferCnt;
-			internal_status.hasUnderrun = talon_status.hasUnderrun;
-			internal_status.isUnderrun = talon_status.isUnderrun;
-			internal_status.activePointValid = talon_status.activePointValid;
-			internal_status.isLast = talon_status.isLast;
-			internal_status.profileSlotSelect0 = talon_status.profileSlotSelect0;
-			internal_status.profileSlotSelect1 = talon_status.profileSlotSelect1;
-			internal_status.outputEnable = static_cast<hardware_interface::SetValueMotionProfile>(talon_status.outputEnable);
-			internal_status.timeDurMs = talon_status.timeDurMs;
-			update_mp_status = true;
-		}
-#endif
 
 		bool update_status_1 = false;
 		double motor_output_percent;
@@ -943,6 +850,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 
 		bool update_status_9 = false;
 		int  mp_top_level_buffer_count;
+		hardware_interface::MotionProfileStatus internal_status;
 		if ((talon_mode == hardware_interface::TalonMode_MotionProfile) &&
 			(last_status_9_time + status_9_period) < ros_time_now)
 		{
@@ -989,7 +897,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			// the middle of a write
 			std::lock_guard<std::mutex> l(*mutex);
 
-			if (update_mp_status || update_status_9)
+			if (update_status_9)
 			{
 				state->setMotionProfileStatus(internal_status);
 				state->setMotionProfileTopLevelBufferCount(mp_top_level_buffer_count);
@@ -1081,32 +989,28 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 	while (ros::ok())
 	{
 		tracer.start("main loop");
-#ifdef USE_TALON_MOTION_PROFILE
-		if (!profile_is_live_.load(std::memory_order_relaxed) &&
-			!writing_points_.load(std::memory_order_relaxed))
-#endif
+
+		//read info from the PDP hardware
+		status = 0;
+		hardware_interface::PDPHWState pdp_state;
+		pdp_state.setVoltage(HAL_GetPDPVoltage(pdp, &status));
+		pdp_state.setTemperature(HAL_GetPDPTemperature(pdp, &status));
+		pdp_state.setTotalCurrent(HAL_GetPDPTotalCurrent(pdp, &status));
+		pdp_state.setTotalPower(HAL_GetPDPTotalPower(pdp, &status));
+		pdp_state.setTotalEnergy(HAL_GetPDPTotalEnergy(pdp, &status));
+		for (int channel = 0; channel <= 15; channel++)
 		{
-			//read info from the PDP hardware
-			status = 0;
-			hardware_interface::PDPHWState pdp_state;
-			pdp_state.setVoltage(HAL_GetPDPVoltage(pdp, &status));
-			pdp_state.setTemperature(HAL_GetPDPTemperature(pdp, &status));
-			pdp_state.setTotalCurrent(HAL_GetPDPTotalCurrent(pdp, &status));
-			pdp_state.setTotalPower(HAL_GetPDPTotalPower(pdp, &status));
-			pdp_state.setTotalEnergy(HAL_GetPDPTotalEnergy(pdp, &status));
-			for (int channel = 0; channel <= 15; channel++)
-			{
-				pdp_state.setCurrent(HAL_GetPDPChannelCurrent(pdp, channel, &status), channel);
-			}
-			if (status)
-				ROS_ERROR_STREAM("pdp_read_thread error : status = " << status);
-			else
-			{
-				// Copy to state shared with read() thread
-				std::lock_guard<std::mutex> l(*mutex);
-				*state = pdp_state;
-			}
+			pdp_state.setCurrent(HAL_GetPDPChannelCurrent(pdp, channel, &status), channel);
 		}
+		if (status)
+			ROS_ERROR_STREAM("pdp_read_thread error : status = " << status);
+		else
+		{
+			// Copy to state shared with read() thread
+			std::lock_guard<std::mutex> l(*mutex);
+			*state = pdp_state;
+		}
+
 		tracer.stop();
 		ROS_INFO_STREAM_THROTTLE(2, tracer.report());
 		r.sleep();
@@ -1131,40 +1035,35 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_
 	while (ros::ok())
 	{
 		tracer.start("main loop");
-#ifdef USE_TALON_MOTION_PROFILE
-		if (!profile_is_live_.load(std::memory_order_relaxed) &&
-			!writing_points_.load(std::memory_order_relaxed))
-#endif
+
+		hardware_interface::PCMState pcm_state(pcm_id);
+		status = 0;
+		pcm_state.setEnabled(HAL_GetCompressor(pcm, &status));
+		pcm_state.setPressureSwitch(HAL_GetCompressorPressureSwitch(pcm, &status));
+		pcm_state.setCompressorCurrent(HAL_GetCompressorCurrent(pcm, &status));
+		pcm_state.setClosedLoopControl(HAL_GetCompressorClosedLoopControl(pcm, &status));
+		pcm_state.setCurrentTooHigh(HAL_GetCompressorCurrentTooHighFault(pcm, &status));
+		pcm_state.setCurrentTooHighSticky(HAL_GetCompressorCurrentTooHighStickyFault(pcm, &status));
+
+		pcm_state.setShorted(HAL_GetCompressorShortedFault(pcm, &status));
+		pcm_state.setShortedSticky(HAL_GetCompressorShortedStickyFault(pcm, &status));
+		pcm_state.setNotConntected(HAL_GetCompressorNotConnectedFault(pcm, &status));
+		pcm_state.setNotConnecteSticky(HAL_GetCompressorNotConnectedStickyFault(pcm, &status));
+		pcm_state.setVoltageFault(HAL_GetPCMSolenoidVoltageFault(pcm, &status));
+		pcm_state.setVoltageStickFault(HAL_GetPCMSolenoidVoltageStickyFault(pcm, &status));
+		pcm_state.setSolenoidBlacklist(HAL_GetPCMSolenoidBlackList(pcm, &status));
+
+		if (status)
 		{
-			// TODO : error checking?
-			hardware_interface::PCMState pcm_state(pcm_id);
-			status = 0;
-			pcm_state.setEnabled(HAL_GetCompressor(pcm, &status));
-			pcm_state.setPressureSwitch(HAL_GetCompressorPressureSwitch(pcm, &status));
-			pcm_state.setCompressorCurrent(HAL_GetCompressorCurrent(pcm, &status));
-			pcm_state.setClosedLoopControl(HAL_GetCompressorClosedLoopControl(pcm, &status));
-			pcm_state.setCurrentTooHigh(HAL_GetCompressorCurrentTooHighFault(pcm, &status));
-			pcm_state.setCurrentTooHighSticky(HAL_GetCompressorCurrentTooHighStickyFault(pcm, &status));
-
-			pcm_state.setShorted(HAL_GetCompressorShortedFault(pcm, &status));
-			pcm_state.setShortedSticky(HAL_GetCompressorShortedStickyFault(pcm, &status));
-			pcm_state.setNotConntected(HAL_GetCompressorNotConnectedFault(pcm, &status));
-			pcm_state.setNotConnecteSticky(HAL_GetCompressorNotConnectedStickyFault(pcm, &status));
-			pcm_state.setVoltageFault(HAL_GetPCMSolenoidVoltageFault(pcm, &status));
-			pcm_state.setVoltageStickFault(HAL_GetPCMSolenoidVoltageStickyFault(pcm, &status));
-			pcm_state.setSolenoidBlacklist(HAL_GetPCMSolenoidBlackList(pcm, &status));
-
-			if (status)
-			{
-				ROS_ERROR_STREAM("pcm_read_thread error : status = " << status);
-			}
-			else
-			{
-				// Copy to state shared with read() thread
-				std::lock_guard<std::mutex> l(*mutex);
-				*state = pcm_state;
-			}
+			ROS_ERROR_STREAM("pcm_read_thread error : status = " << status);
 		}
+		else
+		{
+			// Copy to state shared with read() thread
+			std::lock_guard<std::mutex> l(*mutex);
+			*state = pcm_state;
+		}
+
 		tracer.stop();
 		ROS_INFO_STREAM_THROTTLE(2, tracer.report());
 		r.sleep();
@@ -1878,15 +1777,11 @@ bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, con
 	return false;
 }
 
-#define DEBUG_WRITE
+//#define DEBUG_WRITE
 void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 {
 	// Was the robot enabled last time write was run?
 	static bool last_robot_enabled = false;
-
-#ifdef USE_TALON_MOTION_PROFILE
-	bool profile_is_live = false;
-#endif
 
 	for (std::size_t joint_id = 0; joint_id < num_can_talon_srxs_; ++joint_id)
 	{
@@ -2386,7 +2281,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				{
 					if (safeTalonCall(talon->ClearMotionProfileTrajectories(), "ClearMotionProfileTrajectories"))
 					{
-						can_talons_mp_written_[joint_id]->store(false, std::memory_order_relaxed);
 						ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectories");
 					}
 					else
@@ -2442,7 +2336,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				// Subsequent points will be copied by
 				// the process_motion_profile_buffer_thread code
 				//talon->ProcessMotionProfileBuffer();
-				can_talons_mp_written_[joint_id]->store(true, std::memory_order_relaxed);
 
 				ROS_INFO_STREAM("Added joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectories");
 			}
@@ -2494,7 +2387,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 						ctre::phoenix::motorcontrol::DemandType demand1_type_phoenix;
 						if (convertDemand1Type(demand1_type_internal, demand1_type_phoenix))
 						{
-//#define DEBUG_WRITE
 #ifndef DEBUG_WRITE
 							ROS_INFO_STREAM("called Set() on " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
 									" out_mode = " << static_cast<int>(out_mode) << " command = " << command <<
@@ -2514,21 +2406,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 						talon->Set(out_mode, command);
 					}
 				}
-
-#ifdef USE_TALON_MOTION_PROFILE
-				// If any of the talons are set to MotionProfile and
-				// command == 1 to start the profile, set
-				// profile_is_live_ to true. If this is false
-				// for all of them, set profile_is_live_ to false.
-				if ((out_mode == ctre::phoenix::motorcontrol::ControlMode::MotionProfile) &&
-					(command == 1))
-				{
-					profile_is_live = true;
-					can_talons_mp_running_[joint_id]->store(true, std::memory_order_relaxed);
-				}
-				else
-					can_talons_mp_running_[joint_id]->store(false, std::memory_order_relaxed);
-#endif
 			}
 		}
 		else
@@ -2568,10 +2445,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		}
 	}
 	last_robot_enabled = match_data_.isEnabled();
-
-#ifdef USE_TALON_MOTION_PROFILE
-	profile_is_live_.store(profile_is_live, std::memory_order_relaxed);
-#endif
 
 	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
 	{
