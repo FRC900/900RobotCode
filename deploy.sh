@@ -177,6 +177,7 @@ do
 	(echo "Starting Jetson $i native build" && \
 		ssh $i "cd $JETSON_CLONE_LOCATION/zebROS_ws && \
 		source /opt/ros/kinetic/setup.bash && \
+		source /home/ubuntu/2019RobotCode/zebROS_ws/ROSJetsonMaster.sh && \
 		catkin_make" && \
 		echo "Jetson $i native build complete") &
 	JETSON_BUILD_PROCESSES+=($!)
@@ -194,8 +195,9 @@ for i in "${JETSON_BUILD_PROCESSES[@]}"
 do
 	echo "Waiting for JETSON_BUILD_PROCESS $i"
 	wait $i
-	JETSON_RCS+=($?)
-	echo " ... JETSON_BUILD_PROCESS $i returned $?"
+	JETSON_RC=$?
+	JETSON_RCS+=($JETSON_RC)
+	echo " ... JETSON_BUILD_PROCESS $i returned $JETSON_RC"
 done
 
 # Print diagnostic info after all builds / deploys

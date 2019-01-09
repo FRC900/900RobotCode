@@ -496,10 +496,6 @@ FRCRobotSimInterface::FRCRobotSimInterface(ros::NodeHandle &nh,
 FRCRobotSimInterface::~FRCRobotSimInterface()
 {
     sim_joy_thread_.join();
-	for (size_t i = 0; i < num_can_talon_srxs_; i++)
-    {
-        custom_profile_threads_[i].join();
-    }
 }
 
 /*void FRCRobotSimInterface::cube_state_callback(const frc_msgs::CubeState &cube) {
@@ -565,8 +561,6 @@ void FRCRobotSimInterface::init(void)
 		ROS_WARN_STREAM("fails here? 56789: " << i);
 		// Loop through the list of joint names
 
-		if (can_talon_srx_local_hardwares_[i])
-			custom_profile_threads_.push_back(std::thread(&FRCRobotSimInterface::custom_profile_thread, this, i));
 		ROS_WARN("post and stuff");
 	}
 		ROS_WARN_STREAM("fails here? ~");
@@ -730,14 +724,12 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 	{
 		if (!can_talon_srx_local_hardwares_[joint_id])
 			continue;
+
+		custom_profile_write(joint_id);
+
 		auto &ts = talon_state_[joint_id];
 		auto &tc = talon_command_[joint_id];
 
-		if(talon_command_[joint_id].getCustomProfileRun())
-		{
-			can_talon_srx_run_profile_stop_time_[joint_id] = ros::Time::now().toSec();
-			continue; //Don't mess with talons running in custom profile mode
-		}
 		// If commanded mode changes, copy it over
 		// to current state
 		hardware_interface::TalonMode new_mode = tc.getMode();
@@ -824,7 +816,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			double max_integral_accumulator;
 			double closed_loop_peak_output;
 			int    closed_loop_period;
-			if (tc.pidfChanged(p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period, slot) ||  ros::Time::now().toSec()- can_talon_srx_run_profile_stop_time_[joint_id] < .2)
+			if (tc.pidfChanged(p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period, slot))
 			{
 				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" PIDF slot " << slot << " config values");
 				ts.setPidfP(p, slot);

@@ -76,6 +76,24 @@ class DummyJoint
 };
 #define Dumify(name) ros_control_boilerplate::DummyJoint(#name, &name)
 
+class CustomProfileState
+{
+	public:
+		CustomProfileState()
+			: time_start_(ros::Time::now().toSec())
+			, iteration_count_(0)
+			, points_run_(0)
+	{
+	}
+
+	double time_start_;
+	int iteration_count_;
+	int points_run_;
+	hardware_interface::CustomProfileStatus status_;
+	std::vector<std::vector<hardware_interface::CustomProfilePoint>> saved_points_;
+	std::vector<std::vector<double>> saved_times_;
+};
+
 /// \brief Hardware interface for a robot
 class FRCRobotInterface : public hardware_interface::RobotHW
 {
@@ -166,47 +184,20 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 
 		hardware_interface::RobotControllerStateInterface robot_controller_state_interface_;
 
-		void custom_profile_thread(int joint_id);
-		void custom_profile_set_talon(hardware_interface::TalonMode mode, double setpoint, double fTerm, int joint_id, int pidSlot, bool zeroPos, double start_run, int &pid_slot);
+		std::vector<CustomProfileState> custom_profile_state_;
 
-		// These are overridden in hw_interface to actually
-		// write to talon HW
-		virtual void customProfileSetMode(int /*joint_id*/,
-										  hardware_interface::TalonMode /*mode*/,
-										  double /*setpoint*/,
-										  hardware_interface::DemandType /*demandtype*/,
-										  double /*demandvalue*/)
-		{
-		}
+		void custom_profile_write(int joint_id);
+		void custom_profile_set_talon(hardware_interface::TalonMode mode, double setpoint, double fTerm, int joint_id, int pidSlot, bool zeroPos);
 
-		virtual void customProfileSetSensorPosition(int /*joint_id*/, double /*position*/)
-		{
-		}
-		virtual void customProfileSetPIDF(int    /*joint_id*/,
-										  int    /*pid_slot*/,
-										  double /*p*/,
-										  double /*i*/,
-										  double /*d*/,
-										  double /*f*/,
-										  int    /*iz*/,
-										  int    /*allowable_closed_loop_error*/,
-										  double /*max_integral_accumulator*/,
-										  double /*closed_loop_peak_output*/,
-										  int    /*closed_loop_period*/)
-		{
-		}
 		void readJointLocalParams(XmlRpc::XmlRpcValue joint_params,
 								  const bool local,
 								  const bool saw_local_keyword,
 								  bool &local_update,
 								  bool &local_hardware);
 
-		std::vector<std::thread> custom_profile_threads_;
-
 		// Configuration
 		std::vector<std::string> can_talon_srx_names_;
 		std::vector<int>         can_talon_srx_can_ids_;
-		std::vector<double>      can_talon_srx_run_profile_stop_time_;
 		std::vector<bool>        can_talon_srx_local_updates_;
 		std::vector<bool>        can_talon_srx_local_hardwares_;
 		std::size_t              num_can_talon_srxs_;
