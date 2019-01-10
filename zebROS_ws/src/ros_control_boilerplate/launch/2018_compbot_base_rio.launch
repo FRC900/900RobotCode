@@ -12,6 +12,7 @@
 	<group ns="frcrobot_rio">
 
 		<!-- Load controller settings -->
+
 		<rosparam file="$(find ros_control_boilerplate)/config/2018_compbot_base_rio.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_rio.yaml" command="load"/>
 
