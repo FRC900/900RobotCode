@@ -41,6 +41,10 @@
 
 		<node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
 
+		<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" > 
+		     <arg name="port" value="5803"/>
+			   </include>
+
 	</group>
 	<!-- Run this on the Jetson, but in the Rio namespace so it gets e.g.
 		 joystick and navx from /frcrobot_rio/* -->
