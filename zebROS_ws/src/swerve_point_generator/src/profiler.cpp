@@ -126,10 +126,9 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	std::vector<double> dtds_for_spline;
 	std::vector<double> arc_length_for_spline;
 	double total_arc;
-	double period_t;
 	//Run spline parametrizing code - also gets dtds and arc lengths
 	spline = parametrize_spline(x_splines_first_deriv, y_splines_first_deriv, end_points,
-								total_arc, dtds_for_spline, arc_length_for_spline, period_t);
+								total_arc, dtds_for_spline, arc_length_for_spline);
 	int point_count = 0;
 	std::vector<double> accelerations;
 	path_point holder_point;
@@ -471,11 +470,11 @@ tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &
 		const std::vector<spline_coefs> &y_splines_first_deriv,
 		const std::vector<double> &end_points, double &total_arc_length,
 		std::vector<double> &dtds_by_spline,
-		std::vector<double> &arc_length_by_spline, double &period_t)
+		std::vector<double> &arc_length_by_spline)
 {
 	//
 	total_arc_length = 0;
-	period_t = (end_points[0] - 0.0) / spline_points;
+	double period_t = (end_points[0] - 0.0) / spline_points;
 	double start = 0;
 	double arc_before = 0;
 	double b_val = 0;

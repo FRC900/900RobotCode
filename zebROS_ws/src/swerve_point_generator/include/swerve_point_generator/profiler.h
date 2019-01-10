@@ -119,7 +119,7 @@ class swerve_profiler
 		tk::spline parametrize_spline(const std::vector<spline_coefs> &x_spline,
 									  const std::vector<spline_coefs> &y_spline, const std::vector<double> &end_points,
 									  double &total_arc_length, std::vector<double> &dtds_by_spline,
-									  std::vector<double> &arc_length_by_spline, double &period_t);
+									  std::vector<double> &arc_length_by_spline);
 
 		//Calculates a point on some spline
 		void calc_point(const spline_coefs &spline, const double t, double &returner);
