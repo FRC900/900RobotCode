@@ -344,6 +344,7 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 
 		ROS_INFO_STREAM("solve_for_next_V :theta:" << theta << " cos_t:" << cos_t << " sin_t:" << sin_t
 				<< " path_radius_squared:" << path_radius_squared
+				<< " path_angular_velocity_squared:" << path_angular_velocity_squared
 				<< " path_angular_accel_squared:" << path_angular_accel_squared
 				<< " path_a_over_r:" << path_a_over_r);
 		const double v_curve_max_2 = sqrt(accel_defined /
