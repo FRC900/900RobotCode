@@ -40,6 +40,7 @@
 #pragma once
 #include <time.h>
 #include <ros_control_boilerplate/frc_robot_interface.h>
+#include <ros_control_boilerplate/tracer.h>
 
 namespace ros_control_boilerplate
 {
@@ -100,6 +101,8 @@ class GenericHWControlLoop
 
 		/** \brief Abstract Hardware Interface for your robot */
 		boost::shared_ptr<ros_control_boilerplate::FRCRobotInterface> hardware_interface_;
+
+		Tracer tracer_;
 
 };  // end class
 

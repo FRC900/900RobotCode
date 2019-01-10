@@ -33,7 +33,7 @@
  *********************************************************************/
 
 /*
- * Author: Enrique Fernández
+ * Original Author: Enrique Fernández
  */
 
 #pragma once
@@ -119,16 +119,16 @@ class TalonSwerveDriveController
 
 	private:
 		Eigen::Vector2d wheel1;
-        	Eigen::Vector2d wheel2;
-        	Eigen::Vector2d wheel3;
-        	Eigen::Vector2d wheel4;
+		Eigen::Vector2d wheel2;
+		Eigen::Vector2d wheel3;
+		Eigen::Vector2d wheel4;
 
 		int set_check_;
 		int num_profile_slots_;
 
-		void compOdometry(const ros::Time& time, const double inv_delta_t);
-		Eigen::MatrixX2d new_wheel_pos_;	
-		std::array<Eigen::Vector2d, WHEELCOUNT> old_wheel_pos_; //	
+		void compOdometry(const ros::Time &time, const double inv_delta_t);
+		Eigen::MatrixX2d new_wheel_pos_;
+		std::array<Eigen::Vector2d, WHEELCOUNT> old_wheel_pos_; //
 		std::array<double, WHEELCOUNT> last_wheel_rot_;	//
 
 		Eigen::Vector2d neg_wheel_centroid_;
@@ -155,10 +155,13 @@ class TalonSwerveDriveController
 			double ang;
 			ros::Time stamp;
 
-			Commands() : lin({0.0, 0.0}), ang(0.0), stamp(0.0) {}
+			Commands() : lin(
+			{
+				0.0, 0.0
+			}), ang(0.0), stamp(0.0) {}
 		};
 		struct cmd_points
-		{	
+		{
 			std::vector<std::vector<double>> drive_pos;
 			std::vector<std::vector<double>> drive_f;
 			std::vector<std::vector<double>> steer_pos;
@@ -183,36 +186,31 @@ class TalonSwerveDriveController
 			int id_counter;
 			full_profile_cmd() : wipe_all(false), buffer(false), run(false), brake(false),  run_slot(0), change_queue(false), newly_set(false), id_counter(0) {}
 		};
-				
+
 		boost::circular_buffer<full_profile_cmd> full_profile_buffer_{10}; //likely more than needed
-			
+
 		realtime_tools::RealtimeBuffer<bool> mode_;
 		//realtime_tools::RealtimeBuffer<bool> wipe_all_; //TODO, add this functionality
 		realtime_tools::RealtimeBuffer<Commands> command_;
 		Commands command_struct_;
 		Commands brake_struct_;
 		Commands brake_struct_other_;
-		
+
 		ros::Subscriber sub_command_;
-
-
 
 		ros::ServiceServer motion_profile_serv_;
 		ros::ServiceServer brake_serv_;
 		ros::ServiceServer wheel_pos_serv_;
-	
-		
+
 		std::array<std::array<hardware_interface::CustomProfilePoint, 2>, WHEELCOUNT> holder_points_;
 		std::array<std::array<std::vector<hardware_interface::CustomProfilePoint>, 2>, WHEELCOUNT> full_profile_;
 
-
-	
 		realtime_tools::RealtimeBuffer<bool> run_;
-		realtime_tools::RealtimeBuffer<int> slot_;		
+		realtime_tools::RealtimeBuffer<int> slot_;
 
 		hardware_interface::TalonMode motion_profile = hardware_interface::TalonMode::TalonMode_MotionProfile;
 		hardware_interface::TalonMode velocity_mode = hardware_interface::TalonMode::TalonMode_Velocity;
-        	hardware_interface::TalonMode position_mode = hardware_interface::TalonMode::TalonMode_MotionMagic;
+		hardware_interface::TalonMode position_mode = hardware_interface::TalonMode::TalonMode_MotionMagic;
 
 		/// Publish executed commands
 		//boost::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped> > cmd_vel_pub_;
@@ -224,13 +222,13 @@ class TalonSwerveDriveController
 
 		/// Wheel radius (assuming it's the same for the left and right wheels):
 		double wheel_radius_;
-		
+
 		swerveVar::driveModel model_;
-		
+
 		bool invertWheelAngle_;
 
 		swerveVar::ratios driveRatios_;
-		
+
 		swerveVar::encoderUnits units_;
 		double f_static_;
 
@@ -296,7 +294,7 @@ class TalonSwerveDriveController
 		 * \param right_wheel_name Name of the right wheel joint
 		 */
 		/*
-		
+
 		bool setOdomParamsFromUrdf(ros::NodeHandle& root_nh,
 		                            const std::string& steering_name,
 		                            const std::string& speed_name,
@@ -339,9 +337,9 @@ class TalonSwerveDriveController
 		static const double DEF_SD;
 
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheel_coords_;
-		
+
 //		static const Eigen::Vector2d X_DIR;
-		
+
 		bool pub_odom_to_base_;       // Publish the odometry to base frame transform
 		ros::Duration odom_pub_period_;    // Odometry publishing period
 		Eigen::Affine2d init_odom_to_base_;  // Initial odometry to base frame transform
@@ -349,7 +347,6 @@ class TalonSwerveDriveController
 		Eigen::Affine2d odom_rigid_transf_;
 		Eigen::Matrix2Xd wheel_pos_;
 
-		
 		ros::Publisher profile_queue_num;
 
 		realtime_tools::RealtimePublisher<nav_msgs::Odometry> odom_pub_;
