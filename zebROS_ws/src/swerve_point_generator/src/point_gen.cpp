@@ -69,12 +69,23 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 
 		for (int i = priv_num; i < req.spline_groups[s]; i++)
 		{
-			ROS_INFO_STREAM("orient_coefs[" << i << "].spline=" << req.orient_coefs[i].spline[0] << " " <<
-							req.orient_coefs[i].spline[1] << " " <<
-							req.orient_coefs[i].spline[2] << " " <<
-							req.orient_coefs[i].spline[3] << " " <<
-							req.orient_coefs[i].spline[4] << " " <<
-							req.orient_coefs[i].spline[5]);
+			x_splines.push_back(swerve_profile::spline_coefs(
+									req.x_coefs[i].spline[0] * neg_x,
+									req.x_coefs[i].spline[1] * neg_x,
+									req.x_coefs[i].spline[2] * neg_x,
+									req.x_coefs[i].spline[3] * neg_x,
+									req.x_coefs[i].spline[4] * neg_x,
+									req.x_coefs[i].spline[5] * neg_x));
+			ROS_INFO_STREAM("x_coefs[" << i << "].spline=" << x_splines.back());
+
+			y_splines.push_back(swerve_profile::spline_coefs(
+									req.y_coefs[i].spline[0],
+									req.y_coefs[i].spline[1],
+									req.y_coefs[i].spline[2],
+									req.y_coefs[i].spline[3],
+									req.y_coefs[i].spline[4],
+									req.y_coefs[i].spline[5]));
+			ROS_INFO_STREAM("y_coefs[" << i << "].spline=" << y_splines.back());
 
 			orient_splines.push_back(swerve_profile::spline_coefs(
 										 req.orient_coefs[i].spline[0] * neg_x,
@@ -85,37 +96,6 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 										 req.orient_coefs[i].spline[5] * neg_x));
 			ROS_INFO_STREAM("orient_coefs[" << i << "].spline=" << orient_splines.back());
 
-			ROS_INFO_STREAM("x_coefs[" << i << "].spline=" << req.x_coefs[i].spline[0] << " " <<
-							req.x_coefs[i].spline[1] << " " <<
-							req.x_coefs[i].spline[2] << " " <<
-							req.x_coefs[i].spline[3] << " " <<
-							req.x_coefs[i].spline[4] << " " <<
-							req.x_coefs[i].spline[5]);
-
-			x_splines.push_back(swerve_profile::spline_coefs(
-									req.x_coefs[i].spline[0] * neg_x,
-									req.x_coefs[i].spline[1] * neg_x,
-									req.x_coefs[i].spline[2] * neg_x,
-									req.x_coefs[i].spline[3] * neg_x,
-									req.x_coefs[i].spline[4] * neg_x,
-									req.x_coefs[i].spline[5] * neg_x));
-			ROS_INFO_STREAM("x_coefs[" << i << "].spline=" << x_splines.back());
-
-			ROS_INFO_STREAM("y_coefs[" << i << "].spline=" << req.y_coefs[i].spline[0] << " " <<
-							req.y_coefs[i].spline[1] << " " <<
-							req.y_coefs[i].spline[2] << " " <<
-							req.y_coefs[i].spline[3] << " " <<
-							req.y_coefs[i].spline[4] << " " <<
-							req.y_coefs[i].spline[5]);
-
-			y_splines.push_back(swerve_profile::spline_coefs(
-									req.y_coefs[i].spline[0],
-									req.y_coefs[i].spline[1],
-									req.y_coefs[i].spline[2],
-									req.y_coefs[i].spline[3],
-									req.y_coefs[i].spline[4],
-									req.y_coefs[i].spline[5]));
-			ROS_INFO_STREAM("y_coefs[" << i << "].spline=" << y_splines.back());
 
 			ROS_INFO_STREAM("hrer: " << req.end_points[i] - shift_by << " r_s: " <<  req.spline_groups[s] <<  " s: " << s);
 			end_points_holder.push_back(req.end_points[i] - shift_by);
