@@ -27,7 +27,7 @@ if sudo mount /dev/nvme0n1p1 /mnt/900_2; then
 else
 		date >> /home/ubuntu/mounted.txt
 		echo did not mount >> /home/ubuntu/mounted.txt
-		roslaunch controller_node jetson_teleop.launch output:=screen
+		roslaunch controller_node 2019_compbot_combined.launch output:=screen
 fi
 
 top -b > /mnt/900_2/$(date +%Y%m%d%H%M%S)_top_log.txt
