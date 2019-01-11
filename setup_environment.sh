@@ -144,11 +144,12 @@ if [ "$jetson" = true ] ; then
 		sudo bash -c "echo \"# Modules for CAN interface\" >> /etc/modules"
 		sudo bash -c "echo can >> /etc/modules"
 		sudo bash -c "echo can_raw >> /etc/modules"
-		sudo bash -c "echo mttcan >> /etc/modules"
+		#sudo bash -c "echo mttcan >> /etc/modules"
 
 		# This shouldn't be the least bit dangerous
-		sudo rm /etc/modprobe.d/blacklist-mttcan.conf 
+		#sudo rm /etc/modprobe.d/blacklist-mttcan.conf 
 	fi
+	#find /etc/systemd/system -name 'nv-l4t-usb-device-mode*' -delete
 
 	# Set up ssh host config (add port 5801) 
 	sudo sed "s/Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && sudo mv sshd_config /etc/ssh
