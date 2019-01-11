@@ -500,10 +500,12 @@ tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &
 		{
 			dtds_by_spline.push_back((end_points[i - 1] - end_points[i - 2]) /  (total_arc_length
 									 - arc_before));
+		ROS_INFO_STREAM("dtds by spline:" << dtds_by_spline[i]);
 		}
 		else if (i == 1)
 		{
 			dtds_by_spline.push_back((end_points[0] - 0) /  (total_arc_length - arc_before));
+		ROS_INFO_STREAM("dtds by spline:" << dtds_by_spline[i]);
 		}
 		arc_before = total_arc_length;
 		ROS_INFO_STREAM("arc_before: " << arc_before);
@@ -542,11 +544,13 @@ tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &
 	{
 		dtds_by_spline.push_back((end_points[x_splines_first_deriv.size() - 1] - 0)
 								 /  (total_arc_length - arc_before));
+		ROS_INFO_STREAM("dtds by spline:" << dtds_by_spline.back());
 	}
 	else
 	{
 		dtds_by_spline.push_back((end_points[x_splines_first_deriv.size() - 1]
 								  - end_points[x_splines_first_deriv.size() - 2]) /  (total_arc_length - arc_before));
+		ROS_INFO_STREAM("dtds by spline:" << dtds_by_spline.back());
 	}
 
 	//Put in the last values
@@ -565,6 +569,10 @@ tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &
 	ROS_INFO_STREAM("successful parametrize spline");
 	return s;
 }
+
+// Solves for x in equations of the form 0 = a * x^2 + b * x + c
+// Returns true and the positive root of x if a real solution exists
+// Otherwise, returns false
 bool swerve_profiler::poly_solve(const double a, const double b, const double c, double &x)
 {
 	const double det = b * b - 4 * a * c;
@@ -603,9 +611,9 @@ void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs>
 		const std::vector<double> &arc_length_by_spline, const double t, const double arc_length)
 {
 	size_t which_spline;
-	which_spline = 0;
+
 	//Find the spline based on t
-	for (; which_spline < x_splines.size() - 1; which_spline++)
+	for (which_spline = 0; which_spline < x_splines.size() - 1; which_spline++)
 	{
 		if (t < end_points[which_spline])
 		{
