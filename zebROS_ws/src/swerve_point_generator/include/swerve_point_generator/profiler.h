@@ -10,6 +10,7 @@
 
 namespace swerve_profile
 {
+const double max_path_radius = 1.0e10;
 
 //Data type for characterizing a point on the path
 struct path_point
@@ -23,7 +24,7 @@ struct path_point
 	double angular_velocity;
 	double angular_accel;
 	path_point(void):
-		radius(1000000000000000000.0), //TODO : make a constant for "infinite radius" and use it throughout the code
+		radius(max_path_radius),
 		pos_x(0),
 		pos_y(0),
 		path_angle(0),
@@ -118,7 +119,7 @@ class swerve_profiler
 		tk::spline parametrize_spline(const std::vector<spline_coefs> &x_spline,
 									  const std::vector<spline_coefs> &y_spline, const std::vector<double> &end_points,
 									  double &total_arc_length, std::vector<double> &dtds_by_spline,
-									  std::vector<double> &arc_length_by_spline, double &period_t);
+									  std::vector<double> &arc_length_by_spline);
 
 		//Calculates a point on some spline
 		void calc_point(const spline_coefs &spline, const double t, double &returner);

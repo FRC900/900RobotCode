@@ -42,7 +42,15 @@ class PathFollowAction
 			double next_time;
 			std::vector<double> last_velocities;
 			std::vector<double> next_velocities;
+			std::vector<double> last_positions;
 			int num_points = goal->joint_trajectory.points.size();
+			for(int i = 0; i < num_points; i++)
+			{
+				ROS_INFO_STREAM("orientation velocity: " << goal->joint_trajectory.points[i].velocities[2]);
+			}
+
+			double total_angle = 0;
+			double last_elapsed_time = ros::Time::now().toSec() - start_time;
 
 			ROS_INFO_STREAM("max_time = " << goal->joint_trajectory.points[num_points - 1].time_from_start.toSec());
 			while(ros::ok())
@@ -55,7 +63,7 @@ class PathFollowAction
 					break;
 				}
 
-				for(int i = 0; i < num_points; i++)
+				for(int i = 1; i < num_points; i++)
 				{
 					if(goal->joint_trajectory.points[i].time_from_start.toSec() > elapsed_time)
 					{
@@ -63,26 +71,33 @@ class PathFollowAction
 						next_time = goal->joint_trajectory.points[i].time_from_start.toSec();
 						last_velocities = goal->joint_trajectory.points[i - 1].velocities;//x, y, rotation
 						next_velocities = goal->joint_trajectory.points[i].velocities;//x, y, rotation
+						last_positions = goal->joint_trajectory.points[i].positions;
 						break;
 					}
 				}
 
-				if(elapsed_time < last_time || elapsed_time > next_time)
+				//if(elapsed_time < last_time || elapsed_time > next_time)
 					ROS_ERROR_STREAM("elapsed time " << elapsed_time << "does not fall between the current trajectory points " << last_time << " and " << next_time);
 
 				geometry_msgs::Twist cmd_vel;
 				cmd_vel.linear.x = last_velocities[0] + (next_velocities[0] - last_velocities[0]) / (next_time - last_time) * (elapsed_time - last_time);
 				cmd_vel.linear.y = last_velocities[1] + (next_velocities[1] - last_velocities[1]) / (next_time - last_time) * (elapsed_time - last_time);
 				cmd_vel.angular.z = last_velocities[2] + (next_velocities[2] - last_velocities[2]) / (next_time - last_time) * (elapsed_time - last_time);
+				ROS_INFO_STREAM("orientation: " << last_positions[2] << " orientation velocities: " << last_velocities[2]);
+				ROS_INFO_STREAM("sending orientation " << cmd_vel.angular.z << " from path_follow");
+
+				total_angle += cmd_vel.angular.z * (elapsed_time - last_elapsed_time);
+				ROS_INFO_STREAM("total_angle = " << total_angle);
 
 				cmd_vel_pub.publish(cmd_vel);
 
+				last_elapsed_time = elapsed_time;
 				point_index++;
 				ros::spinOnce();
 				r.sleep();
 				//set feedback
 			}
-			//set result
+			//set resut
 		}
 };
 

@@ -9,13 +9,13 @@
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="static_map" default="True"/>
 
-	<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node> 
 	<group ns="frcrobot_jetson">
+		<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node> 
 
 		<!-- Load controller settings -->
 		<rosparam file="$(find ros_control_boilerplate)/config/2018_compbot_base_jetson.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/talon_swerve_offsets_new_0.yaml" command="load"/>
-		
+
 		<rosparam file="$(find ros_control_boilerplate)/config/2018_swerve_drive.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
@@ -38,6 +38,7 @@
 
                 <node name="path_to_goal_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
                 <node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
+				<node name="path_follower" pkg="swerve_point_generator" type="path_follower" output="screen"/>
 
 		<node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
 

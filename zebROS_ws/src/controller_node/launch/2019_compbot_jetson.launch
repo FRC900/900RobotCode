@@ -10,11 +10,12 @@
 	<arg name="static_map" default="True"/>
 
 	<group ns="frcrobot_jetson">
-                <node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node> 
+		<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node> 
 
-                <!-- These need to be replaced with the real thing -->
+		<!-- These need to be replaced with the real thing -->
 		<rosparam file="$(find ros_control_boilerplate)/config/2018_compbot_base_jetson.yaml" command="load"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/talon_swerve_offsets_new_1.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/talon_swerve_offsets_new_0.yaml" command="load"/>
+
 		<rosparam file="$(find ros_control_boilerplate)/config/2018_swerve_drive.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
@@ -41,12 +42,16 @@
 
 		<node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
 
+		<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" > 
+		     <arg name="port" value="5803"/>
+			   </include>
+
 	</group>
 	<!-- Run this on the Jetson, but in the Rio namespace so it gets e.g.
 		 joystick and navx from /frcrobot_rio/* -->
-        <!-- This needs to be replaced with the real thing -->
-	<group ns="frcrobot_rio">
-		<node name="teleop_joystick_offseason" pkg="teleop_joystick_control" type="teleop_joystick_offseason" output="screen" >
+	<group ns="frcrobot_jetson">
+		<node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" >
+			<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_rio/joystick_states"/>
 		</node>
 	</group>
 
