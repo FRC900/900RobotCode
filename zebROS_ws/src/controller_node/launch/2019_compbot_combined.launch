@@ -21,8 +21,9 @@
 		<machine name="roboRIO" address="10.9.0.2" env-loader="/home/admin/2019RobotCode/zebROS_ws/ROSJetsonMaster.sh" user="admin" password="admin" default="true"/>
 	</group>
 	<group if="$(eval arg('hw_or_sim')=='sim')">
-                <node name="joy_node" pkg="joy" type="joy_node" output="screen"/>
+		<node name="/joy" pkg="joy" type="joy_node" output="screen"/>
 	</group>
+	<remap from="joy" to="joystick_states_raw" />
     <include file="$(find controller_node)/launch/2019_compbot_rio.launch" pass_all_args="true"/>
 
     <!-- If you want to include a second Jetson, create a new launch file for it and uncomment these lines: -->
