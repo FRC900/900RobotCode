@@ -7,7 +7,7 @@
 # we're installing from.  This should be close enough
 # to reality to get past ssl errors from pip if the 
 # date on the Rio is totally wacky
-ssh -p 22 admin@$1 date -u --set="\"`date -u +"%Y.%m.%d-%T"`\""
+ssh -p 22 admin@$1 date -u --set=\"$(date)\"
 
 ssh -p 22 admin@$1 'swapon /dev/sda5'
 
@@ -72,11 +72,7 @@ ssh -p 22 admin@$1 'mv rtc-bq32k.ko /lib/modules/`uname -r`/kernel'
 ssh -p 22 admin@$1 'depmod'
 ssh -p 22 admin@$1 'i2cdetect -y 2'
 ssh -p 22 admin@$1 'echo bq32000 0x68 | tee /sys/class/i2c-adapter/i2c-2/new_device'
-
-# Copy wpilib to roborio
-ssh -p 22 admin@$1 mkdir wpilib
-cd ~/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib/linux/athena/shared
-scp -P 22 *.so *.so.3.? admin@$1:wpilib
+ssh -p 22 admin@$1 'hwclock -w'
 
 scp -P 22 ~/2019RobotCode/setupClock admin@$1:/etc/init.d/setupClock
 ssh -p 22 admin@$1 'chmod +x /etc/init.d/setupClock'
@@ -84,6 +80,12 @@ ssh -p 22 admin@$1 'ln -sf /etc/init.d/setupClock /etc/init.d/hwclock.sh'
 ssh -p 22 admin@$1 '/usr/sbin/update-rc.d -f setupClock defaults'
 ssh -p 22 admin@$1 '/usr/sbin/update-rc.d -f hwclock.sh defaults'
 
+# Copy wpilib to roborio
+ssh -p 22 admin@$1 mkdir wpilib
+cd ~/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib/linux/athena/shared
+scp -P 22 *.so *.so.3.? admin@$1:wpilib
+
+# Set up ssh keys
 scp -P 22 ~/2019RobotCode/jetson_setup/roborio_dot_ssh.tar.bz2 admin@$1:.
 ssh -p 22 admin@$1 'mkdir .ssh'
 ssh -p 22 admin@$1 'cd .ssh -p 22 && tar -xjf ../roborio_dot_ssh.tar.bz2'
@@ -95,6 +97,7 @@ ssh -p 22 admin@$1 "sed \"s/#Port 22/Port 22\\nPort 5801/g\" /etc/ssh/sshd_confi
 
 # Restart sshd to pick up above changes
 ssh -p 22 admin@$1 "/etc/init.d/sshd restart"
+sleep 5
 
 # Copy rio_bashrc.sh, ROSJetsonMaster.sh to /home/admin
 scp -P 22 ~/2019RobotCode/rio_bashrc.sh admin@$1:.
