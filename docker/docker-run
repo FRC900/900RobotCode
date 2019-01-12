@@ -8,4 +8,4 @@ set -o pipefail
 
 docker run -it --privileged --net=host -v /tmp/.X11-unix:/tmp/.X11-unix \
  -v $HOME/2019RobotCode:/home/ubuntu/2019RobotCode \
- -e DISPLAY=$DISPLAY --device=/dev/bus/usb/002/023 --user ubuntu frc900/zebros-2019-dev:latest /bin/bash
+ -e DISPLAY=$DISPLAY --device=/dev/bus/usb/002/026 --user ubuntu frc900/zebros-2019-dev:latest /bin/bash

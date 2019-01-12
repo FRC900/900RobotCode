@@ -50,10 +50,10 @@ target_link_libraries(teleop_joystick_comp
   ${catkin_LIBRARIES}
 )
 
-add_executable(translate_joystick_data src/translate_joystick_data.cpp)
-set_target_properties(translate_joystick_data PROPERTIES OUTPUT_NAME 
-translate_joystick_data PREFIX "")
-target_link_libraries(translate_joystick_data
+add_executable(translate_joystick_data_node src/translate_joystick_data.cpp)
+set_target_properties(translate_joystick_data_node PROPERTIES OUTPUT_NAME 
+translate_joystick_data_node PREFIX "")
+target_link_libraries(translate_joystick_data_node
   ${catkin_LIBRARIES}
 )
 
