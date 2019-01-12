@@ -6,23 +6,23 @@ ros_control_boilerplate::JoystickState processed_msg;
 
 void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 {
-	processed_msg.rightStickY = msg->axes[5];
-	processed_msg.rightStickX = msg->axes[4];
+	processed_msg.rightStickY = msg->axes[4];
+	processed_msg.rightStickX = msg->axes[3];
 	processed_msg.leftStickY = msg->axes[1];
 	processed_msg.leftStickX = msg->axes[0];
 	processed_msg.leftTrigger = msg->axes[2];
-	processed_msg.rightTrigger = msg->axes[3];
+	processed_msg.rightTrigger = msg->axes[5];
 
-	processed_msg.buttonXButton = msg->buttons[3];
-	processed_msg.buttonYButton = msg->buttons[4];
-	processed_msg.bumperLeftButton = msg->buttons[5];
-	processed_msg.bumperRightButton = msg->buttons[6];
-	processed_msg.stickLeftButton = msg->buttons[9];
-	processed_msg.stickRightButton = msg->buttons[10];
-	processed_msg.buttonAButton = msg->buttons[1];
-	processed_msg.buttonBButton = msg->buttons[2];
-	processed_msg.buttonBackButton = msg->buttons[7];
-	processed_msg.buttonStartButton = msg->buttons[8];
+	processed_msg.buttonXButton = msg->buttons[2];
+	processed_msg.buttonYButton = msg->buttons[3];
+	processed_msg.bumperLeftButton = msg->buttons[4];
+	processed_msg.bumperRightButton = msg->buttons[5];
+	processed_msg.stickLeftButton = msg->buttons[8];
+	processed_msg.stickRightButton = msg->buttons[9];
+	processed_msg.buttonAButton = msg->buttons[0];
+	processed_msg.buttonBButton = msg->buttons[1];
+	processed_msg.buttonBackButton = msg->buttons[6];
+	processed_msg.buttonStartButton = msg->buttons[7];
 }
 
 int main(int argc, char ** argv)
