@@ -12,9 +12,11 @@ fps = FPS().start()
 while(True):
     frame = cap.read()
     grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    edges = cv2.Canny(grey, 100, 200, 9)
-    cv2.imshow("feed", edges)
-    #cv2.imshow("feed", frame)
+    blur = cv2.bilateralFilter(grey, 5, 200, 200)
+    edges = cv2.Canny(blur, 100, 200, 5)
+    #cv2.imshow("grey", grey)
+    #cv2.imshow("blur", blur)
+    cv2.imshow("edges", edges)
     if (cv2.waitKey(1) & 0xFF == ord('q')):
         	break
     fps.update()
