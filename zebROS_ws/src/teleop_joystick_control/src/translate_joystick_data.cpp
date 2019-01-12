@@ -13,20 +13,20 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	processed_msg.leftTrigger = msg->axes[2];
 	processed_msg.rightTrigger = msg->axes[5];
 
-	while(msg->axes[6] > 0)
+	if(msg->axes[6] > 0)
 	{
 		processed_msg.directionLeftButton = true
 	;}
 
-	while(msg->axes[6] < 0)
+	if(msg->axes[6] < 0)
 	{
 		processed_msg.directionRightButton = true
 	;}	
-	while(msg->axes[7] > 0)
+	if(msg->axes[7] > 0)
 	{
 		processed_msg.directionUpButton = true
 	;}	
-	while(msg->axes[7] < 0)
+	if(msg->axes[7] < 0)
 	{
 		processed_msg.directionDownButton = true
 	;}
