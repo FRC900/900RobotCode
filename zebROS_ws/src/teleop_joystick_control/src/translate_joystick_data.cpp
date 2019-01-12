@@ -12,6 +12,8 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	processed_msg.leftStickX = msg->axes[0];
 	processed_msg.leftTrigger = msg->axes[2];
 	processed_msg.rightTrigger = msg->axes[5];
+	processed_msg.dPadX = msg->axes[6];
+	processed_msg.dpadY = msg->axes[7];
 
 	processed_msg.buttonXButton = msg->buttons[2];
 	processed_msg.buttonYButton = msg->buttons[3];
