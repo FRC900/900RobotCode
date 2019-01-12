@@ -16,19 +16,23 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	if(msg->axes[6] > 0)
 	{
 		processed_msg.directionLeftButton = true
+		processed_msg.directionRightButton = false
 	;}
 
 	if(msg->axes[6] < 0)
 	{
 		processed_msg.directionRightButton = true
+		processed_msg.directionLeftButton = false
 	;}	
 	if(msg->axes[7] > 0)
 	{
 		processed_msg.directionUpButton = true
+		processed_msg.directionDownButton = false
 	;}	
 	if(msg->axes[7] < 0)
 	{
 		processed_msg.directionDownButton = true
+		processed_msg.directionUpButton = false
 	;}
 
 	processed_msg.buttonXButton = msg->buttons[2];
