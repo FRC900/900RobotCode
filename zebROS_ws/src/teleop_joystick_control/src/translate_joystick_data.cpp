@@ -16,20 +16,20 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	while(msg->axes[6] > 0)
 	{
 		processed_msg.directionLeftButton = true
-	}
+	;}
 
 	while(msg->axes[6] < 0)
 	{
 		processed_msg.directionRightButton = true
-	}	
+	;}	
 	while(msg->axes[7] > 0)
 	{
 		processed_msg.directionUpButton = true
-	}	
+	;}	
 	while(msg->axes[7] < 0)
 	{
 		processed_msg.directionDownButton = true
-	}
+	;}
 
 	processed_msg.buttonXButton = msg->buttons[2];
 	processed_msg.buttonYButton = msg->buttons[3];
