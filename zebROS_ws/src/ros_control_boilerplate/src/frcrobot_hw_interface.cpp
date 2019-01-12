@@ -1388,15 +1388,15 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			auto &m = realtime_pub_joystick_->msg_;
 			m.header.stamp = time_now_t;
 
-                        for(int i = 0; i < 6; i++)
-                        {
-                            m.axes.push_back(joysticks_[0]->GetRawAxis(i));
-                        }
-                        
-                        for(int i = 0; i < 10; i++)
-                        {
-                            m.buttons.push_back(joysticks_[0]->GetRawButton(i));
-                        }
+			for(int i = 0; i < 6; i++)
+			{
+				m.axes.push_back(joysticks_[0]->GetRawAxis(i));
+			}
+
+			for(int i = 0; i < 10; i++)
+			{
+				m.buttons.push_back(joysticks_[0]->GetRawButton(i));
+			}
 
 			/*m.rightStickY = joysticks_[0]->GetRawAxis(5);
 			m.rightStickX = joysticks_[0]->GetRawAxis(4);
