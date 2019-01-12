@@ -17,8 +17,8 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	processed_msg.buttonYButton = msg->buttons[3];
 	processed_msg.bumperLeftButton = msg->buttons[4];
 	processed_msg.bumperRightButton = msg->buttons[5];
-	processed_msg.stickLeftButton = msg->buttons[8];
-	processed_msg.stickRightButton = msg->buttons[9];
+	processed_msg.stickLeftButton = msg->buttons[9];
+	processed_msg.stickRightButton = msg->buttons[10];
 	processed_msg.buttonAButton = msg->buttons[0];
 	processed_msg.buttonBButton = msg->buttons[1];
 	processed_msg.buttonBackButton = msg->buttons[6];
