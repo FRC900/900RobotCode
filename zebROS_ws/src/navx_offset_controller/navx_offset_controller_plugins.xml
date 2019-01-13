@@ -1,4 +1,4 @@
-<library path="lib/libarm_controller">
+<library path="lib/libnavx_offset_controller">
 
 	<class name="navx_offset_controller/NavXOffsetController" type="navx_offset_controller::NavXOffsetController" base_class_type="controller_interface::ControllerBase">
 		<description>
