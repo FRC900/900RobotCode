@@ -144,11 +144,12 @@ if [ "$jetson" = true ] ; then
 		sudo bash -c "echo \"# Modules for CAN interface\" >> /etc/modules"
 		sudo bash -c "echo can >> /etc/modules"
 		sudo bash -c "echo can_raw >> /etc/modules"
-		sudo bash -c "echo mttcan >> /etc/modules"
+		#sudo bash -c "echo mttcan >> /etc/modules"
 
 		# This shouldn't be the least bit dangerous
-		sudo rm /etc/modprobe.d/blacklist-mttcan.conf 
+		#sudo rm /etc/modprobe.d/blacklist-mttcan.conf 
 	fi
+	#find /etc/systemd/system -name 'nv-l4t-usb-device-mode*' -delete
 
 	# Set up ssh host config (add port 5801) 
 	sudo sed "s/Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && sudo mv sshd_config /etc/ssh
@@ -209,7 +210,7 @@ if [ "$jetson" = true ] ; then
     mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
 	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
     cd /home/ubuntu 
-	wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.12.0*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*" 
+	wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.12.1*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*"
 	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
 	find /home/ubuntu/devsite.ctr-electronics.com -name \*headers\*zip | xargs -n 1 unzip -o 
 	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 

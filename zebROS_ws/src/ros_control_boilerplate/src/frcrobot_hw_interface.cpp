@@ -147,8 +147,6 @@ FRCRobotHWInterface::FRCRobotHWInterface(ros::NodeHandle &nh, urdf::Model *urdf_
 // Clean up whatever we've created in init()
 FRCRobotHWInterface::~FRCRobotHWInterface()
 {
-	motion_profile_thread_.join();
-
 	for (size_t i = 0; i < num_can_talon_srxs_; i++)
 	{
 		if (can_talon_srx_local_hardwares_[i])
@@ -169,72 +167,6 @@ FRCRobotHWInterface::~FRCRobotHWInterface()
 		pcm_thread_[i].join();
 	for (size_t i = 0; i < num_pdps_; i++)
 		pdp_thread_[i].join();
-}
-
-/*
- * Thread to feed talon motion profile data from
- * software buffers into the hardware
- * Previous attempts acted weird - different
- * talons would start and stop profiles at different
- * times.  This code has since been updated to lock
- * access to motion profile config to insure only
- * one thread is working with it at a time - perhaps
- * that will help? Need to test
- * also, experiment with 1 thread per talon rather than
- * 1 thread for all of them
- */
-void FRCRobotHWInterface::process_motion_profile_buffer_thread(double hz)
-{
-	return;
-#if 0
-	ros::Duration(3).sleep();
-	bool set_frame_period[num_can_talon_srxs_];
-	for (size_t i = 0; i < num_can_talon_srxs_; i++)
-		set_frame_period[i] = false;
-
-	ros::Rate rate(hz);
-	while (ros::ok())
-	{
-		bool writing_points = false;
-		for (size_t i = 0; i < num_can_talon_srxs_; i++)
-		{
-			// TODO : see if we can eliminate this.  It is used to
-			// skip accesses if motion profiles were never written
-			// but we can also test using mp_status below...
-			if (can_talons_mp_written_[i]->load(std::memory_order_relaxed))
-			{
-				// Avoid accessing motion profile data
-				// while the write() loop is also writing it.
-				std::lock_guard<std::mutex> l(*motion_profile_mutexes_[i]);
-
-				const hardware_interface::TalonMode talon_mode = talon_state_[i].getTalonMode();
-				if (talon_mode == hardware_interface::TalonMode_Follower)
-					continue;
-				const hardware_interface::MotionProfileStatus mp_status = talon_state_[i].getMotionProfileStatus();
-				// Only write to non-follow, non-disabled talons that
-				// have points to write from their top-level buffer
-				//ROS_INFO_STREAM("top count: " << can_talons_[i]->GetMotionProfileTopLevelBufferCount());
-				//ROS_WARN_STREAM("id: " << i << " top size: " << mp_status.topBufferCnt << " running: " << (*can_talons_mp_running_)[i].load(std::memory_order_relaxed));
-				if ((mp_status.topBufferCnt && mp_status.btmBufferCnt < 127) ||
-					can_talons_mp_running_[i]->load(std::memory_order_relaxed))
-				{
-					if (!set_frame_period[i])
-					{
-						can_talons_[i]->ChangeMotionControlFramePeriod(1000./hz); // 1000 to convert from sec to mSec
-						talon_state_[i].setMotionControlFramePeriod(1000./hz);
-						set_frame_period[i] = true;
-					}
-					// Only write if SW buffer has entries in it
-					//ROS_INFO("needs to send points");
-					writing_points = true;
-					can_talons_[i]->ProcessMotionProfileBuffer();
-				}
-			}
-		}
-		writing_points_.store(writing_points, std:memory_order_relaxed);
-		rate.sleep();
-	}
-#endif
 }
 
 // TODO : Think some more on how this will work.  Previous idea of making them
@@ -611,10 +543,6 @@ void FRCRobotHWInterface::init(void)
 	navX_angle_ = 0;
 	pressure_ = 0;
 	navX_zero_ = -10000;
-
-	for (size_t i = 0; i < num_can_talon_srxs_; i++)
-		motion_profile_mutexes_.push_back(std::make_shared<std::mutex>());
-	motion_profile_thread_ = std::thread(&FRCRobotHWInterface::process_motion_profile_buffer_thread, this, 100.);
 
 	ROS_INFO_NAMED("frcrobot_hw_interface", "FRCRobotHWInterface Ready.");
 }
@@ -2327,15 +2255,9 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					pt.zeroPos = it->zeroPos;
 					pt.timeDur =it->timeDur;
 					pt.useAuxPID =it->useAuxPID;
-					safeTalonCall(talon->PushMotionProfileTrajectory(pt),"PushMotionProfileTrajectory");
-					// TODO: not sure what to do if this fails?
+					// TODO : rewrite this using BufferedTrajectoryPointStream
 					//ROS_INFO_STREAM("id: " << joint_id << " pos: " << pt.position << " i: " << i++);
 				}
-				// Copy the 1st profile trajectory point from
-				// the top level buffer to the talon
-				// Subsequent points will be copied by
-				// the process_motion_profile_buffer_thread code
-				//talon->ProcessMotionProfileBuffer();
 
 				ROS_INFO_STREAM("Added joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectories");
 			}
