@@ -19,7 +19,6 @@
 #include <controller_manager/controller_manager.h>
 #include <hardware_interface/robot_hw.h>
 #include <swerve_point_generator/Coefs.h>
-#include <swerve_point_generator/FullGen.h>
 #include <swerve_point_generator/FullGenCoefs.h>
 #include <swerve_point_generator/GenerateTrajectory.h>
 #include <talon_swerve_drive_controller/MotionProfilePoints.h>
