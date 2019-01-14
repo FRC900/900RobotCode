@@ -12,12 +12,10 @@
 #include <talon_interface/talon_state_interface.h> // "
 #include <talon_controllers/talon_controller.h> // "
 #include <talon_controllers/talon_controller_interface.h> // "
-#include <elevator_controller/ElevatorSrv.h> //specific to this controller - write these
 #include <atomic>
 #include <std_msgs/Float64.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <sensor_msgs/JointState.h>
-#include <elevator_controller/ElevatorMsg.h>
 #include <std_msgs/Bool.h>
 
 namespace elevator_controller
@@ -40,8 +38,8 @@ class ElevatorController : public controller_interface::MultiInterfaceController
             virtual void update(const ros::Time & time, const ros::Duration& period);
             virtual void stopping(const ros::Time &time);
 
-            virtual bool cmdService(elevator_controller::ElevatorSrv::Request &req,
-					                elevator_controller::ElevatorSrv::Response &/*res*/);
+            /*virtual bool cmdService(elevator_controller::ElevatorSrv::Request &req,
+					                elevator_controller::ElevatorSrv::Response &res);*/
 
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
@@ -52,7 +50,7 @@ class ElevatorController : public controller_interface::MultiInterfaceController
             realtime_tools::RealtimeBuffer<double> intake_in_cmd_; //buffer for in/out commands
             realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
 
-            ros::ServiceServer service_command_; //service for receiving commands
+            ros::ServiceServer elevator_service_; //service for receiving commands
 }; //class
 
 } //namespace
