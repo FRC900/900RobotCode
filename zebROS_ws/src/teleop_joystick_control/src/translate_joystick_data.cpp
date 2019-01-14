@@ -9,12 +9,7 @@ bool initialized = false;
 
 void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 {
-	if(initialized == false)
-	{
-		processed_msg_last = processed_msg;
-		initialized = true;
-	}
-
+	// Translating sticks and triggers
 	processed_msg.leftStickX = msg->axes[0];
 	processed_msg.leftStickY = msg->axes[1];
 	processed_msg.leftTrigger = msg->axes[2];
@@ -22,6 +17,7 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	processed_msg.rightStickY = msg->axes[4];
 	processed_msg.rightTrigger = msg->axes[5];
 
+	// Translating Dpad (from two axes into the four buttons our code uses)
 	if(msg->axes[6] > 0)
 	{
 		processed_msg.directionLeftButton = true;
@@ -62,6 +58,7 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 			processed_msg.directionDownButton = false;
 	}
 
+	// Translating all buttons other than the Dpad
 	processed_msg.buttonAButton = msg->buttons[0];
 	processed_msg.buttonBButton = msg->buttons[1];
 	processed_msg.buttonXButton = msg->buttons[2];
@@ -73,6 +70,14 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	processed_msg.stickLeftButton = msg->buttons[9];
 	processed_msg.stickRightButton = msg->buttons[10];
 
+	if(initialized == false)
+	{
+		// Such that processed_msg_last has content for the first time through press/release translating
+		processed_msg_last = processed_msg;
+		initialized = true;
+	}
+
+	// Creating press booleans by comparing the last publish to the current one
 	processed_msg.buttonAPress = !processed_msg_last.buttonAButton && processed_msg.buttonAButton;
 	processed_msg.buttonBPress = !processed_msg_last.buttonBButton && processed_msg.buttonBButton;
 	processed_msg.buttonXPress = !processed_msg_last.buttonXButton && processed_msg.buttonXButton;
@@ -88,6 +93,7 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	processed_msg.directionUpPress = !processed_msg_last.directionUpButton && processed_msg.directionUpButton;
 	processed_msg.directionUpPress = !processed_msg_last.directionDownButton && processed_msg.directionDownButton;
 
+	// Creating release booleans by comparing the last publish to the current one
 	processed_msg.buttonARelease = processed_msg_last.buttonAButton && !processed_msg.buttonAButton;
 	processed_msg.buttonBRelease = processed_msg_last.buttonBButton && !processed_msg.buttonBButton;
 	processed_msg.buttonXRelease = processed_msg_last.buttonXButton && !processed_msg.buttonXButton;
@@ -103,6 +109,7 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	processed_msg.directionUpRelease = processed_msg_last.directionUpButton && !processed_msg.directionUpButton;
 	processed_msg.directionDownRelease = processed_msg_last.directionDownButton && !processed_msg.directionDownButton;
 
+	// Set processed_msg_last to be correct the next time through
 	processed_msg_last = processed_msg;
 }
 
