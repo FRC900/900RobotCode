@@ -132,20 +132,20 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 								total_arc, dtds_for_spline, arc_length_for_spline);
 	int point_count = 0;
 	std::vector<double> accelerations;
-	path_point holder_point;
 	//back pass
 	//ROS_INFO_STREAM("total arc: " <<total_arc);
 	//i is the arc length we are at in the loop
 	double curr_v = final_v;
 	for (double i = total_arc /*- .1*/ ; i > 0;)
 	{
+		ROS_INFO_STREAM("------------------------");
+		ROS_INFO_STREAM("back_pass i: " << i << " curr_v:" << curr_v);
 		i -= curr_v * dt_;
 		if (i < 0)
 		{
 			continue;
 		}
 
-		ROS_INFO_STREAM("back pass V: " << curr_v);
 		velocities.push_back(curr_v); //For limiting the velocity on the back pass
 		positions.push_back(i);
 
@@ -158,15 +158,16 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		//ROS_WARN("even_now");
 
 		//Compute all the path info
+		path_point current_spline_point;
 		comp_point_characteristics(x_splines, y_splines, x_splines_first_deriv, y_splines_first_deriv,
 								   x_splines_second_deriv, y_splines_second_deriv, orient_splines, orient_splines_first_deriv,
-								   orient_splines_second_deriv, holder_point, end_points, dtds_for_spline, arc_length_for_spline,
+								   orient_splines_second_deriv, current_spline_point, end_points, dtds_for_spline, arc_length_for_spline,
 								   t_raw2, i);
 
-		ROS_INFO_STREAM("in back pass after comp_point_characteristics orientation_velocities = " << holder_point.angular_velocity);
+		ROS_INFO_STREAM("in back pass after comp_point_characteristics orientation_velocities = " << current_spline_point.angular_velocity);
 
 		//Solve for the next V using constraints
-		if (!solve_for_next_V(holder_point, total_arc, curr_v, i, max_wheel_brake_accel_, accelerations))
+		if (!solve_for_next_V(current_spline_point, total_arc, curr_v, i, max_wheel_brake_accel_, accelerations))
 		{
 			return false;
 		}
@@ -181,14 +182,14 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 				break;
 			}
 		}
-		double acceleration_fudge = .01;
+		double acceleration_fudge = .01; // TODO : perhaps redo as a percentage?
 
 		// calculate the requested acceleration from the current spline length and the next spline length
 		double current_spline_length = i;
 		double next_spline_length = current_spline_length - curr_v * dt_;
 		ROS_INFO_STREAM("current_spline_length = " << current_spline_length << " next_spline_length = " << next_spline_length);
 		double current_time_orient = current_spline_length * dtds_for_spline[which_spline];
-		double current_angular_velocity = holder_point.angular_velocity * curr_v / max_wheel_dist_;
+		double current_angular_velocity = current_spline_point.angular_velocity * curr_v / max_wheel_dist_;
 		double next_time_orient = next_spline_length * dtds_for_spline[which_spline];
 		double next_angular_velocity;
 		calc_point(orient_splines_first_deriv[which_spline], next_time_orient, next_angular_velocity);
@@ -213,13 +214,13 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 			while(true)
 			{
 				midpoint_spline_length = (max_spline_length + min_spline_length)/2;
-				if (count % 1000)
-					ROS_INFO_STREAM("min mid max" << min_spline_length<< " " << midpoint_spline_length << " " << max_spline_length);
+				ROS_INFO_STREAM("min mid max:" << min_spline_length<< " " << midpoint_spline_length << " " << max_spline_length);
 				count++;
 				//what angular acceleration do these two spline lengths require?
 				midpoint_time_orient = midpoint_spline_length * dtds_for_spline[which_spline];
 				calc_point(orient_splines_first_deriv[which_spline], midpoint_time_orient, midpoint_angular_velocity);
-				requested_acceleration = (midpoint_angular_velocity - current_angular_velocity) / dt_;
+				requested_acceleration = fabs(midpoint_angular_velocity - current_angular_velocity) / dt_;
+				ROS_INFO_STREAM("requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration);
 
 				//compare to the actual possible angular acceleration
 				if(requested_acceleration > max_acceleration)
@@ -240,13 +241,15 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 				}
 			}
 			//calculate the correct curr_v from the spline length at max angular acceleration
-			curr_v = (spline_length_max_accel - current_spline_length) / dt_;
+			curr_v = fabs(spline_length_max_accel - current_spline_length) / dt_;
+			ROS_INFO_STREAM("binary search curr_v: " << curr_v);
+			accelerations.clear();
 		}
 		else
 		{
 			ROS_ERROR_STREAM("EVERYTHING IS FINE");
 		}
-		ROS_INFO_STREAM("in back pass after solve_for_next_V orientation_velocities = " << holder_point.angular_velocity);
+		ROS_INFO_STREAM("in back pass after solve_for_next_V orientation_velocities = " << current_spline_point.angular_velocity);
 	}
 	//ROS_WARN("called3");
 	//ROS_INFO_STREAM("passed loop 1");
@@ -276,6 +279,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		const double t_raw3 = spline(i);
 		//ROS_INFO_STREAM("i val: " << i << " t val: " << t_raw3 << " curr v: " << curr_v);
 
+		path_point holder_point;
 		comp_point_characteristics(x_splines, y_splines, x_splines_first_deriv, y_splines_first_deriv,
 								   x_splines_second_deriv, y_splines_second_deriv, orient_splines, orient_splines_first_deriv,
 								   orient_splines_second_deriv, holder_point, end_points, dtds_for_spline, arc_length_for_spline,
