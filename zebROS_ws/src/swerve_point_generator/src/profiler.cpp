@@ -189,15 +189,26 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		double next_spline_length = current_spline_length - curr_v * dt_;
 		ROS_INFO_STREAM("current_spline_length = " << current_spline_length << " next_spline_length = " << next_spline_length);
 		double current_time_orient = current_spline_length * dtds_for_spline[which_spline];
-		double current_angular_velocity = current_spline_point.angular_velocity * curr_v / max_wheel_dist_;
+		// Probably want to undo the "/ max_wheel_dist_" math from comp_point_characteristics
+		// then convert from angular to linear accel to make the units consistent with
+		// the comparison against the linear accel value max_accel_.
+		double current_angular_velocity = current_spline_point.angular_velocity;
 		double next_time_orient = next_spline_length * dtds_for_spline[which_spline];
 		double next_angular_velocity;
 		calc_point(orient_splines_first_deriv[which_spline], next_time_orient, next_angular_velocity);
-		next_angular_velocity *= dtds_for_spline[which_spline] * curr_v; //* wheeldist / wheeldist, also HACK
+		// TODO - fix the conversion from angular robot accel to linear wheel accel here, since it will be
+		// compared against max_accel which is a linear acceleratin limit
+		next_angular_velocity *= max_wheel_dist_;
+		//next_angular_velocity *= dtds_for_spline[which_spline] * curr_v; //* wheeldist / wheeldist, also HACK
 		double requested_acceleration = (next_angular_velocity - current_angular_velocity) / dt_;
 		ROS_INFO_STREAM("current_angular_velocity = " << current_angular_velocity << " next_angular_velocity = " << next_angular_velocity);
 
 		//binary search until spline length corresponds to maximum acceleration
+		// TODO : subtract hypot(current_spline_point.x, current_spline_point.y)/ dt_ to account for
+		// the part of max accel used for linear motion.  Or just (i - prev_i) / dt_ 
+		// to account for path curvature
+		// Accelerations is the adams-bashforth approximation coeffs, and these get cleared
+		// if the acceleration is limited by various constraints
 		double max_acceleration = max_wheel_brake_accel_; //- accelerations[accelerations.size() - 1];
 		ROS_INFO_STREAM("requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration);
 		if(abs(requested_acceleration) > abs(max_acceleration))
@@ -219,6 +230,9 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 				//what angular acceleration do these two spline lengths require?
 				midpoint_time_orient = midpoint_spline_length * dtds_for_spline[which_spline];
 				calc_point(orient_splines_first_deriv[which_spline], midpoint_time_orient, midpoint_angular_velocity);
+				// TODO - fix the conversion from angular robot accel to linear wheel accel here, since it will be
+				// compared against max_accel which is a linear acceleratin limit
+				midpoint_angular_velocity *= max_wheel_dist_;
 				requested_acceleration = fabs(midpoint_angular_velocity - current_angular_velocity) / dt_;
 				ROS_INFO_STREAM("requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration);
 
@@ -293,7 +307,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		out_msg.points[point_count].velocities.push_back(cos(holder_point.path_angle) * curr_v );
 		out_msg.points[point_count].velocities.push_back(sin(holder_point.path_angle) * curr_v );
 		out_msg.points[point_count].velocities.push_back(
-			holder_point.angular_velocity * curr_v / max_wheel_dist_);
+			holder_point.angular_velocity /** curr_v *// max_wheel_dist_);
 		ROS_INFO_STREAM("fpass: orient_v = " << holder_point.angular_velocity << ", curr_v*1000 = " << curr_v*1000 << " o_v * curr_v / wheel_dist " << holder_point.angular_velocity * curr_v / max_wheel_dist_);
 		//out_msg.points[point_count].velocities.push_back(holder_point.path_angle_deriv * (current_v));
 		out_msg.points[point_count].time_from_start = now;
@@ -759,10 +773,10 @@ void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs>
 	}
 
 	holder_point.path_angle = atan2(first_deriv_y, first_deriv_x) - (holder_point.orientation /*-  M_PI / 2.0*/);
-	holder_point.angular_velocity = first_deriv_orient * dtds_by_spline[which_spline] * max_wheel_dist_;
+	holder_point.angular_velocity = first_deriv_orient * /*dtds_by_spline[which_spline] **/ max_wheel_dist_;
 	//ROS_INFO_STREAM(__LINE__ << ": " << holder_point.angular_velocity);
-	holder_point.angular_accel = fabs(second_deriv_orient * dtds_by_spline[which_spline] *
-									  dtds_by_spline[which_spline] * max_wheel_dist_ * ang_accel_conv_);
+	holder_point.angular_accel = fabs(second_deriv_orient * /*dtds_by_spline[which_spline] *
+									  dtds_by_spline[which_spline] **/ max_wheel_dist_ * ang_accel_conv_);
 }
 
 }
