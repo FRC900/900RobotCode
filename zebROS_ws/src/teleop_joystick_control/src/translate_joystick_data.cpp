@@ -7,6 +7,7 @@ ros_control_boilerplate::JoystickState processed_msg;
 
 bool initialized = false;
 
+// Joy_node only published when there is a change in the state of the joystick, not constantly, meaning that this function only runs when there is a change in joystick state. This is the reason for the added lines on press/release after the line that publishes below.
 void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 {
 	// Translating sticks and triggers
@@ -126,6 +127,39 @@ int main(int argc, char ** argv)
     while(ros::ok())
     {
         processed_data_pub.publish(processed_msg);
+
+		// So that press is only true for one publish
+		processed_msg.buttonAPress = false;
+		processed_msg.buttonBPress = false;
+		processed_msg.buttonXPress = false;
+		processed_msg.buttonYPress = false;
+		processed_msg.bumperLeftPress = false;
+		processed_msg.bumperRightPress = false;
+		processed_msg.buttonBackPress = false;
+		processed_msg.buttonStartPress = false;
+		processed_msg.stickLeftPress = false;
+		processed_msg.stickRightPress = false;
+		processed_msg.directionLeftPress = false;
+		processed_msg.directionRightPress = false;
+		processed_msg.directionUpPress = false;
+		processed_msg.directionDownPress = false;
+
+		// So that release is only true for one publish
+		processed_msg.buttonARelease = false;
+		processed_msg.buttonBRelease = false;
+		processed_msg.buttonXRelease = false;
+		processed_msg.buttonYRelease = false;
+		processed_msg.bumperLeftRelease = false;
+		processed_msg.bumperRightRelease = false;
+		processed_msg.buttonBackRelease = false;
+		processed_msg.buttonStartRelease = false;
+		processed_msg.stickLeftRelease = false;
+		processed_msg.stickRightRelease = false;
+		processed_msg.directionLeftRelease = false;
+		processed_msg.directionRightRelease = false;
+		processed_msg.directionUpRelease = false;
+		processed_msg.directionDownRelease = false;
+
 		ros::spinOnce();
 		loop_rate.sleep();
     }
