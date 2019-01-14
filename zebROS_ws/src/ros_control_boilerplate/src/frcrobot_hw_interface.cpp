@@ -1440,7 +1440,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 
 			m.buttonStartButton = joysticks_[0]->GetRawButton(8);
 			m.buttonStartPress = joysticks_[0]->GetRawButtonPressed(8);
-			m.buttonStartRelease = joysticks_[0]->GetRawButtonReleased(8);
+			m.buttonStartRelease = joysticks_[0]->GetRawButtonReleased(8);*/
 
 			bool joystick_up = false;
 			bool joystick_down = false;
@@ -1477,8 +1477,31 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 						joystick_left = true;
 						break;
 			}
-
-			m.directionUpButton = joystick_up;
+			if(joystick_up)
+			{
+				m.buttons[7]=-1.0;
+			}
+			else if (joystick_down)
+			{
+				m.buttons[7]=1.0;
+			}
+			else
+			{
+				m.buttons[7]=0;
+			}
+			if(joystick_left)
+			{
+				m.buttons[6]=-1.0;
+			}
+			else if (joystick_right)
+			{
+				m.buttons[6]=1.0;
+			}
+			else
+			{
+				m.buttons[6]=0;
+			}
+		/*	m.directionUpButton = joystick_up;
 			m.directionUpPress = joystick_up && !joystick_up_last_[0];
 			m.directionUpRelease = !joystick_up && joystick_up_last_[0];
 
