@@ -197,6 +197,22 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			contour_.push_back(Point2f(0.2794,0));
 			name_ = "cube";
 			break;
+		case LEFT_CARGO_2019: //left target on the CARGO SHIP (2019)
+			depth_ = 0;
+			contour_.push_back(Point2f(0,0));
+			contour_.push_back(Point2f(0.035,0.1355));
+			contour_.push_back(Point2f(0.083407382019,0.122980999797)); // 0.048407382019,.012519000203
+			contour_.push_back(Point2f(0.048407382019,-0.012519000203));
+			name_ = "left_cargo_tape";
+			break;
+		case RIGHT_CARGO_2019: //right target on the CARGO SHIP (2019)
+			depth_ = 0;
+			contour_.push_back(Point2f(0,0));
+			contour_.push_back(Point2f(-0.035,0.1355));
+			contour_.push_back(Point2f(-0.083407382019,0.122980999797)); // 0.048407382019,.012519000203
+			contour_.push_back(Point2f(-0.048407382019,-0.012519000203));
+			name_ = "right_cargo_tape";
+			break;
 		default:
 			cerr << "error initializing object!" << endl;
 	}

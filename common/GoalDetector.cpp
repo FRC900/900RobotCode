@@ -52,15 +52,15 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 	const vector<vector<Point>> goal_contours = getContours(image);
 	if (goal_contours.size() == 0)
 		return;
-	const vector<DepthInfo> goal_depths = getDepths(depth,goal_contours, TOP_TAPE_2017, ObjectType(TOP_TAPE_2017).real_height());
+	const vector<DepthInfo> goal_depths = getDepths(depth,goal_contours, LEFT_CARGO_2019, ObjectType(LEFT_CARGO_2019).real_height());
 
 
 	//compute confidences for both the left piece of 
 	//tape and the right piece of tape
-	const vector<GoalInfo> left_info = getInfo(goal_contours,goal_depths,TOP_TAPE_2017);
+	const vector<GoalInfo> left_info = getInfo(goal_contours,goal_depths,LEFT_CARGO_2019);
 	if(left_info.size() == 0)
 		return;
-	const vector<GoalInfo> right_info = getInfo(goal_contours,goal_depths,TOP_TAPE_2017);
+	const vector<GoalInfo> right_info = getInfo(goal_contours,goal_depths,RIGHT_CARGO_2019);
 	if(right_info.size() == 0)
 		return;
 #ifdef VERBOSE
@@ -205,7 +205,6 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				{
 #ifdef VERBOSE_BOILER
 					cout << i << " " << j << " " <<  << " obstruction detected, detecting previous goal" << endl;
-
 				
 #endif
 					continue;
