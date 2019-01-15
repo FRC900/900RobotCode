@@ -40,6 +40,14 @@ hardware_interface:
 # /frcrobot/joint1_talon_controller/command
 # /frcrobot/joint2_talon_controller/command
 # /frcrobot/talon_states
+
+panel_intake_controller:
+    type:           panel_intake_controller/PanelIntakeController
+    publish_rate:   100 
+         
+         
+         
+         
 #
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal
