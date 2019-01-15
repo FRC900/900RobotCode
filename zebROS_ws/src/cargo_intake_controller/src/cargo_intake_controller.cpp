@@ -9,7 +9,7 @@ bool CargoIntakeController::init(hardware_interface::RobotHW *hw,
 {
     hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
     hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
-
+	/*
     intake_in_ = pos_joint_iface->getHandle("clamp");
 
     //read intake name from config file
@@ -31,17 +31,18 @@ bool CargoIntakeController::init(hardware_interface::RobotHW *hw,
     }
 
     service_command_ = controller_nh.advertiseService("intake_command", &IntakeController::cmdService, this);
-
+	*/
     return true;
 }
 
 void CargoIntakeController::starting(const ros::Time &/*time*/) {
-    intake_joint_.setCommand(0.0); // set the command to the spinny part of the intake
+    /*intake_joint_.setCommand(0.0); // set the command to the spinny part of the intake
     intake_in_.setCommand(-1); // set the in/out command to the clampy part of the intake
+	*/
 }
 
 void CargoIntakeController::update(const ros::Time &time, const ros::Duration &period) {
-    double spin_command = *(spin_command_.readFromRT());
+    /*double spin_command = *(spin_command_.readFromRT());
     bool intake_in_cmd = *(intake_in_cmd_.readFromRT());
     double intake_in_cmd_double;
     if(intake_in_cmd == true) {
@@ -55,12 +56,13 @@ void CargoIntakeController::update(const ros::Time &time, const ros::Duration &p
 
     intake_joint_.setCommand(spin_command); // set the command to the spinny part of the intake
     intake_in_.setCommand(intake_in_cmd_double); // set the in/out command to the clampy part of the intake
+	*/
 }
 
 void CargoIntakeController::stopping(const ros::Time &time) {
 }
-
-bool CargoIntakeController::cmdService(intake_controller::IntakeSrv::Request &req, cargo_intake_controller::IntakeSrv::Response &/*response*/) {
+/*
+bool CargoIntakeController::cmdService(intake_controller::IntakeSrv::Request &req, cargo_intake_controller::IntakeSrv::Response &response) {
     if(isRunning())
     {
         spin_command_.writeFromNonRT(req.power); //take the service request for a certain amount of power (-1 to 1) and write it to the command variable
@@ -73,8 +75,8 @@ bool CargoIntakeController::cmdService(intake_controller::IntakeSrv::Request &re
     }
     return true;
 }
-
+*/
 }//namespace
 
 //DON'T FORGET TO EXPORT THE CLASS SO CONTROLLER_MANAGER RECOGNIZES THIS AS A TYPE
-PLUGINLIB_EXPORT_CLASS(intake_controller::IntakeController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(cargo_intake_controller::CargoIntakeController, controller_interface::ControllerBase)

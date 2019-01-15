@@ -12,12 +12,10 @@
 #include <talon_interface/talon_state_interface.h> // "
 #include <talon_controllers/talon_controller.h> // "
 #include <talon_controllers/talon_controller_interface.h> // "
-#include <cargo_intake_controller/IntakeSrv.h> //specific to this controller - write these
 #include <atomic>
 #include <std_msgs/Float64.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <sensor_msgs/JointState.h>
-#include <cargo_intake_controller/IntakeMsg.h>
 #include <std_msgs/Bool.h>
 
 namespace cargo_intake_controller
@@ -39,20 +37,20 @@ class CargoIntakeController : public controller_interface::MultiInterfaceControl
             virtual void starting(const ros::Time &time);
             virtual void update(const ros::Time & time, const ros::Duration& period);
             virtual void stopping(const ros::Time &time);
-
+			/*
             virtual bool cmdService(cargo_intake_controller::IntakeSrv::Request &req,
-					                cargo_intake_controller::IntakeSrv::Response &/*res*/);
-
+					                cargo_intake_controller::IntakeSrv::Response &res);
+			*/
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
             talon_controllers::TalonPercentOutputControllerInterface intake_joint_; //interface for the talon joint
-            hardware_interface::JointHandle intake_in_; //interface for the in/out solenoid joint
+            //hardware_interface::JointHandle intake_in_; //interface for the in/out solenoid joint
 
             realtime_tools::RealtimeBuffer<double> spin_command_; //this is the buffer for percent output commands to be published
             realtime_tools::RealtimeBuffer<double> intake_in_cmd_; //buffer for in/out commands
             realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
 
-            ros::ServiceServer service_command_; //service for receiving commands
+            ros::ServiceServer cargo_intake_service_; //service for receiving commands
 }; //class
 
 } //namespace
