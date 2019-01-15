@@ -1,5 +1,5 @@
-#ifndef INTAKE_CONTROLLER
-#define INTAKE_CONTROLLER
+#ifndef ELEVATOR_CONTROLLER
+#define ELEVATOR_CONTROLLER
 
 #include <ros/ros.h>
 #include <vector>
