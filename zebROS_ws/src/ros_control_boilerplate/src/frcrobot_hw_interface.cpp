@@ -1385,15 +1385,17 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		// Update joystick state as often as possible
 		if ((joysticks_.size() > 0) && realtime_pub_joystick_->trylock())
 		{
+			m.axes.clear();
+			m.buttons.clear();
 			auto &m = realtime_pub_joystick_->msg_;
 			m.header.stamp = time_now_t;
 
-			for(int i = 0; i < 6; i++)
+			for(int i = 0; i < joysticks_[0]->GetAxisCount(); i++)
 			{
 				m.axes.push_back(joysticks_[0]->GetRawAxis(i));
 			}
 
-			for(int i = 0; i < 10; i++)
+			for(int i = 0; i < joysticks_[0]->GetButtonCount(); i++)
 			{
 				m.buttons.push_back(joysticks_[0]->GetRawButton(i));
 			}
@@ -1442,7 +1444,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			m.buttonStartPress = joysticks_[0]->GetRawButtonPressed(8);
 			m.buttonStartRelease = joysticks_[0]->GetRawButtonReleased(8);*/
 
-			bool joystick_up = false;
+		/*	bool joystick_up = false;
 			bool joystick_down = false;
 			bool joystick_left = false;
 			bool joystick_right = false;
@@ -1501,6 +1503,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			{
 				m.buttons[6]=0;
 			}
+			*/
 		/*	m.directionUpButton = joystick_up;
 			m.directionUpPress = joystick_up && !joystick_up_last_[0];
 			m.directionUpRelease = !joystick_up && joystick_up_last_[0];
