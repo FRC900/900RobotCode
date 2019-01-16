@@ -106,7 +106,7 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
+	#INCLUDE_DIRS include
 #  LIBRARIES pixy_get_lines
   CATKIN_DEPENDS message_generation roscpp message_runtime std_msgs
 #  DEPENDS system_lib
@@ -124,7 +124,7 @@ set (PIXYARDUINO_BASE ${PIXY_SRC_BASE}/host/arduino/libraries/Pixy2)
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
- include
+	#include
   ${catkin_INCLUDE_DIRS}
   ${LIBPIXYUSB_BASE}/include
   ${LIBPIXYCOMMON_BASE}/inc
