@@ -11,21 +11,44 @@ bool initialized = false;
 void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 {
 	// Translating sticks and triggers
-	processed_msg.leftStickX = msg->axes[0];
+	processed_msg.leftStickX = msg->axes.size() > 0 ? msg->axes[0] : 0.0;
+	processed_msg.leftStickY = msg->axes.size() > 1 ? msg->axes[1] : 0.0;
+	processed_msg.leftTrigger = msg->axes.size() > 2 ? msg->axes[2] : 0.0;
+	processed_msg.rightStickX = msg->axes.size() > 3 ? msg->axes[3] : 0.0;
+	processed_msg.rightStickY = msg->axes.size() > 4 ? msg->axes[4] : 0.0;
+	processed_msg.rightTrigger = msg->axes.size() > 5 ? msg->axes[5] : 0.0;
+
+	/*processed_msg.leftStickX = msg->axes[0];
 	processed_msg.leftStickY = msg->axes[1];
 	processed_msg.leftTrigger = msg->axes[2];
 	processed_msg.rightStickX = msg->axes[3];
 	processed_msg.rightStickY = msg->axes[4];
-	processed_msg.rightTrigger = msg->axes[5];
+	processed_msg.rightTrigger = msg->axes[5];*/
 
 	// Translating Dpad (from two axes into the four buttons our code uses)
-	processed_msg.directionLeftButton = (msg->axes[6] > 0);
+	processed_msg.directionLeftButton = msg->axes.size() > 6 ? (msg->axes[6] > 0) : false;
+	processed_msg.directionRightButton = msg->axes.size() > 6 ? (msg->axes[6] < 0) : false;
+	processed_msg.directionUpButton = msg->axes.size() > 7 ? (msg->axes[7] > 0) : false;
+	processed_msg.directionDownButton = msg->axes.size() > 7 ? (msg->axes[7] < 0) : false;
+
+	/*processed_msg.directionLeftButton = (msg->axes[6] > 0);
 	processed_msg.directionRightButton = (msg->axes[6] < 0);
 	processed_msg.directionUpButton = (msg->axes[7] > 0);
-	processed_msg.directionDownButton = (msg->axes[7] < 0);
+	processed_msg.directionDownButton = (msg->axes[7] < 0);*/
 
 	// Translating all buttons other than the Dpad
-	processed_msg.buttonAButton = msg->buttons[0];
+	processed_msg.Button = msg->buttons.size() > 0 ? (msg->buttons[0] : false;
+	processed_msg.Button = msg->buttons.size() > 1 ? (msg->buttons[1] : false;
+	processed_msg.Button = msg->buttons.size() > 2 ? (msg->buttons[2] : false;
+	processed_msg.Button = msg->buttons.size() > 3 ? (msg->buttons[3] : false;
+	processed_msg.Button = msg->buttons.size() > 4 ? (msg->buttons[4] : false;
+	processed_msg.Button = msg->buttons.size() > 5 ? (msg->buttons[5] : false;
+	processed_msg.Button = msg->buttons.size() > 6 ? (msg->buttons[6] : false;
+	processed_msg.Button = msg->buttons.size() > 7 ? (msg->buttons[7] : false;
+	processed_msg.Button = msg->buttons.size() > 8 ? (msg->buttons[9] : false;
+	processed_msg.Button = msg->buttons.size() > 9 ? (msg->buttons[10] : false;
+
+	/*processed_msg.buttonAButton = msg->buttons[0];
 	processed_msg.buttonBButton = msg->buttons[1];
 	processed_msg.buttonXButton = msg->buttons[2];
 	processed_msg.buttonYButton = msg->buttons[3];
@@ -34,7 +57,7 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	processed_msg.buttonBackButton = msg->buttons[6];
 	processed_msg.buttonStartButton = msg->buttons[7];
 	processed_msg.stickLeftButton = msg->buttons[9];
-	processed_msg.stickRightButton = msg->buttons[10];
+	processed_msg.stickRightButton = msg->buttons[10];*/
 
 	if(initialized == false)
 	{
