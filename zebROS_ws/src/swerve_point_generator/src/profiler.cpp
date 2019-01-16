@@ -2,6 +2,7 @@
 #include <ros/console.h>
 #include <iostream>
 #include <cstdlib>
+#include <algorithm>
 
 namespace swerve_profile
 {
@@ -132,6 +133,9 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 								total_arc, dtds_for_spline, arc_length_for_spline);
 	int point_count = 0;
 	std::vector<double> accelerations;
+	double max_angular_vel_backpass;
+	double current_angular_velocity = 0;
+	std::vector<double> max_angular_velocities;
 	//back pass
 	//ROS_INFO_STREAM("total arc: " <<total_arc);
 	//i is the arc length we are at in the loop
@@ -140,6 +144,8 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	{
 		ROS_INFO_STREAM("------------------------");
 		ROS_INFO_STREAM("back_pass i: " << i << " curr_v:" << curr_v);
+
+		// Update spline length
 		i -= curr_v * dt_;
 		if (i < 0)
 		{
@@ -148,10 +154,9 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 
 		velocities.push_back(curr_v); //For limiting the velocity on the back pass
 		positions.push_back(i);
+		max_angular_velocities.push_back(current_angular_velocity);
 
 		point_count++;
-		//if (point_count % 100 == 0)
-		//ROS_INFO_STREAM("num points: " << point_count );
 
 		const double t_raw2 = spline(i); //Get t value from the cubic spline interpolation of t vs arc length
 		//ROS_INFO_STREAM("curr_v: " << curr_v);
@@ -171,6 +176,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		{
 			return false;
 		}
+
 		/** HACK STARTS HERE**/
 		//arc length -> next arc length -> next time_o -> next angular velocity
 		size_t which_spline;
@@ -182,41 +188,45 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 				break;
 			}
 		}
+
 		ROS_INFO_STREAM("dtds_for_spline[which_spline] = " << dtds_for_spline[which_spline]);
 		double acceleration_fudge = .01; // TODO : perhaps redo as a percentage?
 
 		// calculate the requested acceleration from the current spline length and the next spline length
 		double current_spline_length = i;
 		double next_spline_length = current_spline_length - curr_v * dt_;
+		double next_time_orient = next_spline_length * dtds_for_spline[which_spline];
+
 		ROS_INFO_STREAM("current_spline_length = " << current_spline_length << " next_spline_length = " << next_spline_length);
 		ROS_INFO_STREAM("max_wheel_dist =  " << max_wheel_dist_);
 		ROS_INFO_STREAM("current_spline_point.angular_velocity = " << current_spline_point.angular_velocity << " curr_v = " << curr_v);
-		double current_time_orient = current_spline_length * dtds_for_spline[which_spline];
+
 		// Probably want to undo the "/ max_wheel_dist_" math from comp_point_characteristics
 		// then convert from angular to linear accel to make the units consistent with
 		// the comparison against the linear accel value max_accel_.
-		ROS_INFO_STREAM("current_spline_point.angular_velocity = " << current_spline_point.angular_velocity << " curr_v = " << curr_v);
-		double current_angular_velocity = current_spline_point.angular_velocity * curr_v / max_wheel_dist_; //* dtds_for_spline[which_spline] * curr_v;
-		double next_time_orient = next_spline_length * dtds_for_spline[which_spline];
 
 		//calculate angular velocity with splines OR
-		double next_angular_velocity;
-		calc_point(orient_splines_first_deriv[which_spline], next_time_orient, next_angular_velocity);
+		//double next_angular_velocity;
+		//calc_point(orient_splines_first_deriv[which_spline], next_time_orient, next_angular_velocity);
 		// TODO - fix the conversion from angular robot accel to linear wheel accel here, since it will be
 		// compared against max_accel which is a linear acceleratin limit
-		ROS_INFO_STREAM("calculated vel = " << next_angular_velocity);
-		next_angular_velocity *=  curr_v / max_wheel_dist_; //* wheeldist / wheeldist, also HACK
-		ROS_INFO_STREAM("SPLINES current_angular_velocity = " << current_angular_velocity << " next_angular_velocity = " << next_angular_velocity);
+		//ROS_INFO_STREAM("calculated vel = " << next_angular_velocity);
+		//next_angular_velocity *=  curr_v / max_wheel_dist_; //* wheeldist / wheeldist, also HACK
+		//ROS_INFO_STREAM("SPLINES current_angular_velocity = " << current_angular_velocity << " next_angular_velocity = " << next_angular_velocity);
 
-		//calulate angular velocity with change in orientation
+		// Calulate angular velocity using change in orientation
 		double next_orientation;
 		calc_point(orient_splines[which_spline], next_time_orient, next_orientation);
+		double next_angular_velocity = (current_spline_point.orientation - next_orientation) / dt_;
+
 		ROS_INFO_STREAM("current_orientation = "  << current_spline_point.orientation << " next_orientation = " << next_orientation);
-		next_angular_velocity = (next_orientation - current_spline_point.orientation) / (next_spline_length - current_spline_length) * curr_v;
 		ROS_INFO_STREAM("ORIENTATION current_angular_velocity = " << current_angular_velocity << " next_angular_velocity = " << next_angular_velocity);
 
-		double requested_acceleration = (next_angular_velocity - current_angular_velocity) / dt_ * max_wheel_dist_; //radians / sec / sec * (meters / radian)
-		//ROS_INFO_STREAM("current_angular_velocity = " << current_angular_velocity << " next_angular_velocity = " << next_angular_velocity);
+		double requested_acceleration = (current_angular_velocity - next_angular_velocity) / dt_ * max_wheel_dist_; //radians / sec / sec * (meters / radian)
+		if(requested_acceleration > 0) //this will be handed by the forward pass
+			continue;
+		double max_acceleration = -1 * max_wheel_brake_accel_; //- accelerations[accelerations.size() - 1];
+		ROS_INFO_STREAM("requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration);
 
 		//binary search until spline length corresponds to maximum acceleration
 		// TODO : subtract hypot(current_spline_point.x, current_spline_point.y)/ dt_ to account for
@@ -224,9 +234,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		// to account for path curvature
 		// Accelerations is the adams-bashforth approximation coeffs, and these get cleared
 		// if the acceleration is limited by various constraints
-		double max_acceleration = max_wheel_brake_accel_; //- accelerations[accelerations.size() - 1];
-		ROS_INFO_STREAM("requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration);
-		if(abs(requested_acceleration) > abs(max_acceleration))
+		if(fabs(requested_acceleration) > fabs(max_acceleration))
 		{
 			ROS_ERROR_STREAM("requested angular acceleration is greater than maximum");
 			double spline_length_max_accel;
@@ -237,43 +245,41 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 			double midpoint_time_orient = 0;
 			double midpoint_orientation = 0;
 			//binary search
-			int count = 0;
 			while(true)
 			{
 				midpoint_spline_length = (max_spline_length + min_spline_length)/2;
 				ROS_INFO_STREAM("min mid max:" << min_spline_length<< " " << midpoint_spline_length << " " << max_spline_length);
-				count++;
 				//what angular acceleration do these two spline lengths require?
 				midpoint_time_orient = midpoint_spline_length * dtds_for_spline[which_spline];
 
 				//calculate angular velocity with spline OR
-				calc_point(orient_splines_first_deriv[which_spline], midpoint_time_orient, midpoint_angular_velocity);
+				//calc_point(orient_splines_first_deriv[which_spline], midpoint_time_orient, midpoint_angular_velocity);
 				//midpoint_angular_velocity *= curr_v;
 				// TODO - fix the conversion from angular robot accel to linear wheel accel here, since it will be
 				// compared against max_accel which is a linear acceleratin limit
 				//midpoint_angular_velocity *= max_wheel_dist_;
-				midpoint_angular_velocity *= curr_v / max_wheel_dist_; // (rad/t_o) * (t_o/meters) *  (meters/sec)
-				ROS_INFO_STREAM("SPLINES current_angular_velocity = " << current_angular_velocity << " midpoint_angular_velocity = " << midpoint_angular_velocity);
-				
+				//midpoint_angular_velocity *= curr_v / max_wheel_dist_; // (rad/t_o) * (t_o/meters) *  (meters/sec)
+				//ROS_INFO_STREAM("SPLINES current_angular_velocity = " << current_angular_velocity << " midpoint_angular_velocity = " << midpoint_angular_velocity);
+
 				//calculate angular velocity with change in orientation
 				calc_point(orient_splines[which_spline], midpoint_time_orient, midpoint_orientation);
+				midpoint_angular_velocity = (current_spline_point.orientation - midpoint_orientation) / dt_;
+				requested_acceleration = (current_angular_velocity - midpoint_angular_velocity) / dt_ * max_wheel_dist_;
+
 				ROS_INFO_STREAM("current_orientation = "  << current_spline_point.orientation << " midpoint_orientation = " << midpoint_orientation);
-				midpoint_angular_velocity = (midpoint_orientation - current_spline_point.orientation) / (midpoint_spline_length - current_spline_length) * curr_v;
-				ROS_INFO_STREAM("diff vel = " << midpoint_angular_velocity - current_angular_velocity << " dt = " << curr_v / (midpoint_spline_length - current_spline_length));
 				ROS_INFO_STREAM("ORIENTATION current_angular_velocity = " << current_angular_velocity << " midpoint_angular_velocity = " << midpoint_angular_velocity);
-				requested_acceleration = (midpoint_angular_velocity - current_angular_velocity) / dt_ * max_wheel_dist_;
 				ROS_INFO_STREAM("requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration);
 
 				//compare to the actual possible angular acceleration
-				if(fabs(requested_acceleration) > fabs(max_acceleration))
+				if(requested_acceleration > max_acceleration)
 				{
 					ROS_INFO_STREAM("requested acceleration of " << requested_acceleration << " too large");
-					max_spline_length = midpoint_spline_length; 
+					min_spline_length = midpoint_spline_length; 
 				}
-				else if(fabs(requested_acceleration) < fabs(max_acceleration - acceleration_fudge))
+				else if(requested_acceleration < max_acceleration - acceleration_fudge)
 				{
 					ROS_INFO_STREAM("requested acceleration of " << requested_acceleration << " too small");
-					min_spline_length = midpoint_spline_length; 
+					max_spline_length = midpoint_spline_length; 
 				}
 				else
 				{
@@ -284,14 +290,21 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 			}
 			//calculate the correct curr_v from the spline length at max angular acceleration
 			curr_v = fabs(spline_length_max_accel - current_spline_length) / dt_;
-			ROS_INFO_STREAM("binary search curr_v: " << curr_v);
+			// Update the next current_angular_velocity to one which follows constraints
+			current_angular_velocity = midpoint_angular_velocity;
+
+			ROS_INFO_STREAM("binary search curr_v: " << curr_v << "curr_ang_v: " << current_angular_velocity);
 			accelerations.clear();
 		}
 		else
 		{
 			ROS_ERROR_STREAM("EVERYTHING IS FINE");
 		}
-		ROS_INFO_STREAM("in back pass after solve_for_next_V orientation_velocities = " << current_spline_point.angular_velocity);
+		//ROS_INFO_STREAM("in back pass after solve_for_next_V orientation_velocities = " << current_spline_point.angular_velocity);
+	}
+	for(int i = 0; i < max_angular_velocities.size(); i++)
+	{
+		ROS_INFO_STREAM(max_angular_velocities[i]);
 	}
 	//ROS_WARN("called3");
 	//ROS_INFO_STREAM("passed loop 1");
@@ -309,6 +322,8 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	ros::Duration period(dt_);
 	//Same as back pass, but now forward
 
+	int vel_index = 0;
+	current_angular_velocity = 0;
 	for (double i = 0; i < total_arc /* - .1*/;)
 	{
 		i += curr_v * dt_;
@@ -351,10 +366,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		out_msg.points[point_count].positions.push_back(current_spline_point.orientation);
 		out_msg.points[point_count].velocities.push_back(cos(current_spline_point.path_angle) * curr_v );
 		out_msg.points[point_count].velocities.push_back(sin(current_spline_point.path_angle) * curr_v );
-		out_msg.points[point_count].velocities.push_back(
-			current_spline_point.angular_velocity * curr_v / max_wheel_dist_);
-		ROS_INFO_STREAM("fpass: orient_v = " << current_spline_point.angular_velocity << ", curr_v*1000 = " << curr_v*1000 << " o_v * curr_v / wheel_dist " << current_spline_point.angular_velocity * curr_v / max_wheel_dist_);
-		//out_msg.points[point_count].velocities.push_back(current_spline_point.path_angle_deriv * (current_v));
+		out_msg.points[point_count].velocities.push_back(current_angular_velocity);
 		out_msg.points[point_count].time_from_start = now;
 		//ROS_INFO_STREAM(now);
 		now += period;
@@ -384,6 +396,14 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		const double p_s   = positions[starting_point];
 		const double vel_cap = i * (v_s - v_sp1) / (p_s - p_sp1) -
 							   p_s * (v_s - v_sp1) / (p_s - p_sp1) + v_s;
+		ROS_INFO_STREAM("vel cap " << vel_cap);
+		if(i<p_sp1)
+			continue;
+		const double ang_vel_sp1 = max_angular_velocities[starting_point + 1];
+		const double ang_vel_s = max_angular_velocities[starting_point];
+		const double ang_cap = ang_vel_sp1 + (i - p_sp1) * (ang_vel_s - ang_vel_sp1) / (p_s - p_sp1);
+		ROS_INFO_STREAM("ang_vel_sp1 = " << ang_vel_sp1 << " ang_vel_s" << ang_vel_s << " p_sp1 " << p_sp1 << " p_s " << p_s << " i = " << i);
+		ROS_INFO_STREAM("angular velocity cap = " << ang_cap);
 		//Keep below back pass
 		//ROS_INFO_STREAM("pre cut max: " << curr_v);
 		//if(curr_v > vel_cap)
@@ -405,49 +425,50 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		{
 			accelerations.clear();
 		}
-		which_spline = 0;
-		for (; which_spline < x_splines.size() - 1; which_spline++)
-		{
-			if (t_raw3 < end_points[which_spline])
-			{
-				break;
-			}
-		}
+
+		/* HACK AGAIN STARTS HERE */
 		ROS_INFO_STREAM("dtds_for_spline[which_spline] = " << dtds_for_spline[which_spline]);
 		double acceleration_fudge = .01; // TODO : perhaps redo as a percentage?
 
 		// calculate the requested acceleration from the current spline length and the next spline length
 		double current_spline_length = i;
-		double next_spline_length = current_spline_length - curr_v * dt_;
+		double next_spline_length = current_spline_length + curr_v * dt_;
+		double next_time_orient = next_spline_length * dtds_for_spline[which_spline];
+
 		ROS_INFO_STREAM("current_spline_length = " << current_spline_length << " next_spline_length = " << next_spline_length);
 		ROS_INFO_STREAM("max_wheel_dist =  " << max_wheel_dist_);
 		ROS_INFO_STREAM("current_spline_point.angular_velocity = " << current_spline_point.angular_velocity << " curr_v = " << curr_v);
-		double current_time_orient = current_spline_length * dtds_for_spline[which_spline];
+
 		// Probably want to undo the "/ max_wheel_dist_" math from comp_point_characteristics
 		// then convert from angular to linear accel to make the units consistent with
 		// the comparison against the linear accel value max_accel_.
-		ROS_INFO_STREAM("current_spline_point.angular_velocity = " << current_spline_point.angular_velocity << " curr_v = " << curr_v);
-		double current_angular_velocity = current_spline_point.angular_velocity * curr_v / max_wheel_dist_; //* dtds_for_spline[which_spline] * curr_v;
-		double next_time_orient = next_spline_length * dtds_for_spline[which_spline];
 
 		//calculate angular velocity with splines OR
-		double next_angular_velocity;
-		calc_point(orient_splines_first_deriv[which_spline], next_time_orient, next_angular_velocity);
+		//double next_angular_velocity;
+		//calc_point(orient_splines_first_deriv[which_spline], next_time_orient, next_angular_velocity);
 		// TODO - fix the conversion from angular robot accel to linear wheel accel here, since it will be
 		// compared against max_accel which is a linear acceleratin limit
-		ROS_INFO_STREAM("calculated vel = " << next_angular_velocity);
-		next_angular_velocity *=  curr_v / max_wheel_dist_; //* wheeldist / wheeldist, also HACK
-		ROS_INFO_STREAM("SPLINES current_angular_velocity = " << current_angular_velocity << " next_angular_velocity = " << next_angular_velocity);
+		//ROS_INFO_STREAM("calculated vel = " << next_angular_velocity);
+		//next_angular_velocity *=  curr_v / max_wheel_dist_; //* wheeldist / wheeldist, also HACK
+		//ROS_INFO_STREAM("SPLINES current_angular_velocity = " << current_angular_velocity << " next_angular_velocity = " << next_angular_velocity);
 
-		//calulate angular velocity with change in orientation
+		// Calulate angular velocity using change in orientation
 		double next_orientation;
 		calc_point(orient_splines[which_spline], next_time_orient, next_orientation);
+		double next_angular_velocity = (next_orientation - current_spline_point.orientation) / dt_;
+
 		ROS_INFO_STREAM("current_orientation = "  << current_spline_point.orientation << " next_orientation = " << next_orientation);
-		next_angular_velocity = (next_orientation - current_spline_point.orientation) / (next_spline_length - current_spline_length) * curr_v;
 		ROS_INFO_STREAM("ORIENTATION current_angular_velocity = " << current_angular_velocity << " next_angular_velocity = " << next_angular_velocity);
 
 		double requested_acceleration = (next_angular_velocity - current_angular_velocity) / dt_ * max_wheel_dist_; //radians / sec / sec * (meters / radian)
-		//ROS_INFO_STREAM("current_angular_velocity = " << current_angular_velocity << " next_angular_velocity = " << next_angular_velocity);
+		double max_acceleration = max_wheel_mid_accel_; //- accelerations[accelerations.size() - 1];
+		ROS_INFO_STREAM("requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration);
+		if(requested_acceleration < 0)
+		{
+			ROS_WARN_STREAM("skipping for back pass");
+			current_angular_velocity = ang_cap;
+			continue;
+		}
 
 		//binary search until spline length corresponds to maximum acceleration
 		// TODO : subtract hypot(current_spline_point.x, current_spline_point.y)/ dt_ to account for
@@ -455,9 +476,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		// to account for path curvature
 		// Accelerations is the adams-bashforth approximation coeffs, and these get cleared
 		// if the acceleration is limited by various constraints
-		double max_acceleration = max_wheel_brake_accel_; //- accelerations[accelerations.size() - 1];
-		ROS_INFO_STREAM("requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration);
-		if(abs(requested_acceleration) > abs(max_acceleration))
+		if(fabs(requested_acceleration) > fabs(max_acceleration))
 		{
 			ROS_ERROR_STREAM("requested angular acceleration is greater than maximum");
 			double spline_length_max_accel;
@@ -468,40 +487,39 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 			double midpoint_time_orient = 0;
 			double midpoint_orientation = 0;
 			//binary search
-			int count = 0;
 			while(true)
 			{
 				midpoint_spline_length = (max_spline_length + min_spline_length)/2;
 				ROS_INFO_STREAM("min mid max:" << min_spline_length<< " " << midpoint_spline_length << " " << max_spline_length);
-				count++;
 				//what angular acceleration do these two spline lengths require?
 				midpoint_time_orient = midpoint_spline_length * dtds_for_spline[which_spline];
 
 				//calculate angular velocity with spline OR
-				calc_point(orient_splines_first_deriv[which_spline], midpoint_time_orient, midpoint_angular_velocity);
+				//calc_point(orient_splines_first_deriv[which_spline], midpoint_time_orient, midpoint_angular_velocity);
 				//midpoint_angular_velocity *= curr_v;
 				// TODO - fix the conversion from angular robot accel to linear wheel accel here, since it will be
 				// compared against max_accel which is a linear acceleratin limit
 				//midpoint_angular_velocity *= max_wheel_dist_;
-				midpoint_angular_velocity *= curr_v / max_wheel_dist_; // (rad/t_o) * (t_o/meters) *  (meters/sec)
-				ROS_INFO_STREAM("SPLINES current_angular_velocity = " << current_angular_velocity << " midpoint_angular_velocity = " << midpoint_angular_velocity);
-				
+				//midpoint_angular_velocity *= curr_v / max_wheel_dist_; // (rad/t_o) * (t_o/meters) *  (meters/sec)
+				//ROS_INFO_STREAM("SPLINES current_angular_velocity = " << current_angular_velocity << " midpoint_angular_velocity = " << midpoint_angular_velocity);
+
 				//calculate angular velocity with change in orientation
 				calc_point(orient_splines[which_spline], midpoint_time_orient, midpoint_orientation);
+				midpoint_angular_velocity = fabs((midpoint_orientation - current_spline_point.orientation) / dt_);
+				requested_acceleration = (midpoint_angular_velocity - current_angular_velocity) / dt_ * max_wheel_dist_;
+
 				ROS_INFO_STREAM("current_orientation = "  << current_spline_point.orientation << " midpoint_orientation = " << midpoint_orientation);
-				midpoint_angular_velocity = (midpoint_orientation - current_spline_point.orientation) / (midpoint_spline_length - current_spline_length) * curr_v;
 				ROS_INFO_STREAM("diff vel = " << midpoint_angular_velocity - current_angular_velocity << " dt = " << curr_v / (midpoint_spline_length - current_spline_length));
 				ROS_INFO_STREAM("ORIENTATION current_angular_velocity = " << current_angular_velocity << " midpoint_angular_velocity = " << midpoint_angular_velocity);
-				requested_acceleration = (midpoint_angular_velocity - current_angular_velocity) / dt_ * max_wheel_dist_;
 				ROS_INFO_STREAM("requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration);
 
 				//compare to the actual possible angular acceleration
-				if(fabs(requested_acceleration) > fabs(max_acceleration))
+				if(requested_acceleration > max_acceleration)
 				{
 					ROS_INFO_STREAM("requested acceleration of " << requested_acceleration << " too large");
 					max_spline_length = midpoint_spline_length; 
 				}
-				else if(fabs(requested_acceleration) < fabs(max_acceleration - acceleration_fudge))
+				else if(requested_acceleration < max_acceleration - acceleration_fudge)
 				{
 					ROS_INFO_STREAM("requested acceleration of " << requested_acceleration << " too small");
 					min_spline_length = midpoint_spline_length; 
@@ -515,15 +533,19 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 			}
 			//calculate the correct curr_v from the spline length at max angular acceleration
 			curr_v = fabs(spline_length_max_accel - current_spline_length) / dt_;
-			ROS_INFO_STREAM("binary search curr_v: " << curr_v);
+			// Update the next current_angular_velocity to one which follows constraints
+			current_angular_velocity = std::min(midpoint_angular_velocity, ang_cap); 
+			ROS_INFO_STREAM("max ang vel = " << max_angular_velocities[vel_index - point_count]);
+
+			ROS_INFO_STREAM("binary search curr_v: " << curr_v << "curr_ang_v: " << current_angular_velocity);
 			accelerations.clear();
 		}
 		else
 		{
 			ROS_ERROR_STREAM("EVERYTHING IS FINE");
 		}
-
 		//ROS_INFO_STREAM("post cut max: " << curr_v);
+		vel_index++;
 	}
 	//ROS_WARN("called3");
 	//ROS_ERROR("finished raw generation");
@@ -930,7 +952,7 @@ void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs>
 	}
 
 	holder_point.path_angle = atan2(first_deriv_y, first_deriv_x) - (holder_point.orientation /*-  M_PI / 2.0*/);
-	holder_point.angular_velocity = first_deriv_orient * dtds_by_spline[which_spline] *  max_wheel_dist_ ; //returns things in rad/t_o
+	holder_point.angular_velocity = first_deriv_orient /* * dtds_by_spline[which_spline] *  max_wheel_dist_ */; //returns things in rad/t_o
 	//ROS_INFO_STREAM(__LINE__ << ": " << holder_point.angular_velocity);
 	holder_point.angular_accel = fabs(second_deriv_orient * /*dtds_by_spline[which_spline] *
 									  dtds_by_spline[which_spline] **/ max_wheel_dist_ * ang_accel_conv_);
