@@ -7,13 +7,11 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "pixy_get_lines");
 	ros::NodeHandle n;
-	int rc;
 
 	Pixy2 pixy;
-	rc = pixy.init();
+	int rc = pixy.init();
 	if (rc < 0)
 	{
-		ROS_ERROR("Error");
 		ROS_ERROR_STREAM("pixy.init() returned " << rc);
 		return rc;
 	}
@@ -21,15 +19,18 @@ int main(int argc, char **argv)
 
 	pixy.line.setMode(LINE_MODE_WHITE_LINE);
 
-#if 0
 	rc = pixy.getVersion();
 	if (rc < 0)
 	{
 		ROS_ERROR_STREAM("pixy.getVersion() returned " << rc);
 		return rc;
 	}
-	pixy.version->print();
-#endif
+	ROS_INFO_STREAM("Pixy version HW:"
+			<< pixy.version->hardware
+			<< "FW:" << pixy.version->firmwareMajor
+			<< "." << pixy.version->firmwareMinor
+			<< " Build:" << pixy.version->firmwareBuild
+			<< " FW Type:" << pixy.version->firmwareType);
 
 	// Set Pixy2 to line feature identification program //
 	pixy.changeProg("line");
