@@ -19,45 +19,10 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	processed_msg.rightTrigger = msg->axes[5];
 
 	// Translating Dpad (from two axes into the four buttons our code uses)
-	if(msg->axes[6] > 0)
-	{
-		processed_msg.directionLeftButton = true;
-	}
-
-	else
-	{
-		processed_msg.directionLeftButton = false;
-	}
-
-	if(msg->axes[6] < 0)
-	{
-		processed_msg.directionRightButton = true;
-	}
-
-	else
-	{
-		processed_msg.directionRightButton = false;
-	}
-
-	if(msg->axes[7] > 0)
-	{
-		processed_msg.directionUpButton = true;
-	}
-
-	else
-	{
-		processed_msg.directionUpButton = false;
-	}
-
-	if(msg->axes[7] < 0)
-	{
-		processed_msg.directionDownButton = true;
-	}
-
-	else
-	{
-			processed_msg.directionDownButton = false;
-	}
+	processed_msg.directionLeftButton = (msg->axes[6] > 0);
+	processed_msg.directionRightButton = (msg->axes[6] < 0);
+	processed_msg.directionUpButton = (msg->axes[7] > 0);
+	processed_msg.directionDownButton = (msg->axes[7] < 0);
 
 	// Translating all buttons other than the Dpad
 	processed_msg.buttonAButton = msg->buttons[0];
