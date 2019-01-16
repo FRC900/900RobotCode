@@ -1385,8 +1385,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		// Update joystick state as often as possible
 		if ((joysticks_.size() > 0) && realtime_pub_joystick_->trylock())
 		{
-			m.axes.clear();
-			m.buttons.clear();
 			auto &m = realtime_pub_joystick_->msg_;
 			m.header.stamp = time_now_t;
 
@@ -1526,6 +1524,9 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			joystick_right_last_[0] = joystick_right;*/
 
 			realtime_pub_joystick_->unlockAndPublish();
+
+			m.axes.clear();
+			m.buttons.clear();
 		}
 		clock_gettime(CLOCK_MONOTONIC, &end_time);
 		time_sum_joystick +=
