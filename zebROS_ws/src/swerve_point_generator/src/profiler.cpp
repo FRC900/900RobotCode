@@ -397,8 +397,8 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		const double vel_cap = i * (v_s - v_sp1) / (p_s - p_sp1) -
 							   p_s * (v_s - v_sp1) / (p_s - p_sp1) + v_s;
 		ROS_INFO_STREAM("vel cap " << vel_cap);
-		if(i<p_sp1)
-			continue;
+		//if(i<p_sp1)
+		//	continue;
 		const double ang_vel_sp1 = max_angular_velocities[starting_point + 1];
 		const double ang_vel_s = max_angular_velocities[starting_point];
 		const double ang_cap = ang_vel_sp1 + (i - p_sp1) * (ang_vel_s - ang_vel_sp1) / (p_s - p_sp1);
