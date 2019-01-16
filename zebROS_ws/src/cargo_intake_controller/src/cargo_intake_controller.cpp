@@ -9,6 +9,48 @@ bool CargoIntakeController::init(hardware_interface::RobotHW *hw,
 {
     hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
     hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
+
+    //read cargo intake actuator name from config file
+    XmlRpc::XmlRpcValue cargo_intake_actuator_params;
+    if (!controller_nh.getParam("cargo_intake_actuator_join", cargo_intake_actuator_params))
+    {
+        ROS_ERROR_STREAM("Can not read cargo intake actuator name");
+        return false;
+    }
+
+    //read cargo intake name from config file
+    XmlRpc::XmlRpcValue cargo_intake_params;
+    if (!controller_nh.getParam("cargo_intake_joint", cargo_intake_params))
+    {
+        ROS_ERROR_STREAM("Can not read cargo intake name");
+        return false;
+    }
+
+
+    //initialize cargo actuator
+    if (!cargo_intake_actuator_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, cargo_intake_actuator_params))
+    {
+        ROS_ERROR("Cannot initialize cargo intake actuator joint!");
+        return false;
+    }
+    else
+    {
+        ROS_INFO("Initialized cargo intake actuator joint!");
+    }
+
+    //initialize cargo intake joint
+    if (!cargo_intake_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, cargo_intake_params))
+    {
+        ROS_ERROR("Cannot initialize cargo intake joint!");
+        return false;
+    }
+    else
+    {
+        ROS_INFO("Initialized cargo intake joint!");
+    }
+
+
+    service_command_ = controller_nh.advertiseService("cargo_intake_command", &CargoIntakeController::cmdService, this);
 	/*
     intake_in_ = pos_joint_iface->getHandle("clamp");
 
