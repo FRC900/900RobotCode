@@ -27,12 +27,12 @@ namespace navx_offset_controller
 			}
 
 			//define the 4 functions that get called to run the controller; the bodies of these functions are defined in the corresponding src file
-			virtual bool init(hardware_interface::RobotHW *hw,
+			virtual bool init(hardware_interface::PositionJointInterface *hw,
 								ros::NodeHandle &root_nh,
-								ros::NodeHandle &controller_nh); //called to when controller initializing - initialize stuff here
-			virtual void starting(const ros::Time &time); //called when controller starting, we don't really use it for much
-			virtual void update(const ros::Time &time, const ros::Duration &period); //called in a loop when controller running
-			virtual void stopping(const ros::Time &time); //called when controller stopping
+								ros::NodeHandle &controller_nh) override; //called to when controller initializing - initialize stuff here
+			virtual void starting(const ros::Time &time) override; //called when controller starting, we don't really use it for much
+			virtual void update(const ros::Time &time, const ros::Duration &period) override; //called in a loop when controller running
+			virtual void stopping(const ros::Time &time) override; //called when controller stopping
 
 			//define the function that executes the service each time a request is received
 			bool cmdService(navx_offset_controller::NavXSrv::Request &req, navx_offset_controller::NavXSrv::Response &res);

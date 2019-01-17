@@ -5,13 +5,12 @@ namespace navx_offset_controller
 
 //define the bodies of the init, starting, update, and stopping functions which were defined in the header file
 
-bool NavXOffsetController::init(hardware_interface::RobotHW *hw,
+bool NavXOffsetController::init(hardware_interface::PositionJointInterface *hw,
 							ros::NodeHandle &root_nh,
 							ros::NodeHandle &controller_nh)
 {
 	//put the handle for the navX joint in the member variable navX_joint_
-	hardware_interface::PositionJointInterface *const pos_joint_iface_ = hw->get<hardware_interface::PositionJointInterface>();
-	navX_joint_ = pos_joint_iface_->getHandle("navX_zero"); //navX_zero is the name of the joint as hard-coded in the hw interface
+	navX_joint_ = hw->getHandle("navX_zero"); //navX_zero is the name of the joint as hard-coded in the hw interface
 
 	//advertise the service
 	navX_offset_service_ = controller_nh.advertiseService("navX_offset_service", &NavXOffsetController::cmdService, this);
@@ -23,7 +22,8 @@ void NavXOffsetController::starting(const ros::Time &time)
 {
 	ROS_ERROR_STREAM("NavXOffsetController Starting");
 
-	//set a default value?
+	//set a default value? - yes, use something similar to the writeFromNonRT call in cmdService,
+	//but with a constant rather than a variable
 }
 
 void NavXOffsetController::update(const ros::Time &time, const ros::Duration &duration)
