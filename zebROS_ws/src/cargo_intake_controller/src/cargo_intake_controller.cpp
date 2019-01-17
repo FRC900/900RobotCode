@@ -50,7 +50,7 @@ bool CargoIntakeController::init(hardware_interface::RobotHW *hw,
     }
 
 
-    service_command_ = controller_nh.advertiseService("cargo_intake_command", &CargoIntakeController::cmdService, this);
+    cargo_intake_service_ = controller_nh.advertiseService("cargo_intake_command", &CargoIntakeController::cmdService, this);
 	/*
     intake_in_ = pos_joint_iface->getHandle("clamp");
 
@@ -103,8 +103,8 @@ void CargoIntakeController::update(const ros::Time &time, const ros::Duration &p
 
 void CargoIntakeController::stopping(const ros::Time &time) {
 }
-/*
-bool CargoIntakeController::cmdService(intake_controller::IntakeSrv::Request &req, cargo_intake_controller::IntakeSrv::Response &response) {
+
+bool CargoIntakeController::cmdService(intake_controller::CargoIntakeSrv::Request &req, cargo_intake_controller::CargoIntakeSrv::Response &response) {
     if(isRunning())
     {
         spin_command_.writeFromNonRT(req.power); //take the service request for a certain amount of power (-1 to 1) and write it to the command variable
@@ -117,7 +117,7 @@ bool CargoIntakeController::cmdService(intake_controller::IntakeSrv::Request &re
     }
     return true;
 }
-*/
+
 }//namespace
 
 //DON'T FORGET TO EXPORT THE CLASS SO CONTROLLER_MANAGER RECOGNIZES THIS AS A TYPE
