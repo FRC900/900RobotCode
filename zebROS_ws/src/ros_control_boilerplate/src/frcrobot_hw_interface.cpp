@@ -658,7 +658,7 @@ void FRCRobotHWInterface::init(void)
 	}
 
 	// TODO : better support for multiple joysticks?
-	bool started_pub = false;
+	/*bool started_pub = false;
 	for (size_t i = 0; i < num_joysticks_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
@@ -681,7 +681,7 @@ void FRCRobotHWInterface::init(void)
 		joystick_down_last_.push_back(false);
 		joystick_right_last_.push_back(false);
 		joystick_left_last_.push_back(false);
-	}
+	}*/
 
 	navX_angle_ = 0;
 	pressure_ = 0;
@@ -1444,7 +1444,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			m.buttonStartPress = joysticks_[0]->GetRawButtonPressed(8);
 			m.buttonStartRelease = joysticks_[0]->GetRawButtonReleased(8);*/
 
-		/*	bool joystick_up = false;
+			/*bool joystick_up = false;
 			bool joystick_down = false;
 			bool joystick_left = false;
 			bool joystick_right = false;
@@ -1502,8 +1502,8 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			else
 			{
 				m.buttons[6]=0;
-			}
-			*/
+			}*/
+
 		/*	m.directionUpButton = joystick_up;
 			m.directionUpPress = joystick_up && !joystick_up_last_[0];
 			m.directionUpRelease = !joystick_up && joystick_up_last_[0];
