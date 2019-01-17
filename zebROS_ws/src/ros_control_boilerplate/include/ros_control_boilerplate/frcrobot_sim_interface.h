@@ -82,6 +82,9 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 		/** \brief Write the command to the robot hardware. */
 		virtual void write(ros::Duration &elapsed_time) override;
 
+	protected:
+		virtual std::vector<ros_control_boilerplate::DummyJoint> getDummyJoints(void) override;
+
 	private:
         //ros::Subscriber cube_state_sub_;
         //void cube_state_callback(const frc_msgs::CubeState &cube);
@@ -93,6 +96,8 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
         ros::Subscriber match_data_sub_;
         void match_data_callback(const frc_msgs::MatchSpecificData &match_data);
 		std::mutex match_data_mutex_;
+
+		double navX_zero_;
 
 		std::thread sim_joy_thread_;
 		TeleopJointsKeyboard teleop_joy_;

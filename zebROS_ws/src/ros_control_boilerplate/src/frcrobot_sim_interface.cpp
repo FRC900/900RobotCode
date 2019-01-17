@@ -528,6 +528,13 @@ void FRCRobotSimInterface::match_data_callback(const frc_msgs::MatchSpecificData
 	match_data_.setBatteryVoltage(match_data.BatteryVoltage);
 }
 
+std::vector<ros_control_boilerplate::DummyJoint> FRCRobotSimInterface::getDummyJoints(void)
+{
+	std::vector<ros_control_boilerplate::DummyJoint> dummy_joints;
+	dummy_joints.push_back(Dumify(navX_zero_));
+	return dummy_joints;
+}
+
 void FRCRobotSimInterface::init(void)
 {
 	// Do base class init. This loads common interface info
