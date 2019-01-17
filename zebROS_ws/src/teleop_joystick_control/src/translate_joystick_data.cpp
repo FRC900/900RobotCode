@@ -9,8 +9,6 @@ ros::Publisher processed_data_pub;
 
 ros::Time time_last_msg;
 
-bool initialized = false;
-
 void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 {
 	// Translating sticks and triggers
@@ -38,13 +36,6 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	processed_msg.buttonStartButton = msg->buttons.size() > 7 ? msg->buttons[7] : false;
 	processed_msg.stickLeftButton = msg->buttons.size() > 8 ? msg->buttons[9] : false;
 	processed_msg.stickRightButton = msg->buttons.size() > 9 ? msg->buttons[10] : false;
-
-	if(initialized == false)
-	{
-		// Such that processed_msg_last has content for the first time through press/release translating
-		processed_msg_last = processed_msg;
-		initialized = true;
-	}
 
 	// Creating press booleans by comparing the last publish to the current one
 	processed_msg.buttonAPress = !processed_msg_last.buttonAButton && processed_msg.buttonAButton;
@@ -130,6 +121,8 @@ int main(int argc, char ** argv)
 	ros::Rate loop_rate(15);
 
 	time_last_msg = ros::Time::now();
+
+	processed_msg_last = processed_msg;
 
     while(ros::ok())
     {
