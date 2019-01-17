@@ -37,10 +37,10 @@ class CargoIntakeController : public controller_interface::MultiInterfaceControl
             virtual void starting(const ros::Time &time);
             virtual void update(const ros::Time & time, const ros::Duration& period);
             virtual void stopping(const ros::Time &time);
-			/*
-            virtual bool cmdService(cargo_intake_controller::IntakeSrv::Request &req,
-					                cargo_intake_controller::IntakeSrv::Response &res);
-			*/
+			
+            virtual bool cmdService(cargo_intake_controller::CargoIntakeSrv::Request &req,
+					                cargo_intake_controller::CargoIntakeSrv::Response &res);
+			
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
             talon_controllers::TalonPercentOutputControllerInterface cargo_intake_joint_; //interface for the talon joint
