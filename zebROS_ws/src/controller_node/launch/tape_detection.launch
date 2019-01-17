@@ -17,7 +17,7 @@
   <arg name="sub_rate" default="10" />
   <arg name="camera_flip" default="True" />
   <arg name="pub_rate" default="1" />
-  <arg name="batch" default="true" /> 
+  <arg name="batch" default="false" /> 
 
 
   <group ns="$(arg name)">
