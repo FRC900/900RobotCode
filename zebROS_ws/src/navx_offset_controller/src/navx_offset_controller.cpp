@@ -11,7 +11,7 @@ bool NavXOffsetController::init(hardware_interface::RobotHW *hw,
 {
 	//put the handle for the navX joint in the member variable navX_joint_
 	hardware_interface::PositionJointInterface *const pos_joint_iface_ = hw->get<hardware_interface::PositionJointInterface>();
-	navX_joint_ = pos_joint_iface_->getHandle("navX_mxp"); //navX_zero is the name of the joint as hard-coded in the hw interface
+	navX_joint_ = pos_joint_iface_->getHandle("navX_zero"); //navX_zero is the name of the joint as hard-coded in the hw interface
 
 	//advertise the service
 	navX_offset_service_ = controller_nh.advertiseService("navX_offset_service", &NavXOffsetController::cmdService, this);
@@ -29,8 +29,7 @@ void NavXOffsetController::starting(const ros::Time &time)
 void NavXOffsetController::update(const ros::Time &time, const ros::Duration &duration)
 {
 	//write the command to the navx joint
-	ROS_WARN(typeid( *(service_command_.readFromRT()) ).name());
-	ROS_WARN("Value: %f",*(service_command_.readFromRT()));
+	navX_joint_.setCommand( *(service_command_.readFromRT()) );
 }
 
 void NavXOffsetController::stopping(const ros::Time &time)
