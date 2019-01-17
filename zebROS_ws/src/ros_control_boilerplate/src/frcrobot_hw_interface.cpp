@@ -658,7 +658,7 @@ void FRCRobotHWInterface::init(void)
 	}
 
 	// TODO : better support for multiple joysticks?
-	bool started_pub = false;
+	/*bool started_pub = false;
 	for (size_t i = 0; i < num_joysticks_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
@@ -681,7 +681,7 @@ void FRCRobotHWInterface::init(void)
 		joystick_down_last_.push_back(false);
 		joystick_right_last_.push_back(false);
 		joystick_left_last_.push_back(false);
-	}
+	}*/
 
 	navX_angle_ = 0;
 	pressure_ = 0;
@@ -1383,7 +1383,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		start_timespec = end_time;
 
 		// Update joystick state as often as possible
-		if ((joysticks_.size() > 0) && realtime_pub_joystick_->trylock())
+		/*if ((joysticks_.size() > 0) && realtime_pub_joystick_->trylock())
 		{
 			m.axes.clear();
 			m.buttons.clear();
@@ -1398,7 +1398,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			for(int i = 0; i < joysticks_[0]->GetButtonCount(); i++)
 			{
 				m.buttons.push_back(joysticks_[0]->GetRawButton(i));
-			}
+			}*/
 
 			/*m.rightStickY = joysticks_[0]->GetRawAxis(5);
 			m.rightStickX = joysticks_[0]->GetRawAxis(4);
@@ -1525,7 +1525,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			joystick_left_last_[0] = joystick_left;
 			joystick_right_last_[0] = joystick_right;*/
 
-			realtime_pub_joystick_->unlockAndPublish();
+			/*realtime_pub_joystick_->unlockAndPublish();
 		}
 		clock_gettime(CLOCK_MONOTONIC, &end_time);
 		time_sum_joystick +=
@@ -1534,7 +1534,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		iteration_count_joystick += 1;
 
 		ROS_INFO_STREAM_THROTTLE(2, "hw_keepalive nt = " << time_sum_nt / iteration_count_nt
-				<< " joystick = " << time_sum_joystick / iteration_count_joystick);
+				<< " joystick = " << time_sum_joystick / iteration_count_joystick);*/
 
 		int32_t status = 0;
 		match_data_.setMatchTimeRemaining(HAL_GetMatchTime(&status));
