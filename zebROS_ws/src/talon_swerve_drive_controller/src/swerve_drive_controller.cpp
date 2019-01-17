@@ -1002,8 +1002,10 @@ void TalonSwerveDriveController::cmdVelCallback(const geometry_msgs::Twist &comm
 
 bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_controller::MotionProfilePoints::Request &req, talon_swerve_drive_controller::MotionProfilePoints::Response &/*res*/)
 {
+	ROS_INFO_STREAM("running service");
 	if (isRunning())
 	{
+		ROS_INFO_STREAM(__LINE__);
 		/*
 		// check that we don't have multiple publishers on the command topic
 		if (!allow_multiple_cmd_vel_publishers_ && sub_command_.getNumPublishers() > 1)
@@ -1021,6 +1023,7 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 
 		full_profile_cmd full_profile_struct;
 		full_profile_struct.buffer = req.buffer;
+		ROS_INFO_STREAM(__LINE__);
 		if (req.buffer)
 		{
 			ROS_INFO_STREAM("size in controller: " << req.profiles.size());
@@ -1047,11 +1050,13 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 				}
 			}
 		}
+		ROS_INFO_STREAM(__LINE__);
 
 		full_profile_struct.wipe_all		= req.wipe_all;
 		full_profile_struct.run				= req.run;
 		full_profile_struct.brake			= req.brake;
 		full_profile_struct.run_slot		= req.run_slot;
+		ROS_INFO_STREAM(__LINE__);
 		full_profile_struct.change_queue	= req.change_queue;
 		for (size_t i = 0; i < req.new_queue.size(); i++)
 		{
@@ -1059,15 +1064,18 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 		}
 		full_profile_struct.newly_set		= true;
 
+		ROS_INFO_STREAM(__LINE__);
 		//mutex?
 		full_profile_buffer_.push_back(full_profile_struct);
 
 
+		ROS_INFO_STREAM(__LINE__);
 		return true;
 	}
 	else
 	{
 		ROS_ERROR_NAMED(name_, "Can't accept new commands. Controller is not running.");
+		ROS_INFO_STREAM(__LINE__);
 		return false;
 	}
 }
