@@ -1,8 +1,69 @@
 #include "ros/ros.h"
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
 
 #include "libpixyusb2.h"
 #include "pixy_get_lines/PixyLine.h"
 
+int demosaic(uint16_t width, uint16_t height, const uint8_t *bayerImage, cv::Mat &mat)
+{
+	mat.create(height, width, CV_8UC3);
+	uint32_t x, y, xx, yy, r, g, b;
+	const uint8_t *pixel0, *pixel;
+
+	for (y=0; y<height; y++)
+	{
+		yy = y;
+		if (yy==0)
+			yy++;
+		else if (yy==height-1)
+			yy--;
+		pixel0 = (const uint8_t *)bayerImage + yy*width;
+		for (x=0; x<width; x++)
+		{
+			uchar *ptr = mat.ptr<uchar>(y);
+			xx = x;
+			if (xx==0)
+				xx++;
+			else if (xx==width-1)
+				xx--;
+			pixel = pixel0 + xx;
+			if (yy&1)
+			{
+				if (xx&1)
+				{
+					r = *pixel;
+					g = (*(pixel-1)+*(pixel+1)+*(pixel+width)+*(pixel-width))>>2;
+					b = (*(pixel-width-1)+*(pixel-width+1)+*(pixel+width-1)+*(pixel+width+1))>>2;
+				}
+				else
+				{
+					r = (*(pixel-1)+*(pixel+1))>>1;
+					g = *pixel;
+					b = (*(pixel-width)+*(pixel+width))>>1;
+				}
+			}
+			else
+			{
+				if (xx&1)
+				{
+					r = (*(pixel-width)+*(pixel+width))>>1;
+					g = *pixel;
+					b = (*(pixel-1)+*(pixel+1))>>1;
+				}
+				else
+				{
+					r = (*(pixel-width-1)+*(pixel-width+1)+*(pixel+width-1)+*(pixel+width+1))>>2;
+					g = (*(pixel-1)+*(pixel+1)+*(pixel+width)+*(pixel-width))>>2;
+					b = *pixel;
+				}
+			}
+			*ptr++ = b;
+			*ptr++ = g;
+			*ptr++ = r;
+		}
+	}
+}
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "pixy_get_lines");
@@ -36,8 +97,10 @@ int main(int argc, char **argv)
 	pixy.changeProg("line");
 
 	ros::Publisher pub = n.advertise<pixy_get_lines::PixyLine>("pixy_line", 1);
-
+	image_transport::ImageTransport it(n);
+	image_transport::Publisher img_pub = it.advertise("pixy_image", 1);
 	ros::Rate r(100);
+	cv::Mat mat;
 	while(ros::ok())
 	{
 		// Query Pixy for line features //
@@ -88,6 +151,16 @@ int main(int argc, char **argv)
 				msg.barcodes.push_back(barcode);
 			}
 			pub.publish(msg);
+		}
+
+		{
+			pixy.m_link.stop();
+			uint8_t *bayerFrame;
+			pixy.m_link.getRawFrame(&bayerFrame);
+			demosaic(PIXY2_RAW_FRAME_WIDTH, PIXY2_RAW_FRAME_HEIGHT, bayerFrame, mat);
+			pixy.m_link.resume();
+			sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", mat).toImageMsg();
+			img_pub.publish(msg);
 		}
 		r.sleep();
 	}
