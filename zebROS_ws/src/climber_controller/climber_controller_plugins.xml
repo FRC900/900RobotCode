@@ -1,0 +1,8 @@
+<library path="lib/libclimber_controller">
+	
+	<class name="climber_controller/ClimberController" type="climber_controller::ClimberController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Library file. Does stuff to make climber_controller exist.
+		</description>
+	</class>
+</library>
