@@ -33,6 +33,35 @@ bool zero_wheel(std_srvs::Trigger::Request& /*req*/, std_srvs::Trigger::Response
 	return 0;
 }
 
+bool keep_wheels_zeroed(std_srvs::Trigger::Request& /*req*/, std_srvs::Trigger::Response& /*res*/)
+{
+	ROS_INFO_STREAM("running zero_wheel_service");
+	std_msgs::Float64 fl_msg;
+	fl_msg.data = offsets[0];
+
+	std_msgs::Float64 fr_msg;
+	fr_msg.data = offsets[1];
+
+	std_msgs::Float64 bl_msg;
+	bl_msg.data = offsets[2];
+
+	std_msgs::Float64 br_msg;
+	br_msg.data = offsets[3];
+
+	ros::Rate r(10);
+	while(ros::ok())
+	{
+		fr_angle_position.publish(fr_msg);
+		fl_angle_position.publish(fl_msg);
+		br_angle_position.publish(br_msg);
+		bl_angle_position.publish(bl_msg);
+		r.sleep();
+	}
+
+	ROS_INFO_STREAM("finished zero_wheel_service");
+	return 0;
+}
+
 int main(int argc, char ** argv)
 {
 	ros::init(argc, argv, "zero_wheel_service");
@@ -61,6 +90,7 @@ int main(int argc, char ** argv)
 		ROS_INFO_STREAM("offsets = " << offsets[i]);
 
 	ros::ServiceServer zero_wheel_srv = nh.advertiseService("zero_wheel", zero_wheel);
+	ros::ServiceServer keep_wheels_zeroed_srv = nh.advertiseService("keep_wheels_zeroed", keep_wheels_zeroed);
 	fr_angle_position = nh.advertise<std_msgs::Float64>("fr_angle_motionmagic_controller/command", 1000);
 	fl_angle_position = nh.advertise<std_msgs::Float64>("fl_angle_motionmagic_controller/command", 1000);
 	br_angle_position = nh.advertise<std_msgs::Float64>("br_angle_motionmagic_controller/command", 1000);
