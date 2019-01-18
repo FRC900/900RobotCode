@@ -18,7 +18,7 @@ hardware_interface:
        - {name: dummy_talon, type: can_talon_srx, can_id: 1, local: false}
          #- {name: pdp, type: pdp}
        - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}
-       - {name: joystick, type: joystick, id: 0}
+       - {name: joystick, type: joystick, id: 0, local: true}
        - {name: joystick_rumble, type: rumble, rumble_port: 0}
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
