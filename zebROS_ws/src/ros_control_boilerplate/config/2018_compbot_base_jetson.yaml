@@ -15,9 +15,9 @@ hardware_interface:
    can_interface: can0
     
    joints:
-       #TODO: Get can id values
-       - {name: cargo_intake_joint, type: can_talon_srx, can_id: 0, local: true}
-       - {name: cargo_intake_actuator_joint, type: can_talon_srx, can_id: 0, local: true}
+       #TODO: Get config values of joints
+       - {name: cargo_intake_joint, type: can_talon_srx, can_id: 0}
+       - {name: cargo_intake_arm_joint, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
        - {name: fl_drive, type: can_talon_srx, can_id: 21, local: true}
        - {name: fl_angle, type: can_talon_srx, can_id: 11, local: true}
        - {name: fr_drive, type: can_talon_srx, can_id: 22, local: true}
@@ -62,13 +62,8 @@ cargo_intake_controller:
         joint: cargo_intake_joint
         type: talon_controllers/TalonPercentOutputController
         invert_output: False
-
-    cargo_intake_actuator_joint: "cargo_intake_acutator"
-    cargo_intake_actuator:
-        joint: cargo_intake_actuator_joint
-        type: talon_controllers/TalonPositionCloseLoopController
-        invert_output: False
-
+    
+    #note: the intake arm (solenoid joint) is currently being grabbed directly from the hardware_interface above
 
 climber_controller:
     type:           climber_controller/ClimberController

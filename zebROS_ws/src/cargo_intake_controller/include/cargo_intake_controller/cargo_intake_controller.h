@@ -44,12 +44,11 @@ class CargoIntakeController : public controller_interface::MultiInterfaceControl
 
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
-            talon_controllers::TalonPercentOutputControllerInterface cargo_intake_joint_; //interface for the talon joint
-            talon_controllers::TalonPositionCloseLoopControllerInterface cargo_intake_actuator_joint_; //interface for the talon joint
-            //hardware_interface::JointHandle intake_in_; //interface for the in/out solenoid joint
+            talon_controllers::TalonPercentOutputControllerInterface cargo_intake_joint_; //interface for the spinny part of the intake
+			hardware_interface::JointHandle cargo_intake_arm_joint_; //interface for the up/down arm of the intake
 
             realtime_tools::RealtimeBuffer<double> spin_command_; //this is the buffer for percent output commands to be published
-            realtime_tools::RealtimeBuffer<double> intake_in_cmd_; //buffer for in/out commands
+            realtime_tools::RealtimeBuffer<double> intake_arm_command_; //buffer for commands for up/down of the arm
             realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
 
             ros::ServiceServer cargo_intake_service_; //service for receiving commands
