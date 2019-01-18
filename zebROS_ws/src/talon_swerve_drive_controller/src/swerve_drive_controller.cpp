@@ -764,7 +764,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 
 			steering_joints_[i].setPIDFSlot(0);
 			speed_joints_[i].setPIDFSlot(0);
-			steering_joints_[i].setMode(position_mode);
+			steering_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_MotionMagic);
 			speed_joints_[i].setClosedloopRamp(0);
 
 			speed_joints_[i].setDemand1Value(0);
@@ -779,7 +779,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 			{
 				//ROS_INFO_STREAM("id:" << i << " speed: " <<speeds_angles[i][0]);
 				speed_joints_[i].setCommand(0);
-				speed_joints_[i].setMode(percent_voltage_mode);
+				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
 			}
 			if (ros::Time::now().toSec() - time_before_brake > .5)
 			{
@@ -823,7 +823,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		{
 			for (size_t i = 0; i < wheel_joints_size_; ++i)
 			{
-				speed_joints_[i].setMode(velocity_mode);
+				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_Velocity);
 				speed_joints_[i].setCommand(speeds_angles[i][0]);
 			}
 		}
@@ -832,7 +832,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 			for (size_t i = 0; i < wheel_joints_size_; ++i)
 			{
 				speed_joints_[i].setCommand(0);
-				speed_joints_[i].setMode(percent_voltage_mode);
+				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
 			}
 		}
 	}
