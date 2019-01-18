@@ -70,6 +70,10 @@ add_dependencies(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
+add_executable(zero_wheel_service src/zero_wheel_angle.cpp)
+target_link_libraries(zero_wheel_service ${catkin_LIBRARIES})
+add_dependencies(zero_wheel_service std_srvs std_msgs)
+
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 

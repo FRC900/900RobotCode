@@ -134,6 +134,62 @@ br_angle_percentout_controller:
     dynamic_reconfigure: True
     voltage_compensation_Enable: True
 
+# ANGLE MOTION MAGIC CONTROLLERS
+
+fr_angle_motionmagic_controller:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: fr_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 4.2, i: 0.006, d: 45.0, f: 0.47, i_zone: 500} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
+        - {p: 5.0, i: 0.03, d: 75.0, f: 0.47, i_zone: 1200} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
+    invert_output: true
+    sensor_phase: true
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+fl_angle_motionmagic_controller:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: fl_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 4.2, i: 0.006, d: 45.0, f: 0.47, i_zone: 500} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
+        - {p: 5.0, i: 0.03, d: 75.0, f: 0.47, i_zone: 1200} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
+    invert_output: true
+    sensor_phase: true
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+br_angle_motionmagic_controller:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: br_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 4.2, i: 0.006, d: 45.0, f: 0.47, i_zone: 500} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
+        - {p: 5.0, i: 0.03, d: 75.0, f: 0.47, i_zone: 1200} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
+    invert_output: true
+    sensor_phase: true
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
 bl_angle_motionmagic_controller:
     type: talon_controllers/TalonMotionMagicCloseLoopController
     joint: bl_angle
@@ -141,6 +197,79 @@ bl_angle_motionmagic_controller:
     close_loop_values:
         - {p: 4.2, i: 0.006, d: 45.0, f: 0.47, i_zone: 500} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
         - {p: 5.0, i: 0.03, d: 75.0, f: 0.47, i_zone: 1200} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
+    invert_output: true
+    sensor_phase: true
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+# DRIVE POSITION CONTROLLERS
+fr_drive_position_controller:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: fr_drive 
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
+        - {p: 0.2, i: 0.002, d: 0.1, f: 0.06145, i_zone: 700}
+    invert_output: true
+    sensor_phase: true
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+fl_drive_position_controller:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: fl_drive 
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
+        - {p: 0.2, i: 0.002, d: 0.1, f: 0.06145, i_zone: 700}
+    invert_output: true
+    sensor_phase: true
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+br_drive_position_controller:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: br_drive 
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
+        - {p: 0.2, i: 0.002, d: 0.1, f: 0.06145, i_zone: 700}
+    invert_output: true
+    sensor_phase: true
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+bl_drive_position_controller:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: bl_drive 
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
+        - {p: 0.2, i: 0.002, d: 0.1, f: 0.06145, i_zone: 700}
     invert_output: true
     sensor_phase: true
     peak_output_forward: 1.0
