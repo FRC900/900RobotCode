@@ -107,6 +107,7 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	// Set processed_msg_last to be correct the next time through
 	processed_msg_last = processed_msg;
 
+	// Reset 0.1 second timer in main
 	time_last_msg = ros::Time::now();
 }
 
@@ -126,7 +127,8 @@ int main(int argc, char ** argv)
 
     while(ros::ok())
     {
-        if((ros::Time::now() - time_last_msg).toSec() > 0.1)
+        // Will only run if not curently processing and publishing messages
+		if((ros::Time::now() - time_last_msg).toSec() > 0.1)
 		{
 			processed_data_pub.publish(processed_msg);
 		}
