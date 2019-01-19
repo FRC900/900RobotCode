@@ -723,7 +723,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		if (cur_prof_cmd.run)
 		{
 			ROS_WARN("running from  controller");
-			cmd_vel_mode_.store(true, std::memory_order_relaxed);
+			cmd_vel_mode_.store(false, std::memory_order_relaxed);
 			for (size_t k = 0; k < WHEELCOUNT; k++)
 			{
 				steering_joints_[k].setCustomProfileSlot(cur_prof_cmd.run_slot);
@@ -850,7 +850,6 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		// Make controller only set CustomProfileRun once, so that it can
 		// be cleared out by the hwi if needed when e.g. disabling the robot
 		set_profile_run = true;
-		ROS_INFO("swerve drive controller set custom profile");
 	}
 
 	static uint16_t slot_ret = 0;
