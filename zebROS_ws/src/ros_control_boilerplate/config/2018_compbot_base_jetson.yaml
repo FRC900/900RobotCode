@@ -15,6 +15,8 @@ hardware_interface:
    can_interface: can0
     
    joints:
+       
+       - {name: elevator_joint, type: can_talon_srx, can_id: 0, local: true}
        - {name: fl_drive, type: can_talon_srx, can_id: 21, local: true}
        - {name: fl_angle, type: can_talon_srx, can_id: 11, local: true}
        - {name: fr_drive, type: can_talon_srx, can_id: 22, local: true}
@@ -45,6 +47,12 @@ hardware_interface:
 #Create controllers for main mechanisms on robot
 elevator_controller:
     type:   elevator_controller/ElevatorController
+    elevator_joint_: "elevator"
+    elevator: 
+        type: talon_controllers/TalonMotionMagicCloseLoopControllerInterface 
+        joint: elevator_joint
+
+
 
 
 # This one creates the /talon_states topic necessary in ROS
