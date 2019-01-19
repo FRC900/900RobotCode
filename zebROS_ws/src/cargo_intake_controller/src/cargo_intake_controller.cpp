@@ -49,17 +49,17 @@ void CargoIntakeController::update(const ros::Time &time, const ros::Duration &p
 	bool intake_arm_command = *(intake_arm_command_.readFromRT());
    	double intake_arm_command_double; //to store processed input
 	if(intake_arm_command == true) {
-		ROS_WARN("cargo intake arm command: -1");
+		//ROS_WARN("cargo intake arm command: -1");
 		intake_arm_command_double = -1;
 	}
 	else if (intake_arm_command == false) {
 		intake_arm_command_double = 1;
-		ROS_WARN("cargo intake arm command: 1");
+		//ROS_WARN("cargo intake arm command: 1");
 	}
 	
 	//read spin command
 	double spin_command = *(spin_command_.readFromRT());
-	ROS_INFO_STREAM("cargo spin command = " << spin_command << "; intake_arm = " << intake_arm_command);
+	//ROS_INFO_STREAM("cargo spin command = " << spin_command << "; intake_arm = " << intake_arm_command);
 	cargo_intake_joint_.setCommand(spin_command); // set the command to the spinny part of the intake
 	cargo_intake_arm_joint_.setCommand(intake_arm_command_double); // set the in/out command to the up/down part of the intake
 }
@@ -72,7 +72,7 @@ bool CargoIntakeController::cmdService(cargo_intake_controller::CargoIntakeSrv::
     {
         spin_command_.writeFromNonRT(req.power); //take the service request for a certain amount of power (-1 to 1) and write it to the command variable
 		intake_arm_command_.writeFromNonRT(req.intake_arm); //take the service request for in/out (true/false???) and write to a command variable
-    }
+	}
     else
     {
         ROS_ERROR_STREAM("Can't accept new commands. CargoIntakeController is not running.");
