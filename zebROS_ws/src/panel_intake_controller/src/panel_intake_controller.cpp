@@ -9,15 +9,18 @@ bool PanelIntakeController::init(hardware_interface::RobotHW *hw,
 {
     hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
     hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
-	/*
-    intake_in_ = pos_joint_iface->getHandle("clamp");
+
+
+	
+   // intake_in_ = pos_joint_iface->getHandle("clamp");
     //read intake name from config file
-    XmlRpc::XmlRpcValue intake_params;
-    if (!controller_nh.getParam("intake_joint", intake_params))
+    XmlRpc::XmlRpcValue panel_params;
+    if (!controller_nh.getParam("panel_joint", panel_params))
     {
-        ROS_ERROR_STREAM("Can not read intake name");
+        ROS_ERROR_STREAM("Can not read panel name");
         return false;
     }
+	/*
     //initialize joint with that name
     if (!intake_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, intake_params))
     {
@@ -30,7 +33,7 @@ bool PanelIntakeController::init(hardware_interface::RobotHW *hw,
     }
 	*/
 
-    //service_command_ = controller_nh.advertiseService("intake_command", &PanelIntakeController::cmdService, this);
+    panel_service_ = controller_nh.advertiseService("intake_command", &PanelIntakeController::cmdService, this);
 
     return true;
 }
