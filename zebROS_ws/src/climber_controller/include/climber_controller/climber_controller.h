@@ -1,5 +1,5 @@
-#ifndef INTAKE_CONTROLLER
-#define INTAKE_CONTROLLER
+#ifndef CLIMBER_CONTROLLER
+#define CLIMBER_CONTROLLER
 
 #include <ros/ros.h>
 #include <vector>
@@ -41,7 +41,7 @@ class ClimberController : public controller_interface::Controller<hardware_inter
 
             realtime_tools::RealtimeBuffer<double> climber_in_cmd_; //buffer for in/out commands
 
-            ros::ServiceServer service_command_; //service for receiving commands
+            ros::ServiceServer climber_service_; //service for receiving commands
 }; //class
 
 } //namespace
