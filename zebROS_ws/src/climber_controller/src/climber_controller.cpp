@@ -11,7 +11,7 @@ bool ClimberController::init(hardware_interface::RobotHW *hw,
 
     climber_in_ = pos_joint_iface->getHandle("climber");
 
-    service_command_ = controller_nh.advertiseService("climber_command", &ClimberController::activateSrv, this);
+    climber_service_ = controller_nh.advertiseService("climber_command", &ClimberController::activateSrv, this);
 
     return true;
 }
@@ -23,7 +23,15 @@ void ClimberController::starting(const ros::Time &/*time*/) {
 void ClimberController::update(const ros::Time &time, const ros::Duration &period) {
     bool climber_in_cmd = *(climber_in_cmd_.readFromRT());
     double climber_in_cmd_double;
-
+	if(climber_in_cmd == true)
+	{
+		climber_in_cmd_double = -1;
+	}
+	else if(climber_in_cmd == false)
+	{
+		climber_in_cmd_double = 1;
+	}
+	
     climber_in_.setCommand(climber_in_cmd_double); // set the in/out command to the clampy part of the climber
 }
 
