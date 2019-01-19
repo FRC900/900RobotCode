@@ -181,7 +181,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				// Make sure there isn't too much
 				// distance left to right between the goals
 				const float dx = left_info[i].pos.x - right_info[j].pos.x;
-				if (fabsf(dx) > .3)
+				if (fabsf(dx) > .5)
 				{
 #ifdef VERBOSE_BOILER
 					cout << i << " " << j << " " << dx << " dx check failed" << endl;

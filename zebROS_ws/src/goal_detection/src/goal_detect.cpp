@@ -88,6 +88,7 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	gd_msg.location.x = pt.x;
 	gd_msg.location.y = pt.y;
 	gd_msg.location.z = pt.z;
+	gd_msg.angle = atan(pt.x/pt.y);
 	gd_msg.valid = gd->Valid();
 	pub.publish(gd_msg);
 

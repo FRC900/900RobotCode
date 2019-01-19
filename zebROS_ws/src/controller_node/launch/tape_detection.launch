@@ -9,7 +9,7 @@
   <arg name="hue" default="6" />
   <arg name="saturation" default="-1" />
   <arg name="gain" default="-1" />
-  <arg name="exposure" default="-1" />
+  <arg name="exposure" default="60" />
   <arg name="whitebalance" default="-1" />
   <arg name="name" default="zed_goal" />
   <arg name="record" default="False" />
