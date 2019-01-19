@@ -295,6 +295,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 
 	profile_queue_num = controller_nh.advertise<std_msgs::UInt16>("profile_queue_num", 1);
 
+	cmd_vel_mode_.store(true, std::memory_order_relaxed);
 	/*
 	if (!setOdomParamsFromUrdf(root_nh,
 	                          speed_names[0],
