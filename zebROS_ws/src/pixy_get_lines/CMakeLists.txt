@@ -133,7 +133,7 @@ include_directories(
   ${LIBPIXYCOMMON_BASE}/inc
   ${PIXY_SRC_BASE}/common/inc
   ${PIXYARDUINO_BASE}
-  ${LIBUSB_1_INCLUDE_DIRS}
+  ${libusb_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
