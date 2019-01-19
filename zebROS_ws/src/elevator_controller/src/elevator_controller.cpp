@@ -12,8 +12,8 @@ namespace elevator_controller
 
 
 		XmlRpc::XmlRpcValue elevator_params;
-		if (!controller_nh.getParam("elevator_joint",elevator_params))
-		{ ROS_ERROR("Could not find elevator_joint");
+		if (!controller_nh.getParam("elevator_joint_",elevator_params))
+		{ ROS_ERROR("Could not find elevator_joint_");
 			return false;
 		}
 
@@ -50,31 +50,32 @@ namespace elevator_controller
 
 	void ElevatorController::starting(const ros::Time &/*time*/) {
 	}
-	/*
-	   void ElevatorController::update(const ros::Time _.setCommand(); // set the command to the spinny part of the intake
-	   intake_in_.setCommand(intake_in_cmd_double); // set the in/out command to the clampy part of the intake
-	   */
-}
 
-void ElevatorController::stopping(const ros::Time &time) {
-}
+	void ElevatorController::update(const  ros::Time &time,const  ros::Duration &duration) 	// set the command to the spinny part of the intake
+			{
+			intake_in_.setCommand(intake_in_cmd_double); // set the in/out command to the clampy part of the intake
+			elevator_joint.setCommand(*spin_command_.readFromRT()); 
+			}
+
+			void ElevatorController::stopping(const ros::Time &time) {
+			}
 
 
-//Command Service Function
+			//Command Service Function
 
-bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request &req, elevator_controller::ElevatorSrv::Response &response) {
-	if(isRunning())
-	{
-		spin_command_.writeFromNonRT(req.position); //take the service request for a certain amount of power (-1 to 1) and write it to the command variable
-	//	intake_in_cmd_.writeFromNonRT(req.intake_in); //take the service request for in/out (true/false???) and write to a command variable
-	}
-	else
-	{
-		ROS_ERROR_STREAM("Can't accept new commands. ElevatorController is not running.");
-		return false;
-	}
-	return true;
-}
+			bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request &req, elevator_controller::ElevatorSrv::Response &response) {
+			if(isRunning())
+			{
+			spin_command_.writeFromNonRT(req.position); //take the service request for a certain amount of power (-1 to 1) and write it to the command variable
+			//	intake_in_cmd_.writeFromNonRT(req.intake_in); //take the service request for in/out (true/false???) and write to a command variable
+			}
+			else
+			{
+			ROS_ERROR_STREAM("Can't accept new commands. ElevatorController is not running.");
+			return false;
+			}
+			return true;
+			}
 
 }//namespace
 
