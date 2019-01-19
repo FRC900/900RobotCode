@@ -3,13 +3,11 @@
 namespace climber_controller
 {
 
-bool ClimberController::init(hardware_interface::RobotHW *hw,
+bool ClimberController::init(hardware_interface::PositionJointInterface *hw,
                                                         ros::NodeHandle                 &root_nh,
                                                         ros::NodeHandle                 &controller_nh)
 {
-    hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
-
-    climber_in_ = pos_joint_iface->getHandle("climber");
+    climber_in_ = hw->getHandle("climber");
 
     climber_service_ = controller_nh.advertiseService("climber_command", &ClimberController::activateSrv, this);
 

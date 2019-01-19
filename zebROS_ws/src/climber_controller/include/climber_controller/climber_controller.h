@@ -25,7 +25,7 @@ class ClimberController : public controller_interface::Controller<hardware_inter
             {
             }
 
-            virtual bool init(hardware_interface::RobotHW *hw,
+            virtual bool init(hardware_interface::PositionJointInterface *hw,
                               ros::NodeHandle             &root_nh,
                               ros::NodeHandle             &controller_nh);
             virtual void starting(const ros::Time &time);
