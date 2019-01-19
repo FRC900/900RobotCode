@@ -26,6 +26,13 @@ count = 0
 while(True):
     frame = cap.read()
     grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+<<<<<<< HEAD
+    blur = cv2.bilateralFilter(grey, 5, 200, 200)
+    edges = cv2.Canny(blur, 100, 200, 5)
+    #cv2.imshow("grey", grey)
+    #cv2.imshow("blur", blur)
+    cv2.imshow("edges", edges)
+=======
     #blurred = cv2.GaussianBlur(grey, (3, 3), 0)
 
     # Bilateral filter - tends to clean up carpet-related
@@ -55,6 +62,7 @@ while(True):
     # like, for testing / evaluation purposes.
     up = cv2.pyrUp(down)
     cv2.imshow("up", up)
+>>>>>>> 68d1f669582a60a9bec7caa15d14ac62b0eab179
     if (cv2.waitKey(1) & 0xFF == ord('q')):
         break
     fps.update()

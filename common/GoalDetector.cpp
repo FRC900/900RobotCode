@@ -169,6 +169,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			// depth info is correct
 			if (!left_info[i].depth_error && !right_info[j].depth_error)
 			{
+/*
 				if (fabsf(left_info[i].angle - right_info[j].angle) > 10.0)
 				{
 #ifdef VERBOSE_BOILER
@@ -176,7 +177,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 #endif
 					continue;
 				}
-
+*/
 				// Make sure there isn't too much
 				// distance left to right between the goals
 				const float dx = left_info[i].pos.x - right_info[j].pos.x;
@@ -373,19 +374,19 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		// Remove objects which are obviously too small
 		// Works out to about 60 pixels on a 360P image
 		// or 250 pixels on 720P
-		if (br.area() <= (_frame_size.width * _frame_size.height * .00027))
+		if (br.area() <= (_frame_size.width * _frame_size.height * .0027))
 		{
 #ifdef VERBOSE
-			cout << "Contour " << i << " area out of range " << br.area() << " vs " << _frame_size.width * _frame_size.height * .00027 << endl;
+			cout << "Contour " << i << " area out of range " << br.area() << " vs " << _frame_size.width * _frame_size.height * .0027 << endl;
 #endif
 			continue;
 		}
 
-		// Scale tape is always taller than it is wide
-		if (br.height < br.width)
+		// Bounding rect is always at a proper ratio for a diagonal piece of tape.
+		if (br.height / br.width < 1)
 		{
 #ifdef VERBOSE
-			cout << "Contour " << i << " wider than tall" << br << endl;
+			cout << "Contour " << i << " height/width ratio fail" << br << endl;
 #endif
 			continue;
 		}
