@@ -30,7 +30,7 @@
 
 		<!-- Load controller manager -->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn joint_state_controller joint_state_listener_controller talon_state_controller match_state_listener_controller pdp_state_controller fr_drive_position_controller fl_drive_position_controller br_drive_position_controller bl_drive_position_controller fr_angle_motionmagic_controller fl_angle_motionmagic_controller br_angle_motionmagic_controller  bl_angle_motionmagic_controller robot_code_ready_controller" /> 
+			output="screen" args="spawn joint_state_controller joint_state_listener_controller talon_state_controller match_state_listener_controller pdp_state_controller swerve_drive_controller robot_code_ready_controller" /> 
 
 		<node name="point_gen" pkg="swerve_point_generator" type="point_gen" output="screen" />
 

@@ -850,6 +850,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		// Make controller only set CustomProfileRun once, so that it can
 		// be cleared out by the hwi if needed when e.g. disabling the robot
 		set_profile_run = true;
+		ROS_INFO("swerve drive controller set custom profile");
 	}
 
 	static uint16_t slot_ret = 0;
