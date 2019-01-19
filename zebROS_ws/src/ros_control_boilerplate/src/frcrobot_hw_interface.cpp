@@ -658,7 +658,7 @@ void FRCRobotHWInterface::init(void)
 	}
 
 	// TODO : better support for multiple joysticks?
-	/*bool started_pub = false;
+	bool started_pub = false;
 	for (size_t i = 0; i < num_joysticks_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
@@ -681,7 +681,7 @@ void FRCRobotHWInterface::init(void)
 		joystick_down_last_.push_back(false);
 		joystick_right_last_.push_back(false);
 		joystick_left_last_.push_back(false);
-	}*/
+	}
 
 	navX_angle_ = 0;
 	pressure_ = 0;
@@ -1385,6 +1385,9 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		// Update joystick state as often as possible
 		if ((joysticks_.size() > 0) && realtime_pub_joystick_->trylock())
 		{
+
+		ROS_INFO_STREAM("Joysitck Access " << joysticks_[0]->GetAxisCount() );
+
 			auto &m = realtime_pub_joystick_->msg_;
 			m.header.stamp = time_now_t;
 
