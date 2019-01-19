@@ -931,13 +931,12 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 			pdp_state.setCurrent(HAL_GetPDPChannelCurrent(pdp, channel, &status), channel);
 		}
 		if (status)
-			ROS_ERROR_STREAM("pdp_read_thread error : status = " << status);
-		else
 		{
-			// Copy to state shared with read() thread
-			std::lock_guard<std::mutex> l(*mutex);
-			*state = pdp_state;
+			ROS_ERROR_STREAM("pdp_read_thread error : status = " << status);
 		}
+		// Copy to state shared with read() thread
+		std::lock_guard<std::mutex> l(*mutex);
+		*state = pdp_state;
 
 		tracer.stop();
 		ROS_INFO_STREAM_THROTTLE(2, tracer.report());
