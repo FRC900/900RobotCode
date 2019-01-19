@@ -1,11 +1,24 @@
 actionlib_intake_params:
     linebreak_debounce_iterations: 5
-    spit_out_time: 1
-actionlib_forearm_params:
-    arm_angle_deadzone: .02
-actionlib_arm_params:
     intake_timeout: 5
-    forearm_timeout: 4
-teleop_params:
-    intake_power: 1
-    intake_hold_power: 0.1
+    lift_timeout: 4
+actionlib_cargo_intake_params:
+    cargo_spit_out_time: 1
+    cargo_intake_power: 1
+actionlib_hatch_cover_intake_params:
+    intake_timeout: 5
+    lift_timeout: 4
+actionlib_lift_params:
+    cargo_setpoints:
+        cargo_ship: -1.0
+        low_rocket: -1.0
+        mid_rocket: -1.0
+        high_rocket: -1.0
+        intake: -1.0
+    hatch_cover_setpoints:
+        cargo_ship: -1.0
+        low_rocket: -1.0
+        mid_rocket: -1.0
+        high_rocket: -1.0
+        intake: -1.0
+    max_speed: -1.0
