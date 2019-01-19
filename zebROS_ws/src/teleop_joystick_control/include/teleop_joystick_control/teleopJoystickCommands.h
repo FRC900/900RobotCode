@@ -15,7 +15,6 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <swerve_point_generator/Coefs.h>
-#include <swerve_point_generator/FullGen.h>
 #include <swerve_point_generator/FullGenCoefs.h>
 #include <swerve_point_generator/GenerateTrajectory.h>
 #include <talon_swerve_drive_controller/MotionProfilePoints.h>

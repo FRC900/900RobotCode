@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+
+	<node name="pixy_get_lines_node" pkg="pixy_get_lines" type="pixy_get_lines_node" output="screen">
+	</node>
+
+</launch>

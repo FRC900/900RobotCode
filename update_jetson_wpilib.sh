@@ -11,7 +11,7 @@ ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnu
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib'
 rsync -avzru $HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include/ $1:/home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/
 # sed command to add aarch64 to list of valid archs in nichipobject
-#/home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/nRoboRIO_FPGANamespace/../fpgainterfacecapi/NiFpga.h, line 71
+#/home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/nRoboRIO_FPGANamespace/../fpgainterfacecapi/NiFpga.h, line 76
 
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre'
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx'

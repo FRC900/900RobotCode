@@ -13,6 +13,8 @@ enum ObjectNum
     BOTTOM_TAPE_2017,
     SWITCH_2018,
     CUBE_2018,
+    LEFT_CARGO_2019,
+    RIGHT_CARGO_2019,
 };
 
 //class to hold the type of object that a detected object is
