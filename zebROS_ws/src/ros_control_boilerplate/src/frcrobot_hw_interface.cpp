@@ -1391,9 +1391,12 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			auto &m = realtime_pub_joystick_->msg_;
 			m.header.stamp = time_now_t;
 
+			m.axes.clear();
+			m.buttons.clear();
+
 			for(int i = 0; i < joysticks_[0]->GetAxisCount(); i++)
 			{
-				m.axes.push_back(joysticks_[0]->GetRawAxis(i+1));
+				m.axes.push_back(joysticks_[0]->GetRawAxis(i));
 			}
 
 			for(int i = 0; i < joysticks_[0]->GetButtonCount(); i++)
@@ -1445,7 +1448,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			m.buttonStartPress = joysticks_[0]->GetRawButtonPressed(8);
 			m.buttonStartRelease = joysticks_[0]->GetRawButtonReleased(8);*/
 
-			/*bool joystick_up = false;
+			bool joystick_up = false;
 			bool joystick_down = false;
 			bool joystick_left = false;
 			bool joystick_right = false;
@@ -1480,30 +1483,32 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 						joystick_left = true;
 						break;
 			}
-			if(joystick_up)
-			{
-				m.buttons[7]=-1.0;
-			}
-			else if (joystick_down)
-			{
-				m.buttons[7]=1.0;
-			}
-			else
-			{
-				m.buttons[7]=0;
-			}
+
 			if(joystick_left)
 			{
-				m.buttons[6]=-1.0;
+				m.axes.push_back(1.0);
 			}
 			else if (joystick_right)
 			{
-				m.buttons[6]=1.0;
+				m.axes.push_back(-1.0);
 			}
 			else
 			{
-				m.buttons[6]=0;
-			}*/
+				m.axes.push_back(0.0);
+			}
+
+			if(joystick_up)
+			{
+				m.axes.push_back(1.0);
+			}
+			else if (joystick_down)
+			{
+				m.axes.push_back(-1.0);
+			}
+			else
+			{
+				m.axes.push_back(0.0);
+			}
 
 		/*	m.directionUpButton = joystick_up;
 			m.directionUpPress = joystick_up && !joystick_up_last_[0];
@@ -1527,9 +1532,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			joystick_right_last_[0] = joystick_right;*/
 
 			realtime_pub_joystick_->unlockAndPublish();
-
-			m.axes.clear();
-			m.buttons.clear();
 		}
 		clock_gettime(CLOCK_MONOTONIC, &end_time);
 		time_sum_joystick +=
