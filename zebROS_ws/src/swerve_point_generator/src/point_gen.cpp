@@ -134,6 +134,22 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 
 		res.dt = defined_dt;
 
+		double total_length_x = 0;
+		double total_length_y = 0;
+		double total_length_theta = 0;
+		for(int i = 0; i < srv_msg.points.size(); i++)
+		{
+			total_length_x += srv_msg.points[i].velocities[0] * defined_dt;
+			total_length_y += srv_msg.points[i].velocities[1] * defined_dt;
+			total_length_theta += srv_msg.points[i].velocities[2] * defined_dt;
+		}
+		ROS_ERROR_STREAM("total_length_x = " << total_length_x << " total_length_y = " <<  total_length_y << " total_length_theta = " << total_length_theta);
+		for(int i = 0; i < srv_msg.points.size(); i++)
+		{
+			ROS_INFO_STREAM(srv_msg.points[i].positions[0] << " " << srv_msg.points[i].positions[1] << " " << srv_msg.points[i].positions[2]);
+		}
+	
+
 		//ROS_INFO_STREAM("dt: " << res.dt);
 
 		//ROS_WARN("BUFFERING");
@@ -171,11 +187,17 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 				return false;
 			}
 		}
+		ROS_INFO_STREAM("velocity vector = " << srv_msg.points[1].positions[0] - srv_msg.points[0].positions[0] << " " << srv_msg.points[1].positions[1] - srv_msg.points[0].positions[1] << " rotation = " << srv_msg.points[1].positions[2] - srv_msg.points[0].positions[2] << " angle = " << srv_msg.points[1].positions[2]);
 		const std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions  = swerve_math->motorOutputs({srv_msg.points[1].positions[0] - srv_msg.points[0].positions[0], srv_msg.points[1].positions[1] - srv_msg.points[0].positions[1]}, srv_msg.points[1].positions[2] - srv_msg.points[0].positions[2], srv_msg.points[1].positions[2], false, holder, false, curPos, false);
 		//TODO: angles on the velocity array below are superfluous, could remove
 		//std::array<Eigen::Vector2d, WHEELCOUNT> angles_velocities  = swerve_math->motorOutputs({srv_msg.points[1].velocities[0], srv_msg.points[1].velocities[1]}, -srv_msg.points[1].velocities[2], /*srv_msg.points[1].positions[2]*/ M_PI / 2.0, false, holder, false, curPos, false);
 		for (size_t k = 0; k < WHEELCOUNT; k++)
 			curPos[k] = angles_positions[k][1];
+
+		for(int i = 0; i < angles_positions.size(); i++)
+		{
+			ROS_INFO_STREAM("at wheel " << i << " angles_positions = " << angles_positions[i][0] << " " << angles_positions[i][1]);
+		}
 
 		//ROS_INFO_STREAM("pos_0:" << srv_msg.points[i+1].positions[0] << "pos_1:" << srv_msg.points[i+1].positions[1] <<"pos_2:" <<  srv_msg.points[i+1].positions[2] << " counts: " << point_count << " i: "<< i << " wheels: " << WHEELCOUNT);
 		std::array<double, WHEELCOUNT> vel_sum;
@@ -221,6 +243,12 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 			const std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions  = swerve_math->motorOutputs({srv_msg.points[i + 1].positions[0] - srv_msg.points[i].positions[0], srv_msg.points[i + 1].positions[1] - srv_msg.points[i].positions[1]}, srv_msg.points[i + 1].positions[2] - srv_msg.points[i].positions[2], srv_msg.points[i + 1].positions[2], false, holder, false, curPos, false);
 			//TODO: angles on the velocity array below are superfluous, could remove
 			std::array<Eigen::Vector2d, WHEELCOUNT> angles_velocities  = swerve_math->motorOutputs({srv_msg.points[i + 1].velocities[0], srv_msg.points[i + 1].velocities[1]}, srv_msg.points[i + 1].velocities[2], srv_msg.points[i + 1].positions[2], false, holder, false, curPos, false);
+
+			for(int i = 0; i < angles_positions.size(); i++)
+			{
+				ROS_INFO_STREAM("at wheel " << i << " angles_positions = " << angles_positions[i][0] << " " << angles_positions[i][1]);
+			}
+
 			for (size_t k = 0; k < WHEELCOUNT; k++)
 				curPos[k] = angles_positions[k][1];
 

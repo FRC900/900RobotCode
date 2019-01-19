@@ -223,8 +223,11 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		ROS_INFO_STREAM("ORIENTATION current_angular_velocity = " << current_angular_velocity << " next_angular_velocity = " << next_angular_velocity);
 
 		double requested_acceleration = (current_angular_velocity - next_angular_velocity) / dt_ * max_wheel_dist_; //radians / sec / sec * (meters / radian)
-		if(requested_acceleration > 0) //this will be handed by the forward pass
+		if(requested_acceleration > 1e-5) //this will be handed by the forward pass
+		{
+			ROS_WARN_STREAM("skipping for forward pass");
 			continue;
+		}
 		double max_acceleration = -1 * max_wheel_brake_accel_; //- accelerations[accelerations.size() - 1];
 		ROS_INFO_STREAM("requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration);
 
@@ -317,6 +320,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	if (out_msg.points.size() == 0)
 		out_msg.points.resize(155 / dt_); //For full auto :)  TODO: optimize
 	curr_v = initial_v;
+	double last_curr_v = 0;
 	double starting_point = positions.size() - 1;
 	ros::Duration now(0);
 	ros::Duration period(dt_);
@@ -327,6 +331,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	for (double i = 0; i < total_arc /* - .1*/;)
 	{
 		i += curr_v * dt_;
+		last_curr_v = curr_v;
 
 		if (i > total_arc)
 		{
@@ -334,7 +339,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		}
 
 		const double t_raw3 = spline(i);
-		//ROS_INFO_STREAM("i val: " << i << " t val: " << t_raw3 << " curr v: " << curr_v);
+		ROS_INFO_STREAM("i val: " << i << " t val: " << t_raw3 << " curr v: " << curr_v);
 
 		path_point current_spline_point;
 		comp_point_characteristics(x_splines, y_splines, x_splines_first_deriv, y_splines_first_deriv,
@@ -353,14 +358,9 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 				break;
 			}
 		}
-		double next_angular_vel;
-		calc_point(orient_splines_first_deriv[which_spline], (i + curr_v * dt_), next_angular_vel);
-		next_angular_vel *= dtds_for_spline[which_spline] * max_wheel_dist_;
-		ROS_INFO_STREAM(current_spline_point.angular_velocity << " " << next_angular_vel);
-		double angular_acceleration = ((current_spline_point.angular_velocity * curr_v / max_wheel_dist_)  - (next_angular_vel * curr_v / max_wheel_dist_)) / dt_;
-		ROS_INFO_STREAM("angular_accleration = " << angular_acceleration);
  
 		//save output values
+		ROS_ERROR_STREAM("current spline point at x = " << current_spline_point.pos_x);
 		out_msg.points[point_count].positions.push_back(current_spline_point.pos_x);
 		out_msg.points[point_count].positions.push_back(current_spline_point.pos_y);
 		out_msg.points[point_count].positions.push_back(current_spline_point.orientation);
@@ -461,9 +461,9 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		ROS_INFO_STREAM("ORIENTATION current_angular_velocity = " << current_angular_velocity << " next_angular_velocity = " << next_angular_velocity);
 
 		double requested_acceleration = (next_angular_velocity - current_angular_velocity) / dt_ * max_wheel_dist_; //radians / sec / sec * (meters / radian)
-		double max_acceleration = max_wheel_mid_accel_; //- accelerations[accelerations.size() - 1];
+		double max_acceleration = max_wheel_mid_accel_; //- (curr_v - last_curr_v)/dt_;
 		ROS_INFO_STREAM("requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration);
-		if(requested_acceleration < 0)
+		if(requested_acceleration < 1e-5)
 		{
 			ROS_WARN_STREAM("skipping for back pass");
 			current_angular_velocity = ang_cap;
@@ -915,6 +915,7 @@ void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs>
 	double second_deriv_y;
 
 	//Calculate all the points
+	ROS_INFO_STREAM("holder point . pos x = " << holder_point.pos_x);
 	calc_point(x_splines[which_spline], t, holder_point.pos_x);
 	calc_point(y_splines[which_spline], t, holder_point.pos_y);
 	calc_point(orient_splines[which_spline], t_o, holder_point.orientation); // TODO

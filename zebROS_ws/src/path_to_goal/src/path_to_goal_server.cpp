@@ -64,6 +64,18 @@ bool runTrajectory(const swerve_point_generator::FullGenCoefs::Response &traj)
     swerve_control_srv.request.buffer = true;
     swerve_control_srv.request.run = true;
     swerve_control_srv.request.profiles[0].slot = 0;
+	swerve_control_srv.request.wipe_all = true;
+	swerve_control_srv.request.brake = false;
+	swerve_control_srv.request.run_slot = 0;
+
+	/*bool wipe_all
+	bool buffer
+	bool run
+	bool brake
+	uint8 run_slot
+	bool change_queue
+	uint8[] new_queue*/
+
 
     if (!swerve_controller.call(swerve_control_srv))
         return false;
