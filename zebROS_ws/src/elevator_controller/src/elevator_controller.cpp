@@ -1,5 +1,4 @@
 #include "elevator_controller/elevator_controller.h"
-
 namespace elevator_controller
 {
 
@@ -53,8 +52,7 @@ namespace elevator_controller
 
 	void ElevatorController::update(const  ros::Time &time,const  ros::Duration &duration) 	// set the command to the spinny part of the intake
 			{
-			intake_in_.setCommand(intake_in_cmd_double); // set the in/out command to the clampy part of the intake
-			elevator_joint.setCommand(*spin_command_.readFromRT()); 
+			elevator_joint_.setCommand(*spin_command_.readFromRT()); 
 			}
 
 			void ElevatorController::stopping(const ros::Time &time) {

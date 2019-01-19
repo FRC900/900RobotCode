@@ -17,6 +17,8 @@
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Bool.h>
+#include "elevator_controller/ElevatorSrv.h"
+
 
 namespace elevator_controller
 {
