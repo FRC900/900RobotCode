@@ -39,6 +39,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -185,12 +186,10 @@ class TalonSwerveDriveController
 
 		boost::circular_buffer<full_profile_cmd> full_profile_buffer_{10}; //likely more than needed
 
-		realtime_tools::RealtimeBuffer<bool> mode_;
+		// True if running cmd_vel, false if running profile
+		std::atomic<bool> cmd_vel_mode_;
 		//realtime_tools::RealtimeBuffer<bool> wipe_all_; //TODO, add this functionality
 		realtime_tools::RealtimeBuffer<Commands> command_;
-		Commands command_struct_;
-		Commands brake_struct_;
-		Commands brake_struct_other_;
 
 		ros::Subscriber sub_command_;
 

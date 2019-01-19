@@ -919,7 +919,7 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 		tc.setSelectedSensorPosition(0);
 		ROS_INFO_STREAM("custom_profile_set_talon zeroing talon:" <<  joint_id);
 	}
-	//ROS_INFO_STREAM("joint_id:" << joint_id << " mode:" << mode << " setpoint: " << setpoint << " fterm: " << fTerm << " slot: " << pidSlot);
+	ROS_INFO_STREAM("joint_id:" << joint_id << " mode:" << mode << " setpoint: " << setpoint << " fterm: " << fTerm << " slot: " << pidSlot);
 
 	// Set talon mode based on profile type
 	if(mode == hardware_interface::TalonMode_PercentOutput)
@@ -932,7 +932,6 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 		tc.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
 		tc.setDemand1Value(fTerm);
 	}
-
 
 	tc.setMode(mode);
 	tc.set(setpoint);
@@ -960,19 +959,32 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 	{
 		return;
 	}
-	auto &ts = talon_state_[joint_id];
 
+	auto &ts = talon_state_[joint_id];
 	auto &cps = custom_profile_state_[joint_id];
+	auto &ps = cps.status_;
 
 	// Grab points to hit and times to hit them from the
 	// talon command buffer
 	auto &prof_pts = cps.saved_points_;
 	auto &prof_times = cps.saved_times_;
+
 	tc.getCustomProfilePointsTimesChanged(prof_pts, prof_times);
 
-	const bool run = tc.getCustomProfileRun();
-	auto &ps = cps.status_;
+	// TODO : add check for talon mode == disabled,, run, etc.
+	// if so clear out getCustomProfileRun(), run, etc.
+	if (ts.getTalonMode() == hardware_interface::TalonMode_Disabled)
+	{
+		tc.setCustomProfileRun(false);
+	}
 
+	const bool run = tc.getCustomProfileRun();
+
+	// Clear out the current slot when profile status
+	// transitions from running to stopped
+	// This should also catch the case where a profile was being run
+	// when the robot was disabled, because we force custom profile
+	// run to false on robot disable
 	if(ps.running && !run)
 	{
 		std::vector<hardware_interface::CustomProfilePoint> empty_points;

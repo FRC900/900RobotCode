@@ -47,8 +47,8 @@ class DriverStationSim(Plugin):
         # plugin at once, these lines add number to make it easy to 
         # tell from pane to pane.
 
-        auto_pub = rospy.Publisher("/frcrobot/autonomous_mode", AutoMode, queue_size=3)
-        match_pub = rospy.Publisher("/frcrobot/match_data", MatchSpecificData, queue_size=3)
+        auto_pub = rospy.Publisher("/frcrobot_rio/autonomous_mode", AutoMode, queue_size=3)
+        match_pub = rospy.Publisher("/frcrobot_rio/match_data", MatchSpecificData, queue_size=3)
 
         def pub_data(self):
             r = rospy.Rate(100)
