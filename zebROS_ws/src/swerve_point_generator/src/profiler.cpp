@@ -180,8 +180,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		/** HACK STARTS HERE**/
 		//arc length -> next arc length -> next time_o -> next angular velocity
 		size_t which_spline;
-		which_spline = 0;
-		for (; which_spline < x_splines.size() - 1; which_spline++)
+		for (which_spline = 0; which_spline < x_splines.size() - 1; which_spline++)
 		{
 			if (t_raw2 < end_points[which_spline])
 			{
@@ -326,8 +325,10 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	ros::Duration period(dt_);
 	//Same as back pass, but now forward
 
+	// Reset variables for the forward pass
 	int vel_index = 0;
 	current_angular_velocity = 0;
+	accelerations.clear();
 	for (double i = 0; i < total_arc /* - .1*/;)
 	{
 		i += curr_v * dt_;
@@ -350,15 +351,14 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		//
 
 		size_t which_spline;
-		which_spline = 0;
-		for (; which_spline < x_splines.size() - 1; which_spline++)
+		for (which_spline = 0; which_spline < x_splines.size() - 1; which_spline++)
 		{
 			if (t_raw3 < end_points[which_spline])
 			{
 				break;
 			}
 		}
- 
+
 		//save output values
 		ROS_ERROR_STREAM("current spline point at x = " << current_spline_point.pos_x);
 		out_msg.points[point_count].positions.push_back(current_spline_point.pos_x);
@@ -873,7 +873,7 @@ void swerve_profiler::calc_point(const spline_coefs &spline, double t, double &r
 	const double t_fifth   = t_cubed * t_squared;
 	returner = spline.a * t_fifth + spline.b * t_fourth + spline.c * t_cubed + spline.d * t_squared + spline.e * t + spline.f;
 	//if (t)
-	//ROS_INFO_STREAM("calc_point a:" << spline << " t:" << t << " f(t):" << returner);
+	//ROS_INFO_STREAM("calc_point spline:" << spline << " t:" << t << " t_squared:" << t_squared << " t_cubed:" << t_cubed << " t_fourth:" << t_fourth << " t_fifth:" << t_fifth << " f(t):" << returner);
 }
 
 void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs> &x_splines,
@@ -915,7 +915,6 @@ void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs>
 	double second_deriv_y;
 
 	//Calculate all the points
-	ROS_INFO_STREAM("holder point . pos x = " << holder_point.pos_x);
 	calc_point(x_splines[which_spline], t, holder_point.pos_x);
 	calc_point(y_splines[which_spline], t, holder_point.pos_y);
 	calc_point(orient_splines[which_spline], t_o, holder_point.orientation); // TODO

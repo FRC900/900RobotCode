@@ -71,10 +71,10 @@ array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelSpeedsAngles(const arra
 		//Only the rotation of the robot differently effects each wheel
 		const double x = wheelMultipliersXY[i][0] * rotation + rotatedVelocity[0];
 		const double y = wheelMultipliersXY[i][1] * rotation - rotatedVelocity[1];
-		ROS_INFO_STREAM("rot: " << rotation << " wheel_multipliers_x: " << wheelMultipliersXY[i][0]<< " wheel_multipliers_y " << wheelMultipliersXY[i][1]);
+		//ROS_INFO_STREAM("rot: " << rotation << " wheel_multipliers_x: " << wheelMultipliersXY[i][0]<< " wheel_multipliers_y " << wheelMultipliersXY[i][1]);
 		angles[i] = atan2(x, y);
 		speeds[i] = hypot(x, y);
-                ROS_INFO_STREAM("angles at " << i << " = " << angles[i] << " speeds at " << i << " = " << speeds[i]);
+        //ROS_INFO_STREAM("angles at " << i << " = " << angles[i] << " speeds at " << i << " = " << speeds[i]);
 	}
 	if(norm)
 	{
