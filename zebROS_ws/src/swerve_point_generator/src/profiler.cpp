@@ -952,7 +952,7 @@ void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs>
 	}
 
 	holder_point.path_angle = atan2(first_deriv_y, first_deriv_x) - (holder_point.orientation /*-  M_PI / 2.0*/);
-	holder_point.angular_velocity = first_deriv_orient /* * dtds_by_spline[which_spline] *  max_wheel_dist_ */; //returns things in rad/t_o
+	holder_point.angular_velocity = first_deriv_orient /* * dtds_by_spline[which_spline] */ *   max_wheel_dist_ ; //returns things in rad/t_o
 	//ROS_INFO_STREAM(__LINE__ << ": " << holder_point.angular_velocity);
 	holder_point.angular_accel = fabs(second_deriv_orient * /*dtds_by_spline[which_spline] *
 									  dtds_by_spline[which_spline] **/ max_wheel_dist_ * ang_accel_conv_);

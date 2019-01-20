@@ -246,7 +246,7 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 
 			for(int i = 0; i < angles_positions.size(); i++)
 			{
-				ROS_INFO_STREAM("at wheel " << i << " angles_positions = " << angles_positions[i][0] << " " << angles_positions[i][1]);
+				//ROS_INFO_STREAM("at wheel " << i << " angles_positions = " << angles_positions[i][0] << " " << angles_positions[i][1]);
 			}
 
 			for (size_t k = 0; k < WHEELCOUNT; k++)

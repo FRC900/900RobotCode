@@ -47,7 +47,7 @@ array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector, double
 {
 	if (rotationCenterID >= multiplierSets_.size())
 	{
-		cerr << "Tell Ryan to stop using fixed-sized arrays for dynamically growable stuff" << endl;
+		ROS_ERROR_STREAM("Tell Ryan to stop using fixed-sized arrays for dynamically growable stuff");
 		return array<Vector2d, WHEELCOUNT>();
 	}
 	array<Vector2d, WHEELCOUNT> speedsAndAngles;
