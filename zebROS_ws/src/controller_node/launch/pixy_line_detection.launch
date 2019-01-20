@@ -1,7 +1,27 @@
 <?xml version="1.0"?>
 <launch>
 
+    <arg name="vfov" default="40" />
+    <arg name="hfov" default="60" />
+    <arg name="sub_rate" default="1" />
+    <arg name="pub_rate" default="1" />
+    <arg name="frameWidth" default="315" />
+    <arg name="frameHeight" default="207" />
+    <arg name="camera_height" default="5" />
+	<arg name="topic" default="/pixy_line" />
+
 	<node name="pixy_get_lines_node" pkg="pixy_get_lines" type="pixy_get_lines_node" output="screen">
 	</node>
+
+	<node name="screen_to_world_node" pkg="screen_to_world" type="screen_to_world_node" output= "screen">
+  		<param name="vfov" value="$(arg vfov)" />
+  		<param name="sub_rate" value="$(arg sub_rate)" />
+  		<param name="pub_rate" value="$(arg pub_rate)" />
+		<param name="hfov" value="$(arg hfov)" />
+		<param name="frameWidth" value="$(arg frameWidth)" />
+		<param name="frameHeight" value="$(arg frameHeight)" />
+		<param name="camera_height" value="$(arg camera_height)" />
+		<param name="topic" value="$(arg topic)" />
+  	</node>
 
 </launch>
