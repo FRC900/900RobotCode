@@ -676,11 +676,6 @@ void FRCRobotHWInterface::init(void)
 		}
 		else
 			joysticks_.push_back(nullptr);
-
-		joystick_up_last_.push_back(false);
-		joystick_down_last_.push_back(false);
-		joystick_right_last_.push_back(false);
-		joystick_left_last_.push_back(false);
 	}
 
 	navX_angle_ = 0;
@@ -1386,8 +1381,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		if ((joysticks_.size() > 0) && realtime_pub_joystick_->trylock())
 		{
 
-		ROS_INFO_STREAM("Joysitck Access " << joysticks_[0]->GetAxisCount() );
-
 			auto &m = realtime_pub_joystick_->msg_;
 			m.header.stamp = time_now_t;
 
@@ -1404,91 +1397,47 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 				m.buttons.push_back(joysticks_[0]->GetRawButton(i+1));
 			}
 
-			/*m.rightStickY = joysticks_[0]->GetRawAxis(5);
-			m.rightStickX = joysticks_[0]->GetRawAxis(4);
-			m.leftStickY = joysticks_[0]->GetRawAxis(1);
-			m.leftStickX = joysticks_[0]->GetRawAxis(0);
-
-			m.leftTrigger = joysticks_[0]->GetRawAxis(2);
-			m.rightTrigger = joysticks_[0]->GetRawAxis(3);
-			m.buttonXButton = joysticks_[0]->GetRawButton(3);
-			m.buttonXPress = joysticks_[0]->GetRawButtonPressed(3);
-			m.buttonXRelease = joysticks_[0]->GetRawButtonReleased(3);
-			m.buttonYButton = joysticks_[0]->GetRawButton(4);
-			m.buttonYPress = joysticks_[0]->GetRawButtonPressed(4);
-			m.buttonYRelease = joysticks_[0]->GetRawButtonReleased(4);
-
-			m.bumperLeftButton = joysticks_[0]->GetRawButton(5);
-			m.bumperLeftPress = joysticks_[0]->GetRawButtonPressed(5);
-			m.bumperLeftRelease = joysticks_[0]->GetRawButtonReleased(5);
-
-			m.bumperRightButton = joysticks_[0]->GetRawButton(6);
-			m.bumperRightPress = joysticks_[0]->GetRawButtonPressed(6);
-			m.bumperRightRelease = joysticks_[0]->GetRawButtonReleased(6);
-
-			m.stickLeftButton = joysticks_[0]->GetRawButton(9);
-			m.stickLeftPress = joysticks_[0]->GetRawButtonPressed(9);
-			m.stickLeftRelease = joysticks_[0]->GetRawButtonReleased(9);
-
-			m.stickRightButton = joysticks_[0]->GetRawButton(10);
-			m.stickRightPress = joysticks_[0]->GetRawButtonPressed(10);
-			m.stickRightRelease = joysticks_[0]->GetRawButtonReleased(10);
-
-			m.buttonAButton = joysticks_[0]->GetRawButton(1);
-			m.buttonAPress = joysticks_[0]->GetRawButtonPressed(1);
-			m.buttonARelease = joysticks_[0]->GetRawButtonReleased(1);
-			m.buttonBButton = joysticks_[0]->GetRawButton(2);
-			m.buttonBPress = joysticks_[0]->GetRawButtonPressed(2);
-			m.buttonBRelease = joysticks_[0]->GetRawButtonReleased(2);
-			m.buttonBackButton = joysticks_[0]->GetRawButton(7);
-			m.buttonBackPress = joysticks_[0]->GetRawButtonPressed(7);
-			m.buttonBackRelease = joysticks_[0]->GetRawButtonReleased(7);
-
-			m.buttonStartButton = joysticks_[0]->GetRawButton(8);
-			m.buttonStartPress = joysticks_[0]->GetRawButtonPressed(8);
-			m.buttonStartRelease = joysticks_[0]->GetRawButtonReleased(8);*/
-
-			bool joystick_up = false;
-			bool joystick_down = false;
-			bool joystick_left = false;
-			bool joystick_right = false;
+			bool direction_up = false;
+			bool direction_down = false;
+			bool direction_left = false;
+			bool direction_right = false;
 			switch (joysticks_[0]->GetPOV(0))
 			{
 				case 0 :
-						joystick_up = true;
+						direction_up = true;
 						break;
 				case 45:
-						joystick_up = true;
-						joystick_right = true;
+						direction_up = true;
+						direction_right = true;
 						break;
 				case 90:
-						joystick_right = true;
+						direction_right = true;
 						break;
 				case 135:
-						joystick_down = true;
-						joystick_right = true;
+						direction_down = true;
+						direction_right = true;
 						break;
 				case 180:
-						joystick_down = true;
+						direction_down = true;
 						break;
 				case 225:
-						joystick_down = true;
-						joystick_left = true;
+						direction_down = true;
+						direction_left = true;
 						break;
 				case 270:
-						joystick_left = true;
+						direction_left = true;
 						break;
 				case 315:
-						joystick_up = true;
-						joystick_left = true;
+						direction_up = true;
+						direction_left = true;
 						break;
 			}
 
-			if(joystick_left)
+			if(direction_left)
 			{
 				m.axes.push_back(1.0);
 			}
-			else if (joystick_right)
+			else if (direction_right)
 			{
 				m.axes.push_back(-1.0);
 			}
@@ -1497,11 +1446,11 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 				m.axes.push_back(0.0);
 			}
 
-			if(joystick_up)
+			if(direction_up)
 			{
 				m.axes.push_back(1.0);
 			}
-			else if (joystick_down)
+			else if (direction_down)
 			{
 				m.axes.push_back(-1.0);
 			}
@@ -1509,27 +1458,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			{
 				m.axes.push_back(0.0);
 			}
-
-		/*	m.directionUpButton = joystick_up;
-			m.directionUpPress = joystick_up && !joystick_up_last_[0];
-			m.directionUpRelease = !joystick_up && joystick_up_last_[0];
-
-			m.directionDownButton = joystick_down;
-			m.directionDownPress = joystick_down && !joystick_down_last_[0];
-			m.directionDownRelease = !joystick_down && joystick_down_last_[0];
-
-			m.directionLeftButton = joystick_left;
-			m.directionLeftPress = joystick_left && !joystick_left_last_[0];
-			m.directionLeftRelease = !joystick_left && joystick_left_last_[0];
-
-			m.directionRightButton = joystick_right;
-			m.directionRightPress = joystick_right && !joystick_right_last_[0];
-			m.directionRightRelease = !joystick_right && joystick_right_last_[0];
-
-			joystick_up_last_[0] = joystick_up;
-			joystick_down_last_[0] = joystick_down;
-			joystick_left_last_[0] = joystick_left;
-			joystick_right_last_[0] = joystick_right;*/
 
 			realtime_pub_joystick_->unlockAndPublish();
 		}

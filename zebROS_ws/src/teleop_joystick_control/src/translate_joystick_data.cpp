@@ -7,17 +7,15 @@ ros_control_boilerplate::JoystickState processed_msg;
 
 ros::Publisher processed_data_pub;
 
-ros::Time time_last_msg;
-
 void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 {
 	// Translating sticks and triggers
 	processed_msg.leftStickX = msg->axes.size() > 0 ? msg->axes[0] : 0.0;
 	processed_msg.leftStickY = msg->axes.size() > 1 ? msg->axes[1] : 0.0;
 	processed_msg.leftTrigger = msg->axes.size() > 2 ? msg->axes[2] : 0.0;
-	processed_msg.rightStickX = msg->axes.size() > 3 ? msg->axes[3] : 0.0;
-	processed_msg.rightStickY = msg->axes.size() > 4 ? msg->axes[4] : 0.0;
-	processed_msg.rightTrigger = msg->axes.size() > 5 ? msg->axes[5] : 0.0;
+	processed_msg.rightTrigger = msg->axes.size() > 3 ? msg->axes[3] : 0.0;
+	processed_msg.rightStickX = msg->axes.size() > 4 ? msg->axes[4] : 0.0;
+	processed_msg.rightStickY = msg->axes.size() > 5 ? msg->axes[5] : 0.0;
 
 	// Translating Dpad (from two axes into the four buttons our code uses)
 	processed_msg.directionLeftButton = msg->axes.size() > 6 ? (msg->axes[6] > 0) : false;
@@ -34,8 +32,8 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	processed_msg.bumperRightButton = msg->buttons.size() > 5 ? msg->buttons[5] : false;
 	processed_msg.buttonBackButton = msg->buttons.size() > 6 ? msg->buttons[6] : false;
 	processed_msg.buttonStartButton = msg->buttons.size() > 7 ? msg->buttons[7] : false;
-	processed_msg.stickLeftButton = msg->buttons.size() > 8 ? msg->buttons[9] : false;
-	processed_msg.stickRightButton = msg->buttons.size() > 9 ? msg->buttons[10] : false;
+	processed_msg.stickLeftButton = msg->buttons.size() > 8 ? msg->buttons[8] : false;
+	processed_msg.stickRightButton = msg->buttons.size() > 9 ? msg->buttons[9] : false;
 
 	// Creating press booleans by comparing the last publish to the current one
 	processed_msg.buttonAPress = !processed_msg_last.buttonAButton && processed_msg.buttonAButton;
@@ -72,43 +70,8 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	// So that processed_msg is published every time a new raw message is translated
 	processed_data_pub.publish(processed_msg);
 
-	// So that press is only true for one publish
-	processed_msg.buttonAPress = false;
-	processed_msg.buttonBPress = false;
-	processed_msg.buttonXPress = false;
-	processed_msg.buttonYPress = false;
-	processed_msg.bumperLeftPress = false;
-	processed_msg.bumperRightPress = false;
-	processed_msg.buttonBackPress = false;
-	processed_msg.buttonStartPress = false;
-	processed_msg.stickLeftPress = false;
-	processed_msg.stickRightPress = false;
-	processed_msg.directionLeftPress = false;
-	processed_msg.directionRightPress = false;
-	processed_msg.directionUpPress = false;
-	processed_msg.directionDownPress = false;
-
-	// So that release is only true for one publish
-	processed_msg.buttonARelease = false;
-	processed_msg.buttonBRelease = false;
-	processed_msg.buttonXRelease = false;
-	processed_msg.buttonYRelease = false;
-	processed_msg.bumperLeftRelease = false;
-	processed_msg.bumperRightRelease = false;
-	processed_msg.buttonBackRelease = false;
-	processed_msg.buttonStartRelease = false;
-	processed_msg.stickLeftRelease = false;
-	processed_msg.stickRightRelease = false;
-	processed_msg.directionLeftRelease = false;
-	processed_msg.directionRightRelease = false;
-	processed_msg.directionUpRelease = false;
-	processed_msg.directionDownRelease = false;
-
 	// Set processed_msg_last to be correct the next time through
 	processed_msg_last = processed_msg;
-
-	// Reset 0.1 second timer in main
-	time_last_msg = ros::Time::now();
 }
 
 int main(int argc, char ** argv)
@@ -117,24 +80,11 @@ int main(int argc, char ** argv)
     ros::NodeHandle n;
 
     ros::Subscriber raw_data_sub = n.subscribe("/frcrobot_rio/joystick_states_raw", 1000, rawDataCB);
-    processed_data_pub = n.advertise<ros_control_boilerplate::JoystickState>("/frcrobot_jetson/joystick_states", 10);
-
-	ros::Rate loop_rate(15);
-
-	time_last_msg = ros::Time::now();
+    processed_data_pub = n.advertise<ros_control_boilerplate::JoystickState>("/frcrobot_jetson/joystick_states", 1);
 
 	processed_msg_last = processed_msg;
 
-    while(ros::ok())
-    {
-        // Will only run if not curently processing and publishing messages
-		if((ros::Time::now() - time_last_msg).toSec() > 0.1)
-		{
-			processed_data_pub.publish(processed_msg);
-		}
+	ros::spin();
 
-		ros::spinOnce();
-		loop_rate.sleep();
-    }
     return 0;
 }
