@@ -6,17 +6,23 @@ namespace elevator_controller
 			ros::NodeHandle                 &root_nh,
 			ros::NodeHandle                 &controller_nh)
 	{
+		//create the interface used to initialize the talon joint
 		hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
-		hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
+		
+		//hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
 
-
+		//get config values for the elevator talon
 		XmlRpc::XmlRpcValue elevator_params;
 		if (!controller_nh.getParam("elevator_joint_",elevator_params))
 		{ ROS_ERROR("Could not find elevator_joint_");
 			return false;
 		}
-
-
+		
+		//initialize the elevator joint
+		if(!elevator_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, elevator_params))
+		{
+			ROS_ERROR("Cannot initialize elevator joint!");
+		}
 
 
 
