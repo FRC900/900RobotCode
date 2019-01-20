@@ -1,6 +1,7 @@
 #include <atomic>
 #include <realtime_tools/realtime_buffer.h>
 #include "teleop_joystick_control/teleop_joystick_comp.h"
+#include "teleop_joystick_control/rate_limiter.h"
 #include "std_srvs/Empty.h"
 #include "std_srvs/SetBool.h"
 #include <vector>
@@ -13,9 +14,20 @@ const double max_rot = 8.8;
 const double joystick_scale = 3;
 const double rotation_scale = 4;
 
+<<<<<<< 1df478ade269d52743692421e4d4c0aeeb64060a
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 std::vector <ros::Subscriber> subscriber_array;
+=======
+// 50 msec to go from full back to full forward
+const double drive_rate_limit_time = 50.;
+rate_limiter::RateLimiter left_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+rate_limiter::RateLimiter left_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+rate_limiter::RateLimiter right_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+rate_limiter::RateLimiter right_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+rate_limiter::RateLimiter left_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+>>>>>>> Add rate limiting for joystick inputs to teleop code
 
 void dead_zone_check(double &val1, double &val2)
 {
@@ -56,7 +68,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	int i = 0;
 
 	const ros::M_string &header = event.getConnectionHeader();
-
 	std::string topic = header.at("topic");
 	/*ROS_INFO_STREAM("topic = " << topic);*/
 
@@ -71,11 +82,18 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 	if(i == 1)
 	{
-		double leftStickX = joystick_states_array[0].leftStickX;
-		double leftStickY = joystick_states_array[0].leftStickY;
+		// TODO - experiment with rate-limiting after scaling instead?
+		double leftStickX = left_stick_x_rate_limit.applyLimit(joystick_states_array[0].leftStickX);
+		double leftStickY = left_stick_y_rate_limit.applyLimit(joystick_states_array[0].leftStickY);
 
-		double rightStickX = joystick_states_array[0].rightStickX;
-		double rightStickY = joystick_states_array[0].rightStickY;
+		double rightStickX = right_stick_x_rate_limit.applyLimit(joystick_states_array[0].rightStickX);
+		double rightStickY = right_stick_y_rate_limit.applyLimit(joystick_states_array[0].rightStickY);
+
+		// TODO : dead-zone for rotation?
+		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
+		double triggerLeft = left_trigger_rate_limit.applyLimit(joystick_states_array[0].leftTrigger);
+		double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
+		const double rotation = (pow(triggerLeft, rotation_scale) - pow(triggerRight, rotation_scale)) * max_rot;
 
 		dead_zone_check(leftStickX, leftStickY);
 		dead_zone_check(rightStickX, rightStickY);
@@ -85,8 +103,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		rightStickX =  pow(rightStickX, joystick_scale);
 		rightStickY = -pow(rightStickY, joystick_scale);
-
-		const double rotation = (pow(joystick_states_array[0].leftTrigger, rotation_scale) - pow(joystick_states_array[0].rightTrigger, rotation_scale)) * max_rot;
 
 		static bool sendRobotZero = false;
 
