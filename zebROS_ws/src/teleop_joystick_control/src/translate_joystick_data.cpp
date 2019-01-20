@@ -84,7 +84,7 @@ int main(int argc, char ** argv)
 
 	processed_msg_last = processed_msg;
 
-	ros::spin();
+	ros::spin;
 
     return 0;
 }
