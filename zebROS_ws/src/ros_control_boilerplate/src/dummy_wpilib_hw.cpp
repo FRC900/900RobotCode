@@ -2,6 +2,15 @@
 #include <ros/ros.h>
 extern "C"
 {
+	static uint32_t GetPacketBaseTime() {
+		timespec t;
+		clock_gettime(CLOCK_MONOTONIC, &t);
+
+		// Convert t to milliseconds
+		uint64_t ms = t.tv_sec * 1000ull + t.tv_nsec / 1000000ull;
+		return ms & 0xFFFFFFFF;
+	}
+
 	// This is the path for calls going through the new CANAPI.  Accesses
 	// via these functions have already been through the CAN status
 	// cache and were not found
@@ -12,6 +21,8 @@ extern "C"
 	void HAL_CAN_ReceiveMessage(uint32_t *messageID, uint32_t messageIDMask, uint8_t *data, uint8_t *dataSize, uint32_t *timeStamp, int32_t *status)
 	{
 		ctre::phoenix::platform::can::CANComm_ReceiveMessage(messageID, messageIDMask, data, dataSize, timeStamp, status);
+		// For some reason, CANAPI uses a weird timeStamp. Emulate it here
+		*timeStamp = GetPacketBaseTime();
 	}
 }
 

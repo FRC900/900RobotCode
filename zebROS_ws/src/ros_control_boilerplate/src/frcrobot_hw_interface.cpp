@@ -909,7 +909,8 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 		std::shared_ptr<std::mutex> mutex,
 		Tracer tracer)
 {
-	ros::Rate r(1); // TODO : Tune me?
+	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
+	ros::Rate r(20); // TODO : Tune me?
 	int32_t status = 0;
 	HAL_ClearPDPStickyFaults(pdp, &status);
 	HAL_ResetPDPTotalEnergy(pdp, &status);
@@ -923,50 +924,17 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 		status = 0;
 		hardware_interface::PDPHWState pdp_state;
 		pdp_state.setVoltage(HAL_GetPDPVoltage(pdp, &status));
-		if (status)
-		{
-			ROS_ERROR_STREAM("pdp_read_thread getPDPVoltage error : status = " << status << ":" << HAL_GetErrorMessage(status));
-			status = 0;
-		}
 		pdp_state.setTemperature(HAL_GetPDPTemperature(pdp, &status));
-		if (status)
-		{
-			ROS_ERROR_STREAM("pdp_read_thread getPDPTemperature error : status = " << status << ":" << HAL_GetErrorMessage(status));
-			status = 0;
-		}
 		pdp_state.setTotalCurrent(HAL_GetPDPTotalCurrent(pdp, &status));
-		if (status)
-		{
-			ROS_ERROR_STREAM("pdp_read_thread getPDPTotalCurrent error : status = " << status << ":" << HAL_GetErrorMessage(status));
-			status = 0;
-		}
 		pdp_state.setTotalPower(HAL_GetPDPTotalPower(pdp, &status));
-		if (status)
-		{
-			ROS_ERROR_STREAM("pdp_read_thread getPDPTotalPower error : status = " << status << ":" << HAL_GetErrorMessage(status));
-			status = 0;
-		}
 		pdp_state.setTotalEnergy(HAL_GetPDPTotalEnergy(pdp, &status));
-		if (status)
-		{
-			ROS_ERROR_STREAM("pdp_read_thread getPDPTotalEnergy error : status = " << status << ":" << HAL_GetErrorMessage(status));
-			status = 0;
-		}
 		for (int channel = 0; channel <= 15; channel++)
 		{
 			pdp_state.setCurrent(HAL_GetPDPChannelCurrent(pdp, channel, &status), channel);
-		if (status)
-		{
-			ROS_ERROR_STREAM("pdp_read_thread getPDPChannelCurrent(" << channel << ") error : status = " << status << ":" << HAL_GetErrorMessage(status));
-			status = 0;
-		}
 		}
 		if (status)
-		{
 			ROS_ERROR_STREAM("pdp_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
-		}
-		else
-			ROS_WARN("pdp_read OK");
+
 		{
 			// Copy to state shared with read() thread
 			// Put this in a separate scope so lock_guard is released
