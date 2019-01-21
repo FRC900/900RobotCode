@@ -383,9 +383,9 @@ void FRCRobotHWInterface::init(void)
 			{
 				double_solenoids_.push_back(DoubleSolenoidHandle(forward_handle, reverse_handle));
 				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
-						double_solenoid_forward_ids_[i], solenoid_pcms_[i]);
+						double_solenoid_forward_ids_[i], double_solenoid_pcms_[i]);
 				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
-						double_solenoid_reverse_ids_[i], solenoid_pcms_[i]);
+						double_solenoid_reverse_ids_[i], double_solenoid_pcms_[i]);
 			}
 			else
 			{
@@ -396,7 +396,9 @@ void FRCRobotHWInterface::init(void)
 			}
 		}
 		else
+		{
 			double_solenoids_.push_back(DoubleSolenoidHandle(HAL_kInvalidHandle, HAL_kInvalidHandle));
+		}
 	}
 
 	//RIGHT NOW THIS WILL ONLY WORK IF THERE IS ONLY ONE NAVX INSTANTIATED
@@ -558,6 +560,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 											std::shared_ptr<std::mutex> mutex,
 											Tracer tracer)
 {
+	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
 	ros::Rate rate(100); // TODO : configure me from a file or
 						 // be smart enough to run at the rate of the fastest status update?
 
