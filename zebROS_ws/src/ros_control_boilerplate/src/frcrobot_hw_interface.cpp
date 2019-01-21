@@ -345,13 +345,15 @@ void FRCRobotHWInterface::init(void)
 							  " as Solenoid " << solenoid_ids_[i]
 							  << " with pcm " << solenoid_pcms_[i]);
 
-		if (solenoid_local_hardwares_[i])
+		// Need to have 1 solenoid instantiated on the Rio to get
+		// support for compressor and so on loaded?
+		if (solenoid_local_hardwares_[i] || run_hal_robot_)
 		{
 			int32_t status = 0;
 			solenoids_.push_back(HAL_InitializeSolenoidPort(HAL_GetPortWithModule(solenoid_pcms_[i], solenoid_ids_[i]), &status));
 			if (solenoids_.back() == HAL_kInvalidHandle)
 				ROS_ERROR_STREAM("Error intializing solenoid : status=" << status);
-			else
+			else if (!solenoid_local_hardwares_[i])
 				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
 						solenoid_ids_[i], solenoid_pcms_[i]);
 		}
@@ -2443,7 +2445,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				if (setpoint == DoubleSolenoid::Value::kForward)
 					forward = true;
 				else if (setpoint == DoubleSolenoid::Value::kReverse)
-					forward = true;
+					reverse = true;
 
 				int32_t status = 0;
 				HAL_SetSolenoid(double_solenoids_[i].forward_, forward, &status);
@@ -2459,7 +2461,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			double_solenoid_state_[i] = double_solenoid_command_[i];
 			ROS_INFO_STREAM("Double solenoid " << double_solenoid_names_[i] <<
 					" at forward id " << double_solenoid_forward_ids_[i] <<
-					"/ reverse id " << double_solenoid_reverse_ids_[i] <<
+					" / reverse id " << double_solenoid_reverse_ids_[i] <<
 					" / pcm " << double_solenoid_pcms_[i] <<
 					" = " << setpoint);
 		}
