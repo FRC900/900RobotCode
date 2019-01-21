@@ -3,37 +3,16 @@
 namespace panel_intake_controller
 {
 
-bool PanelIntakeController::init(hardware_interface::RobotHW *hw,
+bool PanelIntakeController::init(hardware_interface::PositionJointInterface *hw,
                                                         ros::NodeHandle                 &root_nh,
                                                         ros::NodeHandle                 &controller_nh)
 {
-    hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
-    hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
 
+	claw_in_ = hw->getHandle("panel_claw_in");
+	push_in_ = hw->getHandle("panel_push_in"); 
+	wedge_in_ = hw->getHandle("panel_wedge_in");
 
-	
-   // intake_in_ = pos_joint_iface->getHandle("clamp");
-    //read intake name from config file
-    XmlRpc::XmlRpcValue panel_params;
-    if (!controller_nh.getParam("panel_joint", panel_params))
-    {
-        ROS_ERROR_STREAM("Can not read panel name");
-        return false;
-    }
-	/*
-    //initialize joint with that name
-    if (!intake_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, intake_params))
-    {
-        ROS_ERROR("Cannot initialize intake joint!");
-        return false;
-    }
-    else
-    {
-        ROS_INFO("Initialized intake joint!");
-    }
-	*/
-
-    panel_service_ = controller_nh.advertiseService("intake_command", &PanelIntakeController::cmdService, this);
+   panel_service_ = controller_nh.advertiseService("panel_command", &PanelIntakeController::cmdService, this);
 
     return true;
 }
@@ -42,31 +21,49 @@ void PanelIntakeController::starting(const ros::Time &/*time*/) {
 }
 
 void PanelIntakeController::update(const ros::Time &time, const ros::Duration &period) {
-    /*double spin_command = *(spin_command_.readFromRT());
-    bool intake_in_cmd = *(intake_in_cmd_.readFromRT());
-    double intake_in_cmd_double;
-    if(intake_in_cmd == true) {
+    /*double spin_command = *(spin_command_.readFromRT()); */
+    bool claw_cmd = *(claw_cmd_.readFromRT());
+    if(claw_cmd == true) {
         //ROS_WARN("intake in");
-        intake_in_cmd_double = -1;
+        claw_joint_.setCommand(-1.0);
     }
-    else if (intake_in_cmd == false) {
-        intake_in_cmd_double = 1;
-        //ROS_WARN("intake out");
+    else if (claw_cmd == false) {
+
+        claw_joint_.setCommand(1.0);
     }
-    intake_joint_.setCommand(spin_command); // set the command to the spinny part of the intake
-    intake_in_.setCommand(intake_in_cmd_double); // set the in/out command to the clampy part of the intake
-	*/
+
+ bool push_cmd = *(push_cmd_.readFromRT());
+    if(push_cmd == true) {
+        //ROS_WARN("intake in");
+        push_joint_.setCommand(-1.0);
+    }
+    else if (push_cmd == false) {
+
+        push_joint_.setCommand(1.0);
+	}
+
+ bool wedge_cmd = *(wedge_cmd_.readFromRT());
+    if(wedge_cmd == true) {
+        //ROS_WARN("intake in");
+        wedge_joint_.setCommand(-1.0);
+    }
+    else if (wedge_cmd == false) {
+
+        wedge_joint_.setCommand(1.0);
+	}
+
 }
 
 void PanelIntakeController::stopping(const ros::Time &time) {
 }
-/*
+
 bool PanelIntakeController::cmdService(panel_intake_controller::PanelIntakeSrv::Request &req, panel_intake_controller::PanelIntakeSrv::Response &response) {
     if(isRunning())
     {
-        spin_command_.writeFromNonRT(req.power); //take the service request for a certain amount of power (-1 to 1) and write it to the command variable
-        intake_in_cmd_.writeFromNonRT(req.intake_in); //take the service request for in/out (true/false???) and write to a command variable
-    }
+        claw_cmd_.writeFromNonRT(req.claw_in); //take the service request for in/out (true/false???) and write to a command variable
+		push_cmd_.writeFromNonRT(req.push_in);
+		wedge_cmd_.writeFromNonRT(req.wedge_in);
+	}
     else
     {
         ROS_ERROR_STREAM("Can't accept new commands. PanelIntakeController is not running.");
