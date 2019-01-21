@@ -215,7 +215,6 @@ void FRCRobotHWInterface::init(void)
 	{
 		// This is for non Rio-based robots.  Call init for the wpilib HAL code
 		// we've "borrowed" before using them
-		//hal::InitializeCAN();
 		hal::init::InitializeCANAPI();
 		hal::init::InitializeCompressor();
 		hal::init::InitializePCMInternal();
@@ -347,13 +346,13 @@ void FRCRobotHWInterface::init(void)
 
 		// Need to have 1 solenoid instantiated on the Rio to get
 		// support for compressor and so on loaded?
-		if (solenoid_local_hardwares_[i] || run_hal_robot_)
+		if (solenoid_local_hardwares_[i])
 		{
 			int32_t status = 0;
 			solenoids_.push_back(HAL_InitializeSolenoidPort(HAL_GetPortWithModule(solenoid_pcms_[i], solenoid_ids_[i]), &status));
 			if (solenoids_.back() == HAL_kInvalidHandle)
 				ROS_ERROR_STREAM("Error intializing solenoid : status=" << status);
-			else if (!solenoid_local_hardwares_[i])
+			else
 				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
 						solenoid_ids_[i], solenoid_pcms_[i]);
 		}
@@ -775,6 +774,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			active_trajectory_velocity = talon->GetActiveTrajectoryVelocity() * radians_per_second_scale;
 			safeTalonCall(talon->GetLastError(), "GetActiveTrajectoryVelocity");
 
+			// Only in MotionMagic arc mode?
 			active_trajectory_heading = talon->GetActiveTrajectoryHeading() * 2. * M_PI / 360.; //returns in degrees
 			safeTalonCall(talon->GetLastError(), "GetActiveTrajectoryHeading");
 
@@ -1111,7 +1111,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			last_nt_publish_time_ += ros::Duration(1.0 / nt_publish_rate);
 		}
 
-		read_tracer_.start_unique("network joysticks");
+		read_tracer_.start_unique("joysticks");
 		// Update joystick state as often as possible
 		for (size_t i = 0; i < num_joysticks_; i++)
 		{
@@ -2452,11 +2452,17 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				if (status != 0)
 					ROS_ERROR_STREAM("Error setting double solenoid " << double_solenoid_names_[i] <<
 							" forward to " << forward << " status = " << status);
+				else
+					ROS_INFO_STREAM("Setting double solenoid " << double_solenoid_names_[i] <<
+							" forward to " << forward);
 				status = 0;
 				HAL_SetSolenoid(double_solenoids_[i].reverse_, reverse, &status);
 				if (status != 0)
 					ROS_ERROR_STREAM("Error setting double solenoid " << double_solenoid_names_[i] <<
 							" reverse to " << reverse << " status = " << status);
+				else
+					ROS_INFO_STREAM("Setting double solenoid " << double_solenoid_names_[i] <<
+							" reverse to " << reverse);
 			}
 			double_solenoid_state_[i] = double_solenoid_command_[i];
 			ROS_INFO_STREAM("Double solenoid " << double_solenoid_names_[i] <<
@@ -2483,15 +2489,18 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 	for (size_t i = 0; i< num_compressors_; i++)
 	{
-		if (last_compressor_command_[i] != compressor_command_[i])
+		if (compressor_command_[i] != compressor_state_[i])
 		{
 			const bool setpoint = compressor_command_[i] > 0;
 			if (compressor_local_hardwares_[i])
 			{
 				int32_t status = 0;
 				HAL_SetCompressorClosedLoopControl(compressors_[i], setpoint, &status);
+				if (status)
+					ROS_ERROR_STREAM("SetCompressorClosedLoopControl status:" << status
+							<< " " << HAL_GetErrorMessage(status));
 			}
-			last_compressor_command_[i] = compressor_command_[i];
+			compressor_state_[i] = compressor_command_[i];
 			ROS_INFO_STREAM("Wrote compressor " << i << "=" << setpoint);
 		}
 	}
