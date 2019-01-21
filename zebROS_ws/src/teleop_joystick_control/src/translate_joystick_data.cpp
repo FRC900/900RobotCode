@@ -9,6 +9,9 @@ ros::Publisher processed_data_pub;
 
 void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 {
+	// preserve time stamp
+	processed_msg.header.stamp = msg->header.stamp;
+
 	// Translating sticks and triggers
 	processed_msg.leftStickX = msg->axes.size() > 0 ? msg->axes[0] : 0.0;
 	processed_msg.leftStickY = msg->axes.size() > 1 ? msg->axes[1] : 0.0;
