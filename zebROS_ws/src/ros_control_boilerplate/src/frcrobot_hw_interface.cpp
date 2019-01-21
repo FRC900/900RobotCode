@@ -141,6 +141,7 @@ const int timeoutMs = 0; //If nonzero, function will wait for config success and
 FRCRobotHWInterface::FRCRobotHWInterface(ros::NodeHandle &nh, urdf::Model *urdf_model)
 	: ros_control_boilerplate::FRCRobotInterface(nh, urdf_model)
 	, robot_(nullptr)
+	, read_tracer_(nh_.getNamespace() + "::read()")
 {
 }
 
@@ -586,7 +587,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 
 	while(ros::ok())
 	{
-		tracer.start("main_loop");
+		tracer.start("talon read main_loop");
 
 		hardware_interface::TalonMode talon_mode;
 		hardware_interface::FeedbackDevice encoder_feedback;
@@ -927,11 +928,15 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 		}
 		if (status)
 		{
-			ROS_ERROR_STREAM("pdp_read_thread error : status = " << status);
+			ROS_ERROR_STREAM("pdp_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
 		}
-		// Copy to state shared with read() thread
-		std::lock_guard<std::mutex> l(*mutex);
-		*state = pdp_state;
+		{
+			// Copy to state shared with read() thread
+			// Put this in a separate scope so lock_guard is released
+			// as soon as the state is finished copying
+			std::lock_guard<std::mutex> l(*mutex);
+			*state = pdp_state;
+		}
 
 		tracer.stop();
 		ROS_INFO_STREAM_THROTTLE(2, tracer.report());
@@ -976,12 +981,12 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_
 		pcm_state.setSolenoidBlacklist(HAL_GetPCMSolenoidBlackList(pcm, &status));
 
 		if (status)
-		{
-			ROS_ERROR_STREAM("pcm_read_thread error : status = " << status);
-		}
-		else
+			ROS_ERROR_STREAM("pcm_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
+
 		{
 			// Copy to state shared with read() thread
+			// Put this in a separate scope so lock_guard is released
+			// as soon as the state is finished copying
 			std::lock_guard<std::mutex> l(*mutex);
 			*state = pcm_state;
 		}
@@ -994,6 +999,7 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_
 
 void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 {
+	read_tracer_.start_unique("Check for ready");
 	if (run_hal_robot_ && !robot_code_ready_)
 	{
 		bool ready = true;
@@ -1012,8 +1018,10 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 
 	if (robot_code_ready_)
 	{
+		read_tracer_.start_unique("OneIteration");
 		robot_->OneIteration();
 
+		read_tracer_.start_unique("network tables");
 		const ros::Time time_now_t = ros::Time::now();
 		const double nt_publish_rate = 10;
 
@@ -1089,6 +1097,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			last_nt_publish_time_ += ros::Duration(1.0 / nt_publish_rate);
 		}
 
+		read_tracer_.start_unique("network joysticks");
 		// Update joystick state as often as possible
 		for (size_t i = 0; i < num_joysticks_; i++)
 		{
@@ -1175,6 +1184,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			}
 		}
 
+		read_tracer_.start_unique("match data");
 		int32_t status = 0;
 		match_data_.setMatchTimeRemaining(HAL_GetMatchTime(&status));
 		HAL_MatchInfo info;
@@ -1239,6 +1249,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		status = 0;
 		match_data_.setBatteryVoltage(HAL_GetVinVoltage(&status));
 
+		read_tracer_.start_unique("robot controller data");
 		status = 0;
 		robot_controller_state_.SetFPGAVersion(HAL_GetFPGAVersion(&status));
 		robot_controller_state_.SetFPGARevision(HAL_GetFPGARevision(&status));
@@ -1276,6 +1287,8 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		robot_controller_state_.SetCANTransmitErrorCount(transmit_error_count);
 	}
 
+
+	read_tracer_.start_unique("can talons");
 	for (std::size_t joint_id = 0; joint_id < num_can_talon_srxs_; ++joint_id)
 	{
 		if (can_talon_srx_local_hardwares_[joint_id])
@@ -1327,11 +1340,13 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		}
 	}
 
+	read_tracer_.start_unique("nidec");
 	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
 	{
 		if (nidec_brushless_local_updates_[i])
 			brushless_vel_[i] = nidec_brushlesses_[i]->Get();
 	}
+	read_tracer_.start_unique("digital in");
 	for (size_t i = 0; i < num_digital_inputs_; i++)
 	{
 		//State should really be a bool - but we're stuck using
@@ -1363,6 +1378,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			double_solenoid_state_[i] = double_solenoid_command_[i];
 	}
 #endif
+	read_tracer_.start_unique("analog in");
 	for (size_t i = 0; i < num_analog_inputs_; i++)
 	{
 		if (analog_input_locals_[i])
@@ -1371,6 +1387,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		if (analog_input_names_[i] == "analog_pressure_sensor")
 			pressure_ = analog_input_state_[i];
 	}
+	read_tracer_.start_unique("navX");
 	//navX read here
 	for (size_t i = 0; i < num_navX_; i++)
 	{
@@ -1428,6 +1445,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		}
 	}
 
+	read_tracer_.start_unique("compressors");
 	for (size_t i = 0; i < num_compressors_; i++)
 	{
 		if (compressor_local_updates_[i])
@@ -1436,6 +1454,8 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			pcm_state_[i] = *pcm_read_thread_state_[i];
 		}
 	}
+
+	read_tracer_.start_unique("pdps");
 	for (size_t i = 0; i < num_pdps_; i++)
 	{
 		if (pdp_locals_[i])
@@ -1444,6 +1464,8 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			pdp_state_[i] = *pdp_read_thread_state_[i];
 		}
 	}
+	read_tracer_.stop();
+	ROS_INFO_STREAM_THROTTLE(2, read_tracer_.report());
 }
 
 

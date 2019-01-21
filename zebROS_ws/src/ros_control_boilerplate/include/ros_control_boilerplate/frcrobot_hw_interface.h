@@ -301,6 +301,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::vector<Tracer> talon_thread_tracers_;
 		std::vector<Tracer> pdp_thread_tracers_;
 		std::vector<Tracer> pcm_thread_tracers_;
+		Tracer read_tracer_;
 
 };  // class
 
