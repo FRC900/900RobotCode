@@ -444,14 +444,14 @@ void FRCRobotHWInterface::init(void)
 		{
 			if (!HAL_CheckCompressorModule(compressor_pcm_ids_[i]))
 			{
-				ROS_ERROR("Invalid Compressor PDM ID");
+				ROS_ERROR("Invalid Compressor PCM ID");
 				compressors_.push_back(HAL_kInvalidHandle);
 			}
 			else
 			{
 				int32_t status = 0;
 				compressors_.push_back(HAL_InitializeCompressor(compressor_pcm_ids_[i], &status));
-				if (compressors_[i] != HAL_kInvalidHandle)
+				if (!status && (compressors_[i] != HAL_kInvalidHandle))
 				{
 					pcm_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
 					pcm_thread_tracers_.push_back("PCM " + compressor_names_[i] + " " + nh_.getNamespace());
@@ -459,6 +459,11 @@ void FRCRobotHWInterface::init(void)
 								compressors_[i], compressor_pcm_ids_[i], pcm_read_thread_state_[i],
 								pcm_read_thread_mutexes_[i], pcm_thread_tracers_[i]));
 					HAL_Report(HALUsageReporting::kResourceType_Compressor, compressor_pcm_ids_[i]);
+				}
+				else
+				{
+					ROS_ERROR_STREAM("compressor init error : status = "
+							<< status << ":" << HAL_GetErrorMessage(status));
 				}
 			}
 		}
@@ -904,7 +909,7 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 		std::shared_ptr<std::mutex> mutex,
 		Tracer tracer)
 {
-	ros::Rate r(20); // TODO : Tune me?
+	ros::Rate r(1); // TODO : Tune me?
 	int32_t status = 0;
 	HAL_ClearPDPStickyFaults(pdp, &status);
 	HAL_ResetPDPTotalEnergy(pdp, &status);
@@ -918,18 +923,50 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 		status = 0;
 		hardware_interface::PDPHWState pdp_state;
 		pdp_state.setVoltage(HAL_GetPDPVoltage(pdp, &status));
+		if (status)
+		{
+			ROS_ERROR_STREAM("pdp_read_thread getPDPVoltage error : status = " << status << ":" << HAL_GetErrorMessage(status));
+			status = 0;
+		}
 		pdp_state.setTemperature(HAL_GetPDPTemperature(pdp, &status));
+		if (status)
+		{
+			ROS_ERROR_STREAM("pdp_read_thread getPDPTemperature error : status = " << status << ":" << HAL_GetErrorMessage(status));
+			status = 0;
+		}
 		pdp_state.setTotalCurrent(HAL_GetPDPTotalCurrent(pdp, &status));
+		if (status)
+		{
+			ROS_ERROR_STREAM("pdp_read_thread getPDPTotalCurrent error : status = " << status << ":" << HAL_GetErrorMessage(status));
+			status = 0;
+		}
 		pdp_state.setTotalPower(HAL_GetPDPTotalPower(pdp, &status));
+		if (status)
+		{
+			ROS_ERROR_STREAM("pdp_read_thread getPDPTotalPower error : status = " << status << ":" << HAL_GetErrorMessage(status));
+			status = 0;
+		}
 		pdp_state.setTotalEnergy(HAL_GetPDPTotalEnergy(pdp, &status));
+		if (status)
+		{
+			ROS_ERROR_STREAM("pdp_read_thread getPDPTotalEnergy error : status = " << status << ":" << HAL_GetErrorMessage(status));
+			status = 0;
+		}
 		for (int channel = 0; channel <= 15; channel++)
 		{
 			pdp_state.setCurrent(HAL_GetPDPChannelCurrent(pdp, channel, &status), channel);
+		if (status)
+		{
+			ROS_ERROR_STREAM("pdp_read_thread getPDPChannelCurrent(" << channel << ") error : status = " << status << ":" << HAL_GetErrorMessage(status));
+			status = 0;
+		}
 		}
 		if (status)
 		{
 			ROS_ERROR_STREAM("pdp_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
 		}
+		else
+			ROS_WARN("pdp_read OK");
 		{
 			// Copy to state shared with read() thread
 			// Put this in a separate scope so lock_guard is released
@@ -949,39 +986,43 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 // status messages.  Each iteration, data read from the
 // PCM is copied to a state buffer shared with the main read
 // thread.
-void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_id,
+void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle, int32_t pcm_id,
 										  std::shared_ptr<hardware_interface::PCMState> state,
 										  std::shared_ptr<std::mutex> mutex,
 										  Tracer tracer)
 {
+	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
 	ros::Rate r(20); // TODO : Tune me?
 	int32_t status = 0;
-	HAL_ClearAllPCMStickyFaults(pcm, &status);
+	HAL_ClearAllPCMStickyFaults(pcm_id, &status);
 	if (status)
-		ROS_ERROR_STREAM("pcm_read_thread error clearing sticky faults : status = " << status);
+	{
+		ROS_ERROR_STREAM("pcm_read_thread error clearing sticky faults : status = "
+				<< status << ":" << HAL_GetErrorMessage(status));
+	}
 	while (ros::ok())
 	{
 		tracer.start("main loop");
 
 		hardware_interface::PCMState pcm_state(pcm_id);
 		status = 0;
-		pcm_state.setEnabled(HAL_GetCompressor(pcm, &status));
-		pcm_state.setPressureSwitch(HAL_GetCompressorPressureSwitch(pcm, &status));
-		pcm_state.setCompressorCurrent(HAL_GetCompressorCurrent(pcm, &status));
-		pcm_state.setClosedLoopControl(HAL_GetCompressorClosedLoopControl(pcm, &status));
-		pcm_state.setCurrentTooHigh(HAL_GetCompressorCurrentTooHighFault(pcm, &status));
-		pcm_state.setCurrentTooHighSticky(HAL_GetCompressorCurrentTooHighStickyFault(pcm, &status));
+		pcm_state.setEnabled(HAL_GetCompressor(compressor_handle, &status));
+		pcm_state.setPressureSwitch(HAL_GetCompressorPressureSwitch(compressor_handle, &status));
+		pcm_state.setCompressorCurrent(HAL_GetCompressorCurrent(compressor_handle, &status));
+		pcm_state.setClosedLoopControl(HAL_GetCompressorClosedLoopControl(compressor_handle, &status));
+		pcm_state.setCurrentTooHigh(HAL_GetCompressorCurrentTooHighFault(compressor_handle, &status));
+		pcm_state.setCurrentTooHighSticky(HAL_GetCompressorCurrentTooHighStickyFault(compressor_handle, &status));
 
-		pcm_state.setShorted(HAL_GetCompressorShortedFault(pcm, &status));
-		pcm_state.setShortedSticky(HAL_GetCompressorShortedStickyFault(pcm, &status));
-		pcm_state.setNotConntected(HAL_GetCompressorNotConnectedFault(pcm, &status));
-		pcm_state.setNotConnecteSticky(HAL_GetCompressorNotConnectedStickyFault(pcm, &status));
-		pcm_state.setVoltageFault(HAL_GetPCMSolenoidVoltageFault(pcm, &status));
-		pcm_state.setVoltageStickFault(HAL_GetPCMSolenoidVoltageStickyFault(pcm, &status));
-		pcm_state.setSolenoidBlacklist(HAL_GetPCMSolenoidBlackList(pcm, &status));
+		pcm_state.setShorted(HAL_GetCompressorShortedFault(compressor_handle, &status));
+		pcm_state.setShortedSticky(HAL_GetCompressorShortedStickyFault(compressor_handle, &status));
+		pcm_state.setNotConntected(HAL_GetCompressorNotConnectedFault(compressor_handle, &status));
+		pcm_state.setNotConnecteSticky(HAL_GetCompressorNotConnectedStickyFault(compressor_handle, &status));
+		pcm_state.setVoltageFault(HAL_GetPCMSolenoidVoltageFault(pcm_id, &status));
+		pcm_state.setVoltageStickFault(HAL_GetPCMSolenoidVoltageStickyFault(pcm_id, &status));
+		pcm_state.setSolenoidBlacklist(HAL_GetPCMSolenoidBlackList(pcm_id, &status));
 
 		if (status)
-			ROS_ERROR_STREAM("pcm_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
+			ROS_ERROR_STREAM("pcm_read_thread : status = " << status << ":" << HAL_GetErrorMessage(status));
 
 		{
 			// Copy to state shared with read() thread
