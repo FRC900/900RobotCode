@@ -22,7 +22,7 @@ namespace panel_intake_controller
 {
 //this is the actual controller, so it stores all of the  update() functions and the actual handle from the joint interface
 //if it was only one type, controller_interface::Controller<TalonCommandInterface> here
-class PanelIntakeController : public controller_interface::MultiInterfaceController<hardware_interface::TalonCommandInterface, hardware_interface::JointStateInterface, hardware_interface::PositionJointInterface>
+class PanelIntakeController : public controller_interface::Controller<hardware_interface::PositionJointInterface>
 {
         public:
             PanelIntakeController()
@@ -31,24 +31,25 @@ class PanelIntakeController : public controller_interface::MultiInterfaceControl
 
             //should this be hardware_interface::TalonCommandInterface instead? What's the reason to import RobotHW then get CommandInterface from that instead of just importing TalonCommandIface?
             //answer to my question: the TalonCommandInterface is passed in if it's not a multiInterfaceController, and just one kind of joint is made!
-            virtual bool init(hardware_interface::RobotHW *hw,
+            virtual bool init(hardware_interface::PositionJointInterface *hw,
                               ros::NodeHandle             &root_nh,
                               ros::NodeHandle             &controller_nh);
             virtual void starting(const ros::Time &time);
             virtual void update(const ros::Time & time, const ros::Duration& period);
             virtual void stopping(const ros::Time &time);
 
-            /*virtual bool cmdService(panel_intake_controller::PanelIntakeSrv::Request &req,
-					                panel_intake_controller::PanelIntakeSrv::Response &res);*/
+            virtual bool cmdService(panel_intake_controller::PanelIntakeSrv::Request &req,
+					                panel_intake_controller::PanelIntakeSrv::Response &res);
 
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
-            talon_controllers::TalonPercentOutputControllerInterface intake_joint_; //interface for the talon joint
-            hardware_interface::JointHandle intake_in_; //interface for the in/out solenoid joint
+            hardware_interface::JointHandle claw_joint_; //interface for the in/out solenoid joint
+ 			hardware_interface::JointHandle push_joint_;
+ 			hardware_interface::JointHandle wedge_joint_;
 
-            realtime_tools::RealtimeBuffer<double> spin_command_; //this is the buffer for percent output commands to be published
-            realtime_tools::RealtimeBuffer<double> intake_in_cmd_; //buffer for in/out commands
-            realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
+            realtime_tools::RealtimeBuffer<double> claw_cmd_; //this is the buffer for percent output commands to be published
+            realtime_tools::RealtimeBuffer<double> push_cmd_; //buffer for in/out commands
+            realtime_tools::RealtimeBuffer<double> wedge_cmd_; //buffer for timeout commands
 
             ros::ServiceServer panel_intake_service_; //service for receiving commands
 }; //class
