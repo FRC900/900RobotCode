@@ -16,11 +16,12 @@ hardware_interface:
        # the Rio sending 0'd control frames to it won't interfere with
        # operation of real Talons
        - {name: dummy_talon, type: can_talon_srx, can_id: 1, local: false}
-       - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1, local_hardware: true, local_update: true} 
+       - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1, local: true}
          
        - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}
        - {name: joystick, type: joystick, id: 0, local: true}
        - {name: joystick_rumble, type: rumble, rumble_port: 0}
+       - {name: compressor, type: compressor, pcm_id: 0}
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
          
@@ -65,6 +66,10 @@ imu_sensor_controller:
 
 match_state_controller:
    type:         match_state_controller/MatchStateController
+   publish_rate: 20
+
+pcm_state_controller:
+   type : pcm_state_controller/PCMStateController
    publish_rate: 20
 
 robot_controller_state_controller:
