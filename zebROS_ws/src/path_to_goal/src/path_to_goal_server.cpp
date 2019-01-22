@@ -1,4 +1,26 @@
-#include "path_to_goal/path_to_goal.h"
+#include <ros/ros.h>
+#include <cube_detection/CubeDetection.h>
+#include <swerve_point_generator/FullGenCoefs.h>
+#include <talon_swerve_drive_controller/MotionProfilePoints.h>
+#include <base_trajectory/GenerateSpline.h>
+#include <talon_state_controller/TalonState.h>
+#include <robot_visualizer/ProfileFollower.h>
+#include <behaviors/PathAction.h>
+#include <actionlib/server/simple_action_server.h>
+#include <actionlib/client/simple_action_client.h>
+#include <swerve_point_generator/PathFollowAction.h>
+
+// TODO : all of these should be members of PathAction.  Move their
+// initialization from main into the class constructor
+ros::ServiceClient point_gen;
+ros::ServiceClient swerve_controller;
+ros::ServiceClient spline_gen;
+ros::ServiceClient VisualizeService;
+bool outOfPoints;
+
+void cubeCallback(cube_detection::CubeDetection sub_location);
+
+void talonStateCallback(const talon_state_controller::TalonState &talon_state);
 
 bool generateTrajectory(const base_trajectory::GenerateSpline &srvBaseTrajectory, swerve_point_generator::FullGenCoefs &traj)
 {
@@ -115,26 +137,26 @@ public:
 
 		ros::Duration time_to_run = ros::Duration(goal->time_to_run); //TODO: make this an actual thing
 
-                ros::spinOnce();
+		// TODO : why spin here? Is there callback data needed?
+		ros::spinOnce();
 
-
-                //x-movement
-                srvBaseTrajectory.request.points[0].positions.push_back(goal->x);
-                srvBaseTrajectory.request.points[0].velocities.push_back(0);
-                srvBaseTrajectory.request.points[0].accelerations.push_back(0);
-                //y-movement
-                srvBaseTrajectory.request.points[0].positions.push_back(goal->y);
-                srvBaseTrajectory.request.points[0].velocities.push_back(0);
-                srvBaseTrajectory.request.points[0].accelerations.push_back(0);
-                //z-rotation
-                if (goal->rotation < 0.001)
-                    srvBaseTrajectory.request.points[0].positions.push_back(0.001);
-                else
-                    srvBaseTrajectory.request.points[0].positions.push_back(goal->rotation);
-                srvBaseTrajectory.request.points[0].velocities.push_back(0); //velocity at the end point
-                srvBaseTrajectory.request.points[0].accelerations.push_back(0); //acceleration at the end point
-                //time for profile to run
-                srvBaseTrajectory.request.points[0].time_from_start = time_to_run;
+		//x-movement
+		srvBaseTrajectory.request.points[0].positions.push_back(goal->x);
+		srvBaseTrajectory.request.points[0].velocities.push_back(0);
+		srvBaseTrajectory.request.points[0].accelerations.push_back(0);
+		//y-movement
+		srvBaseTrajectory.request.points[0].positions.push_back(goal->y);
+		srvBaseTrajectory.request.points[0].velocities.push_back(0);
+		srvBaseTrajectory.request.points[0].accelerations.push_back(0);
+		//z-rotation
+		if (goal->rotation < 0.001)
+			srvBaseTrajectory.request.points[0].positions.push_back(0.001);
+		else
+			srvBaseTrajectory.request.points[0].positions.push_back(goal->rotation);
+		srvBaseTrajectory.request.points[0].velocities.push_back(0); //velocity at the end point
+		srvBaseTrajectory.request.points[0].accelerations.push_back(0); //acceleration at the end point
+		//time for profile to run
+		srvBaseTrajectory.request.points[0].time_from_start = time_to_run;
 
 		bool running = false;
 		if(!spline_gen.call(srvBaseTrajectory))
@@ -171,8 +193,11 @@ public:
 			ros::spinOnce();
 			if (outOfPoints)
 				success = true;
+
+			// Straight assignment should work fine here - false||x == x
 			timed_out = timed_out || (ros::Time::now().toSec() - startTime) > goal->time_to_run;
 		}
+
 		if (!aborted)
 		{
 			result_.success = success;
@@ -194,8 +219,8 @@ int main(int argc, char** argv)
 	swerve_controller = n.serviceClient<talon_swerve_drive_controller::MotionProfilePoints>("swerve_drive_controller/run_profile", false, service_connection_header);
 	spline_gen = n.serviceClient<base_trajectory::GenerateSpline>("/base_trajectory/spline_gen", false, service_connection_header);
 	VisualizeService = n.serviceClient<robot_visualizer::ProfileFollower>("visualize_auto", false, service_connection_header);
-	talon_sub = n.subscribe("talon_states", 10, talonStateCallback);
-    ac = std::make_shared<actionlib::SimpleActionClient<swerve_point_generator::PathFollowAction>>("path_follower", true);
+	auto talon_sub = n.subscribe("talon_states", 10, talonStateCallback);
+    auto ac = std::make_shared<actionlib::SimpleActionClient<swerve_point_generator::PathFollowAction>>("path_follower", true);
 
 	ROS_INFO_STREAM("waiting for server... ");
 	ac->waitForServer();
