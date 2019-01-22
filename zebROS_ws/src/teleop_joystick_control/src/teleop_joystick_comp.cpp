@@ -120,20 +120,21 @@ void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 	}
 
 }
-void callback(const ros::MessageEvent<ros_control_boilerplate::JoystickStates const>& event)
-{
-const ros::M_strings& header = event.getConnectionHeader();
-std::string topic = header.at("topic");
 
-const ros_control_boilerplate:JoystickStates::ConstPtr& msg = event.getMessage();
+void callback(const ros::MessageEvent<ros_control_boilerplate::JoystickState const>& event)
+{
+	const ros::M_strings& header = event.getConnectionHeader();
+	std::string topic = header.at("topic");
+
+	const ros_control_boilerplate:JoystickState::ConstPtr& msg = event.getMessage();
 }
 
-if(topic_name = /frcrobot_jetson/joystick_states)
+if(topic_name = frcrobot_jetson/joystick_states)
 {
 	joystick_state_array[0] = msg;
 }
 
-if(topic_name = /frcrobot_jetson/joystick_states1)
+if(topic_name = frcrobot_jetson/joystick_states1)
 {
 	joystick_state_array[1] = msg;
 }
