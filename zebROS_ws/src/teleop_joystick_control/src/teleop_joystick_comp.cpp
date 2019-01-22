@@ -47,8 +47,13 @@ void navXCallback(const sensor_msgs::Imu &navXState)
 }
 
 
-void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
+void callback(const ros::MessageEvent<ros_control_boilerplate::JoystickState const>& event)
 {
+	const ros::M_strings& header = event.getConnectionHeader();
+	std::string topic = header.at("topic");
+
+	const ros_control_boilerplate:JoystickState::ConstPtr& msg = event.getMessage();
+
 	double leftStickX = JoystickState->leftStickX;
 	double leftStickY = JoystickState->leftStickY;
 
@@ -102,8 +107,9 @@ void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 		JoystickRobotVel.publish(vel);
 		sendRobotZero = false;
 	}
+<<<<<<< 669e65655c8798e634835c81ef05d9688227792c
 
-	if(JoystickState->buttonAPress)
+	if(joystick_states_array[0].buttonAPress)
 	{
 		ROS_WARN_STREAM("buttonAPress");
 		std_srvs::SetBool msg;
@@ -111,7 +117,7 @@ void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 		run_align.call(msg);
 	}
 
-	if(JoystickState->buttonARelease)
+	if(joystick_states_array[0].buttonARelease)
 	{
 		ROS_WARN_STREAM("buttonARelease");
 		std_srvs::SetBool msg;
@@ -127,16 +133,16 @@ void callback(const ros::MessageEvent<ros_control_boilerplate::JoystickState con
 	std::string topic = header.at("topic");
 
 	const ros_control_boilerplate:JoystickState::ConstPtr& msg = event.getMessage();
-}
 
-if(topic_name = frcrobot_jetson/joystick_states)
-{
-	joystick_state_array[0] = msg;
-}
+	if(topic = frcrobot_jetson/joystick_states)
+	{
+		joystick_state_array[0] = *msg;
+	}
 
-if(topic_name = frcrobot_jetson/joystick_states1)
-{
-	joystick_state_array[1] = msg;
+	if(topic = frcrobot_jetson/joystick_states1)
+	{
+		joystick_state_array[1] = *msg;
+	}
 }
 
 int main(int argc, char **argv)
@@ -146,8 +152,8 @@ int main(int argc, char **argv)
 
 	navX_angle = M_PI / 2;
 
-	ros::Subscriber joystick_sub  = n.subscribe("joystick_states", 1, &evaluateCommands);
-	ros::Subscriber joystick_sub1  = n.subscribe("joystick_states1", 1, &evaluateCommands);
+	ros::Subscriber joystick_sub  = n.subscribe("frcrobot_jetson/joystick_states", 1, &evaluateCommands);
+	ros::Subscriber joystick_sub1  = n.subscribe("frcrobot_jetson/joystick_states1", 1, &evaluateCommands);
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
