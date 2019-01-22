@@ -22,7 +22,7 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
 		<rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
-
+		<rosparam file="$(find behaviors)/config/alignmentOffsets.yaml" command="load"/>
 		<!-- Load hardware interface -->
 		<node name="frcrobot_hardware_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
 			output="screen" launch-prefix="$(arg launch_prefix)">
@@ -44,6 +44,8 @@
 		<node name="path_follower" pkg="swerve_point_generator" type="path_follower" output="screen"/>
 
 		<node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
+				<node name="vision_target_server_test" pkg="behaviors" type="vision_target_server_test" output="screen" />
+				<node name="align_server" pkg="behaviors" type="align_server" output="screen" />
 
 		<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" > 
 			<arg name="port" value="5803"/>

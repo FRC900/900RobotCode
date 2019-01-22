@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
   ros_control_boilerplate
   talon_swerve_drive_controller
+  path_to_goal
   swerve_point_generator
 )
 
@@ -133,17 +134,17 @@ catkin_package(
    CATKIN_DEPENDS actionlib nav_msgs roscpp rospy std_msgs teraranger_array
    DEPENDS 
 )
-# add_executable(arm_server_node src/arm_server.cpp)
-# target_link_libraries(arm_server_node ${catkin_LIBRARIES})
-# add_dependencies(arm_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(vision_target_server_test src/vision_target_server_test.cpp)
+target_link_libraries(vision_target_server_test ${catkin_LIBRARIES})
+add_dependencies(vision_target_server_test ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 # 
-# add_executable(forearm_server_node src/forearm_server.cpp)
-# target_link_libraries(forearm_server_node ${catkin_LIBRARIES})
-# add_dependencies(forearm_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(align_server src/align_server.cpp)
+target_link_libraries(align_server ${catkin_LIBRARIES})
+add_dependencies(align_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 # 
-# add_executable(intake_server_node src/intake_server.cpp)
-# target_link_libraries(intake_server_node ${catkin_LIBRARIES})
-# add_dependencies(intake_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(trigger_call_test src/trigger_call_test.cpp)
+target_link_libraries(trigger_call_test ${catkin_LIBRARIES})
+add_dependencies(trigger_call_test ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #add_executable(dummy src/dummy.cpp)
 #target_link_libraries(
