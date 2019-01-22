@@ -139,7 +139,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			sendRobotZero = false;
 		}
 
-		if(JoystickState->buttonAPress)
+		if(joystick_states_array[0].buttonARelease)
 		{
 			ROS_WARN_STREAM("buttonAPress");
 			std_srvs::SetBool msg;
@@ -147,7 +147,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			run_align.call(msg);
 		}
 
-		if(JoystickState->buttonARelease)
+		if(joystick_states_array[0].buttonAPress)
 		{
 			ROS_WARN_STREAM("buttonARelease");
 			std_srvs::SetBool msg;
@@ -160,16 +160,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	{
 		// Stuff for the second joystick goes here
 	}
-}
 
-if(topic_name = frcrobot_jetson/joystick_states)
-{
-	joystick_state_array[0] = msg;
-}
-
-if(topic_name = frcrobot_jetson/joystick_states1)
-{
-	joystick_state_array[1] = msg;
 }
 
 int main(int argc, char **argv)
