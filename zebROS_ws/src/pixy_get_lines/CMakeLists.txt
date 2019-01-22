@@ -18,7 +18,7 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 
 	## System dependencies are found with CMake's conventions
 	# find_package(Boost REQUIRED COMPONENTS system)
-	find_package (libusb-1.0 REQUIRED)
+	find_package (LibUSB REQUIRED)
 	find_package (OpenCV 3 COMPONENTS core highgui)
 
 	## Uncomment this if the package has a setup.py. This macro ensures
@@ -135,7 +135,8 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 	  ${LIBPIXYCOMMON_BASE}/inc
 	  ${PIXY_SRC_BASE}/common/inc
 	  ${PIXYARDUINO_BASE}
-	  ${libusb_INCLUDE_DIRS}
+	  ${LIBUSB_1_INCLUDE_DIRS}
+	  #${libusb_INCLUDE_DIRS}
 	)
 
 	## Declare a C++ library
