@@ -754,20 +754,25 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		}
 		else if (last_robot_enabled)
 		{
-			// If this is a switch from enabled to
-			// disabled, set talon command to current
-			// talon mode and then disable the talon.
-			// This will set up the talon to return
-			// to the current mode once the robot is
-			// re-enabled
-			// Need to first setMode to disabled because there's
-			// a check in setMode to see if requested_mode == current_mode
-			// If that check is true setMode does nothing - assumes
-			// that the mode won't need to be reset back to the
-			// same mode it is already in
-			tc.setMode(hardware_interface::TalonMode_Disabled);
-			tc.setMode(ts.getTalonMode());
-			ts.setTalonMode(hardware_interface::TalonMode_Disabled);
+			// Update talon state with requested setpoints for
+			// debugging. Don't actually write them to the physical
+			// Talons until the robot is re-enabled, though.
+			double command;
+			hardware_interface::DemandType demand1_type_internal;
+			double demand1_value;
+
+			ts.setSetpoint(tc.get());
+			ts.setDemand1Type(tc.getDemand1Type());
+			ts.setDemand1Value(tc.getDemand1Value());
+			if (last_robot_enabled)
+			{
+				// On the switch from robot enabled to robot disabled, set Talons to ControlMode::Disabled
+				// call resetMode() to queue up a change back to the correct mode / setpoint
+				// when the robot switches from disabled back to enabled
+				tc.resetMode();
+				ts.setTalonMode(hardware_interface::TalonMode_Disabled);
+				ROS_INFO_STREAM("Robot disabled - called Set(Disabled) on " << joint_id << "=" << can_talon_srx_names_[joint_id]);
+			}
 		}
 
 		bool close_loop_mode = false;

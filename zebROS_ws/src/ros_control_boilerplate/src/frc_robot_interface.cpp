@@ -904,19 +904,26 @@ void FRCRobotInterface::init()
 	ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface Ready.");
 }
 
-void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode mode, double setpoint, double fTerm, int joint_id, int pidSlot, bool zeroPos)
+// Using the mode, setpoint, etc generated from a given Talon's custom profile,
+// update the talon command values for that Talon. This way the rest of the
+// write() command will use those values to update hardware / sim for the
+// motor controller
+void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode mode,
+												 double setpoint, double fTerm,
+												 int joint_id, int pidSlot, bool zeroPos)
 {
 	auto &tc = talon_command_[joint_id];
 	if(zeroPos)
 	{
-		//pos_offset = can_talons_[joint_id]->GetSelectedSensorPosition(pidIdx) /* radians_scale*/;
-
 		tc.setSelectedSensorPosition(0);
-		ROS_WARN_STREAM("custom_profile_set_talon zeroing talon:" <<  joint_id);
+		ROS_INFO_STREAM("custom_profile_set_talon zeroing talon:" <<  joint_id);
 	}
+	ROS_INFO_STREAM("joint_id:" << joint_id << " mode:" << mode << " setpoint: " << setpoint << " fterm: " << fTerm << " slot: " << pidSlot);
+
 	// Set talon mode based on profile type
 	if(mode == hardware_interface::TalonMode_PercentOutput)
 	{
+		// Percent output doesn't use feedforward
 		tc.setDemand1Type(hardware_interface::DemandType_Neutral);
 	}
 	else
@@ -925,9 +932,6 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 		tc.setDemand1Value(fTerm);
 	}
 
-	//ROS_INFO_STREAM("setpoint: " << setpoint << " fterm: " << fTerm << " id: " << joint_id << " offset " << pos_offset << " slot: " << pidSlot << " pos mode? " << posMode);
-
-	// Make sure talon_command is in sync with data set above
 	tc.setMode(mode);
 	tc.set(setpoint);
 
@@ -937,8 +941,12 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 // Called once per talon in each write loop.  Used to generate
 // commands for that talon if it is running in custom
 // motion profile mode
+// TODO : see if there's a way to only zero out position once,
+// and then not send pt[0]'s zero pos command for points
+// interpolated from it
 void FRCRobotInterface::custom_profile_write(int joint_id)
 {
+	// Don't run if the talon isn't local
 	if (!can_talon_srx_local_hardwares_[joint_id])
 	{
 		return;
@@ -950,16 +958,32 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 	{
 		return;
 	}
+
 	auto &ts = talon_state_[joint_id];
-
 	auto &cps = custom_profile_state_[joint_id];
-	auto &prof_pts = cps.saved_points_;
-	auto &prof_times = cps.saved_times_;
-	tc.getCustomProfilePointsTimesChanged(prof_pts, prof_times);
-
-	const bool run = tc.getCustomProfileRun();
 	auto &ps = cps.status_;
 
+	// Grab points to hit and times to hit them from the
+	// talon command buffer
+	auto &prof_pts = cps.saved_points_;
+	auto &prof_times = cps.saved_times_;
+
+	tc.getCustomProfilePointsTimesChanged(prof_pts, prof_times);
+
+	// TODO : add check for talon mode == disabled,, run, etc.
+	// if so clear out getCustomProfileRun(), run, etc.
+	if (ts.getTalonMode() == hardware_interface::TalonMode_Disabled)
+	{
+		tc.setCustomProfileRun(false);
+	}
+
+	const bool run = tc.getCustomProfileRun();
+
+	// Clear out the current slot when profile status
+	// transitions from running to stopped
+	// This should also catch the case where a profile was being run
+	// when the robot was disabled, because we force custom profile
+	// run to false on robot disable
 	if(ps.running && !run)
 	{
 		std::vector<hardware_interface::CustomProfilePoint> empty_points;
@@ -969,6 +993,8 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 		//positions get shifted
 		cps.points_run_ = 0;
 	}
+
+	// Reset start time to now when switching from non-running to running
 	if((run && !ps.running) || !run)
 	{
 		cps.time_start_ = ros::Time::now().toSec();
@@ -986,6 +1012,7 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 		cps.time_start_= ros::Time::now().toSec();
 	}
 	ps.slotRunning = slot;
+	// Actully run profile code for this talon
 	if(run)
 	{
 		if(prof_pts[slot].size() == 0)
@@ -1001,19 +1028,21 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 			return;
 		}
 
+		//Find the point just greater than time since start
 		int end;
 		ps.outOfPoints = true;
-		double time_since_start = ros::Time::now().toSec() - cps.time_start_;
-		for(int start = std::min(cps.points_run_ - 1, 0); start < prof_pts[slot].size(); start++)
+		const double time_since_start = ros::Time::now().toSec() - cps.time_start_;
+		for(end = std::max(cps.points_run_ - 1, 0); end < prof_pts[slot].size(); end++)
 		{
-			//Find the point just greater than time since start
-			if(prof_times[slot][start] > time_since_start)
+			if(prof_times[slot][end] > time_since_start)
 			{
 				ps.outOfPoints = false;
-				end = start;
 				break;
 			}
 		}
+
+		// Save the current point found to run to speed up the
+		// search for it next time through the loop.
 		if(ps.outOfPoints)
 		{
 			cps.points_run_ = prof_pts[slot].size();
@@ -1022,6 +1051,12 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 		{
 			cps.points_run_ = std::max(end - 1, 0);
 		}
+#if 0
+		ROS_INFO_STREAM(" cps.points_run_:" << cps.points_run_
+				<< " time_since_start:" << time_since_start
+				<< " end:" << end
+				<< " ps.outOfPoints:" << ps.outOfPoints);
+#endif
 		if(ps.outOfPoints)
 		{
 			auto next_slot = tc.getCustomProfileNextSlot();
@@ -1045,23 +1080,30 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 		else
 		{
 			auto endp = prof_pts[slot][end];
+			auto endpm1 = prof_pts[slot][end - 1];
 			//Allows for mode flipping while in profile execution
 			//We don't want to interpolate between positional and velocity setpoints
-			if(endp.mode != prof_pts[slot][end-1].mode)
+			if(endp.mode != endpm1.mode)
 			{
-				ROS_WARN("mid profile mode flip. If intendped, Cooooooooollllll. If not, fix the code");
+				ROS_WARN_STREAM("mid profile mode flip. If intendped, Cooooooooollllll. If not, fix the code : " << endp.mode << " from " << endpm1.mode);
 				custom_profile_set_talon(endp.mode, endp.setpoint, endp.fTerm, joint_id, endp.pidSlot, endp.zeroPos);
 				// consider adding a check to see which is closer
 			}
 			else
 			{
-				//linear interpolation
-				auto endp = prof_pts[slot][end];
-				auto endpm1 = prof_pts[slot][end - 1];
-				auto time_div = (prof_times[slot][end] - prof_times[slot][end-1]) * (time_since_start - prof_times[slot][end-1]);
-				const double setpoint = endpm1.setpoint + (endp.setpoint - endpm1.setpoint) / time_div;
+				// linear interpolation of the points this particular iteration time
+				// falls between
+#if 0
+				ROS_INFO_STREAM("prof_pts[" << slot <<"]["<<end<<"] setpoint:" << endp.setpoint <<
+						" fTerm:" << endp.fTerm);
+				ROS_INFO_STREAM("prof_pts[" << slot <<"]["<<end-1<<"] setpoint:" << endpm1.setpoint <<
+						" fTerm:" << endpm1.fTerm);
+#endif
 
-				const double fTerm = endpm1.fTerm + (endp.fTerm - endpm1.fTerm) / time_div;
+				const double time_percent = (time_since_start - prof_times[slot][end-1]) / (prof_times[slot][end] - prof_times[slot][end-1]);
+				const double setpoint = endpm1.setpoint + (endp.setpoint - endpm1.setpoint) * time_percent;
+
+				const double fTerm = endpm1.fTerm + (endp.fTerm - endpm1.fTerm) * time_percent;
 				custom_profile_set_talon(endp.mode, setpoint, fTerm, joint_id, endp.pidSlot, endpm1.zeroPos);
 			}
 		}
@@ -1071,6 +1113,7 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 		ps.outOfPoints = false;
 	}
 
+	// Update talon profile status
 	ps.remainingPoints.resize(prof_pts.size());
 
 	for(size_t i = 0; i < prof_pts.size(); i++)

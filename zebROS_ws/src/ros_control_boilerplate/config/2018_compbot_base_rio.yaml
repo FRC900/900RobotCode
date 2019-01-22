@@ -16,8 +16,7 @@ hardware_interface:
        # the Rio sending 0'd control frames to it won't interfere with
        # operation of real Talons
        - {name: dummy_talon, type: can_talon_srx, can_id: 1, local: false}
-       - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1, local: true}
-         
+       - {name: pdp, type: pdp, local: true}
        - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}
        - {name: joystick, type: joystick, id: 0, local: true}
        - {name: joystick_rumble, type: rumble, rumble_port: 0}

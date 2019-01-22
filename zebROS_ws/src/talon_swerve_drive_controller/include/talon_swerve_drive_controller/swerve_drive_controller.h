@@ -39,6 +39,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -68,10 +69,6 @@
 
 namespace talon_swerve_drive_controller
 {
-const hardware_interface::TalonMode motion_profile_mode = hardware_interface::TalonMode::TalonMode_MotionProfile;
-const hardware_interface::TalonMode velocity_mode = hardware_interface::TalonMode::TalonMode_Velocity;
-const hardware_interface::TalonMode percent_voltage_mode = hardware_interface::TalonMode::TalonMode_PercentOutput;
-const hardware_interface::TalonMode position_mode = hardware_interface::TalonMode::TalonMode_Position;
 
 /**
  * This class makes some assumptions on the model of the robot:
@@ -189,12 +186,10 @@ class TalonSwerveDriveController
 
 		boost::circular_buffer<full_profile_cmd> full_profile_buffer_{10}; //likely more than needed
 
-		realtime_tools::RealtimeBuffer<bool> mode_;
+		// True if running cmd_vel, false if running profile
+		std::atomic<bool> cmd_vel_mode_;
 		//realtime_tools::RealtimeBuffer<bool> wipe_all_; //TODO, add this functionality
 		realtime_tools::RealtimeBuffer<Commands> command_;
-		Commands command_struct_;
-		Commands brake_struct_;
-		Commands brake_struct_other_;
 
 		ros::Subscriber sub_command_;
 
@@ -207,10 +202,6 @@ class TalonSwerveDriveController
 
 		realtime_tools::RealtimeBuffer<bool> run_;
 		realtime_tools::RealtimeBuffer<int> slot_;
-
-		hardware_interface::TalonMode motion_profile = hardware_interface::TalonMode::TalonMode_MotionProfile;
-		hardware_interface::TalonMode velocity_mode = hardware_interface::TalonMode::TalonMode_Velocity;
-		hardware_interface::TalonMode position_mode = hardware_interface::TalonMode::TalonMode_MotionMagic;
 
 		/// Publish executed commands
 		//boost::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped> > cmd_vel_pub_;
