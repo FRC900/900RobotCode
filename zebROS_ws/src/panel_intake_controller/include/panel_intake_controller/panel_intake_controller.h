@@ -17,6 +17,9 @@
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Bool.h>
+#include "panel_intake_controller/PanelIntakeSrv.h"
+
+
 
 namespace panel_intake_controller
 {
@@ -44,11 +47,12 @@ class PanelIntakeController : public controller_interface::Controller<hardware_i
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
             hardware_interface::JointHandle claw_joint_; //interface for the in/out solenoid joint
- 			hardware_interface::JointHandle push_joint_;
- 			hardware_interface::JointHandle wedge_joint_;
+ 			hardware_interface::JointHandle push_joint_1_;
+			hardware_interface::JointHandle push_joint_2_;
+			hardware_interface::JointHandle wedge_joint_;
 
             realtime_tools::RealtimeBuffer<double> claw_cmd_; //this is the buffer for percent output commands to be published
-            realtime_tools::RealtimeBuffer<double> push_cmd_; //buffer for in/out commands
+            realtime_tools::RealtimeBuffer<double> push_cmd_; //buffer for in/out commands 
             realtime_tools::RealtimeBuffer<double> wedge_cmd_; //buffer for timeout commands
 
             ros::ServiceServer panel_intake_service_; //service for receiving commands

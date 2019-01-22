@@ -23,6 +23,11 @@ hardware_interface:
        - {name: br_angle, type: can_talon_srx, can_id: 14, local: true}
        - {name: bl_drive, type: can_talon_srx, can_id: 23, local: true}
        - {name: bl_angle, type: can_talon_srx, can_id: 13, local: true}
+       - {name: panel_claw_in, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id:  1} 
+       - {name: panel_push_in_1, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
+       - {name: panel_push_in_2, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1} 
+       - {name: panel_wedge_in, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1} 
+
          #- {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: false}
          #- {name: compressor, type: compressor, pcm_id: 0}
          #- {name: pdp, type: pdp}
