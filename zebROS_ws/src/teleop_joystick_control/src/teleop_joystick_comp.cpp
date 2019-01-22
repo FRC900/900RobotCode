@@ -63,12 +63,10 @@ void navXCallback(const sensor_msgs::Imu &navXState)
 
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
-<<<<<<< a70722da2b2fd410ad4b85ef52aa4bf9e5fc3402
 	int i = 0;
 
 	const ros::M_string &header = event.getConnectionHeader();
 	std::string topic = header.at("topic");
-	/*ROS_INFO_STREAM("topic = " << topic);*/
 
 	for(bool msg_assign = false; msg_assign == false; i++)
 	{
