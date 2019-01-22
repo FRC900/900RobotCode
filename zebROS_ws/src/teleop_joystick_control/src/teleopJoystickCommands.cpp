@@ -357,7 +357,7 @@ void match_data_callback(const frc_msgs::MatchSpecificData::ConstPtr &MatchData)
 //Only allow going to various buttons based on cube state
 //Actually organize code so it can be debugged
 //
-void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &JoystickState)
+void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 {
 	/*std_msgs::Header first_header;
 	  first_header.stamp = JoystickState->header.stamp;

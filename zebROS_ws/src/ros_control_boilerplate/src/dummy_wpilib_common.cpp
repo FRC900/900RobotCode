@@ -596,6 +596,15 @@ extern "C"
 	// These calls haven't been run through the CANAPI yet - PCM?
 	void FRC_NetworkCommunication_CANSessionMux_sendMessage(uint32_t messageID, const uint8_t *data, uint8_t dataSize, int32_t periodMs, int32_t *status)
 	{
+#define CONTROL_1			0x09041C00	/* PCM_Control */
+#define CONTROL_2			0x09041C40	/* PCM_SupplemControl */
+#define CONTROL_3			0x09041C80	/* PcmControlSetOneShotDur_t */
+		// PCM arbIDs - need to filter out writes to these from the Jetson
+		// otherwise they overwrite legitimate commands from the Rio
+		const uint32_t arbId = messageID & 0xFFFFFFC0;
+		if ((arbId == CONTROL_1) || (arbId == CONTROL_2) || (arbId == CONTROL_3))
+			return;
+
 		ctre::phoenix::platform::can::CANComm_SendMessage(messageID, data, dataSize, periodMs, status);
 	}
 	void FRC_NetworkCommunication_CANSessionMux_receiveMessage(uint32_t *messageID, uint32_t messageIDMask, uint8_t *data, uint8_t *dataSize, uint32_t *timeStamp, int32_t *status)

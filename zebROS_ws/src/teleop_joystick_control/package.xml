@@ -9,18 +9,13 @@
 
   <license>BSD</license>
 
-  <url type="website">https://github.com/davetcoleman/ros_control_boilerplate</url>
-  <url type="butracker">https://github.com/davetcoleman/ros_control_boilerplate/issues</url>
-  <url type="repository">https://github.com/davetcoleman/ros_control_boilerplate/</url>
-
-
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>roscpp</depend>
   <depend>control_msgs</depend>
   <depend>actionlib</depend>
   <depend>cmake_modules</depend>
-  <depend>ros_control_boilerplate</depend>
+  <depend>frc_msgs</depend>
   <depend>behaviors</depend>
   <depend>std_srvs</depend>
   <depend>talon_state_controller</depend>

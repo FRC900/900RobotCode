@@ -51,6 +51,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   CubeState.msg
+  JoystickState.msg
   PDPData.msg
   MatchSpecificData.msg
   PCMState.msg

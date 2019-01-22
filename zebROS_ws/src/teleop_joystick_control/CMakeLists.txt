@@ -8,11 +8,11 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   control_msgs
   actionlib
-  ros_control_boilerplate
   behaviors
   std_srvs
   talon_state_controller
   robot_visualizer
+  frc_msgs
 )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -26,7 +26,7 @@ catkin_package(
   CATKIN_DEPENDS
     roscpp
     control_msgs
-    ros_control_boilerplate
+	frc_msgs
   LIBRARIES
   DEPENDS
 )
@@ -50,14 +50,6 @@ target_link_libraries(teleop_joystick_comp
   ${catkin_LIBRARIES}
 )
 
-add_executable(translate_joystick_data_node src/translate_joystick_data.cpp)
-set_target_properties(translate_joystick_data_node PROPERTIES OUTPUT_NAME 
-translate_joystick_data_node PREFIX "")
-target_link_libraries(translate_joystick_data_node
-  ${catkin_LIBRARIES}
-)
-
-
 # Add cmake target dependencies of the executable
 # same as for the library above. This is needed to force
 # talon controller messages to be built before the
@@ -67,11 +59,23 @@ add_dependencies(teleop_joystick_comp
   ${catkin_EXPORTED_TARGETS}
 )
 
+add_executable(translate_joystick_data_node src/translate_joystick_data.cpp)
+set_target_properties(translate_joystick_data_node PROPERTIES OUTPUT_NAME 
+translate_joystick_data_node PREFIX "")
+target_link_libraries(translate_joystick_data_node
+  ${catkin_LIBRARIES}
+)
+
+add_dependencies(translate_joystick_data_node
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+
 ## TOOLS ------------------------------------------------------
 
 # Install ------------------------------------------------------------
 # Install header files
-install(TARGETS teleop_joystick_comp
+install(TARGETS teleop_joystick_comp translate_joystick_data_node
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

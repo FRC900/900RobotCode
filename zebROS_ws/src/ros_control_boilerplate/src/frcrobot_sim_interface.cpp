@@ -95,7 +95,7 @@ namespace frcrobot_control
 
 TeleopJointsKeyboard::TeleopJointsKeyboard(ros::NodeHandle &nh)
 {
-	joints_pub_ = nh.advertise<ros_control_boilerplate::JoystickState>("joystick_states", 1);
+	joints_pub_ = nh.advertise<frc_msgs::JoystickState>("joystick_states", 1);
 }
 
 TeleopJointsKeyboard::~TeleopJointsKeyboard()

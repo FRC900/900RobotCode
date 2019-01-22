@@ -216,10 +216,10 @@ void FRCRobotHWInterface::init(void)
 		// This is for non Rio-based robots.  Call init for the wpilib HAL code
 		// we've "borrowed" before using them
 		hal::init::InitializeCANAPI();
-		//hal::init::InitializeCompressor();
-		//hal::init::InitializePCMInternal();
+		hal::init::InitializeCompressor();
+		hal::init::InitializePCMInternal();
 		hal::init::InitializePDP();
-		//hal::init::InitializeSolenoid();
+		hal::init::InitializeSolenoid();
 
 		ctre::phoenix::platform::can::SetCANInterface(can_interface_.c_str());
 	}

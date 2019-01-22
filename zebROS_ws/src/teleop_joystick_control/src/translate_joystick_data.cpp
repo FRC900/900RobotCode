@@ -1,9 +1,9 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Joy.h>
-#include <ros_control_boilerplate/JoystickState.h>
+#include <frc_msgs/JoystickState.h>
 
-ros_control_boilerplate::JoystickState processed_msg_last;
-ros_control_boilerplate::JoystickState processed_msg;
+frc_msgs::JoystickState processed_msg_last;
+frc_msgs::JoystickState processed_msg;
 
 ros::Publisher processed_data_pub;
 
@@ -80,7 +80,7 @@ int main(int argc, char ** argv)
     ros::NodeHandle n;
 
     ros::Subscriber raw_data_sub = n.subscribe("/frcrobot_rio/joystick_states_raw", 1, rawDataCB);
-    processed_data_pub = n.advertise<ros_control_boilerplate::JoystickState>("/frcrobot_jetson/joystick_states", 1);
+    processed_data_pub = n.advertise<frc_msgs::JoystickState>("/frcrobot_jetson/joystick_states", 1);
 
 	processed_msg_last = processed_msg;
 

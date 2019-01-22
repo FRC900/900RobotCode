@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ros/ros.h"
-#include "ros_control_boilerplate/JoystickState.h"
+#include "frc_msgs/JoystickState.h"
 #include "frc_msgs/MatchSpecificData.h"
 #include "elevator_controller/CubeState.h"
 #include "std_msgs/Float64.h"

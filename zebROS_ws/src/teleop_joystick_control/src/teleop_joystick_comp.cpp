@@ -45,7 +45,7 @@ void navXCallback(const sensor_msgs::Imu &navXState)
 }
 
 
-void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &JoystickState)
+void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 {
 	double leftStickX = JoystickState->leftStickX;
 	double leftStickY = JoystickState->leftStickY;
