@@ -48,9 +48,9 @@
 
 #include <frc_interfaces/robot_controller_interface.h>
 #include "ros_control_boilerplate/AutoMode.h"
-#include "ros_control_boilerplate/JoystickState.h"
 #include "frc_msgs/MatchSpecificData.h"
 #include <std_msgs/Float64.h>
+#include <sensor_msgs/Joy.h>
 
 #include <ctre/phoenix/motorcontrol/can/TalonSRX.h>
 #include <frc/IterativeRobotBase.h>
@@ -270,7 +270,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		std::vector<std::shared_ptr<std::mutex>> pcm_read_thread_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::PCMState>> pcm_read_thread_state_;
-		void pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_id, std::shared_ptr<hardware_interface::PCMState> state, std::shared_ptr<std::mutex> mutex, Tracer tracer);
+		void pcm_read_thread(HAL_CompressorHandle compressor_handle, int32_t pcm_id, std::shared_ptr<hardware_interface::PCMState> state, std::shared_ptr<std::mutex> mutex, Tracer tracer);
 		std::vector<std::thread> pcm_thread_;
 		std::vector<HAL_CompressorHandle> compressors_;
 
@@ -284,11 +284,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::vector<int32_t> pdps_;
 
 		std::vector<std::shared_ptr<Joystick>> joysticks_;
-		std::vector<bool> joystick_up_last_;
-		std::vector<bool> joystick_down_last_;
-		std::vector<bool> joystick_left_last_;
-		std::vector<bool> joystick_right_last_;
-		std::vector<std::unique_ptr<realtime_tools::RealtimePublisher<ros_control_boilerplate::JoystickState>>> realtime_pub_joysticks_;
+		std::vector<std::unique_ptr<realtime_tools::RealtimePublisher<sensor_msgs::Joy>>> realtime_pub_joysticks_;
 
 		std::unique_ptr<ROSIterativeRobot> robot_;
 		std::shared_ptr<realtime_tools::RealtimePublisher<ros_control_boilerplate::AutoMode>> realtime_pub_nt_;
@@ -305,6 +301,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::vector<Tracer> talon_thread_tracers_;
 		std::vector<Tracer> pdp_thread_tracers_;
 		std::vector<Tracer> pcm_thread_tracers_;
+		Tracer read_tracer_;
 
 };  // class
 

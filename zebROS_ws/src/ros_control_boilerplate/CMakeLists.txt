@@ -217,6 +217,7 @@ file(GLOB
 	ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/networktables/*.cpp
 	ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/tables/*.cpp)
 
+	if (0)
 	add_executable(frcrobot_phoenixsim_main
 		src/frcrobot_phoenixsim_interface.cpp
 		src/frcrobot_hw_main.cpp
@@ -333,6 +334,7 @@ file(GLOB
 	  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 	)
+	endif()
 
 endif()
 

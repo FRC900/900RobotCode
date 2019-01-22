@@ -37,15 +37,17 @@ static bool down_sample = false;
 
 void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 {
+	
 	cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
-	cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
 
+	cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
+	
 	// Avoid copies by using pointers to RGB and depth info
 	// These pointers are either to the original data or to
 	// the downsampled data, depending on the down_sample flag
 	const Mat *framePtr = &cvFrame->image;
 	const Mat *depthPtr = &cvDepth->image;
-
+	
 	// To hold downsampled images, if necessary
 	Mat frame;
 	Mat depth;
@@ -88,6 +90,7 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	gd_msg.location.z = pt.z;
 	gd_msg.valid = gd->Valid();
 	pub.publish(gd_msg);
+
 
 	if (!batch)
 	{
@@ -146,6 +149,7 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	tf2::doTransform(transformStamped, transformStampedOdomGoal, transformStampedOdomCamera);
 
 	br.sendTransform(transformStampedOdomGoal);
+
 }
 
 int main(int argc, char **argv)
@@ -162,7 +166,6 @@ int main(int argc, char **argv)
 	nh.getParam("batch", batch);
 	message_filters::Subscriber<Image> frame_sub(nh, "/zed_goal/left/image_rect_color", sub_rate);
 	message_filters::Subscriber<Image> depth_sub(nh, "/zed_goal/depth/depth_registered", sub_rate);
-
 	typedef sync_policies::ApproximateTime<Image, Image > MySyncPolicy2;
 	// ApproximateTime takes a queue size as its constructor argument, hence MySyncPolicy(xxx)
 	Synchronizer<MySyncPolicy2> sync2(MySyncPolicy2(50), frame_sub, depth_sub);
@@ -170,6 +173,7 @@ int main(int argc, char **argv)
 
 	// Set up publisher
 	pub = nh.advertise<goal_detection::GoalDetection>("goal_detect_msg", pub_rate);
+
 
 	ros::spin();
 

@@ -137,32 +137,41 @@ do
 done
 scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $ROBORIO_ADDR:$RIO_ROS_CODE_LOCATION
 
-for i in "${JETSON_ADDR[@]}"
-do
-	rsync -avzru $RSYNC_OPTIONS --exclude '.git' --exclude 'zebROS_ws/build*' \
-		--exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
-		--exclude '*~' --exclude '*.sw[op]' --exclude '*CMakeFiles*' \
-		$LOCAL_CLONE_LOCATION/ $i:$JETSON_ENV_LOCATION/
-	if [ $? -ne 0 ]; then
-		echo "Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"
-		exit 1
-	fi
-done
-echo "Synchronization complete"
+# If two-way syncing is enabled, copy newer files from the Jetson(s)
+# to the dev laptop
 if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
 	echo "Synchronizing remote changes FROM $INSTALL_ENV environment."
 	for i in "${JETSON_ADDR[@]}"
 	do
-		rsync -avzru --exclude '.git' --exclude 'zebROS_ws/build*' \
+		rsync -avzru --ignore-times --exclude '.git' --exclude 'zebROS_ws/build*' \
 			--exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
 			--exclude '*~' --exclude '*.sw[op]'  --exclude '*CMakeFiles*' \
+			--exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2/documents'\
 			$i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/
 		if [ $? -ne 0 ]; then
 			echo "Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
 			exit 1
 		fi
 	done
+	echo "Synchronization complete"
 fi
+
+# Copy from laptop to jetson.  Make it an actual sync - don't ignore
+# newer files on the target as this causes problems when switching
+# between git branches or between host laptops with different
+# versions of code
+for i in "${JETSON_ADDR[@]}"
+do
+	rsync -avzr $RSYNC_OPTIONS --ignore-times --exclude '.git' --exclude 'zebROS_ws/build*' \
+		--exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
+		--exclude '*~' --exclude '*.sw[op]' --exclude '*CMakeFiles*' \
+		--exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2/documents'\
+		$LOCAL_CLONE_LOCATION/ $i:$JETSON_ENV_LOCATION/
+	if [ $? -ne 0 ]; then
+		echo "Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"
+		exit 1
+	fi
+done
 echo "Synchronization complete"
 
 # Run local roboRIO cross build as one process.

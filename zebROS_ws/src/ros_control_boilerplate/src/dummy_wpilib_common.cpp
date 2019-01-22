@@ -379,6 +379,17 @@ bool frc::GenericHID::GetRawButtonReleased(int)
 	return false;
 }
 
+int frc::GenericHID::GetButtonCount() const
+{
+	ROS_ERROR("Called frc::Joystick::GetButtonCount() const on unsupported platform");
+	return -1;
+}
+
+int frc::GenericHID::GetAxisCount() const
+{
+	ROS_ERROR("Called frc::Joystick::GetAxisCount() const on unsupported platform");
+	return -1;
+}
 #include <frc/Joystick.h>
 frc::Joystick::Joystick(int x) : GenericHID(x)
 {
@@ -518,6 +529,7 @@ double frc::Joystick::GetDirectionDegrees() const
 	ROS_ERROR("Called frc::Joystick::GetDirectionDegrees() const on unsupported platform");
 	return std::numeric_limits<double>::max();
 }
+
 
 #include <frc/NidecBrushless.h>
 frc::NidecBrushless::NidecBrushless(int pwmChannel, int dioChannel) : m_dio(dioChannel), m_pwm(pwmChannel)

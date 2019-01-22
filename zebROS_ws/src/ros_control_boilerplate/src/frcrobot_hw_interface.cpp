@@ -141,6 +141,7 @@ const int timeoutMs = 0; //If nonzero, function will wait for config success and
 FRCRobotHWInterface::FRCRobotHWInterface(ros::NodeHandle &nh, urdf::Model *urdf_model)
 	: ros_control_boilerplate::FRCRobotInterface(nh, urdf_model)
 	, robot_(nullptr)
+	, read_tracer_(nh_.getNamespace() + "::read()")
 {
 }
 
@@ -214,7 +215,6 @@ void FRCRobotHWInterface::init(void)
 	{
 		// This is for non Rio-based robots.  Call init for the wpilib HAL code
 		// we've "borrowed" before using them
-		//hal::InitializeCAN();
 		hal::init::InitializeCANAPI();
 		hal::init::InitializeCompressor();
 		hal::init::InitializePCMInternal();
@@ -344,6 +344,8 @@ void FRCRobotHWInterface::init(void)
 							  " as Solenoid " << solenoid_ids_[i]
 							  << " with pcm " << solenoid_pcms_[i]);
 
+		// Need to have 1 solenoid instantiated on the Rio to get
+		// support for compressor and so on loaded?
 		if (solenoid_local_hardwares_[i])
 		{
 			int32_t status = 0;
@@ -382,9 +384,9 @@ void FRCRobotHWInterface::init(void)
 			{
 				double_solenoids_.push_back(DoubleSolenoidHandle(forward_handle, reverse_handle));
 				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
-						double_solenoid_forward_ids_[i], solenoid_pcms_[i]);
+						double_solenoid_forward_ids_[i], double_solenoid_pcms_[i]);
 				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
-						double_solenoid_reverse_ids_[i], solenoid_pcms_[i]);
+						double_solenoid_reverse_ids_[i], double_solenoid_pcms_[i]);
 			}
 			else
 			{
@@ -395,7 +397,9 @@ void FRCRobotHWInterface::init(void)
 			}
 		}
 		else
+		{
 			double_solenoids_.push_back(DoubleSolenoidHandle(HAL_kInvalidHandle, HAL_kInvalidHandle));
+		}
 	}
 
 	//RIGHT NOW THIS WILL ONLY WORK IF THERE IS ONLY ONE NAVX INSTANTIATED
@@ -443,14 +447,14 @@ void FRCRobotHWInterface::init(void)
 		{
 			if (!HAL_CheckCompressorModule(compressor_pcm_ids_[i]))
 			{
-				ROS_ERROR("Invalid Compressor PDM ID");
+				ROS_ERROR("Invalid Compressor PCM ID");
 				compressors_.push_back(HAL_kInvalidHandle);
 			}
 			else
 			{
 				int32_t status = 0;
 				compressors_.push_back(HAL_InitializeCompressor(compressor_pcm_ids_[i], &status));
-				if (compressors_[i] != HAL_kInvalidHandle)
+				if (!status && (compressors_[i] != HAL_kInvalidHandle))
 				{
 					pcm_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
 					pcm_thread_tracers_.push_back("PCM " + compressor_names_[i] + " " + nh_.getNamespace());
@@ -458,6 +462,11 @@ void FRCRobotHWInterface::init(void)
 								compressors_[i], compressor_pcm_ids_[i], pcm_read_thread_state_[i],
 								pcm_read_thread_mutexes_[i], pcm_thread_tracers_[i]));
 					HAL_Report(HALUsageReporting::kResourceType_Compressor, compressor_pcm_ids_[i]);
+				}
+				else
+				{
+					ROS_ERROR_STREAM("compressor init error : status = "
+							<< status << ":" << HAL_GetErrorMessage(status));
 				}
 			}
 		}
@@ -523,21 +532,16 @@ void FRCRobotHWInterface::init(void)
 			joysticks_.push_back(std::make_shared<Joystick>(joystick_ids_[i]));
 			std::stringstream pub_name;
 			// TODO : maybe use pub_names instead, or joy id unconditionally?
-			pub_name << "joystick_states";
+			pub_name << "joystick_states_raw";
 			if (num_joysticks_ > 1)
 				pub_name << joystick_ids_[i];
-			realtime_pub_joysticks_.push_back(std::make_unique<realtime_tools::RealtimePublisher<ros_control_boilerplate::JoystickState>>(nh_, pub_name.str(), 1));
+			realtime_pub_joysticks_.push_back(std::make_unique<realtime_tools::RealtimePublisher<sensor_msgs::Joy>>(nh_, pub_name.str(), 1));
 		}
 		else
 		{
 			joysticks_.push_back(nullptr);
 			realtime_pub_joysticks_.push_back(nullptr);
 		}
-
-		joystick_up_last_.push_back(false);
-		joystick_down_last_.push_back(false);
-		joystick_right_last_.push_back(false);
-		joystick_left_last_.push_back(false);
 	}
 
 	navX_angle_ = 0;
@@ -557,6 +561,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 											std::shared_ptr<std::mutex> mutex,
 											Tracer tracer)
 {
+	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
 	ros::Rate rate(100); // TODO : configure me from a file or
 						 // be smart enough to run at the rate of the fastest status update?
 
@@ -591,7 +596,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 
 	while(ros::ok())
 	{
-		tracer.start("main_loop");
+		tracer.start("talon read main_loop");
 
 		hardware_interface::TalonMode talon_mode;
 		hardware_interface::FeedbackDevice encoder_feedback;
@@ -769,6 +774,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			active_trajectory_velocity = talon->GetActiveTrajectoryVelocity() * radians_per_second_scale;
 			safeTalonCall(talon->GetLastError(), "GetActiveTrajectoryVelocity");
 
+			// Only in MotionMagic arc mode?
 			active_trajectory_heading = talon->GetActiveTrajectoryHeading() * 2. * M_PI / 360.; //returns in degrees
 			safeTalonCall(talon->GetLastError(), "GetActiveTrajectoryHeading");
 
@@ -908,6 +914,7 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 		std::shared_ptr<std::mutex> mutex,
 		Tracer tracer)
 {
+	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
 	ros::Rate r(20); // TODO : Tune me?
 	int32_t status = 0;
 	HAL_ClearPDPStickyFaults(pdp, &status);
@@ -931,10 +938,12 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 			pdp_state.setCurrent(HAL_GetPDPChannelCurrent(pdp, channel, &status), channel);
 		}
 		if (status)
-			ROS_ERROR_STREAM("pdp_read_thread error : status = " << status);
-		else
+			ROS_ERROR_STREAM("pdp_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
+
 		{
 			// Copy to state shared with read() thread
+			// Put this in a separate scope so lock_guard is released
+			// as soon as the state is finished copying
 			std::lock_guard<std::mutex> l(*mutex);
 			*state = pdp_state;
 		}
@@ -950,44 +959,48 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 // status messages.  Each iteration, data read from the
 // PCM is copied to a state buffer shared with the main read
 // thread.
-void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_id,
+void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle, int32_t pcm_id,
 										  std::shared_ptr<hardware_interface::PCMState> state,
 										  std::shared_ptr<std::mutex> mutex,
 										  Tracer tracer)
 {
+	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
 	ros::Rate r(20); // TODO : Tune me?
 	int32_t status = 0;
-	HAL_ClearAllPCMStickyFaults(pcm, &status);
+	HAL_ClearAllPCMStickyFaults(pcm_id, &status);
 	if (status)
-		ROS_ERROR_STREAM("pcm_read_thread error clearing sticky faults : status = " << status);
+	{
+		ROS_ERROR_STREAM("pcm_read_thread error clearing sticky faults : status = "
+				<< status << ":" << HAL_GetErrorMessage(status));
+	}
 	while (ros::ok())
 	{
 		tracer.start("main loop");
 
 		hardware_interface::PCMState pcm_state(pcm_id);
 		status = 0;
-		pcm_state.setEnabled(HAL_GetCompressor(pcm, &status));
-		pcm_state.setPressureSwitch(HAL_GetCompressorPressureSwitch(pcm, &status));
-		pcm_state.setCompressorCurrent(HAL_GetCompressorCurrent(pcm, &status));
-		pcm_state.setClosedLoopControl(HAL_GetCompressorClosedLoopControl(pcm, &status));
-		pcm_state.setCurrentTooHigh(HAL_GetCompressorCurrentTooHighFault(pcm, &status));
-		pcm_state.setCurrentTooHighSticky(HAL_GetCompressorCurrentTooHighStickyFault(pcm, &status));
+		pcm_state.setEnabled(HAL_GetCompressor(compressor_handle, &status));
+		pcm_state.setPressureSwitch(HAL_GetCompressorPressureSwitch(compressor_handle, &status));
+		pcm_state.setCompressorCurrent(HAL_GetCompressorCurrent(compressor_handle, &status));
+		pcm_state.setClosedLoopControl(HAL_GetCompressorClosedLoopControl(compressor_handle, &status));
+		pcm_state.setCurrentTooHigh(HAL_GetCompressorCurrentTooHighFault(compressor_handle, &status));
+		pcm_state.setCurrentTooHighSticky(HAL_GetCompressorCurrentTooHighStickyFault(compressor_handle, &status));
 
-		pcm_state.setShorted(HAL_GetCompressorShortedFault(pcm, &status));
-		pcm_state.setShortedSticky(HAL_GetCompressorShortedStickyFault(pcm, &status));
-		pcm_state.setNotConntected(HAL_GetCompressorNotConnectedFault(pcm, &status));
-		pcm_state.setNotConnecteSticky(HAL_GetCompressorNotConnectedStickyFault(pcm, &status));
-		pcm_state.setVoltageFault(HAL_GetPCMSolenoidVoltageFault(pcm, &status));
-		pcm_state.setVoltageStickFault(HAL_GetPCMSolenoidVoltageStickyFault(pcm, &status));
-		pcm_state.setSolenoidBlacklist(HAL_GetPCMSolenoidBlackList(pcm, &status));
+		pcm_state.setShorted(HAL_GetCompressorShortedFault(compressor_handle, &status));
+		pcm_state.setShortedSticky(HAL_GetCompressorShortedStickyFault(compressor_handle, &status));
+		pcm_state.setNotConntected(HAL_GetCompressorNotConnectedFault(compressor_handle, &status));
+		pcm_state.setNotConnecteSticky(HAL_GetCompressorNotConnectedStickyFault(compressor_handle, &status));
+		pcm_state.setVoltageFault(HAL_GetPCMSolenoidVoltageFault(pcm_id, &status));
+		pcm_state.setVoltageStickFault(HAL_GetPCMSolenoidVoltageStickyFault(pcm_id, &status));
+		pcm_state.setSolenoidBlacklist(HAL_GetPCMSolenoidBlackList(pcm_id, &status));
 
 		if (status)
-		{
-			ROS_ERROR_STREAM("pcm_read_thread error : status = " << status);
-		}
-		else
+			ROS_ERROR_STREAM("pcm_read_thread : status = " << status << ":" << HAL_GetErrorMessage(status));
+
 		{
 			// Copy to state shared with read() thread
+			// Put this in a separate scope so lock_guard is released
+			// as soon as the state is finished copying
 			std::lock_guard<std::mutex> l(*mutex);
 			*state = pcm_state;
 		}
@@ -1000,6 +1013,7 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle pcm, int32_t pcm_
 
 void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 {
+	read_tracer_.start_unique("Check for ready");
 	if (run_hal_robot_ && !robot_code_ready_)
 	{
 		bool ready = true;
@@ -1018,8 +1032,10 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 
 	if (robot_code_ready_)
 	{
+		read_tracer_.start_unique("OneIteration");
 		robot_->OneIteration();
 
+		read_tracer_.start_unique("network tables");
 		const ros::Time time_now_t = ros::Time::now();
 		const double nt_publish_rate = 10;
 
@@ -1095,6 +1111,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			last_nt_publish_time_ += ros::Duration(1.0 / nt_publish_rate);
 		}
 
+		read_tracer_.start_unique("joysticks");
 		// Update joystick state as often as possible
 		for (size_t i = 0; i < num_joysticks_; i++)
 		{
@@ -1103,111 +1120,85 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 				auto &m = realtime_pub_joysticks_[i]->msg_;
 				m.header.stamp = time_now_t;
 
-				m.rightStickY = joysticks_[i]->GetRawAxis(5);
-				m.rightStickX = joysticks_[i]->GetRawAxis(4);
-				m.leftStickY = joysticks_[i]->GetRawAxis(1);
-				m.leftStickX = joysticks_[i]->GetRawAxis(0);
+			m.axes.clear();
+			m.buttons.clear();
 
-				m.leftTrigger = joysticks_[i]->GetRawAxis(2);
-				m.rightTrigger = joysticks_[i]->GetRawAxis(3);
-				m.buttonXButton = joysticks_[i]->GetRawButton(3);
-				m.buttonXPress = joysticks_[i]->GetRawButtonPressed(3);
-				m.buttonXRelease = joysticks_[i]->GetRawButtonReleased(3);
-				m.buttonYButton = joysticks_[i]->GetRawButton(4);
-				m.buttonYPress = joysticks_[i]->GetRawButtonPressed(4);
-				m.buttonYRelease = joysticks_[i]->GetRawButtonReleased(4);
+			for(int j = 0; j < joysticks_[i]->GetAxisCount(); j++)
+			{
+				m.axes.push_back(joysticks_[i]->GetRawAxis(j));
+			}
 
-				m.bumperLeftButton = joysticks_[i]->GetRawButton(5);
-				m.bumperLeftPress = joysticks_[i]->GetRawButtonPressed(5);
-				m.bumperLeftRelease = joysticks_[i]->GetRawButtonReleased(5);
+			for(int j = 0; j < joysticks_[i]->GetButtonCount(); j++)
+			{
+				m.buttons.push_back(joysticks_[i]->GetRawButton(j+1));
+			}
 
-				m.bumperRightButton = joysticks_[i]->GetRawButton(6);
-				m.bumperRightPress = joysticks_[i]->GetRawButtonPressed(6);
-				m.bumperRightRelease = joysticks_[i]->GetRawButtonReleased(6);
-
-				m.stickLeftButton = joysticks_[i]->GetRawButton(9);
-				m.stickLeftPress = joysticks_[i]->GetRawButtonPressed(9);
-				m.stickLeftRelease = joysticks_[i]->GetRawButtonReleased(9);
-
-				m.stickRightButton = joysticks_[i]->GetRawButton(10);
-				m.stickRightPress = joysticks_[i]->GetRawButtonPressed(10);
-				m.stickRightRelease = joysticks_[i]->GetRawButtonReleased(10);
-
-				m.buttonAButton = joysticks_[i]->GetRawButton(1);
-				m.buttonAPress = joysticks_[i]->GetRawButtonPressed(1);
-				m.buttonARelease = joysticks_[i]->GetRawButtonReleased(1);
-				m.buttonBButton = joysticks_[i]->GetRawButton(2);
-				m.buttonBPress = joysticks_[i]->GetRawButtonPressed(2);
-				m.buttonBRelease = joysticks_[i]->GetRawButtonReleased(2);
-				m.buttonBackButton = joysticks_[i]->GetRawButton(7);
-				m.buttonBackPress = joysticks_[i]->GetRawButtonPressed(7);
-				m.buttonBackRelease = joysticks_[i]->GetRawButtonReleased(7);
-
-				m.buttonStartButton = joysticks_[i]->GetRawButton(8);
-				m.buttonStartPress = joysticks_[i]->GetRawButtonPressed(8);
-				m.buttonStartRelease = joysticks_[i]->GetRawButtonReleased(8);
-
-				bool joystick_up = false;
-				bool joystick_down = false;
-				bool joystick_left = false;
-				bool joystick_right = false;
-				switch (joysticks_[i]->GetPOV(0))
-				{
-					case 0 :
-						joystick_up = true;
+			bool direction_up = false;
+			bool direction_down = false;
+			bool direction_left = false;
+			bool direction_right = false;
+			switch (joysticks_[i]->GetPOV(0))
+			{
+				case 0 :
+						direction_up = true;
 						break;
-					case 45:
-						joystick_up = true;
-						joystick_right = true;
+				case 45:
+						direction_up = true;
+						direction_right = true;
 						break;
-					case 90:
-						joystick_right = true;
+				case 90:
+						direction_right = true;
 						break;
-					case 135:
-						joystick_down = true;
-						joystick_right = true;
+				case 135:
+						direction_down = true;
+						direction_right = true;
 						break;
-					case 180:
-						joystick_down = true;
+				case 180:
+						direction_down = true;
 						break;
-					case 225:
-						joystick_down = true;
-						joystick_left = true;
+				case 225:
+						direction_down = true;
+						direction_left = true;
 						break;
-					case 270:
-						joystick_left = true;
+				case 270:
+						direction_left = true;
 						break;
-					case 315:
-						joystick_up = true;
-						joystick_left = true;
+				case 315:
+						direction_up = true;
+						direction_left = true;
 						break;
-				}
+			}
 
-				m.directionUpButton = joystick_up;
-				m.directionUpPress = joystick_up && !joystick_up_last_[i];
-				m.directionUpRelease = !joystick_up && joystick_up_last_[i];
+			if(direction_left)
+			{
+				m.axes.push_back(1.0);
+			}
+			else if (direction_right)
+			{
+				m.axes.push_back(-1.0);
+			}
+			else
+			{
+				m.axes.push_back(0.0);
+			}
 
-				m.directionDownButton = joystick_down;
-				m.directionDownPress = joystick_down && !joystick_down_last_[i];
-				m.directionDownRelease = !joystick_down && joystick_down_last_[i];
-
-				m.directionLeftButton = joystick_left;
-				m.directionLeftPress = joystick_left && !joystick_left_last_[i];
-				m.directionLeftRelease = !joystick_left && joystick_left_last_[i];
-
-				m.directionRightButton = joystick_right;
-				m.directionRightPress = joystick_right && !joystick_right_last_[i];
-				m.directionRightRelease = !joystick_right && joystick_right_last_[i];
-
-				joystick_up_last_[i] = joystick_up;
-				joystick_down_last_[i] = joystick_down;
-				joystick_left_last_[i] = joystick_left;
-				joystick_right_last_[i] = joystick_right;
-
+			if(direction_up)
+			{
+				m.axes.push_back(1.0);
+			}
+			else if (direction_down)
+			{
+				m.axes.push_back(-1.0);
+			}
+			else
+			{
+				m.axes.push_back(0.0);
+			}
 				realtime_pub_joysticks_[i]->unlockAndPublish();
 			}
 		}
 
+		read_tracer_.start_unique("match data");
 		int32_t status = 0;
 		match_data_.setMatchTimeRemaining(HAL_GetMatchTime(&status));
 		HAL_MatchInfo info;
@@ -1272,6 +1263,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		status = 0;
 		match_data_.setBatteryVoltage(HAL_GetVinVoltage(&status));
 
+		read_tracer_.start_unique("robot controller data");
 		status = 0;
 		robot_controller_state_.SetFPGAVersion(HAL_GetFPGAVersion(&status));
 		robot_controller_state_.SetFPGARevision(HAL_GetFPGARevision(&status));
@@ -1309,6 +1301,8 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		robot_controller_state_.SetCANTransmitErrorCount(transmit_error_count);
 	}
 
+
+	read_tracer_.start_unique("can talons");
 	for (std::size_t joint_id = 0; joint_id < num_can_talon_srxs_; ++joint_id)
 	{
 		if (can_talon_srx_local_hardwares_[joint_id])
@@ -1360,11 +1354,13 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		}
 	}
 
+	read_tracer_.start_unique("nidec");
 	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
 	{
 		if (nidec_brushless_local_updates_[i])
 			brushless_vel_[i] = nidec_brushlesses_[i]->Get();
 	}
+	read_tracer_.start_unique("digital in");
 	for (size_t i = 0; i < num_digital_inputs_; i++)
 	{
 		//State should really be a bool - but we're stuck using
@@ -1396,6 +1392,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			double_solenoid_state_[i] = double_solenoid_command_[i];
 	}
 #endif
+	read_tracer_.start_unique("analog in");
 	for (size_t i = 0; i < num_analog_inputs_; i++)
 	{
 		if (analog_input_locals_[i])
@@ -1404,6 +1401,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		if (analog_input_names_[i] == "analog_pressure_sensor")
 			pressure_ = analog_input_state_[i];
 	}
+	read_tracer_.start_unique("navX");
 	//navX read here
 	for (size_t i = 0; i < num_navX_; i++)
 	{
@@ -1461,6 +1459,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		}
 	}
 
+	read_tracer_.start_unique("compressors");
 	for (size_t i = 0; i < num_compressors_; i++)
 	{
 		if (compressor_local_updates_[i])
@@ -1469,6 +1468,8 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			pcm_state_[i] = *pcm_read_thread_state_[i];
 		}
 	}
+
+	read_tracer_.start_unique("pdps");
 	for (size_t i = 0; i < num_pdps_; i++)
 	{
 		if (pdp_locals_[i])
@@ -1477,6 +1478,8 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			pdp_state_[i] = *pdp_read_thread_state_[i];
 		}
 	}
+	read_tracer_.stop();
+	ROS_INFO_STREAM_THROTTLE(2, read_tracer_.report());
 }
 
 
@@ -2442,23 +2445,29 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				if (setpoint == DoubleSolenoid::Value::kForward)
 					forward = true;
 				else if (setpoint == DoubleSolenoid::Value::kReverse)
-					forward = true;
+					reverse = true;
 
 				int32_t status = 0;
 				HAL_SetSolenoid(double_solenoids_[i].forward_, forward, &status);
 				if (status != 0)
 					ROS_ERROR_STREAM("Error setting double solenoid " << double_solenoid_names_[i] <<
 							" forward to " << forward << " status = " << status);
+				else
+					ROS_INFO_STREAM("Setting double solenoid " << double_solenoid_names_[i] <<
+							" forward to " << forward);
 				status = 0;
 				HAL_SetSolenoid(double_solenoids_[i].reverse_, reverse, &status);
 				if (status != 0)
 					ROS_ERROR_STREAM("Error setting double solenoid " << double_solenoid_names_[i] <<
 							" reverse to " << reverse << " status = " << status);
+				else
+					ROS_INFO_STREAM("Setting double solenoid " << double_solenoid_names_[i] <<
+							" reverse to " << reverse);
 			}
 			double_solenoid_state_[i] = double_solenoid_command_[i];
 			ROS_INFO_STREAM("Double solenoid " << double_solenoid_names_[i] <<
 					" at forward id " << double_solenoid_forward_ids_[i] <<
-					"/ reverse id " << double_solenoid_reverse_ids_[i] <<
+					" / reverse id " << double_solenoid_reverse_ids_[i] <<
 					" / pcm " << double_solenoid_pcms_[i] <<
 					" = " << setpoint);
 		}
@@ -2480,15 +2489,18 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 	for (size_t i = 0; i< num_compressors_; i++)
 	{
-		if (last_compressor_command_[i] != compressor_command_[i])
+		if (compressor_command_[i] != compressor_state_[i])
 		{
 			const bool setpoint = compressor_command_[i] > 0;
 			if (compressor_local_hardwares_[i])
 			{
 				int32_t status = 0;
 				HAL_SetCompressorClosedLoopControl(compressors_[i], setpoint, &status);
+				if (status)
+					ROS_ERROR_STREAM("SetCompressorClosedLoopControl status:" << status
+							<< " " << HAL_GetErrorMessage(status));
 			}
-			last_compressor_command_[i] = compressor_command_[i];
+			compressor_state_[i] = compressor_command_[i];
 			ROS_INFO_STREAM("Wrote compressor " << i << "=" << setpoint);
 		}
 	}

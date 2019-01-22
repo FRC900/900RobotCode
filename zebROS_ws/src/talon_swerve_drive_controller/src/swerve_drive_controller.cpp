@@ -252,6 +252,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	// If either parameter is not available, we need to look up the value in the URDF
 	//bool lookup_wheel_coordinates = !controller_nh.getParam("wheel_coordinates", wheel_coordinates_);
 	bool lookup_wheel_radius = !controller_nh.getParam("wheel_radius", wheel_radius_);
+	bool lookup_cmd_vel_timout =!controller_nh.getParam("cmd_vel_timout",cmd_vel_timeout_);
 	bool lookup_max_speed = !controller_nh.getParam("max_speed", model_.maxSpeed);
 	bool lookup_mass = !controller_nh.getParam("mass", model_.mass);
 	bool lookup_motor_free_speed = !controller_nh.getParam("motor_free_speed", model_.motorFreeSpeed);
