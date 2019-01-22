@@ -1,5 +1,4 @@
 #include <ros/ros.h>
-#include <cube_detection/CubeDetection.h>
 #include <swerve_point_generator/FullGenCoefs.h>
 #include <talon_swerve_drive_controller/MotionProfilePoints.h>
 #include <base_trajectory/GenerateSpline.h>
@@ -17,8 +16,6 @@ ros::ServiceClient swerve_controller;
 ros::ServiceClient spline_gen;
 ros::ServiceClient VisualizeService;
 bool outOfPoints;
-
-void cubeCallback(cube_detection::CubeDetection sub_location);
 
 void talonStateCallback(const talon_state_controller::TalonState &talon_state);
 
