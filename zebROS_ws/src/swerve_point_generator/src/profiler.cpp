@@ -303,6 +303,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 			ROS_ERROR_STREAM("EVERYTHING IS FINE");
 		}
 		//ROS_INFO_STREAM("in back pass after solve_for_next_V orientation_velocities = " << current_spline_point.angular_velocity);
+		ROS_ERROR_STREAM("current - last angular velocity = " << current_angular_velocity - next_angular_velocity);
 	}
 	for(int i = 0; i < max_angular_velocities.size(); i++)
 	{
@@ -461,9 +462,10 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		ROS_INFO_STREAM("ORIENTATION current_angular_velocity = " << current_angular_velocity << " next_angular_velocity = " << next_angular_velocity);
 
 		double requested_acceleration = (next_angular_velocity - current_angular_velocity) / dt_ * max_wheel_dist_; //radians / sec / sec * (meters / radian)
-		double max_acceleration = max_wheel_mid_accel_; //- (curr_v - last_curr_v)/dt_;
+		ROS_INFO_STREAM("max wheel mid accel = " << max_wheel_mid_accel_ << " last linear acceleration = " << accelerations[accelerations.size() - 1]);
+		double max_acceleration = max_wheel_mid_accel_;// - accelerations[accelerations.size() - 1]; //- (curr_v - last_curr_v)/dt_;
 		ROS_INFO_STREAM("requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration);
-		if(requested_acceleration < 1e-5)
+		if(requested_acceleration < 0)
 		{
 			ROS_WARN_STREAM("skipping for back pass");
 			current_angular_velocity = ang_cap;
