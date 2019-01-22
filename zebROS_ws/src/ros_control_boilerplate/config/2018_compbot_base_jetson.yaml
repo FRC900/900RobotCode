@@ -31,6 +31,14 @@ hardware_interface:
        - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1, local_hardware: false, local_update: true}
        - {name: pdp, type: pdp}
        - {name: compressor, type: compressor, pcm_id: 0}
+       - {name: panel_claw_in, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id:  1} 
+       - {name: panel_push_in_1, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
+       - {name: panel_push_in_2, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1} 
+       - {name: panel_wedge_in, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1} 
+
+         #- {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: false}
+         #- {name: compressor, type: compressor, pcm_id: 0}
+         #- {name: pdp, type: pdp}
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
          
