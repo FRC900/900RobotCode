@@ -162,12 +162,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	}
 }
 
-if(topic_name = /frcrobot_jetson/joystick_states)
+if(topic_name = frcrobot_jetson/joystick_states)
 {
 	joystick_state_array[0] = msg;
 }
 
-if(topic_name = /frcrobot_jetson/joystick_states1)
+if(topic_name = frcrobot_jetson/joystick_states1)
 {
 	joystick_state_array[1] = msg;
 }
