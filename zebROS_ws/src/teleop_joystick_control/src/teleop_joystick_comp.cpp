@@ -66,6 +66,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 	const ros::M_string &header = event.getConnectionHeader();
 
+	std::string topic = header.at("topic");
+
 	for(bool msg_assign = false; msg_assign == false; i++)
 	{
 		if(topic == topic_array[i])
