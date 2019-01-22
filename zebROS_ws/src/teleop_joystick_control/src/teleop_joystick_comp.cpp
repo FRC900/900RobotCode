@@ -120,6 +120,13 @@ void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 	}
 
 }
+void callback(const ros::MessageEvent<ros_control_boilerplate::JoystickStates const>& event)
+{
+const ros::M_strings& header = event.getConnectionHeader();
+std::string topic = header.at("topic");
+
+const ros_control_boilerplate:JoystickStates::ConstPtr& msg = event.getMessage();
+}
 
 int main(int argc, char **argv)
 {
@@ -129,6 +136,7 @@ int main(int argc, char **argv)
 	navX_angle = M_PI / 2;
 
 	ros::Subscriber joystick_sub  = n.subscribe("joystick_states", 1, &evaluateCommands);
+	ros::Subscriber joystick_sub1  = n.subscribe("joystick_states1", 1, &evaluateCommands);
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
