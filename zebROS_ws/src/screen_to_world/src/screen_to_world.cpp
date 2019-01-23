@@ -84,7 +84,7 @@ void callback(const pixy_get_lines::PixyLine line)
 		vector.y0 = start.y;
 		vector.x1 = end.x;
 		vector.y1 = end.y;
-		//vector.slope = (end.y - start.y)/(end.x - start.x);
+		vector.slope = (end.y - start.y)/(end.x - start.x);
 		
 		pub.publish(vector);
 	}
@@ -93,7 +93,7 @@ void callback(const pixy_get_lines::PixyLine line)
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "screen_to_world");
-  ros::NodeHandle n;
+  ros::NodeHandle n("~");
 
   int sub_rate;
   int pub_rate;
