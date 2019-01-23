@@ -1,18 +1,18 @@
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
-//#include "behaviors/IntakeAction.h"
-//#include "intake_controller/IntakeSrv.h"
+#include "behaviors/IntakeAction.h"
+#include "cargo_intake_controller/IntakeSrv.h"
 #include "sensor_msgs/JointState.h"
 #include <atomic>
 #include <ros/console.h>
 
 //define global variables that will be defined based on config values
-/*
-   double intake_power;
-   double intake_hold_power;
-   double linebreak_debounce_iterations;
-   double spit_out_time;
-   */
+
+double intake_power;
+double intake_hold_power;
+double linebreak_debounce_iterations;
+double spit_out_time;
+
 
 class CargoIntakeAction {
 	protected:
@@ -20,7 +20,7 @@ class CargoIntakeAction {
 
 		actionlib::SimpleActionServer<behaviors::IntakeAction> as_; //create the actionlib server
 		std::string action_name_;
-		ros::ServiceClient client; //create a ros client to send requests to the actionlib server
+		ros::ServiceClient controller_client_; //create a ros client to send requests to the controller
 		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cube since we started trying to intake/outtake
 		std::atomic<int> linebreak_false_count; //same, but how many times in a row no cube
 		behaviors::IntakeResult result_; //variable to store result of the actionlib action
@@ -42,8 +42,8 @@ class CargoIntakeAction {
 		std::map<std::string, std::string> service_connection_header;
 		service_connection_header["tcp_nodelay"] = "1";
 
-		//initialize the client being used to call the actionlib server
-		client = nh_.serviceClient<intake_controller::IntakeSrv>("/frcrobot/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+		//initialize the client being used to call the controller
+		controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 
 		//start subscribers subscribing
 		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
@@ -61,7 +61,7 @@ class CargoIntakeAction {
 			//define variables that will be re-used for each call to a controller
 			double start_time;
 			bool success; //if controller call succeeded
-			
+
 			//define variables that will be set true if the actionlib action is to be ended
 			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
 			//if both of these are false, we assume the action succeeded
@@ -83,7 +83,7 @@ class CargoIntakeAction {
 				srv.request.power = intake_power;
 				srv.request.intake_arm = false;
 				//send request to controller
-				if(!client.call(srv)) //note: the call won't happen if preempted was true, because of how && operator works
+				if(!controller_client_.call(srv)) //note: the call won't happen if preempted was true, because of how && operator works
 				{
 					ROS_ERROR("Srv intake call failed in auto interpreter server intake");
 				}
@@ -106,8 +106,15 @@ class CargoIntakeAction {
 				}
 			}
 			//end of code for sending something to a controller --------------------------------------------------------------------------------
-			
+
 			/* COPY PASTE ADDITIONAL CONTROLLER CALLS HERE */
+
+			//call another actionlib server
+			/*
+			   behaviors::ThingGoal goal;
+			   goal.property = value;
+			   thing_actionlib_client_.sendGoal(goal);
+			   */
 
 			//log state of action and set result of action
 			if(timed_out)
@@ -121,7 +128,6 @@ class CargoIntakeAction {
 			else //implies succeeded
 			{
 				ROS_INFO("%s: Succeeded", action_name_.c_str());
-				return; //don't go on to set it to succeeded below, b/c it was preempted
 			}
 
 			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
@@ -180,20 +186,20 @@ int main(int argc, char** argv) {
 	CargoIntakeAction cargo_intake_action("cargo_intake_server");
 
 	ros::NodeHandle n;
-	/*ros::NodeHandle n_params(n, "teleop_params");
-	  ros::NodeHandle n_actionlib_intake_params(n, "actionlib_intake_params");
+	ros::NodeHandle n_params(n, "teleop_params");
+	ros::NodeHandle n_actionlib_intake_params(n, "actionlib_intake_params");
 
-	  if (!n_params.getParam("intake_power", intake_power))
-	  ROS_ERROR("Could not read intake_power in intake_server");
+	if (!n_params.getParam("intake_power", intake_power))
+		ROS_ERROR("Could not read intake_power in intake_server");
 
-	  if (!n_params.getParam("intake_hold_power", intake_hold_power))
-	  ROS_ERROR("Could not read intake_hold_power in intake_server");
+	if (!n_params.getParam("intake_hold_power", intake_hold_power))
+		ROS_ERROR("Could not read intake_hold_power in intake_server");
 
-	  if (!n_actionlib_intake_params.getParam("linebreak_debounce_iterations", linebreak_debounce_iterations))
-	  ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
-	  if (!n_actionlib_intake_params.getParam("spit_out_time", spit_out_time))
-	  ROS_ERROR("Could not read spit_out_time in intake_sever");
-	  */
+	if (!n_actionlib_intake_params.getParam("linebreak_debounce_iterations", linebreak_debounce_iterations))
+		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
+	if (!n_actionlib_intake_params.getParam("spit_out_time", spit_out_time))
+		ROS_ERROR("Could not read spit_out_time in intake_sever");
+
 	ros::spin();
 	return 0;
 }
