@@ -113,7 +113,7 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-   INCLUDE_DIRS include
+	#INCLUDE_DIRS include
 #  LIBRARIES path_to_goal
    CATKIN_DEPENDS roscpp rospy std_msgs swerve_point_generator talon_controllers talon_swerve_drive_controller geometry_msgs robot_visualizer std_srvs actionlib_msgs actionlib genmsg
 #  DEPENDS system_lib
@@ -126,7 +126,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
+	#include
   ${catkin_INCLUDE_DIRS}
 )
 
