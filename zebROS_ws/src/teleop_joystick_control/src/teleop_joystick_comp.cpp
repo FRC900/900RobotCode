@@ -61,7 +61,6 @@ void navXCallback(const sensor_msgs::Imu &navXState)
         navX_angle.store(yaw, std::memory_order_relaxed);
 }
 
-<<<<<<< 726eef19c37b1b1e55d3e8a741c3fd379652353c
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
 	int i = 0;
