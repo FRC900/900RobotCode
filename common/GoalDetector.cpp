@@ -251,17 +251,28 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 		// good depth data
 		// If neither do, do the best we can
 		const GoalInfo *gi;
-		if (right_info[best_result_index_right].depth_error)
+		if ((!right_info[best_result_index_right].depth_error) && (!left_info[best_result_index_left].depth_error))
+		{
+		_goal_pos = (left_info[best_result_index_left].pos + right_info[best_result_index_right].pos) / 2;
+		_dist_to_goal = (left_info[best_result_index_left].distance + right_info[best_result_index_right].distance) / 2;
+		_angle_to_goal = (left_info[best_result_index_left].angle + right_info[best_result_index_right].angle) / 2;
+
+		}
+		else 
+		{
+			if (right_info[best_result_index_right].depth_error)
 			gi = &left_info[best_result_index_left];
 		else
 			gi = &right_info[best_result_index_right];
 
-		_goal_pos      = gi->pos;
-		_dist_to_goal  = gi->distance; 
-		_angle_to_goal = gi->angle;
-		_goal_left_rect = left_info[best_result_index_left].rect;
+		_goal_pos        = gi->pos;
+		_dist_to_goal    = gi->distance; 
+		_angle_to_goal   = gi->angle;
+		}
+		_goal_left_rect  = left_info[best_result_index_left].rect;
 		_goal_right_rect = right_info[best_result_index_right].rect;
 		_isValid = true;
+
 	}
 }
 
