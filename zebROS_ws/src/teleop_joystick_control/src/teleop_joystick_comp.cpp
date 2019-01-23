@@ -46,85 +46,99 @@ void navXCallback(const sensor_msgs::Imu &navXState)
         navX_angle.store(yaw, std::memory_order_relaxed);
 }
 
-
-void callback(const ros::MessageEvent<ros_control_boilerplate::JoystickState const>& event)
+void combineJoysticks(const ros::MessageEvent<ros_control_boilerplate::JoystickState const>& event)
 {
-	const ros::M_strings& header = event.getConnectionHeader();
+	const ros::M_string &header = event.getConnectionHeader();
 	std::string topic = header.at("topic");
 
-	const ros_control_boilerplate:JoystickState::ConstPtr& msg = event.getMessage();
+	const ros_control_boilerplate::JoystickState::ConstPtr &JoystickState = event.getMessage();
 
-	double leftStickX = JoystickState->leftStickX;
-	double leftStickY = JoystickState->leftStickY;
-
-	double rightStickX = JoystickState->rightStickX;
-	double rightStickY = JoystickState->rightStickY;
-
-	dead_zone_check(leftStickX, leftStickY);
-	dead_zone_check(rightStickX, rightStickY);
-
-	leftStickX =  pow(leftStickX, joystick_scale) * max_speed;
-	leftStickY = -pow(leftStickY, joystick_scale) * max_speed;
-
-	rightStickX =  pow(rightStickX, joystick_scale);
-	rightStickY = -pow(rightStickY, joystick_scale);
-
-	const double rotation = (pow(JoystickState->leftTrigger, rotation_scale) - pow(JoystickState->rightTrigger, rotation_scale)) * max_rot;
-
-	static bool sendRobotZero = false;
-
-	if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
+	if(topic == "frcrobot_jetson/joystick_states") //TODO make more generalized (read number in topic)
 	{
-		if (!sendRobotZero)
+		joystick_array[0] = *JoystickState;
+	}
+
+	else if(topic == "frcrobot_jetson/joystick_states1")
+	{
+		joystick_array[1] = *JoystickState;
+	}
+}
+
+void evaluateCommands()
+{
+	while(ros::ok)
+	{
+		double leftStickX = JoystickState->leftStickX;
+		double leftStickY = JoystickState->leftStickY;
+
+		double rightStickX = JoystickState->rightStickX;
+		double rightStickY = JoystickState->rightStickY;
+
+		dead_zone_check(leftStickX, leftStickY);
+		dead_zone_check(rightStickX, rightStickY);
+
+		leftStickX =  pow(leftStickX, joystick_scale) * max_speed;
+		leftStickY = -pow(leftStickY, joystick_scale) * max_speed;
+
+		rightStickX =  pow(rightStickX, joystick_scale);
+		rightStickY = -pow(rightStickY, joystick_scale);
+
+		const double rotation = (pow(JoystickState->leftTrigger, rotation_scale) - pow(JoystickState->rightTrigger, rotation_scale)) * max_rot;
+
+		static bool sendRobotZero = false;
+
+		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
 		{
-			std_srvs::Empty empty;
-			if (!BrakeSrv.call(empty))
+			if (!sendRobotZero)
 			{
-				ROS_ERROR("BrakeSrv call failed in sendRobotZero");
+				std_srvs::Empty empty;
+				if (!BrakeSrv.call(empty))
+				{
+					ROS_ERROR("BrakeSrv call failed in sendRobotZero");
+				}
+				ROS_INFO("BrakeSrv called");
+				sendRobotZero = true;
 			}
-			ROS_INFO("BrakeSrv called");
-			sendRobotZero = true;
+		}
+
+		else // X or Y or rotation != 0 so tell the drive base to move
+		{
+			//Publish drivetrain messages and elevator/pivot
+			Eigen::Vector2d joyVector;
+			joyVector[0] = leftStickX; //intentionally flipped
+			joyVector[1] = -leftStickY;
+			const Eigen::Rotation2Dd r(-navX_angle.load(std::memory_order_relaxed) - M_PI / 2.);
+			const Eigen::Vector2d rotatedJoyVector = r.toRotationMatrix() * joyVector;
+
+			geometry_msgs::Twist vel;
+			vel.linear.x = rotatedJoyVector[1];
+			vel.linear.y = rotatedJoyVector[0];
+			vel.linear.z = 0;
+
+			vel.angular.x = 0;
+			vel.angular.y = 0;
+			vel.angular.z = rotation;
+
+			JoystickRobotVel.publish(vel);
+			sendRobotZero = false;
+		}
+
+		if(joystick_states_array[0].buttonAPress)
+		{
+			ROS_WARN_STREAM("buttonAPress");
+			std_srvs::SetBool msg;
+			msg.request.data = true;
+			run_align.call(msg);
+		}
+
+		if(joystick_states_array[0].buttonARelease)
+		{
+			ROS_WARN_STREAM("buttonARelease");
+			std_srvs::SetBool msg;
+			msg.request.data = false;
+			run_align.call(msg);
 		}
 	}
-	else // X or Y or rotation != 0 so tell the drive base to move
-	{
-		//Publish drivetrain messages and elevator/pivot
-		Eigen::Vector2d joyVector;
-		joyVector[0] = leftStickX; //intentionally flipped
-		joyVector[1] = -leftStickY;
-		const Eigen::Rotation2Dd r(-navX_angle.load(std::memory_order_relaxed) - M_PI / 2.);
-		const Eigen::Vector2d rotatedJoyVector = r.toRotationMatrix() * joyVector;
-
-		geometry_msgs::Twist vel;
-		vel.linear.x = rotatedJoyVector[1];
-		vel.linear.y = rotatedJoyVector[0];
-		vel.linear.z = 0;
-
-		vel.angular.x = 0;
-		vel.angular.y = 0;
-		vel.angular.z = rotation;
-
-		JoystickRobotVel.publish(vel);
-		sendRobotZero = false;
-	}
-<<<<<<< 669e65655c8798e634835c81ef05d9688227792c
-
-	if(joystick_states_array[0].buttonAPress)
-	{
-		ROS_WARN_STREAM("buttonAPress");
-		std_srvs::SetBool msg;
-		msg.request.data = true;
-		run_align.call(msg);
-	}
-
-	if(joystick_states_array[0].buttonARelease)
-	{
-		ROS_WARN_STREAM("buttonARelease");
-		std_srvs::SetBool msg;
-		msg.request.data = false;
-		run_align.call(msg);
-	}
-
 }
 
 void callback(const ros::MessageEvent<ros_control_boilerplate::JoystickState const>& event)
@@ -152,8 +166,8 @@ int main(int argc, char **argv)
 
 	navX_angle = M_PI / 2;
 
-	ros::Subscriber joystick_sub  = n.subscribe("frcrobot_jetson/joystick_states", 1, &evaluateCommands);
-	ros::Subscriber joystick_sub1  = n.subscribe("frcrobot_jetson/joystick_states1", 1, &evaluateCommands);
+	ros::Subscriber joystick_sub  = n.subscribe("frcrobot_jetson/joystick_states", 1, &combineJoysticks);
+	ros::Subscriber joystick_sub1  = n.subscribe("frcrobot_jetson/joystick_states1", 1, &combineJoysticks);
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
