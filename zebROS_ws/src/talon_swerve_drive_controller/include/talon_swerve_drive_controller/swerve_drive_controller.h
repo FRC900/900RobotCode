@@ -259,6 +259,7 @@ class TalonSwerveDriveController
 		 * RG: also sets to parking config
 		 */
 		void brake();
+		bool running_profile;
 
 		std::array<double, WHEELCOUNT> steer_angles_;
 		std::mutex steer_angles_mutex_;
