@@ -8,7 +8,7 @@
     <arg name="frameWidth" default="315" />
     <arg name="frameHeight" default="207" />
     <arg name="camera_height" default="5" />
-	<arg name="topic" default="/pixy_line" />
+    <arg name="angle" default="45" />
 
 	<node name="pixy_get_lines_node" pkg="pixy_get_lines" type="pixy_get_lines_node" output="screen">
 	</node>
@@ -21,7 +21,7 @@
 		<param name="frameWidth" value="$(arg frameWidth)" />
 		<param name="frameHeight" value="$(arg frameHeight)" />
 		<param name="camera_height" value="$(arg camera_height)" />
-		<param name="topic" value="$(arg topic)" />
+		<param name="angle" value="$(arg angle)" />
   	</node>
 
 </launch>

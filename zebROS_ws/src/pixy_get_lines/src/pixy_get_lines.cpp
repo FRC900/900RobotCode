@@ -64,6 +64,7 @@ int demosaic(uint16_t width, uint16_t height, const uint8_t *bayerImage, cv::Mat
 		}
 	}
 }
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "pixy_get_lines");
@@ -152,7 +153,7 @@ int main(int argc, char **argv)
 			}
 			pub.publish(msg);
 		}
-
+		/*
 		{
 			pixy.m_link.stop();
 			uint8_t *bayerFrame;
@@ -162,6 +163,7 @@ int main(int argc, char **argv)
 			sensor_msgs::ImagePtr msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", mat).toImageMsg();
 			img_pub.publish(msg);
 		}
+		*/
 		r.sleep();
 	}
 

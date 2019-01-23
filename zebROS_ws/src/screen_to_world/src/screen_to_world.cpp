@@ -5,6 +5,8 @@
 #include "pixy_get_lines/PixyLine.h"
 #include "screen_to_world/World.h"
 
+#define _USE_MATH_DEFINES
+
 using namespace std;
 
 int hfov;
@@ -12,49 +14,77 @@ int vfov;
 int frameWidth;
 int frameHeight;
 int camera_height;
+int angle;
 
 ros::Publisher pub;
 
 struct point
 {
-     int x;
-     int y;
+     double x, y;
 };
 
-point getWorldCoords(int x, int y){
-	point worldPoint;
+double toRad(int deg){
+
+	double rad = deg * (M_PI/180);
+	return rad;
+}
+
+struct point getWorldCoords(int x, int y){
+	
+	/*
 	//dx is the distance between the viewer vertex and the image plane using vertical FOV
 	int dx = (frameHeight)/(2 * tan(vfov/2));
 	int vtheta = atan((frameHeight - y)/dx);
 	int worldx = camera_height/(tan(vtheta));
+
 	//dy is the distance between the viewer vertex and the image plane using horizontal FOV
 	int dy = (frameWidth)/(2 * tan(hfov/2));
 	int htheta = atan((frameWidth - x)/dy);	
 	int worldy = worldx * tan(htheta);
+	*/
+
+	struct point worldPoint;
+
+	double centerx = frameWidth/2;
+	double centery = frameHeight/2;
+	double h = x - centerx;
+	double k = y - centery;
+
+	double d = (frameHeight)/(2 * tan(toRad(vfov/2)));
+	double vtheta = atan(((frameHeight/2) - (frameHeight - y))/d);
+ 	double htheta = vtheta + toRad(angle);
+	double worldx = camera_height/tan(htheta);
+
+	double D = sqrt(pow(camera_height, 2) + pow(worldx, 2));
+	double ytheta = acos((pow(d, 2) + pow(k, 2))/(sqrt(pow(d, 2) + pow(k, 2)) * sqrt(pow(d, 2) + pow(h, 2) + pow(k, 2))));
+
+	double worldy = D * tan(ytheta);
+	
 	worldPoint.x = worldx;
 	worldPoint.y = worldy;
+
 	return worldPoint;
 }
 
 void callback(const pixy_get_lines::PixyLine line)
 {	
-	screen_to_world::Vector vector;
+	screen_to_world::WorldVector vector;
 	int size = line.vectors.size();
-    ROS_INFO("array size: %d", size);	
-	if (size != 0){
+	if (size == 1){
 		
 		int x0 = line.vectors[0].x0;
 		int y0 = line.vectors[0].y0;
 		int x1 = line.vectors[0].x1;
 		int y1 = line.vectors[0].y1;
 		
-		point start = getWorldCoords(x0,y0);
-		point end = getWorldCoords(x1,y1);
+		struct point start = getWorldCoords(x0,y0);
+		struct point end = getWorldCoords(x1,y1);
 
 		vector.x0 = start.x;
 		vector.y0 = start.y;
 		vector.x1 = end.x;
 		vector.y1 = end.y;
+		//vector.slope = (end.y - start.y)/(end.x - start.x);
 		
 		pub.publish(vector);
 	}
@@ -75,10 +105,11 @@ int main(int argc, char **argv)
   n.getParam("frameWidth", frameWidth);
   n.getParam("frameHeight", frameHeight);
   n.getParam("camera_height", camera_height);
+  n.getParam("angle", angle);
 
-  pub = n.advertise<screen_to_world::Vector>("world", pub_rate);
+  pub = n.advertise<screen_to_world::WorldVector>("world", pub_rate);
 
-  ros::Subscriber sub = n.subscribe("pixy_line", sub_rate, callback);
+  ros::Subscriber sub = n.subscribe("/pixy_line", sub_rate, callback);
 
   ros::spin();
 
