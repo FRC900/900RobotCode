@@ -13,7 +13,7 @@ class RateLimiter
 			: max_change_per_msec_((rise_time_in_msec > 0) ?
 					((max_val - min_val) / rise_time_in_msec) : std::numeric_limits<double>::max())
 		    , last_value_(0)
-			, last_update_time_(ros::Time::now())
+			, last_update_time_(0)
 		{
 		}
 
@@ -22,6 +22,14 @@ class RateLimiter
 			const ros::Time now = ros::Time::now();
 			const double delta_msec = (now - last_update_time_).toSec() * 1000.;
 			const double delta_value = delta_msec * max_change_per_msec_;
+#if 0
+			ROS_INFO_STREAM("applyLimit value:" << value
+					<< " now:" << now
+					<< " delta_msec:" << delta_msec
+					<< " delta_value:" << delta_value
+					<< " last_value_:" << last_value_
+					<< " last_update_time_:" << last_update_time_);
+#endif
 			if (value > last_value_)
 			{
 				// Increasing value from previous setting?  If so, look for the

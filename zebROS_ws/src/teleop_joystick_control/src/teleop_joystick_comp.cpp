@@ -14,20 +14,18 @@ const double max_rot = 8.8;
 const double joystick_scale = 3;
 const double rotation_scale = 4;
 
-<<<<<<< 1df478ade269d52743692421e4d4c0aeeb64060a
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 std::vector <ros::Subscriber> subscriber_array;
-=======
+
 // 50 msec to go from full back to full forward
-const double drive_rate_limit_time = 50.;
+const double drive_rate_limit_time = 200.;
 rate_limiter::RateLimiter left_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter left_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter right_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter right_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter left_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
->>>>>>> Add rate limiting for joystick inputs to teleop code
 
 void dead_zone_check(double &val1, double &val2)
 {
@@ -65,6 +63,7 @@ void navXCallback(const sensor_msgs::Imu &navXState)
 
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
+<<<<<<< a70722da2b2fd410ad4b85ef52aa4bf9e5fc3402
 	int i = 0;
 
 	const ros::M_string &header = event.getConnectionHeader();
