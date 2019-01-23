@@ -14,7 +14,7 @@ const double joystick_scale = 3;
 const double rotation_scale = 4;
 
 // 50 msec to go from full back to full forward
-const double drive_rate_limit_time = 50.;
+const double drive_rate_limit_time = 200.;
 rate_limiter::RateLimiter left_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter left_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter right_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
@@ -60,20 +60,27 @@ void navXCallback(const sensor_msgs::Imu &navXState)
 void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 {
 	// TODO - experiment with rate-limiting after scaling instead?
-	double leftStickX = left_stick_x_rate_limit.applyLimit(JoystickState->leftStickX);
-	double leftStickY = left_stick_y_rate_limit.applyLimit(JoystickState->leftStickY);
-
-	double rightStickX = right_stick_x_rate_limit.applyLimit(JoystickState->rightStickX);
-	double rightStickY = right_stick_y_rate_limit.applyLimit(JoystickState->rightStickY);
+	double leftStickX = JoystickState->leftStickX;
+	double leftStickY = JoystickState->leftStickY;
 
 	dead_zone_check(leftStickX, leftStickY);
-	dead_zone_check(rightStickX, rightStickY);
+
+	leftStickX = left_stick_x_rate_limit.applyLimit(leftStickX);
+	leftStickY = left_stick_y_rate_limit.applyLimit(leftStickY);
 
 	leftStickX =  pow(leftStickX, joystick_scale) * max_speed;
 	leftStickY = -pow(leftStickY, joystick_scale) * max_speed;
 
+	double rightStickX = JoystickState->rightStickX;
+	double rightStickY = JoystickState->rightStickY;
+
+	dead_zone_check(rightStickX, rightStickY);
+
 	rightStickX =  pow(rightStickX, joystick_scale);
 	rightStickY = -pow(rightStickY, joystick_scale);
+
+	rightStickX = right_stick_x_rate_limit.applyLimit(rightStickX);
+	rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);
 
 	// TODO : dead-zone for rotation?
 	// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
