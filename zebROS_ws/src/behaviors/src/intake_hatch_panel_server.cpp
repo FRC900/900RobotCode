@@ -1,135 +1,213 @@
+#ifndef CARGO_INTAKE_SERVER
+#define CARGO_INTAKE_SERVER
+
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
+#include <panel_intake_controller/PanelIntakeSrv.h>
 #include <behaviors/IntakeAction.h>
 #include <behaviors/PathAction.h>
 #include <behaviors/ElevatorAction.h>
 
+//define global variables that will be defined based on config values
+double linebreak_debounce_iterations;
+double intake_timeout;
+
 class IntakeHatchPanelAction
 {
-    protected:
-        ros::NodeHandle nh_;
-        actionlib::SimpleActionServer<behaviors::IntakeAction> as_;
-        std::string action_name_;
+	protected:
+		ros::NodeHandle nh_;
+		actionlib::SimpleActionServer<behaviors::IntakeAction> as_;
+		std::string action_name_;
 
-        behaviors::IntakeHatchPanelFeedback feedback_;
-        behaviors::IntakeHatchPanelResult result_;
+		behaviors::IntakeFeedback feedback_;
+		behaviors::IntakeResult result_;
 
-        actionlib::SimpleActionClient<behaviors::ElevatorAction> ae_;
-        actionlib::SimpleActionClient<behaviors::PathAction> ap_;
+		actionlib::SimpleActionClient<behaviors::ElevatorAction> ae_;
+		actionlib::SimpleActionClient<behaviors::PathAction> ap_;
 
-        ros::Subscriber GoalDetectSub_;
+		ros::Subscriber GoalDetectSub_;
 
-    public:
-        IntakeHatchPanel(std::string name) :
-            as_(nh_, name, boost::bind(&IntakeHatchPanel::executeCB, this, _1), false),
-            action_name_(name),
-            ae_("move_elevator_server", true),
-            ap_("path_to_goal", true)
-        {
-            GoalDetectSub_ = nh_.subscribe("goal_detect_msg",1, &IntakeHatchPanelAction::goalDetectCallback, this) //TODO make sure this is linked up correctly
-            /* std::map<std::string, std::string> service_connection_header;
-            service_connection_header["tcp_nodelay"] = "1";
-            ElevatorSrv_ = nh_.serviceClient<elevator_controller::ElevatorControlS>("/frcrobot/elevator_controller/cmd_posS", false, service_connection_header);
-            IntakeSrv_ = nh_.serviceClient<elevator_controller::Intake>("/frcrobot/elevator_controller/intake", false, service_connection_header);
-            ClampSrv_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot/elevator_controller/clamp", false, service_connection_header);
-            HighCube_ = nh_.subscribe("/frcrobot/elevator_controller/cube_state", 1, &autoAction::cubeStateCallback, this);
-            BottomLimit_ = nh_.subscribe("/frcrobot/elevator_controller/bottom_limit_pivot", 1, &autoAction::bottomLimitCallback, this);*/
+	public:
+		IntakeHatchPanel(std::string name) :
+			as_(nh_, name, boost::bind(&IntakeHatchPanel::executeCB, this, _1), false),
+			action_name_(name),
+			ae_("move_elevator_server", true),
+			ap_("path_to_goal", true)
+	{
+		GoalDetectSub_ = nh_.subscribe("goal_detect_msg",1, &IntakeHatchPanelAction::goalDetectCallback, this) //TODO make sure this is linked up correctly
+			/* std::map<std::string, std::string> service_connection_header;
+			   service_connection_header["tcp_nodelay"] = "1";
+			   ElevatorSrv_ = nh_.serviceClient<elevator_controller::ElevatorControlS>("/frcrobot/elevator_controller/cmd_posS", false, service_connection_header);
+			   IntakeSrv_ = nh_.serviceClient<elevator_controller::Intake>("/frcrobot/elevator_controller/intake", false, service_connection_header);
+			   ClampSrv_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot/elevator_controller/clamp", false, service_connection_header);
+			   HighCube_ = nh_.subscribe("/frcrobot/elevator_controller/cube_state", 1, &autoAction::cubeStateCallback, this);
+			   BottomLimit_ = nh_.subscribe("/frcrobot/elevator_controller/bottom_limit_pivot", 1, &autoAction::bottomLimitCallback, this);*/
 
-            as_.start();
-        }
+			as_.start();
+	}
 
-        ~IntakeHatchPanelAction(void) {}
+		~IntakeHatchPanelAction(void) {}
 
-        void executeCB(const behaviors::IntakeHatchPanelGoalConstPtr &goal)
-        {
-            ROS_INFO_STREAM("intake_hatch_panel_server running callback");
-            ros::Rate r(10);
-            double start_time = ros::Time::now().toSec();
-            
-            /*
-            //spin in
-            behaviors::IntakeGoal intake_goal;
-            intake_goal.intake_cube = goal->intake_cube;
-            intake_goal.time_out = goal->intake_timeout;
-            ai_.sendGoal(intake_goal);
-            */
-            behaviors::PathGoal path_goal;
-            path_goal.x = goal_relative_x;
-            path_goal.y = goal_relative_y;
-            path_goal.rotation = goal_relative_rotation;
-            path_goal.time_to_run = 
+		void executeCB(const behaviors::IntakeHatchPanelGoalConstPtr &goal)
+		{
+			ros::Rate r(10);
+			//define variables that will be re-used for each call to a controller
+			double start_time;
+			bool success; //if controller/actionlib server call succeeded
 
-            //move arm
-            behaviors::ForearmGoal forearm_goal;
-            forearm_goal.position = goal->arm_position;
-            forearm_goal.timeout = arm_timeout;
-            af_.sendGoal(forearm_goal);
-	    
+			//define variables that will be set true if the actionlib action is to be ended
+			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
+			//if both of these are false, we assume the action succeeded
+			bool preempted = false;
+			bool timed_out = false;
 
+			//call the path server to path slightly back from the panel, and the elevator server to go to the correct height for intaking
+			if(!preempted && !timed_out)
+			{
+				//path actionlib server
+				behaviors::PathGoal path_goal;
+				/*TODO: define path_goal here*/
+				ap_.sendGoal(path_goal);
+				
+				//elevator server
+				behaviors::ElevatorGoal elev_goal;
+				elev_goal.elevator_setpoint = 1; //TODO: figure this out
+				ae_.sendGoal(elev_goal);
+				
+				ap_.waitForResult(); //waits until the goal finishes, whether a success, timeout, or preempt
+				ae_.waitForResult();
 
-            /*
-            bool arm_finished_before_timeout = af_.waitForResult(ros::Duration(arm_timeout));
-            
-            if(!arm_finished_before_timeout) {
-                result_.success = false;
-                as_.setAborted(result_);
-                ROS_ERROR("Forearm actionlib timed out in intake_hatch_panel_server. ABORTING!");
-                return;
-            }
-            behaviors::ForearmResult forearm_result;
-            forearm_result = *af_.getResult();
-            
-            if(!forearm_result.success) {
-                result_.success = false;
-                as_.setAborted(result_);
-                ROS_ERROR("Forearm actionlib did not succeed in intake_hatch_panel_server. Dit it succeed: %d  Did it time out: %d ABORTING!", forearm_result.success, forearm_result.timed_out);
-                return;
-            }
-            */
-            
-            if(!intake_finished_before_timeout) {
-                result_.success = false;
-                as_.setSucceeded(result_); 
-                ROS_ERROR("Intake actionlib timed out in intake_hatch_panel_server. ABORTING!?");
-                return;
-            }
-            
-            behaviors::IntakeResult intake_result;
-            intake_result = *ai_.getResult();
+				//test if we got a preempt while waiting
+				if(as_.isPreemptRequested())
+				{
+					as_.setPreempted();
+					preempted = true;
+				}
+				else
+				{
+					
+				}
+			}
 
-            if(intake_result.success) {
-                result_.success = true;
-                as_.setSucceeded(result_);
-                ROS_WARN("intake_hatch_panel_server succeeded!!");
-            }
-        ROS_WARN("intake_hatch_panel_server exiting!");
-        return;
-      }
+			//call the path server to path to the panel
+			if(!preempted && !timed_out)
+			{
+				behaviors::PathGoal path_goal;
+				/*TODO: define path_goal here. Also figure out how we're going to use goal detection to accurately path*/
+				ap_.sendGoal(path_goal);
+				
+				ap_.waitForResult(); //waits until the goal finishes, whether a success, timeout, or preempt
+				
+				//test if we got a preempt while waiting
+				if(as_.isPreemptRequested())
+				{
+					as_.setPreempted();
+					preempted = true;
+				}
+			}
+
+			//send command to panel_intake_controller to grab the panel ---------------------------------------
+			if(!preempted && !timed_out)
+			{
+				ROS_ERROR("hatch panel intake server running");
+
+				//reset variables
+				//linebreak_true_count = 0; //when this gets higher than linebreak_debounce_iterations, we'll consider the gamepiece intaked
+				start_time = ros::Time::now().toSec();
+				success = false;
+
+				//define request to send to cargo intake controller
+				panel_intake_controller::PanelIntakeSrv srv;
+				srv.request.claw_in = false; //TODO: make sure this means grab the panel
+				srv.request.push_in = true; //this too
+				srv.request.wedge_in = false; //this too
+				//send request to controller
+				if(!controller_client_.call(srv)) //note: the call won't happen if preempted was true, because of how && operator works
+				{
+					ROS_ERROR("Srv intake call failed in auto interpreter server intake");
+				}
+				//update everything by doing spinny stuff
+				ros::spinOnce();
+
+				//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
+				while(!success && !timed_out && !preempted) {
+					success = linebreak_true_count > linebreak_debounce_iterations;
+					if(as_.isPreemptRequested() || !ros::ok()) {
+						ROS_WARN("%s: Preempted", action_name_.c_str());
+						as_.setPreempted();
+						preempted = true;
+					}
+					if (!preempted) {
+						r.sleep();
+						ros::spinOnce();
+						timed_out = (ros::Time::now().toSec()-start_time) > goal->timeout;
+					}
+				}
+			}
+			//end of code for sending something to a controller --------------------------------------------------------------------------------
+
+			//call another actionlib server
+			/*
+			   behaviors::ThingGoal goal;
+			   goal.property = value;
+			   thing_actionlib_client_.sendGoal(goal);
+			   */
+
+			//log state of action and set result of action
+			if(timed_out)
+			{
+				ROS_INFO("%s: Timed Out", action_name_.c_str());
+			}
+			else if(preempted)
+			{
+				ROS_INFO("%s: Preempted", action_name_.c_str());
+			}
+			else //implies succeeded
+			{
+				ROS_INFO("%s: Succeeded", action_name_.c_str());
+			}
+
+			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
+			result_.success = success; //success refers to last controller call, but applies for whole action
+			as_.setSucceeded(result_); //pretend it succeeded no matter what, but tell what actually happened with the result - helps with SMACH
+			return;
+
+		}
+		//TODO: get message type
+		goalDetectCallback(/*message type here*/)
+		{
+		}
 };
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "intake_hatch_panel_server");
+	ros::init(argc, argv, "intake_hatch_panel_server");
 
-  ros::NodeHandle n;
-  ros::NodeHandle n_params(n, "actionlib_arm_params");
+	ros::NodeHandle n;
+	ros::NodeHandle n_params(n, "actionlib_hatch_panel_intake_params");
 
+	if(!n_params.getParam("linebreak_debounce_iterations", linebreak_debounce_iterations))
+	{
+		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_hatch_panel_server");
+	}
 
-  ros::NodeHandle n_params_fake(n, "actionlib_forearm_params");
-  if(!n_params_fake.getParam("arm_angle_deadzone", arm_angle_deadzone))
-    ROS_ERROR("Could not read arm_angle_deadzone in foreintake_hatch_panel_server");
+	if(!n_params.getParam("intake_timeout", intake_timeout))
+	{
+		ROS_ERROR("Could not read intake_timeout in intake_hatch_panel_server");
+	}
+	/*
+	   if(!n_params_fake.getParam("help_me", intake_timeout));
+	   ROS_ERROR("Could not read intake_timeout in intake_hatch_panel_server");
+	   if(!n_params_fake.getParam("help_me2", arm_timeout));
+	   ROS_ERROR("Could not read arm_timeout in intake_hatch_panel_server");
+	   */
 
-  /*
-  if(!n_params_fake.getParam("help_me", intake_timeout));
-    ROS_ERROR("Could not read intake_timeout in intake_hatch_panel_server");
-  if(!n_params_fake.getParam("help_me2", arm_timeout));
-    ROS_ERROR("Could not read arm_timeout in intake_hatch_panel_server");
-  */
-  intake_timeout = 5;
-  arm_timeout = 4;
-  IntakeHatchPanel intake_hatch_panel_server("intake_hatch_panel_server");
-  ros::spin();
+	//create the actionlib server from the class defined above
+	IntakeHatchPanel intake_hatch_panel_server("intake_hatch_panel_server");
+	ros::spin();
 
-  return 0;
+	return 0;
 }
+
+#endif

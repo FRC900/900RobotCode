@@ -1,7 +1,7 @@
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
 #include "behaviors/IntakeAction.h"
-#include "cargo_intake_controller/IntakeSrv.h"
+#include "cargo_intake_controller/CargoIntakeSrv.h"
 #include "sensor_msgs/JointState.h"
 #include <atomic>
 #include <ros/console.h>
