@@ -95,7 +95,10 @@ namespace frcrobot_control
 
 TeleopJointsKeyboard::TeleopJointsKeyboard(ros::NodeHandle &nh)
 {
-	joints_pub_ = nh.advertise<frc_msgs::JoystickState>("joystick_states", 1);
+	// Hard-code this to frcrobot_rio namespace so that it matches
+	// the real robot hardware, where joystick data comes from the
+	// driver station via the Rio
+	joints_pub_ = nh.advertise<frc_msgs::JoystickState>("/frcrobot_rio/joystick_states", 1);
 }
 
 TeleopJointsKeyboard::~TeleopJointsKeyboard()
