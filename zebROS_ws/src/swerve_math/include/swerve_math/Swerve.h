@@ -22,6 +22,7 @@ struct ratios
 	double encodertoRotations;
 	double motortoRotations;
 	double motortoSteering;
+	double percent_fudge;
 };
 
 struct encoderUnits

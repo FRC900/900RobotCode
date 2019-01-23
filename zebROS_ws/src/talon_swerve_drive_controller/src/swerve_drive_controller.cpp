@@ -263,6 +263,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	bool lookup_ratio_encoder_to_rotations = !controller_nh.getParam("ratio_encoder_to_rotations", driveRatios_.encodertoRotations);
 	bool lookup_ratio_motor_to_rotations = !controller_nh.getParam("ratio_motor_to_rotations", driveRatios_.motortoRotations);
 	bool lookup_ratio_motor_to_steering = !controller_nh.getParam("ratio_motor_to_steering", driveRatios_.motortoSteering); // TODO : not used?
+	bool lookup_percent_fudge = !controller_nh.getParam("percent_fudge", driveRatios_.percent_fudge);
 	bool lookup_encoder_drive_get_V_units = !controller_nh.getParam("encoder_drive_get_V_units", units_.rotationGetV);
 	bool lookup_encoder_drive_get_P_units = !controller_nh.getParam("encoder_drive_get_P_units", units_.rotationGetP);
 	bool lookup_encoder_drive_set_V_units = !controller_nh.getParam("encoder_drive_set_V_units", units_.rotationSetV);
@@ -457,7 +458,7 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 		const double new_wheel_rot = speed_joints_[k].getPosition();
 		const double delta_rot = new_wheel_rot - last_wheel_rot_[k];
 		//int inverterD = (k%2==0) ? -1 : 1;
-		const double dist = -delta_rot * wheel_radius_ * driveRatios_.encodertoRotations; //* inverterD;
+		const double dist = -delta_rot * wheel_radius_ * driveRatios_.encodertoRotations * driveRatios_.percent_fudge; //* inverterD;
 		//NOTE: below is a hack, TODO: REMOVE
 
 		steer_angles[k] = steering_joints_[k].getPosition();
