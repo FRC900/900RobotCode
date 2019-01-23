@@ -139,7 +139,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			sendRobotZero = false;
 		}
 
-		if(joystick_states_array[0].buttonARelease)
+		if(joystick_states_array[0].buttonAPress)
 		{
 			ROS_WARN_STREAM("buttonAPress");
 			std_srvs::SetBool msg;
@@ -147,7 +147,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			run_align.call(msg);
 		}
 
-		if(joystick_states_array[0].buttonAPress)
+		if(joystick_states_array[0].buttonARelease)
 		{
 			ROS_WARN_STREAM("buttonARelease");
 			std_srvs::SetBool msg;
