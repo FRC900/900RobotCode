@@ -51,6 +51,8 @@ void combineJoysticks(const ros::MessageEvent<ros_control_boilerplate::JoystickS
 	const ros::M_string &header = event.getConnectionHeader();
 	std::string topic = header.at("topic");
 
+	realtime_tools::RealtimeBuffer<struct> joystick_state_struct;
+
 	const ros_control_boilerplate::JoystickState::ConstPtr &JoystickState = event.getMessage();
 
 	if(topic == "frcrobot_jetson/joystick_states") //TODO make more generalized (read number in topic)
