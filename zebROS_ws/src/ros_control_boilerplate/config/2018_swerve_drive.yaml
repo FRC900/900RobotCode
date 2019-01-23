@@ -45,6 +45,7 @@ swerve_drive_controller:
     wheel_coords3y: -0.28575   
     wheel_coords4x: 0.28575
     wheel_coords4y: -0.28575   
+    percent_fudge: 1.1 # if the robot drives one meter, this is how far it thinks it drives
  
     cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
     speed_joint_fl:
