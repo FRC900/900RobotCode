@@ -47,20 +47,19 @@ void navXCallback(const sensor_msgs::Imu &navXState)
 void combineJoysticks(const ros::MessageEvent<ros_control_boilerplate::JoystickState const>& event)
 {
 	const ros::M_string &header = event.getConnectionHeader();
+
 	std::string topic = header.at("topic");
 
-	realtime_tools::RealtimeBuffer<struct> joystick_state_struct;
-
-	const ros_control_boilerplate::JoystickState::ConstPtr &JoystickState = event.getMessage();
+	std::vector <ros_control_boilerplate::JoystickState> joystick_states;
 
 	if(topic == "frcrobot_jetson/joystick_states") //TODO make more generalized (read number in topic)
 	{
-		joystick_array[0] = *JoystickState;
+		joystick_states[0] = event.getMessage();
 	}
 
 	else if(topic == "frcrobot_jetson/joystick_states1")
 	{
-		joystick_array[1] = *JoystickState;
+		joystick_states[1] = event.getMessage();
 	}
 }
 
