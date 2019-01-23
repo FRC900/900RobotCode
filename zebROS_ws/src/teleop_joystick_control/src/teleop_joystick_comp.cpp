@@ -61,6 +61,7 @@ void navXCallback(const sensor_msgs::Imu &navXState)
         navX_angle.store(yaw, std::memory_order_relaxed);
 }
 
+<<<<<<< 726eef19c37b1b1e55d3e8a741c3fd379652353c
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
 	int i = 0;
@@ -86,12 +87,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		double rightStickX = right_stick_x_rate_limit.applyLimit(joystick_states_array[0].rightStickX);
 		double rightStickY = right_stick_y_rate_limit.applyLimit(joystick_states_array[0].rightStickY);
 
-		// TODO : dead-zone for rotation?
-		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
-		double triggerLeft = left_trigger_rate_limit.applyLimit(joystick_states_array[0].leftTrigger);
-		double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
-		const double rotation = (pow(triggerLeft, rotation_scale) - pow(triggerRight, rotation_scale)) * max_rot;
-
 		dead_zone_check(leftStickX, leftStickY);
 		dead_zone_check(rightStickX, rightStickY);
 
@@ -100,6 +95,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		rightStickX =  pow(rightStickX, joystick_scale);
 		rightStickY = -pow(rightStickY, joystick_scale);
+
+		// TODO : dead-zone for rotation?
+		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
+		double triggerLeft = left_trigger_rate_limit.applyLimit(joystick_states_array[0].leftTrigger);
+		double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
+		const double rotation = (pow(triggerLeft, rotation_scale) - pow(triggerRight, rotation_scale)) * max_rot;
 
 		static bool sendRobotZero = false;
 
@@ -139,7 +140,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			sendRobotZero = false;
 		}
 
-		if(joystick_states_array[0].buttonAPress)
+		if(JoystickState->buttonAPress)
 		{
 			ROS_WARN_STREAM("buttonAPress");
 			std_srvs::SetBool msg;
@@ -147,7 +148,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			run_align.call(msg);
 		}
 
-		if(joystick_states_array[0].buttonARelease)
+		if(JoystickState->buttonARelease)
 		{
 			ROS_WARN_STREAM("buttonARelease");
 			std_srvs::SetBool msg;
