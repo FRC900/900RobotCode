@@ -61,6 +61,7 @@
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <tf/tfMessage.h>
+#include <talon_state_controller/TalonState.h>
 
 #include <realtime_tools/realtime_buffer.h>
 #include <realtime_tools/realtime_publisher.h>
@@ -192,6 +193,7 @@ class TalonSwerveDriveController
 		realtime_tools::RealtimeBuffer<Commands> command_;
 
 		ros::Subscriber sub_command_;
+		ros::Subscriber talon_states_sub_;
 
 		ros::ServiceServer motion_profile_serv_;
 		ros::ServiceServer brake_serv_;
@@ -247,6 +249,10 @@ class TalonSwerveDriveController
 
 		/// Publish limited velocity:
 		bool publish_cmd_;
+		
+		/// Talon state which is read from the callback, used for outOfPoints
+		talon_state_controller::TalonState talon_state_;
+		std::atomic<bool> outOfPoints;
 
 		/**
 		 * \brief Brakes the wheels, i.e. sets the velocity to 0
@@ -262,6 +268,7 @@ class TalonSwerveDriveController
 		 * \param command Velocity command message (twist)
 		 */
 		void cmdVelCallback(const geometry_msgs::Twist &command);
+		void talonStatesCB(const talon_state_controller::TalonState &talon_state);
 		bool motionProfileService(talon_swerve_drive_controller::MotionProfilePoints::Request &req, talon_swerve_drive_controller::MotionProfilePoints::Response &res);
 		bool brakeService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 		bool wheelPosService(talon_swerve_drive_controller::WheelPos::Request &req, talon_swerve_drive_controller::WheelPos::Response &res);
