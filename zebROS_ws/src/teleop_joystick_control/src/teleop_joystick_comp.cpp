@@ -12,6 +12,10 @@ const double max_rot = 8.8;
 const double joystick_scale = 3;
 const double rotation_scale = 4;
 
+int i;
+
+std::vector <ros_control_boilerplate::JoystickState> joystick_states;
+
 void dead_zone_check(double &val1, double &val2)
 {
 	if (fabs(val1) <= dead_zone && fabs(val2) <= dead_zone)
@@ -52,16 +56,16 @@ void combineJoysticks(const ros::MessageEvent<ros_control_boilerplate::JoystickS
 
 	std::string topic = header.at("topic");
 
-	std::vector <ros_control_boilerplate::JoystickState> joystick_states;
-
 	if(topic == "frcrobot_jetson/joystick_states") //TODO make more generalized (read number in topic)
 	{
 		joystick_states[0] = event.getMessage();
+		i = 0;
 	}
 
 	else if(topic == "frcrobot_jetson/joystick_states1")
 	{
 		joystick_states[1] = event.getMessage();
+		i = 1;
 	}
 }
 
@@ -69,11 +73,11 @@ void evaluateCommands()
 {
 	while(ros::ok)
 	{
-		double leftStickX = JoystickState->leftStickX;
-		double leftStickY = JoystickState->leftStickY;
+		double leftStickX = joystick_states[i].leftStickX;
+		double leftStickY = joystick_states[i].leftStickY;
 
-		double rightStickX = JoystickState->rightStickX;
-		double rightStickY = JoystickState->rightStickY;
+		double rightStickX = joystick_states[i].rightStickX;
+		double rightStickY = joystick_states[i].rightStickY;
 
 		dead_zone_check(leftStickX, leftStickY);
 		dead_zone_check(rightStickX, rightStickY);
@@ -84,7 +88,7 @@ void evaluateCommands()
 		rightStickX =  pow(rightStickX, joystick_scale);
 		rightStickY = -pow(rightStickY, joystick_scale);
 
-		const double rotation = (pow(JoystickState->leftTrigger, rotation_scale) - pow(JoystickState->rightTrigger, rotation_scale)) * max_rot;
+		const double rotation = (pow(joystick_states[i].leftTrigger, rotation_scale) - pow(joystick_states[i].rightTrigger, rotation_scale)) * max_rot;
 
 		static bool sendRobotZero = false;
 
