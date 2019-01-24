@@ -29,10 +29,11 @@ rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_t
 
 int i;
 
-std::vector <ros_control_boilerplate::JoystickState> joystick_states;
+std::vector <ros_control_boilerplate::JoystickState> joystick_states_array;
+
+realtime_tools::RealtimeBuffer<struct> joystick_states;
 
 void dead_zone_check(double &val1, double &val2)
-{
 	if (fabs(val1) <= dead_zone && fabs(val2) <= dead_zone)
 	{
 		val1 = 0;
