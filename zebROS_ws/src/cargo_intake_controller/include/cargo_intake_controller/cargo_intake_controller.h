@@ -48,7 +48,7 @@ class CargoIntakeController : public controller_interface::MultiInterfaceControl
 			hardware_interface::JointHandle cargo_intake_arm_joint_; //interface for the up/down arm of the intake
 
             realtime_tools::RealtimeBuffer<double> spin_command_; //this is the buffer for percent output commands to be published
-            realtime_tools::RealtimeBuffer<double> intake_arm_command_; //buffer for commands for up/down of the arm
+            realtime_tools::RealtimeBuffer<bool> intake_arm_command_; //buffer for commands for up/down of the arm
             realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
 
             ros::ServiceServer cargo_intake_service_; //service for receiving commands
