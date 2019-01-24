@@ -350,7 +350,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	}
 
 	sub_command_ = controller_nh.subscribe("cmd_vel", 1, &TalonSwerveDriveController::cmdVelCallback, this);
-	talon_states_sub_ = controller_nh.subscribe("/frcrobot_jetson/talon_states", 1, &TalonSwerveDriveController::talonStatesCB, this);
+	talon_states_sub_ = controller_nh.subscribe("talon_states", 1, &TalonSwerveDriveController::talonStatesCB, this);
 	brake_serv_ = controller_nh.advertiseService("brake", &TalonSwerveDriveController::brakeService, this);
 	motion_profile_serv_ = controller_nh.advertiseService("run_profile", &TalonSwerveDriveController::motionProfileService, this);
 	wheel_pos_serv_ = controller_nh.advertiseService("wheel_pos", &TalonSwerveDriveController::wheelPosService, this);
@@ -727,7 +727,6 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 
 		if (cur_prof_cmd.run)
 		{
-			running_profile = true;
 			ROS_WARN("running from  controller");
 			cmd_vel_mode_.store(false, std::memory_order_relaxed);
 			for (size_t k = 0; k < WHEELCOUNT; k++)
@@ -847,7 +846,6 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 	}
 	else
 	{
-		ROS_INFO_STREAM("out of points = " << outOfPoints.load(std::memory_order_relaxed));
 		mode_last_time =::Time::now().toSec();
 		for (size_t i = 0; !set_profile_run && (i < wheel_joints_size_); ++i)
 		{
@@ -857,9 +855,9 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		// Make controller only set CustomProfileRun once, so that it can
 		// be cleared out by the hwi if needed when e.g. disabling the robot
 		set_profile_run = true;
-		if(outOfPoints.load(std::memory_order_relaxed) && running_profile)
+		if(outOfPoints.load(std::memory_order_relaxed))
 		{
-			ROS_WARN("profile reset in outOfPoints");
+			ROS_WARN("profile_reset");
 			//required for reset
 			for (size_t k = 0; k < WHEELCOUNT; k++)
 			{
@@ -875,8 +873,6 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 			ROS_WARN("called in controller");
 			command_.writeFromNonRT(brake_struct);
 			cmd_vel_mode_.store(true, std::memory_order_relaxed);
-			running_profile = false;
-			full_profile_buffer_.clear();
 		}
 	}
 
@@ -1049,9 +1045,6 @@ void TalonSwerveDriveController::talonStatesCB(const talon_state_controller::Tal
 
 	if (bl_angle_idx < talon_state.custom_profile_status.size())
 		outOfPoints.store(talon_state.custom_profile_status[bl_angle_idx].outOfPoints, std::memory_order_relaxed);
-
-	if(outOfPoints.load(std::memory_order_relaxed))
-		ROS_ERROR_STREAM("OUT OF POINTS HAS CHAAAAAAAANGED");
 }
 
 bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_controller::MotionProfilePoints::Request &req, talon_swerve_drive_controller::MotionProfilePoints::Response &/*res*/)
