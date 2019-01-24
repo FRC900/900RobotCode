@@ -47,7 +47,7 @@ void CargoIntakeController::starting(const ros::Time &/*time*/) {
 void CargoIntakeController::update(const ros::Time &time, const ros::Duration &period) {
 	//process input for the up/down part of the intake (pneumatic piston)
 	bool intake_arm_command = *(intake_arm_command_.readFromRT());
-   	double intake_arm_command_double; //to store processed input
+   double intake_arm_command_double; //to store processed input
 	if(intake_arm_command == true) {
 		//ROS_WARN("cargo intake arm command: -1");
 		intake_arm_command_double = -1;
