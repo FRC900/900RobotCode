@@ -1,149 +1,209 @@
-#include <ros/ros.h>
-#include <actionlib/server/simple_action_server.h>
-#include <actionlib/client/simple_action_client.h>
-#include <behaviors/ArmAction.h>
-#include <behaviors/IntakeGoal.h>
-#include <behaviors/IntakeAction.h>
-#include <behaviors/ForearmGoal.h>
-#include <behaviors/ForearmAction.h>
+#include "ros/ros.h"
+#include "actionlib/server/simple_action_server.h"
+#include "behaviors/IntakeAction.h"
+#include "cargo_intake_controller/CargoIntakeSrv.h"
+#include "sensor_msgs/JointState.h"
+#include <atomic>
+#include <ros/console.h>
 
-/*
-enum ArmPosition
-{
-    LOWER_RIGHT,
-    UPPER_RIGHT,
-    STARTING,
-    UPPER_LEFT,
-    LOWER_LEFT,
-};
-*/
+//define global variables that will be defined based on config values
 
-double intake_timeout;
+double roller_power;
+double roller_timeout;
 double arm_timeout;
-double arm_angle_deadzone;
-
-class ArmAction
-{
-    protected:
-        ros::NodeHandle nh_;
-        actionlib::SimpleActionServer<behaviors::ArmAction> as_;
-        std::string action_name_;
-        behaviors::ArmFeedback feedback_;
-        behaviors::ArmResult result_;
-
-        actionlib::SimpleActionClient<behaviors::IntakeAction> ai_;
-        actionlib::SimpleActionClient<behaviors::ForearmAction> af_;
-
-    public:
-        ArmAction(std::string name) :
-            as_(nh_, name, boost::bind(&ArmAction::executeCB, this, _1), false),
-            action_name_(name),
-            ai_("intake_server", true),
-            af_("forearm_server", true)
-        {
-            /* std::map<std::string, std::string> service_connection_header;
-            service_connection_header["tcp_nodelay"] = "1";
-            ElevatorSrv_ = nh_.serviceClient<elevator_controller::ElevatorControlS>("/frcrobot/elevator_controller/cmd_posS", false, service_connection_header);
-            IntakeSrv_ = nh_.serviceClient<elevator_controller::Intake>("/frcrobot/elevator_controller/intake", false, service_connection_header);
-            ClampSrv_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot/elevator_controller/clamp", false, service_connection_header);
-            HighCube_ = nh_.subscribe("/frcrobot/elevator_controller/cube_state", 1, &autoAction::cubeStateCallback, this);
-            BottomLimit_ = nh_.subscribe("/frcrobot/elevator_controller/bottom_limit_pivot", 1, &autoAction::bottomLimitCallback, this);*/
-
-            as_.start();
-        }
-
-        ~ArmAction(void) {}
-
-        void executeCB(const behaviors::ArmGoalConstPtr &goal)
-        {
-            ROS_INFO_STREAM("arm_server running callback");
-            ros::Rate r(10);
-            double start_time = ros::Time::now().toSec();
-            
-            /*
-            //spin in
-            behaviors::IntakeGoal intake_goal;
-            intake_goal.intake_cube = goal->intake_cube;
-            intake_goal.time_out = goal->intake_timeout;
-            ai_.sendGoal(intake_goal);
-            */
-
-            //move arm
-            behaviors::ForearmGoal forearm_goal;
-            forearm_goal.position = goal->arm_position;
-            forearm_goal.timeout = arm_timeout;
-            af_.sendGoal(forearm_goal);
-	    
+double linebreak_debounce_iterations;
 
 
-            /*
-            bool arm_finished_before_timeout = af_.waitForResult(ros::Duration(arm_timeout));
-            
-            if(!arm_finished_before_timeout) {
-                result_.success = false;
-                as_.setAborted(result_);
-                ROS_ERROR("Forearm actionlib timed out in arm_server. ABORTING!");
-                return;
-            }
-            behaviors::ForearmResult forearm_result;
-            forearm_result = *af_.getResult();
-            
-            if(!forearm_result.success) {
-                result_.success = false;
-                as_.setAborted(result_);
-                ROS_ERROR("Forearm actionlib did not succeed in arm_server. Dit it succeed: %d  Did it time out: %d ABORTING!", forearm_result.success, forearm_result.timed_out);
-                return;
-            }
-            */
-            
-            behaviors::IntakeGoal intake_goal;
-            intake_goal.intake_cube = goal->intake_cube;
-            intake_goal.timeout = intake_timeout;
-            ai_.sendGoal(intake_goal);
+class CargoIntakeAction {
+	protected:
+		ros::NodeHandle nh_;
 
-            bool intake_finished_before_timeout = ai_.waitForResult(ros::Duration(intake_timeout)); 
-            if(!intake_finished_before_timeout) {
-                result_.success = false;
-                as_.setSucceeded(result_); 
-                ROS_ERROR("Intake actionlib timed out in arm_server. ABORTING!?");
-                return;
-            }
-            
-            behaviors::IntakeResult intake_result;
-            intake_result = *ai_.getResult();
+		actionlib::SimpleActionServer<behaviors::IntakeAction> as_; //create the actionlib server
+		std::string action_name_;
+		ros::ServiceClient controller_client_; //create a ros client to send requests to the controller
+		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cube since we started trying to intake/outtake
+		std::atomic<int> linebreak_false_count; //same, but how many times in a row no cube
+		behaviors::IntakeResult result_; //variable to store result of the actionlib action
 
-            if(intake_result.success) {
-                result_.success = true;
-                as_.setSucceeded(result_);
-                ROS_WARN("arm_server succeeded!!");
-            }
-        ROS_WARN("arm_server exiting!");
-        return;
-      }
+		//create subscribers to get data
+		ros::Subscriber joint_states_sub_;
+		ros::Subscriber proceed_;
+		bool proceed;
+
+	public:
+		//make the executeCB function run every time the actionlib server is called
+		CargoIntakeAction(const std::string &name) :
+			as_(nh_, name, boost::bind(&CargoIntakeAction::executeCB, this, _1), false),
+			action_name_(name)
+	{
+		as_.start(); //start the actionlib server
+
+		//do networking stuff?
+		std::map<std::string, std::string> service_connection_header;
+		service_connection_header["tcp_nodelay"] = "1";
+
+		//initialize the client being used to call the controller
+		controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+
+		//start subscribers subscribing
+		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
+
+		//proceed_ = nh_.subscribe("/frcrobot/auto_interpreter_server/proceed", 1, &CargoIntakeAction::proceedCallback, this);
+	}
+
+		~CargoIntakeAction(void) 
+		{
+		}
+
+		//define the function to be executed when the actionlib server is called
+		void executeCB(const behaviors::IntakeGoalConstPtr &goal) {
+			ros::Rate r(10);
+			//define variables that will be re-used for each call to a controller
+			double start_time;
+			bool success; //if controller call succeeded
+
+			//define variables that will be set true if the actionlib action is to be ended
+			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
+			//if both of these are false, we assume the action succeeded
+			bool preempted = false;
+			bool timed_out = false;
+
+			//send something to a controller (cargo intake in this case), copy-paste to send something else to a controller ---------------------------------------
+			if(!preempted && !timed_out)
+			{
+				ROS_ERROR("cargo intake server: intaking cargo");
+
+				//reset variables
+				linebreak_true_count = 0; //when this gets higher than linebreak_debounce_iterations, we'll consider the gamepiece intaked
+				start_time = ros::Time::now().toSec();
+				success = false;
+
+				//define request to send to cargo intake controller
+				cargo_intake_controller::CargoIntakeSrv srv;
+				srv.request.power = intake_power;
+				srv.request.intake_arm = false;
+				//send request to controller
+				if(!controller_client_.call(srv)) //note: the call won't happen if preempted was true, because of how && operator works
+				{
+					ROS_ERROR("Srv intake call failed in auto interpreter server intake");
+				}
+				//update everything by doing spinny stuff
+				ros::spinOnce();
+
+				//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
+				while(!success && !timed_out && !preempted) {
+					success = linebreak_true_count > linebreak_debounce_iterations;
+					if(as_.isPreemptRequested() || !ros::ok()) {
+						ROS_WARN("%s: Preempted", action_name_.c_str());
+						as_.setPreempted();
+						preempted = true;
+					}
+					if (!preempted) {
+						r.sleep();
+						ros::spinOnce();
+						timed_out = (ros::Time::now().toSec()-start_time) > goal->timeout;
+					}
+				}
+			}
+			//end of code for sending something to a controller --------------------------------------------------------------------------------
+
+			/* COPY PASTE ADDITIONAL CONTROLLER CALLS HERE */
+
+			//call another actionlib server
+			/*
+			   behaviors::ThingGoal goal;
+			   goal.property = value;
+			   thing_actionlib_client_.sendGoal(goal);
+			   */
+
+			//log state of action and set result of action
+			if(timed_out)
+			{
+				ROS_INFO("%s: Timed Out", action_name_.c_str());
+			}
+			else if(preempted)
+			{
+				ROS_INFO("%s: Preempted", action_name_.c_str());
+			}
+			else //implies succeeded
+			{
+				ROS_INFO("%s: Succeeded", action_name_.c_str());
+			}
+
+			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
+			result_.success = success; //success refers to last controller call, but applies for whole action
+			as_.setSucceeded(result_); //pretend it succeeded no matter what, but tell what actually happened with the result - helps with SMACH
+			return;
+		}
+
+		// Function to be called whenever the subscriber for the joint states topic receives a message
+		// Grabs various info from hw_interface using
+		// dummy joint position values
+		void jointStateCallback(const sensor_msgs::JointState &joint_state)
+		{
+			//get index of linebreak sensor for this actionlib server
+			static size_t linebreak_idx = std::numeric_limits<size_t>::max();
+			if ((linebreak_idx >= joint_state.name.size()))
+			{
+				for (size_t i = 0; i < joint_state.name.size(); i++)
+				{
+					if (joint_state.name[i] == "intake_line_break")
+						linebreak_idx = i;
+				}
+			}
+
+			//update linebreak counts based on the value of the linebreak sensor
+			if (linebreak_idx < joint_state.position.size())
+			{
+				bool linebreak_true = (joint_state.position[linebreak_idx] != 0);
+				if(linebreak_true)
+				{
+					linebreak_true_count += 1;
+					linebreak_false_count = 0;
+				}
+				else
+				{
+					linebreak_true_count = 0;
+					linebreak_false_count += 1;
+				}
+			}
+			else
+			{
+				static int count = 0;
+				if(count % 100 == 0)
+				{
+					ROS_WARN("intake line break sensor not found in joint_states");
+				}
+				count++;
+				linebreak_true_count = 0;
+				linebreak_false_count += 1;
+			}
+		}
 };
 
-int main(int argc, char** argv)
-{
-  ros::init(argc, argv, "arm_server");
+int main(int argc, char** argv) {
+	//create node
+	ros::init(argc, argv, "cargo_intake_server");
+	
+	//create the cargo intake actionlib server
+	CargoIntakeAction cargo_intake_action("cargo_intake_server");
 
-  ros::NodeHandle n;
-  ros::NodeHandle n_params(n, "actionlib_arm_params");
+	//get config values
+	ros::NodeHandle n;
+	ros::NodeHandle n_params(n, "actionlib_cargo_intake_params");
 
+	if (!n_params.getParam("roller_power", roller_power))
+		ROS_ERROR("Could not read roller_power in cargo_intake_server");
 
-  ros::NodeHandle n_params_fake(n, "actionlib_forearm_params");
-  if(!n_params_fake.getParam("arm_angle_deadzone", arm_angle_deadzone))
-    ROS_ERROR("Could not read arm_angle_deadzone in forearm_server");
+	if (!n_params.getParam("roller_timeout", roller_timeout))
+		ROS_ERROR("Could not read roller_timeout in cargo_intake_server");
 
-  /*
-  if(!n_params_fake.getParam("help_me", intake_timeout));
-    ROS_ERROR("Could not read intake_timeout in arm_server");
-  if(!n_params_fake.getParam("help_me2", arm_timeout));
-    ROS_ERROR("Could not read arm_timeout in arm_server");
-  */
-  intake_timeout = 5;
-  arm_timeout = 4;
-  ArmAction arm_server("arm_server");
-  ros::spin();
+	if (!n_params.getParam("arm_timeout", arm_timeout))
+		ROS_ERROR("Could not read arm_timeout in cargo_intake_server");
 
-  return 0;
+	if (!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
+		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
+
+	ros::spin();
+	return 0;
 }

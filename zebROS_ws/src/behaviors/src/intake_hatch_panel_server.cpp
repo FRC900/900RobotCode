@@ -187,7 +187,7 @@ int main(int argc, char** argv)
 	ros::NodeHandle n;
 	ros::NodeHandle n_params(n, "actionlib_hatch_panel_intake_params");
 
-	if(!n_params.getParam("linebreak_debounce_iterations", linebreak_debounce_iterations))
+	if(!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
 	{
 		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_hatch_panel_server");
 	}
