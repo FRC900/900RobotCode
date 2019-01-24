@@ -33,8 +33,8 @@ void CargoOuttakeController::update(const ros::Time &time, const ros::Duration &
         outtake_arm_command_double = 1;
         //ROS_WARN("cargo outtake arm command: 1");
     }
-    
-    cargo_outtake_arm_joint_.setCommand(intake_arm_command_double); // set the in/out command to the up/down part of the outtake
+}
+    cargo_outtake_arm_joint_.setCommand(outtake_arm_command_double); // set the in/out command to the up/down part of the outtake
 void CargoOuttakeController::stopping(const ros::Time &time) {
 }
 
