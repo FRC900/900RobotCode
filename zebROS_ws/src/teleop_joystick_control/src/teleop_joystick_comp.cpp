@@ -13,10 +13,11 @@ const double rotation_scale = 4;
 
 int i;
 
-std::vector <ros_control_boilerplate::JoystickState> joystick_states;
+std::vector <ros_control_boilerplate::JoystickState> joystick_states_array;
+
+realtime_tools::RealtimeBuffer<struct> joystick_states;
 
 void dead_zone_check(double &val1, double &val2)
-{
 	if (fabs(val1) <= dead_zone && fabs(val2) <= dead_zone)
 	{
 		val1 = 0;
@@ -56,13 +57,13 @@ void combineJoysticks(const ros::MessageEvent<ros_control_boilerplate::JoystickS
 
 	if(topic == "frcrobot_jetson/joystick_states") //TODO make more generalized (read number in topic)
 	{
-		joystick_states[0] = event.getMessage();
+		joystick_states_array[0] = event.getMessage();
 		i = 0;
 	}
 
 	else if(topic == "frcrobot_jetson/joystick_states1")
 	{
-		joystick_states[1] = event.getMessage();
+		joystick_states_array[1] = event.getMessage();
 		i = 1;
 	}
 }
@@ -71,11 +72,11 @@ void evaluateCommands()
 {
 	while(ros::ok)
 	{
-		double leftStickX = joystick_states[i].leftStickX;
-		double leftStickY = joystick_states[i].leftStickY;
+		double leftStickX = joystick_states_array[i].leftStickX;
+		double leftStickY = joystick_states_array[i].leftStickY;
 
-		double rightStickX = joystick_states[i].rightStickX;
-		double rightStickY = joystick_states[i].rightStickY;
+		double rightStickX = joystick_states_array[i].rightStickX;
+		double rightStickY = joystick_states_array[i].rightStickY;
 
 		dead_zone_check(leftStickX, leftStickY);
 		dead_zone_check(rightStickX, rightStickY);
@@ -86,7 +87,7 @@ void evaluateCommands()
 		rightStickX =  pow(rightStickX, joystick_scale);
 		rightStickY = -pow(rightStickY, joystick_scale);
 
-		const double rotation = (pow(joystick_states[i].leftTrigger, rotation_scale) - pow(joystick_states[i].rightTrigger, rotation_scale)) * max_rot;
+		const double rotation = (pow(joystick_states_array[i].leftTrigger, rotation_scale) - pow(joystick_states_array[i].rightTrigger, rotation_scale)) * max_rot;
 
 		static bool sendRobotZero = false;
 
