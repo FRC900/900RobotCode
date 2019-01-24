@@ -18,6 +18,7 @@ hardware_interface:
        #TODO: Get config values of joints
        - {name: cargo_intake_joint, type: can_talon_srx, can_id: 0, local: true}
        - {name: cargo_intake_arm_joint, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
+       - {name: cargo_outtake_arm_joint, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
        - {name: climber, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
        - {name: elevator_joint, type: can_talon_srx, can_id: 0, local: true}
        - {name: fl_drive, type: can_talon_srx, can_id: 21, local: true}
@@ -80,6 +81,8 @@ cargo_intake_controller:
         invert_output: False
     
     #note: the intake arm (solenoid joint) is currently being grabbed directly from the hardware_interface above
+cargo_outtake_controller:
+    type: cargo_outtake_controller/CargoOuttakeController
 
 climber_controller:
     type:           climber_controller/ClimberController
