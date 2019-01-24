@@ -20,7 +20,7 @@ namespace cargo_outtake_controller
 {
 //this is the actual controller, so it stores all of the  update() functions and the actual handle from the joint interface
 //if it was only one type, controller_interface::Controller<TalonCommandInterface> here
-class CargoOuttakeController : public controller_interface::MultiInterfaceController<hardware_interface::JointStateInterface, hardware_interface::PositionJointInterface>
+class CargoOuttakeController : public controller_interface::Controller<hardware_interface::PositionJointInterface>
 {
         public:
             CargoOuttakeController()
@@ -29,7 +29,7 @@ class CargoOuttakeController : public controller_interface::MultiInterfaceContro
 
             //should this be hardware_interface::TalonCommandInterface instead? What's the reason to import RobotHW then get CommandInterface from that instead of just importing TalonCommandIface?
             //answer to my question: the TalonCommandInterface is passed in if it's not a multiInterfaceController, and just one kind of joint is made!
-            virtual bool init(hardware_interface::RobotHW *hw,
+            virtual bool init(hardware_interface::PositionJointInterface *hw,
                               ros::NodeHandle             &root_nh,
                               ros::NodeHandle             &controller_nh);
             virtual void starting(const ros::Time &time);
@@ -41,9 +41,11 @@ class CargoOuttakeController : public controller_interface::MultiInterfaceContro
 
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
-            hardware_interface::JointHandle cargo_outtake_arm_joint_; //interface for the up/down arm of the outtake
+            hardware_interface::JointHandle cargo_outtake_kicker_joint_; //interface for the kicker of the outtake
+			hardware_interface::JointHandle cargo_outtake_clamp_joint_; //interface for the clamp of the outtake
 
-            realtime_tools::RealtimeBuffer<double> outtake_arm_command_; //buffer for commands for up/down of the arm
+            realtime_tools::RealtimeBuffer<bool> kicker_command_; //buffer for commands for the kicker
+			realtime_tools::RealtimeBuffer<bool> clamp_command_; //buffer for commands to the clamp
             realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
     
             ros::ServiceServer cargo_outtake_service_; //service for receiving commands

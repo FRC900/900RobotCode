@@ -1,4 +1,5 @@
 float64 power
-bool outtake_arm
+bool kicker_in
+bool clamp_in
 ---
 

@@ -2,8 +2,7 @@ actionlib_params:
     linebreak_debounce_iterations: 5
 actionlib_cargo_intake_params:
     roller_power: 1
-    roller_timeout: 1 #in seconds
-    arm_timeout: 1
+    intake_timeout: 1 #in seconds
 actionlib_hatch_panel_intake_params:
     intake_timeout: 5 #in seconds
 actionlib_lift_params:

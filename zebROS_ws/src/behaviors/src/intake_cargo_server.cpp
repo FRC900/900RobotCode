@@ -9,8 +9,7 @@
 //define global variables that will be defined based on config values
 
 double roller_power;
-double roller_timeout;
-double arm_timeout;
+double intake_timeout;
 double linebreak_debounce_iterations;
 
 
@@ -20,6 +19,7 @@ class CargoIntakeAction {
 
 		actionlib::SimpleActionServer<behaviors::IntakeAction> as_; //create the actionlib server
 		std::string action_name_;
+
 		ros::ServiceClient controller_client_; //create a ros client to send requests to the controller
 		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cube since we started trying to intake/outtake
 		std::atomic<int> linebreak_false_count; //same, but how many times in a row no cube
@@ -47,8 +47,6 @@ class CargoIntakeAction {
 
 		//start subscribers subscribing
 		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
-
-		//proceed_ = nh_.subscribe("/frcrobot/auto_interpreter_server/proceed", 1, &CargoIntakeAction::proceedCallback, this);
 	}
 
 		~CargoIntakeAction(void) 
@@ -58,9 +56,10 @@ class CargoIntakeAction {
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::IntakeGoalConstPtr &goal) {
 			ros::Rate r(10);
-			//define variables that will be re-used for each call to a controller
+
+			//define variables that will be reused for each controller call/actionlib server call
 			double start_time;
-			bool success; //if controller call succeeded
+			bool success; //if controller/actionlib server call succeeded
 
 			//define variables that will be set true if the actionlib action is to be ended
 			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
@@ -68,10 +67,10 @@ class CargoIntakeAction {
 			bool preempted = false;
 			bool timed_out = false;
 
-			//send something to a controller (cargo intake in this case), copy-paste to send something else to a controller ---------------------------------------
+			//send command to lower arm and run roller to the cargo intake controller ---------------------------------------
 			if(!preempted && !timed_out)
 			{
-				ROS_ERROR("cargo intake server: intaking cargo");
+				ROS_ERROR("cargo intake server: lowering arm and spinning roller in");
 
 				//reset variables
 				linebreak_true_count = 0; //when this gets higher than linebreak_debounce_iterations, we'll consider the gamepiece intaked
@@ -81,11 +80,12 @@ class CargoIntakeAction {
 				//define request to send to cargo intake controller
 				cargo_intake_controller::CargoIntakeSrv srv;
 				srv.request.power = intake_power;
-				srv.request.intake_arm = false;
+				srv.request.intake_arm = false; //TODO: double check
+
 				//send request to controller
-				if(!controller_client_.call(srv)) //note: the call won't happen if preempted was true, because of how && operator works
+				if(!controller_client_.call(srv))
 				{
-					ROS_ERROR("Srv intake call failed in auto interpreter server intake");
+					ROS_ERROR("Srv intake call failed in cargo intake server");
 				}
 				//update everything by doing spinny stuff
 				ros::spinOnce();
@@ -93,28 +93,34 @@ class CargoIntakeAction {
 				//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
 				while(!success && !timed_out && !preempted) {
 					success = linebreak_true_count > linebreak_debounce_iterations;
+					timed_out = (ros::Time::now().toSec()-start_time) > intake_timeout;
+
 					if(as_.isPreemptRequested() || !ros::ok()) {
-						ROS_WARN("%s: Preempted", action_name_.c_str());
+						ROS_WARN(" %s: Preempted", action_name_.c_str());
 						as_.setPreempted();
 						preempted = true;
 					}
-					if (!preempted) {
+					else {
 						r.sleep();
 						ros::spinOnce();
-						timed_out = (ros::Time::now().toSec()-start_time) > goal->timeout;
 					}
 				}
 			}
 			//end of code for sending something to a controller --------------------------------------------------------------------------------
 
-			/* COPY PASTE ADDITIONAL CONTROLLER CALLS HERE */
+			//set ending state of controller no matter what happened: arm up, roller motors stopped
+			//define command to send to cargo intake controller
+			cargo_intake_controller;:CargoIntakeSrv srv;
+			srv.request.power = 0;
+			srv.request.intake_arm = true; //TODO: Double check
+			//send request to controller
+			if(!controller_client_.call(srv))
+			{
+				ROS_ERROR("Srv intake call failed in cargo intake server");
+			}
+			//update everything by doing spinny stuff
+			ros::spinOnce();
 
-			//call another actionlib server
-			/*
-			   behaviors::ThingGoal goal;
-			   goal.property = value;
-			   thing_actionlib_client_.sendGoal(goal);
-			   */
 
 			//log state of action and set result of action
 			if(timed_out)
@@ -147,7 +153,7 @@ class CargoIntakeAction {
 			{
 				for (size_t i = 0; i < joint_state.name.size(); i++)
 				{
-					if (joint_state.name[i] == "intake_line_break")
+					if (joint_state.name[i] == "cargo_intake_line_break") //TODO: define this in the hardware interface
 						linebreak_idx = i;
 				}
 			}
@@ -184,7 +190,7 @@ class CargoIntakeAction {
 int main(int argc, char** argv) {
 	//create node
 	ros::init(argc, argv, "cargo_intake_server");
-	
+
 	//create the cargo intake actionlib server
 	CargoIntakeAction cargo_intake_action("cargo_intake_server");
 
@@ -195,11 +201,8 @@ int main(int argc, char** argv) {
 	if (!n_params.getParam("roller_power", roller_power))
 		ROS_ERROR("Could not read roller_power in cargo_intake_server");
 
-	if (!n_params.getParam("roller_timeout", roller_timeout))
-		ROS_ERROR("Could not read roller_timeout in cargo_intake_server");
-
-	if (!n_params.getParam("arm_timeout", arm_timeout))
-		ROS_ERROR("Could not read arm_timeout in cargo_intake_server");
+	if (!n_params.getParam("intake_timeout", intake_timeout))
+		ROS_ERROR("Could not read intake_timeout in cargo_intake_server");
 
 	if (!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
 		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
