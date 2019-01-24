@@ -1,13 +1,11 @@
-actionlib_intake_params:
+actionlib_params:
     linebreak_debounce_iterations: 5
-    intake_timeout: 5 #in seconds
-    lift_timeout: 4
 actionlib_cargo_intake_params:
-    cargo_spit_out_time: 1 #in seconds
-    cargo_intake_power: 1
-actionlib_hatch_cover_intake_params:
+    roller_power: 1
+    roller_timeout: 1 #in seconds
+    arm_timeout: 1
+actionlib_hatch_panel_intake_params:
     intake_timeout: 5 #in seconds
-    lift_timeout: 4
 actionlib_lift_params:
     cargo_setpoints:
         cargo_ship: -1.0
@@ -22,3 +20,4 @@ actionlib_lift_params:
         high_rocket: -1.0
         intake: -1.0
     max_speed: -1.0
+    timeout: 4

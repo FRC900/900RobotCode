@@ -1,0 +1,9 @@
+
+<library path="lib/libpanel_intake_controller">
+	
+	<class name="panel_intake_controller/PanelIntakeController" type="panel_intake_controller::PanelIntakeController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Library file. Does stuff to make panel_intake_controller exist.
+		</description>
+	</class>
+</library>
