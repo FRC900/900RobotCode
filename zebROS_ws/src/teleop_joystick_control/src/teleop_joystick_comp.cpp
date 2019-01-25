@@ -13,11 +13,12 @@ const double rotation_scale = 4;
 
 int i;
 
+/*realtime_tools::RealtimeBuffer <struct> joystick_states;*/
+
 std::vector <ros_control_boilerplate::JoystickState> joystick_states_array;
 
-realtime_tools::RealtimeBuffer<struct> joystick_states;
-
 void dead_zone_check(double &val1, double &val2)
+{
 	if (fabs(val1) <= dead_zone && fabs(val2) <= dead_zone)
 	{
 		val1 = 0;
@@ -57,13 +58,13 @@ void combineJoysticks(const ros::MessageEvent<ros_control_boilerplate::JoystickS
 
 	if(topic == "frcrobot_jetson/joystick_states") //TODO make more generalized (read number in topic)
 	{
-		joystick_states_array[0] = event.getMessage();
+		joystick_states_array[0] = *(event.getMessage());
 		i = 0;
 	}
 
 	else if(topic == "frcrobot_jetson/joystick_states1")
 	{
-		joystick_states_array[1] = event.getMessage();
+		joystick_states_array[1] = *(event.getMessage());
 		i = 1;
 	}
 }
