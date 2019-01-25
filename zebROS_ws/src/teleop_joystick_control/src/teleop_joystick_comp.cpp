@@ -28,6 +28,7 @@ rate_limiter::RateLimiter left_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_ti
 rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 
 void dead_zone_check(double &val1, double &val2)
+{
 	if (fabs(val1) <= dead_zone && fabs(val2) <= dead_zone)
 	{
 		val1 = 0;
@@ -68,7 +69,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 	std::string topic = header.at("topic");
 
-<<<<<<< f9104abe22c7d7c05e6b9dbdeddfbcf3ce337d07
 	for(bool msg_assign = false; msg_assign == false; i++)
 	{
 		if(topic == topic_array[i])
