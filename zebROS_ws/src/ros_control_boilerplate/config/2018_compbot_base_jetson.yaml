@@ -55,7 +55,6 @@ hardware_interface:
 # /frcrobot/joint2_talon_controller/command
 # /frcrobot/talon_states
 
-<<<<<<< HEAD
 #Create controllers for main mechanisms on robot
 elevator_controller:
     type:   elevator_controller/ElevatorController
@@ -71,8 +70,6 @@ panel_intake_controller:
     type:           panel_intake_controller/PanelIntakeController
     publish_rate:   100 
          
-=======
->>>>>>> 51f3f2d6438bdd1c730a72a9b0d8b4fd2279d65f
 #Set up controllers for main robot mechanisms
 cargo_intake_controller:
     type:   cargo_intake_controller/CargoIntakeController
