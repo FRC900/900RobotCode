@@ -55,21 +55,21 @@ void evaluateCommands(const ros::MessageEvent<ros_control_boilerplate::JoystickS
 	const ros::M_string &header = event.getConnectionHeader();
 
 	std::string topic = header.at("topic");
-	ROS_INFO_STREAM("topic name =" << topic);
 
 	for(bool msg_assign = false; msg_assign == false; i++)
 	{
-		ROS_INFO_STREAM("testing topics, i = " << i);
+		ROS_INFO_STREAM("topic name =" << topic);
 		if(topic == topic_array[i])
 		{
 			joystick_states_array[i] = *(event.getMessage());
 			msg_assign = true;
 		}
-		ROS_INFO_STREAM("msg_assign = " << msg_assign);
 	}
 
 	if(i == 0)
 	{
+		ROS_INFO_STREAM("beginning logic");
+
 		double leftStickX = joystick_states_array[0].leftStickX;
 		double leftStickY = joystick_states_array[0].leftStickY;
 
