@@ -89,5 +89,4 @@
 		<node name="state_setpoint_pub_node" pkg="behaviors" type="state_setpoint_publisher_node" />
 
 	</group>
-
 </launch>
