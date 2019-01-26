@@ -69,6 +69,7 @@
 		<node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" >
 			<remap from="/frcrobot_jetson/navx_mxp" to="/frcrobot_rio/navx_mxp"/>
 		</node>
+		<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" />
 
 		<node name="orient_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="orient_pid_node" />
