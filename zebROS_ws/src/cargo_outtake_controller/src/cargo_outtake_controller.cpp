@@ -66,7 +66,6 @@ namespace cargo_outtake_controller
 		}
 		return true;
 	}
->>>>>>> Added 2nd joint to cargo outtake controller
 
 }//namespace
 
