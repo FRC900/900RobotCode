@@ -54,6 +54,8 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 		return;
 	const vector<DepthInfo> goal_depths = getDepths(depth,goal_contours, LEFT_CARGO_2019, ObjectType(LEFT_CARGO_2019).real_height());
 
+	
+
 
 	//compute confidences for both the left piece of 
 	//tape and the right piece of tape
@@ -113,6 +115,8 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			Rect leftBr = left_info[i].br;
 			Rect rightBr = right_info[j].br;
 
+
+
 #ifdef VERBOSE_BOILER
 			cout << leftBr << " " << rightBr << endl;
 #endif
@@ -170,7 +174,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			if (!left_info[i].depth_error && !right_info[j].depth_error)
 			{
 /*
-				if (fabsf(left_info[i].angle - right_info[j].angle) > 10.0)
+				if (fabsf(left_info[i].angle) + fabsf(right_info[j].angle) < 50.0)
 				{
 #ifdef VERBOSE_BOILER
 					cout << i << " " << j << " angle compare failed" << endl;
@@ -210,6 +214,42 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 #endif
 					continue;
 				} */
+/*
+			rtRect[i] = 
+			_goal_left_rotated_rect = rtRect[left_info[i].vec_index];
+			_goal_right_rotated_rect =rtRect[right_info[i].vec_index];
+			vector<Point> points;
+			Point2f vtx[4];
+			rtR ect[i].points(vtx);
+			for (int idx = 0; idx < 4; idx++)
+				line(image, vtx[idx], vtx[(idx+1)%4], Scalar(153,50,204), 2);
+*/
+
+			if(left_info[i].rtRect.angle > right_info[j].rtRect.angle)
+			{
+				cout << "Angle " << best_result_index_left << ": " << left_info[i].rtRect.angle << "Angle " << best_result_index_right << ": " << right_info[j].rtRect.angle << endl;
+
+				continue;
+
+			}
+
+			if(left_info[i].pos.x > right_info[j].pos.x)
+			{
+				cout  << "Left too far to the right" << endl;
+
+				continue;
+			}
+
+			if(right_info[j].pos.x < left_info[i].pos.x)
+			{
+				cout  << "Right goal too far to the left" << endl;
+
+				continue;
+			}
+
+
+			//_goal_left_rotated_rect =  minAreaRect(Mat(goal_contours[left_info[i].vec_index]));
+			//_goal_right_rotated_rect = minAreaRect(Mat(goal_contours[right_info[j].vec_index]));
 
 
 			// This doesn't work near the edges of the frame?
@@ -262,15 +302,17 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 		{
 			if (right_info[best_result_index_right].depth_error)
 			gi = &left_info[best_result_index_left];
-		else
-			gi = &right_info[best_result_index_right];
+			else
+				gi = &right_info[best_result_index_right];
 
-		_goal_pos        = gi->pos;
-		_dist_to_goal    = gi->distance; 
-		_angle_to_goal   = gi->angle;
+			_goal_pos        = gi->pos;
+			_dist_to_goal    = gi->distance; 
+			_angle_to_goal   = gi->angle;
 		}
 		_goal_left_rect  = left_info[best_result_index_left].rect;
 		_goal_right_rect = right_info[best_result_index_right].rect;
+		_goal_left_rotated_rect = left_info[best_result_index_left].rtRect;
+		_goal_right_rotated_rect = right_info[best_result_index_right].rtRect;
 		_isValid = true;
 
 	}
@@ -285,6 +327,8 @@ void GoalDetector::clear()
 	_angle_to_goal = -1.0;
 	_goal_left_rect = Rect();
 	_goal_right_rect = Rect();
+	_goal_left_rotated_rect = RotatedRect();
+	_goal_right_rotated_rect = RotatedRect();
 	_goal_pos = Point3f();
 }
 
@@ -402,6 +446,8 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 			continue;
 		}
 
+
+
 		
 #if 0
 		// TODO : Figure out how well this works in practice
@@ -487,7 +533,9 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		cout << "br: " << br << endl;
 		cout << "com: " << goal_actual.com() << endl;
 		cout << "position: " << goal_tracked_obj.getPosition() << endl;
+		cout << "Angle: " << minAreaRect(contours[i]).angle << endl;
 		cout << "-------------------------------------------" << endl;
+
 #endif
 
 		GoalInfo goal_info;
@@ -503,6 +551,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		goal_info.depth_error = depth_maxs[i].error;
 		goal_info.com        = goal_actual.com();
 		goal_info.br         = br;
+		goal_info.rtRect     = minAreaRect(contours[i]);
 		return_info.push_back(goal_info);
 	}
 	return return_info;
@@ -653,17 +702,41 @@ Point3f GoalDetector::goal_pos(void) const
 // a different color
 void GoalDetector::drawOnFrame(Mat &image, const vector<vector<Point>> &contours) const
 {
+	vector<RotatedRect> minRect(contours.size());
+
+
 	for (size_t i = 0; i < contours.size(); i++)
 	{
 		drawContours(image, contours, i, Scalar(0,0,255), 3);
+
+
 		Rect br(boundingRect(contours[i]));
-		rectangle(image, br, Scalar(255,0,0), 2);
+		//rectangle(image, br, Scalar(255,0,0), 3);
 		putText(image, to_string(i), br.br(), FONT_HERSHEY_PLAIN, 1, Scalar(0,255,0));
 	}
 	//if(!(_pastRects[_pastRects.size() - 1] == SmartRect(Rect()))) {
 	if (_isValid) {
-		rectangle(image, _goal_left_rect, Scalar(0,255,0), 2);	
-		rectangle(image, _goal_right_rect, Scalar(0,140,255), 2);	
+
+
+
+	//creates a rotated rectangle by drawing four lines. Useful for finding the angle with the horizontal.
+	/*
+	for (size_t i = 0; i < contours.size(); i++)
+	{
+		minRect[i] = minAreaRect(Mat(contours[i]));
+		float tape_angle = minRect[i].angle;
+
+		vector<Point> points;
+		Point2f vtx[4];
+		minRect[i].points(vtx);
+		for (int i = 0; i < 4; i++)
+			line(image, vtx[i], vtx[(i+1)%4], Scalar(153,50,204), 2);
+
+	}
+	*/
+
+		rectangle(image, _goal_left_rect, Scalar(0,255,0), 3);
+		rectangle(image, _goal_right_rect, Scalar(0,140,255), 3);
 	}
 }
 
