@@ -13,10 +13,9 @@ const double max_rot = 8.8;
 const double joystick_scale = 3;
 const double rotation_scale = 4;
 
-int i;
-
-
- std::vector<ros_control_boilerplate::JoystickState> joystick_states_array;
+std::vector <ros_control_boilerplate::JoystickState> joystick_states_array;
+std::vector <std::string> topic_array;
+std::vector <ros::Subscriber> subscriber_array;
 
 void dead_zone_check(double &val1, double &val2)
 {
@@ -52,34 +51,33 @@ void navXCallback(const sensor_msgs::Imu &navXState)
         navX_angle.store(yaw, std::memory_order_relaxed);
 }
 
-void combineJoysticks(const ros::MessageEvent<ros_control_boilerplate::JoystickState const>& event)
+void evaluateCommands(const ros::MessageEvent<ros_control_boilerplate::JoystickState const>& event)
 {
+	int i = 0;
+
 	const ros::M_string &header = event.getConnectionHeader();
 
 	std::string topic = header.at("topic");
+	ROS_INFO_STREAM("topic name =" << topic);
 
-	if(topic == "frcrobot_jetson/joystick_states") //TODO make more generalized (read number in topic)
+	for(bool msg_assign = false; msg_assign == false; i++)
 	{
-		joystick_states_array[0] = *(event.getMessage());
-		i = 0;
+		ROS_INFO_STREAM("testing topics, i = " << i);
+		if(topic == topic_array[i])
+		{
+			joystick_states_array[i] = *(event.getMessage());
+			msg_assign = true;
+		}
+		ROS_INFO_STREAM("msg_assign = " << msg_assign);
 	}
 
-	else if(topic == "frcrobot_jetson/joystick_states1")
+	if(i == 0)
 	{
-		joystick_states_array[1] = *(event.getMessage());
-		i = 1;
-	}
-}
+		double leftStickX = joystick_states_array[0].leftStickX;
+		double leftStickY = joystick_states_array[0].leftStickY;
 
-void evaluateCommands()
-{
-	while(ros::ok)
-	{
-		double leftStickX = joystick_states_array[i].leftStickX;
-		double leftStickY = joystick_states_array[i].leftStickY;
-
-		double rightStickX = joystick_states_array[i].rightStickX;
-		double rightStickY = joystick_states_array[i].rightStickY;
+		double rightStickX = joystick_states_array[0].rightStickX;
+		double rightStickY = joystick_states_array[0].rightStickY;
 
 		dead_zone_check(leftStickX, leftStickY);
 		dead_zone_check(rightStickX, rightStickY);
@@ -90,7 +88,7 @@ void evaluateCommands()
 		rightStickX =  pow(rightStickX, joystick_scale);
 		rightStickY = -pow(rightStickY, joystick_scale);
 
-		const double rotation = (pow(joystick_states_array[i].leftTrigger, rotation_scale) - pow(joystick_states_array[i].rightTrigger, rotation_scale)) * max_rot;
+		const double rotation = (pow(joystick_states_array[0].leftTrigger, rotation_scale) - pow(joystick_states_array[0].rightTrigger, rotation_scale)) * max_rot;
 
 		static bool sendRobotZero = false;
 
@@ -173,8 +171,15 @@ int main(int argc, char **argv)
 
 	navX_angle = M_PI / 2;
 
-	ros::Subscriber joystick_sub  = n.subscribe("/frcrobot_jetson/joystick_states", 1, &combineJoysticks);
-	ros::Subscriber joystick_sub1  = n.subscribe("/frcrobot_jetson/joystick_states1", 1, &combineJoysticks);
+	topic_array.push_back("/frcrobot_jetson/joystick_states");
+	topic_array.push_back("/frcrobot_jetson/joystick_states1");
+
+	for(size_t j = 0; (subscriber_array.size()) < (topic_array.size()); j++)
+	{
+		subscriber_array.push_back(n.subscribe((topic_array[j]), 1, &evaluateCommands));
+	}
+
+	joystick_states_array.resize(topic_array.size());
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
