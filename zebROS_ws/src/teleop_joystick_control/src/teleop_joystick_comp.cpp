@@ -61,7 +61,6 @@ void evaluateCommands(const ros::MessageEvent<ros_control_boilerplate::JoystickS
 
 	for(bool msg_assign = false; msg_assign == false; i++)
 	{
-		ROS_INFO_STREAM("topic name =" << topic);
 		if(topic == topic_array[i])
 		{
 			joystick_states_array[i] = *(event.getMessage());
@@ -69,10 +68,8 @@ void evaluateCommands(const ros::MessageEvent<ros_control_boilerplate::JoystickS
 		}
 	}
 
-	if(i == 0)
+	if(i == 1)
 	{
-		ROS_INFO_STREAM("beginning logic");
-
 		double leftStickX = joystick_states_array[0].leftStickX;
 		double leftStickY = joystick_states_array[0].leftStickY;
 
@@ -161,6 +158,11 @@ void callback(const ros::MessageEvent<ros_control_boilerplate::JoystickState con
 	if(topic = frcrobot_jetson/joystick_states1)
 	{
 		joystick_state_array[1] = *msg;
+	}
+
+	else if(i == 2)
+	{
+		// Stuff for the second joystick goes here
 	}
 }
 
