@@ -1,5 +1,5 @@
 actionlib_params:
-    linebreak_debounce_iterations: 5
+    linebreak_debounce_iterations: 10
 actionlib_cargo_intake_params:
     roller_power: 1
     intake_timeout: 1 #in seconds
