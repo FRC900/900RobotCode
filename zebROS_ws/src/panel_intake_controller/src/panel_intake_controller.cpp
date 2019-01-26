@@ -9,8 +9,7 @@ bool PanelIntakeController::init(hardware_interface::PositionJointInterface *hw,
 {
 
 	claw_joint_ = hw->getHandle("panel_claw_in");
-	push_joint_1_ = hw->getHandle("panel_push_in_1");
-	push_joint_2_ = hw->getHandle("panel_push_in_2");
+	push_joint_ = hw->getHandle("panel_push_in");
 	wedge_joint_ = hw->getHandle("panel_wedge_in");
 
    panel_intake_service_ = controller_nh.advertiseService("panel_command", &PanelIntakeController::cmdService, this);
@@ -36,12 +35,10 @@ void PanelIntakeController::update(const ros::Time &time, const ros::Duration &p
  bool push_cmd = *(push_cmd_.readFromRT());
     if(push_cmd == true) {
         //ROS_WARN("intake in");
-        push_joint_1_.setCommand(-1.0);
-		push_joint_2_.setCommand(-1.0);
+        push_joint_.setCommand(-1.0);
     }
     else if (push_cmd == false) {
-		push_joint_1_.setCommand(1.0);
-		push_joint_2_.setCommand(1.0);
+		push_joint_.setCommand(1.0);
 	}
 
  bool wedge_cmd = *(wedge_cmd_.readFromRT());

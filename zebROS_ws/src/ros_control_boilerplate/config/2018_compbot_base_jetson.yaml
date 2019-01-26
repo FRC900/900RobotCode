@@ -18,7 +18,8 @@ hardware_interface:
        #TODO: Get config values of joints
        - {name: cargo_intake_joint, type: can_talon_srx, can_id: 0, local: true}
        - {name: cargo_intake_arm_joint, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
-       - {name: cargo_outtake_arm_joint, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
+       - {name: cargo_outtake_kicker_joint, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
+       - {name: cargo_outtake_clamp_joint, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
        - {name: climber, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
        - {name: elevator_joint, type: can_talon_srx, can_id: 0, local: true}
        - {name: fl_drive, type: can_talon_srx, can_id: 21, local: true}
@@ -32,8 +33,7 @@ hardware_interface:
        - {name: pdp, type: pdp}
        - {name: compressor, type: compressor, pcm_id: 0}
        - {name: panel_claw_in, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id:  1} 
-       - {name: panel_push_in_1, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
-       - {name: panel_push_in_2, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1} 
+       - {name: panel_push_in, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
        - {name: panel_wedge_in, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1} 
 
          #- {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: false}
