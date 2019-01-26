@@ -21,8 +21,8 @@ class CargoIntakeAction {
 		std::string action_name_;
 
 		ros::ServiceClient controller_client_; //create a ros client to send requests to the controller
-		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cube since we started trying to intake/outtake
-		std::atomic<int> linebreak_false_count; //same, but how many times in a row no cube
+		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo since we started trying to intake/outtake
+		std::atomic<int> linebreak_false_count; //same, but how many times in a row no cargo
 		behaviors::IntakeResult result_; //variable to store result of the actionlib action
 
 		//create subscribers to get data
@@ -43,10 +43,10 @@ class CargoIntakeAction {
 		service_connection_header["tcp_nodelay"] = "1";
 
 		//initialize the client being used to call the controller
-		controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+		controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 
 		//start subscribers subscribing
-		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
+		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
 	}
 
 		~CargoIntakeAction(void) 
