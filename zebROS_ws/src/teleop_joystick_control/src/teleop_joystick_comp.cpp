@@ -5,7 +5,7 @@
 #include "std_srvs/Empty.h"
 #include "std_srvs/SetBool.h"
 #include <vector>
-#include <vector>
+
 // TODO : make these parameters, possibly with dynamic reconfig
 const double dead_zone = .2;
 const double slow_mode = .33;
@@ -26,12 +26,6 @@ rate_limiter::RateLimiter right_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_t
 rate_limiter::RateLimiter right_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter left_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
-
-int i;
-
-std::vector <ros_control_boilerplate::JoystickState> joystick_states_array;
-
-realtime_tools::RealtimeBuffer<struct> joystick_states;
 
 void dead_zone_check(double &val1, double &val2)
 	if (fabs(val1) <= dead_zone && fabs(val2) <= dead_zone)
