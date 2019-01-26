@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(screen_to_world)
 
-<<<<<<< bff269f8440d5e84a7c55d4e0d14ae223df5423d
 include ("../cmake_modules/CMakeOpt.cmake")
 
 if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
