@@ -19,7 +19,6 @@
 		<!-- Load hardware interface -->
 		<node name="frcrobot_hardware_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
 			output="screen" launch-prefix="$(arg launch_prefix)">
-			<remap from="/frcrobot_rio/joystick_states" to="/frcrobot_jetson/joystick_states"/>
 		</node>
 
 		<!-- Load controller manager -->
