@@ -47,8 +47,7 @@ class PanelIntakeController : public controller_interface::Controller<hardware_i
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
             hardware_interface::JointHandle claw_joint_; //interface for the in/out solenoid joint
- 			hardware_interface::JointHandle push_joint_1_;
-			hardware_interface::JointHandle push_joint_2_;
+ 			hardware_interface::JointHandle push_joint_;
 			hardware_interface::JointHandle wedge_joint_;
 
             realtime_tools::RealtimeBuffer<double> claw_cmd_; //this is the buffer for percent output commands to be published
