@@ -3,12 +3,15 @@ project(behaviors)
 
 include ("../cmake_modules/CMakeOpt.cmake")
 
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   actionlib
+  teraranger_array
   actionlib_msgs
   nav_msgs
   roscpp
@@ -127,7 +130,7 @@ generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
 catkin_package(
    INCLUDE_DIRS include
    #LIBRARIES behaviors
-   CATKIN_DEPENDS actionlib nav_msgs roscpp rospy std_msgs
+   CATKIN_DEPENDS actionlib nav_msgs roscpp rospy std_msgs teraranger_array
    DEPENDS 
 )
 # add_executable(arm_server_node src/arm_server.cpp)
@@ -169,7 +172,17 @@ catkin_package(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/behaviors_node.cpp)
+add_executable(publish_pid_cmd_vel_node src/publish_pid_cmd_vel.cpp)
+add_dependencies(publish_pid_cmd_vel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(publish_pid_cmd_vel_node
+  ${catkin_LIBRARIES}
+)
+
+add_executable(state_setpoint_publisher_node src/state_setpoint_publisher.cpp)
+add_dependencies(state_setpoint_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(state_setpoint_publisher_node
+  ${catkin_LIBRARIES}
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -179,12 +192,8 @@ catkin_package(
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
 
 #############
 ## Install ##
@@ -236,4 +245,5 @@ catkin_package(
 # endif()
 
 ## Add folders to be run by python nosetests
+endif()
 # catkin_add_nosetests(test)

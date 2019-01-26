@@ -73,6 +73,7 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>actionlib</exec_depend>
   <exec_depend>actionlib_msgs</exec_depend> 
+  <depend>teraranger_array</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

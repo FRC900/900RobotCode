@@ -6,12 +6,12 @@
       <param name="portname" value="/dev/ttyACM0" />
       <!-- Set activation of each sensor-->
       <param name="Sensor_0" value="True" />
-      <param name="Sensor_1" value="False" />
+      <param name="Sensor_1" value="True" />
       <param name="Sensor_2" value="True" />
-      <param name="Sensor_3" value="False" />
+      <param name="Sensor_3" value="True" />
       <param name="Sensor_4" value="True" />
-      <param name="Sensor_5" value="False" />
-      <param name="Sensor_6" value="False" />
+      <param name="Sensor_5" value="True" />
+      <param name="Sensor_6" value="True" />
       <param name="Sensor_7" value="True" />
       <!-- Remapping topic when using converter nodes-->
       <remap from="ranges" to="ranges_raw" />

@@ -2,6 +2,7 @@
 #include <realtime_tools/realtime_buffer.h>
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "std_srvs/Empty.h"
+#include "std_srvs/SetBool.h"
 
 // TODO : make these parameters, possibly with dynamic reconfig
 const double dead_zone = .2;
@@ -22,6 +23,7 @@ void dead_zone_check(double &val1, double &val2)
 
 static ros::Publisher JoystickRobotVel;
 static ros::ServiceClient BrakeSrv;
+static ros::ServiceClient run_align;
 
 std::atomic<double> navX_angle;
 
@@ -100,6 +102,23 @@ void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 		JoystickRobotVel.publish(vel);
 		sendRobotZero = false;
 	}
+
+	if(JoystickState->buttonAPress)
+	{
+		ROS_WARN_STREAM("buttonAPress");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+
+	if(JoystickState->buttonARelease)
+	{
+		ROS_WARN_STREAM("buttonARelease");
+		std_srvs::SetBool msg;
+		msg.request.data = false;
+		run_align.call(msg);
+	}
+
 }
 
 int main(int argc, char **argv)
@@ -116,6 +135,7 @@ int main(int argc, char **argv)
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("swerve_drive_controller/brake", false, service_connection_header);
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
+	run_align = n.serviceClient<std_srvs::SetBool>("run_align");
 
 	ROS_WARN("joy_init");
 
