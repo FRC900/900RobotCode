@@ -55,21 +55,6 @@ hardware_interface:
 # /frcrobot/joint2_talon_controller/command
 # /frcrobot/talon_states
 
-#Create controllers for main mechanisms on robot
-elevator_controller:
-    type:   elevator_controller/ElevatorController
-    elevator_joint_: "elevator"
-    elevator: 
-        type: talon_controllers/TalonMotionMagicCloseLoopControllerInterface 
-        joint: elevator_joint
-
-
-
-
-panel_intake_controller:
-    type:           panel_intake_controller/PanelIntakeController
-    publish_rate:   100 
-         
 #Set up controllers for main robot mechanisms
 cargo_intake_controller:
     type:   cargo_intake_controller/CargoIntakeController
@@ -84,15 +69,6 @@ cargo_intake_controller:
 cargo_outtake_controller:
     type: cargo_outtake_controller/CargoOuttakeController
 
-<<<<<<< HEAD
-climber_controller:
-    type:           climber_controller/ClimberController
-    publish_rate:   100
-  
-
-#
-=======
-
 climber_controller:
     type:           climber_controller/ClimberController
     publish_rate:   100
@@ -112,7 +88,6 @@ elevator_controller:
 
 
 
->>>>>>> 51f3f2d6438bdd1c730a72a9b0d8b4fd2279d65f
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal
 # encoder state used by the hw manager and publishes it as
