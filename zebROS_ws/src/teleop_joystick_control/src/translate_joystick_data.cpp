@@ -52,7 +52,7 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 	processed_msg.directionLeftPress = !processed_msg_last.directionLeftButton && processed_msg.directionLeftButton;
 	processed_msg.directionRightPress = !processed_msg_last.directionRightButton && processed_msg.directionRightButton;
 	processed_msg.directionUpPress = !processed_msg_last.directionUpButton && processed_msg.directionUpButton;
-	processed_msg.directionUpPress = !processed_msg_last.directionDownButton && processed_msg.directionDownButton;
+	processed_msg.directionDownPress = !processed_msg_last.directionDownButton && processed_msg.directionDownButton;
 
 	// Creating release booleans by comparing the last publish to the current one
 	processed_msg.buttonARelease = processed_msg_last.buttonAButton && !processed_msg.buttonAButton;
