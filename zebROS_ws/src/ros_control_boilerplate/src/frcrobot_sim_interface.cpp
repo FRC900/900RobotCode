@@ -159,8 +159,8 @@ void TeleopJointsKeyboard::keyboardLoop()
 
 	tcsetattr(kfd, TCSANOW, &raw);
 
-	cmd_.axes.resize(8)
-	cmd_.buttons.resize(10)
+	cmd_.axes.resize(8);
+	cmd_.buttons.resize(10);
 
 	bool processing_bracket = false;
 	while (ros::ok())
