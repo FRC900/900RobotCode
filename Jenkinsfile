@@ -63,7 +63,12 @@ node {
                         source devel/setup.bash
                         catkin_make run_tests
                     '''
-		    sh "catkin_make roslint 2> lint.txt"
+                    
+                    // Run lint then exit 0 as any lint errors set the exit code
+                    sh '''#!/bin/bash
+                        catkin_make roslint 2> lint.txt
+                        exit 0
+                    '''
                     
                     // This script forces an exit 0 because the catkin test
                     // results will set the exit code to 1 if there are any failing
