@@ -2,7 +2,7 @@
 #include <realtime_tools/realtime_buffer.h>
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "std_srvs/Empty.h"
-
+#include <vector>
 // TODO : make these parameters, possibly with dynamic reconfig
 const double dead_zone = .2;
 const double slow_mode = .33;
@@ -13,9 +13,8 @@ const double rotation_scale = 4;
 
 int i;
 
-/*realtime_tools::RealtimeBuffer <struct> joystick_states;*/
 
-std::vector <ros_control_boilerplate::JoystickState> joystick_states_array;
+ std::vector<ros_control_boilerplate::JoystickState> joystick_states_array;
 
 void dead_zone_check(double &val1, double &val2)
 {
