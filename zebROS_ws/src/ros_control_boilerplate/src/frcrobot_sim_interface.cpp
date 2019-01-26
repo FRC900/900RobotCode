@@ -174,24 +174,22 @@ void TeleopJointsKeyboard::keyboardLoop()
 		cmd_.axes[0] = 0;
 		cmd_.axes[2] = 0;
 		cmd_.axes[5] = 0;
+		cmd_.axes[6] = 0;
+		cmd_.axes[7] = 0;
 
-	/*	cmd_.buttonXButton = false;
-		cmd_.buttonYButton = false;
-		cmd_.bumperLeftButton = false;
-		cmd_.bumperRightButton = false;
-		cmd_.stickLeftButton = false;
-		cmd_.stickRightButton = false;
+		cmd_.buttons[2] = false;
+		cmd_.buttons[3] = false;
+		cmd_.buttons[4] = false;
+		cmd_.buttons[5] = false;
+		cmd_.buttons[8] = false;
+		cmd_.buttons[9] = false;
 
-		cmd_.buttonAButton = false;
-		cmd_.buttonBButton = false;
-		cmd_.buttonBackButton = false;
+		cmd_.buttons[0] = false;
+		cmd_.buttons[1] = false;
+		cmd_.buttons[6] = false;
 
-		cmd_.buttonStartButton = false;
+		cmd_.buttons[7] = false;
 
-		cmd_.directionUpButton = false;
-		cmd_.directionDownButton = false;
-		cmd_.directionRightButton = false;
-		cmd_.directionLeftButton = false;*/
 
 
 
@@ -204,16 +202,16 @@ void TeleopJointsKeyboard::keyboardLoop()
 			switch (c)
 			{
 				case KEYCODE_i:
-					cmd_.axes[4] += .5;
+					cmd_.axes[5] += .5;
 					break;
 				case KEYCODE_k:
-					cmd_.axes[4] -= .5;
+					cmd_.axes[5] -= .5;
 					break;
 				case KEYCODE_j:
-					cmd_.axes[3] += .5;
+					cmd_.axes[4] += .5;
 					break;
 				case KEYCODE_l:
-					cmd_.axes[3] -= .5;
+					cmd_.axes[4] -= .5;
 					break;
 
 				case KEYCODE_d:
@@ -253,10 +251,10 @@ void TeleopJointsKeyboard::keyboardLoop()
 					cmd_.axes[5] = .5;
 					break;*/
 				case KEYCODE_SEVEN:
-					cmd_.buttons[9] = true;
+					cmd_.buttons[8] = true;
 					break;
 				case KEYCODE_EIGHT:
-					cmd_.buttons[10] = true;
+					cmd_.buttons[9] = true;
 					break;
 				case KEYCODE_FIVE:
 					cmd_.buttons[6] = true;
