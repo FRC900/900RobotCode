@@ -30,12 +30,16 @@
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
 			output="screen" args="spawn clamp_controller joint_state_controller joint_state_listener_controller talon_state_controller match_state_listener_controller pdp_state_controller pcm_state_controller swerve_drive_controller robot_code_ready_controller" /> 
 
-		<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" />
-			
-		<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" >
-			<remap from="/frcrobot_rio/joystick_states_raw1" to="/frcrobot_rio/joystick_states_raw" />
-			<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_jetson/joystick_states1" />
-		</node>
+		<group ns="translator0">
+			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" />
+		</group>
+
+		<group ns="translator1">	
+			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" >
+				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw1" />
+				<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_jetson/joystick_states1" />
+			</node>
+		</group>
 
 		<node name="point_gen" pkg="swerve_point_generator" type="point_gen" output="screen" />
 
@@ -57,9 +61,7 @@
 	<!-- Run this on the Jetson, but in the Rio namespace so it gets e.g.
 		 joystick and navx from /frcrobot_rio/* -->
 	<group ns="frcrobot_jetson">
-		<node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" >
-			<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_rio/joystick_states"/>
-		</node>
+		<node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen"/>
 	</group>
 
 </launch>

@@ -22,14 +22,27 @@
 	</group>
 
 	<group if="$(eval arg('hw_or_sim')=='sim')">
-		<node name="joy_node" pkg="joy" type="joy_node" output="screen">
-			<param name="autorepeat_rate" type="double" value="100"/>
-		</node>
-		<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
-			<remap from="joy_in" to="/joy" />
-			<remap from="joy_out" to="/frcrobot_rio/joystick_states_raw"/>
-			<rosparam command="load" file="$(find teleop_joystick_control)/config/joystick_remap.yaml"/>
-		</node>
+		<group ns="joy0">
+			<node name="joy_node" pkg="joy" type="joy_node" output="screen">
+				<param name="autorepeat_rate" type="double" value="1"/>
+			</node>
+			<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
+				<remap from="joy_in" to="/joy0/joy" />
+				<remap from="joy_out" to="/frcrobot_rio/joystick_states_raw"/>
+				<rosparam command="load" file="$(find teleop_joystick_control)/config/joystick_remap.yaml"/>
+			</node>
+		</group>	
+		<group ns="joy1">
+			<node name="joy_node" pkg="joy" type="joy_node" output="screen">
+				<param name="dev" value="/dev/input/js1"/>
+				<param name="autorepeat_rate" type="double" value="1"/>
+			</node>
+			<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
+				<remap from="joy_in" to="/joy1/joy" />
+				<remap from="joy_out" to="/frcrobot_rio/joystick_states_raw1"/>
+				<rosparam command="load" file="$(find teleop_joystick_control)/config/joystick_remap.yaml"/>
+			</node>
+		</group>
 	</group> 
 
     <include file="$(find controller_node)/launch/2019_compbot_rio.launch" pass_all_args="true"/>

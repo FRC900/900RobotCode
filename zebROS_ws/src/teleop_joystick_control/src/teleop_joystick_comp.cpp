@@ -136,8 +136,8 @@ int main(int argc, char **argv)
 
 	navX_angle = M_PI / 2;
 
-	ros::Subscriber joystick_sub  = n.subscribe("frcrobot_jetson/joystick_states", 1, &combineJoysticks);
-	ros::Subscriber joystick_sub1  = n.subscribe("frcrobot_jetson/joystick_states1", 1, &combineJoysticks);
+	ros::Subscriber joystick_sub  = n.subscribe("/frcrobot_jetson/joystick_states", 1, &combineJoysticks);
+	ros::Subscriber joystick_sub1  = n.subscribe("/frcrobot_jetson/joystick_states1", 1, &combineJoysticks);
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
