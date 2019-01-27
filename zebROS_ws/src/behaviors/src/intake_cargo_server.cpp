@@ -65,22 +65,23 @@ class CargoIntakeAction {
 
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::IntakeGoalConstPtr &goal) {
+			ROS_INFO("%s: Running callback", action_name_.c_str());
 			ros::Rate r(10);
 
 			//define variables that will be reused for each controller call/actionlib server call
 			double start_time = ros::Time::now().toSec();
-			bool success; //if controller/actionlib server call succeeded
 
 			//define variables that will be set true if the actionlib action is to be ended
 			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
 			//if both of these are false, we assume the action succeeded
+			bool success = false; //if controller/actionlib server call succeeded
 			bool preempted = false;
 			bool timed_out = false;
 
 			if(!preempted && !timed_out) {
 				ROS_WARN("cargo intake server: sending elevator to intake config");
 				behaviors::ElevatorGoal elevator_goal;
-				elevator_goal.elevator_setpoint = intake_setpoint;
+				elevator_goal.setpoint = intake_setpoint;
 				ac_elevator_.sendGoal(elevator_goal);
 				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(intake_timeout - (ros::Time::now().toSec() - start_time))); //Wait for server to finish or until timeout is reached
 				if(finished_before_timeout) {
