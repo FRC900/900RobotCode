@@ -36,14 +36,15 @@ double distance_between_sensors = 0.3937;
 
 void distanceCB(const teraranger_array::RangeArray& msg)
 {
-	distance_state = atan((msg.ranges[1].range - msg.ranges[5].range) / distance_between_sensors);
-	ROS_INFO_STREAM("distance state = " << distance_state);
+	if(msg.ranges[1].range == msg.ranges[1].range && msg.ranges[5].range == msg.ranges[5].range)
+		distance_state = atan((msg.ranges[1].range - msg.ranges[5].range) / distance_between_sensors);
+	else
+		ROS_WARN_STREAM("at least one of the distance centers is NAN");
 }
 
 void jointStatesCB(const sensor_msgs::JointState& msg)
 {
 	navx_angle_state = msg.position[2];
-	ROS_INFO_STREAM("navx state = " << navx_angle_state);
 }
 
 bool align_service(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
