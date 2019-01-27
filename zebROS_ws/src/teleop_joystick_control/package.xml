@@ -16,7 +16,6 @@
   <depend>actionlib</depend>
   <depend>cmake_modules</depend>
   <depend>frc_msgs</depend>
-  <depend>behaviors</depend>
   <depend>std_srvs</depend>
   <depend>talon_state_controller</depend>
 
