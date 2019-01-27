@@ -263,7 +263,6 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	bool lookup_ratio_encoder_to_rotations = !controller_nh.getParam("ratio_encoder_to_rotations", driveRatios_.encodertoRotations);
 	bool lookup_ratio_motor_to_rotations = !controller_nh.getParam("ratio_motor_to_rotations", driveRatios_.motortoRotations);
 	bool lookup_ratio_motor_to_steering = !controller_nh.getParam("ratio_motor_to_steering", driveRatios_.motortoSteering); // TODO : not used?
-	bool lookup_percent_fudge = !controller_nh.getParam("percent_fudge", driveRatios_.percent_fudge);
 	bool lookup_encoder_drive_get_V_units = !controller_nh.getParam("encoder_drive_get_V_units", units_.rotationGetV);
 	bool lookup_encoder_drive_get_P_units = !controller_nh.getParam("encoder_drive_get_P_units", units_.rotationGetP);
 	bool lookup_encoder_drive_set_V_units = !controller_nh.getParam("encoder_drive_set_V_units", units_.rotationSetV);
@@ -350,7 +349,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	}
 
 	sub_command_ = controller_nh.subscribe("cmd_vel", 1, &TalonSwerveDriveController::cmdVelCallback, this);
-	talon_states_sub_ = controller_nh.subscribe("talon_states", 1, &TalonSwerveDriveController::talonStatesCB, this);
+	talon_states_sub_ = controller_nh.subscribe("/frcrobot_jetson/talon_states", 1, &TalonSwerveDriveController::talonStatesCB, this);
 	brake_serv_ = controller_nh.advertiseService("brake", &TalonSwerveDriveController::brakeService, this);
 	motion_profile_serv_ = controller_nh.advertiseService("run_profile", &TalonSwerveDriveController::motionProfileService, this);
 	wheel_pos_serv_ = controller_nh.advertiseService("wheel_pos", &TalonSwerveDriveController::wheelPosService, this);
@@ -458,7 +457,7 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 		const double new_wheel_rot = speed_joints_[k].getPosition();
 		const double delta_rot = new_wheel_rot - last_wheel_rot_[k];
 		//int inverterD = (k%2==0) ? -1 : 1;
-		const double dist = -delta_rot * wheel_radius_ * driveRatios_.encodertoRotations * driveRatios_.percent_fudge; //* inverterD;
+		const double dist = -delta_rot * wheel_radius_ * driveRatios_.encodertoRotations; //* inverterD;
 		//NOTE: below is a hack, TODO: REMOVE
 
 		steer_angles[k] = steering_joints_[k].getPosition();
@@ -846,6 +845,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 	}
 	else
 	{
+		ROS_INFO_STREAM("out of points = " << outOfPoints.load(std::memory_order_relaxed));
 		mode_last_time =::Time::now().toSec();
 		for (size_t i = 0; !set_profile_run && (i < wheel_joints_size_); ++i)
 		{
