@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   control_msgs
   actionlib
-  behaviors
   std_srvs
   talon_state_controller
   robot_visualizer
