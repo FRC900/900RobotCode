@@ -11,6 +11,11 @@
 double roller_power;
 double intake_timeout;
 double linebreak_debounce_iterations;
+double intake_setpoint;
+double cargo_ship_setpoint;
+double low_rocket_setpoint;
+double mid_rocket_setpoint;
+double high_rocket_setpoint;
 
 
 class CargoIntakeAction {
@@ -27,9 +32,6 @@ class CargoIntakeAction {
 
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
-		ros::Subscriber proceed_;
-		bool proceed;
-
 	public:
 		//make the executeCB function run every time the actionlib server is called
 		CargoIntakeAction(const std::string &name) :
@@ -42,8 +44,12 @@ class CargoIntakeAction {
 		std::map<std::string, std::string> service_connection_header;
 		service_connection_header["tcp_nodelay"] = "1";
 
+		//initialize action client to call actionlib server
+		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_ = actionlib::SimpleActionClient<behaviors::ElevatorAction>("elevator_server", true); //TODO make sure this is linked up correctly
+
 		//initialize the client being used to call the controller
-		controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+		cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+		elevator_controller_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
 
 		//start subscribers subscribing
 		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
@@ -58,7 +64,7 @@ class CargoIntakeAction {
 			ros::Rate r(10);
 
 			//define variables that will be reused for each controller call/actionlib server call
-			double start_time;
+			double start_time = ros::Time::now().toSec();
 			bool success; //if controller/actionlib server call succeeded
 
 			//define variables that will be set true if the actionlib action is to be ended
@@ -67,14 +73,28 @@ class CargoIntakeAction {
 			bool preempted = false;
 			bool timed_out = false;
 
-			//send command to lower arm and run roller to the cargo intake controller ---------------------------------------
+			if(!preempted && !timed_out) {
+				ROS_WARN("cargo intake server: sending elevator to intake config");
+				behaviors::ElevatorGoal elevator_goal;
+				elevator_goal.elevator_setpoint = intake_setpoint;
+				ac_elevator_.sendGoal(elevator_goal);
+				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(intake_timeout - (ros::Time::now().toSec() - start_time))) //Wait for server to finish or until timeout is reached
+				if(finished_before_timeout) {
+					actionlib::SimpleClientGoalState state = ac_elevator_.getState()
+					ROS_WARN("Elevator Server ACTION FINISHED: %s", state.toString().c_str());
+				}
+				else {
+					timed_out = true;
+					as_.setPreempted();
+				}
+			}
+			//send command to lower arm and run roller to the cargo intake controller ------
 			if(!preempted && !timed_out)
 			{
-				ROS_ERROR("cargo intake server: lowering arm and spinning roller in");
+				ROS_WARN("cargo intake server: lowering arm and spinning roller in");
 
 				//reset variables
-				linebreak_true_count = 0; //when this gets higher than linebreak_debounce_iterations, we'll consider the gamepiece intaked
-				start_time = ros::Time::now().toSec();
+				linebreak_true_count = 0; //when this gets higher than linebreak_debounce_iterations, we'll consider the gamepiece intooketh
 				success = false;
 
 				//define request to send to cargo intake controller
@@ -86,6 +106,8 @@ class CargoIntakeAction {
 				if(!controller_client_.call(srv))
 				{
 					ROS_ERROR("Srv intake call failed in cargo intake server");
+					as_.setPreempted();
+					preempted = true;
 				}
 				//update everything by doing spinny stuff
 				ros::spinOnce();
@@ -106,6 +128,8 @@ class CargoIntakeAction {
 					}
 				}
 			}
+
+
 			//end of code for sending something to a controller --------------------------------------------------------------------------------
 
 			//set ending state of controller no matter what happened: arm up, roller motors stopped

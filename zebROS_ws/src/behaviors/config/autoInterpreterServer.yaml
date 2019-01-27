@@ -2,7 +2,7 @@ actionlib_params:
     linebreak_debounce_iterations: 10
 actionlib_cargo_intake_params:
     roller_power: 1
-    intake_timeout: 1 #in seconds
+    intake_timeout: 3 #in seconds
 actionlib_hatch_panel_intake_params:
     intake_timeout: 5 #in seconds
 actionlib_lift_params:
@@ -18,5 +18,9 @@ actionlib_lift_params:
         mid_rocket: -1.0
         high_rocket: -1.0
         intake: -1.0
+    climber_setpoints:
+        deploy_setpoint: -1.0
+        climb_setpoint: -1.0
     max_speed: -1.0
     timeout: 4
+    elevator_deadzone: -1.0
