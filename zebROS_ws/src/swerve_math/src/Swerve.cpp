@@ -8,10 +8,10 @@
 using namespace std;
 using namespace Eigen;
 
-// TODO : use initializaer list rather than assignment.
+// TODO : use initializer list rather than assignment.
 // string should be a const & var, as should the swerveVar args
 
-swerve::swerve(array<Vector2d, WHEELCOUNT> wheelCoordinates, std::vector<double> offsets, bool wheelAngleInvert, swerveVar::ratios ratio, swerveVar::encoderUnits units, swerveVar::driveModel drive)
+swerve::swerve(array<Vector2d, WHEELCOUNT> wheelCoordinates, std::vector<double> offsets, bool /*wheelAngleInvert*/, swerveVar::ratios ratio, swerveVar::encoderUnits units, swerveVar::driveModel drive)
 {
 	wheelCoordinates_ = wheelCoordinates;
 
@@ -20,45 +20,39 @@ swerve::swerve(array<Vector2d, WHEELCOUNT> wheelCoordinates, std::vector<double>
 	ratio_ = ratio;
 	units_ = units;
 	drive_ = drive;
-	wheelAngleInvert_ = wheelAngleInvert ? -1 : 1;
+	//wheelAngleInvert_ = wheelAngleInvert ? -1 : 1;
 
 	// TODO : Error checking in case offsets.size() != WHEELCOUNT
 	for (size_t i = 0; i < offsets.size() && i < WHEELCOUNT; i++)
 		offsets_[i] = offsets[i];
-
-	// TODO : this shouldn't be hard-coded
-	setCenterOfRotation(0, {0,0});
-}
-
-void swerve::setCenterOfRotation(size_t id, const Vector2d &centerOfRotation)
-{
-	if (id < multiplierSets_.size())
-	{
-		multiplierSet newSet;
-		newSet.multipliers_ = swerveMath_.wheelMultipliersXY(centerOfRotation);
-		newSet.maxRotRate_ = drive_.maxSpeed / furthestWheel(centerOfRotation);
-		multiplierSets_[id] = newSet;
-	}
 }
 
 // TODO : split into motorOutputsDrive and motorOutputsPark
-// Make positionsNew and all Vector2ds const & arguments
-array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector, double rotation, double angle, bool /*forceRead*/, array<bool, WHEELCOUNT> &reverses, bool park, const array<double, WHEELCOUNT> &positionsNew, bool norm, size_t rotationCenterID)
+array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector, double rotation, double angle, bool /*forceRead*/, array<bool, WHEELCOUNT> &reverses, bool park, const array<double, WHEELCOUNT> &positionsNew, bool norm, const Eigen::Vector2d &centerOfRotation)
 {
-	if (rotationCenterID >= multiplierSets_.size())
-	{
-		ROS_ERROR_STREAM("Tell Ryan to stop using fixed-sized arrays for dynamically growable stuff");
-		return array<Vector2d, WHEELCOUNT>();
-	}
 	array<Vector2d, WHEELCOUNT> speedsAndAngles;
 	if (!park)
 	{
+		// See if the current centerOfRotation coords have been used before
+		// If not, calculate the multiplers and matRotRate for them
+		// If so, just reuse previously saved values
+		auto mult_it = multiplierSets_.find(centerOfRotation);
+		if (mult_it == multiplierSets_.end())
+		{
+			multiplierSet newSet;
+			newSet.multipliers_ = swerveMath_.wheelMultipliersXY(centerOfRotation);
+			newSet.maxRotRate_ = drive_.maxSpeed / furthestWheel(centerOfRotation);
+			multiplierSets_[centerOfRotation] = newSet;
+			mult_it = multiplierSets_.find(centerOfRotation);
+			ROS_INFO_STREAM("Added new swerve center of rotation: " << centerOfRotation[0] << "," << centerOfRotation[1]);
+		}
+
 		velocityVector /= drive_.maxSpeed;
-		rotation       /= multiplierSets_[rotationCenterID].maxRotRate_;
+		rotation       /= mult_it->second.maxRotRate_;
 
 		//ROS_WARN_STREAM("max rate r/s: " <<  multiplierSets_[rotationCenterID].maxRotRate_);
 		//ROS_INFO_STREAM("vel: " << velocityVector[0] << " " << velocityVector[1] << " rot: " << rotation);
-		speedsAndAngles = swerveMath_.wheelSpeedsAngles(multiplierSets_[rotationCenterID].multipliers_, velocityVector, rotation, angle, norm);
+		speedsAndAngles = swerveMath_.wheelSpeedsAngles(mult_it->second.multipliers_, velocityVector, rotation, angle, norm);
 		for (int i = 0; i < WHEELCOUNT; i++)
 		{
 			//ROS_INFO_STREAM("PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
