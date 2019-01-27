@@ -1,5 +1,6 @@
 float32 elevator_setpoint
 float32 motor_power #only used for cargo intake, in case we want to spin out
 ---
+bool timed_out
 bool success
 ---

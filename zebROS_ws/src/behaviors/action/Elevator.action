@@ -1,4 +1,5 @@
-float32 elevator_setpoint 
+float32 setpoint 
 ---
-bool result
+bool timed_out
+bool success
 ---
