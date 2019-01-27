@@ -1,3 +1,5 @@
 float32 elevator_setpoint   #shouldn't need to send this, we should already know the setpoint we need to go to
 ---
+bool timed_out
+bool success
 ---

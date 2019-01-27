@@ -1,4 +1,5 @@
 float32 elevator_setpoint
 ---
+bool timed_out
 bool success
 ---

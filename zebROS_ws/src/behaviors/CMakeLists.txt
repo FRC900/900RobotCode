@@ -84,6 +84,7 @@ add_action_files(
 	Intake.action
 	Place.action
 	Climb.action
+	Elevator.action
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -130,20 +131,32 @@ generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
 catkin_package(
    INCLUDE_DIRS include
    #LIBRARIES behaviors
-   CATKIN_DEPENDS actionlib nav_msgs roscpp rospy std_msgs
+   CATKIN_DEPENDS actionlib_msgs actionlib nav_msgs roscpp rospy std_msgs
    DEPENDS 
 )
-# add_executable(arm_server_node src/arm_server.cpp)
-# target_link_libraries(arm_server_node ${catkin_LIBRARIES})
-# add_dependencies(arm_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-# 
-# add_executable(forearm_server_node src/forearm_server.cpp)
-# target_link_libraries(forearm_server_node ${catkin_LIBRARIES})
-# add_dependencies(forearm_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-# 
-# add_executable(intake_server_node src/intake_server.cpp)
-# target_link_libraries(intake_server_node ${catkin_LIBRARIES})
-# add_dependencies(intake_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(intake_cargo_server src/intake_cargo_server.cpp)
+target_link_libraries(intake_cargo_server ${catkin_LIBRARIES})
+add_dependencies(intake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+#add_executable(elevator_server src/elevator_server.cpp)
+#target_link_libraries(elevator_server ${catkin_LIBRARIES})
+#add_dependencies(elevator_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#
+#add_executable(intake_hatch_panel_server src/intake_hatch_panel_server.cpp)
+#target_link_libraries(intake_hatch_panel_server ${catkin_LIBRARIES})
+#add_dependencies(intake_hatch_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#
+#add_executable(climber_server src/climber_server.cpp)
+#target_link_libraries(climber_server ${catkin_LIBRARIES})
+#add_dependencies(climber_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#
+#add_executable(outtake_cargo_server src/outtake_cargo_server.cpp)
+#target_link_libraries(outtake_cargo_server ${catkin_LIBRARIES})
+#add_dependencies(outtake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#
+#add_executable(outtake_hatch_panel_server src/outtake_hatch_panel_server.cpp)
+#target_link_libraries(outtake_hatch_panel_server ${catkin_LIBRARIES})
+#add_dependencies(outtake_hatch_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #add_executable(dummy src/dummy.cpp)
 #target_link_libraries(
