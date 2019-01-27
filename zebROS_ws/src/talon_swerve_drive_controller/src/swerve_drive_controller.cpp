@@ -349,7 +349,6 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	}
 
 	sub_command_ = controller_nh.subscribe("cmd_vel", 1, &TalonSwerveDriveController::cmdVelCallback, this);
-	talon_states_sub_ = controller_nh.subscribe("/frcrobot_jetson/talon_states", 1, &TalonSwerveDriveController::talonStatesCB, this);
 	brake_serv_ = controller_nh.advertiseService("brake", &TalonSwerveDriveController::brakeService, this);
 	motion_profile_serv_ = controller_nh.advertiseService("run_profile", &TalonSwerveDriveController::motionProfileService, this);
 	wheel_pos_serv_ = controller_nh.advertiseService("wheel_pos", &TalonSwerveDriveController::wheelPosService, this);
@@ -855,7 +854,10 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		// Make controller only set CustomProfileRun once, so that it can
 		// be cleared out by the hwi if needed when e.g. disabling the robot
 		set_profile_run = true;
-		if(outOfPoints.load(std::memory_order_relaxed))
+
+		// Assume all joints are running the same length profile and thus have
+		// the same outOfPoints status
+		if(steering_joints_[0].getCustomProfileStatus().outOfPoints)
 		{
 			ROS_WARN("profile_reset");
 			//required for reset
@@ -1025,26 +1027,6 @@ void TalonSwerveDriveController::cmdVelCallback(const geometry_msgs::Twist &comm
 	{
 		ROS_ERROR_NAMED(name_, "Can't accept new commands. Controller is not running.");
 	}
-}
-
-void TalonSwerveDriveController::talonStatesCB(const talon_state_controller::TalonState &talon_state)
-{
-	static size_t bl_angle_idx = std::numeric_limits<size_t>::max();
-
-	if (bl_angle_idx >= talon_state.name.size())
-	{
-		for (size_t i = 0; i < talon_state.name.size(); i++)
-		{
-			if (talon_state.name[i] == "bl_angle")
-			{
-				bl_angle_idx = i;
-				break;
-			}
-		}
-	}
-
-	if (bl_angle_idx < talon_state.custom_profile_status.size())
-		outOfPoints.store(talon_state.custom_profile_status[bl_angle_idx].outOfPoints, std::memory_order_relaxed);
 }
 
 bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_controller::MotionProfilePoints::Request &req, talon_swerve_drive_controller::MotionProfilePoints::Response &/*res*/)

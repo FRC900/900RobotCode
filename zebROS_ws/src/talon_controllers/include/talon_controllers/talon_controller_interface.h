@@ -1246,6 +1246,11 @@ class TalonControllerInterface
             talon_->overwriteCustomProfilePoints(points, slot);
         }
 
+		hardware_interface::CustomProfileStatus getCustomProfileStatus(void)
+		{
+			return talon_.state()->getCustomProfileStatus();
+		}
+
 		//Does the below function need to be accessable?
 		//#if 0
         std::vector<hardware_interface::CustomProfilePoint> getCustomProfilePoints(int slot) /*const*/ //TODO, can be const?

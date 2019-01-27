@@ -244,15 +244,11 @@ class TalonSwerveDriveController
 		size_t wheel_joints_size_;
 
 		/// Speed limiters:
-		Commands last1_cmd_;
-		Commands last0_cmd_;
+		//Commands last1_cmd_;
+		//Commands last0_cmd_;
 
 		/// Publish limited velocity:
 		bool publish_cmd_;
-		
-		/// Talon state which is read from the callback, used for outOfPoints
-		talon_state_controller::TalonState talon_state_;
-		std::atomic<bool> outOfPoints;
 
 		/**
 		 * \brief Brakes the wheels, i.e. sets the velocity to 0
