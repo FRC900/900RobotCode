@@ -43,10 +43,10 @@ class CargoIntakeAction {
 		service_connection_header["tcp_nodelay"] = "1";
 
 		//initialize the client being used to call the controller
-		controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+		controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 
 		//start subscribers subscribing
-		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
+		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
 	}
 
 		~CargoIntakeAction(void) 

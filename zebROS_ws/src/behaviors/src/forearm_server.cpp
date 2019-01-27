@@ -13,7 +13,8 @@ class ForearmAction
         ros::NodeHandle nh_;
         actionlib::SimpleActionServer<behaviors::ForearmAction> as_;
         std::string action_name_;
-        behaviors::ForearmFeedback feedback_;
+        behaviors::ForearmFeedback f
+			eedback_;
         behaviors::ForearmResult result_;
 
         
