@@ -2,8 +2,6 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-#include <functional>
-#include <cmath>
 #include <ros/console.h>
 using namespace std;
 using namespace Eigen;
