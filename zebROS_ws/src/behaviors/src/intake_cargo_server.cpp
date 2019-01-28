@@ -52,13 +52,8 @@ class CargoIntakeAction {
 		//initialize action client to call actionlib server
 
 		//initialize the client being used to call the controller
-<<<<<<< HEAD
-		controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
-=======
 		ros::ServiceClient cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 		ros::ServiceClient elevator_controller_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
->>>>>>> 6cdf3eeae1d18f03d0a6f649c8ea30cf93f0b66b
-
 		//start subscribers subscribing
 		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
 	}
