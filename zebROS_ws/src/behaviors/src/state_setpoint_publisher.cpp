@@ -9,7 +9,9 @@
 #include "teraranger_array/RangeArray.h"
 #include "std_msgs/Bool.h"
 #include "std_srvs/SetBool.h"
-#include "sensor_msgs/JointState.h"
+#include "sensor_msgs/Imu.h"
+#include "tf2/LinearMath/Quaternion.h"
+#include "tf2/LinearMath/Matrix3x3.h"
 
 bool publish;
 
@@ -22,17 +24,6 @@ std_msgs::Float64 y_state_msg;
 std_msgs::Float64 orient_setpoint_msg;
 std_msgs::Float64 y_target_msg;
 std_msgs::Bool pid_enable_msg;
-
-// TODO : none of these either - make them local in main()
-ros::Subscriber world_vector_sub;
-ros::Publisher orient_setpoint;
-ros::Publisher orient_state;
-ros::Publisher y_setpoint;
-ros::Publisher y_state;
-ros::Publisher navx_setpoint;
-ros::Publisher navx_state;
-ros::Publisher pid_enable;
-ros::ServiceServer run_align;
 
 double distance_between_sensors = 0.3937;
 
@@ -50,17 +41,23 @@ void distanceCB(const teraranger_array::RangeArray& msg)
 // value used to zero navX readings, but I don't think that is what we
 // want here. Check out the navX callback in the swerve drive controller
 // to see how to read navX heading
-void jointStatesCB(const sensor_msgs::JointState& msg)
+void jointStatesCB(const sensor_msgs::Imu& msg)
 {
-	navx_angle_state = msg.position[2];
+    const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
+    double roll;
+    double pitch;
+    double yaw;
+    tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
+
+    if (yaw == yaw) // ignore NaN results
+		navx_angle_state = yaw;
 }
 
 bool align_service(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
 {
 	publish = req.data;
 	res.success = true;
-	// TODO : shouldn't this return true?
-	return 0;
+	return true;
 }
 
 int main(int argc, char ** argv)
@@ -74,29 +71,29 @@ int main(int argc, char ** argv)
 
 	//state subscribers
 	ros::Subscriber distance_sub = nh.subscribe("multiflex_1/ranges_raw", 1, distanceCB);
-	ros::Subscriber angle_sub = nh.subscribe("joint_states", 1, jointStatesCB);
+	ros::Subscriber angle_sub = nh.subscribe("navx_mxp", 1, jointStatesCB);
 
 	//required pid_enable topic for the pid node
 	// TODO : consider how namespaces are doing to work, since I assume
 	// we'll eventually have multiple PID controllers running.
 	// It might be easy enough to set up using namespaces, but
 	// prepare for it now?
-	pid_enable = nh.advertise<std_msgs::Bool>("pid_enable", 1);
+	ros::Publisher pid_enable = nh.advertise<std_msgs::Bool>("pid_enable", 1);
 
 	//sets true/false to PID node
-	run_align = nh.advertiseService("run_align", align_service);
+	ros::ServiceServer run_align = nh.advertiseService("run_align", align_service);
 
 	//setpoint and state publishers
 	// TODO : all of these should be locals
-	orient_setpoint = nh.advertise<std_msgs::Float64>("orient_setpoint", 1);
-	orient_state = nh.advertise<std_msgs::Float64>("orient_state", 1);
-	y_setpoint = nh.advertise<std_msgs::Float64>("y_setpoint", 1);
-	y_state = nh.advertise<std_msgs::Float64>("y_state", 1);
-	navx_setpoint = nh.advertise<std_msgs::Float64>("navx_setpoint", 1);
-	navx_state = nh.advertise<std_msgs::Float64>("navx_state", 1);
+	ros::Publisher orient_setpoint = nh.advertise<std_msgs::Float64>("orient_setpoint", 1);
+	ros::Publisher orient_state = nh.advertise<std_msgs::Float64>("orient_state", 1);
+	ros::Publisher y_setpoint = nh.advertise<std_msgs::Float64>("y_setpoint", 1);
+	ros::Publisher y_state = nh.advertise<std_msgs::Float64>("y_state", 1);
+	ros::Publisher navx_setpoint = nh.advertise<std_msgs::Float64>("navx_setpoint", 1);
+	ros::Publisher navx_state = nh.advertise<std_msgs::Float64>("navx_state", 1);
 
-	// TODO : set a ROS rate here which matches the fastest data
-	// is expected to show up
+	ros::Rate r(100);
+
 	while(ros::ok())
 	{
 		orient_setpoint.publish(orient_setpoint_msg);
@@ -120,6 +117,7 @@ int main(int argc, char ** argv)
 		pid_enable.publish(pid_enable_msg);
 
 		ros::spinOnce();
+		r.sleep();
 	}
 
 	return 0;
