@@ -184,7 +184,7 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
  install(FILES
-   navx_controller_plugins.xml
+   navx_offset_controller_plugins.xml
    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
  )
 
