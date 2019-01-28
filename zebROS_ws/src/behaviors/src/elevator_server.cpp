@@ -67,7 +67,7 @@ class ElevatorAction {
 
             while(!success && !timed_out && !preempted) {
                 success = fabs(cur_position - setpoint) < elevator_position_deadzone;
-                if(as_.isPreemptRequested() || !ros::ok()) {
+				if(as_.isPreemptRequested() || !ros::ok()) {
                     ROS_ERROR("%s: Preempted", action_name_.c_str());
 					as_.setPreempted();
 					preempted = true;
@@ -76,6 +76,7 @@ class ElevatorAction {
 					r.sleep();
 					ros::spinOnce();
 				}
+				timed_out = ros::Time::now().toSec() - start_time > timeout;
 			}
 
 			//log state of action and set result of action
