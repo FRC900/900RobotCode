@@ -2,19 +2,13 @@
 #include <array>
 #include <swerve_math/SwerveMath.h>
 #include <ros/ros.h>
-#include <ros/console.h>
 
 using namespace std;
 
-// TODO : use intializer list
-// Make arg const &
-swerveDriveMath::swerveDriveMath(array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinate)
+swerveDriveMath::swerveDriveMath(const array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate)
+	: wheelCoordinate_(wheelCoordinate)
+	, parkingAngle_(parkingAngles())
 {
-	wheelCoordinate_ = wheelCoordinate;
-	parkingAngle_ = parkingAngles();
-	//The below coordinate pair can potentially change, it is relative to the wheel coordinates
-	Eigen::Vector2d baseRotationCenter = {0, 0};
-	baseWheelMultipliersXY_ = wheelMultipliersXY(baseRotationCenter);
 }
 
 //used for varying center of rotation and must be run once for initialization
@@ -22,12 +16,11 @@ array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelMultipliersXY(const Eig
 {
 	array<double, WHEELCOUNT> wheelAngles;
 	array<double, WHEELCOUNT> wheelMultipliers;
-	//int size =  wheelCoordinate::size;
 	for (int i = 0; i < WHEELCOUNT; i++) //increment for each wheel
 	{
-		double x = wheelCoordinate_[i][0] - rotationCenter[0];
-		double y = wheelCoordinate_[i][1] - rotationCenter[1];
-		wheelMultipliers[i] = -sqrt(x * x + y * y); // TODO : use hypot function
+		const double x = wheelCoordinate_[i][0] - rotationCenter[0];
+		const double y = wheelCoordinate_[i][1] - rotationCenter[1];
+		wheelMultipliers[i] = -hypot(x, y);
 		wheelAngles[i] = atan2(x, y) + .5 * M_PI;
 	}
 	normalize(wheelMultipliers, true);
@@ -37,29 +30,20 @@ array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelMultipliersXY(const Eig
 		multipliersXY[i][0] = wheelMultipliers[i] * cos(wheelAngles[i]);
 		multipliersXY[i][1] = wheelMultipliers[i] * sin(wheelAngles[i]);
 	}
-	return multipliersXY; //change to array
+	return multipliersXY;
 }
+
 //Below function calculates wheel speeds and angles for some target rotation and translation velocity
 //Rotation is positive counter clockwise
 //Angle is the angle of the gyro for field centric driving
 //In radians, 0 is horizontal, increases counterclockwise
 //For non field centric set angle to pi/2
-// TODO : pass array as const & argument
 array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelSpeedsAngles(const array<Eigen::Vector2d, WHEELCOUNT> &wheelMultipliersXY, const Eigen::Vector2d &velocityVector, double rotation, double angle, bool norm) const
 {
-	/*if (rotation == 0 && velocityVector[0] == 0 && velocityVector[1] == 0)
-	{
-	return
-	}
-	*/
-
-	//Parking config isn't handled here
-	//The code commented out above is an outline of how it could be handled here.
-	//Only call function if the robot should be moving.
-
 	//Rotate the target velocity by the robots angle to make it field centric
-	Eigen::Rotation2Dd r(M_PI / 2 - angle);
-	Eigen::Vector2d rotatedVelocity = r.toRotationMatrix() * velocityVector;
+	const Eigen::Rotation2Dd r(M_PI / 2 - angle);
+	const Eigen::Vector2d rotatedVelocity = r.toRotationMatrix() * velocityVector;
+
 	//Should this instead be a function in 900Math of the form: rotate(vector, angle) rather than 2 lines of eigen stuff?
 	array<double, WHEELCOUNT> speeds;
 	array<double, WHEELCOUNT> angles;
@@ -89,6 +73,7 @@ array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelSpeedsAngles(const arra
 	}
 	return speedsAngles;
 }
+
 array<double, WHEELCOUNT> swerveDriveMath::parkingAngles(void) const
 {
 	//only must be run once to determine the angles of the wheels in parking config
