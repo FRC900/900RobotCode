@@ -6,8 +6,8 @@
 using namespace std;
 
 swerveDriveMath::swerveDriveMath(const array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate)
-	: wheelCoordinate_(wheelCoordinate)
-	, parkingAngle_(parkingAngles())
+	: parkingAngle_(parkingAngles())
+	, wheelCoordinate_(wheelCoordinate)
 {
 }
 

@@ -1,24 +1,6 @@
 #include <math.h>
 #include "swerve_math/900Math.h"
 
-/*
-//Run once somewhere
-//The following is code to generate a limited square root look up table for improved performance.
-float lookup_table[2000];
-for(int i = 0; i < sizeof(lookup_table)/sizeof(lookup_table[0]); i++) {
-	float num = i/1000.0;
-	float sqrt_num = sqrt(num);
-	lookup_table[i] = sqrt_num;
-}
-*/
-
-/*
-double pythaguptotwo(double a, double b)
-{
-	return lookup_table[a*a+b*b];
-}
-*/
-
 double sign(double number)
 {
 	return (number > 0) ? 1 : ((number < 0) ? -1 : 0);
@@ -37,9 +19,9 @@ double leastDistantAngleWithinHalfPi(double currentAngle, double targetAngle, bo
 {
 	//returns the closest angle to the current angle = to x*.5*M_PI + target angle where x is any integer
 	//used for turning wheels to the target angle (swerve)
-	double normalizedDiff = normalizeAngle(targetAngle) - normalizeAngle(currentAngle);
+	const double normalizedDiff = normalizeAngle(targetAngle) - normalizeAngle(currentAngle);
 
-	double withinPi = (fabs(normalizedDiff) < M_PI) ? normalizedDiff : (normalizedDiff - (2 * M_PI * sign(normalizedDiff)));
+	const double withinPi = (fabs(normalizedDiff) < M_PI) ? normalizedDiff : (normalizedDiff - (2 * M_PI * sign(normalizedDiff)));
 	double withinHalfPi;
 
 	if (fabs(withinPi) < (M_PI / 2) )
@@ -57,8 +39,8 @@ double leastDistantAngleWithinHalfPi(double currentAngle, double targetAngle, bo
 
 double leastDistantAngleWithinPi(double currentAngle, double targetAngle)
 {
-	double normalizedDiff = normalizeAngle(targetAngle) - normalizeAngle(currentAngle);
-	double withinPi = (fabs(normalizedDiff) < M_PI) ? normalizedDiff : (normalizedDiff - (2 * M_PI * sign(normalizedDiff)));
+	const double normalizedDiff = normalizeAngle(targetAngle) - normalizeAngle(currentAngle);
+	const double withinPi = (fabs(normalizedDiff) < M_PI) ? normalizedDiff : (normalizedDiff - (2 * M_PI * sign(normalizedDiff)));
 	return withinPi + currentAngle;
 }
 
@@ -67,8 +49,10 @@ double normalizeAngle(double angle) //normalizes between -M_PI and M_PI
 	return angle - floor((angle + M_PI) / (2 * M_PI)) * 2.0 * M_PI;
 }
 
+#if 0
 double coerce(double value, double lowerBound, double upperBound)
 {
 	return (value < lowerBound) ? lowerBound : (value > upperBound) ? upperBound : value;
 }
 
+#endif

@@ -137,14 +137,14 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		double total_length_x = 0;
 		double total_length_y = 0;
 		double total_length_theta = 0;
-		for(int i = 0; i < srv_msg.points.size(); i++)
+		for(size_t i = 0; i < srv_msg.points.size(); i++)
 		{
 			total_length_x += srv_msg.points[i].velocities[0] * defined_dt;
 			total_length_y += srv_msg.points[i].velocities[1] * defined_dt;
 			total_length_theta += srv_msg.points[i].velocities[2] * defined_dt;
 		}
 		ROS_ERROR_STREAM("total_length_x = " << total_length_x << " total_length_y = " <<  total_length_y << " total_length_theta = " << total_length_theta);
-		for(int i = 0; i < srv_msg.points.size(); i++)
+		for(size_t i = 0; i < srv_msg.points.size(); i++)
 		{
 			ROS_INFO_STREAM(srv_msg.points[i].positions[0] << " " << srv_msg.points[i].positions[1] << " " << srv_msg.points[i].positions[2]);
 		}
@@ -154,8 +154,6 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 
 		//ROS_WARN("BUFFERING");
 		//TODO: optimize code?
-
-		std::array<bool, WHEELCOUNT> holder;
 
 		//Do first point and initialize stuff
 
@@ -188,13 +186,13 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 			}
 		}
 		ROS_INFO_STREAM("velocity vector = " << srv_msg.points[1].positions[0] - srv_msg.points[0].positions[0] << " " << srv_msg.points[1].positions[1] - srv_msg.points[0].positions[1] << " rotation = " << srv_msg.points[1].positions[2] - srv_msg.points[0].positions[2] << " angle = " << srv_msg.points[1].positions[2]);
-		const std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions  = swerve_math->motorOutputs({srv_msg.points[1].positions[0] - srv_msg.points[0].positions[0], srv_msg.points[1].positions[1] - srv_msg.points[0].positions[1]}, srv_msg.points[1].positions[2] - srv_msg.points[0].positions[2], srv_msg.points[1].positions[2], false, holder, false, curPos, false);
+		const std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions  = swerve_math->motorOutputs({srv_msg.points[1].positions[0] - srv_msg.points[0].positions[0], srv_msg.points[1].positions[1] - srv_msg.points[0].positions[1]}, srv_msg.points[1].positions[2] - srv_msg.points[0].positions[2], srv_msg.points[1].positions[2], curPos, false);
 		//TODO: angles on the velocity array below are superfluous, could remove
 		//std::array<Eigen::Vector2d, WHEELCOUNT> angles_velocities  = swerve_math->motorOutputs({srv_msg.points[1].velocities[0], srv_msg.points[1].velocities[1]}, -srv_msg.points[1].velocities[2], /*srv_msg.points[1].positions[2]*/ M_PI / 2.0, false, holder, false, curPos, false);
 		for (size_t k = 0; k < WHEELCOUNT; k++)
 			curPos[k] = angles_positions[k][1];
 
-		for(int i = 0; i < angles_positions.size(); i++)
+		for(size_t i = 0; i < angles_positions.size(); i++)
 		{
 			ROS_INFO_STREAM("at wheel " << i << " angles_positions = " << angles_positions[i][0] << " " << angles_positions[i][1]);
 		}
@@ -240,11 +238,11 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		}
 		for (int i = 0; i < point_count - k_p; i++)
 		{
-			const std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions  = swerve_math->motorOutputs({srv_msg.points[i + 1].positions[0] - srv_msg.points[i].positions[0], srv_msg.points[i + 1].positions[1] - srv_msg.points[i].positions[1]}, srv_msg.points[i + 1].positions[2] - srv_msg.points[i].positions[2], srv_msg.points[i + 1].positions[2], false, holder, false, curPos, false);
+			const std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions  = swerve_math->motorOutputs({srv_msg.points[i + 1].positions[0] - srv_msg.points[i].positions[0], srv_msg.points[i + 1].positions[1] - srv_msg.points[i].positions[1]}, srv_msg.points[i + 1].positions[2] - srv_msg.points[i].positions[2], srv_msg.points[i + 1].positions[2], curPos, false);
 			//TODO: angles on the velocity array below are superfluous, could remove
-			std::array<Eigen::Vector2d, WHEELCOUNT> angles_velocities  = swerve_math->motorOutputs({srv_msg.points[i + 1].velocities[0], srv_msg.points[i + 1].velocities[1]}, srv_msg.points[i + 1].velocities[2], srv_msg.points[i + 1].positions[2], false, holder, false, curPos, false);
+			std::array<Eigen::Vector2d, WHEELCOUNT> angles_velocities  = swerve_math->motorOutputs({srv_msg.points[i + 1].velocities[0], srv_msg.points[i + 1].velocities[1]}, srv_msg.points[i + 1].velocities[2], srv_msg.points[i + 1].positions[2], curPos, false);
 
-			for(int i = 0; i < angles_positions.size(); i++)
+			for(size_t i = 0; i < angles_positions.size(); i++)
 			{
 				//ROS_INFO_STREAM("at wheel " << i << " angles_positions = " << angles_positions[i][0] << " " << angles_positions[i][1]);
 			}
@@ -317,7 +315,6 @@ int main(int argc, char **argv)
 	ros::NodeHandle controller_nh(nh, "swerve_drive_controller");
 
 	//double wheel_radius;
-	bool invert_wheel_angle;
 	swerveVar::ratios drive_ratios;
 	swerveVar::encoderUnits units;
 	double max_accel;
@@ -354,8 +351,6 @@ int main(int argc, char **argv)
 	// TODO : why not just use the number of wheels read from yaml?
 	if (!controller_nh.getParam("motor_quantity", model.motorQuantity))
 		ROS_ERROR("Could not read motor_quantity in point_gen");
-	if (!controller_nh.getParam("invert_wheel_angle", invert_wheel_angle))
-		ROS_ERROR("Could not read invert_wheel_angle in point_gen");
 	if (!controller_nh.getParam("ratio_encoder_to_rotations", drive_ratios.encodertoRotations))
 		ROS_ERROR("Could not read ratio_encoder_to_rotations in point_gen");
 	if (!controller_nh.getParam("ratio_motor_to_rotations", drive_ratios.motortoRotations))
@@ -414,7 +409,7 @@ int main(int argc, char **argv)
 		offsets.push_back(dbl_val);
 	}
 
-	swerve_math = std::make_shared<swerve>(wheel_coords, offsets, invert_wheel_angle, drive_ratios, units, model);
+	swerve_math = std::make_shared<swerve>(wheel_coords, offsets, drive_ratios, units, model);
 	defined_dt = .02;
 	profile_gen = std::make_shared<swerve_profile::swerve_profiler>(hypot(wheel_coords[0][0], wheel_coords[0][1]), max_accel, model.maxSpeed, 1, 1, defined_dt, ang_accel_conv, max_brake_accel); //Fix last val
 	//Something to get intial wheel position
