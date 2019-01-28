@@ -23,4 +23,4 @@ actionlib_lift_params:
         climb_setpoint: -1.0
     max_speed: -1.0
     timeout: 4
-    elevator_deadzone: -1.0
+    elevator_position_deadzone: -1.0

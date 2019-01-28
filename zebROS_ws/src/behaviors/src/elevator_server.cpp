@@ -4,18 +4,23 @@
 #include <elevator_controller/ElevatorSrv.h>
 #include <talon_state_controller/TalonState.h>
 
-double elevator_deadzone;
-class ElevatorAction
-{
+double elevator_position_deadzone;
+double cur_position; //Variable used to store current elevator position
+
+class ElevatorAction {
     protected:
         ros::NodeHandle nh_;
         actionlib::SimpleActionServer<behaviors::ElevatorAction> as_;
         std::string action_name_;
+
+		//Define Feedback and result messages
         behaviors::ElevatorFeedback feedback_;
         behaviors::ElevatorResult result_;
 
+		//Define service client to control elevator
         ros::ServiceClient elevator_client_;
 
+		//Subscriber to monitor talon positions
         ros::Subscriber talon_states_sub;
 
         double elevator_cur_setpoint_;
@@ -51,18 +56,9 @@ class ElevatorAction
 			bool preempted = false;
             bool timed_out = false;
 
-            elevator_controller::SetElevatorState srv;
-            srv.request.position = goal->elevator_setpoint;
-            elevator_client_.call(srv);
-
 			//Initialize start time of execution
             double start_time = ros::Time::now().toSec();
 			double setpoint = goal->setpoint;
-
-            ROS_ERROR("Timeout: %d", goal->timeout);
-            while(!success && !timed_out && !preempted) {
-                success = fabs(goal->elevator_setpoint - elevator_cur_command) < elevator_deadzone;
-				time_out = (ros::Time::now().toSec()-start_time) >intake_timeout;
 
 			//Send setpoint to elevator controller
             elevator_controller::SetElevatorState srv;
@@ -70,9 +66,9 @@ class ElevatorAction
             elevator_client_.call(srv); //Send command to elevator controller
 
             while(!success && !timed_out && !preempted) {
-                success = fabs(arm_angle - setpoint) < arm_angle_deadzone;
+                success = fabs(cur_position - setpoint) < elevator_position_deadzone;
                 if(as_.isPreemptRequested() || !ros::ok()) {
-                    ROS_WARN("%s: Preempted", action_name_.c_str());
+                    ROS_ERROR("%s: Preempted", action_name_.c_str());
 					as_.setPreempted();
 					preempted = true;
 				}
@@ -81,44 +77,47 @@ class ElevatorAction
 					ros::spinOnce();
 				}
 			}
-		}
-		//log state of action and set result of action
-		if(timed_out)
-		{
-			ROS_INFO("%s:Timed Out", action_name_.c_str());
-		}
-		else if(preempted)
-		{
-			ROS_INFO("%s:Preempted", action_name_.c_str());
-		}
-		else //implies succeeded
-		{
-			ROS_INFO("%s:Succeeded", action_name_.c_str());
+
+			//log state of action and set result of action
+			if(timed_out)
+			{
+				ROS_INFO("%s:Timed Out", action_name_.c_str());
+			}
+			else if(preempted)
+			{
+				ROS_INFO("%s:Preempted", action_name_.c_str());
+			}
+			else //implies succeeded
+			{
+				ROS_INFO("%s:Succeeded", action_name_.c_str());
+			}
+
+			result_.timed_out = timed_out;//timed_out refers to last controller call, but applies for whole action
+			result_.success = success; //success refers to last controller call, but applies for whole action
+			as_.setSucceeded(result_); //pretend it succeeded no matter what, but tell what actually happened with the result - helps with SMACH
+			return;
 		}
 
-		result_.timed_out = timed_out;//timed_out refers to last controller call, but applies for whole action
-		result_.success = success; //success refers to last controller call, but applies for whole action
-		as_.setSucceeded(result_); //pretend it succeeded no matter what, but tell what actually happened with the result - helps with SMACH
-		return;
-	}
-	void talonStateCallback(const talon_state_controller::TalonState &talon_state)
-	{
-		static size_t elevator_master_idx = std::numeric_limits<size_t>::max();
-		if (elevator_master_idx >= talon_state.name.size())
+
+		void talonStateCallback(const talon_state_controller::TalonState &talon_state)
 		{
-			for (size_t i = 0; i < talon_state.name(); i++)
+			static size_t elevator_master_idx = std::numeric_limits<size_t>::max();
+			if (elevator_master_idx >= talon_state.name.size())
 			{
-				if (talon_state.name[i] == "elevator_joint_") //figure out what actually goes here!!!
+				for (size_t i = 0; i < talon_state.name(); i++)
 				{
-					elevator_master_idx = i;
-					break;
+					if (talon_state.name[i] == "elevator_joint_") //TODO figure out what actually goes here
+					{
+						elevator_master_idx = i;
+						break;
+					}
 				}
 			}
-		}
-		else{
-			goal->elevator_setpoint = talon_state.position[elevator_master_idx];
+			else{
+				cur_position = talon_state.position[elevator_master_idx];
 			}
-	};
+		}
+};
 
 int main(int argc, char** argv)
 {
@@ -138,7 +137,7 @@ int main(int argc, char** argv)
 	if (!n_params.getParam("timeout", timeout))
 		ROS_ERROR("Could not read timeout in elevator_server");
 
-	if (!n_params.getParam("elevator_deadzone", elevator_deadzone))
+	if (!n_params.getParam("elevator_position_deadzone", elevator_position_deadzone))
 		ROS_ERROR("Could not read elevator_deadzone in elevator_server");
 
 	ros::spin();
