@@ -23,10 +23,10 @@ struct less<Eigen::Vector2d>
 	bool operator()(Eigen::Vector2d const& a, Eigen::Vector2d const& b)
 	{
 		assert(a.size()==b.size());
-		for(size_t i=0;i<a.size();++i)
+		for(int i = 0; i < a.size(); ++i)
 		{
-			if(a[i]<b[i]) return true;
-			if(a[i]>b[i]) return false;
+			if (a[i] < b[i]) return true;
+			if (a[i] > b[i]) return false;
 		}
 		return false;
 	}
@@ -69,11 +69,21 @@ struct driveModel
 class swerve
 {
 	public:
-		swerve(std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinates, std::vector<double> offsets, bool wheelAngleInvert, swerveVar::ratios ratio, swerveVar::encoderUnits units, swerveVar::driveModel drive);
+		swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinates,
+			   const std::vector<double> &offsets,
+			   const swerveVar::ratios &ratio,
+			   const swerveVar::encoderUnits &units,
+			   const swerveVar::driveModel &drive);
 
-		std::array<Eigen::Vector2d, WHEELCOUNT> motorOutputs(Eigen::Vector2d velocityVector, double rotation, double angle, bool forceRead, std::array<bool, WHEELCOUNT> &reverses, bool park, const std::array<double, WHEELCOUNT> &positionsNew, bool norm, const Eigen::Vector2d &centerOfRotation = Eigen::Vector2d{0,0});
 		//for non field centric drive set angle = pi/2
-		//if rotationCenterID == 0 we will use the base center of rotation
+		std::array<Eigen::Vector2d, WHEELCOUNT> motorOutputs(Eigen::Vector2d velocityVector,
+														     double rotation,
+														     double angle,
+														     const std::array<double, WHEELCOUNT> &positionsNew,
+														     bool norm,
+														     const Eigen::Vector2d &centerOfRotation = Eigen::Vector2d{0,0});
+		std::array<double, WHEELCOUNT> parkingAngles(const std::array<double, WHEELCOUNT> &positionsNew);
+
 		void saveNewOffsets(bool useVals, std::array<double, WHEELCOUNT> newOffsets, std::array<double, WHEELCOUNT> newPosition); //should these be doubles?
 		//Note that unless you pass vals in and set useVals to true, it will use the current wheel positions, wheels should be pointing to the right.
 		//Eigen::Vector2d currentOdom;
