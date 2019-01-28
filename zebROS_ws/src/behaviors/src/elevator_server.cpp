@@ -106,7 +106,7 @@ class ElevatorAction {
 			{
 				for (size_t i = 0; i < talon_state.name(); i++)
 				{
-					if (talon_state.name[i] == "elevator_joint_") //TODO figure out what actually goes here
+					if (talon_state.name[i] == "elevator_joint") //TODO figure out what actually goes here
 					{
 						elevator_master_idx = i;
 						break;

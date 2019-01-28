@@ -113,7 +113,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 	INCLUDE_DIRS include
-	#  LIBRARIES cargo_intake_controller
+	LIBRARIES cargo_outtake_controller
 	CATKIN_DEPENDS roscpp rospy std_msgs realtime_tools hardware_interface controller_interface message_generation message_runtime pluginlib talon_interface talon_controllers
 	#  DEPENDS system_lib
 	)
