@@ -22,10 +22,10 @@ class ClimbAction {
 
 		actionlib::SimpleActionServer<behaviors::ClimbAction> as_; //create the actionlib server
 		std::string action_name_;
-		
+
 		//create clients to call other actionlib servers
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ae_; //to call the elevator
-		
+
 		//create clients/subscribers to activate controllers
 		ros::ServiceClient elevator_controller_client_; //create a ros client to send requests to the climber controller (piston in the leg)
 		ros::Publisher cmd_vel_pub_;

@@ -15,24 +15,26 @@ class ElevatorAction
         behaviors::ElevatorResult result_;
 
         ros::ServiceClient elevator_client_;
-		ros::ServiceClient elevator_cur_command_;
 
         ros::Subscriber talon_states_sub;
 
-        double elevator_cur_command_;
+        double elevator_cur_setpoint_;
 
     public:
         ElevatorAction(std::string name) :
             as_(nh_, name, boost::bind(&ElevatorAction::executeCB, this, _1), false),
             action_name_(name)
         {
+			as_.start();
+
+			//Service networking things?
             std::map<std::string, std::string> service_connection_header;
             service_connection_header["tcp_nodelay"] = "1";
 
-            elevator_client_ = nh_.serviceClient<elevator_controller::SetElevatorState>("/frcrobot/elevator_controller/elevator_state_service", false, service_connection_header);
-            elevator_cur_command_ = nh_.serviceClient<elevator_controller::SetElevatorState>("/frcrobot/elevator_controller/elevator_cur_command", false, service_connection_header);
+			//Client for elevator controller
+            elevator_client_ = nh_.serviceClient<elevator_controller::SetElevatorState>("/frcrobot/elevator_controller/elevator_service", false, service_connection_header);
 
-			as_.start();
+			//Talon states subscriber
             talon_states_sub = nh_.subscribe("/frcrobot/talon_states",1, &ElevatorAction::talonStateCallback, this);
         }
 
@@ -40,29 +42,35 @@ class ElevatorAction
 
         void executeCB(const behaviors::ElevatorGoalConstPtr &goal)
         {
-            ROS_INFO_STREAM("elevator_client running callback");
+            ROS_INFO_STREAM("%s: Running callback", action_name.c_str());
             ros::Rate r(10);
+
+
+			//Define variables that will be set to true once the server finishes executing
             bool success = false;
+			bool preempted = false;
             bool timed_out = false;
-            bool preempted = false;
 
             elevator_controller::SetElevatorState srv;
             srv.request.position = goal->elevator_setpoint;
             elevator_client_.call(srv);
 
-            elevator_controller::CurElevatorCommand srv_elevator_command;
-            if(elevator_cur_command_srv_.call(srv_arm_command)) {
-                elevator_cur_command = srv_elevator_command.response.cur_command;
-            }
-            else {
-                ROS_ERROR("Failed to call service elevator_cur_command_");
-            }
-
+			//Initialize start time of execution
             double start_time = ros::Time::now().toSec();
+			double setpoint = goal->setpoint;
+
             ROS_ERROR("Timeout: %d", goal->timeout);
             while(!success && !timed_out && !preempted) {
                 success = fabs(goal->elevator_setpoint - elevator_cur_command) < elevator_deadzone;
 				time_out = (ros::Time::now().toSec()-start_time) >intake_timeout;
+
+			//Send setpoint to elevator controller
+            elevator_controller::SetElevatorState srv;
+            srv.request.position = setpoint;
+            elevator_client_.call(srv); //Send command to elevator controller
+
+            while(!success && !timed_out && !preempted) {
+                success = fabs(arm_angle - setpoint) < arm_angle_deadzone;
                 if(as_.isPreemptRequested() || !ros::ok()) {
                     ROS_WARN("%s: Preempted", action_name_.c_str());
 					as_.setPreempted();
