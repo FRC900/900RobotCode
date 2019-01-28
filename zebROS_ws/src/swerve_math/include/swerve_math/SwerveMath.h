@@ -1,5 +1,4 @@
-#ifndef INC_SWERVE_MATH
-#define INC_SWERVE_MATH
+#pragma once
 #include <array>
 #include <vector>
 #include "900Math.h"
@@ -13,20 +12,20 @@ class swerveDriveMath
 		//There is likely a better way to handle WHEELCOUNT
 		//  TODO : yes, use vectors
 	public:
-		swerveDriveMath(std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinate);
+		swerveDriveMath(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate);
 		swerveDriveMath() {};
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheelMultipliersXY(const Eigen::Vector2d &rotationCenter);
 
-		std::array<Eigen::Vector2d, WHEELCOUNT> wheelSpeedsAngles(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelMultipliersXY, const Eigen::Vector2d &velocityVector, double rotation, double angle, bool norm) const; //for non field centric set angle to pi/2
+		//for non field centric set angle to pi/2
+		std::array<Eigen::Vector2d, WHEELCOUNT> wheelSpeedsAngles(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelMultipliersXY, const Eigen::Vector2d &velocityVector, double rotation, double angle, bool norm) const;
 
 		//Variables which need to be used externally
 		std::array<double, WHEELCOUNT> parkingAngle_;
-		std::array<Eigen::Vector2d, WHEELCOUNT> baseWheelMultipliersXY_;
 		//Wheel multipliers would need to be rerun if wheels somehow get moved around
 
 	private:
-		std::array<double, WHEELCOUNT> parkingAngles(void) const;
 		//only must be run once to determine the angles of the wheels in parking config
+		std::array<double, WHEELCOUNT> parkingAngles(void) const;
 
 		//movement wheelAverage(std::array<Eigen::Vector2d, WHEELCOUNT> wheelMove, double angle, bool rotation);
 
@@ -39,4 +38,3 @@ class swerveDriveMath
 			double rotation;
 		};
 };
-#endif
