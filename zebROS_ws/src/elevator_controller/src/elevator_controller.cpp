@@ -1,85 +1,175 @@
 #include "elevator_controller/elevator_controller.h"
+
 namespace elevator_controller
 {
+bool ElevatorController::init(hardware_interface::RobotHW *hw,
+		ros::NodeHandle                 &root_nh,
+		ros::NodeHandle                 &controller_nh)
+{
+	//create the interface used to initialize the talon joint
+	hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
+	
+	//hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
 
-	bool ElevatorController::init(hardware_interface::RobotHW *hw,
-			ros::NodeHandle                 &root_nh,
-			ros::NodeHandle                 &controller_nh)
-	{
-		//create the interface used to initialize the talon joint
-		hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
-		
-		//hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
-
-		//get config values for the elevator talon
-		XmlRpc::XmlRpcValue elevator_params;
-		if (!controller_nh.getParam("elevator_joint_",elevator_params))
-		{ ROS_ERROR("Could not find elevator_joint_");
-			return false;
-		}
-		
-		//initialize the elevator joint
-		if(!elevator_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, elevator_params))
-		{
-			ROS_ERROR("Cannot initialize elevator joint!");
-		}
-
-
-
-		// intake_in_ = pos_joint_iface->getHandle("clamp");
-		/*
-		//read intake name from config file
-		XmlRpc::XmlRpcValue intake_params;
-		if (!controller_nh.getParam("intake_joint", intake_params))
-		{
-		ROS_ERROR_STREAM("Can not read intake name");
+	//get config values for the elevator talon
+	XmlRpc::XmlRpcValue elevator_params;
+	if (!controller_nh.getParam("elevator_joint", elevator_params))
+	{ ROS_ERROR("Could not find elevator_joint");
 		return false;
+	}
+	
+	//initialize the elevator joint
+	if(!elevator_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, elevator_params))
+	{
+		ROS_ERROR("Cannot initialize elevator joint!");
+	}
+
+	//read locations for elevator placement for HATCH PANEL
+	double hatch_cargo_ship_position;
+	if (!controller_nh.getParam("hatch/cargo_ship_position", hatch_cargo_ship_position))
+	{
+		ROS_ERROR_STREAM("Could not read hatch_cargo_ship_position");
+		return false;
+	}
+	hatch_locations_.push_back(hatch_cargo_ship_position);
+
+	double hatch_rocket1_position;
+	if (!controller_nh.getParam("hatch/rocket1_position", hatch_rocket1_position))
+	{
+		ROS_ERROR_STREAM("Could not read hatch_rocket1_position");
+		return false;
+	}
+	hatch_locations_.push_back(hatch_rocket1_position);
+
+	double hatch_rocket2_position;
+	if (!controller_nh.getParam("hatch/rocket3_position", hatch_rocket2_position))
+	{
+		ROS_ERROR_STREAM("Could not read hatch_rocket2_position");
+		return false;
+	}
+	hatch_locations_.push_back(hatch_rocket2_position);
+
+	double hatch_rocket3_position;
+	if (!controller_nh.getParam("hatch/rocket3_position", hatch_rocket2_position))
+	{
+		ROS_ERROR_STREAM("Could not read hatch_rocket2_position");
+		return false;
+	}
+	hatch_locations_.push_back(hatch_rocket3_position);
+
+	//read locations for elevator placement for HATCH PANEL
+	double cargo_cargo_ship_position;
+	if (!controller_nh.getParam("cargo/cargo_ship_position", cargo_cargo_ship_position))
+	{
+		ROS_ERROR_STREAM("Could not read cargo_cargo_ship_position");
+		return false;
+	}
+	cargo_locations_.push_back(cargo_cargo_ship_position);
+
+	double cargo_rocket1_position;
+	if (!controller_nh.getParam("cargo/rocket1_position", cargo_rocket1_position))
+	{
+		ROS_ERROR_STREAM("Could not read cargo_rocket1_position");
+		return false;
+	}
+	cargo_locations_.push_back(cargo_rocket1_position);
+
+	double cargo_rocket2_position;
+	if (!controller_nh.getParam("cargo/rocket3_position", cargo_rocket2_position))
+	{
+		ROS_ERROR_STREAM("Could not read cargo_rocket2_position");
+		return false;
+	}
+	cargo_locations_.push_back(cargo_rocket2_position);
+
+	double cargo_rocket3_position;
+	if (!controller_nh.getParam("cargo/rocket3_position", cargo_rocket2_position))
+	{
+		ROS_ERROR_STREAM("Could not read cargo_rocket2_position");
+		return false;
+	}
+	cargo_locations_.push_back(cargo_rocket3_position);
+
+	// read elevator forward/reverse limits
+	double forward_soft_limit;
+	if (!controller_nh.getParam("forward_soft_limit", forward_soft_limit))
+	{
+		ROS_ERROR_STREAM("Could not read forward_soft_limit");
+		return false;
+	}
+	double reverse_soft_limit;
+	if (!controller_nh.getParam("reverse_soft_limit", reverse_soft_limit))
+	{
+		ROS_ERROR_STREAM("Could not read reverse_soft_limit");
+		return false;
+	}
+
+	elevator_joint_.setForwardSoftLimitThreshold(forward_soft_limit);
+	elevator_joint_.setReverseSoftLimitThreshold(reverse_soft_limit);
+	elevator_joint_.setForwardSoftLimitEnable(true);
+	elevator_joint_.setReverseSoftLimitEnable(true);
+
+	elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController::cmdService, this);
+
+	return true;
+}
+
+void ElevatorController::starting(const ros::Time &/*time*/) {
+}
+
+void ElevatorController::update(const ros::Time &time,const  ros::Duration &duration) 	// set the command to the spinny part of the intake
+{
+	int index = *(position_index_command_.readFromRT());
+	if(place_hatch_.readFromRT())
+	{
+		if(index < hatch_locations_.size())
+		{
+			elevator_joint_.setCommand(hatch_locations_[index]);
+			ROS_INFO_STREAM("setting elevator to " << hatch_locations_[index]);
 		}
-		*/
-		//initialize joint with that name
-		/* if (!intake_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, intake_params))
-		   {
-		   ROS_ERROR("Cannot initialize intake joint!");
-		   return false;
-		   }
-		   else
-		   {
-		   ROS_INFO("Initialized intake joint!");
-		   }
-
-*/
-		elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController::cmdService, this);
-
-		return true;
+		else
+			ROS_WARN_STREAM("invalid index in elevator_controller");
 	}
-
-	void ElevatorController::starting(const ros::Time &/*time*/) {
+	else if(place_cargo_.readFromRT())
+	{
+		if(index < cargo_locations_.size())
+		{
+			elevator_joint_.setCommand(cargo_locations_[index]);
+			ROS_INFO_STREAM("setting elevator to " << cargo_locations_[index]);
+		}
+		else
+			ROS_WARN_STREAM("invalid index in elevator_controller");
 	}
+	else
+		ROS_WARN_STREAM("if statements are broken");
 
-	void ElevatorController::update(const  ros::Time &time,const  ros::Duration &duration) 	// set the command to the spinny part of the intake
-			{
-			elevator_joint_.setCommand(*spin_command_.readFromRT()); 
-			}
+}
 
-			void ElevatorController::stopping(const ros::Time &time) {
-			}
+void ElevatorController::stopping(const ros::Time &time) {
+}
 
 
-			//Command Service Function
-
-			bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request &req, elevator_controller::ElevatorSrv::Response &response) {
-			if(isRunning())
-			{
-			spin_command_.writeFromNonRT(req.position); //take the service request for a certain amount of power (-1 to 1) and write it to the command variable
-			//	intake_in_cmd_.writeFromNonRT(req.intake_in); //take the service request for in/out (true/false???) and write to a command variable
-			}
-			else
-			{
-			ROS_ERROR_STREAM("Can't accept new commands. ElevatorController is not running.");
+//Command Service Function
+bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request &req, elevator_controller::ElevatorSrv::Response &response) {
+	if(isRunning())
+	{
+		if(req.place_hatch == req.place_cargo)
+		{
+			ROS_WARN_STREAM("skipping command from elevator server because we can only place one game piece at a time :(");
 			return false;
-			}
-			return true;
-			}
+		}
+		position_index_command_.writeFromNonRT(req.position_index); //take the service request for a certain amount of power (-1 to 1) and write it to the command variable
+		place_hatch_.writeFromNonRT(req.place_hatch);
+		place_cargo_.writeFromNonRT(req.place_cargo);
+		ROS_INFO_STREAM("req.position = " << req.position_index);
+	}
+	else
+	{
+		ROS_ERROR_STREAM("Can't accept new commands. ElevatorController is not running.");
+		return false;
+	}
+	return true;
+}
 
 }//namespace
 

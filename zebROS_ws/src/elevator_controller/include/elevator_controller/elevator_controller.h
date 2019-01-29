@@ -46,11 +46,14 @@ class ElevatorController : public controller_interface::MultiInterfaceController
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
             talon_controllers::TalonMotionMagicCloseLoopControllerInterface elevator_joint_; //interface for the talon joint
-           // hardware_interface::JointHandle intake_in_; //interface for the in/out solenoid joint
 
-            realtime_tools::RealtimeBuffer<double> spin_command_; //this is the buffer for percent output commands to be published
-           // realtime_tools::RealtimeBuffer<double> intake_in_cmd_; //buffer for in/out commands
+            realtime_tools::RealtimeBuffer<int> position_index_command_; //this is the buffer for percent output commands to be published
+			realtime_tools::RealtimeBuffer<bool> place_hatch_;
+			realtime_tools::RealtimeBuffer<bool> place_cargo_;
             realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
+
+			std::vector<double> hatch_locations_;
+			std::vector<double> cargo_locations_;
 
             ros::ServiceServer elevator_service_; //service for receiving commands
 }; //class

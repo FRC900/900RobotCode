@@ -1,8 +1,10 @@
 #include <ros/ros.h>
+#include <ros/console.h>
 #include <actionlib/server/simple_action_server.h>
 #include <behaviors/ElevatorAction.h>
 #include <elevator_controller/ElevatorSrv.h>
 #include <talon_state_controller/TalonState.h>
+#include <elevator_controller/SetElevatorState.h>
 
 double elevator_position_deadzone;
 

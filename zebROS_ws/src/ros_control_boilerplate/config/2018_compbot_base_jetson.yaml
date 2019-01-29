@@ -21,7 +21,7 @@ hardware_interface:
        - {name: cargo_outtake_kicker_joint, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
        - {name: cargo_outtake_clamp_joint, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
        - {name: climber, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
-       - {name: elevator_joint, type: can_talon_srx, can_id: 0, local: true}
+       - {name: elevator_joint, type: can_talon_srx, can_id: 44, local: true}
        - {name: fl_drive, type: can_talon_srx, can_id: 21, local: true}
        - {name: fl_angle, type: can_talon_srx, can_id: 11, local: true}
        - {name: fr_drive, type: can_talon_srx, can_id: 22, local: true}
@@ -76,14 +76,6 @@ climber_controller:
 panel_intake_controller:
     type:           panel_intake_controller/PanelIntakeController
     publish_rate:   100 
-
-
-elevator_controller:
-    type:   elevator_controller/ElevatorController
-    elevator_joint_: "elevator"
-    elevator: 
-        type: talon_controllers/TalonMotionMagicCloseLoopControllerInterface 
-        joint: elevator_joint
 
 
 

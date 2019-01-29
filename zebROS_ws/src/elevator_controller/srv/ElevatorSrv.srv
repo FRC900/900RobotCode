@@ -1,3 +1,5 @@
-float64 position
+uint8 position_index
+bool place_hatch
+bool place_cargo
 ---
 
