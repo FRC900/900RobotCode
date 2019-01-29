@@ -41,7 +41,7 @@ bool CargoIntakeController::init(hardware_interface::RobotHW *hw,
 
 void CargoIntakeController::starting(const ros::Time &/*time*/) {
     cargo_intake_joint_.setCommand(0.0); // set the command to the spinny part of the intake
-	cargo_intake_arm_joint_.setCommand(-1); // set the command to the up/down part of the intake
+	cargo_intake_arm_joint_.setCommand(0); // set the command to the up/down part of the intake
 }
 
 void CargoIntakeController::update(const ros::Time &time, const ros::Duration &period) {
@@ -50,10 +50,10 @@ void CargoIntakeController::update(const ros::Time &time, const ros::Duration &p
    double intake_arm_command_double; //to store processed input
 	if(intake_arm_command == true) {
 		//ROS_WARN("cargo intake arm command: -1");
-		intake_arm_command_double = -1;
+		intake_arm_command_double = 1;
 	}
 	else if (intake_arm_command == false) {
-		intake_arm_command_double = 1;
+		intake_arm_command_double = 0;
 		//ROS_WARN("cargo intake arm command: 1");
 	}
 	
