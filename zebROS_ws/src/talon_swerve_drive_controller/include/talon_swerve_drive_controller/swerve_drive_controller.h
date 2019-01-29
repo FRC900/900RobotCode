@@ -116,17 +116,11 @@ class TalonSwerveDriveController
 		void stopping(const ros::Time & /*time*/);
 
 	private:
-		Eigen::Vector2d wheel1;
-		Eigen::Vector2d wheel2;
-		Eigen::Vector2d wheel3;
-		Eigen::Vector2d wheel4;
-
 		int set_check_;
 		int num_profile_slots_;
 
 		void compOdometry(const ros::Time &time, const double inv_delta_t);
 		Eigen::MatrixX2d new_wheel_pos_;
-		std::array<Eigen::Vector2d, WHEELCOUNT> old_wheel_pos_; //
 		std::array<double, WHEELCOUNT> last_wheel_rot_;	//
 
 		Eigen::Vector2d neg_wheel_centroid_;
@@ -217,8 +211,6 @@ class TalonSwerveDriveController
 		double wheel_radius_;
 
 		swerveVar::driveModel model_;
-
-		bool invertWheelAngle_;
 
 		swerveVar::ratios driveRatios_;
 

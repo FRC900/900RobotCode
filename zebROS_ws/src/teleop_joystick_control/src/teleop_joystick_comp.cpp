@@ -1,6 +1,7 @@
 #include <atomic>
 #include <realtime_tools/realtime_buffer.h>
 #include "teleop_joystick_control/teleop_joystick_comp.h"
+#include "teleop_joystick_control/rate_limiter.h"
 #include "std_srvs/Empty.h"
 #include "std_srvs/SetBool.h"
 
@@ -11,6 +12,15 @@ const double max_speed = 3.6;
 const double max_rot = 8.8;
 const double joystick_scale = 3;
 const double rotation_scale = 4;
+
+// 50 msec to go from full back to full forward
+const double drive_rate_limit_time = 500.;
+rate_limiter::RateLimiter left_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+rate_limiter::RateLimiter left_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+rate_limiter::RateLimiter right_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+rate_limiter::RateLimiter right_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+rate_limiter::RateLimiter left_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 
 void dead_zone_check(double &val1, double &val2)
 {
@@ -49,22 +59,34 @@ void navXCallback(const sensor_msgs::Imu &navXState)
 
 void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 {
+	// TODO - experiment with rate-limiting after scaling instead?
 	double leftStickX = JoystickState->leftStickX;
 	double leftStickY = JoystickState->leftStickY;
 
-	double rightStickX = JoystickState->rightStickX;
-	double rightStickY = JoystickState->rightStickY;
-
 	dead_zone_check(leftStickX, leftStickY);
-	dead_zone_check(rightStickX, rightStickY);
+
+	leftStickX = left_stick_x_rate_limit.applyLimit(leftStickX);
+	leftStickY = left_stick_y_rate_limit.applyLimit(leftStickY);
 
 	leftStickX =  pow(leftStickX, joystick_scale) * max_speed;
 	leftStickY = -pow(leftStickY, joystick_scale) * max_speed;
 
+	double rightStickX = JoystickState->rightStickX;
+	double rightStickY = JoystickState->rightStickY;
+
+	dead_zone_check(rightStickX, rightStickY);
+
 	rightStickX =  pow(rightStickX, joystick_scale);
 	rightStickY = -pow(rightStickY, joystick_scale);
 
-	const double rotation = (pow(JoystickState->leftTrigger, rotation_scale) - pow(JoystickState->rightTrigger, rotation_scale)) * max_rot;
+	rightStickX = right_stick_x_rate_limit.applyLimit(rightStickX);
+	rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);
+
+	// TODO : dead-zone for rotation?
+	// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
+	double triggerLeft = left_trigger_rate_limit.applyLimit(JoystickState->leftTrigger);
+	double triggerRight = right_trigger_rate_limit.applyLimit(JoystickState->rightTrigger);
+	const double rotation = (pow(triggerLeft, rotation_scale) - pow(triggerRight, rotation_scale)) * max_rot;
 
 	static bool sendRobotZero = false;
 

@@ -2,92 +2,89 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-#include <functional>
-#include <cmath>
 #include <ros/console.h>
 using namespace std;
 using namespace Eigen;
 
-// TODO : use initializaer list rather than assignment.
+// TODO : use initializer list rather than assignment.
 // string should be a const & var, as should the swerveVar args
 
-swerve::swerve(array<Vector2d, WHEELCOUNT> wheelCoordinates, std::vector<double> offsets, bool wheelAngleInvert, swerveVar::ratios ratio, swerveVar::encoderUnits units, swerveVar::driveModel drive)
+swerve::swerve(const array<Vector2d, WHEELCOUNT> &wheelCoordinates,
+			   const std::vector<double> &offsets,
+			   const swerveVar::ratios &ratio,
+			   const swerveVar::encoderUnits &units,
+			   const swerveVar::driveModel &drive)
+	: wheelCoordinates_(wheelCoordinates)
+	, swerveMath_(swerveDriveMath(wheelCoordinates_))
+	, ratio_(ratio)
+	, units_(units)
+	, drive_(drive)
 {
-	wheelCoordinates_ = wheelCoordinates;
-
-	swerveMath_ = swerveDriveMath(wheelCoordinates_);
-
-	ratio_ = ratio;
-	units_ = units;
-	drive_ = drive;
-	wheelAngleInvert_ = wheelAngleInvert ? -1 : 1;
-
-	// TODO : Error checking in case offsets.size() != WHEELCOUNT
+	assert(offsets.size() == WHEELCOUNT);
 	for (size_t i = 0; i < offsets.size() && i < WHEELCOUNT; i++)
 		offsets_[i] = offsets[i];
-
-	// TODO : this shouldn't be hard-coded
-	setCenterOfRotation(0, {0,0});
 }
 
-void swerve::setCenterOfRotation(size_t id, const Vector2d &centerOfRotation)
+array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
+												 double rotation,
+												 double angle,
+												 const array<double, WHEELCOUNT> &positionsNew,
+												 bool norm,
+												 const Eigen::Vector2d &centerOfRotation)
 {
-	if (id < multiplierSets_.size())
+	array<Vector2d, WHEELCOUNT> speedsAndAngles;
+	// See if the current centerOfRotation coords have been used before
+	// If not, calculate the multiplers and matRotRate for them
+	// If so, just reuse previously saved values
+	auto mult_it = multiplierSets_.find(centerOfRotation);
+	if (mult_it == multiplierSets_.end())
 	{
 		multiplierSet newSet;
 		newSet.multipliers_ = swerveMath_.wheelMultipliersXY(centerOfRotation);
 		newSet.maxRotRate_ = drive_.maxSpeed / furthestWheel(centerOfRotation);
-		multiplierSets_[id] = newSet;
+		multiplierSets_[centerOfRotation] = newSet;
+		mult_it = multiplierSets_.find(centerOfRotation);
+		ROS_INFO_STREAM("Added new swerve center of rotation: " << centerOfRotation[0] << "," << centerOfRotation[1]);
 	}
-}
 
-// TODO : split into motorOutputsDrive and motorOutputsPark
-// Make positionsNew and all Vector2ds const & arguments
-array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector, double rotation, double angle, bool /*forceRead*/, array<bool, WHEELCOUNT> &reverses, bool park, const array<double, WHEELCOUNT> &positionsNew, bool norm, size_t rotationCenterID)
-{
-	if (rotationCenterID >= multiplierSets_.size())
+	velocityVector /= drive_.maxSpeed;
+	rotation       /= mult_it->second.maxRotRate_;
+
+	//ROS_WARN_STREAM("max rate r/s: " <<  multiplierSets_[rotationCenterID].maxRotRate_);
+	//ROS_INFO_STREAM("vel: " << velocityVector[0] << " " << velocityVector[1] << " rot: " << rotation);
+	speedsAndAngles = swerveMath_.wheelSpeedsAngles(mult_it->second.multipliers_, velocityVector, rotation, angle, norm);
+	for (int i = 0; i < WHEELCOUNT; i++)
 	{
-		ROS_ERROR_STREAM("Tell Ryan to stop using fixed-sized arrays for dynamically growable stuff");
-		return array<Vector2d, WHEELCOUNT>();
-	}
-	array<Vector2d, WHEELCOUNT> speedsAndAngles;
-	if (!park)
-	{
-		velocityVector /= drive_.maxSpeed;
-		rotation       /= multiplierSets_[rotationCenterID].maxRotRate_;
+		//ROS_INFO_STREAM("PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
+		const double currpos = getWheelAngle(i, positionsNew[i]);
+		bool reverse;
+		const double nearestangle = leastDistantAngleWithinHalfPi(currpos, speedsAndAngles[i][1], reverse);
 
-		//ROS_WARN_STREAM("max rate r/s: " <<  multiplierSets_[rotationCenterID].maxRotRate_);
-		//ROS_INFO_STREAM("vel: " << velocityVector[0] << " " << velocityVector[1] << " rot: " << rotation);
-		speedsAndAngles = swerveMath_.wheelSpeedsAngles(multiplierSets_[rotationCenterID].multipliers_, velocityVector, rotation, angle, norm);
-		for (int i = 0; i < WHEELCOUNT; i++)
-		{
-			//ROS_INFO_STREAM("PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
-			const double currpos = getWheelAngle(i, positionsNew[i]);
-			const double nearestangle = leastDistantAngleWithinHalfPi(currpos, speedsAndAngles[i][1], reverses[i]);
-
-			speedsAndAngles[i][0] *= ((drive_.maxSpeed / (drive_.wheelRadius)) / ratio_.encodertoRotations) * units_.rotationSetV * (reverses[i] ? -1 : 1);
-			//ROS_INFO_STREAM(" id: " << i << " speed: " << speedsAndAngles[i][0] << " reverse: " << reverses[i]);
-			speedsAndAngles[i][1] = nearestangle * units_.steeringSet;
-			speedsAndAngles[i][1] += offsets_[i];
-			//ROS_INFO_STREAM("pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " << speedsAndAngles[i][1] );
-		}
-	}
-	else
-	{
-		for (int i = 0; i < WHEELCOUNT; i++)
-		{
-			speedsAndAngles[i][1] = swerveMath_.parkingAngle_[i]; // TODO : find a way not to access member of swervemath here
-			speedsAndAngles[i][0] = 0;
-
-			const double currpos = getWheelAngle(i, positionsNew[i]);
-			const double nearestanglep = leastDistantAngleWithinHalfPi(currpos, speedsAndAngles[i][1], reverses[i]);
-			//ROS_INFO_STREAM(" id: " << i << " currpos: " << currpos << "target" <<nearestanglep);
-			speedsAndAngles[i][1] = nearestanglep * units_.steeringSet;
-			speedsAndAngles[i][1] += offsets_[i];
-		}
+		speedsAndAngles[i][0] *= ((drive_.maxSpeed / drive_.wheelRadius) / ratio_.encodertoRotations) * units_.rotationSetV * (reverse ? -1 : 1);
+		//ROS_INFO_STREAM(" id: " << i << " speed: " << speedsAndAngles[i][0] << " reverse: " << reverse);
+		speedsAndAngles[i][1] = nearestangle * units_.steeringSet + offsets_[i];
+		//ROS_INFO_STREAM("pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " << speedsAndAngles[i][1] );
 	}
 	return speedsAndAngles;
 }
+
+array<double, WHEELCOUNT> swerve::parkingAngles(const array<double, WHEELCOUNT> &positionsNew)
+{
+	array<double, WHEELCOUNT> retAngles;
+	for (int i = 0; i < WHEELCOUNT; i++)
+	{
+		retAngles[i] = swerveMath_.parkingAngle_[i]; // TODO : find a way not to access member of swervemath here
+
+		const double currpos = getWheelAngle(i, positionsNew[i]);
+		bool reverse; // TODO : not used for anything?
+		const double nearestanglep = leastDistantAngleWithinHalfPi(currpos, retAngles[i], reverse);
+		//ROS_INFO_STREAM(" id: " << i << " currpos: " << currpos << "target" <<nearestanglep);
+		retAngles[i] = nearestanglep * units_.steeringSet + offsets_[i];
+		//ROS_INFO_STREAM("park[i]:" << swerveMath_.parkingAngle_[i] << " " << retAngles[i]);
+	}
+	return retAngles;
+}
+
 void swerve::saveNewOffsets(bool /*useVals*/, array<double, WHEELCOUNT> /*newOffsets*/, array<double, WHEELCOUNT> /*newPosition*/)
 {
 #if 0

@@ -188,7 +188,6 @@ TalonSwerveDriveController::TalonSwerveDriveController() :
 	publish_cmd_(false)
 
 	//model_({0, 0, 0, 0, 0, 0}),
-	//invertWheelAngle_(false),
 	//units_({1,1,1,1,1,1}),
 	//driveRatios_({0, 0, 0}),
 	//units_({0, 0, 0, 0})
@@ -259,7 +258,6 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	bool lookup_motor_stall_torque = !controller_nh.getParam("motor_stall_torque", model_.motorStallTorque);
 	// TODO : why not just use the number of wheels read from yaml?
 	bool lookup_motor_quantity = !controller_nh.getParam("motor_quantity", model_.motorQuantity);
-	bool lookup_invert_wheel_angle = !controller_nh.getParam("invert_wheel_angle", invertWheelAngle_);
 	bool lookup_ratio_encoder_to_rotations = !controller_nh.getParam("ratio_encoder_to_rotations", driveRatios_.encodertoRotations);
 	bool lookup_ratio_motor_to_rotations = !controller_nh.getParam("ratio_motor_to_rotations", driveRatios_.motortoRotations);
 	bool lookup_ratio_motor_to_steering = !controller_nh.getParam("ratio_motor_to_steering", driveRatios_.motortoSteering); // TODO : not used?
@@ -330,12 +328,11 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	model_.wheelRadius =  wheel_radius_;
 
 	/*
-	invertWheelAngle(false);
 	swerveVar::ratios driveRatios({20, 7, 7});
 	swerveVar::encoderUnits units({1,1,1,1,1,1});
 	*/
 
-	swerveC_ = std::make_shared<swerve>(wheel_coords_, offsets, invertWheelAngle_, driveRatios_, units_, model_);
+	swerveC_ = std::make_shared<swerve>(wheel_coords_, offsets, driveRatios_, units_, model_);
 	for (size_t i = 0; i < wheel_joints_size_; ++i)
 	{
 		ROS_INFO_STREAM_NAMED(name_,
@@ -437,7 +434,6 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 
 		for (size_t row = 0; row < WHEELCOUNT; row++)
 		{
-			old_wheel_pos_[row] = {0, 0};
 			last_wheel_rot_[row] = speed_joints_[row].getPosition();
 		}
 	}
@@ -797,7 +793,6 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 				{
 					steering_joints_[i].setCommand(speeds_angles[i][1]);
 				}
-
 			}
 			return;
 		}
@@ -814,8 +809,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		array<double, WHEELCOUNT> curPos;
 		for (int i = 0; i < WHEELCOUNT; i++)
 			curPos[i] = steering_joints_[i].getPosition();
-		std::array<bool, WHEELCOUNT> holder;
-		speeds_angles  = swerveC_->motorOutputs(curr_cmd.lin, curr_cmd.ang, M_PI / 2, false, holder, false, curPos, true);
+		speeds_angles = swerveC_->motorOutputs(curr_cmd.lin, curr_cmd.ang, M_PI / 2, curPos, true);
 
 		// Set wheels velocities:
 		for (size_t i = 0; i < wheel_joints_size_; ++i)
@@ -897,20 +891,17 @@ void TalonSwerveDriveController::stopping(const ros::Time & /*time*/)
 
 void TalonSwerveDriveController::brake()
 {
-	//required input, but not needed in this case
-	array<bool, WHEELCOUNT> hold;
 	//Use parking config
-
 	array<double, WHEELCOUNT> curPos;
 	for (int i = 0; i < WHEELCOUNT; i++)
 	{
 		curPos[i] = steering_joints_[i].getPosition();
 	}
-	std::array<Vector2d, WHEELCOUNT> park = swerveC_->motorOutputs({0, 0}, 0, 0, false, hold, true, curPos, false);
+	const std::array<double, WHEELCOUNT> park_angles = swerveC_->parkingAngles(curPos);
 	for (size_t i = 0; i < wheel_joints_size_; ++i)
 	{
 		speed_joints_[i].setCommand(0.0);
-		steering_joints_[i].setCommand(park[i][1]);
+		steering_joints_[i].setCommand(park_angles[i]);
 	}
 }
 
@@ -918,7 +909,7 @@ void TalonSwerveDriveController::cmdVelCallback(const geometry_msgs::Twist &comm
 {
 	if (isRunning())
 	{
-		// check tha//t we don't have multiple publishers on the command topic
+		// check that we don't have multiple publishers on the command topic
 		//ROS_WARN("Time Difference: %f", ros::Time::now().toSec() - command->header.stamp.toSec());
 		if (!allow_multiple_cmd_vel_publishers_ && sub_command_.getNumPublishers() > 1)
 		{
