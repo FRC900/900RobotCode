@@ -4,36 +4,53 @@
   <arg name="resolution" default="3" />
   <arg name="frame_rate" default="30" />
   <arg name="quality" default="3" />
-  <arg name="brightness" default="-1" />
-  <arg name="contrast" default="5" />
-  <arg name="hue" default="6" />
-  <arg name="saturation" default="-1" />
+
   <arg name="gain" default="-1" />
   <arg name="exposure" default="60" />
-  <arg name="whitebalance" default="-1" />
+  <arg name="auto_exposure" default="false" />
+
+  <arg name="brightness" default="-1" />
+  <arg name="auto_brightness" default="true" />
+  <arg name="contrast" default="5" />
+  <arg name="auto_contrast" default="false" />
+
+  <arg name="hue" default="6" />
+  <arg name="auto_hue" default="false" />
+
+  <arg name="saturation" default="4" />
+  <arg name="auto_saturation" default="true" />
+
+  <arg name="whitebalance" default="50" />
+  <arg name="auto_whitebalance" default="true" />
+
   <arg name="name" default="zed_goal" />
-  <arg name="record" default="False" />
+
   <arg name="down_sample" default="False" />
-  <arg name="sub_rate" default="10" />
+  <arg name="sub_rate" default="1" />
   <arg name="camera_flip" default="True" />
   <arg name="pub_rate" default="1" />
   <arg name="batch" default="false" /> 
 
-
   <group ns="$(arg name)">
     <include file="$(find zed_wrapper)/launch/zed_camera.launch">
-      <!--<arg name="zed_name" value="$(arg name)" />-->
       <arg name="resolution" value="$(arg resolution)" />
       <arg name="frame_rate" value="$(arg frame_rate)" />
       <arg name="quality" value="$(arg quality)" />
-      <arg name="brightness" value="$(arg brightness)" />
-      <arg name="contrast" value="$(arg contrast)" />
-      <arg name="hue" value="$(arg hue)" />
-      <arg name="saturation" value="$(arg saturation)" />
-      <arg name="gain" value="$(arg gain)" />
-      <arg name="exposure" value="$(arg exposure)" />
-      <arg name="whitebalance" value="$(arg whitebalance)" />
 	  <arg name="camera_flip" value="$(arg camera_flip)" />
+
+	  <arg name="gain"                  value="$(arg gain)" />
+	  <arg name="exposure"              value="$(arg exposure)" />
+	  <arg name="auto_exposure"         value="$(arg auto_exposure)" />
+	  <arg name="brightness"            value="$(arg brightness)" />
+	  <arg name="auto_brightness"       value="$(arg auto_brightness)" />
+	  <arg name="contrast"              value="$(arg contrast)" />
+	  <arg name="auto_contrast"         value="$(arg auto_contrast)" />
+	  <arg name="hue"                   value="$(arg hue)" />
+	  <arg name="auto_hue"              value="$(arg auto_hue)" />
+	  <arg name="saturation"            value="$(arg saturation)" />
+	  <arg name="auto_saturation"       value="$(arg auto_saturation)" />
+	  <arg name="whitebalance"          value="$(arg whitebalance)" />
+	  <arg name="auto_whitebalance"     value="$(arg auto_whitebalance)" />
     </include>
   </group>
 
