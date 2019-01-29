@@ -6,9 +6,10 @@
 using namespace std;
 
 swerveDriveMath::swerveDriveMath(const array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate)
-	: parkingAngle_(parkingAngles())
-	, wheelCoordinate_(wheelCoordinate)
+	: wheelCoordinate_(wheelCoordinate)
 {
+	// Has to be run after wheelCoordinates are set
+	parkingAngle_ = parkingAngles();
 }
 
 //used for varying center of rotation and must be run once for initialization
