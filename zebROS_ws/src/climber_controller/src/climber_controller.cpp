@@ -4,8 +4,8 @@ namespace climber_controller
 {
 
 bool ClimberController::init(hardware_interface::PositionJointInterface *hw,
-                                                        ros::NodeHandle                 &root_nh,
-                                                        ros::NodeHandle                 &controller_nh)
+							 ros::NodeHandle                            &root_nh,
+							 ros::NodeHandle                            &controller_nh)
 {
     feet_retract_ = hw->getHandle("climber_feet_retract");
 
@@ -16,13 +16,13 @@ bool ClimberController::init(hardware_interface::PositionJointInterface *hw,
 	feet_retract_service_ = controller_nh.advertiseService<
 		std_srvs::SetBool::Request,
 		std_srvs::SetBool::Response	>
-			("climber_feet_retract", boost::bind(&ClimberController::activateSrv, this, _1, _2, feet_retract_cmd_));
+			("climber_feet_retract", boost::bind(&ClimberController::activateSrv, this, _1, _2, boost::ref(feet_retract_cmd_)));
 
     release_endgame_ = hw->getHandle("climber_release_endgame");
 	release_endgame_service_ = controller_nh.advertiseService<
 		std_srvs::SetBool::Request,
 		std_srvs::SetBool::Response	>
-			("climber_release_endgame", boost::bind(&ClimberController::activateSrv, this, _1, _2, feet_retract_cmd_));
+			("climber_release_endgame", boost::bind(&ClimberController::activateSrv, this, _1, _2, boost::ref(release_endgame_cmd_)));
     return true;
 }
 

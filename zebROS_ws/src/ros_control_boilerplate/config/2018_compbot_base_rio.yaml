@@ -28,7 +28,7 @@ hardware_interface:
        - {name: climber_release_endgame, type: solenoid, pcm: 0, id: 1, local_hardware: true, local_update: false}
 
        - {name: panel_clamp_release, type: solenoid, pcm: 0, id: 5, local_hardware: true, local_update: false}
-       - {name: panel_extend, type: solenoid, pcm: 0, id: 6, local_hardware: true, local_update: false}
+       - {name: panel_push_extend, type: solenoid, pcm: 0, id: 6, local_hardware: true, local_update: false}
          
        - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}
        - {name: joystick, type: joystick, id: 0, local: true}

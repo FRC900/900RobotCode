@@ -38,7 +38,7 @@ hardware_interface:
        - {name: compressor, type: compressor, pcm_id: 0}
 
        - {name: panel_claw_release, type: solenoid, pcm: 0, id: 5, local_hardware: false, local_update: true}
-       - {name: panel_extend, type: solenoid, pcm: 0, id: 6, local_hardware: false, local_update: true}
+       - {name: panel_push_extend, type: solenoid, pcm: 0, id: 6, local_hardware: false, local_update: true}
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
