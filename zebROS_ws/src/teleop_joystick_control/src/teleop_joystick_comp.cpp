@@ -19,7 +19,7 @@ std::vector <std::string> topic_array;
 std::vector <ros::Subscriber> subscriber_array;
 
 // 50 msec to go from full back to full forward
-const double drive_rate_limit_time = 200.;
+const double drive_rate_limit_time = 500.;
 rate_limiter::RateLimiter left_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter left_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter right_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
