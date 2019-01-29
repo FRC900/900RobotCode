@@ -243,13 +243,13 @@ int main(int argc, char** argv) {
 	if(!n_params_lift.getParam("cargo_ship", cargo_ship_setpoint))
 		ROS_ERROR("Coult not read cargo_ship in cargo_intake_server");
 	if(!n_params_lift.getParam("low_rocket", low_rocket_setpoint))
-		ROS_ERROR("Coult not read cargo_ship in cargo_intake_server");
+		ROS_ERROR("Coult not read low_rocket in cargo_intake_server");
 	if(!n_params_lift.getParam("high_rocket", high_rocket_setpoint))
-		ROS_ERROR("Coult not read cargo_ship in cargo_intake_server");
+		ROS_ERROR("Coult not read high_rocket in cargo_intake_server");
 	if(!n_params_lift.getParam("mid_rocket", mid_rocket_setpoint))
-		ROS_ERROR("Coult not read cargo_ship in cargo_intake_server");
+		ROS_ERROR("Coult not read mid_rocket in cargo_intake_server");
 	if(!n_params_lift.getParam("intake", intake_setpoint))
-		ROS_ERROR("Coult not read cargo_ship in cargo_intake_server");
+		ROS_ERROR("Coult not read intake in cargo_intake_server");
 
 
 	ros::spin();
