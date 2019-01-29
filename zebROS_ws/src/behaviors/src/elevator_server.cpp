@@ -5,7 +5,6 @@
 #include <talon_state_controller/TalonState.h>
 
 double elevator_position_deadzone;
-double cur_position; //Variable used to store current elevator position
 
 class ElevatorAction {
     protected:
@@ -24,6 +23,7 @@ class ElevatorAction {
         ros::Subscriber talon_states_sub;
 
         double elevator_cur_setpoint_;
+		double cur_position_; //Variable used to store current elevator position
 
     public:
         ElevatorAction(std::string name) :
@@ -66,7 +66,7 @@ class ElevatorAction {
             elevator_client_.call(srv); //Send command to elevator controller
 
             while(!success && !timed_out && !preempted) {
-                success = fabs(cur_position - setpoint) < elevator_position_deadzone;
+                success = fabs(cur_position_ - setpoint) < elevator_position_deadzone;
 				if(as_.isPreemptRequested() || !ros::ok()) {
                     ROS_ERROR("%s: Preempted", action_name_.c_str());
 					as_.setPreempted();
@@ -115,7 +115,7 @@ class ElevatorAction {
 				}
 			}
 			else{
-				cur_position = talon_state.position[elevator_master_idx];
+				cur_position_ = talon_state.position[elevator_master_idx];
 			}
 		}
 };
