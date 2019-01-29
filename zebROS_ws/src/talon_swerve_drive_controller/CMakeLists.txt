@@ -77,6 +77,13 @@ add_dependencies(zero_wheel_service
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 )
+
+add_executable(dump_offsets_service src/dump_wheel_offsets.cpp)
+target_link_libraries(dump_offsets_service ${catkin_LIBRARIES})
+add_dependencies(dump_offsets_service
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS}
+)
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 
