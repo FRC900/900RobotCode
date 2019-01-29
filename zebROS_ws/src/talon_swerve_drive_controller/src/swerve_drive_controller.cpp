@@ -348,6 +348,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	sub_command_ = controller_nh.subscribe("cmd_vel", 1, &TalonSwerveDriveController::cmdVelCallback, this);
 	brake_serv_ = controller_nh.advertiseService("brake", &TalonSwerveDriveController::brakeService, this);
 	motion_profile_serv_ = controller_nh.advertiseService("run_profile", &TalonSwerveDriveController::motionProfileService, this);
+	change_center_of_rotation_serv_ = controller_nh.advertiseService("change_center_of_rotation", &TalonSwerveDriveController::changeCenterOfRotationService, this);
 	wheel_pos_serv_ = controller_nh.advertiseService("wheel_pos", &TalonSwerveDriveController::wheelPosService, this);
 	//sub_run_profile_ = controller_nh.subscribe("run_profile", 1, &TalonSwerveDriveController::runCallback, this);
 
@@ -1075,6 +1076,24 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 		return false;
 	}
 }
+
+bool TalonSwerveDriveController::changeCenterOfRotationService(talon_swerve_drive_controller::SetXY::Request& req, talon_swerve_drive_controller::SetXY::Response &res)
+{
+	if(isRunning())
+	{
+		Eigen::Vector2d vector;
+		vector[0] = req.x;
+		vector[1] = req.y;
+		swerveC_->setCenterOfRotation(0, vector);
+		return true;
+	}
+	else
+	{
+		ROS_ERROR_NAMED(name_, "Can't accept new commands. Controller is not running.");
+		return false;
+	}
+}
+
 
 bool TalonSwerveDriveController::brakeService(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*res*/)
 {

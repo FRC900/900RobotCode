@@ -22,6 +22,8 @@ int main(int argc, char ** argv)
 
 	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 
+	ros::Rate r(100);
+
 	while(ros::ok())
 	{
 		current_time = ros::Time::now();
@@ -30,6 +32,7 @@ int main(int argc, char ** argv)
 			cmd_vel_pub.publish(cmd_vel_msg);
 		}
 		ros::spinOnce();
+		r.sleep();
 	}
 	return 0;
 }

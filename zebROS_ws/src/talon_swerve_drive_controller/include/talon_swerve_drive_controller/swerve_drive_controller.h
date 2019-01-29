@@ -51,6 +51,7 @@
 #include <talon_swerve_drive_controller/WheelPos.h>
 #include <talon_swerve_drive_controller/MotionProfilePoints.h>
 #include <talon_swerve_drive_controller/speed_limiter.h>
+#include "talon_swerve_drive_controller/SetXY.h"
 #include <swerve_math/Swerve.h>
 #include <boost/circular_buffer.hpp>
 
@@ -188,6 +189,7 @@ class TalonSwerveDriveController
 		ros::Subscriber sub_command_;
 
 		ros::ServiceServer motion_profile_serv_;
+		ros::ServiceServer change_center_of_rotation_serv_;
 		ros::ServiceServer brake_serv_;
 		ros::ServiceServer wheel_pos_serv_;
 
@@ -255,6 +257,7 @@ class TalonSwerveDriveController
 		 */
 		void cmdVelCallback(const geometry_msgs::Twist &command);
 		bool motionProfileService(talon_swerve_drive_controller::MotionProfilePoints::Request &req, talon_swerve_drive_controller::MotionProfilePoints::Response &res);
+		bool changeCenterOfRotationService(talon_swerve_drive_controller::SetXY::Request &req, talon_swerve_drive_controller::SetXY::Response &res);
 		bool brakeService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 		bool wheelPosService(talon_swerve_drive_controller::WheelPos::Request &req, talon_swerve_drive_controller::WheelPos::Response &res);
 

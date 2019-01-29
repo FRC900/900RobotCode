@@ -4,6 +4,8 @@
  * Publishes orient state, orient setpoint, y state, y setpoint, and pid_enable
  */
 
+/* The logic for stopping and starting PID should probably be put in actionlib, not here */
+
 #include <screen_to_world/WorldVector.h>
 #include "std_msgs/Float64.h"
 #include "teraranger_array/RangeArray.h"
@@ -43,7 +45,7 @@ void distanceCB(const teraranger_array::RangeArray& msg)
 // to see how to read navX heading
 void jointStatesCB(const sensor_msgs::Imu& msg)
 {
-    const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
+    const tf2::Quaternion navQuat(msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w);
     double roll;
     double pitch;
     double yaw;

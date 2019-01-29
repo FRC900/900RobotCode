@@ -89,6 +89,8 @@ class swerve
 		//Eigen::Vector2d currentOdom;
 		//Eigen::Vector2d calculateOdom(); //might be some associated private variables
 		//Probably should be called every
+		//
+		void setCenterOfRotation(size_t ID, const Eigen::Vector2d &centerOfRotation);
 
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinates_;
 		swerveDriveMath swerveMath_; //this should be public

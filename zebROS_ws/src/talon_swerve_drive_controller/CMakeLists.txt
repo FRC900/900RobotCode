@@ -33,6 +33,7 @@ add_service_files (
   MotionProfile.srv
   MotionProfilePoints.srv
   WheelPos.srv
+  SetXY.srv
 )
 
 generate_messages(
