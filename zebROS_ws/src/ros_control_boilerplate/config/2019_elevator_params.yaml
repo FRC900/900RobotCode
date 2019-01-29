@@ -11,11 +11,15 @@ elevator_controller:
         rocket1_position: 1.0
         rocket2_position: 2.0
         rocket3_position: 3.0
-    forward_soft_limit: -1.0
-    reverse_soft_limit: 1.0
     elevator: 
         type: talon_controllers/TalonMotionMagicCloseLoopControllerInterface 
         joint: elevator_joint
         close_loop_values:
             - {p: 1, i: 0.0, d: 0 , f: 1.5, i_zone: 0, closed_loop_peak_output: 1.0}
         feedback_type: CTRE_MagEncoder_Absolute
+
+        # Should forward be less than reverse?    
+        softlimit_forward_threshold: -1.0
+        softlimit_forward_enable: True
+        softlimit_reverse_threshold: 1.0
+        softlimit_forward_enable: True

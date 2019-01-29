@@ -8,7 +8,7 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 {
 	//create the interface used to initialize the talon joint
 	hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
-	
+
 	//hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
 
 	//get config values for the elevator talon
@@ -17,7 +17,7 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 	{ ROS_ERROR("Could not find elevator_joint");
 		return false;
 	}
-	
+
 	//initialize the elevator joint
 	if(!elevator_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, elevator_params))
 	{
@@ -92,25 +92,6 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 	}
 	cargo_locations_[3] = cargo_rocket3_position;
 
-	// read elevator forward/reverse limits
-	double forward_soft_limit;
-	if (!controller_nh.getParam("forward_soft_limit", forward_soft_limit))
-	{
-		ROS_ERROR_STREAM("Could not read forward_soft_limit");
-		return false;
-	}
-	double reverse_soft_limit;
-	if (!controller_nh.getParam("reverse_soft_limit", reverse_soft_limit))
-	{
-		ROS_ERROR_STREAM("Could not read reverse_soft_limit");
-		return false;
-	}
-
-	elevator_joint_.setForwardSoftLimitThreshold(forward_soft_limit);
-	elevator_joint_.setReverseSoftLimitThreshold(reverse_soft_limit);
-	elevator_joint_.setForwardSoftLimitEnable(true);
-	elevator_joint_.setReverseSoftLimitEnable(true);
-
 	elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController::cmdService, this);
 
 	place_hatch_.writeFromNonRT(false);
@@ -122,7 +103,8 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 void ElevatorController::starting(const ros::Time &/*time*/) {
 }
 
-void ElevatorController::update(const ros::Time &time,const  ros::Duration &duration) 	// set the command to the spinny part of the intake
+// set the command to the spinny part of the intake
+void ElevatorController::update(const ros::Time &time,const  ros::Duration &duration)
 {
 	int index = *(position_index_command_.readFromRT());
 	if(place_hatch_.readFromRT())
