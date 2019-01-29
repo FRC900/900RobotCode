@@ -13,7 +13,7 @@ const double max_rot = 8.8;
 const double joystick_scale = 3;
 const double rotation_scale = 4;
 
-std::vector <ros_control_boilerplate::JoystickState> joystick_states_array;
+std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 std::vector <ros::Subscriber> subscriber_array;
 
@@ -51,13 +51,14 @@ void navXCallback(const sensor_msgs::Imu &navXState)
         navX_angle.store(yaw, std::memory_order_relaxed);
 }
 
-void evaluateCommands(const ros::MessageEvent<ros_control_boilerplate::JoystickState const>& event)
+void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
 	int i = 0;
 
 	const ros::M_string &header = event.getConnectionHeader();
 
 	std::string topic = header.at("topic");
+	ROS_INFO_STREAM("topic = " << topic);
 
 	for(bool msg_assign = false; msg_assign == false; i++)
 	{

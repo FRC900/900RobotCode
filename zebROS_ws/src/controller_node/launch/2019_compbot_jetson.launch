@@ -33,7 +33,7 @@
 			output="screen" args="spawn clamp_controller joint_state_controller joint_state_listener_controller talon_state_controller match_state_listener_controller pcm_state_controller pdp_state_controller swerve_drive_controller robot_code_ready_controller" /> 
 
 		<group ns="translator0">
-			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" />
+			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen"/>
 		</group>
 
 		<group ns="translator1">	
@@ -69,7 +69,6 @@
 			<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_rio/joystick_states"/>
 			<remap from="/frcrobot_jetson/navx_mxp" to="/frcrobot_rio/navx_mxp"/>
 		</node>
-		<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" />
 
 		<node name="orient_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="orient_pid_node" />

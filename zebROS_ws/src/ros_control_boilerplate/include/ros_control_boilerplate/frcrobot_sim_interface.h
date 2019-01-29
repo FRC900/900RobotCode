@@ -44,7 +44,7 @@
 #include <thread>
 #include <frc_msgs/CubeState.h>
 #include <frc_msgs/MatchSpecificData.h>
-#include <ros_control_boilerplate/JoystickState.h>
+#include <frc_msgs/JoystickState.h>
 #include  <sensor_msgs/Joy.h>
 
 namespace frcrobot_control
