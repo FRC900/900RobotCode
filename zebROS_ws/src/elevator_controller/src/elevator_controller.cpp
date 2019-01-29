@@ -25,13 +25,15 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 	}
 
 	//read locations for elevator placement for HATCH PANEL
+	hatch_locations_.resize(4); //TODO: not hard-coded
+	cargo_locations_.resize(4); //TODO: not hard-coded
 	double hatch_cargo_ship_position;
 	if (!controller_nh.getParam("hatch/cargo_ship_position", hatch_cargo_ship_position))
 	{
 		ROS_ERROR_STREAM("Could not read hatch_cargo_ship_position");
 		return false;
 	}
-	hatch_locations_.push_back(hatch_cargo_ship_position);
+	hatch_locations_[0] = hatch_cargo_ship_position;
 
 	double hatch_rocket1_position;
 	if (!controller_nh.getParam("hatch/rocket1_position", hatch_rocket1_position))
@@ -39,7 +41,7 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		ROS_ERROR_STREAM("Could not read hatch_rocket1_position");
 		return false;
 	}
-	hatch_locations_.push_back(hatch_rocket1_position);
+	hatch_locations_[1] = hatch_rocket1_position;
 
 	double hatch_rocket2_position;
 	if (!controller_nh.getParam("hatch/rocket3_position", hatch_rocket2_position))
@@ -47,15 +49,15 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		ROS_ERROR_STREAM("Could not read hatch_rocket2_position");
 		return false;
 	}
-	hatch_locations_.push_back(hatch_rocket2_position);
+	hatch_locations_[2] = hatch_rocket2_position;
 
 	double hatch_rocket3_position;
-	if (!controller_nh.getParam("hatch/rocket3_position", hatch_rocket2_position))
+	if (!controller_nh.getParam("hatch/rocket3_position", hatch_rocket3_position))
 	{
-		ROS_ERROR_STREAM("Could not read hatch_rocket2_position");
+		ROS_ERROR_STREAM("Could not read hatch_rocket3_position");
 		return false;
 	}
-	hatch_locations_.push_back(hatch_rocket3_position);
+	hatch_locations_[3] = hatch_rocket3_position;
 
 	//read locations for elevator placement for HATCH PANEL
 	double cargo_cargo_ship_position;
@@ -64,7 +66,7 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		ROS_ERROR_STREAM("Could not read cargo_cargo_ship_position");
 		return false;
 	}
-	cargo_locations_.push_back(cargo_cargo_ship_position);
+	cargo_locations_[0] = cargo_cargo_ship_position;
 
 	double cargo_rocket1_position;
 	if (!controller_nh.getParam("cargo/rocket1_position", cargo_rocket1_position))
@@ -72,7 +74,7 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		ROS_ERROR_STREAM("Could not read cargo_rocket1_position");
 		return false;
 	}
-	cargo_locations_.push_back(cargo_rocket1_position);
+	cargo_locations_[1] = cargo_rocket1_position;
 
 	double cargo_rocket2_position;
 	if (!controller_nh.getParam("cargo/rocket3_position", cargo_rocket2_position))
@@ -80,15 +82,15 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		ROS_ERROR_STREAM("Could not read cargo_rocket2_position");
 		return false;
 	}
-	cargo_locations_.push_back(cargo_rocket2_position);
+	cargo_locations_[2] = cargo_rocket2_position;
 
 	double cargo_rocket3_position;
-	if (!controller_nh.getParam("cargo/rocket3_position", cargo_rocket2_position))
+	if (!controller_nh.getParam("cargo/rocket3_position", cargo_rocket3_position))
 	{
-		ROS_ERROR_STREAM("Could not read cargo_rocket2_position");
+		ROS_ERROR_STREAM("Could not read cargo_rocket3_position");
 		return false;
 	}
-	cargo_locations_.push_back(cargo_rocket3_position);
+	cargo_locations_[3] = cargo_rocket3_position;
 
 	// read elevator forward/reverse limits
 	double forward_soft_limit;
@@ -111,6 +113,9 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 
 	elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController::cmdService, this);
 
+	place_hatch_.writeFromNonRT(false);
+	place_cargo_.writeFromNonRT(false);
+
 	return true;
 }
 
@@ -125,7 +130,6 @@ void ElevatorController::update(const ros::Time &time,const  ros::Duration &dura
 		if(index < hatch_locations_.size())
 		{
 			elevator_joint_.setCommand(hatch_locations_[index]);
-			ROS_INFO_STREAM("setting elevator to " << hatch_locations_[index]);
 		}
 		else
 			ROS_WARN_STREAM("invalid index in elevator_controller");
@@ -135,7 +139,6 @@ void ElevatorController::update(const ros::Time &time,const  ros::Duration &dura
 		if(index < cargo_locations_.size())
 		{
 			elevator_joint_.setCommand(cargo_locations_[index]);
-			ROS_INFO_STREAM("setting elevator to " << cargo_locations_[index]);
 		}
 		else
 			ROS_WARN_STREAM("invalid index in elevator_controller");

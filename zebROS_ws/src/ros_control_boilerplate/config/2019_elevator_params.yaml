@@ -3,14 +3,14 @@ elevator_controller:
     elevator_joint: "elevator"
     cargo:
         cargo_ship_position: 0.5
-        rocket1_position: 1
-        rocket2_position: 2
-        rocket3_position: 3
+        rocket1_position: 1.0
+        rocket2_position: 2.0
+        rocket3_position: 3.0
     hatch:
         cargo_ship_position: 0.5
-        rocket1_position: 1
-        rocket2_position: 2
-        rocket3_position: 3
+        rocket1_position: 1.0
+        rocket2_position: 2.0
+        rocket3_position: 3.0
     forward_soft_limit: -1.0
     reverse_soft_limit: 1.0
     elevator: 
