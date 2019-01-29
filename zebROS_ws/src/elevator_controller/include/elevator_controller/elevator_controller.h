@@ -18,7 +18,7 @@
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Bool.h>
 #include "elevator_controller/ElevatorSrv.h"
-
+#include "elevator_controller/ClimberEngageSrv.h"
 
 namespace elevator_controller
 {
@@ -41,19 +41,25 @@ class ElevatorController : public controller_interface::MultiInterfaceController
             virtual void stopping(const ros::Time &time);
 
             virtual bool cmdService(elevator_controller::ElevatorSrv::Request &req,
-					                elevator_controller::ElevatorSrv::Response &res);
+					                elevator_controller::ElevatorSrv::Response &res); 
+			virtual bool climberEngageCallback(elevator_controller::ClimberEngageSrv::Request &req, elevator_controller::ClimberEngageSrv::Response &res);
+
 
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
             talon_controllers::TalonMotionMagicCloseLoopControllerInterface elevator_joint_; //interface for the talon joint
            // hardware_interface::JointHandle intake_in_; //interface for the in/out solenoid joint
+		   	hardware_interface::JointHandle climber_engage_joint_
 
             realtime_tools::RealtimeBuffer<double> spin_command_; //this is the buffer for percent output commands to be published
+			realtime_tools::RealtimeBuffer<double> climber_engage_cmd_;
            // realtime_tools::RealtimeBuffer<double> intake_in_cmd_; //buffer for in/out commands
             realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
 
             ros::ServiceServer elevator_service_; //service for receiving commands
+			ros::ServiceServer climber_engage_service_;
 }; //class
+
 
 } //namespace
 #endif
