@@ -80,6 +80,7 @@ array<double, WHEELCOUNT> swerve::parkingAngles(const array<double, WHEELCOUNT> 
 		const double nearestanglep = leastDistantAngleWithinHalfPi(currpos, retAngles[i], reverse);
 		//ROS_INFO_STREAM(" id: " << i << " currpos: " << currpos << "target" <<nearestanglep);
 		retAngles[i] = nearestanglep * units_.steeringSet + offsets_[i];
+		//ROS_INFO_STREAM("park[i]:" << swerveMath_.parkingAngle_[i] << " " << retAngles[i]);
 	}
 	return retAngles;
 }
