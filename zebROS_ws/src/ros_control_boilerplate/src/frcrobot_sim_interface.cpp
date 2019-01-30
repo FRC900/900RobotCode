@@ -98,7 +98,7 @@ TeleopJointsKeyboard::TeleopJointsKeyboard(ros::NodeHandle &nh)
 	// Hard-code this to frcrobot_rio namespace so that it matches
 	// the real robot hardware, where joystick data comes from the
 	// driver station via the Rio
-	joints_pub_ = nh.advertise<frc_msgs::JoystickState>("/frcrobot_rio/joystick_states_raw", 1);
+	joints_pub_ = nh.advertise<sensor_msgs::Joy>("/frcrobot_rio/joystick_states_raw", 1);
 }
 
 TeleopJointsKeyboard::~TeleopJointsKeyboard()
@@ -234,11 +234,20 @@ void TeleopJointsKeyboard::keyboardLoop()
 					break;
 				case KEYCODE_ONE:
 
+
 					// TODO : use something like
 					// cmd_.buttonAPress = !cmd_last_.buttonAButton;
 					// to simplify the code here
 					cmd_.buttons[0] = true;
 					break;
+				case KEYCODE_q:
+				  cmd_.axes[2] = .5; 
+				  dirty = true;
+				  break;
+				case KEYCODE_e:
+					cmd_.axes[5] = .5; 
+					break;
+
 				case KEYCODE_TWO:
 					cmd_.buttons[1] = true;
 					break;
@@ -248,14 +257,15 @@ void TeleopJointsKeyboard::keyboardLoop()
 				case KEYCODE_FOUR:
 					cmd_.buttons[3] = true;
 					break;
-				/*case KEYCODE_q:
-				  cmd_.leftTrigger = .5;
+
+			/*	case KEYCODE_q:
+				  cmd_.axes[2] = .5; 
 				  dirty = true;
 				  break;
-				  */
-			/*	case KEYCODE_e:
-					cmd_.axes[5] = .5;
+				case KEYCODE_e:
+					cmd_.axes[5] = .5; 
 					break;*/
+
 				case KEYCODE_SEVEN:
 					cmd_.buttons[8] = true;
 					break;
