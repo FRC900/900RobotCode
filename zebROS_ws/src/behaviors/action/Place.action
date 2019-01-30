@@ -1,4 +1,4 @@
-float32 elevator_setpoint
+uint8 setpoint_index
 ---
 bool timed_out
 bool success

@@ -1,4 +1,5 @@
-float32 setpoint 
+uint8 setpoint_index 
+bool place_cargo
 ---
 bool timed_out
 bool success

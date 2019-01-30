@@ -56,6 +56,10 @@
 			<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_rio/joystick_states"/>
 			<remap from="/frcrobot_jetson/navx_mxp" to="/frcrobot_rio/navx_mxp"/>
 		</node>
+
+		<!-- actionlib servers!!! -->
+		<node name="elevator_ac_server" pkg="behaviors" type="elevator_server" output="screen"/>
+		<node name="outtake_cargo_ac_server" pkg="behaviors" type="outtake_cargo_server" output="screen"/>
 	</group>
 
 	<!-- Run this on the Jetson, but put it in the Rio namespace since the

@@ -1,16 +1,8 @@
 elevator_controller:
     type:   elevator_controller/ElevatorController
     elevator_joint: "elevator"
-    cargo:
-        cargo_ship_position: 0.5
-        rocket1_position: 1.0
-        rocket2_position: 2.0
-        rocket3_position: 3.0
-    hatch:
-        cargo_ship_position: 0.5
-        rocket1_position: 1.0
-        rocket2_position: 2.0
-        rocket3_position: 3.0
+    forward_soft_limit: -1.0
+    reverse_soft_limit: 1.0
     elevator: 
         type: talon_controllers/TalonMotionMagicCloseLoopControllerInterface 
         joint: elevator_joint

@@ -80,7 +80,7 @@ class CargoIntakeAction {
 			if(!preempted && !timed_out) {
 				ROS_WARN("cargo intake server: sending elevator to intake config");
 				behaviors::ElevatorGoal elevator_goal;
-				elevator_goal.setpoint = intake_setpoint;
+				elevator_goal.setpoint_index = intake_setpoint;
 				ac_elevator_.sendGoal(elevator_goal);
 				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(intake_timeout - (ros::Time::now().toSec() - start_time))); //Wait for server to finish or until timeout is reached
 				if(finished_before_timeout) {

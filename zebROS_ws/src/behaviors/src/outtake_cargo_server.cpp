@@ -3,9 +3,11 @@
 #include "actionlib/client/simple_action_client.h"
 #include "behaviors/IntakeAction.h"
 #include "behaviors/ElevatorAction.h"
+#include "behaviors/PlaceAction.h"
 #include "cargo_intake_controller/CargoIntakeSrv.h"
 #include "elevator_controller/ElevatorSrv.h"
 #include "sensor_msgs/JointState.h"
+#include "cargo_outtake_controller/CargoOuttakeSrv.h"
 #include <atomic>
 #include <ros/console.h>
 
@@ -14,27 +16,27 @@
 double roller_power;
 double outtake_timeout;
 double linebreak_debounce_iterations;
-double cargo_ship_setpoint;
-double low_rocket_setpoint;
-double mid_rocket_setpoint;
-double high_rocket_setpoint;
 
+/* Place
+ * request is SETPOINT (cargo, rocket1, rocket2, rocket3) and PLACE_CARGO (hatch if false)
+ */
 
 class CargoOuttakeAction {
 	protected:
 		ros::NodeHandle nh_;
-
 		actionlib::SimpleActionServer<behaviors::PlaceAction> as_; //create the actionlib server
 		std::string action_name_;
+
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
 		ros::ServiceClient controller_client_; //create a ros client to send requests to the controller
-		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo since we started trying to intake/outtake
-		std::atomic<int> linebreak_false_count; //same, but how many times in a row no cargo
+		std::atomic<int> linebreak_true_count_; //counts how many times in a row the linebreak reported there's a cargo since we started trying to intake/outtake
+		std::atomic<int> linebreak_false_count_; //same, but how many times in a row no cargo
 		behaviors::IntakeResult result_; //variable to store result of the actionlib action
 
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
+
 	public:
 		//make the executeCB function run every time the actionlib server is called
 		CargoOuttakeAction(const std::string &name) :
@@ -54,7 +56,7 @@ class CargoOuttakeAction {
 		ros::ServiceClient cargo_outtake_controller_client_ = nh_.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/frcrobot_jetson/cargo_outtake_controller/cargo_outtake_command", false, service_connection_header);
 		ros::ServiceClient elevator_controller_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
 		//start subscribers subscribing
-		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
+		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoOuttakeAction::jointStateCallback, this);
 	}
 
 		~CargoOuttakeAction(void)
@@ -63,7 +65,7 @@ class CargoOuttakeAction {
 
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::PlaceGoalConstPtr &goal) {
-			ROS_INFO("%s: Running callback", action_name_.c_str());
+			ROS_INFO_STREAM("%s: Running callback" << action_name_.c_str());
 			ros::Rate r(10);
 
 			//define variables that will be reused for each controller call/actionlib server call
@@ -77,11 +79,13 @@ class CargoOuttakeAction {
 			bool timed_out = false;
 
 			if(!preempted && !timed_out) {
-				ROS_WARN("cargo outtake server: sending elevator to outtake config");
+				ROS_WARN_STREAM("cargo outtake server: sending elevator to outtake config");
 				behaviors::ElevatorGoal elevator_goal;
-				elevator_goal.setpoint = goal->elevator_setpoint;
+				elevator_goal.setpoint_index = goal->setpoint_index;
+				elevator_goal.place_cargo = true;
 				ac_elevator_.sendGoal(elevator_goal);
-				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(outtake_timeout - (ros::Time::now().toSec() - start_time))); //Wait for server to finish or until timeout is reached
+
+				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(fabs(outtake_timeout - (ros::Time::now().toSec() - start_time)))); //Wait for server to finish or until timeout is reached
 				if(finished_before_timeout) {
 					actionlib::SimpleClientGoalState state = ac_elevator_.getState();
 					if(state.toString().c_str() != "SUCCEEDED") {
@@ -100,16 +104,17 @@ class CargoOuttakeAction {
 					as_.setPreempted();
 				}
 			}
-
+			
 			//send command to lower arm and run roller to the cargo intake controller ------
 			if(!preempted && !timed_out)
 			{
-				ROS_WARN("%s: unclamping cargo",action_name_.c_str())
+				ROS_WARN("%s: unclamping cargo", action_name_.c_str());
 
 				//define request to send to cargo intake controller
 				cargo_outtake_controller::CargoOuttakeSrv srv;
 				srv.request.power = roller_power;
-				srv.request.outtake_arm = false; //TODO: double check
+				srv.request.kicker_in = false; 
+				srv.request.clamp_in = false;
 
 				//send request to controller
 				if(!controller_client_.call(srv))
@@ -123,7 +128,7 @@ class CargoOuttakeAction {
 
 				//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
 				while(!success && !timed_out && !preempted) {
-					success = linebreak_true_count > linebreak_debounce_iterations;
+					success = linebreak_true_count_ > linebreak_debounce_iterations;
 					timed_out = (ros::Time::now().toSec()-start_time) > outtake_timeout;
 
 					if(as_.isPreemptRequested() || !ros::ok()) {
@@ -145,7 +150,8 @@ class CargoOuttakeAction {
 			//define command to send to cargo intake controller
 			cargo_outtake_controller::CargoOuttakeSrv srv;
 			srv.request.power = 0;
-			srv.request.outtake_arm = true; //TODO: Double check
+			srv.request.kicker_in = false;
+			srv.request.clamp_in = true;
 			//send request to controller
 			if(!controller_client_.call(srv))
 			{
@@ -164,10 +170,11 @@ class CargoOuttakeAction {
 			{
 				ROS_INFO("%s: Succeeded", action_name_.c_str());
 			}
+			
 
 			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
 			result_.success = success; //success refers to last controller call, but applies for whole action
-			as_.setSucceeded(result_, "intake_cargo_server: testing send text result from actionlib server... SPOOKY"); //pretend it succeeded no matter what, but tell what actually happened with the result - helps with SMACH
+			//as_.setSucceeded(result_, "intake_cargo_server: testing send text result from actionlib server... SPOOKY"); //pretend it succeeded no matter what, but tell what actually happened with the result - helps with SMACH
 			return;
 		}
 
@@ -193,13 +200,13 @@ class CargoOuttakeAction {
 				bool linebreak_true = (joint_state.position[linebreak_idx] != 0);
 				if(linebreak_true)
 				{
-					linebreak_true_count += 1;
-					linebreak_false_count = 0;
+					linebreak_true_count_ += 1;
+					linebreak_false_count_ = 0;
 				}
 				else
 				{
-					linebreak_true_count = 0;
-					linebreak_false_count += 1;
+					linebreak_true_count_ = 0;
+					linebreak_false_count_ += 1;
 				}
 			}
 			else
@@ -210,8 +217,8 @@ class CargoOuttakeAction {
 					ROS_WARN("outtake line break sensor not found in joint_states");
 				}
 				count++;
-				linebreak_true_count = 0;
-				linebreak_false_count += 1;
+				linebreak_true_count_ = 0;
+				linebreak_false_count_ += 1;
 			}
 		}
 };
@@ -225,26 +232,16 @@ int main(int argc, char** argv) {
 
 	//get config values
 	ros::NodeHandle n;
-	ros::NodeHandle n_params_intake(n, "actionlib_cargo_outtake_params");
+	ros::NodeHandle n_params_outtake(n, "actionlib_cargo_outtake_params");
 	ros::NodeHandle n_params_lift(n, "actionlib_lift_params");
 
 	if (!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
 		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
 
-	if (!n_params_intake.getParam("roller_power", roller_power))
+	if (!n_params_outtake.getParam("roller_power", roller_power))
 		ROS_ERROR("Could not read roller_power in cargo_outtake_server");
-	if (!n_params_intake.getParam("outtake_timeout", outtake_timeout))
+	if (!n_params_outtake.getParam("outtake_timeout", outtake_timeout))
 		ROS_ERROR("Could not read outtake_timeout in cargo_outtake_server");
-
-	if(!n_params_lift.getParam("cargo_ship", cargo_ship_setpoint))
-		ROS_ERROR("Coult not read cargo_ship in cargo_outtake_server");
-	if(!n_params_lift.getParam("low_rocket", low_rocket_setpoint))
-		ROS_ERROR("Coult not read low_rocket in cargo_outtake_server");
-	if(!n_params_lift.getParam("high_rocket", high_rocket_setpoint))
-		ROS_ERROR("Coult not read high_rocket in cargo_outtake_server");
-	if(!n_params_lift.getParam("mid_rocket", mid_rocket_setpoint))
-		ROS_ERROR("Coult not read mid_rocket in cargo_outtake_server");
-
 
 	ros::spin();
 	return 0;

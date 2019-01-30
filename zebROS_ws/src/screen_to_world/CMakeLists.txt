@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(screen_to_world)
 
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
@@ -200,3 +201,4 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+endif()

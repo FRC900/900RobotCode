@@ -2,6 +2,9 @@
 #include <realtime_tools/realtime_buffer.h>
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "std_srvs/Empty.h"
+#include "behaviors/PlaceAction.h"
+#include "behaviors/PlaceGoal.h"
+#include "actionlib/client/simple_action_client.h"
 
 // TODO : make these parameters, possibly with dynamic reconfig
 const double dead_zone = .2;
@@ -22,6 +25,7 @@ void dead_zone_check(double &val1, double &val2)
 
 static ros::Publisher JoystickRobotVel;
 static ros::ServiceClient BrakeSrv;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_cargo_ac;
 
 std::atomic<double> navX_angle;
 
@@ -100,6 +104,14 @@ void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 		JoystickRobotVel.publish(vel);
 		sendRobotZero = false;
 	}
+
+	if(JoystickState->buttonAButton)
+	{
+		ROS_INFO_STREAM("buttonAButton");
+		behaviors::PlaceGoal place_action;
+		place_action.setpoint_index = 1;
+		outtake_cargo_ac->sendGoal(place_action);
+	}
 }
 
 int main(int argc, char **argv)
@@ -116,6 +128,7 @@ int main(int argc, char **argv)
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("swerve_drive_controller/brake", false, service_connection_header);
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
+	outtake_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::PlaceAction>>("cargo_outtake_server", true);
 
 	ROS_WARN("joy_init");
 

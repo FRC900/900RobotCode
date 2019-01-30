@@ -138,9 +138,9 @@ add_executable(intake_cargo_server src/intake_cargo_server.cpp)
 target_link_libraries(intake_cargo_server ${catkin_LIBRARIES})
 add_dependencies(intake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-#add_executable(elevator_server src/elevator_server.cpp)
-#target_link_libraries(elevator_server ${catkin_LIBRARIES})
-#add_dependencies(elevator_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(elevator_server src/elevator_server.cpp)
+target_link_libraries(elevator_server ${catkin_LIBRARIES})
+add_dependencies(elevator_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #
 #add_executable(intake_hatch_panel_server src/intake_hatch_panel_server.cpp)
 #target_link_libraries(intake_hatch_panel_server ${catkin_LIBRARIES})
@@ -150,9 +150,9 @@ add_dependencies(intake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPO
 #target_link_libraries(climber_server ${catkin_LIBRARIES})
 #add_dependencies(climber_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #
-#add_executable(outtake_cargo_server src/outtake_cargo_server.cpp)
-#target_link_libraries(outtake_cargo_server ${catkin_LIBRARIES})
-#add_dependencies(outtake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(outtake_cargo_server src/outtake_cargo_server.cpp)
+target_link_libraries(outtake_cargo_server ${catkin_LIBRARIES})
+add_dependencies(outtake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #
 #add_executable(outtake_hatch_panel_server src/outtake_hatch_panel_server.cpp)
 #target_link_libraries(outtake_hatch_panel_server ${catkin_LIBRARIES})
