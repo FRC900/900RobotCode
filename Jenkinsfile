@@ -60,7 +60,11 @@ node {
                         cd zebROS_ws
                         wstool update -t src --continue-on-error
                         source /opt/ros/kinetic/setup.bash
+                        ls /opt/ros/kinetic/share
+                        ls /opt/ros/kinetic/share/teraranger_array/cmake
                         source devel/setup.bash
+                        ls /opt/ros/kinetic/share
+                        ls /opt/ros/kinetic/share/teraranger_array/cmake
                         catkin_make run_tests
                     '''
                     
