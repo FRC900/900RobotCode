@@ -40,21 +40,31 @@ class ClimbAction {
 
 	public:
 		//make the executeCB function run every time the actionlib server is called
+		// TODO - ae_ is never set?
 		ClimbAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&ClimbAction::executeCB, this, _1), false),
 			action_name_(name)
 	{
 		as_.start(); //start the actionlib server
 
+		// TODO : probably want a call to ae_.waitForServer() with a reasonable timeout, either here
+		// or in the executeCB function. Check the return code to make sure the actionlib server
+		// exists before calling it.
+
 		//do networking stuff?
 		std::map<std::string, std::string> service_connection_header;
 		service_connection_header["tcp_nodelay"] = "1";
 
+		// TODO : call waitForExistence with a reasonable timeout here, again to make
+		// sure that the requested services exist. Useful for initially hooking things
+		// up to the correct names
+		
 		//initialize the client being used to call the climber controller
 		climber_controller_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_service", false, service_connection_header);
 		//initialize the client being used to call the elevator controller to engage the climber
 		climber_engage_client_ = nh_.serviceClient<elevator_controller::EngageClimberSrv>("/frcrobot_jetson/elevator_controller/climber_engage_service", false, service_connection_header);
 
+		// TODO : consider just using 1 instead of 10.
 		//initialize the publisher used to send messages to the drive base
 		cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/frcrobot_jetson/swerve_drive_controller/cmd_vel",10);
 
@@ -110,6 +120,7 @@ class ClimbAction {
 			// raise elevator to right height so we can engage the climber ------------------------------------------------
 			if(!preempted && !timed_out)
 			{
+				// TODO : don't use ROS_ERROR for info messages, use ROS_INFO instead
 				ROS_ERROR("climber server: raising elevator before climber is engaged");
 				
 				success = false;
@@ -120,6 +131,8 @@ class ClimbAction {
 				goal.elevator_setpoint = elevator_deploy_setpoint; //elevator_deploy_setpoint is defined via config values
 				//send the goal
 				ae_.sendGoal(goal);
+				// TODO : probably should pass in a (configurable) timeout, then
+				// check the return code to see if that has expired. If so, error out
 				ae_.waitForResult(); //wait until the action finishes, whether it succeeds, times out, or is preempted
 
 				//determine the outcome of the goal
@@ -162,6 +175,8 @@ class ClimbAction {
 				}
 				ros::spinOnce();
 			}
+			// TODO : any need for a delay between deploying feet and 
+			// running elevator?
 
 			//lower elevator to make robot rise off ground
 			if(!preempted && !timed_out)
@@ -179,6 +194,8 @@ class ClimbAction {
 				ae_.waitForResult(); //wait until the action finishes, whether it succeeds, times out, or is preempted
 
 				//determine the outcome of the goal
+				// TODO : could just replace these 3 lines with
+				// if (ae_.getResult()->success)
 				behaviors::ElevatorResult elev_result;
 				elev_result = *ae_.getResult();
 				if(elev_result.success)
@@ -212,8 +229,10 @@ class ClimbAction {
 					//publish move wheels forward slowly msg
 					geometry_msgs::Twist msg;
 					/*TODO: define msg*/
+					// The speed should probably be a config item?
 					cmd_vel_pub_.publish(msg);
 
+					// TODO : reverse these.
 					r.sleep();
 					ros::spinOnce();
 				}
@@ -224,6 +243,7 @@ class ClimbAction {
 
 			//log state of action and set result of action
 
+			// TODO : timed_out is never set
 			if(timed_out)
 			{
 				result_.timed_out = true;
