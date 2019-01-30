@@ -98,7 +98,7 @@ TeleopJointsKeyboard::TeleopJointsKeyboard(ros::NodeHandle &nh)
 	// Hard-code this to frcrobot_rio namespace so that it matches
 	// the real robot hardware, where joystick data comes from the
 	// driver station via the Rio
-	joints_pub_ = nh.advertise<frc_msgs::JoystickState>("/frcrobot_rio/joystick_states", 1);
+	joints_pub_ = nh.advertise<frc_msgs::JoystickState>("/frcrobot_rio/joystick_states_raw", 1);
 }
 
 TeleopJointsKeyboard::~TeleopJointsKeyboard()
@@ -162,6 +162,9 @@ void TeleopJointsKeyboard::keyboardLoop()
 
 	tcsetattr(kfd, TCSANOW, &raw);
 
+	cmd_.axes.resize(8);
+	cmd_.buttons.resize(10);
+
 	bool processing_bracket = false;
 	while (ros::ok())
 	{
@@ -171,66 +174,30 @@ void TeleopJointsKeyboard::keyboardLoop()
 		else if (rc == 0)
 			continue;
 
-		cmd_.rightStickY = 0;
-		cmd_.rightStickX = 0;
+		cmd_.axes[4] = 0;
+		cmd_.axes[3] = 0;
+		cmd_.axes[1] = 0;
+		cmd_.axes[0] = 0;
+		cmd_.axes[2] = 0;
+		cmd_.axes[5] = 0;
+		cmd_.axes[6] = 0;
+		cmd_.axes[7] = 0;
 
-		cmd_.leftStickY = 0;
-		cmd_.leftStickX = 0;
+		cmd_.buttons[2] = false;
+		cmd_.buttons[3] = false;
+		cmd_.buttons[4] = false;
+		cmd_.buttons[5] = false;
+		cmd_.buttons[8] = false;
+		cmd_.buttons[9] = false;
 
-		cmd_.leftTrigger = 0;
-		cmd_.rightTrigger = 0;
-		cmd_.buttonXButton = false;
-		cmd_.buttonXPress = false;
-		cmd_.buttonXRelease = false;
-		cmd_.buttonYButton = false;
-		cmd_.buttonYPress = false;
-		cmd_.buttonYRelease = false;
+		cmd_.buttons[0] = false;
+		cmd_.buttons[1] = false;
+		cmd_.buttons[6] = false;
 
-		cmd_.bumperLeftButton = false;
-		cmd_.bumperLeftPress = false;
-		cmd_.bumperLeftRelease = false;
+		cmd_.buttons[7] = false;
 
-		cmd_.bumperRightButton = false;
-		cmd_.bumperRightPress = false;
-		cmd_.bumperRightRelease = false;
 
-		cmd_.stickLeftButton = false;
-		cmd_.stickLeftPress = false;
-		cmd_.stickLeftRelease = false;
 
-		cmd_.stickRightButton = false;
-		cmd_.stickRightPress = false;
-		cmd_.stickRightRelease = false;
-
-		cmd_.buttonAButton = false;
-		cmd_.buttonAPress = false;
-		cmd_.buttonARelease = false;
-		cmd_.buttonBButton = false;
-		cmd_.buttonBPress = false;
-		cmd_.buttonBRelease = false;
-		cmd_.buttonBackButton = false;
-		cmd_.buttonBackPress = false;
-		cmd_.buttonBackRelease = false;
-
-		cmd_.buttonStartButton = false;
-		cmd_.buttonStartPress = false;
-		cmd_.buttonStartRelease = false;
-
-		cmd_.directionUpButton = false;
-		cmd_.directionUpPress = false;
-		cmd_.directionUpRelease = false;
-
-		cmd_.directionDownButton = false;
-		cmd_.directionDownPress = false;
-		cmd_.directionDownRelease = false;
-
-		cmd_.directionRightButton = false;
-		cmd_.directionRightPress = false;
-		cmd_.directionRightRelease = false;
-
-		cmd_.directionLeftButton = false;
-		cmd_.directionLeftPress = false;
-		cmd_.directionLeftRelease = false;
 
 		// Assume keypress will be a valid command / cause
 		// to update the published joystick data. Set this to false
@@ -241,131 +208,71 @@ void TeleopJointsKeyboard::keyboardLoop()
 			switch (c)
 			{
 				case KEYCODE_i:
-					cmd_.rightStickY += .5;
+					cmd_.axes[5] += .5;
 					break;
 				case KEYCODE_k:
-					cmd_.rightStickY -= .5;
+					cmd_.axes[5] -= .5;
 					break;
 				case KEYCODE_j:
-					cmd_.rightStickX += .5;
+					cmd_.axes[4] += .5;
 					break;
 				case KEYCODE_l:
-					cmd_.rightStickX -= .5;
+					cmd_.axes[4] -= .5;
 					break;
 
 				case KEYCODE_d:
-					cmd_.leftStickY += .5;
+					cmd_.axes[1] += .5;
 					break;
 				case KEYCODE_a:
-					cmd_.leftStickY -= .5;
+					cmd_.axes[1] -= .5;
 					break;
 				case KEYCODE_w:
-					cmd_.leftStickX += .5;
+					cmd_.axes[0] += .5;
 					break;
 				case KEYCODE_s:
-					cmd_.leftStickX -= .5;
+					cmd_.axes[0] -= .5;
 					break;
 				case KEYCODE_ONE:
 
 					// TODO : use something like
 					// cmd_.buttonAPress = !cmd_last_.buttonAButton;
 					// to simplify the code here
-					if(cmd_last_.buttonAButton) {
-						cmd_.buttonAPress = false;
-					}
-					else {
-						cmd_.buttonAPress = true;
-					}
-					cmd_.buttonAButton = true;
+					cmd_.buttons[0] = true;
 					break;
 				case KEYCODE_TWO:
-					if(cmd_last_.buttonBButton) {
-						cmd_.buttonBPress = false;
-					}
-					else {
-						cmd_.buttonBPress = true;
-					}
-					cmd_.buttonBButton = true;
+					cmd_.buttons[1] = true;
 					break;
 				case KEYCODE_THREE:
-					if(cmd_last_.buttonXButton) {
-						cmd_.buttonXPress = false;
-					}
-					else {
-						cmd_.buttonXPress = true;
-					}
-					cmd_.buttonXButton = true;
+					cmd_.buttons[2] = true;
 					break;
 				case KEYCODE_FOUR:
-					if(cmd_last_.buttonYButton) {
-						cmd_.buttonYPress = false;
-					}
-					else {
-						cmd_.buttonYPress = true;
-					}
-					cmd_.buttonYButton = true;
+					cmd_.buttons[3] = true;
 					break;
 				/*case KEYCODE_q:
 				  cmd_.leftTrigger = .5;
 				  dirty = true;
 				  break;
 				  */
-				case KEYCODE_e:
-					cmd_.rightTrigger = .5;
-					break;
+			/*	case KEYCODE_e:
+					cmd_.axes[5] = .5;
+					break;*/
 				case KEYCODE_SEVEN:
-					if(cmd_last_.stickLeftButton) {
-						cmd_.stickLeftPress = false;
-					}
-					else {
-						cmd_.stickLeftPress = true;
-					}
-					cmd_.stickLeftButton = true;
+					cmd_.buttons[8] = true;
 					break;
 				case KEYCODE_EIGHT:
-					if(cmd_last_.stickRightButton) {
-						cmd_.stickRightPress = false;
-					}
-					else {
-						cmd_.stickRightPress = true;
-					}
-					cmd_.stickRightButton = true;
+					cmd_.buttons[9] = true;
 					break;
 				case KEYCODE_FIVE:
-					if(cmd_last_.buttonBackButton) {
-						cmd_.buttonBackPress = false;
-					}
-					else {
-						cmd_.buttonBackPress = true;
-					}
-					cmd_.buttonBackButton = true;
+					cmd_.buttons[6] = true;
 					break;
 				case KEYCODE_SIX:
-					if(cmd_last_.buttonStartButton) {
-						cmd_.buttonStartPress = false;
-					}
-					else {
-						cmd_.buttonStartPress = true;
-					}
-					cmd_.buttonStartButton = true;
+					cmd_.buttons[7] = true;
 					break;
 				case KEYCODE_MINUS:
-					if(cmd_last_.bumperLeftButton) {
-						cmd_.bumperLeftPress = false;
-					}
-					else {
-						cmd_.bumperLeftPress = true;
-					}
-					cmd_.bumperLeftButton = true;
+					cmd_.buttons[4] = true;
 					break;
 				case KEYCODE_EQUALS:
-					if(cmd_last_.bumperRightButton) {
-						cmd_.bumperRightPress = false;
-					}
-					else {
-						cmd_.bumperRightPress = true;
-					}
-					cmd_.bumperRightButton = true;
+					cmd_.buttons[5] = true;
 					break;
 				case KEYCODE_LEFT_BRACKET:
 					processing_bracket = true;
@@ -391,91 +298,25 @@ void TeleopJointsKeyboard::keyboardLoop()
 			switch (c)
 			{
 				case KEYCODE_B:
-					if(cmd_last_.directionDownButton) {
-						cmd_.directionDownPress = false; // radians
-					}
-					else {
-						cmd_.directionDownPress = true; // radians
-					}
-					cmd_.directionDownButton = true;
+					cmd_.axes[7] = true;
 					processing_bracket = false;
 					break;
 				case KEYCODE_A:
-					if(cmd_last_.directionUpButton) {
-						cmd_.directionUpPress = false; // radians
-					}
-					else {
-						cmd_.directionUpPress = true; // radians
-					}
-					cmd_.directionUpButton = true;
+					cmd_.axes[7] = true;
 					processing_bracket = false;
 					break;
 				case KEYCODE_D:
-					if(cmd_last_.directionLeftButton) {
-						cmd_.directionLeftPress = false; // radians
-					}
-					else {
-						cmd_.directionLeftPress = true; // radians
-					}
-					cmd_.directionLeftButton = true;
+					cmd_.axes[6] = true;
 					processing_bracket = false;
 					break;
 				case KEYCODE_C:
-					if(cmd_last_.directionRightButton) {
-						cmd_.directionRightPress = false; // radians
-					}
-					else {
-						cmd_.directionRightPress = true; // radians
-					}
-					cmd_.directionRightButton = true;
+					cmd_.axes[6] = true;
 					processing_bracket = false;
 					break;
 				default:
 					dirty = false;
 			}
 			break;
-		}
-		if(cmd_last_.buttonAButton && !cmd_.buttonAButton) {
-			cmd_.buttonARelease = true;
-		}
-		if(cmd_last_.buttonBButton && !cmd_.buttonBButton) {
-			cmd_.buttonBRelease = true;
-		}
-		if(cmd_last_.buttonXButton && !cmd_.buttonXButton) {
-			cmd_.buttonXRelease = true;
-		}
-		if(cmd_last_.buttonYButton && !cmd_.buttonYButton) {
-			cmd_.buttonYRelease = true;
-		}
-		if(cmd_last_.buttonStartButton && !cmd_.buttonStartButton) {
-			cmd_.buttonARelease = true;
-		}
-		if(cmd_last_.buttonBackButton && !cmd_.buttonBackButton) {
-			cmd_.buttonARelease = true;
-		}
-		if(cmd_last_.stickLeftButton && !cmd_.stickLeftButton) {
-			cmd_.stickLeftRelease = true;
-		}
-		if(cmd_last_.stickRightButton && !cmd_.stickRightButton) {
-			cmd_.stickRightRelease = true;
-		}
-		if(cmd_last_.bumperLeftButton && !cmd_.bumperLeftButton) {
-			cmd_.bumperLeftRelease = true;
-		}
-		if(cmd_last_.bumperRightButton && !cmd_.bumperRightButton) {
-			cmd_.bumperRightRelease = true;
-		}
-		if(cmd_last_.directionRightButton && !cmd_.directionRightButton) {
-			cmd_.directionRightRelease = true;
-		}
-		if(cmd_last_.directionLeftButton && !cmd_.directionLeftButton) {
-			cmd_.directionLeftRelease = true;
-		}
-		if(cmd_last_.directionUpButton && !cmd_.directionUpButton) {
-			cmd_.directionUpRelease = true;
-		}
-		if(cmd_last_.directionDownButton && !cmd_.directionDownButton) {
-			cmd_.directionDownRelease = true;
 		}
 		// Publish command
 		if (dirty)

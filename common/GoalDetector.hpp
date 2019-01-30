@@ -28,6 +28,7 @@ struct GoalInfo
 	bool depth_error;
 	cv::Point com;
 	cv::Rect br;
+	cv::RotatedRect rtRect;
 };
 
 class GoalDetector
@@ -62,6 +63,8 @@ class GoalDetector
 		float       _angle_to_goal;
 		cv::Rect    _goal_left_rect;
 		cv::Rect    _goal_right_rect;
+		cv::RotatedRect _goal_left_rotated_rect;
+		cv::RotatedRect _goal_right_rotated_rect;
 		cv::Point3f _goal_pos;
 
 		float       _min_valid_confidence;

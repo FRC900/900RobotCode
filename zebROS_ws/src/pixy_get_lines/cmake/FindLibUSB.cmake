@@ -59,6 +59,11 @@ else (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 	  libusb-1.0
   )
 
+  # Append the path suffix if it doesn't get added for some crazy reason
+  if (NOT EXISTS ${LIBUSB_1_INCLUDE_DIRS}/libusb.h AND LIBUSB_1_FOUND)
+    set(LIBUSB_1_INCLUDE_DIRS ${LIBUSB_1_INCLUDE_DIRS}/libusb-1.0)
+  endif()
+
   find_library(LIBUSB_1_LIBRARIES
     NAMES
       usb-1.0 usb

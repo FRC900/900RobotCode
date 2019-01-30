@@ -2,10 +2,14 @@
 #include <realtime_tools/realtime_buffer.h>
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "std_srvs/Empty.h"
+
 #include "behaviors/PlaceAction.h"
 #include "behaviors/PlaceGoal.h"
 #include "actionlib/client/simple_action_client.h"
 
+#include "std_srvs/SetBool.h"
+#include <vector>
+#include <vector>
 // TODO : make these parameters, possibly with dynamic reconfig
 const double dead_zone = .2;
 const double slow_mode = .33;
@@ -13,6 +17,10 @@ const double max_speed = 3.6;
 const double max_rot = 8.8;
 const double joystick_scale = 3;
 const double rotation_scale = 4;
+
+std::vector <frc_msgs::JoystickState> joystick_states_array;
+std::vector <std::string> topic_array;
+std::vector <ros::Subscriber> subscriber_array;
 
 void dead_zone_check(double &val1, double &val2)
 {
@@ -26,6 +34,7 @@ void dead_zone_check(double &val1, double &val2)
 static ros::Publisher JoystickRobotVel;
 static ros::ServiceClient BrakeSrv;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_cargo_ac;
+static ros::ServiceClient run_align;
 
 std::atomic<double> navX_angle;
 
@@ -48,61 +57,101 @@ void navXCallback(const sensor_msgs::Imu &navXState)
         navX_angle.store(yaw, std::memory_order_relaxed);
 }
 
-
-void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
+void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
-	double leftStickX = JoystickState->leftStickX;
-	double leftStickY = JoystickState->leftStickY;
+	int i = 0;
 
-	double rightStickX = JoystickState->rightStickX;
-	double rightStickY = JoystickState->rightStickY;
+	const ros::M_string &header = event.getConnectionHeader();
 
-	dead_zone_check(leftStickX, leftStickY);
-	dead_zone_check(rightStickX, rightStickY);
+	std::string topic = header.at("topic");
+	ROS_INFO_STREAM("topic = " << topic);
 
-	leftStickX =  pow(leftStickX, joystick_scale) * max_speed;
-	leftStickY = -pow(leftStickY, joystick_scale) * max_speed;
-
-	rightStickX =  pow(rightStickX, joystick_scale);
-	rightStickY = -pow(rightStickY, joystick_scale);
-
-	const double rotation = (pow(JoystickState->leftTrigger, rotation_scale) - pow(JoystickState->rightTrigger, rotation_scale)) * max_rot;
-
-	static bool sendRobotZero = false;
-
-	if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
+	for(bool msg_assign = false; msg_assign == false; i++)
 	{
-		if (!sendRobotZero)
+		if(topic == topic_array[i])
 		{
-			std_srvs::Empty empty;
-			if (!BrakeSrv.call(empty))
-			{
-				ROS_ERROR("BrakeSrv call failed in sendRobotZero");
-			}
-			ROS_INFO("BrakeSrv called");
-			sendRobotZero = true;
+			joystick_states_array[i] = *(event.getMessage());
+			msg_assign = true;
 		}
 	}
-	else // X or Y or rotation != 0 so tell the drive base to move
+
+	if(i == 1)
 	{
-		//Publish drivetrain messages and elevator/pivot
-		Eigen::Vector2d joyVector;
-		joyVector[0] = leftStickX; //intentionally flipped
-		joyVector[1] = -leftStickY;
-		const Eigen::Rotation2Dd r(-navX_angle.load(std::memory_order_relaxed) - M_PI / 2.);
-		const Eigen::Vector2d rotatedJoyVector = r.toRotationMatrix() * joyVector;
+		double leftStickX = joystick_states_array[0].leftStickX;
+		double leftStickY = joystick_states_array[0].leftStickY;
 
-		geometry_msgs::Twist vel;
-		vel.linear.x = rotatedJoyVector[1];
-		vel.linear.y = rotatedJoyVector[0];
-		vel.linear.z = 0;
+		double rightStickX = joystick_states_array[0].rightStickX;
+		double rightStickY = joystick_states_array[0].rightStickY;
 
-		vel.angular.x = 0;
-		vel.angular.y = 0;
-		vel.angular.z = rotation;
+		dead_zone_check(leftStickX, leftStickY);
+		dead_zone_check(rightStickX, rightStickY);
 
-		JoystickRobotVel.publish(vel);
-		sendRobotZero = false;
+		leftStickX =  pow(leftStickX, joystick_scale) * max_speed;
+		leftStickY = -pow(leftStickY, joystick_scale) * max_speed;
+
+		rightStickX =  pow(rightStickX, joystick_scale);
+		rightStickY = -pow(rightStickY, joystick_scale);
+
+		const double rotation = (pow(joystick_states_array[0].leftTrigger, rotation_scale) - pow(joystick_states_array[0].rightTrigger, rotation_scale)) * max_rot;
+
+		static bool sendRobotZero = false;
+
+		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
+		{
+			if (!sendRobotZero)
+			{
+				std_srvs::Empty empty;
+				if (!BrakeSrv.call(empty))
+				{
+					ROS_ERROR("BrakeSrv call failed in sendRobotZero");
+				}
+				ROS_INFO("BrakeSrv called");
+				sendRobotZero = true;
+			}
+		}
+
+		else // X or Y or rotation != 0 so tell the drive base to move
+		{
+			//Publish drivetrain messages and elevator/pivot
+			Eigen::Vector2d joyVector;
+			joyVector[0] = leftStickX; //intentionally flipped
+			joyVector[1] = -leftStickY;
+			const Eigen::Rotation2Dd r(-navX_angle.load(std::memory_order_relaxed) - M_PI / 2.);
+			const Eigen::Vector2d rotatedJoyVector = r.toRotationMatrix() * joyVector;
+
+			geometry_msgs::Twist vel;
+			vel.linear.x = rotatedJoyVector[1];
+			vel.linear.y = rotatedJoyVector[0];
+			vel.linear.z = 0;
+
+			vel.angular.x = 0;
+			vel.angular.y = 0;
+			vel.angular.z = rotation;
+
+			JoystickRobotVel.publish(vel);
+			sendRobotZero = false;
+		}
+
+		if(joystick_states_array[0].buttonAPress)
+		{
+			ROS_WARN_STREAM("buttonAPress");
+			std_srvs::SetBool msg;
+			msg.request.data = true;
+			run_align.call(msg);
+		}
+
+		if(joystick_states_array[0].buttonARelease)
+		{
+			ROS_WARN_STREAM("buttonARelease");
+			std_srvs::SetBool msg;
+			msg.request.data = false;
+			run_align.call(msg);
+		}
+	}
+
+	else if(i == 2)
+	{
+		// Stuff for the second joystick goes here
 	}
 
 	if(JoystickState->buttonAButton)
@@ -121,7 +170,15 @@ int main(int argc, char **argv)
 
 	navX_angle = M_PI / 2;
 
-	ros::Subscriber joystick_sub  = n.subscribe("joystick_states", 1, &evaluateCommands);
+	topic_array.push_back("/frcrobot_jetson/joystick_states");
+	topic_array.push_back("/frcrobot_jetson/joystick_states1");
+
+	for(size_t j = 0; (subscriber_array.size()) < (topic_array.size()); j++)
+	{
+		subscriber_array.push_back(n.subscribe((topic_array[j]), 1, &evaluateCommands));
+	}
+
+	joystick_states_array.resize(topic_array.size());
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
@@ -129,6 +186,7 @@ int main(int argc, char **argv)
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
 	outtake_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::PlaceAction>>("cargo_outtake_server", true);
+	run_align = n.serviceClient<std_srvs::SetBool>("run_align");
 
 	ROS_WARN("joy_init");
 
