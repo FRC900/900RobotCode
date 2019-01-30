@@ -66,7 +66,6 @@
 	<!-- Run this on the Jetson so outputs go to /frcrobot_jetson/swerve_drive
 		 but remap the inputs so they come from the Rio -->
 		<node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" >
-			<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_rio/joystick_states"/>
 			<remap from="/frcrobot_jetson/navx_mxp" to="/frcrobot_rio/navx_mxp"/>
 		</node>
 
