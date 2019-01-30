@@ -11,7 +11,7 @@
 
 //define global variables that will be defined based on config values
 //double linebreak_debounce_iterations;
-double outtake_timeout;//this is the same variable as used in cargo_outtake, should it be a different one for the hatch panel?
+double panel_outtake_timeout;//this is the same variable as used in cargo_outtake, should it be a different one for the hatch panel?
 double cargo_ship_setpoint;
 double low_rocket_setpoint;
 double mid_rocket_setpoint;
@@ -52,10 +52,10 @@ class OuttakeHatchPanelAction
 
 			as_.start();
 		//initialize the client being used to call the controller
-		ros::ServiceClient cargo_outtake_controller_client_ = nh_.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/frcrobot_jetson/cargo_outtake_controller/cargo_outtake_command", false, service_connection_header);
+		ros::ServiceClient panel_outtake_controller_client_ = nh_.serviceClient<panel_outtake_controller::PanelOuttakeSrv>("/frcrobot_jetson/cargo_outtake_controller/panel_outtake_command", false, service_connection_header);
 		ros::ServiceClient elevator_controller_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
 		//start subscribers subscribing
-		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
+		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &PanelIntakeAction::jointStateCallback, this);
 }
 
 ~OuttakeHatchPanelAction(void) {}
@@ -128,7 +128,7 @@ void executeCB(const behaviors::PlaceHatchPanelGoalConstPtr &goal)
 		start_time = ros::Time::now().toSec();
 		success = false;
 
-		//define request to send to cargo intake controller
+		//define request to send to panel outtake controller
 		panel_outtake_controller::PanelOuttakeSrv srv;
 		srv.request.claw_in = false; //TODO: make sure this means grab the panel
 		srv.request.push_in = true; //this too
