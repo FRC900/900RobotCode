@@ -60,6 +60,7 @@ class TeleopJointsKeyboard
 	private:
 		ros::Publisher joints_pub_;
 		sensor_msgs::Joy cmd_;
+		sensor_msgs::Joy cmd_last_;
 		//bool has_recieved_joints_;
 };
 
