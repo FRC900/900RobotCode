@@ -1,7 +1,6 @@
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
-#include "behaviors/IntakeAction.h"
 #include "behaviors/ElevatorAction.h"
 #include "behaviors/PlaceAction.h"
 #include "cargo_intake_controller/CargoIntakeSrv.h"
@@ -32,7 +31,7 @@ class CargoOuttakeAction {
 		ros::ServiceClient controller_client_; //create a ros client to send requests to the controller
 		std::atomic<int> linebreak_true_count_; //counts how many times in a row the linebreak reported there's a cargo since we started trying to intake/outtake
 		std::atomic<int> linebreak_false_count_; //same, but how many times in a row no cargo
-		behaviors::IntakeResult result_; //variable to store result of the actionlib action
+		behaviors::PlaceResult result_; //variable to store result of the actionlib action
 
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
@@ -113,8 +112,8 @@ class CargoOuttakeAction {
 				//define request to send to cargo intake controller
 				cargo_outtake_controller::CargoOuttakeSrv srv;
 				srv.request.power = roller_power;
-				srv.request.kicker_in = false; 
-				srv.request.clamp_in = false;
+				srv.request.kicker_in = true; 
+				srv.request.clamp_in = true;
 
 				//send request to controller
 				if(!controller_client_.call(srv))

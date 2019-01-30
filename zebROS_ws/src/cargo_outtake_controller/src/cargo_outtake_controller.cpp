@@ -56,7 +56,9 @@ namespace cargo_outtake_controller
 	bool CargoOuttakeController::cmdService(cargo_outtake_controller::CargoOuttakeSrv::Request &req, cargo_outtake_controller::CargoOuttakeSrv::Response &res) {
 		if(isRunning())
 		{
+			//kick = true, retract = false
 			kicker_command_.writeFromNonRT(req.kicker_in); //take the service request for in/out (true/false???) and write to a command variable
+			//clamped down = false, let go = true
 			clamp_command_.writeFromNonRT(req.clamp_in); //take the service request for in/out (true/false???) and write to a command variable
 		}
 		else
