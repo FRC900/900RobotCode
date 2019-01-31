@@ -4,6 +4,7 @@
 #include <arm_controller/CurArmCommand.h>
 #include <arm_controller/SetArmState.h>
 #include <talon_state_controller/TalonState.h>
+#include "behaviors/enumerated_elevator_indices.h"
 
 
 double arm_angle_deadzone;

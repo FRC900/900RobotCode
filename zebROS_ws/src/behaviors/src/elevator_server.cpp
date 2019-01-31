@@ -5,6 +5,7 @@
 #include <elevator_controller/ElevatorSrv.h>
 #include <talon_state_controller/TalonState.h>
 #include <elevator_controller/ElevatorSrv.h>
+#include "behaviors/enumerated_elevator_indices.h"
 
 //TODO: not global. namespace?
 double elevator_position_deadzone;
@@ -51,8 +52,8 @@ class ElevatorAction {
 			//Talon states subscriber
             talon_states_sub = nh_.subscribe("/frcrobot/talon_states",1, &ElevatorAction::talonStateCallback, this);
 
-			hatch_locations.resize(5); //TODO: not hard-coded
-			cargo_locations.resize(5); //TODO: not hard-coded
+			hatch_locations.resize(ELEVATOR_MAX_INDEX); //TODO: not hard-coded
+			cargo_locations.resize(ELEVATOR_MAX_INDEX); //TODO: not hard-coded
         }
 
         ~ElevatorAction(void) {}
@@ -180,53 +181,53 @@ int main(int argc, char** argv)
 	double hatch_cargo_ship_position;
 	if (!n_params.getParam("hatch/cargo_ship_position", hatch_cargo_ship_position))
 		ROS_ERROR_STREAM("Could not read hatch_cargo_ship_position");
-	elevator_action.hatch_locations[0] = hatch_cargo_ship_position;
+	elevator_action.hatch_locations[CARGO_SHIP] = hatch_cargo_ship_position;
 
 	double hatch_rocket1_position;
 	if (!n_params.getParam("hatch/rocket1_position", hatch_rocket1_position))
 		ROS_ERROR_STREAM("Could not read hatch_rocket1_position");
-	elevator_action.hatch_locations[1] = hatch_rocket1_position;
+	elevator_action.hatch_locations[ROCKET_1] = hatch_rocket1_position;
 
 	double hatch_rocket2_position;
 	if (!n_params.getParam("hatch/rocket3_position", hatch_rocket2_position))
 		ROS_ERROR_STREAM("Could not read hatch_rocket2_position");
-	elevator_action.hatch_locations[2] = hatch_rocket2_position;
+	elevator_action.hatch_locations[ROCKET_2] = hatch_rocket2_position;
 
 	double hatch_rocket3_position;
 	if (!n_params.getParam("hatch/rocket3_position", hatch_rocket3_position))
 		ROS_ERROR_STREAM("Could not read hatch_rocket3_position");
-	elevator_action.hatch_locations[3] = hatch_rocket3_position;
+	elevator_action.hatch_locations[ROCKET_3] = hatch_rocket3_position;
 	
 	double hatch_intake_position;
 	if (!n_params.getParam("hatch/intake_position", hatch_intake_position))
 		ROS_ERROR_STREAM("Could not read hatch_intake_position");
-	elevator_action.hatch_locations[4] = hatch_intake_position;
+	elevator_action.hatch_locations[INTAKE] = hatch_intake_position;
 
 	//read locations for elevator placement for CARGO
 	double cargo_cargo_ship_position;
 	if (!n_params.getParam("cargo/cargo_ship_position", cargo_cargo_ship_position))
 		ROS_ERROR_STREAM("Could not read cargo_cargo_ship_position");
-	elevator_action.cargo_locations[0] = cargo_cargo_ship_position;
+	elevator_action.cargo_locations[CARGO_SHIP] = cargo_cargo_ship_position;
 
 	double cargo_rocket1_position;
 	if (!n_params.getParam("cargo/rocket1_position", cargo_rocket1_position))
 		ROS_ERROR_STREAM("Could not read cargo_rocket1_position");
-	elevator_action.cargo_locations[1] = cargo_rocket1_position;
+	elevator_action.cargo_locations[ROCKET_1] = cargo_rocket1_position;
 
 	double cargo_rocket2_position;
 	if (!n_params.getParam("cargo/rocket3_position", cargo_rocket2_position))
 		ROS_ERROR_STREAM("Could not read cargo_rocket2_position");
-	elevator_action.cargo_locations[2] = cargo_rocket2_position;
+	elevator_action.cargo_locations[ROCKET_2] = cargo_rocket2_position;
 
 	double cargo_rocket3_position;
 	if (!n_params.getParam("cargo/rocket3_position", cargo_rocket3_position))
 		ROS_ERROR_STREAM("Could not read cargo_rocket3_position");
-	elevator_action.cargo_locations[3] = cargo_rocket3_position;
+	elevator_action.cargo_locations[ROCKET_3] = cargo_rocket3_position;
 
 	double cargo_intake_position;
 	if (!n_params.getParam("cargo/intake_position", cargo_intake_position))
 		ROS_ERROR_STREAM("Could not read cargo_intake_position");
-	elevator_action.cargo_locations[4] = cargo_intake_position;
+	elevator_action.cargo_locations[INTAKE] = cargo_intake_position;
 
 	ros::spin();
 	return 0;

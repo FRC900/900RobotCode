@@ -8,6 +8,7 @@
 #include <behaviors/IntakeAction.h>
 #include <behaviors/PathAction.h>
 #include <behaviors/ElevatorAction.h>
+#include "behaviors/enumerated_elevator_indices.h"
 
 //define global variables that will be defined based on config values
 double linebreak_debounce_iterations;
@@ -73,7 +74,8 @@ class IntakeHatchPanelAction
 				
 				//elevator server
 				behaviors::ElevatorGoal elev_goal;
-				elev_goal.elevator_setpoint = 1; //TODO: figure this out
+				elev_goal.setpoint_index = goal->setpoint_index; //TODO: figure this out
+				elev_goal.place_cargo = false;
 				ae_.sendGoal(elev_goal);
 				
 				ap_.waitForResult(); //waits until the goal finishes, whether a success, timeout, or preempt

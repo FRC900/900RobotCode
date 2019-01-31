@@ -11,13 +11,13 @@
 #include "sensor_msgs/JointState.h"
 #include <atomic>
 #include <ros/console.h>
+#include "behaviors/enumerated_elevator_indices.h"
 
 //define global variables that will be defined based on config values
 
 double roller_power;
 double intake_timeout;
 double linebreak_debounce_iterations;
-double intake_setpoint = 4; //this is the position to send the elevator to for intaking
 
 class CargoIntakeAction {
 	protected:
@@ -78,7 +78,7 @@ class CargoIntakeAction {
 			if(!preempted && !timed_out) {
 				ROS_WARN("cargo intake server: sending elevator to intake config");
 				behaviors::ElevatorGoal elevator_goal;
-				elevator_goal.setpoint_index = intake_setpoint;
+				elevator_goal.setpoint_index = INTAKE;
 				ac_elevator_.sendGoal(elevator_goal);
 				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(intake_timeout - (ros::Time::now().toSec() - start_time))); //Wait for server to finish or until timeout is reached
 				if(finished_before_timeout) {

@@ -8,6 +8,7 @@
 #include "geometry_msgs/Twist.h" //for the drivebase
 #include <atomic>
 #include <ros/console.h>
+#include "behaviors/enumerated_elevator_indices.h"
 
 //define global variables that will be defined based on config values
 
@@ -142,7 +143,7 @@ class ClimbAction {
 				//call the elevator actionlib server
 				//define the goal to send
 				behaviors::ElevatorGoal goal;
-				goal.setpoint_index = 5; //TODO enum , deploy setpoint here
+				goal.setpoint_index = ELEVATOR_DEPLOY; //TODO enum , deploy setpoint here
 				goal.place_cargo = 0; //doesn't actually do anything
 				//send the goal
 				ae_.sendGoal(goal);
@@ -199,8 +200,8 @@ class ClimbAction {
 				//call the elevator actionlib server
 				//define the goal to send
 				behaviors::ElevatorGoal goal;
-				goal.setpoint_index = 6; //elevator_climb_setpoint is defined via config values
-				goal.setpoint_index = 0; //doesn't actually do anything 
+				goal.setpoint_index = ELEVATOR_CLIMB; //elevator_climb_setpoint is defined via config values
+				goal.place_cargo = 0; //doesn't actually do anything 
 				//send the goal
 				ae_.sendGoal(goal);
 				if(!ae_.waitForResult(ros::Duration(elevator_climb_timeout))) //wait until the action finishes, whether it succeeds, times out, or is preempted

@@ -12,6 +12,7 @@
 #include "cargo_outtake_controller/CargoOuttakeSrv.h"
 #include <atomic>
 #include <ros/console.h>
+#include "behaviors/enumerated_elevator_indices.h"
 
 //define global variables that will be defined based on config values
 
