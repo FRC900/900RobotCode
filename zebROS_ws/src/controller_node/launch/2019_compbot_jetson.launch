@@ -23,6 +23,7 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
 		<rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
+		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
 
 		<!-- Load hardware interface -->
 		<node name="frcrobot_hardware_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
@@ -35,6 +36,8 @@
 
 		<group ns="translator0">
 			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen"/>
+				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw" />
+				<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_jetson/joystick_states" />
 		</group>
 
 		<group ns="translator1">	
@@ -93,6 +96,5 @@
 		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" />
 		<node name="state_setpoint_pub_node" pkg="behaviors" type="state_setpoint_publisher_node" />
 
-	</group>
 
 </launch>
