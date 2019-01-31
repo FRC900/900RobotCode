@@ -103,7 +103,6 @@ class ClimbAction {
 			//deploy foot using climber controller -----------------------------------------------
 			success = false; //didn't succeed yet
 			//define service to send
-			ROS_ERROR("climber server: deploying foot");
 			std_msgs::SetBool srv;
 			srv.data = true; //TODO: check this
 			//call controller
@@ -184,7 +183,7 @@ class ClimbAction {
 				ROS_ERROR("climber server: lowering elevator to make robot climb");
 				
 				success = false;
-
+			}
 				//call the elevator actionlib server
 				//define the goal to send
 				behaviors::ElevatorGoal goal;
@@ -331,11 +330,13 @@ int main(int argc, char** argv) {
 	ros::NodeHandle n_lift_params(n, "actionlib_lift_params");
 
 	if (!n_lift_params.getParam("elevator_deploy_setpoint", elevator_deploy_setpoint))
+	{
 		ROS_ERROR("Could not read elevator_deploy_setpoint in climber_server");
-
+	}
 	if (!n_lift_params.getParam("elevator_climb_setpoint", elevator_climb_setpoint))
+	{
 		ROS_ERROR("Could not read elevator_climb_setpoint in climber_server");
-
+	}
 	ros::spin();
 	return 0;
 }
