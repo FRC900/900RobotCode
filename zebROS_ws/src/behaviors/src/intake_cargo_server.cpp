@@ -1,3 +1,6 @@
+#ifndef cargo_intake_server
+#define cargo_intake_server
+
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
@@ -243,3 +246,5 @@ int main(int argc, char** argv) {
 	ros::spin();
 	return 0;
 }
+
+#endif
