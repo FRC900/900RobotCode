@@ -64,7 +64,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	const ros::M_string &header = event.getConnectionHeader();
 
 	std::string topic = header.at("topic");
-	ROS_INFO_STREAM("topic = " << topic);
+	//ROS_INFO_STREAM("topic = " << topic);
 
 	for(bool msg_assign = false; msg_assign == false; i++)
 	{
@@ -152,14 +152,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	else if(i == 2)
 	{
 		// Stuff for the second joystick goes here
-	}
-
-	if(JoystickState->buttonAButton)
-	{
-		ROS_INFO_STREAM("buttonAButton");
-		behaviors::PlaceGoal place_action;
-		place_action.setpoint_index = 1;
-		outtake_cargo_ac->sendGoal(place_action);
 	}
 }
 

@@ -1,4 +1,3 @@
-float64 power
 bool kicker_in
 bool clamp_in
 ---

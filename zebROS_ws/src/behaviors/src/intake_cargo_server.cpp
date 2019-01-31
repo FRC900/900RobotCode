@@ -15,10 +15,6 @@ double roller_power;
 double intake_timeout;
 double linebreak_debounce_iterations;
 double intake_setpoint;
-double cargo_ship_setpoint;
-double low_rocket_setpoint;
-double mid_rocket_setpoint;
-double high_rocket_setpoint;
 
 
 class CargoIntakeAction {
@@ -229,8 +225,8 @@ int main(int argc, char** argv) {
 
 	//get config values
 	ros::NodeHandle n;
-	ros::NodeHandle n_params_intake(n, "actionlib_cargo_intake_params");
-	ros::NodeHandle n_params_lift(n, "actionlib_lift_params");
+	ros::NodeHandle n_params_intake(n, "actionlib_cargo_params");
+	ros::NodeHandle n_params_lift(n, "actionlib_lift_params/cargo");
 
 	if (!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
 		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
@@ -240,16 +236,8 @@ int main(int argc, char** argv) {
 	if (!n_params_intake.getParam("intake_timeout", intake_timeout))
 		ROS_ERROR("Could not read intake_timeout in cargo_intake_server");
 
-	if(!n_params_lift.getParam("cargo_ship", cargo_ship_setpoint))
-		ROS_ERROR("Coult not read cargo_ship in cargo_intake_server");
-	if(!n_params_lift.getParam("low_rocket", low_rocket_setpoint))
-		ROS_ERROR("Coult not read low_rocket in cargo_intake_server");
-	if(!n_params_lift.getParam("high_rocket", high_rocket_setpoint))
-		ROS_ERROR("Coult not read high_rocket in cargo_intake_server");
-	if(!n_params_lift.getParam("mid_rocket", mid_rocket_setpoint))
-		ROS_ERROR("Coult not read mid_rocket in cargo_intake_server");
-	if(!n_params_lift.getParam("intake", intake_setpoint))
-		ROS_ERROR("Coult not read intake in cargo_intake_server");
+	if(!n_params_lift.getParam("intake_setpoint", intake_setpoint))
+		ROS_ERROR("Coult not read intake_setpoint in cargo_intake_server");
 
 
 	ros::spin();
