@@ -130,7 +130,7 @@ class swerve_profiler
 
 		// Generates next pos/vel/acc from current pos/vel plus a point on the spline
 		void calc_angular_terms(const double arb_t, const std::vector<spline_coefs> &orient_splines, const std::vector<double> &end_points,
-				double curr_pos, double curr_vel,
+				double curr_pos, double curr_vel, bool back_pass,
 				double &next_pos, double &next_vel, double &next_acc);
 
 		bool coerce(double &val, const double min, const double max);
