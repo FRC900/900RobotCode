@@ -12,8 +12,9 @@
 
 //define global variables that will be defined based on config values
 
-double outtake_timeout;
+double outtake_timeout; //timeout for the elevator call
 double linebreak_debounce_iterations;
+double pause_time_between_pistons;
 
 /* Place
  * request is SETPOINT (cargo, rocket1, rocket2, rocket3) and PLACE_CARGO (hatch if false)
@@ -50,7 +51,7 @@ class CargoOuttakeAction {
 		ros::ServiceClient cargo_outtake_controller_client_ = nh_.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/frcrobot_jetson/cargo_outtake_controller/cargo_outtake_command", false, service_connection_header);
 		
 		//start subscribers subscribing
-		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoOuttakeAction::jointStateCallback, this);
+		//joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoOuttakeAction::jointStateCallback, this);
 	}
 
 		~CargoOuttakeAction(void)
@@ -85,7 +86,6 @@ class CargoOuttakeAction {
 					actionlib::SimpleClientGoalState state = ac_elevator_.getState();
 					if(state.toString().c_str() != "SUCCEEDED") {
 						ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
-						as_.setPreempted();
 						preempted = true;
 					}
 					else {
@@ -96,16 +96,16 @@ class CargoOuttakeAction {
 				else {
 					ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
 					timed_out = true;
-					as_.setPreempted();
+					preempted = true;
 				}
 			}
 			
-			//send command to lower arm and run roller to the cargo intake controller ------
+			//send command to unclamp cargo ----
 			if(!preempted && !timed_out)
 			{
 				ROS_WARN("%s: unclamping cargo", action_name_.c_str());
 
-				//define request to send to cargo intake controller
+				//define request to send to controller
 				cargo_outtake_controller::CargoOuttakeSrv srv;
 				srv.request.kicker_in = true; 
 				srv.request.clamp_in = true;
@@ -114,68 +114,86 @@ class CargoOuttakeAction {
 				if(!controller_client_.call(srv))
 				{
 					ROS_ERROR("%s: Srv outtake call failed", action_name_.c_str());
-					as_.setPreempted();
 					preempted = true;
 				}
 				//update everything by doing spinny stuff
 				ros::spinOnce();
-
-				//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
-				while(!success && !timed_out && !preempted) {
-					success = linebreak_true_count_ > linebreak_debounce_iterations;
-					timed_out = (ros::Time::now().toSec()-start_time) > outtake_timeout;
-
-					if(as_.isPreemptRequested() || !ros::ok()) {
-						ROS_WARN(" %s: Preempted", action_name_.c_str());
-						as_.setPreempted();
-						preempted = true;
-					}
-					else {
-						r.sleep();
-						ros::spinOnce();
-					}
-				}
 			}
-
-
-			//end of code for sending something to a controller ----------------------------------
-
-			//set ending state of controller no matter what happened: arm up and roller motors stopped
-			//define command to send to cargo intake controller
-			cargo_outtake_controller::CargoOuttakeSrv srv;
-			srv.request.power = 0;
-			srv.request.kicker_in = false;
-			srv.request.clamp_in = true;
-			//send request to controller
-			if(!controller_client_.call(srv))
+			
+			//send command to kick cargo, after waiting for a short period of time
+			if(!preempted && !timed_out)
 			{
-				ROS_ERROR("Srv outtake call failed in cargo outtake server");
+				ros::Duration(pause_time_between_pistons).sleep();
+				
+				ROS_INFO_STREAM("%s: kicking cargo", action_name_.c_str());
+
+				//define request to send to controller
+				cargo_outtake_controller::CargoOuttakeSrv srv;
+				srv.request.kicker_in = false;
+				srv.request.clamp_in = true;
+
+				//send request to controller
+				if(!controller_client_.call(srv)
+				{
+					ROS_ERROR("%s: Srv outtake call failed", action_name_.c_str());
+					preempted = true;
+				}
+				ros::spinOnce();
+
 			}
+
+
+			//set ending state of controller no matter what happened: unclamped and kicker not in kicking position
+			if(!preempted && !timed_out)
+			{
+				ros::Duration(pause_time_between_pistons).sleep(); //pause so we don't retract the kicker immediately after kicking
+			}
+			
+			ROS_INFO_STREAM("%s: kicking cargo", action_name_.c_str());
+
+			//define request to send to controller
+			cargo_outtake_controller::CargoOuttakeSrv srv;
+			srv.request.kicker_in = true;
+			srv.request.clamp_in = false;
+
+			//send request to controller
+			if(!controller_client_.call(srv)
+			{
+				ROS_ERROR("%s: Srv outtake call failed", action_name_.c_str());
+				preempted = true;
+			}
+			ros::spinOnce();
+
+
+
 			//log state of action and set result of action
+			
+			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
+			result_.success = success; //success refers to last controller call, but applies for whole action
+
 			if(timed_out)
 			{
 				ROS_INFO("%s: Timed Out", action_name_.c_str());
+				as_.setSucceeded(result_);
 			}
 			else if(preempted)
 			{
 				ROS_INFO("%s: Preempted", action_name_.c_str());
+				as_.setPreempted(result_);
 			}
 			else //implies succeeded
 			{
 				ROS_INFO("%s: Succeeded", action_name_.c_str());
+				as_.setSucceeded(result_);
 			}
 			
-
-			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
-			result_.success = success; //success refers to last controller call, but applies for whole action
-			//as_.setSucceeded(result_, "intake_cargo_server: testing send text result from actionlib server... SPOOKY"); //pretend it succeeded no matter what, but tell what actually happened with the result - helps with SMACH
 			return;
 		}
 
 		// Function to be called whenever the subscriber for the joint states topic receives a message
 		// Grabs various info from hw_interface using
 		// dummy joint position values
-		void jointStateCallback(const sensor_msgs::JointState &joint_state)
+		/*void jointStateCallback(const sensor_msgs::JointState &joint_state)
 		{
 			//get index of linebreak sensor for this actionlib server
 			static size_t linebreak_idx = std::numeric_limits<size_t>::max();
@@ -214,7 +232,7 @@ class CargoOuttakeAction {
 				linebreak_true_count_ = 0;
 				linebreak_false_count_ += 1;
 			}
-		}
+		}*/
 };
 
 int main(int argc, char** argv) {
@@ -226,7 +244,7 @@ int main(int argc, char** argv) {
 
 	//get config values
 	ros::NodeHandle n;
-	ros::NodeHandle n_params_outtake(n, "actionlib_cargo_outtake_params");
+	ros::NodeHandle n_params_outtake(n, "actionlib_cargo_params");
 	ros::NodeHandle n_params_lift(n, "actionlib_lift_params");
 
 	if (!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
@@ -234,6 +252,11 @@ int main(int argc, char** argv) {
 
 	if (!n_params_outtake.getParam("outtake_timeout", outtake_timeout))
 		ROS_ERROR("Could not read outtake_timeout in cargo_outtake_server");
+	
+	if (!n_params_outtake.getParam("pause_time_between_pistons", pause_time_between_pistons))
+		ROS_ERROR("Could not read  pause_time_between_pistons in cargo_outtake_server");
+
+
 
 	ros::spin();
 	return 0;
