@@ -26,22 +26,28 @@ class ElevatorController : public controller_interface::MultiInterfaceController
             //answer to my question: the TalonCommandInterface is passed in if it's not a multiInterfaceController, and just one kind of joint is made!
             virtual bool init(hardware_interface::RobotHW *hw,
                               ros::NodeHandle             &root_nh,
-                              ros::NodeHandle             &controller_nh);
-            virtual void starting(const ros::Time &time);
-            virtual void update(const ros::Time & time, const ros::Duration& period);
-            virtual void stopping(const ros::Time &time);
+                              ros::NodeHandle             &controller_nh) override;
+            virtual void starting(const ros::Time &time) override;
+            virtual void update(const ros::Time & time, const ros::Duration& period) override;
+            virtual void stopping(const ros::Time &time) override;
 
-            virtual bool cmdService(elevator_controller::ElevatorSrv::Request &req,
-					                elevator_controller::ElevatorSrv::Response &res);
+            bool cmdService(elevator_controller::ElevatorSrv::Request &req,
+			                elevator_controller::ElevatorSrv::Response &res);
 
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
-            talon_controllers::TalonMotionMagicCloseLoopControllerInterface elevator_joint_; //interface for the talon joint
+            talon_controllers::TalonControllerInterface elevator_joint_; //interface for the talon joint
 
             realtime_tools::RealtimeBuffer<int> position_command_; //this is the buffer for percent output commands to be published
             realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
 
             ros::ServiceServer elevator_service_; //service for receiving commands
+
+			bool zeroed_;
+			double arb_feed_forward_up_;
+			double initial_position_;
+			double elevator_zeroing_percent_output_;
+			double elevator_sensor_bad_distance_;
 }; //class
 
 } //namespace
