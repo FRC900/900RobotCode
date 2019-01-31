@@ -4,7 +4,6 @@
 #include "behaviors/ClimbAction.h"
 #include "behaviors/ElevatorAction.h"
 #include "behaviors/ElevatorGoal.h"
-#include "elevator_controller/ElevatorEngageSrv.h"
 #include "std_srvs/SetBool.h" //for the climber controller
 #include "geometry_msgs/Twist.h" //for the drivebase
 #include <atomic>
@@ -55,9 +54,9 @@ class ClimbAction {
 		service_connection_header["tcp_nodelay"] = "1";
 
 		//initialize the client being used to call the climber controller
-		climber_controller_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_service", false, service_connection_header);
-		//initialize the client being used to call the elevator controller to engage the climber
-		climber_engage_client_ = nh_.serviceClient<elevator_controller::EngageClimberSrv>("/frcrobot_jetson/elevator_controller/climber_engage_service", false, service_connection_header);
+		climber_controller_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_feet_retract", false, service_connection_header);
+		//initialize the client being used to call the climber controller to engage the climber
+		climber_engage_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_release_endgame", false, service_connection_header);
 
 		//initialize the publisher used to send messages to the drive base
 		cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/frcrobot_jetson/swerve_drive_controller/cmd_vel", 1);
@@ -120,8 +119,8 @@ class ClimbAction {
 			//deploy foot using climber controller -----------------------------------------------
 			success = false; //didn't succeed yet
 			//define service to send
-			std_msgs::SetBool srv;
-			srv.data = true; //TODO: check this
+			std_srvs::SetBool srv;
+			srv.request.data = true; //TODO: check this
 			//call controller
 			if(!climber_controller_client_.call(srv))
 			{
@@ -143,12 +142,11 @@ class ClimbAction {
 				//call the elevator actionlib server
 				//define the goal to send
 				behaviors::ElevatorGoal goal;
-				goal.elevator_setpoint = elevator_deploy_setpoint; //elevator_deploy_setpoint is defined via config values
+				goal.setpoint_index = 5; //TODO enum , deploy setpoint here
+				goal.place_cargo = 0; //doesn't actually do anything
 				//send the goal
 				ae_.sendGoal(goal);
-				// TODO : probably should pass in a (configurable) timeout, then
-				// check the return code to see if that has expired. If so, error out
-				if(!ae_.waitForResult(ros::Duration(elevator_deploy_timeout)); //wait until the action finishes, whether it succeeds, times out, or is preempted
+				if(!ae_.waitForResult(ros::Duration(elevator_deploy_timeout))); //wait until the action finishes, whether it succeeds, times out, or is preempted
 					ROS_ERROR("climber server: first elevator raise timed out");
 
 				//determine the outcome of the goal
@@ -176,8 +174,8 @@ class ClimbAction {
 
 				//call the elevator controller
 				//define the goal to send
-				elevator_controller::ClimberEngageSrv srv;
-				srv.engage = true;
+				std_srvs::SetBool srv;
+				srv.request.data = true;
 				//call controller
 				if(!climber_engage_client_.call(srv))
 				{
@@ -198,11 +196,11 @@ class ClimbAction {
 				ROS_INFO("climber server: lowering elevator to make robot climb");
 				
 				success = false;
-			}
 				//call the elevator actionlib server
 				//define the goal to send
 				behaviors::ElevatorGoal goal;
-				goal.elevator_setpoint = elevator_climb_setpoint; //elevator_climb_setpoint is defined via config values
+				goal.setpoint_index = 6; //elevator_climb_setpoint is defined via config values
+				goal.setpoint_index = 0; //doesn't actually do anything 
 				//send the goal
 				ae_.sendGoal(goal);
 				if(!ae_.waitForResult(ros::Duration(elevator_climb_timeout))) //wait until the action finishes, whether it succeeds, times out, or is preempted
