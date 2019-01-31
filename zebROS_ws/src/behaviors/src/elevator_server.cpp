@@ -51,8 +51,8 @@ class ElevatorAction {
 			//Talon states subscriber
             talon_states_sub = nh_.subscribe("/frcrobot/talon_states",1, &ElevatorAction::talonStateCallback, this);
 
-			hatch_locations.resize(4); //TODO: not hard-coded
-			cargo_locations.resize(4); //TODO: not hard-coded
+			hatch_locations.resize(5); //TODO: not hard-coded
+			cargo_locations.resize(5); //TODO: not hard-coded
         }
 
         ~ElevatorAction(void) {}
@@ -69,6 +69,8 @@ class ElevatorAction {
 
 			//Initialize start time of execution
             double start_time = ros::Time::now().toSec();
+
+			//define variables to store goal received by the elevator server
 			double setpoint_index = goal->setpoint_index;
 			bool place_cargo = goal->place_cargo;
 
@@ -97,13 +99,12 @@ class ElevatorAction {
 				if(as_.isPreemptRequested() || !ros::ok())
 			   	{
                     ROS_ERROR("%s: Preempted", action_name_.c_str());
-					as_.setPreempted();
 					preempted = true;
 				}
 				else
 				{
-					r.sleep();
 					ros::spinOnce();
+					r.sleep();
 				}
 				timed_out = ros::Time::now().toSec() - start_time > timeout;
 			}
@@ -195,6 +196,11 @@ int main(int argc, char** argv)
 	if (!n_params.getParam("hatch/rocket3_position", hatch_rocket3_position))
 		ROS_ERROR_STREAM("Could not read hatch_rocket3_position");
 	elevator_action.hatch_locations[3] = hatch_rocket3_position;
+	
+	double hatch_intake_position;
+	if (!n_params.getParam("hatch/intake_position", hatch_intake_position))
+		ROS_ERROR_STREAM("Could not read hatch_intake_position");
+	elevator_action.hatch_locations[4] = hatch_intake_position;
 
 	//read locations for elevator placement for CARGO
 	double cargo_cargo_ship_position;
@@ -216,6 +222,11 @@ int main(int argc, char** argv)
 	if (!n_params.getParam("cargo/rocket3_position", cargo_rocket3_position))
 		ROS_ERROR_STREAM("Could not read cargo_rocket3_position");
 	elevator_action.cargo_locations[3] = cargo_rocket3_position;
+
+	double cargo_intake_position;
+	if (!n_params.getParam("cargo/intake_position", cargo_intake_position))
+		ROS_ERROR_STREAM("Could not read cargo_intake_position");
+	elevator_action.cargo_locations[4] = cargo_intake_position;
 
 	ros::spin();
 	return 0;
