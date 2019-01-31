@@ -17,8 +17,7 @@
 double roller_power;
 double intake_timeout;
 double linebreak_debounce_iterations;
-double intake_setpoint;
-
+double intake_setpoint = 4; //this is the position to send the elevator to for intaking
 
 class CargoIntakeAction {
 	protected:
@@ -238,10 +237,6 @@ int main(int argc, char** argv) {
 		ROS_ERROR("Could not read roller_power in cargo_intake_server");
 	if (!n_params_intake.getParam("intake_timeout", intake_timeout))
 		ROS_ERROR("Could not read intake_timeout in cargo_intake_server");
-
-	if(!n_params_lift.getParam("intake_setpoint", intake_setpoint))
-		ROS_ERROR("Coult not read intake_setpoint in cargo_intake_server");
-
 
 	ros::spin();
 	return 0;
