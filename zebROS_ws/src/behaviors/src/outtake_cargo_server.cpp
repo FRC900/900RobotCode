@@ -84,7 +84,7 @@ class CargoOuttakeAction {
 				elevator_goal.place_cargo = true;
 				ac_elevator_.sendGoal(elevator_goal);
 
-				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(max(outtake_timeout - (ros::Time::now().toSec() - start_time), 0.001))); //Wait for server to finish or until timeout is reached
+				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(outtake_timeout - (ros::Time::now().toSec() - start_time), 0.001))); //Wait for server to finish or until timeout is reached
 				if(finished_before_timeout) {
 					actionlib::SimpleClientGoalState state = ac_elevator_.getState();
 					if(state.toString().c_str() != "SUCCEEDED") {
@@ -128,7 +128,7 @@ class CargoOuttakeAction {
 			{
 				ros::Duration(pause_time_between_pistons).sleep();
 				
-				ROS_INFO_STREAM("%s: kicking cargo", action_name_.c_str());
+				ROS_INFO_STREAM("%s: kicking cargo" << action_name_.c_str());
 
 				//define request to send to controller
 				cargo_outtake_controller::CargoOuttakeSrv srv;
@@ -136,7 +136,7 @@ class CargoOuttakeAction {
 				srv.request.clamp_in = true;
 
 				//send request to controller
-				if(!controller_client_.call(srv)
+				if(!controller_client_.call(srv))
 				{
 					ROS_ERROR("%s: Srv outtake call failed", action_name_.c_str());
 					preempted = true;
@@ -152,7 +152,7 @@ class CargoOuttakeAction {
 				ros::Duration(pause_time_between_pistons).sleep(); //pause so we don't retract the kicker immediately after kicking
 			}
 			
-			ROS_INFO_STREAM("%s: kicking cargo", action_name_.c_str());
+			ROS_INFO_STREAM("%s: kicking cargo" << action_name_.c_str());
 
 			//define request to send to controller
 			cargo_outtake_controller::CargoOuttakeSrv srv;
@@ -160,7 +160,7 @@ class CargoOuttakeAction {
 			srv.request.clamp_in = false;
 
 			//send request to controller
-			if(!controller_client_.call(srv)
+			if(!controller_client_.call(srv))
 			{
 				ROS_ERROR("%s: Srv outtake call failed", action_name_.c_str());
 				preempted = true;
