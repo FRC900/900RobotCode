@@ -70,6 +70,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 	{
 		const double setpoint = *(position_command_.readFromRT());
 		elevator_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
+		elevator_joint_.setPIDFSlot(0);
 		elevator_joint_.setCommand(setpoint);
 
 		// Add arbirary feed forward for upwards motion
