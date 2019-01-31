@@ -1,6 +1,7 @@
 elevator_controller:
     type:   elevator_controller/ElevatorController
-    elevator_joint: "elevator"
+    # TODO : figure out how many followers, add them here
+    elevator_joint: [ 'elevator_master', 'elevator_follower1', 'elevator_follower2' ]
 
     arb_feed_forward_up: 0.0
 
@@ -40,4 +41,6 @@ elevator_controller:
         voltage_compensation_saturation: 12.5
 
         # TODO : used to convert encoder position from radians to meters
+        # .0573 ... divide or multiply
         conversion_factor: 1
+
