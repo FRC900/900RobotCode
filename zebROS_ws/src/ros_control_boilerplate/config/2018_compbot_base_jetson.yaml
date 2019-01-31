@@ -78,13 +78,6 @@ climber_controller:
 panel_intake_controller:
     type:           panel_intake_controller/PanelIntakeController
 
-elevator_controller:
-    type:   elevator_controller/ElevatorController
-    elevator_joint_: "elevator"
-    elevator: 
-        type: talon_controllers/TalonMotionMagicCloseLoopControllerInterface 
-        joint: elevator_joint
-
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal
 # encoder state used by the hw manager and publishes it as
