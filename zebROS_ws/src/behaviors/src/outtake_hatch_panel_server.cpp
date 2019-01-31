@@ -1,5 +1,5 @@
-//#ifndef CARGO_INTAKE_SERVER
-//#define CARGO_INTAKE_SERVER
+//#ifndef PANEL_OUTTAKE_SERVER
+//#define PANEL_OUTTAKE_SERVER
 
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
@@ -198,10 +198,10 @@ int main(int argc, char** argv)
 	ros::NodeHandle n;
 	ros::NodeHandle n_params(n, "actionlib_hatch_panel_outtake_params");
 
-	if(!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
-	{
-		ROS_ERROR("Could not read linebreak_debounce_iterations in outtake_hatch_panel_server");
-	}
+	//if(!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
+	//{
+	//	ROS_ERROR("Could not read linebreak_debounce_iterations in outtake_hatch_panel_server");
+	//}
 
 	if(!n_params.getParam("outtake_timeout", outtake_timeout))
 	{

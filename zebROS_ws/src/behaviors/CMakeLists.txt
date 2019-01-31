@@ -26,10 +26,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 include_directories(
-  include/
+  include
   ${catkin_INCLUDE_DIRS}
 )
-
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -226,15 +225,18 @@ target_link_libraries(state_setpoint_publisher_node
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS autoInterpreterClient autoInterpreterServer autoInterpreterServerLift autoInterpreterServerIntake
-#    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#  )
-#  install(DIRECTORY
-#     config
-#     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(TARGETS intake_cargo_server outtake_cargo_server elevator_server publish_pid_cmd_vel_node state_setpoint_publisher_node
+   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY
+	config
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+	PATTERN *~ EXCLUDE
+	PATTERN *.sw? EXCLUDE
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
