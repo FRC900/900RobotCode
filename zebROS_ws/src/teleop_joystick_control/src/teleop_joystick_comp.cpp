@@ -2,6 +2,7 @@
 #include <realtime_tools/realtime_buffer.h>
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "std_srvs/Empty.h"
+#include "std_srvs/Trigger.h"
 
 // TODO : make these parameters, possibly with dynamic reconfig
 const double dead_zone = .2;
@@ -44,6 +45,7 @@ void navXCallback(const sensor_msgs::Imu &navXState)
         navX_angle.store(yaw, std::memory_order_relaxed);
 }
 
+static ros::ServiceClient cli;
 
 void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &JoystickState)
 {
@@ -52,6 +54,21 @@ void evaluateCommands(const ros_control_boilerplate::JoystickState::ConstPtr &Jo
 
 	double rightStickX = JoystickState->rightStickX;
 	double rightStickY = JoystickState->rightStickY;
+	ROS_INFO("JoyRecieve");
+	if (JoystickState->buttonAButton) {
+		ROS_INFO("A BUTTON RECIEVED");
+	}
+	bool aButton = JoystickState->buttonAPress;
+	if (aButton) {
+		ROS_INFO("PRESSED THE BUTTON");
+		std_srvs::Trigger trg;
+		if (cli.call(trg)) {
+			ROS_INFO("SERVICE CALLED");
+		} else {
+			ROS_ERROR("LOL NOPE THAT SERVER CANT BE FOUND");
+		}
+
+	}
 
 	dead_zone_check(leftStickX, leftStickY);
 	dead_zone_check(rightStickX, rightStickY);
@@ -114,8 +131,9 @@ int main(int argc, char **argv)
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("swerve_drive_controller/brake", false, service_connection_header);
+	cli = n.serviceClient<std_srvs::Trigger>("/frcrobot_jetson/align_service");
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
-	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
+	ros::Subscriber navX_heading = n.subscribe("navx_mxp", 1, &navXCallback);
 
 	ROS_WARN("joy_init");
 
