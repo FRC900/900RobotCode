@@ -109,22 +109,26 @@ class ElevatorAction {
 			}
 
 			//log state of action and set result of action
+			
+			result_.timed_out = timed_out;//timed_out refers to last controller call, but applies for whole action
+			result_.success = success; //success refers to last controller call, but applies for whole action
+			
 			if(timed_out)
 			{
 				ROS_INFO("%s:Timed Out", action_name_.c_str());
+				as_.setSucceeded(result_);
 			}
 			else if(preempted)
 			{
 				ROS_INFO("%s:Preempted", action_name_.c_str());
+				as_.setPreempted(result_);
 			}
 			else //implies succeeded
 			{
 				ROS_INFO("%s:Succeeded", action_name_.c_str());
+				as_.setSucceeded(result_);
 			}
 
-			result_.timed_out = timed_out;//timed_out refers to last controller call, but applies for whole action
-			result_.success = success; //success refers to last controller call, but applies for whole action
-			as_.setSucceeded(result_); //pretend it succeeded no matter what, but tell what actually happened with the result - helps with SMACH
 			return;
 		}
 
