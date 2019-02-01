@@ -40,10 +40,6 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 	{
 		ROS_ERROR("Cannot initialize elevator joint!");
 	}
-	// Grab initial position, use it to sanity check encoder position
-	// while looking for zero on the way down. If we go too far, assume
-	// the limit switch is broken and stop driving the motor
-	initial_position_ = elevator_joint_.getPosition();
 
 	elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController::cmdService, this);
 
@@ -57,9 +53,27 @@ void ElevatorController::starting(const ros::Time &/*time*/) {
 
 void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &/*duration*/)
 {
+	double elevator_position = elevator_joint_.getPosition(); //so we call the getPosition() function fewer times?
+
+	// Grab initial position, use it to sanity check encoder position
+	// while looking for zero on the way down. If we go too far, assume
+	// the limit switch is broken and stop driving the motor
+	static bool initial_position_found = false;
+	if(elevator_position == 0)
+	{
+		ROS_ERROR_STREAM("not running elevator_controller yet; waiting for encoder data to come in");
+		return;
+	}
+	else if(!initial_position_found)
+	{
+		initial_position_ = elevator_position;
+		ROS_INFO_STREAM("ElevatorController: initial elevator position = " << elevator_position);
+		initial_position_found = true;
+	}
+
 	// If we hit the limit switch, zero the position.
 	// TODO : should we re-zero every time we hit it during a match?
-	if (!zeroed_ && elevator_joint_.getForwardLimitSwitch())
+	if (!zeroed_ && elevator_joint_.getReverseLimitSwitch())
 	{
 		ROS_INFO("ElevatorController : hit limit switch");
 		zeroed_ = true;
@@ -77,7 +91,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		// We could have arb ff for both up and down, but seems
 		// easier (and good enough) to tune PID for down motion
 		// and add an arb FF correction for up
-		if (setpoint > elevator_joint_.getPosition())
+		if (setpoint > elevator_position)
 		{
 			elevator_joint_.setDemand1Type(hardware_interface::DemandType_AuxPID);
 			elevator_joint_.setDemand1Value(arb_feed_forward_up_);
@@ -94,7 +108,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		elevator_joint_.setMode(hardware_interface::TalonMode_PercentOutput);
 
 		// TODO : check sign - expecting down to be negative
-		if ((initial_position_ - elevator_joint_.getPosition()) > elevator_sensor_bad_distance_)
+		if ((initial_position_ - elevator_position) > elevator_sensor_bad_distance_)
 		{
 			elevator_joint_.setCommand(elevator_zeroing_percent_output_); // TODO : configuration param
 		}
