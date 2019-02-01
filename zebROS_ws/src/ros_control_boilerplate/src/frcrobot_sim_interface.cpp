@@ -163,7 +163,7 @@ void TeleopJointsKeyboard::keyboardLoop()
 	tcsetattr(kfd, TCSANOW, &raw);
 
 	cmd_.axes.resize(8);
-	cmd_.buttons.resize(10);
+	cmd_.buttons.resize(11);
 
 	bool processing_bracket = false;
 	while (ros::ok())
@@ -202,52 +202,46 @@ void TeleopJointsKeyboard::keyboardLoop()
 		// Assume keypress will be a valid command / cause
 		// to update the published joystick data. Set this to false
 		// for cases where it isn't true.
-		bool dirty = true;
+		bool dirty = false;
 		if (!processing_bracket)
 		{
 			switch (c)
 			{
+				ROS_INFO_STREAM("Running buttons an axes");
+				case KEYCODE_a:
+					cmd_.axes[0] -= .5;
+					break;
+				case KEYCODE_d:
+					cmd_.axes[0] += .5;
+					break;
+				case KEYCODE_w:
+					cmd_.axes[1] += .5;
+					break;
+				case KEYCODE_s:
+					cmd_.axes[1] -= .5;
+					break;
+				case KEYCODE_q:
+					cmd_.axes[2] = .5;
+					break;
+				case KEYCODE_o:
+					cmd_.axes[3] = .5;
+					break;
+				case KEYCODE_j:
+					cmd_.axes[4] -= .5;
+					break;
+				case KEYCODE_l:
+					cmd_.axes[4] += .5;
+					break;
 				case KEYCODE_i:
 					cmd_.axes[5] += .5;
 					break;
 				case KEYCODE_k:
 					cmd_.axes[5] -= .5;
 					break;
-				case KEYCODE_j:
-					cmd_.axes[4] += .5;
-					break;
-				case KEYCODE_l:
-					cmd_.axes[4] -= .5;
-					break;
 
-				case KEYCODE_d:
-					cmd_.axes[1] += .5;
-					break;
-				case KEYCODE_a:
-					cmd_.axes[1] -= .5;
-					break;
-				case KEYCODE_w:
-					cmd_.axes[0] += .5;
-					break;
-				case KEYCODE_s:
-					cmd_.axes[0] -= .5;
-					break;
 				case KEYCODE_ONE:
-
-
-					// TODO : use something like
-					// cmd_.buttonAPress = !cmd_last_.buttonAButton;
-					// to simplify the code here
 					cmd_.buttons[0] = true;
 					break;
-				case KEYCODE_q:
-				  cmd_.axes[2] = .5; 
-				  dirty = true;
-				  break;
-				case KEYCODE_e:
-					cmd_.axes[5] = .5; 
-					break;
-
 				case KEYCODE_TWO:
 					cmd_.buttons[1] = true;
 					break;
@@ -257,14 +251,49 @@ void TeleopJointsKeyboard::keyboardLoop()
 				case KEYCODE_FOUR:
 					cmd_.buttons[3] = true;
 					break;
-
+				case KEYCODE_e:
+					cmd_.buttons[4] = true;
+					break;
+				case KEYCODE_u:
+					cmd_.buttons[5] = true;
+					break;
+				case KEYCODE_FIVE:
+					cmd_.buttons[6] = true;
+					break;
+				case KEYCODE_SIX:
+					cmd_.buttons[7] = true;
+					break;
+				case KEYCODE_x:
+					cmd_.buttons[8] = true;
+					break;
+				case KEYCODE_m:
+					cmd_.buttons[9] = true;
+					break;
+				case KEYCODE_SEVEN:
+					cmd_.buttons[10] = true;
+					break;
+				case KEYCODE_LEFT_BRACKET:
+					processing_bracket = true;
+					dirty = true;
+				case  KEYCODE_ESCAPE:
+					//std::cout << std::endl;
+					//std::cout << "Exiting " << std::endl;
+					//quit(0);
+					break;
+				case KEYCODE_CARROT:
+					ROS_WARN("It's a carrot");
+					dirty = true;
+					break;
+				default:
+					dirty = true;
+					break;
 			/*	case KEYCODE_q:
 				  cmd_.axes[2] = .5; 
 				  dirty = true;
 				  break;
 				case KEYCODE_e:
 					cmd_.axes[5] = .5; 
-					break;*/
+					break;
 
 				case KEYCODE_SEVEN:
 					cmd_.buttons[8] = true;
@@ -300,40 +329,40 @@ void TeleopJointsKeyboard::keyboardLoop()
 					break;
 				default:
 					dirty = false;
-					break;
+					break;*/
 			}
 		}
 		else // Processing bracket
 		{
 			switch (c)
 			{
+				ROS_INFO_STREAM("Running Dpad");
 				case KEYCODE_B:
-					cmd_.axes[7] = true;
+					cmd_.axes[7] = 1.0;
 					processing_bracket = false;
 					break;
 				case KEYCODE_A:
-					cmd_.axes[7] = true;
+					cmd_.axes[7] = -1.0;
 					processing_bracket = false;
 					break;
 				case KEYCODE_D:
-					cmd_.axes[6] = true;
+					cmd_.axes[6] = -1.0;
 					processing_bracket = false;
 					break;
 				case KEYCODE_C:
-					cmd_.axes[6] = true;
+					cmd_.axes[6] = 1.0;
 					processing_bracket = false;
 					break;
 				default:
-					dirty = false;
+					dirty = true;
 			}
 			break;
 		}
 		// Publish command
-		if (dirty)
+		if (!dirty)
 		{
 			cmd_.header.stamp = ros::Time::now();
 			joints_pub_.publish(cmd_);
-			cmd_last_ = cmd_;
 		}
 	}
 	// Restore sanity to keyboard input
