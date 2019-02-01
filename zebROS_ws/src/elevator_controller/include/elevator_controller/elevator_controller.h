@@ -47,7 +47,10 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 			double arb_feed_forward_up_;
 			double initial_position_;
 			double elevator_zeroing_percent_output_;
-			double elevator_sensor_bad_distance_;
+
+			size_t moving_down_count_;
+			ros::Time last_time_down_;
+			double elevator_zeroing_timeout_;
 }; //class
 
 } //namespace
