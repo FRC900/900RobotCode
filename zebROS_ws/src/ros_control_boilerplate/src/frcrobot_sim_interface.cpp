@@ -165,6 +165,27 @@ void TeleopJointsKeyboard::keyboardLoop()
 	cmd_.axes.resize(8);
 	cmd_.buttons.resize(11);
 
+	cmd_.axes[0] = 0.0;
+	cmd_.axes[1] = 0.0;
+	cmd_.axes[2] = 0.0;
+	cmd_.axes[3] = 0.0;
+	cmd_.axes[4] = 0.0;
+	cmd_.axes[5] = 0.0;
+	cmd_.axes[6] = 0.0;
+	cmd_.axes[7] = 0.0;
+
+	cmd_.buttons[0] = false;
+	cmd_.buttons[1] = false;
+	cmd_.buttons[2] = false;
+	cmd_.buttons[3] = false;
+	cmd_.buttons[4] = false;
+	cmd_.buttons[5] = false;
+	cmd_.buttons[6] = false;
+	cmd_.buttons[7] = false;
+	cmd_.buttons[8] = false;
+	cmd_.buttons[9] = false;
+	cmd_.buttons[10] = false;
+
 	bool processing_bracket = false;
 	while (ros::ok())
 	{
@@ -174,40 +195,15 @@ void TeleopJointsKeyboard::keyboardLoop()
 		else if (rc == 0)
 			continue;
 
-		cmd_.axes[4] = 0;
-		cmd_.axes[3] = 0;
-		cmd_.axes[1] = 0;
-		cmd_.axes[0] = 0;
-		cmd_.axes[2] = 0;
-		cmd_.axes[5] = 0;
-		cmd_.axes[6] = 0;
-		cmd_.axes[7] = 0;
-
-		cmd_.buttons[2] = false;
-		cmd_.buttons[3] = false;
-		cmd_.buttons[4] = false;
-		cmd_.buttons[5] = false;
-		cmd_.buttons[8] = false;
-		cmd_.buttons[9] = false;
-
-		cmd_.buttons[0] = false;
-		cmd_.buttons[1] = false;
-		cmd_.buttons[6] = false;
-
-		cmd_.buttons[7] = false;
-
-
-
-
 		// Assume keypress will be a valid command / cause
 		// to update the published joystick data. Set this to false
 		// for cases where it isn't true.
 		bool dirty = false;
 		if (!processing_bracket)
 		{
+			ROS_INFO_STREAM("Processing axes and buttons");
 			switch (c)
 			{
-				ROS_INFO_STREAM("Running buttons an axes");
 				case KEYCODE_a:
 					cmd_.axes[0] -= .5;
 					break;
@@ -272,50 +268,18 @@ void TeleopJointsKeyboard::keyboardLoop()
 				case KEYCODE_SEVEN:
 					cmd_.buttons[10] = true;
 					break;
-				case KEYCODE_LEFT_BRACKET:
-					processing_bracket = true;
-					dirty = true;
-				case  KEYCODE_ESCAPE:
-					//std::cout << std::endl;
-					//std::cout << "Exiting " << std::endl;
-					//quit(0);
-					break;
-				case KEYCODE_CARROT:
-					ROS_WARN("It's a carrot");
-					dirty = true;
-					break;
-				default:
-					dirty = true;
-					break;
-			/*	case KEYCODE_q:
-				  cmd_.axes[2] = .5; 
-				  dirty = true;
-				  break;
-				case KEYCODE_e:
-					cmd_.axes[5] = .5; 
+
+				case KEYCODE_r:
+					for(size_t i = 0; i <= cmd_.buttons.size(); i++)
+					{
+						ROS_INFO_STREAM("Resetting buttons to false!");
+						cmd_.buttons[i] = false;
+					}
 					break;
 
-				case KEYCODE_SEVEN:
-					cmd_.buttons[8] = true;
-					break;
-				case KEYCODE_EIGHT:
-					cmd_.buttons[9] = true;
-					break;
-				case KEYCODE_FIVE:
-					cmd_.buttons[6] = true;
-					break;
-				case KEYCODE_SIX:
-					cmd_.buttons[7] = true;
-					break;
-				case KEYCODE_MINUS:
-					cmd_.buttons[4] = true;
-					break;
-				case KEYCODE_EQUALS:
-					cmd_.buttons[5] = true;
-					break;
 				case KEYCODE_LEFT_BRACKET:
 					processing_bracket = true;
-					dirty = false;
+					dirty = true;
 				case  KEYCODE_ESCAPE:
 					//std::cout << std::endl;
 					//std::cout << "Exiting " << std::endl;
@@ -323,20 +287,18 @@ void TeleopJointsKeyboard::keyboardLoop()
 					break;
 				case KEYCODE_CARROT:
 					ROS_WARN("It's a carrot");
-					dirty = false;
-					break;
-				case KEYCODE_SPACE:  // Force a re-publish of joystick msg?
+					dirty = true;
 					break;
 				default:
-					dirty = false;
-					break;*/
+					dirty = true;
+					break;
 			}
 		}
 		else // Processing bracket
 		{
+			ROS_INFO_STREAM("Running Dpad");
 			switch (c)
 			{
-				ROS_INFO_STREAM("Running Dpad");
 				case KEYCODE_B:
 					cmd_.axes[7] = 1.0;
 					processing_bracket = false;
