@@ -98,4 +98,6 @@
 	<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" />
 	<node name="state_setpoint_pub_node" pkg="behaviors" type="state_setpoint_publisher_node" />
 
+	<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
+
 </launch>
