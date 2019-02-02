@@ -53,6 +53,7 @@
 #include <sensor_msgs/Joy.h>
 
 #include <ctre/phoenix/motorcontrol/can/TalonSRX.h>
+#include <ctre/phoenix/motorcontrol/can/VictorSPX.h>
 #include <frc/IterativeRobotBase.h>
 #include <frc/AnalogInput.h>
 #include <frc/DriverStation.h>
@@ -244,12 +245,13 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		double navX_zero_;
 
 		std::vector<std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonSRX>> can_talons_;
+		std::vector<std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController>> ctre_mcs_;
 
 		// Maintain a separate read thread for each talon SRX
-		std::vector<std::shared_ptr<std::mutex>> talon_read_state_mutexes_;
-		std::vector<std::shared_ptr<hardware_interface::TalonHWState>> talon_read_thread_states_;
-		std::vector<std::thread> talon_read_threads_;
-		void talon_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonSRX> talon, std::shared_ptr<hardware_interface::TalonHWState> state, std::shared_ptr<std::mutex> mutex, Tracer tracer);
+		std::vector<std::shared_ptr<std::mutex>> ctre_mc_read_state_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::TalonHWState>> ctre_mc_read_thread_states_;
+		std::vector<std::thread> ctre_mc_read_threads_;
+		void ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController> ctre_mc, std::shared_ptr<hardware_interface::TalonHWState> state, std::shared_ptr<std::mutex> mutex, Tracer tracer);
 
 		std::vector<std::shared_ptr<frc::NidecBrushless>> nidec_brushlesses_;
 		std::vector<std::shared_ptr<frc::DigitalInput>> digital_inputs_;
@@ -280,7 +282,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		std::unique_ptr<ROSIterativeRobot> robot_;
 
-		std::vector<Tracer> talon_thread_tracers_;
+		std::vector<Tracer> ctre_mc_thread_tracers_;
 		std::vector<Tracer> pdp_thread_tracers_;
 		std::vector<Tracer> pcm_thread_tracers_;
 		Tracer read_tracer_;
