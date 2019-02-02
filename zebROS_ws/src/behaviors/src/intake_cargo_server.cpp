@@ -7,7 +7,6 @@
 #include "behaviors/IntakeAction.h"
 #include "behaviors/ElevatorAction.h"
 #include "cargo_intake_controller/CargoIntakeSrv.h"
-#include "elevator_controller/ElevatorSrv.h"
 #include "sensor_msgs/JointState.h"
 #include <atomic>
 #include <ros/console.h>
@@ -18,6 +17,7 @@
 double roller_power;
 double intake_timeout;
 double linebreak_debounce_iterations;
+double wait_for_server_timeout;
 
 class CargoIntakeAction {
 	protected:
@@ -27,7 +27,7 @@ class CargoIntakeAction {
 		std::string action_name_;
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
-		ros::ServiceClient controller_client_; //create a ros client to send requests to the controller
+		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
 		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo since we started trying to intake/outtake
 		std::atomic<int> linebreak_false_count; //same, but how many times in a row no cargo
 		behaviors::IntakeResult result_; //variable to store result of the actionlib action
@@ -50,10 +50,9 @@ class CargoIntakeAction {
 		//initialize action client to call actionlib server
 
 		//initialize the client being used to call the controller
-		ros::ServiceClient cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
-		ros::ServiceClient elevator_controller_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
+		cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 		//start subscribers subscribing
-		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
+		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
 	}
 
 		~CargoIntakeAction(void) 
@@ -63,6 +62,24 @@ class CargoIntakeAction {
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::IntakeGoalConstPtr &goal) {
 			ROS_INFO("%s: Running callback", action_name_.c_str());
+
+			//wait for all actionlib servers we need
+			if(!ac_elevator_.waitForServer(ros::Duration(wait_for_server_timeout)))
+			{
+				ROS_ERROR_STREAM("Cargo intake server couldn't find elevator server");
+				as_.setPreempted();
+				return;
+			}
+
+			//wait for all controller services we need
+			if(! cargo_intake_controller_client_.waitForExistence(ros::Duration(wait_for_server_timeout)))
+			{
+				ROS_ERROR_STREAM("Intake cargo server can't find cargo_intake_controller");
+				as_.setPreempted();
+				return;
+			}
+
+
 			ros::Rate r(10);
 
 			//define variables that will be reused for each controller call/actionlib server call
@@ -95,7 +112,6 @@ class CargoIntakeAction {
 				else {
 					ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
 					timed_out = true;
-					as_.setPreempted();
 				}
 			}
 
@@ -114,7 +130,7 @@ class CargoIntakeAction {
 				srv.request.intake_arm = false; //TODO: double check
 
 				//send request to controller
-				if(!controller_client_.call(srv))
+				if(!cargo_intake_controller_client_.call(srv))
 				{
 					ROS_ERROR("%s: Srv intake call failed", action_name_.c_str());
 					as_.setPreempted();
@@ -149,7 +165,7 @@ class CargoIntakeAction {
 			srv.request.power = 0;
 			srv.request.intake_arm = true; //TODO: Double check
 			//send request to controller
-			if(!controller_client_.call(srv))
+			if(!cargo_intake_controller_client_.call(srv))
 			{
 				ROS_ERROR("Srv intake call failed in cargo intake server");
 			}
@@ -232,6 +248,8 @@ int main(int argc, char** argv) {
 
 	if (!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
 		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
+	if (!n.getParam("actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
+		ROS_ERROR("Could not read wait_for_server_timeout in intake_sever");
 
 	if (!n_params_intake.getParam("roller_power", roller_power))
 		ROS_ERROR("Could not read roller_power in cargo_intake_server");
