@@ -9,6 +9,7 @@
 #include <std_msgs/Bool.h>
 #include "panel_intake_controller/PanelIntakeSrv.h"
 #include "sensor_msgs/JointState.h"
+#include <atomic>
 
 namespace panel_intake_controller
 {
@@ -33,6 +34,8 @@ class PanelIntakeController : public controller_interface::Controller<hardware_i
             virtual bool cmdService(panel_intake_controller::PanelIntakeSrv::Request &req,
 					                panel_intake_controller::PanelIntakeSrv::Response &res);
 
+			void jointStateCallback(const sensor_msgs::JointState &joint_state);
+
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
             hardware_interface::JointHandle claw_joint_; //interface for the in/out solenoid joint
@@ -43,6 +46,9 @@ class PanelIntakeController : public controller_interface::Controller<hardware_i
 
             ros::ServiceServer panel_intake_service_; //service for receiving commands
 			ros::Subscriber joint_states_sub_; //to subscribe to joint states - for sensors
+
+			std::atomic<int> linebreak_true_count;
+			std::atomic<int> linebreak_false_count;
 }; //class
 
 } //namespace
