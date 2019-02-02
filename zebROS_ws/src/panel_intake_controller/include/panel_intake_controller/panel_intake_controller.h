@@ -8,6 +8,7 @@
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <std_msgs/Bool.h>
 #include "panel_intake_controller/PanelIntakeSrv.h"
+#include "sensor_msgs/JointState.h"
 
 namespace panel_intake_controller
 {
@@ -41,6 +42,7 @@ class PanelIntakeController : public controller_interface::Controller<hardware_i
             realtime_tools::RealtimeBuffer<bool> push_cmd_; //buffer for in/out commands 
 
             ros::ServiceServer panel_intake_service_; //service for receiving commands
+			ros::Subscriber joint_states_sub_; //to subscribe to joint states - for sensors
 }; //class
 
 } //namespace

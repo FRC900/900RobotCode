@@ -53,7 +53,7 @@ class CargoIntakeAction {
 		ros::ServiceClient cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 		ros::ServiceClient elevator_controller_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
 		//start subscribers subscribing
-		joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
+		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
 	}
 
 		~CargoIntakeAction(void) 
@@ -95,7 +95,6 @@ class CargoIntakeAction {
 				else {
 					ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
 					timed_out = true;
-					as_.setPreempted();
 				}
 			}
 

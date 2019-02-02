@@ -55,7 +55,7 @@ class CargoOuttakeAction {
 		ros::ServiceClient cargo_outtake_controller_client_ = nh_.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/frcrobot_jetson/cargo_outtake_controller/cargo_outtake_command", false, service_connection_header);
 		
 		//start subscribers subscribing
-		//joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoOuttakeAction::jointStateCallback, this);
+		//joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoOuttakeAction::jointStateCallback, this);
 	}
 
 		~CargoOuttakeAction(void)
