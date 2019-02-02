@@ -13,8 +13,8 @@ int hfov;
 int vfov;
 int frameWidth;
 int frameHeight;
-int camera_height;
-int angle;
+double camera_height;
+double angle;
 
 ros::Publisher pub;
 
@@ -31,18 +31,6 @@ double toRad(int deg){
 
 struct point getWorldCoords(int x, int y){
 	
-	/*
-	//dx is the distance between the viewer vertex and the image plane using vertical FOV
-	int dx = (frameHeight)/(2 * tan(vfov/2));
-	int vtheta = atan((frameHeight - y)/dx);
-	int worldx = camera_height/(tan(vtheta));
-
-	//dy is the distance between the viewer vertex and the image plane using horizontal FOV
-	int dy = (frameWidth)/(2 * tan(hfov/2));
-	int htheta = atan((frameWidth - x)/dy);	
-	int worldy = worldx * tan(htheta);
-	*/
-
 	struct point worldPoint;
 
 	double centerx = frameWidth/2;
