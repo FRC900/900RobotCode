@@ -549,6 +549,8 @@ void FRCRobotSimInterface::init(void)
     //cube_state_sub_ = nh_.subscribe("/frcrobot/cube_state_sim", 1, &FRCRobotSimInterface::cube_state_callback, this);
     match_data_sub_ = nh_.subscribe("match_data", 1, &FRCRobotSimInterface::match_data_callback, this);
 
+	linebreak_sensor_srv_ = nh_.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
+
 	ROS_WARN("fails here?1");
 	// Loop through the list of joint names
 	// specified as params for the hardware_interface.
@@ -711,6 +713,12 @@ void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
 		}
 	}
     ros::spinOnce();
+}
+bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBreakSensors::Request &req,
+							ros_control_boilerplate::LineBreakSensors::Response &res)
+
+	{ if  (req.j < digital_input_names_.size())
+		{	digital_input_names_[req.j] = (req.value) ? 1 : 0;}
 }
 
 void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
