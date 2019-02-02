@@ -1,0 +1,13 @@
+#pragma once
+
+enum ElevatorLocation
+{
+	CARGO_SHIP,
+	ROCKET_1,
+	ROCKET_2,
+	ROCKET_3,
+	INTAKE,
+	ELEVATOR_DEPLOY,
+	ELEVATOR_CLIMB,
+	ELEVATOR_MAX_INDEX,
+};

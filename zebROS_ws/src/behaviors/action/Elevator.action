@@ -1,4 +1,5 @@
-float32 setpoint 
+uint8 setpoint_index # 0=cargo ship, 1=low rocket, 2=mid rocket, 3=high rocket, 4=intake
+bool place_cargo
 ---
 bool timed_out
 bool success

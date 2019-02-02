@@ -16,3 +16,6 @@
 #include <std_msgs/Float64.h>
 
 void navXCallback(const sensor_msgs::Imu &navXState);
+
+/*realtime_tools::RealtimeBuffer<struct> joystick_state;*/
+

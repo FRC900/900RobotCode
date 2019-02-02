@@ -3,20 +3,11 @@
 
 #include <ros/ros.h>
 #include <vector>
-#include <hardware_interface/joint_state_interface.h> //other than talon data
 #include <hardware_interface/joint_command_interface.h>
 #include <realtime_tools/realtime_buffer.h> //code for real-time buffer - stop multple things writing to same variable at same time
-#include <boost/shared_ptr.hpp>
 #include <controller_interface/multi_interface_controller.h>
-#include <controller_interface/controller.h> //for writing controllers
-#include <talon_interface/talon_state_interface.h> // "
-#include <talon_controllers/talon_controller.h> // "
 #include <talon_controllers/talon_controller_interface.h> // "
-#include <atomic>
-#include <std_msgs/Float64.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
-#include <sensor_msgs/JointState.h>
-#include <std_msgs/Bool.h>
 #include <cargo_intake_controller/CargoIntakeSrv.h>
 
 namespace cargo_intake_controller
@@ -49,7 +40,6 @@ class CargoIntakeController : public controller_interface::MultiInterfaceControl
 
             realtime_tools::RealtimeBuffer<double> spin_command_; //this is the buffer for percent output commands to be published
             realtime_tools::RealtimeBuffer<bool> intake_arm_command_; //buffer for commands for up/down of the arm
-            realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
 
             ros::ServiceServer cargo_intake_service_; //service for receiving commands
 }; //class

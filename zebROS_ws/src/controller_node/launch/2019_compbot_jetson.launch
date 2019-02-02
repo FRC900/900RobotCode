@@ -19,9 +19,11 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/talon_swerve_offsets_offseason.yaml" command="load"/>
 
 		<rosparam file="$(find ros_control_boilerplate)/config/2018_swerve_drive.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2019_elevator_params.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
 		<rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
+		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
 
 		<!-- Load hardware interface -->
 		<node name="frcrobot_hardware_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
@@ -32,6 +34,18 @@
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
 			output="screen" args="spawn cargo_outtake_controller cargo_intake_controller climber_controller panel_intake_controller elevator_controller joint_state_controller joint_state_listener_controller talon_state_controller match_state_listener_controller pcm_state_controller pdp_state_controller swerve_drive_controller robot_code_ready_controller" /> 
 
+		<group ns="translator0">
+			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen"/>
+				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw" />
+				<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_jetson/joystick_states" />
+		</group>
+
+		<group ns="translator1">	
+			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" >
+				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw1" />
+				<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_jetson/joystick_states1" />
+			</node>
+		</group>
 
 		<node name="point_gen" pkg="swerve_point_generator" type="point_gen" output="screen" />
 
@@ -49,18 +63,39 @@
 			<arg name="port" value="5803"/>
 		</include>
 
-	<!-- Run this on the Jetson so outputs go to /frcrobot_jetson/swerve_drive
+		<!-- 
+		<group if="$(eval arg('hw_or_sim')=='hw')">
+			<include file="$(find controller_node)/launch/multiflex_example.launch" />
+		</group>
+-->
+
+		<!-- Run this on the Jetson so outputs go to /frcrobot_jetson/swerve_drive
 		 but remap the inputs so they come from the Rio -->
 		<node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" >
-			<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_rio/joystick_states"/>
 			<remap from="/frcrobot_jetson/navx_mxp" to="/frcrobot_rio/navx_mxp"/>
 		</node>
+
+		<!-- actionlib servers!!! -->
+		<node name="elevator_ac_server" pkg="behaviors" type="elevator_server" output="screen"/>
+		<node name="outtake_cargo_ac_server" pkg="behaviors" type="outtake_cargo_server" output="screen"/>
 	</group>
 
-	<!-- Run this on the Jetson, but put it in the Rio namespace since the
-		 input and output topics map more naturally ro /frcrobot_rio -->`
-	<group ns="frcrobot_rio">
-		<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" />
-	</group>
+	<node name="orient_pid" pkg="pid" type="controller" >
+		<param name="node_name" value="orient_pid_node" />
+		<param name="Kp" value="5.0" />
+		<param name="Ki" value="0.0" />
+		<param name="Kd" value="0.1" />
+		<param name="upper_limit" value="10" />
+		<param name="lower_limit" value="-10" />
+		<param name="windup_limit" value="10" />
+		<param name="max_loop_frequency" value="100.0" />
+		<param name="min_loop_frequency" value="100.0" />
+		<param name="topic_from_controller" value="orient_pid/orient_control_effort" />     
+		<param name="setpoint_topic" value="orient_setpoint" />
+		<param name="topic_from_plant" value="orient_state" />
+	</node>
+
+	<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" />
+	<node name="state_setpoint_pub_node" pkg="behaviors" type="state_setpoint_publisher_node" />
 
 </launch>

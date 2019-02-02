@@ -45,6 +45,7 @@
 #include <frc_msgs/CubeState.h>
 #include <frc_msgs/MatchSpecificData.h>
 #include <frc_msgs/JoystickState.h>
+#include  <sensor_msgs/Joy.h>
 
 namespace frcrobot_control
 {
@@ -58,8 +59,8 @@ class TeleopJointsKeyboard
 
 	private:
 		ros::Publisher joints_pub_;
-		frc_msgs::JoystickState cmd_;
-		frc_msgs::JoystickState cmd_last_;
+		sensor_msgs::Joy cmd_;
+		sensor_msgs::Joy cmd_last_;
 		//bool has_recieved_joints_;
 };
 

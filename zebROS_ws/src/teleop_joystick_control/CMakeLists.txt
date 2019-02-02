@@ -3,6 +3,8 @@ project(teleop_joystick_control)
 
 include ("../cmake_modules/CMakeOpt.cmake")
 
+if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   roscpp
@@ -89,4 +91,8 @@ install(TARGETS teleop_joystick_comp translate_joystick_data_node
 install(DIRECTORY
 	config
 	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+	PATTERN *~ EXCLUDE
+	PATTERN *.sw? EXCLUDE
 )
+
+endif()

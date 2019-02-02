@@ -15,6 +15,7 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
      sensor_msgs
      cv_bridge
      message_generation
+     roslint
      )
   find_package(OpenCV REQUIRED)
   find_package(Boost COMPONENTS filesystem system serialization iostreams thread REQUIRED)
@@ -218,4 +219,5 @@ generate_messages(
 
   ## Add folders to be run by python nosetests
   # catkin_add_nosetests(test)
+  roslint_cpp()
 endif()

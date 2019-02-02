@@ -1,4 +1,4 @@
-float32 elevator_setpoint
+uint8 setpoint_index # 0=cargo ship, 1=low rocket, 2=mid rocket, 3=high rocket, 4=intake
 ---
 bool timed_out
 bool success

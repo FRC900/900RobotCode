@@ -3,12 +3,15 @@ project(behaviors)
 
 include ("../cmake_modules/CMakeOpt.cmake")
 
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   actionlib
+  teraranger_array
   actionlib_msgs
   nav_msgs
   roscpp
@@ -23,10 +26,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 include_directories(
-  include/
+  include
   ${catkin_INCLUDE_DIRS}
 )
-
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -131,32 +133,32 @@ generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
 catkin_package(
    INCLUDE_DIRS include
    #LIBRARIES behaviors
-   CATKIN_DEPENDS actionlib_msgs actionlib nav_msgs roscpp rospy std_msgs
+   CATKIN_DEPENDS actionlib_msgs actionlib nav_msgs roscpp rospy std_msgs teraranger_array
    DEPENDS 
 )
 add_executable(intake_cargo_server src/intake_cargo_server.cpp)
 target_link_libraries(intake_cargo_server ${catkin_LIBRARIES})
 add_dependencies(intake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-#add_executable(elevator_server src/elevator_server.cpp)
-#target_link_libraries(elevator_server ${catkin_LIBRARIES})
-#add_dependencies(elevator_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(elevator_server src/elevator_server.cpp)
+target_link_libraries(elevator_server ${catkin_LIBRARIES})
+add_dependencies(elevator_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #
-#add_executable(intake_hatch_panel_server src/intake_hatch_panel_server.cpp)
-#target_link_libraries(intake_hatch_panel_server ${catkin_LIBRARIES})
-#add_dependencies(intake_hatch_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(intake_hatch_panel_server src/intake_hatch_panel_server.cpp)
+target_link_libraries(intake_hatch_panel_server ${catkin_LIBRARIES})
+add_dependencies(intake_hatch_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #
-#add_executable(climber_server src/climber_server.cpp)
-#target_link_libraries(climber_server ${catkin_LIBRARIES})
-#add_dependencies(climber_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(climber_server src/climber_server.cpp)
+target_link_libraries(climber_server ${catkin_LIBRARIES})
+add_dependencies(climber_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #
-#add_executable(outtake_cargo_server src/outtake_cargo_server.cpp)
-#target_link_libraries(outtake_cargo_server ${catkin_LIBRARIES})
-#add_dependencies(outtake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(outtake_cargo_server src/outtake_cargo_server.cpp)
+target_link_libraries(outtake_cargo_server ${catkin_LIBRARIES})
+add_dependencies(outtake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #
-#add_executable(outtake_hatch_panel_server src/outtake_hatch_panel_server.cpp)
-#target_link_libraries(outtake_hatch_panel_server ${catkin_LIBRARIES})
-#add_dependencies(outtake_hatch_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(outtake_hatch_panel_server src/outtake_hatch_panel_server.cpp)
+target_link_libraries(outtake_hatch_panel_server ${catkin_LIBRARIES})
+add_dependencies(outtake_hatch_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #add_executable(dummy src/dummy.cpp)
 #target_link_libraries(
@@ -185,7 +187,17 @@ add_dependencies(intake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPO
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/behaviors_node.cpp)
+add_executable(publish_pid_cmd_vel_node src/publish_pid_cmd_vel.cpp)
+add_dependencies(publish_pid_cmd_vel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(publish_pid_cmd_vel_node
+  ${catkin_LIBRARIES}
+)
+
+add_executable(state_setpoint_publisher_node src/state_setpoint_publisher.cpp)
+add_dependencies(state_setpoint_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(state_setpoint_publisher_node
+  ${catkin_LIBRARIES}
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -195,12 +207,8 @@ add_dependencies(intake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPO
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
 
 #############
 ## Install ##
@@ -217,15 +225,18 @@ add_dependencies(intake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPO
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS autoInterpreterClient autoInterpreterServer autoInterpreterServerLift autoInterpreterServerIntake
-#    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-#  )
-#  install(DIRECTORY
-#     config
-#     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
+install(TARGETS intake_cargo_server outtake_cargo_server elevator_server publish_pid_cmd_vel_node state_setpoint_publisher_node
+   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(DIRECTORY
+	config
+	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+	PATTERN *~ EXCLUDE
+	PATTERN *.sw? EXCLUDE
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
@@ -252,4 +263,5 @@ add_dependencies(intake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPO
 # endif()
 
 ## Add folders to be run by python nosetests
+endif()
 # catkin_add_nosetests(test)

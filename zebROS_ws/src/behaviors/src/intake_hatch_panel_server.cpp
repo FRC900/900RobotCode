@@ -8,10 +8,12 @@
 #include <behaviors/IntakeAction.h>
 #include <behaviors/PathAction.h>
 #include <behaviors/ElevatorAction.h>
+#include "behaviors/enumerated_elevator_indices.h"
 
 //define global variables that will be defined based on config values
 double linebreak_debounce_iterations;
 double intake_timeout;
+double pause_time_between_pistons
 
 class IntakeHatchPanelAction
 {
@@ -72,7 +74,8 @@ class IntakeHatchPanelAction
 				
 				//elevator server
 				behaviors::ElevatorGoal elev_goal;
-				elev_goal.elevator_setpoint = 1; //TODO: figure this out
+				elev_goal.setpoint_index = goal->setpoint_index; //TODO: figure this out
+				elev_goal.place_cargo = false;
 				ae_.sendGoal(elev_goal);
 				
 				ap_.waitForResult(); //waits until the goal finishes, whether a success, timeout, or preempt
@@ -121,9 +124,9 @@ class IntakeHatchPanelAction
 				panel_intake_controller::PanelIntakeSrv srv;
 				srv.request.claw_in = false; //TODO: make sure this means grab the panel
 				srv.request.push_in = true; //this too
-				srv.request.wedge_in = false; //this too
+				//srv.request.wedge_in = false; //this too
 				//send request to controller
-				if(!controller_client_.call(srv)) //note: the call won't happen if preempted was true, because of how && operator works
+				if(!panel_controller_client_.call(srv)) //note: the call won't happen if preempted was true, because of how && operator works
 				{
 					ROS_ERROR("Srv intake call failed in auto interpreter server intake");
 				}
@@ -131,7 +134,10 @@ class IntakeHatchPanelAction
 				ros::spinOnce();
 
 				//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
-				while(!success && !timed_out && !preempted) {
+				//
+				ros::Duration(0.5).sleep();//sleeps for 0.5
+
+					/*	while(!success && !timed_out && !preempted) {
 					success = linebreak_true_count > linebreak_debounce_iterations;
 					if(as_.isPreemptRequested() || !ros::ok()) {
 						ROS_WARN("%s: Preempted", action_name_.c_str());
@@ -139,12 +145,12 @@ class IntakeHatchPanelAction
 						preempted = true;
 					}
 					if (!preempted) {
-						r.sleep();
+						r.sleep()r
 						ros::spinOnce();
 						timed_out = (ros::Time::now().toSec()-start_time) > goal->timeout;
 					}
 				}
-			}
+			} */
 			//end of code for sending something to a controller --------------------------------------------------------------------------------
 
 			//call another actionlib server
@@ -185,14 +191,18 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "intake_hatch_panel_server");
 
 	ros::NodeHandle n;
-	ros::NodeHandle n_params(n, "actionlib_hatch_panel_intake_params");
+	ros::NodeHandle n_params(n, "actionlib_hatch_panel_params");
 
 	if(!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
 	{
 		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_hatch_panel_server");
 	}
+	if(!n_params.getParam("pause_time_between_pistons", pause_time_between_pistons_))
+	{
+		ROS_ERROR("Could not read pause_time_between_pistons in intake_hatch_panel_server");
+	}
 
-	if(!n_params.getParam("intake_timeout", intake_timeout))
+	if(!n_params.getParam("intake_timeout", intake_timeout_))
 	{
 		ROS_ERROR("Could not read intake_timeout in intake_hatch_panel_server");
 	}

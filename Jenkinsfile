@@ -39,6 +39,7 @@ node {
                     failed_stage = env.STAGE_NAME
                 
                     sh '''#!/bin/bash
+                        export HOME="/home/ubuntu"
                         cd /home/ubuntu/2019RobotCode
                         git log -n1
                         git submodule update --init --recursive
@@ -48,7 +49,7 @@ node {
                         source /opt/ros/kinetic/setup.bash
                         catkin_make
                         source devel/setup.bash
-                        timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen
+                        timeout -k 30 --preserve-status 60 roslaunch controller_node 2019_compbot_combined.launch hw_or_sim:=sim 
                     '''
                 } // end Build stage
             
@@ -61,6 +62,12 @@ node {
                         source /opt/ros/kinetic/setup.bash
                         source devel/setup.bash
                         catkin_make run_tests
+                    '''
+                    
+                    // Run lint then exit 0 as any lint errors set the exit code
+                    sh '''#!/bin/bash
+                        catkin_make roslint 2> lint.txt
+                        exit 0
                     '''
                     
                     // This script forces an exit 0 because the catkin test
@@ -112,11 +119,11 @@ node {
         junit allowEmptyResults: true, healthScaleFactor: 1.0, testResults: 'zebROS_ws/build/test_results/**/*.xml'
         deleteDir()
         notifySlack(currentBuild.result, full_commit, author, failed_stage)
+	//publish reports
 
     } // end finally
     
 } // end Node
-
 
 def notifySlack(
     String buildStatus = 'STARTED',
@@ -146,8 +153,6 @@ def notifySlack(
     org = tokens[tokens.size()-3]
     repo = tokens[tokens.size()-2]
     branch = tokens[tokens.size()-1]
-
-    
 
     if (buildStatus != 'FAILURE') {
 

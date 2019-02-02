@@ -2,23 +2,18 @@
 #define ELEVATOR_CONTROLLER
 
 #include <ros/ros.h>
-#include <vector>
-#include <hardware_interface/joint_state_interface.h> //other than talon data
 #include <hardware_interface/joint_command_interface.h>
-#include <realtime_tools/realtime_publisher.h> //code for real-time buffer - stop multple things writing to same variable at same time
-#include <boost/shared_ptr.hpp>
+#include <realtime_tools/realtime_buffer.h>
 #include <controller_interface/multi_interface_controller.h>
-#include <controller_interface/controller.h> //for writing controllers
-#include <talon_interface/talon_state_interface.h> // "
-#include <talon_controllers/talon_controller.h> // "
 #include <talon_controllers/talon_controller_interface.h> // "
-#include <atomic>
 #include <std_msgs/Float64.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
-#include <sensor_msgs/JointState.h>
 #include <std_msgs/Bool.h>
 #include "elevator_controller/ElevatorSrv.h"
+<<<<<<< HEAD
 #include "elevator_controller/ClimberEngageSrv.h"
+=======
+>>>>>>> 01edc2a6eec83020ceb9c4a874eff9132aa57e3d
 
 namespace elevator_controller
 {
@@ -35,11 +30,12 @@ class ElevatorController : public controller_interface::MultiInterfaceController
             //answer to my question: the TalonCommandInterface is passed in if it's not a multiInterfaceController, and just one kind of joint is made!
             virtual bool init(hardware_interface::RobotHW *hw,
                               ros::NodeHandle             &root_nh,
-                              ros::NodeHandle             &controller_nh);
-            virtual void starting(const ros::Time &time);
-            virtual void update(const ros::Time & time, const ros::Duration& period);
-            virtual void stopping(const ros::Time &time);
+                              ros::NodeHandle             &controller_nh) override;
+            virtual void starting(const ros::Time &time) override;
+            virtual void update(const ros::Time & time, const ros::Duration& period) override;
+            virtual void stopping(const ros::Time &time) override;
 
+<<<<<<< HEAD
             virtual bool cmdService(elevator_controller::ElevatorSrv::Request &req,
 					                elevator_controller::ElevatorSrv::Response &res); 
 			virtual bool climberEngageCallback(elevator_controller::ClimberEngageSrv::Request &req, elevator_controller::ClimberEngageSrv::Response &res);
@@ -58,6 +54,25 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 
             ros::ServiceServer elevator_service_; //service for receiving commands
 			ros::ServiceServer climber_engage_service_;
+=======
+            bool cmdService(elevator_controller::ElevatorSrv::Request &req,
+			                elevator_controller::ElevatorSrv::Response &res);
+
+        private:
+            std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
+            talon_controllers::TalonControllerInterface elevator_joint_; //interface for the talon joint
+
+            realtime_tools::RealtimeBuffer<int> position_command_; //this is the buffer for percent output commands to be published
+            realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
+
+            ros::ServiceServer elevator_service_; //service for receiving commands
+
+			bool zeroed_;
+			double arb_feed_forward_up_;
+			double initial_position_;
+			double elevator_zeroing_percent_output_;
+			double elevator_sensor_bad_distance_;
+>>>>>>> 01edc2a6eec83020ceb9c4a874eff9132aa57e3d
 }; //class
 
 

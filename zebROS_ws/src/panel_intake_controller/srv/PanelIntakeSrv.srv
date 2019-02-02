@@ -1,4 +1,3 @@
-bool claw_in
-bool push_in
-bool wedge_in
+bool claw_release
+bool push_extend
 ---
