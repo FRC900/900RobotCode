@@ -338,6 +338,7 @@ void TeleopJointsKeyboard::keyboardLoop()
 				case KEYCODE_LEFT_BRACKET:
 					processing_bracket = true;
 					dirty = true;
+					break;
 				case  KEYCODE_ESCAPE:
 					//std::cout << std::endl;
 					//std::cout << "Exiting " << std::endl;
@@ -358,26 +359,44 @@ void TeleopJointsKeyboard::keyboardLoop()
 			switch (c)
 			{
 				case KEYCODE_B:
-					cmd_.axes[7] = 1.0;
+					if(cmd_.axes[7] > -1.0)
+					{
+						cmd_.axes[7] -= 1.0;
+					}
 					processing_bracket = false;
+					dirty = false;
 					break;
 				case KEYCODE_A:
-					cmd_.axes[7] = -1.0;
+					if(cmd_.axes[7] < 1.0)
+					{
+						cmd_.axes[7] += 1.0;
+					}
 					processing_bracket = false;
+					dirty = false;
 					break;
 				case KEYCODE_D:
-					cmd_.axes[6] = -1.0;
+					if(cmd_.axes[6] < 1.0)
+					{
+						cmd_.axes[6] += 1.0;
+					}
 					processing_bracket = false;
+					dirty = false;
 					break;
 				case KEYCODE_C:
-					cmd_.axes[6] = 1.0;
+					if(cmd_.axes[6] > -1.0)
+					{
+						cmd_.axes[6] -= 1.0;
+					}
 					processing_bracket = false;
+					dirty = false;
+					break;
+				case KEYCODE_LEFT_BRACKET:
+					processing_bracket = true;
 					break;
 				default:
 					dirty = true;
 					break;
 			}
-			break;
 		}
 	}
 	// Restore sanity to keyboard input
