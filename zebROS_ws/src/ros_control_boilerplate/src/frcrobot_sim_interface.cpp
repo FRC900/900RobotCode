@@ -89,6 +89,7 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 #define KEYCODE_ESCAPE  0x1B
 #define KEYCODE_CARROT 0x5E
 #define KEYCODE_SPACE 0x20
+#define KEYCODE_COMMA 0x2C
 
 namespace frcrobot_control
 {
@@ -187,8 +188,22 @@ void TeleopJointsKeyboard::keyboardLoop()
 	cmd_.buttons[10] = false;
 
 	bool processing_bracket = false;
+	bool dirty = false;
+
+	ros::Rate loop_rate(100);
+
 	while (ros::ok())
 	{
+		// Publish command
+		if (!dirty)
+		{
+			cmd_.header.stamp = ros::Time::now();
+			joints_pub_.publish(cmd_);
+		}
+
+		ros::spinOnce();
+		loop_rate.sleep();
+
 		int rc = pollKeyboard(kfd, c);
 		if (rc < 0)
 			break;
@@ -198,41 +213,84 @@ void TeleopJointsKeyboard::keyboardLoop()
 		// Assume keypress will be a valid command / cause
 		// to update the published joystick data. Set this to false
 		// for cases where it isn't true.
-		bool dirty = false;
+		dirty = false;
+
 		if (!processing_bracket)
 		{
 			ROS_INFO_STREAM("Processing axes and buttons");
 			switch (c)
 			{
 				case KEYCODE_a:
-					cmd_.axes[0] -= .5;
+					if(cmd_.axes[0] > -1.0)
+					{
+						cmd_.axes[0] -= 0.5;
+					}
 					break;
 				case KEYCODE_d:
-					cmd_.axes[0] += .5;
+					if(cmd_.axes[0] < 1.0)
+					{
+						cmd_.axes[0] += 0.5;
+					}
 					break;
 				case KEYCODE_w:
-					cmd_.axes[1] += .5;
+					if(cmd_.axes[1] < 1.0)
+					{
+						cmd_.axes[1] += 0.5;
+					}
 					break;
 				case KEYCODE_s:
-					cmd_.axes[1] -= .5;
+					if(cmd_.axes[1] > -1.0)
+					{
+						cmd_.axes[1] -= 0.5;
+					}
 					break;
 				case KEYCODE_q:
-					cmd_.axes[2] = .5;
+					if(cmd_.axes[2] < 1.0)
+					{
+						cmd_.axes[2] += 0.5;
+					}
+					break;
+				case KEYCODE_z:
+					if(cmd_.axes[2] > 0.0)
+					{
+						cmd_.axes[2] -= 0.5;
+					}
 					break;
 				case KEYCODE_o:
-					cmd_.axes[3] = .5;
+					if(cmd_.axes[3] < 1.0)
+					{
+						cmd_.axes[3] += 0.5;
+					}
+					break;
+				case KEYCODE_COMMA:
+					if(cmd_.axes[3] > 0.0)
+					{
+						cmd_.axes[3] -= 0.5;
+					}
 					break;
 				case KEYCODE_j:
-					cmd_.axes[4] -= .5;
+					if(cmd_.axes[4] > -1.0)
+					{
+						cmd_.axes[4] -= 0.5;
+					}
 					break;
 				case KEYCODE_l:
-					cmd_.axes[4] += .5;
+					if(cmd_.axes[4] < 1.0)
+					{
+						cmd_.axes[4] += 0.5;
+					}
 					break;
 				case KEYCODE_i:
-					cmd_.axes[5] += .5;
+					if(cmd_.axes[5] < 1.0)
+					{
+						cmd_.axes[5] += 0.5;
+					}
 					break;
 				case KEYCODE_k:
-					cmd_.axes[5] -= .5;
+					if(cmd_.axes[5] > -1.0)
+					{
+						cmd_.axes[5] -= 0.5;
+					}
 					break;
 
 				case KEYCODE_ONE:
@@ -317,14 +375,9 @@ void TeleopJointsKeyboard::keyboardLoop()
 					break;
 				default:
 					dirty = true;
+					break;
 			}
 			break;
-		}
-		// Publish command
-		if (!dirty)
-		{
-			cmd_.header.stamp = ros::Time::now();
-			joints_pub_.publish(cmd_);
 		}
 	}
 	// Restore sanity to keyboard input
