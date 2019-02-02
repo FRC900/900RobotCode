@@ -12,7 +12,7 @@ elevator_controller:
     # from the top to the bottom of the elevator, plus some margin
     # for error
     # Note once the conversion factor is set, 
-    elevator_sensor_bad_distance: -20.0
+    elevator_zeroing_timeout_:  2.0
     elevator_master: 
         type: talon_controllers/TalonControllerInterface 
         joint: elevator_master

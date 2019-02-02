@@ -38,14 +38,16 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		ROS_ERROR("Could not find arb_feed_forward_up");
 		return false;
 	}
+
 	if (!controller_nh.getParam("elevator_zeroing_percent_output", elevator_zeroing_percent_output_))
 	{
 		ROS_ERROR("Could not find elevator_zeroing_percent_output");
 		return false;
 	}
-	if (!controller_nh.getParam("elevator_sensor_bad_distance", elevator_sensor_bad_distance_))
+
+	if (!controller_nh.getParam("elevator_zeroing_timeout", elevator_zeroing_timeout_))
 	{
-		ROS_ERROR("Could not find elevator_sensor_bad_distance");
+		ROS_ERROR("Could not find elevator_zeroing_timeout");
 		return false;
 	}
 
@@ -62,15 +64,15 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 	{
 		ROS_ERROR("Cannot initialize elevator joint!");
 	}
-	// Grab initial position, use it to sanity check encoder position
-	// while looking for zero on the way down. If we go too far, assume
-	// the limit switch is broken and stop driving the motor
-	initial_position_ = elevator_joint_.getPosition();
 
 	elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController::cmdService, this);
 
 	zeroed_ = false;
+<<<<<<< HEAD
 >>>>>>> 01edc2a6eec83020ceb9c4a874eff9132aa57e3d
+=======
+	last_time_down_ = ros::Time::now();
+>>>>>>> 17197f736cd3acecc1b16826ec2318493fb2b11a
 
 	return true;
 }
@@ -82,7 +84,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 {
 	// If we hit the limit switch, zero the position.
 	// TODO : should we re-zero every time we hit it during a match?
-	if (!zeroed_ && elevator_joint_.getForwardLimitSwitch())
+	if (!zeroed_ && elevator_joint_.getReverseLimitSwitch())
 	{
 		ROS_INFO("ElevatorController : hit limit switch");
 		zeroed_ = true;
@@ -134,8 +136,8 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 	}
 	else
 	{
-		// Not yet zeroed. Run the elevator down slowly until the limit switch is set.
 		elevator_joint_.setMode(hardware_interface::TalonMode_PercentOutput);
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 
@@ -143,18 +145,29 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 =======
 		// TODO : check sign - expecting down to be negative
 		if ((initial_position_ - elevator_joint_.getPosition()) > elevator_sensor_bad_distance_)
+=======
+		if ((ros::Time::now() - last_time_down_).toSec() < elevator_zeroing_timeout_)
+>>>>>>> 17197f736cd3acecc1b16826ec2318493fb2b11a
 		{
-			elevator_joint_.setCommand(elevator_zeroing_percent_output_); // TODO : configuration param
+			// Not yet zeroed. Run the elevator down slowly until the limit switch is set.
+			elevator_joint_.setCommand(elevator_zeroing_percent_output_);
 		}
 		else
 		{
-			// If we've moved further than the height of the elevator
-			// and haven't seen a limit switch, there's a good chance
-			// the limit switch is not working. In that case, stop driving
-			// down since things just aren't going to work.
 			elevator_joint_.setCommand(0);
 		}
+<<<<<<< HEAD
 >>>>>>> 01edc2a6eec83020ceb9c4a874eff9132aa57e3d
+=======
+
+		// If not zeroed but enabled, check if the arm is moving down
+		if ((elevator_joint_.getMode() == hardware_interface::TalonMode_Disabled) ||
+			(elevator_joint_.getSpeed() < 0)) // TODO : param
+		{
+			// If moving down, or disabled and thus not expected to move down, reset the timer
+			last_time_down_ = ros::Time::now();
+		}
+>>>>>>> 17197f736cd3acecc1b16826ec2318493fb2b11a
 	}
 }
 
