@@ -46,6 +46,7 @@
 #include <frc_msgs/MatchSpecificData.h>
 #include <frc_msgs/JoystickState.h>
 #include <ros_control_boilerplate/LineBreakSensors.h>
+#include  <sensor_msgs/Joy.h>
 
 namespace frcrobot_control
 {
@@ -59,8 +60,7 @@ class TeleopJointsKeyboard
 
 	private:
 		ros::Publisher joints_pub_;
-		frc_msgs::JoystickState cmd_;
-		frc_msgs::JoystickState cmd_last_;
+		sensor_msgs::Joy cmd_;
 		//bool has_recieved_joints_;
 };
 
@@ -100,6 +100,8 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		std::mutex match_data_mutex_;
 		ros::ServiceServer linebreak_sensor_srv_;
+		double navX_zero_;
+
 		double navX_zero_;
 
 		std::thread sim_joy_thread_;
