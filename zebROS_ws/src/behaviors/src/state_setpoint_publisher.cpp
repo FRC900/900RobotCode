@@ -10,14 +10,20 @@
 #include "std_msgs/Bool.h"
 #include "std_srvs/SetBool.h"
 
+// TODO : nit, but explicitily initializing to false
+// will make it obvious what the intended use of this is
 bool publish;
 
+ // TODO : all of these can be locals - in general
+ // put declarations as close to their use as possible
+ // Makes it easer to keep track of what's used for what
 std_msgs::Float64 orient_state_msg;
 std_msgs::Float64 y_state_msg;
 std_msgs::Float64 orient_setpoint_msg;
 std_msgs::Float64 y_target_msg;
 std_msgs::Bool pid_enable_msg;
 
+// TODO : same with these
 ros::Subscriber world_vector_sub;
 ros::Publisher orient_setpoint;
 ros::Publisher orient_state;
