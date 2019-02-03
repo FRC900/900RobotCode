@@ -63,12 +63,9 @@
 			<arg name="port" value="5803"/>
 		</include>
 
-		<!-- 
 		<group if="$(eval arg('hw_or_sim')=='hw')">
 			<include file="$(find controller_node)/launch/multiflex_example.launch" />
 		</group>
--->
-
 		<!-- Run this on the Jetson so outputs go to /frcrobot_jetson/swerve_drive
 		 but remap the inputs so they come from the Rio -->
 		<node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" >
@@ -78,6 +75,8 @@
 		<!-- actionlib servers!!! -->
 		<node name="elevator_ac_server" pkg="behaviors" type="elevator_server" output="screen"/>
 		<node name="outtake_cargo_ac_server" pkg="behaviors" type="outtake_cargo_server" output="screen"/>
+
+		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 	</group>
 
 	<node name="orient_pid" pkg="pid" type="controller" >
@@ -98,6 +97,5 @@
 	<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" />
 	<node name="state_setpoint_pub_node" pkg="behaviors" type="state_setpoint_publisher_node" />
 
-	<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 
 </launch>
