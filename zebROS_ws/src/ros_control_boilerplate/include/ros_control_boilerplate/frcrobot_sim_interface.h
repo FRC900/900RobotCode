@@ -102,8 +102,6 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 		ros::ServiceServer linebreak_sensor_srv_;
 		double navX_zero_;
 
-		double navX_zero_;
-
 		std::thread sim_joy_thread_;
 		TeleopJointsKeyboard teleop_joy_;
 

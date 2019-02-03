@@ -82,8 +82,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	if(i == 1)
 	{
 		// TODO - experiment with rate-limiting after scaling instead?
-		double leftStickX = JoystickState->leftStickX;
-		double leftStickY = JoystickState->leftStickY;
+		double leftStickX = joystick_states_array[0].leftStickX;
+		double leftStickY = joystick_states_array[0].leftStickY;
 
 		dead_zone_check(leftStickX, leftStickY);
 
@@ -93,8 +93,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		leftStickX = left_stick_x_rate_limit.applyLimit(leftStickX);
 		leftStickY = left_stick_y_rate_limit.applyLimit(leftStickY);
 
-		double rightStickX = JoystickState->rightStickX;
-		double rightStickY = JoystickState->rightStickY;
+		double rightStickX = joystick_states_array[0].rightStickX;
+		double rightStickY = joystick_states_array[0].rightStickY;
 
 		dead_zone_check(rightStickX, rightStickY);
 
@@ -103,18 +103,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		rightStickX = right_stick_x_rate_limit.applyLimit(rightStickX);
 		rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);
-
-		// TODO : dead-zone for rotation?
-		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
-		double triggerLeft = left_trigger_rate_limit.applyLimit(JoystickState->leftTrigger);
-		double triggerRight = right_trigger_rate_limit.applyLimit(JoystickState->rightTrigger);
-		const double rotation = (pow(triggerLeft, rotation_scale) - pow(triggerRight, rotation_scale)) * max_rot;
-
-		leftStickX =  pow(leftStickX, joystick_scale) * max_speed;
-		leftStickY = -pow(leftStickY, joystick_scale) * max_speed;
-
-		rightStickX =  pow(rightStickX, joystick_scale);
-		rightStickY = -pow(rightStickY, joystick_scale);
 
 		// TODO : dead-zone for rotation?
 		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
