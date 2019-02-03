@@ -8,6 +8,19 @@
 
 std::vector<bool> senses_panels;
 
+// I get what you're going for here - either the reading is "in" or "out" of the key
+// You might get better results by using the closest sensor reading as a baseline
+// for "out". Then other readings are set based on whether they are within a range
+// of that closest distance.  It might also be useful for setting a range that's valid
+// for "in" values. Anything further away than that might be from e.g. the sensor pointing
+// at nothing?  Could be useful for detecting if e.g. only one sensor is seeing anything
+// So you'd end up with 3 possible states :
+//  seeing the normal plane of the cargo ship
+//  seeing inside the rectangle cutout
+//  seeing something else
+//
+// Making a table with the 4 sensors seeing permutations of each of the 3 states
+// would give ideas about where to move the robot?
 void multiflexCB(const teraranger_array::RangeArray& msg)
 {
 	for(int i = 0; i < msg.ranges.size(); i++)
@@ -40,6 +53,7 @@ int main(int argc, char ** argv)
 	cmd_vel_msg.angular.y = 0;
 	cmd_vel_msg.angular.z = 0;
 
+	// TODO : I'd increase the rate 
 	ros::Rate r(10);
 
 	while(ros::ok())
@@ -59,6 +73,8 @@ int main(int argc, char ** argv)
 		}
 		ROS_INFO_STREAM("location = " << location);
 
+		// TODO : calcs using only ints will result in an int,
+		// no need for floor here.
 		if(location == floor((NUM_SENSORS-1)/2))
 		{
 			ROS_INFO_STREAM("PERFECT");
@@ -67,7 +83,7 @@ int main(int argc, char ** argv)
 		else if(location < floor((NUM_SENSORS-1)/2))
 		{
 			ROS_INFO_STREAM("move left");
-			cmd_vel_msg.linear.y = 0.1;
+			cmd_vel_msg.linear.y = 0.1; // TODO : this might not be enough to get the robot to move?
 		}
 		else
 		{
