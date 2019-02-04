@@ -68,7 +68,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	const ros::M_string &header = event.getConnectionHeader();
 
 	std::string topic = header.at("topic");
-	ROS_INFO_STREAM("topic = " << topic);
 
 	for(bool msg_assign = false; msg_assign == false; i++)
 	{
