@@ -11,7 +11,8 @@ std::vector<bool> senses_panels;
 // I get what you're going for here - either the reading is "in" or "out" of the key
 // You might get better results by using the closest sensor reading as a baseline
 // for "out". Then other readings are set based on whether they are within a range
-// of that closest distance.  It might also be useful for setting a range that's valid
+// of that closest distance.  You'd still want a max range check, though, to avoid counting
+// really wacky results. It might also be useful for setting a range that's valid
 // for "in" values. Anything further away than that might be from e.g. the sensor pointing
 // at nothing?  Could be useful for detecting if e.g. only one sensor is seeing anything
 // So you'd end up with 3 possible states :
