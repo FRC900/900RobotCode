@@ -26,7 +26,6 @@ namespace talon_controllers
  * - \b command (std_msgs::Float64) : The joint setpoint to apply
  */
 
-
 // Since most controllers are going to share a lot of common code,
 // create a base class template. The big difference between controllers
 // will be the mode the Talon is run in. This is specificed by the type
@@ -71,13 +70,14 @@ class TalonController:
 	protected:
 		TALON_IF talon_if_;
 
+	private:
+		ros::Subscriber sub_command_;
+
 		// Real-time buffer holds the last command value read from the
 		// "command" topic.  This buffer is read in each call to update()
 		// to get the command to send to the Talon
 		realtime_tools::RealtimeBuffer<double> command_buffer_;
 
-	private:
-		ros::Subscriber sub_command_;
 		// Take each message read from the "command" topic and push
 		// it into the command buffer. This buffer will later be
 		// read by update() and sent to the Talon.  The buffer
@@ -173,126 +173,6 @@ class TalonFollowerController:
 		// from grabbing that Talon until this controller is
 		// explicitly unloaded.
 		TalonFollowerControllerInterface talon_if_;
-
-};
-
-// Convert Linear Position and Displacement to radians
-// and input on the Talon
-// Use of Positional PID and the radius of the gear next
-// to the Talon
-class TalonLinearPositionCloseLoopController :
-	public TalonPositionCloseLoopController
-{
-	//Used radius
-	private:
-		double radius_;
-	public:
-		TalonLinearPositionCloseLoopController(void) {}
-
-		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n) override
-		{
-			// Read params from command line / config file
-			if (!TalonCloseLoopController<TalonPositionCloseLoopControllerInterface>::init(hw,n))
-				return false;
-
-			//radius for length
-			n.getParam("radius", radius_);
-			return true;
-		}
-
-		// Same as TalonClosedLoopController but setCommand
-		// has converted radians as input
-		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
-		{
-			talon_if_.setCommand(*command_buffer_.readFromRT() / radius_);
-		}
-};
-
-class TalonLinearMotionMagicCloseLoopController :
-	public TalonCloseLoopController<TalonMotionMagicCloseLoopControllerInterface>
-{
-	//Used radius
-	private:
-		double radius_;
-		double gear_ratio_from_encoder_;
-	public:
-		TalonLinearMotionMagicCloseLoopController(void) {}
-
-		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n) override
-		{
-			// Read params from command line / config file
-			if (!TalonCloseLoopController<TalonMotionMagicCloseLoopControllerInterface>::init(hw,n))
-				return false;
-
-			//radius for length
-			n.getParam("radius", radius_);
-			//Ratio to convert to correct angle
-			n.getParam("gear_ratio_from_encoder", gear_ratio_from_encoder_);
-			return true;
-		}
-
-		// Same as TalonClosedLoopController but setCommand
-		// has converted radians as input
-		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
-		{
-			talon_if_.setCommand(*command_buffer_.readFromRT() / radius_ / gear_ratio_from_encoder_);
-			//ROS_INFO_STREAM(cmd.command_ / radius_ << "works?");
-		}
-};
-class TalonAnglePositionCloseLoopController :
-	public TalonCloseLoopController<TalonPositionCloseLoopControllerInterface>
-{
-	//Ratio
-	private:
-		double gear_ratio_from_encoder_;
-	public:
-		TalonAnglePositionCloseLoopController(void) {}
-
-		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n) override
-		{
-			// Read params from command line / config file
-			if (!TalonCloseLoopController<TalonPositionCloseLoopControllerInterface>::init(hw,n))
-				return false;
-
-			//Ratio to convert to correct angle
-			n.getParam("gear_ratio_from_encoder", gear_ratio_from_encoder_);
-			return true;
-		}
-
-		// Same as TalonClosedLoopController but setCommand
-		// has converted radians as input
-		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
-		{
-			talon_if_.setCommand(*command_buffer_.readFromRT() / gear_ratio_from_encoder_);
-		}
-};
-
-class TalonAngleMotionMagicCloseLoopController :
-	public TalonCloseLoopController<TalonMotionMagicCloseLoopControllerInterface>
-{
-	//Used ratio
-	private:
-		double gear_ratio_from_encoder_;
-	public:
-		TalonAngleMotionMagicCloseLoopController(void) {}
-
-		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n) override
-		{
-			// Read params from command line / config file
-			if (!TalonCloseLoopController<TalonMotionMagicCloseLoopControllerInterface>::init(hw,n))
-				return false;
-
-			//ratio to convert to correct angle
-			n.getParam("gear_ratio_from_encoder", gear_ratio_from_encoder_);
-			return true;
-		}
-
-		// Same as TalonClosedLoopController but setCommand
-		// has converted radians as input
-		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
-		{
-			talon_if_.setCommand(*command_buffer_.readFromRT() / gear_ratio_from_encoder_);
-		}
 };
 
 }
