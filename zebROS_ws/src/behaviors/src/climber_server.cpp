@@ -72,6 +72,9 @@ class ClimbAction {
 
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::ClimbGoalConstPtr &goal) {
+			// TODO : consider putting the if(!found) check right after
+			// each call to waitForServer - otherwise if all 3 are missing
+			// we'll be waiting a long time before seeing useful status?
 			bool elevator_server_found = ae_.waitForServer(ros::Duration(wait_for_server_timeout));
 			bool climber_controller_found = climber_controller_client_.waitForExistence(ros::Duration(wait_for_server_timeout));
 			bool climber_engage_found = climber_engage_client_.waitForExistence(ros::Duration(wait_for_server_timeout));
@@ -109,6 +112,8 @@ class ClimbAction {
 
 			//define variables that will be reused for each controller call/actionlib server call
 			double start_time;
+			// TODO : follow the logic and see if success is ever looked for in the status checking code
+			// Now it looks like no - success is the default case if !timeout && !preempt
 			bool success; //if controller/actionlib server call succeeded, the actionlib server will output the latest value of this at the end - if the last action succeeded, we infer everything did
 
 			//define variables that will be set true if the actionlib action is to be ended
@@ -118,6 +123,7 @@ class ClimbAction {
 			bool timed_out = false;
 			
 			//deploy foot using climber controller -----------------------------------------------
+			// TODO : combine with declaration, above, save a line of code
 			success = false; //didn't succeed yet
 			//define service to send
 			std_srvs::SetBool srv;
@@ -129,8 +135,10 @@ class ClimbAction {
 				preempted = true;
 			}
 			else {
-				success = true;
+				success = true; // TODO : this might be redundant since it isn't checked before being set to false?
 			}
+			// TODO - move inside else block above - no point
+			// spinning if we're just going to error out
 			ros::spinOnce();
 
 			// raise elevator to right height so we can engage the climber ------------------------------------------------

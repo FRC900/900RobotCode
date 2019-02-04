@@ -199,6 +199,12 @@ target_link_libraries(state_setpoint_publisher_node
   ${catkin_LIBRARIES}
 )
 
+add_executable(align_with_terabee_node src/align_with_terabee.cpp)
+add_dependencies(align_with_terabee_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(align_with_terabee_node
+  ${catkin_LIBRARIES}
+)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
