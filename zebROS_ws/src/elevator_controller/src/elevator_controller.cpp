@@ -48,6 +48,7 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 	zeroed_ = false;
 	last_time_down_ = ros::Time::now();
 
+
 	return true;
 }
 
@@ -86,11 +87,13 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 			elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
 			elevator_joint_.setDemand1Value(0);
 		}
+
 	}
 	else
 	{
 		elevator_joint_.setMode(hardware_interface::TalonMode_PercentOutput);
 		if ((ros::Time::now() - last_time_down_).toSec() < elevator_zeroing_timeout_)
+
 		{
 			// Not yet zeroed. Run the elevator down slowly until the limit switch is set.
 			elevator_joint_.setCommand(elevator_zeroing_percent_output_);
@@ -100,14 +103,16 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 			elevator_joint_.setCommand(0);
 		}
 
+
 		// If not zeroed but enabled, check if the arm is moving down
 		if ((elevator_joint_.getMode() == hardware_interface::TalonMode_Disabled) ||
-			(elevator_joint_.getSpeed() < 0)) // TODO : param
+				(elevator_joint_.getSpeed() < 0)) // TODO : param
 		{
 			// If moving down, or disabled and thus not expected to move down, reset the timer
 			last_time_down_ = ros::Time::now();
 		}
 	}
+
 }
 
 void ElevatorController::stopping(const ros::Time &/*time*/)

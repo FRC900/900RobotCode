@@ -47,7 +47,6 @@ hardware_interface:
        - {name: cargo_intake_linebreak_2, type: digital_input, dio_channel: 1, invert: true, local: false}
        - {name: cargo_intake_linebreak_3, type: digital_input, dio_channel: 2, invert: true, local: false}
        - {name: cargo_intake_linebreak_4, type: digital_input, dio_channel: 3, invert: true, local: false}
-
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
          
