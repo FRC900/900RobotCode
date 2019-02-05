@@ -53,7 +53,14 @@
 			<param name="frame_id" value="/map"/>
 		</node>
 
+		<!-- Actionlib Servers -->
 		<node name="path_to_goal_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
+		<node name="intake_cargo_server" pkg="behaviors" type="intake_cargo_server" output="screen" />
+		<node name="outtake_cargo_server" pkg="behaviors" type="outtake_cargo_server" output="screen" />
+		<node name="intake_hatch_panel_server" pkg="behaviors" type="intake_hatch_panel_server" output="screen" />
+		<node name="outtake_hatch_panel_server" pkg="behaviors" type="outtake_hatch_panel_server" output="screen" />
+		<node name="climber_server" pkg="behaviors" type="climber_server" output="screen" />
+
 		<node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
 		<node name="path_follower" pkg="swerve_point_generator" type="path_follower" output="screen"/>
 

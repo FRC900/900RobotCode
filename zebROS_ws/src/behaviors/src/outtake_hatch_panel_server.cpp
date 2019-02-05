@@ -7,7 +7,6 @@
 #include <panel_intake_controller/PanelIntakeSrv.h>
 #include <behaviors/PlaceAction.h>
 #include <behaviors/ElevatorAction.h>
-#include "behaviors/enumerated_elevator_indices.h"
 
 //define global variables that will be defined based on config values
 double elevator_timeout;
@@ -78,7 +77,7 @@ class OuttakeHatchPanelAction
 
 			//move elevator to outtake location
 			behaviors::ElevatorGoal elev_goal;
-			elev_goal.setpoint_index = INTAKE; //TODO: fix logic
+			elev_goal.setpoint_index = goal->setpoint_index;
 			elev_goal.place_cargo = false;
 			ac_elevator_.sendGoal(elev_goal);
 

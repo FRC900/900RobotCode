@@ -351,19 +351,19 @@ int main(int argc, char** argv) {
 	if (!n_params.getParam("wait_for_server_timeout", wait_for_server_timeout))
 		ROS_ERROR("Could not read wait_for_server_timeout in climber_server");
 
-	if (!n_lift_params.getParam("elevator_deploy_position", elevator_deploy_setpoint))
+	if (!n_lift_params.getParam("deploy_position", elevator_deploy_setpoint))
 	{
-		ROS_ERROR("Could not read elevator_deploy_position in climber_server");
+		ROS_ERROR("Could not read deploy_position in climber_server");
 	}
-	if (!n_lift_params.getParam("elevator_climb_position", elevator_climb_setpoint))
+	if (!n_lift_params.getParam("climb_position", elevator_climb_setpoint))
 	{
-		ROS_ERROR("Could not read elevator_climb_position in climber_server");
+		ROS_ERROR("Could not read climb_position in climber_server");
 	}
 
-	if (!n_lift_params.getParam("elevator_deploy_timeout", elevator_deploy_timeout))
+	if (!n_lift_params.getParam("deploy_timeout", elevator_deploy_timeout))
 		ROS_ERROR("Could not read elevator_deploy_timeout in climber_server");
 
-	if (!n_lift_params.getParam("elevator_climb_timeout", elevator_climb_timeout))
+	if (!n_lift_params.getParam("climb_timeout", elevator_climb_timeout))
 		ROS_ERROR("Could not read elevator_climb_timeout in climber_server");
 
 	ros::spin();
