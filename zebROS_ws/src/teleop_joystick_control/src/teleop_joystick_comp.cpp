@@ -86,11 +86,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		dead_zone_check(leftStickX, leftStickY);
 
-		leftStickX =  pow(leftStickX, joystick_scale) * max_speed;
-		leftStickY = -pow(leftStickY, joystick_scale) * max_speed;
-
 		leftStickX = left_stick_x_rate_limit.applyLimit(leftStickX);
 		leftStickY = left_stick_y_rate_limit.applyLimit(leftStickY);
+
+		leftStickX =  pow(leftStickX, joystick_scale) * max_speed;
+		leftStickY = -pow(leftStickY, joystick_scale) * max_speed;
 
 		double rightStickX = joystick_states_array[0].rightStickX;
 		double rightStickY = joystick_states_array[0].rightStickY;
