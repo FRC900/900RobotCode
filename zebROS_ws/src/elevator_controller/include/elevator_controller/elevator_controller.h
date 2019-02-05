@@ -10,10 +10,9 @@
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <std_msgs/Bool.h>
 #include "elevator_controller/ElevatorSrv.h"
-<<<<<<< HEAD
+
 #include "elevator_controller/ClimberEngageSrv.h"
-=======
->>>>>>> 01edc2a6eec83020ceb9c4a874eff9132aa57e3d
+
 
 namespace elevator_controller
 {
@@ -35,26 +34,6 @@ class ElevatorController : public controller_interface::MultiInterfaceController
             virtual void update(const ros::Time & time, const ros::Duration& period) override;
             virtual void stopping(const ros::Time &time) override;
 
-<<<<<<< HEAD
-            virtual bool cmdService(elevator_controller::ElevatorSrv::Request &req,
-					                elevator_controller::ElevatorSrv::Response &res); 
-			virtual bool climberEngageCallback(elevator_controller::ClimberEngageSrv::Request &req, elevator_controller::ClimberEngageSrv::Response &res);
-
-
-        private:
-            std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
-            talon_controllers::TalonMotionMagicCloseLoopControllerInterface elevator_joint_; //interface for the talon joint
-           // hardware_interface::JointHandle intake_in_; //interface for the in/out solenoid joint
-		   	hardware_interface::JointHandle climber_engage_joint_
-
-            realtime_tools::RealtimeBuffer<double> spin_command_; //this is the buffer for percent output commands to be published
-			realtime_tools::RealtimeBuffer<double> climber_engage_cmd_;
-           // realtime_tools::RealtimeBuffer<double> intake_in_cmd_; //buffer for in/out commands
-            realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
-
-            ros::ServiceServer elevator_service_; //service for receiving commands
-			ros::ServiceServer climber_engage_service_;
-=======
             bool cmdService(elevator_controller::ElevatorSrv::Request &req,
 			                elevator_controller::ElevatorSrv::Response &res);
 
@@ -71,15 +50,12 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 			double arb_feed_forward_up_;
 			double initial_position_;
 			double elevator_zeroing_percent_output_;
-<<<<<<< HEAD
+
 			double elevator_sensor_bad_distance_;
->>>>>>> 01edc2a6eec83020ceb9c4a874eff9132aa57e3d
-=======
 
 			size_t moving_down_count_;
 			ros::Time last_time_down_;
 			double elevator_zeroing_timeout_;
->>>>>>> 17197f736cd3acecc1b16826ec2318493fb2b11a
 }; //class
 
 
