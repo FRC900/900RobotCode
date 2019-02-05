@@ -3,8 +3,14 @@
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "std_srvs/Empty.h"
 
+#include "behaviors/IntakeAction.h"
+#include "behaviors/IntakeGoal.h"
 #include "behaviors/PlaceAction.h"
 #include "behaviors/PlaceGoal.h"
+#include "behaviors/ElevatorAction.h"
+#include "behaviors/ElevatorGoal.h"
+#include "behaviors/ClimbAction.h"
+#include "behaviors/ClimbGoal.h"
 #include "actionlib/client/simple_action_client.h"
 
 #include "std_srvs/SetBool.h"
@@ -24,7 +30,12 @@ std::vector <std::string> topic_array;
 ros::Publisher JoystickRobotVel;
 ros::ServiceClient BrakeSrv;
 ros::ServiceClient run_align;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_cargo_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_cargo_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_hatch_panel_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_hatch_panel_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::ElevatorAction>> elevator_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::ClimbAction>> climber_ac;
 std::atomic<double> navX_angle;
 
 struct ElevatorGoal
