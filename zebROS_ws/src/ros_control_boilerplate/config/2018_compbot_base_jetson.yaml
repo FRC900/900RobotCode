@@ -16,7 +16,7 @@ hardware_interface:
     
    joints:
        #TODO: Get config values of joints
-       - {name: cargo_intake_joint, type: can_talon_srx, can_id: 0, local: true}
+       - {name: cargo_intake_joint, type: can_talon_srx, can_id: 31, local: true}
        - {name: cargo_intake_arm_joint, type: solenoid, pcm: 0, id: 2, local_hardware: false, local_update: true}
        - {name: cargo_outtake_kicker_joint, type: solenoid, pcm: 0, id: 3, local_hardware: false, local_update: true}
        - {name: cargo_outtake_clamp_joint, type: solenoid, pcm: 0, id: 4, local_hardware: false, local_update: true}
@@ -39,28 +39,14 @@ hardware_interface:
        - {name: bl_angle, type: can_talon_srx, can_id: 13, local: true}
        - {name: pdp, type: pdp}
        - {name: compressor, type: compressor, pcm_id: 0}
-<<<<<<< HEAD
-       - {name: panel_claw_in, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id:  1} 
-       - {name: panel_push_in, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1}
-       - {name: panel_wedge_in, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1} 
-       - {name: climber_engage_joint, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1} 
-         #- {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: false}
-         #- {name: compressor, type: compressor, pcm_id: 0}
-         #- {name: pdp, type: pdp}
-=======
 
        - {name: panel_claw_release, type: solenoid, pcm: 0, id: 5, local_hardware: false, local_update: true}
        - {name: panel_push_extend, type: solenoid, pcm: 0, id: 6, local_hardware: false, local_update: true}
 
-<<<<<<< HEAD
->>>>>>> 01edc2a6eec83020ceb9c4a874eff9132aa57e3d
-=======
-       - {name: cargo_intake_linebreak_1, type: digital_input, dio_channel: 0, invert: true}
-       - {name: cargo_intake_linebreak_2, type: digital_input, dio_channel: 1, invert: true}
-       - {name: cargo_intake_linebreak_3, type: digital_input, dio_channel: 2, invert: true}
-       - {name: cargo_intake_linebreak_4, type: digital_input, dio_channel: 3, invert: true}
-
->>>>>>> 17197f736cd3acecc1b16826ec2318493fb2b11a
+       - {name: cargo_intake_linebreak_1, type: digital_input, dio_channel: 0, invert: true, local: false}
+       - {name: cargo_intake_linebreak_2, type: digital_input, dio_channel: 1, invert: true, local: false}
+       - {name: cargo_intake_linebreak_3, type: digital_input, dio_channel: 2, invert: true, local: false}
+       - {name: cargo_intake_linebreak_4, type: digital_input, dio_channel: 3, invert: true, local: false}
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
          

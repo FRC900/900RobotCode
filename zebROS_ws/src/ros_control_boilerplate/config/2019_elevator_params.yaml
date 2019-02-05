@@ -8,11 +8,11 @@ elevator_controller:
     # How quickly the elevator moves down when zeroing itself
     elevator_zeroing_percent_output: -0.1 # TODO : tune me
 
-    # TODO : figure this out. It will be the reading in radians 
-    # from the top to the bottom of the elevator, plus some margin
-    # for error
-    # Note once the conversion factor is set, 
-    elevator_zeroing_timeout_:  2.0
+    # If there are no negative velocity readings while zeroing
+    # for this amount of time, assume the elevator is stuck
+    # or has hit bottom and the limit switch is broken.  Stop
+    # trying to drive down to prevent killing the motor
+    elevator_zeroing_timeout:  2.0
     elevator_master: 
         type: talon_controllers/TalonControllerInterface 
         joint: elevator_master
