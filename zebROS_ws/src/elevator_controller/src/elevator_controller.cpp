@@ -57,9 +57,8 @@ void ElevatorController::starting(const ros::Time &/*time*/) {
 
 void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &/*duration*/)
 {
-	// If we hit the limit switch, zero the position.
-	// TODO : should we re-zero every time we hit it during a match?
-	if (!zeroed_ && elevator_joint_.getReverseLimitSwitch())
+	// If we hit the limit switch, (re)zero the position.
+	if (elevator_joint_.getReverseLimitSwitch())
 	{
 		ROS_INFO("ElevatorController : hit limit switch");
 		zeroed_ = true;
