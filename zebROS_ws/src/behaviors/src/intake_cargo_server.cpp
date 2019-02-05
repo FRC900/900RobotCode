@@ -47,8 +47,6 @@ class CargoIntakeAction {
 		std::map<std::string, std::string> service_connection_header;
 		service_connection_header["tcp_nodelay"] = "1";
 
-		//initialize action client to call actionlib server
-
 		//initialize the client being used to call the controller
 		cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 		//start subscribers subscribing
@@ -113,6 +111,12 @@ class CargoIntakeAction {
 					ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
 					timed_out = true;
 				}
+			}
+
+			//test if we got a preempt while waiting
+			if(as_.isPreemptRequested())
+			{
+				preempted = true;
 			}
 
 			//send command to lower arm and run roller to the cargo intake controller ------

@@ -144,9 +144,9 @@ add_executable(elevator_server src/elevator_server.cpp)
 target_link_libraries(elevator_server ${catkin_LIBRARIES})
 add_dependencies(elevator_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #
-#add_executable(intake_hatch_panel_server src/intake_hatch_panel_server.cpp)
-#target_link_libraries(intake_hatch_panel_server ${catkin_LIBRARIES})
-#add_dependencies(intake_hatch_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(intake_hatch_panel_server src/intake_hatch_panel_server.cpp)
+target_link_libraries(intake_hatch_panel_server ${catkin_LIBRARIES})
+add_dependencies(intake_hatch_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #
 add_executable(climber_server src/climber_server.cpp)
 target_link_libraries(climber_server ${catkin_LIBRARIES})

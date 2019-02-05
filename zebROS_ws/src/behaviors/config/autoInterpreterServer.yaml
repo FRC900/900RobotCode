@@ -7,7 +7,7 @@ actionlib_cargo_params:
     outtake_timeout: 3 #timeout for the elevator when outtaking
     pause_time_between_pistons: 0.1 #time to pause between piston actuations (relevant for cargo outtake), in seconds
 actionlib_hatch_panel_params:
-    intake_timeout: 5 #in seconds
+    elevator_timeout: 5 #in seconds
     pause_time_between_pistons: 0.1 #time to pause between piston actuations, in seconds
 actionlib_lift_params:
     cargo:
