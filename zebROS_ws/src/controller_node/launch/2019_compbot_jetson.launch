@@ -53,17 +53,7 @@
 			<param name="frame_id" value="/map"/>
 		</node>
 
-		<!-- Actionlib Servers -->
-		<node name="path_to_goal_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
-		<node name="intake_cargo_server" pkg="behaviors" type="intake_cargo_server" output="screen" />
-		<node name="outtake_cargo_server" pkg="behaviors" type="outtake_cargo_server" output="screen" />
-		<node name="intake_hatch_panel_server" pkg="behaviors" type="intake_hatch_panel_server" output="screen" />
-		<node name="outtake_hatch_panel_server" pkg="behaviors" type="outtake_hatch_panel_server" output="screen" />
-		<node name="climber_server" pkg="behaviors" type="climber_server" output="screen" />
-
-		<node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
-		<node name="path_follower" pkg="swerve_point_generator" type="path_follower" output="screen"/>
-
+		
 		<node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
 
 		<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" > 
@@ -79,9 +69,17 @@
 			<remap from="/frcrobot_jetson/navx_mxp" to="/frcrobot_rio/navx_mxp"/>
 		</node>
 
-		<!-- actionlib servers!!! -->
-		<node name="elevator_ac_server" pkg="behaviors" type="elevator_server" output="screen"/>
-		<node name="outtake_cargo_ac_server" pkg="behaviors" type="outtake_cargo_server" output="screen"/>
+		<!-- Actionlib servers!!! -->
+		<node name="path_to_goal_ac_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
+		<node name="elevator_ac_server" pkg="behaviors" type="elevator_server" output="screen" />
+		<node name="intake_cargo_ac_server" pkg="behaviors" type="intake_cargo_server" output="screen" />
+		<node name="outtake_cargo_ac_server" pkg="behaviors" type="outtake_cargo_server" output="screen" />
+		<node name="intake_hatch_panel_ac_server" pkg="behaviors" type="intake_hatch_panel_server" output="screen" />
+		<node name="outtake_hatch_panel_ac_server" pkg="behaviors" type="outtake_hatch_panel_server" output="screen" />
+		<node name="climber_ac_server" pkg="behaviors" type="climber_server" output="screen" />
+
+		<node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
+		<node name="path_follower" pkg="swerve_point_generator" type="path_follower" output="screen"/>
 
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 	</group>
