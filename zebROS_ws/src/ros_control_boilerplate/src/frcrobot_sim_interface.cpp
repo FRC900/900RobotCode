@@ -630,9 +630,17 @@ void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
 }
 bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBreakSensors::Request &req,
 							ros_control_boilerplate::LineBreakSensors::Response &res)
-
-	{ if  (req.j < digital_input_names_.size())
-		{	digital_input_names_[req.j] = (req.value) ? 1 : 0;}
+{
+	if  (req.j < digital_input_names_.size())
+	{
+		digital_input_names_[req.j] = (req.value) ? 1 : 0;
+		ROS_INFO_STREAM("req.j set to" << req.value);
+	}
+	else
+	{
+	ROS_INFO_STREAM("req.j not set to" << req.value);
+	}
+	return true;
 }
 
 void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
