@@ -4,6 +4,7 @@
 #include "teleop_joystick_control/rate_limiter.h"
 #include "std_srvs/Empty.h"
 #include "std_srvs/SetBool.h"
+#include <vector>
 
 // TODO : make these parameters, possibly with dynamic reconfig
 const double dead_zone = .2;
@@ -12,6 +13,10 @@ const double max_speed = 3.6;
 const double max_rot = 8.8;
 const double joystick_scale = 3;
 const double rotation_scale = 4;
+
+std::vector <frc_msgs::JoystickState> joystick_states_array;
+std::vector <std::string> topic_array;
+std::vector <ros::Subscriber> subscriber_array;
 
 // 50 msec to go from full back to full forward
 const double drive_rate_limit_time = 500.;
@@ -56,89 +61,112 @@ void navXCallback(const sensor_msgs::Imu &navXState)
         navX_angle.store(yaw, std::memory_order_relaxed);
 }
 
-
-void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
+void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
-	// TODO - experiment with rate-limiting after scaling instead?
-	double leftStickX = JoystickState->leftStickX;
-	double leftStickY = JoystickState->leftStickY;
+	int i = 0;
 
-	dead_zone_check(leftStickX, leftStickY);
+	const ros::M_string &header = event.getConnectionHeader();
 
-	leftStickX = left_stick_x_rate_limit.applyLimit(leftStickX);
-	leftStickY = left_stick_y_rate_limit.applyLimit(leftStickY);
+	std::string topic = header.at("topic");
 
-	leftStickX =  pow(leftStickX, joystick_scale) * max_speed;
-	leftStickY = -pow(leftStickY, joystick_scale) * max_speed;
-
-	double rightStickX = JoystickState->rightStickX;
-	double rightStickY = JoystickState->rightStickY;
-
-	dead_zone_check(rightStickX, rightStickY);
-
-	rightStickX =  pow(rightStickX, joystick_scale);
-	rightStickY = -pow(rightStickY, joystick_scale);
-
-	rightStickX = right_stick_x_rate_limit.applyLimit(rightStickX);
-	rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);
-
-	// TODO : dead-zone for rotation?
-	// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
-	double triggerLeft = left_trigger_rate_limit.applyLimit(JoystickState->leftTrigger);
-	double triggerRight = right_trigger_rate_limit.applyLimit(JoystickState->rightTrigger);
-	const double rotation = (pow(triggerLeft, rotation_scale) - pow(triggerRight, rotation_scale)) * max_rot;
-
-	static bool sendRobotZero = false;
-
-	if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
+	for(bool msg_assign = false; msg_assign == false; i++)
 	{
-		if (!sendRobotZero)
+		if(topic == topic_array[i])
 		{
-			std_srvs::Empty empty;
-			if (!BrakeSrv.call(empty))
-			{
-				ROS_ERROR("BrakeSrv call failed in sendRobotZero");
-			}
-			ROS_INFO("BrakeSrv called");
-			sendRobotZero = true;
+			joystick_states_array[i] = *(event.getMessage());
+			msg_assign = true;
 		}
 	}
-	else // X or Y or rotation != 0 so tell the drive base to move
+
+	if(i == 1)
 	{
-		//Publish drivetrain messages and elevator/pivot
-		Eigen::Vector2d joyVector;
-		joyVector[0] = leftStickX; //intentionally flipped
-		joyVector[1] = -leftStickY;
-		const Eigen::Rotation2Dd r(-navX_angle.load(std::memory_order_relaxed) - M_PI / 2.);
-		const Eigen::Vector2d rotatedJoyVector = r.toRotationMatrix() * joyVector;
+		// TODO - experiment with rate-limiting after scaling instead?
+		double leftStickX = joystick_states_array[0].leftStickX;
+		double leftStickY = joystick_states_array[0].leftStickY;
 
-		geometry_msgs::Twist vel;
-		vel.linear.x = rotatedJoyVector[1];
-		vel.linear.y = rotatedJoyVector[0];
-		vel.linear.z = 0;
+		dead_zone_check(leftStickX, leftStickY);
 
-		vel.angular.x = 0;
-		vel.angular.y = 0;
-		vel.angular.z = rotation;
+		leftStickX = left_stick_x_rate_limit.applyLimit(leftStickX);
+		leftStickY = left_stick_y_rate_limit.applyLimit(leftStickY);
 
-		JoystickRobotVel.publish(vel);
-		sendRobotZero = false;
+		leftStickX =  pow(leftStickX, joystick_scale) * max_speed;
+		leftStickY = -pow(leftStickY, joystick_scale) * max_speed;
+
+		double rightStickX = joystick_states_array[0].rightStickX;
+		double rightStickY = joystick_states_array[0].rightStickY;
+
+		dead_zone_check(rightStickX, rightStickY);
+
+		rightStickX =  pow(rightStickX, joystick_scale);
+		rightStickY = -pow(rightStickY, joystick_scale);
+
+		rightStickX = right_stick_x_rate_limit.applyLimit(rightStickX);
+		rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);
+
+		// TODO : dead-zone for rotation?
+		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
+		double triggerLeft = left_trigger_rate_limit.applyLimit(joystick_states_array[0].leftTrigger);
+		double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
+		const double rotation = (pow(triggerLeft, rotation_scale) - pow(triggerRight, rotation_scale)) * max_rot;
+
+		static bool sendRobotZero = false;
+
+		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
+		{
+			if (!sendRobotZero)
+			{
+				std_srvs::Empty empty;
+				if (!BrakeSrv.call(empty))
+				{
+					ROS_ERROR("BrakeSrv call failed in sendRobotZero");
+				}
+				ROS_INFO("BrakeSrv called");
+				sendRobotZero = true;
+			}
+		}
+
+		else // X or Y or rotation != 0 so tell the drive base to move
+		{
+			//Publish drivetrain messages and elevator/pivot
+			Eigen::Vector2d joyVector;
+			joyVector[0] = leftStickX; //intentionally flipped
+			joyVector[1] = -leftStickY;
+			const Eigen::Rotation2Dd r(-navX_angle.load(std::memory_order_relaxed) - M_PI / 2.);
+			const Eigen::Vector2d rotatedJoyVector = r.toRotationMatrix() * joyVector;
+
+			geometry_msgs::Twist vel;
+			vel.linear.x = rotatedJoyVector[1];
+			vel.linear.y = rotatedJoyVector[0];
+			vel.linear.z = 0;
+
+			vel.angular.x = 0;
+			vel.angular.y = 0;
+			vel.angular.z = rotation;
+
+			JoystickRobotVel.publish(vel);
+			sendRobotZero = false;
+		}
+
+		if(joystick_states_array[0].buttonAPress)
+		{
+			ROS_WARN_STREAM("buttonAPress");
+			std_srvs::SetBool msg;
+			msg.request.data = true;
+			run_align.call(msg);
+		}
+
+		if(joystick_states_array[0].buttonARelease)
+		{
+			ROS_WARN_STREAM("buttonARelease");
+			std_srvs::SetBool msg;
+			msg.request.data = false;
+			run_align.call(msg);
+		}
 	}
 
-	if(JoystickState->buttonAPress)
+	else if(i == 2)
 	{
-		ROS_WARN_STREAM("buttonAPress");
-		std_srvs::SetBool msg;
-		msg.request.data = true;
-		run_align.call(msg);
-	}
-
-	if(JoystickState->buttonARelease)
-	{
-		ROS_WARN_STREAM("buttonARelease");
-		std_srvs::SetBool msg;
-		msg.request.data = false;
-		run_align.call(msg);
+		// Stuff for the second joystick goes here
 	}
 
 }
@@ -150,7 +178,15 @@ int main(int argc, char **argv)
 
 	navX_angle = M_PI / 2;
 
-	ros::Subscriber joystick_sub  = n.subscribe("joystick_states", 1, &evaluateCommands);
+	topic_array.push_back("/frcrobot_jetson/joystick_states");
+	topic_array.push_back("/frcrobot_jetson/joystick_states1");
+
+	for(size_t j = 0; (subscriber_array.size()) < (topic_array.size()); j++)
+	{
+		subscriber_array.push_back(n.subscribe((topic_array[j]), 1, &evaluateCommands));
+	}
+
+	joystick_states_array.resize(topic_array.size());
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";

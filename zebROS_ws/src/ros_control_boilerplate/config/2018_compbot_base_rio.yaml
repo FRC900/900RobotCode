@@ -18,6 +18,7 @@ hardware_interface:
        - {name: dummy_talon, type: can_talon_srx, can_id: 1, local: false}
        - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1, local_hardware: true, local_update: false}
          
+       - {name: intake_line_break, type: digital_input, dio_channel: 0, invert: true, local: true}
        - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}
        - {name: joystick, type: joystick, id: 0, local: true}
        - {name: joystick_rumble, type: rumble, rumble_port: 0}

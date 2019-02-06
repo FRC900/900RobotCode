@@ -95,6 +95,7 @@ class TalonStateController: public controller_interface::Controller<hardware_int
 
 		void addExtraJoints(const ros::NodeHandle &nh, talon_state_controller::TalonState &msg);
 		std::string limitSwitchSourceToString(const hardware_interface::LimitSwitchSource source);
+		std::string remoteLimitSwitchSourceToString(const hardware_interface::RemoteLimitSwitchSource source);
 		std::string limitSwitchNormalToString(const hardware_interface::LimitSwitchNormal normal);
 
 };

@@ -147,6 +147,10 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 		m.limit_switch_local_forward_normal.push_back("");
 		m.limit_switch_local_reverse_source.push_back("");
 		m.limit_switch_local_reverse_normal.push_back("");
+		m.limit_switch_remote_forward_source.push_back("");
+		m.limit_switch_remote_forward_normal.push_back("");
+		m.limit_switch_remote_reverse_source.push_back("");
+		m.limit_switch_remote_reverse_normal.push_back("");
 		m.softlimit_forward_threshold.push_back(0);
 		m.softlimit_forward_enable.push_back(false);
 		m.softlimit_reverse_threshold.push_back(0);
@@ -225,8 +229,24 @@ std::string TalonStateController::limitSwitchSourceToString(const hardware_inter
 		return "RemoteTalonSRX";
 	case hardware_interface::LimitSwitchSource_RemoteCANifier:
 		return "RemoteCANifier";
-		break;
 	case hardware_interface::LimitSwitchSource_Deactivated:
+		return "Deactivated";
+	default:
+		return "Unknown";
+	}
+}
+
+std::string TalonStateController::remoteLimitSwitchSourceToString(const hardware_interface::RemoteLimitSwitchSource source)
+{
+	switch (source)
+	{
+	case hardware_interface::RemoteLimitSwitchSource_Uninitialized:
+		return "Uninitialized";
+	case hardware_interface::RemoteLimitSwitchSource_RemoteTalonSRX:
+		return "RemoteTalonSRX";
+	case hardware_interface::RemoteLimitSwitchSource_RemoteCANifier:
+		return "RemoteCANifier";
+	case hardware_interface::RemoteLimitSwitchSource_Deactivated:
 		return "Deactivated";
 	default:
 		return "Unknown";
@@ -459,7 +479,6 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				hardware_interface::LimitSwitchNormal ls_normal;
 				ts->getForwardLimitSwitchSource(ls_source, ls_normal);
 
-
 				m.limit_switch_local_forward_source[i] = limitSwitchSourceToString(ls_source);
 				m.limit_switch_local_forward_normal[i] = limitSwitchNormalToString(ls_normal);
 
@@ -467,6 +486,15 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				m.limit_switch_local_reverse_source[i] = limitSwitchSourceToString(ls_source);
 				m.limit_switch_local_reverse_normal[i] = limitSwitchNormalToString(ls_normal);
 
+				hardware_interface::RemoteLimitSwitchSource remote_ls_source;
+				ts->getRemoteForwardLimitSwitchSource(remote_ls_source, ls_normal);
+
+				m.limit_switch_remote_forward_source[i] = remoteLimitSwitchSourceToString(remote_ls_source);
+				m.limit_switch_remote_forward_normal[i] = limitSwitchNormalToString(ls_normal);
+
+				ts->getRemoteReverseLimitSwitchSource(remote_ls_source, ls_normal);
+				m.limit_switch_remote_reverse_source[i] = remoteLimitSwitchSourceToString(remote_ls_source);
+				m.limit_switch_remote_reverse_normal[i] = limitSwitchNormalToString(ls_normal);
 				m.softlimit_forward_threshold[i] = ts->getForwardSoftLimitThreshold();
 				m.softlimit_forward_enable[i] = ts->getForwardSoftLimitEnable();
 				m.softlimit_reverse_threshold[i] = ts->getReverseSoftLimitThreshold();

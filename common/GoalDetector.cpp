@@ -279,9 +279,9 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 	//say a goal is found if the sum of the confidences is higher than 0.5
 	if(found_goal && left_info[best_result_index_left].confidence + right_info[best_result_index_right].confidence > _min_valid_confidence) {
 #ifdef VERBOSE
-		cout << "Top distance: " << left_info[best_result_index_left].distance << " Bottom distance: " << right_info[best_result_index_right].distance << endl;
-		cout << "Top position: " << left_info[best_result_index_left].pos << " Bottom position: " << right_info[best_result_index_right].pos << endl;
-		cout << "Top confidence: " << left_info[best_result_index_left].confidence << " Bottom confidence: " << right_info[best_result_index_right].confidence << endl;
+		cout << "Left distance: " << left_info[best_result_index_left].distance << " Right distance: " << right_info[best_result_index_right].distance << endl;
+		cout << "Left position: " << left_info[best_result_index_left].pos << " Right position: " << right_info[best_result_index_right].pos << endl;
+		cout << "Left confidence: " << left_info[best_result_index_left].confidence << " Right confidence: " << right_info[best_result_index_right].confidence << endl;
 		cout << "Found Goal: " << found_goal << " " << left_info[best_result_index_left].distance << " " << left_info[best_result_index_left].angle << endl;
 		cout << "Found goal with confidence: " << left_info[best_result_index_left].confidence + right_info[best_result_index_right].confidence << endl;
 #endif
@@ -399,6 +399,7 @@ const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< 
 const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contours, const vector<DepthInfo> &depth_maxs, ObjectNum objtype) {
 	ObjectType _goal_shape(objtype);
 	vector<GoalInfo> return_info;
+	vector<GoalFound> return_found_info;
 	// Create some target stats based on our idealized goal model
 	//center of mass as a percentage of the object size from left left
 	const Point2f com_percent_expected(_goal_shape.com().x / _goal_shape.width(),
@@ -545,14 +546,65 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		goal_info.pos        = goal_tracked_obj.getPosition();
 		goal_info.confidence = confidence;
 		goal_info.distance   = depth_maxs[i].depth * cosf((_camera_angle/10.0) * (M_PI/180.0));
-		goal_info.angle 	 = atan2f(goal_info.pos.x, goal_info.pos.y) * 180. / M_PI;
-		goal_info.rect   	 = br;
+		goal_info.angle		 = atan2f(goal_info.pos.x, goal_info.pos.y) * 180. / M_PI;
+		goal_info.rect		 = br;
 		goal_info.vec_index  = i;
 		goal_info.depth_error = depth_maxs[i].error;
 		goal_info.com        = goal_actual.com();
 		goal_info.br         = br;
 		goal_info.rtRect     = minAreaRect(contours[i]);
 		return_info.push_back(goal_info);
+
+		GoalFound goal_found;
+
+		//These are the saved values for the best goal before moving on to
+		//try and find another one.
+		if(return_found_info.size() == 0)
+		{
+			goal_found.found_pos                 = _goal_pos;
+			goal_found.found_distance            = _dist_to_goal;
+			goal_found.found_angle               = _angle_to_goal;
+			goal_found.found_left_rect           = _goal_left_rect;
+			goal_found.found_right_rect          = _goal_right_rect;
+			goal_found.found_left_rotated_rect   = _goal_left_rotated_rect;
+			goal_found.found_right_rotated_rect  = _goal_right_rotated_rect;
+			goal_found._isValid				     = _isValid;
+		}
+
+
+		else
+		{
+			const int THRESH = 0.1;
+			bool repeated = false;
+			for(int k = 0; k < return_found_info.size(); k++)
+			{
+				if(abs(_goal_pos.x - return_found_info[k].found_pos.x) < THRESH)	/*threshold val. Can be tweaked*/
+					{
+						continue;
+					}
+				for(int l = 0; l < return_found_info.size(); l++)
+				{
+					if(abs(_goal_pos.x - return_found_info[l].found_pos.x) < 0.075)
+						repeated = true;
+				}
+			}
+			if(repeated == false)
+			{
+				goal_found.found_pos                 = _goal_pos;
+				goal_found.found_distance            = _dist_to_goal;
+				goal_found.found_angle               = _angle_to_goal;
+				goal_found.found_left_rect           = _goal_left_rect;
+				goal_found.found_right_rect          = _goal_right_rect;
+				goal_found.found_left_rotated_rect   = _goal_left_rotated_rect;
+				goal_found.found_right_rotated_rect  = _goal_right_rotated_rect;
+				goal_found._isValid				     = _isValid;
+			}
+		return_found_info.push_back(goal_found);
+		}
+		cout << "Number of goals: " << return_found_info.size() << endl;
+		for(int n = 0; n < return_found_info.size(); n++)
+			cout << "Goal " << n << " x-pos: " << return_found_info[n].found_pos.x << endl;
+
 	}
 	return return_info;
 }

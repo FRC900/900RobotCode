@@ -15,6 +15,7 @@ hardware_interface:
    can_interface: can0
     
    joints:
+       - {name: intake_line_break, type: digital_input, dio_channel: 0, invert: true, local: false}
        - {name: fl_drive, type: can_talon_srx, can_id: 21, local: true}
        - {name: fl_angle, type: can_talon_srx, can_id: 11, local: true}
        - {name: fr_drive, type: can_talon_srx, can_id: 22, local: true}
