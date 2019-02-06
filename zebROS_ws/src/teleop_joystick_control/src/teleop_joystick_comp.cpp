@@ -12,6 +12,7 @@
 #include "behaviors/ClimbAction.h"
 #include "behaviors/ClimbGoal.h"
 #include "actionlib/client/simple_action_client.h"
+#include "behaviors/enumerated_elevator_indices.h"
 
 #include "std_srvs/SetBool.h"
 #include <vector>
@@ -30,6 +31,7 @@ std::vector <std::string> topic_array;
 ros::Publisher JoystickRobotVel;
 ros::ServiceClient BrakeSrv;
 ros::ServiceClient run_align;
+//use shared pointers to make the clients global 
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_cargo_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_cargo_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_hatch_panel_ac;
@@ -164,9 +166,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].buttonAPress)
 		{
 			ROS_INFO_STREAM("Joystick1: buttonAPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			behaviors::ElevatorGoal goal;
+			goal.setpoint_index = INTAKE;
+			goal.place_cargo = false;
+			elevator_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonAButton)
 		{
@@ -185,10 +188,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonB
 		if(joystick_states_array[0].buttonBPress)
 		{
-			ROS_INFO_STREAM("Joystick1: buttonBPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			ROS_INFO_STREAM("Joystick1: buttonAPress");
+			behaviors::ElevatorGoal goal;
+			goal.setpoint_index = CARGO_SHIP;
+			goal.place_cargo = false;
+			elevator_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonBButton)
 		{
@@ -658,7 +662,16 @@ int main(int argc, char **argv)
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("swerve_drive_controller/brake", false, service_connection_header);
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
+
+	//initialize actionlib clients
+	intake_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>>("cargo_intake_server", true);
 	outtake_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::PlaceAction>>("cargo_outtake_server", true);
+	intake_hatch_panel_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>>("intake_hatch_panel_server", true);
+	outtake_hatch_panel_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::PlaceAction>>("outtake_hatch_panel_server", true);
+	climber_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ClimbAction>>("climber_server", true);
+	elevator_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ElevatorAction>>("elevator_server", true);
+
+
 	run_align = n.serviceClient<std_srvs::SetBool>("run_align");
 
 	ROS_WARN("joy_init");
