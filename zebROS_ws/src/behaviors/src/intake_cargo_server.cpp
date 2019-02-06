@@ -100,7 +100,6 @@ class CargoIntakeAction {
 					actionlib::SimpleClientGoalState state = ac_elevator_.getState();
 					if(state.toString().c_str() != "SUCCEEDED") {
 						ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
-						as_.setPreempted();
 						preempted = true;
 					}
 					else {
@@ -137,7 +136,6 @@ class CargoIntakeAction {
 				if(!cargo_intake_controller_client_.call(srv))
 				{
 					ROS_ERROR("%s: Srv intake call failed", action_name_.c_str());
-					as_.setPreempted();
 					preempted = true;
 				}
 				//update everything by doing spinny stuff
@@ -150,7 +148,6 @@ class CargoIntakeAction {
 
 					if(as_.isPreemptRequested() || !ros::ok()) {
 						ROS_WARN(" %s: Preempted", action_name_.c_str());
-						as_.setPreempted();
 						preempted = true;
 					}
 					else {
@@ -174,22 +171,26 @@ class CargoIntakeAction {
 				ROS_ERROR("Srv intake call failed in cargo intake server");
 			}
 			//log state of action and set result of action
+			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
 			if(timed_out)
 			{
 				ROS_INFO("%s: Timed Out", action_name_.c_str());
+				result_.success = false;
+				as_.setSucceeded(result_);
 			}
 			else if(preempted)
 			{
 				ROS_INFO("%s: Preempted", action_name_.c_str());
+				result_.success = false;
+				as_.setSucceeded(result_);
 			}
 			else //implies succeeded
 			{
 				ROS_INFO("%s: Succeeded", action_name_.c_str());
+				result_.success = true;
+				as_.setSucceeded(result_);
 			}
 
-			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
-			result_.success = success; //success refers to last controller call, but applies for whole action
-			as_.setSucceeded(result_, "intake_cargo_server: testing send text result from actionlib server... SPOOKY"); //pretend it succeeded no matter what, but tell what actually happened with the result - helps with SMACH
 			return;
 		}
 
