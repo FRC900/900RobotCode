@@ -45,6 +45,7 @@
 #include <frc_msgs/CubeState.h>
 #include <frc_msgs/MatchSpecificData.h>
 #include <frc_msgs/JoystickState.h>
+#include <ros_control_boilerplate/set_limit_switch.h>
 
 namespace frcrobot_control
 {
@@ -81,6 +82,8 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		/** \brief Write the command to the robot hardware. */
 		virtual void write(ros::Duration &elapsed_time) override;
+
+		virtual bool setlimit(ros_control_boilerplate::set_limit_switch::Request &req,ros_control_boilerplate::set_limit_switch::Response &res);
 
 	protected:
 		virtual std::vector<ros_control_boilerplate::DummyJoint> getDummyJoints(void) override;
