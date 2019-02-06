@@ -110,7 +110,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//const double rotation = (pow(joystick_states_array[0].leftTrigger, rotation_pow) - pow(joystick_states_array[0].rightTrigger, rotation_pow)) * max_rot;
 		//
 		//rotate based off of joysticks
-		const double rotation = pow(rightStickX, rotation_pow) * max_rot;
+		double rotation = pow(rightStickX, rotation_pow) * max_rot;
 
 		static bool sendRobotZero = false;
 		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
