@@ -6,6 +6,7 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include "angles/angles.h"
 #include "std_msgs/Float64.h"
+#include "std_msgs/Float64MultiArray.h"
 
 
 #include <vector>
@@ -23,7 +24,7 @@ double nearest_angle(std::vector<double> angles)
 	double smallest_distance = std::numeric_limits<double>::max();
 	double cur_angle = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
 	for(int i = 0; i < angles.size(); i++){
-		double distance = angles::shortest_angular_distance(cur_angle, angles[i]);
+		double distance = fabs(angles::shortest_angular_distance(cur_angle, angles[i]));
 		if(distance < smallest_distance) {
 			smallest_distance = distance;
 			snap_angle = angles[i];
@@ -67,16 +68,16 @@ int main(int argc, char **argv)
 
 	navX_angle = M_PI / 2;
 
-	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
-	ros::Publisher snapAnglePub = n.advertise<std_msgs::Float64>("snap_angle_pub", 10);
+	ros::Subscriber navX_heading  = n.subscribe("/frcrobot_rio/navx_mxp", 1, &navXCallback);
+	ros::Publisher snapAnglePub = n.advertise<std_msgs::Float64MultiArray>("snap_angle_pub", 10);
 	ROS_INFO("snap_to_angle_init");
 	
 	ros::Rate r(10);
 	bool has_hatch_panel = false;
-	bool has_cargo = false;
+	bool has_cargo = true;
 	double snap_angle;
 	while(ros::ok()) {
-		std_msgs::Float64 angle_snap;
+		std_msgs::Float64MultiArray angle_snap;
 		if(has_hatch_panel) {
 			snap_angle = nearest_angle(hatch_panel_angles);
 		}
@@ -86,7 +87,8 @@ int main(int argc, char **argv)
 		else {
 			snap_angle = nearest_angle(nothing_angles);
 		}
-		angle_snap.data = snap_angle;
+		angle_snap.data.push_back(snap_angle);
+		angle_snap.data.push_back(angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed)));
 		snapAnglePub.publish(angle_snap);
 		
 		r.sleep();
