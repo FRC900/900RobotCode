@@ -19,7 +19,6 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/talon_swerve_offsets_offseason.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_elevator_params.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
-		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
 
 		<!-- Load hardware interface -->
 		<node name="frcrobot_hardware_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
@@ -59,6 +58,7 @@
 	</group>
 
 	<group ns="teleop">
+		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
 		<!-- Run this on the Jetson so outputs go to /frcrobot_jetson/swerve_drive
 		 but remap the inputs so they come from the Rio -->
 		<node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" >
@@ -85,11 +85,11 @@
 		<node name="outtake_cargo_ac_server" pkg="behaviors" type="outtake_cargo_server" output="screen" />
 	</group>
 	<group ns="hatch_intake">
-		<rosparam file="$(find behaviors)/config/hatchPanelServer.yaml" command="load"/>
+		<rosparam file="$(find behaviors)/config/intakeHatchPanelServer.yaml" command="load"/>
 		<node name="intake_hatch_ac_server" pkg="behaviors" type="intake_hatch_panel_server" output="screen" />
 	</group>
 	<group ns="hatch_outtake">
-		<rosparam file="$(find behaviors)/config/hatchPanelServer.yaml" command="load"/>
+		<rosparam file="$(find behaviors)/config/outtakeHatchPanelServer.yaml" command="load"/>
 		<node name="outtake_hatch_ac_server" pkg="behaviors" type="outtake_hatch_panel_server" output="screen" />
 	</group>
 

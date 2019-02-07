@@ -191,7 +191,7 @@ int main(int argc, char** argv)
 	//create node
 	ros::init(argc, argv, "panel_intake_server");
 
-	IntakeHatchPanelAction intake_hatch_panel_server("intake_hatch_panel_server");
+	IntakeHatchPanelAction intake_hatch_panel_server("intake_hatch_panel_intake_server");
 
 	//get config values
 	ros::NodeHandle n;
