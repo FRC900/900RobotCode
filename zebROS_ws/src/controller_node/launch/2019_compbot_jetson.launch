@@ -24,6 +24,7 @@
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
 		<rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
 		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
+		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
 
 		<!-- Load hardware interface -->
 		<node name="frcrobot_hardware_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
@@ -68,6 +69,9 @@
 		<node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" >
 			<remap from="/frcrobot_jetson/navx_mxp" to="/frcrobot_rio/navx_mxp"/>
 		</node>
+
+		<!-- Snap to nearest goal test code -->
+		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" />
 
 		<!-- Actionlib servers!!! -->
 		<node name="path_to_goal_ac_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />

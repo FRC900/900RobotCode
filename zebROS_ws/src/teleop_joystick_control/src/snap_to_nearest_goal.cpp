@@ -1,0 +1,94 @@
+#include <atomic>
+#include "std_srvs/Empty.h"
+#include "sensor_msgs/Imu.h"
+#include "ros/ros.h"
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include "angles/angles.h"
+#include "std_msgs/Float64.h"
+
+
+#include <vector>
+
+ros::Publisher snapAnglePub;
+std::atomic<double> navX_angle;
+
+std::vector<double> hatch_panel_angles;
+std::vector<double> cargo_angles;
+std::vector<double> nothing_angles;
+
+double nearest_angle(std::vector<double> angles)
+{
+	double smallest_distance = std::numeric_limits<double>::max();
+	for(int i = 0; i < angles.size(); i++){
+		double distance = angles::shortest_angular_distance(navX_angle.load(std::memory_order_relaxed), angles[i]);
+		if(distance < smallest_distance) {
+			smallest_distance = distance;
+		}
+	}
+	return smallest_distance;
+}
+
+void navXCallback(const sensor_msgs::Imu &navXState)
+{
+    const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
+    double roll;
+    double pitch;
+    double yaw;
+    tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
+
+    if (yaw == yaw) // ignore NaN results
+        navX_angle.store(yaw, std::memory_order_relaxed);
+	
+}
+
+int main(int argc, char **argv)
+{
+	ros::init(argc, argv, "Joystick_controller");
+	ros::NodeHandle n;
+	ros::NodeHandle n_params(n, "goal_angles");
+
+	if(!n_params.getParam("hatch_panel_angles", hatch_panel_angles))
+	{
+		ROS_ERROR("Could not read hatch_panel_angles in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("cargo_angles", cargo_angles))
+	{
+		ROS_ERROR("Could not read cargo_angles in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("nothing_angles", nothing_angles))
+	{
+		ROS_ERROR("Could not read nothing_angles in teleop_joystick_comp");
+	}
+
+
+	navX_angle = M_PI / 2;
+
+	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
+	ros::Publisher snapAnglePub = n.advertise<std_msgs::Float64>("snap_angle_pub", 10);
+	ROS_INFO("snap_to_angle_init");
+	
+	ros::Rate r(10);
+	bool has_hatch_panel = false;
+	bool has_cargo = false;
+	double snap_angle;
+	while(ros::ok()) {
+		std_msgs::Float64 angle_snap;
+		if(has_hatch_panel) {
+			snap_angle = nearest_angle(hatch_panel_angles);
+		}
+		else if(has_cargo) {
+			snap_angle = nearest_angle(cargo_angles);
+		}
+		else {
+			snap_angle = nearest_angle(nothing_angles);
+		}
+		angle_snap.data = snap_angle;
+		snapAnglePub.publish(angle_snap);
+		r.sleep();
+	}
+
+
+	ros::spin();
+	return 0;
+}
