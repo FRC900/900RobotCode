@@ -39,7 +39,7 @@ class CargoIntakeAction {
 		CargoIntakeAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&CargoIntakeAction::executeCB, this, _1), false),
 			action_name_(name),
-			ac_elevator_("elevator_server", true) //TODO make sure this is linked up correctly
+			ac_elevator_("/elevator/elevator_server", true) //TODO make sure this is linked up correctly
 	{
 		as_.start(); //start the actionlib server
 

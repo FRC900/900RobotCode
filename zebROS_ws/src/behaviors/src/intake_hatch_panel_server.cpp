@@ -34,7 +34,7 @@ class IntakeHatchPanelAction
 		IntakeHatchPanelAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&IntakeHatchPanelAction::executeCB, this, _1), false),
 			action_name_(name),
-			ac_elevator_("move_elevator_server", true)
+			ac_elevator_("/elevator/elevator_server", true)
 	{
 		//GoalDetectSub_ = nh_.subscribe("goal_detect_msg",1, &IntakeHatchPanelAction::goalDetectCallback, this) //TODO make sure this is linked up correctly
 		/* std::map<std::string, std::string> service_connection_header;
@@ -49,7 +49,6 @@ class IntakeHatchPanelAction
 
 		//initialize the client being used to call the controller
 		panel_controller_client_ = nh_.serviceClient<panel_intake_controller::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command", false, service_connection_header);
-
 	}
 
 		~IntakeHatchPanelAction(void) {}
@@ -191,7 +190,7 @@ int main(int argc, char** argv)
 	//create node
 	ros::init(argc, argv, "panel_intake_server");
 
-	IntakeHatchPanelAction intake_hatch_panel_server("intake_hatch_panel_intake_server");
+	IntakeHatchPanelAction intake_hatch_panel_server("intake_hatch_panel_server");
 
 	//get config values
 	ros::NodeHandle n;

@@ -33,7 +33,7 @@ class OuttakeHatchPanelAction
 		OuttakeHatchPanelAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&OuttakeHatchPanelAction::executeCB, this, _1), false),
 			action_name_(name),
-			ac_elevator_("move_elevator_server", true)
+			ac_elevator_("/elevator/elevator_server", true)
 	{
 		//GoalDetectSub_ = nh_.subscribe("goal_detect_msg",1, &OuttakeHatchPanelAction::goalDetectCallback, this) //TODO make sure this is linked up correctly
 		/* std::map<std::string, std::string> service_connection_header;
