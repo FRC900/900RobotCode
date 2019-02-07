@@ -11,3 +11,4 @@ control_toolbox
 rospy_message_converter
 ydlidar
 sick_tim
+teraranger
