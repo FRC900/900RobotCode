@@ -13,6 +13,8 @@ node {
         full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%H'").trim()
         author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
 
+        sh 'docker pull frc900/zebros-2019-dev:latest'
+
     } // end Preparation stage
    
    // Encapsulate builds in try block to allow unconditional execution of unit test publication
