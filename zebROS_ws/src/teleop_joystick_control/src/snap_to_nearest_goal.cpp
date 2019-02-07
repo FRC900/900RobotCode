@@ -19,14 +19,17 @@ std::vector<double> nothing_angles;
 
 double nearest_angle(std::vector<double> angles)
 {
+	double snap_angle;
 	double smallest_distance = std::numeric_limits<double>::max();
+	double cur_angle = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
 	for(int i = 0; i < angles.size(); i++){
-		double distance = angles::shortest_angular_distance(navX_angle.load(std::memory_order_relaxed), angles[i]);
+		double distance = angles::shortest_angular_distance(cur_angle, angles[i]);
 		if(distance < smallest_distance) {
 			smallest_distance = distance;
+			snap_angle = angles[i];
 		}
 	}
-	return smallest_distance;
+	return snap_angle;
 }
 
 void navXCallback(const sensor_msgs::Imu &navXState)
@@ -85,10 +88,9 @@ int main(int argc, char **argv)
 		}
 		angle_snap.data = snap_angle;
 		snapAnglePub.publish(angle_snap);
+		
 		r.sleep();
+		ros::spinOnce();
 	}
-
-
-	ros::spin();
 	return 0;
 }
