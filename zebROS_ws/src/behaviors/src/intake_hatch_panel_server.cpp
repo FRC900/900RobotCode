@@ -195,9 +195,9 @@ int main(int argc, char** argv)
 
 	//get config values
 	ros::NodeHandle n;
-	ros::NodeHandle n_panel_params(n, "actionlib_hatch_panel_params");
+	ros::NodeHandle n_panel_params(n, "actionlib_hatch_panel_intake_params");
 
-	if (!n.getParam("actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
+	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 		ROS_ERROR("Could not read wait_for_server_timeout in panel_intake_sever");
 	if (!n_panel_params.getParam("elevator_timeout", elevator_timeout))
 		ROS_ERROR("Could not read elevator_timeout in panel_intake_sever");

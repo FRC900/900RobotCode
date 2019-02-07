@@ -269,12 +269,11 @@ int main(int argc, char** argv) {
 
 	//get config values
 	ros::NodeHandle n;
-	ros::NodeHandle n_params_outtake(n, "actionlib_cargo_params");
-	ros::NodeHandle n_params_lift(n, "actionlib_lift_params");
+	ros::NodeHandle n_params_outtake(n, "actionlib_cargo_outtake_params");
 
-	if (!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
+	if (!n.getParam("/actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
 		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
-	if (!n.getParam("actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
+	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 		ROS_ERROR("Could not read wait_for_server_timeout in intake_sever");
 
 	if (!n_params_outtake.getParam("outtake_timeout", outtake_timeout))
@@ -282,8 +281,6 @@ int main(int argc, char** argv) {
 
 	if (!n_params_outtake.getParam("pause_time_between_pistons", pause_time_between_pistons))
 		ROS_ERROR("Could not read  pause_time_between_pistons in cargo_outtake_server");
-
-
 
 	ros::spin();
 	return 0;

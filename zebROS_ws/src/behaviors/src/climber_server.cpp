@@ -46,7 +46,7 @@ class ClimbAction {
 		ClimbAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&ClimbAction::executeCB, this, _1), false),
 			action_name_(name),
-			ae_("elevator_server", true)
+			ae_("/elevator/elevator_server", true)
 	{
 		as_.start(); //start the actionlib server
 
@@ -341,14 +341,13 @@ int main(int argc, char** argv) {
 	ros::init(argc, argv, "climb_server");
 
 	//create the cargo intake actionlib server
-	ClimbAction climb_action("climb_server");
+	ClimbAction climb_action("climber_server");
 
 	//get config values
 	ros::NodeHandle n;
-	ros::NodeHandle n_params(n, "actionlib_params");
-	ros::NodeHandle n_lift_params(n, "actionlib_lift_params/climber");
+	ros::NodeHandle n_lift_params(n, "climber_server");
 
-	if (!n_params.getParam("wait_for_server_timeout", wait_for_server_timeout))
+	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 		ROS_ERROR("Could not read wait_for_server_timeout in climber_server");
 
 	if (!n_lift_params.getParam("deploy_position", elevator_deploy_setpoint))

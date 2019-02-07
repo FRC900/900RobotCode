@@ -121,7 +121,6 @@ class OuttakeHatchPanelAction
 				//pause for a bit
 				ros::Duration(pause_time_between_pistons).sleep();
 
-
 				//release the panel - we can reuse the srv variable
 				srv.request.claw_release = true;
 				srv.request.push_extend = true;
@@ -136,7 +135,6 @@ class OuttakeHatchPanelAction
 
 				//pause for a bit
 				ros::Duration(pause_time_between_pistons).sleep();
-
 
 				//retract the panel mechanism; we can reuse the srv variable
 				srv.request.claw_release = true;
@@ -184,7 +182,6 @@ class OuttakeHatchPanelAction
 		*/
 };
 
-
 int main(int argc, char** argv)
 {
 	//create node
@@ -196,7 +193,7 @@ int main(int argc, char** argv)
 	ros::NodeHandle n;
 	ros::NodeHandle n_panel_params(n, "actionlib_hatch_panel_params");
 
-	if (!n.getParam("actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
+	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 		ROS_ERROR("Could not read wait_for_server_timeout in panel_outtake_sever");
 	if (!n_panel_params.getParam("elevator_timeout", elevator_timeout))
 		ROS_ERROR("Could not read elevator_timeout in panel_outtake_sever");

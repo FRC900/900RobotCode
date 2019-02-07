@@ -60,7 +60,7 @@ int main(int argc, char ** argv)
 
 	orient_setpoint_msg.data = 0;
 
-	ros::Subscriber distance_sub = nh.subscribe("multiflex_1/ranges_raw", 1, distanceCB);
+	ros::Subscriber distance_sub = nh.subscribe("/multiflex_1/ranges_raw", 1, distanceCB);
 	orient_setpoint = nh.advertise<std_msgs::Float64>("orient_setpoint", 1);
 	orient_state = nh.advertise<std_msgs::Float64>("orient_state", 1);
 	//y_setpoint = nh.advertise<std_msgs::Float64>("y_setpoint", 1);

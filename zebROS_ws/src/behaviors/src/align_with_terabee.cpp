@@ -53,8 +53,8 @@ int main(int argc, char ** argv)
 	double dist_to_back_panel = 0.2;
 	double error_threshhold = 0.05;
 
-	ros::Subscriber terabee_sub = n.subscribe("multiflex_1/ranges_raw", 1, &multiflexCB);
-	ros::Publisher cmd_vel_pub = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+	ros::Subscriber terabee_sub = n.subscribe("/multiflex_1/ranges_raw", 1, &multiflexCB);
+	ros::Publisher cmd_vel_pub = n.advertise<geometry_msgs::Twist>("/frcrobot_jetson/swerve_drive_controller/cmd_vel", 1);
 
 	geometry_msgs::Twist cmd_vel_msg;
 	cmd_vel_msg.linear.x = 0;

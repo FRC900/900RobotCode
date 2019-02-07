@@ -20,7 +20,7 @@ int main(int argc, char ** argv)
 
 	ros::Subscriber orient_pid_sub = nh.subscribe("orient_pid/orient_control_effort", 1, &orientCB);
 
-	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/frcrobot_jetson/swerve_drive_controller/cmd_vel", 1);
 
 	while(ros::ok())
 	{
