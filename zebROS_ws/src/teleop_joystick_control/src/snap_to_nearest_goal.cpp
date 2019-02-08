@@ -187,7 +187,7 @@ int main(int argc, char **argv)
 	ros::Publisher navXStatePub = nh.advertise<std_msgs::Float64>("/navX_snap_to_goal_pid/navX_snap_to_goal_state", 10);
 	ROS_INFO("snap_to_angle_init");
 	
-	ros::Rate r(10);
+	ros::Rate r(100);
 	double snap_angle;
 	while(ros::ok()) {
 		std_msgs::Float64 angle_snap;
