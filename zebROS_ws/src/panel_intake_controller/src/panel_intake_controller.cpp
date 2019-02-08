@@ -73,13 +73,13 @@ namespace panel_intake_controller
 		{
 			for (size_t i = 0; i < joint_state.name.size(); i++)
 			{
-				if (joint_state.name[i] == "cargo_intake_linebreak_1")
+				if (joint_state.name[i] == "panel_intake_linebreak_1")
 					linebreak_idx_1 = i;
-				if (joint_state.name[i] == "cargo_intake_linebreak_2")
+				if (joint_state.name[i] == "panel_intake_linebreak_2")
 					linebreak_idx_2 = i;
-				if (joint_state.name[i] == "cargo_intake_linebreak_3")
+				if (joint_state.name[i] == "panel_intake_linebreak_3")
 					linebreak_idx_3 = i;
-				if (joint_state.name[i] == "cargo_intake_linebreak_4")
+				if (joint_state.name[i] == "panel_intake_linebreak_4")
 					linebreak_idx_4 = i;
 			}
 		}

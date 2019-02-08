@@ -30,10 +30,12 @@ hardware_interface:
        - {name: panel_clamp_release, type: solenoid, pcm: 0, id: 5, local_hardware: true, local_update: false}
        - {name: panel_push_extend, type: solenoid, pcm: 0, id: 6, local_hardware: true, local_update: false}
 
-       - {name: cargo_intake_linebreak_1, type: digital_input, dio_channel: 0, invert: true, local_update: true}
-       - {name: cargo_intake_linebreak_2, type: digital_input, dio_channel: 1, invert: true, local_update: true}
-       - {name: cargo_intake_linebreak_3, type: digital_input, dio_channel: 2, invert: true, local_update: true}
-       - {name: cargo_intake_linebreak_4, type: digital_input, dio_channel: 3, invert: true, local_update: true}
+       - {name: panel_intake_linebreak_1, type: digital_input, dio_channel: 0, invert: true, local: true}
+       - {name: panel_intake_linebreak_2, type: digital_input, dio_channel: 1, invert: true, local: true}
+       - {name: panel_intake_linebreak_3, type: digital_input, dio_channel: 2, invert: true, local: true}
+       - {name: panel_intake_linebreak_4, type: digital_input, dio_channel: 3, invert: true, local: true}
+
+       - {name: cargo_intake_linebreak_1, type: digital_input, dio_channel: 4, invert: true, local: true}
          
        - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}
        - {name: joystick, type: joystick, id: 0, local: true}
