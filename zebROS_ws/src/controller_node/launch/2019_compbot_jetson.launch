@@ -87,7 +87,23 @@
 
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 	</group>
-
+    
+    <group ns="navX_snap_to_goal_pid">
+        <node name="navX_snap_to_goal_pid" pkg="pid" type="controller" >
+            <param name="node_name" value="navX_snap_to_goal_pid_node" />
+            <param name="Kp" value="5.0" />
+            <param name="Ki" value="0.0" />
+            <param name="Kd" value="0.1" />
+            <param name="upper_limit" value="10" />
+            <param name="lower_limit" value="-10" />
+            <param name="windup_limit" value="10" />
+            <param name="max_loop_frequency" value="100.0" />
+            <param name="min_loop_frequency" value="100.0" />
+            <param name="topic_from_controller" value="orient_pid/orient_control_effort" />     
+            <param name="setpoint_topic" value="navX_snap_to_goal_setpoint" />
+            <param name="topic_from_plant" value="navX_snap_to_goal_state" />
+        </node>
+    </group>
 	<node name="orient_pid" pkg="pid" type="controller" >
 		<param name="node_name" value="orient_pid_node" />
 		<param name="Kp" value="5.0" />
