@@ -438,6 +438,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 		}
 	}
 
+
 	return true;
 }
 
@@ -838,6 +839,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 	}
 	else
 	{
+		ROS_INFO_STREAM_THROTTLE(.5, "out of points = " << steering_joints_[0].getCustomProfileStatus().outOfPoints);
 		mode_last_time =::Time::now().toSec();
 		for (size_t i = 0; !set_profile_run && (i < wheel_joints_size_); ++i)
 		{
@@ -847,6 +849,28 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		// Make controller only set CustomProfileRun once, so that it can
 		// be cleared out by the hwi if needed when e.g. disabling the robot
 		set_profile_run = true;
+
+		// Assume all joints are running the same length profile and thus have
+		// the same outOfPoints status
+		if(steering_joints_[0].getCustomProfileStatus().outOfPoints)
+		{
+			ROS_WARN("profile_reset");
+			//required for reset
+			for (size_t k = 0; k < WHEELCOUNT; k++)
+			{
+				steering_joints_[k].setCustomProfileRun(false);
+				speed_joints_[k].setCustomProfileRun(false);
+			}
+			set_profile_run = false;
+			Commands brake_struct;
+			brake_struct.lin[0] = 0;
+			brake_struct.lin[1] = 0;
+			brake_struct.ang = 0;
+			brake_struct.stamp = ros::Time::now();
+			ROS_WARN("called in controller");
+			command_.writeFromNonRT(brake_struct);
+			cmd_vel_mode_.store(true, std::memory_order_relaxed);
+		}
 	}
 
 	static uint16_t slot_ret = 0;
@@ -1002,7 +1026,6 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 	ROS_INFO_STREAM("running service");
 	if (isRunning())
 	{
-		ROS_INFO_STREAM(__LINE__);
 		/*
 		// check that we don't have multiple publishers on the command topic
 		if (!allow_multiple_cmd_vel_publishers_ && sub_command_.getNumPublishers() > 1)
@@ -1020,7 +1043,6 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 
 		full_profile_cmd full_profile_struct;
 		full_profile_struct.buffer = req.buffer;
-		ROS_INFO_STREAM(__LINE__);
 		if (req.buffer)
 		{
 			ROS_INFO_STREAM("size in controller: " << req.profiles.size());
@@ -1047,13 +1069,11 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 				}
 			}
 		}
-		ROS_INFO_STREAM(__LINE__);
 
 		full_profile_struct.wipe_all		= req.wipe_all;
 		full_profile_struct.run				= req.run;
 		full_profile_struct.brake			= req.brake;
 		full_profile_struct.run_slot		= req.run_slot;
-		ROS_INFO_STREAM(__LINE__);
 		full_profile_struct.change_queue	= req.change_queue;
 		for (size_t i = 0; i < req.new_queue.size(); i++)
 		{
@@ -1061,18 +1081,15 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 		}
 		full_profile_struct.newly_set		= true;
 
-		ROS_INFO_STREAM(__LINE__);
 		//mutex?
 		full_profile_buffer_.push_back(full_profile_struct);
 
 
-		ROS_INFO_STREAM(__LINE__);
 		return true;
 	}
 	else
 	{
 		ROS_ERROR_NAMED(name_, "Can't accept new commands. Controller is not running.");
-		ROS_INFO_STREAM(__LINE__);
 		return false;
 	}
 }

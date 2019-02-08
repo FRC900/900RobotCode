@@ -4,15 +4,10 @@
   <version>0.4.1</version>
   <description>Simple simulation interface and template for setting up a hardware interface for ros_control</description>
 
-  <maintainer email="davetcoleman@gmail.com">Dave Coleman</maintainer>
+  <author email="programmers@team900.org">Dave Coleman</author>
+  <maintainer email="programmers@team900.org">Dave Coleman</maintainer>
 
   <license>BSD</license>
-
-  <url type="website">https://github.com/davetcoleman/ros_control_boilerplate</url>
-  <url type="butracker">https://github.com/davetcoleman/ros_control_boilerplate/issues</url>
-  <url type="repository">https://github.com/davetcoleman/ros_control_boilerplate/</url>
-
-  <author email="davetcoleman@gmail.com">Dave Coleman</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 
