@@ -23,6 +23,7 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
 		<rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
+		<rosparam file="$(find behaviors)/config/align_with_terabee.yaml" command="load"/>
 		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
 		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
 

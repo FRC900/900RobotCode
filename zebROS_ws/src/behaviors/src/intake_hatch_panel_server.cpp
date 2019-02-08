@@ -34,7 +34,7 @@ class IntakeHatchPanelAction
 		IntakeHatchPanelAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&IntakeHatchPanelAction::executeCB, this, _1), false),
 			action_name_(name),
-			ac_elevator_("move_elevator_server", true)
+			ac_elevator_("elevator_server", true)
 	{
 		//GoalDetectSub_ = nh_.subscribe("goal_detect_msg",1, &IntakeHatchPanelAction::goalDetectCallback, this) //TODO make sure this is linked up correctly
 		/* std::map<std::string, std::string> service_connection_header;
@@ -56,6 +56,8 @@ class IntakeHatchPanelAction
 
 		void executeCB(const behaviors::IntakeGoalConstPtr &goal)
 		{
+			ROS_ERROR("hatch panel intake server running");
+
 			//make sure the elevator server exists
 			bool elevator_server_found = ac_elevator_.waitForServer(ros::Duration(wait_for_server_timeout));
 
@@ -104,8 +106,6 @@ class IntakeHatchPanelAction
 			//send commands to panel_intake_controller to grab the panel ---------------------------------------
 			if(!preempted && !timed_out)
 			{
-				ROS_ERROR("hatch panel intake server running");
-
 				//extend panel mechanism
 				panel_intake_controller::PanelIntakeSrv srv;
 				srv.request.claw_release = true;
