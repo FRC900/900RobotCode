@@ -844,7 +844,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 	}
 	else
 	{
-		ROS_INFO_STREAM("out of points = " << steering_joints_[0].getCustomProfileStatus().outOfPoints);
+		ROS_INFO_STREAM_THROTTLE(.5, "out of points = " << steering_joints_[0].getCustomProfileStatus().outOfPoints);
 		mode_last_time =::Time::now().toSec();
 		for (size_t i = 0; !set_profile_run && (i < wheel_joints_size_); ++i)
 		{
