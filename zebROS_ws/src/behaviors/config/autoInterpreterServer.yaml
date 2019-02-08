@@ -1,11 +1,32 @@
-actionlib_intake_params:
-    linebreak_debounce_iterations: 5
-    spit_out_time: 1
-actionlib_forearm_params:
-    arm_angle_deadzone: .02
-actionlib_arm_params:
-    intake_timeout: 5
-    forearm_timeout: 4
-teleop_params:
-    intake_power: 1
-    intake_hold_power: 0.1
+actionlib_params:
+    linebreak_debounce_iterations: 10
+    wait_for_server_timeout: 5
+actionlib_cargo_params:
+    roller_power: 1
+    intake_timeout: 3 #in seconds
+    outtake_timeout: 3 #timeout for the elevator when outtaking
+    pause_time_between_pistons: 0.1 #time to pause between piston actuations (relevant for cargo outtake), in seconds
+actionlib_hatch_panel_params:
+    elevator_timeout: 5 #in seconds
+    pause_time_between_pistons: 0.1 #time to pause between piston actuations, in seconds
+actionlib_lift_params:
+    cargo:
+        intake_position: 0.0
+        cargo_ship_position: 0.5
+        rocket1_position: 1.0
+        rocket2_position: 2.0
+        rocket3_position: 3.0
+    hatch:
+        intake_position: 0.0
+        cargo_ship_position: 0.5
+        rocket1_position: 1.0
+        rocket2_position: 2.0
+        rocket3_position: 3.0
+    climber:
+        deploy_position: -1.0
+        climb_position: -1.0
+        deploy_timeout: -1.0
+        climb_timeout: -1.0
+    max_speed: -1.0
+    timeout: 4
+    elevator_position_deadzone: 1.0

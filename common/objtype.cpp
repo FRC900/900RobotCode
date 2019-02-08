@@ -1,5 +1,5 @@
-// A class for defining objects we're trying to 
-// detect.  The class stores information about shape 
+// A class for defining objects we're trying to
+// detect.  The class stores information about shape
 // and size of the objects in real-world measurements
 #include "objtype.hpp"
 
@@ -79,7 +79,7 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			contour_.push_back(Point2f(0.342570149542,0.130409053701));
 			contour_.push_back(Point2f(0.355464120703,0.126876796969));
 			contour_.push_back(Point2f(0.36827619115,0.1230581348));
-			contour_.push_back(Point2f(0.381,0.118954963068));	
+			contour_.push_back(Point2f(0.381,0.118954963068));
 			contour_.push_back(Point2f(0.381, 0));
 			contour_.push_back(Point2f(0.381,0.0122875187586));
 			contour_.push_back(Point2f(0.368470376004,0.0172542619015));
@@ -112,7 +112,7 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			contour_.push_back(Point2f(0.0125296239964,0.0172542619015));
 			contour_.push_back(Point2f(0,0.0122875187586));
 			name_ = "top_boiler_tape";
-			break;	
+			break;
 		case BOTTOM_TAPE_2017: //bottom piece of tape (2017)
 			depth_ = 0;
 			real_height_ = 1.7272; //5ft 7inches + 1/2 * 2in height
@@ -147,7 +147,7 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			contour_.push_back(Point2f(0.342570149542,0.0604090537011));
 			contour_.push_back(Point2f(0.355464120703,0.0568767969687));
 			contour_.push_back(Point2f(0.36827619115,0.0530581347998));
-			contour_.push_back(Point2f(0.381,0.0489549630683));	
+			contour_.push_back(Point2f(0.381,0.0489549630683));
 			contour_.push_back(Point2f(0.381, 0));
 			contour_.push_back(Point2f(0.381,0.0122875187586));
 			contour_.push_back(Point2f(0.368470376004,0.0172542619015));
@@ -224,7 +224,7 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 ObjectType::ObjectType(const vector< Point2f > &contour_in, const string &name_in, const float &depth_in) :
 	contour_(contour_in),
 	depth_(depth_in),
-	name_(name_in)	
+	name_(name_in)
 {
 	if(contour_in.size() == 0 || name_in.length() == 0 || depth_in < 0)
 		throw std::invalid_argument("bad argument to ObjectType Point2f");
@@ -234,7 +234,7 @@ ObjectType::ObjectType(const vector< Point2f > &contour_in, const string &name_i
 ObjectType::ObjectType(const vector< Point > &contour_in, const string &name_in, const float &depth_in):
 	depth_(depth_in),
 	name_(name_in)
-{	
+{
 	if(contour_in.size() == 0 || name_in.length() == 0 || depth_in < 0)
 		throw std::invalid_argument("bad argument to ObjectType Point");
 	for (auto it = contour_in.cbegin(); it != contour_in.cend(); ++it)
@@ -365,7 +365,7 @@ float ObjectType::expectedDepth(const Rect &screen_position, const Size &frame_s
 	return width_ / (2.0 * tanf(size_fov / 2.0)) - depth_ / 2.;
 }
 
-bool ObjectType::operator== (const ObjectType &t1) const 
+bool ObjectType::operator== (const ObjectType &t1) const
 {
 	return this->shape() == t1.shape();
 }

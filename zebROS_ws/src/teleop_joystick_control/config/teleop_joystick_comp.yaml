@@ -1,0 +1,7 @@
+teleop_params:
+    joystick_deadzone: 0.2
+    slow_mode: 0.33
+    max_speed: 3.6
+    max_rot: 8.8
+    joystick_pow: 3
+    rotation_pow: 4
