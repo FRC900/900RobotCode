@@ -2,6 +2,7 @@
 #include <realtime_tools/realtime_buffer.h>
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "std_srvs/Empty.h"
+#include "std_msgs/Bool.h"
 
 #include "behaviors/IntakeAction.h"
 #include "behaviors/IntakeGoal.h"
@@ -29,8 +30,10 @@ std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 
 ros::Publisher JoystickRobotVel;
+ros::Publisher align_with_terabee_pub;
 ros::ServiceClient BrakeSrv;
 ros::ServiceClient run_align;
+ros::ServiceClient align_with_terabee;
 //use shared pointers to make the clients global 
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_cargo_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_cargo_ac;
@@ -241,16 +244,19 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].buttonYButton)
 		{
 			ROS_INFO_THROTTLE(1, "buttonYButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			std_msgs::Bool msg;
+			msg.data = true;
+			align_with_terabee_pub.publish(msg);
+		}
+		else
+		{
+			std_msgs::Bool msg;
+			msg.data = false;
+			align_with_terabee_pub.publish(msg);
 		}
 		if(joystick_states_array[0].buttonYRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: buttonYRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
 		}
 		//Joystick1: bumperLeft
 		if(joystick_states_array[0].bumperLeftPress)
@@ -673,6 +679,7 @@ int main(int argc, char **argv)
 
 
 	run_align = n.serviceClient<std_srvs::SetBool>("run_align");
+	align_with_terabee_pub = n.advertise<std_msgs::Bool>("/frcrobot_jetson/align_with_terabee_pub", 1);
 
 	ROS_WARN("joy_init");
 
