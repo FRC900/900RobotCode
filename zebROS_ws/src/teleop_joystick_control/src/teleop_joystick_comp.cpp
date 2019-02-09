@@ -3,6 +3,7 @@
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "teleop_joystick_control/rate_limiter.h"
 #include "std_srvs/Empty.h"
+#include "std_srvs/Trigger.h"
 
 #include "std_srvs/SetBool.h"
 
@@ -87,6 +88,9 @@ void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 		}
 
 	}
+
+
+
 
 
 	dead_zone_check(leftStickX, leftStickY);
@@ -184,11 +188,9 @@ int main(int argc, char **argv)
 	cli = n.serviceClient<std_srvs::Trigger>("/frcrobot_jetson/align_service");
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 
+
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
 	run_align = n.serviceClient<std_srvs::SetBool>("run_align");
-
-
-
 
 	ROS_WARN("joy_init");
 
