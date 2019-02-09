@@ -23,17 +23,12 @@
 topic:
 -
   name    : auto interpreter client
-  topic   : /frcrobot/swerve_drive_controller/cmd_vel
-  timeout : 
-  priority: 
--
-  name    : dummy 
-  topic   : /frcrobot/swerve_drive_controller/cmd_vel
+  topic   : /frcrobot/auto_interpreter_client/cmd_vel
   timeout : 
   priority: 
 -
   name    : pid
-  topic   : swerve_drive_controller/cmd_vel
+  topic   : publish_pid_cmd_vel/cmd_vel
   timeout : 
   priority: 
 -
