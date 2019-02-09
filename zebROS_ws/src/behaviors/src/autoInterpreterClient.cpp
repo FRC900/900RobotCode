@@ -1309,7 +1309,7 @@ int main(int argc, char** argv) {
     BrakeService = n.serviceClient<std_srvs::Empty>("/frcrobot/swerve_drive_controller/brake", false, service_connection_header);
 	VisualizeService = n.serviceClient<robot_visualizer::ProfileFollower>("/frcrobot/visualize_auto", false, service_connection_header);    
 
-    VelPub = n.advertise<geometry_msgs::Twist>("/frcrobot/swerve_drive_controller/cmd_vel", 1);
+    VelPub = n.advertise<geometry_msgs::Twist>("/frcrobot/auto_interpreter_client/cmd_vel", 1);
     auto_state_0 = n.advertise<std_msgs::Float64>("/frcrobot/auto_state_controller_0/command", 1);
     auto_state_1 = n.advertise<std_msgs::Float64>("/frcrobot/auto_state_controller_1/command", 1);
     auto_state_2 = n.advertise<std_msgs::Float64>("/frcrobot/auto_state_controller_2/command", 1);
