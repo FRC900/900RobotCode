@@ -59,6 +59,7 @@
 #include <std_msgs/Bool.h>
 #include <std_msgs/UInt16.h>
 #include <std_srvs/Empty.h>
+#include <std_srvs/SetBool.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <tf/tfMessage.h>
@@ -184,6 +185,7 @@ class TalonSwerveDriveController
 
 		// True if running cmd_vel, false if running profile
 		std::atomic<bool> cmd_vel_mode_;
+		std::atomic<bool> dont_set_angle_mode_;
 		//realtime_tools::RealtimeBuffer<bool> wipe_all_; //TODO, add this functionality
 		realtime_tools::RealtimeBuffer<Commands> command_;
 
@@ -194,6 +196,7 @@ class TalonSwerveDriveController
 		ros::ServiceServer change_center_of_rotation_serv_;
 		ros::ServiceServer brake_serv_;
 		ros::ServiceServer wheel_pos_serv_;
+		ros::ServiceServer dont_set_angle_mode_serv_;
 
 		std::array<std::array<hardware_interface::CustomProfilePoint, 2>, WHEELCOUNT> holder_points_;
 		std::array<std::array<std::vector<hardware_interface::CustomProfilePoint>, 2>, WHEELCOUNT> full_profile_;
@@ -263,6 +266,7 @@ class TalonSwerveDriveController
 		bool changeCenterOfRotationService(talon_swerve_drive_controller::SetXY::Request &req, talon_swerve_drive_controller::SetXY::Response &res);
 		bool brakeService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 		bool wheelPosService(talon_swerve_drive_controller::WheelPos::Request &req, talon_swerve_drive_controller::WheelPos::Response &res);
+		bool dontSetAngleModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
 
 		/**
 		 * \brief Get the wheel names from a wheel param

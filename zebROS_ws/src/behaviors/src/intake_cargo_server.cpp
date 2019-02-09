@@ -39,7 +39,7 @@ class CargoIntakeAction {
 		CargoIntakeAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&CargoIntakeAction::executeCB, this, _1), false),
 			action_name_(name),
-			ac_elevator_("elevator_server", true) //TODO make sure this is linked up correctly
+			ac_elevator_("/elevator/elevator_server", true) //TODO make sure this is linked up correctly
 	{
 		as_.start(); //start the actionlib server
 
@@ -48,12 +48,12 @@ class CargoIntakeAction {
 		service_connection_header["tcp_nodelay"] = "1";
 
 		//initialize the client being used to call the controller
-		cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+		cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("cargo_intake_command", false, service_connection_header);
 		//start subscribers subscribing
 		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
 	}
 
-		~CargoIntakeAction(void) 
+		~CargoIntakeAction(void)
 		{
 		}
 
@@ -205,7 +205,7 @@ class CargoIntakeAction {
 			{
 				for (size_t i = 0; i < joint_state.name.size(); i++)
 				{
-					if (joint_state.name[i] == "cargo_intake_line_break") //TODO: define this in the hardware interface
+					if (joint_state.name[i] == "cargo_intake_linebreak_1") //TODO: define this in the hardware interface
 						linebreak_idx = i;
 				}
 			}
@@ -248,12 +248,11 @@ int main(int argc, char** argv) {
 
 	//get config values
 	ros::NodeHandle n;
-	ros::NodeHandle n_params_intake(n, "actionlib_cargo_params");
-	ros::NodeHandle n_params_lift(n, "actionlib_lift_params/cargo");
+	ros::NodeHandle n_params_intake(n, "actionlib_cargo_intake_params");
 
-	if (!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
+	if (!n.getParam("/actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
 		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
-	if (!n.getParam("actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
+	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 		ROS_ERROR("Could not read wait_for_server_timeout in intake_sever");
 
 	if (!n_params_intake.getParam("roller_power", roller_power))

@@ -28,6 +28,7 @@ hardware_interface:
        - {name: elevator_master, type: can_talon_srx, can_id: 41, local: true}
        - {name: elevator_follower1, type: can_talon_srx, can_id: 42, local: true}
        - {name: elevator_follower2, type: can_talon_srx, can_id: 43, local: true}
+       - {name: elevator_follower3, type: can_talon_srx, can_id: 44, local: true}
 
        - {name: fl_drive, type: can_talon_srx, can_id: 21, local: true}
        - {name: fl_angle, type: can_talon_srx, can_id: 11, local: true}
@@ -256,7 +257,7 @@ bl_angle_motionmagic_controller:
 fr_drive_position_controller:
     type: talon_controllers/TalonPositionCloseLoopController
     joint: fr_drive 
-    feedback_type: CTRE_MagEncoder_Absolute
+    feedback_type: CTRE_MagEncoder_Relative
     close_loop_values:
         - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
         - {p: 0.8, i: 0, d: 10, f: 0.0, i_zone: 0}
@@ -274,7 +275,7 @@ fr_drive_position_controller:
 fl_drive_position_controller:
     type: talon_controllers/TalonPositionCloseLoopController
     joint: fl_drive 
-    feedback_type: CTRE_MagEncoder_Absolute
+    feedback_type: CTRE_MagEncoder_Relative
     close_loop_values:
         - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
         - {p: 0.8, i: 0, d: 10, f: 0.0, i_zone: 0}
@@ -292,7 +293,7 @@ fl_drive_position_controller:
 br_drive_position_controller:
     type: talon_controllers/TalonPositionCloseLoopController
     joint: br_drive 
-    feedback_type: CTRE_MagEncoder_Absolute
+    feedback_type: CTRE_MagEncoder_Relative
     close_loop_values:
         - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
         - {p: 0.8, i: 0, d: 10, f: 0.0, i_zone: 0}
@@ -310,7 +311,7 @@ br_drive_position_controller:
 bl_drive_position_controller:
     type: talon_controllers/TalonPositionCloseLoopController
     joint: bl_drive 
-    feedback_type: CTRE_MagEncoder_Absolute
+    feedback_type: CTRE_MagEncoder_Relative
     close_loop_values:
         - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
         - {p: 0.8, i: 0, d: 10, f: 0.0, i_zone: 0}
@@ -324,3 +325,4 @@ bl_drive_position_controller:
     motion_acceleration: 150
     voltage_compensation_enable: true
     dynamic_reconfigure: True
+        

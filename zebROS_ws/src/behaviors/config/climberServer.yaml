@@ -1,0 +1,6 @@
+# TODO - these are all wrong
+climber_server:
+    deploy_position: -1
+    climb_position: -1
+    deploy_timeout: 4.0
+    climb_timeout: 4.0

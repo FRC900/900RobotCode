@@ -9,11 +9,17 @@ generic_hw_control_loop:
 # For future expansion, change hw_id to specify one
 # of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
 hardware_interface:
+   run_hal_robot: false
+   can_interface: can0
+
    joints:
-         - {name: elevator_left_master, type: can_talon_srx, can_id: 22}
-         - {name: elevator_left_follower, type: can_talon_srx, can_id: 12}
-         - {name: elevator_right_top, type: can_talon_srx, can_id: 24}
-         - {name: elevator_right_bottom, type: can_talon_srx, can_id: 14}
+       - {name: elevator_left_master, type: can_talon_srx, can_id: 22}
+       - {name: elevator_left_follower, type: can_talon_srx, can_id: 12}
+       - {name: elevator_right_top, type: can_talon_srx, can_id: 24}
+       - {name: elevator_right_bottom, type: can_talon_srx, can_id: 14}
+       - {name: pdp, type: pdp}
+       - {name: robot_code_ready_jetson, local: true, type: ready}
+       - {name: robot_code_ready_rio, local: false, type: ready} 
 
 # Create controllers for each joint
 #
@@ -34,23 +40,42 @@ hardware_interface:
 # to figure out what to map e.g. effort to in the Talon world
 talon_state_controller:
    type:         talon_state_controller/TalonStateController
-   publish_rate: 50
+   publish_rate: 100
 
 # Similar to above, but this one prints non-Talon state
 # (stuff that fits into the more standard ROS position/
 # speed/effort paradigm)
 joint_state_controller:
    type:         joint_state_controller/JointStateController
-   publish_rate: 20
+   publish_rate: 100
 
+# Used to listen for remote joint states published from the given topic
+# (in this case the Rio) and copy them to internal copies of 
+# joint data
+joint_state_listener_controller:
+    type:      state_listener_controller/JointStateListenerController
+    topic:     /frcrobot_rio/joint_states
 
 pdp_state_controller:
    type:         pdp_state_controller/PDPStateController
-   publish_rate: 50
+   publish_rate: 20
+
+pcm_state_controller:
+   type:         pcm_state_controller/PCMStateController
+   publish_rate: 20
+
+match_state_listener_controller:
+    type:      state_listener_controller/MatchStateListenerController
+    topic:     /frcrobot_rio/match_data
 
 elevator_master_percent_output_controller:
     type: talon_controllers/TalonPercentOutputController
-    joint: elevator_master
+    joint: elevator_left_master
+    feedback_type: CTRE_MagEncoder_Absolute
+    
+elevator_master_velocity_controller:
+    type: talon_controllers/TalonVelocityCloseLoopController    
+    joint: elevator_left_master
     feedback_type: CTRE_MagEncoder_Absolute
     close_loop_values:
         - {p: 0.0, i: 0.000, d: 00.0, f: 0.00, i_zone: 000}
@@ -63,13 +88,25 @@ elevator_master_percent_output_controller:
     motion_cruise_velocity: 00
     motion_acceleration: 000
     voltage_compensation_enable: true
-    
-elevator_master_controller:
-    type: talon_controllers/TalonVelocityCloseLoopController    
-    close_loop_values:
-        - {p: 0.0, i: 0.00, d: 0.0, f: 0.0, i_zone: 000}
-    joint: bl_drive
-    feedback_type: CTRE_MagEncoder_Relative
-    sensor_phase: true
+    dynamic_reconfigure: true
  
+elevator_left_follower_controller:
+    type: talon_controllers/TalonFollowerController
+    joint: elevator_left_follower 
+    feedback_type: CTRE_MagEncoder_Absolute
+    invert_output: False
+    follow_joint: elevator_left_master
 
+elevator_right_top_follower_controller:
+    type: talon_controllers/TalonFollowerController
+    joint: elevator_right_top 
+    feedback_type: CTRE_MagEncoder_Absolute
+    invert_output: False
+    follow_joint: elevator_left_master
+
+elevator_right_bottom_follower_controller:
+    type: talon_controllers/TalonFollowerController
+    joint: elevator_right_bottom
+    feedback_type: CTRE_MagEncoder_Absolute
+    invert_output: False
+    follow_joint: elevator_left_master

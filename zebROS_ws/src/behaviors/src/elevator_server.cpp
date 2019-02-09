@@ -50,7 +50,7 @@ class ElevatorAction {
             elevator_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
 
 			//Talon states subscriber
-            talon_states_sub = nh_.subscribe("/frcrobot/talon_states",1, &ElevatorAction::talonStateCallback, this);
+            talon_states_sub = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);
 
 			hatch_locations.resize(ELEVATOR_MAX_INDEX); //TODO: not hard-coded
 			cargo_locations.resize(ELEVATOR_MAX_INDEX); //TODO: not hard-coded
@@ -98,7 +98,7 @@ class ElevatorAction {
                 success = fabs(cur_position_ - elevator_cur_setpoint_) < elevator_position_deadzone;
 				ROS_INFO_STREAM("cur position = " << cur_position_ << " elevator_cur_setpoint " << elevator_cur_setpoint_);
 				if(as_.isPreemptRequested() || !ros::ok())
-			   	{
+				{
                     ROS_ERROR("%s: Preempted", action_name_.c_str());
 					preempted = true;
 				}
@@ -111,10 +111,10 @@ class ElevatorAction {
 			}
 
 			//log state of action and set result of action
-			
+
 			result_.timed_out = timed_out;//timed_out refers to last controller call, but applies for whole action
 			result_.success = success; //success refers to last controller call, but applies for whole action
-			
+
 			if(timed_out)
 			{
 				ROS_INFO("%s:Timed Out", action_name_.c_str());
@@ -189,7 +189,7 @@ int main(int argc, char** argv)
 	elevator_action.hatch_locations[ROCKET_1] = hatch_rocket1_position;
 
 	double hatch_rocket2_position;
-	if (!n_params.getParam("hatch/rocket3_position", hatch_rocket2_position))
+	if (!n_params.getParam("hatch/rocket2_position", hatch_rocket2_position))
 		ROS_ERROR_STREAM("Could not read hatch_rocket2_position");
 	elevator_action.hatch_locations[ROCKET_2] = hatch_rocket2_position;
 
@@ -197,7 +197,7 @@ int main(int argc, char** argv)
 	if (!n_params.getParam("hatch/rocket3_position", hatch_rocket3_position))
 		ROS_ERROR_STREAM("Could not read hatch_rocket3_position");
 	elevator_action.hatch_locations[ROCKET_3] = hatch_rocket3_position;
-	
+
 	double hatch_intake_position;
 	if (!n_params.getParam("hatch/intake_position", hatch_intake_position))
 		ROS_ERROR_STREAM("Could not read hatch_intake_position");
@@ -215,7 +215,7 @@ int main(int argc, char** argv)
 	elevator_action.cargo_locations[ROCKET_1] = cargo_rocket1_position;
 
 	double cargo_rocket2_position;
-	if (!n_params.getParam("cargo/rocket3_position", cargo_rocket2_position))
+	if (!n_params.getParam("cargo/rocket2_position", cargo_rocket2_position))
 		ROS_ERROR_STREAM("Could not read cargo_rocket2_position");
 	elevator_action.cargo_locations[ROCKET_2] = cargo_rocket2_position;
 

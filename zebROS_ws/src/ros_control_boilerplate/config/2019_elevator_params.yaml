@@ -1,7 +1,7 @@
 elevator_controller:
     type:   elevator_controller/ElevatorController
-    # TODO : figure out how many followers, add them here
-    elevator_joint: [ 'elevator_master', 'elevator_follower1', 'elevator_follower2' ]
+
+    elevator_joint: [ 'elevator_master', 'elevator_follower1', 'elevator_follower2', 'elevator_follower3' ]
 
     arb_feed_forward_up: 0.0
 
@@ -50,3 +50,6 @@ elevator_controller:
 
     elevator_follower2: 
         joint: elevator_follower2
+
+    elevator_follower3: 
+        joint: elevator_follower3
