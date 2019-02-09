@@ -69,7 +69,7 @@ struct ElevatorGoal
 realtime_tools::RealtimeBuffer<ElevatorGoal> ElevatorGoal;
 
 
-void deadzone_check(double &val1, double &val2)
+void dead_zone_check(double &val1, double &val2)
 {
 	if (fabs(val1) <= joystick_deadzone && fabs(val2) <= joystick_deadzone)
 	{
@@ -133,8 +133,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		dead_zone_check(rightStickX, rightStickY);
 
-		rightStickX =  pow(rightStickX, joystick_scale);
-		rightStickY = -pow(rightStickY, joystick_scale);
+		rightStickX =  pow(rightStickX, joystick_pow);
+		rightStickY = -pow(rightStickY, joystick_pow);
 
 		rightStickX = right_stick_x_rate_limit.applyLimit(rightStickX);
 		rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);

@@ -8,6 +8,7 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   roscpp
+  behaviors
   control_msgs
   actionlib
   std_srvs
