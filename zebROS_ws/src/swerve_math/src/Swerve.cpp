@@ -6,9 +6,6 @@
 using namespace std;
 using namespace Eigen;
 
-// TODO : use initializer list rather than assignment.
-// string should be a const & var, as should the swerveVar args
-
 swerve::swerve(const array<Vector2d, WHEELCOUNT> &wheelCoordinates,
 			   const std::vector<double> &offsets,
 			   const swerveVar::ratios &ratio,
