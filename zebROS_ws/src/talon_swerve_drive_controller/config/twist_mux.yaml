@@ -6,7 +6,7 @@
 #  priority: 10
 #-
 #  name    : joystick
-# topic   : joy_vel
+#  topic   : joy_vel
 #  timeout : 0.5
 #  priority: 100
 #-
@@ -20,34 +20,44 @@
 #  timeout : 0.5
 #  priority: 100
 
-#topic:
-#-
-#  name    : auto interpreter client
-#  topic   : /frcrobot/swerve_drive_controller/cmd_vel
-#  timeout : 
-#  priority: 
-#-
-#  name    : dummy 
-#  topic   : /frcrobot/swerve_drive_controller/cmd_vel
-#  timeout : 
-#  priority: 
-#-
-#  name    : pid
-#  topic   : swerve_drive_controller/cmd_vel
-#  timeout : 
-#  priority: 
-#-
-#  name    : path follower server
-#  topic   : swerve_drive_controller/cmd_vel
-#  timeout : 
-#  priority: 
-#-
-#  name    : teleop joystick comp
-#  topic   : swerve_drive_controller/cmd_vel
-#  timeout : 
-#  priority: 
-#-
-#  name    : teleop joystick commands
-#  topic   : /frcrobot/swerve_drive_controller/cmd_vel
-#  timeout : 
-#  priority: 
+topic:
+-
+  name    : auto interpreter client
+  topic   : /frcrobot/swerve_drive_controller/cmd_vel
+  timeout : 
+  priority: 
+-
+  name    : dummy 
+  topic   : /frcrobot/swerve_drive_controller/cmd_vel
+  timeout : 
+  priority: 
+-
+  name    : pid
+  topic   : swerve_drive_controller/cmd_vel
+  timeout : 
+  priority: 
+-
+  name    : path follower server
+  topic   : swerve_drive_controller/cmd_vel
+  timeout : 
+  priority: 
+-
+  name    : teleop joystick comp
+  topic   : swerve_drive_controller/cmd_vel
+  timeout : 
+  priority: 
+-
+  name    : teleop joystick commands
+  topic   : /frcrobot/swerve_drive_controller/cmd_vel
+  timeout : 
+  priority: 
+-
+  name    : terabee aligning 
+  topic   : swerve_drive_controller/cmd_vel
+  timeout : 
+  priority: 
+-
+  name    : climber server
+  topic   : /frcrobot/swerve_drive_controller/cmd_vel
+  timeout : 
+  priority: 
