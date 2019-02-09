@@ -83,7 +83,7 @@ int main(int argc, char ** argv)
     ros::NodeHandle n;
 
     ros::Subscriber raw_data_sub = n.subscribe("/frcrobot_rio/joystick_states_raw", 5, rawDataCB);
-    processed_data_pub = n.advertise<frc_msgs::JoystickState>("/frcrobot_jetson/joystick_states", 5);
+    processed_data_pub = n.advertise<frc_msgs::JoystickState>("joystick_states", 5);
 
 	processed_msg_last = processed_msg;
 
