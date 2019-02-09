@@ -106,8 +106,9 @@
 		<node name="path_follower" pkg="swerve_point_generator" type="path_follower" output="screen"/>
 	</group>
 		
-	<node name="twist_mux" pkg="twist" type="twist_mux">
-		<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux.yaml"/>
+	<node name="twist_mux" pkg="twist_mux" type="twist_mux">
+		<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux_topics.yaml"/>
+		<!--	<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux_locks.yaml"/>-->
 	</node> 
 
 	<group ns="align_with_terabee">
