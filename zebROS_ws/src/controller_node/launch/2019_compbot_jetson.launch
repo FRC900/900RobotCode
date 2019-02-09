@@ -93,6 +93,10 @@
 		<node name="state_setpoint_pub_node" pkg="behaviors" type="state_setpoint_publisher_node" />
 		<node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
 		<node name="path_follower" pkg="swerve_point_generator" type="path_follower" output="screen"/>
+		
+		<node name="twist_mux" pkg="twist" type="twist_mux">
+			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux.yaml"/>
+		</node>
 
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 	</group>
@@ -113,6 +117,7 @@
             <param name="topic_from_plant" value="navX_snap_to_goal_state" />
         </node>
     </group>
+
 	<node name="orient_pid" pkg="pid" type="controller" >
 		<param name="node_name" value="orient_pid_node" />
 		<param name="Kp" value="5.0" />
