@@ -188,6 +188,9 @@ int main(int argc, char **argv)
 
 	ros::Rate r(100);
 	double snap_angle;
+	
+	ros::spinOnce();
+
 	while(ros::ok()) {
 		std_msgs::Float64 angle_snap;
 		std_msgs::Float64 navX_state;

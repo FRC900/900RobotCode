@@ -4,6 +4,7 @@
 #include "geometry_msgs/Twist.h"
 #include "std_srvs/SetBool.h"
 #include "std_msgs/Bool.h"
+#include "std_msgs/Float64.h"
 
 #define NUM_SENSORS 4
 #define MIN_DIST 4
@@ -14,20 +15,6 @@ bool publish = false;
 bool publish_last = false;
 double min_dist = 100000000000;
 
-// I get what you're going for here - either the reading is "in" or "out" of the key
-// You might get better results by using the closest sensor reading as a baseline
-// for "out". Then other readings are set based on whether they are within a range
-// of that closest distance.  You'd still want a max range check, though, to avoid counting
-// really wacky results. It might also be useful for setting a range that's valid
-// for "in" values. Anything further away than that might be from e.g. the sensor pointing
-// at nothing?  Could be useful for detecting if e.g. only one sensor is seeing anything
-// So you'd end up with 3 possible states :
-//  seeing the normal plane of the cargo ship
-//  seeing inside the rectangle cutout
-//  seeing something else
-//
-// Making a table with the 4 sensors seeing permutations of each of the 3 states
-// would give ideas about where to move the robot?
 void multiflexCB(const teraranger_array::RangeArray& msg)
 {
 	min_dist = 1000000000;
@@ -68,6 +55,7 @@ int main(int argc, char ** argv)
 	double dist_to_back_panel;
 	double error_threshhold;
 	double cmd_vel_to_pub;
+	double distance_target;
 
 	if(!n_params.getParam("dist_to_back_panel", dist_to_back_panel))
 		ROS_ERROR_STREAM("Could not read dist_to_back_panel in align_with_terabee");
@@ -75,23 +63,28 @@ int main(int argc, char ** argv)
 		ROS_ERROR_STREAM("Could not read cmd_vel_to_pub in align_with_terabee");
 	if(!n_params.getParam("error_threshhold", error_threshhold))
 		ROS_ERROR_STREAM("Could not read error_threshhold in align_with_terabee");
+	if(!n_params.getParam("distance_target", distance_target))
+		ROS_ERROR_STREAM("Could not read distance_target in align_with_terabee");
 
 
 	sensors_distances.resize(NUM_SENSORS);
 	ternary_distances.resize(NUM_SENSORS);
 
-	ros::Subscriber terabee_sub = n.subscribe("/multiflex_1/ranges_raw", 1, &multiflexCB);
-	ros::Publisher cmd_vel_pub = n.advertise<geometry_msgs::Twist>("/frcrobot_jetson/swerve_drive_controller/cmd_vel", 1);
-	ros::ServiceServer start_stop_service = n.advertiseService("align_with_terabee", startStopAlign);
-	ros::Subscriber start_stop_sub = n.subscribe("align_with_terabee_pub", 1, &startStopCallback);
+	ros::Publisher distance_setpoint_pub = n.advertise<std_msgs::Float64>("distance_pid_setpoint", 1);
+	ros::Publisher distance_state_pub = n.advertise<std_msgs::Float64>("distance_pid_state", 1);
+	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_terabee_y_command", 1);
+	ros::Publisher successful_y_align = n.advertise<std_msgs::Bool>("y_aligned", 1);
 
-	geometry_msgs::Twist cmd_vel_msg;
-	cmd_vel_msg.linear.x = 0;
-	cmd_vel_msg.linear.y = 0;
-	cmd_vel_msg.linear.z = 0;
-	cmd_vel_msg.angular.x = 0;
-	cmd_vel_msg.angular.y = 0;
-	cmd_vel_msg.angular.z = 0;
+	ros::Subscriber terabee_sub = n.subscribe("/multiflex_1/ranges_raw", 1, &multiflexCB);
+	ros::Subscriber start_stop_sub = n.subscribe("enable_y_pub", 1, &startStopCallback);
+
+	ros::ServiceServer start_stop_service = n.advertiseService("align_with_terabee", startStopAlign);
+
+	std_msgs::Float64 y_msg;
+	y_msg.data = 0;
+
+	std_msgs::Float64 distance_setpoint_msg;
+	distance_setpoint_msg.data = distance_target;
 
 	ros::Rate r(50);
 
@@ -105,6 +98,14 @@ int main(int argc, char ** argv)
 			continue;
 		}
 
+		//deal with distance PID first
+		std_msgs::Float64 distance_state_msg;
+		distance_state_msg.data = min_dist;
+		distance_state_pub.publish(distance_state_msg);
+
+		distance_setpoint_pub.publish(distance_setpoint_msg.data);
+
+		//now the exciting y-alignment stuff
 		for(int i = 0; i < sensors_distances.size(); i++)
 		{
 			if(sensors_distances[i] != sensors_distances[i])
@@ -135,7 +136,7 @@ int main(int argc, char ** argv)
 		if(ternary_distances[0] == 0 && ternary_distances[1] == 1 && ternary_distances[2] == 1 && ternary_distances[3] == 0)
 		{
 			ROS_INFO_STREAM("ALIGNED");
-			cmd_vel_msg.linear.x = 0.0;
+			y_msg.data= 0.0;
 			cutout_found = true;
 		}
 
@@ -145,13 +146,13 @@ int main(int argc, char ** argv)
 			if(ternary_distances[0] == 0 && ternary_distances[1] == 0 && ternary_distances[2] == 1 && ternary_distances[3] == 1)
 			{
 				ROS_INFO_STREAM("move right, either cargo or rocket");
-				cmd_vel_msg.linear.x = -1*cmd_vel_to_pub;
+				y_msg.data= -1*cmd_vel_to_pub;
 				cutout_found = true;
 			}
 			else if(ternary_distances[0] == 1 && ternary_distances[1] == 1 && ternary_distances[2] == 0 && ternary_distances[3] == 0)
 			{
 				ROS_INFO_STREAM("move left, either cargo or rocket");
-				cmd_vel_msg.linear.x = cmd_vel_to_pub;
+				y_msg.data= cmd_vel_to_pub;
 				cutout_found = true;
 			}
 		}
@@ -162,13 +163,13 @@ int main(int argc, char ** argv)
 			if(ternary_distances[0] == 1 && (ternary_distances[1] == 0 && ternary_distances[2] == 0 && ternary_distances[3] == 0))
 			{
 				ROS_INFO_STREAM("move left, probably cargo ship");
-				cmd_vel_msg.linear.x = cmd_vel_to_pub;
+				y_msg.data= cmd_vel_to_pub;
 				cutout_found = true;
 			}
 			else if (ternary_distances[0] == 0 && ternary_distances[1] == 0 && ternary_distances[2] == 0 && ternary_distances[3] == 1)
 			{
 				ROS_INFO_STREAM("move right, probably cargo ship");
-				cmd_vel_msg.linear.x = -1*cmd_vel_to_pub;
+				y_msg.data= -1*cmd_vel_to_pub;
 				cutout_found = true;
 			}
 		}
@@ -179,13 +180,13 @@ int main(int argc, char ** argv)
 			if(ternary_distances[0] == 1 && (ternary_distances[1] == 1 && ternary_distances[2] == 0 && ternary_distances[3] == 2))
 				{
 				ROS_INFO_STREAM("move left, probably rocket edge");
-				cmd_vel_msg.linear.x = cmd_vel_to_pub;
+				y_msg.data= cmd_vel_to_pub;
 				cutout_found = true;
 			}
 			else if (ternary_distances[0] == 2 && ternary_distances[1] == 0 && ternary_distances[2] == 1 && ternary_distances[3] == 1)
 			{
 				ROS_INFO_STREAM("move right, probably rocket edge");
-				cmd_vel_msg.linear.x = -1*cmd_vel_to_pub;
+				y_msg.data= -1*cmd_vel_to_pub;
 				cutout_found = true;
 			}
 		}
@@ -196,13 +197,13 @@ int main(int argc, char ** argv)
 			if(ternary_distances[0] == 1 && (ternary_distances[1] == 1 && ternary_distances[2] == 0 && ternary_distances[3] == 1))
 			{
 				ROS_INFO_STREAM("move left, probably rocket center");
-				cmd_vel_msg.linear.x = cmd_vel_to_pub;
+				y_msg.data= cmd_vel_to_pub;
 				cutout_found = true;
 			}
 			else if (ternary_distances[0] == 1 && ternary_distances[1] == 0 && ternary_distances[2] == 1 && ternary_distances[3] == 1)
 			{
 				ROS_INFO_STREAM("move right, probably rocket center");
-				cmd_vel_msg.linear.x = -1*cmd_vel_to_pub;
+				y_msg.data= -1*cmd_vel_to_pub;
 				cutout_found = true;
 			}
 		}
@@ -210,17 +211,17 @@ int main(int argc, char ** argv)
 		if(!cutout_found)
 		{
 			ROS_INFO_STREAM("cutout not found; can't align");
-			cmd_vel_msg.linear.x = 0;
+			y_msg.data= 0;
 		}
 
 		if(publish)
 		{
-			cmd_vel_pub.publish(cmd_vel_msg);
+			y_command_pub.publish(y_msg);
 		}
 		else if(!publish && publish_last)
 		{
-			cmd_vel_msg.linear.x = 0;
-			cmd_vel_pub.publish(cmd_vel_msg);
+			y_msg.data= 0;
+			y_command_pub.publish(y_msg);
 		}
 		ROS_INFO_STREAM("publish = " << publish);
 

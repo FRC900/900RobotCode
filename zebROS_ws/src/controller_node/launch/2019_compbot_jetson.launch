@@ -107,7 +107,27 @@
 
 	<group ns="align_with_terabee">
 		<rosparam file="$(find behaviors)/config/align_with_terabee.yaml" command="load"/>
+
+		<node name="align_ac_server" pkg="behaviors" type="align_server" output="screen" />
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
+        <node name="distance_pid" pkg="pid" type="controller" >
+            <param name="node_name" value="distance_pid_node" />
+            <param name="Kp" value="5.0" />
+            <param name="Ki" value="0.0" />
+            <param name="Kd" value="0.1" />
+            <param name="upper_limit" value="10" />
+            <param name="lower_limit" value="-10" />
+            <param name="windup_limit" value="10" />
+            <param name="max_loop_frequency" value="100.0" />
+            <param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="distance_pid_x_command" />     
+            <param name="setpoint_topic" value="distance_setpoint" />
+            <param name="topic_from_plant" value="distance_state" />
+        </node>
+		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node">
+			<param name="x_topic" value="distance_pid_x_command" />
+			<param name="y_topic" value="align_with_terabee_y_command" />
+		</node>
 	</group>
     
     <group ns="navX_snap_to_goal_pid">
