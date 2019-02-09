@@ -6,21 +6,21 @@ topic:
   priority: 
 -
   name    : path follower server
-  topic   : path_follower_server/cmd_vel
+  topic   : swerve_drive_controller/cmd_vel
   timeout : 
   priority: 
 -
   name    : teleop joystick comp
-  topic   : teleop_joystick_comp/cmd_vel
+  topic   : swerve_drive_controller/cmd_vel
   timeout : 
   priority: 
 -
   name    : terabee aligning 
-  topic   : align_with_terabee/cmd_vel
+  topic   : swerve_drive_controller/cmd_vel
   timeout : 
   priority: 
 -
   name    : climber server
-  topic   : /frcrobot_jetson/climber_server/cmd_vel
+  topic   : /frcrobot/swerve_drive_controller/cmd_vel
   timeout : 
   priority: 
