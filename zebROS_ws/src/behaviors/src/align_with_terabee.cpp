@@ -122,7 +122,7 @@ int main(int argc, char ** argv)
 			}
 			else
 			{
-				ROS_INFO_STREAM("very confused " << sensors_distances[i]);
+				//ROS_INFO_STREAM("very confused " << sensors_distances[i]);
 			}
 
 		}

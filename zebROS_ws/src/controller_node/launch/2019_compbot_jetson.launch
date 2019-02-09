@@ -110,7 +110,7 @@
 
 	<group ns="align_with_terabee">
 		<rosparam file="$(find behaviors)/config/align_with_terabee.yaml" command="load"/>
-		<!--node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/-->
+		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 	</group>
     
     <group ns="navX_snap_to_goal_pid">
