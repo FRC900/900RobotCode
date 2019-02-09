@@ -37,7 +37,6 @@
 		<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" > 
 			<arg name="port" value="5803"/>
 		</include>
-        
         <node name="talon_throttler" type="throttle" pkg="topic_tools" args="messages /frcrobot_jetson/talon_states 10 /frcrobot_jetson/talon_states_throttled" />
         <node name="joint_throttler" type="throttle" pkg="topic_tools" args="messages /frcrobot_jetson/joint_states 10 /frcrobot_jetson/joint_states_throttled" />
 	</group>
@@ -58,6 +57,9 @@
 
 		<group ns="translator1" if="$(eval arg('joy_or_key')=='joy')">	
 			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" >
+				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw1" />
+				<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_jetson/joystick_states1" />
+
 			</node>
 		</group>
 
@@ -108,7 +110,7 @@
 
 	<group ns="align_with_terabee">
 		<rosparam file="$(find behaviors)/config/align_with_terabee.yaml" command="load"/>
-		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
+		<!--node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/-->
 	</group>
     
     <group ns="navX_snap_to_goal_pid">
