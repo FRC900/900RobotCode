@@ -183,13 +183,15 @@ int main(int argc, char **argv)
 
 	ros::Subscriber joint_states_sub_ = nh.subscribe("/frcrobot_jetson/joint_states", 1, jointStateCallback);
 	ros::Subscriber navX_heading  = nh.subscribe("/frcrobot_rio/navx_mxp", 1, &navXCallback);
-	ros::Publisher snapAnglePub = nh.advertise<std_msgs::Float64MultiArray>("snap_angle_pub", 10);
+	ros::Publisher snapAnglePub = nh.advertise<std_msgs::Float64>("/navX_snap_to_goal_pid/navX_snap_to_goal_setpoint", 10);
+	ros::Publisher navXStatePub = nh.advertise<std_msgs::Float64>("/navX_snap_to_goal_pid/navX_snap_to_goal_state", 10);
 	ROS_INFO("snap_to_angle_init");
 	
-	ros::Rate r(10);
+	ros::Rate r(100);
 	double snap_angle;
 	while(ros::ok()) {
-		std_msgs::Float64MultiArray angle_snap;
+		std_msgs::Float64 angle_snap;
+		std_msgs::Float64 navX_state;
 		if(has_panel) {
 			snap_angle = nearest_angle(hatch_panel_angles);
 		}
@@ -199,9 +201,10 @@ int main(int argc, char **argv)
 		else {
 			snap_angle = nearest_angle(nothing_angles);
 		}
-		angle_snap.data.push_back(snap_angle);
-		angle_snap.data.push_back(angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed)));
+		angle_snap.data = snap_angle;
+		navX_state.data = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
 		snapAnglePub.publish(angle_snap);
+        navXStatePub.publish(navX_state);
 		
 		r.sleep();
 		ros::spinOnce();

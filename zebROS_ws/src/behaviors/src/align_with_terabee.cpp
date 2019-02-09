@@ -2,13 +2,16 @@
 #include <vector>
 #include "teraranger_array/RangeArray.h"
 #include "geometry_msgs/Twist.h"
+#include "std_srvs/SetBool.h"
+#include "std_msgs/Bool.h"
 
 #define NUM_SENSORS 4
 #define MIN_DIST 4
 
-std::vector<bool> senses_panels;
 std::vector<double> sensors_distances;
 std::vector<int> ternary_distances;
+bool publish = false;
+bool publish_last = false;
 double min_dist = 100000000000;
 
 // I get what you're going for here - either the reading is "in" or "out" of the key
@@ -27,34 +30,60 @@ double min_dist = 100000000000;
 // would give ideas about where to move the robot?
 void multiflexCB(const teraranger_array::RangeArray& msg)
 {
-	for(int i = 0; i < msg.ranges.size(); i++)
+	min_dist = 1000000000;
+	for(int i = 0; i < NUM_SENSORS; i++)
 	{
-		sensors_distances[i] = msg.ranges[i].range;
-		min_dist = std::min(min_dist, static_cast<double>(msg.ranges[i].range));
-
-		ROS_INFO_STREAM("i = " << i << " range = " << msg.ranges[i].range);
 		if(msg.ranges[i].range == msg.ranges[i].range)
-			senses_panels[i] = (msg.ranges[i].range < 1.0);
+		{
+			sensors_distances[i] = msg.ranges[i].range;
+			min_dist = std::min(min_dist, static_cast<double>(msg.ranges[i].range));
+			ROS_INFO_STREAM("i = " << i << " range = " << sensors_distances[i]);
+		}
 		else
-			senses_panels[i] = false;
+		{
+			sensors_distances[i] = 1000000000;
+		}
 	}
+}
+
+bool startStopAlign(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+{
+	publish = req.data;
+	res.success = true;
+	ROS_INFO_STREAM("running/stopping align with terabee " << publish);
+	return 0;
+}
+
+void startStopCallback(std_msgs::Bool msg)
+{
+	publish = msg.data;
 }
 
 int main(int argc, char ** argv)
 {
 	ros::init(argc, argv, "align_with_terabee");
 	ros::NodeHandle n;
+	ros::NodeHandle n_params(n, "align_with_terabee_params");
 
-	senses_panels.resize(NUM_SENSORS);
+	double dist_to_back_panel;
+	double error_threshhold;
+	double cmd_vel_to_pub;
+
+	if(!n_params.getParam("dist_to_back_panel", dist_to_back_panel))
+		ROS_ERROR_STREAM("Could not read dist_to_back_panel in align_with_terabee");
+	if(!n_params.getParam("cmd_vel_to_pub", cmd_vel_to_pub))
+		ROS_ERROR_STREAM("Could not read cmd_vel_to_pub in align_with_terabee");
+	if(!n_params.getParam("error_threshhold", error_threshhold))
+		ROS_ERROR_STREAM("Could not read error_threshhold in align_with_terabee");
+
+
 	sensors_distances.resize(NUM_SENSORS);
 	ternary_distances.resize(NUM_SENSORS);
 
-	int location;
-	double dist_to_back_panel = 0.2;
-	double error_threshhold = 0.05;
-
 	ros::Subscriber terabee_sub = n.subscribe("multiflex_1/ranges_raw", 1, &multiflexCB);
 	ros::Publisher cmd_vel_pub = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+	ros::ServiceServer start_stop_service = n.advertiseService("align_with_terabee", startStopAlign);
+	ros::Subscriber start_stop_sub = n.subscribe("align_with_terabee_pub", 1, &startStopCallback);
 
 	geometry_msgs::Twist cmd_vel_msg;
 	cmd_vel_msg.linear.x = 0;
@@ -68,7 +97,13 @@ int main(int argc, char ** argv)
 
 	while(ros::ok())
 	{
-		ROS_INFO_STREAM("0: " << senses_panels[0] << "1: " << senses_panels[1] << "2: " << senses_panels[2] << "3: " << senses_panels[3]); 
+		if(sensors_distances[0] == 0.0 && sensors_distances[1] == 0.0 && sensors_distances[2] == 0.0 && sensors_distances[3] == 0.0)
+		{
+			ROS_INFO_STREAM_THROTTLE(1, "No data is being received from the Terabee sensors. Skipping this message");
+			ros::spinOnce();
+			r.sleep();
+			continue;
+		}
 
 		for(int i = 0; i < sensors_distances.size(); i++)
 		{
@@ -86,45 +121,110 @@ int main(int argc, char ** argv)
 				ternary_distances[i] = 0;
 			}
 			else
-				ROS_INFO_STREAM("very confused");
+			{
+				ROS_INFO_STREAM("very confused " << sensors_distances[i]);
+			}
 
 		}
+		ROS_INFO_STREAM("minimum_distance = " << min_dist);
+		ROS_INFO_STREAM("ternary_distances 0: " << ternary_distances[0] << " 1: " << ternary_distances[1] << " 2: " << ternary_distances[2] << " 3: " << ternary_distances[3]); 
 
 		bool cutout_found = false;
-		for(int i = 0; i < NUM_SENSORS - 1; i++)
+
+		//the robot is aligned
+		if(ternary_distances[0] == 0 && ternary_distances[1] == 1 && ternary_distances[2] == 1 && ternary_distances[3] == 0)
 		{
-			if((ternary_distances[i] == 1) && (ternary_distances[i+1] == 1))
+			ROS_INFO_STREAM("ALIGNED");
+			cmd_vel_msg.linear.x = 0.0;
+			cutout_found = true;
+		}
+
+		//cutout seen in leftmost or rightmost two sensors, and panel seen in other two
+		if(!cutout_found)
+		{
+			if(ternary_distances[0] == 0 && ternary_distances[1] == 0 && ternary_distances[2] == 1 && ternary_distances[3] == 1)
 			{
-				location = i;
-				if(cutout_found)
-					ROS_ERROR_STREAM_THROTTLE(1, "two cutouts found????");
+				ROS_INFO_STREAM("move right, either cargo or rocket");
+				cmd_vel_msg.linear.x = -1*cmd_vel_to_pub;
+				cutout_found = true;
+			}
+			else if(ternary_distances[0] == 1 && ternary_distances[1] == 1 && ternary_distances[2] == 0 && ternary_distances[3] == 0)
+			{
+				ROS_INFO_STREAM("move left, either cargo or rocket");
+				cmd_vel_msg.linear.x = cmd_vel_to_pub;
 				cutout_found = true;
 			}
 		}
-		ROS_INFO_STREAM("0: " << ternary_distances[0] << " 1: " << ternary_distances[1] << " 2: " << ternary_distances[2] << " 3: " << ternary_distances[3]); 
-		ROS_INFO_STREAM("location = " << location);
 
-		// TODO : calcs using only ints will result in an int,
-		// no need for floor here.
-		if(location == floor((NUM_SENSORS-1)/2))
+		//only one sensor senses the cutout, and then the other three see the panel
+		if(!cutout_found)
 		{
-			ROS_INFO_STREAM("PERFECT");
+			if(ternary_distances[0] == 1 && (ternary_distances[1] == 0 && ternary_distances[2] == 0 && ternary_distances[3] == 0))
+			{
+				ROS_INFO_STREAM("move left, probably cargo ship");
+				cmd_vel_msg.linear.x = cmd_vel_to_pub;
+				cutout_found = true;
+			}
+			else if (ternary_distances[0] == 0 && ternary_distances[1] == 0 && ternary_distances[2] == 0 && ternary_distances[3] == 1)
+			{
+				ROS_INFO_STREAM("move right, probably cargo ship");
+				cmd_vel_msg.linear.x = -1*cmd_vel_to_pub;
+				cutout_found = true;
+			}
+		}
+
+		//the robot senses a cutout with two sensors, and then the panel, and then really far
+		if(!cutout_found)
+		{
+			if(ternary_distances[0] == 1 && (ternary_distances[1] == 1 && ternary_distances[2] == 0 && ternary_distances[3] == 2))
+				{
+				ROS_INFO_STREAM("move left, probably rocket edge");
+				cmd_vel_msg.linear.x = cmd_vel_to_pub;
+				cutout_found = true;
+			}
+			else if (ternary_distances[0] == 2 && ternary_distances[1] == 0 && ternary_distances[2] == 1 && ternary_distances[3] == 1)
+			{
+				ROS_INFO_STREAM("move right, probably rocket edge");
+				cmd_vel_msg.linear.x = -1*cmd_vel_to_pub;
+				cutout_found = true;
+			}
+		}
+
+		//the robot senses a cutout with two sensors, and then the panel, and then what SEEMS like a cutout but is actually the other side of the rocket
+		if(!cutout_found)
+		{
+			if(ternary_distances[0] == 1 && (ternary_distances[1] == 1 && ternary_distances[2] == 0 && ternary_distances[3] == 1))
+			{
+				ROS_INFO_STREAM("move left, probably rocket center");
+				cmd_vel_msg.linear.x = cmd_vel_to_pub;
+				cutout_found = true;
+			}
+			else if (ternary_distances[0] == 1 && ternary_distances[1] == 0 && ternary_distances[2] == 1 && ternary_distances[3] == 1)
+			{
+				ROS_INFO_STREAM("move right, probably rocket center");
+				cmd_vel_msg.linear.x = -1*cmd_vel_to_pub;
+				cutout_found = true;
+			}
+		}
+
+		if(!cutout_found)
+		{
+			ROS_INFO_STREAM("cutout not found; can't align");
 			cmd_vel_msg.linear.x = 0;
 		}
-		else if(location < floor((NUM_SENSORS-1)/2))
+
+		if(publish)
 		{
-			ROS_INFO_STREAM("move left");
-			cmd_vel_msg.linear.x = 0.1; // TODO : this might not be enough to get the robot to move?
+			cmd_vel_pub.publish(cmd_vel_msg);
 		}
-		else
+		else if(!publish && publish_last)
 		{
-			ROS_INFO_STREAM("move right");
-			cmd_vel_msg.linear.x = -0.1;
+			cmd_vel_msg.linear.x = 0;
+			cmd_vel_pub.publish(cmd_vel_msg);
 		}
+		ROS_INFO_STREAM("publish = " << publish);
 
-
-		cmd_vel_pub.publish(cmd_vel_msg);
-
+		publish_last = publish;
 		ros::spinOnce();
 		r.sleep();
 	}
