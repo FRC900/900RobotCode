@@ -62,9 +62,8 @@
 
 			</node>
 		</group>
-
-
 	</group>
+
 	<!-- Actionlib servers!!! -->
 	<!-- Include this at the top level so all actionlib servers can find it -->
 	<rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
