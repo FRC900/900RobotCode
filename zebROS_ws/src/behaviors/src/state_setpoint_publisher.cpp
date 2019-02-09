@@ -15,17 +15,30 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Matrix3x3.h"
 
+// TODO : nit, but explicitily initializing to false
+// will make it obvious what the intended use of this is
 bool publish;
 
 double navx_angle_state;
 double distance_state;
 
-// TODO : none of these should be global
+ // TODO : all of these can be locals - in general
+ // put declarations as close to their use as possible
+ // Makes it easer to keep track of what's used for what
 std_msgs::Float64 orient_state_msg;
 std_msgs::Float64 y_state_msg;
 std_msgs::Float64 orient_setpoint_msg;
 std_msgs::Float64 y_target_msg;
 std_msgs::Bool pid_enable_msg;
+
+// TODO : same with these
+ros::Subscriber world_vector_sub;
+ros::Publisher orient_setpoint;
+ros::Publisher orient_state;
+ros::Publisher y_setpoint;
+ros::Publisher y_state;
+ros::Publisher pid_enable;
+ros::ServiceServer run_align;
 
 double distance_between_sensors = 0.3937;
 
@@ -72,8 +85,8 @@ int main(int argc, char ** argv)
 	orient_setpoint_msg.data = 0;
 
 	//state subscribers
-	ros::Subscriber distance_sub = nh.subscribe("multiflex_1/ranges_raw", 1, distanceCB);
-	ros::Subscriber angle_sub = nh.subscribe("navx_mxp", 1, jointStatesCB);
+	ros::Subscriber distance_sub = nh.subscribe("/multiflex_1/ranges_raw", 1, distanceCB);
+	ros::Subscriber angle_sub = nh.subscribe("/frcrobot_rio/navx_mxp", 1, jointStatesCB);
 
 	//required pid_enable topic for the pid node
 	// TODO : consider how namespaces are doing to work, since I assume

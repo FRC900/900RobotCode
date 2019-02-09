@@ -59,9 +59,11 @@
 #include <std_msgs/Bool.h>
 #include <std_msgs/UInt16.h>
 #include <std_srvs/Empty.h>
+#include <std_srvs/SetBool.h>
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <tf/tfMessage.h>
+#include <talon_state_controller/TalonState.h>
 
 #include <realtime_tools/realtime_buffer.h>
 #include <realtime_tools/realtime_publisher.h>
@@ -183,15 +185,18 @@ class TalonSwerveDriveController
 
 		// True if running cmd_vel, false if running profile
 		std::atomic<bool> cmd_vel_mode_;
+		std::atomic<bool> dont_set_angle_mode_;
 		//realtime_tools::RealtimeBuffer<bool> wipe_all_; //TODO, add this functionality
 		realtime_tools::RealtimeBuffer<Commands> command_;
 
 		ros::Subscriber sub_command_;
+		ros::Subscriber talon_states_sub_;
 
 		ros::ServiceServer motion_profile_serv_;
 		ros::ServiceServer change_center_of_rotation_serv_;
 		ros::ServiceServer brake_serv_;
 		ros::ServiceServer wheel_pos_serv_;
+		ros::ServiceServer dont_set_angle_mode_serv_;
 
 		std::array<std::array<hardware_interface::CustomProfilePoint, 2>, WHEELCOUNT> holder_points_;
 		std::array<std::array<std::vector<hardware_interface::CustomProfilePoint>, 2>, WHEELCOUNT> full_profile_;
@@ -236,8 +241,8 @@ class TalonSwerveDriveController
 		size_t wheel_joints_size_;
 
 		/// Speed limiters:
-		Commands last1_cmd_;
-		Commands last0_cmd_;
+		//Commands last1_cmd_;
+		//Commands last0_cmd_;
 
 		/// Publish limited velocity:
 		bool publish_cmd_;
@@ -256,10 +261,12 @@ class TalonSwerveDriveController
 		 * \param command Velocity command message (twist)
 		 */
 		void cmdVelCallback(const geometry_msgs::Twist &command);
+		void talonStatesCB(const talon_state_controller::TalonState &talon_state);
 		bool motionProfileService(talon_swerve_drive_controller::MotionProfilePoints::Request &req, talon_swerve_drive_controller::MotionProfilePoints::Response &res);
 		bool changeCenterOfRotationService(talon_swerve_drive_controller::SetXY::Request &req, talon_swerve_drive_controller::SetXY::Response &res);
 		bool brakeService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 		bool wheelPosService(talon_swerve_drive_controller::WheelPos::Request &req, talon_swerve_drive_controller::WheelPos::Response &res);
+		bool dontSetAngleModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
 
 		/**
 		 * \brief Get the wheel names from a wheel param

@@ -76,6 +76,7 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 						  hFov * (M_PI / 180.) * ((float)framePtr->rows / framePtr->cols));
 		gd = new GoalDetector(fov, framePtr->size(), !batch);
 	}
+	//Send current color and depth image to the actual GoalDetector
 	gd->findBoilers(*framePtr, *depthPtr);
 	Mat tempFrame(framePtr->clone());
 	gd->drawOnFrame(tempFrame, gd->getContours(tempFrame));

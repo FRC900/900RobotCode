@@ -1,11 +1,4 @@
-actionlib_intake_params:
-    linebreak_debounce_iterations: 5
-    spit_out_time: 1
-actionlib_forearm_params:
-    arm_angle_deadzone: .02
-actionlib_arm_params:
-    intake_timeout: 5
-    forearm_timeout: 4
-teleop_params:
-    intake_power: 1
-    intake_hold_power: 0.1
+# Global params for all actionlib servers
+actionlib_params:
+    linebreak_debounce_iterations: 10
+    wait_for_server_timeout: 5

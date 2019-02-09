@@ -946,6 +946,12 @@ class TalonControllerInterface
 			talon_->setMode(mode);
 		}
 
+		// Set the mode of the motor controller
+		hardware_interface::TalonMode getMode(void) const
+		{
+			return talon_.state()->getTalonMode();
+		}
+
 		// Pick the config slot (0 or 1) for PIDF/IZone values
 		virtual bool setPIDFSlot(int slot)
 		{
@@ -1182,6 +1188,11 @@ class TalonControllerInterface
 			return talon_.state()->getPosition();
 		}
 
+		double getSpeed(void) const
+		{
+			return talon_.state()->getSpeed();
+		}
+
 		bool getForwardLimitSwitch(void) const
 		{
 			return talon_.state()->getForwardLimitSwitch();
@@ -1302,6 +1313,11 @@ class TalonControllerInterface
         {
             talon_->overwriteCustomProfilePoints(points, slot);
         }
+
+		hardware_interface::CustomProfileStatus getCustomProfileStatus(void)
+		{
+			return talon_.state()->getCustomProfileStatus();
+		}
 
 		//Does the below function need to be accessable?
 		//#if 0
