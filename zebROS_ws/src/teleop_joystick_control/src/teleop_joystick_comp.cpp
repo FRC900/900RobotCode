@@ -185,11 +185,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonA
 		if(joystick_states_array[0].buttonAPress)
 		{
-			ROS_INFO_STREAM("Joystick1: buttonAPress");
-			behaviors::ElevatorGoal goal;
-			goal.setpoint_index = INTAKE;
-			goal.place_cargo = false;
-			elevator_ac->sendGoal(goal);
+			ROS_INFO_STREAM("Joystick1: buttonAPress - Cargo Intake");
+			behaviors::IntakeGoal goal;
+			goal.motor_power = 1;
+			intake_cargo_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonAButton)
 		{
@@ -208,11 +207,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonB
 		if(joystick_states_array[0].buttonBPress)
 		{
-			ROS_INFO_STREAM("Joystick1: buttonAPress");
-			behaviors::ElevatorGoal goal;
+			ROS_INFO_STREAM("Joystick1: buttonBPress - Cargo Outtake");
+			behaviors::PlaceGoal goal;
 			goal.setpoint_index = CARGO_SHIP;
-			goal.place_cargo = false;
-			elevator_ac->sendGoal(goal);
+			outtake_cargo_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonBButton)
 		{
@@ -231,10 +229,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonX
 		if(joystick_states_array[0].buttonXPress)
 		{
-			ROS_INFO_STREAM("Joystick1: buttonXPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			ROS_INFO_STREAM("Joystick1: buttonXPress - Panel Intake");
+			behaviors::IntakeGoal goal;
+			goal.motor_power = 0;
+			intake_hatch_panel_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonXButton)
 		{
@@ -253,10 +251,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonY
 		if(joystick_states_array[0].buttonYPress)
 		{
-			ROS_INFO_STREAM("Joystick1: buttonYPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			ROS_INFO_STREAM("Joystick1: buttonYPress - Panel Outtake");
+			behaviors::PlaceGoal goal;
+			goal.setpoint_index = CARGO_SHIP;
+			outtake_hatch_panel_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonYButton)
 		{
