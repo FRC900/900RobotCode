@@ -52,7 +52,7 @@ int main(int argc, char ** argv)
     }
 
 
-	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("/frcrobot_jetson/publish_pid_cmd_vel/cmd_vel", 1);
+	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 
 	ros::Rate r(100);
 
