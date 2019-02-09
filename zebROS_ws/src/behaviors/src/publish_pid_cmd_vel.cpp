@@ -10,6 +10,9 @@ std::string orient_topic;
 std::string x_topic;
 std::string y_topic;
 
+ros::Subscriber orient_pid_sub;
+ros::Subscriber x_pid_sub;
+ros::Subscriber y_pid_sub;
 void orientCB(const std_msgs::Float64& msg)
 {
 	time_since_command = ros::Time::now();
@@ -36,19 +39,22 @@ int main(int argc, char ** argv)
         ROS_ERROR("Could not read orient_topic in publish_pid_cmd_vel");
     }
     else {
-        ros::Subscriber orient_pid_sub = nh.subscribe(orient_topic, 1, &orientCB);
+		ROS_WARN_STREAM("Subscribing to: " << orient_topic);
+        orient_pid_sub = nh.subscribe(orient_topic, 1, &orientCB);
     }
     if(!nh_private_params.getParam("x_topic", x_topic)) {
-        ROS_ERROR("Could not read x_topic in publish_pid_cmd_vel");
+        ROS_ERROR("aahaaaaaaaaaaaaaaaaah topic in publish_pid_cmd_vel");
     }
     else {
-        ros::Subscriber x_pid_sub = nh.subscribe(x_topic, 1, &xCB);
+		ROS_WARN_STREAM("Subscribing to: %s" << x_topic);
+        x_pid_sub = nh.subscribe(x_topic, 1, &xCB);
     }
     if(!nh_private_params.getParam("y_topic", y_topic)) {
         ROS_ERROR("Could not read y_topic in publish_pid_cmd_vel");
     }
     else {
-        ros::Subscriber y_pid_sub = nh.subscribe(y_topic, 1, &yCB);
+		ROS_WARN_STREAM("Subscribing to: %s" << y_topic);
+        y_pid_sub = nh.subscribe(y_topic, 1, &yCB);
     }
 
 

@@ -123,11 +123,11 @@
 		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" />
         <node name="navX_snap_to_goal_pid" pkg="pid" type="controller" >
             <param name="node_name" value="navX_snap_to_goal_pid_node" />
-            <param name="Kp" value="5.0" />
+            <param name="Kp" value="2.0" />
             <param name="Ki" value="0.0" />
             <param name="Kd" value="0.1" />
-            <param name="upper_limit" value="10" />
-            <param name="lower_limit" value="-10" />
+            <param name="upper_limit" value="4" />
+            <param name="lower_limit" value="4" />
             <param name="windup_limit" value="10" />
             <param name="max_loop_frequency" value="100.0" />
             <param name="min_loop_frequency" value="100.0" />
@@ -135,13 +135,13 @@
             <param name="setpoint_topic" value="navX_snap_to_goal_setpoint" />
             <param name="topic_from_plant" value="navX_snap_to_goal_state" />
         </node>
-		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node">
+		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
 			<param name="orient_topic" value="orient_pid/orient_control_effort" />
 		</node>
     </group>
 
 	<group ns="orient_pid">
-		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" />
+		<!--node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" /-->
 		<node name="state_setpoint_pub_node" pkg="behaviors" type="state_setpoint_publisher_node" />
 
 		<node name="orient_pid" pkg="pid" type="controller" >
