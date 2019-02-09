@@ -34,7 +34,7 @@ class IntakeHatchPanelAction
 		IntakeHatchPanelAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&IntakeHatchPanelAction::executeCB, this, _1), false),
 			action_name_(name),
-			ac_elevator_("elevator_server", true)
+			ac_elevator_("/elevator/elevator_server", true)
 	{
 		//GoalDetectSub_ = nh_.subscribe("goal_detect_msg",1, &IntakeHatchPanelAction::goalDetectCallback, this) //TODO make sure this is linked up correctly
 		/* std::map<std::string, std::string> service_connection_header;
@@ -49,7 +49,6 @@ class IntakeHatchPanelAction
 
 		//initialize the client being used to call the controller
 		panel_controller_client_ = nh_.serviceClient<panel_intake_controller::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command", false, service_connection_header);
-
 	}
 
 		~IntakeHatchPanelAction(void) {}
@@ -195,9 +194,9 @@ int main(int argc, char** argv)
 
 	//get config values
 	ros::NodeHandle n;
-	ros::NodeHandle n_panel_params(n, "actionlib_hatch_panel_params");
+	ros::NodeHandle n_panel_params(n, "actionlib_hatch_panel_intake_params");
 
-	if (!n.getParam("actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
+	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 		ROS_ERROR("Could not read wait_for_server_timeout in panel_intake_sever");
 	if (!n_panel_params.getParam("elevator_timeout", elevator_timeout))
 		ROS_ERROR("Could not read elevator_timeout in panel_intake_sever");

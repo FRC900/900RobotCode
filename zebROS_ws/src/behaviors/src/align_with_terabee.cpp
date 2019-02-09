@@ -80,8 +80,8 @@ int main(int argc, char ** argv)
 	sensors_distances.resize(NUM_SENSORS);
 	ternary_distances.resize(NUM_SENSORS);
 
-	ros::Subscriber terabee_sub = n.subscribe("multiflex_1/ranges_raw", 1, &multiflexCB);
-	ros::Publisher cmd_vel_pub = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+	ros::Subscriber terabee_sub = n.subscribe("/multiflex_1/ranges_raw", 1, &multiflexCB);
+	ros::Publisher cmd_vel_pub = n.advertise<geometry_msgs::Twist>("/frcrobot_jetson/swerve_drive_controller/cmd_vel", 1);
 	ros::ServiceServer start_stop_service = n.advertiseService("align_with_terabee", startStopAlign);
 	ros::Subscriber start_stop_sub = n.subscribe("align_with_terabee_pub", 1, &startStopCallback);
 

@@ -38,12 +38,9 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 			                elevator_controller::ElevatorSrv::Response &res);
 
         private:
-            std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
             talon_controllers::TalonControllerInterface elevator_joint_; //interface for the talon joint
 
             realtime_tools::RealtimeBuffer<int> position_command_; //this is the buffer for percent output commands to be published
-            realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
-
             ros::ServiceServer elevator_service_; //service for receiving commands
 
 			bool zeroed_;
@@ -51,9 +48,6 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 			double initial_position_;
 			double elevator_zeroing_percent_output_;
 
-			double elevator_sensor_bad_distance_;
-
-			size_t moving_down_count_;
 			ros::Time last_time_down_;
 			double elevator_zeroing_timeout_;
 }; //class
