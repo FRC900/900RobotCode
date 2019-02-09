@@ -50,7 +50,6 @@ void navXCallback(const sensor_msgs::Imu &navXState)
 
     if (yaw == yaw) // ignore NaN results
         navX_angle.store(-1*yaw, std::memory_order_relaxed);
-	
 }
 
 void jointStateCallback(const sensor_msgs::JointState &joint_state)
@@ -186,7 +185,7 @@ int main(int argc, char **argv)
 	ros::Publisher snapAnglePub = nh.advertise<std_msgs::Float64>("/navX_snap_to_goal_pid/navX_snap_to_goal_setpoint", 10);
 	ros::Publisher navXStatePub = nh.advertise<std_msgs::Float64>("/navX_snap_to_goal_pid/navX_snap_to_goal_state", 10);
 	ROS_INFO("snap_to_angle_init");
-	
+
 	ros::Rate r(100);
 	double snap_angle;
 	while(ros::ok()) {
@@ -205,7 +204,7 @@ int main(int argc, char **argv)
 		navX_state.data = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
 		snapAnglePub.publish(angle_snap);
         navXStatePub.publish(navX_state);
-		
+
 		r.sleep();
 		ros::spinOnce();
 	}
