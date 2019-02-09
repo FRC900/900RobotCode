@@ -4,6 +4,7 @@
 #include <arm_controller/CurArmCommand.h>
 #include <arm_controller/SetArmState.h>
 #include <talon_state_controller/TalonState.h>
+#include "behaviors/enumerated_elevator_indices.h"
 
 
 double arm_angle_deadzone;
@@ -13,7 +14,8 @@ class ForearmAction
         ros::NodeHandle nh_;
         actionlib::SimpleActionServer<behaviors::ForearmAction> as_;
         std::string action_name_;
-        behaviors::ForearmFeedback feedback_;
+        behaviors::ForearmFeedback f
+			eedback_;
         behaviors::ForearmResult result_;
 
         

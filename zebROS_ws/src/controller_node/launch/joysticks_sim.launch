@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<launch>
+
+	<!-- GDB functionality -->
+	<arg name="debug" default="false" />
+	<arg unless="$(arg debug)" name="launch_prefix" value="" />
+	<arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+	<arg name="hw_or_sim" default="hw" />
+	<arg name="joy_or_key" default="joy" />
+	<arg name="static_map" default="True"/>
+	
+	<group if="$(eval arg('joy_or_key')=='joy')">
+			<group ns="joy0">
+			<node name="joy_node" pkg="joy" type="joy_node" output="screen">
+				<param name="autorepeat_rate" type="double" value="100"/>
+				<param name="coalesce_rate" type="double" value="0.01"/>
+			</node>
+			<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
+				<remap from="joy_in" to="/joy0/joy" />
+				<remap from="joy_out" to="/frcrobot_rio/joystick_states_raw"/>
+				<rosparam command="load" file="$(find teleop_joystick_control)/config/joystick_remap.yaml"/>
+			</node>
+		</group>	
+		<group ns="joy1">
+			<node name="joy_node" pkg="joy" type="joy_node" output="screen">
+				<param name="dev" value="/dev/input/js1"/>
+				<param name="autorepeat_rate" type="double" value="100"/>
+				<param name="coalesce_rate" type="double" value="0.01"/>
+			</node>
+			<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
+				<remap from="joy_in" to="/joy1/joy" />
+				<remap from="joy_out" to="/frcrobot_rio/joystick_states_raw1"/>
+				<rosparam command="load" file="$(find teleop_joystick_control)/config/joystick_remap.yaml"/>
+			</node>
+		</group>
+	</group>
+</launch>

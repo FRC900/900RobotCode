@@ -3,9 +3,12 @@ project(teleop_joystick_control)
 
 include ("../cmake_modules/CMakeOpt.cmake")
 
+if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   roscpp
+  behaviors
   control_msgs
   actionlib
   std_srvs
@@ -70,6 +73,17 @@ add_dependencies(translate_joystick_data_node
   ${catkin_EXPORTED_TARGETS}
 )
 
+add_executable(snap_to_nearest_goal src/snap_to_nearest_goal.cpp)
+set_target_properties(snap_to_nearest_goal PROPERTIES OUTPUT_NAME 
+snap_to_nearest_goal PREFIX "")
+target_link_libraries(snap_to_nearest_goal
+  ${catkin_LIBRARIES}
+)
+
+add_dependencies(snap_to_nearest_goal
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
 ## TOOLS ------------------------------------------------------
 
 # Install ------------------------------------------------------------
@@ -88,4 +102,8 @@ install(TARGETS teleop_joystick_comp translate_joystick_data_node
 install(DIRECTORY
 	config
 	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+	PATTERN *~ EXCLUDE
+	PATTERN *.sw? EXCLUDE
 )
+
+endif()

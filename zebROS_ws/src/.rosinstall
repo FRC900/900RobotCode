@@ -46,4 +46,8 @@
     local-name: sick_tim
     uri: https://github.com/uos/sick_tim.git
     version: kinetic
+- git:
+    local-name: teraranger
+    uri: https://github.com/Terabee/teraranger.git
+    version: 2.0.0
 

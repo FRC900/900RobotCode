@@ -15,13 +15,32 @@ hardware_interface:
        # controlled by the Jetson won't run. Use an unused CAN Id so that
        # the Rio sending 0'd control frames to it won't interfere with
        # operation of real Talons
-       - {name: dummy_talon, type: can_talon_srx, can_id: 1, local: false}
-       - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1, local_hardware: true, local_update: false}
+       - {name: dummy_talon, type: can_talon_srx, can_id: 0, local: false}
+
+       # Solenoids which are updated from controllers on the Jetson need
+       # to be configured here so they can write to hardware attached
+       # to the Rio
+       - {name: cargo_intake_arm_joint, type: solenoid, pcm: 0, id: 2, local_hardware: true, local_update: false}
+       - {name: cargo_outtake_kicker_joint, type: solenoid, pcm: 0, id: 3, local_hardware: true, local_update: false}
+       - {name: cargo_outtake_clamp_joint, type: solenoid, pcm: 0, id: 4, local_hardware: true, local_update: false}
+
+       - {name: climber_feet_retract, type: solenoid, pcm: 0, id: 0, local_hardware: true, local_update: false}
+       - {name: climber_release_endgame, type: solenoid, pcm: 0, id: 1, local_hardware: true, local_update: false}
+
+       - {name: panel_clamp_release, type: solenoid, pcm: 0, id: 5, local_hardware: true, local_update: false}
+       - {name: panel_push_extend, type: solenoid, pcm: 0, id: 6, local_hardware: true, local_update: false}
+
+       - {name: panel_intake_linebreak_1, type: digital_input, dio_channel: 0, invert: true, local: true}
+       - {name: panel_intake_linebreak_2, type: digital_input, dio_channel: 1, invert: true, local: true}
+       - {name: panel_intake_linebreak_3, type: digital_input, dio_channel: 2, invert: true, local: true}
+       - {name: panel_intake_linebreak_4, type: digital_input, dio_channel: 3, invert: true, local: true}
+
+       - {name: cargo_intake_linebreak_1, type: digital_input, dio_channel: 4, invert: true, local: true}
          
+       - {name: intake_line_break, type: digital_input, dio_channel: 0, invert: true, local: true}
        - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}
        - {name: joystick, type: joystick, id: 0, local: true}
        - {name: joystick_rumble, type: rumble, rumble_port: 0}
-         #- {name: compressor, type: compressor, pcm_id: 0}
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
          
@@ -79,6 +98,3 @@ robot_controller_state_controller:
    type: robot_controller_state_controller/RobotControllerStateController
    publish_rate: 100
 
-compressor_controller:
-    type: position_controllers/JointPositionController
-    joint: compressor

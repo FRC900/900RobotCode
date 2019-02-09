@@ -23,6 +23,10 @@
   <arg name="whitebalance" default="50" />
   <arg name="auto_whitebalance" default="true" />
 
+  <arg name="saturation" default="-1" />
+  <arg name="gain" default="-1" />
+  <arg name="exposure" default="-1" />
+  <arg name="whitebalance" default="-1" />
   <arg name="name" default="zed_goal" />
 
   <arg name="down_sample" default="False" />

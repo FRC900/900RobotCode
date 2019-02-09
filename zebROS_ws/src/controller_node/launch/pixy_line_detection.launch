@@ -5,10 +5,10 @@
     <arg name="hfov" default="60" />
     <arg name="sub_rate" default="1" />
     <arg name="pub_rate" default="1" />
-    <arg name="frameWidth" default="315" />
-    <arg name="frameHeight" default="207" />
-    <arg name="camera_height" default="5" />
-    <arg name="angle" default="45" />
+    <arg name="frameWidth" default="78" />
+    <arg name="frameHeight" default="51" />
+    <arg name="camera_height" default="0.4" />
+    <arg name="angle" default="25" />
 
 	<node name="pixy_get_lines_node" pkg="pixy_get_lines" type="pixy_get_lines_node" output="screen">
 	</node>

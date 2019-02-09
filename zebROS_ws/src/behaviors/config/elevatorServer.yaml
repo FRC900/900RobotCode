@@ -1,0 +1,22 @@
+actionlib_lift_params:
+    cargo:
+        intake_position: 0.0
+        cargo_ship_position: 0.5
+        rocket1_position: 1.0
+        rocket2_position: 2.0
+        rocket3_position: 3.0
+    hatch:
+        intake_position: 0.0
+        cargo_ship_position: 0.5
+        rocket1_position: 1.0
+        rocket2_position: 2.0
+        rocket3_position: 3.0
+    climber:
+        deploy_position: -1.0
+        climb_position: -1.0
+        deploy_timeout: -1.0
+        climb_timeout: -1.0
+    max_speed: -1.0
+    timeout: 4
+    elevator_position_deadzone: 1.0
+

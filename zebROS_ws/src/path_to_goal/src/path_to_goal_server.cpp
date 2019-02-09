@@ -8,6 +8,7 @@
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
 #include <swerve_point_generator/PathFollowAction.h>
+#include <angles/angles.h>
 
 // TODO : all of these should be members of PathAction.  Move their
 // initialization from main into the class constructor
@@ -146,10 +147,12 @@ public:
 		srvBaseTrajectory.request.points[0].velocities.push_back(0);
 		srvBaseTrajectory.request.points[0].accelerations.push_back(0);
 		//z-rotation
-		if (goal->rotation < 0.001)
-			srvBaseTrajectory.request.points[0].positions.push_back(0.001);
+		double rotation = goal->rotation;
+		rotation = angles::normalize_angle(rotation);
+		if (std::abs(rotation) < 0.001)
+			srvBaseTrajectory.request.points[0].positions.push_back(rotation < 0 ? -0.001 : 0.001);
 		else
-			srvBaseTrajectory.request.points[0].positions.push_back(goal->rotation);
+			srvBaseTrajectory.request.points[0].positions.push_back(rotation);
 		srvBaseTrajectory.request.points[0].velocities.push_back(0); //velocity at the end point
 		srvBaseTrajectory.request.points[0].accelerations.push_back(0); //acceleration at the end point
 		//time for profile to run
@@ -213,10 +216,10 @@ int main(int argc, char** argv)
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = 1;
 	point_gen = n.serviceClient<swerve_point_generator::FullGenCoefs>("/point_gen/command", false, service_connection_header);
-	swerve_controller = n.serviceClient<talon_swerve_drive_controller::MotionProfilePoints>("swerve_drive_controller/run_profile", false, service_connection_header);
+	swerve_controller = n.serviceClient<talon_swerve_drive_controller::MotionProfilePoints>("/frcrobot_jetson/swerve_drive_controller/run_profile", false, service_connection_header);
 	spline_gen = n.serviceClient<base_trajectory::GenerateSpline>("/base_trajectory/spline_gen", false, service_connection_header);
 	VisualizeService = n.serviceClient<robot_visualizer::ProfileFollower>("visualize_auto", false, service_connection_header);
-	auto talon_sub = n.subscribe("talon_states", 10, talonStateCallback);
+	auto talon_sub = n.subscribe("/frcrobot_jetson/talon_states", 10, talonStateCallback);
     auto ac = std::make_shared<actionlib::SimpleActionClient<swerve_point_generator::PathFollowAction>>("path_follower", true);
 
 	ROS_INFO_STREAM("waiting for server... ");

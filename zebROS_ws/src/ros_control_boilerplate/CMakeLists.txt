@@ -29,6 +29,13 @@ add_message_files (
   AutoModeStatus.msg
 )
 
+
+add_service_files (
+  FILES
+  set_limit_switch.srv
+  LineBreakSensors.srv
+)
+
 generate_messages(
   DEPENDENCIES
   std_msgs

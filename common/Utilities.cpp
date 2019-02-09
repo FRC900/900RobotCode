@@ -79,7 +79,7 @@ namespace zv_utils {
 		        }
 		    }
 		}
-		// Need to debug this more but for now fix it 
+		// Need to debug this more but for now fix it
 		// by returning a negative number (i.e. failure)
 		// if it happens
 		float min_dist = sum_min / num_pix_min;
@@ -91,7 +91,7 @@ namespace zv_utils {
 		return std::make_pair(min_dist, max_dist);
 	}
 
-	float avgOfDepthMat(const cv::Mat& img, const cv::Mat& mask, const cv::Rect& bound_rect) 
+	float avgOfDepthMat(const cv::Mat& img, const cv::Mat& mask, const cv::Rect& bound_rect)
 	{
 		double sum = 0.0;
 		unsigned count = 0;
@@ -127,7 +127,6 @@ namespace zv_utils {
 		Eigen::Vector3d rpy = m.rotation().eulerAngles(0, 1, 2);
 		cout << "Camera Translation: " << xyz << endl;
 		cout << "Camera Rotation: " << rpy << endl;
-		
 	}
 #endif
 
@@ -169,17 +168,17 @@ namespace zv_utils {
 		return std::make_pair<double,double>(slope_list(slope_x_values, slope_y_values), slope_list(slope_z_values, slope_y_values));
 
 	}
-	
+
 	double normalCFD(const pair<double,double> &meanAndStddev, double value)
 	{
 		double z_score = (value - meanAndStddev.first) / meanAndStddev.second;
-   		return 0.5 * erfc(-z_score * M_SQRT1_2);
+		return 0.5 * erfc(-z_score * M_SQRT1_2);
 	}
-	
+
 	class DataRecorder {
-		public:	
+		public:
 			DataRecorder(void) {}
-			
+
 			DataRecorder(const string &file_name, const vector<string> &column_names) {
 				_data_file.open(file_name + ".csv");
 				_num_columns = column_names.size();

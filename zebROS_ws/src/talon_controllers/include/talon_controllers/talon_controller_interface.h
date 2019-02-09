@@ -69,6 +69,10 @@ class TalonCIParams
 			limit_switch_local_forward_normal_(hardware_interface::LimitSwitchNormal_Disabled),
 			limit_switch_local_reverse_source_(hardware_interface::LimitSwitchSource_FeedbackConnector),
 			limit_switch_local_reverse_normal_(hardware_interface::LimitSwitchNormal_Disabled),
+			limit_switch_remote_forward_source_(hardware_interface::RemoteLimitSwitchSource_Deactivated),
+			limit_switch_remote_forward_normal_(hardware_interface::LimitSwitchNormal_Disabled),
+			limit_switch_remote_reverse_source_(hardware_interface::RemoteLimitSwitchSource_Deactivated),
+			limit_switch_remote_reverse_normal_(hardware_interface::LimitSwitchNormal_Disabled),
 			softlimit_forward_threshold_(0.0),
 			softlimit_forward_enable_(false),
 			softlimit_reverse_threshold_(0.0),
@@ -158,6 +162,10 @@ class TalonCIParams
 			limit_switch_local_forward_normal_ = static_cast<hardware_interface::LimitSwitchNormal>(config.limit_switch_local_forward_normal);
 			limit_switch_local_reverse_source_ = static_cast<hardware_interface::LimitSwitchSource>(config.limit_switch_local_reverse_source);
 			limit_switch_local_reverse_normal_ = static_cast<hardware_interface::LimitSwitchNormal>(config.limit_switch_local_reverse_normal);
+			limit_switch_remote_forward_source_ = static_cast<hardware_interface::RemoteLimitSwitchSource>(config.limit_switch_remote_forward_source);
+			limit_switch_remote_forward_normal_ = static_cast<hardware_interface::LimitSwitchNormal>(config.limit_switch_remote_forward_normal);
+			limit_switch_remote_reverse_source_ = static_cast<hardware_interface::RemoteLimitSwitchSource>(config.limit_switch_remote_reverse_source);
+			limit_switch_remote_reverse_normal_ = static_cast<hardware_interface::LimitSwitchNormal>(config.limit_switch_remote_reverse_normal);
 
 			softlimit_forward_threshold_ = config.softlimit_forward_threshold;
 			softlimit_forward_enable_ = config.softlimit_forward_enable;
@@ -243,6 +251,10 @@ class TalonCIParams
 			config.limit_switch_local_forward_normal = limit_switch_local_forward_normal_;
 			config.limit_switch_local_reverse_source = limit_switch_local_reverse_source_;
 			config.limit_switch_local_reverse_normal = limit_switch_local_reverse_normal_;
+			config.limit_switch_remote_forward_source = limit_switch_remote_forward_source_;
+			config.limit_switch_remote_forward_normal = limit_switch_remote_forward_normal_;
+			config.limit_switch_remote_reverse_source = limit_switch_remote_reverse_source_;
+			config.limit_switch_remote_reverse_normal = limit_switch_remote_reverse_normal_;
 			config.softlimit_forward_threshold = softlimit_forward_threshold_;
 			config.softlimit_forward_enable = softlimit_forward_enable_;
 			config.softlimit_reverse_threshold = softlimit_reverse_threshold_;
@@ -488,6 +500,31 @@ class TalonCIParams
 					return false;
 				limit_switch_local_reverse_normal_ = limit_switch_normal;
 			}
+			hardware_interface::RemoteLimitSwitchSource remote_limit_switch_source;
+			if (n.getParam("limit_switch_remote_forward_source", str_val))
+			{
+				if (!stringToRemoteLimitSwitchSource(str_val, remote_limit_switch_source))
+					return false;
+				limit_switch_remote_forward_source_ = remote_limit_switch_source;
+			}
+			if (n.getParam("limit_switch_remote_forward_normal", str_val))
+			{
+				if (!stringToLimitSwitchNormal(str_val, limit_switch_normal))
+					return false;
+				limit_switch_remote_forward_normal_ = limit_switch_normal;
+			}
+			if (n.getParam("limit_switch_remote_reverse_source", str_val))
+			{
+				if (!stringToRemoteLimitSwitchSource(str_val, remote_limit_switch_source))
+					return false;
+				limit_switch_remote_reverse_source_ = remote_limit_switch_source;
+			}
+			if (n.getParam("limit_switch_remote_reverse_normal", str_val))
+			{
+				if (!stringToLimitSwitchNormal(str_val, limit_switch_normal))
+					return false;
+				limit_switch_remote_reverse_normal_ = limit_switch_normal;
+			}
 			return true;
 		}
 
@@ -608,6 +645,10 @@ class TalonCIParams
 		hardware_interface::LimitSwitchNormal limit_switch_local_forward_normal_;
 		hardware_interface::LimitSwitchSource limit_switch_local_reverse_source_;
 		hardware_interface::LimitSwitchNormal limit_switch_local_reverse_normal_;
+		hardware_interface::RemoteLimitSwitchSource limit_switch_remote_forward_source_;
+		hardware_interface::LimitSwitchNormal limit_switch_remote_forward_normal_;
+		hardware_interface::RemoteLimitSwitchSource limit_switch_remote_reverse_source_;
+		hardware_interface::LimitSwitchNormal limit_switch_remote_reverse_normal_;
 
 		double softlimit_forward_threshold_;
 		bool   softlimit_forward_enable_;
@@ -673,7 +714,7 @@ class TalonCIParams
 		}
 
 		bool stringToLimitSwitchSource(const std::string &str,
-									   hardware_interface::LimitSwitchSource &limit_switch_source)
+									   hardware_interface::LimitSwitchSource &limit_switch_source) const
 		{
 			if (str == "FeedbackConnector")
 				limit_switch_source = hardware_interface::LimitSwitchSource_FeedbackConnector;
@@ -690,8 +731,24 @@ class TalonCIParams
 			}
 			return true;
 		}
+		bool stringToRemoteLimitSwitchSource(const std::string &str,
+											 hardware_interface::RemoteLimitSwitchSource &limit_switch_source) const
+		{
+			if (str == "RemoteTalonSRX")
+				limit_switch_source = hardware_interface::RemoteLimitSwitchSource_RemoteTalonSRX;
+			else if (str == "RemoteCANifier")
+				limit_switch_source = hardware_interface::RemoteLimitSwitchSource_RemoteCANifier;
+			else if (str == "Deactivated")
+				limit_switch_source = hardware_interface::RemoteLimitSwitchSource_Deactivated;
+			else
+			{
+				ROS_ERROR_STREAM("Invalid remote limit switch source : " << str);
+				return false;
+			}
+			return true;
+		}
 		bool stringToLimitSwitchNormal(const std::string &str,
-									   hardware_interface::LimitSwitchNormal &limit_switch_source)
+									   hardware_interface::LimitSwitchNormal &limit_switch_source) const
 		{
 			if (str == "NormallyOpen")
 				limit_switch_source = hardware_interface::LimitSwitchNormal_NormallyOpen;
@@ -887,6 +944,12 @@ class TalonControllerInterface
 		virtual void setMode(hardware_interface::TalonMode mode)
 		{
 			talon_->setMode(mode);
+		}
+
+		// Set the mode of the motor controller
+		hardware_interface::TalonMode getMode(void) const
+		{
+			return talon_.state()->getTalonMode();
 		}
 
 		// Pick the config slot (0 or 1) for PIDF/IZone values
@@ -1125,6 +1188,11 @@ class TalonControllerInterface
 			return talon_.state()->getPosition();
 		}
 
+		double getSpeed(void) const
+		{
+			return talon_.state()->getSpeed();
+		}
+
 		bool getForwardLimitSwitch(void) const
 		{
 			return talon_.state()->getForwardLimitSwitch();
@@ -1245,6 +1313,11 @@ class TalonControllerInterface
         {
             talon_->overwriteCustomProfilePoints(points, slot);
         }
+
+		hardware_interface::CustomProfileStatus getCustomProfileStatus(void)
+		{
+			return talon_.state()->getCustomProfileStatus();
+		}
 
 		//Does the below function need to be accessable?
 		//#if 0

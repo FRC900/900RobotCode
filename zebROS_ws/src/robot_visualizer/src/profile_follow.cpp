@@ -22,9 +22,9 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "profile_follow");
     ros::NodeHandle n;
 
-	follow_srv = n.advertiseService("/frcrobot/visualize_auto", &follow_service);
-	talon_sub = n.subscribe("/frcrobot/talon_states", 1, &talon_cb);
-	robot_state_pub = n.advertise<robot_visualizer::RobotVisualizeState>("/frcrobot/robot_viz_state", 1);
+	follow_srv = n.advertiseService("visualize_auto", &follow_service);
+	talon_sub = n.subscribe("/frcrobot_jetson/talon_states", 1, &talon_cb);
+	robot_state_pub = n.advertise<robot_visualizer::RobotVisualizeState>("robot_viz_state", 1);
 
 
 	ros::Rate rate(50);

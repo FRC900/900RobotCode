@@ -58,6 +58,18 @@ enum FeedbackDevice
 	FeedbackDevice_Last
 };
 
+enum RemoteFeedbackDevice
+{
+	RemoteFeedbackDevice_Uninitialized,
+	RemoteFeedbackDevice_FactoryDefaultOff,
+	RemoteFeedbackDevice_SensorSum,
+	RemoteFeedbackDevice_SensorDifference,
+	RemoteFeedbackDevice_RemoteSensor0,
+	RemoteFeedbackDevice_RemoteSensor1,
+	RemoteFeedbackDevice_SoftwareEmulatedSensor,
+	RemoteFeedbackDevice_Last
+};
+
 enum LimitSwitchSource
 {
 	LimitSwitchSource_Uninitialized,
@@ -260,6 +272,7 @@ class TalonHWState
 			neutral_mode_(NeutralMode_Uninitialized),
 			neutral_output_(false),
 			encoder_feedback_(FeedbackDevice_Uninitialized),
+			encoder_feedback_remote_(RemoteFeedbackDevice_Uninitialized),
 			feedback_coefficient_(1.0),
 			encoder_ticks_per_rotation_(4096),
 
@@ -569,6 +582,10 @@ class TalonHWState
 		{
 			return encoder_feedback_;
 		}
+		RemoteFeedbackDevice getRemoteEncoderFeedback(void) const
+		{
+			return encoder_feedback_remote_;
+		}
 		double getFeedbackCoefficient(void) const
 		{
 			return feedback_coefficient_;
@@ -757,6 +774,30 @@ class TalonHWState
 		{
 			source = limit_switch_local_reverse_source_;
 			normal = limit_switch_local_reverse_normal_;
+		}
+
+		void setRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal)
+		{
+			limit_switch_remote_forward_source_ = source;
+			limit_switch_remote_forward_normal_ = normal;
+		}
+
+		void getRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal) const
+		{
+			source = limit_switch_remote_forward_source_;
+			normal = limit_switch_remote_forward_normal_;
+		}
+
+		void setRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal)
+		{
+			limit_switch_remote_reverse_source_ = source;
+			limit_switch_remote_reverse_normal_ = normal;
+		}
+
+		void getRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal) const
+		{
+			source = limit_switch_remote_reverse_source_;
+			normal = limit_switch_remote_reverse_normal_;
 		}
 
 		void setForwardSoftLimitThreshold(double threshold)
@@ -1111,6 +1152,14 @@ class TalonHWState
 			else
 				ROS_WARN_STREAM("Invalid feedback device requested");
 		}
+		void setRemoteEncoderFeedback(RemoteFeedbackDevice encoder_feedback_remote)
+		{
+			if ((encoder_feedback_remote >= RemoteFeedbackDevice_Uninitialized) &&
+				(encoder_feedback_remote <  RemoteFeedbackDevice_Last) )
+				encoder_feedback_remote_ = encoder_feedback_remote;
+			else
+				ROS_WARN_STREAM("Invalid remote feedback device requested");
+		}
 		void setFeedbackCoefficient(double feedback_coefficient)
 		{
 			feedback_coefficient_ = feedback_coefficient;
@@ -1185,6 +1234,7 @@ class TalonHWState
 		bool        neutral_output_;
 
 		FeedbackDevice encoder_feedback_;
+		RemoteFeedbackDevice encoder_feedback_remote_;
 		double feedback_coefficient_;
 		int encoder_ticks_per_rotation_;
 

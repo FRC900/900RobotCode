@@ -15,6 +15,21 @@ hardware_interface:
    can_interface: can0
     
    joints:
+       #TODO: Get config values of joints
+       - {name: cargo_intake_joint, type: can_talon_srx, can_id: 31, local: true}
+       - {name: cargo_intake_arm_joint, type: solenoid, pcm: 0, id: 2, local_hardware: false, local_update: true}
+       - {name: cargo_outtake_kicker_joint, type: solenoid, pcm: 0, id: 3, local_hardware: false, local_update: true}
+       - {name: cargo_outtake_clamp_joint, type: solenoid, pcm: 0, id: 4, local_hardware: false, local_update: true}
+
+       - {name: climber_feet_retract, type: solenoid, pcm: 0, id: 0, local_hardware: false, local_update: true}
+       - {name: climber_release_endgame, type: solenoid, pcm: 0, id: 1, local_hardware: false, local_update: true}
+
+       # TODO : figure out how many followers, define them here
+       - {name: elevator_master, type: can_talon_srx, can_id: 41, local: true}
+       - {name: elevator_follower1, type: can_talon_srx, can_id: 42, local: true}
+       - {name: elevator_follower2, type: can_talon_srx, can_id: 43, local: true}
+       - {name: elevator_follower3, type: can_talon_srx, can_id: 44, local: true}
+
        - {name: fl_drive, type: can_talon_srx, can_id: 21, local: true}
        - {name: fl_angle, type: can_talon_srx, can_id: 11, local: true}
        - {name: fr_drive, type: can_talon_srx, can_id: 22, local: true}
@@ -23,9 +38,19 @@ hardware_interface:
        - {name: br_angle, type: can_talon_srx, can_id: 14, local: true}
        - {name: bl_drive, type: can_talon_srx, can_id: 23, local: true}
        - {name: bl_angle, type: can_talon_srx, can_id: 13, local: true}
-       - {name: clamp, type: double_solenoid, pcm: 0, forward_id: 0, reverse_id: 1, local_hardware: false, local_update: true}
        - {name: pdp, type: pdp}
        - {name: compressor, type: compressor, pcm_id: 0}
+
+       - {name: panel_claw_release, type: solenoid, pcm: 0, id: 5, local_hardware: false, local_update: true}
+       - {name: panel_push_extend, type: solenoid, pcm: 0, id: 6, local_hardware: false, local_update: true}
+
+       - {name: panel_intake_linebreak_1, type: digital_input, dio_channel: 0, invert: true, local: false}
+       - {name: panel_intake_linebreak_2, type: digital_input, dio_channel: 1, invert: true, local: false}
+       - {name: panel_intake_linebreak_3, type: digital_input, dio_channel: 2, invert: true, local: false}
+       - {name: panel_intake_linebreak_4, type: digital_input, dio_channel: 3, invert: true, local: false}
+
+       - {name: cargo_intake_linebreak_1, type: digital_input, dio_channel: 4, invert: true, local: false}
+
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
          
@@ -40,7 +65,27 @@ hardware_interface:
 # /frcrobot/joint1_talon_controller/command
 # /frcrobot/joint2_talon_controller/command
 # /frcrobot/talon_states
-#
+
+#Set up controllers for main robot mechanisms
+cargo_intake_controller:
+    type:   cargo_intake_controller/CargoIntakeController
+    
+    cargo_intake_joint: "cargo_intake"
+    cargo_intake:
+        joint: cargo_intake_joint
+        type: talon_controllers/TalonPercentOutputController
+        invert_output: False
+    
+    #note: the intake arm (solenoid joint) is currently being grabbed directly from the hardware_interface above
+cargo_outtake_controller:
+    type: cargo_outtake_controller/CargoOuttakeController
+
+climber_controller:
+    type:           climber_controller/ClimberController
+
+panel_intake_controller:
+    type:           panel_intake_controller/PanelIntakeController
+
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal
 # encoder state used by the hw manager and publishes it as
@@ -75,10 +120,6 @@ pcm_state_controller:
 match_state_listener_controller:
     type:      state_listener_controller/MatchStateListenerController
     topic:     /frcrobot_rio/match_data
-
-clamp_controller:
-    type: position_controllers/JointPositionController
-    joint: clamp
 
 # These controllers are defined for testing indivudal motors 
 # but are not actually used for normal swerve drive control
@@ -216,7 +257,7 @@ bl_angle_motionmagic_controller:
 fr_drive_position_controller:
     type: talon_controllers/TalonPositionCloseLoopController
     joint: fr_drive 
-    feedback_type: CTRE_MagEncoder_Absolute
+    feedback_type: CTRE_MagEncoder_Relative
     close_loop_values:
         - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
         - {p: 0.8, i: 0, d: 10, f: 0.0, i_zone: 0}
@@ -234,7 +275,7 @@ fr_drive_position_controller:
 fl_drive_position_controller:
     type: talon_controllers/TalonPositionCloseLoopController
     joint: fl_drive 
-    feedback_type: CTRE_MagEncoder_Absolute
+    feedback_type: CTRE_MagEncoder_Relative
     close_loop_values:
         - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
         - {p: 0.8, i: 0, d: 10, f: 0.0, i_zone: 0}
@@ -252,7 +293,7 @@ fl_drive_position_controller:
 br_drive_position_controller:
     type: talon_controllers/TalonPositionCloseLoopController
     joint: br_drive 
-    feedback_type: CTRE_MagEncoder_Absolute
+    feedback_type: CTRE_MagEncoder_Relative
     close_loop_values:
         - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
         - {p: 0.8, i: 0, d: 10, f: 0.0, i_zone: 0}
@@ -270,7 +311,7 @@ br_drive_position_controller:
 bl_drive_position_controller:
     type: talon_controllers/TalonPositionCloseLoopController
     joint: bl_drive 
-    feedback_type: CTRE_MagEncoder_Absolute
+    feedback_type: CTRE_MagEncoder_Relative
     close_loop_values:
         - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
         - {p: 0.8, i: 0, d: 10, f: 0.0, i_zone: 0}
@@ -284,3 +325,4 @@ bl_drive_position_controller:
     motion_acceleration: 150
     voltage_compensation_enable: true
     dynamic_reconfigure: True
+        

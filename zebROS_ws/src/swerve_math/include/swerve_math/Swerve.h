@@ -100,6 +100,7 @@ class swerve
 		//should we get them together instead?
 		//the angle it passes out isn't normalized
 		double furthestWheel(const Eigen::Vector2d &centerOfRotation) const;
+
 		std::array<double, WHEELCOUNT> offsets_;
 		//Second piece of data is here just for physics/modeling
 

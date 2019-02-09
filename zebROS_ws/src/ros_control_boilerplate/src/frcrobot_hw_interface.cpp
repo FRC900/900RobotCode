@@ -275,6 +275,7 @@ void FRCRobotHWInterface::init(void)
 			talon_read_thread_states_.push_back(nullptr);
 		}
 	}
+
 	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
@@ -522,7 +523,6 @@ void FRCRobotHWInterface::init(void)
 			pdps_.push_back(HAL_kInvalidHandle);
 	}
 
-	// TODO : better support for multiple joysticks?
 	for (size_t i = 0; i < num_joysticks_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
@@ -553,8 +553,8 @@ void FRCRobotHWInterface::init(void)
 	ROS_INFO_NAMED("frcrobot_hw_interface", "FRCRobotHWInterface Ready.");
 }
 
-// Each talon gets their own read thread. The thread loops at a fixed rate
-// reading all state from that talon. The state is copied to a shared buffer
+// Each talon/victor gets their own read thread. The thread loops at a fixed rate
+// reading all state from that talon/victor. The state is copied to a shared buffer
 // at the end of each iteration of the loop.
 // The code tries to only read status when we expect there to be new
 // data given the update rate of various CAN messages.
@@ -629,7 +629,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			ros::Duration status_9_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_9_MotProfBuffer));
 			ros::Duration status_10_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_10_MotionMagic));
 			ros::Duration status_13_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_13_Base_PIDF0));
-			ros::Duration sensor_collection_period = ros::Duration(.1); // TODO : fix me
+			ros::Duration sensor_collection_period = ros::Duration(.16); // TODO : fix me
 			if (!state->getEnableReadThread())
 				return;
 		}
@@ -809,7 +809,8 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			last_status_9_time = ros_time_now;
 		}
 
-		// SensorCollection - 100msec default
+#if 0
+		// SensorCollection - 160msec default
 		bool update_sensor_collection = false;
 		bool forward_limit_switch;
 		bool reverse_limit_switch;
@@ -822,6 +823,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			update_sensor_collection = true;
 			last_sensor_collection_time = ros_time_now;
 		}
+#endif
 
 		// Actually update the TalonHWState shared between
 		// this thread and read()
@@ -846,6 +848,9 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 
 				state->setForwardSoftlimitHit(faults.ForwardSoftLimit);
 				state->setReverseSoftlimitHit(faults.ReverseSoftLimit);
+
+				state->setForwardLimitSwitch(faults.ForwardLimitSwitch);
+				state->setReverseLimitSwitch(faults.ReverseLimitSwitch);
 			}
 
 			if (update_status_2)
@@ -892,13 +897,13 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 				}
 			}
 
-			state->setFaults(faults.ToBitfield());
-
+#if 0
 			if (update_sensor_collection)
 			{
 				state->setForwardLimitSwitch(forward_limit_switch);
 				state->setReverseLimitSwitch(reverse_limit_switch);
 			}
+#endif
 		}
 		tracer.stop();
 		ROS_INFO_STREAM_THROTTLE(2, tracer.report());
@@ -2057,6 +2062,37 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 
+		hardware_interface::RemoteLimitSwitchSource internal_remote_forward_source;
+		hardware_interface::LimitSwitchNormal internal_remote_forward_normal;
+		hardware_interface::RemoteLimitSwitchSource internal_remote_reverse_source;
+		hardware_interface::LimitSwitchNormal internal_remote_reverse_normal;
+		ctre::phoenix::motorcontrol::RemoteLimitSwitchSource talon_remote_forward_source;
+		ctre::phoenix::motorcontrol::LimitSwitchNormal talon_remote_forward_normal;
+		ctre::phoenix::motorcontrol::RemoteLimitSwitchSource talon_remote_reverse_source;
+		ctre::phoenix::motorcontrol::LimitSwitchNormal talon_remote_reverse_normal;
+		if (tc.remoteLimitSwitchesSourceChanged(internal_remote_forward_source, internal_remote_forward_normal,
+											    internal_remote_reverse_source, internal_remote_reverse_normal) &&
+				convertRemoteLimitSwitchSource(internal_remote_forward_source, talon_remote_forward_source) &&
+				convertLimitSwitchNormal(internal_remote_forward_normal, talon_remote_forward_normal) &&
+				convertRemoteLimitSwitchSource(internal_remote_reverse_source, talon_remote_reverse_source) &&
+				convertLimitSwitchNormal(internal_remote_reverse_normal, talon_remote_reverse_normal) )
+		{
+			bool rc = true;
+			rc &= safeTalonCall(talon->ConfigForwardLimitSwitchSource(talon_remote_forward_source, talon_remote_forward_normal, timeoutMs),"ConfigForwardLimitSwitchSource(Remote)");
+			rc &= safeTalonCall(talon->ConfigReverseLimitSwitchSource(talon_remote_reverse_source, talon_remote_reverse_normal, timeoutMs),"ConfigReverseLimitSwitchSource(Remote)");
+
+			if (rc)
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" remote limit switches");
+				ts.setRemoteForwardLimitSwitchSource(internal_remote_forward_source, internal_remote_forward_normal);
+				ts.setRemoteReverseLimitSwitchSource(internal_remote_reverse_source, internal_remote_reverse_normal);
+			}
+			else
+			{
+				tc.resetLimitSwitchesSource();
+			}
+		}
+
 		double softlimit_forward_threshold;
 		bool softlimit_forward_enable;
 		double softlimit_reverse_threshold;
@@ -2371,6 +2407,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 	}
+
 	last_robot_enabled = match_data_.isEnabled();
 
 	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
@@ -2683,6 +2720,28 @@ bool FRCRobotHWInterface::convertLimitSwitchSource(
 			break;
 		default:
 			ROS_WARN("Unknown limit switch source seen in HW interface");
+			return false;
+	}
+	return true;
+}
+
+bool FRCRobotHWInterface::convertRemoteLimitSwitchSource(
+	const hardware_interface::RemoteLimitSwitchSource input_ls,
+	ctre::phoenix::motorcontrol::RemoteLimitSwitchSource &output_ls)
+{
+	switch (input_ls)
+	{
+		case hardware_interface::RemoteLimitSwitchSource_RemoteTalonSRX:
+			output_ls = ctre::phoenix::motorcontrol::RemoteLimitSwitchSource_RemoteTalonSRX;
+			break;
+		case hardware_interface::RemoteLimitSwitchSource_RemoteCANifier:
+			output_ls = ctre::phoenix::motorcontrol::RemoteLimitSwitchSource_RemoteCANifier;
+			break;
+		case hardware_interface::RemoteLimitSwitchSource_Deactivated:
+			output_ls = ctre::phoenix::motorcontrol::RemoteLimitSwitchSource_Deactivated;
+			break;
+		default:
+			ROS_WARN("Unknown remote limit switch source seen in HW interface");
 			return false;
 	}
 	return true;
