@@ -689,7 +689,7 @@ int main(int argc, char **argv)
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
-	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("/frcrobot_jetson/teleop_joystick_comp/cmd_vel", 1);
+	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
 
 	//initialize actionlib clients
