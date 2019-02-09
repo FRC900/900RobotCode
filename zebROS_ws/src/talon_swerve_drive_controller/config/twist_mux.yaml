@@ -1,31 +1,4 @@
-#topics:
-#-
-#  name    : navigation
-#  topic   : nav_vel
-#  timeout : 0.5
-#  priority: 10
-#-
-#  name    : joystick
-#  topic   : joy_vel
-#  timeout : 0.5
-#  priority: 100
-#-
-#  name    : keyboard
-#  topic   : key_vel
-#  timeout : 0.5
-#  priority: 90
-#-
-#  name    : tablet
-#  topic   : tab_vel
-#  timeout : 0.5
-#  priority: 100
-
 topic:
--
-  name    : auto interpreter client
-  topic   : /frcrobot/auto_interpreter_client/cmd_vel
-  timeout : 
-  priority: 
 -
   name    : pid
   topic   : publish_pid_cmd_vel/cmd_vel

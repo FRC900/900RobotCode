@@ -104,14 +104,11 @@
 		<node name="path_to_goal_ac_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
 		<node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
 		<node name="path_follower" pkg="swerve_point_generator" type="path_follower" output="screen"/>
-<<<<<<< 269769e2c2d60af06d04e0be6d97299f91a9e39a
 	</group>
-=======
 		
 		<node name="twist_mux" pkg="twist" type="twist_mux">
 			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux.yaml"/>
 		</node>
->>>>>>> Begin config file for twist_mux
 
 	<group ns="align_with_terabee">
 		<rosparam file="$(find behaviors)/config/align_with_terabee.yaml" command="load"/>
