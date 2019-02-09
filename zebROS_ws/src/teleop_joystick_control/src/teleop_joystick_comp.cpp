@@ -639,6 +639,11 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 	ros::NodeHandle n_params(n, "teleop_params");
 
+	int num_joysticks = 1;
+	if(!n_params.getParam("num_joysticks", num_joysticks))
+	{
+		ROS_ERROR("Could not read num_joysticks in teleop_joystick_comp");
+	}
 	if(!n_params.getParam("joystick_deadzone", joystick_deadzone))
 	{
 		ROS_ERROR("Could not read joystick_deadzone in teleop_joystick_comp");
@@ -664,17 +669,19 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read rotation_pow in teleop_joystick_comp");
 	}
 
-
 	std::vector <ros::Subscriber> subscriber_array;
 
 	navX_angle = M_PI / 2;
 
-	//Read from two joysticks
-	topic_array.push_back("/frcrobot_jetson/joystick_states");
-	topic_array.push_back("/frcrobot_jetson/joystick_states1");
-	for(size_t j = 0; (subscriber_array.size()) < (topic_array.size()); j++)
+	//Read from _num_joysticks_ joysticks
+	for(size_t j = 0; j < num_joysticks; j++)
 	{
-		subscriber_array.push_back(n.subscribe((topic_array[j]), 1, &evaluateCommands));
+		std::stringstream s;
+		s << "translator";
+		s << j;
+		s << "/joystick_states";
+		topic_array.push_back(s.str());
+		subscriber_array.push_back(n.subscribe(topic_array[j], 1, &evaluateCommands));
 	}
 
 	joystick_states_array.resize(topic_array.size());

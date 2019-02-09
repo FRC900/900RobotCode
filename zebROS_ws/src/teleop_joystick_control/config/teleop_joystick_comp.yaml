@@ -1,4 +1,5 @@
 teleop_params:
+    num_joysticks: 2
     joystick_deadzone: 0.2
     slow_mode: 0.33
     max_speed: 3.6
