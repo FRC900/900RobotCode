@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 
 	PathFollowAction path("path_follower", n);
 
-	cmd_vel_pub = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1000);
+	cmd_vel_pub = n.advertise<geometry_msgs::Twist>("path_follower_server/cmd_vel", 1000);
 
 	ros::spin();
 
