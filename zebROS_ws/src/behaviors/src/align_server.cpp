@@ -93,15 +93,6 @@ class AlignAction {
 				timed_out = (ros::Time::now().toSec() - start_time) > align_timeout;
 				preempted = as_.isPreemptRequested();
 			}*/
-			geometry_msgs::Twist cmd_vel_msg;
-			cmd_vel_msg.linear.x = 0.0;
-			cmd_vel_msg.linear.y = 0.0;
-			cmd_vel_msg.linear.z = 0.0;
-			cmd_vel_msg.angular.x = 0.0;
-			cmd_vel_msg.angular.y = 0.0;
-			cmd_vel_msg.angular.z = 0.0;
-			cmd_vel_pub_.publish(cmd_vel_msg);
-			ros::spinOnce();
 
 			start_time = ros::Time::now().toSec();
 			bool aligned = false;
@@ -122,8 +113,6 @@ class AlignAction {
 				preempted = as_.isPreemptRequested();
 				aligned = x_aligned_ && y_aligned_;
 			}
-			cmd_vel_pub_.publish(cmd_vel_msg);
-			ros::spinOnce();
 			
 			if(timed_out)
 			{
