@@ -55,6 +55,8 @@ class OuttakeHatchPanelAction
 
 		void executeCB(const behaviors::PlaceGoalConstPtr &goal)
 		{
+			ROS_WARN("hatch panel outtake server running");
+
 			//make sure the elevator server exists
 			bool elevator_server_found = ac_elevator_.waitForServer(ros::Duration(wait_for_server_timeout));
 
@@ -82,15 +84,18 @@ class OuttakeHatchPanelAction
 			ac_elevator_.sendGoal(elev_goal);
 
 			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(elevator_timeout - (ros::Time::now().toSec() - start_time)));
-			if(!finished_before_timeout)
-			{
+			if(finished_before_timeout) {
 				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
-				if(state.toString().c_str() != "SUCCEEDED")
-				{
+				if(state.toString() != "SUCCEEDED") {
+					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
 					preempted = true;
+				}
+				else {
+					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
 				}
 			}
 			else {
+				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
 				timed_out = true;
 			}
 
@@ -103,8 +108,6 @@ class OuttakeHatchPanelAction
 			//send commands to panel_intake_controller to grab the panel ---------------------------------------
 			if(!preempted && !timed_out)
 			{
-				ROS_ERROR("hatch panel outtake server running");
-
 				//extend panel mechanism
 				panel_intake_controller::PanelIntakeSrv srv;
 				srv.request.claw_release = false;
@@ -154,19 +157,19 @@ class OuttakeHatchPanelAction
 
 			if(timed_out)
 			{
-				ROS_INFO("%s: Timed Out", action_name_.c_str());
+				ROS_WARN("%s: Timed Out", action_name_.c_str());
 				result_.success = false;
 				as_.setSucceeded(result_);
 			}
 			else if(preempted)
 			{
-				ROS_INFO("%s: Preempted", action_name_.c_str());
+				ROS_WARN("%s: Preempted", action_name_.c_str());
 				result_.success = false;
 				as_.setPreempted(result_);
 			}
 			else //implies succeeded
 			{
-				ROS_INFO("%s: Succeeded", action_name_.c_str());
+				ROS_WARN("%s: Succeeded", action_name_.c_str());
 				result_.success = true;
 				as_.setSucceeded(result_);
 			}

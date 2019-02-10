@@ -1,4 +1,4 @@
 actionlib_hatch_panel_outtake_params:
     elevator_timeout: 5 #in seconds
-    pause_time_between_pistons: 0.1 #time to pause between piston actuations, in seconds
+    pause_time_between_pistons: 1 #time to pause between piston actuations, in seconds
 

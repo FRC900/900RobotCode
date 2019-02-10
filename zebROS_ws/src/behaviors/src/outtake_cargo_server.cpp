@@ -100,7 +100,7 @@ class CargoOuttakeAction {
 
 			//send elevator to outtake position
 			if(!preempted && !timed_out) {
-				ROS_WARN_STREAM("cargo outtake server: sending elevator to outtake config");
+				ROS_WARN_STREAM("cargo outtake server: sending elevator to outtake setpoint");
 				behaviors::ElevatorGoal elevator_goal;
 				elevator_goal.setpoint_index = goal->setpoint_index;
 				elevator_goal.place_cargo = true;
@@ -109,19 +109,17 @@ class CargoOuttakeAction {
 				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(outtake_timeout - (ros::Time::now().toSec() - start_time), 0.001))); //Wait for server to finish or until timeout is reached
 				if(finished_before_timeout) {
 					actionlib::SimpleClientGoalState state = ac_elevator_.getState();
-					if(state.toString().c_str() != "SUCCEEDED") {
+					if(state.toString() != "SUCCEEDED") {
 						ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
 						preempted = true;
 					}
 					else {
 						ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
-						success = true;
 					}
 				}
 				else {
 					ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
 					timed_out = true;
-					preempted = true;
 				}
 			}
 
@@ -198,17 +196,17 @@ class CargoOuttakeAction {
 
 			if(timed_out)
 			{
-				ROS_INFO("%s: Timed Out", action_name_.c_str());
+				ROS_WARN("%s: Timed Out", action_name_.c_str());
 				as_.setSucceeded(result_);
 			}
 			else if(preempted)
 			{
-				ROS_INFO("%s: Preempted", action_name_.c_str());
+				ROS_WARN("%s: Preempted", action_name_.c_str());
 				as_.setPreempted(result_);
 			}
 			else //implies succeeded
 			{
-				ROS_INFO("%s: Succeeded", action_name_.c_str());
+				ROS_WARN("%s: Succeeded", action_name_.c_str());
 				as_.setSucceeded(result_);
 			}
 

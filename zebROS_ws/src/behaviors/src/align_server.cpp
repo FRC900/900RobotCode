@@ -25,7 +25,6 @@ class AlignAction {
 		ros::Publisher enable_navx_pub_;
 		ros::Publisher enable_x_pub_;
 		ros::Publisher enable_y_pub_;
-		ros::Publisher cmd_vel_pub_;
 
 		ros::Subscriber navx_error_sub_;
 		ros::Subscriber x_error_sub_;
@@ -46,7 +45,6 @@ class AlignAction {
 			enable_navx_pub_ = nh_.advertise<std_msgs::Bool>("/navX_snap_to_goal_pid/pid_enable", 1);
 			enable_x_pub_ = nh_.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1);
 			enable_y_pub_ = nh_.advertise<std_msgs::Bool>("align_with_terabee/enable_y_pub", 1);
-			cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 
 			navx_error_sub_ = nh_.subscribe("/navX_snap_to_goal_pid/pid_debug", 1, &AlignAction::navx_error_cb, this);
 			x_error_sub_ = nh_.subscribe("distance_pid/pid_debug", 1, &AlignAction::x_error_cb, this);
