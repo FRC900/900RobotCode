@@ -1,12 +1,7 @@
 #include "robot_visualizer/profile_follow.h"
 
 robot_visualizer::ProfileFollower::Request local_req;
-ros::ServiceServer follow_srv;
-ros::Subscriber talon_sub;
-ros::Publisher robot_state_pub;
 bool msg_recieved = false;
-
-int index_talon = -1;
 
 bool running;
 int slot_run;
@@ -22,16 +17,15 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "profile_follow");
     ros::NodeHandle n;
 
-	follow_srv = n.advertiseService("visualize_auto", &follow_service);
-	talon_sub = n.subscribe("/frcrobot_jetson/talon_states", 1, &talon_cb);
-	robot_state_pub = n.advertise<robot_visualizer::RobotVisualizeState>("robot_viz_state", 1);
-
+	auto follow_srv = n.advertiseService("visualize_auto", &follow_service);
+	auto talon_sub = n.subscribe("/frcrobot_jetson/talon_states", 1, &talon_cb);
+	auto robot_state_pub = n.advertise<robot_visualizer::RobotVisualizeState>("robot_viz_state", 1);
 
 	ros::Rate rate(50);
 	while(ros::ok())
 	{
-		rate.sleep();
 		ros::spinOnce();
+		rate.sleep();
 		//ROS_ERROR("running");
 		if(!msg_recieved) {continue;}
 		//ROS_WARN("4");
@@ -67,7 +61,7 @@ int main(int argc, char **argv) {
 bool follow_service(robot_visualizer::ProfileFollower::Request &req, robot_visualizer::ProfileFollower::Response &/*res*/)
 {
 	msg_recieved = true;
-	ROS_ERROR_STREAM("srv_Called_real with size: "<< req.joint_trajectories.size());
+	ROS_INFO_STREAM("srv_Called_real with size: "<< req.joint_trajectories.size());
 
 	local_req = req;
 	return true;
@@ -75,6 +69,7 @@ bool follow_service(robot_visualizer::ProfileFollower::Request &req, robot_visua
 
 void talon_cb(const talon_state_controller::TalonState &msg)
 {
+	static int index_talon = -1;
 	if(index_talon == -1)
 	{
 		for(size_t i = 0; i < msg.can_id.size(); i++)
