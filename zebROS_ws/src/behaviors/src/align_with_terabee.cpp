@@ -70,13 +70,13 @@ int main(int argc, char ** argv)
 	sensors_distances.resize(NUM_SENSORS);
 	ternary_distances.resize(NUM_SENSORS);
 
-	ros::Publisher distance_setpoint_pub = n.advertise<std_msgs::Float64>("distance_pid_setpoint", 1);
-	ros::Publisher distance_state_pub = n.advertise<std_msgs::Float64>("distance_pid_state", 1);
-	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_terabee_y_command", 1);
-	ros::Publisher successful_y_align = n.advertise<std_msgs::Bool>("y_aligned", 1);
+	ros::Publisher distance_setpoint_pub = n.advertise<std_msgs::Float64>("distance_pid/setpoint", 1);
+	ros::Publisher distance_state_pub = n.advertise<std_msgs::Float64>("distance_pid/state", 1);
+	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_terabee/y_command", 1);
+	ros::Publisher successful_y_align = n.advertise<std_msgs::Bool>("align_with_terabee/y_aligned", 1);
 
 	ros::Subscriber terabee_sub = n.subscribe("/multiflex_1/ranges_raw", 1, &multiflexCB);
-	ros::Subscriber start_stop_sub = n.subscribe("enable_y_pub", 1, &startStopCallback);
+	ros::Subscriber start_stop_sub = n.subscribe("align_with_terabee/enable_y_pub", 1, &startStopCallback);
 
 	ros::ServiceServer start_stop_service = n.advertiseService("align_with_terabee", startStopAlign);
 
@@ -90,6 +90,7 @@ int main(int argc, char ** argv)
 
 	while(ros::ok())
 	{
+		bool aligned = false;
 		if(sensors_distances[0] == 0.0 && sensors_distances[1] == 0.0 && sensors_distances[2] == 0.0 && sensors_distances[3] == 0.0)
 		{
 			ROS_INFO_STREAM_THROTTLE(1, "No data is being received from the Terabee sensors. Skipping this message");
@@ -136,6 +137,7 @@ int main(int argc, char ** argv)
 		if(ternary_distances[0] == 0 && ternary_distances[1] == 1 && ternary_distances[2] == 1 && ternary_distances[3] == 0)
 		{
 			ROS_INFO_STREAM("ALIGNED");
+			aligned = true;
 			y_msg.data= 0.0;
 			cutout_found = true;
 		}
@@ -223,7 +225,10 @@ int main(int argc, char ** argv)
 			y_msg.data= 0;
 			y_command_pub.publish(y_msg);
 		}
-		ROS_INFO_STREAM("publish = " << publish);
+
+		std_msgs::Bool aligned_msg;
+		aligned_msg.data = aligned;
+		successful_y_align.publish(aligned_msg);
 
 		publish_last = publish;
 		ros::spinOnce();

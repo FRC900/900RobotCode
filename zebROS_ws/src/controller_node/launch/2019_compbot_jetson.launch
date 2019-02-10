@@ -105,11 +105,12 @@
 		<node name="path_follower" pkg="swerve_point_generator" type="path_follower" output="screen"/>
 	</group>
 
-	<group ns="align_with_terabee">
+	<group ns="align_server">
 		<rosparam file="$(find behaviors)/config/align_with_terabee.yaml" command="load"/>
 
 		<node name="align_ac_server" pkg="behaviors" type="align_server" output="screen" />
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
+		<group ns="distance_pid">
         <node name="distance_pid" pkg="pid" type="controller" >
             <param name="node_name" value="distance_pid_node" />
             <param name="Kp" value="5.0" />
@@ -120,13 +121,12 @@
             <param name="windup_limit" value="10" />
             <param name="max_loop_frequency" value="100.0" />
             <param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value="distance_pid_x_command" />     
-            <param name="setpoint_topic" value="distance_setpoint" />
-            <param name="topic_from_plant" value="distance_state" />
-        </node>
-		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node">
-			<param name="x_topic" value="distance_pid_x_command" />
-			<param name="y_topic" value="align_with_terabee_y_command" />
+			<param name="topic_from_controller" value="x_command" />     
+		</node>
+		</group>
+		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+			<param name="x_topic" value="distance_pid/x_command" />
+			<param name="y_topic" value="align_with_terabee/y_command" />
 		</node>
 	</group>
     
@@ -152,25 +152,5 @@
 			<param name="orient_topic" value="orient_pid/orient_control_effort" />
 		</node>
     </group>
-
-	<group ns="orient_pid">
-		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" />
-		<node name="state_setpoint_pub_node" pkg="behaviors" type="state_setpoint_publisher_node" />
-
-		<node name="orient_pid" pkg="pid" type="controller" >
-			<param name="node_name" value="orient_pid_node" />
-			<param name="Kp" value="5.0" />
-			<param name="Ki" value="0.0" />
-			<param name="Kd" value="0.1" />
-			<param name="upper_limit" value="10" />
-			<param name="lower_limit" value="-10" />
-			<param name="windup_limit" value="10" />
-			<param name="max_loop_frequency" value="100.0" />
-			<param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value="orient_pid/orient_control_effort" />     
-			<param name="setpoint_topic" value="orient_setpoint" />
-			<param name="topic_from_plant" value="orient_state" />
-		</node>
-	</group>
 
 </launch>

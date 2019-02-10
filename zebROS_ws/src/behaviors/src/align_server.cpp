@@ -5,6 +5,7 @@
 #include <ros/console.h>
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
+#include "std_msgs/Float64MultiArray.h"
 #include "behaviors/AlignGoal.h"
 #include "behaviors/AlignAction.h"
 
@@ -28,9 +29,9 @@ class AlignAction {
 		ros::Subscriber x_error_sub_;
 		ros::Subscriber y_error_sub_;
 
-		bool x_aligned_;
-		bool y_aligned_;
-		bool orient_aligned_;
+		bool x_aligned_ = false;
+		bool y_aligned_ = false;
+		bool orient_aligned_ = false;
 
 	public:
 		//make the executeCB function run every time the actionlib server is called
@@ -41,26 +42,26 @@ class AlignAction {
 			as_.start(); //start the actionlib server
 
 			enable_navx_pub_ = nh_.advertise<std_msgs::Bool>("/navX_snap_to_goal_pid/pid_enable", 1);
-			enable_x_pub_ = nh_.advertise<std_msgs::Bool>("pid_enable", 1);
-			enable_y_pub_ = nh_.advertise<std_msgs::Bool>("enable_y_pub", 1);
+			enable_x_pub_ = nh_.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1);
+			enable_y_pub_ = nh_.advertise<std_msgs::Bool>("align_with_terabee/enable_y_pub", 1);
 
 			navx_error_sub_ = nh_.subscribe("/navX_snap_to_goal_pid/pid_debug", 1, &AlignAction::navx_error_cb, this);
-			x_error_sub_ = nh_.subscribe("distance_pid_state", 1, &AlignAction::x_error_cb, this);
-			y_error_sub_ = nh_.subscribe("y_aligned", 1, &AlignAction::y_error_cb, this);
+			x_error_sub_ = nh_.subscribe("distance_pid/pid_debug", 1, &AlignAction::x_error_cb, this);
+			y_error_sub_ = nh_.subscribe("align_with_terabee/y_aligned", 1, &AlignAction::y_error_cb, this);
 		}
 
 		~AlignAction(void) 
 		{
 		}
 
-		void navx_error_cb(const std_msgs::Float64 &msg)
+		void navx_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-			orient_aligned_ = (msg.data > orient_error_threshhold);
+			orient_aligned_ = (msg.data[0] > orient_error_threshhold);
 		}
 
-		void x_error_cb(const std_msgs::Float64 &msg)
+		void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-			x_aligned_ = (msg.data > x_error_threshhold);
+			x_aligned_ = (msg.data[0] > x_error_threshhold);
 		}
 
 		void y_error_cb(const std_msgs::Bool &msg)
@@ -76,7 +77,17 @@ class AlignAction {
 			bool preempted = false;
 			bool timed_out = false;
 
-			/*CALL NAVX STUFF HERE*/
+			while(!orient_aligned_ && !preempted && !timed_out)
+			{
+				ros::spinOnce();
+
+				std_msgs::Bool orient_msg;
+				orient_msg.data = !orient_aligned_;
+				enable_navx_pub_.publish(orient_msg);
+
+				timed_out = (ros::Time::now().toSec() - start_time) > align_timeout;
+				preempted = as_.isPreemptRequested();
+			}
 
 			start_time = ros::Time::now().toSec();
 			bool aligned = false;
@@ -133,14 +144,13 @@ int main(int argc, char** argv) {
 	AlignAction align_action("align_server");
 
 	ros::NodeHandle n;
+	ros::NodeHandle n_params(n, "align_server_params");
 
-	if(!n.getParam("align_timeout", align_timeout))
+	if(!n_params.getParam("align_timeout", align_timeout))
 		ROS_ERROR_STREAM("Could not read align_timeout in align_server");
-
-	if(!n.getParam("x_error_threshhold", x_error_threshhold))
+	if(!n_params.getParam("x_error_threshhold", x_error_threshhold))
 		ROS_ERROR_STREAM("Could not read x_error_threshhold in align_server");
-
-	if(!n.getParam("orient_error_threshhold", orient_error_threshhold))
+	if(!n_params.getParam("orient_error_threshhold", orient_error_threshhold))
 		ROS_ERROR_STREAM("Could not read orient_error_threshhold in align_server");
 
 	ros::spin();
