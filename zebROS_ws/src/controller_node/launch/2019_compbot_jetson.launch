@@ -134,6 +134,7 @@
 		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
 			<param name="x_topic" value="distance_pid/x_command" />
 			<param name="y_topic" value="align_with_terabee/y_command" />
+			<param name="enable_topic" value="distance_pid/pid_enable" />
 		</node>
 	</group>
     
@@ -155,8 +156,9 @@
             <param name="setpoint_topic" value="navX_snap_to_goal_setpoint" />
             <param name="topic_from_plant" value="navX_snap_to_goal_state" />
         </node>
-		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node">
+		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
 			<param name="orient_topic" value="orient_pid/orient_control_effort" />
+			<param name="enable_topic" value="pid_enable" />
 		</node>
     </group>
 

@@ -45,6 +45,7 @@ class AlignAction {
 			enable_navx_pub_ = nh_.advertise<std_msgs::Bool>("/navX_snap_to_goal_pid/pid_enable", 1);
 			enable_x_pub_ = nh_.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1);
 			enable_y_pub_ = nh_.advertise<std_msgs::Bool>("align_with_terabee/enable_y_pub", 1);
+			cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("server/swerve_drive_controller/cmd_vel", 1);
 
 			navx_error_sub_ = nh_.subscribe("/navX_snap_to_goal_pid/pid_debug", 1, &AlignAction::navx_error_cb, this);
 			x_error_sub_ = nh_.subscribe("distance_pid/pid_debug", 1, &AlignAction::x_error_cb, this);
@@ -91,6 +92,15 @@ class AlignAction {
 				timed_out = (ros::Time::now().toSec() - start_time) > align_timeout;
 				preempted = as_.isPreemptRequested();
 			}*/
+			geometry_msgs::Twist cmd_vel_msg;
+			cmd_vel_msg.linear.x = 0.0;
+			cmd_vel_msg.linear.y = 0.0;
+			cmd_vel_msg.linear.z = 0.0;
+			cmd_vel_msg.angular.x = 0.0;
+			cmd_vel_msg.angular.y = 0.0;
+			cmd_vel_msg.angular.z = 0.0;
+			cmd_vel_pub_.publish(cmd_vel_msg);
+			ros::spinOnce();
 
 			start_time = ros::Time::now().toSec();
 			bool aligned = false;
@@ -111,6 +121,8 @@ class AlignAction {
 				preempted = as_.isPreemptRequested();
 				aligned = x_aligned_ && y_aligned_;
 			}
+			cmd_vel_pub_.publish(cmd_vel_msg);
+			ros::spinOnce();
 			
 			if(timed_out)
 			{

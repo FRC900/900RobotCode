@@ -1,18 +1,24 @@
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/Bool.h>
 #include <geometry_msgs/Twist.h>
 
 geometry_msgs::Twist cmd_vel_msg;
 ros::Time time_since_command;
+ros::Time time_since_pid_enable;
 ros::Time current_time;
 
 std::string orient_topic;
 std::string x_topic;
 std::string y_topic;
+std::string enable_topic;
 
 ros::Subscriber x_pid_sub;
 ros::Subscriber y_pid_sub;
 ros::Subscriber orient_pid_sub;
+ros::Subscriber enable_pid_sub;
+
+bool pid_enable = false;
 
 void orientCB(const std_msgs::Float64& msg)
 {
@@ -28,6 +34,11 @@ void yCB(const std_msgs::Float64& msg)
 {
 	time_since_command = ros::Time::now();
 	cmd_vel_msg.linear.y = msg.data;
+}
+void enableCB(const std_msgs::Bool& msg)
+{
+	time_since_pid_enable = ros::Time::now();
+	pid_enable = msg.data;
 }
 
 int main(int argc, char ** argv)
@@ -54,16 +65,23 @@ int main(int argc, char ** argv)
     else {
         y_pid_sub = nh.subscribe(y_topic, 1, &yCB);
     }
+	if(!nh_private_params.getParam("enable_topic", enable_topic))
+	{
+		ROS_ERROR("Could not read enable_topic in publish_pid_cmd_vel");
+	}
+	else {
+		enable_pid_sub = nh.subscribe(enable_topic, 1, &enableCB);
+	}
 
-
-	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("pid/swerve_drive_controller/cmd_vel", 1);
 
 	ros::Rate r(100);
 
+	time_since_pid_enable = ros::Time::now();
 	while(ros::ok())
 	{
 		current_time = ros::Time::now();
-		if((current_time - time_since_command).toSec() < 1 /*&& (current_time - time_since_y).toSec() < 1*/)
+		if((current_time - time_since_command).toSec() < 1 && pid_enable && (current_time - time_since_pid_enable).toSec() < 0.5)
 		{
 			cmd_vel_pub.publish(cmd_vel_msg);
 		}
