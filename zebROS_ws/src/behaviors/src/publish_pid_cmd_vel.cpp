@@ -16,7 +16,7 @@ ros::Subscriber y_pid_sub;
 void orientCB(const std_msgs::Float64& msg)
 {
 	time_since_command = ros::Time::now();
-	cmd_vel_msg.angular.z = msg.data;
+	cmd_vel_msg.angular.z = -1*msg.data;
 }
 void xCB(const std_msgs::Float64& msg)
 {

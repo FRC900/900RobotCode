@@ -15,7 +15,7 @@
 #include "behaviors/ClimbGoal.h"
 #include "actionlib/client/simple_action_client.h"
 #include "behaviors/enumerated_elevator_indices.h"
-
+#include "std_msgs/Bool.h"
 #include "std_srvs/SetBool.h"
 #include <vector>
 
@@ -38,6 +38,8 @@ rate_limiter::RateLimiter right_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_t
 rate_limiter::RateLimiter left_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 
+
+ros::Publisher navX_pid;
 ros::Publisher JoystickRobotVel;
 ros::Publisher align_with_terabee_pub;
 ros::ServiceClient BrakeSrv;
@@ -193,16 +195,27 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].buttonAButton)
 		{
 			ROS_INFO_THROTTLE(1, "buttonAButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+            std_msgs::Bool enable_pid;
+			enable_pid.data = true;
+            navX_pid.publish(enable_pid);
 		}
 		if(joystick_states_array[0].buttonARelease)
 		{
 			ROS_INFO_STREAM("Joystick1: buttonARelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
+            std_msgs::Bool enable_pid;
+			enable_pid.data = false;
+            navX_pid.publish(enable_pid);
+
+			geometry_msgs::Twist vel;
+			vel.linear.x = 0;
+			vel.linear.y = 0;
+			vel.linear.z = 0;
+
+			vel.angular.x = 0;
+			vel.angular.y = 0;
+			vel.angular.z = 0;
+
+			JoystickRobotVel.publish(vel);
 		}
 		//Joystick1: buttonB
 		if(joystick_states_array[0].buttonBPress)
@@ -683,6 +696,7 @@ int main(int argc, char **argv)
 	service_connection_header["tcp_nodelay"] = "1";
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("/frcrobot_jetson/swerve_drive_controller/cmd_vel", 1);
+    navX_pid = n.advertise<std_msgs::Bool>("/navX_snap_to_goal_pid/pid_enable", 1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
 
 	//initialize actionlib clients

@@ -31,7 +31,7 @@ double nearest_angle(std::vector<double> angles)
 	double smallest_distance = std::numeric_limits<double>::max();
 	double cur_angle = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
 	for(int i = 0; i < angles.size(); i++){
-		double distance = fabs(angles::shortest_angular_distance(cur_angle, angles[i]));
+		double distance = fabs(cur_angle - angles[i]);
 		if(distance < smallest_distance) {
 			smallest_distance = distance;
 			snap_angle = angles[i];
@@ -49,7 +49,7 @@ void navXCallback(const sensor_msgs::Imu &navXState)
     tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
 
     if (yaw == yaw) // ignore NaN results
-        navX_angle.store(-1*yaw, std::memory_order_relaxed);
+        navX_angle.store(yaw, std::memory_order_relaxed);
 }
 
 void jointStateCallback(const sensor_msgs::JointState &joint_state)
