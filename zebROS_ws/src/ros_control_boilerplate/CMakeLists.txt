@@ -169,9 +169,9 @@ if ("${ARM_PREFIX}" STREQUAL "arm-frc2019-linux-gnueabi")
 		${WPI_SYSROOT}/lib/navx/linux/athena/static/libnavx_frc.a
 	)
 elseif ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") # Jetson TK1
-	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/armhf/static)
+	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/raspbian/static)    # Who knows if this will work
 elseif ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") # Jetson TX1/TX2
-	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/aarch64/static)
+	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/jetsontx/static)
 else() # x86-64, hopefully. First person to try and build native on a Mac gets kicked off the team
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/x86-64/static)
 endif()
