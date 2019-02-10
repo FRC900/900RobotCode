@@ -154,25 +154,25 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "Joystick_controller");
 	ros::NodeHandle nh;
 	ros::NodeHandle n_params(nh, "goal_angles");
-	ros::NodeHandle n_params_actionlib(nh, "actionlib_params");
+	ros::NodeHandle n_params_actionlib(nh, "/actionlib_params");
 
 	if(!n_params.getParam("hatch_panel_angles", hatch_panel_angles))
 	{
-		ROS_ERROR("Could not read hatch_panel_angles in teleop_joystick_comp");
+		ROS_ERROR("Could not read hatch_panel_angles in teleop joystick snap to goal");
 	}
 	if(!n_params.getParam("cargo_angles", cargo_angles))
 	{
-		ROS_ERROR("Could not read cargo_angles in teleop_joystick_comp");
+		ROS_ERROR("Could not read cargo_angles in teleop joystick snap to goal");
 	}
 	if(!n_params.getParam("nothing_angles", nothing_angles))
 	{
-		ROS_ERROR("Could not read nothing_angles in teleop_joystick_comp");
+		ROS_ERROR("Could not read nothing_angles in teleop joystick snap to goal");
 	}
 
 
 	if(!n_params_actionlib.getParam("linebreak_debounce_iterations", linebreak_debounce_iterations))
 	{
-		ROS_ERROR("Could not read nothing_angles in teleop_joystick_comp");
+		ROS_ERROR("Could not read linebreak_debounce_interations in teleop joystick snap to goal");
 	}
 
 
@@ -188,6 +188,9 @@ int main(int argc, char **argv)
 
 	ros::Rate r(100);
 	double snap_angle;
+	
+	ros::spinOnce();
+
 	while(ros::ok()) {
 		std_msgs::Float64 angle_snap;
 		std_msgs::Float64 navX_state;

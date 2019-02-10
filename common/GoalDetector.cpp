@@ -42,8 +42,7 @@ float GoalDetector::createConfidence(float expectedVal, float expectedStddev, fl
 	return confidence > 0.5 ? 1 - confidence : confidence;
 }
 
-// Search for two contours which could make up a
-// vision target.  If found, save the location of it
+
 void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 	clear();
 	const vector<vector<Point>> goal_contours = getContours(image);
@@ -218,7 +217,8 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 
 			if(left_info[i].rtRect.angle > right_info[j].rtRect.angle)
 			{
-				cout << "Angle " << best_result_index_left << ": " << left_info[i].rtRect.angle << "Angle " << best_result_index_right << ": " << right_info[j].rtRect.angle << endl;
+				//cout << "Angle " << best_result_index_left << ": " << left_info[i].rtRect.angle << " Angle " << best_result_index_right << ": " << right_info[j].rtRect.angle << endl;
+				cout << i << " " << j << "Angle check failed" << endl;
 
 				continue;
 			}
@@ -262,12 +262,62 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				best_result_index_left = i;
 				best_result_index_right = j;
 			}
+
+			GoalFound goal_found;
+
+			//These are the saved values for the best goal before moving on to
+			//try and find another one.
+			if(_return_found.size() == 0)
+			{
+				goal_found.found_pos                 = left_info[best_result_index_left].pos;
+				goal_found.found_distance            = left_info[best_result_index_left].distance;
+				goal_found.found_angle               = left_info[best_result_index_left].angle;
+				goal_found.found_left_rect			 = left_info[best_result_index_left].rect;
+				goal_found.found_right_rect			 = right_info[best_result_index_right].rect;
+				goal_found.found_left_rotated_rect	 = left_info[best_result_index_left].rtRect;
+				goal_found.found_right_rotated_rect	 = right_info[best_result_index_right].rtRect;
+				_return_found.push_back(goal_found);
+			}
+			else
+			{
+				const int min_dist_bwn_goals = 0.01;
+				bool repeated = false;
+				for(int k = 0; k < _return_found.size(); k++)
+				{
+					if(abs(left_info[best_result_index_left].pos.x - _return_found[k].found_pos.x) < min_dist_bwn_goals)
+						{
+							continue;
+						}
+					for(int l = 0; l < _return_found.size(); l++)
+					{
+						if(abs(left_info[best_result_index_left].pos.x - _return_found[l].found_pos.x) < min_dist_bwn_goals)
+							repeated = true;
+					}
+				}
+				if(repeated == false)
+				{
+					goal_found.found_pos                 = left_info[best_result_index_left].pos;
+					goal_found.found_distance            = left_info[best_result_index_left].distance;
+					goal_found.found_angle               = left_info[best_result_index_left].angle;
+					goal_found.found_left_rect			 = left_info[best_result_index_left].rect;
+					goal_found.found_right_rect			 = right_info[best_result_index_right].rect;
+					goal_found.found_left_rotated_rect	 = left_info[best_result_index_left].rtRect;
+					goal_found.found_right_rotated_rect	 = right_info[best_result_index_right].rtRect;
+					_return_found.push_back(goal_found);
+				}
+
+			}
+				cout << "Number of goals: " << _return_found.size() << endl;
+				for(int n = 0; n < _return_found.size(); n++)
+					cout << "Goal " << n + 1 << " pos: " << _return_found[n].found_pos << endl;
+
+
 		}
 	}
 
 	//say a goal is found if the sum of the confidences is higher than 0.5
 	if(found_goal && left_info[best_result_index_left].confidence + right_info[best_result_index_right].confidence > _min_valid_confidence) {
-#ifdef VERBOSE
+#ifdef VERBOSE_BOILER
 		cout << "Left distance: " << left_info[best_result_index_left].distance << " Right distance: " << right_info[best_result_index_right].distance << endl;
 		cout << "Left position: " << left_info[best_result_index_left].pos << " Right position: " << right_info[best_result_index_right].pos << endl;
 		cout << "Left confidence: " << left_info[best_result_index_left].confidence << " Right confidence: " << right_info[best_result_index_right].confidence << endl;
@@ -279,12 +329,20 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 		// Use data from the contour which has
 		// good depth data
 		// If neither do, do the best we can
-		const GoalInfo *gi;
-		if (!right_info[best_result_index_right].depth_error && !left_info[best_result_index_left].depth_error)
+
+		//const GoalInfo *gi;
+		
+/*
+		if ((!right_info[best_result_index_right].depth_error) && (!left_info[best_result_index_left].depth_error))
 		{
-			_goal_pos = (left_info[best_result_index_left].pos + right_info[best_result_index_right].pos) / 2;
-			_dist_to_goal = (left_info[best_result_index_left].distance + right_info[best_result_index_right].distance) / 2;
-			_angle_to_goal = (left_info[best_result_index_left].angle + right_info[best_result_index_right].angle) / 2;
+		goal_found.found_pos = (left_info[best_result_index_left].pos + right_info[best_result_index_right].pos) / 2;
+		goal_found.found_distance = (left_info[best_result_index_left].distance + right_info[best_result_index_right].distance) / 2;
+		goal_found.found_angle = (left_info[best_result_index_left].angle + right_info[best_result_index_right].angle) / 2;
+		goal_found.found_left_rect			 = left_info[best_result_index_left].rect;
+		goal_found.found_right_rect			 = right_info[best_result_index_right].rect;
+		goal_found.found_left_rotated_rect	 = left_info[best_result_index_left].rtRect;
+		goal_found.found_right_rotated_rect	 = right_info[best_result_index_right].rtRect;
+
 
 		}
 		else
@@ -297,13 +355,10 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			_goal_pos        = gi->pos;
 			_dist_to_goal    = gi->distance;
 			_angle_to_goal   = gi->angle;
-		}
-		_goal_left_rect  = left_info[best_result_index_left].rect;
-		_goal_right_rect = right_info[best_result_index_right].rect;
-		_goal_left_rotated_rect = left_info[best_result_index_left].rtRect;
-		_goal_right_rotated_rect = right_info[best_result_index_right].rtRect;
-		_isValid = true;
 
+		}
+*/
+				_isValid = true;
 	}
 }
 
@@ -312,13 +367,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 void GoalDetector::clear()
 {
 	_isValid = false;
-	_dist_to_goal = -1.0;
-	_angle_to_goal = -1.0;
-	_goal_left_rect = Rect();
-	_goal_right_rect = Rect();
-	_goal_left_rotated_rect = RotatedRect();
-	_goal_right_rotated_rect = RotatedRect();
-	_goal_pos = Point3f();
+	_return_found.clear();
 }
 
 const vector< vector < Point > > GoalDetector::getContours(const Mat& image) {
@@ -388,7 +437,6 @@ const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< 
 const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contours, const vector<DepthInfo> &depth_maxs, ObjectNum objtype) {
 	ObjectType _goal_shape(objtype);
 	vector<GoalInfo> return_info;
-	vector<GoalFound> return_found_info;
 	// Create some target stats based on our idealized goal model
 	//center of mass as a percentage of the object size from left left
 	const Point2f com_percent_expected(_goal_shape.com().x / _goal_shape.width(),
@@ -505,6 +553,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		float confidence = (confidence_height + confidence_com_x + confidence_filled_area + confidence_ratio/2. + confidence_screen_area/2.) / 5.0;
 
 #ifdef VERBOSE
+/*
 		cout << "-------------------------------------------" << endl;
 		cout << "Contour " << i << endl;
 		cout << "confidence_height: " << confidence_height << endl;
@@ -522,6 +571,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		cout << "position: " << goal_tracked_obj.getPosition() << endl;
 		cout << "Angle: " << minAreaRect(contours[i]).angle << endl;
 		cout << "-------------------------------------------" << endl;
+*/
 #endif
 
 		GoalInfo goal_info;
@@ -539,56 +589,6 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		goal_info.br         = br;
 		goal_info.rtRect     = minAreaRect(contours[i]);
 		return_info.push_back(goal_info);
-
-		GoalFound goal_found;
-
-		//These are the saved values for the best goal before moving on to
-		//try and find another one.
-		if(return_found_info.size() == 0)
-		{
-			goal_found.found_pos                 = _goal_pos;
-			goal_found.found_distance            = _dist_to_goal;
-			goal_found.found_angle               = _angle_to_goal;
-			goal_found.found_left_rect           = _goal_left_rect;
-			goal_found.found_right_rect          = _goal_right_rect;
-			goal_found.found_left_rotated_rect   = _goal_left_rotated_rect;
-			goal_found.found_right_rotated_rect  = _goal_right_rotated_rect;
-			goal_found._isValid				     = _isValid;
-		}
-
-
-		else
-		{
-			const int THRESH = 0.1;
-			bool repeated = false;
-			for(int k = 0; k < return_found_info.size(); k++)
-			{
-				if(abs(_goal_pos.x - return_found_info[k].found_pos.x) < THRESH)	/*threshold val. Can be tweaked*/
-					{
-						continue;
-					}
-				for(int l = 0; l < return_found_info.size(); l++)
-				{
-					if(abs(_goal_pos.x - return_found_info[l].found_pos.x) < 0.075)
-						repeated = true;
-				}
-			}
-			if(repeated == false)
-			{
-				goal_found.found_pos                 = _goal_pos;
-				goal_found.found_distance            = _dist_to_goal;
-				goal_found.found_angle               = _angle_to_goal;
-				goal_found.found_left_rect           = _goal_left_rect;
-				goal_found.found_right_rect          = _goal_right_rect;
-				goal_found.found_left_rotated_rect   = _goal_left_rotated_rect;
-				goal_found.found_right_rotated_rect  = _goal_right_rotated_rect;
-				goal_found._isValid				     = _isValid;
-			}
-		return_found_info.push_back(goal_found);
-		}
-		cout << "Number of goals: " << return_found_info.size() << endl;
-		for(int n = 0; n < return_found_info.size(); n++)
-			cout << "Goal " << n << " x-pos: " << return_found_info[n].found_pos.x << endl;
 
 	}
 	return return_info;
@@ -674,65 +674,18 @@ float GoalDetector::distanceUsingFixedHeight(const Rect &/*rect*/, const Point &
 	return distance_diagonal;
 }
 
+vector< GoalFound > GoalDetector::return_found(void) const
+{
+	return _return_found;
+}
+
+
+
 bool GoalDetector::Valid(void) const
 {
 	return _isValid;
 }
 
-float GoalDetector::dist_to_goal(void) const
-{
-	//floor distance to goal in m
-	return _isValid ? _dist_to_goal * 1.0 : -1.0;
-}
-
-float GoalDetector::angle_to_goal(void) const
-{
-	//angle robot has to turn to face goal in degrees
-	if (!_isValid)
-		return -1;
-
-	float delta = 0;
-#if 0
-	if (_angle_to_goal >= 40)
-		delta = -3.00; // >= 40
-	else if (_angle_to_goal >= 35)
-		delta = -2.50; // 35 < x <= 40
-	else if (_angle_to_goal >= 30)
-		delta = -2.00; // 30 < x <= 35
-	else if (_angle_to_goal >= 25)
-		delta = -0.50; // 25 < x <= 30
-	else if (_angle_to_goal >= 20)
-		delta = -0.15; // 20 < x <= 25
-	else if (_angle_to_goal >= -20)
-		delta = 0;     // -20 <= x <= 20
-	else if (_angle_to_goal >= -25)
-		delta = 0.25;  // -25 <= x < -20
-	else if (_angle_to_goal >= -30)
-		delta = 0.50;  // -30 <= x < -25
-	else if (_angle_to_goal >= -35)
-		delta = 2.50;  // -35 <= x < -30
-	else if (_angle_to_goal >= -40)
-		delta = 3.50;  // -40 <= x < -35
-	else
-		delta = 4.55;  // -40 > x 
-
-	cout << "angle:" << _angle_to_goal << " delta:" << delta << endl;
-#endif
-
-	return _angle_to_goal + delta;
-}
-
-// Screen rect bounding the goal
-Rect GoalDetector::goal_rect(void) const
-{
-	return _isValid ? _goal_left_rect : Rect();
-}
-
-// Goal x,y,z position relative to robot
-Point3f GoalDetector::goal_pos(void) const
-{
-	return _isValid ? _goal_pos : Point3f();
-}
 
 // Draw debugging info on frame - all non-filtered contours
 // plus their confidence. Highlight the best bounding rect in
@@ -750,7 +703,6 @@ void GoalDetector::drawOnFrame(Mat &image, const vector<vector<Point>> &contours
 		putText(image, to_string(i), br.br(), FONT_HERSHEY_PLAIN, 1, Scalar(0,255,0));
 	}
 	//if(!(_pastRects[_pastRects.size() - 1] == SmartRect(Rect()))) {
-	if (_isValid) {
 
 
 
@@ -769,10 +721,12 @@ void GoalDetector::drawOnFrame(Mat &image, const vector<vector<Point>> &contours
 
 	}
 	*/
-
-		rectangle(image, _goal_left_rect, Scalar(0,255,0), 3);
-		rectangle(image, _goal_right_rect, Scalar(0,140,255), 3);
+	for(int i = 0; i < _return_found.size(); i++)
+	{
+		rectangle(image, _return_found[i].found_left_rect, Scalar(0,255,0), 3);
+		rectangle(image, _return_found[i].found_right_rect, Scalar(0,140,255), 3);
 	}
+
 }
 
 // Look for the N most recent detected rectangles to be

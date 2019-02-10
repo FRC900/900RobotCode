@@ -13,6 +13,8 @@
 #include "behaviors/ElevatorGoal.h"
 #include "behaviors/ClimbAction.h"
 #include "behaviors/ClimbGoal.h"
+#include "behaviors/AlignAction.h"
+#include "behaviors/AlignGoal.h"
 #include "actionlib/client/simple_action_client.h"
 #include "behaviors/enumerated_elevator_indices.h"
 #include "std_msgs/Bool.h"
@@ -52,6 +54,7 @@ std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_h
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_hatch_panel_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ElevatorAction>> elevator_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ClimbAction>> climber_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::AlignAction>> align_ac;
 std::atomic<double> navX_angle;
 
 struct ElevatorGoal
@@ -290,9 +293,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].bumperLeftPress)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].bumperLeftButton)
 		{
@@ -370,9 +370,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].directionRightRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: directionRightRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
+			behaviors::AlignGoal goal;
+			goal.trigger = true;
+			align_ac->sendGoal(goal);
 		}
 		//Joystick1: directionUp
 		if(joystick_states_array[0].directionUpPress)
@@ -652,6 +652,11 @@ int main(int argc, char **argv)
 	ros::NodeHandle n;
 	ros::NodeHandle n_params(n, "teleop_params");
 
+	int num_joysticks = 1;
+	if(!n_params.getParam("num_joysticks", num_joysticks))
+	{
+		ROS_ERROR("Could not read num_joysticks in teleop_joystick_comp");
+	}
 	if(!n_params.getParam("joystick_deadzone", joystick_deadzone))
 	{
 		ROS_ERROR("Could not read joystick_deadzone in teleop_joystick_comp");
@@ -677,17 +682,19 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read rotation_pow in teleop_joystick_comp");
 	}
 
-
 	std::vector <ros::Subscriber> subscriber_array;
 
 	navX_angle = M_PI / 2;
 
-	//Read from two joysticks
-	topic_array.push_back("/frcrobot_jetson/joystick_states");
-	topic_array.push_back("/frcrobot_jetson/joystick_states1");
-	for(size_t j = 0; (subscriber_array.size()) < (topic_array.size()); j++)
+	//Read from _num_joysticks_ joysticks
+	for(size_t j = 0; j < num_joysticks; j++)
 	{
-		subscriber_array.push_back(n.subscribe((topic_array[j]), 1, &evaluateCommands));
+		std::stringstream s;
+		s << "/teleop/translator";
+		s << j;
+		s << "/joystick_states";
+		topic_array.push_back(s.str());
+		subscriber_array.push_back(n.subscribe(topic_array[j], 1, &evaluateCommands));
 	}
 
 	joystick_states_array.resize(topic_array.size());
@@ -695,8 +702,12 @@ int main(int argc, char **argv)
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
-	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("/frcrobot_jetson/swerve_drive_controller/cmd_vel", 1);
     navX_pid = n.advertise<std_msgs::Bool>("/navX_snap_to_goal_pid/pid_enable", 1);
+	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
+	{
+		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");
+	}
+	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
 
 	//initialize actionlib clients
@@ -705,6 +716,7 @@ int main(int argc, char **argv)
 	intake_hatch_panel_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>>("/hatch_intake/intake_hatch_panel_server", true);
 	outtake_hatch_panel_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::PlaceAction>>("/hatch_outtake/outtake_hatch_panel_server", true);
 	climber_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ClimbAction>>("/climber/climber_server", true);
+	align_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::AlignAction>>("/align_server/align_server", true);
 	elevator_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ElevatorAction>>("/elevator/elevator_server", true);
 
 

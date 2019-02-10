@@ -81,19 +81,23 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	Mat tempFrame(framePtr->clone());
 	gd->drawOnFrame(tempFrame, gd->getContours(tempFrame));
 
-	const Point3f pt = gd->goal_pos();
-
+	vector< GoalFound > gfd = gd->return_found(); 
 	goal_detection::GoalDetection gd_msg;
+
+
+	for(int i = 0; i < gfd.size(); i++)
+	{
+	geometry_msgs::Point32 dummy;
 	gd_msg.header.seq = frameMsg->header.seq;
 	gd_msg.header.stamp = frameMsg->header.stamp;
 	gd_msg.header.frame_id = frameMsg->header.frame_id;
-	gd_msg.location.x = pt.x;
-	gd_msg.location.y = pt.y;
-	gd_msg.location.z = pt.z;
-
+	dummy.x = gfd[i].found_pos.x;
+	dummy.y = gfd[i].found_pos.y;
+	dummy.z = gfd[i].found_pos.z;
+	gd_msg.location.push_back(dummy);
+	}
 
 	gd_msg.valid = gd->Valid();
-
 
 	pub.publish(gd_msg);
 
@@ -106,11 +110,12 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 		waitKey(5);
 	}
 
+
 	if (gd_msg.valid == false)
 	{
 		return;
 	}
-
+/*
 	//Transform between goal frame and odometry/map.
 	static tf2_ros::TransformBroadcaster br;
 	geometry_msgs::TransformStamped transformStamped;
@@ -155,7 +160,7 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	tf2::doTransform(transformStamped, transformStampedOdomGoal, transformStampedOdomCamera);
 
 	br.sendTransform(transformStampedOdomGoal);
-
+*/
 }
 
 int main(int argc, char **argv)

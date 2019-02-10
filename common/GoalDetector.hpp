@@ -31,7 +31,7 @@ struct GoalInfo
 	cv::RotatedRect rtRect;
 };
 
-//This contains all the necessary info for a goal that was found in getInfo().
+//This contains all the necessary info for a goal
 struct GoalFound
 {
 	cv::Point3f found_pos;
@@ -41,7 +41,6 @@ struct GoalFound
 	cv::Rect found_right_rect;
 	cv::RotatedRect found_left_rotated_rect;
 	cv::RotatedRect found_right_rotated_rect;
-	bool _isValid = true;
 };
 
 
@@ -50,10 +49,8 @@ class GoalDetector
 	public:
 		GoalDetector(const cv::Point2f &fov_size, const cv::Size &frame_size, bool gui = false);
 
-		float dist_to_goal(void) const;
-		float angle_to_goal(void) const;
-		cv::Rect goal_rect(void) const;
-		cv::Point3f goal_pos(void) const;
+		std::vector< GoalFound > return_found(void) const;
+
 		void drawOnFrame(cv::Mat &image,const std::vector< std::vector< cv::Point>> &contours) const;
 
 		//These are the three functions to call to run GoalDetector
@@ -66,21 +63,15 @@ class GoalDetector
 		const std::vector< std::vector< cv::Point > > getContours(const cv::Mat& image);
 
 		bool Valid(void) const;
+
 	private:
-	
+
 		cv::Point2f _fov_size;
 		cv::Size    _frame_size;
 
 		// Save detection info
 		bool        _isValid;
-		float       _dist_to_goal;
-		float       _angle_to_goal;
-		cv::Rect    _goal_left_rect;
-		cv::Rect    _goal_right_rect;
-		cv::RotatedRect _goal_left_rotated_rect;
-		cv::RotatedRect _goal_right_rotated_rect;
-		cv::Point3f _goal_pos;
-
+		std::vector< GoalFound > _return_found;
 		float       _min_valid_confidence;
 
 		int         _otsu_threshold;

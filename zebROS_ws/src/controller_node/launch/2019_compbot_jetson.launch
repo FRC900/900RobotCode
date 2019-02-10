@@ -30,20 +30,6 @@
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
 			output="screen" args="spawn cargo_outtake_controller cargo_intake_controller climber_controller panel_intake_controller elevator_controller joint_state_controller joint_state_listener_controller talon_state_controller match_state_listener_controller pcm_state_controller pdp_state_controller swerve_drive_controller robot_code_ready_controller" /> 
 
-		<!-- TODO - these should be in joy0, joy1 -->
-		<group ns="translator0">
-			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen"/>
-				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw" />
-				<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_jetson/joystick_states" />
-		</group>
-
-		<group ns="translator1" if="$(eval arg('joy_or_key')=='joy')">	
-			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" >
-				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw1" />
-				<remap from="/frcrobot_jetson/joystick_states" to="/frcrobot_jetson/joystick_states1" />
-			</node>
-		</group>
-
 		<node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
 	</group>
 
@@ -51,7 +37,6 @@
 		<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" > 
 			<arg name="port" value="5803"/>
 		</include>
-        
         <node name="talon_throttler" type="throttle" pkg="topic_tools" args="messages /frcrobot_jetson/talon_states 10 /frcrobot_jetson/talon_states_throttled" />
         <node name="joint_throttler" type="throttle" pkg="topic_tools" args="messages /frcrobot_jetson/joint_states 10 /frcrobot_jetson/joint_states_throttled" />
 	</group>
@@ -62,13 +47,21 @@
 
 	<group ns="teleop">
 		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
-		<!-- Run this on the Jetson so outputs go to /frcrobot_jetson/swerve_drive
-		 but remap the inputs so they come from the Rio -->
 		<node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" >
 			<remap from="navx_mxp" to="/frcrobot_rio/navx_mxp"/>
 		</node>
 
+		<group ns="translator0">
+			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen"/>
+		</group>
+
+		<group ns="translator1" if="$(eval arg('joy_or_key')=='joy')">	
+			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" >
+				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw1" />
+			</node>
+		</group>
 	</group>
+
 	<!-- Actionlib servers!!! -->
 	<!-- Include this at the top level so all actionlib servers can find it -->
 	<rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
@@ -109,12 +102,39 @@
 		</node>
 		<node name="path_to_goal_ac_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
 		<node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
-		<node name="path_follower" pkg="swerve_point_generator" type="path_follower" output="screen"/>
+	</group>
+		
+	<group ns="cmd_vel_mux">
+		<node name="twist_mux" pkg="twist_mux" type="twist_mux">
+			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux_topics.yaml"/>
+			<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
+		</node> 
 	</group>
 
-	<group ns="align_with_terabee">
+	<group ns="align_server">
 		<rosparam file="$(find behaviors)/config/align_with_terabee.yaml" command="load"/>
+
+		<node name="align_ac_server" pkg="behaviors" type="align_server" output="screen" />
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
+		<group ns="distance_pid">
+        <node name="distance_pid" pkg="pid" type="controller" >
+            <param name="node_name" value="distance_pid" />
+            <param name="Kp" value="5.0" />
+            <param name="Ki" value="0.0" />
+            <param name="Kd" value="0.1" />
+            <param name="upper_limit" value="10" />
+            <param name="lower_limit" value="-10" />
+            <param name="windup_limit" value="10" />
+            <param name="max_loop_frequency" value="100.0" />
+            <param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="x_command" />     
+		</node>
+		</group>
+		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+			<param name="x_topic" value="distance_pid/x_command" />
+			<param name="y_topic" value="align_with_terabee/y_command" />
+			<param name="enable_topic" value="distance_pid/pid_enable" />
+		</node>
 	</group>
     
     <group ns="navX_snap_to_goal_pid">
@@ -137,27 +157,8 @@
         </node>
 		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
 			<param name="orient_topic" value="orient_pid/orient_control_effort" />
+			<param name="enable_topic" value="pid_enable" />
 		</node>
     </group>
-
-	<group ns="orient_pid">
-		<!--node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" /-->
-		<node name="state_setpoint_pub_node" pkg="behaviors" type="state_setpoint_publisher_node" />
-
-		<node name="orient_pid" pkg="pid" type="controller" >
-			<param name="node_name" value="orient_pid_node" />
-			<param name="Kp" value="5.0" />
-			<param name="Ki" value="0.0" />
-			<param name="Kd" value="0.1" />
-			<param name="upper_limit" value="10" />
-			<param name="lower_limit" value="-10" />
-			<param name="windup_limit" value="10" />
-			<param name="max_loop_frequency" value="100.0" />
-			<param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value="orient_pid/orient_control_effort" />     
-			<param name="setpoint_topic" value="orient_setpoint" />
-			<param name="topic_from_plant" value="orient_state" />
-		</node>
-	</group>
 
 </launch>

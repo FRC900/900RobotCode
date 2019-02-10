@@ -60,7 +60,7 @@ class ClimbAction {
 		climber_engage_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_release_endgame", false, service_connection_header);
 
 		//initialize the publisher used to send messages to the drive base
-		cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/frcrobot_jetson/swerve_drive_controller/cmd_vel", 1);
+		cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 
 		//start subscribers subscribing
 		//joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
@@ -72,26 +72,19 @@ class ClimbAction {
 
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::ClimbGoalConstPtr &goal) {
-			// TODO : consider putting the if(!found) check right after
-			// each call to waitForServer - otherwise if all 3 are missing
-			// we'll be waiting a long time before seeing useful status?
-			bool elevator_server_found = ae_.waitForServer(ros::Duration(wait_for_server_timeout));
-			bool climber_controller_found = climber_controller_client_.waitForExistence(ros::Duration(wait_for_server_timeout));
-			bool climber_engage_found = climber_engage_client_.waitForExistence(ros::Duration(wait_for_server_timeout));
-
-			if(!elevator_server_found)
+			if(!ae_.waitForServer(ros::Duration(wait_for_server_timeout)))
 			{
 				ROS_ERROR_STREAM("The elevator server was not loaded before the climber server needed it");
 				as_.setPreempted();
 				return;
 			}
-			if(!climber_controller_found)
+			if(!climber_controller_client_.waitForExistence(ros::Duration(wait_for_server_timeout)))
 			{
 				ROS_ERROR_STREAM("The elevator server was not loaded before the climber server needed it");
 				as_.setPreempted();
 				return;
 			}
-			if(!climber_engage_found)
+			if(!climber_engage_client_.waitForExistence(ros::Duration(wait_for_server_timeout)))
 			{
 				ROS_ERROR_STREAM("The elevator server was not loaded before the climber server needed it");
 				as_.setPreempted();

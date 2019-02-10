@@ -91,6 +91,10 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 #define KEYCODE_SPACE 0x20
 #define KEYCODE_COMMA 0x2C
 
+#include <ros_control_boilerplate/set_limit_switch.h>
+
+ros::ServiceServer service;
+
 namespace frcrobot_control
 {
 
@@ -449,8 +453,25 @@ std::vector<ros_control_boilerplate::DummyJoint> FRCRobotSimInterface::getDummyJ
 	return dummy_joints;
 }
 
+bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,ros_control_boilerplate::set_limit_switch::Response &res)
+{
+	for (std::size_t joint_id = 0; joint_id < num_can_talon_srxs_; ++joint_id)
+	{
+		if (!can_talon_srx_local_hardwares_[joint_id])
+			continue;
+        auto &ts = talon_state_[joint_id];
+        if(ts.getCANID() == req.target_joint_id) {
+            ts.setForwardLimitSwitch(req.forward);
+			ts.setReverseLimitSwitch(req.reverse);
+        }
+    }
+	return true;
+}
+
 void FRCRobotSimInterface::init(void)
 {
+	service = nh_.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit,this);
+
 	// Do base class init. This loads common interface info
 	// used by both the real and sim interfaces
 	ROS_WARN("Passes");
@@ -1122,3 +1143,6 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 }
 
 }  // namespace
+
+
+

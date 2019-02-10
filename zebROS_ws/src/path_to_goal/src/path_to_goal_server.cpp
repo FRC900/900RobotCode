@@ -8,6 +8,7 @@
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
 #include <swerve_point_generator/PathFollowAction.h>
+#include <angles/angles.h>
 
 // TODO : all of these should be members of PathAction.  Move their
 // initialization from main into the class constructor
@@ -146,10 +147,12 @@ public:
 		srvBaseTrajectory.request.points[0].velocities.push_back(0);
 		srvBaseTrajectory.request.points[0].accelerations.push_back(0);
 		//z-rotation
-		if (goal->rotation < 0.001)
-			srvBaseTrajectory.request.points[0].positions.push_back(0.001);
+		double rotation = goal->rotation;
+		rotation = angles::normalize_angle(rotation);
+		if (std::abs(rotation) < 0.001)
+			srvBaseTrajectory.request.points[0].positions.push_back(rotation < 0 ? -0.001 : 0.001);
 		else
-			srvBaseTrajectory.request.points[0].positions.push_back(goal->rotation);
+			srvBaseTrajectory.request.points[0].positions.push_back(rotation);
 		srvBaseTrajectory.request.points[0].velocities.push_back(0); //velocity at the end point
 		srvBaseTrajectory.request.points[0].accelerations.push_back(0); //acceleration at the end point
 		//time for profile to run

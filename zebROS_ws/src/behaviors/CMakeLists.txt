@@ -87,6 +87,7 @@ add_action_files(
 	Place.action
 	Climb.action
 	Elevator.action
+	Align.action
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -160,6 +161,9 @@ add_executable(outtake_hatch_panel_server src/outtake_hatch_panel_server.cpp)
 target_link_libraries(outtake_hatch_panel_server ${catkin_LIBRARIES})
 add_dependencies(outtake_hatch_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(test_actionlib src/test_actionlib.cpp)
+target_link_libraries(test_actionlib ${catkin_LIBRARIES})
+add_dependencies(test_actionlib ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #add_executable(dummy src/dummy.cpp)
 #target_link_libraries(
 #    dummy
@@ -202,6 +206,12 @@ target_link_libraries(state_setpoint_publisher_node
 add_executable(align_with_terabee_node src/align_with_terabee.cpp)
 add_dependencies(align_with_terabee_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(align_with_terabee_node
+  ${catkin_LIBRARIES}
+)
+
+add_executable(align_server src/align_server.cpp)
+add_dependencies(align_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(align_server
   ${catkin_LIBRARIES}
 )
 

@@ -48,7 +48,7 @@ class CargoIntakeAction {
 		service_connection_header["tcp_nodelay"] = "1";
 
 		//initialize the client being used to call the controller
-		cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("cargo_intake_command", false, service_connection_header);
+		cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 		//start subscribers subscribing
 		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
 	}
@@ -91,14 +91,14 @@ class CargoIntakeAction {
 			bool timed_out = false;
 
 			if(!preempted && !timed_out) {
-				ROS_WARN("cargo intake server: sending elevator to intake config");
+				ROS_WARN("cargo intake server: sending elevator to intake setpoint");
 				behaviors::ElevatorGoal elevator_goal;
 				elevator_goal.setpoint_index = INTAKE;
 				ac_elevator_.sendGoal(elevator_goal);
 				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(intake_timeout - (ros::Time::now().toSec() - start_time))); //Wait for server to finish or until timeout is reached
 				if(finished_before_timeout) {
 					actionlib::SimpleClientGoalState state = ac_elevator_.getState();
-					if(state.toString().c_str() != "SUCCEEDED") {
+					if(state.toString() != "SUCCEEDED") {
 						ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
 						preempted = true;
 					}
@@ -174,19 +174,19 @@ class CargoIntakeAction {
 			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
 			if(timed_out)
 			{
-				ROS_INFO("%s: Timed Out", action_name_.c_str());
+				ROS_WARN("%s: Timed Out", action_name_.c_str());
 				result_.success = false;
 				as_.setSucceeded(result_);
 			}
 			else if(preempted)
 			{
-				ROS_INFO("%s: Preempted", action_name_.c_str());
+				ROS_WARN("%s: Preempted", action_name_.c_str());
 				result_.success = false;
 				as_.setSucceeded(result_);
 			}
 			else //implies succeeded
 			{
-				ROS_INFO("%s: Succeeded", action_name_.c_str());
+				ROS_WARN("%s: Succeeded", action_name_.c_str());
 				result_.success = true;
 				as_.setSucceeded(result_);
 			}
