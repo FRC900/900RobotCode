@@ -80,7 +80,7 @@ bool runTrajectory(const swerve_point_generator::FullGenCoefs::Response &traj)
     talon_swerve_drive_controller::MotionProfilePoints swerve_control_srv;
     swerve_control_srv.request.profiles.resize(1);
     swerve_control_srv.request.profiles[0].points = traj.points;
-    swerve_control_srv.request.profiles[0].dt = 0.02;
+    swerve_control_srv.request.profiles[0].dt = traj.dt;
     swerve_control_srv.request.buffer = true;
     swerve_control_srv.request.run = true;
     swerve_control_srv.request.profiles[0].slot = 0;
@@ -215,16 +215,11 @@ int main(int argc, char** argv)
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = 1;
-	point_gen = n.serviceClient<swerve_point_generator::FullGenCoefs>("/point_gen/command", false, service_connection_header);
+	point_gen = n.serviceClient<swerve_point_generator::FullGenCoefs>("point_gen/command", false, service_connection_header);
 	swerve_controller = n.serviceClient<talon_swerve_drive_controller::MotionProfilePoints>("/frcrobot_jetson/swerve_drive_controller/run_profile", false, service_connection_header);
-	spline_gen = n.serviceClient<base_trajectory::GenerateSpline>("/base_trajectory/spline_gen", false, service_connection_header);
+	spline_gen = n.serviceClient<base_trajectory::GenerateSpline>("base_trajectory/spline_gen", false, service_connection_header);
 	VisualizeService = n.serviceClient<robot_visualizer::ProfileFollower>("visualize_auto", false, service_connection_header);
 	auto talon_sub = n.subscribe("/frcrobot_jetson/talon_states", 10, talonStateCallback);
-    auto ac = std::make_shared<actionlib::SimpleActionClient<swerve_point_generator::PathFollowAction>>("path_follower", true);
-
-	ROS_INFO_STREAM("waiting for server... ");
-	ac->waitForServer();
-	ROS_INFO_STREAM("found server");
 
 	ros::spin();
 

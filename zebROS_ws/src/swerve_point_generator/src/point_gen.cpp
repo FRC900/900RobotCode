@@ -426,7 +426,7 @@ int main(int argc, char **argv)
 	// Once everything this node needs is available, open
 	// it up to connections from the outside
         //ROS_ERROR("BEFORE advertiseService");
-	ros::ServiceServer service = nh.advertiseService("/point_gen/command", full_gen);
+	ros::ServiceServer service = nh.advertiseService("point_gen/command", full_gen);
 	//ROS_ERROR("AFTER advertiseService");
 
 	ros::spin();
