@@ -25,6 +25,7 @@ class AlignAction {
 		ros::Publisher enable_navx_pub_;
 		ros::Publisher enable_x_pub_;
 		ros::Publisher enable_y_pub_;
+		ros::Publisher cmd_vel_pub_;
 
 		ros::Subscriber navx_error_sub_;
 		ros::Subscriber x_error_sub_;
@@ -80,7 +81,7 @@ class AlignAction {
 			bool preempted = false;
 			bool timed_out = false;
 
-			/*while(!orient_aligned_ && !preempted && !timed_out)
+			while(!orient_aligned_ && !preempted && !timed_out)
 			{
 				ros::spinOnce();
 				r.sleep();
@@ -91,7 +92,7 @@ class AlignAction {
 
 				timed_out = (ros::Time::now().toSec() - start_time) > align_timeout;
 				preempted = as_.isPreemptRequested();
-			}*/
+			}
 			geometry_msgs::Twist cmd_vel_msg;
 			cmd_vel_msg.linear.x = 0.0;
 			cmd_vel_msg.linear.y = 0.0;
