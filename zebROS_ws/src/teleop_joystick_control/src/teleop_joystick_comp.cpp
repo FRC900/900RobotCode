@@ -677,7 +677,7 @@ int main(int argc, char **argv)
 	for(size_t j = 0; j < num_joysticks; j++)
 	{
 		std::stringstream s;
-		s << "translator";
+		s << "/teleop/translator";
 		s << j;
 		s << "/joystick_states";
 		topic_array.push_back(s.str());
