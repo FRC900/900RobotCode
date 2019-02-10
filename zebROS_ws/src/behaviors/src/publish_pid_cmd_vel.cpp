@@ -20,9 +20,6 @@ ros::Subscriber enable_pid_sub;
 
 bool pid_enable = false;
 
-ros::Subscriber orient_pid_sub;
-ros::Subscriber x_pid_sub;
-ros::Subscriber y_pid_sub;
 void orientCB(const std_msgs::Float64& msg)
 {
 	time_since_command = ros::Time::now();
