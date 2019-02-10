@@ -87,6 +87,7 @@ add_action_files(
 	Place.action
 	Climb.action
 	Elevator.action
+	Align.action
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -205,6 +206,12 @@ target_link_libraries(state_setpoint_publisher_node
 add_executable(align_with_terabee_node src/align_with_terabee.cpp)
 add_dependencies(align_with_terabee_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(align_with_terabee_node
+  ${catkin_LIBRARIES}
+)
+
+add_executable(align_server src/align_server.cpp)
+add_dependencies(align_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(align_server
   ${catkin_LIBRARIES}
 )
 
