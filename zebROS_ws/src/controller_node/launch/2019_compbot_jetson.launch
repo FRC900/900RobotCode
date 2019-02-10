@@ -119,7 +119,7 @@
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 		<group ns="distance_pid">
         <node name="distance_pid" pkg="pid" type="controller" >
-            <param name="node_name" value="distance_pid_node" />
+            <param name="node_name" value="distance_pid" />
             <param name="Kp" value="5.0" />
             <param name="Ki" value="0.0" />
             <param name="Kd" value="0.1" />

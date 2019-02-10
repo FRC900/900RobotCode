@@ -72,6 +72,7 @@ int main(int argc, char ** argv)
 
 	ros::Publisher distance_setpoint_pub = n.advertise<std_msgs::Float64>("distance_pid/setpoint", 1);
 	ros::Publisher distance_state_pub = n.advertise<std_msgs::Float64>("distance_pid/state", 1);
+	ros::Publisher distance_enable_pub = n.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1);
 	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_terabee/y_command", 1);
 	ros::Publisher successful_y_align = n.advertise<std_msgs::Bool>("align_with_terabee/y_aligned", 1);
 
@@ -87,6 +88,13 @@ int main(int argc, char ** argv)
 	distance_setpoint_msg.data = distance_target;
 
 	ros::Rate r(50);
+
+	//make the robot not randomly drive forward as soon as it receives data
+	std_msgs::Bool enable_false;
+	enable_false.data = false;
+	distance_enable_pub.publish(enable_false);
+	ros::spinOnce();
+
 
 	while(ros::ok())
 	{

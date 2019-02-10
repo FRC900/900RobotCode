@@ -70,14 +70,15 @@ class AlignAction {
 		}
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::AlignGoalConstPtr &goal) {
+			ROS_INFO_STREAM("align callback called");
 			ros::Rate r(10);
 
 			double start_time = ros::Time::now().toSec();
-			bool success = false; 
+			bool success = false;
 			bool preempted = false;
 			bool timed_out = false;
 
-			while(!orient_aligned_ && !preempted && !timed_out)
+			/*while(!orient_aligned_ && !preempted && !timed_out)
 			{
 				ros::spinOnce();
 
@@ -87,7 +88,7 @@ class AlignAction {
 
 				timed_out = (ros::Time::now().toSec() - start_time) > align_timeout;
 				preempted = as_.isPreemptRequested();
-			}
+			}*/
 
 			start_time = ros::Time::now().toSec();
 			bool aligned = false;

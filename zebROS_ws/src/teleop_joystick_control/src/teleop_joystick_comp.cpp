@@ -13,6 +13,8 @@
 #include "behaviors/ElevatorGoal.h"
 #include "behaviors/ClimbAction.h"
 #include "behaviors/ClimbGoal.h"
+#include "behaviors/AlignAction.h"
+#include "behaviors/AlignGoal.h"
 #include "actionlib/client/simple_action_client.h"
 #include "behaviors/enumerated_elevator_indices.h"
 
@@ -50,6 +52,7 @@ std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_h
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_hatch_panel_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ElevatorAction>> elevator_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ClimbAction>> climber_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::AlignAction>> align_ac;
 std::atomic<double> navX_angle;
 
 struct ElevatorGoal
@@ -277,9 +280,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].bumperLeftPress)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].bumperLeftButton)
 		{
@@ -357,9 +357,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].directionRightRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: directionRightRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
+			behaviors::AlignGoal goal;
+			goal.trigger = true;
+			align_ac->sendGoal(goal);
 		}
 		//Joystick1: directionUp
 		if(joystick_states_array[0].directionUpPress)
@@ -702,6 +702,7 @@ int main(int argc, char **argv)
 	intake_hatch_panel_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>>("/hatch_intake/intake_hatch_panel_server", true);
 	outtake_hatch_panel_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::PlaceAction>>("/hatch_outtake/outtake_hatch_panel_server", true);
 	climber_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ClimbAction>>("/climber/climber_server", true);
+	align_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::AlignAction>>("/align_server/align_server", true);
 	elevator_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ElevatorAction>>("/elevator/elevator_server", true);
 
 
