@@ -239,7 +239,7 @@ int main(int argc, char **argv)
 	nh.param<double>("loop_hz", loop_hz, 50.);
 	period = ros::Duration(1.0 / loop_hz);
 
-	ros::ServiceServer service = nh.advertiseService("/base_trajectory/spline_gen", generate);
+	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", generate);
 
 	ros::spin();
 }
