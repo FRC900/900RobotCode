@@ -7,7 +7,6 @@ double wheel_base_pos_offset;
 ros::Publisher robot_pub;
 
 geometry_msgs::PolygonStamped robot_poly;
-std::vector<geometry_msgs::PolygonStamped> arm_polys, intake_polys;
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "robot_visualize");
@@ -33,16 +32,16 @@ int main(int argc, char **argv) {
 	robot_poly.polygon.points[0].y = -length/2.0 + wheel_base_pos_offset;
 	robot_poly.polygon.points[0].z = 0.0;
 	robot_poly.polygon.points[1].x = -width/2.0;
-	robot_poly.polygon.points[1].y = length/2.0+ wheel_base_pos_offset;
+	robot_poly.polygon.points[1].y = length/2.0 + wheel_base_pos_offset;
 	robot_poly.polygon.points[1].z = 0.0;
 	robot_poly.polygon.points[2].x = width/2.0;
-	robot_poly.polygon.points[2].y = length/2.0+ wheel_base_pos_offset;
+	robot_poly.polygon.points[2].y = length/2.0 + wheel_base_pos_offset;
 	robot_poly.polygon.points[2].z = 0.0;
 	robot_poly.polygon.points[3].x = width/2.0;
-	robot_poly.polygon.points[3].y = -length/2.0+ wheel_base_pos_offset;
+	robot_poly.polygon.points[3].y = -length/2.0 + wheel_base_pos_offset;
 	robot_poly.polygon.points[3].z = 0.0;
 	robot_poly.polygon.points[4].x = -width/2.0;
-	robot_poly.polygon.points[4].y = -length/2.0+ wheel_base_pos_offset;
+	robot_poly.polygon.points[4].y = -length/2.0 + wheel_base_pos_offset;
 	robot_poly.polygon.points[4].z = 0.0;
 
 	ros::spin();
