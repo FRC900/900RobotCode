@@ -210,7 +210,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			behaviors::AlignGoal goal;
 			goal.trigger = false;
 			align_ac->sendGoal(goal);
+<<<<<<< fcd2150fcb9413602c538b032026d7742cd3bc50
 			preemptActionlibServers();
+=======
+>>>>>>> started joystick mapping
 
 		}
 		if(joystick_states_array[0].buttonAButton)
