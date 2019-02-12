@@ -28,6 +28,10 @@ double max_rot;
 double joystick_pow;
 double rotation_pow;
 
+int elevator_cur_setpoint_idx;
+bool previously_intaked_cargo = false; //previous command intaked if true, next press will be false 
+bool previously_intaked_panel = false;
+
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 
@@ -202,10 +206,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonA
 		if(joystick_states_array[0].buttonAPress)
 		{
-			ROS_INFO_STREAM("Joystick1: buttonAPress - Cargo Intake");
-			preemptActionlibServers();
-			behaviors::IntakeGoal goal;
-			intake_cargo_ac->sendGoal(goal);
+			ROS_INFO_STREAM("Joystick1: buttonAPress - Auto Align");
+			behaviors::AlignGoal goal;
+			goal.trigger = false;
+			align_ac->sendGoal(goal);
+
 		}
 		if(joystick_states_array[0].buttonAButton)
 		{
@@ -258,10 +263,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonX
 		if(joystick_states_array[0].buttonXPress)
 		{
-			ROS_INFO_STREAM("Joystick1: buttonXPress - Panel Intake");
-			preemptActionlibServers();
-			behaviors::IntakeGoal goal;
-			intake_hatch_panel_ac->sendGoal(goal);
+
+			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
+			behaviors::ElevatorGoal goal;
+			goal.setpoint_index = elevator_cur_setpoint_idx;
+			goal.place_cargo = false;
+			elevator_ac->sendGoal(goal);
+
 		}
 		if(joystick_states_array[0].buttonXButton)
 		{
@@ -307,6 +315,21 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].bumperLeftPress)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
+			if(previously_intaked_cargo){
+				ROS_INFO_STREAM("Joystick1: Place Cargo");
+				behaviors::PlaceGoal goal;
+				goal.setpoint_index = elevator_cur_setpoint_idx;
+				outtake_cargo_ac->sendGoal(goal);
+				
+			}
+			else{
+				ROS_INFO_STREAM("Joystick1: Intake Cargo");
+				behaviors::IntakeGoal goal;
+				goal.motor_power = 1;
+				intake_cargo_ac->sendGoal(goal);
+				
+			}
+			previously_intaked_cargo = !previously_intaked_cargo;
 		}
 		if(joystick_states_array[0].bumperLeftButton)
 		{
