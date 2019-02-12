@@ -180,10 +180,12 @@ br_angle_percentout_controller:
     dynamic_reconfigure: True
     voltage_compensation_Enable: True
 
-fl_angle_velocity_controller:
-    type: talon_controllers/TalonVelocityCloseLoopController
+fl_angle_position_controller:
+    type: talon_controllers/TalonPositionCloseLoopController
     joint: fl_angle
-    feedback_type: CTRE_MagEncoder_Relative
+    feedback_type: CTRE_MagEncoder_Absolute
+        - {p: 4.2, i: 0.006, d: 45.0, f: 0.47, i_zone: 500}
+        - {p: 7.5, i: 0.000, d: 00, f: 0.0, i_zone: 0}
     dynamic_reconfigure: True
     voltage_compensation_Enable: True
 
