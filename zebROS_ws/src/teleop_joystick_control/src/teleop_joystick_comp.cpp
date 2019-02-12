@@ -191,9 +191,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].buttonAPress)
 		{
 			ROS_INFO_STREAM("Joystick1: buttonAPress - Cargo Intake");
-			behaviors::IntakeGoal goal;
-			goal.motor_power = 1;
-			intake_cargo_ac->sendGoal(goal);
+			//behaviors::IntakeGoal goal;
+			//goal.motor_power = 1;
+			//intake_cargo_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonAButton)
 		{

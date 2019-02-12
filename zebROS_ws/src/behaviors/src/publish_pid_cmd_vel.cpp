@@ -12,6 +12,7 @@ std::string orient_topic;
 std::string x_topic;
 std::string y_topic;
 std::string enable_topic;
+std::string name;
 
 ros::Subscriber x_pid_sub;
 ros::Subscriber y_pid_sub;
@@ -55,7 +56,7 @@ int main(int argc, char ** argv)
         orient_pid_sub = nh.subscribe(orient_topic, 1, &orientCB);
     }
     if(!nh_private_params.getParam("x_topic", x_topic)) {
-        ROS_ERROR("aahaaaaaaaaaaaaaaaaah topic in publish_pid_cmd_vel");
+        ROS_ERROR("Could not read x topic in publish_pid_cmd_vel");
     }
     else {
 		ROS_WARN_STREAM("Subscribing to: %s" << x_topic);
@@ -75,8 +76,12 @@ int main(int argc, char ** argv)
 	else {
 		enable_pid_sub = nh.subscribe(enable_topic, 1, &enableCB);
 	}
+	if(!nh_private_params.getParam("name", name))
+	{
+		ROS_ERROR("Could not read name in publish_pid_cmd_vel");
+	}
 
-	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("pid/swerve_drive_controller/cmd_vel", 1);
+	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(name + "/pid/swerve_drive_controller/cmd_vel", 1);
 
 	ros::Rate r(100);
 
