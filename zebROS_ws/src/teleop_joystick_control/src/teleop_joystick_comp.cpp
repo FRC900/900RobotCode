@@ -357,14 +357,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				behaviors::PlaceGoal goal;
 				goal.setpoint_index = elevator_cur_setpoint_idx;
 				outtake_cargo_ac->sendGoal(goal);
-				
+
 			}
 			else{
 				ROS_INFO_STREAM("Joystick1: Intake Panel");
 				behaviors::IntakeGoal goal;
 				goal.motor_power = 1;
 				intake_panel_ac->sendGoal(goal);
-				
+
 			}
 			previously_intaked_panel = !previously_intaked_panel;
 		}
