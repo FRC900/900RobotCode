@@ -21,11 +21,9 @@ done
 
 #install basic dependencies
 
-sudo apt-get update
-sudo apt-get -y upgrade
-sudo apt-get install -y libeigen3-dev build-essential gfortran git cmake libleveldb-dev libsnappy-dev libhdf5-dev libhdf5-serial-dev liblmdb-dev vim-gtk libgflags-dev libgoogle-glog-dev libatlas-base-dev python-dev python-pip libtinyxml2-dev v4l-conf v4l-utils libgtk2.0-dev pkg-config exfat-fuse exfat-utils libprotobuf-dev protobuf-compiler unzip python-numpy python-scipy python-opencv python-matplotlib chromium-browser wget unzip ccache ntp ntpdate libflann-dev libpcl-dev libproj-dev htop can-utils gstreamer1.0-plugins-*
-
-sudo apt-get install --no-install-recommends -y libboost-all-dev
+sudo apt update
+sudo apt -y upgrade
+sudo apt install -y libeigen3-dev build-essential gfortran git cmake libleveldb-dev libsnappy-dev libhdf5-dev libhdf5-serial-dev liblmdb-dev vim-gtk libgflags-dev libgoogle-glog-dev libatlas-base-dev python-dev python-pip libtinyxml2-dev v4l-conf v4l-utils libgtk2.0-dev pkg-config exfat-fuse exfat-utils libprotobuf-dev protobuf-compiler unzip python-numpy python-scipy python-opencv python-matplotlib chromium-browser wget unzip ccache ntp ntpdate libflann-dev libpcl-dev libproj-dev htop can-utils gstreamer1.0-plugins-* rsync openssh-client openssh-client terminator ninja-build libsuitesparse-dev xfonts-scalable rsync libboost-all-dev
 
 #install caffe
 # cd
@@ -106,12 +104,6 @@ cd 2019RobotCode
 git submodule init
 git submodule update
 
-# Set up prereqs for deploy script
-mv ~/2019RobotCode ~/2019RobotCode.orig
-ln -s ~/2019RobotCode.orig ~/2019RobotCode
-mkdir -p ~/2019RobotCode.prod/zebROS_ws
-mkdir -p ~/2019RobotCode.dev/zebROS_ws
-
 #mount and setup autostart script
 if [ "$jetson" = true ] ; then
 	sudo mkdir /mnt/900_2
@@ -121,6 +113,7 @@ if [ "$jetson" = true ] ; then
 	# For tx2 only - install drivers for USB
 	# serial devices
 	if [ "$version" = tx2 ] ; then
+		cd ~/2019RobotCode
 		sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/serial
 		sudo cp jetson_setup/cp210x.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/usb/serial/cp210x.ko
 		sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/class
@@ -144,6 +137,7 @@ if [ "$jetson" = true ] ; then
 		sudo bash -c "echo \"# Modules for CAN interface\" >> /etc/modules"
 		sudo bash -c "echo can >> /etc/modules"
 		sudo bash -c "echo can_raw >> /etc/modules"
+		sudo bash -c "echo gs_can >> /etc/modules"
 		#sudo bash -c "echo mttcan >> /etc/modules"
 
 		# This shouldn't be the least bit dangerous
@@ -204,7 +198,7 @@ if [ "$jetson" = true ] ; then
 	# Clean up Jetson
 	sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/TensorRT /home/nvidia/libvisionworkd*
 	# Save ~400MB
-	sudo apt remove --purge thunderbird libreoffice-*
+	sudo apt remove --purge -y thunderbird libreoffice-*
 
 	# Install CTRE & navX libs
     mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
@@ -218,45 +212,45 @@ if [ "$jetson" = true ] ; then
     rm -rf /home/ubuntu/devsite.ctr-electronics.com 
 
     cd /home/ubuntu 
-	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.340/navx-cpp-3.1.340-headers.zip 
+	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.366/navx-cpp-3.1.366-headers.zip 
 	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
 	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
-	unzip -o /home/ubuntu/navx-cpp-3.1.340-headers.zip 
-	rm /home/ubuntu/navx-cpp-3.1.340-headers.zip 
+	unzip -o /home/ubuntu/navx-cpp-3.1.366-headers.zip 
+	rm /home/ubuntu/navx-cpp-3.1.366-headers.zip 
     cd /home/ubuntu 
-	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.340/navx-cpp-3.1.340-linuxathena.zip 
+	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.366/navx-cpp-3.1.366-linuxathena.zip 
 	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
 	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
-	unzip -o /home/ubuntu/navx-cpp-3.1.340-linuxathena.zip 
-	rm /home/ubuntu/navx-cpp-3.1.340-linuxathena.zip 
+	unzip -o /home/ubuntu/navx-cpp-3.1.366-linuxathena.zip 
+	rm /home/ubuntu/navx-cpp-3.1.366-linuxathena.zip 
     cd /home/ubuntu 
-	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.340/navx-cpp-3.1.340-linuxathenastatic.zip 
+	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.366/navx-cpp-3.1.366-linuxathenastatic.zip 
 	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
-	unzip -o /home/ubuntu/navx-cpp-3.1.340-linuxathenastatic.zip 
-	rm /home/ubuntu/navx-cpp-3.1.340-linuxathenastatic.zip 
+	unzip -o /home/ubuntu/navx-cpp-3.1.366-linuxathenastatic.zip 
+	rm /home/ubuntu/navx-cpp-3.1.366-linuxathenastatic.zip 
 
 	# Install wpilip headers by copying them from the local maven dir
-	mkdir ~/wpiheaders
-	scp `find ~/frc2019/maven -name \*headers\*` 10.9.0.8:wpiheaders
-	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib
-	find ~/wpiheaders -name \*headers\*zip | xargs -n1 unzip
-
-	cd /home/ubuntu 
-	wget https://github.com/wpilibsuite/allwpilib/releases/download/v2019.1.1/WPILib_Linux-2019.1.1.tar.gz 
-	mkdir -p /home/ubuntu/frc2019
-    cd /home/ubuntu/frc2019
-	tar -xzf /home/ubuntu/WPILib_Linux-2019.1.1.tar.gz
-	rm /home/ubuntu/WPILib_Linux-2019.1.1.tar.gz
-    cd /home/ubuntu/frc2019/tools
-	python ToolsUpdater.py
-    mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib
-	find ../../../.. -name \*athena\*zip | xargs -n1 unzip -o
-    mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib
-	find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
+    cd /home/ubuntu 
+	wget https://github.com/wpilibsuite/allwpilib/releases/download/v2019.2.1/WPILib_Linux-2019.2.1.tar.gz 
+	mkdir -p /home/ubuntu/frc2019 
+    cd /home/ubuntu/frc2019 
+	tar -xzf /home/ubuntu/WPILib_Linux-2019.2.1.tar.gz 
+	rm /home/ubuntu/WPILib_Linux-2019.2.1.tar.gz 
+    cd /home/ubuntu/frc2019/tools 
+	python ToolsUpdater.py 
+    mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
+	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
+	find ../../../.. -name \*athena\*zip | xargs -n1 unzip -o 
+    mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
+	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
+	find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o 
     rm -rf /home/ubuntu/frc2019/maven /home/ubuntu/frc2019/jdk
+
+	# Set up prereqs for deploy script
+	mv ~/2019RobotCode ~/2019RobotCode.orig
+	ln -s ~/2019RobotCode.orig ~/2019RobotCode
+	mkdir -p ~/2019RobotCode.prod/zebROS_ws
+	mkdir -p ~/2019RobotCode.dev/zebROS_ws
 fi
 
 sudo mkdir -p /usr/local/zed/settings
