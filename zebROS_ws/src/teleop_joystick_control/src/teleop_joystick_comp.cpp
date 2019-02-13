@@ -269,11 +269,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 
 			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
-			behaviors::ElevatorGoal goal;
-			goal.setpoint_index = elevator_cur_setpoint_idx;
-			goal.place_cargo = false;
-			elevator_ac->sendGoal(goal);
-
+			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % 4;
+			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
 		}
 		if(joystick_states_array[0].buttonXButton)
 		{
