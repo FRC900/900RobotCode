@@ -5,25 +5,32 @@
 #include <sstream>
 
 talon_state_controller::TalonState talon_state_msg;
-std::vector<double> offsets;
 
 bool get_offsets_srv(std_srvs::Trigger::Request& /*req*/, std_srvs::Trigger::Response& /*res*/)
 {
 	ROS_INFO_STREAM("running get_offsets_srv");
-	std::ofstream offsets_file;
 	std::stringstream offsets_file_name;
 	offsets_file_name <<  "/home/ubuntu/2019RobotCode/zebROS_ws/src/ros_control_boilerplate/config/offsets_" << std::to_string(ros::Time::now().toSec()) << ".yaml";
-	offsets_file.open(offsets_file_name.str());
+	std::ofstream offsets_file(offsets_file_name.str());
 
-	offsets_file << "swerve_drive_controller:\n";
-	offsets_file << "\tsteering_joint_fl:\n";
-	offsets_file << "\t" << "\t" << "offset: "<< talon_state_msg.position[0] << "\n";
-	offsets_file << "\tsteering_joint_fr:"<< "\n";
-	offsets_file << "\t" << "\t" << "offset: "<< talon_state_msg.position[2] << "\n";
-	offsets_file << "\tsteering_joint_bl:"<< "\n";
-	offsets_file << "\t" << "\t" << "offset: "<< talon_state_msg.position[4] << "\n";
-	offsets_file << "\tsteering_joint_br:"<< "\n";
-	offsets_file << "\t" << "\t" << "offset: "<< talon_state_msg.position[6] << "\n";
+	// TODO : make these config items, maybe?
+	std::map<std::string, std::string> offset_joint_names;
+	offset_joint_names["fl_angle"] = "steering_joint_fl";
+	offset_joint_names["fr_angle"] = "steering_joint_fr";
+	offset_joint_names["bl_angle"] = "steering_joint_bl";
+	offset_joint_names["br_angle"] = "steering_joint_br";
+
+	offsets_file << "swerve_drive_controller:" << std::endl;
+	for (size_t i = 0; i < talon_state_msg.name.size(); i++)
+	{
+		auto it = offset_joint_names.find(talon_state_msg.name[i]);
+		if (it != offset_joint_names.end())
+		{
+			offsets_file << "    " << it->second << ":" << std::endl;
+			double offset = fmod(talon_state_msg.position[i] + M_PI / 2., 2. * M_PI);
+			offsets_file << "        offset: " << offset << std::endl;
+		}
+	}
 
 	return true;
 }
