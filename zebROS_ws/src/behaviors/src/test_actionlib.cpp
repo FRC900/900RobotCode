@@ -274,7 +274,6 @@ int main (int argc, char **argv)
 				test_idx++;
 			}
 		}
-		ROS_INFO("HI");
 	}
 	else if(what_to_run == "intake_cargo") {
 		callIntakeCargo();
