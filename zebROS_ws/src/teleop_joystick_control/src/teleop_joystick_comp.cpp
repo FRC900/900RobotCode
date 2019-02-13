@@ -237,6 +237,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			JoystickRobotVel.publish(vel);
 		}
+		
+		/*
 		//Joystick1: buttonB
 		if(joystick_states_array[0].buttonBPress)
 		{
@@ -260,6 +262,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			msg.request.data = false;
 			run_align.call(msg);
 		}
+		*/
+
 		//Joystick1: buttonX
 		if(joystick_states_array[0].buttonXPress)
 		{
@@ -286,7 +290,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			run_align.call(msg);
 		}
 		//Joystick1: buttonY
-		if(joystick_states_array[0].buttonYPress)
+		/*if(joystick_states_array[0].buttonYPress)
 		{
 			ROS_INFO_STREAM("Joystick1: buttonYPress - Panel Outtake");
 			preemptActionlibServers();
@@ -311,6 +315,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			ROS_INFO_STREAM("Joystick1: buttonYRelease");
 		}
+		*/
+
 		//Joystick1: bumperLeft
 		if(joystick_states_array[0].bumperLeftPress)
 		{
@@ -348,10 +354,22 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: bumperRight
 		if(joystick_states_array[0].bumperRightPress)
 		{
-			ROS_INFO_STREAM("Joystick1: bumperRightPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
+			if(previously_intaked_panel){
+				ROS_INFO_STREAM("Joystick1: Place Panel");
+				behaviors::PlaceGoal goal;
+				goal.setpoint_index = elevator_cur_setpoint_idx;
+				outtake_cargo_ac->sendGoal(goal);
+				
+			}
+			else{
+				ROS_INFO_STREAM("Joystick1: Intake Panel");
+				behaviors::IntakeGoal goal;
+				goal.motor_power = 1;
+				intake_panel_ac->sendGoal(goal);
+				
+			}
+			previously_intaked_panel = !previously_intaked_panel;
 		}
 		if(joystick_states_array[0].bumperRightButton)
 		{
@@ -414,10 +432,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: directionUp
 		if(joystick_states_array[0].directionUpPress)
 		{
-			ROS_INFO_STREAM("Joystick1: directionUpPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			ROS_INFO_STREAM("Joystick1: Calling Climber Server ");
+			behaviors::ClimberGoal goal;
+			goal.elevator_setpoint = 0;
+			climber_ac->cancelAllGoals();
 		}
 		if(joystick_states_array[0].directionUpButton)
 		{
