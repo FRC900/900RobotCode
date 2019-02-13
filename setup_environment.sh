@@ -171,23 +171,24 @@ if [ "$jetson" = true ] ; then
 	# Kernel module build steps for TX2 : https://gist.github.com/sauhaardac/9d7a82c23e4b283a1e79009903095655
 	# Not needed unless Jetpack is updated with a new kernel version and modules
 	# for a given kernel version aren't already built
-	cd ~
-	wget -N https://developer.download.nvidia.com/embedded/L4T/r28_Release_v2.1/public_sources.tbz2
-	tar -xf public_sources.tbz2 public_release/kernel_src.tbz2
-	tar -xf public_release/kernel_src.tbz2
-	cd ..
-	cd ~/kernel/kernel-4.4
-	zcat /proc/config.gz > .config
-	echo "CONFIG_USB_ACM=m" >> .config
-	echo "CONFIG_USB_SERIAL_CP210X=m" >> .config
-	echo "CONFIG_CAN_GS_USB=m" >> .config
-	echo "CONFIG_JOYSTICK_XPAD=m" >> .config
-	make -j6 clean
-	make -j6 prepare
-	make -j6 modules_prepare
+	# cd ~
+	# wget -N https://developer.download.nvidia.com/embedded/L4T/r28_Release_v2.1/public_sources.tbz2
+	# tar -xf public_sources.tbz2 public_release/kernel_src.tbz2
+	# tar -xf public_release/kernel_src.tbz2
+	# cd ..
+	# cd ~/kernel/kernel-4.4
+	# zcat /proc/config.gz > .config
+	# echo "CONFIG_USB_ACM=m" >> .config
+	# echo "CONFIG_USB_SERIAL_CP210X=m" >> .config
+	# echo "CONFIG_CAN_GS_USB=m" >> .config
+	# echo "CONFIG_JOYSTICK_XPAD=m" >> .config
+	# make -j6 clean
+	# make -j6 prepare
+	# make -j6 modules_prepare
 	# make -j6 M=drivers/usb/class
 	# make -j6 M=drivers/usb/serial
-	# make -j6 M=drivers/net/can/usb
+	# make -j6 M=drivers/net/can
+	# make -j6 M=net/can
 	# sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/serial
 	# sudo cp drivers/usb/class/cp210x-acm.ko /lib/modules/`uname -r`/kernel/drivers/usb/serial/cp210x-acm.ko
 	# sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/class
