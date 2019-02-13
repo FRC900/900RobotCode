@@ -120,6 +120,10 @@ if [ "$jetson" = true ] ; then
 		sudo cp jetson_setup/cdc-acm.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/usb/class/cdc-acm.ko
 		sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/net/can/usb
 		sudo cp jetson_setup/gs_usb.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/net/can/usb/gs_usb.ko
+		sudo cp can-dev.ko.4.4.38-tegra /lib/modules/4.4.38-tegra/kernel/drivers/net/can/can-dev.ko 
+		sudo mkdir -p /lib/modules/`uname -r`/kernel/net/can
+		sudo cp can.ko.`uname -r` /lib/modules/`uname -r`/kernel/net/can/can.ko 
+		sudo cp can-raw.ko.`uname -r` /lib/modules/`uname -r`/kernel/net/can/can-raw.ko 
 
 		sudo depmod -a
         # edit /etc/init.d/ntp to contain the line: <ntpd -gq> before all content already there.
@@ -167,20 +171,20 @@ if [ "$jetson" = true ] ; then
 	# Kernel module build steps for TX2 : https://gist.github.com/sauhaardac/9d7a82c23e4b283a1e79009903095655
 	# Not needed unless Jetpack is updated with a new kernel version and modules
 	# for a given kernel version aren't already built
-	# cd ~
-	# wget -N https://developer.download.nvidia.com/embedded/L4T/r28_Release_v2.1/public_sources.tbz2
-	# sudo tar -xvf public_sources.tbz2 public_release/kernel_src.tbz2
-	# tar -xvf public_release/kernel_src.tbz2
-	# cd ..
-	# cd ~/kernel/kernel-4.4
-	# zcat /proc/config.gz > .config
-	# echo "CONFIG_USB_ACM=m" >> .config
-	# echo "CONFIG_USB_SERIAL_CP210X=m" >> .config
-	# echo "CONFIG_CAN_GS_USB=m" >> .config
-	# echo "CONFIG_JOYSTICK_XPAD=m" >> .config
-	# make -j6 clean
-	# make -j6 prepare
-	# make -j6 modules_prepare
+	cd ~
+	wget -N https://developer.download.nvidia.com/embedded/L4T/r28_Release_v2.1/public_sources.tbz2
+	tar -xf public_sources.tbz2 public_release/kernel_src.tbz2
+	tar -xf public_release/kernel_src.tbz2
+	cd ..
+	cd ~/kernel/kernel-4.4
+	zcat /proc/config.gz > .config
+	echo "CONFIG_USB_ACM=m" >> .config
+	echo "CONFIG_USB_SERIAL_CP210X=m" >> .config
+	echo "CONFIG_CAN_GS_USB=m" >> .config
+	echo "CONFIG_JOYSTICK_XPAD=m" >> .config
+	make -j6 clean
+	make -j6 prepare
+	make -j6 modules_prepare
 	# make -j6 M=drivers/usb/class
 	# make -j6 M=drivers/usb/serial
 	# make -j6 M=drivers/net/can/usb
