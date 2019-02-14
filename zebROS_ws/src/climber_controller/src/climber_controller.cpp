@@ -41,7 +41,7 @@ void ClimberController::update(const ros::Time &time, const ros::Duration &perio
 	}
 	else if(feet_retract_cmd == false)
 	{
-		feet_retract_cmd_double = 0;
+		feet_retract_cmd_double = -1;
 	}
 
     feet_retract_.setCommand(feet_retract_cmd_double); // set the in/out command to the clampy part of the climber
@@ -53,7 +53,7 @@ void ClimberController::update(const ros::Time &time, const ros::Duration &perio
 	}
 	else if(release_endgame_cmd == false)
 	{
-		release_endgame_cmd_double = 0;
+		release_endgame_cmd_double = -1;
 	}
 
     release_endgame_.setCommand(release_endgame_cmd_double); // set the in/out command to the clampy part of the climber

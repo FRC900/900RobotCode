@@ -269,7 +269,9 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			//try and find another one.
 			if(_return_found.size() == 0)
 			{
-				goal_found.found_pos                 = left_info[best_result_index_left].pos;
+				goal_found.found_pos.x               = left_info[best_result_index_left].pos.x + ((right_info[best_result_index_right].pos.x - left_info[best_result_index_left].pos.x) / 2);
+				goal_found.found_pos.y				 = left_info[best_result_index_left].pos.y;
+				goal_found.found_pos.z				 = left_info[best_result_index_left].pos.z;
 				goal_found.found_distance            = left_info[best_result_index_left].distance;
 				goal_found.found_angle               = left_info[best_result_index_left].angle;
 				goal_found.found_left_rect			 = left_info[best_result_index_left].rect;
@@ -280,13 +282,13 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			}
 			else
 			{
-				const int min_dist_bwn_goals = 0.01;
+				const int min_dist_bwn_goals = 0.1;
 				bool repeated = false;
 				for(int k = 0; k < _return_found.size(); k++)
 				{
 					if(abs(left_info[best_result_index_left].pos.x - _return_found[k].found_pos.x) < min_dist_bwn_goals)
 						{
-							continue;
+							break;
 						}
 					for(int l = 0; l < _return_found.size(); l++)
 					{
@@ -296,13 +298,15 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				}
 				if(repeated == false)
 				{
-					goal_found.found_pos                 = left_info[best_result_index_left].pos;
-					goal_found.found_distance            = left_info[best_result_index_left].distance;
-					goal_found.found_angle               = left_info[best_result_index_left].angle;
-					goal_found.found_left_rect			 = left_info[best_result_index_left].rect;
-					goal_found.found_right_rect			 = right_info[best_result_index_right].rect;
-					goal_found.found_left_rotated_rect	 = left_info[best_result_index_left].rtRect;
-					goal_found.found_right_rotated_rect	 = right_info[best_result_index_right].rtRect;
+					goal_found.found_pos.x               = left_info[i].pos.x + ((right_info[j].pos.x - left_info[i].pos.x) / 2);
+					goal_found.found_pos.y				 = left_info[i].pos.y;
+					goal_found.found_pos.z				 = left_info[i].pos.z;
+					goal_found.found_distance            = left_info[i].distance;
+					goal_found.found_angle               = left_info[i].angle;
+					goal_found.found_left_rect			 = left_info[i].rect;
+					goal_found.found_right_rect			 = right_info[j].rect;
+					goal_found.found_left_rotated_rect	 = left_info[i].rtRect;
+					goal_found.found_right_rotated_rect	 = right_info[j].rtRect;
 					_return_found.push_back(goal_found);
 				}
 

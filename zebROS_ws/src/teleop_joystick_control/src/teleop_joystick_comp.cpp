@@ -102,6 +102,17 @@ void navXCallback(const sensor_msgs::Imu &navXState)
         navX_angle.store(yaw, std::memory_order_relaxed);
 }
 
+void preemptActionlibServers()
+{
+	intake_cargo_ac->cancelAllGoals();
+	outtake_cargo_ac->cancelAllGoals();
+	intake_hatch_panel_ac->cancelAllGoals();
+	outtake_hatch_panel_ac->cancelAllGoals();
+	elevator_ac->cancelAllGoals();
+	climber_ac->cancelAllGoals();
+	align_ac->cancelAllGoals();
+}
+
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
 	int i = 0;
@@ -117,6 +128,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			msg_assign = true;
 		}
 	}
+
 
 	//Only do this for the first joystick
 	if(i == 1)
@@ -224,6 +236,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].buttonBPress)
 		{
 			ROS_INFO_STREAM("Joystick1: buttonBPress - Cargo Outtake");
+			preemptActionlibServers();
 			behaviors::PlaceGoal goal;
 			goal.setpoint_index = CARGO_SHIP;
 			outtake_cargo_ac->sendGoal(goal);
@@ -246,8 +259,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].buttonXPress)
 		{
 			ROS_INFO_STREAM("Joystick1: buttonXPress - Panel Intake");
+			preemptActionlibServers();
 			behaviors::IntakeGoal goal;
-			goal.motor_power = 0;
 			intake_hatch_panel_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonXButton)
@@ -268,6 +281,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].buttonYPress)
 		{
 			ROS_INFO_STREAM("Joystick1: buttonYPress - Panel Outtake");
+			preemptActionlibServers();
 			behaviors::PlaceGoal goal;
 			goal.setpoint_index = CARGO_SHIP;
 			outtake_hatch_panel_ac->sendGoal(goal);

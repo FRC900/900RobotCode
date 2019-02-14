@@ -906,7 +906,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 #endif
 		}
 		tracer.stop();
-		ROS_INFO_STREAM_THROTTLE(2, tracer.report());
+		ROS_INFO_STREAM_THROTTLE(60, tracer.report());
 		rate.sleep();
 	}
 }
@@ -956,7 +956,7 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 		}
 
 		tracer.stop();
-		ROS_INFO_STREAM_THROTTLE(2, tracer.report());
+		ROS_INFO_STREAM_THROTTLE(60, tracer.report());
 		r.sleep();
 	}
 }
@@ -1013,7 +1013,7 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle
 		}
 
 		tracer.stop();
-		ROS_INFO_STREAM_THROTTLE(2, tracer.report());
+		ROS_INFO_STREAM_THROTTLE(60, tracer.report());
 		r.sleep();
 	}
 }
@@ -1486,7 +1486,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		}
 	}
 	read_tracer_.stop();
-	ROS_INFO_STREAM_THROTTLE(2, read_tracer_.report());
+	ROS_INFO_STREAM_THROTTLE(60, read_tracer_.report());
 }
 
 

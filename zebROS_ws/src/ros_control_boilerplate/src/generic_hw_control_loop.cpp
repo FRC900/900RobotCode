@@ -107,7 +107,7 @@ void GenericHWControlLoop::update(void)
 	hardware_interface_->write(elapsed_time_);
 	tracer_.stop();
 
-	ROS_INFO_STREAM_THROTTLE(2, tracer_.report());
+	ROS_INFO_STREAM_THROTTLE(20, tracer_.report());
 }
 
 }  // namespace

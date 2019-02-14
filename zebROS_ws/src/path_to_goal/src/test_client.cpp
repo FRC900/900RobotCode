@@ -29,7 +29,6 @@ bool trigger_pathing_cb(path_to_goal::TwistSrv::Request &req, path_to_goal::Twis
 
     return true;
 }
-    
 
 int main(int argc, char** argv)
 {

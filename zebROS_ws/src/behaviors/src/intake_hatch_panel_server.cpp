@@ -55,7 +55,7 @@ class IntakeHatchPanelAction
 
 		void executeCB(const behaviors::IntakeGoalConstPtr &goal)
 		{
-			ROS_ERROR("hatch panel intake server running");
+			ROS_WARN("hatch panel intake server running");
 
 			//make sure the elevator server exists
 			bool elevator_server_found = ac_elevator_.waitForServer(ros::Duration(wait_for_server_timeout));
