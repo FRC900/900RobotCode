@@ -5,8 +5,10 @@
 #include <behaviors/ElevatorAction.h>
 #include <behaviors/ClimbAction.h>
 #include <behaviors/enumerated_elevator_indices.h>
+#include <boost/algorithm/string.hpp>
 
-double server_timeout = 20.0; //how long to wait for an actionlib server call to finish before timing out, in sec. Used for all actionlib calls
+double server_wait_timeout = 20.0; //how long to wait for a server to exist before exiting, in sec.
+double server_exec_timeout = 20.0; //how long to wait for an actionlib server call to finish before timing out, in sec. Used for all actionlib calls
 
 bool callElevator(int setpoint_idx)
 {
@@ -14,7 +16,10 @@ bool callElevator(int setpoint_idx)
 	actionlib::SimpleActionClient<behaviors::ElevatorAction> elevator_ac("/elevator/elevator_server", true);
 
 	ROS_INFO("Waiting for elevator server to start.");
-	elevator_ac.waitForServer();
+	if(!elevator_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("Could not find server within %f seconds.", server_wait_timeout);
+	}
 
 	ROS_INFO("Sending goal to elevator server, setpoint = %d", setpoint_idx);
 	// send a goal to the action
@@ -23,7 +28,7 @@ bool callElevator(int setpoint_idx)
 	elevator_ac.sendGoal(goal);
 
 	//wait for the action to return
-	bool finished_before_timeout = elevator_ac.waitForResult(ros::Duration(server_timeout));
+	bool finished_before_timeout = elevator_ac.waitForResult(ros::Duration(server_exec_timeout));
 
 	if (finished_before_timeout)
 	{
@@ -45,7 +50,10 @@ bool callIntakeCargo()
 	actionlib::SimpleActionClient<behaviors::IntakeAction> intake_cargo_ac("/cargo_intake/cargo_intake_server", true);
 
 	ROS_INFO("Waiting for cargo intake server to start.");
-	intake_cargo_ac.waitForServer(); //will wait for infinite time
+	if(!intake_cargo_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("Could not find server within %f seconds.", server_wait_timeout);
+	}
 
 	ROS_INFO("Sending goal to intake cargo server.");
 	// send a goal to the action
@@ -53,7 +61,7 @@ bool callIntakeCargo()
 	intake_cargo_ac.sendGoal(intake_cargo_goal);
 
 	//wait for the action to return
-	bool finished_before_timeout = intake_cargo_ac.waitForResult(ros::Duration(server_timeout));
+	bool finished_before_timeout = intake_cargo_ac.waitForResult(ros::Duration(server_exec_timeout));
 
 	if (finished_before_timeout)
 	{
@@ -74,7 +82,10 @@ bool callOuttakeCargo(int setpoint_idx)
 	actionlib::SimpleActionClient<behaviors::PlaceAction> outtake_cargo_ac("/cargo_outtake/cargo_outtake_server", true);
 
 	ROS_INFO("Waiting for cargo outtake server to start.");
-	outtake_cargo_ac.waitForServer();
+	if(!outtake_cargo_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("Could not find server within %f seconds.", server_wait_timeout);
+	}
 
 	ROS_INFO("Sending goal to outtake cargo server.");
 	// send a goal to the action
@@ -83,7 +94,7 @@ bool callOuttakeCargo(int setpoint_idx)
 	outtake_cargo_ac.sendGoal(outtake_cargo_goal);
 
 	//wait for the action to return
-	bool finished_before_timeout = outtake_cargo_ac.waitForResult(ros::Duration(server_timeout));
+	bool finished_before_timeout = outtake_cargo_ac.waitForResult(ros::Duration(server_exec_timeout));
 
 	if (finished_before_timeout)
 	{
@@ -104,7 +115,10 @@ bool callIntakeHatchPanel()
 	actionlib::SimpleActionClient<behaviors::IntakeAction> intake_hatch_panel_ac("/hatch_intake/intake_hatch_panel_server", true);
 
 	ROS_INFO("Waiting for panel intake server to start.");
-	intake_hatch_panel_ac.waitForServer();
+	if(!intake_hatch_panel_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("Could not find server within %f seconds.", server_wait_timeout);
+	}
 
 	ROS_INFO("Sending goal to intake hatch panel server.");
 	// send a goal to the action
@@ -112,7 +126,7 @@ bool callIntakeHatchPanel()
 	intake_hatch_panel_ac.sendGoal(intake_hatch_panel_goal);
 
 	//wait for the action to return
-	bool finished_before_timeout = intake_hatch_panel_ac.waitForResult(ros::Duration(server_timeout));
+	bool finished_before_timeout = intake_hatch_panel_ac.waitForResult(ros::Duration(server_exec_timeout));
 
 	if (finished_before_timeout)
 	{
@@ -133,7 +147,10 @@ bool callOuttakeHatchPanel(int setpoint_idx)
 	actionlib::SimpleActionClient<behaviors::PlaceAction> outtake_hatch_panel_ac("/hatch_outtake/outtake_hatch_panel_server", true);
 
 	ROS_INFO("Waiting for panel outtake server to start.");
-	outtake_hatch_panel_ac.waitForServer();
+	if(!outtake_hatch_panel_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("Could not find server within %f seconds.", server_wait_timeout);
+	}
 
 	ROS_INFO("Sending goal to outtake hatch panel server.");
 	// send a goal to the action
@@ -142,7 +159,7 @@ bool callOuttakeHatchPanel(int setpoint_idx)
 	outtake_hatch_panel_ac.sendGoal(outtake_hatch_panel_goal);
 
 	//wait for the action to return
-	bool finished_before_timeout = outtake_hatch_panel_ac.waitForResult(ros::Duration(server_timeout));
+	bool finished_before_timeout = outtake_hatch_panel_ac.waitForResult(ros::Duration(server_exec_timeout));
 
 	if (finished_before_timeout)
 	{
@@ -163,7 +180,10 @@ bool callClimber()
 	actionlib::SimpleActionClient<behaviors::ClimbAction> climber_ac("/climber/climber_server", true);
 
 	ROS_INFO("Waiting for climber server to start.");
-	climber_ac.waitForServer();
+	if(!climber_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("Could not find server within %f seconds.", server_wait_timeout);
+	}
 
 	ROS_INFO("Sending goal to climber server.");
 	// send a goal to the action
@@ -171,7 +191,7 @@ bool callClimber()
 	climber_ac.sendGoal(climb_goal);
 
 	//wait for the action to return
-	bool finished_before_timeout = climber_ac.waitForResult(ros::Duration(server_timeout));
+	bool finished_before_timeout = climber_ac.waitForResult(ros::Duration(server_exec_timeout));
 
 	if (finished_before_timeout)
 	{
@@ -203,6 +223,7 @@ int main (int argc, char **argv)
 	std::string what_to_run;
 	std::string elevator_setpoint;
 	what_to_run = ros::getROSArg(argc, argv, "run"); //if can't find the argument, will default to an empty string of length 0
+	boost::algorithm::to_lower(what_to_run); //convert to lower case
 	//make sure user told us what to run
 	if(what_to_run.length() == 0)
 	{
@@ -212,6 +233,7 @@ int main (int argc, char **argv)
 		return 0;
 	}
 	elevator_setpoint = ros::getROSArg(argc, argv, "setpoint"); //only used for elevator call or outtake call. Not used for the 'all' run option
+	boost::algorithm::to_upper(elevator_setpoint); //convert to upper case
 
 	ROS_WARN("what_to_run: %s", what_to_run.c_str());
 	ROS_WARN("setpoint: %s", elevator_setpoint.c_str());
