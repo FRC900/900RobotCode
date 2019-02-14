@@ -271,6 +271,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
 			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % 4;
+			if(elevator_cur_setpoint_idx = 0)
+			{
+				elevator_cur_setpoint_idx = 1;
+			}
 			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
 		}
 		if(joystick_states_array[0].buttonXButton)
