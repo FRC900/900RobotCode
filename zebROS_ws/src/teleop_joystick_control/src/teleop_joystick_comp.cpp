@@ -29,8 +29,8 @@ double joystick_pow;
 double rotation_pow;
 
 int elevator_cur_setpoint_idx;
-bool previously_intaked_cargo = false; //previous command intaked if true, next press will be false 
-bool previously_intaked_panel = false;
+bool previously_intook_cargo = false; //previous command intook if true, next press will be false 
+bool previously_intook_panel = false;
 
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
@@ -318,7 +318,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].bumperLeftPress)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
-			if(previously_intaked_cargo){
+			if(previously_intook_cargo){
 				ROS_INFO_STREAM("Joystick1: Place Cargo");
 				behaviors::PlaceGoal goal;
 				goal.setpoint_index = elevator_cur_setpoint_idx;
@@ -332,7 +332,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				intake_cargo_ac->sendGoal(goal);
 				
 			}
-			previously_intaked_cargo = !previously_intaked_cargo;
+			previously_intook_cargo = !previously_intook_cargo;
 		}
 		if(joystick_states_array[0].bumperLeftButton)
 		{
@@ -352,7 +352,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].bumperRightPress)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
-			if(previously_intaked_panel){
+			if(previously_intook_panel){
 				ROS_INFO_STREAM("Joystick1: Place Panel");
 				behaviors::PlaceGoal goal;
 				goal.setpoint_index = elevator_cur_setpoint_idx;
@@ -363,10 +363,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				ROS_INFO_STREAM("Joystick1: Intake Panel");
 				behaviors::IntakeGoal goal;
 				goal.motor_power = 1;
-				intake_panel_ac->sendGoal(goal);
+				intake_hatch_panel_ac->sendGoal(goal);
 
 			}
-			previously_intaked_panel = !previously_intaked_panel;
+			previously_intook_panel = !previously_intook_panel;
 		}
 		if(joystick_states_array[0].bumperRightButton)
 		{
@@ -430,7 +430,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].directionUpPress)
 		{
 			ROS_INFO_STREAM("Joystick1: Calling Climber Server ");
-			behaviors::ClimberGoal goal;
+			behaviors::ClimbGoal goal;
 			goal.elevator_setpoint = 0;
 			climber_ac->cancelAllGoals();
 		}
