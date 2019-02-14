@@ -108,13 +108,13 @@ void navXCallback(const sensor_msgs::Imu &navXState)
 
 void preemptActionlibServers()
 {
-	intake_cargo_ac->cancelAllGoals();
-	outtake_cargo_ac->cancelAllGoals();
-	intake_hatch_panel_ac->cancelAllGoals();
-	outtake_hatch_panel_ac->cancelAllGoals();
-	elevator_ac->cancelAllGoals();
-	climber_ac->cancelAllGoals();
-	align_ac->cancelAllGoals();
+	intake_cargo_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	outtake_cargo_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	intake_hatch_panel_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	outtake_hatch_panel_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	elevator_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	climber_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	align_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 }
 
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
@@ -210,6 +210,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			behaviors::AlignGoal goal;
 			goal.trigger = false;
 			align_ac->sendGoal(goal);
+			preemptActionlibServers();
 
 		}
 		if(joystick_states_array[0].buttonAButton)
@@ -322,13 +323,16 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].bumperLeftPress)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
-			if(previously_intook_cargo){
+			preemptActionlibServers();
+			if(previously_intook_cargo)
+			{
 				ROS_INFO_STREAM("Joystick1: Place Cargo");
 				behaviors::PlaceGoal goal;
 				goal.setpoint_index = elevator_cur_setpoint_idx;
 				outtake_cargo_ac->sendGoal(goal);
 			}
-			else{
+			else
+			{
 				ROS_INFO_STREAM("Joystick1: Intake Cargo");
 				behaviors::IntakeGoal goal;
 				goal.motor_power = 1;
@@ -354,14 +358,17 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].bumperRightPress)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
-			if(previously_intook_panel){
+			preemptActionlibServers();
+			if(previously_intook_panel)
+			{
 				ROS_INFO_STREAM("Joystick1: Place Panel");
 				behaviors::PlaceGoal goal;
 				goal.setpoint_index = elevator_cur_setpoint_idx;
 				outtake_cargo_ac->sendGoal(goal);
 
 			}
-			else{
+			else
+			{
 				ROS_INFO_STREAM("Joystick1: Intake Panel");
 				behaviors::IntakeGoal goal;
 				goal.motor_power = 1;
@@ -434,7 +441,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: Calling Climber Server ");
 			behaviors::ClimbGoal goal;
 			goal.elevator_setpoint = 0;
-			climber_ac->cancelAllGoals();
 		}
 		if(joystick_states_array[0].directionUpButton)
 		{
