@@ -23,7 +23,7 @@ bool callElevator(int setpoint_idx)
 	elevator_ac.sendGoal(goal);
 
 	//wait for the action to return
-	bool finished_before_timeout = elevator_ac.waitForResult(ros::Duration(30.0));
+	bool finished_before_timeout = elevator_ac.waitForResult(ros::Duration(server_timeout));
 
 	if (finished_before_timeout)
 	{
@@ -50,11 +50,10 @@ bool callIntakeCargo()
 	ROS_INFO("Sending goal to intake cargo server.");
 	// send a goal to the action
 	behaviors::IntakeGoal intake_cargo_goal;
-	intake_cargo_goal.motor_power = 1;
 	intake_cargo_ac.sendGoal(intake_cargo_goal);
 
 	//wait for the action to return
-	bool finished_before_timeout = intake_cargo_ac.waitForResult(ros::Duration(30.0));
+	bool finished_before_timeout = intake_cargo_ac.waitForResult(ros::Duration(server_timeout));
 
 	if (finished_before_timeout)
 	{
@@ -84,7 +83,7 @@ bool callOuttakeCargo(int setpoint_idx)
 	outtake_cargo_ac.sendGoal(outtake_cargo_goal);
 
 	//wait for the action to return
-	bool finished_before_timeout = outtake_cargo_ac.waitForResult(ros::Duration(30.0));
+	bool finished_before_timeout = outtake_cargo_ac.waitForResult(ros::Duration(server_timeout));
 
 	if (finished_before_timeout)
 	{
@@ -110,11 +109,10 @@ bool callIntakeHatchPanel()
 	ROS_INFO("Sending goal to intake hatch panel server.");
 	// send a goal to the action
 	behaviors::IntakeGoal intake_hatch_panel_goal;
-	intake_hatch_panel_goal.motor_power = 0;
 	intake_hatch_panel_ac.sendGoal(intake_hatch_panel_goal);
 
 	//wait for the action to return
-	bool finished_before_timeout = intake_hatch_panel_ac.waitForResult(ros::Duration(30.0));
+	bool finished_before_timeout = intake_hatch_panel_ac.waitForResult(ros::Duration(server_timeout));
 
 	if (finished_before_timeout)
 	{
@@ -134,7 +132,7 @@ bool callOuttakeHatchPanel(int setpoint_idx)
 	//create client to call actionlib server
 	actionlib::SimpleActionClient<behaviors::PlaceAction> outtake_hatch_panel_ac("/hatch_outtake/outtake_hatch_panel_server", true);
 
-	ROS_INFO("Waiting for panel outtake to start.");
+	ROS_INFO("Waiting for panel outtake server to start.");
 	outtake_hatch_panel_ac.waitForServer();
 
 	ROS_INFO("Sending goal to outtake hatch panel server.");
@@ -144,11 +142,40 @@ bool callOuttakeHatchPanel(int setpoint_idx)
 	outtake_hatch_panel_ac.sendGoal(outtake_hatch_panel_goal);
 
 	//wait for the action to return
-	bool finished_before_timeout = outtake_hatch_panel_ac.waitForResult(ros::Duration(30.0));
+	bool finished_before_timeout = outtake_hatch_panel_ac.waitForResult(ros::Duration(server_timeout));
 
 	if (finished_before_timeout)
 	{
 		actionlib::SimpleClientGoalState state = outtake_hatch_panel_ac.getState();
+		ROS_INFO("Action finished: %s",state.toString().c_str());
+		return true;
+	}
+	else
+	{
+		ROS_INFO("Action did not finish before the time out.");
+		return false;
+	}
+}
+
+bool callClimber()
+{
+	//create client to call actionlib server
+	actionlib::SimpleActionClient<behaviors::ClimbAction> climber_ac("/climber/climber_server", true);
+
+	ROS_INFO("Waiting for climber server to start.");
+	climber_ac.waitForServer();
+
+	ROS_INFO("Sending goal to climber server.");
+	// send a goal to the action
+	behaviors::ClimbGoal climb_goal;
+	climber_ac.sendGoal(climb_goal);
+
+	//wait for the action to return
+	bool finished_before_timeout = climber_ac.waitForResult(ros::Duration(server_timeout));
+
+	if (finished_before_timeout)
+	{
+		actionlib::SimpleClientGoalState state = climber_ac.getState();
 		ROS_INFO("Action finished: %s",state.toString().c_str());
 		return true;
 	}
@@ -180,7 +207,8 @@ int main (int argc, char **argv)
 	if(what_to_run.length() == 0)
 	{
 		ROS_ERROR("You need to specify the run functionality with: rosrun behaviors test_actionlib run:=____");
-		ROS_ERROR("Possible values for run: all, intake_cargo, outtake_cargo, intake_hatch_panel, outtake_hatch_panel, elevator");
+		ROS_ERROR("Possible values for run: all, intake_cargo, outtake_cargo, intake_hatch_panel, outtake_hatch_panel, elevator, climber");
+		ROS_ERROR("Note: 'all' will not run the climber");
 		return 0;
 	}
 	elevator_setpoint = ros::getROSArg(argc, argv, "setpoint"); //only used for elevator call or outtake call. Not used for the 'all' run option
@@ -289,6 +317,9 @@ int main (int argc, char **argv)
 	}
 	else if(what_to_run == "elevator") {
 		callElevator(setpoint_idx);
+	}
+	else if(what_to_run == "climber") {
+		callClimber();
 	}
 	else {
 		ROS_ERROR("Invalid run argument");
