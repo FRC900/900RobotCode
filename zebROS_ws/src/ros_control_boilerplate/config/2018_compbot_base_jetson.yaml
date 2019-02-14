@@ -17,12 +17,12 @@ hardware_interface:
    joints:
        #TODO: Get config values of joints
        - {name: cargo_intake_joint, type: can_talon_srx, can_id: 31, local: true}
-       - {name: cargo_intake_arm_joint, type: solenoid, pcm: 0, id: 2, local_hardware: false, local_update: true}
+       - {name: cargo_intake_arm_joint, type: solenoid, pcm: 0, id: 0, local_hardware: false, local_update: true}
        - {name: cargo_outtake_kicker_joint, type: solenoid, pcm: 0, id: 3, local_hardware: false, local_update: true}
-       - {name: cargo_outtake_clamp_joint, type: solenoid, pcm: 0, id: 4, local_hardware: false, local_update: true}
+       - {name: cargo_outtake_clamp_joint, type: solenoid, pcm: 0, id: 2, local_hardware: false, local_update: true}
 
-       - {name: climber_feet_retract, type: solenoid, pcm: 0, id: 0, local_hardware: false, local_update: true}
-       - {name: climber_release_endgame, type: solenoid, pcm: 0, id: 1, local_hardware: false, local_update: true}
+       - {name: climber_feet_retract, type: double_solenoid, pcm: 0, forward_id: 5, reverse_id: 4, local_hardware: false, local_update: true}
+       - {name: climber_release_endgame, type: double_solenoid, pcm: 0, forward_id: 6, reverse_id: 7, local_hardware: false, local_update: true}
 
        # TODO : figure out how many followers, define them here
        - {name: elevator_master, type: can_talon_srx, can_id: 41, local: true}
