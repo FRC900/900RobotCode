@@ -282,7 +282,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			}
 			else
 			{
-				const int min_dist_bwn_goals = 0.00000001;
+				const int min_dist_bwn_goals = 0.1;
 				bool repeated = false;
 				for(int k = 0; k < _return_found.size(); k++)
 				{
