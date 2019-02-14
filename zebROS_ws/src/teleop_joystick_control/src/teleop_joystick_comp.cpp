@@ -270,6 +270,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
 			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % 4;
+			if(elevator_cur_setpoint_idx = 0)
+			{
+				elevator_cur_setpoint_idx = 1;
+			}
 			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
 		}
 		if(joystick_states_array[0].buttonXButton)
@@ -323,14 +327,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				behaviors::PlaceGoal goal;
 				goal.setpoint_index = elevator_cur_setpoint_idx;
 				outtake_cargo_ac->sendGoal(goal);
-				
 			}
 			else{
 				ROS_INFO_STREAM("Joystick1: Intake Cargo");
 				behaviors::IntakeGoal goal;
 				goal.motor_power = 1;
 				intake_cargo_ac->sendGoal(goal);
-				
 			}
 			previously_intook_cargo = !previously_intook_cargo;
 		}
