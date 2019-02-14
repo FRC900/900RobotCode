@@ -435,7 +435,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].directionUpPress)
 		{
 			ROS_INFO_STREAM("Joystick1: Calling Climber Server ");
-			behaviors::ClimberGoal goal;
+			behaviors::ClimbGoal goal;
 			goal.elevator_setpoint = 0;
 			climber_ac->cancelAllGoals();
 		}
