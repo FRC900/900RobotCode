@@ -205,7 +205,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: buttonAPress - Cargo Intake");
 			preemptActionlibServers();
 			behaviors::IntakeGoal goal;
-			goal.motor_power = 1;
 			intake_cargo_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonAButton)
@@ -262,7 +261,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: buttonXPress - Panel Intake");
 			preemptActionlibServers();
 			behaviors::IntakeGoal goal;
-			goal.motor_power = 0;
 			intake_hatch_panel_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonXButton)
