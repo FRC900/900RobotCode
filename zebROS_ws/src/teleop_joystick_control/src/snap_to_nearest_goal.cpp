@@ -25,7 +25,7 @@ std::vector<double> nothing_angles;
 int linebreak_debounce_iterations;
 
 
-double nearest_angle(std::vector<double> angles, double angle)
+double nearest_angle(std::vector<double> angles, double cur_angle)
 {
 	double snap_angle;
 	double smallest_distance = std::numeric_limits<double>::max();
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
 			snap_angle = -1*nearest_angle(cargo_angles, cur_angle+M_PI/2) - M_PI;
 		}
 		else {
-			snap_angle = nearest_angle(nothing_angles);
+			snap_angle = nearest_angle(nothing_angles, cur_angle);
 		}
 		angle_snap.data = snap_angle;
 		navX_state.data = -1*angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed)) - M_PI/2;
