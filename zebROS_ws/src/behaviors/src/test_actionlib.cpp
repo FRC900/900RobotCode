@@ -35,6 +35,10 @@ bool callElevator(int setpoint_idx)
 	{
 		actionlib::SimpleClientGoalState state = elevator_ac.getState();
 		ROS_INFO("Action finished: %s",state.toString().c_str());
+		if(elevator_ac.getResult()->timed_out)
+		{
+			ROS_INFO("Timed out!");
+		}
 		return true;
 	}
 	else
@@ -68,6 +72,10 @@ bool callIntakeCargo()
 	{
 		actionlib::SimpleClientGoalState state = intake_cargo_ac.getState();
 		ROS_INFO("Action finished: %s",state.toString().c_str());
+		if(intake_cargo_ac.getResult()->timed_out)
+		{
+			ROS_INFO("Timed out!");
+		}
 		return true;
 	}
 	else
@@ -101,6 +109,10 @@ bool callOuttakeCargo(int setpoint_idx)
 	{
 		actionlib::SimpleClientGoalState state = outtake_cargo_ac.getState();
 		ROS_INFO("Action finished: %s",state.toString().c_str());
+		if(outtake_cargo_ac.getResult()->timed_out)
+		{
+			ROS_INFO("Timed out!");
+		}
 		return true;
 	}
 	else
@@ -133,6 +145,10 @@ bool callIntakeHatchPanel()
 	{
 		actionlib::SimpleClientGoalState state = intake_hatch_panel_ac.getState();
 		ROS_INFO("Action finished: %s",state.toString().c_str());
+		if(intake_hatch_panel_ac.getResult()->timed_out)
+		{
+			ROS_INFO("Timed out!");
+		}
 		return true;
 	}
 	else
@@ -166,6 +182,10 @@ bool callOuttakeHatchPanel(int setpoint_idx)
 	{
 		actionlib::SimpleClientGoalState state = outtake_hatch_panel_ac.getState();
 		ROS_INFO("Action finished: %s",state.toString().c_str());
+		if(outtake_hatch_panel_ac.getResult()->timed_out)
+		{
+			ROS_INFO("Timed out!");
+		}
 		return true;
 	}
 	else
@@ -175,7 +195,7 @@ bool callOuttakeHatchPanel(int setpoint_idx)
 	}
 }
 
-bool callClimber()
+bool callClimber(int step)
 {
 	//create client to call actionlib server
 	actionlib::SimpleActionClient<behaviors::ClimbAction> climber_ac("/climber/climber_server", true);
@@ -189,6 +209,7 @@ bool callClimber()
 	ROS_INFO("Sending goal to climber server.");
 	// send a goal to the action
 	behaviors::ClimbGoal climb_goal;
+	climb_goal.step = step;
 	climber_ac.sendGoal(climb_goal);
 
 	//wait for the action to return
@@ -198,6 +219,10 @@ bool callClimber()
 	{
 		actionlib::SimpleClientGoalState state = climber_ac.getState();
 		ROS_INFO("Action finished: %s",state.toString().c_str());
+		if(climber_ac.getResult()->timed_out)
+		{
+			ROS_INFO("Timed out!");
+		}
 		return true;
 	}
 	else
@@ -223,7 +248,6 @@ int main (int argc, char **argv)
 	 */
 	std::string what_to_run;
 	std::string elevator_setpoint;
-	int climber_step;
 
 	what_to_run = ros::getROSArg(argc, argv, "run"); //if can't find the argument, will default to an empty string of length 0
 	boost::algorithm::to_lower(what_to_run); //convert to lower case
@@ -231,22 +255,12 @@ int main (int argc, char **argv)
 	if(what_to_run.length() == 0)
 	{
 		ROS_ERROR("You need to specify the run functionality with: rosrun behaviors test_actionlib run:=____");
-		ROS_ERROR("Possible values for run: all, intake_cargo, outtake_cargo, intake_hatch_panel, outtake_hatch_panel, elevator, climber");
+		ROS_ERROR("Possible values for run: all, intake_cargo, outtake_cargo, intake_hatch_panel, outtake_hatch_panel, elevator, climber0, climber1, climber2, climber3");
 		ROS_ERROR("Note: 'all' will not run the climber");
 		return 0;
 	}
 	elevator_setpoint = ros::getROSArg(argc, argv, "setpoint"); //only used for elevator call or outtake call. Not used for the 'all' run option
 	boost::algorithm::to_upper(elevator_setpoint); //convert to upper case
-
-	climber_step = std::stoi(ros::getROSArg(argc, argv, "step"), nullptr, 10); //only used for climber call
-
-	ROS_WARN("what_to_run: %s", what_to_run.c_str());
-	ROS_WARN("setpoint: %s", elevator_setpoint.c_str());
-	ROS_WARN("climber step: %d", climber_step);
-
-	//Actually run stuff ---------------------------------
-
-	ros::init(argc, argv, "test_actionlib");
 
 	//make sure we have the setpoint if we need it, and determine what it is
 	int setpoint_idx;
@@ -289,6 +303,17 @@ int main (int argc, char **argv)
 			return 0;
 		}
 	}
+	else {
+		elevator_setpoint = "N/A";
+	}
+
+	ROS_WARN("what_to_run: %s", what_to_run.c_str());
+	ROS_WARN("setpoint: %s", elevator_setpoint.c_str());
+
+
+	//Actually run stuff ---------------------------------
+
+	ros::init(argc, argv, "test_actionlib");
 
 	//determine what to run and do it
 	std::string user_input;
@@ -346,8 +371,17 @@ int main (int argc, char **argv)
 	else if(what_to_run == "elevator") {
 		callElevator(setpoint_idx);
 	}
-	else if(what_to_run == "climber") {
-		callClimber();
+	else if(what_to_run == "climber0") {
+		callClimber(0);
+	}
+	else if(what_to_run == "climber1") {
+		callClimber(1);
+	}
+	else if(what_to_run == "climber2") {
+		callClimber(2);
+	}
+	else if(what_to_run == "climber3") {
+		callClimber(3);
 	}
 	else {
 		ROS_ERROR("Invalid run argument");

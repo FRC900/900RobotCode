@@ -55,6 +55,7 @@ class ElevatorAction {
 
 			hatch_locations.resize(ELEVATOR_MAX_INDEX);
 			cargo_locations.resize(ELEVATOR_MAX_INDEX);
+			climb_locations.resize(ELEVATOR_MAX_INDEX - 5);
         }
 
         ~ElevatorAction(void) {}
@@ -152,7 +153,7 @@ class ElevatorAction {
 			{
 				for (size_t i = 0; i < talon_state.name.size(); i++)
 				{
-					if (talon_state.name[i] == "elevator_joint") //TODO figure out what actually goes here
+					if (talon_state.name[i] == "elevator_master")
 					{
 						elevator_master_idx = i;
 						break;
