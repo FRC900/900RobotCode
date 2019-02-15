@@ -25,11 +25,10 @@ std::vector<double> nothing_angles;
 int linebreak_debounce_iterations;
 
 
-double nearest_angle(std::vector<double> angles)
+double nearest_angle(std::vector<double> angles, double angle)
 {
 	double snap_angle;
 	double smallest_distance = std::numeric_limits<double>::max();
-	double cur_angle = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
 	for(int i = 0; i < angles.size(); i++){
 		double distance = fabs(angles::shortest_angular_distance(cur_angle, angles[i]));
 		if(distance < smallest_distance) {
@@ -193,11 +192,12 @@ int main(int argc, char **argv)
 	while(ros::ok()) {
 		std_msgs::Float64 angle_snap;
 		std_msgs::Float64 navX_state;
+		double cur_angle = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
 		if(has_panel) {
-			snap_angle = -1*nearest_angle(hatch_panel_angles) - M_PI/2; //TODO remove having to multiply negative one
+			snap_angle = -1*nearest_angle(hatch_panel_angles, cur_angle) - M_PI/2; //TODO remove having to multiply negative one
 		}
 		else if(has_cargo) {
-			snap_angle = -1*nearest_angle(cargo_angles);
+			snap_angle = -1*nearest_angle(cargo_angles, cur_angle+M_PI/2) - M_PI;
 		}
 		else {
 			snap_angle = nearest_angle(nothing_angles);
