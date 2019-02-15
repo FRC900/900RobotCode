@@ -29,6 +29,7 @@ double joystick_pow;
 double rotation_pow;
 
 int elevator_cur_setpoint_idx;
+int climber_cur_step;
 bool previously_intook_cargo = false; //previous command intook if true, next press will be false 
 bool previously_intook_panel = false;
 
@@ -238,7 +239,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			JoystickRobotVel.publish(vel);
 		}
-		
+
 		/*
 		//Joystick1: buttonB
 		if(joystick_states_array[0].buttonBPress)
@@ -271,25 +272,15 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
 			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % 4;
-			if(elevator_cur_setpoint_idx = 0)
-			{
-				elevator_cur_setpoint_idx = 1;
-			}
 			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
 		}
 		if(joystick_states_array[0].buttonXButton)
 		{
 			ROS_INFO_THROTTLE(1, "buttonXButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].buttonXRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: buttonXRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
 		}
 		//Joystick1: buttonY
 		/*if(joystick_states_array[0].buttonYPress)
@@ -335,7 +326,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 				ROS_INFO_STREAM("Joystick1: Intake Cargo");
 				behaviors::IntakeGoal goal;
-				goal.motor_power = 1;
 				intake_cargo_ac->sendGoal(goal);
 			}
 			previously_intook_cargo = !previously_intook_cargo;
@@ -343,16 +333,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].bumperLeftButton)
 		{
 			ROS_INFO_THROTTLE(1, "bumperLeftButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].bumperLeftRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
 		}
 		//Joystick1: bumperRight
 		if(joystick_states_array[0].bumperRightPress)
@@ -364,14 +348,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				ROS_INFO_STREAM("Joystick1: Place Panel");
 				behaviors::PlaceGoal goal;
 				goal.setpoint_index = elevator_cur_setpoint_idx;
-				outtake_cargo_ac->sendGoal(goal);
+				outtake_hatch_panel_ac->sendGoal(goal);
 
 			}
 			else
 			{
 				ROS_INFO_STREAM("Joystick1: Intake Panel");
 				behaviors::IntakeGoal goal;
-				goal.motor_power = 1;
 				intake_hatch_panel_ac->sendGoal(goal);
 
 			}
@@ -380,19 +363,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].bumperRightButton)
 		{
 			ROS_INFO_THROTTLE(1, "bumperRightButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].bumperRightRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperRightRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
 		}
 		//Joystick1: directionLeft
-		if(joystick_states_array[0].directionLeftPress)
+		/*if(joystick_states_array[0].directionLeftPress)
 		{
 			ROS_INFO_STREAM("Joystick1: directionLeftPress");
 			std_srvs::SetBool msg;
@@ -412,9 +389,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			std_srvs::SetBool msg;
 			msg.request.data = false;
 			run_align.call(msg);
-		}
+		}*/
 		//Joystick1: directionRight
-		if(joystick_states_array[0].directionRightPress)
+		/*if(joystick_states_array[0].directionRightPress)
 		{
 			ROS_INFO_STREAM("Joystick1: directionRightPress");
 			std_srvs::SetBool msg;
@@ -434,56 +411,45 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			behaviors::AlignGoal goal;
 			goal.trigger = true;
 			align_ac->sendGoal(goal);
-		}
+		}*/
 		//Joystick1: directionUp
 		if(joystick_states_array[0].directionUpPress)
 		{
-			ROS_INFO_STREAM("Joystick1: Calling Climber Server ");
+			ROS_INFO_STREAM("Joystick1: Calling Climber Server");
+			preemptActionlibServers();
+			climber_cur_step = (climber_cur_step + 1) % 4;
 			behaviors::ClimbGoal goal;
-			goal.elevator_setpoint = 0;
+			goal.step = climber_cur_step;
+			climber_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].directionUpButton)
 		{
 			ROS_INFO_THROTTLE(1, "directionUpButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].directionUpRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: directionUpRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
 		}
 		//Joystick1: directionDown
 		if(joystick_states_array[0].directionDownPress)
 		{
-			ROS_INFO_STREAM("Joystick1: directionDownPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			ROS_WARN("Joystick1: Preempting All Servers");
+			preemptActionlibServers();
 		}
 		if(joystick_states_array[0].directionDownButton)
 		{
 			ROS_INFO_THROTTLE(1, "directionDownButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].directionDownRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: directionDownRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
 		}
 	}
 
 	else if(i == 2)
 	{
 		//Joystick2: buttonA
-		if(joystick_states_array[1].buttonAPress)
+		/*if(joystick_states_array[1].buttonAPress)
 		{
 			ROS_INFO_STREAM("Joystick2: buttonAPress");
 			std_srvs::SetBool msg;
@@ -701,7 +667,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			std_srvs::SetBool msg;
 			msg.request.data = false;
 			run_align.call(msg);
-		}
+		}*/
 	}
 
 }
