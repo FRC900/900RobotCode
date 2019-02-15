@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <node name="rosbag_record_node" pkg="rosbag" type="record"
+	  args="record -o /mnt/900_2/ --lz4
+	  	/frcrobot_jetson/talon_states
+		/frcrobot_jetson/joint_states
+		/frcrobot_rio/joint_states
+		/frcrobot_rio/heartbeat
+		/frcrobot_jetson/heartbeat
+		/frcrobot_rio/match_data
+		/frcrobot_jetson/swerve_drive_controller/cmd_vel
+		/navX_snap_to_goal_pid/pid_debug
+		/multiflex_1/ranges_raw
+		/frcrobot_rio/navx_mxp
+		/frcrobot_rio/robot_controller_states
+		/frcrobot_jetson/pdp_states
+		/frcrobot_jetson/pcm_states
+		/zed_goal/depth/depth_registered
+		/zed_goal/left/image_rect_color
+		"/>
+</launch>
