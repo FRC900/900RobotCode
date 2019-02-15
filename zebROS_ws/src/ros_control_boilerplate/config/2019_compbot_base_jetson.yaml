@@ -201,9 +201,8 @@ fr_angle_motionmagic_controller:
     joint: fr_angle
     feedback_type: CTRE_MagEncoder_Absolute
     close_loop_values:
-        - {p: 4.2, i: 0.006, d: 45.0, f: 0.47, i_zone: 500} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
-        - {p: 5.0, i: 0.03, d: 75.0, f: 0.47, i_zone: 1200} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
-    invert_output: false
+        - {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+    invert_output: true 
     sensor_phase: false
     peak_output_forward: 1.0
     peak_output_reverse: -1.0
@@ -219,9 +218,8 @@ fl_angle_motionmagic_controller:
     joint: fl_angle
     feedback_type: CTRE_MagEncoder_Absolute
     close_loop_values:
-        - {p: 4.2, i: 0.006, d: 45.0, f: 0.47, i_zone: 500} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
-        - {p: 5.0, i: 0.03, d: 75.0, f: 0.47, i_zone: 1200} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
-    invert_output: false
+        - {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+    invert_output: true 
     sensor_phase: false
     peak_output_forward: 1.0
     peak_output_reverse: -1.0
@@ -237,9 +235,8 @@ br_angle_motionmagic_controller:
     joint: br_angle
     feedback_type: CTRE_MagEncoder_Absolute
     close_loop_values:
-        - {p: 4.2, i: 0.006, d: 45.0, f: 0.47, i_zone: 500} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
-        - {p: 5.0, i: 0.03, d: 75.0, f: 0.47, i_zone: 1200} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
-    invert_output: false
+        - {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+    invert_output: true  
     sensor_phase: false
     peak_output_forward: 1.0
     peak_output_reverse: -1.0
@@ -255,9 +252,8 @@ bl_angle_motionmagic_controller:
     joint: bl_angle
     feedback_type: CTRE_MagEncoder_Absolute
     close_loop_values:
-        - {p: 4.2, i: 0.006, d: 45.0, f: 0.47, i_zone: 500} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
-        - {p: 5.0, i: 0.03, d: 75.0, f: 0.47, i_zone: 1200} #{p: 7.15, i: 0.006, d: 90.0, f: 0.609381981, i_zone: 500}
-    invert_output: false
+        - {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+    invert_output: true
     sensor_phase: false
     peak_output_forward: 1.0
     peak_output_reverse: -1.0
@@ -274,8 +270,8 @@ fr_drive_position_controller:
     joint: fr_drive 
     feedback_type: CTRE_MagEncoder_Relative
     close_loop_values:
-        - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
-        - {p: 0.8, i: 0, d: 10, f: 0.0, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
     invert_output: true
     sensor_phase: true
     peak_output_forward: 1.0
@@ -292,8 +288,8 @@ fl_drive_position_controller:
     joint: fl_drive 
     feedback_type: CTRE_MagEncoder_Relative
     close_loop_values:
-        - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
-        - {p: 0.8, i: 0, d: 10, f: 0.0, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
     invert_output: true
     sensor_phase: true
     peak_output_forward: 1.0
@@ -310,8 +306,8 @@ br_drive_position_controller:
     joint: br_drive 
     feedback_type: CTRE_MagEncoder_Relative
     close_loop_values:
-        - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
-        - {p: 0.8, i: 0, d: 10, f: 0.0, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
     invert_output: true
     sensor_phase: true
     peak_output_forward: 1.0
@@ -328,8 +324,8 @@ bl_drive_position_controller:
     joint: bl_drive 
     feedback_type: CTRE_MagEncoder_Relative
     close_loop_values:
-        - {p: 0.1, i: 0.0006, d: 1, f: 0.06145, i_zone: 500}
-        - {p: 0.8, i: 0, d: 10, f: 0.0, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
     invert_output: true
     sensor_phase: true
     peak_output_forward: 1.0
