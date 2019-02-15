@@ -241,18 +241,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		bool safeTalonCall(ctre::phoenix::ErrorCode error_code,
 				const std::string &talon_method_name);
 
-		double cube_state_;
-		double auto_state_0_;
-		double auto_state_1_;
-		double auto_state_2_;
-		double auto_state_3_;
-		double stop_arm_;
-		double override_arm_limits_;
-		double disable_compressor_;
-		double starting_config_;
 		double navX_zero_;
-		double navX_angle_;
-		double pressure_;
 
 		std::vector<std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonSRX>> can_talons_;
 
@@ -290,16 +279,6 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::vector<std::unique_ptr<realtime_tools::RealtimePublisher<sensor_msgs::Joy>>> realtime_pub_joysticks_;
 
 		std::unique_ptr<ROSIterativeRobot> robot_;
-		std::shared_ptr<realtime_tools::RealtimePublisher<ros_control_boilerplate::AutoMode>> realtime_pub_nt_;
-		std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64>> realtime_pub_error_;
-
-		bool error_msg_last_received_;
-
-		// Same thing for network tables - they only need to update
-		// at human-usable scales
-		ros::Time last_nt_publish_time_;
-
-		double error_pub_start_time_;
 
 		std::vector<Tracer> talon_thread_tracers_;
 		std::vector<Tracer> pdp_thread_tracers_;
