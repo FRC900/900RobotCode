@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 
 
 	navX_angle = M_PI / 2;
-	has_panel = false;
+	has_panel = true;
 	has_cargo = false;
 
 	ros::Subscriber joint_states_sub_ = nh.subscribe("/frcrobot_jetson/joint_states", 1, jointStateCallback);
@@ -194,16 +194,16 @@ int main(int argc, char **argv)
 		std_msgs::Float64 angle_snap;
 		std_msgs::Float64 navX_state;
 		if(has_panel) {
-			snap_angle = nearest_angle(hatch_panel_angles);
+			snap_angle = -1*nearest_angle(hatch_panel_angles) - M_PI/2; //TODO remove having to multiply negative one
 		}
 		else if(has_cargo) {
-			snap_angle = nearest_angle(cargo_angles);
+			snap_angle = -1*nearest_angle(cargo_angles);
 		}
 		else {
 			snap_angle = nearest_angle(nothing_angles);
 		}
 		angle_snap.data = snap_angle;
-		navX_state.data = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
+		navX_state.data = -1*angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed)) - M_PI/2;
 		snapAnglePub.publish(angle_snap);
         navXStatePub.publish(navX_state);
 
