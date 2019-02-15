@@ -6,6 +6,7 @@
 #include <behaviors/ClimbAction.h>
 #include <behaviors/enumerated_elevator_indices.h>
 #include <boost/algorithm/string.hpp>
+#include <string>
 
 double server_wait_timeout = 20.0; //how long to wait for a server to exist before exiting, in sec.
 double server_exec_timeout = 20.0; //how long to wait for an actionlib server call to finish before timing out, in sec. Used for all actionlib calls
@@ -222,6 +223,8 @@ int main (int argc, char **argv)
 	 */
 	std::string what_to_run;
 	std::string elevator_setpoint;
+	int climber_step;
+
 	what_to_run = ros::getROSArg(argc, argv, "run"); //if can't find the argument, will default to an empty string of length 0
 	boost::algorithm::to_lower(what_to_run); //convert to lower case
 	//make sure user told us what to run
@@ -235,8 +238,11 @@ int main (int argc, char **argv)
 	elevator_setpoint = ros::getROSArg(argc, argv, "setpoint"); //only used for elevator call or outtake call. Not used for the 'all' run option
 	boost::algorithm::to_upper(elevator_setpoint); //convert to upper case
 
+	climber_step = std::stoi(ros::getROSArg(argc, argv, "step"), nullptr, 10); //only used for climber call
+
 	ROS_WARN("what_to_run: %s", what_to_run.c_str());
 	ROS_WARN("setpoint: %s", elevator_setpoint.c_str());
+	ROS_WARN("climber step: %d", climber_step);
 
 	//Actually run stuff ---------------------------------
 

@@ -33,6 +33,7 @@ class ElevatorAction {
     public:
 		std::vector<double> hatch_locations;
 		std::vector<double> cargo_locations;
+		std::vector<double> climb_locations; //vector of everything after index 4 in enumerated elevator indices, except for max index at the end
 
 		double timeout;
 
@@ -52,8 +53,8 @@ class ElevatorAction {
 			//Talon states subscriber
             talon_states_sub = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);
 
-			hatch_locations.resize(ELEVATOR_MAX_INDEX); //TODO: not hard-coded
-			cargo_locations.resize(ELEVATOR_MAX_INDEX); //TODO: not hard-coded
+			hatch_locations.resize(ELEVATOR_MAX_INDEX);
+			cargo_locations.resize(ELEVATOR_MAX_INDEX);
         }
 
         ~ElevatorAction(void) {}
@@ -75,9 +76,17 @@ class ElevatorAction {
 			double setpoint_index = goal->setpoint_index;
 			bool place_cargo = goal->place_cargo;
 
-			//Send setpoint to elevator controller
+			//Determine setpoint (elevator_cur_setpoint_)
             elevator_controller::ElevatorSrv srv;
-			if(place_cargo)
+			if(setpoint_index >= 5) //then it's a climb index
+			{
+				double climb_setpoint_index = setpoint_index - 5;
+				if(climb_setpoint_index < climb_locations.size())
+					elevator_cur_setpoint_ = climb_locations[climb_setpoint_index];
+				else
+					ROS_ERROR_STREAM("index out of bounds in elevator_server");
+			}
+			else if(place_cargo)
 			{
 				if(setpoint_index < cargo_locations.size())
 					elevator_cur_setpoint_ = cargo_locations[setpoint_index];
@@ -94,6 +103,7 @@ class ElevatorAction {
 			srv.request.position = elevator_cur_setpoint_;
             elevator_client_.call(srv); //Send command to elevator controller
 
+			//send request to elevator controller
             while(!success && !timed_out && !preempted) {
                 success = fabs(cur_position_ - elevator_cur_setpoint_) < elevator_position_deadzone;
 				ROS_INFO_STREAM("cur position = " << cur_position_ << " elevator_cur_setpoint " << elevator_cur_setpoint_);
@@ -228,6 +238,22 @@ int main(int argc, char** argv)
 	if (!n_params.getParam("cargo/intake_position", cargo_intake_position))
 		ROS_ERROR_STREAM("Could not read cargo_intake_position");
 	elevator_action.cargo_locations[INTAKE] = cargo_intake_position;
+
+	//read locations for elevator climbing setpoints
+	double climb_deploy_position;
+	if (!n_params.getParam("climber/deploy_position", climb_deploy_position))
+		ROS_ERROR_STREAM("Could not read deploy_position");
+	elevator_action.climb_locations[ELEVATOR_DEPLOY - 5] = climb_deploy_position;
+
+	double climb_position;
+	if (!n_params.getParam("climber/climb_position", climb_position))
+		ROS_ERROR_STREAM("Could not read climb_position");
+	elevator_action.climb_locations[ELEVATOR_CLIMB - 5] = climb_position;
+
+	double climb_low_position;
+	if (!n_params.getParam("climber/climb_low_position", climb_low_position))
+		ROS_ERROR_STREAM("Could not read climb_low_position");
+	elevator_action.climb_locations[ELEVATOR_CLIMB_LOW - 5] = climb_low_position;
 
 	ros::spin();
 	return 0;
