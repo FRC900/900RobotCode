@@ -10,10 +10,10 @@ swerve_drive_controller:
     # fix me
     wheel_radius: 0.0381 # m
     cmd_vel_timout: 0.5
-    max_speed: 4.5 #3.628571429
-    max_accel: 1.8 #2
-    max_brake_accel: 2.5 #4
-    ang_accel_conv: 2.0 #0.741176471
+    max_speed: 4.5
+    max_accel: 1.8
+    max_brake_accel: 2.5
+    ang_accel_conv: 2.0
     max_rotational_vel: 10
     
     f_s: 0.12
