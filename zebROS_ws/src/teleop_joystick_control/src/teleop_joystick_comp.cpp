@@ -30,8 +30,12 @@ double rotation_pow;
 
 int elevator_cur_setpoint_idx;
 int climber_cur_step;
+
 bool previously_intook_cargo = false; //previous command intook if true, next press will be false
 bool previously_intook_panel = false;
+
+const int climber_num_steps = 4;
+const int elevator_num_setpoints = 4;
 
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
@@ -253,7 +257,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 
 			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
-			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % 4;
+			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % elevator_num_setpoints;
 			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
 		}
 		if(joystick_states_array[0].buttonXButton)
@@ -325,7 +329,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: bumperRight
 		if(joystick_states_array[0].bumperRightPress)
 		{
-			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
+			ROS_INFO_STREAM("Joystick1: bumperRightPress");
 			preemptActionlibServers();
 			if(previously_intook_panel)
 			{
@@ -395,7 +399,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			behaviors::ClimbGoal goal;
 			goal.step = climber_cur_step;
 			climber_ac->sendGoal(goal);
-			climber_cur_step = (climber_cur_step + 1) % 4;
+			climber_cur_step = (climber_cur_step + 1) % climber_num_steps;
 		}
 		if(joystick_states_array[0].directionUpButton)
 		{
