@@ -216,27 +216,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].buttonAButton)
 		{
 			ROS_INFO_THROTTLE(1, "buttonAButton");
-			std_msgs::Bool enable_pid;
-			enable_pid.data = true;
-			navX_pid.publish(enable_pid);
 		}
 		if(joystick_states_array[0].buttonARelease)
 		{
 			ROS_INFO_STREAM("Joystick1: buttonARelease");
-			std_msgs::Bool enable_pid;
-			enable_pid.data = false;
-			navX_pid.publish(enable_pid);
-
-			geometry_msgs::Twist vel;
-			vel.linear.x = 0;
-			vel.linear.y = 0;
-			vel.linear.z = 0;
-
-			vel.angular.x = 0;
-			vel.angular.y = 0;
-			vel.angular.z = 0;
-
-			JoystickRobotVel.publish(vel);
 		}
 
 		/*
@@ -390,18 +373,18 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		//Joystick1: directionRight
 		if(joystick_states_array[0].directionRightPress)
-		  {
-		  ROS_INFO_STREAM("Preempting All Servers");
-		  preemptActionlibServers();
-		  }
-		  if(joystick_states_array[0].directionRightButton)
-		  {
-		  ROS_INFO_THROTTLE(1, "directionRightButton");
-		  }
-		  if(joystick_states_array[0].directionRightRelease)
-		  {
-		  ROS_INFO_STREAM("Joystick1: directionRightRelease");
-		  }
+		{
+			ROS_WARN("Preempting All Servers");
+			preemptActionlibServers();
+		}
+		if(joystick_states_array[0].directionRightButton)
+		{
+			ROS_INFO_THROTTLE(1, "directionRightButton");
+		}
+		if(joystick_states_array[0].directionRightRelease)
+		{
+			ROS_INFO_STREAM("Joystick1: directionRightRelease");
+		}
 		//Joystick1: directionUp
 		if(joystick_states_array[0].directionUpPress)
 		{
