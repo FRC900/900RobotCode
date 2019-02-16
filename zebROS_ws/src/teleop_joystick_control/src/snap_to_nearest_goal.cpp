@@ -181,8 +181,8 @@ int main(int argc, char **argv)
 
 	ros::Subscriber joint_states_sub_ = nh.subscribe("/frcrobot_jetson/joint_states", 1, jointStateCallback);
 	ros::Subscriber navX_heading  = nh.subscribe("/frcrobot_rio/navx_mxp", 1, &navXCallback);
-	ros::Publisher snapAnglePub = nh.advertise<std_msgs::Float64>("/navX_snap_to_goal_pid/navX_snap_to_goal_setpoint", 10);
-	ros::Publisher navXStatePub = nh.advertise<std_msgs::Float64>("/navX_snap_to_goal_pid/navX_snap_to_goal_state", 10);
+	ros::Publisher snapAnglePub = nh.advertise<std_msgs::Float64>("navX_snap_to_goal_setpoint", 10);
+	ros::Publisher navXStatePub = nh.advertise<std_msgs::Float64>("navX_snap_to_goal_state", 10);
 	ROS_INFO("snap_to_angle_init");
 
 	ros::Rate r(100);
@@ -194,16 +194,16 @@ int main(int argc, char **argv)
 		std_msgs::Float64 navX_state;
 		double cur_angle = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
 		if(has_panel) {
-			snap_angle = -1*nearest_angle(hatch_panel_angles, cur_angle) - M_PI/2; //TODO remove having to multiply negative one
+			snap_angle = -1*nearest_angle(hatch_panel_angles, cur_angle); //TODO remove having to multiply negative one
 		}
 		else if(has_cargo) {
-			snap_angle = -1*nearest_angle(cargo_angles, cur_angle+M_PI/2) - M_PI;
+			snap_angle = -1*nearest_angle(cargo_angles, cur_angle + M_PI/2) - M_PI/2;
 		}
 		else {
 			snap_angle = nearest_angle(nothing_angles, cur_angle);
 		}
 		angle_snap.data = snap_angle;
-		navX_state.data = -1*angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed)) - M_PI/2;
+		navX_state.data = -1*angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
 		snapAnglePub.publish(angle_snap);
         navXStatePub.publish(navX_state);
 

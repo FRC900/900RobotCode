@@ -169,7 +169,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
 		double triggerLeft = left_trigger_rate_limit.applyLimit(joystick_states_array[0].leftTrigger);
 		double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
-		double rotation = pow(rightStickX, rotation_pow) * max_rot;
+		double rotation = -1*pow(rightStickX, rotation_pow) * max_rot; //TODO fix having to multiply by -1
 
 		static bool sendRobotZero = false;
 		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
@@ -684,7 +684,7 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
 	}
-	if(!n_swerve_params.getParam("max_rotational_vel", max_rot))
+	if(!n_params.getParam("max_rot", max_rot))
 	{
 		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
 	}
@@ -709,7 +709,7 @@ int main(int argc, char **argv)
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
-	navX_pid = n.advertise<std_msgs::Bool>("/navX_snap_to_goal_pid/pid_enable", 1);
+    navX_pid = n.advertise<std_msgs::Bool>("/align_server/navX_pid/pid_enable", 1);
 	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
 	{
 		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");
