@@ -59,7 +59,7 @@
 			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen"/>
 		</group>
 
-		<group ns="translator1" if="$(eval arg('joy_or_key')=='joy')">	
+		<group ns="translator1" if="$(eval arg('joy_or_key')=='two_joy')">	
 			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" >
 				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw1" />
 			</node>
