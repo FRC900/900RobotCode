@@ -357,6 +357,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].directionLeftPress)
 		{
 			ROS_WARN("Calling elevator server; move to setpoint %d", elevator_cur_setpoint_idx);
+			preemptActionlibServers();
 			behaviors::ElevatorGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_idx;
 			elevator_ac->sendGoal(goal);
