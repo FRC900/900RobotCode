@@ -13,16 +13,16 @@ bool zero_wheel(std_srvs::Trigger::Request& /*req*/, std_srvs::Trigger::Response
 {
 	ROS_INFO_STREAM("running zero_wheel_service");
 	std_msgs::Float64 fl_msg;
-	fl_msg.data = offsets[0];
+	fl_msg.data = offsets[0] + M_PI/2;
 
 	std_msgs::Float64 fr_msg;
-	fr_msg.data = offsets[1];
+	fr_msg.data = offsets[1] + M_PI/2;
 
 	std_msgs::Float64 bl_msg;
-	bl_msg.data = offsets[2];
+	bl_msg.data = offsets[2] + M_PI/2;
 
 	std_msgs::Float64 br_msg;
-	br_msg.data = offsets[3];
+	br_msg.data = offsets[3] + M_PI/2;
 
 	fr_angle_position.publish(fr_msg);
 	fl_angle_position.publish(fl_msg);
@@ -37,16 +37,16 @@ bool keep_wheels_zeroed(std_srvs::Trigger::Request& /*req*/, std_srvs::Trigger::
 {
 	ROS_INFO_STREAM("running zero_wheel_service");
 	std_msgs::Float64 fl_msg;
-	fl_msg.data = offsets[0];
+	fl_msg.data = offsets[0] + M_PI/2;
 
 	std_msgs::Float64 fr_msg;
-	fr_msg.data = offsets[1];
+	fr_msg.data = offsets[1] + M_PI/2;
 
 	std_msgs::Float64 bl_msg;
-	bl_msg.data = offsets[2];
+	bl_msg.data = offsets[2] + M_PI/2;
 
 	std_msgs::Float64 br_msg;
-	br_msg.data = offsets[3];
+	br_msg.data = offsets[3] + M_PI/2;
 
 	ros::Rate r(10);
 	while(ros::ok())

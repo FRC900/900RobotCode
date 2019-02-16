@@ -653,6 +653,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "Joystick_controller");
 	ros::NodeHandle n;
 	ros::NodeHandle n_params(n, "teleop_params");
+	ros::NodeHandle n_swerve_params(n, "/frcrobot_jetson/swerve_drive_controller");
 
 	int num_joysticks = 1;
 	if(!n_params.getParam("num_joysticks", num_joysticks))
@@ -667,14 +668,6 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read slow_mode in teleop_joystick_comp");
 	}
-	if(!n_params.getParam("max_speed", max_speed))
-	{
-		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
-	}
-	if(!n_params.getParam("max_rot", max_rot))
-	{
-		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
-	}
 	if(!n_params.getParam("joystick_pow", joystick_pow))
 	{
 		ROS_ERROR("Could not read joystick_pow in teleop_joystick_comp");
@@ -682,6 +675,14 @@ int main(int argc, char **argv)
 	if(!n_params.getParam("rotation_pow", rotation_pow))
 	{
 		ROS_ERROR("Could not read rotation_pow in teleop_joystick_comp");
+	}
+	if(!n_swerve_params.getParam("max_speed", max_speed))
+	{
+		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
+	}
+	if(!n_swerve_params.getParam("max_rotational_vel", max_rot))
+	{
+		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
 	}
 
 	std::vector <ros::Subscriber> subscriber_array;

@@ -11,8 +11,8 @@
 #include "behaviors/AlignAction.h"
 
 double align_timeout;
-double orient_error_threshhold;
-double x_error_threshhold;
+double orient_error_threshold;
+double x_error_threshold;
 
 class AlignAction {
 	protected:
@@ -43,12 +43,12 @@ class AlignAction {
 		{
 			as_.start(); //start the actionlib server
 
-			enable_navx_pub_ = nh_.advertise<std_msgs::Bool>("/navX_snap_to_goal_pid/pid_enable", 1);
+			enable_navx_pub_ = nh_.advertise<std_msgs::Bool>("navX_pid/pid_enable", 1);
 			enable_x_pub_ = nh_.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1);
 			enable_y_pub_ = nh_.advertise<std_msgs::Bool>("align_with_terabee/enable_y_pub", 1);
 			cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("server/swerve_drive_controller/cmd_vel", 1);
 
-			navx_error_sub_ = nh_.subscribe("/navX_snap_to_goal_pid/pid_debug", 1, &AlignAction::navx_error_cb, this);
+			navx_error_sub_ = nh_.subscribe("navX_pid/pid_debug", 1, &AlignAction::navx_error_cb, this);
 			x_error_sub_ = nh_.subscribe("distance_pid/pid_debug", 1, &AlignAction::x_error_cb, this);
 			y_error_sub_ = nh_.subscribe("align_with_terabee/y_aligned", 1, &AlignAction::y_error_cb, this);
 		}
@@ -59,12 +59,12 @@ class AlignAction {
 
 		void navx_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-			orient_aligned_ = (msg.data[0] > orient_error_threshhold);
+			orient_aligned_ = (msg.data[0] > orient_error_threshold);
 		}
 
 		void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-			x_aligned_ = (msg.data[0] > x_error_threshhold);
+			x_aligned_ = (msg.data[0] > x_error_threshold);
 		}
 
 		void y_error_cb(const std_msgs::Bool &msg)
@@ -165,10 +165,10 @@ int main(int argc, char** argv) {
 
 	if(!n_params.getParam("align_timeout", align_timeout))
 		ROS_ERROR_STREAM("Could not read align_timeout in align_server");
-	if(!n_params.getParam("x_error_threshhold", x_error_threshhold))
-		ROS_ERROR_STREAM("Could not read x_error_threshhold in align_server");
-	if(!n_params.getParam("orient_error_threshhold", orient_error_threshhold))
-		ROS_ERROR_STREAM("Could not read orient_error_threshhold in align_server");
+	if(!n_params.getParam("x_error_threshold", x_error_threshold))
+		ROS_ERROR_STREAM("Could not read x_error_threshold in align_server");
+	if(!n_params.getParam("orient_error_threshold", orient_error_threshold))
+		ROS_ERROR_STREAM("Could not read orient_error_threshold in align_server");
 
 	ros::spin();
 	return 0;

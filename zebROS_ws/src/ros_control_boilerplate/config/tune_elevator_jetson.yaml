@@ -13,10 +13,10 @@ hardware_interface:
    can_interface: can0
 
    joints:
-       - {name: elevator_left_master, type: can_talon_srx, can_id: 22}
-       - {name: elevator_left_follower, type: can_talon_srx, can_id: 12}
-       - {name: elevator_right_top, type: can_talon_srx, can_id: 24}
-       - {name: elevator_right_bottom, type: can_talon_srx, can_id: 14}
+       - {name: elevator_left_master, type: can_talon_srx, can_id: 41}
+       - {name: elevator_left_follower, type: can_talon_srx, can_id: 42}
+       - {name: elevator_right_top, type: can_talon_srx, can_id: 43}
+       - {name: elevator_right_bottom, type: can_talon_srx, can_id: 44}
        - {name: pdp, type: pdp}
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} 
@@ -80,9 +80,10 @@ elevator_master_velocity_controller:
     close_loop_values:
         - {p: 0.0, i: 0.000, d: 00.0, f: 0.00, i_zone: 000}
     invert_output: False
-    sensor_phase: False
+    sensor_phase: True 
     peak_output_forward: 0.0
     peak_output_reverse: 0.0
+    conversion_factor: 0.02959
     nominal_output_forward: 0.0
     nominal_output_reverse: 0.0
     motion_cruise_velocity: 00

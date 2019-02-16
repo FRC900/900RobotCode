@@ -24,10 +24,12 @@ bool get_offsets_srv(std_srvs::Trigger::Request& /*req*/, std_srvs::Trigger::Res
 	for (size_t i = 0; i < talon_state_msg.name.size(); i++)
 	{
 		auto it = offset_joint_names.find(talon_state_msg.name[i]);
+		ROS_INFO_STREAM("index for talon: " << i);
 		if (it != offset_joint_names.end())
 		{
 			offsets_file << "    " << it->second << ":" << std::endl;
 			double offset = fmod(talon_state_msg.position[i] + M_PI / 2., 2. * M_PI);
+			ROS_INFO_STREAM("OFFSET: " << offset);
 			offsets_file << "        offset: " << offset << std::endl;
 		}
 	}

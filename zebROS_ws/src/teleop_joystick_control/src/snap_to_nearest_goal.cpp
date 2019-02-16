@@ -25,13 +25,12 @@ std::vector<double> nothing_angles;
 int linebreak_debounce_iterations;
 
 
-double nearest_angle(std::vector<double> angles)
+double nearest_angle(std::vector<double> angles, double cur_angle)
 {
 	double snap_angle;
 	double smallest_distance = std::numeric_limits<double>::max();
-	double cur_angle = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
 	for(int i = 0; i < angles.size(); i++){
-		double distance = fabs(cur_angle - angles[i]);
+		double distance = fabs(angles::shortest_angular_distance(cur_angle, angles[i]));
 		if(distance < smallest_distance) {
 			smallest_distance = distance;
 			snap_angle = angles[i];
@@ -177,7 +176,7 @@ int main(int argc, char **argv)
 
 
 	navX_angle = M_PI / 2;
-	has_panel = false;
+	has_panel = true;
 	has_cargo = false;
 
 	ros::Subscriber joint_states_sub_ = nh.subscribe("/frcrobot_jetson/joint_states", 1, jointStateCallback);
@@ -188,23 +187,23 @@ int main(int argc, char **argv)
 
 	ros::Rate r(100);
 	double snap_angle;
-	
 	ros::spinOnce();
 
 	while(ros::ok()) {
 		std_msgs::Float64 angle_snap;
 		std_msgs::Float64 navX_state;
+		double cur_angle = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
 		if(has_panel) {
-			snap_angle = nearest_angle(hatch_panel_angles);
+			snap_angle = -1*nearest_angle(hatch_panel_angles, cur_angle) - M_PI/2; //TODO remove having to multiply negative one
 		}
 		else if(has_cargo) {
-			snap_angle = nearest_angle(cargo_angles);
+			snap_angle = -1*nearest_angle(cargo_angles, cur_angle+M_PI/2) - M_PI;
 		}
 		else {
-			snap_angle = nearest_angle(nothing_angles);
+			snap_angle = nearest_angle(nothing_angles, cur_angle);
 		}
 		angle_snap.data = snap_angle;
-		navX_state.data = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
+		navX_state.data = -1*angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed)) - M_PI/2;
 		snapAnglePub.publish(angle_snap);
         navXStatePub.publish(navX_state);
 

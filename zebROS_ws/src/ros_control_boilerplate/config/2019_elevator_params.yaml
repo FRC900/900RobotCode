@@ -23,7 +23,7 @@ elevator_controller:
         # motion_cruise_velocity: 32
         # motion_acceleration: 150
               
-        sensor_phase: True
+        sensor_phase: True 
         invert_output: False
 
         feedback_type: CTRE_MagEncoder_Absolute
@@ -43,7 +43,7 @@ elevator_controller:
 
         # TODO : used to convert encoder position from radians to meters
         # .0573 ... divide or multiply?
-        conversion_factor: 1
+        conversion_factor: 0.02959
 
     elevator_follower1: 
         joint: elevator_follower1
