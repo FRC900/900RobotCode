@@ -78,7 +78,6 @@ class ElevatorAction {
 			bool place_cargo = goal->place_cargo;
 
 			//Determine setpoint (elevator_cur_setpoint_)
-            elevator_controller::ElevatorSrv srv;
 			if(setpoint_index >= 5) //then it's a climb index
 			{
 				double climb_setpoint_index = setpoint_index - 5;
@@ -101,13 +100,21 @@ class ElevatorAction {
 				else
 					ROS_ERROR_STREAM("index out of bounds in elevator_server");
 			}
-			srv.request.position = elevator_cur_setpoint_;
-            elevator_client_.call(srv); //Send command to elevator controller
 
 			//send request to elevator controller
+            elevator_controller::ElevatorSrv srv;
+			srv.request.position = elevator_cur_setpoint_;
+			srv.request.go_slow = false; //default
+			if(setpoint_index >= 5) //then climbing, go slow
+			{
+				srv.request.go_slow = true;
+			}
+            elevator_client_.call(srv); //Send command to elevator controller
+
+			//wait for elevator controller to finish
             while(!success && !timed_out && !preempted) {
                 success = fabs(cur_position_ - elevator_cur_setpoint_) < elevator_position_deadzone;
-				ROS_INFO_STREAM("cur position = " << cur_position_ << " elevator_cur_setpoint " << elevator_cur_setpoint_);
+				ROS_INFO_STREAM("elevator server: cur position = " << cur_position_ << " elevator_cur_setpoint " << elevator_cur_setpoint_);
 				if(as_.isPreemptRequested() || !ros::ok())
 				{
                     ROS_ERROR("%s: Preempted", action_name_.c_str());
@@ -120,6 +127,8 @@ class ElevatorAction {
 				}
 				timed_out = ros::Time::now().toSec() - start_time > timeout;
 			}
+
+
 
 			//log state of action and set result of action
 

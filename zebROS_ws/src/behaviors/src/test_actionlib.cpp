@@ -295,6 +295,9 @@ int main (int argc, char **argv)
 		else if(elevator_setpoint == "ELEVATOR_CLIMB") {
 			setpoint_idx = ELEVATOR_CLIMB;
 		}
+		else if(elevator_setpoint == "ELEVATOR_CLIMB_LOW") {
+			setpoint_idx = ELEVATOR_CLIMB;
+		}
 		else if(elevator_setpoint == "ELEVATOR_MAX_INDEX") {
 			setpoint_idx = ELEVATOR_MAX_INDEX;
 		}

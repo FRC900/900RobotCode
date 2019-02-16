@@ -222,6 +222,24 @@ class ClimbAction {
 					}
 				} //end of lowering elevator to make robot climb
 
+				//handle preempting/timed out
+				if(preempted || timed_out)
+				{
+					//send robot back to ground - go to deploy setpoint
+
+					//call the elevator actionlib server
+					//define the goal to send
+					behaviors::ElevatorGoal goal;
+					goal.setpoint_index = ELEVATOR_DEPLOY;
+					goal.place_cargo = 0; //doesn't actually do anything 
+					//send the goal
+					ae_.sendGoal(goal);
+					if(!ae_.waitForResult(ros::Duration(elevator_climb_timeout))) //wait until the action finishes, whether it succeeds, times out, or is preempted
+					{
+						ROS_ERROR("climber server step 0: preempt handling elevator move timed out");
+					}
+				}
+
 			}
 			else if(goal->step == 1)
 			{
@@ -241,6 +259,8 @@ class ClimbAction {
 					//only spin if we're not going to error out
 					ros::spinOnce();
 				}
+
+				//preempt handling: do nothing
 
 			}
 			else if(goal->step == 2)
@@ -270,6 +290,12 @@ class ClimbAction {
 				if(as_.isPreemptRequested())
 				{
 					preempted = true;
+				}
+
+				//preempt handling: preempt elevator server to freeze the elevator
+				if(preempted || timed_out)
+				{
+					ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 			}
 			else if(goal->step == 3)
@@ -301,6 +327,11 @@ class ClimbAction {
 					preempted = true;
 				}
 
+				//preempt handling: preempt elevator server to freeze the elevator
+				if(preempted || timed_out)
+				{
+					ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				}
 			}
 
 			//log state of action and set result of action
