@@ -96,6 +96,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		}
 		else
 		{
+			// Stop moving to preven motor from burning out
 			elevator_joint_.setCommand(0);
 		}
 
