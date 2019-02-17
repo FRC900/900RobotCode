@@ -13,10 +13,10 @@ hardware_interface:
    can_interface: can0
 
    joints:
-       - {name: elevator_left_master, type: can_talon_srx, can_id: 41}
-       - {name: elevator_left_follower, type: can_talon_srx, can_id: 42}
-       - {name: elevator_right_top, type: can_talon_srx, can_id: 43}
-       - {name: elevator_right_bottom, type: can_talon_srx, can_id: 44}
+       - {name: elevator_master, type: can_talon_srx, can_id: 41, local: true}
+       - {name: elevator_follower1, type: can_talon_srx, can_id: 42, local: true}
+       - {name: elevator_follower2, type: can_talon_srx, can_id: 43, local: true}
+       - {name: elevator_follower3, type: can_talon_srx, can_id: 44, local: true}
        - {name: pdp, type: pdp}
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} 
@@ -70,12 +70,23 @@ match_state_listener_controller:
 
 elevator_master_percent_output_controller:
     type: talon_controllers/TalonPercentOutputController
-    joint: elevator_left_master
-    feedback_type: CTRE_MagEncoder_Absolute
+    joint: elevator_master
+    feedback_type: CTRE_MagEncoder_Relative
+    sensor_phase: True
+    invert_output: False
+    # TODO : bottom limit switch config
+    limit_switch_local_reverse_source: "FeedbackConnector"
+    limit_switch_local_reverse_normal: "NormallyOpen"
+
+    # TODO : figure out what value this should be
+    # Only need one direction, to
+    # prevent the elevator from running off the top
+    #softlimit_forward_threshold: 10.0
+    #softlimit_forward_enable: True
     
 elevator_master_velocity_controller:
     type: talon_controllers/TalonVelocityCloseLoopController    
-    joint: elevator_left_master
+    joint: elevator_master
     feedback_type: CTRE_MagEncoder_Absolute
     close_loop_values:
         - {p: 0.0, i: 0.000, d: 00.0, f: 0.00, i_zone: 000}
@@ -91,23 +102,23 @@ elevator_master_velocity_controller:
     voltage_compensation_enable: true
     dynamic_reconfigure: true
  
-elevator_left_follower_controller:
+elevator_follower1_controller:
     type: talon_controllers/TalonFollowerController
-    joint: elevator_left_follower 
+    joint: elevator_follower1 
     feedback_type: CTRE_MagEncoder_Absolute
     invert_output: False
-    follow_joint: elevator_left_master
+    follow_joint: elevator_master
 
-elevator_right_top_follower_controller:
+elevator_follower2_controller:
     type: talon_controllers/TalonFollowerController
-    joint: elevator_right_top 
+    joint: elevator_follower2 
     feedback_type: CTRE_MagEncoder_Absolute
     invert_output: False
-    follow_joint: elevator_left_master
+    follow_joint: elevator_master
 
-elevator_right_bottom_follower_controller:
+elevator_follower3_controller:
     type: talon_controllers/TalonFollowerController
-    joint: elevator_right_bottom
+    joint: elevator_follower3
     feedback_type: CTRE_MagEncoder_Absolute
     invert_output: False
-    follow_joint: elevator_left_master
+    follow_joint: elevator_master

@@ -790,7 +790,6 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			last_status_9_time = ros_time_now;
 		}
 
-#if 0
 		// SensorCollection - 160msec default
 		bool update_sensor_collection = false;
 		bool forward_limit_switch;
@@ -804,7 +803,6 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			update_sensor_collection = true;
 			last_sensor_collection_time = ros_time_now;
 		}
-#endif
 
 		// Actually update the TalonHWState shared between
 		// this thread and read()
@@ -830,8 +828,8 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 				state->setForwardSoftlimitHit(faults.ForwardSoftLimit);
 				state->setReverseSoftlimitHit(faults.ReverseSoftLimit);
 
-				state->setForwardLimitSwitch(faults.ForwardLimitSwitch);
-				state->setReverseLimitSwitch(faults.ReverseLimitSwitch);
+				//state->setForwardLimitSwitch(faults.ForwardLimitSwitch);
+				//state->setReverseLimitSwitch(faults.ReverseLimitSwitch);
 			}
 
 			if (update_status_2)
@@ -878,13 +876,11 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 				}
 			}
 
-#if 0
 			if (update_sensor_collection)
 			{
 				state->setForwardLimitSwitch(forward_limit_switch);
 				state->setReverseLimitSwitch(reverse_limit_switch);
 			}
-#endif
 		}
 		tracer.stop();
 		ROS_INFO_STREAM_THROTTLE(60, tracer.report());
