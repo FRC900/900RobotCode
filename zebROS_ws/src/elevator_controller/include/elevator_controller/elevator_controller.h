@@ -40,7 +40,7 @@ class ElevatorController : public controller_interface::MultiInterfaceController
         private:
             talon_controllers::TalonControllerInterface elevator_joint_; //interface for the talon joint
 
-            realtime_tools::RealtimeBuffer<int> position_command_; //this is the buffer for percent output commands to be published
+            realtime_tools::RealtimeBuffer<double> position_command_; //this is the buffer for percent output commands to be published
             ros::ServiceServer elevator_service_; //service for receiving commands
 
 			bool zeroed_;
