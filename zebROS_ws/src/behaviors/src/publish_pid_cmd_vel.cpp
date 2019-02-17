@@ -81,7 +81,7 @@ int main(int argc, char ** argv)
 		ROS_ERROR("Could not read name in publish_pid_cmd_vel");
 	}
 
-	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(name + "/pid/swerve_drive_controller/cmd_vel", 1);
+	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(name + "/swerve_drive_controller/cmd_vel", 1);
 
 	ros::Rate r(100);
 
