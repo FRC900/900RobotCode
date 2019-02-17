@@ -1,3 +1,4 @@
+uint8 step
 ---
 bool timed_out
 bool success
