@@ -164,6 +164,7 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 
 		m.motion_cruise_velocity.push_back(0);
 		m.motion_acceleration.push_back(0);
+		m.motion_s_curve_strength.push_back(0);
 		m.motion_profile_top_level_buffer_count.push_back(0);
 		m.motion_profile_top_level_buffer_full.push_back(false);
 		m.motion_profile_status_top_buffer_rem.push_back(0);
@@ -508,6 +509,7 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 
 				m.motion_cruise_velocity[i] = ts->getMotionCruiseVelocity();
 				m.motion_acceleration[i] = ts->getMotionAcceleration();
+				m.motion_s_curve_strength[i] = ts->getMotionSCurveStrength();
 				m.motion_profile_top_level_buffer_count[i] = ts->getMotionProfileTopLevelBufferCount();
 				m.motion_profile_top_level_buffer_full[i] = ts->getMotionProfileTopLevelBufferFull();
 				hardware_interface::MotionProfileStatus mp_status(ts->getMotionProfileStatus());
