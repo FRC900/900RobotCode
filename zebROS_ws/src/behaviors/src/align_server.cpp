@@ -46,7 +46,7 @@ class AlignAction {
 			enable_navx_pub_ = nh_.advertise<std_msgs::Bool>("navX_pid/pid_enable", 1);
 			enable_x_pub_ = nh_.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1);
 			enable_y_pub_ = nh_.advertise<std_msgs::Bool>("align_with_terabee/enable_y_pub", 1);
-			cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("server/swerve_drive_controller/cmd_vel", 1);
+			cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("align_server/swerve_drive_controller/cmd_vel", 1);
 
 			navx_error_sub_ = nh_.subscribe("navX_pid/pid_debug", 1, &AlignAction::navx_error_cb, this);
 			x_error_sub_ = nh_.subscribe("distance_pid/pid_debug", 1, &AlignAction::x_error_cb, this);
@@ -59,12 +59,13 @@ class AlignAction {
 
 		void navx_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-			orient_aligned_ = (msg.data[0] > orient_error_threshold);
+			orient_aligned_ = (fabs(msg.data[0]) > orient_error_threshold);
+			ROS_WARN("navX error" << fabs(msg.data[0]));
 		}
 
 		void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-			x_aligned_ = (msg.data[0] > x_error_threshold);
+			x_aligned_ = (fabs(msg.data[0]) > x_error_threshold);
 		}
 
 		void y_error_cb(const std_msgs::Bool &msg)
@@ -80,6 +81,7 @@ class AlignAction {
 			bool success = false;
 			bool preempted = false;
 			bool timed_out = false;
+			orient_aligned_ = false;
 
 			while(!orient_aligned_ && !preempted && !timed_out)
 			{
@@ -92,6 +94,7 @@ class AlignAction {
 
 				timed_out = (ros::Time::now().toSec() - start_time) > align_timeout;
 				preempted = as_.isPreemptRequested();
+				ROS_INFO_THROTTLE(.5, "Orienting");
 			}
 			geometry_msgs::Twist cmd_vel_msg;
 			cmd_vel_msg.linear.x = 0.0;

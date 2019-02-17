@@ -210,9 +210,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].buttonAButton)
 		{
 			ROS_INFO_THROTTLE(1, "buttonAButton");
-            std_msgs::Bool enable_pid;
-			enable_pid.data = true;
-            navX_pid.publish(enable_pid);
+            //std_msgs::Bool enable_pid;
+			//enable_pid.data = true;
+            //navX_pid.publish(enable_pid);
+
+			behaviors::AlignGoal goal;
+			goal.trigger = true;
+			align_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonARelease)
 		{

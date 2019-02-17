@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
   <!-- Create namesapce to avoid naming collisions if launching several drivers -->
   <group ns="multiflex_1">
