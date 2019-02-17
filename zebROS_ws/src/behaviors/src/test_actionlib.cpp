@@ -34,10 +34,10 @@ bool callElevator(int setpoint_idx)
 	if (finished_before_timeout)
 	{
 		actionlib::SimpleClientGoalState state = elevator_ac.getState();
-		ROS_INFO("Action finished: %s",state.toString().c_str());
+		ROS_INFO("Action finished with state: %s",state.toString().c_str());
 		if(elevator_ac.getResult()->timed_out)
 		{
-			ROS_INFO("Timed out!");
+			ROS_INFO("Elevator Server timed out!");
 		}
 		return true;
 	}
@@ -71,10 +71,10 @@ bool callIntakeCargo()
 	if (finished_before_timeout)
 	{
 		actionlib::SimpleClientGoalState state = intake_cargo_ac.getState();
-		ROS_INFO("Action finished: %s",state.toString().c_str());
+		ROS_INFO("Action finished with state: %s",state.toString().c_str());
 		if(intake_cargo_ac.getResult()->timed_out)
 		{
-			ROS_INFO("Timed out!");
+			ROS_INFO("Intake cargo server timed out!");
 		}
 		return true;
 	}
@@ -108,10 +108,10 @@ bool callOuttakeCargo(int setpoint_idx)
 	if (finished_before_timeout)
 	{
 		actionlib::SimpleClientGoalState state = outtake_cargo_ac.getState();
-		ROS_INFO("Action finished: %s",state.toString().c_str());
+		ROS_INFO("Action finished with state: %s",state.toString().c_str());
 		if(outtake_cargo_ac.getResult()->timed_out)
 		{
-			ROS_INFO("Timed out!");
+			ROS_INFO("Outtake cargo server timed out!");
 		}
 		return true;
 	}
@@ -144,10 +144,10 @@ bool callIntakeHatchPanel()
 	if (finished_before_timeout)
 	{
 		actionlib::SimpleClientGoalState state = intake_hatch_panel_ac.getState();
-		ROS_INFO("Action finished: %s",state.toString().c_str());
+		ROS_INFO("Action finished with state: %s",state.toString().c_str());
 		if(intake_hatch_panel_ac.getResult()->timed_out)
 		{
-			ROS_INFO("Timed out!");
+			ROS_INFO("Panel intake server timed out!");
 		}
 		return true;
 	}
@@ -181,10 +181,10 @@ bool callOuttakeHatchPanel(int setpoint_idx)
 	if (finished_before_timeout)
 	{
 		actionlib::SimpleClientGoalState state = outtake_hatch_panel_ac.getState();
-		ROS_INFO("Action finished: %s",state.toString().c_str());
+		ROS_INFO("Action finished with state: %s",state.toString().c_str());
 		if(outtake_hatch_panel_ac.getResult()->timed_out)
 		{
-			ROS_INFO("Timed out!");
+			ROS_INFO("Panel outtake server timed out!");
 		}
 		return true;
 	}
@@ -218,10 +218,10 @@ bool callClimber(int step)
 	if (finished_before_timeout)
 	{
 		actionlib::SimpleClientGoalState state = climber_ac.getState();
-		ROS_INFO("Action finished: %s",state.toString().c_str());
+		ROS_INFO("Action finished with state: %s",state.toString().c_str());
 		if(climber_ac.getResult()->timed_out)
 		{
-			ROS_INFO("Timed out!");
+			ROS_INFO("Climber server timed out!");
 		}
 		return true;
 	}

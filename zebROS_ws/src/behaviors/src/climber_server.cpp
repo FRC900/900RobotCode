@@ -428,16 +428,28 @@ int main(int argc, char** argv) {
 	ros::NodeHandle n_lift_params(n, "climber_server");
 
 	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
+	{
 		ROS_ERROR("Could not read wait_for_server_timeout in climber_server");
+		wait_for_server_timeout = 10;
+	}
 
 	if (!n_lift_params.getParam("deploy_timeout", elevator_deploy_timeout))
+	{
 		ROS_ERROR("Could not read elevator_deploy_timeout in climber_server");
+		elevator_deploy_timeout = 6;
+	}
 
 	if (!n_lift_params.getParam("climb_timeout", elevator_climb_timeout))
+	{
 		ROS_ERROR("Could not read elevator_climb_timeout in climber_server");
+		elevator_climb_timeout = 20;
+	}
 
 	if (!n_lift_params.getParam("climb_low_timeout", elevator_climb_low_timeout))
+	{
 		ROS_ERROR("Could not read climb_low_timeout in climber_server");
+		elevator_climb_low_timeout = 6;
+	}
 
 	ros::spin();
 	return 0;
