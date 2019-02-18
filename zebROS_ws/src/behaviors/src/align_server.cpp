@@ -53,19 +53,19 @@ class AlignAction {
 			y_error_sub_ = nh_.subscribe("align_with_terabee/y_aligned", 1, &AlignAction::y_error_cb, this);
 		}
 
-		~AlignAction(void) 
+		~AlignAction(void)
 		{
 		}
 
 		void navx_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-			orient_aligned_ = (fabs(msg.data[0]) > orient_error_threshold);
+			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold);
 			ROS_WARN("navX error" << fabs(msg.data[0]));
 		}
 
 		void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-			x_aligned_ = (fabs(msg.data[0]) > x_error_threshold);
+			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold);
 		}
 
 		void y_error_cb(const std_msgs::Bool &msg)
@@ -89,7 +89,7 @@ class AlignAction {
 				r.sleep();
 
 				std_msgs::Bool orient_msg;
-				orient_msg.data = !orient_aligned_;
+				orient_msg.data = !orient_aligned_; //Publish true to the navX pid node until orient is aligned
 				enable_navx_pub_.publish(orient_msg);
 
 				timed_out = (ros::Time::now().toSec() - start_time) > align_timeout;
@@ -114,7 +114,7 @@ class AlignAction {
 				r.sleep();
 
 				std_msgs::Bool x_msg;
-				x_msg.data = !x_aligned_;
+				x_msg.data = !x_aligned_; //TODO maybe make this use aligned to correct throughout the entire action and doesn't stop if it aligns first
 				enable_x_pub_.publish(x_msg);
 
 				std_msgs::Bool y_msg;
