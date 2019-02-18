@@ -61,6 +61,7 @@ swerve_drive_controller:
         current_limit_continuous_amps: 20
         current_limit_enable: True
         dynamic_reconfigure: True
+        neutral_mode: "Brake"
     speed_joint_fr:
         joint: fr_drive #fix pid
         close_loop_values:
@@ -73,6 +74,7 @@ swerve_drive_controller:
         current_limit_continuous_amps: 20
         current_limit_enable: True
         dynamic_reconfigure: True
+        neutral_mode: "Brake"
     speed_joint_bl:
         joint: bl_drive #fix pid
         close_loop_values: 
@@ -85,6 +87,7 @@ swerve_drive_controller:
         current_limit_continuous_amps: 20
         current_limit_enable: True
         dynamic_reconfigure: True
+        neutral_mode: "Brake"
     speed_joint_br:
         joint: br_drive #fix pid
         close_loop_values:
@@ -97,6 +100,7 @@ swerve_drive_controller:
         current_limit_continuous_amps: 20
         current_limit_enable: True
         dynamic_reconfigure: True
+        neutral_mode: "Brake"
     steering_joint_fl:
         joint: fl_angle
         feedback_type: CTRE_MagEncoder_Absolute
