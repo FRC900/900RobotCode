@@ -332,9 +332,9 @@ void TeleopJointsKeyboard::keyboardLoop()
 					break;
 
 				case KEYCODE_r:
+					ROS_INFO_STREAM("Resetting buttons to false!");
 					for(size_t i = 0; i <= cmd_.buttons.size(); i++)
 					{
-						ROS_INFO_STREAM("Resetting buttons to false!");
 						cmd_.buttons[i] = false;
 					}
 					break;

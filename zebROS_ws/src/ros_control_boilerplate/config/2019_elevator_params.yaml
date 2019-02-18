@@ -3,7 +3,8 @@ elevator_controller:
 
     elevator_joint: [ 'elevator_master', 'elevator_follower1', 'elevator_follower2', 'elevator_follower3' ]
 
-    arb_feed_forward_up: 0.0
+    arb_feed_forward_up: 0.041
+    arb_feed_forward_down: 0.026
 
     # How quickly the elevator moves down when zeroing itself
     elevator_zeroing_percent_output: -0.1 # TODO : tune me
@@ -20,25 +21,25 @@ elevator_controller:
         type: talon_controllers/TalonControllerInterface 
         joint: elevator_master
         close_loop_values:
-            - {p: 1, i: 0.0, d: 0, f: 1.5, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: 0.0, i: 0.0, d: 0, f: 0.18, i_zone: 0, closed_loop_peak_output: 1.0}
 
         # TODO : tuning
-        # motion_cruise_velocity: 32
-        # motion_acceleration: 150
+        motion_cruise_velocity: 1.2
+        motion_acceleration: 6
               
-        sensor_phase: True
+        sensor_phase: True 
         invert_output: False
 
-        feedback_type: CTRE_MagEncoder_Absolute
+        feedback_type: CTRE_MagEncoder_Relative
 
         # TODO : bottom limit switch config
-        # limit_switch_local_forward_source: FeebackConnector
-        # limit_switch_local_forward_normal: NormallyOpen
+        limit_switch_local_reverse_source: "FeedbackConnector"
+        limit_switch_local_reverse_normal: "NormallyOpen"
 
         # TODO : figure out what value this should be
         # Only need one direction, to
         # prevent the elevator from running off the top
-        softlimit_forward_threshold: 10.0
+        softlimit_forward_threshold: 1.66755
         softlimit_forward_enable: True
 
         voltage_compensation_enable: True
@@ -46,13 +47,18 @@ elevator_controller:
 
         # TODO : used to convert encoder position from radians to meters
         # .0573 ... divide or multiply?
-        conversion_factor: 1
+        conversion_factor: 0.02959
+
+        dynamic_reconfigure: true
 
     elevator_follower1: 
         joint: elevator_follower1
+        invert_output: False
 
     elevator_follower2: 
         joint: elevator_follower2
+        invert_output: True
 
     elevator_follower3: 
         joint: elevator_follower3
+        invert_output: True

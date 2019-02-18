@@ -28,6 +28,15 @@ double max_rot;
 double joystick_pow;
 double rotation_pow;
 
+int elevator_cur_setpoint_idx;
+int climber_cur_step;
+
+bool previously_intook_cargo = false; //previous command intook if true, next press will be false
+bool previously_intook_panel = false;
+
+const int climber_num_steps = 4;
+const int elevator_num_setpoints = 4;
+
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 
@@ -59,15 +68,15 @@ std::atomic<double> navX_angle;
 
 struct ElevatorGoal
 {
-    ElevatorGoal():
-        index_(0)
-    {
-    }
-    ElevatorGoal(double index):
-        index_(index)
-    {
-    }
-    double index_;
+	ElevatorGoal():
+		index_(0)
+	{
+	}
+	ElevatorGoal(double index):
+		index_(index)
+	{
+	}
+	double index_;
 
 };
 
@@ -88,29 +97,29 @@ void dead_zone_check(double &val1, double &val2)
 // want it to be the fast part of the code, so for now
 // pretend that is the realtime side of the code
 /*realtime_tools::RealtimeBuffer<ElevatorPos> elevatorPos;
-realtime_tools::RealtimeBuffer<CubeState> cubeState;
-realtime_tools::RealtimeBuffer<ElevatorPos> elevatorCmd;*/
+  realtime_tools::RealtimeBuffer<CubeState> cubeState;
+  realtime_tools::RealtimeBuffer<ElevatorPos> elevatorCmd;*/
 void navXCallback(const sensor_msgs::Imu &navXState)
 {
-    const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
-    double roll;
-    double pitch;
-    double yaw;
-    tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
+	const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
+	double roll;
+	double pitch;
+	double yaw;
+	tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
 
-    if (yaw == yaw) // ignore NaN results
-        navX_angle.store(yaw, std::memory_order_relaxed);
+	if (yaw == yaw) // ignore NaN results
+		navX_angle.store(yaw, std::memory_order_relaxed);
 }
 
 void preemptActionlibServers()
 {
-	intake_cargo_ac->cancelAllGoals();
-	outtake_cargo_ac->cancelAllGoals();
-	intake_hatch_panel_ac->cancelAllGoals();
-	outtake_hatch_panel_ac->cancelAllGoals();
-	elevator_ac->cancelAllGoals();
-	climber_ac->cancelAllGoals();
-	align_ac->cancelAllGoals();
+	intake_cargo_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	outtake_cargo_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	intake_hatch_panel_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	outtake_hatch_panel_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	elevator_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	climber_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	align_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 }
 
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
@@ -202,460 +211,443 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonA
 		if(joystick_states_array[0].buttonAPress)
 		{
-			ROS_INFO_STREAM("Joystick1: buttonAPress - Cargo Intake");
+			ROS_WARN("Joystick1: buttonAPress - Auto Align");
 			preemptActionlibServers();
-			behaviors::IntakeGoal goal;
-			intake_cargo_ac->sendGoal(goal);
+			behaviors::AlignGoal goal;
+			goal.trigger = false;
+			align_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonAButton)
 		{
 			ROS_INFO_THROTTLE(1, "buttonAButton");
-            std_msgs::Bool enable_pid;
-			enable_pid.data = true;
-            navX_pid.publish(enable_pid);
 		}
 		if(joystick_states_array[0].buttonARelease)
 		{
 			ROS_INFO_STREAM("Joystick1: buttonARelease");
-            std_msgs::Bool enable_pid;
-			enable_pid.data = false;
-            navX_pid.publish(enable_pid);
-
-			geometry_msgs::Twist vel;
-			vel.linear.x = 0;
-			vel.linear.y = 0;
-			vel.linear.z = 0;
-
-			vel.angular.x = 0;
-			vel.angular.y = 0;
-			vel.angular.z = 0;
-
-			JoystickRobotVel.publish(vel);
 		}
+
+		/*
 		//Joystick1: buttonB
 		if(joystick_states_array[0].buttonBPress)
 		{
-			ROS_INFO_STREAM("Joystick1: buttonBPress - Cargo Outtake");
-			preemptActionlibServers();
-			behaviors::PlaceGoal goal;
-			goal.setpoint_index = CARGO_SHIP;
-			outtake_cargo_ac->sendGoal(goal);
+		ROS_INFO_STREAM("Joystick1: buttonBPress - Cargo Outtake");
+		preemptActionlibServers();
+		behaviors::PlaceGoal goal;
+		goal.setpoint_index = CARGO_SHIP;
+		outtake_cargo_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonBButton)
 		{
-			ROS_INFO_THROTTLE(1, "buttonBButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+		ROS_INFO_THROTTLE(1, "buttonBButton");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
 		}
 		if(joystick_states_array[0].buttonBRelease)
 		{
-			ROS_INFO_STREAM("Joystick1: buttonBRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
+		ROS_INFO_STREAM("Joystick1: buttonBRelease");
+		std_srvs::SetBool msg;
+		msg.request.data = false;
+		run_align.call(msg);
 		}
+		*/
+
 		//Joystick1: buttonX
 		if(joystick_states_array[0].buttonXPress)
 		{
-			ROS_INFO_STREAM("Joystick1: buttonXPress - Panel Intake");
-			preemptActionlibServers();
-			behaviors::IntakeGoal goal;
-			intake_hatch_panel_ac->sendGoal(goal);
+
+			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
+			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % elevator_num_setpoints;
+			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
 		}
 		if(joystick_states_array[0].buttonXButton)
 		{
 			ROS_INFO_THROTTLE(1, "buttonXButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].buttonXRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: buttonXRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
 		}
 		//Joystick1: buttonY
-		if(joystick_states_array[0].buttonYPress)
-		{
-			ROS_INFO_STREAM("Joystick1: buttonYPress - Panel Outtake");
-			preemptActionlibServers();
-			behaviors::PlaceGoal goal;
-			goal.setpoint_index = CARGO_SHIP;
-			outtake_hatch_panel_ac->sendGoal(goal);
-		}
-		if(joystick_states_array[0].buttonYButton)
-		{
-			ROS_INFO_THROTTLE(1, "buttonYButton");
-			std_msgs::Bool msg;
-			msg.data = true;
-			align_with_terabee_pub.publish(msg);
-		}
-		else
-		{
-			std_msgs::Bool msg;
-			msg.data = false;
-			align_with_terabee_pub.publish(msg);
-		}
-		if(joystick_states_array[0].buttonYRelease)
-		{
-			ROS_INFO_STREAM("Joystick1: buttonYRelease");
-		}
+		/*if(joystick_states_array[0].buttonYPress)
+		  {
+		  ROS_INFO_STREAM("Joystick1: buttonYPress - Panel Outtake");
+		  preemptActionlibServers();
+		  behaviors::PlaceGoal goal;
+		  goal.setpoint_index = CARGO_SHIP;
+		  outtake_hatch_panel_ac->sendGoal(goal);
+		  }
+		  if(joystick_states_array[0].buttonYButton)
+		  {
+		  ROS_INFO_THROTTLE(1, "buttonYButton");
+		  std_msgs::Bool msg;
+		  msg.data = true;
+		  align_with_terabee_pub.publish(msg);
+		  }
+		  else
+		  {
+		  std_msgs::Bool msg;
+		  msg.data = false;
+		  align_with_terabee_pub.publish(msg);
+		  }
+		  if(joystick_states_array[0].buttonYRelease)
+		  {
+		  ROS_INFO_STREAM("Joystick1: buttonYRelease");
+		  }
+		  */
+
 		//Joystick1: bumperLeft
 		if(joystick_states_array[0].bumperLeftPress)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
+			preemptActionlibServers();
+			if(previously_intook_cargo)
+			{
+				ROS_INFO_STREAM("Joystick1: Place Cargo");
+				behaviors::PlaceGoal goal;
+				goal.setpoint_index = elevator_cur_setpoint_idx;
+				outtake_cargo_ac->sendGoal(goal);
+				elevator_cur_setpoint_idx = 0;
+				ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+			}
+			else
+			{
+				ROS_INFO_STREAM("Joystick1: Intake Cargo");
+				behaviors::IntakeGoal goal;
+				intake_cargo_ac->sendGoal(goal);
+			}
+			previously_intook_cargo = !previously_intook_cargo;
 		}
 		if(joystick_states_array[0].bumperLeftButton)
 		{
 			ROS_INFO_THROTTLE(1, "bumperLeftButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].bumperLeftRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
 		}
 		//Joystick1: bumperRight
 		if(joystick_states_array[0].bumperRightPress)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperRightPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			preemptActionlibServers();
+			if(previously_intook_panel)
+			{
+				ROS_INFO_STREAM("Joystick1: Place Panel");
+				behaviors::PlaceGoal goal;
+				goal.setpoint_index = elevator_cur_setpoint_idx;
+				outtake_hatch_panel_ac->sendGoal(goal);
+				elevator_cur_setpoint_idx = 0;
+				ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+			}
+			else
+			{
+				ROS_INFO_STREAM("Joystick1: Intake Panel");
+				behaviors::IntakeGoal goal;
+				intake_hatch_panel_ac->sendGoal(goal);
+
+			}
+			previously_intook_panel = !previously_intook_panel;
 		}
 		if(joystick_states_array[0].bumperRightButton)
 		{
 			ROS_INFO_THROTTLE(1, "bumperRightButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].bumperRightRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperRightRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
 		}
 		//Joystick1: directionLeft
 		if(joystick_states_array[0].directionLeftPress)
 		{
-			ROS_INFO_STREAM("Joystick1: directionLeftPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			ROS_WARN("Calling elevator server; move to setpoint %d", elevator_cur_setpoint_idx);
+			preemptActionlibServers();
+			behaviors::ElevatorGoal goal;
+			goal.setpoint_index = elevator_cur_setpoint_idx;
+			elevator_ac->sendGoal(goal);
+			elevator_cur_setpoint_idx = 0;
+			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
 		}
 		if(joystick_states_array[0].directionLeftButton)
 		{
 			ROS_INFO_THROTTLE(1, "directionLeftButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].directionLeftRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: directionLeftRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
 		}
 		//Joystick1: directionRight
 		if(joystick_states_array[0].directionRightPress)
 		{
-			ROS_INFO_STREAM("Joystick1: directionRightPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			ROS_WARN("Preempting All Servers");
+			preemptActionlibServers();
 		}
 		if(joystick_states_array[0].directionRightButton)
 		{
 			ROS_INFO_THROTTLE(1, "directionRightButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].directionRightRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: directionRightRelease");
-			behaviors::AlignGoal goal;
-			goal.trigger = true;
-			align_ac->sendGoal(goal);
 		}
 		//Joystick1: directionUp
 		if(joystick_states_array[0].directionUpPress)
 		{
-			ROS_INFO_STREAM("Joystick1: directionUpPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			ROS_INFO_STREAM("Joystick1: Calling Climber Server");
+			preemptActionlibServers();
+			ROS_WARN("Climber current step = %d", climber_cur_step);
+			behaviors::ClimbGoal goal;
+			goal.step = climber_cur_step;
+			climber_ac->sendGoal(goal);
+			climber_cur_step = (climber_cur_step + 1) % climber_num_steps;
 		}
 		if(joystick_states_array[0].directionUpButton)
 		{
 			ROS_INFO_THROTTLE(1, "directionUpButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].directionUpRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: directionUpRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
 		}
 		//Joystick1: directionDown
 		if(joystick_states_array[0].directionDownPress)
 		{
-			ROS_INFO_STREAM("Joystick1: directionDownPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+			ROS_WARN("Joystick1: Preempting Climber Server");
+			climber_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+			climber_cur_step = 0;
 		}
 		if(joystick_states_array[0].directionDownButton)
 		{
 			ROS_INFO_THROTTLE(1, "directionDownButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
 		}
 		if(joystick_states_array[0].directionDownRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: directionDownRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
 		}
 	}
 
 	else if(i == 2)
 	{
 		//Joystick2: buttonA
-		if(joystick_states_array[1].buttonAPress)
-		{
-			ROS_INFO_STREAM("Joystick2: buttonAPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].buttonAButton)
-		{
-			ROS_INFO_THROTTLE(1, "buttonAButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].buttonARelease)
-		{
-			ROS_INFO_STREAM("Joystick2: buttonARelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
-		}
+		/*if(joystick_states_array[1].buttonAPress)
+		  {
+		  ROS_INFO_STREAM("Joystick2: buttonAPress");
+		  std_srvs::SetBool msg;
+		  msg.request.data = true;
+		  run_align.call(msg);
+		  }
+		  if(joystick_states_array[1].buttonAButton)
+		  {
+		  ROS_INFO_THROTTLE(1, "buttonAButton");
+		  std_srvs::SetBool msg;
+		  msg.request.data = true;
+		  run_align.call(msg);
+		  }
+		  if(joystick_states_array[1].buttonARelease)
+		  {
+		  ROS_INFO_STREAM("Joystick2: buttonARelease");
+		  std_srvs::SetBool msg;
+		  msg.request.data = false;
+		  run_align.call(msg);
+		  }
 		//Joystick2: buttonB
 		if(joystick_states_array[1].buttonBPress)
 		{
-			ROS_INFO_STREAM("Joystick2: buttonBPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+		ROS_INFO_STREAM("Joystick2: buttonBPress");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
 		}
 		if(joystick_states_array[1].buttonBButton)
 		{
-			ROS_INFO_THROTTLE(1, "buttonBButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+		ROS_INFO_THROTTLE(1, "buttonBButton");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
 		}
 		if(joystick_states_array[1].buttonBRelease)
 		{
-			ROS_INFO_STREAM("Joystick2: buttonBRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
+		ROS_INFO_STREAM("Joystick2: buttonBRelease");
+		std_srvs::SetBool msg;
+		msg.request.data = false;
+		run_align.call(msg);
 		}
 		//Joystick2: buttonX
 		if(joystick_states_array[1].buttonXPress)
 		{
-			ROS_INFO_STREAM("Joystick2: buttonXPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+		ROS_INFO_STREAM("Joystick2: buttonXPress");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
 		}
 		if(joystick_states_array[1].buttonXButton)
 		{
-			ROS_INFO_THROTTLE(1, "buttonXButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
+		ROS_INFO_THROTTLE(1, "buttonXButton");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
 		}
 		if(joystick_states_array[1].buttonXRelease)
 		{
-			ROS_INFO_STREAM("Joystick2: buttonXRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
+		ROS_INFO_STREAM("Joystick2: buttonXRelease");
+		std_srvs::SetBool msg;
+		msg.request.data = false;
+		run_align.call(msg);
 		}
 		//Joystick2: buttonY
 		if(joystick_states_array[1].buttonYPress)
 		{
-			ROS_INFO_STREAM("Joystick2: buttonYPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].buttonYButton)
-		{
-			ROS_INFO_THROTTLE(1, "buttonYButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].buttonYRelease)
-		{
-			ROS_INFO_STREAM("Joystick2: buttonYRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
-		}
-		//Joystick2: bumperLeft
-		if(joystick_states_array[1].bumperLeftPress)
-		{
-			ROS_INFO_STREAM("Joystick2: bumperLeftPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].bumperLeftButton)
-		{
-			ROS_INFO_THROTTLE(1, "bumperLeftButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].bumperLeftRelease)
-		{
-			ROS_INFO_STREAM("Joystick2: bumperLeftRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
-		}
-		//Joystick2: bumperRight
-		if(joystick_states_array[1].bumperRightPress)
-		{
-			ROS_INFO_STREAM("Joystick2: bumperRightPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].bumperRightButton)
-		{
-			ROS_INFO_THROTTLE(1, "bumperRightButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].bumperRightRelease)
-		{
-			ROS_INFO_STREAM("Joystick2: bumperRightRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
-		}
-		//Joystick2: directionLeft
-		if(joystick_states_array[1].directionLeftPress)
-		{
-			ROS_INFO_STREAM("Joystick2: directionLeftPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].directionLeftButton)
-		{
-			ROS_INFO_THROTTLE(1, "directionLeftButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].directionLeftRelease)
-		{
-			ROS_INFO_STREAM("Joystick2: directionLeftRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
-		}
-		//Joystick2: directionRight
-		if(joystick_states_array[1].directionRightPress)
-		{
-			ROS_INFO_STREAM("Joystick2: directionRightPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].directionRightButton)
-		{
-			ROS_INFO_THROTTLE(1, "directionRightButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].directionRightRelease)
-		{
-			ROS_INFO_STREAM("Joystick2: directionRightRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
-		}
-		//Joystick2: directionUp
-		if(joystick_states_array[1].directionUpPress)
-		{
-			ROS_INFO_STREAM("Joystick2: directionUpPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].directionUpButton)
-		{
-			ROS_INFO_THROTTLE(1, "directionUpButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].directionUpRelease)
-		{
-			ROS_INFO_STREAM("Joystick2: directionUpRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
-		}
-		//Joystick2: directionDown
-		if(joystick_states_array[1].directionDownPress)
-		{
-			ROS_INFO_STREAM("Joystick2: directionDownPress");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].directionDownButton)
-		{
-			ROS_INFO_THROTTLE(1, "directionDownButton");
-			std_srvs::SetBool msg;
-			msg.request.data = true;
-			run_align.call(msg);
-		}
-		if(joystick_states_array[1].directionDownRelease)
-		{
-			ROS_INFO_STREAM("Joystick2: directionDownRelease");
-			std_srvs::SetBool msg;
-			msg.request.data = false;
-			run_align.call(msg);
-		}
+		ROS_INFO_STREAM("Joystick2: buttonYPress");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].buttonYButton)
+	{
+		ROS_INFO_THROTTLE(1, "buttonYButton");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].buttonYRelease)
+	{
+		ROS_INFO_STREAM("Joystick2: buttonYRelease");
+		std_srvs::SetBool msg;
+		msg.request.data = false;
+		run_align.call(msg);
+	}
+	//Joystick2: bumperLeft
+	if(joystick_states_array[1].bumperLeftPress)
+	{
+		ROS_INFO_STREAM("Joystick2: bumperLeftPress");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].bumperLeftButton)
+	{
+		ROS_INFO_THROTTLE(1, "bumperLeftButton");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].bumperLeftRelease)
+	{
+		ROS_INFO_STREAM("Joystick2: bumperLeftRelease");
+		std_srvs::SetBool msg;
+		msg.request.data = false;
+		run_align.call(msg);
+	}
+	//Joystick2: bumperRight
+	if(joystick_states_array[1].bumperRightPress)
+	{
+		ROS_INFO_STREAM("Joystick2: bumperRightPress");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].bumperRightButton)
+	{
+		ROS_INFO_THROTTLE(1, "bumperRightButton");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].bumperRightRelease)
+	{
+		ROS_INFO_STREAM("Joystick2: bumperRightRelease");
+		std_srvs::SetBool msg;
+		msg.request.data = false;
+		run_align.call(msg);
+	}
+	//Joystick2: directionLeft
+	if(joystick_states_array[1].directionLeftPress)
+	{
+		ROS_INFO_STREAM("Joystick2: directionLeftPress");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].directionLeftButton)
+	{
+		ROS_INFO_THROTTLE(1, "directionLeftButton");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].directionLeftRelease)
+	{
+		ROS_INFO_STREAM("Joystick2: directionLeftRelease");
+		std_srvs::SetBool msg;
+		msg.request.data = false;
+		run_align.call(msg);
+	}
+	//Joystick2: directionRight
+	if(joystick_states_array[1].directionRightPress)
+	{
+		ROS_INFO_STREAM("Joystick2: directionRightPress");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].directionRightButton)
+	{
+		ROS_INFO_THROTTLE(1, "directionRightButton");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].directionRightRelease)
+	{
+		ROS_INFO_STREAM("Joystick2: directionRightRelease");
+		std_srvs::SetBool msg;
+		msg.request.data = false;
+		run_align.call(msg);
+	}
+	//Joystick2: directionUp
+	if(joystick_states_array[1].directionUpPress)
+	{
+		ROS_INFO_STREAM("Joystick2: directionUpPress");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].directionUpButton)
+	{
+		ROS_INFO_THROTTLE(1, "directionUpButton");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].directionUpRelease)
+	{
+		ROS_INFO_STREAM("Joystick2: directionUpRelease");
+		std_srvs::SetBool msg;
+		msg.request.data = false;
+		run_align.call(msg);
+	}
+	//Joystick2: directionDown
+	if(joystick_states_array[1].directionDownPress)
+	{
+		ROS_INFO_STREAM("Joystick2: directionDownPress");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].directionDownButton)
+	{
+		ROS_INFO_THROTTLE(1, "directionDownButton");
+		std_srvs::SetBool msg;
+		msg.request.data = true;
+		run_align.call(msg);
+	}
+	if(joystick_states_array[1].directionDownRelease)
+	{
+		ROS_INFO_STREAM("Joystick2: directionDownRelease");
+		std_srvs::SetBool msg;
+		msg.request.data = false;
+		run_align.call(msg);
+	}*/
 	}
 
 }
@@ -665,6 +657,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "Joystick_controller");
 	ros::NodeHandle n;
 	ros::NodeHandle n_params(n, "teleop_params");
+	ros::NodeHandle n_swerve_params(n, "/frcrobot_jetson/swerve_drive_controller");
 
 	int num_joysticks = 1;
 	if(!n_params.getParam("num_joysticks", num_joysticks))
@@ -679,14 +672,6 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read slow_mode in teleop_joystick_comp");
 	}
-	if(!n_params.getParam("max_speed", max_speed))
-	{
-		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
-	}
-	if(!n_params.getParam("max_rot", max_rot))
-	{
-		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
-	}
 	if(!n_params.getParam("joystick_pow", joystick_pow))
 	{
 		ROS_ERROR("Could not read joystick_pow in teleop_joystick_comp");
@@ -694,6 +679,14 @@ int main(int argc, char **argv)
 	if(!n_params.getParam("rotation_pow", rotation_pow))
 	{
 		ROS_ERROR("Could not read rotation_pow in teleop_joystick_comp");
+	}
+	if(!n_swerve_params.getParam("max_speed", max_speed))
+	{
+		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
+	}
+	if(!n_swerve_params.getParam("max_rotational_vel", max_rot))
+	{
+		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
 	}
 
 	std::vector <ros::Subscriber> subscriber_array;
@@ -716,7 +709,7 @@ int main(int argc, char **argv)
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
-    navX_pid = n.advertise<std_msgs::Bool>("/navX_snap_to_goal_pid/pid_enable", 1);
+	navX_pid = n.advertise<std_msgs::Bool>("/navX_snap_to_goal_pid/pid_enable", 1);
 	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
 	{
 		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");

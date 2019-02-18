@@ -1,7 +1,7 @@
 topics:
 -
-  name    : pid_orient
-  topic   : /navX_snap_to_goal_pid/pid/swerve_drive_controller/cmd_vel
+  name    : pid_navX
+  topic   : /align_server/navX/pid/swerve_drive_controller/cmd_vel
   timeout : 0.2
   priority: 100
 -
@@ -15,8 +15,8 @@ topics:
   timeout : 0.2
   priority: 150
 -
-  name    : pid_align
-  topic   : /align_server/pid/swerve_drive_controller/cmd_vel
+  name    : pid_terabee
+  topic   : /align_server/terabee/pid/swerve_drive_controller/cmd_vel
   timeout : 0.2
   priority: 100
 -

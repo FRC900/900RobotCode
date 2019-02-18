@@ -179,15 +179,6 @@ FRCRobotHWInterface::~FRCRobotHWInterface()
 std::vector<ros_control_boilerplate::DummyJoint> FRCRobotHWInterface::getDummyJoints(void)
 {
 	std::vector<ros_control_boilerplate::DummyJoint> dummy_joints;
-	dummy_joints.push_back(Dumify(cube_state_));
-	dummy_joints.push_back(Dumify(auto_state_0_));
-	dummy_joints.push_back(Dumify(auto_state_1_));
-	dummy_joints.push_back(Dumify(auto_state_2_));
-	dummy_joints.push_back(Dumify(auto_state_3_));
-	dummy_joints.push_back(Dumify(stop_arm_));
-	dummy_joints.push_back(Dumify(override_arm_limits_));
-	dummy_joints.push_back(Dumify(disable_compressor_));
-	dummy_joints.push_back(Dumify(starting_config_));
 	dummy_joints.push_back(Dumify(navX_zero_));
 	return dummy_joints;
 }
@@ -204,14 +195,6 @@ void FRCRobotHWInterface::init(void)
 		// a CAN Talon object to avoid NIFPGA: Resource not initialized
 		// errors? See https://www.chiefdelphi.com/forums/showpost.php?p=1640943&postcount=3
 		robot_.reset(new ROSIterativeRobot());
-		realtime_pub_nt_.reset(new realtime_tools::RealtimePublisher<ros_control_boilerplate::AutoMode>(nh_, "autonomous_mode", 1));
-		realtime_pub_nt_->msg_.mode.resize(4);
-		realtime_pub_nt_->msg_.delays.resize(4);
-		realtime_pub_error_.reset(new realtime_tools::RealtimePublisher<std_msgs::Float64>(nh_, "error_times", 4));
-		last_nt_publish_time_ = ros::Time::now();
-
-		error_msg_last_received_ = false;
-		error_pub_start_time_ = last_nt_publish_time_.toSec();
 	}
 	else
 	{
@@ -546,8 +529,6 @@ void FRCRobotHWInterface::init(void)
 		}
 	}
 
-	navX_angle_ = 0;
-	pressure_ = 0;
 	navX_zero_ = -10000;
 
 	ROS_INFO_NAMED("frcrobot_hw_interface", "FRCRobotHWInterface Ready.");
@@ -809,7 +790,6 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			last_status_9_time = ros_time_now;
 		}
 
-#if 0
 		// SensorCollection - 160msec default
 		bool update_sensor_collection = false;
 		bool forward_limit_switch;
@@ -823,7 +803,6 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			update_sensor_collection = true;
 			last_sensor_collection_time = ros_time_now;
 		}
-#endif
 
 		// Actually update the TalonHWState shared between
 		// this thread and read()
@@ -849,8 +828,8 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 				state->setForwardSoftlimitHit(faults.ForwardSoftLimit);
 				state->setReverseSoftlimitHit(faults.ReverseSoftLimit);
 
-				state->setForwardLimitSwitch(faults.ForwardLimitSwitch);
-				state->setReverseLimitSwitch(faults.ReverseLimitSwitch);
+				//state->setForwardLimitSwitch(faults.ForwardLimitSwitch);
+				//state->setReverseLimitSwitch(faults.ReverseLimitSwitch);
 			}
 
 			if (update_status_2)
@@ -897,13 +876,11 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 				}
 			}
 
-#if 0
 			if (update_sensor_collection)
 			{
 				state->setForwardLimitSwitch(forward_limit_switch);
 				state->setReverseLimitSwitch(reverse_limit_switch);
 			}
-#endif
 		}
 		tracer.stop();
 		ROS_INFO_STREAM_THROTTLE(60, tracer.report());
@@ -1042,84 +1019,9 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		read_tracer_.start_unique("OneIteration");
 		robot_->OneIteration();
 
-		read_tracer_.start_unique("network tables");
-		const ros::Time time_now_t = ros::Time::now();
-		const double nt_publish_rate = 10;
-
-		// Throttle NT updates since these are mainly for human
-		// UI and don't have to run at crazy speeds
-		if ((last_nt_publish_time_ + ros::Duration(1.0 / nt_publish_rate)) < time_now_t)
-		{
-			// SmartDashboard works!
-			frc::SmartDashboard::PutNumber("navX_angle", navX_angle_);
-			frc::SmartDashboard::PutNumber("Pressure", pressure_);
-			frc::SmartDashboard::PutBoolean("cube_state", cube_state_ != 0);
-			frc::SmartDashboard::PutBoolean("death_0", auto_state_0_ != 0);
-			frc::SmartDashboard::PutBoolean("death_1", auto_state_1_ != 0);
-			frc::SmartDashboard::PutBoolean("death_2", auto_state_2_ != 0);
-			frc::SmartDashboard::PutBoolean("death_3", auto_state_3_ != 0);
-
-			std::shared_ptr<nt::NetworkTable> driveTable = NetworkTable::GetTable("SmartDashboard");  //Access Smart Dashboard Variables
-			if (driveTable && realtime_pub_nt_->trylock())
-			{
-				auto &m = realtime_pub_nt_->msg_;
-				m.mode[0] = (int)driveTable->GetNumber("auto_mode_0", 0);
-				m.mode[1] = (int)driveTable->GetNumber("auto_mode_1", 0);
-				m.mode[2] = (int)driveTable->GetNumber("auto_mode_2", 0);
-				m.mode[3] = (int)driveTable->GetNumber("auto_mode_3", 0);
-				m.delays[0] = (int)driveTable->GetNumber("delay_0", 0);
-				m.delays[1] = (int)driveTable->GetNumber("delay_1", 0);
-				m.delays[2] = (int)driveTable->GetNumber("delay_2", 0);
-				m.delays[3] = (int)driveTable->GetNumber("delay_3", 0);
-				m.position = (int)driveTable->GetNumber("robot_start_position", 0);
-
-				frc::SmartDashboard::PutNumber("auto_mode_0_ret", m.mode[0]);
-				frc::SmartDashboard::PutNumber("auto_mode_1_ret", m.mode[1]);
-				frc::SmartDashboard::PutNumber("auto_mode_2_ret", m.mode[2]);
-				frc::SmartDashboard::PutNumber("auto_mode_3_ret", m.mode[3]);
-				frc::SmartDashboard::PutNumber("delay_0_ret", m.delays[0]);
-				frc::SmartDashboard::PutNumber("delay_1_ret", m.delays[1]);
-				frc::SmartDashboard::PutNumber("delay_2_ret", m.delays[2]);
-				frc::SmartDashboard::PutNumber("delay_3_ret", m.delays[3]);
-				frc::SmartDashboard::PutNumber("robot_start_position_ret", m.position);
-
-				m.header.stamp = time_now_t;
-				realtime_pub_nt_->unlockAndPublish();
-			}
-			if (driveTable)
-			{
-				disable_compressor_ = driveTable->GetBoolean("disable_reg", 0);
-				frc::SmartDashboard::PutBoolean("disable_reg_ret", disable_compressor_ != 0);
-				starting_config_ = driveTable->GetBoolean("starting_config", 0);
-
-				override_arm_limits_ = driveTable->GetBoolean("disable_arm_limits", 0);
-				frc::SmartDashboard::PutBoolean("disable_arm_limits_ret", override_arm_limits_ != 0);
-
-				stop_arm_ = driveTable->GetBoolean("stop_arm", 0);
-
-				if(driveTable->GetBoolean("zero_navX", 0) != 0)
-					navX_zero_ = (double)driveTable->GetNumber("zero_angle", 0);
-				else
-					navX_zero_ = -10000;
-
-				if(driveTable->GetBoolean("record_time", 0) != 0 )
-				{
-					if (!error_msg_last_received_ && realtime_pub_error_->trylock())
-					{
-						realtime_pub_error_->msg_.data = time_now_t.toSec() - error_pub_start_time_;
-						realtime_pub_error_->unlockAndPublish();
-						error_msg_last_received_ = true;
-					}
-				}
-				else
-					error_msg_last_received_ = false;
-			}
-
-			last_nt_publish_time_ += ros::Duration(1.0 / nt_publish_rate);
-		}
-
 		read_tracer_.start_unique("joysticks");
 		// Update joystick state as often as possible
+		auto time_now_t = ros::Time::now();
 		for (size_t i = 0; i < num_joysticks_; i++)
 		{
 			if (realtime_pub_joysticks_[i]->trylock())
@@ -1127,80 +1029,80 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 				auto &m = realtime_pub_joysticks_[i]->msg_;
 				m.header.stamp = time_now_t;
 
-			m.axes.clear();
-			m.buttons.clear();
+				m.axes.clear();
+				m.buttons.clear();
 
-			for(int j = 0; j < joysticks_[i]->GetAxisCount(); j++)
-			{
-				m.axes.push_back(joysticks_[i]->GetRawAxis(j));
-			}
+				for(int j = 0; j < joysticks_[i]->GetAxisCount(); j++)
+				{
+					m.axes.push_back(joysticks_[i]->GetRawAxis(j));
+				}
 
-			for(int j = 0; j < joysticks_[i]->GetButtonCount(); j++)
-			{
-				m.buttons.push_back(joysticks_[i]->GetRawButton(j+1));
-			}
+				for(int j = 0; j < joysticks_[i]->GetButtonCount(); j++)
+				{
+					m.buttons.push_back(joysticks_[i]->GetRawButton(j+1));
+				}
 
-			bool direction_up = false;
-			bool direction_down = false;
-			bool direction_left = false;
-			bool direction_right = false;
-			switch (joysticks_[i]->GetPOV(0))
-			{
-				case 0 :
+				bool direction_up = false;
+				bool direction_down = false;
+				bool direction_left = false;
+				bool direction_right = false;
+				switch (joysticks_[i]->GetPOV(0))
+				{
+					case 0 :
 						direction_up = true;
 						break;
-				case 45:
+					case 45:
 						direction_up = true;
 						direction_right = true;
 						break;
-				case 90:
+					case 90:
 						direction_right = true;
 						break;
-				case 135:
+					case 135:
 						direction_down = true;
 						direction_right = true;
 						break;
-				case 180:
+					case 180:
 						direction_down = true;
 						break;
-				case 225:
+					case 225:
 						direction_down = true;
 						direction_left = true;
 						break;
-				case 270:
+					case 270:
 						direction_left = true;
 						break;
-				case 315:
+					case 315:
 						direction_up = true;
 						direction_left = true;
 						break;
-			}
+				}
 
-			if(direction_left)
-			{
-				m.axes.push_back(1.0);
-			}
-			else if (direction_right)
-			{
-				m.axes.push_back(-1.0);
-			}
-			else
-			{
-				m.axes.push_back(0.0);
-			}
+				if(direction_left)
+				{
+					m.axes.push_back(1.0);
+				}
+				else if (direction_right)
+				{
+					m.axes.push_back(-1.0);
+				}
+				else
+				{
+					m.axes.push_back(0.0);
+				}
 
-			if(direction_up)
-			{
-				m.axes.push_back(1.0);
-			}
-			else if (direction_down)
-			{
-				m.axes.push_back(-1.0);
-			}
-			else
-			{
-				m.axes.push_back(0.0);
-			}
+				if(direction_up)
+				{
+					m.axes.push_back(1.0);
+				}
+				else if (direction_down)
+				{
+					m.axes.push_back(-1.0);
+				}
+				else
+				{
+					m.axes.push_back(0.0);
+				}
 				realtime_pub_joysticks_[i]->unlockAndPublish();
 			}
 		}
@@ -1404,9 +1306,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 	{
 		if (analog_input_locals_[i])
 			analog_input_state_[i] = analog_inputs_[i]->GetValue() *analog_input_a_[i] + analog_input_b_[i];
-
-		if (analog_input_names_[i] == "analog_pressure_sensor")
-			pressure_ = analog_input_state_[i];
 	}
 	read_tracer_.start_unique("navX");
 	//navX read here
@@ -1441,9 +1340,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			{
 				if(navX_zero_ != -10000)
 					offset_navX_[i] = navX_zero_ - navXs_[i]->GetFusedHeading() / 360. * 2. * M_PI;
-
-				// For display on the smartdash
-				navX_angle_ = navXs_[i]->GetFusedHeading() / 360. * 2. * M_PI + offset_navX_[i];
 			}
 			tempQ.setRPY(navXs_[i]->GetRoll() / -360 * 2 * M_PI, navXs_[i]->GetPitch() / -360 * 2 * M_PI, navXs_[i]->GetFusedHeading() / 360 * 2 * M_PI + offset_navX_[i]  );
 
@@ -1488,7 +1384,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 	read_tracer_.stop();
 	ROS_INFO_STREAM_THROTTLE(60, read_tracer_.report());
 }
-
 
 double FRCRobotHWInterface::getConversionFactor(int encoder_ticks_per_rotation,
 						hardware_interface::FeedbackDevice encoder_feedback,
