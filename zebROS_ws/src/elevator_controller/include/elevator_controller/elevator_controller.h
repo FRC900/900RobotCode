@@ -11,8 +11,6 @@
 #include <std_msgs/Bool.h>
 #include "elevator_controller/ElevatorSrv.h"
 
-#include "elevator_controller/ClimberEngageSrv.h"
-
 
 namespace elevator_controller
 {
@@ -47,6 +45,7 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 			double arb_feed_forward_up_;
 			double initial_position_;
 			double elevator_zeroing_percent_output_;
+			double slow_peak_output_;
 
 			ros::Time last_time_down_;
 			double elevator_zeroing_timeout_;

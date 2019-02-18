@@ -14,6 +14,9 @@ elevator_controller:
     # or has hit bottom and the limit switch is broken.  Stop
     # trying to drive down to prevent killing the motor
     elevator_zeroing_timeout:  2.0
+
+    slow_peak_output: 0.3 #Absolute value of max percent output if the elevator controller is told to go slow in the service request, useful for climbing
+
     elevator_master: 
         type: talon_controllers/TalonControllerInterface 
         joint: elevator_master

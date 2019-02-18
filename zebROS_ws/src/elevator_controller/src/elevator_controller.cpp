@@ -29,6 +29,12 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		return false;
 	}
 
+	if (!controller_nh.getParam("slow_peak_output", slow_peak_output_))
+	{
+		ROS_ERROR("Elevator controller: could not find slow_peak_output");
+		return false;
+	}
+
 	//get config values for the elevator talon
 	XmlRpc::XmlRpcValue elevator_params;
 	if (!controller_nh.getParam("elevator_joint", elevator_params))
@@ -119,6 +125,19 @@ bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request  &
 {
 	if(isRunning())
 	{
+		//adjust peak output appropriately
+		if(req.go_slow)
+		{
+			elevator_joint_.setPeakOutputForward(slow_peak_output_);
+			elevator_joint_.setPeakOutputReverse(-slow_peak_output_);
+			ROS_INFO("Elevator controller: reduced peak output +/- %f",slow_peak_output_);
+		}
+		else { //reset to default
+			elevator_joint_.setPeakOutputForward(1.0);
+			elevator_joint_.setPeakOutputReverse(-1.0);
+			ROS_INFO("Elevator controller: normal peak output");
+		}
+
 		position_command_.writeFromNonRT(req.position);
 		ROS_INFO_STREAM("writing " << std::to_string(req.position) << " to elevator controller");
 	}

@@ -14,9 +14,11 @@ actionlib_lift_params:
     climber:
         deploy_position: -1.0
         climb_position: -1.0
-        deploy_timeout: -1.0
-        climb_timeout: -1.0
+        climb_low_position: -1.0
+        deploy_timeout: 5.0
+        climb_timeout: 15.0
+        climb_low_timeout: 10.0
     max_speed: -1.0
     timeout: 4
-    elevator_position_deadzone: 1.0
+    elevator_position_deadzone: 0.1
 
