@@ -162,6 +162,7 @@ class TalonHWCommand
 
 			motion_cruise_velocity_(0),
 			motion_acceleration_(0),
+			motion_s_curve_strength_(0),
 			motion_cruise_changed_(true),
 
 			motion_profile_clear_trajectories_(false),
@@ -1347,11 +1348,25 @@ class TalonHWCommand
 		{
 			return motion_acceleration_;
 		}
+		void setMotionSCurveStrength(unsigned int s_curve_strength)
+		{
+			if ((s_curve_strength != motion_s_curve_strength_) &&
+				(s_curve_strength <= 8))
+			{
+				motion_s_curve_strength_ = s_curve_strength;
+				motion_cruise_changed_ = true;
+			}
+		}
+		unsigned int getMotionSCurveStrength(void) const
+		{
+			return motion_s_curve_strength_;
+		}
 
-		bool motionCruiseChanged(double &velocity, double &acceleration)
+		bool motionCruiseChanged(double &velocity, double &acceleration, unsigned int &s_curve_strength)
 		{
 			velocity = motion_cruise_velocity_;
 			acceleration = motion_acceleration_;
+			s_curve_strength = motion_s_curve_strength_;
 			if (!motion_cruise_changed_)
 				return false;
 			motion_cruise_changed_ = false;
@@ -1974,11 +1989,12 @@ class TalonHWCommand
 		bool current_limit_enable_;
 		bool current_limit_changed_;
 
-		// Talon expects these in integral sensorUnitsPer100ms,
+		// Talon expects the next two in integral sensorUnitsPer100ms,
 		// but at this level we're still dealing with
 		// radians/sec (or /sec^2 for acceleration)
 		double motion_cruise_velocity_;
 		double motion_acceleration_;
+		unsigned int motion_s_curve_strength_;
 		bool motion_cruise_changed_;
 
 		bool motion_profile_clear_trajectories_;

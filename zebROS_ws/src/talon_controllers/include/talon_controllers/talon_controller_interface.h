@@ -84,6 +84,7 @@ class TalonCIParams
 			current_limit_enable_(false),
 			motion_cruise_velocity_(0),
 			motion_acceleration_(0),
+			motion_s_curve_strength_(0),
 			motion_profile_trajectory_period_(0),
 
 			conversion_factor_(1.0),
@@ -179,6 +180,7 @@ class TalonCIParams
 			current_limit_enable_ = config.current_limit_enable;
 			motion_cruise_velocity_ = config.motion_cruise_velocity;
 			motion_acceleration_ = config.motion_acceleration;
+			motion_s_curve_strength_ = config.motion_s_curve_strength;
 			motion_profile_trajectory_period_ = config.motion_profile_trajectory_period;
 
 			status_frame_periods_[hardware_interface::Status_1_General] = config.status_1_general_period;
@@ -266,6 +268,7 @@ class TalonCIParams
 			config.current_limit_enable = current_limit_enable_;
 			config.motion_cruise_velocity = motion_cruise_velocity_;
 			config.motion_acceleration = motion_acceleration_;
+			config.motion_s_curve_strength = motion_s_curve_strength_;
 			config.motion_profile_trajectory_period = motion_profile_trajectory_period_;
 
 			config.status_1_general_period = status_frame_periods_[hardware_interface::Status_1_General];
@@ -565,6 +568,7 @@ class TalonCIParams
 		{
 			n.getParam("motion_cruise_velocity", motion_cruise_velocity_);
 			n.getParam("motion_acceleration", motion_acceleration_);
+			n.getParam("motion_s_curve_strength", motion_s_curve_strength_);
 			n.getParam("motion_profile_trajectory_period", motion_profile_trajectory_period_);
 			return true;
 		}
@@ -661,6 +665,7 @@ class TalonCIParams
 		bool   current_limit_enable_;
 		double motion_cruise_velocity_;
 		double motion_acceleration_;
+		double motion_s_curve_strength_;
 		int    motion_profile_trajectory_period_;
 		std::array<int, hardware_interface::Status_Last> status_frame_periods_;
 		std::array<int, hardware_interface::Control_Last> control_frame_periods_;
@@ -1111,6 +1116,17 @@ class TalonControllerInterface
 			syncDynamicReconfigure();
 
 			talon_->setMotionAcceleration(params_.motion_acceleration_);
+		}
+
+		virtual void setMotionSCurveStrength(unsigned int s_curve_strength)
+		{
+			if (s_curve_strength == params_.motion_s_curve_strength_)
+				return;
+			params_.motion_s_curve_strength_ = s_curve_strength;
+
+			syncDynamicReconfigure();
+
+			talon_->setMotionSCurveStrength(params_.motion_s_curve_strength_);
 		}
 
 		virtual double getMotionCruiseVelocity(void)

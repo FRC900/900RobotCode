@@ -318,6 +318,7 @@ class TalonHWState
 
 			motion_cruise_velocity_(0),
 			motion_acceleration_(0),
+			motion_s_curve_strength_(0),
 
 			// motion profiling
 			motion_profile_top_level_buffer_count_(0),
@@ -895,6 +896,21 @@ class TalonHWState
 			return motion_acceleration_;
 		}
 
+		void setMotionSCurveStrength(unsigned int s_curve_strength)
+		{
+			if (s_curve_strength > 8)
+			{
+				ROS_ERROR("setMotionSCurveStrength out of range");
+				return;
+			}
+
+			motion_s_curve_strength_ = s_curve_strength;
+		}
+		unsigned int getMotionSCurveStrength(void) const
+		{
+			return motion_s_curve_strength_;
+		}
+
 		void setMotionProfileTopLevelBufferCount(int count)
 		{
 			motion_profile_top_level_buffer_count_ = count;
@@ -1282,6 +1298,8 @@ class TalonHWState
 		// radians/sec (or /sec^2 for acceleration)
 		double motion_cruise_velocity_;
 		double motion_acceleration_;
+
+		unsigned int motion_s_curve_strength_;
 
 		// Motion profiling
 		int motion_profile_top_level_buffer_count_;

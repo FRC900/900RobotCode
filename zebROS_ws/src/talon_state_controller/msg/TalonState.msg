@@ -108,6 +108,7 @@ int32[]   current_limit_continuous_amps
 bool[]    current_limit_enable
 float64[] motion_cruise_velocity
 float64[] motion_acceleration
+uint8[]   motion_s_curve_strength
 int32[]   motion_profile_top_level_buffer_count
 bool[]    motion_profile_top_level_buffer_full
 int32[]   motion_profile_status_top_buffer_rem

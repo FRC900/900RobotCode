@@ -2107,18 +2107,21 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			{
 				double motion_cruise_velocity;
 				double motion_acceleration;
-				if (tc.motionCruiseChanged(motion_cruise_velocity, motion_acceleration))
+				unsigned int motion_s_curve_strength;
+				if (tc.motionCruiseChanged(motion_cruise_velocity, motion_acceleration, motion_s_curve_strength))
 				{
 					bool rc = true;
 					//converted from rad/sec to native units
-					rc &= safeTalonCall(talon->ConfigMotionCruiseVelocity(motion_cruise_velocity / radians_per_second_scale, timeoutMs),"ConfigMotionCruiseVelocity(");
-					rc &= safeTalonCall(talon->ConfigMotionAcceleration(motion_acceleration / radians_per_second_scale, timeoutMs),"ConfigMotionAcceleration(");
+					rc &= safeTalonCall(talon->ConfigMotionCruiseVelocity(motion_cruise_velocity / radians_per_second_scale, timeoutMs),"ConfigMotionCruiseVelocity");
+					rc &= safeTalonCall(talon->ConfigMotionAcceleration(motion_acceleration / radians_per_second_scale, timeoutMs),"ConfigMotionAcceleration");
+					rc &= safeTalonCall(talon->ConfigMotionSCurveStrength(motion_s_curve_strength, timeoutMs), "ConfigMotionSCurveStrength");
 
 					if (rc)
 					{
 						ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" cruise velocity / acceleration");
 						ts.setMotionCruiseVelocity(motion_cruise_velocity);
 						ts.setMotionAcceleration(motion_acceleration);
+						ts.setMotionSCurveStrength(motion_s_curve_strength);
 					}
 					else
 					{
