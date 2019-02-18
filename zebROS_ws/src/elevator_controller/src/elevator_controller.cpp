@@ -73,8 +73,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 	if (zeroed_) // run normally, seeking to various positions
 	{
 		const double setpoint = *(position_command_.readFromRT());
-		elevator_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
-		elevator_joint_.setPIDFSlot(0);
+		elevator_joint_.setMode(hardware_interface::TalonMode_Position);
 		elevator_joint_.setCommand(setpoint);
 
 		// Add arbirary feed forward for upwards motion
@@ -83,14 +82,23 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		// and add an arb FF correction for up
 		if (setpoint > elevator_joint_.getPosition())
 		{
-			elevator_joint_.setDemand1Type(hardware_interface::DemandType_AuxPID);
-			elevator_joint_.setDemand1Value(arb_feed_forward_up_);
+			//elevator_joint_.setDemand1Type(hardware_interface::DemandType_AuxPID);
+			//elevator_joint_.setDemand1Value(arb_feed_forward_up_);
+			if(last_setpoint_ != setpoint)
+			{
+				elevator_joint_.setPIDFSlot(0);
+			}
 		}
 		else
 		{
-			elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
-			elevator_joint_.setDemand1Value(0);
+			//elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
+			//elevator_joint_.setDemand1Value(0);
+			if(last_setpoint_ != setpoint)
+			{
+				elevator_joint_.setPIDFSlot(1);
+			}
 		}
+		last_setpoint_ = setpoint;
 	}
 	else
 	{
