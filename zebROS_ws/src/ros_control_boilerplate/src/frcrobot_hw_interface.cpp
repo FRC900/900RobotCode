@@ -1918,7 +1918,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			if (safeTalonCall(talon->SetSelectedSensorPosition(sensor_position / radians_scale, pidIdx, timeoutMs),
 					"SetSelectedSensorPosition"))
 			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" selected sensor position");
+				ROS_INFO_STREAM_THROTTLE(2, "Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" selected sensor position");
 			}
 			else
 			{

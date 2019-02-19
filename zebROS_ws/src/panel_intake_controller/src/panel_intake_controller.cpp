@@ -7,10 +7,11 @@ namespace panel_intake_controller
 			ros::NodeHandle                 &root_nh,
 			ros::NodeHandle                 &controller_nh)
 	{
-		claw_joint_ = hw->getHandle("panel_claw_release");
+		//claw_joint_ = hw->getHandle("panel_claw_release");
 		push_joint_ = hw->getHandle("panel_push_extend");
 
 		panel_intake_service_ = controller_nh.advertiseService("panel_command", &PanelIntakeController::cmdService, this);
+		cargo_outtake_service_ = controller_nh.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("cargo_outtake_controller/cargo_outtake_command");
 		joint_states_sub_ = controller_nh.subscribe("/frcrobot_jetson/joint_states", 1, &PanelIntakeController::jointStateCallback, this);
 
 		return true;
@@ -22,14 +23,22 @@ namespace panel_intake_controller
 
 	void PanelIntakeController::update(const ros::Time &time, const ros::Duration &period) {
 		const bool claw_cmd = *(claw_cmd_.readFromRT());
-		if(claw_cmd == true) {
-			//ROS_WARN("intake in");
-			claw_joint_.setCommand(1.0);
-		}
-		else if (claw_cmd == false) {
 
-			claw_joint_.setCommand(0.0);
+		if(last_claw_cmd_ != claw_cmd)
+		{
+			cargo_outtake_controller::CargoOuttakeSrv outtake_srv;
+			outtake_srv.request.kicker_in = true;
+			outtake_srv.request.clamp_release = claw_cmd;
+			cargo_outtake_service_.call(outtake_srv);
 		}
+		//if(claw_cmd == true) {
+		//	//ROS_WARN("intake in");
+		//	claw_joint_.setCommand(1.0);
+		//}
+		//else if (claw_cmd == false) {
+
+		//	claw_joint_.setCommand(0.0);
+		//}
 
 		const bool push_cmd = *(push_cmd_.readFromRT());
 		if(push_cmd == true) {
@@ -39,6 +48,7 @@ namespace panel_intake_controller
 		else if (push_cmd == false) {
 			push_joint_.setCommand(0.0);
 		}
+		last_claw_cmd_ = claw_cmd;
 	}
 
 	void PanelIntakeController::stopping(const ros::Time &time) {

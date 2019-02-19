@@ -9,7 +9,7 @@ namespace cargo_outtake_controller
 	{
 		//initialize cargo outtake kicker joint (pneumatic piston that controls kicker)
 		cargo_outtake_kicker_joint_ = hw->getHandle("cargo_outtake_kicker_joint");
-		cargo_outtake_clamp_joint_ = hw->getHandle("cargo_outtake_clamp_joint");
+		cargo_outtake_clamp_joint_ = hw->getHandle("clamp_joint");
 
 		cargo_outtake_service_ = controller_nh.advertiseService("cargo_outtake_command", &CargoOuttakeController::cmdService, this);
 
@@ -27,10 +27,10 @@ namespace cargo_outtake_controller
 		double kicker_command_double; //to store processed input
 		if(kicker_command == true) {
 			//ROS_WARN("cargo outtake kicker command: -1");
-			kicker_command_double = 1;
+			kicker_command_double = 0;
 		}
 		else if (kicker_command == false) {
-			kicker_command_double = 0;
+			kicker_command_double = 1;
 			//ROS_WARN("cargo outtake kicker command: 1");
 		}
 
@@ -56,10 +56,11 @@ namespace cargo_outtake_controller
 	bool CargoOuttakeController::cmdService(cargo_outtake_controller::CargoOuttakeSrv::Request &req, cargo_outtake_controller::CargoOuttakeSrv::Response &res) {
 		if(isRunning())
 		{
+			ROS_INFO_STREAM("running cargo outtake controller service");
 			//kick = true, retract = false
 			kicker_command_.writeFromNonRT(req.kicker_in); //take the service request for in/out (true/false???) and write to a command variable
 			//clamped down = false, let go = true
-			clamp_command_.writeFromNonRT(req.clamp_in); //take the service request for in/out (true/false???) and write to a command variable
+			clamp_command_.writeFromNonRT(req.clamp_release); //take the service request for in/out (true/false???) and write to a command variable
 		}
 		else
 		{

@@ -131,7 +131,7 @@ class CargoOuttakeAction {
 				//define request to send to controller
 				cargo_outtake_controller::CargoOuttakeSrv srv;
 				srv.request.kicker_in = true; 
-				srv.request.clamp_in = true;
+				srv.request.clamp_release = false;
 
 				//send request to controller
 				if(!cargo_outtake_controller_client_.call(srv))
@@ -153,7 +153,7 @@ class CargoOuttakeAction {
 				//define request to send to controller
 				cargo_outtake_controller::CargoOuttakeSrv srv;
 				srv.request.kicker_in = false;
-				srv.request.clamp_in = true;
+				srv.request.clamp_release = false;
 
 				//send request to controller
 				if(!cargo_outtake_controller_client_.call(srv))
@@ -177,7 +177,7 @@ class CargoOuttakeAction {
 			//define request to send to controller
 			cargo_outtake_controller::CargoOuttakeSrv srv;
 			srv.request.kicker_in = true;
-			srv.request.clamp_in = false;
+			srv.request.clamp_release = true;
 
 			//send request to controller
 			if(!cargo_outtake_controller_client_.call(srv))
