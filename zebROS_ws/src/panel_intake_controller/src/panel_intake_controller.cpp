@@ -11,7 +11,7 @@ namespace panel_intake_controller
 		push_joint_ = hw->getHandle("panel_push_extend");
 
 		panel_intake_service_ = controller_nh.advertiseService("panel_command", &PanelIntakeController::cmdService, this);
-		cargo_outtake_service_ = controller_nh.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("cargo_outtake_controller/cargo_outtake_command");
+		cargo_outtake_service_ = controller_nh.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/frcrobot_jetson/cargo_outtake_controller/cargo_outtake_command");
 		joint_states_sub_ = controller_nh.subscribe("/frcrobot_jetson/joint_states", 1, &PanelIntakeController::jointStateCallback, this);
 
 		return true;
