@@ -24,7 +24,7 @@ hardware_interface:
        - {name: cargo_outtake_kicker_joint, type: solenoid, pcm: 0, id: 3, local_hardware: true, local_update: false}
        - {name: clamp_joint, type: solenoid, pcm: 0, id: 2, local_hardware: true, local_update: false}
 
-       - {name: climber_feet_retract, type: double_solenoid, pcm: 0, forward_id: 5, reverse_id: 4, local_hardware: true, local_update: false}
+       - {name: climber_feet_retract, type: double_solenoid, pcm: 0, forward_id: 4, reverse_id: 5, local_hardware: true, local_update: false}
        - {name: climber_release_endgame, type: double_solenoid, pcm: 0, forward_id: 6, reverse_id: 7, local_hardware: true, local_update: false}
 
        - {name: panel_push_extend, type: solenoid, pcm: 0, id: 1, local_hardware: true, local_update: false}
