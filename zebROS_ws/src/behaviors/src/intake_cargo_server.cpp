@@ -19,6 +19,7 @@ double roller_power;
 double intake_timeout;
 double linebreak_debounce_iterations;
 double wait_for_server_timeout;
+double pause_before_running_motor = 0;
 
 class CargoIntakeAction {
 	protected:
@@ -130,6 +131,7 @@ class CargoIntakeAction {
 				outtake_srv.request.kicker_in = true;
 				outtake_srv.request.clamp_release = true;
 				cargo_outtake_controller_client_.call(outtake_srv);
+				ros::Duration(pause_before_running_motor).sleep();
 			}
 
 			//send command to lower arm and run roller to the cargo intake controller ------
@@ -284,6 +286,8 @@ int main(int argc, char** argv) {
 		ROS_ERROR("Could not read roller_power in cargo_intake_server");
 	if (!n_params_intake.getParam("intake_timeout", intake_timeout))
 		ROS_ERROR("Could not read intake_timeout in cargo_intake_server");
+	if (!n_params_intake.getParam("pause_before_running_motor", pause_before_running_motor))
+		ROS_ERROR("Could not read pause_before_running_motor in cargo_intake_server");
 
 	ros::spin();
 	return 0;
