@@ -1,4 +1,3 @@
-#include <atomic>
 #include <realtime_tools/realtime_buffer.h>
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "teleop_joystick_control/rate_limiter.h"
@@ -64,7 +63,7 @@ std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_h
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ElevatorAction>> elevator_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ClimbAction>> climber_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::AlignAction>> align_ac;
-std::atomic<double> navX_angle;
+double navX_angle;
 
 struct ElevatorGoal
 {
@@ -108,7 +107,7 @@ void navXCallback(const sensor_msgs::Imu &navXState)
 	tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
 
 	if (yaw == yaw) // ignore NaN results
-		navX_angle.store(yaw, std::memory_order_relaxed);
+		navX_angle = yaw;
 }
 
 void preemptActionlibServers()
@@ -167,8 +166,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		// TODO : dead-zone for rotation?
 		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
-		double triggerLeft = left_trigger_rate_limit.applyLimit(joystick_states_array[0].leftTrigger);
-		double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
+		//double triggerLeft = left_trigger_rate_limit.applyLimit(joystick_states_array[0].leftTrigger);
+		//double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
 		double rotation = pow(rightStickX, rotation_pow) * max_rot;
 
 		static bool sendRobotZero = false;
@@ -192,7 +191,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			Eigen::Vector2d joyVector;
 			joyVector[0] = leftStickX; //intentionally flipped
 			joyVector[1] = -leftStickY;
-			const Eigen::Rotation2Dd r(-navX_angle.load(std::memory_order_relaxed) - M_PI / 2.);
+			const Eigen::Rotation2Dd r(-navX_angle - M_PI / 2.);
 			const Eigen::Vector2d rotatedJoyVector = r.toRotationMatrix() * joyVector;
 
 			geometry_msgs::Twist vel;
