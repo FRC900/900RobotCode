@@ -570,13 +570,6 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 	ros::Time last_sensor_collection_time = ros::Time::now();
 	ros::Duration sensor_collection_period;
 
-	// This never changes so read it once when the thread is started
-	int can_id;
-	{
-		std::lock_guard<std::mutex> l(*mutex);
-		can_id = state->getCANID();
-	}
-
 	while(ros::ok())
 	{
 		tracer.start("talon read main_loop");
@@ -844,6 +837,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			{
 				state->setBusVoltage(bus_voltage);
 				state->setTemperature(temperature);
+				state->setOutputVoltage(output_voltage);
 			}
 
 			if ((talon_mode == hardware_interface::TalonMode_Position) ||
@@ -1877,11 +1871,19 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				// Only enable once settings are correctly written to the Talon
 				talon->EnableVoltageCompensation(v_c_enable);
 				rc &= safeTalonCall(talon->GetLastError(), "EnableVoltageCompensation");
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" voltage compensation");
+				if (rc)
+				{
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" voltage compensation");
 
-				ts.setVoltageCompensationSaturation(v_c_saturation);
-				ts.setVoltageMeasurementFilter(v_measurement_filter);
-				ts.setVoltageCompensationEnable(v_c_enable);
+					ts.setVoltageCompensationSaturation(v_c_saturation);
+					ts.setVoltageMeasurementFilter(v_measurement_filter);
+					ts.setVoltageCompensationEnable(v_c_enable);
+				}
+				else
+				{
+					tc.resetVoltageCompensation();
+				}
+
 			}
 			else
 			{
