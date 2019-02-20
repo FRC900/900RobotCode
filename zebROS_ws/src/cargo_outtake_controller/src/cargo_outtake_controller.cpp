@@ -23,24 +23,24 @@ namespace cargo_outtake_controller
 
 	void CargoOuttakeController::update(const ros::Time &time, const ros::Duration &period) {
 		//process input for the up/down part of the intake (pneumatic piston)
-		bool kicker_command = *(kicker_command_.readFromRT());
+		const bool kicker_command = *(kicker_command_.readFromRT());
 		double kicker_command_double; //to store processed input
 		if(kicker_command == true) {
 			//ROS_WARN("cargo outtake kicker command: -1");
 			kicker_command_double = 0;
 		}
-		else if (kicker_command == false) {
+		else {
 			kicker_command_double = 1;
 			//ROS_WARN("cargo outtake kicker command: 1");
 		}
 
-		bool clamp_command = *(clamp_command_.readFromRT());
+		const bool clamp_command = *(clamp_command_.readFromRT());
 		double clamp_command_double; //to store processed input
 		if(clamp_command == true) {
 			//ROS_WARN("cargo outtake kicker command: -1");
 			clamp_command_double = 1;
 		}
-		else if (clamp_command == false) {
+		else {
 			clamp_command_double = 0;
 			//ROS_WARN("cargo outtake kicker command: 1");
 		}
