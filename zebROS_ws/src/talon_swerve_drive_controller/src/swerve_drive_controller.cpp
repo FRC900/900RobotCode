@@ -266,10 +266,6 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	bool lookup_encoder_steering_get_units = !controller_nh.getParam("encoder_steering_get_units", units_.steeringGet);
 	bool lookup_encoder_steering_set_units = !controller_nh.getParam("encoder_steering_set_units", units_.steeringSet);
 	bool lookup_f_static = !controller_nh.getParam("f_static", f_static_); //TODO: Maybe use this?
-	std::vector<double> wheel1a;
-	std::vector<double> wheel2a;
-	std::vector<double> wheel3a;
-	std::vector<double> wheel4a;
 	bool lookup_wheel1x = !controller_nh.getParam("wheel_coords1x", wheel_coords_[0][0]);
 	bool lookup_wheel2x = !controller_nh.getParam("wheel_coords2x", wheel_coords_[1][0]);
 	bool lookup_wheel3x = !controller_nh.getParam("wheel_coords3x", wheel_coords_[2][0]);
@@ -846,7 +842,6 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 	{
 		ROS_INFO_STREAM_THROTTLE(.5, "out of points = " << steering_joints_[0].getCustomProfileStatus().outOfPoints);
 		mode_last_time =::Time::now().toSec();
-		const bool dont_set_angle_mode = dont_set_angle_mode_.load(std::memory_order_relaxed);
 		for (size_t i = 0; !set_profile_run && (i < wheel_joints_size_); ++i)
 		{
 			steering_joints_[i].setCustomProfileRun(true);
@@ -953,10 +948,10 @@ void TalonSwerveDriveController::cmdVelCallback(const geometry_msgs::Twist &comm
 
 		//These below are some simple bounds checks on the cmd vel input so we don't make dumb mistakes. (like try to get the swerve drive to fly away)
 		//Those counters exist to reduce spam somewhat
-		static int fly_counter = 0;
 		static bool fly_last = false;
 		if (command.linear.z != 0)
 		{
+			static int fly_counter = 0;
 			if (fly_counter > 40 || !fly_last)
 			{
 				ROS_ERROR("Rotors not up to speed!");
@@ -969,10 +964,10 @@ void TalonSwerveDriveController::cmdVelCallback(const geometry_msgs::Twist &comm
 		{
 			fly_last = false;
 		}
-		static int impossible_rotation_counter = 0;
 		static bool impossible_rotation_last = false;
 		if ((command.angular.x != 0) || (command.angular.y != 0))
 		{
+			static int impossible_rotation_counter = 0;
 			if (impossible_rotation_counter > 40 || !impossible_rotation_last)
 			{
 				ROS_ERROR("Reaction wheels need alignment. Please reverse polarity on neutron flux capacitor");
@@ -985,10 +980,10 @@ void TalonSwerveDriveController::cmdVelCallback(const geometry_msgs::Twist &comm
 		{
 			impossible_rotation_last = false;
 		}
-		static int light_speed_counter = 0;
 		static bool light_speed_last = false;
 		if ((sqrt(command.linear.x * command.linear.x + command.linear.y * command.linear.y)) > 300000000)
 		{
+			static int light_speed_counter = 0;
 			if (light_speed_counter > 40 || !light_speed_last)
 			{
 				ROS_ERROR("PHYSICS VIOLATION DETECTED. DISABLE TELEPORTATION UNIT!");
