@@ -17,8 +17,8 @@ namespace cargo_outtake_controller
 	}
 
 	void CargoOuttakeController::starting(const ros::Time &/*time*/) {
-		cargo_outtake_kicker_joint_.setCommand(0); // set the command to the kicker of the outtake
-		cargo_outtake_clamp_joint_.setCommand(0); // set the command to the up/down part of the outtake
+		kicker_command_.writeFromNonRT(true);
+		clamp_command_.writeFromNonRT(false);
 	}
 
 	void CargoOuttakeController::update(const ros::Time &time, const ros::Duration &period) {
@@ -56,7 +56,6 @@ namespace cargo_outtake_controller
 	bool CargoOuttakeController::cmdService(cargo_outtake_controller::CargoOuttakeSrv::Request &req, cargo_outtake_controller::CargoOuttakeSrv::Response &res) {
 		if(isRunning())
 		{
-			ROS_INFO_STREAM("running cargo outtake controller service");
 			//kick = true, retract = false
 			kicker_command_.writeFromNonRT(req.kicker_in); //take the service request for in/out (true/false???) and write to a command variable
 			//clamped down = false, let go = true

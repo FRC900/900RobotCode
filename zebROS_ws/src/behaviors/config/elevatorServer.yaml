@@ -1,12 +1,12 @@
 actionlib_lift_params:
     cargo:
-        intake_position: 0.0
-        cargo_ship_position: 0.5
+        intake_position: 4.0
+        cargo_ship_position: 2.5
         rocket1_position: 1.0
         rocket2_position: 2.0
         rocket3_position: 3.0
     hatch:
-        intake_position: 0.0
+        intake_position: 6.0
         cargo_ship_position: 0.5
         rocket1_position: 1.0
         rocket2_position: 2.0

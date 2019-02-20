@@ -11,6 +11,7 @@
 #include <atomic>
 #include <ros/console.h>
 #include "behaviors/enumerated_elevator_indices.h"
+#include "cargo_outtake_controller/CargoOuttakeSrv.h"
 
 //define global variables that will be defined based on config values
 
@@ -28,6 +29,7 @@ class CargoIntakeAction {
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
 		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
+		ros::ServiceClient cargo_outtake_controller_client_; //create a ros client to send requests to the controller
 		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo since we started trying to intake/outtake
 		std::atomic<int> linebreak_false_count; //same, but how many times in a row no cargo
 		behaviors::IntakeResult result_; //variable to store result of the actionlib action
@@ -49,6 +51,7 @@ class CargoIntakeAction {
 
 		//initialize the client being used to call the controller
 		cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+		cargo_outtake_controller_client_ = nh_.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/frcrobot_jetson/cargo_outtake_controller/cargo_outtake_command", false, service_connection_header);
 		//start subscribers subscribing
 		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
 	}
@@ -78,7 +81,7 @@ class CargoIntakeAction {
 			}
 
 
-			ros::Rate r(10);
+			ros::Rate r(100);
 
 			//define variables that will be reused for each controller call/actionlib server call
 			double start_time = ros::Time::now().toSec();
@@ -118,6 +121,17 @@ class CargoIntakeAction {
 				preempted = true;
 			}
 
+			//raise cargo clamp
+			if(!preempted && !timed_out)
+			{
+				ROS_WARN("%s: raising cargo clamp", action_name_.c_str());
+
+				cargo_outtake_controller::CargoOuttakeSrv outtake_srv;
+				outtake_srv.request.kicker_in = true;
+				outtake_srv.request.clamp_release = true;
+				cargo_outtake_controller_client_.call(outtake_srv);
+			}
+
 			//send command to lower arm and run roller to the cargo intake controller ------
 			if(!preempted && !timed_out)
 			{
@@ -130,7 +144,7 @@ class CargoIntakeAction {
 				//define request to send to cargo intake controller
 				cargo_intake_controller::CargoIntakeSrv srv;
 				srv.request.power = roller_power;
-				srv.request.intake_arm = false; //TODO: double check
+				srv.request.intake_arm = true; //TODO: double check
 
 				//send request to controller
 				if(!cargo_intake_controller_client_.call(srv))
@@ -150,7 +164,8 @@ class CargoIntakeAction {
 						ROS_WARN(" %s: Preempted", action_name_.c_str());
 						preempted = true;
 					}
-					else {
+					else if(!success) 
+					{
 						r.sleep();
 						ros::spinOnce();
 					}
@@ -164,12 +179,22 @@ class CargoIntakeAction {
 			//define command to send to cargo intake controller
 			cargo_intake_controller::CargoIntakeSrv srv;
 			srv.request.power = 0;
-			srv.request.intake_arm = true; //TODO: Double check
+			srv.request.intake_arm = false; //TODO: Double check
 			//send request to controller
 			if(!cargo_intake_controller_client_.call(srv))
 			{
 				ROS_ERROR("Srv intake call failed in cargo intake server");
 			}
+
+			if(success)
+			{
+				cargo_outtake_controller::CargoOuttakeSrv outtake_srv;
+				outtake_srv.request.kicker_in = true;
+				outtake_srv.request.clamp_release = false;
+				cargo_outtake_controller_client_.call(outtake_srv);
+				//call the cargo outtake controller to clamp DOWN
+			}
+
 			//log state of action and set result of action
 			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
 			if(timed_out)

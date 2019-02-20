@@ -20,6 +20,8 @@ double outtake_timeout; //timeout for the elevator call
 double linebreak_debounce_iterations;
 double pause_time_between_pistons;
 double wait_for_server_timeout;
+bool linebreak_true_count = 0;
+bool linebreak_false_count = 0;
 
 /* Place
  * request is SETPOINT (cargo, rocket1, rocket2, rocket3) and PLACE_CARGO (hatch if false)
@@ -37,7 +39,7 @@ class CargoOuttakeAction {
 		behaviors::PlaceResult result_; //variable to store result of the actionlib action
 
 		//create subscribers to get data
-		//ros::Subscriber joint_states_sub_;
+		ros::Subscriber joint_states_sub_;
 
 	public:
 		//make the executeCB function run every time the actionlib server is called
@@ -56,7 +58,7 @@ class CargoOuttakeAction {
 		cargo_outtake_controller_client_ = nh_.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/frcrobot_jetson/cargo_outtake_controller/cargo_outtake_command", false, service_connection_header);
 
 		//start subscribers subscribing
-		//joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoOuttakeAction::jointStateCallback, this);
+		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoOuttakeAction::jointStateCallback, this);
 	}
 
 		~CargoOuttakeAction(void)
@@ -123,15 +125,18 @@ class CargoOuttakeAction {
 				}
 			}
 
+			ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
+
 			//send command to unclamp cargo ----
 			if(!preempted && !timed_out)
 			{
+				ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 				ROS_WARN("%s: unclamping cargo", action_name_.c_str());
 
 				//define request to send to controller
 				cargo_outtake_controller::CargoOuttakeSrv srv;
 				srv.request.kicker_in = true; 
-				srv.request.clamp_release = false;
+				srv.request.clamp_release = true;
 
 				//send request to controller
 				if(!cargo_outtake_controller_client_.call(srv))
@@ -141,19 +146,23 @@ class CargoOuttakeAction {
 				}
 				//update everything by doing spinny stuff
 				ros::spinOnce();
+				ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 			}
 
+			ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 			//send command to kick cargo, after waiting for a short period of time
 			if(!preempted && !timed_out)
 			{
+				ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 				ros::Duration(pause_time_between_pistons).sleep();
 
+				ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 				ROS_INFO_STREAM("%s: kicking cargo" << action_name_.c_str());
 
 				//define request to send to controller
 				cargo_outtake_controller::CargoOuttakeSrv srv;
 				srv.request.kicker_in = false;
-				srv.request.clamp_release = false;
+				srv.request.clamp_release = true;
 
 				//send request to controller
 				if(!cargo_outtake_controller_client_.call(srv))
@@ -172,12 +181,12 @@ class CargoOuttakeAction {
 				ros::Duration(pause_time_between_pistons).sleep(); //pause so we don't retract the kicker immediately after kicking
 			}
 
-			ROS_INFO_STREAM("%s: kicking cargo" << action_name_.c_str());
+			ROS_INFO_STREAM("%s: reseting cargo" << action_name_.c_str());
 
 			//define request to send to controller
 			cargo_outtake_controller::CargoOuttakeSrv srv;
 			srv.request.kicker_in = true;
-			srv.request.clamp_release = true;
+			srv.request.clamp_release = false;
 
 			//send request to controller
 			if(!cargo_outtake_controller_client_.call(srv))
@@ -216,46 +225,46 @@ class CargoOuttakeAction {
 		// Function to be called whenever the subscriber for the joint states topic receives a message
 		// Grabs various info from hw_interface using
 		// dummy joint position values
-		/*void jointStateCallback(const sensor_msgs::JointState &joint_state)
-		  {
-		//get index of linebreak sensor for this actionlib server
-		static size_t linebreak_idx = std::numeric_limits<size_t>::max();
-		if ((linebreak_idx >= joint_state.name.size()))
+		void jointStateCallback(const sensor_msgs::JointState &joint_state)
 		{
-		for (size_t i = 0; i < joint_state.name.size(); i++)
-		{
-		if (joint_state.name[i] == "cargo_outtake_line_break") //TODO: define this in the hardware interface
-		linebreak_idx = i;
-		}
-		}
+			//get index of linebreak sensor for this actionlib server
+			static size_t linebreak_idx = std::numeric_limits<size_t>::max();
+			if ((linebreak_idx >= joint_state.name.size()))
+			{
+				for (size_t i = 0; i < joint_state.name.size(); i++)
+				{
+					if (joint_state.name[i] == "cargo_intake_linebreak_1") //TODO: define this in the hardware interface
+						linebreak_idx = i;
+				}
+			}
 
-		//update linebreak counts based on the value of the linebreak sensor
-		if (linebreak_idx < joint_state.position.size())
-		{
-		bool linebreak_true = (joint_state.position[linebreak_idx] != 0);
-		if(linebreak_true)
-		{
-		linebreak_true_count_ += 1;
-		linebreak_false_count_ = 0;
+			//update linebreak counts based on the value of the linebreak sensor
+			if (linebreak_idx < joint_state.position.size())
+			{
+				bool linebreak_true = (joint_state.position[linebreak_idx] != 0);
+				if(linebreak_true)
+				{
+					linebreak_true_count += 1;
+					linebreak_false_count = 0;
+				}
+				else
+				{
+					linebreak_true_count = 0;
+					linebreak_false_count += 1;
+				}
+			}
+			else
+			{
+				static int count = 0;
+				if(count % 100 == 0)
+				{
+					ROS_WARN("outtake line break sensor not found in joint_states");
+				}
+				count++;
+				linebreak_true_count = 0;
+				linebreak_false_count += 1;
+			}
 		}
-		else
-		{
-		linebreak_true_count_ = 0;
-		linebreak_false_count_ += 1;
-		}
-		}
-		else
-		{
-		static int count = 0;
-		if(count % 100 == 0)
-		{
-		ROS_WARN("outtake line break sensor not found in joint_states");
-		}
-		count++;
-		linebreak_true_count_ = 0;
-		linebreak_false_count_ += 1;
-		}
-		}*/
 };
 
 int main(int argc, char** argv) {
