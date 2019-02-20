@@ -76,7 +76,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		elevator_joint_.setMode(hardware_interface::TalonMode_Position);
 		elevator_joint_.setCommand(setpoint);
 
-		// Add arbirary feed forward for upwards motion
+		// Add arbitrary feed forward for upwards motion
 		// We could have arb ff for both up and down, but seems
 		// easier (and good enough) to tune PID for down motion
 		// and add an arb FF correction for up
