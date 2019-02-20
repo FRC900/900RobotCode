@@ -711,7 +711,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 				safeTalonCall(talon->GetLastError(), "GetErrorDerivative");
 
 				// Not sure of timing on this?
-				const double closed_loop_target = talon->GetClosedLoopTarget(pidIdx) * closed_loop_scale;
+				closed_loop_target = talon->GetClosedLoopTarget(pidIdx) * closed_loop_scale;
 				safeTalonCall(talon->GetLastError(), "GetClosedLoopTarget");
 				state->setClosedLoopTarget(closed_loop_target);
 
@@ -1441,7 +1441,6 @@ double FRCRobotHWInterface::getConversionFactor(int encoder_ticks_per_rotation,
 
 bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name)
 {
-	return true;
 	std::string error_name;
 	switch (error_code)
 	{
@@ -2098,13 +2097,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		}
 
 		{
-#ifdef USE_TALON_MOTION_PROFILE
-			// Lock this so that the motion profile update
-			// thread doesn't update in the middle of writing
-			// motion profile params
-			std::lock_guard<std::mutex> l(*motion_profile_mutexes_[joint_id]);
-#endif
-
 			if (motion_profile_mode)
 			{
 				double motion_cruise_velocity;
