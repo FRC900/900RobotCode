@@ -222,18 +222,18 @@ std::string TalonStateController::limitSwitchSourceToString(const hardware_inter
 {
 	switch (source)
 	{
-	case hardware_interface::LimitSwitchSource_Uninitialized:
-		return "Uninitialized";
-	case hardware_interface::LimitSwitchSource_FeedbackConnector:
-		return "FeedbackConnector";
-	case hardware_interface::LimitSwitchSource_RemoteTalonSRX:
-		return "RemoteTalonSRX";
-	case hardware_interface::LimitSwitchSource_RemoteCANifier:
-		return "RemoteCANifier";
-	case hardware_interface::LimitSwitchSource_Deactivated:
-		return "Deactivated";
-	default:
-		return "Unknown";
+		case hardware_interface::LimitSwitchSource_Uninitialized:
+			return "Uninitialized";
+		case hardware_interface::LimitSwitchSource_FeedbackConnector:
+			return "FeedbackConnector";
+		case hardware_interface::LimitSwitchSource_RemoteTalonSRX:
+			return "RemoteTalonSRX";
+		case hardware_interface::LimitSwitchSource_RemoteCANifier:
+			return "RemoteCANifier";
+		case hardware_interface::LimitSwitchSource_Deactivated:
+			return "Deactivated";
+		default:
+			return "Unknown";
 	}
 }
 
@@ -241,32 +241,32 @@ std::string TalonStateController::remoteLimitSwitchSourceToString(const hardware
 {
 	switch (source)
 	{
-	case hardware_interface::RemoteLimitSwitchSource_Uninitialized:
-		return "Uninitialized";
-	case hardware_interface::RemoteLimitSwitchSource_RemoteTalonSRX:
-		return "RemoteTalonSRX";
-	case hardware_interface::RemoteLimitSwitchSource_RemoteCANifier:
-		return "RemoteCANifier";
-	case hardware_interface::RemoteLimitSwitchSource_Deactivated:
-		return "Deactivated";
-	default:
-		return "Unknown";
+		case hardware_interface::RemoteLimitSwitchSource_Uninitialized:
+			return "Uninitialized";
+		case hardware_interface::RemoteLimitSwitchSource_RemoteTalonSRX:
+			return "RemoteTalonSRX";
+		case hardware_interface::RemoteLimitSwitchSource_RemoteCANifier:
+			return "RemoteCANifier";
+		case hardware_interface::RemoteLimitSwitchSource_Deactivated:
+			return "Deactivated";
+		default:
+			return "Unknown";
 	}
 }
 std::string TalonStateController::limitSwitchNormalToString(const hardware_interface::LimitSwitchNormal normal)
 {
 	switch (normal)
 	{
-	case hardware_interface::LimitSwitchNormal_Uninitialized:
-		return "Uninitialized";
-	case hardware_interface::LimitSwitchNormal_NormallyOpen:
-		return "NormallyOpen";
-	case hardware_interface::LimitSwitchNormal_NormallyClosed:
-		return "NormallyClosed";
-	case hardware_interface::LimitSwitchNormal_Disabled:
-		return "Disabled";
-	default:
-		return "Unknown";
+		case hardware_interface::LimitSwitchNormal_Uninitialized:
+			return "Uninitialized";
+		case hardware_interface::LimitSwitchNormal_NormallyOpen:
+			return "NormallyOpen";
+		case hardware_interface::LimitSwitchNormal_NormallyClosed:
+			return "NormallyClosed";
+		case hardware_interface::LimitSwitchNormal_Disabled:
+			return "Disabled";
+		default:
+			return "Unknown";
 
 	}
 }
