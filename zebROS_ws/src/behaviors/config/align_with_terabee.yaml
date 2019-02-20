@@ -1,5 +1,4 @@
 align_with_terabee_params:
-    error_threshhold: 0.03
-    dist_to_back_panel: 0.07
-    cmd_vel_to_pub: 0.3
+    distance_bound: 0.04
+    cmd_vel_to_pub: 0.4
     distance_target: 0.1

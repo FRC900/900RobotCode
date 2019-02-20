@@ -18,8 +18,8 @@
         <rosparam file="$(find ros_control_boilerplate)/config/talon_swerve_offsets_offseason.yaml" command="load"/>
 		<!--rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_base_jetson.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_swerve_drive.yaml" command="load"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/2019_practicebot_offsets.yaml" command="load"/-->
-		<rosparam file="$(find ros_control_boilerplate)/config/2019_elevator_params.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2019_practicebot_offsets.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2019_elevator_params.yaml" command="load"/-->
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 
 
@@ -122,18 +122,18 @@
 	<group ns="align_server">
 
 		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
-		<node name="align_ac_server" pkg="behaviors" type="align_server" output="screen" />
+		<node name="align_server" pkg="behaviors" type="align_server" output="screen" />
 
 		<!-- Terabee stuffs -->
 		<rosparam file="$(find behaviors)/config/align_with_terabee.yaml" command="load"/>
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 		<node name="distance_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="distance_pid" />
-			<param name="Kp" value="5.0" />
+			<param name="Kp" value="3.0" />
 			<param name="Ki" value="0.0" />
 			<param name="Kd" value="0.1" />
-			<param name="upper_limit" value="10" />
-			<param name="lower_limit" value="-10" />
+			<param name="upper_limit" value="2" />
+			<param name="lower_limit" value="-2" />
 			<param name="windup_limit" value="10" />
 			<param name="max_loop_frequency" value="100.0" />
 			<param name="min_loop_frequency" value="100.0" />
@@ -144,8 +144,8 @@
 			<remap from="pid_enable" to="distance_pid/pid_enable"/>
 		</node>
 		<node name="terabee_pid_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
-			<param name="x_topic" value="distance_pid/x_command" />
-			<param name="y_topic" value="align_with_terabee/y_command" />
+			<param name="y_topic" value="distance_pid/x_command" />
+			<param name="x_topic" value="align_with_terabee/y_command" />
 			<param name="enable_topic" value="distance_pid/pid_enable" />
 			<param name="name" value="terabee_pid" />
 		</node>

@@ -9,6 +9,7 @@
 #include "std_msgs/Float64MultiArray.h"
 #include "behaviors/AlignGoal.h"
 #include "behaviors/AlignAction.h"
+#include "std_srvs/Empty.h"
 
 double align_timeout;
 double orient_error_threshold;
@@ -31,6 +32,8 @@ class AlignAction {
 		ros::Subscriber x_error_sub_;
 		ros::Subscriber y_error_sub_;
 
+        ros::ServiceClient BrakeSrv;
+
 		bool x_aligned_ = false;
 		bool y_aligned_ = false;
 		bool orient_aligned_ = false;
@@ -41,8 +44,11 @@ class AlignAction {
 			as_(nh_, name, boost::bind(&AlignAction::executeCB, this, _1), false),
 			action_name_(name)
 		{
-			as_.start(); //start the actionlib server
+            as_.start();
 
+            std::map<std::string, std::string> service_connection_header;
+            service_connection_header["tcp_nodelay"] = "1";
+			BrakeSrv = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 			enable_navx_pub_ = nh_.advertise<std_msgs::Bool>("navX_pid/pid_enable", 1);
 			enable_x_pub_ = nh_.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1);
 			enable_y_pub_ = nh_.advertise<std_msgs::Bool>("align_with_terabee/enable_y_pub", 1);
@@ -60,12 +66,13 @@ class AlignAction {
 		void navx_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold);
-			ROS_WARN("navX error" << fabs(msg.data[0]));
+			ROS_WARN_STREAM_THROTTLE(0.5, "navX error" << fabs(msg.data[0]));
 		}
 
 		void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold);
+			ROS_WARN_STREAM_THROTTLE(0.5, "distance error" << msg.data[0]);
 		}
 
 		void y_error_cb(const std_msgs::Bool &msg)
@@ -94,7 +101,7 @@ class AlignAction {
 
 				timed_out = (ros::Time::now().toSec() - start_time) > align_timeout;
 				preempted = as_.isPreemptRequested();
-				ROS_INFO_THROTTLE(.5, "Orienting");
+				ROS_WARN_THROTTLE(.5, "Orienting");
 			}
 			geometry_msgs::Twist cmd_vel_msg;
 			cmd_vel_msg.linear.x = 0.0;
@@ -108,13 +115,15 @@ class AlignAction {
 
 			start_time = ros::Time::now().toSec();
 			bool aligned = false;
+            x_aligned_ = false;
+            y_aligned_ = false;
 			while(!aligned && !preempted && !timed_out)
 			{
 				ros::spinOnce();
 				r.sleep();
 
 				std_msgs::Bool x_msg;
-				x_msg.data = !x_aligned_; //TODO maybe make this use aligned to correct throughout the entire action and doesn't stop if it aligns first
+				x_msg.data = !aligned; //TODO make the publish pid cmd vel node work when x_aligned_ is true
 				enable_x_pub_.publish(x_msg);
 
 				std_msgs::Bool y_msg;
@@ -124,8 +133,10 @@ class AlignAction {
 				timed_out = (ros::Time::now().toSec() - start_time) > align_timeout;
 				preempted = as_.isPreemptRequested();
 				aligned = x_aligned_ && y_aligned_;
+				ROS_WARN_STREAM_THROTTLE(0.5, "Translating distance_aligned: " << x_aligned_ <<  "cutout aligned: " << y_aligned_);
 			}
-			cmd_vel_pub_.publish(cmd_vel_msg);
+            std_srvs::Empty empty;
+            BrakeSrv.call(empty);
 			ros::spinOnce();
 			
 			if(timed_out)

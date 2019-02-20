@@ -12,8 +12,8 @@
       <param name="Sensor_3" value="True" />
       <param name="Sensor_4" value="True" />
       <param name="Sensor_5" value="True" />
-      <param name="Sensor_6" value="True" />
-      <param name="Sensor_7" value="True" />
+      <param name="Sensor_6" value="False" />
+      <param name="Sensor_7" value="False" />
       <!-- Remapping topic when using converter nodes-->
       <remap from="ranges" to="ranges_raw" />
     </node>

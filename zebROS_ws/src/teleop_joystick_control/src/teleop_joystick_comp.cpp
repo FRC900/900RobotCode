@@ -223,13 +223,15 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
             //std_msgs::Bool enable_pid;
 			//enable_pid.data = true;
             //navX_pid.publish(enable_pid);
-
-			behaviors::AlignGoal goal;
-			goal.trigger = true;
-			align_ac->sendGoal(goal);
+			//std_msgs::Bool enable_stuff;
+			//enable_stuff.data = true;
+			//align_with_terabee_pub.publish(enable_stuff);
 		}
 		if(joystick_states_array[0].buttonARelease)
 		{
+			//std_msgs::Bool enable_stuff;
+			//enable_stuff.data = false;
+			//align_with_terabee_pub.publish(enable_stuff);
 			ROS_INFO_STREAM("Joystick1: buttonARelease");
 		}
 
@@ -735,7 +737,7 @@ int main(int argc, char **argv)
 
 
 	run_align = n.serviceClient<std_srvs::SetBool>("/align_with_terabee/run_align");
-	align_with_terabee_pub = n.advertise<std_msgs::Bool>("/frcrobot_jetson/align_with_terabee_pub", 1);
+	align_with_terabee_pub = n.advertise<std_msgs::Bool>("/align_server/align_with_terabee/enable_y_pub", 1);
 
 	ROS_WARN("joy_init");
 
