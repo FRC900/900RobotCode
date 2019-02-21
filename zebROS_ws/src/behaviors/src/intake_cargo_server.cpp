@@ -1,6 +1,3 @@
-#ifndef cargo_intake_server
-#define cargo_intake_server
-
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
@@ -154,8 +151,6 @@ class CargoIntakeAction {
 					ROS_ERROR("%s: Srv intake call failed", action_name_.c_str());
 					preempted = true;
 				}
-				//update everything by doing spinny stuff
-				ros::spinOnce();
 
 				//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
 				while(!success && !timed_out && !preempted) {
@@ -169,7 +164,6 @@ class CargoIntakeAction {
 					else if(!success) 
 					{
 						r.sleep();
-						ros::spinOnce();
 					}
 				}
 			}
@@ -289,8 +283,9 @@ int main(int argc, char** argv) {
 	if (!n_params_intake.getParam("pause_before_running_motor", pause_before_running_motor))
 		ROS_ERROR("Could not read pause_before_running_motor in cargo_intake_server");
 
-	ros::spin();
+	ros::AsyncSpinner Spinner(2);
+	Spinner.start();
+	ros::waitForShutdown();
 	return 0;
 }
 
-#endif
