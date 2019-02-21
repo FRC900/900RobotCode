@@ -44,7 +44,7 @@ class ElevatorAction {
 
 		double timeout;
 
-        ElevatorAction(std::string name) :
+        ElevatorAction(const std::string &name) :
             as_(nh_, name, boost::bind(&ElevatorAction::executeCB, this, _1), false),
             action_name_(name)
         {
@@ -74,7 +74,6 @@ class ElevatorAction {
             ros::Rate r(10);
 
 			//Define variables that will be set to true once the server finishes executing
-            bool success = false;
 			bool preempted = false;
             bool timed_out = false;
 
@@ -125,6 +124,8 @@ class ElevatorAction {
 
 			if(!preempted)
 			{
+				bool success = false;
+
 				//send request to elevator controller
 				elevator_controller::ElevatorSrv srv;
 				srv.request.position = elevator_cur_setpoint_;
