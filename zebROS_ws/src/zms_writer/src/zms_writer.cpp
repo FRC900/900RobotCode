@@ -58,6 +58,7 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "goal_detect");
+	ros::NodeHandle nh("~");
 
 	char name[PATH_MAX];
 	int index = -1;
@@ -73,7 +74,6 @@ int main(int argc, char **argv)
 	sprintf(name, "/home/ubuntu/Documents/zms/cap%d_0.zms", index);
 	zmsOut = new ZMSOut(name, 1, 250, true);
 
-	ros::NodeHandle nh("~");
 	nh.getParam("down_sample", down_sample);
 
 	// Sync up timestamps to find image and depth
