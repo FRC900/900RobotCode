@@ -27,7 +27,7 @@ double max_speed;
 double max_rot;
 double joystick_pow;
 double rotation_pow;
-double linebreak_debounce_iterations;
+int linebreak_debounce_iterations;
 
 int elevator_cur_setpoint_idx;
 int climber_cur_step;
@@ -690,7 +690,7 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 	else
 	{
 		ROS_WARN_THROTTLE(1, "outtake line break sensor not found in joint_states");
-		cargo_linebreak_false_count += 1;
+		cargo_linebreak_false_count = 0;
 		cargo_linebreak_true_count = 0;
 	}
 
