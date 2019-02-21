@@ -19,6 +19,7 @@
 #include "std_msgs/Bool.h"
 #include "std_srvs/SetBool.h"
 #include <vector>
+#include "teleop_joystick_control/RobotOrient.h"
 
 double joystick_deadzone;
 double slow_mode;
@@ -35,6 +36,9 @@ bool previously_intook_panel = false;
 
 const int climber_num_steps = 4;
 const int elevator_num_setpoints = 4;
+
+bool robot_orient = false;
+double offset_angle = 0;
 
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
@@ -121,6 +125,15 @@ void preemptActionlibServers()
 	align_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 }
 
+bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
+					teleop_joystick_control::RobotOrient::Response& res)
+{
+	robot_orient = req.robot_orient;
+	offset_angle = req.offset_angle;
+	ROS_WARN_STREAM("Robot Orient = " << (robot_orient) << ", Offset Angle = " << offset_angle);
+	return true;
+}
+
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
 	int i = 0;
@@ -191,8 +204,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			Eigen::Vector2d joyVector;
 			joyVector[0] = leftStickX; //intentionally flipped
 			joyVector[1] = -leftStickY;
-			const Eigen::Rotation2Dd r(-navX_angle - M_PI / 2.);
-			const Eigen::Vector2d rotatedJoyVector = r.toRotationMatrix() * joyVector;
+
+			const Eigen::Rotation2Dd rotate((robot_orient ? -offset_angle : -navX_angle) -M_PI / 2.);
+      const Eigen::Vector2d rotatedJoyVector = rotate.toRotationMatrix() * joyVector;
 
 			geometry_msgs::Twist vel;
 			vel.linear.x = rotatedJoyVector[1];
@@ -728,6 +742,8 @@ int main(int argc, char **argv)
 
 	run_align = n.serviceClient<std_srvs::SetBool>("/align_with_terabee/run_align");
 	align_with_terabee_pub = n.advertise<std_msgs::Bool>("/frcrobot_jetson/align_with_terabee_pub", 1);
+
+	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 
 	ROS_WARN("joy_init");
 
