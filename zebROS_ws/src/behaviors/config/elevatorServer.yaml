@@ -1,16 +1,16 @@
 actionlib_lift_params:
     cargo:
-        intake_position: 4.0
+        intake_position: 0.0
         cargo_ship_position: 2.5
-        rocket1_position: 1.0
-        rocket2_position: 2.0
-        rocket3_position: 3.0
+        rocket1_position: 0.427260696617
+        rocket2_position: 1.07003544694
+        rocket3_position: 1.65
     hatch:
-        intake_position: 6.0
-        cargo_ship_position: 0.5
-        rocket1_position: 1.0
-        rocket2_position: 2.0
-        rocket3_position: 3.0
+        intake_position: 0.0
+        cargo_ship_position: 0.0
+        rocket1_position: 0.0
+        rocket2_position: 0.72
+        rocket3_position: 1.46257241755 
     climber:
         deploy_position: -1.0
         climb_position: -1.0
