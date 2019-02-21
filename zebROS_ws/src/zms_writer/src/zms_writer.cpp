@@ -65,12 +65,12 @@ int main(int argc, char **argv)
 	struct stat statbuf;
 	do
 	{
-		sprintf(name, "/mnt/900_2/cap%d_0.zms", ++index);
+		sprintf(name, "/home/ubuntu/Documents/zms/cap%d_0.zms", ++index);
 		rc = stat(name, &statbuf);
 	}
 	while (rc == 0);
 
-	sprintf(name, "/mnt/900_2/cap%d.zms", index);
+	sprintf(name, "/home/ubuntu/Documents/zms/cap%d_0.zms", index);
 	zmsOut = new ZMSOut(name, 1, 250, true);
 
 	ros::NodeHandle nh("~");
