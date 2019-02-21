@@ -122,7 +122,7 @@
 	<group ns="align_server">
 
 		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
-		<node name="align_server" pkg="behaviors" type="align_server" output="screen" />
+		<node name="align_ac_server" pkg="behaviors" type="align_server" output="screen" />
 
 		<!-- Terabee stuffs -->
 		<rosparam file="$(find behaviors)/config/align_with_terabee.yaml" command="load"/>

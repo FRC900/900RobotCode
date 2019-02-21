@@ -65,14 +65,23 @@ class AlignAction {
 
 		void navx_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
+<<<<<<< HEAD
 			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold);
 			ROS_WARN_STREAM_THROTTLE(0.5, "navX error" << fabs(msg.data[0]));
+=======
+			orient_aligned_ = (fabs(msg.data[0]) > orient_error_threshold);
+			ROS_WARN("navX error" << fabs(msg.data[0]));
+>>>>>>> daec9f013a90ca7f9663619cce72477810a7388d
 		}
 
 		void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
+<<<<<<< HEAD
 			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold);
 			ROS_WARN_STREAM_THROTTLE(0.5, "distance error" << msg.data[0]);
+=======
+			x_aligned_ = (fabs(msg.data[0]) > x_error_threshold);
+>>>>>>> daec9f013a90ca7f9663619cce72477810a7388d
 		}
 
 		void y_error_cb(const std_msgs::Bool &msg)
@@ -101,7 +110,11 @@ class AlignAction {
 
 				timed_out = (ros::Time::now().toSec() - start_time) > align_timeout;
 				preempted = as_.isPreemptRequested();
+<<<<<<< HEAD
 				ROS_WARN_THROTTLE(.5, "Orienting");
+=======
+				ROS_INFO_THROTTLE(.5, "Orienting");
+>>>>>>> daec9f013a90ca7f9663619cce72477810a7388d
 			}
 			geometry_msgs::Twist cmd_vel_msg;
 			cmd_vel_msg.linear.x = 0.0;

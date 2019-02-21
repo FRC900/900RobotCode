@@ -226,6 +226,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//std_msgs::Bool enable_stuff;
 			//enable_stuff.data = true;
 			//align_with_terabee_pub.publish(enable_stuff);
+
+			behaviors::AlignGoal goal;
+			goal.trigger = true;
+			align_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonARelease)
 		{
