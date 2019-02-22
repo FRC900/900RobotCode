@@ -10,6 +10,8 @@
 //TODO: not global. namespace?
 double elevator_position_deadzone;
 int min_climb_idx = ELEVATOR_DEPLOY; //reference to minimum index in enumerated elevator indices, used for determining which indices are for climbing (this idx or greater)
+double collision_range_min;
+double collision_range_max;
 
 class ElevatorAction {
     protected:
@@ -22,7 +24,8 @@ class ElevatorAction {
         behaviors::ElevatorResult result_;
 
 		//Define service client to control elevator
-        ros::ServiceClient elevator_client_;
+		ros::ServiceClient elevator_client_;
+        ros::ServiceClient cargo_intake_client_;
 
 		//Subscriber to monitor talon positions
         ros::Subscriber talon_states_sub;
@@ -50,6 +53,7 @@ class ElevatorAction {
 
 			//Client for elevator controller
             elevator_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
+            cargo_intake_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_service", false, service_connection_header);
 
 			//Talon states subscriber
             talon_states_sub = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);
@@ -131,6 +135,14 @@ class ElevatorAction {
 				//wait for elevator controller to finish
 				while(!success && !timed_out && !preempted) {
 					success = fabs(cur_position_ - elevator_cur_setpoint_) < elevator_position_deadzone;
+					if(cur_position_ > collision_range_min && cur_position_ < collision_range_max)
+					{
+						cargo_intake_controller::CargoIntakeSrv cargo_intake_srv;
+						cargo_intake_srv.intake_arm = true;
+						cargo_intake_srv.power = 0.0;
+						cargo_intake_client_.call(cargo_intake_srv);
+					}
+
 					ROS_INFO_STREAM("elevator server: cur position = " << cur_position_ << " elevator_cur_setpoint " << elevator_cur_setpoint_);
 					if(as_.isPreemptRequested() || !ros::ok())
 					{
@@ -143,6 +155,13 @@ class ElevatorAction {
 						r.sleep();
 					}
 					timed_out = ros::Time::now().toSec() - start_time > timeout;
+				}
+				if(!(cur_position_ > collision_range_min && cur_position_ < collision_range_max) && goal->raise_intake_after_success)
+				{
+					cargo_intake_controller::CargoIntakeSrv cargo_intake_srv;
+					cargo_intake_srv.intake_arm = false;
+					cargo_intake_srv.power = 0.0;
+					cargo_intake_client_.call(cargo_intake_srv);
 				}
 			}
 
@@ -221,6 +240,18 @@ int main(int argc, char** argv)
 	{
 		ROS_ERROR("Could not read elevator_deadzone in elevator_server");
 		elevator_position_deadzone = 0.1;
+	}
+
+	if (!n_params.getParam("collision_range_min", collision_range_min))
+	{
+		ROS_ERROR("Could not read collision_range_min in elevator_server");
+		collision_range_min = 0;
+	}
+
+	if (!n_params.getParam("collision_range_max", collision_range_max))
+	{
+		ROS_ERROR("Could not read collision_range_max in elevator_server");
+		collision_range_max = 0;
 	}
 
 	//read locations for elevator placement for HATCH PANEL
