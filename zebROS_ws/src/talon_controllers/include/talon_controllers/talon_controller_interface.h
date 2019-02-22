@@ -205,6 +205,8 @@ class TalonCIParams
 			conversion_factor_ = config.conversion_factor;
 
 			custom_profile_hz_ = config.custom_profile_hz;
+
+			enable_read_thread_ = true;
 		}
 
 		// Copy from internal state to TalonConfigConfig state

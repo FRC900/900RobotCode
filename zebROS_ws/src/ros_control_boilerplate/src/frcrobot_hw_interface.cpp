@@ -570,13 +570,6 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 	ros::Time last_sensor_collection_time = ros::Time::now();
 	ros::Duration sensor_collection_period;
 
-	// This never changes so read it once when the thread is started
-	int can_id;
-	{
-		std::lock_guard<std::mutex> l(*mutex);
-		can_id = state->getCANID();
-	}
-
 	while(ros::ok())
 	{
 		tracer.start("talon read main_loop");
@@ -718,7 +711,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 				safeTalonCall(talon->GetLastError(), "GetErrorDerivative");
 
 				// Not sure of timing on this?
-				const double closed_loop_target = talon->GetClosedLoopTarget(pidIdx) * closed_loop_scale;
+				closed_loop_target = talon->GetClosedLoopTarget(pidIdx) * closed_loop_scale;
 				safeTalonCall(talon->GetLastError(), "GetClosedLoopTarget");
 				state->setClosedLoopTarget(closed_loop_target);
 
@@ -844,6 +837,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			{
 				state->setBusVoltage(bus_voltage);
 				state->setTemperature(temperature);
+				state->setOutputVoltage(output_voltage);
 			}
 
 			if ((talon_mode == hardware_interface::TalonMode_Position) ||
@@ -1447,7 +1441,6 @@ double FRCRobotHWInterface::getConversionFactor(int encoder_ticks_per_rotation,
 
 bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name)
 {
-	return true;
 	std::string error_name;
 	switch (error_code)
 	{
@@ -1877,11 +1870,19 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				// Only enable once settings are correctly written to the Talon
 				talon->EnableVoltageCompensation(v_c_enable);
 				rc &= safeTalonCall(talon->GetLastError(), "EnableVoltageCompensation");
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" voltage compensation");
+				if (rc)
+				{
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" voltage compensation");
 
-				ts.setVoltageCompensationSaturation(v_c_saturation);
-				ts.setVoltageMeasurementFilter(v_measurement_filter);
-				ts.setVoltageCompensationEnable(v_c_enable);
+					ts.setVoltageCompensationSaturation(v_c_saturation);
+					ts.setVoltageMeasurementFilter(v_measurement_filter);
+					ts.setVoltageCompensationEnable(v_c_enable);
+				}
+				else
+				{
+					tc.resetVoltageCompensation();
+				}
+
 			}
 			else
 			{
@@ -2096,13 +2097,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		}
 
 		{
-#ifdef USE_TALON_MOTION_PROFILE
-			// Lock this so that the motion profile update
-			// thread doesn't update in the middle of writing
-			// motion profile params
-			std::lock_guard<std::mutex> l(*motion_profile_mutexes_[joint_id]);
-#endif
-
 			if (motion_profile_mode)
 			{
 				double motion_cruise_velocity;

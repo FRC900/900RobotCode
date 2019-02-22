@@ -1,6 +1,3 @@
-#ifndef cargo_intake_server
-#define cargo_intake_server
-
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
@@ -19,6 +16,7 @@ double roller_power;
 double intake_timeout;
 double linebreak_debounce_iterations;
 double wait_for_server_timeout;
+double pause_before_running_motor = 0;
 
 class CargoIntakeAction {
 	protected:
@@ -130,6 +128,7 @@ class CargoIntakeAction {
 				outtake_srv.request.kicker_in = true;
 				outtake_srv.request.clamp_release = true;
 				cargo_outtake_controller_client_.call(outtake_srv);
+				ros::Duration(pause_before_running_motor).sleep();
 			}
 
 			//send command to lower arm and run roller to the cargo intake controller ------
@@ -152,8 +151,6 @@ class CargoIntakeAction {
 					ROS_ERROR("%s: Srv intake call failed", action_name_.c_str());
 					preempted = true;
 				}
-				//update everything by doing spinny stuff
-				ros::spinOnce();
 
 				//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
 				while(!success && !timed_out && !preempted) {
@@ -167,7 +164,6 @@ class CargoIntakeAction {
 					else if(!success) 
 					{
 						r.sleep();
-						ros::spinOnce();
 					}
 				}
 			}
@@ -284,9 +280,12 @@ int main(int argc, char** argv) {
 		ROS_ERROR("Could not read roller_power in cargo_intake_server");
 	if (!n_params_intake.getParam("intake_timeout", intake_timeout))
 		ROS_ERROR("Could not read intake_timeout in cargo_intake_server");
+	if (!n_params_intake.getParam("pause_before_running_motor", pause_before_running_motor))
+		ROS_ERROR("Could not read pause_before_running_motor in cargo_intake_server");
 
-	ros::spin();
+	ros::AsyncSpinner Spinner(2);
+	Spinner.start();
+	ros::waitForShutdown();
 	return 0;
 }
 
-#endif

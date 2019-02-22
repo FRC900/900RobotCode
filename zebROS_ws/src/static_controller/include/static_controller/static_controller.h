@@ -10,8 +10,8 @@ namespace static_controller
  * \brief Static controller
  *
  * This class creates a controller which sets a joint to
- * a fixed value when started. Used mainly to communicate 
- * state to the controller manager. 
+ * a fixed value when started. Used mainly to communicate
+ * state to the controller manager.
  *
  * \section ROS interface
  *
@@ -24,7 +24,7 @@ class StaticController:
 	public controller_interface::Controller<hardware_interface::JointCommandInterface>
 {
 	public:
-		StaticController(void) {}
+		StaticController(void) : value_(0) {}
 		~StaticController() {}
 
 		virtual bool init(hardware_interface::JointCommandInterface *hw, ros::NodeHandle &n) override;

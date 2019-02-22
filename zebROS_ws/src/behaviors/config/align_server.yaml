@@ -1,0 +1,5 @@
+align_server_params:
+    align_timeout: 10
+    x_error_threshold: 0.05
+    orient_error_threshold: 0.05
+

@@ -36,10 +36,4 @@ void StaticController::update(const ros::Time & /*time*/, const ros::Duration & 
 
 }
 
-#if 0
-void static_controller::update()
-{
-}
-#endif
-
 PLUGINLIB_EXPORT_CLASS(static_controller::StaticController,controller_interface::ControllerBase)
