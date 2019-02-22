@@ -32,7 +32,7 @@ int elevator_cur_setpoint_idx;
 int climber_cur_step;
 
 bool previously_intook_cargo = false; //previous command intook if true, next press will be false
-bool previously_intook_panel = false;
+bool previously_intook_panel = false; //TODO: change to relying on linebreak sensors instead of a toggle.
 
 const int climber_num_steps = 4;
 const int elevator_num_setpoints = 4;
@@ -126,8 +126,9 @@ void preemptActionlibServers()
 }
 
 bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
-					teleop_joystick_control::RobotOrient::Response& res)
+		teleop_joystick_control::RobotOrient::Response& res)
 {
+	// Used to switch between robot orient and field orient driving
 	robot_orient = req.robot_orient;
 	offset_angle = req.offset_angle;
 	ROS_WARN_STREAM("Robot Orient = " << (robot_orient) << ", Offset Angle = " << offset_angle);
@@ -141,6 +142,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	const ros::M_string &header = event.getConnectionHeader();
 
 	std::string topic = header.at("topic");
+
+	//Identifies the incoming message as the correct joystick based on the topic the message was recieved from
 	for(bool msg_assign = false; msg_assign == false; i++)
 	{
 		if(topic == topic_array[i])
@@ -206,7 +209,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			joyVector[1] = -leftStickY;
 
 			const Eigen::Rotation2Dd rotate((robot_orient ? -offset_angle : -navX_angle) -M_PI / 2.);
-      const Eigen::Vector2d rotatedJoyVector = rotate.toRotationMatrix() * joyVector;
+			const Eigen::Vector2d rotatedJoyVector = rotate.toRotationMatrix() * joyVector;
 
 			geometry_msgs::Twist vel;
 			vel.linear.x = rotatedJoyVector[1];
@@ -224,6 +227,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonA
 		if(joystick_states_array[0].buttonAPress)
 		{
+			//Align the robot
 			ROS_WARN("Joystick1: buttonAPress - Auto Align");
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
@@ -268,7 +272,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonX
 		if(joystick_states_array[0].buttonXPress)
 		{
-
+			//Determines where elevator will go when called to outtake or move to a setpoint
 			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
 			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % elevator_num_setpoints;
 			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
@@ -316,6 +320,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			preemptActionlibServers();
 			if(previously_intook_cargo)
 			{
+				//If we have a cargo, outtake it
 				ROS_INFO_STREAM("Joystick1: Place Cargo");
 				behaviors::PlaceGoal goal;
 				goal.setpoint_index = elevator_cur_setpoint_idx;
@@ -325,6 +330,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 			else
 			{
+				//If we don't have a cargo, intake one
 				ROS_INFO_STREAM("Joystick1: Intake Cargo");
 				behaviors::IntakeGoal goal;
 				intake_cargo_ac->sendGoal(goal);
@@ -346,6 +352,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			preemptActionlibServers();
 			if(previously_intook_panel)
 			{
+				//If we have a panel, outtake it
 				ROS_INFO_STREAM("Joystick1: Place Panel");
 				behaviors::PlaceGoal goal;
 				goal.setpoint_index = elevator_cur_setpoint_idx;
@@ -355,6 +362,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 			else
 			{
+				//If we don't have a panel, intake one
 				ROS_INFO_STREAM("Joystick1: Intake Panel");
 				behaviors::IntakeGoal goal;
 				intake_hatch_panel_ac->sendGoal(goal);
@@ -373,6 +381,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: directionLeft
 		if(joystick_states_array[0].directionLeftPress)
 		{
+			//Move the elevator to the current setpoint
 			ROS_WARN("Calling elevator server; move to setpoint %d", elevator_cur_setpoint_idx);
 			preemptActionlibServers();
 			behaviors::ElevatorGoal goal;
@@ -392,6 +401,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: directionRight
 		if(joystick_states_array[0].directionRightPress)
 		{
+			//Preempt every server running; for emergencies or testing only
 			ROS_WARN("Preempting All Servers");
 			preemptActionlibServers();
 		}
@@ -406,6 +416,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: directionUp
 		if(joystick_states_array[0].directionUpPress)
 		{
+			//Start or move to the next step of the climb
 			ROS_INFO_STREAM("Joystick1: Calling Climber Server");
 			preemptActionlibServers();
 			ROS_WARN("Climber current step = %d", climber_cur_step);
@@ -425,6 +436,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: directionDown
 		if(joystick_states_array[0].directionDownPress)
 		{
+			//Abort the climb and lower back down
 			ROS_WARN("Joystick1: Preempting Climber Server");
 			climber_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 			climber_cur_step = 0;
