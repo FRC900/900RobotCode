@@ -32,10 +32,10 @@ int linebreak_debounce_iterations;
 int elevator_cur_setpoint_idx;
 int climber_cur_step;
 
-bool cargo_linebreak_true_count = 0;
-bool panel_linebreak_true_count = 0;
-bool cargo_linebreak_false_count = 0;
-bool panel_linebreak_false_count = 0;
+int cargo_linebreak_true_count = 0;
+int panel_linebreak_true_count = 0;
+int cargo_linebreak_false_count = 0;
+int panel_linebreak_false_count = 0;
 
 
 const int climber_num_steps = 4;
@@ -46,6 +46,7 @@ double offset_angle = 0;
 
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
+ros::Subscriber joint_states_sub;
 
 // 500 msec to go from full back to full forward
 const double drive_rate_limit_time = 500.;
@@ -720,7 +721,7 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 		cargo_linebreak_true_count = 0;
 	}
 
-	if (panel_linebreak_1_idx < joint_state.position.size() || panel_linebreak_2_idx < joint_state.position.size())
+	if (panel_linebreak_1_idx < joint_state.position.size() && panel_linebreak_2_idx < joint_state.position.size())
 	{
 		bool panel_linebreak_true = ((joint_state.position[panel_linebreak_1_idx] != 0) || (joint_state.position[panel_linebreak_2_idx] != 0));
 		if(panel_linebreak_true)
@@ -810,7 +811,7 @@ int main(int argc, char **argv)
 	}
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
-	ros::Subscriber joint_states_sub = n.subscribe("joint_states", 1, jointStateCallback);
+	joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
 	//initialize actionlib clients
 	intake_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>>("/cargo_intake/cargo_intake_server", true);
