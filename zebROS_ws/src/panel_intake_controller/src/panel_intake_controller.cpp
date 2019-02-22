@@ -19,6 +19,9 @@ namespace panel_intake_controller
 
 	void PanelIntakeController::starting(const ros::Time &/*time*/) {
 		// TODO : defaults?
+		last_claw_cmd_ = true;
+		claw_cmd_.writeFromNonRT(false); //take the service request for in/out (true/false???) and write to a command variable
+		push_cmd_.writeFromNonRT(false);
 	}
 
 	void PanelIntakeController::update(const ros::Time &time, const ros::Duration &period) {
