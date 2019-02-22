@@ -40,7 +40,7 @@ elevator_controller:
         # Only need one direction, to
         # prevent the elevator from running off the top
         softlimit_forward_threshold: 1.5 #1.66755
-        softlimit_forward_enable: True
+        softlimit_forward_enable: False
 
         voltage_compensation_enable: True
         voltage_compensation_saturation: 12.5
@@ -53,7 +53,12 @@ elevator_controller:
 
     elevator_follower1: 
         joint: elevator_follower1
+        sensor_phase: True 
         invert_output: False
+        feedback_type: CTRE_MagEncoder_Relative
+        conversion_factor: 0.02959
+
+        dynamic_reconfigure: true
 
     elevator_follower2: 
         joint: elevator_follower2
