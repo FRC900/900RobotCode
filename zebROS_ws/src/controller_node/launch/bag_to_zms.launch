@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<launch>
+	<param name="use_sim_time" value="true" />
+	<param name="bag" value="home/ubuntu/Downloads/Match-2_1.bag"/>
+	<node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/ubuntu/Downloads/Match-2_1.bag"/>
+	<node name="zms_writer_node" pkg="zms_writer" type="zms_writer_node" output= "screen">
+		<arg name="bag" value="$(arg bag)" />
+	</node>
+</launch>
