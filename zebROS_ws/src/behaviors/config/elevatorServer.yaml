@@ -1,7 +1,7 @@
 actionlib_lift_params:
     cargo:
         intake_position: 0.0
-        cargo_ship_position: 2.5
+        cargo_ship_position: 0.427 # TODO fix me
         rocket1_position: 0.427260696617
         rocket2_position: 1.07003544694
         rocket3_position: 1.65
@@ -21,4 +21,6 @@ actionlib_lift_params:
     max_speed: -1.0
     timeout: 4
     elevator_position_deadzone: 0.1
+    collision_range_min: 0.01
+    collision_range_max: 0.5
 
