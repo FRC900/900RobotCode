@@ -20,6 +20,7 @@ enum TalonMode
 	TalonMode_Follower,
 	TalonMode_MotionProfile,
 	TalonMode_MotionMagic,
+	TalonMode_MotionProfileArc,
 	TalonMode_Disabled,
 	TalonMode_Last
 };
