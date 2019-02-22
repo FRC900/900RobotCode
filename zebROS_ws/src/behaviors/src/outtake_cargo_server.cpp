@@ -101,28 +101,26 @@ class CargoOuttakeAction {
 			bool timed_out = false;
 
 			//send elevator to outtake position
-			if(!preempted && !timed_out) {
-				ROS_WARN_STREAM("cargo outtake server: sending elevator to outtake setpoint");
-				behaviors::ElevatorGoal elevator_goal;
-				elevator_goal.setpoint_index = goal->setpoint_index;
-				elevator_goal.place_cargo = true;
-				ac_elevator_.sendGoal(elevator_goal);
+			ROS_WARN_STREAM("cargo outtake server: sending elevator to outtake setpoint");
+			behaviors::ElevatorGoal elevator_goal;
+			elevator_goal.setpoint_index = goal->setpoint_index;
+			elevator_goal.place_cargo = true;
+			ac_elevator_.sendGoal(elevator_goal);
 
-				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(outtake_timeout - (ros::Time::now().toSec() - start_time), 0.001))); //Wait for server to finish or until timeout is reached
-				if(finished_before_timeout) {
-					actionlib::SimpleClientGoalState state = ac_elevator_.getState();
-					if(state.toString() != "SUCCEEDED") {
-						ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
-						preempted = true;
-					}
-					else {
-						ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
-					}
+			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(outtake_timeout - (ros::Time::now().toSec() - start_time), 0.001))); //Wait for server to finish or until timeout is reached
+			if(finished_before_timeout) {
+				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
+				if(state.toString() != "SUCCEEDED") {
+					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
+					preempted = true;
 				}
 				else {
-					ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
-					timed_out = true;
+					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
 				}
+			}
+			else {
+				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
+				timed_out = true;
 			}
 
 			ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
