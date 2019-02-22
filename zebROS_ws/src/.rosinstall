@@ -34,18 +34,8 @@
     local-name: rospy_message_converter
     uri: https://github.com/FRC900/rospy_message_converter.git
 - git:
-    local-name: rplidar_ros
-    uri: https://github.com/FRC900/rplidar_ros.git
-- git:
     local-name: zed-ros-wrapper
     uri: https://github.com/FRC900/zed-ros-wrapper.git
-- git:
-    local-name: ydlidar
-    uri: https://github.com/EAIBOT/ydlidar.git
-- git:
-    local-name: sick_tim
-    uri: https://github.com/uos/sick_tim.git
-    version: kinetic
 - git:
     local-name: teraranger
     uri: https://github.com/Terabee/teraranger.git
