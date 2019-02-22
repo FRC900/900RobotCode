@@ -389,6 +389,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			preemptActionlibServers();
 			behaviors::ElevatorGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_idx;
+			goal.raise_intake_after_success  = true;
 			elevator_ac->sendGoal(goal);
 			elevator_cur_setpoint_idx = 0;
 			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);

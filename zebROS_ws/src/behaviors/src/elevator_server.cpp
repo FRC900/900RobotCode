@@ -6,6 +6,7 @@
 #include <talon_state_controller/TalonState.h>
 #include <elevator_controller/ElevatorSrv.h>
 #include "behaviors/enumerated_elevator_indices.h"
+#include "cargo_intake_controller/CargoIntakeSrv.h"
 
 //TODO: not global. namespace?
 double elevator_position_deadzone;
@@ -53,7 +54,7 @@ class ElevatorAction {
 
 			//Client for elevator controller
             elevator_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
-            cargo_intake_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_service", false, service_connection_header);
+            cargo_intake_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 
 			//Talon states subscriber
             talon_states_sub = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);
@@ -137,9 +138,18 @@ class ElevatorAction {
 					success = fabs(cur_position_ - elevator_cur_setpoint_) < elevator_position_deadzone;
 					if(cur_position_ > collision_range_min && cur_position_ < collision_range_max)
 					{
+						ROS_WARN_STREAM("running the thiiiiiiiiiing");
 						cargo_intake_controller::CargoIntakeSrv cargo_intake_srv;
-						cargo_intake_srv.intake_arm = true;
-						cargo_intake_srv.power = 0.0;
+						cargo_intake_srv.request.intake_arm = true;
+						cargo_intake_srv.request.power = 0.0;
+						cargo_intake_client_.call(cargo_intake_srv);
+					}
+					if(!(cur_position_ > collision_range_min && (cur_position_ + .1) < collision_range_max) && goal->raise_intake_after_success)
+					{
+						ROS_WARN_STREAM("running the thiiiiiiiiiing back up");
+						cargo_intake_controller::CargoIntakeSrv cargo_intake_srv;
+						cargo_intake_srv.request.intake_arm = false;
+						cargo_intake_srv.request.power = 0.0;
 						cargo_intake_client_.call(cargo_intake_srv);
 					}
 
@@ -155,13 +165,6 @@ class ElevatorAction {
 						r.sleep();
 					}
 					timed_out = ros::Time::now().toSec() - start_time > timeout;
-				}
-				if(!(cur_position_ > collision_range_min && cur_position_ < collision_range_max) && goal->raise_intake_after_success)
-				{
-					cargo_intake_controller::CargoIntakeSrv cargo_intake_srv;
-					cargo_intake_srv.intake_arm = false;
-					cargo_intake_srv.power = 0.0;
-					cargo_intake_client_.call(cargo_intake_srv);
 				}
 			}
 
