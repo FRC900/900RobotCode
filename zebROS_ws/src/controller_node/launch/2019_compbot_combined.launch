@@ -10,6 +10,7 @@
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="joy_or_key" default="joy" />
 	<arg name="static_map" default="True"/>
+	<arg name="record" default="false"/>
 	
     <!-- Jetson Nodes -->
     <include file="$(find controller_node)/launch/2019_compbot_jetson.launch" pass_all_args="true"/>

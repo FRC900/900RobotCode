@@ -118,6 +118,7 @@ class ClimbAction {
 			//if both of these are false, we assume the action succeeded
 			bool preempted = false;
 			bool timed_out = false;
+			bool finished_before_timeout = false;
 
 			if(goal->step == 0)
 			{
@@ -138,7 +139,7 @@ class ClimbAction {
 				}
 
 				// raise elevator to right height so we can engage the climber ------------------------------------------------
-				if(!preempted && !timed_out)
+				if(!preempted && !timed_out && ros::ok())
 				{
 					ROS_INFO("climber server step 0: raising elevator before climber is engaged");
 
@@ -150,8 +151,8 @@ class ClimbAction {
 					goal.raise_intake_after_success = true;
 					//send the goal
 					ae_.sendGoal(goal);
-					if(!ae_.waitForResult(ros::Duration(elevator_deploy_timeout))); //wait until the action finishes, whether it succeeds, times out, or is preempted
-					{
+					finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_deploy_timeout)); //wait until the action finishes, whether it succeeds, times out, or is preempted
+					if(!finished_before_timeout){
 						ROS_ERROR("climber server step 0: first elevator raise timed out");
 						timed_out = true;
 					}
@@ -176,7 +177,7 @@ class ClimbAction {
 				} //end of raise elevator to right height before engaging
 
 				//engage climber with elevator controller -----------------------------------------------------------------
-				if(!preempted && !timed_out)
+				if(!preempted && !timed_out && ros::ok())
 				{
 					ROS_INFO("climber server step 0: engaging the climber with the elvator");
 
@@ -197,7 +198,7 @@ class ClimbAction {
 				ros::Duration(1).sleep();
 
 				//lower elevator to make robot rise off ground
-				if(!preempted && !timed_out)
+				if(!preempted && !timed_out && ros::ok())
 				{
 					ROS_INFO("climber server step 0: lowering elevator to make robot climb");
 
@@ -209,7 +210,8 @@ class ClimbAction {
 					goal.raise_intake_after_success = true;
 					//send the goal
 					ae_.sendGoal(goal);
-					if(!ae_.waitForResult(ros::Duration(elevator_climb_timeout))) //wait until the action finishes, whether it succeeds, times out, or is preempted
+					finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_timeout));
+					if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
 						ROS_ERROR("climber server step 0: second elevator move timed out");
 
 					//determine the outcome of the goal
@@ -239,7 +241,8 @@ class ClimbAction {
 					goal.raise_intake_after_success = true;
 					//send the goal
 					ae_.sendGoal(goal);
-					if(!ae_.waitForResult(ros::Duration(elevator_climb_timeout))) //wait until the action finishes, whether it succeeds, times out, or is preempted
+					finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_timeout));
+					if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
 					{
 						ROS_ERROR("climber server step 0: preempt/timeout handling elevator move timed out");
 					}
@@ -283,7 +286,8 @@ class ClimbAction {
 				goal.raise_intake_after_success = true;
 				//send the goal
 				ae_.sendGoal(goal);
-				if(!ae_.waitForResult(ros::Duration(elevator_deploy_timeout))) //wait until the action finishes, whether it succeeds, times out, or is preempted
+				finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_deploy_timeout));
+				if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
 					ROS_ERROR("climber server step 2: elevator raise timed out");
 
 				//determine the outcome of the goal
@@ -320,7 +324,8 @@ class ClimbAction {
 				goal.raise_intake_after_success = true;
 				//send the goal
 				ae_.sendGoal(goal);
-				if(!ae_.waitForResult(ros::Duration(elevator_climb_low_timeout))) //wait until the action finishes, whether it succeeds, times out, or is preempted
+				finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_low_timeout));
+				if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
 					ROS_ERROR("climber server step 3: elevator move timed out");
 
 				//determine the outcome of the goal

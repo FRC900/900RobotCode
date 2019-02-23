@@ -81,7 +81,7 @@ class AlignAction {
 			bool preempted = false;
 			bool timed_out = false;
 
-			while(!orient_aligned_ && !preempted && !timed_out)
+			while(!orient_aligned_ && !preempted && !timed_out && ros::ok())
 			{
 				ros::spinOnce();
 				r.sleep();
@@ -105,7 +105,7 @@ class AlignAction {
 
 			start_time = ros::Time::now().toSec();
 			bool aligned = false;
-			while(!aligned && !preempted && !timed_out)
+			while(!aligned && !preempted && !timed_out && ros::ok())
 			{
 				ros::spinOnce();
 				r.sleep();

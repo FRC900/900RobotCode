@@ -127,7 +127,7 @@ class CargoOuttakeAction {
 			ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 
 			//send command to unclamp cargo ----
-			if(!preempted && !timed_out)
+			if(!preempted && !timed_out && ros::ok())
 			{
 				ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 				ROS_WARN("%s: unclamping cargo", action_name_.c_str());
@@ -150,7 +150,7 @@ class CargoOuttakeAction {
 
 			ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 			//send command to kick cargo, after waiting for a short period of time
-			if(!preempted && !timed_out)
+			if(!preempted && !timed_out && ros::ok())
 			{
 				ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 				ros::Duration(pause_time_between_pistons).sleep();
@@ -175,7 +175,7 @@ class CargoOuttakeAction {
 
 
 			//set ending state of controller no matter what happened: unclamped and kicker not in kicking position
-			if(!preempted && !timed_out)
+			if(!preempted && !timed_out && ros::ok())
 			{
 				ros::Duration(pause_time_between_pistons).sleep(); //pause so we don't retract the kicker immediately after kicking
 			}

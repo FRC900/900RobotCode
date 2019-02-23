@@ -57,7 +57,6 @@ rate_limiter::RateLimiter left_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_ti
 rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 
 
-ros::Publisher navX_pid;
 ros::Publisher JoystickRobotVel;
 ros::Publisher align_with_terabee_pub;
 ros::ServiceClient BrakeSrv;
@@ -390,7 +389,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			goal.setpoint_index = elevator_cur_setpoint_idx;
 			goal.raise_intake_after_success  = true;
 			elevator_ac->sendGoal(goal);
-			elevator_cur_setpoint_idx = 0;
 			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
 		}
 		if(joystick_states_array[0].directionLeftButton)
@@ -804,7 +802,6 @@ int main(int argc, char **argv)
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
-	navX_pid = n.advertise<std_msgs::Bool>("/navX_snap_to_goal_pid/pid_enable", 1);
 	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
 	{
 		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");

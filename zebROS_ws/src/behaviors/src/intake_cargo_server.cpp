@@ -103,15 +103,14 @@ class CargoIntakeAction {
 					if(state.toString() != "SUCCEEDED") {
 						ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
 						preempted = true;
-					}
-					else {
-						ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
-					}
 				}
 				else {
-					ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
-					timed_out = true;
+					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
 				}
+			}
+			else {
+				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
+				timed_out = true;
 			}
 
 			//test if we got a preempt while waiting
@@ -121,7 +120,7 @@ class CargoIntakeAction {
 			}
 
 			//raise cargo clamp
-			if(!preempted && !timed_out)
+			if(!preempted && !timed_out && ros::ok())
 			{
 				ROS_WARN("%s: raising cargo clamp", action_name_.c_str());
 
@@ -133,7 +132,7 @@ class CargoIntakeAction {
 			}
 
 			//send command to lower arm and run roller to the cargo intake controller ------
-			if(!preempted && !timed_out)
+			if(!preempted && !timed_out && ros::ok())
 			{
 				ROS_WARN("%s: lowering arm and spinning roller in",action_name_.c_str());
 
@@ -154,7 +153,7 @@ class CargoIntakeAction {
 				}
 
 				//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
-				while(!success && !timed_out && !preempted) {
+				while(!success && !timed_out && !preempted && ros::ok()) {
 					success = linebreak_true_count > linebreak_debounce_iterations;
 					timed_out = (ros::Time::now().toSec()-start_time) > intake_timeout;
 
