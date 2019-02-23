@@ -3,10 +3,10 @@ elevator_controller:
 
     elevator_joint: [ 'elevator_master', 'elevator_follower1', 'elevator_follower2', 'elevator_follower3' ]
 
-    arb_feed_forward_up: 0.0
+    arb_feed_forward_up: 0.04
 
     # How quickly the elevator moves down when zeroing itself
-    elevator_zeroing_percent_output: -0.2 # TODO : tune me
+    elevator_zeroing_percent_output: -0.08 # TODO : tune me
 
     # If there are no negative velocity readings while zeroing
     # for this amount of time, assume the elevator is stuck
@@ -20,8 +20,8 @@ elevator_controller:
         type: talon_controllers/TalonControllerInterface 
         joint: elevator_master
         close_loop_values:
-            - {p: 0.3, i: 0.0, d: 0, f: 0.0, i_zone: 0, closed_loop_peak_output: 1.0}
-            - {p: 0.22, i: 0.0, d: 0, f: 0.0, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: 0.26, i: 0.0, d: 0, f: 0.0, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: 0.18, i: 0.0, d: 0, f: 0.0, i_zone: 0, closed_loop_peak_output: 1.0}
 
         # TODO : tuning
         motion_cruise_velocity: 1.5
@@ -48,6 +48,7 @@ elevator_controller:
         # TODO : used to convert encoder position from radians to meters
         # .0573 ... divide or multiply?
         conversion_factor: 0.02959
+        neutral_deadband: 0.001
 
         dynamic_reconfigure: true
 
