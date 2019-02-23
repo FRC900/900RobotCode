@@ -9,6 +9,7 @@
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="joy_or_key" default="joy" />
 	<arg name="static_map" default="True"/>
+	<arg name="record" default="false" />
 
 	<group ns="frcrobot_jetson">
 
@@ -169,5 +170,7 @@
     
     <group ns="navX_snap_to_goal_pid">
     </group>
+
+	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
 
 </launch>

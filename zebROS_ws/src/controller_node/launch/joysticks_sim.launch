@@ -9,6 +9,7 @@
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="joy_or_key" default="joy" />
 	<arg name="static_map" default="True"/>
+	<arg name="record" default="false" />
 
 	<group ns="joy0" unless="$(eval arg('joy_or_key')=='key')">
 		<node name="joy_node" pkg="joy" type="joy_node" output="screen">
