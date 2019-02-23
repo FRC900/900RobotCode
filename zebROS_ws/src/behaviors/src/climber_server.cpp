@@ -138,7 +138,7 @@ class ClimbAction {
 				}
 
 				// raise elevator to right height so we can engage the climber ------------------------------------------------
-				if(!preempted && !timed_out)
+				if(!preempted && !timed_out && ros::ok())
 				{
 					ROS_INFO("climber server step 0: raising elevator before climber is engaged");
 
@@ -175,7 +175,7 @@ class ClimbAction {
 				} //end of raise elevator to right height before engaging
 
 				//engage climber with elevator controller -----------------------------------------------------------------
-				if(!preempted && !timed_out)
+				if(!preempted && !timed_out && ros::ok())
 				{
 					ROS_INFO("climber server step 0: engaging the climber with the elvator");
 
@@ -196,7 +196,7 @@ class ClimbAction {
 				ros::Duration(1).sleep();
 
 				//lower elevator to make robot rise off ground
-				if(!preempted && !timed_out)
+				if(!preempted && !timed_out && ros::ok())
 				{
 					ROS_INFO("climber server step 0: lowering elevator to make robot climb");
 
