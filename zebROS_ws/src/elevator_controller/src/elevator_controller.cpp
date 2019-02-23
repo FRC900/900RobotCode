@@ -92,25 +92,28 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		// We could have arb ff for both up and down, but seems
 		// easier (and good enough) to tune PID for down motion
 		// and add an arb FF correction for up
-		if (setpoint > elevator_joint_.getPosition())
+		if(!go_slow_)
 		{
-			//elevator_joint_.setDemand1Type(hardware_interface::DemandType_AuxPID);
-			//elevator_joint_.setDemand1Value(arb_feed_forward_up_);
-			if(last_setpoint_ != setpoint)
+			if (setpoint > elevator_joint_.getPosition())
 			{
-				elevator_joint_.setPIDFSlot(0);
+				//elevator_joint_.setDemand1Type(hardware_interface::DemandType_AuxPID);
+				//elevator_joint_.setDemand1Value(arb_feed_forward_up_);
+				if(last_setpoint_ != setpoint)
+				{
+					elevator_joint_.setPIDFSlot(0);
+				}
 			}
-		}
-		else
-		{
-			//elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
-			//elevator_joint_.setDemand1Value(0);
-			if(last_setpoint_ != setpoint)
+			else
 			{
-				elevator_joint_.setPIDFSlot(1);
+				//elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
+				//elevator_joint_.setDemand1Value(0);
+				if(last_setpoint_ != setpoint)
+				{
+					elevator_joint_.setPIDFSlot(1);
+				}
 			}
+			last_setpoint_ = setpoint;
 		}
-		last_setpoint_ = setpoint;
 	}
 	else
 	{
@@ -150,6 +153,12 @@ bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request  &
 		{
 			elevator_joint_.setPeakOutputForward(slow_peak_output_);
 			elevator_joint_.setPeakOutputReverse(-slow_peak_output_);
+
+			//set P to 0.1 at slot 0, then set PIDF  slot to 0
+			elevator_joint_.setP(0.1, 0);
+			elevator_joint_.setPIDFSlot(0);
+
+			go_slow_ = true;
 			ROS_INFO("Elevator controller: reduced peak output +/- %f",slow_peak_output_);
 		}
 		else { //reset to default

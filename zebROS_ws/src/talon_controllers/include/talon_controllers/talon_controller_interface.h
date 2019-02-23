@@ -1010,6 +1010,19 @@ class TalonControllerInterface
 			return true;
 		}
 
+		virtual bool setP(double newP, int slot)
+		{
+			if ((slot != 0) && (slot != 1))
+			{
+				//ROS_WARN_STREAM("controller set of PID slot:  (false): " << slot);
+				return false;
+			}
+			syncDynamicReconfigure();
+
+			talon_->setP(newP, slot);
+			return true;
+		}
+
 		virtual void setNeutralOutput(void)
 		{
 			talon_->setNeutralOutput();
