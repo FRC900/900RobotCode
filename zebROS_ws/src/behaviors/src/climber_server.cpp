@@ -118,6 +118,7 @@ class ClimbAction {
 			//if both of these are false, we assume the action succeeded
 			bool preempted = false;
 			bool timed_out = false;
+			bool finished_before_timeout = false;
 
 			if(goal->step == 0)
 			{
@@ -149,8 +150,8 @@ class ClimbAction {
 					goal.place_cargo = 0; //doesn't actually do anything
 					//send the goal
 					ae_.sendGoal(goal);
-					if(!ae_.waitForResult(ros::Duration(elevator_deploy_timeout))); //wait until the action finishes, whether it succeeds, times out, or is preempted
-					{
+					finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_deploy_timeout)); //wait until the action finishes, whether it succeeds, times out, or is preempted
+					if(!finished_before_timeout){
 						ROS_ERROR("climber server step 0: first elevator raise timed out");
 						timed_out = true;
 					}
@@ -207,7 +208,8 @@ class ClimbAction {
 					goal.place_cargo = 0; //doesn't actually do anything 
 					//send the goal
 					ae_.sendGoal(goal);
-					if(!ae_.waitForResult(ros::Duration(elevator_climb_timeout))) //wait until the action finishes, whether it succeeds, times out, or is preempted
+					finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_timeout));
+					if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
 						ROS_ERROR("climber server step 0: second elevator move timed out");
 
 					//determine the outcome of the goal
@@ -236,7 +238,8 @@ class ClimbAction {
 					goal.place_cargo = 0; //doesn't actually do anything 
 					//send the goal
 					ae_.sendGoal(goal);
-					if(!ae_.waitForResult(ros::Duration(elevator_climb_timeout))) //wait until the action finishes, whether it succeeds, times out, or is preempted
+					finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_timeout));
+					if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
 					{
 						ROS_ERROR("climber server step 0: preempt/timeout handling elevator move timed out");
 					}
@@ -279,7 +282,8 @@ class ClimbAction {
 				goal.place_cargo = 0; //doesn't actually do anything 
 				//send the goal
 				ae_.sendGoal(goal);
-				if(!ae_.waitForResult(ros::Duration(elevator_deploy_timeout))) //wait until the action finishes, whether it succeeds, times out, or is preempted
+				finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_deploy_timeout));
+				if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
 					ROS_ERROR("climber server step 2: elevator raise timed out");
 
 				//determine the outcome of the goal
@@ -315,7 +319,8 @@ class ClimbAction {
 				goal.place_cargo = 0; //doesn't actually do anything 
 				//send the goal
 				ae_.sendGoal(goal);
-				if(!ae_.waitForResult(ros::Duration(elevator_climb_low_timeout))) //wait until the action finishes, whether it succeeds, times out, or is preempted
+				finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_low_timeout));
+				if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
 					ROS_ERROR("climber server step 3: elevator move timed out");
 
 				//determine the outcome of the goal
