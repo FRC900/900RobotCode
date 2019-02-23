@@ -2227,9 +2227,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				ctre::phoenix::motorcontrol::ControlMode out_mode;
 				if (convertControlMode(in_mode, out_mode))
 				{
-					ts.setTalonMode(in_mode);
-					ts.setSetpoint(command);
-
 					ts.setNeutralOutput(false); // maybe make this a part of setSetpoint?
 
 					switch (out_mode)
@@ -2245,19 +2242,23 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 							break;
 					}
 
-					ts.setDemand1Type(demand1_type_internal);
-					ts.setDemand1Value(demand1_value);
-
+					// TODO : just use 4-arg version all the time
 					if (b3)
 					{
 						ctre::phoenix::motorcontrol::DemandType demand1_type_phoenix;
 						if (convertDemand1Type(demand1_type_internal, demand1_type_phoenix))
 						{
 #ifndef DEBUG_WRITE
-							ROS_INFO_STREAM("called Set() on " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
+							ROS_INFO_STREAM("called Set(4) on " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
 									" out_mode = " << static_cast<int>(out_mode) << " command = " << command <<
 									" demand1_type_phoenix = " << static_cast<int>(demand1_type_phoenix) << " demand1_value = " << demand1_value);
 #endif
+							ts.setDemand1Type(demand1_type_internal);
+							ts.setDemand1Value(demand1_value);
+
+							ts.setTalonMode(in_mode);
+							ts.setSetpoint(command);
+
 							talon->Set(out_mode, command, demand1_type_phoenix, demand1_value);
 						}
 						else
@@ -2269,6 +2270,8 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 						ROS_INFO_STREAM("called Set(2) on " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
 								" out_mode = " << static_cast<int>(out_mode) << " command = " << command);
 #endif
+						ts.setTalonMode(in_mode);
+						ts.setSetpoint(command);
 						talon->Set(out_mode, command);
 					}
 				}
@@ -2288,6 +2291,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				// call resetMode() to queue up a change back to the correct mode / setpoint
 				// when the robot switches from disabled back to enabled
 				tc.resetMode();
+				tc.resetDemand1(); // make sure demand1 type/value is also written on re-enable
 				talon->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0);
 				ts.setTalonMode(hardware_interface::TalonMode_Disabled);
 				ROS_INFO_STREAM("Robot disabled - called Set(Disabled) on " << joint_id << "=" << can_talon_srx_names_[joint_id]);

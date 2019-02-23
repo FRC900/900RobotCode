@@ -607,6 +607,12 @@ class TalonHWCommand
 				demand1_changed_ = true;
 			}
 		}
+
+		void resetDemand1(void)
+		{
+			demand1_changed_ = true;
+		}
+
 		double getDemand1Value(void) const
 		{
 			return demand1_value_;
