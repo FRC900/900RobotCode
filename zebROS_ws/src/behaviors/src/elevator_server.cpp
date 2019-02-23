@@ -14,6 +14,8 @@ int min_climb_idx = ELEVATOR_DEPLOY; //reference to minimum index in enumerated 
 double collision_range_min;
 double collision_range_max;
 
+double carriage_height;
+
 class ElevatorAction {
     protected:
         ros::NodeHandle nh_;
@@ -144,7 +146,7 @@ class ElevatorAction {
 						cargo_intake_srv.request.power = 0.0;
 						cargo_intake_client_.call(cargo_intake_srv);
 					}
-					if(!(cur_position_ > collision_range_min && (cur_position_ + .1) < collision_range_max) && goal->raise_intake_after_success)
+					if(!(cur_position_ > collision_range_min && (cur_position_ + carriage_height) < collision_range_max) && goal->raise_intake_after_success)
 					{
 						ROS_WARN_STREAM("running the thiiiiiiiiiing back up");
 						cargo_intake_controller::CargoIntakeSrv cargo_intake_srv;
@@ -363,6 +365,12 @@ int main(int argc, char** argv)
 		climb_low_position = -1; //signals to server to preempt
 	}
 	elevator_action.climb_locations[ELEVATOR_CLIMB_LOW - min_climb_idx] = climb_low_position;
+
+	if(!n_params.getParam("carriage_height", carriage_height))
+	{
+		ROS_ERROR_STREAM("Could not read carriage_height");
+		carriage_height = 0.1;
+	}
 
 	ros::spin();
 	return 0;
