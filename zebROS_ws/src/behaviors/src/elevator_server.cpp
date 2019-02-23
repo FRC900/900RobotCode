@@ -138,7 +138,8 @@ class ElevatorAction {
 				//wait for elevator controller to finish
 				while(!success && !timed_out && !preempted) {
 					success = fabs(cur_position_ - elevator_cur_setpoint_) < elevator_position_deadzone;
-					if(cur_position_ > collision_range_min && cur_position_ < collision_range_max)
+					if(cur_position_ > collision_range_min && 
+							cur_position_ < collision_range_max)
 					{
 						cargo_intake_controller::CargoIntakeSrv cargo_intake_srv;
 						cargo_intake_srv.request.intake_arm = true; //means that the arm is down
@@ -146,7 +147,9 @@ class ElevatorAction {
 						if(!cargo_intake_client_.call(cargo_intake_srv))
 							ROS_ERROR_STREAM("failed to deploy the intake arm");
 					}
-					if(!(cur_position_ > collision_range_min && (cur_position_ + carriage_height) < collision_range_max) && goal->raise_intake_after_success)
+					if(!(cur_position_ > collision_range_min && 
+							(cur_position_ + carriage_height) < collision_range_max) && 
+							goal->raise_intake_after_success)
 					{
 						cargo_intake_controller::CargoIntakeSrv cargo_intake_srv;
 						cargo_intake_srv.request.intake_arm = false;
