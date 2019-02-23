@@ -92,10 +92,18 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		// We could have arb ff for both up and down, but seems
 		// easier (and good enough) to tune PID for down motion
 		// and add an arb FF correction for up
-		if (setpoint > elevator_joint_.getPosition())
+		if(elevator_joint_.getPosition() > 0.8) {
+			elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+			elevator_joint_.setDemand1Value(arb_feed_forward_up_);
+		}
+		else {
+			elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
+			elevator_joint_.setDemand1Value(0);
+		}
+		//elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+		//elevator_joint_.setDemand1Value(arb_feed_forward_up_);
+		if(setpoint > elevator_joint_.getPosition())
 		{
-			//elevator_joint_.setDemand1Type(hardware_interface::DemandType_AuxPID);
-			//elevator_joint_.setDemand1Value(arb_feed_forward_up_);
 			if(last_setpoint_ != setpoint)
 			{
 				elevator_joint_.setPIDFSlot(0);
@@ -103,8 +111,6 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		}
 		else
 		{
-			//elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
-			//elevator_joint_.setDemand1Value(0);
 			if(last_setpoint_ != setpoint)
 			{
 				elevator_joint_.setPIDFSlot(1);

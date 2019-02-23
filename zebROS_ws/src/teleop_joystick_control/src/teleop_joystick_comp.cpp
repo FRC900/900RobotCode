@@ -218,7 +218,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			joyVector[0] = leftStickX; //intentionally flipped
 			joyVector[1] = -leftStickY;
 
-			const Eigen::Rotation2Dd rotate((robot_orient ? -offset_angle : -navX_angle) -M_PI / 2.);
+			const Eigen::Rotation2Dd rotate((robot_orient ? -offset_angle : -navX_angle));
 			const Eigen::Vector2d rotatedJoyVector = rotate.toRotationMatrix() * joyVector;
 
 			geometry_msgs::Twist vel;
@@ -228,7 +228,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			vel.angular.x = 0;
 			vel.angular.y = 0;
-			vel.angular.z = rotation;
+			vel.angular.z = -rotation;
 
 			JoystickRobotVel.publish(vel);
 			sendRobotZero = false;
