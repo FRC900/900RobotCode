@@ -3,6 +3,7 @@
 #include "teleop_joystick_control/rate_limiter.h"
 #include "std_srvs/Empty.h"
 #include "std_msgs/Bool.h"
+#include "std_msgs/Int8.h"
 
 #include "behaviors/IntakeAction.h"
 #include "behaviors/IntakeGoal.h"
@@ -57,7 +58,7 @@ rate_limiter::RateLimiter right_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_t
 rate_limiter::RateLimiter left_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 
-
+ros::Publisher elevator_setpoint;
 ros::Publisher JoystickRobotVel;
 ros::Publisher align_with_terabee_pub;
 ros::ServiceClient BrakeSrv;
@@ -157,6 +158,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 	}
 
+
+    //Publish elevator setpoinut
+    std_msgs::Int8 elevator_setpoint_msg;
+    elevator_setpoint_msg.data = elevator_cur_setpoint_idx;
+    elevator_setpoint.publish(elevator_setpoint_msg);
 
 	//Only do this for the first joystick
 	if(i == 1)
@@ -279,7 +285,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Determines where elevator will go when called to outtake or move to a setpoint
 			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
 			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % elevator_num_setpoints;
-			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+   			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+            
 		}
 		if(joystick_states_array[0].buttonXButton)
 		{
@@ -782,9 +789,8 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
 	}
 
-	std::vector <ros::Subscriber> subscriber_array;
-
-	navX_angle = M_PI / 2;
+	std::vector <ros::Subscriber> subscriber_array;	
+    navX_angle = M_PI / 2;
 
 	//Read from _num_joysticks_ joysticks
 	for(size_t j = 0; j < num_joysticks; j++)
@@ -797,6 +803,7 @@ int main(int argc, char **argv)
 		subscriber_array.push_back(n.subscribe(topic_array[j], 1, &evaluateCommands));
 	}
 
+
 	joystick_states_array.resize(topic_array.size());
 
 	std::map<std::string, std::string> service_connection_header;
@@ -807,6 +814,7 @@ int main(int argc, char **argv)
 		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");
 	}
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+	elevator_setpoint = n.advertise<std_msgs::Int8>("elevator_setpoint",1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
 	joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
