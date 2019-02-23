@@ -148,6 +148,7 @@ class ClimbAction {
 					behaviors::ElevatorGoal goal;
 					goal.setpoint_index = ELEVATOR_DEPLOY;
 					goal.place_cargo = 0; //doesn't actually do anything
+					goal.raise_intake_after_success = true;
 					//send the goal
 					ae_.sendGoal(goal);
 					finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_deploy_timeout)); //wait until the action finishes, whether it succeeds, times out, or is preempted
@@ -206,6 +207,7 @@ class ClimbAction {
 					behaviors::ElevatorGoal goal;
 					goal.setpoint_index = ELEVATOR_CLIMB;
 					goal.place_cargo = 0; //doesn't actually do anything 
+					goal.raise_intake_after_success = true;
 					//send the goal
 					ae_.sendGoal(goal);
 					finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_timeout));
@@ -236,6 +238,7 @@ class ClimbAction {
 					behaviors::ElevatorGoal goal;
 					goal.setpoint_index = ELEVATOR_DEPLOY;
 					goal.place_cargo = 0; //doesn't actually do anything 
+					goal.raise_intake_after_success = true;
 					//send the goal
 					ae_.sendGoal(goal);
 					finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_timeout));
@@ -280,6 +283,7 @@ class ClimbAction {
 				behaviors::ElevatorGoal goal;
 				goal.setpoint_index = ELEVATOR_DEPLOY;
 				goal.place_cargo = 0; //doesn't actually do anything 
+				goal.raise_intake_after_success = true;
 				//send the goal
 				ae_.sendGoal(goal);
 				finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_deploy_timeout));
@@ -317,6 +321,7 @@ class ClimbAction {
 				behaviors::ElevatorGoal goal;
 				goal.setpoint_index = ELEVATOR_CLIMB_LOW;
 				goal.place_cargo = 0; //doesn't actually do anything 
+				goal.raise_intake_after_success = true;
 				//send the goal
 				ae_.sendGoal(goal);
 				finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_low_timeout));

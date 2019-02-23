@@ -6,10 +6,15 @@
 #include <talon_state_controller/TalonState.h>
 #include <elevator_controller/ElevatorSrv.h>
 #include "behaviors/enumerated_elevator_indices.h"
+#include "cargo_intake_controller/CargoIntakeSrv.h"
 
 //TODO: not global. namespace?
 double elevator_position_deadzone;
 int min_climb_idx = ELEVATOR_DEPLOY; //reference to minimum index in enumerated elevator indices, used for determining which indices are for climbing (this idx or greater)
+double collision_range_min;
+double collision_range_max;
+
+double carriage_height;
 
 class ElevatorAction {
     protected:
@@ -22,7 +27,8 @@ class ElevatorAction {
         behaviors::ElevatorResult result_;
 
 		//Define service client to control elevator
-        ros::ServiceClient elevator_client_;
+		ros::ServiceClient elevator_client_;
+        ros::ServiceClient cargo_intake_client_;
 
 		//Subscriber to monitor talon positions
         ros::Subscriber talon_states_sub;
@@ -50,6 +56,7 @@ class ElevatorAction {
 
 			//Client for elevator controller
             elevator_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
+            cargo_intake_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 
 			//Talon states subscriber
             talon_states_sub = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);
@@ -131,6 +138,26 @@ class ElevatorAction {
 				//wait for elevator controller to finish
 				while(!success && !timed_out && !preempted) {
 					success = fabs(cur_position_ - elevator_cur_setpoint_) < elevator_position_deadzone;
+					if(cur_position_ > collision_range_min && 
+							cur_position_ < collision_range_max)
+					{
+						cargo_intake_controller::CargoIntakeSrv cargo_intake_srv;
+						cargo_intake_srv.request.intake_arm = true; //means that the arm is down
+						cargo_intake_srv.request.power = 0.0;
+						if(!cargo_intake_client_.call(cargo_intake_srv))
+							ROS_ERROR_STREAM("failed to deploy the intake arm");
+					}
+					if(!(cur_position_ > collision_range_min && 
+							(cur_position_ + carriage_height) < collision_range_max) && 
+							goal->raise_intake_after_success)
+					{
+						cargo_intake_controller::CargoIntakeSrv cargo_intake_srv;
+						cargo_intake_srv.request.intake_arm = false;
+						cargo_intake_srv.request.power = 0.0;
+						if(!cargo_intake_client_.call(cargo_intake_srv))
+							ROS_ERROR_STREAM("failed to pull back the intake arm");
+					}
+
 					ROS_INFO_STREAM("elevator server: cur position = " << cur_position_ << " elevator_cur_setpoint " << elevator_cur_setpoint_);
 					if(as_.isPreemptRequested() || !ros::ok())
 					{
@@ -221,6 +248,18 @@ int main(int argc, char** argv)
 	{
 		ROS_ERROR("Could not read elevator_deadzone in elevator_server");
 		elevator_position_deadzone = 0.1;
+	}
+
+	if (!n_params.getParam("collision_range_min", collision_range_min))
+	{
+		ROS_ERROR("Could not read collision_range_min in elevator_server");
+		collision_range_min = 0;
+	}
+
+	if (!n_params.getParam("collision_range_max", collision_range_max))
+	{
+		ROS_ERROR("Could not read collision_range_max in elevator_server");
+		collision_range_max = 0;
 	}
 
 	//read locations for elevator placement for HATCH PANEL
@@ -329,6 +368,12 @@ int main(int argc, char** argv)
 		climb_low_position = -1; //signals to server to preempt
 	}
 	elevator_action.climb_locations[ELEVATOR_CLIMB_LOW - min_climb_idx] = climb_low_position;
+
+	if(!n_params.getParam("carriage_height", carriage_height))
+	{
+		ROS_ERROR_STREAM("Could not read carriage_height");
+		carriage_height = 0.1;
+	}
 
 	ros::spin();
 	return 0;
