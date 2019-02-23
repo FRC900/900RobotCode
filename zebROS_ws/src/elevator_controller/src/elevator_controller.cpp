@@ -10,6 +10,9 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 	hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
 
 	//hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
+	srv_mutex_ = std::make_shared<boost::recursive_mutex>();
+	srv_ = std::make_shared<dynamic_reconfigure::Server<elevator_controller::ElevatorConfig>>(*srv_mutex_, ros::NodeHandle(controller_nh, "elevator_controller"));
+	srv_->setCallback(boost::bind(&ElevatorController::callback, this, _1, _2));
 
 	if (!controller_nh.getParam("arb_feed_forward_up", arb_feed_forward_up_))
 	{
@@ -35,6 +38,14 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		return false;
 	}
 
+	// Copy read params into dynamic reconfigure values so they start in sync
+	elevator_controller::ElevatorConfig config;
+	config.arb_feed_forward_up = arb_feed_forward_up_;
+	config.elevator_zeroing_percent_output = elevator_zeroing_percent_output_;
+	config.elevator_zeroing_timeout = elevator_zeroing_timeout_;
+	config.slow_peak_output = slow_peak_output_;
+	srv_->updateConfig(config);
+
 	//get config values for the elevator talon
 	XmlRpc::XmlRpcValue elevator_params;
 	if (!controller_nh.getParam("elevator_joint", elevator_params))
@@ -52,6 +63,7 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 	elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController::cmdService, this);
 
 	zeroed_ = false;
+
 	last_time_down_ = ros::Time::now();
 
 	return true;
@@ -155,6 +167,14 @@ bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request  &
 		return false;
 	}
 	return true;
+}
+
+void ElevatorController::callback(elevator_controller::ElevatorConfig &config, uint32_t level)
+{
+	arb_feed_forward_up_ = config.arb_feed_forward_up;
+	elevator_zeroing_percent_output_ = config.elevator_zeroing_percent_output;
+	elevator_zeroing_timeout_ = config.elevator_zeroing_timeout;
+	slow_peak_output_ = config.slow_peak_output;
 }
 
 }//namespace

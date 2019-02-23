@@ -9,8 +9,9 @@
 #include <std_msgs/Float64.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <std_msgs/Bool.h>
+#include <dynamic_reconfigure/server.h>
 #include "elevator_controller/ElevatorSrv.h"
-
+#include <elevator_controller/ElevatorConfig.h>
 
 namespace elevator_controller
 {
@@ -35,6 +36,9 @@ class ElevatorController : public controller_interface::MultiInterfaceController
             bool cmdService(elevator_controller::ElevatorSrv::Request &req,
 			                elevator_controller::ElevatorSrv::Response &res);
 
+			void callback(elevator_controller::ElevatorConfig &config, uint32_t level);
+
+
         private:
             talon_controllers::TalonControllerInterface elevator_joint_; //interface for the talon joint
 
@@ -50,6 +54,9 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 
 			ros::Time last_time_down_;
 			double elevator_zeroing_timeout_;
+
+			std::shared_ptr<dynamic_reconfigure::Server<ElevatorConfig>> srv_;
+			std::shared_ptr<boost::recursive_mutex>                      srv_mutex_;
 }; //class
 
 
