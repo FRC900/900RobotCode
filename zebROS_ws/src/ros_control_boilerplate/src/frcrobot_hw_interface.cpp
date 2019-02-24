@@ -2107,108 +2107,106 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 
+		if (motion_profile_mode)
 		{
-			if (motion_profile_mode)
+			double motion_cruise_velocity;
+			double motion_acceleration;
+			unsigned int motion_s_curve_strength;
+			if (tc.motionCruiseChanged(motion_cruise_velocity, motion_acceleration, motion_s_curve_strength))
 			{
-				double motion_cruise_velocity;
-				double motion_acceleration;
-				unsigned int motion_s_curve_strength;
-				if (tc.motionCruiseChanged(motion_cruise_velocity, motion_acceleration, motion_s_curve_strength))
+				bool rc = true;
+				//converted from rad/sec to native units
+				rc &= safeTalonCall(talon->ConfigMotionCruiseVelocity(motion_cruise_velocity / radians_per_second_scale, timeoutMs),"ConfigMotionCruiseVelocity");
+				rc &= safeTalonCall(talon->ConfigMotionAcceleration(motion_acceleration / radians_per_second_scale, timeoutMs),"ConfigMotionAcceleration");
+				rc &= safeTalonCall(talon->ConfigMotionSCurveStrength(motion_s_curve_strength, timeoutMs), "ConfigMotionSCurveStrength");
+
+				if (rc)
 				{
-					bool rc = true;
-					//converted from rad/sec to native units
-					rc &= safeTalonCall(talon->ConfigMotionCruiseVelocity(motion_cruise_velocity / radians_per_second_scale, timeoutMs),"ConfigMotionCruiseVelocity");
-					rc &= safeTalonCall(talon->ConfigMotionAcceleration(motion_acceleration / radians_per_second_scale, timeoutMs),"ConfigMotionAcceleration");
-					rc &= safeTalonCall(talon->ConfigMotionSCurveStrength(motion_s_curve_strength, timeoutMs), "ConfigMotionSCurveStrength");
-
-					if (rc)
-					{
-						ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" cruise velocity / acceleration");
-						ts.setMotionCruiseVelocity(motion_cruise_velocity);
-						ts.setMotionAcceleration(motion_acceleration);
-						ts.setMotionSCurveStrength(motion_s_curve_strength);
-					}
-					else
-					{
-						tc.resetMotionCruise();
-					}
-
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" cruise velocity / acceleration");
+					ts.setMotionCruiseVelocity(motion_cruise_velocity);
+					ts.setMotionAcceleration(motion_acceleration);
+					ts.setMotionSCurveStrength(motion_s_curve_strength);
+				}
+				else
+				{
+					tc.resetMotionCruise();
 				}
 
-				int motion_profile_trajectory_period;
-				if (tc.motionProfileTrajectoryPeriodChanged(motion_profile_trajectory_period))
-				{
-					if (safeTalonCall(talon->ConfigMotionProfileTrajectoryPeriod(motion_profile_trajectory_period, timeoutMs),"ConfigMotionProfileTrajectoryPeriod"))
-					{
-						ts.setMotionProfileTrajectoryPeriod(motion_profile_trajectory_period);
-						ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectory period");
-					}
-					else
-					{
-						tc.resetMotionProfileTrajectoryPeriod();
-					}
-				}
-
-				if (tc.clearMotionProfileTrajectoriesChanged())
-				{
-					if (safeTalonCall(talon->ClearMotionProfileTrajectories(), "ClearMotionProfileTrajectories"))
-					{
-						ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectories");
-					}
-					else
-					{
-						tc.setClearMotionProfileTrajectories();
-					}
-				}
-
-				if (tc.clearMotionProfileHasUnderrunChanged())
-				{
-					if (safeTalonCall(talon->ClearMotionProfileHasUnderrun(timeoutMs),"ClearMotionProfileHasUnderrun"))
-					{
-						ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile underrun changed");
-					}
-					else
-					{
-						tc.setClearMotionProfileHasUnderrun();
-					}
-				}
-
-				// TODO : check that Talon motion buffer is not full
-				// before writing, communicate how many have been written
-				// - and thus should be cleared - from the talon_command
-				// list of requests.
 			}
 
-			std::vector<hardware_interface::TrajectoryPoint> trajectory_points;
-			if (tc.motionProfileTrajectoriesChanged(trajectory_points))
+			int motion_profile_trajectory_period;
+			if (tc.motionProfileTrajectoryPeriodChanged(motion_profile_trajectory_period))
 			{
-				//int i = 0;
-				for (auto it = trajectory_points.cbegin(); it != trajectory_points.cend(); ++it)
+				if (safeTalonCall(talon->ConfigMotionProfileTrajectoryPeriod(motion_profile_trajectory_period, timeoutMs),"ConfigMotionProfileTrajectoryPeriod"))
 				{
-					ctre::phoenix::motion::TrajectoryPoint pt;
-					pt.position = it->position / radians_scale;
-					pt.velocity = it->velocity / radians_per_second_scale;
-					pt.headingDeg = it->headingRad * 180. / M_PI;
-					pt.arbFeedFwd = it->arbFeedFwd;
-					pt.auxiliaryPos = it->auxiliaryPos; // TODO : unit conversion?
-					pt.auxiliaryVel = it->auxiliaryVel; // TODO : unit conversion?
-					pt.auxiliaryArbFeedFwd = it->auxiliaryArbFeedFwd; // TODO : unit conversion?
-					pt.profileSlotSelect0 = it->profileSlotSelect0;
-					pt.profileSlotSelect1 = it->profileSlotSelect1;
-					pt.isLastPoint = it->isLastPoint;
-					pt.zeroPos = it->zeroPos;
-					pt.timeDur =it->timeDur;
-					pt.useAuxPID =it->useAuxPID;
-					// TODO : rewrite this using BufferedTrajectoryPointStream
-					//ROS_INFO_STREAM("id: " << joint_id << " pos: " << pt.position << " i: " << i++);
+					ts.setMotionProfileTrajectoryPeriod(motion_profile_trajectory_period);
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectory period");
 				}
-
-				ROS_INFO_STREAM("Added joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectories");
+				else
+				{
+					tc.resetMotionProfileTrajectoryPeriod();
+				}
 			}
+
+			if (tc.clearMotionProfileTrajectoriesChanged())
+			{
+				if (safeTalonCall(talon->ClearMotionProfileTrajectories(), "ClearMotionProfileTrajectories"))
+				{
+					ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectories");
+				}
+				else
+				{
+					tc.setClearMotionProfileTrajectories();
+				}
+			}
+
+			if (tc.clearMotionProfileHasUnderrunChanged())
+			{
+				if (safeTalonCall(talon->ClearMotionProfileHasUnderrun(timeoutMs),"ClearMotionProfileHasUnderrun"))
+				{
+					ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile underrun changed");
+				}
+				else
+				{
+					tc.setClearMotionProfileHasUnderrun();
+				}
+			}
+
+			// TODO : check that Talon motion buffer is not full
+			// before writing, communicate how many have been written
+			// - and thus should be cleared - from the talon_command
+			// list of requests.
 		}
 
-		// Set new motor setpoint if either the mode or
-		// the setpoint has been changed
+		// TODO : rewrite this using BufferedTrajectoryPointStream
+		std::vector<hardware_interface::TrajectoryPoint> trajectory_points;
+		if (tc.motionProfileTrajectoriesChanged(trajectory_points))
+		{
+			//int i = 0;
+			for (auto it = trajectory_points.cbegin(); it != trajectory_points.cend(); ++it)
+			{
+				ctre::phoenix::motion::TrajectoryPoint pt;
+				pt.position = it->position / radians_scale;
+				pt.velocity = it->velocity / radians_per_second_scale;
+				pt.headingDeg = it->headingRad * 180. / M_PI;
+				pt.arbFeedFwd = it->arbFeedFwd;
+				pt.auxiliaryPos = it->auxiliaryPos; // TODO : unit conversion?
+				pt.auxiliaryVel = it->auxiliaryVel; // TODO : unit conversion?
+				pt.auxiliaryArbFeedFwd = it->auxiliaryArbFeedFwd; // TODO : unit conversion?
+				pt.profileSlotSelect0 = it->profileSlotSelect0;
+				pt.profileSlotSelect1 = it->profileSlotSelect1;
+				pt.isLastPoint = it->isLastPoint;
+				pt.zeroPos = it->zeroPos;
+				pt.timeDur = it->timeDur;
+				pt.useAuxPID = it->useAuxPID;
+				//ROS_INFO_STREAM("id: " << joint_id << " pos: " << pt.position << " i: " << i++);
+			}
+
+			ROS_INFO_STREAM("Added joint " << joint_id << "=" <<
+					can_talon_srx_names_[joint_id] <<" motion profile trajectories");
+		}
+
+		// Set new motor setpoint if either the mode or the setpoint has been changed
 		if (match_data_.isEnabled())
 		{
 			double command;
@@ -2216,7 +2214,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			hardware_interface::DemandType demand1_type_internal;
 			double demand1_value;
 
-			const bool b1 = tc.newMode(in_mode);
+			const bool b1 = tc.modeChanged(in_mode);
 			const bool b2 = tc.commandChanged(command);
 			const bool b3 = tc.demand1Changed(demand1_type_internal, demand1_value);
 
@@ -2244,7 +2242,8 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 #ifndef DEBUG_WRITE
 					ROS_INFO_STREAM("called Set(4) on " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
 									" out_mode = " << static_cast<int>(out_mode) << " command = " << command <<
-									" demand1_type_phoenix = " << static_cast<int>(demand1_type_phoenix) << " demand1_value = " << demand1_value);
+									" demand1_type_phoenix = " << static_cast<int>(demand1_type_phoenix) <<
+									" demand1_value = " << demand1_value);
 #endif
 					ts.setNeutralOutput(false); // maybe make this a part of setSetpoint?
 
@@ -2270,7 +2269,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				// On the switch from robot enabled to robot disabled, set Talons to ControlMode::Disabled
 				// call resetMode() to queue up a change back to the correct mode / setpoint
 				// when the robot switches from disabled back to enabled
-				tc.resetMode();
+				tc.resetMode();    // also forces re-write of setpoint
 				tc.resetDemand1(); // make sure demand1 type/value is also written on re-enable
 				talon->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0);
 				ts.setTalonMode(hardware_interface::TalonMode_Disabled);

@@ -697,7 +697,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		// Only set mode to requested one when robot is enabled
 		if (robot_enabled)
 		{
-			if (tc.newMode(new_mode))
+			if (tc.modeChanged(new_mode))
 			{
 				ts.setTalonMode(new_mode);
 				ROS_INFO_STREAM("Set joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" mode " << (int)new_mode);

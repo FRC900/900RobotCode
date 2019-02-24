@@ -567,7 +567,7 @@ class TalonHWCommand
 		// bus to repeatedly set the mode to the same value.
 		// Instead, only send a setMode to a given Talon if
 		// the mode has actually changed.
-		bool newMode(TalonMode &mode)
+		bool modeChanged(TalonMode &mode)
 		{
 			mode = mode_;
 			if (!mode_changed_)
