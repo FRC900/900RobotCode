@@ -368,7 +368,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 					if (!xml_solenoid_id.valid() ||
 							xml_solenoid_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
 						throw std::runtime_error("An invalid joint solenoid id was specified (expecting an int) for joint " + joint_name);
-					int solenoid_id = xml_solenoid_id;
+					solenoid_id = xml_solenoid_id;
 				}
 			}
 
