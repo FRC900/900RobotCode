@@ -387,7 +387,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			preemptActionlibServers();
 			behaviors::ElevatorGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_idx;
-			if(cargo_linebreak_true_count > linebreak_debounce_interations)
+			if(cargo_linebreak_true_count > linebreak_debounce_iterations)
 			{
 				goal.place_cargo = true;
 			}

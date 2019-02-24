@@ -78,7 +78,6 @@ class CargoIntakeAction {
 				return;
 			}
 
-
 			ros::Rate r(100);
 
 			//define variables that will be reused for each controller call/actionlib server call
@@ -87,22 +86,20 @@ class CargoIntakeAction {
 			//define variables that will be set true if the actionlib action is to be ended
 			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
 			//if both of these are false, we assume the action succeeded
-			bool success = false; //if controller/actionlib server call succeeded
 			bool preempted = false;
 			bool timed_out = false;
 
-			if(!preempted && !timed_out) {
-				ROS_WARN("cargo intake server: sending elevator to intake setpoint");
-				behaviors::ElevatorGoal elevator_goal;
-				elevator_goal.setpoint_index = INTAKE;
-				elevator_goal.raise_intake_after_success = false;
-				ac_elevator_.sendGoal(elevator_goal);
-				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(intake_timeout - (ros::Time::now().toSec() - start_time))); //Wait for server to finish or until timeout is reached
-				if(finished_before_timeout) {
-					actionlib::SimpleClientGoalState state = ac_elevator_.getState();
-					if(state.toString() != "SUCCEEDED") {
-						ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
-						preempted = true;
+			ROS_WARN("cargo intake server: sending elevator to intake setpoint");
+			behaviors::ElevatorGoal elevator_goal;
+			elevator_goal.setpoint_index = INTAKE;
+			elevator_goal.raise_intake_after_success = false;
+			ac_elevator_.sendGoal(elevator_goal);
+			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(intake_timeout - (ros::Time::now().toSec() - start_time))); //Wait for server to finish or until timeout is reached
+			if(finished_before_timeout) {
+				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
+				if(state.toString() != "SUCCEEDED") {
+					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
+					preempted = true;
 				}
 				else {
 					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
@@ -131,6 +128,7 @@ class CargoIntakeAction {
 				ros::Duration(pause_before_running_motor).sleep();
 			}
 
+			bool success = false; //if controller/actionlib server call succeeded
 			//send command to lower arm and run roller to the cargo intake controller ------
 			if(!preempted && !timed_out && ros::ok())
 			{
@@ -161,7 +159,7 @@ class CargoIntakeAction {
 						ROS_WARN(" %s: Preempted", action_name_.c_str());
 						preempted = true;
 					}
-					else if(!success) 
+					else if(!success)
 					{
 						r.sleep();
 					}
