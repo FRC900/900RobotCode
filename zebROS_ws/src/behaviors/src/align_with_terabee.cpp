@@ -148,20 +148,21 @@ int main(int argc, char ** argv)
 				break;
 			//Off to the right a small amount
 			case(112212):
-			case(212212):
-			case(212211):
-			case(211211):
+			//case(212212):
+			case(112211):
+			case(111211):
+			case(211221):
 			case(211221):
 			case(221221):
 			case(221121):
 			case(222121):
+			case(221122):
+			case(222122):
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the right a small amount: case: " << ternary_distances);
 				cutout_found = true;
 				y_msg.data = 1*cmd_vel_to_pub;
 				break;
 			//Off to the right a large amount
-			case(221122):
-			case(222122):
 			case(222112):
 			case(222212):
 			case(222211):
@@ -172,19 +173,20 @@ int main(int argc, char ** argv)
 				break;
 			//Off to the left a small amount
 			case(122112):
+			case(222112):
 			case(122122):
-			case(121122):
 			//case(222122): Shouldn't happen
-			//case(221122): Shouldn't happen now moved middle sensor to the right
+			case(222122):
+			case(221122):
+			case(211122):
 			case(221222):
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left a small amount: case: " << ternary_distances);
 				cutout_found = true;
 				y_msg.data = -1*cmd_vel_to_pub;
 				break;
 			//Off to the left a large amount
-			case(211122):
 			case(211222):
-			case(212222):
+			case(111222):
 			case(112222):
 			case(122222):
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left a large amount: case: " << ternary_distances);
