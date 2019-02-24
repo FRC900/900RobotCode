@@ -2220,15 +2220,14 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			const bool b2 = tc.commandChanged(command);
 			const bool b3 = tc.demand1Changed(demand1_type_internal, demand1_value);
 
-			// TODO : unconditionally use the 4-param version of Set()
 			// ROS_INFO_STREAM("b1 = " << b1 << " b2 = " << b2 << " b3 = " << b3);
 			if (b1 || b2 || b3)
 			{
 				ctre::phoenix::motorcontrol::ControlMode out_mode;
-				if (convertControlMode(in_mode, out_mode))
+				ctre::phoenix::motorcontrol::DemandType demand1_type_phoenix;
+				if (convertControlMode(in_mode, out_mode) &&
+					convertDemand1Type(demand1_type_internal, demand1_type_phoenix))
 				{
-					ts.setNeutralOutput(false); // maybe make this a part of setSetpoint?
-
 					switch (out_mode)
 					{
 						case ctre::phoenix::motorcontrol::ControlMode::Velocity:
@@ -2242,38 +2241,19 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 							break;
 					}
 
-					// TODO : just use 4-arg version all the time
-					if (b3)
-					{
-						ctre::phoenix::motorcontrol::DemandType demand1_type_phoenix;
-						if (convertDemand1Type(demand1_type_internal, demand1_type_phoenix))
-						{
 #ifndef DEBUG_WRITE
-							ROS_INFO_STREAM("called Set(4) on " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
+					ROS_INFO_STREAM("called Set(4) on " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
 									" out_mode = " << static_cast<int>(out_mode) << " command = " << command <<
 									" demand1_type_phoenix = " << static_cast<int>(demand1_type_phoenix) << " demand1_value = " << demand1_value);
 #endif
-							ts.setDemand1Type(demand1_type_internal);
-							ts.setDemand1Value(demand1_value);
+					ts.setNeutralOutput(false); // maybe make this a part of setSetpoint?
 
-							ts.setTalonMode(in_mode);
-							ts.setSetpoint(command);
+					ts.setTalonMode(in_mode);
+					ts.setSetpoint(command);
+					ts.setDemand1Type(demand1_type_internal);
+					ts.setDemand1Value(demand1_value);
 
-							talon->Set(out_mode, command, demand1_type_phoenix, demand1_value);
-						}
-						else
-							ROS_ERROR("Invalid Demand1 Type in hardware_interface write()");
-					}
-					else
-					{
-#ifdef DEBUG_WRITE
-						ROS_INFO_STREAM("called Set(2) on " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
-								" out_mode = " << static_cast<int>(out_mode) << " command = " << command);
-#endif
-						ts.setTalonMode(in_mode);
-						ts.setSetpoint(command);
-						talon->Set(out_mode, command);
-					}
+					talon->Set(out_mode, command, demand1_type_phoenix, demand1_value);
 				}
 			}
 		}
