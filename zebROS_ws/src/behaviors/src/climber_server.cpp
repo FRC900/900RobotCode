@@ -126,7 +126,7 @@ class ClimbAction {
 				//deploy foot using climber controller -----------------------------------------------
 				//define service to send
 				std_srvs::SetBool srv;
-				srv.request.data = true; //TODO: check this
+				srv.request.data = false; 
 				//call controller
 				if(!climber_controller_client_.call(srv))
 				{
@@ -256,7 +256,7 @@ class ClimbAction {
 				//retract climber foot to make robot fall
 				//define service to send
 				std_srvs::SetBool srv;
-				srv.request.data = false; //TODO: check this
+				srv.request.data = true;
 				//call controller
 				if(!climber_controller_client_.call(srv))
 				{
