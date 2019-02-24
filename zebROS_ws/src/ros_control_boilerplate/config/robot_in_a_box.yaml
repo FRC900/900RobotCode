@@ -66,6 +66,7 @@ talon_state_controller:
 # up with one of the names in the top-level joints list
 # above.  
 # The type is a talon_controllers/TalonController
+<<<<<<< 9fc3200015b18b64680544d70d596a5e1edd1d6d
 
 rumble_controller:
     type: position_controllers/JointPositionController
