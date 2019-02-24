@@ -694,7 +694,8 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			(talon_mode == hardware_interface::TalonMode_Velocity) ||
 			(talon_mode == hardware_interface::TalonMode_Current ) ||
 			(talon_mode == hardware_interface::TalonMode_MotionProfile) ||
-			(talon_mode == hardware_interface::TalonMode_MotionMagic))
+			(talon_mode == hardware_interface::TalonMode_MotionMagic)   ||
+			(talon_mode == hardware_interface::TalonMode_MotionProfileArc))
 		{
 			// PIDF0 Status 13 - 160 mSec default
 			if ((last_status_13_time + status_13_period) < ros_time_now)
@@ -741,7 +742,8 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 		double active_trajectory_heading;
 		// Targets Status 10 - 160 mSec default
 		if (((talon_mode == hardware_interface::TalonMode_MotionProfile) ||
-			 (talon_mode == hardware_interface::TalonMode_MotionMagic))  &&
+			 (talon_mode == hardware_interface::TalonMode_MotionMagic)   ||
+			 (talon_mode == hardware_interface::TalonMode_MotionProfileArc)) &&
 			((last_status_10_time + status_10_period) < ros_time_now) )
 		{
 			active_trajectory_position = talon->GetActiveTrajectoryPosition() * radians_scale;
@@ -750,9 +752,11 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			active_trajectory_velocity = talon->GetActiveTrajectoryVelocity() * radians_per_second_scale;
 			safeTalonCall(talon->GetLastError(), "GetActiveTrajectoryVelocity");
 
-			// Only in MotionMagic arc mode?
-			active_trajectory_heading = talon->GetActiveTrajectoryHeading() * 2. * M_PI / 360.; //returns in degrees
-			safeTalonCall(talon->GetLastError(), "GetActiveTrajectoryHeading");
+			if (talon_mode == hardware_interface::TalonMode_MotionProfileArc)
+			{
+				active_trajectory_heading = talon->GetActiveTrajectoryHeading() * 2. * M_PI / 360.; //returns in degrees
+				safeTalonCall(talon->GetLastError(), "GetActiveTrajectoryHeading");
+			}
 
 			update_status_10 = true;
 			last_status_10_time = ros_time_now;
@@ -844,7 +848,8 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 				(talon_mode == hardware_interface::TalonMode_Velocity) ||
 				(talon_mode == hardware_interface::TalonMode_Current ) ||
 				(talon_mode == hardware_interface::TalonMode_MotionProfile) ||
-				(talon_mode == hardware_interface::TalonMode_MotionMagic))
+				(talon_mode == hardware_interface::TalonMode_MotionMagic)   ||
+				(talon_mode == hardware_interface::TalonMode_MotionProfileArc))
 			{
 				if (update_status_13)
 				{
@@ -852,7 +857,8 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 					state->setIntegralAccumulator(integral_accumulator);
 					state->setErrorDerivative(error_derivative);
 					if ((talon_mode != hardware_interface::TalonMode_MotionProfile) &&
-						(talon_mode != hardware_interface::TalonMode_MotionMagic))
+						(talon_mode != hardware_interface::TalonMode_MotionMagic) &&
+						(talon_mode != hardware_interface::TalonMode_MotionProfileArc))
 					{
 						state->setClosedLoopTarget(closed_loop_target);
 					}
@@ -860,13 +866,17 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			}
 
 			if ((talon_mode == hardware_interface::TalonMode_MotionProfile) ||
-				(talon_mode == hardware_interface::TalonMode_MotionMagic))
+				(talon_mode == hardware_interface::TalonMode_MotionMagic)   ||
+				(talon_mode == hardware_interface::TalonMode_MotionProfileArc))
 			{
 				if (update_status_10)
 				{
 					state->setActiveTrajectoryPosition(active_trajectory_position);
 					state->setActiveTrajectoryVelocity(active_trajectory_velocity);
+					if (talon_mode == hardware_interface::TalonMode_MotionProfileArc)
+					{
 					state->setActiveTrajectoryHeading(active_trajectory_heading);
+					}
 				}
 			}
 
@@ -1681,7 +1691,8 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			close_loop_mode = true;
 		}
 		else if ((talon_mode == hardware_interface::TalonMode_MotionProfile) ||
-			     (talon_mode == hardware_interface::TalonMode_MotionMagic))
+			     (talon_mode == hardware_interface::TalonMode_MotionMagic)   ||
+			     (talon_mode == hardware_interface::TalonMode_MotionProfileArc))
 		{
 			close_loop_mode = true;
 			motion_profile_mode = true;
@@ -2494,6 +2505,9 @@ bool FRCRobotHWInterface::convertControlMode(
 			break;
 		case hardware_interface::TalonMode_MotionMagic:
 			output_mode = ctre::phoenix::motorcontrol::ControlMode::MotionMagic;
+			break;
+		case hardware_interface::TalonMode_MotionProfileArc:
+			output_mode = ctre::phoenix::motorcontrol::ControlMode::MotionProfileArc;
 			break;
 		case hardware_interface::TalonMode_Disabled:
 			output_mode = ctre::phoenix::motorcontrol::ControlMode::Disabled;
