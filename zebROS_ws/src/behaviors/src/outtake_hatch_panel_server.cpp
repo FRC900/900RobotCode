@@ -81,9 +81,30 @@ class OuttakeHatchPanelAction
 			behaviors::ElevatorGoal elev_goal;
 			elev_goal.setpoint_index = goal->setpoint_index;
 			elev_goal.place_cargo = false;
+			elev_goal.raise_intake_after_success = true;
 			ac_elevator_.sendGoal(elev_goal);
 
 			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(elevator_timeout - (ros::Time::now().toSec() - start_time), 0.001)));
+			if(finished_before_timeout && !ac_elevator_.getResult()->timed_out) {
+				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
+				if(state.toString() != "SUCCEEDED") {
+					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
+					preempted = true;
+				}
+				else {
+					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
+				}
+			}
+			else {
+				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
+				timed_out = true;
+			}
+
+			elev_goal.setpoint_index = goal->end_setpoint_index;
+			elev_goal.place_cargo = false;
+			ac_elevator_.sendGoal(elev_goal);
+
+			finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(elevator_timeout - (ros::Time::now().toSec() - start_time), 0.001)));
 			if(finished_before_timeout && !ac_elevator_.getResult()->timed_out) {
 				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
 				if(state.toString() != "SUCCEEDED") {

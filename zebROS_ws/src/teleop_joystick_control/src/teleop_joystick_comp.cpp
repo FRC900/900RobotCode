@@ -47,7 +47,6 @@ double offset_angle = 0;
 
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
-ros::Subscriber joint_states_sub;
 
 // 500 msec to go from full back to full forward
 const double drive_rate_limit_time = 500.;
@@ -395,6 +394,15 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			preemptActionlibServers();
 			behaviors::ElevatorGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_idx;
+			if(cargo_linebreak_true_count > linebreak_debounce_iterations)
+			{
+				goal.place_cargo = true;
+			}
+			else
+			{
+				goal.place_cargo = false;
+			}
+			goal.raise_intake_after_success  = true;
 			elevator_ac->sendGoal(goal);
 			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
 		}
@@ -816,7 +824,7 @@ int main(int argc, char **argv)
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	elevator_setpoint = n.advertise<std_msgs::Int8>("elevator_setpoint",1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
-	joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
+	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
 	//initialize actionlib clients
 	intake_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>>("/cargo_intake/cargo_intake_server", true);
