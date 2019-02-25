@@ -3,7 +3,6 @@
 #include <std_msgs/Bool.h>
 #include <geometry_msgs/Twist.h>
 
-geometry_msgs::Twist cmd_vel_msg;
 ros::Time time_since_command;
 ros::Time time_since_pid_enable;
 ros::Time current_time;
@@ -18,6 +17,8 @@ ros::Subscriber x_pid_sub;
 ros::Subscriber y_pid_sub;
 ros::Subscriber orient_pid_sub;
 ros::Subscriber enable_pid_sub;
+
+geometry_msgs::Twist cmd_vel_msg;
 
 bool pid_enable = false;
 

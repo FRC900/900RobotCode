@@ -143,10 +143,6 @@ add_executable(vision_target_server_test src/vision_target_server_test.cpp)
 target_link_libraries(vision_target_server_test ${catkin_LIBRARIES})
 add_dependencies(vision_target_server_test ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 # 
-add_executable(align_server src/align_server.cpp)
-target_link_libraries(align_server ${catkin_LIBRARIES})
-add_dependencies(align_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-# 
 add_executable(trigger_call_test src/trigger_call_test.cpp)
 target_link_libraries(trigger_call_test ${catkin_LIBRARIES})
 add_dependencies(trigger_call_test ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

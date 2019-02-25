@@ -139,7 +139,10 @@
 
 		<!-- Terabee stuffs -->
 		<rosparam file="$(find behaviors)/config/align_with_terabee.yaml" command="load"/>
+		<!-- Align with notch -->
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
+
+		<!-- Distance PID -->
 		<node name="distance_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="distance_pid" />
 			<param name="Kp" value="3.0" />
@@ -155,12 +158,6 @@
 			<param name="topic_from_plant" value="distance_pid/state" />
 			<remap from="pid_debug" to="distance_pid/pid_debug"/>
 			<remap from="pid_enable" to="distance_pid/pid_enable"/>
-		</node>
-		<node name="terabee_pid_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
-			<param name="y_topic" value="distance_pid/x_command" />
-			<param name="x_topic" value="align_with_terabee/y_command" />
-			<param name="enable_topic" value="distance_pid/pid_enable" />
-			<param name="name" value="terabee_pid" />
 		</node>
 
 		<!-- Snap to nearest goal navX test code -->
@@ -184,10 +181,13 @@
 			<remap from="pid_debug" to="navX_pid/pid_debug"/>
 			<remap from="pid_enable" to="navX_pid/pid_enable"/>
 		</node>
-		<node name="navX_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+
+		<node name="align_pid_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
 			<param name="orient_topic" value="navX_pid/orient_command" />
-			<param name="enable_topic" value="navX_pid/pid_enable" />
-			<param name="name" value="navX_pid" />
+			<param name="y_topic" value="distance_pid/x_command" />
+			<param name="x_topic" value="align_with_terabee/y_command" />
+			<param name="enable_topic" value="align_pid/pid_enable" />
+			<param name="name" value="align_pid" />
 		</node>
 	</group>
     
