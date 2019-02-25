@@ -21,9 +21,12 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_practicebot_offsets.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_elevator_params.yaml" command="load"/-->
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
+		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
+		<rosparam file="$(find behaviors)/config/alignmentOffsets.yaml" command="load"/>
 
 
 		<node name="zero_wheel_service" pkg="talon_swerve_drive_controller" type="zero_wheel_service" output="screen"> </node>
+
 
 
 		<!-- Load hardware interface -->
@@ -34,8 +37,17 @@
 		<!-- Load controller manager--> 
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
 			output="screen" args="spawn cargo_outtake_controller cargo_intake_controller climber_controller panel_intake_controller joint_state_controller joint_state_listener_controller talon_state_controller match_state_listener_controller pcm_state_controller pdp_state_controller swerve_drive_controller robot_code_ready_controller" /> 
+
+
 		<node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
+				<node name="vision_target_server_test" pkg="behaviors" type="vision_target_server_test" output="screen" />
+				<node name="align_server" pkg="behaviors" type="align_server" output="screen" />
+
+
+
 	</group>
+
+
 
 	<group ns="rosbridge_server">
 		<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" > 
@@ -110,6 +122,7 @@
 		</node>
 		<node name="path_to_goal_ac_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
 		<node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
+		<node name="path_follower" pkg="swerve_point_generator" type="path_follower" output="screen"/>
 	</group>
 		
 	<group ns="cmd_vel_mux">

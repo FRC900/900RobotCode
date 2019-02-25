@@ -65,23 +65,14 @@ class AlignAction {
 
 		void navx_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-<<<<<<< HEAD
 			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold);
 			ROS_WARN_STREAM_THROTTLE(0.5, "navX error" << fabs(msg.data[0]));
-=======
-			orient_aligned_ = (fabs(msg.data[0]) > orient_error_threshold);
-			ROS_WARN("navX error" << fabs(msg.data[0]));
->>>>>>> daec9f013a90ca7f9663619cce72477810a7388d
 		}
 
 		void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-<<<<<<< HEAD
 			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold);
-			ROS_WARN_STREAM_THROTTLE(0.5, "distance error" << msg.data[0]);
-=======
-			x_aligned_ = (fabs(msg.data[0]) > x_error_threshold);
->>>>>>> daec9f013a90ca7f9663619cce72477810a7388d
+			ROS_WARN_STREAM_THROTTLE(1, "distance error" << msg.data[0]);
 		}
 
 		void y_error_cb(const std_msgs::Bool &msg)
@@ -110,11 +101,7 @@ class AlignAction {
 
 				timed_out = (ros::Time::now().toSec() - start_time) > align_timeout;
 				preempted = as_.isPreemptRequested();
-<<<<<<< HEAD
-				ROS_WARN_THROTTLE(.5, "Orienting");
-=======
-				ROS_INFO_THROTTLE(.5, "Orienting");
->>>>>>> daec9f013a90ca7f9663619cce72477810a7388d
+				ROS_INFO_THROTTLE(1, "Orienting");
 			}
 			geometry_msgs::Twist cmd_vel_msg;
 			cmd_vel_msg.linear.x = 0.0;
@@ -151,7 +138,7 @@ class AlignAction {
             std_srvs::Empty empty;
             BrakeSrv.call(empty);
 			ros::spinOnce();
-			
+
 			if(timed_out)
 			{
 				result_.timed_out = true;
@@ -165,9 +152,7 @@ class AlignAction {
 				result_.timed_out = false;
 				result_.success = false;
 				as_.setPreempted(result_);
-				
 				ROS_INFO("%s: Preempted", action_name_.c_str());
-				
 			}
 			else //implies succeeded
 			{

@@ -3,6 +3,9 @@
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "teleop_joystick_control/rate_limiter.h"
 #include "std_srvs/Empty.h"
+
+#include "std_srvs/Trigger.h"
+
 #include "std_msgs/Bool.h"
 
 #include "behaviors/IntakeAction.h"
@@ -17,7 +20,8 @@
 #include "behaviors/AlignGoal.h"
 #include "actionlib/client/simple_action_client.h"
 #include "behaviors/enumerated_elevator_indices.h"
-#include "std_msgs/Bool.h"
+
+
 #include "std_srvs/SetBool.h"
 #include <vector>
 
@@ -37,8 +41,13 @@ bool previously_intook_panel = false;
 const int climber_num_steps = 4;
 const int elevator_num_setpoints = 4;
 
+
+
+
+
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
+
 
 // 500 msec to go from full back to full forward
 const double drive_rate_limit_time = 500.;
@@ -122,11 +131,45 @@ void preemptActionlibServers()
 	align_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 }
 
+
+static ros::ServiceClient cli;
+
+
+
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
+
 {
 	int i = 0;
 
+
+
+
+	double rightStickX = JoystickState->rightStickX;
+	double rightStickY = JoystickState->rightStickY;
+	ROS_INFO("JoyRecieve");
+	if (JoystickState->buttonAButton) {
+		ROS_INFO("A BUTTON RECIEVED");
+	}
+	bool aButton = JoystickState->buttonAPress;
+	if (aButton) {
+		ROS_INFO("PRESSED THE BUTTON");
+		std_srvs::Trigger trg;
+		if (cli.call(trg)) {
+			ROS_INFO("SERVICE CALLED");
+		} else {
+			ROS_ERROR("LOL NOPE THAT SERVER CANT BE FOUND");
+		}
+
+	}
+
+
+
+
+
+	dead_zone_check(leftStickX, leftStickY);
+
 	const ros::M_string &header = event.getConnectionHeader();
+
 
 	std::string topic = header.at("topic");
 	for(bool msg_assign = false; msg_assign == false; i++)
@@ -721,6 +764,13 @@ int main(int argc, char **argv)
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
+
+
+	cli = n.serviceClient<std_srvs::Trigger>("/frcrobot_jetson/align_service");
+
+
+
+
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
     navX_pid = n.advertise<std_msgs::Bool>("/align_server/navX_pid/pid_enable", 1);
 	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
@@ -728,6 +778,7 @@ int main(int argc, char **argv)
 		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");
 	}
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
 
 	//initialize actionlib clients

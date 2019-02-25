@@ -75,6 +75,12 @@ void rawDataCB(const sensor_msgs::Joy::ConstPtr &msg)
 
 	// Set processed_msg_last to be correct the next time through
 	processed_msg_last = processed_msg;
+
+	ROS_INFO("Joy");
+	if (processed_msg.buttonAButton) {
+		ROS_INFO("A");
+	}
+
 }
 
 int main(int argc, char ** argv)
