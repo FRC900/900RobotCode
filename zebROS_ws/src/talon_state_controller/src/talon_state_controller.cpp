@@ -62,7 +62,7 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 
 	auto &m = realtime_pub_->msg_;
 	// get joints and allocate message
-	talon_state_controller::CustomProfileStatus custom_profile_status_holder;	
+	talon_state_controller::CustomProfileStatus custom_profile_status_holder;
 
 	for (unsigned i = 0; i < num_hw_joints_; i++)
 	{
@@ -222,18 +222,18 @@ std::string TalonStateController::limitSwitchSourceToString(const hardware_inter
 {
 	switch (source)
 	{
-	case hardware_interface::LimitSwitchSource_Uninitialized:
-		return "Uninitialized";
-	case hardware_interface::LimitSwitchSource_FeedbackConnector:
-		return "FeedbackConnector";
-	case hardware_interface::LimitSwitchSource_RemoteTalonSRX:
-		return "RemoteTalonSRX";
-	case hardware_interface::LimitSwitchSource_RemoteCANifier:
-		return "RemoteCANifier";
-	case hardware_interface::LimitSwitchSource_Deactivated:
-		return "Deactivated";
-	default:
-		return "Unknown";
+		case hardware_interface::LimitSwitchSource_Uninitialized:
+			return "Uninitialized";
+		case hardware_interface::LimitSwitchSource_FeedbackConnector:
+			return "FeedbackConnector";
+		case hardware_interface::LimitSwitchSource_RemoteTalonSRX:
+			return "RemoteTalonSRX";
+		case hardware_interface::LimitSwitchSource_RemoteCANifier:
+			return "RemoteCANifier";
+		case hardware_interface::LimitSwitchSource_Deactivated:
+			return "Deactivated";
+		default:
+			return "Unknown";
 	}
 }
 
@@ -241,41 +241,39 @@ std::string TalonStateController::remoteLimitSwitchSourceToString(const hardware
 {
 	switch (source)
 	{
-	case hardware_interface::RemoteLimitSwitchSource_Uninitialized:
-		return "Uninitialized";
-	case hardware_interface::RemoteLimitSwitchSource_RemoteTalonSRX:
-		return "RemoteTalonSRX";
-	case hardware_interface::RemoteLimitSwitchSource_RemoteCANifier:
-		return "RemoteCANifier";
-	case hardware_interface::RemoteLimitSwitchSource_Deactivated:
-		return "Deactivated";
-	default:
-		return "Unknown";
+		case hardware_interface::RemoteLimitSwitchSource_Uninitialized:
+			return "Uninitialized";
+		case hardware_interface::RemoteLimitSwitchSource_RemoteTalonSRX:
+			return "RemoteTalonSRX";
+		case hardware_interface::RemoteLimitSwitchSource_RemoteCANifier:
+			return "RemoteCANifier";
+		case hardware_interface::RemoteLimitSwitchSource_Deactivated:
+			return "Deactivated";
+		default:
+			return "Unknown";
 	}
 }
 std::string TalonStateController::limitSwitchNormalToString(const hardware_interface::LimitSwitchNormal normal)
 {
 	switch (normal)
 	{
-	case hardware_interface::LimitSwitchNormal_Uninitialized:
-		return "Uninitialized";
-	case hardware_interface::LimitSwitchNormal_NormallyOpen:
-		return "NormallyOpen";
-	case hardware_interface::LimitSwitchNormal_NormallyClosed:
-		return "NormallyClosed";
-	case hardware_interface::LimitSwitchNormal_Disabled:
-		return "Disabled";
-	default:
-		return "Unknown";
+		case hardware_interface::LimitSwitchNormal_Uninitialized:
+			return "Uninitialized";
+		case hardware_interface::LimitSwitchNormal_NormallyOpen:
+			return "NormallyOpen";
+		case hardware_interface::LimitSwitchNormal_NormallyClosed:
+			return "NormallyClosed";
+		case hardware_interface::LimitSwitchNormal_Disabled:
+			return "Disabled";
+		default:
+			return "Unknown";
 
 	}
 }
 
 void TalonStateController::update(const ros::Time &time, const ros::Duration & /*period*/)
 {
-	
-	
-	talon_state_controller::CustomProfileStatus custom_profile_status_holder;	
+	talon_state_controller::CustomProfileStatus custom_profile_status_holder;
 
 	// limit rate of publishing
 	if (publish_rate_ > 0.0 && last_publish_time_ + ros::Duration(1.0 / publish_rate_) < time)
@@ -412,6 +410,9 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 						break;
 					case hardware_interface::TalonMode_MotionMagic:
 						m.talon_mode[i] = "Motion Magic";
+						break;
+					case hardware_interface::TalonMode_MotionProfileArc:
+						m.talon_mode[i] = "Motion Profile Arc";
 						break;
 					case hardware_interface::TalonMode_Disabled:
 						m.talon_mode[i] = "Disabled";
@@ -599,20 +600,17 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 					}
 					m.sticky_faults[i] = str;
 				}
-	
-				
+
 				hardware_interface::CustomProfileStatus temp_status = ts->getCustomProfileStatus();
 				custom_profile_status_holder.running = temp_status.running;
 				custom_profile_status_holder.slotRunning = temp_status.slotRunning;
 				custom_profile_status_holder.remainingPoints  = temp_status.remainingPoints;
-				 custom_profile_status_holder.remainingTime = temp_status.remainingTime;
-				 custom_profile_status_holder.outOfPoints = temp_status.outOfPoints;
+				custom_profile_status_holder.remainingTime = temp_status.remainingTime;
+				custom_profile_status_holder.outOfPoints = temp_status.outOfPoints;
 
 				m.custom_profile_status[i] = custom_profile_status_holder;
 
-
 				m.conversion_factor[i] = ts->getConversionFactor();
-				//Add custom profile status
 			}
 			realtime_pub_->unlockAndPublish();
 		}

@@ -1,4 +1,3 @@
-#include <atomic>
 #include <realtime_tools/realtime_buffer.h>
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "teleop_joystick_control/rate_limiter.h"
@@ -7,6 +6,7 @@
 #include "std_srvs/Trigger.h"
 
 #include "std_msgs/Bool.h"
+#include "std_msgs/Int8.h"
 
 #include "behaviors/IntakeAction.h"
 #include "behaviors/IntakeGoal.h"
@@ -24,6 +24,7 @@
 
 #include "std_srvs/SetBool.h"
 #include <vector>
+#include "teleop_joystick_control/RobotOrient.h"
 
 double joystick_deadzone;
 double slow_mode;
@@ -31,19 +32,22 @@ double max_speed;
 double max_rot;
 double joystick_pow;
 double rotation_pow;
+int linebreak_debounce_iterations;
 
 int elevator_cur_setpoint_idx;
 int climber_cur_step;
 
-bool previously_intook_cargo = false; //previous command intook if true, next press will be false
-bool previously_intook_panel = false;
+int cargo_linebreak_true_count = 0;
+int panel_linebreak_true_count = 0;
+int cargo_linebreak_false_count = 0;
+int panel_linebreak_false_count = 0;
+
 
 const int climber_num_steps = 4;
 const int elevator_num_setpoints = 4;
 
-
-
-
+bool robot_orient = false;
+double offset_angle = 0;
 
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
@@ -58,8 +62,7 @@ rate_limiter::RateLimiter right_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_t
 rate_limiter::RateLimiter left_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
 
-
-ros::Publisher navX_pid;
+ros::Publisher elevator_setpoint;
 ros::Publisher JoystickRobotVel;
 ros::Publisher align_with_terabee_pub;
 ros::ServiceClient BrakeSrv;
@@ -73,7 +76,7 @@ std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_h
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ElevatorAction>> elevator_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ClimbAction>> climber_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::AlignAction>> align_ac;
-std::atomic<double> navX_angle;
+double navX_angle;
 
 struct ElevatorGoal
 {
@@ -117,7 +120,7 @@ void navXCallback(const sensor_msgs::Imu &navXState)
 	tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
 
 	if (yaw == yaw) // ignore NaN results
-		navX_angle.store(yaw, std::memory_order_relaxed);
+		navX_angle = yaw;
 }
 
 void preemptActionlibServers()
@@ -131,10 +134,15 @@ void preemptActionlibServers()
 	align_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 }
 
-
-static ros::ServiceClient cli;
-
-
+bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
+		teleop_joystick_control::RobotOrient::Response& res)
+{
+	// Used to switch between robot orient and field orient driving
+	robot_orient = req.robot_orient;
+	offset_angle = req.offset_angle;
+	ROS_WARN_STREAM("Robot Orient = " << (robot_orient) << ", Offset Angle = " << offset_angle);
+	return true;
+}
 
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 
@@ -172,6 +180,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 
 	std::string topic = header.at("topic");
+
+	//Identifies the incoming message as the correct joystick based on the topic the message was recieved from
 	for(bool msg_assign = false; msg_assign == false; i++)
 	{
 		if(topic == topic_array[i])
@@ -181,6 +191,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 	}
 
+
+    //Publish elevator setpoinut
+    std_msgs::Int8 elevator_setpoint_msg;
+    elevator_setpoint_msg.data = elevator_cur_setpoint_idx;
+    elevator_setpoint.publish(elevator_setpoint_msg);
 
 	//Only do this for the first joystick
 	if(i == 1)
@@ -210,9 +225,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		// TODO : dead-zone for rotation?
 		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
-		double triggerLeft = left_trigger_rate_limit.applyLimit(joystick_states_array[0].leftTrigger);
-		double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
-		double rotation = -1*pow(rightStickX, rotation_pow) * max_rot; //TODO fix having to multiply by -1
+		//double triggerLeft = left_trigger_rate_limit.applyLimit(joystick_states_array[0].leftTrigger);
+		//double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
+		double rotation = pow(rightStickX, rotation_pow) * max_rot;
 
 		static bool sendRobotZero = false;
 		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
@@ -235,8 +250,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			Eigen::Vector2d joyVector;
 			joyVector[0] = leftStickX; //intentionally flipped
 			joyVector[1] = -leftStickY;
-			const Eigen::Rotation2Dd r(-navX_angle.load(std::memory_order_relaxed) - M_PI / 2.);
-			const Eigen::Vector2d rotatedJoyVector = r.toRotationMatrix() * joyVector;
+
+			const Eigen::Rotation2Dd rotate((robot_orient ? -offset_angle : -navX_angle));
+			const Eigen::Vector2d rotatedJoyVector = rotate.toRotationMatrix() * joyVector;
 
 			geometry_msgs::Twist vel;
 			vel.linear.x = rotatedJoyVector[1];
@@ -245,7 +261,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			vel.angular.x = 0;
 			vel.angular.y = 0;
-			vel.angular.z = rotation;
+			vel.angular.z = -rotation;
 
 			JoystickRobotVel.publish(vel);
 			sendRobotZero = false;
@@ -254,6 +270,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonA
 		if(joystick_states_array[0].buttonAPress)
 		{
+			//Align the robot
 			ROS_WARN("Joystick1: buttonAPress - Auto Align");
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
@@ -311,10 +328,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonX
 		if(joystick_states_array[0].buttonXPress)
 		{
-
+			//Determines where elevator will go when called to outtake or move to a setpoint
 			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
 			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % elevator_num_setpoints;
-			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+   			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+            
 		}
 		if(joystick_states_array[0].buttonXButton)
 		{
@@ -357,8 +375,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
 			preemptActionlibServers();
-			if(previously_intook_cargo)
+			if(cargo_linebreak_true_count > linebreak_debounce_iterations)
 			{
+				//If we have a cargo, outtake it
 				ROS_INFO_STREAM("Joystick1: Place Cargo");
 				behaviors::PlaceGoal goal;
 				goal.setpoint_index = elevator_cur_setpoint_idx;
@@ -368,11 +387,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 			else
 			{
+				//If we don't have a cargo, intake one
 				ROS_INFO_STREAM("Joystick1: Intake Cargo");
 				behaviors::IntakeGoal goal;
 				intake_cargo_ac->sendGoal(goal);
 			}
-			previously_intook_cargo = !previously_intook_cargo;
 		}
 		if(joystick_states_array[0].bumperLeftButton)
 		{
@@ -387,8 +406,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			ROS_INFO_STREAM("Joystick1: bumperRightPress");
 			preemptActionlibServers();
-			if(previously_intook_panel)
+			if(panel_linebreak_true_count > linebreak_debounce_iterations)
 			{
+				//If we have a panel, outtake it
 				ROS_INFO_STREAM("Joystick1: Place Panel");
 				behaviors::PlaceGoal goal;
 				goal.setpoint_index = elevator_cur_setpoint_idx;
@@ -398,12 +418,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 			else
 			{
+				//If we don't have a panel, intake one
 				ROS_INFO_STREAM("Joystick1: Intake Panel");
 				behaviors::IntakeGoal goal;
 				intake_hatch_panel_ac->sendGoal(goal);
 
 			}
-			previously_intook_panel = !previously_intook_panel;
 		}
 		if(joystick_states_array[0].bumperRightButton)
 		{
@@ -416,12 +436,21 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: directionLeft
 		if(joystick_states_array[0].directionLeftPress)
 		{
+			//Move the elevator to the current setpoint
 			ROS_WARN("Calling elevator server; move to setpoint %d", elevator_cur_setpoint_idx);
 			preemptActionlibServers();
 			behaviors::ElevatorGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_idx;
+			if(cargo_linebreak_true_count > linebreak_debounce_iterations)
+			{
+				goal.place_cargo = true;
+			}
+			else
+			{
+				goal.place_cargo = false;
+			}
+			goal.raise_intake_after_success  = true;
 			elevator_ac->sendGoal(goal);
-			elevator_cur_setpoint_idx = 0;
 			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
 		}
 		if(joystick_states_array[0].directionLeftButton)
@@ -435,6 +464,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: directionRight
 		if(joystick_states_array[0].directionRightPress)
 		{
+			//Preempt every server running; for emergencies or testing only
 			ROS_WARN("Preempting All Servers");
 			preemptActionlibServers();
 		}
@@ -449,6 +479,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: directionUp
 		if(joystick_states_array[0].directionUpPress)
 		{
+			//Start or move to the next step of the climb
 			ROS_INFO_STREAM("Joystick1: Calling Climber Server");
 			preemptActionlibServers();
 			ROS_WARN("Climber current step = %d", climber_cur_step);
@@ -468,6 +499,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: directionDown
 		if(joystick_states_array[0].directionDownPress)
 		{
+			//Abort the climb and lower back down
 			ROS_WARN("Joystick1: Preempting Climber Server");
 			climber_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 			climber_cur_step = 0;
@@ -708,6 +740,69 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 }
 
+void jointStateCallback(const sensor_msgs::JointState &joint_state)
+{
+	//get index of linebreak sensor for this actionlib server
+	static size_t cargo_linebreak_idx = std::numeric_limits<size_t>::max();
+	static size_t panel_linebreak_1_idx = std::numeric_limits<size_t>::max();
+	static size_t panel_linebreak_2_idx = std::numeric_limits<size_t>::max();
+	if (cargo_linebreak_idx >= joint_state.name.size() || panel_linebreak_1_idx >= joint_state.name.size() || panel_linebreak_2_idx >= joint_state.name.size())
+	{
+		for (size_t i = 0; i < joint_state.name.size(); i++)
+		{
+			if (joint_state.name[i] == "cargo_intake_linebreak_1")
+				cargo_linebreak_idx = i;
+			if (joint_state.name[i] == "panel_intake_linebreak_1")
+				panel_linebreak_1_idx = i;
+			if (joint_state.name[i] == "panel_intake_linebreak_2")
+				panel_linebreak_2_idx = i;
+		}
+	}
+
+	//update linebreak counts based on the value of the linebreak sensor
+	if (cargo_linebreak_idx < joint_state.position.size())
+	{
+		bool cargo_linebreak_true = (joint_state.position[cargo_linebreak_idx] != 0);
+		if(cargo_linebreak_true)
+		{
+			cargo_linebreak_true_count += 1;
+			cargo_linebreak_false_count = 0;
+		}
+		else
+		{
+			cargo_linebreak_true_count = 0;
+			cargo_linebreak_false_count += 1;
+		}
+	}
+	else
+	{
+		ROS_WARN_THROTTLE(1, "outtake line break sensor not found in joint_states");
+		cargo_linebreak_false_count = 0;
+		cargo_linebreak_true_count = 0;
+	}
+
+	if (panel_linebreak_1_idx < joint_state.position.size() && panel_linebreak_2_idx < joint_state.position.size())
+	{
+		bool panel_linebreak_true = ((joint_state.position[panel_linebreak_1_idx] != 0) || (joint_state.position[panel_linebreak_2_idx] != 0));
+		if(panel_linebreak_true)
+		{
+			panel_linebreak_true_count += 1;
+			panel_linebreak_false_count = 0;
+		}
+		else
+		{
+			panel_linebreak_true_count = 0;
+			panel_linebreak_false_count += 1;
+		}
+	}
+	else
+	{
+		ROS_WARN_THROTTLE(1, "intake line break sensor not found in joint_states");
+		panel_linebreak_false_count += 1;
+		panel_linebreak_true_count = 0;
+	}
+}
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "Joystick_controller");
@@ -736,6 +831,10 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read rotation_pow in teleop_joystick_comp");
 	}
+	if(!n_params.getParam("linebreak_debounce_iterations", linebreak_debounce_iterations))
+	{
+		ROS_ERROR("Could not read linebreak_debounce_iterations in teleop_joystick_comp");
+	}
 	if(!n_swerve_params.getParam("max_speed", max_speed))
 	{
 		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
@@ -745,9 +844,8 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
 	}
 
-	std::vector <ros::Subscriber> subscriber_array;
-
-	navX_angle = M_PI / 2;
+	std::vector <ros::Subscriber> subscriber_array;	
+    navX_angle = M_PI / 2;
 
 	//Read from _num_joysticks_ joysticks
 	for(size_t j = 0; j < num_joysticks; j++)
@@ -759,6 +857,7 @@ int main(int argc, char **argv)
 		topic_array.push_back(s.str());
 		subscriber_array.push_back(n.subscribe(topic_array[j], 1, &evaluateCommands));
 	}
+
 
 	joystick_states_array.resize(topic_array.size());
 
@@ -772,14 +871,14 @@ int main(int argc, char **argv)
 
 
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
-    navX_pid = n.advertise<std_msgs::Bool>("/align_server/navX_pid/pid_enable", 1);
 	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
 	{
 		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");
 	}
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
-
+	elevator_setpoint = n.advertise<std_msgs::Int8>("elevator_setpoint",1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
+	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
 	//initialize actionlib clients
 	intake_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>>("/cargo_intake/cargo_intake_server", true);
@@ -793,6 +892,8 @@ int main(int argc, char **argv)
 
 	run_align = n.serviceClient<std_srvs::SetBool>("/align_with_terabee/run_align");
 	align_with_terabee_pub = n.advertise<std_msgs::Bool>("/align_server/align_with_terabee/enable_y_pub", 1);
+
+	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 
 	ROS_WARN("joy_init");
 

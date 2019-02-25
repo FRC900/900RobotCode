@@ -482,7 +482,6 @@ class TalonStateListenerController :
 				auto it = std::find(msg->name.cbegin(), msg->name.cend(), joint_names_[i]);
 				if (it != msg->name.cend())
 				{
-					const size_t loc = it - msg->name.cbegin();
 					data[i].value_.setPosition(msg->position[i]);
 					data[i].value_.setSpeed(msg->speed[i]);
 					data[i].value_.setOutputCurrent(msg->output_voltage[i]);

@@ -3,11 +3,10 @@ elevator_controller:
 
     elevator_joint: [ 'elevator_master', 'elevator_follower1', 'elevator_follower2', 'elevator_follower3' ]
 
-    arb_feed_forward_up: 0.041
-    arb_feed_forward_down: 0.026
+    arb_feed_forward_up: 0.0
 
     # How quickly the elevator moves down when zeroing itself
-    elevator_zeroing_percent_output: -0.1 # TODO : tune me
+    elevator_zeroing_percent_output: -0.2 # TODO : tune me
 
     # If there are no negative velocity readings while zeroing
     # for this amount of time, assume the elevator is stuck
@@ -21,10 +20,11 @@ elevator_controller:
         type: talon_controllers/TalonControllerInterface 
         joint: elevator_master
         close_loop_values:
-            - {p: 0.0, i: 0.0, d: 0, f: 0.18, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: 0.09, i: 0.0, d: 0, f: 0.0, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: 0.09, i: 0.0, d: 0, f: 0.0, i_zone: 0, closed_loop_peak_output: 1.0}
 
         # TODO : tuning
-        motion_cruise_velocity: 1.2
+        motion_cruise_velocity: 1.5
         motion_acceleration: 6
               
         sensor_phase: True 
@@ -39,8 +39,8 @@ elevator_controller:
         # TODO : figure out what value this should be
         # Only need one direction, to
         # prevent the elevator from running off the top
-        softlimit_forward_threshold: 1.66755
-        softlimit_forward_enable: True
+        softlimit_forward_threshold: 1.5 #1.66755
+        softlimit_forward_enable: False
 
         voltage_compensation_enable: True
         voltage_compensation_saturation: 12.5
@@ -53,7 +53,12 @@ elevator_controller:
 
     elevator_follower1: 
         joint: elevator_follower1
+        sensor_phase: True 
         invert_output: False
+        feedback_type: CTRE_MagEncoder_Relative
+        conversion_factor: 0.02959
+
+        dynamic_reconfigure: true
 
     elevator_follower2: 
         joint: elevator_follower2

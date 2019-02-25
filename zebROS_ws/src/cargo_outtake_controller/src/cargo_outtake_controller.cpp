@@ -9,7 +9,7 @@ namespace cargo_outtake_controller
 	{
 		//initialize cargo outtake kicker joint (pneumatic piston that controls kicker)
 		cargo_outtake_kicker_joint_ = hw->getHandle("cargo_outtake_kicker_joint");
-		cargo_outtake_clamp_joint_ = hw->getHandle("cargo_outtake_clamp_joint");
+		cargo_outtake_clamp_joint_ = hw->getHandle("clamp_joint");
 
 		cargo_outtake_service_ = controller_nh.advertiseService("cargo_outtake_command", &CargoOuttakeController::cmdService, this);
 
@@ -17,30 +17,30 @@ namespace cargo_outtake_controller
 	}
 
 	void CargoOuttakeController::starting(const ros::Time &/*time*/) {
-		cargo_outtake_kicker_joint_.setCommand(0); // set the command to the kicker of the outtake
-		cargo_outtake_clamp_joint_.setCommand(0); // set the command to the up/down part of the outtake
+		kicker_command_.writeFromNonRT(true);
+		clamp_command_.writeFromNonRT(false);
 	}
 
 	void CargoOuttakeController::update(const ros::Time &time, const ros::Duration &period) {
 		//process input for the up/down part of the intake (pneumatic piston)
-		bool kicker_command = *(kicker_command_.readFromRT());
+		const bool kicker_command = *(kicker_command_.readFromRT());
 		double kicker_command_double; //to store processed input
 		if(kicker_command == true) {
 			//ROS_WARN("cargo outtake kicker command: -1");
-			kicker_command_double = 1;
-		}
-		else if (kicker_command == false) {
 			kicker_command_double = 0;
+		}
+		else {
+			kicker_command_double = 1;
 			//ROS_WARN("cargo outtake kicker command: 1");
 		}
 
-		bool clamp_command = *(clamp_command_.readFromRT());
+		const bool clamp_command = *(clamp_command_.readFromRT());
 		double clamp_command_double; //to store processed input
 		if(clamp_command == true) {
 			//ROS_WARN("cargo outtake kicker command: -1");
 			clamp_command_double = 1;
 		}
-		else if (clamp_command == false) {
+		else {
 			clamp_command_double = 0;
 			//ROS_WARN("cargo outtake kicker command: 1");
 		}
@@ -59,7 +59,7 @@ namespace cargo_outtake_controller
 			//kick = true, retract = false
 			kicker_command_.writeFromNonRT(req.kicker_in); //take the service request for in/out (true/false???) and write to a command variable
 			//clamped down = false, let go = true
-			clamp_command_.writeFromNonRT(req.clamp_in); //take the service request for in/out (true/false???) and write to a command variable
+			clamp_command_.writeFromNonRT(req.clamp_release); //take the service request for in/out (true/false???) and write to a command variable
 		}
 		else
 		{

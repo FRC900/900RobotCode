@@ -10,6 +10,7 @@
 #include "panel_intake_controller/PanelIntakeSrv.h"
 #include "sensor_msgs/JointState.h"
 #include <atomic>
+#include "cargo_outtake_controller/CargoOuttakeSrv.h"
 
 namespace panel_intake_controller
 {
@@ -40,11 +41,13 @@ class PanelIntakeController : public controller_interface::Controller<hardware_i
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
             hardware_interface::JointHandle claw_joint_; //interface for the in/out solenoid joint
  			hardware_interface::JointHandle push_joint_;
+			bool last_claw_cmd_;
 
             realtime_tools::RealtimeBuffer<bool> claw_cmd_; //this is the buffer for percent output commands to be published
             realtime_tools::RealtimeBuffer<bool> push_cmd_; //buffer for in/out commands 
 
             ros::ServiceServer panel_intake_service_; //service for receiving commands
+            ros::ServiceClient cargo_outtake_service_; //service for receiving commands
 			ros::Subscriber joint_states_sub_; //to subscribe to joint states - for sensors
 
 			std::atomic<int> linebreak_true_count;

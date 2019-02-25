@@ -1,4 +1,4 @@
 # Global params for all actionlib servers
 actionlib_params:
-    linebreak_debounce_iterations: 10
+    linebreak_debounce_iterations: 1
     wait_for_server_timeout: 5

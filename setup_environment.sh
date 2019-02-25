@@ -157,10 +157,15 @@ if [ "$jetson" = true ] ; then
 	mkdir -p ~/.ssh
 	cd ~/.ssh
 	tar -xjf ~/2019RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 
+	chmod 640 authorized_keys
+	cd ~
+	chmod 700 .ssh
 
 	sudo mkdir -p /root/.ssh
 	sudo cd /root/.ssh
-	sudo tar -xjf /home/ubuntu/2019RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 
+	sudo tar -xjf /home/ubuntu/2019RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
+	sudo chmod 640 /root/authorized_keys
+	sudo chmod 700 /root/.ssh
 
 	cd ~/2019RobotCode
 	sudo cp ./jetson_setup/10-local.rules /etc/udev/rules.d/
