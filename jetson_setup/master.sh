@@ -36,3 +36,4 @@ nvpmodel -m 0
 /home/ubuntu/jetson_clocks.sh
 /home/ubuntu/2019RobotCode/jetson_setup/clocks.sh &
 
+pushd ../build; python3 -m http.server 5805; popd
