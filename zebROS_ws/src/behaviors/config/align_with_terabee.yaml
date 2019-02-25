@@ -1,4 +1,0 @@
-align_with_terabee_params:
-    distance_bound: 0.04
-    cmd_vel_to_pub: 0.4
-    distance_target: 0.1

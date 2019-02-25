@@ -106,7 +106,9 @@ class AlignAction {
 			bool aligned = false;
 
 			if(goal->has_cargo) {
-
+				orient_aligned_ = false;
+				x_aligned_ = false;
+				y_aligned_ = false;
 
 			}
 			else {
@@ -141,7 +143,7 @@ class AlignAction {
 					if(!orient_aligned_)
 						ROS_INFO_THROTTLE(1, "Orienting");
 					else
-						ROS_INFO_THROTTLE(1, "Translating + Orienting. Distance aligned: " << x_aligned_ << " Cutout aligned: " << y_aligned_);
+						ROS_INFO_STREAM_THROTTLE(1, "Translating + Orienting. Distance aligned: " << x_aligned_ << " Cutout aligned: " << y_aligned_);
 					if(orient_timed_out)
 						ROS_ERROR_STREAM_THROTTLE(1, "Orient timed out!");
 				}

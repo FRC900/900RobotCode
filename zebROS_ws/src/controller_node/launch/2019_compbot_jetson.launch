@@ -138,8 +138,6 @@
 		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
 		<node name="align_ac_server" pkg="behaviors" type="align_server" output="screen" />
 
-		<!-- Terabee stuffs -->
-		<rosparam file="$(find behaviors)/config/align_with_terabee.yaml" command="load"/>
 		<!-- Align with notch -->
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 
@@ -157,6 +155,24 @@
 			<param name="topic_from_controller" value="distance_pid/x_command" />     
 			<param name="setpoint_topic" value="distance_pid/setpoint" />
 			<param name="topic_from_plant" value="distance_pid/state" />
+			<remap from="pid_debug" to="distance_pid/pid_debug"/>
+			<remap from="pid_enable" to="distance_pid/pid_enable"/>
+		</node>
+
+		<!-- Cargo  PID -->
+		<node name="cargo_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="cargo_pid" />
+			<param name="Kp" value="1.5" />
+			<param name="Ki" value="0.0" />
+			<param name="Kd" value="0.1" />
+			<param name="upper_limit" value="1" />
+			<param name="lower_limit" value="-1" />
+			<param name="windup_limit" value="10" />
+			<param name="max_loop_frequency" value="100.0" />
+			<param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="cargo_pid/y_command" />     
+			<param name="setpoint_topic" value="cargo_pid/setpoint" />
+			<param name="topic_from_plant" value="cargo_pid/state" />
 			<remap from="pid_debug" to="distance_pid/pid_debug"/>
 			<remap from="pid_enable" to="distance_pid/pid_enable"/>
 		</node>
@@ -183,10 +199,18 @@
 			<remap from="pid_enable" to="navX_pid/pid_enable"/>
 		</node>
 
-		<node name="align_pid_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+		<node name="align_pid_hatch_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
 			<param name="orient_topic" value="navX_pid/orient_command" />
 			<param name="y_topic" value="distance_pid/x_command" />
 			<param name="x_topic" value="align_with_terabee/y_command" />
+			<param name="enable_topic" value="align_pid/pid_enable" />
+			<param name="name" value="align_pid" />
+		</node>
+
+		<node name="align_pid_cargo_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+			<param name="orient_topic" value="navX_pid/orient_command" />
+			<param name="y_topic" value="distance_pid/x_command" />
+			<param name="x_topic" value="cargo_pid/y_command" />
 			<param name="enable_topic" value="align_pid/pid_enable" />
 			<param name="name" value="align_pid" />
 		</node>

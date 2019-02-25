@@ -6,13 +6,13 @@
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
 
-#define NUM_SENSORS 6
-#define MIN_DIST 4
+#define NUM_SENSORS 8
 
 std::vector<double> sensors_distances;
 int ternary_distances;
 bool publish = false;
 bool publish_last = false;
+
 const double default_min_dist_ = 100;
 double min_dist = default_min_dist_;
 
@@ -70,7 +70,8 @@ int main(int argc, char ** argv)
 
 	ros::Publisher distance_setpoint_pub = n.advertise<std_msgs::Float64>("distance_pid/setpoint", 1);
 	ros::Publisher distance_state_pub = n.advertise<std_msgs::Float64>("distance_pid/state", 1);
-	ros::Publisher distance_enable_pub = n.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1);
+	ros::Publisher cargo_setpoint_pub = n.advertise<std_msgs::Float64>("cargo_pid/setpoint", 1);
+	ros::Publisher cargo_state_pub = n.advertise<std_msgs::Float64>("cargo_pid/state", 1);
 	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_terabee/y_command", 1);
 	ros::Publisher successful_y_align = n.advertise<std_msgs::Bool>("align_with_terabee/y_aligned", 1);
 
@@ -85,14 +86,10 @@ int main(int argc, char ** argv)
 	std_msgs::Float64 distance_setpoint_msg;
 	distance_setpoint_msg.data = 0;
 
+	std_msgs::Float64 cargo_setpoint_msg;
+	cargo_setpoint_msg.data = 0;
+
 	ros::Rate r(50);
-
-	//make the robot not randomly drive forward as soon as it receives data
-	std_msgs::Bool enable_false;
-	enable_false.data = false;
-	distance_enable_pub.publish(enable_false);
-	ros::spinOnce();
-
 
 	while(ros::ok())
 	{
@@ -113,19 +110,26 @@ int main(int argc, char ** argv)
             distance_setpoint_pub.publish(distance_setpoint_msg.data);
         }
 
+		//deal with cargo PID next
+		std_msgs::Float64 cargo_state_msg;
+		cargo_state_msg.data = sensors_distances[0] - sensors_distances[1];
+		cargo_state_pub.publish(cargo_state_msg);
+		cargo_setpoint_pub.publish(cargo_setpoint_msg);
+
+
 
 		//now the exciting y-alignment stuff
 		//1 is rocket panel
 		//2 is empty space(can't differentiate on rocket between cutout and off the side)
 		ternary_distances = 0;
-		for(int i = 0; i < sensors_distances.size(); i++)
+		for(int i = 2; i < sensors_distances.size(); i++)
 		{
 			if(sensors_distances[i] != sensors_distances[i])
-				ternary_distances += pow(10.0, NUM_SENSORS - 1 - i)*2;
+				ternary_distances += pow(10.0, i)*2;
 			else if(fabs(sensors_distances[i] - min_dist) < distance_bound)
-				ternary_distances += pow(10.0, NUM_SENSORS - 1 - i);  //TODO This is just i on compbot
+				ternary_distances += pow(10.0, i);  //TODO This is just i on compbot
 			else if(fabs(sensors_distances[i] - min_dist) > distance_bound)
-				ternary_distances += pow(10.0, NUM_SENSORS - 1 - i)*2;
+				ternary_distances += pow(10.0, i)*2;
 			else
 			{
 				ROS_INFO_STREAM("very confused " << sensors_distances[i]);
@@ -152,18 +156,17 @@ int main(int argc, char ** argv)
 			case(112211):
 			case(111211):
 			case(211221):
-			case(211221):
 			case(221221):
 			case(221121):
 			case(222121):
-			case(221122):
-			case(222122):
+			case(221122): //DUPLICATE
+			case(222122): //DUPLICATE
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the right a small amount: case: " << ternary_distances);
 				cutout_found = true;
 				y_msg.data = 1*cmd_vel_to_pub;
 				break;
 			//Off to the right a large amount
-			case(222112):
+			case(222112): //DUPLICATE
 			case(222212):
 			case(222211):
 			case(222221):
