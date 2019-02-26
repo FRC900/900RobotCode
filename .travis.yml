@@ -32,7 +32,7 @@ script:
      catkin_make &&
      echo \"catkin make\" &&
      source devel/setup.bash &&
-     timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen &&
+     timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2019_compbot_combined.launch hw_or_sim:=sim output:=screen &&
      echo \"Finished Ubuntu compile.\""
   - docker run --user ubuntu frc900/zebros-2019-dev:latest /bin/bash -l -c
     "cd ~ &&
