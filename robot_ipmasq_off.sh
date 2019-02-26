@@ -20,7 +20,7 @@
 #
 # Configurations
 #
-IPTABLES="/usr/sbin/iptables"
+IPTABLES="/sbin/iptables"
 #
 # reset the default policies in the filter table.
 #
