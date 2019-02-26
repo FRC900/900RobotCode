@@ -15,6 +15,7 @@ bool publish_last = false;
 
 const double default_min_dist_ = 100;
 double min_dist = default_min_dist_;
+double last_command;
 
 void multiflexCB(const teraranger_array::RangeArray& msg)
 {
@@ -24,7 +25,9 @@ void multiflexCB(const teraranger_array::RangeArray& msg)
 		if(msg.ranges[i].range == msg.ranges[i].range)
 		{
 			sensors_distances[i] = msg.ranges[i].range;
-			min_dist = std::min(min_dist, static_cast<double>(msg.ranges[i].range));
+			if(i >= 2) {
+				min_dist = std::min(min_dist, static_cast<double>(msg.ranges[i].range));
+			}
 			//ROS_INFO_STREAM("i = " << i << " range = " << sensors_distances[i]);
 		}
 		else
@@ -96,7 +99,7 @@ int main(int argc, char ** argv)
 		bool aligned = false;
 		if(sensors_distances[0] == 0.0 && sensors_distances[1] == 0.0 && sensors_distances[2] == 0.0 && sensors_distances[3] == 0.0 && sensors_distances[4] == 0.0)
 		{
-			ROS_INFO_STREAM("No data is being received from the Terabee sensors. Skipping this message");
+			ROS_INFO_STREAM_THROTTLE(2, "No data is being received from the Terabee sensors. Skipping this message");
 			ros::spinOnce();
 			r.sleep();
 			continue;
@@ -125,11 +128,11 @@ int main(int argc, char ** argv)
 		for(int i = 2; i < sensors_distances.size(); i++)
 		{
 			if(sensors_distances[i] != sensors_distances[i])
-				ternary_distances += pow(10.0, i)*2;
+				ternary_distances += pow(10.0, i - 2)*2;
 			else if(fabs(sensors_distances[i] - min_dist) < distance_bound)
-				ternary_distances += pow(10.0, i);  //TODO This is just i on compbot
+				ternary_distances += pow(10.0, i - 2);  //TODO This is just i on compbot
 			else if(fabs(sensors_distances[i] - min_dist) > distance_bound)
-				ternary_distances += pow(10.0, i)*2;
+				ternary_distances += pow(10.0, i - 2)*2;
 			else
 			{
 				ROS_INFO_STREAM("very confused " << sensors_distances[i]);
@@ -156,17 +159,17 @@ int main(int argc, char ** argv)
 			case(112211):
 			case(111211):
 			case(211221):
+			case(212211): //Just added technically shouldn't happen
 			case(221221):
 			case(221121):
 			case(222121):
-			case(221122): //DUPLICATE
-			case(222122): //DUPLICATE
+			case(222112):
+			case(222122): //DUPLICATE moving sensor 4 one to the right makes this only case
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the right a small amount: case: " << ternary_distances);
 				cutout_found = true;
 				y_msg.data = 1*cmd_vel_to_pub;
 				break;
 			//Off to the right a large amount
-			case(222112): //DUPLICATE
 			case(222212):
 			case(222211):
 			case(222221):
@@ -176,11 +179,8 @@ int main(int argc, char ** argv)
 				break;
 			//Off to the left a small amount
 			case(122112):
-			case(222112):
 			case(122122):
-			//case(222122): Shouldn't happen
-			case(222122):
-			case(221122):
+			//case(222122): //Shouldn't happen
 			case(211122):
 			case(221222):
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left a small amount: case: " << ternary_distances);
@@ -195,6 +195,11 @@ int main(int argc, char ** argv)
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left a large amount: case: " << ternary_distances);
 				cutout_found = true;
 				y_msg.data = -2*cmd_vel_to_pub;
+				break;
+			case(221122):
+				ROS_INFO_STREAM_THROTTLE(.25, "Indeterminate case found: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = last_command;
 				break;
 		}
 

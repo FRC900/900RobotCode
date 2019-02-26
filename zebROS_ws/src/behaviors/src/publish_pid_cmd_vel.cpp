@@ -4,6 +4,9 @@
 #include <geometry_msgs/Twist.h>
 
 ros::Time time_since_command;
+ros::Time time_since_orient;
+ros::Time time_since_x;
+ros::Time time_since_y;
 ros::Time time_since_pid_enable;
 ros::Time current_time;
 
@@ -25,22 +28,24 @@ bool pid_enable = false;
 void orientCB(const std_msgs::Float64& msg)
 {
 	time_since_command = ros::Time::now();
+	time_since_orient = ros::Time::now();
 	cmd_vel_msg.angular.z = -1*msg.data;
 }
 void xCB(const std_msgs::Float64& msg)
 {
 	time_since_command = ros::Time::now();
+	time_since_x = ros::Time::now();
 	cmd_vel_msg.linear.x = msg.data;
 }
 void yCB(const std_msgs::Float64& msg)
 {
 	time_since_command = ros::Time::now();
+	time_since_y = ros::Time::now();
 	cmd_vel_msg.linear.y = msg.data;
 }
 void enableCB(const std_msgs::Bool& msg)
 {
 	time_since_pid_enable = ros::Time::now();
-	pid_enable = msg.data;
 }
 
 int main(int argc, char ** argv)
@@ -92,6 +97,13 @@ int main(int argc, char ** argv)
 		current_time = ros::Time::now();
 		if((current_time - time_since_command).toSec() < 1 && pid_enable && (current_time - time_since_pid_enable).toSec() < 0.5)
 		{
+			if((current_time - time_since_orient).toSec() > 0.1)
+				cmd_vel_msg.angular.z = 0.0;
+			if((current_time - time_since_x).toSec() > 0.1)
+				cmd_vel_msg.linear.x = 0.0;
+			if((current_time - time_since_y).toSec() > 0.1)
+				cmd_vel_msg.linear.y = 0.0;
+			time_since_x = ros::Time::now();
 			cmd_vel_pub.publish(cmd_vel_msg);
 		}
 		ros::spinOnce();

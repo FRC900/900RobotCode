@@ -65,6 +65,8 @@ rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_t
 ros::Publisher elevator_setpoint;
 ros::Publisher JoystickRobotVel;
 ros::Publisher align_with_terabee_pub;
+ros::Publisher cargo_pid;
+ros::Publisher terabee_pid;
 ros::ServiceClient BrakeSrv;
 ros::ServiceClient run_align;
 ros::ServiceClient align_with_terabee;
@@ -244,27 +246,30 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			//Align the robot
 			ROS_WARN("Joystick1: buttonAPress - Auto Align");
-			preemptActionlibServers();
-			behaviors::AlignGoal goal;
-			goal.trigger = false;
-			align_ac->sendGoal(goal);
+		//	preemptActionlibServers();
+		//	behaviors::AlignGoal goal;
+		//	goal.trigger = false;
+		//	align_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonAButton)
 		{
 			ROS_INFO_THROTTLE(1, "buttonAButton");
-            //std_msgs::Bool enable_pid;
-			//enable_pid.data = true;
-            //navX_pid.publish(enable_pid);
+            std_msgs::Bool enable_pid;
+			enable_pid.data = true;
+            terabee_pid.publish(enable_pid);
 			//std_msgs::Bool enable_stuff;
 			//enable_stuff.data = true;
 			//align_with_terabee_pub.publish(enable_stuff);
 
-			behaviors::AlignGoal goal;
-			goal.trigger = true;
-			align_ac->sendGoal(goal);
+			//behaviors::AlignGoal goal;
+			//goal.trigger = true;
+			//align_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonARelease)
 		{
+            std_msgs::Bool enable_pid;
+			enable_pid.data = false;
+            terabee_pid.publish(enable_pid);
 			//std_msgs::Bool enable_stuff;
 			//enable_stuff.data = false;
 			//align_with_terabee_pub.publish(enable_stuff);
@@ -859,6 +864,8 @@ int main(int argc, char **argv)
 
 	run_align = n.serviceClient<std_srvs::SetBool>("/align_with_terabee/run_align");
 	align_with_terabee_pub = n.advertise<std_msgs::Bool>("/align_server/align_with_terabee/enable_y_pub", 1);
+	cargo_pid = n.advertise<std_msgs::Bool>("/align_server/cargo_pid/pid_enable", 1);
+	terabee_pid = n.advertise<std_msgs::Bool>("/align_server/align_with_terabee/enable_y_pub", 1);
 
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 

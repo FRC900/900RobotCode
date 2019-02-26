@@ -15,7 +15,7 @@
 
 		<!-- Load controller settings -->
 		<!-- These need to be replaced with the real thing -->
-		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_base_rio.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2018_compbot_base_rio.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_rio.yaml" command="load"/>
 
 		<!-- Load hardware interface -->
