@@ -5,10 +5,11 @@
 #include "libpixyusb2.h"
 #include "pixy_get_lines/PixyLine.h"
 
-int demosaic(uint16_t width, uint16_t height, const uint8_t *bayerImage, cv::Mat &mat)
+void demosaic(size_t width, size_t height, const uint8_t *bayerImage, cv::Mat &mat)
 {
 	mat.create(height, width, CV_8UC3);
-	uint32_t x, y, xx, yy, r, g, b;
+	size_t x, y, xx, yy;
+	uint32_t r, g, b;
 	const uint8_t *pixel0, *pixel;
 
 	for (y=0; y<height; y++)

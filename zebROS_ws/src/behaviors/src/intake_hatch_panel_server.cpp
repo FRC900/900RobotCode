@@ -53,7 +53,7 @@ class IntakeHatchPanelAction
 
 		~IntakeHatchPanelAction(void) {}
 
-		void executeCB(const behaviors::IntakeGoalConstPtr &goal)
+		void executeCB(const behaviors::IntakeGoalConstPtr &/*goal*/)
 		{
 			ROS_WARN("hatch panel intake server running");
 

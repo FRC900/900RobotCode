@@ -130,7 +130,7 @@ void preemptActionlibServers()
 }
 
 bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
-		teleop_joystick_control::RobotOrient::Response& res)
+		teleop_joystick_control::RobotOrient::Response&/* res*/)
 {
 	// Used to switch between robot orient and field orient driving
 	robot_orient = req.robot_orient;
@@ -797,11 +797,11 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
 	}
 
-	std::vector <ros::Subscriber> subscriber_array;	
+	std::vector <ros::Subscriber> subscriber_array;
     navX_angle = M_PI / 2;
 
 	//Read from _num_joysticks_ joysticks
-	for(size_t j = 0; j < num_joysticks; j++)
+	for(int j = 0; j < num_joysticks; j++)
 	{
 		std::stringstream s;
 		s << "/teleop/translator";

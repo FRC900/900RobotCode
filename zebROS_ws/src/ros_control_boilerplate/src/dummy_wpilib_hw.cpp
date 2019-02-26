@@ -61,7 +61,7 @@ int frc::AnalogInput::GetChannel() const
 	ROS_ERROR("Called frc::AnalogInput::GetChannel() const on unsupported platform");
 	return -1;
 }
-void frc::AnalogInput::SetAverageBits(int bits)
+void frc::AnalogInput::SetAverageBits(int)
 {
 	ROS_ERROR("Called frc::AnalogInput::SetAverageBits(int bits) on unsupported platform");
 }
@@ -70,7 +70,7 @@ int frc::AnalogInput::GetAverageBits() const
 	ROS_ERROR("Called frc::AnalogInput::GetAverageBits() const on unsupported platform");
 	return -1;
 }
-void frc::AnalogInput::SetOversampleBits(int bits)
+void frc::AnalogInput::SetOversampleBits(int)
 {
 	ROS_ERROR("Called frc::AnalogInput::SetOversampleBits(int bits) on unsupported platform");
 }
@@ -98,7 +98,7 @@ void frc::AnalogInput::InitAccumulator()
 {
 	ROS_ERROR("Called frc::AnalogInput::InitAccumulator() on unsupported platform");
 }
-void frc::AnalogInput::SetAccumulatorInitialValue(int64_t value)
+void frc::AnalogInput::SetAccumulatorInitialValue(int64_t)
 {
 	ROS_ERROR("Called frc::AnalogInput::SetAccumulatorInitialValue(int64_t value) on unsupported platform");
 }
@@ -106,11 +106,11 @@ void frc::AnalogInput::ResetAccumulator()
 {
 	ROS_ERROR("Called frc::AnalogInput::ResetAccumulator() on unsupported platform");
 }
-void frc::AnalogInput::SetAccumulatorCenter(int center)
+void frc::AnalogInput::SetAccumulatorCenter(int)
 {
 	ROS_ERROR("Called frc::AnalogInput::SetAccumulatorCenter(int center) on unsupported platform");
 }
-void frc::AnalogInput::SetAccumulatorDeadband(int deadband)
+void frc::AnalogInput::SetAccumulatorDeadband(int)
 {
 	ROS_ERROR("Called frc::AnalogInput::SetAccumulatorDeadband(int deadband) on unsupported platform");
 }
@@ -124,11 +124,11 @@ int64_t frc::AnalogInput::GetAccumulatorCount() const
 	ROS_ERROR("Called frc::AnalogInput::GetAccumulatorCount() const on unsupported platform");
 	return -1;
 }
-void frc::AnalogInput::GetAccumulatorOutput(int64_t& value, int64_t& count) const
+void frc::AnalogInput::GetAccumulatorOutput(int64_t&, int64_t&) const
 {
 	ROS_ERROR("Called frc::AnalogInput::GetAccumulatorOutput(int64_t& value, int64_t& count) const on unsupported platform");
 }
-void frc::AnalogInput::SetSampleRate(double samplesPerSecond)
+void frc::AnalogInput::SetSampleRate(double)
 {
 	ROS_ERROR("Called frc::AnalogInput::SetSampleRate(double samplesPerSecond) on unsupported platform");
 }
@@ -142,7 +142,7 @@ double frc::AnalogInput::PIDGet()
 	ROS_ERROR("Called frc::AnalogInput::PIDGet() on unsupported platform");
 	return std::numeric_limits<double>::max();
 }
-void frc::AnalogInput::InitSendable(SendableBuilder& builder)
+void frc::AnalogInput::InitSendable(SendableBuilder&)
 {
 	ROS_ERROR("Called frc::AnalogInput::InitSendable(SendableBuilder& builder) on unsupported platform");
 }
@@ -180,7 +180,7 @@ bool frc::DigitalInput::IsAnalogTrigger() const
 	ROS_ERROR("Called frc::DigitalInput::IsAnalogTrigger() const on unsupported platform");
 	return false;
 }
-void frc::DigitalInput::InitSendable(SendableBuilder& builder)
+void frc::DigitalInput::InitSendable(SendableBuilder&)
 {
 	ROS_ERROR("Called frc::DigitalInput::InitSendable(SendableBuilder& builder) on unsupported platform");
 }
@@ -367,7 +367,7 @@ std::string frc::SendableBase::GetName() const
 	ROS_ERROR("Called string frc::SendableBase::GetName() const on unsupported platform");
 	return std::string();
 }
-void frc::SendableBase::SetName(const wpi::Twine& name)
+void frc::SendableBase::SetName(const wpi::Twine&)
 {
 	ROS_ERROR("Called ::SendableBase::SetName(const wpi::Twine& name) on unsupported platform");
 }
@@ -376,7 +376,7 @@ std::string frc::SendableBase::GetSubsystem() const
 	ROS_ERROR("Called string frc::SendableBase::GetSubsystem() const on unsupported platform");
 	return std::string();
 }
-void frc::SendableBase::SetSubsystem(const wpi::Twine& subsystem)
+void frc::SendableBase::SetSubsystem(const wpi::Twine&)
 {
 	ROS_ERROR("Called ::SendableBase::SetSubsystem(const wpi::Twine& subsystem) on unsupported platform");
 }
@@ -429,7 +429,7 @@ uint64_t HAL_GetFPGATime(int32_t* status)
 	return ((uint64_t)tv.tv_sec * 1000000) + tv.tv_usec;
 }
 
-HAL_Bool HAL_Initialize(int32_t timeout, int32_t mode)
+HAL_Bool HAL_Initialize(int32_t, int32_t)
 {
 	hal::init::HAL_IsInitialized.store(true);
 	return true;
@@ -561,7 +561,7 @@ void HAL_CAN_GetCANStatus(float* percentBusUtilization, uint32_t* busOffCount,
 	ROS_ERROR("Called HAL_CAN_GetCANStatus() on unsupported platform");
 	*percentBusUtilization = -1;
 	*busOffCount = -1;
-	*txFullCount - -1;
+	*txFullCount = -1;
 	*receiveErrorCount = -1;
 	*transmitErrorCount = -1;
 	*status = 0;
@@ -575,7 +575,7 @@ int64_t HAL_Report(int32_t resource, int32_t instanceNumber,
 	return -1;
 }
 
-int32_t HAL_GetControlWord(HAL_ControlWord* controlWord)
+int32_t HAL_GetControlWord(HAL_ControlWord*)
 {
 	ROS_INFO_STREAM("Called HAL_GetControlWord() on unsupported platform");
 	return -1;
@@ -584,14 +584,16 @@ int32_t HAL_GetControlWord(HAL_ControlWord* controlWord)
 HAL_AllianceStationID HAL_GetAllianceStation(int32_t* status)
 {
 	ROS_INFO_STREAM("Called HAL_GetAllianceStation() on unsupported platform");
+	*status = 0;
 	return static_cast<HAL_AllianceStationID>(-1);
 }
 double HAL_GetMatchTime(int32_t* status)
 {
 	ROS_INFO_STREAM("Called HAL_GetMatchTime() on unsupported platform");
+	*status = 0;
 	return -1;
 }
-int32_t HAL_GetMatchInfo(HAL_MatchInfo* info)
+int32_t HAL_GetMatchInfo(HAL_MatchInfo*)
 {
 	ROS_INFO_STREAM("Called HAL_GetMatchInfo() on unsupported platform");
 	return -1;
@@ -621,8 +623,8 @@ void HAL_ObserveUserProgramTest(void)
 {
 	ROS_ERROR("Called HAL_ObserveUserProgramTest(void) on unsupported platform");
 }
-int32_t HAL_SetJoystickOutputs(int32_t joystickNum, int64_t outputs,
-                               int32_t leftRumble, int32_t rightRumble)
+int32_t HAL_SetJoystickOutputs(int32_t, int64_t,
+                               int32_t, int32_t)
 {
 	ROS_ERROR("Called HAL_SetJoystickOutputs(int32_t joystickNum, int64_t outputs, int32_t leftRumble, int32_t rightRumble) on unsupported device");
 	return -1;

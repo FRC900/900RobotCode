@@ -1206,7 +1206,7 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 		}
 
 		//Find the point just greater than time since start
-		int end;
+		size_t end;
 		ps.outOfPoints = true;
 		const double time_since_start = ros::Time::now().toSec() - cps.time_start_;
 		for(end = std::max(cps.points_run_ - 1, 0); end < prof_pts[slot].size(); end++)
@@ -1226,7 +1226,7 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 		}
 		else
 		{
-			cps.points_run_ = std::max(end - 1, 0);
+			cps.points_run_ = std::max(static_cast<int>(end) - 1, 0);
 		}
 #if 0
 		ROS_INFO_STREAM(" cps.points_run_:" << cps.points_run_
@@ -1295,7 +1295,7 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 
 	for(size_t i = 0; i < prof_pts.size(); i++)
 	{
-		if(i == ps.slotRunning)
+		if(i == static_cast<size_t>(ps.slotRunning))
 		{
 			ps.remainingPoints[i] = tc.getCustomProfileCount(i) - cps.points_run_;
 			if(tc.getCustomProfileTimeCount(i) > 0)

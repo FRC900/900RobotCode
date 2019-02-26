@@ -4,7 +4,7 @@ namespace cargo_outtake_controller
 {
 
 	bool CargoOuttakeController::init(hardware_interface::PositionJointInterface *hw,
-			ros::NodeHandle                 &root_nh,
+			ros::NodeHandle                 &/*root_nh*/,
 			ros::NodeHandle                 &controller_nh)
 	{
 		//initialize cargo outtake kicker joint (pneumatic piston that controls kicker)
@@ -21,7 +21,7 @@ namespace cargo_outtake_controller
 		clamp_command_.writeFromNonRT(false);
 	}
 
-	void CargoOuttakeController::update(const ros::Time &time, const ros::Duration &period) {
+	void CargoOuttakeController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
 		//process input for the up/down part of the intake (pneumatic piston)
 		const bool kicker_command = *(kicker_command_.readFromRT());
 		double kicker_command_double; //to store processed input
@@ -49,11 +49,11 @@ namespace cargo_outtake_controller
 		cargo_outtake_clamp_joint_.setCommand(clamp_command_double); // set the in/out command to the up/down part of the outtake
 	}
 
-	void CargoOuttakeController::stopping(const ros::Time &time) {
+	void CargoOuttakeController::stopping(const ros::Time &/*time*/) {
 
 	}
 
-	bool CargoOuttakeController::cmdService(cargo_outtake_controller::CargoOuttakeSrv::Request &req, cargo_outtake_controller::CargoOuttakeSrv::Response &res) {
+	bool CargoOuttakeController::cmdService(cargo_outtake_controller::CargoOuttakeSrv::Request &req, cargo_outtake_controller::CargoOuttakeSrv::Response &/*res*/) {
 		if(isRunning())
 		{
 			//kick = true, retract = false

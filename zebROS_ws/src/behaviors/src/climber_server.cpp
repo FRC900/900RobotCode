@@ -121,8 +121,6 @@ class ClimbAction {
 			ros::Rate r(10);
 
 			//define variables that will be reused for each controller call/actionlib server call
-			double start_time;
-
 			//define variables that will be set true if the actionlib action is to be ended
 			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
 			//if both of these are false, we assume the action succeeded

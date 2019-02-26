@@ -115,7 +115,7 @@ int main(int argc, char ** argv)
 		distance_setpoint_pub.publish(distance_setpoint_msg.data);
 
 		//now the exciting y-alignment stuff
-		for(int i = 0; i < sensors_distances.size(); i++)
+		for(size_t i = 0; i < sensors_distances.size(); i++)
 		{
 			if(sensors_distances[i] != sensors_distances[i])
 				ternary_distances[i] = 2;

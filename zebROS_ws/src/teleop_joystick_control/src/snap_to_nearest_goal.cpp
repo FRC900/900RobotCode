@@ -29,7 +29,7 @@ double nearest_angle(std::vector<double> angles, double cur_angle)
 {
 	double snap_angle;
 	double smallest_distance = std::numeric_limits<double>::max();
-	for(int i = 0; i < angles.size(); i++){
+	for(size_t i = 0; i < angles.size(); i++){
 		double distance = fabs(angles::shortest_angular_distance(cur_angle, angles[i]));
 		if(distance < smallest_distance) {
 			smallest_distance = distance;
@@ -118,7 +118,7 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
                 linebreak_true_panel_count = 0;
                 linebreak_false_panel_count += 1;
             }
-			
+
 		    if(linebreak_true_cargo_count >	linebreak_debounce_iterations) {
                 has_cargo.store(true);
             }

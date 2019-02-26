@@ -4,7 +4,7 @@ namespace panel_intake_controller
 {
 
 	bool PanelIntakeController::init(hardware_interface::PositionJointInterface *hw,
-			ros::NodeHandle                 &root_nh,
+			ros::NodeHandle                 &/*root_nh*/,
 			ros::NodeHandle                 &controller_nh)
 	{
 		//claw_joint_ = hw->getHandle("panel_claw_release");
@@ -24,7 +24,7 @@ namespace panel_intake_controller
 		push_cmd_.writeFromNonRT(false);
 	}
 
-	void PanelIntakeController::update(const ros::Time &time, const ros::Duration &period) {
+	void PanelIntakeController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
 		const bool claw_cmd = *(claw_cmd_.readFromRT());
 
 		if(last_claw_cmd_ != claw_cmd)
@@ -54,10 +54,10 @@ namespace panel_intake_controller
 		last_claw_cmd_ = claw_cmd;
 	}
 
-	void PanelIntakeController::stopping(const ros::Time &time) {
+	void PanelIntakeController::stopping(const ros::Time &/*time*/) {
 	}
 
-	bool PanelIntakeController::cmdService(panel_intake_controller::PanelIntakeSrv::Request &req, panel_intake_controller::PanelIntakeSrv::Response &response) {
+	bool PanelIntakeController::cmdService(panel_intake_controller::PanelIntakeSrv::Request &req, panel_intake_controller::PanelIntakeSrv::Response &/*response*/) {
 		if(isRunning())
 		{
 			claw_cmd_.writeFromNonRT(req.claw_release); //take the service request for in/out (true/false???) and write to a command variable

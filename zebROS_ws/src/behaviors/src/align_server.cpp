@@ -72,12 +72,11 @@ class AlignAction {
 			y_aligned_ = msg.data;
 		}
 		//define the function to be executed when the actionlib server is called
-		void executeCB(const behaviors::AlignGoalConstPtr &goal) {
+		void executeCB(const behaviors::AlignGoalConstPtr &/*goal*/) {
 			ROS_INFO_STREAM("align callback called");
 			ros::Rate r(10);
 
 			double start_time = ros::Time::now().toSec();
-			bool success = false;
 			bool preempted = false;
 			bool timed_out = false;
 

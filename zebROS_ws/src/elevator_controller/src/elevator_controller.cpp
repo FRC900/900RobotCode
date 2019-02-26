@@ -3,7 +3,7 @@
 namespace elevator_controller
 {
 bool ElevatorController::init(hardware_interface::RobotHW *hw,
-							  ros::NodeHandle             &root_nh,
+							  ros::NodeHandle             &/*root_nh*/,
 							  ros::NodeHandle             &controller_nh)
 {
 	//create the interface used to initialize the talon joint
@@ -187,6 +187,7 @@ bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request  &
 
 void ElevatorController::callback(elevator_controller::ElevatorConfig &config, uint32_t level)
 {
+	(void)level;
 	arb_feed_forward_up_ = config.arb_feed_forward_up;
 	elevator_zeroing_percent_output_ = config.elevator_zeroing_percent_output;
 	elevator_zeroing_timeout_ = config.elevator_zeroing_timeout;
