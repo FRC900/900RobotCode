@@ -46,8 +46,8 @@ class ElevatorController : public controller_interface::MultiInterfaceController
             ros::ServiceServer elevator_service_; //service for receiving commands
 
 			bool zeroed_;
-			bool go_slow_;
 			double arb_feed_forward_up_;
+			double arb_feed_forward_down_;
 			double initial_position_;
 			double elevator_zeroing_percent_output_;
 			double slow_peak_output_;

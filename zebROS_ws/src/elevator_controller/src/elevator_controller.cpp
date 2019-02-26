@@ -20,6 +20,12 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		return false;
 	}
 
+	if (!controller_nh.getParam("arb_feed_forward_down", arb_feed_forward_down_))
+	{
+		ROS_ERROR("Could not find arb_feed_forward_down");
+		return false;
+	}
+
 	if (!controller_nh.getParam("elevator_zeroing_percent_output", elevator_zeroing_percent_output_))
 	{
 		ROS_ERROR("Could not find elevator_zeroing_percent_output");
@@ -85,7 +91,6 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 	if (zeroed_) // run normally, seeking to various positions
 	{
 		const double setpoint = *(position_command_.readFromRT());
-		elevator_joint_.setMode(hardware_interface::TalonMode_Position);
 		elevator_joint_.setCommand(setpoint);
 
 		// Add arbitrary feed forward for upwards motion
@@ -104,21 +109,26 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 
 		if(setpoint > elevator_joint_.getPosition())
 		{
-			if(last_setpoint_ != setpoint)
-			{
-				//elevator_joint_.setDemand1Type(hardware_interface::DemandType_AuxPID);
-				//elevator_joint_.setDemand1Value(arb_feed_forward_up_);
-				elevator_joint_.setPIDFSlot(0);
+			if(elevator_joint_.getPosition() > 0.8) {
+				elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+				elevator_joint_.setDemand1Value(arb_feed_forward_up_);
 			}
-		}
-		else
-		{
-			//elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
-			//elevator_joint_.setDemand1Value(0);
-			if(last_setpoint_ != setpoint)
-			{
-				elevator_joint_.setPIDFSlot(1);
+			else {
+				elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
+				elevator_joint_.setDemand1Value(0);
 			}
+			//for now, up and down PID is the same
+			/*
+			if(last_setpoint_ != setpoint) {
+				if(setpoint > elevator_joint_.getPosition()) {
+					elevator_joint_.setPIDFSlot(0);
+				}
+				else {
+					elevator_joint_.setPIDFSlot(1);
+				}
+			}
+			last_setpoint_ = setpoint;
+			*/
 		}
 		last_setpoint_ = setpoint;
 	}
@@ -158,19 +168,18 @@ bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request  &
 		//adjust peak output appropriately
 		if(req.go_slow)
 		{
-			elevator_joint_.setPeakOutputForward(slow_peak_output_);
-			elevator_joint_.setPeakOutputReverse(-slow_peak_output_);
-
-			//set P to 0.1 at slot 0, then set PIDF  slot to 0
-			elevator_joint_.setP(0.1, 0);
-			elevator_joint_.setPIDFSlot(0);
-
+			elevator_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
+			elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+			elevator_joint_.setDemand1Value(arb_feed_forward_down_);
+			elevator_joint_.setPeakOutputForward(0.0);
+			elevator_joint_.setPIDFSlot(1);
 			go_slow_ = true;
 			ROS_INFO("Elevator controller: reduced peak output +/- %f",slow_peak_output_);
 		}
 		else { //reset to default
 			elevator_joint_.setPeakOutputForward(1.0);
 			elevator_joint_.setPeakOutputReverse(-1.0);
+			elevator_joint_.setMode(hardware_interface::TalonMode_Position);
 			ROS_INFO("Elevator controller: normal peak output");
 		}
 
@@ -189,6 +198,7 @@ void ElevatorController::callback(elevator_controller::ElevatorConfig &config, u
 {
 	(void)level;
 	arb_feed_forward_up_ = config.arb_feed_forward_up;
+	arb_feed_forward_down_ = config.arb_feed_forward_down;
 	elevator_zeroing_percent_output_ = config.elevator_zeroing_percent_output;
 	elevator_zeroing_timeout_ = config.elevator_zeroing_timeout;
 	slow_peak_output_ = config.slow_peak_output;
