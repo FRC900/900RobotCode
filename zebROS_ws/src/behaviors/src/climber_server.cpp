@@ -9,13 +9,16 @@
 #include <atomic>
 #include <ros/console.h>
 #include "behaviors/enumerated_elevator_indices.h"
+#include "frc_msgs/MatchSpecificData.h"
+
 
 //define global variables that will be defined based on config values
 
 double elevator_deploy_timeout;
 double elevator_climb_timeout;
 double elevator_climb_low_timeout;
-
+double match_time_remaining;
+double match_time_lock;
 double wait_for_server_timeout;
 
 class ClimbAction {
@@ -38,7 +41,7 @@ class ClimbAction {
 		behaviors::ClimbResult result_; //variable to store result of the actionlib action
 
 		//create subscribers to get data
-		//ros::Subscriber joint_states_sub_;
+		ros::Subscriber match_data_sub_;
 
 	public:
 		//make the executeCB function run every time the actionlib server is called
@@ -53,6 +56,8 @@ class ClimbAction {
 		std::map<std::string, std::string> service_connection_header;
 		service_connection_header["tcp_nodelay"] = "1";
 
+		//get the match timer
+		match_data_sub_ = nh_.subscribe("/frcrobot_jetson/match_data", 1,&ClimbAction::matchStateCallback,this); 
 		//initialize the client being used to call the climber controller
 		climber_controller_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_feet_retract", false, service_connection_header);
 		//initialize the client being used to call the climber controller to engage the climber
@@ -60,7 +65,6 @@ class ClimbAction {
 
 		//initialize the publisher used to send messages to the drive base
 		//cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
-
 		//start subscribers subscribing
 		//joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
 	}
@@ -71,6 +75,12 @@ class ClimbAction {
 
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::ClimbGoalConstPtr &goal) {
+			if(match_time_remaining > match_time_lock)
+			{
+				ROS_ERROR_STREAM("can not climb, too much time remaining in match");
+				return;
+			}
+
 			if(!ae_.waitForServer(ros::Duration(wait_for_server_timeout)))
 			{
 				ROS_ERROR_STREAM("The elevator server was not loaded before the climber server needed it");
@@ -424,6 +434,10 @@ class ClimbAction {
 		}
 		}
 		*/
+		void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
+		{
+			match_time_remaining = msg.matchTimeRemaining;
+		}
 };
 
 int main(int argc, char** argv) {
@@ -459,6 +473,12 @@ int main(int argc, char** argv) {
 	{
 		ROS_ERROR("Could not read climb_low_timeout in climber_server");
 		elevator_climb_low_timeout = 6;
+	}
+
+	if (!n_lift_params.getParam("match_time_lock", match_time_lock))
+	{
+		ROS_ERROR("Could not read match_time_lock in climber_server");
+		match_time_lock = 135;
 	}
 
 	ros::spin();

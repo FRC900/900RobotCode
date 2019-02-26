@@ -119,6 +119,7 @@ class ElevatorAction {
 
 			if(elevator_cur_setpoint_ < 0) //will occur if a config value wasn't read
 			{
+				ROS_ERROR_STREAM("Current setpoint was not read");
 				preempted = true;
 			}
 
