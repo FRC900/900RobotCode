@@ -106,16 +106,14 @@ class ClimbAction {
 			 * 2. Raise elevator to right height via elevator actionlib server
 			 * 3. Deploy climber engagement piston via elevator controller
 			 * 4. Lower elevator to right height to make the robot climb (this should be slow... change pid somehow?)
-			 *
-			 * Climber Server Step 1
 			 * 5. Retract foot to drop robot onto platform
 			 * (driver drives forward a bit)
 			 *
-			 * Climber Server Step 2
+			 * Climber Server Step 1
 			 * 6. Pull climber all the way up
 			 * (driver drives forward a bit)
 			 *
-			 * Climber Server Step 3
+			 * Climber Server Step 2
 			 * 7. Push climber a bit down to prop back wheels up
 			 */
 			ros::Rate r(10);
@@ -134,7 +132,7 @@ class ClimbAction {
 				//deploy foot using climber controller -----------------------------------------------
 				//define service to send
 				std_srvs::SetBool srv;
-				srv.request.data = false; 
+				srv.request.data = false; //shouldn't do anything, this is default
 				//call controller
 				if(!climber_controller_client_.call(srv))
 				{
@@ -256,35 +254,33 @@ class ClimbAction {
 					}
 				}
 
-			}
-			else if(goal->step == 1)
-			{
-				ROS_INFO("Running climber server step 1");
-
-				//retract climber foot to make robot fall
-				//define service to send
-				std_srvs::SetBool srv;
-				srv.request.data = true;
-				//call controller
-				if(!climber_controller_client_.call(srv))
+				if(!preempted && !timed_out)
 				{
-					ROS_ERROR("climber server step 1: Foot retract failed in climber controller");
-					preempted = true;
-				}
-				else {
-					//only spin if we're not going to error out
-					ros::spinOnce();
+					//retract climber foot to make robot fall
+					//define service to send
+					std_srvs::SetBool srv;
+					srv.request.data = true;
+					//call controller
+					if(!climber_controller_client_.call(srv))
+					{
+						ROS_ERROR("climber server step 1: Foot retract failed in climber controller");
+						preempted = true;
+					}
+					else {
+						//only spin if we're not going to error out
+						ros::spinOnce();
+					}
 				}
 
 				//preempt handling: do nothing
 
 			}
-			else if(goal->step == 2)
+			else if(goal->step == 1)
 			{
-				ROS_INFO("Running climber server step 2");
+				ROS_INFO("Running climber server step 1");
 
 				//pull climber all the way up - move elevator to climber deploy setpoint
-				ROS_INFO("climber server step 2: raising elevator to pull climber back up");
+				ROS_INFO("climber server step 1: raising elevator to pull climber back up");
 
 				//call the elevator actionlib server
 				//define the goal to send
@@ -296,7 +292,7 @@ class ClimbAction {
 				ae_.sendGoal(goal);
 				finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_deploy_timeout));
 				if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
-					ROS_ERROR("climber server step 2: elevator raise timed out");
+					ROS_ERROR("climber server step 1: elevator raise timed out");
 
 				//determine the outcome of the goal
 				if(!ae_.getResult()->success) //this might mean preempted or timed out
@@ -313,16 +309,16 @@ class ClimbAction {
 				//preempt handling: preempt elevator server to freeze the elevator
 				if(preempted || timed_out)
 				{
-					ROS_INFO("Running climber server step 2 preempt/timeout handling - preempting elevator server");
+					ROS_INFO("Running climber server step 1 preempt/timeout handling - preempting elevator server");
 					ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 			}
-			else if(goal->step == 3)
+			else if(goal->step == 2)
 			{
-				ROS_INFO("Running climber server step 3");
+				ROS_INFO("Running climber server step 2");
 
 				//push climber a bit down to prop up back wheels (and thus bumper) for a legit climb
-				ROS_INFO("climber server step 3: lowering elevator to push back of robot up with climber");
+				ROS_INFO("climber server step 2: lowering elevator to push back of robot up with climber");
 
 				//call the elevator actionlib server
 				//define the goal to send
@@ -334,7 +330,7 @@ class ClimbAction {
 				ae_.sendGoal(goal);
 				finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_low_timeout));
 				if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
-					ROS_ERROR("climber server step 3: elevator move timed out");
+					ROS_ERROR("climber server step 2: elevator move timed out");
 
 				//determine the outcome of the goal
 				if(!ae_.getResult()->success) //this might mean preempted or timed out
