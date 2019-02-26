@@ -8,10 +8,10 @@ services:
   - docker
 
 install:
-  - travis_wait 45 docker pull frc900/zebros-dev:latest
+  - travis_wait 45 docker pull frc900/zebros-2019-dev:latest
 
 script:
-  - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
+  - docker run --user ubuntu frc900/zebros-2019-dev:latest /bin/bash -l -c
     "cd ~ &&
      sudo chown ubuntu:ubuntu 2019RobotCode &&
      cd ~/2019RobotCode &&
@@ -34,7 +34,7 @@ script:
      source devel/setup.bash &&
      timeout -k 30 --preserve-status 60 roslaunch ros_control_boilerplate 2018_main_frcrobot.launch hw_or_sim:=sim output:=screen &&
      echo \"Finished Ubuntu compile.\""
-  - docker run --user ubuntu frc900/zebros-dev:latest /bin/bash -l -c
+  - docker run --user ubuntu frc900/zebros-2019-dev:latest /bin/bash -l -c
     "cd ~ &&
      sudo chown ubuntu:ubuntu 2019RobotCode &&
      git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2019RobotCode.git &&
