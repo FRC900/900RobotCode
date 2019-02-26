@@ -178,6 +178,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		leftStickX =  pow(leftStickX, joystick_pow) * max_speed;
 		leftStickY = -pow(leftStickY, joystick_pow) * max_speed;
 
+		copysign(leftStickX, joystick_states_array[0].leftStickX);
+		copysign(leftStickY, -joystick_states_array[0].leftStickY);
+
 		double rightStickX = joystick_states_array[0].rightStickX;
 		double rightStickY = joystick_states_array[0].rightStickY;
 
@@ -185,6 +188,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		rightStickX =  pow(rightStickX, joystick_pow);
 		rightStickY = -pow(rightStickY, joystick_pow);
+
+		copysign(rightStickX, joystick_states_array[0].rightStickX);
+		copysign(rightStickY, -joystick_states_array[0].rightStickY);
 
 		rightStickX = right_stick_x_rate_limit.applyLimit(rightStickX);
 		rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);
@@ -194,6 +200,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//double triggerLeft = left_trigger_rate_limit.applyLimit(joystick_states_array[0].leftTrigger);
 		//double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
 		double rotation = pow(rightStickX, rotation_pow) * max_rot;
+		copysign(rotation, rightStickX);
 
 		static bool sendRobotZero = false;
 		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
