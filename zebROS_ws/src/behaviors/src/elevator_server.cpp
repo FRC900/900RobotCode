@@ -73,8 +73,12 @@ class ElevatorAction {
             ROS_INFO_STREAM("%s: Running callback " << action_name_.c_str());
             ros::Rate r(10);
 
-			//Define variables that will be set to true once the server finishes executing
-			bool preempted = false;
+            feedback_.running = true;
+            as_.publishFeedback(feedback_);
+
+
+            //Define variables that will be set to true once the server finishes executing
+            bool preempted = false;
             bool timed_out = false;
 
 			//Initialize start time of execution
@@ -199,6 +203,9 @@ class ElevatorAction {
 				result_.success = true;
 				as_.setSucceeded(result_);
 			}
+
+                        feedback_.running = true;
+                        as_.publishFeedback(feedback_);
 
 			return;
 		}
