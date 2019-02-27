@@ -22,7 +22,7 @@ elevator_controller:
         joint: elevator_master
         close_loop_values:
             - {p: 0.09, i: 0.0, d: 0, f: 0.0, i_zone: 0, closed_loop_peak_output: 1.0}
-            - {p: 0.25, i: 0.0002, d: 0, f: 0.58, i_zone: 4096, closed_loop_peak_output: 1.0}
+            - {p: 0.25, i: 0.0005, d: 0, f: 0.58, i_zone: 4096, closed_loop_peak_output: 1.0}
 
         # TODO : tuning
         motion_cruise_velocity: 0.25
