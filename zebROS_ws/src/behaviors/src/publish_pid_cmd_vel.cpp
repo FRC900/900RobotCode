@@ -46,6 +46,7 @@ void yCB(const std_msgs::Float64& msg)
 void enableCB(const std_msgs::Bool& msg)
 {
 	time_since_pid_enable = ros::Time::now();
+	pid_enable = msg.data;
 }
 
 int main(int argc, char ** argv)
@@ -65,14 +66,14 @@ int main(int argc, char ** argv)
         ROS_ERROR("Could not read x topic in publish_pid_cmd_vel");
     }
     else {
-		ROS_WARN_STREAM("Subscribing to: %s" << x_topic);
+		ROS_WARN_STREAM("Subscribing to: " << x_topic);
         x_pid_sub = nh.subscribe(x_topic, 1, &xCB);
     }
     if(!nh_private_params.getParam("y_topic", y_topic)) {
         ROS_INFO("Could not read y_topic in publish_pid_cmd_vel");
     }
     else {
-		ROS_WARN_STREAM("Subscribing to: %s" << y_topic);
+		ROS_WARN_STREAM("Subscribing to: " << y_topic);
         y_pid_sub = nh.subscribe(y_topic, 1, &yCB);
     }
 	if(!nh_private_params.getParam("enable_topic", enable_topic))

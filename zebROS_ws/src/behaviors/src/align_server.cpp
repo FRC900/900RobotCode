@@ -45,6 +45,7 @@ class AlignAction {
 		bool y_aligned_ = false;
 		bool cargo_aligned_ = false;
 		bool orient_aligned_ = false;
+		bool distance_aligned_ = false;
 
 	public:
 		//make the executeCB function run every time the actionlib server is called
@@ -113,6 +114,7 @@ class AlignAction {
 			bool aligned = false;
 
 			orient_aligned_ = false;
+			distance_aligned_ = false;
 			x_aligned_ = false;
 			y_aligned_ = false;
 			while(!aligned && !preempted && !timed_out && ros::ok())
@@ -122,11 +124,13 @@ class AlignAction {
 
 				//Define enable messages
 				std_msgs::Bool orient_msg;
+				std_msgs::Bool distance_msg;
 				std_msgs::Bool terabee_msg;
 				std_msgs::Bool enable_align_msg;
 
 				orient_msg.data = true && !orient_timed_out;			//Publish true to the navX pid node throughout the action until orient_timed_out
-				terabee_msg.data = orient_aligned_ || orient_timed_out; //Publish true to the terabee node when orient aligns or orient times out
+				distance_msg.data = orient_aligned_ || orient_timed_out;
+				terabee_msg.data = (orient_aligned_ || orient_timed_out) && x_aligned_; //Publish true to the terabee node when orient aligns or orient times out
 				enable_align_msg.data = !aligned;
 
 				//
@@ -136,7 +140,7 @@ class AlignAction {
 				//Publish enable messages
 				if(goal->has_cargo) {
 					enable_navx_pub_->publish(orient_msg);
-					enable_x_pub_->publish(terabee_msg);
+					enable_x_pub_->publish(distance_msg);
 					enable_cargo_pub_->publish(terabee_msg);
 					enable_align_pub_->publish(enable_align_msg);
 					//Check aligned
@@ -144,7 +148,7 @@ class AlignAction {
 				}
 				else {
 					enable_navx_pub_->publish(orient_msg);
-					enable_x_pub_->publish(terabee_msg);
+					enable_x_pub_->publish(distance_msg);
 					enable_y_pub_->publish(terabee_msg);
 					enable_align_pub_->publish(enable_align_msg);
 					//Check aligned
@@ -228,11 +232,11 @@ int main(int argc, char** argv) {
 		ROS_ERROR_STREAM("Could not read cargo_error_threshold in align_server");
 
 
-	std::shared_ptr<ros::Publisher> enable_navx_pub_;
-	std::shared_ptr<ros::Publisher> enable_x_pub_;
-	std::shared_ptr<ros::Publisher> enable_y_pub_;
-	std::shared_ptr<ros::Publisher> enable_align_pub_;
-	std::shared_ptr<ros::Publisher> enable_cargo_pub_;
+	std::shared_ptr<ros::Publisher> enable_navx_pub_ = std::make_shared<ros::Publisher>();
+	std::shared_ptr<ros::Publisher> enable_x_pub_ = std::make_shared<ros::Publisher>();
+	std::shared_ptr<ros::Publisher> enable_y_pub_ = std::make_shared<ros::Publisher>();
+	std::shared_ptr<ros::Publisher> enable_align_pub_ = std::make_shared<ros::Publisher>();
+	std::shared_ptr<ros::Publisher> enable_cargo_pub_ = std::make_shared<ros::Publisher>();
 
 	*enable_navx_pub_ = n.advertise<std_msgs::Bool>("navX_pid/pid_enable", 1);
 	*enable_x_pub_ = n.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1);
@@ -242,7 +246,7 @@ int main(int argc, char** argv) {
 
 	AlignAction align_action("align_server", enable_navx_pub_, enable_x_pub_, enable_y_pub_, enable_cargo_pub_, enable_align_pub_);
 
-	ros::Rate r(10);
+	ros::Rate r(30);
 	while(ros::ok()) {
 		//Stop PID nodes from defaulting true
 		if(startup) {

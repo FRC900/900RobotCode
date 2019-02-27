@@ -105,6 +105,8 @@ int main(int argc, char ** argv)
 			continue;
 		}
 
+		ROS_ERROR_STREAM_THROTTLE(0.25, "min_dist: " << min_dist);
+
 		//deal with distance PID first
         if(fabs(min_dist) < default_min_dist_) {
             std_msgs::Float64 distance_state_msg;
@@ -146,7 +148,9 @@ int main(int argc, char ** argv)
 
 
 		switch(ternary_distances) {
-			//the robot is aligned
+			//the robot is aligned or close enough
+			case(112212): //off to the right a small amount, but really close
+			case(122112): //off to the left a small amount, but really close
 			case(122212):
 				ROS_INFO_STREAM_THROTTLE(.25, "The robot is aligned: case: " << ternary_distances);
 				aligned = true;
@@ -154,7 +158,6 @@ int main(int argc, char ** argv)
 				cutout_found = true;
 				break;
 			//Off to the right a small amount
-			case(112212):
 			//case(212212):
 			case(112211):
 			case(111211):
@@ -178,7 +181,6 @@ int main(int argc, char ** argv)
 				y_msg.data = 2*cmd_vel_to_pub;
 				break;
 			//Off to the left a small amount
-			case(122112):
 			case(122122):
 			//case(222122): //Shouldn't happen
 			case(211122):
@@ -206,7 +208,7 @@ int main(int argc, char ** argv)
 		if(!cutout_found)
 		{
 			ROS_INFO_STREAM_THROTTLE(.25, "cutout not found; can't align");
-			y_msg.data= 0;
+			//y_msg.data= 0;
 		}
 		if(publish)
 		{
