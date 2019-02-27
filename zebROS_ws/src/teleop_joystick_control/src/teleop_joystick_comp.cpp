@@ -246,10 +246,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			//Align the robot
 			ROS_WARN("Joystick1: buttonAPress - Auto Align");
-		//	preemptActionlibServers();
-		//	behaviors::AlignGoal goal;
-		//	goal.trigger = false;
-		//	align_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonAButton)
 		{
@@ -276,10 +272,16 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: buttonARelease");
 		}
 
-		/*
+		
 		//Joystick1: buttonB
 		if(joystick_states_array[0].buttonBPress)
 		{
+			preemptActionlibServers();
+			behaviors::AlignGoal goal;
+			goal.has_cargo = false;
+			align_ac->sendGoal(goal);
+		}
+			/*
 		ROS_INFO_STREAM("Joystick1: buttonBPress - Cargo Outtake");
 		preemptActionlibServers();
 		behaviors::PlaceGoal goal;
