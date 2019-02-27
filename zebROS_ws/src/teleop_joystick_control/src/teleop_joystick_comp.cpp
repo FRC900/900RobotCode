@@ -176,7 +176,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		leftStickY = left_stick_y_rate_limit.applyLimit(leftStickY);
 
 		leftStickX =  pow(leftStickX, joystick_pow) * max_speed;
-		leftStickY = -pow(leftStickY, joystick_pow) * max_speed;
+		leftStickY =  pow(leftStickY, joystick_pow) * max_speed;
 
 		copysign(leftStickX, joystick_states_array[0].leftStickX);
 		copysign(leftStickY, -joystick_states_array[0].leftStickY);
@@ -221,10 +221,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			//Publish drivetrain messages and call servers
 			Eigen::Vector2d joyVector;
-			joyVector[0] = leftStickX; //intentionally flipped
+			joyVector[0] = -leftStickX; //intentionally flipped
 			joyVector[1] = -leftStickY;
 
-			const Eigen::Rotation2Dd rotate((robot_orient ? -offset_angle : -navX_angle));
+			const Eigen::Rotation2Dd rotate(robot_orient ? -offset_angle : -navX_angle);
 			const Eigen::Vector2d rotatedJoyVector = rotate.toRotationMatrix() * joyVector;
 
 			geometry_msgs::Twist vel;
