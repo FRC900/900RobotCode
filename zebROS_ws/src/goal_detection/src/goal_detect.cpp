@@ -81,20 +81,20 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	Mat tempFrame(framePtr->clone());
 	gd->drawOnFrame(tempFrame, gd->getContours(tempFrame));
 
-	vector< GoalFound > gfd = gd->return_found(); 
+	vector< GoalFound > gfd = gd->return_found();
 	goal_detection::GoalDetection gd_msg;
 
 
-	for(int i = 0; i < gfd.size(); i++)
+	for(size_t i = 0; i < gfd.size(); i++)
 	{
-	geometry_msgs::Point32 dummy;
-	gd_msg.header.seq = frameMsg->header.seq;
-	gd_msg.header.stamp = frameMsg->header.stamp;
-	gd_msg.header.frame_id = frameMsg->header.frame_id;
-	dummy.x = gfd[i].found_pos.x;
-	dummy.y = gfd[i].found_pos.y;
-	dummy.z = gfd[i].found_pos.z;
-	gd_msg.location.push_back(dummy);
+		geometry_msgs::Point32 dummy;
+		gd_msg.header.seq = frameMsg->header.seq;
+		gd_msg.header.stamp = frameMsg->header.stamp;
+		gd_msg.header.frame_id = frameMsg->header.frame_id;
+		dummy.x = gfd[i].found_pos.x;
+		dummy.y = gfd[i].found_pos.y;
+		dummy.z = gfd[i].found_pos.z;
+		gd_msg.location.push_back(dummy);
 	}
 
 	gd_msg.valid = gd->Valid();

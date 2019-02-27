@@ -106,7 +106,6 @@ class AlignAction {
 			startup = false;
 
 			double start_time = ros::Time::now().toSec();
-			bool success = false;
 			bool preempted = false;
 			bool timed_out = false;
 			bool orient_timed_out = false;

@@ -2279,10 +2279,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			// Update talon state with requested setpoints for
 			// debugging. Don't actually write them to the physical
 			// Talons until the robot is re-enabled, though.
-			double command;
-			hardware_interface::DemandType demand1_type_internal;
-			double demand1_value;
-
 			ts.setSetpoint(tc.get());
 			ts.setDemand1Type(tc.getDemand1Type());
 			ts.setDemand1Value(tc.getDemand1Value());
@@ -2540,6 +2536,7 @@ bool FRCRobotHWInterface::convertDemand1Type(
 			ROS_WARN("Unknown demand1 type seen in HW interface");
 			return false;
 	}
+	return true;
 }
 
 bool FRCRobotHWInterface::convertNeutralMode(

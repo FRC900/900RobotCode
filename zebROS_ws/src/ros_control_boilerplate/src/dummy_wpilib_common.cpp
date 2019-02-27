@@ -9,26 +9,26 @@ AHRS::AHRS(I2C::Port)
 {
 	ROS_ERROR("Called AHRS(I2C::Port i2c_port_id) on unsupported platform");
 }
-AHRS::AHRS(SerialPort::Port serial_port_id)
+AHRS::AHRS(SerialPort::Port)
 {
 	ROS_ERROR("Called AHRS(SerialPort::Port serial_port_id) on unsupported platform");
 }
 
-AHRS::AHRS(SPI::Port spi_port_id, uint8_t )
+AHRS::AHRS(SPI::Port, uint8_t)
 {
 	ROS_ERROR("Called AHRS(SPI::Port spi_port_id, uint8_t update_rate_hz) on unsupported platform");
 }
-AHRS::AHRS(SPI::Port spi_port_id, uint32_t, uint8_t)
+AHRS::AHRS(SPI::Port, uint32_t, uint8_t)
 {
 	ROS_ERROR("Called AHRS(SPI::Port spi_port_id, uint32_t spi_bitrate, uint8_t update_rate_hz) on unsupported platform");
 }
 
-AHRS::AHRS(I2C::Port i2c_port_id, uint8_t)
+AHRS::AHRS(I2C::Port, uint8_t)
 {
 	ROS_ERROR("Called AHRS(I2C::Port i2c_port_id, uint8_t update_rate_hz) on unsupported platform");
 }
 
-AHRS::AHRS(SerialPort::Port, AHRS::SerialDataType , uint8_t )
+AHRS::AHRS(SerialPort::Port, AHRS::SerialDataType , uint8_t)
 {
 	ROS_ERROR("Called AHRS(SerialPort::Port serial_port_id, AHRS::SerialDataType data_type, uint8_t update_rate_hz) on unsupported platform");
 }
@@ -308,7 +308,7 @@ int AHRS::GetRequestedUpdateRate()
 	return std::numeric_limits<int>::max();
 }
 
-void AHRS::EnableLogging(bool enable)
+void AHRS::EnableLogging(bool)
 {
 	ROS_ERROR("Called bool AHRS::EnableLogging(bool enable) on unsupported platform");
 }
@@ -342,9 +342,10 @@ double AHRS::PIDGet()
 	ROS_ERROR("Called AHRS::PIDGet() on unsupported platform");
 	return std::numeric_limits<double>::max();
 }
-uint8_t AHRS::GetActualUpdateRateInternal(uint8_t update_rate)
+uint8_t AHRS::GetActualUpdateRateInternal(uint8_t)
 {
 	ROS_ERROR("Called AHRS::GetActualUpdateRateInternal(uint8_t update_rate) on unsupported platform");
+	return std::numeric_limits<uint8_t>::max();
 }
 
 #include <frc/DriverStation.h>
@@ -537,7 +538,7 @@ frc::NidecBrushless::NidecBrushless(int pwmChannel, int dioChannel) : m_dio(dioC
 	ROS_ERROR("Called NidecBrushless::NidecBrushless(int, int) on unsupported platform");
 }
 
-void frc::NidecBrushless::Set(double speed)
+void frc::NidecBrushless::Set(double)
 {
 	ROS_ERROR("Called ::NidecBrushless::Set(double speed) on unsupported platform");
 }
@@ -546,7 +547,7 @@ double frc::NidecBrushless::Get() const
 	ROS_ERROR("Called ::NidecBrushless::Get() const on unsupported platform");
 	return std::numeric_limits<double>::max();
 }
-void frc::NidecBrushless::SetInverted(bool isInverted)
+void frc::NidecBrushless::SetInverted(bool)
 {
 	ROS_ERROR("Called ::NidecBrushless::SetInverted(bool isInverted) on unsupported platform");
 }
@@ -569,12 +570,12 @@ void frc::NidecBrushless::Enable()
 	ROS_ERROR("Called ::NidecBrushless::Enable() on unsupported platform");
 }
 
-void frc::NidecBrushless::PIDWrite(double output)
+void frc::NidecBrushless::PIDWrite(double)
 {
 	ROS_ERROR("Called ::NidecBrushless::PIDWrite(double output) on unsupported platform");
 }
 
-void frc::NidecBrushless::GetDescription(wpi::raw_ostream& desc) const
+void frc::NidecBrushless::GetDescription(wpi::raw_ostream&) const
 {
 	ROS_ERROR("Called ::NidecBrushless::GetDescription(wpi::raw_ostream& desc) const on unsupported platform");
 }
@@ -585,7 +586,7 @@ int frc::NidecBrushless::GetChannel() const
 	return -1;
 }
 
-void frc::NidecBrushless::InitSendable(SendableBuilder& builder)
+void frc::NidecBrushless::InitSendable(SendableBuilder&)
 {
 	ROS_ERROR("Called ::NidecBrushless::InitSendable(SendableBuilder& builder) on unsupported platform");
 }
@@ -731,7 +732,7 @@ frc::RobotBase::~RobotBase()
 }
 
 #include <frc/PIDSource.h>
-void frc::PIDSource::SetPIDSourceType(PIDSourceType pidSource)
+void frc::PIDSource::SetPIDSourceType(PIDSourceType)
 {
 	ROS_ERROR("Called frc::PIDSource::SetPIDSourceType(PIDSourceType pidSource) on unsupported platform");
 }

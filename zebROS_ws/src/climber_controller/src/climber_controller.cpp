@@ -4,7 +4,7 @@ namespace climber_controller
 {
 
 bool ClimberController::init(hardware_interface::PositionJointInterface *hw,
-							 ros::NodeHandle                            &root_nh,
+							 ros::NodeHandle                            &/*root_nh*/,
 							 ros::NodeHandle                            &controller_nh)
 {
     feet_retract_ = hw->getHandle("climber_feet_retract");
@@ -30,7 +30,7 @@ void ClimberController::starting(const ros::Time &/*time*/) {
     //climber_in_.setCommand(0);
 }
 
-void ClimberController::update(const ros::Time &time, const ros::Duration &period) {
+void ClimberController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
     const bool feet_retract_cmd = *(feet_retract_cmd_.readFromRT());
     const bool release_endgame_cmd = *(release_endgame_cmd_.readFromRT());
 
@@ -59,7 +59,7 @@ void ClimberController::update(const ros::Time &time, const ros::Duration &perio
     release_endgame_.setCommand(release_endgame_cmd_double); // set the in/out command to the clampy part of the climber
 }
 
-void ClimberController::stopping(const ros::Time &time) {
+void ClimberController::stopping(const ros::Time &/*time*/) {
 }
 
 // Callback takes the request, writes it into the

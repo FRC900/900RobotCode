@@ -43,7 +43,7 @@ int cargo_linebreak_false_count = 0;
 int panel_linebreak_false_count = 0;
 
 
-const int climber_num_steps = 4;
+const int climber_num_steps = 3;
 const int elevator_num_setpoints = 4;
 
 bool robot_orient = false;
@@ -137,7 +137,7 @@ void preemptActionlibServers()
 }
 
 bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
-		teleop_joystick_control::RobotOrient::Response& res)
+		teleop_joystick_control::RobotOrient::Response&/* res*/)
 {
 	// Used to switch between robot orient and field orient driving
 	robot_orient = req.robot_orient;
@@ -184,7 +184,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		leftStickY = left_stick_y_rate_limit.applyLimit(leftStickY);
 
 		leftStickX =  pow(leftStickX, joystick_pow) * max_speed;
-		leftStickY = -pow(leftStickY, joystick_pow) * max_speed;
+		leftStickY =  pow(leftStickY, joystick_pow) * max_speed;
+
+		copysign(leftStickX, joystick_states_array[0].leftStickX);
+		copysign(leftStickY, -joystick_states_array[0].leftStickY);
 
 		double rightStickX = joystick_states_array[0].rightStickX;
 		double rightStickY = joystick_states_array[0].rightStickY;
@@ -194,6 +197,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		rightStickX =  pow(rightStickX, joystick_pow);
 		rightStickY = -pow(rightStickY, joystick_pow);
 
+		copysign(rightStickX, joystick_states_array[0].rightStickX);
+		copysign(rightStickY, -joystick_states_array[0].rightStickY);
+
 		rightStickX = right_stick_x_rate_limit.applyLimit(rightStickX);
 		rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);
 
@@ -202,6 +208,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//double triggerLeft = left_trigger_rate_limit.applyLimit(joystick_states_array[0].leftTrigger);
 		//double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
 		double rotation = pow(rightStickX, rotation_pow) * max_rot;
+		copysign(rotation, rightStickX);
 
 		static bool sendRobotZero = false;
 		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
@@ -222,10 +229,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			//Publish drivetrain messages and call servers
 			Eigen::Vector2d joyVector;
-			joyVector[0] = leftStickX; //intentionally flipped
+			joyVector[0] = -leftStickX; //intentionally flipped
 			joyVector[1] = -leftStickY;
 
-			const Eigen::Rotation2Dd rotate((robot_orient ? -offset_angle : -navX_angle));
+			const Eigen::Rotation2Dd rotate(robot_orient ? -offset_angle : -navX_angle);
 			const Eigen::Vector2d rotatedJoyVector = rotate.toRotationMatrix() * joyVector;
 
 			geometry_msgs::Twist vel;
@@ -823,11 +830,11 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
 	}
 
-	std::vector <ros::Subscriber> subscriber_array;	
+	std::vector <ros::Subscriber> subscriber_array;
     navX_angle = M_PI / 2;
 
 	//Read from _num_joysticks_ joysticks
-	for(size_t j = 0; j < num_joysticks; j++)
+	for(int j = 0; j < num_joysticks; j++)
 	{
 		std::stringstream s;
 		s << "/teleop/translator";

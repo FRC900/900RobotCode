@@ -127,7 +127,7 @@ int main(int argc, char ** argv)
 		//1 is rocket panel
 		//2 is empty space(can't differentiate on rocket between cutout and off the side)
 		ternary_distances = 0;
-		for(int i = 2; i < sensors_distances.size(); i++)
+		for(size_t i = 2; i < sensors_distances.size(); i++)
 		{
 			if(sensors_distances[i] != sensors_distances[i])
 				ternary_distances += pow(10.0, i - 2)*2;

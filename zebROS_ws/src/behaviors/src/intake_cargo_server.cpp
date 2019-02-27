@@ -59,7 +59,7 @@ class CargoIntakeAction {
 		}
 
 		//define the function to be executed when the actionlib server is called
-		void executeCB(const behaviors::IntakeGoalConstPtr &goal) {
+		void executeCB(const behaviors::IntakeGoalConstPtr &/*goal*/) {
 			ROS_INFO("%s: Running callback", action_name_.c_str());
 
 			//wait for all actionlib servers we need

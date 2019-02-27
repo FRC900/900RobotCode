@@ -3,7 +3,7 @@
 namespace elevator_controller
 {
 bool ElevatorController::init(hardware_interface::RobotHW *hw,
-							  ros::NodeHandle             &root_nh,
+							  ros::NodeHandle             &/*root_nh*/,
 							  ros::NodeHandle             &controller_nh)
 {
 	//create the interface used to initialize the talon joint
@@ -17,6 +17,12 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 	if (!controller_nh.getParam("arb_feed_forward_up", arb_feed_forward_up_))
 	{
 		ROS_ERROR("Could not find arb_feed_forward_up");
+		return false;
+	}
+
+	if (!controller_nh.getParam("arb_feed_forward_down", arb_feed_forward_down_))
+	{
+		ROS_ERROR("Could not find arb_feed_forward_down");
 		return false;
 	}
 
@@ -41,6 +47,7 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 	// Copy read params into dynamic reconfigure values so they start in sync
 	elevator_controller::ElevatorConfig config;
 	config.arb_feed_forward_up = arb_feed_forward_up_;
+	config.arb_feed_forward_down = arb_feed_forward_down_;
 	config.elevator_zeroing_percent_output = elevator_zeroing_percent_output_;
 	config.elevator_zeroing_timeout = elevator_zeroing_timeout_;
 	config.slow_peak_output = slow_peak_output_;
@@ -62,14 +69,16 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 
 	elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController::cmdService, this);
 
-	zeroed_ = false;
-
-	last_time_down_ = ros::Time::now();
 
 	return true;
 }
 
 void ElevatorController::starting(const ros::Time &/*time*/) {
+	elevator_joint_.setPIDFSlot(0);
+	elevator_joint_.setMode(hardware_interface::TalonMode_Position);
+	go_slow_ = false;
+	zeroed_ = false;
+	last_time_down_ = ros::Time::now();
 }
 
 void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &/*duration*/)
@@ -85,42 +94,37 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 	if (zeroed_) // run normally, seeking to various positions
 	{
 		const double setpoint = *(position_command_.readFromRT());
-		elevator_joint_.setMode(hardware_interface::TalonMode_Position);
 		elevator_joint_.setCommand(setpoint);
 
-		// Add arbitrary feed forward for upwards motion
-		// We could have arb ff for both up and down, but seems
-		// easier (and good enough) to tune PID for down motion
-		// and add an arb FF correction for up
-		if(elevator_joint_.getPosition() > 0.8) {
-			elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-			elevator_joint_.setDemand1Value(arb_feed_forward_up_);
-		}
-		else {
-			elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
-			elevator_joint_.setDemand1Value(0);
-		}
-
-
-		if(setpoint > elevator_joint_.getPosition())
+		//if we're not climbing, add an arbitrary feed forward to hold the elevator up
+		if(!go_slow_)
 		{
-			if(last_setpoint_ != setpoint)
-			{
-				//elevator_joint_.setDemand1Type(hardware_interface::DemandType_AuxPID);
-				//elevator_joint_.setDemand1Value(arb_feed_forward_up_);
-				elevator_joint_.setPIDFSlot(0);
+			// Add arbitrary feed forward for upwards motion
+			// We could have arb ff for both up and down, but seems
+			// easier (and good enough) to tune PID for down motion
+			// and add an arb FF correction for up
+			if(elevator_joint_.getPosition() > 0.8 && last_position_ < 0.8) {
+				elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+				elevator_joint_.setDemand1Value(arb_feed_forward_up_);
 			}
-		}
-		else
-		{
-			//elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
-			//elevator_joint_.setDemand1Value(0);
-			if(last_setpoint_ != setpoint)
-			{
-				elevator_joint_.setPIDFSlot(1);
+			else if (elevator_joint_.getPosition() < 0.8 && last_position_ > 0.8) {
+				elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
+				elevator_joint_.setDemand1Value(0);
 			}
+
+			//for now, up and down PID is the same, so slot 1 is used for climbing
+			/*
+			if(last_setpoint_ != setpoint) {
+				if(setpoint > elevator_joint_.getPosition()) {
+					elevator_joint_.setPIDFSlot(0);
+				}
+				else {
+					elevator_joint_.setPIDFSlot(1);
+				}
+			}
+			last_setpoint_ = setpoint;
+			*/
 		}
-		last_setpoint_ = setpoint;
 	}
 	else
 	{
@@ -128,11 +132,13 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		if ((ros::Time::now() - last_time_down_).toSec() < elevator_zeroing_timeout_)
 		{
 			// Not yet zeroed. Run the elevator down slowly until the limit switch is set.
+			ROS_INFO_STREAM_THROTTLE(0.25, "Zeroing elevator with percent output: " << elevator_zeroing_percent_output_);
 			elevator_joint_.setCommand(elevator_zeroing_percent_output_);
 		}
 		else
 		{
-			// Stop moving to preven motor from burning out
+			// Stop moving to prevent motor from burning out
+			ROS_INFO_STREAM_THROTTLE(0.25, "Elevator timed out");
 			elevator_joint_.setCommand(0);
 		}
 
@@ -144,6 +150,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 			last_time_down_ = ros::Time::now();
 		}
 	}
+        last_position_ = elevator_joint_.getPosition();
 }
 
 void ElevatorController::stopping(const ros::Time &/*time*/)
@@ -156,22 +163,20 @@ bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request  &
 {
 	if(isRunning())
 	{
-		//adjust peak output appropriately
+		//adjust talon mode, arb feed forward, and PID slot appropriately
 		if(req.go_slow)
 		{
-			elevator_joint_.setPeakOutputForward(slow_peak_output_);
-			elevator_joint_.setPeakOutputReverse(-slow_peak_output_);
-
-			//set P to 0.1 at slot 0, then set PIDF  slot to 0
-			elevator_joint_.setP(0.1, 0);
-			elevator_joint_.setPIDFSlot(0);
-
+			elevator_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
+			elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+			elevator_joint_.setDemand1Value(arb_feed_forward_down_);
+			//elevator_joint_.setPeakOutputForward(0.0);
+			elevator_joint_.setPIDFSlot(1);
 			go_slow_ = true;
-			ROS_INFO("Elevator controller: reduced peak output +/- %f",slow_peak_output_);
+			ROS_INFO("Elevator controller: now in climbing mode");
 		}
-		else { //reset to default
-			elevator_joint_.setPeakOutputForward(1.0);
-			elevator_joint_.setPeakOutputReverse(-1.0);
+		else { //reset to default -- although, this should never be called after endgame
+			elevator_joint_.setMode(hardware_interface::TalonMode_Position);
+			elevator_joint_.setPIDFSlot(0);
 			ROS_INFO("Elevator controller: normal peak output");
 		}
 
@@ -188,7 +193,9 @@ bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request  &
 
 void ElevatorController::callback(elevator_controller::ElevatorConfig &config, uint32_t level)
 {
+	(void)level;
 	arb_feed_forward_up_ = config.arb_feed_forward_up;
+	arb_feed_forward_down_ = config.arb_feed_forward_down;
 	elevator_zeroing_percent_output_ = config.elevator_zeroing_percent_output;
 	elevator_zeroing_timeout_ = config.elevator_zeroing_timeout;
 	slow_peak_output_ = config.slow_peak_output;

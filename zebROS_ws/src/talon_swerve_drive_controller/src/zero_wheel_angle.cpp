@@ -74,7 +74,7 @@ int main(int argc, char ** argv)
 	steering_names.push_back("swerve_drive_controller/steering_joint_bl");
 	steering_names.push_back("swerve_drive_controller/steering_joint_br");
 
-	for(int i = 0; i < steering_names.size(); i++)
+	for(size_t i = 0; i < steering_names.size(); i++)
 		ROS_INFO_STREAM("steering_name = " << steering_names[i]);
 
 	for (auto it = steering_names.cbegin(); it != steering_names.cend(); ++it)
@@ -86,7 +86,7 @@ int main(int argc, char ** argv)
 		offsets.push_back(dbl_val);
 	}
 
-	for(int i = 0; i < offsets.size(); i++)
+	for(size_t i = 0; i < offsets.size(); i++)
 		ROS_INFO_STREAM("offsets = " << offsets[i]);
 
 	ros::ServiceServer zero_wheel_srv = nh.advertiseService("zero_wheel", zero_wheel);
