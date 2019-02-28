@@ -19,6 +19,9 @@ sudo umount /mnt/900_2 --lazy
 export CUDA_CACHE_MAXSIZE=104857600
 export CUDA_CACHE_PATH=/home/ubuntu/.nv/ComputeCache
 
+pushd ../build; python3 -m http.server 5805 &
+popd
+
 if sudo mount /dev/nvme0n1p1 /mnt/900_2; then
 		date >> /home/ubuntu/mounted.txt
 		echo worked >> /home/ubuntu/mounted.txt
@@ -36,4 +39,3 @@ nvpmodel -m 0
 /home/ubuntu/jetson_clocks.sh
 /home/ubuntu/2019RobotCode/jetson_setup/clocks.sh &
 
-pushd ../build; python3 -m http.server 5805; popd
