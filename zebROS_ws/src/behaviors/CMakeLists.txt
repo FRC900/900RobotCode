@@ -139,14 +139,6 @@ catkin_package(
    DEPENDS 
 )
 
-add_executable(vision_target_server_test src/vision_target_server_test.cpp)
-target_link_libraries(vision_target_server_test ${catkin_LIBRARIES})
-add_dependencies(vision_target_server_test ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-# 
-add_executable(trigger_call_test src/trigger_call_test.cpp)
-target_link_libraries(trigger_call_test ${catkin_LIBRARIES})
-add_dependencies(trigger_call_test ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 add_executable(intake_cargo_server src/intake_cargo_server.cpp)
 target_link_libraries(intake_cargo_server ${catkin_LIBRARIES})
 add_dependencies(intake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
