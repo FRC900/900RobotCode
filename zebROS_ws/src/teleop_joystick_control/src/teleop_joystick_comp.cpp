@@ -83,10 +83,10 @@ std::shared_ptr<actionlib::SimpleActionClient<behaviors::ClimbAction>> climber_a
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::AlignAction>> align_ac;
 double navX_angle;
 
-bool ManualToggleA = false;
-bool ManualToggleB = false;
-bool ManualToggleX = false;
-bool ManualToggleY = false;
+bool ManualToggleClamp = false;
+bool ManualTogglePush = false;
+bool ManualToggleKicker = false;
+bool ManualToggleArm = false;
 
 struct ElevatorGoal
 
@@ -476,18 +476,18 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	{
 		//Joystick2: buttonA
 		if(joystick_states_array[1].buttonAPress) //Clamp
-		  {
-			ManualToggleA = !ManualToggleA;
-		  ROS_INFO_STREAM("Joystick2: buttonAPress");
+		{
+			ManualToggleClamp = !ManualToggleClamp;
+		    ROS_INFO_STREAM("Joystick2: buttonAPress");
 			panel_intake_controller::PanelIntakeSrv msg;
-		  msg.request.claw_release = ManualToggleA;
-		  msg.request.push_extend = ManualToggleB;
-		  manual_server_panelIn.call(msg);
+		    msg.request.claw_release = ManualToggleClamp;
+		    msg.request.push_extend = ManualTogglePush;
+		    manual_server_panelIn.call(msg);
 			cargo_outtake_controller::CargoOuttakeSrv msg2;
-			msg2.request.kicker_in = ManualToggleX;
-			msg2.request.clamp_release = ManualToggleA;
+			msg2.request.kicker_in = ManualToggleKicker;
+			msg2.request.clamp_release = ManualToggleClamp;
 			manual_server_cargoOut.call(msg2);
-		  }
+		}
 		/*  if(joystick_states_array[1].buttonAButton)
 		  {
 		  ROS_INFO_THROTTLE(1, "buttonAButton");
@@ -505,12 +505,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick2: buttonB
 		if(joystick_states_array[1].buttonBPress)
 		{
-			ManualToggleB = !ManualToggleB;
-		ROS_INFO_STREAM("Joystick2: buttonBPress");
-		panel_intake_controller::PanelIntakeSrv msg;
-		  msg.request.claw_release = ManualToggleA;
-		  msg.request.push_extend = ManualToggleB;
-		  manual_server_panelIn.call(msg);
+			ManualTogglePush = !ManualTogglePush;
+			ROS_INFO_STREAM("Joystick2: buttonBPress");
+			panel_intake_controller::PanelIntakeSrv msg;
+			msg.request.claw_release = ManualToggleClamp;
+			msg.request.push_extend = ManualTogglePush;
+			manual_server_panelIn.call(msg);
 		}
 		/*if(joystick_states_array[1].buttonBButton)
 		{
@@ -529,14 +529,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick2: buttonX
 		if(joystick_states_array[1].buttonXPress)
 		{
-			ManualToggleX = !ManualToggleX;
-		ROS_INFO_STREAM("Joystick2: buttonXPress");
-		
-cargo_outtake_controller::CargoOuttakeSrv msg;
-			msg.request.kicker_in = ManualToggleX;
-			msg.request.clamp_release = ManualToggleA;
+			ManualToggleKicker = !ManualToggleKicker;
+			ROS_INFO_STREAM("Joystick2: buttonXPress");
+			cargo_outtake_controller::CargoOuttakeSrv msg;
+			msg.request.kicker_in = ManualToggleKicker;
+			msg.request.clamp_release = ManualToggleClamp;
 			manual_server_cargoOut.call(msg);
-
 		}
 		/*if(joystick_states_array[1].buttonXButton)
 		{
@@ -555,13 +553,13 @@ cargo_outtake_controller::CargoOuttakeSrv msg;
 		//Joystick2: buttonY
 		if(joystick_states_array[1].buttonYPress)
 		{
-			ManualToggleY = !ManualToggleY;
-		ROS_INFO_STREAM("Joystick2: buttonYPress");
+			ManualToggleArm = !ManualToggleArm;
+			ROS_INFO_STREAM("Joystick2: buttonYPress");
 			cargo_intake_controller::CargoIntakeSrv msg;
-		msg.request.intake_arm = ManualToggleY;
-		msg.request.power = 0.0;
-		manual_server_cargoIn.call(msg);
-	}
+			msg.request.intake_arm = ManualToggleArm;
+			msg.request.power = 0.0;
+			manual_server_cargoIn.call(msg);
+		}
 /*	if(joystick_states_array[1].buttonYButton)
 	{
 		ROS_INFO_THROTTLE(1, "buttonYButton");
