@@ -245,12 +245,15 @@ int main(int argc, char ** argv)
 				}
 				*/
 			case(112221):
+			case(111112): //off to the right at loading station
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the right of cargo ship a small amount: case: " << ternary_distances);
 				cutout_found = true;
 				y_msg.data = 1*cmd_vel_to_pub;
 				break;
+			//Off to the right a lot`
 			case(111221):
 			case(111121):
+			case(211121):
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the right of cargo ship a large amount: case: " << ternary_distances);
 				cutout_found = true;
 				y_msg.data = 2*cmd_vel_to_pub;
@@ -266,6 +269,7 @@ int main(int argc, char ** argv)
 				}*/
 			//case(122112): //Duplicate of off to the left of rocket a small amount
 			case(222111):
+			case(221111): //Off to the left a bit at loading station
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left of cargo ship a small amount: case: " << ternary_distances);
 				cutout_found = true;
 				y_msg.data = -1*cmd_vel_to_pub;
