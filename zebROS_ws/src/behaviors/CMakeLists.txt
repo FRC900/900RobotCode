@@ -22,7 +22,6 @@ find_package(catkin REQUIRED COMPONENTS
   message_filters
   ros_control_boilerplate
   talon_swerve_drive_controller
-  path_to_goal
   swerve_point_generator
 )
 
