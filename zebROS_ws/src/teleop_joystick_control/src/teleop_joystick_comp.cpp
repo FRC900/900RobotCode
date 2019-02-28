@@ -257,7 +257,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Align the robot
 			ROS_WARN("Joystick1: buttonAPress - Auto Align");
 
-			/* TODO uncomment this for actual robot
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
 			if(cargo_linebreak_true_count > linebreak_debounce_iterations) {
@@ -267,15 +266,16 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				goal.has_cargo = false;
 			}
 			align_ac->sendGoal(goal);
-			*/
 		}
 		if(joystick_states_array[0].buttonAButton)
 		{
+			/*
 			ROS_INFO_THROTTLE(1, "buttonAButton");
             std_msgs::Bool enable_pid;
 			enable_pid.data = true;
             terabee_pid.publish(enable_pid);
 			enable_align.publish(enable_pid);
+			*/
 
 			//behaviors::AlignGoal goal;
 			//goal.trigger = true;
@@ -283,10 +283,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		if(joystick_states_array[0].buttonARelease)
 		{
+			/*
             std_msgs::Bool enable_pid;
 			enable_pid.data = false;
             terabee_pid.publish(enable_pid);
 			enable_align.publish(enable_pid);
+			*/
 			ROS_INFO_STREAM("Joystick1: buttonARelease");
 		}
 
@@ -294,10 +296,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonB
 		if(joystick_states_array[0].buttonBPress)
 		{
+			/*
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
 			goal.has_cargo = false;
 			align_ac->sendGoal(goal);
+			*/
 		}
 			/*
 		ROS_INFO_STREAM("Joystick1: buttonBPress - Cargo Outtake");
@@ -333,19 +337,23 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		if(joystick_states_array[0].buttonXButton)
 		{
+			/*
 			ROS_INFO_THROTTLE(1, "buttonXButton");
             std_msgs::Bool enable_pid;
 			enable_pid.data = true;
             distance_pid.publish(enable_pid);
 			enable_align.publish(enable_pid);
+			*/
 		}
 		if(joystick_states_array[0].buttonXRelease)
 		{
+			/*
 			ROS_INFO_STREAM("Joystick1: buttonXRelease");
             std_msgs::Bool enable_pid;
 			enable_pid.data = false;
             distance_pid.publish(enable_pid);
 			enable_align.publish(enable_pid);
+			*/
 		}
 		//Joystick1: buttonY
 		/*if(joystick_states_array[0].buttonYPress)
@@ -359,19 +367,23 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		  */
 		  if(joystick_states_array[0].buttonYButton)
 		  {
+			  /*
 			  ROS_INFO_THROTTLE(1, "buttonYButton");
 			  std_msgs::Bool enable_pid;
 			  enable_pid.data = true;
 			  navX_pid.publish(enable_pid);
 			  enable_align.publish(enable_pid);
+			  */
 		  }
 		  if(joystick_states_array[0].buttonYRelease)
 		  {
+			  /*
 			  ROS_INFO_STREAM("Joystick1: buttonYRelease");
 			  std_msgs::Bool enable_pid;
 			  enable_pid.data = false;
 			  navX_pid.publish(enable_pid);
 			  enable_align.publish(enable_pid);
+			  */
 		  }
 
 		//Joystick1: bumperLeft
