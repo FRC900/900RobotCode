@@ -256,6 +256,18 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			//Align the robot
 			ROS_WARN("Joystick1: buttonAPress - Auto Align");
+
+			/* TODO uncomment this for actual robot
+			preemptActionlibServers();
+			behaviors::AlignGoal goal;
+			if(cargo_linebreak_true_count > linebreak_debounce_iterations) {
+				goal.has_cargo = true;
+			}
+			else {
+				goal.has_cargo = false;
+			}
+			align_ac->sendGoal(goal);
+			*/
 		}
 		if(joystick_states_array[0].buttonAButton)
 		{
