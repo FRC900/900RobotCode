@@ -29,19 +29,19 @@ void orientCB(const std_msgs::Float64& msg)
 {
 	time_since_command = ros::Time::now();
 	time_since_orient = ros::Time::now();
-	cmd_vel_msg.angular.z = -1*msg.data;
+	cmd_vel_msg.angular.z = -1*((msg.data == msg.data) ? msg.data : 0.0);
 }
 void xCB(const std_msgs::Float64& msg)
 {
 	time_since_command = ros::Time::now();
 	time_since_x = ros::Time::now();
-	cmd_vel_msg.linear.x = msg.data;
+	cmd_vel_msg.linear.x = ((msg.data == msg.data) ? msg.data : 0.0);
 }
 void yCB(const std_msgs::Float64& msg)
 {
 	time_since_command = ros::Time::now();
 	time_since_y = ros::Time::now();
-	cmd_vel_msg.linear.y = msg.data;
+	cmd_vel_msg.linear.y = ((msg.data == msg.data) ? msg.data : 0.0);
 }
 void enableCB(const std_msgs::Bool& msg)
 {

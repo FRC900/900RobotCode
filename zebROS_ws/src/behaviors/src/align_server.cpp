@@ -243,7 +243,7 @@ int main(int argc, char** argv) {
 	*enable_cargo_pub_ = n.advertise<std_msgs::Bool>("cargo_pid/pid_enable", 1);
 	*enable_align_pub_ = n.advertise<std_msgs::Bool>("align_pid/pid_enable", 1);
 
-	AlignAction align_action("align_server", enable_navx_pub_, enable_x_pub_, enable_y_pub_, enable_cargo_pub_, enable_align_pub_);
+	AlignAction align_action("align_server", enable_navx_pub_, enable_x_pub_, enable_y_pub_, enable_align_pub_, enable_cargo_pub_);
 
 	ros::Rate r(30);
 	while(ros::ok()) {
