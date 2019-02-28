@@ -181,8 +181,8 @@ int main(int argc, char **argv)
 
 	ros::Subscriber joint_states_sub_ = nh.subscribe("/frcrobot_jetson/joint_states", 1, jointStateCallback);
 	ros::Subscriber navX_heading  = nh.subscribe("/frcrobot_rio/navx_mxp", 1, &navXCallback);
-	ros::Publisher snapAnglePub = nh.advertise<std_msgs::Float64>("/navX_snap_to_goal_pid/navX_snap_to_goal_setpoint", 10);
-	ros::Publisher navXStatePub = nh.advertise<std_msgs::Float64>("/navX_snap_to_goal_pid/navX_snap_to_goal_state", 10);
+	ros::Publisher snapAnglePub = nh.advertise<std_msgs::Float64>("navX_pid/setpoint", 10);
+	ros::Publisher navXStatePub = nh.advertise<std_msgs::Float64>("navX_pid/state", 10);
 	ROS_INFO("snap_to_angle_init");
 
 	ros::Rate r(100);
@@ -192,19 +192,25 @@ int main(int argc, char **argv)
 	while(ros::ok()) {
 		std_msgs::Float64 angle_snap;
 		std_msgs::Float64 navX_state;
-		double cur_angle = angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed));
+		double cur_angle = angles::normalize_angle_positive(-1*navX_angle.load(std::memory_order_relaxed));
 		if(has_panel) {
-			snap_angle = -1*nearest_angle(hatch_panel_angles, cur_angle) - M_PI/2; //TODO remove having to multiply negative one
+			snap_angle = nearest_angle(hatch_panel_angles, cur_angle); //TODO remove having to multiply negative one
 		}
 		else if(has_cargo) {
-			snap_angle = -1*nearest_angle(cargo_angles, cur_angle+M_PI/2) - M_PI;
+			snap_angle = nearest_angle(cargo_angles, cur_angle + M_PI/2) - M_PI/2;
 		}
 		else {
 			snap_angle = nearest_angle(nothing_angles, cur_angle);
 		}
+		double heading = angles::normalize_angle(-1*navX_angle.load(std::memory_order_relaxed));
+		double goal_angle = angles::normalize_angle(snap_angle);
+		double angle_diff = angles::normalize_angle(goal_angle - heading);
 		angle_snap.data = snap_angle;
-		navX_state.data = -1*angles::normalize_angle_positive(navX_angle.load(std::memory_order_relaxed)) - M_PI/2;
-		snapAnglePub.publish(angle_snap);
+		navX_state.data = angle_diff;
+		snapAnglePub.publish(0.0);
+		//ROS_WARN_STREAM_THROTTLE(0.1, "Angle diff: " << angle_diff);
+		//ROS_WARN_STREAM_THROTTLE(0.1, "Heading: " <<  heading);
+		//ROS_WARN_STREAM_THROTTLE(0.1, "Goal: " <<  goal_angle);
         navXStatePub.publish(navX_state);
 
 		r.sleep();

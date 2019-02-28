@@ -137,6 +137,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		}
 		else
 		{
+			// Stop moving to prevent motor from burning out
 			ROS_INFO_STREAM_THROTTLE(0.25, "Elevator timed out");
 			elevator_joint_.setCommand(0);
 		}

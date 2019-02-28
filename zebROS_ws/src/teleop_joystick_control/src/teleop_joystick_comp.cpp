@@ -2,6 +2,9 @@
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "teleop_joystick_control/rate_limiter.h"
 #include "std_srvs/Empty.h"
+
+#include "std_srvs/Trigger.h"
+
 #include "std_msgs/Bool.h"
 #include "std_msgs/Int8.h"
 
@@ -17,7 +20,8 @@
 #include "behaviors/AlignGoal.h"
 #include "actionlib/client/simple_action_client.h"
 #include "behaviors/enumerated_elevator_indices.h"
-#include "std_msgs/Bool.h"
+
+
 #include "std_srvs/SetBool.h"
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
@@ -48,6 +52,7 @@ double offset_angle = 0;
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 
+
 // 500 msec to go from full back to full forward
 const double drive_rate_limit_time = 500.;
 rate_limiter::RateLimiter left_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
@@ -59,7 +64,12 @@ rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_t
 
 ros::Publisher elevator_setpoint;
 ros::Publisher JoystickRobotVel;
-ros::Publisher align_with_terabee_pub;
+ros::Publisher cargo_pid;
+ros::Publisher terabee_pid;
+ros::Publisher distance_pid;
+ros::Publisher navX_pid;
+ros::Publisher enable_align;
+
 ros::ServiceClient BrakeSrv;
 ros::ServiceClient run_align;
 ros::ServiceClient align_with_terabee;
@@ -140,6 +150,7 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 }
 
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
+
 {
 	int i = 0;
 
@@ -245,24 +256,54 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			//Align the robot
 			ROS_WARN("Joystick1: buttonAPress - Auto Align");
+
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
-			goal.trigger = false;
+			if(cargo_linebreak_true_count > linebreak_debounce_iterations) {
+				goal.has_cargo = true;
+			}
+			else {
+				goal.has_cargo = false;
+			}
 			align_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonAButton)
 		{
+			/*
 			ROS_INFO_THROTTLE(1, "buttonAButton");
+            std_msgs::Bool enable_pid;
+			enable_pid.data = true;
+            terabee_pid.publish(enable_pid);
+			enable_align.publish(enable_pid);
+			*/
+
+			//behaviors::AlignGoal goal;
+			//goal.trigger = true;
+			//align_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonARelease)
 		{
+			/*
+            std_msgs::Bool enable_pid;
+			enable_pid.data = false;
+            terabee_pid.publish(enable_pid);
+			enable_align.publish(enable_pid);
+			*/
 			ROS_INFO_STREAM("Joystick1: buttonARelease");
 		}
 
-		/*
+		
 		//Joystick1: buttonB
 		if(joystick_states_array[0].buttonBPress)
 		{
+			/*
+			preemptActionlibServers();
+			behaviors::AlignGoal goal;
+			goal.has_cargo = false;
+			align_ac->sendGoal(goal);
+			*/
+		}
+			/*
 		ROS_INFO_STREAM("Joystick1: buttonBPress - Cargo Outtake");
 		preemptActionlibServers();
 		behaviors::PlaceGoal goal;
@@ -289,18 +330,30 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].buttonXPress)
 		{
 			//Determines where elevator will go when called to outtake or move to a setpoint
-			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
-			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % elevator_num_setpoints;
-   			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+		//	ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
+		//	elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % elevator_num_setpoints;
+   		//	ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
             
 		}
 		if(joystick_states_array[0].buttonXButton)
 		{
+			/*
 			ROS_INFO_THROTTLE(1, "buttonXButton");
+            std_msgs::Bool enable_pid;
+			enable_pid.data = true;
+            distance_pid.publish(enable_pid);
+			enable_align.publish(enable_pid);
+			*/
 		}
 		if(joystick_states_array[0].buttonXRelease)
 		{
+			/*
 			ROS_INFO_STREAM("Joystick1: buttonXRelease");
+            std_msgs::Bool enable_pid;
+			enable_pid.data = false;
+            distance_pid.publish(enable_pid);
+			enable_align.publish(enable_pid);
+			*/
 		}
 		//Joystick1: buttonY
 		/*if(joystick_states_array[0].buttonYPress)
@@ -311,24 +364,27 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		  goal.setpoint_index = CARGO_SHIP;
 		  outtake_hatch_panel_ac->sendGoal(goal);
 		  }
+		  */
 		  if(joystick_states_array[0].buttonYButton)
 		  {
-		  ROS_INFO_THROTTLE(1, "buttonYButton");
-		  std_msgs::Bool msg;
-		  msg.data = true;
-		  align_with_terabee_pub.publish(msg);
-		  }
-		  else
-		  {
-		  std_msgs::Bool msg;
-		  msg.data = false;
-		  align_with_terabee_pub.publish(msg);
+			  /*
+			  ROS_INFO_THROTTLE(1, "buttonYButton");
+			  std_msgs::Bool enable_pid;
+			  enable_pid.data = true;
+			  navX_pid.publish(enable_pid);
+			  enable_align.publish(enable_pid);
+			  */
 		  }
 		  if(joystick_states_array[0].buttonYRelease)
 		  {
-		  ROS_INFO_STREAM("Joystick1: buttonYRelease");
+			  /*
+			  ROS_INFO_STREAM("Joystick1: buttonYRelease");
+			  std_msgs::Bool enable_pid;
+			  enable_pid.data = false;
+			  navX_pid.publish(enable_pid);
+			  enable_align.publish(enable_pid);
+			  */
 		  }
-		  */
 
 		//Joystick1: bumperLeft
 		if(joystick_states_array[0].bumperLeftPress)
@@ -799,7 +855,7 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
 	}
-	if(!n_swerve_params.getParam("max_rotational_vel", max_rot))
+	if(!n_params.getParam("max_rot", max_rot))
 	{
 		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
 	}
@@ -823,6 +879,8 @@ int main(int argc, char **argv)
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
+
+
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
 	{
@@ -844,7 +902,12 @@ int main(int argc, char **argv)
 
 
 	run_align = n.serviceClient<std_srvs::SetBool>("/align_with_terabee/run_align");
-	align_with_terabee_pub = n.advertise<std_msgs::Bool>("/frcrobot_jetson/align_with_terabee_pub", 1);
+
+	cargo_pid = n.advertise<std_msgs::Bool>("/align_server/cargo_pid/pid_enable", 1);
+	terabee_pid = n.advertise<std_msgs::Bool>("/align_server/align_with_terabee/enable_y_pub", 1);
+	distance_pid = n.advertise<std_msgs::Bool>("/align_server/distance_pid/pid_enable", 1);
+	navX_pid = n.advertise<std_msgs::Bool>("/align_server/navX_pid/pid_enable", 1);
+	enable_align = n.advertise<std_msgs::Bool>("/align_server/align_pid/pid_enable", 1);
 
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 

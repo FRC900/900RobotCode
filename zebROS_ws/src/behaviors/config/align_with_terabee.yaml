@@ -1,9 +1,0 @@
-align_with_terabee_params:
-    error_threshhold: 0.03
-    dist_to_back_panel: 0.07
-    cmd_vel_to_pub: 0.3
-    distance_target: 0.1
-align_server_params:
-    align_timeout: 10
-    x_error_threshhold: 0.01
-    orient_error_threshhold: 0.026
