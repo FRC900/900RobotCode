@@ -21,6 +21,10 @@
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
 
+#include "panel_intake_controller/PanelIntakeSrv.h"
+#include "cargo_outtake_controller/CargoOuttakeSrv.h"
+#include "cargo_intake_controller/CargoIntakeSrv.h"
+
 double joystick_deadzone;
 double slow_mode;
 double max_speed;
@@ -63,6 +67,11 @@ ros::Publisher JoystickRobotVel;
 ros::Publisher align_with_terabee_pub;
 ros::ServiceClient BrakeSrv;
 ros::ServiceClient run_align;
+
+ros::ServiceClient manual_server_panelIn;
+ros::ServiceClient manual_server_cargoOut;
+ros::ServiceClient manual_server_cargoIn;
+
 ros::ServiceClient align_with_terabee;
 //use shared pointers to make the clients global
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_cargo_ac;
@@ -74,7 +83,15 @@ std::shared_ptr<actionlib::SimpleActionClient<behaviors::ClimbAction>> climber_a
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::AlignAction>> align_ac;
 double navX_angle;
 
+bool ManualToggleA = false;
+bool ManualToggleB = false;
+bool ManualToggleX = false;
+bool ManualToggleY = false;
+
 struct ElevatorGoal
+
+
+
 {
 	ElevatorGoal():
 		index_(0)
@@ -458,14 +475,20 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	else if(i == 2)
 	{
 		//Joystick2: buttonA
-		/*if(joystick_states_array[1].buttonAPress)
+		if(joystick_states_array[1].buttonAPress) //Clamp
 		  {
+			ManualToggleA = !ManualToggleA;
 		  ROS_INFO_STREAM("Joystick2: buttonAPress");
-		  std_srvs::SetBool msg;
-		  msg.request.data = true;
-		  run_align.call(msg);
+			panel_intake_controller::PanelIntakeSrv msg;
+		  msg.request.claw_release = ManualToggleA;
+		  msg.request.push_extend = ManualToggleB;
+		  manual_server_panelIn.call(msg);
+			cargo_outtake_controller::CargoOuttakeSrv msg2;
+			msg2.request.kicker_in = ManualToggleX;
+			msg2.request.clamp_release = ManualToggleA;
+			manual_server_cargoOut.call(msg2);
 		  }
-		  if(joystick_states_array[1].buttonAButton)
+		/*  if(joystick_states_array[1].buttonAButton)
 		  {
 		  ROS_INFO_THROTTLE(1, "buttonAButton");
 		  std_srvs::SetBool msg;
@@ -478,16 +501,18 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		  std_srvs::SetBool msg;
 		  msg.request.data = false;
 		  run_align.call(msg);
-		  }
+		  }*/
 		//Joystick2: buttonB
 		if(joystick_states_array[1].buttonBPress)
 		{
+			ManualToggleB = !ManualToggleB;
 		ROS_INFO_STREAM("Joystick2: buttonBPress");
-		std_srvs::SetBool msg;
-		msg.request.data = true;
-		run_align.call(msg);
+		panel_intake_controller::PanelIntakeSrv msg;
+		  msg.request.claw_release = ManualToggleA;
+		  msg.request.push_extend = ManualToggleB;
+		  manual_server_panelIn.call(msg);
 		}
-		if(joystick_states_array[1].buttonBButton)
+		/*if(joystick_states_array[1].buttonBButton)
 		{
 		ROS_INFO_THROTTLE(1, "buttonBButton");
 		std_srvs::SetBool msg;
@@ -500,16 +525,20 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		std_srvs::SetBool msg;
 		msg.request.data = false;
 		run_align.call(msg);
-		}
+		}*/
 		//Joystick2: buttonX
 		if(joystick_states_array[1].buttonXPress)
 		{
+			ManualToggleX = !ManualToggleX;
 		ROS_INFO_STREAM("Joystick2: buttonXPress");
-		std_srvs::SetBool msg;
-		msg.request.data = true;
-		run_align.call(msg);
+		
+cargo_outtake_controller::CargoOuttakeSrv msg;
+			msg.request.kicker_in = ManualToggleX;
+			msg.request.clamp_release = ManualToggleA;
+			manual_server_cargoOut.call(msg);
+
 		}
-		if(joystick_states_array[1].buttonXButton)
+		/*if(joystick_states_array[1].buttonXButton)
 		{
 		ROS_INFO_THROTTLE(1, "buttonXButton");
 		std_srvs::SetBool msg;
@@ -522,16 +551,18 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		std_srvs::SetBool msg;
 		msg.request.data = false;
 		run_align.call(msg);
-		}
+		}*/
 		//Joystick2: buttonY
 		if(joystick_states_array[1].buttonYPress)
 		{
+			ManualToggleY = !ManualToggleY;
 		ROS_INFO_STREAM("Joystick2: buttonYPress");
-		std_srvs::SetBool msg;
-		msg.request.data = true;
-		run_align.call(msg);
+			cargo_intake_controller::CargoIntakeSrv msg;
+		msg.request.intake_arm = ManualToggleY;
+		msg.request.power = 0.0;
+		manual_server_cargoIn.call(msg);
 	}
-	if(joystick_states_array[1].buttonYButton)
+/*	if(joystick_states_array[1].buttonYButton)
 	{
 		ROS_INFO_THROTTLE(1, "buttonYButton");
 		std_srvs::SetBool msg;
@@ -825,6 +856,11 @@ int main(int argc, char **argv)
 
 
 	run_align = n.serviceClient<std_srvs::SetBool>("/align_with_terabee/run_align");
+
+	manual_server_panelIn = n.serviceClient<panel_intake_controller::PanelIntakeSrv>("/panel_intake_controller/panel_command");
+	manual_server_cargoOut = n.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/cargo_outtake_controller/cargo_outtake_command");
+	manual_server_cargoIn = n.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/cargo_intake_controller/cargo_intake_command");
+
 	align_with_terabee_pub = n.advertise<std_msgs::Bool>("/frcrobot_jetson/align_with_terabee_pub", 1);
 
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
