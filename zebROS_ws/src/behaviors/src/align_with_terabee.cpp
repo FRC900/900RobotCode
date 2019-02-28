@@ -16,6 +16,7 @@ bool publish_last = false;
 const double default_min_dist_ = 100;
 double min_dist = default_min_dist_;
 double last_command;
+double last_command_published;
 
 void multiflexCB(const teraranger_array::RangeArray& msg)
 {
@@ -160,8 +161,6 @@ int main(int argc, char ** argv)
 
 		switch(ternary_distances) {
 			//the robot is aligned or close enough
-			case(112212): //off to the right a small amount, but really close
-			case(122112): //off to the left a small amount, but really close
 			case(122212):
 				ROS_INFO_STREAM_THROTTLE(.25, "The robot is aligned: case: " << ternary_distances);
 				aligned = true;
@@ -170,6 +169,13 @@ int main(int argc, char ** argv)
 				break;
 			//Off to the right a small amount
 			//case(212212):
+			case(112212): //off to the right a small amount, but really close
+				if(last_command_published > 0.0) { //if last command was positive to move closer to center set aligned to not overshoot
+					cutout_found = true;
+					y_msg.data = 0;
+					aligned = true;
+					break;
+				}
 			case(112211):
 			case(111211):
 			case(211221):
@@ -192,6 +198,15 @@ int main(int argc, char ** argv)
 				y_msg.data = 2*cmd_vel_to_pub;
 				break;
 			//Off to the left a small amount
+			case(122112): //off to the left a small amount, but really close
+				/*  //Commented out because same as off to the left more than a few inches on cargo ship, so can't set aligned without knowing cargo or rocket
+				if(last_command_published < 0.0) { //if last command was positive to move closer to center set aligned to not overshoot
+					cutout_found = true;
+					y_msg.data = 0;
+					aligned = true;
+					break;
+				}
+				*/
 			case(122122):
 			//case(222122): //Shouldn't happen
 			case(211122):
@@ -209,6 +224,59 @@ int main(int argc, char ** argv)
 				cutout_found = true;
 				y_msg.data = -2*cmd_vel_to_pub;
 				break;
+
+
+			//Cargo ship cases
+			//Aligned
+			case(122211):
+				ROS_INFO_STREAM_THROTTLE(.25, "The robot is aligned with cargo ship: case: " << ternary_distances);
+				aligned = true;
+				y_msg.data = 0;
+				cutout_found = true;
+				break;
+			//Off to the right
+				/*    //Comented out because duplicate of of the right more than a few inches on rocket so can't set aligned for this case without knowing rocket or caro
+			case(112211): //off a bit but really close
+				if(last_command_published > 0.0) { //if last command was positive to move closer to center set aligned to not overshoot
+					cutout_found = true;
+					y_msg.data = 0;
+					aligned = true;
+					break;
+				}
+				*/
+			case(112221):
+				ROS_INFO_STREAM_THROTTLE(.25, "Off to the right of cargo ship a small amount: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = 1*cmd_vel_to_pub;
+				break;
+			case(111221):
+			case(111121):
+				ROS_INFO_STREAM_THROTTLE(.25, "Off to the right of cargo ship a large amount: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = 2*cmd_vel_to_pub;
+				break;
+			//Off to the left
+			case(122111): //off a bit but really close
+				/*TODO commented out because can go many inches off to the left in this case probably will cause severe undershooting.
+				if(last_command_published < 0.0) { //if last command was positive to move closer to center set aligned to not overshoot
+					cutout_found = true;
+					y_msg.data = 0;
+					aligned = true;
+					break;
+				}*/
+			//case(122112): //Duplicate of off to the left of rocket a small amount
+			case(222111):
+				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left of cargo ship a small amount: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = -1*cmd_vel_to_pub;
+				break;
+			case(221112):
+			case(211112):
+				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left of cargo ship a large amount: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = -2*cmd_vel_to_pub;
+				break;
+			//Indeterminate cases
 			case(221122):
 				ROS_INFO_STREAM_THROTTLE(.25, "Indeterminate case found: case: " << ternary_distances);
 				cutout_found = true;
@@ -224,6 +292,7 @@ int main(int argc, char ** argv)
 		if(publish)
 		{
 			y_command_pub.publish(y_msg);
+			last_command_published = y_msg.data;
 		}
 		else if(!publish && publish_last)
 		{
