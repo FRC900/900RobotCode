@@ -149,7 +149,7 @@ int main(int argc, char ** argv)
 				ternary_distances += pow(10.0, i - 2)*2;
 			else
 			{
-				ROS_INFO_STREAM("very confused " << sensors_distances[i]);
+				ROS_INFO_STREAM_THROTTLE(1,"very confused " << sensors_distances[i]);
 			}
 
 		}
