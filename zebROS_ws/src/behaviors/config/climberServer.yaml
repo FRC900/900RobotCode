@@ -1,7 +1,7 @@
 # TODO - these are all wrong
 climber_server:
-    deploy_position: 0
-    climb_position: 0
     deploy_timeout: 8.0
     climb_timeout: 8.0
+    running_forward_timeout: 2.0
+    climb_low_timeout: 8.0
     match_time_lock: 225
