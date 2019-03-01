@@ -316,6 +316,56 @@ class ClimbAction {
 					}
 				}
 
+				ros::Duration(1).sleep();
+
+				if(!preempted && !timed_out && ros::ok())
+				{
+					ROS_INFO("climber server step 0: raising elevator to make robot climb");
+
+					//call the elevator actionlib server
+					//define the goal to send
+					behaviors::ElevatorGoal goal;
+					goal.setpoint_index = ELEVATOR_CLIMB_LOW;
+					goal.place_cargo = 0; //doesn't actually do anything 
+					goal.raise_intake_after_success = true;
+					//send the goal
+					ae_.sendGoal(goal);
+					double start_time = ros::Time::now().toSec();
+					finished_climb = false;
+					while(ros::ok() && !finished_climb && !preempted && !timed_out)
+					{
+						timed_out = (ros::Time::now().toSec() - start_time) > elevator_climb_timeout;
+						preempted = as_.isPreemptRequested();
+
+						geometry_msgs::Twist cmd_vel_msg;
+						cmd_vel_msg.linear.x = 0.1;
+						cmd_vel_msg.linear.y = 0.0;
+						cmd_vel_msg.linear.z = 0.0;
+						cmd_vel_msg.angular.x = 0.0;
+						cmd_vel_msg.angular.y = 0.0;
+						cmd_vel_msg.angular.z = 0.0;
+						cmd_vel_publisher_.publish(cmd_vel_msg);
+					}
+					if(timed_out) //wait until the action finishes, whether it succeeds, times out, or is preempted
+					{
+						ROS_ERROR("climber server step 0: second elevator move timed out");
+					}
+
+					//determine the outcome of the goal
+					if(!ae_.getResult()->success) //this might mean preempted or timed out
+					{
+						ROS_INFO_STREAM("elevator did not succeed -- climber_server");
+						preempted = true;
+					}
+
+					//check if we got a preempt while we were waiting
+					if(as_.isPreemptRequested())
+					{
+						ROS_INFO_STREAM("preempt was requested -- climber_server");
+						preempted = true;
+					}
+				} //end of raising elevator to make robot climb
+
 				//preempt handling: do nothing
 
 			}
