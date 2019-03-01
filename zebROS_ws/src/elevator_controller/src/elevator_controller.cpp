@@ -84,7 +84,7 @@ void ElevatorController::starting(const ros::Time &/*time*/) {
 void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &/*duration*/)
 {
 	// If we hit the limit switch, (re)zero the position.
-	if (elevator_joint_.getReverseLimitSwitch())
+	if (elevator_joint_.getReverseLimitSwitch() && !zeroed_)
 	{
 		ROS_INFO_THROTTLE(2, "ElevatorController : hit limit switch");
 		zeroed_ = true;
@@ -99,6 +99,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		//if we're not climbing, add an arbitrary feed forward to hold the elevator up
 		if(!go_slow_)
 		{
+			elevator_joint_.setMode(hardware_interface::TalonMode_Position);
 			// Add arbitrary feed forward for upwards motion
 			// We could have arb ff for both up and down, but seems
 			// easier (and good enough) to tune PID for down motion
