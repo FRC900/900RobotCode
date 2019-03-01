@@ -20,7 +20,7 @@ actionlib_lift_params:
         climb_low_timeout: 10.0
         running_forward_timeout: 2.0
     max_speed: -1.0
-    timeout: 4
+    timeout: 10
     elevator_position_deadzone: 0.01
     collision_range_min: 0.01
     collision_range_max: 0.5

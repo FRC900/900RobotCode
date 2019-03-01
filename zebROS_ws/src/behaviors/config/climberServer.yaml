@@ -2,6 +2,6 @@
 climber_server:
     deploy_position: 0
     climb_position: 0
-    deploy_timeout: 4.0
-    climb_timeout: 4.0
-    match_time_lock: 60
+    deploy_timeout: 8.0
+    climb_timeout: 8.0
+    match_time_lock: 225
