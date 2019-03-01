@@ -12,6 +12,7 @@
 //define global variables that will be defined based on config values
 double elevator_timeout;
 double pause_time_between_pistons;
+double dist_up_after;
 double wait_for_server_timeout;
 
 class IntakeHatchPanelAction
@@ -125,6 +126,12 @@ class IntakeHatchPanelAction
 				//pause for a bit
 				ros::Duration(pause_time_between_pistons).sleep();
 
+				//move elevator up a bit after
+				behaviors::ElevatorGoal elev_goal;
+				elev_goal.setpoint_index = CARGO_SHIP; //TODO fix this add to enum in include file
+				elev_goal.place_cargo = false;
+				elev_goal.raise_intake_after_success = true;
+				ac_elevator_.sendGoal(elev_goal);
 
 				//grab the panel - we can reuse the srv variable
 				srv.request.claw_release = false;
@@ -140,6 +147,7 @@ class IntakeHatchPanelAction
 
 				//pause for a bit
 				ros::Duration(pause_time_between_pistons).sleep();
+
 
 
 				//retract the panel mechanism we can reuse the srv variable
@@ -206,6 +214,8 @@ int main(int argc, char** argv)
 		ROS_ERROR("Could not read elevator_timeout in panel_intake_sever");
 	if (!n_panel_params.getParam("pause_time_between_pistons", pause_time_between_pistons))
 		ROS_ERROR("Could not read pause_time_between_pistons in panel_intake_sever");
+	if (!n_panel_params.getParam("dist_up_after", dist_up_after))
+		ROS_ERROR("Could not read dist_up_after in panel_intake_sever");
 
 	ros::spin();
 

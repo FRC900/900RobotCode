@@ -281,13 +281,13 @@ int main(int argc, char** argv)
 	}
 
 	//read locations for elevator placement for HATCH PANEL
-	double hatch_cargo_ship_position;
-	if (!n_params.getParam("hatch/cargo_ship_position", hatch_cargo_ship_position))
+	double hatch_intake_end_position;
+	if (!n_params.getParam("hatch/intake_end_position", hatch_intake_end_position))
 	{
-		ROS_ERROR_STREAM("Could not read hatch_cargo_ship_position");
-		hatch_cargo_ship_position = -1; //signals to server to preempt
+		ROS_ERROR_STREAM("Could not read hatch_intake_end_position");
+		hatch_intake_end_position = -1; //signals to server to preempt
 	}
-	elevator_action.hatch_locations[CARGO_SHIP] = hatch_cargo_ship_position;
+	elevator_action.hatch_locations[CARGO_SHIP] = hatch_intake_end_position;
 
 	double hatch_rocket1_position;
 	if (!n_params.getParam("hatch/rocket1_position", hatch_rocket1_position))
