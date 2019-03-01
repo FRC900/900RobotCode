@@ -10,14 +10,22 @@
 		/frcrobot_rio/heartbeat
 		/frcrobot_jetson/heartbeat
 		/frcrobot_rio/match_data
+		/frcrobot_jetson/joystick_states
 		/frcrobot_jetson/swerve_drive_controller/cmd_vel
+		/align_server/align_pid/swerve_drive_controller/cmd_vel
+		/teleop/swerve_drive_controller/cmd_vel
+		/align_server/align_pid/pid_enable
+		/climber/swerve_drive_controller/cmd_vel
 		/navX_snap_to_goal_pid/pid_debug
 		/multiflex_1/ranges_raw
+		/frcrobot_jetson/swerve_drive_controller/odom
 		/frcrobot_rio/navx_mxp
 		/frcrobot_rio/robot_controller_states
+		/frcrobot_rio/joystick_states_raw
 		/frcrobot_jetson/pdp_states
 		/frcrobot_jetson/pcm_states
 		/zed_goal/depth/depth_registered
 		/zed_goal/left/image_rect_color
+		/teleop/translator0/joystick_states
 		"/>
 </launch>
