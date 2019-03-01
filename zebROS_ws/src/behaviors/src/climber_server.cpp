@@ -121,7 +121,7 @@ class ClimbAction {
 			 * Climber Server Step 2
 			 * 7. Push climber a bit down to prop back wheels up
 			 */
-			ros::Rate r(10);
+			ros::Rate r(20);
 
 			//define variables that will be reused for each controller call/actionlib server call
 			//define variables that will be set true if the actionlib action is to be ended
@@ -236,6 +236,7 @@ class ClimbAction {
 						cmd_vel_msg.angular.y = 0.0;
 						cmd_vel_msg.angular.z = 0.0;
 						cmd_vel_publisher_.publish(cmd_vel_msg);
+						r.sleep();
 					}
 					if(timed_out) //wait until the action finishes, whether it succeeds, times out, or is preempted
 					{
@@ -313,10 +314,9 @@ class ClimbAction {
 						cmd_vel_msg.angular.y = 0.0;
 						cmd_vel_msg.angular.z = 0.0;
 						cmd_vel_publisher_.publish(cmd_vel_msg);
+						r.sleep();
 					}
 				}
-
-				ros::Duration(1).sleep();
 
 				if(!preempted && !timed_out && ros::ok())
 				{
@@ -345,6 +345,7 @@ class ClimbAction {
 						cmd_vel_msg.angular.y = 0.0;
 						cmd_vel_msg.angular.z = 0.0;
 						cmd_vel_publisher_.publish(cmd_vel_msg);
+						r.sleep();
 					}
 					if(timed_out) //wait until the action finishes, whether it succeeds, times out, or is preempted
 					{
