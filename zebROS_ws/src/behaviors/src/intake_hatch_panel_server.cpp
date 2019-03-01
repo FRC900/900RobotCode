@@ -126,12 +126,6 @@ class IntakeHatchPanelAction
 				//pause for a bit
 				ros::Duration(pause_time_between_pistons).sleep();
 
-				//move elevator up a bit after
-				behaviors::ElevatorGoal elev_goal;
-				elev_goal.setpoint_index = CARGO_SHIP; //TODO fix this add to enum in include file
-				elev_goal.place_cargo = false;
-				elev_goal.raise_intake_after_success = true;
-				ac_elevator_.sendGoal(elev_goal);
 
 				//grab the panel - we can reuse the srv variable
 				srv.request.claw_release = false;
@@ -147,6 +141,13 @@ class IntakeHatchPanelAction
 
 				//pause for a bit
 				ros::Duration(pause_time_between_pistons).sleep();
+				//
+				//move elevator up a bit after
+				behaviors::ElevatorGoal elev_goal;
+				elev_goal.setpoint_index = CARGO_SHIP; //TODO fix this add to enum in include file
+				elev_goal.place_cargo = false;
+				elev_goal.raise_intake_after_success = true;
+				ac_elevator_.sendGoal(elev_goal);
 
 
 
