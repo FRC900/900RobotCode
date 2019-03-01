@@ -180,44 +180,45 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		// TODO - experiment with rate-limiting after scaling instead?
 		double leftStickX = joystick_states_array[0].leftStickX;
 		double leftStickY = joystick_states_array[0].leftStickY;
-
-		dead_zone_check(leftStickX, leftStickY);
-
-		leftStickX = left_stick_x_rate_limit.applyLimit(leftStickX);
-		leftStickY = left_stick_y_rate_limit.applyLimit(leftStickY);
-
-		leftStickX =  pow(leftStickX, joystick_pow) * max_speed;
-		leftStickY =  pow(leftStickY, joystick_pow) * max_speed;
-
-		copysign(leftStickX, joystick_states_array[0].leftStickX);
-		copysign(leftStickY, -joystick_states_array[0].leftStickY);
-
 		double rightStickX = joystick_states_array[0].rightStickX;
 		double rightStickY = joystick_states_array[0].rightStickY;
 
-		dead_zone_check(rightStickX, rightStickY);
-
-		rightStickX =  pow(rightStickX, joystick_pow);
-		rightStickY = -pow(rightStickY, joystick_pow);
-
-		copysign(rightStickX, joystick_states_array[0].rightStickX);
-		copysign(rightStickY, -joystick_states_array[0].rightStickY);
-
+		leftStickX = left_stick_x_rate_limit.applyLimit(leftStickX);
+		leftStickY = left_stick_y_rate_limit.applyLimit(leftStickY);
 		rightStickX = right_stick_x_rate_limit.applyLimit(rightStickX);
 		rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);
 
+		dead_zone_check(leftStickX, leftStickY);
+		dead_zone_check(rightStickX, rightStickY);
+
+		leftStickX =  pow(fabs(leftStickX), joystick_pow) * max_speed;
+		leftStickY =  pow(fabs(leftStickY), joystick_pow) * max_speed;
+		double rotation = pow(fabs(rightStickX), rotation_pow) * max_rot;
+
+		leftStickX = copysign(leftStickX, joystick_states_array[0].leftStickX);
+		leftStickY = copysign(leftStickY, -joystick_states_array[0].leftStickY);
+		rotation = copysign(rotation,  joystick_states_array[0].rightStickX);
+
 		// TODO : dead-zone for rotation?
 		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
-		//double triggerLeft = left_trigger_rate_limit.applyLimit(joystick_states_array[0].leftTrigger);
+		//double triggerLeft = left_trigger_rate_limit.applyLmit(joystick_states_array[0].leftTrigger);
 		//double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
-		double rotation = pow(rightStickX, rotation_pow) * max_rot;
-		copysign(rotation, rightStickX);
 
 		static bool sendRobotZero = false;
 		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
 		{
 			if (!sendRobotZero)
 			{
+				geometry_msgs::Twist vel;
+				vel.linear.x = 0;
+				vel.linear.y = 0;
+				vel.linear.z = 0;
+
+				vel.angular.x = 0;
+				vel.angular.y = 0;
+				vel.angular.z = 0;
+
+				JoystickRobotVel.publish(vel);
 				std_srvs::Empty empty;
 				if (!BrakeSrv.call(empty))
 				{
@@ -227,13 +228,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				sendRobotZero = true;
 			}
 		}
-
 		else // X or Y or rotation != 0 so tell the drive base to move
 		{
 			//Publish drivetrain messages and call servers
 			Eigen::Vector2d joyVector;
 			joyVector[0] = -leftStickX; //intentionally flipped
-			joyVector[1] = -leftStickY;
+			joyVector[1] = leftStickY;
 
 			const Eigen::Rotation2Dd rotate(robot_orient ? -offset_angle : -navX_angle);
 			const Eigen::Vector2d rotatedJoyVector = rotate.toRotationMatrix() * joyVector;
