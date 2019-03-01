@@ -353,15 +353,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonX
 		if(joystick_states_array[0].buttonXPress)
 		{
-			preemptActionlibServers();
-			//If we don't have a panel, intake one
-			ROS_INFO_STREAM("Joystick1: Intake Panel");
-			behaviors::IntakeGoal goal;
-			intake_hatch_panel_ac->sendGoal(goal);
 			//Determines where elevator will go when called to outtake or move to a setpoint
-		//	ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
-		//	elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % elevator_num_setpoints;
-   		//	ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
+			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % elevator_num_setpoints;
+			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
             
 		}
 		if(joystick_states_array[0].buttonXButton)
@@ -396,6 +391,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		  */
 		  if(joystick_states_array[0].buttonYButton)
 		  {
+			preemptActionlibServers();
+			//If we don't have a panel, intake one
+			ROS_INFO_STREAM("Joystick1: Intake Panel");
+			behaviors::IntakeGoal goal;
+			intake_hatch_panel_ac->sendGoal(goal);
 			  /*
 			  ROS_INFO_THROTTLE(1, "buttonYButton");
 			  std_msgs::Bool enable_pid;
