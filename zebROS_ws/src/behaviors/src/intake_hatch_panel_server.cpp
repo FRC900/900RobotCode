@@ -53,7 +53,7 @@ class IntakeHatchPanelAction
 
 		~IntakeHatchPanelAction(void) {}
 
-		void executeCB(const behaviors::IntakeGoalConstPtr &goal)
+		void executeCB(const behaviors::IntakeGoalConstPtr &/*goal*/)
 		{
 			ROS_WARN("hatch panel intake server running");
 
@@ -107,7 +107,7 @@ class IntakeHatchPanelAction
 			}
 
 			//send commands to panel_intake_controller to grab the panel ---------------------------------------
-			if(!preempted && !timed_out)
+			if(!preempted && !timed_out && ros::ok())
 			{
 				//extend panel mechanism
 				panel_intake_controller::PanelIntakeSrv srv;

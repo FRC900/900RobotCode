@@ -113,7 +113,7 @@ protected:
 	behaviors::PathResult result_;
 
 public:
-	PathAction(std::string name, ros::NodeHandle n_) :
+	PathAction(const std::string &name, ros::NodeHandle n_) :
 		as_(n_, name, boost::bind(&PathAction::executeCB, this, _1), false),
 		action_name_(name)
 	{

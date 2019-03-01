@@ -4,7 +4,7 @@ namespace cargo_intake_controller
 {
 
 bool CargoIntakeController::init(hardware_interface::RobotHW *hw,
-                                                        ros::NodeHandle                 &root_nh,
+                                                        ros::NodeHandle                 &/*root_nh*/,
                                                         ros::NodeHandle                 &controller_nh)
 {
     hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
@@ -40,11 +40,11 @@ bool CargoIntakeController::init(hardware_interface::RobotHW *hw,
 }
 
 void CargoIntakeController::starting(const ros::Time &/*time*/) {
-    cargo_intake_joint_.setCommand(0.0); // set the command to the spinny part of the intake
-	cargo_intake_arm_joint_.setCommand(0); // set the command to the up/down part of the intake
+    intake_arm_command_.writeFromNonRT(false); // set the command to the spinny part of the intake
+	spin_command_.writeFromNonRT(0); // set the command to the up/down part of the intake
 }
 
-void CargoIntakeController::update(const ros::Time &time, const ros::Duration &period) {
+void CargoIntakeController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
 	//process input for the up/down part of the intake (pneumatic piston)
 	const bool intake_arm_command = *(intake_arm_command_.readFromRT());
 	double intake_arm_command_double; //to store processed input
@@ -64,10 +64,10 @@ void CargoIntakeController::update(const ros::Time &time, const ros::Duration &p
 	cargo_intake_arm_joint_.setCommand(intake_arm_command_double); // set the in/out command to the up/down part of the intake
 }
 
-void CargoIntakeController::stopping(const ros::Time &time) {
+void CargoIntakeController::stopping(const ros::Time &/*time*/) {
 }
 
-bool CargoIntakeController::cmdService(cargo_intake_controller::CargoIntakeSrv::Request &req, cargo_intake_controller::CargoIntakeSrv::Response &res) {
+bool CargoIntakeController::cmdService(cargo_intake_controller::CargoIntakeSrv::Request &req, cargo_intake_controller::CargoIntakeSrv::Response &/*res*/) {
     if(isRunning())
     {
         spin_command_.writeFromNonRT(req.power); //take the service request for a certain amount of power (-1 to 1) and write it to the command variable

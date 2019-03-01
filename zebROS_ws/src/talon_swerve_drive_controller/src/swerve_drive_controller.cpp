@@ -67,14 +67,13 @@ const double talon_swerve_drive_controller::TalonSwerveDriveController::DEF_INIT
 const double talon_swerve_drive_controller::TalonSwerveDriveController::DEF_INIT_YAW = 0.;
 const double talon_swerve_drive_controller::TalonSwerveDriveController::DEF_SD = 0.01;
 
-/*
+#if 0
 static double euclideanOfVectors(const urdf::Vector3& vec1, const urdf::Vector3& vec2)
 {
   return std::sqrt(std::pow(vec1.x-vec2.x,2) +
                    std::pow(vec1.y-vec2.y,2) +
                    std::pow(vec1.z-vec2.z,2));
 }
-*/
 /*
 * \brief Check that a link exists and has a geometry collision.
 * \param link The link
@@ -101,7 +100,6 @@ static bool hasCollisionGeometry(const urdf::LinkConstSharedPtr &link)
 	}
 	return true;
 }
-#if 0
 /*
  * \brief Check if the link is modeled as a cylinder
  * \param link Link
@@ -1097,7 +1095,7 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 	}
 }
 
-bool TalonSwerveDriveController::changeCenterOfRotationService(talon_swerve_drive_controller::SetXY::Request& req, talon_swerve_drive_controller::SetXY::Response &res)
+bool TalonSwerveDriveController::changeCenterOfRotationService(talon_swerve_drive_controller::SetXY::Request& req, talon_swerve_drive_controller::SetXY::Response &/*res*/)
 {
 	if(isRunning())
 	{

@@ -100,6 +100,26 @@ class OuttakeHatchPanelAction
 				timed_out = true;
 			}
 
+			elev_goal.setpoint_index = goal->end_setpoint_index;
+			elev_goal.place_cargo = false;
+			ac_elevator_.sendGoal(elev_goal);
+
+			finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(elevator_timeout - (ros::Time::now().toSec() - start_time), 0.001)));
+			if(finished_before_timeout && !ac_elevator_.getResult()->timed_out) {
+				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
+				if(state.toString() != "SUCCEEDED") {
+					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
+					preempted = true;
+				}
+				else {
+					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
+				}
+			}
+			else {
+				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
+				timed_out = true;
+			}
+
 			//test if we got a preempt while waiting
 			if(as_.isPreemptRequested())
 			{
@@ -107,7 +127,7 @@ class OuttakeHatchPanelAction
 			}
 
 			//send commands to panel_intake_controller to grab the panel ---------------------------------------
-			if(!preempted && !timed_out)
+			if(!preempted && !timed_out && ros::ok())
 			{
 				//extend panel mechanism
 				panel_intake_controller::PanelIntakeSrv srv;

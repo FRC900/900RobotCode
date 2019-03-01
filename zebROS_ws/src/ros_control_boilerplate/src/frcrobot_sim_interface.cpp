@@ -453,7 +453,7 @@ std::vector<ros_control_boilerplate::DummyJoint> FRCRobotSimInterface::getDummyJ
 	return dummy_joints;
 }
 
-bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,ros_control_boilerplate::set_limit_switch::Response &res)
+bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,ros_control_boilerplate::set_limit_switch::Response &/*res*/)
 {
 	for (std::size_t joint_id = 0; joint_id < num_can_talon_srxs_; ++joint_id)
 	{
@@ -635,7 +635,6 @@ void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
 	// display it here for debugging
 
 	//printState();
-	static bool printed_robot_code_ready;
 	if (!robot_code_ready_)
 	{
 		bool ready = true;
@@ -650,16 +649,16 @@ void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
     ros::spinOnce();
 }
 bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBreakSensors::Request &req,
-							ros_control_boilerplate::LineBreakSensors::Response &res)
+							ros_control_boilerplate::LineBreakSensors::Response &/*res*/)
 {
-	if  (req.j < digital_input_names_.size())
+	if (req.j < digital_input_names_.size())
 	{
 		digital_input_names_[req.j] = (req.value) ? 1 : 0;
 		ROS_INFO_STREAM("req.j set to" << req.value);
 	}
 	else
 	{
-	ROS_INFO_STREAM("req.j not set to" << req.value);
+		ROS_INFO_STREAM("req.j not set to" << req.value);
 	}
 	return true;
 }
@@ -718,10 +717,6 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			// Update talon state with requested setpoints for
 			// debugging. Don't actually write them to the physical
 			// Talons until the robot is re-enabled, though.
-			double command;
-			hardware_interface::DemandType demand1_type_internal;
-			double demand1_value;
-
 			ts.setSetpoint(tc.get());
 			ts.setDemand1Type(tc.getDemand1Type());
 			ts.setDemand1Value(tc.getDemand1Value());

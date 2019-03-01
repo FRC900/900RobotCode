@@ -8,14 +8,14 @@ hardware_interface:
    run_hal_robot: false
    can_interface: can0
    joints:
-       - {name: talon3, type: can_talon_srx, local: true, can_id: 3}
-       - {name: talon9, type: can_talon_srx, local: true, can_id: 9}
+       - {name: talon3, type: can_talon_srx, local: true}
+       - {name: talon9, type: can_talon_srx, local: true}
        - {name: pdp, local: true, type: pdp}
          #- {name: compressor, local: true, type: compressor, pcm_id: 0}
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
-       - {name: do1, local: false, type: digital_output, dio_channel: 1}
-       - {name: do2, local_update: true, local_hardware: false, type: digital_output, dio_channel: 2}
+       - {name: do1, local: false, type: digital_output}
+       - {name: do2, local_update: true, local_hardware: false, type: digital_output}
        
 joint_state_controller:
    type:         joint_state_controller/JointStateController

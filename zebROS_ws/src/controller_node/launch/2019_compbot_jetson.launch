@@ -9,17 +9,27 @@
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="joy_or_key" default="joy" />
 	<arg name="static_map" default="True"/>
+	<arg name="record" default="false" />
 
 	<group ns="frcrobot_jetson">
 
 		<!-- These need to be replaced with the real thing -->
+		<!--rosparam file="$(find ros_control_boilerplate)/config/2018_compbot_base_jetson.yaml" command="load"/>
+        <rosparam file="$(find ros_control_boilerplate)/config/2018_offseason_swerve.yaml" command="load"/>
+        <rosparam file="$(find ros_control_boilerplate)/config/talon_swerve_offsets_offseason.yaml" command="load"/-->
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_base_jetson.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_swerve_drive.yaml" command="load"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/2019_practicebot_offsets.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_offsets.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_elevator_params.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
+		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
+		<rosparam file="$(find behaviors)/config/alignmentOffsets.yaml" command="load"/>
+
 
 		<node name="zero_wheel_service" pkg="talon_swerve_drive_controller" type="zero_wheel_service" output="screen"> </node>
+		<node name="dump_offsets_service" pkg="talon_swerve_drive_controller" type="dump_offsets_service" output="screen"> </node>
+
+
 
 		<!-- Load hardware interface -->
 		<node name="frcrobot_hardware_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
@@ -28,9 +38,13 @@
 
 		<!-- Load controller manager--> 
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn cargo_outtake_controller cargo_intake_controller climber_controller panel_intake_controller joint_state_controller joint_state_listener_controller talon_state_controller match_state_listener_controller pcm_state_controller pdp_state_controller elevator_controller swerve_drive_controller robot_code_ready_controller" /> 
+			output="screen" args="spawn cargo_outtake_controller cargo_intake_controller climber_controller panel_intake_controller joint_state_controller joint_state_listener_controller talon_state_controller match_state_listener_controller pcm_state_controller pdp_state_controller elevator_controller swerve_drive_controller robot_code_ready_controller" />
+
+
 		<node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
 	</group>
+
+
 
 	<group ns="rosbridge_server">
 		<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" > 
@@ -40,11 +54,8 @@
         <node name="joint_throttler" type="throttle" pkg="topic_tools" args="messages /frcrobot_jetson/joint_states 10 /frcrobot_jetson/joint_states_throttled" />
 	</group>
 
-	<!--
-	<group if="$(eval arg('hw_or_sim')=='hw')">
-		<include file="$(find controller_node)/launch/multiflex_example.launch" />
-	</group>
-	-->
+
+    <include file="$(find controller_node)/launch/multiflex_example.launch" />
 
 	<group ns="teleop">
 		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
@@ -107,6 +118,7 @@
 		</node>
 		<node name="path_to_goal_ac_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
 		<node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
+		<!--node name="path_follower" pkg="swerve_point_generator" type="path_follower" output="screen"/-->
 	</group>
 		
 	<group ns="cmd_vel_mux">
@@ -117,57 +129,91 @@
 	</group>
 
 	<group ns="align_server">
-		<rosparam file="$(find behaviors)/config/align_with_terabee.yaml" command="load"/>
 
+		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
 		<node name="align_ac_server" pkg="behaviors" type="align_server" output="screen" />
+
+		<!-- Align with notch -->
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
-		<group ns="distance_pid">
-        <node name="distance_pid" pkg="pid" type="controller" >
-            <param name="node_name" value="distance_pid" />
-            <param name="Kp" value="5.0" />
-            <param name="Ki" value="0.0" />
-            <param name="Kd" value="0.1" />
-            <param name="upper_limit" value="10" />
-            <param name="lower_limit" value="-10" />
-            <param name="windup_limit" value="10" />
-            <param name="max_loop_frequency" value="100.0" />
-            <param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value="x_command" />     
+
+		<!-- Distance PID -->
+		<node name="distance_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="distance_pid" />
+			<param name="Kp" value="4.5" />
+			<param name="Ki" value="0.0" />
+			<param name="Kd" value="0.1" />
+			<param name="upper_limit" value="2" />
+			<param name="lower_limit" value="-2" />
+			<param name="windup_limit" value="10" />
+			<param name="max_loop_frequency" value="100.0" />
+			<param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="distance_pid/x_command" />     
+			<param name="setpoint_topic" value="distance_pid/setpoint" />
+			<param name="topic_from_plant" value="distance_pid/state" />
+			<remap from="pid_debug" to="distance_pid/pid_debug"/>
+			<remap from="pid_enable" to="distance_pid/pid_enable"/>
 		</node>
-		</group>
-		<node name="publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
-			<param name="x_topic" value="distance_pid/x_command" />
-			<param name="y_topic" value="align_with_terabee/y_command" />
-			<param name="enable_topic" value="distance_pid/pid_enable" />
-			<param name="name" value="terabee" />
+
+		<!-- Cargo  PID -->
+		<node name="cargo_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="cargo_pid" />
+			<param name="Kp" value="1.5" />
+			<param name="Ki" value="0.0" />
+			<param name="Kd" value="0.1" />
+			<param name="upper_limit" value="1" />
+			<param name="lower_limit" value="-1" />
+			<param name="windup_limit" value="10" />
+			<param name="max_loop_frequency" value="100.0" />
+			<param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="cargo_pid/y_command" />     
+			<param name="setpoint_topic" value="cargo_pid/setpoint" />
+			<param name="topic_from_plant" value="cargo_pid/state" />
+			<remap from="pid_debug" to="cargo_pid/pid_debug"/>
+			<remap from="pid_enable" to="cargo_pid/pid_enable"/>
 		</node>
 
 		<!-- Snap to nearest goal navX test code -->
 		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
 		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" />
-        <node name="navX_pid" pkg="pid" type="controller" >
-            <param name="node_name" value="navX_pid" />
-            <param name="Kp" value="3.0" />
-            <param name="Ki" value="0.0" />
-            <param name="Kd" value="0.05" />
-            <param name="upper_limit" value="8" />
-            <param name="lower_limit" value="-8" />
-            <param name="windup_limit" value="10" />
-            <param name="angle_error" value="true" />
-            <param name="max_loop_frequency" value="100.0" />
-            <param name="min_loop_frequency" value="100.0" />
-            <param name="topic_from_controller" value="navX_pid/orient_command" />     
-            <param name="setpoint_topic" value="navX_snap_to_goal_setpoint" />
-            <param name="topic_from_plant" value="navX_snap_to_goal_state" />
-        </node>
-		<node name="navX_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+		<node name="navX_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="navX_pid" />
+			<param name="Kp" value="12.0" />
+			<param name="Ki" value="0.0" />
+			<param name="Kd" value="1.5" />
+			<param name="upper_limit" value="8" />
+			<param name="lower_limit" value="-8" />
+			<param name="windup_limit" value="10" />
+			<param name="angle_error" value="false" />
+			<param name="angle_wrap" value="false" />
+			<param name="max_loop_frequency" value="100.0" />
+			<param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="navX_pid/orient_command" />     
+			<param name="setpoint_topic" value="navX_pid/setpoint" />
+			<param name="topic_from_plant" value="navX_pid/state" />
+			<remap from="pid_debug" to="navX_pid/pid_debug"/>
+			<remap from="pid_enable" to="navX_pid/pid_enable"/>
+		</node>
+
+		<node name="align_pid_hatch_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
 			<param name="orient_topic" value="navX_pid/orient_command" />
-			<param name="enable_topic" value="navX_pid/pid_enable" />
-			<param name="name" value="navX" />
+			<param name="y_topic" value="distance_pid/x_command" />
+			<param name="x_topic" value="align_with_terabee/y_command" />
+			<param name="enable_topic" value="align_pid/pid_enable" />
+			<param name="name" value="align_pid" />
+		</node>
+
+		<node name="align_pid_cargo_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+			<param name="orient_topic" value="navX_pid/orient_command" />
+			<param name="y_topic" value="distance_pid/x_command" />
+			<param name="x_topic" value="cargo_pid/y_command" />
+			<param name="enable_topic" value="align_pid/pid_enable" />
+			<param name="name" value="align_pid" />
 		</node>
 	</group>
     
     <group ns="navX_snap_to_goal_pid">
     </group>
+
+	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
 
 </launch>

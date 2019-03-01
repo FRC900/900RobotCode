@@ -47,6 +47,8 @@ class TalonCIParams
 			closed_loop_period_{1, 1},
 			pidf_slot_(0),
 			aux_pid_polarity_(false),
+			demand1_type_(hardware_interface::DemandType_Neutral),
+			demand1_value_(0.),
 			invert_output_(false),
 			sensor_phase_(false),
 			neutral_mode_(hardware_interface::NeutralMode_Uninitialized),
@@ -140,6 +142,8 @@ class TalonCIParams
 			closed_loop_period_[1] = config.closed_loop_period1;
 			pidf_slot_ = config.pid_config;
 			aux_pid_polarity_ = config.aux_pid_polarity;
+			demand1_type_ = static_cast<hardware_interface::DemandType>(config.demand1_type);
+			demand1_value_ = config.demand1_value;
 			invert_output_ = config.invert_output;
 
 			sensor_phase_ = config.sensor_phase;
@@ -233,6 +237,8 @@ class TalonCIParams
 			config.closed_loop_period1 = closed_loop_period_[1];
 			config.pid_config    = pidf_slot_;
 			config.aux_pid_polarity = aux_pid_polarity_;
+			config.demand1_type = demand1_type_;
+			config.demand1_value = demand1_value_;
 			config.invert_output = invert_output_;
 			config.sensor_phase  = sensor_phase_;
 			config.feedback_type = feedback_type_;
@@ -391,7 +397,24 @@ class TalonCIParams
 		{
 			XmlRpc::XmlRpcValue pid_param_list;
 
-			n.getParam("aux_pid_polarity", pid_param_list);
+			n.getParam("aux_pid_polarity", aux_pid_polarity_);
+			std::string demand1_mode_string;
+			if (n.getParam("demand1_mode", demand1_mode_string))
+			{
+				if (demand1_mode_string == "Neutral")
+					demand1_type_ = hardware_interface::DemandType_Neutral;
+				else if (demand1_mode_string == "AuxPID")
+					demand1_type_ = hardware_interface::DemandType_AuxPID;
+				else if (demand1_mode_string == "ArbitraryFeedForward")
+					demand1_type_ = hardware_interface::DemandType_ArbitraryFeedForward;
+				else
+				{
+					ROS_ERROR("Invalid demand1 mode type (namespace: %s) %s",
+							  n.getNamespace().c_str(), demand1_mode_string.c_str());
+					return false;
+				}
+			}
+			n.getParam("demand1_value", demand1_value_);
 			if (!n.getParam("close_loop_values", pid_param_list))
 				return true;
 			if (pid_param_list.size() <= 2)
@@ -628,6 +651,8 @@ class TalonCIParams
 		int    closed_loop_period_[2];
 		int    pidf_slot_;
 		bool   aux_pid_polarity_;
+		hardware_interface::DemandType demand1_type_;
+		double demand1_value_;
 		bool   invert_output_;
 		bool   sensor_phase_;
 		hardware_interface::NeutralMode neutral_mode_;
@@ -985,6 +1010,19 @@ class TalonControllerInterface
 			return true;
 		}
 
+		virtual bool setP(double newP, int slot)
+		{
+			if ((slot != 0) && (slot != 1))
+			{
+				//ROS_WARN_STREAM("controller set of PID slot:  (false): " << slot);
+				return false;
+			}
+			syncDynamicReconfigure();
+
+			talon_->setP(newP, slot);
+			return true;
+		}
+
 		virtual void setNeutralOutput(void)
 		{
 			talon_->setNeutralOutput();
@@ -1262,14 +1300,22 @@ class TalonControllerInterface
 			talon_->setOpenloopRamp(params_.open_loop_ramp_);
 		}
 
-		void setDemand1Type(hardware_interface::DemandType demand_type)
+		void setDemand1Type(hardware_interface::DemandType demand1_type)
 		{
-			talon_->setDemand1Type(demand_type);
+			if (demand1_type == params_.demand1_type_)
+				return;
+			params_.demand1_type_ = demand1_type;
+			syncDynamicReconfigure();
+			talon_->setDemand1Type(demand1_type);
 		}
 
-		void setDemand1Value(double value)
+		void setDemand1Value(double demand1_value)
 		{
-			talon_->setDemand1Value(value);
+			if (demand1_value == params_.demand1_value_)
+				return;
+			params_.demand1_value_ = demand1_value;
+			syncDynamicReconfigure();
+			talon_->setDemand1Value(demand1_value);
 		}
 
 		virtual void setCustomProfileHz(const double &hz)
@@ -1457,6 +1503,8 @@ class TalonControllerInterface
 			}
 			talon->setPidfSlot(params.pidf_slot_);
 			talon->setAuxPidPolarity(params.aux_pid_polarity_);
+			talon->setDemand1Type(params.demand1_type_);
+			talon->setDemand1Value(params.demand1_value_);
 			talon->setNeutralMode(params.neutral_mode_);
 
 			talon->setEncoderFeedback(params.feedback_type_);

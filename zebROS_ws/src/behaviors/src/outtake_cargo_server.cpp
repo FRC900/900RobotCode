@@ -127,7 +127,7 @@ class CargoOuttakeAction {
 			ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 
 			//send command to unclamp cargo ----
-			if(!preempted && !timed_out)
+			if(!preempted && !timed_out && ros::ok())
 			{
 				ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 				ROS_WARN("%s: unclamping cargo", action_name_.c_str());
@@ -150,7 +150,7 @@ class CargoOuttakeAction {
 
 			ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 			//send command to kick cargo, after waiting for a short period of time
-			if(!preempted && !timed_out)
+			if(!preempted && !timed_out && ros::ok())
 			{
 				ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 				ros::Duration(pause_time_between_pistons).sleep();
@@ -173,9 +173,29 @@ class CargoOuttakeAction {
 
 			}
 
+			ROS_WARN_STREAM("cargo outtake server: elevator down after placing");
+			elevator_goal.setpoint_index = goal->end_setpoint_index;
+			elevator_goal.place_cargo = true;
+			ac_elevator_.sendGoal(elevator_goal);
+
+			finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(outtake_timeout - (ros::Time::now().toSec() - start_time), 0.001))); //Wait for server to finish or until timeout is reached
+			if(finished_before_timeout) {
+				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
+				if(state.toString() != "SUCCEEDED") {
+					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
+					preempted = true;
+				}
+				else {
+					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
+				}
+			}
+			else {
+				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
+				timed_out = true;
+			}
 
 			//set ending state of controller no matter what happened: unclamped and kicker not in kicking position
-			if(!preempted && !timed_out)
+			if(!preempted && !timed_out && ros::ok())
 			{
 				ros::Duration(pause_time_between_pistons).sleep(); //pause so we don't retract the kicker immediately after kicking
 			}

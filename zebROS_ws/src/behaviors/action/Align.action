@@ -1,4 +1,5 @@
 bool trigger
+bool has_cargo
 ---
 bool success
 bool timed_out

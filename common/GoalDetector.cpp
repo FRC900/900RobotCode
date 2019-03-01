@@ -284,13 +284,13 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			{
 				const int min_dist_bwn_goals = 0.1;
 				bool repeated = false;
-				for(int k = 0; k < _return_found.size(); k++)
+				for(size_t k = 0; k < _return_found.size(); k++)
 				{
 					if(abs(left_info[best_result_index_left].pos.x - _return_found[k].found_pos.x) < min_dist_bwn_goals)
 						{
 							break;
 						}
-					for(int l = 0; l < _return_found.size(); l++)
+					for(size_t l = 0; l < _return_found.size(); l++)
 					{
 						if(abs(left_info[best_result_index_left].pos.x - _return_found[l].found_pos.x) < min_dist_bwn_goals)
 							repeated = true;
@@ -312,7 +312,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 
 			}
 				cout << "Number of goals: " << _return_found.size() << endl;
-				for(int n = 0; n < _return_found.size(); n++)
+				for(size_t n = 0; n < _return_found.size(); n++)
 					cout << "Goal " << n + 1 << " pos: " << _return_found[n].found_pos << endl;
 
 
@@ -725,7 +725,7 @@ void GoalDetector::drawOnFrame(Mat &image, const vector<vector<Point>> &contours
 
 	}
 	*/
-	for(int i = 0; i < _return_found.size(); i++)
+	for(size_t i = 0; i < _return_found.size(); i++)
 	{
 		rectangle(image, _return_found[i].found_left_rect, Scalar(0,255,0), 3);
 		rectangle(image, _return_found[i].found_right_rect, Scalar(0,140,255), 3);

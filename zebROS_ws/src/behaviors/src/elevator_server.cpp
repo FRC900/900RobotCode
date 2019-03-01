@@ -44,7 +44,7 @@ class ElevatorAction {
 
 		double timeout;
 
-        ElevatorAction(std::string name) :
+        ElevatorAction(const std::string &name) :
             as_(nh_, name, boost::bind(&ElevatorAction::executeCB, this, _1), false),
             action_name_(name)
         {
@@ -73,9 +73,12 @@ class ElevatorAction {
             ROS_INFO_STREAM("%s: Running callback " << action_name_.c_str());
             ros::Rate r(10);
 
-			//Define variables that will be set to true once the server finishes executing
-            bool success = false;
-			bool preempted = false;
+            feedback_.running = true;
+            as_.publishFeedback(feedback_);
+
+
+            //Define variables that will be set to true once the server finishes executing
+            bool preempted = false;
             bool timed_out = false;
 
 			//Initialize start time of execution
@@ -120,11 +123,14 @@ class ElevatorAction {
 
 			if(elevator_cur_setpoint_ < 0) //will occur if a config value wasn't read
 			{
+				ROS_ERROR_STREAM("Current setpoint was not read");
 				preempted = true;
 			}
 
 			if(!preempted)
 			{
+				bool success = false;
+
 				//send request to elevator controller
 				elevator_controller::ElevatorSrv srv;
 				srv.request.position = elevator_cur_setpoint_;
@@ -138,21 +144,24 @@ class ElevatorAction {
 				//wait for elevator controller to finish
 				while(!success && !timed_out && !preempted) {
 					success = fabs(cur_position_ - elevator_cur_setpoint_) < elevator_position_deadzone;
-					if(cur_position_ > collision_range_min && cur_position_ < collision_range_max)
+					if(cur_position_ > collision_range_min && 
+							cur_position_ < collision_range_max)
 					{
-						ROS_WARN_STREAM("running the thiiiiiiiiiing");
 						cargo_intake_controller::CargoIntakeSrv cargo_intake_srv;
-						cargo_intake_srv.request.intake_arm = true;
+						cargo_intake_srv.request.intake_arm = true; //means that the arm is down
 						cargo_intake_srv.request.power = 0.0;
-						cargo_intake_client_.call(cargo_intake_srv);
+						if(!cargo_intake_client_.call(cargo_intake_srv))
+							ROS_ERROR_STREAM("failed to deploy the intake arm");
 					}
-					if(!(cur_position_ > collision_range_min && (cur_position_ + carriage_height) < collision_range_max) && goal->raise_intake_after_success)
+					if(!(cur_position_ > collision_range_min && 
+							(cur_position_ + carriage_height) < collision_range_max) && 
+							goal->raise_intake_after_success)
 					{
-						ROS_WARN_STREAM("running the thiiiiiiiiiing back up");
 						cargo_intake_controller::CargoIntakeSrv cargo_intake_srv;
 						cargo_intake_srv.request.intake_arm = false;
 						cargo_intake_srv.request.power = 0.0;
-						cargo_intake_client_.call(cargo_intake_srv);
+						if(!cargo_intake_client_.call(cargo_intake_srv))
+							ROS_ERROR_STREAM("failed to pull back the intake arm");
 					}
 
 					ROS_INFO_STREAM("elevator server: cur position = " << cur_position_ << " elevator_cur_setpoint " << elevator_cur_setpoint_);
@@ -194,6 +203,9 @@ class ElevatorAction {
 				result_.success = true;
 				as_.setSucceeded(result_);
 			}
+
+                        feedback_.running = true;
+                        as_.publishFeedback(feedback_);
 
 			return;
 		}

@@ -12,14 +12,15 @@ actionlib_lift_params:
         rocket2_position: 0.72
         rocket3_position: 1.46257241755 
     climber:
-        deploy_position: -1.0
-        climb_position: -1.0
-        climb_low_position: -1.0
+        deploy_position: 0.9
+        climb_position: 0.0
+        climb_low_position: 0.1
         deploy_timeout: 5.0
         climb_timeout: 15.0
         climb_low_timeout: 10.0
+        running_forward_timeout: 2.0
     max_speed: -1.0
-    timeout: 4
+    timeout: 10
     elevator_position_deadzone: 0.01
     collision_range_min: 0.01
     collision_range_max: 0.5

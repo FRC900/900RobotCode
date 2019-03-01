@@ -289,7 +289,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		//ROS_INFO_STREAM("in back pass after solve_for_next_V orientation_velocities = " << current_spline_point.angular_velocity);
 		ROS_WARN_STREAM("current - last angular velocity = " << current_angular_velocity - next_angular_velocity);
 	}
-	for(int i = 0; i < max_angular_velocities.size(); i++)
+	for(size_t i = 0; i < max_angular_velocities.size(); i++)
 	{
 		ROS_INFO_STREAM(max_angular_velocities[i]);
 	}
@@ -511,7 +511,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	out_msg.points.erase(out_msg.points.begin() + point_count, out_msg.points.end());
 	ROS_ERROR_STREAM("p: " << out_msg.points.size());
 	ROS_INFO_STREAM("point_count in profiler: " << point_count);
-	for(int i = 0; i < out_msg.points.size(); i++)
+	for(size_t i = 0; i < out_msg.points.size(); i++)
 	{
 		ROS_INFO_STREAM("orientation velocities in profiler= " << out_msg.points[i].velocities[2]);
 	}
@@ -837,10 +837,10 @@ void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs>
 		const std::vector<spline_coefs> &y_splines, const std::vector<spline_coefs> &x_splines_first_deriv,
 		const std::vector<spline_coefs> &y_splines_first_deriv, const std::vector<spline_coefs> &x_splines_second_deriv,
 		const std::vector<spline_coefs> &y_splines_second_deriv, const std::vector<spline_coefs> &orient_splines,
-		const std::vector<spline_coefs> &orient_splines_first_deriv,
-		const std::vector<spline_coefs> &orient_splines_second_deriv, path_point &holder_point,
-		const std::vector<double> &end_points, const std::vector<double> &dtds_by_spline,
-		const std::vector<double> &arc_length_by_spline, const double t, const double arc_length)
+		const std::vector<spline_coefs> &/*orient_splines_first_deriv*/,
+		const std::vector<spline_coefs> &/*orient_splines_second_deriv*/, path_point &holder_point,
+		const std::vector<double> &end_points, const std::vector<double> &/*dtds_by_spline*/,
+		const std::vector<double> &/*arc_length_by_spline*/, const double t, const double /*arc_length*/)
 {
 	size_t which_spline;
 
@@ -867,8 +867,10 @@ void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs>
 	}
 #endif
 
+#if 0
 	double first_deriv_orient;
 	double second_deriv_orient;
+#endif
 	double first_deriv_x;
 	double first_deriv_y;
 	double second_deriv_x;

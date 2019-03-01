@@ -6,29 +6,34 @@
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
 
-#define NUM_SENSORS 4
-#define MIN_DIST 4
+#define NUM_SENSORS 8
 
 std::vector<double> sensors_distances;
-std::vector<int> ternary_distances;
+int ternary_distances;
 bool publish = false;
 bool publish_last = false;
-double min_dist = 100000000000;
+
+const double default_min_dist_ = 100;
+double min_dist = default_min_dist_;
+double last_command;
+double last_command_published;
 
 void multiflexCB(const teraranger_array::RangeArray& msg)
 {
-	min_dist = 1000000000;
+    min_dist = default_min_dist_;
 	for(int i = 0; i < NUM_SENSORS; i++)
 	{
 		if(msg.ranges[i].range == msg.ranges[i].range)
 		{
 			sensors_distances[i] = msg.ranges[i].range;
-			min_dist = std::min(min_dist, static_cast<double>(msg.ranges[i].range));
+			if(i >= 2) {
+				min_dist = std::min(min_dist, static_cast<double>(msg.ranges[i].range));
+			}
 			//ROS_INFO_STREAM("i = " << i << " range = " << sensors_distances[i]);
 		}
 		else
 		{
-			sensors_distances[i] = 1000000000;
+			sensors_distances[i] = default_min_dist_;
 		}
 	}
 }
@@ -53,26 +58,24 @@ int main(int argc, char ** argv)
 	ros::NodeHandle n_params(n, "align_with_terabee_params");
 
 	double dist_to_back_panel;
-	double error_threshhold;
+	double distance_bound;
 	double cmd_vel_to_pub;
 	double distance_target;
 
-	if(!n_params.getParam("dist_to_back_panel", dist_to_back_panel))
-		ROS_ERROR_STREAM("Could not read dist_to_back_panel in align_with_terabee");
 	if(!n_params.getParam("cmd_vel_to_pub", cmd_vel_to_pub))
 		ROS_ERROR_STREAM("Could not read cmd_vel_to_pub in align_with_terabee");
-	if(!n_params.getParam("error_threshhold", error_threshhold))
-		ROS_ERROR_STREAM("Could not read error_threshhold in align_with_terabee");
+	if(!n_params.getParam("distance_bound", distance_bound))
+		ROS_ERROR_STREAM("Could not read distance_bound in align_with_terabee");
 	if(!n_params.getParam("distance_target", distance_target))
 		ROS_ERROR_STREAM("Could not read distance_target in align_with_terabee");
 
 
 	sensors_distances.resize(NUM_SENSORS);
-	ternary_distances.resize(NUM_SENSORS);
 
 	ros::Publisher distance_setpoint_pub = n.advertise<std_msgs::Float64>("distance_pid/setpoint", 1);
 	ros::Publisher distance_state_pub = n.advertise<std_msgs::Float64>("distance_pid/state", 1);
-	ros::Publisher distance_enable_pub = n.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1);
+	ros::Publisher cargo_setpoint_pub = n.advertise<std_msgs::Float64>("cargo_pid/setpoint", 1);
+	ros::Publisher cargo_state_pub = n.advertise<std_msgs::Float64>("cargo_pid/state", 1);
 	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_terabee/y_command", 1);
 	ros::Publisher successful_y_align = n.advertise<std_msgs::Bool>("align_with_terabee/y_aligned", 1);
 
@@ -85,21 +88,17 @@ int main(int argc, char ** argv)
 	y_msg.data = 0;
 
 	std_msgs::Float64 distance_setpoint_msg;
-	distance_setpoint_msg.data = distance_target;
+	distance_setpoint_msg.data = 0;
+
+	std_msgs::Float64 cargo_setpoint_msg;
+	cargo_setpoint_msg.data = 0;
 
 	ros::Rate r(50);
-
-	//make the robot not randomly drive forward as soon as it receives data
-	std_msgs::Bool enable_false;
-	enable_false.data = false;
-	distance_enable_pub.publish(enable_false);
-	ros::spinOnce();
-
 
 	while(ros::ok())
 	{
 		bool aligned = false;
-		if(sensors_distances[0] == 0.0 && sensors_distances[1] == 0.0 && sensors_distances[2] == 0.0 && sensors_distances[3] == 0.0)
+		if(sensors_distances[0] == 0.0 && sensors_distances[1] == 0.0 && sensors_distances[2] == 0.0 && sensors_distances[3] == 0.0 && sensors_distances[4] == 0.0)
 		{
 			ROS_INFO_STREAM_THROTTLE(2, "No data is being received from the Terabee sensors. Skipping this message");
 			ros::spinOnce();
@@ -107,126 +106,197 @@ int main(int argc, char ** argv)
 			continue;
 		}
 
-		//deal with distance PID first
-		std_msgs::Float64 distance_state_msg;
-		distance_state_msg.data = min_dist;
-		distance_state_pub.publish(distance_state_msg);
+		ROS_ERROR_STREAM_THROTTLE(0.25, "min_dist: " << min_dist);
 
-		distance_setpoint_pub.publish(distance_setpoint_msg.data);
+		//deal with distance PID first
+        if(fabs(min_dist) < default_min_dist_) {
+            std_msgs::Float64 distance_state_msg;
+            distance_state_msg.data = min_dist - distance_target;
+            distance_state_pub.publish(distance_state_msg);
+            distance_setpoint_pub.publish(distance_setpoint_msg.data);
+        }
+
+		//deal with cargo PID next
+		std_msgs::Float64 cargo_state_msg;
+		double dist_left = sensors_distances[0];
+		double dist_right = sensors_distances[1];
+		if(dist_left != dist_left)
+			dist_left = 1.0;
+		if(dist_right != dist_right)
+			dist_right = 1.0;
+		dist_left = std::max(dist_left, 0.0);
+		dist_right = std::max(dist_right, 0.0);
+		dist_left = std::min(dist_left, 1.0);
+		dist_right = std::min(dist_right, 1.0);
+
+		cargo_state_msg.data = dist_left - dist_right;
+		cargo_state_pub.publish(cargo_state_msg);
+		cargo_setpoint_pub.publish(cargo_setpoint_msg);
+
+
 
 		//now the exciting y-alignment stuff
-		for(int i = 0; i < sensors_distances.size(); i++)
+		//1 is rocket panel
+		//2 is empty space(can't differentiate on rocket between cutout and off the side)
+		ternary_distances = 0;
+		for(size_t i = 2; i < sensors_distances.size(); i++)
 		{
 			if(sensors_distances[i] != sensors_distances[i])
-				ternary_distances[i] = 2;
-			else if(fabs(sensors_distances[i] - min_dist) < error_threshhold)
-				ternary_distances[i] = 0;
-			else if(fabs(sensors_distances[i] - (min_dist + dist_to_back_panel)) < error_threshhold)
-				ternary_distances[i] = 1;
-			else if(sensors_distances[i] > min_dist + dist_to_back_panel)
-				ternary_distances[i] = 2;
-			else if((sensors_distances[i] < min_dist + dist_to_back_panel) && (sensors_distances[i] > min_dist))
-			{
-				//ROS_INFO_STREAM("intermediate value detected; defaulting to detection of front panel");
-				ternary_distances[i] = 0;
-			}
+				ternary_distances += pow(10.0, i - 2)*2;
+			else if(fabs(sensors_distances[i] - min_dist) < distance_bound)
+				ternary_distances += pow(10.0, i - 2);  //TODO This is just i on compbot
+			else if(fabs(sensors_distances[i] - min_dist) > distance_bound)
+				ternary_distances += pow(10.0, i - 2)*2;
 			else
 			{
-				//ROS_INFO_STREAM("very confused " << sensors_distances[i]);
+				ROS_INFO_STREAM_THROTTLE(1,"very confused " << sensors_distances[i]);
 			}
 
 		}
 		//ROS_INFO_STREAM("minimum_distance = " << min_dist);
-		//ROS_INFO_STREAM("ternary_distances 0: " << ternary_distances[0] << " 1: " << ternary_distances[1] << " 2: " << ternary_distances[2] << " 3: " << ternary_distances[3]); 
+		ROS_WARN_STREAM_THROTTLE(0.5, "ternary_distances: " << ternary_distances);
 
 		bool cutout_found = false;
 
-		//the robot is aligned
-		if(ternary_distances[0] == 0 && ternary_distances[1] == 1 && ternary_distances[2] == 1 && ternary_distances[3] == 0)
-		{
-			ROS_INFO_STREAM("ALIGNED");
-			aligned = true;
-			y_msg.data= 0.0;
-			cutout_found = true;
+
+		switch(ternary_distances) {
+			//the robot is aligned or close enough
+			case(122212):
+				ROS_INFO_STREAM_THROTTLE(.25, "The robot is aligned: case: " << ternary_distances);
+				aligned = true;
+				y_msg.data = 0;
+				cutout_found = true;
+				break;
+			//Off to the right a small amount
+			//case(212212):
+			case(112212): //off to the right a small amount, but really close
+				if(last_command_published > 0.0) { //if last command was positive to move closer to center set aligned to not overshoot
+					cutout_found = true;
+					y_msg.data = 0;
+					aligned = true;
+					break;
+				}
+			case(112211):
+			case(111211):
+			case(211221):
+			case(212211): //Just added technically shouldn't happen
+			case(221221):
+			case(221121):
+			case(222121):
+			case(222112):
+			case(222122): //DUPLICATE moving sensor 4 one to the right makes this only case
+				ROS_INFO_STREAM_THROTTLE(.25, "Off to the right a small amount: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = 1*cmd_vel_to_pub;
+				break;
+			//Off to the right a large amount
+			case(222212):
+			case(222211):
+			case(222221):
+				ROS_INFO_STREAM_THROTTLE(.25, "Off to the right a large amount: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = 2*cmd_vel_to_pub;
+				break;
+			//Off to the left a small amount
+			case(122112): //off to the left a small amount, but really close
+				/*  //Commented out because same as off to the left more than a few inches on cargo ship, so can't set aligned without knowing cargo or rocket
+				if(last_command_published < 0.0) { //if last command was positive to move closer to center set aligned to not overshoot
+					cutout_found = true;
+					y_msg.data = 0;
+					aligned = true;
+					break;
+				}
+				*/
+			case(122122):
+			//case(222122): //Shouldn't happen
+			case(211122):
+			case(221222):
+				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left a small amount: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = -1*cmd_vel_to_pub;
+				break;
+			//Off to the left a large amount
+			case(211222):
+			case(111222):
+			case(112222):
+			case(122222):
+				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left a large amount: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = -2*cmd_vel_to_pub;
+				break;
+
+
+			//Cargo ship cases
+			//Aligned
+			case(122211):
+				ROS_INFO_STREAM_THROTTLE(.25, "The robot is aligned with cargo ship: case: " << ternary_distances);
+				aligned = true;
+				y_msg.data = 0;
+				cutout_found = true;
+				break;
+			//Off to the right
+				/*    //Comented out because duplicate of of the right more than a few inches on rocket so can't set aligned for this case without knowing rocket or caro
+			case(112211): //off a bit but really close
+				if(last_command_published > 0.0) { //if last command was positive to move closer to center set aligned to not overshoot
+					cutout_found = true;
+					y_msg.data = 0;
+					aligned = true;
+					break;
+				}
+				*/
+			case(112221):
+			case(111112): //off to the right at loading station
+				ROS_INFO_STREAM_THROTTLE(.25, "Off to the right of cargo ship a small amount: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = 1*cmd_vel_to_pub;
+				break;
+			//Off to the right a lot`
+			case(111221):
+			case(111121):
+			case(211121):
+				ROS_INFO_STREAM_THROTTLE(.25, "Off to the right of cargo ship a large amount: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = 2*cmd_vel_to_pub;
+				break;
+			//Off to the left
+			case(122111): //off a bit but really close
+				/*TODO commented out because can go many inches off to the left in this case probably will cause severe undershooting.
+				if(last_command_published < 0.0) { //if last command was positive to move closer to center set aligned to not overshoot
+					cutout_found = true;
+					y_msg.data = 0;
+					aligned = true;
+					break;
+				}*/
+			//case(122112): //Duplicate of off to the left of rocket a small amount
+			case(222111):
+			case(221111): //Off to the left a bit at loading station
+				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left of cargo ship a small amount: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = -1*cmd_vel_to_pub;
+				break;
+			case(221112):
+			case(211112):
+				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left of cargo ship a large amount: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = -2*cmd_vel_to_pub;
+				break;
+			//Indeterminate cases
+			case(221122):
+				ROS_INFO_STREAM_THROTTLE(.25, "Indeterminate case found: case: " << ternary_distances);
+				cutout_found = true;
+				y_msg.data = last_command;
+				break;
 		}
 
-		//cutout seen in leftmost or rightmost two sensors, and panel seen in other two
 		if(!cutout_found)
 		{
-			if(ternary_distances[0] == 0 && ternary_distances[1] == 0 && ternary_distances[2] == 1 && ternary_distances[3] == 1)
-			{
-				//ROS_INFO_STREAM("move right, either cargo or rocket");
-				y_msg.data= -1*cmd_vel_to_pub;
-				cutout_found = true;
-			}
-			else if(ternary_distances[0] == 1 && ternary_distances[1] == 1 && ternary_distances[2] == 0 && ternary_distances[3] == 0)
-			{
-				//ROS_INFO_STREAM("move left, either cargo or rocket");
-				y_msg.data= cmd_vel_to_pub;
-				cutout_found = true;
-			}
+			ROS_INFO_STREAM_THROTTLE(.25, "cutout not found; can't align");
+			//y_msg.data= 0;
 		}
-
-		//only one sensor senses the cutout, and then the other three see the panel
-		if(!cutout_found)
-		{
-			if(ternary_distances[0] == 1 && (ternary_distances[1] == 0 && ternary_distances[2] == 0 && ternary_distances[3] == 0))
-			{
-				//ROS_INFO_STREAM("move left, probably cargo ship");
-				y_msg.data= cmd_vel_to_pub;
-				cutout_found = true;
-			}
-			else if (ternary_distances[0] == 0 && ternary_distances[1] == 0 && ternary_distances[2] == 0 && ternary_distances[3] == 1)
-			{
-				//ROS_INFO_STREAM("move right, probably cargo ship");
-				y_msg.data= -1*cmd_vel_to_pub;
-				cutout_found = true;
-			}
-		}
-
-		//the robot senses a cutout with two sensors, and then the panel, and then really far
-		if(!cutout_found)
-		{
-			if(ternary_distances[0] == 1 && (ternary_distances[1] == 1 && ternary_distances[2] == 0 && ternary_distances[3] == 2))
-				{
-				//ROS_INFO_STREAM("move left, probably rocket edge");
-				y_msg.data= cmd_vel_to_pub;
-				cutout_found = true;
-			}
-			else if (ternary_distances[0] == 2 && ternary_distances[1] == 0 && ternary_distances[2] == 1 && ternary_distances[3] == 1)
-			{
-				//ROS_INFO_STREAM("move right, probably rocket edge");
-				y_msg.data= -1*cmd_vel_to_pub;
-				cutout_found = true;
-			}
-		}
-
-		//the robot senses a cutout with two sensors, and then the panel, and then what SEEMS like a cutout but is actually the other side of the rocket
-		if(!cutout_found)
-		{
-			if(ternary_distances[0] == 1 && (ternary_distances[1] == 1 && ternary_distances[2] == 0 && ternary_distances[3] == 1))
-			{
-				//ROS_INFO_STREAM("move left, probably rocket center");
-				y_msg.data= cmd_vel_to_pub;
-				cutout_found = true;
-			}
-			else if (ternary_distances[0] == 1 && ternary_distances[1] == 0 && ternary_distances[2] == 1 && ternary_distances[3] == 1)
-			{
-				//ROS_INFO_STREAM("move right, probably rocket center");
-				y_msg.data= -1*cmd_vel_to_pub;
-				cutout_found = true;
-			}
-		}
-
-		if(!cutout_found)
-		{
-			//ROS_INFO_STREAM("cutout not found; can't align");
-			y_msg.data= 0;
-		}
-
 		if(publish)
 		{
 			y_command_pub.publish(y_msg);
+			last_command_published = y_msg.data;
 		}
 		else if(!publish && publish_last)
 		{

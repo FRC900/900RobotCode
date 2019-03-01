@@ -5,3 +5,4 @@ bool raise_intake_after_success
 bool timed_out
 bool success
 ---
+bool running

@@ -120,10 +120,10 @@ if [ "$jetson" = true ] ; then
 		sudo cp jetson_setup/cdc-acm.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/usb/class/cdc-acm.ko
 		sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/net/can/usb
 		sudo cp jetson_setup/gs_usb.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/net/can/usb/gs_usb.ko
-		sudo cp can-dev.ko.4.4.38-tegra /lib/modules/4.4.38-tegra/kernel/drivers/net/can/can-dev.ko 
+		sudo cp jetson_setup/can-dev.ko.`uname -r` /lib/modules/4.4.38-tegra/kernel/drivers/net/can/can-dev.ko 
 		sudo mkdir -p /lib/modules/`uname -r`/kernel/net/can
-		sudo cp can.ko.`uname -r` /lib/modules/`uname -r`/kernel/net/can/can.ko 
-		sudo cp can-raw.ko.`uname -r` /lib/modules/`uname -r`/kernel/net/can/can-raw.ko 
+		sudo cp jetson_setup/can.ko.`uname -r` /lib/modules/`uname -r`/kernel/net/can/can.ko 
+		sudo cp jetson_setup/can-raw.ko.`uname -r` /lib/modules/`uname -r`/kernel/net/can/can-raw.ko 
 
 		sudo depmod -a
         # edit /etc/init.d/ntp to contain the line: <ntpd -gq> before all content already there.
@@ -164,7 +164,7 @@ if [ "$jetson" = true ] ; then
 	sudo mkdir -p /root/.ssh
 	sudo cd /root/.ssh
 	sudo tar -xjf /home/ubuntu/2019RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
-	sudo chmod 640 /root/authorized_keys
+	sudo chmod 640 /root/.ssh/authorized_keys
 	sudo chmod 700 /root/.ssh
 
 	cd ~/2019RobotCode
@@ -241,11 +241,11 @@ if [ "$jetson" = true ] ; then
 
 	# Install wpilip headers by copying them from the local maven dir
     cd /home/ubuntu 
-	wget https://github.com/wpilibsuite/allwpilib/releases/download/v2019.2.1/WPILib_Linux-2019.2.1.tar.gz 
+	wget https://github.com/wpilibsuite/allwpilib/releases/download/v2019.4.1/WPILib_Linux-2019.4.1.tar.gz 
 	mkdir -p /home/ubuntu/frc2019 
     cd /home/ubuntu/frc2019 
-	tar -xzf /home/ubuntu/WPILib_Linux-2019.2.1.tar.gz 
-	rm /home/ubuntu/WPILib_Linux-2019.2.1.tar.gz 
+	tar -xzf /home/ubuntu/WPILib_Linux-2019.4.1.tar.gz 
+	rm /home/ubuntu/WPILib_Linux-2019.4.1.tar.gz 
     cd /home/ubuntu/frc2019/tools 
 	python ToolsUpdater.py 
     mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
