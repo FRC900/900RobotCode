@@ -169,6 +169,7 @@ class ElevatorAction {
 					{
 						ROS_ERROR("%s: Preempted", action_name_.c_str());
 						preempted = true;
+
 					}
 					else
 					{
@@ -179,6 +180,14 @@ class ElevatorAction {
 				}
 			}
 
+			//if we preempt or time out, stop moving the elevator
+			if(preempted || timed_out)
+			{
+				elevator_controller::ElevatorSrv srv;
+				srv.request.position = cur_position_;
+				srv.request.go_slow = false; //default
+				elevator_client_.call(srv); //Send command to elevator controller
+			}
 
 
 			//log state of action and set result of action
