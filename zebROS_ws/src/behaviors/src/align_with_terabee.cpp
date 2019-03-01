@@ -118,8 +118,8 @@ int main(int argc, char ** argv)
 
 		//deal with cargo PID next
 		std_msgs::Float64 cargo_state_msg;
-		double dist_left = sensors_distances[2];
-		double dist_right = sensors_distances[7];
+		double dist_left = sensors_distances[0];
+		double dist_right = sensors_distances[1];
 		if(dist_left != dist_left)
 			dist_left = 1.0;
 		if(dist_right != dist_right)
