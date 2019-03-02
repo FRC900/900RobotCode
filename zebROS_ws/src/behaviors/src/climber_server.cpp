@@ -146,6 +146,7 @@ class ClimbAction {
 				}
 				else {
 					//only spin if we're not going to error out
+					// TODO - Why spin here?
 					ros::spinOnce();
 				}
 
@@ -156,6 +157,7 @@ class ClimbAction {
 
 					//call the elevator actionlib server
 					//define the goal to send
+					// TODO - try moving up fast for this step?
 					behaviors::ElevatorGoal goal;
 					goal.setpoint_index = ELEVATOR_DEPLOY;
 					goal.place_cargo = 0; //doesn't actually do anything
@@ -168,6 +170,7 @@ class ClimbAction {
 						timed_out = true;
 					}
 					//determine the outcome of the goal
+					// TODO - add a check for !timed_out here
 					if(!ae_.getResult()->success)
 					{
 						if(ae_.getResult()->timed_out == true)
@@ -181,6 +184,7 @@ class ClimbAction {
 					}
 
 					//check if we got a preempt while we were waiting
+					// TODO - add a check for !timed_out and !preempted here
 					if(as_.isPreemptRequested())
 					{
 						preempted = true;
@@ -202,10 +206,12 @@ class ClimbAction {
 						ROS_ERROR("climber server step 0: Climber engage failed in climber controller");
 						preempted = true;
 					}
+					// TODO - Why spin here?
 					ros::spinOnce();
 				}
 
 				// delay to make sure that we engaged properly
+				// TODO - if we need to spin, spin in a loop here for 1 second here?
 				ros::Duration(1).sleep();
 
 				//lower elevator to make robot rise off ground
@@ -229,7 +235,7 @@ class ClimbAction {
 						preempted = as_.isPreemptRequested();
 
 						geometry_msgs::Twist cmd_vel_msg;
-						cmd_vel_msg.linear.x = 0.1;
+						cmd_vel_msg.linear.x = 0.1; // TODO - should be a param
 						cmd_vel_msg.linear.y = 0.0;
 						cmd_vel_msg.linear.z = 0.0;
 						cmd_vel_msg.angular.x = 0.0;
@@ -307,7 +313,7 @@ class ClimbAction {
 						preempted = as_.isPreemptRequested();
 
 						geometry_msgs::Twist cmd_vel_msg;
-						cmd_vel_msg.linear.x = 0.1;
+						cmd_vel_msg.linear.x = 0.1; // TODO - make config, possibly make into a small function since it is reused several times
 						cmd_vel_msg.linear.y = 0.0;
 						cmd_vel_msg.linear.z = 0.0;
 						cmd_vel_msg.angular.x = 0.0;
@@ -320,6 +326,7 @@ class ClimbAction {
 
 				if(!preempted && !timed_out && ros::ok())
 				{
+					// TODO - is this info correct?
 					ROS_INFO("climber server step 0: raising elevator to make robot climb");
 
 					//call the elevator actionlib server
@@ -331,9 +338,12 @@ class ClimbAction {
 					//send the goal
 					ae_.sendGoal(goal);
 					double start_time = ros::Time::now().toSec();
+					// TODO - finished_climb isn't used
 					finished_climb = false;
 					while(ros::ok() && !finished_climb && !preempted && !timed_out)
 					{
+						// TODO - this whole loop is very similar to previous ones,
+						// could be made a function?
 						timed_out = (ros::Time::now().toSec() - start_time) > elevator_climb_timeout;
 						preempted = as_.isPreemptRequested();
 
