@@ -324,10 +324,16 @@ class ClimbAction {
 					}
 				}
 
+
+				//preempt handling: do nothing
+
+			}
+			else if(goal->step == 1)
+			{
 				if(!preempted && !timed_out && ros::ok())
 				{
 					// TODO - is this info correct?
-					ROS_INFO("climber server step 0: raising elevator to make robot climb");
+					ROS_INFO("climber server step 0: raising elevator to make robot fall a bit");
 
 					//call the elevator actionlib server
 					//define the goal to send
@@ -340,7 +346,7 @@ class ClimbAction {
 					double start_time = ros::Time::now().toSec();
 					// TODO - finished_climb isn't used
 					finished_climb = false;
-					while(ros::ok() && !finished_climb && !preempted && !timed_out)
+					while(ros::ok() /* && !finished_climb*/ && !preempted && !timed_out)
 					{
 						// TODO - this whole loop is very similar to previous ones,
 						// could be made a function?
@@ -376,11 +382,8 @@ class ClimbAction {
 						preempted = true;
 					}
 				} //end of raising elevator to make robot climb
-
-				//preempt handling: do nothing
-
 			}
-			else if(goal->step == 1)
+			else if(goal->step == 2)
 			{
 				ROS_INFO("Running climber server step 1");
 
@@ -415,44 +418,6 @@ class ClimbAction {
 				if(preempted || timed_out)
 				{
 					ROS_INFO("Running climber server step 1 preempt/timeout handling - preempting elevator server");
-					ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-				}
-			}
-			else if(goal->step == 2)
-			{
-				ROS_INFO("Running climber server step 2");
-
-				//push climber a bit down to prop up back wheels (and thus bumper) for a legit climb
-				ROS_INFO("climber server step 2: lowering elevator to push back of robot up with climber");
-
-				//call the elevator actionlib server
-				//define the goal to send
-				behaviors::ElevatorGoal goal;
-				goal.setpoint_index = ELEVATOR_CLIMB_LOW;
-				goal.place_cargo = 0; //doesn't actually do anything 
-				goal.raise_intake_after_success = true;
-				//send the goal
-				ae_.sendGoal(goal);
-				finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_low_timeout));
-				if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
-					ROS_ERROR("climber server step 2: elevator move timed out");
-
-				//determine the outcome of the goal
-				if(!ae_.getResult()->success) //this might mean preempted or timed out
-				{
-					preempted = true;
-				}
-
-				//check if we got a preempt while we were waiting
-				if(as_.isPreemptRequested())
-				{
-					preempted = true;
-				}
-
-				//preempt handling: preempt elevator server to freeze the elevator
-				if(preempted || timed_out)
-				{
-					ROS_INFO("Running climber server step 2 preempt/timeout handling - preempting elevator server");
 					ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 			}

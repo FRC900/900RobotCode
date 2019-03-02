@@ -29,8 +29,10 @@ int main(int argc, char **argv)
 	std::ofstream temp_file;
 	temp_file.open ("temp_file.txt");
 
+        temp_file << "Writing to a file";
+
 	std::vector<std::string> topics;
-	topics.push_back(std::string("/frcrobot/match_data"));
+	topics.push_back(std::string("/frcrobot_rio/match_data"));
 
 	rosbag::View view(bag, rosbag::TopicQuery(topics));
 
@@ -38,20 +40,15 @@ int main(int argc, char **argv)
 	{
 		frc_msgs::MatchSpecificData::ConstPtr s = m.instantiate<frc_msgs::MatchSpecificData>();
 		if (s != NULL){
-			if (s->allianceData != "")
-			{
-				temp_file << "We have data! Keep this file!!" << std::endl;
-			}
 			temp_file << s->header << std::endl;
 			temp_file << s->matchTimeRemaining << std::endl;
-		    temp_file << "allianceData: " << s->allianceData << std::endl;
 			temp_file << static_cast<int>(s->allianceColor) << std::endl;
 			temp_file << static_cast<int>(s->matchType) << std::endl;
 			temp_file << static_cast<int>(s->driverStationLocation) << std::endl;
 			temp_file << "matchNumber: " << static_cast<int>(s->matchNumber) << std::endl;
-			temp_file << static_cast<bool>(s->isEnabled) << std::endl;
-			temp_file << static_cast<bool>(s->isDisabled) << std::endl;
-			temp_file << static_cast<bool>(s->isAutonomous) << std::endl;
+			temp_file << static_cast<bool>(s->Enabled) << std::endl;
+			temp_file << static_cast<bool>(s->Disabled) << std::endl;
+			temp_file << static_cast<bool>(s->Autonomous) << std::endl;
 		}
 
 	}

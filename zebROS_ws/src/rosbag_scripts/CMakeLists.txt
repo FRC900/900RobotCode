@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rosbag_scripts)
 
-if(FALSE)
 
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 
@@ -217,4 +216,3 @@ install(PROGRAMS
 
 endif()
 
-endif()
