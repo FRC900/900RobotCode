@@ -49,7 +49,12 @@ class AlignAction {
 
 	public:
 		//make the executeCB function run every time the actionlib server is called
-		AlignAction(const std::string &name, const std::shared_ptr<ros::Publisher>& enable_navx_pub_,const std::shared_ptr<ros::Publisher>& enable_x_pub_, const std::shared_ptr<ros::Publisher>& enable_y_pub_,const std::shared_ptr<ros::Publisher>& enable_align_pub_,const std::shared_ptr<ros::Publisher>& enable_cargo_pub_) :
+		AlignAction(const std::string &name,
+			   	const std::shared_ptr<ros::Publisher>& enable_navx_pub_,
+				const std::shared_ptr<ros::Publisher>& enable_x_pub_,
+				const std::shared_ptr<ros::Publisher>& enable_y_pub_,
+				const std::shared_ptr<ros::Publisher>& enable_align_pub_,
+				const std::shared_ptr<ros::Publisher>& enable_cargo_pub_) :
 			as_(nh_, name, boost::bind(&AlignAction::executeCB, this, _1), false),
 			action_name_(name),
 			enable_navx_pub_(enable_navx_pub_),
@@ -80,13 +85,13 @@ class AlignAction {
 		void navx_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold);
-			ROS_WARN_STREAM_THROTTLE(0.5, "navX error" << fabs(msg.data[0]));
+			ROS_WARN_STREAM_THROTTLE(1, "navX error: " << fabs(msg.data[0]));
 		}
 
 		void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold);
-			ROS_WARN_STREAM_THROTTLE(1, "distance error" << msg.data[0]);
+			ROS_WARN_STREAM_THROTTLE(1, "distance error: " << msg.data[0]);
 		}
 
 		void y_error_cb(const std_msgs::Bool &msg)
@@ -97,7 +102,7 @@ class AlignAction {
 		void cargo_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			cargo_aligned_ = (fabs(msg.data[0]) < cargo_error_threshold);
-			ROS_WARN_STREAM_THROTTLE(1, "cargo error" << msg.data[0]);
+			ROS_WARN_STREAM_THROTTLE(1, "cargo error: " << msg.data[0]);
 		}
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::AlignGoalConstPtr &goal) {
