@@ -85,7 +85,7 @@ void ElevatorController::starting(const ros::Time &/*time*/) {
 void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &/*duration*/)
 {
 	// If we hit the limit switch, (re)zero the position.
-	if (elevator_joint_.getReverseLimitSwitch() && !zeroed_)
+	if (elevator_joint_.getReverseLimitSwitch())
 	{
 		ROS_INFO_THROTTLE(2, "ElevatorController : hit limit switch");
 		zeroed_ = true;

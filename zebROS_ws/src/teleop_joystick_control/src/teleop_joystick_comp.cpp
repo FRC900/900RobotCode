@@ -447,29 +447,29 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: bumperLeftRelease");
 		}
 		//Joystick1: bumperRight
-		if(joystick_states_array[0].bumperRightPress)
-		{
-			ROS_INFO_STREAM("Joystick1: bumperRightPress");
-			preemptActionlibServers();
-			if(panel_linebreak_true_count > linebreak_debounce_iterations)
-			{
-				//If we have a panel, outtake it
-				ROS_INFO_STREAM("Joystick1: Place Panel");
-				behaviors::PlaceGoal goal;
-				goal.setpoint_index = elevator_cur_setpoint_idx;
-				outtake_hatch_panel_ac->sendGoal(goal);
-				elevator_cur_setpoint_idx = 0;
-				ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
-			}
-			else
-			{
-				//If we don't have a panel, intake one
-				ROS_INFO_STREAM("Joystick1: Intake Panel");
-				behaviors::IntakeGoal goal;
-				intake_hatch_panel_ac->sendGoal(goal);
+		//if(joystick_states_array[0].bumperRightPress)
+		//{
+		//	ROS_INFO_STREAM("Joystick1: bumperRightPress");
+		//	preemptActionlibServers();
+		//	if(panel_linebreak_true_count > linebreak_debounce_iterations)
+		//	{
+		//		//If we have a panel, outtake it
+		//		ROS_INFO_STREAM("Joystick1: Place Panel");
+		//		behaviors::PlaceGoal goal;
+		//		goal.setpoint_index = elevator_cur_setpoint_idx;
+		//		outtake_hatch_panel_ac->sendGoal(goal);
+		//		elevator_cur_setpoint_idx = 0;
+		//		ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+		//	}
+		//	else
+		//	{
+		//		//If we don't have a panel, intake one
+		//		ROS_INFO_STREAM("Joystick1: Intake Panel");
+		//		behaviors::IntakeGoal goal;
+		//		intake_hatch_panel_ac->sendGoal(goal);
 
-			}
-		}
+		//	}
+		//}
 		if(joystick_states_array[0].bumperRightButton)
 		{
 			ROS_INFO_THROTTLE(1, "bumperRightButton");
