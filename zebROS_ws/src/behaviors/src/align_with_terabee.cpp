@@ -61,6 +61,7 @@ int main(int argc, char ** argv)
 	double distance_bound;
 	double cmd_vel_to_pub;
 	double distance_target;
+	double cargo_pid_max_distance;
 
 	if(!n_params.getParam("cmd_vel_to_pub", cmd_vel_to_pub))
 		ROS_ERROR_STREAM("Could not read cmd_vel_to_pub in align_with_terabee");
@@ -68,6 +69,8 @@ int main(int argc, char ** argv)
 		ROS_ERROR_STREAM("Could not read distance_bound in align_with_terabee");
 	if(!n_params.getParam("distance_target", distance_target))
 		ROS_ERROR_STREAM("Could not read distance_target in align_with_terabee");
+	if(!n_params.getParam("cargo_pid_max_distance", cargo_pid_max_distance))
+		ROS_ERROR_STREAM("Could not read cargo_pid_max_distance in align_with_terabee");
 
 
 	sensors_distances.resize(NUM_SENSORS);
@@ -126,8 +129,8 @@ int main(int argc, char ** argv)
 			dist_right = 1.0;
 		dist_left = std::max(dist_left, 0.0);
 		dist_right = std::max(dist_right, 0.0);
-		dist_left = std::min(dist_left, 1.0);
-		dist_right = std::min(dist_right, 1.0);
+		dist_left = std::min(dist_left, cargo_pid_max_distance);
+		dist_right = std::min(dist_right, cargo_pid_max_distance);
 
 		cargo_state_msg.data = dist_left - dist_right;
 		cargo_state_pub.publish(cargo_state_msg);
@@ -136,7 +139,7 @@ int main(int argc, char ** argv)
 
 
 		//now the exciting y-alignment stuff
-		//1 is rocket panel
+		//1 is wall
 		//2 is empty space(can't differentiate on rocket between cutout and off the side)
 		ternary_distances = 0;
 		for(size_t i = 2; i < sensors_distances.size(); i++)
@@ -144,7 +147,7 @@ int main(int argc, char ** argv)
 			if(sensors_distances[i] != sensors_distances[i])
 				ternary_distances += pow(10.0, i - 2)*2;
 			else if(fabs(sensors_distances[i] - min_dist) < distance_bound)
-				ternary_distances += pow(10.0, i - 2);  //TODO This is just i on compbot
+				ternary_distances += pow(10.0, i - 2);
 			else if(fabs(sensors_distances[i] - min_dist) > distance_bound)
 				ternary_distances += pow(10.0, i - 2)*2;
 			else
@@ -156,9 +159,9 @@ int main(int argc, char ** argv)
 		//ROS_INFO_STREAM("minimum_distance = " << min_dist);
 		ROS_WARN_STREAM_THROTTLE(0.5, "ternary_distances: " << ternary_distances);
 
+
+
 		bool cutout_found = false;
-
-
 		switch(ternary_distances) {
 			//the robot is aligned or close enough
 			case(122212):
@@ -286,11 +289,14 @@ int main(int argc, char ** argv)
 				cutout_found = true;
 				y_msg.data = last_command;
 				break;
+			default:
+				break;
 		}
 
 		if(!cutout_found)
 		{
 			ROS_INFO_STREAM_THROTTLE(.25, "cutout not found; can't align");
+			//Don't publish anything when not found to let previous commands drift the bot a bit
 			//y_msg.data= 0;
 		}
 		if(publish)

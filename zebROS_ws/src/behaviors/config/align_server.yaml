@@ -8,3 +8,4 @@ align_with_terabee_params:
     cmd_vel_to_pub: 0.6
     distance_bound: 0.04
     distance_target: 0.15
+    cargo_pid_max_distance: 0.5
