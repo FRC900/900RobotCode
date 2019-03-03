@@ -493,7 +493,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			// TODO : id might instead be a string - MXP, USB, etc
 			// telling where the navX is attached?
 			const bool has_id = joint_params.hasMember("id");
-			if (!local_hardware && has_id)
+			if (!local && has_id)
 				throw std::runtime_error("A navX id was specified for non-local hardware for joint " + joint_name);
 			int navX_id = 0;
 			if (local_hardware)
