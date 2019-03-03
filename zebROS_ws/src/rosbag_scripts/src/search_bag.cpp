@@ -40,15 +40,17 @@ int main(int argc, char **argv)
 	{
 		frc_msgs::MatchSpecificData::ConstPtr s = m.instantiate<frc_msgs::MatchSpecificData>();
 		if (s != NULL){
-			temp_file << s->header << std::endl;
-			temp_file << s->matchTimeRemaining << std::endl;
-			temp_file << static_cast<int>(s->allianceColor) << std::endl;
-			temp_file << static_cast<int>(s->matchType) << std::endl;
-			temp_file << static_cast<int>(s->driverStationLocation) << std::endl;
-			temp_file << "matchNumber: " << static_cast<int>(s->matchNumber) << std::endl;
-			temp_file << static_cast<bool>(s->Enabled) << std::endl;
-			temp_file << static_cast<bool>(s->Disabled) << std::endl;
-			temp_file << static_cast<bool>(s->Autonomous) << std::endl;
+			if(static_cast<bool>(s->Enabled))
+			{
+				temp_file << s->matchTimeRemaining << std::endl;
+				temp_file << static_cast<int>(s->allianceColor) << std::endl;
+				temp_file << static_cast<int>(s->matchType) << std::endl;
+				temp_file << static_cast<int>(s->driverStationLocation) << std::endl;
+				temp_file << "matchNumber: " << static_cast<int>(s->matchNumber) << std::endl;
+				temp_file << static_cast<bool>(s->Enabled) << std::endl;
+				temp_file << static_cast<bool>(s->Disabled) << std::endl;
+				temp_file << static_cast<bool>(s->Autonomous) << std::endl;
+			}
 		}
 
 	}

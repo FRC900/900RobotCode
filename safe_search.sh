@@ -32,11 +32,12 @@ do
 	$HOME/2019RobotCode/zebROS_ws/devel/lib/rosbag_scripts/rosbag_scripts_node $var
 	filename=$(basename $var)
 
-	any_data=$(rosbag info $var | grep /frcrobot/match_data)
+	any_data=$(rosbag info $var | grep /frcrobot_rio/match_data)
 	if [ ! -z "$any_data" -a "$any_data" != " " ] 
 	then
 		echo This has match data
 		matchNumber=$(grep -m1 matchNumber temp_file.txt | cut -c14-15)
+                echo MatchNumber = $matchNumber
 		if [ $matchNumber = 0 ]
 		then
 			echo Match number is zero -- renaming
