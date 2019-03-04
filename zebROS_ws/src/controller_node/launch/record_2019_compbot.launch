@@ -26,6 +26,8 @@
 		/frcrobot_jetson/pcm_states
 		/zed_goal/depth/depth_registered
 		/zed_goal/left/image_rect_color
+		/zed_goal/odom
+		/zed_goal/pose
 		/teleop/translator0/joystick_states
 		"/>
 </launch>

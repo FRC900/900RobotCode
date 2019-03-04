@@ -253,8 +253,8 @@ int main(int argc, char ** argv)
 				cutout_found = true;
 				y_msg.data = 1*cmd_vel_to_pub;
 				break;
-			//Off to the right a lot`
-			case(111221):
+			//Off to the right a lot need to check if this is important for cargo ship placing as this happens on the rocket
+			//case(111221):
 			case(111121):
 			case(211121):
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the right of cargo ship a large amount: case: " << ternary_distances);

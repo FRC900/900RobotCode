@@ -85,7 +85,7 @@ class AlignAction {
 		void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold);
-			ROS_WARN_STREAM_THROTTLE(1, "distance error: " << msg.data[0]);
+			ROS_WARN_STREAM("distance error: " << msg.data[0]);
 		}
 		void y_error_cb(const std_msgs::Bool &msg)
 		{
@@ -125,7 +125,7 @@ class AlignAction {
 				std_msgs::Bool enable_align_msg;
 
 				orient_msg.data = true && !orient_timed_out;							//Publish true to the navX pid node throughout the action until orient_timed_out
-				distance_msg.data = orient_aligned_ || orient_timed_out;				//Enable distance pid once orient is aligned or timed out
+				distance_msg.data = (orient_aligned_ || orient_timed_out) && !x_aligned_;				//Enable distance pid once orient is aligned or timed out
 				terabee_msg.data = (orient_aligned_ || orient_timed_out) && x_aligned_; //Enable terabee node when distance is aligned and  orient aligns or orient times out
 				enable_align_msg.data = !aligned;										//Enable publishing pid vals until aligned
 
