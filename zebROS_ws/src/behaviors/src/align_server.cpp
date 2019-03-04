@@ -1,15 +1,10 @@
 #include "ros/ros.h"
-#include <atomic>
-#include <ros/console.h>
 #include "std_msgs/Bool.h"
-#include "std_msgs/Float64.h"
 #include "std_msgs/Float64MultiArray.h"
 #include "std_srvs/Empty.h"
-#include "geometry_msgs/Twist.h"
 #include "behaviors/AlignGoal.h"
 #include "behaviors/AlignAction.h"
 #include "actionlib/server/simple_action_server.h"
-#include "actionlib/client/simple_action_client.h"
 
 double align_timeout;
 double orient_timeout;
@@ -26,7 +21,6 @@ class AlignAction {
 		actionlib::SimpleActionServer<behaviors::AlignAction> as_; //create the actionlib server
 		std::string action_name_;
 		behaviors::AlignResult result_; //variable to store result of the actionlib action
-
 
 		std::shared_ptr<ros::Publisher> enable_navx_pub_;
 		std::shared_ptr<ros::Publisher> enable_x_pub_;
@@ -76,8 +70,6 @@ class AlignAction {
 			x_error_sub_ = nh_.subscribe("distance_pid/pid_debug", 1, &AlignAction::x_error_cb, this);
 			cargo_error_sub_ = nh_.subscribe("cargo_pid/pid_debug", 1, &AlignAction::cargo_error_cb, this);
 			y_error_sub_ = nh_.subscribe("align_with_terabee/y_aligned", 1, &AlignAction::y_error_cb, this);
-
-
 		}
 
 		~AlignAction(void)
@@ -108,7 +100,7 @@ class AlignAction {
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::AlignGoalConstPtr &goal) {
 			ROS_INFO_STREAM("align server callback called");
-			ros::Rate r(10);
+			ros::Rate r(10); // TODO - try running faster and see what happens to overshoot?
 			startup = false;
 
 			double start_time = ros::Time::now().toSec();
@@ -169,12 +161,19 @@ class AlignAction {
 					ROS_ERROR_STREAM_THROTTLE(1, "Orient timed out!");
 			}
 			//Stop robot after aligning
+			bool success = true;
 			std_srvs::Empty empty;
-			BrakeSrv.call(empty);
+			if (!BrakeSrv.call(empty))
+			{
+				ROS_ERROR("brakeSrv call failed in align_server");
+				success = false;
+			}
+			// TODO : is this needed?
 			ros::spinOnce();
 
 
 			//Stop all PID after aligning
+			// TODO : just set starting back to true?
 			std_msgs::Bool false_msg;
 			false_msg.data = false;
 
@@ -198,6 +197,16 @@ class AlignAction {
 				result_.success = false;
 				as_.setPreempted(result_);
 				ROS_INFO("%s: Preempted", action_name_.c_str());
+			}
+			// Only for the case where the BrakeSrv call failed
+			// Does this make sense?
+			else if (!success)
+			{
+				result_.timed_out = false;
+				result_.success = false;
+				as_.setSucceeded(result_);
+
+				ROS_INFO("%s: Not Successful", action_name_.c_str());
 			}
 			else //implies succeeded
 			{
@@ -260,7 +269,9 @@ int main(int argc, char** argv) {
 		}
 
 		ros::spinOnce();
+		r.sleep();
 	}
+	// TODO : almost certain this isn't needed
 	ros::spin();
 	return 0;
 }
