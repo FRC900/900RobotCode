@@ -74,8 +74,6 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 }
 
 void ElevatorController::starting(const ros::Time &/*time*/) {
-	elevator_joint_.setPIDFSlot(0);
-	elevator_joint_.setMode(hardware_interface::TalonMode_Position);
 	go_slow_ = false;
 	zeroed_ = false;
 	last_time_down_ = ros::Time::now();
