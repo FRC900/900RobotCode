@@ -12,9 +12,10 @@
 
 //define global variables that will be defined based on config values
 
+// TODO - these need defaults
 double roller_power;
 double intake_timeout;
-double linebreak_debounce_iterations;
+int linebreak_debounce_iterations;
 double wait_for_server_timeout;
 double pause_before_running_motor = 0;
 
@@ -30,7 +31,6 @@ class CargoIntakeAction {
 		ros::ServiceClient cargo_outtake_controller_client_; //create a ros client to send requests to the controller
 		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo since we started trying to intake/outtake
 		std::atomic<int> linebreak_false_count; //same, but how many times in a row no cargo
-		behaviors::IntakeResult result_; //variable to store result of the actionlib action
 
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
@@ -117,6 +117,7 @@ class CargoIntakeAction {
 			}
 
 			//raise cargo clamp
+			bool success = true;
 			if(!preempted && !timed_out && ros::ok())
 			{
 				ROS_WARN("%s: raising cargo clamp", action_name_.c_str());
@@ -124,13 +125,19 @@ class CargoIntakeAction {
 				cargo_outtake_controller::CargoOuttakeSrv outtake_srv;
 				outtake_srv.request.kicker_in = true;
 				outtake_srv.request.clamp_release = true;
-				cargo_outtake_controller_client_.call(outtake_srv);
-				ros::Duration(pause_before_running_motor).sleep();
+				if (!cargo_outtake_controller_client_.call(outtake_srv))
+				{
+					ROS_ERROR("cargo_outtake_controller_client call faled in intake_cargo_server");
+					success = false;
+				}
+				else
+				{
+					ros::Duration(pause_before_running_motor).sleep();
+				}
 			}
 
-			bool success = false; //if controller/actionlib server call succeeded
 			//send command to lower arm and run roller to the cargo intake controller ------
-			if(!preempted && !timed_out && ros::ok())
+			if(success && !preempted && !timed_out && ros::ok())
 			{
 				ROS_WARN("%s: lowering arm and spinning roller in",action_name_.c_str());
 
@@ -182,33 +189,36 @@ class CargoIntakeAction {
 
 			if(success)
 			{
+				//call the cargo outtake controller to clamp DOWN
 				cargo_outtake_controller::CargoOuttakeSrv outtake_srv;
 				outtake_srv.request.kicker_in = true;
 				outtake_srv.request.clamp_release = false;
-				cargo_outtake_controller_client_.call(outtake_srv);
-				//call the cargo outtake controller to clamp DOWN
+				if (!cargo_outtake_controller_client_.call(outtake_srv))
+				{
+					ROS_ERROR("cargo_outtake_controller_client call failed in intake_cargo_service");
+					success = false;
+				}
 			}
 
 			//log state of action and set result of action
-			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
-			if(timed_out)
+			behaviors::IntakeResult result; //variable to store result of the actionlib action
+			result.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
+			if(!success || timed_out)
 			{
-				ROS_WARN("%s: Timed Out", action_name_.c_str());
-				result_.success = false;
-				as_.setSucceeded(result_);
+				ROS_WARN("%s: Error / Timed Out", action_name_.c_str());
+				result.success = false;
 			}
 			else if(preempted)
 			{
 				ROS_WARN("%s: Preempted", action_name_.c_str());
-				result_.success = false;
-				as_.setSucceeded(result_);
+				result.success = false;
 			}
 			else //implies succeeded
 			{
 				ROS_WARN("%s: Succeeded", action_name_.c_str());
-				result_.success = true;
-				as_.setSucceeded(result_);
+				result.success = true;
 			}
+			as_.setSucceeded(result);
 
 			return;
 		}
@@ -246,12 +256,7 @@ class CargoIntakeAction {
 			}
 			else
 			{
-				static int count = 0;
-				if(count % 100 == 0)
-				{
-					ROS_WARN("intake line break sensor not found in joint_states");
-				}
-				count++;
+				ROS_WARN_THROTTLE(2.0, "intake line break sensor not found in joint_states");
 				linebreak_true_count = 0;
 				linebreak_false_count += 1;
 			}

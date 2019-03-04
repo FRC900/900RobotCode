@@ -18,7 +18,6 @@ namespace panel_intake_controller
 	}
 
 	void PanelIntakeController::starting(const ros::Time &/*time*/) {
-		// TODO : defaults?
 		last_claw_cmd_ = true;
 		claw_cmd_.writeFromNonRT(false); //take the service request for in/out (true/false???) and write to a command variable
 		push_cmd_.writeFromNonRT(false);
@@ -32,7 +31,8 @@ namespace panel_intake_controller
 			cargo_outtake_controller::CargoOuttakeSrv outtake_srv;
 			outtake_srv.request.kicker_in = true;
 			outtake_srv.request.clamp_release = claw_cmd;
-			cargo_outtake_service_.call(outtake_srv);
+			if (!cargo_outtake_service_.call(outtake_srv))
+				ROS_ERROR("cargo_outtake_service call failed in  PanelIntakeController::update");
 		}
 		//if(claw_cmd == true) {
 		//	//ROS_WARN("intake in");
