@@ -241,7 +241,6 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 					throw std::runtime_error("A Digital Input dio_channel was not specified for joint " + joint_name);
 				else
 				{
-
 					XmlRpc::XmlRpcValue &xml_digital_input_dio_channel = joint_params["dio_channel"];
 					if (!xml_digital_input_dio_channel.valid() ||
 							xml_digital_input_dio_channel.getType() != XmlRpc::XmlRpcValue::TypeInt)
@@ -1194,14 +1193,9 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 	{
 		if(prof_pts[slot].size() == 0)
 		{
-			static int fail_flag = 0;
-			if(fail_flag % 100 == 0)
-			{
-				ROS_ERROR("Tried to run custom profile with no points buffered");
-			}
+			ROS_ERROR_THROTTLE(1.0, "Tried to run custom profile with no points buffered");
 			//Potentially add more things to do if this exception is caught
 			//Like maybe set talon to neutral mode or something
-			fail_flag++;
 			return;
 		}
 
