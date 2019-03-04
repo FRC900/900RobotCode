@@ -97,26 +97,6 @@ bool ManualTogglePush = false;
 bool ManualToggleKicker = false;
 bool ManualToggleArm = false;
 
-struct ElevatorGoal
-
-
-
-{
-	ElevatorGoal():
-		index_(0)
-	{
-	}
-	ElevatorGoal(double index):
-		index_(index)
-	{
-	}
-	double index_;
-
-};
-
-realtime_tools::RealtimeBuffer<ElevatorGoal> ElevatorGoal;
-
-
 void dead_zone_check(double &val1, double &val2)
 {
 	if (fabs(val1) <= joystick_deadzone && fabs(val2) <= joystick_deadzone)
@@ -126,13 +106,6 @@ void dead_zone_check(double &val1, double &val2)
 	}
 }
 
-// Use a realtime buffer to store the odom callback data
-// The main teleop code isn't technically realtime but we
-// want it to be the fast part of the code, so for now
-// pretend that is the realtime side of the code
-/*realtime_tools::RealtimeBuffer<ElevatorPos> elevatorPos;
-  realtime_tools::RealtimeBuffer<CubeState> cubeState;
-  realtime_tools::RealtimeBuffer<ElevatorPos> elevatorCmd;*/
 void navXCallback(const sensor_msgs::Imu &navXState)
 {
 	const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
@@ -357,7 +330,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: buttonXPress - Increment Elevator");
 			elevator_cur_setpoint_idx = (elevator_cur_setpoint_idx + 1) % elevator_num_setpoints;
 			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
-            
 		}
 		if(joystick_states_array[0].buttonXButton)
 		{
@@ -921,7 +893,6 @@ int main(int argc, char **argv)
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
 
-
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
 	{
@@ -940,7 +911,6 @@ int main(int argc, char **argv)
 	climber_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ClimbAction>>("/climber/climber_server", true);
 	align_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::AlignAction>>("/align_server/align_server", true);
 	elevator_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ElevatorAction>>("/elevator/elevator_server", true);
-
 
 	run_align = n.serviceClient<std_srvs::SetBool>("/align_with_terabee/run_align");
 
