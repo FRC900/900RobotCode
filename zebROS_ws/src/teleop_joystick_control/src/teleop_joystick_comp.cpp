@@ -541,11 +541,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			panel_intake_controller::PanelIntakeSrv msg;
 		    msg.request.claw_release = ManualToggleClamp;
 		    msg.request.push_extend = ManualTogglePush;
-		    manual_server_panelIn.call(msg);
+			if (!manual_server_panelIn.call(msg))
+				ROS_ERROR("teleop call to manual_server_panelIn failed for buttonAPress");
 			cargo_outtake_controller::CargoOuttakeSrv msg2;
 			msg2.request.kicker_in = ManualToggleKicker;
 			msg2.request.clamp_release = ManualToggleClamp;
-			manual_server_cargoOut.call(msg2);
+			if (!manual_server_cargoOut.call(msg2))
+				ROS_ERROR("teleop call to manual_server_cargoOut failed for buttonAPress");
 		}
 		/*  if(joystick_states_array[1].buttonAButton)
 		  {
@@ -569,7 +571,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			panel_intake_controller::PanelIntakeSrv msg;
 			msg.request.claw_release = ManualToggleClamp;
 			msg.request.push_extend = ManualTogglePush;
-			manual_server_panelIn.call(msg);
+			if (!manual_server_panelIn.call(msg))
+				ROS_ERROR("teleop call to manual_server_panelIn failed for buttonBPress");
 		}
 		/*if(joystick_states_array[1].buttonBButton)
 		{
@@ -593,7 +596,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			cargo_outtake_controller::CargoOuttakeSrv msg;
 			msg.request.kicker_in = ManualToggleKicker;
 			msg.request.clamp_release = ManualToggleClamp;
-			manual_server_cargoOut.call(msg);
+			if (!manual_server_cargoOut.call(msg))
+				ROS_ERROR("teleop call to manual_server_cargoOut failed for buttonXPress");
 		}
 		/*if(joystick_states_array[1].buttonXButton)
 		{
@@ -617,7 +621,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			cargo_intake_controller::CargoIntakeSrv msg;
 			msg.request.intake_arm = ManualToggleArm;
 			msg.request.power = 0.0;
-			manual_server_cargoIn.call(msg);
+			if (!manual_server_cargoIn.call(msg))
+				ROS_ERROR("teleop call to manual_server_cargoIn failed for buttonYPress");
 		}
 /*	if(joystick_states_array[1].buttonYButton)
 	{
