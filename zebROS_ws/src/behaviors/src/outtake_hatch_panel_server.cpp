@@ -39,7 +39,7 @@ class OuttakeHatchPanelAction
 		/* std::map<std::string, std::string> service_connection_header;
 		   service_connection_header["tcp_nodelay"] = "1";
 		   ElevatorSrv_ = nh_.serviceClient<elevator_controller::ElevatorControlS>("/frcrobot/elevator_controller/cmd_posS", false, service_connection_header);
-		   */
+		 */
 		as_.start();
 
 		//do networking stuff?
@@ -156,6 +156,7 @@ class OuttakeHatchPanelAction
 
 			ros::Duration(1).sleep();
 
+			//lower elevator
 			elev_goal.setpoint_index = goal->end_setpoint_index;
 			elev_goal.place_cargo = false;
 			ac_elevator_.sendGoal(elev_goal);
@@ -175,6 +176,22 @@ class OuttakeHatchPanelAction
 				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
 				timed_out = true;
 			}
+
+			//set final state of mechanism - pulled in, clamped (to stay within frame perimeter)
+			//it doesn't matter if timed out or preempted, do anyways			
+			//extend panel mechanism
+			panel_intake_controller::PanelIntakeSrv srv;
+			srv.request.claw_release = false;
+			srv.request.push_extend = false;
+			//send request to controller
+			if(!panel_controller_client_.call(srv))
+			{
+				ROS_ERROR("Panel controller call failed in panel outtake server, final state of mechanism call.");
+				preempted = true;
+			}
+			ros::spinOnce(); //update everything
+
+
 
 			//log state of action and set result of action
 			result_.timed_out = timed_out;
@@ -206,7 +223,7 @@ class OuttakeHatchPanelAction
 		{
 
 		}
-		*/
+		 */
 };
 
 int main(int argc, char** argv)

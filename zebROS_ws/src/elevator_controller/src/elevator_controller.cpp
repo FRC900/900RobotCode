@@ -92,10 +92,10 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 
 	if (zeroed_) // run normally, seeking to various positions
 	{
-		//if (elevator_joint_.getMode() == hardware_interface::TalonMode_Disabled)
-		//{
-		//	position_command_.writeFromNonRT(elevator_joint_.getPosition());
-		//}
+		if (elevator_joint_.getMode() == hardware_interface::TalonMode_Disabled)
+		{
+			position_command_.writeFromNonRT(elevator_joint_.getPosition());
+		}
 		const double setpoint = *(position_command_.readFromRT());
 		elevator_joint_.setCommand(setpoint);
 

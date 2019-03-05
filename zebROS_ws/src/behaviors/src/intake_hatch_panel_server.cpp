@@ -41,7 +41,7 @@ class IntakeHatchPanelAction
 		/* std::map<std::string, std::string> service_connection_header;
 		   service_connection_header["tcp_nodelay"] = "1";
 		   ElevatorSrv_ = nh_.serviceClient<elevator_controller::ElevatorControlS>("/frcrobot/elevator_controller/cmd_posS", false, service_connection_header);
-		   */
+		 */
 		as_.start();
 
 		//do networking stuff?
@@ -166,24 +166,26 @@ class IntakeHatchPanelAction
 					timed_out = true;
 				}
 
-			//test if we got a preempt while waiting
-			if(as_.isPreemptRequested())
-			{
-				preempted = true;
-			}
-
-				//retract the panel mechanism we can reuse the srv variable
-				srv.request.claw_release = false;
-				srv.request.push_extend = false;
-				//send request to controller
-				if(!panel_controller_client_.call(srv)) //note: the call won't happen if preempted was true, because of how && operator works
+				//test if we got a preempt while waiting
+				if(as_.isPreemptRequested())
 				{
-					ROS_ERROR("Panel controller call failed in panel intake server");
 					preempted = true;
 				}
-				ros::spinOnce(); //update everything
 
 			}
+
+			//Set final state - retract the panel mechanism and clamp (to stay within frame perimeter)
+			//it doesn't matter if preempted or timed out, do this anyway
+			panel_intake_controller::PanelIntakeSrv srv;
+			srv.request.claw_release = false;
+			srv.request.push_extend = false;
+			//send request to controller
+			if(!panel_controller_client_.call(srv)) //note: the call won't happen if preempted was true, because of how && operator works
+			{
+				ROS_ERROR("Panel controller call failed in panel intake server");
+				preempted = true;
+			}
+			ros::spinOnce(); //update everything
 
 			//log state of action and set result of action
 			result_.timed_out = timed_out;
@@ -215,7 +217,7 @@ class IntakeHatchPanelAction
 		{
 
 		}
-		*/
+		 */
 };
 
 
