@@ -10,6 +10,7 @@
 #include <ros/console.h>
 #include "behaviors/enumerated_elevator_indices.h"
 #include "frc_msgs/MatchSpecificData.h"
+#include <thread>
 
 
 //define global variables that will be defined based on config values
@@ -46,6 +47,8 @@ class ClimbAction {
 		ros::Subscriber match_data_sub_;
 		ros::Subscriber feedback_subscriber_;
 
+		double cmd_vel_forward_speed_;
+
 
 	public:
 		//make the executeCB function run every time the actionlib server is called
@@ -77,6 +80,20 @@ class ClimbAction {
 		~ClimbAction(void) 
 		{
 		}
+
+                void cmdVelCallback()
+                {
+                    geometry_msgs::Twist cmd_vel_msg;
+
+                    cmd_vel_msg.linear.x = cmd_vel_forward_speed_; 
+                    cmd_vel_msg.linear.y = 0.0;
+                    cmd_vel_msg.linear.z = 0.0;
+                    cmd_vel_msg.angular.x = 0.0;
+                    cmd_vel_msg.angular.y = 0.0;
+                    cmd_vel_msg.angular.z = 0.0;
+
+                    cmd_vel_publisher_.publish(cmd_vel_msg);
+                }
 
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::ClimbGoalConstPtr &goal) {
@@ -123,6 +140,8 @@ class ClimbAction {
 			 */
 			ros::Rate r(20);
 
+                        std::thread cmdVelThread(cmdVelCallback, this);
+
 			//define variables that will be reused for each controller call/actionlib server call
 			//define variables that will be set true if the actionlib action is to be ended
 			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
@@ -134,6 +153,7 @@ class ClimbAction {
 			if(goal->step == 0)
 			{
 				ROS_INFO("Running climber server step 0");
+				cmd_vel_forward_speed_ = 0;
 				//deploy foot using climber controller -----------------------------------------------
 				//define service to send
 				std_srvs::SetBool srv;
@@ -227,25 +247,11 @@ class ClimbAction {
 					goal.raise_intake_after_success = true;
 					//send the goal
 					ae_.sendGoal(goal);
-					double start_time = ros::Time::now().toSec();
-					finished_climb = false;
-					while(ros::ok() && !finished_climb && !preempted && !timed_out)
-					{
-						timed_out = (ros::Time::now().toSec() - start_time) > elevator_climb_timeout;
-						preempted = as_.isPreemptRequested();
 
-						geometry_msgs::Twist cmd_vel_msg;
-						cmd_vel_msg.linear.x = 0.1; // TODO - should be a param
-						cmd_vel_msg.linear.y = 0.0;
-						cmd_vel_msg.linear.z = 0.0;
-						cmd_vel_msg.angular.x = 0.0;
-						cmd_vel_msg.angular.y = 0.0;
-						cmd_vel_msg.angular.z = 0.0;
-						cmd_vel_publisher_.publish(cmd_vel_msg);
-						r.sleep();
-					}
-					if(timed_out) //wait until the action finishes, whether it succeeds, times out, or is preempted
-					{
+					ae_.sendGoal(goal);
+					finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_deploy_timeout)); //wait until the action finishes, whether it succeeds, times out, or is preempted
+					if(!finished_before_timeout){
+						timed_out = true;
 						ROS_ERROR("climber server step 0: second elevator move timed out");
 					}
 
