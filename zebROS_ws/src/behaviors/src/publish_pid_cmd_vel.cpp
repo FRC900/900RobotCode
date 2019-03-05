@@ -96,7 +96,7 @@ int main(int argc, char ** argv)
 	while(ros::ok())
 	{
 		current_time = ros::Time::now();
-		if((current_time - time_since_command).toSec() < 1 && pid_enable && (current_time - time_since_pid_enable).toSec() < 0.5)
+		if((current_time - time_since_command).toSec() < 1 && pid_enable)
 		{
 			if((current_time - time_since_orient).toSec() > 0.1)
 				cmd_vel_msg.angular.z = 0.0;
@@ -106,6 +106,11 @@ int main(int argc, char ** argv)
 				cmd_vel_msg.linear.y = 0.0;
 			time_since_x = ros::Time::now();
 			cmd_vel_pub.publish(cmd_vel_msg);
+		}
+		else {
+			cmd_vel_msg.angular.z = 0.0;
+			cmd_vel_msg.linear.x = 0.0;
+			cmd_vel_msg.linear.y = 0.0;
 		}
 		ros::spinOnce();
 		r.sleep();

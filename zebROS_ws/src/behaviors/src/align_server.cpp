@@ -13,7 +13,7 @@ double x_error_threshold;
 double cargo_error_threshold;
 
 
-bool startup = true; //disable all pid nodes on startup
+//bool startup = true; //disable all pid nodes on startup
 class AlignAction {
 	protected:
 		ros::NodeHandle nh_;
@@ -100,7 +100,7 @@ class AlignAction {
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::AlignGoalConstPtr &goal) {
 			ROS_INFO_STREAM("align server callback called");
-			ros::Rate r(10); // TODO - try running faster and see what happens to overshoot?
+			ros::Rate r(30);
 			startup = false;
 
 			double start_time = ros::Time::now().toSec();
@@ -168,9 +168,6 @@ class AlignAction {
 				ROS_ERROR("brakeSrv call failed in align_server");
 				success = false;
 			}
-			// TODO : is this needed?
-			ros::spinOnce();
-
 
 			//Stop all PID after aligning
 			// TODO : just set starting back to true?
@@ -245,12 +242,12 @@ int main(int argc, char** argv) {
 	std::shared_ptr<ros::Publisher> enable_align_cargo_pub_ = std::make_shared<ros::Publisher>();
 	std::shared_ptr<ros::Publisher> enable_cargo_pub_ = std::make_shared<ros::Publisher>();
 
-	*enable_navx_pub_ = n.advertise<std_msgs::Bool>("navX_pid/pid_enable", 1);
-	*enable_x_pub_ = n.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1);
-	*enable_y_pub_ = n.advertise<std_msgs::Bool>("align_with_terabee/enable_y_pub", 1);
-	*enable_cargo_pub_ = n.advertise<std_msgs::Bool>("cargo_pid/pid_enable", 1);
-	*enable_align_hatch_pub_ = n.advertise<std_msgs::Bool>("align_hatch_pid/pid_enable", 1);
-	*enable_align_cargo_pub_ = n.advertise<std_msgs::Bool>("align_cargo_pid/pid_enable", 1);
+	*enable_navx_pub_ = n.advertise<std_msgs::Bool>("navX_pid/pid_enable", 1, latch = true);
+	*enable_x_pub_ = n.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1, latch = true);
+	*enable_y_pub_ = n.advertise<std_msgs::Bool>("align_with_terabee/enable_y_pub", 1, latch = true);
+	*enable_cargo_pub_ = n.advertise<std_msgs::Bool>("cargo_pid/pid_enable", 1, latch = true);
+	*enable_align_hatch_pub_ = n.advertise<std_msgs::Bool>("align_hatch_pid/pid_enable", 1, latch = true);
+	*enable_align_cargo_pub_ = n.advertise<std_msgs::Bool>("align_cargo_pid/pid_enable", 1, latch = true);
 
 	AlignAction align_action("align_server", enable_navx_pub_, enable_x_pub_, enable_y_pub_, enable_align_hatch_pub_, enable_align_cargo_pub_, enable_cargo_pub_);
 
@@ -271,7 +268,5 @@ int main(int argc, char** argv) {
 		ros::spinOnce();
 		r.sleep();
 	}
-	// TODO : almost certain this isn't needed
-	ros::spin();
 	return 0;
 }
