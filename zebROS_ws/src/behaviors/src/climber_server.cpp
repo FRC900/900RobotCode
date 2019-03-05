@@ -19,7 +19,6 @@ double elevator_deploy_timeout;
 double elevator_climb_timeout;
 double running_forward_timeout;
 double elevator_climb_low_timeout;
-double match_time_remaining;
 double match_time_lock;
 double wait_for_server_timeout;
 double drive_forward_speed;
@@ -49,6 +48,9 @@ class ClimbAction {
 		std::atomic<double> cmd_vel_forward_speed_;
 		std::atomic<bool> stopped_;
 
+		// Data from subscribers
+		double match_time_remaining_;
+		bool finished_climb_;
 
 	public:
 		//make the executeCB function run every time the actionlib server is called
@@ -104,7 +106,7 @@ class ClimbAction {
 
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::ClimbGoalConstPtr &goal) {
-			if(match_time_remaining > match_time_lock)
+			if(match_time_remaining_ > match_time_lock)
 			{
 				ROS_ERROR_STREAM("can not climb, too much time remaining in match");
 				return;
@@ -256,7 +258,6 @@ class ClimbAction {
 					goal.raise_intake_after_success = true;
 					//send the goal
 					ae_.sendGoal(goal);
-
 					finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_deploy_timeout)); //wait until the action finishes, whether it succeeds, times out, or is preempted
 					if(!finished_before_timeout){
 						timed_out = true;
@@ -497,7 +498,7 @@ class ClimbAction {
 		*/
 		void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 		{
-			match_time_remaining = msg.matchTimeRemaining;
+			match_time_remaining_ = msg.matchTimeRemaining;
 		}
 };
 
