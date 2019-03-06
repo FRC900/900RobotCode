@@ -108,8 +108,6 @@ git submodule update
 if [ "$jetson" = true ] ; then
 	sudo mkdir /mnt/900_2
 
-	# TODO - add "Port 5801" to /etc/ssh/sshd_config
-
 	# For tx2 only - install drivers for USB
 	# serial devices
 	if [ "$version" = tx2 ] ; then
@@ -120,7 +118,7 @@ if [ "$jetson" = true ] ; then
 		sudo cp jetson_setup/cdc-acm.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/usb/class/cdc-acm.ko
 		sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/net/can/usb
 		sudo cp jetson_setup/gs_usb.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/net/can/usb/gs_usb.ko
-		sudo cp jetson_setup/can-dev.ko.`uname -r` /lib/modules/4.4.38-tegra/kernel/drivers/net/can/can-dev.ko 
+		sudo cp jetson_setup/can-dev.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/net/can/can-dev.ko 
 		sudo mkdir -p /lib/modules/`uname -r`/kernel/net/can
 		sudo cp jetson_setup/can.ko.`uname -r` /lib/modules/`uname -r`/kernel/net/can/can.ko 
 		sudo cp jetson_setup/can-raw.ko.`uname -r` /lib/modules/`uname -r`/kernel/net/can/can-raw.ko 
@@ -141,6 +139,7 @@ if [ "$jetson" = true ] ; then
 		sudo bash -c "echo \"# Modules for CAN interface\" >> /etc/modules"
 		sudo bash -c "echo can >> /etc/modules"
 		sudo bash -c "echo can_raw >> /etc/modules"
+		sudo bash -c "echo can_dev >> /etc/modules"
 		sudo bash -c "echo gs_can >> /etc/modules"
 		#sudo bash -c "echo mttcan >> /etc/modules"
 
@@ -162,7 +161,6 @@ if [ "$jetson" = true ] ; then
 	chmod 700 .ssh
 
 	sudo mkdir -p /root/.ssh
-	sudo cd /root/.ssh
 	sudo tar -xjf /home/ubuntu/2019RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
 	sudo chmod 640 /root/.ssh/authorized_keys
 	sudo chmod 700 /root/.ssh
@@ -214,7 +212,7 @@ if [ "$jetson" = true ] ; then
     mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
 	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
     cd /home/ubuntu 
-	wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.12.1*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*"
+	wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.14.1*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*"
 	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
 	find /home/ubuntu/devsite.ctr-electronics.com -name \*headers\*zip | xargs -n 1 unzip -o 
 	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
@@ -255,6 +253,7 @@ if [ "$jetson" = true ] ; then
 	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
 	find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o 
     rm -rf /home/ubuntu/frc2019/maven /home/ubuntu/frc2019/jdk
+	sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 
 	# Set up prereqs for deploy script
 	mv ~/2019RobotCode ~/2019RobotCode.orig
