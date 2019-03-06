@@ -20,6 +20,7 @@ double outtake_timeout; //timeout for the elevator call
 double linebreak_debounce_iterations;
 double pause_time_between_pistons;
 double wait_for_server_timeout;
+double pause_before_elevator_lower; //after the outtake
 bool linebreak_true_count = 0;
 bool linebreak_false_count = 0;
 
@@ -172,6 +173,9 @@ class CargoOuttakeAction {
 				ros::spinOnce();
 
 			}
+			
+			//make sure outtake really happened; pause before lowering elevator
+			ros::Duration(pause_before_elevator_lower).sleep();
 
 			ROS_WARN_STREAM("cargo outtake server: elevator down after placing");
 			elevator_goal.setpoint_index = goal->end_setpoint_index;
@@ -304,6 +308,9 @@ int main(int argc, char** argv) {
 
 	if (!n_params_outtake.getParam("outtake_timeout", outtake_timeout))
 		ROS_ERROR("Could not read outtake_timeout in cargo_outtake_server");
+
+	if (!n_params_outtake.getParam("pause_before_elevator_lower", pause_before_elevator_lower))
+		ROS_ERROR("Could not read pause_before_elevator_lower in cargo_outtake_server");
 
 	if (!n_params_outtake.getParam("pause_time_between_pistons", pause_time_between_pistons))
 		ROS_ERROR("Could not read  pause_time_between_pistons in cargo_outtake_server");
