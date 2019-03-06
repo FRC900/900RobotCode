@@ -94,26 +94,44 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 		m.pid_slot.push_back(0);
 		m.pid_p0.push_back(0.0);
 		m.pid_p1.push_back(0.0);
+		m.pid_p2.push_back(0.0);
+		m.pid_p3.push_back(0.0);
 
 		m.pid_i0.push_back(0.0);
 		m.pid_i1.push_back(0.0);
+		m.pid_i2.push_back(0.0);
+		m.pid_i3.push_back(0.0);
 
 		m.pid_d0.push_back(0.0);
 		m.pid_d1.push_back(0.0);
+		m.pid_d2.push_back(0.0);
+		m.pid_d3.push_back(0.0);
 
 		m.pid_f0.push_back(0.0);
 		m.pid_f1.push_back(0.0);
+		m.pid_f2.push_back(0.0);
+		m.pid_f3.push_back(0.0);
 
 		m.pid_izone0.push_back(0);
 		m.pid_izone1.push_back(0);
+		m.pid_izone2.push_back(0);
+		m.pid_izone3.push_back(0);
 		m.pid_allowable_closed_loop_error0.push_back(0);
 		m.pid_allowable_closed_loop_error1.push_back(0);
+		m.pid_allowable_closed_loop_error2.push_back(0);
+		m.pid_allowable_closed_loop_error3.push_back(0);
 		m.pid_max_integral_accumulator0.push_back(0);
 		m.pid_max_integral_accumulator1.push_back(0);
+		m.pid_max_integral_accumulator2.push_back(0);
+		m.pid_max_integral_accumulator3.push_back(0);
 		m.pid_closed_loop_peak_output0.push_back(0);
 		m.pid_closed_loop_peak_output1.push_back(0);
+		m.pid_closed_loop_peak_output2.push_back(0);
+		m.pid_closed_loop_peak_output3.push_back(0);
 		m.pid_closed_loop_period0.push_back(0);
 		m.pid_closed_loop_period1.push_back(0);
+		m.pid_closed_loop_period2.push_back(0);
+		m.pid_closed_loop_period3.push_back(0);
 		m.aux_pid_polarity.push_back(false);
 		m.set_point.push_back(0.0);
 		m.can_id.push_back(0);
@@ -435,6 +453,26 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				m.pid_max_integral_accumulator1[i] = ts->getMaxIntegralAccumulator(1);
 				m.pid_closed_loop_peak_output1[i] = ts->getClosedLoopPeakOutput(1);
 				m.pid_closed_loop_period1[i] = ts->getClosedLoopPeriod(1);
+
+				m.pid_p2[i] = ts->getPidfP(2);
+				m.pid_i2[i] = ts->getPidfI(2);
+				m.pid_d2[i] = ts->getPidfD(2);
+				m.pid_f2[i] = ts->getPidfF(2);
+				m.pid_izone2[i] = ts->getPidfIzone(2);
+				m.pid_allowable_closed_loop_error2[i] = ts->getAllowableClosedLoopError(2);
+				m.pid_max_integral_accumulator2[i] = ts->getMaxIntegralAccumulator(2);
+				m.pid_closed_loop_peak_output2[i] = ts->getClosedLoopPeakOutput(2);
+				m.pid_closed_loop_period2[i] = ts->getClosedLoopPeriod(2);
+
+				m.pid_p3[i] = ts->getPidfP(3);
+				m.pid_i3[i] = ts->getPidfI(3);
+				m.pid_d3[i] = ts->getPidfD(3);
+				m.pid_f3[i] = ts->getPidfF(3);
+				m.pid_izone3[i] = ts->getPidfIzone(3);
+				m.pid_allowable_closed_loop_error3[i] = ts->getAllowableClosedLoopError(3);
+				m.pid_max_integral_accumulator3[i] = ts->getMaxIntegralAccumulator(3);
+				m.pid_closed_loop_peak_output3[i] = ts->getClosedLoopPeakOutput(3);
+				m.pid_closed_loop_period3[i] = ts->getClosedLoopPeriod(3);
 
 				m.aux_pid_polarity[i] = ts->getAuxPidPolarity();
 

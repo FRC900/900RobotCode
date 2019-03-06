@@ -238,6 +238,8 @@ struct CustomProfileStatus
 	}
 };
 
+constexpr size_t TALON_PIDF_SLOTS = 4;
+
 // Class which contains state information
 // about a given Talon SRX. This should include
 // data about the mode the Talon is running in,
@@ -264,15 +266,15 @@ class TalonHWState
 			bus_voltage_(0),
 			motor_output_percent_(0),
 			temperature_(0),
-			pidf_p_ {0, 0},
-			pidf_i_ {0, 0},
-			pidf_d_ {0, 0},
-			pidf_f_ {0, 0},
-			pidf_izone_ {0, 0},
-			allowable_closed_loop_error_ {0, 0},
-			max_integral_accumulator_ {0, 0},
-			closed_loop_peak_output_{1, 1},
-			closed_loop_period_{1, 1},
+			pidf_p_ {0, 0, 0, 0},
+			pidf_i_ {0, 0, 0, 0},
+			pidf_d_ {0, 0, 0, 0},
+			pidf_f_ {0, 0, 0, 0},
+			pidf_izone_ {0, 0, 0, 0},
+			allowable_closed_loop_error_ {0, 0, 0, 0},
+			max_integral_accumulator_ {0, 0, 0, 0},
+			closed_loop_peak_output_{1, 1, 1, 1},
+			closed_loop_period_{1, 1, 1, 1},
 			aux_pid_polarity_(false),
 			closed_loop_error_(0.0),
 			integral_accumulator_(0.0),
@@ -426,91 +428,91 @@ class TalonHWState
 		}
 		double getPidfP(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return pidf_p_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getPidfP. Must be < TALON_PIDF_SLOTS.");
 				return 0.0;
 			}
 		}
 		double getPidfI(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return pidf_i_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getPidfI. Must be < TALON_PIDF_SLOTS.");
 				return 0.0;
 			}
 		}
 		double getPidfD(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return pidf_d_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getPidfD. Must be < TALON_PIDF_SLOTS.");
 				return 0.0;
 			}
 		}
 		double getPidfF(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return pidf_f_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getPidfF. Must be < TALON_PIDF_SLOTS.");
 				return 0.0;
 			}
 		}
 		int getPidfIzone(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return pidf_izone_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getPidfIzone. Must be < TALON_PIDF_SLOTS.");
 				return 0;
 			}
 		}
 		int getAllowableClosedLoopError(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return allowable_closed_loop_error_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getAllowableClosedLoopError. Must be < TALON_PIDF_SLOTS.");
 				return 0;
 			}
 		}
 		double getMaxIntegralAccumulator(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return max_integral_accumulator_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getMaxIntegralAccumulator. Must be < TALON_PIDF_SLOTS.");
 				return 0;
 			}
 		}
 		double getClosedLoopPeakOutput(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return closed_loop_peak_output_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getClosedLoopPeakOutput. Must be < TALON_PIDF_SLOTS.");
 				return 0;
 			}
 		}
 		int getClosedLoopPeriod(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return closed_loop_period_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getClosedLoopPeriod. Must be < TALON_PIDF_SLOTS.");
 				return 0;
 			}
 		}
@@ -1054,66 +1056,66 @@ class TalonHWState
 		}
 		void setPidfP(double pidf_p, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				pidf_p_[index] = pidf_p;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setPidfP. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setPidfI(double pidf_i, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				pidf_i_[index] = pidf_i;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setPidfI. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setPidfD(double pidf_d, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				pidf_d_[index] = pidf_d;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setPidfD. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setPidfF(double pidf_f, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				pidf_f_[index] = pidf_f;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setPidfF. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setPidfIzone(int pidf_izone, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				pidf_izone_[index] = pidf_izone;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setPidfIzone. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setAllowableClosedLoopError(int allowable_closed_loop_error, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				allowable_closed_loop_error_[index] = allowable_closed_loop_error;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setAllowableClosedLoopError. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setMaxIntegralAccumulator(double max_integral_accumulator, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				max_integral_accumulator_[index] = max_integral_accumulator;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setMaxIntegralAccumulator. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setClosedLoopPeakOutput(double closed_loop_peak_output, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				closed_loop_peak_output_[index] = closed_loop_peak_output;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setClosedLoopPeakOutput. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setClosedLoopPeriod(double closed_loop_period, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				closed_loop_period_[index] = closed_loop_period;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setClosedLoopPeriod. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setAuxPidPolarity(bool aux_pid_polarity)
 		{
@@ -1332,15 +1334,15 @@ class TalonHWState
 		double bus_voltage_;
 		double motor_output_percent_;
 		double temperature_;
-		double pidf_p_[2];
-		double pidf_i_[2];
-		double pidf_d_[2];
-		double pidf_f_[2];
-		int    pidf_izone_[2];
-		int    allowable_closed_loop_error_[2];
-		double max_integral_accumulator_[2];
-		double closed_loop_peak_output_[2];
-		int    closed_loop_period_[2];
+		std::array<double, TALON_PIDF_SLOTS> pidf_p_;
+		std::array<double, TALON_PIDF_SLOTS> pidf_i_;
+		std::array<double, TALON_PIDF_SLOTS> pidf_d_;
+		std::array<double, TALON_PIDF_SLOTS> pidf_f_;
+		std::array<int, TALON_PIDF_SLOTS>    pidf_izone_;
+		std::array<int, TALON_PIDF_SLOTS>    allowable_closed_loop_error_;
+		std::array<double, TALON_PIDF_SLOTS> max_integral_accumulator_;
+		std::array<double, TALON_PIDF_SLOTS> closed_loop_peak_output_;
+		std::array<int, TALON_PIDF_SLOTS>    closed_loop_period_;
 		bool   aux_pid_polarity_;
 		double closed_loop_error_;
 		double integral_accumulator_;

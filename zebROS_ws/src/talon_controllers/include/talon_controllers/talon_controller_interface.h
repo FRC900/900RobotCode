@@ -36,15 +36,15 @@ class TalonCIParams
 		// Initialize with relatively sane defaults
 		// for all parameters
 		TalonCIParams(void) :
-			p_{0, 0},
-			i_{0, 0},
-			d_{0, 0},
-			f_{0, 0},
-			izone_{0, 0},
-			allowable_closed_loop_error_{0, 0}, // need better defaults
-			max_integral_accumulator_{0, 0},
-			closed_loop_peak_output_{1, 1},
-			closed_loop_period_{1, 1},
+			p_{0, 0, 0, 0},
+			i_{0, 0, 0, 0},
+			d_{0, 0, 0, 0},
+			f_{0, 0, 0, 0},
+			izone_{0, 0, 0, 0},
+			allowable_closed_loop_error_{0, 0, 0, 0}, // need better defaults
+			max_integral_accumulator_{0, 0, 0, 0},
+			closed_loop_peak_output_{1, 1, 1, 1},
+			closed_loop_period_{1, 1, 1, 1},
 			pidf_slot_(0),
 			aux_pid_polarity_(false),
 			demand1_type_(hardware_interface::DemandType_Neutral),
@@ -130,22 +130,40 @@ class TalonCIParams
 		{
 			p_[0] = config.p0;
 			p_[1] = config.p1;
+			p_[2] = config.p2;
+			p_[3] = config.p3;
 			i_[0] = config.i0;
 			i_[1] = config.i1;
+			i_[2] = config.i2;
+			i_[3] = config.i3;
 			d_[0] = config.d0;
 			d_[1] = config.d1;
+			d_[2] = config.d2;
+			d_[3] = config.d3;
 			f_[0] = config.f0;
 			f_[1] = config.f1;
+			f_[2] = config.f2;
+			f_[3] = config.f3;
 			izone_[0] = config.izone0;
 			izone_[1] = config.izone1;
+			izone_[2] = config.izone2;
+			izone_[3] = config.izone3;
 			allowable_closed_loop_error_[0] = config.allowable_closed_loop_error0;
 			allowable_closed_loop_error_[1] = config.allowable_closed_loop_error1;
+			allowable_closed_loop_error_[2] = config.allowable_closed_loop_error2;
+			allowable_closed_loop_error_[3] = config.allowable_closed_loop_error3;
 			max_integral_accumulator_[0] = config.max_integral_accumulator0;
 			max_integral_accumulator_[1] = config.max_integral_accumulator1;
+			max_integral_accumulator_[2] = config.max_integral_accumulator2;
+			max_integral_accumulator_[3] = config.max_integral_accumulator3;
 			closed_loop_peak_output_[0] = config.closed_loop_peak_output0;
 			closed_loop_peak_output_[1] = config.closed_loop_peak_output1;
+			closed_loop_peak_output_[2] = config.closed_loop_peak_output2;
+			closed_loop_peak_output_[3] = config.closed_loop_peak_output3;
 			closed_loop_period_[0] = config.closed_loop_period0;
 			closed_loop_period_[1] = config.closed_loop_period1;
+			closed_loop_period_[2] = config.closed_loop_period2;
+			closed_loop_period_[3] = config.closed_loop_period3;
 			pidf_slot_ = config.pid_config;
 			aux_pid_polarity_ = config.aux_pid_polarity;
 			demand1_type_ = static_cast<hardware_interface::DemandType>(config.demand1_type);
@@ -236,22 +254,40 @@ class TalonCIParams
 			TalonConfigConfig config;
 			config.p0            = p_[0];
 			config.p1            = p_[1];
+			config.p2            = p_[2];
+			config.p3            = p_[3];
 			config.i0            = i_[0];
 			config.i1            = i_[1];
+			config.i2            = i_[2];
+			config.i3            = i_[3];
 			config.d0            = d_[0];
 			config.d1            = d_[1];
+			config.d2            = d_[2];
+			config.d3            = d_[3];
 			config.f0            = f_[0];
 			config.f1            = f_[1];
+			config.f2            = f_[2];
+			config.f3            = f_[3];
 			config.izone0        = izone_[0];
 			config.izone1        = izone_[1];
+			config.izone2        = izone_[2];
+			config.izone3        = izone_[3];
 			config.allowable_closed_loop_error0 = allowable_closed_loop_error_[0];
 			config.allowable_closed_loop_error1 = allowable_closed_loop_error_[1];
+			config.allowable_closed_loop_error2 = allowable_closed_loop_error_[2];
+			config.allowable_closed_loop_error3 = allowable_closed_loop_error_[3];
 			config.max_integral_accumulator0 = max_integral_accumulator_[0];
 			config.max_integral_accumulator1 = max_integral_accumulator_[1];
+			config.max_integral_accumulator2 = max_integral_accumulator_[2];
+			config.max_integral_accumulator3 = max_integral_accumulator_[3];
 			config.closed_loop_peak_output0 = closed_loop_peak_output_[0];
 			config.closed_loop_peak_output1 = closed_loop_peak_output_[1];
+			config.closed_loop_peak_output2 = closed_loop_peak_output_[2];
+			config.closed_loop_peak_output3 = closed_loop_peak_output_[3];
 			config.closed_loop_period0 = closed_loop_period_[0];
 			config.closed_loop_period1 = closed_loop_period_[1];
+			config.closed_loop_period2 = closed_loop_period_[2];
+			config.closed_loop_period3 = closed_loop_period_[3];
 			config.pid_config    = pidf_slot_;
 			config.aux_pid_polarity = aux_pid_polarity_;
 			config.demand1_type = demand1_type_;
@@ -476,7 +512,7 @@ class TalonCIParams
 			n.getParam("demand1_value", demand1_value_);
 			if (!n.getParam("close_loop_values", pid_param_list))
 				return true;
-			if (pid_param_list.size() <= 2)
+			if (pid_param_list.size() <= hardware_interface::TALON_PIDF_SLOTS)
 			{
 				for (int i = 0; i < pid_param_list.size(); i++)
 				{
@@ -496,7 +532,7 @@ class TalonCIParams
 			}
 			else
 			{
-				throw std::runtime_error("More than two pid_param values");
+				throw std::runtime_error("Too many pid_param values");
 			}
 			return false;
 		}
@@ -719,15 +755,15 @@ class TalonCIParams
 		}
 
 		std::string joint_name_;
-		double p_[2];
-		double i_[2];
-		double d_[2];
-		double f_[2];
-		int    izone_[2];
-		int    allowable_closed_loop_error_[2];
-		double max_integral_accumulator_[2];
-		double closed_loop_peak_output_[2];
-		int    closed_loop_period_[2];
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> p_;
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> i_;
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> d_;
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> f_;
+		std::array<int, hardware_interface::TALON_PIDF_SLOTS>    izone_;
+		std::array<int, hardware_interface::TALON_PIDF_SLOTS>    allowable_closed_loop_error_;
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> max_integral_accumulator_;
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> closed_loop_peak_output_;
+		std::array<int, hardware_interface::TALON_PIDF_SLOTS>    closed_loop_period_;
 		int    pidf_slot_;
 		bool   aux_pid_polarity_;
 		hardware_interface::DemandType demand1_type_;
@@ -1642,7 +1678,7 @@ class TalonControllerInterface
 			// but don't set mode - either force the caller to
 			// set it or use one of the derived, fixed-mode
 			// classes instead
-			for (int i = 0; i < 2; i++)
+			for (int i = 0; i < hardware_interface::TALON_PIDF_SLOTS; i++)
 			{
 				talon->setP(params.p_[i], i);
 				talon->setI(params.i_[i], i);
