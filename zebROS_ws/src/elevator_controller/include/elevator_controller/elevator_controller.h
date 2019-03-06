@@ -54,6 +54,7 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 			double elevator_zeroing_percent_output_;
 			double slow_peak_output_;
 			double last_setpoint_;
+			hardware_interface::TalonMode last_mode_;
 
 			ros::Time last_time_down_;
 			double elevator_zeroing_timeout_;

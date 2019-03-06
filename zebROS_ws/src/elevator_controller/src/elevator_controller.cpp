@@ -92,7 +92,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 
 	if (zeroed_) // run normally, seeking to various positions
 	{
-		if (elevator_joint_.getMode() == hardware_interface::TalonMode_Disabled)
+		if (elevator_joint_.getMode() == hardware_interface::TalonMode_Disabled && last_mode_ != hardware_interface::TalonMode_Disabled)
 		{
 			position_command_.writeFromNonRT(elevator_joint_.getPosition());
 		}
@@ -164,6 +164,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		}
 	}
         last_position_ = elevator_joint_.getPosition();
+        last_mode_ = elevator_joint_.getMode();
 }
 
 void ElevatorController::stopping(const ros::Time &/*time*/)
