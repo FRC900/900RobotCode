@@ -2,6 +2,7 @@
 climber_server:
     deploy_timeout: 8.0
     climb_timeout: 8.0
-    running_forward_timeout: 2.0
+    running_forward_timeout: 10.0
     climb_low_timeout: 8.0
     match_time_lock: 225
+    drive_forward_speed: 0.3
