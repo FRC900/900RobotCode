@@ -15,6 +15,7 @@ actionlib_lift_params:
         deploy_position: 0.9
         climb_position: 0.0
         climb_low_position: 0.229539715584
+        climb_raise_position: 0.83
         deploy_timeout: 5.0
         climb_timeout: 15.0
         climb_low_timeout: 10.0

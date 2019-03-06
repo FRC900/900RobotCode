@@ -386,7 +386,7 @@ class ClimbAction {
 				//call the elevator actionlib server
 				//define the goal to send
 				behaviors::ElevatorGoal goal;
-				goal.setpoint_index = ELEVATOR_DEPLOY;
+				goal.setpoint_index = ELEVATOR_RAISE;
 				goal.place_cargo = 0; //doesn't actually do anything 
 				goal.raise_intake_after_success = true;
 				//send the goal
@@ -551,7 +551,7 @@ int main(int argc, char** argv) {
 	if (!n_lift_params.getParam("drive_forward_speed", drive_forward_speed))
 	{
 		ROS_ERROR("Could not read drive_forward_speed in climber_server");
-		elevator_drive_forward_speed = 20;
+		drive_forward_speed = 0.2;
 	}
 
 	ros::spin();

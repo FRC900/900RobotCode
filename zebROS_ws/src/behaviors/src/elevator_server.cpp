@@ -393,6 +393,14 @@ int main(int argc, char** argv)
 	}
 	elevator_action.climb_locations[ELEVATOR_CLIMB_LOW - min_climb_idx] = climb_low_position;
 
+	double climb_raise_position;
+	if (!n_params.getParam("climber/climb_raise_position", climb_raise_position))
+	{
+		ROS_ERROR_STREAM("Could not read climb_low_position");
+		climb_raise_position = -1; //signals to server to preempt
+	}
+	elevator_action.climb_locations[ELEVATOR_RAISE - min_climb_idx] = climb_raise_position;
+
 	if(!n_params.getParam("carriage_height", carriage_height))
 	{
 		ROS_ERROR_STREAM("Could not read carriage_height");

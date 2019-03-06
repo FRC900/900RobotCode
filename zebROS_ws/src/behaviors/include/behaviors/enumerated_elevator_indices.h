@@ -11,5 +11,6 @@ enum ElevatorLocation
 	ELEVATOR_DEPLOY, //height at which we can engage climber with elevator
 	ELEVATOR_CLIMB, //height to make robot rise
 	ELEVATOR_CLIMB_LOW, //height to boost back of robot up once on platform
+	ELEVATOR_RAISE,
 	ELEVATOR_MAX_INDEX, //last index in list
 };
