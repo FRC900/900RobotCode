@@ -101,7 +101,6 @@ class AlignAction {
 		void executeCB(const behaviors::AlignGoalConstPtr &goal) {
 			ROS_INFO_STREAM("align server callback called");
 			ros::Rate r(30);
-			startup = false;
 
 			double start_time = ros::Time::now().toSec();
 			bool preempted = false;
@@ -242,31 +241,24 @@ int main(int argc, char** argv) {
 	std::shared_ptr<ros::Publisher> enable_align_cargo_pub_ = std::make_shared<ros::Publisher>();
 	std::shared_ptr<ros::Publisher> enable_cargo_pub_ = std::make_shared<ros::Publisher>();
 
-	*enable_navx_pub_ = n.advertise<std_msgs::Bool>("navX_pid/pid_enable", 1, latch = true);
-	*enable_x_pub_ = n.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1, latch = true);
-	*enable_y_pub_ = n.advertise<std_msgs::Bool>("align_with_terabee/enable_y_pub", 1, latch = true);
-	*enable_cargo_pub_ = n.advertise<std_msgs::Bool>("cargo_pid/pid_enable", 1, latch = true);
-	*enable_align_hatch_pub_ = n.advertise<std_msgs::Bool>("align_hatch_pid/pid_enable", 1, latch = true);
-	*enable_align_cargo_pub_ = n.advertise<std_msgs::Bool>("align_cargo_pid/pid_enable", 1, latch = true);
+	*enable_navx_pub_ = n.advertise<std_msgs::Bool>("navX_pid/pid_enable", 1,  true);
+	*enable_x_pub_ = n.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1,  true);
+	*enable_y_pub_ = n.advertise<std_msgs::Bool>("align_with_terabee/enable_y_pub", 1,  true);
+	*enable_cargo_pub_ = n.advertise<std_msgs::Bool>("cargo_pid/pid_enable", 1,  true);
+	*enable_align_hatch_pub_ = n.advertise<std_msgs::Bool>("align_hatch_pid/pid_enable", 1,  true);
+	*enable_align_cargo_pub_ = n.advertise<std_msgs::Bool>("align_cargo_pid/pid_enable", 1,  true);
 
 	AlignAction align_action("align_server", enable_navx_pub_, enable_x_pub_, enable_y_pub_, enable_align_hatch_pub_, enable_align_cargo_pub_, enable_cargo_pub_);
 
 	ros::Rate r(20);
-	while(ros::ok()) {
-		//Stop PID nodes from defaulting true
-		if(startup) {
-			std_msgs::Bool false_msg;
-			false_msg.data = false;
-			enable_navx_pub_->publish(false_msg);
-			enable_x_pub_->publish(false_msg);
-			enable_y_pub_->publish(false_msg);
-			enable_cargo_pub_->publish(false_msg);
-			enable_align_hatch_pub_->publish(false_msg);
-			enable_align_cargo_pub_->publish(false_msg);
-		}
-
-		ros::spinOnce();
-		r.sleep();
-	}
+	//Stop PID nodes from defaulting true
+	std_msgs::Bool false_msg;
+	false_msg.data = false;
+	enable_navx_pub_->publish(false_msg);
+	enable_x_pub_->publish(false_msg);
+	enable_y_pub_->publish(false_msg);
+	enable_cargo_pub_->publish(false_msg);
+	enable_align_hatch_pub_->publish(false_msg);
+	enable_align_cargo_pub_->publish(false_msg);
 	return 0;
 }
