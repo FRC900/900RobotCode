@@ -110,7 +110,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES state_listener
 #  CATKIN_DEPENDS controller_interface realtime_tools roscpp
-  DEPENDS system_lib message_runtime talon_state_controller frc_msgs frc_interfaces 
+  DEPENDS message_runtime talon_state_controller frc_msgs frc_interfaces 
 )
 
 ###########

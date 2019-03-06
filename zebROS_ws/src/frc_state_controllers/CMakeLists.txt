@@ -113,7 +113,7 @@ catkin_package(
   INCLUDE_DIRS include
   #  LIBRARIES frc_state_controllers
   CATKIN_DEPENDS controller_interface hardware_interface pluginlib realtime_tools roscpp std_msgs frc_interfaces frc_msgs
-  DEPENDS system_lib
+  #DEPENDS system_lib
 )
 
 ###########
