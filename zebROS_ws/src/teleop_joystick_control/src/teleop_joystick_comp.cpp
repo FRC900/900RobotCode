@@ -249,6 +249,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
+			goal.trigger = true;
 			if(cargo_linebreak_true_count > linebreak_debounce_iterations) {
 				goal.has_cargo = true;
 			}

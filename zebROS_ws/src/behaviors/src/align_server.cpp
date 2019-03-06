@@ -260,5 +260,7 @@ int main(int argc, char** argv) {
 	enable_cargo_pub_->publish(false_msg);
 	enable_align_hatch_pub_->publish(false_msg);
 	enable_align_cargo_pub_->publish(false_msg);
+    
+    ros::spin();
 	return 0;
 }
