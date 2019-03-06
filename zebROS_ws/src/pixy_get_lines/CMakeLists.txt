@@ -111,7 +111,7 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 	## CATKIN_DEPENDS: catkin_packages dependent projects also need
 	## DEPENDS: system dependencies of this project that dependent projects also need
 	catkin_package(
-		#INCLUDE_DIRS include
+		#	INCLUDE_DIRS include
 	#  LIBRARIES pixy_get_lines
 	  CATKIN_DEPENDS message_generation roscpp message_runtime std_msgs
 	#  DEPENDS system_lib
@@ -136,7 +136,7 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 	  ${PIXY_SRC_BASE}/common/inc
 	  ${PIXYARDUINO_BASE}
 	  ${LIBUSB_1_INCLUDE_DIRS}
-	  #${libusb_INCLUDE_DIRS}
+	  ${libusb_INCLUDE_DIRS}
 	)
 
 	## Declare a C++ library
@@ -175,7 +175,7 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 	## Specify libraries to link a library or executable target against
 	target_link_libraries(${PROJECT_NAME}_node
 	  ${catkin_LIBRARIES}
-	  ${LIBUSB_1_LIBRARY}
+	  ${LIBUSB_1_LIBRARIES}
 	)
 
 	#############
