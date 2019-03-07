@@ -80,12 +80,12 @@ class AlignAction {
 		void navx_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold);
-			ROS_WARN_STREAM_THROTTLE(1, "navX error: " << fabs(msg.data[0]));
+			//ROS_WARN_STREAM_THROTTLE(1, "navX error: " << fabs(msg.data[0]));
 		}
 		void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold);
-			ROS_WARN_STREAM("distance error: " << msg.data[0]);
+			//ROS_WARN_STREAM("distance error: " << msg.data[0]);
 		}
 		void y_error_cb(const std_msgs::Bool &msg)
 		{
@@ -94,7 +94,7 @@ class AlignAction {
 		void cargo_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			cargo_aligned_ = (fabs(msg.data[0]) < cargo_error_threshold);
-			ROS_WARN_STREAM_THROTTLE(1, "cargo error: " << msg.data[0]);
+			//ROS_WARN_STREAM_THROTTLE(1, "cargo error: " << msg.data[0]);
 		}
 
 		//define the function to be executed when the actionlib server is called
@@ -123,10 +123,16 @@ class AlignAction {
 				std_msgs::Bool terabee_msg;
 				std_msgs::Bool enable_align_msg;
 
-				orient_msg.data = true && !orient_timed_out;							//Publish true to the navX pid node throughout the action until orient_timed_out
-				distance_msg.data = (orient_aligned_ || orient_timed_out) && !x_aligned_;				//Enable distance pid once orient is aligned or timed out
-				terabee_msg.data = (orient_aligned_ || orient_timed_out) && x_aligned_; //Enable terabee node when distance is aligned and  orient aligns or orient times out
-				enable_align_msg.data = !aligned;										//Enable publishing pid vals until aligned
+				orient_msg.data = true && !orient_timed_out;							    //Publish true to the navX pid node throughout the action until orient_timed_out
+
+
+                // -+-+- Enable distance after orient aligned -+-+-
+				distance_msg.data = (orient_aligned_ || orient_timed_out) && !x_aligned_;	//Enable distance pid once orient is aligned or timed out
+                // -+-+- Enable distance while orient aligned -+-+-
+				//distance_msg.data = true && !x_aligned_;	                                //Enable distance pid while orient is aligning
+
+				terabee_msg.data = (orient_aligned_ || orient_timed_out) && x_aligned_;     //Enable terabee node when distance is aligned and  orient aligns or orient times out
+				enable_align_msg.data = !aligned;										    //Enable publishing pid vals until aligned
 
 				//CARGO VS HATCH PANEL
 				//only difference is enable_cargo_pub_ vs enable_y_pub_

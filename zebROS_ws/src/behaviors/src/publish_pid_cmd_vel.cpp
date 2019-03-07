@@ -96,7 +96,7 @@ int main(int argc, char ** argv)
 	while(ros::ok())
 	{
 		current_time = ros::Time::now();
-		if((current_time - time_since_command).toSec() < 1 && pid_enable)
+		if((current_time - time_since_command).toSec() < 0.5 && pid_enable)
 		{
 			if((current_time - time_since_orient).toSec() > 0.1)
 				cmd_vel_msg.angular.z = 0.0;
