@@ -2239,7 +2239,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 							break;
 					}
 
-#ifndef DEBUG_WRITE
+#ifdef DEBUG_WRITE
 					ROS_INFO_STREAM("called Set(4) on " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
 									" out_mode = " << static_cast<int>(out_mode) << " command = " << command <<
 									" demand1_type_phoenix = " << static_cast<int>(demand1_type_phoenix) <<
