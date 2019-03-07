@@ -11,7 +11,8 @@
 
 //define global variables that will be defined based on config values
 double elevator_timeout;
-double pause_time_between_pistons;
+double pause_time_after_extend;
+double pause_time_after_clamp;
 double dist_up_after;
 double wait_for_server_timeout;
 
@@ -124,7 +125,7 @@ class IntakeHatchPanelAction
 
 
 				//pause for a bit
-				ros::Duration(pause_time_between_pistons).sleep();
+				ros::Duration(pause_time_after_extend).sleep();
 
 
 				//grab the panel - we can reuse the srv variable
@@ -140,7 +141,7 @@ class IntakeHatchPanelAction
 
 
 				//pause for a bit
-				ros::Duration(pause_time_between_pistons).sleep();
+				ros::Duration(pause_time_after_clamp).sleep();
 				//
 				//move elevator up a bit after
 				behaviors::ElevatorGoal elev_goal;
@@ -236,8 +237,10 @@ int main(int argc, char** argv)
 		ROS_ERROR("Could not read wait_for_server_timeout in panel_intake_sever");
 	if (!n_panel_params.getParam("elevator_timeout", elevator_timeout))
 		ROS_ERROR("Could not read elevator_timeout in panel_intake_sever");
-	if (!n_panel_params.getParam("pause_time_between_pistons", pause_time_between_pistons))
-		ROS_ERROR("Could not read pause_time_between_pistons in panel_intake_sever");
+	if (!n_panel_params.getParam("pause_time_after_extend", pause_time_after_extend))
+		ROS_ERROR("Could not read pause_time_after_extend in panel_intake_sever");
+	if (!n_panel_params.getParam("pause_time_after_clamp", pause_time_after_clamp))
+		ROS_ERROR("Could not read pause_time_after_clamp in panel_intake_sever");
 	if (!n_panel_params.getParam("dist_up_after", dist_up_after))
 		ROS_ERROR("Could not read dist_up_after in panel_intake_sever");
 
