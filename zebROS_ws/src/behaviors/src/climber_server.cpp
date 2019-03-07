@@ -388,7 +388,7 @@ class ClimbAction {
 				//define the goal to send
 				behaviors::ElevatorGoal goal;
 				goal.setpoint_index = ELEVATOR_RAISE;
-				goal.place_cargo = 0; //doesn't actually do anything 
+				goal.place_cargo = 0; //doesn't actually do anything
 				goal.raise_intake_after_success = true;
 				//send the goal
 				ae_.sendGoal(goal);
@@ -400,6 +400,18 @@ class ClimbAction {
 				if(!ae_.getResult()->success) //this might mean preempted or timed out
 				{
 					preempted = true;
+				}
+				else {
+					//Drive forward until drive forward timeout at end of game
+					ROS_INFO_STREAM("Driving forward at end of climb");
+					double start_time = ros::Time::now().toSec();
+					
+					while(ros::ok() && !preempted && !timed_out)
+					{
+						timed_out = (ros::Time::now().toSec() -  start_time) > running_forward_timeout;
+						preempted = as_.isPreemptRequested();
+						r.sleep();
+					}
 				}
 
 				//check if we got a preempt while we were waiting
@@ -414,6 +426,7 @@ class ClimbAction {
 					ROS_INFO("Running climber server step 1 preempt/timeout handling - preempting elevator server");
 					ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
+
 			}
 
 			//log state of action and set result of action
