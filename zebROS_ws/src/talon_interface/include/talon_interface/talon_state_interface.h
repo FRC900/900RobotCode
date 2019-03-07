@@ -61,7 +61,6 @@ enum FeedbackDevice
 
 enum RemoteFeedbackDevice
 {
-	RemoteFeedbackDevice_Uninitialized,
 	RemoteFeedbackDevice_FactoryDefaultOff,
 	RemoteFeedbackDevice_SensorSum,
 	RemoteFeedbackDevice_SensorDifference,
@@ -71,6 +70,24 @@ enum RemoteFeedbackDevice
 	RemoteFeedbackDevice_Last
 };
 
+enum RemoteSensorSource
+{
+	RemoteSensorSource_Off,
+	RemoteSensorSource_TalonSRX_SelectedSensor,
+	RemoteSensorSource_Pigeon_Yaw,
+	RemoteSensorSource_Pigeon_Pitch,
+	RemoteSensorSource_Pigeon_Roll,
+	RemoteSensorSource_CANifier_Quadrature,
+	RemoteSensorSource_CANifier_PWMInput0,
+	RemoteSensorSource_CANifier_PWMInput1,
+	RemoteSensorSource_CANifier_PWMInput2,
+	RemoteSensorSource_CANifier_PWMInput3,
+	RemoteSensorSource_GadgeteerPigeon_Yaw,
+	RemoteSensorSource_GadgeteerPigeon_Pitch,
+	RemoteSensorSource_GadgeteerPigeon_Roll,
+	RemoteSensorSource_Last
+
+};
 enum LimitSwitchSource
 {
 	LimitSwitchSource_Uninitialized,
@@ -274,9 +291,10 @@ class TalonHWState
 			neutral_mode_(NeutralMode_Uninitialized),
 			neutral_output_(false),
 			encoder_feedback_(FeedbackDevice_Uninitialized),
-			encoder_feedback_remote_(RemoteFeedbackDevice_Uninitialized),
 			feedback_coefficient_(1.0),
+			encoder_feedback_remote_(RemoteFeedbackDevice_FactoryDefaultOff),
 			encoder_ticks_per_rotation_(4096),
+			remote_feedback_filter_{RemoteSensorSource_Off, RemoteSensorSource_Off},
 
 			//output shaping
 			close_loop_ramp_(0),
@@ -596,6 +614,15 @@ class TalonHWState
 		double getFeedbackCoefficient(void) const
 		{
 			return feedback_coefficient_;
+		}
+		RemoteSensorSource getRemoteFeedbackFilter(size_t remote_ordinal) const
+		{
+			if (remote_ordinal >= 2)
+			{
+				ROS_WARN("getRemoteFeedbackFilter : remote_ordinal too large");
+				return RemoteSensorSource_Last;
+			}
+			return remote_feedback_filter_[remote_ordinal];
 		}
 		int getEncoderTicksPerRotation(void) const
 		{
@@ -1180,7 +1207,7 @@ class TalonHWState
 		}
 		void setRemoteEncoderFeedback(RemoteFeedbackDevice encoder_feedback_remote)
 		{
-			if ((encoder_feedback_remote >= RemoteFeedbackDevice_Uninitialized) &&
+			if ((encoder_feedback_remote >= RemoteFeedbackDevice_FactoryDefaultOff) &&
 				(encoder_feedback_remote <  RemoteFeedbackDevice_Last) )
 				encoder_feedback_remote_ = encoder_feedback_remote;
 			else
@@ -1189,6 +1216,21 @@ class TalonHWState
 		void setFeedbackCoefficient(double feedback_coefficient)
 		{
 			feedback_coefficient_ = feedback_coefficient;
+		}
+		void setRemoteFeedbackFilter(RemoteSensorSource remote_sensor_source, size_t remote_ordinal)
+		{
+			if (remote_ordinal >= 2)
+			{
+				ROS_WARN("setRemoteFeedbackFilter : remote_ordinal too large");
+				return;
+			}
+			if ((remote_sensor_source <  RemoteSensorSource_Off) ||
+			    (remote_sensor_source >= RemoteSensorSource_Last))
+			{
+				ROS_WARN("setRemoteFeedbackFilter : remote_sensor_source out of range");
+				return;
+			}
+			remote_feedback_filter_[remote_ordinal] = remote_sensor_source;
 		}
 		void setEncoderTicksPerRotation(int encoder_ticks_per_rotation)
 		{
@@ -1261,9 +1303,10 @@ class TalonHWState
 		bool        neutral_output_;
 
 		FeedbackDevice encoder_feedback_;
-		RemoteFeedbackDevice encoder_feedback_remote_;
 		double feedback_coefficient_;
+		RemoteFeedbackDevice encoder_feedback_remote_;
 		int encoder_ticks_per_rotation_;
+		std::array<RemoteSensorSource, 2> remote_feedback_filter_;
 
 		// output shaping
 		double close_loop_ramp_;

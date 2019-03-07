@@ -35,6 +35,9 @@ float64[] motor_output_percent
 float64[] temperature
 string[]  feedback_sensor
 float64[] feedback_coefficient
+string[]  remote_feedback_sensor
+string[]  remote_feedback_filter0
+string[]  remote_feedback_filter1
 int32[]   encoder_ticks_per_rotation
 int32[]   pid_slot
 float64[] pid_p0

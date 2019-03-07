@@ -80,6 +80,9 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 
 		m.feedback_sensor.push_back("");
 		m.feedback_coefficient.push_back(0.0);
+		m.remote_feedback_sensor.push_back("");
+		m.remote_feedback_filter0.push_back("");
+		m.remote_feedback_filter1.push_back("");
 		m.encoder_ticks_per_rotation.push_back(0);
 
 		m.pid_slot.push_back(0);
@@ -219,7 +222,7 @@ void TalonStateController::starting(const ros::Time &time)
 	last_publish_time_ = time;
 }
 
-std::string TalonStateController::limitSwitchSourceToString(const hardware_interface::LimitSwitchSource source)
+std::string TalonStateController::limitSwitchSourceToString(const hardware_interface::LimitSwitchSource source) const
 {
 	switch (source)
 	{
@@ -238,7 +241,7 @@ std::string TalonStateController::limitSwitchSourceToString(const hardware_inter
 	}
 }
 
-std::string TalonStateController::remoteLimitSwitchSourceToString(const hardware_interface::RemoteLimitSwitchSource source)
+std::string TalonStateController::remoteLimitSwitchSourceToString(const hardware_interface::RemoteLimitSwitchSource source) const
 {
 	switch (source)
 	{
@@ -254,7 +257,7 @@ std::string TalonStateController::remoteLimitSwitchSourceToString(const hardware
 			return "Unknown";
 	}
 }
-std::string TalonStateController::limitSwitchNormalToString(const hardware_interface::LimitSwitchNormal normal)
+std::string TalonStateController::limitSwitchNormalToString(const hardware_interface::LimitSwitchNormal normal) const
 {
 	switch (normal)
 	{
@@ -268,7 +271,41 @@ std::string TalonStateController::limitSwitchNormalToString(const hardware_inter
 			return "Disabled";
 		default:
 			return "Unknown";
+	}
+}
 
+std::string TalonStateController::remoteSensorSourceToString(const hardware_interface::RemoteSensorSource remote_sensor_source) const
+{
+	switch (remote_sensor_source)
+	{
+		case hardware_interface::RemoteSensorSource_Off:
+			return "Off";
+		case hardware_interface::RemoteSensorSource_TalonSRX_SelectedSensor:
+			return "TalonSRX_SelectedSensor";
+		case hardware_interface::RemoteSensorSource_Pigeon_Yaw:
+			return "Pigeon_Yaw";
+		case hardware_interface::RemoteSensorSource_Pigeon_Pitch:
+			return "Pigeon_Pitch";
+		case hardware_interface::RemoteSensorSource_Pigeon_Roll:
+			return "Pigeon_Roll";
+		case hardware_interface::RemoteSensorSource_CANifier_Quadrature:
+			return "CANifier_Quadrature";
+		case hardware_interface::RemoteSensorSource_CANifier_PWMInput0:
+			return "CANifier_PWMInput0";
+		case hardware_interface::RemoteSensorSource_CANifier_PWMInput1:
+			return "CANifier_PWMInput1";
+		case hardware_interface::RemoteSensorSource_CANifier_PWMInput2:
+			return "CANifier_PWMInput2";
+		case hardware_interface::RemoteSensorSource_CANifier_PWMInput3:
+			return "CANifier_PWMInput3";
+		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Yaw:
+			return "GadgeteerPigeon_Yaw";
+		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Pitch:
+			return "GadgeteerPigeon_Pitch";
+		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Roll:
+			return "GadgeteerPigeon_Roll";
+		default:
+			return "Unknown";
 	}
 }
 
@@ -341,6 +378,32 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 						break;
 				}
 				m.feedback_coefficient[i] = ts->getFeedbackCoefficient();
+				switch (ts->getRemoteEncoderFeedback())
+				{
+					case hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff:
+						m.remote_feedback_sensor[i] = "FactoryDefaultOff";
+						break;
+					case hardware_interface::RemoteFeedbackDevice_SensorSum:
+						m.remote_feedback_sensor[i] = "SensorSum";
+						break;
+					case hardware_interface::RemoteFeedbackDevice_SensorDifference:
+						m.remote_feedback_sensor[i] = "SensorDifference";
+						break;
+					case hardware_interface::RemoteFeedbackDevice_RemoteSensor0:
+						m.remote_feedback_sensor[i] = "RemoteSensor0";
+						break;
+					case hardware_interface::RemoteFeedbackDevice_RemoteSensor1:
+						m.remote_feedback_sensor[i] = "RemoteSensor1";
+						break;
+					case hardware_interface::RemoteFeedbackDevice_SoftwareEmulatedSensor:
+						m.remote_feedback_sensor[i] = "SoftwareEmulatedSensor";
+						break;
+					default:
+						m.remote_feedback_sensor[i] = "Unknown";
+						break;
+				}
+				m.remote_feedback_filter0[i] = remoteSensorSourceToString(ts->getRemoteFeedbackFilter(0));
+				m.remote_feedback_filter1[i] = remoteSensorSourceToString(ts->getRemoteFeedbackFilter(1));
 				m.encoder_ticks_per_rotation[i] = ts->getEncoderTicksPerRotation();
 
 				//publish the array of PIDF values

@@ -1643,6 +1643,26 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 
+		ctre::phoenix::motorcontrol::RemoteFeedbackDevice talon_remote_feedback_device;
+		hardware_interface::RemoteFeedbackDevice internal_remote_feedback_device;
+		if (tc.remoteEncoderFeedbackChanged(internal_remote_feedback_device) &&
+			convertRemoteFeedbackDevice(internal_remote_feedback_device, talon_remote_feedback_device))
+		{
+			// Check for errors on Talon writes. If it fails, used the reset() call to
+			// set the changed var for the config items to true. This will trigger a re-try
+			// the next time through the loop.
+			const bool rc = safeTalonCall(victor->ConfigSelectedFeedbackSensor(talon_remote_feedback_device, pidIdx, timeoutMs),"ConfigSelectedFeedbackSensor (Remote)");
+			if (rc)
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " remote feedback");
+				ts.setRemoteEncoderFeedback(internal_remote_feedback_device);
+			}
+			else
+			{
+				tc.resetRemoteEncoderFeedback();
+			}
+		}
+
 		// Get mode that is about to be commanded
 		const hardware_interface::TalonMode talon_mode = tc.getMode();
 		const int encoder_ticks_per_rotation = tc.getEncoderTicksPerRotation();
@@ -2047,11 +2067,8 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					tc.resetCurrentLimit();
 				}
 			}
-		}
 
-		// TODO : fix for Victor non-enhanced status frames
-		if (talon)
-		{
+			// TODO : fix for Victor non-enhanced status frames
 			for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
 			{
 				uint8_t period;
@@ -2568,6 +2585,38 @@ bool FRCRobotHWInterface::convertFeedbackDevice(
 			ROS_WARN("Unknown feedback device seen in HW interface");
 			return false;
 	}
+	return true;
+}
+
+bool FRCRobotHWInterface::convertRemoteFeedbackDevice(
+	const hardware_interface::RemoteFeedbackDevice input_fd,
+	ctre::phoenix::motorcontrol::RemoteFeedbackDevice &output_fd)
+{
+	switch (input_fd)
+	{
+		case hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff:
+			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice_FactoryDefaultOff;
+			break;
+		case hardware_interface::RemoteFeedbackDevice_SensorSum:
+			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice_SensorSum;
+			break;
+		case hardware_interface::RemoteFeedbackDevice_SensorDifference:
+			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice_SensorDifference;
+			break;
+		case hardware_interface::RemoteFeedbackDevice_RemoteSensor0:
+			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice_RemoteSensor0;
+			break;
+		case hardware_interface::RemoteFeedbackDevice_RemoteSensor1:
+			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice_RemoteSensor1;
+			break;
+		case hardware_interface::RemoteFeedbackDevice_SoftwareEmulatedSensor:
+			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice_SoftwareEmulatedSensor;
+			break;
+		default:
+			ROS_WARN("Unknown remote feedback device seen in HW interface");
+			return false;
+	}
+
 	return true;
 }
 

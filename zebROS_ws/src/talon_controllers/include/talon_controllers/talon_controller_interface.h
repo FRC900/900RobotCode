@@ -54,6 +54,7 @@ class TalonCIParams
 			neutral_mode_(hardware_interface::NeutralMode_Uninitialized),
 			feedback_type_(hardware_interface::FeedbackDevice_Uninitialized),
 			feedback_coefficient_(1.0),
+			remote_feedback_type_(hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff),
 			ticks_per_rotation_(4096),
 			closed_loop_ramp_(0.),
 			open_loop_ramp_(0.),
@@ -149,6 +150,7 @@ class TalonCIParams
 			sensor_phase_ = config.sensor_phase;
 			feedback_type_ = static_cast<hardware_interface::FeedbackDevice>(config.feedback_type);
 			feedback_coefficient_ = config.feedback_coefficient;
+			remote_feedback_type_ = static_cast<hardware_interface::RemoteFeedbackDevice>(config.remote_feedback_type);
 			ticks_per_rotation_ = config.encoder_ticks_per_rotation;
 			neutral_mode_ = static_cast<hardware_interface::NeutralMode>(config.neutral_mode);
 			closed_loop_ramp_ = config.closed_loop_ramp;
@@ -243,6 +245,7 @@ class TalonCIParams
 			config.sensor_phase  = sensor_phase_;
 			config.feedback_type = feedback_type_;
 			config.feedback_coefficient = feedback_coefficient_;
+			config.remote_feedback_type = remote_feedback_type_;
 			config.encoder_ticks_per_rotation = ticks_per_rotation_;
 			config.neutral_mode  = neutral_mode_;
 			config.closed_loop_ramp = closed_loop_ramp_;
@@ -346,10 +349,10 @@ class TalonCIParams
 		bool readFeedbackType(ros::NodeHandle &n)
 		{
 			std::string feedback_type_name;
+			// Not all talons will have feedback, so it is
+			// OK to leave this entry out.
 			if (n.getParam("feedback_type", feedback_type_name))
 			{
-				// Not all talons will have feedback, so it is
-				// OK to leave this entry out.
 				if (feedback_type_name == "QuadEncoder")
 					feedback_type_ = hardware_interface::FeedbackDevice_QuadEncoder;
 				else if (feedback_type_name == "Analog")
@@ -380,6 +383,26 @@ class TalonCIParams
 			}
 			n.getParam("ticks_per_rotation", ticks_per_rotation_);
 			n.getParam("feedback_coefficient", feedback_coefficient_);
+			if (n.getParam("remote_feedback_type", feedback_type_name))
+			{
+				if (feedback_type_name == "FactoryDefaultOff")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff;
+				else if (feedback_type_name == "SensorSum")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_SensorSum;
+				else if (feedback_type_name == "SensorDifference")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_SensorDifference;
+				else if (feedback_type_name == "RemoteSensor0")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_RemoteSensor0;
+				else if (feedback_type_name == "RemoteSensor1")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_RemoteSensor1;
+				else if (feedback_type_name == "SoftwareEmulatedSensor")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_SoftwareEmulatedSensor;
+				else
+				{
+					ROS_ERROR("Invalid remote feedback device name given");
+					return false;
+				}
+			}
 			return true;
 		}
 
@@ -655,6 +678,7 @@ class TalonCIParams
 		hardware_interface::NeutralMode neutral_mode_;
 		hardware_interface::FeedbackDevice feedback_type_;
 		double feedback_coefficient_;
+		hardware_interface::RemoteFeedbackDevice remote_feedback_type_;
 		int    ticks_per_rotation_;
 		double closed_loop_ramp_;
 		double open_loop_ramp_;
@@ -1506,6 +1530,7 @@ class TalonControllerInterface
 
 			talon->setEncoderFeedback(params.feedback_type_);
 			talon->setFeedbackCoefficient(params.feedback_coefficient_);
+			talon->setRemoteEncoderFeedback(params.remote_feedback_type_);
 			talon->setEncoderTicksPerRotation(params.ticks_per_rotation_);
 
 			talon->setInvert(params.invert_output_);

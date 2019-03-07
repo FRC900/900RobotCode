@@ -222,6 +222,9 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		bool convertFeedbackDevice(
 			const hardware_interface::FeedbackDevice input_fd,
 			ctre::phoenix::motorcontrol::FeedbackDevice &output_fd);
+		bool convertRemoteFeedbackDevice(
+			const hardware_interface::RemoteFeedbackDevice input_fd,
+			ctre::phoenix::motorcontrol::RemoteFeedbackDevice &output_fd);
 		bool convertLimitSwitchSource(
 			const hardware_interface::LimitSwitchSource input_ls,
 			ctre::phoenix::motorcontrol::LimitSwitchSource &output_ls);
