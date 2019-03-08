@@ -16,6 +16,8 @@ std::string y_topic;
 std::string enable_topic;
 std::string name;
 
+double command_timeout = 0.5; //Default value if param not loaded
+
 ros::Subscriber x_pid_sub;
 ros::Subscriber y_pid_sub;
 ros::Subscriber orient_pid_sub;
@@ -83,6 +85,10 @@ int main(int argc, char ** argv)
 	else {
 		enable_pid_sub = nh.subscribe(enable_topic, 1, &enableCB);
 	}
+	if(!nh_private_params.getParam("command_timeout", command_timeout))
+	{
+		ROS_ERROR("Could not read command_timeout in publish_pid_cmd_vel");
+	}
 	if(!nh_private_params.getParam("name", name))
 	{
 		ROS_ERROR("Could not read name in publish_pid_cmd_vel");
@@ -96,7 +102,7 @@ int main(int argc, char ** argv)
 	while(ros::ok())
 	{
 		current_time = ros::Time::now();
-		if((current_time - time_since_command).toSec() < 0.5 && pid_enable)
+		if((current_time - time_since_command).toSec() < command_timeout && pid_enable)
 		{
 			if((current_time - time_since_orient).toSec() > 0.1)
 				cmd_vel_msg.angular.z = 0.0;
