@@ -11,6 +11,8 @@
 	<arg name="static_map" default="True"/>
 	<arg name="record" default="false" />
 
+	<include file="$(find controller_node)/launch/tape_detection.launch" />
+
 	<group ns="frcrobot_jetson">
 
 		<!-- These need to be replaced with the real thing -->
@@ -209,9 +211,6 @@
 		</node>
 	</group>
     
-    <group ns="navX_snap_to_goal_pid">
-    </group>
-
 	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
 
 </launch>

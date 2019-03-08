@@ -3,3 +3,4 @@ pkill -f rosout
 pkill -f rosmaster
 pkill -f rqt
 pkill -f rviz
+pkill -f python
