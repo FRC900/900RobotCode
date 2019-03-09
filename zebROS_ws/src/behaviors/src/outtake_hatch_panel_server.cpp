@@ -177,6 +177,7 @@ class OuttakeHatchPanelAction
 				timed_out = true;
 			}
 
+			//TODO fix this comp change made end state pulled in, and deployed and isn't with in frame perimeter
 			//set final state of mechanism - pulled in, clamped (to stay within frame perimeter)
 			//it doesn't matter if timed out or preempted, do anyways			
 			//extend panel mechanism
