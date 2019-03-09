@@ -7,7 +7,7 @@ actionlib_lift_params:
         rocket3_position: 1.65
     hatch:
         intake_position: 0.0
-        intake_end_position: 0.05
+        intake_end_position: 0.1
         rocket1_position: 0.0
         rocket2_position: 0.72
         rocket3_position: 1.46257241755 
