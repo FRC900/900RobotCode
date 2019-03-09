@@ -53,6 +53,7 @@ const int elevator_num_setpoints = 4;
 bool robot_orient = false;
 double offset_angle = 0;
 
+
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 
@@ -389,6 +390,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		  }
 
 		//Joystick1: bumperLeft
+	  /*
 		if(joystick_states_array[0].bumperLeftPress)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
@@ -410,6 +412,24 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				behaviors::IntakeGoal goal;
 				intake_cargo_ac->sendGoal(goal);
 			}
+		}
+		*/
+		if(joystick_states_array[0].bumperLeftPress)
+		{
+			static bool claw_release_toggle = false;
+			claw_release_toggle = !claw_release_toggle;
+			if(claw_release_toggle) {
+				ROS_WARN("DUCK BILL");
+			}
+			else {
+				ROS_WARN("WINGS");
+			}
+
+			panel_intake_controller::PanelIntakeSrv srv;
+			srv.request.claw_release = claw_release_toggle;
+			srv.request.push_extend = false;
+			if (!manual_server_panelIn.call(srv))
+				ROS_ERROR("teleop call to manual_server_panelIn failed for bumperLeftPress");
 		}
 		if(joystick_states_array[0].bumperLeftButton)
 		{
@@ -920,7 +940,7 @@ int main(int argc, char **argv)
 
 	run_align = n.serviceClient<std_srvs::SetBool>("/align_with_terabee/run_align");
 
-	manual_server_panelIn = n.serviceClient<panel_intake_controller::PanelIntakeSrv>("/panel_intake_controller/panel_command");
+	manual_server_panelIn = n.serviceClient<panel_intake_controller::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command");
 	manual_server_cargoOut = n.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/cargo_outtake_controller/cargo_outtake_command");
 	manual_server_cargoIn = n.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/cargo_intake_controller/cargo_intake_command");
 
