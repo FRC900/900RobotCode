@@ -28,9 +28,8 @@ bool ClimberController::init(hardware_interface::PositionJointInterface *hw,
 }
 
 void ClimberController::starting(const ros::Time &/*time*/) {
-    feet_retract_.setCommand(false);
-    ski_retract_.setCommand(false);
-    release_endgame_.setCommand(false);
+	feet_retract_cmd_.writeFromNonRT(false);
+	release_endgame_cmd_.writeFromNonRT(false);
 }
 
 void ClimberController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
@@ -60,7 +59,7 @@ void ClimberController::update(const ros::Time &/*time*/, const ros::Duration &/
 		release_endgame_cmd_double = -1;
 	}
 
-    release_endgame_.setCommand(release_endgame_cmd_double); //release the endgame and make the climber fall
+    release_endgame_.setCommand(release_endgame_cmd_double); //release the endgame
 }
 
 void ClimberController::stopping(const ros::Time &/*time*/) {
