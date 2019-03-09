@@ -28,7 +28,9 @@ bool ClimberController::init(hardware_interface::PositionJointInterface *hw,
 }
 
 void ClimberController::starting(const ros::Time &/*time*/) {
-    //climber_in_.setCommand(0);
+    feet_retract_.setCommand(false);
+    ski_retract_.setCommand(false);
+    release_endgame_.setCommand(false);
 }
 
 void ClimberController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
@@ -45,8 +47,8 @@ void ClimberController::update(const ros::Time &/*time*/, const ros::Duration &/
 		feet_retract_cmd_double = -1;
 	}
 
-    feet_retract_.setCommand(feet_retract_cmd_double); // set the in/out command to the clampy part of the climber
-    ski_retract_.setCommand(feet_retract_cmd_double); // set the in/out command to the clampy part of the climber
+    feet_retract_.setCommand(feet_retract_cmd_double); //retract the feet
+    ski_retract_.setCommand(feet_retract_cmd_double); //retract the piston to make the ski deploy
 
     double release_endgame_cmd_double;
 	if(release_endgame_cmd == true)
@@ -58,7 +60,7 @@ void ClimberController::update(const ros::Time &/*time*/, const ros::Duration &/
 		release_endgame_cmd_double = -1;
 	}
 
-    release_endgame_.setCommand(release_endgame_cmd_double); // set the in/out command to the clampy part of the climber
+    release_endgame_.setCommand(release_endgame_cmd_double); //release the endgame and make the climber fall
 }
 
 void ClimberController::stopping(const ros::Time &/*time*/) {
