@@ -26,7 +26,7 @@ elevator_controller:
 
         # TODO : tuning
         motion_cruise_velocity: 0.25
-        motion_acceleration: 1
+        motion_acceleration: 0.4
               
         sensor_phase: True 
         invert_output: False

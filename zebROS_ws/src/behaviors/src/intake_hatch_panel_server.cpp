@@ -79,6 +79,19 @@ class IntakeHatchPanelAction
 			bool preempted = false;
 			bool timed_out = false;
 
+			//release claw
+			panel_intake_controller::PanelIntakeSrv srv;
+			srv.request.claw_release = true;
+			srv.request.push_extend = false;
+			//send request to controller
+			if(!panel_controller_client_.call(srv))
+			{
+				ROS_ERROR("Panel controller call failed in panel intake server");
+				preempted = true;
+			}
+			ros::spinOnce(); //update everything
+
+
 			//move elevator to intake location
 			behaviors::ElevatorGoal elev_goal;
 			elev_goal.setpoint_index = INTAKE;
@@ -112,7 +125,6 @@ class IntakeHatchPanelAction
 			if(!preempted && !timed_out && ros::ok())
 			{
 				//release claw
-				panel_intake_controller::PanelIntakeSrv srv;
 				srv.request.claw_release = true;
 				srv.request.push_extend = false;
 				//send request to controller
@@ -191,7 +203,6 @@ class IntakeHatchPanelAction
 
 			//Set final state - retract the panel mechanism and clamp (to stay within frame perimeter)
 			//it doesn't matter if preempted or timed out, do this anyway
-			panel_intake_controller::PanelIntakeSrv srv;
 			srv.request.claw_release = false;
 			srv.request.push_extend = false;
 			//send request to controller

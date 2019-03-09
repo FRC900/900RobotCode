@@ -181,7 +181,7 @@ class OuttakeHatchPanelAction
 			//it doesn't matter if timed out or preempted, do anyways			
 			//extend panel mechanism
 			panel_intake_controller::PanelIntakeSrv srv;
-			srv.request.claw_release = false;
+			srv.request.claw_release = true;
 			srv.request.push_extend = false;
 			//send request to controller
 			if(!panel_controller_client_.call(srv))

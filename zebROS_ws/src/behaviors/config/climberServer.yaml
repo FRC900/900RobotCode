@@ -5,4 +5,4 @@ climber_server:
     running_forward_timeout: 10.0
     climb_low_timeout: 8.0
     match_time_lock: 225
-    drive_forward_speed: 0.3
+    drive_forward_speed: 0.6

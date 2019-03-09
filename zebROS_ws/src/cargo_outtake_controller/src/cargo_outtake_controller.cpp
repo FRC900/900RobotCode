@@ -8,7 +8,6 @@ namespace cargo_outtake_controller
 			ros::NodeHandle                 &controller_nh)
 	{
 		//initialize cargo outtake kicker joint (pneumatic piston that controls kicker)
-		cargo_outtake_kicker_joint_ = hw->getHandle("cargo_outtake_kicker_joint");
 		cargo_outtake_clamp_joint_ = hw->getHandle("clamp_joint");
 
 		cargo_outtake_service_ = controller_nh.advertiseService("cargo_outtake_command", &CargoOuttakeController::cmdService, this);
@@ -45,7 +44,6 @@ namespace cargo_outtake_controller
 			//ROS_WARN("cargo outtake kicker command: 1");
 		}
 
-		cargo_outtake_kicker_joint_.setCommand(kicker_command_double); // set the in/out command to the up/down part of the outtake
 		cargo_outtake_clamp_joint_.setCommand(clamp_command_double); // set the in/out command to the up/down part of the outtake
 	}
 
