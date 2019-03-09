@@ -46,7 +46,7 @@ void ClimberController::update(const ros::Time &/*time*/, const ros::Duration &/
 	}
 
     feet_retract_.setCommand(feet_retract_cmd_double); // set the in/out command to the clampy part of the climber
-    ski_retract_.setCommand(!feet_retract_cmd); // set the in/out command to the clampy part of the climber
+    ski_retract_.setCommand(feet_retract_cmd_double); // set the in/out command to the clampy part of the climber
 
     double release_endgame_cmd_double;
 	if(release_endgame_cmd == true)
