@@ -11,9 +11,9 @@
 
 //define global variables that will be defined based on config values
 double elevator_timeout;
+double pause_time_after_release;
 double pause_time_after_extend;
 double pause_time_after_clamp;
-double dist_up_after;
 double wait_for_server_timeout;
 
 class IntakeHatchPanelAction
@@ -111,8 +111,22 @@ class IntakeHatchPanelAction
 			//send commands to panel_intake_controller to grab the panel ---------------------------------------
 			if(!preempted && !timed_out && ros::ok())
 			{
-				//extend panel mechanism
+				//release claw
 				panel_intake_controller::PanelIntakeSrv srv;
+				srv.request.claw_release = true;
+				srv.request.push_extend = false;
+				//send request to controller
+				if(!panel_controller_client_.call(srv))
+				{
+					ROS_ERROR("Panel controller call failed in panel intake server");
+					preempted = true;
+				}
+				ros::spinOnce(); //update everything
+
+				//pause for a bit
+				ros::Duration(pause_time_after_release).sleep();
+
+				//extend panel mechanism
 				srv.request.claw_release = true;
 				srv.request.push_extend = true;
 				//send request to controller
@@ -234,15 +248,15 @@ int main(int argc, char** argv)
 	ros::NodeHandle n_panel_params(n, "actionlib_hatch_panel_intake_params");
 
 	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
-		ROS_ERROR("Could not read wait_for_server_timeout in panel_intake_sever");
+		ROS_ERROR("Could not read wait_for_server_timeout in panel_intake_server");
 	if (!n_panel_params.getParam("elevator_timeout", elevator_timeout))
-		ROS_ERROR("Could not read elevator_timeout in panel_intake_sever");
+		ROS_ERROR("Could not read elevator_timeout in panel_intake_server");
+	if (!n_panel_params.getParam("pause_time_after_release", pause_time_after_release))
+		ROS_ERROR("Could not read pause_time_after_release in panel_intake_server");
 	if (!n_panel_params.getParam("pause_time_after_extend", pause_time_after_extend))
-		ROS_ERROR("Could not read pause_time_after_extend in panel_intake_sever");
+		ROS_ERROR("Could not read pause_time_after_extend in panel_intake_server");
 	if (!n_panel_params.getParam("pause_time_after_clamp", pause_time_after_clamp))
-		ROS_ERROR("Could not read pause_time_after_clamp in panel_intake_sever");
-	if (!n_panel_params.getParam("dist_up_after", dist_up_after))
-		ROS_ERROR("Could not read dist_up_after in panel_intake_sever");
+		ROS_ERROR("Could not read pause_time_after_clamp in panel_intake_server");
 
 	ros::spin();
 
