@@ -37,17 +37,20 @@ void ClimberController::update(const ros::Time &/*time*/, const ros::Duration &/
     const bool release_endgame_cmd = *(release_endgame_cmd_.readFromRT());
 
     double feet_retract_cmd_double;
+	double ski_retract_cmd_double;
 	if(feet_retract_cmd == true)
 	{
 		feet_retract_cmd_double = 1;
+		ski_retract_cmd_double = 1;
 	}
 	else if(feet_retract_cmd == false)
 	{
 		feet_retract_cmd_double = -1;
+		ski_retract_cmd_double = 0;
 	}
 
     feet_retract_.setCommand(feet_retract_cmd_double); //retract the feet
-    ski_retract_.setCommand(feet_retract_cmd_double); //retract the piston to make the ski deploy
+    ski_retract_.setCommand(ski_retract_cmd_double); //retract the piston to make the ski deploy
 
     double release_endgame_cmd_double;
 	if(release_endgame_cmd == true)
