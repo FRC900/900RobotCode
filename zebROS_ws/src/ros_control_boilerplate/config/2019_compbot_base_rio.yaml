@@ -21,7 +21,7 @@ hardware_interface:
        # to be configured here so they can write to hardware attached
        # to the Rio
        - {name: cargo_intake_arm_joint, type: solenoid, pcm: 0, id: 0, local_hardware: true, local_update: false}
-       - {name: cargo_outtake_kicker_joint, type: solenoid, pcm: 0, id: 3, local_hardware: true, local_update: false}
+       - {name: climber_ski_joint, type: solenoid, pcm: 0, id: 3, local_hardware: true, local_update: false}
        - {name: clamp_joint, type: solenoid, pcm: 0, id: 2, local_hardware: true, local_update: false}
 
        - {name: climber_feet_retract, type: double_solenoid, pcm: 0, forward_id: 4, reverse_id: 5, local_hardware: true, local_update: false}

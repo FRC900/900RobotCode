@@ -326,7 +326,6 @@ class ClimbAction {
 				double start_time = ros::Time::now().toSec();
 				while(ros::ok() && !preempted && !timed_out)
 				{
-					ROS_INFO_STREAM("DRIIIVING");
 					timed_out = (ros::Time::now().toSec() -  start_time) > running_forward_timeout;
 					preempted = as_.isPreemptRequested();
 					r.sleep();

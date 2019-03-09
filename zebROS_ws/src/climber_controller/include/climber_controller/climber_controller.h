@@ -31,6 +31,7 @@ class ClimberController : public controller_interface::Controller<hardware_inter
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
             hardware_interface::JointHandle feet_retract_; //interface for the in/out solenoid joint
+            hardware_interface::JointHandle ski_retract_; //interface for the in/out solenoid joint
 
             realtime_tools::RealtimeBuffer<bool> feet_retract_cmd_; //buffer for in/out commands
 
