@@ -1,5 +1,5 @@
 actionlib_hatch_panel_intake_params:
-    elevator_timeout: 5 #in seconds
+    elevator_timeout: 2 #in seconds
     pause_time_after_release: 0.25 #time to pause between piston actuations, in seconds #ru happpy niall
     pause_time_after_extend: 1 #time to pause between piston actuations, in seconds
     pause_time_after_clamp: 1 #time to pause between piston actuations, in seconds

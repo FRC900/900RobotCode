@@ -4,13 +4,18 @@
 #include "std_srvs/Empty.h"
 #include "behaviors/AlignGoal.h"
 #include "behaviors/AlignAction.h"
+#include "behaviors/ElevatorAction.h"
+#include "behaviors/enumerated_elevator_indices.h"
 #include "actionlib/server/simple_action_server.h"
+#include "actionlib/client/simple_action_client.h"
 
 double align_timeout;
 double orient_timeout;
 double orient_error_threshold;
 double x_error_threshold;
 double cargo_error_threshold;
+
+double elevator_timeout;
 
 
 //bool startup = true; //disable all pid nodes on startup
@@ -21,7 +26,8 @@ class AlignAction {
 		actionlib::SimpleActionServer<behaviors::AlignAction> as_; //create the actionlib server
 		std::string action_name_;
 		behaviors::AlignResult result_; //variable to store result of the actionlib action
-
+		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
+        
 		std::shared_ptr<ros::Publisher> enable_navx_pub_;
 		std::shared_ptr<ros::Publisher> enable_x_pub_;
 		std::shared_ptr<ros::Publisher> enable_y_pub_;
@@ -53,6 +59,7 @@ class AlignAction {
 			const std::shared_ptr<ros::Publisher>& enable_cargo_pub_):
 			as_(nh_, name, boost::bind(&AlignAction::executeCB, this, _1), false),
 			action_name_(name),
+			ac_elevator_("/elevator/elevator_server", true),
 			enable_navx_pub_(enable_navx_pub_),
 			enable_x_pub_(enable_x_pub_),
 			enable_y_pub_(enable_y_pub_),
@@ -102,6 +109,8 @@ class AlignAction {
 			ROS_INFO_STREAM("align server callback called");
 			ros::Rate r(30);
 
+            static bool elevator_moved = false;
+
 			double start_time = ros::Time::now().toSec();
 			bool preempted = false;
 			bool timed_out = false;
@@ -112,10 +121,44 @@ class AlignAction {
 			distance_aligned_ = false;
 			x_aligned_ = false;
 			y_aligned_ = false;
+
+			//move elevator up a bit before aligning(terabees r sad :( )
+			behaviors::ElevatorGoal elev_goal;
+			elev_goal.setpoint_index = CARGO_SHIP; //TODO fix this add to enum in include file
+			elev_goal.place_cargo = false;
+			elev_goal.raise_intake_after_success = true;
+			ac_elevator_.sendGoal(elev_goal);
+
+
+			//test if we got a preempt while waiting
+			if(as_.isPreemptRequested())
+			{
+				preempted = true;
+			}
+
 			while(!aligned && !preempted && !timed_out && ros::ok())
 			{
 				ros::spinOnce();
 				r.sleep();
+
+                if((orient_aligned_ || orient_timed_out) && !elevator_moved) {
+                    bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(elevator_timeout - (ros::Time::now().toSec() - start_time)));
+                    if(finished_before_timeout) {
+                        actionlib::SimpleClientGoalState state = ac_elevator_.getState();
+                        if(state.toString() != "SUCCEEDED") {
+                            ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
+                            preempted = true;
+                        }
+                        else {
+                            ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
+                            elevator_moved = true;
+                        }
+                    }
+                    else {
+                        ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
+                        timed_out = true;
+                    }
+                }
 
 				//Define enable messages for pid nodes
 				std_msgs::Bool orient_msg;
@@ -228,6 +271,7 @@ int main(int argc, char** argv) {
 
 	ros::NodeHandle n;
 	ros::NodeHandle n_params(n, "align_server_params");
+    ros::NodeHandle n_panel_params(n, "actionlib_hatch_panel_intake_params");
 
 	if(!n_params.getParam("align_timeout", align_timeout))
 		ROS_ERROR_STREAM("Could not read align_timeout in align_server");
@@ -239,6 +283,9 @@ int main(int argc, char** argv) {
 		ROS_ERROR_STREAM("Could not read orient_error_threshold in align_server");
 	if(!n_params.getParam("cargo_error_threshold", cargo_error_threshold))
 		ROS_ERROR_STREAM("Could not read cargo_error_threshold in align_server");
+
+	if(!n_panel_params.getParam("elevator_timeout", elevator_timeout))
+		ROS_ERROR_STREAM("Could not read elevator_timeout in align_server");
 
 	std::shared_ptr<ros::Publisher> enable_navx_pub_ = std::make_shared<ros::Publisher>();
 	std::shared_ptr<ros::Publisher> enable_x_pub_ = std::make_shared<ros::Publisher>();

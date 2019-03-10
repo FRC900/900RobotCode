@@ -166,6 +166,7 @@ class IntakeHatchPanelAction
 				ros::spinOnce(); //update everything
 
 
+                /*
 				//pause for a bit
 				ros::Duration(pause_time_after_clamp).sleep();
 				//
@@ -197,7 +198,7 @@ class IntakeHatchPanelAction
 				if(as_.isPreemptRequested())
 				{
 					preempted = true;
-				}
+				}*/
 
 			}
 
