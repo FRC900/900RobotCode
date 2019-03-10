@@ -45,6 +45,7 @@ int cargo_linebreak_true_count = 0;
 int panel_linebreak_true_count = 0;
 int cargo_linebreak_false_count = 0;
 int panel_linebreak_false_count = 0;
+bool panel_push_extend = false;
 
 
 const int climber_num_steps = 3;
@@ -417,20 +418,24 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		*/
 		if(joystick_states_array[0].bumperLeftPress)
 		{
-			static bool claw_release_toggle = false;
-			claw_release_toggle = !claw_release_toggle;
-			if(claw_release_toggle) {
-				ROS_WARN("DUCK BILL");
+			if (panel_push_extend)
+			{
+				ROS_INFO_STREAM("Toggling to clamped and not extended");
+				panel_intake_controller::PanelIntakeSrv srv;
+				srv.request.claw_release = false;
+				srv.request.push_extend = false;
+				if (!manual_server_panelIn.call(srv))
+					ROS_ERROR("teleop call to manual_server_panelIn failed for bumperLeftPress");
 			}
-			else {
-				ROS_WARN("WINGS");
+			else
+			{
+				ROS_INFO_STREAM("Toggling to unclamped and extended");
+				panel_intake_controller::PanelIntakeSrv srv;
+				srv.request.claw_release = true;
+				srv.request.push_extend = true;
+				if (!manual_server_panelIn.call(srv))
+					ROS_ERROR("teleop call to manual_server_panelIn failed for bumperLeftPress");
 			}
-
-			panel_intake_controller::PanelIntakeSrv srv;
-			srv.request.claw_release = claw_release_toggle;
-			srv.request.push_extend = false;
-			if (!manual_server_panelIn.call(srv))
-				ROS_ERROR("teleop call to manual_server_panelIn failed for bumperLeftPress");
 		}
 		if(joystick_states_array[0].bumperLeftButton)
 		{
@@ -802,6 +807,7 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 	static size_t cargo_linebreak_idx = std::numeric_limits<size_t>::max();
 	static size_t panel_linebreak_1_idx = std::numeric_limits<size_t>::max();
 	static size_t panel_linebreak_2_idx = std::numeric_limits<size_t>::max();
+	static size_t panel_push_extend_idx = std::numeric_limits<size_t>::max();
 	if (cargo_linebreak_idx >= joint_state.name.size() || panel_linebreak_1_idx >= joint_state.name.size() || panel_linebreak_2_idx >= joint_state.name.size())
 	{
 		for (size_t i = 0; i < joint_state.name.size(); i++)
@@ -812,6 +818,8 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 				panel_linebreak_1_idx = i;
 			if (joint_state.name[i] == "panel_intake_linebreak_2")
 				panel_linebreak_2_idx = i;
+			if (joint_state.name[i] == "panel_push_extend")
+				panel_push_extend_idx = i;
 		}
 	}
 
@@ -856,6 +864,11 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 		ROS_WARN_THROTTLE(1, "intake line break sensor not found in joint_states");
 		panel_linebreak_false_count += 1;
 		panel_linebreak_true_count = 0;
+	}
+
+	if (panel_push_extend_idx < joint_state.position.size())
+	{
+		panel_push_extend = (joint_state.position[panel_push_extend_idx] != 0);
 	}
 }
 
