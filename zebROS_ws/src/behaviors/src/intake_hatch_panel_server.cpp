@@ -82,7 +82,7 @@ class IntakeHatchPanelAction
 			//release claw
 			panel_intake_controller::PanelIntakeSrv srv;
 			srv.request.claw_release = true;
-			srv.request.push_extend = false;
+			srv.request.push_extend = true;
 			//send request to controller
 			if(!panel_controller_client_.call(srv))
 			{
@@ -126,7 +126,7 @@ class IntakeHatchPanelAction
 			{
 				//release claw
 				srv.request.claw_release = true;
-				srv.request.push_extend = false;
+				srv.request.push_extend = true;
 				//send request to controller
 				if(!panel_controller_client_.call(srv))
 				{
@@ -152,7 +152,6 @@ class IntakeHatchPanelAction
 
 				//pause for a bit
 				ros::Duration(pause_time_after_extend).sleep();
-
 
 				//grab the panel - we can reuse the srv variable
 				srv.request.claw_release = false;
