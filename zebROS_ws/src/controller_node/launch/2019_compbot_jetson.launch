@@ -139,7 +139,7 @@
 		<!-- Distance PID -->
 		<node name="distance_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="distance_pid" />
-			<param name="Kp" value="4.5" />
+			<param name="Kp" value="4.8" />
 			<param name="Ki" value="0.0" />
 			<param name="Kd" value="0.1" />
 			<param name="upper_limit" value="2" />
@@ -177,7 +177,7 @@
 		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" />
 		<node name="navX_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="navX_pid" />
-			<param name="Kp" value="16.0" />
+			<param name="Kp" value="13.0" />
 			<param name="Ki" value="0.0" />
 			<param name="Kd" value="1.5" />
 			<param name="upper_limit" value="8" />
