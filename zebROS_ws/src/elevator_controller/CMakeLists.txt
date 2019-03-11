@@ -21,7 +21,6 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   talon_interface
   talon_controllers
-  dynamic_reconfigure
   dynamic_reconfigure_wrapper
   )
 
