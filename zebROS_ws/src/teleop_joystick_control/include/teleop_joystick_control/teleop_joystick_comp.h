@@ -3,7 +3,6 @@
 #include "ros/ros.h"
 #include "frc_msgs/JoystickState.h"
 #include "frc_msgs/MatchSpecificData.h"
-#include "std_msgs/Float64.h"
 #include "sensor_msgs/JointState.h"
 #include "geometry_msgs/Twist.h"
 #include <string>
@@ -16,6 +15,4 @@
 #include <std_msgs/Float64.h>
 
 void navXCallback(const sensor_msgs::Imu &navXState);
-
-/*realtime_tools::RealtimeBuffer<struct> joystick_state;*/
 

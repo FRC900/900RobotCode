@@ -9,8 +9,8 @@
 #include <std_msgs/Float64.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <std_msgs/Bool.h>
-#include <dynamic_reconfigure/server.h>
 #include "elevator_controller/ElevatorSrv.h"
+#include <dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h>
 #include <elevator_controller/ElevatorConfig.h>
 
 namespace elevator_controller
@@ -47,20 +47,16 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 
 			bool zeroed_;
 			bool go_slow_;
-			double arb_feed_forward_up_;
-			double arb_feed_forward_down_;
 			double initial_position_;
 			double last_position_;
-			double elevator_zeroing_percent_output_;
 			double slow_peak_output_;
 			double last_setpoint_;
 			hardware_interface::TalonMode last_mode_;
 
 			ros::Time last_time_down_;
-			double elevator_zeroing_timeout_;
 
-			std::shared_ptr<dynamic_reconfigure::Server<ElevatorConfig>> srv_;
-			std::shared_ptr<boost::recursive_mutex>                      srv_mutex_;
+			DynamicReconfigureWrapper<ElevatorConfig> dynamic_reconfigure_server_;
+			ElevatorConfig config_;
 }; //class
 
 

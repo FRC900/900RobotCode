@@ -21,7 +21,6 @@
 #include "actionlib/client/simple_action_client.h"
 #include "behaviors/enumerated_elevator_indices.h"
 
-
 #include "std_srvs/SetBool.h"
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
@@ -30,13 +29,8 @@
 #include "cargo_outtake_controller/CargoOuttakeSrv.h"
 #include "cargo_intake_controller/CargoIntakeSrv.h"
 
-double joystick_deadzone;
-double slow_mode;
-double max_speed;
-double max_rot;
-double joystick_pow;
-double rotation_pow;
-int linebreak_debounce_iterations;
+#include "dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h"
+#include "teleop_joystick_control/TeleopJoystickCompConfig.h"
 
 int elevator_cur_setpoint_idx;
 int climber_cur_step;
@@ -57,6 +51,8 @@ double offset_angle = 0;
 
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
+
+teleop_joystick_control::TeleopJoystickCompConfig config;
 
 
 // 500 msec to go from full back to full forward
@@ -101,7 +97,7 @@ bool ManualToggleArm = false;
 
 void dead_zone_check(double &val1, double &val2)
 {
-	if (fabs(val1) <= joystick_deadzone && fabs(val2) <= joystick_deadzone)
+	if (fabs(val1) <= config.joystick_deadzone && fabs(val2) <= config.joystick_deadzone)
 	{
 		val1 = 0;
 		val2 = 0;
@@ -183,9 +179,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		dead_zone_check(leftStickX, leftStickY);
 		dead_zone_check(rightStickX, rightStickY);
 
-		leftStickX =  pow(fabs(leftStickX), joystick_pow) * max_speed;
-		leftStickY =  pow(fabs(leftStickY), joystick_pow) * max_speed;
-		double rotation = pow(fabs(rightStickX), rotation_pow) * max_rot;
+		leftStickX =  pow(fabs(leftStickX), config.joystick_pow) * config.max_speed;
+		leftStickY =  pow(fabs(leftStickY), config.joystick_pow) * config.max_speed;
+		double rotation = pow(fabs(rightStickX), config.rotation_pow) * config.max_rot;
 
 		leftStickX = copysign(leftStickX, joystick_states_array[0].leftStickX);
 		leftStickY = copysign(leftStickY, -joystick_states_array[0].leftStickY);
@@ -252,7 +248,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
 			goal.trigger = true;
-			if(cargo_linebreak_true_count > linebreak_debounce_iterations) {
+			if(cargo_linebreak_true_count > config.linebreak_debounce_iterations) {
 				goal.has_cargo = true;
 			}
 			else {
@@ -285,7 +281,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: buttonARelease");
 		}
 
-		
 		//Joystick1: buttonB
 		if(joystick_states_array[0].buttonBPress)
 		{
@@ -397,7 +392,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
 			preemptActionlibServers();
-			if(cargo_linebreak_true_count > linebreak_debounce_iterations)
+			if(cargo_linebreak_true_count > config.linebreak_debounce_iterations)
 			{
 				//If we have a cargo, outtake it
 				ROS_INFO_STREAM("Joystick1: Place Cargo");
@@ -450,7 +445,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//{
 		//	ROS_INFO_STREAM("Joystick1: bumperRightPress");
 		//	preemptActionlibServers();
-		//	if(panel_linebreak_true_count > linebreak_debounce_iterations)
+		//	if(panel_linebreak_true_count > config.linebreak_debounce_iterations)
 		//	{
 		//		//If we have a panel, outtake it
 		//		ROS_INFO_STREAM("Joystick1: Place Panel");
@@ -485,7 +480,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			preemptActionlibServers();
 			behaviors::ElevatorGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_idx;
-			if(cargo_linebreak_true_count > linebreak_debounce_iterations)
+			if(cargo_linebreak_true_count > config.linebreak_debounce_iterations)
 			{
 				goal.place_cargo = true;
 			}
@@ -872,6 +867,13 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 	}
 }
 
+void dynamic_callback(teleop_joystick_control::TeleopJoystickCompConfig &cfg,
+					  uint32_t level)
+{
+	(void)level;
+	config = cfg;
+}
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "Joystick_controller");
@@ -884,37 +886,33 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read num_joysticks in teleop_joystick_comp");
 	}
-	if(!n_params.getParam("joystick_deadzone", joystick_deadzone))
+	if(!n_params.getParam("joystick_deadzone", config.joystick_deadzone))
 	{
 		ROS_ERROR("Could not read joystick_deadzone in teleop_joystick_comp");
 	}
-	if(!n_params.getParam("slow_mode", slow_mode))
-	{
-		ROS_ERROR("Could not read slow_mode in teleop_joystick_comp");
-	}
-	if(!n_params.getParam("joystick_pow", joystick_pow))
+	if(!n_params.getParam("joystick_pow", config.joystick_pow))
 	{
 		ROS_ERROR("Could not read joystick_pow in teleop_joystick_comp");
 	}
-	if(!n_params.getParam("rotation_pow", rotation_pow))
+	if(!n_params.getParam("rotation_pow", config.rotation_pow))
 	{
 		ROS_ERROR("Could not read rotation_pow in teleop_joystick_comp");
 	}
-	if(!n_params.getParam("linebreak_debounce_iterations", linebreak_debounce_iterations))
+	if(!n_params.getParam("linebreak_debounce_iterations", config.linebreak_debounce_iterations))
 	{
 		ROS_ERROR("Could not read linebreak_debounce_iterations in teleop_joystick_comp");
 	}
-	if(!n_swerve_params.getParam("max_speed", max_speed))
+	if(!n_swerve_params.getParam("max_speed", config.max_speed))
 	{
 		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
 	}
-	if(!n_params.getParam("max_rot", max_rot))
+	if(!n_params.getParam("max_rot", config.max_rot))
 	{
 		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
 	}
 
 	std::vector <ros::Subscriber> subscriber_array;
-    navX_angle = M_PI / 2;
+    navX_angle = M_PI / 2.;
 
 	//Read from _num_joysticks_ joysticks
 	for(int j = 0; j < num_joysticks; j++)
@@ -965,6 +963,13 @@ int main(int argc, char **argv)
 	enable_align = n.advertise<std_msgs::Bool>("/align_server/align_pid/pid_enable", 1);
 
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
+
+	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompConfig> drw;
+	drw.init(n_params, dynamic_callback);
+	// max_speed isn't read from the n_params namespace, so make sure to
+	// update the dynamic reconfig init value here using the value
+	// read from n_swerve_params into config.max_speed
+	drw.updateConfig(config);
 
 	ROS_WARN("joy_init");
 

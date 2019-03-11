@@ -10,48 +10,30 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 	hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
 
 	//hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
-	srv_mutex_ = std::make_shared<boost::recursive_mutex>();
-	srv_ = std::make_shared<dynamic_reconfigure::Server<elevator_controller::ElevatorConfig>>(*srv_mutex_, ros::NodeHandle(controller_nh, "elevator_controller"));
-	srv_->setCallback(boost::bind(&ElevatorController::callback, this, _1, _2));
 
-	if (!controller_nh.getParam("arb_feed_forward_up", arb_feed_forward_up_))
+	if (!controller_nh.getParam("arb_feed_forward_up", config_.arb_feed_forward_up))
 	{
 		ROS_ERROR("Could not find arb_feed_forward_up");
 		return false;
 	}
 
-	if (!controller_nh.getParam("arb_feed_forward_down", arb_feed_forward_down_))
+	if (!controller_nh.getParam("arb_feed_forward_down", config_.arb_feed_forward_down))
 	{
 		ROS_ERROR("Could not find arb_feed_forward_down");
 		return false;
 	}
 
-	if (!controller_nh.getParam("elevator_zeroing_percent_output", elevator_zeroing_percent_output_))
+	if (!controller_nh.getParam("elevator_zeroing_percent_output", config_.elevator_zeroing_percent_output))
 	{
 		ROS_ERROR("Could not find elevator_zeroing_percent_output");
 		return false;
 	}
 
-	if (!controller_nh.getParam("elevator_zeroing_timeout", elevator_zeroing_timeout_))
+	if (!controller_nh.getParam("elevator_zeroing_timeout", config_.elevator_zeroing_timeout))
 	{
 		ROS_ERROR("Could not find elevator_zeroing_timeout");
 		return false;
 	}
-
-	if (!controller_nh.getParam("slow_peak_output", slow_peak_output_))
-	{
-		ROS_ERROR("Elevator controller: could not find slow_peak_output");
-		return false;
-	}
-
-	// Copy read params into dynamic reconfigure values so they start in sync
-	elevator_controller::ElevatorConfig config;
-	config.arb_feed_forward_up = arb_feed_forward_up_;
-	config.arb_feed_forward_down = arb_feed_forward_down_;
-	config.elevator_zeroing_percent_output = elevator_zeroing_percent_output_;
-	config.elevator_zeroing_timeout = elevator_zeroing_timeout_;
-	config.slow_peak_output = slow_peak_output_;
-	srv_->updateConfig(config);
 
 	//get config values for the elevator talon
 	XmlRpc::XmlRpcValue elevator_params;
@@ -69,6 +51,7 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 
 	elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController::cmdService, this);
 
+	dynamic_reconfigure_server_.init(controller_nh, boost::bind(&ElevatorController::callback, this, _1, _2));
 
 	return true;
 }
@@ -110,7 +93,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 			// and add an arb FF correction for up
 			if(elevator_joint_.getPosition() > 0.8 && last_position_ < 0.8) {
 				elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-				elevator_joint_.setDemand1Value(arb_feed_forward_up_);
+				elevator_joint_.setDemand1Value(config_.arb_feed_forward_up);
 			}
 			else if (elevator_joint_.getPosition() < 0.8 && last_position_ > 0.8) {
 				elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
@@ -134,7 +117,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		{
 			elevator_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
 			elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-			elevator_joint_.setDemand1Value(arb_feed_forward_down_);
+			elevator_joint_.setDemand1Value(config_.arb_feed_forward_down);
 			//elevator_joint_.setPeakOutputForward(0.0);
 			elevator_joint_.setPIDFSlot(1);
 		}
@@ -142,11 +125,12 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 	else
 	{
 		elevator_joint_.setMode(hardware_interface::TalonMode_PercentOutput);
-		if ((ros::Time::now() - last_time_down_).toSec() < elevator_zeroing_timeout_)
+		if ((ros::Time::now() - last_time_down_).toSec() < config_.elevator_zeroing_timeout)
 		{
 			// Not yet zeroed. Run the elevator down slowly until the limit switch is set.
-			ROS_INFO_STREAM_THROTTLE(0.25, "Zeroing elevator with percent output: " << elevator_zeroing_percent_output_);
-			elevator_joint_.setCommand(elevator_zeroing_percent_output_);
+			ROS_INFO_STREAM_THROTTLE(0.25, "Zeroing elevator with percent output: "
+									 << config_.elevator_zeroing_percent_output);
+			elevator_joint_.setCommand(config_.elevator_zeroing_percent_output);
 		}
 		else
 		{
@@ -201,11 +185,7 @@ bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request  &
 void ElevatorController::callback(elevator_controller::ElevatorConfig &config, uint32_t level)
 {
 	(void)level;
-	arb_feed_forward_up_ = config.arb_feed_forward_up;
-	arb_feed_forward_down_ = config.arb_feed_forward_down;
-	elevator_zeroing_percent_output_ = config.elevator_zeroing_percent_output;
-	elevator_zeroing_timeout_ = config.elevator_zeroing_timeout;
-	slow_peak_output_ = config.slow_peak_output;
+	config_ = config;
 }
 
 }//namespace

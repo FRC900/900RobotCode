@@ -66,6 +66,7 @@
 	<depend>pluginlib</depend>
 	<depend>talon_interface</depend>
 	<depend>talon_controllers</depend>
+	<depend>dynamic_reconfigure_wrapper</depend>
 
 	<!-- The export tag contains other, unspecified, tags -->
 	<export>

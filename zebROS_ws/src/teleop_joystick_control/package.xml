@@ -19,6 +19,8 @@
   <depend>frc_msgs</depend>
   <depend>std_srvs</depend>
   <depend>talon_state_controller</depend>
+  <depend>dynamic_reconfigure</depend>
+  <depend>dynamic_reconfigure_wrapper</depend>
 
   <export>
   </export>

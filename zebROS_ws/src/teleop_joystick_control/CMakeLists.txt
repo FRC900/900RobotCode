@@ -15,6 +15,8 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 		talon_state_controller
 		robot_visualizer
 		frc_msgs
+		dynamic_reconfigure
+		dynamic_reconfigure_wrapper
 		)
 
 	set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -30,6 +32,11 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 		DEPENDENCIES
 		std_msgs
 		teleop_joystick_control	
+		)
+
+	## Generate dynamic reconfigure parameters in the 'cfg' folder
+	generate_dynamic_reconfigure_options(
+		cfg/TeleopJoystickComp.cfg
 		)
 
 	## System dependencies are found with CMake's conventions
