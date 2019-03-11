@@ -10,6 +10,8 @@
 
 //TODO: not global. namespace?
 double elevator_position_deadzone;
+
+// TODO : make constexpr, and a size_t
 int min_climb_idx = ELEVATOR_DEPLOY; //reference to minimum index in enumerated elevator indices, used for determining which indices are for climbing (this idx or greater)
 double collision_range_min;
 double collision_range_max;
@@ -23,6 +25,7 @@ class ElevatorAction {
         std::string action_name_;
 
 		//Define Feedback and result messages
+		// TODO : why are these class members rather than locals?
         behaviors::ElevatorFeedback feedback_;
         behaviors::ElevatorResult result_;
 
@@ -31,17 +34,20 @@ class ElevatorAction {
         ros::ServiceClient cargo_intake_client_;
 
 		//Subscriber to monitor talon positions
+		// TODO - member variables end with an underscore
         ros::Subscriber talon_states_sub;
 
         double elevator_cur_setpoint_; //stores actual setpoint value to go to, not index
 		double cur_position_; //Variable used to store current elevator position
 
-
     public:
+		// Make these std::arrays instead
+		// TODO - member variables end with an underscore
 		std::vector<double> hatch_locations;
 		std::vector<double> cargo_locations;
 		std::vector<double> climb_locations; //vector of everything at and after min_climb_idx in enumerated elevator indices, except for max index at the end
 
+		// TODO - member variables end with an underscore
 		double timeout;
 
         ElevatorAction(const std::string &name) :
@@ -76,7 +82,6 @@ class ElevatorAction {
             feedback_.running = true;
             as_.publishFeedback(feedback_);
 
-
             //Define variables that will be set to true once the server finishes executing
             bool preempted = false;
             bool timed_out = false;
@@ -85,12 +90,16 @@ class ElevatorAction {
             double start_time = ros::Time::now().toSec();
 
 			//define variables to store goal received by the elevator server
+			// TODO : indexes should be type size_t
+			// TODO : make const
 			double setpoint_index = goal->setpoint_index;
 			bool place_cargo = goal->place_cargo;
 
 			//Determine setpoint (elevator_cur_setpoint_)
 			if(setpoint_index >= min_climb_idx) //then it's a climb index
 			{
+				// TODO : indexes should be type size_t
+				// TODO : make const
 				double climb_setpoint_index = setpoint_index - min_climb_idx;
 				if(climb_setpoint_index < climb_locations.size())
 					elevator_cur_setpoint_ = climb_locations[climb_setpoint_index];
@@ -173,7 +182,6 @@ class ElevatorAction {
 					{
 						ROS_ERROR("%s: Preempted", action_name_.c_str());
 						preempted = true;
-
 					}
 					else
 					{
@@ -194,7 +202,6 @@ class ElevatorAction {
 				// can be done if this fails?
 				elevator_client_.call(srv); //Send command to elevator controller
 			}
-
 
 			//log state of action and set result of action
 
@@ -219,12 +226,12 @@ class ElevatorAction {
 				as_.setSucceeded(result_);
 			}
 
-                        feedback_.running = true;
-                        as_.publishFeedback(feedback_);
+			// TODO : shouldn't this be false?
+			feedback_.running = true;
+			as_.publishFeedback(feedback_);
 
 			return;
 		}
-
 
 		void talonStateCallback(const talon_state_controller::TalonState &talon_state)
 		{
