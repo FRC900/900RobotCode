@@ -41,15 +41,14 @@ class CargoOuttakeController : public controller_interface::Controller<hardware_
 
         private:
             std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
-            hardware_interface::JointHandle cargo_outtake_kicker_joint_; //interface for the kicker of the outtake
+            //hardware_interface::JointHandle cargo_outtake_kicker_joint_; //interface for the kicker of the outtake
 			hardware_interface::JointHandle cargo_outtake_clamp_joint_; //interface for the clamp of the outtake
 
-            realtime_tools::RealtimeBuffer<bool> kicker_command_; //buffer for commands for the kicker
+            //realtime_tools::RealtimeBuffer<bool> kicker_command_; //buffer for commands for the kicker
 			realtime_tools::RealtimeBuffer<bool> clamp_command_; //buffer for commands to the clamp
             realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
-    
+
             ros::ServiceServer cargo_outtake_service_; //service for receiving commands
 }; //class
-    
 } //namespace
 #endif
