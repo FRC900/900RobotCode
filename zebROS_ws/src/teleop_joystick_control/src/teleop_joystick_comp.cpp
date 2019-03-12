@@ -95,12 +95,11 @@ bool ManualTogglePush = false;
 bool ManualToggleKicker = false;
 bool ManualToggleArm = false;
 
-void dead_zone_check(double &val1, double &val2)
+void dead_zone_check(double &val1)
 {
-	if (fabs(val1) <= config.joystick_deadzone && fabs(val2) <= config.joystick_deadzone)
+	if (fabs(val1) <= config.joystick_deadzone)
 	{
 		val1 = 0;
-		val2 = 0;
 	}
 }
 
@@ -176,8 +175,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		rightStickX = right_stick_x_rate_limit.applyLimit(rightStickX);
 		rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);
 
-		dead_zone_check(leftStickX, leftStickY);
-		dead_zone_check(rightStickX, rightStickY);
+		dead_zone_check(leftStickX);
+		dead_zone_check(leftStickY);
+
+		dead_zone_check(rightStickX);
 
 		leftStickX =  pow(fabs(leftStickX), config.joystick_pow) * config.max_speed;
 		leftStickY =  pow(fabs(leftStickY), config.joystick_pow) * config.max_speed;
