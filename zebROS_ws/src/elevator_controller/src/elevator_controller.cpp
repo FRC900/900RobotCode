@@ -60,6 +60,7 @@ void ElevatorController::starting(const ros::Time &/*time*/) {
 	go_slow_ = false;
 	zeroed_ = false;
 	last_time_down_ = ros::Time::now();
+	last_mode_ = hardware_interface::TalonMode_Disabled;
 	position_command_.writeFromNonRT(0);
 }
 
@@ -147,8 +148,8 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 			last_time_down_ = ros::Time::now();
 		}
 	}
-        last_position_ = elevator_joint_.getPosition();
-        last_mode_ = elevator_joint_.getMode();
+	last_position_ = elevator_joint_.getPosition();
+	last_mode_ = elevator_joint_.getMode();
 }
 
 void ElevatorController::stopping(const ros::Time &/*time*/)
@@ -159,6 +160,11 @@ void ElevatorController::stopping(const ros::Time &/*time*/)
 bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request  &req,
 									elevator_controller::ElevatorSrv::Response &/*response*/)
 {
+	if (req.position > 1.7) // TODO : get real measurement, make a param
+	{
+		ROS_ERROR_STREAM("Elevator controller: req.position too large : " << req.position);
+		return false;
+	}
 	if(isRunning())
 	{
 		//adjust talon mode, arb feed forward, and PID slot appropriately
