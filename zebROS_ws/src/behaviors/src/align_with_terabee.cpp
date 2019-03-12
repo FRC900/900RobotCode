@@ -9,14 +9,11 @@
 #define NUM_SENSORS 8
 
 std::vector<double> sensors_distances;
-int ternary_distances;
 bool publish = false;
 bool publish_last = false;
 
 const double default_min_dist_ = 100;
 double min_dist = default_min_dist_;
-double last_command;
-double last_command_published;
 
 void multiflexCB(const teraranger_array::RangeArray& msg)
 {
@@ -57,11 +54,13 @@ int main(int argc, char ** argv)
 	ros::NodeHandle n;
 	ros::NodeHandle n_params(n, "align_with_terabee_params");
 
-	double dist_to_back_panel;
 	double distance_bound;
 	double cmd_vel_to_pub;
 	double distance_target;
 	double cargo_pid_max_distance;
+
+	double last_command;
+	double last_command_published = 0.0;
 
 	if(!n_params.getParam("cmd_vel_to_pub", cmd_vel_to_pub))
 		ROS_ERROR_STREAM("Could not read cmd_vel_to_pub in align_with_terabee");
@@ -71,7 +70,6 @@ int main(int argc, char ** argv)
 		ROS_ERROR_STREAM("Could not read distance_target in align_with_terabee");
 	if(!n_params.getParam("cargo_pid_max_distance", cargo_pid_max_distance))
 		ROS_ERROR_STREAM("Could not read cargo_pid_max_distance in align_with_terabee");
-
 
 	sensors_distances.resize(NUM_SENSORS);
 
@@ -116,7 +114,7 @@ int main(int argc, char ** argv)
             std_msgs::Float64 distance_state_msg;
             distance_state_msg.data = min_dist - distance_target;
             distance_state_pub.publish(distance_state_msg);
-            distance_setpoint_pub.publish(distance_setpoint_msg.data);
+            distance_setpoint_pub.publish(distance_setpoint_msg);
         }
 
 		//deal with cargo PID next
@@ -136,12 +134,10 @@ int main(int argc, char ** argv)
 		cargo_state_pub.publish(cargo_state_msg);
 		cargo_setpoint_pub.publish(cargo_setpoint_msg);
 
-
-
 		//now the exciting y-alignment stuff
 		//1 is wall
 		//2 is empty space(can't differentiate on rocket between cutout and off the side)
-		ternary_distances = 0;
+		int ternary_distances = 0;
 		for(size_t i = 2; i < sensors_distances.size(); i++)
 		{
 			if(sensors_distances[i] != sensors_distances[i])
@@ -152,14 +148,11 @@ int main(int argc, char ** argv)
 				ternary_distances += pow(10.0, i - 2)*2;
 			else
 			{
-				ROS_INFO_STREAM_THROTTLE(1,"very confused " << sensors_distances[i]);
+				ROS_INFO_STREAM_THROTTLE(1,"index " << i << " is very confused " << sensors_distances[i]);
 			}
-
 		}
 		//ROS_INFO_STREAM("minimum_distance = " << min_dist);
 		ROS_WARN_STREAM_THROTTLE(0.5, "ternary_distances: " << ternary_distances);
-
-
 
 		bool cutout_found = false;
 		switch(ternary_distances) {
