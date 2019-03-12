@@ -38,7 +38,6 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 
 			void callback(elevator_controller::ElevatorConfig &config, uint32_t level);
 
-
         private:
             talon_controllers::TalonControllerInterface elevator_joint_; //interface for the talon joint
 
@@ -47,10 +46,8 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 
 			bool zeroed_;
 			bool go_slow_;
-			double initial_position_;
 			double last_position_;
-			double slow_peak_output_;
-			double last_setpoint_;
+			//double last_setpoint_;
 			hardware_interface::TalonMode last_mode_;
 
 			ros::Time last_time_down_;

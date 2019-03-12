@@ -167,7 +167,6 @@ class TalonHWCommand
 
 			motion_profile_clear_trajectories_(false),
 			motion_profile_clear_has_underrun_(false),
-			motion_profile_control_frame_period_changed_(true),
 			motion_profile_profile_trajectory_period_(0),
 			motion_profile_profile_trajectory_period_changed_(true),
 
@@ -2006,7 +2005,6 @@ class TalonHWCommand
 		bool motion_profile_clear_trajectories_;
 		bool motion_profile_clear_has_underrun_;
 		std::vector<TrajectoryPoint> motion_profile_trajectory_points_;
-		bool motion_profile_control_frame_period_changed_;
 		int motion_profile_profile_trajectory_period_;
 		bool motion_profile_profile_trajectory_period_changed_;
 		std::array<uint8_t, Status_Last> status_frame_periods_;
