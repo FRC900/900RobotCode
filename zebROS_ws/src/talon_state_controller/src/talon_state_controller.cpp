@@ -82,7 +82,13 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 		m.feedback_coefficient.push_back(0.0);
 		m.remote_feedback_sensor.push_back("");
 		m.remote_feedback_filter0.push_back("");
+		m.remote_feedback_device_id0.push_back(0);
 		m.remote_feedback_filter1.push_back("");
+		m.remote_feedback_device_id1.push_back(0);
+		m.sensor_term_sum0.push_back("");
+		m.sensor_term_sum1.push_back("");
+		m.sensor_term_diff0.push_back("");
+		m.sensor_term_diff1.push_back("");
 		m.encoder_ticks_per_rotation.push_back(0);
 
 		m.pid_slot.push_back(0);
@@ -274,6 +280,35 @@ std::string TalonStateController::limitSwitchNormalToString(const hardware_inter
 	}
 }
 
+std::string TalonStateController::feedbackDeviceToString(const hardware_interface::FeedbackDevice feedback_device) const
+{
+	switch (feedback_device)
+	{
+		case hardware_interface::FeedbackDevice_Uninitialized:
+			return "Uninitialized";
+		case hardware_interface::FeedbackDevice_QuadEncoder:
+			return "QuadEncoder";
+		case hardware_interface::FeedbackDevice_Analog:
+			return "Analog";
+		case hardware_interface::FeedbackDevice_Tachometer:
+			return "Tachometer";
+		case hardware_interface::FeedbackDevice_PulseWidthEncodedPosition:
+			return "PusleWidthEncodedPosition";
+		case hardware_interface::FeedbackDevice_SensorSum:
+			return  "SensorSum";
+		case hardware_interface::FeedbackDevice_SensorDifference:
+			return "SensorDifference";
+		case hardware_interface::FeedbackDevice_RemoteSensor0:
+			return  "RemoteSensor0";
+		case hardware_interface::FeedbackDevice_RemoteSensor1:
+			return  "RemoteSensor0";
+		case hardware_interface::FeedbackDevice_SoftwareEmulatedSensor:
+			return "SoftwareEmulatedSensor";
+		default:
+			return "Unknown";
+	}
+}
+
 std::string TalonStateController::remoteSensorSourceToString(const hardware_interface::RemoteSensorSource remote_sensor_source) const
 {
 	switch (remote_sensor_source)
@@ -341,42 +376,7 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				m.motor_output_percent[i] = ts->getMotorOutputPercent();
 				m.temperature[i] = ts->getTemperature();
 
-				switch (ts->getEncoderFeedback())
-				{
-					case hardware_interface::FeedbackDevice_Uninitialized:
-						m.feedback_sensor[i] = "Uninitialized";
-						break;
-					case hardware_interface::FeedbackDevice_QuadEncoder:
-						m.feedback_sensor[i] = "QuadEncoder";
-						break;
-					case hardware_interface::FeedbackDevice_Analog:
-						m.feedback_sensor[i] = "Analog";
-						break;
-					case hardware_interface::FeedbackDevice_Tachometer:
-						m.feedback_sensor[i] = "Tachometer";
-						break;
-					case hardware_interface::FeedbackDevice_PulseWidthEncodedPosition:
-						m.feedback_sensor[i] = "PusleWidthEncodedPosition";
-						break;
-					case hardware_interface::FeedbackDevice_SensorSum:
-						m.feedback_sensor[i] =  "SensorSum";
-						break;
-					case hardware_interface::FeedbackDevice_SensorDifference:
-						m.feedback_sensor[i] = "SensorDifference";
-						break;
-					case hardware_interface::FeedbackDevice_RemoteSensor0:
-						m.feedback_sensor[i] =  "RemoteSensor0";
-						break;
-					case hardware_interface::FeedbackDevice_RemoteSensor1:
-						m.feedback_sensor[i] =  "RemoteSensor0";
-						break;
-					case hardware_interface::FeedbackDevice_SoftwareEmulatedSensor:
-						m.feedback_sensor[i] = "SoftwareEmulatedSensor";
-						break;
-					default:
-						m.feedback_sensor[i] = "Unknown";
-						break;
-				}
+				m.feedback_sensor[i] = feedbackDeviceToString(ts->getEncoderFeedback());
 				m.feedback_coefficient[i] = ts->getFeedbackCoefficient();
 				switch (ts->getRemoteEncoderFeedback())
 				{
@@ -402,9 +402,15 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 						m.remote_feedback_sensor[i] = "Unknown";
 						break;
 				}
+				m.remote_feedback_device_id0[i] = ts->getRemoteFeedbackDeviceId(0);
 				m.remote_feedback_filter0[i] = remoteSensorSourceToString(ts->getRemoteFeedbackFilter(0));
+				m.remote_feedback_device_id1[i] = ts->getRemoteFeedbackDeviceId(1);
 				m.remote_feedback_filter1[i] = remoteSensorSourceToString(ts->getRemoteFeedbackFilter(1));
 				m.encoder_ticks_per_rotation[i] = ts->getEncoderTicksPerRotation();
+				m.sensor_term_sum0[i] = feedbackDeviceToString(ts->getSensorTerm(hardware_interface::SensorTerm_Sum0));
+				m.sensor_term_sum1[i] = feedbackDeviceToString(ts->getSensorTerm(hardware_interface::SensorTerm_Sum1));
+				m.sensor_term_diff0[i] = feedbackDeviceToString(ts->getSensorTerm(hardware_interface::SensorTerm_Diff0));
+				m.sensor_term_diff1[i] = feedbackDeviceToString(ts->getSensorTerm(hardware_interface::SensorTerm_Diff1));
 
 				//publish the array of PIDF values
 				m.pid_slot[i] = ts->getSlot();

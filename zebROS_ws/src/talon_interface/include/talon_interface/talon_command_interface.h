@@ -111,8 +111,11 @@ class TalonHWCommand
 			remote_encoder_feedback_(RemoteFeedbackDevice_FactoryDefaultOff),
 			remote_encoder_feedback_changed_(false),
 			encoder_ticks_per_rotation_(4096),
-			remote_feedback_filter_{RemoteSensorSource_Off, RemoteSensorSource_Off},
-			remote_feedback_filter_changed_{false, false},
+			remote_feedback_device_ids_{0, 0},
+			remote_feedback_filters_{RemoteSensorSource_Off, RemoteSensorSource_Off},
+			remote_feedback_filters_changed_(false),
+			sensor_terms_{FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized},
+			sensor_terms_changed_(false),
 
 			//output shaping
 			closed_loop_ramp_(0),
@@ -799,7 +802,15 @@ class TalonHWCommand
 		{
 			remote_encoder_feedback_changed_ = true;
 		}
-
+		int getRemoteFeedbackDeviceId(size_t remote_ordinal) const
+		{
+			if (remote_ordinal >= 2)
+			{
+				ROS_WARN("getRemoteFeedbackDeviceId: remote_ordinal too large");
+				return -1;
+			}
+			return remote_feedback_device_ids_[remote_ordinal];
+		}
 		RemoteSensorSource getRemoteFeedbackFilter(size_t remote_ordinal) const
 		{
 			if (remote_ordinal >= 2)
@@ -807,7 +818,18 @@ class TalonHWCommand
 				ROS_WARN("getRemoteFeedbackFilter : remote_ordinal too large");
 				return RemoteSensorSource_Last;
 			}
-			return remote_feedback_filter_[remote_ordinal];
+			return remote_feedback_filters_[remote_ordinal];
+		}
+
+		void setRemoteFeedbackDeviceId(int remote_feedback_device_id, size_t remote_ordinal)
+		{
+			if (remote_ordinal >= 2)
+			{
+				ROS_WARN("setRemoteFeedbackFilter : remote_ordinal too large");
+				return;
+			}
+			remote_feedback_device_ids_[remote_ordinal] = remote_feedback_device_id;
+			remote_feedback_filters_changed_ = true;
 		}
 		void setRemoteFeedbackFilter(RemoteSensorSource remote_sensor_source, size_t remote_ordinal)
 		{
@@ -822,29 +844,58 @@ class TalonHWCommand
 				ROS_WARN("setRemoteFeedbackFilter : remote_sensor_source out of range");
 				return;
 			}
-			remote_feedback_filter_[remote_ordinal] = remote_sensor_source;
-			remote_feedback_filter_changed_[remote_ordinal] = true;
+			remote_feedback_filters_[remote_ordinal] = remote_sensor_source;
+			remote_feedback_filters_changed_ = true;
 		}
-		bool remoteFeedbackFilterChanged(RemoteSensorSource &remote_feedback_filter, size_t remote_ordinal)
+		bool remoteFeedbackFiltersChanged(std::array<int, 2> &remote_feedback_device_ids, std::array<RemoteSensorSource, 2> &remote_feedback_filters)
 		{
-			if (remote_ordinal >= 2)
-			{
-				ROS_WARN("remoteFeedbackFilterChanged : remote_ordinal too large");
-				remote_feedback_filter = RemoteSensorSource_Last;
+			remote_feedback_device_ids = remote_feedback_device_ids_;
+			remote_feedback_filters = remote_feedback_filters_;
+			if (!remote_feedback_filters_changed_)
 				return false;
-			}
-			remote_feedback_filter = remote_feedback_filter_[remote_ordinal];
-			if (!remote_feedback_filter_changed_[remote_ordinal])
-				return false;
-			remote_feedback_filter_changed_[remote_ordinal] = false;
+			remote_feedback_filters_changed_ = false;
 			return true;
 		}
-		void resetRemoteFeedbackFilter(size_t remote_ordinal)
+		void resetRemoteFeedbackFilters(void)
 		{
-			if (remote_ordinal >= 2)
-				ROS_WARN("remoteFeedbackFilterChanged : remote_ordinal too large");
-			else
-				remote_feedback_filter_changed_[remote_ordinal] = true;
+			remote_feedback_filters_changed_ = true;
+		}
+
+		FeedbackDevice getSensorTerm(SensorTerm sensor_terms) const
+		{
+			if (sensor_terms < SensorTerm_Last)
+				return sensor_terms_[sensor_terms];
+			ROS_WARN("getSensorTerm : sensor_terms index too large");
+			return FeedbackDevice_Last;
+		}
+		void setSensorTerm(FeedbackDevice feedback_device, SensorTerm sensor_terms)
+		{
+			if (sensor_terms >= SensorTerm_Last)
+			{
+				ROS_WARN_STREAM("setSensorTerm Invalid sensor term index requested");
+				return;
+			}
+
+			if ((feedback_device <  FeedbackDevice_Uninitialized) &&
+				(feedback_device >= FeedbackDevice_Last) )
+			{
+				ROS_WARN_STREAM("setSensorTerm Invalid feedback device requested");
+				return;
+			}
+			sensor_terms_[sensor_terms] = feedback_device;
+			sensor_terms_changed_ = true;
+		}
+		bool sensorTermsChanged(std::array<FeedbackDevice, SensorTerm_Last> &sensor_terms)
+		{
+			sensor_terms = sensor_terms_;
+			if (!sensor_terms_changed_)
+				return false;
+			sensor_terms_changed_ = false;
+			return true;
+		}
+		void resetSensorTerms(void)
+		{
+			sensor_terms_changed_ = true;
 		}
 
 		int getEncoderTicksPerRotation(void) const
@@ -2031,8 +2082,11 @@ class TalonHWCommand
 		RemoteFeedbackDevice remote_encoder_feedback_;
 		bool remote_encoder_feedback_changed_;
 		int encoder_ticks_per_rotation_;
-		std::array<RemoteSensorSource, 2> remote_feedback_filter_;
-		std::array<bool, 2>               remote_feedback_filter_changed_;
+		std::array<int, 2>                remote_feedback_device_ids_;
+		std::array<RemoteSensorSource, 2> remote_feedback_filters_;
+		bool                              remote_feedback_filters_changed_;
+		std::array<FeedbackDevice, SensorTerm_Last> sensor_terms_;
+		bool                                        sensor_terms_changed_;
 
 		//output shaping
 		double closed_loop_ramp_;

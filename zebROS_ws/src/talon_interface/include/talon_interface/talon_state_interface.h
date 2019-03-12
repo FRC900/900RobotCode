@@ -86,8 +86,17 @@ enum RemoteSensorSource
 	RemoteSensorSource_GadgeteerPigeon_Pitch,
 	RemoteSensorSource_GadgeteerPigeon_Roll,
 	RemoteSensorSource_Last
-
 };
+
+enum SensorTerm
+{
+	SensorTerm_Sum0,
+	SensorTerm_Sum1,
+	SensorTerm_Diff0,
+	SensorTerm_Diff1,
+	SensorTerm_Last
+};
+
 enum LimitSwitchSource
 {
 	LimitSwitchSource_Uninitialized,
@@ -294,7 +303,9 @@ class TalonHWState
 			feedback_coefficient_(1.0),
 			encoder_feedback_remote_(RemoteFeedbackDevice_FactoryDefaultOff),
 			encoder_ticks_per_rotation_(4096),
-			remote_feedback_filter_{RemoteSensorSource_Off, RemoteSensorSource_Off},
+			remote_feedback_device_ids_{0, 0},
+			remote_feedback_filters_{RemoteSensorSource_Off, RemoteSensorSource_Off},
+			sensor_terms_{FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized},
 
 			//output shaping
 			close_loop_ramp_(0),
@@ -615,6 +626,15 @@ class TalonHWState
 		{
 			return feedback_coefficient_;
 		}
+		int getRemoteFeedbackDeviceId(size_t remote_ordinal) const
+		{
+			if (remote_ordinal >= 2)
+			{
+				ROS_WARN("getRemoteFeedbackDeviceId: remote_ordinal too large");
+				return -1;
+			}
+			return remote_feedback_device_ids_[remote_ordinal];
+		}
 		RemoteSensorSource getRemoteFeedbackFilter(size_t remote_ordinal) const
 		{
 			if (remote_ordinal >= 2)
@@ -622,7 +642,14 @@ class TalonHWState
 				ROS_WARN("getRemoteFeedbackFilter : remote_ordinal too large");
 				return RemoteSensorSource_Last;
 			}
-			return remote_feedback_filter_[remote_ordinal];
+			return remote_feedback_filters_[remote_ordinal];
+		}
+		FeedbackDevice getSensorTerm(SensorTerm sensor_term) const
+		{
+			if (sensor_term < SensorTerm_Last)
+				return sensor_terms_[sensor_term];
+			ROS_WARN("getSensorTerm : sensor_term index too large");
+			return FeedbackDevice_Last;
 		}
 		int getEncoderTicksPerRotation(void) const
 		{
@@ -1217,6 +1244,19 @@ class TalonHWState
 		{
 			feedback_coefficient_ = feedback_coefficient;
 		}
+		void setRemoteFeedbackDeviceId(int device_id, size_t remote_ordinal)
+		{
+			if (remote_ordinal >= 2)
+			{
+				ROS_WARN("setRemoteFeedbackDeviceId : remote_ordinal too large");
+				return;
+			}
+			remote_feedback_device_ids_[remote_ordinal] = device_id;
+		}
+		void setRemoteFeedbackDeviceIds(const std::array<int, 2> &remote_feedback_device_ids)
+		{
+			remote_feedback_device_ids_ = remote_feedback_device_ids;
+		}
 		void setRemoteFeedbackFilter(RemoteSensorSource remote_sensor_source, size_t remote_ordinal)
 		{
 			if (remote_ordinal >= 2)
@@ -1230,7 +1270,31 @@ class TalonHWState
 				ROS_WARN("setRemoteFeedbackFilter : remote_sensor_source out of range");
 				return;
 			}
-			remote_feedback_filter_[remote_ordinal] = remote_sensor_source;
+			remote_feedback_filters_[remote_ordinal] = remote_sensor_source;
+		}
+		void setRemoteFeedbackFilters(const std::array<RemoteSensorSource, 2> &remote_sensor_sources)
+		{
+			remote_feedback_filters_ = remote_sensor_sources;
+		}
+		void setSensorTerm(FeedbackDevice feedback_device, SensorTerm sensor_term)
+		{
+			if (sensor_term >= SensorTerm_Last)
+			{
+				ROS_WARN_STREAM("setSensorTerm Invalid sensor term index requested");
+				return;
+			}
+
+			if ((feedback_device <  FeedbackDevice_Uninitialized) &&
+				(feedback_device >= FeedbackDevice_Last) )
+			{
+				ROS_WARN_STREAM("setSensorTerm Invalid feedback device requested");
+				return;
+			}
+			sensor_terms_[sensor_term] = feedback_device;
+		}
+		void setSensorTerms(const std::array<FeedbackDevice, SensorTerm_Last> &sensor_terms)
+		{
+			sensor_terms_ = sensor_terms;
 		}
 		void setEncoderTicksPerRotation(int encoder_ticks_per_rotation)
 		{
@@ -1306,7 +1370,9 @@ class TalonHWState
 		double feedback_coefficient_;
 		RemoteFeedbackDevice encoder_feedback_remote_;
 		int encoder_ticks_per_rotation_;
-		std::array<RemoteSensorSource, 2> remote_feedback_filter_;
+		std::array<int, 2> remote_feedback_device_ids_;
+		std::array<RemoteSensorSource, 2> remote_feedback_filters_;
+		std::array<FeedbackDevice, SensorTerm_Last> sensor_terms_;
 
 		// output shaping
 		double close_loop_ramp_;

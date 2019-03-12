@@ -56,6 +56,9 @@ class TalonCIParams
 			feedback_coefficient_(1.0),
 			remote_feedback_type_(hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff),
 			ticks_per_rotation_(4096),
+			remote_feedback_device_ids_{0, 0},
+			remote_feedback_filters_{hardware_interface::RemoteSensorSource_Off, hardware_interface::RemoteSensorSource_Off},
+			sensor_terms_{hardware_interface::FeedbackDevice_Uninitialized,hardware_interface::FeedbackDevice_Uninitialized,hardware_interface::FeedbackDevice_Uninitialized,hardware_interface::FeedbackDevice_Uninitialized},
 			closed_loop_ramp_(0.),
 			open_loop_ramp_(0.),
 			peak_output_forward_(1.),
@@ -151,6 +154,14 @@ class TalonCIParams
 			feedback_type_ = static_cast<hardware_interface::FeedbackDevice>(config.feedback_type);
 			feedback_coefficient_ = config.feedback_coefficient;
 			remote_feedback_type_ = static_cast<hardware_interface::RemoteFeedbackDevice>(config.remote_feedback_type);
+			remote_feedback_device_ids_[0] = config.remote_feedback_device_id0;
+			remote_feedback_filters_[0] = static_cast<hardware_interface::RemoteSensorSource>(config.remote_feedback_filter0);
+			remote_feedback_device_ids_[1] = config.remote_feedback_device_id1;
+			remote_feedback_filters_[1] = static_cast<hardware_interface::RemoteSensorSource>(config.remote_feedback_filter1);
+			sensor_terms_[hardware_interface::SensorTerm_Sum0] = static_cast<hardware_interface::FeedbackDevice>(config.sensor_term_sum0);
+			sensor_terms_[hardware_interface::SensorTerm_Sum1] = static_cast<hardware_interface::FeedbackDevice>(config.sensor_term_sum1);
+			sensor_terms_[hardware_interface::SensorTerm_Diff0] = static_cast<hardware_interface::FeedbackDevice>(config.sensor_term_diff0);
+			sensor_terms_[hardware_interface::SensorTerm_Diff1] = static_cast<hardware_interface::FeedbackDevice>(config.sensor_term_diff1);
 			ticks_per_rotation_ = config.encoder_ticks_per_rotation;
 			neutral_mode_ = static_cast<hardware_interface::NeutralMode>(config.neutral_mode);
 			closed_loop_ramp_ = config.closed_loop_ramp;
@@ -247,6 +258,14 @@ class TalonCIParams
 			config.feedback_coefficient = feedback_coefficient_;
 			config.remote_feedback_type = remote_feedback_type_;
 			config.encoder_ticks_per_rotation = ticks_per_rotation_;
+			config.remote_feedback_device_id0 = remote_feedback_device_ids_[0];
+			config.remote_feedback_filter0 = remote_feedback_filters_[0];
+			config.remote_feedback_device_id1 = remote_feedback_device_ids_[1];
+			config.remote_feedback_filter1 = remote_feedback_filters_[1];
+			config.sensor_term_sum0 = sensor_terms_[hardware_interface::SensorTerm_Sum0];
+			config.sensor_term_sum1 = sensor_terms_[hardware_interface::SensorTerm_Sum1];
+			config.sensor_term_diff0 = sensor_terms_[hardware_interface::SensorTerm_Diff0];
+			config.sensor_term_diff1 = sensor_terms_[hardware_interface::SensorTerm_Diff1];
 			config.neutral_mode  = neutral_mode_;
 			config.closed_loop_ramp = closed_loop_ramp_;
 			config.open_loop_ramp = open_loop_ramp_;
@@ -348,61 +367,75 @@ class TalonCIParams
 		//TODOa: create a method that reads the feedback settings enum
 		bool readFeedbackType(ros::NodeHandle &n)
 		{
-			std::string feedback_type_name;
-			// Not all talons will have feedback, so it is
-			// OK to leave this entry out.
-			if (n.getParam("feedback_type", feedback_type_name))
+			std::string str;
+			if (n.getParam("feedback_type", str) && !stringToFeedbackDevice(str, feedback_type_))
 			{
-				if (feedback_type_name == "QuadEncoder")
-					feedback_type_ = hardware_interface::FeedbackDevice_QuadEncoder;
-				else if (feedback_type_name == "Analog")
-					feedback_type_ = hardware_interface::FeedbackDevice_Analog;
-				else if (feedback_type_name == "Tachometer")
-					feedback_type_ = hardware_interface::FeedbackDevice_Tachometer;
-				else if (feedback_type_name == "PulseWidthEncodedPosition")
-					feedback_type_ = hardware_interface::FeedbackDevice_PulseWidthEncodedPosition;
-				else if (feedback_type_name == "SensorSum")
-					feedback_type_ = hardware_interface::FeedbackDevice_SensorSum;
-				else if (feedback_type_name == "SensorDifference")
-					feedback_type_ = hardware_interface::FeedbackDevice_SensorDifference;
-				else if (feedback_type_name == "RemoteSensor0")
-					feedback_type_ = hardware_interface::FeedbackDevice_RemoteSensor0;
-				else if (feedback_type_name == "RemoteSensor1")
-					feedback_type_ = hardware_interface::FeedbackDevice_RemoteSensor1;
-				else if (feedback_type_name == "SoftwareEmulatedSensor")
-					feedback_type_ = hardware_interface::FeedbackDevice_SoftwareEmulatedSensor;
-				else if (feedback_type_name == "CTRE_MagEncoder_Absolute")
-					feedback_type_ = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Absolute;
-				else if (feedback_type_name == "CTRE_MagEncoder_Relative")
-					feedback_type_ = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Relative;
-				else
-				{
-					ROS_ERROR("Invalid feedback device name given");
-					return false;
-				}
+				ROS_ERROR_STREAM("Invalid feedback device name given : " << str);
+				return false;
 			}
+
 			n.getParam("ticks_per_rotation", ticks_per_rotation_);
 			n.getParam("feedback_coefficient", feedback_coefficient_);
-			if (n.getParam("remote_feedback_type", feedback_type_name))
+			if (n.getParam("remote_feedback_type", str))
 			{
-				if (feedback_type_name == "FactoryDefaultOff")
+				if (str == "FactoryDefaultOff")
 					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff;
-				else if (feedback_type_name == "SensorSum")
+				else if (str == "SensorSum")
 					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_SensorSum;
-				else if (feedback_type_name == "SensorDifference")
+				else if (str == "SensorDifference")
 					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_SensorDifference;
-				else if (feedback_type_name == "RemoteSensor0")
+				else if (str == "RemoteSensor0")
 					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_RemoteSensor0;
-				else if (feedback_type_name == "RemoteSensor1")
+				else if (str == "RemoteSensor1")
 					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_RemoteSensor1;
-				else if (feedback_type_name == "SoftwareEmulatedSensor")
+				else if (str == "SoftwareEmulatedSensor")
 					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_SoftwareEmulatedSensor;
 				else
 				{
-					ROS_ERROR("Invalid remote feedback device name given");
+					ROS_ERROR_STREAM("Invalid remote feedback device name given : " << str);
 					return false;
 				}
 			}
+			n.getParam("remote_feedback_device_id0", remote_feedback_device_ids_[0]);
+			if (n.getParam("remote_feedback_filter0", str) &&
+				!stringToRemoteSensorSource(str, remote_feedback_filters_[0]))
+			{
+				ROS_ERROR_STREAM("Invalid remote_feedback_filter0 device name given : " << str);
+				return false;
+			}
+			n.getParam("remote_feedback_device_id1", remote_feedback_device_ids_[1]);
+			if (n.getParam("remote_feedback_filter1", str) &&
+				stringToRemoteSensorSource(str, remote_feedback_filters_[1]))
+			{
+				ROS_ERROR_STREAM("Invalid remote_feedback_filter1 device name given : " << str);
+				return false;
+			}
+
+			if (n.getParam("sensor_term_sum0", str) &&
+				!stringToFeedbackDevice(str, sensor_terms_[hardware_interface::SensorTerm_Sum0]))
+			{
+				ROS_ERROR_STREAM("Invalid sensor_term_sum0 device name given : " << str);
+				return false;
+			}
+			if (n.getParam("sensor_term_sum1", str) &&
+				!stringToFeedbackDevice(str, sensor_terms_[hardware_interface::SensorTerm_Sum1]))
+			{
+				ROS_ERROR_STREAM("Invalid sensor_term_sum1 device name given : " << str);
+				return false;
+			}
+			if (n.getParam("sensor_term_diff0", str) &&
+				!stringToFeedbackDevice(str, sensor_terms_[hardware_interface::SensorTerm_Diff0]))
+			{
+				ROS_ERROR_STREAM("Invalid sensor_term_diff0 device name given : " << str);
+				return false;
+			}
+			if (n.getParam("sensor_term_diff1", str) &&
+				!stringToFeedbackDevice(str, sensor_terms_[hardware_interface::SensorTerm_Diff1]))
+			{
+				ROS_ERROR_STREAM("Invalid sensor_term_diff1 device name given : " << str);
+				return false;
+			}
+
 			return true;
 		}
 
@@ -680,6 +713,9 @@ class TalonCIParams
 		double feedback_coefficient_;
 		hardware_interface::RemoteFeedbackDevice remote_feedback_type_;
 		int    ticks_per_rotation_;
+		std::array<int, 2>                                    remote_feedback_device_ids_;
+		std::array<hardware_interface::RemoteSensorSource, 2> remote_feedback_filters_;
+		std::array<hardware_interface::FeedbackDevice, hardware_interface::SensorTerm_Last> sensor_terms_;
 		double closed_loop_ramp_;
 		double open_loop_ramp_;
 		double peak_output_forward_;
@@ -812,6 +848,76 @@ class TalonCIParams
 			else
 			{
 				ROS_ERROR_STREAM("Invalid limit switch normal : " << str);
+				return false;
+			}
+			return true;
+		}
+
+		bool stringToFeedbackDevice(const std::string &str,
+				hardware_interface::FeedbackDevice &feedback_device) const
+		{
+				if (str == "QuadEncoder")
+					feedback_device = hardware_interface::FeedbackDevice_QuadEncoder;
+				else if (str == "Analog")
+					feedback_device = hardware_interface::FeedbackDevice_Analog;
+				else if (str == "Tachometer")
+					feedback_device = hardware_interface::FeedbackDevice_Tachometer;
+				else if (str == "PulseWidthEncodedPosition")
+					feedback_device = hardware_interface::FeedbackDevice_PulseWidthEncodedPosition;
+				else if (str == "SensorSum")
+					feedback_device = hardware_interface::FeedbackDevice_SensorSum;
+				else if (str == "SensorDifference")
+					feedback_device = hardware_interface::FeedbackDevice_SensorDifference;
+				else if (str == "RemoteSensor0")
+					feedback_device = hardware_interface::FeedbackDevice_RemoteSensor0;
+				else if (str == "RemoteSensor1")
+					feedback_device = hardware_interface::FeedbackDevice_RemoteSensor1;
+				else if (str == "SoftwareEmulatedSensor")
+					feedback_device = hardware_interface::FeedbackDevice_SoftwareEmulatedSensor;
+				else if (str == "CTRE_MagEncoder_Absolute")
+					feedback_device = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Absolute;
+				else if (str == "CTRE_MagEncoder_Relative")
+					feedback_device = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Relative;
+				else
+				{
+					ROS_ERROR_STREAM("Invalid feedback device name given : " << str);
+					return false;
+				}
+				return true;
+		}
+
+		bool stringToRemoteSensorSource(const std::string &str,
+				hardware_interface::RemoteSensorSource &source)
+		{
+			if (str == "Off")
+				source = hardware_interface::RemoteSensorSource_Off;
+			else if (str == "TalonSRX_SelectedSensor")
+				source = hardware_interface::RemoteSensorSource_TalonSRX_SelectedSensor;
+			else if (str == "Pigeon_Yaw")
+				source = hardware_interface::RemoteSensorSource_Pigeon_Yaw;
+			else if (str == "Pigeon_Pitch")
+				source = hardware_interface::RemoteSensorSource_Pigeon_Pitch;
+			else if (str == "Pigeon_Roll")
+				source = hardware_interface::RemoteSensorSource_Pigeon_Roll;
+			else if (str == "CANifier_Quadrature")
+				source = hardware_interface::RemoteSensorSource_CANifier_Quadrature;
+			else if (str == "CANifier_PWMInput0")
+				source = hardware_interface::RemoteSensorSource_CANifier_PWMInput0;
+			else if (str == "CANifier_PWMInput1")
+				source = hardware_interface::RemoteSensorSource_CANifier_PWMInput1;
+			else if (str == "CANifier_PWMInput2")
+				source = hardware_interface::RemoteSensorSource_CANifier_PWMInput2;
+			else if (str == "CANifier_PWMInput3")
+				source = hardware_interface::RemoteSensorSource_CANifier_PWMInput3;
+			else if (str == "GadgeteerPigeon_Yaw")
+				source = hardware_interface::RemoteSensorSource_GadgeteerPigeon_Yaw;
+			else if (str == "GadgeteerPigeon_Pitch")
+				source = hardware_interface::RemoteSensorSource_GadgeteerPigeon_Pitch;
+			else if (str == "GadgeteerPigeon_Roll")
+				source = hardware_interface::RemoteSensorSource_GadgeteerPigeon_Roll;
+			else
+			{
+				ROS_ERROR_STREAM("Invalid remote sensor source filter type : " << str);
 				return false;
 			}
 			return true;
@@ -1532,6 +1638,13 @@ class TalonControllerInterface
 			talon->setFeedbackCoefficient(params.feedback_coefficient_);
 			talon->setRemoteEncoderFeedback(params.remote_feedback_type_);
 			talon->setEncoderTicksPerRotation(params.ticks_per_rotation_);
+			for (size_t i = 0; i < params.remote_feedback_filters_.size(); ++i)
+			{
+				talon->setRemoteFeedbackDeviceId(params.remote_feedback_device_ids_[i], i);
+				talon->setRemoteFeedbackFilter(params.remote_feedback_filters_[i], i);
+			}
+			for (hardware_interface::SensorTerm i = hardware_interface::SensorTerm_Sum0; i < hardware_interface::SensorTerm_Last; i = static_cast<hardware_interface::SensorTerm>(i + 1))
+				talon->setSensorTerm(params.sensor_terms_[i], i);
 
 			talon->setInvert(params.invert_output_);
 			talon->setSensorPhase(params.sensor_phase_);

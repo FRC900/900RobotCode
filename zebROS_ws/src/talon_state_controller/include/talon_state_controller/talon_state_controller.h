@@ -97,6 +97,7 @@ class TalonStateController: public controller_interface::Controller<hardware_int
 		std::string limitSwitchSourceToString(const hardware_interface::LimitSwitchSource source) const;
 		std::string remoteLimitSwitchSourceToString(const hardware_interface::RemoteLimitSwitchSource source) const;
 		std::string limitSwitchNormalToString(const hardware_interface::LimitSwitchNormal normal) const;
+		std::string feedbackDeviceToString(const hardware_interface::FeedbackDevice feedback_device) const;
 		std::string remoteSensorSourceToString(const hardware_interface::RemoteSensorSource remote_sensor_source) const;
 };
 

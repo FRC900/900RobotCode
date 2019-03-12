@@ -1654,12 +1654,61 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			const bool rc = safeTalonCall(victor->ConfigSelectedFeedbackSensor(talon_remote_feedback_device, pidIdx, timeoutMs),"ConfigSelectedFeedbackSensor (Remote)");
 			if (rc)
 			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " remote feedback");
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " remote feedback sensor");
 				ts.setRemoteEncoderFeedback(internal_remote_feedback_device);
 			}
 			else
 			{
 				tc.resetRemoteEncoderFeedback();
+			}
+		}
+		std::array<int, 2>                                    remote_feedback_device_ids;
+		std::array<hardware_interface::RemoteSensorSource, 2> internal_remote_feedback_filters;
+		std::array<ctre::phoenix::motorcontrol::RemoteSensorSource, 2> talon_remote_feedback_filters;
+		if (tc.remoteFeedbackFiltersChanged(remote_feedback_device_ids, internal_remote_feedback_filters) &&
+
+			convertRemoteSensorSource(internal_remote_feedback_filters[0], talon_remote_feedback_filters[0]) &&
+			convertRemoteSensorSource(internal_remote_feedback_filters[0], talon_remote_feedback_filters[0]))
+		{
+			bool rc = safeTalonCall(talon->ConfigRemoteFeedbackFilter(remote_feedback_device_ids[0], talon_remote_feedback_filters[0], 0, timeoutMs),"ConfigRemoteFeedbackFilter (0)");
+			rc &= safeTalonCall(talon->ConfigRemoteFeedbackFilter(remote_feedback_device_ids[1], talon_remote_feedback_filters[1], 1, timeoutMs),"ConfigRemoteFeedbackFilter (1)");
+
+			if (rc)
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " remote feedback filters");
+				ts.setRemoteFeedbackDeviceIds(remote_feedback_device_ids);
+				ts.setRemoteFeedbackFilters(internal_remote_feedback_filters);
+			}
+			else
+			{
+				tc.resetRemoteFeedbackFilters();
+			}
+		}
+
+
+		std::array<hardware_interface::FeedbackDevice, hardware_interface::SensorTerm_Last> internal_sensor_terms;
+		std::array<ctre::phoenix::motorcontrol::FeedbackDevice, hardware_interface::SensorTerm_Last> talon_sensor_terms;
+		if (tc.sensorTermsChanged(internal_sensor_terms) &&
+			convertFeedbackDevice(internal_sensor_terms[0], talon_sensor_terms[0]) &&
+			convertFeedbackDevice(internal_sensor_terms[1], talon_sensor_terms[1]) &&
+			convertFeedbackDevice(internal_sensor_terms[2], talon_sensor_terms[2]) &&
+			convertFeedbackDevice(internal_sensor_terms[3], talon_sensor_terms[3]))
+		{
+			// Check for errors on Talon writes. If it fails, used the reset() call to
+			// set the changed var for the config items to true. This will trigger a re-try
+			// the next time through the loop.
+			bool rc = safeTalonCall(talon->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Sum0, talon_sensor_terms[hardware_interface::SensorTerm_Sum0], timeoutMs),"ConfigSensorTerm Sum0");
+			rc &= safeTalonCall(talon->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Sum1, talon_sensor_terms[hardware_interface::SensorTerm_Sum1], timeoutMs),"ConfigSensorTerm Sum1");
+			rc = safeTalonCall(talon->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Diff0, talon_sensor_terms[hardware_interface::SensorTerm_Diff0], timeoutMs),"ConfigSensorTerm Diff0");
+			rc &= safeTalonCall(talon->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Diff1, talon_sensor_terms[hardware_interface::SensorTerm_Diff1], timeoutMs),"ConfigSensorTerm Diff1");
+			if (rc)
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " sensor terms");
+				ts.setSensorTerms(internal_sensor_terms);
+			}
+			else
+			{
+				tc.resetSensorTerms();
 			}
 		}
 
@@ -2614,6 +2663,60 @@ bool FRCRobotHWInterface::convertRemoteFeedbackDevice(
 			break;
 		default:
 			ROS_WARN("Unknown remote feedback device seen in HW interface");
+			return false;
+	}
+
+	return true;
+}
+
+bool FRCRobotHWInterface::convertRemoteSensorSource(
+	const hardware_interface::RemoteSensorSource input_rss,
+	ctre::phoenix::motorcontrol::RemoteSensorSource &output_rss)
+{
+	switch (input_rss)
+	{
+		case hardware_interface::RemoteSensorSource_Off:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_Off;
+			break;
+		case hardware_interface::RemoteSensorSource_TalonSRX_SelectedSensor:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_TalonSRX_SelectedSensor;
+			break;
+		case hardware_interface::RemoteSensorSource_Pigeon_Yaw:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_Pigeon_Yaw;
+			break;
+		case hardware_interface::RemoteSensorSource_Pigeon_Pitch:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_Pigeon_Pitch;
+			break;
+		case hardware_interface::RemoteSensorSource_Pigeon_Roll:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_Pigeon_Roll;
+			break;
+		case hardware_interface::RemoteSensorSource_CANifier_Quadrature:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_CANifier_Quadrature;
+			break;
+		case hardware_interface::RemoteSensorSource_CANifier_PWMInput0:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_CANifier_PWMInput0;
+			break;
+		case hardware_interface::RemoteSensorSource_CANifier_PWMInput1:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_CANifier_PWMInput1;
+			break;
+		case hardware_interface::RemoteSensorSource_CANifier_PWMInput2:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_CANifier_PWMInput2;
+			break;
+		case hardware_interface::RemoteSensorSource_CANifier_PWMInput3:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_CANifier_PWMInput3;
+			break;
+		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Yaw:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_GadgeteerPigeon_Yaw;
+			break;
+		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Pitch:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_GadgeteerPigeon_Pitch;
+			break;
+		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Roll:
+			output_rss = ctre::phoenix::motorcontrol::RemoteSensorSource::RemoteSensorSource_GadgeteerPigeon_Roll;
+			break;
+
+		default:
+			ROS_WARN("Unknown remote sensor source seen in HW interface");
 			return false;
 	}
 
