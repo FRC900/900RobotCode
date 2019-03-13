@@ -9,7 +9,7 @@
 #include <behaviors/ElevatorAction.h>
 #include "behaviors/enumerated_elevator_indices.h"
 
-//define global variables that will be defined based on config values
+//define global variables that will be set based on config values
 double elevator_timeout;
 double pause_time_after_release;
 double pause_time_after_extend;
@@ -26,11 +26,10 @@ class IntakeHatchPanelAction
 		behaviors::IntakeFeedback feedback_;
 		behaviors::IntakeResult result_;
 
+		//Create actionlib client for the elevator server
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
-
+		//Service client for hatch panel mech
 		ros::ServiceClient panel_controller_client_;
-
-		ros::Subscriber GoalDetectSub_;
 
 	public:
 		IntakeHatchPanelAction(const std::string &name) :
@@ -38,11 +37,6 @@ class IntakeHatchPanelAction
 			action_name_(name),
 			ac_elevator_("/elevator/elevator_server", true)
 	{
-		//GoalDetectSub_ = nh_.subscribe("goal_detect_msg",1, &IntakeHatchPanelAction::goalDetectCallback, this) //TODO make sure this is linked up correctly
-		/* std::map<std::string, std::string> service_connection_header;
-		   service_connection_header["tcp_nodelay"] = "1";
-		   ElevatorSrv_ = nh_.serviceClient<elevator_controller::ElevatorControlS>("/frcrobot/elevator_controller/cmd_posS", false, service_connection_header);
-		 */
 		as_.start();
 
 		//do networking stuff?
@@ -57,7 +51,7 @@ class IntakeHatchPanelAction
 
 		void executeCB(const behaviors::IntakeGoalConstPtr &/*goal*/)
 		{
-			ROS_WARN("hatch panel intake server running");
+			ROS_INFO("Hatch Panel Intake Server Running");
 
 			//make sure the elevator server exists
 			bool elevator_server_found = ac_elevator_.waitForServer(ros::Duration(wait_for_server_timeout));
@@ -70,6 +64,7 @@ class IntakeHatchPanelAction
 			}
 
 			ros::Rate r(10);
+
 			//define variables that will be re-used for each call to a controller
 			double start_time = ros::Time::now().toSec();
 
@@ -122,7 +117,7 @@ class IntakeHatchPanelAction
 			//send commands to panel_intake_controller to grab the panel ---------------------------------------
 			if(!preempted && ros::ok())
 			{
-				//release claw
+				//release claw (NOOT NOOT)
 				srv.request.claw_release = true;
 				srv.request.push_extend = true;
 				//send request to controller
@@ -131,24 +126,10 @@ class IntakeHatchPanelAction
 					ROS_ERROR("Panel controller call failed in panel intake server");
 					preempted = true;
 				}
-				ros::spinOnce(); //update everything
 
 				//pause for a bit
 				ros::Duration(pause_time_after_release).sleep();
 
-				//extend panel mechanism
-				srv.request.claw_release = true;
-				srv.request.push_extend = true;
-				//send request to controller
-				if(!panel_controller_client_.call(srv))
-				{
-					ROS_ERROR("Panel controller call failed in panel intake server");
-					preempted = true;
-				}
-				ros::spinOnce(); //update everything
-
-
-				//pause for a bit
 				ros::Duration(pause_time_after_extend).sleep();
 
 				//grab the panel - we can reuse the srv variable
