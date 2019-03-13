@@ -68,6 +68,7 @@ float64[] d_term
 float64[] f_term
 float64[] active_trajectory_position
 float64[] active_trajectory_velocity
+float64[] active_trajectory_arbitrary_feed_forward
 float64[] active_trajectory_heading
 bool[] forward_limit_switch
 bool[] reverse_limit_switch

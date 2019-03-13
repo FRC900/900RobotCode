@@ -258,6 +258,7 @@ class TalonHWState
 			f_term_(0.0),
 			active_trajectory_position_(0.0),
 			active_trajectory_velocity_(0.0),
+			active_trajectory_arbitrary_feed_forward_(0.0),
 			active_trajectory_heading_(0.0),
 			forward_limit_switch_closed_(false),
 			reverse_limit_switch_closed_(false),
@@ -526,6 +527,10 @@ class TalonHWState
 		double getActiveTrajectoryVelocity(void) const
 		{
 			return active_trajectory_velocity_;
+		}
+		double getActiveTrajectoryArbitraryFeedForward(void) const
+		{
+			return active_trajectory_arbitrary_feed_forward_;
 		}
 		double getActiveTrajectoryHeading(void) const
 		{
@@ -1095,6 +1100,10 @@ class TalonHWState
 		{
 			active_trajectory_velocity_ = active_trajectory_velocity;
 		}
+		void setActiveTrajectoryArbitraryFeedForward(double active_trajectory_arbitrary_feed_forward)
+		{
+			active_trajectory_arbitrary_feed_forward_ = active_trajectory_arbitrary_feed_forward;
+		}
 		void setActiveTrajectoryHeading(double active_trajectory_heading)
 		{
 			active_trajectory_heading_ = active_trajectory_heading;
@@ -1231,6 +1240,7 @@ class TalonHWState
 		double f_term_;
 		double active_trajectory_position_;
 		double active_trajectory_velocity_;
+		double active_trajectory_arbitrary_feed_forward_;
 		double active_trajectory_heading_;
 		bool   forward_limit_switch_closed_;
 		bool   reverse_limit_switch_closed_;

@@ -118,6 +118,7 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 		m.f_term.push_back(0);
 		m.active_trajectory_position.push_back(0);
 		m.active_trajectory_velocity.push_back(0);
+		m.active_trajectory_arbitrary_feed_forward.push_back(0);
 		m.active_trajectory_heading.push_back(0);
 		m.forward_limit_switch.push_back(false);
 		m.reverse_limit_switch.push_back(false);
@@ -377,6 +378,7 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				m.f_term[i] = ts->getFTerm();
 				m.active_trajectory_position[i] = ts->getActiveTrajectoryPosition();
 				m.active_trajectory_velocity[i] = ts->getActiveTrajectoryVelocity();
+				m.active_trajectory_arbitrary_feed_forward[i] = ts->getActiveTrajectoryArbitraryFeedForward();
 				m.active_trajectory_heading[i] = ts->getActiveTrajectoryHeading();
 				m.forward_limit_switch[i] = ts->getForwardLimitSwitch();
 				m.reverse_limit_switch[i] = ts->getReverseLimitSwitch();

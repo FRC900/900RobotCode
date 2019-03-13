@@ -495,7 +495,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			if (!local && has_id)
 				throw std::runtime_error("A navX id was specified for non-local hardware for joint " + joint_name);
 			int navX_id = 0;
-			if (local_hardware)
+			if (local)
 			{
 				if (!has_id)
 					throw std::runtime_error("A navX id was not specified for joint " + joint_name);
@@ -510,10 +510,10 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			}
 
 			const bool has_frame_id = joint_params.hasMember("id");
-			if (!local_hardware && has_frame_id)
+			if (!local && has_frame_id)
 				throw std::runtime_error("A navX frame_id was specified for non-local hardware for joint " + joint_name);
 			std::string frame_id;
-			if (local_hardware)
+			if (local)
 			{
 				if (!has_frame_id)
 					throw std::runtime_error("A navX frame_id was not specified for joint " + joint_name);
