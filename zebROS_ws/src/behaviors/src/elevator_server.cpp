@@ -95,7 +95,7 @@ class ElevatorAction {
 			bool place_cargo = goal->place_cargo;
 
 			//Determine setpoint (elevator_cur_setpoint_)
-			if(setpoint_index >= min_climb_idx) //then it's a climb index
+			if(setpoint_index > min_climb_idx) //then it's a climb index
 			{
 				// TODO : make const
 				size_t climb_setpoint_index = setpoint_index - min_climb_idx;
