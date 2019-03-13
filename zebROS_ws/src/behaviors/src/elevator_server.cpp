@@ -90,17 +90,15 @@ class ElevatorAction {
             double start_time = ros::Time::now().toSec();
 
 			//define variables to store goal received by the elevator server
-			// TODO : indexes should be type size_t
 			// TODO : make const
-			double setpoint_index = goal->setpoint_index;
+			size_t setpoint_index = goal->setpoint_index;
 			bool place_cargo = goal->place_cargo;
 
 			//Determine setpoint (elevator_cur_setpoint_)
 			if(setpoint_index >= min_climb_idx) //then it's a climb index
 			{
-				// TODO : indexes should be type size_t
 				// TODO : make const
-				double climb_setpoint_index = setpoint_index - min_climb_idx;
+				size_t climb_setpoint_index = setpoint_index - min_climb_idx;
 				if(climb_setpoint_index < climb_locations.size())
 					elevator_cur_setpoint_ = climb_locations[climb_setpoint_index];
 				else
