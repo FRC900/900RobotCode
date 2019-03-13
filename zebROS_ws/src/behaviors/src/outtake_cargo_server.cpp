@@ -114,7 +114,6 @@ class CargoOuttakeAction {
 				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
 				if(state.toString() != "SUCCEEDED") {
 					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
-					preempted = true;
 				}
 				else {
 					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
@@ -122,13 +121,10 @@ class CargoOuttakeAction {
 			}
 			else {
 				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
-				timed_out = true;
 			}
 
-			ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
-
 			//send command to unclamp cargo ----
-			if(!preempted && !timed_out && ros::ok())
+			if(!preempted && ros::ok())
 			{
 				ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 				ROS_WARN("%s: unclamping cargo", action_name_.c_str());
