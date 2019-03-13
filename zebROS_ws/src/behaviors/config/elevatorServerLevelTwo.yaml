@@ -1,0 +1,29 @@
+actionlib_lift_params:
+    cargo:
+        intake_position: 0.0
+        cargo_ship_position: 0.427 # TODO fix me
+        rocket1_position: 0.427260696617
+        rocket2_position: 1.07003544694
+        rocket3_position: 1.65
+    hatch:
+        intake_position: 0.0
+        intake_end_position: 0.1
+        rocket1_position: 0.0
+        rocket2_position: 0.77
+        rocket3_position: 1.5
+    climber:
+        deploy_position: 0.9
+        climb_position: 0.33
+        climb_low_position: 0.5
+        climb_raise_position: 1.12
+        deploy_timeout: 5.0
+        climb_timeout: 15.0
+        climb_low_timeout: 10.0
+        running_forward_timeout: 10.0
+    max_speed: -1.0
+    timeout: 10
+    elevator_position_deadzone: 0.05
+    collision_range_min: 0.03
+    collision_range_max: 0.5
+    carriage_height: 0.1
+
