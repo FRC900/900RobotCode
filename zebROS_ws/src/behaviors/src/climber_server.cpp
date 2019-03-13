@@ -11,7 +11,9 @@
 #include "behaviors/enumerated_elevator_indices.h"
 #include "frc_msgs/MatchSpecificData.h"
 #include <thread>
-
+#include "sensor_msgs/Imu.h"
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 //define global variables that will be defined based on config values
 
@@ -50,7 +52,10 @@ class ClimbAction {
 
 		// Data from subscribers
 		double match_time_remaining_;
-		bool finished_climb_;
+		ros::Subscriber navX_sub_;
+
+		double navX_roll_;
+		double navX_pitch_;
 
 	public:
 		//make the executeCB function run every time the actionlib server is called
@@ -72,13 +77,15 @@ class ClimbAction {
 		//initialize the client being used to call the climber controller to engage the climber
 		climber_engage_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_release_endgame", false, service_connection_header);
 
+		navX_sub_ = nh_.subscribe("navx_mxp", 1, &ClimbAction::navXCallback,this);
+
 		//initialize the publisher used to send messages to the drive base
 		cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 		//start subscribers subscribing
 		//joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
 	}
 
-		~ClimbAction(void) 
+		~ClimbAction(void)
 		{
 		}
 
@@ -404,7 +411,7 @@ class ClimbAction {
 					//Drive forward until drive forward timeout at end of game
 					ROS_INFO_STREAM("Driving forward at end of climb");
 					double start_time = ros::Time::now().toSec();
-					
+
 					while(ros::ok() && !preempted && !timed_out)
 					{
 						timed_out = (ros::Time::now().toSec() -  start_time) > running_forward_timeout;
@@ -461,6 +468,21 @@ class ClimbAction {
 			cmdVelThread.join();
 
 			return;
+		}
+
+		void navXCallback(const sensor_msgs::Imu &navXState)
+		{
+			const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
+			double roll;
+			double pitch;
+			double yaw;
+			tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
+
+			if (roll == roll) // ignore NaN results
+				navX_roll_ = roll;
+
+			if (pitch == pitch) // ignore NaN results
+				navX_pitch_ = pitch;
 		}
 
 		/*
