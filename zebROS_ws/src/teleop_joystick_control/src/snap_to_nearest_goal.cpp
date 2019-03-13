@@ -193,6 +193,7 @@ int main(int argc, char **argv)
 		std_msgs::Float64 angle_snap;
 		std_msgs::Float64 navX_state;
 		double cur_angle = angles::normalize_angle_positive(-1*navX_angle.load(std::memory_order_relaxed));
+		/*
 		if(has_panel) {
 			snap_angle = nearest_angle(hatch_panel_angles, cur_angle + M_PI/2) - M_PI/2; //TODO remove having to multiply negative one
 		}
@@ -201,7 +202,10 @@ int main(int argc, char **argv)
 		}
 		else {
 			snap_angle = nearest_angle(nothing_angles, cur_angle);
-		}
+		}*/
+		
+		//TODO make this not a hack (ASSUMES hatch panel)
+		snap_angle = nearest_angle(hatch_panel_angles, cur_angle + M_PI/2) - M_PI/2; //TODO remove having to multiply negative one
 		double heading = angles::normalize_angle(-1*navX_angle.load(std::memory_order_relaxed));
 		double goal_angle = angles::normalize_angle(snap_angle);
 		double angle_diff = angles::normalize_angle(goal_angle - heading);

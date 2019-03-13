@@ -248,12 +248,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
 			goal.trigger = true;
+			/*
 			if(cargo_linebreak_true_count > config.linebreak_debounce_iterations) {
 				goal.has_cargo = true;
 			}
 			else {
 				goal.has_cargo = false;
-			}
+			}*/
+			goal.has_cargo = false;
 			align_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonAButton)
