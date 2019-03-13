@@ -89,7 +89,6 @@ class OuttakeHatchPanelAction
 				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
 				if(state.toString() != "SUCCEEDED") {
 					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
-					preempted = true;
 				}
 				else {
 					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
@@ -97,7 +96,6 @@ class OuttakeHatchPanelAction
 			}
 			else {
 				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
-				timed_out = true;
 			}
 
 
@@ -108,7 +106,7 @@ class OuttakeHatchPanelAction
 			}
 
 			//send commands to panel_intake_controller to grab the panel ---------------------------------------
-			if(!preempted && !timed_out && ros::ok())
+			if(!preempted && ros::ok())
 			{
 				//extend panel mechanism
 				panel_intake_controller::PanelIntakeSrv srv;

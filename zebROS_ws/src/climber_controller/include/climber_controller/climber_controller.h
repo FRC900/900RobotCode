@@ -42,6 +42,8 @@ class ClimberController : public controller_interface::Controller<hardware_inter
             realtime_tools::RealtimeBuffer<bool> release_endgame_cmd_; //buffer for in/out commands
 
             ros::ServiceServer release_endgame_service_; //service for receiving commands
+
+			ros::Subscriber navX_sub_;
 }; //class
 
 } //namespace

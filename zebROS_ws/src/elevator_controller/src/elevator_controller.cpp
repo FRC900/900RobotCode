@@ -57,11 +57,10 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 }
 
 void ElevatorController::starting(const ros::Time &/*time*/) {
-	go_slow_ = false;
 	zeroed_ = false;
 	last_time_down_ = ros::Time::now();
 	last_mode_ = hardware_interface::TalonMode_Disabled;
-	position_command_.writeFromNonRT(0);
+	position_command_.writeFromNonRT(ElevatorCommand());
 }
 
 void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &/*duration*/)
@@ -78,13 +77,13 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 	{
 		if (elevator_joint_.getMode() == hardware_interface::TalonMode_Disabled && last_mode_ != hardware_interface::TalonMode_Disabled)
 		{
-			position_command_.writeFromNonRT(elevator_joint_.getPosition());
+			position_command_.writeFromNonRT(ElevatorCommand (elevator_joint_.getPosition(),false));
 		}
-		const double setpoint = *(position_command_.readFromRT());
-		elevator_joint_.setCommand(setpoint);
+		const ElevatorCommand setpoint = *(position_command_.readFromRT());
+		elevator_joint_.setCommand(setpoint.GetPosition());
 
 		//if we're not climbing, add an arbitrary feed forward to hold the elevator up
-		if(!go_slow_)
+		if(!setpoint.GetGoSlow())
 		{
 			elevator_joint_.setMode(hardware_interface::TalonMode_Position);
 			elevator_joint_.setPIDFSlot(0);
@@ -170,14 +169,13 @@ bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request  &
 		//adjust talon mode, arb feed forward, and PID slot appropriately
 		if(req.go_slow)
 		{
-			go_slow_ = true;
 			ROS_INFO("Elevator controller: now in climbing mode");
 		}
 		else { //reset to default -- although, this should never be called after endgame
 			ROS_INFO("Elevator controller: normal peak output");
 		}
 
-		position_command_.writeFromNonRT(req.position);
+		position_command_.writeFromNonRT(ElevatorCommand (req.position, req.go_slow));
 		ROS_INFO_STREAM("writing " << std::to_string(req.position) << " to elevator controller");
 	}
 	else
