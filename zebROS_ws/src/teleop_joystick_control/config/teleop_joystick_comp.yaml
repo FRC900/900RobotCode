@@ -4,4 +4,4 @@ teleop_params:
     max_rot: 5
     joystick_pow: 2
     rotation_pow: 2
-    linebreak_debounce_iterations: 2
+    limit_switch_debounce_iterations: 2

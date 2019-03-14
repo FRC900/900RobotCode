@@ -173,7 +173,8 @@
 		</node>
 
 		<!-- Snap to nearest goal navX test code -->
-		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
+
+		<!-- rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
 		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" />
 		<node name="navX_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="navX_pid" />
@@ -192,7 +193,7 @@
 			<param name="topic_from_plant" value="navX_pid/state" />
 			<remap from="pid_debug" to="navX_pid/pid_debug"/>
 			<remap from="pid_enable" to="navX_pid/pid_enable"/>
-		</node>
+		</node-->
 
 		<node name="align_pid_hatch_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
 			<param name="orient_topic" value="navX_pid/orient_command" />
