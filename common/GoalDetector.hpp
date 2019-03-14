@@ -89,5 +89,3 @@ class GoalDetector
 		const std::vector< GoalInfo > getInfo(const std::vector< std::vector< cv::Point > > &contours, const std::vector<DepthInfo> &depth_maxs, ObjectNum objtype);
 };
 
-
-

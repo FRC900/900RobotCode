@@ -17,7 +17,7 @@ GoalDetector::GoalDetector(const cv::Point2f &fov_size, const cv::Size &frame_si
 	_otsu_threshold(5),
 	_blue_scale(90),
 	_red_scale(80),
-	_camera_angle(390) // in tenths of a degree
+	_camera_angle(0) // in tenths of a degree
 {
 	if (gui)
 	{
@@ -28,7 +28,6 @@ GoalDetector::GoalDetector(const cv::Point2f &fov_size, const cv::Size &frame_si
 		createTrackbar("Camera Angle","Goal Detect Adjustments", &_camera_angle, 900);
 	}
 }
-
 
 // Compute a confidence score for an actual measurement given
 // the expected value and stddev of that measurement
@@ -41,7 +40,6 @@ float GoalDetector::createConfidence(float expectedVal, float expectedStddev, fl
 	float confidence = zv_utils::normalCFD(expectedNormal, actualVal);
 	return confidence > 0.5 ? 1 - confidence : confidence;
 }
-
 
 void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 	clear();
@@ -59,7 +57,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 	if(right_info.size() == 0)
 		return;
 #ifdef VERBOSE
-	cout << left_info.size() << " left goals found and " << right_info.size() << " right" << endl;
+	cout << left_info.size() << " left goals found and " << right_info.size() << " right"  << endl;
 #endif
 
 	int best_result_index_left = 0;
@@ -71,7 +69,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 	for(size_t i = 0; i < left_info.size(); i++) {
 		for(size_t j = 0; j < right_info.size(); j++) {
 #ifdef VERBOSE_BOILER
-			cout << i << " " << j << " ij" << endl;
+			cout << "i:" << i << " j:" << j << endl;
 #endif
 			// Index of the contour corrsponding to
 			// left and right goal. Since we filter out
@@ -96,7 +94,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			const float screendy = left_info[i].com.y - right_info[j].com.y;
 			const float screenDist = sqrtf(screendx * screendx + screendy * screendy);
 
-			if (screenDist > (2 * (left_info[i].br.width + right_info[i].br.width)))
+			if (screenDist > (3 * (left_info[i].br.width + right_info[i].br.width)))
 			{
 #ifdef VERBOSE_BOILER
 				cout << i << " " << j << " " << screenDist << " screen dist check failed" << endl;
@@ -104,8 +102,8 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				continue;
 			}
 
-			Rect leftBr = left_info[i].br;
-			Rect rightBr = right_info[j].br;
+			const Rect leftBr = left_info[i].br;
+			const Rect rightBr = right_info[j].br;
 
 #ifdef VERBOSE_BOILER
 			cout << leftBr << " " << rightBr << endl;
@@ -115,7 +113,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			// similar in size
 			const float area_ratio = (float)leftBr.area() / rightBr.area();
 			const float max_area_ratio = 2.5;
-			if ((area_ratio > max_area_ratio) || (area_ratio < (1 / max_area_ratio)))
+			if ((area_ratio > max_area_ratio) || (area_ratio < (1. / max_area_ratio)))
 			{
 #ifdef VERBOSE_BOILER
 				cout << i << " " << j << " " << area_ratio << " screen area ratio failed" << endl;
@@ -125,7 +123,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 
 			// Make sure the right contour overlaps at least
 			// part of the left contour
-			if ((leftBr.br().y - (leftBr.width/2)) < rightBr.y)
+			if ((leftBr.br().y - (leftBr.width/2.)) < rightBr.y)
 			{
 #ifdef VERBOSE_BOILER
 				cout << i << " " << j << " " << leftBr.br().y << " " << rightBr.y << " stacked check 1 failed" << endl;
@@ -133,7 +131,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				continue;
 			}
 
-			if ((leftBr.y + (leftBr.width/2)) > rightBr.br().y)
+			if ((leftBr.y + (leftBr.width/2.)) > rightBr.br().y)
 			{
 #ifdef VERBOSE_BOILER
 				cout << i << " " << j << " " << leftBr.br().y << " " << rightBr.y << " stacked check 2 failed" << endl;
@@ -143,7 +141,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 
 			// Make sure the left contour overlaps at least
 			// part of the right contour
-			if ((rightBr.br().y - (rightBr.width/2)) < leftBr.y)
+			if ((rightBr.br().y - (rightBr.width/2.)) < leftBr.y)
 			{
 #ifdef VERBOSE_BOILER
 				cout << i << " " << j << " " << leftBr.br().y << " " << rightBr.y << " stacked check 3 failed" << endl;
@@ -205,7 +203,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 					continue;
 				} */
 /*
-			rtRect[i] = 
+			rtRect[i] =
 			_goal_left_rotated_rect = rtRect[left_info[i].vec_index];
 			_goal_right_rotated_rect =rtRect[right_info[i].vec_index];
 			vector<Point> points;
@@ -225,18 +223,17 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 
 			if(left_info[i].pos.x > right_info[j].pos.x)
 			{
-				cout  << "Left too far to the right" << endl;
+				cout << "Left too far to the right" << endl;
 
 				continue;
 			}
 
 			if(right_info[j].pos.x < left_info[i].pos.x)
 			{
-				cout  << "Right goal too far to the left" << endl;
+				cout << "Right goal too far to the left" << endl;
 
 				continue;
 			}
-
 
 			//_goal_left_rotated_rect =  minAreaRect(Mat(goal_contours[left_info[i].vec_index]));
 			//_goal_right_rotated_rect = minAreaRect(Mat(goal_contours[right_info[j].vec_index]));
@@ -269,7 +266,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			//try and find another one.
 			if(_return_found.size() == 0)
 			{
-				goal_found.found_pos.x               = left_info[best_result_index_left].pos.x + ((right_info[best_result_index_right].pos.x - left_info[best_result_index_left].pos.x) / 2);
+				goal_found.found_pos.x               = left_info[best_result_index_left].pos.x + ((right_info[best_result_index_right].pos.x - left_info[best_result_index_left].pos.x) / 2.);
 				goal_found.found_pos.y				 = left_info[best_result_index_left].pos.y;
 				goal_found.found_pos.z				 = left_info[best_result_index_left].pos.z;
 				goal_found.found_distance            = left_info[best_result_index_left].distance;
@@ -287,9 +284,9 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				for(size_t k = 0; k < _return_found.size(); k++)
 				{
 					if(abs(left_info[best_result_index_left].pos.x - _return_found[k].found_pos.x) < min_dist_bwn_goals)
-						{
-							break;
-						}
+					{
+						break;
+					}
 					for(size_t l = 0; l < _return_found.size(); l++)
 					{
 						if(abs(left_info[best_result_index_left].pos.x - _return_found[l].found_pos.x) < min_dist_bwn_goals)
@@ -298,7 +295,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				}
 				if(repeated == false)
 				{
-					goal_found.found_pos.x               = left_info[i].pos.x + ((right_info[j].pos.x - left_info[i].pos.x) / 2);
+					goal_found.found_pos.x               = left_info[i].pos.x + ((right_info[j].pos.x - left_info[i].pos.x) / 2.);
 					goal_found.found_pos.y				 = left_info[i].pos.y;
 					goal_found.found_pos.z				 = left_info[i].pos.z;
 					goal_found.found_distance            = left_info[i].distance;
@@ -314,8 +311,6 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				cout << "Number of goals: " << _return_found.size() << endl;
 				for(size_t n = 0; n < _return_found.size(); n++)
 					cout << "Goal " << n + 1 << " pos: " << _return_found[n].found_pos << endl;
-
-
 		}
 	}
 
@@ -335,7 +330,6 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 		// If neither do, do the best we can
 
 		//const GoalInfo *gi;
-		
 /*
 		if ((!right_info[best_result_index_right].depth_error) && (!left_info[best_result_index_left].depth_error))
 		{
@@ -346,8 +340,6 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 		goal_found.found_right_rect			 = right_info[best_result_index_right].rect;
 		goal_found.found_left_rotated_rect	 = left_info[best_result_index_left].rtRect;
 		goal_found.found_right_rotated_rect	 = right_info[best_result_index_right].rtRect;
-
-
 		}
 		else
 		{
@@ -362,7 +354,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 
 		}
 */
-				_isValid = true;
+		_isValid = true;
 	}
 }
 
@@ -419,7 +411,7 @@ const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< 
 		float depth_z_max = average_depth;
 
 #ifdef VERBOSE
-		cout << "Depth " << i << ": " << depth_z_min << " " << depth_z_max << endl;
+		cout << "Depth " << i << ": " << depth_z_min << " " << depth_z_max<< endl;
 #endif
 
 		// If no depth data, calculate it using FOV and height of
@@ -480,7 +472,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		}
 
 		// Bounding rect is always at a proper ratio for a diagonal piece of tape.
-		if (((double)br.height / br.width) < 1.0)
+		if (((double)br.height / br.width) < 0.9)
 		{
 #ifdef VERBOSE
 			cout << "Contour " << i << " height/width ratio fail" << br << endl;
@@ -727,10 +719,20 @@ void GoalDetector::drawOnFrame(Mat &image, const vector<vector<Point>> &contours
 	*/
 	for(size_t i = 0; i < _return_found.size(); i++)
 	{
-		rectangle(image, _return_found[i].found_left_rect, Scalar(0,255,0), 3);
-		rectangle(image, _return_found[i].found_right_rect, Scalar(0,140,255), 3);
+		const auto lr =_return_found[i].found_left_rect;
+		const auto rr =_return_found[i].found_right_rect;
+		rectangle(image, lr, Scalar(0,255,0), 3);
+		rectangle(image, rr, Scalar(0,140,255), 3);
+		line(image,
+			 Point(lr.x + lr.width / 2.0, lr.y + lr.height / 2.0),
+			 Point(rr.x + rr.width / 2.0, lr.y + lr.height / 2.0),
+			 Scalar(0, 140, 255), 3);
+		const double center_x = (lr.x + lr.width / 2.0 + rr.x + rr.width / 2.0) / 2.0;
+		const double center_y =  lr.y + lr.height / 2.0;
+		line(image,
+			 Point(center_x, center_y - 30.), Point(center_x, center_y + 30.),
+			 Scalar(0, 140, 255), 3);
 	}
-
 }
 
 // Look for the N most recent detected rectangles to be

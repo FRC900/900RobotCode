@@ -8,7 +8,7 @@ using namespace std;
 using namespace cv;
 
 // How many consecutive frames a track must be missing before
-// it is erased 
+// it is erased
 const int missedFrameCountMax = 10;
 
 /*
@@ -27,7 +27,6 @@ static Point3f screenToWorldCoords(const Rect &screen_position, double avg_depth
 	Notes:
 		Z is up, X is left-right, and Y is forward
 		(0,0,0) = (r,0,0) = right in front of you
-	
 
 	Point2f rect_center(
 			screen_position.tl().x + (screen_position.width  / 2.0),
@@ -36,7 +35,6 @@ static Point3f screenToWorldCoords(const Rect &screen_position, double avg_depth
 			rect_center.x - (frame_size.width / 2.0),
 			-rect_center.y + (frame_size.height / 2.0));
 
-	
 
 // This uses formula from http://www.chiefdelphi.com/forums/showpost.php?p=1571187&postcount=4
 	float azimuth = atan(dist_to_center.x / (.5 * frame_size.width / tan(fov_size.x / 2)));
@@ -70,7 +68,7 @@ static Rect worldToScreenCoords(const Point3f &_position, const ObjectType &_typ
 	Point2f dist_to_center(
 			tan(azimuth) * (0.5 * frame_size.width / tan(fov_size.x / 2)),
 			tan(inclination) * (0.5 * frame_size.height / tan(fov_size.y / 2)));
-	
+
 	//cout << "Distance to center: " << dist_to_center << endl;
 	Point2f rect_center(
 			dist_to_center.x + (frame_size.width / 2.0),
@@ -420,7 +418,6 @@ void TrackedObjectList::getDisplay(vector<TrackedObjectDisplay> &displayList) co
 
 const double dist_thresh_ = 1.0; // FIX ME!
 //#define VERBOSE_TRACK
-
 
 // Process a set of detected rectangles
 // Each will either match a previously detected object or
