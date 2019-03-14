@@ -95,12 +95,9 @@ bool ManualTogglePush = false;
 bool ManualToggleKicker = false;
 bool ManualToggleArm = false;
 
-void dead_zone_check(double &val1)
+double dead_zone_check(double val1)
 {
-	if (fabs(val1) <= config.joystick_deadzone)
-	{
-		val1 = 0;
-	}
+	return ((fabs(val1) <= config.joystick_deadzone) ? 0 : val1);
 }
 
 void navXCallback(const sensor_msgs::Imu &navXState)
