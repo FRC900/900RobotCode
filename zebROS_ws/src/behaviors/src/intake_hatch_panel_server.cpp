@@ -1,6 +1,3 @@
-#ifndef PANEL_INTAKE_SERVER
-#define PANEL_INTAKE_SERVER
-
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
@@ -22,9 +19,6 @@ class IntakeHatchPanelAction
 		ros::NodeHandle nh_;
 		actionlib::SimpleActionServer<behaviors::IntakeAction> as_;
 		std::string action_name_;
-
-		behaviors::IntakeFeedback feedback_;
-		behaviors::IntakeResult result_;
 
 		//Create actionlib client for the elevator server
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
@@ -193,28 +187,26 @@ class IntakeHatchPanelAction
 			ros::spinOnce(); //update everything
 
 			//log state of action and set result of action
-			result_.timed_out = timed_out;
+			behaviors::IntakeResult result;
+			result.timed_out = timed_out;
 
 			if(timed_out)
 			{
 				ROS_WARN("%s: Timed Out", action_name_.c_str());
-				result_.success = false;
-				as_.setSucceeded(result_);
+				result.success = false;
 			}
 			else if(preempted)
 			{
 				ROS_WARN("%s: Preempted", action_name_.c_str());
-				result_.success = false;
-				as_.setPreempted(result_);
+				result.success = false;
 			}
 			else //implies succeeded
 			{
 				ROS_WARN("%s: Succeeded", action_name_.c_str());
-				result_.success = true;
-				as_.setSucceeded(result_);
+				result.success = true;
 			}
+			as_.setSucceeded(result);
 			return;
-
 		}
 		/*
 		//TODO: get message type
@@ -252,5 +244,3 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-
-#endif

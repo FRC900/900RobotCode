@@ -1,6 +1,3 @@
-#ifndef cargo_outtake_server
-#define cargo_outtake_server
-
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
@@ -37,7 +34,6 @@ class CargoOuttakeAction {
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
 		ros::ServiceClient cargo_outtake_controller_client_; //create a ros client to send requests to the controller
-		behaviors::PlaceResult result_; //variable to store result of the actionlib action
 
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
@@ -215,28 +211,25 @@ class CargoOuttakeAction {
 			}
 			ros::spinOnce();
 
-
-
 			//log state of action and set result of action
 
-			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
-			result_.success = success; //success refers to last controller call, but applies for whole action
+			behaviors::PlaceResult result; //variable to store result of the actionlib action
+			result.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
+			result.success = success; //success refers to last controller call, but applies for whole action
 
 			if(timed_out)
 			{
 				ROS_WARN("%s: Timed Out", action_name_.c_str());
-				as_.setSucceeded(result_);
 			}
 			else if(preempted)
 			{
 				ROS_WARN("%s: Preempted", action_name_.c_str());
-				as_.setPreempted(result_);
 			}
 			else //implies succeeded
 			{
 				ROS_WARN("%s: Succeeded", action_name_.c_str());
-				as_.setSucceeded(result_);
 			}
+			as_.setSucceeded(result);
 
 			return;
 		}
@@ -314,5 +307,3 @@ int main(int argc, char** argv) {
 	ros::spin();
 	return 0;
 }
-
-#endif
