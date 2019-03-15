@@ -2,6 +2,7 @@
 
 enum ElevatorLocation
 {
+	ACCESS_ALIGN,
 	CARGO_SHIP,
 	ROCKET_1,
 	ROCKET_2,
