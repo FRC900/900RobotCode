@@ -112,7 +112,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			// Make sure the two contours are
 			// similar in size
 			const float area_ratio = (float)leftBr.area() / rightBr.area();
-			const float max_area_ratio = 2.5;
+			constexpr float max_area_ratio = 4;
 			if ((area_ratio > max_area_ratio) || (area_ratio < (1. / max_area_ratio)))
 			{
 #ifdef VERBOSE_BOILER
@@ -482,7 +482,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		// Use rotated rect to get a more accurate guess at the real
 		// height and width of the contour
 		const float actualRatio = std::min(rr.size.height, rr.size.width) / std::max(rr.size.height, rr.size.width);
-		if ((actualRatio < .26) || (actualRatio > .94))
+		if ((actualRatio < .20) || (actualRatio > 1.0))
 		{
 #ifdef VERBOSE
 			cout << "Contour " << i << " height/width ratio fail" << rr.size << " " << actualRatio << endl;
