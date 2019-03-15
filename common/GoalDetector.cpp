@@ -213,10 +213,14 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				line(image, vtx[idx], vtx[(idx+1)%4], Scalar(153,50,204), 2);
 */
 
-			if(left_info[i].rtRect.angle > right_info[j].rtRect.angle)
+			// minAreaRect returns a multiple of 90 if it can't ID a rectangle's
+			// orientation. If so, don't perform the angle check
+			if((fabs(fmod(left_info[i].rtRect.angle, 90)) != 0.) &&
+			   (fabs(fmod(right_info[i].rtRect.angle, 90)) != 0.) &&
+			   (left_info[i].rtRect.angle > right_info[j].rtRect.angle))
 			{
 				//cout << "Angle " << best_result_index_left << ": " << left_info[i].rtRect.angle << " Angle " << best_result_index_right << ": " << right_info[j].rtRect.angle << endl;
-				cout << i << " " << j << "Angle check failed" << endl;
+				cout << i << " " << j << " Angle check failed" << endl;
 
 				continue;
 			}
@@ -431,7 +435,7 @@ const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< 
 }
 
 const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contours, const vector<DepthInfo> &depth_maxs, ObjectNum objtype) {
-	ObjectType _goal_shape(objtype);
+	const ObjectType _goal_shape(objtype);
 	vector<GoalInfo> return_info;
 	// Create some target stats based on our idealized goal model
 	//center of mass as a percentage of the object size from left left
@@ -447,8 +451,10 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 	{
 		// ObjectType computes a ton of useful properties so create
 		// one for what we're looking at
-		Rect br(boundingRect(contours[i]));
+		const Rect br(boundingRect(contours[i]));
+		const RotatedRect rr(minAreaRect(contours[i]));
 
+#if 0
 		// Get rid of returns from the robot in the
 		// upper right and left corner of the image
 		if (((br.x <= 0) && (br.y <= 0)) ||
@@ -459,11 +465,12 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 #endif
 			continue;
 		}
+#endif
 
 		// Remove objects which are obviously too small
 		// Works out to about 60 pixels on a 360P image
 		// or 250 pixels on 720P
-		if (br.area() <= (_frame_size.width * _frame_size.height * .0027))
+		if (br.area() <= (_frame_size.width * _frame_size.height * .0007))
 		{
 #ifdef VERBOSE
 			cout << "Contour " << i << " area out of range " << br.area() << " vs " << _frame_size.width * _frame_size.height * .0027 << endl;
@@ -471,11 +478,14 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 			continue;
 		}
 
-		// Bounding rect is always at a proper ratio for a diagonal piece of tape.
-		if (((double)br.height / br.width) < 0.9)
+		//width to height ratio
+		// Use rotated rect to get a more accurate guess at the real
+		// height and width of the contour
+		const float actualRatio = std::min(rr.size.height, rr.size.width) / std::max(rr.size.height, rr.size.width);
+		if ((actualRatio < .26) || (actualRatio > .94))
 		{
 #ifdef VERBOSE
-			cout << "Contour " << i << " height/width ratio fail" << br << endl;
+			cout << "Contour " << i << " height/width ratio fail" << rr.size << " " << actualRatio << endl;
 #endif
 			continue;
 		}
@@ -518,9 +528,6 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		Point2f com_percent_actual((goal_actual.com().x - br.tl().x) / goal_actual.width(),
 								   (goal_actual.com().y - br.tl().y) / goal_actual.height());
 
-		//width to height ratio
-		float actualRatio = goal_actual.width() / goal_actual.height();
-
 		/* I don't think this block of code works but I'll leave it in here
 		Mat test_contour = Mat::zeros(640,640,CV_8UC1);
 		std::vector<Point> upscaled_contour;
@@ -540,16 +547,15 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		//confidence is near 0.5 when value is near the mean
 		//confidence is small or large when value is not near mean
 		float confidence_height      = createConfidence(_goal_shape.real_height(), 0.4, goal_tracked_obj.getPosition().z - _goal_shape.height() / 2.0);
-		float confidence_com_x       = createConfidence(com_percent_expected.x, 0.125,  com_percent_actual.x);
-		float confidence_filled_area = createConfidence(filledPercentageExpected, 0.33,   filledPercentageActual);
-		float confidence_ratio       = createConfidence(expectedRatio, 2,  actualRatio);
+		float confidence_com_x       = createConfidence(com_percent_expected.x, 0.5,  com_percent_actual.x);
+		float confidence_filled_area = createConfidence(filledPercentageExpected, 0.33, filledPercentageActual);
+		float confidence_ratio       = createConfidence(expectedRatio, 1.5,  actualRatio);
 		float confidence_screen_area = createConfidence(1.0, 0.75,  actualScreenArea);
 
 		// higher is better
-		float confidence = (confidence_height + confidence_com_x + confidence_filled_area + confidence_ratio/2. + confidence_screen_area/2.) / 5.0;
+		float confidence = (confidence_height + confidence_com_x + confidence_filled_area + confidence_ratio/2. + confidence_screen_area/2.) / 4.0;
 
 #ifdef VERBOSE
-/*
 		cout << "-------------------------------------------" << endl;
 		cout << "Contour " << i << endl;
 		cout << "confidence_height: " << confidence_height << endl;
@@ -564,26 +570,26 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		cout << "Aspect ratio exp/act : " << expectedRatio << "/" << actualRatio << endl;
 		cout << "br: " << br << endl;
 		cout << "com: " << goal_actual.com() << endl;
+		cout << "com_expected / actual: " << com_percent_expected << " " << com_percent_actual << endl;
 		cout << "position: " << goal_tracked_obj.getPosition() << endl;
 		cout << "Angle: " << minAreaRect(contours[i]).angle << endl;
 		cout << "-------------------------------------------" << endl;
-*/
 #endif
 
 		GoalInfo goal_info;
 
 		// This goal passes the threshold required for us to consider it a goal
 		// Add it to the list of best goals
-		goal_info.pos        = goal_tracked_obj.getPosition();
-		goal_info.confidence = confidence;
-		goal_info.distance   = depth_maxs[i].depth * cosf((_camera_angle/10.0) * (M_PI/180.0));
-		goal_info.angle		 = atan2f(goal_info.pos.x, goal_info.pos.y) * 180. / M_PI;
-		goal_info.rect		 = br;
-		goal_info.vec_index  = i;
+		goal_info.pos         = goal_tracked_obj.getPosition();
+		goal_info.confidence  = confidence;
+		goal_info.distance    = depth_maxs[i].depth * cosf((_camera_angle/10.0) * (M_PI/180.0));
+		goal_info.angle		  = atan2f(goal_info.pos.x, goal_info.pos.y) * 180. / M_PI;
+		goal_info.rect		  = br;
+		goal_info.vec_index   = i;
 		goal_info.depth_error = depth_maxs[i].error;
-		goal_info.com        = goal_actual.com();
-		goal_info.br         = br;
-		goal_info.rtRect     = minAreaRect(contours[i]);
+		goal_info.com         = goal_actual.com();
+		goal_info.br          = br;
+		goal_info.rtRect      = rr;
 		return_info.push_back(goal_info);
 
 	}

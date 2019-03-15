@@ -36,7 +36,10 @@ int main(int argc, char **argv)
 	while (cap->getFrame(image, depth, paused))
 	{
 		if (frame)
+		{
 			paused = true;
+			frame = false;
+		}
 
 		frameTicker.mark();
 
