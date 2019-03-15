@@ -261,7 +261,7 @@ class ClimbAction {
 					//define the goal to send
 					behaviors::ElevatorGoal goal;
 					goal.setpoint_index = ELEVATOR_CLIMB;
-					goal.place_cargo = 0; //doesn't actually do anything 
+					goal.place_cargo = 0; //doesn't actually do anything
 					goal.raise_intake_after_success = true;
 					//send the goal
 					ae_.sendGoal(goal);

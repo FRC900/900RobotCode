@@ -18,6 +18,23 @@
 
 namespace cargo_outtake_controller
 {
+
+	// TODO : redo this to match the new cargo hardware, when available
+class CargoOuttakeCommand //define class to hold command data - so we only need 1 realtime buffer
+{
+	public:
+		// Use this to set the default state of the mechanism
+		CargoOuttakeCommand()
+			: clamp_cmd_(false)
+		{
+		}
+		CargoOuttakeCommand(bool clamp_cmd)
+		{
+			clamp_cmd_ = clamp_cmd;
+		}
+		bool clamp_cmd_;
+}; //class
+
 //this is the actual controller, so it stores all of the  update() functions and the actual handle from the joint interface
 //if it was only one type, controller_interface::Controller<TalonCommandInterface> here
 class CargoOuttakeController : public controller_interface::Controller<hardware_interface::PositionJointInterface>
@@ -44,9 +61,7 @@ class CargoOuttakeController : public controller_interface::Controller<hardware_
             //hardware_interface::JointHandle cargo_outtake_kicker_joint_; //interface for the kicker of the outtake
 			hardware_interface::JointHandle cargo_outtake_clamp_joint_; //interface for the clamp of the outtake
 
-            //realtime_tools::RealtimeBuffer<bool> kicker_command_; //buffer for commands for the kicker
-			realtime_tools::RealtimeBuffer<bool> clamp_command_; //buffer for commands to the clamp
-            realtime_tools::RealtimeBuffer<double> timeout_; //buffer for timeout commands
+			realtime_tools::RealtimeBuffer<CargoOuttakeCommand> cargo_outtake_cmd_;
 
             ros::ServiceServer cargo_outtake_service_; //service for receiving commands
 }; //class

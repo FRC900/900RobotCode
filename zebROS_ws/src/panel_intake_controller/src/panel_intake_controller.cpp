@@ -2,7 +2,6 @@
 
 namespace panel_intake_controller
 {
-
 	bool PanelIntakeController::init(hardware_interface::PositionJointInterface *hw,
 			ros::NodeHandle                 &/*root_nh*/,
 			ros::NodeHandle                 &controller_nh)
@@ -19,12 +18,13 @@ namespace panel_intake_controller
 
 	void PanelIntakeController::starting(const ros::Time &/*time*/) {
 		last_claw_cmd_ = true;
-		claw_cmd_.writeFromNonRT(false); //take the service request for in/out (true/false???) and write to a command variable
-		push_cmd_.writeFromNonRT(false);
+		//claw not released, mech not extended
+		panel_cmd_.writeFromNonRT(PanelCommand(false, false));
 	}
 
 	void PanelIntakeController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
-		const bool claw_cmd = *(claw_cmd_.readFromRT());
+		const PanelCommand panel_cmd = *(panel_cmd_.readFromRT());
+		const bool claw_cmd = panel_cmd.claw_cmd_;
 
 		if(last_claw_cmd_ != claw_cmd)
 		{
@@ -43,12 +43,11 @@ namespace panel_intake_controller
 		//	claw_joint_.setCommand(0.0);
 		//}
 
-		const bool push_cmd = *(push_cmd_.readFromRT());
-		if(push_cmd == true) {
+		if(panel_cmd.push_cmd_) {
 			//ROS_WARN("intake in");
 			push_joint_.setCommand(1.0);
 		}
-		else if (push_cmd == false) {
+		else {
 			push_joint_.setCommand(0.0);
 		}
 		last_claw_cmd_ = claw_cmd;
@@ -60,8 +59,7 @@ namespace panel_intake_controller
 	bool PanelIntakeController::cmdService(panel_intake_controller::PanelIntakeSrv::Request &req, panel_intake_controller::PanelIntakeSrv::Response &/*response*/) {
 		if(isRunning())
 		{
-			claw_cmd_.writeFromNonRT(req.claw_release); //take the service request for in/out (true/false???) and write to a command variable
-			push_cmd_.writeFromNonRT(req.push_extend);
+			panel_cmd_.writeFromNonRT(PanelCommand(req.claw_release, req.push_extend));
 		}
 		else
 		{
@@ -121,12 +119,7 @@ namespace panel_intake_controller
 		}
 		else
 		{
-			static int count = 0;
-			if(count % 100 == 0)
-			{
-				ROS_WARN("intake line break sensor not found in joint_states");
-			}
-			count++;
+			ROS_WARN_THROTTLE(1.0, "intake line break sensor not found in joint_states");
 			linebreak_true_count = 0;
 			linebreak_false_count += 1;
 		}

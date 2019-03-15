@@ -14,6 +14,26 @@
 
 namespace panel_intake_controller
 {
+
+//define class to hold command data - so we only need one realtime buffer
+class PanelCommand
+{
+	public:
+		// Set default state of mechanism here
+		PanelCommand()
+			: claw_cmd_(false)
+			, push_cmd_(false)
+		{
+		}
+		PanelCommand(bool claw_cmd, bool push_cmd)
+		{
+			claw_cmd_ = claw_cmd;
+			push_cmd_ = push_cmd;
+		}
+		bool claw_cmd_;
+		bool push_cmd_;
+};
+
 //this is the actual controller, so it stores all of the  update() functions and the actual handle from the joint interface
 //if it was only one type, controller_interface::Controller<TalonCommandInterface> here
 class PanelIntakeController : public controller_interface::Controller<hardware_interface::PositionJointInterface>
@@ -38,13 +58,11 @@ class PanelIntakeController : public controller_interface::Controller<hardware_i
 			void jointStateCallback(const sensor_msgs::JointState &joint_state);
 
         private:
-            std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
             hardware_interface::JointHandle claw_joint_; //interface for the in/out solenoid joint
- 			hardware_interface::JointHandle push_joint_;
+			hardware_interface::JointHandle push_joint_;
 			bool last_claw_cmd_;
 
-            realtime_tools::RealtimeBuffer<bool> claw_cmd_; //this is the buffer for percent output commands to be published
-            realtime_tools::RealtimeBuffer<bool> push_cmd_; //buffer for in/out commands 
+			realtime_tools::RealtimeBuffer<PanelCommand> panel_cmd_; //buffer for clamp and extend commands
 
             ros::ServiceServer panel_intake_service_; //service for receiving commands
             ros::ServiceClient cargo_outtake_service_; //service for receiving commands

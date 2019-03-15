@@ -33,35 +33,32 @@ bool CargoIntakeController::init(hardware_interface::RobotHW *hw,
         ROS_INFO("Initialized cargo intake joint!");
     }
 
-
     cargo_intake_service_ = controller_nh.advertiseService("cargo_intake_command", &CargoIntakeController::cmdService, this);
 
 	return true;
 }
 
 void CargoIntakeController::starting(const ros::Time &/*time*/) {
-    intake_arm_command_.writeFromNonRT(false); // set the command to the spinny part of the intake
-	spin_command_.writeFromNonRT(0); // set the command to the up/down part of the intake
+	// set the command to the spinny part of the intake and the command to the up/down part of the intake
+	cargo_intake_cmd_.writeFromNonRT(CargoIntakeCommand(0, false));
 }
 
 void CargoIntakeController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
 	//process input for the up/down part of the intake (pneumatic piston)
-	const bool intake_arm_command = *(intake_arm_command_.readFromRT());
-	double intake_arm_command_double; //to store processed input
-	if(intake_arm_command == true) {
-		//ROS_WARN("cargo intake arm command: -1");
-		intake_arm_command_double = 1;
+	const CargoIntakeCommand cargo_intake_cmd = *(cargo_intake_cmd_.readFromRT());
+	double intake_arm_cmd_double; //to store processed input
+	if(cargo_intake_cmd.intake_arm_cmd_ == true) {
+		intake_arm_cmd_double = 1;
 	}
 	else {
-		intake_arm_command_double = 0;
-		//ROS_WARN("cargo intake arm command: 1");
+		intake_arm_cmd_double = 0;
 	}
+	//ROS_WARN_STREAM("cargo intake arm command: " << instake_arm_cmd_double);
 
 	//read spin command
-	const double spin_command = *(spin_command_.readFromRT());
 	//ROS_INFO_STREAM("cargo spin command = " << spin_command << "; intake_arm = " << intake_arm_command);
-	cargo_intake_joint_.setCommand(spin_command); // set the command to the spinny part of the intake
-	cargo_intake_arm_joint_.setCommand(intake_arm_command_double); // set the in/out command to the up/down part of the intake
+	cargo_intake_joint_.setCommand(cargo_intake_cmd.spin_cmd_); // set the command to the spinny part of the intake
+	cargo_intake_arm_joint_.setCommand(intake_arm_cmd_double); // set the in/out command to the up/down part of the intake
 }
 
 void CargoIntakeController::stopping(const ros::Time &/*time*/) {
@@ -70,8 +67,9 @@ void CargoIntakeController::stopping(const ros::Time &/*time*/) {
 bool CargoIntakeController::cmdService(cargo_intake_controller::CargoIntakeSrv::Request &req, cargo_intake_controller::CargoIntakeSrv::Response &/*res*/) {
     if(isRunning())
     {
-        spin_command_.writeFromNonRT(req.power); //take the service request for a certain amount of power (-1 to 1) and write it to the command variable
-		intake_arm_command_.writeFromNonRT(req.intake_arm); //take the service request for in/out (true/false???) and write to a command variable
+		//take the service request for a certain amount of power (-1 to 1) and write it to the command variable
+		//take the service request for in/out (true/false???) and write to a command variable
+		cargo_intake_cmd_.writeFromNonRT(CargoIntakeCommand(req.power, req.intake_arm));
 	}
     else
     {
