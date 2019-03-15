@@ -124,7 +124,7 @@ class AlignAction {
 
 			//move elevator up a bit before aligning(terabees r sad :( )
 			behaviors::ElevatorGoal elev_goal;
-			elev_goal.setpoint_index = ACCESS_ALIGN;
+			elev_goal.setpoint_index = CARGO_SHIP; //TODO fix this add to enum in include file
 			elev_goal.place_cargo = false;
 			elev_goal.raise_intake_after_success = true;
 			ac_elevator_.sendGoal(elev_goal);
