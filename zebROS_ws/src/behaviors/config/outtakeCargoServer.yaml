@@ -1,4 +1,5 @@
 actionlib_cargo_outtake_params:
+    roller_power: -1.0
     outtake_timeout: 3 #timeout for the elevator when outtaking
     pause_time_between_pistons: 1 #time to pause between piston actuations (relevant for cargo outtake), in seconds
     pause_before_elevator_lower: 1 #time to pause after outtaking before lowering the elevator back to default height
