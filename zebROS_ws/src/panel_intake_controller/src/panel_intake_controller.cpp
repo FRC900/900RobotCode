@@ -6,26 +6,25 @@ namespace panel_intake_controller
 			ros::NodeHandle                 &/*root_nh*/,
 			ros::NodeHandle                 &controller_nh)
 	{
-		//claw_joint_ = hw->getHandle("panel_claw_release");
+		claw_joint_ = hw->getHandle("panel_claw");
 		push_joint_ = hw->getHandle("panel_push_extend");
 
 		panel_intake_service_ = controller_nh.advertiseService("panel_command", &PanelIntakeController::cmdService, this);
-		cargo_outtake_service_ = controller_nh.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/frcrobot_jetson/cargo_outtake_controller/cargo_outtake_command");
 		joint_states_sub_ = controller_nh.subscribe("/frcrobot_jetson/joint_states", 1, &PanelIntakeController::jointStateCallback, this);
 
 		return true;
 	}
 
 	void PanelIntakeController::starting(const ros::Time &/*time*/) {
-		last_claw_cmd_ = true;
-		//claw not released, mech not extended
+		last_claw_cmd_ = true; //claw not released, mech not extended
+
 		panel_cmd_.writeFromNonRT(PanelCommand(false, false));
 	}
 
 	void PanelIntakeController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
 		const PanelCommand panel_cmd = *(panel_cmd_.readFromRT());
-		const bool claw_cmd = panel_cmd.claw_cmd_;
 
+        /*
 		if(last_claw_cmd_ != claw_cmd)
 		{
 			cargo_outtake_controller::CargoOuttakeSrv outtake_srv;
@@ -33,7 +32,7 @@ namespace panel_intake_controller
 			outtake_srv.request.clamp_release = claw_cmd;
 			if (!cargo_outtake_service_.call(outtake_srv))
 				ROS_ERROR("cargo_outtake_service call failed in  PanelIntakeController::update");
-		}
+		}*/
 		//if(claw_cmd == true) {
 		//	//ROS_WARN("intake in");
 		//	claw_joint_.setCommand(1.0);
@@ -42,6 +41,13 @@ namespace panel_intake_controller
 
 		//	claw_joint_.setCommand(0.0);
 		//}
+        if(panel_cmd.claw_cmd_) {
+            claw_joint_.setCommand(-1.0);
+        }
+        else {
+            claw_joint_.setCommand(1.0);
+        }
+
 
 		if(panel_cmd.push_cmd_) {
 			//ROS_WARN("intake in");
@@ -50,7 +56,7 @@ namespace panel_intake_controller
 		else {
 			push_joint_.setCommand(0.0);
 		}
-		last_claw_cmd_ = claw_cmd;
+		//last_claw_cmd_ = panel_cmd.claw_cmd;
 	}
 
 	void PanelIntakeController::stopping(const ros::Time &/*time*/) {

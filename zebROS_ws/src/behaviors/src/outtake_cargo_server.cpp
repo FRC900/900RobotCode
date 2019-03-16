@@ -9,7 +9,6 @@
 #include "cargo_intake_controller/CargoIntakeSrv.h"
 #include "elevator_controller/ElevatorSrv.h"
 #include "sensor_msgs/JointState.h"
-#include "cargo_outtake_controller/CargoOuttakeSrv.h"
 #include <atomic>
 #include <ros/console.h>
 #include "behaviors/enumerated_elevator_indices.h"
@@ -19,6 +18,7 @@
 double outtake_timeout; //timeout for the elevator call
 double linebreak_debounce_iterations;
 double pause_time_between_pistons;
+double roller_power;
 
 /* Place
  * request is SETPOINT (cargo, rocket1, rocket2, rocket3) and PLACE_CARGO (hatch if false)
@@ -32,7 +32,7 @@ class CargoOuttakeAction {
 
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
-		ros::ServiceClient controller_client_; //create a ros client to send requests to the controller
+		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
 		behaviors::PlaceResult result_; //variable to store result of the actionlib action
 
 		//create subscribers to get data
@@ -51,8 +51,10 @@ class CargoOuttakeAction {
 		std::map<std::string, std::string> service_connection_header;
 		service_connection_header["tcp_nodelay"] = "1";
 
+
 		//initialize the client being used to call the controller
-		ros::ServiceClient cargo_outtake_controller_client_ = nh_.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/frcrobot_jetson/cargo_outtake_controller/cargo_outtake_command", false, service_connection_header);
+		ros::ServiceClient cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+        cargo_intake_controller_client_.waitForExistence();
 		
 		//start subscribers subscribing
 		//joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoOuttakeAction::jointStateCallback, this);
@@ -99,76 +101,51 @@ class CargoOuttakeAction {
 				}
 				else {
 					ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
-					timed_out = true;
-					preempted = true;
+					//timed_out = true;
+					//preempted = true;
 				}
 			}
 			
-			//send command to unclamp cargo ----
+			//send command to launch cargo ----
 			if(!preempted && !timed_out)
 			{
 				ROS_WARN("%s: unclamping cargo", action_name_.c_str());
 
 				//define request to send to controller
-				cargo_outtake_controller::CargoOuttakeSrv srv;
-				srv.request.kicker_in = true; 
-				srv.request.clamp_in = true;
+				cargo_intake_controller::CargoIntakeSrv srv;
+                srv.request.power = roller_power;
+                srv.request.intake_arm = false;
 
 				//send request to controller
-				if(!controller_client_.call(srv))
+				if(!cargo_intake_controller_client_.call(srv))
 				{
 					ROS_ERROR("%s: Srv outtake call failed", action_name_.c_str());
 					preempted = true;
 				}
 				//update everything by doing spinny stuff
+                while(!timed_out && !preempted && ros::ok()) {
+                    timed_out = (ros::Time::now().toSec() - start_time) > outtake_timeout;
+                    if(as_.isPreemptRequested() || !ros::ok()) {
+                        ROS_WARN(" %s: Preempted", action_name_.c_str());
+                        preempted = true;
+                    }
+					r.sleep();
+                }
 				ros::spinOnce();
 			}
 			
-			//send command to kick cargo, after waiting for a short period of time
-			if(!preempted && !timed_out)
-			{
-				ros::Duration(pause_time_between_pistons).sleep();
-				
-				ROS_INFO_STREAM("%s: kicking cargo" << action_name_.c_str());
-
-				//define request to send to controller
-				cargo_outtake_controller::CargoOuttakeSrv srv;
-				srv.request.kicker_in = false;
-				srv.request.clamp_in = true;
-
-				//send request to controller
-				if(!controller_client_.call(srv))
-				{
-					ROS_ERROR("%s: Srv outtake call failed", action_name_.c_str());
-					preempted = true;
-				}
-				ros::spinOnce();
-
-			}
-
 
 			//set ending state of controller no matter what happened: unclamped and kicker not in kicking position
-			if(!preempted && !timed_out)
-			{
-				ros::Duration(pause_time_between_pistons).sleep(); //pause so we don't retract the kicker immediately after kicking
-			}
-			
-			ROS_INFO_STREAM("%s: kicking cargo" << action_name_.c_str());
-
-			//define request to send to controller
-			cargo_outtake_controller::CargoOuttakeSrv srv;
-			srv.request.kicker_in = true;
-			srv.request.clamp_in = false;
+			cargo_intake_controller::CargoIntakeSrv srv;
+			srv.request.power = 0;
+			srv.request.intake_arm = false;
 
 			//send request to controller
-			if(!controller_client_.call(srv))
+        if(!cargo_intake_controller_client_.call(srv))
 			{
 				ROS_ERROR("%s: Srv outtake call failed", action_name_.c_str());
 				preempted = true;
 			}
-			ros::spinOnce();
-
-
 
 			//log state of action and set result of action
 			
@@ -248,17 +225,21 @@ int main(int argc, char** argv) {
 
 	//get config values
 	ros::NodeHandle n;
-	ros::NodeHandle n_params_outtake(n, "actionlib_cargo_params");
+	ros::NodeHandle n_params_outtake(n, "actionlib_cargo_outtake_params");
+	ros::NodeHandle n_params_intake(n, "actionlib_cargo_intake_params");
 	ros::NodeHandle n_params_lift(n, "actionlib_lift_params");
 
-	if (!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
-		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
+	if (!n.getParam("/teleop/teleop_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
+		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_server");
 
 	if (!n_params_outtake.getParam("outtake_timeout", outtake_timeout))
 		ROS_ERROR("Could not read outtake_timeout in cargo_outtake_server");
 	
 	if (!n_params_outtake.getParam("pause_time_between_pistons", pause_time_between_pistons))
 		ROS_ERROR("Could not read  pause_time_between_pistons in cargo_outtake_server");
+
+    if(!n_params_outtake.getParam("roller_power", roller_power))
+        ROS_ERROR("Could not read roller_power in cargo_outtakeserver");
 
 
 
