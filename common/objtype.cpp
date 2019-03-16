@@ -199,7 +199,9 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			break;
 		case LEFT_CARGO_2019: //left target on the CARGO SHIP (2019)
 			depth_ = 0;
-			contour_.push_back(Point2f(0,0.1251900023));
+			real_height_ = 31.5 * 2.54; // TODO : subtract camera height
+			real_height_ -= real_height_;
+			contour_.push_back(Point2f(0,0.01251900023));
 			contour_.push_back(Point2f(0.035,0.148019));
 			contour_.push_back(Point2f(0.083407382019,0.1355));
 			contour_.push_back(Point2f(0.048407382019,0.0));
@@ -207,7 +209,9 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			break;
 		case RIGHT_CARGO_2019: //right target on the CARGO SHIP (2019)
 			depth_ = 0;
-			contour_.push_back(Point2f(0.083407392,0.012519));
+			real_height_ = 31.5 * 2.54; // TODO : subtract camera height
+			real_height_ -= real_height_;
+			contour_.push_back(Point2f(0.083407382,0.012519));
 			contour_.push_back(Point2f(0.048407382,0.148019));
 			contour_.push_back(Point2f(0.0,0.1355));
 			contour_.push_back(Point2f(0.035,0.0));
@@ -246,8 +250,8 @@ void ObjectType::computeProperties()
 {
 	float min_x = numeric_limits<float>::max();
 	float min_y = numeric_limits<float>::max();
-	float max_x = numeric_limits<float>::min();
-	float max_y = numeric_limits<float>::min();
+	float max_x = -min_x;
+	float max_y = -min_y;
 	for (auto it = contour_.cbegin(); it != contour_.cend(); ++it)
 	{
 		min_x = min(min_x, it->x);
