@@ -169,12 +169,42 @@ class CargoOuttakeAction {
 			}
 			
 
-			//set ending state of controller no matter what happened: unclamped and kicker not in kicking position
+			//make sure outtake really happened; pause before lowering elevator
+			ros::Duration(pause_before_elevator_lower).sleep();
+
+			//move elevator down to end setpoint
+			ROS_WARN_STREAM("cargo outtake server: elevator down after placing");
+			behaviors::ElevatorGoal elevator_goal;
+			elevator_goal.setpoint_index = goal->end_setpoint_index;
+			elevator_goal.place_cargo = true;
+			ac_elevator_.sendGoal(elevator_goal);
+
+			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(outtake_timeout - (ros::Time::now().toSec() - start_time), 0.001))); //Wait for server to finish or until timeout is reached
+			if(finished_before_timeout) {
+				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
+				if(state.toString() != "SUCCEEDED") {
+					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
+					preempted = true;
+				}
+				else {
+					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
+				}
+			}
+			else {
+				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
+				timed_out = true;
+			}
+
+			//set ending state of controller no matter what happened: not rolling and arm up
+
+			ROS_INFO_STREAM("%s: reseting cargo" << action_name_.c_str());
+
+			//define request to send to controller
 			srv.request.power = 0;
 			srv.request.intake_arm = false;
 
 			//send request to controller
-        if(!cargo_intake_controller_client_.call(srv))
+            if(!cargo_intake_controller_client_.call(srv))
 			{
 				ROS_ERROR("%s: Srv outtake call failed", action_name_.c_str());
 				preempted = true;
@@ -272,7 +302,6 @@ int main(int argc, char** argv) {
 		ROS_ERROR("Could not read outtake_timeout in cargo_outtake_server");
 	if (!n_params_outtake.getParam("elevator_timeout", elevator_timeout))
 		ROS_ERROR("Could not read elevator_timeout in cargo_elevator_server");
-	
 	if (!n_params_outtake.getParam("pause_time_between_pistons", pause_time_between_pistons))
 		ROS_ERROR("Could not read  pause_time_between_pistons in cargo_outtake_server");
 

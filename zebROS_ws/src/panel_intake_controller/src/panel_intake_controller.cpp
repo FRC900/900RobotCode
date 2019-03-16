@@ -24,15 +24,6 @@ namespace panel_intake_controller
 	void PanelIntakeController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
 		const PanelCommand panel_cmd = *(panel_cmd_.readFromRT());
 
-        /*
-		if(last_claw_cmd_ != claw_cmd)
-		{
-			cargo_outtake_controller::CargoOuttakeSrv outtake_srv;
-			outtake_srv.request.kicker_in = true;
-			outtake_srv.request.clamp_release = claw_cmd;
-			if (!cargo_outtake_service_.call(outtake_srv))
-				ROS_ERROR("cargo_outtake_service call failed in  PanelIntakeController::update");
-		}*/
 		//if(claw_cmd == true) {
 		//	//ROS_WARN("intake in");
 		//	claw_joint_.setCommand(1.0);
