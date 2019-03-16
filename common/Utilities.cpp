@@ -18,12 +18,12 @@ namespace zv_utils {
 		int max_loc_x;
 		int max_loc_y;
 		bool found = false;
-		for (int j = bound_rect.tl().y; j <= bound_rect.br().y; j++) //for each row
+		for (int j = bound_rect.tl().y + 1; j < bound_rect.br().y; j++) //for each row
 		{
 			const float *ptr_img  = img.ptr<float>(j);
 			const uchar *ptr_mask = mask.ptr<uchar>(j);
 
-			for (int i = bound_rect.tl().x; i <= bound_rect.br().x; i++) //for each pixel in row
+			for (int i = bound_rect.tl().x + 1; i < bound_rect.br().x; i++) //for each pixel in row
 			{
 				//cout << i << " " << j << " " << ptr_img[i] << " " << (int)ptr_mask[i] << endl;
 				if (ptr_mask[i] && !(isnan(ptr_img[i]) || isinf(ptr_img[i]) || (ptr_img[i] <= 0)))
@@ -91,20 +91,86 @@ namespace zv_utils {
 		return std::make_pair(min_dist, max_dist);
 	}
 
+	std::string GetMatDepth(const cv::Mat& mat)
+	{
+		const int depth = mat.depth();
+
+		switch (depth)
+		{
+			case CV_8U:  return "CV_8U";
+			case CV_8S:  return "CV_8S";
+			case CV_16U: return "CV_16U";
+			case CV_16S: return "CV_16S";
+			case CV_32S: return "CV_32S";
+			case CV_32F: return "CV_32F";
+			case CV_64F: return "CV_64F";
+			default:
+						 return "Invalid depth type of matrix!";
+		}
+	}
+
+	std::string GetMatType(const cv::Mat& mat)
+	{
+		const int mtype = mat.type();
+
+		switch (mtype)
+		{
+			case CV_8UC1:  return "CV_8UC1";
+			case CV_8UC2:  return "CV_8UC2";
+			case CV_8UC3:  return "CV_8UC3";
+			case CV_8UC4:  return "CV_8UC4";
+
+			case CV_8SC1:  return "CV_8SC1";
+			case CV_8SC2:  return "CV_8SC2";
+			case CV_8SC3:  return "CV_8SC3";
+			case CV_8SC4:  return "CV_8SC4";
+
+			case CV_16UC1: return "CV_16UC1";
+			case CV_16UC2: return "CV_16UC2";
+			case CV_16UC3: return "CV_16UC3";
+			case CV_16UC4: return "CV_16UC4";
+
+			case CV_16SC1: return "CV_16SC1";
+			case CV_16SC2: return "CV_16SC2";
+			case CV_16SC3: return "CV_16SC3";
+			case CV_16SC4: return "CV_16SC4";
+
+			case CV_32SC1: return "CV_32SC1";
+			case CV_32SC2: return "CV_32SC2";
+			case CV_32SC3: return "CV_32SC3";
+			case CV_32SC4: return "CV_32SC4";
+
+			case CV_32FC1: return "CV_32FC1";
+			case CV_32FC2: return "CV_32FC2";
+			case CV_32FC3: return "CV_32FC3";
+			case CV_32FC4: return "CV_32FC4";
+
+			case CV_64FC1: return "CV_64FC1";
+			case CV_64FC2: return "CV_64FC2";
+			case CV_64FC3: return "CV_64FC3";
+			case CV_64FC4: return "CV_64FC4";
+
+			default:
+						   return "Invalid type of matrix!";
+		}
+	}
 	float avgOfDepthMat(const cv::Mat& img, const cv::Mat& mask, const cv::Rect& bound_rect)
 	{
 		double sum = 0.0;
 		unsigned count = 0;
-		for (int j = bound_rect.tl().y; j <= bound_rect.br().y; j++) //for each row
+		//std::cout << "Mat Depth : " << GetMatDepth(img);
+		//std::cout << " type : " << GetMatType(img) << std::endl;
+		for (int j = bound_rect.tl().y+1; j < bound_rect.br().y; j++) //for each row
 		{
 			const float *ptr_img  = img.ptr<float>(j);
 			const uchar *ptr_mask = mask.ptr<uchar>(j);
 
-			for (int i = bound_rect.tl().x; i <= bound_rect.br().x; i++) //for each pixel in row
+			for (int i = bound_rect.tl().x+1; i < bound_rect.br().x; i++) //for each pixel in row
 			{
 				if (ptr_mask[i] && !(isnan(ptr_img[i]) || isinf(ptr_img[i]) || (ptr_img[i] <= 0)))
 				{
 					sum += ptr_img[i];
+					depths.push_back(ptr_img[i]);
 					count += 1;
 				}
 			}
