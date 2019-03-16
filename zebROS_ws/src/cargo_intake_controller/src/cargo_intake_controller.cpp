@@ -53,7 +53,7 @@ void CargoIntakeController::update(const ros::Time &/*time*/, const ros::Duratio
 	else {
 		intake_arm_cmd_double = 0;
 	}
-	//ROS_WARN_STREAM("cargo intake arm command: " << instake_arm_cmd_double);
+	ROS_WARN_STREAM("cargo intake arm command: " << intake_arm_cmd_double);
 
 	//read spin command
 	//ROS_INFO_STREAM("cargo spin command = " << spin_command << "; intake_arm = " << intake_arm_command);

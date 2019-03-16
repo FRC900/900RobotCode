@@ -26,7 +26,6 @@
 #include "teleop_joystick_control/RobotOrient.h"
 
 #include "panel_intake_controller/PanelIntakeSrv.h"
-#include "cargo_outtake_controller/CargoOuttakeSrv.h"
 #include "cargo_intake_controller/CargoIntakeSrv.h"
 
 #include "dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h"
@@ -563,11 +562,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		    msg.request.push_extend = ManualTogglePush;
 			if (!manual_server_panelIn.call(msg))
 				ROS_ERROR("teleop call to manual_server_panelIn failed for buttonAPress");
-			cargo_outtake_controller::CargoOuttakeSrv msg2;
-			msg2.request.kicker_in = ManualToggleKicker;
-			msg2.request.clamp_release = ManualToggleClamp;
-			if (!manual_server_cargoOut.call(msg2))
-				ROS_ERROR("teleop call to manual_server_cargoOut failed for buttonAPress");
+			//cargo_outtake_controller::CargoOuttakeSrv msg2;
+			//msg2.request.kicker_in = ManualToggleKicker;
+			//msg2.request.clamp_release = ManualToggleClamp;
+			//if (!manual_server_cargoOut.call(msg2))
+			//	ROS_ERROR("teleop call to manual_server_cargoOut failed for buttonAPress");
 		}
 		/*  if(joystick_states_array[1].buttonAButton)
 		  {
@@ -611,13 +610,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick2: buttonX
 		if(joystick_states_array[1].buttonXPress)
 		{
-			ManualToggleKicker = !ManualToggleKicker;
-			ROS_INFO_STREAM("Joystick2: buttonXPress");
-			cargo_outtake_controller::CargoOuttakeSrv msg;
-			msg.request.kicker_in = ManualToggleKicker;
-			msg.request.clamp_release = ManualToggleClamp;
-			if (!manual_server_cargoOut.call(msg))
-				ROS_ERROR("teleop call to manual_server_cargoOut failed for buttonXPress");
+			//ManualToggleKicker = !ManualToggleKicker;
+			//ROS_INFO_STREAM("Joystick2: buttonXPress");
+			//cargo_outtake_controller::CargoOuttakeSrv msg;
+			//msg.request.kicker_in = ManualToggleKicker;
+			//msg.request.clamp_release = ManualToggleClamp;
+			//if (!manual_server_cargoOut.call(msg))
+			//	ROS_ERROR("teleop call to manual_server_cargoOut failed for buttonXPress");
 		}
 		/*if(joystick_states_array[1].buttonXButton)
 		{
@@ -951,7 +950,7 @@ int main(int argc, char **argv)
 	run_align = n.serviceClient<std_srvs::SetBool>("/align_with_terabee/run_align");
 
 	manual_server_panelIn = n.serviceClient<panel_intake_controller::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command");
-	manual_server_cargoOut = n.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/cargo_outtake_controller/cargo_outtake_command");
+	//manual_server_cargoOut = n.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/cargo_outtake_controller/cargo_outtake_command");
 	manual_server_cargoIn = n.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/cargo_intake_controller/cargo_intake_command");
 
 	cargo_pid = n.advertise<std_msgs::Bool>("/align_server/cargo_pid/pid_enable", 1);

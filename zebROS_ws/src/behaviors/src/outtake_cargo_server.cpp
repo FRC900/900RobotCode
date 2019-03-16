@@ -9,7 +9,6 @@
 #include "cargo_intake_controller/CargoIntakeSrv.h"
 #include "elevator_controller/ElevatorSrv.h"
 #include "sensor_msgs/JointState.h"
-#include "cargo_outtake_controller/CargoOuttakeSrv.h"
 #include <atomic>
 #include <ros/console.h>
 #include "behaviors/enumerated_elevator_indices.h"
@@ -25,39 +24,40 @@ double pause_before_elevator_lower; //after the outtake
 bool linebreak_true_count = 0;
 bool linebreak_false_count = 0;
 
-/* Place
- * request is SETPOINT (cargo, rocket1, rocket2, rocket3) and PLACE_CARGO (hatch if false)
- */
+	/* Place
+	 * request is SETPOINT (cargo, rocket1, rocket2, rocket3) and PLACE_CARGO (hatch if false)
+	 */
 
-class CargoOuttakeAction {
-	protected:
-		ros::NodeHandle nh_;
-		actionlib::SimpleActionServer<behaviors::PlaceAction> as_; //create the actionlib server
-		std::string action_name_;
+	class CargoOuttakeAction {
+		protected:
+			ros::NodeHandle nh_;
+			actionlib::SimpleActionServer<behaviors::PlaceAction> as_; //create the actionlib server
+			std::string action_name_;
 
-		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
+			actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
-		ros::ServiceClient controller_client_; //create a ros client to send requests to the controller
-		behaviors::PlaceResult result_; //variable to store result of the actionlib action
+			ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
+			behaviors::PlaceResult result_; //variable to store result of the actionlib action
 
-		//create subscribers to get data
-		//ros::Subscriber joint_states_sub_;
+			//create subscribers to get data
+			//ros::Subscriber joint_states_sub_;
 
-	public:
-		//make the executeCB function run every time the actionlib server is called
-		CargoOuttakeAction(const std::string &name) :
-			as_(nh_, name, boost::bind(&CargoOuttakeAction::executeCB, this, _1), false),
-			action_name_(name),
-			ac_elevator_("elevator_server", true) //TODO make sure this is linked up correctly
-	{
-		as_.start(); //start the actionlib server
+		public:
+			//make the executeCB function run every time the actionlib server is called
+			CargoOuttakeAction(const std::string &name) :
+				as_(nh_, name, boost::bind(&CargoOuttakeAction::executeCB, this, _1), false),
+				action_name_(name),
+				ac_elevator_("elevator_server", true) //TODO make sure this is linked up correctly
+		{
+			as_.start(); //start the actionlib server
 
-		//do networking stuff?
-		std::map<std::string, std::string> service_connection_header;
-		service_connection_header["tcp_nodelay"] = "1";
+			//do networking stuff?
+			std::map<std::string, std::string> service_connection_header;
+			service_connection_header["tcp_nodelay"] = "1";
 
-		//initialize the client being used to call the controller
-		cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+
+			//initialize the client being used to call the controller
+			cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 		//start subscribers subscribing
 		//joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoOuttakeAction::jointStateCallback, this);
 	}
@@ -137,8 +137,7 @@ class CargoOuttakeAction {
 					timed_out = true;
 				}
 			}
-
-			//spin out cargo
+			//send command to launch cargo ----
 			if(!preempted && !timed_out)
 			{
 				cargo_intake_controller::CargoIntakeSrv srv;
@@ -150,7 +149,6 @@ class CargoOuttakeAction {
 					ROS_ERROR("Cargo outtake server: could not roll out");
 					preempted = true;
 				}
-
 				while(!success && !timed_out && !preempted && ros::ok()) {
 					//TODO: linebreak for detecting success?
 					timed_out = (ros::Time::now().toSec()-start_time) > intake_timeout;
@@ -217,13 +215,11 @@ class CargoOuttakeAction {
 			srv.request.intake_arm = false;
 
 			//send request to controller
-			if(!controller_client_.call(srv))
+        if(!cargo_intake_controller_client_.call(srv))
 			{
 				ROS_ERROR("%s: Srv outtake call failed", action_name_.c_str());
 				preempted = true;
 			}
-
-
 
 			//log state of action and set result of action
 			
@@ -303,11 +299,12 @@ int main(int argc, char** argv) {
 
 	//get config values
 	ros::NodeHandle n;
-	ros::NodeHandle n_params_outtake(n, "actionlib_cargo_params");
+	ros::NodeHandle n_params_outtake(n, "actionlib_cargo_outtake_params");
+	ros::NodeHandle n_params_intake(n, "actionlib_cargo_intake_params");
 	ros::NodeHandle n_params_lift(n, "actionlib_lift_params");
 
-	if (!n.getParam("actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
-		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
+	if (!n.getParam("/teleop/teleop_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
+		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_server");
 
 	if (!n_params_outtake.getParam("roller_power", roller_power))
 		ROS_ERROR("Could not read roller_power in cargo_outtake_server");
@@ -317,6 +314,9 @@ int main(int argc, char** argv) {
 	
 	if (!n_params_outtake.getParam("pause_time_between_pistons", pause_time_between_pistons))
 		ROS_ERROR("Could not read  pause_time_between_pistons in cargo_outtake_server");
+
+    if(!n_params_outtake.getParam("roller_power", roller_power))
+        ROS_ERROR("Could not read roller_power in cargo_outtakeserver");
 
 
 
