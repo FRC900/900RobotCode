@@ -286,14 +286,33 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonB
 		if(joystick_states_array[0].buttonBPress)
 		{
+			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
 			preemptActionlibServers();
+			if(cargo_limit_switch_true_count > config.limit_switch_debounce_iterations)
+			{
+				//If we have a cargo, outtake it
+				ROS_INFO_STREAM("Joystick1: Place Cargo");
+				behaviors::PlaceGoal goal;
+				goal.setpoint_index = elevator_cur_setpoint_idx;
+				outtake_cargo_ac->sendGoal(goal);
+				elevator_cur_setpoint_idx = 0;
+				ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+			}
+			else
+			{
+				//If we don't have a cargo, intake one
+				ROS_INFO_STREAM("Joystick1: Intake Cargo");
+				behaviors::IntakeGoal goal;
+				intake_cargo_ac->sendGoal(goal);
+			}
+			/*preemptActionlibServers();
 			ROS_INFO_STREAM("Joystick1: Place Panel");
 			behaviors::PlaceGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_idx;
             goal.end_setpoint_index = INTAKE;
 			outtake_hatch_panel_ac->sendGoal(goal);
 			elevator_cur_setpoint_idx = 0;
-			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);*/
 			/*
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
@@ -361,25 +380,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			behaviors::IntakeGoal goal;
 			intake_hatch_panel_ac->sendGoal(goal);
 		  }
-		  /*if(joystick_states_array[0].buttonYButton)
-		  {
-			  ROS_INFO_THROTTLE(1, "buttonYButton");
-			  std_msgs::Bool enable_pid;
-			  enable_pid.data = true;
-			  navX_pid.publish(enable_pid);
-			  enable_align.publish(enable_pid);
-		  }*/
-		  if(joystick_states_array[0].buttonYRelease)
-		  {
-			  /*
-			  ROS_INFO_STREAM("Joystick1: buttonYRelease");
-			  std_msgs::Bool enable_pid;
-			  enable_pid.data = false;
-			  navX_pid.publish(enable_pid);
-			  enable_align.publish(enable_pid);
-			  */
-		  }
-
 		//Joystick1: bumperLeft
 	  /*
 		if(joystick_states_array[0].bumperLeftPress)
@@ -435,29 +435,25 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: bumperLeftRelease");
 		}
 		//Joystick1: bumperRight
-		//if(joystick_states_array[0].bumperRightPress)
-		//{
-		//	ROS_INFO_STREAM("Joystick1: bumperRightPress");
-		//	preemptActionlibServers();
-		//	if(panel_limit_switch_true_count > config.limit_switch_debounce_iterations)
-		//	{
-		//		//If we have a panel, outtake it
-		//		ROS_INFO_STREAM("Joystick1: Place Panel");
-		//		behaviors::PlaceGoal goal;
-		//		goal.setpoint_index = elevator_cur_setpoint_idx;
-		//		outtake_hatch_panel_ac->sendGoal(goal);
-		//		elevator_cur_setpoint_idx = 0;
-		//		ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
-		//	}
-		//	else
-		//	{
-		//		//If we don't have a panel, intake one
-		//		ROS_INFO_STREAM("Joystick1: Intake Panel");
-		//		behaviors::IntakeGoal goal;
-		//		intake_hatch_panel_ac->sendGoal(goal);
-
-		//	}
-		//}
+		if(joystick_states_array[0].bumperRightPress)
+		{
+			if (roller_extend)
+			{
+				ROS_INFO_STREAM("Toggling to roller not extended");
+				cargo_intake_controller::CargoIntakeSrv srv;
+				srv.request.roller_extend = false;
+				if (!manual_server_cargoIn.call(srv))
+					ROS_ERROR("teleop call to manual_server_cargoIn failed for bumperRightPress");
+			}
+			else
+			{
+				ROS_INFO_STREAM("Toggling to roller extended");
+				cargo_intake_controller::CargoIntakeSrv srv;
+				srv.request.roller_extend = true;
+				if (!manual_server_cargoIn.call(srv))
+					ROS_ERROR("teleop call to manual_server_cargoIn failed for bumperRightPress");
+			}
+		}
 		if(joystick_states_array[0].bumperRightButton)
 		{
 			ROS_INFO_THROTTLE(1, "bumperRightButton");
@@ -465,6 +461,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].bumperRightRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperRightRelease");
+		}
+		if(joystick_states_array[0].leftTrigger >= 0.5)
+		{
+			ROS_INFO_STREAM("Joystick1: LeftTrigger");
+		}
+		if(joystick_states_array[0].rightTrigger >= 0.5)
+		{
+			ROS_INFO_STREAM("Joystick1: rightTrigger");
 		}
 		//Joystick1: directionLeft
 		if(joystick_states_array[0].directionLeftPress)
