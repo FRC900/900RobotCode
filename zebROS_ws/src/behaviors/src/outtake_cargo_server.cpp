@@ -6,7 +6,6 @@
 #include "cargo_intake_controller/CargoIntakeSrv.h"
 #include "elevator_controller/ElevatorSrv.h"
 #include "sensor_msgs/JointState.h"
-#include "cargo_outtake_controller/CargoOuttakeSrv.h"
 #include <atomic>
 #include <ros/console.h>
 #include "behaviors/enumerated_elevator_indices.h"
@@ -33,7 +32,7 @@ class CargoOuttakeAction {
 
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
-		ros::ServiceClient cargo_outtake_controller_client_; //create a ros client to send requests to the controller
+		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
 
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
@@ -52,7 +51,7 @@ class CargoOuttakeAction {
 		service_connection_header["tcp_nodelay"] = "1";
 
 		//initialize the client being used to call the controller
-		cargo_outtake_controller_client_ = nh_.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/frcrobot_jetson/cargo_outtake_controller/cargo_outtake_command", false, service_connection_header);
+		cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoOuttakeSrv>("/frcrobot_jetson/cargo_outtake_controller/cargo_outtake_command", false, service_connection_header);
 
 		//start subscribers subscribing
 		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoOuttakeAction::jointStateCallback, this);

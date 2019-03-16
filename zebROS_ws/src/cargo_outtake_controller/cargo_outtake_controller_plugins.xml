@@ -1,9 +1,0 @@
-<library path="lib/libcargo_outtake_controller">
-
-	<class name="cargo_outtake_controller/CargoOuttakeController" type="cargo_outtake_controller::CargoOuttakeController" base_class_type="controller_interface::ControllerBase">
-		<description>
-			Library file. Does stuff to make cargo_outtake_controller exist.
-		</description>
-	</class>
-</library>
-~            
