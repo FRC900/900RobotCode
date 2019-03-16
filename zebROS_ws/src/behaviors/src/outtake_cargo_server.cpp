@@ -149,20 +149,16 @@ bool linebreak_false_count = 0;
 					ROS_ERROR("Cargo outtake server: could not roll out");
 					preempted = true;
 				}
-				while(!success && !timed_out && !preempted && ros::ok()) {
-					//TODO: linebreak for detecting success?
-					timed_out = (ros::Time::now().toSec()-start_time) > intake_timeout;
-
-					if(as_.isPreemptRequested() || !ros::ok()) {
-						ROS_WARN(" %s: Preempted", action_name_.c_str());
-						preempted = true;
-					}
-					else if(!success)
-					{
-						r.sleep();
-					}
-				}
-
+				//update everything by doing spinny stuff
+                while(!timed_out && !preempted && ros::ok()) {
+                    timed_out = (ros::Time::now().toSec() - start_time) > outtake_timeout;
+                    if(as_.isPreemptRequested() || !ros::ok()) {
+                        ROS_WARN(" %s: Preempted", action_name_.c_str());
+                        preempted = true;
+                    }
+					r.sleep();
+                }
+				ros::spinOnce();
 			}
 
 			//stop roller
@@ -311,7 +307,8 @@ int main(int argc, char** argv) {
 
 	if (!n_params_outtake.getParam("outtake_timeout", outtake_timeout))
 		ROS_ERROR("Could not read outtake_timeout in cargo_outtake_server");
-	
+	if (!n_params_outtake.getParam("elevator_timeout", elevator_timeout))
+		ROS_ERROR("Could not read elevator_timeout in cargo_elevator_server");
 	if (!n_params_outtake.getParam("pause_time_between_pistons", pause_time_between_pistons))
 		ROS_ERROR("Could not read  pause_time_between_pistons in cargo_outtake_server");
 
