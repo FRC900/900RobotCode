@@ -39,6 +39,7 @@ int panel_limit_switch_true_count = 0;
 int cargo_limit_switch_false_count = 0;
 int panel_limit_switch_false_count = 0;
 bool panel_push_extend = false;
+bool intake_arm_down = false;
 
 
 const int climber_num_steps = 3;
@@ -283,14 +284,33 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: buttonB
 		if(joystick_states_array[0].buttonBPress)
 		{
+			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
 			preemptActionlibServers();
+			if(cargo_limit_switch_true_count > config.limit_switch_debounce_iterations)
+			{
+				//If we have a cargo, outtake it
+				ROS_INFO_STREAM("Joystick1: Place Cargo");
+				behaviors::PlaceGoal goal;
+				goal.setpoint_index = elevator_cur_setpoint_idx;
+				outtake_cargo_ac->sendGoal(goal);
+				elevator_cur_setpoint_idx = 0;
+				ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+			}
+			else
+			{
+				//If we don't have a cargo, intake one
+				ROS_INFO_STREAM("Joystick1: Intake Cargo");
+				behaviors::IntakeGoal goal;
+				intake_cargo_ac->sendGoal(goal);
+			}
+			/*preemptActionlibServers();
 			ROS_INFO_STREAM("Joystick1: Place Panel");
 			behaviors::PlaceGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_idx;
             goal.end_setpoint_index = INTAKE;
 			outtake_hatch_panel_ac->sendGoal(goal);
 			elevator_cur_setpoint_idx = 0;
-			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);*/
 			/*
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
@@ -350,22 +370,30 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			*/
 		}
 		//Joystick1: buttonY
-		/*if(joystick_states_array[0].buttonYPress)
+		if(joystick_states_array[0].buttonYPress)
+		 {
+		 	 ROS_INFO_STREAM("joystick1: buttonYPress");
+		 	 preemptActionlibServers();
+		  if(panel_limit_switch_true_count > config.limit_switch_debounce_iterations)
 		  {
-		  ROS_INFO_STREAM("Joystick1: buttonYPress - Panel Outtake");
-		  preemptActionlibServers();
-		  behaviors::PlaceGoal goal;
-		  goal.setpoint_index = CARGO_SHIP;
-		  outtake_hatch_panel_ac->sendGoal(goal);
+		 	 //If we have a hatch panel, outtake it
+		 	 ROS_INFO_STREAM("Joystick1: buttonYPress - Panel Outtake");
+		 	 preemptActionlibServers();
+		 	 behaviors::PlaceGoal goal;
+		 	 goal.setpoint_index = CARGO_SHIP;
+			 outtake_hatch_panel_ac->sendGoal(goal);
 		  }
-		  */
+		  else
+		  {
+			//If we don't have a hatch panel, intake one
+			ROS_INFO_STREAM("Joystick1: buttonYPress - Panel Intake");
+			behaviors::IntakeGoal goal;
+			intake_cargo_ac->sendGoal(goal);
+		  }
+		  }
 		  if(joystick_states_array[0].buttonYButton)
 		  {
-			preemptActionlibServers();
-			//If we don't have a panel, intake one
-			ROS_INFO_STREAM("Joystick1: Intake Panel");
-			behaviors::IntakeGoal goal;
-			intake_hatch_panel_ac->sendGoal(goal);
+			ROS_INFO_STREAM("Joystick1: buttonYButton");
 			  /*
 			  ROS_INFO_THROTTLE(1, "buttonYButton");
 			  std_msgs::Bool enable_pid;
@@ -440,29 +468,27 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: bumperLeftRelease");
 		}
 		//Joystick1: bumperRight
-		//if(joystick_states_array[0].bumperRightPress)
-		//{
-		//	ROS_INFO_STREAM("Joystick1: bumperRightPress");
-		//	preemptActionlibServers();
-		//	if(panel_limit_switch_true_count > config.limit_switch_debounce_iterations)
-		//	{
-		//		//If we have a panel, outtake it
-		//		ROS_INFO_STREAM("Joystick1: Place Panel");
-		//		behaviors::PlaceGoal goal;
-		//		goal.setpoint_index = elevator_cur_setpoint_idx;
-		//		outtake_hatch_panel_ac->sendGoal(goal);
-		//		elevator_cur_setpoint_idx = 0;
-		//		ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
-		//	}
-		//	else
-		//	{
-		//		//If we don't have a panel, intake one
-		//		ROS_INFO_STREAM("Joystick1: Intake Panel");
-		//		behaviors::IntakeGoal goal;
-		//		intake_hatch_panel_ac->sendGoal(goal);
-
-		//	}
-		//}
+		if(joystick_states_array[0].bumperRightPress)
+		{
+			if (intake_arm_down)
+			{
+				ROS_INFO_STREAM("Toggling to roller not extended");
+				cargo_intake_controller::CargoIntakeSrv srv;
+				srv.request.intake_arm = false;
+                srv.request.power = 0;
+				if (!manual_server_cargoIn.call(srv))
+					ROS_ERROR("teleop call to manual_server_cargoIn failed for bumperRightPress");
+			}
+			else
+			{
+				ROS_INFO_STREAM("Toggling to roller extended");
+				cargo_intake_controller::CargoIntakeSrv srv;
+				srv.request.intake_arm = true;
+                srv.request.power = 0;
+				if (!manual_server_cargoIn.call(srv))
+					ROS_ERROR("teleop call to manual_server_cargoIn failed for bumperRightPress");
+			}
+		}
 		if(joystick_states_array[0].bumperRightButton)
 		{
 			ROS_INFO_THROTTLE(1, "bumperRightButton");
@@ -470,6 +496,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].bumperRightRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperRightRelease");
+		}
+		if(joystick_states_array[0].leftTrigger >= 0.5)
+		{
+			ROS_INFO_STREAM("Joystick1: LeftTrigger");
+		}
+		if(joystick_states_array[0].rightTrigger >= 0.5)
+		{
+			ROS_INFO_STREAM("Joystick1: rightTrigger");
 		}
 		//Joystick1: directionLeft
 		if(joystick_states_array[0].directionLeftPress)
@@ -802,6 +836,7 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 	static size_t panel_limit_switch_1_idx = std::numeric_limits<size_t>::max();
 	static size_t panel_limit_switch_2_idx = std::numeric_limits<size_t>::max();
 	static size_t panel_push_extend_idx = std::numeric_limits<size_t>::max();
+	static size_t intake_arm_idx = std::numeric_limits<size_t>::max();
 	if (cargo_limit_switch_idx >= joint_state.name.size() || panel_limit_switch_1_idx >= joint_state.name.size() || panel_limit_switch_2_idx >= joint_state.name.size())
 	{
 		for (size_t i = 0; i < joint_state.name.size(); i++)
@@ -814,6 +849,8 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 				panel_limit_switch_2_idx = i;
 			if (joint_state.name[i] == "panel_push_extend")
 				panel_push_extend_idx = i;
+			if (joint_state.name[i] == "cargo_intake_arm_joint")
+				intake_arm_idx = i;
 		}
 	}
 
@@ -863,6 +900,10 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 	if (panel_push_extend_idx < joint_state.position.size())
 	{
 		panel_push_extend = (joint_state.position[panel_push_extend_idx] != 0);
+	}
+	if (intake_arm_idx < joint_state.position.size())
+	{
+		intake_arm_down = (joint_state.position[panel_push_extend_idx] != 0);
 	}
 }
 
