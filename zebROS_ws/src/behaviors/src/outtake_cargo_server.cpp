@@ -157,7 +157,6 @@ class CargoOuttakeAction {
 					preempted = true;
 				}
 				//update everything by doing spinny stuff
-                start_time = ros::Time::now().toSec();
                 while(!timed_out && !preempted && ros::ok()) {
                     timed_out = (ros::Time::now().toSec() - start_time) > outtake_timeout;
                     if(as_.isPreemptRequested() || !ros::ok()) {
@@ -271,7 +270,7 @@ int main(int argc, char** argv) {
 
 	if (!n_params_outtake.getParam("outtake_timeout", outtake_timeout))
 		ROS_ERROR("Could not read outtake_timeout in cargo_outtake_server");
-	if (!n_params_elevator.getParam("elevator_timeout", elevator_timeout))
+	if (!n_params_outtake.getParam("elevator_timeout", elevator_timeout))
 		ROS_ERROR("Could not read elevator_timeout in cargo_elevator_server");
 	
 	if (!n_params_outtake.getParam("pause_time_between_pistons", pause_time_between_pistons))
