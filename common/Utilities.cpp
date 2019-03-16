@@ -170,7 +170,7 @@ namespace zv_utils {
 				if (ptr_mask[i] && !(isnan(ptr_img[i]) || isinf(ptr_img[i]) || (ptr_img[i] <= 0)))
 				{
 					sum += ptr_img[i];
-					depths.push_back(ptr_img[i]);
+					//depths.push_back(ptr_img[i]);
 					count += 1;
 				}
 			}

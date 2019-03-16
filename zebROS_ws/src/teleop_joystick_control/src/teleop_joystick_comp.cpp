@@ -353,30 +353,22 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			*/
 		}
 		//Joystick1: buttonY
-		/*if(joystick_states_array[0].buttonYPress)
-		  {
-		  ROS_INFO_STREAM("Joystick1: buttonYPress - Panel Outtake");
-		  preemptActionlibServers();
-		  behaviors::PlaceGoal goal;
-		  goal.setpoint_index = CARGO_SHIP;
-		  outtake_hatch_panel_ac->sendGoal(goal);
-		  }
-		  */
-		  if(joystick_states_array[0].buttonYButton)
+		if(joystick_states_array[0].buttonYPress)
 		  {
 			preemptActionlibServers();
 			//If we don't have a panel, intake one
-			ROS_INFO_STREAM("Joystick1: Intake Panel");
+			ROS_INFO_STREAM("buttonYPress: Intake Panel");
 			behaviors::IntakeGoal goal;
 			intake_hatch_panel_ac->sendGoal(goal);
-			  /*
+		  }
+		  /*if(joystick_states_array[0].buttonYButton)
+		  {
 			  ROS_INFO_THROTTLE(1, "buttonYButton");
 			  std_msgs::Bool enable_pid;
 			  enable_pid.data = true;
 			  navX_pid.publish(enable_pid);
 			  enable_align.publish(enable_pid);
-			  */
-		  }
+		  }*/
 		  if(joystick_states_array[0].buttonYRelease)
 		  {
 			  /*
