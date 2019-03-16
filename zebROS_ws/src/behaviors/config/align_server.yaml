@@ -6,6 +6,6 @@ align_server_params:
     orient_error_threshold: 0.1
 align_with_terabee_params:
     cmd_vel_to_pub: 0.7
-    distance_bound: 0.04
+    distance_bound: 1.14 #TODO make this not massive
     distance_target: 0.1
     cargo_pid_max_distance: 0.5
