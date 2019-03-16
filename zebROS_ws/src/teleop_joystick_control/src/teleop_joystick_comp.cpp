@@ -406,6 +406,15 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		*/
 		if(joystick_states_array[0].bumperLeftPress)
 		{
+            //TODO get rid of this testing code
+            //If we have a cargo, outtake it
+            ROS_INFO_STREAM("Joystick1: Place Cargo");
+            behaviors::PlaceGoal goal;
+            goal.setpoint_index = elevator_cur_setpoint_idx;
+            outtake_cargo_ac->sendGoal(goal);
+            elevator_cur_setpoint_idx = 0;
+            ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
+            /*
 			if (panel_push_extend)
 			{
 				ROS_INFO_STREAM("Toggling to clamped and not extended");
@@ -424,6 +433,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				if (!manual_server_panelIn.call(srv))
 					ROS_ERROR("teleop call to manual_server_panelIn failed for bumperLeftPress");
 			}
+            */
 		}
 		if(joystick_states_array[0].bumperLeftButton)
 		{
@@ -436,7 +446,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick1: bumperRight
 		if(joystick_states_array[0].bumperRightPress)
 		{
-			if (roller_extend)
+            //TODO get rid of this testing cde
+            //If we don't have a cargo, intake one
+            ROS_INFO_STREAM("Joystick1: Intake Cargo");
+            behaviors::IntakeGoal goal;
+            intake_cargo_ac->sendGoal(goal);
+            /*
+			if (intake_arm_down)
 			{
 				ROS_INFO_STREAM("Toggling to roller not extended");
 				cargo_intake_controller::CargoIntakeSrv srv;
@@ -452,6 +468,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				if (!manual_server_cargoIn.call(srv))
 					ROS_ERROR("teleop call to manual_server_cargoIn failed for bumperRightPress");
 			}
+            */
 		}
 		if(joystick_states_array[0].bumperRightButton)
 		{
@@ -796,16 +813,17 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 void jointStateCallback(const sensor_msgs::JointState &joint_state)
 {
 	//get index of limit_switch sensor for this actionlib server
-	static size_t cargo_limit_switch_idx = std::numeric_limits<size_t>::max();
+	static size_t cargo_linebreak_idx = std::numeric_limits<size_t>::max();
 	static size_t panel_limit_switch_1_idx = std::numeric_limits<size_t>::max();
 	static size_t panel_limit_switch_2_idx = std::numeric_limits<size_t>::max();
 	static size_t panel_push_extend_idx = std::numeric_limits<size_t>::max();
-	if (cargo_limit_switch_idx >= joint_state.name.size() || panel_limit_switch_1_idx >= joint_state.name.size() || panel_limit_switch_2_idx >= joint_state.name.size())
+	static size_t intake_arm_idx = std::numeric_limits<size_t>::max();
+	if (cargo_linebreak_idx >= joint_state.name.size() || panel_limit_switch_1_idx >= joint_state.name.size() || panel_limit_switch_2_idx >= joint_state.name.size())
 	{
 		for (size_t i = 0; i < joint_state.name.size(); i++)
 		{
-			if (joint_state.name[i] == "cargo_intake_limit_switch_1")
-				cargo_limit_switch_idx = i;
+			if (joint_state.name[i] == "cargo_intake_linebreak_1")
+				cargo_linebreak_idx = i;
 			if (joint_state.name[i] == "panel_intake_limit_switch_1")
 				panel_limit_switch_1_idx = i;
 			if (joint_state.name[i] == "panel_intake_limit_switch_2")
@@ -816,9 +834,9 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 	}
 
 	//update limit_switch counts based on the value of the limit_switch sensor
-	if (cargo_limit_switch_idx < joint_state.position.size())
+	if (cargo_linebreak_idx < joint_state.position.size())
 	{
-		bool cargo_limit_switch_true = (joint_state.position[cargo_limit_switch_idx] != 0);
+		bool cargo_limit_switch_true = (joint_state.position[cargo_linebreak_idx] != 0);
 		if(cargo_limit_switch_true)
 		{
 			cargo_limit_switch_true_count += 1;
