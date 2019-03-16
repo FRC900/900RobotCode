@@ -56,13 +56,7 @@ teleop_joystick_control::TeleopJoystickCompConfig config;
 
 
 // 500 msec to go from full back to full forward
-const double drive_rate_limit_time = 500.;
-rate_limiter::RateLimiter left_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
-rate_limiter::RateLimiter left_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
-rate_limiter::RateLimiter right_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
-rate_limiter::RateLimiter right_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
-rate_limiter::RateLimiter left_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
-rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+constexpr double drive_rate_limit_time = 500.;
 
 ros::Publisher elevator_setpoint;
 ros::Publisher JoystickRobotVel;
@@ -164,10 +158,19 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		double rightStickX = joystick_states_array[0].rightStickX;
 		double rightStickY = joystick_states_array[0].rightStickY;
 
-		leftStickX = left_stick_x_rate_limit.applyLimit(leftStickX);
-		leftStickY = left_stick_y_rate_limit.applyLimit(leftStickY);
-		rightStickX = right_stick_x_rate_limit.applyLimit(rightStickX);
-		rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);
+		// Defer init until the first time these are used - makes sure the
+		// initial time is reasonable
+		static std::unique_ptr<rate_limiter::RateLimiter> left_stick_x_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+		static std::unique_ptr<rate_limiter::RateLimiter> left_stick_y_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+		static std::unique_ptr<rate_limiter::RateLimiter> right_stick_x_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+		static std::unique_ptr<rate_limiter::RateLimiter> right_stick_y_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+		static std::unique_ptr<rate_limiter::RateLimiter> left_trigger_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+		static std::unique_ptr<rate_limiter::RateLimiter> right_trigger_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+
+		leftStickX = left_stick_x_rate_limit->applyLimit(leftStickX);
+		leftStickY = left_stick_y_rate_limit->applyLimit(leftStickY);
+		rightStickX = right_stick_x_rate_limit->applyLimit(rightStickX);
+		rightStickY = right_stick_y_rate_limit->applyLimit(rightStickY);
 
 		dead_zone_check(leftStickX, leftStickY);
 		dead_zone_check(rightStickX, rightStickY);
@@ -182,8 +185,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		// TODO : dead-zone for rotation?
 		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
-		//double triggerLeft = left_trigger_rate_limit.applyLmit(joystick_states_array[0].leftTrigger);
-		//double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
+		//double triggerLeft = left_trigger_rate_limit->applyLmit(joystick_states_array[0].leftTrigger);
+		//double triggerRight = right_trigger_rate_limit->applyLimit(joystick_states_array[0].rightTrigger);
 
 		static bool sendRobotZero = false;
 		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
