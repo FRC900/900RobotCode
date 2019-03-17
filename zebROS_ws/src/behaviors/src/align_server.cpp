@@ -188,13 +188,12 @@ class AlignAction {
 				//
 				//Publish enable messages
 				enable_navx_pub_->publish(orient_msg);
-				cargo_enable_distance_pub_->publish(distance_msg);
 				if(goal->has_cargo) {
 					ROS_WARN("CARGO!");
 					distance_msg.data = (orient_aligned_ || orient_timed_out) && !cargo_distance_aligned_;	//Enable distance pid once orient is aligned or timed out
 					cargo_enable_distance_pub_->publish(distance_msg);
 					terabee_msg.data = (orient_aligned_ || orient_timed_out) && cargo_distance_aligned_;     //Enable terabee node when distance is aligned and  orient aligns or orient times out
-					ROS_ERROR_STREAM("Terabee_msg cargo: " << (orient_aligned_ || orient_timed_out) && cargo_distance_aligned_);
+					ROS_ERROR_STREAM("Terabee_msg cargo: " << ((orient_aligned_ || orient_timed_out) && cargo_distance_aligned_));
 					enable_cargo_pub_->publish(terabee_msg);
 					enable_align_cargo_pub_->publish(enable_align_msg);
 					aligned = cargo_distance_aligned_ && cargo_aligned_;	 //Check aligned
