@@ -286,31 +286,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
 			preemptActionlibServers();
-			if(cargo_limit_switch_true_count > config.limit_switch_debounce_iterations)
-			{
-				//If we have a cargo, outtake it
-				ROS_INFO_STREAM("Joystick1: Place Cargo");
-				behaviors::PlaceGoal goal;
-				goal.setpoint_index = elevator_cur_setpoint_idx;
-				outtake_cargo_ac->sendGoal(goal);
-				elevator_cur_setpoint_idx = 0;
-				ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
-			}
-			else
-			{
-				//If we don't have a cargo, intake one
-				ROS_INFO_STREAM("Joystick1: Intake Cargo");
-				behaviors::IntakeGoal goal;
-				intake_cargo_ac->sendGoal(goal);
-			}
-			/*preemptActionlibServers();
 			ROS_INFO_STREAM("Joystick1: Place Panel");
 			behaviors::PlaceGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_idx;
             goal.end_setpoint_index = INTAKE;
 			outtake_hatch_panel_ac->sendGoal(goal);
 			elevator_cur_setpoint_idx = 0;
-			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);*/
 			/*
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
@@ -374,22 +355,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		 {
 		 	 ROS_INFO_STREAM("joystick1: buttonYPress");
 		 	 preemptActionlibServers();
-		  if(panel_limit_switch_true_count > config.limit_switch_debounce_iterations)
-		  {
-		 	 //If we have a hatch panel, outtake it
-		 	 ROS_INFO_STREAM("Joystick1: buttonYPress - Panel Outtake");
-		 	 preemptActionlibServers();
-		 	 behaviors::PlaceGoal goal;
-		 	 goal.setpoint_index = CARGO_SHIP;
-			 outtake_hatch_panel_ac->sendGoal(goal);
-		  }
-		  else
-		  {
-			//If we don't have a hatch panel, intake one
-			ROS_INFO_STREAM("Joystick1: buttonYPress - Panel Intake");
-			behaviors::IntakeGoal goal;
-			intake_cargo_ac->sendGoal(goal);
-		  }
+
+			 behaviors::IntakeGoal goal;
+			 intake_hatch_panel_ac->sendGoal(goal);
 		  }
 		  if(joystick_states_array[0].buttonYButton)
 		  {
@@ -442,6 +410,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
             //TODO get rid of this testing code
             //If we have a cargo, outtake it
+		 	preemptActionlibServers();
             ROS_INFO_STREAM("Joystick1: Place Cargo");
             behaviors::PlaceGoal goal;
             goal.setpoint_index = elevator_cur_setpoint_idx;
@@ -476,12 +445,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].bumperLeftRelease)
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftRelease");
+			outtake_cargo_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		}
 		//Joystick1: bumperRight
 		if(joystick_states_array[0].bumperRightPress)
 		{
             //TODO get rid of this testing cde
             //If we don't have a cargo, intake one
+			preemptActionlibServers();
             ROS_INFO_STREAM("Joystick1: Intake Cargo");
             behaviors::IntakeGoal goal;
             intake_cargo_ac->sendGoal(goal);
@@ -512,7 +483,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		if(joystick_states_array[0].bumperRightRelease)
 		{
+			//forces right bumper to be held for intaking to continue
+			//TODO test this brings arm up instantly
+			intake_cargo_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 			ROS_INFO_STREAM("Joystick1: bumperRightRelease");
+
 		}
 		if(joystick_states_array[0].leftTrigger >= 0.5)
 		{
@@ -636,6 +611,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		  run_align.call(msg);
 		  }*/
 		//Joystick2: buttonB
+		/* TODO this may be causing weird issues
 		if(joystick_states_array[1].buttonBPress)
 		{
 			ManualTogglePush = !ManualTogglePush;
@@ -645,7 +621,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			msg.request.push_extend = ManualTogglePush;
 			if (!manual_server_panelIn.call(msg))
 				ROS_ERROR("teleop call to manual_server_panelIn failed for buttonBPress");
-		}
+		} */
 		/*if(joystick_states_array[1].buttonBButton)
 		{
 		ROS_INFO_THROTTLE(1, "buttonBButton");
@@ -686,6 +662,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		run_align.call(msg);
 		}*/
 		//Joystick2: buttonY
+		/* TODO this may be causing weird issues
 		if(joystick_states_array[1].buttonYPress)
 		{
 			ManualToggleArm = !ManualToggleArm;
@@ -695,7 +672,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			msg.request.power = 0.0;
 			if (!manual_server_cargoIn.call(msg))
 				ROS_ERROR("teleop call to manual_server_cargoIn failed for buttonYPress");
-		}
+		} */
 /*	if(joystick_states_array[1].buttonYButton)
 	{
 		ROS_INFO_THROTTLE(1, "buttonYButton");

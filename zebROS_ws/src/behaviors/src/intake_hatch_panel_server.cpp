@@ -60,7 +60,6 @@ class IntakeHatchPanelAction
 			ros::Rate r(10);
 
 			//define variables that will be re-used for each call to a controller
-			double start_time = ros::Time::now().toSec();
 
 			//define variables that will be set true if the actionlib action is to be ended
 			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
@@ -71,7 +70,7 @@ class IntakeHatchPanelAction
 			//release claw
 			panel_intake_controller::PanelIntakeSrv srv;
 			srv.request.claw_release = true;
-			srv.request.push_extend = true;
+			srv.request.push_extend = false;
 			//send request to controller
 			if(!panel_controller_client_.call(srv))
 			{
@@ -88,6 +87,7 @@ class IntakeHatchPanelAction
 			elev_goal.raise_intake_after_success = true;
 			ac_elevator_.sendGoal(elev_goal);
 
+			const double start_time = ros::Time::now().toSec();
 			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(elevator_timeout - (ros::Time::now().toSec() - start_time)));
 			if(finished_before_timeout) {
 				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
@@ -107,7 +107,6 @@ class IntakeHatchPanelAction
 			{
 				preempted = true;
 			}
-
 			//send commands to panel_intake_controller to grab the panel ---------------------------------------
 			if(!preempted && ros::ok())
 			{

@@ -1,11 +1,11 @@
 align_server_params:
     align_timeout: 5
     orient_timeout: 2
-    x_error_threshold: 0.07
+    x_error_threshold: 0.14
     cargo_error_threshold: 0.05
     orient_error_threshold: 0.1
 align_with_terabee_params:
     cmd_vel_to_pub: 0.7
-    distance_bound: 0.04
+    distance_bound: 0.14 #TODO make this not massive
     distance_target: 0.1
     cargo_pid_max_distance: 0.5
