@@ -41,16 +41,14 @@ bool linebreak_false_count = 0;
 
 			//create subscribers to get data
 			//ros::Subscriber joint_states_sub_;
-
 		public:
 			//make the executeCB function run every time the actionlib server is called
 			CargoOuttakeAction(const std::string &name) :
-				as_(nh_, name, boost::bind(&CargoOuttakeAction::executeCB, this, _1), false),
-				action_name_(name),
-				ac_elevator_("elevator_server", true) //TODO make sure this is linked up correctly
-		{
-			as_.start(); //start the actionlib server
-
+			as_(nh_, name, boost::bind(&CargoOuttakeAction::executeCB, this, _1), false),
+			action_name_(name),
+			ac_elevator_("/elevator/elevator_server", true) //TODO make sure this is linked up correctly
+	{
+		as_.start(); //start the actionlib server
 			//do networking stuff?
 			std::map<std::string, std::string> service_connection_header;
 			service_connection_header["tcp_nodelay"] = "1";
