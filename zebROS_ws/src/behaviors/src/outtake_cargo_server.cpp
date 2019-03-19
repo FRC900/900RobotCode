@@ -14,12 +14,12 @@
 //define global variables that will be defined based on config values
 
 double outtake_timeout; //timeout for the elevator call
-double limit_switch_debounce_iterations;
+int linebreak_debounce_iterations;
 double pause_time_between_pistons;
 double wait_for_server_timeout;
 double pause_before_elevator_lower; //after the outtake
-bool limit_switch_true_count = 0;
-bool limit_switch_false_count = 0;
+int linebreak_true_count = 0;
+int linebreak_false_count = 0;
 
 /* Place
  * request is SETPOINT (cargo, rocket1, rocket2, rocket3) and PLACE_CARGO (hatch if false)
@@ -239,30 +239,30 @@ class CargoOuttakeAction {
 		// dummy joint position values
 		void jointStateCallback(const sensor_msgs::JointState &joint_state)
 		{
-			//get index of limit_switch sensor for this actionlib server
-			static size_t limit_switch_idx = std::numeric_limits<size_t>::max();
-			if ((limit_switch_idx >= joint_state.name.size()))
+			//get index of linebreak sensor for this actionlib server
+			static size_t linebreak_idx = std::numeric_limits<size_t>::max();
+			if ((linebreak_idx >= joint_state.name.size()))
 			{
 				for (size_t i = 0; i < joint_state.name.size(); i++)
 				{
-					if (joint_state.name[i] == "cargo_intake_limit_switch_1") //TODO: define this in the hardware interface
-						limit_switch_idx = i;
+					if (joint_state.name[i] == "cargo_intake_linebreak_1") //TODO: define this in the hardware interface
+						linebreak_idx = i;
 				}
 			}
 
-			//update limit_switch counts based on the value of the limit_switch sensor
-			if (limit_switch_idx < joint_state.position.size())
+			//update linebreak counts based on the value of the linebreak sensor
+			if (linebreak_idx < joint_state.position.size())
 			{
-				bool limit_switch_true = (joint_state.position[limit_switch_idx] != 0);
-				if(limit_switch_true)
+				bool linebreak_true = (joint_state.position[linebreak_idx] != 0);
+				if(linebreak_true)
 				{
-					limit_switch_true_count += 1;
-					limit_switch_false_count = 0;
+					linebreak_true_count += 1;
+					linebreak_false_count = 0;
 				}
 				else
 				{
-					limit_switch_true_count = 0;
-					limit_switch_false_count += 1;
+					linebreak_true_count = 0;
+					linebreak_false_count += 1;
 				}
 			}
 			else
@@ -273,8 +273,8 @@ class CargoOuttakeAction {
 					ROS_WARN("outtake line break sensor not found in joint_states");
 				}
 				count++;
-				limit_switch_true_count = 0;
-				limit_switch_false_count += 1;
+				linebreak_true_count = 0;
+				linebreak_false_count += 1;
 			}
 		}
 };
@@ -290,8 +290,8 @@ int main(int argc, char** argv) {
 	ros::NodeHandle n;
 	ros::NodeHandle n_params_outtake(n, "actionlib_cargo_outtake_params");
 
-	if (!n.getParam("/actionlib_params/limit_switch_debounce_iterations", limit_switch_debounce_iterations))
-		ROS_ERROR("Could not read limit_switch_debounce_iterations in intake_sever");
+	if (!n.getParam("/actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
+		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
 	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 		ROS_ERROR("Could not read wait_for_server_timeout in intake_sever");
 

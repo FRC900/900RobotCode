@@ -34,7 +34,18 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		ROS_ERROR("Could not find elevator_zeroing_timeout");
 		return false;
 	}
-
+	
+	if (!controller_nh.getParam("stage_2_height", config_.stage_2_height))
+	{
+		ROS_ERROR("Could not find stage_2_height");
+		return false;
+	}
+	
+	if (!controller_nh.getParam("motion_s_curve_strength",config_.motion_s_curve_strength))
+	{
+		ROS_ERROR("Could not find motion_s_curve_strength");
+		return false;
+	}
 	//get config values for the elevator talon
 	XmlRpc::XmlRpcValue elevator_params;
 	if (!controller_nh.getParam("elevator_joint", elevator_params))
@@ -91,11 +102,11 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 			// We could have arb ff for both up and down, but seems
 			// easier (and good enough) to tune PID for down motion
 			// and add an arb FF correction for up
-			if(elevator_joint_.getPosition() > 0.8 && last_position_ < 0.8) {
+			if(elevator_joint_.getPosition() >= config_.stage_2_height && last_position_ <= config_.stage_2_height) {
 				elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
 				elevator_joint_.setDemand1Value(config_.arb_feed_forward_up);
 			}
-			else if (elevator_joint_.getPosition() < 0.8 && last_position_ > 0.8) {
+			else if (elevator_joint_.getPosition() <= config_.stage_2_height && last_position_ >= config_.stage_2_height) {
 				elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
 				elevator_joint_.setDemand1Value(0);
 			}

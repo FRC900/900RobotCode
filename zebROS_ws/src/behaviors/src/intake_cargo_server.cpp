@@ -15,7 +15,7 @@
 // TODO - these need defaults
 double roller_power;
 double intake_timeout;
-int limit_switch_debounce_iterations;
+int linebreak_debounce_iterations;
 double wait_for_server_timeout;
 double pause_before_running_motor = 0;
 
@@ -29,8 +29,8 @@ class CargoIntakeAction {
 
 		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
 		ros::ServiceClient cargo_outtake_controller_client_; //create a ros client to send requests to the controller
-		std::atomic<int> limit_switch_true_count; //counts how many times in a row the limit_switch reported there's a cargo since we started trying to intake/outtake
-		std::atomic<int> limit_switch_false_count; //same, but how many times in a row no cargo
+		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo since we started trying to intake/outtake
+		std::atomic<int> linebreak_false_count; //same, but how many times in a row no cargo
 
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
@@ -140,7 +140,7 @@ class CargoIntakeAction {
 				ROS_WARN("%s: lowering arm and spinning roller in",action_name_.c_str());
 
 				//reset variables
-				limit_switch_true_count = 0; //when this gets higher than limit_switch_debounce_iterations, we'll consider the gamepiece intooketh
+				linebreak_true_count = 0; //when this gets higher than linebreak_debounce_iterations, we'll consider the gamepiece intooketh
 				success = false;
 
 				//define request to send to cargo intake controller
@@ -157,7 +157,7 @@ class CargoIntakeAction {
 
 				//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
 				while(!success && !timed_out && !preempted && ros::ok()) {
-					success = limit_switch_true_count > limit_switch_debounce_iterations;
+					success = linebreak_true_count > linebreak_debounce_iterations;
 					timed_out = (ros::Time::now().toSec()-start_time) > intake_timeout;
 
 					if(as_.isPreemptRequested() || !ros::ok()) {
@@ -226,37 +226,37 @@ class CargoIntakeAction {
 		// dummy joint position values
 		void jointStateCallback(const sensor_msgs::JointState &joint_state)
 		{
-			//get index of limit_switch sensor for this actionlib server
-			static size_t limit_switch_idx = std::numeric_limits<size_t>::max();
-			if ((limit_switch_idx >= joint_state.name.size()))
+			//get index of linebreak sensor for this actionlib server
+			static size_t linebreak_idx = std::numeric_limits<size_t>::max();
+			if ((linebreak_idx >= joint_state.name.size()))
 			{
 				for (size_t i = 0; i < joint_state.name.size(); i++)
 				{
-					if (joint_state.name[i] == "cargo_intake_limit_switch_1") //TODO: define this in the hardware interface
-						limit_switch_idx = i;
+					if (joint_state.name[i] == "cargo_intake_linebreak_1") //TODO: define this in the hardware interface
+						linebreak_idx = i;
 				}
 			}
 
-			//update limit_switch counts based on the value of the limit_switch sensor
-			if (limit_switch_idx < joint_state.position.size())
+			//update linebreak counts based on the value of the linebreak sensor
+			if (linebreak_idx < joint_state.position.size())
 			{
-				bool limit_switch_true = (joint_state.position[limit_switch_idx] != 0);
-				if(limit_switch_true)
+				bool linebreak_true = (joint_state.position[linebreak_idx] != 0);
+				if(linebreak_true)
 				{
-					limit_switch_true_count += 1;
-					limit_switch_false_count = 0;
+					linebreak_true_count += 1;
+					linebreak_false_count = 0;
 				}
 				else
 				{
-					limit_switch_true_count = 0;
-					limit_switch_false_count += 1;
+					linebreak_true_count = 0;
+					linebreak_false_count += 1;
 				}
 			}
 			else
 			{
 				ROS_WARN_THROTTLE(2.0, "intake line break sensor not found in joint_states");
-				limit_switch_true_count = 0;
-				limit_switch_false_count += 1;
+				linebreak_true_count = 0;
+				linebreak_false_count += 1;
 			}
 		}
 };
@@ -272,8 +272,8 @@ int main(int argc, char** argv) {
 	ros::NodeHandle n;
 	ros::NodeHandle n_params_intake(n, "actionlib_cargo_intake_params");
 
-	if (!n.getParam("/actionlib_params/limit_switch_debounce_iterations", limit_switch_debounce_iterations))
-		ROS_ERROR("Could not read limit_switch_debounce_iterations in intake_sever");
+	if (!n.getParam("/actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
+		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
 	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 		ROS_ERROR("Could not read wait_for_server_timeout in intake_sever");
 
