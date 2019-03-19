@@ -59,7 +59,8 @@ class CargoIntakeAction {
 		}
 
 		//define the function to be executed when the actionlib server is called
-		void executeCB(const behaviors::IntakeGoalConstPtr &/*goal*/) {
+		void executeCB(const behaviors::IntakeGoalConstPtr &/*goal*/) 
+		{
 			ROS_INFO("%s: Running callback", action_name_.c_str());
 
 			//wait for all actionlib servers we need
@@ -110,7 +111,8 @@ class CargoIntakeAction {
 			//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
 			bool success = false;
 			const double start_time = ros::Time::now().toSec();
-			while(!success && !timed_out && !preempted && ros::ok()) {
+			while(!success && !timed_out && !preempted && ros::ok())
+			{
 				success = linebreak_true_count > linebreak_debounce_iterations;
 				timed_out = (ros::Time::now().toSec()-start_time) > intake_timeout;
 
@@ -161,46 +163,46 @@ class CargoIntakeAction {
 			as_.setSucceeded(result);
 
 			return;
-        }
+		}
 
-        // Function to be called whenever the subscriber for the joint states topic receives a message
-        // Grabs various info from hw_interface using
-        // dummy joint position values
-        void jointStateCallback(const sensor_msgs::JointState &joint_state)
-        {
-            //get index of linebreak sensor for this actionlib server
-            static size_t linebreak_idx = std::numeric_limits<size_t>::max();
-            if ((linebreak_idx >= joint_state.name.size()))
-            {
-                for (size_t i = 0; i < joint_state.name.size(); i++)
-                {
-                    if (joint_state.name[i] == "cargo_intake_linebreak_1") //TODO: define this in the hardware interface
-                        linebreak_idx = i;
-                }
-            }
+		// Function to be called whenever the subscriber for the joint states topic receives a message
+		// Grabs various info from hw_interface using
+		// dummy joint position values
+		void jointStateCallback(const sensor_msgs::JointState &joint_state)
+		{
+			//get index of linebreak sensor for this actionlib server
+			static size_t linebreak_idx = std::numeric_limits<size_t>::max();
+			if ((linebreak_idx >= joint_state.name.size()))
+			{
+				for (size_t i = 0; i < joint_state.name.size(); i++)
+				{
+					if (joint_state.name[i] == "cargo_intake_linebreak_1") //TODO: define this in the hardware interface
+						linebreak_idx = i;
+				}
+			}
 
-            //update linebreak counts based on the value of the linebreak sensor
-            if (linebreak_idx < joint_state.position.size())
-            {
-                bool linebreak_true = (joint_state.position[linebreak_idx] != 0);
-                if(linebreak_true)
-                {
-                    linebreak_true_count += 1;
-                    linebreak_false_count = 0;
-                }
-                else
-                {
-                    linebreak_true_count = 0;
-                    linebreak_false_count += 1;
-                }
-            }
-            else
-            {
-                ROS_WARN_THROTTLE(2.0, "intake line break sensor not found in joint_states");
-                linebreak_true_count = 0;
-                linebreak_false_count += 1;
-            }
-        }
+			//update linebreak counts based on the value of the linebreak sensor
+			if (linebreak_idx < joint_state.position.size())
+			{
+				bool linebreak_true = (joint_state.position[linebreak_idx] != 0);
+				if(linebreak_true)
+				{
+					linebreak_true_count += 1;
+					linebreak_false_count = 0;
+				}
+				else
+				{
+					linebreak_true_count = 0;
+					linebreak_false_count += 1;
+				}
+			}
+			else
+			{
+				ROS_WARN_THROTTLE(2.0, "intake line break sensor not found in joint_states");
+				linebreak_true_count = 0;
+				linebreak_false_count += 1;
+			}
+		}
 };
 
 int main(int argc, char** argv) {
