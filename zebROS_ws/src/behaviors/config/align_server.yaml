@@ -1,10 +1,10 @@
-align_server_params:
+align_server_params : #params defined in align_server_cpp #default values
     align_timeout: 5
     orient_timeout: 2
     x_error_threshold: 1.14
     cargo_error_threshold: 0.05
     orient_error_threshold: 0.1
-align_with_terabee_params:
+align_with_terabee_params: #params defined in align_with_terabee.cpp
     cmd_vel_to_pub: 0.7
     distance_bound: 1.14 #TODO make this not massive
     distance_target: 0.1

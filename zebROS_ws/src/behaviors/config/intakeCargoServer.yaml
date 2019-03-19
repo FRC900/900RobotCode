@@ -1,4 +1,4 @@
-actionlib_cargo_intake_params:
+actionlib_cargo_intake_params: #params in intake_cargo_server.cpp, set as defaults 
     roller_power: 1
     intake_timeout: 5 #in seconds
     pause_before_running_motor: 0.2

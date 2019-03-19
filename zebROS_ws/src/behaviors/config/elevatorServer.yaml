@@ -1,4 +1,4 @@
-actionlib_lift_params:
+actionlib_lift_params: #sets params for elevator_server.cpp #default values
     cargo:
         intake_position: 0.0
         cargo_ship_position: 0.427 # TODO fix me
