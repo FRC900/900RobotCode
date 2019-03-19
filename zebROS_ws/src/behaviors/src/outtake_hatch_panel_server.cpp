@@ -1,6 +1,3 @@
-#ifndef PANEL_OUTTAKE_SERVER
-#define PANEL_OUTTAKE_SERVER
-
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
@@ -10,8 +7,9 @@
 
 //define global variables that will be defined based on config values
 double elevator_timeout;
-double pause_time_between_pistons;
 double wait_for_server_timeout;
+double pause_time_after_release;
+double pause_time_after_extend;
 
 class OuttakeHatchPanelAction
 {
@@ -20,8 +18,6 @@ class OuttakeHatchPanelAction
 		actionlib::SimpleActionServer<behaviors::PlaceAction> as_;
 		std::string action_name_;
 
-		behaviors::PlaceFeedback feedback_;
-		behaviors::PlaceResult result_;
 
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
@@ -89,7 +85,6 @@ class OuttakeHatchPanelAction
 				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
 				if(state.toString() != "SUCCEEDED") {
 					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
-					preempted = true;
 				}
 				else {
 					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
@@ -97,7 +92,6 @@ class OuttakeHatchPanelAction
 			}
 			else {
 				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
-				timed_out = true;
 			}
 
 
@@ -108,7 +102,7 @@ class OuttakeHatchPanelAction
 			}
 
 			//send commands to panel_intake_controller to grab the panel ---------------------------------------
-			if(!preempted && !timed_out && ros::ok())
+			if(!preempted && ros::ok())
 			{
 				//extend panel mechanism
 				panel_intake_controller::PanelIntakeSrv srv;
@@ -124,7 +118,7 @@ class OuttakeHatchPanelAction
 
 
 				//pause for a bit
-				ros::Duration(pause_time_between_pistons).sleep();
+				ros::Duration(pause_time_after_extend).sleep();
 
 				//release the panel - we can reuse the srv variable
 				srv.request.claw_release = true;
@@ -139,7 +133,7 @@ class OuttakeHatchPanelAction
 
 
 				//pause for a bit
-				ros::Duration(pause_time_between_pistons).sleep();
+				ros::Duration(pause_time_after_release).sleep();
 
 				//retract the panel mechanism; we can reuse the srv variable
 				srv.request.claw_release = true;
@@ -179,7 +173,7 @@ class OuttakeHatchPanelAction
 
 			//TODO fix this comp change made end state pulled in, and deployed and isn't with in frame perimeter
 			//set final state of mechanism - pulled in, clamped (to stay within frame perimeter)
-			//it doesn't matter if timed out or preempted, do anyways			
+			//it doesn't matter if timed out or preempted, do anyways
 			//extend panel mechanism
 			panel_intake_controller::PanelIntakeSrv srv;
 			srv.request.claw_release = true;
@@ -192,29 +186,26 @@ class OuttakeHatchPanelAction
 			}
 			ros::spinOnce(); //update everything
 
-
-
 			//log state of action and set result of action
-			result_.timed_out = timed_out;
+			behaviors::PlaceResult result;
+			result.timed_out = timed_out;
 
 			if(timed_out)
 			{
 				ROS_WARN("%s: Timed Out", action_name_.c_str());
-				result_.success = false;
-				as_.setSucceeded(result_);
+				result.success = false;
 			}
 			else if(preempted)
 			{
 				ROS_WARN("%s: Preempted", action_name_.c_str());
-				result_.success = false;
-				as_.setPreempted(result_);
+				result.success = false;
 			}
 			else //implies succeeded
 			{
 				ROS_WARN("%s: Succeeded", action_name_.c_str());
-				result_.success = true;
-				as_.setSucceeded(result_);
+				result.success = true;
 			}
+			as_.setSucceeded(result);
 			return;
 
 		}
@@ -242,12 +233,12 @@ int main(int argc, char** argv)
 		ROS_ERROR("Could not read wait_for_server_timeout in panel_outtake_sever");
 	if (!n_panel_params.getParam("elevator_timeout", elevator_timeout))
 		ROS_ERROR("Could not read elevator_timeout in panel_outtake_sever");
-	if (!n_panel_params.getParam("pause_time_between_pistons", pause_time_between_pistons))
-		ROS_ERROR("Could not read pause_time_between_pistons in panel_outtake_sever");
+	if (!n_panel_params.getParam("pause_time_after_release", pause_time_after_release))
+		ROS_ERROR("Could not read pause_time_after_release in panel_outtake_sever");
+	if (!n_panel_params.getParam("pause_time_after_extend", pause_time_after_extend))
+		ROS_ERROR("Could not read pause_time_after_extend in panel_outtake_sever");
 
 	ros::spin();
 
 	return 0;
 }
-
-#endif

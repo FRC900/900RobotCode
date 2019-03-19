@@ -15,6 +15,35 @@
 
 namespace elevator_controller
 {
+
+	class ElevatorCommand 
+{
+	public:
+		ElevatorCommand()
+		{
+		  position_ = 0;
+		  go_slow_ = false;
+		}
+	   	ElevatorCommand(double position, bool go_slow)
+		{
+		  position_ = position;
+		  go_slow_ = go_slow;
+		}
+		double GetPosition() const
+		{
+		return position_;
+		}
+		bool GetGoSlow() const
+		{
+		return go_slow_;
+		}
+
+
+	private:
+		double position_;
+		bool go_slow_;
+}
+;
 //this is the actual controller, so it stores all of the  update() functions and the actual handle from the joint interface
 //if it was only one type, controller_interface::Controller<TalonCommandInterface> here
 class ElevatorController : public controller_interface::MultiInterfaceController<hardware_interface::TalonCommandInterface, hardware_interface::JointStateInterface, hardware_interface::PositionJointInterface>
@@ -41,11 +70,10 @@ class ElevatorController : public controller_interface::MultiInterfaceController
         private:
             talon_controllers::TalonControllerInterface elevator_joint_; //interface for the talon joint
 
-            realtime_tools::RealtimeBuffer<double> position_command_; //this is the buffer for percent output commands to be published
+            realtime_tools::RealtimeBuffer<ElevatorCommand> position_command_; //this is the buffer for percent output commands to be published
             ros::ServiceServer elevator_service_; //service for receiving commands
 
 			bool zeroed_;
-			bool go_slow_;
 			double last_position_;
 			//double last_setpoint_;
 			hardware_interface::TalonMode last_mode_;
@@ -54,6 +82,7 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 
 			DynamicReconfigureWrapper<ElevatorConfig> dynamic_reconfigure_server_;
 			ElevatorConfig config_;
+
 }; //class
 
 

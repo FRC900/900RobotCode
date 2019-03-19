@@ -29,20 +29,23 @@ class AlignAction {
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
         
 		std::shared_ptr<ros::Publisher> enable_navx_pub_;
-		std::shared_ptr<ros::Publisher> enable_x_pub_;
+		std::shared_ptr<ros::Publisher> hatch_panel_enable_distance_pub_;
+		std::shared_ptr<ros::Publisher> cargo_enable_distance_pub_;
 		std::shared_ptr<ros::Publisher> enable_y_pub_;
 		std::shared_ptr<ros::Publisher> enable_align_hatch_pub_;
 		std::shared_ptr<ros::Publisher> enable_align_cargo_pub_;
 		std::shared_ptr<ros::Publisher> enable_cargo_pub_;
 
 		ros::Subscriber navx_error_sub_;
-		ros::Subscriber x_error_sub_;
+		ros::Subscriber hatch_panel_distance_error_sub_;
+		ros::Subscriber cargo_distance_error_sub_;
 		ros::Subscriber y_error_sub_;
 		ros::Subscriber cargo_error_sub_;
 
         ros::ServiceClient BrakeSrv;
 
-		bool x_aligned_ = false;
+		bool hatch_panel_distance_aligned_ = false;
+		bool cargo_distance_aligned_ = false;
 		bool y_aligned_ = false;
 		bool cargo_aligned_ = false;
 		bool orient_aligned_ = false;
@@ -52,7 +55,8 @@ class AlignAction {
 		//make the executeCB function run every time the actionlib server is called
 		AlignAction(const std::string &name,
 			const std::shared_ptr<ros::Publisher>& enable_navx_pub_,
-			const std::shared_ptr<ros::Publisher>& enable_x_pub_,
+			const std::shared_ptr<ros::Publisher>& hatch_panel_enable_distance_pub_,
+			const std::shared_ptr<ros::Publisher>& cargo_enable_distance_pub_,
 			const std::shared_ptr<ros::Publisher>& enable_y_pub_,
 			const std::shared_ptr<ros::Publisher>& enable_align_hatch_pub_,
 			const std::shared_ptr<ros::Publisher>& enable_align_cargo_pub_,
@@ -61,7 +65,8 @@ class AlignAction {
 			action_name_(name),
 			ac_elevator_("/elevator/elevator_server", true),
 			enable_navx_pub_(enable_navx_pub_),
-			enable_x_pub_(enable_x_pub_),
+			hatch_panel_enable_distance_pub_(hatch_panel_enable_distance_pub_),
+			cargo_enable_distance_pub_(cargo_enable_distance_pub_),
 			enable_y_pub_(enable_y_pub_),
 			enable_align_hatch_pub_(enable_align_hatch_pub_),
 			enable_align_cargo_pub_(enable_align_cargo_pub_),
@@ -74,7 +79,8 @@ class AlignAction {
 			BrakeSrv = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 
 			navx_error_sub_ = nh_.subscribe("navX_pid/pid_debug", 1, &AlignAction::navx_error_cb, this);
-			x_error_sub_ = nh_.subscribe("distance_pid/pid_debug", 1, &AlignAction::x_error_cb, this);
+			hatch_panel_distance_error_sub_ = nh_.subscribe("hatch_panel_distance_pid/pid_debug", 1, &AlignAction::hatch_panel_distance_error_cb, this);
+			cargo_distance_error_sub_ = nh_.subscribe("cargo_distance_pid/pid_debug", 1, &AlignAction::cargo_distance_error_cb, this);
 			cargo_error_sub_ = nh_.subscribe("cargo_pid/pid_debug", 1, &AlignAction::cargo_error_cb, this);
 			y_error_sub_ = nh_.subscribe("align_with_terabee/y_aligned", 1, &AlignAction::y_error_cb, this);
 		}
@@ -89,10 +95,15 @@ class AlignAction {
 			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold);
 			//ROS_WARN_STREAM_THROTTLE(1, "navX error: " << fabs(msg.data[0]));
 		}
-		void x_error_cb(const std_msgs::Float64MultiArray &msg)
+		void hatch_panel_distance_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold);
+			hatch_panel_distance_aligned_ = (fabs(msg.data[0]) < x_error_threshold);
 			//ROS_WARN_STREAM("distance error: " << msg.data[0]);
+		}
+		void cargo_distance_error_cb(const std_msgs::Float64MultiArray &msg)
+		{
+			cargo_distance_aligned_ = (fabs(msg.data[0]) < x_error_threshold);
+			ROS_ERROR_STREAM("distance error: " << msg.data[0]);
 		}
 		void y_error_cb(const std_msgs::Bool &msg)
 		{
@@ -119,7 +130,8 @@ class AlignAction {
 
 			orient_aligned_ = false;
 			distance_aligned_ = false;
-			x_aligned_ = false;
+			hatch_panel_distance_aligned_ = false;
+			cargo_distance_aligned_ = false;
 			y_aligned_ = false;
 
 			//move elevator up a bit before aligning(terabees r sad :( )
@@ -169,12 +181,6 @@ class AlignAction {
 				orient_msg.data = true && !orient_timed_out;							    //Publish true to the navX pid node throughout the action until orient_timed_out
 
 
-                // -+-+- Enable distance after orient aligned -+-+-
-				distance_msg.data = (orient_aligned_ || orient_timed_out) && !x_aligned_;	//Enable distance pid once orient is aligned or timed out
-                // -+-+- Enable distance while orient aligned -+-+-
-				//distance_msg.data = true && !x_aligned_;	                                //Enable distance pid while orient is aligning
-
-				terabee_msg.data = (orient_aligned_ || orient_timed_out) && x_aligned_;     //Enable terabee node when distance is aligned and  orient aligns or orient times out
 				enable_align_msg.data = !aligned;										    //Enable publishing pid vals until aligned
 
 				//CARGO VS HATCH PANEL
@@ -182,16 +188,24 @@ class AlignAction {
 				//
 				//Publish enable messages
 				enable_navx_pub_->publish(orient_msg);
-				enable_x_pub_->publish(distance_msg);
 				if(goal->has_cargo) {
+					ROS_WARN("CARGO!");
+					distance_msg.data = (orient_aligned_ || orient_timed_out) && !cargo_distance_aligned_;	//Enable distance pid once orient is aligned or timed out
+					cargo_enable_distance_pub_->publish(distance_msg);
+					terabee_msg.data = (orient_aligned_ || orient_timed_out) && cargo_distance_aligned_;     //Enable terabee node when distance is aligned and  orient aligns or orient times out
+					ROS_ERROR_STREAM("Terabee_msg cargo: " << ((orient_aligned_ || orient_timed_out) && cargo_distance_aligned_));
 					enable_cargo_pub_->publish(terabee_msg);
 					enable_align_cargo_pub_->publish(enable_align_msg);
-					aligned = x_aligned_ && cargo_aligned_;	 //Check aligned
+					aligned = cargo_distance_aligned_ && cargo_aligned_;	 //Check aligned
 				}
 				else {
+					ROS_WARN(" NOT CARGO!");
+					distance_msg.data = (orient_aligned_ || orient_timed_out) && !hatch_panel_distance_aligned_;	//Enable distance pid once orient is aligned or timed out
+					hatch_panel_enable_distance_pub_->publish(distance_msg);
+					terabee_msg.data = (orient_aligned_ || orient_timed_out) && hatch_panel_distance_aligned_;     //Enable terabee node when distance is aligned and  orient aligns or orient times out
 					enable_y_pub_->publish(terabee_msg);
 					enable_align_hatch_pub_->publish(enable_align_msg);
-					aligned = x_aligned_ && y_aligned_;		//Check aligned
+					aligned = hatch_panel_distance_aligned_ && y_aligned_;		//Check aligned
 				}
 
 				//Check timed out
@@ -204,7 +218,7 @@ class AlignAction {
 				if(!orient_aligned_)
 					ROS_INFO_THROTTLE(1, "Orienting");
 				else
-					ROS_INFO_STREAM_THROTTLE(1, "Translating + Orienting. Distance aligned: " << x_aligned_ << " Cutout aligned: " << y_aligned_);
+					ROS_INFO_STREAM_THROTTLE(1, "Translating + Orienting. Hatch panel distance aligned: " << hatch_panel_distance_aligned_ << " Cargo distance aligned: " << cargo_distance_aligned_ << " Cutout aligned: " << y_aligned_);
 				if(orient_timed_out)
 					ROS_ERROR_STREAM_THROTTLE(1, "Orient timed out!");
 			}
@@ -223,7 +237,8 @@ class AlignAction {
 			false_msg.data = false;
 
 			enable_navx_pub_->publish(false_msg);
-			enable_x_pub_->publish(false_msg);
+			hatch_panel_enable_distance_pub_->publish(false_msg);
+			cargo_enable_distance_pub_->publish(false_msg);
 			enable_y_pub_->publish(false_msg);
 			enable_cargo_pub_->publish(false_msg);
 			enable_align_hatch_pub_->publish(false_msg);
@@ -288,32 +303,35 @@ int main(int argc, char** argv) {
 		ROS_ERROR_STREAM("Could not read elevator_timeout in align_server");
 
 	std::shared_ptr<ros::Publisher> enable_navx_pub_ = std::make_shared<ros::Publisher>();
-	std::shared_ptr<ros::Publisher> enable_x_pub_ = std::make_shared<ros::Publisher>();
+	std::shared_ptr<ros::Publisher> hatch_panel_enable_distance_pub_ = std::make_shared<ros::Publisher>();
+	std::shared_ptr<ros::Publisher> cargo_enable_distance_pub_ = std::make_shared<ros::Publisher>();
 	std::shared_ptr<ros::Publisher> enable_y_pub_ = std::make_shared<ros::Publisher>();
 	std::shared_ptr<ros::Publisher> enable_align_hatch_pub_ = std::make_shared<ros::Publisher>();
 	std::shared_ptr<ros::Publisher> enable_align_cargo_pub_ = std::make_shared<ros::Publisher>();
 	std::shared_ptr<ros::Publisher> enable_cargo_pub_ = std::make_shared<ros::Publisher>();
 
 	*enable_navx_pub_ = n.advertise<std_msgs::Bool>("navX_pid/pid_enable", 1,  true);
-	*enable_x_pub_ = n.advertise<std_msgs::Bool>("distance_pid/pid_enable", 1,  true);
+	*hatch_panel_enable_distance_pub_ = n.advertise<std_msgs::Bool>("hatch_panel_distance_pid/pid_enable", 1,  true);
+	*cargo_enable_distance_pub_ = n.advertise<std_msgs::Bool>("cargo_distance_pid/pid_enable", 1,  true);
 	*enable_y_pub_ = n.advertise<std_msgs::Bool>("align_with_terabee/enable_y_pub", 1,  true);
 	*enable_cargo_pub_ = n.advertise<std_msgs::Bool>("cargo_pid/pid_enable", 1,  true);
 	*enable_align_hatch_pub_ = n.advertise<std_msgs::Bool>("align_hatch_pid/pid_enable", 1,  true);
 	*enable_align_cargo_pub_ = n.advertise<std_msgs::Bool>("align_cargo_pid/pid_enable", 1,  true);
 
-	AlignAction align_action("align_server", enable_navx_pub_, enable_x_pub_, enable_y_pub_, enable_align_hatch_pub_, enable_align_cargo_pub_, enable_cargo_pub_);
+	AlignAction align_action("align_server", enable_navx_pub_, hatch_panel_enable_distance_pub_, cargo_enable_distance_pub_, enable_y_pub_, enable_align_hatch_pub_, enable_align_cargo_pub_, enable_cargo_pub_);
 
 	ros::Rate r(20);
 	//Stop PID nodes from defaulting true
 	std_msgs::Bool false_msg;
 	false_msg.data = false;
 	enable_navx_pub_->publish(false_msg);
-	enable_x_pub_->publish(false_msg);
+	hatch_panel_enable_distance_pub_->publish(false_msg);
+	cargo_enable_distance_pub_->publish(false_msg);
 	enable_y_pub_->publish(false_msg);
 	enable_cargo_pub_->publish(false_msg);
 	enable_align_hatch_pub_->publish(false_msg);
 	enable_align_cargo_pub_->publish(false_msg);
-    
+
     ros::spin();
 	return 0;
 }

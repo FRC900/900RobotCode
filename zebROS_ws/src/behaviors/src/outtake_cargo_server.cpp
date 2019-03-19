@@ -1,6 +1,3 @@
-#ifndef cargo_outtake_server
-#define cargo_outtake_server
-
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
@@ -17,12 +14,12 @@
 //define global variables that will be defined based on config values
 
 double outtake_timeout; //timeout for the elevator call
-double linebreak_debounce_iterations;
+int linebreak_debounce_iterations;
 double pause_time_between_pistons;
 double wait_for_server_timeout;
 double pause_before_elevator_lower; //after the outtake
-bool linebreak_true_count = 0;
-bool linebreak_false_count = 0;
+int linebreak_true_count = 0;
+int linebreak_false_count = 0;
 
 /* Place
  * request is SETPOINT (cargo, rocket1, rocket2, rocket3) and PLACE_CARGO (hatch if false)
@@ -37,7 +34,6 @@ class CargoOuttakeAction {
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
 		ros::ServiceClient cargo_outtake_controller_client_; //create a ros client to send requests to the controller
-		behaviors::PlaceResult result_; //variable to store result of the actionlib action
 
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
@@ -114,7 +110,6 @@ class CargoOuttakeAction {
 				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
 				if(state.toString() != "SUCCEEDED") {
 					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
-					preempted = true;
 				}
 				else {
 					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
@@ -122,13 +117,10 @@ class CargoOuttakeAction {
 			}
 			else {
 				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
-				timed_out = true;
 			}
 
-			ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
-
 			//send command to unclamp cargo ----
-			if(!preempted && !timed_out && ros::ok())
+			if(!preempted && ros::ok())
 			{
 				ROS_WARN_STREAM("timed out at line " << __LINE__ << " is " << timed_out);
 				ROS_WARN("%s: unclamping cargo", action_name_.c_str());
@@ -219,28 +211,25 @@ class CargoOuttakeAction {
 			}
 			ros::spinOnce();
 
-
-
 			//log state of action and set result of action
 
-			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
-			result_.success = success; //success refers to last controller call, but applies for whole action
+			behaviors::PlaceResult result; //variable to store result of the actionlib action
+			result.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
+			result.success = success; //success refers to last controller call, but applies for whole action
 
 			if(timed_out)
 			{
 				ROS_WARN("%s: Timed Out", action_name_.c_str());
-				as_.setSucceeded(result_);
 			}
 			else if(preempted)
 			{
 				ROS_WARN("%s: Preempted", action_name_.c_str());
-				as_.setPreempted(result_);
 			}
 			else //implies succeeded
 			{
 				ROS_WARN("%s: Succeeded", action_name_.c_str());
-				as_.setSucceeded(result_);
 			}
+			as_.setSucceeded(result);
 
 			return;
 		}
@@ -318,5 +307,3 @@ int main(int argc, char** argv) {
 	ros::spin();
 	return 0;
 }
-
-#endif

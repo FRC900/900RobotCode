@@ -14,15 +14,20 @@ bool publish_last = false;
 
 const double default_min_dist_ = 100;
 double min_dist = default_min_dist_;
+double min_dist_cargo = default_min_dist_;
 
 void multiflexCB(const teraranger_array::RangeArray& msg)
 {
     min_dist = default_min_dist_;
+	min_dist_cargo = default_min_dist_;
 	for(int i = 0; i < NUM_SENSORS; i++)
 	{
 		if(msg.ranges[i].range == msg.ranges[i].range)
 		{
 			sensors_distances[i] = msg.ranges[i].range;
+			if(i <= 1) {
+				min_dist_cargo = std::min(min_dist_cargo, static_cast<double>(msg.ranges[i].range));
+			}
 			if(i >= 2) {
 				min_dist = std::min(min_dist, static_cast<double>(msg.ranges[i].range));
 			}
@@ -73,8 +78,10 @@ int main(int argc, char ** argv)
 
 	sensors_distances.resize(NUM_SENSORS);
 
-	ros::Publisher distance_setpoint_pub = n.advertise<std_msgs::Float64>("distance_pid/setpoint", 1);
-	ros::Publisher distance_state_pub = n.advertise<std_msgs::Float64>("distance_pid/state", 1);
+	ros::Publisher hatch_panel_distance_setpoint_pub = n.advertise<std_msgs::Float64>("hatch_panel_distance_pid/setpoint", 1);
+	ros::Publisher hatch_panel_distance_state_pub = n.advertise<std_msgs::Float64>("hatch_panel_distance_pid/state", 1);
+	ros::Publisher cargo_distance_state_pub = n.advertise<std_msgs::Float64>("cargo_distance_pid/state", 1);
+	ros::Publisher cargo_distance_setpoint_pub = n.advertise<std_msgs::Float64>("cargo_distance_pid/setpoint", 1);
 	ros::Publisher cargo_setpoint_pub = n.advertise<std_msgs::Float64>("cargo_pid/setpoint", 1);
 	ros::Publisher cargo_state_pub = n.advertise<std_msgs::Float64>("cargo_pid/state", 1);
 	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_terabee/y_command", 1);
@@ -113,9 +120,15 @@ int main(int argc, char ** argv)
         if(fabs(min_dist) < default_min_dist_) {
             std_msgs::Float64 distance_state_msg;
             distance_state_msg.data = min_dist - distance_target;
-            distance_state_pub.publish(distance_state_msg);
-            distance_setpoint_pub.publish(distance_setpoint_msg);
+            hatch_panel_distance_state_pub.publish(distance_state_msg);
+            hatch_panel_distance_setpoint_pub.publish(distance_setpoint_msg);
         }
+		if(fabs(min_dist_cargo) < default_min_dist_) {
+            std_msgs::Float64 distance_state_msg;
+            distance_state_msg.data = min_dist_cargo - distance_target;
+            cargo_distance_state_pub.publish(distance_state_msg);
+            cargo_distance_setpoint_pub.publish(distance_setpoint_msg);
+		}
 
 		//deal with cargo PID next
 		std_msgs::Float64 cargo_state_msg;
@@ -265,12 +278,10 @@ int main(int argc, char ** argv)
 				}*/
 			//case(122112): //Duplicate of off to the left of rocket a small amount
 			case(222111):
-			case(221111): //Off to the left a bit at loading station
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left of cargo ship a small amount: case: " << ternary_distances);
 				cutout_found = true;
 				y_msg.data = -1*cmd_vel_to_pub;
 				break;
-			case(221112):
 			case(211112):
 				ROS_INFO_STREAM_THROTTLE(.25, "Off to the left of cargo ship a large amount: case: " << ternary_distances);
 				cutout_found = true;
@@ -278,6 +289,8 @@ int main(int argc, char ** argv)
 				break;
 			//Indeterminate cases
 			case(221122):
+			case(221112):
+			case(221111): //Off to the left a bit at loading station but shows up to the right on rocket
 				ROS_INFO_STREAM_THROTTLE(.25, "Indeterminate case found: case: " << ternary_distances);
 				cutout_found = true;
 				y_msg.data = last_command;

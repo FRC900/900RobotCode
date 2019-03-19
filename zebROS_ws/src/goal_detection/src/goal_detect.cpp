@@ -91,9 +91,9 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 		gd_msg.header.seq = frameMsg->header.seq;
 		gd_msg.header.stamp = frameMsg->header.stamp;
 		gd_msg.header.frame_id = frameMsg->header.frame_id;
-		dummy.x = gfd[i].found_pos.x;
-		dummy.y = gfd[i].found_pos.y;
-		dummy.z = gfd[i].found_pos.z;
+		dummy.x = gfd[i].pos.x;
+		dummy.y = gfd[i].pos.y;
+		dummy.z = gfd[i].pos.z;
 		gd_msg.location.push_back(dummy);
 	}
 

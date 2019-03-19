@@ -35,10 +35,10 @@
 int elevator_cur_setpoint_idx;
 int climber_cur_step;
 
-int cargo_linebreak_true_count = 0;
-int panel_linebreak_true_count = 0;
-int cargo_linebreak_false_count = 0;
-int panel_linebreak_false_count = 0;
+int cargo_limit_switch_true_count = 0;
+int panel_limit_switch_true_count = 0;
+int cargo_limit_switch_false_count = 0;
+int panel_limit_switch_false_count = 0;
 bool panel_push_extend = false;
 
 
@@ -247,12 +247,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
 			goal.trigger = true;
-			if(cargo_linebreak_true_count > config.linebreak_debounce_iterations) {
+            /*
+			if(cargo_limit_switch_true_count > config.limit_switch_debounce_iterations) {
 				goal.has_cargo = true;
 			}
 			else {
 				goal.has_cargo = false;
-			}
+			}*/
+            goal.has_cargo = true;
 			align_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonAButton)
@@ -350,30 +352,22 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			*/
 		}
 		//Joystick1: buttonY
-		/*if(joystick_states_array[0].buttonYPress)
-		  {
-		  ROS_INFO_STREAM("Joystick1: buttonYPress - Panel Outtake");
-		  preemptActionlibServers();
-		  behaviors::PlaceGoal goal;
-		  goal.setpoint_index = CARGO_SHIP;
-		  outtake_hatch_panel_ac->sendGoal(goal);
-		  }
-		  */
-		  if(joystick_states_array[0].buttonYButton)
+		if(joystick_states_array[0].buttonYPress)
 		  {
 			preemptActionlibServers();
 			//If we don't have a panel, intake one
-			ROS_INFO_STREAM("Joystick1: Intake Panel");
+			ROS_INFO_STREAM("buttonYPress: Intake Panel");
 			behaviors::IntakeGoal goal;
 			intake_hatch_panel_ac->sendGoal(goal);
-			  /*
+		  }
+		  /*if(joystick_states_array[0].buttonYButton)
+		  {
 			  ROS_INFO_THROTTLE(1, "buttonYButton");
 			  std_msgs::Bool enable_pid;
 			  enable_pid.data = true;
 			  navX_pid.publish(enable_pid);
 			  enable_align.publish(enable_pid);
-			  */
-		  }
+		  }*/
 		  if(joystick_states_array[0].buttonYRelease)
 		  {
 			  /*
@@ -391,7 +385,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
 			preemptActionlibServers();
-			if(cargo_linebreak_true_count > config.linebreak_debounce_iterations)
+			if(cargo_limit_switch_true_count > config.limit_switch_debounce_iterations)
 			{
 				//If we have a cargo, outtake it
 				ROS_INFO_STREAM("Joystick1: Place Cargo");
@@ -444,7 +438,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//{
 		//	ROS_INFO_STREAM("Joystick1: bumperRightPress");
 		//	preemptActionlibServers();
-		//	if(panel_linebreak_true_count > config.linebreak_debounce_iterations)
+		//	if(panel_limit_switch_true_count > config.limit_switch_debounce_iterations)
 		//	{
 		//		//If we have a panel, outtake it
 		//		ROS_INFO_STREAM("Joystick1: Place Panel");
@@ -479,7 +473,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			preemptActionlibServers();
 			behaviors::ElevatorGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_idx;
-			if(cargo_linebreak_true_count > config.linebreak_debounce_iterations)
+			if(cargo_limit_switch_true_count > config.limit_switch_debounce_iterations)
 			{
 				goal.place_cargo = true;
 			}
@@ -797,67 +791,67 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 void jointStateCallback(const sensor_msgs::JointState &joint_state)
 {
-	//get index of linebreak sensor for this actionlib server
-	static size_t cargo_linebreak_idx = std::numeric_limits<size_t>::max();
-	static size_t panel_linebreak_1_idx = std::numeric_limits<size_t>::max();
-	static size_t panel_linebreak_2_idx = std::numeric_limits<size_t>::max();
+	//get index of limit_switch sensor for this actionlib server
+	static size_t cargo_limit_switch_idx = std::numeric_limits<size_t>::max();
+	static size_t panel_limit_switch_1_idx = std::numeric_limits<size_t>::max();
+	static size_t panel_limit_switch_2_idx = std::numeric_limits<size_t>::max();
 	static size_t panel_push_extend_idx = std::numeric_limits<size_t>::max();
-	if (cargo_linebreak_idx >= joint_state.name.size() || panel_linebreak_1_idx >= joint_state.name.size() || panel_linebreak_2_idx >= joint_state.name.size())
+	if (cargo_limit_switch_idx >= joint_state.name.size() || panel_limit_switch_1_idx >= joint_state.name.size() || panel_limit_switch_2_idx >= joint_state.name.size())
 	{
 		for (size_t i = 0; i < joint_state.name.size(); i++)
 		{
-			if (joint_state.name[i] == "cargo_intake_linebreak_1")
-				cargo_linebreak_idx = i;
-			if (joint_state.name[i] == "panel_intake_linebreak_1")
-				panel_linebreak_1_idx = i;
-			if (joint_state.name[i] == "panel_intake_linebreak_2")
-				panel_linebreak_2_idx = i;
+			if (joint_state.name[i] == "cargo_intake_limit_switch_1")
+				cargo_limit_switch_idx = i;
+			if (joint_state.name[i] == "panel_intake_limit_switch_1")
+				panel_limit_switch_1_idx = i;
+			if (joint_state.name[i] == "panel_intake_limit_switch_2")
+				panel_limit_switch_2_idx = i;
 			if (joint_state.name[i] == "panel_push_extend")
 				panel_push_extend_idx = i;
 		}
 	}
 
-	//update linebreak counts based on the value of the linebreak sensor
-	if (cargo_linebreak_idx < joint_state.position.size())
+	//update limit_switch counts based on the value of the limit_switch sensor
+	if (cargo_limit_switch_idx < joint_state.position.size())
 	{
-		bool cargo_linebreak_true = (joint_state.position[cargo_linebreak_idx] != 0);
-		if(cargo_linebreak_true)
+		bool cargo_limit_switch_true = (joint_state.position[cargo_limit_switch_idx] != 0);
+		if(cargo_limit_switch_true)
 		{
-			cargo_linebreak_true_count += 1;
-			cargo_linebreak_false_count = 0;
+			cargo_limit_switch_true_count += 1;
+			cargo_limit_switch_false_count = 0;
 		}
 		else
 		{
-			cargo_linebreak_true_count = 0;
-			cargo_linebreak_false_count += 1;
+			cargo_limit_switch_true_count = 0;
+			cargo_limit_switch_false_count += 1;
 		}
 	}
 	else
 	{
 		ROS_WARN_THROTTLE(1, "outtake line break sensor not found in joint_states");
-		cargo_linebreak_false_count = 0;
-		cargo_linebreak_true_count = 0;
+		cargo_limit_switch_false_count = 0;
+		cargo_limit_switch_true_count = 0;
 	}
 
-	if (panel_linebreak_1_idx < joint_state.position.size() && panel_linebreak_2_idx < joint_state.position.size())
+	if (panel_limit_switch_1_idx < joint_state.position.size() && panel_limit_switch_2_idx < joint_state.position.size())
 	{
-		bool panel_linebreak_true = ((joint_state.position[panel_linebreak_1_idx] != 0) || (joint_state.position[panel_linebreak_2_idx] != 0));
-		if(panel_linebreak_true)
+		bool panel_limit_switch_true = ((joint_state.position[panel_limit_switch_1_idx] != 0) || (joint_state.position[panel_limit_switch_2_idx] != 0));
+		if(panel_limit_switch_true)
 		{
-			panel_linebreak_true_count += 1;
-			panel_linebreak_false_count = 0;
+			panel_limit_switch_true_count += 1;
+			panel_limit_switch_false_count = 0;
 		}
 		else
 		{
-			panel_linebreak_true_count = 0;
-			panel_linebreak_false_count += 1;
+			panel_limit_switch_true_count = 0;
+			panel_limit_switch_false_count += 1;
 		}
 	}
 	else
 	{
 		ROS_WARN_THROTTLE(1, "intake line break sensor not found in joint_states");
-		panel_linebreak_false_count += 1;
-		panel_linebreak_true_count = 0;
+		panel_limit_switch_false_count += 1;
+		panel_limit_switch_true_count = 0;
 	}
 
 	if (panel_push_extend_idx < joint_state.position.size())
@@ -897,9 +891,9 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read rotation_pow in teleop_joystick_comp");
 	}
-	if(!n_params.getParam("linebreak_debounce_iterations", config.linebreak_debounce_iterations))
+	if(!n_params.getParam("limit_switch_debounce_iterations", config.limit_switch_debounce_iterations))
 	{
-		ROS_ERROR("Could not read linebreak_debounce_iterations in teleop_joystick_comp");
+		ROS_ERROR("Could not read limit_switch_debounce_iterations in teleop_joystick_comp");
 	}
 	if(!n_swerve_params.getParam("max_speed", config.max_speed))
 	{

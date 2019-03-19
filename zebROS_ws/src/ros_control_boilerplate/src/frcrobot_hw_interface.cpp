@@ -220,7 +220,8 @@ void FRCRobotHWInterface::init(void)
 		if (can_talon_srx_local_hardwares_[i])
 		{
 			can_talons_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_talon_srx_can_ids_[i]));
-			can_talons_[i]->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0, 20);
+			can_talons_[i]->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0,
+								ctre::phoenix::motorcontrol::DemandType::DemandType_Neutral, 0);
 
 			// Clear sticky faults
 			//safeTalonCall(can_talons_[i]->ClearStickyFaults(timeoutMs), "ClearStickyFaults()");
@@ -754,8 +755,12 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 
 			if (talon_mode == hardware_interface::TalonMode_MotionProfileArc)
 			{
-				active_trajectory_heading = talon->GetActiveTrajectoryHeading() * 2. * M_PI / 360.; //returns in degrees
+				active_trajectory_heading = talon->GetActiveTrajectoryPosition(1) * 2. * M_PI / 360.; //returns in degrees
 				safeTalonCall(talon->GetLastError(), "GetActiveTrajectoryHeading");
+			}
+			else
+			{
+				active_trajectory_heading = 0.0;
 			}
 
 			update_status_10 = true;
@@ -2236,6 +2241,8 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 							break;
 						case ctre::phoenix::motorcontrol::ControlMode::MotionMagic:
 							command /= radians_scale;
+							break;
+						default:
 							break;
 					}
 

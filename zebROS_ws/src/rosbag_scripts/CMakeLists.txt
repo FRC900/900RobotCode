@@ -153,6 +153,7 @@ add_executable(rename_frame_id src/rename_frame_id.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
+add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
 add_dependencies(encoder_search_node ${catkin_EXPORTED_TARGETS})
 add_dependencies(rename_frame_id ${catkin_EXPORTED_TARGETS})
 add_dependencies(error_search_node ${catkin_EXPORTED_TARGETS})
@@ -209,10 +210,9 @@ install(PROGRAMS
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_rosbag_scripts.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
+endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-endif()
 

@@ -1,7 +1,9 @@
 teleop_params:
     num_joysticks: 2
     max_rot: 5
+    max_speed: 3
     joystick_pow: 2
     rotation_pow: 2
     linebreak_debounce_iterations: 2
     max_speed: 3
+    limit_switch_debounce_iterations: 2

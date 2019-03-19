@@ -2,7 +2,6 @@
 #define CARGO_INTAKE_CONTROLLER
 
 #include <ros/ros.h>
-#include <vector>
 #include <hardware_interface/joint_command_interface.h>
 #include <realtime_tools/realtime_buffer.h> //code for real-time buffer - stop multple things writing to same variable at same time
 #include <controller_interface/multi_interface_controller.h>
@@ -13,6 +12,24 @@
 namespace cargo_intake_controller
 {
 //this is the actual controller, so it stores all of the  update() functions and the actual handle from the joint interface
+
+class CargoIntakeCommand //define class to hold command data - so we only need 1 realtime buffer
+{
+	public:
+	CargoIntakeCommand()
+		: spin_cmd_(0.0)
+		, intake_arm_cmd_(false)
+	{
+	}
+	CargoIntakeCommand(double spin_cmd, bool intake_arm_cmd)
+	{
+		spin_cmd_ = spin_cmd;
+		intake_arm_cmd_ = intake_arm_cmd;
+	}
+	double spin_cmd_;
+	bool intake_arm_cmd_;
+}; //class
+
 //if it was only one type, controller_interface::Controller<TalonCommandInterface> here
 class CargoIntakeController : public controller_interface::MultiInterfaceController<hardware_interface::TalonCommandInterface, hardware_interface::JointStateInterface, hardware_interface::PositionJointInterface>
 {
@@ -34,12 +51,10 @@ class CargoIntakeController : public controller_interface::MultiInterfaceControl
 					                cargo_intake_controller::CargoIntakeSrv::Response &res);
 
         private:
-            std::vector<std::string> joint_names_; //still not used, but we might have to for config file things?
             talon_controllers::TalonPercentOutputControllerInterface cargo_intake_joint_; //interface for the spinny part of the intake
 			hardware_interface::JointHandle cargo_intake_arm_joint_; //interface for the up/down arm of the intake
 
-            realtime_tools::RealtimeBuffer<double> spin_command_; //this is the buffer for percent output commands to be published
-            realtime_tools::RealtimeBuffer<bool> intake_arm_command_; //buffer for commands for up/down of the arm
+			realtime_tools::RealtimeBuffer<CargoIntakeCommand> cargo_intake_cmd_;
 
             ros::ServiceServer cargo_intake_service_; //service for receiving commands
 }; //class
