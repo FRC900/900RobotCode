@@ -10,7 +10,6 @@
 #include "panel_intake_controller/PanelIntakeSrv.h"
 #include "sensor_msgs/JointState.h"
 #include <atomic>
-#include "cargo_outtake_controller/CargoOuttakeSrv.h"
 
 namespace panel_intake_controller
 {
@@ -65,7 +64,6 @@ class PanelIntakeController : public controller_interface::Controller<hardware_i
 			realtime_tools::RealtimeBuffer<PanelCommand> panel_cmd_; //buffer for clamp and extend commands
 
             ros::ServiceServer panel_intake_service_; //service for receiving commands
-            ros::ServiceClient cargo_outtake_service_; //service for receiving commands
 			ros::Subscriber joint_states_sub_; //to subscribe to joint states - for sensors
 
 			std::atomic<int> linebreak_true_count;

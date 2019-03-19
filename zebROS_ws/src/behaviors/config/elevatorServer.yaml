@@ -1,8 +1,8 @@
 actionlib_lift_params: #sets params for elevator_server.cpp #default values
     cargo:
-        intake_position: 0.0
-        cargo_ship_position: 0.427 # TODO fix me
-        rocket1_position: 0.427260696617
+        intake_position: 0.1
+        cargo_ship_position: 0.0 # TODO This is first level rocket
+        rocket1_position: 0.427260696617 #This is cargo ship
         rocket2_position: 1.07003544694
         rocket3_position: 1.65
     hatch:
