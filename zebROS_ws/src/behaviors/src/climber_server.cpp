@@ -190,7 +190,6 @@ class ClimbAction {
 				if(!preempted && !timed_out && ros::ok())
 				{
 					ROS_INFO("climber server step 0: raising elevator before climber is engaged");
-
 					//call the elevator actionlib server
 					//define the goal to send
 					// TODO - try moving up fast for this step?
@@ -545,7 +544,7 @@ int main(int argc, char** argv) {
 
 	//get config values
 	ros::NodeHandle n;
-	ros::NodeHandle n_lift_params(n, "climber_server");
+	ros::NodeHandle n_climb_params(n, "climber_server");
 
 	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 	{
@@ -553,37 +552,37 @@ int main(int argc, char** argv) {
 		wait_for_server_timeout = 10;
 	}
 
-	if (!n_lift_params.getParam("deploy_timeout", elevator_deploy_timeout))
+	if (!n_climb_params.getParam("deploy_timeout", elevator_deploy_timeout))
 	{
 		ROS_ERROR("Could not read elevator_deploy_timeout in climber_server");
 		elevator_deploy_timeout = 6;
 	}
 
-	if (!n_lift_params.getParam("climb_timeout", elevator_climb_timeout))
+	if (!n_climb_params.getParam("climb_timeout", elevator_climb_timeout))
 	{
 		ROS_ERROR("Could not read elevator_climb_timeout in climber_server");
 		elevator_climb_timeout = 20;
 	}
 
-	if (!n_lift_params.getParam("running_forward_timeout", running_forward_timeout))
+	if (!n_climb_params.getParam("running_forward_timeout", running_forward_timeout))
 	{
 		ROS_ERROR("Could not read running_forward_timeout in climber_server");
 		running_forward_timeout= 2;
 	}
 
-	if (!n_lift_params.getParam("climb_low_timeout", elevator_climb_low_timeout))
+	if (!n_climb_params.getParam("climb_low_timeout", elevator_climb_low_timeout))
 	{
 		ROS_ERROR("Could not read climb_low_timeout in climber_server");
 		elevator_climb_low_timeout = 6;
 	}
 
-	if (!n_lift_params.getParam("match_time_lock", match_time_lock))
+	if (!n_climb_params.getParam("match_time_lock", match_time_lock))
 	{
 		ROS_ERROR("Could not read match_time_lock in climber_server");
 		match_time_lock = 135;
 	}
 
-	if (!n_lift_params.getParam("drive_forward_speed", drive_forward_speed))
+	if (!n_climb_params.getParam("drive_forward_speed", drive_forward_speed))
 	{
 		ROS_ERROR("Could not read drive_forward_speed in climber_server");
 		drive_forward_speed = 0.2;

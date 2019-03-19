@@ -29,9 +29,7 @@ class CargoIntakeAction {
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
 		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
-		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a carg
-		std::atomic<int> linebreak_false_count; //same, but how many times in a row no cargo
-
+		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
 	public:
@@ -218,6 +216,7 @@ int main(int argc, char** argv) {
 
 	if (!n.getParam("/teleop/teleop_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
 		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_server");
+
 	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 		ROS_ERROR("Could not read wait_for_server_timeout in intake_sever");
 

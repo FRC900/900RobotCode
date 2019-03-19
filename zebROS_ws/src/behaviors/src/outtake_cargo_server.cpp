@@ -14,16 +14,20 @@
 #include "behaviors/enumerated_elevator_indices.h"
 
 
+
 //define global variables that will be defined based on config values
 double outtake_timeout; //timeout for the entire action
 double elevator_timeout; //timeout for the elevator call
 double linebreak_debounce_iterations;
+
 double pause_time_between_pistons;
 double wait_for_server_timeout;
 double roller_power;
 double pause_before_elevator_lower; //after the outtake
-bool linebreak_true_count = 0;
-bool linebreak_false_count = 0;
+
+int linebreak_true_count = 0;
+int linebreak_false_count = 0;
+
 
 	/* Place
 	 * request is SETPOINT (cargo, rocket1, rocket2, rocket3) and PLACE_CARGO (hatch if false)
@@ -218,6 +222,7 @@ bool linebreak_false_count = 0;
 			
 			return;
 		}
+
 };
 
 int main(int argc, char** argv) {
@@ -233,8 +238,12 @@ int main(int argc, char** argv) {
 	ros::NodeHandle n_params_intake(n, "actionlib_cargo_intake_params");
 	ros::NodeHandle n_params_lift(n, "actionlib_lift_params");
 
-	if (!n.getParam("/teleop/teleop_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
-		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_server");
+
+	if (!n.getParam("/actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
+		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
+	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
+		ROS_ERROR("Could not read wait_for_server_timeout in intake_sever");
+
 
 	if (!n_params_outtake.getParam("roller_power", roller_power))
 		ROS_ERROR("Could not read roller_power in cargo_outtake_server");

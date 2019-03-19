@@ -14,12 +14,12 @@ elevator_controller:
     # or has hit bottom and the limit switch is broken.  Stop
     # trying to drive down to prevent killing the motor
     elevator_zeroing_timeout:  2.0
-
+    stage_2_height: 0.8
     elevator_master: 
         type: talon_controllers/TalonControllerInterface 
         joint: elevator_master
         close_loop_values:
-            - {p: 0.09, i: 0.0, d: 0, f: 0.0, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: 0.09, i: 0.00003, d: 0, f: 0.0, i_zone: 2204, closed_loop_peak_output: 1.0}
             - {p: 0.25, i: 0.0005, d: 0, f: 0.58, i_zone: 4096, closed_loop_peak_output: 1.0}
 
         # TODO : tuning
@@ -50,7 +50,7 @@ elevator_controller:
         neutral_deadband: 0.001
 
         dynamic_reconfigure: true
-
+        motion_s_curve_strength: 0 
     elevator_follower1: 
         joint: elevator_follower1
         sensor_phase: True 
@@ -67,3 +67,4 @@ elevator_controller:
     elevator_follower3: 
         joint: elevator_follower3
         invert_output: True
+

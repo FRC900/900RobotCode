@@ -1,4 +1,4 @@
-actionlib_hatch_panel_intake_params:
+actionlib_hatch_panel_intake_params: #params in intake hatch actionlib server
     elevator_timeout: 0 #in seconds
     pause_time_after_release: 0 #time to pause between piston actuations, in seconds #ru happpy niall
     pause_time_after_extend: 0.25  #time to pause between piston actuations, in seconds

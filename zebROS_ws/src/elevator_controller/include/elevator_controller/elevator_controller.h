@@ -82,6 +82,7 @@ class ElevatorController : public controller_interface::MultiInterfaceController
 
 			DynamicReconfigureWrapper<ElevatorConfig> dynamic_reconfigure_server_;
 			ElevatorConfig config_;
+
 }; //class
 
 
