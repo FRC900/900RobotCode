@@ -94,16 +94,12 @@ class CargoIntakeAction {
 			elevator_goal.raise_intake_after_success = false;
 			ac_elevator_.sendGoal(elevator_goal);
 
-
-
-
 			//send command to lower arm and run roller to the cargo intake controller ------
 			ROS_WARN("%s: lowering arm and spinning roller in",action_name_.c_str());
 			//define request to send to cargo intake controller
 			cargo_intake_controller::CargoIntakeSrv srv;
 			srv.request.power = roller_power;
-			srv.request.intake_arm = true; //TODO: double check
-
+			srv.request.intake_arm = true;
 			//send request to controller
 			if(!cargo_intake_controller_client_.call(srv))
 			{

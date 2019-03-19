@@ -38,7 +38,6 @@ bool linebreak_false_count = 0;
 			actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
 			ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
-			behaviors::PlaceResult result_; //variable to store result of the actionlib action
 
 		public:
 			//make the executeCB function run every time the actionlib server is called
@@ -197,6 +196,7 @@ bool linebreak_false_count = 0;
 			}
 
 			//log state of action and set result of action
+			behaviors::PlaceResult result_; //variable to store result of the actionlib action
 			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
 			result_.success = success; //success refers to last controller call, but applies for whole action
 
@@ -218,50 +218,6 @@ bool linebreak_false_count = 0;
 			
 			return;
 		}
-
-		// Function to be called whenever the subscriber for the joint states topic receives a message
-		// Grabs various info from hw_interface using
-		// dummy joint position values
-		/*void jointStateCallback(const sensor_msgs::JointState &joint_state)
-		{
-			//get index of linebreak sensor for this actionlib server
-			static size_t linebreak_idx = std::numeric_limits<size_t>::max();
-			if ((linebreak_idx >= joint_state.name.size()))
-			{
-				for (size_t i = 0; i < joint_state.name.size(); i++)
-				{
-					if (joint_state.name[i] == "cargo_outtake_line_break") //TODO: define this in the hardware interface
-						linebreak_idx = i;
-				}
-			}
-
-			//update linebreak counts based on the value of the linebreak sensor
-			if (linebreak_idx < joint_state.position.size())
-			{
-				bool linebreak_true = (joint_state.position[linebreak_idx] != 0);
-				if(linebreak_true)
-				{
-					linebreak_true_count_ += 1;
-					linebreak_false_count_ = 0;
-				}
-				else
-				{
-					linebreak_true_count_ = 0;
-					linebreak_false_count_ += 1;
-				}
-			}
-			else
-			{
-				static int count = 0;
-				if(count % 100 == 0)
-				{
-					ROS_WARN("outtake line break sensor not found in joint_states");
-				}
-				count++;
-				linebreak_true_count_ = 0;
-				linebreak_false_count_ += 1;
-			}
-		}*/
 };
 
 int main(int argc, char** argv) {
@@ -282,18 +238,12 @@ int main(int argc, char** argv) {
 
 	if (!n_params_outtake.getParam("roller_power", roller_power))
 		ROS_ERROR("Could not read roller_power in cargo_outtake_server");
-
 	if (!n_params_outtake.getParam("outtake_timeout", outtake_timeout))
 		ROS_ERROR("Could not read outtake_timeout in cargo_outtake_server");
 	if (!n_params_outtake.getParam("elevator_timeout", elevator_timeout))
 		ROS_ERROR("Could not read elevator_timeout in cargo_elevator_server");
 	if (!n_params_outtake.getParam("pause_time_between_pistons", pause_time_between_pistons))
 		ROS_ERROR("Could not read  pause_time_between_pistons in cargo_outtake_server");
-
-    if(!n_params_outtake.getParam("roller_power", roller_power))
-        ROS_ERROR("Could not read roller_power in cargo_outtakeserver");
-
-
 
 	ros::spin();
 	return 0;
