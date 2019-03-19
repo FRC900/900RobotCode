@@ -129,7 +129,6 @@ class CargoIntakeAction {
 			}
 			//set ending state of controller no matter what happened: arm up and roller motors stopped
 			//define command to send to cargo intake controller
-			cargo_intake_controller::CargoIntakeSrv srv;
 			if(linebreak_true_count > linebreak_debounce_iterations) {
 				srv.request.power = holding_power;
 				srv.request.intake_arm = false;
