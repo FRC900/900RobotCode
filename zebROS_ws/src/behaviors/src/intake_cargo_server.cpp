@@ -29,7 +29,7 @@ class CargoIntakeAction {
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
 		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
-		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo since we started trying to intake/outtake
+		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a carg
 		std::atomic<int> linebreak_false_count; //same, but how many times in a row no cargo
 
 		//create subscribers to get data
@@ -78,97 +78,65 @@ class CargoIntakeAction {
 				return;
 			}
 
-			ros::Rate r(100);
-
 			//define variables that will be reused for each controller call/actionlib server call
+			ros::Rate r(100);
 
 			//define variables that will be set true if the actionlib action is to be ended
 			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
 			//if both of these are false, we assume the action succeeded
 			bool preempted = false;
 			bool timed_out = false;
+			linebreak_true_count = 0; //when this gets higher than linebreak_debounce_iterations, we'll consider the gamepiece intooketh
 
-			ROS_WARN("cargo intake server: sending elevator to intake setpoint");
+			ROS_INFO("Cargo intake server: sending elevator to intake setpoint");
 			behaviors::ElevatorGoal elevator_goal;
-			elevator_goal.setpoint_index = CARGO_SHIP;
+			elevator_goal.setpoint_index = INTAKE;
 			elevator_goal.raise_intake_after_success = false;
 			ac_elevator_.sendGoal(elevator_goal);
-			double start_time = ros::Time::now().toSec();
-			/*
-			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(intake_timeout - (ros::Time::now().toSec() - start_time))); //Wait for server to finish or until timeout is reached
-			if(finished_before_timeout) {
-				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
-				if(state.toString() != "SUCCEEDED") {
-					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
-				}
-				else {
-					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
-				}
-			}
-			else {
-				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
-			}
 
-			//test if we got a preempt while waiting
-			if(as_.isPreemptRequested())
-			{
-				preempted = true;
-			}
-			*/
-			bool success = true;
+
 
 
 			//send command to lower arm and run roller to the cargo intake controller ------
-			if(success && !preempted && !timed_out && ros::ok())
+			ROS_WARN("%s: lowering arm and spinning roller in",action_name_.c_str());
+			//define request to send to cargo intake controller
+			cargo_intake_controller::CargoIntakeSrv srv;
+			srv.request.power = roller_power;
+			srv.request.intake_arm = true; //TODO: double check
+
+			//send request to controller
+			if(!cargo_intake_controller_client_.call(srv))
 			{
-				ROS_WARN("%s: lowering arm and spinning roller in",action_name_.c_str());
+				ROS_ERROR("%s: Srv intake call failed", action_name_.c_str());
+				preempted = true;
+			}
 
-				//reset variables
-				linebreak_true_count = 0; //when this gets higher than linebreak_debounce_iterations, we'll consider the gamepiece intooketh
-				success = false;
+			//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
+			bool success = false;
+			const double start_time = ros::Time::now().toSec();
+			while(!success && !timed_out && !preempted && ros::ok()) {
+				success = linebreak_true_count > linebreak_debounce_iterations;
+				timed_out = (ros::Time::now().toSec()-start_time) > intake_timeout;
 
-				//define request to send to cargo intake controller
-				cargo_intake_controller::CargoIntakeSrv srv;
-				srv.request.power = roller_power;
-				srv.request.intake_arm = true; //TODO: double check
-
-				//send request to controller
-				if(!cargo_intake_controller_client_.call(srv))
-				{
-					ROS_ERROR("%s: Srv intake call failed", action_name_.c_str());
+				if(as_.isPreemptRequested() || !ros::ok()) {
+					ROS_WARN(" %s: Preempted", action_name_.c_str());
 					preempted = true;
 				}
-
-				//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
-				while(!success && !timed_out && !preempted && ros::ok()) {
-					success = linebreak_true_count > linebreak_debounce_iterations;
-					timed_out = (ros::Time::now().toSec()-start_time) > intake_timeout;
-
-					if(as_.isPreemptRequested() || !ros::ok()) {
-						ROS_WARN(" %s: Preempted", action_name_.c_str());
-						preempted = true;
-					}
-					else if(!success)
-					{
-						r.sleep();
-					}
-				
-                }
-
-
-                //end of code for sending something to a controller ----------------------------------
-            }
-
-			cargo_intake_controller::CargoIntakeSrv srv;
+				else if(!success)
+				{
+					r.sleep();
+				}
+			}
 			//set ending state of controller no matter what happened: arm up and roller motors stopped
 			//define command to send to cargo intake controller
+			cargo_intake_controller::CargoIntakeSrv srv;
 			if(linebreak_true_count > linebreak_debounce_iterations) {
 				srv.request.power = holding_power;
-				srv.request.intake_arm = false; //TODO: Double check
+				srv.request.intake_arm = false;
 			}
 			else {
-				srv.request.power = holding_power; //TODO: change this
-				srv.request.intake_arm = false; //TODO: Double check
+				srv.request.power = holding_power; //TODO: change this. This currently just sets holding power no matter what, but this probably should change once we have a linebreak mount
+				srv.request.intake_arm = false;
 			}
 			//send request to controller
 			if(!cargo_intake_controller_client_.call(srv))

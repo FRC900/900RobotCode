@@ -1,6 +1,6 @@
 actionlib_lift_params:
     cargo:
-        intake_position: 0.0
+        intake_position: 0.1
         cargo_ship_position: 0.0 # TODO This is first level rocket
         rocket1_position: 0.427260696617 #This is cargo ship
         rocket2_position: 1.07003544694

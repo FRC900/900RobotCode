@@ -13,9 +13,10 @@
 #include <ros/console.h>
 #include "behaviors/enumerated_elevator_indices.h"
 
-//define global variables that will be defined based on config values
 
-double outtake_timeout; //timeout for the elevator call
+//define global variables that will be defined based on config values
+double outtake_timeout; //timeout for the entire action
+double elevator_timeout; //timeout for the elevator call
 double linebreak_debounce_iterations;
 double pause_time_between_pistons;
 double wait_for_server_timeout;
