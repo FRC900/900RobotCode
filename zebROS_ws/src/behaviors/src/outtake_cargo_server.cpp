@@ -40,8 +40,6 @@ bool linebreak_false_count = 0;
 			ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
 			behaviors::PlaceResult result_; //variable to store result of the actionlib action
 
-			//create subscribers to get data
-			//ros::Subscriber joint_states_sub_;
 		public:
 			//make the executeCB function run every time the actionlib server is called
 			CargoOuttakeAction(const std::string &name) :
@@ -54,11 +52,8 @@ bool linebreak_false_count = 0;
 			std::map<std::string, std::string> service_connection_header;
 			service_connection_header["tcp_nodelay"] = "1";
 
-
 			//initialize the client being used to call the controller
 			cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
-		//start subscribers subscribing
-		//joint_states_sub_ = nh_.subscribe("/frcrobot/joint_states", 1, &CargoOuttakeAction::jointStateCallback, this);
 	}
 
 		~CargoOuttakeAction(void)
@@ -164,7 +159,7 @@ bool linebreak_false_count = 0;
 			ros::Duration(pause_before_elevator_lower).sleep();
 
 			//move elevator down to end setpoint
-			ROS_WARN_STREAM("cargo outtake server: elevator down after placing");
+			ROS_INFO_STREAM("cargo outtake server: elevator down after placing");
 			behaviors::ElevatorGoal elevator_goal;
 			elevator_goal.setpoint_index = goal->end_setpoint_index;
 			elevator_goal.place_cargo = true;
@@ -202,7 +197,6 @@ bool linebreak_false_count = 0;
 			}
 
 			//log state of action and set result of action
-			
 			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
 			result_.success = success; //success refers to last controller call, but applies for whole action
 
