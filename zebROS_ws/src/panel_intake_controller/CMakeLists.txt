@@ -21,7 +21,6 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   talon_interface
   talon_controllers
-  cargo_outtake_controller
   )
 
 #TO MAKE A CONTROLLER YOU NEED A PLUGIN.XML FILE
