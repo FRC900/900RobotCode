@@ -1,5 +1,4 @@
-#ifndef PANEL_INTAKE_CONTROLLER
-#define PANEL_INTAKE_CONTROLLER
+#pragma once
 
 #include <ros/ros.h>
 #include <hardware_interface/joint_command_interface.h>
@@ -8,8 +7,6 @@
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <std_msgs/Bool.h>
 #include "panel_intake_controller/PanelIntakeSrv.h"
-#include "sensor_msgs/JointState.h"
-#include <atomic>
 
 namespace panel_intake_controller
 {
@@ -54,21 +51,13 @@ class PanelIntakeController : public controller_interface::Controller<hardware_i
             virtual bool cmdService(panel_intake_controller::PanelIntakeSrv::Request &req,
 					                panel_intake_controller::PanelIntakeSrv::Response &res);
 
-			void jointStateCallback(const sensor_msgs::JointState &joint_state);
-
         private:
             hardware_interface::JointHandle claw_joint_; //interface for the in/out solenoid joint
 			hardware_interface::JointHandle push_joint_;
-			bool last_claw_cmd_;
 
 			realtime_tools::RealtimeBuffer<PanelCommand> panel_cmd_; //buffer for clamp and extend commands
 
             ros::ServiceServer panel_intake_service_; //service for receiving commands
-			ros::Subscriber joint_states_sub_; //to subscribe to joint states - for sensors
-
-			std::atomic<int> linebreak_true_count;
-			std::atomic<int> linebreak_false_count;
 }; //class
 
 } //namespace
-#endif
