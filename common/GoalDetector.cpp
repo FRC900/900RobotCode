@@ -276,6 +276,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				continue;
 			}
 
+#if 0 // This is the same check as above
 			if(right_info[j].pos.x < left_info[i].pos.x)
 			{
 #ifdef VERBOSE_BOILER
@@ -283,6 +284,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 #endif
 				continue;
 			}
+#endif
 
 			//_goal_left_rotated_rect =  minAreaRect(Mat(goal_contours[left_info[i].contour_index]));
 			//_goal_right_rotated_rect = minAreaRect(Mat(goal_contours[right_info[j].contour_index]));
