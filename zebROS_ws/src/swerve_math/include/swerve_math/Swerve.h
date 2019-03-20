@@ -20,7 +20,7 @@ namespace std
 template<>
 struct less<Eigen::Vector2d>
 {
-	bool operator()(Eigen::Vector2d const& a, Eigen::Vector2d const& b)
+	bool operator()(Eigen::Vector2d const& a, Eigen::Vector2d const& b) const
 	{
 		assert(a.size()==b.size());
 		for(int i = 0; i < a.size(); ++i)
@@ -82,7 +82,7 @@ class swerve
 														     const std::array<double, WHEELCOUNT> &positionsNew,
 														     bool norm,
 														     const Eigen::Vector2d &centerOfRotation = Eigen::Vector2d{0,0});
-		std::array<double, WHEELCOUNT> parkingAngles(const std::array<double, WHEELCOUNT> &positionsNew);
+		std::array<double, WHEELCOUNT> parkingAngles(const std::array<double, WHEELCOUNT> &positionsNew) const;
 
 		void saveNewOffsets(bool useVals, std::array<double, WHEELCOUNT> newOffsets, std::array<double, WHEELCOUNT> newPosition); //should these be doubles?
 		//Note that unless you pass vals in and set useVals to true, it will use the current wheel positions, wheels should be pointing to the right.
@@ -115,5 +115,5 @@ class swerve
 		std::map<Eigen::Vector2d, multiplierSet> multiplierSets_;
 		swerveVar::ratios ratio_;
 		swerveVar::encoderUnits units_;
-		swerveVar::	driveModel drive_;
+		swerveVar::driveModel drive_;
 };

@@ -194,6 +194,7 @@ class TalonSwerveDriveController
 
 		ros::ServiceServer motion_profile_serv_;
 		ros::ServiceServer change_center_of_rotation_serv_;
+		realtime_tools::RealtimeBuffer<Eigen::Vector2d> center_of_rotation_;
 		ros::ServiceServer brake_serv_;
 		ros::ServiceServer wheel_pos_serv_;
 		ros::ServiceServer dont_set_angle_mode_serv_;

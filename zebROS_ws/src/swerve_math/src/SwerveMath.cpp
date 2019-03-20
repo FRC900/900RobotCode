@@ -13,7 +13,7 @@ swerveDriveMath::swerveDriveMath(const array<Eigen::Vector2d, WHEELCOUNT> &wheel
 }
 
 //used for varying center of rotation and must be run once for initialization
-array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelMultipliersXY(const Eigen::Vector2d &rotationCenter)
+array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelMultipliersXY(const Eigen::Vector2d &rotationCenter) const
 {
 	array<double, WHEELCOUNT> wheelAngles;
 	array<double, WHEELCOUNT> wheelMultipliers;

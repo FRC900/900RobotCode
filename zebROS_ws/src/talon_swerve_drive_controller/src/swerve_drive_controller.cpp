@@ -288,6 +288,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 
 	cmd_vel_mode_.store(true, std::memory_order_relaxed);
 	dont_set_angle_mode_.store(false, std::memory_order_relaxed);
+	center_of_rotation_.writeFromNonRT(Eigen::Vector2d{0,0});
 	/*
 	if (!setOdomParamsFromUrdf(root_nh,
 	                          speed_names[0],
@@ -809,7 +810,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		array<double, WHEELCOUNT> curPos;
 		for (int i = 0; i < WHEELCOUNT; i++)
 			curPos[i] = steering_joints_[i].getPosition();
-		speeds_angles = swerveC_->motorOutputs(curr_cmd.lin, curr_cmd.ang, M_PI / 2, curPos, true);
+		speeds_angles = swerveC_->motorOutputs(curr_cmd.lin, curr_cmd.ang, M_PI / 2, curPos, true, *(center_of_rotation_.readFromRT()));
 
 		// Set wheels velocities:
 		for (size_t i = 0; !dont_set_angle_mode && (i < wheel_joints_size_); ++i)
@@ -1102,7 +1103,7 @@ bool TalonSwerveDriveController::changeCenterOfRotationService(talon_swerve_driv
 		Eigen::Vector2d vector;
 		vector[0] = req.x;
 		vector[1] = req.y;
-		swerveC_->setCenterOfRotation(0, vector);
+		center_of_rotation_.writeFromNonRT(vector);
 		return true;
 	}
 	else
