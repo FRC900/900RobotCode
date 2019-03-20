@@ -30,7 +30,6 @@ class CargoIntakeAction {
 
 		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
 		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo
-		std::atomic<int> linebreak_false_count; //counts how many times in a row the linebreak reported there's a cargo
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
 	public:
