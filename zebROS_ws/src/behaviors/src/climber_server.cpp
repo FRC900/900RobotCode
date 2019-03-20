@@ -94,7 +94,7 @@ class ClimbAction {
 		{
 		}
 
-		bool levelTwoClimbServer(std_srvs::SetBool::Request &req,
+		bool levelTwoClimbServer(std_srvs::SetBool::Request &level_two_climb,
 									std_srvs::SetBool::Response &res)
 		{
 			return true;
