@@ -7,6 +7,7 @@
 #include "std_srvs/SetBool.h" //for the climber controller
 #include "geometry_msgs/Twist.h" //for the drivebase
 #include <atomic>
+#include "std_srvs/SetBool.h"
 #include <ros/console.h>
 #include "behaviors/enumerated_elevator_indices.h"
 #include "frc_msgs/MatchSpecificData.h"
@@ -47,6 +48,8 @@ class ClimbAction {
 		//create subscribers to get data
 		ros::Subscriber match_data_sub_;
 
+		ros::ServiceServer level_two_climb_;
+
 		std::atomic<double> cmd_vel_forward_speed_;
 		std::atomic<bool> stopped_;
 
@@ -79,14 +82,22 @@ class ClimbAction {
 
 			navX_sub_ = nh_.subscribe("/frcrobot_rio/navx_mxp", 1, &ClimbAction::navXCallback,this);
 
-			//initialize the publisher used to send messages to the drive base
-			cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
-			//start subscribers subscribing
-			//joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
-		}
+		level_two_climb_ = nh_.advertiseService("level_two_climb_server", &ClimbAction::levelTwoClimbServer,this);
+
+		//initialize the publisher used to send messages to the drive base
+		cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+		//start subscribers subscribing
+		//joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
+	}
 
 		~ClimbAction(void)
 		{
+		}
+
+		bool levelTwoClimbServer(std_srvs::SetBool::Request &req,
+									std_srvs::SetBool::Response &res)
+		{
+			return true;
 		}
 
 		void cmdVelCallback()
