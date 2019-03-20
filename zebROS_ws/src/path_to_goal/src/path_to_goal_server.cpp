@@ -109,9 +109,6 @@ protected:
 	actionlib::SimpleActionServer<behaviors::PathAction> as_;
 	std::string action_name_;
 
-	behaviors::PathFeedback feedback_;
-	behaviors::PathResult result_;
-
 public:
 	PathAction(const std::string &name, ros::NodeHandle n_) :
 		as_(n_, name, boost::bind(&PathAction::executeCB, this, _1), false),
@@ -158,7 +155,6 @@ public:
 		//time for profile to run
 		srvBaseTrajectory.request.points[0].time_from_start = time_to_run;
 
-		bool running = false;
 		if(!spline_gen.call(srvBaseTrajectory))
 		{
 			ROS_ERROR_STREAM("spline_gen died");
@@ -200,9 +196,10 @@ public:
 
 		if (!aborted)
 		{
-			result_.success = success;
-			result_.timeout = timed_out;
-			as_.setSucceeded(result_);
+			behaviors::PathResult result;
+			result.success = success;
+			result.timeout = timed_out;
+			as_.setSucceeded(result);
 		}
 	}
 };
