@@ -147,19 +147,20 @@ class CargoIntakeAction {
 			{
 				ROS_WARN("%s: Error / Timed Out", action_name_.c_str());
 				result.success = false;
-				timed_out = true;
+				as_.setSucceeded(result);
 			}
 			else if(preempted)
 			{
 				ROS_WARN("%s: Preempted", action_name_.c_str());
 				result.success = false;
+				as_.setPreempted(result);
 			}
 			else //implies succeeded
 			{
 				ROS_WARN("%s: Succeeded", action_name_.c_str());
 				result.success = true;
+				as_.setSucceeded(result);
 			}
-			as_.setSucceeded(result);
 
 			return;
 		}

@@ -137,7 +137,6 @@ int linebreak_false_count = 0;
 			//send command to launch cargo ----
 			if(!preempted && !timed_out)
 			{
-				cargo_intake_controller::CargoIntakeSrv srv;
 				srv.request.power = roller_power;
 				srv.request.intake_arm = true;
 
@@ -219,7 +218,7 @@ int linebreak_false_count = 0;
 				ROS_INFO("%s: Succeeded", action_name_.c_str());
 				as_.setSucceeded(result_);
 			}
-			
+
 			return;
 		}
 

@@ -65,7 +65,7 @@ class IntakeHatchPanelAction
 			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
 			//if both of these are false, we assume the action succeeded
 			bool preempted = false;
-			bool timed_out = false;
+			bool timed_out = false; // TODO : never set?
 
 			//define service
 			panel_intake_controller::PanelIntakeSrv srv;
@@ -157,18 +157,20 @@ class IntakeHatchPanelAction
 			{
 				ROS_WARN("%s: Timed Out", action_name_.c_str());
 				result.success = false;
+				as_.setSucceeded(result);
 			}
 			else if(preempted)
 			{
 				ROS_WARN("%s: Preempted", action_name_.c_str());
 				result.success = false;
+				as_.setPreempted(result);
 			}
 			else //implies succeeded
 			{
 				ROS_WARN("%s: Succeeded", action_name_.c_str());
 				result.success = true;
+				as_.setSucceeded(result);
 			}
-			as_.setSucceeded(result);
 			return;
 		}
 		/*
