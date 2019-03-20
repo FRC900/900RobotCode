@@ -118,7 +118,6 @@ class TalonSwerveDriveController
 		void stopping(const ros::Time & /*time*/);
 
 	private:
-		int set_check_;
 		int num_profile_slots_;
 
 		void compOdometry(const ros::Time &time, const double inv_delta_t);

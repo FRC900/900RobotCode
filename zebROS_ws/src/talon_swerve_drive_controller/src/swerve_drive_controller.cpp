@@ -263,7 +263,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	bool lookup_encoder_drive_set_P_units = !controller_nh.getParam("encoder_drive_set_P_units", units_.rotationSetP);
 	bool lookup_encoder_steering_get_units = !controller_nh.getParam("encoder_steering_get_units", units_.steeringGet);
 	bool lookup_encoder_steering_set_units = !controller_nh.getParam("encoder_steering_set_units", units_.steeringSet);
-	bool lookup_f_static = !controller_nh.getParam("f_static", f_static_); //TODO: Maybe use this?
+	//bool lookup_f_static = !controller_nh.getParam("f_static", f_static_); //TODO: Maybe use this?
 	bool lookup_wheel1x = !controller_nh.getParam("wheel_coords1x", wheel_coords_[0][0]);
 	bool lookup_wheel2x = !controller_nh.getParam("wheel_coords2x", wheel_coords_[1][0]);
 	bool lookup_wheel3x = !controller_nh.getParam("wheel_coords3x", wheel_coords_[2][0]);
