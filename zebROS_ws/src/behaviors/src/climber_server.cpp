@@ -63,27 +63,27 @@ class ClimbAction {
 			as_(nh_, name, boost::bind(&ClimbAction::executeCB, this, _1), false),
 			action_name_(name),
 			ae_("/elevator/elevator_server", true)
-	{
-		as_.start(); //start the actionlib server
+		{
+			as_.start(); //start the actionlib server
 
-		//do networking stuff?
-		std::map<std::string, std::string> service_connection_header;
-		service_connection_header["tcp_nodelay"] = "1";
+			//do networking stuff?
+			std::map<std::string, std::string> service_connection_header;
+			service_connection_header["tcp_nodelay"] = "1";
 
-		//get the match timer
-		match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data", 1,&ClimbAction::matchStateCallback,this);
-		//initialize the client being used to call the climber controller
-		climber_controller_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_feet_retract", false, service_connection_header);
-		//initialize the client being used to call the climber controller to engage the climber
-		climber_engage_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_release_endgame", false, service_connection_header);
+			//get the match timer
+			match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data", 1, &ClimbAction::matchStateCallback,this);
+			//initialize the client being used to call the climber controller
+			climber_controller_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_feet_retract", false, service_connection_header);
+			//initialize the client being used to call the climber controller to engage the climber
+			climber_engage_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_release_endgame", false, service_connection_header);
 
-		navX_sub_ = nh_.subscribe("navx_mxp", 1, &ClimbAction::navXCallback,this);
+			navX_sub_ = nh_.subscribe("/frcrobot_rio/navx_mxp", 1, &ClimbAction::navXCallback,this);
 
-		//initialize the publisher used to send messages to the drive base
-		cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
-		//start subscribers subscribing
-		//joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
-	}
+			//initialize the publisher used to send messages to the drive base
+			cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+			//start subscribers subscribing
+			//joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
+		}
 
 		~ClimbAction(void)
 		{
