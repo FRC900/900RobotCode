@@ -49,6 +49,8 @@ hardware_interface:
 
        - {name: cargo_intake_linebreak_1, type: digital_input, local: false}
 
+       - {name: climber_linebreak, type: digital_input, local: false}
+
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
          
