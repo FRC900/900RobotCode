@@ -654,7 +654,7 @@ bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBre
 {
 	if (req.j < digital_input_names_.size())
 	{
-		digital_input_names_[req.j] = (req.value) ? 1 : 0;
+		digital_input_state_[req.j] = (req.value) ? 1 : 0;
 		ROS_INFO_STREAM("req.j set to" << req.value);
 	}
 	else
