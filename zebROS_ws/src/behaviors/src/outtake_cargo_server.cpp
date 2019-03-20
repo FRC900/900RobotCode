@@ -123,7 +123,7 @@ int linebreak_false_count = 0;
 					actionlib::SimpleClientGoalState state = ac_elevator_.getState();
 					if(state.toString() != "SUCCEEDED") {
 						ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
-						preempted = true;
+						//preempted = true;
 					}
 					else {
 						ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
@@ -131,7 +131,7 @@ int linebreak_false_count = 0;
 				}
 				else {
 					ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
-					timed_out = true;
+					//timed_out = true;
 				}
 			}
 			//send command to launch cargo ----
@@ -139,7 +139,7 @@ int linebreak_false_count = 0;
 			{
 				cargo_intake_controller::CargoIntakeSrv srv;
 				srv.request.power = roller_power;
-				srv.request.intake_arm = false;
+				srv.request.intake_arm = true;
 
 				if(!cargo_intake_controller_client_.call(srv))
 				{

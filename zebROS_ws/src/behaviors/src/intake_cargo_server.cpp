@@ -30,6 +30,7 @@ class CargoIntakeAction {
 
 		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
 		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo
+		std::atomic<int> linebreak_false_count; //counts how many times in a row the linebreak reported there's a cargo
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
 	public:
@@ -90,6 +91,7 @@ class CargoIntakeAction {
 			ROS_INFO("Cargo intake server: sending elevator to intake setpoint");
 			behaviors::ElevatorGoal elevator_goal;
 			elevator_goal.setpoint_index = INTAKE;
+			elevator_goal.place_cargo = true;
 			elevator_goal.raise_intake_after_success = false;
 			ac_elevator_.sendGoal(elevator_goal);
 

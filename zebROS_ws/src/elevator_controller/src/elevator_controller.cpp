@@ -41,11 +41,12 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		return false;
 	}
 	
+	/*
 	if (!controller_nh.getParam("motion_s_curve_strength",config_.motion_s_curve_strength))
 	{
 		ROS_ERROR("Could not find motion_s_curve_strength");
 		return false;
-	}
+	}*/
 	//get config values for the elevator talon
 	XmlRpc::XmlRpcValue elevator_params;
 	if (!controller_nh.getParam("elevator_joint", elevator_params))
