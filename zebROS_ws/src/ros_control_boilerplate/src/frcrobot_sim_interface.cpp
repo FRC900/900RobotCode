@@ -635,12 +635,13 @@ void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
 	// display it here for debugging
 
 	//printState();
+	// This is only used to test the stuff in hw_interface?
 	if (!robot_code_ready_)
 	{
-		bool ready = true;
-		for (auto r : robot_ready_signals_)
-			ready &= (r != 0);
-		if (ready)
+		// Code is ready when all robot_ready_signals are set to non-zero values
+		if (std::all_of(robot_ready_signals_.cbegin(),
+						robot_ready_signals_.cend(),
+						[](double d) { return d != 0.0;} ))
 		{
 			ROS_WARN("ROBOT CODE READY!");
 			robot_code_ready_ = true;

@@ -594,19 +594,19 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 		// as needed when more are read
 		{
 			std::lock_guard<std::mutex> l(*mutex);
+			if (!state->getEnableReadThread())
+				return;
 			talon_mode = state->getTalonMode();
 			encoder_feedback = state->getEncoderFeedback();
 			encoder_ticks_per_rotation = state->getEncoderTicksPerRotation();
 			conversion_factor = state->getConversionFactor();
-			ros::Duration status_1_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_1_General));
-			ros::Duration status_2_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_2_Feedback0));
-			ros::Duration status_4_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_4_AinTempVbat));
-			ros::Duration status_9_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_9_MotProfBuffer));
-			ros::Duration status_10_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_10_MotionMagic));
-			ros::Duration status_13_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_13_Base_PIDF0));
-			ros::Duration sensor_collection_period = ros::Duration(.16); // TODO : fix me
-			if (!state->getEnableReadThread())
-				return;
+			status_1_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_1_General));
+			status_2_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_2_Feedback0));
+			status_4_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_4_AinTempVbat));
+			status_9_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_9_MotProfBuffer));
+			status_10_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_10_MotionMagic));
+			status_13_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_13_Base_PIDF0));
+			sensor_collection_period = ros::Duration(.10); // TODO : fix me
 		}
 
 		// TODO : in main read() loop copy status from talon being followed
@@ -880,7 +880,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 					state->setActiveTrajectoryVelocity(active_trajectory_velocity);
 					if (talon_mode == hardware_interface::TalonMode_MotionProfileArc)
 					{
-					state->setActiveTrajectoryHeading(active_trajectory_heading);
+						state->setActiveTrajectoryHeading(active_trajectory_heading);
 					}
 				}
 			}
@@ -1009,14 +1009,13 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 	read_tracer_.start_unique("Check for ready");
 	if (run_hal_robot_ && !robot_code_ready_)
 	{
-		bool ready = true;
 		// This will be written by the last controller to be
 		// spawned - waiting here prevents the robot from
 		// reporting robot code ready to the field until
 		// all other controllers are started
-		for (auto r : robot_ready_signals_)
-			ready &= (r != 0);
-		if (ready)
+		if (std::all_of(robot_ready_signals_.cbegin(),
+						robot_ready_signals_.cend(),
+						[](double d) { return d != 0.0;} ))
 		{
 			robot_->StartCompetition();
 			robot_code_ready_ = true;
@@ -1218,7 +1217,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		robot_controller_state_.SetCANReceiveErrorCount(receive_error_count);
 		robot_controller_state_.SetCANTransmitErrorCount(transmit_error_count);
 	}
-
 
 	read_tracer_.start_unique("can talons");
 	for (std::size_t joint_id = 0; joint_id < num_can_talon_srxs_; ++joint_id)
