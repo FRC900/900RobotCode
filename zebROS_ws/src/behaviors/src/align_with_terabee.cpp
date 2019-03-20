@@ -64,7 +64,6 @@ int main(int argc, char ** argv)
 	double distance_target;
 	double cargo_pid_max_distance;
 
-	double last_command;
 	double last_command_published = 0.0;
 
 	if(!n_params.getParam("cmd_vel_to_pub", cmd_vel_to_pub))
@@ -293,7 +292,7 @@ int main(int argc, char ** argv)
 			case(221111): //Off to the left a bit at loading station but shows up to the right on rocket
 				ROS_INFO_STREAM_THROTTLE(.25, "Indeterminate case found: case: " << ternary_distances);
 				cutout_found = true;
-				y_msg.data = last_command;
+				y_msg.data = last_command_published;
 				break;
 			default:
 				break;
