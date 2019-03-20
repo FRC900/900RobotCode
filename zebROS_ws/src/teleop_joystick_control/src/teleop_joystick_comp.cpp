@@ -137,16 +137,13 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 }
 
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
-
 {
-	int i = 0;
-
 	const ros::M_string &header = event.getConnectionHeader();
+	const std::string topic = header.at("topic");
 
-	std::string topic = header.at("topic");
-
+	size_t i = 0;
 	//Identifies the incoming message as the correct joystick based on the topic the message was recieved from
-	for(bool msg_assign = false; msg_assign == false; i++)
+	for(bool msg_assign = false; (msg_assign == false) && (i < topic_array.size()); i++)
 	{
 		if(topic == topic_array[i])
 		{
@@ -154,12 +151,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			msg_assign = true;
 		}
 	}
-
-
-    //Publish elevator setpoinut
-    std_msgs::Int8 elevator_setpoint_msg;
-    elevator_setpoint_msg.data = elevator_cur_setpoint_idx;
-    elevator_setpoint.publish(elevator_setpoint_msg);
 
 	//Only do this for the first joystick
 	if(i == 1)
@@ -353,13 +344,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		//Joystick1: buttonY
 		if(joystick_states_array[0].buttonYPress)
-		 {
-		 	 ROS_INFO_STREAM("joystick1: buttonYPress");
-		 	 preemptActionlibServers();
+		{
+			ROS_INFO_STREAM("joystick1: buttonYPress");
+			preemptActionlibServers();
 
-			 behaviors::IntakeGoal goal;
-			 intake_hatch_panel_ac->sendGoal(goal);
-		  }
+			behaviors::IntakeGoal goal;
+			intake_hatch_panel_ac->sendGoal(goal);
+		}
 		//Joystick1: bumperLeft
 	  /*
 		if(joystick_states_array[0].bumperLeftPress)
@@ -389,7 +380,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
             //TODO get rid of this testing code
             //If we have a cargo, outtake it
-		 	preemptActionlibServers();
+			preemptActionlibServers();
             ROS_INFO_STREAM("Joystick1: Place Cargo");
             behaviors::PlaceGoal goal;
             goal.setpoint_index = elevator_cur_setpoint_idx;
@@ -798,6 +789,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	}*/
 	}
 
+    //Publish elevator setpoinut
+    std_msgs::Int8 elevator_setpoint_msg;
+    elevator_setpoint_msg.data = elevator_cur_setpoint_idx;
+    elevator_setpoint.publish(elevator_setpoint_msg);
 }
 
 void jointStateCallback(const sensor_msgs::JointState &joint_state)
@@ -807,7 +802,6 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 	static size_t panel_limit_switch_1_idx = std::numeric_limits<size_t>::max();
 	static size_t panel_limit_switch_2_idx = std::numeric_limits<size_t>::max();
 	static size_t panel_push_extend_idx = std::numeric_limits<size_t>::max();
-	static size_t intake_arm_idx = std::numeric_limits<size_t>::max();
 	if (cargo_linebreak_idx >= joint_state.name.size() || panel_limit_switch_1_idx >= joint_state.name.size() || panel_limit_switch_2_idx >= joint_state.name.size())
 	{
 		for (size_t i = 0; i < joint_state.name.size(); i++)
