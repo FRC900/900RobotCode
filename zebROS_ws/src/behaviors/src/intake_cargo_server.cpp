@@ -29,7 +29,7 @@ class CargoIntakeAction {
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
 		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
-		std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo
+		std::atomic<int> linebreak_true_count_; //counts how many times in a row the linebreak reported there's a cargo
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
 	public:
@@ -57,7 +57,7 @@ class CargoIntakeAction {
 		}
 
 		//define the function to be executed when the actionlib server is called
-		void executeCB(const behaviors::IntakeGoalConstPtr &/*goal*/) 
+		void executeCB(const behaviors::IntakeGoalConstPtr &/*goal*/)
 		{
 			ROS_INFO("%s: Running callback", action_name_.c_str());
 
@@ -85,7 +85,7 @@ class CargoIntakeAction {
 			//if both of these are false, we assume the action succeeded
 			bool preempted = false;
 			bool timed_out = false;
-			linebreak_true_count = 0; //when this gets higher than linebreak_debounce_iterations, we'll consider the gamepiece intooketh
+			linebreak_true_count_ = 0; //when this gets higher than linebreak_debounce_iterations, we'll consider the gamepiece intooketh
 
 			ROS_INFO("Cargo intake server: sending elevator to intake setpoint");
 			behaviors::ElevatorGoal elevator_goal;
@@ -112,7 +112,7 @@ class CargoIntakeAction {
 			const double start_time = ros::Time::now().toSec();
 			while(!success && !timed_out && !preempted && ros::ok())
 			{
-				success = linebreak_true_count > linebreak_debounce_iterations;
+				success = linebreak_true_count_ > linebreak_debounce_iterations;
 				timed_out = (ros::Time::now().toSec()-start_time) > intake_timeout;
 
 				if(as_.isPreemptRequested() || !ros::ok()) {
@@ -126,7 +126,7 @@ class CargoIntakeAction {
 			}
 			//set ending state of controller no matter what happened: arm up and roller motors stopped
 			//define command to send to cargo intake controller
-			if(linebreak_true_count > linebreak_debounce_iterations) {
+			if(linebreak_true_count_ > linebreak_debounce_iterations) {
 				srv.request.power = holding_power;
 				srv.request.intake_arm = false;
 			}
@@ -187,20 +187,17 @@ class CargoIntakeAction {
 				bool linebreak_true = (joint_state.position[linebreak_idx] != 0);
 				if(linebreak_true)
 				{
-					linebreak_true_count += 1;
-					linebreak_false_count = 0;
+					linebreak_true_count_ += 1;
 				}
 				else
 				{
-					linebreak_true_count = 0;
-					linebreak_false_count += 1;
+					linebreak_true_count_ = 0;
 				}
 			}
 			else
 			{
 				ROS_WARN_THROTTLE(2.0, "intake line break sensor not found in joint_states");
-				linebreak_true_count = 0;
-				linebreak_false_count += 1;
+				linebreak_true_count_ = 0;
 			}
 		}
 };
