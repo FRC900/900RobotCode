@@ -91,6 +91,7 @@ class ElevatorAction {
 									std_srvs::SetBool::Response &res)
 		{
 			climb_locations_ = level_two_climb.data ? climb_locations_level_two_ : climb_locations_level_three_;
+			ROS_WARN_STREAM("Level two climb = " << level_two_climb.data);
 			return true;
 		}
 
