@@ -6,6 +6,7 @@
 #include <talon_state_controller/TalonState.h>
 #include <elevator_controller/ElevatorSrv.h>
 #include "behaviors/enumerated_elevator_indices.h"
+#include "std_srvs/SetBool.h"
 
 //TODO: not global. namespace?
 double elevator_position_deadzone;
@@ -21,6 +22,8 @@ class ElevatorAction {
 		//Define service client to control elevator
 		ros::ServiceClient elevator_client_;
 
+		ros::ServiceServer level_two_climb_;
+
 		//Subscriber to monitor talon positions
         ros::Subscriber talon_states_sub_;
 
@@ -32,6 +35,8 @@ class ElevatorAction {
 		// TODO - member variables end with an underscore
 		std::vector<double> hatch_locations_;
 		std::vector<double> cargo_locations_;
+		std::vector<double> climb_locations_level_three_;
+		std::vector<double> climb_locations_level_two_;
 		std::vector<double> climb_locations_; //vector of everything at and after min_climb_idx in enumerated elevator indices, except for max index at the end
 
 		double timeout_;
@@ -46,6 +51,9 @@ class ElevatorAction {
             std::map<std::string, std::string> service_connection_header;
             service_connection_header["tcp_nodelay"] = "1";
 
+			//Server for level two vs. level three climbs
+			level_two_climb_ = nh_.advertiseService("level_two_climb_server", &ElevatorAction::levelTwoClimbServer,this);
+
 			//Client for elevator controller
             elevator_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
 
@@ -58,6 +66,13 @@ class ElevatorAction {
         }
 
         ~ElevatorAction(void) {}
+
+		bool levelTwoClimbServer(std_srvs::SetBool::Request &level_two_climb,
+									std_srvs::SetBool::Response &res)
+		{
+			climb_locations_ = level_two_climb.data ? climb_locations_level_two_ : climb_locations_level_three_;
+			return true;
+		}
 
         void executeCB(const behaviors::ElevatorGoalConstPtr &goal)
         {
@@ -323,36 +338,64 @@ int main(int argc, char** argv)
 
 	//read locations for elevator climbing setpoints
 	double climb_deploy_position;
-	if (!n_params.getParam("climber/deploy_position", climb_deploy_position))
+	if (!n_params.getParam("climber2/deploy_position", climb_deploy_position))
 	{
 		ROS_ERROR_STREAM("Could not read deploy_position");
 		climb_deploy_position = -1; //signals to server to preempt
 	}
-	elevator_action.climb_locations_[ELEVATOR_DEPLOY - min_climb_idx] = climb_deploy_position;
+	elevator_action.climb_locations_level_two_[ELEVATOR_DEPLOY - min_climb_idx] = climb_deploy_position;
+
+	if (!n_params.getParam("climber3/deploy_position", climb_deploy_position))
+	{
+		ROS_ERROR_STREAM("Could not read deploy_position");
+		climb_deploy_position = -1; //signals to server to preempt
+	}
+	elevator_action.climb_locations_level_three_[ELEVATOR_DEPLOY - min_climb_idx] = climb_deploy_position;
 
 	double climb_position;
-	if (!n_params.getParam("climber/climb_position", climb_position))
+	if (!n_params.getParam("climber2/climb_position", climb_position))
 	{
 		ROS_ERROR_STREAM("Could not read climb_position");
 		climb_position = -1; //signals to server to preempt
 	}
-	elevator_action.climb_locations_[ELEVATOR_CLIMB - min_climb_idx] = climb_position;
+	elevator_action.climb_locations_level_two_[ELEVATOR_CLIMB - min_climb_idx] = climb_position;
+
+	if (!n_params.getParam("climber3/climb_position", climb_position))
+	{
+		ROS_ERROR_STREAM("Could not read climb_position");
+		climb_position = -1; //signals to server to preempt
+	}
+	elevator_action.climb_locations_level_three_[ELEVATOR_CLIMB - min_climb_idx] = climb_position;
 
 	double climb_low_position;
-	if (!n_params.getParam("climber/climb_low_position", climb_low_position))
+	if (!n_params.getParam("climber2/climb_low_position", climb_low_position))
 	{
 		ROS_ERROR_STREAM("Could not read climb_low_position");
 		climb_low_position = -1; //signals to server to preempt
 	}
-	elevator_action.climb_locations_[ELEVATOR_CLIMB_LOW - min_climb_idx] = climb_low_position;
+	elevator_action.climb_locations_level_two_[ELEVATOR_CLIMB_LOW - min_climb_idx] = climb_low_position;
+
+	if (!n_params.getParam("climber3/climb_low_position", climb_low_position))
+	{
+		ROS_ERROR_STREAM("Could not read climb_low_position");
+		climb_low_position = -1; //signals to server to preempt
+	}
+	elevator_action.climb_locations_level_three_[ELEVATOR_CLIMB_LOW - min_climb_idx] = climb_low_position;
 
 	double climb_raise_position;
-	if (!n_params.getParam("climber/climb_raise_position", climb_raise_position))
+	if (!n_params.getParam("climber2/climb_raise_position", climb_raise_position))
 	{
 		ROS_ERROR_STREAM("Could not read climb_low_position");
 		climb_raise_position = -1; //signals to server to preempt
 	}
-	elevator_action.climb_locations_[ELEVATOR_RAISE - min_climb_idx] = climb_raise_position;
+	elevator_action.climb_locations_level_two_[ELEVATOR_RAISE - min_climb_idx] = climb_raise_position;
+
+	if (!n_params.getParam("climber3/climb_raise_position", climb_raise_position))
+	{
+		ROS_ERROR_STREAM("Could not read climb_low_position");
+		climb_raise_position = -1; //signals to server to preempt
+	}
+	elevator_action.climb_locations_level_three_[ELEVATOR_RAISE - min_climb_idx] = climb_raise_position;
 
 	ros::spin();
 	return 0;
