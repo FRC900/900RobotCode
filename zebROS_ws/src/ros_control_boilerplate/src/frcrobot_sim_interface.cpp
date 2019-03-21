@@ -482,7 +482,7 @@ void FRCRobotSimInterface::init(void)
 	if (run_hal_robot_)
 		sim_joy_thread_ = std::thread(std::bind(&TeleopJointsKeyboard::keyboardLoop, &teleop_joy_));
     //cube_state_sub_ = nh_.subscribe("/frcrobot/cube_state_sim", 1, &FRCRobotSimInterface::cube_state_callback, this);
-    match_data_sub_ = nh_.subscribe("match_data", 1, &FRCRobotSimInterface::match_data_callback, this);
+    match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data", 1, &FRCRobotSimInterface::match_data_callback, this);
 
 	linebreak_sensor_srv_ = nh_.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
 
@@ -654,7 +654,7 @@ bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBre
 {
 	if (req.j < digital_input_names_.size())
 	{
-		digital_input_names_[req.j] = (req.value) ? 1 : 0;
+		digital_input_state_[req.j] = (req.value) ? 1 : 0;
 		ROS_INFO_STREAM("req.j set to" << req.value);
 	}
 	else
