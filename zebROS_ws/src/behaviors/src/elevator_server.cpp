@@ -7,6 +7,8 @@
 #include <elevator_controller/ElevatorSrv.h>
 #include "behaviors/enumerated_elevator_indices.h"
 #include "std_srvs/SetBool.h"
+#include "std_msgs/Bool.h"
+#include <atomic>
 
 //TODO: not global. namespace?
 double elevator_position_deadzone;
@@ -31,6 +33,8 @@ class ElevatorAction {
 
         double elevator_cur_setpoint_; //stores actual setpoint value to go to, not index
 		double cur_position_; //Variable used to store current elevator position
+		
+		std::atomic<bool> stopped_;
 
     public:
 		// Make these std::arrays instead
@@ -63,7 +67,7 @@ class ElevatorAction {
             talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);
 			
 			//Climb level publisher
-			level_two_publisher_ = nh.advertise<std_msgs::Bool>("level_two", 1);
+			level_two_publisher_ = nh_.advertise<std_msgs::Bool>("level_two",1);
 
 			hatch_locations_.resize(ELEVATOR_MAX_INDEX);
 			cargo_locations_.resize(ELEVATOR_MAX_INDEX);
@@ -82,9 +86,11 @@ class ElevatorAction {
 
 			while(ros::ok() && !stopped_)
 			{
-
-
-
+				level_two_msg.data = true; 
+				
+				level_two_publisher_.publish(level_two_msg);
+				r.sleep();
+			}
 		}
 
 		bool levelTwoClimbServer(std_srvs::SetBool::Request &level_two_climb,
