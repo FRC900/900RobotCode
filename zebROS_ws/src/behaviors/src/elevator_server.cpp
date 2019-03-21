@@ -86,7 +86,7 @@ class ElevatorAction {
 
 			while(ros::ok() && !stopped_)
 			{
-				level_two_msg.data = true; 
+				level_two_msg.data = climb_locations_ == climb_locations_level_two_; 
 				
 				level_two_publisher_.publish(level_two_msg);
 				r.sleep();
