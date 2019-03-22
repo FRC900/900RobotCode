@@ -238,14 +238,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
 			goal.trigger = true;
-            /*
 			if(cargo_limit_switch_true_count > config.limit_switch_debounce_iterations) {
 				goal.has_cargo = true;
 			}
 			else {
 				goal.has_cargo = false;
-			}*/
-            goal.has_cargo = true;
+			}
 			align_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonAButton)
