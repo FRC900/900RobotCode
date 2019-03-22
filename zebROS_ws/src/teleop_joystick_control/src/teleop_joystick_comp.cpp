@@ -384,6 +384,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
             ROS_INFO_STREAM("Joystick1: Place Cargo");
             behaviors::PlaceGoal goal;
             goal.setpoint_index = elevator_cur_setpoint_idx;
+			goal.end_setpoint_index = INTAKE;
             outtake_cargo_ac->sendGoal(goal);
             elevator_cur_setpoint_idx = 0;
             ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
