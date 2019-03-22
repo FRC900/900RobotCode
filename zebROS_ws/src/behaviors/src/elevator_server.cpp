@@ -7,8 +7,9 @@
 #include <elevator_controller/ElevatorSrv.h>
 #include "behaviors/enumerated_elevator_indices.h"
 #include "std_srvs/SetBool.h"
-#include "std_msgs/Bool.h"
+#include "std_msgs/Int8.h"
 #include <atomic>
+#include <thread>
 
 //TODO: not global. namespace?
 double elevator_position_deadzone;
@@ -67,26 +68,27 @@ class ElevatorAction {
             talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);
 			
 			//Climb level publisher
-			level_two_publisher_ = nh_.advertise<std_msgs::Bool>("level_two",1);
+			level_two_publisher_ = nh_.advertise<std_msgs::Int8>("level_two",1);
 
 			hatch_locations_.resize(ELEVATOR_MAX_INDEX);
 			cargo_locations_.resize(ELEVATOR_MAX_INDEX);
 			climb_locations_.resize(ELEVATOR_MAX_INDEX - min_climb_idx);
+			climb_locations_level_three_.resize(ELEVATOR_MAX_INDEX - min_climb_idx);
+			climb_locations_level_two_.resize(ELEVATOR_MAX_INDEX - min_climb_idx);
         }
 
         ~ElevatorAction(void) {}
 		
 		void climbLevelCallback()
 		{
-			ROS_INFO_STREAM("the callback is being called");
-			std_msgs::Bool level_two_msg;
+			std_msgs::Int8 level_two_msg;
 			stopped_ = false;
 
 			ros::Rate r(20);
 
 			while(ros::ok() && !stopped_)
 			{
-				level_two_msg.data = climb_locations_ == climb_locations_level_two_; 
+				level_two_msg.data = (climb_locations_ == climb_locations_level_two_) ? 2 : 3; 
 				
 				level_two_publisher_.publish(level_two_msg);
 				r.sleep();
@@ -97,7 +99,8 @@ class ElevatorAction {
 									std_srvs::SetBool::Response &res)
 		{
 			climb_locations_ = level_two_climb.data ? climb_locations_level_two_ : climb_locations_level_three_;
-			ROS_WARN_STREAM("Level two climb = " << level_two_climb.data);
+			ROS_WARN_STREAM("Level two climb = " << static_cast<bool>(level_two_climb.data));
+			res.success = true;
 			return true;
 		}
 
@@ -109,6 +112,7 @@ class ElevatorAction {
 			behaviors::ElevatorFeedback feedback;
             feedback.running = true;
             as_.publishFeedback(feedback);
+
 
             //Define variables that will be set to true once the server finishes executing
             bool preempted = false;
@@ -424,6 +428,10 @@ int main(int argc, char** argv)
 	}
 	elevator_action.climb_locations_level_three_[ELEVATOR_RAISE - min_climb_idx] = climb_raise_position;
 
+	std::thread publishLvlThread(std::bind(&ElevatorAction::climbLevelCallback, &elevator_action));
+
 	ros::spin();
+
+	publishLvlThread.join();
 	return 0;
 }
