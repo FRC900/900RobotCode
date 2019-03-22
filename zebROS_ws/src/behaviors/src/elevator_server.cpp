@@ -22,7 +22,7 @@ class ElevatorAction {
         actionlib::SimpleActionServer<behaviors::ElevatorAction> as_;
         std::string action_name_;
 
-		ros::Publisher level_two_publisher_; //publish whether level 2 or level 3: 1 = level 2, 0 = level 3
+		ros::Publisher level_two_publisher_; //publish whether level 2 or level 3
 
 		//Define service client to control elevator
 		ros::ServiceClient elevator_client_;
@@ -35,7 +35,6 @@ class ElevatorAction {
         double elevator_cur_setpoint_; //stores actual setpoint value to go to, not index
 		double cur_position_; //Variable used to store current elevator position
 		
-		std::atomic<bool> stopped_;
 
     public:
 		// Make these std::arrays instead
@@ -47,6 +46,8 @@ class ElevatorAction {
 		std::vector<double> climb_locations_; //vector of everything at and after min_climb_idx in enumerated elevator indices, except for max index at the end
 
 		double timeout_;
+
+		bool stopped;
 
         ElevatorAction(const std::string &name) :
             as_(nh_, name, boost::bind(&ElevatorAction::executeCB, this, _1), false),
@@ -82,11 +83,11 @@ class ElevatorAction {
 		void climbLevelCallback()
 		{
 			std_msgs::Int8 level_two_msg;
-			stopped_ = false;
+			stopped = false;
 
 			ros::Rate r(20);
 
-			while(ros::ok() && !stopped_)
+			while(ros::ok() && !stopped)
 			{
 				level_two_msg.data = (climb_locations_ == climb_locations_level_two_) ? 2 : 3; 
 				
@@ -432,6 +433,7 @@ int main(int argc, char** argv)
 
 	ros::spin();
 
+	elevator_action.stopped = true;
 	publishLvlThread.join();
 	return 0;
 }
