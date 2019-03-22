@@ -2,3 +2,4 @@ actionlib_cargo_intake_params:
     roller_power: 0.6
     holding_power: 0.1
     intake_timeout: 50 #in seconds
+    elevator_timeout: 1

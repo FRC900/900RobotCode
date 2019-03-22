@@ -23,6 +23,7 @@ double linebreak_debounce_iterations;
 double pause_time_between_pistons;
 double wait_for_server_timeout;
 double roller_power;
+double holding_power;
 double pause_before_elevator_lower; //after the outtake
 
 int linebreak_true_count = 0;
@@ -65,7 +66,7 @@ int linebreak_false_count = 0;
 
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::PlaceGoalConstPtr &goal) {
-			ROS_INFO_STREAM("%s: Running callback" << action_name_.c_str());
+			ROS_WARN_STREAM("%s: Running callback" << action_name_.c_str());
 
 			//wait for all actionlib servers we need
 			if(!ac_elevator_.waitForServer(ros::Duration(wait_for_server_timeout)))
@@ -98,8 +99,9 @@ int linebreak_false_count = 0;
 
 			//make sure cargo mech is in the up position
 			//define request
+			ROS_WARN_STREAM("Setting initial state to cargo mech in outtake server");
 			cargo_intake_controller::CargoIntakeSrv srv;
-			srv.request.power = 0;
+			srv.request.power = holding_power;
 			srv.request.intake_arm = false;
 			//send request to controller
 			if(!cargo_intake_controller_client_.call(srv))
@@ -118,7 +120,7 @@ int linebreak_false_count = 0;
 				elevator_goal.raise_intake_after_success = true;
 				ac_elevator_.sendGoal(elevator_goal);
 
-				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(outtake_timeout - (ros::Time::now().toSec() - start_time), 0.001))); //Wait for server to finish or until timeout is reached
+				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(elevator_timeout - (ros::Time::now().toSec() - start_time), 0.001))); //Wait for server to finish or until timeout is reached
 				if(finished_before_timeout) {
 					actionlib::SimpleClientGoalState state = ac_elevator_.getState();
 					if(state.toString() != "SUCCEEDED") {
@@ -135,6 +137,7 @@ int linebreak_false_count = 0;
 				}
 			}
 			//send command to launch cargo ----
+			ROS_WARN_STREAM("Cargo outtake server: launching cargo");
 			if(!preempted && !timed_out)
 			{
 				srv.request.power = roller_power;
@@ -147,6 +150,7 @@ int linebreak_false_count = 0;
 				}
 				//update everything by doing spinny stuff
                 while(!timed_out && !preempted && ros::ok()) {
+					ROS_WARN_STREAM_THROTTLE(.25, "Cargo outtake server: continuing to launch");
                     timed_out = (ros::Time::now().toSec() - start_time) > outtake_timeout;
                     if(as_.isPreemptRequested() || !ros::ok()) {
                         ROS_WARN(" %s: Preempted", action_name_.c_str());
@@ -158,34 +162,44 @@ int linebreak_false_count = 0;
 			}
 
 			//make sure outtake really happened; pause before lowering elevator
-			ros::Duration(pause_before_elevator_lower).sleep();
-
-			//move elevator down to end setpoint
-			ROS_INFO_STREAM("cargo outtake server: elevator down after placing");
-			behaviors::ElevatorGoal elevator_goal;
-			elevator_goal.setpoint_index = goal->end_setpoint_index;
-			elevator_goal.place_cargo = true;
-			ac_elevator_.sendGoal(elevator_goal);
-
-			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(outtake_timeout - (ros::Time::now().toSec() - start_time), 0.001))); //Wait for server to finish or until timeout is reached
-			if(finished_before_timeout) {
-				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
-				if(state.toString() != "SUCCEEDED") {
-					ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
+			double time_before_pause = ros::Time::now().toSec();
+			while(pause_before_elevator_lower - (ros::Time::now().toSec() - time_before_pause) > 0 && !preempted && ros::ok()) {
+				ROS_WARN_STREAM_THROTTLE(.25, "Cargo outtake server: waiting before lowering elevator");
+				if(as_.isPreemptRequested() || !ros::ok()) {
+					ROS_WARN(" %s: Preempted", action_name_.c_str());
 					preempted = true;
 				}
-				else {
-					ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
-				}
+				r.sleep();
 			}
-			else {
-				ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
-				timed_out = true;
+
+			if(!preempted) {
+				//move elevator down to end setpoint
+				ROS_WARN_STREAM("cargo outtake server: elevator down after placing");
+				behaviors::ElevatorGoal elevator_goal;
+				elevator_goal.setpoint_index = goal->end_setpoint_index;
+				elevator_goal.place_cargo = true;
+				ac_elevator_.sendGoal(elevator_goal);
+
+				bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(outtake_timeout - (ros::Time::now().toSec() - start_time), 0.001))); //Wait for server to finish or until timeout is reached
+				if(finished_before_timeout) {
+					actionlib::SimpleClientGoalState state = ac_elevator_.getState();
+					if(state.toString() != "SUCCEEDED") {
+						ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
+						//preempted = true;
+					}
+					else {
+						ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
+					}
+				}
+				else {
+					ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
+					//timed_out = true;
+				}
 			}
 
 			//set ending state of controller no matter what happened: not rolling and arm up
 
-			ROS_INFO_STREAM("%s: reseting cargo" << action_name_.c_str());
+			ROS_WARN_STREAM("%s: reseting cargo" << action_name_.c_str());
 
 			//define request to send to controller
 			srv.request.power = 0;
@@ -243,6 +257,8 @@ int main(int argc, char** argv) {
 	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 		ROS_ERROR("Could not read wait_for_server_timeout in intake_sever");
 
+	if (!n_params_intake.getParam("holding_power", holding_power))
+        ROS_ERROR("Could not read holding_power in cargo_intake_server");
 
 	if (!n_params_outtake.getParam("roller_power", roller_power))
 		ROS_ERROR("Could not read roller_power in cargo_outtake_server");
