@@ -17,7 +17,7 @@ GoalDetector::GoalDetector(const cv::Point2f &fov_size, const cv::Size &frame_si
 	_otsu_threshold(5),
 	_blue_scale(90),
 	_red_scale(80),
-	_camera_angle(0) // in tenths of a degree
+	_camera_angle(250) // in tenths of a degree
 {
 	if (gui)
 	{
