@@ -48,7 +48,6 @@ const int elevator_num_setpoints = 4;
 bool robot_orient = false;
 double offset_angle = 0;
 
-
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 
@@ -173,10 +172,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);
 
 		// Deadzone check inputs can change to give differing levels of sensitivity.
-		dead_zone_check(leftStickX, 0.2);
-		dead_zone_check(leftStickY, 0.2);
+		dead_zone_check(leftStickX, config.joystick_deadzone);
+		dead_zone_check(leftStickY, config.joystick_deadzone);
 
-		dead_zone_check(rightStickX, 0.2);
+		dead_zone_check(rightStickX, config.joystick_deadzone);
 
 		leftStickX =  pow(fabs(leftStickX), config.joystick_pow) * config.max_speed;
 		leftStickY =  pow(fabs(leftStickY), config.joystick_pow) * config.max_speed;
