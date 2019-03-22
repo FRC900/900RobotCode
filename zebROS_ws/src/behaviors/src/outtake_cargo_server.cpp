@@ -1,6 +1,3 @@
-#ifndef cargo_outtake_server
-#define cargo_outtake_server
-
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
@@ -66,7 +63,7 @@ int linebreak_false_count = 0;
 
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behaviors::PlaceGoalConstPtr &goal) {
-			ROS_WARN_STREAM("%s: Running callback" << action_name_.c_str());
+			ROS_WARN_STREAM("Running callback " << action_name_.c_str());
 
 			//wait for all actionlib servers we need
 			if(!ac_elevator_.waitForServer(ros::Duration(wait_for_server_timeout)))
@@ -158,7 +155,7 @@ int linebreak_false_count = 0;
                     }
 					r.sleep();
                 }
-				ros::spinOnce();
+				ros::spinOnce(); // TODO - maybe inside the while() loop?
 			}
 
 			//make sure outtake really happened; pause before lowering elevator
@@ -199,7 +196,7 @@ int linebreak_false_count = 0;
 
 			//set ending state of controller no matter what happened: not rolling and arm up
 
-			ROS_WARN_STREAM("%s: reseting cargo" << action_name_.c_str());
+			ROS_WARN_STREAM("Reseting cargo" << action_name_.c_str());
 
 			//define request to send to controller
 			srv.request.power = 0;
@@ -213,24 +210,24 @@ int linebreak_false_count = 0;
 			}
 
 			//log state of action and set result of action
-			behaviors::PlaceResult result_; //variable to store result of the actionlib action
-			result_.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
-			result_.success = success; //success refers to last controller call, but applies for whole action
+			behaviors::PlaceResult result; //variable to store result of the actionlib action
+			result.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
+			result.success = success; //success refers to last controller call, but applies for whole action
 
 			if(timed_out)
 			{
 				ROS_INFO("%s: Timed Out", action_name_.c_str());
-				as_.setSucceeded(result_);
+				as_.setSucceeded(result);
 			}
 			else if(preempted)
 			{
 				ROS_INFO("%s: Preempted", action_name_.c_str());
-				as_.setPreempted(result_);
+				as_.setPreempted(result);
 			}
 			else //implies succeeded
 			{
 				ROS_INFO("%s: Succeeded", action_name_.c_str());
-				as_.setSucceeded(result_);
+				as_.setSucceeded(result);
 			}
 
 			return;
@@ -250,7 +247,6 @@ int main(int argc, char** argv) {
 	ros::NodeHandle n_params_outtake(n, "actionlib_cargo_outtake_params");
 	ros::NodeHandle n_params_intake(n, "actionlib_cargo_intake_params");
 	ros::NodeHandle n_params_lift(n, "actionlib_lift_params");
-
 
 	if (!n.getParam("/actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
 		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_sever");
@@ -272,5 +268,3 @@ int main(int argc, char** argv) {
 	ros::spin();
 	return 0;
 }
-
-#endif
