@@ -47,7 +47,7 @@ class ElevatorAction {
 
 		double timeout_;
 
-		bool stopped;
+		std::atomic<bool> stopped;
 
         ElevatorAction(const std::string &name) :
             as_(nh_, name, boost::bind(&ElevatorAction::executeCB, this, _1), false),
