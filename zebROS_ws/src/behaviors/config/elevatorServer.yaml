@@ -29,11 +29,6 @@ actionlib_lift_params: #sets params for elevator_server.cpp #default values
         climb_timeout: 15.0
         climb_low_timeout: 10.0
         running_forward_timeout: 10.0   
-
     max_speed: -1.0
     timeout: 10
     elevator_position_deadzone: 0.05
-    collision_range_min: 0.03
-    collision_range_max: 0.5
-    carriage_height: 0.1
-

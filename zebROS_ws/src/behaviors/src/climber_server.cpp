@@ -191,7 +191,6 @@ class ClimbAction {
 					ROS_INFO("climber server step 0: raising elevator before climber is engaged");
 					//call the elevator actionlib server
 					//define the goal to send
-					// TODO - try moving up fast for this step?
 					behaviors::ElevatorGoal goal;
 					goal.setpoint_index = ELEVATOR_DEPLOY;
 					goal.place_cargo = 0; //doesn't actually do anything

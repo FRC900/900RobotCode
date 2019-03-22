@@ -7,7 +7,7 @@
 #include <elevator_controller/ElevatorSrv.h>
 #include "behaviors/enumerated_elevator_indices.h"
 #include "std_srvs/SetBool.h"
-#include "std_msgs/Int8.h"
+#include "std_msgs/Bool.h"
 #include <atomic>
 #include <thread>
 
@@ -22,7 +22,7 @@ class ElevatorAction {
         actionlib::SimpleActionServer<behaviors::ElevatorAction> as_;
         std::string action_name_;
 
-		ros::Publisher level_two_publisher_; //publish whether level 2 or level 3
+		ros::Publisher level_two_publisher_; //publish whether level 2 or level 3 //level two is 1, level 3 is 0
 
 		//Define service client to control elevator
 		ros::ServiceClient elevator_client_;
@@ -69,7 +69,7 @@ class ElevatorAction {
             talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);
 			
 			//Climb level publisher
-			level_two_publisher_ = nh_.advertise<std_msgs::Int8>("level_two",1);
+			level_two_publisher_ = nh_.advertise<std_msgs::Bool>("level_two",1);
 
 			hatch_locations_.resize(ELEVATOR_MAX_INDEX);
 			cargo_locations_.resize(ELEVATOR_MAX_INDEX);
@@ -82,14 +82,14 @@ class ElevatorAction {
 		
 		void climbLevelCallback()
 		{
-			std_msgs::Int8 level_two_msg;
+			std_msgs::Bool level_two_msg;
 			stopped = false;
 
 			ros::Rate r(20);
 
 			while(ros::ok() && !stopped)
 			{
-				level_two_msg.data = (climb_locations_ == climb_locations_level_two_) ? 2 : 3; 
+				level_two_msg.data = climb_locations_ == climb_locations_level_two_;
 				
 				level_two_publisher_.publish(level_two_msg);
 				r.sleep();
@@ -123,11 +123,13 @@ class ElevatorAction {
             const double start_time = ros::Time::now().toSec();
 
 			//Determine setpoint (elevator_cur_setpoint_)
-			if(goal->setpoint_index > min_climb_idx) //then it's a climb index
+			if(goal->setpoint_index >= min_climb_idx) //then it's a climb index
 			{
 				const size_t climb_setpoint_index = goal->setpoint_index - min_climb_idx;
 				if(climb_setpoint_index < climb_locations_.size())
+				{
 					elevator_cur_setpoint_ = climb_locations_[climb_setpoint_index];
+				}
 				else
 				{
 					ROS_ERROR_STREAM("index out of bounds in elevator_server");
@@ -428,6 +430,8 @@ int main(int argc, char** argv)
 		climb_raise_position = -1; //signals to server to preempt
 	}
 	elevator_action.climb_locations_level_three_[ELEVATOR_RAISE - min_climb_idx] = climb_raise_position;
+
+	elevator_action.climb_locations_ = elevator_action.climb_locations_level_three_;
 
 	std::thread publishLvlThread(std::bind(&ElevatorAction::climbLevelCallback, &elevator_action));
 
