@@ -171,7 +171,7 @@ class ElevatorAction {
 				elevator_controller::ElevatorSrv srv;
 				srv.request.position = elevator_cur_setpoint_;
 				srv.request.go_slow = false; //default
-				if(goal->setpoint_index >= min_climb_idx) //then climbing, go slow
+				if(goal->setpoint_index >= (min_climb_idx + 1)) //then climbing, go slow, except for ELEVATOR_DEPLOY
 				{
 					srv.request.go_slow = true;
 				}
