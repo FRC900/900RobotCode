@@ -263,7 +263,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	bool lookup_encoder_drive_set_P_units = !controller_nh.getParam("encoder_drive_set_P_units", units_.rotationSetP);
 	bool lookup_encoder_steering_get_units = !controller_nh.getParam("encoder_steering_get_units", units_.steeringGet);
 	bool lookup_encoder_steering_set_units = !controller_nh.getParam("encoder_steering_set_units", units_.steeringSet);
-	bool lookup_f_static = !controller_nh.getParam("f_static", f_static_); //TODO: Maybe use this?
+	//bool lookup_f_static = !controller_nh.getParam("f_static", f_static_); //TODO: Maybe use this?
 	bool lookup_wheel1x = !controller_nh.getParam("wheel_coords1x", wheel_coords_[0][0]);
 	bool lookup_wheel2x = !controller_nh.getParam("wheel_coords2x", wheel_coords_[1][0]);
 	bool lookup_wheel3x = !controller_nh.getParam("wheel_coords3x", wheel_coords_[2][0]);
@@ -288,6 +288,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 
 	cmd_vel_mode_.store(true, std::memory_order_relaxed);
 	dont_set_angle_mode_.store(false, std::memory_order_relaxed);
+	center_of_rotation_.writeFromNonRT(Eigen::Vector2d{0,0});
 	/*
 	if (!setOdomParamsFromUrdf(root_nh,
 	                          speed_names[0],
@@ -809,7 +810,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		array<double, WHEELCOUNT> curPos;
 		for (int i = 0; i < WHEELCOUNT; i++)
 			curPos[i] = steering_joints_[i].getPosition();
-		speeds_angles = swerveC_->motorOutputs(curr_cmd.lin, curr_cmd.ang, M_PI / 2, curPos, true);
+		speeds_angles = swerveC_->motorOutputs(curr_cmd.lin, curr_cmd.ang, M_PI / 2, curPos, true, *(center_of_rotation_.readFromRT()));
 
 		// Set wheels velocities:
 		for (size_t i = 0; !dont_set_angle_mode && (i < wheel_joints_size_); ++i)
@@ -1102,7 +1103,7 @@ bool TalonSwerveDriveController::changeCenterOfRotationService(talon_swerve_driv
 		Eigen::Vector2d vector;
 		vector[0] = req.x;
 		vector[1] = req.y;
-		swerveC_->setCenterOfRotation(0, vector);
+		center_of_rotation_.writeFromNonRT(vector);
 		return true;
 	}
 	else

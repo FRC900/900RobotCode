@@ -210,7 +210,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		/* Get conversion factor for position, velocity, and closed-loop stuff */
 
-		double getConversionFactor(int encoder_cycle_per_revolution, hardware_interface::FeedbackDevice encoder_feedback, hardware_interface::TalonMode talon_mode);
+		double getConversionFactor(int encoder_ticks_per_rotation, hardware_interface::FeedbackDevice encoder_feedback, hardware_interface::TalonMode talon_mode);
 
 		bool convertControlMode(const hardware_interface::TalonMode input_mode,
 								ctre::phoenix::motorcontrol::ControlMode &output_mode);

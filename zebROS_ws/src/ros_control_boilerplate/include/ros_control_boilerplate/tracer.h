@@ -26,7 +26,7 @@ class TracerEntry
 class Tracer
 {
 	public:
-		Tracer(const std::string name)
+		Tracer(const std::string &name)
 			:name_(name)
 		{
 		}

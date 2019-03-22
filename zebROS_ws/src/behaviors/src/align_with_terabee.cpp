@@ -125,7 +125,7 @@ int main(int argc, char ** argv)
         }
 		if(fabs(min_dist_cargo) < default_min_dist_) {
             std_msgs::Float64 distance_state_msg;
-            distance_state_msg.data = min_dist_cargo - distance_target;
+            distance_state_msg.data = distance_target - min_dist_cargo;
             cargo_distance_state_pub.publish(distance_state_msg);
             cargo_distance_setpoint_pub.publish(distance_setpoint_msg);
 		}

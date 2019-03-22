@@ -65,7 +65,7 @@ array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
 	return speedsAndAngles;
 }
 
-array<double, WHEELCOUNT> swerve::parkingAngles(const array<double, WHEELCOUNT> &positionsNew)
+array<double, WHEELCOUNT> swerve::parkingAngles(const array<double, WHEELCOUNT> &positionsNew) const
 {
 	array<double, WHEELCOUNT> retAngles;
 	for (int i = 0; i < WHEELCOUNT; i++)

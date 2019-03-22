@@ -118,7 +118,6 @@ class TalonSwerveDriveController
 		void stopping(const ros::Time & /*time*/);
 
 	private:
-		int set_check_;
 		int num_profile_slots_;
 
 		void compOdometry(const ros::Time &time, const double inv_delta_t);
@@ -194,6 +193,7 @@ class TalonSwerveDriveController
 
 		ros::ServiceServer motion_profile_serv_;
 		ros::ServiceServer change_center_of_rotation_serv_;
+		realtime_tools::RealtimeBuffer<Eigen::Vector2d> center_of_rotation_;
 		ros::ServiceServer brake_serv_;
 		ros::ServiceServer wheel_pos_serv_;
 		ros::ServiceServer dont_set_angle_mode_serv_;

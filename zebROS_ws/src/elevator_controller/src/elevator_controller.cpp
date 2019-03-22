@@ -34,18 +34,19 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		ROS_ERROR("Could not find elevator_zeroing_timeout");
 		return false;
 	}
-	
+
 	if (!controller_nh.getParam("stage_2_height", config_.stage_2_height))
 	{
 		ROS_ERROR("Could not find stage_2_height");
 		return false;
 	}
-	
+
+	/*
 	if (!controller_nh.getParam("motion_s_curve_strength",config_.motion_s_curve_strength))
 	{
 		ROS_ERROR("Could not find motion_s_curve_strength");
 		return false;
-	}
+	}*/
 	//get config values for the elevator talon
 	XmlRpc::XmlRpcValue elevator_params;
 	if (!controller_nh.getParam("elevator_joint", elevator_params))
@@ -71,6 +72,7 @@ void ElevatorController::starting(const ros::Time &/*time*/) {
 	zeroed_ = false;
 	last_time_down_ = ros::Time::now();
 	last_mode_ = hardware_interface::TalonMode_Disabled;
+	last_position_ = -1; // give nonsense position to force update on first time through update()
 	position_command_.writeFromNonRT(ElevatorCommand());
 }
 
@@ -182,7 +184,8 @@ bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request  &
 		{
 			ROS_INFO("Elevator controller: now in climbing mode");
 		}
-		else { //reset to default -- although, this should never be called after endgame
+		else
+		{ //reset to default -- although, this should never be called after endgame
 			ROS_INFO("Elevator controller: normal peak output");
 		}
 

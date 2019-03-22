@@ -22,11 +22,11 @@ hardware_interface:
        # to the Rio
        - {name: cargo_intake_arm_joint, type: solenoid, pcm: 0, id: 0, local_hardware: true, local_update: false}
        - {name: climber_ski_joint, type: solenoid, pcm: 0, id: 3, local_hardware: true, local_update: false}
-       - {name: clamp_joint, type: solenoid, pcm: 0, id: 2, local_hardware: true, local_update: false}
 
        - {name: climber_feet_retract, type: double_solenoid, pcm: 0, forward_id: 4, reverse_id: 5, local_hardware: true, local_update: false}
        - {name: climber_release_endgame, type: double_solenoid, pcm: 0, forward_id: 6, reverse_id: 7, local_hardware: true, local_update: false}
 
+       - {name: panel_claw, type: solenoid, pcm: 0, id: 2, local_hardware: true, local_update: false}
        - {name: panel_push_extend, type: solenoid, pcm: 0, id: 1, local_hardware: true, local_update: false}
 
        - {name: panel_intake_linebreak_1, type: digital_input, dio_channel: 0, invert: true, local: true}
@@ -35,6 +35,9 @@ hardware_interface:
        - {name: panel_intake_linebreak_4, type: digital_input, dio_channel: 3, invert: true, local: true}
 
        - {name: cargo_intake_linebreak_1, type: digital_input, dio_channel: 4, invert: true, local: true}
+
+       - {name: climber_linebreak_1, type: digital_input, dio_channel: 5, invert: true, local: true}
+       - {name: climber_linebreak_2, type: digital_input, dio_channel: 6, invert: true, local: true}
          
        - {name: intake_line_break, type: digital_input, dio_channel: 0, invert: true, local: true}
        - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}

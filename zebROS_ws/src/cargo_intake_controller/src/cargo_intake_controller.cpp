@@ -53,10 +53,9 @@ void CargoIntakeController::update(const ros::Time &/*time*/, const ros::Duratio
 	else {
 		intake_arm_cmd_double = 0;
 	}
-	//ROS_WARN_STREAM("cargo intake arm command: " << instake_arm_cmd_double);
+	//ROS_WARN_STREAM("cargo intake arm command: " << intake_arm_cmd_double);
 
 	//read spin command
-	//ROS_INFO_STREAM("cargo spin command = " << spin_command << "; intake_arm = " << intake_arm_command);
 	cargo_intake_joint_.setCommand(cargo_intake_cmd.spin_cmd_); // set the command to the spinny part of the intake
 	cargo_intake_arm_joint_.setCommand(intake_arm_cmd_double); // set the in/out command to the up/down part of the intake
 }

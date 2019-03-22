@@ -41,16 +41,16 @@ do
 		if [ $matchNumber = 0 ]
 		then
 			echo Match number is zero -- renaming
-			cp $var $HOME/palmetto_bags/palmetto_bags_filtered/practice$(basename $var)
+			cp $var ./bagfiles/practice$(basename $var)
 			continue
 		fi
 
 			bag_name=Match${matchNumber}
 			echo Renaming bag file to ${bag_name}.bag
-			cp $var $HOME/palmetto_bags/palmetto_bags_filtered/${bag_name}.bag
+			cp $var ./bagfiles/${bag_name}.bag
 	else
 		echo This does not have match data -- renaming to practice${var} 
-		cp $var $HOME/palmetto_bags/palmetto_bags_filtered/practice$(basename $var)
+		cp $var ./bagfiles/practice$(basename $var)
 	fi
 	#rm temp_file.txt
 

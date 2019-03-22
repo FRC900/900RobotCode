@@ -60,16 +60,24 @@ class IntakeHatchPanelAction
 			ros::Rate r(10);
 
 			//define variables that will be re-used for each call to a controller
-			double start_time = ros::Time::now().toSec();
 
 			//define variables that will be set true if the actionlib action is to be ended
 			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
 			//if both of these are false, we assume the action succeeded
 			bool preempted = false;
-			bool timed_out = false;
+			bool timed_out = false; // TODO : never set?
 
 			//define service
 			panel_intake_controller::PanelIntakeSrv srv;
+			srv.request.claw_release = true;
+			srv.request.push_extend = false;
+			//send request to controller
+			if(!panel_controller_client_.call(srv))
+			{
+				ROS_ERROR("Panel controller call failed in panel intake server");
+				preempted = true;
+			}
+			ros::spinOnce(); //update everything
 
 			//move elevator to intake location
 			behaviors::ElevatorGoal elev_goal;
@@ -78,8 +86,8 @@ class IntakeHatchPanelAction
 			elev_goal.raise_intake_after_success = true;
 			ac_elevator_.sendGoal(elev_goal);
 
-			ROS_INFO_STREAM("elevator timeout = " << elevator_timeout);
-			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(elevator_timeout, 0.0)));
+			const double start_time = ros::Time::now().toSec();
+			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(elevator_timeout - (ros::Time::now().toSec() - start_time)));
 			if(finished_before_timeout) {
 				actionlib::SimpleClientGoalState state = ac_elevator_.getState();
 				if(state.toString() != "SUCCEEDED") {
@@ -99,7 +107,6 @@ class IntakeHatchPanelAction
 			{
 				preempted = true;
 			}
-
 			//send commands to panel_intake_controller to grab the panel ---------------------------------------
 			if(!preempted && ros::ok())
 			{
@@ -150,18 +157,20 @@ class IntakeHatchPanelAction
 			{
 				ROS_WARN("%s: Timed Out", action_name_.c_str());
 				result.success = false;
+				as_.setSucceeded(result);
 			}
 			else if(preempted)
 			{
 				ROS_WARN("%s: Preempted", action_name_.c_str());
 				result.success = false;
+				as_.setPreempted(result);
 			}
 			else //implies succeeded
 			{
 				ROS_WARN("%s: Succeeded", action_name_.c_str());
 				result.success = true;
+				as_.setSucceeded(result);
 			}
-			as_.setSucceeded(result);
 			return;
 		}
 		/*

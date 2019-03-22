@@ -130,6 +130,7 @@ class AlignAction {
 
 			orient_aligned_ = false;
 			distance_aligned_ = false;
+			cargo_aligned_ = false;
 			hatch_panel_distance_aligned_ = false;
 			cargo_distance_aligned_ = false;
 			y_aligned_ = false;
@@ -153,6 +154,7 @@ class AlignAction {
 				ros::spinOnce();
 				r.sleep();
 
+				/*
                 if((orient_aligned_ || orient_timed_out) && !elevator_moved) {
                     bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(elevator_timeout - (ros::Time::now().toSec() - start_time)));
                     if(finished_before_timeout) {
@@ -170,7 +172,7 @@ class AlignAction {
                         ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
                         timed_out = true;
                     }
-                }
+                }*/
 
 				//Define enable messages for pid nodes
 				std_msgs::Bool orient_msg;
