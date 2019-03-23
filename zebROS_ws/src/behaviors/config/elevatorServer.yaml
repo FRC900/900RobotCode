@@ -1,13 +1,13 @@
 actionlib_lift_params: #sets params for elevator_server.cpp #default values
     cargo:
-        intake_position: 0.1
+        intake_position: 0.07
         cargo_ship_position: 0.03
         rocket1_position: 0.03
         rocket2_position: 0.8
         rocket3_position: 1.5
     hatch:
         intake_position: 0.0
-        intake_end_position: 0.1
+        intake_end_position: 0.0
         rocket1_position: 0.0
         rocket2_position: 0.77
         rocket3_position: 1.5

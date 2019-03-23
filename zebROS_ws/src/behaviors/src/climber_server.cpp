@@ -14,6 +14,7 @@
 #include "sensor_msgs/Imu.h"
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include "cargo_intake_controller/CargoIntakeSrv.h"
 
 //define global variables that will be defined based on config values
 
@@ -57,6 +58,8 @@ class ClimbAction {
 		double navX_roll_;
 		double navX_pitch_;
 
+		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
+
 	public:
 		//make the executeCB function run every time the actionlib server is called
 		ClimbAction(const std::string &name) :
@@ -78,6 +81,8 @@ class ClimbAction {
 			climber_engage_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_release_endgame", false, service_connection_header);
 
 			navX_sub_ = nh_.subscribe("/frcrobot_rio/navx_mxp", 1, &ClimbAction::navXCallback,this);
+
+			cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 
 		//initialize the publisher used to send messages to the drive base
 		cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
@@ -183,6 +188,16 @@ class ClimbAction {
 					//only spin if we're not going to error out
 					// TODO - Why spin here?
 					ros::spinOnce();
+				}
+
+				cargo_intake_controller::CargoIntakeSrv cargo_srv;
+				cargo_srv.request.power = 0;
+				cargo_srv.request.intake_arm = false;
+				//send request to controller
+				if(!cargo_intake_controller_client_.call(cargo_srv))
+				{
+					ROS_ERROR("Cargo outtake server: controller call failed to lift arm up");
+					preempted = true;
 				}
 
 				// raise elevator to right height so we can engage the climber ------------------------------------------------
@@ -339,6 +354,16 @@ class ClimbAction {
 				{
 					// TODO - is this info correct?
 					ROS_INFO("climber server step 0: raising elevator to make robot fall a bit");
+
+					cargo_intake_controller::CargoIntakeSrv srv;
+					srv.request.power = 0;
+					srv.request.intake_arm = true;
+					//send request to controller
+					if(!cargo_intake_controller_client_.call(srv))
+					{
+						ROS_ERROR("Cargo outtake server: controller call failed to lift arm up");
+						preempted = true;
+					}
 
 					//call the elevator actionlib server
 					//define the goal to send
