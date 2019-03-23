@@ -2266,7 +2266,24 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			// Update talon state with requested setpoints for
 			// debugging. Don't actually write them to the physical
 			// Talons until the robot is re-enabled, though.
-			ts.setSetpoint(tc.get());
+			double command = tc.get();
+			const hardware_interface::TalonMode in_mode = tc.getMode();
+			switch (in_mode)
+			{
+				case hardware_interface::TalonMode_Velocity:
+					command /= radians_per_second_scale;
+					break;
+				case hardware_interface::TalonMode_Position:
+					command /= radians_scale;
+					break;
+				case hardware_interface::TalonMode_MotionMagic:
+					command /= radians_scale;
+					break;
+				default:
+					break;
+			}
+
+			ts.setSetpoint(command);
 			ts.setDemand1Type(tc.getDemand1Type());
 			ts.setDemand1Value(tc.getDemand1Value());
 			if (last_robot_enabled)
