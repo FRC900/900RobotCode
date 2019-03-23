@@ -2229,6 +2229,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				if (convertControlMode(in_mode, out_mode) &&
 					convertDemand1Type(demand1_type_internal, demand1_type_phoenix))
 				{
+					ts.setSetpoint(command); // set the state before converting it to native units
 					switch (out_mode)
 					{
 						case ctre::phoenix::motorcontrol::ControlMode::Velocity:
@@ -2253,7 +2254,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					ts.setNeutralOutput(false); // maybe make this a part of setSetpoint?
 
 					ts.setTalonMode(in_mode);
-					ts.setSetpoint(command);
 					ts.setDemand1Type(demand1_type_internal);
 					ts.setDemand1Value(demand1_value);
 
@@ -2266,24 +2266,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			// Update talon state with requested setpoints for
 			// debugging. Don't actually write them to the physical
 			// Talons until the robot is re-enabled, though.
-			double command = tc.get();
-			const hardware_interface::TalonMode in_mode = tc.getMode();
-			switch (in_mode)
-			{
-				case hardware_interface::TalonMode_Velocity:
-					command /= radians_per_second_scale;
-					break;
-				case hardware_interface::TalonMode_Position:
-					command /= radians_scale;
-					break;
-				case hardware_interface::TalonMode_MotionMagic:
-					command /= radians_scale;
-					break;
-				default:
-					break;
-			}
-
-			ts.setSetpoint(command);
+			ts.setSetpoint(tc.get());
 			ts.setDemand1Type(tc.getDemand1Type());
 			ts.setDemand1Value(tc.getDemand1Value());
 			if (last_robot_enabled)
