@@ -4,15 +4,12 @@
 #include <panel_intake_controller/PanelIntakeSrv.h>
 #include <behaviors/PlaceAction.h>
 #include <behaviors/ElevatorAction.h>
-#include <behaviors/ElevatorAction.h>
 #include <thread>
 #include <geometry_msgs/Twist.h>
 #include <atomic>
-#include <std_srvs/Empty.h>
 
 //define global variables that will be defined based on config values
 double elevator_timeout;
-double outtake_timeout;
 double wait_for_server_timeout;
 double pause_time_after_release;
 double pause_time_after_extend;
@@ -24,12 +21,10 @@ class OuttakeHatchPanelAction
 		actionlib::SimpleActionServer<behaviors::PlaceAction> as_;
 		std::string action_name_;
 
-		std::atomic<bool> continue_outtake;
 
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
 		ros::ServiceClient panel_controller_client_;
-		ros::ServiceServer continue_outtake_server_;
 		ros::Publisher cmd_vel_publisher_;
 
 		ros::Subscriber GoalDetectSub_;
@@ -56,20 +51,12 @@ class OuttakeHatchPanelAction
 
 		//initialize the client being used to call the controller
 		panel_controller_client_ = nh_.serviceClient<panel_intake_controller::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command", false, service_connection_header);
-		bool continueOuttakeCB(std_srvs::Empty::Request &req, std_srvs::Empty::Response &response);
-		continue_outtake_server_ = nh_.advertiseService("continue_outtake_panel", &OuttakeHatchPanelAction::continueOuttakeCB, this);
-		continue_outtake = false;
 
 		cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 
 	}
 
 		~OuttakeHatchPanelAction(void) {}
-
-		bool continueOuttakeCB(std_srvs::Empty::Request &req, std_srvs::Empty::Response &response) {
-			continue_outtake = true;
-			return true;
-		}
 
 		void cmdVelCallback()
 		{
@@ -98,7 +85,6 @@ class OuttakeHatchPanelAction
 			ROS_WARN("hatch panel outtake server running");
 
 			cmd_vel_forward_speed_ = 0.0;
-			continue_outtake = false; //Set continue to false to wait for B to be released
 
 			//make sure the elevator server exists
 			bool elevator_server_found = ac_elevator_.waitForServer(ros::Duration(wait_for_server_timeout));
@@ -151,15 +137,6 @@ class OuttakeHatchPanelAction
 				preempted = true;
 			}
 
-			//Wait for B button to be released before continuing action
-			while(!continue_outtake && !timed_out && !preempted && ros::ok()) {
-				timed_out = ros::Time::now().toSec() - start_time > outtake_timeout;
-				if(as_.isPreemptRequested()){
-					preempted = true;
-				}
-				ros::spinOnce();
-				r.sleep();
-			}
 			//send commands to panel_intake_controller to grab the panel ---------------------------------------
 			if(!preempted && ros::ok())
 			{
@@ -293,8 +270,6 @@ int main(int argc, char** argv)
 		ROS_ERROR("Could not read wait_for_server_timeout in panel_outtake_sever");
 	if (!n_panel_params.getParam("elevator_timeout", elevator_timeout))
 		ROS_ERROR("Could not read elevator_timeout in panel_outtake_sever");
-	if (!n_panel_params.getParam("outtake_timeout", outtake_timeout))
-		ROS_ERROR("Could not read outtake_timeout in panel_outtake_sever");
 	if (!n_panel_params.getParam("pause_time_after_release", pause_time_after_release))
 		ROS_ERROR("Could not read pause_time_after_release in panel_outtake_sever");
 	if (!n_panel_params.getParam("pause_time_after_extend", pause_time_after_extend))
