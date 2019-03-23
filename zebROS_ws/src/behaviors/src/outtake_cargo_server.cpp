@@ -135,7 +135,7 @@ int linebreak_false_count = 0;
 			}
 			if(goal->setpoint_index == CARGO_SHIP && !preempted && !timed_out) {
 				ROS_WARN("Moving arm joint down before launching for cargo ship");
-				srv.request.power = 0;
+				srv.request.power = holding_power;
 				srv.request.intake_arm = true;
 				ros::Duration(pause_time_between_pistons).sleep();
 			}
