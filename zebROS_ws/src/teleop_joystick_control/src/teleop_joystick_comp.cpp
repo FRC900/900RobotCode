@@ -289,28 +289,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			align_ac->sendGoal(goal);
 			*/
 		}
-			/*
-		ROS_INFO_STREAM("Joystick1: buttonBPress - Cargo Outtake");
-		preemptActionlibServers();
-		behaviors::PlaceGoal goal;
-		goal.setpoint_index = CARGO_SHIP;
-		outtake_cargo_ac->sendGoal(goal);
-		}
-		if(joystick_states_array[0].buttonBButton)
-		{
-		ROS_INFO_THROTTLE(1, "buttonBButton");
-		std_srvs::SetBool msg;
-		msg.request.data = true;
-		run_align.call(msg);
-		}
-		if(joystick_states_array[0].buttonBRelease)
-		{
-		ROS_INFO_STREAM("Joystick1: buttonBRelease");
-		std_srvs::SetBool msg;
-		msg.request.data = false;
-		run_align.call(msg);
-		}
-		*/
 
 		//Joystick1: buttonX
 		if(joystick_states_array[0].buttonXPress)
@@ -386,7 +364,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
             outtake_cargo_ac->sendGoal(goal);
             elevator_cur_setpoint_idx = 0;
             ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
-            /*
+            /* NOOT NOOT TOGGLE
 			if (panel_push_extend)
 			{
 				ROS_INFO_STREAM("Toggling to clamped and not extended");
@@ -409,7 +387,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		if(joystick_states_array[0].bumperLeftButton)
 		{
-			ROS_INFO_THROTTLE(1, "bumperLeftButton");
 		}
 		if(joystick_states_array[0].bumperLeftRelease)
 		{
@@ -446,7 +423,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		if(joystick_states_array[0].bumperRightButton)
 		{
-			ROS_INFO_THROTTLE(1, "bumperRightButton");
 		}
 		if(joystick_states_array[0].bumperRightRelease)
 		{
@@ -458,11 +434,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		if(joystick_states_array[0].leftTrigger >= 0.5)
 		{
-			ROS_INFO_STREAM("Joystick1: LeftTrigger");
 		}
 		if(joystick_states_array[0].rightTrigger >= 0.5)
 		{
-			ROS_INFO_STREAM("Joystick1: rightTrigger");
 		}
 		//Joystick1: directionLeft
 		if(joystick_states_array[0].directionLeftPress)
