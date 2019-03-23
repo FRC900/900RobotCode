@@ -3,7 +3,7 @@ elevator_controller:
 
     elevator_joint: [ 'elevator_master', 'elevator_follower1', 'elevator_follower2', 'elevator_follower3' ]
 
-    arb_feed_forward_up: 0.04
+    arb_feed_forward_up: 0.05
     arb_feed_forward_down: -0.185
 
     # How quickly the elevator moves down when zeroing itself
