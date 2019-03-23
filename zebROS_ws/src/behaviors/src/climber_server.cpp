@@ -225,7 +225,7 @@ class ClimbAction {
 				} //end of raise elevator to right height before engaging
 
 				//engage climber with elevator controller -----------------------------------------------------------------
-				if(!preempted && !timed_out && ros::ok())
+				if(!preempted && ros::ok())
 				{
 					ROS_INFO("climber server step 0: engaging the climber with the elvator");
 
@@ -240,11 +240,11 @@ class ClimbAction {
 					}
 					// TODO - Why spin here?
 					ros::spinOnce();
-				}
 
-				// delay to make sure that we engaged properly
-				// TODO - if we need to spin, spin in a loop here for 1 second here?
-				ros::Duration(1).sleep();
+                                        // delay to make sure that we engaged properly
+                                        // TODO - if we need to spin, spin in a loop here for 1 second here?
+                                        ros::Duration(1).sleep();
+				}
 
 				cmd_vel_forward_speed_ = drive_forward_speed;
 
@@ -287,21 +287,13 @@ class ClimbAction {
 				//handle preempting/timed out
 				if(preempted || timed_out)
 				{
-					//send robot back to ground - go to deploy setpoint
-					ROS_INFO("Climber server step 0: running preempt/timeout handling - moving robot to ground");
+					ROS_WARN_STREAM("Climber server timed out or was preempted");
+					ae_.cancelAllGoals();
+					srv.request.data = false;
 
-					//call the elevator actionlib server
-					//define the goal to send
-					behaviors::ElevatorGoal goal;
-					goal.setpoint_index = ELEVATOR_DEPLOY;
-					goal.place_cargo = 0; //doesn't actually do anything 
-					goal.raise_intake_after_success = true;
-					//send the goal
-					ae_.sendGoal(goal);
-					const bool finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_timeout));
-					if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
+					if(!climber_engage_client_.call(srv))
 					{
-						ROS_ERROR("climber server step 0: preempt/timeout handling elevator move timed out");
+						ROS_ERROR("climber server step 0: Climber PANIC failed in climber controller");
 					}
 				}
 

@@ -506,7 +506,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			//Abort the climb and lower back down
 			ROS_WARN("Joystick1: Preempting Climber Server");
-			climber_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+			climber_ac->cancelAllGoals();
 			climber_cur_step = 0;
 		}
 		if(joystick_states_array[0].directionDownButton)

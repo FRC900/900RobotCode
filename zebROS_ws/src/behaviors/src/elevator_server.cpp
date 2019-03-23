@@ -203,6 +203,7 @@ class ElevatorAction {
 			//if we preempt or time out, stop moving the elevator
 			if(preempted || timed_out)
 			{
+				ROS_WARN_STREAM("Elevator server timed out or was preempted");
 				elevator_controller::ElevatorSrv srv;
 				srv.request.position = cur_position_;
 				srv.request.go_slow = false; //default
