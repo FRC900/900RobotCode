@@ -137,6 +137,11 @@ int linebreak_false_count = 0;
 				ROS_WARN("Moving arm joint down before launching for cargo ship");
 				srv.request.power = holding_power;
 				srv.request.intake_arm = true;
+				if(!cargo_intake_controller_client_.call(srv))
+				{
+					ROS_ERROR("Cargo outtake server: could not move arm before launching");
+					preempted = true;
+				}
 				ros::Duration(pause_time_between_pistons).sleep();
 			}
 
