@@ -104,14 +104,15 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 			// We could have arb ff for both up and down, but seems
 			// easier (and good enough) to tune PID for down motion
 			// and add an arb FF correction for up
-			if(elevator_joint_.getPosition() >= config_.stage_2_height && last_position_ <= config_.stage_2_height) {
-				elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-				elevator_joint_.setDemand1Value(config_.arb_feed_forward_up);
-			}
-			else if (elevator_joint_.getPosition() <= config_.stage_2_height && last_position_ >= config_.stage_2_height) {
-				elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
-				elevator_joint_.setDemand1Value(0);
-			}
+
+			//if(elevator_joint_.getPosition() >= config_.stage_2_height && last_position_ <= config_.stage_2_height) {
+			elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+			elevator_joint_.setDemand1Value(config_.arb_feed_forward_up);
+			//}
+			//else if (elevator_joint_.getPosition() <= config_.stage_2_height && last_position_ >= config_.stage_2_height) {
+			//	elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
+			//	elevator_joint_.setDemand1Value(0);
+			//}
 
 			//for now, up and down PID is the same, so slot 1 is used for climbing
 			/*

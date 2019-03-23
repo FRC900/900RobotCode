@@ -600,12 +600,12 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			encoder_feedback = state->getEncoderFeedback();
 			encoder_ticks_per_rotation = state->getEncoderTicksPerRotation();
 			conversion_factor = state->getConversionFactor();
-			status_1_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_1_General));
-			status_2_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_2_Feedback0));
-			status_4_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_4_AinTempVbat));
-			status_9_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_9_MotProfBuffer));
-			status_10_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_10_MotionMagic));
-			status_13_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_13_Base_PIDF0));
+			//status_1_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_1_General));
+			//status_2_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_2_Feedback0));
+			//status_4_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_4_AinTempVbat));
+			//status_9_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_9_MotProfBuffer));
+			//status_10_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_10_MotionMagic));
+			//status_13_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_13_Base_PIDF0));
 			sensor_collection_period = ros::Duration(.10); // TODO : fix me
 		}
 
@@ -2229,6 +2229,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				if (convertControlMode(in_mode, out_mode) &&
 					convertDemand1Type(demand1_type_internal, demand1_type_phoenix))
 				{
+					ts.setSetpoint(command); // set the state before converting it to native units
 					switch (out_mode)
 					{
 						case ctre::phoenix::motorcontrol::ControlMode::Velocity:
@@ -2253,7 +2254,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					ts.setNeutralOutput(false); // maybe make this a part of setSetpoint?
 
 					ts.setTalonMode(in_mode);
-					ts.setSetpoint(command);
 					ts.setDemand1Type(demand1_type_internal);
 					ts.setDemand1Value(demand1_value);
 

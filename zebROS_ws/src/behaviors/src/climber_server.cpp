@@ -79,11 +79,11 @@ class ClimbAction {
 
 			navX_sub_ = nh_.subscribe("/frcrobot_rio/navx_mxp", 1, &ClimbAction::navXCallback,this);
 
-			//initialize the publisher used to send messages to the drive base
-			cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
-			//start subscribers subscribing
-			//joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
-		}
+		//initialize the publisher used to send messages to the drive base
+		cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+		//start subscribers subscribing
+		//joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
+	}
 
 		~ClimbAction(void)
 		{
@@ -191,7 +191,6 @@ class ClimbAction {
 					ROS_INFO("climber server step 0: raising elevator before climber is engaged");
 					//call the elevator actionlib server
 					//define the goal to send
-					// TODO - try moving up fast for this step?
 					behaviors::ElevatorGoal goal;
 					goal.setpoint_index = ELEVATOR_DEPLOY;
 					goal.place_cargo = 0; //doesn't actually do anything
