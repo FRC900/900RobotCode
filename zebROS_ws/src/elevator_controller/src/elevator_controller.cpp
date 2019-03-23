@@ -41,6 +41,30 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 		return false;
 	}
 
+	if (!controller_nh.getParam("motion_magic_velocity_fast", config_.motion_magic_velocity_fast))
+	{
+		ROS_ERROR("Could not find motion_magic_velocity_fast");
+		return false;
+	}
+
+	if (!controller_nh.getParam("motion_magic_velocity_slow", config_.motion_magic_velocity_slow))
+	{
+		ROS_ERROR("Could not find motion_magic_velocity_slow");
+		return false;
+	}
+
+	if (!controller_nh.getParam("motion_magic_acceleration_fast", config_.motion_magic_acceleration_fast))
+	{
+		ROS_ERROR("Could not find motion_magic_acceleration_fast");
+		return false;
+	}
+
+	if (!controller_nh.getParam("motion_magic_acceleration_slow", config_.motion_magic_acceleration_slow))
+	{
+		ROS_ERROR("Could not find motion_magic_acceleration_slow");
+		return false;
+	}
+
 	/*
 	if (!controller_nh.getParam("motion_s_curve_strength",config_.motion_s_curve_strength))
 	{
@@ -88,6 +112,7 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 
 	if (zeroed_) // run normally, seeking to various positions
 	{
+		elevator_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
 		if (elevator_joint_.getMode() == hardware_interface::TalonMode_Disabled && last_mode_ != hardware_interface::TalonMode_Disabled)
 		{
 			position_command_.writeFromNonRT(ElevatorCommand (elevator_joint_.getPosition(),false));
@@ -98,7 +123,8 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		//if we're not climbing, add an arbitrary feed forward to hold the elevator up
 		if(!setpoint.GetGoSlow())
 		{
-			elevator_joint_.setMode(hardware_interface::TalonMode_Position);
+			elevator_joint_.setMotionAcceleration(config_.motion_magic_acceleration_fast);
+			elevator_joint_.setMotionCruiseVelocity(config_.motion_magic_velocity_fast);
 			elevator_joint_.setPIDFSlot(0);
 			// Add arbitrary feed forward for upwards motion
 			// We could have arb ff for both up and down, but seems
@@ -129,7 +155,8 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		}
 		else //climbing
 		{
-			elevator_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
+			elevator_joint_.setMotionAcceleration(config_.motion_magic_acceleration_slow);
+			elevator_joint_.setMotionCruiseVelocity(config_.motion_magic_velocity_slow);
 			elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
 			elevator_joint_.setDemand1Value(config_.arb_feed_forward_down);
 			//elevator_joint_.setPeakOutputForward(0.0);
