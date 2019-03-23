@@ -75,7 +75,7 @@ cargo_intake_controller:
     cargo_intake:
         joint: cargo_intake_joint
         type: talon_controllers/TalonPercentOutputController
-        invert_output: True 
+        invert_output: False 
     
     #note: the intake arm (solenoid joint) is currently being grabbed directly from the hardware_interface above
 cargo_outtake_controller:

@@ -4,6 +4,9 @@
 #include <panel_intake_controller/PanelIntakeSrv.h>
 #include <behaviors/PlaceAction.h>
 #include <behaviors/ElevatorAction.h>
+#include <thread>
+#include <geometry_msgs/Twist.h>
+#include <atomic>
 
 //define global variables that will be defined based on config values
 double elevator_timeout;
@@ -22,8 +25,12 @@ class OuttakeHatchPanelAction
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
 		ros::ServiceClient panel_controller_client_;
+		ros::Publisher cmd_vel_publisher_;
 
 		ros::Subscriber GoalDetectSub_;
+
+		std::atomic<double> cmd_vel_forward_speed_;
+		std::atomic<bool> stopped_;
 
 	public:
 		OuttakeHatchPanelAction(const std::string &name) :
@@ -45,13 +52,39 @@ class OuttakeHatchPanelAction
 		//initialize the client being used to call the controller
 		panel_controller_client_ = nh_.serviceClient<panel_intake_controller::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command", false, service_connection_header);
 
+		cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+
 	}
 
 		~OuttakeHatchPanelAction(void) {}
 
+		void cmdVelCallback()
+		{
+			ROS_INFO_STREAM("the callback is being called");
+			geometry_msgs::Twist cmd_vel_msg;
+			stopped_ = false;
+
+			ros::Rate r(20);
+
+			while(ros::ok() && !stopped_)
+			{
+				cmd_vel_msg.linear.x = 0.0;
+				cmd_vel_msg.linear.y = cmd_vel_forward_speed_;
+				cmd_vel_msg.linear.z = 0.0;
+				cmd_vel_msg.angular.x = 0.0;
+				cmd_vel_msg.angular.y = 0.0;
+				cmd_vel_msg.angular.z = 0.0;
+
+				cmd_vel_publisher_.publish(cmd_vel_msg);
+				r.sleep();
+			}
+		}
+
 		void executeCB(const behaviors::PlaceGoalConstPtr &goal)
 		{
 			ROS_WARN("hatch panel outtake server running");
+
+			cmd_vel_forward_speed_ = 0.0;
 
 			//make sure the elevator server exists
 			bool elevator_server_found = ac_elevator_.waitForServer(ros::Duration(wait_for_server_timeout));
@@ -66,6 +99,7 @@ class OuttakeHatchPanelAction
 			ros::Rate r(10);
 			//define variables that will be re-used for each call to a controller
 			double start_time = ros::Time::now().toSec();
+			std::thread cmdVelThread(std::bind(&OuttakeHatchPanelAction::cmdVelCallback, this));
 
 			//define variables that will be set true if the actionlib action is to be ended
 			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
@@ -79,6 +113,8 @@ class OuttakeHatchPanelAction
 			elev_goal.place_cargo = false;
 			elev_goal.raise_intake_after_success = true;
 			ac_elevator_.sendGoal(elev_goal);
+
+			cmd_vel_forward_speed_ = -0.3;
 
 			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(elevator_timeout - (ros::Time::now().toSec() - start_time), 0.001)));
 			if(finished_before_timeout && !ac_elevator_.getResult()->timed_out) {
@@ -204,8 +240,11 @@ class OuttakeHatchPanelAction
 				result.success = true;
 			}
 			as_.setSucceeded(result);
-			return;
 
+			stopped_ = true;
+			cmdVelThread.join();
+
+			return;
 		}
 		/*
 		//TODO: get message type

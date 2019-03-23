@@ -1,18 +1,18 @@
 actionlib_lift_params: #sets params for elevator_server.cpp #default values
     cargo:
-        intake_position: 0.1
+        intake_position: 0.07
         cargo_ship_position: 0.03
         rocket1_position: 0.03
         rocket2_position: 0.8
         rocket3_position: 1.5
     hatch:
         intake_position: 0.0
-        intake_end_position: 0.1
+        intake_end_position: 0.0
         rocket1_position: 0.0
         rocket2_position: 0.77
         rocket3_position: 1.5
     climber3: #Used for level three climbs
-        deploy_position: 0.9
+        deploy_position: 0.95
         climb_position: 0.0
         climb_low_position: 0.17 #0.22
         climb_raise_position: 0.79
@@ -21,7 +21,7 @@ actionlib_lift_params: #sets params for elevator_server.cpp #default values
         climb_low_timeout: 10.0
         running_forward_timeout: 10.0    
     climber2: #Used for level two climbs
-        deploy_position: 0.9
+        deploy_position: 0.95
         climb_position: 0.33
         climb_low_position: 0.5 
         climb_raise_position: 1.12
