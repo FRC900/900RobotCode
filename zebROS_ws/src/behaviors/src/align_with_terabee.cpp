@@ -106,7 +106,7 @@ int main(int argc, char ** argv)
 	while(ros::ok())
 	{
 		bool aligned = false;
-		if(sensors_distances[0] == 0.0 && sensors_distances[1] == 0.0 && sensors_distances[2] == 0.0 && sensors_distances[3] == 0.0 && sensors_distances[4] == 0.0)
+		if(sensors_distances[0] == 0.0 && sensors_distances[1] == 0.0)
 		{
 			ROS_INFO_STREAM_THROTTLE(2, "No data is being received from the Terabee sensors. Skipping this message");
 			ros::spinOnce();
@@ -114,7 +114,7 @@ int main(int argc, char ** argv)
 			continue;
 		}
 
-		ROS_ERROR_STREAM_THROTTLE(0.25, "min_dist: " << min_dist);
+		//ROS_ERROR_STREAM_THROTTLE(0.25, "min_dist: " << min_dist);
 
 		//deal with distance PID first
         if(fabs(min_dist) < default_min_dist_) {
@@ -161,11 +161,11 @@ int main(int argc, char ** argv)
 				ternary_distances += pow(10.0, i - 2)*2;
 			else
 			{
-				ROS_INFO_STREAM_THROTTLE(1,"index " << i << " is very confused " << sensors_distances[i]);
+				//ROS_INFO_STREAM_THROTTLE(1,"index " << i << " is very confused " << sensors_distances[i]);
 			}
 		}
 		//ROS_INFO_STREAM("minimum_distance = " << min_dist);
-		ROS_WARN_STREAM_THROTTLE(0.5, "ternary_distances: " << ternary_distances);
+		//ROS_WARN_STREAM_THROTTLE(0.5, "ternary_distances: " << ternary_distances);
 
 		bool cutout_found = false;
 		switch(ternary_distances) {
@@ -301,7 +301,7 @@ int main(int argc, char ** argv)
 
 		if(!cutout_found)
 		{
-			ROS_INFO_STREAM_THROTTLE(.25, "cutout not found; can't align");
+			//ROS_INFO_STREAM_THROTTLE(.25, "cutout not found; can't align");
 			//Don't publish anything when not found to let previous commands drift the bot a bit
 			//y_msg.data= 0;
 		}

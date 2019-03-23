@@ -15,7 +15,6 @@ double orient_error_threshold;
 double x_error_threshold;
 double cargo_error_threshold;
 
-double elevator_timeout;
 
 
 //bool startup = true; //disable all pid nodes on startup
@@ -120,8 +119,6 @@ class AlignAction {
 			ROS_INFO_STREAM("align server callback called");
 			ros::Rate r(30);
 
-            static bool elevator_moved = false;
-
 			double start_time = ros::Time::now().toSec();
 			bool preempted = false;
 			bool timed_out = false;
@@ -154,26 +151,6 @@ class AlignAction {
 				ros::spinOnce();
 				r.sleep();
 
-				/*
-                if((orient_aligned_ || orient_timed_out) && !elevator_moved) {
-                    bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(elevator_timeout - (ros::Time::now().toSec() - start_time)));
-                    if(finished_before_timeout) {
-                        actionlib::SimpleClientGoalState state = ac_elevator_.getState();
-                        if(state.toString() != "SUCCEEDED") {
-                            ROS_ERROR("%s: Elevator Server ACTION FAILED: %s",action_name_.c_str(), state.toString().c_str());
-                            preempted = true;
-                        }
-                        else {
-                            ROS_WARN("%s: Elevator Server ACTION SUCCEEDED",action_name_.c_str());
-                            elevator_moved = true;
-                        }
-                    }
-                    else {
-                        ROS_ERROR("%s: Elevator Server ACTION TIMED OUT",action_name_.c_str());
-                        timed_out = true;
-                    }
-                }*/
-
 				//Define enable messages for pid nodes
 				std_msgs::Bool orient_msg;
 				std_msgs::Bool distance_msg;
@@ -191,7 +168,6 @@ class AlignAction {
 				//Publish enable messages
 				enable_navx_pub_->publish(orient_msg);
 				if(goal->has_cargo) {
-					ROS_WARN("CARGO!");
 					distance_msg.data = (orient_aligned_ || orient_timed_out) && !cargo_distance_aligned_;	//Enable distance pid once orient is aligned or timed out
 					cargo_enable_distance_pub_->publish(distance_msg);
 					terabee_msg.data = (orient_aligned_ || orient_timed_out) && cargo_distance_aligned_;     //Enable terabee node when distance is aligned and  orient aligns or orient times out
@@ -201,11 +177,12 @@ class AlignAction {
 					aligned = cargo_distance_aligned_ && cargo_aligned_;	 //Check aligned
 				}
 				else {
-					ROS_WARN(" NOT CARGO!");
+                    /*
 					distance_msg.data = (orient_aligned_ || orient_timed_out) && !hatch_panel_distance_aligned_;	//Enable distance pid once orient is aligned or timed out
 					hatch_panel_enable_distance_pub_->publish(distance_msg);
 					terabee_msg.data = (orient_aligned_ || orient_timed_out) && hatch_panel_distance_aligned_;     //Enable terabee node when distance is aligned and  orient aligns or orient times out
 					enable_y_pub_->publish(terabee_msg);
+                    */
 					enable_align_hatch_pub_->publish(enable_align_msg);
 					aligned = hatch_panel_distance_aligned_ && y_aligned_;		//Check aligned
 				}
@@ -300,9 +277,6 @@ int main(int argc, char** argv) {
 		ROS_ERROR_STREAM("Could not read orient_error_threshold in align_server");
 	if(!n_params.getParam("cargo_error_threshold", cargo_error_threshold))
 		ROS_ERROR_STREAM("Could not read cargo_error_threshold in align_server");
-
-	if(!n_panel_params.getParam("elevator_timeout", elevator_timeout))
-		ROS_ERROR_STREAM("Could not read elevator_timeout in align_server");
 
 	std::shared_ptr<ros::Publisher> enable_navx_pub_ = std::make_shared<ros::Publisher>();
 	std::shared_ptr<ros::Publisher> hatch_panel_enable_distance_pub_ = std::make_shared<ros::Publisher>();

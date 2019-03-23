@@ -18,7 +18,6 @@ double holding_power;
 double intake_timeout;
 int linebreak_debounce_iterations;
 double wait_for_server_timeout;
-double pause_before_running_motor = 0;
 
 class CargoIntakeAction {
 	protected:
@@ -225,8 +224,6 @@ int main(int argc, char** argv) {
 		ROS_ERROR("Could not read holding_power in cargo_intake_server");
 	if (!n_params_intake.getParam("intake_timeout", intake_timeout))
 		ROS_ERROR("Could not read intake_timeout in cargo_intake_server");
-	if (!n_params_intake.getParam("pause_before_running_motor", pause_before_running_motor))
-		ROS_ERROR("Could not read pause_before_running_motor in cargo_intake_server");
 
 	ros::AsyncSpinner Spinner(2);
 	Spinner.start();

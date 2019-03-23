@@ -874,6 +874,10 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read limit_switch_debounce_iterations in teleop_joystick_comp");
 	}
+	if(!n_params.getParam("linebreak_debounce_iterations", config.linebreak_debounce_iterations))
+	{
+		ROS_ERROR("Could not read linebreak_debounce_iterations in teleop_joystick_comp");
+	}
 	if(!n_swerve_params.getParam("max_speed", config.max_speed))
 	{
 		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");

@@ -23,6 +23,7 @@ std::vector<double> cargo_angles;
 std::vector<double> nothing_angles;
 
 int limit_switch_debounce_iterations;
+int linebreak_debounce_iterations;
 
 
 double nearest_angle(std::vector<double> angles, double cur_angle)
@@ -55,8 +56,8 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 {
 		static int limit_switch_true_panel_count = 0;
 		static int limit_switch_false_panel_count = 0;
-		static int limit_switch_true_cargo_count = 0;
-		static int limit_switch_false_cargo_count = 0;
+		static int linebreak_true_cargo_count = 0;
+		static int linebreak_false_cargo_count = 0;
         //get index of limit_switch sensor for this actionlib server
         static size_t limit_switch_idx_1 = std::numeric_limits<size_t>::max();
         static size_t limit_switch_idx_2 = std::numeric_limits<size_t>::max();
@@ -100,13 +101,13 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
                                 );
             if(limit_switch_true_cargo)
             {
-                limit_switch_true_cargo_count += 1;
-                limit_switch_false_cargo_count = 0;
+                linebreak_true_cargo_count += 1;
+                linebreak_false_cargo_count = 0;
             }
             else
             {
-                limit_switch_true_cargo_count = 0;
-                limit_switch_false_cargo_count += 1;
+                linebreak_true_cargo_count = 0;
+                linebreak_false_cargo_count += 1;
             }
             if(limit_switch_true_panel)
             {
@@ -119,7 +120,7 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
                 limit_switch_false_panel_count += 1;
             }
 
-		    if(limit_switch_true_cargo_count >	limit_switch_debounce_iterations) {
+		    if(linebreak_true_cargo_count >	limit_switch_debounce_iterations) {
                 has_cargo.store(true);
             }
             else {
@@ -141,9 +142,9 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
             }
             count++;
             limit_switch_true_panel_count = 0;
-            limit_switch_true_cargo_count = 0;
+            linebreak_true_cargo_count = 0;
             limit_switch_false_panel_count += 1;
-            limit_switch_false_cargo_count += 1;
+            linebreak_false_cargo_count += 1;
         }
 }
 
@@ -153,7 +154,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "Joystick_controller");
 	ros::NodeHandle nh;
 	ros::NodeHandle n_params(nh, "goal_angles");
-	ros::NodeHandle n_params_actionlib(nh, "/actionlib_params");
+	ros::NodeHandle n_params_teleop(nh, "/teleop/teleop_params");
 
 	if(!n_params.getParam("hatch_panel_angles", hatch_panel_angles))
 	{
@@ -169,9 +170,13 @@ int main(int argc, char **argv)
 	}
 
 
-	if(!n_params_actionlib.getParam("limit_switch_debounce_iterations", limit_switch_debounce_iterations))
+	if(!n_params_teleop.getParam("limit_switch_debounce_iterations", limit_switch_debounce_iterations))
 	{
 		ROS_ERROR("Could not read limit_switch_debounce_interations in teleop joystick snap to goal");
+	}
+	if(!n_params_teleop.getParam("linebreak_debounce_iterations", linebreak_debounce_iterations))
+	{
+		ROS_ERROR("Could not read linebreak_debounce_interations in teleop joystick snap to goal");
 	}
 
 
