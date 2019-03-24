@@ -22,6 +22,7 @@
 #include "behaviors/enumerated_elevator_indices.h"
 
 #include "std_srvs/SetBool.h"
+#include "std_srvs/Empty.h"
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
 
@@ -77,6 +78,8 @@ ros::ServiceClient run_align;
 ros::ServiceClient manual_server_panelIn;
 ros::ServiceClient manual_server_cargoOut;
 ros::ServiceClient manual_server_cargoIn;
+
+ros::ServiceClient continue_outtake_client;
 
 ros::ServiceClient align_with_terabee;
 //use shared pointers to make the clients global
@@ -289,6 +292,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			align_ac->sendGoal(goal);
 			*/
 		}
+		if(joystick_states_array[0].buttonBRelease) {
+            std_srvs::Empty empty_srv;
+            continue_outtake_client.call(empty_srv);
+        }
 
 		//Joystick1: buttonX
 		if(joystick_states_array[0].buttonXPress)
@@ -931,6 +938,8 @@ int main(int argc, char **argv)
 	manual_server_panelIn = n.serviceClient<panel_intake_controller::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command");
 	//manual_server_cargoOut = n.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/cargo_outtake_controller/cargo_outtake_command");
 	manual_server_cargoIn = n.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/cargo_intake_controller/cargo_intake_command");
+
+    continue_outtake_client = n.serviceClient<std_srvs::Empty>("/hatch_outtake/continue_outtake_panel");
 
 	cargo_pid = n.advertise<std_msgs::Bool>("/align_server/cargo_pid/pid_enable", 1);
 	terabee_pid = n.advertise<std_msgs::Bool>("/align_server/align_with_terabee/enable_y_pub", 1);
