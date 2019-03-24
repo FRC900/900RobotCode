@@ -606,7 +606,7 @@ void FRCRobotHWInterface::talon_read_thread(std::shared_ptr<ctre::phoenix::motor
 			//status_9_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_9_MotProfBuffer));
 			//status_10_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_10_MotionMagic));
 			//status_13_period = ros::Duration(state->getStatusFramePeriod(hardware_interface::Status_13_Base_PIDF0));
-			sensor_collection_period = ros::Duration(.10); // TODO : fix me
+			//sensor_collection_period = ros::Duration(.10); // TODO : fix me
 		}
 
 		// TODO : in main read() loop copy status from talon being followed
@@ -2134,7 +2134,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				{
 					tc.resetMotionCruise();
 				}
-
 			}
 
 			int motion_profile_trajectory_period;
