@@ -41,6 +41,24 @@ float GoalDetector::createConfidence(float expectedVal, float expectedStddev, fl
 	return confidence > 0.5 ? 1 - confidence : confidence;
 }
 
+// Finds the intersection of two lines, or returns false.
+// The lines are defined by (o1, p1) and (o2, p2).
+bool intersection(Point2f o1, Point2f p1, Point2f o2, Point2f p2,
+                      Point2f &r)
+{
+    Point2f x = o2 - o1;
+    Point2f d1 = p1 - o1;
+    Point2f d2 = p2 - o2;
+
+    float cross = d1.x*d2.y - d1.y*d2.x;
+    if (abs(cross) < /*EPS*/1e-8)
+        return false;
+
+    double t1 = (x.x * d2.y - x.y * d2.x)/cross;
+    r = o1 + d1 * t1;
+    return true;
+}
+
 void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 	clear();
 	const vector<vector<Point>> goal_contours = getContours(image);
@@ -73,8 +91,8 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			// left and right goal. Since we filter out
 			// some contours prior to testing goal data
 			// these can be different than i&j
-			int left_vindex = left_info[i].contour_index;
-			int right_vindex = right_info[j].contour_index;
+			const int left_vindex = left_info[i].contour_index;
+			const int right_vindex = right_info[j].contour_index;
 			if (left_vindex == right_vindex)
 			{
 #ifdef VERBOSE_BOILER
@@ -83,13 +101,31 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				continue;
 			}
 
+			if(left_info[i].com.x > right_info[j].com.x)
+			{
+#ifdef VERBOSE_BOILER
+				cout << "Left too far to the right " << left_info[i].com.x << " " << right_info[j].com.x << endl;
+#endif
+				continue;
+			}
+
+#if 0 // This is the same check as above
+			if(right_info[j].pos.x < left_info[i].pos.x)
+			{
+#ifdef VERBOSE_BOILER
+				cout << "Right goal too far to the left" << endl;
+#endif
+				continue;
+			}
+#endif
+
 			// Make sure the goal parts are reasonably close
 			// together on the screen and proportionally accurate to the tapes.
 			const float screendx = left_info[i].com.x - right_info[j].com.x;
 			const float screendy = left_info[i].com.y - right_info[j].com.y;
 			const float screenDist = sqrtf(screendx * screendx + screendy * screendy);
 
-			if (screenDist > (2.5 * (left_info[i].br.width + right_info[i].br.width)))
+			if (screenDist > (3.0 * (left_info[i].br.width + right_info[i].br.width)))
 			{
 #ifdef VERBOSE_BOILER
 				cout << i << " " << j << " " << screenDist << " max screen dist check failed" << endl;
@@ -134,36 +170,36 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 
 			// Make sure the right contour overlaps at least
 			// part of the left contour
-			if ((leftBr.br().y - (leftBr.width/2.)) < rightBr.y)
+			if ((leftBr.br().y - (leftBr.height * 0.)) < rightBr.y)
 			{
 #ifdef VERBOSE_BOILER
-				cout << i << " " << j << " " << leftBr.br().y << " " << rightBr.y << " stacked check 1 failed" << endl;
+				cout << i << " " << j << " " << leftBr.br().y << " " << leftBr.height << " "  << rightBr.y << " stacked check 1 failed" << endl;
 #endif
 				continue;
 			}
 
-			if ((leftBr.y + (leftBr.width/2.)) > rightBr.br().y)
+			if ((leftBr.y + (leftBr.height * 0.)) > rightBr.br().y)
 			{
 #ifdef VERBOSE_BOILER
-				cout << i << " " << j << " " << leftBr.br().y << " " << rightBr.y << " stacked check 2 failed" << endl;
+				cout << i << " " << j << " " << leftBr.y << " " << leftBr.height << " "  << rightBr.br().y << " stacked check 2 failed" << endl;
 #endif
 				continue;
 			}
 
 			// Make sure the left contour overlaps at least
 			// part of the right contour
-			if ((rightBr.br().y - (rightBr.width/2.)) < leftBr.y)
+			if ((rightBr.br().y - (rightBr.height * 0.)) < leftBr.y)
 			{
 #ifdef VERBOSE_BOILER
-				cout << i << " " << j << " " << leftBr.br().y << " " << rightBr.y << " stacked check 3 failed" << endl;
+				cout << i << " " << j << " " << rightBr.br().y << " " << rightBr.height << " "  << leftBr.y << " stacked check 3 failed" << endl;
 #endif
 				continue;
 			}
 
-			if ((rightBr.y + (rightBr.width/2)) > leftBr.br().y)
+			if ((rightBr.y + (rightBr.height * 0.)) > leftBr.br().y)
 			{
 #ifdef VERBOSE_BOILER
-				cout << i << " " << j << " " << leftBr.br().y << " " << rightBr.y << " stacked check 4 failed" << endl;
+				cout << i << " " << j << " " << rightBr.y << " " << rightBr.height << " "  << leftBr.br().y << " stacked check 4 failed" << endl;
 #endif
 				continue;
 			}
@@ -223,7 +259,19 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 			for (int idx = 0; idx < 4; idx++)
 				line(image, vtx[idx], vtx[(idx+1)%4], Scalar(153,50,204), 2);
 */
+			Point2f intersection_point;
 
+			if (!intersection(left_info[i].lineStart, left_info[i].lineEnd,
+			                  right_info[j].lineStart, right_info[j].lineEnd,
+							  intersection_point) ||
+					(intersection_point.y > std::max(left_info[i].com.y, right_info[j].com.y)))
+			{
+				cout << i << " " << j << " intersection point below com of contours : " << intersection_point << endl;
+				continue;
+			}
+
+
+#if 0
 			// minAreaRect returns a multiple of 90 if it can't ID a rectangle's
 			// orientation. If so, don't perform the angle check
 			if((fabs(fmod(left_info[i].rtRect.angle, 90)) != 0.) &&
@@ -267,24 +315,8 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 					continue;
 				}
 			}
+#endif
 
-			if(left_info[i].pos.x > right_info[j].pos.x)
-			{
-#ifdef VERBOSE_BOILER
-				cout << "Left too far to the right" << endl;
-#endif
-				continue;
-			}
-
-#if 0 // This is the same check as above
-			if(right_info[j].pos.x < left_info[i].pos.x)
-			{
-#ifdef VERBOSE_BOILER
-				cout << "Right goal too far to the left" << endl;
-#endif
-				continue;
-			}
-#endif
 
 			//_goal_left_rotated_rect =  minAreaRect(Mat(goal_contours[left_info[i].contour_index]));
 			//_goal_right_rotated_rect = minAreaRect(Mat(goal_contours[right_info[j].contour_index]));
@@ -322,27 +354,39 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 
 				//These are the saved values for the best goal before moving on to
 				//try and find another one.
-				if(_return_found.size() == 0)
-				{
-					_return_found.push_back(goal_found);
-				}
-				else
+				bool repeated = false;
+				if(_return_found.size() > 0)
 				{
 					const double min_dist_bwn_goals = 0.1;
-					bool repeated = false;
+					size_t gf_lci = goal_found.left_contour_index;
+					size_t gf_rci = goal_found.right_contour_index;
 					for(size_t k = 0; k < _return_found.size(); k++)
 					{
-						// TODO : compare contour indexes of goal_found vs _return_found[k].  If neither
+						size_t rf_lci = _return_found[k].left_contour_index;
+						size_t rf_rci = _return_found[k].right_contour_index;
+						// compare contour indexes of goal_found vs _return_found[k].  If neither
 						// match, this can't be a repeated goal so add it to return_found and continue.
+						if ((gf_lci != rf_lci) && (gf_lci != rf_rci) &&
+						    (gf_rci != rf_lci) && (gf_rci != rf_rci))
+						{
+							continue;
+						}
+						repeated = true;
 						// TODO : next, check distance between (goal_found.right_pos.x - goal_found.left_pos.x) and
 						// (return_found[k].right_pos.x - return_found[k].left_pos.x).  If the goal_found
 						// distance is shorter, replace return_found with goal_found. This would be the case
 						// where one contour is shared between both, but goal_found has closer second contour
 						// than the one in return_found
+						if ((goal_found.right_pos.x - goal_found.left_pos.x) < (_return_found[k].right_pos.x - _return_found[k].left_pos.x))
+						{
+							_return_found[k] = goal_found;
+							break;
+						}
 						// TODO : then, if confidence is higher for goal_found compared to return_found[k],
 						// replace return_found[k] with goal info.  This might not be needed
 						// TODO : otherwise, discard goal_found since the previously found goal in return_found
 						// was closer to the ideal goal
+					#if 0 
 						if(abs(left_info[i].pos.x - _return_found[k].pos.x) < min_dist_bwn_goals)
 						{
 							break;
@@ -352,19 +396,20 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 							if(abs(left_info[i].pos.x - _return_found[l].pos.x) < min_dist_bwn_goals)
 								repeated = true;
 						}
+#endif
 					}
-					if(repeated == false)
-					{
-						_return_found.push_back(goal_found);
-					}
-
+				}
+				if(repeated == false)
+				{
+					_return_found.push_back(goal_found);
 				}
 				_isValid = true;
 
 				cout << "Number of goals: " << _return_found.size() << endl;
 				for(size_t n = 0; n < _return_found.size(); n++)
 				{
-					cout << "Goal " << n + 1 << " pos: " << _return_found[n].pos <<
+					cout << "Goal " << n + 1 << " " << _return_found[n].left_contour_index << " " <<
+						_return_found[n].right_contour_index << " pos: " << _return_found[n].pos <<
 						" distance: " << _return_found[n].distance << " angle: " << _return_found[n].angle << endl;
 				}
 			}
@@ -487,10 +532,10 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		// Remove objects which are obviously too small
 		// Works out to about 60 pixels on a 360P image
 		// or 250 pixels on 720P
-		if (br.area() <= (_frame_size.width * _frame_size.height * .0007))
+		if (br.area() <= (_frame_size.width * _frame_size.height * .0004))
 		{
 #ifdef VERBOSE
-			cout << "Contour " << i << " area out of range " << br.area() << " vs " << _frame_size.width * _frame_size.height * .0027 << endl;
+			cout << "Contour " << i << " area out of range " << br.area() << " vs " << _frame_size.width * _frame_size.height * .0004 << endl;
 #endif
 			continue;
 		}
@@ -518,6 +563,27 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 			continue;
 		}
 #endif
+		// Fit a line to the countor, calculate the start and end points on screen
+		// for the line.
+		Vec4f fit_line;
+		fitLine(contours[i], fit_line, CV_DIST_L2, 0, 0.01, 0.01);
+
+		const float vx = fit_line[0];
+		const float vy = fit_line[1];
+		const float x = fit_line[2];
+		const float y = fit_line[3];
+		const float leftY =((-x * vy / vx) + y);
+		const float rightY =(((_frame_size.width - x) * vy / vx) + y);
+		const float angle = atan2(vy, vx);
+#if 0
+		cout << "fit_line: " << fit_line << endl;
+		cout << "   frame_size " << _frame_size << endl;
+		cout << "   leftY: " << leftY << endl;
+		cout << "   rightY: " << rightY << endl;
+		cout << "   angle: " << angle * 180. / M_PI << endl;
+#endif
+		const Point2f start_line(_frame_size.width - 1, rightY);
+		const Point2f end_line(0, leftY);
 
 		//create a trackedobject to get various statistics
 		//including area and x,y,z position of the goal
@@ -592,6 +658,8 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		cout << "com_expected / actual: " << com_percent_expected << " " << com_percent_actual << endl;
 		cout << "position: " << goal_tracked_obj.getPosition() << endl;
 		cout << "Angle: " << minAreaRect(contours[i]).angle << endl;
+		cout << "lineStart: " << start_line << endl;
+		cout << "lineEnd: " << end_line << endl;
 		cout << "-------------------------------------------" << endl;
 #endif
 
@@ -609,6 +677,8 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		goal_info.com           = goal_actual.com();
 		goal_info.br            = br;
 		goal_info.rtRect        = rr;
+		goal_info.lineStart     = start_line;
+		goal_info.lineEnd       = end_line;
 		return_info.push_back(goal_info);
 
 	}
@@ -718,6 +788,26 @@ void GoalDetector::drawOnFrame(Mat &image, const vector<vector<Point>> &contours
 	for (size_t i = 0; i < contours.size(); i++)
 	{
 		drawContours(image, contours, i, Scalar(0,0,255), 3);
+
+		Vec4f fit_line;
+		fitLine(contours[i], fit_line, CV_DIST_L2, 0, 0.01, 0.01);
+
+		const float vx = fit_line[0];
+		const float vy = fit_line[1];
+		const float x = fit_line[2];
+		const float y = fit_line[3];
+		const float leftY =((-x * vy / vx) + y);
+		const float rightY =(((image.cols- x) * vy / vx) + y);
+#if 0
+		const float angle = atan2(vy, vx);
+		cout << "fit_line: " << fit_line << endl;
+		cout << "   image: " << image.size() << endl;
+		cout << "   leftY: " << leftY << endl;
+		cout << "   rightY: " << rightY << endl;
+		cout << "   angle: " << angle * 180. / M_PI << endl;
+#endif
+		if ((vx > 1e-5) && (vy > 1e-5))
+			line(image, Point2f(image.cols - 1, rightY), Point2f(0 ,leftY), Scalar(0,128,0), 2);
 
 		Rect br(boundingRect(contours[i]));
 		//rectangle(image, br, Scalar(255,0,0), 3);

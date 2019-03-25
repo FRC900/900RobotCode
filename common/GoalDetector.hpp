@@ -29,6 +29,8 @@ struct GoalInfo
 	cv::Point com;
 	cv::Rect br;
 	cv::RotatedRect rtRect;
+	cv::Point2f lineStart;
+	cv::Point2f lineEnd;
 };
 
 //This contains all the necessary info for a goal
