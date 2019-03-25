@@ -66,3 +66,6 @@ target_link_libraries(
 	${LibTinyXML2}
 	${PCL_COMMON_LIBRARIES}
 )
+
+add_executable(mergezms mergezms.cpp mediain.cpp syncin.cpp cameraparams.cpp zedparams.cpp zedsvoin.cpp zmsin.cpp mediaout.cpp zmsout.cpp portable_binary_oarchive.cpp portable_binary_iarchive.cpp ZvSettings.cpp)
+target_link_libraries( mergezms ${Boost_LIBRARIES} ${OpenCV_LIBS} ${ZED_LIBRARIES} ${LibTinyXML2})

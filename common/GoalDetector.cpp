@@ -514,24 +514,8 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		// ObjectType computes a ton of useful properties so create
 		// one for what we're looking at
 		const Rect br(boundingRect(contours[i]));
-		const RotatedRect rr(minAreaRect(contours[i]));
-
-#if 0
-		// Get rid of returns from the robot in the
-		// upper right and left corner of the image
-		if (((br.x <= 0) && (br.y <= 0)) ||
-		    ((br.br().x >= (_frame_size.width-1)) && (br.y <= 0)))
-		{
-#ifdef VERBOSE
-			cout << "Contour " << i << " is the robot" << endl;
-#endif
-			continue;
-		}
-#endif
 
 		// Remove objects which are obviously too small
-		// Works out to about 60 pixels on a 360P image
-		// or 250 pixels on 720P
 		if (br.area() <= (_frame_size.width * _frame_size.height * .0004))
 		{
 #ifdef VERBOSE
@@ -543,11 +527,12 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		//width to height ratio
 		// Use rotated rect to get a more accurate guess at the real
 		// height and width of the contour
-		const float actualRatio = std::min(rr.size.height, rr.size.width) / std::max(rr.size.height, rr.size.width);
+		//const RotatedRect rr(minAreaRect(contours[i]));
+		const float actualRatio = (float)std::min(br.height, br.width) / std::max(br.height, br.width);
 		if ((actualRatio < .20) || (actualRatio > 1.0))
 		{
 #ifdef VERBOSE
-			cout << "Contour " << i << " height/width ratio fail" << rr.size << " " << actualRatio << endl;
+			cout << "Contour " << i << " height/width ratio fail" << br.size() << " " << actualRatio << endl;
 #endif
 			continue;
 		}
@@ -657,7 +642,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		cout << "com: " << goal_actual.com() << endl;
 		cout << "com_expected / actual: " << com_percent_expected << " " << com_percent_actual << endl;
 		cout << "position: " << goal_tracked_obj.getPosition() << endl;
-		cout << "Angle: " << minAreaRect(contours[i]).angle << endl;
+		//cout << "Angle: " << minAreaRect(contours[i]).angle << endl;
 		cout << "lineStart: " << start_line << endl;
 		cout << "lineEnd: " << end_line << endl;
 		cout << "-------------------------------------------" << endl;
@@ -676,7 +661,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		goal_info.depth_error   = depth_maxs[i].error;
 		goal_info.com           = goal_actual.com();
 		goal_info.br            = br;
-		goal_info.rtRect        = rr;
+		//goal_info.rtRect        = rr;
 		goal_info.lineStart     = start_line;
 		goal_info.lineEnd       = end_line;
 		return_info.push_back(goal_info);
@@ -783,7 +768,6 @@ bool GoalDetector::Valid(void) const
 // a different color
 void GoalDetector::drawOnFrame(Mat &image, const vector<vector<Point>> &contours) const
 {
-	vector<RotatedRect> minRect(contours.size());
 
 	for (size_t i = 0; i < contours.size(); i++)
 	{
@@ -806,7 +790,7 @@ void GoalDetector::drawOnFrame(Mat &image, const vector<vector<Point>> &contours
 		cout << "   rightY: " << rightY << endl;
 		cout << "   angle: " << angle * 180. / M_PI << endl;
 #endif
-		if ((vx > 1e-5) && (vy > 1e-5))
+		if ((fabs(vx) > 1e-5) && (fabs(vy) > 1e-5))
 			line(image, Point2f(image.cols - 1, rightY), Point2f(0 ,leftY), Scalar(0,128,0), 2);
 
 		Rect br(boundingRect(contours[i]));
@@ -819,6 +803,7 @@ void GoalDetector::drawOnFrame(Mat &image, const vector<vector<Point>> &contours
 
 	//creates a rotated rectangle by drawing four lines. Useful for finding the angle with the horizontal.
 	/*
+	vector<RotatedRect> minRect(contours.size());
 	for (size_t i = 0; i < contours.size(); i++)
 	{
 		minRect[i] = minAreaRect(Mat(contours[i]));
@@ -829,7 +814,6 @@ void GoalDetector::drawOnFrame(Mat &image, const vector<vector<Point>> &contours
 		minRect[i].points(vtx);
 		for (int i = 0; i < 4; i++)
 			line(image, vtx[i], vtx[(i+1)%4], Scalar(153,50,204), 2);
-
 	}
 	*/
 	for(size_t i = 0; i < _return_found.size(); i++)
