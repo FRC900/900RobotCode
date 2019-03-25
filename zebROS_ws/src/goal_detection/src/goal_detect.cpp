@@ -161,7 +161,7 @@ int main(int argc, char **argv)
 
 	ros::NodeHandle nh("~");
 	down_sample = false;
-	int sub_rate = 5;
+	int sub_rate = 2;
 	int pub_rate = 1;
 	nh.getParam("down_sample", down_sample);
 	nh.getParam("sub_rate", sub_rate);
@@ -171,7 +171,7 @@ int main(int argc, char **argv)
 	message_filters::Subscriber<Image> depth_sub(nh, "/zed_goal/depth/depth_registered", sub_rate);
 	typedef sync_policies::ApproximateTime<Image, Image > MySyncPolicy2;
 	// ApproximateTime takes a queue size as its constructor argument, hence MySyncPolicy(xxx)
-	Synchronizer<MySyncPolicy2> sync2(MySyncPolicy2(50), frame_sub, depth_sub);
+	Synchronizer<MySyncPolicy2> sync2(MySyncPolicy2(10), frame_sub, depth_sub);
 	sync2.registerCallback(boost::bind(&callback, _1, _2));
 
 	// Set up publisher
