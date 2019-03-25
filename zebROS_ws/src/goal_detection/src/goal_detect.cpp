@@ -25,7 +25,6 @@
 
 #include "GoalDetector.hpp"
 
-
 using namespace cv;
 using namespace std;
 using namespace sensor_msgs;
@@ -38,17 +37,15 @@ static bool down_sample = false;
 
 void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 {
-	
 	cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
-
 	cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
-	
+
 	// Avoid copies by using pointers to RGB and depth info
 	// These pointers are either to the original data or to
 	// the downsampled data, depending on the down_sample flag
 	const Mat *framePtr = &cvFrame->image;
 	const Mat *depthPtr = &cvDepth->image;
-	
+
 	// To hold downsampled images, if necessary
 	Mat frame;
 	Mat depth;
@@ -78,12 +75,9 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	}
 	//Send current color and depth image to the actual GoalDetector
 	gd->findBoilers(*framePtr, *depthPtr);
-	Mat tempFrame(framePtr->clone());
-	gd->drawOnFrame(tempFrame, gd->getContours(tempFrame));
 
 	vector< GoalFound > gfd = gd->return_found();
 	goal_detection::GoalDetection gd_msg;
-
 
 	for(size_t i = 0; i < gfd.size(); i++)
 	{
@@ -101,7 +95,6 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 
 	pub.publish(gd_msg);
 
-
 	if (!batch)
 	{
 		Mat thisFrame(framePtr->clone());
@@ -109,7 +102,6 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 		imshow("Image", thisFrame);
 		waitKey(5);
 	}
-
 
 	if (gd_msg.valid == false)
 	{
@@ -184,7 +176,6 @@ int main(int argc, char **argv)
 
 	// Set up publisher
 	pub = nh.advertise<goal_detection::GoalDetection>("goal_detect_msg", pub_rate);
-
 
 	ros::spin();
 

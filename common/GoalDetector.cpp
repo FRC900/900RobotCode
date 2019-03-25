@@ -13,7 +13,7 @@ GoalDetector::GoalDetector(const cv::Point2f &fov_size, const cv::Size &frame_si
 	_fov_size(fov_size),
 	_frame_size(frame_size),
 	_isValid(false),
-	_min_valid_confidence(0.75),
+	_min_valid_confidence(0.60),
 	_otsu_threshold(5),
 	_blue_scale(90),
 	_red_scale(80),

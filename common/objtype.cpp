@@ -199,8 +199,7 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			break;
 		case LEFT_CARGO_2019: //left target on the CARGO SHIP (2019)
 			depth_ = 0;
-			real_height_ = 31.5 * 2.54; // TODO : subtract camera height
-			real_height_ -= real_height_;
+			real_height_ = -.4; // TODO : subtract camera height
 			contour_.push_back(Point2f(0,0.01251900023));
 			contour_.push_back(Point2f(0.035,0.148019));
 			contour_.push_back(Point2f(0.083407382019,0.1355));
@@ -209,8 +208,7 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			break;
 		case RIGHT_CARGO_2019: //right target on the CARGO SHIP (2019)
 			depth_ = 0;
-			real_height_ = 31.5 * 2.54; // TODO : subtract camera height
-			real_height_ -= real_height_;
+			real_height_ = -.4; // TODO : subtract camera height
 			contour_.push_back(Point2f(0.083407382,0.012519));
 			contour_.push_back(Point2f(0.048407382,0.148019));
 			contour_.push_back(Point2f(0.0,0.1355));
