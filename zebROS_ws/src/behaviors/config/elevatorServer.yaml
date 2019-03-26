@@ -22,9 +22,9 @@ actionlib_lift_params: #sets params for elevator_server.cpp #default values
         running_forward_timeout: 10.0    
     climber2: #Used for level two climbs
         deploy_position: 0.95
-        climb_position: 0.33
+        climb_position: 0.27
         climb_low_position: 0.5 
-        climb_raise_position: 1.12
+        climb_raise_position: 0.79
         deploy_timeout: 5.0
         climb_timeout: 15.0
         climb_low_timeout: 10.0
