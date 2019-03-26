@@ -27,8 +27,10 @@
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
 		<rosparam file="$(find behaviors)/config/alignmentOffsets.yaml" command="load"/>
 
+		<!--
 
 		<node name="zero_wheel_service" pkg="talon_swerve_drive_controller" type="zero_wheel_service" output="screen"> </node>
+		-->
 		<node name="dump_offsets_service" pkg="talon_swerve_drive_controller" type="dump_offsets_service" output="screen"> </node>
 
 		<!-- Load hardware interface -->
