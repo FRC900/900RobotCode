@@ -41,13 +41,13 @@ int cargo_limit_switch_false_count = 0;
 int panel_limit_switch_false_count = 0;
 bool panel_push_extend = false;
 
-
 const int climber_num_steps = 3;
 const int elevator_num_setpoints = 4;
 
 bool robot_orient = false;
 double offset_angle = 0;
 
+double max_speed;
 
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
@@ -172,8 +172,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		dead_zone_check(leftStickX, leftStickY);
 		dead_zone_check(rightStickX, rightStickY);
 
-		leftStickX =  pow(fabs(leftStickX), config.joystick_pow) * config.max_speed;
-		leftStickY =  pow(fabs(leftStickY), config.joystick_pow) * config.max_speed;
+		leftStickX =  pow(fabs(leftStickX), config.joystick_pow) * max_speed;
+		leftStickY =  pow(fabs(leftStickY), config.joystick_pow) * max_speed;
 		double rotation = pow(fabs(rightStickX), config.rotation_pow) * config.max_rot;
 
 		leftStickX = copysign(leftStickX, joystick_states_array[0].leftStickX);
@@ -441,6 +441,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		if(joystick_states_array[0].leftTrigger >= 0.5)
 		{
+			max_speed = config.max_speed_slow;
+			ROS_WARN_STREAM("Slow mode enabled. Max speed = " << max_speed);
+		}
+		else
+		{
+			max_speed = config.max_speed;
+			ROS_WARN_STREAM("Slow mode disabled. Max speed = " << max_speed);
 		}
 		if(joystick_states_array[0].rightTrigger >= 0.5)
 		{
@@ -889,10 +896,16 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
 	}
+	if(!n_swerve_params.getParam("max_speed_slow", config.max_speed_slow))
+	{
+		ROS_ERROR("Could not read max_speed_slow in teleop_joystick_comp");
+	}
 	if(!n_params.getParam("max_rot", config.max_rot))
 	{
 		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
 	}
+
+	double max_speed = config.max_speed;
 
 	std::vector <ros::Subscriber> subscriber_array;
     navX_angle = M_PI / 2.;
