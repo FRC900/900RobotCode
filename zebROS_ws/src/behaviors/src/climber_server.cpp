@@ -25,6 +25,7 @@ double running_forward_timeout;
 double elevator_climb_low_timeout;
 double match_time_lock;
 double wait_for_server_timeout;
+double wait_at_top_for_engage;
 double drive_forward_speed;
 double delay_before_engage;
 double delay_before_continue_retract;
@@ -43,10 +44,10 @@ class ClimbAction {
 
 		//create clients/subscribers to activate controllers
 		ros::ServiceClient climber_controller_client_; //create a ros client to send requests to the climber controller (piston in the leg)
-		ros::ServiceClient climber_engage_client_; //ros client to engage the climber via the elevator controller 
+		ros::ServiceClient climber_engage_client_; //ros client to engage the climber via the elevator controller
 		ros::Publisher cmd_vel_publisher_;
-		   std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo since we started trying to intake/outtake
-		   std::atomic<int> linebreak_false_count; //same, but how many times in a row no cargo
+	    std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo since we started trying to intake/outtake
+	    std::atomic<int> linebreak_false_count; //same, but how many times in a row no cargo
 		behaviors::ClimbResult result_; //variable to store result of the actionlib action
 
 		//create subscribers to get data
@@ -55,51 +56,59 @@ class ClimbAction {
 
 		std::atomic<double> cmd_vel_forward_speed_;
 		std::atomic<bool> stopped_;
+		ros::Subscriber navX_sub_;
 
 		// Data from subscribers
 		double match_time_remaining_;
-		ros::Subscriber navX_sub_;
-
 		double navX_roll_;
 		double navX_pitch_;
 
+		std::atomic<double> cmd_vel_forward_speed_;
+		std::atomic<bool> stopped_;
+
 		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
-
-	public:
-		//make the executeCB function run every time the actionlib server is called
-		ClimbAction(const std::string &name) :
-			as_(nh_, name, boost::bind(&ClimbAction::executeCB, this, _1), false),
-			action_name_(name),
-			ae_("/elevator/elevator_server", true)
+		// Try to safely wait for an elevator action to succeed
+		void waitForElevator(bool &timed_out, bool &preempted, int step, ros::Rate &r, double timeout)
 		{
-			as_.start(); //start the actionlib server
-
-			//do networking stuff?
-			std::map<std::string, std::string> service_connection_header;
-			service_connection_header["tcp_nodelay"] = "1";
-
-			//get the match timer
-			match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data", 1, &ClimbAction::matchStateCallback,this);
-			//initialize the client being used to call the climber controller
-			climber_controller_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_feet_retract", false, service_connection_header);
-			//initialize the client being used to call the climber controller to engage the climber
-			climber_engage_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_release_endgame", false, service_connection_header);
-
-			navX_sub_ = nh_.subscribe("/frcrobot_rio/navx_mxp", 1, &ClimbAction::navXCallback,this);
-
-			cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
-
-		//initialize the publisher used to send messages to the drive base
-		cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
-		//start subscribers subscribing
-		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
-	}
-
-		~ClimbAction(void)
-		{
+			bool waiting_for_elevator = true;
+			const double start_time = ros::Time::now().toSec();
+			while (waiting_for_elevator)
+			{
+				auto state = ae_.getState();
+				if ((state == actionlib::SimpleClientGoalState::StateEnum::SUCCEEDED) ||
+					(state == actionlib::SimpleClientGoalState::StateEnum::PREEMPTED))
+				{
+					waiting_for_elevator = false;
+					timed_out = (ros::Time::now().toSec() - start_time) > timeout;
+					if (timed_out)
+						ROS_ERROR_STREAM("climber server step " << step << " : timed out");
+					if (state == actionlib::SimpleClientGoalState::StateEnum::PREEMPTED)
+					{
+						ROS_INFO_STREAM("elevator " << step << " state returned preempted");
+						preempted = true;
+					}
+					if (!ae_.getResult()->success)
+					{
+						ROS_INFO_STREAM("elevator " << step << " did not succeed -- climber_server");
+						preempted = true;
+					}
+				}
+				else if(as_.isPreemptRequested())
+				{
+					waiting_for_elevator = false;
+					preempted = true;
+				}
+				else
+				{
+					ros::spinOnce();
+					r.sleep();
+				}
+			}
 		}
 
-		void cmdVelCallback()
+		// Basic thread which spams cmd_vel to the drive base to
+		// continually drive forward during the climb
+		void cmdVelThread()
 		{
 			ROS_INFO_STREAM("the callback is being called");
 			geometry_msgs::Twist cmd_vel_msg;
@@ -166,7 +175,7 @@ class ClimbAction {
 			 */
 			ros::Rate r(20);
 
-			std::thread cmdVelThread(std::bind(&ClimbAction::cmdVelCallback, this));
+			std::thread cmdVelThread(std::bind(&ClimbAction::cmdVelThread, this));
 
 			//define variables that will be reused for each controller call/actionlib server call
 			//define variables that will be set true if the actionlib action is to be ended
@@ -189,7 +198,8 @@ class ClimbAction {
 					ROS_ERROR("Foot deploy failed in climber controller");
 					preempted = true;
 				}
-				else {
+				else
+				{
 					//only spin if we're not going to error out
 					// TODO - Why spin here?
 					ros::spinOnce();
@@ -211,38 +221,17 @@ class ClimbAction {
 					ROS_INFO("climber server step 0: raising elevator before climber is engaged");
 					//call the elevator actionlib server
 					//define the goal to send
-					behaviors::ElevatorGoal goal;
-					goal.setpoint_index = ELEVATOR_DEPLOY;
-					goal.place_cargo = 0; //doesn't actually do anything
-					goal.raise_intake_after_success = true;
-					//send the goal
-					ae_.sendGoal(goal);
-					const bool finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_deploy_timeout)); //wait until the action finishes, whether it succeeds, times out, or is preempted
-					if(!finished_before_timeout){
-						ROS_ERROR("climber server step 0: first elevator raise timed out");
-						timed_out = true;
-					}
-					//determine the outcome of the goal
-					// TODO - add a check for !timed_out here
-					if(!ae_.getResult()->success)
-					{
-						if(ae_.getResult()->timed_out == true)
-						{
-							timed_out = true;
-						}
-						else
-						{
-							preempted = true;
-						}
-					}
-
-					//check if we got a preempt while we were waiting
-					// TODO - add a check for !timed_out and !preempted here
-					if(as_.isPreemptRequested())
-					{
-						preempted = true;
-					}
+					behaviors::ElevatorGoal elevator_goal;
+					elevator_goal.setpoint_index = ELEVATOR_DEPLOY;
+					elevator_goal.place_cargo = 0; //doesn't actually do anything
+					elevator_goal.raise_intake_after_success = true;
+					//send the elevator_goal
+					ae_.sendGoal(elevator_goal);
+					waitForElevator(timed_out, preempted, goal->step, r, elevator_deploy_timeout);
 				} //end of raise elevator to right height before engaging
+			}
+			else if(goal->step == 1)
+			{
 
 				//engage climber with elevator controller -----------------------------------------------------------------
 				if(!preempted && ros::ok())
@@ -261,9 +250,9 @@ class ClimbAction {
 					// TODO - Why spin here?
 					ros::spinOnce();
 
-                                        // delay to make sure that we engaged properly
-                                        // TODO - if we need to spin, spin in a loop here for 1 second here?
-                                        ros::Duration(delay_before_engage).sleep();
+					// delay to make sure that we engaged properly
+					// TODO - if we need to spin, spin in a loop here for 1 second here?
+					ros::Duration(wait_at_top_for_engage).sleep();
 				}
 
 				cmd_vel_forward_speed_ = drive_forward_speed;
@@ -275,31 +264,13 @@ class ClimbAction {
 
 					//call the elevator actionlib server
 					//define the goal to send
-					behaviors::ElevatorGoal goal;
-					goal.setpoint_index = ELEVATOR_CLIMB;
-					goal.place_cargo = 0; //doesn't actually do anything
-					goal.raise_intake_after_success = true;
-					//send the goal
-					ae_.sendGoal(goal);
-					const bool finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_deploy_timeout)); //wait until the action finishes, whether it succeeds, times out, or is preempted
-					if(!finished_before_timeout){
-						timed_out = true;
-						ROS_ERROR("climber server step 0: second elevator move timed out");
-					}
-
-					//determine the outcome of the goal
-					if(!ae_.getResult()->success) //this might mean preempted or timed out
-					{
-						ROS_INFO_STREAM("elevator did not succeed -- climber_server");
-						preempted = true;
-					}
-
-					//check if we got a preempt while we were waiting
-					if(as_.isPreemptRequested())
-					{
-						ROS_INFO_STREAM("preempt was requested -- climber_server");
-						preempted = true;
-					}
+					behaviors::ElevatorGoal elevator_goal;
+					elevator_goal.setpoint_index = ELEVATOR_CLIMB;
+					elevator_goal.place_cargo = 0; //doesn't actually do anything
+					elevator_goal.raise_intake_after_success = true;
+					//send the elevator_goal
+					ae_.sendGoal(elevator_goal);
+					waitForElevator(timed_out, preempted, goal->step, r, elevator_deploy_timeout);
 				} //end of lowering elevator to make robot climb
 
 				ROS_INFO_STREAM("preempted = " << preempted);
@@ -349,11 +320,9 @@ class ClimbAction {
 				if(preempted)
 					ROS_INFO_STREAM("Driving forward was preempted");
 
-
 				//preempt handling: do nothing
-
 			}
-			else if(goal->step == 1)
+			else if(goal->step == 2)
 			{
 				if(!preempted && !timed_out && ros::ok())
 				{
@@ -372,32 +341,13 @@ class ClimbAction {
 
 					//call the elevator actionlib server
 					//define the goal to send
-					behaviors::ElevatorGoal goal;
-					goal.setpoint_index = ELEVATOR_CLIMB_LOW;
-					goal.place_cargo = 0; //doesn't actually do anything 
-					goal.raise_intake_after_success = true;
-					//send the goal
-					ae_.sendGoal(goal);
-					const bool finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_climb_timeout));
-					if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
-					{
-						ROS_ERROR("climber server step 1: pulling up elevator timed out");
-						timed_out = true;
-					}
-
-					//determine the outcome of the goal
-					if(!ae_.getResult()->success) //this might mean preempted or timed out
-					{
-						ROS_INFO_STREAM("elevator did not succeed -- climber_server");
-						preempted = true;
-					}
-
-					//check if we got a preempt while we were waiting
-					if(as_.isPreemptRequested())
-					{
-						ROS_INFO_STREAM("preempt was requested -- climber_server");
-						preempted = true;
-					}
+					behaviors::ElevatorGoal elevator_goal;
+					elevator_goal.setpoint_index = ELEVATOR_CLIMB_LOW;
+					elevator_goal.place_cargo = 0; //doesn't actually do anything
+					elevator_goal.raise_intake_after_success = true;
+					//send the elevator_goal
+					ae_.sendGoal(elevator_goal);
+					waitForElevator(timed_out, preempted, goal->step, r, elevator_climb_timeout);
 				} //end of raising elevator to make robot climb
 				double start_time = ros::Time::now().toSec();
 				while(linebreak_true_count <= linebreak_debounce_iterations && ros::ok() && !preempted && !timed_out) {
@@ -422,25 +372,20 @@ class ClimbAction {
 
 				//call the elevator actionlib server
 				//define the goal to send
-				behaviors::ElevatorGoal goal;
-				goal.setpoint_index = ELEVATOR_RAISE;
-				goal.place_cargo = 0; //doesn't actually do anything
-				goal.raise_intake_after_success = true;
-				//send the goal
-				ae_.sendGoal(goal);
-				const bool finished_before_timeout = ae_.waitForResult(ros::Duration(elevator_deploy_timeout));
-				if(!finished_before_timeout) //wait until the action finishes, whether it succeeds, times out, or is preempted
-					ROS_ERROR("climber server step 1: elevator raise timed out");
+				behaviors::ElevatorGoal elevator_goal;
+				elevator_goal.setpoint_index = ELEVATOR_RAISE;
+				elevator_goal.place_cargo = 0; //doesn't actually do anything
+				elevator_goal.raise_intake_after_success = true;
+				//send the elevator_goal
+				ae_.sendGoal(elevator_goal);
+				waitForElevator(timed_out, preempted, goal->step, r, elevator_climb_timeout);
 
 				//determine the outcome of the goal
-				if(!ae_.getResult()->success) //this might mean preempted or timed out
+				if (!preempted)
 				{
-					preempted = true;
-				}
-				else {
 					//Drive forward until drive forward timeout at end of game
 					ROS_INFO_STREAM("Driving forward at end of climb");
-					double start_time = ros::Time::now().toSec();
+					const double start_time = ros::Time::now().toSec();
 
 					while(ros::ok() && !preempted && !timed_out)
 					{
@@ -450,46 +395,39 @@ class ClimbAction {
 					}
 				}
 
-				//check if we got a preempt while we were waiting
-				if(as_.isPreemptRequested())
-				{
-					preempted = true;
-				}
-
 				//preempt handling: preempt elevator server to freeze the elevator
 				if(preempted || timed_out)
 				{
-					ROS_INFO("Running climber server step 1 preempt/timeout handling - preempting elevator server");
+					ROS_INFO("Running climber server step 2 preempt/timeout handling - preempting elevator server");
 					ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
-
 			}
 
 			//log state of action and set result of action
 
 			// TODO : timed_out is never set
+			behaviors::ClimbResult result; //variable to store result of the actionlib action
 			if(timed_out)
 			{
-				result_.timed_out = true;
-				result_.success = false;
-				as_.setSucceeded(result_);
+				result.timed_out = true;
+				result.success = false;
+				as_.setSucceeded(result);
 
 				ROS_INFO("%s: Timed Out", action_name_.c_str());
 			}
 			else if(preempted)
 			{
-				result_.timed_out = false;
-				result_.success = false;
-				as_.setPreempted(result_);
+				result.timed_out = false;
+				result.success = false;
+				as_.setPreempted(result);
 
 				ROS_INFO("%s: Preempted", action_name_.c_str());
-
 			}
 			else //implies succeeded
 			{
-				result_.timed_out = false;
-				result_.success = true;
-				as_.setSucceeded(result_);
+				result.timed_out = false;
+				result.success = true;
+				as_.setSucceeded(result);
 
 				ROS_INFO("%s: Succeeded", action_name_.c_str());
 			}
@@ -567,6 +505,41 @@ class ClimbAction {
 		{
 			match_time_remaining_ = msg.matchTimeRemaining;
 		}
+
+	public:
+		//make the executeCB function run every time the actionlib server is called
+		ClimbAction(const std::string &name) :
+			as_(nh_, name, boost::bind(&ClimbAction::executeCB, this, _1), false),
+			action_name_(name),
+			ae_("/elevator/elevator_server", true)
+		{
+			as_.start(); //start the actionlib server
+
+			//do networking stuff?
+			std::map<std::string, std::string> service_connection_header;
+			service_connection_header["tcp_nodelay"] = "1";
+
+			//get the match timer
+			match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data", 1, &ClimbAction::matchStateCallback,this);
+			//initialize the client being used to call the climber controller
+			climber_controller_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_feet_retract", false, service_connection_header);
+			//initialize the client being used to call the climber controller to engage the climber
+			climber_engage_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_release_endgame", false, service_connection_header);
+
+			navX_sub_ = nh_.subscribe("/frcrobot_rio/navx_mxp", 1, &ClimbAction::navXCallback, this);
+
+			cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+
+			//initialize the publisher used to send messages to the drive base
+			cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+			//start subscribers subscribing
+			joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
+		}
+
+		~ClimbAction(void)
+		{
+		}
+
 };
 
 int main(int argc, char** argv) {
@@ -584,6 +557,12 @@ int main(int argc, char** argv) {
 	{
 		ROS_ERROR("Could not read wait_for_server_timeout in climber_server");
 		wait_for_server_timeout = 10;
+	}
+
+	if (!n_climb_params.getParam("wait_at_top_for_engage", wait_at_top_for_engage))
+	{
+		ROS_ERROR("Could not read wait_at_top_for_engage in climber_server");
+		wait_at_top_for_engage = 1;
 	}
 
 	if (!n_climb_params.getParam("deploy_timeout", elevator_deploy_timeout))

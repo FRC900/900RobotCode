@@ -34,7 +34,22 @@ class ElevatorAction {
 
         double elevator_cur_setpoint_; //stores actual setpoint value to go to, not index
 		double cur_position_; //Variable used to store current elevator position
-		
+
+		void climbLevelCallback()
+		{
+			std_msgs::Bool level_two_msg;
+			stopped = false;
+
+			ros::Rate r(20);
+
+			while(ros::ok() && !stopped)
+			{
+				level_two_msg.data = climb_locations_ == climb_locations_level_two_;
+
+				level_two_publisher_.publish(level_two_msg);
+				r.sleep();
+			}
+		}
 
     public:
 		// Make these std::arrays instead
@@ -67,7 +82,7 @@ class ElevatorAction {
 
 			//Talon states subscriber
             talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);
-			
+
 			//Climb level publisher
 			level_two_publisher_ = nh_.advertise<std_msgs::Bool>("level_two",1);
 
@@ -79,25 +94,9 @@ class ElevatorAction {
         }
 
         ~ElevatorAction(void) {}
-		
-		void climbLevelCallback()
-		{
-			std_msgs::Bool level_two_msg;
-			stopped = false;
-
-			ros::Rate r(20);
-
-			while(ros::ok() && !stopped)
-			{
-				level_two_msg.data = climb_locations_ == climb_locations_level_two_;
-				
-				level_two_publisher_.publish(level_two_msg);
-				r.sleep();
-			}
-		}
 
 		bool levelTwoClimbServer(std_srvs::SetBool::Request &level_two_climb,
-									std_srvs::SetBool::Response &res)
+								 std_srvs::SetBool::Response &res)
 		{
 			climb_locations_ = level_two_climb.data ? climb_locations_level_two_ : climb_locations_level_three_;
 			ROS_WARN_STREAM("Level two climb = " << static_cast<bool>(level_two_climb.data));
