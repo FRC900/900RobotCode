@@ -32,4 +32,3 @@ actionlib_lift_params: #sets params for elevator_server.cpp #default values
     max_speed: -1.0
     timeout: 10
     elevator_position_deadzone: 0.05
-    wait_at_top_for_engage: 0.2
