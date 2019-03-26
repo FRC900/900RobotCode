@@ -8,6 +8,15 @@
 
 #define NUM_SENSORS 8
 
+// TODO - if we redid the interface to this to match the interface for a PID
+// controller it would be a lot easier to make the align server code common
+// between various modes. That is, make a debug, enable, etc message and populate
+// them as-if this were the standard ROS PID node.  This would remove the need
+// for special cases in the align server itself
+// TODO - also split up into two separate align with terabee nodes - one for
+// cargo, one for hatch?  If not, have two interfaces matching PID controllers,
+// one for cargo, one for hatch
+
 std::vector<double> sensors_distances;
 bool publish = false;
 bool publish_last = false;
@@ -45,6 +54,7 @@ bool startStopAlign(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response
 	publish = req.data;
 	res.success = true;
 	//ROS_INFO_STREAM("running/stopping align with terabee " << publish);
+	// TODO : should probably return true here if there's no error
 	return 0;
 }
 
