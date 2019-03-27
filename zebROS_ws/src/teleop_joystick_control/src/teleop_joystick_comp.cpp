@@ -439,17 +439,15 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: bumperRightRelease");
 
 		}
-		if(joystick_states_array[0].leftTrigger >= 0.5)
+		if(joystick_states_array[0].rightTrigger >= 0.5)
 		{
 			max_speed = config.max_speed_slow;
-			ROS_WARN_STREAM("Slow mode enabled. Max speed = " << max_speed);
 		}
 		else
 		{
 			max_speed = config.max_speed;
-			ROS_WARN_STREAM("Slow mode disabled. Max speed = " << max_speed);
 		}
-		if(joystick_states_array[0].rightTrigger >= 0.5)
+		if(joystick_states_array[0].leftTrigger >= 0.5)
 		{
 		}
 		//Joystick1: directionLeft
@@ -896,7 +894,7 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
 	}
-	if(!n_swerve_params.getParam("max_speed_slow", config.max_speed_slow))
+	if(!n_params.getParam("max_speed_slow", config.max_speed_slow))
 	{
 		ROS_ERROR("Could not read max_speed_slow in teleop_joystick_comp");
 	}
