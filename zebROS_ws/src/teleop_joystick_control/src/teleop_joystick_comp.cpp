@@ -48,6 +48,7 @@ bool robot_orient = false;
 double offset_angle = 0;
 
 double max_speed;
+double max_rot;
 
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
@@ -177,7 +178,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		leftStickX =  pow(fabs(leftStickX), config.joystick_pow) * max_speed;
 		leftStickY =  pow(fabs(leftStickY), config.joystick_pow) * max_speed;
-		double rotation = pow(fabs(rightStickX), config.rotation_pow) * config.max_rot;
+		double rotation = pow(fabs(rightStickX), config.rotation_pow) * max_rot;
 
 		leftStickX = copysign(leftStickX, joystick_states_array[0].leftStickX);
 		leftStickY = copysign(leftStickY, -joystick_states_array[0].leftStickY);
@@ -445,10 +446,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		if(joystick_states_array[0].rightTrigger >= 0.5)
 		{
 			max_speed = config.max_speed_slow;
+			max_rot = config.max_rot_slow;
 		}
 		else
 		{
 			max_speed = config.max_speed;
+			max_rot = config.max_rot;
 		}
 		if(joystick_states_array[0].leftTrigger >= 0.5)
 		{
@@ -893,7 +896,7 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read linebreak_debounce_iterations in teleop_joystick_comp");
 	}
-	if(!n_swerve_params.getParam("max_speed", config.max_speed))
+	if(!n_params.getParam("max_speed", config.max_speed))
 	{
 		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
 	}
@@ -905,8 +908,13 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
 	}
+	if(!n_params.getParam("max_rot_slow", config.max_rot_slow))
+	{
+		ROS_ERROR("Could not read max_rot_slow in teleop_joystick_comp");
+	}
 
-	double max_speed = config.max_speed;
+	max_speed = config.max_speed;
+	max_rot = config.max_rot;
 
 	std::vector <ros::Subscriber> subscriber_array;
     navX_angle = M_PI / 2.;
