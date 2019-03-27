@@ -72,16 +72,13 @@ class ClimbAction {
 		{
 			bool waiting_for_elevator = true;
 			const double start_time = ros::Time::now().toSec();
-			while (waiting_for_elevator)
+			while (waiting_for_elevator && ros::ok())
 			{
 				auto state = ae_.getState();
 				if ((state == actionlib::SimpleClientGoalState::StateEnum::SUCCEEDED) ||
 					(state == actionlib::SimpleClientGoalState::StateEnum::PREEMPTED))
 				{
 					waiting_for_elevator = false;
-					timed_out = (ros::Time::now().toSec() - start_time) > timeout;
-					if (timed_out)
-						ROS_ERROR_STREAM("climber server step " << step << " : timed out");
 					if (state == actionlib::SimpleClientGoalState::StateEnum::PREEMPTED)
 					{
 						ROS_INFO_STREAM("elevator " << step << " state returned preempted");
@@ -97,6 +94,12 @@ class ClimbAction {
 				{
 					waiting_for_elevator = false;
 					preempted = true;
+				}
+				else if((ros::Time::now().toSec() - start_time) > timeout)
+				{
+					ROS_ERROR_STREAM("climber server step " << step << " : timed out");
+					timed_out = true;
+					waiting_for_elevator = false;
 				}
 				else
 				{

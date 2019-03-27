@@ -35,74 +35,8 @@ class ElevatorAction {
         double elevator_cur_setpoint_; //stores actual setpoint value to go to, not index
 		double cur_position_; //Variable used to store current elevator position
 
-		void climbLevelCallback()
-		{
-			std_msgs::Bool level_two_msg;
-			stopped = false;
-
-			ros::Rate r(20);
-
-			while(ros::ok() && !stopped)
-			{
-				level_two_msg.data = climb_locations_ == climb_locations_level_two_;
-
-				level_two_publisher_.publish(level_two_msg);
-				r.sleep();
-			}
-		}
-
-    public:
-		// Make these std::arrays instead
-		// TODO - member variables end with an underscore
-		std::vector<double> hatch_locations_;
-		std::vector<double> cargo_locations_;
-		std::vector<double> climb_locations_level_three_;
-		std::vector<double> climb_locations_level_two_;
-		std::vector<double> climb_locations_; //vector of everything at and after min_climb_idx in enumerated elevator indices, except for max index at the end
-
-		double timeout_;
-
-		std::atomic<bool> stopped;
-
-        ElevatorAction(const std::string &name) :
-            as_(nh_, name, boost::bind(&ElevatorAction::executeCB, this, _1), false),
-            action_name_(name)
-        {
-			as_.start();
-
-			//Service networking things?
-            std::map<std::string, std::string> service_connection_header;
-            service_connection_header["tcp_nodelay"] = "1";
-
-			//Server for level two vs. level three climbs
-			level_two_climb_ = nh_.advertiseService("level_two_climb_server", &ElevatorAction::levelTwoClimbServer,this);
-
-			//Client for elevator controller
-            elevator_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
-
-			//Talon states subscriber
-            talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);
-
-			//Climb level publisher
-			level_two_publisher_ = nh_.advertise<std_msgs::Bool>("level_two",1);
-
-			hatch_locations_.resize(ELEVATOR_MAX_INDEX);
-			cargo_locations_.resize(ELEVATOR_MAX_INDEX);
-			climb_locations_.resize(ELEVATOR_MAX_INDEX - min_climb_idx);
-			climb_locations_level_three_.resize(ELEVATOR_MAX_INDEX - min_climb_idx);
-			climb_locations_level_two_.resize(ELEVATOR_MAX_INDEX - min_climb_idx);
-        }
-
-        ~ElevatorAction(void) {}
-
-		bool levelTwoClimbServer(std_srvs::SetBool::Request &level_two_climb,
-								 std_srvs::SetBool::Response &res)
-		{
-			climb_locations_ = level_two_climb.data ? climb_locations_level_two_ : climb_locations_level_three_;
-			ROS_WARN_STREAM("Level two climb = " << static_cast<bool>(level_two_climb.data));
-			res.success = true;
-			return true;
-		}
+		std::thread publishLvlThread_;
+		std::atomic<bool> stopped_;
 
         void executeCB(const behaviors::ElevatorGoalConstPtr &goal)
         {
@@ -112,7 +46,6 @@ class ElevatorAction {
 			behaviors::ElevatorFeedback feedback;
             feedback.running = true;
             as_.publishFeedback(feedback);
-
 
             //Define variables that will be set to true once the server finishes executing
             bool preempted = false;
@@ -258,6 +191,78 @@ class ElevatorAction {
 				cur_position_ = talon_state.position[elevator_master_idx];
 			}
 		}
+
+		bool levelTwoClimbServer(std_srvs::SetBool::Request &level_two_climb,
+								 std_srvs::SetBool::Response &res)
+		{
+			climb_locations_ = level_two_climb.data ? climb_locations_level_two_ : climb_locations_level_three_;
+			ROS_WARN_STREAM("Level two climb = " << static_cast<bool>(level_two_climb.data));
+			res.success = true;
+			return true;
+		}
+
+		void climbLevelThread()
+		{
+			std_msgs::Bool level_two_msg;
+			stopped_ = false;
+
+			ros::Rate r(20);
+
+			while(ros::ok() && !stopped_)
+			{
+				level_two_msg.data = climb_locations_ == climb_locations_level_two_;
+
+				level_two_publisher_.publish(level_two_msg);
+				r.sleep();
+			}
+		}
+
+    public:
+        ElevatorAction(const std::string &name) :
+            as_(nh_, name, boost::bind(&ElevatorAction::executeCB, this, _1), false),
+            action_name_(name),
+			publishLvlThread_(std::bind(&ElevatorAction::climbLevelThread, this))
+        {
+			as_.start();
+
+			//Service networking things?
+            std::map<std::string, std::string> service_connection_header;
+            service_connection_header["tcp_nodelay"] = "1";
+
+			//Server for level two vs. level three climbs
+			level_two_climb_ = nh_.advertiseService("level_two_climb_server", &ElevatorAction::levelTwoClimbServer,this);
+
+			//Client for elevator controller
+            elevator_client_ = nh_.serviceClient<elevator_controller::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
+
+			//Talon states subscriber
+            talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);
+
+			//Climb level publisher
+			level_two_publisher_ = nh_.advertise<std_msgs::Bool>("level_two",1);
+
+			hatch_locations_.resize(ELEVATOR_MAX_INDEX);
+			cargo_locations_.resize(ELEVATOR_MAX_INDEX);
+			climb_locations_.resize(ELEVATOR_MAX_INDEX - min_climb_idx);
+			climb_locations_level_three_.resize(ELEVATOR_MAX_INDEX - min_climb_idx);
+			climb_locations_level_two_.resize(ELEVATOR_MAX_INDEX - min_climb_idx);
+        }
+
+		~ElevatorAction(void)
+		{
+			stopped_ = true;
+			publishLvlThread_.join();
+		}
+
+		// Make these std::arrays instead
+		// TODO - member variables end with an underscore
+		std::vector<double> hatch_locations_;
+		std::vector<double> cargo_locations_;
+		std::vector<double> climb_locations_level_three_;
+		std::vector<double> climb_locations_level_two_;
+		std::vector<double> climb_locations_; //vector of everything at and after min_climb_idx in enumerated elevator indices, except for max index at the end
+
+		double timeout_;
 };
 
 int main(int argc, char** argv)
@@ -433,11 +438,7 @@ int main(int argc, char** argv)
 
 	elevator_action.climb_locations_ = elevator_action.climb_locations_level_three_;
 
-	std::thread publishLvlThread(std::bind(&ElevatorAction::climbLevelCallback, &elevator_action));
-
 	ros::spin();
 
-	elevator_action.stopped = true;
-	publishLvlThread.join();
 	return 0;
 }
