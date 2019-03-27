@@ -155,6 +155,13 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 */
 }
 
+void callback_no_depth(const ImageConstPtr &frameMsg)
+{
+	cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
+	cv::Mat depthMat(cvFrame->image.size(), CV_32FC1, Scalar(-1.0));
+	callback(frameMsg, cv_bridge::CvImage(std_msgs::Header(), "32FC1", depthMat).toImageMsg());
+}
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "goal_detect");
@@ -167,12 +174,30 @@ int main(int argc, char **argv)
 	nh.getParam("sub_rate", sub_rate);
 	nh.getParam("pub_rate", pub_rate);
 	nh.getParam("batch", batch);
-	message_filters::Subscriber<Image> frame_sub(nh, "/zed_goal/left/image_rect_color", sub_rate);
-	message_filters::Subscriber<Image> depth_sub(nh, "/zed_goal/depth/depth_registered", sub_rate);
-	typedef sync_policies::ApproximateTime<Image, Image > MySyncPolicy2;
-	// ApproximateTime takes a queue size as its constructor argument, hence MySyncPolicy(xxx)
-	Synchronizer<MySyncPolicy2> sync2(MySyncPolicy2(10), frame_sub, depth_sub);
-	sync2.registerCallback(boost::bind(&callback, _1, _2));
+
+	bool no_depth = false;
+	nh.getParam("no_depth", no_depth);
+
+	std::shared_ptr<message_filters::Subscriber<Image>> frame_sub;
+	std::shared_ptr<message_filters::Subscriber<Image>> depth_sub;
+	typedef sync_policies::ApproximateTime<Image, Image>  SyncPolicy;
+	std::shared_ptr<Synchronizer<SyncPolicy>> sync;
+
+	std::shared_ptr<ros::Subscriber> rgb_sub;
+	if (!no_depth)
+	{
+		ROS_INFO("starting goal detection using ZED");
+		frame_sub = std::make_shared<message_filters::Subscriber<Image>>(nh, "/zed_goal/left/image_rect_color", sub_rate);
+		depth_sub = std::make_shared<message_filters::Subscriber<Image>>(nh, "/zed_goal/depth/depth_registered", sub_rate);
+		// ApproximateTime takes a queue size as its constructor argument, hence SyncPolicy(xxx)
+		sync = std::make_shared<Synchronizer<SyncPolicy>>(SyncPolicy(10), *frame_sub, *depth_sub);
+		sync->registerCallback(boost::bind(&callback, _1, _2));
+	}
+	else
+	{
+		ROS_INFO("starting goal detection using webcam");
+		rgb_sub = std::make_shared<ros::Subscriber>(nh.subscribe("/c920_camera/image_raw", sub_rate, callback_no_depth));
+	}
 
 	// Set up publisher
 	pub = nh.advertise<goal_detection::GoalDetection>("goal_detect_msg", pub_rate);
