@@ -19,17 +19,14 @@ class AlignHatchPanelAction : public BaseAlignAction {
 				x_error_topic_,
 				y_error_topic_)
 		{
-			// TODO - this is kinda weird having 2 different y_error_ subscribers (one here,
-			// one in the base). Having the align hatch panel action return the same format
-			// as the pid node will allow you to remove this, at least partially
-			y_error_ = nh_.subscribe(y_error_topic_, 1, &AlignHatchPanelAction::y_error_cb, this);
 		}
+
+
+#if 0 // Seems to build with these commented out? @kevinj
 
 		void y_error_cb(const std_msgs::Bool &msg) {
 			y_aligned_ = msg.data;
 		}
-	
-#if 0 // Seems to build with these commented out? @kevinj
 		/*HACK TO GET CODE TO COMPILE -- @kevinj please help*/
 		void orient_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
