@@ -6,6 +6,6 @@
 
 	<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_zed" args="kds -0.072263 0.0244348 0 0 0 base_link zed_camera_center" />
 
-	<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_panel_outtake" args="-0.074422 -0.403098 0 0 0 0 base_link panel_outtake" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_panel_outtake" args="-0.074422 -0.403098 0 -0.5 0.5 -0.5 0.5 base_link panel_outtake" />
 </launch>
 
