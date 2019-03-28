@@ -25,9 +25,11 @@ bool debug = true;
 
 void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 {
+	ROS_INFO_STREAM("camera callback is running");
 	goals_found = true;
 	try
 	{
+<<<<<<< 21d55a2f758b43efd6e2a269de3b29225d2139db
 		if(debug)
 		{
 			ROS_INFO_THROTTLE(1, " RAW point of turtle 3 in frame of turtle 1 Position(x:%f y:%f z:%f)\n",
@@ -44,6 +46,18 @@ void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 					relative_goal_location.point.y,
 					relative_goal_location.point.z);
 		}
+=======
+		ROS_INFO(" RAW point of turtle 3 in frame of turtle 1 Position(x:%f y:%f z:%f)\n", 
+				raw_goal_location->point.x,
+				raw_goal_location->point.y,
+				raw_goal_location->point.z);
+		ROS_INFO_STREAM(target_frame);
+		buffer.transform(*raw_goal_location, relative_goal_location, target_frame);
+		ROS_INFO("RELATIVE point of turtle 3 in frame of turtle 1 Position(x:%f y:%f z:%f)\n", 
+				relative_goal_location.point.x,
+				relative_goal_location.point.y,
+				relative_goal_location.point.z);
+>>>>>>> woo! it publishes a cmd_vel now! just one transform bug to fix
 	}
 	catch (tf2::TransformException &ex)
 	{
@@ -143,13 +157,20 @@ int main(int argc, char ** argv)
 
 		if(fabs(error) < error_threshold)
 		{
+<<<<<<< 21d55a2f758b43efd6e2a269de3b29225d2139db
 			if(debug)
 				ROS_INFO_STREAM_THROTTLE(1, "we're aligned!! error = " << error);
 			//aligned = true;
 			cmd_msg.data = 0;
+=======
+			ROS_INFO_STREAM("we're aligned!! error = " << relative_goal_location.point.x);
+			aligned = true;
+			y_msg.data = 0;
+>>>>>>> woo! it publishes a cmd_vel now! just one transform bug to fix
 		}
 		else if(error > 0)
 		{
+<<<<<<< 21d55a2f758b43efd6e2a269de3b29225d2139db
 			if(debug)
 				ROS_INFO_STREAM_THROTTLE(1, "we're left. error = " << error);
 			cmd_msg.data = -1*cmd_vel_to_pub;
@@ -159,6 +180,15 @@ int main(int argc, char ** argv)
 			if(debug)
 				ROS_INFO_STREAM_THROTTLE(1, "we're right. error = " << error);
 			cmd_msg.data = 1*cmd_vel_to_pub;
+=======
+			ROS_INFO_STREAM("we're left. error = " << relative_goal_location.point.x);
+			y_msg.data = 1*cmd_vel_to_pub;
+		}
+		else
+		{
+			ROS_INFO_STREAM("we're right. error = " << relative_goal_location.point.x);
+			y_msg.data = -1*cmd_vel_to_pub;
+>>>>>>> woo! it publishes a cmd_vel now! just one transform bug to fix
 		}
 
 		if(publish)
