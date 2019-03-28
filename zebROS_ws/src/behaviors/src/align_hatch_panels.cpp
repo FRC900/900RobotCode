@@ -71,6 +71,7 @@ class AlignHatchPanelAction : public BaseAlignAction {
 		}
 #endif
 };
+
 // TODO : These probably need to be moved into the base class, along
 // with some defaults and a way to set them
 double align_timeout;

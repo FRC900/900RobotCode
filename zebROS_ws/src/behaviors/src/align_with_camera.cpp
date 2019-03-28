@@ -29,7 +29,6 @@ void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 	goals_found = true;
 	try
 	{
-<<<<<<< 21d55a2f758b43efd6e2a269de3b29225d2139db
 		if(debug)
 		{
 			ROS_INFO_THROTTLE(1, " RAW point of turtle 3 in frame of turtle 1 Position(x:%f y:%f z:%f)\n",
@@ -46,18 +45,6 @@ void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 					relative_goal_location.point.y,
 					relative_goal_location.point.z);
 		}
-=======
-		ROS_INFO(" RAW point of turtle 3 in frame of turtle 1 Position(x:%f y:%f z:%f)\n", 
-				raw_goal_location->point.x,
-				raw_goal_location->point.y,
-				raw_goal_location->point.z);
-		ROS_INFO_STREAM(target_frame);
-		buffer.transform(*raw_goal_location, relative_goal_location, target_frame);
-		ROS_INFO("RELATIVE point of turtle 3 in frame of turtle 1 Position(x:%f y:%f z:%f)\n", 
-				relative_goal_location.point.x,
-				relative_goal_location.point.y,
-				relative_goal_location.point.z);
->>>>>>> woo! it publishes a cmd_vel now! just one transform bug to fix
 	}
 	catch (tf2::TransformException &ex)
 	{
@@ -175,7 +162,11 @@ int main(int argc, char ** argv)
 				ROS_INFO_STREAM_THROTTLE(1, "we're left. error = " << error);
 			cmd_msg.data = -1*cmd_vel_to_pub;
 		}
+<<<<<<< 04cf929f3bab11ac43bb168926a442e9b0632d58
 		else
+=======
+		else if(relative_goal_location.point.x > 0)
+>>>>>>> fixed link for test_actionlib and cmd_vel backwards bug
 		{
 			if(debug)
 				ROS_INFO_STREAM_THROTTLE(1, "we're right. error = " << error);
@@ -202,7 +193,13 @@ int main(int argc, char ** argv)
 		}
 		last_command_published = cmd_msg.data;
 
+<<<<<<< 04cf929f3bab11ac43bb168926a442e9b0632d58
 		aligned_msg.data[0] = error;
+=======
+		std_msgs::Float64MultiArray aligned_msg;
+		aligned_msg.data.resize(5);
+		aligned_msg.data[0] =  aligned ? 0.0 : std::numeric_limits<double>::max();
+>>>>>>> fixed link for test_actionlib and cmd_vel backwards bug
 		successful_y_align.publish(aligned_msg);
 
 		publish_last = publish;
