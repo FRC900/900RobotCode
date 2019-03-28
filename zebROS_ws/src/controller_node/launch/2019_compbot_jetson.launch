@@ -133,6 +133,7 @@
 	
 	<!-- TODO need a way to use the same PID node in multiple align servers without copying and pasting topics -->
 	<!-- Create a new group for each align server, define params for every single topic, load all nodes used by that align server -->
+<<<<<<< 1bed7a6e0e683dc8781782b3e3bbb92ad21d91c4
 	<!--group ns="align_server_common">
 		<param name="enable_orient_pub" value="orient_pid/pid_enable" />
 		<param name="orient_error_topic" value="orient_pid/pid_debug" />
@@ -144,6 +145,10 @@
 
 	<group ns="align_cargo_rocketship">
 		<!--param name="enable_align_pub" value="align_pid/pid_enable" />
+=======
+	<group ns="align_cargo_rocket_ship">
+		<param name="enable_align_pub" value="align_pid/pid_enable" />
+>>>>>>> made base-align server an include file, simple class that inherits from
 		<param name="enable_orient_pub" value="orient_pid/pid_enable" />
 		<param name="enable_x_pub" value="x_pid/pid_enable" />
 		<param name="enable_y_pub" value="y_pid/pid_enable" />
@@ -162,8 +167,14 @@
 
 		<param name="orient_state_topic" value="orient_pid/orient_state" />
 		<param name="x_state_topic" value="x_pid/x_state" />
+<<<<<<< 1bed7a6e0e683dc8781782b3e3bbb92ad21d91c4
 		<param name="y_state_topic" value="y_pid/y_state" /-->
 		<node name="cargo_distance_pid" pkg="pid" type="controller">
+=======
+		<param name="y_state_topic" value="y_pid/y_state" />
+		<!-- Distance PID Cargo -->
+		<node name="cargo_distance_pid" pkg="pid" type="controller" >
+>>>>>>> made base-align server an include file, simple class that inherits from
 			<param name="node_name" value="cargo_distance_pid" />
 			<param name="Kp" value="4.8" />
 			<param name="Ki" value="0.0" />
@@ -173,6 +184,7 @@
 			<param name="windup_limit" value="10" />
 			<param name="max_loop_frequency" value="100.0" />
 			<param name="min_loop_frequency" value="100.0" />
+<<<<<<< 1bed7a6e0e683dc8781782b3e3bbb92ad21d91c4
 			<param name="topic_from_controller" value="x_pid/x_command" />     
 			<param name="setpoint_topic" value="x_pid/x_setpoint" />
 			<param name="topic_from_plant" value="x_pid/x_state" />
@@ -180,6 +192,16 @@
 			<remap from="pid_enable" to="x_pid/pid_enable" />
 		</node>
 
+=======
+			<param name="topic_from_controller" value=x_command_topic />     
+			<param name="setpoint_topic" value=x_setpoint_topic />
+			<param name="topic_from_plant" value=x_setpoint_topic />
+			<remap from="pid_debug" to=x_error_topic/>
+			<remap from="pid_enable" to=x_enable_topic/>
+		</node>
+
+		<!-- Cargo  PID -->
+>>>>>>> made base-align server an include file, simple class that inherits from
 		<node name="cargo_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="cargo_pid" />
 			<param name="Kp" value="5.0" />
@@ -190,6 +212,7 @@
 			<param name="windup_limit" value="10" />
 			<param name="max_loop_frequency" value="100.0" />
 			<param name="min_loop_frequency" value="100.0" />
+<<<<<<< 1bed7a6e0e683dc8781782b3e3bbb92ad21d91c4
 			<param name="topic_from_controller" value="y_pid/y_command" />     
 			<param name="setpoint_topic" value="y_pid/y_setpoint" />
 			<param name="topic_from_plant" value="y_pid/y_state" />
@@ -206,6 +229,24 @@
 			<param name="name" value="align_pid" />
 		</node>
 	</group> 
+=======
+			<param name="topic_from_controller" value=y_command_topic />     
+			<param name="setpoint_topic" value=y_setpoint_topic />
+			<param name="topic_from_plant" value=y_setpoint_topic />
+			<remap from="pid_debug" to=y_error_topic/>
+			<remap from="pid_enable" to=y_enable_topic/>
+		</node>
+
+		<node name="align_pid_cargo_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+			<param name="orient_topic" value=orient_command_topic />
+			<param name="x_topic" value=x_command_topic />
+			<param name="y_topic" value=y_command_topic />
+			<param name="command_timeout" value="0.5" />
+			<param name="enable_topic" value=enable_align_pub />
+			<param name="name" value="align_pid" />
+		</node>
+	</group>
+>>>>>>> made base-align server an include file, simple class that inherits from
 
 	<group ns="align_server">
 
