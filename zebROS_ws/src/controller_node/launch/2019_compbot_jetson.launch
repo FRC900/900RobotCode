@@ -146,7 +146,7 @@
 		<!--param name="enable_align_pub" value="align_pid/pid_enable" />
 	</group>
 
-	<group ns="align_cargo_rocket_ship">
+	<!-- <group ns="align_cargo_rocket_ship">
 		<param name="enable_align_pub" value="align_pid/pid_enable" />
 		<param name="enable_orient_pub" value="orient_pid/pid_enable" />
 		<param name="enable_x_pub" value="x_pid/pid_enable" />
@@ -167,6 +167,7 @@
 		<param name="orient_state_topic" value="orient_pid/orient_state" />
 		<param name="x_state_topic" value="x_pid/x_state" />
 		<param name="y_state_topic" value="y_pid/y_state" /-->
+
 	<group ns="align_cargo_rocketship">
 		<!-- Distance PID Cargo -->
 		<node name="cargo_distance_pid" pkg="pid" type="controller" >
@@ -186,7 +187,6 @@
 			<remap from="pid_enable" to="x_pid/pid_enable" />
 		</node>
 
-		<!-- Cargo  PID -->
 		<node name="cargo_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="cargo_pid" />
 			<param name="Kp" value="5.0" />
@@ -347,6 +347,51 @@
 	<include file="$(find realsense2_camera)/launch/rs_t265.launch" />
 
 	<include file="$(find controller_node)/launch/tf_2019.launch" />
+
+
+	<group ns="align_hatch">
+		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
+		<node name="align_server" pkg="behaviors" type="align_hatch_server" output="screen" />
+		<rosparam file="$(find behaviors)/config/align_with_camera.yaml" command="load" />
+		<node name="align_with_camera" pkg="behaviors" type="align_with_camera" output="screen" />
+		<node name="translate_to_pointstamped" pkg="goal_detection" type="translate_to_pointstamped" output="screen">
+			<param name="camera_goal_topic" value="/zed_goal/whatever" />
+		</node>
+
+		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
+		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" >
+			<remap from="navX_pid/setpoint" to="orient_pid/setpoint"/>
+			<remap from="navX_pid/state" to="orient_pid/state"/>
+		</node>
+
+		<node name="navX_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="navX_pid" />
+			<param name="Kp" value="13.0" />
+			<param name="Ki" value="0.0" />
+			<param name="Kd" value="1.5" />
+			<param name="upper_limit" value="8" />
+			<param name="lower_limit" value="-8" />
+			<param name="windup_limit" value="10" />
+			<param name="angle_error" value="false" />
+			<param name="angle_wrap" value="false" />
+			<param name="max_loop_frequency" value="100.0" />
+			<param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="orient_pid/orient_command" />     
+			<param name="setpoint_topic" value="orient_pid/setpoint" />
+			<param name="topic_from_plant" value="orient_pid/state" />
+			<remap from="pid_debug" to="orient_pid/pid_debug"/>
+			<remap from="pid_enable" to="orient_pid/pid_enable" />
+		</node>
+
+		<node name="align_pid_hatch_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+			<param name="orient_topic" value="orient_pid/orient_command" />
+			<param name="y_topic" value="align_with_camera/y_command" />
+			<param name="command_timeout" value="0.5" />
+			<param name="enable_topic" value="align_hatch_pid/pid_enable" />
+			<param name="name" value="align_hatch" />
+		</node>
+
+	</group>
 
 
 </launch>

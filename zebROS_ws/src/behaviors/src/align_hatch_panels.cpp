@@ -69,10 +69,8 @@ class AlignHatchPanelAction : public BaseAlignAction {
 				r.sleep();
 			}
 		}
-
 };
 
-bool debug;
 
 int main(int argc, char** argv)
 {

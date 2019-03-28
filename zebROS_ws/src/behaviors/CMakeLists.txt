@@ -243,11 +243,6 @@ target_link_libraries(align_cargo_rocketship
 #target_link_libraries(base_align_server
 #  ${catkin_LIBRARIES}
 #)
-add_executable(align_cargo_rocket_ship src/align_cargo_rocket_ship.cpp)
-add_dependencies(align_cargo_rocket_ship ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(align_cargo_rocket_ship
-  ${catkin_LIBRARIES}
-)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
