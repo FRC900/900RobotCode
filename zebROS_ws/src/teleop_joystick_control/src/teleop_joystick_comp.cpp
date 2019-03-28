@@ -50,6 +50,7 @@ double offset_angle = 0;
 double max_speed;
 double max_rot;
 
+// array of joystick_states messages for multiple joysticks
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 
@@ -77,6 +78,7 @@ ros::ServiceClient manual_server_cargoIn;
 ros::ServiceClient continue_outtake_client;
 
 ros::ServiceClient align_with_terabee;
+
 //use shared pointers to make the clients global
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_cargo_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_cargo_ac;
@@ -136,22 +138,31 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
+	//So the code can use specific joysticks
+	int joystick_id = -1;
+
 	const ros::M_string &header = event.getConnectionHeader();
 	const std::string topic = header.at("topic");
 
-	size_t i = 0;
 	//Identifies the incoming message as the correct joystick based on the topic the message was recieved from
-	for(bool msg_assign = false; (msg_assign == false) && (i < topic_array.size()); i++)
+	for(size_t i = 0; (i < topic_array.size()); i++)
 	{
 		if(topic == topic_array[i])
 		{
 			joystick_states_array[i] = *(event.getMessage());
-			msg_assign = true;
+			joystick_id = i;
+			break;
 		}
 	}
 
+	if(joystick_id == -1)
+	{
+		ROS_ERROR("Joystick message topic not identified. Teleop callback failed.");
+		return;
+	}
+
 	//Only do this for the first joystick
-	if(i == 1)
+	if(joystick_id == 0)
 	{
 		// TODO - experiment with rate-limiting after scaling instead?
 		double leftStickX = joystick_states_array[0].leftStickX;
@@ -180,6 +191,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		leftStickY =  pow(fabs(leftStickY), config.joystick_pow) * max_speed;
 		double rotation = pow(fabs(rightStickX), config.rotation_pow) * max_rot;
 
+		// Copysign is a c++ function to make sure we don't screw up the sign in the lines above
 		leftStickX = copysign(leftStickX, joystick_states_array[0].leftStickX);
 		leftStickY = copysign(leftStickY, -joystick_states_array[0].leftStickY);
 		rotation = copysign(rotation,  joystick_states_array[0].rightStickX);
@@ -537,7 +549,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 	}
 
-	else if(i == 2)
+	else if(joystick_id == 1)
 	{
 		//Joystick2: buttonA
 		if(joystick_states_array[1].buttonAPress) //Clamp
