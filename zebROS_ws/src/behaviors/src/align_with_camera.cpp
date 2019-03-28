@@ -57,16 +57,13 @@ int main(int argc, char ** argv)
 	//read configs
 	double cmd_vel_to_pub;
 	if(!n_params.getParam("cmd_vel_to_pub", cmd_vel_to_pub))
-		ROS_ERROR_STREAM("Could not read cmd_vel_to_pub in align_with_terabee");
+		ROS_ERROR_STREAM("Could not read cmd_vel_to_pub in align_with_camera");
 	std::string target_frame;
 	if(!n_params.getParam("target_frame", target_frame))
-		ROS_ERROR_STREAM("Could not read target_frame in align_with_terabee");
-	std::string camera_goal_topic;
-	if(!n_params.getParam("camera_goal_topic", camera_goal_topic))
-		ROS_ERROR_STREAM("Could not read camera_goal_topic in align_with_terabee");
+		ROS_ERROR_STREAM("Could not read target_frame in align_with_camera");
 	double x_error_threshold;
 	if(!n_params.getParam("x_error_threshold", x_error_threshold))
-		ROS_ERROR_STREAM("Could not read x_error_threshold in align_with_terabee");
+		ROS_ERROR_STREAM("Could not read x_error_threshold in align_with_camera");
 
 	//set up publisher for publish_pid_cmd_vel node
 	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_camera/y_command", 1);
@@ -75,9 +72,9 @@ int main(int argc, char ** argv)
 	//set up enable subscriber from align_server
 	ros::Subscriber start_stop_sub = n.subscribe("align_with_camera/enable_y_pub", 1, &startStopCallback);
 	//set up camera subscriber with transforms
-	message_filters::Subscriber<geometry_msgs::PointStamped> camera_msg_sub(n, camera_goal_topic, 1);
+	message_filters::Subscriber<geometry_msgs::PointStamped> camera_msg_sub(n, "pointstamped_goal_msg", 1);
 	//advertise service to start or stop align (who uses this?)
-	ros::ServiceServer start_stop_service = n.advertiseService("align_with_terabee", startStopAlign);
+	ros::ServiceServer start_stop_service = n.advertiseService("align_with_camera", startStopAlign);
 
 	//set up transforms for camera -> mechanismt checkout align_with_zed -- ../../goal_detection/src/tr
 	tf2_ros::TransformListener tf2(buffer);
