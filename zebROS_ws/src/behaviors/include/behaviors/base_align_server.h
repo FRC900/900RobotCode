@@ -210,6 +210,7 @@ class BaseAlignAction {
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
 			enable_y_pub_.publish(enable_msg);
+			start_time_ = ros::Time::now().toSec();
 
 			//Wait to be aligned
 			if(wait_for_alignment) {
@@ -319,6 +320,17 @@ class BaseAlignAction {
 
 			//move mech out of the way
 			//move_mech(r, false);
+			//
+			//enable, wait for alignment, default timeout, don't keep enabled
+			align_y(r, true, true);
+
+			//Check if it timed out or preempted while waiting
+			timed_out = check_timeout(start_time_, align_timeout);
+			preempted_ = check_preempted();
+			if(preempted_ || timed_out) {
+				return false;
+			}
+
 
 			//enable, wait for alignment, TODO change this timeout, keep enabled
 			align_orient(r, true, true, align_timeout, true);
@@ -339,22 +351,13 @@ class BaseAlignAction {
 			if(preempted_ || timed_out) {
 				return false;
 			}
-			//enable, wait for alignment, default timeout, don't keep enabled
-			align_y(r, true, true);
-
-			//Check if it timed out or preempted while waiting
-			timed_out = check_timeout(start_time_, align_timeout);
-			preempted_ = check_preempted();
-			if(preempted_ || timed_out) {
-				return false;
-			}
-
 			ROS_INFO("Base align class: align succeeded");
 			return true;
 		}
 
 		//define the function to be executed when the actionlib server is called
 		virtual void executeCB(const behaviors::AlignGoalConstPtr &goal) {
+			disable_pid();
 			bool align_succeeded = robot_align();
 			disable_pid(); //Disable all align PID after execution
 

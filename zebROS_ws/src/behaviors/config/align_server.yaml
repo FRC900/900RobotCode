@@ -1,5 +1,5 @@
 align_server_params : #params defined in align_server_cpp #default values
-    align_timeout: 10
+    align_timeout: 2
     orient_timeout: 2
     x_error_threshold: 0.07
     cargo_error_threshold: 0.05

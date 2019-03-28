@@ -5,6 +5,7 @@
 #include "std_srvs/SetBool.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
+#include "std_msgs/Float64MultiArray.h"
 //tf stuff
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/message_filter.h"
@@ -105,7 +106,7 @@ int main(int argc, char ** argv)
 			aligned = true;
 			y_msg.data = 0;
 		}
-		else if(relative_goal_location.point.x < 0)
+		else if(relative_goal_location.point.x > 0)
 		{
 			ROS_INFO_STREAM("we're left. error = " << relative_goal_location.point.x);
 			y_msg.data = 1*cmd_vel_to_pub;
@@ -127,8 +128,9 @@ int main(int argc, char ** argv)
 			y_command_pub.publish(y_msg);
 		}
 
-		std_msgs::Bool aligned_msg;
-		aligned_msg.data = aligned;
+		std_msgs::Float64MultiArray aligned_msg;
+		aligned_msg.data.resize(5);
+		aligned_msg.data[0] =  aligned ? 0.0 : std::numeric_limits<double>::max();
 		successful_y_align.publish(aligned_msg);
 
 		publish_last = publish;
