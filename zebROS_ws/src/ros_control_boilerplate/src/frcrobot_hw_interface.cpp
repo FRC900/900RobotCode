@@ -287,9 +287,26 @@ void FRCRobotHWInterface::init(void)
 							  " invert " << digital_input_inverts_[i]);
 
 		if (digital_input_locals_[i])
-			digital_inputs_.push_back(std::make_shared<frc::DigitalInput>(digital_input_dio_channels_[i]));
+		{
+			bool need_new_hal_din = true;
+			for (size_t j = 0; (j < i) && need_new_hal_din; j++)
+			{
+				if (digital_input_dio_channels_[i] == digital_input_dio_channels_[j])
+				{
+					digital_inputs_.push_back(digital_inputs_[j]);
+					need_new_hal_din = false;
+						ROS_WARN_STREAM("DIn " << digital_input_names_[i] <<
+								" uses same channel (" << digital_input_dio_channels_[i] <<
+								") as " <<  digital_input_names_[j]);
+				}
+			}
+			if (need_new_hal_din)
+				digital_inputs_.push_back(std::make_shared<frc::DigitalInput>(digital_input_dio_channels_[i]));
+		}
 		else
+		{
 			digital_inputs_.push_back(nullptr);
+		}
 	}
 	for (size_t i = 0; i < num_digital_outputs_; i++)
 	{
@@ -417,7 +434,22 @@ void FRCRobotHWInterface::init(void)
 							  " local = " << analog_input_locals_[i] <<
 							  " as Analog Input " << analog_input_analog_channels_[i]);
 		if (analog_input_locals_[i])
-			analog_inputs_.push_back(std::make_shared<frc::AnalogInput>(analog_input_analog_channels_[i]));
+		{
+			bool need_new_hal_ain = true;
+			for (size_t j = 0; (j < i) && need_new_hal_ain; j++)
+			{
+				if (analog_input_analog_channels_[i] == analog_input_analog_channels_[j])
+				{
+					analog_inputs_.push_back(analog_inputs_[j]);
+					need_new_hal_ain = false;
+						ROS_WARN_STREAM("AIn " << analog_input_names_[i] <<
+								" uses same channel (" << analog_input_analog_channels_[i] <<
+								") as " <<  analog_input_names_[j]);
+				}
+			}
+			if (need_new_hal_ain)
+				analog_inputs_.push_back(std::make_shared<frc::AnalogInput>(analog_input_analog_channels_[i]));
+		}
 		else
 			analog_inputs_.push_back(nullptr);
 	}
