@@ -48,7 +48,7 @@ int main(int argc, char ** argv)
 	ros::init(argc, argv, "translate_to_pointstamped");
 	ros::NodeHandle nh;
 
-	ros::Subscriber zed_msg_sub = nh.subscribe("goal_detection_node/goal_detect_msg", 10, &ZEDMsgCallback);
+	ros::Subscriber zed_msg_sub = nh.subscribe("/goal_detection_node/goal_detect_msg", 10, &ZEDMsgCallback);
 	point_msg_pub = nh.advertise<geometry_msgs::PointStamped>("pointstamped_goal_msg", 10);
 
 	ros::spin();
