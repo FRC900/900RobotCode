@@ -21,10 +21,20 @@ geometry_msgs::PointStamped relative_goal_location;
 
 void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 {
+	ROS_INFO_STREAM("camera callback is running");
 	goals_found = true;
 	try
 	{
+		ROS_INFO(" RAW point of turtle 3 in frame of turtle 1 Position(x:%f y:%f z:%f)\n", 
+				raw_goal_location->point.x,
+				raw_goal_location->point.y,
+				raw_goal_location->point.z);
+		ROS_INFO_STREAM(target_frame);
 		buffer.transform(*raw_goal_location, relative_goal_location, target_frame);
+		ROS_INFO("RELATIVE point of turtle 3 in frame of turtle 1 Position(x:%f y:%f z:%f)\n", 
+				relative_goal_location.point.x,
+				relative_goal_location.point.y,
+				relative_goal_location.point.z);
 	}
 	catch (tf2::TransformException &ex)
 	{
@@ -58,7 +68,6 @@ int main(int argc, char ** argv)
 	double cmd_vel_to_pub;
 	if(!n_params.getParam("cmd_vel_to_pub", cmd_vel_to_pub))
 		ROS_ERROR_STREAM("Could not read cmd_vel_to_pub in align_with_camera");
-	std::string target_frame;
 	if(!n_params.getParam("target_frame", target_frame))
 		ROS_ERROR_STREAM("Could not read target_frame in align_with_camera");
 	double x_error_threshold;
@@ -92,15 +101,18 @@ int main(int argc, char ** argv)
 
 		if(fabs(relative_goal_location.point.x) < x_error_threshold)
 		{
+			ROS_INFO_STREAM("we're aligned!! error = " << relative_goal_location.point.x);
 			aligned = true;
 			y_msg.data = 0;
 		}
 		else if(relative_goal_location.point.x < 0)
 		{
+			ROS_INFO_STREAM("we're left. error = " << relative_goal_location.point.x);
 			y_msg.data = 1*cmd_vel_to_pub;
 		}
 		else
 		{
+			ROS_INFO_STREAM("we're right. error = " << relative_goal_location.point.x);
 			y_msg.data = -1*cmd_vel_to_pub;
 		}
 
