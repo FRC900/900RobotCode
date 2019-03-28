@@ -1,6 +1,5 @@
 uint8 setpoint_index # 0=cargo ship, 1=low rocket, 2=mid rocket, 3=high rocket, 4=intake
 bool place_cargo
-bool raise_intake_after_success
 ---
 bool timed_out
 bool success

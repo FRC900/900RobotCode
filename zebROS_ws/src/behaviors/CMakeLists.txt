@@ -215,6 +215,11 @@ add_dependencies(align_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPOR
 target_link_libraries(align_server
   ${catkin_LIBRARIES}
 )
+add_executable(base_align_server src/base_align_server.cpp)
+add_dependencies(base_align_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(base_align_server
+  ${catkin_LIBRARIES}
+)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
