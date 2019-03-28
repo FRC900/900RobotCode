@@ -23,9 +23,10 @@ ros::Time goal_timestamp;
 
 bool debug = true;
 
+bool debug = false;
+
 void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 {
-	ROS_INFO_STREAM("camera callback is running");
 	goals_found = true;
 	try
 	{
@@ -144,42 +145,22 @@ int main(int argc, char ** argv)
 
 		if(fabs(error) < error_threshold)
 		{
-<<<<<<< 21d55a2f758b43efd6e2a269de3b29225d2139db
 			if(debug)
 				ROS_INFO_STREAM_THROTTLE(1, "we're aligned!! error = " << error);
 			//aligned = true;
 			cmd_msg.data = 0;
-=======
-			ROS_INFO_STREAM("we're aligned!! error = " << relative_goal_location.point.x);
-			aligned = true;
-			y_msg.data = 0;
->>>>>>> woo! it publishes a cmd_vel now! just one transform bug to fix
 		}
 		else if(error > 0)
 		{
-<<<<<<< 21d55a2f758b43efd6e2a269de3b29225d2139db
 			if(debug)
 				ROS_INFO_STREAM_THROTTLE(1, "we're left. error = " << error);
 			cmd_msg.data = -1*cmd_vel_to_pub;
 		}
-<<<<<<< 04cf929f3bab11ac43bb168926a442e9b0632d58
 		else
-=======
-		else if(relative_goal_location.point.x > 0)
->>>>>>> fixed link for test_actionlib and cmd_vel backwards bug
 		{
 			if(debug)
 				ROS_INFO_STREAM_THROTTLE(1, "we're right. error = " << error);
 			cmd_msg.data = 1*cmd_vel_to_pub;
-=======
-			ROS_INFO_STREAM("we're left. error = " << relative_goal_location.point.x);
-			y_msg.data = 1*cmd_vel_to_pub;
-		}
-		else
-		{
-			ROS_INFO_STREAM("we're right. error = " << relative_goal_location.point.x);
-			y_msg.data = -1*cmd_vel_to_pub;
->>>>>>> woo! it publishes a cmd_vel now! just one transform bug to fix
 		}
 
 		if(publish)
@@ -193,13 +174,7 @@ int main(int argc, char ** argv)
 		}
 		last_command_published = cmd_msg.data;
 
-<<<<<<< 04cf929f3bab11ac43bb168926a442e9b0632d58
 		aligned_msg.data[0] = error;
-=======
-		std_msgs::Float64MultiArray aligned_msg;
-		aligned_msg.data.resize(5);
-		aligned_msg.data[0] =  aligned ? 0.0 : std::numeric_limits<double>::max();
->>>>>>> fixed link for test_actionlib and cmd_vel backwards bug
 		successful_y_align.publish(aligned_msg);
 
 		publish_last = publish;
