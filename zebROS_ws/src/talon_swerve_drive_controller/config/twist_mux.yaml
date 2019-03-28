@@ -19,4 +19,9 @@ topics:
   topic   : /hatch_outtake/swerve_drive_controller/cmd_vel
   timeout : 0.2
   priority: 100
+-
+  name    : align_hatch
+  topic   : /align_hatch/align_hatch/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 100
 locks: []
