@@ -5,6 +5,7 @@
 #include "std_srvs/SetBool.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
+#include "std_msgs/Float64MultiArray.h"
 
 #define NUM_SENSORS 8
 
@@ -13,6 +14,8 @@
 // between various modes. That is, make a debug, enable, etc message and populate
 // them as-if this were the standard ROS PID node.  This would remove the need
 // for special cases in the align server itself
+//   Note - now done for the result - turned it into a float64 array like
+//          the PID nodes so the align server can use common code to decode it
 // TODO - also split up into two separate align with terabee nodes - one for
 // cargo, one for hatch?  If not, have two interfaces matching PID controllers,
 // one for cargo, one for hatch
@@ -95,7 +98,7 @@ int main(int argc, char ** argv)
 	ros::Publisher cargo_setpoint_pub = n.advertise<std_msgs::Float64>("cargo_pid/setpoint", 1);
 	ros::Publisher cargo_state_pub = n.advertise<std_msgs::Float64>("cargo_pid/state", 1);
 	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_terabee/y_command", 1);
-	ros::Publisher successful_y_align = n.advertise<std_msgs::Bool>("align_with_terabee/y_aligned", 1);
+	ros::Publisher successful_y_align = n.advertise<std_msgs::Float64MultiArray>("align_with_terabee/y_aligned", 1);
 
 	ros::Subscriber terabee_sub = n.subscribe("/multiflex_1/ranges_raw", 1, &multiflexCB);
 	ros::Subscriber start_stop_sub = n.subscribe("align_with_terabee/enable_y_pub", 1, &startStopCallback);
@@ -325,8 +328,14 @@ int main(int argc, char ** argv)
 			y_msg.data= 0;
 			y_command_pub.publish(y_msg);
 		}
-		std_msgs::Bool aligned_msg;
-		aligned_msg.data = aligned;
+		// Match the PID debug output format
+		// The 0th entry in the array is the error. Since we only
+		// have binary thresholding here, set that "error" to either 0
+		// or some huge number depending on whether or not we are or
+		// are not aligned
+		std_msgs::Float64MultiArray aligned_msg;
+		aligned_msg.data.resize(5);
+		aligned_msg.data[0] = aligned ? 0.0 : std::numeric_limits<double>::max();
 		successful_y_align.publish(aligned_msg);
 
 		publish_last = publish;
