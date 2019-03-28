@@ -84,7 +84,7 @@ int main(int argc, char ** argv)
 	//set up publisher for publish_pid_cmd_vel node
 	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_camera/y_command", 1);
 	//set up feedback publisher for the align_server which uses this node
-	ros::Publisher successful_y_align = n.advertise<std_msgs::Bool>("align_with_camera/y_aligned", 1);
+	ros::Publisher successful_y_align = n.advertise<std_msgs::Float64MultiArray>("align_with_camera/y_aligned", 1);
 	//set up enable subscriber from align_server
 	ros::Subscriber start_stop_sub = n.subscribe("align_with_camera/enable_y_pub", 1, &startStopCallback);
 	//set up camera subscriber with transforms
