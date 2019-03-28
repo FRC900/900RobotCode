@@ -105,7 +105,10 @@ class BaseAlignAction {
 			enable_align_pub_(nh_.advertise<std_msgs::Bool>(enable_align_topic_, 1, true)),
 			enable_orient_pub_(nh_.advertise<std_msgs::Bool>(enable_orient_topic_, 1, true)),
 			enable_x_pub_(nh_.advertise<std_msgs::Bool>(enable_x_topic_, 1, true)),
-			enable_y_pub_(nh_.advertise<std_msgs::Bool>(enable_y_topic_, 1, true))
+			enable_y_pub_(nh_.advertise<std_msgs::Bool>(enable_y_topic_, 1, true)),
+			orient_error_(nh_.subscribe(orient_error_topic_, 1, &BaseAlignAction::orient_error_cb, this)),
+			x_error_(nh_.subscribe(x_error_topic_, 1, &BaseAlignAction::x_error_cb, this)),
+			y_error_(nh_.subscribe(y_error_topic_, 1, &BaseAlignAction::y_error_cb, this))
 		{
             as_.start();
 
@@ -113,11 +116,6 @@ class BaseAlignAction {
             service_connection_header["tcp_nodelay"] = "1";
 
 			BrakeSrv_ = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
-
-			orient_error_ = nh_.subscribe(orient_error_topic_, 1, &BaseAlignAction::orient_error_cb, this);
-			x_error_ = nh_.subscribe(x_error_topic_, 1, &BaseAlignAction::x_error_cb, this);
-			/*HACK -- somehow, need to have a default for these? */
-			y_error_ = nh_.subscribe(y_error_topic_, 1, &BaseAlignAction::y_error_cb, this);
 		}
 
 		~BaseAlignAction(void)
