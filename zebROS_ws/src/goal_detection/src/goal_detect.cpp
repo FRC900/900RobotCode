@@ -84,7 +84,12 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 		geometry_msgs::Point32 dummy;
 		gd_msg.header.seq = frameMsg->header.seq;
 		gd_msg.header.stamp = frameMsg->header.stamp;
-		gd_msg.header.frame_id = frameMsg->header.frame_id;
+		// Remove _optical_frame from the camera frame ID if present
+		std::string frame_id = frameMsg->header.frame_id;
+		const size_t idx = frame_id.rfind("_optical_frame");
+		if (idx != std::string::npos)
+			frame_id.erase(idx);
+		gd_msg.header.frame_id = frame_id;
 		dummy.x = gfd[i].pos.x;
 		dummy.y = gfd[i].pos.y;
 		dummy.z = gfd[i].pos.z;
