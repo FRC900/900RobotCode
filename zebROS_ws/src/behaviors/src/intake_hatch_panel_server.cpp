@@ -83,7 +83,6 @@ class IntakeHatchPanelAction
 			behaviors::ElevatorGoal elev_goal;
 			elev_goal.setpoint_index = INTAKE;
 			elev_goal.place_cargo = false;
-			elev_goal.raise_intake_after_success = true;
 			ac_elevator_.sendGoal(elev_goal);
 
 			const double start_time = ros::Time::now().toSec();
