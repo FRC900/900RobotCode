@@ -14,6 +14,7 @@ if (DEFINED CMAKE_TOOLCHAIN_FILE)
     geometry_msgs
     std_msgs
     sensor_msgs
+	teraranger_array
     tf2
     tf2_ros
   )

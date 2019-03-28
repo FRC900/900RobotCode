@@ -19,6 +19,8 @@
 #include <geometry_msgs/Point32.h>
 #include <cv_bridge/cv_bridge.h>
 
+#include "teraranger_array/RangeArray.h"
+
 #include "goal_detection/GoalDetection.h"
 
 #include <sstream>
@@ -30,10 +32,12 @@ using namespace std;
 using namespace sensor_msgs;
 using namespace message_filters;
 
-static ros::Publisher pub;
-static GoalDetector *gd = NULL;
-static bool batch = true;
-static bool down_sample = false;
+ros::Publisher pub;
+GoalDetector *gd = NULL;
+bool batch = true;
+bool down_sample = false;
+double hFov = 69.; //105.;
+double camera_angle = -25.0;
 
 void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 {
@@ -68,9 +72,8 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	// grabbed from the ZED messages
 	if (gd == NULL)
 	{
-		const float hFov = 105.;
 		const Point2f fov(hFov * (M_PI / 180.),
-						  hFov * (M_PI / 180.) * ((float)framePtr->rows / framePtr->cols));
+						  hFov * (M_PI / 180.) * ((double)framePtr->rows / framePtr->cols));
 		gd = new GoalDetector(fov, framePtr->size(), !batch);
 	}
 	//Send current color and depth image to the actual GoalDetector
@@ -160,10 +163,25 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 */
 }
 
+double distance_from_terabee = -1;
+void multiflexCB(const teraranger_array::RangeArray& msg)
+{
+    double min_dist = std::numeric_limits<double>::max();
+	distance_from_terabee = -1;
+	for(int i = 0; i < 2; i++)
+	{
+		const double range = static_cast<double>(msg.ranges[i].range);
+		if(!std::isnan(range))
+			min_dist = std::min(min_dist, range);
+	}
+	if (min_dist != std::numeric_limits<double>::max())
+		distance_from_terabee = min_dist;
+}
+
 void callback_no_depth(const ImageConstPtr &frameMsg)
 {
 	cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
-	cv::Mat depthMat(cvFrame->image.size(), CV_32FC1, Scalar(-1.0));
+	cv::Mat depthMat(cvFrame->image.size(), CV_32FC1, Scalar(distance_from_terabee));
 	callback(frameMsg, cv_bridge::CvImage(std_msgs::Header(), "32FC1", depthMat).toImageMsg());
 }
 
@@ -182,6 +200,9 @@ int main(int argc, char **argv)
 
 	bool no_depth = false;
 	nh.getParam("no_depth", no_depth);
+
+	nh.getParam("hFov", hFov);
+	nh.getParam("camera_angle", hFov);
 
 	std::shared_ptr<message_filters::Subscriber<Image>> frame_sub;
 	std::shared_ptr<message_filters::Subscriber<Image>> depth_sub;
@@ -203,6 +224,7 @@ int main(int argc, char **argv)
 		ROS_INFO("starting goal detection using webcam");
 		rgb_sub = std::make_shared<ros::Subscriber>(nh.subscribe("/c920_camera/image_raw", sub_rate, callback_no_depth));
 	}
+	ros::Subscriber terabee_sub = nh.subscribe("/multiflex_1/ranges_raw", 1, &multiflexCB);
 
 	// Set up publisher
 	pub = nh.advertise<goal_detection::GoalDetection>("goal_detect_msg", pub_rate);

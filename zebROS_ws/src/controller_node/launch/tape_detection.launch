@@ -29,6 +29,8 @@
   <arg name="sub_rate" default="1" />
   <arg name="camera_flip" default="True" />
   <arg name="pub_rate" default="1" />
+  <arg name="hFov" default="105.0" />
+  <arg name="camera_angle" default="-25.0" />
   <arg name="batch" default="false" /> 
 
   <group ns="$(arg name)">
@@ -58,6 +60,8 @@
   	<param name="down_sample" value="$(arg down_sample)" />
   	<param name="sub_rate" value="$(arg sub_rate)" />
 	<param name="pub_rate" value="$(arg pub_rate)" />
+	<param name="hFov" value="$(arg hFov)" />
+	<param name="camera_angle" value="$(arg camera_angle)" />
 	<param name="batch" value="$(arg batch)" />
   </node>
 
