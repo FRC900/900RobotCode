@@ -93,8 +93,8 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 		if (idx != std::string::npos)
 			frame_id.erase(idx);
 		gd_msg.header.frame_id = frame_id;
-		dummy.x = gfd[i].pos.x;
-		dummy.y = gfd[i].pos.y;
+		dummy.x = gfd[i].pos.y;
+		dummy.y = gfd[i].pos.x;
 		dummy.z = gfd[i].pos.z;
 		gd_msg.location.push_back(dummy);
 	}
