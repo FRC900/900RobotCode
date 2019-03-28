@@ -216,6 +216,12 @@ add_dependencies(align_with_camera ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_
 target_link_libraries(align_with_camera
   ${catkin_LIBRARIES}
 )
+
+add_executable(align_hatch_server src/align_hatch_panels.cpp)
+add_dependencies(align_hatch_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(align_hatch_server
+  ${catkin_LIBRARIES}
+)
 #add_executable(base_align_server src/base_align_server.cpp)
 #add_dependencies(base_align_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 #target_link_libraries(base_align_server

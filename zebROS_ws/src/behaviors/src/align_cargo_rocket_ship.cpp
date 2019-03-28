@@ -17,3 +17,8 @@ class AlignCargoRocketShip:public BaseAlignAction {
 			x_aligned_ = msg.data;
 		}
 };
+
+int main(int argc, char ** argv)
+{
+	return 0;
+}
