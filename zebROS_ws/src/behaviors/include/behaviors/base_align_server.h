@@ -1,3 +1,4 @@
+#pragma once
 #include "ros/ros.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64MultiArray.h"
@@ -9,16 +10,18 @@
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
 
-double align_timeout;
-double orient_timeout;
-double x_timeout;
-double y_timeout;
+// TODO : These probably need to be moved into the base class, along
+// with some defaults and a way to set them
+extern double align_timeout;
+extern double orient_timeout;
+extern double x_timeout;
+extern double y_timeout;
 
-double orient_error_threshold;
-double x_error_threshold;
-double y_error_threshold;
+extern double orient_error_threshold;
+extern double x_error_threshold;
+extern double y_error_threshold;
 
-bool debug;
+extern bool debug;
 
 // TODO
 //    One way to clean this up is to create a base AlignAction class
@@ -61,16 +64,16 @@ class BaseAlignAction {
 		behaviors::AlignResult result_; //variable to store result of the actionlib action
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
 
-		std::shared_ptr<ros::Publisher> enable_align_pub_;
-		std::shared_ptr<ros::Publisher> enable_orient_pub_;
-		std::shared_ptr<ros::Publisher> enable_x_pub_;
-		std::shared_ptr<ros::Publisher> enable_y_pub_;
+		ros::Publisher enable_align_pub_;
+		ros::Publisher enable_orient_pub_;
+		ros::Publisher enable_x_pub_;
+		ros::Publisher enable_y_pub_;
 
 		ros::Subscriber orient_error_;
 		ros::Subscriber x_error_;
 		ros::Subscriber y_error_;
 
-        ros::ServiceClient BrakeSrv;
+        ros::ServiceClient BrakeSrv_;
 
 		bool aligned_ = false;
 		bool orient_aligned_ = false;
@@ -85,43 +88,42 @@ class BaseAlignAction {
 
 		double start_time_ = -1.0;
 
-
 	public:
 		//make the executeCB function run every time the actionlib server is called
 		BaseAlignAction(const std::string &name,
-			const std::shared_ptr<ros::Publisher>& enable_align_pub_,
-			const std::shared_ptr<ros::Publisher>& enable_orient_pub_,
-			const std::shared_ptr<ros::Publisher>& enable_x_pub_,
-			const std::shared_ptr<ros::Publisher>& enable_y_pub_,
-			const std::string &orient_error_topic_,
-			const std::string &x_error_topic_,
-			const std::string &y_error_topic_):
+						const std::string &enable_align_topic_,
+						const std::string &enable_orient_topic_,
+						const std::string &enable_x_topic_,
+						const std::string &enable_y_topic_,
+						const std::string &orient_error_topic_,
+						const std::string &x_error_topic_,
+						const std::string &y_error_topic_):
 
 			as_(nh_, name, boost::bind(&BaseAlignAction::executeCB, this, _1), false),
 			action_name_(name),
 			ac_elevator_("/elevator/elevator_server", true),
-			enable_align_pub_(enable_align_pub_),
-			enable_orient_pub_(enable_orient_pub_),
-			enable_x_pub_(enable_x_pub_),
-			enable_y_pub_(enable_y_pub_)
+			enable_align_pub_(nh_.advertise<std_msgs::Bool>(enable_align_topic_, 1, true)),
+			enable_orient_pub_(nh_.advertise<std_msgs::Bool>(enable_orient_topic_, 1, true)),
+			enable_x_pub_(nh_.advertise<std_msgs::Bool>(enable_x_topic_, 1, true)),
+			enable_y_pub_(nh_.advertise<std_msgs::Bool>(enable_y_topic_, 1, true))
 		{
             as_.start();
 
             std::map<std::string, std::string> service_connection_header;
             service_connection_header["tcp_nodelay"] = "1";
 
-			BrakeSrv = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
+			BrakeSrv_ = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 
 			orient_error_ = nh_.subscribe(orient_error_topic_, 1, &BaseAlignAction::orient_error_cb, this);
 			x_error_ = nh_.subscribe(x_error_topic_, 1, &BaseAlignAction::x_error_cb, this);
 			/*HACK -- somehow, need to have a default for these? */
-			//y_error_ = nh_.subscribe(y_error_topic_, 1, &BaseAlignAction::y_error_cb, this);
-
+			y_error_ = nh_.subscribe(y_error_topic_, 1, &BaseAlignAction::y_error_cb, this);
 		}
 
 		~BaseAlignAction(void)
 		{
 		}
+
 		//function to check for preempts and timeouts
 		bool check_timeout(double start_time, double timeout) {
 			bool timeout_var = false;
@@ -162,7 +164,7 @@ class BaseAlignAction {
 		virtual void enable_align(bool enable=true) {
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
-			enable_align_pub_->publish(enable_msg);
+			enable_align_pub_.publish(enable_msg);
 		}
 
 		//Functions to enable align PID
@@ -170,7 +172,7 @@ class BaseAlignAction {
 			ROS_INFO_STREAM("Running align_orient");
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
-			enable_orient_pub_->publish(enable_msg);
+			enable_orient_pub_.publish(enable_msg);
 
 			//Wait to be aligned
 			if(wait_for_alignment) {
@@ -183,13 +185,13 @@ class BaseAlignAction {
 
 				//Set end enable state to keep_enabled
 				enable_msg.data = keep_enabled;
-				enable_orient_pub_->publish(enable_msg);
+				enable_orient_pub_.publish(enable_msg);
 			}
 		}
 		virtual void align_x(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
-			enable_x_pub_->publish(enable_msg);
+			enable_x_pub_.publish(enable_msg);
 
 			//Wait to be aligned
 			if(wait_for_alignment) {
@@ -202,14 +204,14 @@ class BaseAlignAction {
 
 				//Set end enable state to keep_enabled
 				enable_msg.data = keep_enabled;
-				enable_x_pub_->publish(enable_msg);
+				enable_x_pub_.publish(enable_msg);
 			}
 		}
 		virtual void align_y(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
 			ROS_INFO_STREAM("Running align_y");
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
-			enable_y_pub_->publish(enable_msg);
+			enable_y_pub_.publish(enable_msg);
 
 			//Wait to be aligned
 			if(wait_for_alignment) {
@@ -222,7 +224,7 @@ class BaseAlignAction {
 
 				//Set end enable state to keep_enabled
 				enable_msg.data = keep_enabled;
-				enable_y_pub_->publish(enable_msg);
+				enable_y_pub_.publish(enable_msg);
 			}
 		}
 
@@ -295,10 +297,10 @@ class BaseAlignAction {
 			std_msgs::Bool false_msg;
 			false_msg.data = false;
 
-			enable_align_pub_->publish(false_msg);
-			enable_orient_pub_->publish(false_msg);
-			enable_x_pub_->publish(false_msg);
-			enable_y_pub_->publish(false_msg);
+			enable_align_pub_.publish(false_msg);
+			enable_orient_pub_.publish(false_msg);
+			enable_x_pub_.publish(false_msg);
+			enable_y_pub_.publish(false_msg);
 		}
 
 		//Example align function
@@ -437,13 +439,13 @@ class BaseAlignAction {
 	// all of the publishers to be straight member variables in BaseAlignAction
 	std_msgs::Bool false_msg;
 	false_msg.data = false;
-	enable_navx_pub_->publish(false_msg);
-	hatch_panel_enable_distance_pub_->publish(false_msg);
-	cargo_enable_distance_pub_->publish(false_msg);
-	enable_y_pub_->publish(false_msg);
-	enable_cargo_pub_->publish(false_msg);
-	enable_align_hatch_pub_->publish(false_msg);
-	enable_align_cargo_pub_->publish(false_msg);
+	enable_navx_pub_.publish(false_msg);
+	hatch_panel_enable_distance_pub_.publish(false_msg);
+	cargo_enable_distance_pub_.publish(false_msg);
+	enable_y_pub_.publish(false_msg);
+	enable_cargo_pub_.publish(false_msg);
+	enable_align_hatch_pub_.publish(false_msg);
+	enable_align_cargo_pub_.publish(false_msg);
 
     ros::spin();
 	return 0;
