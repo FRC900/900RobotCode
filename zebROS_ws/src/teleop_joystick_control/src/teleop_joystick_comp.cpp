@@ -484,7 +484,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 				goal.place_cargo = false;
 			}
-			goal.raise_intake_after_success  = true;
 			elevator_ac->sendGoal(goal);
 			ROS_WARN("elevator current setpoint index %d", elevator_cur_setpoint_idx);
 		}
