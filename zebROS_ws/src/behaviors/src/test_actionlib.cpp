@@ -4,6 +4,7 @@
 #include <behaviors/PlaceAction.h>
 #include <behaviors/ElevatorAction.h>
 #include <behaviors/ClimbAction.h>
+#include <behaviors/AlignAction.h>
 #include <behaviors/enumerated_elevator_indices.h>
 #include <boost/algorithm/string.hpp>
 #include <string>
@@ -232,6 +233,44 @@ bool callClimber(int step)
 	}
 }
 
+bool callAlignHatch()
+{
+	actionlib::SimpleActionClient<behaviors::AlignAction> align_hatch_ac("/align_hatch/align_server", true);
+
+	ROS_INFO("Waiting for align hatch server to start.");
+	if(!align_hatch_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("Could not find server.");
+		return false;
+	}
+
+	ROS_INFO("Sending goal to the server.");
+	behaviors::AlignGoal align_goal;
+	align_hatch_ac.sendGoal(align_goal);
+
+	//wait for the action to return
+	bool finished_before_timeout = align_hatch_ac.waitForResult(ros::Duration(server_exec_timeout));
+
+	if (finished_before_timeout)
+	{
+		actionlib::SimpleClientGoalState state = align_hatch_ac.getState();
+		ROS_INFO("Action finished with state: %s",state.toString().c_str());
+		if(align_hatch_ac.getResult()->timed_out)
+		{
+			ROS_INFO("Align hatch server timed out!");
+		}
+		return true;
+	}
+	else
+	{
+		ROS_INFO("Action did not finish before the time out.");
+		return false;
+	}
+}
+
+
+
+
 int main (int argc, char **argv)
 {
 	/*GET DATA FROM USER INPUT
@@ -385,6 +424,10 @@ int main (int argc, char **argv)
 	}
 	else if(what_to_run == "climber3") {
 		callClimber(3);
+	}
+	else if(what_to_run == "align_hatch")
+	{
+		callAlignHatch();
 	}
 	else {
 		ROS_ERROR("Invalid run argument");

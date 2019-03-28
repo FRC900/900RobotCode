@@ -114,7 +114,8 @@ class BaseAlignAction {
 
 			orient_error_ = nh_.subscribe(orient_error_topic_, 1, &BaseAlignAction::orient_error_cb, this);
 			x_error_ = nh_.subscribe(x_error_topic_, 1, &BaseAlignAction::x_error_cb, this);
-			y_error_ = nh_.subscribe(y_error_topic_, 1, &BaseAlignAction::y_error_cb, this);
+			/*HACK -- somehow, need to have a default for these? */
+			//y_error_ = nh_.subscribe(y_error_topic_, 1, &BaseAlignAction::y_error_cb, this);
 
 		}
 
@@ -152,6 +153,7 @@ class BaseAlignAction {
 		}
 		virtual void y_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
+			ROS_INFO_STREAM("running the base function :(((((((");
 			y_aligned_ = (fabs(msg.data[0]) < y_error_threshold);
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "y error: " << fabs(msg.data[0]));
@@ -165,6 +167,7 @@ class BaseAlignAction {
 
 		//Functions to enable align PID
 		virtual void align_orient(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
+			ROS_INFO_STREAM("Running align_orient");
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
 			enable_orient_pub_->publish(enable_msg);
@@ -172,6 +175,7 @@ class BaseAlignAction {
 			//Wait to be aligned
 			if(wait_for_alignment) {
 				while(ros::ok() && !orient_aligned_ && !preempted_ && !orient_timed_out_) {
+					enable_align();
 					orient_timed_out_ = check_timeout(start_time_, timeout);
 					preempted_ = check_preempted();
 					r.sleep();
@@ -190,6 +194,7 @@ class BaseAlignAction {
 			//Wait to be aligned
 			if(wait_for_alignment) {
 				while(ros::ok() && !x_aligned_ && !preempted_ && !x_timed_out_) {
+					enable_align();
 					x_timed_out_ = check_timeout(start_time_, timeout);
 					preempted_ = check_preempted();
 					r.sleep();
@@ -201,6 +206,7 @@ class BaseAlignAction {
 			}
 		}
 		virtual void align_y(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
+			ROS_INFO_STREAM("Running align_y");
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
 			enable_y_pub_->publish(enable_msg);
@@ -208,6 +214,7 @@ class BaseAlignAction {
 			//Wait to be aligned
 			if(wait_for_alignment) {
 				while(ros::ok() && !y_aligned_ && !preempted_ && !y_timed_out_) {
+					enable_align();
 					y_timed_out_ = check_timeout(start_time_, timeout);
 					preempted_ = check_preempted();
 					r.sleep();
@@ -332,7 +339,6 @@ class BaseAlignAction {
 			if(preempted_ || timed_out) {
 				return false;
 			}
-
 			//enable, wait for alignment, default timeout, don't keep enabled
 			align_y(r, true, true);
 
@@ -351,14 +357,40 @@ class BaseAlignAction {
 		virtual void executeCB(const behaviors::AlignGoalConstPtr &goal) {
 			bool align_succeeded = robot_align();
 			disable_pid(); //Disable all align PID after execution
+
+			if(orient_timed_out_ || y_timed_out_ || x_timed_out_)
+			{
+				result_.timed_out = true;
+				result_.success = false;
+				as_.setSucceeded(result_);
+
+				ROS_INFO("%s: Timed Out", action_name_.c_str());
+			}
+			else if(preempted_)
+			{
+				result_.timed_out = false;
+				result_.success = false;
+				as_.setPreempted(result_);
+				ROS_INFO("%s: Preempted", action_name_.c_str());
+			}
+			else //implies succeeded
+			{
+				result_.timed_out = false;
+				result_.success = true;
+				as_.setSucceeded(result_);
+
+				ROS_INFO("%s: Succeeded", action_name_.c_str());
+			}
+
+			return;
 		}
 };
 
-int main(int argc, char** argv) {
+/*int main(int argc, char** argv) {
 	ros::init(argc, argv, "align_server");
 
 	ros::NodeHandle n;
-	ros::NodeHandle n_private_params("`");
+	ros::NodeHandle n_private_params("~");
 	ros::NodeHandle n_params(n, "align_server_params");
     ros::NodeHandle n_panel_params(n, "actionlib_hatch_panel_intake_params");
 
@@ -389,15 +421,15 @@ int main(int argc, char** argv) {
 	std::shared_ptr<ros::Publisher> enable_align_cargo_pub_ = std::make_shared<ros::Publisher>();
 	std::shared_ptr<ros::Publisher> enable_cargo_pub_ = std::make_shared<ros::Publisher>();
 
-	*enable_navx_pub_ = n.advertise<std_msgs::Bool>("navX_pid/pid_enable", 1,  true);
+	*enable_navx_pub_ = n.advertise<std_msgs::Bool>("orient_pid/pid_enable", 1,  true);
 	*hatch_panel_enable_distance_pub_ = n.advertise<std_msgs::Bool>("hatch_panel_distance_pid/pid_enable", 1,  true);
 	*cargo_enable_distance_pub_ = n.advertise<std_msgs::Bool>("cargo_distance_pid/pid_enable", 1,  true);
-	*enable_y_pub_ = n.advertise<std_msgs::Bool>("align_with_terabee/enable_y_pub", 1,  true);
+	*enable_y_pub_ = n.advertise<std_msgs::Bool>("align_with_camera/enable_y_pub", 1,  true);
 	*enable_cargo_pub_ = n.advertise<std_msgs::Bool>("cargo_pid/pid_enable", 1,  true);
 	*enable_align_hatch_pub_ = n.advertise<std_msgs::Bool>("align_hatch_pid/pid_enable", 1,  true);
 	*enable_align_cargo_pub_ = n.advertise<std_msgs::Bool>("align_cargo_pid/pid_enable", 1,  true);
 
-	BaseAlignAction align_action("align_server", enable_align_hatch_pub_, enable_navx_pub_, hatch_panel_enable_distance_pub_, enable_y_pub_, "navX_pid/pid_debug", "hatch_panel_distance_pid/pid_debug", "align_with_terabee/y_aligned");
+	BaseAlignAction align_action("align_server", enable_align_hatch_pub_, enable_navx_pub_, hatch_panel_enable_distance_pub_, enable_y_pub_, "orient_pid/pid_debug", "hatch_panel_distance_pid/pid_debug", "align_with_camera/y_aligned"); //TODO make the error topics params?
 
 
 	//Stop PID nodes from defaulting true
@@ -415,4 +447,4 @@ int main(int argc, char** argv) {
 
     ros::spin();
 	return 0;
-}
+}*/
