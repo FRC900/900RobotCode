@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
   ros_control_boilerplate
   talon_swerve_drive_controller
   swerve_point_generator
+  tf2_ros
 )
 
 include_directories(
@@ -134,7 +135,7 @@ generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
 catkin_package(
    INCLUDE_DIRS include
    #LIBRARIES behaviors
-   CATKIN_DEPENDS actionlib_msgs actionlib nav_msgs roscpp rospy std_msgs teraranger_array
+   CATKIN_DEPENDS actionlib_msgs actionlib nav_msgs roscpp rospy std_msgs teraranger_array tf2_ros
    DEPENDS 
 )
 
@@ -210,9 +211,9 @@ target_link_libraries(align_with_terabee_node
   ${catkin_LIBRARIES}
 )
 
-add_executable(align_server src/align_server.cpp)
-add_dependencies(align_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(align_server
+add_executable(align_with_camera src/align_with_camera.cpp)
+add_dependencies(align_with_camera ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(align_with_camera
   ${catkin_LIBRARIES}
 )
 #add_executable(base_align_server src/base_align_server.cpp)
