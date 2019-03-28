@@ -132,6 +132,15 @@
 	
 	<!-- TODO need a way to use the same PID node in multiple align servers without copying and pasting topics -->
 	<!-- Create a new group for each align server, define params for every single topic, load all nodes used by that align server -->
+	<group ns="align_server_common">
+		<param name="enable_orient_pub" value="orient_pid/pid_enable" />
+		<param name="orient_error_topic" value="orient_pid/pid_debug" />
+		<param name="orient_command_topic" value="orient_pid/orient_command" />
+		<param name="orient_setpoint_topic" value="orient_pid/orient_setpoint" />
+		<param name="orient_state_topic" value="orient_pid/orient_state" />
+
+	</group>
+
 	<group ns="align_cargo_rocket_ship">
 		<param name="enable_align_pub" value="align_pid/pid_enable" />
 		<param name="enable_orient_pub" value="orient_pid/pid_enable" />
