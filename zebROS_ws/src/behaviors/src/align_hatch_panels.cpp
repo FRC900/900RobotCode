@@ -20,28 +20,8 @@ class AlignHatchPanelAction : public BaseAlignAction {
 				y_error_topic_)
 		{
 		}
-
-
-#if 0 // Seems to build with these commented out? @kevinj
-
-		void y_error_cb(const std_msgs::Bool &msg) {
-			y_aligned_ = msg.data;
-		}
-		/*HACK TO GET CODE TO COMPILE -- @kevinj please help*/
-		void orient_error_cb(const std_msgs::Float64MultiArray &msg)
-		{
-			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold);
-			if(debug)
-				ROS_WARN_STREAM_THROTTLE(1, "orient error: " << fabs(msg.data[0]));
-		}
-		void x_error_cb(const std_msgs::Float64MultiArray &msg)
-		{
-			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold);
-			if(debug)
-				ROS_WARN_STREAM_THROTTLE(1, "x error: " << fabs(msg.data[0]));
-		}
-#endif
 };
+
 // TODO : These probably need to be moved into the base class, along
 // with some defaults and a way to set them
 double align_timeout;

@@ -235,7 +235,7 @@ bool callClimber(int step)
 
 bool callAlignHatch()
 {
-	actionlib::SimpleActionClient<behaviors::AlignAction> align_hatch_ac("/align_hatch/align_server", true);
+	actionlib::SimpleActionClient<behaviors::AlignAction> align_hatch_ac("/align_hatch/align_hatch_server", true);
 
 	ROS_INFO("Waiting for align hatch server to start.");
 	if(!align_hatch_ac.waitForServer(ros::Duration(server_wait_timeout)))
