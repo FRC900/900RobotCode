@@ -164,8 +164,7 @@ class AlignAction {
 		}
 
 		//Functions to enable align PID
-		void align_orient(bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
-			ros::Rate r(30);
+		void align_orient(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
 			enable_orient_pub_->publish(enable_msg);
@@ -183,8 +182,7 @@ class AlignAction {
 				enable_orient_pub_->publish(enable_msg);
 			}
 		}
-		void align_x(bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
-			ros::Rate r(30);
+		void align_x(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
 			enable_x_pub_->publish(enable_msg);
@@ -202,8 +200,7 @@ class AlignAction {
 				enable_x_pub_->publish(enable_msg);
 			}
 		}
-		void align_y(bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
-			ros::Rate r(30);
+		void align_y(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
 			enable_y_pub_->publish(enable_msg);
@@ -233,8 +230,7 @@ class AlignAction {
 		//TODO add more debug printouts
 		//
 		//TODO Make this configurable
-		bool wait_for_mech(double timeout) {
-			ros::Rate r(30);
+		bool wait_for_mech(ros::Rate r, double timeout) {
 			bool waiting = true;
 			bool timed_out = false;
 			while(waiting && ros::ok() &&!preempted_) {
@@ -274,13 +270,13 @@ class AlignAction {
 		}
 		//TODO make this configurable
 		//Function to move mech out of the way of sensors
-		bool move_mech(bool wait_for_result) {
+		bool move_mech(ros::Rate r, bool wait_for_result) {
 			behaviors::ElevatorGoal elev_goal;
 			elev_goal.setpoint_index = CARGO_SHIP;
 			elev_goal.place_cargo = false;
 			ac_elevator_.sendGoal(elev_goal);
 			if(wait_for_result) {
-				return wait_for_mech(align_timeout);
+				return wait_for_mech(r, align_timeout);
 			}
 			else {
 				return true;
@@ -300,6 +296,7 @@ class AlignAction {
 
 		//Example align function
 		virtual bool robot_align() {
+			ros::Rate r(30);
 
 			start_time_ = ros::Time::now().toSec();
 			bool timed_out = false;
@@ -314,10 +311,10 @@ class AlignAction {
 			y_aligned_ = false;
 
 			//move mech out of the way
-			move_mech(false);
+			move_mech(r, false);
 
 			//enable, wait for alignment, TODO change this timeout, keep enabled
-			align_orient(true, true, align_timeout, true);
+			align_orient(r, true, true, align_timeout, true);
 
 			//Check if it timed out or preempted while waiting
 			timed_out = check_timeout(start_time_, align_timeout);
@@ -327,7 +324,7 @@ class AlignAction {
 			}
 
 			//enable, wait for alignment, default timeout, don't keep enabled
-			align_x(true, true);
+			align_x(r, true, true);
 
 			//Check if it timed out or preempted while waiting
 			timed_out = check_timeout(start_time_, align_timeout);
@@ -337,7 +334,7 @@ class AlignAction {
 			}
 
 			//enable, wait for alignment, default timeout, don't keep enabled
-			align_y(true, true);
+			align_y(r, true, true);
 
 			//Check if it timed out or preempted while waiting
 			timed_out = check_timeout(start_time_, align_timeout);
