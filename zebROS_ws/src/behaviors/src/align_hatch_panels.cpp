@@ -3,22 +3,25 @@
 class AlignHatchPanelAction : public BaseAlignAction {
 	public:
 		AlignHatchPanelAction(const std::string &name,
-			const std::shared_ptr<ros::Publisher>& enable_align_pub_,
-			const std::shared_ptr<ros::Publisher>& enable_orient_pub_,
-			const std::shared_ptr<ros::Publisher>& enable_x_pub_,
-			const std::shared_ptr<ros::Publisher>& enable_y_pub_,
-			const std::string &orient_error_topic_,
-			const std::string &x_error_topic_,
-			const std::string &y_error_topic_) :
+							  const std::string &enable_align_topic_,
+							  const std::string &enable_orient_topic_,
+							  const std::string &enable_x_topic_,
+							  const std::string &enable_y_topic_,
+							  const std::string &orient_error_topic_,
+							  const std::string &x_error_topic_,
+							  const std::string &y_error_topic_) :
 			BaseAlignAction(name,
-				enable_align_pub_,
-				enable_orient_pub_,
-				enable_x_pub_,
-				enable_y_pub_,
+				enable_align_topic_,
+				enable_orient_topic_,
+				enable_x_topic_,
+				enable_y_topic_,
 				orient_error_topic_,
 				x_error_topic_,
 				y_error_topic_)
 		{
+			// TODO - this is kinda weird having 2 different y_error_ subscribers (one here,
+			// one in the base). Having the align hatch panel action return the same format
+			// as the pid node will allow you to remove this, at least partially
 			y_error_ = nh_.subscribe(y_error_topic_, 1, &AlignHatchPanelAction::y_error_cb, this);
 		}
 
@@ -26,6 +29,7 @@ class AlignHatchPanelAction : public BaseAlignAction {
 			y_aligned_ = msg.data;
 		}
 	
+#if 0 // Seems to build with these commented out? @kevinj
 		/*HACK TO GET CODE TO COMPILE -- @kevinj please help*/
 		void orient_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
@@ -39,7 +43,20 @@ class AlignHatchPanelAction : public BaseAlignAction {
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "x error: " << fabs(msg.data[0]));
 		}
+#endif
 };
+// TODO : These probably need to be moved into the base class, along
+// with some defaults and a way to set them
+double align_timeout;
+double orient_timeout;
+double x_timeout;
+double y_timeout;
+
+double orient_error_threshold;
+double x_error_threshold;
+double y_error_threshold;
+
+bool debug;
 
 int main(int argc, char** argv)
 {
@@ -68,18 +85,14 @@ int main(int argc, char** argv)
 	if(!n_private_params.getParam("debug", debug))
 		ROS_ERROR_STREAM("Could not read debug in align_server");
 
-
-	std::shared_ptr<ros::Publisher> enable_align_hatch_pub_ = std::make_shared<ros::Publisher>(); //for the publish_pid_cmd_vel node
-	std::shared_ptr<ros::Publisher> enable_navx_pub_ = std::make_shared<ros::Publisher>(); //for PID navx
-	std::shared_ptr<ros::Publisher> hatch_panel_enable_distance_pub_ = std::make_shared<ros::Publisher>(); //for PID distance from target
-	std::shared_ptr<ros::Publisher> enable_y_pub_ = std::make_shared<ros::Publisher>(); //for the align_with_zed node (not ros_pid node)
-
-	*enable_align_hatch_pub_ = n.advertise<std_msgs::Bool>("align_hatch_pid/pid_enable", 1,  true);
-	*enable_navx_pub_ = n.advertise<std_msgs::Bool>("navX_pid/pid_enable", 1,  true);
-	*hatch_panel_enable_distance_pub_ = n.advertise<std_msgs::Bool>("hatch_panel_distance_pid/pid_enable", 1,  true);
-	*enable_y_pub_ = n.advertise<std_msgs::Bool>("align_with_camera/enable_y_pub", 1,  true);
-
-	AlignHatchPanelAction align_hatch_action("align_server", enable_align_hatch_pub_, enable_navx_pub_, hatch_panel_enable_distance_pub_, enable_y_pub_, "navX_pid/pid_debug", "hatch_panel_distance_pid/pid_debug", "align_with_camera/y_aligned");
+	AlignHatchPanelAction align_hatch_action("align_hatch_server",
+			"align_hatch_pid/pid_enable",
+			"navX_pid/pid_enable",
+			"hatch_panel_distance_pid/pid_enable",
+			"align_with_camera/enable_y_pub",
+			"navX_pid/pid_debug",
+			"hatch_panel_distance_pid/pid_debug",
+			"align_with_camera/y_aligned");
 
 	ros::spin();
 	return 0;
