@@ -104,7 +104,6 @@ int main(int argc, char** argv)
 			"/align_server/align_hatch_params/x_error_threshold",
 			"/align_server/align_hatch_params/y_error_threshold",
 			"align_hatch_pid/ratio_xy");
-
 	ros::spin();
 	return 0;
 }
