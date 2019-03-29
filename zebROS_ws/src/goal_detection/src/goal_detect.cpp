@@ -202,14 +202,15 @@ int main(int argc, char **argv)
 	nh.getParam("no_depth", no_depth);
 
 	nh.getParam("hFov", hFov);
-	nh.getParam("camera_angle", hFov);
+	nh.getParam("camera_angle", camera_angle);
 
-	std::shared_ptr<message_filters::Subscriber<Image>> frame_sub;
-	std::shared_ptr<message_filters::Subscriber<Image>> depth_sub;
-	typedef sync_policies::ApproximateTime<Image, Image>  SyncPolicy;
-	std::shared_ptr<Synchronizer<SyncPolicy>> sync;
+	std::shared_ptr<message_filters::Subscriber<Image>>  frame_sub;
+	std::shared_ptr<message_filters::Subscriber<Image>>  depth_sub;
+	typedef sync_policies::ApproximateTime<Image, Image> SyncPolicy;
+	std::shared_ptr<Synchronizer<SyncPolicy>>            sync;
 
-	std::shared_ptr<ros::Subscriber> rgb_sub;
+	std::shared_ptr<ros::Subscriber>                     rgb_sub;
+	ros::Subscriber                                      terabee_sub;
 	if (!no_depth)
 	{
 		ROS_INFO("starting goal detection using ZED");
@@ -223,8 +224,8 @@ int main(int argc, char **argv)
 	{
 		ROS_INFO("starting goal detection using webcam");
 		rgb_sub = std::make_shared<ros::Subscriber>(nh.subscribe("/c920_camera/image_raw", sub_rate, callback_no_depth));
+		terabee_sub = nh.subscribe("/multiflex_1/ranges_raw", 1, &multiflexCB);
 	}
-	ros::Subscriber terabee_sub = nh.subscribe("/multiflex_1/ranges_raw", 1, &multiflexCB);
 
 	// Set up publisher
 	pub = nh.advertise<goal_detection::GoalDetection>("goal_detect_msg", pub_rate);
