@@ -9,6 +9,16 @@ using namespace cv;
 #define VERBOSE
 #define VERBOSE_BOILER
 
+int camera_angle_common = 25;
+
+void angleCallback(int value, void *data)
+{
+	std::cout << "running AngleCallback with value " << value << endl;
+	GoalDetector *gd = static_cast<GoalDetector*>(data);
+	double angle = static_cast<double>(value)/-10;
+	gd->setCameraAngle(angle);
+}
+
 GoalDetector::GoalDetector(const cv::Point2f &fov_size, const cv::Size &frame_size, bool gui) :
 	_fov_size(fov_size),
 	_frame_size(frame_size),
@@ -25,7 +35,7 @@ GoalDetector::GoalDetector(const cv::Point2f &fov_size, const cv::Size &frame_si
 		createTrackbar("Blue Scale","Goal Detect Adjustments", &_blue_scale, 100);
 		createTrackbar("Red Scale","Goal Detect Adjustments", &_red_scale, 100);
 		createTrackbar("Otsu Threshold","Goal Detect Adjustments", &_otsu_threshold, 255);
-		createTrackbar("Camera Angle","Goal Detect Adjustments", &_camera_angle, 900);
+		createTrackbar("Camera Angle","Goal Detect Adjustments", &camera_angle_common, 900, angleCallback, this);
 	}
 }
 

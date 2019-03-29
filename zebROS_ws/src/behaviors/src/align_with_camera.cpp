@@ -20,7 +20,7 @@ tf2_ros::Buffer buffer;
 std::string target_frame;
 geometry_msgs::PointStamped relative_goal_location;
 
-bool debug = false;
+bool debug = true;
 
 void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 {
