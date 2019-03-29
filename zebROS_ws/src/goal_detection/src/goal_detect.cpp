@@ -36,7 +36,7 @@ ros::Publisher pub;
 GoalDetector *gd = NULL;
 bool batch = true;
 bool down_sample = false;
-double hFov = 69.; //105.;
+double hFov = 105; //105.;
 double camera_angle = -25.0;
 
 void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
@@ -202,7 +202,7 @@ int main(int argc, char **argv)
 	nh.getParam("no_depth", no_depth);
 
 	nh.getParam("hFov", hFov);
-	nh.getParam("camera_angle", hFov);
+	nh.getParam("camera_angle", camera_angle);
 
 	std::shared_ptr<message_filters::Subscriber<Image>> frame_sub;
 	std::shared_ptr<message_filters::Subscriber<Image>> depth_sub;
