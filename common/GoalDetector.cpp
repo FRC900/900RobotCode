@@ -357,7 +357,6 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				bool repeated = false;
 				if(_return_found.size() > 0)
 				{
-					const double min_dist_bwn_goals = 0.1;
 					size_t gf_lci = goal_found.left_contour_index;
 					size_t gf_rci = goal_found.right_contour_index;
 					for(size_t k = 0; k < _return_found.size(); k++)
@@ -453,7 +452,7 @@ const vector< vector < Point > > GoalDetector::getContours(const Mat& image) {
 	return return_contours;
 }
 
-const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< vector< Point > > &contours, ObjectNum objtype, float expected_height) {
+const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< vector< Point > > &contours, const ObjectNum &objtype, float expected_height) {
 	// Use to mask the contour off from the rest of the
 	// image - used when grabbing depth data for the contour
 	Mat contour_mask(_frame_size, CV_8UC1, Scalar(0));
@@ -462,11 +461,12 @@ const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< 
 	for(size_t i = 0; i < contours.size(); i++) {
 		// get the minimum and maximum depth values in the contour,
 		const Rect br(boundingRect(contours[i]));
-		const Moments mu = moments(contours[i], false);
-		const Point com = Point(mu.m10 / mu.m00, mu.m01 / mu.m00);
+		//const Moments mu = moments(contours[i], false);
+		//const Point com = Point(mu.m10 / mu.m00, mu.m01 / mu.m00);
 		//Point center(rect.tl().x+rect.size().width/2, rect.tl().y+rect.size().height/2);
 
 		//create a mask which is the same shape as the contour
+		// TODO - don't clear these?
 		contour_mask.setTo(Scalar(0));
 		drawContours(contour_mask, contours, i, Scalar(255), CV_FILLED);
 		// copy them into individual floats
@@ -483,8 +483,8 @@ const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< 
 		// the target. This isn't perfect but better than nothing
 		if ((depth_z_min <= 0.) || (depth_z_max <= 0.)) {
 			depthInfo.error = true;
-			ObjectType ot(objtype);
-			depth_z_min = depth_z_max = distanceUsingFixedHeight(br,com,expected_height);
+			//ObjectType ot(objtype);
+			depth_z_min = depth_z_max = distanceUsingFOV(objtype, br);
 		}
 		else
 			depthInfo.error = false;
@@ -559,8 +559,8 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		const float y = fit_line[3];
 		const float leftY =((-x * vy / vx) + y);
 		const float rightY =(((_frame_size.width - x) * vy / vx) + y);
-		const float angle = atan2(vy, vx);
 #if 0
+		const float angle = atan2(vy, vx);
 		cout << "fit_line: " << fit_line << endl;
 		cout << "   frame_size " << _frame_size << endl;
 		cout << "   leftY: " << leftY << endl;
@@ -590,7 +590,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 			continue;
 		}*/
 		//percentage of the object filled in
-		float filledPercentageActual = goal_actual.area() / goal_actual.boundingArea();
+		const float filledPercentageActual = goal_actual.area() / goal_actual.boundingArea();
 
 		//center of mass as a percentage of the object size from left and top
 		Point2f com_percent_actual((goal_actual.com().x - br.tl().x) / goal_actual.width(),
@@ -857,3 +857,7 @@ void GoalDetector::isValid()
 #endif
 }
 
+void GoalDetector::setCameraAngle(double camera_angle)
+{
+	_camera_angle = camera_angle * 10;
+}
