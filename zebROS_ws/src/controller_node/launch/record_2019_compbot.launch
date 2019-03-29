@@ -52,7 +52,7 @@
 		/zed_goal/pose
 		/teleop/translator0/joystick_states
 		/teleop/elevator_setpoint
-		/tf2
-		/tf2_static
+		/tf
+		/tf_static
 		"/>
 </launch>
