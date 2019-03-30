@@ -32,3 +32,4 @@ actionlib_lift_params: #sets params for elevator_server.cpp #default values
     max_speed: -1.0
     timeout: 10
     elevator_position_deadzone: 0.05
+    climber_engage_pos: 0.1 #elevator position right where climber clicks in to engage TODO: figure this out
