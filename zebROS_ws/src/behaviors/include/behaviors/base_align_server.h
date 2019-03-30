@@ -320,7 +320,7 @@ class BaseAlignAction {
 			//move mech out of the way
 			//move_mech(r, false);
 			//enable, wait for alignment, TODO change this timeout, keep enabled
-			align_orient(r, true, true, align_timeout, true);
+			align_orient(r, true, true, align_timeout, false);
 
 			//Check if it timed out or preempted while waiting
 			timed_out = check_timeout(start_time_, align_timeout);
