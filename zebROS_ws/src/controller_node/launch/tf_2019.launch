@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <launch>
-    <!-- <param name="use_sim_time" value="true" />
+    <param name="use_sim_time" value="true" />
 
-    <node pkg="rosbag" type="play" name="player" output="screen" args="-/-clock -l /home/ubuntu/120_cm_high_angled.bag"/> -->
+	<node pkg="rosbag" type="play" name="player" output="screen" args="--clock -l /home/ubuntu/120_cm_high_angled.bag"/>
 
 	<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_zed" args="-0.234 -0.30 0 0 0 0 zed_camera_center base_link" />
 
