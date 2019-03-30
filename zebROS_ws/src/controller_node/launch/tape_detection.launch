@@ -31,7 +31,7 @@
   <arg name="pub_rate" default="1" />
   <arg name="hFov" default="105.0" />
   <arg name="camera_angle" default="-25.0" />
-  <arg name="batch" default="false" /> 
+  <arg name="batch" default="true" /> 
 
   <group ns="$(arg name)">
     <include file="$(find zed_wrapper)/launch/zed_camera.launch">

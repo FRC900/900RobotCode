@@ -198,6 +198,7 @@ int main(int argc, char **argv)
 		std_msgs::Float64 angle_snap;
 		std_msgs::Float64 navX_state;
 		double cur_angle = angles::normalize_angle_positive(-1*navX_angle.load(std::memory_order_relaxed));
+		has_panel = true;
 		if(has_panel) {
 			snap_angle = nearest_angle(hatch_panel_angles, cur_angle + M_PI/2) - M_PI/2; //TODO remove having to multiply negative one
 		}
