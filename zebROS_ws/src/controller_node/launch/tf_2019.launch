@@ -4,8 +4,8 @@
 
     <node pkg="rosbag" type="play" name="player" output="screen" args="-/-clock -l /home/ubuntu/120_cm_high_angled.bag"/> -->
 
-	<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_zed" args="kds -0.072263 0.0244348 0 0 0 base_link zed_camera_center" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_zed" args="-0.234 -0.30 0 0 0 0 zed_camera_center base_link" />
 
-	<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_panel_outtake" args="-0.074422 -0.403098 0 -0.5 0.5 -0.5 0.5 base_link panel_outtake" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_panel_outtake" args="-0.0745 0.3016 0 0 0 0 base_link panel_outtake" />
 </launch>
 

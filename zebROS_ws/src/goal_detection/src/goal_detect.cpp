@@ -36,7 +36,7 @@ ros::Publisher pub;
 GoalDetector *gd = NULL;
 bool batch = true;
 bool down_sample = false;
-double hFov = 105; //105.;
+double hFov = 69.; //105.;
 double camera_angle = -25.0;
 
 void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
@@ -91,7 +91,10 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 		std::string frame_id = frameMsg->header.frame_id;
 		const size_t idx = frame_id.rfind("_optical_frame");
 		if (idx != std::string::npos)
+		{
 			frame_id.erase(idx);
+			frame_id += "_frame";
+		}
 		gd_msg.header.frame_id = frame_id;
 		dummy.x = gfd[i].pos.y;
 		dummy.y = gfd[i].pos.x;
