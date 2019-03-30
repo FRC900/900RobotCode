@@ -25,6 +25,7 @@ else()
     geometry_msgs
     std_msgs
     sensor_msgs
+	teraranger_array
     cv_bridge
     tf2
     tf2_ros
