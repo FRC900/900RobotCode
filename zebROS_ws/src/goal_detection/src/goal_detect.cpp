@@ -36,7 +36,7 @@ ros::Publisher pub;
 GoalDetector *gd = NULL;
 bool batch = true;
 bool down_sample = false;
-double hFov = 105; //105.;
+double hFov = 69.; //105.;
 double camera_angle = -25.0;
 
 void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
