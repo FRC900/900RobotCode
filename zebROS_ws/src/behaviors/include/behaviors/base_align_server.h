@@ -97,7 +97,10 @@ class BaseAlignAction {
 						const std::string &enable_y_topic_,
 						const std::string &orient_error_topic_,
 						const std::string &x_error_topic_,
-						const std::string &y_error_topic_):
+						const std::string &y_error_topic_,
+						const std::string &orient_error_threshold_param_name_,
+						const std::string &x_error_threshold_param_name_,
+						const std::string &y_error_threshold_param_name_):
 
 			as_(nh_, name, boost::bind(&BaseAlignAction::executeCB, this, _1), false),
 			action_name_(name),
@@ -116,6 +119,13 @@ class BaseAlignAction {
             service_connection_header["tcp_nodelay"] = "1";
 
 			BrakeSrv_ = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
+
+			if(!nh_.getParam("orient_error_threshold_param_name_", orient_error_threshold))
+				ROS_ERROR_STREAM("Could not read orient_error_threshold_param_name_ in align_server");
+			if(!nh_.getParam("x_error_threshold_param_name_", x_error_threshold))
+				ROS_ERROR_STREAM("Could not read x_error_threshold_param_name_ in align_server");
+			if(!nh_.getParam("cargo_error_threshold_param_name_", y_error_threshold))
+				ROS_ERROR_STREAM("Could not read cargo_error_threshold_param_name_ in align_server");
 		}
 
 		~BaseAlignAction(void)
@@ -277,7 +287,7 @@ class BaseAlignAction {
 		}
 		//TODO make this configurable
 		//Function to move mech out of the way of sensors
-		virtual bool move_mech(ros::Rate r, bool wait_for_result) {
+		virtual bool move_mech(ros::Rate r, boolwait_for_result) {
 			behaviors::ElevatorGoal elev_goal;
 			elev_goal.setpoint_index = CARGO_SHIP;
 			elev_goal.place_cargo = false;
