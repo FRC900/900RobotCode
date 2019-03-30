@@ -16,6 +16,35 @@ double x_error_threshold;
 double cargo_error_threshold;
 
 
+// TODO
+//    One way to clean this up is to create a base AlignAction class
+//    that then gets specialized into different derived classes based on the 
+//    thing being aligned
+//    As it stands now, you'd want one derived class for Terabee hatch (currently only auto align)
+//    and a second for cargo on the rocket.  We'd add additional derived classes for
+//    ZED hatch and C920 cargo ship cargo
+//    The base class would have everything shared between the processes.  Basically, everything
+//    at this point minus a few exceptions
+//    The point where the class is checking if(goal->has_cargo) would turn into an
+//    unconditional call to a member function. This function would be different in each
+//    derived class - it would be customized for each derived type.
+//    Then to make this function work, you'd combine the goal->has_cargo specific vars
+//    (e.g. hatch_panel_enable_distance pub and cargo_enable_distance_pub) into a single
+//    var. That var would be initialized to the correct value at init time for each of the
+//    separate classes.  So when constructing the derived TerabeeCargoAlignAction class,
+//    set the now-combined enable_distance_pub var to publish to "cargo_distance_pid/pid_enable"
+//    Then the specialized function in the derived TerabeeCargoAlignAction will use
+//    distance_pub, and it will be set to the correct publisher for that.
+//    After doing this, continue to simplify by moving code which is only needed
+//    in the derived classes into those classed (e.g. the callback for their particular
+//    enable_distance_pub)
+//    The main idea is to make the base class code generic to the "align angle, then distance, then y"
+//    problem and putting anything specific into derived classes. This makes it easier to add
+//    a new e.g. Zed class - you just have to fill in the Zed-specific parts while still having
+//    the Base framework for the generic stuff.
+//    This would move the decision between cargo vs hatch up to the teleop, but it kinda makes
+//    sense - it would call a variety of AlignActions based on input it has already
+//    then make the specific Align Action only do one thing well
 
 //bool startup = true; //disable all pid nodes on startup
 class AlignAction {
@@ -24,6 +53,7 @@ class AlignAction {
 
 		actionlib::SimpleActionServer<behaviors::AlignAction> as_; //create the actionlib server
 		std::string action_name_;
+		// TODO this result should be a local var
 		behaviors::AlignResult result_; //variable to store result of the actionlib action
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
         
@@ -296,8 +326,11 @@ int main(int argc, char** argv) {
 
 	AlignAction align_action("align_server", enable_navx_pub_, hatch_panel_enable_distance_pub_, cargo_enable_distance_pub_, enable_y_pub_, enable_align_hatch_pub_, enable_align_cargo_pub_, enable_cargo_pub_);
 
-	ros::Rate r(20);
+	ros::Rate r(20); // TODO : not used
+
 	//Stop PID nodes from defaulting true
+	// TODO : why not just put this call in the AlignAction constructor, then move
+	// all of the publishers to be straight member variables in AlignAction
 	std_msgs::Bool false_msg;
 	false_msg.data = false;
 	enable_navx_pub_->publish(false_msg);

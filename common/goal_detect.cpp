@@ -41,13 +41,14 @@ int main(int argc, char **argv)
 			frame = false;
 		}
 
+
 		frameTicker.mark();
 
 		gd.findBoilers(image, depth);
 		gd.drawOnFrame(image, gd.getContours(image));
 
 		stringstream ss;
-		ss << fixed << setprecision(2) << cap->FPS() << "C:" << frameTicker.getFPS() << "GD FPS";
+		ss << fixed << setprecision(2) << cap->FPS() << " C:" << frameTicker.getFPS() << " GD FPS" << cap->frameNumber() << " FrameNum:";
 		putText(image, ss.str(), Point(image.cols - 15 * ss.str().length(), 50), FONT_HERSHEY_PLAIN, 1.5, Scalar(0,0,255));
 		//rectangle(image, gd.goal_rect(), Scalar(255,0,0), 2);
 		imshow ("Image", image);

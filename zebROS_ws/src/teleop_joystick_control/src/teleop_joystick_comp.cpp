@@ -41,14 +41,16 @@ int cargo_limit_switch_false_count = 0;
 int panel_limit_switch_false_count = 0;
 bool panel_push_extend = false;
 
-
 const int climber_num_steps = 3;
 const int elevator_num_setpoints = 4;
 
 bool robot_orient = false;
 double offset_angle = 0;
 
+double max_speed;
+double max_rot;
 
+// array of joystick_states messages for multiple joysticks
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 
@@ -56,13 +58,7 @@ teleop_joystick_control::TeleopJoystickCompConfig config;
 
 
 // 500 msec to go from full back to full forward
-const double drive_rate_limit_time = 500.;
-rate_limiter::RateLimiter left_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
-rate_limiter::RateLimiter left_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
-rate_limiter::RateLimiter right_stick_x_rate_limit(-1.0, 1.0, drive_rate_limit_time);
-rate_limiter::RateLimiter right_stick_y_rate_limit(-1.0, 1.0, drive_rate_limit_time);
-rate_limiter::RateLimiter left_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
-rate_limiter::RateLimiter right_trigger_rate_limit(-1.0, 1.0, drive_rate_limit_time);
+constexpr double drive_rate_limit_time = 500.;
 
 ros::Publisher elevator_setpoint;
 ros::Publisher JoystickRobotVel;
@@ -82,6 +78,7 @@ ros::ServiceClient manual_server_cargoIn;
 ros::ServiceClient continue_outtake_client;
 
 ros::ServiceClient align_with_terabee;
+
 //use shared pointers to make the clients global
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_cargo_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_cargo_ac;
@@ -141,22 +138,31 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
+	//So the code can use specific joysticks
+	int joystick_id = -1;
+
 	const ros::M_string &header = event.getConnectionHeader();
 	const std::string topic = header.at("topic");
 
-	size_t i = 0;
 	//Identifies the incoming message as the correct joystick based on the topic the message was recieved from
-	for(bool msg_assign = false; (msg_assign == false) && (i < topic_array.size()); i++)
+	for(size_t i = 0; (i < topic_array.size()); i++)
 	{
 		if(topic == topic_array[i])
 		{
 			joystick_states_array[i] = *(event.getMessage());
-			msg_assign = true;
+			joystick_id = i;
+			break;
 		}
 	}
 
+	if(joystick_id == -1)
+	{
+		ROS_ERROR("Joystick message topic not identified. Teleop callback failed.");
+		return;
+	}
+
 	//Only do this for the first joystick
-	if(i == 1)
+	if(joystick_id == 0)
 	{
 		// TODO - experiment with rate-limiting after scaling instead?
 		double leftStickX = joystick_states_array[0].leftStickX;
@@ -164,26 +170,36 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		double rightStickX = joystick_states_array[0].rightStickX;
 		double rightStickY = joystick_states_array[0].rightStickY;
 
-		leftStickX = left_stick_x_rate_limit.applyLimit(leftStickX);
-		leftStickY = left_stick_y_rate_limit.applyLimit(leftStickY);
-		rightStickX = right_stick_x_rate_limit.applyLimit(rightStickX);
-		rightStickY = right_stick_y_rate_limit.applyLimit(rightStickY);
+		// Defer init until the first time these are used - makes sure the
+		// initial time is reasonable
+		static std::unique_ptr<rate_limiter::RateLimiter> left_stick_x_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+		static std::unique_ptr<rate_limiter::RateLimiter> left_stick_y_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+		static std::unique_ptr<rate_limiter::RateLimiter> right_stick_x_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+		static std::unique_ptr<rate_limiter::RateLimiter> right_stick_y_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+		static std::unique_ptr<rate_limiter::RateLimiter> left_trigger_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+		static std::unique_ptr<rate_limiter::RateLimiter> right_trigger_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+
+		leftStickX = left_stick_x_rate_limit->applyLimit(leftStickX);
+		leftStickY = left_stick_y_rate_limit->applyLimit(leftStickY);
+		rightStickX = right_stick_x_rate_limit->applyLimit(rightStickX);
+		rightStickY = right_stick_y_rate_limit->applyLimit(rightStickY);
 
 		dead_zone_check(leftStickX, leftStickY);
 		dead_zone_check(rightStickX, rightStickY);
 
-		leftStickX =  pow(fabs(leftStickX), config.joystick_pow) * config.max_speed;
-		leftStickY =  pow(fabs(leftStickY), config.joystick_pow) * config.max_speed;
-		double rotation = pow(fabs(rightStickX), config.rotation_pow) * config.max_rot;
+		leftStickX =  pow(fabs(leftStickX), config.joystick_pow) * max_speed;
+		leftStickY =  pow(fabs(leftStickY), config.joystick_pow) * max_speed;
+		double rotation = pow(fabs(rightStickX), config.rotation_pow) * max_rot;
 
+		// Copysign is a c++ function to make sure we don't screw up the sign in the lines above
 		leftStickX = copysign(leftStickX, joystick_states_array[0].leftStickX);
 		leftStickY = copysign(leftStickY, -joystick_states_array[0].leftStickY);
 		rotation = copysign(rotation,  joystick_states_array[0].rightStickX);
 
 		// TODO : dead-zone for rotation?
 		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
-		//double triggerLeft = left_trigger_rate_limit.applyLmit(joystick_states_array[0].leftTrigger);
-		//double triggerRight = right_trigger_rate_limit.applyLimit(joystick_states_array[0].rightTrigger);
+		//double triggerLeft = left_trigger_rate_limit->applyLmit(joystick_states_array[0].leftTrigger);
+		//double triggerRight = right_trigger_rate_limit->applyLimit(joystick_states_array[0].rightTrigger);
 
 		static bool sendRobotZero = false;
 		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
@@ -439,10 +455,17 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: bumperRightRelease");
 
 		}
-		if(joystick_states_array[0].leftTrigger >= 0.5)
-		{
-		}
 		if(joystick_states_array[0].rightTrigger >= 0.5)
+		{
+			max_speed = config.max_speed_slow;
+			max_rot = config.max_rot_slow;
+		}
+		else
+		{
+			max_speed = config.max_speed;
+			max_rot = config.max_rot;
+		}
+		if(joystick_states_array[0].leftTrigger >= 0.5)
 		{
 		}
 		//Joystick1: directionLeft
@@ -526,7 +549,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 	}
 
-	else if(i == 2)
+	else if(joystick_id == 1)
 	{
 		//Joystick2: buttonA
 		if(joystick_states_array[1].buttonAPress) //Clamp
@@ -885,14 +908,25 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read linebreak_debounce_iterations in teleop_joystick_comp");
 	}
-	if(!n_swerve_params.getParam("max_speed", config.max_speed))
+	if(!n_params.getParam("max_speed", config.max_speed))
 	{
 		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("max_speed_slow", config.max_speed_slow))
+	{
+		ROS_ERROR("Could not read max_speed_slow in teleop_joystick_comp");
 	}
 	if(!n_params.getParam("max_rot", config.max_rot))
 	{
 		ROS_ERROR("Could not read max_rot in teleop_joystick_comp");
 	}
+	if(!n_params.getParam("max_rot_slow", config.max_rot_slow))
+	{
+		ROS_ERROR("Could not read max_rot_slow in teleop_joystick_comp");
+	}
+
+	max_speed = config.max_speed;
+	max_rot = config.max_rot;
 
 	std::vector <ros::Subscriber> subscriber_array;
     navX_angle = M_PI / 2.;

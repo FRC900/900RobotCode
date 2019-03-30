@@ -29,6 +29,8 @@ struct GoalInfo
 	cv::Point com;
 	cv::Rect br;
 	cv::RotatedRect rtRect;
+	cv::Point2f lineStart;
+	cv::Point2f lineEnd;
 };
 
 //This contains all the necessary info for a goal
@@ -68,6 +70,7 @@ class GoalDetector
 		const std::vector< std::vector< cv::Point > > getContours(const cv::Mat& image);
 
 		bool Valid(void) const;
+		void setCameraAngle(double camera_angle);
 
 	private:
 
@@ -90,7 +93,7 @@ class GoalDetector
 		float distanceUsingFixedHeight(const cv::Rect &rect,const cv::Point &center, float expected_delta_height) const;
 		bool generateThresholdAddSubtract(const cv::Mat& imageIn, cv::Mat& imageOut);
 		void isValid();
-		const std::vector<DepthInfo> getDepths(const cv::Mat &depth, const std::vector< std::vector< cv::Point > > &contours, ObjectNum objtype, float expected_height);
+		const std::vector<DepthInfo> getDepths(const cv::Mat &depth, const std::vector< std::vector< cv::Point > > &contours, const ObjectNum &objtype, float expected_height);
 		const std::vector< GoalInfo > getInfo(const std::vector< std::vector< cv::Point > > &contours, const std::vector<DepthInfo> &depth_maxs, ObjectNum objtype);
 };
 

@@ -13,7 +13,7 @@ class RateLimiter
 			: max_change_per_msec_((rise_time_in_msec > 0) ?
 					((max_val - min_val) / rise_time_in_msec) : std::numeric_limits<double>::max())
 		    , last_value_(0)
-			, last_update_time_(0)
+			, last_update_time_(ros::Time::now())
 		{
 		}
 
