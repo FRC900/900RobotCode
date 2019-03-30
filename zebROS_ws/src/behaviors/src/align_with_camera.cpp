@@ -82,7 +82,7 @@ int main(int argc, char ** argv)
 		ROS_ERROR_STREAM("Could not read x_error_threshold in align_with_camera");
 
 	//set up publisher for publish_pid_cmd_vel node
-	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_camera/y_command", 1);
+	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_camera/x_command", 1);
 	//set up feedback publisher for the align_server which uses this node
 	ros::Publisher successful_y_align = n.advertise<std_msgs::Float64MultiArray>("align_with_camera/y_aligned", 1);
 	//set up enable subscriber from align_server
@@ -106,24 +106,24 @@ int main(int argc, char ** argv)
 	{
 		bool aligned = false;
 
-		if(fabs(relative_goal_location.point.x) < x_error_threshold)
+		if(fabs(relative_goal_location.point.y) < x_error_threshold)
 		{
 			if(debug)
-				ROS_INFO_STREAM("we're aligned!! error = " << relative_goal_location.point.x);
+				ROS_INFO_STREAM_THROTTLE(0.1, "we're aligned!! error = " << relative_goal_location.point.y);
 			aligned = true;
 			y_msg.data = 0;
 		}
-		else if(relative_goal_location.point.x > 0)
+		else if(relative_goal_location.point.y > 0)
 		{
 			if(debug)
-				ROS_INFO_STREAM("we're left. error = " << relative_goal_location.point.x);
-			y_msg.data = 1*cmd_vel_to_pub;
+				ROS_INFO_STREAM("we're left. error = " << relative_goal_location.point.y);
+			y_msg.data = -1*cmd_vel_to_pub;
 		}
 		else
 		{
 			if(debug)
-				ROS_INFO_STREAM("we're right. error = " << relative_goal_location.point.x);
-			y_msg.data = -1*cmd_vel_to_pub;
+				ROS_INFO_STREAM("we're right. error = " << relative_goal_location.point.y);
+			y_msg.data = 1*cmd_vel_to_pub;
 		}
 
 		if(publish)
