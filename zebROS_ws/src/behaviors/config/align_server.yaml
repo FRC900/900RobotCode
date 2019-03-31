@@ -10,6 +10,6 @@ align_with_terabee_params: #params defined in align_with_terabee.cpp
     distance_target: 0.45
     cargo_pid_max_distance: 0.5
 align_server_topics:
-    align_cargo_rocket_ship:
+    align_cargo_rocketship:
         enable_x_pub: "hatch_panel_distance_pid/pid_enable"
         x_error_topic: "hatch_panel_distance_pid/pid_debug"
