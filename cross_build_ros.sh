@@ -58,7 +58,7 @@ wstool update -j8
 sed -i -e '/<\/package>/i  <depend>urdfdom_headers<\/depend>' urdf/urdf_parser_plugin/package.xml 
 
 # In a docker container : 
-# docker run -it --user ubuntu -v /home/kjaget/2019RobotCode:/home/ubuntu/2019RobotCode -v ~/catkin_arm_cross_ws:/home/ubuntu/catkin_arm_cross_ws  frc900/zebros-beta2019-dev /bin/bash
+# docker run -it --user ubuntu -v /home/kjaget/2019RobotCode:/home/ubuntu/2019RobotCode -v ~/catkin_arm_cross_ws:/home/ubuntu/catkin_arm_cross_ws  frc900/zebros-2019-dev /bin/bash
 
 cd ~/catkin_arm_cross_ws
 # Do a fresh build - kill off any lingering dependencies
@@ -71,6 +71,7 @@ rm -rf ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/kinetic devel_isolate
 # Add newly built cross-libs to git repo so they are
 # used for subsequent Rio imagings
 cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi
+rm roscode_roborio_2018.tar.bz2
 tar -cjf ~/2019RobotCode/roscore_roborio_2018.tar.bz2 opt/ros/kinetic
 
 # I needed to add "-DYAML_CPP_INCLUDE_DIRS=/$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include
