@@ -287,7 +287,7 @@ class BaseAlignAction {
 		}
 		//TODO make this configurable
 		//Function to move mech out of the way of sensors
-		virtual bool move_mech(ros::Rate r, boolwait_for_result) {
+		virtual bool move_mech(ros::Rate r, bool wait_for_result) {
 			behaviors::ElevatorGoal elev_goal;
 			elev_goal.setpoint_index = CARGO_SHIP;
 			elev_goal.place_cargo = false;
