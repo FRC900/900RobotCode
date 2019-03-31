@@ -72,17 +72,6 @@ class AlignHatchPanelAction : public BaseAlignAction {
 #endif
 };
 
-// TODO : These probably need to be moved into the base class, along
-// with some defaults and a way to set them
-double align_timeout;
-double orient_timeout;
-double x_timeout;
-double y_timeout;
-
-double orient_error_threshold;
-double x_error_threshold;
-double y_error_threshold;
-
 bool debug;
 
 
