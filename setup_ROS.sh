@@ -14,6 +14,10 @@ sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 0xB0
 # Installation
 sudo apt update
 
+# For intel realsense
+sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE 
+sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main" -u 
+sudo apt update
 # Add Individual Packages here
 # You can install a specific ROS package (replace underscores with dashes of the package name):
 # sudo apt-get install ros-kinetic-PACKAGE
