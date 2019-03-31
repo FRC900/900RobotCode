@@ -141,7 +141,7 @@
 
 	</group>
 
-	<!-- <group ns="align_cargo_rocket_ship">
+	<!-- <group ns="align_cargo_rocketship">
 		<param name="enable_align_pub" value="align_pid/pid_enable" />
 		<param name="enable_orient_pub" value="orient_pid/pid_enable" />
 		<param name="enable_x_pub" value="x_pid/pid_enable" />
