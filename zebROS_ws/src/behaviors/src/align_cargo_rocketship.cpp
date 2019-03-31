@@ -1,5 +1,6 @@
 #include "behaviors/base_align_server.h"
 
+<<<<<<< 8868c2e2b92ee790aa417360c0f3123eb4a3c251
 class AlignCargoRocketshipAction : public BaseAlignAction {
 	public:
 		AlignCargoRocketshipAction(const std::string &name,
@@ -39,6 +40,26 @@ class AlignCargoRocketshipAction : public BaseAlignAction {
                 orient_error_threshold_param_name_,
                 x_error_threshold_param_name_,
                 y_error_threshold_param_name_)
+=======
+class AlignHatchPanelAction : public BaseAlignAction {
+	public:
+		AlignHatchPanelAction(const std::string &name,
+							  const std::string &enable_align_topic_,
+							  const std::string &enable_orient_topic_,
+							  const std::string &enable_x_topic_,
+							  const std::string &enable_y_topic_,
+							  const std::string &orient_error_topic_,
+							  const std::string &x_error_topic_,
+							  const std::string &y_error_topic_) :
+			BaseAlignAction(name,
+				enable_align_topic_,
+				enable_orient_topic_,
+				enable_x_topic_,
+				enable_y_topic_,
+				orient_error_topic_,
+				x_error_topic_,
+				y_error_topic_)
+>>>>>>> Started adding cargo cargoship and rocketship align functionality
 		{
 		}
 };
