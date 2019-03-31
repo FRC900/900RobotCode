@@ -12,14 +12,6 @@
 
 // TODO : These probably need to be moved into the base class, along
 // with some defaults and a way to set them
-extern double align_timeout;
-extern double orient_timeout;
-extern double x_timeout;
-extern double y_timeout;
-
-extern double orient_error_threshold;
-extern double x_error_threshold;
-extern double y_error_threshold;
 
 extern bool debug;
 
@@ -84,6 +76,15 @@ class BaseAlignAction {
 		bool x_timed_out_ = false;
 		bool y_timed_out_ = false;
 
+		double align_timeout_ = 0.0;
+		double orient_timeout_ = 0.0;
+		double x_timeout_ = 0.0;
+		double y_timeout_ = 0.0;
+
+		double orient_error_threshold_ = 0.0;
+		double x_error_threshold_ = 0.0;
+		double y_error_threshold_ = 0.0;
+
 		bool preempted_ = false;
 
 		double start_time_ = -1.0;
@@ -91,13 +92,21 @@ class BaseAlignAction {
 	public:
 		//make the executeCB function run every time the actionlib server is called
 		BaseAlignAction(const std::string &name,
+
 						const std::string &enable_align_topic_,
 						const std::string &enable_orient_topic_,
 						const std::string &enable_x_topic_,
 						const std::string &enable_y_topic_,
+
 						const std::string &orient_error_topic_,
 						const std::string &x_error_topic_,
 						const std::string &y_error_topic_,
+
+						const std::string &align_timeout_param_name_,
+						const std::string &orient_timeout_param_name_,
+						const std::string &x_timeout_param_name_,
+						const std::string &y_timeout_param_name_,
+
 						const std::string &orient_error_threshold_param_name_,
 						const std::string &x_error_threshold_param_name_,
 						const std::string &y_error_threshold_param_name_):
@@ -120,12 +129,21 @@ class BaseAlignAction {
 
 			BrakeSrv_ = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 
-			if(!nh_.getParam("orient_error_threshold_param_name_", orient_error_threshold))
+			if(!nh_.getParam(align_timeout_param_name_, align_timeout_))
+				ROS_ERROR_STREAM("Could not read align_timeout_param_name_ in align_server");
+			if(!nh_.getParam(orient_timeout_param_name_, orient_timeout_))
+				ROS_ERROR_STREAM("Could not read orient_timeout_param_name_ in align_server");
+			if(!nh_.getParam(x_timeout_param_name_, x_timeout_))
+				ROS_ERROR_STREAM("Could not read x_timeout_param_name_ in align_server");
+			if(!nh_.getParam(y_timeout_param_name_, y_timeout_))
+				ROS_ERROR_STREAM("Could not read y_timeout_param_name_ in align_server");
+
+			if(!nh_.getParam(orient_error_threshold_param_name_, orient_error_threshold_))
 				ROS_ERROR_STREAM("Could not read orient_error_threshold_param_name_ in align_server");
-			if(!nh_.getParam("x_error_threshold_param_name_", x_error_threshold))
+			if(!nh_.getParam(x_error_threshold_param_name_, x_error_threshold_))
 				ROS_ERROR_STREAM("Could not read x_error_threshold_param_name_ in align_server");
-			if(!nh_.getParam("cargo_error_threshold_param_name_", y_error_threshold))
-				ROS_ERROR_STREAM("Could not read cargo_error_threshold_param_name_ in align_server");
+			if(!nh_.getParam(y_error_threshold_param_name_, y_error_threshold_))
+				ROS_ERROR_STREAM("Could not read y_error_threshold_param_name_ in align_server");
 		}
 
 		~BaseAlignAction(void)
@@ -151,19 +169,19 @@ class BaseAlignAction {
 		//Default error callbacks for pid node
 		virtual void orient_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold);
+			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold_);
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "orient error: " << fabs(msg.data[0]));
 		}
 		virtual void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold);
+			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold_);
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "x error: " << fabs(msg.data[0]));
 		}
 		virtual void y_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
-			y_aligned_ = (fabs(msg.data[0]) < y_error_threshold);
+			y_aligned_ = (fabs(msg.data[0]) < y_error_threshold_);
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "y error: " << fabs(msg.data[0]));
 		}
@@ -175,7 +193,7 @@ class BaseAlignAction {
 		}
 
 		//Functions to enable align PID
-		virtual void align_orient(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
+		virtual void align_orient(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=1.0, double keep_enabled=false) {
 			ROS_INFO_STREAM("Running align_orient");
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
@@ -195,7 +213,7 @@ class BaseAlignAction {
 				enable_orient_pub_.publish(enable_msg);
 			}
 		}
-		virtual void align_x(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
+		virtual void align_x(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=1.0, double keep_enabled=false) {
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
 			enable_x_pub_.publish(enable_msg);
@@ -214,7 +232,7 @@ class BaseAlignAction {
 				enable_x_pub_.publish(enable_msg);
 			}
 		}
-		virtual void align_y(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=align_timeout, double keep_enabled=false) {
+		virtual void align_y(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=1.0, double keep_enabled=false) {
 			ROS_INFO_STREAM("Running align_y");
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
@@ -293,7 +311,7 @@ class BaseAlignAction {
 			elev_goal.place_cargo = false;
 			ac_elevator_.sendGoal(elev_goal);
 			if(wait_for_result) {
-				return wait_for_mech(r, align_timeout);
+				return wait_for_mech(r, align_timeout_);
 			}
 			else {
 				return true;
@@ -314,6 +332,7 @@ class BaseAlignAction {
 		//Example align function
 		virtual bool robot_align() {
 			ros::Rate r(30);
+			ROS_WARN("starting robot_align");
 
 			start_time_ = ros::Time::now().toSec();
 			bool timed_out = false;
@@ -330,10 +349,12 @@ class BaseAlignAction {
 			//move mech out of the way
 			//move_mech(r, false);
 			//enable, wait for alignment, TODO change this timeout, keep enabled
-			align_orient(r, true, true, align_timeout, false);
+			ROS_WARN("Starting orient align");
+			align_orient(r, true, true, align_timeout_, false);
+			ROS_WARN("Ending orient align");
 
 			//Check if it timed out or preempted while waiting
-			timed_out = check_timeout(start_time_, align_timeout);
+			timed_out = check_timeout(start_time_, align_timeout_);
 			preempted_ = check_preempted();
 			if(preempted_ || timed_out) {
 				return false;
@@ -343,17 +364,19 @@ class BaseAlignAction {
 			//align_x(r, true, true);
 
 			////Check if it timed out or preempted while waiting
-			//timed_out = check_timeout(start_time_, align_timeout);
+			//timed_out = check_timeout(start_time_, align_timeout_);
 			//preempted_ = check_preempted();
 			//if(preempted_ || timed_out) {
 			//	return false;
 			//}
 			
 			//enable, wait for alignment, default timeout, don't keep enabled
+			ROS_WARN("Starting y align");
 			align_y(r, true, true);
+			ROS_WARN("ending y align");
 
 			//Check if it timed out or preempted while waiting
-			timed_out = check_timeout(start_time_, align_timeout);
+			timed_out = check_timeout(start_time_, align_timeout_);
 			preempted_ = check_preempted();
 			if(preempted_ || timed_out) {
 				return false;
@@ -406,8 +429,8 @@ class BaseAlignAction {
 	ros::NodeHandle n_params(n, "align_server_params");
     ros::NodeHandle n_panel_params(n, "actionlib_hatch_panel_intake_params");
 
-	if(!n_params.getParam("align_timeout", align_timeout))
-		ROS_ERROR_STREAM("Could not read align_timeout in align_server");
+	if(!n_params.getParam("align_timeout_", align_timeout_))
+		ROS_ERROR_STREAM("Could not read align_timeout_ in align_server");
 	if(!n_params.getParam("orient_timeout", orient_timeout))
 		ROS_ERROR_STREAM("Could not read orient_timeout in align_server");
 	if(!n_params.getParam("x_timeout", x_timeout))
