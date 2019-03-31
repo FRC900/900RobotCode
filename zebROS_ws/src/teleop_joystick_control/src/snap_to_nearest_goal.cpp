@@ -208,6 +208,7 @@ int main(int argc, char **argv)
 		else {
 			snap_angle = nearest_angle(nothing_angles, cur_angle);
 		}
+		snap_angle = nearest_angle(hatch_panel_angles, cur_angle + M_PI/2) - M_PI/2; //TODO remove having to multiply negative one
 		
 		//TODO make this not a hack (ASSUMES hatch panel)
 		//snap_angle = nearest_angle(hatch_panel_angles, cur_angle + M_PI/2) - M_PI/2; //TODO remove having to multiply negative one

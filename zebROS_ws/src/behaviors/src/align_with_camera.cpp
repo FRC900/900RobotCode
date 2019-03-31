@@ -29,7 +29,7 @@ void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 	{
 		if(debug)
 		{
-			ROS_INFO(" RAW point of turtle 3 in frame of turtle 1 Position(x:%f y:%f z:%f)\n", 
+			ROS_INFO_THROTTLE(1, " RAW point of turtle 3 in frame of turtle 1 Position(x:%f y:%f z:%f)\n", 
 					raw_goal_location->point.x,
 					raw_goal_location->point.y,
 					raw_goal_location->point.z);
@@ -37,7 +37,7 @@ void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 		buffer.transform(*raw_goal_location, relative_goal_location, target_frame);
 		if(debug)
 		{
-			ROS_INFO("RELATIVE point of turtle 3 in frame of turtle 1 Position(x:%f y:%f z:%f)\n", 
+			ROS_INFO_THROTTLE(1, "RELATIVE point of turtle 3 in frame of turtle 1 Position(x:%f y:%f z:%f)\n", 
 					relative_goal_location.point.x,
 					relative_goal_location.point.y,
 					relative_goal_location.point.z);
@@ -109,20 +109,20 @@ int main(int argc, char ** argv)
 		if(fabs(relative_goal_location.point.y) < x_error_threshold)
 		{
 			if(debug)
-				ROS_INFO_STREAM_THROTTLE(0.1, "we're aligned!! error = " << relative_goal_location.point.y);
+				ROS_INFO_STREAM_THROTTLE(1, "we're aligned!! error = " << relative_goal_location.point.y);
 			aligned = true;
 			y_msg.data = 0;
 		}
 		else if(relative_goal_location.point.y > 0)
 		{
 			if(debug)
-				ROS_INFO_STREAM("we're left. error = " << relative_goal_location.point.y);
+				ROS_INFO_STREAM_THROTTLE(1, "we're left. error = " << relative_goal_location.point.y);
 			y_msg.data = -1*cmd_vel_to_pub;
 		}
 		else
 		{
 			if(debug)
-				ROS_INFO_STREAM("we're right. error = " << relative_goal_location.point.y);
+				ROS_INFO_STREAM_THROTTLE(1, "we're right. error = " << relative_goal_location.point.y);
 			y_msg.data = 1*cmd_vel_to_pub;
 		}
 
