@@ -248,6 +248,11 @@ class ClimbAction {
 					ae_.sendGoal(elevator_goal);
 					waitForElevator(timed_out, preempted, goal->step, r, elevator_deploy_timeout);
 				} //end of raise elevator to right height before engaging
+				if(preempted || timed_out)
+				{
+					ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				}
+
 			}
 			else if(goal->step == 1)
 			{
@@ -300,14 +305,14 @@ class ClimbAction {
 				if(preempted || timed_out)
 				{
 					ROS_WARN_STREAM("Climber server timed out or was preempted");
-					ae_.cancelAllGoals();
-					std_srvs::SetBool srv;
-					srv.request.data = false;
-
-					if(!climber_engage_client_.call(srv))
-					{
-						ROS_ERROR("climber server step 1: Climber PANIC failed in climber controller");
-					}
+					cmd_vel_forward_speed_ = 0;
+					behaviors::ElevatorGoal elevator_goal;
+					elevator_goal.setpoint_index = ELEVATOR_RAISE;
+					elevator_goal.place_cargo = 0; //doesn't actually do anything
+					elevator_goal.raise_intake_after_success = true;
+					//send the elevator_goal
+					ae_.sendGoal(elevator_goal);
+					waitForElevator(timed_out, preempted, goal->step, r, elevator_deploy_timeout);
 				}
 
 				ROS_INFO_STREAM("preempted = " << preempted);
@@ -339,9 +344,15 @@ class ClimbAction {
 					r.sleep();
 				}
 				if(timed_out)
+				{
 					ROS_INFO_STREAM("Driving forward after fall has timed out");
+					cmd_vel_forward_speed_ = 0;
+				}
 				if(preempted)
+				{
 					ROS_INFO_STREAM("Driving forward after fall was preempted");
+					cmd_vel_forward_speed_ = 0;
+				}
 
 				//preempt handling: do nothing
 			}
