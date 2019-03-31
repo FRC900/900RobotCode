@@ -296,8 +296,6 @@ class ClimbAction {
 				cmd_vel_forward_speed_ = drive_forward_speed;
 
 				std::thread elevatorClimbConnectThread(std::bind(&ClimbAction::elevatorClimbConnectThread, this));
-				//
-				//lower elevator to make robot rise off ground ---------------------------------------------------
 				if(!preempted && !timed_out && ros::ok())
 				{
 					ROS_INFO("climber server step 1: lowering elevator to make robot climb");
