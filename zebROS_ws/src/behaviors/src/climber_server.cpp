@@ -37,7 +37,7 @@ double delay_before_continue_retract;
 
 int linebreak_debounce_iterations;
 double climber_engage_pos;
-
+double climb_raise_position;
 class ClimbAction {
 	protected:
 		ros::NodeHandle nh_;
@@ -70,6 +70,7 @@ class ClimbAction {
 		double navX_roll_;
 		double navX_pitch_;
 		double elev_cur_position_;
+		bool climber_engaged_;
 
 		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
 		// Try to safely wait for an elevator action to succeed
@@ -81,7 +82,7 @@ class ClimbAction {
 			{
 				auto state = ae_.getState();
 				if ((state == actionlib::SimpleClientGoalState::StateEnum::SUCCEEDED) ||
-					(state == actionlib::SimpleClientGoalState::StateEnum::PREEMPTED))
+						(state == actionlib::SimpleClientGoalState::StateEnum::PREEMPTED))
 				{
 					waiting_for_elevator = false;
 					if (state == actionlib::SimpleClientGoalState::StateEnum::PREEMPTED)
@@ -111,6 +112,15 @@ class ClimbAction {
 					ros::spinOnce();
 					r.sleep();
 				}
+			}
+		}
+
+		void elevatorClimbConnectThread()
+		{
+			if(elev_cur_position_ <= climb_raise_position)
+			{
+				bool climber_engaged_ = true;
+				ROS_WARN_STREAM("elevator connected with climber");
 			}
 		}
 
@@ -184,6 +194,7 @@ class ClimbAction {
 			ros::Rate r(20);
 
 			std::thread cmdVelThread(std::bind(&ClimbAction::cmdVelThread, this));
+			std::thread elevatorClimbConnectThread; //will be initialized right before moving the elevator down to make robot rise in air
 
 			//define variables that will be reused for each controller call/actionlib server call
 			//define variables that will be set true if the actionlib action is to be ended
@@ -264,6 +275,8 @@ class ClimbAction {
 				}
 
 				cmd_vel_forward_speed_ = drive_forward_speed;
+
+				std::thread elevatorClimbConnectThread(std::bind(&ClimbAction::elevatorClimbConnectThread, this));
 
 				//lower elevator to make robot rise off ground
 				if(!preempted && !timed_out && ros::ok())
@@ -458,8 +471,9 @@ class ClimbAction {
 			}
 
 			stopped_ = true;
-			cmdVelThread.join();
 
+			cmdVelThread.join();
+			elevatorClimbConnectThread.join();
 			return;
 		}
 
@@ -558,29 +572,29 @@ class ClimbAction {
 			as_(nh_, name, boost::bind(&ClimbAction::executeCB, this, _1), false),
 			action_name_(name),
 			ae_("/elevator/elevator_server", true)
-		{
-			as_.start(); //start the actionlib server
+	{
+		as_.start(); //start the actionlib server
 
-			//do networking stuff?
-			std::map<std::string, std::string> service_connection_header;
-			service_connection_header["tcp_nodelay"] = "1";
+		//do networking stuff?
+		std::map<std::string, std::string> service_connection_header;
+		service_connection_header["tcp_nodelay"] = "1";
 
-			//get the match timer
-			match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data", 1, &ClimbAction::matchStateCallback,this);
-			//initialize the client being used to call the climber controller
-			climber_controller_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_feet_retract", false, service_connection_header);
-			//initialize the client being used to call the climber controller to engage the climber
-			climber_engage_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_release_endgame", false, service_connection_header);
+		//get the match timer
+		match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data", 1, &ClimbAction::matchStateCallback,this);
+		//initialize the client being used to call the climber controller
+		climber_controller_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_feet_retract", false, service_connection_header);
+		//initialize the client being used to call the climber controller to engage the climber
+		climber_engage_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_release_endgame", false, service_connection_header);
 
-			navX_sub_ = nh_.subscribe("/frcrobot_rio/navx_mxp", 1, &ClimbAction::navXCallback, this);
-			talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states",1,&ClimbAction::talonStateCallback, this);
+		navX_sub_ = nh_.subscribe("/frcrobot_rio/navx_mxp", 1, &ClimbAction::navXCallback, this);
+		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states",1,&ClimbAction::talonStateCallback, this);
 
-			cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+		cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 
-			//initialize the publisher used to send messages to the drive base
-			cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
-			//start subscribers subscribing
-			joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
+		//initialize the publisher used to send messages to the drive base
+		cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+		//start subscribers subscribing
+		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
 		}
 
 		~ClimbAction(void)
@@ -599,6 +613,12 @@ int main(int argc, char** argv) {
 	//get config values
 	ros::NodeHandle n;
 	ros::NodeHandle n_climb_params(n, "climber_server");
+
+	if (!n.getParam("/action_lift_params/climber3/climb_raise_position", climb_raise_position))
+	{
+		ROS_ERROR("could not read climb_raise_position");
+		climb_raise_position = 0.79;
+	}
 
 	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 	{
