@@ -1,8 +1,8 @@
 #include "behaviors/base_align_server.h"
 
-class AlignCargoRocketshipAction : public BaseAlignAction {
+class AlignCargoCargoshipAction : public BaseAlignAction {
 	public:
-		AlignCargoRocketshipAction(const std::string &name,
+		AlignCargoCargoshipAction(const std::string &name,
 							  const std::string &enable_align_topic_,
 							  const std::string &enable_orient_topic_,
 							  const std::string &enable_x_topic_,
@@ -37,7 +37,7 @@ bool debug;
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "align_server");
+	ros::init(argc, argv, "align_cargo_cargoship_server");
 
 	ros::NodeHandle n;
 	ros::NodeHandle n_private_params("~");
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
 	if(!n_private_params.getParam("debug", debug))
 		ROS_ERROR_STREAM("Could not read debug in align_server");
 
-	AlignCargoRocketshipAction align_cargo_rocketship_action("align_cargo_rocketship_server",
+	AlignCargoCargoshipAction align_cargo_cargoship_action("align_cargo_cargoship_server",
 			"align_pid/pid_enable",
 			"orient_pid/pid_enable",
 			"cargo_distance_pid/pid_enable",
