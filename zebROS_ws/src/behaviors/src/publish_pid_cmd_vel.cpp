@@ -28,8 +28,7 @@ ros::Subscriber ratio_xy_sub;
 
 geometry_msgs::Twist cmd_vel_msg;
 
-std::atomic<double> ratio_xy = 0.0;
-
+std::atomic<double> ratio_xy(0.0);
 bool pid_enable = false;
 bool orient_sub = false;
 bool x_sub = false;
