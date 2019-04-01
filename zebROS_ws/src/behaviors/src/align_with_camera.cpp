@@ -106,7 +106,7 @@ int main(int argc, char ** argv)
 	while(ros::ok())
 	{
 		bool aligned = false;
-		double error;
+		double error = 0;
 		
 		if(target_frame == "panel_outtake")
 		{
