@@ -3,7 +3,6 @@
 class AlignCargoCargoshipAction : public BaseAlignAction {
 	public:
 		AlignCargoCargoshipAction(const std::string &name,
-<<<<<<< 66fd3f058c6797f4b8293ad4cf2a20338a86b2bf
 
                             const std::string &enable_align_topic_,
                             const std::string &enable_orient_topic_,
@@ -40,23 +39,6 @@ class AlignCargoCargoshipAction : public BaseAlignAction {
                 orient_error_threshold_param_name_,
                 x_error_threshold_param_name_,
                 y_error_threshold_param_name_)
-=======
-							  const std::string &enable_align_topic_,
-							  const std::string &enable_orient_topic_,
-							  const std::string &enable_x_topic_,
-							  const std::string &enable_y_topic_,
-							  const std::string &orient_error_topic_,
-							  const std::string &x_error_topic_,
-							  const std::string &y_error_topic_) :
-			BaseAlignAction(name,
-				enable_align_topic_,
-				enable_orient_topic_,
-				enable_x_topic_,
-				enable_y_topic_,
-				orient_error_topic_,
-				x_error_topic_,
-				y_error_topic_)
->>>>>>> Continue setting up cargo align
 		{
 		}
 };
