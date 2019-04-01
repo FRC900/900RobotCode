@@ -6,3 +6,6 @@ climber_server:
     climb_low_timeout: 8.0
     match_time_lock: 225
     drive_forward_speed: 0.6
+    delay_before_engage: 0.2
+    linebreak_debounce_iterations: 5
+    delay_before_continue_retract: 0.3

@@ -12,6 +12,7 @@
 #include "frc_msgs/MatchSpecificData.h"
 #include <thread>
 #include "sensor_msgs/Imu.h"
+#include "sensor_msgs/JointState.h"
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include "cargo_intake_controller/CargoIntakeSrv.h"
@@ -25,6 +26,10 @@ double elevator_climb_low_timeout;
 double match_time_lock;
 double wait_for_server_timeout;
 double drive_forward_speed;
+double delay_before_engage;
+double delay_before_continue_retract;
+
+int linebreak_debounce_iterations;
 
 class ClimbAction {
 	protected:
@@ -40,13 +45,13 @@ class ClimbAction {
 		ros::ServiceClient climber_controller_client_; //create a ros client to send requests to the climber controller (piston in the leg)
 		ros::ServiceClient climber_engage_client_; //ros client to engage the climber via the elevator controller 
 		ros::Publisher cmd_vel_publisher_;
-		/*
 		   std::atomic<int> linebreak_true_count; //counts how many times in a row the linebreak reported there's a cargo since we started trying to intake/outtake
-		   std::atomic<int> linebreak_false_count; //same, but how many times in a row no cargo*/
+		   std::atomic<int> linebreak_false_count; //same, but how many times in a row no cargo
 		behaviors::ClimbResult result_; //variable to store result of the actionlib action
 
 		//create subscribers to get data
 		ros::Subscriber match_data_sub_;
+		ros::Subscriber joint_states_sub_;
 
 		std::atomic<double> cmd_vel_forward_speed_;
 		std::atomic<bool> stopped_;
@@ -87,7 +92,7 @@ class ClimbAction {
 		//initialize the publisher used to send messages to the drive base
 		cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 		//start subscribers subscribing
-		//joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
+		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbAction::jointStateCallback, this);
 	}
 
 		~ClimbAction(void)
@@ -258,7 +263,7 @@ class ClimbAction {
 
                                         // delay to make sure that we engaged properly
                                         // TODO - if we need to spin, spin in a loop here for 1 second here?
-                                        ros::Duration(1).sleep();
+                                        ros::Duration(delay_before_engage).sleep();
 				}
 
 				cmd_vel_forward_speed_ = drive_forward_speed;
@@ -394,9 +399,22 @@ class ClimbAction {
 						preempted = true;
 					}
 				} //end of raising elevator to make robot climb
-			}
-			else if(goal->step == 2)
-			{
+				double start_time = ros::Time::now().toSec();
+				while(linebreak_true_count <= linebreak_debounce_iterations && ros::ok() && !preempted && !timed_out) {
+					timed_out = (ros::Time::now().toSec() -  start_time) > running_forward_timeout;
+					if(as_.isPreemptRequested())
+					{
+						ROS_INFO_STREAM("preempt was requested -- climber_server");
+						preempted = true;
+					}
+					ros::spinOnce();
+					r.sleep();
+
+				}
+				ros::Duration(delay_before_continue_retract).sleep();
+			//}
+			//else if(goal->step == 2)
+			//{
 				ROS_INFO("Running climber server step 1");
 
 				//pull climber all the way up - move elevator to climber deploy setpoint
@@ -501,47 +519,50 @@ class ClimbAction {
 		// Function to be called whenever the subscriber for the joint states topic receives a message
 		// Grabs various info from hw_interface using
 		// dummy joint position values
+		// */
 		void jointStateCallback(const sensor_msgs::JointState &joint_state)
 		{
-		//get index of linebreak sensor for this actionlib server
-		static size_t linebreak_idx = std::numeric_limits<size_t>::max();
-		if ((linebreak_idx >= joint_state.name.size()))
-		{
-		for (size_t i = 0; i < joint_state.name.size(); i++)
-		{
-		if (joint_state.name[i] == "cargo_intake_line_break") //TODO: define this in the hardware interface
-		linebreak_idx = i;
-		}
-		}
+			//get index of linebreak sensor for this actionlib server
+			static size_t linebreak_idx_1 = std::numeric_limits<size_t>::max();
+			static size_t linebreak_idx_2 = std::numeric_limits<size_t>::max();
+			if ((linebreak_idx_1 >= joint_state.name.size()) && (linebreak_idx_2 >= joint_state.name.size()) )
+			{
+				for (size_t i = 0; i < joint_state.name.size(); i++)
+				{
+					if (joint_state.name[i] == "climber_linebreak_linebreak_1") //TODO: define this in the hardware interface
+						linebreak_idx_1 = i;
+					if (joint_state.name[i] == "climber_linebreak_linebreak_2") //TODO: define this in the hardware interface
+						linebreak_idx_2 = i;
+				}
+			}
 
-		//update linebreak counts based on the value of the linebreak sensor
-		if (linebreak_idx < joint_state.position.size())
-		{
-		bool linebreak_true = (joint_state.position[linebreak_idx] != 0);
-		if(linebreak_true)
-		{
-		linebreak_true_count += 1;
-		linebreak_false_count = 0;
+			//update linebreak counts based on the value of the linebreak sensor
+			if (linebreak_idx_1 < joint_state.position.size() && linebreak_idx_2 < joint_state.position.size())
+			{
+				bool linebreak_true = (joint_state.position[linebreak_idx_1] != 0) && (joint_state.position[linebreak_idx_2] != 0);
+				if(linebreak_true)
+				{
+					linebreak_true_count += 1;
+					linebreak_false_count = 0;
+				}
+				else
+				{
+					linebreak_true_count = 0;
+					linebreak_false_count += 1;
+				}
+			}
+			else
+			{
+			static int count = 0;
+			if(count % 100 == 0)
+			{
+			ROS_WARN("intake line break sensor not found in joint_states");
+			}
+			count++;
+			linebreak_true_count = 0;
+			linebreak_false_count += 1;
+			}
 		}
-		else
-		{
-		linebreak_true_count = 0;
-		linebreak_false_count += 1;
-		}
-		}
-		else
-		{
-		static int count = 0;
-		if(count % 100 == 0)
-		{
-		ROS_WARN("intake line break sensor not found in joint_states");
-		}
-		count++;
-		linebreak_true_count = 0;
-		linebreak_false_count += 1;
-		}
-		}
-		*/
 		void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 		{
 			match_time_remaining_ = msg.matchTimeRemaining;
@@ -599,6 +620,21 @@ int main(int argc, char** argv) {
 	{
 		ROS_ERROR("Could not read drive_forward_speed in climber_server");
 		drive_forward_speed = 0.2;
+	}
+	if (!n_climb_params.getParam("delay_before_engage", delay_before_engage))
+	{
+		ROS_ERROR("Could not read delay_before_engage in climber_server");
+		delay_before_engage = 0.2;
+	}
+	if (!n_climb_params.getParam("linebreak_debounce_iterations", linebreak_debounce_iterations))
+	{
+		ROS_ERROR("Could not read linebreak_debounce_iterations in climber_server");
+		linebreak_debounce_iterations = 1;
+	}
+	if (!n_climb_params.getParam("delay_before_continue_retract", delay_before_continue_retract))
+	{
+		ROS_ERROR("Could not read delay_before_continue_retract in climber_server");
+		delay_before_continue_retract = 0.2;
 	}
 
 	ros::spin();
