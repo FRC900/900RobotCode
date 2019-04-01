@@ -141,7 +141,7 @@
 
 	</group>
 
-	<!-- <group ns="align_cargo_rocketship">
+	<group ns="align_cargo_rocketship">
 		<param name="enable_align_pub" value="align_pid/pid_enable" />
 		<param name="enable_orient_pub" value="orient_pid/pid_enable" />
 		<param name="enable_x_pub" value="x_pid/pid_enable" />
@@ -172,11 +172,11 @@
 			<param name="windup_limit" value="10" />
 			<param name="max_loop_frequency" value="100.0" />
 			<param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value=x_command_topic />     
-			<param name="setpoint_topic" value=x_setpoint_topic />
-			<param name="topic_from_plant" value=x_setpoint_topic />
-			<remap from="pid_debug" to=x_error_topic/>
-			<remap from="pid_enable" to=x_enable_topic/>
+			<param name="topic_from_controller" value="x_pid/x_command" />     
+			<param name="setpoint_topic" value="x_pid/x_setpoint" />
+			<param name="topic_from_plant" value="x_pid/x_state" />
+			<remap from="pid_debug" to="x_pid/pid_debug" />
+			<remap from="pid_enable" to="x_pid/pid_enable" />
 		</node>
 
 		<node name="cargo_pid" pkg="pid" type="controller" >
@@ -189,22 +189,22 @@
 			<param name="windup_limit" value="10" />
 			<param name="max_loop_frequency" value="100.0" />
 			<param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value=y_command_topic />     
-			<param name="setpoint_topic" value=y_setpoint_topic />
-			<param name="topic_from_plant" value=y_setpoint_topic />
-			<remap from="pid_debug" to=y_error_topic/>
-			<remap from="pid_enable" to=y_enable_topic/>
+			<param name="topic_from_controller" value="y_pid/y_command" />     
+			<param name="setpoint_topic" value="y_pid/y_setpoint" />
+			<param name="topic_from_plant" value="y_pid/y_state" />
+			<remap from="pid_debug" to="y_pid/pid_debug" />
+			<remap from="pid_enable" to="y_pid/pid_enable" />
 		</node>
 
 		<node name="align_pid_cargo_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
-			<param name="orient_topic" value=orient_command_topic />
-			<param name="x_topic" value=x_command_topic />
-			<param name="y_topic" value=y_command_topic />
+			<param name="orient_topic" value="orient_pid/orient_command" />
+			<param name="x_topic" value="x_pid/x_command" />
+			<param name="y_topic" value="y_pid/y_command" />
 			<param name="command_timeout" value="0.5" />
-			<param name="enable_topic" value=enable_align_pub />
+			<param name="enable_topic" value="align_pid/pid_enable" />
 			<param name="name" value="align_pid" />
 		</node>
-	</group> -->
+	</group> 
 
 	<group ns="align_server">
 
@@ -274,7 +274,6 @@
 	<group ns="align_hatch">
 		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
 		<node name="align_server" pkg="behaviors" type="align_hatch_server" output="screen" />
-		<rosparam file="$(find behaviors)/config/align_with_camera.yaml" command="load" />
 		<node name="align_with_camera" pkg="behaviors" type="align_with_camera" output="screen" >
 			<param name="target_frame" value="panel_outtake" />
 		</node>
