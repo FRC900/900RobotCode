@@ -308,6 +308,7 @@
 			<param name="x_topic" value="align_with_camera/x_command" />
 			<param name="command_timeout" value="0.5" />
 			<param name="enable_topic" value="align_hatch_pid/pid_enable" />
+			<param name="ratio_xy_topic" value="align_hatch_pid/ratio_xy" />
 			<param name="name" value="align_hatch" />
 		</node>
 
