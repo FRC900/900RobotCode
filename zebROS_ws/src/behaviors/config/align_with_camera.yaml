@@ -1,4 +1,0 @@
-align_with_camera_params:
-    cmd_vel_to_pub: 0.7
-    error_threshold: 0.1
-
