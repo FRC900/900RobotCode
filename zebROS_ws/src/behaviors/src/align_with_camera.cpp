@@ -147,7 +147,6 @@ int main(int argc, char ** argv)
 		{
 			if(debug)
 				ROS_INFO_STREAM_THROTTLE(1, "we're aligned!! error = " << error);
-			//aligned = true;
 			cmd_msg.data = 0;
 		}
 		else if(error > 0)
