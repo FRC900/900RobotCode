@@ -60,11 +60,11 @@ int main(int argc, char** argv)
 			"align_hatch_pid/pid_enable",
 			"orient_pid/pid_enable",
 			"hatch_panel_distance_pid/pid_enable",
-			"align_with_camera/enable_y_pub",
+			"align_with_camera/enable_pub",
 
 			"orient_pid/pid_debug",
 			"hatch_panel_distance_pid/pid_debug",
-			"align_with_camera/y_aligned",
+			"align_with_camera/aligned",
 
 			"/align_server/align_hatch_params/align_timeout",
 			"/align_server/align_hatch_params/orient_timeout",

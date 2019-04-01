@@ -67,6 +67,7 @@ int main(int argc, char ** argv)
 	ros::init(argc, argv, "align_with_camera");
 	ros::NodeHandle n;
 	ros::NodeHandle n_params(n, "align_with_camera_params");
+	ros::NodeHandle n_private_params("~");
 
 	double last_command;
 	double last_command_published = 0.0;
@@ -75,18 +76,18 @@ int main(int argc, char ** argv)
 	double cmd_vel_to_pub;
 	if(!n_params.getParam("cmd_vel_to_pub", cmd_vel_to_pub))
 		ROS_ERROR_STREAM("Could not read cmd_vel_to_pub in align_with_camera");
-	if(!n_params.getParam("target_frame", target_frame))
+	double error_threshold;
+	if(!n_params.getParam("error_threshold", error_threshold))
+		ROS_ERROR_STREAM("Could not read error_threshold in align_with_camera");
+	if(!n_private_params.getParam("target_frame", target_frame))
 		ROS_ERROR_STREAM("Could not read target_frame in align_with_camera");
-	double x_error_threshold;
-	if(!n_params.getParam("x_error_threshold", x_error_threshold))
-		ROS_ERROR_STREAM("Could not read x_error_threshold in align_with_camera");
 
 	//set up publisher for publish_pid_cmd_vel node
-	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_camera/x_command", 1);
+	ros::Publisher command_pub = n.advertise<std_msgs::Float64>("align_with_camera/command", 1);
 	//set up feedback publisher for the align_server which uses this node
-	ros::Publisher successful_y_align = n.advertise<std_msgs::Float64MultiArray>("align_with_camera/y_aligned", 1);
+	ros::Publisher successful_y_align = n.advertise<std_msgs::Float64MultiArray>("align_with_camera/aligned", 1);
 	//set up enable subscriber from align_server
-	ros::Subscriber start_stop_sub = n.subscribe("align_with_camera/enable_y_pub", 1, &startStopCallback);
+	ros::Subscriber start_stop_sub = n.subscribe("align_with_camera/enable_pub", 1, &startStopCallback);
 	//set up camera subscriber with transforms
 	message_filters::Subscriber<geometry_msgs::PointStamped> camera_msg_sub(n, "pointstamped_goal_msg", 1);
 	//advertise service to start or stop align (who uses this?)
@@ -97,44 +98,58 @@ int main(int argc, char ** argv)
 	tf2_ros::MessageFilter<geometry_msgs::PointStamped> tf2_filter(camera_msg_sub, buffer, target_frame, 10, 0);
 	tf2_filter.registerCallback(cameraCB);
 
-	std_msgs::Float64 y_msg;
-	y_msg.data = 0;
+	std_msgs::Float64 cmd_msg;
+	cmd_msg.data = 0;
 
 	ros::Rate r(50);
 
 	while(ros::ok())
 	{
 		bool aligned = false;
-
-		if(fabs(relative_goal_location.point.y) < x_error_threshold)
+		double error;
+		
+		if(target_frame == "panel_outtake")
 		{
-			if(debug)
-				ROS_INFO_STREAM_THROTTLE(1, "we're aligned!! error = " << relative_goal_location.point.y);
-			aligned = true;
-			y_msg.data = 0;
+			error = relative_goal_location.point.y;
 		}
-		else if(relative_goal_location.point.y > 0)
+		else if(target_frame == "cargo_outtake")
+		{
+			error = relative_goal_location.point.x;
+		}
+		else
+		{
+			ROS_ERROR_STREAM_THROTTLE(0.5, "Unknown target_frame in align_with_camera");
+		}
+
+		if(fabs(error) < error_threshold)
 		{
 			if(debug)
-				ROS_INFO_STREAM_THROTTLE(1, "we're left. error = " << relative_goal_location.point.y);
-			y_msg.data = -1*cmd_vel_to_pub;
+				ROS_INFO_STREAM_THROTTLE(1, "we're aligned!! error = " << error);
+			aligned = true;
+			cmd_msg.data = 0;
+		}
+		else if(error > 0)
+		{
+			if(debug)
+				ROS_INFO_STREAM_THROTTLE(1, "we're left. error = " << error);
+			cmd_msg.data = -1*cmd_vel_to_pub;
 		}
 		else
 		{
 			if(debug)
-				ROS_INFO_STREAM_THROTTLE(1, "we're right. error = " << relative_goal_location.point.y);
-			y_msg.data = 1*cmd_vel_to_pub;
+				ROS_INFO_STREAM_THROTTLE(1, "we're right. error = " << error);
+			cmd_msg.data = 1*cmd_vel_to_pub;
 		}
 
 		if(publish)
 		{
-			y_command_pub.publish(y_msg);
-			last_command_published = y_msg.data;
+			command_pub.publish(cmd_msg);
+			last_command_published = cmd_msg.data;
 		}
 		else if(!publish && publish_last)
 		{
-			y_msg.data= 0;
-			y_command_pub.publish(y_msg);
+			cmd_msg.data= 0;
+			command_pub.publish(cmd_msg);
 		}
 
 		std_msgs::Float64MultiArray aligned_msg;
