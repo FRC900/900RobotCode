@@ -179,9 +179,9 @@ class ClimbAction {
 
 			/* Steps to climb:
 			 * Climber Server Step 0
-			 * Deploy foot via climber controller
 			 * Raise elevator to right height via elevator actionlib server
 			 * Climber Server Step 1
+			 * Deploy foot via climber controller
 			 * Deploy climber engagement piston via elevator controller
 			 * Start driving forward
 			 * Lower elevator to right height to make the robot climb (this should be slow... change pid somehow?)
@@ -272,6 +272,18 @@ class ClimbAction {
 				ROS_INFO("Running climber server step 1");
 
 				cmd_vel_forward_speed_ = 0;
+
+				//deploy foot using climber controller -----------------------------------------------
+				ROS_INFO("climber server step 0: deploying foot");
+				//define service to send
+				std_srvs::SetBool srv;
+				srv.request.data = false; //shouldn't do anything, this is default
+				//call controller
+				if(!climber_controller_client_.call(srv))
+				{
+					ROS_ERROR("Foot deploy failed in climber controller");
+					preempted = true;
+				}
 
 				// pop out pin to engage climber with elevator -----------------------------------------------------------------
 				if(!preempted && !timed_out && ros::ok())
