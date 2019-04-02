@@ -23,8 +23,6 @@ ros::Time goal_timestamp;
 
 bool debug = true;
 
-bool debug = true;
-
 void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 {
 	goals_found = true;
