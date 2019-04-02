@@ -377,9 +377,10 @@ class BaseAlignAction {
 			//	return false;
 			//}
 			
-			//enable, wait for alignment, default timeout, don't keep enabled
+			//enable,don't wait for alignment, default timeout, don't keep enabled
 			ROS_WARN("Starting y align");
-			align_y(r, true, true);
+			align_y(r, true);
+			align_x(r, true);
 			ROS_WARN("ending y align");
 
 			//Check if it timed out or preempted while waiting
