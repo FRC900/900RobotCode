@@ -121,7 +121,7 @@ class ClimbAction {
 		{
 			if(elev_cur_position_ <= climb_raise_position)
 			{
-				bool climber_engaged_ = true;
+				climber_engaged_ = true;
 				ROS_WARN_STREAM("elevator connected with climber");
 			}
 		}
