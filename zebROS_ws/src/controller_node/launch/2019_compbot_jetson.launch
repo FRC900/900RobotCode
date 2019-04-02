@@ -209,7 +209,7 @@
 	<group ns="align_server">
 
 		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
-		<node name="align_ac_server" pkg="behaviors" type="align_server" output="screen" />
+		<!--node name="align_ac_server" pkg="behaviors" type="align_server" output="screen" /-->
 
 		<!-- Align with notch -->
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
@@ -270,7 +270,8 @@
 
 	<group ns="align_hatch">
 		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
-		<node name="align_server" pkg="behaviors" type="align_hatch_server" output="screen" />
+		<node name="align_server" pkg="behaviors" type="align_hatch_server" output="screen" launch-prefix="gdb --ex run --args" />
+
 		<node name="align_with_camera" pkg="behaviors" type="align_with_camera" output="screen" >
 			<param name="target_frame" value="panel_outtake" />
 		</node>
