@@ -154,7 +154,7 @@ int main(int argc, char ** argv)
 
 		std_msgs::Float64MultiArray aligned_msg;
 		aligned_msg.data.resize(5);
-		aligned_msg.data[0] =  aligned ? 0.0 : std::numeric_limits<double>::max();
+		aligned_msg.data[0] =  error;
 		successful_y_align.publish(aligned_msg);
 
 		publish_last = publish;
