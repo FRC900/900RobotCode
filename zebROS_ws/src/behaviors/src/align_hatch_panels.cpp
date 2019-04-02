@@ -1,6 +1,11 @@
 #include "behaviors/base_align_server.h"
+#include <thread>
+#include <std_msgs/Float64.h>
 
 class AlignHatchPanelAction : public BaseAlignAction {
+	protected:
+		ros::Publisher ratio_xy_pub_;
+		bool ratio_imposed = false;
 	public:
 		AlignHatchPanelAction(const std::string &name,
 
@@ -20,7 +25,9 @@ class AlignHatchPanelAction : public BaseAlignAction {
 
 							const std::string &orient_error_threshold_param_name_,
 							const std::string &x_error_threshold_param_name_,
-							const std::string &y_error_threshold_param_name_):
+							const std::string &y_error_threshold_param_name_,
+
+							const std::string &ratio_xy_topic_):
 			BaseAlignAction(name,
 				enable_align_topic_,
 				enable_orient_topic_,
@@ -40,7 +47,19 @@ class AlignHatchPanelAction : public BaseAlignAction {
 				x_error_threshold_param_name_,
 				y_error_threshold_param_name_)
 		{
+
+			if(!ratio_xy_topic_.empty()) {
+				ratio_imposed = true;
+				ratio_xy_pub_ = nh_.advertise<std_msgs::Float64>(ratio_xy_topic_, 1);
+				std::thread ratioThread(std::bind(&AlignHatchPanelAction::ratioPub, this));
+			}
 		}
+		void ratioPub() {
+			std_msgs::Float64 msg;
+			msg.data = y_error_/x_error_;
+			ratio_xy_pub_.publish(msg);
+		}
+
 };
 
 bool debug;
@@ -73,7 +92,8 @@ int main(int argc, char** argv)
 
 			"/align_server/align_hatch_params/orient_error_threshold",
 			"/align_server/align_hatch_params/x_error_threshold",
-			"/align_server/align_hatch_params/y_error_threshold");
+			"/align_server/align_hatch_params/y_error_threshold",
+			"align_hatch_pid/ratio_xy");
 
 	ros::spin();
 	return 0;
