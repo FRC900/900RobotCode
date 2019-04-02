@@ -40,7 +40,7 @@ void multiflexCB(const teraranger_array::RangeArray& msg)
 			if(i <= 1) {
 				min_dist_cargo = std::min(min_dist_cargo, static_cast<double>(msg.ranges[i].range));
 			}
-			if(i >= 2) {
+			if(i == 2) {
 				min_dist = std::min(min_dist, static_cast<double>(msg.ranges[i].range));
 			}
 			//ROS_INFO_STREAM("i = " << i << " range = " << sensors_distances[i]);

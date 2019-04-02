@@ -303,6 +303,7 @@
 			<remap from="pid_enable" to="orient_pid/pid_enable" />
 		</node>
 
+		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 		<!-- Distance PID Hatch Panel -->
 		<node name="hatch_panel_distance_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="hatch_panel_distance_pid" />
