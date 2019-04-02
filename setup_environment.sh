@@ -185,9 +185,20 @@ if [ "$jetson" = true ] ; then
 	# echo "CONFIG_USB_SERIAL_CP210X=m" >> .config
 	# echo "CONFIG_CAN_GS_USB=m" >> .config
 	# echo "CONFIG_JOYSTICK_XPAD=m" >> .config
+	## Apply realsense patches to modules
+	# patch -p1 < /realsense_src/librealsesne-2.19.2/scripts/realsense-camera-formats_ubuntu-${ubuntu_codename}-${kernel_branch}.patch 
+	# patch -p1 < /realsense_src/librealsesne-2.19.2/scripts/realsense-metadata-ubuntu-${ubuntu_codename}-${kernel_branch}.patch
+	# patch -p1 < /realsense_src/librealsesne-2.19.2/scripts/realsense-hid-ubuntu-${ubuntu_codename}-${kernel_branch}.patch
+	# patch -p1 < /realsense_src/librealsesne-2.19.2/scripts/realsense-powerlinefrequency-control-fix.patch
+	# sudo bash scripts/config --file .config --enable IIO_BUFFER --module IIO_KFIFO_BUF --module IIO_TRIGGERED_BUFFER --enable IIO_TRIGGER --set-val IIO_CONSUMERS_PER_TRIGGER 2 --module HID_SENSOR_IIO_COMMON --module HID_SENSOR_IIO_TRIGGER --module HID_SENSOR_HUB --module HID_SENSOR_ACCEL_3D --module HID_SENSOR_GYRO_3D --module USB_ACM --module CAN_GS_USM --module JOYSTICK_XPAD
+	# 
 	# make -j6 clean
 	# make -j6 prepare
 	# make -j6 modules_prepare
+    # make -j6 Image
+	# sudo cp arch/arm64/boot/Image boot/Image
+    # make -j6 modules
+	# make -j6 modules_install
 	# make -j6 M=drivers/usb/class
 	# make -j6 M=drivers/usb/serial
 	# make -j6 M=drivers/net/can

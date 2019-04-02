@@ -14,10 +14,23 @@ sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 0xB0
 # Installation
 sudo apt update
 
-# For intel realsense
+# For intel realsense - from apt for x86 laptops
 sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE 
 sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main" -u 
 sudo apt update
+
+# From source for the Jetson
+sudo apt install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw3-dev 
+mkdir realsense_src && cd realsense_src
+wget https://github.com/IntelRealSense/librealsense/archive/v2.19.2.zip
+unzip v2.19.2.zip
+cd librealsense-2.19.2
+sudo cp config/99-realsense-libusb.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules && udevadm trigger
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=true ..
+sudo make uninstall && make clean -j 6 && make && sudo make install
+
 # Add Individual Packages here
 # You can install a specific ROS package (replace underscores with dashes of the package name):
 # sudo apt-get install ros-kinetic-PACKAGE
