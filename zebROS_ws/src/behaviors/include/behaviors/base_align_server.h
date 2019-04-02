@@ -61,9 +61,9 @@ class BaseAlignAction {
 		ros::Publisher enable_x_pub_;
 		ros::Publisher enable_y_pub_;
 
-		ros::Subscriber orient_error_;
-		ros::Subscriber x_error_;
-		ros::Subscriber y_error_;
+		ros::Subscriber orient_error_sub_;
+		ros::Subscriber x_error_sub_;
+		ros::Subscriber y_error_sub_;
 
         ros::ServiceClient BrakeSrv_;
 
@@ -71,6 +71,10 @@ class BaseAlignAction {
 		bool orient_aligned_ = false;
 		bool x_aligned_ = false;
 		bool y_aligned_ = false;
+	
+		double orient_error_ = 0.0;
+		double x_error_ = 0.0;
+		double y_error_ = 0.0;
 
 		bool orient_timed_out_ = false;
 		bool x_timed_out_ = false;
@@ -118,9 +122,9 @@ class BaseAlignAction {
 			enable_orient_pub_(nh_.advertise<std_msgs::Bool>(enable_orient_topic_, 1, true)),
 			enable_x_pub_(nh_.advertise<std_msgs::Bool>(enable_x_topic_, 1, true)),
 			enable_y_pub_(nh_.advertise<std_msgs::Bool>(enable_y_topic_, 1, true)),
-			orient_error_(nh_.subscribe(orient_error_topic_, 1, &BaseAlignAction::orient_error_cb, this)),
-			x_error_(nh_.subscribe(x_error_topic_, 1, &BaseAlignAction::x_error_cb, this)),
-			y_error_(nh_.subscribe(y_error_topic_, 1, &BaseAlignAction::y_error_cb, this))
+			orient_error_sub_(nh_.subscribe(orient_error_topic_, 1, &BaseAlignAction::orient_error_cb, this)),
+			x_error_sub_(nh_.subscribe(x_error_topic_, 1, &BaseAlignAction::x_error_cb, this)),
+			y_error_sub_(nh_.subscribe(y_error_topic_, 1, &BaseAlignAction::y_error_cb, this))
 		{
             as_.start();
 
@@ -170,18 +174,21 @@ class BaseAlignAction {
 		virtual void orient_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold_);
+			orient_error_ =fabs(msg.data[0]) < orient_error_threshold_;
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "orient error: " << fabs(msg.data[0]));
 		}
 		virtual void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold_);
+			x_error_ =fabs(msg.data[0]) < x_error_threshold_;
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "x error: " << fabs(msg.data[0]));
 		}
 		virtual void y_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			y_aligned_ = (fabs(msg.data[0]) < y_error_threshold_);
+			y_error_ =fabs(msg.data[0]) < y_error_threshold_;
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "y error: " << fabs(msg.data[0]));
 		}

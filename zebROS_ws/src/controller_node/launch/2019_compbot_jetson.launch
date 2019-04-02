@@ -132,17 +132,17 @@
 	
 	<!-- TODO need a way to use the same PID node in multiple align servers without copying and pasting topics -->
 	<!-- Create a new group for each align server, define params for every single topic, load all nodes used by that align server -->
-	<group ns="align_server_common">
+	<!--group ns="align_server_common">
 		<param name="enable_orient_pub" value="orient_pid/pid_enable" />
 		<param name="orient_error_topic" value="orient_pid/pid_debug" />
 		<param name="orient_command_topic" value="orient_pid/orient_command" />
 		<param name="orient_setpoint_topic" value="orient_pid/orient_setpoint" />
 		<param name="orient_state_topic" value="orient_pid/orient_state" />
 
-	</group>
+	</group-->
 
 	<group ns="align_cargo_rocketship">
-		<param name="enable_align_pub" value="align_pid/pid_enable" />
+		<!--param name="enable_align_pub" value="align_pid/pid_enable" />
 		<param name="enable_orient_pub" value="orient_pid/pid_enable" />
 		<param name="enable_x_pub" value="x_pid/pid_enable" />
 		<param name="enable_y_pub" value="y_pid/pid_enable" />
@@ -161,8 +161,8 @@
 
 		<param name="orient_state_topic" value="orient_pid/orient_state" />
 		<param name="x_state_topic" value="x_pid/x_state" />
-		<param name="y_state_topic" value="y_pid/y_state" />
-		<node name="cargo_distance_pid" pkg="pid" type="controller" >
+		<param name="y_state_topic" value="y_pid/y_state" /-->
+		<node name="cargo_distance_pid" pkg="pid" type="controller">
 			<param name="node_name" value="cargo_distance_pid" />
 			<param name="Kp" value="4.8" />
 			<param name="Ki" value="0.0" />
@@ -267,9 +267,7 @@
 
 	</group>
     
-	<include file="$(find realsense2_camera)/launch/rs_t265.launch" />
 
-	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
 
 	<group ns="align_hatch">
 		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
@@ -316,6 +314,10 @@
 		</node>
 
 	</group>
+
+	<include file="$(find realsense2_camera)/launch/rs_t265.launch" />
+
+	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
 
 	<include file="$(find controller_node)/launch/tf_2019.launch" />
 
