@@ -7,14 +7,19 @@
   <arg name="down_sample" default="False" />
   <arg name="sub_rate" default="2" />
   <arg name="pub_rate" default="1" />
-  <arg name="hFov" default="105.0" />
-  <arg name="camera_angle" default="-25.0" />
+  <arg name="hFov" default="69.0" />
+  <arg name="camera_angle" default="0.0" />
   <arg name="batch" default="false" /> 
   <arg name="no_depth" default="true" /> 
 
 	  <node name="c920_camera" pkg="usb_cam" type="usb_cam_node" output="screen">
 		  <param name="video_device" value="/dev/video1"/>
-		  <param name="pixel_format" value="yuyv"/>
+		  <param name="pixel_format" value="mjpeg"/>
+		  <param name="camera_frame_id" value="c920_frame"/>
+		  <param name="framerate" value="60"/>
+		  <param name="image_width" value="640"/>
+		  <param name="image_height" value="360"/>
+
 	  </node>
 
   <node name="c920_goal_detection_node" pkg="goal_detection" type="goal_detection_node" output= "screen">
