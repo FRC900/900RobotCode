@@ -4,6 +4,7 @@
 
 class AlignHatchPanelAction : public BaseAlignAction {
 	protected:
+		std::thread ratioThread;
 		ros::Publisher ratio_xy_pub_;
 		bool ratio_imposed = false;
 	public:
@@ -51,13 +52,22 @@ class AlignHatchPanelAction : public BaseAlignAction {
 			if(!ratio_xy_topic_.empty()) {
 				ratio_imposed = true;
 				ratio_xy_pub_ = nh_.advertise<std_msgs::Float64>(ratio_xy_topic_, 1);
-				std::thread ratioThread(std::bind(&AlignHatchPanelAction::ratioPub, this));
+				ratioThread = std::thread(std::bind(&AlignHatchPanelAction::ratioPub, this));
 			}
 		}
 		void ratioPub() {
-			std_msgs::Float64 msg;
-			msg.data = y_error_/x_error_;
-			ratio_xy_pub_.publish(msg);
+			ros::Rate r(20);
+			while(ros::ok()) {
+				std_msgs::Float64 msg;
+				if(y_error_ != 0.0 && x_error_ != 0.0) {
+					msg.data = y_error_/x_error_;
+				}
+				else {
+					msg.data = 0.0;
+				}
+				ratio_xy_pub_.publish(msg);
+				r.sleep();
+			}
 		}
 
 };
