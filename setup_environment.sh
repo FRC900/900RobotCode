@@ -174,6 +174,8 @@ if [ "$jetson" = true ] ; then
 	# Kernel module build steps for TX2 : https://gist.github.com/sauhaardac/9d7a82c23e4b283a1e79009903095655
 	# Not needed unless Jetpack is updated with a new kernel version and modules
 	# for a given kernel version aren't already built
+	#
+	# Note - need to switch back to the default linker to build the kernel image
 	# cd ~
 	# wget -N https://developer.download.nvidia.com/embedded/L4T/r28_Release_v2.1/public_sources.tbz2
 	# tar -xf public_sources.tbz2 public_release/kernel_src.tbz2
@@ -190,7 +192,7 @@ if [ "$jetson" = true ] ; then
 	# patch -p1 < ~/realsense_src/librealsense-2.19.2/scripts/realsense-metadata-ubuntu-xenial-master.patch
 	# patch -p1 < ~/realsense_src/librealsense-2.19.2/scripts/realsense-hid-ubuntu-xenial-master.patch
 	# patch -p1 < ~/realsense_src/librealsense-2.19.2/scripts/realsense-powerlinefrequency-control-fix.patch
-	# bash scripts/config --file .config --enable IIO_BUFFER --module IIO_KFIFO_BUF --module IIO_TRIGGERED_BUFFER --enable IIO_TRIGGER --set-val IIO_CONSUMERS_PER_TRIGGER 2 --module HID_SENSOR_IIO_COMMON --module HID_SENSOR_IIO_TRIGGER --module HID_SENSOR_HUB --module HID_SENSOR_ACCEL_3D --module HID_SENSOR_GYRO_3D --module USB_ACM --module CAN_GS_USM --module JOYSTICK_XPAD
+	# bash scripts/config --file .config --enable IIO_BUFFER --enable IIO_KFIFO_BUF --module IIO_TRIGGERED_BUFFER --enable IIO_TRIGGER --set-val IIO_CONSUMERS_PER_TRIGGER 2 --module HID_SENSOR_IIO_COMMON --module HID_SENSOR_IIO_TRIGGER --module HID_SENSOR_HUB --module HID_SENSOR_ACCEL_3D --module HID_SENSOR_GYRO_3D --module USB_ACM --module CAN_GS_USB --module JOYSTICK_XPAD
 	# 
 	# make -j6 clean
 	# make -j6 prepare
@@ -198,7 +200,7 @@ if [ "$jetson" = true ] ; then
     # make -j6 Image
 	# sudo cp arch/arm64/boot/Image boot/Image
     # make -j6 modules
-	# make -j6 modules_install
+	# sudo make -j6 modules_install
 	# make -j6 M=drivers/usb/class
 	# make -j6 M=drivers/usb/serial
 	# make -j6 M=drivers/net/can
