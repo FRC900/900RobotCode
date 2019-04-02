@@ -12,6 +12,7 @@
 	<arg name="record" default="false" />
 
 	<include file="$(find controller_node)/launch/tape_detection.launch" />
+	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
 
 	<group ns="frcrobot_jetson">
 
