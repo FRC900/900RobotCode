@@ -71,7 +71,7 @@ class BaseAlignAction {
 		bool orient_aligned_ = false;
 		bool x_aligned_ = false;
 		bool y_aligned_ = false;
-	
+
 		double orient_error_ = 0.0;
 		double x_error_ = 0.0;
 		double y_error_ = 0.0;
@@ -274,9 +274,8 @@ class BaseAlignAction {
 		//TODO Make this configurable
 		virtual bool wait_for_mech(ros::Rate r, double timeout) {
 			bool waiting = true;
-			bool timed_out = false;
 			while(waiting && ros::ok() &&!preempted_) {
-				timed_out = check_timeout(start_time_, timeout);
+				const bool timed_out = check_timeout(start_time_, timeout);
 
 				auto state = ac_elevator_.getState();
 				if ((state == actionlib::SimpleClientGoalState::StateEnum::SUCCEEDED) ||
