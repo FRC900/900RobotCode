@@ -235,10 +235,6 @@ class ClimbAction {
 					ae_.sendGoal(elevator_goal);
 					waitForElevator(timed_out, preempted, goal->step, r, elevator_deploy_timeout);
 				} //end of raise elevator to right height before engaging
-				if(preempted || timed_out)
-				{
-					ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-				}
 				//preempt handling
 				if(preempted || timed_out || !ros::ok())
 				{
@@ -252,12 +248,10 @@ class ClimbAction {
 			{
 				//TODO make sure elevator is in the correct location before continuing
 				ROS_INFO("Running climber server step 1");
-
-				cmd_vel_forward_speed_ = 0;
+				cmd_vel_forward_speed_ = 0; //Don't move yet
 
 				//deploy foot using climber controller -----------------------------------------------
 				ROS_INFO("climber server step 0: ensure initial foot state");
-				//define service to send
 				std_srvs::SetBool srv;
 				srv.request.data = false; //shouldn't do anything, this is default
 				//call controller
