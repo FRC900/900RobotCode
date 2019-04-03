@@ -174,21 +174,21 @@ class BaseAlignAction {
 		virtual void orient_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold_);
-			orient_error_ =fabs(msg.data[0]) < orient_error_threshold_;
+			orient_error_ =fabs(msg.data[0]);
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "orient error: " << fabs(msg.data[0]));
 		}
 		virtual void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold_);
-			x_error_ =fabs(msg.data[0]) < x_error_threshold_;
+			x_error_ =fabs(msg.data[0]);
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "x error: " << fabs(msg.data[0]));
 		}
 		virtual void y_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			y_aligned_ = (fabs(msg.data[0]) < y_error_threshold_);
-			y_error_ =fabs(msg.data[0]) < y_error_threshold_;
+			y_error_ =fabs(msg.data[0]);
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "y error: " << fabs(msg.data[0]));
 		}
@@ -337,7 +337,7 @@ class BaseAlignAction {
 
 		//Example align function
 		virtual bool robot_align() {
-			ros::Rate r(30);
+			ros::Rate r(60);
 			ROS_WARN("starting robot_align");
 
 			start_time_ = ros::Time::now().toSec();
@@ -356,7 +356,7 @@ class BaseAlignAction {
 			//move_mech(r, false);
 			//enable, wait for alignment, TODO change this timeout, keep enabled
 			ROS_WARN("Starting orient align");
-			align_orient(r, true, true, align_timeout_, false);
+			align_orient(r, true, true, align_timeout_, true);
 			ROS_WARN("Ending orient align");
 
 			//Check if it timed out or preempted while waiting
@@ -379,7 +379,7 @@ class BaseAlignAction {
 			//enable,don't wait for alignment, default timeout, don't keep enabled
 			ROS_WARN("Starting y align");
 			align_y(r, true);
-			align_x(r, true);
+			align_x(r, true, true);
 			ROS_WARN("ending y align");
 
 			//Check if it timed out or preempted while waiting
