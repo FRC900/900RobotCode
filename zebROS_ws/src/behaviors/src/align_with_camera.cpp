@@ -109,7 +109,7 @@ int main(int argc, char ** argv)
 	std_msgs::Float64MultiArray aligned_msg;
 	aligned_msg.data.resize(5);
 
-	ros::Rate r(50);
+	ros::Rate r(60);
 
 	while(ros::ok())
 	{
@@ -139,7 +139,7 @@ int main(int argc, char ** argv)
 		// the goal timestamp.
 		const double latency_comp = last_command_published * ((ros::Time::now() - goal_timestamp).toSec() + extra_latency);
 		ROS_INFO_STREAM_THROTTLE(1, "Latency_comp = " << latency_comp << " error before = " << error);
-		// error += latency_comp;
+		error += latency_comp;
 
 		if(fabs(error) < error_threshold)
 		{
