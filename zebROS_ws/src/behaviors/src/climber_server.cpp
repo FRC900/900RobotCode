@@ -194,6 +194,7 @@ class ClimbAction {
 
 			std::thread cmdVelThread(std::bind(&ClimbAction::cmdVelThread, this));
 			std::thread elevatorClimbConnectThread; //will be initialized right before moving the elevator down to make robot rise in air
+			cmd_vel_forward_speed_ = 0; //Make sure it doesn't start moving
 
 			//define variables that will be reused for each controller call/actionlib server call
 			//define variables that will be set true if the actionlib action is to be ended
@@ -205,26 +206,6 @@ class ClimbAction {
 			if(goal->step == 0)
 			{
 				ROS_INFO("Running climber server step 0");
-
-				//no cmd vel thread here because we want to do step 0 when possibly still driving to the HAB
-
-				//deploy foot using climber controller -----------------------------------------------
-				ROS_INFO("climber server step 0: deploying foot");
-				//define service to send
-				std_srvs::SetBool srv;
-				srv.request.data = false; //shouldn't do anything, this is default
-				//call controller
-				if(!climber_controller_client_.call(srv))
-				{
-					ROS_ERROR("Foot deploy failed in climber controller");
-					preempted = true;
-				}
-				else
-				{
-					//only spin if we're not going to error out
-					// TODO - Why spin here?
-					ros::spinOnce();
-				}
 
 				//pull cargo mech up ---------------------------------------------------
 				if(!preempted && !timed_out && ros::ok())
@@ -269,12 +250,13 @@ class ClimbAction {
 			}
 			else if(goal->step == 1)
 			{
+				//TODO make sure elevator is in the correct location before continuing
 				ROS_INFO("Running climber server step 1");
 
 				cmd_vel_forward_speed_ = 0;
 
 				//deploy foot using climber controller -----------------------------------------------
-				ROS_INFO("climber server step 0: deploying foot");
+				ROS_INFO("climber server step 0: ensure initial foot state");
 				//define service to send
 				std_srvs::SetBool srv;
 				srv.request.data = false; //shouldn't do anything, this is default
@@ -288,7 +270,7 @@ class ClimbAction {
 				// pop out pin to engage climber with elevator -----------------------------------------------------------------
 				if(!preempted && !timed_out && ros::ok())
 				{
-					ROS_INFO("climber server step 1: engaging the climber with the elvator");
+					ROS_INFO("climber server step 1: engaging the climber with the elevator");
 
 					//call the elevator controller
 					//define the goal to send
@@ -312,8 +294,6 @@ class ClimbAction {
 				{
 					ROS_INFO("climber server step 1: lowering elevator to make robot climb");
 
-					//call the elevator actionlib server
-					//define the goal to send
 					behaviors::ElevatorGoal elevator_goal;
 					elevator_goal.setpoint_index = ELEVATOR_CLIMB;
 					elevator_goal.place_cargo = 0; //doesn't actually do anything
@@ -323,7 +303,7 @@ class ClimbAction {
 					waitForElevator(timed_out, preempted, goal->step, r, elevator_deploy_timeout);
 				} //end of lowering elevator to make robot climb
 
-				ROS_INFO_STREAM("preempted = " << preempted);
+				//ROS_INFO_STREAM("preempted = " << preempted);
 
 				//handle preempting/timed out for step 1, prior to falling ------------------------------------------------------
 				if(preempted || timed_out || !ros::ok())
@@ -334,14 +314,12 @@ class ClimbAction {
 				}
 				else
 				{
-					//retract climber foot to make robot fall ----------------------------------------------------
-					if(!preempted && !timed_out && ros::ok())
+					//retract climber foot to make robot fall ---------------------------------------
+					if(!preempted && !timed_out && ros::ok()) //TODO we don't need this if statement as we just checked these cases above
 					{
 						ROS_INFO_STREAM("Climber server step 1: Retracting foot to make robot fall");
-						//define service to send
 						std_srvs::SetBool srv;
 						srv.request.data = true;
-						//call controller
 						if(!climber_controller_client_.call(srv))
 						{
 							ROS_ERROR("climber server step 1: Foot retract failed in climber controller");
@@ -349,7 +327,7 @@ class ClimbAction {
 						}
 					}
 
-					//keep driving forward until preempted or timed out ---------------------------------------------------
+					//keep driving forward until preempted or timed out -------------------------------------
 					ROS_INFO_STREAM("Climber step 1: Driving forward after fall, until timeout or preempt");
 					double start_time = ros::Time::now().toSec();
 					while(ros::ok() && !preempted && !timed_out)
@@ -359,9 +337,9 @@ class ClimbAction {
 						r.sleep();
 					}
 					if(timed_out)
-						ROS_INFO_STREAM("Driving forward has timed out");
+						ROS_WARN_STREAM("Driving forward has timed out");
 					if(preempted)
-						ROS_INFO_STREAM("Driving forward was preempted");
+						ROS_WARN_STREAM("Driving forward was preempted");
 
 					//preempt handling after falling -----------------------------------------------------
 					if(preempted || timed_out || !ros::ok())
@@ -372,17 +350,14 @@ class ClimbAction {
 					}
 				}
 			}
-			else if(goal->step == 2)
+			if(goal->step == 2)
 			{
-				//start cmd vel publisher thread ----------------------------------------------
-				ROS_INFO("climber server step 2: Starting cmd vel pub thread with initial forward speed");
 				cmd_vel_forward_speed_ = drive_forward_speed;
-				std::thread cmdVelThread(std::bind(&ClimbAction::cmdVelThread, this));
 
 				//raise climber leg up a bit --------------------------------------------------------
 				if(!preempted && !timed_out && ros::ok())
 				{
-					ROS_INFO("climber server step 2: raising elevator to pull climber leg up a bit");
+					ROS_INFO("climber server step 2: raising climber leg up a bit, ensure cargo intake is out");
 
 					cargo_intake_controller::CargoIntakeSrv srv;
 					srv.request.power = 0;
@@ -395,7 +370,6 @@ class ClimbAction {
 					}
 
 					//pull the climber leg up a bit
-					//define the goal to send
 					behaviors::ElevatorGoal elevator_goal;
 					elevator_goal.setpoint_index = ELEVATOR_CLIMB_LOW;
 					elevator_goal.place_cargo = 0; //doesn't actually do anything
@@ -406,7 +380,7 @@ class ClimbAction {
 				}
 
 
-				//wait a little before continuing to retract leg all the waay up -------------------------------------------------
+				//wait a little before continuing to retract leg all the waay up and make sure linebreaks are triggered
 				ROS_INFO("climber server step 2: Pausing before finishing retracting leg");
 				double start_time = ros::Time::now().toSec();
 				while(ros::ok() && !preempted && !timed_out) {
