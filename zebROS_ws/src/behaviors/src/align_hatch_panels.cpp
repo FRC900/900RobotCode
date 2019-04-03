@@ -7,6 +7,13 @@ class AlignHatchPanelAction : public BaseAlignAction {
 		std::thread ratioThread;
 		ros::Publisher ratio_xy_pub_;
 		bool ratio_imposed = false;
+
+		double p0;
+		double i0;
+		double d0;
+		double p1;
+		double i1;
+		double d1;
 	public:
 		AlignHatchPanelAction(const std::string &name,
 
@@ -48,6 +55,24 @@ class AlignHatchPanelAction : public BaseAlignAction {
 				x_error_threshold_param_name_,
 				y_error_threshold_param_name_)
 		{
+			if(!nh_.getParam("orient_pid/p0", p0)){
+				ROS_ERROR("Align hatch panel failed to load p0");
+			}
+			if(!nh_.getParam("orient_pid/i0", i0)){
+				ROS_ERROR("Align hatch panel failed to load i0");
+			}
+			if(!nh_.getParam("orient_pid/d0", d0)){
+				ROS_ERROR("Align hatch panel failed to load d0");
+			}
+			if(!nh_.getParam("orient_pid/p1", p1)){
+				ROS_ERROR("Align hatch panel failed to load p1");
+			}
+			if(!nh_.getParam("orient_pid/i1", i1)){
+				ROS_ERROR("Align hatch panel failed to load i1");
+			}
+			if(!nh_.getParam("orient_pid/d1", d1)){
+				ROS_ERROR("Align hatch panel failed to load d1");
+			}
 
 			if(!ratio_xy_topic_.empty()) {
 				ratio_imposed = true;
@@ -70,6 +95,65 @@ class AlignHatchPanelAction : public BaseAlignAction {
 			}
 		}
 
+		bool robot_align() {
+            ros::Rate r(60);
+            ROS_WARN("starting robot_align");
+
+            start_time_ = ros::Time::now().toSec();
+            bool timed_out = false;
+
+            orient_timed_out_ = false;
+            x_timed_out_ = false;
+            y_timed_out_ = false;
+
+            aligned_ = false;
+            orient_aligned_ = false;
+            x_aligned_ = false;
+            y_aligned_ = false;
+
+            load_new_pid("/align_hatch/orient_pid/set_parameters", p0, d0, i0); //reset pid to stationary pid values
+            //move mech out of the way
+            //move_mech(r, false);
+            //enable, wait for alignment, todo change this timeout, keep enabled
+            ROS_WARN("starting orient align");
+            align_orient(r, true, true, align_timeout_, true);
+            ROS_WARN("ending orient align");
+
+            //check if it timed out or preempted while waiting
+            timed_out = check_timeout(start_time_, align_timeout_);
+            preempted_ = check_preempted();
+            if(preempted_ || timed_out) {
+                return false;
+            }
+
+            //enable, wait for alignment, default timeout, don't keep enabled
+            //align_x(r, true, true);
+
+            ////check if it timed out or preempted while waiting
+            //timed_out = check_timeout(start_time_, align_timeout_);
+            //preempted_ = check_preempted();
+            //if(preempted_ || timed_out) {
+            //  return false;
+            //}
+            //enable,don't wait for alignment, default timeout, don't keep enabled
+
+            load_new_pid("/align_hatch/orient_pid/set_parameters", p1, d1, i1); //Set pid to in motion pid values
+            ROS_WARN("starting y align");
+            align_y(r, true);
+            align_x(r, true, true);
+            ROS_WARN("ending y align");
+
+            //check if it timed out or preempted while waiting
+            timed_out = check_timeout(start_time_, align_timeout_);
+            preempted_ = check_preempted();
+            if(preempted_ || timed_out) {
+                return false;
+            }
+
+
+            ROS_INFO("base align class: align succeeded");
+            return true;
+        }
 };
 
 bool debug;

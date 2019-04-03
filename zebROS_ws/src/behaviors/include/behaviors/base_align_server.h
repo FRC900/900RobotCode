@@ -10,6 +10,10 @@
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
 
+#include <dynamic_reconfigure/DoubleParameter.h>
+#include <dynamic_reconfigure/Reconfigure.h>
+#include <dynamic_reconfigure/Config.h>
+
 extern bool debug;
 
 //bool startup = true; //disable all pid nodes on startup
@@ -135,6 +139,37 @@ class BaseAlignAction {
 				preempted_var = true;
 			}
 			return preempted_var;
+		}
+
+		virtual void load_new_pid(std::string reconfigure_topic, double p_, double i_, double d_) {
+			dynamic_reconfigure::ReconfigureRequest srv_req;
+			dynamic_reconfigure::ReconfigureResponse srv_resp;
+			dynamic_reconfigure::Config conf;
+
+			dynamic_reconfigure::DoubleParameter p;
+			dynamic_reconfigure::DoubleParameter i;
+			dynamic_reconfigure::DoubleParameter d;
+			dynamic_reconfigure::DoubleParameter p_scale;
+			dynamic_reconfigure::DoubleParameter i_scale;
+			dynamic_reconfigure::DoubleParameter d_scale;
+
+			p.value = p_;
+			i.value = i_;
+			d.value = d_;
+
+			p_scale.value = 100.0;
+			i_scale.value = 100.0;
+			d_scale.value = 100.0;
+
+			conf.doubles.push_back(p_scale);
+			conf.doubles.push_back(p);
+			conf.doubles.push_back(i_scale);
+			conf.doubles.push_back(i);
+			conf.doubles.push_back(d_scale);
+			conf.doubles.push_back(d);
+
+			srv_req.config = conf;
+			ros::service::call(reconfigure_topic, srv_req, srv_resp);
 		}
 
 		//Default error callbacks for pid node

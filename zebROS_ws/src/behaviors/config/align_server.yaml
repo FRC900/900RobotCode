@@ -22,3 +22,10 @@ align_server_topics:
     align_cargo_rocketship:
         enable_x_pub: "hatch_panel_distance_pid/pid_enable"
         x_error_topic: "hatch_panel_distance_pid/pid_debug"
+orient_pid:
+    p0: 13.0
+    i0: 0.0
+    d0: 1.5
+    p1: 10.0
+    i1: 0.0
+    d1: 1.5
