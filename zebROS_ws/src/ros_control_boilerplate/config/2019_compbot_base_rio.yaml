@@ -39,7 +39,6 @@ hardware_interface:
        - {name: climber_linebreak_1, type: digital_input, dio_channel: 5, invert: true, local: true}
        - {name: climber_linebreak_2, type: digital_input, dio_channel: 6, invert: true, local: true}
          
-       - {name: intake_line_break, type: digital_input, dio_channel: 0, invert: true, local: true}
        - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}
        - {name: joystick, type: joystick, id: 0, local: true}
        - {name: joystick_rumble, type: rumble, rumble_port: 0}
