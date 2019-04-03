@@ -41,7 +41,7 @@ int cargo_limit_switch_false_count = 0;
 int panel_limit_switch_false_count = 0;
 bool panel_push_extend = false;
 
-const int climber_num_steps = 3;
+const int climber_num_steps = 4;
 const int elevator_num_setpoints = 4;
 
 bool robot_orient = false;

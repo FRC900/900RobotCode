@@ -389,7 +389,7 @@ class ClimbAction {
 
 				}
 				//pull climber leg all the way up ------------------------------------------------------
-				if(!preempted && !timed_out && ros::ok())
+				if(linebreak_true_count > linebreak_debounce_iterations && !preempted && !timed_out && ros::ok())
 				{
 					ROS_INFO("climber server step 2: raising elevator to pull climber all the way back up");
 					//call the elevator actionlib server
@@ -417,12 +417,43 @@ class ClimbAction {
 						}
 					}
 				}
+				else {
+					ROS_WARN("climber server step 2: linebreak sensors not triggered. NOT CONTINUING CLIMB");
+				}
 				//preempt handling: preempt elevator server to freeze the elevator
 				if(preempted || timed_out || !ros::ok())
 				{
 					ROS_INFO("Running climber server step 2 preempt/timeout handling - preempting elevator server and stopping drive forward");
 					ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 					cmd_vel_forward_speed_ = 0;
+				}
+			}
+			if(goal->step == 3) {
+				ROS_WARN("Overriding linebreak sensor automation! Continuing climb manually!");
+				ROS_WARN("climber server step 3: raising elevator to pull climber all the way back up");
+				//call the elevator actionlib server
+				//define the goal to send
+				behaviors::ElevatorGoal elevator_goal;
+				elevator_goal.setpoint_index = ELEVATOR_RAISE;
+				elevator_goal.place_cargo = 0; //doesn't actually do anything
+				elevator_goal.raise_intake_after_success = true;
+				//send the elevator_goal
+				ae_.sendGoal(elevator_goal);
+				waitForElevator(timed_out, preempted, goal->step, r, elevator_climb_timeout);
+
+				//determine the outcome of the goal
+				if (!preempted)
+				{
+					//Drive forward until drive forward timeout at end of game
+					ROS_INFO_STREAM("Driving forward at end of climb");
+					const double start_time = ros::Time::now().toSec();
+
+					while(ros::ok() && !preempted && !timed_out)
+					{
+						timed_out = (ros::Time::now().toSec() -  start_time) > running_forward_timeout;
+						preempted = as_.isPreemptRequested();
+						r.sleep();
+					}
 				}
 			}
 
@@ -666,6 +697,11 @@ int main(int argc, char** argv) {
 	{
 		ROS_ERROR("Could not read delay_before_continue_retract in climber_server");
 		delay_before_continue_retract = 0.2;
+	}
+	if (!n_climb_params.getParam("linebreak_debounce_iterations", linebreak_debounce_iterations))
+	{
+		ROS_ERROR("Could not read linebreak_debounce_iterations in climber_server");
+		linebreak_debounce_iterations = 5;
 	}
 
 	ros::spin();

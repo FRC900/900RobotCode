@@ -10,3 +10,4 @@ climber_server:
     delay_before_continue_retract: 0.3
     wait_at_top_for_engage: 0.2
     pull_leg_up_pause_time: 0.5
+    linebreak_debounce_iterations: 5
