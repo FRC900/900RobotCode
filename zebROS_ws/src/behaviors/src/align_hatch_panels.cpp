@@ -56,11 +56,11 @@ class AlignHatchPanelAction : public BaseAlignAction {
 			}
 		}
 		void ratioPub() {
-			ros::Rate r(20);
+			ros::Rate r(60);
 			while(ros::ok()) {
 				std_msgs::Float64 msg;
 				if(y_error_ != 0.0 && x_error_ != 0.0) {
-					msg.data = y_error_/x_error_;
+					msg.data =-1*y_error_/x_error_;
 				}
 				else {
 					msg.data = 0.0;
