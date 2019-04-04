@@ -1,15 +1,14 @@
-#include "behaviors/base_align_with_vision_server.h"
+#include "behaviors/base_align_server.h"
 #include <thread>
 #include <std_msgs/Float64.h>
 
-bool debug;
-
-/*
-class BaseAlignHatchPanelAction : public BaseAlignAction {
+class BaseAlignVisionAction : public BaseAlignAction {
 	protected:
 		std::thread ratioThread;
 		ros::Publisher ratio_xy_pub_;
 		bool ratio_imposed = false;
+
+		std::string reconfigure_orient_pid_topic_;
 
 		double p0;
 		double i0;
@@ -18,7 +17,7 @@ class BaseAlignHatchPanelAction : public BaseAlignAction {
 		double i1;
 		double d1;
 	public:
-		AlignHatchPanelAction(const std::string &name,
+		BaseAlignVisionAction(const std::string &name,
 
 							const std::string &enable_align_topic_,
 							const std::string &enable_orient_topic_,
@@ -38,7 +37,9 @@ class BaseAlignHatchPanelAction : public BaseAlignAction {
 							const std::string &x_error_threshold_param_name_,
 							const std::string &y_error_threshold_param_name_,
 
-							const std::string &ratio_xy_topic_):
+							const std::string &ratio_xy_topic_,
+
+							const std::string &reconfigure_orient_pid_topic):
 			BaseAlignAction(name,
 				enable_align_topic_,
 				enable_orient_topic_,
@@ -56,45 +57,48 @@ class BaseAlignHatchPanelAction : public BaseAlignAction {
 
 				orient_error_threshold_param_name_,
 				x_error_threshold_param_name_,
-				y_error_threshold_param_name_)
+				y_error_threshold_param_name_),
+			 reconfigure_orient_pid_topic_(reconfigure_orient_pid_topic)
 		{
 			if(!nh_.getParam("orient_pid/p0", p0)){
-				ROS_ERROR("Align hatch panel failed to load p0");
+				ROS_ERROR("BaseAlignVision failed to load p0");
 			}
 			if(!nh_.getParam("orient_pid/i0", i0)){
-				ROS_ERROR("Align hatch panel failed to load i0");
+				ROS_ERROR("BaseAlignVision failed to load i0");
 			}
 			if(!nh_.getParam("orient_pid/d0", d0)){
-				ROS_ERROR("Align hatch panel failed to load d0");
+				ROS_ERROR("BaseAlignVision failed to load d0");
 			}
 			if(!nh_.getParam("orient_pid/p1", p1)){
-				ROS_ERROR("Align hatch panel failed to load p1");
+				ROS_ERROR("BaseAlignVision failed to load p1");
 			}
 			if(!nh_.getParam("orient_pid/i1", i1)){
-				ROS_ERROR("Align hatch panel failed to load i1");
+				ROS_ERROR("BaseAlignVision failed to load i1");
 			}
 			if(!nh_.getParam("orient_pid/d1", d1)){
-				ROS_ERROR("Align hatch panel failed to load d1");
+				ROS_ERROR("BaseAlignVision failed to load d1");
 			}
 
 			if(!ratio_xy_topic_.empty()) {
 				ratio_imposed = true;
 				ratio_xy_pub_ = nh_.advertise<std_msgs::Float64>(ratio_xy_topic_, 1);
-				ratioThread = std::thread(std::bind(&AlignHatchPanelAction::ratioPub, this));
+				ratioThread = std::thread(std::bind(&BaseAlignVisionAction::ratioPub, this));
 			}
 		}
 		void ratioPub() {
 			ros::Rate r(60);
 			while(ros::ok()) {
-				std_msgs::Float64 msg;
 				if(y_error_ != 0.0 && x_error_ != 0.0) {
-					msg.data =-1*y_error_/x_error_;
+					if(x_error_ > 0.2) {
+						std_msgs::Float64 msg;
+						msg.data =y_error_/x_error_;
+						ratio_xy_pub_.publish(msg);
+						r.sleep();
+					}
 				}
 				else {
-					msg.data = 0.0;
+					//msg.data = 0.0;
 				}
-				ratio_xy_pub_.publish(msg);
-				r.sleep();
 			}
 		}
 
@@ -114,7 +118,7 @@ class BaseAlignHatchPanelAction : public BaseAlignAction {
             x_aligned_ = false;
             y_aligned_ = false;
 
-            load_new_pid("/align_hatch/orient_pid/set_parameters", p0, d0, i0); //reset pid to stationary pid values
+            load_new_pid(reconfigure_orient_pid_topic_, p0, d0, i0); //reset pid to stationary pid values
             //move mech out of the way
             //move_mech(r, false);
             //enable, wait for alignment, todo change this timeout, keep enabled
@@ -140,10 +144,10 @@ class BaseAlignHatchPanelAction : public BaseAlignAction {
             //}
             //enable,don't wait for alignment, default timeout, don't keep enabled
 
-            load_new_pid("/align_hatch/orient_pid/set_parameters", p1, d1, i1); //Set pid to in motion pid values
+            load_new_pid(reconfigure_orient_pid_topic_, p1, d1, i1); //Set pid to in motion pid values
             ROS_WARN("starting y align");
             align_y(r, true);
-            align_x(r, true, true);
+            align_x(r, true, true, align_timeout_, true);
             ROS_WARN("ending y align");
 
             //check if it timed out or preempted while waiting
@@ -158,8 +162,8 @@ class BaseAlignHatchPanelAction : public BaseAlignAction {
             return true;
         }
 };
-*/
 
+/*
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "align_server");
@@ -189,11 +193,9 @@ int main(int argc, char** argv)
 			"/align_server/align_hatch_params/orient_error_threshold",
 			"/align_server/align_hatch_params/x_error_threshold",
 			"/align_server/align_hatch_params/y_error_threshold",
-
-			"align_hatch_pid/ratio_xy",
-
-			"align_hatch/orient_pid/set_parameters");
+			"align_hatch_pid/ratio_xy");
 
 	ros::spin();
 	return 0;
 }
+*/

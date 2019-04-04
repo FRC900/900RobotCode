@@ -37,6 +37,9 @@ void multiflexCB(const teraranger_array::RangeArray& msg)
 		if(msg.ranges[i].range == msg.ranges[i].range)
 		{
 			sensors_distances[i] = msg.ranges[i].range;
+			if(msg.ranges[i].range > default_min_dist_) {
+				sensors_distances[i] = default_min_dist_ - .1;
+			}
 			if(i <= 1) {
 				min_dist_cargo = std::min(min_dist_cargo, static_cast<double>(msg.ranges[i].range));
 			}
