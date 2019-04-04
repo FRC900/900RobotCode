@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <node name="rosbag_record_node" pkg="rosbag" type="record"
+	  args="record -o /mnt/900_2/no_zed --lz4
+	  	/frcrobot_jetson/talon_states
+		/frcrobot_jetson/joint_states
+		/frcrobot_rio/joint_states
+		/frcrobot_rio/heartbeat
+		/frcrobot_jetson/heartbeat
+		/frcrobot_rio/match_data
+		/frcrobot_jetson/swerve_drive_controller/cmd_vel
+		/teleop/swerve_drive_controller/cmd_vel
+		/align_server/align_cargo_pid/pid_enable
+		/align_server/align_hatch_pid/pid_enable
+		/align_server/align_pid/pid_enable
+		/align_server/align_pid/swerve_drive_controller/cmd_vel
+		/align_server/align_with_terabee/enable_y_pub
+		/align_server/align_with_terabee/y_aligned
+		/align_server/align_with_terabee/y_command
+		/align_server/cargo_distance_pid/pid_debug
+		/align_server/cargo_distance_pid/pid_enable
+		/align_server/cargo_distance_pid/state
+		/align_server/cargo_distance_pid/x_command
+		/align_server/cargo_pid/pid_debug
+		/align_server/cargo_pid/pid_enable
+		/align_server/cargo_pid/state
+		/align_server/cargo_pid/y_command
+		/align_server/distance_pid/pid_enable
+		/align_server/hatch_panel_distance_pid/pid_debug
+		/align_server/hatch_panel_distance_pid/pid_enable
+		/align_server/hatch_panel_distance_pid/state
+		/align_server/hatch_panel_distance_pid/x_command
+		/align_server/navX_pid/orient_command
+		/align_server/navX_pid/pid_debug
+		/align_server/navX_pid/pid_enable
+		/align_server/navX_pid/state
+		/climber/swerve_drive_controller/cmd_vel
+		/navX_snap_to_goal_pid/pid_debug
+		/multiflex_1/ranges_raw
+		/frcrobot_jetson/swerve_drive_controller/odom
+		/frcrobot_rio/navx_mxp
+		/frcrobot_rio/robot_controller_states
+		/frcrobot_rio/joystick_states_raw
+		/frcrobot_jetson/pdp_states
+		/frcrobot_jetson/pcm_states
+		/goal_detection_node/goal_detect_msg
+		/zed_goal/odom
+		/zed_goal/pose
+		/teleop/translator0/joystick_states
+		/teleop/elevator_setpoint
+		/tf
+		/tf_static
+		"/>
+</launch>
