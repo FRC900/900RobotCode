@@ -249,7 +249,7 @@
 			<param name="node_name" value="navX_pid" />
 			<param name="Kp" value="13.0" />
 			<param name="Ki" value="0.0" />
-			<param name="Kd" value="1.5" />
+			<param name="Kd" value="0.0" />
 			<param name="upper_limit" value="8" />
 			<param name="lower_limit" value="-8" />
 			<param name="windup_limit" value="10" />
@@ -297,7 +297,7 @@
 			<param name="node_name" value="orient_pid" />
 			<param name="Kp" value="13.0" />
 			<param name="Ki" value="0.0" />
-			<param name="Kd" value="1.5" />
+			<param name="Kd" value="0.0" />
 			<param name="upper_limit" value="8" />
 			<param name="lower_limit" value="-8" />
 			<param name="windup_limit" value="10" />

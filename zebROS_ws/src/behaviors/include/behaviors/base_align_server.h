@@ -176,21 +176,21 @@ class BaseAlignAction {
 		virtual void orient_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold_);
-			orient_error_ =fabs(msg.data[0]);
+			orient_error_ =msg.data[0];
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "orient error: " << fabs(msg.data[0]));
 		}
 		virtual void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold_);
-			x_error_ =fabs(msg.data[0]);
+			x_error_ = msg.data[0];
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "x error: " << fabs(msg.data[0]));
 		}
 		virtual void y_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
 			y_aligned_ = (fabs(msg.data[0]) < y_error_threshold_);
-			y_error_ =fabs(msg.data[0]);
+			y_error_ = msg.data[0];
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "y error: " << fabs(msg.data[0]));
 		}
@@ -397,8 +397,15 @@ class BaseAlignAction {
 
 		//define the function to be executed when the actionlib server is called
 		virtual void executeCB(const behaviors::AlignGoalConstPtr &goal) {
+			double start_time = ros::Time::now().toSec();
 			disable_pid();
+			ros::Rate r(20);
 			bool align_succeeded = robot_align();
+			bool timed_out = false;
+			while(!timed_out && ros::ok()) {
+				timed_out = ros::Time::now().toSec() - start_time > 0.1;
+				r.sleep();
+			}
 			disable_pid(); //Disable all align PID after execution
 
 			if(orient_timed_out_ || y_timed_out_ || x_timed_out_)
