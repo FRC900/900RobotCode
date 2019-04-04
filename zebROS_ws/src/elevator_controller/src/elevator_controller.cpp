@@ -11,9 +11,15 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 
 	//hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
 
-	if (!controller_nh.getParam("arb_feed_forward_up", config_.arb_feed_forward_up))
+	if (!controller_nh.getParam("arb_feed_forward_up_high", config_.arb_feed_forward_up_high))
 	{
-		ROS_ERROR("Could not find arb_feed_forward_up");
+		ROS_ERROR("Could not find arb_feed_forward_up_high");
+		return false;
+	}
+
+	if (!controller_nh.getParam("arb_feed_forward_up_low", config_.arb_feed_forward_up_low))
+	{
+		ROS_ERROR("Could not find arb_feed_forward_up_low");
 		return false;
 	}
 
@@ -131,14 +137,15 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 			// easier (and good enough) to tune PID for down motion
 			// and add an arb FF correction for up
 
-			//if(elevator_joint_.getPosition() >= config_.stage_2_height && last_position_ <= config_.stage_2_height) {
-			elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-			elevator_joint_.setDemand1Value(config_.arb_feed_forward_up);
-			//}
-			//else if (elevator_joint_.getPosition() <= config_.stage_2_height && last_position_ >= config_.stage_2_height) {
-			//	elevator_joint_.setDemand1Type(hardware_interface::DemandType_Neutral);
-			//	elevator_joint_.setDemand1Value(0);
-			//}
+			if(elevator_joint_.getPosition() >= config_.stage_2_height && last_position_ <= config_.stage_2_height) {
+				elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+				elevator_joint_.setDemand1Value(config_.arb_feed_forward_up_high);
+			}
+			else if (elevator_joint_.getPosition() <= config_.stage_2_height && last_position_ >= config_.stage_2_height) {
+				elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+				elevator_joint_.setDemand1Value(config_.arb_feed_forward_up_low);
+			}
+
 
 			//for now, up and down PID is the same, so slot 1 is used for climbing
 			/*
