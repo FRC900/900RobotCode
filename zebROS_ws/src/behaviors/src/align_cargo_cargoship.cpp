@@ -113,7 +113,8 @@ int main(int argc, char** argv)
             "/align_server/align_cargo_params/x_error_threshold",
             "/align_server/align_cargo_params/y_error_threshold",
 
-			"align_cargo_cargoship/ratio_xy",
+			"align_cargo/ratio_xy",
+			"cargo_distance_pid/x_command",
 
 			"align_cargo_cargoship/orient_pid/set_parameters");
 

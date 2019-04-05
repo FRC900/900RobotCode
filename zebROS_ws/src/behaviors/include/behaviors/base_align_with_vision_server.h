@@ -188,8 +188,9 @@ class BaseAlignVisionAction : public BaseAlignAction {
             //enable,don't wait for alignment, default timeout, don't keep enabled
 
 			if(track_target) {
-				while(ros::ok()) {
+				while(ros::ok() && !preempted_) {
 					ROS_ERROR_THROTTLE(0.2, "CONSTANTLY TRACKING TARGET DUE TO TESTING CONFIG IN ALIGN SERVER!!!!");
+					preempted_ = check_preempted();
 					load_new_pid(reconfigure_orient_pid_topic_, p1, d1, i1); //Set pid to in motion pid values
 					align_y(r, true);
 					align_x(r, true);
@@ -199,10 +200,10 @@ class BaseAlignVisionAction : public BaseAlignAction {
 			}
 			else if(!do_pid) {
 				start_time_ = ros::Time::now().toSec();
-				while(ros::ok() && !timed_out && !preempted) {
+				while(ros::ok() && !timed_out && !preempted_) {
 					ROS_ERROR_THROTTLE(0.2, "RUNNING CONSTANT VEL DUE TO TESTING CONFIG IN ALIGN SERVER!!!!");
 					timed_out = check_timeout(start_time_, align_timeout_);
-					preempted = check_preempted();
+					preempted_ = check_preempted();
 					std_msgs::Float64 constant_vel_msg;
 					constant_vel_msg.data = constant_vel;
 					constant_vel_pub_.publish(constant_vel_msg);

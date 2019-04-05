@@ -189,6 +189,7 @@ int main(int argc, char** argv)
 			"/align_server/align_hatch_params/y_error_threshold",
 
 			"align_hatch_pid/ratio_xy",
+			"hatch_panel_distance_pid/y_command",
 
 			"align_hatch/orient_pid/set_parameters");
 	ros::spin();
