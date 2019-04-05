@@ -16,6 +16,7 @@ double outtake_timeout;
 double wait_for_server_timeout;
 double pause_time_after_release;
 double pause_time_after_extend;
+double pause_time_after_drawback;
 
 class OuttakeHatchPanelAction
 {
@@ -204,6 +205,18 @@ class OuttakeHatchPanelAction
 					preempted = true;
 				}
 				ros::spinOnce(); //update everything
+                                
+                                ros::Duration(pause_time_after_drawback).sleep();
+
+				//close the panel mechanism; we can reuse the srv variable
+				srv.request.claw_release = false;
+				srv.request.push_extend = false;
+				//send request to controller
+				if(!panel_controller_client_.call(srv)) //note: the call won't happen if preempted was true, because of how && operator works
+				{
+					ROS_ERROR("Panel controller call failed in panel outtake server");
+					preempted = true;
+				}
 
 			}
 
@@ -297,6 +310,8 @@ int main(int argc, char** argv)
 		ROS_ERROR("Could not read outtake_timeout in panel_outtake_sever");
 	if (!n_panel_params.getParam("pause_time_after_release", pause_time_after_release))
 		ROS_ERROR("Could not read pause_time_after_release in panel_outtake_sever");
+	if (!n_panel_params.getParam("pause_time_after_drawback", pause_time_after_drawback))
+		ROS_ERROR("Could not read pause_time_after_drawback in panel_outtake_sever");
 	if (!n_panel_params.getParam("pause_time_after_extend", pause_time_after_extend))
 		ROS_ERROR("Could not read pause_time_after_extend in panel_outtake_sever");
 
