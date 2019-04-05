@@ -2,12 +2,12 @@
 #include <thread>
 #include <std_msgs/Float64.h>
 
-bool update_ratio = false;
 
 class BaseAlignVisionAction : public BaseAlignAction {
 	protected:
 		std::thread ratioThread;
 		ros::Publisher ratio_xy_pub_;
+		ros::Publisher constant_vel_pub_;
 		bool ratio_imposed = false;
 
 		std::string reconfigure_orient_pid_topic_;
@@ -18,6 +18,16 @@ class BaseAlignVisionAction : public BaseAlignAction {
 		double p1;
 		double i1;
 		double d1;
+
+		bool update_ratio = false;
+
+
+		//TESTING PARAMS !!DANGER!!
+		bool do_orient = false;
+		bool track_target = false;
+		bool do_pid = false;
+		bool hold_orient = false;
+		bool constant_vel = false;
 	public:
 		BaseAlignVisionAction(const std::string &name,
 
@@ -40,6 +50,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 							const std::string &y_error_threshold_param_name_,
 
 							const std::string &ratio_xy_topic_,
+							const std::string &constant_vel_topic_,
 
 							const std::string &reconfigure_orient_pid_topic):
 			BaseAlignAction(name,
@@ -80,7 +91,24 @@ class BaseAlignVisionAction : public BaseAlignAction {
 			if(!nh_.getParam("orient_pid/d1", d1)){
 				ROS_ERROR("BaseAlignVision failed to load d1");
 			}
+			//TESTING PARAMS !DANGER!
+			if(!nh_.getParam("do_orient", do_orient)){
+				ROS_ERROR("BaseAlignVision failed to load do_orient");
+			}
+			if(!nh_.getParam("track_target", track_target)){
+				ROS_ERROR("BaseAlignVision failed to load track_target");
+			}
+			if(!nh_.getParam("do_pid", do_pid)){
+				ROS_ERROR("BaseAlignVision failed to load do_pid");
+			}
+			if(!nh_.getParam("hold_orient", hold_orient)){
+				ROS_ERROR("BaseAlignVision failed to load hold_orient");
+			}
+			if(!nh_.getParam("constant_vel", constant_vel)){
+				ROS_ERROR("BaseAlignVision failed to load constant_vel");
+			}
 
+			constant_vel_pub_ = nh_.advertise<std_msgs::Float64>(constant_vel_topic_, 1);
 			if(!ratio_xy_topic_.empty()) {
 				ratio_imposed = true;
 				ratio_xy_pub_ = nh_.advertise<std_msgs::Float64>(ratio_xy_topic_, 1);
@@ -92,8 +120,8 @@ class BaseAlignVisionAction : public BaseAlignAction {
 			while(ros::ok()) {
 				if(update_ratio) {
 					ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error_, x_error_);
-					if(y_error_ != 0.0 && x_error_ != 0.0) {
-						if(x_error_ > 0.2) {
+					if(y_error_ != 0.0 && x_error_ != 0.0 || track_target) {
+						if(x_error_ > 0.2 || track_target) {
 							std_msgs::Float64 msg;
 							msg.data = y_error_/(x_error_-.04);
 							ratio_xy_pub_.publish(msg);
@@ -129,9 +157,17 @@ class BaseAlignVisionAction : public BaseAlignAction {
             //move mech out of the way
             //move_mech(r, false);
             //enable, wait for alignment, todo change this timeout, keep enabled
-            ROS_WARN("starting orient align");
-            align_orient(r, true, true, align_timeout_, true);
-            ROS_WARN("ending orient align");
+			if(do_orient) {
+				ROS_WARN("starting orient align");
+				align_orient(r, true, true, align_timeout_, hold_orient);
+				ROS_WARN("ending orient align");
+			}
+			else {
+				ROS_ERROR("SKIPPING ORIENT DUE TO TESTING PARAM!!!");
+				ROS_ERROR("SKIPPING ORIENT DUE TO TESTING PARAM!!!");
+				ROS_ERROR("SKIPPING ORIENT DUE TO TESTING PARAM!!!");
+				ROS_ERROR("SKIPPING ORIENT DUE TO TESTING PARAM!!!");
+			}
 
             //check if it timed out or preempted while waiting
             timed_out = check_timeout(start_time_, align_timeout_);
@@ -151,12 +187,34 @@ class BaseAlignVisionAction : public BaseAlignAction {
             //}
             //enable,don't wait for alignment, default timeout, don't keep enabled
 
-            load_new_pid(reconfigure_orient_pid_topic_, p1, d1, i1); //Set pid to in motion pid values
-            ROS_WARN("starting y align");
-            align_y(r, true);
-            align_x(r, true, true, align_timeout_, true);
-            ROS_WARN("ending y align");
-
+			if(track_target) {
+				while(ros::ok()) {
+					ROS_ERROR_THROTTLE(0.2, "CONSTANTLY TRACKING TARGET DUE TO TESTING CONFIG IN ALIGN SERVER!!!!");
+					load_new_pid(reconfigure_orient_pid_topic_, p1, d1, i1); //Set pid to in motion pid values
+					align_y(r, true);
+					align_x(r, true);
+					r.sleep();
+					update_ratio = true;
+				}
+			}
+			else if(!do_pid) {
+				start_time_ = ros::Time::now().toSec();
+				while(ros::ok() && !timed_out && !preempted) {
+					ROS_ERROR_THROTTLE(0.2, "RUNNING CONSTANT VEL DUE TO TESTING CONFIG IN ALIGN SERVER!!!!");
+					timed_out = check_timeout(start_time_, align_timeout_);
+					preempted = check_preempted();
+					std_msgs::Float64 constant_vel_msg;
+					constant_vel_msg.data = constant_vel;
+					constant_vel_pub_.publish(constant_vel_msg);
+				}
+			}
+			else {
+				load_new_pid(reconfigure_orient_pid_topic_, p1, d1, i1); //Set pid to in motion pid values
+				ROS_WARN("starting y align");
+				align_y(r, true);
+				align_x(r, true, true, align_timeout_, true);
+				ROS_WARN("ending y align");
+			}
             //check if it timed out or preempted while waiting
             timed_out = check_timeout(start_time_, align_timeout_);
             preempted_ = check_preempted();
