@@ -983,12 +983,7 @@ int main(int argc, char **argv)
 
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 
-	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompConfig> drw;
-	drw.init(n_params, dynamic_callback);
-	// max_speed isn't read from the n_params namespace, so make sure to
-	// update the dynamic reconfig init value here using the value
-	// read from n_swerve_params into config.max_speed
-	drw.updateConfig(config);
+	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompConfig> drw(n_params, config, dynamic_callback);
 
 	ROS_WARN("joy_init");
 

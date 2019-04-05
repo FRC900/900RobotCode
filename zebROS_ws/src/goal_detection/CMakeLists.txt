@@ -9,6 +9,7 @@ include ("../cmake_modules/CMakeOpt.cmake")
 if (DEFINED CMAKE_TOOLCHAIN_FILE)
   find_package(catkin REQUIRED COMPONENTS
     roscpp
+	dynamic_reconfigure_wrapper
     message_filters
     message_generation
     geometry_msgs
@@ -21,6 +22,7 @@ else()
   find_package(catkin REQUIRED COMPONENTS
     roscpp
     message_filters
+	dynamic_reconfigure_wrapper
     message_generation
     geometry_msgs
     std_msgs
@@ -107,10 +109,9 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/GoalDetection.cfg
+)
 
 ###################################
 ## catkin specific configuration ##

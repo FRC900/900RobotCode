@@ -93,7 +93,7 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 
 	elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController::cmdService, this);
 
-	dynamic_reconfigure_server_.init(controller_nh, boost::bind(&ElevatorController::callback, this, _1, _2));
+	dynamic_reconfigure_server_.init(controller_nh, config_, boost::bind(&ElevatorController::callback, this, _1, _2));
 
 	return true;
 }

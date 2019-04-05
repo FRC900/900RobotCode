@@ -26,6 +26,8 @@
 #include <sstream>
 
 #include "GoalDetector.hpp"
+#include "goal_detection/GoalDetectionConfig.h"
+#include "dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h"
 
 using namespace cv;
 using namespace std;
@@ -34,10 +36,8 @@ using namespace message_filters;
 
 ros::Publisher pub;
 GoalDetector *gd = NULL;
-bool batch = true;
-bool down_sample = false;
-double hFov = 69.; //105.;
-double camera_angle = -25.0;
+
+goal_detection::GoalDetectionConfig config;
 
 void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 {
@@ -55,7 +55,7 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	Mat depth;
 
 	// Downsample for speed purposes
-	if (down_sample)
+	if (config.down_sample)
 	{
 		pyrDown(*framePtr, frame);
 
@@ -70,11 +70,18 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	// Initialize goal detector object the first time
 	// through here. Use the size of the frame
 	// grabbed from the ZED messages
-	if (gd == NULL)
+	static double savedFov = std::numeric_limits<double>::max();
+	static bool savedBatch = false;
+	if ((gd == NULL) || (savedFov != config.hFov) || (savedBatch != config.batch))
 	{
-		const Point2f fov(hFov * (M_PI / 180.),
-						  hFov * (M_PI / 180.) * ((double)framePtr->rows / framePtr->cols));
-		gd = new GoalDetector(fov, framePtr->size(), !batch);
+		if (gd)
+			delete gd;
+
+		const Point2f fov(config.hFov * (M_PI / 180.),
+						  config.hFov * (M_PI / 180.) * ((double)framePtr->rows / framePtr->cols));
+		gd = new GoalDetector(fov, framePtr->size(), !config.batch);
+		savedFov = config.hFov;
+		savedBatch = config.batch;
 	}
 	//Send current color and depth image to the actual GoalDetector
 	gd->findBoilers(*framePtr, *depthPtr);
@@ -103,7 +110,7 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 
 	pub.publish(gd_msg);
 
-	if (!batch)
+	if (!config.batch)
 	{
 		Mat thisFrame(framePtr->clone());
 		gd->drawOnFrame(thisFrame, gd->getContours(cvFrame->image));
@@ -185,24 +192,37 @@ void callback_no_depth(const ImageConstPtr &frameMsg)
 	callback(frameMsg, cv_bridge::CvImage(std_msgs::Header(), "32FC1", depthMat).toImageMsg());
 }
 
+void dynamic_callback(goal_detection::GoalDetectionConfig &cfg, uint32_t level)
+{
+	(void)level;
+	config = cfg;
+}
+
+
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "goal_detect");
 
 	ros::NodeHandle nh("~");
-	down_sample = false;
+	config.batch = true;
+	config.down_sample = false;
+	config.hFov = 105.;
+	config.camera_angle = -25.0;
 	int sub_rate = 2;
 	int pub_rate = 1;
-	nh.getParam("down_sample", down_sample);
+	ROS_INFO_STREAM(__LINE__ << " : config.batch = " << config.batch);
+	nh.getParam("down_sample", config.down_sample);
 	nh.getParam("sub_rate", sub_rate);
 	nh.getParam("pub_rate", pub_rate);
-	nh.getParam("batch", batch);
+	nh.getParam("batch", config.batch);
 
 	bool no_depth = false;
 	nh.getParam("no_depth", no_depth);
 
-	nh.getParam("hFov", hFov);
-	nh.getParam("camera_angle", camera_angle);
+	nh.getParam("hFov", config.hFov);
+	nh.getParam("camera_angle", config.camera_angle);
+	ROS_INFO_STREAM(__LINE__ << " : config.batch = " << config.batch);
 
 	std::shared_ptr<message_filters::Subscriber<Image>>  frame_sub;
 	std::shared_ptr<message_filters::Subscriber<Image>>  depth_sub;
@@ -229,6 +249,9 @@ int main(int argc, char **argv)
 
 	// Set up publisher
 	pub = nh.advertise<goal_detection::GoalDetection>("goal_detect_msg", pub_rate);
+
+	ROS_INFO_STREAM(__LINE__ << " : config.batch = " << config.batch);
+	DynamicReconfigureWrapper<goal_detection::GoalDetectionConfig> drw(nh, config, dynamic_callback);
 
 	ros::spin();
 
