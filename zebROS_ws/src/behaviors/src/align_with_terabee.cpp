@@ -6,6 +6,7 @@
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/Float64MultiArray.h"
+#include <atomic>
 
 #define NUM_SENSORS 8
 
@@ -24,14 +25,16 @@ std::vector<double> sensors_distances;
 bool publish = false;
 bool publish_last = false;
 
-const double default_min_dist_ = 100;
-double min_dist = default_min_dist_;
-double min_dist_cargo = default_min_dist_;
+const double default_min_dist_ = 1.5;
+std::atomic<double> min_dist;
+std::atomic<double> min_dist_cargo;
+double min_dist_local;
+double min_dist_cargo_local;
 
 void multiflexCB(const teraranger_array::RangeArray& msg)
 {
-    min_dist = default_min_dist_;
-	min_dist_cargo = default_min_dist_;
+    min_dist_local = default_min_dist_;
+	min_dist_cargo_local = default_min_dist_;
 	for(int i = 0; i < NUM_SENSORS; i++)
 	{
 		if(msg.ranges[i].range == msg.ranges[i].range)
@@ -41,10 +44,10 @@ void multiflexCB(const teraranger_array::RangeArray& msg)
 				sensors_distances[i] = default_min_dist_ - .1;
 			}
 			if(i <= 1) {
-				min_dist_cargo = std::min(min_dist_cargo, static_cast<double>(msg.ranges[i].range));
+				min_dist_cargo_local = std::min(min_dist_cargo_local, static_cast<double>(sensors_distances[i]));
 			}
 			if(i == 2) {
-				min_dist = std::min(min_dist, static_cast<double>(msg.ranges[i].range));
+				min_dist_local = std::min(min_dist_local, static_cast<double>(sensors_distances[i]));
 			}
 			//ROS_INFO_STREAM("i = " << i << " range = " << sensors_distances[i]);
 		}
@@ -52,6 +55,12 @@ void multiflexCB(const teraranger_array::RangeArray& msg)
 		{
 			sensors_distances[i] = default_min_dist_;
 		}
+	}
+	if(min_dist_cargo_local != default_min_dist_) {
+		min_dist_cargo = min_dist_cargo_local;
+	}
+	if(min_dist_local != default_min_dist_) {
+		min_dist = min_dist_local;
 	}
 }
 
@@ -117,12 +126,13 @@ int main(int argc, char ** argv)
 	std_msgs::Float64 cargo_setpoint_msg;
 	cargo_setpoint_msg.data = 0;
 
-	ros::Rate r(50);
+	ros::Rate r(100);
 
 	while(ros::ok())
 	{
 		bool aligned = false;
-		if(sensors_distances[0] == 0.0 && sensors_distances[1] == 0.0)
+		ros::spinOnce();
+		if(sensors_distances[0] == 0.0 && sensors_distances[1] == 0.0 &&sensors_distances[2] == 0.0)
 		{
 			ROS_INFO_STREAM_THROTTLE(2, "No data is being received from the Terabee sensors. Skipping this message");
 			ros::spinOnce();
@@ -133,12 +143,14 @@ int main(int argc, char ** argv)
 		//ROS_ERROR_STREAM_THROTTLE(0.25, "min_dist: " << min_dist);
 
 		//deal with distance PID first
+		ros::spinOnce();
         if(fabs(min_dist) < default_min_dist_) {
             std_msgs::Float64 distance_state_msg;
             distance_state_msg.data = min_dist - distance_target;
             hatch_panel_distance_state_pub.publish(distance_state_msg);
             hatch_panel_distance_setpoint_pub.publish(distance_setpoint_msg);
         }
+		ros::spinOnce();
 		if(fabs(min_dist_cargo) < default_min_dist_) {
             std_msgs::Float64 distance_state_msg;
             distance_state_msg.data = distance_target - min_dist_cargo;
@@ -162,6 +174,7 @@ int main(int argc, char ** argv)
 		cargo_state_msg.data = dist_left - dist_right;
 		cargo_state_pub.publish(cargo_state_msg);
 		cargo_setpoint_pub.publish(cargo_setpoint_msg);
+		ros::spinOnce();
 
 		//now the exciting y-alignment stuff
 		//1 is wall

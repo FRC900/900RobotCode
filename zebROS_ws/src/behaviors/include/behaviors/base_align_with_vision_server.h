@@ -2,6 +2,8 @@
 #include <thread>
 #include <std_msgs/Float64.h>
 
+bool update_ratio = false;
+
 class BaseAlignVisionAction : public BaseAlignAction {
 	protected:
 		std::thread ratioThread;
@@ -88,21 +90,26 @@ class BaseAlignVisionAction : public BaseAlignAction {
 		void ratioPub() {
 			ros::Rate r(60);
 			while(ros::ok()) {
-				if(y_error_ != 0.0 && x_error_ != 0.0) {
-					if(x_error_ > 0.2) {
-						std_msgs::Float64 msg;
-						msg.data =y_error_/x_error_;
-						ratio_xy_pub_.publish(msg);
-						r.sleep();
+				if(update_ratio) {
+					ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error_, x_error_);
+					if(y_error_ != 0.0 && x_error_ != 0.0) {
+						if(x_error_ > 0.2) {
+							std_msgs::Float64 msg;
+							msg.data = y_error_/(x_error_-.04);
+							ratio_xy_pub_.publish(msg);
+						}
 					}
+					else {
+						//msg.data = 0.0;
+					}
+					update_ratio = false;
 				}
-				else {
-					//msg.data = 0.0;
-				}
+				r.sleep();
 			}
 		}
 
 		bool robot_align() {
+			update_ratio = true;
             ros::Rate r(60);
             ROS_WARN("starting robot_align");
 

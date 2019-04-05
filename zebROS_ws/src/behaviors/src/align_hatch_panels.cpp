@@ -27,9 +27,7 @@ class BaseAlignHatchPanelAction : public BaseAlignAction {
 
 							const std::string &orient_error_topic_,
 							const std::string &x_error_topic_,
-							const std::string &y_error_topic_,
-
-							const std::string &align_timeout_param_name_,
+							const std::strout_param_name_,
 							const std::string &orient_timeout_param_name_,
 							const std::string &x_timeout_param_name_,
 							const std::string &y_timeout_param_name_,

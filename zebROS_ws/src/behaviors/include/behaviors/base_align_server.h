@@ -135,7 +135,7 @@ class BaseAlignAction {
 		}
 		bool check_preempted() {
 			bool preempted_var = false;
-			if(as_.isPreemptRequested()) {
+			if(as_.isPreemptRequested() || preempted_) {
 				preempted_var = true;
 			}
 			return preempted_var;
@@ -153,12 +153,18 @@ class BaseAlignAction {
 			dynamic_reconfigure::DoubleParameter i_scale;
 			dynamic_reconfigure::DoubleParameter d_scale;
 
+			p.name = "Kp";
 			p.value = p_;
+			i.name = "Ki";
 			i.value = i_;
+			d.name = "Kd";
 			d.value = d_;
 
+			p_scale.name = "Kp_scale";
 			p_scale.value = 100.0;
+			i_scale.name = "Ki_scale";
 			i_scale.value = 100.0;
+			d_scale.name = "Kd_scale";
 			d_scale.value = 100.0;
 
 			conf.doubles.push_back(p_scale);
@@ -402,6 +408,7 @@ class BaseAlignAction {
 			ros::Rate r(20);
 			bool align_succeeded = robot_align();
 			bool timed_out = false;
+			preempted_ = false;
 			while(!timed_out && ros::ok()) {
 				timed_out = ros::Time::now().toSec() - start_time > 0.1;
 				r.sleep();
