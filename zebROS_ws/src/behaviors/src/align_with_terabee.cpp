@@ -22,6 +22,7 @@
 // one for cargo, one for hatch
 
 std::vector<double> sensors_distances;
+std::vector<double> adjust_terabee_dists;
 bool publish = false;
 bool publish_last = false;
 
@@ -39,14 +40,14 @@ void multiflexCB(const teraranger_array::RangeArray& msg)
 	{
 		if(msg.ranges[i].range == msg.ranges[i].range)
 		{
-			sensors_distances[i] = msg.ranges[i].range;
+			sensors_distances[i] = msg.ranges[i].range + adjust_terabee_dists[i];
 			if(msg.ranges[i].range > default_min_dist_) {
 				sensors_distances[i] = default_min_dist_ - .1;
 			}
 			if(i <= 1) {
 				min_dist_cargo_local = std::min(min_dist_cargo_local, static_cast<double>(sensors_distances[i]));
 			}
-			if(i == 2) {
+			if(i == 2 || i == 3) {
 				min_dist_local = std::min(min_dist_local, static_cast<double>(sensors_distances[i]));
 			}
 			//ROS_INFO_STREAM("i = " << i << " range = " << sensors_distances[i]);
@@ -92,6 +93,8 @@ int main(int argc, char ** argv)
 	double last_command;
 	double last_command_published = 0.0;
 
+	if(!n_params.getParam("adjust_terabee_dists", adjust_terabee_dists))
+		ROS_ERROR_STREAM("Could not read adjust_terabee_dists in align_with_terabee");
 	if(!n_params.getParam("cmd_vel_to_pub", cmd_vel_to_pub))
 		ROS_ERROR_STREAM("Could not read cmd_vel_to_pub in align_with_terabee");
 	if(!n_params.getParam("distance_bound", distance_bound))

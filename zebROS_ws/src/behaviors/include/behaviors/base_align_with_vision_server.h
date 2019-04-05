@@ -120,7 +120,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 			while(ros::ok()) {
 				if(update_ratio) {
 					ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error_, x_error_);
-					if(y_error_ != 0.0 && x_error_ != 0.0 || track_target) {
+					if((y_error_ != 0.0 && x_error_ != 0.0) || track_target) {
 						if(x_error_ > 0.2 || track_target) {
 							std_msgs::Float64 msg;
 							msg.data = y_error_/(x_error_-.04);
@@ -187,13 +187,22 @@ class BaseAlignVisionAction : public BaseAlignAction {
             //}
             //enable,don't wait for alignment, default timeout, don't keep enabled
 
+			load_new_pid(reconfigure_orient_pid_topic_, p1, d1, i1); //Set pid to in motion pid values
 			if(track_target) {
 				while(ros::ok() && !preempted_) {
 					ROS_ERROR_THROTTLE(0.2, "CONSTANTLY TRACKING TARGET DUE TO TESTING CONFIG IN ALIGN SERVER!!!!");
 					preempted_ = check_preempted();
-					load_new_pid(reconfigure_orient_pid_topic_, p1, d1, i1); //Set pid to in motion pid values
-					align_y(r, true);
-					align_x(r, true);
+					if(!do_pid) {
+						ROS_ERROR_THROTTLE(0.2, "RUNNING CONSTANT VEL DUE TO TESTING CONFIG IN ALIGN SERVER!!!!");
+
+						std_msgs::Float64 constant_vel_msg;
+						constant_vel_msg.data = constant_vel;
+						constant_vel_pub_.publish(constant_vel_msg);
+					}
+					else {
+						align_y(r, true);
+						align_x(r, true);
+					}
 					r.sleep();
 					update_ratio = true;
 				}
@@ -204,13 +213,13 @@ class BaseAlignVisionAction : public BaseAlignAction {
 					ROS_ERROR_THROTTLE(0.2, "RUNNING CONSTANT VEL DUE TO TESTING CONFIG IN ALIGN SERVER!!!!");
 					timed_out = check_timeout(start_time_, align_timeout_);
 					preempted_ = check_preempted();
+
 					std_msgs::Float64 constant_vel_msg;
 					constant_vel_msg.data = constant_vel;
 					constant_vel_pub_.publish(constant_vel_msg);
 				}
 			}
 			else {
-				load_new_pid(reconfigure_orient_pid_topic_, p1, d1, i1); //Set pid to in motion pid values
 				ROS_WARN("starting y align");
 				align_y(r, true);
 				align_x(r, true, true, align_timeout_, true);

@@ -147,7 +147,7 @@
 	</group>
 
 	<group ns="align_cargo_rocketship">
-		<!--param name="enable_align_pub" value="align_pid/pid_enable" />
+		<param name="enable_align_pub" value="align_pid/pid_enable" />
 		<param name="enable_orient_pub" value="orient_pid/pid_enable" />
 		<param name="enable_x_pub" value="x_pid/pid_enable" />
 		<param name="enable_y_pub" value="y_pid/pid_enable" />
@@ -214,20 +214,32 @@
 		</node>
 	</group> 
 
-	<group ns="align_server">
+
+
+
+	<!-- vision align -->
+	<node name="translate_to_pointstamped" pkg="goal_detection" type="translate_to_pointstamped" output="screen">
+		<param name="camera_goal_topic" value="/zed_goal/whatever" />
+	</node>
+
+	<group ns="align_cargo">
 
 		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
 		<!--node name="align_ac_server" pkg="behaviors" type="align_server" output="screen" /-->
+		<node name="align_server" pkg="behaviors" type="align_cargo_cargoship_server" output="screen" />
 
+		<node name="align_with_camera" pkg="behaviors" type="align_with_camera" output="screen" >
+			<param name="target_frame" value="cargo_outtake" /> <!-- TODO test this -->
+		</node>
 		<!-- Align with notch -->
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 
-		<!-- Distance PID Hatch Panel -->
+		<!-- Distance PID Cargo -->
 		<node name="cargo_distance_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="cargo_distance_pid" />
 			<param name="Kp" value="4.8" />
 			<param name="Ki" value="0.0" />
-			<param name="Kd" value="0.1" />
+			<param name="Kd" value="0.0" />
 			<param name="upper_limit" value="2" />
 			<param name="lower_limit" value="-2" />
 			<param name="windup_limit" value="10" />
@@ -244,9 +256,13 @@
 		<!-- Snap to nearest goal navX test code -->
 
 		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
-		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" />
-		<node name="navX_pid" pkg="pid" type="controller" >
-			<param name="node_name" value="navX_pid" />
+
+		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" >
+			<remap from="navX_pid/setpoint" to="orient_pid/setpoint"/>
+			<remap from="navX_pid/state" to="orient_pid/state"/>
+		</node>
+		<node name="orient_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="orient_pid" />
 			<param name="Kp" value="13.0" />
 			<param name="Ki" value="0.0" />
 			<param name="Kd" value="0.0" />
@@ -257,15 +273,15 @@
 			<param name="angle_wrap" value="false" />
 			<param name="max_loop_frequency" value="100.0" />
 			<param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value="navX_pid/orient_command" />     
-			<param name="setpoint_topic" value="navX_pid/setpoint" />
-			<param name="topic_from_plant" value="navX_pid/state" />
-			<remap from="pid_debug" to="navX_pid/pid_debug"/>
-			<remap from="pid_enable" to="navX_pid/pid_enable"/>
+			<param name="topic_from_controller" value="orient_pid/orient_command" />     
+			<param name="setpoint_topic" value="orient_pid/setpoint" />
+			<param name="topic_from_plant" value="orient_pid/state" />
+			<remap from="pid_debug" to="orient_pid/pid_debug"/>
+			<remap from="pid_enable" to="orient_pid/pid_enable"/>
 		</node>
 
 		<node name="align_pid_cargo_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
-			<param name="orient_topic" value="navX_pid/orient_command" />
+			<param name="orient_topic" value="orient_pid/orient_command" />
 			<param name="x_topic" value="cargo_distance_pid/x_command" />
 			<param name="ratio_xy_topic" value="align_cargo_pid/ratio_xy" />
 			<param name="command_timeout" value="0.5" />
@@ -282,9 +298,6 @@
 
 		<node name="align_with_camera" pkg="behaviors" type="align_with_camera" output="screen" >
 			<param name="target_frame" value="panel_outtake" />
-		</node>
-		<node name="translate_to_pointstamped" pkg="goal_detection" type="translate_to_pointstamped" output="screen">
-			<param name="camera_goal_topic" value="/zed_goal/whatever" />
 		</node>
 
 		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
@@ -344,11 +357,10 @@
 	</group>
 
 	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
-	<include file="$(find realsense2_camera)/launch/rs_t265.launch" />
 
 	<include file="$(find controller_node)/launch/tf_2019.launch" />
 
 
-	<include file="$(find realsense2_camera)/launch/rs_t265.launch" />
+	<!--include file="$(find realsense2_camera)/launch/rs_t265.launch" /-->
 
 </launch>

@@ -15,6 +15,7 @@ align_with_terabee_params: #params defined in align_with_terabee.cpp
     distance_bound: 0.07 
     distance_target: 0.18
     cargo_pid_max_distance: 0.5
+    adjust_terabee_dists: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 align_with_camera_params: 
     cmd_vel_to_pub: 0.7
     error_threshold: 0.1
