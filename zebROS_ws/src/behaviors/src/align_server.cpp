@@ -197,6 +197,13 @@ class AlignAction {
 				//
 				//Publish enable messages
 				enable_navx_pub_->publish(orient_msg);
+
+				if(goal->has_cargo) {
+					enable_align_cargo_pub_->publish(enable_align_msg);
+                }
+                else {
+					enable_align_hatch_pub_->publish(enable_align_msg);
+                }
 				/*
 				if(goal->has_cargo) {
 					distance_msg.data = (orient_aligned_ || orient_timed_out) && !cargo_distance_aligned_;	//Enable distance pid once orient is aligned or timed out
