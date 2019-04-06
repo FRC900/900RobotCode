@@ -207,17 +207,6 @@ class OuttakeHatchPanelAction
 				ros::spinOnce(); //update everything
                                 
                                 ros::Duration(pause_time_after_drawback).sleep();
-
-				//close the panel mechanism; we can reuse the srv variable
-				srv.request.claw_release = false;
-				srv.request.push_extend = false;
-				//send request to controller
-				if(!panel_controller_client_.call(srv)) //note: the call won't happen if preempted was true, because of how && operator works
-				{
-					ROS_ERROR("Panel controller call failed in panel outtake server");
-					preempted = true;
-				}
-
 			}
 
 			ros::Duration(1).sleep();

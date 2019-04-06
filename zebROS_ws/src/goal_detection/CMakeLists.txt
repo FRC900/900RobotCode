@@ -9,7 +9,6 @@ include ("../cmake_modules/CMakeOpt.cmake")
 if (DEFINED CMAKE_TOOLCHAIN_FILE)
   find_package(catkin REQUIRED COMPONENTS
     roscpp
-	dynamic_reconfigure_wrapper
     message_filters
     message_generation
     geometry_msgs
@@ -109,8 +108,7 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-generate_dynamic_reconfigure_options(
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   cfg/GoalDetection.cfg
 )
 endif()
