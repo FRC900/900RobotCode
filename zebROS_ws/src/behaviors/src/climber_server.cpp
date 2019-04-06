@@ -117,6 +117,7 @@ class ClimbAction {
 			}
 		}
 
+		/*
 		void elevatorClimbConnectThread()
 		{
 			if(elev_cur_position_ <= climb_raise_position)
@@ -124,7 +125,7 @@ class ClimbAction {
 				climber_engaged_ = true;
 				ROS_WARN_STREAM("elevator connected with climber");
 			}
-		}
+		}*/
 
 		// Basic thread which spams cmd_vel to the drive base to
 		// continually drive forward during the climb
@@ -193,7 +194,7 @@ class ClimbAction {
 			ros::Rate r(20);
 
 			std::thread cmdVelThread(std::bind(&ClimbAction::cmdVelThread, this));
-			std::thread elevatorClimbConnectThread; //will be initialized right before moving the elevator down to make robot rise in air
+			//std::thread elevatorClimbConnectThread; //will be initialized right before moving the elevator down to make robot rise in air
 			cmd_vel_forward_speed_ = 0; //Make sure it doesn't start moving
 
 			//define variables that will be reused for each controller call/actionlib server call
@@ -283,7 +284,7 @@ class ClimbAction {
 				ROS_INFO("climber server step 1: starting to drive forward");
 				cmd_vel_forward_speed_ = drive_forward_speed;
 
-				std::thread elevatorClimbConnectThread(std::bind(&ClimbAction::elevatorClimbConnectThread, this));
+				//std::thread elevatorClimbConnectThread(std::bind(&ClimbAction::elevatorClimbConnectThread, this));
 				if(!preempted && !timed_out && ros::ok())
 				{
 					ROS_INFO("climber server step 1: lowering elevator to make robot climb");
@@ -488,8 +489,11 @@ class ClimbAction {
 
 			stopped_ = true;
 
+			ROS_INFO("Before join");
 			cmdVelThread.join();
-			elevatorClimbConnectThread.join();
+			ROS_INFO("Between join");
+			//elevatorClimbConnectThread.join();
+			ROS_INFO("After join");
 			return;
 		}
 
