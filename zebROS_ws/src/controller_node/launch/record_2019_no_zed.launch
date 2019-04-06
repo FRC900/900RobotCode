@@ -2,7 +2,7 @@
 
 <launch>
 
-  <node name="rosbag_record_node" pkg="rosbag" type="record"
+  <node name="rosbag_record_node_no_zed" pkg="rosbag" type="record"
 	  args="record -o /mnt/900_2/no_zed --lz4
 	  	/frcrobot_jetson/talon_states
 		/frcrobot_jetson/joint_states
