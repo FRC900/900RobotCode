@@ -181,14 +181,14 @@ int main(int argc, char** argv)
 			"hatch_panel_distance_pid/pid_debug",
 			"align_with_camera/aligned",
 
-			"/align_server/align_hatch_params/align_timeout",
-			"/align_server/align_hatch_params/orient_timeout",
-			"/align_server/align_hatch_params/x_timeout",
-			"/align_server/align_hatch_params/y_timeout",
+			"/align_hatch/align_hatch_params/align_timeout",
+			"/align_hatch/align_hatch_params/orient_timeout",
+			"/align_hatch/align_hatch_params/x_timeout",
+			"/align_hatch/align_hatch_params/y_timeout",
 
-			"/align_server/align_hatch_params/orient_error_threshold",
-			"/align_server/align_hatch_params/x_error_threshold",
-			"/align_server/align_hatch_params/y_error_threshold",
+			"/align_hatch/align_hatch_params/orient_error_threshold",
+			"/align_hatch/align_hatch_params/x_error_threshold",
+			"/align_hatch/align_hatch_params/y_error_threshold",
 
 			"align_hatch_pid/ratio_xy",
 			"hatch_panel_distance_pid/y_command",

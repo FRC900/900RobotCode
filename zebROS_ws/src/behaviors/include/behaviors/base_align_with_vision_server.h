@@ -26,7 +26,8 @@ class BaseAlignVisionAction : public BaseAlignAction {
 		bool track_target = false;
 		bool do_pid = false;
 		bool hold_orient = false;
-		bool constant_vel = false;
+
+		double constant_vel = 0.0;
 	public:
 		BaseAlignVisionAction(const std::string &name,
 
