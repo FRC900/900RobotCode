@@ -109,9 +109,11 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
+if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 generate_dynamic_reconfigure_options(
   cfg/GoalDetection.cfg
 )
+endif()
 
 ###################################
 ## catkin specific configuration ##
