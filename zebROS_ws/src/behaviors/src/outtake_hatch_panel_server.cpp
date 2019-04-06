@@ -16,6 +16,8 @@ double outtake_timeout;
 double wait_for_server_timeout;
 double pause_time_after_release;
 double pause_time_after_extend;
+double pause_time_after_drawback;
+double outtake_cmd_vel;
 
 class OuttakeHatchPanelAction
 {
@@ -127,7 +129,7 @@ class OuttakeHatchPanelAction
 			elev_goal.place_cargo = false;
 			ac_elevator_.sendGoal(elev_goal);
 
-			cmd_vel_forward_speed_ = -0.3;
+			cmd_vel_forward_speed_ = outtake_cmd_vel;
 
 			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(elevator_timeout - (ros::Time::now().toSec() - start_time), 0.001)));
 			if(finished_before_timeout && !ac_elevator_.getResult()->timed_out) {
@@ -203,7 +205,8 @@ class OuttakeHatchPanelAction
 					preempted = true;
 				}
 				ros::spinOnce(); //update everything
-
+                                
+                                ros::Duration(pause_time_after_drawback).sleep();
 			}
 
 			ros::Duration(1).sleep();
@@ -296,8 +299,12 @@ int main(int argc, char** argv)
 		ROS_ERROR("Could not read outtake_timeout in panel_outtake_sever");
 	if (!n_panel_params.getParam("pause_time_after_release", pause_time_after_release))
 		ROS_ERROR("Could not read pause_time_after_release in panel_outtake_sever");
+	if (!n_panel_params.getParam("pause_time_after_drawback", pause_time_after_drawback))
+		ROS_ERROR("Could not read pause_time_after_drawback in panel_outtake_sever");
 	if (!n_panel_params.getParam("pause_time_after_extend", pause_time_after_extend))
 		ROS_ERROR("Could not read pause_time_after_extend in panel_outtake_sever");
+	if (!n_panel_params.getParam("outtake_cmd_vel", outtake_cmd_vel))
+		ROS_ERROR("Could not read outtake_cmd_vel in panel_outtake_sever");
 
 	ros::spin();
 

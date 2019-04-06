@@ -363,6 +363,17 @@ add_dependencies(frcrobot_hw_main
   ${catkin_EXPORTED_TARGETS}
 )
 
+add_executable(q_to_rpy src/q_to_rpy.cpp)
+target_link_libraries(q_to_rpy
+	${catkin_LIBRARIES}
+	${PLATFORM_SPECIFIC_LIBS}
+	${CTRE_USER_LIBS}
+)
+
+add_dependencies(q_to_rpy
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
 ## Install ------------------------------------------------------------
 
 # Install executables

@@ -196,6 +196,14 @@ class AlignAction {
 				//
 				//Publish enable messages
 				enable_navx_pub_->publish(orient_msg);
+
+				if(goal->has_cargo) {
+					enable_align_cargo_pub_->publish(enable_align_msg);
+                }
+                else {
+					enable_align_hatch_pub_->publish(enable_align_msg);
+                }
+				/*
 				if(goal->has_cargo) {
 					distance_msg.data = (orient_aligned_ || orient_timed_out) && !cargo_distance_aligned_;	//Enable distance pid once orient is aligned or timed out
 					cargo_enable_distance_pub_->publish(distance_msg);
@@ -206,15 +214,14 @@ class AlignAction {
 					aligned = cargo_distance_aligned_ && cargo_aligned_;	 //Check aligned
 				}
 				else {
-                    /*
 					distance_msg.data = (orient_aligned_ || orient_timed_out) && !hatch_panel_distance_aligned_;	//Enable distance pid once orient is aligned or timed out
 					hatch_panel_enable_distance_pub_->publish(distance_msg);
 					terabee_msg.data = (orient_aligned_ || orient_timed_out) && hatch_panel_distance_aligned_;     //Enable terabee node when distance is aligned and  orient aligns or orient times out
 					enable_y_pub_->publish(terabee_msg);
-                    */
 					enable_align_hatch_pub_->publish(enable_align_msg);
 					aligned = hatch_panel_distance_aligned_ && y_aligned_;		//Check aligned
 				}
+				*/
 
 				//Check timed out
 				timed_out = (ros::Time::now().toSec() - start_time) > align_timeout;

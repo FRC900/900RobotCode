@@ -443,7 +443,7 @@ void GoalDetector::clear()
 const vector< vector < Point > > GoalDetector::getContours(const Mat& image) {
 	// Look for parts the the image which are within the
 	// expected bright green color range
-	Mat threshold_image;
+	static Mat threshold_image;
 	vector < vector < Point > > return_contours;
 	if (!generateThresholdAddSubtract(image, threshold_image))
 	{
@@ -465,7 +465,7 @@ const vector< vector < Point > > GoalDetector::getContours(const Mat& image) {
 const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< vector< Point > > &contours, const ObjectNum &objtype, float expected_height) {
 	// Use to mask the contour off from the rest of the
 	// image - used when grabbing depth data for the contour
-	Mat contour_mask(_frame_size, CV_8UC1, Scalar(0));
+	static Mat contour_mask(_frame_size, CV_8UC1, Scalar(0));
 	vector<DepthInfo> return_vec;
 	DepthInfo depthInfo;
 	for(size_t i = 0; i < contours.size(); i++) {
@@ -695,8 +695,8 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 // show up in the output grayscale
 bool GoalDetector::generateThresholdAddSubtract(const Mat& imageIn, Mat& imageOut)
 {
-    vector<Mat> splitImage;
-    Mat         bluePlusRed;
+    static vector<Mat> splitImage;
+    static Mat         bluePlusRed;
 
     split(imageIn, splitImage);
 	addWeighted(splitImage[0], _blue_scale / 100.0,
@@ -717,6 +717,7 @@ bool GoalDetector::generateThresholdAddSubtract(const Mat& imageIn, Mat& imageOu
 	// really dark and the returned threshold image will be mostly noise.
 	// In that case, skip processing it entirely.
 	const double otsuThreshold = threshold(imageOut, imageOut, 0., 255., CV_THRESH_BINARY | CV_THRESH_OTSU);
+	//const double otsuThreshold = threshold(imageOut, imageOut, 20., 255., CV_THRESH_BINARY);
 #ifdef VERBOSE
 	cout << "OTSU THRESHOLD " << otsuThreshold << endl;
 #endif

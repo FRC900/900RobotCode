@@ -3,7 +3,8 @@ elevator_controller:
 
     elevator_joint: [ 'elevator_master', 'elevator_follower1', 'elevator_follower2', 'elevator_follower3' ]
 
-    arb_feed_forward_up: 0.03
+    arb_feed_forward_up_high: 0.052
+    arb_feed_forward_up_low: 0.042
     arb_feed_forward_down: -0.185
 
     motion_magic_velocity_fast: 1.0
@@ -25,7 +26,7 @@ elevator_controller:
         type: talon_controllers/TalonControllerInterface 
         joint: elevator_master
         close_loop_values:
-            - {p: 0.035, i: 0.00001, d: 0.35, f: 0.24, i_zone: 1900, closed_loop_peak_output: 1.0}
+            - {p: 0.01, i: 0.0, d: 0.0, f: 0.225, i_zone: 0, closed_loop_peak_output: 1.0}
             - {p: 0.25, i: 0.0, d: 0, f: 0.58, i_zone: 4096, closed_loop_peak_output: 1.0}
               
         sensor_phase: True 

@@ -2,8 +2,8 @@
 
 <launch>
 
-  <node name="rosbag_record_node" pkg="rosbag" type="record"
-	  args="record -o /mnt/900_2/ --bz2
+  <node name="rosbag_record_node_no_zed" pkg="rosbag" type="record"
+	  args="record -o /mnt/900_2/no_zed --bz2
 	  	/frcrobot_jetson/talon_states
 		/frcrobot_jetson/joint_states
 		/frcrobot_rio/joint_states
@@ -46,8 +46,6 @@
 		/frcrobot_jetson/pdp_states
 		/frcrobot_jetson/pcm_states
 		/goal_detection_node/goal_detect_msg
-		/zed_goal/depth/depth_registered
-		/zed_goal/left/image_rect_color
 		/zed_goal/odom
 		/zed_goal/pose
 		/teleop/translator0/joystick_states
@@ -57,6 +55,5 @@
 		/camera/accel/sample
 		/camera/gyro/sample
 		/camera/odom/sample
-
 		"/>
 </launch>

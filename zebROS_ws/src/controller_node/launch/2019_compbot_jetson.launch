@@ -325,6 +325,7 @@
 
 	<!--include file="$(find realsense2_camera)/launch/rs_t265.launch" /-->
 	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
+	<include file="$(find controller_node)/launch/record_2019_no_zed.launch" if="$(arg record)" />
 
 	<include file="$(find controller_node)/launch/tf_2019.launch" />
 </launch>

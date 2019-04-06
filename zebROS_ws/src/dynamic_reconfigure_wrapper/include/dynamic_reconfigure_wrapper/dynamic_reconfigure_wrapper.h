@@ -14,7 +14,14 @@ class DynamicReconfigureWrapper
 		{
 		}
 
-		void init(const ros::NodeHandle &nh,
+		DynamicReconfigureWrapper(const ros::NodeHandle &nh,
+				const T& loaded_config,
+				const typename dynamic_reconfigure::Server<T>::CallbackType &callback)
+		{
+			init(nh, loaded_config, callback);
+		}
+
+		void init(const ros::NodeHandle &nh, const T& config,
 				const typename dynamic_reconfigure::Server<T>::CallbackType &callback)
 		{
 			// Create the server and set up a callback function
@@ -25,12 +32,7 @@ class DynamicReconfigureWrapper
 			srv_ = std::make_shared<dynamic_reconfigure::Server<T>>(*srv_mutex_, nh);
 			srv_->setCallback(callback);
 
-			// Create a config object, load values from the param
-			// server, use those to initialize the dyanmic reconfigure
-			// values
-			T current_param_server_config;
-			current_param_server_config.__fromServer__(nh);
-			srv_->updateConfig(current_param_server_config);
+			updateConfig(config);
 		}
 
 		void updateConfig(const T &config)

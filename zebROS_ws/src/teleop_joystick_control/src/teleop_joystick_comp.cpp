@@ -41,7 +41,7 @@ int cargo_limit_switch_false_count = 0;
 int panel_limit_switch_false_count = 0;
 bool panel_push_extend = false;
 
-const int climber_num_steps = 3;
+const int climber_num_steps = 4;
 const int elevator_num_setpoints = 4;
 
 bool robot_orient = false;
@@ -986,12 +986,7 @@ int main(int argc, char **argv)
 
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 
-	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompConfig> drw;
-	drw.init(n_params, dynamic_callback);
-	// max_speed isn't read from the n_params namespace, so make sure to
-	// update the dynamic reconfig init value here using the value
-	// read from n_swerve_params into config.max_speed
-	drw.updateConfig(config);
+	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompConfig> drw(n_params, config, dynamic_callback);
 
 	ROS_WARN("joy_init");
 
