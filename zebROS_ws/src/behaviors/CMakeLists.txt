@@ -227,9 +227,9 @@ target_link_libraries(align_hatch_server
 #target_link_libraries(base_align_server
 #  ${catkin_LIBRARIES}
 #)
-add_executable(align_cargo_cargoship src/align_cargo_cargoship.cpp)
-add_dependencies(align_cargo_cargoship ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(align_cargo_cargoship
+add_executable(align_cargo_cargoship_server src/align_cargo_cargoship.cpp)
+add_dependencies(align_cargo_cargoship_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(align_cargo_cargoship_server
   ${catkin_LIBRARIES}
 )
 
