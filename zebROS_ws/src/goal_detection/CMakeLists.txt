@@ -109,8 +109,9 @@ generate_messages(
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  cfg/GoalDetection.cfg
-)
+    generate_dynamic_reconfigure_options(
+    cfg/GoalDetection.cfg
+    )
 endif()
 
 ###################################
