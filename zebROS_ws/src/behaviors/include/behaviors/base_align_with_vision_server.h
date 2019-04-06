@@ -208,6 +208,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 				}
 			}
 			else if(!do_pid) {
+				timed_out = false;
 				start_time_ = ros::Time::now().toSec();
 				while(ros::ok() && !timed_out && !preempted_) {
 					ROS_ERROR_THROTTLE(0.2, "RUNNING CONSTANT VEL DUE TO TESTING CONFIG IN ALIGN SERVER!!!!");
