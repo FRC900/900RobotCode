@@ -28,7 +28,6 @@ class BaseAlignHatchPanelAction : public BaseAlignAction {
 							const std::string &orient_error_topic_,
 							const std::string &x_error_topic_,
 							const std::strout_param_name_,
-							const std::string &orient_timeout_param_name_,
 							const std::string &x_timeout_param_name_,
 							const std::string &y_timeout_param_name_,
 
@@ -95,6 +94,10 @@ class BaseAlignHatchPanelAction : public BaseAlignAction {
 				r.sleep();
 			}
 		}
+<<<<<<< HEAD
+=======
+
+>>>>>>> 482153db53edc6698d28c1a5f8ef99306457b22b
 		bool robot_align() {
             ros::Rate r(60);
             ROS_WARN("starting robot_align");
@@ -156,7 +159,6 @@ class BaseAlignHatchPanelAction : public BaseAlignAction {
         }
 };
 */
-
 
 int main(int argc, char** argv)
 {

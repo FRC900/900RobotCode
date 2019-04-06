@@ -2,7 +2,6 @@
 #include <thread>
 #include <std_msgs/Float64.h>
 
-
 class BaseAlignVisionAction : public BaseAlignAction {
 	protected:
 		std::thread ratioThread;
