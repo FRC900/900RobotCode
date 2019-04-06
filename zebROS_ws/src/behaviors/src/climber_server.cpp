@@ -231,7 +231,6 @@ class ClimbAction {
 					behaviors::ElevatorGoal elevator_goal;
 					elevator_goal.setpoint_index = ELEVATOR_DEPLOY;
 					elevator_goal.place_cargo = 0; //doesn't actually do anything
-					elevator_goal.raise_intake_after_success = true;
 					//send the elevator_goal
 					ae_.sendGoal(elevator_goal);
 					waitForElevator(timed_out, preempted, goal->step, r, elevator_deploy_timeout);
@@ -292,7 +291,6 @@ class ClimbAction {
 					behaviors::ElevatorGoal elevator_goal;
 					elevator_goal.setpoint_index = ELEVATOR_CLIMB;
 					elevator_goal.place_cargo = 0; //doesn't actually do anything
-					elevator_goal.raise_intake_after_success = true;
 					//send the elevator_goal
 					ae_.sendGoal(elevator_goal);
 					waitForElevator(timed_out, preempted, goal->step, r, elevator_deploy_timeout);
@@ -368,7 +366,6 @@ class ClimbAction {
 					behaviors::ElevatorGoal elevator_goal;
 					elevator_goal.setpoint_index = ELEVATOR_CLIMB_LOW;
 					elevator_goal.place_cargo = 0; //doesn't actually do anything
-					elevator_goal.raise_intake_after_success = true;
 					//send the elevator_goal
 					ae_.sendGoal(elevator_goal);
 					waitForElevator(timed_out, preempted, goal->step, r, elevator_climb_timeout);
@@ -398,7 +395,6 @@ class ClimbAction {
 					behaviors::ElevatorGoal elevator_goal;
 					elevator_goal.setpoint_index = ELEVATOR_RAISE;
 					elevator_goal.place_cargo = 0; //doesn't actually do anything
-					elevator_goal.raise_intake_after_success = true;
 					//send the elevator_goal
 					ae_.sendGoal(elevator_goal);
 					waitForElevator(timed_out, preempted, goal->step, r, elevator_climb_timeout);
@@ -437,7 +433,6 @@ class ClimbAction {
 				behaviors::ElevatorGoal elevator_goal;
 				elevator_goal.setpoint_index = ELEVATOR_RAISE;
 				elevator_goal.place_cargo = 0; //doesn't actually do anything
-				elevator_goal.raise_intake_after_success = true;
 				//send the elevator_goal
 				ae_.sendGoal(elevator_goal);
 				waitForElevator(timed_out, preempted, goal->step, r, elevator_climb_timeout);
