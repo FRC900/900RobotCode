@@ -114,6 +114,8 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 		ROS_INFO_THROTTLE(2, "ElevatorController : hit limit switch");
 		zeroed_ = true;
 		elevator_joint_.setSelectedSensorPosition(0);
+		elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+		elevator_joint_.setDemand1Value(config_.arb_feed_forward_up_low);
 	}
 
 	if (zeroed_) // run normally, seeking to various positions

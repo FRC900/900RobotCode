@@ -129,7 +129,7 @@ class OuttakeHatchPanelAction
 			elev_goal.raise_intake_after_success = true;
 			ac_elevator_.sendGoal(elev_goal);
 
-			cmd_vel_forward_speed_ = -0.3;
+			cmd_vel_forward_speed_ = -0.7;
 
 			bool finished_before_timeout = ac_elevator_.waitForResult(ros::Duration(std::max(elevator_timeout - (ros::Time::now().toSec() - start_time), 0.001)));
 			if(finished_before_timeout && !ac_elevator_.getResult()->timed_out) {
