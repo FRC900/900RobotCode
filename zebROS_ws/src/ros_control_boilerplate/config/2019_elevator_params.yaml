@@ -7,7 +7,7 @@ elevator_controller:
     arb_feed_forward_up_low: 0.042
     arb_feed_forward_down: -0.185
 
-    motion_magic_velocity_fast: 1.2
+    motion_magic_velocity_fast: 1.0
     motion_magic_acceleration_fast: 2.0
 
     motion_magic_velocity_slow: 0.25
