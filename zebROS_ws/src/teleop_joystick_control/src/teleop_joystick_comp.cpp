@@ -86,7 +86,8 @@ std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_h
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_hatch_panel_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ElevatorAction>> elevator_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behaviors::ClimbAction>> climber_ac;
-std::shared_ptr<actionlib::SimpleActionClient<behaviors::AlignAction>> align_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::AlignAction>> align_hatch_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behaviors::AlignAction>> align_cargo_ac;
 double navX_angle;
 
 bool ManualToggleClamp = false;
@@ -123,7 +124,8 @@ void preemptActionlibServers()
 	outtake_hatch_panel_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	elevator_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	climber_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
-	align_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	align_hatch_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	align_cargo_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 }
 
 bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
@@ -259,11 +261,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			goal.trigger = true;
 			if(cargo_limit_switch_true_count > config.limit_switch_debounce_iterations) {
 				goal.has_cargo = true;
+				align_cargo_ac->sendGoal(goal);
 			}
 			else {
 				goal.has_cargo = false;
+				align_hatch_ac->sendGoal(goal);
 			}
-			align_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonAButton)
 		{
@@ -277,7 +280,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			//behaviors::AlignGoal goal;
 			//goal.trigger = true;
-			//align_ac->sendGoal(goal);
+			//align_hatch_ac->sendGoal(goal);
 		}
 		if(joystick_states_array[0].buttonARelease)
 		{
@@ -305,7 +308,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			preemptActionlibServers();
 			behaviors::AlignGoal goal;
 			goal.has_cargo = false;
-			align_ac->sendGoal(goal);
+			align_hatch_ac->sendGoal(goal);
 			*/
 		}
 		if(joystick_states_array[0].buttonBRelease) {
@@ -963,7 +966,8 @@ int main(int argc, char **argv)
 	intake_hatch_panel_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>>("/hatch_intake/intake_hatch_panel_server", true);
 	outtake_hatch_panel_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::PlaceAction>>("/hatch_outtake/outtake_hatch_panel_server", true);
 	climber_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ClimbAction>>("/climber/climber_server", true);
-	align_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::AlignAction>>("/align_hatch/align_hatch_server", true);
+	align_hatch_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::AlignAction>>("/align_hatch/align_hatch_server", true);
+	align_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::AlignAction>>("/align_cargo/align_cargo_server", true);
 	elevator_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ElevatorAction>>("/elevator/elevator_server", true);
 
 	run_align = n.serviceClient<std_srvs::SetBool>("/align_with_terabee/run_align");
