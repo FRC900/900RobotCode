@@ -26,6 +26,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 		bool track_target = false;
 		bool do_pid = false;
 		bool hold_orient = false;
+		bool do_align = false;
 
 		double constant_vel = 0.0;
 	public:
@@ -107,6 +108,9 @@ class BaseAlignVisionAction : public BaseAlignAction {
 			if(!nh_.getParam("constant_vel", constant_vel)){
 				ROS_ERROR("BaseAlignVision failed to load constant_vel");
 			}
+			if(!nh_.getParam("do_align", do_align)){
+				ROS_ERROR("BaseAlignVision failed to load do_align");
+			}
 
 			constant_vel_pub_ = nh_.advertise<std_msgs::Float64>(constant_vel_topic_, 1);
 			if(!ratio_xy_topic_.empty()) {
@@ -176,6 +180,9 @@ class BaseAlignVisionAction : public BaseAlignAction {
                 return false;
             }
 
+			if(!do_align) {
+				return false;
+			}
             //enable, wait for alignment, default timeout, don't keep enabled
             //align_x(r, true, true);
 
