@@ -304,7 +304,7 @@ class ClimbAction {
 				if(preempted || timed_out || !ros::ok())
 				{
 					ROS_WARN_STREAM("Climber server timed out or was preempted in step 1 prior to falling");
-					ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+					//ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 					cmd_vel_forward_speed_ = 0;
 				}
 				else
@@ -340,7 +340,7 @@ class ClimbAction {
 					if(preempted || timed_out || !ros::ok())
 					{
 						ROS_INFO("Climber server step 1 timed out or preempted after falling");
-						ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+						//ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 						cmd_vel_forward_speed_ = 0;
 					}
 				}
@@ -425,7 +425,7 @@ class ClimbAction {
 				if(preempted || timed_out || !ros::ok())
 				{
 					ROS_INFO("Running climber server step 2 preempt/timeout handling - preempting elevator server and stopping drive forward");
-					ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+					//ae_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 					cmd_vel_forward_speed_ = 0;
 				}
 			}
