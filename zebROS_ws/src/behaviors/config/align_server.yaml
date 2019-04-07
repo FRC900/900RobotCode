@@ -13,7 +13,7 @@ align_hatch_params:
 align_with_terabee_params: #params defined in align_with_terabee.cpp
     cmd_vel_to_pub: 0.7
     distance_bound: 0.07 
-    distance_target: 0.18
+    distance_target: 0.12
     cargo_pid_max_distance: 0.5
     adjust_terabee_dists: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 align_with_camera_params: 
@@ -36,4 +36,4 @@ track_target: false #If true doesn't actually align!!!!
 do_pid: false
 hold_orient: false
 constant_vel: -0.6
-do_align: false
+do_align: true

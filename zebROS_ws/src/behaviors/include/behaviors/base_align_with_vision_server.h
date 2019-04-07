@@ -119,6 +119,13 @@ class BaseAlignVisionAction : public BaseAlignAction {
 				ratioThread = std::thread(std::bind(&BaseAlignVisionAction::ratioPub, this));
 			}
 		}
+		void y_error_cb(const std_msgs::Float64 &msg) {
+			y_aligned_ = (fabs(msg.data) < y_error_threshold_);
+            y_error_ = msg.data;
+            if(debug)
+                ROS_WARN_STREAM_THROTTLE(1, "y error: " << fabs(msg.data));
+		}
+
 		void ratioPub() {
 			ros::Rate r(60);
 			while(ros::ok()) {
@@ -202,6 +209,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 					if(!do_pid) {
 						ROS_ERROR_THROTTLE(0.2, "RUNNING CONSTANT VEL DUE TO TESTING CONFIG IN ALIGN SERVER!!!!");
 
+                        enable_align(true);
 						std_msgs::Float64 constant_vel_msg;
 						constant_vel_msg.data = constant_vel;
 						constant_vel_pub_.publish(constant_vel_msg);
@@ -215,6 +223,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 				}
 			}
 			else if(!do_pid) {
+				update_ratio = true;
 				timed_out = false;
 				start_time_ = ros::Time::now().toSec();
 				while(ros::ok() && !timed_out && !preempted_) {
@@ -222,6 +231,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 					timed_out = check_timeout(start_time_, align_timeout_);
 					preempted_ = check_preempted();
 
+                    enable_align(true);
 					std_msgs::Float64 constant_vel_msg;
 					constant_vel_msg.data = constant_vel;
 					constant_vel_pub_.publish(constant_vel_msg);

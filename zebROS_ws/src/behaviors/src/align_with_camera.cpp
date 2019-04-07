@@ -120,11 +120,11 @@ int main(int argc, char ** argv)
 		// the loop and bail if the target_frame is unrecognzed?
 		if(target_frame == "panel_outtake")
 		{
-			error = relative_goal_location.point.y;
+			error = relative_goal_location.point.x;
 		}
 		else if(target_frame == "cargo_outtake")
 		{
-			error = relative_goal_location.point.x;
+			error = relative_goal_location.point.y;
 		}
 		else
 		{

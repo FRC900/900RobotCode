@@ -38,8 +38,8 @@ void ZEDMsgCallback(const goal_detection::GoalDetection &msg)
 	}
 	geometry_msgs::PointStamped goal_location;
 	goal_location.header = msg.header;
-	goal_location.point.x = msg.location[index].x;
-	goal_location.point.y = msg.location[index].y;
+	goal_location.point.x = msg.location[index].y; //Inverted on purpose
+	goal_location.point.y = msg.location[index].x;
 	goal_location.point.z = 0;
 	zed_point_msg_pub.publish(goal_location);
 }

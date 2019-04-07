@@ -178,7 +178,7 @@ int main(int argc, char** argv)
 			"align_with_camera/enable_pub",
 
 			"orient_pid/pid_debug",
-			"hatch_panel_distance_pid/pid_debug",
+			"hatch_panel_distance_pid/state",
 			"align_with_camera/aligned",
 
 			"/align_hatch/align_hatch_params/align_timeout",

@@ -101,7 +101,7 @@ int main(int argc, char** argv)
 			"align_with_camera/enable_y_pub",
 
 			"orient_pid/pid_debug",
-			"cargo_distance_pid/pid_debug",
+			"cargo_distance_pid/state",
 			"align_with_camera/y_aligned",
 
             "/align_cargo/align_cargo_params/align_timeout",
