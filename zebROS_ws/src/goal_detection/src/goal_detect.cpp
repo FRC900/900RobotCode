@@ -2,8 +2,8 @@
 #include <opencv2/opencv.hpp>
 
 #include <ros/ros.h>
-#include <sensor_msgs/Image.h>
-#include <sensor_msgs/image_encodings.h>
+#include <image_transport/image_transport.h>
+#include <image_transport/subscriber_filter.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -39,7 +39,7 @@ bool down_sample = false;
 double hFov = 69.; //105.;
 double camera_angle = -25.0;
 
-void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
+void callback(const sensor_msgs::ImageConstPtr &frameMsg, const sensor_msgs::ImageConstPtr &depthMsg)
 {
 	cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
 	cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
@@ -82,20 +82,20 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	vector< GoalFound > gfd = gd->return_found();
 	goal_detection::GoalDetection gd_msg;
 
+	gd_msg.header.seq = frameMsg->header.seq;
+	gd_msg.header.stamp = frameMsg->header.stamp;
+	std::string frame_id = frameMsg->header.frame_id;
+	const size_t idx = frame_id.rfind("_optical_frame");
+	if (idx != std::string::npos)
+	{
+		frame_id.erase(idx);
+		frame_id += "_frame";
+	}
+	gd_msg.header.frame_id = frame_id;
 	for(size_t i = 0; i < gfd.size(); i++)
 	{
 		geometry_msgs::Point32 dummy;
-		gd_msg.header.seq = frameMsg->header.seq;
-		gd_msg.header.stamp = frameMsg->header.stamp;
 		// Remove _optical_frame from the camera frame ID if present
-		std::string frame_id = frameMsg->header.frame_id;
-		const size_t idx = frame_id.rfind("_optical_frame");
-		if (idx != std::string::npos)
-		{
-			frame_id.erase(idx);
-			frame_id += "_frame";
-		}
-		gd_msg.header.frame_id = frame_id;
 		dummy.x = gfd[i].pos.y;
 		dummy.y = gfd[i].pos.x;
 		dummy.z = gfd[i].pos.z;
@@ -118,29 +118,37 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	{
 		return;
 	}
-/*
+
 	//Transform between goal frame and odometry/map.
 	static tf2_ros::TransformBroadcaster br;
-	geometry_msgs::TransformStamped transformStamped;
+	for(size_t i = 0; i < gfd.size(); i++)
+	{
+		geometry_msgs::TransformStamped transformStamped;
 
-	transformStamped.header.stamp = ros::Time::now();
-	transformStamped.header.frame_id = cvFrame->header.frame_id;
-	transformStamped.child_frame_id = "goal";
+		transformStamped.header.stamp = gd_msg.header.stamp;
+		transformStamped.header.frame_id = frame_id;
+		std::stringstream child_frame;
+		child_frame << "goal_";
+		child_frame << i;
+		transformStamped.child_frame_id = child_frame.str();
 
-	transformStamped.transform.translation.x = gd_msg.location.x;
-	transformStamped.transform.translation.y = gd_msg.location.y;
-	transformStamped.transform.translation.z = gd_msg.location.z;
+		transformStamped.transform.translation.x = gd_msg.location[i].x;
+		transformStamped.transform.translation.y = gd_msg.location[i].y;
+		transformStamped.transform.translation.z = gd_msg.location[i].z;
 
-	tf2::Quaternion q;
-	q.setRPY(0, 0, 0);
+		// Can't detect rotation yet, so publish 0 instead
+		tf2::Quaternion q;
+		q.setRPY(0, 0, 0);
 
-	transformStamped.transform.rotation.x = q.x();
-	transformStamped.transform.rotation.y = q.y();
-	transformStamped.transform.rotation.z = q.z();
-	transformStamped.transform.rotation.w = q.w();
+		transformStamped.transform.rotation.x = q.x();
+		transformStamped.transform.rotation.y = q.y();
+		transformStamped.transform.rotation.z = q.z();
+		transformStamped.transform.rotation.w = q.w();
 
-	br.sendTransform(transformStamped);
+		br.sendTransform(transformStamped);
+	}
 
+	/*
 	//Transform between a fixed frame and the goal.
 	tf2_ros::Buffer tfBuffer;
 	tf2_ros::TransformListener tfListener(tfBuffer);
@@ -181,7 +189,7 @@ void multiflexCB(const teraranger_array::RangeArray& msg)
 		distance_from_terabee = min_dist;
 }
 
-void callback_no_depth(const ImageConstPtr &frameMsg)
+void callback_no_depth(const sensor_msgs::ImageConstPtr &frameMsg)
 {
 	cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
 	cv::Mat depthMat(cvFrame->image.size(), CV_32FC1, Scalar(distance_from_terabee));
@@ -194,7 +202,7 @@ int main(int argc, char **argv)
 
 	ros::NodeHandle nh("~");
 	down_sample = false;
-	int sub_rate = 2;
+	int sub_rate = 1;
 	int pub_rate = 1;
 	nh.getParam("down_sample", down_sample);
 	nh.getParam("sub_rate", sub_rate);
@@ -207,26 +215,29 @@ int main(int argc, char **argv)
 	nh.getParam("hFov", hFov);
 	nh.getParam("camera_angle", camera_angle);
 
-	std::shared_ptr<message_filters::Subscriber<Image>>  frame_sub;
-	std::shared_ptr<message_filters::Subscriber<Image>>  depth_sub;
-	typedef sync_policies::ApproximateTime<Image, Image> SyncPolicy;
-	std::shared_ptr<Synchronizer<SyncPolicy>>            sync;
+	//std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>>  frame_sub;
+	//std::unique_ptr<message_filters::Subscriber<sensor_msgs::Image>>  depth_sub;
+	image_transport::ImageTransport it(nh);
+	std::unique_ptr<image_transport::SubscriberFilter>   frame_sub;
+	std::unique_ptr<image_transport::SubscriberFilter>   depth_sub;
+	typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> RGBDSyncPolicy;
+	std::unique_ptr<message_filters::Synchronizer<RGBDSyncPolicy>> rgbd_sync;
 
-	std::shared_ptr<ros::Subscriber>                     rgb_sub;
-	ros::Subscriber                                      terabee_sub;
+	std::unique_ptr<image_transport::Subscriber>               rgb_sub;
+	ros::Subscriber                                            terabee_sub;
 	if (!no_depth)
 	{
 		ROS_INFO("starting goal detection using ZED");
-		frame_sub = std::make_shared<message_filters::Subscriber<Image>>(nh, "/zed_goal/left/image_rect_color", sub_rate);
-		depth_sub = std::make_shared<message_filters::Subscriber<Image>>(nh, "/zed_goal/depth/depth_registered", sub_rate);
+		frame_sub = std::make_unique<image_transport::SubscriberFilter>(it, "/zed_goal/left/image_rect_color", sub_rate);
+		depth_sub = std::make_unique<image_transport::SubscriberFilter>(it, "/zed_goal/depth/depth_registered", sub_rate);
 		// ApproximateTime takes a queue size as its constructor argument, hence SyncPolicy(xxx)
-		sync = std::make_shared<Synchronizer<SyncPolicy>>(SyncPolicy(10), *frame_sub, *depth_sub);
-		sync->registerCallback(boost::bind(&callback, _1, _2));
+		rgbd_sync = std::make_unique<Synchronizer<RGBDSyncPolicy>>(RGBDSyncPolicy(10), *frame_sub, *depth_sub);
+		rgbd_sync->registerCallback(boost::bind(&callback, _1, _2));
 	}
 	else
 	{
 		ROS_INFO("starting goal detection using webcam");
-		rgb_sub = std::make_shared<ros::Subscriber>(nh.subscribe("/c920_camera/image_raw", sub_rate, callback_no_depth));
+		rgb_sub = std::make_unique<image_transport::Subscriber>(it.subscribe("/c920_camera/image_raw", sub_rate, callback_no_depth));
 		terabee_sub = nh.subscribe("/multiflex_1/ranges_raw", 1, &multiflexCB);
 	}
 
