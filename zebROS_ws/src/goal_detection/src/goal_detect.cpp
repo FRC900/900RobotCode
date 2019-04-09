@@ -2,6 +2,8 @@
 #include <opencv2/opencv.hpp>
 
 #include <ros/ros.h>
+#include <nodelet/nodelet.h>
+#include <pluginlib/class_list_macros.h>
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
 #include <message_filters/subscriber.h>
@@ -11,12 +13,11 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
-#include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-#include <std_msgs/Header.h>
+//#include <std_msgs/Header.h>
 
-#include <geometry_msgs/Point32.h>
+//#include <geometry_msgs/Point32.h>
 #include <cv_bridge/cv_bridge.h>
 
 #include "teraranger_array/RangeArray.h"
@@ -27,16 +28,27 @@
 
 #include "GoalDetector.hpp"
 
-namespace goal_detect
+namespace goal_detection
 {
-	class GoalDetect
+	class GoalDetect : public nodelet::Nodelet
 	{
 		public:
 
 			GoalDetect(void)
-				: nh_("~")
-				, it_(nh_)
 			{
+			}
+
+			~GoalDetect()
+			{
+				if (gd_)
+					delete gd_;
+			}
+
+		protected:
+			void onInit() override
+			{
+				nh_ = getMTPrivateNodeHandle();
+				image_transport::ImageTransport it(nh_);
 				int sub_rate = 1;
 				int pub_rate = 1;
 				nh_.getParam("sub_rate", sub_rate);
@@ -51,8 +63,8 @@ namespace goal_detect
 				if (!no_depth)
 				{
 					ROS_INFO("starting goal detection using ZED");
-					frame_sub_ = std::make_unique<image_transport::SubscriberFilter>(it_, "/zed_goal/left/image_rect_color", sub_rate);
-					depth_sub_ = std::make_unique<image_transport::SubscriberFilter>(it_, "/zed_goal/depth/depth_registered", sub_rate);
+					frame_sub_ = std::make_unique<image_transport::SubscriberFilter>(it, "/zed_goal/left/image_rect_color", sub_rate);
+					depth_sub_ = std::make_unique<image_transport::SubscriberFilter>(it, "/zed_goal/depth/depth_registered", sub_rate);
 					// ApproximateTime takes a queue size as its constructor argument, hence SyncPolicy(xxx)
 					rgbd_sync_ = std::make_unique<message_filters::Synchronizer<RGBDSyncPolicy>>(RGBDSyncPolicy(10), *frame_sub_, *depth_sub_);
 					rgbd_sync_->registerCallback(boost::bind(&GoalDetect::callback, this, _1, _2));
@@ -60,21 +72,13 @@ namespace goal_detect
 				else
 				{
 					ROS_INFO("starting goal detection using webcam");
-					rgb_sub_ = std::make_unique<image_transport::Subscriber>(it_.subscribe("/c920_camera/image_raw", sub_rate, &GoalDetect::callback_no_depth, this));
+					rgb_sub_ = std::make_unique<image_transport::Subscriber>(it.subscribe("/c920_camera/image_raw", sub_rate, &GoalDetect::callback_no_depth, this));
 					terabee_sub_ = nh_.subscribe("/multiflex_1/ranges_raw", 1, &GoalDetect::multiflexCB, this);
 				}
 
 				// Set up publisher
 				pub_ = nh_.advertise<goal_detection::GoalDetection>("goal_detect_msg", pub_rate);
 			}
-
-			~GoalDetect()
-			{
-				if (gd_)
-					delete gd_;
-			}
-
-		private:
 			void callback(const sensor_msgs::ImageConstPtr &frameMsg, const sensor_msgs::ImageConstPtr &depthMsg)
 			{
 				cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
@@ -193,7 +197,6 @@ namespace goal_detect
 				*/
 			}
 
-			double distance_from_terabee_ = -1;
 			void multiflexCB(const teraranger_array::RangeArray& msg)
 			{
 				double min_dist = std::numeric_limits<double>::max();
@@ -216,30 +219,20 @@ namespace goal_detect
 			}
 			typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> RGBDSyncPolicy;
 
-			ros::NodeHandle nh_;
-			image_transport::ImageTransport it_;
+			ros::NodeHandle                                                nh_;
 			std::unique_ptr<image_transport::SubscriberFilter>             frame_sub_;
 			std::unique_ptr<image_transport::SubscriberFilter>             depth_sub_;
 			std::unique_ptr<image_transport::Subscriber>                   rgb_sub_;
 			std::unique_ptr<message_filters::Synchronizer<RGBDSyncPolicy>> rgbd_sync_;
 			ros::Subscriber                                                terabee_sub_;
-			ros::Publisher pub_;
-			GoalDetector *gd_ = NULL;
-			bool batch_ = true;
-			bool down_sample_ = false;
-			double hFov_ = 105.;
-			double camera_angle_ = -25.0;
-
+			ros::Publisher                                                 pub_;
+			GoalDetector                                                  *gd_                    = NULL;
+			bool                                                           batch_                 = true;
+			bool                                                           down_sample_           = false;
+			double                                                         hFov_                  = 105.;
+			double                                                         camera_angle_          = -25.0;
+			double                                                         distance_from_terabee_ = -1;
 	};
 } // namspace
 
-int main(int argc, char **argv)
-{
-	ros::init(argc, argv, "goal_detect");
-
-	goal_detect::GoalDetect goal_detect;
-
-	ros::spin();
-
-	return 0;
-}
+PLUGINLIB_EXPORT_CLASS(goal_detection::GoalDetect, nodelet::Nodelet)

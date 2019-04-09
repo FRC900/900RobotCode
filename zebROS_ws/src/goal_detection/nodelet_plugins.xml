@@ -1,0 +1,9 @@
+<library path="lib/libGoalDetection">
+	<class name="goal_detection/GoalDetect" type="goal_detection::GoalDetect" base_class_type="nodelet::Nodelet">
+		<description>
+			Nodelet for detecting retroreflective goals using either RGBD or RGB+a depth sensor
+		</description>
+	</class>
+</library>
+
+
