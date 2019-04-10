@@ -75,6 +75,4 @@
 	<param name="batch" value="$(arg batch)" />
   </node>
 
-  </launch>
-
-
+</launch>
