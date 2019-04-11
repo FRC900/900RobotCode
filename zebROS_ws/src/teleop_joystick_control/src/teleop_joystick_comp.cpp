@@ -94,13 +94,9 @@ bool ManualTogglePush = false;
 bool ManualToggleKicker = false;
 bool ManualToggleArm = false;
 
-void dead_zone_check(double &val1, double &val2)
+double dead_zone_check(double test_axis, double dead_zone)
 {
-	if (fabs(val1) <= config.joystick_deadzone && fabs(val2) <= config.joystick_deadzone)
-	{
-		val1 = 0;
-		val2 = 0;
-	}
+	return ((fabs(test_axis) <= fabs(dead_zone)) ? 0 : test_axis);
 }
 
 void navXCallback(const sensor_msgs::Imu &navXState)
@@ -184,8 +180,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		rightStickX = right_stick_x_rate_limit->applyLimit(rightStickX);
 		rightStickY = right_stick_y_rate_limit->applyLimit(rightStickY);
 
-		dead_zone_check(leftStickX, leftStickY);
-		dead_zone_check(rightStickX, rightStickY);
+		// Deadzone check inputs can change to give differing levels of sensitivity.
+		dead_zone_check(leftStickX, config.joystick_deadzone);
+		dead_zone_check(leftStickY, config.joystick_deadzone);
+
+		dead_zone_check(rightStickX, config.joystick_deadzone);
 
 		leftStickX =  pow(fabs(leftStickX), config.joystick_pow) * max_speed;
 		leftStickY =  pow(fabs(leftStickY), config.joystick_pow) * max_speed;
