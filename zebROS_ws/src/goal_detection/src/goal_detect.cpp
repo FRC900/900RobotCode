@@ -19,42 +19,43 @@
 #include <geometry_msgs/Point32.h>
 #include <cv_bridge/cv_bridge.h>
 
+#include "teraranger_array/RangeArray.h"
+
 #include "goal_detection/GoalDetection.h"
 
 #include <sstream>
 
 #include "GoalDetector.hpp"
-
+#include "goal_detection/GoalDetectionConfig.h"
+#include "dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h"
 
 using namespace cv;
 using namespace std;
 using namespace sensor_msgs;
 using namespace message_filters;
 
-static ros::Publisher pub;
-static GoalDetector *gd = NULL;
-static bool batch = true;
-static bool down_sample = false;
+ros::Publisher pub;
+GoalDetector *gd = NULL;
+
+goal_detection::GoalDetectionConfig config;
 
 void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 {
-	
 	cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
-
 	cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
-	
+
 	// Avoid copies by using pointers to RGB and depth info
 	// These pointers are either to the original data or to
 	// the downsampled data, depending on the down_sample flag
 	const Mat *framePtr = &cvFrame->image;
 	const Mat *depthPtr = &cvDepth->image;
-	
+
 	// To hold downsampled images, if necessary
 	Mat frame;
 	Mat depth;
 
 	// Downsample for speed purposes
-	if (down_sample)
+	if (config.down_sample)
 	{
 		pyrDown(*framePtr, frame);
 
@@ -69,30 +70,38 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 	// Initialize goal detector object the first time
 	// through here. Use the size of the frame
 	// grabbed from the ZED messages
-	if (gd == NULL)
+	static double savedFov = std::numeric_limits<double>::max();
+	static bool savedBatch = false;
+	if ((gd == NULL) || (savedFov != config.hFov) || (savedBatch != config.batch))
 	{
-		const float hFov = 105.;
-		const Point2f fov(hFov * (M_PI / 180.),
-						  hFov * (M_PI / 180.) * ((float)framePtr->rows / framePtr->cols));
-		gd = new GoalDetector(fov, framePtr->size(), !batch);
+		if (gd)
+			delete gd;
+
+		const Point2f fov(config.hFov * (M_PI / 180.),
+						  config.hFov * (M_PI / 180.) * ((double)framePtr->rows / framePtr->cols));
+		gd = new GoalDetector(fov, framePtr->size(), !config.batch);
+		savedFov = config.hFov;
+		savedBatch = config.batch;
 	}
 	//Send current color and depth image to the actual GoalDetector
 	gd->findBoilers(*framePtr, *depthPtr);
-	Mat tempFrame(framePtr->clone());
-	gd->drawOnFrame(tempFrame, gd->getContours(tempFrame));
 
 	vector< GoalFound > gfd = gd->return_found();
 	goal_detection::GoalDetection gd_msg;
-
 
 	for(size_t i = 0; i < gfd.size(); i++)
 	{
 		geometry_msgs::Point32 dummy;
 		gd_msg.header.seq = frameMsg->header.seq;
 		gd_msg.header.stamp = frameMsg->header.stamp;
-		gd_msg.header.frame_id = frameMsg->header.frame_id;
-		dummy.x = gfd[i].pos.x;
-		dummy.y = gfd[i].pos.y;
+		// Remove _optical_frame from the camera frame ID if present
+		std::string frame_id = frameMsg->header.frame_id;
+		const size_t idx = frame_id.rfind("_optical_frame");
+		if (idx != std::string::npos)
+			frame_id.erase(idx);
+		gd_msg.header.frame_id = frame_id;
+		dummy.x = gfd[i].pos.y;
+		dummy.y = gfd[i].pos.x;
 		dummy.z = gfd[i].pos.z;
 		gd_msg.location.push_back(dummy);
 	}
@@ -101,15 +110,13 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 
 	pub.publish(gd_msg);
 
-
-	if (!batch)
+	if (!config.batch)
 	{
 		Mat thisFrame(framePtr->clone());
 		gd->drawOnFrame(thisFrame, gd->getContours(cvFrame->image));
 		imshow("Image", thisFrame);
 		waitKey(5);
 	}
-
 
 	if (gd_msg.valid == false)
 	{
@@ -163,28 +170,88 @@ void callback(const ImageConstPtr &frameMsg, const ImageConstPtr &depthMsg)
 */
 }
 
+double distance_from_terabee = -1;
+void multiflexCB(const teraranger_array::RangeArray& msg)
+{
+    double min_dist = std::numeric_limits<double>::max();
+	distance_from_terabee = -1;
+	for(int i = 0; i < 2; i++)
+	{
+		const double range = static_cast<double>(msg.ranges[i].range);
+		if(!std::isnan(range))
+			min_dist = std::min(min_dist, range);
+	}
+	if (min_dist != std::numeric_limits<double>::max())
+		distance_from_terabee = min_dist;
+}
+
+void callback_no_depth(const ImageConstPtr &frameMsg)
+{
+	cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
+	cv::Mat depthMat(cvFrame->image.size(), CV_32FC1, Scalar(distance_from_terabee));
+	callback(frameMsg, cv_bridge::CvImage(std_msgs::Header(), "32FC1", depthMat).toImageMsg());
+}
+
+void dynamic_callback(goal_detection::GoalDetectionConfig &cfg, uint32_t level)
+{
+	(void)level;
+	config = cfg;
+}
+
+
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "goal_detect");
 
 	ros::NodeHandle nh("~");
-	down_sample = false;
-	int sub_rate = 5;
+	config.batch = true;
+	config.down_sample = false;
+	config.hFov = 105.;
+	config.camera_angle = -25.0;
+	int sub_rate = 2;
 	int pub_rate = 1;
-	nh.getParam("down_sample", down_sample);
+	ROS_INFO_STREAM(__LINE__ << " : config.batch = " << config.batch);
+	nh.getParam("down_sample", config.down_sample);
 	nh.getParam("sub_rate", sub_rate);
 	nh.getParam("pub_rate", pub_rate);
-	nh.getParam("batch", batch);
-	message_filters::Subscriber<Image> frame_sub(nh, "/zed_goal/left/image_rect_color", sub_rate);
-	message_filters::Subscriber<Image> depth_sub(nh, "/zed_goal/depth/depth_registered", sub_rate);
-	typedef sync_policies::ApproximateTime<Image, Image > MySyncPolicy2;
-	// ApproximateTime takes a queue size as its constructor argument, hence MySyncPolicy(xxx)
-	Synchronizer<MySyncPolicy2> sync2(MySyncPolicy2(50), frame_sub, depth_sub);
-	sync2.registerCallback(boost::bind(&callback, _1, _2));
+	nh.getParam("batch", config.batch);
+
+	bool no_depth = false;
+	nh.getParam("no_depth", no_depth);
+
+	nh.getParam("hFov", config.hFov);
+	nh.getParam("camera_angle", config.camera_angle);
+	ROS_INFO_STREAM(__LINE__ << " : config.batch = " << config.batch);
+
+	std::shared_ptr<message_filters::Subscriber<Image>>  frame_sub;
+	std::shared_ptr<message_filters::Subscriber<Image>>  depth_sub;
+	typedef sync_policies::ApproximateTime<Image, Image> SyncPolicy;
+	std::shared_ptr<Synchronizer<SyncPolicy>>            sync;
+
+	std::shared_ptr<ros::Subscriber>                     rgb_sub;
+	ros::Subscriber                                      terabee_sub;
+	if (!no_depth)
+	{
+		ROS_INFO("starting goal detection using ZED");
+		frame_sub = std::make_shared<message_filters::Subscriber<Image>>(nh, "/zed_goal/left/image_rect_color", sub_rate);
+		depth_sub = std::make_shared<message_filters::Subscriber<Image>>(nh, "/zed_goal/depth/depth_registered", sub_rate);
+		// ApproximateTime takes a queue size as its constructor argument, hence SyncPolicy(xxx)
+		sync = std::make_shared<Synchronizer<SyncPolicy>>(SyncPolicy(10), *frame_sub, *depth_sub);
+		sync->registerCallback(boost::bind(&callback, _1, _2));
+	}
+	else
+	{
+		ROS_INFO("starting goal detection using webcam");
+		rgb_sub = std::make_shared<ros::Subscriber>(nh.subscribe("/c920_camera/image_raw", sub_rate, callback_no_depth));
+		terabee_sub = nh.subscribe("/multiflex_1/ranges_raw", 1, &multiflexCB);
+	}
 
 	// Set up publisher
 	pub = nh.advertise<goal_detection::GoalDetection>("goal_detect_msg", pub_rate);
 
+	ROS_INFO_STREAM(__LINE__ << " : config.batch = " << config.batch);
+	DynamicReconfigureWrapper<goal_detection::GoalDetectionConfig> drw(nh, config, dynamic_callback);
 
 	ros::spin();
 

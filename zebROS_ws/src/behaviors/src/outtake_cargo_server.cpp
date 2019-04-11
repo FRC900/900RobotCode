@@ -133,6 +133,18 @@ int linebreak_false_count = 0;
 					//timed_out = true;
 				}
 			}
+			if(goal->setpoint_index == CARGO_SHIP && !preempted && !timed_out) {
+				ROS_WARN("Moving arm joint down before launching for cargo ship");
+				srv.request.power = holding_power;
+				srv.request.intake_arm = true;
+				if(!cargo_intake_controller_client_.call(srv))
+				{
+					ROS_ERROR("Cargo outtake server: could not move arm before launching");
+					preempted = true;
+				}
+				ros::Duration(pause_time_between_pistons).sleep();
+			}
+
 			//send command to launch cargo ----
 			ROS_WARN_STREAM("Cargo outtake server: launching cargo");
 			if(!preempted && !timed_out)
@@ -245,7 +257,6 @@ int main(int argc, char** argv) {
 	//get config values
 	ros::NodeHandle n;
 	ros::NodeHandle n_params_outtake(n, "actionlib_cargo_outtake_params");
-	ros::NodeHandle n_params_intake(n, "actionlib_cargo_intake_params");
 	ros::NodeHandle n_params_lift(n, "actionlib_lift_params");
 
 	if (!n.getParam("/actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
@@ -253,8 +264,9 @@ int main(int argc, char** argv) {
 	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
 		ROS_ERROR("Could not read wait_for_server_timeout in intake_sever");
 
-	if (!n_params_intake.getParam("holding_power", holding_power))
-        ROS_ERROR("Could not read holding_power in cargo_intake_server");
+	if (!n.getParam("/cargo_intake/actionlib_cargo_intake_params/holding_power", holding_power))
+        ROS_ERROR("Could not read holding_power in cargo_outtake_server");
+	ROS_WARN("Holding power in cargo outtake server: %f", holding_power);
 
 	if (!n_params_outtake.getParam("roller_power", roller_power))
 		ROS_ERROR("Could not read roller_power in cargo_outtake_server");

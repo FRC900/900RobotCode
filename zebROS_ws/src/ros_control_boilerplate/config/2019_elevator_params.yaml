@@ -3,8 +3,15 @@ elevator_controller:
 
     elevator_joint: [ 'elevator_master', 'elevator_follower1', 'elevator_follower2', 'elevator_follower3' ]
 
-    arb_feed_forward_up: 0.04
+    arb_feed_forward_up_high: 0.052
+    arb_feed_forward_up_low: 0.042
     arb_feed_forward_down: -0.185
+
+    motion_magic_velocity_fast: 1.0
+    motion_magic_acceleration_fast: 2.0
+
+    motion_magic_velocity_slow: 0.25
+    motion_magic_acceleration_slow: 0.4
 
     # How quickly the elevator moves down when zeroing itself
     elevator_zeroing_percent_output: -0.2 # TODO : tune me
@@ -19,12 +26,8 @@ elevator_controller:
         type: talon_controllers/TalonControllerInterface 
         joint: elevator_master
         close_loop_values:
-            - {p: 0.09, i: 0.00003, d: 0, f: 0.0, i_zone: 2204, closed_loop_peak_output: 1.0}
-            - {p: 0.25, i: 0.0005, d: 0, f: 0.58, i_zone: 4096, closed_loop_peak_output: 1.0}
-
-        # TODO : tuning
-        motion_cruise_velocity: 0.25
-        motion_acceleration: 0.4
+            - {p: 0.01, i: 0.0, d: 0.0, f: 0.225, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: 0.25, i: 0.0, d: 0, f: 0.58, i_zone: 4096, closed_loop_peak_output: 1.0}
               
         sensor_phase: True 
         invert_output: False

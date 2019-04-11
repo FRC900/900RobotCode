@@ -15,7 +15,7 @@ namespace panel_intake_controller
 	}
 
 	void PanelIntakeController::starting(const ros::Time &/*time*/) {
-		panel_cmd_.writeFromNonRT(PanelCommand(false, false));
+		panel_cmd_.writeFromNonRT(PanelCommand(true, false));
 	}
 
 	void PanelIntakeController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
@@ -43,7 +43,7 @@ namespace panel_intake_controller
 	bool PanelIntakeController::cmdService(panel_intake_controller::PanelIntakeSrv::Request &req, panel_intake_controller::PanelIntakeSrv::Response &/*response*/) {
 		if(isRunning())
 		{
-			panel_cmd_.writeFromNonRT(PanelCommand(req.claw_release, req.push_extend));
+			panel_cmd_.writeFromNonRT(PanelCommand(!req.claw_release, req.push_extend));
 		}
 		else
 		{

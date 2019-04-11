@@ -42,10 +42,10 @@ hardware_interface:
        - {name: panel_claw, type: solenoid, local_hardware: false, local_update: true}
        - {name: panel_push_extend, type: solenoid, local_hardware: false, local_update: true}
 
-       - {name: panel_intake_linebreak_1, type: digital_input, local: false}
-       - {name: panel_intake_linebreak_2, type: digital_input, local: false}
-       - {name: panel_intake_linebreak_3, type: digital_input, local: false}
-       - {name: panel_intake_linebreak_4, type: digital_input, local: false}
+       - {name: panel_intake_limit_switch_1, type: digital_input, local: false}
+       - {name: panel_intake_limit_switch_2, type: digital_input, local: false}
+       - {name: panel_intake_limit_switch_3, type: digital_input, local: false}
+       - {name: panel_intake_limit_switch_4, type: digital_input, local: false}
 
        - {name: cargo_intake_linebreak_1, type: digital_input, local: false}
 

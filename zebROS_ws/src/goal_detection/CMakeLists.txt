@@ -21,10 +21,12 @@ else()
   find_package(catkin REQUIRED COMPONENTS
     roscpp
     message_filters
+	dynamic_reconfigure_wrapper
     message_generation
     geometry_msgs
     std_msgs
     sensor_msgs
+	teraranger_array
     cv_bridge
     tf2
     tf2_ros
@@ -106,10 +108,11 @@ generate_messages(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    generate_dynamic_reconfigure_options(
+    cfg/GoalDetection.cfg
+    )
+endif()
 
 ###################################
 ## catkin specific configuration ##

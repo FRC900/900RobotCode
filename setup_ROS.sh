@@ -14,6 +14,23 @@ sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 0xB0
 # Installation
 sudo apt update
 
+# For intel realsense - from apt for x86 laptops
+sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE 
+sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main" -u 
+sudo apt update
+
+# From source for the Jetson
+sudo apt install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw3-dev 
+mkdir realsense_src && cd realsense_src
+wget https://github.com/IntelRealSense/librealsense/archive/v2.19.2.zip
+unzip v2.19.2.zip
+cd librealsense-2.19.2
+sudo cp config/99-realsense-libusb.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules && udevadm trigger
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=true ..
+sudo make uninstall && make clean && make -j6 && sudo make install
+
 # Add Individual Packages here
 # You can install a specific ROS package (replace underscores with dashes of the package name):
 # sudo apt-get install ros-kinetic-PACKAGE
@@ -23,7 +40,7 @@ sudo apt update
 # To find available packages:
 # apt-cache search ros-kinetic
 # 
-sudo apt install ros-kinetic-ros-base python-rosdep python-rosinstall terminator ros-kinetic-rqt ros-kinetic-rqt-common-plugins ros-kinetic-tf2-ros ros-kinetic-pcl-conversions ros-kinetic-cv-bridge ros-kinetic-tf ros-kinetic-map-server ros-kinetic-rviz ros-kinetic-hector-slam ros-kinetic-hector-slam-launch ros-kinetic-rtabmap-ros ros-kinetic-robot-localization ros-kinetic-navigation ros-kinetic-robot-state-publisher ros-kinetic-rosparam-shortcuts python-wstool ninja-build libsuitesparse-dev ros-kinetic-tf2-tools ros-kinetic-hardware-interface ros-kinetic-controller-manager ros-kinetic-control-msgs ros-kinetic-joint-limits-interface ros-kinetic-transmission-interface liblua5.3-dev ros-kinetic-joystick-drivers ros-kinetic-gmapping ros-kinetic-teb-local-planner ros-kinetic-roslint ros-kinetic-xacro ros-kinetic-rqt-controller-manager ros-kinetic-serial ros-kinetic-ecl-geometry ros-kinetic-rviz-imu-plugin ros-kinetic-rosbridge-suite ros-kinetic-grid-map-core ros-kinetic-grid-map-cv ros-kinetic-grid-map-ros ros-kinetic-ar-track-alvar ros-kinetic-teraranger-* ros-kinetic-pid ros-kinetic*mux* -y
+sudo apt install ros-kinetic-ros-base python-rosdep python-rosinstall terminator ros-kinetic-rqt ros-kinetic-rqt-common-plugins ros-kinetic-tf2-ros ros-kinetic-pcl-conversions ros-kinetic-cv-bridge ros-kinetic-tf ros-kinetic-map-server ros-kinetic-rviz ros-kinetic-hector-slam ros-kinetic-hector-slam-launch ros-kinetic-rtabmap-ros ros-kinetic-robot-localization ros-kinetic-navigation ros-kinetic-robot-state-publisher ros-kinetic-rosparam-shortcuts python-wstool ninja-build libsuitesparse-dev ros-kinetic-tf2-tools ros-kinetic-hardware-interface ros-kinetic-controller-manager ros-kinetic-control-msgs ros-kinetic-joint-limits-interface ros-kinetic-transmission-interface liblua5.3-dev ros-kinetic-joystick-drivers ros-kinetic-gmapping ros-kinetic-teb-local-planner ros-kinetic-roslint ros-kinetic-xacro ros-kinetic-rqt-controller-manager ros-kinetic-serial ros-kinetic-ecl-geometry ros-kinetic-rviz-imu-plugin ros-kinetic-rosbridge-suite ros-kinetic-grid-map-core ros-kinetic-grid-map-cv ros-kinetic-grid-map-ros ros-kinetic-ar-track-alvar ros-kinetic-teraranger-* ros-kinetic-pid ros-kinetic*mux* ros-kinetic-usb-cam  librealsense2-dev librealsense2-dkms librealsense2-utils -y
 
 # Initialize rosdep
 # ssl certificates can get messed up on TX1 for some reason

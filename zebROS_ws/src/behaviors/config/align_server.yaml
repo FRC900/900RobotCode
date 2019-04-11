@@ -7,5 +7,5 @@ align_server_params : #params defined in align_server_cpp #default values
 align_with_terabee_params: #params defined in align_with_terabee.cpp
     cmd_vel_to_pub: 0.7
     distance_bound: 0.07 
-    distance_target: 0.2
+    distance_target: 0.45
     cargo_pid_max_distance: 0.5

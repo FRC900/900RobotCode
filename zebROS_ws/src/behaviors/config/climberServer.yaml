@@ -1,4 +1,4 @@
-# TODO - these are all wrong
+# TODO - these are all wrong... or not?
 climber_server:
     deploy_timeout: 8.0
     climb_timeout: 8.0
@@ -6,3 +6,8 @@ climber_server:
     climb_low_timeout: 8.0
     match_time_lock: 225
     drive_forward_speed: 0.6
+    delay_before_engage: 0.2
+    delay_before_continue_retract: 0.3
+    wait_at_top_for_engage: 0.2
+    pull_leg_up_pause_time: 0.5
+    linebreak_debounce_iterations: 5

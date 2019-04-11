@@ -13,7 +13,6 @@ sudo rfkill block bluetooth
 #systemctl restart networking
 
 sudo chmod a+rw /dev/ttyACM0
-#sudo python /home/ubuntu/2017VisionCode/time_sync_server.py & 
 sudo umount /mnt/900_2 --lazy
 
 export CUDA_CACHE_MAXSIZE=104857600
@@ -22,7 +21,6 @@ export CUDA_CACHE_PATH=/home/ubuntu/.nv/ComputeCache
 cd /home/ubuntu/2019RobotCode/build
 python3 -m http.server 5805 &
 cd /home/ubuntu/2019RobotCode/jetson_setup/
-
 
 if sudo mount /dev/nvme0n1p1 /mnt/900_2; then
 		date >> /home/ubuntu/mounted.txt
@@ -36,6 +34,8 @@ else
 fi
 
 top -b > /mnt/900_2/$(date +%Y%m%d%H%M%S)_top_log.txt
+
+v4l2-ctl -d `find /dev/v4l/by-id/ -name \*Webcam_C9\*` -c exposure_auto=1,exposure_absolute=20,brightness=5
 
 nvpmodel -m 0
 /home/ubuntu/jetson_clocks.sh
