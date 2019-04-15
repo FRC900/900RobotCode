@@ -1,11 +1,12 @@
 teleop_params:
     num_joysticks: 2
-    joystick_deadzone: 0.2
     max_rot: 5
     max_rot_slow: 2.5
     max_speed: 3
     max_speed_slow: 1.5
     joystick_pow: 2
     rotation_pow: 2     #Scaling factors used in teleop_joystick_comp1
+    joystick_deadzone: 0.2
     limit_switch_debounce_iterations: 2 #Used in teleop_joystick_comp for detecting hatch_panels
     linebreak_debounce_iterations: 2 #Used in actionlib servers for intaking cargo and teleop_joystick_comp for detecting cargo
+    
