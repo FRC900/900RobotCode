@@ -8,6 +8,8 @@
 #include <swerve_point_generator/GenerateSwerveProfile.h> //ROS Service data type
 #include <swerve_point_generator/spline.h> //tk::spline library
 
+#include <ros/console.h>
+
 namespace swerve_profile
 {
 const double max_path_radius = 1.0e10;
@@ -83,13 +85,32 @@ auto operator<<(std::ostream &os, const T &t) -> decltype(t.print(os), os)
 	return os;
 }
 
+class SwerveMessageFilter : public ros::console::FilterBase
+{
+	public:
+		SwerveMessageFilter(bool enabled)
+		{
+			enabled_ = enabled;
+		}
+		bool isEnabled(void) override
+		{
+			return enabled_;
+		}
+		bool isEnabled(ros::console::FilterParams &) override
+		{
+			return isEnabled();
+		}
+	private:
+		bool enabled_;
+};
+
 class swerve_profiler
 {
 	public:
 		//Constructor saves swerve characteristics and dt
 		swerve_profiler(double max_wheel_dist, double max_wheel_mid_accel, double max_wheel_vel,
 						double max_steering_accel, double max_steering_vel, double dt, double ang_accel_conv,
-						double max_wheel_brake_accel);
+						double max_wheel_brake_accel, bool debug = true);
 
 		//Generates full profile. Has some spline manipulation options
 		bool generate_profile(std::vector<spline_coefs> x_splines,
@@ -150,5 +171,7 @@ class swerve_profiler
 		double t_total_; //Total time
 		double ang_accel_conv_; //c_a
 		double max_wheel_brake_accel_; //a_max for slowing down
+
+		SwerveMessageFilter message_filter_;
 };
 }

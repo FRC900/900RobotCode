@@ -144,8 +144,7 @@ public:
 		srvBaseTrajectory.request.points[0].velocities.push_back(0);
 		srvBaseTrajectory.request.points[0].accelerations.push_back(0);
 		//z-rotation
-		double rotation = goal->rotation;
-		rotation = angles::normalize_angle(rotation);
+		const double rotation = angles::normalize_angle(goal->rotation);
 		if (std::abs(rotation) < 0.001)
 			srvBaseTrajectory.request.points[0].positions.push_back(rotation < 0 ? -0.001 : 0.001);
 		else
