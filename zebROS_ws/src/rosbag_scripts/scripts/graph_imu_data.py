@@ -28,6 +28,11 @@ from rospy_message_converter import json_message_converter
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 from pylab import *
+from tf import transformations
+
+#quaternion = (0, 0, 0, 1);
+#euler = transformations.euler_from_quaternion(quaternion)
+
 
 # Global variable for input file name
 
@@ -46,57 +51,25 @@ def run():
         topicList = readBagTopicList(bag)
 
         # figure out which topic is talon_states and which is pdp_states
-        talonTopic = "/frcrobot_jetson/talon_states"
-        pdpTopic = "/frcrobot_jetson/pdp_states"
+        imuTopic = "/frcrobot_rio/navx_mxp"
         
         # read Talon data
-        talon_data = extract_data(bag, talonTopic, inputFileName)
+        imu_data = extract_data(bag, imuTopic , inputFileName)
 
-        # read PDP data
-        pdp_data = extract_data(bag, pdpTopic, inputFileName)
+        imu_data_filtered = []
+        roll = 0
+        pitch = 0
+        yaw = 0
+        for msg in imu_data:
+            quaternion = (msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w);
+            euler = transformations.euler_from_quaternion(quaternion)
+            if (euler[2] == euler[2]):
+                imu_data_filtered.append(euler[2])
 
-        # graph Talon speeds
-        num_talons = len(talon_data[0].speed)
-        subplots_dimension = ceil(sqrt(num_talons))
-        print("num talons = ", num_talons)
-
-        for talon in range(num_talons):
-            talon_data_filtered = []
-            for msg in talon_data:
-                talon_data_filtered.append(msg.speed[talon])
-            ax1 = subplot(subplots_dimension, subplots_dimension, talon + 1)
-            ax1.set_title(msg.name[talon])
-            ax1.plot(range(0, len(talon_data)), talon_data_filtered)
+        #plt.set_title(msg.name[talon])
+        plt.plot(range(0, 20000), imu_data_filtered[0:20000])
 
         plt.show()
-
-        # graph PDP current for all channels and graph voltage
-        num_channels = len(pdp_data[0].current)
-        subplots_dimension = ceil(sqrt(num_channels))
-        print("num channels = ", num_channels)
-
-        # grid = plt.GridSpec(subplots_dimension + 1, subplots_dimension)
-
-        for channel in range(num_channels):
-            current_data_filtered = []
-            for msg in pdp_data:
-                current_data_filtered.append(msg.current[channel])
-            ax1 = subplot(subplots_dimension, subplots_dimension, channel + 1)
-            ax1.set_title("channel = %s" % (channel + 1))
-            ax1.plot(range(0, len(pdp_data)), current_data_filtered)
-            
-        #int((channel % subplots_dimension) + 1)
-        #int(floor(channel / subplots_dimension))]
-
-        # voltage_data_filtered = []
-        # for msg in pdp_data:
-        #     voltage_data_filtered.append(msg.voltage)
-        # ax1 = subplot(grid[subplots_dimension, 0:])
-        # ax1.plot(range(0, len(pdp_data)), voltage_data_filtered)
-        # ax1.set_title("voltage")
-
-        plt.show()
-
 
         bag.close()
 
@@ -114,6 +87,8 @@ def readBagTopicList(bag):
     Read and save the initial topic list from bag
     """
     print "[OK] Reading topics in this bag. Can take a while.."
+
+    # TODO: There has got to be a faster way to do this
     topicList = []
     for topic, msg, t in bag.read_messages():
         if topicList.count(topic) == 0:
@@ -122,5 +97,5 @@ def readBagTopicList(bag):
     print '{0} topics found:'.format(len(topicList))
     return topicList
 
-if __name__=="__main__":
-    run()
+
+run()
