@@ -482,7 +482,12 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 				ROS_INFO_STREAM_FILTER(&message_filter_, "requested acceleration = " << requested_acceleration << " max_acceleration = " << max_acceleration << " linear_acceleration = " << midpoint_spline_acceleration);
 
 				//compare to the actual possible angular acceleration
-				if(requested_acceleration > max_acceleration)
+				if(midpoint_spline_acceleration < -max_wheel_mid_accel_)
+				{
+					ROS_INFO_STREAM_FILTER(&message_filter_, "requested acceleration of " << requested_acceleration << " too small");
+					min_spline_position = midpoint_spline_position;
+				}
+				else if(requested_acceleration > max_acceleration)
 				{
 					ROS_INFO_STREAM_FILTER(&message_filter_, "requested acceleration of " << requested_acceleration << " too large");
 					max_spline_position = midpoint_spline_position;
