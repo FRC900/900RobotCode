@@ -47,9 +47,8 @@
 #include <talon_controllers/talon_controller_interface.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <talon_swerve_drive_controller/MotionProfile.h>
 #include <talon_swerve_drive_controller/WheelPos.h>
-#include <talon_swerve_drive_controller/MotionProfilePoints.h>
+#include <talon_swerve_drive_controller/MotionProfile.h>
 #include <talon_swerve_drive_controller/speed_limiter.h>
 #include "talon_swerve_drive_controller/SetXY.h"
 #include <swerve_math/Swerve.h>
@@ -220,7 +219,13 @@ class TalonSwerveDriveController
 		swerveVar::ratios driveRatios_;
 
 		swerveVar::encoderUnits units_;
-		double f_static_;
+
+		// Feed forward terms
+		double f_s_;
+		double f_a_;
+		double f_v_;
+		double f_s_v_;
+		double f_s_s_;
 
 		/// Timeout to consider cmd_vel commands old:
 		double cmd_vel_timeout_;
@@ -262,7 +267,7 @@ class TalonSwerveDriveController
 		 */
 		void cmdVelCallback(const geometry_msgs::Twist &command);
 		void talonStatesCB(const talon_state_controller::TalonState &talon_state);
-		bool motionProfileService(talon_swerve_drive_controller::MotionProfilePoints::Request &req, talon_swerve_drive_controller::MotionProfilePoints::Response &res);
+		bool motionProfileService(talon_swerve_drive_controller::MotionProfile::Request &req, talon_swerve_drive_controller::MotionProfile::Response &res);
 		bool changeCenterOfRotationService(talon_swerve_drive_controller::SetXY::Request &req, talon_swerve_drive_controller::SetXY::Response &res);
 		bool brakeService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 		bool wheelPosService(talon_swerve_drive_controller::WheelPos::Request &req, talon_swerve_drive_controller::WheelPos::Response &res);
@@ -303,7 +308,6 @@ class TalonSwerveDriveController
 		void setOdomPubFields(ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
 		*/
 
-		static const std::string DEF_ROBOT_DESC_NAME;
 		static const std::string DEF_BASE_LINK;
 		static const double DEF_CMD_VEL_TIMEOUT;
 
@@ -344,7 +348,8 @@ class TalonSwerveDriveController
 
 		realtime_tools::RealtimePublisher<nav_msgs::Odometry> odom_pub_;
 		realtime_tools::RealtimePublisher<tf::tfMessage> odom_tf_pub_;
-		ros::Time last_odom_pub_time_, last_odom_tf_pub_time_;
+		ros::Time last_odom_pub_time_;
+		ros::Time last_odom_tf_pub_time_;
 };
 
 PLUGINLIB_EXPORT_CLASS(talon_swerve_drive_controller::TalonSwerveDriveController, controller_interface::ControllerBase);

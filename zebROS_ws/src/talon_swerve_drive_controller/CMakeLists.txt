@@ -31,7 +31,7 @@ add_message_files (
 add_service_files (
   FILES
   MotionProfile.srv
-  MotionProfilePoints.srv
+  #MotionProfilePoints.srv
   WheelPos.srv
   SetXY.srv
 )

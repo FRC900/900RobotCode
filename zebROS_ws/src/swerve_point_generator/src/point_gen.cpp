@@ -8,7 +8,6 @@
 #include <swerve_point_generator/FullGenCoefs.h>
 #include <swerve_point_generator/GenerateSwerveProfile.h>
 #include <talon_swerve_drive_controller/MotionProfile.h> //Only needed for visualization
-#include <talon_swerve_drive_controller/MotionProfilePoints.h> //Only needed for visualization
 #include <talon_swerve_drive_controller/WheelPos.h>
 
 //Get swerve info here:
@@ -53,7 +52,6 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		{
 			priv_num = req.spline_groups[s - 1];
 		}
-		const int n = round(req.wait_before_group[s] / defined_dt);
 		std::vector<swerve_profile::spline_coefs> x_splines;
 		std::vector<swerve_profile::spline_coefs> y_splines;
 		std::vector<swerve_profile::spline_coefs> orient_splines;
@@ -102,6 +100,8 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		const double t_shift = req.t_shift[s];
 		const bool flip_dirc = req.flip[s];
 
+		// TODO - replace with just an array of JointTrajectoryPoints since
+		// the rest of the message isn't used at all
 		swerve_point_generator::GenerateSwerveProfile::Response srv_msg; //TODO FIX THIS, HACK
 		//srv_msg.points.resize(0);
 		ROS_INFO_STREAM("req.initial_v: " << req.initial_v << " req.final_v: " << req.final_v << " t_shift: " << t_shift);
@@ -113,6 +113,7 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 
 		res.dt = defined_dt;
 
+		// TODO - just for debugging
 		double total_length_x = 0;
 		double total_length_y = 0;
 		double total_length_theta = 0;
@@ -127,26 +128,9 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		{
 			ROS_INFO_STREAM(srv_msg.points[i].positions[0] << " " << srv_msg.points[i].positions[1] << " " << srv_msg.points[i].positions[2]);
 		}
-	
-
-		//ROS_INFO_STREAM("dt: " << res.dt);
-
-		//ROS_WARN("BUFFERING");
-		//TODO: optimize code?
 
 		//Do first point and initialize stuff
 
-		/*
-		TODO: IMPLEMENT BELOW
-		if(motion_profile_mode == steering_joints_[0].getMode())
-		{
-			for(size_t i = 0; i < WHEELCOUNT; i++)
-			{
-				speed_joints_[i].setCommand(0);
-				steering_joints_[i].setCommand(0);
-			}
-		}
-		*/
 		//ROS_INFO_STREAM("pos_0:" << srv_msg.points[0].positions[0] << "pos_1:" << srv_msg.points[0].positions[1] <<"pos_2:" <<  srv_msg.points[0].positions[2]);
 
 		// Bounds checking - not safe to proceed with setting up angle
@@ -164,10 +148,15 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 				return false;
 			}
 		}
-		ROS_INFO_STREAM("velocity vector = " << srv_msg.points[1].positions[0] - srv_msg.points[0].positions[0] << " " << srv_msg.points[1].positions[1] - srv_msg.points[0].positions[1] << " rotation = " << srv_msg.points[1].positions[2] - srv_msg.points[0].positions[2] << " angle = " << srv_msg.points[1].positions[2]);
-		const std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions  = swerve_math->motorOutputs({srv_msg.points[1].positions[0] - srv_msg.points[0].positions[0], srv_msg.points[1].positions[1] - srv_msg.points[0].positions[1]}, srv_msg.points[1].positions[2] - srv_msg.points[0].positions[2], srv_msg.points[1].positions[2], curPos, false);
-		//TODO: angles on the velocity array below are superfluous, could remove
-		//std::array<Eigen::Vector2d, WHEELCOUNT> angles_velocities  = swerve_math->motorOutputs({srv_msg.points[1].velocities[0], srv_msg.points[1].velocities[1]}, -srv_msg.points[1].velocities[2], /*srv_msg.points[1].positions[2]*/ M_PI / 2.0, false, holder, false, curPos, false);
+
+		ROS_INFO_STREAM("velocity vector = " << srv_msg.points[1].positions[0] - srv_msg.points[0].positions[0] <<
+				" " << srv_msg.points[1].positions[1] - srv_msg.points[0].positions[1] <<
+				" rotation = " << srv_msg.points[1].positions[2] - srv_msg.points[0].positions[2] <<
+				" angle = " << srv_msg.points[1].positions[2]);
+		const std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions = swerve_math->motorOutputs({srv_msg.points[1].positions[0] - srv_msg.points[0].positions[0], srv_msg.points[1].positions[1] - srv_msg.points[0].positions[1]}, srv_msg.points[1].positions[2] - srv_msg.points[0].positions[2], srv_msg.points[1].positions[2], curPos, false);
+
+		for (size_t k = 0; k < WHEELCOUNT; k++)
+			ROS_INFO_STREAM("Steer angle : " << k <<  "=" << curPos[k]);
 		for (size_t k = 0; k < WHEELCOUNT; k++)
 			curPos[k] = angles_positions[k][1];
 
@@ -177,10 +166,29 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		}
 
 		//ROS_INFO_STREAM("pos_0:" << srv_msg.points[i+1].positions[0] << "pos_1:" << srv_msg.points[i+1].positions[1] <<"pos_2:" <<  srv_msg.points[i+1].positions[2] << " counts: " << point_count << " i: "<< i << " wheels: " << WHEELCOUNT);
-		std::array<double, WHEELCOUNT> vel_sum;
-		for (int i = prev_point_count; i < n + prev_point_count; i++)
+		//std::array<double, WHEELCOUNT> vel_sum;
+		int n = round(req.wait_before_group[s] / defined_dt);
+		bool skip_one_traj = false;
+		if ((n > 0) && (prev_point_count == 0))
 		{
 			graph_msg.request.joint_trajectory.points.push_back(srv_msg.points[0]);
+			res.hold.push_back(true);
+			skip_one_traj = true;
+		}
+		for (int i = prev_point_count; i < n + prev_point_count; i++)
+		{
+			if (!skip_one_traj)
+			{
+#if 0
+				trajectory_msgs::JointTrajectoryPoint p = srv_msg.points[1];
+				p.positions[0] = srv_msg.points[0].positions[0];
+				p.positions[1] = srv_msg.points[0].positions[1];
+#endif
+				graph_msg.request.joint_trajectory.points.push_back(srv_msg.points[1]);
+				res.hold.push_back(true);
+			}
+
+			skip_one_traj = false;
 
 			for (size_t k = 0; k < WHEELCOUNT; k++)
 			{
@@ -188,7 +196,7 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 
 				if (s == 0)
 				{
-					res.points[i].drive_pos.push_back(angles_positions[k][0]);
+					res.points[i].drive_pos.push_back(0);
 				}
 				else
 				{
@@ -198,7 +206,7 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 				//ROS_WARN("re");
 
 				res.points[i].drive_f.push_back(0);
-				vel_sum[k] = 0;
+				//vel_sum[k] = 0;
 
 				res.points[i].steer_pos.push_back(angles_positions[k][1]);
 				res.points[i].steer_f.push_back(0);
@@ -217,21 +225,27 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		}
 		for (int i = 0; i < point_count - k_p; i++)
 		{
+			ROS_INFO_STREAM("pos_0:" << srv_msg.points[i].positions[0] << " pos_1:" << srv_msg.points[i].positions[1] <<" pos_2:" <<  srv_msg.points[i].positions[2] << " counts: " << point_count << " i: "<< i << " wheels: " << WHEELCOUNT);
+			
+			ROS_INFO_STREAM("pos_0:" << srv_msg.points[i+1].positions[0] << " pos_1:" << srv_msg.points[i+1].positions[1] <<" pos_2:" <<  srv_msg.points[i+1].positions[2] << " counts: " << point_count << " i: "<< i << " wheels: " << WHEELCOUNT);
 			const std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions  = swerve_math->motorOutputs({srv_msg.points[i + 1].positions[0] - srv_msg.points[i].positions[0], srv_msg.points[i + 1].positions[1] - srv_msg.points[i].positions[1]}, srv_msg.points[i + 1].positions[2] - srv_msg.points[i].positions[2], srv_msg.points[i + 1].positions[2], curPos, false);
 			//TODO: angles on the velocity array below are superfluous, could remove
 			std::array<Eigen::Vector2d, WHEELCOUNT> angles_velocities  = swerve_math->motorOutputs({srv_msg.points[i + 1].velocities[0], srv_msg.points[i + 1].velocities[1]}, srv_msg.points[i + 1].velocities[2], srv_msg.points[i + 1].positions[2], curPos, false);
 
-			for(size_t i = 0; i < angles_positions.size(); i++)
+			for(size_t j = 0; j < angles_positions.size(); j++)
 			{
-				//ROS_INFO_STREAM("at wheel " << i << " angles_positions = " << angles_positions[i][0] << " " << angles_positions[i][1]);
+				//ROS_INFO_STREAM("at wheel " << j << " angles_positions = " << angles_positions[j][0] << " " << angles_positions[j][1]);
 			}
 
 			for (size_t k = 0; k < WHEELCOUNT; k++)
 				curPos[k] = angles_positions[k][1];
 
+			res.hold.push_back(false);
 			//ROS_INFO_STREAM("pos_0:" << srv_msg.points[i+1].positions[0] << "pos_1:" << srv_msg.points[i+1].positions[1] <<"pos_2:" <<  srv_msg.points[i+1].positions[2] << " counts: " << point_count << " i: "<< i << " wheels: " << WHEELCOUNT);
 			for (size_t k = 0; k < WHEELCOUNT; k++)
 			{
+				ROS_INFO_STREAM("a_p : " << angles_positions[k][0] << " " << angles_positions[k][1]);
+				
 				res.points[i + n + prev_point_count].hold.push_back(false);
 
 				//ROS_WARN("hhhhere");
@@ -256,7 +270,7 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 					int sign_v = angles_velocities[k][0] < 0 ? -1 : angles_velocities[k][0] > 0 ? 1 : 0;
 					res.points[i + n + prev_point_count].drive_f.push_back(angles_velocities[k][0] * f_v + sign_v * f_s + f_a /* / ( -fabs(angles_velocities[k][0]) / (model.maxSpeed * 1.2) + 1.05 ) */ * (angles_velocities[k][0] - prev_vels[k]) / defined_dt);
 					prev_vels[k] = angles_velocities[k][0];
-					vel_sum[k] += angles_velocities[k][0];
+					//vel_sum[k] += angles_velocities[k][0];
 
 					const double steer_v = (angles_positions[k][1] - prev_steer_pos[k]) / defined_dt;
 					const int sign_steer_v = steer_v < 0 ? -1 : steer_v > 0 ? 1 : 0;
@@ -274,11 +288,11 @@ bool full_gen(swerve_point_generator::FullGenCoefs::Request &req, swerve_point_g
 		//ROS_ERROR_STREAM("l: " <<  prev_point_count << " P: " << point_count);
 	}
 
+
 	graph_prof.call(graph_msg);
 	res.points.erase(res.points.begin() + prev_point_count, res.points.end());
-	ROS_INFO_STREAM("profile time: " << res.points.size() * defined_dt);
-
 	res.joint_trajectory = graph_msg.request.joint_trajectory;
+	ROS_INFO_STREAM("profile time: " << res.joint_trajectory.points.size() * defined_dt);
 
 	//talon_swerve_drive_controller::MotionProfilePoints graph_swerve_msg;
 	//graph_swerve_msg.request.points = res.points;
@@ -396,7 +410,7 @@ int main(int argc, char **argv)
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
 	graph_prof = nh.serviceClient<talon_swerve_drive_controller::MotionProfile>("visualize_profile", false, service_connection_header);
-	graph_swerve_prof = nh.serviceClient<talon_swerve_drive_controller::MotionProfilePoints>("visualize_swerve_profile", false, service_connection_header);
+	graph_swerve_prof = nh.serviceClient<talon_swerve_drive_controller::MotionProfile>("visualize_swerve_profile", false, service_connection_header);
 
 	ros::service::waitForService("/frcrobot_jetson/swerve_drive_controller/wheel_pos");
 	ROS_ERROR("DONE WAITING FOR wheel_pos");

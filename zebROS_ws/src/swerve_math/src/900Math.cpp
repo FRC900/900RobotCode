@@ -1,10 +1,6 @@
 #include <math.h>
 #include "swerve_math/900Math.h"
-
-double sign(double number)
-{
-	return (number > 0) ? 1 : ((number < 0) ? -1 : 0);
-}
+#include <ros/ros.h>
 
 // KCJ - if you're returning more than 1 thing, probably best to
 // return them both via reference.
@@ -21,17 +17,17 @@ double leastDistantAngleWithinHalfPi(double currentAngle, double targetAngle, bo
 	//used for turning wheels to the target angle (swerve)
 	const double normalizedDiff = normalizeAngle(targetAngle) - normalizeAngle(currentAngle);
 
-	const double withinPi = (fabs(normalizedDiff) < M_PI) ? normalizedDiff : (normalizedDiff - (2 * M_PI * sign(normalizedDiff)));
+	const double withinPi = (fabs(normalizedDiff) < M_PI) ? normalizedDiff : (normalizedDiff - copysign(2. * M_PI, normalizedDiff));
 	double withinHalfPi;
 
-	if (fabs(withinPi) < (M_PI / 2) )
+	if (fabs(withinPi) < (M_PI / 2.) )
 	{
 		withinHalfPi =  withinPi;
 		reverse = false;
 	}
 	else
 	{
-		withinHalfPi = (withinPi - sign(withinPi) * M_PI);
+		withinHalfPi = (withinPi - copysign(M_PI, withinPi));
 		reverse = true;
 	}
 	return withinHalfPi + currentAngle;
@@ -40,13 +36,13 @@ double leastDistantAngleWithinHalfPi(double currentAngle, double targetAngle, bo
 double leastDistantAngleWithinPi(double currentAngle, double targetAngle)
 {
 	const double normalizedDiff = normalizeAngle(targetAngle) - normalizeAngle(currentAngle);
-	const double withinPi = (fabs(normalizedDiff) < M_PI) ? normalizedDiff : (normalizedDiff - (2 * M_PI * sign(normalizedDiff)));
+	const double withinPi = (fabs(normalizedDiff) < M_PI) ? normalizedDiff : (normalizedDiff - copysign(2. * M_PI, normalizedDiff));
 	return withinPi + currentAngle;
 }
 
 double normalizeAngle(double angle) //normalizes between -M_PI and M_PI
 {
-	return angle - floor((angle + M_PI) / (2 * M_PI)) * 2.0 * M_PI;
+	return angle - floor((angle + M_PI) / (2. * M_PI)) * 2.0 * M_PI;
 }
 
 #if 0

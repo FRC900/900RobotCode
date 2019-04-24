@@ -41,7 +41,7 @@ array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
 		newSet.maxRotRate_ = drive_.maxSpeed / furthestWheel(centerOfRotation);
 		multiplierSets_[centerOfRotation] = newSet;
 		mult_it = multiplierSets_.find(centerOfRotation);
-		ROS_INFO_STREAM("Added new swerve center of rotation: " << centerOfRotation[0] << "," << centerOfRotation[1]);
+		//ROS_INFO_STREAM("Added new swerve center of rotation: " << centerOfRotation[0] << "," << centerOfRotation[1]);
 	}
 
 	velocityVector /= drive_.maxSpeed;
@@ -56,11 +56,12 @@ array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
 		const double currpos = getWheelAngle(i, positionsNew[i]);
 		bool reverse;
 		const double nearestangle = leastDistantAngleWithinHalfPi(currpos, speedsAndAngles[i][1], reverse);
+		//ROS_INFO_STREAM("currpos: " << currpos << " nearestangle: " << nearestangle);
 
 		speedsAndAngles[i][0] *= ((drive_.maxSpeed / drive_.wheelRadius) / ratio_.encodertoRotations) * units_.rotationSetV * (reverse ? -1 : 1);
 		//ROS_INFO_STREAM(" id: " << i << " speed: " << speedsAndAngles[i][0] << " reverse: " << reverse);
 		speedsAndAngles[i][1] = nearestangle * units_.steeringSet + offsets_[i];
-		//ROS_INFO_STREAM("pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " << speedsAndAngles[i][1] );
+		//ROS_INFO_STREAM("pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " << speedsAndAngles[i][1] << " offset: " << offsets_[i] << " steeringSet: " << units_.steeringSet );
 	}
 	return speedsAndAngles;
 }
