@@ -246,41 +246,152 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	// TODO : see if model_, driveRatios, units can be local instead of member vars
 	// If either parameter is not available, we need to look up the value in the URDF
 	//bool lookup_wheel_coordinates = !controller_nh.getParam("wheel_coordinates", wheel_coordinates_);
-	controller_nh.getParam("wheel_radius", wheel_radius_);
-	controller_nh.getParam("cmd_vel_timout",cmd_vel_timeout_);
-	controller_nh.getParam("max_speed", model_.maxSpeed);
-	controller_nh.getParam("mass", model_.mass);
-	controller_nh.getParam("motor_free_speed", model_.motorFreeSpeed);
-	controller_nh.getParam("motor_stall_torque", model_.motorStallTorque);
+	if (!controller_nh.getParam("wheel_radius", wheel_radius_))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_radius");
+		return false;
+	}
+	if (!controller_nh.getParam("cmd_vel_timout",cmd_vel_timeout_))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read cmd_vel_timout");
+		return false;
+	}
+	if (!controller_nh.getParam("max_speed", model_.maxSpeed))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read max_speed");
+		return false;
+	}
+	if (!controller_nh.getParam("mass", model_.mass))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read mass");
+		return false;
+	}
+	if (!controller_nh.getParam("motor_free_speed", model_.motorFreeSpeed))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read motor_free_speed");
+		return false;
+	}
+	if (!controller_nh.getParam("motor_stall_torque", model_.motorStallTorque))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read motor_stall_torque");
+		return false;
+	}
 	// TODO : why not just use the number of wheels read from yaml?
-	controller_nh.getParam("motor_quantity", model_.motorQuantity);
-	controller_nh.getParam("ratio_encoder_to_rotations", driveRatios_.encodertoRotations);
-	controller_nh.getParam("ratio_motor_to_rotations", driveRatios_.motortoRotations);
-	controller_nh.getParam("ratio_motor_to_steering", driveRatios_.motortoSteering); // TODO : not used?
-	controller_nh.getParam("encoder_drive_get_V_units", units_.rotationGetV);
-	controller_nh.getParam("encoder_drive_get_P_units", units_.rotationGetP);
-	controller_nh.getParam("encoder_drive_set_V_units", units_.rotationSetV);
-	controller_nh.getParam("encoder_drive_set_P_units", units_.rotationSetP);
-	controller_nh.getParam("encoder_steering_get_units", units_.steeringGet);
-	controller_nh.getParam("encoder_steering_set_units", units_.steeringSet);
+	if (!controller_nh.getParam("motor_quantity", model_.motorQuantity))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read motor_quantity");
+		return false;
+	}
+	if (!controller_nh.getParam("ratio_encoder_to_rotations", driveRatios_.encodertoRotations))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read ratio_encoder_to_rotations");
+		return false;
+	}
+	if (!controller_nh.getParam("ratio_motor_to_rotations", driveRatios_.motortoRotations))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read ratio_motor_to_rotations");
+		return false;
+	}
+	if (!controller_nh.getParam("ratio_motor_to_steering", driveRatios_.motortoSteering)) // TODO : not used
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read ratio_motor_to_steering");
+		return false;
+	}
+	if (!controller_nh.getParam("encoder_drive_get_V_units", units_.rotationGetV))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read encoder_drive_get_V_units");
+		return false;
+	}
+	if (!controller_nh.getParam("encoder_drive_get_P_units", units_.rotationGetP))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read encoder_drive_get_P_units");
+		return false;
+	}
+	if (!controller_nh.getParam("encoder_drive_set_V_units", units_.rotationSetV))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read encoder_drive_set_V_units");
+		return false;
+	}
+	if (!controller_nh.getParam("encoder_drive_set_P_units", units_.rotationSetP))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read encoder_drive_set_P_units");
+		return false;
+	}
+	if (!controller_nh.getParam("encoder_steering_get_units", units_.steeringGet))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read encoder_steering_get_units");
+		return false;
+	}
+	if (!controller_nh.getParam("encoder_steering_set_units", units_.steeringSet))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read encoder_steering_set_units");
+		return false;
+	}
 	if (!controller_nh.getParam("f_s", f_s_))
+	{
 		ROS_ERROR("Could not read f_s in talon swerve drive controller");
+		return false;
+	}
 	if (!controller_nh.getParam("f_a", f_a_))
+	{
 		ROS_ERROR("Could not read f_a in talon swerve drive controller");
+		return false;
+	}
 	if (!controller_nh.getParam("f_v", f_v_))
+	{
 		ROS_ERROR("Could not read f_v in talon swerve drive controller");
+		return false;
+	}
 	if (!controller_nh.getParam("f_s_v", f_s_v_))
+	{
 		ROS_ERROR("Could not read f_s_v in talon swerve drive controller");
+		return false;
+	}
 	if (!controller_nh.getParam("f_s_s", f_s_s_))
+	{
 		ROS_ERROR("Could not read f_s_s in talon swerve drive controller");
-	controller_nh.getParam("wheel_coords1x", wheel_coords_[0][0]);
-	controller_nh.getParam("wheel_coords2x", wheel_coords_[1][0]);
-	controller_nh.getParam("wheel_coords3x", wheel_coords_[2][0]);
-	controller_nh.getParam("wheel_coords4x", wheel_coords_[3][0]);
-	controller_nh.getParam("wheel_coords1y", wheel_coords_[0][1]);
-	controller_nh.getParam("wheel_coords2y", wheel_coords_[1][1]);
-	controller_nh.getParam("wheel_coords3y", wheel_coords_[2][1]);
-	controller_nh.getParam("wheel_coords4y", wheel_coords_[3][1]);
+		return false;
+	}
+	if (!controller_nh.getParam("wheel_coords1x", wheel_coords_[0][0]))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords1x");
+		return false;
+	}
+	if (!controller_nh.getParam("wheel_coords2x", wheel_coords_[1][0]))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords2x");
+		return false;
+	}
+	if (!controller_nh.getParam("wheel_coords3x", wheel_coords_[2][0]))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords3x");
+		return false;
+	}
+	if (!controller_nh.getParam("wheel_coords4x", wheel_coords_[3][0]))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords4x");
+		return false;
+	}
+	if (!controller_nh.getParam("wheel_coords1y", wheel_coords_[0][1]))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords1y");
+		return false;
+	}
+	if (!controller_nh.getParam("wheel_coords2y", wheel_coords_[1][1]))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords2y");
+		return false;
+	}
+	if (!controller_nh.getParam("wheel_coords3y", wheel_coords_[2][1]))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords3y");
+		return false;
+	}
+	if (!controller_nh.getParam("wheel_coords4y", wheel_coords_[3][1]))
+	{
+		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords4y");
+		return false;
+	}
 
 	ROS_INFO_STREAM("Coords: " << wheel_coords_[0] << "   " << wheel_coords_[1] << "   " << wheel_coords_[2] << "   " << wheel_coords_[3]);
 	std::vector<double> offsets;
@@ -289,7 +400,10 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 		ros::NodeHandle nh(controller_nh, *it);
 		double dbl_val = 0;
 		if (!nh.getParam("offset", dbl_val))
+		{
 			ROS_ERROR_STREAM("Can not read offset for " << *it);
+			return false;
+		}
 		offsets.push_back(dbl_val);
 	}
 
@@ -353,8 +467,6 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	dont_set_angle_mode_serv_ = controller_nh.advertiseService("dont_set_angle", &TalonSwerveDriveController::dontSetAngleModeService, this);
 	motion_profile_serv_ = controller_nh.advertiseService("run_profile", &TalonSwerveDriveController::motionProfileService, this);
 	change_center_of_rotation_serv_ = controller_nh.advertiseService("change_center_of_rotation", &TalonSwerveDriveController::changeCenterOfRotationService, this);
-	wheel_pos_serv_ = controller_nh.advertiseService("wheel_pos", &TalonSwerveDriveController::wheelPosService, this);
-	//sub_run_profile_ = controller_nh.subscribe("run_profile", 1, &TalonSwerveDriveController::runCallback, this);
 
 	double odom_pub_freq;
 	controller_nh.param("odometry_publishing_frequency", odom_pub_freq, DEF_ODOM_PUB_FREQ);
@@ -1027,7 +1139,7 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 	if (isRunning())
 	{
 		//ros::message_operations::Printer< ::talon_swerve_drive_controller::MotionProfileRequest_<std::allocator<void>> >::stream(std::cout, "", req);
-		ROS_INFO("------------------------------------");
+		//ROS_INFO("------------------------------------");
 		// Generate MotionProfilePoints (testing)
 		// fill in full_profile_cmd
 		// lock
@@ -1053,11 +1165,11 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 			return false;
 		}
 		const double defined_dt = (points[1].time_from_start - points[0].time_from_start).toSec();
-		full_profile_cmd full_profile_struct2;
+		full_profile_cmd full_profile_struct;
 		if (req.buffer)
 		{
-			full_profile_struct2.profiles.resize(1);
-			auto &fps = full_profile_struct2.profiles[0];
+			full_profile_struct.profiles.resize(1);
+			auto &fps = full_profile_struct.profiles[0];
 
 			fps.drive_pos.resize(point_count - 1);
 			fps.drive_f.resize(point_count - 1);
@@ -1118,7 +1230,7 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 				for (size_t k = 0; k < WHEELCOUNT; k++)
 				{
 					fps.hold[i].push_back(req.hold[i]);
-					ROS_INFO_STREAM("a_p : " << angles_positions[k][0] << " " << angles_positions[k][1] << "hold: " << (bool)req.hold[i]);
+					//ROS_INFO_STREAM("a_p : " << angles_positions[k][0] << " " << angles_positions[k][1] << "hold: " << (bool)req.hold[i]);
 					fps.drive_pos[i].push_back(angles_positions[k][0] + prev_drive_pos[k]);
 					fps.steer_pos[i].push_back(angles_positions[k][1]);
 
@@ -1144,52 +1256,9 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 			}
 		}
 
-		full_profile_struct2.buffer         = req.buffer;
-		full_profile_struct2.wipe_all		= req.wipe_all;
-		full_profile_struct2.run			= req.run;
-		full_profile_struct2.brake			= req.brake;
-		full_profile_struct2.run_slot		= req.run_slot;
-		full_profile_struct2.change_queue	= req.change_queue;
-		full_profile_struct2.newly_set		= true;
-		for (size_t i = 0; i < req.new_queue.size(); i++)
-		{
-			full_profile_struct2.new_queue.push_back(req.new_queue[i]);
-		}
-		ros::message_operations::Printer< ::talon_swerve_drive_controller::MotionProfileRequest_<std::allocator<void>> >::stream(std::cout, "", req);
-
-		ROS_WARN("serv points called");
-
-		full_profile_cmd full_profile_struct;
-		if (req.buffer)
-		{
-			ROS_INFO_STREAM("size in controller: " << req.profiles.size());
-			full_profile_struct.profiles.resize(req.profiles.size());
-			for (size_t i = 0; i < req.profiles.size(); i++)
-			{
-				full_profile_struct.profiles[i].drive_pos.resize(req.profiles[i].points.size());
-				full_profile_struct.profiles[i].drive_f.resize(req.profiles[i].points.size());
-				full_profile_struct.profiles[i].steer_pos.resize(req.profiles[i].points.size());
-				full_profile_struct.profiles[i].steer_f.resize(req.profiles[i].points.size());
-				full_profile_struct.profiles[i].hold.resize(req.profiles[i].points.size());
-				full_profile_struct.profiles[i].dt = req.profiles[i].dt;
-				full_profile_struct.profiles[i].slot = req.profiles[i].slot;
-				for (size_t k = 0; k < req.profiles[i].points.size(); k++)
-				{
-					for (size_t h = 0; h < req.profiles[i].points[k].hold.size(); h++)
-					{
-						full_profile_struct.profiles[i].hold[k].push_back(req.profiles[i].points[k].hold[h]);
-					}
-					full_profile_struct.profiles[i].drive_pos[k] = req.profiles[i].points[k].drive_pos;
-					full_profile_struct.profiles[i].drive_f[k] = req.profiles[i].points[k].drive_f;
-					full_profile_struct.profiles[i].steer_pos[k] = req.profiles[i].points[k].steer_pos;
-					full_profile_struct.profiles[i].steer_f[k] = req.profiles[i].points[k].steer_f;
-				}
-			}
-		}
-
-		full_profile_struct.buffer          = req.buffer;
+		full_profile_struct.buffer         = req.buffer;
 		full_profile_struct.wipe_all		= req.wipe_all;
-		full_profile_struct.run				= req.run;
+		full_profile_struct.run			= req.run;
 		full_profile_struct.brake			= req.brake;
 		full_profile_struct.run_slot		= req.run_slot;
 		full_profile_struct.change_queue	= req.change_queue;
@@ -1198,11 +1267,9 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 		{
 			full_profile_struct.new_queue.push_back(req.new_queue[i]);
 		}
+		ROS_WARN("serv points called");
 
 		full_profile_struct.Print();
-		ROS_INFO("---------------------------------------------");
-		full_profile_struct2.Print();
-
 
 		// TODO : use shared_ptr to prevent copies when queuing
 		// Guard access to full_profile_buffer with a lock
@@ -1254,30 +1321,6 @@ bool TalonSwerveDriveController::brakeService(std_srvs::Empty::Request &/*req*/,
 	else
 	{
 		ROS_ERROR_NAMED(name_, "brakeService can't accept new commands. Controller is not running.");
-		return false;
-	}
-}
-
-bool TalonSwerveDriveController::wheelPosService(talon_swerve_drive_controller::WheelPos::Request &/*req*/, talon_swerve_drive_controller::WheelPos::Response &res)
-{
-	if (isRunning())
-	{
-		std::array<double, WHEELCOUNT> steer_angles;
-		{
-			std::lock_guard<std::mutex> lock(steer_angles_mutex_);
-			steer_angles = steer_angles_;
-		}
-
-		for (int i = 0; i < WHEELCOUNT; i++)
-		{
-			res.positions.push_back(steer_angles[i]);
-		}
-
-		return true;
-	}
-	else
-	{
-		ROS_ERROR_NAMED(name_, "Can't distribute data. Controller is not running.");
 		return false;
 	}
 }

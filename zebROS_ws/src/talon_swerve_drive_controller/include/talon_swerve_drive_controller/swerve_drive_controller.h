@@ -48,11 +48,10 @@
 #include <talon_controllers/talon_controller_interface.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <talon_swerve_drive_controller/WheelPos.h>
 #include <talon_swerve_drive_controller/MotionProfile.h>
 #include <talon_swerve_drive_controller/speed_limiter.h>
 #include "talon_swerve_drive_controller/SetXY.h"
-#include <swerve_math/Swerve.h>
+#include <talon_swerve_drive_controller/Swerve.h>
 
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Bool.h>
@@ -229,7 +228,6 @@ class TalonSwerveDriveController
 		ros::ServiceServer change_center_of_rotation_serv_;
 		realtime_tools::RealtimeBuffer<Eigen::Vector2d> center_of_rotation_;
 		ros::ServiceServer brake_serv_;
-		ros::ServiceServer wheel_pos_serv_;
 		ros::ServiceServer dont_set_angle_mode_serv_;
 
 		std::array<std::array<hardware_interface::CustomProfilePoint, 2>, WHEELCOUNT> holder_points_;
@@ -301,11 +299,9 @@ class TalonSwerveDriveController
 		 * \param command Velocity command message (twist)
 		 */
 		void cmdVelCallback(const geometry_msgs::Twist &command);
-		void talonStatesCB(const talon_state_controller::TalonState &talon_state);
 		bool motionProfileService(talon_swerve_drive_controller::MotionProfile::Request &req, talon_swerve_drive_controller::MotionProfile::Response &res);
 		bool changeCenterOfRotationService(talon_swerve_drive_controller::SetXY::Request &req, talon_swerve_drive_controller::SetXY::Response &res);
 		bool brakeService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
-		bool wheelPosService(talon_swerve_drive_controller::WheelPos::Request &req, talon_swerve_drive_controller::WheelPos::Response &res);
 		bool dontSetAngleModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
 
 		/**

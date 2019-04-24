@@ -1,6 +1,3 @@
-
-# TODO - only for debugging
-talon_swerve_drive_controller/SwervePointSet[] profiles
 trajectory_msgs/JointTrajectory joint_trajectory
 bool[]  hold
 float64 dt

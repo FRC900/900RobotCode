@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
 	std_srvs
     nav_msgs
     geometry_msgs
-	swerve_math
     trajectory_msgs
     realtime_tools
     talon_interface
@@ -24,15 +23,11 @@ find_package(Eigen3 REQUIRED)
 
 add_message_files (
 	FILES
-	SwervePoint.msg
-	SwervePointSet.msg
 	)
 
 add_service_files (
   FILES
   MotionProfile.srv
-  #MotionProfilePoints.srv
-  WheelPos.srv
   SetXY.srv
 )
 
@@ -61,6 +56,9 @@ add_library(${PROJECT_NAME}
 	src/swerve_drive_controller.cpp 
 	src/odometry.cpp 
 	src/speed_limiter.cpp
+	src/900Math.cpp
+	src/SwerveMath.cpp
+	src/Swerve.cpp
 )
 
 add_dependencies(${PROJECT_NAME}

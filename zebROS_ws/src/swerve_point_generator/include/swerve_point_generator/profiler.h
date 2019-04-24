@@ -119,6 +119,7 @@ class swerve_profiler
 							  swerve_point_generator::GenerateSwerveProfile::Response &out_msg,
 							  const std::vector<double> &end_points, double t_shift, bool flip_dirc);
 		//swerve_point_generator::GenerateSwerveProfile::Response is part of ROS custom service data type
+		double getDT(void) const { return dt_; }
 
 	private:
 		//Gets all the information for the path_point struct

@@ -7,15 +7,11 @@ include ("../cmake_modules/CMakeOpt.cmake")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  cmake_modules
   roscpp
   std_msgs
-  swerve_math
   trajectory_msgs
   talon_swerve_drive_controller
   message_generation
-  actionlib
-  actionlib_msgs
   geometry_msgs
 )
 
@@ -28,9 +24,7 @@ add_message_files (
 
 add_service_files (
   FILES
-  FullGen.srv
   FullGenCoefs.srv
-  GenerateTrajectory.srv
   GenerateSwerveProfile.srv
 )
 
@@ -38,33 +32,22 @@ add_service_files (
 
 ## Generate services in the 'srv' folder
 
-## Generate actions in the 'action' folder
-add_action_files(
-  FILES
-  PathFollow.action
-)
-
 generate_messages(
   DEPENDENCIES
   std_msgs
   trajectory_msgs
   swerve_point_generator
   talon_swerve_drive_controller
-  actionlib_msgs
   geometry_msgs
-  actionlib
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 catkin_package(
   CATKIN_DEPENDS
-    cmake_modules
     std_msgs
 	message_runtime
 	talon_swerve_drive_controller
-	actionlib
-	actionlib_msgs
 	geometry_msgs
 	INCLUDE_DIRS include
 	#LIBRARIES ${PROJECT_NAME} trajectory_msgs
@@ -101,16 +84,6 @@ install(TARGETS point_gen
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-add_executable(path_follower src/path_follower_server.cpp)
-target_link_libraries(path_follower
-  ${catkin_LIBRARIES}
-)
-
-add_dependencies(path_follower
-  ${${PROJECT_NAME}_EXPORTED_TARGETS}
-  ${catkin_EXPORTED_TARGETS}
 )
 
 #install(DIRECTORY include/${PROJECT_NAME}/
