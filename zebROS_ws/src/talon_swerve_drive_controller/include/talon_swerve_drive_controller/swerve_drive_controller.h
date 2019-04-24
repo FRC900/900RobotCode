@@ -40,6 +40,7 @@
 
 #include <array>
 #include <atomic>
+#include <deque>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -52,7 +53,6 @@
 #include <talon_swerve_drive_controller/speed_limiter.h>
 #include "talon_swerve_drive_controller/SetXY.h"
 #include <swerve_math/Swerve.h>
-#include <boost/circular_buffer.hpp>
 
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Bool.h>
@@ -163,6 +163,23 @@ class TalonSwerveDriveController
 			int slot;
 
 			cmd_points() : dt(0.0), slot(0) {}
+			void Print(void) const
+			{
+				ROS_INFO_STREAM("dt : " << (int)dt);
+				ROS_INFO_STREAM("slot : " << (int)slot);
+				for (size_t i = 0; i < drive_pos.size(); i++)
+				{
+					ROS_INFO_STREAM("cmd_point[" << i << "]");
+					for (size_t j = 0; j < drive_pos[i].size(); j++)
+						ROS_INFO_STREAM("  drive_pos[" << j << "] = " << drive_pos[i][j]);
+					for (size_t j = 0; j < steer_pos[i].size(); j++)
+						ROS_INFO_STREAM("  steer_pos[" << j << "] = " << steer_pos[i][j]);
+					for (size_t j = 0; j < drive_f[i].size(); j++)
+						ROS_INFO_STREAM("  drive_f[" << j << "] = " << drive_f[i][j]);
+					for (size_t j = 0; j < steer_f[i].size(); j++)
+						ROS_INFO_STREAM("  steer_f[" << j << "] = " <<steer_f[i][j]);
+				}
+			}
 		};
 		struct full_profile_cmd
 		{
@@ -177,13 +194,31 @@ class TalonSwerveDriveController
 			bool newly_set;
 			int id_counter;
 			full_profile_cmd() : wipe_all(false), buffer(false), run(false), brake(false),  run_slot(0), change_queue(false), newly_set(false), id_counter(0) {}
+			void Print(void) const
+			{
+				for (const auto & p: profiles)
+					p.Print();
+				ROS_INFO_STREAM("wipe_all : " << (int)wipe_all);
+				ROS_INFO_STREAM("buffer : " << (int)buffer);
+				ROS_INFO_STREAM("run : " << (int)run);
+				ROS_INFO_STREAM("brake : " << (int)brake);
+				ROS_INFO_STREAM("run_slot : " << (int)run_slot);
+				ROS_INFO_STREAM("change_queue : " << (int)change_queue);
+				ROS_INFO_STREAM("newly_set : " << (int)newly_set);
+				ROS_INFO_STREAM("id_counter : " << (int)id_counter);
+				for (size_t i = 0; i < new_queue.size(); i++)
+					ROS_INFO_STREAM("new_queue[" << i << "] = " << new_queue[i]);
+			}
 		};
 
-		boost::circular_buffer<full_profile_cmd> full_profile_buffer_{10}; //likely more than needed
+		std::deque<full_profile_cmd> full_profile_buffer_;
 
 		// True if running cmd_vel, false if running profile
 		std::atomic<bool> cmd_vel_mode_;
 		std::atomic<bool> dont_set_angle_mode_;
+
+		std::mutex profile_mutex_;
+
 		//realtime_tools::RealtimeBuffer<bool> wipe_all_; //TODO, add this functionality
 		realtime_tools::RealtimeBuffer<Commands> command_;
 

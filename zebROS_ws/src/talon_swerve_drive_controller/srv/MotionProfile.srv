@@ -2,13 +2,15 @@
 # TODO - only for debugging
 talon_swerve_drive_controller/SwervePointSet[] profiles
 trajectory_msgs/JointTrajectory joint_trajectory
-bool[] hold
-bool wipe_all
-bool buffer
-bool run
-bool brake
-bool mode
-uint8 run_slot
-bool change_queue
+bool[]  hold
+float64 dt
+uint32  slot
+bool    wipe_all
+bool    buffer
+bool    run
+bool    brake
+bool    mode
+uint8   run_slot
+bool    change_queue
 uint8[] new_queue
 ---

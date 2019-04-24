@@ -14,9 +14,8 @@ int sign(double n)
 	}
 }
 
-double nextVelocity(double v, double vt, double &a, double am, double jm, double cr) 
+double nextVelocity(double v, double vt, double &a, double am, double jm, double cr)
 {
-	
 	double diffv = vt - v;
 	int signDiffV = sign(diffv);
 	int signA = sign(a);
@@ -36,11 +35,11 @@ double nextVelocity(double v, double vt, double &a, double am, double jm, double
 			a = (a -  signA * jm * cr);
 			finish = false;
 			//cout<<"return from peak accel"<<endl;
-		}										 
+		}
 	}
 	else
 	{
-		//upswing or flat	
+		//upswing or flat
 		a = (a + signDiffV * jm * cr);
 		if(abs(a) > am)
 		{
@@ -56,7 +55,5 @@ double nextVelocity(double v, double vt, double &a, double am, double jm, double
 	nV = v + a * cr;
 	if(finish) {a=0;} 
 	return nV;
-
-
 }
 #endif

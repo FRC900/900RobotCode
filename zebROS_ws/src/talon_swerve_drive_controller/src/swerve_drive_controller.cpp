@@ -625,12 +625,28 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 	//ROS_INFO_STREAM("mode: " << cmd_vel_mode_);
 
 	static bool set_profile_run = false;
-	//For this to be thread safe, the assumption is that the serv is called relatively infrequently
-	if (full_profile_buffer_.size() != 0)
+
+	size_t full_profile_buffer_size = 0;
+	full_profile_cmd cur_prof_cmd;
+
+	// Protect access to full_profile_buffer_
+	// with a mutex to enforce thread safety
+	{
+		std::unique_lock<std::mutex> l(profile_mutex_, std::try_to_lock);
+		if (l.owns_lock())
+		{
+			full_profile_buffer_size = full_profile_buffer_.size();
+			if (full_profile_buffer_size != 0)
+			{
+				full_profile_cmd cur_prof_cmd = full_profile_buffer_.front();
+				full_profile_buffer_.pop_front();
+			}
+		}
+	}
+
+	if (full_profile_buffer_size != 0)
 	{
 		//WHERE BE THIS MUTEX
-		full_profile_cmd cur_prof_cmd = full_profile_buffer_.front();
-		full_profile_buffer_.pop_front();
 		if (cur_prof_cmd.brake)
 		{
 			ROS_WARN("profile_reset");
@@ -1010,11 +1026,11 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 	ROS_INFO_STREAM("running motionProfileService");
 	if (isRunning())
 	{
-		ros::message_operations::Printer< ::talon_swerve_drive_controller::MotionProfileRequest_<std::allocator<void>> >::stream(std::cout, "", req);
+		//ros::message_operations::Printer< ::talon_swerve_drive_controller::MotionProfileRequest_<std::allocator<void>> >::stream(std::cout, "", req);
 		ROS_INFO("------------------------------------");
 		// Generate MotionProfilePoints (testing)
 		// fill in full_profile_cmd
-		// lock 
+		// lock
 		// push to full_profile_buf
 		// unlock
 		std::array<double, WHEELCOUNT> steer_angles;
@@ -1036,91 +1052,109 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 			ROS_ERROR("Need more than 1 point for a motion profile");
 			return false;
 		}
-		const double defined_dt = (req.joint_trajectory.points[1].time_from_start - req.joint_trajectory.points[0].time_from_start).toSec();
-
-		req.profiles.clear();
-		req.profiles.resize(1);
-		auto &rr = req.profiles[0].points;
-		rr.resize(point_count - 1);
-
-		bool holding = false;
-		std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions;
-		std::array<Eigen::Vector2d, WHEELCOUNT> angles_velocities;
-		std::array<double,WHEELCOUNT> prev_drive_pos;
-		for (size_t k = 0; k < WHEELCOUNT; k++)
+		const double defined_dt = (points[1].time_from_start - points[0].time_from_start).toSec();
+		full_profile_cmd full_profile_struct2;
+		if (req.buffer)
 		{
-			prev_drive_pos[k] = 0;
-		}
-		for (size_t i = 0; i < point_count - 1; i++)
-		{
-			ROS_INFO_STREAM("pos_0:" << points[i].positions[0] << " pos_1:" << points[i].positions[1] <<" pos_2:" <<  points[i].positions[2] << " counts: " << point_count << " i: "<< i << " wheels: " << WHEELCOUNT);
-			ROS_INFO_STREAM("pos_0:" << points[i+1].positions[0] << " pos_1:" << points[i+1].positions[1] <<" pos_2:" <<  points[i+1].positions[2] << " counts: " << point_count << " i: "<< i << " wheels: " << WHEELCOUNT);
+			full_profile_struct2.profiles.resize(1);
+			auto &fps = full_profile_struct2.profiles[0];
 
-			// When transitioning from not-hold to hold, calculate
-			// the necessary angles once. Reuse them until hold is released
-			// This will keep the wheels pointed in the correct direction
-			// the entire duration of the requested hold duration
-			if (!(holding && req.hold[i]))
-			{
-				angles_positions =
-					swerveC_->motorOutputs({points[i + 1].positions[0] - points[i].positions[0],
-											points[i + 1].positions[1] - points[i].positions[1]},
-										   points[i + 1].positions[2] - points[i].positions[2],
-										   points[i + 1].positions[2],
-										   steer_angles,
-										   false);
+			fps.drive_pos.resize(point_count - 1);
+			fps.drive_f.resize(point_count - 1);
+			fps.steer_pos.resize(point_count - 1);
+			fps.steer_f.resize(point_count - 1);
+			fps.hold.resize(point_count - 1);
+			fps.dt = req.dt;
+			fps.slot = req.slot;
 
-
-				angles_velocities =
-					swerveC_->motorOutputs({points[i + 1].velocities[0], points[i + 1].velocities[1]},
-											points[i + 1].velocities[2],
-											points[i + 1].positions[2],
-											steer_angles,
-											false);
-
-				for (size_t k = 0; (i > 0) && (k < WHEELCOUNT); k++)
-				{
-					prev_drive_pos[k] = rr[i - 1].drive_pos[k];
-				}
-			}
-			// Don't drive while hold is active
-			for (size_t k = 0; req.hold[i] && (k < WHEELCOUNT); k++)
-			{
-				angles_positions[k][0] = 0;
-			}
-
-			holding = req.hold[i];
-
+			bool holding = false;
+			std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions;
+			std::array<Eigen::Vector2d, WHEELCOUNT> angles_velocities;
+			std::array<double,WHEELCOUNT> prev_drive_pos;
 			for (size_t k = 0; k < WHEELCOUNT; k++)
 			{
-				rr[i].hold.push_back(req.hold[i]);
-				ROS_INFO_STREAM("a_p : " << angles_positions[k][0] << " " << angles_positions[k][1] << "hold: " << (bool)req.hold[i]);
-				rr[i].drive_pos.push_back(angles_positions[k][0] + prev_drive_pos[k]);
-				rr[i].steer_pos.push_back(angles_positions[k][1]);
+				prev_drive_pos[k] = 0;
+			}
+			for (size_t i = 0; i < point_count - 1; i++)
+			{
+				//ROS_INFO_STREAM("pos_0:" << points[i].positions[0] << " pos_1:" << points[i].positions[1] <<" pos_2:" <<  points[i].positions[2] << " counts: " << point_count << " i: "<< i << " wheels: " << WHEELCOUNT);
+				//ROS_INFO_STREAM("pos_0:" << points[i+1].positions[0] << " pos_1:" << points[i+1].positions[1] <<" pos_2:" <<  points[i+1].positions[2] << " counts: " << point_count << " i: "<< i << " wheels: " << WHEELCOUNT);
 
-				if ((i > point_count - 2) || req.hold[i])
+				// When transitioning from not-hold to hold, calculate
+				// the necessary angles once. Reuse them until hold is released
+				// This will keep the wheels pointed in the correct direction
+				// the entire duration of the requested hold duration
+				if (!(holding && req.hold[i]))
 				{
-					//ROS_INFO_STREAM("final pos" << angles_positions[k][0] + rr[i + n - 1 + prev_point_count].drive_pos[k]);
-					//ROS_INFO_STREAM("vel sum" << vel_sum[k]);
-					rr[i].drive_f.push_back(0);
-					rr[i].steer_f.push_back(0);
+					angles_positions =
+						swerveC_->motorOutputs({points[i + 1].positions[0] - points[i].positions[0],
+								points[i + 1].positions[1] - points[i].positions[1]},
+								points[i + 1].positions[2] - points[i].positions[2],
+								points[i + 1].positions[2],
+								steer_angles,
+								false);
+
+
+					angles_velocities =
+						swerveC_->motorOutputs({points[i + 1].velocities[0], points[i + 1].velocities[1]},
+								points[i + 1].velocities[2],
+								points[i + 1].positions[2],
+								steer_angles,
+								false);
+
+					for (size_t k = 0; (i > 0) && (k < WHEELCOUNT); k++)
+					{
+						prev_drive_pos[k] = fps.drive_pos[i - 1][k];
+					}
 				}
-				else
+				// Don't drive while hold is active
+				for (size_t k = 0; req.hold[i] && (k < WHEELCOUNT); k++)
 				{
-					int sign_v = (angles_velocities[k][0] < 0) ? -1 : ((angles_velocities[k][0] > 0) ? 1 : 0);
-					rr[i].drive_f.push_back(angles_velocities[k][0] * f_v_ + sign_v * f_s_ + f_a_ /* / ( -fabs(angles_velocities[k][0]) / (model.maxSpeed * 1.2) + 1.05 ) */ * (angles_velocities[k][0] - prev_vels[k]) / defined_dt);
-					prev_vels[k] = angles_velocities[k][0];
-
-					const double prev_steer_pos = (i > 0) ? rr[i - 1].steer_pos[k] : steer_angles[k];
-					const double steer_v = (angles_positions[k][1] - prev_steer_pos) / defined_dt;
-					const int sign_steer_v = (steer_v < 0) ? -1 : ((steer_v > 0) ? 1 : 0);
-					rr[i].steer_f.push_back(steer_v * f_s_v_ + sign_steer_v * f_s_s_);
+					angles_positions[k][0] = 0;
 				}
 
-				steer_angles[k] = angles_positions[k][1]; // update for next iteration of the loop
+				holding = req.hold[i];
+
+				for (size_t k = 0; k < WHEELCOUNT; k++)
+				{
+					fps.hold[i].push_back(req.hold[i]);
+					ROS_INFO_STREAM("a_p : " << angles_positions[k][0] << " " << angles_positions[k][1] << "hold: " << (bool)req.hold[i]);
+					fps.drive_pos[i].push_back(angles_positions[k][0] + prev_drive_pos[k]);
+					fps.steer_pos[i].push_back(angles_positions[k][1]);
+
+					if ((i > point_count - 2) || req.hold[i])
+					{
+						fps.drive_f[i].push_back(0);
+						fps.steer_f[i].push_back(0);
+					}
+					else
+					{
+						int sign_v = (angles_velocities[k][0] < 0) ? -1 : ((angles_velocities[k][0] > 0) ? 1 : 0);
+						fps.drive_f[i].push_back(angles_velocities[k][0] * f_v_ + sign_v * f_s_ + f_a_ /* / ( -fabs(angles_velocities[k][0]) / (model.maxSpeed * 1.2) + 1.05 ) */ * (angles_velocities[k][0] - prev_vels[k]) / defined_dt);
+						prev_vels[k] = angles_velocities[k][0];
+
+						const double prev_steer_pos = (i > 0) ? fps.steer_pos[i - 1][k] : steer_angles[k];
+						const double steer_v = (angles_positions[k][1] - prev_steer_pos) / defined_dt;
+						const int sign_steer_v = (steer_v < 0) ? -1 : ((steer_v > 0) ? 1 : 0);
+						fps.steer_f[i].push_back(steer_v * f_s_v_ + sign_steer_v * f_s_s_);
+					}
+
+					steer_angles[k] = angles_positions[k][1]; // update for next iteration of the loop
+				}
 			}
 		}
 
+		full_profile_struct2.buffer         = req.buffer;
+		full_profile_struct2.wipe_all		= req.wipe_all;
+		full_profile_struct2.run			= req.run;
+		full_profile_struct2.brake			= req.brake;
+		full_profile_struct2.run_slot		= req.run_slot;
+		full_profile_struct2.change_queue	= req.change_queue;
+		full_profile_struct2.newly_set		= true;
+		for (size_t i = 0; i < req.new_queue.size(); i++)
+		{
+			full_profile_struct2.new_queue.push_back(req.new_queue[i]);
+		}
 		ros::message_operations::Printer< ::talon_swerve_drive_controller::MotionProfileRequest_<std::allocator<void>> >::stream(std::cout, "", req);
 
 		ROS_WARN("serv points called");
@@ -1159,13 +1193,20 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 		full_profile_struct.brake			= req.brake;
 		full_profile_struct.run_slot		= req.run_slot;
 		full_profile_struct.change_queue	= req.change_queue;
+		full_profile_struct.newly_set		= true;
 		for (size_t i = 0; i < req.new_queue.size(); i++)
 		{
 			full_profile_struct.new_queue.push_back(req.new_queue[i]);
 		}
-		full_profile_struct.newly_set		= true;
 
-		//mutex?
+		full_profile_struct.Print();
+		ROS_INFO("---------------------------------------------");
+		full_profile_struct2.Print();
+
+
+		// TODO : use shared_ptr to prevent copies when queuing
+		// Guard access to full_profile_buffer with a lock
+		std::lock_guard<std::mutex> l(profile_mutex_);
 		full_profile_buffer_.push_back(full_profile_struct);
 
 		return true;

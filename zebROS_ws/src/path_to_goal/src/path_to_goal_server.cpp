@@ -80,12 +80,16 @@ bool runTrajectory(const swerve_point_generator::FullGenCoefs::Response &traj)
     talon_swerve_drive_controller::MotionProfile swerve_control_srv;
     swerve_control_srv.request.profiles.resize(1);
     swerve_control_srv.request.profiles[0].points = traj.points; // TODO -only for debug
+    swerve_control_srv.request.profiles[0].dt = traj.dt;
+    swerve_control_srv.request.profiles[0].slot = 0;
+
     swerve_control_srv.request.joint_trajectory = traj.joint_trajectory;
     swerve_control_srv.request.hold = traj.hold;
-    swerve_control_srv.request.profiles[0].dt = traj.dt;
+    swerve_control_srv.request.dt = traj.dt;
+    swerve_control_srv.request.slot = 0;
+
     swerve_control_srv.request.buffer = true;
     swerve_control_srv.request.run = true;
-    swerve_control_srv.request.profiles[0].slot = 0;
 	swerve_control_srv.request.wipe_all = true;
 	swerve_control_srv.request.brake = false;
 	swerve_control_srv.request.run_slot = 0;

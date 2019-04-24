@@ -1,15 +1,5 @@
 #include <math.h>
 #include "swerve_math/900Math.h"
-#include <ros/ros.h>
-
-// KCJ - if you're returning more than 1 thing, probably best to
-// return them both via reference.
-// For more fun, though, create a type which has a double plus a bool
-// in it.  Return that type.
-// Maybe use it for both of the leastDistant
-// calls - set as is here and unconditionally set to false in the other
-// function below?  Code that uses it can query the reverse bool var
-// without worring about which function it called, maybe?
 
 double leastDistantAngleWithinHalfPi(double currentAngle, double targetAngle, bool &reverse)
 {
@@ -20,9 +10,9 @@ double leastDistantAngleWithinHalfPi(double currentAngle, double targetAngle, bo
 	const double withinPi = (fabs(normalizedDiff) < M_PI) ? normalizedDiff : (normalizedDiff - copysign(2. * M_PI, normalizedDiff));
 	double withinHalfPi;
 
-	if (fabs(withinPi) < (M_PI / 2.) )
+	if (fabs(withinPi) < (M_PI / 2.))
 	{
-		withinHalfPi =  withinPi;
+		withinHalfPi = withinPi;
 		reverse = false;
 	}
 	else
@@ -42,13 +32,6 @@ double leastDistantAngleWithinPi(double currentAngle, double targetAngle)
 
 double normalizeAngle(double angle) //normalizes between -M_PI and M_PI
 {
-	return angle - floor((angle + M_PI) / (2. * M_PI)) * 2.0 * M_PI;
+	return angle - floor((angle + M_PI) / (2. * M_PI)) * 2. * M_PI;
 }
 
-#if 0
-double coerce(double value, double lowerBound, double upperBound)
-{
-	return (value < lowerBound) ? lowerBound : (value > upperBound) ? upperBound : value;
-}
-
-#endif
