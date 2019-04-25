@@ -750,7 +750,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 			full_profile_buffer_size = full_profile_buffer_.size();
 			if (full_profile_buffer_size != 0)
 			{
-				full_profile_cmd cur_prof_cmd = full_profile_buffer_.front();
+				cur_prof_cmd = full_profile_buffer_.front();
 				full_profile_buffer_.pop_front();
 			}
 		}

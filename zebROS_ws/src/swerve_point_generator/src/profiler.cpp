@@ -679,10 +679,10 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 
 			//Threshold again
 			ROS_INFO_STREAM_FILTER(&message_filter_, "solve_for_next_V, after adding accel current_v:" << current_v << " v_general_max:" << v_general_max << " v_curve_max:" << v_curve_max << " v_curve_max_2:" << v_curve_max_2);
-			const bool b1 = coerce(current_v, -v_curve_max, v_curve_max);
-			const bool b2 = coerce(current_v, -v_curve_max_2, v_curve_max_2);
-			const bool b3 = coerce(current_v, -v_general_max, v_general_max);
-			if (b1 || b2 || b3)
+			const bool b11 = coerce(current_v, -v_curve_max, v_curve_max);
+			const bool b12 = coerce(current_v, -v_curve_max_2, v_curve_max_2);
+			const bool b13 = coerce(current_v, -v_general_max, v_general_max);
+			if (b11 || b12 || b13)
 			{
 				accelerations.clear();
 			}
