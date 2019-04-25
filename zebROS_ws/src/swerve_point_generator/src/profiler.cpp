@@ -6,20 +6,17 @@
 namespace swerve_profile
 {
 //Constructor
-swerve_profiler::swerve_profiler(double max_wheel_dist, double max_wheel_mid_accel,
-								 double max_wheel_vel, double max_steering_accel,
-								 double max_steering_vel, double dt,
-								 double ang_accel_conv, double max_wheel_brake_accel,
+swerve_profiler::swerve_profiler(double max_wheel_dist, double max_wheel_vel,
+								 double max_wheel_mid_accel, double max_wheel_brake_accel,
+								 double ang_accel_conv, double dt,
 								 bool debug)
 	:
 	max_wheel_dist_(max_wheel_dist),
-	max_wheel_mid_accel_(max_wheel_mid_accel),
 	max_wheel_vel_(max_wheel_vel),
-	max_steering_accel_(max_steering_accel),
-	max_steering_vel_(max_steering_vel),
-	dt_(dt),
-	ang_accel_conv_(ang_accel_conv),
+	max_wheel_mid_accel_(max_wheel_mid_accel),
 	max_wheel_brake_accel_(max_wheel_brake_accel),
+	ang_accel_conv_(ang_accel_conv),
+	dt_(dt),
 	message_filter_(debug)
 {
 	ROS_INFO_STREAM("max_wheel_dist_ = " << max_wheel_dist_ << " ang_accel_conv_ = " << ang_accel_conv_);
@@ -316,7 +313,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	if (out_msg.points.size() == 0)
 		out_msg.points.resize(155 / dt_); //For full auto :)  TODO: optimize
 	curr_v = initial_v;
-	int starting_point = positions.size() - 1;
+	size_t starting_point = positions.size() - 1;
 	ros::Duration now(0);
 	ros::Duration period(dt_);
 	//Same as back pass, but now forward
@@ -359,9 +356,9 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 			return false;
 		}
 		//ROS_ERROR_STREAM_FILTER(&message_filter_, "2: " << curr_v);
-		for (int k = 0; k < positions.size(); k++)
+		for (size_t k = 0; k < positions.size(); k++)
 		{
-			if (starting_point - k < 0 || positions[starting_point - k] > current_spline_position)
+			if (starting_point < k || positions[starting_point - k] > current_spline_position)
 			{
 				starting_point -= k;
 				break;
@@ -370,7 +367,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		}
 		//Make sure starting point doesn't go less than 1
 		// TODO : why? shouldn't it be less than zero?
-		starting_point = std::max(1, starting_point);
+		starting_point = std::max(1UL, starting_point);
 		//coerce(starting_point, 1, 1000000000000);
 
 		//Linear interpolation to get vel cap

@@ -130,7 +130,6 @@ class TalonSwerveDriveController
 		/// Odometry related:
 		ros::Duration publish_period_;
 		ros::Time last_state_publish_time_;
-		bool open_loop_;
 
 		std::shared_ptr<swerve> swerveC_;
 
@@ -273,7 +272,7 @@ class TalonSwerveDriveController
 		std::string odom_frame_id_;
 
 		/// Whether to publish odometry to tf or not:
-		bool enable_odom_tf_;
+		//bool enable_odom_tf_;
 
 		/// Number of wheel joints:
 		size_t wheel_joints_size_;
@@ -283,7 +282,7 @@ class TalonSwerveDriveController
 		//Commands last0_cmd_;
 
 		/// Publish limited velocity:
-		bool publish_cmd_;
+		//bool publish_cmd_;
 
 		/**
 		 * \brief Brakes the wheels, i.e. sets the velocity to 0

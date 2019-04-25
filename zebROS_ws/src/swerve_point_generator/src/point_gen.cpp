@@ -201,7 +201,7 @@ int main(int argc, char **argv)
 	//ROS_INFO_STREAM("model max speed: " << model.maxSpeed << " radius: " << model.wheelRadius);
 
 	constexpr double defined_dt = .02;
-	profile_gen = std::make_shared<swerve_profile::swerve_profiler>(hypot(wheel_coords[0][0], wheel_coords[0][1]), max_accel, max_speed, 1, 1, defined_dt, ang_accel_conv, max_brake_accel); //Fix last val
+	profile_gen = std::make_shared<swerve_profile::swerve_profiler>(hypot(wheel_coords[0][0], wheel_coords[0][1]), max_speed, max_accel, max_brake_accel, defined_dt, ang_accel_conv); //Fix last val
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";

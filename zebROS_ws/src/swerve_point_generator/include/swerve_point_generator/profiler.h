@@ -109,7 +109,7 @@ class swerve_profiler
 	public:
 		//Constructor saves swerve characteristics and dt
 		swerve_profiler(double max_wheel_dist, double max_wheel_mid_accel, double max_wheel_vel,
-						double max_steering_accel, double max_steering_vel, double dt, double ang_accel_conv,
+						double dt, double ang_accel_conv,
 						double max_wheel_brake_accel, bool debug = true);
 
 		//Generates full profile. Has some spline manipulation options
@@ -162,16 +162,14 @@ class swerve_profiler
 
 		//Saved information from constructor:
 		double max_wheel_dist_; //From center of rotation
-		double max_wheel_mid_accel_; //a_max for speeding up
 		double max_wheel_vel_; //v_max
-		double max_steering_accel_; //unused
-		double max_steering_vel_; //unused
+		double max_wheel_mid_accel_; //a_max for speeding up
+		double max_wheel_brake_accel_; //a_max for slowing down
+		double ang_accel_conv_; //c_a
 		double dt_;
 		double t_shift_; //Spline parameter shift
 		bool flip_dirc_; //Spline reverse
 		double t_total_; //Total time
-		double ang_accel_conv_; //c_a
-		double max_wheel_brake_accel_; //a_max for slowing down
 
 		SwerveMessageFilter message_filter_;
 };

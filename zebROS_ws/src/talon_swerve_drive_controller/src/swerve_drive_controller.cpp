@@ -175,20 +175,12 @@ namespace talon_swerve_drive_controller
 {
 
 TalonSwerveDriveController::TalonSwerveDriveController() :
-	open_loop_(false),
 	wheel_radius_(0.0),
 	cmd_vel_timeout_(0.5), //Change to 5.0 for auto path planning testing
 	allow_multiple_cmd_vel_publishers_(true),
 	base_frame_id_("base_link"),
 	odom_frame_id_("odom"),
-	enable_odom_tf_(true),
-	wheel_joints_size_(0),
-	publish_cmd_(false)
-
-	//model_({0, 0, 0, 0, 0, 0}),
-	//units_({1,1,1,1,1,1}),
-	//driveRatios_({0, 0, 0}),
-	//units_({0, 0, 0, 0})
+	wheel_joints_size_(0)
 {
 }
 
@@ -758,7 +750,6 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 
 	if (full_profile_buffer_size != 0)
 	{
-		//WHERE BE THIS MUTEX
 		if (cur_prof_cmd.brake)
 		{
 			ROS_WARN("profile_reset");
