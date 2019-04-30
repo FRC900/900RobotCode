@@ -71,7 +71,7 @@ rm -rf ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/kinetic devel_isolate
 # Add newly built cross-libs to git repo so they are
 # used for subsequent Rio imagings
 cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi
-rm roscode_roborio_2018.tar.bz2
+rm roscore_roborio_2018.tar.bz2
 tar -cjf ~/2019RobotCode/roscore_roborio_2018.tar.bz2 opt/ros/kinetic
 
 # I needed to add "-DYAML_CPP_INCLUDE_DIRS=/$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include
