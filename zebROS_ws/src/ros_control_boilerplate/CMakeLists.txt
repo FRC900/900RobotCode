@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.8.3)
 project(ros_control_boilerplate)
 
 include ("../cmake_modules/CMakeOpt.cmake")
-add_definitions(--std=c++14)
 
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules

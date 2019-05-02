@@ -183,3 +183,11 @@ install_package($base_uri . "openssl-engines_1.0.2k-r0.13_cortexa9-vfpv3.ipk");
 install_package($base_uri . "openssl-misc_1.0.2k-r0.13_cortexa9-vfpv3.ipk");
 install_package($base_uri . "openssl-staticdev_1.0.2k-r0.13_cortexa9-vfpv3.ipk");
 install_package($base_uri . "openssl_1.0.2k-r0.13_cortexa9-vfpv3.ipk");
+
+# Various gpg stuff from rosbag
+install_package($base_uri . "gpgme-dev_1.8.0-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "gpgme_1.8.0-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libgpg-error-dev_1.26-r1.6_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libgpg-error0_1.26-r1.6_cortexa9-vfpv3.ipk");
+linstall_package($base_uri . "ibassuan-dev_2.4.3-r0.2_cortexa9-vfpv3.ipk");
+linstall_package($base_uri . "ibassuan0_2.4.3-r0.2_cortexa9-vfpv3.ipk");

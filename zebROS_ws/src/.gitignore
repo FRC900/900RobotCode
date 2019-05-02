@@ -12,4 +12,7 @@ rospy_message_converter
 ydlidar
 sick_tim
 teraranger
+teraranger_array
+teraranger_array_converter
+teraranger_description
 realsense
