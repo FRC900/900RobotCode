@@ -149,7 +149,7 @@ if [ "$jetson" = true ] ; then
 	#find /etc/systemd/system -name 'nv-l4t-usb-device-mode*' -delete
 
 	# Set up ssh host config (add port 5801) 
-	sudo sed "s/Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && sudo mv sshd_config /etc/ssh
+	sudo sed "s/#Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && sudo mv sshd_config /etc/ssh
 	
 	# and keys for 
 	# connections to Rio
@@ -175,32 +175,57 @@ if [ "$jetson" = true ] ; then
 	# Not needed unless Jetpack is updated with a new kernel version and modules
 	# for a given kernel version aren't already built
 	#
+	# This is a PR into the jetsonhacks repo of the same name, will like be
+	# gone the next time anyone looks for it
+	# Also, this says Xavier but it really seems to mean Jetpack 4.x, in the
+	# case of this particular PR, 4.2. Which is what we're using for the TX2
+	# systems as well.
+	cd
+	git clone https://github.com/klapstoelpiloot/buildLibrealsense2Xavier.git 
 	# Note - need to switch back to the default linker to build the kernel image
-	# cd ~
-	# wget -N https://developer.download.nvidia.com/embedded/L4T/r28_Release_v2.1/public_sources.tbz2
-	# tar -xf public_sources.tbz2 public_release/kernel_src.tbz2
-	# tar -xf public_release/kernel_src.tbz2
-	# cd ..
-	# cd ~/kernel/kernel-4.4
-	# zcat /proc/config.gz > .config
-	# echo "CONFIG_USB_ACM=m" >> .config
-	# echo "CONFIG_USB_SERIAL_CP210X=m" >> .config
-	# echo "CONFIG_CAN_GS_USB=m" >> .config
-	# echo "CONFIG_JOYSTICK_XPAD=m" >> .config
-	## Apply realsense patches to modules
-	# patch -p1 < ~/realsense_src/librealsense-2.19.2/scripts/realsense-camera-formats_ubuntu-xenial-master.patch 
-	# patch -p1 < ~/realsense_src/librealsense-2.19.2/scripts/realsense-metadata-ubuntu-xenial-master.patch
-	# patch -p1 < ~/realsense_src/librealsense-2.19.2/scripts/realsense-hid-ubuntu-xenial-master.patch
-	# patch -p1 < ~/realsense_src/librealsense-2.19.2/scripts/realsense-powerlinefrequency-control-fix.patch
-	# bash scripts/config --file .config --enable IIO_BUFFER --enable IIO_KFIFO_BUF --module IIO_TRIGGERED_BUFFER --enable IIO_TRIGGER --set-val IIO_CONSUMERS_PER_TRIGGER 2 --module HID_SENSOR_IIO_COMMON --module HID_SENSOR_IIO_TRIGGER --module HID_SENSOR_HUB --module HID_SENSOR_ACCEL_3D --module HID_SENSOR_GYRO_3D --module USB_ACM --module CAN_GS_USB --module JOYSTICK_XPAD
+	cd
+	wget https://developer.nvidia.com/embedded/dlc/l4t-sources-32-1-JAX-TX2 -O l4t-sources-32-1-JAX-TX2.tbz2
+	tar -xf l4t-sources-32-1-JAX-TX2.tbz2 public_sources/kernel_src.tbz2
+	tar -xf public_sources/kernel_src.tbz2
+	cd ..
+	cd ~/kernel/kernel-4.4
+
+	## Apply realsense patches to modules - xenial seems to work even on bionic?
+	patch -p1 < ~/buildLibrealsense2Xavier/patches/realsense-camera-formats_ubuntu-bionic-Xavier-4.9.140.patch 
+	patch -p1 < ~/buildLibrealsense2Xavier/patches/realsense-metadata-ubuntu-bionic-Xavier-4.9.140.patch
+	patch -p1 < ~/buildLibrealsense2Xavier/patches/realsense-hid-ubuntu-bionic-Xavier-4.9.140.patch
+	patch -p1 < ~/librealsense-2.21.0/scripts/realsense-powerlinefrequency-control-fix.patch
+	# These are for the librealsense code, but don't actually seem to be used
+	#patch -p1 < ~/buildLibrealsense2Xavier/patches/model-views.patch
+	#patch -p1 < ~/buildLibrealsense2Xavier/patches/incomplete-frame.patch
+	rm -rf ~/buildLibrealsense2Xavier
+
+	# turn on various config settings needed for USB tty, realsense, nvme, etc
+	zcat /proc/config.gz > .config
+	bash scripts/config --file .config \
+	   	--set-str LOCALVERSION -tegra \
+		--enable IIO_BUFFER \
+		--enable IIO_KFIFO_BUF  \
+		--module IIO_TRIGGERED_BUFFER  \
+		--enable IIO_TRIGGER  \
+		--set-val IIO_CONSUMERS_PER_TRIGGER 2  \
+		--module HID_SENSOR_IIO_COMMON  \
+		--module HID_SENSOR_IIO_TRIGGER  \
+		--module HID_SENSOR_HUB  \
+		--module HID_SENSOR_ACCEL_3D  \
+		--module HID_SENSOR_GYRO_3D  \
+		--module USB_ACM  \
+		--module CAN_GS_USB  \
+		--module JOYSTICK_XPAD  \
+		--enable CONFIG_BLK_DEV_NVME
 	# 
-	# make -j6 clean
-	# make -j6 prepare
-	# make -j6 modules_prepare
-    # make -j6 Image
-	# sudo cp arch/arm64/boot/Image boot/Image
-    # make -j6 modules
-	# sudo make -j6 modules_install
+	make -j6 clean
+	make -j6 prepare
+	make -j6 modules_prepare
+    make -j6 Image zImage
+    make -j6 modules
+	sudo make -j6 modules_install
+
 	# make -j6 M=drivers/usb/class
 	# make -j6 M=drivers/usb/serial
 	# make -j6 M=drivers/net/can
