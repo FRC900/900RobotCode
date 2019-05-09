@@ -1,4 +1,5 @@
 #include "Utilities.hpp"
+#include <numeric>
 using namespace std;
 
 namespace zv_utils {
