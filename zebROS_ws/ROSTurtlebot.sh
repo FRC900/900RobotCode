@@ -1,6 +1,6 @@
 # Setup ROS for Turtlebot Development
 
-source /opt/ros/kinetic/setup.bash
+source /opt/ros/melodic/setup.bash
 source ~/2019RobotCode/devel/setup.bash
 export ROS_MASTER_URI=http://10.0.0.120:11311
 

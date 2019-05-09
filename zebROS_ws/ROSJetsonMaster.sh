@@ -4,13 +4,13 @@
 if [ -f /.dockerenv ] ; then
     # Docker-specific configuration
     echo "Sourcing Docker environment"
-    source /opt/ros/kinetic/setup.bash
+    source /opt/ros/melodic/setup.bash
     source /home/ubuntu/2019RobotCode/zebROS_ws/devel/setup.bash
     export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 8`
 elif [ -f /home/ubuntu/2019RobotCode/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Jetson / native Linux environment"
-    source /opt/ros/kinetic/setup.bash
+    source /opt/ros/melodic/setup.bash
     source /home/ubuntu/2019RobotCode/zebROS_ws/devel/setup.bash
     #export ROS_IP=10.9.0.8
     export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 6`
@@ -33,7 +33,7 @@ elif [ -f /home/admin/rio_bashrc.sh ] ; then
     swapon /dev/sda5
 else
     echo "Unknown environment! Trying to proceed anyway using local environment."
-    source /opt/ros/kinetic/setup.bash
+    source /opt/ros/melodic/setup.bash
     source $HOME/2019RobotCode/zebROS_ws/devel/setup.bash
     export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 6`
 fi
