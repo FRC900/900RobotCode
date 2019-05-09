@@ -55,7 +55,7 @@ bool ZMSOut::openSerializeOutput(const char *fileName)
 {
 	deleteOutputPointers();
 	// First create an ofstream to write to
-	serializeOut_ = new ofstream(fileName, ios::out | ios::binary);
+	serializeOut_ = new std::ofstream(fileName, ios::out | ios::binary);
 	if (!serializeOut_ || !serializeOut_->is_open())
 	{
 		cerr << "Could not open ofstream(" << fileName << ")" << endl;

@@ -13,7 +13,7 @@
 
 #include <boost/config.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/serialization/pfto.hpp>
+//#include <boost/serialization/pfto.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>

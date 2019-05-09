@@ -153,14 +153,13 @@ protected:
     typedef boost::archive::detail::common_iarchive<portable_binary_iarchive>
         detail_common_iarchive;
     template<class T>
-    void load_override(T & t, BOOST_PFTO int){
-        this->detail_common_iarchive::load_override(t, 0);
+    void load_override(T & t){
+        this->detail_common_iarchive::load_override(t);
     }
-    void load_override(boost::archive::class_name_type & t, int);
+    void load_override(boost::archive::class_name_type & t);
     // binary files don't include the optional information
     void load_override(
-        boost::archive::class_id_optional_type & /* t */,
-        int
+        boost::archive::class_id_optional_type & /* t */
     ){}
 
     void init(unsigned int flags);
