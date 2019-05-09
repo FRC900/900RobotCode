@@ -37,7 +37,4 @@ top -b > /mnt/900_2/$(date +%Y%m%d%H%M%S)_top_log.txt
 
 v4l2-ctl -d `find /dev/v4l/by-id/ -name \*Webcam_C9\*` -c exposure_auto=1,exposure_absolute=20,brightness=5
 
-nvpmodel -m 0
-/home/ubuntu/jetson_clocks.sh
 /home/ubuntu/2019RobotCode/jetson_setup/clocks.sh &
-

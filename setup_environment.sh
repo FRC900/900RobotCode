@@ -306,7 +306,7 @@ sudo cp ~/2019RobotCode/calibration_files/*.conf /usr/local/zed/settings
 sudo chmod 644 /usr/local/zed/settings/*
 
 cp ~/2019RobotCode/.vimrc ~/2019RobotCode/.gvimrc ~
-sudo cp ~/2019RobotCode/kjaget.vim /usr/share/vim/vim74/colors
+sudo cp ~/2019RobotCode/kjaget.vim /usr/share/vim/vim80/colors
 
 git config --global user.email "progammers@team900.org"
 git config --global user.name "Team900 Jetson TX2"
