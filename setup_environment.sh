@@ -146,7 +146,11 @@ if [ "$jetson" = true ] ; then
 		# This shouldn't be the least bit dangerous
 		#sudo rm /etc/modprobe.d/blacklist-mttcan.conf 
 	fi
-	#find /etc/systemd/system -name 'nv-l4t-usb-device-mode*' -delete
+
+	# Disable l4tbridge - https://devtalk.nvidia.com/default/topic/1042511/is-it-safe-to-remove-l4tbr0-bridge-network-on-jetson-xavier-/
+	# sudo rm /etc/systemd/system/nv-l4t-usb-device-mode.sh /etc/systemd/system/multi-user.target.wants/nv-l4t-usb-device-mode.service
+	sudo systemctl disable nv-l4t-usb-device-mode.service
+	sudo systemctl stop nv-l4t-usb-device-mode.service
 
 	# Set up ssh host config (add port 5801) 
 	sudo sed "s/#Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && sudo mv sshd_config /etc/ssh
@@ -315,4 +319,4 @@ git config --global user.name "Team900 Jetson TX2"
 sudo update-alternatives --install "/usr/bin/ld" "ld" "/usr/bin/ld.gold" 20
 sudo update-alternatives --install "/usr/bin/ld" "ld" "/usr/bin/ld.bfd" 10
 
-sudo update-alternatives --config ld
+echo | sudo update-alternatives --config ld
