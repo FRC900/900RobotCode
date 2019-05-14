@@ -39,14 +39,14 @@ ssh -p 22 admin@$1 'opkg install gflags gflags-bash-completion libglog0 openssl'
 ssh -p 22 admin@$1 'pip install catkin_pkg rospkg rosdistro vcstools rosdep wstool rosinstall rosinstall_generator defusedxml empy'
 
 # Copy over ROS tar.bz2 file, extract to / on the Rio
-scp -P 22 ~/2019RobotCode/roscore_roborio_2018.tar.bz2 admin@$1:.
-ssh -p 22 admin@$1 'cd / && tar -xjf ~/roscore_roborio_2018.tar.bz2'
+scp -P 22 ~/2019RobotCode/roscore_roborio.tar.bz2 admin@$1:.
+ssh -p 22 admin@$1 'cd / && tar -xjf ~/roscore_roborio_tar.bz2'
 scp -P 22 ~/2019RobotCode/os_detect.py admin@$1:/usr/lib/python2.7/site-packages/rospkg/
-ssh -p 22 admin@$1 'rm ~/roscore_roborio_2018.tar.bz2'
+ssh -p 22 admin@$1 'rm ~/roscore_roborio_tar.bz2'
 
 # Try to simulate what the cross-build environment looks like 
 # This will prevent weird bugs were sourcing install_isolated/setup.bash
-#   will overwrite the settings from /opt/ros/kinetic/setup.bash leading
+#   will overwrite the settings from /opt/ros/melodic/setup.bash leading
 #   to errors finding basic ROS tools
 ssh -p 22 admin@$1 'mkdir -p /home/ubuntu/frc2019/roborio'
 ssh -p 22 admin@$1 'ln -s / /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi'
@@ -56,7 +56,7 @@ ssh -p 22 admin@$1 'ln -s /usr/include /include'
 # Create workspace. Do a build in the empty workspace to set
 # up various scripts for later use. TODO : See if this is needed?
 ssh -p 22 admin@$1 'mkdir -p 2019RobotCode/zebROS_ws/src'
-ssh -p 22 admin@$1 'source /opt/ros/kinetic/setup.bash && cd 2019RobotCode/zebROS_ws && catkin_make_isolated --install'
+ssh -p 22 admin@$1 'source /opt/ros/melodic/setup.bash && cd 2019RobotCode/zebROS_ws && catkin_make_isolated --install'
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
 ##################-----------------------------#################
