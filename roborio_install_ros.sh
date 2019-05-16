@@ -35,6 +35,9 @@ ssh -p 22 admin@$1 'opkg clean'
 ssh -p 22 admin@$1 'opkg install ntp ntp-tickadj ntp-utils ntpdate rsync htop curl libusb-1.0-dev'
 ssh -p 22 admin@$1 'opkg clean'
 ssh -p 22 admin@$1 'opkg install gflags gflags-bash-completion libglog0 openssl'
+ssh -p 22 admin@$1 'opkg clean'
+ssh -p 22 admin@$1 'opkg install gpgme-dev gpgme libgpg-error-dev libgpg-error0 libassuan-dev libassuan0'
+ssh -p 22 admin@$1 'opkg clean'
 
 ssh -p 22 admin@$1 'pip install catkin_pkg rospkg rosdistro vcstools rosdep wstool rosinstall rosinstall_generator defusedxml empy'
 
