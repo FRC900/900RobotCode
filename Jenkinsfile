@@ -13,7 +13,7 @@ node {
         full_commit = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%H'").trim()
         author = sh(returnStdout: true, script: "git log -n 1 --pretty=format:'%an'").trim()
 
-        sh 'docker pull frc900/zebros-2019-dev:latest'
+        sh 'docker pull frc900/zebros-2020-beta-dev:latest'
 
     } // end Preparation stage
    
@@ -31,7 +31,7 @@ node {
        // is so that we can delete the workspace. Since the docker image
        // persists, we want to try to keep it as clean as possible. If we checked out
        // code inside the image, it would stay in there (unless we delete it in the docker image I guess).
-       docker.image('frc900/zebros-2019-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2019RobotCode -l /bin/bash') { c ->
+       docker.image('frc900/zebros-2020-beta-dev:latest').inside('--user root:root -v ' + env.WORKSPACE + ':/home/ubuntu/2019RobotCode -l /bin/bash') { c ->
             
             // This try-finally block is required to always change permissions
             // inside the docker image to allow Jenkins to finally delete it at the end.
