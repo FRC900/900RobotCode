@@ -38,12 +38,33 @@ ros::Duration period;
 bool generate(base_trajectory::GenerateSpline::Request &msg,
 			  base_trajectory::GenerateSpline::Response &out_msg)
 {
-	const ros::Time start = ros::Time::now();
 	// Hold current position if trajectory is empty
 	if (msg.points.empty())
 	{
 		ROS_DEBUG("Empty trajectory command, stopping.");
 		return false;
+	}
+	for (size_t i = 0; i < msg.points.size(); ++i)
+	{
+		if (msg.points[i].positions.size() != 3)
+		{
+			ROS_ERROR_STREAM("Input point " << i << " must have 3 positions (x, y, orientation)");
+			return false;
+		}
+		if (msg.points[i].velocities.size())
+		{
+			if (msg.points[i].velocities.size() != 3)
+			{
+				ROS_ERROR_STREAM("Input point " << i << " must have 0 or 3 velocities (x, y, orientation)");
+				return false;
+			}
+			if ((msg.points[i].accelerations.size() != 0) &&
+				(msg.points[i].accelerations.size() != 3))
+			{
+				ROS_ERROR_STREAM("Input point " << i << " must have 0 or 3 accelerations (x, y, orientation)");
+				return false;
+			}
+		}
 	}
 
 	// Hard code 3 dimensions for paths to
@@ -120,9 +141,6 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 		}
 	}
 
-	const ros::Time init = ros::Time::now();
-	std::cout << "Init time = " << (init - start).toSec() << std::endl;
-
 	// Set basic options for the trajectory
 	// generation controller
 	joint_trajectory_controller::InitJointTrajectoryOptions<Trajectory> options;
@@ -174,7 +192,11 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 			                " end_time = " << trajectory[joint][seg].endTime());
 			auto coefs = trajectory[joint][seg].getCoefs();
 
-			ROS_INFO_STREAM("coefs: " << coefs[0][0] << " " << coefs[0][1] << " " << coefs[0][2] << " " << coefs[0][3] << " " << coefs[0][4] << " " << coefs[0][5]);
+			std::stringstream s;
+			s << "coefs ";
+			for (size_t i = 0; i < coefs[i].size(); ++i)
+				s << coefs[0][i] << " ";
+			ROS_INFO_STREAM(s.str());
 
 			std::vector<double> *m;
 
@@ -193,10 +215,8 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 			// Push in reverse order to match expectations
 			// of point_gen code?
 			m->clear();
-			for (int i = 5; i >= 0; i--)
+			for (int i = coefs[0].size() - 1; i >= 0; i--)
 				m->push_back(coefs[0][i]);
-
-			std::cout << std::endl;
 		}
 
 		// All splines in a waypoint end at the same time?
@@ -236,7 +256,7 @@ int main(int argc, char **argv)
 
 	double loop_hz;
 
-	nh.param<double>("loop_hz", loop_hz, 50.);
+	nh.param<double>("loop_hz", loop_hz, 100.);
 	period = ros::Duration(1.0 / loop_hz);
 
 	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", generate);
