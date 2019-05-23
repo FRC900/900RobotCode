@@ -199,7 +199,9 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	if (msg.points[0].velocities.size() == 0)
 	{
 		// Velocity vector angle for a given point is the direction
-		// from it to the next point
+		// from it to the next point. This has nothing to do with
+		// the robot's orientation. Instead, it is the direction
+		// the robot will be moving to get to the next waypoint
 		std::vector<double> vel_vec;
 		vel_vec.push_back(std::atan2(msg.points[0].positions[1], msg.points[0].positions[0]));
 			ROS_INFO_STREAM("vel_vec : added " << vel_vec.back());
@@ -220,6 +222,10 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 		const double decel_max = .4;
 		const double vel_max   = 1;
 
+		// Regardless of any other constraints, the robot only
+		// has to move so fast to cover a certain distance in
+		// a given amount of time.  USe that as another constraint
+		// on velocity here
 		double path_vmax = hypot(msg.points[0].positions[0], msg.points[0].positions[1]);
 		for (size_t i = 0; i < msg.points.size() - 1; i++)
 		{
@@ -247,6 +253,9 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 		{
 			double angle;
 
+			// assume hading at midpoint is kinda half-way
+			// between the heading getting to that point and the heading
+			// leading out of the point
 			angle = (vel_vec[i] + vel_vec[i + 1]) / 2.0; // TODO - scale by segment length?
 			msg.points[i].velocities.push_back(vel_mag[i+1] * cos(angle)); // x
 			msg.points[i].velocities.push_back(vel_mag[i+1] * sin(angle)); // y
