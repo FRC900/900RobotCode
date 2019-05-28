@@ -1,4 +1,5 @@
 #!/bin/bash
+return # Don't run me directly
 jetson=true
 version="tx2"
 gpu=true
@@ -108,22 +109,9 @@ git submodule update
 if [ "$jetson" = true ] ; then
 	sudo mkdir /mnt/900_2
 
-	# For tx2 only - install drivers for USB
-	# serial devices
 	if [ "$version" = tx2 ] ; then
 		cd ~/2019RobotCode
-		sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/serial
-		sudo cp jetson_setup/cp210x.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/usb/serial/cp210x.ko
-		sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/class
-		sudo cp jetson_setup/cdc-acm.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/usb/class/cdc-acm.ko
-		sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/net/can/usb
-		sudo cp jetson_setup/gs_usb.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/net/can/usb/gs_usb.ko
-		sudo cp jetson_setup/can-dev.ko.`uname -r` /lib/modules/`uname -r`/kernel/drivers/net/can/can-dev.ko 
-		sudo mkdir -p /lib/modules/`uname -r`/kernel/net/can
-		sudo cp jetson_setup/can.ko.`uname -r` /lib/modules/`uname -r`/kernel/net/can/can.ko 
-		sudo cp jetson_setup/can-raw.ko.`uname -r` /lib/modules/`uname -r`/kernel/net/can/can-raw.ko 
 
-		sudo depmod -a
         # edit /etc/init.d/ntp to contain the line: <ntpd -gq> before all content already there.
         sudo cp ntp-client.conf /etc/ntp.conf  # edit /etc/ntp.conf to be a copy of ntp-client.conf in 2019RobotCode
 
@@ -194,7 +182,7 @@ if [ "$jetson" = true ] ; then
 	cd ..
 	cd ~/kernel/kernel-4.4
 
-	## Apply realsense patches to modules - xenial seems to work even on bionic?
+	## Apply realsense patches to modules
 	patch -p1 < ~/buildLibrealsense2Xavier/patches/realsense-camera-formats_ubuntu-bionic-Xavier-4.9.140.patch 
 	patch -p1 < ~/buildLibrealsense2Xavier/patches/realsense-metadata-ubuntu-bionic-Xavier-4.9.140.patch
 	patch -p1 < ~/buildLibrealsense2Xavier/patches/realsense-hid-ubuntu-bionic-Xavier-4.9.140.patch
@@ -230,20 +218,7 @@ if [ "$jetson" = true ] ; then
     make -j6 modules
 	sudo make -j6 modules_install
 
-	# make -j6 M=drivers/usb/class
-	# make -j6 M=drivers/usb/serial
-	# make -j6 M=drivers/net/can
-	# make -j6 M=net/can
-	# sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/serial
-	# sudo cp drivers/usb/class/cp210x-acm.ko /lib/modules/`uname -r`/kernel/drivers/usb/serial/cp210x-acm.ko
-	# sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/class
-	# sudo cp drivers/usb/serial/cdc-acm.ko /lib/modules/`uname -r`/kernel/drivers/usb/class/cdc-acm.ko
-	# sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/usb/class
-	# sudo cp drivers/net/can/usb/gs_usb.ko /lib/modules/`uname -r`/kernel/drivers/net/can/usb
-
-	# sudo mkdir -p /lib/modules/`uname -r`/kernel/drivers/joystick
-	# sudo cp xpad.ko /lib/modules/`uname -r`/kernel/drivers/joystick/xpad.ko
-	# sudo depmod -a
+	sudo depmod -a
 
 	# Clean up Jetson
 	sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/TensorRT /home/nvidia/libvisionworkd*

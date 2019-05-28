@@ -81,7 +81,7 @@ cd ~/2019RobotCode/zebROS_ws/src
 #wstool merge https://raw.githubusercontent.com/FRC900/rplidar_ros/master/rplidar.rosinstall
 
 # Pull latest version of merged repos 
-wstool update
+wstool update -j4
 
 # Install deb dependencies.
 # The command 'sudo rosdep init' will print an error if you have already
@@ -89,7 +89,7 @@ wstool update
 rosdep update
 rosdep install --from-paths . --ignore-src --rosdistro=melodic -y
 
-source /opt/ros/kinetic/setup.bash
+#source /opt/ros/kinetic/setup.bash
 
-cd ~/2019RobotCode/zebROS_ws
-catkin_make
+#cd ~/2019RobotCode/zebROS_ws
+#catkin_make
