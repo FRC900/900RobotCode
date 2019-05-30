@@ -33,18 +33,80 @@ typedef trajectory_msgs::JointTrajectory::ConstPtr JointTrajectoryConstPtr;
 
 ros::Duration period;
 
+void printCoefs(std::stringstream &s, const std::string &name, const std::vector<swerve_point_generator::Coefs> &coefs)
+{
+	for (size_t i = 0; i < coefs.size(); i++)
+	{
+		s << "p" << name << i << " = [";
+		for (size_t j = 0; j < coefs[i].spline.size(); j++)
+		{
+			s << coefs[i].spline[j];
+			if (j < coefs[i].spline.size() - 1)
+				s << ", ";
+		}
+		s << "];" << std::endl;
+	}
+}
+void printPolyval(std::stringstream &s, const std::string &name, size_t size, const std::vector<double> &end_points)
+{
+	s << "p" << name << "_y = [";
+	for (size_t i = 0; i < size; i++)
+	{
+		double x_offset;
+		if (i == 0)
+		{
+			x_offset = 0;
+		}
+		else
+		{
+			x_offset = end_points[i - 1];
+		}
+		s << "polyval(p" << name << i << ", x" << i << " - " << x_offset << ")";
+		if (i < size - 1)
+			s << ", ";
+	}
+	s << "];" << std::endl;
+}
+
 // input should be JointTrajectory[] custom message
 // Output wil be array of spline coefficents swerve_point_generator/Coefs[] for x, y, orientation
 bool generate(base_trajectory::GenerateSpline::Request &msg,
 			  base_trajectory::GenerateSpline::Response &out_msg)
 {
-	const ros::Time start = ros::Time::now();
 	// Hold current position if trajectory is empty
 	if (msg.points.empty())
 	{
 		ROS_DEBUG("Empty trajectory command, stopping.");
 		return false;
 	}
+	for (size_t i = 0; i < msg.points.size(); ++i)
+	{
+		if (msg.points[i].positions.size() != 3)
+		{
+			ROS_ERROR_STREAM("Input point " << i << " must have 3 positions (x, y, orientation)");
+			return false;
+		}
+		if (msg.points[i].velocities.size())
+		{
+			if (msg.points[i].velocities.size() != 3)
+			{
+				ROS_ERROR_STREAM("Input point " << i << " must have 0 or 3 velocities (x, y, orientation)");
+				return false;
+			}
+			if ((msg.points[i].accelerations.size() != 0) &&
+				(msg.points[i].accelerations.size() != 3))
+			{
+				ROS_ERROR_STREAM("Input point " << i << " must have 0 or 3 accelerations (x, y, orientation)");
+				return false;
+			}
+		}
+		else if (msg.points[i].accelerations.size())
+		{
+			ROS_ERROR_STREAM("Input point " << i << " must have 0 accelerations since there are also 0 velocities for that point)");
+			return false;
+		}
+	}
+
 
 	// Hard code 3 dimensions for paths to
 	// follow - x&y translation and z rotation
@@ -120,9 +182,6 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 		}
 	}
 
-	const ros::Time init = ros::Time::now();
-	std::cout << "Init time = " << (init - start).toSec() << std::endl;
-
 	// Set basic options for the trajectory
 	// generation controller
 	joint_trajectory_controller::InitJointTrajectoryOptions<Trajectory> options;
@@ -133,6 +192,85 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	options.rt_goal_handle            = NULL;
 	options.default_tolerances        = NULL;
 	options.allow_partial_joints_goal = true;
+
+	// Generate a rough estimate of velocity magnitude and
+	// vector at each waypoint, use that to populate the x&y velocity
+	// for each waypoint before generating the spline
+	if (msg.points[0].velocities.size() == 0)
+	{
+		// Velocity vector angle for a given point is the direction
+		// from it to the next point. This has nothing to do with
+		// the robot's orientation. Instead, it is the direction
+		// the robot will be moving to get to the next waypoint
+		std::vector<double> vel_vec;
+		vel_vec.push_back(std::atan2(msg.points[0].positions[1], msg.points[0].positions[0]));
+			ROS_INFO_STREAM("vel_vec : added " << vel_vec.back());
+		for (size_t i = 0; i < msg.points.size() - 1; i++)
+		{
+			const auto &mi   = msg.points[i].positions;
+			const auto &mip1 = msg.points[i + 1].positions;
+			vel_vec.push_back(std::atan2(mip1[1] - mi[1], mip1[0] - mi[0]));
+			ROS_INFO_STREAM("vel_vec : added " << vel_vec.back());
+		}
+		// Direction for last point is kinda undefined. Set it here
+		// to be the same direction as between it and the previous
+		// point and see how that works
+		vel_vec.push_back(vel_vec.back());
+			ROS_INFO_STREAM("vel_vec : added " << vel_vec.back());
+
+		const double accel_max = .25;
+		const double decel_max = .4;
+		const double vel_max   = 1;
+
+		// Regardless of any other constraints, the robot only
+		// has to move so fast to cover a certain distance in
+		// a given amount of time.  USe that as another constraint
+		// on velocity here
+		double path_vmax = hypot(msg.points[0].positions[0], msg.points[0].positions[1]);
+		for (size_t i = 0; i < msg.points.size() - 1; i++)
+		{
+			path_vmax += hypot(msg.points[i+1].positions[0] - msg.points[i].positions[0],
+			                   msg.points[i+1].positions[1] - msg.points[i].positions[1]);
+		}
+		std::vector<double> vel_mag(vel_vec.size(), 0.0);
+		const double end_secs = msg.points.back().time_from_start.toSec();
+		path_vmax /= end_secs;
+		ROS_INFO_STREAM("Path vmax = " << path_vmax);
+		// Backwards pass
+		for (size_t i = vel_vec.size() - 1; i > 0; --i)
+		{
+			vel_mag[i] = std::min(std::min(vel_max, decel_max * (end_secs - msg.points[i - 1].time_from_start.toSec())), path_vmax);
+		}
+		for (size_t i = 1; i < vel_mag.size(); i++)
+		{
+			vel_mag[i] = std::min(vel_mag[i], accel_max * msg.points[i - 1].time_from_start.toSec());
+		}
+		for (size_t i = 0; i < vel_mag.size(); i++)
+			ROS_INFO_STREAM("vel_mag[" << i << "] = " << vel_mag[i]);
+		// Really basic motion modeling here - later steps should refine it?
+		// Starting at 0 velocity
+		for (size_t i = 0; i < (vel_vec.size() - 2); i++)
+		{
+			double angle;
+
+			// assume hading at midpoint is kinda half-way
+			// between the heading getting to that point and the heading
+			// leading out of the point
+			angle = (vel_vec[i] + vel_vec[i + 1]) / 2.0; // TODO - scale by segment length?
+			msg.points[i].velocities.push_back(vel_mag[i+1] * cos(angle)); // x
+			msg.points[i].velocities.push_back(vel_mag[i+1] * sin(angle)); // y
+			msg.points[i].velocities.push_back(0);                         // theta
+			msg.points[i].accelerations.push_back(0.); // x
+			msg.points[i].accelerations.push_back(0.); // y
+			msg.points[i].accelerations.push_back(0);  // theta
+		}
+		for(size_t j = 0; j < n_joints; j++)
+		{
+			msg.points.back().velocities.push_back(0);
+			msg.points.back().accelerations.push_back(0);
+		}
+	}
+	ros::message_operations::Printer<::base_trajectory::GenerateSplineRequest_<std::allocator<void>>>::stream(std::cout, "", msg);
 
 	// Actually generate the new trajectory
 	// This will create spline coefficents for
@@ -174,7 +312,11 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 			                " end_time = " << trajectory[joint][seg].endTime());
 			auto coefs = trajectory[joint][seg].getCoefs();
 
-			ROS_INFO_STREAM("coefs: " << coefs[0][0] << " " << coefs[0][1] << " " << coefs[0][2] << " " << coefs[0][3] << " " << coefs[0][4] << " " << coefs[0][5]);
+			std::stringstream s;
+			s << "coefs ";
+			for (size_t i = 0; i < coefs[i].size(); ++i)
+				s << coefs[0][i] << " ";
+			ROS_INFO_STREAM(s.str());
 
 			std::vector<double> *m;
 
@@ -193,15 +335,82 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 			// Push in reverse order to match expectations
 			// of point_gen code?
 			m->clear();
-			for (int i = 5; i >= 0; i--)
+			for (int i = coefs[0].size() - 1; i >= 0; i--)
 				m->push_back(coefs[0][i]);
-
-			std::cout << std::endl;
 		}
 
 		// All splines in a waypoint end at the same time?
 		out_msg.end_points.push_back(trajectory[0][seg].endTime());
 	}
+
+	// Generate matlab / octave code for displaying generated splines
+	std::stringstream s;
+	s << std::endl;
+	for (size_t i = 0; i < out_msg.end_points.size(); i++)
+	{
+		double range;
+		double prev_x;
+		if (i == 0)
+		{
+			range = out_msg.end_points[0];
+			prev_x = 0;
+		}
+		else
+		{
+			range = out_msg.end_points[i] - out_msg.end_points[i-1];
+			prev_x = out_msg.end_points[i-1];
+		}
+		s << "x" << i << " = " << prev_x << ":" << range / 100. << ":" << out_msg.end_points[i] << ";" << std::endl;;
+	}
+	s << "x = [";
+	for (size_t i = 0; i < out_msg.end_points.size(); i++)
+	{
+		s << "x" << i;
+		if (i < out_msg.end_points.size() - 1)
+			s << ", ";
+	}
+	s << "];" << std::endl;
+	s << std::endl;
+	printCoefs(s, "x", out_msg.x_coefs);
+	printCoefs(s, "y", out_msg.y_coefs);
+	printCoefs(s, "orient", out_msg.orient_coefs);
+	for (size_t i = 0; i < out_msg.x_coefs.size(); i++)
+	{
+		s << "pdx" << i << " = polyder(px" << i << ");" << std::endl;
+		s << "pddx" << i << " = polyder(pdx" << i << ");" << std::endl;
+		s << "pdddx" << i << " = polyder(pddx" << i << ");" << std::endl;
+		s << "pdy" << i << " = polyder(py" << i << ");" << std::endl;
+		s << "pddy" << i << " = polyder(pdy" << i << ");" << std::endl;
+		s << "pdddy" << i << " = polyder(pddy" << i << ");" << std::endl;
+		s << "pdorient" << i << " = polyder(porient" << i << ");" << std::endl;
+		s << "pddorient" << i << " = polyder(pdorient" << i << ");" << std::endl;
+		s << "pdddorient" << i << " = polyder(pddorient" << i << ");" << std::endl;
+	}
+	printPolyval(s, "x", out_msg.x_coefs.size(), out_msg.end_points);
+	printPolyval(s, "dx", out_msg.x_coefs.size(), out_msg.end_points);
+	printPolyval(s, "ddx", out_msg.x_coefs.size(), out_msg.end_points);
+	printPolyval(s, "dddx", out_msg.x_coefs.size(), out_msg.end_points);
+	printPolyval(s, "y", out_msg.y_coefs.size(), out_msg.end_points);
+	printPolyval(s, "dy", out_msg.y_coefs.size(), out_msg.end_points);
+	printPolyval(s, "ddy", out_msg.y_coefs.size(), out_msg.end_points);
+	printPolyval(s, "dddy", out_msg.y_coefs.size(), out_msg.end_points);
+	printPolyval(s, "orient", out_msg.orient_coefs.size(), out_msg.end_points);
+	printPolyval(s, "dorient", out_msg.orient_coefs.size(), out_msg.end_points);
+	printPolyval(s, "ddorient", out_msg.orient_coefs.size(), out_msg.end_points);
+	printPolyval(s, "dddorient", out_msg.orient_coefs.size(), out_msg.end_points);
+	s << "subplot(1,1,1)" << std::endl;
+	s << "subplot(3,2,1)" << std::endl;
+	s << "plot(px_y, py_y)" << std::endl;
+	s << "subplot(3,2,3)" << std::endl;
+	s << "plot (x,px_y, x, py_y)" << std::endl;
+	s << "subplot(3,2,4)" << std::endl;
+	s << "plot (x,pdx_y, x, pdy_y)" << std::endl;
+	s << "subplot(3,2,5)" << std::endl;
+	s << "plot (x,pddx_y, x, pddy_y)" << std::endl;
+	s << "subplot(3,2,6)" << std::endl;
+	s << "plot (x,pdddx_y, x, pdddy_y)" << std::endl;
+	ROS_INFO_STREAM("Matlab_splines : " << s.str());
+
 #if 0
 	// Test using middle switch auto spline
 	out_msg.x_coefs[1].spline[0] = 6.0649999999999995;
@@ -236,7 +445,7 @@ int main(int argc, char **argv)
 
 	double loop_hz;
 
-	nh.param<double>("loop_hz", loop_hz, 50.);
+	nh.param<double>("loop_hz", loop_hz, 100.);
 	period = ros::Duration(1.0 / loop_hz);
 
 	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", generate);

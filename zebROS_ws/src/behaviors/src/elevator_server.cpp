@@ -22,7 +22,6 @@ class ElevatorAction {
         actionlib::SimpleActionServer<behaviors::ElevatorAction> as_;
         std::string action_name_;
 
-		ros::Publisher level_two_publisher_; //publish whether level 2 or level 3 //level two is 1, level 3 is 0
 
 		//Define service client to control elevator
 		ros::ServiceClient elevator_client_;
@@ -206,13 +205,15 @@ class ElevatorAction {
 			std_msgs::Bool level_two_msg;
 			stopped_ = false;
 
+			auto level_two_publisher = nh_.advertise<std_msgs::Bool>("level_two",1);
+
 			ros::Rate r(20);
 
 			while(ros::ok() && !stopped_)
 			{
 				level_two_msg.data = climb_locations_ == climb_locations_level_two_;
 
-				level_two_publisher_.publish(level_two_msg);
+				level_two_publisher.publish(level_two_msg);
 				r.sleep();
 			}
 		}
@@ -237,9 +238,6 @@ class ElevatorAction {
 
 			//Talon states subscriber
             talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);
-
-			//Climb level publisher
-			level_two_publisher_ = nh_.advertise<std_msgs::Bool>("level_two",1);
 
 			hatch_locations_.resize(ELEVATOR_MAX_INDEX);
 			cargo_locations_.resize(ELEVATOR_MAX_INDEX);
