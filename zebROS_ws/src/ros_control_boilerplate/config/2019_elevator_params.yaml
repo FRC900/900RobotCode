@@ -4,11 +4,11 @@ elevator_controller:
     elevator_joint: [ 'elevator_master', 'elevator_follower1', 'elevator_follower2', 'elevator_follower3' ]
 
     arb_feed_forward_up_high: 0.052
-    arb_feed_forward_up_low: 0.042
+    arb_feed_forward_up_low: 0.032
     arb_feed_forward_down: -0.185
 
-    motion_magic_velocity_fast: 1.0
-    motion_magic_acceleration_fast: 2.0
+    motion_magic_velocity_fast: 1.7
+    motion_magic_acceleration_fast: 3.5
 
     motion_magic_velocity_slow: 0.25
     motion_magic_acceleration_slow: 0.4
@@ -26,7 +26,7 @@ elevator_controller:
         type: talon_controllers/TalonControllerInterface 
         joint: elevator_master
         close_loop_values:
-            - {p: 0.01, i: 0.0, d: 0.0, f: 0.225, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: 0.275, i: 0.00001, d: 6.25, f: 0.28, i_zone: 0, closed_loop_peak_output: 1.0}
             - {p: 0.25, i: 0.0, d: 0, f: 0.58, i_zone: 4096, closed_loop_peak_output: 1.0}
               
         sensor_phase: True 
@@ -47,8 +47,6 @@ elevator_controller:
         voltage_compensation_enable: True
         voltage_compensation_saturation: 12.5
         
-        # TODO : used to convert encoder position from radians to meters
-        # .0573 ... divide or multiply?
         conversion_factor: 0.02959
         neutral_deadband: 0.001
 
@@ -58,10 +56,10 @@ elevator_controller:
         joint: elevator_follower1
         sensor_phase: True 
         invert_output: False
-        feedback_type: CTRE_MagEncoder_Relative
-        conversion_factor: 0.02959
+        #feedback_type: CTRE_MagEncoder_Relative
+        #conversion_factor: 0.02959
 
-        dynamic_reconfigure: true
+        #dynamic_reconfigure: true
 
     elevator_follower2: 
         joint: elevator_follower2
