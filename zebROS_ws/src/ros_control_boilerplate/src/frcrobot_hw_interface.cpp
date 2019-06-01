@@ -1553,7 +1553,7 @@ bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, con
 	return false;
 }
 
-//#define DEBUG_WRITE
+#define DEBUG_WRITE
 void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 {
 	// Was the robot enabled last time write was run?
@@ -1571,9 +1571,9 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 		// If the original object was a talon, both talon and victor will be valid
 		// The original object was a victor, talon will be nullptr
-		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mcs_[joint_id]);
+		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mcs_[joint_id]);
 		auto victor = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mcs_[joint_id]);
-#if 0
+#if 1
 		if (talon)
 		{
 			ROS_ERROR_STREAM_THROTTLE(5.0, "talon OK for id " << joint_id);
@@ -1592,7 +1592,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		}
 #endif
 
-		if (!talon && !victor) // skip unintialized Talons
+		if (!victor && !talon) // skip unintialized Talons
 			continue;
 
 		// Save some typing by making references to commonly
@@ -2215,7 +2215,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					}
 
 #ifdef DEBUG_WRITE
-					ROS_INFO_STREAM("called Set(4) on " << joint_id << "=" << can_talon_srx_names_[joint_id] <<
+					ROS_INFO_STREAM("called Set(4) on " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<
 									" out_mode = " << static_cast<int>(out_mode) << " command = " << command <<
 									" demand1_type_phoenix = " << static_cast<int>(demand1_type_phoenix) <<
 									" demand1_value = " << demand1_value);
