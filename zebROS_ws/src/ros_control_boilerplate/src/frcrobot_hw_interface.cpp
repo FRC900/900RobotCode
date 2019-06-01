@@ -234,7 +234,7 @@ void FRCRobotHWInterface::init(void)
 
 			// TODO : if the motor controller doesn't initialize - maybe known
 			// by -1 from firmware version read - somehow tag
-			// the entry in ctre_mcs__[] as uninitialized.
+			// the entry in ctre_mcs_[] as uninitialized.
 			// This probably should be a fatal error
 			ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
 								  "\tMotor controller firmware version " << ctre_mcs_[i]->GetFirmwareVersion());
@@ -254,12 +254,23 @@ void FRCRobotHWInterface::init(void)
 			// them, though, so the local flags should be set to false
 			// which means both reads and writes will be skipped
 			if (run_hal_robot_)
-				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_ctre_mc_can_ids_[i]));
+			{
+				if (can_ctre_mc_is_talon_[i])
+				{
+					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_ctre_mc_can_ids_[i]));
+				}
+				else
+				{
+					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::VictorSPX>(can_ctre_mc_can_ids_[i]));
+				}
+			}
 			else
+			{
 				// Add a null pointer as the can ctre_mc for this index - no
 				// actual local hardware identified for it so nothing to create.
 				// Just keep the indexes of all the various can_ctre_mc arrays in sync
 				ctre_mcs_.push_back(nullptr);
+			}
 			ctre_mc_read_state_mutexes_.push_back(nullptr);
 			ctre_mc_read_thread_states_.push_back(nullptr);
 		}
@@ -1573,7 +1584,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		// The original object was a victor, talon will be nullptr
 		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mcs_[joint_id]);
 		auto victor = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mcs_[joint_id]);
-#if 1
+#if 0
 		if (talon)
 		{
 			ROS_ERROR_STREAM_THROTTLE(5.0, "talon OK for id " << joint_id);
@@ -2225,6 +2236,8 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					ts.setTalonMode(in_mode);
 					ts.setDemand1Type(demand1_type_internal);
 					ts.setDemand1Value(demand1_value);
+
+					victor->Set(out_mode, command, demand1_type_phoenix, demand1_value);
 				}
 			}
 		}
