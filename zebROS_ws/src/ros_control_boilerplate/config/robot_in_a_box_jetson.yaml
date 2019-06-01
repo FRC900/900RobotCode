@@ -8,7 +8,7 @@ hardware_interface:
    run_hal_robot: false
    can_interface: can0
    joints:
-       #       - {name: talon3, type: can_talon_srx, can_id: 3,local: true}
+       - {name: talon3, type: can_victor_spx, can_id: 3,local: true}
        - {name: talon9, type: can_talon_srx, can_id: 9,local: true}
        - {name: pdp, local: true, type: pdp}
        - {name: compressor, local: true, type: compressor, pcm_id: 0}
@@ -49,17 +49,17 @@ talon_state_controller:
 # Similar to above, but this one prints non-Talon state
 # (stuff that fits into the more standard ROS position/
 
-# Create a controller called talon1_controller
+# Create a controller called talon3_controller
 #  That name is used by spawner in the launch file to 
 #  actually start this controller
-# The joint it controls is talon_1. This should match
+# The joint it controls is talon3. This should match
 # up with one of the names in the top-level joints list
 # above.  
 # The type is a talon_controllers/TalonController
 talon3_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: talon3
-    feedback_type: CTRE_MagEncoder_Absolute
+    #feedback_type: CTRE_MagEncoder_Absolute
     dynamic_reconfigure: True
     voltage_compensation_Enable: True
 

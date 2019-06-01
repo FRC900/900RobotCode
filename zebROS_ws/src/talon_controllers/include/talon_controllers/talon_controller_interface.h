@@ -346,40 +346,37 @@ class TalonCIParams
 		bool readFeedbackType(ros::NodeHandle &n)
 		{
 			std::string feedback_type_name;
-			if (!n.getParam("feedback_type", feedback_type_name))
+			if (n.getParam("feedback_type", feedback_type_name))
 			{
-				//ROS_ERROR("No feedback type given (namespace: %s)",
-				//			  n.getNamespace().c_str());
-				// TODO : Not all talons will have feedback - figure
-				//        out how to handle that case
-				return true;
-			}
-			if (feedback_type_name == "QuadEncoder")
-				feedback_type_ = hardware_interface::FeedbackDevice_QuadEncoder;
-			else if (feedback_type_name == "Analog")
-				feedback_type_ = hardware_interface::FeedbackDevice_Analog;
-			else if (feedback_type_name == "Tachometer")
-				feedback_type_ = hardware_interface::FeedbackDevice_Tachometer;
-			else if (feedback_type_name == "PulseWidthEncodedPosition")
-				feedback_type_ = hardware_interface::FeedbackDevice_PulseWidthEncodedPosition;
-			else if (feedback_type_name == "SensorSum")
-				feedback_type_ = hardware_interface::FeedbackDevice_SensorSum;
-			else if (feedback_type_name == "SensorDifference")
-				feedback_type_ = hardware_interface::FeedbackDevice_SensorDifference;
-			else if (feedback_type_name == "RemoteSensor0")
-				feedback_type_ = hardware_interface::FeedbackDevice_RemoteSensor0;
-			else if (feedback_type_name == "RemoteSensor1")
-				feedback_type_ = hardware_interface::FeedbackDevice_RemoteSensor1;
-			else if (feedback_type_name == "SoftwareEmulatedSensor")
-				feedback_type_ = hardware_interface::FeedbackDevice_SoftwareEmulatedSensor;
-			else if (feedback_type_name == "CTRE_MagEncoder_Absolute")
-				feedback_type_ = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Absolute;
-			else if (feedback_type_name == "CTRE_MagEncoder_Relative")
-				feedback_type_ = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Relative;
-			else
-			{
-				ROS_ERROR("Invalid feedback device name given");
-				return false;
+				// Not all talons will have feedback, so it is
+				// OK to leave this entry out.
+				if (feedback_type_name == "QuadEncoder")
+					feedback_type_ = hardware_interface::FeedbackDevice_QuadEncoder;
+				else if (feedback_type_name == "Analog")
+					feedback_type_ = hardware_interface::FeedbackDevice_Analog;
+				else if (feedback_type_name == "Tachometer")
+					feedback_type_ = hardware_interface::FeedbackDevice_Tachometer;
+				else if (feedback_type_name == "PulseWidthEncodedPosition")
+					feedback_type_ = hardware_interface::FeedbackDevice_PulseWidthEncodedPosition;
+				else if (feedback_type_name == "SensorSum")
+					feedback_type_ = hardware_interface::FeedbackDevice_SensorSum;
+				else if (feedback_type_name == "SensorDifference")
+					feedback_type_ = hardware_interface::FeedbackDevice_SensorDifference;
+				else if (feedback_type_name == "RemoteSensor0")
+					feedback_type_ = hardware_interface::FeedbackDevice_RemoteSensor0;
+				else if (feedback_type_name == "RemoteSensor1")
+					feedback_type_ = hardware_interface::FeedbackDevice_RemoteSensor1;
+				else if (feedback_type_name == "SoftwareEmulatedSensor")
+					feedback_type_ = hardware_interface::FeedbackDevice_SoftwareEmulatedSensor;
+				else if (feedback_type_name == "CTRE_MagEncoder_Absolute")
+					feedback_type_ = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Absolute;
+				else if (feedback_type_name == "CTRE_MagEncoder_Relative")
+					feedback_type_ = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Relative;
+				else
+				{
+					ROS_ERROR("Invalid feedback device name given");
+					return false;
+				}
 			}
 			n.getParam("ticks_per_rotation", ticks_per_rotation_);
 			n.getParam("feedback_coefficient", feedback_coefficient_);

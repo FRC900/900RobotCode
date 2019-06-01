@@ -244,7 +244,6 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		double navX_zero_;
 
-		std::vector<std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonSRX>> can_talons_;
 		std::vector<std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController>> ctre_mcs_;
 
 		// Maintain a separate read thread for each talon SRX
