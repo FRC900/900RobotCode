@@ -256,11 +256,11 @@ def pf_localization(px, pw, xEst, PEst, z, u, RFID):
             b = math.atan2(dy, dx)
             db = b - z[i, 1]
             
-            if ((abs(RFID[j, 0] - z[i, 2]) > 0.0001) or (abs(RFID[j, 1] - z[i, 3]) > 0.0001)):
-                print("Misidentified beacon : dz", dz, " db", db)
-                print("robot predicted pos", x)
-                print("RFID[", j, "]", RFID[j]);
-                print("z[", i, "]", z[i])
+            #if ((abs(RFID[j, 0] - z[i, 2]) > 0.0001) or (abs(RFID[j, 1] - z[i, 3]) > 0.0001)):
+                #print("Misidentified beacon : dz", dz, " db", db)
+                #print("robot predicted pos", x)
+                #print("RFID[", j, "]", RFID[j]);
+                #print("z[", i, "]", z[i])
 
             # Weight is the product of the probabilities that this
             # position would give the measured distances
@@ -389,15 +389,15 @@ def main():
             [ 4.3474672618,-5.6094151333]])
     '''    
     # State Vectors [x y x' y']'
-    xTrue = np.array([[-10,0,0,0]]).T
+    xTrue = np.array([[-7.5,0,0,0]]).T
     xEst = np.zeros((4,1))
     PEst = np.eye(4)
 
     # Important for at least some particles to be initialized to be near the true starting
     # coordinates. Resampling can only pick from existing position proposals and if
     # none are close to the starting position, the particles will never converge
-    starting_xmin = -9
-    starting_xmax = -11.5
+    starting_xmin = -8.3
+    starting_xmax = -7.3
     starting_ymin = -2.5
     starting_ymax = 2.5
     xpos = np.random.uniform(starting_xmin, starting_xmax, (1, NP))
