@@ -10,6 +10,7 @@ import sys
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # Estimation parameter of PF
 Q = np.diag([0.05, 0.1])**2  # range error
@@ -37,6 +38,7 @@ show_animation = True
 # For swerve, use x and y velocity
 # This is used to estimate position using dead reckoning (integrating velocity to get
 # position over time)
+
 def calc_input(time):
     #v = 1.0  # [m/s]
     #yawrate = 0.1  # [rad/s]
@@ -290,7 +292,7 @@ def main():
     #                 [0.0, 15.0],
     #                 [-5.0, 20.0]])
 
-
+    '''
     RFID = np.array([
             [-0.8231083414,1.0982357152],
             [-1.682597162,1.0982357152],
@@ -320,6 +322,25 @@ def main():
             [ 3.169649248,-5.6094151333],
             [ 3.7744747147,-5.2156103415],
             [ 4.3474672618,-5.6094151333]])
+    '''
+
+    #RFID positions [x, y]
+    RFID = np.array([[2.07,3.63],
+                    [2.44,3.39],
+                    [2.81,3.63],
+                    [2.66,0.28],
+                    [1.64,0.71],
+                    [1.08,0.71],
+                    [.53,.71],
+                    [8.26,3.44]])
+
+    RFID0 = np.array([-1,1])*RFID
+    RFID1 = np.array([1,-1])*RFID
+    RFID2 = np.array([-1,-1])*RFID
+
+    RFID = np.append(RFID,RFID0,0)
+    RFID = np.append(RFID,RFID1,0)
+    RFID = np.append(RFID,RFID2,0)
 
     # State Vectors [x y x' y']'
     xTrue = np.array([[-10,0,0,0]]).T
@@ -345,6 +366,31 @@ def main():
     hxEst = xEst
     hxTrue = xTrue
     hxDR = xTrue
+
+    #This code is a copy of the code below it, with removed visualization. However, this code saves data in a pickle to be visualized separately.
+    
+    columns = ['RFID','xTrue','z','px','hxEst','hxDR','hxTrue','time']
+    total_values = []
+    while SIM_TIME >= time:
+        time += DT
+        u = calc_input(time)
+        xTrue, z, xDR, ud = observation(xTrue, xDR, u, RFID)
+
+        xEst, PEst, px, pw = pf_localization(px, pw, xEst, PEst, z, ud, RFID)
+        #print(xEst)
+
+        # store data history
+        hxEst = np.hstack((hxEst, xEst))
+        hxDR = np.hstack((hxDR, xDR))
+        hxTrue = np.hstack((hxTrue, xTrue))
+
+        total_values.append([RFID,xTrue,z,px,hxEst,hxDR,hxTrue,time])
+
+    df = pd.DataFrame(total_values,columns=columns)
+    df.to_pickle('data.p')
+    
+    #Reset time for the standard code visualization
+    time = 0
 
     while SIM_TIME >= time:
         time += DT
