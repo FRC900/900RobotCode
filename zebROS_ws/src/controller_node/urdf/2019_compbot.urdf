@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+
+<robot name="2019_compbot">
+
+	<link name="base_link"/>
+
+	<joint name="zed_camera_center_joint" type="fixed"> 
+        <parent link="base_link"/>
+        <child link="zed_camera_center"/>
+		<origin xyz="-0.234 -0.1576 1.1684" rpy="0 0 0" />
+	</joint>
+    <link name="zed_camera_center">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://zed_wrapper/urdf/models/ZEDM.stl" />
+            </geometry>
+            <material name="light_grey">
+                <color rgba="0 0 0 0.9"/>
+            </material>
+        </visual>
+    </link>
+
+<!-- Left Camera -->
+    <joint name="zed_left_camera_joint" type="fixed">
+        <parent link="zed_camera_center"/>
+        <child link="zed_left_camera_frame"/>
+        <origin xyz="0 0.03 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="zed_left_camera_frame" />
+
+    <joint name="zed_left_camera_optical_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="-1.57079632679 0.0 -1.57079632679"/>
+        <parent link="zed_left_camera_frame"/>
+        <child link="zed_left_camera_optical_frame"/>
+    </joint>
+
+    <link name="zed_left_camera_optical_frame"/>
+
+<!-- Right Camera -->
+    <joint name="zed_right_camera_joint" type="fixed">
+        <parent link="zed_camera_center"/>
+        <child link="zed_right_camera_frame"/>
+        <origin xyz="0 -0.03 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="zed_right_camera_frame" />
+
+    <joint name="zed_right_camera_optical_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="-1.57079632679 0.0 -1.57079632679"/>
+        <parent link="zed_right_camera_frame"/>
+        <child link="zed_right_camera_optical_frame"/>
+    </joint>
+
+    <link name="zed_right_camera_optical_frame"/>
+
+<!-- IMU -->    
+    <joint name="imu_link_joint" type="floating">
+        <parent link="zed_camera_center"/>
+        <child link="zed_imu_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+    <link name="zed_imu_link" />
+
+	<link name="panel_outtake"/>
+	<joint name="panel_outtake_joint" type="fixed"> 
+        <parent link="base_link"/>
+        <child link="panel_outtake"/>
+		<origin xyz="-0.200745 -0.3016 .4318" rpy="0 0 0" />
+	</joint>
+
+	<link name="cargo_outtake"/>
+	<joint name="cargo_outtake_joint" type="fixed"> 
+        <parent link="base_link"/>
+        <child link="cargo_outtake"/>
+		<origin xyz="0.4143 0 0.3556" rpy="0 0 0" />
+	</joint>
+
+	<link name="c920_frame"/>
+	<joint name="c920_joint" type="fixed"> 
+        <parent link="base_link"/>
+        <child link="c920_frame"/>
+		<origin xyz="0.24226 0.1682 0.2286" rpy="0 0 0" />
+	</joint>
+</robot>
+

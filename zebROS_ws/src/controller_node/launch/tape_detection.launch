@@ -1,29 +1,30 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="resolution" default="3" />
-  <arg name="frame_rate" default="30" />
-  <arg name="quality" default="3" />
+  <!-- 
+		 ZED needs transforms for its cameras, but we've modified them
+         Launch the modified version here so that the ZED camera node
+         always has them available
+  -->
+  <!--<include file="$(find controller_node)/launch/tf_2019.launch" /-->
+  <group ns="robot_state">
+	<param name="robot_description" textfile="$(find controller_node)/urdf/2019_compbot.urdf" />
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+  </group>
 
-  <arg name="gain" default="-1" />
-  <arg name="exposure" default="10" />
-  <arg name="auto_exposure" default="false" />
+  <arg name="zed_node_name" default="zed_goal" />
 
-  <arg name="brightness" default="-1" />
-  <arg name="auto_brightness" default="true" />
-  <arg name="contrast" default="5" />
-  <arg name="auto_contrast" default="false" />
+  <!-- Nodelet Manager -->
+  <arg name="nodelet_manager_name"  value="zed_nodelet_manager" />
 
-  <arg name="hue" default="6" />
-  <arg name="auto_hue" default="false" />
 
-  <arg name="saturation" default="4" />
-  <arg name="auto_saturation" default="true" />
-
-  <arg name="whitebalance" default="50" />
-  <arg name="auto_whitebalance" default="true" />
-
-  <arg name="name" default="zed_goal" />
+  <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)" args="manager" output="screen" />
+  <include file="$(find zed_wrapper)/launch/zed_camera_nodelet.launch">
+	  <arg name="nodelet_manager_name" value="$(arg nodelet_manager_name)" />
+	  <arg name="common_params_file"   value="$(find controller_node)/config/zed/common.yaml" />
+	  <arg name="node_name"            value="$(arg zed_node_name)" />
+	  <arg name="publish_urdf"         value="false" />
+  </include>
 
   <arg name="down_sample" default="False" />
   <arg name="sub_rate" default="1" />
@@ -31,32 +32,13 @@
   <arg name="pub_rate" default="1" />
   <arg name="hFov" default="105.0" />
   <arg name="camera_angle" default="-25.0" />
-  <arg name="batch" default="false" /> 
+  <arg name="batch" default="true" /> 
 
-  <group ns="$(arg name)">
-    <include file="$(find zed_wrapper)/launch/zed_camera.launch">
-      <arg name="resolution" value="$(arg resolution)" />
-      <arg name="frame_rate" value="$(arg frame_rate)" />
-      <arg name="quality" value="$(arg quality)" />
-	  <arg name="camera_flip" value="$(arg camera_flip)" />
+  <!--
+  <node name="goal_detection_node" pkg="goal_detection" type="goal_detection_node" output="screen">
+	-->
 
-	  <arg name="gain"                  value="$(arg gain)" />
-	  <arg name="exposure"              value="$(arg exposure)" />
-	  <arg name="auto_exposure"         value="$(arg auto_exposure)" />
-	  <arg name="brightness"            value="$(arg brightness)" />
-	  <arg name="auto_brightness"       value="$(arg auto_brightness)" />
-	  <arg name="contrast"              value="$(arg contrast)" />
-	  <arg name="auto_contrast"         value="$(arg auto_contrast)" />
-	  <arg name="hue"                   value="$(arg hue)" />
-	  <arg name="auto_hue"              value="$(arg auto_hue)" />
-	  <arg name="saturation"            value="$(arg saturation)" />
-	  <arg name="auto_saturation"       value="$(arg auto_saturation)" />
-	  <arg name="whitebalance"          value="$(arg whitebalance)" />
-	  <arg name="auto_whitebalance"     value="$(arg auto_whitebalance)" />
-    </include>
-  </group>
-
-  <node name="goal_detection_node" pkg="goal_detection" type="goal_detection_node" output= "screen">
+  <node pkg="nodelet" type="nodelet" name="goal_detection" args="load goal_detection/GoalDetect /zed_nodelet_manager">
   	<param name="down_sample" value="$(arg down_sample)" />
   	<param name="sub_rate" value="$(arg sub_rate)" />
 	<param name="pub_rate" value="$(arg pub_rate)" />
@@ -65,6 +47,5 @@
 	<param name="batch" value="$(arg batch)" />
   </node>
 
-  </launch>
-
+</launch>
 
