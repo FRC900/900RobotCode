@@ -22,9 +22,9 @@ sudo apt update
 # From source for the Jetson
 sudo apt install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw3-dev 
 mkdir realsense_src && cd realsense_src
-wget https://github.com/IntelRealSense/librealsense/archive/v2.19.2.zip
-unzip v2.19.2.zip
-cd librealsense-2.19.2
+wget https://github.com/IntelRealSense/librealsense/archive/v2.23.0.zip
+unzip v2.23.0.zip
+cd librealsense-2.23.0
 sudo cp config/99-realsense-libusb.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && udevadm trigger
 mkdir build && cd build
@@ -77,7 +77,7 @@ cd ~/2019RobotCode/zebROS_ws/src
 #wstool merge https://raw.githubusercontent.com/FRC900/rplidar_ros/master/rplidar.rosinstall
 
 # Pull latest version of merged repos 
-wstool update
+wstool update -j 4
 
 # Install deb dependencies.
 # The command 'sudo rosdep init' will print an error if you have already
