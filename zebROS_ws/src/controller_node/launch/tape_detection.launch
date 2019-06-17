@@ -18,9 +18,13 @@
   <arg name="nodelet_manager_name"  value="zed_nodelet_manager" />
 
 
+  <!--
   <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)" args="manager" output="screen" />
-  <include file="$(find zed_wrapper)/launch/zed_camera_nodelet.launch">
+  -->
+  <include file="$(find zed_wrapper)/launch/zed_camera.launch">
+  <!--
 	  <arg name="nodelet_manager_name" value="$(arg nodelet_manager_name)" />
+  -->
 	  <arg name="common_params_file"   value="$(find controller_node)/config/zed/common.yaml" />
 	  <arg name="node_name"            value="$(arg zed_node_name)" />
 	  <arg name="publish_urdf"         value="false" />
@@ -34,11 +38,11 @@
   <arg name="camera_angle" default="-25.0" />
   <arg name="batch" default="true" /> 
 
-  <!--
   <node name="goal_detection_node" pkg="goal_detection" type="goal_detection_node" output="screen">
-	-->
 
+  <!--
   <node pkg="nodelet" type="nodelet" name="goal_detection" args="load goal_detection/GoalDetect /zed_nodelet_manager">
+  -->
   	<param name="down_sample" value="$(arg down_sample)" />
   	<param name="sub_rate" value="$(arg sub_rate)" />
 	<param name="pub_rate" value="$(arg pub_rate)" />

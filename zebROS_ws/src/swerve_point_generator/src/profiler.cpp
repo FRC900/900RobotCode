@@ -19,7 +19,13 @@ swerve_profiler::swerve_profiler(double max_wheel_dist, double max_wheel_vel,
 	dt_(dt),
 	message_filter_(debug)
 {
-	ROS_INFO_STREAM("max_wheel_dist_ = " << max_wheel_dist_ << " ang_accel_conv_ = " << ang_accel_conv_);
+	ROS_INFO_STREAM("Starting swerve_profiler : max_wheel_dist_ = " << max_wheel_dist_
+	<< " max_wheel_vel_ = " << max_wheel_vel_
+	<< " max_wheel_mid_accel_ = " << max_wheel_mid_accel_
+	<< " max_wheel_brake_accel_ = " << max_wheel_brake_accel_
+	<< " ang_accel_conv_ = " << ang_accel_conv_
+	<< " dt_ = " << dt
+	<< " debug = " << debug);
 }
 
 //Generation function
@@ -313,7 +319,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	if (out_msg.points.size() == 0)
 		out_msg.points.resize(155 / dt_); //For full auto :)  TODO: optimize
 	curr_v = initial_v;
-	size_t starting_point = positions.size() - 1;
+	size_t starting_point = positions.size() ? positions.size() - 1 : 0;
 	ros::Duration now(0);
 	ros::Duration period(dt_);
 	//Same as back pass, but now forward
@@ -358,7 +364,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		//ROS_ERROR_STREAM_FILTER(&message_filter_, "2: " << curr_v);
 		for (size_t k = 0; k < positions.size(); k++)
 		{
-			if (starting_point < k || positions[starting_point - k] > current_spline_position)
+			if (starting_point > k || positions[starting_point - k] > current_spline_position)
 			{
 				starting_point -= k;
 				break;
