@@ -193,6 +193,50 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	options.default_tolerances        = NULL;
 	options.allow_partial_joints_goal = true;
 
+	constexpr double t = 0.1;
+	if (msg.points[0].velocities.size() == 0)
+	{
+		// from http://scaledinnovation.com/analytics/splines/aboutSplines.html
+		for (size_t i = 0; i < msg.points.size() - 1; i++)
+		{
+			double x0;
+			double y0;
+			if (i == 0)
+			{
+				x0 = 0;
+				y0 = 0;
+			}
+			else
+			{
+				x0 = msg.points[i-1].positions[0];
+				y0 = msg.points[i-1].positions[1];
+			}
+			const double x1 = msg.points[i].positions[0];
+			const double y1 = msg.points[i].positions[1];
+			const double x2 = msg.points[i+1].positions[0];
+			const double y2 = msg.points[i+1].positions[1];
+			const double d01 = hypot(x1 - x0, y1 - y0);
+			const double d12 = hypot(x2 - x1, y2 - y1);
+			const double fa = t * d01 / (d01 + d12);
+			const double fb = t * d12 / (d01 + d12);
+			const double p1x = x1 - fa * (x2 - x0);    // x2-x0 is the width of triangle T
+			const double p1y = y1 - fa * (y2 - y0);    // y2-y0 is the height of T
+			const double p2x = x1 + fb * (x2 - x0);
+			const double p2y = y1 + fb * (y2 - y0);
+			msg.points[i].velocities.push_back(p2x - p1x);
+			msg.points[i].velocities.push_back(p2y - p1y);
+			msg.points[i].velocities.push_back(0.);
+			msg.points[i].accelerations.push_back(0.); // x
+			msg.points[i].accelerations.push_back(0.); // y
+			msg.points[i].accelerations.push_back(0.);  // theta
+		}
+		for(size_t j = 0; j < n_joints; j++)
+		{
+			msg.points.back().velocities.push_back(0.);
+			msg.points.back().accelerations.push_back(0.);
+		}
+	}
+#if 0
 	// Generate a rough estimate of velocity magnitude and
 	// vector at each waypoint, use that to populate the x&y velocity
 	// for each waypoint before generating the spline
@@ -270,6 +314,7 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 			msg.points.back().accelerations.push_back(0);
 		}
 	}
+#endif
 	ros::message_operations::Printer<::base_trajectory::GenerateSplineRequest_<std::allocator<void>>>::stream(std::cout, "", msg);
 
 	// Actually generate the new trajectory
