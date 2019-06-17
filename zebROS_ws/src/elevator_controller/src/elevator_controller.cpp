@@ -100,6 +100,7 @@ bool ElevatorController::init(hardware_interface::RobotHW *hw,
 
 void ElevatorController::starting(const ros::Time &/*time*/) {
 	zeroed_ = false;
+	last_zeroed_  = false;
 	last_time_down_ = ros::Time::now();
 	last_mode_ = hardware_interface::TalonMode_Disabled;
 	last_position_ = -1; // give nonsense position to force update on first time through update()
@@ -112,11 +113,20 @@ void ElevatorController::update(const ros::Time &/*time*/, const ros::Duration &
 	if (elevator_joint_.getReverseLimitSwitch())
 	{
 		ROS_INFO_THROTTLE(2, "ElevatorController : hit limit switch");
-		zeroed_ = true;
-		elevator_joint_.setSelectedSensorPosition(0);
-		elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-		elevator_joint_.setDemand1Value(config_.arb_feed_forward_up_low);
+		if (!last_zeroed_)
+		{
+			zeroed_ = true;
+			last_zeroed_ = true;
+			elevator_joint_.setSelectedSensorPosition(0);
+			elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+			elevator_joint_.setDemand1Value(config_.arb_feed_forward_up_low);
+		}
 	}
+	else
+	{
+		last_zeroed_ = false;
+	}
+
 
 	if (zeroed_) // run normally, seeking to various positions
 	{

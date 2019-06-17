@@ -74,6 +74,7 @@ class ElevatorController : public controller_interface::MultiInterfaceController
             ros::ServiceServer elevator_service_; //service for receiving commands
 
 			bool zeroed_;
+			bool last_zeroed_;
 			double last_position_;
 			//double last_setpoint_;
 			hardware_interface::TalonMode last_mode_;
