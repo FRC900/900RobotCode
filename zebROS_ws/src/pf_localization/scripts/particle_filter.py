@@ -2,7 +2,7 @@
 
 Particle Filter localization sample
 
-author: Atsushi Sakai (@Atsushi_twi)
+oritinal author: Atsushi Sakai (@Atsushi_twi)
 
 """
 
@@ -413,8 +413,31 @@ def main():
     hxTrue = xTrue
     hxDR = xTrue
 
-    #Init for pickle file save
+    #This code is a copy of the code below it, with removed visualization. However, this code saves data in a pickle to be visualized separately.
+    
+    columns = ['RFID','xTrue','z','px','hxEst','hxDR','hxTrue','time']
     total_values = []
+    while SIM_TIME >= time:
+        time += DT
+        u = calc_input(time)
+        xTrue, z, xDR, ud = observation(xTrue, xDR, u, RFID)
+
+        xEst, PEst, px, pw = pf_localization(px, pw, xEst, PEst, z, ud, RFID)
+        #print(xEst)
+
+        # store data history
+        hxEst = np.hstack((hxEst, xEst))
+        hxDR = np.hstack((hxDR, xDR))
+        hxTrue = np.hstack((hxTrue, xTrue))
+
+        total_values.append([RFID,xTrue,z,px,hxEst,hxDR,hxTrue,time])
+
+    df = pd.DataFrame(total_values,columns=columns)
+    df.to_pickle('data.p')
+    
+    #Reset time for the standard code visualization
+    time = 0
+    
 
     while SIM_TIME >= time:
         time += DT
