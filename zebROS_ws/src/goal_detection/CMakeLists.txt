@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(goal_detection)
 
 include ("../cmake_modules/CMakeOpt.cmake")
+add_definitions(--std=c++14)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -12,6 +13,7 @@ if (DEFINED CMAKE_TOOLCHAIN_FILE)
     message_filters
     message_generation
     geometry_msgs
+	nodelet
     std_msgs
     sensor_msgs
     tf2
@@ -20,10 +22,12 @@ if (DEFINED CMAKE_TOOLCHAIN_FILE)
 else()
   find_package(catkin REQUIRED COMPONENTS
     roscpp
+	image_transport
     message_filters
 	dynamic_reconfigure_wrapper
     message_generation
     geometry_msgs
+	nodelet
     std_msgs
     sensor_msgs
 	teraranger_array
@@ -152,13 +156,13 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 
   ## Declare a C++ executable
   add_executable(goal_detection_node
-    src/goal_detect.cpp
-    ../../../common/GoalDetector.cpp
-    ../../../common/Utilities.cpp
-    ../../../common/objtype.cpp
-    ../../../common/track3d.cpp
-    ../../../common/kalman.cpp
-    ../../../common/hungarian.cpp
+    src/goal_detect_node.cpp
+  )
+
+  ## Specify libraries to link a library or executable target against
+  target_link_libraries(goal_detection_node
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBS}
   )
 
   ## Add cmake target dependencies of the executable
@@ -168,12 +172,25 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     ${catkin_EXPORTED_TARGETS}
   )
 
-  ## Specify libraries to link a library or executable target against
-  target_link_libraries(goal_detection_node
-    ${catkin_LIBRARIES}
-    ${OpenCV_LIBS}
-    ${orocos_kdl_LIBRARIES} 
+  add_library(GoalDetection 
+	src/goal_detect.cpp
+    ../../../common/GoalDetector.cpp
+    ../../../common/Utilities.cpp
+    ../../../common/objtype.cpp
+    ../../../common/track3d.cpp
+    ../../../common/kalman.cpp
+    ../../../common/hungarian.cpp
   )
+  target_link_libraries(GoalDetection
+	${catkin_LIBRARIES}
+	${OpenCV_LIBS}
+  )
+
+  add_dependencies(GoalDetection
+    ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+    ${catkin_EXPORTED_TARGETS}
+  )
+
 endif()
 
 #############
