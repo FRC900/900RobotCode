@@ -51,15 +51,11 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>roscpp</build_depend>
-  <depend>control_msgs</depend>
   <depend>trajectory_msgs</depend>
   <depend>std_msgs</depend>
-  <depend>cmake_modules</depend>
   <depend>talon_swerve_drive_controller</depend>
   <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>
-  <depend>actionlib</depend>
-  <depend>actionlib_msgs</depend>
   <depend>geometry_msgs</depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>

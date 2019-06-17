@@ -10,6 +10,6 @@ float64[] end_points
 float64 initial_v
 float64 final_v
 ---
-talon_swerve_drive_controller/SwervePoint[] points 
 trajectory_msgs/JointTrajectory joint_trajectory
+bool[] hold
 float64 dt

@@ -1,13 +1,12 @@
 #include <ros/ros.h>
 #include <swerve_point_generator/FullGenCoefs.h>
-#include <talon_swerve_drive_controller/MotionProfilePoints.h>
+#include <talon_swerve_drive_controller/MotionProfile.h>
 #include <base_trajectory/GenerateSpline.h>
 #include <talon_state_controller/TalonState.h>
 #include <robot_visualizer/ProfileFollower.h>
 #include <behaviors/PathAction.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
-#include <swerve_point_generator/PathFollowAction.h>
 #include <angles/angles.h>
 
 // TODO : all of these should be members of PathAction.  Move their
@@ -58,14 +57,6 @@ bool runTrajectory(const swerve_point_generator::FullGenCoefs::Response &traj)
     robot_visualizer::ProfileFollower srv_viz_msg;
     srv_viz_msg.request.joint_trajectories.push_back(traj.joint_trajectory);
 
-	for(int i  = 0; i < traj.points.size(); i++)
-	{
-		for(int j = 0; i < traj.points[i].drive_pos.size(); i++)
-		{
-			ROS_INFO_STREAM("drive pos = " << traj.points[i].drive_pos[j]);
-		}
-	}
-
     srv_viz_msg.request.start_id = 0;
 
     if(!VisualizeService.call(srv_viz_msg))
@@ -77,13 +68,15 @@ bool runTrajectory(const swerve_point_generator::FullGenCoefs::Response &traj)
         ROS_ERROR("succeded in call to viz srv");
     }
 
-    talon_swerve_drive_controller::MotionProfilePoints swerve_control_srv;
-    swerve_control_srv.request.profiles.resize(1);
-    swerve_control_srv.request.profiles[0].points = traj.points;
-    swerve_control_srv.request.profiles[0].dt = traj.dt;
+    talon_swerve_drive_controller::MotionProfile swerve_control_srv;
+
+    swerve_control_srv.request.joint_trajectory = traj.joint_trajectory;
+    swerve_control_srv.request.hold = traj.hold;
+    swerve_control_srv.request.dt = traj.dt;
+    swerve_control_srv.request.slot = 0;
+
     swerve_control_srv.request.buffer = true;
     swerve_control_srv.request.run = true;
-    swerve_control_srv.request.profiles[0].slot = 0;
 	swerve_control_srv.request.wipe_all = true;
 	swerve_control_srv.request.brake = false;
 	swerve_control_srv.request.run_slot = 0;
@@ -144,8 +137,7 @@ public:
 		srvBaseTrajectory.request.points[0].velocities.push_back(0);
 		srvBaseTrajectory.request.points[0].accelerations.push_back(0);
 		//z-rotation
-		double rotation = goal->rotation;
-		rotation = angles::normalize_angle(rotation);
+		const double rotation = angles::normalize_angle(goal->rotation);
 		if (std::abs(rotation) < 0.001)
 			srvBaseTrajectory.request.points[0].positions.push_back(rotation < 0 ? -0.001 : 0.001);
 		else
@@ -210,10 +202,22 @@ int main(int argc, char** argv)
 	ros::NodeHandle n;
 	PathAction path("path_server", n);
 
+	if (!ros::service::waitForService("point_gen/command", 15000))
+	{
+		ROS_ERROR("Failed waiting for point_gen/command service, exiting");
+		return 0;
+	}
+
+	if (!ros::service::waitForService("/frcrobot_jetson/swerve_drive_controller/run_profile", 15000))
+	{
+		ROS_ERROR("Failed waiting for /frcrobot_jetson/swerve_drive_controller/run_profile service, exiting");
+		return 0;
+	}
+
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = 1;
 	point_gen = n.serviceClient<swerve_point_generator::FullGenCoefs>("point_gen/command", false, service_connection_header);
-	swerve_controller = n.serviceClient<talon_swerve_drive_controller::MotionProfilePoints>("/frcrobot_jetson/swerve_drive_controller/run_profile", false, service_connection_header);
+	swerve_controller = n.serviceClient<talon_swerve_drive_controller::MotionProfile>("/frcrobot_jetson/swerve_drive_controller/run_profile", false, service_connection_header);
 	spline_gen = n.serviceClient<base_trajectory::GenerateSpline>("base_trajectory/spline_gen", false, service_connection_header);
 	VisualizeService = n.serviceClient<robot_visualizer::ProfileFollower>("visualize_auto", false, service_connection_header);
 	auto talon_sub = n.subscribe("/frcrobot_jetson/talon_states", 10, talonStateCallback);

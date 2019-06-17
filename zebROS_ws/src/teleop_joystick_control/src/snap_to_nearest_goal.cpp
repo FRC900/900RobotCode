@@ -10,7 +10,6 @@
 #include "std_msgs/Float64.h"
 #include "std_msgs/Float64MultiArray.h"
 
-
 #include <vector>
 
 ros::Publisher snapAnglePub;

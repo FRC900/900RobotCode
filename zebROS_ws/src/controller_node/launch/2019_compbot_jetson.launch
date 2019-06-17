@@ -111,9 +111,8 @@
 		<node name="profile_follow" pkg="robot_visualizer" type="profile_follow" output="screen" />
 		-->
 		<!-- todo - remove next 2 config files after moving profile gen to swerve drive controller -->
-		<rosparam file="$(find ros_control_boilerplate)/config/2019_swerve_drive.yaml" command="load"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/talon_swerve_offsets_offseason.yaml" command="load"/>
 		<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node> 
+		<rosparam file="$(find swerve_point_generator)/config/point_gen.yaml" command="load"/>
 		<node name="point_gen" pkg="swerve_point_generator" type="point_gen" output="screen" />
 		<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/2018FRC_field.yaml" output="screen" if="$(arg static_map)">
 			<param name="frame_id" value="/map"/>

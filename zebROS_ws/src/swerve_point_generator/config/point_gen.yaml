@@ -1,0 +1,9 @@
+#  These values are found in the swerve yaml file as
+#  well.  Here, though, we might want to change them
+#  to something other than their defaults for profile
+#  generation, so duplicate them here
+max_speed: 3.0
+max_accel: 1.8
+max_brake_accel: 2.5
+ang_accel_conv: 2.0
+
