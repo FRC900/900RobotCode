@@ -512,7 +512,7 @@ class TalonCIParams
 			n.getParam("demand1_value", demand1_value_);
 			if (!n.getParam("close_loop_values", pid_param_list))
 				return true;
-			if (pid_param_list.size() <= hardware_interface::TALON_PIDF_SLOTS)
+			if (pid_param_list.size() <= static_cast<int>(hardware_interface::TALON_PIDF_SLOTS))
 			{
 				for (int i = 0; i < pid_param_list.size(); i++)
 				{
@@ -1678,7 +1678,7 @@ class TalonControllerInterface
 			// but don't set mode - either force the caller to
 			// set it or use one of the derived, fixed-mode
 			// classes instead
-			for (int i = 0; i < hardware_interface::TALON_PIDF_SLOTS; i++)
+			for (size_t i = 0; i < hardware_interface::TALON_PIDF_SLOTS; i++)
 			{
 				talon->setP(params.p_[i], i);
 				talon->setI(params.i_[i], i);
