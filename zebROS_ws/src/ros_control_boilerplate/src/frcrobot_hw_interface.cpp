@@ -639,7 +639,6 @@ void FRCRobotHWInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::mot
 		const double radians_scale = getConversionFactor(encoder_ticks_per_rotation, encoder_feedback, hardware_interface::TalonMode_Position) * conversion_factor;
 		const double radians_per_second_scale = getConversionFactor(encoder_ticks_per_rotation, encoder_feedback, hardware_interface::TalonMode_Velocity) * conversion_factor;
 
-
 		const double motor_output_percent = victor->GetMotorOutputPercent();
 		safeTalonCall(victor->GetLastError(), "GetMotorOutputPercent");
 
@@ -1618,28 +1617,31 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		hardware_interface::FeedbackDevice internal_feedback_device = hardware_interface::FeedbackDevice_Uninitialized;
 		double feedback_coefficient;
 
-		if (talon)
-		{
-			ctre::phoenix::motorcontrol::FeedbackDevice talon_feedback_device;
-			if (tc.encoderFeedbackChanged(internal_feedback_device, feedback_coefficient) &&
+		ctre::phoenix::motorcontrol::FeedbackDevice talon_feedback_device;
+		if (tc.encoderFeedbackChanged(internal_feedback_device, feedback_coefficient) &&
 				convertFeedbackDevice(internal_feedback_device, talon_feedback_device))
+		{
+			// Check for errors on Talon writes. If it fails, used the reset() call to
+			// set the changed var for the config items to true. This will trigger a re-try
+			// the next time through the loop.
+			bool rc = true;
+			// Only actually set this on the hardware for Talon devices. But set it in
+			// talon_states for both types of motor controllers. This allows the conversion
+			// functions to work properly?
+			if (talon)
 			{
-				// Check for errors on Talon writes. If it fails, used the reset() call to
-				// set the changed var for the config items to true. This will trigger a re-try
-				// the next time through the loop.
-				bool rc = true;
 				rc &= safeTalonCall(talon->ConfigSelectedFeedbackSensor(talon_feedback_device, pidIdx, timeoutMs),"ConfigSelectedFeedbackSensor");
 				rc &= safeTalonCall(talon->ConfigSelectedFeedbackCoefficient(feedback_coefficient, pidIdx, timeoutMs),"ConfigSelectedFeedbackCoefficient");
-				if (rc)
-				{
-					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " feedback");
-					ts.setEncoderFeedback(internal_feedback_device);
-					ts.setFeedbackCoefficient(feedback_coefficient);
-				}
-				else
-				{
-					tc.resetEncoderFeedback();
-				}
+			}
+			if (rc)
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " feedback");
+				ts.setEncoderFeedback(internal_feedback_device);
+				ts.setFeedbackCoefficient(feedback_coefficient);
+			}
+			else
+			{
+				tc.resetEncoderFeedback();
 			}
 		}
 
@@ -2001,13 +2003,15 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					convertLimitSwitchSource(internal_local_reverse_source, talon_local_reverse_source) &&
 					convertLimitSwitchNormal(internal_local_reverse_normal, talon_local_reverse_normal) )
 			{
-				bool rc = true;
-				rc &= safeTalonCall(talon->ConfigForwardLimitSwitchSource(talon_local_forward_source, talon_local_forward_normal, timeoutMs),"ConfigForwardLimitSwitchSource");
+				bool rc = safeTalonCall(talon->ConfigForwardLimitSwitchSource(talon_local_forward_source, talon_local_forward_normal, timeoutMs),"ConfigForwardLimitSwitchSource");
 				rc &= safeTalonCall(talon->ConfigReverseLimitSwitchSource(talon_local_reverse_source, talon_local_reverse_normal, timeoutMs),"ConfigReverseLimitSwitchSource");
 
 				if (rc)
 				{
-					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " limit switches");
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id]
+							<< " limit switches "
+							<< talon_local_forward_source << " " << talon_local_forward_normal << " "
+							<< talon_local_reverse_source << " " << talon_local_reverse_normal);
 					ts.setForwardLimitSwitchSource(internal_local_forward_source, internal_local_forward_normal);
 					ts.setReverseLimitSwitchSource(internal_local_reverse_source, internal_local_reverse_normal);
 				}
@@ -2041,13 +2045,16 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 			if (rc)
 			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " remote limit switches");
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id]
+						<< " remote limit switches"
+						<< talon_remote_forward_source << " " << talon_remote_forward_normal << " " << remote_forward_id << " "
+						<< talon_remote_reverse_source << " " << talon_remote_reverse_normal << " " << remote_reverse_id);
 				ts.setRemoteForwardLimitSwitchSource(internal_remote_forward_source, internal_remote_forward_normal, remote_forward_id);
 				ts.setRemoteReverseLimitSwitchSource(internal_remote_reverse_source, internal_remote_reverse_normal, remote_reverse_id);
 			}
 			else
 			{
-				tc.resetLimitSwitchesSource();
+				tc.resetRemoteLimitSwitchesSource();
 			}
 		}
 

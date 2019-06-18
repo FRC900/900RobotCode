@@ -326,14 +326,14 @@ class TalonHWState
 			velocity_measurement_window_(64),
 
 			limit_switch_local_forward_source_(LimitSwitchSource_FeedbackConnector),
-			limit_switch_local_forward_normal_(LimitSwitchNormal_NormallyOpen),
+			limit_switch_local_forward_normal_(LimitSwitchNormal_Disabled),
 			limit_switch_local_reverse_source_(LimitSwitchSource_FeedbackConnector),
-			limit_switch_local_reverse_normal_(LimitSwitchNormal_NormallyOpen),
+			limit_switch_local_reverse_normal_(LimitSwitchNormal_Disabled),
 			limit_switch_remote_forward_source_(RemoteLimitSwitchSource_Deactivated),
-			limit_switch_remote_forward_normal_(LimitSwitchNormal_NormallyOpen),
+			limit_switch_remote_forward_normal_(LimitSwitchNormal_Disabled),
 			limit_switch_remote_forward_id_(0),
 			limit_switch_remote_reverse_source_(RemoteLimitSwitchSource_Deactivated),
-			limit_switch_remote_reverse_normal_(LimitSwitchNormal_NormallyOpen),
+			limit_switch_remote_reverse_normal_(LimitSwitchNormal_Disabled),
 			limit_switch_remote_reverse_id_(0),
 
 			// soft limits
