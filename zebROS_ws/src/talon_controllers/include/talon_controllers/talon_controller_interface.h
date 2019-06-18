@@ -77,8 +77,10 @@ class TalonCIParams
 			limit_switch_local_reverse_normal_(hardware_interface::LimitSwitchNormal_Disabled),
 			limit_switch_remote_forward_source_(hardware_interface::RemoteLimitSwitchSource_Deactivated),
 			limit_switch_remote_forward_normal_(hardware_interface::LimitSwitchNormal_Disabled),
+			limit_switch_remote_forward_id_(0),
 			limit_switch_remote_reverse_source_(hardware_interface::RemoteLimitSwitchSource_Deactivated),
 			limit_switch_remote_reverse_normal_(hardware_interface::LimitSwitchNormal_Disabled),
+			limit_switch_remote_reverse_id_(0),
 			softlimit_forward_threshold_(0.0),
 			softlimit_forward_enable_(false),
 			softlimit_reverse_threshold_(0.0),
@@ -182,8 +184,10 @@ class TalonCIParams
 			limit_switch_local_reverse_normal_ = static_cast<hardware_interface::LimitSwitchNormal>(config.limit_switch_local_reverse_normal);
 			limit_switch_remote_forward_source_ = static_cast<hardware_interface::RemoteLimitSwitchSource>(config.limit_switch_remote_forward_source);
 			limit_switch_remote_forward_normal_ = static_cast<hardware_interface::LimitSwitchNormal>(config.limit_switch_remote_forward_normal);
+			limit_switch_remote_forward_id_     = config.limit_switch_remote_forward_id;
 			limit_switch_remote_reverse_source_ = static_cast<hardware_interface::RemoteLimitSwitchSource>(config.limit_switch_remote_reverse_source);
 			limit_switch_remote_reverse_normal_ = static_cast<hardware_interface::LimitSwitchNormal>(config.limit_switch_remote_reverse_normal);
+			limit_switch_remote_reverse_id_     = config.limit_switch_remote_reverse_id;
 
 			softlimit_forward_threshold_ = config.softlimit_forward_threshold;
 			softlimit_forward_enable_ = config.softlimit_forward_enable;
@@ -285,8 +289,10 @@ class TalonCIParams
 			config.limit_switch_local_reverse_normal = limit_switch_local_reverse_normal_;
 			config.limit_switch_remote_forward_source = limit_switch_remote_forward_source_;
 			config.limit_switch_remote_forward_normal = limit_switch_remote_forward_normal_;
+			config.limit_switch_remote_forward_id     = limit_switch_remote_forward_id_;
 			config.limit_switch_remote_reverse_source = limit_switch_remote_reverse_source_;
 			config.limit_switch_remote_reverse_normal = limit_switch_remote_reverse_normal_;
+			config.limit_switch_remote_reverse_id     = limit_switch_remote_reverse_id_;
 			config.softlimit_forward_threshold = softlimit_forward_threshold_;
 			config.softlimit_forward_enable = softlimit_forward_enable_;
 			config.softlimit_reverse_threshold = softlimit_reverse_threshold_;
@@ -587,6 +593,16 @@ class TalonCIParams
 				if (!stringToRemoteLimitSwitchSource(str_val, remote_limit_switch_source))
 					return false;
 				limit_switch_remote_forward_source_ = remote_limit_switch_source;
+				int id;
+				if (n.getParam("limit_switch_remote_forward_id", id))
+				{
+					limit_switch_remote_forward_id_ = static_cast<unsigned int>(id);
+				}
+				else if (limit_switch_remote_forward_source_ != hardware_interface::RemoteLimitSwitchSource_Deactivated)
+				{
+					ROS_ERROR("Remote limt switch forward id must be set if source is not \"Disabled\"");
+					return false;
+				}
 			}
 			if (n.getParam("limit_switch_remote_forward_normal", str_val))
 			{
@@ -599,6 +615,16 @@ class TalonCIParams
 				if (!stringToRemoteLimitSwitchSource(str_val, remote_limit_switch_source))
 					return false;
 				limit_switch_remote_reverse_source_ = remote_limit_switch_source;
+				int id;
+				if (n.getParam("limit_switch_remote_reverse_id", id))
+				{
+					limit_switch_remote_reverse_id_ = static_cast<unsigned int>(id);
+				}
+				else if (limit_switch_remote_reverse_source_ != hardware_interface::RemoteLimitSwitchSource_Deactivated)
+				{
+					ROS_ERROR("Remote limt switch reverse id must be set if source is not \"Disabled\"");
+					return false;
+				}
 			}
 			if (n.getParam("limit_switch_remote_reverse_normal", str_val))
 			{
@@ -735,8 +761,10 @@ class TalonCIParams
 		hardware_interface::LimitSwitchNormal limit_switch_local_reverse_normal_;
 		hardware_interface::RemoteLimitSwitchSource limit_switch_remote_forward_source_;
 		hardware_interface::LimitSwitchNormal limit_switch_remote_forward_normal_;
+		unsigned int                          limit_switch_remote_forward_id_;
 		hardware_interface::RemoteLimitSwitchSource limit_switch_remote_reverse_source_;
 		hardware_interface::LimitSwitchNormal limit_switch_remote_reverse_normal_;
+		unsigned int                          limit_switch_remote_reverse_id_;
 
 		double softlimit_forward_threshold_;
 		bool   softlimit_forward_enable_;
@@ -1666,6 +1694,9 @@ class TalonControllerInterface
 
 			talon->setForwardLimitSwitchSource(params.limit_switch_local_forward_source_, params.limit_switch_local_forward_normal_);
 			talon->setReverseLimitSwitchSource(params.limit_switch_local_reverse_source_, params.limit_switch_local_reverse_normal_);
+
+			talon->setRemoteForwardLimitSwitchSource(params.limit_switch_remote_forward_source_, params.limit_switch_remote_forward_normal_, params.limit_switch_remote_forward_id_);
+			talon->setRemoteReverseLimitSwitchSource(params.limit_switch_remote_reverse_source_, params.limit_switch_remote_reverse_normal_, params.limit_switch_remote_reverse_id_);
 			talon->setOverrideSoftLimitsEnable(params.override_limit_switches_enable_);
 			talon->setForwardSoftLimitThreshold(params.softlimit_forward_threshold_);
 			talon->setForwardSoftLimitEnable(params.softlimit_forward_enable_);

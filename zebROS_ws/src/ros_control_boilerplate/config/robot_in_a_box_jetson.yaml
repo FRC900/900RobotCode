@@ -62,6 +62,11 @@ talon3_controller:
     #feedback_type: CTRE_MagEncoder_Absolute
     dynamic_reconfigure: True
     voltage_compensation_Enable: True
+    remote_feedback_type: RemoteSensor0
+    remote_feedback_device_id0: 9
+    remote_feedback_filter0: TalonSRX_SelectedSensor
+    limit_switch_remote_forward_source: RemoteTalonSRX
+    limit_switch_remote_forward_id: 9
 
 talon9_percentout_controller:
     type: talon_controllers/TalonPercentOutputController

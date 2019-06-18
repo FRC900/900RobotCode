@@ -331,8 +331,10 @@ class TalonHWState
 			limit_switch_local_reverse_normal_(LimitSwitchNormal_NormallyOpen),
 			limit_switch_remote_forward_source_(RemoteLimitSwitchSource_Deactivated),
 			limit_switch_remote_forward_normal_(LimitSwitchNormal_NormallyOpen),
+			limit_switch_remote_forward_id_(0),
 			limit_switch_remote_reverse_source_(RemoteLimitSwitchSource_Deactivated),
 			limit_switch_remote_reverse_normal_(LimitSwitchNormal_NormallyOpen),
+			limit_switch_remote_reverse_id_(0),
 
 			// soft limits
 			softlimit_forward_threshold_(0.0),
@@ -837,28 +839,32 @@ class TalonHWState
 			normal = limit_switch_local_reverse_normal_;
 		}
 
-		void setRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal)
+		void setRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal, unsigned int id)
 		{
 			limit_switch_remote_forward_source_ = source;
 			limit_switch_remote_forward_normal_ = normal;
+			limit_switch_remote_forward_id_     = id;
 		}
 
-		void getRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal) const
+		void getRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal, unsigned int &id) const
 		{
 			source = limit_switch_remote_forward_source_;
 			normal = limit_switch_remote_forward_normal_;
+			id     = limit_switch_remote_forward_id_;
 		}
 
-		void setRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal)
+		void setRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal, unsigned int id)
 		{
 			limit_switch_remote_reverse_source_ = source;
 			limit_switch_remote_reverse_normal_ = normal;
+			limit_switch_remote_reverse_id_     = id;
 		}
 
-		void getRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal) const
+		void getRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal, unsigned int &id) const
 		{
 			source = limit_switch_remote_reverse_source_;
 			normal = limit_switch_remote_reverse_normal_;
+			id     = limit_switch_remote_reverse_id_;
 		}
 
 		void setForwardSoftLimitThreshold(double threshold)
@@ -1397,8 +1403,10 @@ class TalonHWState
 		LimitSwitchNormal limit_switch_local_reverse_normal_;
 		RemoteLimitSwitchSource limit_switch_remote_forward_source_;
 		LimitSwitchNormal limit_switch_remote_forward_normal_;
+		unsigned int limit_switch_remote_forward_id_;
 		RemoteLimitSwitchSource limit_switch_remote_reverse_source_;
 		LimitSwitchNormal limit_switch_remote_reverse_normal_;
+		unsigned int limit_switch_remote_reverse_id_;
 
 		// soft limits
 		double softlimit_forward_threshold_;

@@ -148,8 +148,10 @@ class TalonHWCommand
 			limit_switch_local_changed_(true),
 			limit_switch_remote_forward_source_(RemoteLimitSwitchSource_Deactivated),
 			limit_switch_remote_forward_normal_(LimitSwitchNormal_Disabled),
+			limit_switch_remote_forward_id_(0),
 			limit_switch_remote_reverse_source_(RemoteLimitSwitchSource_Deactivated),
 			limit_switch_remote_reverse_normal_(LimitSwitchNormal_Disabled),
+			limit_switch_remote_reverse_id_(0),
 			limit_switch_remote_changed_(true),
 
 			// soft limits
@@ -1232,77 +1234,78 @@ class TalonHWCommand
 			limit_switch_local_changed_ = true;
 		}
 
-		void setRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal)
+		void setRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal, unsigned int id)
 		{
-			if ((source != limit_switch_remote_forward_source_) ||
-				(normal != limit_switch_remote_forward_normal_))
+			if ((source <= RemoteLimitSwitchSource_Uninitialized) ||
+				(source >= RemoteLimitSwitchSource_Last))
 			{
-				if ((source <= RemoteLimitSwitchSource_Uninitialized) ||
-					(source >= RemoteLimitSwitchSource_Last))
-				{
-					ROS_WARN("Invalid source in setRemoteForwardLimitSwitchSource");
-					return;
-				}
-				if ((normal <= LimitSwitchNormal_Uninitialized) ||
-					(normal >= LimitSwitchNormal_Last))
-				{
-					ROS_WARN("Invalid normal in setRemoteForwardLimitSwitchSource");
-					return;
-				}
-				if ((limit_switch_remote_forward_source_ != source) ||
-				    (limit_switch_remote_forward_normal_ != normal) )
-				{
-					limit_switch_remote_forward_source_ = source;
-					limit_switch_remote_forward_normal_ = normal;
-					limit_switch_remote_changed_ = true;
-				}
+				ROS_WARN("Invalid source in setRemoteForwardLimitSwitchSource");
+				return;
+			}
+			if ((normal <= LimitSwitchNormal_Uninitialized) ||
+				(normal >= LimitSwitchNormal_Last))
+			{
+				ROS_WARN("Invalid normal in setRemoteForwardLimitSwitchSource");
+				return;
+			}
+			if ((limit_switch_remote_forward_source_ != source) ||
+				(limit_switch_remote_forward_normal_ != normal) ||
+				(limit_switch_remote_forward_id_     != id    )  )
+			{
+				limit_switch_remote_forward_source_ = source;
+				limit_switch_remote_forward_normal_ = normal;
+				limit_switch_remote_forward_id_     = id;
+				limit_switch_remote_changed_ = true;
 			}
 		}
 
-		void getRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal) const
+		void getRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal, unsigned int &id) const
 		{
 			source = limit_switch_remote_forward_source_;
 			normal = limit_switch_remote_forward_normal_;
+			id     = limit_switch_remote_forward_id_;
 		}
 
-		void setRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal)
+		void setRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal, unsigned int id)
 		{
-			if ((source != limit_switch_remote_reverse_source_) || (normal != limit_switch_remote_reverse_normal_))
+			if ((source <= RemoteLimitSwitchSource_Uninitialized) ||
+				(source >= RemoteLimitSwitchSource_Last))
 			{
-				if ((source <= RemoteLimitSwitchSource_Uninitialized) ||
-					(source >= RemoteLimitSwitchSource_Last))
-				{
-					ROS_WARN("Invalid source in setRemoteReverseLimitSwitchSource");
-					return;
-				}
-				if ((normal <= LimitSwitchNormal_Uninitialized) ||
-					(normal >= LimitSwitchNormal_Last))
-				{
-					ROS_WARN("Invalid normal in setRemoteReverseLimitSwitchSource");
-					return;
-				}
-				if ((limit_switch_remote_reverse_source_ != source) ||
-				    (limit_switch_remote_reverse_normal_ != normal) )
-				{
-					limit_switch_remote_reverse_source_ = source;
-					limit_switch_remote_reverse_normal_ = normal;
-					limit_switch_remote_changed_ = true;
-				}
+				ROS_WARN("Invalid source in setRemoteReverseLimitSwitchSource");
+				return;
+			}
+			if ((normal <= LimitSwitchNormal_Uninitialized) ||
+				(normal >= LimitSwitchNormal_Last))
+			{
+				ROS_WARN("Invalid normal in setRemoteReverseLimitSwitchSource");
+				return;
+			}
+			if ((limit_switch_remote_reverse_source_ != source) ||
+				(limit_switch_remote_reverse_normal_ != normal) ||
+				(limit_switch_remote_reverse_id_     != id    )  )
+			{
+				limit_switch_remote_reverse_source_ = source;
+				limit_switch_remote_reverse_normal_ = normal;
+				limit_switch_remote_reverse_id_     = id;
+				limit_switch_remote_changed_ = true;
 			}
 		}
 
-		void getRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal) const
+		void getRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal, unsigned int &id) const
 		{
 			source = limit_switch_remote_reverse_source_;
 			normal = limit_switch_remote_reverse_normal_;
+			id     = limit_switch_remote_reverse_id_;
 		}
 
-		bool remoteLimitSwitchesSourceChanged(RemoteLimitSwitchSource &forward_source, LimitSwitchNormal &forward_normal, RemoteLimitSwitchSource &reverse_source, LimitSwitchNormal &reverse_normal)
+		bool remoteLimitSwitchesSourceChanged(RemoteLimitSwitchSource &forward_source, LimitSwitchNormal &forward_normal, unsigned int &forward_id, RemoteLimitSwitchSource &reverse_source, LimitSwitchNormal &reverse_normal, unsigned int &reverse_id)
 		{
 			forward_source = limit_switch_remote_forward_source_;
 			forward_normal = limit_switch_remote_forward_normal_;
+			forward_id     = limit_switch_remote_forward_id_;
 			reverse_source = limit_switch_remote_reverse_source_;
 			reverse_normal = limit_switch_remote_reverse_normal_;
+			reverse_id     = limit_switch_remote_reverse_id_;
 			if (!limit_switch_remote_changed_)
 				return false;
 			limit_switch_remote_changed_ = false;
@@ -2077,11 +2080,11 @@ class TalonHWCommand
 		bool        neutral_output_;
 
 		FeedbackDevice encoder_feedback_;
-		double feedback_coefficient_;
-		bool encoder_feedback_changed_;
+		double         feedback_coefficient_;
+		bool           encoder_feedback_changed_;
 		RemoteFeedbackDevice remote_encoder_feedback_;
-		bool remote_encoder_feedback_changed_;
-		int encoder_ticks_per_rotation_;
+		bool                 remote_encoder_feedback_changed_;
+		int                  encoder_ticks_per_rotation_;
 		std::array<int, 2>                remote_feedback_device_ids_;
 		std::array<RemoteSensorSource, 2> remote_feedback_filters_;
 		bool                              remote_feedback_filters_changed_;
@@ -2114,12 +2117,14 @@ class TalonHWCommand
 		LimitSwitchNormal limit_switch_local_forward_normal_;
 		LimitSwitchSource limit_switch_local_reverse_source_;
 		LimitSwitchNormal limit_switch_local_reverse_normal_;
-		bool limit_switch_local_changed_;
+		bool              limit_switch_local_changed_;
 		RemoteLimitSwitchSource limit_switch_remote_forward_source_;
-		LimitSwitchNormal limit_switch_remote_forward_normal_;
+		LimitSwitchNormal       limit_switch_remote_forward_normal_;
+		unsigned int            limit_switch_remote_forward_id_;
 		RemoteLimitSwitchSource limit_switch_remote_reverse_source_;
-		LimitSwitchNormal limit_switch_remote_reverse_normal_;
-		bool limit_switch_remote_changed_;
+		LimitSwitchNormal       limit_switch_remote_reverse_normal_;
+		unsigned int            limit_switch_remote_reverse_id_;
+		bool                    limit_switch_remote_changed_;
 
 		double softlimit_forward_threshold_;
 		bool softlimit_forward_enable_;

@@ -159,8 +159,10 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 		m.limit_switch_local_reverse_normal.push_back("");
 		m.limit_switch_remote_forward_source.push_back("");
 		m.limit_switch_remote_forward_normal.push_back("");
+		m.limit_switch_remote_forward_id.push_back(0);
 		m.limit_switch_remote_reverse_source.push_back("");
 		m.limit_switch_remote_reverse_normal.push_back("");
+		m.limit_switch_remote_reverse_id.push_back(0);
 		m.softlimit_forward_threshold.push_back(0);
 		m.softlimit_forward_enable.push_back(false);
 		m.softlimit_reverse_threshold.push_back(0);
@@ -560,14 +562,18 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				m.limit_switch_local_reverse_normal[i] = limitSwitchNormalToString(ls_normal);
 
 				hardware_interface::RemoteLimitSwitchSource remote_ls_source;
-				ts->getRemoteForwardLimitSwitchSource(remote_ls_source, ls_normal);
+				unsigned int remote_ls_id;
+				ts->getRemoteForwardLimitSwitchSource(remote_ls_source, ls_normal, remote_ls_id);
 
 				m.limit_switch_remote_forward_source[i] = remoteLimitSwitchSourceToString(remote_ls_source);
 				m.limit_switch_remote_forward_normal[i] = limitSwitchNormalToString(ls_normal);
+				m.limit_switch_remote_forward_id[i] = remote_ls_id;
 
-				ts->getRemoteReverseLimitSwitchSource(remote_ls_source, ls_normal);
+				ts->getRemoteReverseLimitSwitchSource(remote_ls_source, ls_normal, remote_ls_id);
 				m.limit_switch_remote_reverse_source[i] = remoteLimitSwitchSourceToString(remote_ls_source);
 				m.limit_switch_remote_reverse_normal[i] = limitSwitchNormalToString(ls_normal);
+				m.limit_switch_remote_reverse_id[i] = remote_ls_id;
+
 				m.softlimit_forward_threshold[i] = ts->getForwardSoftLimitThreshold();
 				m.softlimit_forward_enable[i] = ts->getForwardSoftLimitEnable();
 				m.softlimit_reverse_threshold[i] = ts->getReverseSoftLimitThreshold();
