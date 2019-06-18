@@ -189,7 +189,7 @@ do
 		ssh $i "cd $JETSON_CLONE_LOCATION/zebROS_ws && \
 		source /opt/ros/melodic/setup.bash && \
 		source /home/ubuntu/2019RobotCode/zebROS_ws/ROSJetsonMaster.sh && \
-		catkin_make" && \
+		catkin_make --use-ninja" && \
 		echo "Jetson $i native build complete") &
 	JETSON_BUILD_PROCESSES+=($!)
 done
