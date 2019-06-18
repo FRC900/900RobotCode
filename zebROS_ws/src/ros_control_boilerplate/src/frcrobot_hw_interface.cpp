@@ -88,6 +88,7 @@
 
 #include <ctre/phoenix/motorcontrol/SensorCollection.h>
 #include <ctre/phoenix/platform/Platform.h>
+#include "ctre/phoenix/unmanaged/Unmanaged.h"
 
 //
 // digital output, PWM, Pneumatics, compressor, nidec, talons
@@ -1568,6 +1569,11 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 {
 	// Was the robot enabled last time write was run?
 	static bool last_robot_enabled = false;
+
+	if (!run_hal_robot_ && num_can_ctre_mcs_)
+	{
+		ctre::phoenix::unmanaged::FeedEnable(100);
+	}
 
 	for (std::size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
 	{
