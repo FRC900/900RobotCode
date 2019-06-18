@@ -19,7 +19,13 @@ swerve_profiler::swerve_profiler(double max_wheel_dist, double max_wheel_vel,
 	dt_(dt),
 	message_filter_(debug)
 {
-	ROS_INFO_STREAM("max_wheel_dist_ = " << max_wheel_dist_ << " ang_accel_conv_ = " << ang_accel_conv_);
+	ROS_INFO_STREAM("Starting swerve_profiler : max_wheel_dist_ = " << max_wheel_dist_
+	<< " max_wheel_vel_ = " << max_wheel_vel_
+	<< " max_wheel_mid_accel_ = " << max_wheel_mid_accel_
+	<< " max_wheel_brake_accel_ = " << max_wheel_brake_accel_
+	<< " ang_accel_conv_ = " << ang_accel_conv_
+	<< " dt_ = " << dt
+	<< " debug = " << debug);
 }
 
 //Generation function
@@ -313,7 +319,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 	if (out_msg.points.size() == 0)
 		out_msg.points.resize(155 / dt_); //For full auto :)  TODO: optimize
 	curr_v = initial_v;
-	size_t starting_point = positions.size() - 1;
+	size_t starting_point = positions.size() ? positions.size() - 1 : 0;
 	ros::Duration now(0);
 	ros::Duration period(dt_);
 	//Same as back pass, but now forward
@@ -358,7 +364,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		//ROS_ERROR_STREAM_FILTER(&message_filter_, "2: " << curr_v);
 		for (size_t k = 0; k < positions.size(); k++)
 		{
-			if (starting_point < k || positions[starting_point - k] > current_spline_position)
+			if (starting_point > k || positions[starting_point - k] > current_spline_position)
 			{
 				starting_point -= k;
 				break;
@@ -367,7 +373,7 @@ bool swerve_profiler::generate_profile(std::vector<spline_coefs> x_splines,
 		}
 		//Make sure starting point doesn't go less than 1
 		// TODO : why? shouldn't it be less than zero?
-		starting_point = std::max(1UL, starting_point);
+		starting_point = std::max(static_cast<size_t>(1), starting_point);
 		//coerce(starting_point, 1, 1000000000000);
 
 		//Linear interpolation to get vel cap
@@ -939,9 +945,10 @@ void swerve_profiler::comp_point_characteristics(const std::vector<spline_coefs>
 #endif
 }
 
-void swerve_profiler::calc_angular_terms(const double arb_t, const std::vector<spline_coefs> &orient_splines, const std::vector<double> &end_points,
-										double curr_pos, double curr_vel, bool back_pass,
-										double &next_pos, double &next_vel, double &next_acc)
+void swerve_profiler::calc_angular_terms(const double arb_t, const std::vector<spline_coefs> &orient_splines,
+										 const std::vector<double> &end_points,
+										 double curr_pos, double curr_vel, bool back_pass,
+										 double &next_pos, double &next_vel, double &next_acc)
 {
 		size_t which_spline;
 		for (which_spline = 0; which_spline < end_points.size() - 1; which_spline++)
@@ -952,11 +959,10 @@ void swerve_profiler::calc_angular_terms(const double arb_t, const std::vector<s
 			}
 		}
 
-		double sign = back_pass ? -1 : 1;
+		const double sign = back_pass ? -1 : 1;
 		calc_point(orient_splines[which_spline], arb_t, next_pos);
 		next_vel = sign * (next_pos - curr_pos) / dt_;
 		next_acc = sign * (next_vel - curr_vel) / dt_ * max_wheel_dist_;
 }
-
 
 }
