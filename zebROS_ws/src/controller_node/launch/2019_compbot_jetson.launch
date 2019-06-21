@@ -233,7 +233,11 @@
 		</node>
 	</group>
     
-	<include file="$(find realsense2_camera)/launch/rs_t265.launch" />
+	<include file="$(find realsense2_camera)/launch/rs_t265.launch" >
+		<!-- didn't seem to work, retest
+		<param name="camera" value="rs_t265" />
+		-->
+	</include>
 
 	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
 	<include file="$(find controller_node)/launch/record_2019_no_zed.launch" if="$(arg record)" />
