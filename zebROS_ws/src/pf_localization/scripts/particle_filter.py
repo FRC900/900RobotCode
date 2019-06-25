@@ -5,6 +5,55 @@ Particle Filter localization sample
 oritinal author: Atsushi Sakai (@Atsushi_twi)
 
 """
+"""
+Big list of TODOs :
+
+    This is a lot of work, but take it step by step.
+
+    - Make this more object oriented. Right now, sim is tied pretty tightly to the rest of the code. I can see splitting this up so that isn't the case.
+       - Particle filter should be a class. There can be a constructor, data required are num particles, RFID locations, wall coords, starting bounding box, Q and R matricies
+         Methods would be localization and all the things it calls - gauss likelyhood, calc_covariance, and so on
+	 I could see things like RFID location, wall coords, motion model being separate objects that are part of the
+	  main pf object.  
+	  RFID would have a constructor to set locations and closest_feature as well as range error covariance matrix - this could return delta distance and delta bearing instead of recalculating it in the main code, or add another method to do so. Actually, it looks like the whole get_weights section of pf_localization could be part of RFID, since it seems to use most of the member vars anyway
+	  Wall locations would have a constructor with field map (wall coords), and then provide an intersect() call
+	  Robot motion model could be yet another object, although there isn't much interesting there to break out into a separate object
+
+       - then sim could use this, factoring out things which are sim specific.  The DT, sim time, simulated sensor stuff, anyting related to xTrue, and so on.
+       - not sure how python handles polymorphism, but if I were doing this in C++, I'd create a top level class which has the framework for running PF.  That is,
+         it has methods to get robot motion, sensor input, run an iteration of PF, update the state and so on.  Then turn sim into a derived class which specializes those
+	 methods using the sim-only functions below.  Once that was working, create a real-hardware derived class which fills in those same methods, only
+	 using stuff read from ROS.  If done correctly, the top-level driver code could be shared?
+
+    - Adding data from ROS
+       - I'd start with the simplest - calc_input should just read and store the latest swerve cmd_vel message.  From there, expand it to store a list of cmd_vel messages with associated time.  The second one would handle the case where there were multiple cmd_vel messages set between goal detection messages.  
+       - The grab and parse goal detection results, replacing the observation funtion.  It actually looks like observation does 3 separate things, 2 of which we don't really need.  Split those two things out somewhere else and make observation just a "get_detected_beacons" function?  The other two things - updating true location (impossible with real robot) and updating dead reckoning (possible but not really useful) should end up in sim-only code?  In any case, remove the code which adds noise to each detection - the real data will already be noisy. 
+       - Also, note that the camera detection are relative tto the camera, but the coordinates of the RFID tags are relative to the field coordinate system.  This will have to be handled in the pf_loc code itself.  First, translate from camera-frame to robot base frame. This can be done when the data is read from the message since it is a constant translation.  Translation from robot base frame to map frame has to happen for each particle.  Since each particle has the location of the robot base relative to the map, adding the robot coords (in the map frame) to the displacement between robot center and target will give the coords of the target in the map frame. Each particle's guess at the robot location is different, though, so this will have to be done separately for each particle.
+       - Figure out a way to publish a transform between an odom frame and the calculate map frame location.  The result of the pf will be the distance from the robot to the origin of the map frame, or alternatively, the coordinates of the robot in the map frame (same thing).  But since the realsense camera (or something else) will be publishing odom->robot, the code just needs to express this as an offset between the existing odom frame origin and the calculate map frame origin.  Subtracting the origin of the odom frame from the calculated map frame should do it, or maybe a ROS transform call mgiht be possible?
+       - If the code ends up keeping track of multiple cmd_vel messages that happened between goal detect messages, change the function which calculates motion to account for that. Basically, step through the list and iteratively add cmd_vel * dt for that message to the robot's position.  Be careful with the start and end entries in the list - the dt there will depend on the relative arrival times of the cmd_vel messages along with the previous and current goal detect message.  e.g. if cmd_vel comes in at 10 msec intervals most of the update will be loc = cmd_vel * 0.01. The first and last timestep will not typically be 10msec though, because there the timestep is actually the time between the last overall update (last arrival of a goal detect message) and the time the next cmd_vel arrived. Same with the last message.  A cmd_vel will come in, then before the next cmd_vel arrives, a goal detect message shows up, screwing up the regular spacing of those messages. Only add enough distance for the robot traveling cmd_vel for the time between the final cmd_vel message and the goal detect message.
+
+     - Update closest_feature to include wall occlusion.  Make it check to see if the RFID tag being compared against could not possibly be seen because it is behind a wall.  If so, exclude it from being a potential match
+     
+     - Add robot orientation. This will let the code better filter out which targets are seen at each timestep.
+       - Update robot state vector to hold robot rotation
+       - For sim, need to update the motion model to model rotation
+       - For ROS, add a navX subscriber. The motion model should simply copy this value into robot state when called (we trust the navX as much as anything).
+       - In the sim code which simulates target detection, update it to make sure the camera field of view can actually see the target
+       - Same in closest_feature - update it to ignore targets which are outside of the camera's field of view when trying to find a closest match
+       - Add code which rotates all particles to the navX orientation, possibly including some noise
+       - For bonus points, update the gui to show which way the robot is facing (arrow, line, whatever)
+
+     - In sim, add a check for angle from target to robot. If the angle is too far to the side, we'd have trouble detecting it so model it as not-seen.  This will be the case for e.g. where the robot is just barely unblocked by the cargo ship wall but still at a really oblique angle to the targets on the side - those will be impossible to see in real life even though they're not technically blocked by a wall
+
+     - Experiment with clustering.  This supposedly helps with cases where the targets are symmetric. The problem is that leads to cases where one observation could come from several different distinct positions.  If the model picks the wrong one and converges on it, as written it will be hard for the code to get to the correct position.  clustering seems to keep some particles from other less than optimal locations, and if further robot motion turns these suboptimal locations into a much better guess, will use them (as would be the case if a slight change in position made it obvious which of the various symetric alternatives the robot was located at).  See e.g. https://github.com/teammcr192/activity-indoor-localization/blob/master/ParticleFilter/pf.py for an example.
+
+     - Another way to fix the problem above is to occasinally add random samples back in during resampling. This will help overcome the "everything converged to the wrong spot" problem, at the expense of replacing probably good estimates with random ones.  Having it happen infrequently and with only a small percent of the particles will help. Need to test and see what happens.
+
+     - Another way to fix this is to have a tigher range of possible starting locations. For 2019, we know the robot has to be on the 1st level of the hab. Figure out what that means for a potential range of starting center coords of the robot.  Also, if we always start against the wall at the back of the hab that further constrains us (probably add some margin for error, but it will still be smaller than assuming the robot center can be literally anywhere on the 1st level of the hab.
+        - Add even tigher restrictions for left / center / right, and add a service call to set them?  This would require restarting the particle filter, or at least re-initing the particle locations.
+
+	  
+	  """
 
 import sys
 import numpy as np
@@ -235,6 +284,7 @@ def pf_localization(px, pw, xEst, PEst, z, u, RFID):
         # Predict with random input sampling - update the position of
         # the particle using the input robot velocity. Add noise to the
         # commanded robot velocity to account for tracking error
+	# TODO - should this use R rather than Rsim?
         ud1 = u[0, 0] + np.random.randn() * Rsim[0, 0]
         ud2 = u[1, 0] + np.random.randn() * Rsim[1, 1]
         ud = np.array([[ud1, ud2]]).T
@@ -351,43 +401,6 @@ def main():
 
     time = 0.0
 
-    # RFID positions [x, y]
-    #RFID = np.array([[10.0, 0.0],
-    #                 [10.0, 10.0],
-    #                 [0.0, 15.0],
-    #                 [-5.0, 20.0]])
-
-    '''
-    RFID = np.array([
-            [-0.8231083414,1.0982357152],
-            [-1.682597162,1.0982357152],
-            [-2.523895743,1.0982357152],
-            [-4.1337319466,0.6571224052],
-            [-3.169649248,5.6094151333],
-            [-3.7744747147,5.2156103415],
-            [-4.3474672618,5.6094151333],
-            [ 0.8231083414,1.0982357152],
-            [ 1.682597162,1.0982357152],
-            [ 2.523895743,1.0982357152],
-            [ 4.1337319466,0.6571224052],
-            [ 3.169649248,5.6094151333],
-            [ 3.7744747147,5.2156103415],
-            [ 4.3474672618,5.6094151333],
-            [-0.8231083414,-1.0982357152],
-            [-1.682597162,-1.0982357152],
-            [-2.523895743,-1.0982357152],
-            [-4.1337319466,-0.6571224052],
-            [-3.169649248,-5.6094151333],
-            [-3.7744747147,-5.2156103415],
-            [-4.3474672618,-5.6094151333],
-            [ 0.8231083414,-1.0982357152],
-            [ 1.682597162,-1.0982357152],
-            [ 2.523895743,-1.0982357152],
-            [ 4.1337319466,-0.6571224052],
-            [ 3.169649248,-5.6094151333],
-            [ 3.7744747147,-5.2156103415],
-            [ 4.3474672618,-5.6094151333]])
-    '''    
     # State Vectors [x y x' y']'
     xTrue = np.array([[-7.5,0,0,0]]).T
     xEst = np.zeros((4,1))
