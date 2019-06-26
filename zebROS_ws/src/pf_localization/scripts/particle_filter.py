@@ -42,8 +42,6 @@ Big list of TODOs :
        - Add code which rotates all particles to the navX orientation, possibly including some noise
        - For bonus points, update the gui to show which way the robot is facing (arrow, line, whatever)
 
-     - In sim, add a check for angle from target to robot. If the angle is too far to the side, we'd have trouble detecting it so model it as not-seen.  This will be the case for e.g. where the robot is just barely unblocked by the cargo ship wall but still at a really oblique angle to the targets on the side - those will be impossible to see in real life even though they're not technically blocked by a wall
-
      - Experiment with clustering.  This supposedly helps with cases where the targets are symmetric. The problem is that leads to cases where one observation could come from several different distinct positions.  If the model picks the wrong one and converges on it, as written it will be hard for the code to get to the correct position.  clustering seems to keep some particles from other less than optimal locations, and if further robot motion turns these suboptimal locations into a much better guess, will use them (as would be the case if a slight change in position made it obvious which of the various symetric alternatives the robot was located at).  See e.g. https://github.com/teammcr192/activity-indoor-localization/blob/master/ParticleFilter/pf.py for an example.
 
      - Another way to fix the problem above is to occasinally add random samples back in during resampling. This will help overcome the "everything converged to the wrong spot" problem, at the expense of replacing probably good estimates with random ones.  Having it happen infrequently and with only a small percent of the particles will help. Need to test and see what happens.
@@ -105,6 +103,8 @@ class Beacons:
             deltarange = abs(beacondist - d)
             deltaangle = abs(beaconangle - b)
             if ((deltarange + deltaangle) < mindist):
+                # TODO - add checks from sim code for wall occlusion
+                # and target angle to rule out additional potential targets
                 mindist = deltarange + deltaangle
                 featid = i
 
@@ -141,6 +141,7 @@ Walls = np.array([[-1.94,1.94,.709,.709],
                   [8.24,8.24,4.10,-4.10],
                   [-8.24,-8.24,4.10,-4.10]])    
 
+# Rocket - 4 copie mirrored around origin
 Walls1 = np.array([[2.89,2.94,4.10,3.86],
                    [2.94,2.69,3.86,3.39],
                    [2.69,2.20,3.39,3.39],
@@ -148,14 +149,10 @@ Walls1 = np.array([[2.89,2.94,4.10,3.86],
                    [1.94,1.94,3.86,3.86],
                    [1.94,1.99,3.86,4.10]]) 
     
-Walls2 = Walls1 * [-1,-1,1,1] 
-Walls3 = Walls1 * [-1,-1,-1,-1] 
-Walls4 = Walls1 * [1,1,-1,-1] 
+Walls1 = np.append(Walls1, Walls1 * [-1,-1,1,1], 0) 
+Walls1 = np.append(Walls1, Walls1 * [1,1,-1,-1], 0) 
 
-Walls = np.append(Walls,Walls1,0)
-Walls = np.append(Walls,Walls2,0)
-Walls = np.append(Walls,Walls3,0)
-Walls = np.append(Walls,Walls4,0)
+Walls  = np.append(Walls,Walls1,0)
 
 def calc_input(time):
     #v = 1.0  # [m/s]
@@ -168,7 +165,7 @@ def calc_input(time):
         else:
             yvel = 1.2  # [m/s]
 
-        xvel = 0.4  # [m/s]
+        xvel = 0.3  # [m/s]
     else:
         xvel = 0
         yvel = 0
