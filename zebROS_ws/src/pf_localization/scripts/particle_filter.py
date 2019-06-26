@@ -2,7 +2,7 @@
 
 Particle Filter localization sample
 
-oritinal author: Atsushi Sakai (@Atsushi_twi)
+original author: Atsushi Sakai (@Atsushi_twi)
 
 """
 """
@@ -110,10 +110,10 @@ class Beacons:
 
         return self.coords[featid]
 
-    # Get a list of (distance, bearing, realX, realY) of all
+    # Get a list of (distance, bearing, realX, realY, realAngle) of all
     # beacons within max_range away from location
     def in_range(self, location, max_range):
-        z = np.zeros((0, 4))
+        z = np.zeros((0, 5)) # distance, bearing, beacon x, beacon y, beacon angle
 
         for i in range(len(self.coords[:, 0])):
             dx = location[0, 0] - self.coords[i, 0]
@@ -122,7 +122,7 @@ class Beacons:
 
             if d <= max_range:
                 b  = math.atan2(dy, dx)
-                zi = np.array([[d, b, self.coords[i, 0], self.coords[i, 1]]])
+                zi = np.array([[d, b, self.coords[i, 0], self.coords[i, 1], self.coords[i, 2]]])
                 z  = np.vstack((z, zi))
 
         return z
@@ -191,19 +191,35 @@ def observation(xTrue, xd, u, beacons):
     # add noise to them
     z_initial = beacons.in_range(xTrue, MAX_RANGE)
 
-    z = np.zeros((0, 4))
+    z = np.zeros((0, 5))
     for i in range(len(z_initial[:, 0])):
+
+        # Make sure target isn't at too oblique an angle to the
+        # vision target - TODO : measure how far off we can get and still see
+        beacon_x     = z_initial[i, 2]
+        beacon_y     = z_initial[i, 3]
+        beacon_theta = z_initial[i, 4]
+
+        dx = xTrue[0, 0] - beacon_x
+        dy = xTrue[1, 0] - beacon_y
+
+        beacon_to_robot_bearing = math.atan2(dy, dx)
+        delta_angle = abs(beacon_theta - beacon_to_robot_bearing)
+        if ((delta_angle > .9) and (delta_angle < (2 * math.pi - .9))):
+            continue
+        
         does_intersect = False
         for j in range(len(Walls)):
-            if intersect([Walls[j][0],Walls[j][2]],[Walls[j][1],Walls[j][3]],[xTrue[0,0],xTrue[1,0]],[z_initial[i,2],z_initial[i,3]]):
+            if intersect([Walls[j][0],Walls[j][2]],[Walls[j][1],Walls[j][3]],[xTrue[0,0],xTrue[1,0]],[beacon_x, beacon_y]):
                 does_intersect = True
                 break
 
         if does_intersect == False:
             d = z_initial[i, 0] + np.random.randn() * Qsim[0, 0]  # add noise to distance
             b = z_initial[i, 1] + np.random.randn() * Qsim[1, 1]  # add noise to bearing
-            zi = np.array([[d, b, z_initial[i, 2], z_initial[i, 3]]])
+            zi = np.array([[d, b, beacon_x, beacon_y, beacon_theta]])
             z = np.vstack((z, zi))
+
 
     #print ("z", z)
     # add noise to input to simulate dead reckoning
@@ -399,26 +415,37 @@ def main():
     xEst = np.zeros((4,1))
     PEst = np.eye(4)
 
-    # Beacon positions [x, y]
+    # Beacon positions [x, y, orientation]
     # in this case, beacons are vision targets
     # Add / subtract various small values to make sure they
     # aren't lying directly on a wall - bias them slightly
     # towards the interior of the field. This prevents wall
     # intersection code from thinking they're behind a wall accidentally
     beacon_coords = np.array([
-                              [2.07-.005,3.63-0.005],
-                              [2.44,3.39-.001],
-                              [2.81+0.0075,3.63-0.0075],
-                              [2.66,0.28],
-                              [1.64,0.71],
-                              [1.08,0.71],
-                              [.53,.71],
-                              [8.26 - 0.021,3.44]
+                              [2.07-.005,3.63-0.005, math.radians(270 - 60)],
+                              [2.44,3.39-.001, 3. * math.pi / 2.],
+                              [2.81+0.0075,3.63-0.0075, math.radians(270 + 60)],
+                              [2.66,0.28, 0],
+                              [1.64,0.71, math.pi / 2.],
+                              [1.08,0.71, math.pi / 2.],
+                              [0.53,0.71, math.pi / 2.],
+                              [8.26 - 0.021,3.44, math.pi]
                                 ])
     # Assume map is symmetric around the origin in 
     # both horizontal and vertical directions
-    beacon_coords = np.append(beacon_coords, np.array([-1,1]) * beacon_coords, 0)
-    beacon_coords = np.append(beacon_coords, np.array([1,-1]) * beacon_coords, 0)
+    # x, y, are -1, 1, but subtracting them from 0 inverts again
+    # subtract angles from pi to mirror horizontally
+    mirror = np.array(np.array([0, 0, math.pi]) - np.array([1,-1,1]) * beacon_coords)
+    beacon_coords = np.append(beacon_coords, mirror, 0)
+
+    # x, y, are 1, -1, but subtracting them from 0 inverts again
+    # subtract angles from 2pi to mirror vertically
+    mirror = np.array(np.array([0, 0, 2 * math.pi]) - np.array([-1,1,1]) * beacon_coords)
+    beacon_coords = np.append(beacon_coords, mirror, 0)
+
+    # normalize angles between 0 and 2pi
+    beacon_coords[beacon_coords[:,2] <= -math.pi] += np.array([0,0,2 * math.pi])
+    beacon_coords[beacon_coords[:,2] > math.pi] -= np.array([0,0,2 * math.pi])
     print ("beacon_coords", beacon_coords)
 
     beacons = Beacons(beacon_coords)
@@ -497,7 +524,10 @@ def main():
                 plt.plot(Walls[i][:2],Walls[i][2:],color='purple')
 
             
-            plt.plot(beacon_coords[:, 0], beacon_coords[:, 1], ".k")
+            u = np.cos(beacon_coords[:,2])
+            v = np.sin(beacon_coords[:,2])
+            #plt.plot(beacon_coords[:, 0], beacon_coords[:, 1], ".k")
+            plt.quiver(beacon_coords[:, 0], beacon_coords[:, 1], u, v)
             plt.plot(px[0, :], px[1, :], ".r")
             plt.plot(np.array(hxTrue[0, :]).flatten(),
                      np.array(hxTrue[1, :]).flatten(), "-b")
