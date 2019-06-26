@@ -13,9 +13,8 @@ Big list of TODOs :
     - Make this more object oriented. Right now, sim is tied pretty tightly to the rest of the code. I can see splitting this up so that isn't the case.
        - Particle filter should be a class. There can be a constructor, data required are num particles, RFID locations, wall coords, starting bounding box, Q and R matricies
          Methods would be localization and all the things it calls - gauss likelyhood, calc_covariance, and so on
-	 I could see things like RFID location, wall coords, motion model being separate objects that are part of the
+	 I could see things like RFID location (done), wall coords, motion model being separate objects that are part of the
 	  main pf object.  
-	  RFID would have a constructor to set locations and closest_feature as well as range error covariance matrix - this could return delta distance and delta bearing instead of recalculating it in the main code, or add another method to do so. Actually, it looks like the whole get_weights section of pf_localization could be part of RFID, since it seems to use most of the member vars anyway
 	  Wall locations would have a constructor with field map (wall coords), and then provide an intersect() call
 	  Robot motion model could be yet another object, although there isn't much interesting there to break out into a separate object
 
@@ -73,13 +72,13 @@ Rsim = np.diag([0.5, 0.5])**2
 
 DT = 0.1   # time tick [s]
 SIM_TIME = 50.0  # simulation time [s]
-MAX_RANGE = 6.0  # maximum observation range
+MAX_RANGE = 4.75 # maximum observation range
 
 # Particle filter parameter
-NP = 300  # Number of Particles
+NP = 100  # Number of Particles
 NTh = NP / 2.0  # Number of particle for re-sampling
 
-show_animation = False
+show_animation = True
 
 # Return motion model transition vector
 # For diff drive, linear and angular velocity
@@ -87,35 +86,56 @@ show_animation = False
 # This is used to estimate position using dead reckoning (integrating velocity to get
 # position over time)
 
+class Beacons:
+    def __init__(self, coords):
+        self.coords = coords
 
+    # Given the predicted robot position and the measured distance
+    # to a beacon, find the coordinates of the closest beacon to that
+    # position.
+    def closest_feature(self, robotpos, beacondist, beaconangle):
+        mindist = sys.float_info.max
+        featid = -1
 
-#RFID positions [x, y]
-RFID = np.array([[2.07,3.63],
-                [2.44,3.39],
-                [2.81,3.63],
-                [2.66,0.28],
-                [1.64,0.71],
-                [1.08,0.71],
-                [.53,.71],
-                [8.26,3.44]])
+        for i in range(len(self.coords[:, 0])):
+            dx = robotpos[0] - self.coords[i, 0]
+            dy = robotpos[1] - self.coords[i, 1]
+            d = math.sqrt(dx**2 + dy**2) # distance
+            b = math.atan2(dy, dx)       # bearing
+            deltarange = abs(beacondist - d)
+            deltaangle = abs(beaconangle - b)
+            if ((deltarange + deltaangle) < mindist):
+                mindist = deltarange + deltaangle
+                featid = i
 
-RFID0 = np.array([-1,1])*RFID
-RFID1 = np.array([1,-1])*RFID
-RFID2 = np.array([-1,-1])*RFID
+        return self.coords[featid]
 
-RFID = np.append(RFID,RFID0,0)
-RFID = np.append(RFID,RFID1,0)
-RFID = np.append(RFID,RFID2,0)
+    # Get a list of (distance, bearing, realX, realY) of all
+    # beacons within max_range away from location
+    def in_range(self, location, max_range):
+        z = np.zeros((0, 4))
+
+        for i in range(len(self.coords[:, 0])):
+            dx = location[0, 0] - self.coords[i, 0]
+            dy = location[1, 0] - self.coords[i, 1]
+            d  = math.sqrt(dx**2 + dy**2)
+
+            if d <= max_range:
+                b  = math.atan2(dy, dx)
+                zi = np.array([[d, b, self.coords[i, 0], self.coords[i, 1]]])
+                z  = np.vstack((z, zi))
+
+        return z
 
 #Wall positions [x1,x2,y1,y2]
-Walls = np.array([[-1.94,1.94,.71,.71],
-                  [-1.94,1.94,-.71,-.71],
+Walls = np.array([[-1.94,1.94,.709,.709],
+                  [-1.94,1.94,-.709,-.709],
                   [1.94,2.66,0.71,0.58],
                   [-1.94,-2.66,0.71,0.58],
                   [1.94,2.66,-0.71,-0.58],
                   [-1.94,-2.66,-0.71,-0.58],
-                  [2.66,2.66,0.58,-0.58],
-                  [-2.66,-2.66,0.58,-0.58],
+                  [2.659,2.659,0.58,-0.58],
+                  [-2.659,-2.659,0.58,-0.58],
                   [8.24,-8.24,4.10,4.10],
                   [8.24,-8.24,-4.10,-4.10],
                   [8.24,8.24,4.10,-4.10],
@@ -142,14 +162,13 @@ def calc_input(time):
     #yawrate = 0.1  # [rad/s]
     #u = np.array([[v, yawrate]]).T
 
-    if (time > 5):
-        xvel = 1.5  # [m/s]
-        if ((time % (SIM_TIME/5)) < (SIM_TIME / 10)):
-            yvel = 1  # [m/s]
+    if (time > 2):
+        if ((time % (SIM_TIME / 5)) < (SIM_TIME / 10)):
+            yvel = -1.2  # [m/s]
         else:
-            yvel = -1  # [m/s]
+            yvel = 1.2  # [m/s]
 
-        xvel = 0.3  # [m/s]
+        xvel = 0.4  # [m/s]
     else:
         xvel = 0
         yvel = 0
@@ -164,34 +183,29 @@ def ccw(A,B,C):
 def intersect(A,B,C,D):
     return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)
 
-def observation(xTrue, xd, u, RFID):
+def observation(xTrue, xd, u, beacons):
 
     xTrue = motion_model(xTrue, u)
 
-    # add noise to gps x-y
+    # Get list of beacons in range and visible,
+    # add noise to them
+    z_initial = beacons.in_range(xTrue, MAX_RANGE)
+
     z = np.zeros((0, 4))
+    for i in range(len(z_initial[:, 0])):
+        does_intersect = False
+        for j in range(len(Walls)):
+            if intersect([Walls[j][0],Walls[j][2]],[Walls[j][1],Walls[j][3]],[xTrue[0,0],xTrue[1,0]],[z_initial[i,2],z_initial[i,3]]):
+                does_intersect = True
+                break
 
-    for i in range(len(RFID[:, 0])):
-        dx = xTrue[0, 0] - RFID[i, 0]
-        dy = xTrue[1, 0] - RFID[i, 1]
-        d = math.sqrt(dx**2 + dy**2)
-        b = math.atan2(dy, dx)
-        
+        if does_intersect == False:
+            d = z_initial[i, 0] + np.random.randn() * Qsim[0, 0]  # add noise to distance
+            b = z_initial[i, 1] + np.random.randn() * Qsim[1, 1]  # add noise to bearing
+            zi = np.array([[d, b, z_initial[i, 2], z_initial[i, 3]]])
+            z = np.vstack((z, zi))
 
-
-        if d <= MAX_RANGE:
-            
-            does_intersect=False
-            for j in range(len(Walls)):
-                if intersect([Walls[j][0],Walls[j][2]],[Walls[j][1],Walls[j][3]],[xTrue[0,0],xTrue[1,0]],[RFID[i,0],RFID[i,1]]):
-                    does_intersect=True
-
-            if does_intersect == False:
-                dn = d + np.random.randn() * Qsim[0, 0]  # add noise
-                bn = b + np.random.randn() * Qsim[1, 1]  # add noise
-                zi = np.array([[dn, bn, RFID[i, 0], RFID[i, 1]]])
-                z = np.vstack((z, zi))
-
+    #print ("z", z)
     # add noise to input to simulate dead reckoning
     ud1 = u[0, 0] + np.random.randn() * Rsim[0, 0]
     ud2 = u[1, 0] + np.random.randn() * Rsim[1, 1]
@@ -250,28 +264,7 @@ def calc_covariance(xEst, px, pw):
 
     return cov
 
-# Given the predicted robot position and the measured distance
-# to a beacon, find the index of the closest beacon to that
-# position.  This simulates sensor returns from N identical
-# beacons positioned at fixed locations in the map
-def closest_feature(robotpos, beacondist, beaconangle, RFID):
-    mindist = sys.float_info.max
-    featid = -1
-
-    for i in range(len(RFID[:, 0])):
-        dx = robotpos[0] - RFID[i, 0]
-        dy = robotpos[1] - RFID[i, 1]
-        d = math.sqrt(dx**2 + dy**2)
-        b = math.atan2(dy, dx)
-        deltarange = abs(beacondist - d)
-        deltaangle = abs(beaconangle - b)
-        if ((deltarange +deltaangle)< mindist):
-            mindist = deltarange + deltaangle
-            featid = i
-
-    return featid
-
-def pf_localization(px, pw, xEst, PEst, z, u, RFID):
+def pf_localization(px, pw, xEst, PEst, z, u, beacons):
     """
     Localization with Particle filter
     """
@@ -297,19 +290,19 @@ def pf_localization(px, pw, xEst, PEst, z, u, RFID):
             # Find the index of the landmark which most
             # closely matches the distance of the reported 
             # target
-            j = closest_feature(x, z[i, 0], z[i, 1], RFID)
-            dx = x[0, 0] - RFID[j, 0]
-            dy = x[1, 0] - RFID[j, 1]
+            beacon_coord = beacons.closest_feature(x, z[i, 0], z[i, 1])
+            dx = x[0, 0] - beacon_coord[0]
+            dy = x[1, 0] - beacon_coord[1]
             prez = math.sqrt(dx**2 + dy**2)
             dz = prez - z[i, 0]
 
             b = math.atan2(dy, dx)
             db = b - z[i, 1]
             
-            #if ((abs(RFID[j, 0] - z[i, 2]) > 0.0001) or (abs(RFID[j, 1] - z[i, 3]) > 0.0001)):
+            #if ((abs(beacon_coord[j, 0] - z[i, 2]) > 0.0001) or (abs(beacon_coord[j, 1] - z[i, 3]) > 0.0001)):
                 #print("Misidentified beacon : dz", dz, " db", db)
                 #print("robot predicted pos", x)
-                #print("RFID[", j, "]", RFID[j]);
+                #print("beacon_coord[", j, "]", beacon_coord[j]);
                 #print("z[", i, "]", z[i])
 
             # Weight is the product of the probabilities that this
@@ -402,15 +395,39 @@ def main():
     time = 0.0
 
     # State Vectors [x y x' y']'
-    xTrue = np.array([[-7.5,0,0,0]]).T
+    xTrue = np.array([[-6.75,0,0,0]]).T
     xEst = np.zeros((4,1))
     PEst = np.eye(4)
+
+    # Beacon positions [x, y]
+    # in this case, beacons are vision targets
+    # Add / subtract various small values to make sure they
+    # aren't lying directly on a wall - bias them slightly
+    # towards the interior of the field. This prevents wall
+    # intersection code from thinking they're behind a wall accidentally
+    beacon_coords = np.array([
+                              [2.07-.005,3.63-0.005],
+                              [2.44,3.39-.001],
+                              [2.81+0.0075,3.63-0.0075],
+                              [2.66,0.28],
+                              [1.64,0.71],
+                              [1.08,0.71],
+                              [.53,.71],
+                              [8.26 - 0.021,3.44]
+                                ])
+    # Assume map is symmetric around the origin in 
+    # both horizontal and vertical directions
+    beacon_coords = np.append(beacon_coords, np.array([-1,1]) * beacon_coords, 0)
+    beacon_coords = np.append(beacon_coords, np.array([1,-1]) * beacon_coords, 0)
+    print ("beacon_coords", beacon_coords)
+
+    beacons = Beacons(beacon_coords)
 
     # Important for at least some particles to be initialized to be near the true starting
     # coordinates. Resampling can only pick from existing position proposals and if
     # none are close to the starting position, the particles will never converge
-    starting_xmin = -8.3
-    starting_xmax = -7.3
+    starting_xmin = -8.0
+    starting_xmax = -6.5
     starting_ymin = -2.5
     starting_ymax = 2.5
     xpos = np.random.uniform(starting_xmin, starting_xmax, (1, NP))
@@ -428,14 +445,15 @@ def main():
 
     #This code is a copy of the code below it, with removed visualization. However, this code saves data in a pickle to be visualized separately.
     
-    columns = ['RFID','xTrue','z','px','hxEst','hxDR','hxTrue','time']
+    columns = ['beacon_coords','xTrue','z','px','hxEst','hxDR','hxTrue','time']
     total_values = []
+    """
     while SIM_TIME >= time:
         time += DT
         u = calc_input(time)
-        xTrue, z, xDR, ud = observation(xTrue, xDR, u, RFID)
+        xTrue, z, xDR, ud = observation(xTrue, xDR, u, beacons)
 
-        xEst, PEst, px, pw = pf_localization(px, pw, xEst, PEst, z, ud, RFID)
+        xEst, PEst, px, pw = pf_localization(px, pw, xEst, PEst, z, ud, beacons)
         #print(xEst)
 
         # store data history
@@ -443,10 +461,11 @@ def main():
         hxDR = np.hstack((hxDR, xDR))
         hxTrue = np.hstack((hxTrue, xTrue))
 
-        total_values.append([RFID,xTrue,z,px,hxEst,hxDR,hxTrue,time])
+        total_values.append([beacon_coords,xTrue,z,px,hxEst,hxDR,hxTrue,time])
 
     df = pd.DataFrame(total_values,columns=columns)
     df.to_pickle('data.p')
+    """
     
     #Reset time for the standard code visualization
     time = 0
@@ -456,9 +475,9 @@ def main():
         time += DT
         u = calc_input(time)
 
-        xTrue, z, xDR, ud = observation(xTrue, xDR, u, RFID)
+        xTrue, z, xDR, ud = observation(xTrue, xDR, u, beacons)
 
-        xEst, PEst, px, pw = pf_localization(px, pw, xEst, PEst, z, ud, RFID)
+        xEst, PEst, px, pw = pf_localization(px, pw, xEst, PEst, z, ud, beacons)
         #print(xEst)
 
         # store data history
@@ -466,7 +485,7 @@ def main():
         hxDR = np.hstack((hxDR, xDR))
         hxTrue = np.hstack((hxTrue, xTrue))
         
-        total_values.append([Walls,RFID,xTrue,z,px,hxEst,hxDR,hxTrue,time])
+        total_values.append([Walls,beacon_coords,xTrue,z,px,hxEst,hxDR,hxTrue,time])
 
         if show_animation:
             plt.cla()
@@ -478,7 +497,7 @@ def main():
                 plt.plot(Walls[i][:2],Walls[i][2:],color='purple')
 
             
-            plt.plot(RFID[:, 0], RFID[:, 1], ".k")
+            plt.plot(beacon_coords[:, 0], beacon_coords[:, 1], ".k")
             plt.plot(px[0, :], px[1, :], ".r")
             plt.plot(np.array(hxTrue[0, :]).flatten(),
                      np.array(hxTrue[1, :]).flatten(), "-b")
@@ -494,7 +513,7 @@ def main():
             #    input("Press any ket to continue...")
 
     #Saving pickle file
-    columns = ['Walls','RFID','xTrue','z','px','hxEst','hxDR','hxTrue','time']
+    columns = ['Walls','beacon_coords','xTrue','z','px','hxEst','hxDR','hxTrue','time']
     df = pd.DataFrame(total_values,columns=columns)
     df.to_pickle('data.p')
 
