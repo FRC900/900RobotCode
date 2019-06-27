@@ -11,12 +11,8 @@ Big list of TODOs :
     This is a lot of work, but take it step by step.
 
     - Make this more object oriented. Right now, sim is tied pretty tightly to the rest of the code. I can see splitting this up so that isn't the case.
-       - Particle filter should be a class. There can be a constructor, data required are num particles, RFID locations, wall coords, starting bounding box, Q and R matricies
-         Methods would be localization and all the things it calls - gauss likelyhood, calc_covariance, and so on
-	 I could see things like RFID location (done), wall coords, motion model being separate objects that are part of the
-	  main pf object.  
-	  Wall locations would have a constructor with field map (wall coords), and then provide an intersect() call
-	  Robot motion model could be yet another object, although there isn't much interesting there to break out into a separate object
+
+       - Split into pf base class plus derived classes for sim vs real
 
        - then sim could use this, factoring out things which are sim specific.  The DT, sim time, simulated sensor stuff, anyting related to xTrue, and so on.
        - not sure how python handles polymorphism, but if I were doing this in C++, I'd create a top level class which has the framework for running PF.  That is,
@@ -58,25 +54,286 @@ import math
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# Estimation parameter of PF
-Q = np.diag([0.05, 0.1])**2  # range error
-#R = np.diag([1.0, np.deg2rad(40.0)])**2  # input error
-R = np.diag([0.5, 0.5])**2  # input error
-
-#  Simulation parameter
+#  Simulation parameters
 Qsim = np.diag([0.1, 0.2])**2
 #Rsim = np.diag([1.0, np.deg2rad(30.0)])**2
-Rsim = np.diag([0.5, 0.5])**2
+Rsim = np.diag([0.75, 0.75])**2
 
 DT = 0.1   # time tick [s]
 SIM_TIME = 50.0  # simulation time [s]
 MAX_RANGE = 4.75 # maximum observation range
 
-# Particle filter parameter
-NP = 100  # Number of Particles
-NTh = NP / 2.0  # Number of particle for re-sampling
-
 show_animation = True
+
+# Beacon - holds field-centric x,y,angle coordinates
+#          of targets on the field
+class Beacon:
+    def __init__(self, coord):
+        self.coord = coord # numpy array [x,y,angle]
+
+    def __str__(self):
+        return "Beacon : coord" + np.array2string(self.coord)
+
+    def get_coords(self):
+        return np.array([self.coord[0], self.coord[1]])
+
+    # Compute and return [distance, bearing to target] 
+    # between the requested beacon and the input
+    # location.  loc is [x,y] coordinates
+    def distance(self, loc):
+        dx = loc[0] - self.coord[0]
+        dy = loc[1] - self.coord[1]
+        d = math.sqrt(dx**2 + dy**2) # distance
+        b = math.atan2(dy, dx)       # bearing
+        return np.array([d, b])
+ 
+    # If this beacon would be visible to a robot at loc,
+    # return true distance and bearing for it.
+    # Used by simulation to generate a list of simulated
+    # detected targets this time-step
+    def visible_in_sim(self, loc, max_range, walls):
+        db = self.distance(loc)
+        if (db[0] <= max_range):
+            # Make sure target isn't at too oblique an angle to the
+            # vision target - TODO : measure how far off we can get and still see
+            delta_angle = abs(self.coord[2] - db[1])
+            if ((delta_angle < .9) or (delta_angle > (2 * math.pi - .9))):
+
+                if walls.intersect([loc[0], loc[1]],[self.coord[0], self.coord[1]]) == False:
+                    detection = Detection(np.array([db[0], db[1]]))
+                    detection.set_actual(self)
+                    return detection
+
+        return None
+
+
+# Holds a list of Beacon objects, plus accessor functions
+class Beacons:
+    def __init__(self, beacons): # Initialize from a numpy array of [x,y,theta] coords
+        self.beacons = []
+        for i in range(len(beacons[:,0])):
+            self.beacons.append(Beacon(beacons[i]))
+
+    def append(self, beacon):
+        self.beacons.append(beacon)
+
+    def clear(self):
+        self.beacons = []
+
+    def visible_in_sim(self, loc, max_range, walls):
+        ret = Detections()
+        for i in range(len(self.beacons)):
+           d = self.beacons[i].visible_in_sim(loc, max_range, walls)
+           if (d != None):
+               ret.append(d)
+        return ret
+
+    # For a detection at beacondist / beaconangle from robot_loc,
+    # where robot_loc is [x,y] in field-centric coords,
+    # find the closest actual beacon and return it
+    def closest_beacon(self, robot_loc, beacondist, beaconangle):
+        mindist = sys.float_info.max
+        best_idx = 0
+
+        for i in range(len(self.beacons)):
+            db = self.beacons[i].distance(robot_loc)
+            deltarange = abs(beacondist - db[0])
+            deltaangle = abs(beaconangle - db[1])
+            if ((deltarange + deltaangle) < mindist):
+                # TODO - add checks from sim code for wall occlusion
+                # and target angle to rule out additional potential targets
+                mindist = deltarange + deltaangle
+                best_idx = i
+
+        return self.beacons[best_idx]
+
+class Walls:
+    def __init__(self, walls):
+        self.walls = walls
+
+    def _ccw(self,A,B,C):
+        return (C[1]-A[1]) * (B[0]-A[0]) > (B[1]-A[1]) * (C[0]-A[0])
+
+    # Return true if line segments AB and CD intersect
+    def _one_intersect(self,A,B,C,D):
+        return self._ccw(A,C,D) != self._ccw(B,C,D) and self._ccw(A,B,C) != self._ccw(A,B,D)
+
+    # Returns true if line segment CD intersects with any defined walls
+    # returns false otherwise
+    def intersect(self, C, D):
+        for i in range(len(self.walls)):
+            if self._one_intersect([self.walls[i][0],self.walls[i][2]],[self.walls[i][1],self.walls[i][3]],C,D):
+                return True
+        return False
+
+# Collect walls plus beacons into a single conatiner
+class FieldMap:
+    def __init__(self, beacons, walls):
+        self.beacons = beacons
+        self.walls = walls
+
+    def _dist_to_beacon(self, beacon, location):
+        return self.beacons[beacon].distance(location)
+
+    # Given the predicted robot position and the measured distance
+    # to a beacon, find the coordinates of the closest beacon to that
+    # position.
+    def closest_beacon(self, robot_loc, beacondist, beaconangle):
+        return self.beacons.closest_beacon(robot_loc, beacondist, beaconangle)
+
+    # Get a list of (distance, bearing, realX, realY, realAngle) of all
+    # beacons within max_range away from location
+    # Make sure they are visible, both not obscured by an intervening
+    # wall as well as at an angle that can be seen
+    def visible_in_sim(self, location, max_range):
+        return self.beacons.visible_in_sim(location, max_range, self.walls)
+
+# Detection -
+#  Holds robot-relative distance / angle coordinates
+#    of a detected target
+class Detection:
+    def __init__(self, coord):
+        self.coord = coord # numpy array [dist / angle]
+        self.actual = None
+
+    def __str__(self):
+        return "Detection : coord" + np.array2string(self.coord) + " actual," + str(self.actual)
+
+    # set actual field beacon associated with this detection - for sim and debugging
+    def set_actual(self, actual): 
+        self.actual = actual
+
+    def get_actual(self):
+        return self.actual;
+
+    # Add noise to dist/ angle measurement. Use by simulation to make
+    # detections look more like real world measurements
+    def add_noise(self, Q):
+        self.coord[0] += np.random.randn() * Qsim[0, 0]  # add noise to distance
+        self.coord[1] += np.random.randn() * Qsim[1, 1]  # add noise to bearing
+
+    def weight(self, loc, field_map, Q):
+        closest_beacon = field_map.closest_beacon(loc, self.coord[0], self.coord[1]) # Todo - change to use coord[]
+
+        # distance / angle to best predicted ideal detection
+        loc_to_closest = closest_beacon.distance(loc) 
+
+        # difference in distance and angle between predicted and actual detection
+        delta = loc_to_closest - self.coord
+        
+        # Weight is the product of the probabilities that this
+        # position would give the measured distances
+        # Alternatively, it is the likelhood that the given position
+        # is accurate given the distance / angle to target
+        w =     self._gauss_likelihood(delta[0], math.sqrt(Q[0, 0]))
+        w = w * self._gauss_likelihood(delta[1], math.sqrt(Q[1, 1]))
+
+        return w
+
+    # probability of x given a 0-centered normal distribution 
+    def _gauss_likelihood(self, x, sigma):
+        p = 1.0 / math.sqrt(2.0 * math.pi * sigma ** 2) * \
+            math.exp(-x ** 2 / (2 * sigma ** 2))
+
+        return p
+
+# List of detection objects plus helper functions
+class Detections:
+    def __init__(self):
+        self.detections = []
+
+    def append(self, detection):
+        if (detection != None):
+            self.detections.append(detection)
+
+    def get_actual(self):
+        actuals = []
+        for i in range(len(self.detections)):
+            a = self.detections[i].get_actual()
+            if (a != None):
+                actuals.append(a)
+        return actuals
+
+    def weights(self, loc, field_map, Q):
+        w = 1
+        for i in range(len(self.detections)):
+            w *= self.detections[i].weight(loc, field_map, Q)
+
+        return w;
+
+    def add_noise(self, Q):
+        for i in range(len(self.detections)):
+            self.detections[i].add_noise(Q)
+
+class PFLocalization:
+    def __init__(self, NP, F, B, field_map, Q, R, starting_xmin, starting_xmax, starting_ymin, starting_ymax):
+        self.NP = NP
+        self.NTh = NP / 2.0 # Number of particle for re-sampling
+        self.F = F
+        self.B = B
+        self.field_map = field_map
+        self.Q = Q
+        self.R = R
+
+        xpos = np.random.uniform(starting_xmin, starting_xmax, (1, self.NP))
+        ypos = np.random.uniform(starting_ymin, starting_ymax, (1, self.NP))
+        self.px = np.concatenate((xpos, ypos, np.zeros((1, self.NP)), np.zeros((1, NP))), axis=0)
+
+        #px = np.zeros((4, self.NP))  # Particle store
+        self.pw = np.zeros((1, self.NP)) + 1.0 / NP  # Particle weight
+
+    # Get particle coords - for viz only
+    def get_px(self):
+        return self.px
+
+    # Given state matrix x and transition matrix u,
+    # calculate and return a state matrix for the next timestep
+    def motion_model(self, x, u):
+
+        #F = np.array([[1.0, 0, 0, 0],
+                      #[0, 1.0, 0, 0],
+                      #[0, 0, 1.0, 0],
+                      #[0, 0, 0, 0]])
+
+        #B = np.array([[DT * math.cos(x[2, 0]), 0],
+                      #[DT * math.sin(x[2, 0]), 0],
+                      #[0.0, DT],
+                      #[1.0, 0.0]])
+
+        # For swerve drive, use a very simple model
+        # next position is based on current position plus current velocity
+        # next velocity is just requested velocity
+        #F = np.array([[1.0, 0.0, 0.0, 0.0],
+        #              [0.0, 1.0, 0.0, 0.0],
+        #              [0.0, 0.0, 0.0, 0.0],
+        #              [0.0, 0.0, 0.0, 0.0]])
+        #B = np.array([[DT, 0.0],
+        #              [0.0, DT],
+        #              [1.0, 0.0],
+        #              [0.0, 1.0]])
+
+        x = self.F.dot(x) + self.B.dot(u)
+
+        return x
+
+    def get_input(self, time):
+        #v = 1.0  # [m/s]
+        #yawrate = 0.1  # [rad/s]
+        #u = np.array([[v, yawrate]]).T
+
+        if (time > 2):
+            if ((time % (SIM_TIME / 5)) < (SIM_TIME / 10)):
+                yvel = -1.2  # [m/s]
+            else:
+                yvel = 1.2  # [m/s]
+
+            xvel = 0.3  # [m/s]
+        else:
+            xvel = 0
+            yvel = 0
+
+        u = np.array([[xvel, yvel]]).T
+        return u
 
 # Return motion model transition vector
 # For diff drive, linear and angular velocity
@@ -84,287 +341,97 @@ show_animation = True
 # This is used to estimate position using dead reckoning (integrating velocity to get
 # position over time)
 
-class Beacons:
-    def __init__(self, coords):
-        self.coords = coords
 
-    # Given the predicted robot position and the measured distance
-    # to a beacon, find the coordinates of the closest beacon to that
-    # position.
-    def closest_feature(self, robotpos, beacondist, beaconangle):
-        mindist = sys.float_info.max
-        featid = -1
+    # Sim-specific
+    def update_ground_truth(self, xTrue, u):
+        return self.motion_model(xTrue, u)
 
-        for i in range(len(self.coords[:, 0])):
-            dx = robotpos[0] - self.coords[i, 0]
-            dy = robotpos[1] - self.coords[i, 1]
-            d = math.sqrt(dx**2 + dy**2) # distance
-            b = math.atan2(dy, dx)       # bearing
-            deltarange = abs(beacondist - d)
-            deltaangle = abs(beaconangle - b)
-            if ((deltarange + deltaangle) < mindist):
-                # TODO - add checks from sim code for wall occlusion
-                # and target angle to rule out additional potential targets
-                mindist = deltarange + deltaangle
-                featid = i
-
-        return self.coords[featid]
-
-    # Get a list of (distance, bearing, realX, realY, realAngle) of all
-    # beacons within max_range away from location
-    def in_range(self, location, max_range):
-        z = np.zeros((0, 5)) # distance, bearing, beacon x, beacon y, beacon angle
-
-        for i in range(len(self.coords[:, 0])):
-            dx = location[0, 0] - self.coords[i, 0]
-            dy = location[1, 0] - self.coords[i, 1]
-            d  = math.sqrt(dx**2 + dy**2)
-
-            if d <= max_range:
-                b  = math.atan2(dy, dx)
-                zi = np.array([[d, b, self.coords[i, 0], self.coords[i, 1], self.coords[i, 2]]])
-                z  = np.vstack((z, zi))
-
+    # Need ROS implementation
+    def get_detections(self, xTrue):
+        # Get list of beacons in range and visible,
+        # add noise to them
+        z = self.field_map.visible_in_sim(xTrue[:,0].T, MAX_RANGE)
+        z.add_noise(Qsim)
         return z
 
-#Wall positions [x1,x2,y1,y2]
-Walls = np.array([[-1.94,1.94,.709,.709],
-                  [-1.94,1.94,-.709,-.709],
-                  [1.94,2.66,0.71,0.58],
-                  [-1.94,-2.66,0.71,0.58],
-                  [1.94,2.66,-0.71,-0.58],
-                  [-1.94,-2.66,-0.71,-0.58],
-                  [2.659,2.659,0.58,-0.58],
-                  [-2.659,-2.659,0.58,-0.58],
-                  [8.24,-8.24,4.10,4.10],
-                  [8.24,-8.24,-4.10,-4.10],
-                  [8.24,8.24,4.10,-4.10],
-                  [-8.24,-8.24,4.10,-4.10]])    
 
-# Rocket - 4 copie mirrored around origin
-Walls1 = np.array([[2.89,2.94,4.10,3.86],
-                   [2.94,2.69,3.86,3.39],
-                   [2.69,2.20,3.39,3.39],
-                   [2.20,1.94,3.39,3.86],
-                   [1.94,1.94,3.86,3.86],
-                   [1.94,1.99,3.86,4.10]]) 
-    
-Walls1 = np.append(Walls1, Walls1 * [-1,-1,1,1], 0) 
-Walls1 = np.append(Walls1, Walls1 * [1,1,-1,-1], 0) 
-
-Walls  = np.append(Walls,Walls1,0)
-
-def calc_input(time):
-    #v = 1.0  # [m/s]
-    #yawrate = 0.1  # [rad/s]
-    #u = np.array([[v, yawrate]]).T
-
-    if (time > 2):
-        if ((time % (SIM_TIME / 5)) < (SIM_TIME / 10)):
-            yvel = -1.2  # [m/s]
-        else:
-            yvel = 1.2  # [m/s]
-
-        xvel = 0.3  # [m/s]
-    else:
-        xvel = 0
-        yvel = 0
-
-    u = np.array([[xvel, yvel]]).T
-    return u
-
-def ccw(A,B,C):
-    return (C[1]-A[1]) * (B[0]-A[0]) > (B[1]-A[1]) * (C[0]-A[0])
-
-# Return true if line segments AB and CD intersect
-def intersect(A,B,C,D):
-    return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)
-
-def observation(xTrue, xd, u, beacons):
-
-    xTrue = motion_model(xTrue, u)
-
-    # Get list of beacons in range and visible,
-    # add noise to them
-    z_initial = beacons.in_range(xTrue, MAX_RANGE)
-
-    z = np.zeros((0, 5))
-    for i in range(len(z_initial[:, 0])):
-
-        # Make sure target isn't at too oblique an angle to the
-        # vision target - TODO : measure how far off we can get and still see
-        beacon_x     = z_initial[i, 2]
-        beacon_y     = z_initial[i, 3]
-        beacon_theta = z_initial[i, 4]
-
-        dx = xTrue[0, 0] - beacon_x
-        dy = xTrue[1, 0] - beacon_y
-
-        beacon_to_robot_bearing = math.atan2(dy, dx)
-        delta_angle = abs(beacon_theta - beacon_to_robot_bearing)
-        if ((delta_angle > .9) and (delta_angle < (2 * math.pi - .9))):
-            continue
-        
-        does_intersect = False
-        for j in range(len(Walls)):
-            if intersect([Walls[j][0],Walls[j][2]],[Walls[j][1],Walls[j][3]],[xTrue[0,0],xTrue[1,0]],[beacon_x, beacon_y]):
-                does_intersect = True
-                break
-
-        if does_intersect == False:
-            d = z_initial[i, 0] + np.random.randn() * Qsim[0, 0]  # add noise to distance
-            b = z_initial[i, 1] + np.random.randn() * Qsim[1, 1]  # add noise to bearing
-            zi = np.array([[d, b, beacon_x, beacon_y, beacon_theta]])
-            z = np.vstack((z, zi))
-
-
-    #print ("z", z)
-    # add noise to input to simulate dead reckoning
-    ud1 = u[0, 0] + np.random.randn() * Rsim[0, 0]
-    ud2 = u[1, 0] + np.random.randn() * Rsim[1, 1]
-    ud = np.array([[ud1, ud2]]).T
-
-    xd = motion_model(xd, ud)
-
-    return xTrue, z, xd, ud
-
-
-# Given state matrix x and transition matrix u,
-# calculate and return a state matrix for the next timestep
-def motion_model(x, u):
-
-    #F = np.array([[1.0, 0, 0, 0],
-                  #[0, 1.0, 0, 0],
-                  #[0, 0, 1.0, 0],
-                  #[0, 0, 0, 0]])
-
-    #B = np.array([[DT * math.cos(x[2, 0]), 0],
-                  #[DT * math.sin(x[2, 0]), 0],
-                  #[0.0, DT],
-                  #[1.0, 0.0]])
-
-    # For swerve drive, use a very simple model
-    # next position is based on current position plus current velocity
-    # next velocity is just requested velocity
-    F = np.array([[1.0, 0.0, 0.0, 0.0],
-                  [0.0, 1.0, 0.0, 0.0],
-                  [0.0, 0.0, 0.0, 0.0],
-                  [0.0, 0.0, 0.0, 0.0]])
-    B = np.array([[DT, 0.0],
-                  [0.0, DT],
-                  [1.0, 0.0],
-                  [0.0, 1.0]])
-
-    x = F.dot(x) + B.dot(u)
-
-    return x
-
-
-# probability of x given a 0-centered normal distribution 
-def gauss_likelihood(x, sigma):
-    p = 1.0 / math.sqrt(2.0 * math.pi * sigma ** 2) * \
-        math.exp(-x ** 2 / (2 * sigma ** 2))
-
-    return p
-
-
-def calc_covariance(xEst, px, pw):
-    cov = np.zeros((3, 3))
-
-    for i in range(px.shape[1]):
-        dx = (px[:, i] - xEst)[0:3]
-        cov += pw[0, i] * dx.dot(dx.T)
-
-    return cov
-
-def pf_localization(px, pw, xEst, PEst, z, u, beacons):
-    """
-    Localization with Particle filter
-    """
-
-    for ip in range(NP):
-        # Grab location and weight of this particle
-        x = np.array([px[:, ip]]).T
-        w = pw[0, ip]
-
-        # Predict with random input sampling - update the position of
-        # the particle using the input robot velocity. Add noise to the
-        # commanded robot velocity to account for tracking error
-	# TODO - should this use R rather than Rsim?
+    def update_dead_reckoning(self, xd, u):
+        # add noise to input to simulate dead reckoning
         ud1 = u[0, 0] + np.random.randn() * Rsim[0, 0]
         ud2 = u[1, 0] + np.random.randn() * Rsim[1, 1]
         ud = np.array([[ud1, ud2]]).T
-        x = motion_model(x, ud)
 
-        # x is now the new predicted robot position for this particle
+        return self.motion_model(xd, ud)
 
-        #  Calc Importance Weight
-        for i in range(len(z[:, 0])):
-            # Find the index of the landmark which most
-            # closely matches the distance of the reported 
-            # target
-            beacon_coord = beacons.closest_feature(x, z[i, 0], z[i, 1])
-            dx = x[0, 0] - beacon_coord[0]
-            dy = x[1, 0] - beacon_coord[1]
-            prez = math.sqrt(dx**2 + dy**2)
-            dz = prez - z[i, 0]
 
-            b = math.atan2(dy, dx)
-            db = b - z[i, 1]
-            
-            #if ((abs(beacon_coord[j, 0] - z[i, 2]) > 0.0001) or (abs(beacon_coord[j, 1] - z[i, 3]) > 0.0001)):
-                #print("Misidentified beacon : dz", dz, " db", db)
-                #print("robot predicted pos", x)
-                #print("beacon_coord[", j, "]", beacon_coord[j]);
-                #print("z[", i, "]", z[i])
+    def calc_covariance(self, xEst, px, pw):
+        cov = np.zeros((3, 3))
 
-            # Weight is the product of the probabilities that this
-            # position would give the measured distances
-            w = w * gauss_likelihood(dz, math.sqrt(Q[0, 0]))
-            w = w * gauss_likelihood(db, math.sqrt(Q[1, 1]))
+        for i in range(px.shape[1]):
+            dx = (px[:, i] - xEst)[0:3]
+            cov += pw[0, i] * dx.dot(dx.T)
 
-        # Update particle list with new position & weight values
-        px[:, ip] = x[:, 0]
-        pw[0, ip] = w
+        return cov
 
-    pw = pw / pw.sum()  # normalize
-
-    # estimated position is the weighted average of all particles 
-    xEst = px.dot(pw.T)
-    PEst = calc_covariance(xEst, px, pw)
-
-    px, pw = resampling(px, pw)
-
-    return xEst, PEst, px, pw
-
-# Resample particles - grab a new set of particles
-# selected from the current list. The odds of a particle
-# being selected each iteration is its weight - so more
-# likely predictions have a better chance of being picked
-def resampling(px, pw):
     """
-    low variance re-sampling
+    Localization with Particle filter
     """
+    def localize(self, z, u):
 
-    Neff = 1.0 / (pw.dot(pw.T))[0, 0]  # Effective particle number
-    if Neff < NTh:
-        print("resampling")
-        wcum = np.cumsum(pw)
-        base = np.cumsum(pw * 0.0 + 1 / NP) - 1 / NP
-        resampleid = base + np.random.rand(base.shape[0]) / NP
+        for ip in range(self.NP):
+            # Grab location and weight of this particle
+            x = np.array([self.px[:, ip]]).T
+            w = self.pw[0, ip]
 
-        inds = []
-        ind = 0
-        for ip in range(NP):
-            while resampleid[ip] > wcum[ind]:
-                ind += 1
-            inds.append(ind)
+            # Predict with random input sampling - update the position of
+            # the particle using the input robot velocity. Add noise to the
+            # commanded robot velocity to account for tracking error
+            ud1 = u[0, 0] + np.random.randn() * self.R[0, 0]
+            ud2 = u[1, 0] + np.random.randn() * self.R[1, 1]
+            ud = np.array([[ud1, ud2]]).T
+            x = self.motion_model(x, ud)
 
-        px = px[:, inds]
-        pw = np.zeros((1, NP)) + 1.0 / NP  # init weight
+            # x is now the new predicted robot position for this particle
 
-    return px, pw
+            # Update particle list with new position & weight values
+            self.px[:, ip]  = x[:, 0]
+            self.pw[0, ip] *= z.weights(x[:,0].T, self.field_map, self.Q) # TODO - or maybe just straight assignment
 
+        self.pw = self.pw / self.pw.sum()  # normalize
+
+        # estimated position is the weighted average of all particles 
+        xEst = self.px.dot(self.pw.T)
+        PEst = self.calc_covariance(xEst, self.px, self.pw)
+
+        self.resampling()
+
+        return xEst, PEst
+
+    # Resample particles - grab a new set of particles
+    # selected from the current list. The odds of a particle
+    # being selected each iteration is its weight - so more
+    # likely predictions have a better chance of being picked
+    def resampling(self):
+        """
+        low variance re-sampling
+        """
+
+        Neff = 1.0 / (self.pw.dot(self.pw.T))[0, 0]  # Effective particle number
+        if Neff < self.NTh:
+            print("resampling")
+            wcum = np.cumsum(self.pw)
+            base = np.cumsum(self.pw * 0.0 + 1 / self.NP) - 1. / self.NP
+            resampleid = base + np.random.rand(base.shape[0]) / self.NP
+
+            inds = []
+            ind = 0
+            for ip in range(self.NP):
+                while resampleid[ip] > wcum[ind]:
+                    ind += 1
+                inds.append(ind)
+
+            self.px = self.px[:, inds]
+            self.pw = np.zeros((1, self.NP)) + 1.0 / self.NP  # init weight
 
 def plot_covariance_ellipse(xEst, PEst):  # pragma: no cover
     Pxy = PEst[0:2, 0:2]
@@ -401,16 +468,17 @@ def plot_covariance_ellipse(xEst, PEst):  # pragma: no cover
     py = np.array(fx[1, :] + xEst[1, 0]).flatten()
     plt.plot(px, py, "--r")
 
-
 def main():
     print(__file__ + " start!!")
 
     time = 0.0
 
+    # Particle filter parameter
+    NP = 100  # Number of Particles
+
     # State Vectors [x y x' y']'
     xTrue = np.array([[-6.75,0,0,0]]).T
-    xEst = np.zeros((4,1))
-    PEst = np.eye(4)
+    xDR = xTrue  # Dead reckoning - only for animation
 
     # Beacon positions [x, y, orientation]
     # in this case, beacons are vision targets
@@ -445,7 +513,52 @@ def main():
     beacon_coords[beacon_coords[:,2] > math.pi] -= np.array([0,0,2 * math.pi])
     print ("beacon_coords", beacon_coords)
 
-    beacons = Beacons(beacon_coords)
+    #Wall positions [x1,x2,y1,y2]
+    wall_coords = np.array([[-1.94,1.94,.709,.709],
+                      [-1.94,1.94,-.709,-.709],
+                      [1.94,2.66,0.71,0.58],
+                      [-1.94,-2.66,0.71,0.58],
+                      [1.94,2.66,-0.71,-0.58],
+                      [-1.94,-2.66,-0.71,-0.58],
+                      [2.659,2.659,0.58,-0.58],
+                      [-2.659,-2.659,0.58,-0.58],
+                      [8.24,-8.24,4.10,4.10],
+                      [8.24,-8.24,-4.10,-4.10],
+                      [8.24,8.24,4.10,-4.10],
+                      [-8.24,-8.24,4.10,-4.10]])    
+
+    # Rocket - 4 copie mirrored around origin
+    wall_coords1 = np.array([[2.89,2.94,4.10,3.86],
+                       [2.94,2.69,3.86,3.39],
+                       [2.69,2.20,3.39,3.39],
+                       [2.20,1.94,3.39,3.86],
+                       [1.94,1.94,3.86,3.86],
+                       [1.94,1.99,3.86,4.10]]) 
+        
+    wall_coords1 = np.append(wall_coords1, wall_coords1 * [-1,-1,1,1], 0) 
+    wall_coords1 = np.append(wall_coords1, wall_coords1 * [1,1,-1,-1], 0) 
+
+    wall_coords  = np.append(wall_coords,wall_coords1,0)
+
+    field_map = FieldMap(Beacons(beacon_coords), Walls(wall_coords))
+
+
+    # For swerve drive, use a very simple model
+    # next position is based on current position plus current velocity
+    # next velocity is just requested velocity
+    F = np.array([[1.0, 0.0, 0.0, 0.0],
+                  [0.0, 1.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0],
+                  [0.0, 0.0, 0.0, 0.0]])
+    B = np.array([[DT, 0.0],
+                  [0.0, DT],
+                  [1.0, 0.0],
+                  [0.0, 1.0]])
+
+    # Estimation parameter of PF
+    Q = np.diag([0.05, 0.1])**2  # range error
+    #R = np.diag([1.0, np.deg2rad(40.0)])**2  # input error
+    R = np.diag([0.5, 0.5])**2  # input error
 
     # Important for at least some particles to be initialized to be near the true starting
     # coordinates. Resampling can only pick from existing position proposals and if
@@ -454,38 +567,32 @@ def main():
     starting_xmax = -6.5
     starting_ymin = -2.5
     starting_ymax = 2.5
-    xpos = np.random.uniform(starting_xmin, starting_xmax, (1, NP))
-    ypos = np.random.uniform(starting_ymin, starting_ymax, (1, NP))
-    px = np.concatenate((xpos, ypos, np.zeros((1, NP)), np.zeros((1, NP))), axis=0)
-
-    #px = np.zeros((4, NP))  # Particle store
-    pw = np.zeros((1, NP)) + 1.0 / NP  # Particle weight
-    xDR = xTrue             # Dead reckoning - only for animation
+    pf = PFLocalization(NP, F, B, field_map, Q, R, starting_xmin, starting_xmax, starting_ymin, starting_ymax)
 
     # history
-    hxEst = xEst
+    hxEst  = np.zeros((4,1))
     hxTrue = xTrue
-    hxDR = xTrue
+    hxDR   = xDR
 
     #This code is a copy of the code below it, with removed visualization. However, this code saves data in a pickle to be visualized separately.
     
-    columns = ['beacon_coords','xTrue','z','px','hxEst','hxDR','hxTrue','time']
+    columns = ['wall_coords','beacon_coords','xTrue','z','px','hxEst','hxDR','hxTrue','time']
     total_values = []
     """
     while SIM_TIME >= time:
         time += DT
-        u = calc_input(time)
-        xTrue, z, xDR, ud = observation(xTrue, xDR, u, beacons)
-
-        xEst, PEst, px, pw = pf_localization(px, pw, xEst, PEst, z, ud, beacons)
-        #print(xEst)
+        u          = pf.get_input(time)
+        xTrue      = pf.update_ground_truth(xTrue, u)
+        z          = pf.get_detections(xTrue)
+        xDR        = pf.update_dead_reckoning(xDR, u)
+        xEst, PEst = pf.localize(z, u)
 
         # store data history
         hxEst = np.hstack((hxEst, xEst))
         hxDR = np.hstack((hxDR, xDR))
         hxTrue = np.hstack((hxTrue, xTrue))
 
-        total_values.append([beacon_coords,xTrue,z,px,hxEst,hxDR,hxTrue,time])
+        total_values.append([wall_coords,beacon_coords,xTrue,z,px,hxEst,hxDR,hxTrue,time])
 
     df = pd.DataFrame(total_values,columns=columns)
     df.to_pickle('data.p')
@@ -493,34 +600,35 @@ def main():
     
     #Reset time for the standard code visualization
     time = 0
-    
 
     while SIM_TIME >= time:
         time += DT
-        u = calc_input(time)
+        u          = pf.get_input(time)
+        xTrue      = pf.update_ground_truth(xTrue, u)
+        z          = pf.get_detections(xTrue)
+        xDR        = pf.update_dead_reckoning(xDR, u)
+        xEst, PEst = pf.localize(z, u)
 
-        xTrue, z, xDR, ud = observation(xTrue, xDR, u, beacons)
-
-        xEst, PEst, px, pw = pf_localization(px, pw, xEst, PEst, z, ud, beacons)
-        #print(xEst)
+        px = pf.get_px()
 
         # store data history
         hxEst = np.hstack((hxEst, xEst))
         hxDR = np.hstack((hxDR, xDR))
         hxTrue = np.hstack((hxTrue, xTrue))
         
-        total_values.append([Walls,beacon_coords,xTrue,z,px,hxEst,hxDR,hxTrue,time])
+        total_values.append([wall_coords,beacon_coords,xTrue,z,px,hxEst,hxDR,hxTrue,time])
 
         if show_animation:
             plt.cla()
 
-            for i in range(len(z[:, 0])):
-                plt.plot([xTrue[0, 0], z[i, 2]], [xTrue[1, 0], z[i, 3]], "-k")
+            actual = z.get_actual();
+            for i in range(len(actual)):
+                beacon = actual[i].get_coords()
+                plt.plot([xTrue[0, 0], beacon[0]], [xTrue[1, 0], beacon[1]], "-k")
 
-            for i in range(len(Walls)):
-                plt.plot(Walls[i][:2],Walls[i][2:],color='purple')
+            for i in range(len(wall_coords)):
+                plt.plot(wall_coords[i][:2],wall_coords[i][2:],color='purple')
 
-            
             u = np.cos(beacon_coords[:,2])
             v = np.sin(beacon_coords[:,2])
             #plt.plot(beacon_coords[:, 0], beacon_coords[:, 1], ".k")
@@ -540,7 +648,7 @@ def main():
             #    input("Press any ket to continue...")
 
     #Saving pickle file
-    columns = ['Walls','beacon_coords','xTrue','z','px','hxEst','hxDR','hxTrue','time']
+    columns = ['wall_coords','beacon_coords','xTrue','z','px','hxEst','hxDR','hxTrue','time']
     df = pd.DataFrame(total_values,columns=columns)
     df.to_pickle('data.p')
 
