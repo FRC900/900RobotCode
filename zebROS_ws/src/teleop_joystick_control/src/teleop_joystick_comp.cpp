@@ -62,6 +62,7 @@ constexpr double drive_rate_limit_time = 500.;
 
 ros::Publisher elevator_setpoint;
 ros::Publisher JoystickRobotVel;
+ros::Publisher JoystickRobotVelStamped;
 ros::Publisher cargo_pid;
 ros::Publisher terabee_pid;
 ros::Publisher distance_pid;
@@ -166,27 +167,27 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		double leftStickX = joystick_states_array[0].leftStickX;
 		double leftStickY = joystick_states_array[0].leftStickY;
 		double rightStickX = joystick_states_array[0].rightStickX;
-		double rightStickY = joystick_states_array[0].rightStickY;
+		//double rightStickY = joystick_states_array[0].rightStickY;
+
+		// Deadzone check inputs can change to give differing levels of sensitivity.
+		leftStickX  = dead_zone_check(leftStickX, config.joystick_deadzone);
+		leftStickY  = dead_zone_check(leftStickY, config.joystick_deadzone);
+		rightStickX = dead_zone_check(rightStickX, config.joystick_deadzone);
+		//rightStickY = dead_zone_check(rightStickY, config.joystick_deadzone);
 
 		// Defer init until the first time these are used - makes sure the
 		// initial time is reasonable
-		static std::unique_ptr<rate_limiter::RateLimiter> left_stick_x_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
-		static std::unique_ptr<rate_limiter::RateLimiter> left_stick_y_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
-		static std::unique_ptr<rate_limiter::RateLimiter> right_stick_x_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
-		static std::unique_ptr<rate_limiter::RateLimiter> right_stick_y_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
-		static std::unique_ptr<rate_limiter::RateLimiter> left_trigger_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
-		static std::unique_ptr<rate_limiter::RateLimiter> right_trigger_rate_limit = std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time);
+		static std::unique_ptr<rate_limiter::RateLimiter> left_stick_x_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
+		static std::unique_ptr<rate_limiter::RateLimiter> left_stick_y_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
+		static std::unique_ptr<rate_limiter::RateLimiter> right_stick_x_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
+		//static std::unique_ptr<rate_limiter::RateLimiter> right_stick_y_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
+		//static std::unique_ptr<rate_limiter::RateLimiter> left_trigger_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
+		//static std::unique_ptr<rate_limiter::RateLimiter> right_trigger_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
 
-		leftStickX = left_stick_x_rate_limit->applyLimit(leftStickX);
-		leftStickY = left_stick_y_rate_limit->applyLimit(leftStickY);
-		rightStickX = right_stick_x_rate_limit->applyLimit(rightStickX);
-		rightStickY = right_stick_y_rate_limit->applyLimit(rightStickY);
-
-		// Deadzone check inputs can change to give differing levels of sensitivity.
-		dead_zone_check(leftStickX, config.joystick_deadzone);
-		dead_zone_check(leftStickY, config.joystick_deadzone);
-
-		dead_zone_check(rightStickX, config.joystick_deadzone);
+		leftStickX = left_stick_x_rate_limit->applyLimit(leftStickX, joystick_states_array[0].header.stamp);
+		leftStickY = left_stick_y_rate_limit->applyLimit(leftStickY, joystick_states_array[0].header.stamp);
+		rightStickX = right_stick_x_rate_limit->applyLimit(rightStickX, joystick_states_array[0].header.stamp);
+		//rightStickY = right_stick_y_rate_limit->applyLimit(rightStickY, joystick_states_array[0].header.stamp);
 
 		leftStickX =  pow(fabs(leftStickX), config.joystick_pow) * max_speed;
 		leftStickY =  pow(fabs(leftStickY), config.joystick_pow) * max_speed;
@@ -195,12 +196,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		// Copysign is a c++ function to make sure we don't screw up the sign in the lines above
 		leftStickX = copysign(leftStickX, joystick_states_array[0].leftStickX);
 		leftStickY = copysign(leftStickY, -joystick_states_array[0].leftStickY);
-		rotation = copysign(rotation,  joystick_states_array[0].rightStickX);
+		rotation   = copysign(rotation,   joystick_states_array[0].rightStickX);
 
 		// TODO : dead-zone for rotation?
 		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
-		//double triggerLeft = left_trigger_rate_limit->applyLmit(joystick_states_array[0].leftTrigger);
-		//double triggerRight = right_trigger_rate_limit->applyLimit(joystick_states_array[0].rightTrigger);
+		//double triggerLeft = left_trigger_rate_limit->applyLmit(joystick_states_array[0].leftTrigger, joystick_states_array[0].header.stamp);
+		//double triggerRight = right_trigger_rate_limit->applyLimit(joystick_states_array[0].rightTrigger, joystick_states_array[0].header.stamp);
 
 		static bool sendRobotZero = false;
 		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
@@ -224,6 +225,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				}
 				ROS_INFO("BrakeSrv called");
 				sendRobotZero = true;
+
+				geometry_msgs::TwistStamped vel_stamped;
+				vel_stamped.header = joystick_states_array[0].header;
+				vel_stamped.twist = vel;
+				JoystickRobotVelStamped.publish(vel_stamped);
 			}
 		}
 		else // X or Y or rotation != 0 so tell the drive base to move
@@ -247,6 +253,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			JoystickRobotVel.publish(vel);
 			sendRobotZero = false;
+
+			geometry_msgs::TwistStamped vel_stamped;
+			vel_stamped.header = joystick_states_array[0].header;
+			vel_stamped.twist = vel;
+			JoystickRobotVelStamped.publish(vel_stamped);
 		}
 
 		//Joystick1: buttonA
@@ -950,11 +961,12 @@ int main(int argc, char **argv)
 	service_connection_header["tcp_nodelay"] = "1";
 
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
-	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
+	//if(!BrakeSrv.waitForExistence(ros::Duration(15)))
 	{
 		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");
 	}
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+	JoystickRobotVelStamped = n.advertise<geometry_msgs::TwistStamped>("swerve_drive_controller/cmd_vel_stamped", 1);
 	elevator_setpoint = n.advertise<std_msgs::Int8>("elevator_setpoint",1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);

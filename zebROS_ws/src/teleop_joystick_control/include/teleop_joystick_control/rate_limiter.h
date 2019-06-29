@@ -17,19 +17,22 @@ class RateLimiter
 		{
 		}
 
-		double applyLimit(double value)
+		double applyLimit(double value, const ros::Time &now)
 		{
-			const ros::Time now = ros::Time::now();
 			const double delta_msec = (now - last_update_time_).toSec() * 1000.;
 			const double delta_value = delta_msec * max_change_per_msec_;
 #if 0
-			ROS_INFO_STREAM("applyLimit value:" << value
+			ROS_INFO_STREAM(__LINE__ << " applyLimit value:" << value
 					<< " now:" << now
 					<< " delta_msec:" << delta_msec
 					<< " delta_value:" << delta_value
 					<< " last_value_:" << last_value_
 					<< " last_update_time_:" << last_update_time_);
 #endif
+			// Can happen if replaying rosbag files over and over
+			// without restarting teleop node :/
+			if (delta_msec < 0)
+				return 0;
 			if (value > last_value_)
 			{
 				// Increasing value from previous setting?  If so, look for the
@@ -44,6 +47,14 @@ class RateLimiter
 			}
 
 			last_update_time_ = now;
+#if 0
+			ROS_INFO_STREAM(__LINE__ << " applyLimit value:" << value
+					<< " now:" << now
+					<< " delta_msec:" << delta_msec
+					<< " delta_value:" << delta_value
+					<< " last_value_:" << last_value_
+					<< " last_update_time_:" << last_update_time_);
+#endif
 			return last_value_;
 		}
 
