@@ -1,3 +1,4 @@
+#!/usr/bin/python
 """
 
 Particle Filter localization sample
@@ -10,20 +11,7 @@ Big list of TODOs :
 
     This is a lot of work, but take it step by step.
 
-    - Make this more object oriented. Right now, sim is tied pretty tightly to the rest of the code. I can see splitting this up so that isn't the case.
-
-       - Split into pf base class plus derived classes for sim vs real
-
-       - then sim could use this, factoring out things which are sim specific.  The DT, sim time, simulated sensor stuff, anyting related to xTrue, and so on.
-       - not sure how python handles polymorphism, but if I were doing this in C++, I'd create a top level class which has the framework for running PF.  That is,
-         it has methods to get robot motion, sensor input, run an iteration of PF, update the state and so on.  Then turn sim into a derived class which specializes those
-	 methods using the sim-only functions below.  Once that was working, create a real-hardware derived class which fills in those same methods, only
-	 using stuff read from ROS.  If done correctly, the top-level driver code could be shared?
-
     - Adding data from ROS
-       - I'd start with the simplest - calc_input should just read and store the latest swerve cmd_vel message.  From there, expand it to store a list of cmd_vel messages with associated time.  The second one would handle the case where there were multiple cmd_vel messages set between goal detection messages.  
-       - The grab and parse goal detection results, replacing the observation funtion.  It actually looks like observation does 3 separate things, 2 of which we don't really need.  Split those two things out somewhere else and make observation just a "get_detected_beacons" function?  The other two things - updating true location (impossible with real robot) and updating dead reckoning (possible but not really useful) should end up in sim-only code?  In any case, remove the code which adds noise to each detection - the real data will already be noisy. 
-       - Also, note that the camera detection are relative tto the camera, but the coordinates of the RFID tags are relative to the field coordinate system.  This will have to be handled in the pf_loc code itself.  First, translate from camera-frame to robot base frame. This can be done when the data is read from the message since it is a constant translation.  Translation from robot base frame to map frame has to happen for each particle.  Since each particle has the location of the robot base relative to the map, adding the robot coords (in the map frame) to the displacement between robot center and target will give the coords of the target in the map frame. Each particle's guess at the robot location is different, though, so this will have to be done separately for each particle.
        - Figure out a way to publish a transform between an odom frame and the calculate map frame location.  The result of the pf will be the distance from the robot to the origin of the map frame, or alternatively, the coordinates of the robot in the map frame (same thing).  But since the realsense camera (or something else) will be publishing odom->robot, the code just needs to express this as an offset between the existing odom frame origin and the calculate map frame origin.  Subtracting the origin of the odom frame from the calculated map frame should do it, or maybe a ROS transform call mgiht be possible?
        - If the code ends up keeping track of multiple cmd_vel messages that happened between goal detect messages, change the function which calculates motion to account for that. Basically, step through the list and iteratively add cmd_vel * dt for that message to the robot's position.  Be careful with the start and end entries in the list - the dt there will depend on the relative arrival times of the cmd_vel messages along with the previous and current goal detect message.  e.g. if cmd_vel comes in at 10 msec intervals most of the update will be loc = cmd_vel * 0.01. The first and last timestep will not typically be 10msec though, because there the timestep is actually the time between the last overall update (last arrival of a goal detect message) and the time the next cmd_vel arrived. Same with the last message.  A cmd_vel will come in, then before the next cmd_vel arrives, a goal detect message shows up, screwing up the regular spacing of those messages. Only add enough distance for the robot traveling cmd_vel for the time between the final cmd_vel message and the goal detect message.
 
@@ -46,7 +34,7 @@ Big list of TODOs :
         - Add even tigher restrictions for left / center / right, and add a service call to set them?  This would require restarting the particle filter, or at least re-initing the particle locations.
 
 	  
-	  """
+"""
 
 import sys
 import numpy as np
@@ -54,16 +42,24 @@ import math
 import matplotlib.pyplot as plt
 import pandas as pd
 
-#  Simulation parameters
-Qsim = np.diag([0.1, 0.2])**2
-#Rsim = np.diag([1.0, np.deg2rad(30.0)])**2
-Rsim = np.diag([0.75, 0.75])**2
+import rospy
+from sensor_msgs.msg import Imu
+from geometry_msgs.msg import Twist
+from goal_detection.msg import GoalDetection
+import tf
+import tf2_geometry_msgs
+from geometry_msgs.msg import Quaternion, TransformStamped, Vector3Stamped
 
 DT = 0.1   # time tick [s]
 SIM_TIME = 50.0  # simulation time [s]
 MAX_RANGE = 4.75 # maximum observation range
 
 show_animation = True
+
+# history - start empty
+hxEst  = np.empty(shape=[4,0])
+hxTrue = hxEst
+hxDR   = hxEst
 
 # Beacon - holds field-centric x,y,angle coordinates
 #          of targets on the field
@@ -80,10 +76,13 @@ class Beacon:
     # Compute and return [distance, bearing to target] 
     # between the requested beacon and the input
     # location.  loc is [x,y] coordinates
-    def distance(self, loc):
-        dx = loc[0] - self.coord[0]
-        dy = loc[1] - self.coord[1]
+    def distance(self, loc, reverse_angle = False):
+        dx = self.coord[0] - loc[0]
+        dy = self.coord[1] - loc[1]
         d = math.sqrt(dx**2 + dy**2) # distance
+        #if (reverse_angle == True):
+            #dy = -dy
+            #dx = -dx
         b = math.atan2(dy, dx)       # bearing
         return np.array([d, b])
  
@@ -92,7 +91,7 @@ class Beacon:
     # Used by simulation to generate a list of simulated
     # detected targets this time-step
     def visible_in_sim(self, loc, max_range, walls):
-        db = self.distance(loc)
+        db = self.distance(loc, True)
         if (db[0] <= max_range):
             # Make sure target isn't at too oblique an angle to the
             # vision target - TODO : measure how far off we can get and still see
@@ -133,18 +132,26 @@ class Beacons:
     # find the closest actual beacon and return it
     def closest_beacon(self, robot_loc, beacondist, beaconangle):
         mindist = sys.float_info.max
-        best_idx = 0
+        best_idx = -1
 
         for i in range(len(self.beacons)):
+            #print("beacon=", self.beacons[i].get_coords())
             db = self.beacons[i].distance(robot_loc)
+            #print("db = ", db)
             deltarange = abs(beacondist - db[0])
             deltaangle = abs(beaconangle - db[1])
-            if ((deltarange + deltaangle) < mindist):
+            #print("deltarange ", deltarange, " deltaangle ", deltaangle)
+            delta = deltarange + deltaangle * 20
+            #print("delta", delta)
+            if (delta < mindist):
                 # TODO - add checks from sim code for wall occlusion
                 # and target angle to rule out additional potential targets
-                mindist = deltarange + deltaangle
+                mindist = delta
                 best_idx = i
+                #print("----------- new best", best_idx)
 
+        if (best_idx == -1): # Won't happen, maybe later after adding a bound
+            return None      # on acceptable min distance
         return self.beacons[best_idx]
 
 class Walls:
@@ -209,11 +216,13 @@ class Detection:
     # Add noise to dist/ angle measurement. Use by simulation to make
     # detections look more like real world measurements
     def add_noise(self, Q):
-        self.coord[0] += np.random.randn() * Qsim[0, 0]  # add noise to distance
-        self.coord[1] += np.random.randn() * Qsim[1, 1]  # add noise to bearing
+        self.coord[0] += np.random.randn() * Q[0, 0]  # add noise to distance
+        self.coord[1] += np.random.randn() * Q[1, 1]  # add noise to bearing
 
     def weight(self, loc, field_map, Q):
         closest_beacon = field_map.closest_beacon(loc, self.coord[0], self.coord[1]) # Todo - change to use coord[]
+        if (closest_beacon == None):
+            return 0
 
         # distance / angle to best predicted ideal detection
         loc_to_closest = closest_beacon.distance(loc) 
@@ -232,15 +241,25 @@ class Detection:
 
     # probability of x given a 0-centered normal distribution 
     def _gauss_likelihood(self, x, sigma):
-        p = 1.0 / math.sqrt(2.0 * math.pi * sigma ** 2) * \
-            math.exp(-x ** 2 / (2 * sigma ** 2))
+        p = 1.0 / math.sqrt(2.0 * math.pi * sigma ** 2.) * \
+            math.exp(-x ** 2. / (2. * sigma ** 2.))
 
         return p
+
+    def guess_actual(self, loc, field_map):
+        #print("guess actual loc", loc, "self.coord", self.coord)
+        self.actual = field_map.closest_beacon(loc, self.coord[0], self.coord[1])
 
 # List of detection objects plus helper functions
 class Detections:
     def __init__(self):
         self.detections = []
+
+    def __str__(self):
+        s = ""
+        for i in range(len(self.detections)):
+            s += "\t" + str(self.detections[i]) + "\n"
+        return s
 
     def append(self, detection):
         if (detection != None):
@@ -265,7 +284,13 @@ class Detections:
         for i in range(len(self.detections)):
             self.detections[i].add_noise(Q)
 
-class PFLocalization:
+
+    def guess_actuals(self, loc, field_map):
+        for i in range(len(self.detections)):
+            self.detections[i].guess_actual(loc, field_map)
+
+
+class PFLocalization(object):
     def __init__(self, NP, F, B, field_map, Q, R, starting_xmin, starting_xmax, starting_ymin, starting_ymax):
         self.NP = NP
         self.NTh = NP / 2.0 # Number of particle for re-sampling
@@ -282,6 +307,9 @@ class PFLocalization:
         #px = np.zeros((4, self.NP))  # Particle store
         self.pw = np.zeros((1, self.NP)) + 1.0 / NP  # Particle weight
 
+    def set_B(self, B):
+        self.B = B
+
     # Get particle coords - for viz only
     def get_px(self):
         return self.px
@@ -289,80 +317,9 @@ class PFLocalization:
     # Given state matrix x and transition matrix u,
     # calculate and return a state matrix for the next timestep
     def motion_model(self, x, u):
-
-        #F = np.array([[1.0, 0, 0, 0],
-                      #[0, 1.0, 0, 0],
-                      #[0, 0, 1.0, 0],
-                      #[0, 0, 0, 0]])
-
-        #B = np.array([[DT * math.cos(x[2, 0]), 0],
-                      #[DT * math.sin(x[2, 0]), 0],
-                      #[0.0, DT],
-                      #[1.0, 0.0]])
-
-        # For swerve drive, use a very simple model
-        # next position is based on current position plus current velocity
-        # next velocity is just requested velocity
-        #F = np.array([[1.0, 0.0, 0.0, 0.0],
-        #              [0.0, 1.0, 0.0, 0.0],
-        #              [0.0, 0.0, 0.0, 0.0],
-        #              [0.0, 0.0, 0.0, 0.0]])
-        #B = np.array([[DT, 0.0],
-        #              [0.0, DT],
-        #              [1.0, 0.0],
-        #              [0.0, 1.0]])
-
         x = self.F.dot(x) + self.B.dot(u)
 
         return x
-
-    def get_input(self, time):
-        #v = 1.0  # [m/s]
-        #yawrate = 0.1  # [rad/s]
-        #u = np.array([[v, yawrate]]).T
-
-        if (time > 2):
-            if ((time % (SIM_TIME / 5)) < (SIM_TIME / 10)):
-                yvel = -1.2  # [m/s]
-            else:
-                yvel = 1.2  # [m/s]
-
-            xvel = 0.3  # [m/s]
-        else:
-            xvel = 0
-            yvel = 0
-
-        u = np.array([[xvel, yvel]]).T
-        return u
-
-# Return motion model transition vector
-# For diff drive, linear and angular velocity
-# For swerve, use x and y velocity
-# This is used to estimate position using dead reckoning (integrating velocity to get
-# position over time)
-
-
-    # Sim-specific
-    def update_ground_truth(self, xTrue, u):
-        return self.motion_model(xTrue, u)
-
-    # Need ROS implementation
-    def get_detections(self, xTrue):
-        # Get list of beacons in range and visible,
-        # add noise to them
-        z = self.field_map.visible_in_sim(xTrue[:,0].T, MAX_RANGE)
-        z.add_noise(Qsim)
-        return z
-
-
-    def update_dead_reckoning(self, xd, u):
-        # add noise to input to simulate dead reckoning
-        ud1 = u[0, 0] + np.random.randn() * Rsim[0, 0]
-        ud2 = u[1, 0] + np.random.randn() * Rsim[1, 1]
-        ud = np.array([[ud1, ud2]]).T
-
-        return self.motion_model(xd, ud)
-
 
     def calc_covariance(self, xEst, px, pw):
         cov = np.zeros((3, 3))
@@ -395,7 +352,7 @@ class PFLocalization:
 
             # Update particle list with new position & weight values
             self.px[:, ip]  = x[:, 0]
-            self.pw[0, ip] *= z.weights(x[:,0].T, self.field_map, self.Q) # TODO - or maybe just straight assignment
+            self.pw[0, ip] = z.weights(x[:,0].T, self.field_map, self.Q) # TODO - or maybe just straight assignment
 
         self.pw = self.pw / self.pw.sum()  # normalize
 
@@ -418,9 +375,8 @@ class PFLocalization:
 
         Neff = 1.0 / (self.pw.dot(self.pw.T))[0, 0]  # Effective particle number
         if Neff < self.NTh:
-            print("resampling")
             wcum = np.cumsum(self.pw)
-            base = np.cumsum(self.pw * 0.0 + 1 / self.NP) - 1. / self.NP
+            base = np.cumsum(self.pw * 0.0 + 1. / self.NP) - 1. / self.NP
             resampleid = base + np.random.rand(base.shape[0]) / self.NP
 
             inds = []
@@ -431,7 +387,62 @@ class PFLocalization:
                 inds.append(ind)
 
             self.px = self.px[:, inds]
-            self.pw = np.zeros((1, self.NP)) + 1.0 / self.NP  # init weight
+            self.pw = np.zeros((1, self.NP)) + 1. / self.NP  # init weight
+
+    def guess_detection_actuals(self, detections, loc):
+        detections.guess_actuals(loc, self.field_map)
+
+
+class PFLocalizationSim(PFLocalization):
+    def __init__(self, NP, F, B, field_map, Q, R, Qsim, Rsim, starting_xmin, starting_xmax, starting_ymin, starting_ymax):
+        super(PFLocalizationSim, self).__init__(NP, F, B, field_map, Q, R, starting_xmin, starting_xmax, starting_ymin, starting_ymax)
+        self.Qsim = Qsim
+        self.Rsim = Rsim
+
+    # Return motion model transition vector
+    # For diff drive, linear and angular velocity
+    # For swerve, use x and y velocity
+    # This is used to estimate position using dead reckoning (integrating velocity to get
+    # position over time)
+    def get_input(self, time):
+        #v = 1.0  # [m/s]
+        #yawrate = 0.1  # [rad/s]
+        #u = np.array([[v, yawrate]]).T
+
+        if (time > 2):
+            if ((time % (SIM_TIME / 5)) < (SIM_TIME / 10)):
+                yvel = -1.2  # [m/s]
+            else:
+                yvel = 1.2  # [m/s]
+
+            xvel = 0.3  # [m/s]
+        else:
+            xvel = 0
+            yvel = 0
+
+        u = np.array([[xvel, yvel]]).T
+        return u
+
+    # Sim-specific
+    def update_ground_truth(self, xTrue, u):
+        return self.motion_model(xTrue, u)
+
+    # Return a list of Detections for targets visible at this time
+    def get_detections(self, xTrue):
+        # Get list of beacons in range and visible,
+        # add noise to them
+        z = self.field_map.visible_in_sim(xTrue[:,0].T, MAX_RANGE)
+        z.add_noise(self.Qsim)
+        return z
+
+    def update_dead_reckoning(self, xd, u):
+        # add noise to input to simulate dead reckoning
+        ud1 = u[0, 0] + np.random.randn() * self.Rsim[0, 0]
+        ud2 = u[1, 0] + np.random.randn() * self.Rsim[1, 1]
+        ud = np.array([[ud1, ud2]]).T
+
+        return self.motion_model(xd, ud)
+
 
 def plot_covariance_ellipse(xEst, PEst):  # pragma: no cover
     Pxy = PEst[0:2, 0:2]
@@ -468,80 +479,190 @@ def plot_covariance_ellipse(xEst, PEst):  # pragma: no cover
     py = np.array(fx[1, :] + xEst[1, 0]).flatten()
     plt.plot(px, py, "--r")
 
+cmd_vel_u = np.zeros((2,1))
+imu_yaw = 0
+last_time = None
+
+def cmd_vel_to_map_frame():
+    global cmd_vel_u
+    global imu_transform
+    #print("cmd_vel_u before")
+    #print(cmd_vel_u)
+    #print("imu_yaw")
+    #print(imu_yaw)
+    new_x = math.cos(imu_yaw) * cmd_vel_u[0] - math.sin(imu_yaw) * cmd_vel_u[1]
+    new_y = math.sin(imu_yaw) * cmd_vel_u[0] + math.cos(imu_yaw) * cmd_vel_u[1]
+    cmd_vel_u[0] = new_x
+    cmd_vel_u[1] = new_y
+    #print("cmd_vel_u after")
+    #print(cmd_vel_u.T)
+
+
+def twist_callback(data):
+    global cmd_vel_u
+    cmd_vel_u = np.array([[data.linear.x, data.linear.y]]).T
+    #print("cmd_vel_u")
+    #print(cmd_vel_u)
+    cmd_vel_to_map_frame()
+
+def navx_callback(data):
+    global imu_yaw
+    q = tf.transformations.quaternion_inverse((data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w))
+    (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
+    cmd_vel_to_map_frame()
+
+
+def goal_detection_callback(data, args):
+
+    pf = args
+    global cmd_vel_u
+    z = Detections()
+    for i in range(len(data.location)):
+        # Fake transform to center of robot
+        x = data.location[i].x - .1576
+        y = -data.location[i].y + .234
+        #y = -y
+        #print("x", x)
+        #print("y", y)
+        d = math.hypot(x, y)
+        b = math.atan2(y, x)
+        z.append(Detection(np.array([d, b])))
+    
+    #print("z")
+    #print(z)
+    global last_time
+    dt = rospy.get_time() - last_time
+    print ("dt", dt)
+    print (cmd_vel_u.T)
+    last_time = rospy.get_time()
+    if (dt > 10000):
+        return
+    B = np.array([[dt, 0.0],
+                  [0.0, dt],
+                  [1.0, 0.0],
+                  [0.0, 1.0]])
+
+    pf.set_B(B)
+    #xDR        = pf.update_dead_reckoning(xDR, cmd_vel_u)
+    xEst, PEst = pf.localize(z, cmd_vel_u)
+    pf.guess_detection_actuals(z, np.array([xEst[0,0], xEst[1,0]]))
+
+    debug_plot(None, xEst, PEst, None, z, pf.get_px())
+
+# Beacon positions [x, y, orientation]
+# in this case, beacons are vision targets
+# Add / subtract various small values to make sure they
+# aren't lying directly on a wall - bias them slightly
+# towards the interior of the field. This prevents wall
+# intersection code from thinking they're behind a wall accidentally
+beacon_coords = np.array([
+                          [2.07-.005,3.63-0.005, math.radians(270 - 60)],
+                          [2.44,3.39-.001, 3. * math.pi / 2.],
+                          [2.81+0.0075,3.63-0.0075, math.radians(270 + 60)],
+                          [2.66,0.28, 0],
+                          [1.64,0.71, math.pi / 2.],
+                          [1.08,0.71, math.pi / 2.],
+                          [0.53,0.71, math.pi / 2.],
+                          [8.26 - 0.021,3.44, math.pi]
+                            ])
+# Assume map is symmetric around the origin in 
+# both horizontal and vertical directions
+# x, y, are -1, 1, but subtracting them from 0 inverts again
+# subtract angles from pi to mirror horizontally
+mirror = np.array(np.array([0, 0, math.pi]) - np.array([1,-1,1]) * beacon_coords)
+beacon_coords = np.append(beacon_coords, mirror, 0)
+
+# x, y, are 1, -1, but subtracting them from 0 inverts again
+# subtract angles from 2pi to mirror vertically
+mirror = np.array(np.array([0, 0, 2 * math.pi]) - np.array([-1,1,1]) * beacon_coords)
+beacon_coords = np.append(beacon_coords, mirror, 0)
+
+# normalize angles between 0 and 2pi
+beacon_coords[beacon_coords[:,2] <= -math.pi] += np.array([0,0,2 * math.pi])
+beacon_coords[beacon_coords[:,2] > math.pi] -= np.array([0,0,2 * math.pi])
+print ("beacon_coords", beacon_coords)
+
+#Wall positions [x1,x2,y1,y2]
+wall_coords = np.array([[-1.94,1.94,.709,.709],
+                  [-1.94,1.94,-.709,-.709],
+                  [1.94,2.66,0.71,0.58],
+                  [-1.94,-2.66,0.71,0.58],
+                  [1.94,2.66,-0.71,-0.58],
+                  [-1.94,-2.66,-0.71,-0.58],
+                  [2.659,2.659,0.58,-0.58],
+                  [-2.659,-2.659,0.58,-0.58],
+                  [8.24,-8.24,4.10,4.10],
+                  [8.24,-8.24,-4.10,-4.10],
+                  [8.24,8.24,4.10,-4.10],
+                  [-8.24,-8.24,4.10,-4.10]])    
+
+# Rocket - 4 copies mirrored around origin
+wall_coords1 = np.array([[2.89,2.94,4.10,3.86],
+                   [2.94,2.69,3.86,3.39],
+                   [2.69,2.20,3.39,3.39],
+                   [2.20,1.94,3.39,3.86],
+                   [1.94,1.94,3.86,3.86],
+                   [1.94,1.99,3.86,4.10]]) 
+    
+wall_coords1 = np.append(wall_coords1, wall_coords1 * [-1,-1,1,1], 0) 
+wall_coords1 = np.append(wall_coords1, wall_coords1 * [1,1,-1,-1], 0) 
+
+wall_coords  = np.append(wall_coords,wall_coords1,0)
+
+def debug_plot(xTrue, xEst, PEst, xDR, z, px):
+    # store data history
+    global hxEst
+    global hxDR
+    global hxTrue
+    hxEst = np.hstack((hxEst, xEst))
+    if (xDR is not None):
+        hxDR = np.hstack((hxDR, xDR))
+    if (xTrue is not None):
+        hxTrue = np.hstack((hxTrue, xTrue))
+
+    if show_animation:
+        plt.cla()
+
+        actual = z.get_actual();
+        plot_x = xEst
+        if (xTrue is not None):
+            plot_x = xTrue
+        for i in range(len(actual)):
+            beacon = actual[i].get_coords()
+            plt.plot([plot_x[0, 0], beacon[0]], [plot_x[1, 0], beacon[1]], "-k")
+
+        for i in range(len(wall_coords)):
+            plt.plot(wall_coords[i][:2],wall_coords[i][2:],color='purple')
+
+        u = np.cos(beacon_coords[:,2])
+        v = np.sin(beacon_coords[:,2])
+        #plt.plot(beacon_coords[:, 0], beacon_coords[:, 1], ".k")
+        plt.quiver(beacon_coords[:, 0], beacon_coords[:, 1], u, v)
+        plt.plot(px[0, :], px[1, :], ".r")
+        plt.plot(np.array(hxTrue[0, :]).flatten(),
+                 np.array(hxTrue[1, :]).flatten(), "-b")
+        plt.plot(np.array(hxDR[0, :]).flatten(),
+                 np.array(hxDR[1, :]).flatten(), "-k")
+        plt.plot(np.array(hxEst[0, :]).flatten(),
+                 np.array(hxEst[1, :]).flatten(), "-r")
+        #plot_covariance_ellipse(xEst, PEst)
+        plt.axis("equal")
+        plt.grid(True)
+        plt.pause(0.001)
+
 def main():
     print(__file__ + " start!!")
 
     time = 0.0
 
     # Particle filter parameter
-    NP = 100  # Number of Particles
+    NP = 200  # Number of Particles
 
     # State Vectors [x y x' y']'
     xTrue = np.array([[-6.75,0,0,0]]).T
     xDR = xTrue  # Dead reckoning - only for animation
 
-    # Beacon positions [x, y, orientation]
-    # in this case, beacons are vision targets
-    # Add / subtract various small values to make sure they
-    # aren't lying directly on a wall - bias them slightly
-    # towards the interior of the field. This prevents wall
-    # intersection code from thinking they're behind a wall accidentally
-    beacon_coords = np.array([
-                              [2.07-.005,3.63-0.005, math.radians(270 - 60)],
-                              [2.44,3.39-.001, 3. * math.pi / 2.],
-                              [2.81+0.0075,3.63-0.0075, math.radians(270 + 60)],
-                              [2.66,0.28, 0],
-                              [1.64,0.71, math.pi / 2.],
-                              [1.08,0.71, math.pi / 2.],
-                              [0.53,0.71, math.pi / 2.],
-                              [8.26 - 0.021,3.44, math.pi]
-                                ])
-    # Assume map is symmetric around the origin in 
-    # both horizontal and vertical directions
-    # x, y, are -1, 1, but subtracting them from 0 inverts again
-    # subtract angles from pi to mirror horizontally
-    mirror = np.array(np.array([0, 0, math.pi]) - np.array([1,-1,1]) * beacon_coords)
-    beacon_coords = np.append(beacon_coords, mirror, 0)
-
-    # x, y, are 1, -1, but subtracting them from 0 inverts again
-    # subtract angles from 2pi to mirror vertically
-    mirror = np.array(np.array([0, 0, 2 * math.pi]) - np.array([-1,1,1]) * beacon_coords)
-    beacon_coords = np.append(beacon_coords, mirror, 0)
-
-    # normalize angles between 0 and 2pi
-    beacon_coords[beacon_coords[:,2] <= -math.pi] += np.array([0,0,2 * math.pi])
-    beacon_coords[beacon_coords[:,2] > math.pi] -= np.array([0,0,2 * math.pi])
-    print ("beacon_coords", beacon_coords)
-
-    #Wall positions [x1,x2,y1,y2]
-    wall_coords = np.array([[-1.94,1.94,.709,.709],
-                      [-1.94,1.94,-.709,-.709],
-                      [1.94,2.66,0.71,0.58],
-                      [-1.94,-2.66,0.71,0.58],
-                      [1.94,2.66,-0.71,-0.58],
-                      [-1.94,-2.66,-0.71,-0.58],
-                      [2.659,2.659,0.58,-0.58],
-                      [-2.659,-2.659,0.58,-0.58],
-                      [8.24,-8.24,4.10,4.10],
-                      [8.24,-8.24,-4.10,-4.10],
-                      [8.24,8.24,4.10,-4.10],
-                      [-8.24,-8.24,4.10,-4.10]])    
-
-    # Rocket - 4 copie mirrored around origin
-    wall_coords1 = np.array([[2.89,2.94,4.10,3.86],
-                       [2.94,2.69,3.86,3.39],
-                       [2.69,2.20,3.39,3.39],
-                       [2.20,1.94,3.39,3.86],
-                       [1.94,1.94,3.86,3.86],
-                       [1.94,1.99,3.86,4.10]]) 
-        
-    wall_coords1 = np.append(wall_coords1, wall_coords1 * [-1,-1,1,1], 0) 
-    wall_coords1 = np.append(wall_coords1, wall_coords1 * [1,1,-1,-1], 0) 
-
-    wall_coords  = np.append(wall_coords,wall_coords1,0)
-
     field_map = FieldMap(Beacons(beacon_coords), Walls(wall_coords))
-
 
     # For swerve drive, use a very simple model
     # next position is based on current position plus current velocity
@@ -560,6 +681,11 @@ def main():
     #R = np.diag([1.0, np.deg2rad(40.0)])**2  # input error
     R = np.diag([0.5, 0.5])**2  # input error
 
+    # Simulation parameters
+    Qsim = np.diag([0.1, 0.2])**2
+    #Rsim = np.diag([1.0, np.deg2rad(30.0)])**2
+    Rsim = np.diag([0.75, 0.75])**2
+
     # Important for at least some particles to be initialized to be near the true starting
     # coordinates. Resampling can only pick from existing position proposals and if
     # none are close to the starting position, the particles will never converge
@@ -567,12 +693,8 @@ def main():
     starting_xmax = -6.5
     starting_ymin = -2.5
     starting_ymax = 2.5
+    #pf = PFLocalizationSim(NP, F, B, field_map, Q, R, Qsim, Rsim, starting_xmin, starting_xmax, starting_ymin, starting_ymax)
     pf = PFLocalization(NP, F, B, field_map, Q, R, starting_xmin, starting_xmax, starting_ymin, starting_ymax)
-
-    # history
-    hxEst  = np.zeros((4,1))
-    hxTrue = xTrue
-    hxDR   = xDR
 
     #This code is a copy of the code below it, with removed visualization. However, this code saves data in a pickle to be visualized separately.
     
@@ -597,60 +719,41 @@ def main():
     df = pd.DataFrame(total_values,columns=columns)
     df.to_pickle('data.p')
     """
+
+    rospy.init_node('pf_localization', anonymous=True)
+
+    rospy.Subscriber("/frcrobot_rio/navx_mxp", Imu, navx_callback)
+    rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel", Twist, twist_callback)
+    rospy.Subscriber("/goal_detection_node/goal_detect_msg", GoalDetection, goal_detection_callback, (pf))
+    global last_time
+    last_time = rospy.get_time()
+
+    # spin() simply keeps python from exiting until this node is stopped
+    print "ROS Spinning";
+    rospy.spin()
+    
+    """
     
     #Reset time for the standard code visualization
     time = 0
 
     while SIM_TIME >= time:
-        time += DT
+        time      += DT
         u          = pf.get_input(time)
         xTrue      = pf.update_ground_truth(xTrue, u)
         z          = pf.get_detections(xTrue)
         xDR        = pf.update_dead_reckoning(xDR, u)
         xEst, PEst = pf.localize(z, u)
 
-        px = pf.get_px()
-
-        # store data history
-        hxEst = np.hstack((hxEst, xEst))
-        hxDR = np.hstack((hxDR, xDR))
-        hxTrue = np.hstack((hxTrue, xTrue))
+        debug_plot(xTrue, xEst, PEst, xDR, z, pf.get_px())
         
-        total_values.append([wall_coords,beacon_coords,xTrue,z,px,hxEst,hxDR,hxTrue,time])
-
-        if show_animation:
-            plt.cla()
-
-            actual = z.get_actual();
-            for i in range(len(actual)):
-                beacon = actual[i].get_coords()
-                plt.plot([xTrue[0, 0], beacon[0]], [xTrue[1, 0], beacon[1]], "-k")
-
-            for i in range(len(wall_coords)):
-                plt.plot(wall_coords[i][:2],wall_coords[i][2:],color='purple')
-
-            u = np.cos(beacon_coords[:,2])
-            v = np.sin(beacon_coords[:,2])
-            #plt.plot(beacon_coords[:, 0], beacon_coords[:, 1], ".k")
-            plt.quiver(beacon_coords[:, 0], beacon_coords[:, 1], u, v)
-            plt.plot(px[0, :], px[1, :], ".r")
-            plt.plot(np.array(hxTrue[0, :]).flatten(),
-                     np.array(hxTrue[1, :]).flatten(), "-b")
-            plt.plot(np.array(hxDR[0, :]).flatten(),
-                     np.array(hxDR[1, :]).flatten(), "-k")
-            plt.plot(np.array(hxEst[0, :]).flatten(),
-                     np.array(hxEst[1, :]).flatten(), "-r")
-            #plot_covariance_ellipse(xEst, PEst)
-            plt.axis("equal")
-            plt.grid(True)
-            plt.pause(0.001)
-            #if (time <= DT):
-            #    input("Press any ket to continue...")
+        total_values.append([wall_coords,beacon_coords,xTrue,z,pf.get_px(),hxEst,hxDR,hxTrue,time])
 
     #Saving pickle file
     columns = ['wall_coords','beacon_coords','xTrue','z','px','hxEst','hxDR','hxTrue','time']
     df = pd.DataFrame(total_values,columns=columns)
     df.to_pickle('data.p')
+    """
 
 if __name__ == '__main__':
     main()

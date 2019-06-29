@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-import rospy
 import sys
 import math
+import rospy
 from geometry_msgs.msg import Twist
 from goal_detection.msg import GoalDetection
 import numpy as np
