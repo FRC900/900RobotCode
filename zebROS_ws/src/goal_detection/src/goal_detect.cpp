@@ -80,7 +80,10 @@ namespace goal_detection
 
 				// Set up publisher
 				pub_ = nh_.advertise<goal_detection::GoalDetection>("goal_detect_msg", pub_rate);
+
+				pub_debug_image_ = it.advertise("debug_image", 2);
 			}
+
 			void callback(const sensor_msgs::ImageConstPtr &frameMsg, const sensor_msgs::ImageConstPtr &depthMsg)
 			{
 				cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
@@ -110,6 +113,7 @@ namespace goal_detection
 				gd_msg.header.seq = frameMsg->header.seq;
 				gd_msg.header.stamp = frameMsg->header.stamp;
 				std::string frame_id = frameMsg->header.frame_id;
+				// Remove _optical_frame from the camera frame ID if present
 				const size_t idx = frame_id.rfind("_optical_frame");
 				if (idx != std::string::npos)
 				{
@@ -120,7 +124,6 @@ namespace goal_detection
 				for(size_t i = 0; i < gfd.size(); i++)
 				{
 					geometry_msgs::Point32 dummy;
-					// Remove _optical_frame from the camera frame ID if present
 					dummy.x = gfd[i].pos.y;
 					dummy.y = gfd[i].pos.x;
 					dummy.z = gfd[i].pos.z;
@@ -131,12 +134,19 @@ namespace goal_detection
 
 				pub_.publish(gd_msg);
 
-				if (!batch_)
+				if (!batch_ || (pub_debug_image_.getNumSubscribers() > 0))
 				{
 					cv::Mat thisFrame(framePtr->clone());
 					gd_->drawOnFrame(thisFrame, gd_->getContours(cvFrame->image));
-					cv::imshow("Image", thisFrame);
-					cv::waitKey(5);
+					if (!batch_)
+					{
+						cv::imshow("Image", thisFrame);
+						cv::waitKey(5);
+					}
+					if (pub_debug_image_.getNumSubscribers() > 0)
+					{
+						pub_debug_image_.publish(cv_bridge::CvImage(std_msgs::Header(), "bgr8", thisFrame).toImageMsg());
+					}
 				}
 
 				if (gd_msg.valid == false)
@@ -228,6 +238,7 @@ namespace goal_detection
 			std::unique_ptr<message_filters::Synchronizer<RGBDSyncPolicy>> rgbd_sync_;
 			ros::Subscriber                                                terabee_sub_;
 			ros::Publisher                                                 pub_;
+			image_transport::Publisher                                     pub_debug_image_;
 			GoalDetector                                                  *gd_                    = NULL;
 			bool                                                           batch_                 = true;
 			bool                                                           down_sample_           = false;
