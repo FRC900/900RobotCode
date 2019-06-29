@@ -127,7 +127,6 @@ class OuttakeHatchPanelAction
 			behaviors::ElevatorGoal elev_goal;
 			elev_goal.setpoint_index = goal->setpoint_index;
 			elev_goal.place_cargo = false;
-			elev_goal.raise_intake_after_success = true;
 			ac_elevator_.sendGoal(elev_goal);
 
 			cmd_vel_forward_speed_ = outtake_cmd_vel;

@@ -1,10 +1,5 @@
 topics:
 -
-  name    : align_pid
-  topic   : /align_server/align_pid/swerve_drive_controller/cmd_vel
-  timeout : 0.2
-  priority: 100
--
   name    : teleop joystick comp
   topic   : /teleop/swerve_drive_controller/cmd_vel
   timeout : 0.2
@@ -17,6 +12,16 @@ topics:
 -
   name    : outtake_hatch_panel_server
   topic   : /hatch_outtake/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 100
+-
+  name    : align_hatch
+  topic   : /align_hatch/align_hatch/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 100
+-
+  name    : align_cargo
+  topic   : /align_cargo/align_cargo/swerve_drive_controller/cmd_vel
   timeout : 0.2
   priority: 100
 locks: []

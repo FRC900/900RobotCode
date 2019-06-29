@@ -79,7 +79,6 @@
 		 <link name="camera_link" />
 	-->
 
-
 	<link name="panel_outtake"/>
 	<joint name="panel_outtake_joint" type="fixed"> 
         <parent link="base_link"/>

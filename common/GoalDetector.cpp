@@ -6,8 +6,18 @@
 using namespace std;
 using namespace cv;
 
-#define VERBOSE
-#define VERBOSE_BOILER
+//#define VERBOSE
+//#define VERBOSE_BOILER
+
+int camera_angle_common = 25;
+
+void angleCallback(int value, void *data)
+{
+	std::cout << "running AngleCallback with value " << value << endl;
+	GoalDetector *gd = static_cast<GoalDetector*>(data);
+	double angle = static_cast<double>(value)/-10;
+	gd->setCameraAngle(angle);
+}
 
 GoalDetector::GoalDetector(const cv::Point2f &fov_size, const cv::Size &frame_size, bool gui) :
 	_fov_size(fov_size),
@@ -25,7 +35,7 @@ GoalDetector::GoalDetector(const cv::Point2f &fov_size, const cv::Size &frame_si
 		createTrackbar("Blue Scale","Goal Detect Adjustments", &_blue_scale, 100);
 		createTrackbar("Red Scale","Goal Detect Adjustments", &_red_scale, 100);
 		createTrackbar("Otsu Threshold","Goal Detect Adjustments", &_otsu_threshold, 255);
-		createTrackbar("Camera Angle","Goal Detect Adjustments", &_camera_angle, 900);
+		createTrackbar("Camera Angle","Goal Detect Adjustments", &camera_angle_common, 900, angleCallback, this);
 	}
 }
 
@@ -266,7 +276,9 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 							  intersection_point) ||
 					(intersection_point.y > std::max(left_info[i].com.y, right_info[j].com.y)))
 			{
+#ifdef VERBOSE_BOILER
 				cout << i << " " << j << " intersection point below com of contours : " << intersection_point << endl;
+#endif
 				continue;
 			}
 
@@ -404,6 +416,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				}
 				_isValid = true;
 
+#ifdef VERBOSE_BOILER
 				cout << "Number of goals: " << _return_found.size() << endl;
 				for(size_t n = 0; n < _return_found.size(); n++)
 				{
@@ -411,6 +424,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 						_return_found[n].right_contour_index << " pos: " << _return_found[n].pos <<
 						" distance: " << _return_found[n].distance << " angle: " << _return_found[n].angle << endl;
 				}
+#endif
 			}
 			else
 			{

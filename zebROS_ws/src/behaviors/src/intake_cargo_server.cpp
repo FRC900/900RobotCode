@@ -90,7 +90,6 @@ class CargoIntakeAction {
 			behaviors::ElevatorGoal elevator_goal;
 			elevator_goal.setpoint_index = INTAKE;
 			elevator_goal.place_cargo = true;
-			elevator_goal.raise_intake_after_success = false;
 			ac_elevator_.sendGoal(elevator_goal);
 
 			//send command to lower arm and run roller to the cargo intake controller ------

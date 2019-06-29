@@ -1,11 +1,39 @@
-align_server_params : #params defined in align_server_cpp #default values
-    align_timeout: 10
+align_cargo_params: #params defined in align_server_cpp #default values
+    align_timeout: 4
     orient_timeout: 2
     x_error_threshold: 0.07
     cargo_error_threshold: 0.05
-    orient_error_threshold: 0.03
+    orient_error_threshold: 0.1
+align_hatch_params:
+    align_timeout: 4
+    orient_timeout: 2
+    y_error_threshold: 0.02
+    cargo_error_threshold: 0.05
+    orient_error_threshold: 0.1
 align_with_terabee_params: #params defined in align_with_terabee.cpp
     cmd_vel_to_pub: 0.7
     distance_bound: 0.07 
-    distance_target: 0.45
+    distance_target: 0.12
     cargo_pid_max_distance: 0.5
+    adjust_terabee_dists: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+align_with_camera_params: 
+    cmd_vel_to_pub: 0.7
+    error_threshold: 0.1
+align_server_topics:
+    align_cargo_rocketship:
+        enable_x_pub: "hatch_panel_distance_pid/pid_enable"
+        x_error_topic: "hatch_panel_distance_pid/pid_debug"
+orient_pid:
+    p0: 13.0
+    i0: 0.0
+    d0: 0.0
+    p1: 9.0
+    i1: 0.0
+    d1: 0.0
+#change these values for debugging auto align
+do_orient: false
+track_target: false #If true doesn't actually align!!!!
+do_pid: false
+hold_orient: false
+constant_vel: -0.6
+do_align: true

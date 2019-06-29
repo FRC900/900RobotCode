@@ -12,6 +12,7 @@
 	<arg name="record" default="false" />
 
 	<include file="$(find controller_node)/launch/tape_detection.launch" />
+	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
 
 	<group ns="frcrobot_jetson">
 
@@ -128,18 +129,15 @@
 			<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
 		</node> 
 	</group>
+	
+	<!-- TODO need a way to use the same PID node in multiple align servers without copying and pasting topics -->
+	<!-- Create a new group for each align server, define params for every single topic, load all nodes used by that align server -->
+	<!--group ns="align_server_common "!-->
 
-	<group ns="align_server">
-
-		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
-		<node name="align_ac_server" pkg="behaviors" type="align_server" output="screen" />
-
-		<!-- Align with notch -->
-		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
-
-		<!-- Distance PID Hatch Panel -->
-		<node name="hatch_panel_distance_pid" pkg="pid" type="controller" >
-			<param name="node_name" value="hatch_panel_distance_pid" />
+	<group ns="align_cargo_rocketship">
+		<!-- Distance PID Cargo -->
+		<node name="cargo_distance_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="cargo_distance_pid" />
 			<param name="Kp" value="4.8" />
 			<param name="Ki" value="0.0" />
 			<param name="Kd" value="0.1" />
@@ -148,19 +146,66 @@
 			<param name="windup_limit" value="10" />
 			<param name="max_loop_frequency" value="100.0" />
 			<param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value="hatch_panel_distance_pid/x_command" />     
-			<param name="setpoint_topic" value="hatch_panel_distance_pid/setpoint" />
-			<param name="topic_from_plant" value="hatch_panel_distance_pid/state" />
-			<remap from="pid_debug" to="hatch_panel_distance_pid/pid_debug"/>
-			<remap from="pid_enable" to="hatch_panel_distance_pid/pid_enable"/>
+			<param name="topic_from_controller" value="x_pid/x_command" />     
+			<param name="setpoint_topic" value="x_pid/x_setpoint" />
+			<param name="topic_from_plant" value="x_pid/x_state" />
+			<remap from="pid_debug" to="x_pid/pid_debug" />
+			<remap from="pid_enable" to="x_pid/pid_enable" />
 		</node>
+
+		<node name="cargo_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="cargo_pid" />
+			<param name="Kp" value="5.0" />
+			<param name="Ki" value="0.0" />
+			<param name="Kd" value="0.0" />
+			<param name="upper_limit" value="1" />
+			<param name="lower_limit" value="-1" />
+			<param name="windup_limit" value="10" />
+			<param name="max_loop_frequency" value="100.0" />
+			<param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="y_pid/y_command" />     
+			<param name="setpoint_topic" value="y_pid/y_setpoint" />
+			<param name="topic_from_plant" value="y_pid/y_state" />
+			<remap from="pid_debug" to="y_pid/pid_debug" />
+			<remap from="pid_enable" to="y_pid/pid_enable" />
+		</node>
+
+		<node name="align_pid_cargo_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+			<param name="orient_topic" value="orient_pid/orient_command" />
+			<param name="x_topic" value="x_pid/x_command" />
+			<param name="y_topic" value="y_pid/y_command" />
+			<param name="command_timeout" value="0.5" />
+			<param name="enable_topic" value="align_pid/pid_enable" />
+			<param name="name" value="align_pid" />
+		</node>
+	</group> 
+
+
+
+
+	<!-- vision align -->
+	<node name="translate_to_pointstamped" pkg="goal_detection" type="translate_to_pointstamped" output="screen">
+		<param name="camera_goal_topic" value="/zed_goal/whatever" />
+	</node>
+
+	<group ns="align_cargo">
+
+		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
+		<!--node name="align_ac_server" pkg="behaviors" type="align_server" output="screen" /-->
+		<node name="align_server" pkg="behaviors" type="align_cargo_cargoship_server" output="screen" />
+
+		<node name="align_with_camera" pkg="behaviors" type="align_with_camera" output="screen" >
+			<param name="target_frame" value="cargo_outtake" /> <!-- TODO test this -->
+		</node>
+		<!-- Align with notch -->
+		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 
 		<!-- Distance PID Cargo -->
 		<node name="cargo_distance_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="cargo_distance_pid" />
 			<param name="Kp" value="4.8" />
 			<param name="Ki" value="0.0" />
-			<param name="Kd" value="0.1" />
+			<param name="Kd" value="0.0" />
 			<param name="upper_limit" value="2" />
 			<param name="lower_limit" value="-2" />
 			<param name="windup_limit" value="10" />
@@ -173,33 +218,20 @@
 			<remap from="pid_enable" to="cargo_distance_pid/pid_enable"/>
 		</node>
 
-		<!-- Cargo  PID -->
-		<node name="cargo_pid" pkg="pid" type="controller" >
-			<param name="node_name" value="cargo_pid" />
-			<param name="Kp" value="5.0" />
-			<param name="Ki" value="0.0" />
-			<param name="Kd" value="0.0" />
-			<param name="upper_limit" value="1" />
-			<param name="lower_limit" value="-1" />
-			<param name="windup_limit" value="10" />
-			<param name="max_loop_frequency" value="100.0" />
-			<param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value="cargo_pid/y_command" />     
-			<param name="setpoint_topic" value="cargo_pid/setpoint" />
-			<param name="topic_from_plant" value="cargo_pid/state" />
-			<remap from="pid_debug" to="cargo_pid/pid_debug"/>
-			<remap from="pid_enable" to="cargo_pid/pid_enable"/>
-		</node>
 
 		<!-- Snap to nearest goal navX test code -->
 
 		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
-		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" />
-		<node name="navX_pid" pkg="pid" type="controller" >
-			<param name="node_name" value="navX_pid" />
+
+		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" >
+			<remap from="navX_pid/setpoint" to="orient_pid/setpoint"/>
+			<remap from="navX_pid/state" to="orient_pid/state"/>
+		</node>
+		<node name="orient_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="orient_pid" />
 			<param name="Kp" value="13.0" />
 			<param name="Ki" value="0.0" />
-			<param name="Kd" value="1.5" />
+			<param name="Kd" value="0.0" />
 			<param name="upper_limit" value="8" />
 			<param name="lower_limit" value="-8" />
 			<param name="windup_limit" value="10" />
@@ -207,30 +239,87 @@
 			<param name="angle_wrap" value="false" />
 			<param name="max_loop_frequency" value="100.0" />
 			<param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value="navX_pid/orient_command" />     
-			<param name="setpoint_topic" value="navX_pid/setpoint" />
-			<param name="topic_from_plant" value="navX_pid/state" />
-			<remap from="pid_debug" to="navX_pid/pid_debug"/>
-			<remap from="pid_enable" to="navX_pid/pid_enable"/>
-		</node>
-
-		<node name="align_pid_hatch_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
-			<param name="orient_topic" value="navX_pid/orient_command" />
-			<param name="y_topic" value="hatch_panel_distance_pid/x_command" />
-			<param name="x_topic" value="align_with_terabee/y_command" />
-			<param name="command_timeout" value="0.5" />
-			<param name="enable_topic" value="align_hatch_pid/pid_enable" />
-			<param name="name" value="align_pid" />
+			<param name="topic_from_controller" value="orient_pid/orient_command" />     
+			<param name="setpoint_topic" value="orient_pid/setpoint" />
+			<param name="topic_from_plant" value="orient_pid/state" />
+			<remap from="pid_debug" to="orient_pid/pid_debug"/>
+			<remap from="pid_enable" to="orient_pid/pid_enable"/>
 		</node>
 
 		<node name="align_pid_cargo_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
-			<param name="orient_topic" value="navX_pid/orient_command" />
+			<param name="orient_topic" value="orient_pid/orient_command" />
 			<param name="x_topic" value="cargo_distance_pid/x_command" />
-			<param name="y_topic" value="cargo_pid/y_command" />
+			<param name="ratio_xy_topic" value="align_cargo_pid/ratio_xy" />
 			<param name="command_timeout" value="0.5" />
 			<param name="enable_topic" value="align_cargo_pid/pid_enable" />
 			<param name="name" value="align_pid" />
 		</node>
+
+	</group>
+    
+
+	<group ns="align_hatch">
+		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
+		<node name="align_server" pkg="behaviors" type="align_hatch_server" output="screen" />
+
+		<node name="align_with_camera" pkg="behaviors" type="align_with_camera" output="screen" >
+			<param name="target_frame" value="panel_outtake" />
+		</node>
+
+		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
+		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" >
+			<remap from="navX_pid/setpoint" to="orient_pid/setpoint"/>
+			<remap from="navX_pid/state" to="orient_pid/state"/>
+		</node>
+
+		<node name="orient_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="orient_pid" />
+			<param name="Kp" value="13.0" />
+			<param name="Ki" value="0.0" />
+			<param name="Kd" value="0.0" />
+			<param name="upper_limit" value="8" />
+			<param name="lower_limit" value="-8" />
+			<param name="windup_limit" value="10" />
+			<param name="angle_error" value="false" />
+			<param name="angle_wrap" value="false" />
+			<param name="max_loop_frequency" value="100.0" />
+			<param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="orient_pid/orient_command" />     
+			<param name="setpoint_topic" value="orient_pid/setpoint" />
+			<param name="topic_from_plant" value="orient_pid/state" />
+			<remap from="pid_debug" to="orient_pid/pid_debug"/>
+			<remap from="pid_enable" to="orient_pid/pid_enable" />
+		</node>
+
+		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
+		<!-- Distance PID Hatch Panel -->
+		<node name="hatch_panel_distance_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="hatch_panel_distance_pid" />
+			<param name="Kp" value="4.8" />
+			<param name="Ki" value="0.0" />
+			<param name="Kd" value="0.1" />
+			<param name="upper_limit" value="1.2" />
+			<param name="lower_limit" value="-1.2" />
+			<param name="windup_limit" value="10" />
+			<param name="max_loop_frequency" value="100.0" />
+			<param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="hatch_panel_distance_pid/y_command" />     
+			<param name="setpoint_topic" value="hatch_panel_distance_pid/setpoint" />
+			<param name="topic_from_plant" value="hatch_panel_distance_pid/state" />
+			<remap from="pid_debug" to="hatch_panel_distance_pid/pid_debug"/>
+			<remap from="pid_enable" to="hatch_panel_distance_pid/pid_enable"/>
+		</node>
+
+		<node name="align_pid_hatch_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+			<param name="orient_topic" value="orient_pid/orient_command" />
+			<!--param name="x_topic" value="align_with_camera/command" /-->
+			<param name="y_topic" value="hatch_panel_distance_pid/y_command" />
+			<param name="command_timeout" value="0.5" />
+			<param name="enable_topic" value="align_hatch_pid/pid_enable" />
+			<param name="ratio_xy_topic" value="align_hatch_pid/ratio_xy" />
+			<param name="name" value="align_hatch" />
+		</node>
+
 	</group>
     
 	<include file="$(find realsense2_camera)/launch/rs_t265.launch" >
@@ -239,6 +328,7 @@
 		-->
 	</include>
 
+	<!--include file="$(find realsense2_camera)/launch/rs_t265.launch" /-->
 	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
 	<include file="$(find controller_node)/launch/record_2019_no_zed.launch" if="$(arg record)" />
 

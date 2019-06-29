@@ -41,7 +41,6 @@ int main(int argc, char **argv)
 			frame = false;
 		}
 
-
 		frameTicker.mark();
 
 		gd.findBoilers(image, depth);
