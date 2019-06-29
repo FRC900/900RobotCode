@@ -49,6 +49,8 @@ from goal_detection.msg import GoalDetection
 import tf
 import tf2_geometry_msgs
 from geometry_msgs.msg import Quaternion, TransformStamped, Vector3Stamped
+import message_filters
+
 
 DT = 0.1   # time tick [s]
 SIM_TIME = 50.0  # simulation time [s]
@@ -479,13 +481,23 @@ def plot_covariance_ellipse(xEst, PEst):  # pragma: no cover
     py = np.array(fx[1, :] + xEst[1, 0]).flatten()
     plt.plot(px, py, "--r")
 
+# TODO : these should be in a class along with pf and the various 
+# ROS callbacks
 cmd_vel_u = np.zeros((2,1))
-imu_yaw = 0
+imu_yaw   = 0
 last_time = None
+start_time = None
 
-def cmd_vel_to_map_frame():
+def imu_cmd_vel_callback(imu_data, cmd_vel_data):
+    global last_time
+    if (last_time == None):
+        start_time = last_time = rospy.get_time()
+
     global cmd_vel_u
-    global imu_transform
+    cmd_vel_u = np.array([[cmd_vel_data.linear.x, cmd_vel_data.linear.y]]).T
+    q = tf.transformations.quaternion_inverse((imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z, imu_data.orientation.w))
+    global imu_yaw # Make global for debugging for now
+    (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
     #print("cmd_vel_u before")
     #print(cmd_vel_u)
     #print("imu_yaw")
@@ -497,23 +509,7 @@ def cmd_vel_to_map_frame():
     #print("cmd_vel_u after")
     #print(cmd_vel_u.T)
 
-
-def twist_callback(data):
-    global cmd_vel_u
-    cmd_vel_u = np.array([[data.linear.x, data.linear.y]]).T
-    #print("cmd_vel_u")
-    #print(cmd_vel_u)
-    cmd_vel_to_map_frame()
-
-def navx_callback(data):
-    global imu_yaw
-    q = tf.transformations.quaternion_inverse((data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w))
-    (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
-    cmd_vel_to_map_frame()
-
-
 def goal_detection_callback(data, args):
-
     pf = args
     global cmd_vel_u
     z = Detections()
@@ -535,8 +531,7 @@ def goal_detection_callback(data, args):
     print ("dt", dt)
     print (cmd_vel_u.T)
     last_time = rospy.get_time()
-    if (dt > 10000):
-        return
+    now = last_time - start_time
     B = np.array([[dt, 0.0],
                   [0.0, dt],
                   [1.0, 0.0],
@@ -547,7 +542,7 @@ def goal_detection_callback(data, args):
     xEst, PEst = pf.localize(z, cmd_vel_u)
     pf.guess_detection_actuals(z, np.array([xEst[0,0], xEst[1,0]]))
 
-    debug_plot(None, xEst, PEst, None, z, pf.get_px())
+    debug_plot(None, xEst, PEst, None, z, pf.get_px(), now)
 
 # Beacon positions [x, y, orientation]
 # in this case, beacons are vision targets
@@ -609,7 +604,7 @@ wall_coords1 = np.append(wall_coords1, wall_coords1 * [1,1,-1,-1], 0)
 
 wall_coords  = np.append(wall_coords,wall_coords1,0)
 
-def debug_plot(xTrue, xEst, PEst, xDR, z, px):
+def debug_plot(xTrue, xEst, PEst, xDR, z, px, now):
     # store data history
     global hxEst
     global hxDR
@@ -648,6 +643,7 @@ def debug_plot(xTrue, xEst, PEst, xDR, z, px):
         #plot_covariance_ellipse(xEst, PEst)
         plt.axis("equal")
         plt.grid(True)
+        plt.text(0, 0, str(now))
         plt.pause(0.001)
 
 def main():
@@ -722,8 +718,10 @@ def main():
 
     rospy.init_node('pf_localization', anonymous=True)
 
-    rospy.Subscriber("/frcrobot_rio/navx_mxp", Imu, navx_callback)
-    rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel", Twist, twist_callback)
+    cmd_vel_sub = message_filters.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel", Twist)
+    imu_sub = message_filters.Subscriber("/frcrobot_rio/navx_mxp", Imu)
+    ts = message_filters.ApproximateTimeSynchronizer([cmd_vel_sub, imu_sub], 10, 0.1)
+    ts.registerCallback(imu_cmd_vel_callback)
     rospy.Subscriber("/goal_detection_node/goal_detect_msg", GoalDetection, goal_detection_callback, (pf))
     global last_time
     last_time = rospy.get_time()
@@ -745,7 +743,7 @@ def main():
         xDR        = pf.update_dead_reckoning(xDR, u)
         xEst, PEst = pf.localize(z, u)
 
-        debug_plot(xTrue, xEst, PEst, xDR, z, pf.get_px())
+        debug_plot(xTrue, xEst, PEst, xDR, z, pf.get_px(), time)
         
         total_values.append([wall_coords,beacon_coords,xTrue,z,pf.get_px(),hxEst,hxDR,hxTrue,time])
 
