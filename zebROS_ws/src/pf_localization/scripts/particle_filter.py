@@ -141,7 +141,13 @@ class Beacons:
             #print("db = %f %f" % (db[0], db[1]))
             #print("beacondist = %f, beaconangle = %f, robot angle = %f" % (beacondist, beaconangle, robot_loc[2]))
             deltarange = abs(beacondist - db[0])
-            deltaangle = abs(beaconangle - db[1])
+            #deltaangle = abs(beaconangle - db[1])
+            deltaangle = (beaconangle - db[1]) % (2. * math.pi)
+            if deltaangle > math.pi:
+                deltaangle -= 2. * math.pi
+            deltaangle = abs(deltaangle)
+            if deltaangle > 0.85:
+                continue
             #print("deltarange = %f deltaangle = %f" % (deltarange , deltaangle))
             delta = deltarange + deltaangle * 5
             #print("delta", delta)
@@ -358,7 +364,8 @@ class PFLocalization(object):
             # commanded robot velocity to account for tracking error
             ud1 = u[0, 0] + np.random.randn() * self.R[0, 0]
             ud2 = u[1, 0] + np.random.randn() * self.R[1, 1]
-            ud = np.array([[ud1, ud2]]).T
+            ud3 = u[2, 0] + np.random.randn() * self.R[2, 2]
+            ud = np.array([[ud1, ud2, ud3]]).T
             x = self.motion_model(x, ud)
 
             # x is now the new predicted robot position for this particle
@@ -474,7 +481,8 @@ class PFLocalizationSim(PFLocalization):
         # add noise to input to simulate dead reckoning
         ud1 = u[0, 0] + np.random.randn() * self.Rsim[0, 0]
         ud2 = u[1, 0] + np.random.randn() * self.Rsim[1, 1]
-        ud = np.array([[ud1, ud2]]).T
+        ud3 = u[2, 0] + np.random.randn() * self.Rsim[2, 2]
+        ud = np.array([[ud1, ud2, ud3]]).T
 
         return self.motion_model(xd, ud)
 
@@ -534,13 +542,12 @@ def imu_cmd_vel_callback(imu_data, cmd_vel_data):
             start_time = last_time = min(imu_data.header.stamp.to_sec(), cmd_vel_data.header.stamp.to_sec())
 
         global cmd_vel_u
-        cmd_vel_u = np.array([[cmd_vel_data.twist.linear.x, cmd_vel_data.twist.linear.y]]).T
+        cmd_vel_u = np.array([[cmd_vel_data.twist.linear.x, cmd_vel_data.twist.linear.y, cmd_vel_data.twist.angular.z]]).T
         q = tf.transformations.quaternion_inverse((imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z, imu_data.orientation.w))
         global imu_yaw # Make global for debugging for now
         (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
-        imu_yaw += imu_offset
         print("cmd_vel_u before")
-        print(cmd_vel_u)
+        print(cmd_vel_u.T)
         print("imu_yaw %f "% imu_yaw)
         new_x = math.cos(imu_yaw) * cmd_vel_u[0] - math.sin(imu_yaw) * cmd_vel_u[1]
         new_y = math.sin(imu_yaw) * cmd_vel_u[0] + math.cos(imu_yaw) * cmd_vel_u[1]
@@ -554,7 +561,7 @@ def imu_cmd_vel_callback(imu_data, cmd_vel_data):
         print ("imu_stamp time %f cmd_vel_stamp time %f" % (imu_data.header.stamp.to_sec(), cmd_vel_data.header.stamp.to_sec()))
         print("cmd_vel : start_time %f, last_time %f, now, %f, dt %f" % (start_time, last_time, now, dt))
         last_time = now # force imu callback to reset last time
-        if (dt > 0.025):
+        if (dt > 0.2):
             dt = 0.01
             print ("adjusted dt %f" % dt)
 
@@ -579,10 +586,11 @@ def imu_callback(data):
     mutex.acquire()
     try:
         q = tf.transformations.quaternion_inverse((data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w))
-        (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(q)
+        global imu_yaw
+        (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
         global pf
         global imu_offset
-        pf.rotate_particles(yaw + imu_offset)
+        pf.rotate_particles(imu_yaw + imu_offset)
 
     finally:
         mutex.release()
@@ -633,6 +641,8 @@ def goal_detection_callback(data, args):
     try:
         global last_time
         global start_time
+        global imu_yaw
+        global imu_offset
         if (last_time == None):
             start_time = last_time = data.header.stamp.to_sec();
         pf = args
@@ -642,10 +652,14 @@ def goal_detection_callback(data, args):
             x = data.location[i].x - .1576
             y = data.location[i].y + .234
             y = -y
+            print ("Raw detection loc.x = %f, loc.y = %f, x = %f, y = %f, imu_yaw = %f, imu_offset = %f" % (data.location[i].x, data.location[i].y, x, y, imu_yaw, imu_offset))
             #print("x", x)
             #print("y", y)
             d = math.hypot(x, y)
-            b = math.atan2(y, x)
+            # Todo - make normalize angle a function
+            b = (math.atan2(y, x) + imu_yaw + imu_offset) % (2. * math.pi)
+            if b > math.pi:
+                b -= 2. * math.pi
             z.append(Detection(np.array([d, b])))
         
         print("z")
@@ -671,10 +685,10 @@ beacon_coords = np.array([
                           [2.44,3.39-.001, 3. * math.pi / 2.],
                           [2.81+0.0075,3.63-0.0075, math.radians(270 + 60)],
                           [2.66,0.28, 0],
-                          #[1.64,0.71, math.pi / 2.],
-                          #[1.08,0.71, math.pi / 2.],
-                          #[0.53,0.71, math.pi / 2.],
-                          #[8.26 - 0.021,3.44, math.pi]
+                          [1.64,0.71, math.pi / 2.],
+                          [1.08,0.71, math.pi / 2.],
+                          [0.53,0.71, math.pi / 2.],
+                          [8.26 - 0.021,3.44, math.pi]
                             ])
 # Assume map is symmetric around the origin in 
 # both horizontal and vertical directions
@@ -773,10 +787,10 @@ def main():
     time = 0.0
 
     # Particle filter parameter
-    NP = 50   # Number of Particles
+    NP = 200  # Number of Particles
 
     # State Vectors [x y theta x' y' theta']'
-    xTrue = np.array([[-6.75,0,0,0,0,0]]).T
+    xTrue = np.array([[-7.00,0,0,0,0,0]]).T
     xDR = xTrue  # Dead reckoning - only for animation
 
     field_map = FieldMap(Beacons(beacon_coords), Walls(wall_coords))
