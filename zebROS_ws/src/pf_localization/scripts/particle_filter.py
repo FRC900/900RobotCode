@@ -60,6 +60,13 @@ hxEst  = np.empty(shape=[6,0])
 hxTrue = hxEst
 hxDR   = hxEst
 
+def normalize_angle(a):
+    a %= 2. * math.pi
+    if a > math.pi:
+        a -= 2. * math.pi
+    return a
+
+
 # Beacon - holds field-centric x,y,angle coordinates
 #          of targets on the field
 class Beacon:
@@ -94,7 +101,7 @@ class Beacon:
         if (db[0] <= max_range):
             # Make sure target isn't at too oblique an angle to the
             # vision target - TODO : measure how far off we can get and still see
-            delta_angle = abs(self.coord[2] - db[1])
+            delta_angle = abs(normalize_angle(self.coord[2] - db[1]))
             if ((delta_angle < .9) or (delta_angle > (2 * math.pi - .9))):
 
                 if walls.intersect([loc[0], loc[1]],[self.coord[0], self.coord[1]]) == False:
@@ -142,12 +149,20 @@ class Beacons:
             #print("beacondist = %f, beaconangle = %f, robot angle = %f" % (beacondist, beaconangle, robot_loc[2]))
             deltarange = abs(beacondist - db[0])
             #deltaangle = abs(beaconangle - db[1])
-            deltaangle = (beaconangle - db[1]) % (2. * math.pi)
-            if deltaangle > math.pi:
-                deltaangle -= 2. * math.pi
-            deltaangle = abs(deltaangle)
+            deltaangle = abs(normalize_angle((beaconangle - db[1])))
+            # Check that potential target is actually in the field of view of 
+            # the cameras
             if deltaangle > 0.85:
                 continue
+
+            # Check that the angle from the target to the robot is
+            # between +/- pi/2.  This is a quick way to rule out
+            # cases where it would be looking through a wall to see the 
+            # target
+            reverse_delta_angle = abs(normalize_angle(math.pi - delta_angle))
+            if (reverse_delta_angle >= (math.pi / 2.0)):
+                continue
+
             #print("deltarange = %f deltaangle = %f" % (deltarange , deltaangle))
             delta = deltarange + deltaangle * 5
             #print("delta", delta)
@@ -656,10 +671,7 @@ def goal_detection_callback(data, args):
             #print("x", x)
             #print("y", y)
             d = math.hypot(x, y)
-            # Todo - make normalize angle a function
-            b = (math.atan2(y, x) + imu_yaw + imu_offset) % (2. * math.pi)
-            if b > math.pi:
-                b -= 2. * math.pi
+            b = normalize_angle(math.atan2(y, x) + imu_yaw + imu_offset)
             z.append(Detection(np.array([d, b])))
         
         print("z")
@@ -703,8 +715,8 @@ mirror = np.array(np.array([0, 0, 2 * math.pi]) - np.array([-1,1,1]) * beacon_co
 beacon_coords = np.append(beacon_coords, mirror, 0)
 
 # normalize angles between 0 and 2pi
-beacon_coords[beacon_coords[:,2] <= -math.pi] += np.array([0,0,2 * math.pi])
-beacon_coords[beacon_coords[:,2] > math.pi] -= np.array([0,0,2 * math.pi])
+for i in range(len(beacon_coords[:,2])):
+    beacon_coords[i,2] = normalize_angle(beacon_coords[i,2])
 print ("beacon_coords", beacon_coords)
 
 #Wall positions [x1,x2,y1,y2]
