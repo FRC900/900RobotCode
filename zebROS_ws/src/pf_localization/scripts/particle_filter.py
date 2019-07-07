@@ -34,6 +34,7 @@ Big list of TODOs :
 
 import sys
 import numpy as np
+from scipy.optimize import linear_sum_assignment
 import math
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -77,7 +78,7 @@ class Beacon:
         return "Beacon : coord" + np.array2string(self.coord)
 
     def get_coords(self):
-        return np.array([self.coord[0], self.coord[1]])
+        return np.array([self.coord[0], self.coord[1], self.coord[2]])
 
     # Compute and return [distance, bearing to target] 
     # between the requested beacon and the input
@@ -89,8 +90,16 @@ class Beacon:
         if (reverse_angle == True):
             dy = -dy
             dx = -dx
-        b = math.atan2(dy, dx)       # bearing
+        b = normalize_angle(math.atan2(dy, dx))      # bearing
         return np.array([d, b])
+
+    # Given an angle from the robot to this beacon
+    # in field-centric coords, return the angle from
+    # the beacon to the robot in beacon-centric coords
+    def robot_bearing(self, angle):
+        abs_bearing = math.pi - angle
+        rel_bearing = abs_bearing - self.coord[2]
+        return(normalize_angle(rel_bearing))
  
     # If this beacon would be visible to a robot at loc,
     # return true distance and bearing for it.
@@ -125,6 +134,11 @@ class Beacons:
     def clear(self):
         self.beacons = []
 
+    def at(self, i):
+        if i < len(self.beacons):
+            return self.beacons[i]
+        return None
+
     def visible_in_sim(self, loc, max_range, walls):
         ret = Detections()
         for i in range(len(self.beacons)):
@@ -133,56 +147,48 @@ class Beacons:
                ret.append(d)
         return ret
 
-    # For a detection at beacondist / beaconangle from robot_loc,
-    # where robot_loc is [x,y] in field-centric coords,
-    # find the closest actual beacon and return it
-    def closest_beacon(self, robot_loc, beacondist, beaconangle, walls):
-        mindist = sys.float_info.max
-        best_idx = -1
-
-        #print ("closest_beacon to robot loc")
+    def get_costs(self, robot_loc, detection):
+        #print ("robot_loc")
         #print (robot_loc)
+        #print ("detection coord")
+        #print(detection)
+        costs = np.zeros(len(self.beacons))
+        beacondist, beaconangle = detection.get_dist_angle()
         for i in range(len(self.beacons)):
             #print("beacon=", self.beacons[i].get_coords())
             db = self.beacons[i].distance(robot_loc)
             #print("db = %f %f" % (db[0], db[1]))
-            #print("beacondist = %f, beaconangle = %f, robot angle = %f" % (beacondist, beaconangle, robot_loc[2]))
-            deltarange = abs(beacondist - db[0])
-            #deltaangle = abs(beaconangle - db[1])
-            deltaangle = abs(normalize_angle((beaconangle - db[1])))
+            # Assume a max range for actual detections, screen out
+            # beacons further away than that
+            if db[0] > 7.0:
+                #print("robot to beacon dist of %f too far" % db[0])
+                costs[i] = 1e5
+                continue
             # Check that potential target is actually in the field of view of 
             # the cameras
-            if deltaangle > 0.85:
+            if abs(db[1]) > 0.85:
+                #print("robot to beacon angle %f too large" % db[0])
+                costs[i] = 1e5
                 continue
+            #print("beacondist = %f, beaconangle = %f, robot angle = %f" % (beacondist, beaconangle, robot_loc[2]))
+            deltarange = abs(beacondist - db[0])
+            #print ("deltarange = %f" % deltarange)
+            deltaangle = abs(normalize_angle((beaconangle - db[1])))
+            #print ("deltaangle = %f" % deltaangle)
 
             # Check that the angle from the target to the robot is
             # between +/- pi/2.  This is a quick way to rule out
             # cases where it would be looking through a wall to see the 
             # target
-            reverse_delta_angle = abs(normalize_angle(math.pi - delta_angle))
-            if (reverse_delta_angle >= (math.pi / 2.0)):
+            reverse_angle = self.beacons[i].robot_bearing(robot_loc[2] + db[1])
+            #print ("reverseangle = %f" % reverse_angle)
+            if (reverse_angle >= (math.pi / 2.0)):
+                costs[i] = 1e5
                 continue
 
             #print("deltarange = %f deltaangle = %f" % (deltarange , deltaangle))
-            delta = deltarange + deltaangle * 5
-            #print("delta", delta)
-            if (delta < mindist):
-
-                # TODO - add checks from sim code for wall occlusion
-                # and target angle to rule out additional potential targets
-                #if walls.intersect(robot_loc,self.beacons[i].get_coords()) == False:
-                mindist = delta
-                best_idx = i
-                #print("----------- new best %d" %best_idx)
-
-        if (mindist > 10):
-            best_idx = -1
-        if (best_idx == -1): # Won't happen, maybe later after adding a bound
-            #print ("None!")
-            return None      # on acceptable min distance
-        #print ("self.beacons[best_idx]")
-        #print (self.beacons[best_idx])
-        return self.beacons[best_idx]
+            costs[i] = deltarange + deltaangle * 5
+        return costs
 
 class Walls:
     def __init__(self, walls):
@@ -212,12 +218,6 @@ class FieldMap:
     def _dist_to_beacon(self, beacon, location):
         return self.beacons[beacon].distance(location)
 
-    # Given the predicted robot position and the measured distance
-    # to a beacon, find the coordinates of the closest beacon to that
-    # position.
-    def closest_beacon(self, robot_loc, beacondist, beaconangle):
-        return self.beacons.closest_beacon(robot_loc, beacondist, beaconangle, self.walls)
-
     # Get a list of (distance, bearing, realX, realY, realAngle) of all
     # beacons within max_range away from location
     # Make sure they are visible, both not obscured by an intervening
@@ -236,12 +236,15 @@ class Detection:
     def __str__(self):
         return "Detection : coord" + np.array2string(self.coord) + " actual," + str(self.actual)
 
-    # set actual field beacon associated with this detection - for sim and debugging
-    def set_actual(self, actual): 
-        self.actual = actual
+    # set actual field beacon associated with this detection
+    def set_actual(self, beacon): 
+        self.actual = beacon
 
     def get_actual(self):
         return self.actual;
+
+    def get_dist_angle(self):
+        return (self.coord[0], self.coord[1])
 
     # Add noise to dist/ angle measurement. Use by simulation to make
     # detections look more like real world measurements
@@ -249,13 +252,12 @@ class Detection:
         self.coord[0] += np.random.randn() * Q[0, 0]  # add noise to distance
         self.coord[1] += np.random.randn() * Q[1, 1]  # add noise to bearing
 
-    def weight(self, loc, field_map, Q):
-        closest_beacon = field_map.closest_beacon(loc, self.coord[0], self.coord[1]) # Todo - change to use coord[]
-        if (closest_beacon == None):
+    def weight(self, loc, Q):
+        if (self.actual == None):
             return 0
 
         # distance / angle to best predicted ideal detection
-        loc_to_closest = closest_beacon.distance(loc) 
+        loc_to_closest = self.actual.distance(loc) 
 
         # difference in distance and angle between predicted and actual detection
         delta = loc_to_closest - self.coord
@@ -264,8 +266,8 @@ class Detection:
         # position would give the measured distances
         # Alternatively, it is the likelhood that the given position
         # is accurate given the distance / angle to target
-        w =     self._gauss_likelihood(delta[0], math.sqrt(Q[0, 0]))
-        w = w * self._gauss_likelihood(delta[1], math.sqrt(Q[1, 1]))
+        w  = self._gauss_likelihood(delta[0], math.sqrt(Q[0, 0]))
+        w *= self._gauss_likelihood(delta[1], math.sqrt(Q[1, 1]))
 
         return w
 
@@ -275,12 +277,6 @@ class Detection:
             math.exp(-x ** 2. / (2. * sigma ** 2.))
 
         return p
-
-    def guess_actual(self, loc, field_map):
-        print("guess actual loc", loc, "self.coord", self.coord)
-        self.actual = field_map.closest_beacon(loc, self.coord[0], self.coord[1])
-        print("actual = ")
-        print(self.actual)
 
 # List of detection objects plus helper functions
 class Detections:
@@ -305,22 +301,43 @@ class Detections:
                 actuals.append(a)
         return actuals
 
+    #def weights(self, loc, field_map, Q):
+        #w = 1
+        #for i in range(len(self.detections)):
+            #w *= self.detections[i].weight(loc, field_map, Q)
+#
+        #return w;
+
     def weights(self, loc, field_map, Q):
+        self.guess_actuals(loc, field_map)
+
         w = 1
         for i in range(len(self.detections)):
-            w *= self.detections[i].weight(loc, field_map, Q)
-
-        return w;
+            w *= self.detections[i].weight(loc, Q)
+            
+        return w
 
     def add_noise(self, Q):
         for i in range(len(self.detections)):
             self.detections[i].add_noise(Q)
 
-
     def guess_actuals(self, loc, field_map):
         for i in range(len(self.detections)):
-            self.detections[i].guess_actual(loc, field_map)
+            cost = field_map.beacons.get_costs(loc, self.detections[i])
+            if (i == 0):
+                costs = np.vstack([cost])
+            else:
+                costs = np.vstack([costs, cost])
 
+        #print ("costs")
+        #print (costs)
+
+        #row_ind[i] == detection index
+        #col_ind[i] == matched beacon index
+
+        row_ind, col_ind = linear_sum_assignment(costs)
+        for i in range(len(row_ind)):
+            self.detections[row_ind[i]].set_actual(field_map.beacons.at(col_ind[i]))
 
 class PFLocalization(object):
     def __init__(self, NP, F, B, field_map, Q, R, starting_xmin, starting_xmax, starting_ymin, starting_ymax):
@@ -448,7 +465,6 @@ class PFLocalization(object):
 
     def guess_detection_actuals(self, detections, loc):
         detections.guess_actuals(loc, self.field_map)
-
 
 class PFLocalizationSim(PFLocalization):
     def __init__(self, NP, F, B, field_map, Q, R, Qsim, Rsim, starting_xmin, starting_xmax, starting_ymin, starting_ymax):
@@ -605,6 +621,7 @@ def imu_callback(data):
         (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
         global pf
         global imu_offset
+        #print("imu_yaw %f (%f)"% (imu_yaw, imu_yaw + imu_offset))
         pf.rotate_particles(imu_yaw + imu_offset)
 
     finally:
@@ -646,6 +663,7 @@ def cmd_vel_callback(data, args):
             pf = args
             pf.set_B(B)
             pf.move_particles(cmd_vel_u)
+        pf.rotate_particles(imu_yaw + imu_offset)
 
     finally:
         mutex.release()
@@ -661,6 +679,9 @@ def goal_detection_callback(data, args):
         if (last_time == None):
             start_time = last_time = data.header.stamp.to_sec();
         pf = args
+        if (len(data.location) == 0):
+            debug_plot(None, xEst, PEst, None, Detections(), pf.get_px(), now)
+            return
         z = Detections()
         for i in range(len(data.location)):
             # Fake transform to center of robot
@@ -673,9 +694,7 @@ def goal_detection_callback(data, args):
             d = math.hypot(x, y)
             b = normalize_angle(math.atan2(y, x) + imu_yaw + imu_offset)
             z.append(Detection(np.array([d, b])))
-        
-        print("z")
-        print(z)
+       
         #xDR        = pf.update_dead_reckoning(xDR, cmd_vel_u)
         xEst, PEst = pf.localize(z)
         pf.guess_detection_actuals(z, np.array([xEst[0,0], xEst[1,0], xEst[2,0]]))
