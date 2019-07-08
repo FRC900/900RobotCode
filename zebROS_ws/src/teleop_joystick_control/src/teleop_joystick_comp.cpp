@@ -881,13 +881,6 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 	}
 }
 
-void dynamic_callback(teleop_joystick_control::TeleopJoystickCompConfig &cfg,
-					  uint32_t level)
-{
-	(void)level;
-	config = cfg;
-}
-
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "Joystick_controller");
@@ -997,7 +990,7 @@ int main(int argc, char **argv)
 
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 
-	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompConfig> drw(n_params, config, dynamic_callback);
+	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompConfig> drw(n_params, config);
 
 	ROS_WARN("joy_init");
 
