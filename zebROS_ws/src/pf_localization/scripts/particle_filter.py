@@ -13,7 +13,6 @@ Big list of TODOs :
 
     - Adding data from ROS
        - Figure out a way to publish a transform between an odom frame and the calculate map frame location.  The result of the pf will be the distance from the robot to the origin of the map frame, or alternatively, the coordinates of the robot in the map frame (same thing).  But since the realsense camera (or something else) will be publishing odom->robot, the code just needs to express this as an offset between the existing odom frame origin and the calculate map frame origin.  Subtracting the origin of the odom frame from the calculated map frame should do it, or maybe a ROS transform call mgiht be possible?
-       - If the code ends up keeping track of multiple cmd_vel messages that happened between goal detect messages, change the function which calculates motion to account for that. Basically, step through the list and iteratively add cmd_vel * dt for that message to the robot's position.  Be careful with the start and end entries in the list - the dt there will depend on the relative arrival times of the cmd_vel messages along with the previous and current goal detect message.  e.g. if cmd_vel comes in at 10 msec intervals most of the update will be loc = cmd_vel * 0.01. The first and last timestep will not typically be 10msec though, because there the timestep is actually the time between the last overall update (last arrival of a goal detect message) and the time the next cmd_vel arrived. Same with the last message.  A cmd_vel will come in, then before the next cmd_vel arrives, a goal detect message shows up, screwing up the regular spacing of those messages. Only add enough distance for the robot traveling cmd_vel for the time between the final cmd_vel message and the goal detect message.
 
      - Update closest_feature to include wall occlusion.  Make it check to see if the RFID tag being compared against could not possibly be seen because it is behind a wall.  If so, exclude it from being a potential match
      
@@ -155,7 +154,7 @@ class Beacons:
         costs = np.zeros(len(self.beacons))
         beacondist, beaconangle = detection.get_dist_angle()
         for i in range(len(self.beacons)):
-            #print("beacon=", self.beacons[i].get_coords())
+            #print(self.beacons[i])
             db = self.beacons[i].distance(robot_loc)
             #print("db = %f %f" % (db[0], db[1]))
             # Assume a max range for actual detections, screen out
@@ -166,7 +165,7 @@ class Beacons:
                 continue
             # Check that potential target is actually in the field of view of 
             # the cameras
-            if abs(db[1]) > 0.85:
+            if abs(normalize_angle(db[1] - robot_loc[2])) > 0.85:
                 #print("robot to beacon angle %f too large" % db[0])
                 costs[i] = 1e5
                 continue
@@ -180,7 +179,7 @@ class Beacons:
             # between +/- pi/2.  This is a quick way to rule out
             # cases where it would be looking through a wall to see the 
             # target
-            reverse_angle = self.beacons[i].robot_bearing(robot_loc[2] + db[1])
+            reverse_angle = abs(self.beacons[i].robot_bearing(beaconangle))
             #print ("reverseangle = %f" % reverse_angle)
             if (reverse_angle >= (math.pi / 2.0)):
                 costs[i] = 1e5
@@ -253,6 +252,9 @@ class Detection:
         self.coord[1] += np.random.randn() * Q[1, 1]  # add noise to bearing
 
     def weight(self, loc, Q):
+        # TODO - maybe make this a small number rather than
+        # zero to assign a penalty to particles which produce
+        # cases where a detection can't be mapped to a beacon
         if (self.actual == None):
             return 0
 
@@ -301,14 +303,9 @@ class Detections:
                 actuals.append(a)
         return actuals
 
-    #def weights(self, loc, field_map, Q):
-        #w = 1
-        #for i in range(len(self.detections)):
-            #w *= self.detections[i].weight(loc, field_map, Q)
-#
-        #return w;
-
     def weights(self, loc, field_map, Q):
+        # Assign each detection to a best-guess for
+        # which beacon it actually is
         self.guess_actuals(loc, field_map)
 
         w = 1
@@ -329,15 +326,22 @@ class Detections:
             else:
                 costs = np.vstack([costs, cost])
 
-        #print ("costs")
-        #print (costs)
 
         #row_ind[i] == detection index
         #col_ind[i] == matched beacon index
 
         row_ind, col_ind = linear_sum_assignment(costs)
+        if False:
+            print ("costs")
+            print (costs)
+            print (row_ind)
+            print (col_ind)
         for i in range(len(row_ind)):
-            self.detections[row_ind[i]].set_actual(field_map.beacons.at(col_ind[i]))
+            if costs[row_ind[i], col_ind[i]] > 1e4:
+                self.detections[row_ind[i]].set_actual(None)
+            else:
+                self.detections[row_ind[i]].set_actual(field_map.beacons.at(col_ind[i]))
+            #print(field_map.beacons.at(col_ind[i]))
 
 class PFLocalization(object):
     def __init__(self, NP, F, B, field_map, Q, R, starting_xmin, starting_xmax, starting_ymin, starting_ymax):
@@ -408,12 +412,10 @@ class PFLocalization(object):
     # some noise
     def rotate_particles(self, angle):
         for ip in range(self.NP):
-            # Grab state of this particle
-            x = np.array([self.px[:, ip]]).T
-            x[2,0] = angle + np.random.randn() * self.R[2,2]
+            self.px[2, ip]  = angle + np.random.randn() * self.R[2,2]
 
-            # x is now the new predicted robot state for this particle
-            self.px[:, ip]  = x[:, 0]
+    def get_estimate(self):
+        return self.px.dot(self.pw.T)
 
     def localize(self, z):
         print("localize")
@@ -431,7 +433,7 @@ class PFLocalization(object):
             self.pw = pw / pw_sum  # normalize
 
         # estimated position is the weighted average of all particles 
-        xEst = self.px.dot(self.pw.T)
+        xEst = self.get_estimate()
         PEst = self.calc_covariance(xEst, self.px, self.pw)
 
         self.resampling()
@@ -577,27 +579,27 @@ def imu_cmd_vel_callback(imu_data, cmd_vel_data):
         q = tf.transformations.quaternion_inverse((imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z, imu_data.orientation.w))
         global imu_yaw # Make global for debugging for now
         (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
-        print("cmd_vel_u before")
-        print(cmd_vel_u.T)
-        print("imu_yaw %f "% imu_yaw)
+        #print("cmd_vel_u before")
+        #print(cmd_vel_u.T)
+        #print("imu_yaw %f "% imu_yaw)
         new_x = math.cos(imu_yaw) * cmd_vel_u[0] - math.sin(imu_yaw) * cmd_vel_u[1]
         new_y = math.sin(imu_yaw) * cmd_vel_u[0] + math.cos(imu_yaw) * cmd_vel_u[1]
         cmd_vel_u[0] = new_x
         cmd_vel_u[1] = new_y
-        print("cmd_vel_u after")
-        print(cmd_vel_u.T)
+        #print("cmd_vel_u after")
+        #print(cmd_vel_u.T)
 
         now = cmd_vel_data.header.stamp.to_sec()
         dt = now - last_time
-        print ("imu_stamp time %f cmd_vel_stamp time %f" % (imu_data.header.stamp.to_sec(), cmd_vel_data.header.stamp.to_sec()))
-        print("cmd_vel : start_time %f, last_time %f, now, %f, dt %f" % (start_time, last_time, now, dt))
+        #print ("imu_stamp time %f cmd_vel_stamp time %f" % (imu_data.header.stamp.to_sec(), cmd_vel_data.header.stamp.to_sec()))
+        #print("cmd_vel : start_time %f, last_time %f, now, %f, dt %f" % (start_time, last_time, now, dt))
         last_time = now # force imu callback to reset last time
         if (dt > 0.2):
-            dt = 0.01
-            print ("adjusted dt %f" % dt)
+            dt = 0.03
+            #print ("adjusted dt %f" % dt)
 
         if (cmd_vel_u[0,0] != 0 or cmd_vel_u[1,0] != 0):
-            print ("moving particles");
+            #print ("moving particles");
             B = np.array([[dt,  0.0, 0.0],
                           [0.0, dt,  0.0],
                           [0.0, 0.0,  dt], # TODO - do we care about commanded z-rotation?
@@ -635,7 +637,7 @@ def cmd_vel_callback(data, args):
         global start_time
         global imu_yaw
 
-        print ("cmd_vel_callback : rospy.get_time() = %f" % rospy.get_time())
+        #print ("cmd_vel_callback : rospy.get_time() = %f" % rospy.get_time())
         cmd_vel_u = np.array([[data.linear.x, data.linear.y]]).T
         #print("cmd_vel_u before")
         #print(cmd_vel_u.T)
@@ -679,16 +681,16 @@ def goal_detection_callback(data, args):
         if (last_time == None):
             start_time = last_time = data.header.stamp.to_sec();
         pf = args
+        now = data.header.stamp.to_sec() - start_time
         if (len(data.location) == 0):
-            debug_plot(None, xEst, PEst, None, Detections(), pf.get_px(), now)
+            debug_plot(None, pf.get_estimate(), None, None, Detections(), pf.get_px(), now)
             return
         z = Detections()
         for i in range(len(data.location)):
             # Fake transform to center of robot
-            x = data.location[i].x - .1576
-            y = data.location[i].y + .234
-            y = -y
-            print ("Raw detection loc.x = %f, loc.y = %f, x = %f, y = %f, imu_yaw = %f, imu_offset = %f" % (data.location[i].x, data.location[i].y, x, y, imu_yaw, imu_offset))
+            x =  data.location[i].x + .1576
+            y = -data.location[i].y - .234
+            #print ("Raw detection loc.x = %f, loc.y = %f, x = %f, y = %f, imu_yaw = %f, imu_offset = %f" % (data.location[i].x, data.location[i].y, x, y, imu_yaw, imu_offset))
             #print("x", x)
             #print("y", y)
             d = math.hypot(x, y)
@@ -697,9 +699,10 @@ def goal_detection_callback(data, args):
        
         #xDR        = pf.update_dead_reckoning(xDR, cmd_vel_u)
         xEst, PEst = pf.localize(z)
+        #print ("Guess actuals, loc =")
+        #print (xEst)
         pf.guess_detection_actuals(z, np.array([xEst[0,0], xEst[1,0], xEst[2,0]]))
 
-        now = data.header.stamp.to_sec() - start_time
         debug_plot(None, xEst, PEst, None, z, pf.get_px(), now)
 
     finally:
@@ -794,19 +797,21 @@ def debug_plot(xTrue, xEst, PEst, xDR, z, px, now):
         v = np.sin(beacon_coords[:,2])
         #plt.plot(beacon_coords[:, 0], beacon_coords[:, 1], ".k")
         plt.quiver(beacon_coords[:, 0], beacon_coords[:, 1], u, v)
-        plt.plot(px[0, :], px[1, :], ".r")
+        if px is not None:
+            plt.plot(px[0, :], px[1, :], ".r")
         plt.plot(np.array(hxTrue[0, :]).flatten(),
                  np.array(hxTrue[1, :]).flatten(), "-b")
         plt.plot(np.array(hxDR[0, :]).flatten(),
                  np.array(hxDR[1, :]).flatten(), "-k")
         plt.plot(np.array(hxEst[0, :]).flatten(),
                  np.array(hxEst[1, :]).flatten(), "-r")
-        print("xEst")
-        print(xEst)
+        #print("xEst")
+        #print(xEst)
         u = np.cos(xEst[2,0])
         v = np.sin(xEst[2,0])
         plt.quiver(xEst[0, 0], xEst[1, 0], u, v)
-        #plot_covariance_ellipse(xEst, PEst)
+        #if (PEst is not None):
+            #plot_covariance_ellipse(xEst, PEst)
         plt.axis("equal")
         plt.grid(True)
         plt.text(-2, 0, str(now))
@@ -825,6 +830,17 @@ def main():
     xDR = xTrue  # Dead reckoning - only for animation
 
     field_map = FieldMap(Beacons(beacon_coords), Walls(wall_coords))
+
+    if False:
+        z = Detections()
+        z.append(Detection(np.array([1.0860, .14437])))
+        loc = np.array([-3.372, 3.589, 2.078 - math.pi / 2., 0, 0, 0])
+        z.guess_actuals(loc, field_map)
+        print(z)
+
+        debug_plot(None, np.array([loc]).T, None, None, z, None, -1)
+
+
 
     # For swerve drive, use a very simple model
     # next position is based on current position plus current velocity
@@ -847,7 +863,7 @@ def main():
     # Estimation parameter of PF
     Q = np.diag([0.05, 0.1])**2  # range error
     #R = np.diag([1.0, np.deg2rad(40.0)])**2  # input error
-    R = np.diag([0.5, 0.5, np.deg2rad(2.0)])**2  # x, y, theta velocity error
+    R = np.diag([1.5, 1.5, np.deg2rad(10.0)])**2  # x, y, theta velocity error
 
     # Simulation parameters
     Qsim = np.diag([0.1, 0.2])**2
