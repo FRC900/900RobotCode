@@ -192,6 +192,12 @@ class Beacons:
 class Walls:
     def __init__(self, walls):
         self.walls = walls
+        wall_max = np.amax(np.absolute(walls), axis=0)
+        self.maxx = max(wall_max[0], wall_max[1])
+        self.maxy = max(wall_max[2], wall_max[3])
+        print(wall_max)
+        print(self.maxx)
+        print(self.maxy)
 
     def _ccw(self,A,B,C):
         return (C[1]-A[1]) * (B[0]-A[0]) > (B[1]-A[1]) * (C[0]-A[0])
@@ -206,6 +212,13 @@ class Walls:
         for i in range(len(self.walls)):
             if self._one_intersect([self.walls[i][0],self.walls[i][2]],[self.walls[i][1],self.walls[i][3]],C,D):
                 return True
+        return False
+
+    def outside_field(self, loc):
+        if abs(loc[0]) > self.maxx:
+            return True
+        if abs(loc[1]) > self.maxy:
+            return True
         return False
 
 # Collect walls plus beacons into a single conatiner
@@ -223,6 +236,9 @@ class FieldMap:
     # wall as well as at an angle that can be seen
     def visible_in_sim(self, location, max_range):
         return self.beacons.visible_in_sim(location, max_range, self.walls)
+
+    def outside_field(self, loc):
+        return self.walls.outside_field(loc) 
 
 # Detection -
 #  Holds robot-relative distance / angle coordinates
@@ -304,6 +320,11 @@ class Detections:
         return actuals
 
     def weights(self, loc, field_map, Q):
+        if field_map.outside_field(loc):
+            print("Outside field")
+            print(loc)
+            return 0
+
         # Assign each detection to a best-guess for
         # which beacon it actually is
         self.guess_actuals(loc, field_map)
@@ -319,6 +340,11 @@ class Detections:
             self.detections[i].add_noise(Q)
 
     def guess_actuals(self, loc, field_map):
+        # Generate a cost between each [detection, beacon] pair
+        # The cost is basically just the difference between the
+        # detection distance and beacon distance from the robot
+        # location - beacons closer to the detection coords
+        # have a lower cost
         for i in range(len(self.detections)):
             cost = field_map.beacons.get_costs(loc, self.detections[i])
             if (i == 0):
@@ -326,16 +352,21 @@ class Detections:
             else:
                 costs = np.vstack([costs, cost])
 
-
-        #row_ind[i] == detection index
-        #col_ind[i] == matched beacon index
-
+        # Assign detections to actual beacons such that
+        # the cost of all mappings is minimized.  
         row_ind, col_ind = linear_sum_assignment(costs)
         if False:
             print ("costs")
             print (costs)
+            #row_ind[i] == detection index
+            #col_ind[i] == matched beacon index
             print (row_ind)
             print (col_ind)
+
+        # Set the "actual" field in each detection to the 
+        # real beacon matched up with it.  Set the actual
+        # to None if no beacon could possibly match (i.e. if
+        # they are all out of range or behind walls)
         for i in range(len(row_ind)):
             if costs[row_ind[i], col_ind[i]] > 1e4:
                 self.detections[row_ind[i]].set_actual(None)
@@ -823,7 +854,7 @@ def main():
     time = 0.0
 
     # Particle filter parameter
-    NP = 200  # Number of Particles
+    NP = 300  # Number of Particles
 
     # State Vectors [x y theta x' y' theta']'
     xTrue = np.array([[-7.00,0,0,0,0,0]]).T
