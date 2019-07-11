@@ -236,7 +236,7 @@ class TalonSwerveDriveController
 		realtime_tools::RealtimeBuffer<int> slot_;
 
 		/// Publish executed commands
-		//boost::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped> > cmd_vel_pub_;
+		boost::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped> > cmd_vel_pub_;
 
 		//Odometry related:
 		//boost::shared_ptr<realtime_tools::RealtimePublisher<nav_msgs::Odometry> > odom_pub_;
@@ -282,7 +282,7 @@ class TalonSwerveDriveController
 		//Commands last0_cmd_;
 
 		/// Publish limited velocity:
-		//bool publish_cmd_;
+		bool publish_cmd_;
 
 		/**
 		 * \brief Brakes the wheels, i.e. sets the velocity to 0

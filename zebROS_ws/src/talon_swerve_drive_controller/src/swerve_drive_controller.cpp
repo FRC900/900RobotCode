@@ -233,7 +233,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	publish_period_ = ros::Duration(1.0 / publish_rate);
 
 	// Publish limited velocity:
-	//controller_nh.param("publish_cmd", publish_cmd_, publish_cmd_);
+	controller_nh.param("publish_cmd", publish_cmd_, true);
 
 	// TODO : see if model_, driveRatios, units can be local instead of member vars
 	// If either parameter is not available, we need to look up the value in the URDF
@@ -419,11 +419,10 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	// to set the odometry parameters
 	//setOdomPubFields(root_nh, controller_nh);
 
-	/*if (publish_cmd_)
+	if (publish_cmd_)
 	{
-	  cmd_vel_pub_.reset(new realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped>(controller_nh, "cmd_vel_out", 100));
+	  cmd_vel_pub_.reset(new realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped>(controller_nh, "cmd_vel_out", 5));
 	}
-	*/
 	// Get the joint object to use in the realtime loop
 
 	// TODO : all of these need to be read from params
@@ -972,6 +971,17 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 				speed_joints_[i].setCommand(0);
 				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
 			}
+		}
+		if (publish_cmd_ && cmd_vel_pub_->trylock())
+		{
+			cmd_vel_pub_->msg_.header.stamp = ros::Time::now();
+			cmd_vel_pub_->msg_.twist.linear.x = curr_cmd.lin[0];
+			cmd_vel_pub_->msg_.twist.linear.y = curr_cmd.lin[1];
+			cmd_vel_pub_->msg_.twist.linear.z = 0;
+			cmd_vel_pub_->msg_.twist.angular.x = 0;
+			cmd_vel_pub_->msg_.twist.angular.y = 0;
+			cmd_vel_pub_->msg_.twist.angular.z = curr_cmd.ang;
+			cmd_vel_pub_->unlockAndPublish();
 		}
 	}
 	else

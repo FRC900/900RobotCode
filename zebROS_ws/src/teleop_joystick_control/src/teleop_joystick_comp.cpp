@@ -62,7 +62,6 @@ constexpr double drive_rate_limit_time = 500.;
 
 ros::Publisher elevator_setpoint;
 ros::Publisher JoystickRobotVel;
-ros::Publisher JoystickRobotVelStamped;
 ros::Publisher cargo_pid;
 ros::Publisher terabee_pid;
 ros::Publisher distance_pid;
@@ -225,11 +224,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				}
 				ROS_INFO("BrakeSrv called");
 				sendRobotZero = true;
-
-				geometry_msgs::TwistStamped vel_stamped;
-				vel_stamped.header = joystick_states_array[0].header;
-				vel_stamped.twist = vel;
-				JoystickRobotVelStamped.publish(vel_stamped);
 			}
 		}
 		else // X or Y or rotation != 0 so tell the drive base to move
@@ -254,10 +248,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			JoystickRobotVel.publish(vel);
 			sendRobotZero = false;
 
-			geometry_msgs::TwistStamped vel_stamped;
-			vel_stamped.header = joystick_states_array[0].header;
-			vel_stamped.twist = vel;
-			JoystickRobotVelStamped.publish(vel_stamped);
 		}
 
 		//Joystick1: buttonA
@@ -959,7 +949,6 @@ int main(int argc, char **argv)
 		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");
 	}
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
-	JoystickRobotVelStamped = n.advertise<geometry_msgs::TwistStamped>("swerve_drive_controller/cmd_vel_stamped", 1);
 	elevator_setpoint = n.advertise<std_msgs::Int8>("elevator_setpoint",1);
 	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
