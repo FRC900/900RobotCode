@@ -163,8 +163,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	if(joystick_id == 0)
 	{
 		// TODO - experiment with rate-limiting after scaling instead?
-		double leftStickX = joystick_states_array[0].leftStickX;
-		double leftStickY = joystick_states_array[0].leftStickY;
+		double leftStickX  = joystick_states_array[0].leftStickX;
+		double leftStickY  = joystick_states_array[0].leftStickY;
 		double rightStickX = joystick_states_array[0].rightStickX;
 		//double rightStickY = joystick_states_array[0].rightStickY;
 
@@ -174,33 +174,32 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		rightStickX = dead_zone_check(rightStickX, config.joystick_deadzone);
 		//rightStickY = dead_zone_check(rightStickY, config.joystick_deadzone);
 
+		// Scale input so there is more resolution near the origin versus at the extremes
+		leftStickX      = pow(fabs(leftStickX), config.joystick_pow);
+		leftStickY      = pow(fabs(leftStickY), config.joystick_pow);
+		double rotation = pow(fabs(rightStickX), config.rotation_pow);
+
 		// Defer init until the first time these are used - makes sure the
 		// initial time is reasonable
+		// This applies a ramp to the input - it limits the amount of change per
+		// unit time that's allowed.
 		static std::unique_ptr<rate_limiter::RateLimiter> left_stick_x_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
 		static std::unique_ptr<rate_limiter::RateLimiter> left_stick_y_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
-		static std::unique_ptr<rate_limiter::RateLimiter> right_stick_x_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
-		//static std::unique_ptr<rate_limiter::RateLimiter> right_stick_y_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
-		//static std::unique_ptr<rate_limiter::RateLimiter> left_trigger_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
-		//static std::unique_ptr<rate_limiter::RateLimiter> right_trigger_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
+		static std::unique_ptr<rate_limiter::RateLimiter> rotation_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
 
 		leftStickX = left_stick_x_rate_limit->applyLimit(leftStickX, joystick_states_array[0].header.stamp);
 		leftStickY = left_stick_y_rate_limit->applyLimit(leftStickY, joystick_states_array[0].header.stamp);
-		rightStickX = right_stick_x_rate_limit->applyLimit(rightStickX, joystick_states_array[0].header.stamp);
-		//rightStickY = right_stick_y_rate_limit->applyLimit(rightStickY, joystick_states_array[0].header.stamp);
+		rotation   = rotation_rate_limit->applyLimit(rotation, joystick_states_array[0].header.stamp);
 
-		leftStickX =  pow(fabs(leftStickX), config.joystick_pow) * max_speed;
-		leftStickY =  pow(fabs(leftStickY), config.joystick_pow) * max_speed;
-		double rotation = pow(fabs(rightStickX), config.rotation_pow) * max_rot;
+		leftStickX *= max_speed;
+		leftStickY *= max_speed;
+		rotation   *= max_rot;
 
-		// Copysign is a c++ function to make sure we don't screw up the sign in the lines above
-		leftStickX = copysign(leftStickX, joystick_states_array[0].leftStickX);
+		// pow() can change the sign of the output - copy the sign of the original
+		// input to make sure the robot moves in the correct direction
+		leftStickX = copysign(leftStickX,  joystick_states_array[0].leftStickX);
 		leftStickY = copysign(leftStickY, -joystick_states_array[0].leftStickY);
-		rotation   = copysign(rotation,   joystick_states_array[0].rightStickX);
-
-		// TODO : dead-zone for rotation?
-		// TODO : test rate limiting rotation rather than individual inputs, either pre or post scaling?
-		//double triggerLeft = left_trigger_rate_limit->applyLmit(joystick_states_array[0].leftTrigger, joystick_states_array[0].header.stamp);
-		//double triggerRight = right_trigger_rate_limit->applyLimit(joystick_states_array[0].rightTrigger, joystick_states_array[0].header.stamp);
+		rotation   = copysign(rotation,    joystick_states_array[0].rightStickX);
 
 		static bool sendRobotZero = false;
 		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
@@ -247,7 +246,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			JoystickRobotVel.publish(vel);
 			sendRobotZero = false;
-
 		}
 
 		//Joystick1: buttonA
@@ -944,7 +942,7 @@ int main(int argc, char **argv)
 	service_connection_header["tcp_nodelay"] = "1";
 
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
-	//if(!BrakeSrv.waitForExistence(ros::Duration(15)))
+	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
 	{
 		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");
 	}
