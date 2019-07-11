@@ -250,7 +250,7 @@ if [ "$jetson" = true ] ; then
 	unzip -o /home/ubuntu/navx-cpp-3.1.366-linuxathenastatic.zip 
 	rm /home/ubuntu/navx-cpp-3.1.366-linuxathenastatic.zip 
 
-	# Install wpilip headers by copying them from the local maven dir
+	# Install wpilib headers by copying them from the local maven dir
     cd /home/ubuntu 
 	wget https://github.com/wpilibsuite/allwpilib/releases/download/v2019.4.1/WPILib_Linux-2019.4.1.tar.gz 
 	mkdir -p /home/ubuntu/frc2019 
