@@ -615,8 +615,8 @@ def imu_cmd_vel_callback(imu_data, cmd_vel_data):
         #print("imu_yaw %f "% imu_yaw)
         new_x = math.cos(imu_yaw) * cmd_vel_u[0] - math.sin(imu_yaw) * cmd_vel_u[1]
         new_y = math.sin(imu_yaw) * cmd_vel_u[0] + math.cos(imu_yaw) * cmd_vel_u[1]
-        cmd_vel_u[0] = new_x
-        cmd_vel_u[1] = new_y
+        cmd_vel_u[0] = new_x * 2
+        cmd_vel_u[1] = new_y * 2
         #print("cmd_vel_u after")
         #print(cmd_vel_u.T)
 
@@ -683,8 +683,8 @@ def cmd_vel_callback(data, args):
         dt = now - last_time
         #print("cmd_vel : start_time %f, last_time %f, dt %f" % (start_time, last_time, dt))
         last_time = None # force imu callback to reset last time
-        if (dt > 0.3):
-            dt = 0.02
+        #if (dt > 0.3):
+            #dt = 0.02
             #print ("adjusted dt %f" % dt)
         if (cmd_vel_u[0,0] != 0 or cmd_vel_u[1,0] != 0):
             #print ("moving particles");
@@ -871,8 +871,6 @@ def main():
 
         debug_plot(None, np.array([loc]).T, None, None, z, None, -1)
 
-
-
     # For swerve drive, use a very simple model
     # next position is based on current position plus current velocity
     # next velocity is just requested velocity
@@ -894,7 +892,7 @@ def main():
     # Estimation parameter of PF
     Q = np.diag([0.05, 0.1])**2  # range error
     #R = np.diag([1.0, np.deg2rad(40.0)])**2  # input error
-    R = np.diag([1.5, 1.5, np.deg2rad(10.0)])**2  # x, y, theta velocity error
+    R = np.diag([1.8, 1.8, np.deg2rad(10.0)])**2  # x, y, theta velocity error
 
     # Simulation parameters
     Qsim = np.diag([0.1, 0.2])**2
@@ -938,7 +936,7 @@ def main():
 
     rospy.init_node('pf_localization', anonymous=True)
 
-    cmd_vel_sub = message_filters.Subscriber("/frcrobot_jetson/teleop/swerve_drive_controller/cmd_vel_stamped", TwistStamped, queue_size = 2)
+    cmd_vel_sub = message_filters.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, queue_size = 2)
     imu_sub     = message_filters.Subscriber("/frcrobot_rio/navx_mxp", Imu, queue_size = 2)
     ts          = message_filters.ApproximateTimeSynchronizer([imu_sub, cmd_vel_sub], 10, 0.1)
     ts.registerCallback(imu_cmd_vel_callback)

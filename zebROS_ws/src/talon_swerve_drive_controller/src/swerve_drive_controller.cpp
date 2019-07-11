@@ -195,7 +195,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	// Get joint names from the parameter server
 	std::vector<std::string> speed_names, steering_names;
 	if (!getWheelNames(controller_nh, "speed", speed_names) or
-			!getWheelNames(controller_nh, "steering", steering_names))
+		!getWheelNames(controller_nh, "steering", steering_names))
 	{
 		return false;
 	}
@@ -221,7 +221,8 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 
 	if (!n_params_behaviors.getParam("num_profile_slots", num_profile_slots_))
 	        ROS_ERROR("Didn't read param num_profile_slots in talon_swerve");
-	*/num_profile_slots_ = 20;
+	*/
+	num_profile_slots_ = 20;
 
 	// Odometry related:
 	double publish_rate;
@@ -933,6 +934,17 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 				{
 					steering_joints_[i].setCommand(speeds_angles[i][1]);
 				}
+			}
+			if (publish_cmd_ && cmd_vel_pub_->trylock())
+			{
+				cmd_vel_pub_->msg_.header.stamp = ros::Time::now();
+				cmd_vel_pub_->msg_.twist.linear.x = 0;
+				cmd_vel_pub_->msg_.twist.linear.y = 0;
+				cmd_vel_pub_->msg_.twist.linear.z = 0;
+				cmd_vel_pub_->msg_.twist.angular.x = 0;
+				cmd_vel_pub_->msg_.twist.angular.y = 0;
+				cmd_vel_pub_->msg_.twist.angular.z = 0;
+				cmd_vel_pub_->unlockAndPublish();
 			}
 			return;
 		}
