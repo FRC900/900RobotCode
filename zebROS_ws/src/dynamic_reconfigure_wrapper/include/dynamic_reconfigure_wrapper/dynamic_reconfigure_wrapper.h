@@ -11,6 +11,7 @@ class DynamicReconfigureWrapper
 		DynamicReconfigureWrapper()
 			: srv_(nullptr)
 		    , srv_mutex_(nullptr)
+		    , config_ptr_(nullptr)
 		{
 		}
 
@@ -21,6 +22,8 @@ class DynamicReconfigureWrapper
 
 		void init(const ros::NodeHandle &nh, T& config)
 		{
+			config_ptr_.reset(&config);
+
 			// Create the server and set up a callback function
 			// This callback is responsible for copying from a
 			// passed-in config object into local copies of the
@@ -28,8 +31,6 @@ class DynamicReconfigureWrapper
 			srv_mutex_ = std::make_shared<boost::recursive_mutex>();
 			srv_ = std::make_shared<dynamic_reconfigure::Server<T>>(*srv_mutex_, nh);
 			srv_->setCallback(boost::bind(&DynamicReconfigureWrapper<T>::callback, this, _1, _2));
-
-			config_ptr_.reset(&config);
 
 			updateConfig(config);
 		}
@@ -49,7 +50,8 @@ class DynamicReconfigureWrapper
 		void callback(T &config, uint32_t level)
 		{
 			(void)level;
-			*config_ptr_ = config;
+			if (config_ptr_)
+				*config_ptr_ = config;
 		}
 
 };
