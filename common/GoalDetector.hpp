@@ -71,6 +71,10 @@ class GoalDetector
 
 		bool Valid(void) const;
 		void setCameraAngle(double camera_angle);
+		void setBlueScale(double blue_scale);
+		void setRedScale(double red_scale);
+		void setOtsuThreshold(int otsu_threshold);
+		void setMinConfidence(double min_valid_confidence);
 
 	private:
 

@@ -876,3 +876,22 @@ void GoalDetector::setCameraAngle(double camera_angle)
 {
 	_camera_angle = camera_angle * 10;
 }
+
+void GoalDetector::setBlueScale(double blue_scale)
+{
+	_blue_scale = blue_scale;
+}
+void GoalDetector::setRedScale(double red_scale)
+{
+	_red_scale = red_scale;
+}
+
+void GoalDetector::setOtsuThreshold(int otsu_threshold)
+{
+	_otsu_threshold = otsu_threshold;
+}
+
+void GoalDetector::setMinConfidence(double min_valid_confidence)
+{
+	_min_valid_confidence = min_valid_confidence;
+}

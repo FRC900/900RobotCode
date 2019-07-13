@@ -1,4 +1,7 @@
 #include <iostream>
+#include <mutex>
+#include <sstream>
+
 #include <opencv2/opencv.hpp>
 
 #include <ros/ros.h>
@@ -15,16 +18,11 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-//#include <std_msgs/Header.h>
-
-//#include <geometry_msgs/Point32.h>
 #include <cv_bridge/cv_bridge.h>
 
 #include "teraranger_array/RangeArray.h"
 
 #include "goal_detection/GoalDetection.h"
-
-#include <sstream>
 
 #include "GoalDetector.hpp"
 #include "goal_detection/GoalDetectionConfig.h"
@@ -55,9 +53,14 @@ namespace goal_detection
 				int pub_rate = 1;
 				nh_.getParam("sub_rate", sub_rate);
 				nh_.getParam("pub_rate", pub_rate);
-				nh_.getParam("batch", batch_);
-				nh_.getParam("hFov", hFov_);
-				nh_.getParam("camera_angle", camera_angle_);
+
+				nh_.param("hFov", config_.hFov, 105.);
+				nh_.param("camera_angle", config_.camera_angle, -25.0);
+				nh_.param("blue_scale", config_.blue_scale, 0.90);
+				nh_.param("red_scale", config_.red_scale, 0.80);
+				nh_.param("otsu_threshold", config_.otsu_threshold, 5);
+				nh_.param("min_confidence", config_.min_confidence, 0.50);
+				drw_.init(nh_, config_);
 
 				bool no_depth = false;
 				nh_.getParam("no_depth", no_depth);
@@ -86,26 +89,27 @@ namespace goal_detection
 
 			void callback(const sensor_msgs::ImageConstPtr &frameMsg, const sensor_msgs::ImageConstPtr &depthMsg)
 			{
+				std::lock_guard<std::mutex> l(mutex_);
 				cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
 				cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
-
-				// Avoid copies by using pointers to RGB and depth info
-				// These pointers are either to the original data or to
-				// the downsampled data, depending on the down_sample flag
-				const cv::Mat *framePtr = &cvFrame->image;
-				const cv::Mat *depthPtr = &cvDepth->image;
 
 				// Initialize goal detector object the first time
 				// through here. Use the size of the frame
 				// grabbed from the ZED messages
 				if (gd_ == NULL)
 				{
-					const cv::Point2f fov(hFov_ * (M_PI / 180.),
-										  hFov_ * (M_PI / 180.) * ((double)framePtr->rows / framePtr->cols));
-					gd_ = new GoalDetector(fov, framePtr->size(), !batch_);
+					const cv::Point2f fov(config_.hFov * (M_PI / 180.),
+										  config_.hFov * (M_PI / 180.) * ((double)cvFrame->image.rows / cvFrame->image.cols));
+					gd_ = new GoalDetector(fov, cvFrame->image.size(), false);
 				}
+				gd_->setCameraAngle(config_.camera_angle);
+				gd_->setBlueScale(config_.blue_scale);
+				gd_->setRedScale(config_.red_scale);
+				gd_->setOtsuThreshold(config_.otsu_threshold);
+				gd_->setMinConfidence(config_.min_confidence);
+
 				//Send current color and depth image to the actual GoalDetector
-				gd_->findBoilers(*framePtr, *depthPtr);
+				gd_->findBoilers(cvFrame->image, cvDepth->image);
 
 				std::vector< GoalFound > gfd = gd_->return_found();
 				goal_detection::GoalDetection gd_msg;
@@ -134,19 +138,11 @@ namespace goal_detection
 
 				pub_.publish(gd_msg);
 
-				if (!batch_ || (pub_debug_image_.getNumSubscribers() > 0))
+				if (pub_debug_image_.getNumSubscribers() > 0)
 				{
-					cv::Mat thisFrame(framePtr->clone());
-					gd_->drawOnFrame(thisFrame, gd_->getContours(cvFrame->image));
-					if (!batch_)
-					{
-						cv::imshow("Image", thisFrame);
-						cv::waitKey(5);
-					}
-					if (pub_debug_image_.getNumSubscribers() > 0)
-					{
-						pub_debug_image_.publish(cv_bridge::CvImage(std_msgs::Header(), "bgr8", thisFrame).toImageMsg());
-					}
+					cv::Mat thisFrame(cvFrame->image.clone());
+					gd_->drawOnFrame(thisFrame, gd_->getContours(thisFrame));
+					pub_debug_image_.publish(cv_bridge::CvImage(std_msgs::Header(), "bgr8", thisFrame).toImageMsg());
 				}
 
 				if (gd_msg.valid == false)
@@ -240,11 +236,10 @@ namespace goal_detection
 			ros::Publisher                                                 pub_;
 			image_transport::Publisher                                     pub_debug_image_;
 			GoalDetector                                                  *gd_                    = NULL;
-			bool                                                           batch_                 = true;
-			bool                                                           down_sample_           = false;
-			double                                                         hFov_                  = 105.;
-			double                                                         camera_angle_          = -25.0;
 			double                                                         distance_from_terabee_ = -1;
+			goal_detection::GoalDetectionConfig                            config_;
+			DynamicReconfigureWrapper<goal_detection::GoalDetectionConfig> drw_;
+			std::mutex                                                     mutex_;
 	};
 } // namspace
 

@@ -7,12 +7,10 @@
          Launch the modified version here so that the ZED camera node
          always has them available
   -->
-  <!--<include file="$(find controller_node)/launch/tf_2019.launch" /-->
   <group ns="robot_state">
 	<param name="robot_description" textfile="$(find controller_node)/urdf/2019_compbot.urdf" />
 	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
   </group>
-
 
   <arg name="zed_node_name" default="zed_goal" />
 
@@ -30,25 +28,20 @@
 	  <arg name="publish_urdf"         value="false" />
   </include>
 
-  <arg name="down_sample" default="False" />
   <arg name="sub_rate" default="1" />
-  <arg name="camera_flip" default="True" />
   <arg name="pub_rate" default="1" />
   <arg name="hFov" default="105.0" />
   <arg name="camera_angle" default="-25.0" />
-  <arg name="batch" default="true" /> 
 
   <!--
   <node name="goal_detection_node" pkg="goal_detection" type="goal_detection_node" output="screen">
 	-->
 
-  <node pkg="nodelet" type="nodelet" name="goal_detection" args="load goal_detection/GoalDetect /zed_nodelet_manager">
-  	<param name="down_sample" value="$(arg down_sample)" />
+  <node pkg="nodelet" type="nodelet" name="goal_detection" args="load goal_detection/GoalDetect /zed_nodelet_manager" output="screen">
   	<param name="sub_rate" value="$(arg sub_rate)" />
 	<param name="pub_rate" value="$(arg pub_rate)" />
 	<param name="hFov" value="$(arg hFov)" />
 	<param name="camera_angle" value="$(arg camera_angle)" />
-	<param name="batch" value="$(arg batch)" />
   </node>
 
 </launch>
