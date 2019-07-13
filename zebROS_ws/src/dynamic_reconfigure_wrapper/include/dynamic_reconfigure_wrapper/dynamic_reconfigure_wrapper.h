@@ -15,6 +15,10 @@ class DynamicReconfigureWrapper
 		{
 		}
 
+		~DynamicReconfigureWrapper()
+		{
+		}
+
 		DynamicReconfigureWrapper(const ros::NodeHandle &nh, T& loaded_config)
 		{
 			init(nh, loaded_config);
@@ -22,15 +26,21 @@ class DynamicReconfigureWrapper
 
 		void init(const ros::NodeHandle &nh, T& config)
 		{
-			config_ptr_.reset(&config);
-
 			// Create the server and set up a callback function
 			// This callback is responsible for copying from a
 			// passed-in config object into local copies of the
 			// variables
+			// Fist call to setCallback calls the callback which
+			// sets config to the defaults from the .cfg file
+			// We don't want those values, so use a temp config
+			// to hold them and throw them out before setting the
+			// actual values passed in
+			T tmp_config;
+			config_ptr_ = &tmp_config;
 			srv_mutex_ = std::make_shared<boost::recursive_mutex>();
 			srv_ = std::make_shared<dynamic_reconfigure::Server<T>>(*srv_mutex_, nh);
 			srv_->setCallback(boost::bind(&DynamicReconfigureWrapper<T>::callback, this, _1, _2));
+			config_ptr_ = &config;
 
 			updateConfig(config);
 		}
@@ -44,7 +54,7 @@ class DynamicReconfigureWrapper
 	protected:
 		std::shared_ptr<dynamic_reconfigure::Server<T>> srv_;
 		std::shared_ptr<boost::recursive_mutex>         srv_mutex_;
-		std::shared_ptr<T>                              config_ptr_;
+		T                                              *config_ptr_;
 
 		// Generic callback function copies config from GUI into local config
 		void callback(T &config, uint32_t level)
