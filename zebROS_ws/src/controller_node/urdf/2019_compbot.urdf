@@ -66,8 +66,8 @@
 <!-- Realsense2 t265 -->
 	<link name="camera_pose_frame"/>
     <joint name="camera_joint" type="fixed">
-        <parent link="camera_pose_frame"/>
-        <child link="base_link"/>
+        <parent link="base_link"/>
+        <child link="camera_pose_frame"/>
 		<!-- after rotation, this is z, y, -x? 
 			 TODO : verify that the imu and odom frames
                     require this rotation
