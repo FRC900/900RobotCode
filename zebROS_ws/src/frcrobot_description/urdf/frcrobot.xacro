@@ -8,6 +8,7 @@
 	<xacro:property name="base_depth" value=".75" /> 
 
 	<xacro:property name="swerve_box_size" value=".075" /> 
+	<xacro:property name="wheel_diameter" value=".0675" /> 
 	<xacro:macro name="swerve_module" params="prefix x y">
 		<link name="${prefix}_angle">
 			<visual>
@@ -24,7 +25,7 @@
 		<link name="${prefix}_speed">
 			<visual>
 				<geometry>
-					<cylinder length=".04" radius=".0675"/>
+					<cylinder length=".04" radius="${wheel_diameter}"/>
 				</geometry>
 				<origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
 				<material name="black">
@@ -33,14 +34,14 @@
 			</visual>
 		</link>
 		<joint name="base_to_${prefix}_angle" type="continuous">
-			<parent link="base_link"/>
+			<parent link="base_plate"/>
 			<child link="${prefix}_angle"/>
 			<origin xyz="${x} ${y} -${base_height/2}" rpy="0 0 0"/>
 		</joint>
 		<joint name="${prefix}_angle_to_speed" type="continuous">
 			<parent link="${prefix}_angle"/>
 			<child link="${prefix}_speed"/>
-			<origin xyz="0 0 -0.0675" rpy="0 0 0"/>
+			<origin xyz="0 0 -${wheel_diameter}" rpy="0 0 0"/>
 		</joint>
 	</xacro:macro>
 
@@ -57,14 +58,15 @@
 	<joint name="base_plate_to_base_link" type="fixed">
 		<parent link="base_link"/>
 		<child link="base_plate"/>
-		<origin xyz="0 0 0 " rpy="0 0 0"/>
+		<origin xyz="0 0 ${wheel_diameter + base_height/2}" rpy="0 0 0"/>
 	</joint>
 
 	<xacro:property name="elevator_height" value="1.1" /> 
+	<xacro:property name="elevator_width"  value="${base_width / 2.}" /> 
 	<link name="elevator_plate">
 		<visual>
 			<geometry>
-				<box size="${base_width * 2. / 3.} 0.05 ${elevator_height}"/>
+				<box size="${elevator_width} 0.05 ${elevator_height}"/>
 			</geometry>
 			<material name="yellow">
 				<color rgba="1 1 0 1"/>
@@ -72,7 +74,7 @@
 		</visual>
 	</link>
 	<joint name="elevator_plate_to_base_link" type="fixed">
-		<parent link="base_link"/>
+		<parent link="base_plate"/>
 		<child link="elevator_plate"/>
 		<origin xyz="-0.25 0 ${elevator_height/2 + base_height/2}" rpy="0 0 ${pi/2}"/>
 	</joint>
