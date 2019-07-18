@@ -47,15 +47,15 @@ const int elevator_num_setpoints = 4;
 bool robot_orient = false;
 double offset_angle = 0;
 
-double max_speed;
-double max_rot;
-
 // array of joystick_states messages for multiple joysticks
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 
 teleop_joystick_control::TeleopJoystickCompConfig config;
 
+// Set to either fast or slow max speeds based on mode
+double max_speed;
+double max_rot;
 
 // 500 msec to go from full back to full forward
 constexpr double drive_rate_limit_time = 500.;
@@ -97,7 +97,15 @@ bool ManualToggleArm = false;
 
 double dead_zone_check(double test_axis, double dead_zone)
 {
-	return ((fabs(test_axis) <= fabs(dead_zone)) ? 0 : test_axis);
+	// Less than dead_zone? Return 0
+	if (fabs(test_axis) <= fabs(dead_zone))
+		return 0;
+
+	// Scale the remaining values - just above dead_zone
+	// is 0, scaling up to 1.0 as the input value goes
+	// to 1.0. This avoids a jerk from 0->0.x as the input
+	// transitions from dead_zone to non-dead_zone
+	return (fabs(test_axis) - dead_zone) / (1.0 - dead_zone);
 }
 
 void navXCallback(const sensor_msgs::Imu &navXState)
@@ -125,7 +133,7 @@ void preemptActionlibServers()
 }
 
 bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
-		teleop_joystick_control::RobotOrient::Response&/* res*/)
+					teleop_joystick_control::RobotOrient::Response&/* res*/)
 {
 	// Used to switch between robot orient and field orient driving
 	robot_orient = req.robot_orient;
@@ -162,47 +170,60 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	//Only do this for the first joystick
 	if(joystick_id == 0)
 	{
-		// TODO - experiment with rate-limiting after scaling instead?
-		double leftStickX  = joystick_states_array[0].leftStickX;
-		double leftStickY  = joystick_states_array[0].leftStickY;
-		double rightStickX = joystick_states_array[0].rightStickX;
-		//double rightStickY = joystick_states_array[0].rightStickY;
+		// Raw joystick values for X & Y translation
+		const double leftStickX = joystick_states_array[0].leftStickX;
+		const double leftStickY = joystick_states_array[0].leftStickY;
+		//ROS_INFO_STREAM(__LINE__ << " "  << leftStickX << " " << leftStickY);
 
-		// Deadzone check inputs can change to give differing levels of sensitivity.
-		leftStickX  = dead_zone_check(leftStickX, config.joystick_deadzone);
-		leftStickY  = dead_zone_check(leftStickY, config.joystick_deadzone);
-		rightStickX = dead_zone_check(rightStickX, config.joystick_deadzone);
-		//rightStickY = dead_zone_check(rightStickY, config.joystick_deadzone);
+		// Convert to polar coordinates
+		double direction = atan2(leftStickY, leftStickX);
 
-		// Scale input so there is more resolution near the origin versus at the extremes
-		leftStickX      = pow(fabs(leftStickX), config.joystick_pow);
-		leftStickY      = pow(fabs(leftStickY), config.joystick_pow);
-		double rotation = pow(fabs(rightStickX), config.rotation_pow);
+		// Do a dead zone check on the magnitude of the velocity,
+		// then scale it by a power function to increase resolution
+		// of low-speed inputs. This will give an output range from
+		// 0-100%
+		// Finally, scale it so that 0% corresponds to the minimum
+		// output needed to move the robot and 100% to the max
+		// configured speed
+		double magnitude = dead_zone_check(hypot(leftStickX, leftStickY), config.joystick_deadzone);
+		//ROS_INFO_STREAM(__LINE__ << " "  << magnitude);
+		if (magnitude != 0)
+		{
+			magnitude = pow(magnitude, config.joystick_pow);
+			//ROS_INFO_STREAM(__LINE__ << " "  << magnitude << " " << direction);
+			magnitude *= max_speed - config.min_speed;
+			//ROS_INFO_STREAM(__LINE__ << " "  << magnitude);
+			magnitude += config.min_speed;
+			//ROS_INFO_STREAM(__LINE__ << " "  << magnitude);
+		}
 
-		// Defer init until the first time these are used - makes sure the
-		// initial time is reasonable
-		// This applies a ramp to the input - it limits the amount of change per
-		// unit time that's allowed.
-		static std::unique_ptr<rate_limiter::RateLimiter> left_stick_x_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
-		static std::unique_ptr<rate_limiter::RateLimiter> left_stick_y_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
-		static std::unique_ptr<rate_limiter::RateLimiter> rotation_rate_limit(std::make_unique<rate_limiter::RateLimiter>(-1.0, 1.0, drive_rate_limit_time));
+		// This applies a ramp to the output - it limits the amount of change per
+		// unit time that's allowed.  This helps limit extreme current draw in
+		// cases where the robot is changing direction rapidly.
+		static rate_limiter::RateLimiter x_rate_limit(-max_speed, max_speed, drive_rate_limit_time);
+		static rate_limiter::RateLimiter y_rate_limit(-max_speed, max_speed, drive_rate_limit_time);
 
-		leftStickX = left_stick_x_rate_limit->applyLimit(leftStickX, joystick_states_array[0].header.stamp);
-		leftStickY = left_stick_y_rate_limit->applyLimit(leftStickY, joystick_states_array[0].header.stamp);
-		rotation   = rotation_rate_limit->applyLimit(rotation, joystick_states_array[0].header.stamp);
+		// Convert back to rectangular coordinates for the x and Y velocity
+		const double xSpeed = x_rate_limit.applyLimit(magnitude * cos(direction), joystick_states_array[0].header.stamp);
+		const double ySpeed = y_rate_limit.applyLimit(magnitude * sin(direction), joystick_states_array[0].header.stamp);
+		//ROS_INFO_STREAM(__LINE__ << " "  << xSpeed << " " << ySpeed);
 
-		leftStickX *= max_speed;
-		leftStickY *= max_speed;
-		rotation   *= max_rot;
+		// Rotation is a bit simpler since it is just one independent axis
+		const double rightStickX = dead_zone_check(joystick_states_array[0].rightStickX, config.joystick_deadzone);
 
-		// pow() can change the sign of the output - copy the sign of the original
-		// input to make sure the robot moves in the correct direction
-		leftStickX = copysign(leftStickX,  joystick_states_array[0].leftStickX);
-		leftStickY = copysign(leftStickY, -joystick_states_array[0].leftStickY);
-		rotation   = copysign(rotation,    joystick_states_array[0].rightStickX);
+		// Scale the input by a power function to increase resolution
+		// of the slower settings. Use copysign to preserve the sign
+		// of the original input (keeps the direction correct)
+		double rotation = pow(rightStickX, config.rotation_pow);
+		rotation  = copysign(rotation, joystick_states_array[0].rightStickX);
+		rotation *= max_rot;
+
+		// Rate-limit changes in rotation
+		static rate_limiter::RateLimiter rotation_rate_limit(-max_rot, max_rot, drive_rate_limit_time);
+		rotation = rotation_rate_limit.applyLimit(rotation, joystick_states_array[0].header.stamp);
 
 		static bool sendRobotZero = false;
-		if (leftStickX == 0.0 && leftStickY == 0.0 && rotation == 0.0)
+		if (xSpeed == 0.0 && ySpeed == 0.0 && rotation == 0.0)
 		{
 			if (!sendRobotZero)
 			{
@@ -229,8 +250,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			//Publish drivetrain messages and call servers
 			Eigen::Vector2d joyVector;
-			joyVector[0] = -leftStickX; //intentionally flipped
-			joyVector[1] = leftStickY;
+			joyVector[0] = -xSpeed; //intentionally flipped
+			joyVector[1] = -ySpeed;
 
 			const Eigen::Rotation2Dd rotate(robot_orient ? -offset_angle : -navX_angle);
 			const Eigen::Vector2d rotatedJoyVector = rotate.toRotationMatrix() * joyVector;
@@ -456,15 +477,26 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: bumperRightRelease");
 
 		}
+		static bool slow_mode      = false;
+		static bool prev_slow_mode = false;
 		if(joystick_states_array[0].rightTrigger >= 0.5)
 		{
 			max_speed = config.max_speed_slow;
 			max_rot = config.max_rot_slow;
+			slow_mode = true;
 		}
 		else
 		{
 			max_speed = config.max_speed;
 			max_rot = config.max_rot;
+			slow_mode = false;
+		}
+		if (prev_slow_mode != slow_mode)
+		{
+			x_rate_limit.updateMinMax(-max_speed, max_speed);
+			y_rate_limit.updateMinMax(-max_speed, max_speed);
+			rotation_rate_limit.updateMinMax(-max_rot, max_rot);
+			prev_slow_mode = slow_mode;
 		}
 		if(joystick_states_array[0].leftTrigger >= 0.5)
 		{
@@ -858,7 +890,7 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 	}
 	else
 	{
-		ROS_WARN_THROTTLE(1, "intake line break sensor not found in joint_states");
+		ROS_WARN_THROTTLE(1, "teleop : intake line break sensor not found in joint_states");
 		panel_limit_switch_false_count += 1;
 		panel_limit_switch_true_count = 0;
 	}
@@ -901,6 +933,10 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read linebreak_debounce_iterations in teleop_joystick_comp");
 	}
+	if(!n_params.getParam("min_speed", config.min_speed))
+	{
+		ROS_ERROR("Could not read min_speed in teleop_joystick_comp");
+	}
 	if(!n_params.getParam("max_speed", config.max_speed))
 	{
 		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
@@ -921,22 +957,7 @@ int main(int argc, char **argv)
 	max_speed = config.max_speed;
 	max_rot = config.max_rot;
 
-	std::vector <ros::Subscriber> subscriber_array;
     navX_angle = M_PI / 2.;
-
-	//Read from _num_joysticks_ joysticks
-	for(int j = 0; j < num_joysticks; j++)
-	{
-		std::stringstream s;
-		s << "/teleop/translator";
-		s << j;
-		s << "/joystick_states";
-		topic_array.push_back(s.str());
-		subscriber_array.push_back(n.subscribe(topic_array[j], 1, &evaluateCommands));
-	}
-
-
-	joystick_states_array.resize(topic_array.size());
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
@@ -948,7 +969,7 @@ int main(int argc, char **argv)
 	}
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	elevator_setpoint = n.advertise<std_msgs::Int8>("elevator_setpoint",1);
-	ros::Subscriber navX_heading  = n.subscribe("navx_mxp", 1, &navXCallback);
+	ros::Subscriber navX_heading = n.subscribe("navx_mxp", 1, &navXCallback);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
 	//initialize actionlib clients
@@ -978,6 +999,22 @@ int main(int argc, char **argv)
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 
 	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompConfig> drw(n_params, config);
+
+	//Read from _num_joysticks_ joysticks
+	// Set up this callback last, since it might use all of the various stuff
+	// initialized above here. Setting it up first risks the chance that a callback
+	// happens immediately and tries to use them before they have valid values
+	std::vector <ros::Subscriber> subscriber_array;
+	joystick_states_array.resize(num_joysticks);
+	for(int j = 0; j < num_joysticks; j++)
+	{
+		std::stringstream s;
+		s << "/teleop/translator";
+		s << j;
+		s << "/joystick_states";
+		topic_array.push_back(s.str());
+		subscriber_array.push_back(n.subscribe(topic_array[j], 1, &evaluateCommands));
+	}
 
 	ROS_WARN("joy_init");
 
