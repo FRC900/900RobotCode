@@ -7,8 +7,6 @@
 	<arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
 
 	<arg name="hw_or_sim" default="hw" />
-	<arg name="joy_or_key" default="joy" />
-	<arg name="static_map" default="True"/>
 
 	<group ns="frcrobot_jetson">
 		<!--load config files-->
@@ -24,7 +22,7 @@
 
 		<!-- Load controller manager -->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn joint_state_controller joint_state_listener_controller talon_state_controller pdp_state_controller robot_code_ready_controller fl_angle_percent fr_angle_percent bl_angle_percent br_angle_percent" /> 
+			output="screen" args="spawn joint_state_controller joint_state_listener_controller talon_state_controller pdp_state_controller fl_angle_motion_magic fr_angle_motion_magic bl_angle_motion_magic br_angle_motion_magic match_state_listener_controller robot_code_ready_controller " /> 
 
 	</group>
 
