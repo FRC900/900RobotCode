@@ -21,7 +21,7 @@ std::string target_frame;
 geometry_msgs::PointStamped relative_goal_location;
 ros::Time goal_timestamp;
 
-bool debug = true;
+constexpr bool debug = false;
 
 void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 {
@@ -138,7 +138,8 @@ int main(int argc, char ** argv)
 		// then interpolate the distance moved for the saved entry where the code jumps past
 		// the goal timestamp.
 		const double latency_comp = last_command_published * ((ros::Time::now() - goal_timestamp).toSec() + extra_latency);
-		ROS_INFO_STREAM_THROTTLE(1, "Latency_comp = " << latency_comp << " error before = " << error);
+		if(debug)
+			ROS_INFO_STREAM_THROTTLE(1, "Latency_comp = " << latency_comp << " error before = " << error);
 		error += latency_comp;
 
 		if(fabs(error) < error_threshold)

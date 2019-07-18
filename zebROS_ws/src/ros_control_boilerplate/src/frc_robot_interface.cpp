@@ -914,7 +914,11 @@ void FRCRobotInterface::init()
 		// offset for reported heading
 		hardware_interface::JointStateHandle nxsh(navX_names_[i], &navX_state_[i], &navX_state_[i], &navX_state_[i]);
 		joint_state_interface_.registerHandle(nxsh);
-
+		if (!navX_locals_[i])
+		{
+			hardware_interface::JointHandle nxh(nxsh, &navX_state_[i]); /// writing directly to state?
+			joint_remote_interface_.registerHandle(nxh);
+		}
 		offset_navX_[i] = 0;
 	}
 

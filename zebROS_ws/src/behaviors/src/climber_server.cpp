@@ -521,9 +521,9 @@ class ClimbAction {
 			{
 				for (size_t i = 0; i < joint_state.name.size(); i++)
 				{
-					if (joint_state.name[i] == "climber_linebreak_linebreak_1") //TODO: define this in the hardware interface
+					if (joint_state.name[i] == "climber_linebreak_1") //TODO: define this in the hardware interface
 						linebreak_idx_1 = i;
-					if (joint_state.name[i] == "climber_linebreak_linebreak_2") //TODO: define this in the hardware interface
+					if (joint_state.name[i] == "climber_linebreak_2") //TODO: define this in the hardware interface
 						linebreak_idx_2 = i;
 				}
 			}
@@ -545,12 +545,7 @@ class ClimbAction {
 			}
 			else
 			{
-			static int count = 0;
-			if(count % 100 == 0)
-			{
-			ROS_WARN("intake line break sensor not found in joint_states");
-			}
-			count++;
+			ROS_WARN_THROTTLE(2.0, "climber_server : intake line break sensor not found in joint_states");
 			linebreak_true_count = 0;
 			linebreak_false_count += 1;
 			}

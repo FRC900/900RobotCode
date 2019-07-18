@@ -194,7 +194,7 @@ class CargoIntakeAction {
 			}
 			else
 			{
-				ROS_WARN_THROTTLE(2.0, "intake line break sensor not found in joint_states");
+				ROS_WARN_THROTTLE(2.0, "intake_cargo_server : intake line break sensor not found in joint_states");
 				linebreak_true_count_ = 0;
 			}
 		}
