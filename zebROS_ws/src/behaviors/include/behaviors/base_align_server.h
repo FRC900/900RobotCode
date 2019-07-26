@@ -25,74 +25,95 @@ class BaseAlignAction {
 		std::string action_name_;
 		// TODO this result should be a local var
 		behaviors::AlignResult result_; //variable to store result of the actionlib action
-		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
+		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_; //Action client for controlling the elevato
 
-		ros::Publisher enable_align_pub_;
-		ros::Publisher enable_orient_pub_;
-		ros::Publisher enable_x_pub_;
-		ros::Publisher enable_y_pub_;
 
-		ros::Subscriber orient_error_sub_;
-		ros::Subscriber x_error_sub_;
-		ros::Subscriber y_error_sub_;
+		//Publishers for enabling PID loops and cmd_vel combiner
+		ros::Publisher enable_align_pub_;  	//Enables the cmd_vel combiner
+		ros::Publisher enable_orient_pub_; 	//Enables orient pid
+		ros::Publisher enable_x_pub_;		//Enables x-direction pid
+		ros::Publisher enable_y_pub_;		//Enables y-direction pid
 
+		//Subscribers for PID error
+		ros::Subscriber orient_error_sub_; 	//orient error
+		ros::Subscriber x_error_sub_;		//x error
+		ros::Subscriber y_error_sub_;		//y error
+
+		//Service client for forcefully stopping the robot
         ros::ServiceClient BrakeSrv_;
 
-		bool aligned_ = false;
-		bool orient_aligned_ = false;
-		bool x_aligned_ = false;
-		bool y_aligned_ = false;
+		//Set default state for align variables
+		//
+		//Whether we are aligned variables
+		bool aligned_ = false;				//overall aligned
+		bool orient_aligned_ = false;		//orient is aligned
+		bool x_aligned_ = false;			//x is aligned
+		bool y_aligned_ = false;			//y is aligned
 
-		double orient_error_ = 0.0;
-		double x_error_ = 0.0;
-		double y_error_ = 0.0;
+		//Error values
+		double orient_error_ = 0.0;			//orient error
+		double x_error_ = 0.0;				//x error
+		double y_error_ = 0.0;				//y error
 
-		bool orient_timed_out_ = false;
-		bool x_timed_out_ = false;
-		bool y_timed_out_ = false;
+		//Whether axes are timed out
+		bool orient_timed_out_ = false;		//orient timed out
+		bool x_timed_out_ = false;			//x timed out
+		bool y_timed_out_ = false;			//y timed out
 
-		double align_timeout_ = 0.0;
-		double orient_timeout_ = 0.0;
-		double x_timeout_ = 0.0;
-		double y_timeout_ = 0.0;
+		//timeouts for overall align and specific axes
+		double align_timeout_ = 0.0;		//overall align timeout
+		double orient_timeout_ = 0.0;		//orient timeout
+		double x_timeout_ = 0.0;			//x timeout
+		double y_timeout_ = 0.0;			//y timeout
 
-		double orient_error_threshold_ = 0.0;
-		double x_error_threshold_ = 0.0;
-		double y_error_threshold_ = 0.0;
+		//maximum error to be aligned
+		double orient_error_threshold_ = 0.0;	//max orient error
+		double x_error_threshold_ = 0.0;		//max x error
+		double y_error_threshold_ = 0.0;		//max y error
 
+		//is align preempted
 		bool preempted_ = false;
 
+		//start time of align
 		double start_time_ = -1.0;
 
 	public:
 		//make the executeCB function run every time the actionlib server is called
 		BaseAlignAction(const std::string &name,
 
+						//Topics that enable align PID loops
 						const std::string &enable_align_topic_,
 						const std::string &enable_orient_topic_,
 						const std::string &enable_x_topic_,
 						const std::string &enable_y_topic_,
 
+						//Topics with error values
 						const std::string &orient_error_topic_,
 						const std::string &x_error_topic_,
 						const std::string &y_error_topic_,
 
+						//Paramater name with align timeouts
 						const std::string &align_timeout_param_name_,
 						const std::string &orient_timeout_param_name_,
 						const std::string &x_timeout_param_name_,
 						const std::string &y_timeout_param_name_,
 
+						//Paramater name with error thresholds
 						const std::string &orient_error_threshold_param_name_,
 						const std::string &x_error_threshold_param_name_,
 						const std::string &y_error_threshold_param_name_):
 
 			as_(nh_, name, boost::bind(&BaseAlignAction::executeCB, this, _1), false),
 			action_name_(name),
-			ac_elevator_("/elevator/elevator_server", true),
+			ac_elevator_("/elevator/elevator_server", true),		//TODO maybe make this a generic part of the robot
+
+			//Create publishers on the enable PID loop topics
 			enable_align_pub_(nh_.advertise<std_msgs::Bool>(enable_align_topic_, 1, true)),
 			enable_orient_pub_(nh_.advertise<std_msgs::Bool>(enable_orient_topic_, 1, true)),
 			enable_x_pub_(nh_.advertise<std_msgs::Bool>(enable_x_topic_, 1, true)),
 			enable_y_pub_(nh_.advertise<std_msgs::Bool>(enable_y_topic_, 1, true)),
+
+			//Create subscribers on the error topics
 			orient_error_sub_(nh_.subscribe(orient_error_topic_, 1, &BaseAlignAction::orient_error_cb, this)),
 			x_error_sub_(nh_.subscribe(x_error_topic_, 1, &BaseAlignAction::x_error_cb, this)),
 			y_error_sub_(nh_.subscribe(y_error_topic_, 1, &BaseAlignAction::y_error_cb, this))
@@ -102,8 +123,10 @@ class BaseAlignAction {
             std::map<std::string, std::string> service_connection_header;
             service_connection_header["tcp_nodelay"] = "1";
 
+			//Create service client for abruptly stopping the robot
 			BrakeSrv_ = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 
+			//Get the timeout parameters
 			if(!nh_.getParam(align_timeout_param_name_, align_timeout_))
 				ROS_ERROR_STREAM("Could not read align_timeout_param_name_ in align_server");
 			if(!nh_.getParam(orient_timeout_param_name_, orient_timeout_))
@@ -113,6 +136,7 @@ class BaseAlignAction {
 			if(!nh_.getParam(y_timeout_param_name_, y_timeout_))
 				ROS_ERROR_STREAM("Could not read y_timeout_param_name_ in align_server");
 
+			//Get the error parameters
 			if(!nh_.getParam(orient_error_threshold_param_name_, orient_error_threshold_))
 				ROS_ERROR_STREAM("Could not read orient_error_threshold_param_name_ in align_server");
 			if(!nh_.getParam(x_error_threshold_param_name_, x_error_threshold_))
@@ -125,22 +149,22 @@ class BaseAlignAction {
 		{
 		}
 
-		//function to check for preempts and timeouts
+		//functions to check for preempts and timeouts
 		bool check_timeout(double start_time, double timeout) {
-			bool timeout_var = false;
 			if(ros::Time::now().toSec() - start_time > timeout) {
-				timeout_var = true;
+				return true;
 			}
-			return timeout_var;
+			return false;
 		}
 		bool check_preempted() {
-			bool preempted_var = false;
 			if(as_.isPreemptRequested() || preempted_) {
-				preempted_var = true;
+				return true;
 			}
-			return preempted_var;
+			return false;
 		}
 
+		//Function to dynamically load a new set of PID on a ros PID node
+		//TODO make this work
 		virtual void load_new_pid(std::string reconfigure_topic, double p_, double i_, double d_) {
 			dynamic_reconfigure::ReconfigureRequest srv_req;
 			dynamic_reconfigure::ReconfigureResponse srv_resp;
@@ -181,6 +205,7 @@ class BaseAlignAction {
 		//Default error callbacks for pid node
 		virtual void orient_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
+			//Check if error less than threshold
 			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold_);
 			orient_error_ =msg.data[0];
 			if(debug)
@@ -188,6 +213,7 @@ class BaseAlignAction {
 		}
 		virtual void x_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
+			//Check if error less than threshold
 			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold_);
 			x_error_ = msg.data[0];
 			if(debug)
@@ -195,19 +221,20 @@ class BaseAlignAction {
 		}
 		virtual void y_error_cb(const std_msgs::Float64MultiArray &msg)
 		{
+			//Check if error less than threshold
 			y_aligned_ = (fabs(msg.data[0]) < y_error_threshold_);
 			y_error_ = msg.data[0];
 			if(debug)
 				ROS_WARN_STREAM_THROTTLE(1, "y error: " << fabs(msg.data[0]));
 		}
 
+		//Functions to enable align PID
 		virtual void enable_align(bool enable=true) {
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
 			enable_align_pub_.publish(enable_msg);
 		}
 
-		//Functions to enable align PID
 		virtual void align_orient(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=1.0, double keep_enabled=false) {
 			ROS_INFO_STREAM("Running align_orient");
 			std_msgs::Bool enable_msg;
