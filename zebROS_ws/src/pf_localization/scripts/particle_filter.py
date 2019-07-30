@@ -66,7 +66,6 @@ def normalize_angle(a):
         a -= 2. * math.pi
     return a
 
-
 # Beacon - holds field-centric x,y,angle coordinates
 #          of targets on the field
 class Beacon:
@@ -226,9 +225,6 @@ class FieldMap:
     def __init__(self, beacons, walls):
         self.beacons = beacons
         self.walls = walls
-
-    def _dist_to_beacon(self, beacon, location):
-        return self.beacons[beacon].distance(location)
 
     # Get a list of (distance, bearing, realX, realY, realAngle) of all
     # beacons within max_range away from location

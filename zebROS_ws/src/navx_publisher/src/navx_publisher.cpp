@@ -93,6 +93,7 @@ int main(int argc, char **argv)
 	odom.header.frame_id = "nav_current_frame";
 
 	{
+		// TODO - these should be params instead
 		//read the file with covariances and apply it to the odometry and IMU
 		ifstream infile("/home/ubuntu/2019RobotCode/zebROS_ws/src/navx_publisher/navx_calib.dat");
 		if (!infile.good())
@@ -165,6 +166,7 @@ int main(int argc, char **argv)
 
 			//pull orientation data from NavX
 			//all in one shot
+			// TODO - revise to use fusedHeading for nx_yaw
 			nx.GetRPYQAccel(nx_roll, nx_pitch, nx_yaw,
 							nx_qx, nx_qy, nx_qz, nx_qw,
 							nx_ax, nx_ay, nx_az,
@@ -179,7 +181,6 @@ int main(int argc, char **argv)
 
 			//std::cout << "From NX : " << nx_qx << " " << nx_qy << " " << nx_qz << " " << nx_qw << std::endl;
 			//std::cout << "From RPY : " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
-
 
 			tf::quaternionTFToMsg(q, imu_msg.orientation);
 			imu_msg.linear_acceleration.x = nx_ax;
