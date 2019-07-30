@@ -1,30 +1,62 @@
 #!/bin/bash
-return # Don't run me directly
-jetson=true
-version="tx2"
-gpu=true
-
-#process args
-while [ $# -gt 0 ]
-do
-	case "$1" in
-	-tx1) jetson=true;verson="tx1";;
-	-tx2) jetson=true;version="tx2";;
-	-amd64) jetson=false;;
-	-c) gpu=false;;
-	-h) echo >&2 \
-		"usage: $0 [-tx1 or -tx2 or -amd64] [-c] [-h]"
-		exit 1;;
-	*)  break;;	# terminate while loop
-	esac
-	shift
-done
+# Script to setup Jetson TX2 environment. Probably would also work
+# with slight modifications on other Jetson hardware
 
 #install basic dependencies
-
 sudo apt update
 sudo apt -y upgrade
-sudo apt install -y libeigen3-dev build-essential gfortran git cmake libleveldb-dev libsnappy-dev libhdf5-dev libhdf5-serial-dev liblmdb-dev vim-gtk libgflags-dev libgoogle-glog-dev libatlas-base-dev python-dev python-pip libtinyxml2-dev v4l-conf v4l-utils libgtk2.0-dev pkg-config exfat-fuse exfat-utils libprotobuf-dev protobuf-compiler unzip python-numpy python-scipy python-opencv python-matplotlib chromium-browser wget unzip ccache ntp ntpdate libflann-dev libpcl-dev libproj-dev htop can-utils gstreamer1.0-plugins-* rsync openssh-client openssh-client terminator ninja-build libsuitesparse-dev xfonts-scalable rsync libboost-all-dev
+
+# These are listed 1 package per line to hopefully make git merging easier
+# They're also sorted alphabetically to keep packages from being listed multiple times
+sudo apt install -y \
+	build-essential \
+	can-utils \
+	ccache \
+	chromium-browser \
+	cmake \
+	exfat-fuse \
+	exfat-utils \
+	gfortran \
+	git \
+	gstreamer1.0-plugins-* \
+	htop \
+	libatlas-base-dev \
+	libboost-all-dev \
+	libeigen3-dev \
+	libflann-dev \
+	libgflags-dev \
+	libgoogle-glog-dev \
+	libgtk2.0-dev \
+	libhdf5-dev \
+	libhdf5-serial-dev \
+	libleveldb-dev \
+	liblmdb-dev \
+	libpcl-dev \
+	libproj-dev \
+	libprotobuf-dev \
+	libsnappy-dev \
+	libsuitesparse-dev \
+	libtinyxml2-dev \
+	ninja-build \
+	ntp \
+	ntpdate \
+	openssh-client \
+	pkg-config \
+	protobuf-compiler \
+	python-dev \
+	python-matplotlib \
+	python-numpy \
+	python-opencv \
+	python-pip \
+	python-scipy \
+	rsync \
+	terminator \
+	unzip \
+	v4l-conf \
+	v4l-utils \
+	vim-gtk \
+	wget \
+	xfonts-scalable
 
 #install caffe
 # cd
@@ -44,30 +76,6 @@ sudo apt install -y libeigen3-dev build-essential gfortran git cmake libleveldb-
 #make runtest
 # make -j4 install
 
-# Install libsodium - this is a prereq for zeromq 1.0.14 released 9/21/2017
-# cd
-# wget --no-check-certificate https://download.libsodium.org/libsodium/releases/libsodium-1.0.14.tar.gz
-# tar -zxvf libsodium-1.0.14.tar.gz
-# cd libsodium-1.0.14
-# ./configure
-# make -j4 
-# sudo make install
-# cd ..
-# rm -rf libsodium-1.0.14*
-
-# install zeromq 4.2.2 is latest stable as of 9/20/2017
-# cd
-# wget --no-check-certificate https://github.com/zeromq/libzmq/releases/download/v4.2.2/zeromq-4.2.2.tar.gz
-# tar -xzvf zeromq-4.2.2.tar.gz
-# cd zeromq-4.2.2
-# ./configure
-# make -j4
-# sudo make install
-# cd ..
-# rm -rf zeromq-4.2.2*
-# cd /usr/local/include/
-# sudo wget --no-check-certificate https://raw.githubusercontent.com/zeromq/cppzmq/master/zmq.hpp
-
 # Install tinyxml2
 cd
 git clone https://github.com/leethomason/tinyxml2.git
@@ -81,93 +89,71 @@ cd ../..
 rm -rf tinyxml2
 
 #install zed sdk
-if [ "$version" = tx1 ] && [ "$jetson" = true ] ; then
-	$zed_arch="JTX1_JP3.2"
-elif [ "$version" = tx2 ] && [ "$jetson" = true ] ; then
-	$zed_arch="JTX2_JP3.2"
-else
-	$zed_arch="Ubuntu16"
-fi
-
-zed_ver="2.7.1"
-zed_fn="ZED_SDK_"$zed_arch"_v"$zed_ver".run"
+zed_fn="jetson_jp42"
 wget --no-check-certificate https://www.stereolabs.com/download/$zed_fn
 chmod 755 $zed_fn
 ./$zed_fn
 rm ./$zed_fn
 
-#clone repo
-#TODO : rethink this - how are we getting the script if the
-#       repo isn't there in the first place?
-cd
-git clone https://github.com/FRC900/2019RobotCode.git
-cd 2019RobotCode
-git submodule init
-git submodule update
-
 #mount and setup autostart script
-if [ "$jetson" = true ] ; then
-	sudo mkdir /mnt/900_2
+sudo mkdir /mnt/900_2
+cd ~/2019RobotCode
 
-	if [ "$version" = tx2 ] ; then
-		cd ~/2019RobotCode
+# edit /etc/init.d/ntp to contain the line: <ntpd -gq> before all content already there.
+sudo cp ntp-client.conf /etc/ntp.conf  # edit /etc/ntp.conf to be a copy of ntp-client.conf in 2019RobotCode
 
-        # edit /etc/init.d/ntp to contain the line: <ntpd -gq> before all content already there.
-        sudo cp ntp-client.conf /etc/ntp.conf  # edit /etc/ntp.conf to be a copy of ntp-client.conf in 2019RobotCode
+# Set up can0 network interface
+cd
+echo "auto can0" > can0
+echo "iface can0 inet manual" >> can0
+echo "  pre-up /sbin/ip link set can0 type can bitrate 1000000" >> can0
+echo "  up /sbin/ifconfig can0 up" >> can0
+echo "  down /sbin/ifconfig can0 down" >> can0
+sudo mv can0 /etc/network/interfaces.d
 
-		# Set up can0 network interface
-		cd
-		echo "auto can0" > can0
-		echo "iface can0 inet manual" >> can0
-		echo "  pre-up /sbin/ip link set can0 type can bitrate 1000000" >> can0
-		echo "  up /sbin/ifconfig can0 up" >> can0
-		echo "  down /sbin/ifconfig can0 down" >> can0
-		sudo mv can0 /etc/network/interfaces.d
+sudo bash -c "echo \"# Modules for CAN interface\" >> /etc/modules"
+sudo bash -c "echo can >> /etc/modules"
+sudo bash -c "echo can_raw >> /etc/modules"
+sudo bash -c "echo can_dev >> /etc/modules"
+sudo bash -c "echo gs_can >> /etc/modules"
+#sudo bash -c "echo mttcan >> /etc/modules"
 
-		sudo bash -c "echo \"# Modules for CAN interface\" >> /etc/modules"
-		sudo bash -c "echo can >> /etc/modules"
-		sudo bash -c "echo can_raw >> /etc/modules"
-		sudo bash -c "echo can_dev >> /etc/modules"
-		sudo bash -c "echo gs_can >> /etc/modules"
-		#sudo bash -c "echo mttcan >> /etc/modules"
+# This shouldn't be the least bit dangerous
+#sudo rm /etc/modprobe.d/blacklist-mttcan.conf 
 
-		# This shouldn't be the least bit dangerous
-		#sudo rm /etc/modprobe.d/blacklist-mttcan.conf 
-	fi
+# Disable l4tbridge - https://devtalk.nvidia.com/default/topic/1042511/is-it-safe-to-remove-l4tbr0-bridge-network-on-jetson-xavier-/
+# sudo rm /etc/systemd/system/nv-l4t-usb-device-mode.sh /etc/systemd/system/multi-user.target.wants/nv-l4t-usb-device-mode.service
+sudo systemctl disable nv-l4t-usb-device-mode.service
+sudo systemctl stop nv-l4t-usb-device-mode.service
 
-	# Disable l4tbridge - https://devtalk.nvidia.com/default/topic/1042511/is-it-safe-to-remove-l4tbr0-bridge-network-on-jetson-xavier-/
-	# sudo rm /etc/systemd/system/nv-l4t-usb-device-mode.sh /etc/systemd/system/multi-user.target.wants/nv-l4t-usb-device-mode.service
-	sudo systemctl disable nv-l4t-usb-device-mode.service
-	sudo systemctl stop nv-l4t-usb-device-mode.service
-
-	# Set up ssh host config (add port 5801) 
-	sudo sed "s/#Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && sudo mv sshd_config /etc/ssh
+# Set up ssh host config (add port 5801) 
+sudo sed "s/#Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && sudo mv sshd_config /etc/ssh
 	
-	# and keys for 
-	# connections to Rio
-	mkdir -p ~/.ssh
-	cd ~/.ssh
-	tar -xjf ~/2019RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 
-	chmod 640 authorized_keys
-	cd ~
-	chmod 700 .ssh
+# and keys for connections to Rio
+mkdir -p ~/.ssh
+cd ~/.ssh
+tar -xjf ~/2019RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 
+chmod 640 authorized_keys
+cd ~
+chmod 700 .ssh
 
-	sudo mkdir -p /root/.ssh
-	sudo tar -xjf /home/ubuntu/2019RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
-	sudo chmod 640 /root/.ssh/authorized_keys
-	sudo chmod 700 /root/.ssh
+sudo mkdir -p /root/.ssh
+sudo tar -xjf /home/ubuntu/2019RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
+sudo chmod 640 /root/.ssh/authorized_keys
+sudo chmod 700 /root/.ssh
 
-	cd ~/2019RobotCode
-	sudo cp ./jetson_setup/10-local.rules /etc/udev/rules.d/
-	sudo service udev reload
-	sleep 2
-	sudo service udev restart
+cd ~/2019RobotCode
+sudo cp ./jetson_setup/10-local.rules /etc/udev/rules.d/
+sudo service udev reload
+sleep 2
+sudo service udev restart
 
+if /bin/false; then
 	# Kernel module build steps for TX2 : https://gist.github.com/sauhaardac/9d7a82c23e4b283a1e79009903095655
 	# Not needed unless Jetpack is updated with a new kernel version and modules
 	# for a given kernel version aren't already built
 	#
-	# This is a PR into the jetsonhacks repo of the same name, will like be
+	# This is a PR into the jetsonhacks repo of the same name, will likely be
 	# gone the next time anyone looks for it
 	# Also, this says Xavier but it really seems to mean Jetpack 4.x, in the
 	# case of this particular PR, 4.2. Which is what we're using for the TX2
@@ -219,65 +205,65 @@ if [ "$jetson" = true ] ; then
 	sudo make -j6 modules_install
 
 	sudo depmod -a
-
-	# Clean up Jetson
-	sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/TensorRT /home/nvidia/libvisionworkd*
-	# Save ~400MB
-	sudo apt remove --purge -y thunderbird libreoffice-*
-
-	# Install CTRE & navX libs
-    mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
-	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
-    cd /home/ubuntu 
-	wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.14.1*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*"
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
-	find /home/ubuntu/devsite.ctr-electronics.com -name \*headers\*zip | xargs -n 1 unzip -o 
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
-	find /home/ubuntu/devsite.ctr-electronics.com -name \*linux\*zip | xargs -n 1 unzip -o 
-    rm -rf /home/ubuntu/devsite.ctr-electronics.com 
-
-    cd /home/ubuntu 
-	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.366/navx-cpp-3.1.366-headers.zip 
-	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
-	unzip -o /home/ubuntu/navx-cpp-3.1.366-headers.zip 
-	rm /home/ubuntu/navx-cpp-3.1.366-headers.zip 
-    cd /home/ubuntu 
-	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.366/navx-cpp-3.1.366-linuxathena.zip 
-	mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
-	unzip -o /home/ubuntu/navx-cpp-3.1.366-linuxathena.zip 
-	rm /home/ubuntu/navx-cpp-3.1.366-linuxathena.zip 
-    cd /home/ubuntu 
-	wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.366/navx-cpp-3.1.366-linuxathenastatic.zip 
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
-	unzip -o /home/ubuntu/navx-cpp-3.1.366-linuxathenastatic.zip 
-	rm /home/ubuntu/navx-cpp-3.1.366-linuxathenastatic.zip 
-
-	# Install wpilip headers by copying them from the local maven dir
-    cd /home/ubuntu 
-	wget https://github.com/wpilibsuite/allwpilib/releases/download/v2019.4.1/WPILib_Linux-2019.4.1.tar.gz 
-	mkdir -p /home/ubuntu/frc2019 
-    cd /home/ubuntu/frc2019 
-	tar -xzf /home/ubuntu/WPILib_Linux-2019.4.1.tar.gz 
-	rm /home/ubuntu/WPILib_Linux-2019.4.1.tar.gz 
-    cd /home/ubuntu/frc2019/tools 
-	python ToolsUpdater.py 
-    mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
-	find ../../../.. -name \*athena\*zip | xargs -n1 unzip -o 
-    mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
-	cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
-	find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o 
-    rm -rf /home/ubuntu/frc2019/maven /home/ubuntu/frc2019/jdk
-	sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
-
-	# Set up prereqs for deploy script
-	mv ~/2019RobotCode ~/2019RobotCode.orig
-	ln -s ~/2019RobotCode.orig ~/2019RobotCode
-	mkdir -p ~/2019RobotCode.prod/zebROS_ws
-	mkdir -p ~/2019RobotCode.dev/zebROS_ws
 fi
+
+# Clean up Jetson
+sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/TensorRT /home/nvidia/libvisionworkd*
+# Save ~400MB
+sudo apt remove --purge -y thunderbird libreoffice-*
+
+# Install CTRE & navX libs
+mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
+mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
+cd /home/ubuntu 
+wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.14.1*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*"
+cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
+find /home/ubuntu/devsite.ctr-electronics.com -name \*headers\*zip | xargs -n 1 unzip -o 
+cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
+find /home/ubuntu/devsite.ctr-electronics.com -name \*linux\*zip | xargs -n 1 unzip -o 
+rm -rf /home/ubuntu/devsite.ctr-electronics.com 
+
+cd /home/ubuntu 
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.366/navx-cpp-3.1.366-headers.zip 
+mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
+cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
+unzip -o /home/ubuntu/navx-cpp-3.1.366-headers.zip 
+rm /home/ubuntu/navx-cpp-3.1.366-headers.zip 
+cd /home/ubuntu 
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.366/navx-cpp-3.1.366-linuxathena.zip 
+mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
+cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
+unzip -o /home/ubuntu/navx-cpp-3.1.366-linuxathena.zip 
+rm /home/ubuntu/navx-cpp-3.1.366-linuxathena.zip 
+cd /home/ubuntu 
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.366/navx-cpp-3.1.366-linuxathenastatic.zip 
+cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
+unzip -o /home/ubuntu/navx-cpp-3.1.366-linuxathenastatic.zip 
+rm /home/ubuntu/navx-cpp-3.1.366-linuxathenastatic.zip 
+
+# Install wpilib headers by copying them from the local maven dir
+cd /home/ubuntu 
+wget https://github.com/wpilibsuite/allwpilib/releases/download/v2019.4.1/WPILib_Linux-2019.4.1.tar.gz 
+mkdir -p /home/ubuntu/frc2019 
+cd /home/ubuntu/frc2019 
+tar -xzf /home/ubuntu/WPILib_Linux-2019.4.1.tar.gz 
+rm /home/ubuntu/WPILib_Linux-2019.4.1.tar.gz 
+cd /home/ubuntu/frc2019/tools 
+python ToolsUpdater.py 
+mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
+cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
+find ../../../.. -name \*athena\*zip | xargs -n1 unzip -o 
+mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
+cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
+find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o 
+rm -rf /home/ubuntu/frc2019/maven /home/ubuntu/frc2019/jdk
+sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
+
+# Set up prereqs for deploy script
+mv ~/2019RobotCode ~/2019RobotCode.orig
+ln -s ~/2019RobotCode.orig ~/2019RobotCode
+mkdir -p ~/2019RobotCode.prod/zebROS_ws
+mkdir -p ~/2019RobotCode.dev/zebROS_ws
 
 sudo mkdir -p /usr/local/zed/settings
 sudo chmod 755 /usr/local/zed/settings

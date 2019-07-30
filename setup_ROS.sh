@@ -14,7 +14,7 @@ sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 0xB0
 # Installation
 sudo apt update
 
-# For intel realsense - from apt for x86 laptops
+# For intel realsense - from apt for x86 laptops, not yet (if ever) available for AARCH64
 #sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE 
 #sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main" -u 
 #sudo apt update
@@ -23,9 +23,9 @@ sudo apt update
 # From source for the Jetson
 sudo apt install -y git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev 
 mkdir realsense_src && cd realsense_src
-wget https://github.com/IntelRealSense/librealsense/archive/v2.21.0.zip
-unzip v2.21.0.zip
-cd librealsense-2.21.0
+wget https://github.com/IntelRealSense/librealsense/archive/v2.24.0.zip
+unzip v2.24.0.zip
+cd librealsense-2.24.0
 sudo cp config/99-realsense-libusb.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && udevadm trigger
 mkdir build && cd build
@@ -34,14 +34,60 @@ sudo make uninstall && make clean && make -j6 && sudo make install
 
 # Add Individual Packages here
 # You can install a specific ROS package (replace underscores with dashes of the package name):
-# sudo apt-get install ros-kinetic-PACKAGE
+# sudo apt-get install ros-melodic-PACKAGE
 # e.g.
-# sudo apt-get install ros-kinetic-navigation
+# sudo apt-get install ros-melodic-navigation
 #
 # To find available packages:
-# apt-cache search ros-kinetic
+# apt-cache search ros-melodic
 # 
-sudo apt install -y ros-melodic-ros-base python-rosdep python-rosinstall terminator ros-melodic-rqt ros-melodic-rqt-common-plugins ros-melodic-tf2-ros ros-melodic-pcl-conversions ros-melodic-cv-bridge ros-melodic-tf ros-melodic-map-server ros-melodic-rviz ros-melodic-rtabmap-ros ros-melodic-robot-localization ros-melodic-navigation ros-melodic-robot-state-publisher ros-melodic-rosparam-shortcuts python-wstool ninja-build libsuitesparse-dev ros-melodic-tf2-tools ros-melodic-hardware-interface ros-melodic-controller-manager ros-melodic-control-msgs ros-melodic-joint-limits-interface ros-melodic-transmission-interface liblua5.3-dev ros-melodic-joystick-drivers ros-melodic-teb-local-planner ros-melodic-roslint ros-melodic-xacro ros-melodic-rqt-controller-manager ros-melodic-serial ros-melodic-ecl-geometry ros-melodic-rviz-imu-plugin ros-melodic-rosbridge-suite ros-melodic-grid-map-core ros-melodic-grid-map-cv ros-melodic-grid-map-ros ros-melodic-ar-track-alvar ros-melodic-pid ros-melodic*mux* ros-melodic-usb-cam
+# Keep each package on a separate line to aid in git merging
+# Try to keep them in alphabetic order to make it easier to find duplicates
+sudo apt install -y \
+	ros-melodic-ros-base \
+	liblua5.3-dev \
+	libsuitesparse-dev \
+	ninja-build \
+	python-pyqtgraph \
+	python-rosdep \
+	python-rosinstall \
+	python-wstool \
+	ros-melodic-ar-track-alvar \
+	ros-melodic-controller-manager \
+	ros-melodic-control-msgs \
+	ros-melodic-cv-bridge \
+	ros-melodic-ecl-geometry \
+	ros-melodic-grid-map-core \
+	ros-melodic-grid-map-cv \
+	ros-melodic-grid-map-ros \
+	ros-melodic-hardware-interface \
+	ros-melodic-joint-limits-interface \
+	ros-melodic-joystick-drivers \
+	ros-melodic-map-server \
+	ros-melodic*mux* \
+	ros-melodic-navigation \
+	ros-melodic-pcl-conversions \
+	ros-melodic-pid \
+	ros-melodic-robot-localization \
+	ros-melodic-robot-state-publisher \
+	ros-melodic-rosbridge-suite \
+	ros-melodic-roslint \
+	ros-melodic-rosparam-shortcuts \
+	ros-melodic-rqt \
+	ros-melodic-rqt-common-plugins \
+	ros-melodic-rqt-controller-manager \
+	ros-melodic-rtabmap-ros \
+	ros-melodic-rviz \
+	ros-melodic-rviz-imu-plugin \
+	ros-melodic-serial \
+	ros-melodic-teb-local-planner \
+	ros-melodic-tf \
+	ros-melodic-tf2-ros \
+	ros-melodic-tf2-tools \
+	ros-melodic-transmission-interface \
+	ros-melodic-usb-cam \
+	ros-melodic-xacro \
+	terminator 
 
 # Not for melodic - ros-melodic-hector-slam ros-melodic-hector-slam-launch ros-melodic-gmapping 
 # handled by wstool for now ros-melodic-teraranger-* 
@@ -75,7 +121,7 @@ cd ~/2019RobotCode/zebROS_ws/src
 
 # Boilerplate control code
 #wstool merge https://raw.githubusercontent.com/FRC900/steered_wheel_base_controller/master/steered_wheel_base_controller.rosinstall
-#wstool merge https://raw.githubusercontent.com/FRC900/ros_control_boilerplate/kinetic-devel/ros_control_boilerplate.rosinstall
+#wstool merge https://raw.githubusercontent.com/FRC900/ros_control_boilerplate/melodic-devel/ros_control_boilerplate.rosinstall
 
 # LIDAR driver
 #wstool merge https://raw.githubusercontent.com/FRC900/rplidar_ros/master/rplidar.rosinstall
@@ -89,7 +135,7 @@ wstool update -j4
 rosdep update
 rosdep install --from-paths . --ignore-src --rosdistro=melodic -y
 
-#source /opt/ros/kinetic/setup.bash
+#source /opt/ros/melodic/setup.bash
 
 #cd ~/2019RobotCode/zebROS_ws
 #catkin_make
