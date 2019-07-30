@@ -1,5 +1,3 @@
-# Run setup_cross_build.sh first 
-
 # Actual ros build and install :
 
 sudo apt-get install -y python-rosdep python-rosinstall-generator python-wstool python-rosinstall build-essential ninja-build
