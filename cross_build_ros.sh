@@ -61,6 +61,8 @@ sed -i -e '/<\/package>/i  <build_depend>urdfdom_headers<\/build_depend>' urdf/u
 # In a docker container : 
 # docker run -it --user ubuntu -v /home/kjaget/2019RobotCode:/home/ubuntu/2019RobotCode -v ~/melodic_arm_cross_ws:/home/ubuntu/melodic_arm_cross_ws  frc900/zebros-2020-beta-dev /bin/bash
 
+# Then run the following from inside the container :
+
 cd ~/melodic_arm_cross_ws
 # Do a fresh build - kill off any lingering dependencies
 rm -rf ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/melodic devel_isolated build_isolated
