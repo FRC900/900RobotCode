@@ -11,7 +11,7 @@
 	<param name="robot_description" command="$(find xacro)/xacro --inorder '$(find frcrobot_description)/urdf/robot_in_a_box.xacro'" />
 	<group ns="frcrobot">
 		<!-- Load hardware interface -->
-		<node name="frcrobot_hardware_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
+		<node name="frcrobot_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
 			output="screen" launch-prefix="$(arg launch_prefix)">
 		</node>
 
