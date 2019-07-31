@@ -241,6 +241,9 @@ void FRCRobotHWInterface::init(void)
 										  can_talons_[i], talon_read_thread_states_[i],
 										  talon_read_state_mutexes_[i],
 										  talon_thread_tracers_[i]));
+			std::stringstream s;
+			s << "ctre_read_" << can_talon_srx_can_ids_[i];
+			pthread_setname_np(talon_read_threads_.back().native_handle(), s.str().c_str());
 		}
 		else
 		{
@@ -480,6 +483,9 @@ void FRCRobotHWInterface::init(void)
 					pcm_thread_.push_back(std::thread(&FRCRobotHWInterface::pcm_read_thread, this,
 								compressors_[i], compressor_pcm_ids_[i], pcm_read_thread_state_[i],
 								pcm_read_thread_mutexes_[i], pcm_thread_tracers_[i]));
+					std::stringstream s;
+					s << "pcm_read_" << i;
+					pthread_setname_np(pcm_thread_[i].native_handle(), s.str().c_str());
 					HAL_Report(HALUsageReporting::kResourceType_Compressor, compressor_pcm_ids_[i]);
 				}
 				else
@@ -531,6 +537,9 @@ void FRCRobotHWInterface::init(void)
 					pdp_thread_.push_back(std::thread(&FRCRobotHWInterface::pdp_read_thread, this,
 										  pdps_[i], pdp_read_thread_state_[i], pdp_read_thread_mutexes_[i],
 										  pdp_thread_tracers_[i]));
+					std::stringstream s;
+					s << "pdp_read_" << i;
+					pthread_setname_np(pdp_thread_[i].native_handle(), s.str().c_str());
 					HAL_Report(HALUsageReporting::kResourceType_PDP, pdp_modules_[i]);
 				}
 			}
