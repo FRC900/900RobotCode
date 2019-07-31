@@ -93,8 +93,6 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 
 #include <ros_control_boilerplate/set_limit_switch.h>
 
-ros::ServiceServer service;
-
 namespace frcrobot_control
 {
 
@@ -419,13 +417,6 @@ FRCRobotSimInterface::~FRCRobotSimInterface()
     sim_joy_thread_.join();
 }
 
-/*void FRCRobotSimInterface::cube_state_callback(const frc_msgs::CubeState &cube) {
-    clamp = cube.clamp;
-    intake_high = cube.intake_high;
-    intake_low = cube.intake_low;
-    has_cube = cube.has_cube;
-}*/
-
 void FRCRobotSimInterface::match_data_callback(const frc_msgs::MatchSpecificData &match_data) {
 	std::lock_guard<std::mutex> l(match_data_mutex_);
 	match_data_.setMatchTimeRemaining(match_data.matchTimeRemaining);
@@ -470,21 +461,11 @@ bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::R
 
 void FRCRobotSimInterface::init(void)
 {
-	service = nh_.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit,this);
-
 	// Do base class init. This loads common interface info
 	// used by both the real and sim interfaces
 	ROS_WARN("Passes");
 	FRCRobotInterface::init();
 	ROS_WARN("Passes");
-
-	// TODO : make this depend on joystick joints being defined
-	if (run_hal_robot_)
-		sim_joy_thread_ = std::thread(std::bind(&TeleopJointsKeyboard::keyboardLoop, &teleop_joy_));
-    //cube_state_sub_ = nh_.subscribe("/frcrobot/cube_state_sim", 1, &FRCRobotSimInterface::cube_state_callback, this);
-    match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data", 1, &FRCRobotSimInterface::match_data_callback, this);
-
-	linebreak_sensor_srv_ = nh_.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
 
 	ROS_WARN("fails here?1");
 	// Loop through the list of joint names
@@ -596,6 +577,14 @@ void FRCRobotSimInterface::init(void)
 		ROS_INFO_STREAM_NAMED("frcrobot_sim_interface",
 							  "Loading dummy joint " << i << "=" << dummy_joint_names_[i]);
 
+	// TODO : make this depend on joystick joints being defined
+	if (run_hal_robot_)
+		sim_joy_thread_ = std::thread(std::bind(&TeleopJointsKeyboard::keyboardLoop, &teleop_joy_));
+
+	limit_switch_srv_ = nh_.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit,this);
+    match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data", 1, &FRCRobotSimInterface::match_data_callback, this);
+
+	linebreak_sensor_srv_ = nh_.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
 	ROS_INFO_NAMED("frcrobot_sim_interface", "FRCRobotSimInterface Ready.");
 }
 
@@ -603,38 +592,18 @@ void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
 {
 	for (std::size_t joint_id = 0; joint_id < num_can_talon_srxs_; ++joint_id)
 	{
-		if (!can_talon_srx_local_hardwares_[joint_id])
-			continue;
-        auto &ts = talon_state_[joint_id];
-        if(ts.getCANID() == 51) {
-            if(clamp) {
-                ts.setForwardLimitSwitch(true);
-            }
-            else {
-                ts.setForwardLimitSwitch(false);
-            }
-        }
+		// Do nothing
     }
 	for (size_t i = 0; i < num_digital_inputs_; i++)
 	{
-		//State should really be a bool - but we're stuck using
-		//ROS control code which thinks everything to and from
-		//hardware are doubles
-		if(digital_input_names_[i] == "intake_line_break_high") {
-			digital_input_state_[i] = (intake_high) ? 1 : 0;
-		}
-		if(digital_input_names_[i] == "intake_line_break_low") {
-			digital_input_state_[i] = (intake_low) ? 1 : 0;
-		}
-		if(digital_input_names_[i] == "intake_line_break") {
-			digital_input_state_[i] = (has_cube) ? 1 : 0;
-		}
+		// Set using evaluateDigitalInput callback
+		// TODO - make make threadsafe using a command buffer, if needed
 	}
 
     // Simulated state is updated in write, so just
 	// display it here for debugging
+	// printState();
 
-	//printState();
 	// This is only used to test the stuff in hw_interface?
 	if (!robot_code_ready_)
 	{
@@ -649,6 +618,7 @@ void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
 	}
     ros::spinOnce();
 }
+
 bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBreakSensors::Request &req,
 							ros_control_boilerplate::LineBreakSensors::Response &/*res*/)
 {
@@ -1080,7 +1050,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		}
 	}
 
-	for (size_t i = 0; i< num_double_solenoids_; i++)
+	for (size_t i = 0; i < num_double_solenoids_; i++)
 	{
 		// TODO - maybe check for < 0, 0, >0 and map to forward/reverse?
 		const double command = double_solenoid_command_[i];

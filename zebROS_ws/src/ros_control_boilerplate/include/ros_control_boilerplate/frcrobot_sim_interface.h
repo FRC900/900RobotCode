@@ -93,19 +93,14 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 		virtual std::vector<ros_control_boilerplate::DummyJoint> getDummyJoints(void) override;
 
 	private:
-        //ros::Subscriber cube_state_sub_;
-        //void cube_state_callback(const frc_msgs::CubeState &cube);
-		std::atomic<bool> clamp;
-		std::atomic<bool> intake_high;
-		std::atomic<bool> intake_low;
-		std::atomic<bool> has_cube;
-
         ros::Subscriber match_data_sub_;
         void match_data_callback(const frc_msgs::MatchSpecificData &match_data);
 		bool evaluateDigitalInput(ros_control_boilerplate::LineBreakSensors::Request &req, ros_control_boilerplate::LineBreakSensors::Response &res);
 
 		std::mutex match_data_mutex_;
 		ros::ServiceServer linebreak_sensor_srv_;
+		ros::ServiceServer limit_switch_srv_;
+
 		double navX_zero_;
 
 		std::thread sim_joy_thread_;

@@ -34,7 +34,6 @@ void FRCRobotPhoenixSimInterface::init(void)
 // of the underlying motor sim
 void FRCRobotPhoenixSimInterface::write(ros::Duration &elapsed_time)
 {
-	ros::Duration(0.01).sleep();
 	c_FeedEnable(500);
 	FRCRobotHWInterface::write(elapsed_time);
 
