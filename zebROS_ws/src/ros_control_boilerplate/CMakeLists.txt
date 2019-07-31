@@ -223,10 +223,10 @@ file(GLOB
 	ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/networktables/*.cpp
 	ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/tables/*.cpp)
 
-	if (0)
+	if (1)
 	add_executable(frcrobot_phoenixsim_main
 		src/frcrobot_phoenixsim_interface.cpp
-		src/frcrobot_hw_main.cpp
+		src/frcrobot_phoenixsim_main.cpp
 		src/frcrobot_hw_interface.cpp
 		src/frc_robot_interface.cpp
 		src/generic_hw_control_loop.cpp
@@ -322,7 +322,7 @@ file(GLOB
 		${CTRE_LIB_DIR}/libCTRE_Phoenix.a
 		${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.a
 		${CTRE_LIB_DIR}/libCTRE_PhoenixCanutils.a
-		${CTRE_LIB_DIR}/libCTRE_PhoenixPlatform_sim.a
+		${CTRE_LIB_DIR}/../shared/libCTRE_PhoenixPlatform_sim.so
 		)
 	## Add cmake target dependencies of the executable
 	## same as for the library above. This is needed to force
