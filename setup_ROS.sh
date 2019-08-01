@@ -10,8 +10,8 @@
 # Setup sources.lst
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 # Setup keys
-sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 0xB01FA116
-# Installation
+sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+# Grab new package lists from ros.org
 sudo apt update
 
 # For intel realsense - from apt for x86 laptops, not yet (if ever) available for AARCH64
