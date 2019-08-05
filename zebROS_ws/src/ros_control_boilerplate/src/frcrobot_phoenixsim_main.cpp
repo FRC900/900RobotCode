@@ -36,7 +36,7 @@
    Desc:   Example ros_control main() entry point for controlling robots in ROS
 */
 
-#include <ros_control_boilerplate/generic_phoenixsimcontrol_loop.h>
+#include <ros_control_boilerplate/generic_hw_control_loop.h>
 #include <ros_control_boilerplate/frcrobot_phoenixsim_interface.h>
 
 int main(int argc, char **argv)
@@ -50,8 +50,8 @@ int main(int argc, char **argv)
 	spinner.start();
 
 	// Create the hardware interface specific to your robot
-	boost::shared_ptr<frcrobot_control::FRCRobotPhonenixSimInterface> frcrobot_phoenixsim_interface
-		(new frcrobot_control::FRCRobotPhonenixSimInterface(nh));
+	boost::shared_ptr<frcrobot_control::FRCRobotPhoenixSimInterface> frcrobot_phoenixsim_interface
+		(new frcrobot_control::FRCRobotPhoenixSimInterface(nh));
 	frcrobot_phoenixsim_interface->init();
 
 	// Start the control loop

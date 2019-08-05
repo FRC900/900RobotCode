@@ -24,7 +24,7 @@
                 <rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
 
 		<!-- Load hardware interface -->
-		<node name="frcrobot_hardware_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
+		<node name="frcrobot_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
 			output="screen" launch-prefix="$(arg launch_prefix)">
 		</node>
 

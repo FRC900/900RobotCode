@@ -9,14 +9,14 @@
 
 	<group ns="frcrobot_jetson">
 
-		<!-- Load hardware interface -->
-		<node name="frcrobot_jetson_hardware_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
-			output="screen" launch-prefix="$(arg launch_prefix)">
-		</node>
-
 		<!-- Load controller settings -->
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_in_a_box_jetson.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
+		<!-- Load hardware interface -->
+		<node name="frcrobot_jetson_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
+			output="screen" launch-prefix="$(arg launch_prefix)">
+		</node>
+
 
 		<!-- Load controller manager -->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"

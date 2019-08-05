@@ -102,7 +102,7 @@
 	<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
 
 	<!-- Load hardware interface -->
-	<node machine="roboRIO" name="frcrobot_hardware_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main" launch-prefix="$(arg launch_prefix)" output="$(arg output)"> </node>
+	<node machine="roboRIO" name="frcrobot_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main" launch-prefix="$(arg launch_prefix)" output="$(arg output)"> </node>
 
     <!-- Load controller manager -->
     <node machine="roboRIO" name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false" output="$(arg output)"
