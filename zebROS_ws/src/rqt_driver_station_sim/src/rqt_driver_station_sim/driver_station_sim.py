@@ -163,6 +163,17 @@ class DriverStationSim(Plugin):
         # TODO restore intrinsic configuration, usually using:
         # v = instance_settings.value(k)
         pass
+    
+    def _parse_args(self, argv):
+        parser = argparse.ArgumentParser(prog="rqt_driver_station_sim", add_help=False)
+        DriverStationSim.add_arguments(parser)
+        return parser.parse_args(argv)
+
+
+    @staticmethod
+    def add_arguments(parser):
+        group = parser.add_argument_group('Options for rqt_driver_station_sim plugin')
+        #No options exist yet
 
     #def trigger_configuration(self):
         # Comment in to signal that the plugin has a way to configure
