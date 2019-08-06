@@ -43,9 +43,9 @@ ssh -p 22 admin@$1 'pip install catkin_pkg rospkg rosdistro vcstools rosdep wsto
 
 # Copy over ROS tar.bz2 file, extract to / on the Rio
 scp -P 22 ~/2019RobotCode/roscore_roborio.tar.bz2 admin@$1:.
-ssh -p 22 admin@$1 'cd / && tar -xjf ~/roscore_roborio_tar.bz2'
+ssh -p 22 admin@$1 'cd / && tar -xjf ~/roscore_roborio.tar.bz2'
+ssh -p 22 admin@$1 'rm ~/roscore_roborio.tar.bz2'
 scp -P 22 ~/2019RobotCode/os_detect.py admin@$1:/usr/lib/python2.7/site-packages/rospkg/
-ssh -p 22 admin@$1 'rm ~/roscore_roborio_tar.bz2'
 
 # Try to simulate what the cross-build environment looks like 
 # This will prevent weird bugs were sourcing install_isolated/setup.bash
