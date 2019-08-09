@@ -41,6 +41,18 @@
     uri: https://github.com/Terabee/teraranger.git
     version: 2.0.0
 - git:
+    local-name: teraranger_array
+    uri: https://github.com/Terabee/teraranger_array-release.git
+    version: release/kinetic/teraranger_array/1.3.4-0
+- git:
+    local-name: teraranger_array_converter
+    uri: https://github.com/Terabee/teraranger_array_converter-release.git
+    version: release/kinetic/teraranger_array_converter/1.1.1-0
+- git:
+    local-name: teraranger_description
+    uri: https://github.com/Terabee/teraranger_description-release.git
+    version: release/kinetic/teraranger_description/1.1.0-0
+- git:
     local-name: realsense
     uri: https://github.com/FRC900/realsense.git 
 

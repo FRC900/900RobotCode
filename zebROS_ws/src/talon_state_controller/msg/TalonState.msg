@@ -1,25 +1,3 @@
-#s is a message that holds data to describe the state of a set of torque
-#controlled joints. 
-#
-# The state of each joint (revolute or prismatic) is defined by:
-#  * the position of the joint (rad or m),
-#  * the velocity of the joint (rad/s or m/s) and 
-#  * the effort that is applied in the joint (Nm or N).
-#
-# Each joint is uniquely identified by its name
-# The header specifies the time at which the joint states were recorded. All
-# the joint states
-# in one message have to be recorded at the same time.
-#
-# This message consists of a multiple arrays, one for each part of the joint
-# state. 
-# The goal is to make each of the fields optional. When e.g. your joints have
-# no
-# effort associated with them, you can leave the effort array empty. 
-#
-# All arrays in this message should have the same size, or be empty.
-# This is the only way to uniquely associate the joint name with the correct
-
 Header header
 
 string[] name
@@ -35,6 +13,15 @@ float64[] motor_output_percent
 float64[] temperature
 string[]  feedback_sensor
 float64[] feedback_coefficient
+string[]  remote_feedback_sensor
+int8[]    remote_feedback_device_id0
+string[]  remote_feedback_filter0
+int8[]    remote_feedback_device_id1
+string[]  remote_feedback_filter1
+string[]  sensor_term_sum0
+string[]  sensor_term_sum1
+string[]  sensor_term_diff0
+string[]  sensor_term_diff1
 int32[]   encoder_ticks_per_rotation
 int32[]   pid_slot
 float64[] pid_p0
@@ -55,6 +42,24 @@ int32[] pid_allowable_closed_loop_error1
 float64[] pid_max_integral_accumulator1
 float64[] pid_closed_loop_peak_output1
 int32[]   pid_closed_loop_period1
+float64[] pid_p2
+float64[] pid_i2
+float64[] pid_d2
+float64[] pid_f2
+int32[] pid_izone2
+int32[] pid_allowable_closed_loop_error2
+float64[] pid_max_integral_accumulator2
+float64[] pid_closed_loop_peak_output2
+int32[]   pid_closed_loop_period2
+float64[] pid_p3
+float64[] pid_i3
+float64[] pid_d3
+float64[] pid_f3
+int32[] pid_izone3
+int32[] pid_allowable_closed_loop_error3
+float64[] pid_max_integral_accumulator3
+float64[] pid_closed_loop_peak_output3
+int32[]   pid_closed_loop_period3
 bool[]    aux_pid_polarity
 float64[] set_point
 int8[] can_id
@@ -96,8 +101,10 @@ string[]  limit_switch_local_reverse_source
 string[]  limit_switch_local_reverse_normal
 string[]  limit_switch_remote_forward_source
 string[]  limit_switch_remote_forward_normal
+uint8[]   limit_switch_remote_forward_id
 string[]  limit_switch_remote_reverse_source
 string[]  limit_switch_remote_reverse_normal
+uint8[]   limit_switch_remote_reverse_id
 float64[] softlimit_forward_threshold
 bool[]    softlimit_forward_enable
 float64[] softlimit_reverse_threshold

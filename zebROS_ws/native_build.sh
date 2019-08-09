@@ -1,11 +1,11 @@
 #!/bin/bash
 
 if [ -z $ROS_ROOT ]; then
-	source /opt/ros/kinetic/setup.bash
+	source /opt/ros/melodic/setup.bash
 	if [ ! -z install_native/setup.bash]; then
 		source install_native/setup.bash
 	fi
-elif [[ ! $ROS_ROOT = "/opt/ros/kinetic/share/ros" ]]; then
+elif [[ ! $ROS_ROOT = "/opt/ros/melodic/share/ros" ]]; then
 	echo "ROS is not configured for a native build (maybe set up for a cross build instead?)"
 	echo "Run ./native_build.sh in a new terminal window"
 	exit 1

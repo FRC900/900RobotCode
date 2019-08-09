@@ -446,9 +446,9 @@ std::vector<ros_control_boilerplate::DummyJoint> FRCRobotSimInterface::getDummyJ
 
 bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,ros_control_boilerplate::set_limit_switch::Response &/*res*/)
 {
-	for (std::size_t joint_id = 0; joint_id < num_can_talon_srxs_; ++joint_id)
+	for (std::size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
 	{
-		if (!can_talon_srx_local_hardwares_[joint_id])
+		if (!can_ctre_mc_local_hardwares_[joint_id])
 			continue;
         auto &ts = talon_state_[joint_id];
         if(ts.getCANID() == req.target_joint_id) {
@@ -476,20 +476,20 @@ void FRCRobotSimInterface::init(void)
 	// controller on the robot.  Use this pointer
 	// to initialize each Talon with various params
 	// set for that motor controller in config files.
-	// TODO : assert can_talon_srx_names_.size() == can_talon_srx_can_ids_.size()
+	// TODO : assert can_ctre_mc_names_.size() == can_ctre_mc_can_ids_.size()
 
-	for (size_t i = 0; i < can_talon_srx_names_.size(); i++)
+	for (size_t i = 0; i < can_ctre_mc_names_.size(); i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_sim_interface",
-							  "Loading joint " << i << "=" << can_talon_srx_names_[i] <<
-							  (can_talon_srx_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (can_talon_srx_local_hardwares_[i] ? "local" : "remote") << " hardware " <<
-							  " as CAN id " << can_talon_srx_can_ids_[i]);
+							  "Loading joint " << i << "=" << can_ctre_mc_names_[i] <<
+							  (can_ctre_mc_local_updates_[i] ? " local" : " remote") << " update, " <<
+							  (can_ctre_mc_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
+							  " as " << (can_ctre_mc_is_talon_[i] ? "TalonSRX" : "VictorSPX")
+							  << " CAN id " << can_ctre_mc_can_ids_[i]);
 
 		ROS_WARN_STREAM("fails here? 56789: " << i);
 		// Loop through the list of joint names
 
-		ROS_WARN("post and stuff");
 	}
 		ROS_WARN_STREAM("fails here? ~");
 	// TODO : assert nidec_brushles_names_.size() == nidec_brushles_xxx_channels_.size()
@@ -590,7 +590,7 @@ void FRCRobotSimInterface::init(void)
 
 void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
 {
-	for (std::size_t joint_id = 0; joint_id < num_can_talon_srxs_; ++joint_id)
+	for (std::size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
 	{
 		// Do nothing
     }
@@ -651,9 +651,9 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		robot_enabled = match_data_.isEnabled();
 	}
 
-	for (std::size_t joint_id = 0; joint_id < num_can_talon_srxs_; ++joint_id)
+	for (std::size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
 	{
-		if (!can_talon_srx_local_hardwares_[joint_id])
+		if (!can_ctre_mc_local_hardwares_[joint_id])
 			continue;
 
 		custom_profile_write(joint_id);
@@ -671,7 +671,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			if (tc.modeChanged(new_mode))
 			{
 				ts.setTalonMode(new_mode);
-				ROS_INFO_STREAM("Set joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" mode " << (int)new_mode);
+				ROS_INFO_STREAM("Set joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" mode " << (int)new_mode);
 			}
 			hardware_interface::DemandType demand1_type_internal;
 			double demand1_value;
@@ -680,7 +680,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 				ts.setDemand1Type(demand1_type_internal);
 				ts.setDemand1Value(demand1_value);
 
-				ROS_INFO_STREAM("Set joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" demand1 type / value");
+				ROS_INFO_STREAM("Set joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" demand1 type / value");
 			}
 		}
 		else if (last_robot_enabled)
@@ -698,7 +698,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 				// when the robot switches from disabled back to enabled
 				tc.resetMode();
 				ts.setTalonMode(hardware_interface::TalonMode_Disabled);
-				ROS_INFO_STREAM("Robot disabled - called Set(Disabled) on " << joint_id << "=" << can_talon_srx_names_[joint_id]);
+				ROS_INFO_STREAM("Robot disabled - called Set(Disabled) on " << joint_id << "=" << can_ctre_mc_names_[joint_id]);
 			}
 		}
 
@@ -750,7 +750,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			int    closed_loop_period;
 			if (tc.pidfChanged(p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period, slot))
 			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" PIDF slot " << slot << " config values");
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" PIDF slot " << slot << " config values");
 				ts.setPidfP(p, slot);
 				ts.setPidfI(i, slot);
 				ts.setPidfD(d, slot);
@@ -765,7 +765,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			if (slot_changed)
 			{
 				ts.setSlot(slot);
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] << " PIDF slot to " << slot);
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " PIDF slot to " << slot);
 			}
 		}
 		// Invert / sensor phase matters for all modes
@@ -773,7 +773,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		bool sensor_phase;
 		if (tc.invertChanged(invert, sensor_phase))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" invert / phase");
+			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" invert / phase");
 			ts.setInvert(invert);
 			ts.setSensorPhase(sensor_phase);
 		}
@@ -781,20 +781,20 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		hardware_interface::NeutralMode neutral_mode;
 		if (tc.neutralModeChanged(neutral_mode))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" neutral mode");
+			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" neutral mode");
 			ts.setNeutralMode(neutral_mode);
 		}
 
 		if (tc.neutralOutputChanged())
 		{
-			ROS_INFO_STREAM("Set joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" neutral output");
+			ROS_INFO_STREAM("Set joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" neutral output");
 			ts.setNeutralOutput(true);
 		}
 
 		double iaccum;
 		if (close_loop_mode && tc.integralAccumulatorChanged(iaccum))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" integral accumulator");
+			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" integral accumulator");
 		}
 
 		double closed_loop_ramp;
@@ -812,7 +812,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 									nominal_output_reverse,
 									neutral_deadband))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" output shaping");
+			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" output shaping");
 			ts.setOpenloopRamp(open_loop_ramp);
 			ts.setClosedloopRamp(closed_loop_ramp);
 			ts.setPeakOutputForward(peak_output_forward);
@@ -828,7 +828,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 									v_measurement_filter,
 									v_c_enable))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" voltage compensation");
+			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" voltage compensation");
 			ts.setVoltageCompensationSaturation(v_c_saturation);
 			ts.setVoltageMeasurementFilter(v_measurement_filter);
 			ts.setVoltageCompensationEnable(v_c_enable);
@@ -841,13 +841,13 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		{
 			ts.setVelocityMeasurementPeriod(v_m_period);
 			ts.setVelocityMeasurementWindow(v_m_window);
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" velocity measurement period / window");
+			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" velocity measurement period / window");
 		}
 
 		double sensor_position;
 		if (tc.sensorPositionChanged(sensor_position))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" selected sensor position");
+			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" selected sensor position");
 			ts.setPosition(sensor_position);
 		}
 
@@ -858,7 +858,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		if (tc.limitSwitchesSourceChanged(internal_local_forward_source, internal_local_forward_normal,
 				internal_local_reverse_source, internal_local_reverse_normal))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" limit switches");
+			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" limit switches");
 			ts.setForwardLimitSwitchSource(internal_local_forward_source, internal_local_forward_normal);
 			ts.setReverseLimitSwitchSource(internal_local_reverse_source, internal_local_reverse_normal);
 		}
@@ -874,7 +874,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 				softlimit_reverse_enable,
 				softlimit_override_enable))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" soft limits " <<
+			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" soft limits " <<
 					std::endl << "\tforward enable=" << softlimit_forward_enable << " forward threshold=" << softlimit_forward_threshold <<
 					std::endl << "\treverse enable=" << softlimit_reverse_enable << " reverse threshold=" << softlimit_reverse_threshold <<
 					std::endl << "\toverride_enable=" << softlimit_override_enable);
@@ -891,7 +891,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		bool enable;
 		if (tc.currentLimitChanged(peak_amps, peak_msec, continuous_amps, enable))
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" peak current");
+			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" peak current");
 			ts.setPeakCurrentLimit(peak_amps);
 			ts.setPeakCurrentDuration(peak_msec);
 			ts.setContinuousCurrentLimit(continuous_amps);
@@ -905,7 +905,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			if (tc.statusFramePeriodChanged(status_frame, period) && (period != 0))
 			{
 				ts.setStatusFramePeriod(status_frame, period);
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" status_frame " << i << "=" << static_cast<int>(period) << "mSec");
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" status_frame " << i << "=" << static_cast<int>(period) << "mSec");
 			}
 		}
 
@@ -916,7 +916,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			unsigned int motion_s_curve_strength;
 			if (tc.motionCruiseChanged(motion_cruise_velocity, motion_acceleration, motion_s_curve_strength))
 			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" cruise velocity / acceleration");
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" cruise velocity / acceleration");
 				ts.setMotionCruiseVelocity(motion_cruise_velocity);
 				ts.setMotionAcceleration(motion_acceleration);
 				ts.setMotionSCurveStrength(motion_s_curve_strength);
@@ -925,20 +925,20 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			int motion_profile_trajectory_period;
 			if (tc.motionProfileTrajectoryPeriodChanged(motion_profile_trajectory_period))
 			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectory period");
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" motion profile trajectory period");
 				ts.setMotionProfileTrajectoryPeriod(motion_profile_trajectory_period);
 			}
 
 			if (tc.clearMotionProfileTrajectoriesChanged())
-				ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectories");
+				ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" motion profile trajectories");
 
 			if (tc.clearMotionProfileHasUnderrunChanged())
-				ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile underrun changed");
+				ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" motion profile underrun changed");
 
 			std::vector<hardware_interface::TrajectoryPoint> trajectory_points;
 
 			if (tc.motionProfileTrajectoriesChanged(trajectory_points))
-				ROS_INFO_STREAM("Added " << trajectory_points.size() << " points to joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" motion profile trajectories");
+				ROS_INFO_STREAM("Added " << trajectory_points.size() << " points to joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" motion profile trajectories");
 		}
 
 		hardware_interface::TalonMode simulate_mode = ts.getTalonMode();
@@ -1004,7 +1004,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		}
 
 		if (tc.clearStickyFaultsChanged())
-			ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_talon_srx_names_[joint_id] <<" sticky_faults");
+			ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" sticky_faults");
 	}
 	last_robot_enabled = robot_enabled;
 

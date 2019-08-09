@@ -81,10 +81,10 @@ class TalonStateController: public controller_interface::Controller<hardware_int
 
 		virtual bool init(hardware_interface::TalonStateInterface *hw,
 						  ros::NodeHandle                         &root_nh,
-						  ros::NodeHandle                         &controller_nh);
-		virtual void starting(const ros::Time &time);
-		virtual void update(const ros::Time &time, const ros::Duration & /*period*/);
-		virtual void stopping(const ros::Time & /*time*/);
+						  ros::NodeHandle                         &controller_nh) override;
+		virtual void starting(const ros::Time &time) override;
+		virtual void update(const ros::Time &time, const ros::Duration & /*period*/) override;
+		virtual void stopping(const ros::Time & /*time*/) override;
 
 	private:
 		std::vector<hardware_interface::TalonStateHandle> talon_state_;
@@ -94,10 +94,11 @@ class TalonStateController: public controller_interface::Controller<hardware_int
 		unsigned int num_hw_joints_; ///< Number of joints present in the JointStateInterface, excluding extra joints
 
 		void addExtraJoints(const ros::NodeHandle &nh, talon_state_controller::TalonState &msg);
-		std::string limitSwitchSourceToString(const hardware_interface::LimitSwitchSource source);
-		std::string remoteLimitSwitchSourceToString(const hardware_interface::RemoteLimitSwitchSource source);
-		std::string limitSwitchNormalToString(const hardware_interface::LimitSwitchNormal normal);
-
+		std::string limitSwitchSourceToString(const hardware_interface::LimitSwitchSource source) const;
+		std::string remoteLimitSwitchSourceToString(const hardware_interface::RemoteLimitSwitchSource source) const;
+		std::string limitSwitchNormalToString(const hardware_interface::LimitSwitchNormal normal) const;
+		std::string feedbackDeviceToString(const hardware_interface::FeedbackDevice feedback_device) const;
+		std::string remoteSensorSourceToString(const hardware_interface::RemoteSensorSource remote_sensor_source) const;
 };
 
 }

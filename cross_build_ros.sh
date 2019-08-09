@@ -1,19 +1,17 @@
-# Run setup_cross_build.sh first 
-
 # Actual ros build and install :
 
 sudo apt-get install -y python-rosdep python-rosinstall-generator python-wstool python-rosinstall build-essential ninja-build
 sudo rosdep init
 rosdep update
-mkdir ~/catkin_arm_cross_ws
-cd ~/catkin_arm_cross_ws
-rosinstall_generator ros ros_comm robot angles serial robot_localization controller_interface controller_manager combined_robot_hw joint_limits_interface transmission_interface controller_manager controller_interface hardware_interface controller_manager_tests controller_manager_msgs combined_robot_hw combined_robot_hw_tests tf2_tools tf2_eigen tf2_sensor_msgs rosparam_shortcuts rqt_controller_manager actionlib_tutorials image_transport rosbridge_suite --rosdistro kinetic --deps --wet-only > kinetic-ros_comm-wet.rosinstall
+mkdir ~/melodic_arm_cross_ws
+cd ~/melodic_arm_cross_ws
+rosinstall_generator ros ros_comm robot angles serial robot_localization controller_interface controller_manager combined_robot_hw joint_limits_interface transmission_interface controller_manager controller_interface hardware_interface controller_manager_tests controller_manager_msgs combined_robot_hw combined_robot_hw_tests tf2_tools tf2_eigen tf2_sensor_msgs rosparam_shortcuts rqt_controller_manager actionlib_tutorials image_transport rosbridge_suite --rosdistro melodic --deps --wet-only > melodic-ros_comm-wet.rosinstall
 
-#edit kinetic-ros_comm-wet.rosinstall and remove entries for realtime_tools, filter
-sed -i -e '/local-name: filters/{N;N;N;d}' kinetic-ros_comm-wet.rosinstall
+#edit melodic-ros_comm-wet.rosinstall and remove entries for realtime_tools, filter
+sed -i -e '/local-name: filters/{N;N;N;d}' melodic-ros_comm-wet.rosinstall
 
-mkdir -p ~/catkin_arm_cross_ws/src
-cd ~/catkin_arm_cross_ws/src
+mkdir -p ~/melodic_arm_cross_ws/src
+cd ~/melodic_arm_cross_ws/src
 
 git clone https://github.com/ros/urdfdom_headers.git
 cd urdfdom_headers
@@ -21,8 +19,8 @@ wget https://raw.githubusercontent.com/ros-gbp/urdfdom_headers-release/master/in
 # Fix the version in package.xml to read 1.0.0
 sed -i -e 's/:{version}/1.0.0/' package.xml 
 
-cd ~/catkin_arm_cross_ws/src
-git clone https://github.com/jbeder/yaml-cpp.git
+cd ~/melodic_arm_cross_ws/src
+#git clone https://github.com/jbeder/yaml-cpp.git
 
 # Grab urdfdom, add a boilerplate package.xml in it
 # so it will build as a ROS package
@@ -48,31 +46,36 @@ echo '
 </package>
 ' > package.xml
 
-cd ~/catkin_arm_cross_ws/src
+cd ~/melodic_arm_cross_ws/src
 
 touch .rosinstall
-wstool merge kinetic-ros_comm-wet.rosinstall
+wstool merge ../melodic-ros_comm-wet.rosinstall
 wstool update -j8
 
 # add "<depend>urdfdom_headers</depend>" to src/urdf/urdf_parser_plugin/package.xml
-sed -i -e '/<\/package>/i  <depend>urdfdom_headers<\/depend>' urdf/urdf_parser_plugin/package.xml 
+sed -i -e '/<\/package>/i  <build_depend>urdfdom_headers<\/build_depend>' urdf/urdf_parser_plugin/package.xml 
+
+# localization_ekf - -Werror needs to be removed due to eigen warnings
+# Add class_loader to src/urdf/urdf package.xml exec_depend and CMakeLists CATKIN_DEPENDS
 
 # In a docker container : 
-# docker run -it --user ubuntu -v /home/kjaget/2019RobotCode:/home/ubuntu/2019RobotCode -v ~/catkin_arm_cross_ws:/home/ubuntu/catkin_arm_cross_ws  frc900/zebros-2019-dev /bin/bash
+# docker run -it --user ubuntu -v /home/kjaget/2019RobotCode:/home/ubuntu/2019RobotCode -v ~/melodic_arm_cross_ws:/home/ubuntu/melodic_arm_cross_ws  frc900/zebros-2020-beta-dev /bin/bash
 
-cd ~/catkin_arm_cross_ws
+# Then run the following from inside the container :
+
+cd ~/melodic_arm_cross_ws
 # Do a fresh build - kill off any lingering dependencies
-rm -rf ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/kinetic devel_isolated build_isolated
+rm -rf ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/melodic devel_isolated build_isolated
 
 # Note - if this fails looking for gencpp*cmake, run from a new terminal
 # window where no ROS setup.bash has previously been sourced
-./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/kinetic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2019RobotCode/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
+./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2019RobotCode/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
 
 # Add newly built cross-libs to git repo so they are
 # used for subsequent Rio imagings
 cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi
-rm roscode_roborio_2018.tar.bz2
-tar -cjf ~/2019RobotCode/roscore_roborio_2018.tar.bz2 opt/ros/kinetic
+rm ~/2019RobotCode/roscore_melodic_roborio.tar.bz2
+tar -cjf ~/2019RobotCode/roscore_melodic_roborio.tar.bz2 opt/ros/melodic
 
 # I needed to add "-DYAML_CPP_INCLUDE_DIRS=/$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include
 # -DYAML_CPP_LIBRARIES=/$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/libyaml-cpp.a" to

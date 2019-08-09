@@ -150,6 +150,7 @@ add_executable(${PROJECT_NAME}_node src/laser_targets.cpp)
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
+list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
 target_link_libraries(${PROJECT_NAME}_node
   ${PCL_LIBRARIES}
   ${OpenCV_LIBS}

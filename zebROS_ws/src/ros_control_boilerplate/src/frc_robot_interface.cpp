@@ -77,7 +77,7 @@ void FRCRobotInterface::readJointLocalParams(XmlRpc::XmlRpcValue joint_params,
 FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_model) :
 	  name_("generic_hw_interface")
 	, nh_(nh)
-	, num_can_talon_srxs_(0)
+	, num_can_ctre_mcs_(0)
 	, num_nidec_brushlesses_(0)
 	, num_digital_inputs_(0)
 	, num_digital_outputs_(0)
@@ -141,32 +141,33 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			saw_local_keyword = true;
 		}
 
-		if (joint_type == "can_talon_srx")
+		if ((joint_type == "can_talon_srx") || (joint_type == "can_victor_spx") )
 		{
 			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
 
 			const bool has_can_id = joint_params.hasMember("can_id");
 			if (!local_hardware && has_can_id)
-				throw std::runtime_error("A CAN Talon SRX can_id was specified with local_hardware == false for joint " + joint_name);
+				throw std::runtime_error("A CAN Talon SRX / Victor SPX can_id was specified with local_hardware == false for joint " + joint_name);
 
 			int can_id = 0;
 			if (local_hardware)
 			{
 				if (!has_can_id)
-					throw std::runtime_error("A CAN Talon SRX can_id was not specified");
+					throw std::runtime_error("A CAN Talon SRX / Victor SPX can_id was not specified");
 				XmlRpc::XmlRpcValue &xml_can_id = joint_params["can_id"];
 				if (!xml_can_id.valid() ||
 						xml_can_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
 					throw std::runtime_error("An invalid joint can_id was specified (expecting an int) for joint " + joint_name);
 				can_id = xml_can_id;
-				auto it = std::find(can_talon_srx_can_ids_.cbegin(), can_talon_srx_can_ids_.cend(), can_id);
-				if (it != can_talon_srx_can_ids_.cend())
+				auto it = std::find(can_ctre_mc_can_ids_.cbegin(), can_ctre_mc_can_ids_.cend(), can_id);
+				if (it != can_ctre_mc_can_ids_.cend())
 					throw std::runtime_error("A duplicate can_id was specified for joint " + joint_name);
 			}
-			can_talon_srx_names_.push_back(joint_name);
-			can_talon_srx_can_ids_.push_back(can_id);
-			can_talon_srx_local_updates_.push_back(local_update);
-			can_talon_srx_local_hardwares_.push_back(local_hardware);
+			can_ctre_mc_names_.push_back(joint_name);
+			can_ctre_mc_can_ids_.push_back(can_id);
+			can_ctre_mc_local_updates_.push_back(local_update);
+			can_ctre_mc_local_hardwares_.push_back(local_hardware);
+			can_ctre_mc_is_talon_.push_back(joint_type == "can_talon_srx");
 		}
 		else if (joint_type == "nidec_brushless")
 		{
@@ -681,10 +682,10 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 
 void FRCRobotInterface::init()
 {
-	num_can_talon_srxs_ = can_talon_srx_names_.size();
+	num_can_ctre_mcs_ = can_ctre_mc_names_.size();
 	// Create vectors of the correct size for
 	// talon HW state and commands
-	talon_command_.resize(num_can_talon_srxs_);
+	talon_command_.resize(num_can_ctre_mcs_);
 
 	// Loop through the list of joint names
 	// specified as params for the hardware_interface.
@@ -694,9 +695,9 @@ void FRCRobotInterface::init()
 	// controller on the robot.  Use this pointer
 	// to initialize each Talon with various params
 	// set for that motor controller in config files.
-	for (size_t i = 0; i < num_can_talon_srxs_; i++)
+	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Talon Interface for " << can_talon_srx_names_[i] << " at hw ID " << can_talon_srx_can_ids_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Talon Interface for " << can_ctre_mc_names_[i] << " at hw ID " << can_ctre_mc_can_ids_[i]);
 
 		// Create joint state interface
 		// Also register as JointStateInterface so that legacy
@@ -704,23 +705,23 @@ void FRCRobotInterface::init()
 		// access basic state info from the talon
 		// Code which needs more specific status should
 		// get a TalonStateHandle instead.
-		talon_state_.push_back(hardware_interface::TalonHWState(can_talon_srx_can_ids_[i]));
+		talon_state_.push_back(hardware_interface::TalonHWState(can_ctre_mc_can_ids_[i]));
 	}
-	for (size_t i = 0; i < num_can_talon_srxs_; i++)
+	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
 	{
 		// Create state interface for the given Talon
 		// and point it to the data stored in the
 		// corresponding talon_state array entry
-		hardware_interface::TalonStateHandle tsh(can_talon_srx_names_[i], &talon_state_[i]);
+		hardware_interface::TalonStateHandle tsh(can_ctre_mc_names_[i], &talon_state_[i]);
 		talon_state_interface_.registerHandle(tsh);
 
 		// Do the same for a command interface for
 		// the same talon
 		hardware_interface::TalonCommandHandle tch(tsh, &talon_command_[i]);
 		talon_command_interface_.registerHandle(tch);
-		if (!can_talon_srx_local_updates_[i])
+		if (!can_ctre_mc_local_updates_[i])
 		{
-			hardware_interface::TalonWritableStateHandle twsh(can_talon_srx_names_[i], &talon_state_[i]); /// writing directly to state?
+			hardware_interface::TalonWritableStateHandle twsh(can_ctre_mc_names_[i], &talon_state_[i]); /// writing directly to state?
 			talon_remote_state_interface_.registerHandle(twsh);
 		}
 		custom_profile_state_.push_back(CustomProfileState());
@@ -1134,7 +1135,7 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 void FRCRobotInterface::custom_profile_write(int joint_id)
 {
 	// Don't run if the talon isn't local
-	if (!can_talon_srx_local_hardwares_[joint_id])
+	if (!can_ctre_mc_local_hardwares_[joint_id])
 	{
 		return;
 	}
@@ -1341,7 +1342,7 @@ std::string FRCRobotInterface::printStateHelper()
 	std::cout.precision(15);
 
 	ss << "    CAN ID       position        velocity        effort" << std::endl;
-	for (std::size_t i = 0; i < num_can_talon_srxs_; ++i)
+	for (std::size_t i = 0; i < num_can_ctre_mcs_; ++i)
 	{
 		ss << "j" << i << ":    " ;
 		ss << talon_state_[i].getCANID() << "\t ";
@@ -1357,7 +1358,7 @@ std::string FRCRobotInterface::printCommandHelper()
 	std::stringstream ss;
 	std::cout.precision(15);
 	ss << "    setpoint" << std::endl;
-	for (std::size_t i = 0; i < num_can_talon_srxs_; ++i)
+	for (std::size_t i = 0; i < num_can_ctre_mcs_; ++i)
 		ss << "j" << i << ": " << std::fixed << talon_command_[i].get() << std::endl;
 	return ss.str();
 }

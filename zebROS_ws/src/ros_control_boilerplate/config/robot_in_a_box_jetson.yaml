@@ -8,10 +8,10 @@ hardware_interface:
    run_hal_robot: false
    can_interface: can0
    joints:
-       - {name: talon3, type: can_talon_srx, can_id: 3,local: true}
+       - {name: talon3, type: can_victor_spx, can_id: 3,local: true}
        - {name: talon9, type: can_talon_srx, can_id: 9,local: true}
        - {name: pdp, local: true, type: pdp}
-         #- {name: compressor, local: true, type: compressor, pcm_id: 0}
+       - {name: compressor, local: true, type: compressor, pcm_id: 0}
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
        - {name: do1, local: false, type: digital_output}
@@ -49,19 +49,25 @@ talon_state_controller:
 # Similar to above, but this one prints non-Talon state
 # (stuff that fits into the more standard ROS position/
 
-# Create a controller called talon1_controller
+# Create a controller called talon3_controller
 #  That name is used by spawner in the launch file to 
 #  actually start this controller
-# The joint it controls is talon_1. This should match
+# The joint it controls is talon3. This should match
 # up with one of the names in the top-level joints list
 # above.  
 # The type is a talon_controllers/TalonController
 talon3_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: talon3
-    feedback_type: CTRE_MagEncoder_Absolute
     dynamic_reconfigure: True
     voltage_compensation_Enable: True
+    feedback_type: CTRE_MagEncoder_Absolute # Feedback type of the remote sensor, used for conversion to reasonable units?
+    remote_feedback_type: RemoteSensor0
+    remote_feedback_device_id0: 9
+    remote_feedback_filter0: TalonSRX_SelectedSensor
+    limit_switch_remote_forward_source: RemoteTalonSRX
+    limit_switch_remote_forward_normal: NormallyOpen
+    limit_switch_remote_forward_id: 9
 
 talon9_percentout_controller:
     type: talon_controllers/TalonPercentOutputController

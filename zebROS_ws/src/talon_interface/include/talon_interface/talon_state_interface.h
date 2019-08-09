@@ -61,7 +61,6 @@ enum FeedbackDevice
 
 enum RemoteFeedbackDevice
 {
-	RemoteFeedbackDevice_Uninitialized,
 	RemoteFeedbackDevice_FactoryDefaultOff,
 	RemoteFeedbackDevice_SensorSum,
 	RemoteFeedbackDevice_SensorDifference,
@@ -69,6 +68,33 @@ enum RemoteFeedbackDevice
 	RemoteFeedbackDevice_RemoteSensor1,
 	RemoteFeedbackDevice_SoftwareEmulatedSensor,
 	RemoteFeedbackDevice_Last
+};
+
+enum RemoteSensorSource
+{
+	RemoteSensorSource_Off,
+	RemoteSensorSource_TalonSRX_SelectedSensor,
+	RemoteSensorSource_Pigeon_Yaw,
+	RemoteSensorSource_Pigeon_Pitch,
+	RemoteSensorSource_Pigeon_Roll,
+	RemoteSensorSource_CANifier_Quadrature,
+	RemoteSensorSource_CANifier_PWMInput0,
+	RemoteSensorSource_CANifier_PWMInput1,
+	RemoteSensorSource_CANifier_PWMInput2,
+	RemoteSensorSource_CANifier_PWMInput3,
+	RemoteSensorSource_GadgeteerPigeon_Yaw,
+	RemoteSensorSource_GadgeteerPigeon_Pitch,
+	RemoteSensorSource_GadgeteerPigeon_Roll,
+	RemoteSensorSource_Last
+};
+
+enum SensorTerm
+{
+	SensorTerm_Sum0,
+	SensorTerm_Sum1,
+	SensorTerm_Diff0,
+	SensorTerm_Diff1,
+	SensorTerm_Last
 };
 
 enum LimitSwitchSource
@@ -212,6 +238,8 @@ struct CustomProfileStatus
 	}
 };
 
+constexpr size_t TALON_PIDF_SLOTS = 4;
+
 // Class which contains state information
 // about a given Talon SRX. This should include
 // data about the mode the Talon is running in,
@@ -238,15 +266,15 @@ class TalonHWState
 			bus_voltage_(0),
 			motor_output_percent_(0),
 			temperature_(0),
-			pidf_p_ {0, 0},
-			pidf_i_ {0, 0},
-			pidf_d_ {0, 0},
-			pidf_f_ {0, 0},
-			pidf_izone_ {0, 0},
-			allowable_closed_loop_error_ {0, 0},
-			max_integral_accumulator_ {0, 0},
-			closed_loop_peak_output_{1, 1},
-			closed_loop_period_{1, 1},
+			pidf_p_ {0, 0, 0, 0},
+			pidf_i_ {0, 0, 0, 0},
+			pidf_d_ {0, 0, 0, 0},
+			pidf_f_ {0, 0, 0, 0},
+			pidf_izone_ {0, 0, 0, 0},
+			allowable_closed_loop_error_ {0, 0, 0, 0},
+			max_integral_accumulator_ {0, 0, 0, 0},
+			closed_loop_peak_output_{1, 1, 1, 1},
+			closed_loop_period_{1, 1, 1, 1},
 			aux_pid_polarity_(false),
 			closed_loop_error_(0.0),
 			integral_accumulator_(0.0),
@@ -274,9 +302,12 @@ class TalonHWState
 			neutral_mode_(NeutralMode_Uninitialized),
 			neutral_output_(false),
 			encoder_feedback_(FeedbackDevice_Uninitialized),
-			encoder_feedback_remote_(RemoteFeedbackDevice_Uninitialized),
 			feedback_coefficient_(1.0),
+			encoder_feedback_remote_(RemoteFeedbackDevice_FactoryDefaultOff),
 			encoder_ticks_per_rotation_(4096),
+			remote_feedback_device_ids_{0, 0},
+			remote_feedback_filters_{RemoteSensorSource_Off, RemoteSensorSource_Off},
+			sensor_terms_{FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized},
 
 			//output shaping
 			close_loop_ramp_(0),
@@ -297,13 +328,15 @@ class TalonHWState
 			velocity_measurement_window_(64),
 
 			limit_switch_local_forward_source_(LimitSwitchSource_FeedbackConnector),
-			limit_switch_local_forward_normal_(LimitSwitchNormal_NormallyOpen),
+			limit_switch_local_forward_normal_(LimitSwitchNormal_Disabled),
 			limit_switch_local_reverse_source_(LimitSwitchSource_FeedbackConnector),
-			limit_switch_local_reverse_normal_(LimitSwitchNormal_NormallyOpen),
+			limit_switch_local_reverse_normal_(LimitSwitchNormal_Disabled),
 			limit_switch_remote_forward_source_(RemoteLimitSwitchSource_Deactivated),
-			limit_switch_remote_forward_normal_(LimitSwitchNormal_NormallyOpen),
+			limit_switch_remote_forward_normal_(LimitSwitchNormal_Disabled),
+			limit_switch_remote_forward_id_(0),
 			limit_switch_remote_reverse_source_(RemoteLimitSwitchSource_Deactivated),
-			limit_switch_remote_reverse_normal_(LimitSwitchNormal_NormallyOpen),
+			limit_switch_remote_reverse_normal_(LimitSwitchNormal_Disabled),
+			limit_switch_remote_reverse_id_(0),
 
 			// soft limits
 			softlimit_forward_threshold_(0.0),
@@ -395,91 +428,91 @@ class TalonHWState
 		}
 		double getPidfP(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return pidf_p_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getPidfP. Must be < TALON_PIDF_SLOTS.");
 				return 0.0;
 			}
 		}
 		double getPidfI(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return pidf_i_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getPidfI. Must be < TALON_PIDF_SLOTS.");
 				return 0.0;
 			}
 		}
 		double getPidfD(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return pidf_d_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getPidfD. Must be < TALON_PIDF_SLOTS.");
 				return 0.0;
 			}
 		}
 		double getPidfF(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return pidf_f_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getPidfF. Must be < TALON_PIDF_SLOTS.");
 				return 0.0;
 			}
 		}
 		int getPidfIzone(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return pidf_izone_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getPidfIzone. Must be < TALON_PIDF_SLOTS.");
 				return 0;
 			}
 		}
 		int getAllowableClosedLoopError(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return allowable_closed_loop_error_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getAllowableClosedLoopError. Must be < TALON_PIDF_SLOTS.");
 				return 0;
 			}
 		}
 		double getMaxIntegralAccumulator(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return max_integral_accumulator_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getMaxIntegralAccumulator. Must be < TALON_PIDF_SLOTS.");
 				return 0;
 			}
 		}
 		double getClosedLoopPeakOutput(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return closed_loop_peak_output_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getClosedLoopPeakOutput. Must be < TALON_PIDF_SLOTS.");
 				return 0;
 			}
 		}
 		int getClosedLoopPeriod(size_t index) const
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				return closed_loop_period_[index];
 			else
 			{
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state getClosedLoopPeriod. Must be < TALON_PIDF_SLOTS.");
 				return 0;
 			}
 		}
@@ -596,6 +629,31 @@ class TalonHWState
 		double getFeedbackCoefficient(void) const
 		{
 			return feedback_coefficient_;
+		}
+		int getRemoteFeedbackDeviceId(size_t remote_ordinal) const
+		{
+			if (remote_ordinal >= 2)
+			{
+				ROS_WARN("getRemoteFeedbackDeviceId: remote_ordinal too large");
+				return -1;
+			}
+			return remote_feedback_device_ids_[remote_ordinal];
+		}
+		RemoteSensorSource getRemoteFeedbackFilter(size_t remote_ordinal) const
+		{
+			if (remote_ordinal >= 2)
+			{
+				ROS_WARN("getRemoteFeedbackFilter : remote_ordinal too large");
+				return RemoteSensorSource_Last;
+			}
+			return remote_feedback_filters_[remote_ordinal];
+		}
+		FeedbackDevice getSensorTerm(SensorTerm sensor_term) const
+		{
+			if (sensor_term < SensorTerm_Last)
+				return sensor_terms_[sensor_term];
+			ROS_WARN("getSensorTerm : sensor_term index too large");
+			return FeedbackDevice_Last;
 		}
 		int getEncoderTicksPerRotation(void) const
 		{
@@ -783,28 +841,32 @@ class TalonHWState
 			normal = limit_switch_local_reverse_normal_;
 		}
 
-		void setRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal)
+		void setRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal, unsigned int id)
 		{
 			limit_switch_remote_forward_source_ = source;
 			limit_switch_remote_forward_normal_ = normal;
+			limit_switch_remote_forward_id_     = id;
 		}
 
-		void getRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal) const
+		void getRemoteForwardLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal, unsigned int &id) const
 		{
 			source = limit_switch_remote_forward_source_;
 			normal = limit_switch_remote_forward_normal_;
+			id     = limit_switch_remote_forward_id_;
 		}
 
-		void setRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal)
+		void setRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource source, LimitSwitchNormal normal, unsigned int id)
 		{
 			limit_switch_remote_reverse_source_ = source;
 			limit_switch_remote_reverse_normal_ = normal;
+			limit_switch_remote_reverse_id_     = id;
 		}
 
-		void getRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal) const
+		void getRemoteReverseLimitSwitchSource(RemoteLimitSwitchSource &source, LimitSwitchNormal &normal, unsigned int &id) const
 		{
 			source = limit_switch_remote_reverse_source_;
 			normal = limit_switch_remote_reverse_normal_;
+			id     = limit_switch_remote_reverse_id_;
 		}
 
 		void setForwardSoftLimitThreshold(double threshold)
@@ -994,66 +1056,66 @@ class TalonHWState
 		}
 		void setPidfP(double pidf_p, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				pidf_p_[index] = pidf_p;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setPidfP. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setPidfI(double pidf_i, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				pidf_i_[index] = pidf_i;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setPidfI. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setPidfD(double pidf_d, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				pidf_d_[index] = pidf_d;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setPidfD. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setPidfF(double pidf_f, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				pidf_f_[index] = pidf_f;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setPidfF. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setPidfIzone(int pidf_izone, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				pidf_izone_[index] = pidf_izone;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setPidfIzone. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setAllowableClosedLoopError(int allowable_closed_loop_error, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				allowable_closed_loop_error_[index] = allowable_closed_loop_error;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setAllowableClosedLoopError. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setMaxIntegralAccumulator(double max_integral_accumulator, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				max_integral_accumulator_[index] = max_integral_accumulator;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setMaxIntegralAccumulator. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setClosedLoopPeakOutput(double closed_loop_peak_output, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				closed_loop_peak_output_[index] = closed_loop_peak_output;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setClosedLoopPeakOutput. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setClosedLoopPeriod(double closed_loop_period, size_t index)
 		{
-			if ((index == 0) || (index == 1))
+			if (index < TALON_PIDF_SLOTS)
 				closed_loop_period_[index] = closed_loop_period;
 			else
-				ROS_WARN_STREAM("Invalid index. Must be 0 or 1.");
+				ROS_WARN_STREAM("Invalid index in talon_state setClosedLoopPeriod. Must be < TALON_PIDF_SLOTS.");
 		}
 		void setAuxPidPolarity(bool aux_pid_polarity)
 		{
@@ -1180,7 +1242,7 @@ class TalonHWState
 		}
 		void setRemoteEncoderFeedback(RemoteFeedbackDevice encoder_feedback_remote)
 		{
-			if ((encoder_feedback_remote >= RemoteFeedbackDevice_Uninitialized) &&
+			if ((encoder_feedback_remote >= RemoteFeedbackDevice_FactoryDefaultOff) &&
 				(encoder_feedback_remote <  RemoteFeedbackDevice_Last) )
 				encoder_feedback_remote_ = encoder_feedback_remote;
 			else
@@ -1189,6 +1251,58 @@ class TalonHWState
 		void setFeedbackCoefficient(double feedback_coefficient)
 		{
 			feedback_coefficient_ = feedback_coefficient;
+		}
+		void setRemoteFeedbackDeviceId(int device_id, size_t remote_ordinal)
+		{
+			if (remote_ordinal >= 2)
+			{
+				ROS_WARN("setRemoteFeedbackDeviceId : remote_ordinal too large");
+				return;
+			}
+			remote_feedback_device_ids_[remote_ordinal] = device_id;
+		}
+		void setRemoteFeedbackDeviceIds(const std::array<int, 2> &remote_feedback_device_ids)
+		{
+			remote_feedback_device_ids_ = remote_feedback_device_ids;
+		}
+		void setRemoteFeedbackFilter(RemoteSensorSource remote_sensor_source, size_t remote_ordinal)
+		{
+			if (remote_ordinal >= 2)
+			{
+				ROS_WARN("setRemoteFeedbackFilter : remote_ordinal too large");
+				return;
+			}
+			if ((remote_sensor_source <  RemoteSensorSource_Off) ||
+			    (remote_sensor_source >= RemoteSensorSource_Last))
+			{
+				ROS_WARN("setRemoteFeedbackFilter : remote_sensor_source out of range");
+				return;
+			}
+			remote_feedback_filters_[remote_ordinal] = remote_sensor_source;
+		}
+		void setRemoteFeedbackFilters(const std::array<RemoteSensorSource, 2> &remote_sensor_sources)
+		{
+			remote_feedback_filters_ = remote_sensor_sources;
+		}
+		void setSensorTerm(FeedbackDevice feedback_device, SensorTerm sensor_term)
+		{
+			if (sensor_term >= SensorTerm_Last)
+			{
+				ROS_WARN_STREAM("setSensorTerm Invalid sensor term index requested");
+				return;
+			}
+
+			if ((feedback_device <  FeedbackDevice_Uninitialized) &&
+				(feedback_device >= FeedbackDevice_Last) )
+			{
+				ROS_WARN_STREAM("setSensorTerm Invalid feedback device requested");
+				return;
+			}
+			sensor_terms_[sensor_term] = feedback_device;
+		}
+		void setSensorTerms(const std::array<FeedbackDevice, SensorTerm_Last> &sensor_terms)
+		{
+			sensor_terms_ = sensor_terms;
 		}
 		void setEncoderTicksPerRotation(int encoder_ticks_per_rotation)
 		{
@@ -1220,15 +1334,15 @@ class TalonHWState
 		double bus_voltage_;
 		double motor_output_percent_;
 		double temperature_;
-		double pidf_p_[2];
-		double pidf_i_[2];
-		double pidf_d_[2];
-		double pidf_f_[2];
-		int    pidf_izone_[2];
-		int    allowable_closed_loop_error_[2];
-		double max_integral_accumulator_[2];
-		double closed_loop_peak_output_[2];
-		int    closed_loop_period_[2];
+		std::array<double, TALON_PIDF_SLOTS> pidf_p_;
+		std::array<double, TALON_PIDF_SLOTS> pidf_i_;
+		std::array<double, TALON_PIDF_SLOTS> pidf_d_;
+		std::array<double, TALON_PIDF_SLOTS> pidf_f_;
+		std::array<int, TALON_PIDF_SLOTS>    pidf_izone_;
+		std::array<int, TALON_PIDF_SLOTS>    allowable_closed_loop_error_;
+		std::array<double, TALON_PIDF_SLOTS> max_integral_accumulator_;
+		std::array<double, TALON_PIDF_SLOTS> closed_loop_peak_output_;
+		std::array<int, TALON_PIDF_SLOTS>    closed_loop_period_;
 		bool   aux_pid_polarity_;
 		double closed_loop_error_;
 		double integral_accumulator_;
@@ -1261,9 +1375,12 @@ class TalonHWState
 		bool        neutral_output_;
 
 		FeedbackDevice encoder_feedback_;
-		RemoteFeedbackDevice encoder_feedback_remote_;
 		double feedback_coefficient_;
+		RemoteFeedbackDevice encoder_feedback_remote_;
 		int encoder_ticks_per_rotation_;
+		std::array<int, 2> remote_feedback_device_ids_;
+		std::array<RemoteSensorSource, 2> remote_feedback_filters_;
+		std::array<FeedbackDevice, SensorTerm_Last> sensor_terms_;
 
 		// output shaping
 		double close_loop_ramp_;
@@ -1288,8 +1405,10 @@ class TalonHWState
 		LimitSwitchNormal limit_switch_local_reverse_normal_;
 		RemoteLimitSwitchSource limit_switch_remote_forward_source_;
 		LimitSwitchNormal limit_switch_remote_forward_normal_;
+		unsigned int limit_switch_remote_forward_id_;
 		RemoteLimitSwitchSource limit_switch_remote_reverse_source_;
 		LimitSwitchNormal limit_switch_remote_reverse_normal_;
+		unsigned int limit_switch_remote_reverse_id_;
 
 		// soft limits
 		double softlimit_forward_threshold_;

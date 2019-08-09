@@ -36,15 +36,15 @@ class TalonCIParams
 		// Initialize with relatively sane defaults
 		// for all parameters
 		TalonCIParams(void) :
-			p_{0, 0},
-			i_{0, 0},
-			d_{0, 0},
-			f_{0, 0},
-			izone_{0, 0},
-			allowable_closed_loop_error_{0, 0}, // need better defaults
-			max_integral_accumulator_{0, 0},
-			closed_loop_peak_output_{1, 1},
-			closed_loop_period_{1, 1},
+			p_{0, 0, 0, 0},
+			i_{0, 0, 0, 0},
+			d_{0, 0, 0, 0},
+			f_{0, 0, 0, 0},
+			izone_{0, 0, 0, 0},
+			allowable_closed_loop_error_{0, 0, 0, 0}, // need better defaults
+			max_integral_accumulator_{0, 0, 0, 0},
+			closed_loop_peak_output_{1, 1, 1, 1},
+			closed_loop_period_{1, 1, 1, 1},
 			pidf_slot_(0),
 			aux_pid_polarity_(false),
 			demand1_type_(hardware_interface::DemandType_Neutral),
@@ -54,7 +54,11 @@ class TalonCIParams
 			neutral_mode_(hardware_interface::NeutralMode_Uninitialized),
 			feedback_type_(hardware_interface::FeedbackDevice_Uninitialized),
 			feedback_coefficient_(1.0),
+			remote_feedback_type_(hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff),
 			ticks_per_rotation_(4096),
+			remote_feedback_device_ids_{0, 0},
+			remote_feedback_filters_{hardware_interface::RemoteSensorSource_Off, hardware_interface::RemoteSensorSource_Off},
+			sensor_terms_{hardware_interface::FeedbackDevice_Uninitialized,hardware_interface::FeedbackDevice_Uninitialized,hardware_interface::FeedbackDevice_Uninitialized,hardware_interface::FeedbackDevice_Uninitialized},
 			closed_loop_ramp_(0.),
 			open_loop_ramp_(0.),
 			peak_output_forward_(1.),
@@ -73,8 +77,10 @@ class TalonCIParams
 			limit_switch_local_reverse_normal_(hardware_interface::LimitSwitchNormal_Disabled),
 			limit_switch_remote_forward_source_(hardware_interface::RemoteLimitSwitchSource_Deactivated),
 			limit_switch_remote_forward_normal_(hardware_interface::LimitSwitchNormal_Disabled),
+			limit_switch_remote_forward_id_(0),
 			limit_switch_remote_reverse_source_(hardware_interface::RemoteLimitSwitchSource_Deactivated),
 			limit_switch_remote_reverse_normal_(hardware_interface::LimitSwitchNormal_Disabled),
+			limit_switch_remote_reverse_id_(0),
 			softlimit_forward_threshold_(0.0),
 			softlimit_forward_enable_(false),
 			softlimit_reverse_threshold_(0.0),
@@ -124,22 +130,40 @@ class TalonCIParams
 		{
 			p_[0] = config.p0;
 			p_[1] = config.p1;
+			p_[2] = config.p2;
+			p_[3] = config.p3;
 			i_[0] = config.i0;
 			i_[1] = config.i1;
+			i_[2] = config.i2;
+			i_[3] = config.i3;
 			d_[0] = config.d0;
 			d_[1] = config.d1;
+			d_[2] = config.d2;
+			d_[3] = config.d3;
 			f_[0] = config.f0;
 			f_[1] = config.f1;
+			f_[2] = config.f2;
+			f_[3] = config.f3;
 			izone_[0] = config.izone0;
 			izone_[1] = config.izone1;
+			izone_[2] = config.izone2;
+			izone_[3] = config.izone3;
 			allowable_closed_loop_error_[0] = config.allowable_closed_loop_error0;
 			allowable_closed_loop_error_[1] = config.allowable_closed_loop_error1;
+			allowable_closed_loop_error_[2] = config.allowable_closed_loop_error2;
+			allowable_closed_loop_error_[3] = config.allowable_closed_loop_error3;
 			max_integral_accumulator_[0] = config.max_integral_accumulator0;
 			max_integral_accumulator_[1] = config.max_integral_accumulator1;
+			max_integral_accumulator_[2] = config.max_integral_accumulator2;
+			max_integral_accumulator_[3] = config.max_integral_accumulator3;
 			closed_loop_peak_output_[0] = config.closed_loop_peak_output0;
 			closed_loop_peak_output_[1] = config.closed_loop_peak_output1;
+			closed_loop_peak_output_[2] = config.closed_loop_peak_output2;
+			closed_loop_peak_output_[3] = config.closed_loop_peak_output3;
 			closed_loop_period_[0] = config.closed_loop_period0;
 			closed_loop_period_[1] = config.closed_loop_period1;
+			closed_loop_period_[2] = config.closed_loop_period2;
+			closed_loop_period_[3] = config.closed_loop_period3;
 			pidf_slot_ = config.pid_config;
 			aux_pid_polarity_ = config.aux_pid_polarity;
 			demand1_type_ = static_cast<hardware_interface::DemandType>(config.demand1_type);
@@ -149,6 +173,15 @@ class TalonCIParams
 			sensor_phase_ = config.sensor_phase;
 			feedback_type_ = static_cast<hardware_interface::FeedbackDevice>(config.feedback_type);
 			feedback_coefficient_ = config.feedback_coefficient;
+			remote_feedback_type_ = static_cast<hardware_interface::RemoteFeedbackDevice>(config.remote_feedback_type);
+			remote_feedback_device_ids_[0] = config.remote_feedback_device_id0;
+			remote_feedback_filters_[0] = static_cast<hardware_interface::RemoteSensorSource>(config.remote_feedback_filter0);
+			remote_feedback_device_ids_[1] = config.remote_feedback_device_id1;
+			remote_feedback_filters_[1] = static_cast<hardware_interface::RemoteSensorSource>(config.remote_feedback_filter1);
+			sensor_terms_[hardware_interface::SensorTerm_Sum0] = static_cast<hardware_interface::FeedbackDevice>(config.sensor_term_sum0);
+			sensor_terms_[hardware_interface::SensorTerm_Sum1] = static_cast<hardware_interface::FeedbackDevice>(config.sensor_term_sum1);
+			sensor_terms_[hardware_interface::SensorTerm_Diff0] = static_cast<hardware_interface::FeedbackDevice>(config.sensor_term_diff0);
+			sensor_terms_[hardware_interface::SensorTerm_Diff1] = static_cast<hardware_interface::FeedbackDevice>(config.sensor_term_diff1);
 			ticks_per_rotation_ = config.encoder_ticks_per_rotation;
 			neutral_mode_ = static_cast<hardware_interface::NeutralMode>(config.neutral_mode);
 			closed_loop_ramp_ = config.closed_loop_ramp;
@@ -169,8 +202,10 @@ class TalonCIParams
 			limit_switch_local_reverse_normal_ = static_cast<hardware_interface::LimitSwitchNormal>(config.limit_switch_local_reverse_normal);
 			limit_switch_remote_forward_source_ = static_cast<hardware_interface::RemoteLimitSwitchSource>(config.limit_switch_remote_forward_source);
 			limit_switch_remote_forward_normal_ = static_cast<hardware_interface::LimitSwitchNormal>(config.limit_switch_remote_forward_normal);
+			limit_switch_remote_forward_id_     = config.limit_switch_remote_forward_id;
 			limit_switch_remote_reverse_source_ = static_cast<hardware_interface::RemoteLimitSwitchSource>(config.limit_switch_remote_reverse_source);
 			limit_switch_remote_reverse_normal_ = static_cast<hardware_interface::LimitSwitchNormal>(config.limit_switch_remote_reverse_normal);
+			limit_switch_remote_reverse_id_     = config.limit_switch_remote_reverse_id;
 
 			softlimit_forward_threshold_ = config.softlimit_forward_threshold;
 			softlimit_forward_enable_ = config.softlimit_forward_enable;
@@ -219,22 +254,40 @@ class TalonCIParams
 			TalonConfigConfig config;
 			config.p0            = p_[0];
 			config.p1            = p_[1];
+			config.p2            = p_[2];
+			config.p3            = p_[3];
 			config.i0            = i_[0];
 			config.i1            = i_[1];
+			config.i2            = i_[2];
+			config.i3            = i_[3];
 			config.d0            = d_[0];
 			config.d1            = d_[1];
+			config.d2            = d_[2];
+			config.d3            = d_[3];
 			config.f0            = f_[0];
 			config.f1            = f_[1];
+			config.f2            = f_[2];
+			config.f3            = f_[3];
 			config.izone0        = izone_[0];
 			config.izone1        = izone_[1];
+			config.izone2        = izone_[2];
+			config.izone3        = izone_[3];
 			config.allowable_closed_loop_error0 = allowable_closed_loop_error_[0];
 			config.allowable_closed_loop_error1 = allowable_closed_loop_error_[1];
+			config.allowable_closed_loop_error2 = allowable_closed_loop_error_[2];
+			config.allowable_closed_loop_error3 = allowable_closed_loop_error_[3];
 			config.max_integral_accumulator0 = max_integral_accumulator_[0];
 			config.max_integral_accumulator1 = max_integral_accumulator_[1];
+			config.max_integral_accumulator2 = max_integral_accumulator_[2];
+			config.max_integral_accumulator3 = max_integral_accumulator_[3];
 			config.closed_loop_peak_output0 = closed_loop_peak_output_[0];
 			config.closed_loop_peak_output1 = closed_loop_peak_output_[1];
+			config.closed_loop_peak_output2 = closed_loop_peak_output_[2];
+			config.closed_loop_peak_output3 = closed_loop_peak_output_[3];
 			config.closed_loop_period0 = closed_loop_period_[0];
 			config.closed_loop_period1 = closed_loop_period_[1];
+			config.closed_loop_period2 = closed_loop_period_[2];
+			config.closed_loop_period3 = closed_loop_period_[3];
 			config.pid_config    = pidf_slot_;
 			config.aux_pid_polarity = aux_pid_polarity_;
 			config.demand1_type = demand1_type_;
@@ -243,7 +296,16 @@ class TalonCIParams
 			config.sensor_phase  = sensor_phase_;
 			config.feedback_type = feedback_type_;
 			config.feedback_coefficient = feedback_coefficient_;
+			config.remote_feedback_type = remote_feedback_type_;
 			config.encoder_ticks_per_rotation = ticks_per_rotation_;
+			config.remote_feedback_device_id0 = remote_feedback_device_ids_[0];
+			config.remote_feedback_filter0 = remote_feedback_filters_[0];
+			config.remote_feedback_device_id1 = remote_feedback_device_ids_[1];
+			config.remote_feedback_filter1 = remote_feedback_filters_[1];
+			config.sensor_term_sum0 = sensor_terms_[hardware_interface::SensorTerm_Sum0];
+			config.sensor_term_sum1 = sensor_terms_[hardware_interface::SensorTerm_Sum1];
+			config.sensor_term_diff0 = sensor_terms_[hardware_interface::SensorTerm_Diff0];
+			config.sensor_term_diff1 = sensor_terms_[hardware_interface::SensorTerm_Diff1];
 			config.neutral_mode  = neutral_mode_;
 			config.closed_loop_ramp = closed_loop_ramp_;
 			config.open_loop_ramp = open_loop_ramp_;
@@ -263,8 +325,10 @@ class TalonCIParams
 			config.limit_switch_local_reverse_normal = limit_switch_local_reverse_normal_;
 			config.limit_switch_remote_forward_source = limit_switch_remote_forward_source_;
 			config.limit_switch_remote_forward_normal = limit_switch_remote_forward_normal_;
+			config.limit_switch_remote_forward_id     = limit_switch_remote_forward_id_;
 			config.limit_switch_remote_reverse_source = limit_switch_remote_reverse_source_;
 			config.limit_switch_remote_reverse_normal = limit_switch_remote_reverse_normal_;
+			config.limit_switch_remote_reverse_id     = limit_switch_remote_reverse_id_;
 			config.softlimit_forward_threshold = softlimit_forward_threshold_;
 			config.softlimit_forward_enable = softlimit_forward_enable_;
 			config.softlimit_reverse_threshold = softlimit_reverse_threshold_;
@@ -345,44 +409,75 @@ class TalonCIParams
 		//TODOa: create a method that reads the feedback settings enum
 		bool readFeedbackType(ros::NodeHandle &n)
 		{
-			std::string feedback_type_name;
-			if (!n.getParam("feedback_type", feedback_type_name))
+			std::string str;
+			if (n.getParam("feedback_type", str) && !stringToFeedbackDevice(str, feedback_type_))
 			{
-				//ROS_ERROR("No feedback type given (namespace: %s)",
-				//			  n.getNamespace().c_str());
-				// TODO : Not all talons will have feedback - figure
-				//        out how to handle that case
-				return true;
-			}
-			if (feedback_type_name == "QuadEncoder")
-				feedback_type_ = hardware_interface::FeedbackDevice_QuadEncoder;
-			else if (feedback_type_name == "Analog")
-				feedback_type_ = hardware_interface::FeedbackDevice_Analog;
-			else if (feedback_type_name == "Tachometer")
-				feedback_type_ = hardware_interface::FeedbackDevice_Tachometer;
-			else if (feedback_type_name == "PulseWidthEncodedPosition")
-				feedback_type_ = hardware_interface::FeedbackDevice_PulseWidthEncodedPosition;
-			else if (feedback_type_name == "SensorSum")
-				feedback_type_ = hardware_interface::FeedbackDevice_SensorSum;
-			else if (feedback_type_name == "SensorDifference")
-				feedback_type_ = hardware_interface::FeedbackDevice_SensorDifference;
-			else if (feedback_type_name == "RemoteSensor0")
-				feedback_type_ = hardware_interface::FeedbackDevice_RemoteSensor0;
-			else if (feedback_type_name == "RemoteSensor1")
-				feedback_type_ = hardware_interface::FeedbackDevice_RemoteSensor1;
-			else if (feedback_type_name == "SoftwareEmulatedSensor")
-				feedback_type_ = hardware_interface::FeedbackDevice_SoftwareEmulatedSensor;
-			else if (feedback_type_name == "CTRE_MagEncoder_Absolute")
-				feedback_type_ = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Absolute;
-			else if (feedback_type_name == "CTRE_MagEncoder_Relative")
-				feedback_type_ = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Relative;
-			else
-			{
-				ROS_ERROR("Invalid feedback device name given");
+				ROS_ERROR_STREAM("Invalid feedback device name given : " << str);
 				return false;
 			}
+
 			n.getParam("ticks_per_rotation", ticks_per_rotation_);
 			n.getParam("feedback_coefficient", feedback_coefficient_);
+			if (n.getParam("remote_feedback_type", str))
+			{
+				if (str == "FactoryDefaultOff")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff;
+				else if (str == "SensorSum")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_SensorSum;
+				else if (str == "SensorDifference")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_SensorDifference;
+				else if (str == "RemoteSensor0")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_RemoteSensor0;
+				else if (str == "RemoteSensor1")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_RemoteSensor1;
+				else if (str == "SoftwareEmulatedSensor")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_SoftwareEmulatedSensor;
+				else
+				{
+					ROS_ERROR_STREAM("Invalid remote feedback device name given : " << str);
+					return false;
+				}
+			}
+			n.getParam("remote_feedback_device_id0", remote_feedback_device_ids_[0]);
+			if (n.getParam("remote_feedback_filter0", str) &&
+				!stringToRemoteSensorSource(str, remote_feedback_filters_[0]))
+			{
+				ROS_ERROR_STREAM("Invalid remote_feedback_filter0 device name given : " << str);
+				return false;
+			}
+			n.getParam("remote_feedback_device_id1", remote_feedback_device_ids_[1]);
+			if (n.getParam("remote_feedback_filter1", str) &&
+				stringToRemoteSensorSource(str, remote_feedback_filters_[1]))
+			{
+				ROS_ERROR_STREAM("Invalid remote_feedback_filter1 device name given : " << str);
+				return false;
+			}
+
+			if (n.getParam("sensor_term_sum0", str) &&
+				!stringToFeedbackDevice(str, sensor_terms_[hardware_interface::SensorTerm_Sum0]))
+			{
+				ROS_ERROR_STREAM("Invalid sensor_term_sum0 device name given : " << str);
+				return false;
+			}
+			if (n.getParam("sensor_term_sum1", str) &&
+				!stringToFeedbackDevice(str, sensor_terms_[hardware_interface::SensorTerm_Sum1]))
+			{
+				ROS_ERROR_STREAM("Invalid sensor_term_sum1 device name given : " << str);
+				return false;
+			}
+			if (n.getParam("sensor_term_diff0", str) &&
+				!stringToFeedbackDevice(str, sensor_terms_[hardware_interface::SensorTerm_Diff0]))
+			{
+				ROS_ERROR_STREAM("Invalid sensor_term_diff0 device name given : " << str);
+				return false;
+			}
+			if (n.getParam("sensor_term_diff1", str) &&
+				!stringToFeedbackDevice(str, sensor_terms_[hardware_interface::SensorTerm_Diff1]))
+			{
+				ROS_ERROR_STREAM("Invalid sensor_term_diff1 device name given : " << str);
+				return false;
+			}
+
 			return true;
 		}
 
@@ -417,7 +512,7 @@ class TalonCIParams
 			n.getParam("demand1_value", demand1_value_);
 			if (!n.getParam("close_loop_values", pid_param_list))
 				return true;
-			if (pid_param_list.size() <= 2)
+			if (pid_param_list.size() <= static_cast<int>(hardware_interface::TALON_PIDF_SLOTS))
 			{
 				for (int i = 0; i < pid_param_list.size(); i++)
 				{
@@ -437,7 +532,7 @@ class TalonCIParams
 			}
 			else
 			{
-				throw std::runtime_error("More than two pid_param values");
+				throw std::runtime_error("Too many pid_param values");
 			}
 			return false;
 		}
@@ -534,6 +629,16 @@ class TalonCIParams
 				if (!stringToRemoteLimitSwitchSource(str_val, remote_limit_switch_source))
 					return false;
 				limit_switch_remote_forward_source_ = remote_limit_switch_source;
+				int id;
+				if (n.getParam("limit_switch_remote_forward_id", id))
+				{
+					limit_switch_remote_forward_id_ = static_cast<unsigned int>(id);
+				}
+				else if (limit_switch_remote_forward_source_ != hardware_interface::RemoteLimitSwitchSource_Deactivated)
+				{
+					ROS_ERROR("Remote limt switch forward id must be set if source is not \"Disabled\"");
+					return false;
+				}
 			}
 			if (n.getParam("limit_switch_remote_forward_normal", str_val))
 			{
@@ -546,6 +651,16 @@ class TalonCIParams
 				if (!stringToRemoteLimitSwitchSource(str_val, remote_limit_switch_source))
 					return false;
 				limit_switch_remote_reverse_source_ = remote_limit_switch_source;
+				int id;
+				if (n.getParam("limit_switch_remote_reverse_id", id))
+				{
+					limit_switch_remote_reverse_id_ = static_cast<unsigned int>(id);
+				}
+				else if (limit_switch_remote_reverse_source_ != hardware_interface::RemoteLimitSwitchSource_Deactivated)
+				{
+					ROS_ERROR("Remote limt switch reverse id must be set if source is not \"Disabled\"");
+					return false;
+				}
 			}
 			if (n.getParam("limit_switch_remote_reverse_normal", str_val))
 			{
@@ -640,15 +755,15 @@ class TalonCIParams
 		}
 
 		std::string joint_name_;
-		double p_[2];
-		double i_[2];
-		double d_[2];
-		double f_[2];
-		int    izone_[2];
-		int    allowable_closed_loop_error_[2];
-		double max_integral_accumulator_[2];
-		double closed_loop_peak_output_[2];
-		int    closed_loop_period_[2];
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> p_;
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> i_;
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> d_;
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> f_;
+		std::array<int, hardware_interface::TALON_PIDF_SLOTS>    izone_;
+		std::array<int, hardware_interface::TALON_PIDF_SLOTS>    allowable_closed_loop_error_;
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> max_integral_accumulator_;
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> closed_loop_peak_output_;
+		std::array<int, hardware_interface::TALON_PIDF_SLOTS>    closed_loop_period_;
 		int    pidf_slot_;
 		bool   aux_pid_polarity_;
 		hardware_interface::DemandType demand1_type_;
@@ -658,7 +773,11 @@ class TalonCIParams
 		hardware_interface::NeutralMode neutral_mode_;
 		hardware_interface::FeedbackDevice feedback_type_;
 		double feedback_coefficient_;
+		hardware_interface::RemoteFeedbackDevice remote_feedback_type_;
 		int    ticks_per_rotation_;
+		std::array<int, 2>                                    remote_feedback_device_ids_;
+		std::array<hardware_interface::RemoteSensorSource, 2> remote_feedback_filters_;
+		std::array<hardware_interface::FeedbackDevice, hardware_interface::SensorTerm_Last> sensor_terms_;
 		double closed_loop_ramp_;
 		double open_loop_ramp_;
 		double peak_output_forward_;
@@ -678,8 +797,10 @@ class TalonCIParams
 		hardware_interface::LimitSwitchNormal limit_switch_local_reverse_normal_;
 		hardware_interface::RemoteLimitSwitchSource limit_switch_remote_forward_source_;
 		hardware_interface::LimitSwitchNormal limit_switch_remote_forward_normal_;
+		unsigned int                          limit_switch_remote_forward_id_;
 		hardware_interface::RemoteLimitSwitchSource limit_switch_remote_reverse_source_;
 		hardware_interface::LimitSwitchNormal limit_switch_remote_reverse_normal_;
+		unsigned int                          limit_switch_remote_reverse_id_;
 
 		double softlimit_forward_threshold_;
 		bool   softlimit_forward_enable_;
@@ -791,6 +912,76 @@ class TalonCIParams
 			else
 			{
 				ROS_ERROR_STREAM("Invalid limit switch normal : " << str);
+				return false;
+			}
+			return true;
+		}
+
+		bool stringToFeedbackDevice(const std::string &str,
+				hardware_interface::FeedbackDevice &feedback_device) const
+		{
+				if (str == "QuadEncoder")
+					feedback_device = hardware_interface::FeedbackDevice_QuadEncoder;
+				else if (str == "Analog")
+					feedback_device = hardware_interface::FeedbackDevice_Analog;
+				else if (str == "Tachometer")
+					feedback_device = hardware_interface::FeedbackDevice_Tachometer;
+				else if (str == "PulseWidthEncodedPosition")
+					feedback_device = hardware_interface::FeedbackDevice_PulseWidthEncodedPosition;
+				else if (str == "SensorSum")
+					feedback_device = hardware_interface::FeedbackDevice_SensorSum;
+				else if (str == "SensorDifference")
+					feedback_device = hardware_interface::FeedbackDevice_SensorDifference;
+				else if (str == "RemoteSensor0")
+					feedback_device = hardware_interface::FeedbackDevice_RemoteSensor0;
+				else if (str == "RemoteSensor1")
+					feedback_device = hardware_interface::FeedbackDevice_RemoteSensor1;
+				else if (str == "SoftwareEmulatedSensor")
+					feedback_device = hardware_interface::FeedbackDevice_SoftwareEmulatedSensor;
+				else if (str == "CTRE_MagEncoder_Absolute")
+					feedback_device = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Absolute;
+				else if (str == "CTRE_MagEncoder_Relative")
+					feedback_device = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Relative;
+				else
+				{
+					ROS_ERROR_STREAM("Invalid feedback device name given : " << str);
+					return false;
+				}
+				return true;
+		}
+
+		bool stringToRemoteSensorSource(const std::string &str,
+				hardware_interface::RemoteSensorSource &source)
+		{
+			if (str == "Off")
+				source = hardware_interface::RemoteSensorSource_Off;
+			else if (str == "TalonSRX_SelectedSensor")
+				source = hardware_interface::RemoteSensorSource_TalonSRX_SelectedSensor;
+			else if (str == "Pigeon_Yaw")
+				source = hardware_interface::RemoteSensorSource_Pigeon_Yaw;
+			else if (str == "Pigeon_Pitch")
+				source = hardware_interface::RemoteSensorSource_Pigeon_Pitch;
+			else if (str == "Pigeon_Roll")
+				source = hardware_interface::RemoteSensorSource_Pigeon_Roll;
+			else if (str == "CANifier_Quadrature")
+				source = hardware_interface::RemoteSensorSource_CANifier_Quadrature;
+			else if (str == "CANifier_PWMInput0")
+				source = hardware_interface::RemoteSensorSource_CANifier_PWMInput0;
+			else if (str == "CANifier_PWMInput1")
+				source = hardware_interface::RemoteSensorSource_CANifier_PWMInput1;
+			else if (str == "CANifier_PWMInput2")
+				source = hardware_interface::RemoteSensorSource_CANifier_PWMInput2;
+			else if (str == "CANifier_PWMInput3")
+				source = hardware_interface::RemoteSensorSource_CANifier_PWMInput3;
+			else if (str == "GadgeteerPigeon_Yaw")
+				source = hardware_interface::RemoteSensorSource_GadgeteerPigeon_Yaw;
+			else if (str == "GadgeteerPigeon_Pitch")
+				source = hardware_interface::RemoteSensorSource_GadgeteerPigeon_Pitch;
+			else if (str == "GadgeteerPigeon_Roll")
+				source = hardware_interface::RemoteSensorSource_GadgeteerPigeon_Roll;
+			else
+			{
+				ROS_ERROR_STREAM("Invalid remote sensor source filter type : " << str);
 				return false;
 			}
 			return true;
@@ -1487,7 +1678,7 @@ class TalonControllerInterface
 			// but don't set mode - either force the caller to
 			// set it or use one of the derived, fixed-mode
 			// classes instead
-			for (int i = 0; i < 2; i++)
+			for (size_t i = 0; i < hardware_interface::TALON_PIDF_SLOTS; i++)
 			{
 				talon->setP(params.p_[i], i);
 				talon->setI(params.i_[i], i);
@@ -1509,7 +1700,15 @@ class TalonControllerInterface
 
 			talon->setEncoderFeedback(params.feedback_type_);
 			talon->setFeedbackCoefficient(params.feedback_coefficient_);
+			talon->setRemoteEncoderFeedback(params.remote_feedback_type_);
 			talon->setEncoderTicksPerRotation(params.ticks_per_rotation_);
+			for (size_t i = 0; i < params.remote_feedback_filters_.size(); ++i)
+			{
+				talon->setRemoteFeedbackDeviceId(params.remote_feedback_device_ids_[i], i);
+				talon->setRemoteFeedbackFilter(params.remote_feedback_filters_[i], i);
+			}
+			for (hardware_interface::SensorTerm i = hardware_interface::SensorTerm_Sum0; i < hardware_interface::SensorTerm_Last; i = static_cast<hardware_interface::SensorTerm>(i + 1))
+				talon->setSensorTerm(params.sensor_terms_[i], i);
 
 			talon->setInvert(params.invert_output_);
 			talon->setSensorPhase(params.sensor_phase_);
@@ -1531,6 +1730,9 @@ class TalonControllerInterface
 
 			talon->setForwardLimitSwitchSource(params.limit_switch_local_forward_source_, params.limit_switch_local_forward_normal_);
 			talon->setReverseLimitSwitchSource(params.limit_switch_local_reverse_source_, params.limit_switch_local_reverse_normal_);
+
+			talon->setRemoteForwardLimitSwitchSource(params.limit_switch_remote_forward_source_, params.limit_switch_remote_forward_normal_, params.limit_switch_remote_forward_id_);
+			talon->setRemoteReverseLimitSwitchSource(params.limit_switch_remote_reverse_source_, params.limit_switch_remote_reverse_normal_, params.limit_switch_remote_reverse_id_);
 			talon->setOverrideSoftLimitsEnable(params.override_limit_switches_enable_);
 			talon->setForwardSoftLimitThreshold(params.softlimit_forward_threshold_);
 			talon->setForwardSoftLimitEnable(params.softlimit_forward_enable_);

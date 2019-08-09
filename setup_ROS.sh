@@ -10,21 +10,22 @@
 # Setup sources.lst
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 # Setup keys
-sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-key 0xB01FA116
-# Installation
+sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+# Grab new package lists from ros.org
 sudo apt update
 
-# For intel realsense - from apt for x86 laptops
-sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE 
-sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main" -u 
-sudo apt update
+# For intel realsense - from apt for x86 laptops, not yet (if ever) available for AARCH64
+#sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE 
+#sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main" -u 
+#sudo apt update
+#sudo apt install -y librealsense2-dev librealsense2-dkms librealsense2-utils
 
 # From source for the Jetson
-sudo apt install git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw3-dev 
+sudo apt install -y git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev 
 mkdir realsense_src && cd realsense_src
-wget https://github.com/IntelRealSense/librealsense/archive/v2.23.0.zip
-unzip v2.23.0.zip
-cd librealsense-2.23.0
+wget https://github.com/IntelRealSense/librealsense/archive/v2.24.0.zip
+unzip v2.24.0.zip
+cd librealsense-2.24.0
 sudo cp config/99-realsense-libusb.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && udevadm trigger
 mkdir build && cd build
@@ -33,14 +34,63 @@ sudo make uninstall && make clean && make -j6 && sudo make install
 
 # Add Individual Packages here
 # You can install a specific ROS package (replace underscores with dashes of the package name):
-# sudo apt-get install ros-kinetic-PACKAGE
+# sudo apt-get install ros-melodic-PACKAGE
 # e.g.
-# sudo apt-get install ros-kinetic-navigation
+# sudo apt-get install ros-melodic-navigation
 #
 # To find available packages:
-# apt-cache search ros-kinetic
+# apt-cache search ros-melodic
 # 
-sudo apt install ros-kinetic-ros-base python-rosdep python-rosinstall terminator ros-kinetic-rqt ros-kinetic-rqt-common-plugins ros-kinetic-tf2-ros ros-kinetic-pcl-conversions ros-kinetic-cv-bridge ros-kinetic-tf ros-kinetic-map-server ros-kinetic-rviz ros-kinetic-hector-slam ros-kinetic-hector-slam-launch ros-kinetic-rtabmap-ros ros-kinetic-robot-localization ros-kinetic-navigation ros-kinetic-robot-state-publisher ros-kinetic-rosparam-shortcuts python-wstool ninja-build libsuitesparse-dev ros-kinetic-tf2-tools ros-kinetic-hardware-interface ros-kinetic-controller-manager ros-kinetic-control-msgs ros-kinetic-joint-limits-interface ros-kinetic-transmission-interface liblua5.3-dev ros-kinetic-joystick-drivers ros-kinetic-gmapping ros-kinetic-teb-local-planner ros-kinetic-roslint ros-kinetic-xacro ros-kinetic-rqt-controller-manager ros-kinetic-serial ros-kinetic-ecl-geometry ros-kinetic-rviz-imu-plugin ros-kinetic-rosbridge-suite ros-kinetic-grid-map-core ros-kinetic-grid-map-cv ros-kinetic-grid-map-ros ros-kinetic-ar-track-alvar ros-kinetic-teraranger-* ros-kinetic-pid ros-kinetic*mux* ros-kinetic-usb-cam python-pyqtgraph librealsense2-dev librealsense2-dkms librealsense2-utils ros-kinetic-uvc-camera ros-kinetic-image-pipeline -y
+# Keep each package on a separate line to aid in git merging
+# Try to keep them in alphabetic order to make it easier to find duplicates
+sudo apt install -y \
+	ros-melodic-ros-base \
+	liblua5.3-dev \
+	libsuitesparse-dev \
+	ninja-build \
+	python-pyqtgraph \
+	python-rosdep \
+	python-rosinstall \
+	python-wstool \
+	ros-melodic-ar-track-alvar \
+	ros-melodic-controller-manager \
+	ros-melodic-control-msgs \
+	ros-melodic-cv-bridge \
+	ros-melodic-ecl-geometry \
+	ros-melodic-grid-map-core \
+	ros-melodic-grid-map-cv \
+	ros-melodic-grid-map-ros \
+	ros-melodic-hardware-interface \
+	ros-melodic-joint-limits-interface \
+	ros-melodic-joystick-drivers \
+	ros-melodic-map-server \
+	ros-melodic*mux* \
+	ros-melodic-navigation \
+	ros-melodic-pcl-conversions \
+	ros-melodic-pid \
+	ros-melodic-robot-localization \
+	ros-melodic-robot-state-publisher \
+	ros-melodic-rosbridge-suite \
+	ros-melodic-roslint \
+	ros-melodic-rosparam-shortcuts \
+	ros-melodic-rqt \
+	ros-melodic-rqt-common-plugins \
+	ros-melodic-rqt-controller-manager \
+	ros-melodic-rtabmap-ros \
+	ros-melodic-rviz \
+	ros-melodic-rviz-imu-plugin \
+	ros-melodic-serial \
+	ros-melodic-teb-local-planner \
+	ros-melodic-tf \
+	ros-melodic-tf2-ros \
+	ros-melodic-tf2-tools \
+	ros-melodic-transmission-interface \
+	ros-melodic-usb-cam \
+	ros-melodic-xacro \
+	terminator 
+
+# Not for melodic - ros-melodic-hector-slam ros-melodic-hector-slam-launch ros-melodic-gmapping 
+# handled by wstool for now ros-melodic-teraranger-* 
 
 # Initialize rosdep
 # ssl certificates can get messed up on TX1 for some reason
@@ -71,7 +121,7 @@ cd ~/2019RobotCode/zebROS_ws/src
 
 # Boilerplate control code
 #wstool merge https://raw.githubusercontent.com/FRC900/steered_wheel_base_controller/master/steered_wheel_base_controller.rosinstall
-#wstool merge https://raw.githubusercontent.com/FRC900/ros_control_boilerplate/kinetic-devel/ros_control_boilerplate.rosinstall
+#wstool merge https://raw.githubusercontent.com/FRC900/ros_control_boilerplate/melodic-devel/ros_control_boilerplate.rosinstall
 
 # LIDAR driver
 #wstool merge https://raw.githubusercontent.com/FRC900/rplidar_ros/master/rplidar.rosinstall
@@ -83,9 +133,9 @@ wstool update -j 4
 # The command 'sudo rosdep init' will print an error if you have already
 # executed it since installing ROS. This error can be ignored.
 rosdep update
-rosdep install --from-paths . --ignore-src --rosdistro=kinetic -y
+rosdep install --from-paths . --ignore-src --rosdistro=melodic -y
 
-source /opt/ros/kinetic/setup.bash
+#source /opt/ros/melodic/setup.bash
 
-cd ~/2019RobotCode/zebROS_ws
-catkin_make
+#cd ~/2019RobotCode/zebROS_ws
+#catkin_make

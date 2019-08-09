@@ -15,10 +15,11 @@ FRCRobotPhoenixSimInterface::FRCRobotPhoenixSimInterface(ros::NodeHandle &nh, ur
 
 void FRCRobotPhoenixSimInterface::init(void)
 {
-	for (size_t i = 0; i < can_talon_srx_can_ids_.size(); i++)
+	for (size_t i = 0; i < can_ctre_mc_can_ids_.size(); i++)
 	{
-		c_SimCreate(DeviceType::TalonSRXType, can_talon_srx_can_ids_[i]);
-		ROS_INFO_STREAM("phoenixsim : creating DeviceType::TalonSRXType id=" << can_talon_srx_can_ids_[i]);
+		// TODO : fix device type
+		c_SimCreate(DeviceType::TalonSRXType, can_ctre_mc_can_ids_[i]);
+		ROS_INFO_STREAM("phoenixsim : creating DeviceType::TalonSRXType id=" << can_ctre_mc_can_ids_[i]);
 	}
 
 	// for now we need a delay so backend can properly setup device properties

@@ -5,8 +5,6 @@ include ("../cmake_modules/CMakeOpt.cmake")
 
 if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 
-	add_definitions(--std=c++14)
-
 	find_package(catkin REQUIRED COMPONENTS
 		cmake_modules
 		roscpp

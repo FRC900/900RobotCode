@@ -159,6 +159,7 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     src/goal_detect_node.cpp
   )
 
+  list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
   ## Specify libraries to link a library or executable target against
   target_link_libraries(goal_detection_node
     ${catkin_LIBRARIES}

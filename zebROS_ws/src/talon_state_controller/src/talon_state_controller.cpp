@@ -80,31 +80,58 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 
 		m.feedback_sensor.push_back("");
 		m.feedback_coefficient.push_back(0.0);
+		m.remote_feedback_sensor.push_back("");
+		m.remote_feedback_filter0.push_back("");
+		m.remote_feedback_device_id0.push_back(0);
+		m.remote_feedback_filter1.push_back("");
+		m.remote_feedback_device_id1.push_back(0);
+		m.sensor_term_sum0.push_back("");
+		m.sensor_term_sum1.push_back("");
+		m.sensor_term_diff0.push_back("");
+		m.sensor_term_diff1.push_back("");
 		m.encoder_ticks_per_rotation.push_back(0);
 
 		m.pid_slot.push_back(0);
 		m.pid_p0.push_back(0.0);
 		m.pid_p1.push_back(0.0);
+		m.pid_p2.push_back(0.0);
+		m.pid_p3.push_back(0.0);
 
 		m.pid_i0.push_back(0.0);
 		m.pid_i1.push_back(0.0);
+		m.pid_i2.push_back(0.0);
+		m.pid_i3.push_back(0.0);
 
 		m.pid_d0.push_back(0.0);
 		m.pid_d1.push_back(0.0);
+		m.pid_d2.push_back(0.0);
+		m.pid_d3.push_back(0.0);
 
 		m.pid_f0.push_back(0.0);
 		m.pid_f1.push_back(0.0);
+		m.pid_f2.push_back(0.0);
+		m.pid_f3.push_back(0.0);
 
 		m.pid_izone0.push_back(0);
 		m.pid_izone1.push_back(0);
+		m.pid_izone2.push_back(0);
+		m.pid_izone3.push_back(0);
 		m.pid_allowable_closed_loop_error0.push_back(0);
 		m.pid_allowable_closed_loop_error1.push_back(0);
+		m.pid_allowable_closed_loop_error2.push_back(0);
+		m.pid_allowable_closed_loop_error3.push_back(0);
 		m.pid_max_integral_accumulator0.push_back(0);
 		m.pid_max_integral_accumulator1.push_back(0);
+		m.pid_max_integral_accumulator2.push_back(0);
+		m.pid_max_integral_accumulator3.push_back(0);
 		m.pid_closed_loop_peak_output0.push_back(0);
 		m.pid_closed_loop_peak_output1.push_back(0);
+		m.pid_closed_loop_peak_output2.push_back(0);
+		m.pid_closed_loop_peak_output3.push_back(0);
 		m.pid_closed_loop_period0.push_back(0);
 		m.pid_closed_loop_period1.push_back(0);
+		m.pid_closed_loop_period2.push_back(0);
+		m.pid_closed_loop_period3.push_back(0);
 		m.aux_pid_polarity.push_back(false);
 		m.set_point.push_back(0.0);
 		m.can_id.push_back(0);
@@ -150,8 +177,10 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 		m.limit_switch_local_reverse_normal.push_back("");
 		m.limit_switch_remote_forward_source.push_back("");
 		m.limit_switch_remote_forward_normal.push_back("");
+		m.limit_switch_remote_forward_id.push_back(0);
 		m.limit_switch_remote_reverse_source.push_back("");
 		m.limit_switch_remote_reverse_normal.push_back("");
+		m.limit_switch_remote_reverse_id.push_back(0);
 		m.softlimit_forward_threshold.push_back(0);
 		m.softlimit_forward_enable.push_back(false);
 		m.softlimit_reverse_threshold.push_back(0);
@@ -219,7 +248,7 @@ void TalonStateController::starting(const ros::Time &time)
 	last_publish_time_ = time;
 }
 
-std::string TalonStateController::limitSwitchSourceToString(const hardware_interface::LimitSwitchSource source)
+std::string TalonStateController::limitSwitchSourceToString(const hardware_interface::LimitSwitchSource source) const
 {
 	switch (source)
 	{
@@ -238,7 +267,7 @@ std::string TalonStateController::limitSwitchSourceToString(const hardware_inter
 	}
 }
 
-std::string TalonStateController::remoteLimitSwitchSourceToString(const hardware_interface::RemoteLimitSwitchSource source)
+std::string TalonStateController::remoteLimitSwitchSourceToString(const hardware_interface::RemoteLimitSwitchSource source) const
 {
 	switch (source)
 	{
@@ -254,7 +283,7 @@ std::string TalonStateController::remoteLimitSwitchSourceToString(const hardware
 			return "Unknown";
 	}
 }
-std::string TalonStateController::limitSwitchNormalToString(const hardware_interface::LimitSwitchNormal normal)
+std::string TalonStateController::limitSwitchNormalToString(const hardware_interface::LimitSwitchNormal normal) const
 {
 	switch (normal)
 	{
@@ -268,7 +297,70 @@ std::string TalonStateController::limitSwitchNormalToString(const hardware_inter
 			return "Disabled";
 		default:
 			return "Unknown";
+	}
+}
 
+std::string TalonStateController::feedbackDeviceToString(const hardware_interface::FeedbackDevice feedback_device) const
+{
+	switch (feedback_device)
+	{
+		case hardware_interface::FeedbackDevice_Uninitialized:
+			return "Uninitialized";
+		case hardware_interface::FeedbackDevice_QuadEncoder:
+			return "QuadEncoder";
+		case hardware_interface::FeedbackDevice_Analog:
+			return "Analog";
+		case hardware_interface::FeedbackDevice_Tachometer:
+			return "Tachometer";
+		case hardware_interface::FeedbackDevice_PulseWidthEncodedPosition:
+			return "PusleWidthEncodedPosition";
+		case hardware_interface::FeedbackDevice_SensorSum:
+			return  "SensorSum";
+		case hardware_interface::FeedbackDevice_SensorDifference:
+			return "SensorDifference";
+		case hardware_interface::FeedbackDevice_RemoteSensor0:
+			return  "RemoteSensor0";
+		case hardware_interface::FeedbackDevice_RemoteSensor1:
+			return  "RemoteSensor0";
+		case hardware_interface::FeedbackDevice_SoftwareEmulatedSensor:
+			return "SoftwareEmulatedSensor";
+		default:
+			return "Unknown";
+	}
+}
+
+std::string TalonStateController::remoteSensorSourceToString(const hardware_interface::RemoteSensorSource remote_sensor_source) const
+{
+	switch (remote_sensor_source)
+	{
+		case hardware_interface::RemoteSensorSource_Off:
+			return "Off";
+		case hardware_interface::RemoteSensorSource_TalonSRX_SelectedSensor:
+			return "TalonSRX_SelectedSensor";
+		case hardware_interface::RemoteSensorSource_Pigeon_Yaw:
+			return "Pigeon_Yaw";
+		case hardware_interface::RemoteSensorSource_Pigeon_Pitch:
+			return "Pigeon_Pitch";
+		case hardware_interface::RemoteSensorSource_Pigeon_Roll:
+			return "Pigeon_Roll";
+		case hardware_interface::RemoteSensorSource_CANifier_Quadrature:
+			return "CANifier_Quadrature";
+		case hardware_interface::RemoteSensorSource_CANifier_PWMInput0:
+			return "CANifier_PWMInput0";
+		case hardware_interface::RemoteSensorSource_CANifier_PWMInput1:
+			return "CANifier_PWMInput1";
+		case hardware_interface::RemoteSensorSource_CANifier_PWMInput2:
+			return "CANifier_PWMInput2";
+		case hardware_interface::RemoteSensorSource_CANifier_PWMInput3:
+			return "CANifier_PWMInput3";
+		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Yaw:
+			return "GadgeteerPigeon_Yaw";
+		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Pitch:
+			return "GadgeteerPigeon_Pitch";
+		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Roll:
+			return "GadgeteerPigeon_Roll";
+		default:
+			return "Unknown";
 	}
 }
 
@@ -304,44 +396,41 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				m.motor_output_percent[i] = ts->getMotorOutputPercent();
 				m.temperature[i] = ts->getTemperature();
 
-				switch (ts->getEncoderFeedback())
+				m.feedback_sensor[i] = feedbackDeviceToString(ts->getEncoderFeedback());
+				m.feedback_coefficient[i] = ts->getFeedbackCoefficient();
+				switch (ts->getRemoteEncoderFeedback())
 				{
-					case hardware_interface::FeedbackDevice_Uninitialized:
-						m.feedback_sensor[i] = "Uninitialized";
+					case hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff:
+						m.remote_feedback_sensor[i] = "FactoryDefaultOff";
 						break;
-					case hardware_interface::FeedbackDevice_QuadEncoder:
-						m.feedback_sensor[i] = "QuadEncoder";
+					case hardware_interface::RemoteFeedbackDevice_SensorSum:
+						m.remote_feedback_sensor[i] = "SensorSum";
 						break;
-					case hardware_interface::FeedbackDevice_Analog:
-						m.feedback_sensor[i] = "Analog";
+					case hardware_interface::RemoteFeedbackDevice_SensorDifference:
+						m.remote_feedback_sensor[i] = "SensorDifference";
 						break;
-					case hardware_interface::FeedbackDevice_Tachometer:
-						m.feedback_sensor[i] = "Tachometer";
+					case hardware_interface::RemoteFeedbackDevice_RemoteSensor0:
+						m.remote_feedback_sensor[i] = "RemoteSensor0";
 						break;
-					case hardware_interface::FeedbackDevice_PulseWidthEncodedPosition:
-						m.feedback_sensor[i] = "PusleWidthEncodedPosition";
+					case hardware_interface::RemoteFeedbackDevice_RemoteSensor1:
+						m.remote_feedback_sensor[i] = "RemoteSensor1";
 						break;
-					case hardware_interface::FeedbackDevice_SensorSum:
-						m.feedback_sensor[i] =  "SensorSum";
-						break;
-					case hardware_interface::FeedbackDevice_SensorDifference:
-						m.feedback_sensor[i] = "SensorDifference";
-						break;
-					case hardware_interface::FeedbackDevice_RemoteSensor0:
-						m.feedback_sensor[i] =  "RemoteSensor0";
-						break;
-					case hardware_interface::FeedbackDevice_RemoteSensor1:
-						m.feedback_sensor[i] =  "RemoteSensor0";
-						break;
-					case hardware_interface::FeedbackDevice_SoftwareEmulatedSensor:
-						m.feedback_sensor[i] = "SoftwareEmulatedSensor";
+					case hardware_interface::RemoteFeedbackDevice_SoftwareEmulatedSensor:
+						m.remote_feedback_sensor[i] = "SoftwareEmulatedSensor";
 						break;
 					default:
-						m.feedback_sensor[i] = "Unknown";
+						m.remote_feedback_sensor[i] = "Unknown";
 						break;
 				}
-				m.feedback_coefficient[i] = ts->getFeedbackCoefficient();
+				m.remote_feedback_device_id0[i] = ts->getRemoteFeedbackDeviceId(0);
+				m.remote_feedback_filter0[i] = remoteSensorSourceToString(ts->getRemoteFeedbackFilter(0));
+				m.remote_feedback_device_id1[i] = ts->getRemoteFeedbackDeviceId(1);
+				m.remote_feedback_filter1[i] = remoteSensorSourceToString(ts->getRemoteFeedbackFilter(1));
 				m.encoder_ticks_per_rotation[i] = ts->getEncoderTicksPerRotation();
+				m.sensor_term_sum0[i] = feedbackDeviceToString(ts->getSensorTerm(hardware_interface::SensorTerm_Sum0));
+				m.sensor_term_sum1[i] = feedbackDeviceToString(ts->getSensorTerm(hardware_interface::SensorTerm_Sum1));
+				m.sensor_term_diff0[i] = feedbackDeviceToString(ts->getSensorTerm(hardware_interface::SensorTerm_Diff0));
+				m.sensor_term_diff1[i] = feedbackDeviceToString(ts->getSensorTerm(hardware_interface::SensorTerm_Diff1));
 
 				//publish the array of PIDF values
 				m.pid_slot[i] = ts->getSlot();
@@ -364,6 +453,26 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				m.pid_max_integral_accumulator1[i] = ts->getMaxIntegralAccumulator(1);
 				m.pid_closed_loop_peak_output1[i] = ts->getClosedLoopPeakOutput(1);
 				m.pid_closed_loop_period1[i] = ts->getClosedLoopPeriod(1);
+
+				m.pid_p2[i] = ts->getPidfP(2);
+				m.pid_i2[i] = ts->getPidfI(2);
+				m.pid_d2[i] = ts->getPidfD(2);
+				m.pid_f2[i] = ts->getPidfF(2);
+				m.pid_izone2[i] = ts->getPidfIzone(2);
+				m.pid_allowable_closed_loop_error2[i] = ts->getAllowableClosedLoopError(2);
+				m.pid_max_integral_accumulator2[i] = ts->getMaxIntegralAccumulator(2);
+				m.pid_closed_loop_peak_output2[i] = ts->getClosedLoopPeakOutput(2);
+				m.pid_closed_loop_period2[i] = ts->getClosedLoopPeriod(2);
+
+				m.pid_p3[i] = ts->getPidfP(3);
+				m.pid_i3[i] = ts->getPidfI(3);
+				m.pid_d3[i] = ts->getPidfD(3);
+				m.pid_f3[i] = ts->getPidfF(3);
+				m.pid_izone3[i] = ts->getPidfIzone(3);
+				m.pid_allowable_closed_loop_error3[i] = ts->getAllowableClosedLoopError(3);
+				m.pid_max_integral_accumulator3[i] = ts->getMaxIntegralAccumulator(3);
+				m.pid_closed_loop_peak_output3[i] = ts->getClosedLoopPeakOutput(3);
+				m.pid_closed_loop_period3[i] = ts->getClosedLoopPeriod(3);
 
 				m.aux_pid_polarity[i] = ts->getAuxPidPolarity();
 
@@ -491,14 +600,18 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				m.limit_switch_local_reverse_normal[i] = limitSwitchNormalToString(ls_normal);
 
 				hardware_interface::RemoteLimitSwitchSource remote_ls_source;
-				ts->getRemoteForwardLimitSwitchSource(remote_ls_source, ls_normal);
+				unsigned int remote_ls_id;
+				ts->getRemoteForwardLimitSwitchSource(remote_ls_source, ls_normal, remote_ls_id);
 
 				m.limit_switch_remote_forward_source[i] = remoteLimitSwitchSourceToString(remote_ls_source);
 				m.limit_switch_remote_forward_normal[i] = limitSwitchNormalToString(ls_normal);
+				m.limit_switch_remote_forward_id[i] = remote_ls_id;
 
-				ts->getRemoteReverseLimitSwitchSource(remote_ls_source, ls_normal);
+				ts->getRemoteReverseLimitSwitchSource(remote_ls_source, ls_normal, remote_ls_id);
 				m.limit_switch_remote_reverse_source[i] = remoteLimitSwitchSourceToString(remote_ls_source);
 				m.limit_switch_remote_reverse_normal[i] = limitSwitchNormalToString(ls_normal);
+				m.limit_switch_remote_reverse_id[i] = remote_ls_id;
+
 				m.softlimit_forward_threshold[i] = ts->getForwardSoftLimitThreshold();
 				m.softlimit_forward_enable[i] = ts->getForwardSoftLimitEnable();
 				m.softlimit_reverse_threshold[i] = ts->getReverseSoftLimitThreshold();
