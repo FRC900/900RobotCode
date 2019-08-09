@@ -169,7 +169,10 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
  install(PROGRAMS
-   scripts/driver_station_sim
+   scripts/rqt_driver_station_sim
+   src/driver_station_sim.py
+   src/driver_station_widget.py
+   src/__init__.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 

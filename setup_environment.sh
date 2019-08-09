@@ -16,6 +16,7 @@ sudo apt install -y \
 	cmake \
 	exfat-fuse \
 	exfat-utils \
+	gdb \
 	gfortran \
 	git \
 	gstreamer1.0-plugins-* \
@@ -31,13 +32,16 @@ sudo apt install -y \
 	libhdf5-serial-dev \
 	libleveldb-dev \
 	liblmdb-dev \
+	liblua5.3-dev \
 	libpcl-dev \
 	libproj-dev \
 	libprotobuf-dev \
 	libsnappy-dev \
 	libsuitesparse-dev \
 	libtinyxml2-dev \
+	net-tools \
 	ninja-build \
+	nmap \
 	ntp \
 	ntpdate \
 	openssh-client \
@@ -50,6 +54,7 @@ sudo apt install -y \
 	python-pip \
 	python-scipy \
 	rsync \
+	software-properties-common \
 	terminator \
 	unzip \
 	v4l-conf \
