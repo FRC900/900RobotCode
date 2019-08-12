@@ -55,4 +55,7 @@
 - git:
     local-name: realsense
     uri: https://github.com/FRC900/realsense.git 
+- git:
+    local-name: ddynamic_reconfigure
+    uri: https://github.com/pal-robotics/ddynamic_reconfigure
 
