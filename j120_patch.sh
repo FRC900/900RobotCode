@@ -22,18 +22,18 @@
 
 	# no hits for zImage in the nvidia 4.2 installer
 
-	cp `find . -name tegra186-quill-p3310-1000-a00-00-base.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2_Linux_P3310/Linux_for_Tegra/kernel/dtb
-	sudo cp `find . -name tegra186-quill-p3310-1000-a00-00-base.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2_Linux_P3310/Linux_for_Tegra/rootfs/boot
+	cp `find . -name tegra186-quill-p3310-1000-a00-00-base.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2.1_Linux_GA_P3310/Linux_for_Tegra/kernel/dtb
+	sudo cp `find . -name tegra186-quill-p3310-1000-a00-00-base.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2.1_Linux_GA_P3310/Linux_for_Tegra/rootfs/boot
 
-	cp `find . -name tegra186-quill-p3310-1000-c03-00-base.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2_Linux_P3310/Linux_for_Tegra/kernel/dtb
-	cp `find . -name tegra186-quill-p3310-1000-c03-00-base.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2_Linux_P3310/Linux_for_Tegra/bootloader
-	sudo cp `find . -name tegra186-quill-p3310-1000-c03-00-base.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2_Linux_P3310/Linux_for_Tegra/rootfs/boot
+	cp `find . -name tegra186-quill-p3310-1000-c03-00-base.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2.1_Linux_GA_P3310/Linux_for_Tegra/kernel/dtb
+	cp `find . -name tegra186-quill-p3310-1000-c03-00-base.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2.1_Linux_GA_P3310/Linux_for_Tegra/bootloader
+	sudo cp `find . -name tegra186-quill-p3310-1000-c03-00-base.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2.1_Linux_GA_P3310/Linux_for_Tegra/rootfs/boot
  
-	cp `find . -name tegra186-quill-p3310-1000-c03-00-dsi-hdmi-dp.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2_Linux_P3310/Linux_for_Tegra/kernel/dtb
-	sudo cp `find . -name tegra186-quill-p3310-1000-c03-00-dsi-hdmi-dp.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2_Linux_P3310/Linux_for_Tegra/rootfs/boot
+	cp `find . -name tegra186-quill-p3310-1000-c03-00-dsi-hdmi-dp.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2.1_Linux_GA_P3310/Linux_for_Tegra/kernel/dtb
+	sudo cp `find . -name tegra186-quill-p3310-1000-c03-00-dsi-hdmi-dp.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2.1_Linux_GA_P3310/Linux_for_Tegra/rootfs/boot
 
-	cp `find . -name tegra186-quill-p3489-1000-a00-00-ucm1.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2_Linux_P3310/Linux_for_Tegra/kernel/dtb
-	sudo cp `find . -name tegra186-quill-p3489-1000-a00-00-ucm1.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2_Linux_P3310/Linux_for_Tegra/rootfs/boot
+	cp `find . -name tegra186-quill-p3489-1000-a00-00-ucm1.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2.1_Linux_GA_P3310/Linux_for_Tegra/kernel/dtb
+	sudo cp `find . -name tegra186-quill-p3489-1000-a00-00-ucm1.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2.1_Linux_GA_P3310/Linux_for_Tegra/rootfs/boot
 
-	cp `find . -name tegra186-quill-p3489-1000-a00-00-ucm2.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2_Linux_P3310/Linux_for_Tegra/kernel/dtb
-	sudo cp `find . -name tegra186-quill-p3489-1000-a00-00-ucm2.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2_Linux_P3310/Linux_for_Tegra/rootfs/boot
+	cp `find . -name tegra186-quill-p3489-1000-a00-00-ucm2.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2.1_Linux_GA_P3310/Linux_for_Tegra/kernel/dtb
+	sudo cp `find . -name tegra186-quill-p3489-1000-a00-00-ucm2.dtb | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2.1_Linux_GA_P3310/Linux_for_Tegra/rootfs/boot

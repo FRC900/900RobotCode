@@ -23,9 +23,9 @@ sudo apt update
 # From source for the Jetson
 sudo apt install -y git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev 
 mkdir realsense_src && cd realsense_src
-wget https://github.com/IntelRealSense/librealsense/archive/v2.24.0.zip
-unzip v2.24.0.zip
-cd librealsense-2.24.0
+wget https://github.com/IntelRealSense/librealsense/archive/v2.25.0.zip
+unzip v2.25.0.zip
+cd librealsense-2.25.0
 sudo cp config/99-realsense-libusb.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && udevadm trigger
 mkdir build && cd build
