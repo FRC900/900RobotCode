@@ -13,9 +13,9 @@ install:
 script:
   - docker run --user ubuntu frc900/zebros-2020-beta-dev:latest /bin/bash -l -c
     "cd ~ &&
-     sudo chown ubuntu:ubuntu 2019RobotCode &&
-     cd ~/2019RobotCode &&
-     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2019RobotCode.git . &&
+     sudo chown ubuntu:ubuntu 2019Offseason &&
+     cd ~/2019Offseason &&
+     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2019Offseason.git . &&
      echo \"Clone success.\" &&
      git checkout $TRAVIS_COMMIT &&
      echo \"git checkout\" &&
@@ -36,9 +36,9 @@ script:
      echo \"Finished Ubuntu compile.\""
   - docker run --user ubuntu frc900/zebros-2020-beta-dev:latest /bin/bash -l -c
     "cd ~ &&
-     sudo chown ubuntu:ubuntu 2019RobotCode &&
-     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2019RobotCode.git &&
-     cd ./2019RobotCode/ &&
+     sudo chown ubuntu:ubuntu 2019Offseason &&
+     git clone https://$GITHUB_USER:$GITHUB_PASS@github.com/FRC900/2019Offseason.git &&
+     cd ./2019Offseason/ &&
      git checkout $TRAVIS_COMMIT &&
      git log -n1 &&
      git submodule update --init --recursive &&

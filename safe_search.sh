@@ -29,7 +29,7 @@ do
 	fi
 
 	echo Writing data to file
-	$HOME/2019RobotCode/zebROS_ws/devel/lib/rosbag_scripts/rosbag_scripts_node $var
+	$HOME/2019Offseason/zebROS_ws/devel/lib/rosbag_scripts/rosbag_scripts_node $var
 	filename=$(basename $var)
 
 	any_data=$(rosbag info $var | grep /frcrobot_rio/match_data)

@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 	{
 		// TODO - these should be params instead
 		//read the file with covariances and apply it to the odometry and IMU
-		ifstream infile("/home/ubuntu/2019RobotCode/zebROS_ws/src/navx_publisher/navx_calib.dat");
+		ifstream infile("/home/ubuntu/2019Offseason/zebROS_ws/src/navx_publisher/navx_calib.dat");
 		if (!infile.good())
 			cerr << "navx_calib.dat file not opened!" << endl;
 		std::string line;

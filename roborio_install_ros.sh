@@ -42,10 +42,10 @@ ssh -p 22 admin@$1 'opkg clean'
 ssh -p 22 admin@$1 'pip install catkin_pkg rospkg rosdistro vcstools rosdep wstool rosinstall rosinstall_generator defusedxml empy'
 
 # Copy over ROS tar.bz2 file, extract to / on the Rio
-scp -P 22 ~/2019RobotCode/roscore_roborio.tar.bz2 admin@$1:.
+scp -P 22 ~/2019Offseason/roscore_roborio.tar.bz2 admin@$1:.
 ssh -p 22 admin@$1 'cd / && tar -xjf ~/roscore_roborio.tar.bz2'
 ssh -p 22 admin@$1 'rm ~/roscore_roborio.tar.bz2'
-scp -P 22 ~/2019RobotCode/os_detect.py admin@$1:/usr/lib/python2.7/site-packages/rospkg/
+scp -P 22 ~/2019Offseason/os_detect.py admin@$1:/usr/lib/python2.7/site-packages/rospkg/
 
 # Try to simulate what the cross-build environment looks like 
 # This will prevent weird bugs were sourcing install_isolated/setup.bash
@@ -58,26 +58,26 @@ ssh -p 22 admin@$1 'ln -s /usr/include /include'
 
 # Create workspace. Do a build in the empty workspace to set
 # up various scripts for later use. TODO : See if this is needed?
-ssh -p 22 admin@$1 'mkdir -p 2019RobotCode/zebROS_ws/src'
-ssh -p 22 admin@$1 'source /opt/ros/melodic/setup.bash && cd 2019RobotCode/zebROS_ws && catkin_make_isolated --install'
+ssh -p 22 admin@$1 'mkdir -p 2019Offseason/zebROS_ws/src'
+ssh -p 22 admin@$1 'source /opt/ros/melodic/setup.bash && cd 2019Offseason/zebROS_ws && catkin_make_isolated --install'
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
 ##################-----------------------------#################
-#Edit /etc/ntp.conf to be a copy of ntp-server in 2019RobotCode#
-scp -P 22 ~/2019RobotCode/ntp-server.conf admin@$1:/etc/ntp.conf
+#Edit /etc/ntp.conf to be a copy of ntp-server in 2019Offseason#
+scp -P 22 ~/2019Offseason/ntp-server.conf admin@$1:/etc/ntp.conf
 
 #---------------------------------------------------------------#
 #               to setup RTC on the rio
 #   Plug the rtc into the i2c port on the rio while unpowered
 #
-scp -P 22 ~/2019RobotCode/rtc-bq32k.ko admin@$1:.
+scp -P 22 ~/2019Offseason/rtc-bq32k.ko admin@$1:.
 ssh -p 22 admin@$1 'mv rtc-bq32k.ko /lib/modules/`uname -r`/kernel'
 ssh -p 22 admin@$1 'depmod'
 ssh -p 22 admin@$1 'i2cdetect -y 2'
 ssh -p 22 admin@$1 'echo bq32000 0x68 | tee /sys/class/i2c-adapter/i2c-2/new_device'
 ssh -p 22 admin@$1 'hwclock -w'
 
-scp -P 22 ~/2019RobotCode/setupClock admin@$1:/etc/init.d/setupClock
+scp -P 22 ~/2019Offseason/setupClock admin@$1:/etc/init.d/setupClock
 ssh -p 22 admin@$1 'chmod +x /etc/init.d/setupClock'
 ssh -p 22 admin@$1 'ln -sf /etc/init.d/setupClock /etc/init.d/hwclock.sh'
 ssh -p 22 admin@$1 '/usr/sbin/update-rc.d -f setupClock defaults'
@@ -89,7 +89,7 @@ cd ~/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib/linux/athena/shared
 scp -P 22 *.so *.so.3.? admin@$1:wpilib
 
 # Set up ssh keys
-scp -P 22 ~/2019RobotCode/jetson_setup/roborio_dot_ssh.tar.bz2 admin@$1:.
+scp -P 22 ~/2019Offseason/jetson_setup/roborio_dot_ssh.tar.bz2 admin@$1:.
 ssh -p 22 admin@$1 'mkdir .ssh'
 ssh -p 22 admin@$1 'cd .ssh -p 22 && tar -xjf ../roborio_dot_ssh.tar.bz2'
 ssh -p 22 admin@$1 'rm roborio_dot_ssh.tar.bz2'
@@ -103,11 +103,11 @@ ssh -p 22 admin@$1 "/etc/init.d/sshd restart"
 sleep 5
 
 # Copy rio_bashrc.sh, ROSJetsonMaster.sh to /home/admin
-scp -P 22 ~/2019RobotCode/rio_bashrc.sh admin@$1:.
-scp -P 22 ~/2019RobotCode/zebROS_ws/ROSJetsonMaster.sh admin@$1:.
+scp -P 22 ~/2019Offseason/rio_bashrc.sh admin@$1:.
+scp -P 22 ~/2019Offseason/zebROS_ws/ROSJetsonMaster.sh admin@$1:.
 
 # Set up prereqs for deploy script
-ssh -p 22 admin@$1 'mv ~/2019RobotCode ~/2019RobotCode.orig'
-ssh -p 22 admin@$1 'ln -s ~/2019RobotCode.orig ~/2019RobotCode'
-ssh -p 22 admin@$1 'mkdir -p ~/2019RobotCode.prod/zebROS_ws'
-ssh -p 22 admin@$1 'mkdir -p ~/2019RobotCode.dev/zebROS_ws'
+ssh -p 22 admin@$1 'mv ~/2019Offseason ~/2019Offseason.orig'
+ssh -p 22 admin@$1 'ln -s ~/2019Offseason.orig ~/2019Offseason'
+ssh -p 22 admin@$1 'mkdir -p ~/2019Offseason.prod/zebROS_ws'
+ssh -p 22 admin@$1 'mkdir -p ~/2019Offseason.dev/zebROS_ws'

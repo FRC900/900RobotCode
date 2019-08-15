@@ -9,7 +9,7 @@
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="static_map" default="True"/>
 
-        <!--machine name="roboRIO" address="10.9.0.2" env-loader="/home/admin/2019RobotCode/zebROS_ws/ROSJetsonMaster.sh" user="admin" password="admin"/-->
+        <!--machine name="roboRIO" address="10.9.0.2" env-loader="/home/admin/2019Offseason/zebROS_ws/ROSJetsonMaster.sh" user="admin" password="admin"/-->
 
         <!--include file="$(find controller_node)/launch/record_offseason.launch"/-->
 	
@@ -72,7 +72,7 @@
     </group>
 
     <!-- jetson 2 stuffs -->
-	<!-- <machine name="jetson_2" address="10.9.0.9" env-loader="/home/ubuntu/2019RobotCode/zebROS_ws/ROSJetsonMaster.sh" user="ubuntu" password="ubuntu" default="true"/>
+	<!-- <machine name="jetson_2" address="10.9.0.9" env-loader="/home/ubuntu/2019Offseason/zebROS_ws/ROSJetsonMaster.sh" user="ubuntu" password="ubuntu" default="true"/>
          Jetson 2 Sensors
         <include file="$(find controller_node)/launch/rplidar.launch"/>
         <group ns="jetson_2">

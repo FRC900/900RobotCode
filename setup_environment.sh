@@ -102,10 +102,10 @@ rm ./$zed_fn
 
 #mount and setup autostart script
 sudo mkdir /mnt/900_2
-cd ~/2019RobotCode
+cd ~/2019Offseason
 
 # edit /etc/init.d/ntp to contain the line: <ntpd -gq> before all content already there.
-sudo cp ntp-client.conf /etc/ntp.conf  # edit /etc/ntp.conf to be a copy of ntp-client.conf in 2019RobotCode
+sudo cp ntp-client.conf /etc/ntp.conf  # edit /etc/ntp.conf to be a copy of ntp-client.conf in 2019Offseason
 
 # Set up can0 network interface
 cd
@@ -137,17 +137,17 @@ sudo sed "s/#Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config &&
 # and keys for connections to Rio
 mkdir -p ~/.ssh
 cd ~/.ssh
-tar -xjf ~/2019RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 
+tar -xjf ~/2019Offseason/jetson_setup/jetson_dot_ssh.tar.bz2 
 chmod 640 authorized_keys
 cd ~
 chmod 700 .ssh
 
 sudo mkdir -p /root/.ssh
-sudo tar -xjf /home/ubuntu/2019RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
+sudo tar -xjf /home/ubuntu/2019Offseason/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
 sudo chmod 640 /root/.ssh/authorized_keys
 sudo chmod 700 /root/.ssh
 
-cd ~/2019RobotCode
+cd ~/2019Offseason
 sudo cp ./jetson_setup/10-local.rules /etc/udev/rules.d/
 sudo service udev reload
 sleep 2
@@ -280,18 +280,18 @@ rm -rf /home/ubuntu/frc2019/maven /home/ubuntu/frc2019/jdk
 sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 
 # Set up prereqs for deploy script
-mv ~/2019RobotCode ~/2019RobotCode.orig
-ln -s ~/2019RobotCode.orig ~/2019RobotCode
-mkdir -p ~/2019RobotCode.prod/zebROS_ws
-mkdir -p ~/2019RobotCode.dev/zebROS_ws
+mv ~/2019Offseason ~/2019Offseason.orig
+ln -s ~/2019Offseason.orig ~/2019Offseason
+mkdir -p ~/2019Offseason.prod/zebROS_ws
+mkdir -p ~/2019Offseason.dev/zebROS_ws
 
 sudo mkdir -p /usr/local/zed/settings
 sudo chmod 755 /usr/local/zed/settings
-sudo cp ~/2019RobotCode/calibration_files/*.conf /usr/local/zed/settings
+sudo cp ~/2019Offseason/calibration_files/*.conf /usr/local/zed/settings
 sudo chmod 644 /usr/local/zed/settings/*
 
-cp ~/2019RobotCode/.vimrc ~/2019RobotCode/.gvimrc ~
-sudo cp ~/2019RobotCode/kjaget.vim /usr/share/vim/vim80/colors
+cp ~/2019Offseason/.vimrc ~/2019Offseason/.gvimrc ~
+sudo cp ~/2019Offseason/kjaget.vim /usr/share/vim/vim80/colors
 
 git config --global user.email "progammers@team900.org"
 git config --global user.name "Team900 Jetson TX2"

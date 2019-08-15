@@ -4,7 +4,7 @@
 sudo sysctl -p
 sudo rfkill block wifi  
 sudo rfkill block bluetooth
-. /home/ubuntu/2019RobotCode/zebROS_ws/ROSJetsonSlave.sh
+. /home/ubuntu/2019Offseason/zebROS_ws/ROSJetsonSlave.sh
 #echo 1100-1200,443,80,554,1735,5800-5810 > /proc/sys/net/ipv4/ip_local_reserved_ports
 #sudo chmod a+rw /dev/ttyACM0
 
@@ -20,5 +20,5 @@ else
 	roslaunch controller_node controller_slave.launch
 fi
 
-/home/ubuntu/2019RobotCode/jetson_setup/clocks.sh &
+/home/ubuntu/2019Offseason/jetson_setup/clocks.sh &
 

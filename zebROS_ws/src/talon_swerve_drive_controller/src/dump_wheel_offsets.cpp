@@ -10,7 +10,7 @@ bool get_offsets_srv(std_srvs::Trigger::Request& /*req*/, std_srvs::Trigger::Res
 {
 	ROS_INFO_STREAM("running get_offsets_srv");
 	std::stringstream offsets_file_name;
-	offsets_file_name <<  "/home/ubuntu/2019RobotCode/zebROS_ws/src/ros_control_boilerplate/config/offsets_" << std::to_string(ros::Time::now().toSec()) << ".yaml";
+	offsets_file_name <<  "/home/ubuntu/2019Offseason/zebROS_ws/src/ros_control_boilerplate/config/offsets_" << std::to_string(ros::Time::now().toSec()) << ".yaml";
 	std::ofstream offsets_file(offsets_file_name.str());
 
 	// TODO : make these config items, maybe?

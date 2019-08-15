@@ -9,11 +9,11 @@ Type=simple
 WorkingDirectory=/mnt/900_2
 
 ExecStartPre=/bin/sh -ec 'sleep 5' ; \
-	     /bin/bash -ec "/home/ubuntu/2019RobotCode/set_freq_tx.sh || true" ; \
-	     /bin/bash -ec "/home/ubuntu/2019RobotCode/set_freq_tx.sh || true" ; \
+	     /bin/bash -ec "/home/ubuntu/2019Offseason/set_freq_tx.sh || true" ; \
+	     /bin/bash -ec "/home/ubuntu/2019Offseason/set_freq_tx.sh || true" ; \
 	     /bin/sh -ec 'ifup eth0 || true' ;
 
-ExecStart=/bin/bash -ec "/home/ubuntu/2019RobotCode/jetson_setup/slave.sh || true"
+ExecStart=/bin/bash -ec "/home/ubuntu/2019Offseason/jetson_setup/slave.sh || true"
 
 Restart=on-failure
 

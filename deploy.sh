@@ -73,12 +73,12 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # Directory paths on the Jetson and roboRIO.
-RIO_CLONE_LOCATION=/home/admin/2019RobotCode
+RIO_CLONE_LOCATION=/home/admin/2019Offseason
 RIO_ENV_LOCATION=$RIO_CLONE_LOCATION.$INSTALL_ENV
 RIO_ROS_CODE_LOCATION=$RIO_ENV_LOCATION/zebROS_ws
 RIO_INSTALL_LOCATION=$RIO_ROS_CODE_LOCATION/install_isolated
 
-JETSON_CLONE_LOCATION=/home/ubuntu/2019RobotCode
+JETSON_CLONE_LOCATION=/home/ubuntu/2019Offseason
 JETSON_ENV_LOCATION=$JETSON_CLONE_LOCATION.$INSTALL_ENV
 JETSON_ROS_CODE_LOCATION=$JETSON_ENV_LOCATION/zebROS_ws
 
@@ -188,7 +188,7 @@ do
 	(echo "Starting Jetson $i native build" && \
 		ssh $i "cd $JETSON_CLONE_LOCATION/zebROS_ws && \
 		source /opt/ros/melodic/setup.bash && \
-		source /home/ubuntu/2019RobotCode/zebROS_ws/ROSJetsonMaster.sh && \
+		source /home/ubuntu/2019Offseason/zebROS_ws/ROSJetsonMaster.sh && \
 		catkin_make --use-ninja" && \
 		echo "Jetson $i native build complete") &
 	JETSON_BUILD_PROCESSES+=($!)
