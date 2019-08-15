@@ -59,7 +59,7 @@ sed -i -e '/<\/package>/i  <build_depend>urdfdom_headers<\/build_depend>' urdf/u
 # Add class_loader to src/urdf/urdf package.xml exec_depend and CMakeLists CATKIN_DEPENDS
 
 # In a docker container : 
-# docker run -it --user ubuntu -v /home/kjaget/2019RobotCode:/home/ubuntu/2019RobotCode -v ~/melodic_arm_cross_ws:/home/ubuntu/melodic_arm_cross_ws  frc900/zebros-2020-beta-dev /bin/bash
+# docker run -it --user ubuntu -v /home/kjaget/2019Offseason:/home/ubuntu/2019Offseason -v ~/melodic_arm_cross_ws:/home/ubuntu/melodic_arm_cross_ws  frc900/zebros-2020-beta-dev /bin/bash
 
 # Then run the following from inside the container :
 
@@ -69,13 +69,13 @@ rm -rf ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/melodic devel_isolate
 
 # Note - if this fails looking for gencpp*cmake, run from a new terminal
 # window where no ROS setup.bash has previously been sourced
-./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2019RobotCode/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
+./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2019Offseason/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
 
 # Add newly built cross-libs to git repo so they are
 # used for subsequent Rio imagings
 cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi
-rm ~/2019RobotCode/roscore_roborio.tar.bz2
-tar -cjf ~/2019RobotCode/roscore_roborio.tar.bz2 opt/ros/melodic
+rm ~/2019Offseason/roscore_roborio.tar.bz2
+tar -cjf ~/2019Offseason/roscore_roborio.tar.bz2 opt/ros/melodic
 
 # !!!NOTE!!! - important - copy roscore_melodic_roborio.tar.bz2 into the docker repo
 # so it gets picked up in subsequent builds
