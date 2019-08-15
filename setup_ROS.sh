@@ -30,7 +30,7 @@ sudo cp config/99-realsense-libusb.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && udevadm trigger
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=true ..
-sudo make uninstall && make clean && make -j6 && sudo make install
+sudo make uninstall && make clean && make -j4 && sudo make install
 
 # Add Individual Packages here
 # You can install a specific ROS package (replace underscores with dashes of the package name):

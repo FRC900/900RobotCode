@@ -74,8 +74,11 @@ rm -rf ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/melodic devel_isolate
 # Add newly built cross-libs to git repo so they are
 # used for subsequent Rio imagings
 cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi
-rm ~/2019RobotCode/roscore_melodic_roborio.tar.bz2
-tar -cjf ~/2019RobotCode/roscore_melodic_roborio.tar.bz2 opt/ros/melodic
+rm ~/2019RobotCode/roscore_roborio.tar.bz2
+tar -cjf ~/2019RobotCode/roscore_roborio.tar.bz2 opt/ros/melodic
+
+# !!!NOTE!!! - important - copy roscore_melodic_roborio.tar.bz2 into the docker repo
+# so it gets picked up in subsequent builds
 
 # I needed to add "-DYAML_CPP_INCLUDE_DIRS=/$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/include
 # -DYAML_CPP_LIBRARIES=/$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/libyaml-cpp.a" to

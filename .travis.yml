@@ -27,7 +27,7 @@ script:
      cd zebROS_ws &&
      wstool update -t src &&
      echo \"wstool update\" &&
-     source /opt/ros/kinetic/setup.bash &&
+     source /opt/ros/melodic/setup.bash &&
      echo \"source setup.bash\" &&
      catkin_make &&
      echo \"catkin make\" &&
@@ -44,7 +44,7 @@ script:
      git submodule update --init --recursive &&
      cd zebROS_ws &&
      wstool update -t src &&
-     source /usr/arm-frc-linux-gnueabi/opt/ros/kinetic/setup.bash &&
+     source /usr/arm-frc-linux-gnueabi/opt/ros/melodic/setup.bash &&
      ./cross_build.sh &&
      echo \"Finished RoboRIO compile.\""
   - echo "Completed all tests successfully."

@@ -2,8 +2,8 @@
 
 if [ -z $ROS_ROOT ]; then
 	source /opt/ros/melodic/setup.bash
-	if [ ! -z install_native/setup.bash]; then
-		source install_native/setup.bash
+	if [ ! -z devel/setup.bash ]; then
+		source devel/setup.bash
 	fi
 elif [[ ! $ROS_ROOT = "/opt/ros/melodic/share/ros" ]]; then
 	echo "ROS is not configured for a native build (maybe set up for a cross build instead?)"
@@ -11,5 +11,4 @@ elif [[ ! $ROS_ROOT = "/opt/ros/melodic/share/ros" ]]; then
 	exit 1
 fi
 
-
-catkin_make_isolated --install --use-ninja --build-space build_native --devel-space devel_native --install-space install_native -DCMAKE_BUILD_TYPE=Release -DCATKIN_ENABLE_TESTING=OFF "$@"
+catkin_make --use-ninja -DCMAKE_BUILD_TYPE=Release -DCATKIN_ENABLE_TESTING=OFF "$@"

@@ -189,5 +189,5 @@ install_package($base_uri . "gpgme-dev_1.8.0-r0.2_cortexa9-vfpv3.ipk");
 install_package($base_uri . "gpgme_1.8.0-r0.2_cortexa9-vfpv3.ipk");
 install_package($base_uri . "libgpg-error-dev_1.26-r1.6_cortexa9-vfpv3.ipk");
 install_package($base_uri . "libgpg-error0_1.26-r1.6_cortexa9-vfpv3.ipk");
-linstall_package($base_uri . "ibassuan-dev_2.4.3-r0.2_cortexa9-vfpv3.ipk");
-linstall_package($base_uri . "ibassuan0_2.4.3-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libassuan-dev_2.4.3-r0.2_cortexa9-vfpv3.ipk");
+install_package($base_uri . "libassuan0_2.4.3-r0.2_cortexa9-vfpv3.ipk");

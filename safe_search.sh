@@ -1,6 +1,6 @@
 #also the organization is horrible. TODO please please fix
 
-source /opt/ros/kinetic/setup.bash
+source /opt/ros/melodic/setup.bash
 
 IFS='
 '

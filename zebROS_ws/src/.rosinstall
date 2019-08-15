@@ -2,34 +2,10 @@
 - git:
     local-name: control_toolbox
     uri: https://github.com/ros-gbp/control_toolbox-release.git
-    version: release/kinetic/control_toolbox/1.17.0-0
+    version: release/melodic/control_toolbox/1.17.0-0
 - git:
     local-name: px_ros_pkg
     uri: https://github.com/cvg/px-ros-pkg.git
-- git:
-    local-name: ros_controllers/forward_command_controller
-    uri: https://github.com/ros-gbp/ros_controllers-release.git
-    version: release/kinetic/forward_command_controller/0.13.5-0
-- git:
-    local-name: ros_controllers/imu_sensor_controller
-    uri: https://github.com/ros-gbp/ros_controllers-release.git
-    version: release/kinetic/imu_sensor_controller/0.13.5-0
-- git:
-    local-name: ros_controllers/joint_state_controller
-    uri: https://github.com/ros-gbp/ros_controllers-release.git
-    version: release/kinetic/joint_state_controller/0.13.5-0
-- git:
-    local-name: ros_controllers/joint_trajectory_controller
-    uri: https://github.com/ros-gbp/ros_controllers-release.git
-    version: release/kinetic/joint_trajectory_controller/0.13.5-0
-- git:
-    local-name: ros_controllers/position_controllers
-    uri: https://github.com/ros-gbp/ros_controllers-release.git
-    version: release/kinetic/position_controllers/0.13.5-0
-- git:
-    local-name: ros_controllers/velocity_controllers
-    uri: https://github.com/ros-gbp/ros_controllers-release.git
-    version: release/kinetic/velocity_controllers/0.13.5-0
 - git:
     local-name: rospy_message_converter
     uri: https://github.com/FRC900/rospy_message_converter.git
@@ -37,13 +13,37 @@
     local-name: zed-ros-wrapper
     uri: https://github.com/FRC900/zed-ros-wrapper.git
 - git:
+    local-name: ros_controllers/forward_command_controller
+    uri: https://github.com/ros-gbp/ros_controllers-release.git
+    version: release/melodic/forward_command_controller/0.15.0-0
+- git:
+    local-name: ros_controllers/imu_sensor_controller
+    uri: https://github.com/ros-gbp/ros_controllers-release.git
+    version: release/melodic/imu_sensor_controller/0.15.0-0
+- git:
+    local-name: ros_controllers/joint_state_controller
+    uri: https://github.com/ros-gbp/ros_controllers-release.git
+    version: release/melodic/joint_state_controller/0.15.0-0
+- git:
+    local-name: ros_controllers/joint_trajectory_controller
+    uri: https://github.com/ros-gbp/ros_controllers-release.git
+    version: release/melodic/joint_trajectory_controller/0.15.0-0
+- git:
+    local-name: ros_controllers/position_controllers
+    uri: https://github.com/ros-gbp/ros_controllers-release.git
+    version: release/melodic/position_controllers/0.15.0-0
+- git:
+    local-name: ros_controllers/velocity_controllers
+    uri: https://github.com/ros-gbp/ros_controllers-release.git
+    version: release/melodic/velocity_controllers/0.15.0-0
+- git:
     local-name: teraranger
-    uri: https://github.com/Terabee/teraranger.git
-    version: 2.0.0
+    uri: https://github.com/Terabee/teraranger-release.git
+    version: release/melodic/teraranger/2.1.0-1
 - git:
     local-name: teraranger_array
     uri: https://github.com/Terabee/teraranger_array-release.git
-    version: release/kinetic/teraranger_array/1.3.4-0
+    version: release/melodic/teraranger_array/2.0.0-1
 - git:
     local-name: teraranger_array_converter
     uri: https://github.com/Terabee/teraranger_array_converter-release.git
@@ -58,4 +58,7 @@
 - git:
     local-name: ddynamic_reconfigure
     uri: https://github.com/pal-robotics/ddynamic_reconfigure
-
+- git:
+    local-name: realtime_tools
+    uri: https://github.com/FRC900/realtime_tools.git
+    version: fix_non_realtime
