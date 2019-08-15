@@ -43,7 +43,6 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
-#include <std_msgs/Float64MultiArray.h>
 
 #define KEYCODE_a 0x61
 #define KEYCODE_b 0x62
@@ -96,6 +95,8 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 namespace frcrobot_control
 {
 
+// TODO : Turn into a separate node - make it launched
+// depending on sim mode being true and the key_or_joy setting
 TeleopJointsKeyboard::TeleopJointsKeyboard(ros::NodeHandle &nh)
 {
 	// Hard-code this to frcrobot_rio namespace so that it matches
