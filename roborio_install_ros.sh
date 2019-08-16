@@ -26,7 +26,7 @@ ssh -p 22 admin@$1 'opkg install libbz2 libxml2 libgnutls-bin libgnutls-openssl2
 ssh -p 22 admin@$1 'opkg clean'
 ssh -p 22 admin@$1 'opkg install libgnutls30 libgnutlsxx28 nettle libgmp10 libgmpxx4 libz1 cmake make'
 ssh -p 22 admin@$1 'opkg clean'
-ssh -p 22 admin@$1 'opkg install python-setuptools python3-docutils'
+ssh -p 22 admin@$1 'opkg install python-setuptools python3-docutils python-pycrypto python-pycrypto-dev`'
 ssh -p 22 admin@$1 'opkg clean'
 ssh -p 22 admin@$1 'opkg install python-pkgutil python-dateutil python-argparse python-nose'
 ssh -p 22 admin@$1 'opkg clean'
