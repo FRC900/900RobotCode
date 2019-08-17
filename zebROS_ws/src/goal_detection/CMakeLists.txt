@@ -141,7 +141,7 @@ catkin_package(
 if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 	add_executable(translate_to_pointstamped src/translate_to_pointstamped.cpp)
 	target_link_libraries(translate_to_pointstamped ${catkin_LIBRARIES})
-	add_dependencies(translate_to_pointstamped ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+	add_dependencies(translate_to_pointstamped ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
   find_package(OpenCV REQUIRED)
   ## Specify additional locations of header files
