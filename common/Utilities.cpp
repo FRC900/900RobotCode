@@ -13,7 +13,7 @@ namespace zv_utils {
 
 		//cout << bound_rect << endl;
 		float min = numeric_limits<float>::max();
-		float max = numeric_limits<float>::min();
+		float max = numeric_limits<float>::lowest();
 		int min_loc_x;
 		int min_loc_y;
 		int max_loc_x;

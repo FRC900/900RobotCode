@@ -423,27 +423,27 @@ void frc::Joystick::SetAxisChannel(AxisType, int)
 int frc::Joystick::GetXChannel() const
 {
 	ROS_ERROR("Called frc::Joystick::GetXChannel() const on unsupported platform");
-	return std::numeric_limits<int>::min();
+	return -std::numeric_limits<int>::max();
 }
 int frc::Joystick::GetYChannel() const
 {
 	ROS_ERROR("Called frc::Joystick::GetYChannel() const on unsupported platform");
-	return std::numeric_limits<int>::min();
+	return -std::numeric_limits<int>::max();
 }
 int frc::Joystick::GetZChannel() const
 {
 	ROS_ERROR("Called frc::Joystick::GetZChannel() const on unsupported platform");
-	return std::numeric_limits<int>::min();
+	return -std::numeric_limits<int>::max();
 }
 int frc::Joystick::GetTwistChannel() const
 {
 	ROS_ERROR("Called frc::Joystick::GetTwistChannel() const on unsupported platform");
-	return std::numeric_limits<int>::min();
+	return -std::numeric_limits<int>::max();
 }
 int frc::Joystick::GetThrottleChannel() const
 {
 	ROS_ERROR("Called frc::Joystick::GetThrottleChannel() const on unsupported platform");
-	return std::numeric_limits<int>::min();
+	return -std::numeric_limits<int>::max();
 }
 double frc::Joystick::GetX(JoystickHand) const
 {
