@@ -11,6 +11,10 @@
 #include <boost/assign.hpp>
 #include <base_trajectory/GenerateSpline.h>
 
+#include <angles/angles.h>
+
+// Some template / polymorphism magic to add a getCoefs()
+// method to the spline type used by the rest of the code
 namespace trajectory_interface
 {
 template<class ScalarType>
@@ -24,6 +28,8 @@ class MyQuinticSplineSegment: public QuinticSplineSegment<ScalarType>
 };
 }
 
+// Define typedefs - we're generating Quinitc (5-th order polynomial) splines
+// which have doubles as their datatype
 typedef joint_trajectory_controller::JointTrajectorySegment<trajectory_interface::MyQuinticSplineSegment<double>> Segment;
 
 typedef std::vector<Segment> TrajectoryPerJoint;
@@ -33,6 +39,7 @@ typedef trajectory_msgs::JointTrajectory::ConstPtr JointTrajectoryConstPtr;
 
 ros::Duration period;
 
+// For printing out matlab code for testing
 void printCoefs(std::stringstream &s, const std::string &name, const std::vector<swerve_point_generator::Coefs> &coefs)
 {
 	for (size_t i = 0; i < coefs.size(); i++)
@@ -47,6 +54,8 @@ void printCoefs(std::stringstream &s, const std::string &name, const std::vector
 		s << "];" << std::endl;
 	}
 }
+
+// For printing out matlab code for testing
 void printPolyval(std::stringstream &s, const std::string &name, size_t size, const std::vector<double> &end_points)
 {
 	s << "p" << name << "_y = [";
@@ -66,6 +75,83 @@ void printPolyval(std::stringstream &s, const std::string &name, size_t size, co
 			s << ", ";
 	}
 	s << "];" << std::endl;
+}
+
+// Find the angle that line p1p2 is pointing at
+double getLineAngle(const std::vector<double> &p1, const std::vector<double> &p2)
+{
+	return angles::normalize_angle_positive(atan2(p2[1] - p1[1], p2[0] - p1[0]));
+}
+
+void writeMatlabCode(const base_trajectory::GenerateSpline::Response &msg)
+{
+	// Generate matlab / octave code for displaying generated splines
+	std::stringstream s;
+	s << std::endl;
+	for (size_t i = 0; i < msg.end_points.size(); i++)
+	{
+		double range;
+		double prev_x;
+		if (i == 0)
+		{
+			range = msg.end_points[0];
+			prev_x = 0;
+		}
+		else
+		{
+			range = msg.end_points[i] - msg.end_points[i-1];
+			prev_x = msg.end_points[i-1];
+		}
+		s << "x" << i << " = " << prev_x << ":" << range / 100. << ":" << msg.end_points[i] << ";" << std::endl;;
+	}
+	s << "x = [";
+	for (size_t i = 0; i < msg.end_points.size(); i++)
+	{
+		s << "x" << i;
+		if (i < msg.end_points.size() - 1)
+			s << ", ";
+	}
+	s << "];" << std::endl;
+	s << std::endl;
+	printCoefs(s, "x", msg.x_coefs);
+	printCoefs(s, "y", msg.y_coefs);
+	printCoefs(s, "orient", msg.orient_coefs);
+	for (size_t i = 0; i < msg.x_coefs.size(); i++)
+	{
+		s << "pdx" << i << " = polyder(px" << i << ");" << std::endl;
+		s << "pddx" << i << " = polyder(pdx" << i << ");" << std::endl;
+		s << "pdddx" << i << " = polyder(pddx" << i << ");" << std::endl;
+		s << "pdy" << i << " = polyder(py" << i << ");" << std::endl;
+		s << "pddy" << i << " = polyder(pdy" << i << ");" << std::endl;
+		s << "pdddy" << i << " = polyder(pddy" << i << ");" << std::endl;
+		s << "pdorient" << i << " = polyder(porient" << i << ");" << std::endl;
+		s << "pddorient" << i << " = polyder(pdorient" << i << ");" << std::endl;
+		s << "pdddorient" << i << " = polyder(pddorient" << i << ");" << std::endl;
+	}
+	printPolyval(s, "x", msg.x_coefs.size(), msg.end_points);
+	printPolyval(s, "dx", msg.x_coefs.size(), msg.end_points);
+	printPolyval(s, "ddx", msg.x_coefs.size(), msg.end_points);
+	printPolyval(s, "dddx", msg.x_coefs.size(), msg.end_points);
+	printPolyval(s, "y", msg.y_coefs.size(), msg.end_points);
+	printPolyval(s, "dy", msg.y_coefs.size(), msg.end_points);
+	printPolyval(s, "ddy", msg.y_coefs.size(), msg.end_points);
+	printPolyval(s, "dddy", msg.y_coefs.size(), msg.end_points);
+	printPolyval(s, "orient", msg.orient_coefs.size(), msg.end_points);
+	printPolyval(s, "dorient", msg.orient_coefs.size(), msg.end_points);
+	printPolyval(s, "ddorient", msg.orient_coefs.size(), msg.end_points);
+	printPolyval(s, "dddorient", msg.orient_coefs.size(), msg.end_points);
+	s << "subplot(1,1,1)" << std::endl;
+	s << "subplot(3,2,1)" << std::endl;
+	s << "plot(px_y, py_y)" << std::endl;
+	s << "subplot(3,2,3)" << std::endl;
+	s << "plot (x,px_y, x, py_y)" << std::endl;
+	s << "subplot(3,2,4)" << std::endl;
+	s << "plot (x,pdx_y, x, pdy_y)" << std::endl;
+	s << "subplot(3,2,5)" << std::endl;
+	s << "plot (x,pddx_y, x, pddy_y)" << std::endl;
+	s << "subplot(3,2,6)" << std::endl;
+	s << "plot (x,pdddx_y, x, pdddy_y)" << std::endl;
+	ROS_INFO_STREAM("Matlab_splines : " << s.str());
 }
 
 // input should be JointTrajectory[] custom message
@@ -193,128 +279,171 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	options.default_tolerances        = NULL;
 	options.allow_partial_joints_goal = true;
 
-	constexpr double t = 0.1;
+	// Auto - generate velocities and accelerations for splines
+	// based on a simple heuristic. This is becoming less simple
+	// by the moment.
 	if (msg.points[0].velocities.size() == 0)
 	{
-		// from http://scaledinnovation.com/analytics/splines/aboutSplines.html
-		for (size_t i = 0; i < msg.points.size() - 1; i++)
+		// Starting with 0 velocity
+		// TODO - handle arbitrary starting velocity
+		for(size_t i = 0; i < n_joints; i++)
 		{
-			double x0;
-			double y0;
-			if (i == 0)
-			{
-				x0 = 0;
-				y0 = 0;
-			}
-			else
-			{
-				x0 = msg.points[i-1].positions[0];
-				y0 = msg.points[i-1].positions[1];
-			}
-			const double x1 = msg.points[i].positions[0];
-			const double y1 = msg.points[i].positions[1];
-			const double x2 = msg.points[i+1].positions[0];
-			const double y2 = msg.points[i+1].positions[1];
-			const double d01 = hypot(x1 - x0, y1 - y0);
-			const double d12 = hypot(x2 - x1, y2 - y1);
-			const double fa = t * d01 / (d01 + d12);
-			const double fb = t * d12 / (d01 + d12);
-			const double p1x = x1 - fa * (x2 - x0);    // x2-x0 is the width of triangle T
-			const double p1y = y1 - fa * (y2 - y0);    // y2-y0 is the height of T
-			const double p2x = x1 + fb * (x2 - x0);
-			const double p2y = y1 + fb * (y2 - y0);
-			msg.points[i].velocities.push_back(p2x - p1x);
-			msg.points[i].velocities.push_back(p2y - p1y);
-			msg.points[i].velocities.push_back(0.);
-			msg.points[i].accelerations.push_back(0.); // x
-			msg.points[i].accelerations.push_back(0.); // y
-			msg.points[i].accelerations.push_back(0.);  // theta
+			msg.points[0].velocities.push_back(0.);
 		}
-		for(size_t j = 0; j < n_joints; j++)
-		{
-			msg.points.back().velocities.push_back(0.);
-			msg.points.back().accelerations.push_back(0.);
-		}
-	}
-#if 0
-	// Generate a rough estimate of velocity magnitude and
-	// vector at each waypoint, use that to populate the x&y velocity
-	// for each waypoint before generating the spline
-	if (msg.points[0].velocities.size() == 0)
-	{
-		// Velocity vector angle for a given point is the direction
-		// from it to the next point. This has nothing to do with
-		// the robot's orientation. Instead, it is the direction
-		// the robot will be moving to get to the next waypoint
-		std::vector<double> vel_vec;
-		vel_vec.push_back(std::atan2(msg.points[0].positions[1], msg.points[0].positions[0]));
-			ROS_INFO_STREAM("vel_vec : added " << vel_vec.back());
-		for (size_t i = 0; i < msg.points.size() - 1; i++)
+		// Velocities of intermediate points are tangent
+		// to the bisection of the angle between the incoming
+		// and outgoing line segments.
+		// Length of the tangent is min distance to either
+		// previous or next waypoint
+		// See http://www2.informatik.uni-freiburg.de/~lau/students/Sprunk2008.pdf
+		// sectopm 4.1.1 and
+		// http://ais.informatik.uni-freiburg.de/teaching/ws09/robotics2/projects/mr2-p6-paper.pdf
+		// section 3.2 (equation 2 & 3) for details
+		double prev_angle = getLineAngle(msg.points[0].positions, msg.points[1].positions);
+		double prev_length = hypot(msg.points[1].positions[0] - msg.points[0].positions[0],
+								   msg.points[1].positions[1] - msg.points[0].positions[1]);
+
+		for (size_t i = 1; i < (msg.points.size() - 1); i++)
 		{
 			const auto &mi   = msg.points[i].positions;
 			const auto &mip1 = msg.points[i + 1].positions;
-			vel_vec.push_back(std::atan2(mip1[1] - mi[1], mip1[0] - mi[0]));
-			ROS_INFO_STREAM("vel_vec : added " << vel_vec.back());
-		}
-		// Direction for last point is kinda undefined. Set it here
-		// to be the same direction as between it and the previous
-		// point and see how that works
-		vel_vec.push_back(vel_vec.back());
-			ROS_INFO_STREAM("vel_vec : added " << vel_vec.back());
 
-		const double accel_max = .25;
-		const double decel_max = .4;
-		const double vel_max   = 1;
+			const double curr_angle = getLineAngle(mi, mip1);
 
-		// Regardless of any other constraints, the robot only
-		// has to move so fast to cover a certain distance in
-		// a given amount of time.  USe that as another constraint
-		// on velocity here
-		double path_vmax = hypot(msg.points[0].positions[0], msg.points[0].positions[1]);
-		for (size_t i = 0; i < msg.points.size() - 1; i++)
-		{
-			path_vmax += hypot(msg.points[i+1].positions[0] - msg.points[i].positions[0],
-			                   msg.points[i+1].positions[1] - msg.points[i].positions[1]);
-		}
-		std::vector<double> vel_mag(vel_vec.size(), 0.0);
-		const double end_secs = msg.points.back().time_from_start.toSec();
-		path_vmax /= end_secs;
-		ROS_INFO_STREAM("Path vmax = " << path_vmax);
-		// Backwards pass
-		for (size_t i = vel_vec.size() - 1; i > 0; --i)
-		{
-			vel_mag[i] = std::min(std::min(vel_max, decel_max * (end_secs - msg.points[i - 1].time_from_start.toSec())), path_vmax);
-		}
-		for (size_t i = 1; i < vel_mag.size(); i++)
-		{
-			vel_mag[i] = std::min(vel_mag[i], accel_max * msg.points[i - 1].time_from_start.toSec());
-		}
-		for (size_t i = 0; i < vel_mag.size(); i++)
-			ROS_INFO_STREAM("vel_mag[" << i << "] = " << vel_mag[i]);
-		// Really basic motion modeling here - later steps should refine it?
-		// Starting at 0 velocity
-		for (size_t i = 0; i < (vel_vec.size() - 2); i++)
-		{
-			double angle;
+			const double angle = angles::normalize_angle_positive(prev_angle + (curr_angle - prev_angle) / 2.0);
 
-			// assume hading at midpoint is kinda half-way
-			// between the heading getting to that point and the heading
-			// leading out of the point
-			angle = (vel_vec[i] + vel_vec[i + 1]) / 2.0; // TODO - scale by segment length?
-			msg.points[i].velocities.push_back(vel_mag[i+1] * cos(angle)); // x
-			msg.points[i].velocities.push_back(vel_mag[i+1] * sin(angle)); // y
-			msg.points[i].velocities.push_back(0);                         // theta
-			msg.points[i].accelerations.push_back(0.); // x
-			msg.points[i].accelerations.push_back(0.); // y
-			msg.points[i].accelerations.push_back(0);  // theta
+			const double curr_length = hypot(mip1[0] - mi[0], mip1[1] - mi[1]);
+
+			// Adding a scaling factor here controls the velocity
+			// at the waypoints.  Bigger than 1 ==> curvier path with
+			// higher speeds.  Less than 1 ==> tigher turns to stay
+			// closer to straight paths.
+			const double length = std::min(prev_length, curr_length) * .75;
+
+			msg.points[i].velocities.push_back(length * cos(angle)); // x
+			msg.points[i].velocities.push_back(length * sin(angle)); // y
+			msg.points[i].velocities.push_back(0);                   // theta
+
+#if 0
+			ROS_INFO_STREAM("prev_angle " << prev_angle << " prev_length " << prev_length);
+			ROS_INFO_STREAM("curr_angle " << curr_angle << " curr_length " << curr_length);
+			ROS_INFO_STREAM("angle " << angle << " length " << length);
+#endif
+			// Update for next step
+			prev_angle = curr_angle;
+			prev_length = curr_length;
 		}
-		for(size_t j = 0; j < n_joints; j++)
+
+		// End position is also 0 velocity
+		// TODO - handle input end velocity
+		for(size_t i = 0; i < n_joints; i++)
 		{
-			msg.points.back().velocities.push_back(0);
-			msg.points.back().accelerations.push_back(0);
+			msg.points.back().velocities.push_back(0.);
+		}
+
+		// Guess for acceleration term is explained in
+		// http://www2.informatik.uni-freiburg.de/~lau/students/Sprunk2008.pdf
+		// section 4.2.1.  Basically, pretend there are cubic splines
+		// (bezier splines in this case) between two points.  These are splines
+		// which just connect the two points, and use the velocity at
+		// those points calculated above.  This gives reasonable curvature along
+		// the path between the two points. Taking the
+		// weighted average of the 2nd derivatives of the pretend cubic
+		// splines at the given point, and using that to generate
+		// a quintic spline does a reasonable job of preserving
+		// smoothness while also making the curve continuous.
+		{
+			// First point is a special case - just
+			// find the 2nd derivative of the pretend cubic between
+			// points 0 & 1
+			const double Ax = msg.points[0].positions[0];
+			const double Ay = msg.points[0].positions[1];
+			const double tAx = msg.points[0].velocities[0];
+			const double tAy = msg.points[0].velocities[1];
+			const double Bx = msg.points[1].positions[0];
+			const double By = msg.points[1].positions[1];
+			const double tBx = msg.points[1].velocities[0];
+			const double tBy = msg.points[1].velocities[1];
+
+			const double xaccel = 6.0 * Ax + 2.0 * tAx + 4.0 * tBx - 6.0 * Bx;
+			const double yaccel = 6.0 * Ay + 2.0 * tAy + 4.0 * tBy - 6.0 * By;
+
+			msg.points[0].accelerations.push_back(xaccel); // x
+			msg.points[0].accelerations.push_back(yaccel); // y
+			msg.points[0].accelerations.push_back(0.); // theta
+		}
+
+		// For interior points, weight the average of the
+		// 2nd derivative of each of the pretend cubic
+		// splines and use them as the acceleration for
+		// the to-be-generated quintic spline.
+		for (size_t i = 1; i < (msg.points.size() - 1); i++)
+		{
+			const double Ax = msg.points[i-1].positions[0];
+			const double Ay = msg.points[i-1].positions[1];
+			const double tAx = msg.points[i-1].velocities[0];
+			const double tAy = msg.points[i-1].velocities[1];
+
+			const double Bx = msg.points[i].positions[0];
+			const double By = msg.points[i].positions[1];
+			const double tBx = msg.points[i].velocities[0];
+			const double tBy = msg.points[i].velocities[1];
+
+			const double Cx = msg.points[i+1].positions[0];
+			const double Cy = msg.points[i+1].positions[1];
+			const double tCx = msg.points[i+1].velocities[0];
+			const double tCy = msg.points[i+1].velocities[1];
+
+			// L2 distance between A and B
+			const double dab = hypot(Bx - Ax, By - Ay);
+			// L2 distance between B and C
+			const double dbc = hypot(Cx - Bx, Cy - By);
+
+			// Weighting factors
+			const double alpha = dbc / (dab + dbc);
+			const double beta  = dab / (dab + dbc);
+
+			const double xaccel = alpha * ( 6.0 * Ax + 2.0 * tAx + 4.0 * tBx - 6.0 * Bx) +
+								  beta  * (-6.0 * Bx - 4.0 * tBx - 2.0 * tCx + 6.0 * Cx);
+			const double yaccel = alpha * ( 6.0 * Ay + 2.0 * tAy + 4.0 * tBy - 6.0 * By) +
+								  beta  * (-6.0 * By - 4.0 * tBy - 2.0 * tCy + 6.0 * Cy);
+
+			msg.points[i].accelerations.push_back(xaccel); // x
+			msg.points[i].accelerations.push_back(yaccel); // y
+			msg.points[i].accelerations.push_back(0.); // theta
+
+#if 0
+			ROS_INFO_STREAM("dab = " << dab << " dbc = " << dbc);
+			ROS_INFO_STREAM("Ax = " << Ax << " tAx = " << tAx <<
+			                " Bx = " << Bx << " tBx = " << tBx <<
+			                " Cx = " << Cx << " tCx = " << tCx);
+			ROS_INFO_STREAM("Ay = " << Ay << " tAy = " << tAy <<
+			                " By = " << By << " tBy = " << tBy <<
+			                " Cy = " << Cy << " tCy = " << tCy);
+#endif
+		}
+		{
+			// Last point is also a special case since
+			// there's just one pretend cubic spline to consider
+			const size_t last = msg.points.size() - 1;
+			const double Ax = msg.points[last-1].positions[0];
+			const double Ay = msg.points[last-1].positions[1];
+			const double tAx = msg.points[last-1].velocities[0];
+			const double tAy = msg.points[last-1].velocities[1];
+			const double Bx = msg.points[last].positions[0];
+			const double By = msg.points[last].positions[1];
+			const double tBx = msg.points[last].velocities[0];
+			const double tBy = msg.points[last].velocities[1];
+
+			const double xaccel = 6.0 * Ax + 2.0 * tAx + 4.0 * tBx - 6.0 * Bx;
+			const double yaccel = 6.0 * Ay + 2.0 * tAy + 4.0 * tBy - 6.0 * By;
+
+			msg.points[last].accelerations.push_back(xaccel); // x
+			msg.points[last].accelerations.push_back(yaccel); // y
+			msg.points[last].accelerations.push_back(0.); // theta
 		}
 	}
-#endif
+
 	ros::message_operations::Printer<::base_trajectory::GenerateSplineRequest_<std::allocator<void>>>::stream(std::cout, "", msg);
 
 	// Actually generate the new trajectory
@@ -388,74 +517,6 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 		out_msg.end_points.push_back(trajectory[0][seg].endTime());
 	}
 
-	// Generate matlab / octave code for displaying generated splines
-	std::stringstream s;
-	s << std::endl;
-	for (size_t i = 0; i < out_msg.end_points.size(); i++)
-	{
-		double range;
-		double prev_x;
-		if (i == 0)
-		{
-			range = out_msg.end_points[0];
-			prev_x = 0;
-		}
-		else
-		{
-			range = out_msg.end_points[i] - out_msg.end_points[i-1];
-			prev_x = out_msg.end_points[i-1];
-		}
-		s << "x" << i << " = " << prev_x << ":" << range / 100. << ":" << out_msg.end_points[i] << ";" << std::endl;;
-	}
-	s << "x = [";
-	for (size_t i = 0; i < out_msg.end_points.size(); i++)
-	{
-		s << "x" << i;
-		if (i < out_msg.end_points.size() - 1)
-			s << ", ";
-	}
-	s << "];" << std::endl;
-	s << std::endl;
-	printCoefs(s, "x", out_msg.x_coefs);
-	printCoefs(s, "y", out_msg.y_coefs);
-	printCoefs(s, "orient", out_msg.orient_coefs);
-	for (size_t i = 0; i < out_msg.x_coefs.size(); i++)
-	{
-		s << "pdx" << i << " = polyder(px" << i << ");" << std::endl;
-		s << "pddx" << i << " = polyder(pdx" << i << ");" << std::endl;
-		s << "pdddx" << i << " = polyder(pddx" << i << ");" << std::endl;
-		s << "pdy" << i << " = polyder(py" << i << ");" << std::endl;
-		s << "pddy" << i << " = polyder(pdy" << i << ");" << std::endl;
-		s << "pdddy" << i << " = polyder(pddy" << i << ");" << std::endl;
-		s << "pdorient" << i << " = polyder(porient" << i << ");" << std::endl;
-		s << "pddorient" << i << " = polyder(pdorient" << i << ");" << std::endl;
-		s << "pdddorient" << i << " = polyder(pddorient" << i << ");" << std::endl;
-	}
-	printPolyval(s, "x", out_msg.x_coefs.size(), out_msg.end_points);
-	printPolyval(s, "dx", out_msg.x_coefs.size(), out_msg.end_points);
-	printPolyval(s, "ddx", out_msg.x_coefs.size(), out_msg.end_points);
-	printPolyval(s, "dddx", out_msg.x_coefs.size(), out_msg.end_points);
-	printPolyval(s, "y", out_msg.y_coefs.size(), out_msg.end_points);
-	printPolyval(s, "dy", out_msg.y_coefs.size(), out_msg.end_points);
-	printPolyval(s, "ddy", out_msg.y_coefs.size(), out_msg.end_points);
-	printPolyval(s, "dddy", out_msg.y_coefs.size(), out_msg.end_points);
-	printPolyval(s, "orient", out_msg.orient_coefs.size(), out_msg.end_points);
-	printPolyval(s, "dorient", out_msg.orient_coefs.size(), out_msg.end_points);
-	printPolyval(s, "ddorient", out_msg.orient_coefs.size(), out_msg.end_points);
-	printPolyval(s, "dddorient", out_msg.orient_coefs.size(), out_msg.end_points);
-	s << "subplot(1,1,1)" << std::endl;
-	s << "subplot(3,2,1)" << std::endl;
-	s << "plot(px_y, py_y)" << std::endl;
-	s << "subplot(3,2,3)" << std::endl;
-	s << "plot (x,px_y, x, py_y)" << std::endl;
-	s << "subplot(3,2,4)" << std::endl;
-	s << "plot (x,pdx_y, x, pdy_y)" << std::endl;
-	s << "subplot(3,2,5)" << std::endl;
-	s << "plot (x,pddx_y, x, pddy_y)" << std::endl;
-	s << "subplot(3,2,6)" << std::endl;
-	s << "plot (x,pdddx_y, x, pdddy_y)" << std::endl;
-	ROS_INFO_STREAM("Matlab_splines : " << s.str());
-
 #if 0
 	// Test using middle switch auto spline
 	out_msg.x_coefs[1].spline[0] = 6.0649999999999995;
@@ -480,6 +541,8 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	out_msg.orient_coefs[1].spline[5] = -3.14159;
 	out_msg.end_points[1] = 1.0; // change me to 4 to match end time in yaml and break point_gen
 #endif
+
+	writeMatlabCode(out_msg);
 	return true;
 }
 

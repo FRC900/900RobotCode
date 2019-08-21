@@ -9,6 +9,7 @@ include ("../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   roscpp
+  angles
   joint_trajectory_controller
   swerve_point_generator
   std_msgs
