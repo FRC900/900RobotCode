@@ -718,23 +718,22 @@ bool swerve_profiler::solve_for_next_V(const path_point &path, const double path
 	//ROS_INFO_STREAM(__LINE__ << ": " << path.angular_velocity);
 }
 
-const double spline_points = 1000.;
+constexpr size_t spline_points = 1000;
 tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &x_splines_first_deriv,
 		const std::vector<spline_coefs> &y_splines_first_deriv,
 		const std::vector<double> &end_points, double &total_arc_length,
 		std::vector<double> &dtds_by_spline,
 		std::vector<double> &arc_length_by_spline)
 {
-	//
 	total_arc_length = 0;
 	double period_t = (end_points[0] - 0.0) / spline_points;
-	double start = 0;
-	double arc_before = 0;
-	double b_val = 0;
+	double start = 0.0;
+	double arc_before = 0.0;
+	double b_val = 0.0;
 	std::vector<double> t_vals;
 	std::vector<double> s_vals;
-	t_vals.reserve(x_splines_first_deriv.size() * (static_cast<size_t>(spline_points) + 1));
-	s_vals.reserve(x_splines_first_deriv.size() * (static_cast<size_t>(spline_points) + 1));
+	t_vals.reserve(x_splines_first_deriv.size() * (spline_points + 1));
+	s_vals.reserve(x_splines_first_deriv.size() * (spline_points + 1));
 	//ROS_INFO_STREAM("Running parametrize");
 
 	//ROS_WARN_STREAM(x_splines_first_deriv.size());
@@ -746,23 +745,23 @@ tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &
 
 		if (i != 0)
 		{
-			period_t = (end_points[i] - end_points[i - 1]) / spline_points; //100 is super arbitrary
+			period_t = (end_points[i] - end_points[i - 1]) / static_cast<double>(spline_points);
 			start = end_points[i - 1];
 		}
 		if (i > 1)
 		{
-			dtds_by_spline.push_back((end_points[i - 1] - end_points[i - 2]) /  (total_arc_length
-									 - arc_before));
-		ROS_INFO_STREAM_FILTER(&message_filter_, "dtds by spline:" << dtds_by_spline[i]);
+			dtds_by_spline.push_back((end_points[i - 1] - end_points[i - 2]) /
+									 (total_arc_length - arc_before));
+			ROS_INFO_STREAM_FILTER(&message_filter_, "dtds by spline:" << dtds_by_spline[i]);
 		}
 		else if (i == 1)
 		{
-			dtds_by_spline.push_back((end_points[0] - 0) /  (total_arc_length - arc_before));
-		ROS_INFO_STREAM_FILTER(&message_filter_, "dtds by spline:" << dtds_by_spline[i]);
+			dtds_by_spline.push_back((end_points[0] - 0) / (total_arc_length - arc_before));
+			ROS_INFO_STREAM_FILTER(&message_filter_, "dtds by spline:" << dtds_by_spline[i]);
 		}
 		arc_before = total_arc_length;
 		ROS_INFO_STREAM_FILTER(&message_filter_, "arc_before: " << arc_before);
-		for (size_t k = 0; k < static_cast<size_t>(spline_points); k++)
+		for (size_t k = 0; k < spline_points; k++)
 		{
 			const double a_val = k * period_t + start;
 			b_val = (k + 1) * period_t + start;
@@ -782,14 +781,14 @@ tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &
 			calc_point(x_splines_first_deriv[i], (a_val + b_val) / 2, x_at_avg);
 			calc_point(y_splines_first_deriv[i], (a_val + b_val) / 2, y_at_avg);
 
+			//Simpsons rule
 			//f(t) = sqrt((dx/dt)^2 + (dy/dt)^2)
 
 			//ROS_INFO_STREAM_FILTER(&message_filter_, "period_t: " << period_t);
 			//ROS_INFO_STREAM_FILTER(&message_filter_, "idek: " << hypot(x_at_a, y_at_a) + 4 * hypot(x_at_avg, y_at_avg) + hypot(x_at_b, y_at_b));
 			total_arc_length += period_t / 6. * (hypot(x_at_a, y_at_a) + 4. * hypot(x_at_avg, y_at_avg) + hypot(x_at_b, y_at_b));
 			//ROS_INFO_STREAM_FILTER(&message_filter_, "arc_now: " << total_arc_length);
-			//Simpsons rule
-			//ROS_INFO_STREAM_FILTER(&message_filter_, "Spline: " << i << " t_val: " << a_val <<"  arc_length: " << total_arc_length);
+			//ROS_INFO_STREAM_FILTER(&message_filter_, "Spline: " << i << " a_val: " << a_val <<"  arc_length: " << total_arc_length);
 		}
 		arc_length_by_spline.push_back(total_arc_length);
 	}
@@ -816,8 +815,8 @@ tk::spline swerve_profiler::parametrize_spline(const std::vector<spline_coefs> &
 	s.set_points(s_vals, t_vals);
 	for (size_t i = 0; i < t_vals.size(); i++)
 	{
-		ROS_INFO_STREAM_FILTER(&message_filter_, "t_val = " << t_vals[i] << " s vals = " << s_vals[i]);
-		//ROS_INFO_STREAM_FILTER(&message_filter_, "s_vale = " << s_vals[i] << " s vals = " << s(s_vals[i]));
+		ROS_INFO_STREAM_FILTER(&message_filter_, "t_vals = " << t_vals[i] << " s vals = " << s_vals[i]);
+		//ROS_INFO_STREAM_FILTER(&message_filter_, "s_vals = " << s_vals[i] << " s vals = " << s(s_vals[i]));
 	}
 	ROS_INFO_STREAM("successful parametrize spline");
 	return s;
