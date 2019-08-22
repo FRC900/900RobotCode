@@ -32,7 +32,11 @@ class MyQuinticSplineSegment: public QuinticSplineSegment<ScalarType>
 // which have doubles as their datatype
 typedef joint_trajectory_controller::JointTrajectorySegment<trajectory_interface::MyQuinticSplineSegment<double>> Segment;
 
+// Each TrajectoryPerJoint is a vector of segments, each a spline which makes up 
+// the total path for that dimension (x, y, orientation)
 typedef std::vector<Segment> TrajectoryPerJoint;
+
+// A vector of those is created to hold x, y and orientation in one struct.
 typedef std::vector<TrajectoryPerJoint> Trajectory;
 
 typedef trajectory_msgs::JointTrajectory::ConstPtr JointTrajectoryConstPtr;
@@ -77,12 +81,6 @@ void printPolyval(std::stringstream &s, const std::string &name, size_t size, co
 	s << "];" << std::endl;
 }
 
-// Find the angle that line p1p2 is pointing at
-double getLineAngle(const std::vector<double> &p1, const std::vector<double> &p2)
-{
-	return angles::normalize_angle_positive(atan2(p2[1] - p1[1], p2[0] - p1[0]));
-}
-
 void writeMatlabCode(const base_trajectory::GenerateSpline::Response &msg)
 {
 	// Generate matlab / octave code for displaying generated splines
@@ -102,7 +100,8 @@ void writeMatlabCode(const base_trajectory::GenerateSpline::Response &msg)
 			range = msg.end_points[i] - msg.end_points[i-1];
 			prev_x = msg.end_points[i-1];
 		}
-		s << "x" << i << " = " << prev_x << ":" << range / 100. << ":" << msg.end_points[i] << ";" << std::endl;;
+		s << "x" << i << " = " << prev_x << ":" << range / 100.
+		  << ":" << msg.end_points[i] << ";" << std::endl;
 	}
 	s << "x = [";
 	for (size_t i = 0; i < msg.end_points.size(); i++)
@@ -154,46 +153,57 @@ void writeMatlabCode(const base_trajectory::GenerateSpline::Response &msg)
 	ROS_INFO_STREAM("Matlab_splines : " << s.str());
 }
 
-// input should be JointTrajectory[] custom message
-// Output wil be array of spline coefficents swerve_point_generator/Coefs[] for x, y, orientation
-bool generate(base_trajectory::GenerateSpline::Request &msg,
-			  base_trajectory::GenerateSpline::Response &out_msg)
+// Find the angle that line p1p2 is pointing at
+double getLineAngle(const std::vector<double> &p1, const std::vector<double> &p2)
 {
-	// Hold current position if trajectory is empty
-	if (msg.points.empty())
-	{
-		ROS_DEBUG("Empty trajectory command, stopping.");
-		return false;
-	}
-	for (size_t i = 0; i < msg.points.size(); ++i)
-	{
-		if (msg.points[i].positions.size() != 3)
-		{
-			ROS_ERROR_STREAM("Input point " << i << " must have 3 positions (x, y, orientation)");
-			return false;
-		}
-		if (msg.points[i].velocities.size())
-		{
-			if (msg.points[i].velocities.size() != 3)
-			{
-				ROS_ERROR_STREAM("Input point " << i << " must have 0 or 3 velocities (x, y, orientation)");
-				return false;
-			}
-			if ((msg.points[i].accelerations.size() != 0) &&
-				(msg.points[i].accelerations.size() != 3))
-			{
-				ROS_ERROR_STREAM("Input point " << i << " must have 0 or 3 accelerations (x, y, orientation)");
-				return false;
-			}
-		}
-		else if (msg.points[i].accelerations.size())
-		{
-			ROS_ERROR_STREAM("Input point " << i << " must have 0 accelerations since there are also 0 velocities for that point)");
-			return false;
-		}
-	}
+	return angles::normalize_angle_positive(atan2(p2[1] - p1[1], p2[0] - p1[0]));
+}
 
+// Optimization parameters - these are deltas added to
+// the original guess for the spline generation used
+// to improve the overall cost of following the spline
+struct OptParams
+{
+	double posX_;
+	double posY_;
+	double length_;
 
+	OptParams(void)
+		: posX_(0.)
+		, posY_(0.)
+		, length_(0.)
+	{
+	}
+};
+
+// Helper function for finding 2nd derivative
+// (acceleration) term of start and end point
+void setFirstLastPointAcceleration(const std::vector<double> &p1, const std::vector<double> &p2,
+								   const std::vector<double> &v1, const std::vector<double> &v2,
+								   std::vector<double> &accelerations)
+{
+	// Rename vars to match notation in the paper
+	const double Ax  = p1[0];
+	const double Ay  = p1[1];
+	const double tAx = v1[0];
+	const double tAy = v1[1];
+	const double Bx  = p2[0];
+	const double By  = p2[1];
+	const double tBx = v2[0];
+	const double tBy = v2[1];
+
+	const double xaccel = 6.0 * Ax + 2.0 * tAx + 4.0 * tBx - 6.0 * Bx;
+	const double yaccel = 6.0 * Ay + 2.0 * tAy + 4.0 * tBy - 6.0 * By;
+
+	accelerations.push_back(xaccel); // x
+	accelerations.push_back(yaccel); // y
+	accelerations.push_back(0.); // theta
+}
+
+bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> points,
+					const std::vector<OptParams> &optParams,
+					Trajectory &trajectory)
+{
 	// Hard code 3 dimensions for paths to
 	// follow - x&y translation and z rotation
 	std::vector<std::string> joint_names = {"x_linear_joint", "y_linear_joint", "z_rotation_joint"};
@@ -282,13 +292,23 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	// Auto - generate velocities and accelerations for splines
 	// based on a simple heuristic. This is becoming less simple
 	// by the moment.
-	if (msg.points[0].velocities.size() == 0)
+	if (points[0].velocities.size() == 0)
 	{
-		// Starting with 0 velocity
+		// Offset x and y by the amount determined by the optimizer
+		// Paper says to make the coord system based off the
+		// tangent direction (perp & parallel to tangent)
+		// We'll see if that makes a difference
+		for (size_t i = 1; i < (points.size() - 1); i++)
+		{
+			points[i].positions[0] += optParams[i].posX_;
+			points[i].positions[1] += optParams[i].posY_;
+		}
+
+		// Starting with 0 velocity for the initial condition
 		// TODO - handle arbitrary starting velocity
 		for(size_t i = 0; i < n_joints; i++)
 		{
-			msg.points[0].velocities.push_back(0.);
+			points[0].velocities.push_back(0.);
 		}
 		// Velocities of intermediate points are tangent
 		// to the bisection of the angle between the incoming
@@ -299,17 +319,17 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 		// sectopm 4.1.1 and
 		// http://ais.informatik.uni-freiburg.de/teaching/ws09/robotics2/projects/mr2-p6-paper.pdf
 		// section 3.2 (equation 2 & 3) for details
-		double prev_angle = getLineAngle(msg.points[0].positions, msg.points[1].positions);
-		double prev_length = hypot(msg.points[1].positions[0] - msg.points[0].positions[0],
-								   msg.points[1].positions[1] - msg.points[0].positions[1]);
+		//
+		double prev_angle = getLineAngle(points[0].positions, points[1].positions);
+		double prev_length = hypot(points[1].positions[0] - points[0].positions[0],
+								   points[1].positions[1] - points[0].positions[1]);
 
-		for (size_t i = 1; i < (msg.points.size() - 1); i++)
+		for (size_t i = 1; i < (points.size() - 1); i++)
 		{
-			const auto &mi   = msg.points[i].positions;
-			const auto &mip1 = msg.points[i + 1].positions;
+			const auto &mi   = points[i].positions;
+			const auto &mip1 = points[i + 1].positions;
 
 			const double curr_angle = getLineAngle(mi, mip1);
-
 			const double angle = angles::normalize_angle_positive(prev_angle + (curr_angle - prev_angle) / 2.0);
 
 			const double curr_length = hypot(mip1[0] - mi[0], mip1[1] - mi[1]);
@@ -318,11 +338,11 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 			// at the waypoints.  Bigger than 1 ==> curvier path with
 			// higher speeds.  Less than 1 ==> tigher turns to stay
 			// closer to straight paths.
-			const double length = std::min(prev_length, curr_length) * .75;
+			const double length = std::min(prev_length, curr_length) * .75 + optParams[i].length_;
 
-			msg.points[i].velocities.push_back(length * cos(angle)); // x
-			msg.points[i].velocities.push_back(length * sin(angle)); // y
-			msg.points[i].velocities.push_back(0);                   // theta
+			points[i].velocities.push_back(length * cos(angle)); // x
+			points[i].velocities.push_back(length * sin(angle)); // y
+			points[i].velocities.push_back(0); // theta
 
 #if 0
 			ROS_INFO_STREAM("prev_angle " << prev_angle << " prev_length " << prev_length);
@@ -338,7 +358,7 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 		// TODO - handle input end velocity
 		for(size_t i = 0; i < n_joints; i++)
 		{
-			msg.points.back().velocities.push_back(0.);
+			points.back().velocities.push_back(0.);
 		}
 
 		// Guess for acceleration term is explained in
@@ -352,47 +372,38 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 		// splines at the given point, and using that to generate
 		// a quintic spline does a reasonable job of preserving
 		// smoothness while also making the curve continuous.
-		{
-			// First point is a special case - just
-			// find the 2nd derivative of the pretend cubic between
-			// points 0 & 1
-			const double Ax = msg.points[0].positions[0];
-			const double Ay = msg.points[0].positions[1];
-			const double tAx = msg.points[0].velocities[0];
-			const double tAy = msg.points[0].velocities[1];
-			const double Bx = msg.points[1].positions[0];
-			const double By = msg.points[1].positions[1];
-			const double tBx = msg.points[1].velocities[0];
-			const double tBy = msg.points[1].velocities[1];
+		//
+		// First and last point don't have a prev / next point
+		// to connect to, so just grab the 2nd derivitave off
+		// the point they are adjacent to
+		setFirstLastPointAcceleration(points[0].positions, points[1].positions,
+				points[0].velocities, points[1].velocities,
+				points[0].accelerations);
 
-			const double xaccel = 6.0 * Ax + 2.0 * tAx + 4.0 * tBx - 6.0 * Bx;
-			const double yaccel = 6.0 * Ay + 2.0 * tAy + 4.0 * tBy - 6.0 * By;
-
-			msg.points[0].accelerations.push_back(xaccel); // x
-			msg.points[0].accelerations.push_back(yaccel); // y
-			msg.points[0].accelerations.push_back(0.); // theta
-		}
-
+		const size_t last = points.size() - 1;
+		setFirstLastPointAcceleration(points[last-1].positions, points[last].positions,
+				points[last-1].velocities, points[last].velocities,
+				points[last].accelerations);
 		// For interior points, weight the average of the
 		// 2nd derivative of each of the pretend cubic
 		// splines and use them as the acceleration for
 		// the to-be-generated quintic spline.
-		for (size_t i = 1; i < (msg.points.size() - 1); i++)
+		for (size_t i = 1; i < (points.size() - 1); i++)
 		{
-			const double Ax = msg.points[i-1].positions[0];
-			const double Ay = msg.points[i-1].positions[1];
-			const double tAx = msg.points[i-1].velocities[0];
-			const double tAy = msg.points[i-1].velocities[1];
+			const double Ax = points[i-1].positions[0];
+			const double Ay = points[i-1].positions[1];
+			const double tAx = points[i-1].velocities[0];
+			const double tAy = points[i-1].velocities[1];
 
-			const double Bx = msg.points[i].positions[0];
-			const double By = msg.points[i].positions[1];
-			const double tBx = msg.points[i].velocities[0];
-			const double tBy = msg.points[i].velocities[1];
+			const double Bx = points[i].positions[0];
+			const double By = points[i].positions[1];
+			const double tBx = points[i].velocities[0];
+			const double tBy = points[i].velocities[1];
 
-			const double Cx = msg.points[i+1].positions[0];
-			const double Cy = msg.points[i+1].positions[1];
-			const double tCx = msg.points[i+1].velocities[0];
-			const double tCy = msg.points[i+1].velocities[1];
+			const double Cx = points[i+1].positions[0];
+			const double Cy = points[i+1].positions[1];
+			const double tCx = points[i+1].velocities[0];
+			const double tCy = points[i+1].velocities[1];
 
 			// L2 distance between A and B
 			const double dab = hypot(Bx - Ax, By - Ay);
@@ -408,9 +419,9 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 			const double yaccel = alpha * ( 6.0 * Ay + 2.0 * tAy + 4.0 * tBy - 6.0 * By) +
 								  beta  * (-6.0 * By - 4.0 * tBy - 2.0 * tCy + 6.0 * Cy);
 
-			msg.points[i].accelerations.push_back(xaccel); // x
-			msg.points[i].accelerations.push_back(yaccel); // y
-			msg.points[i].accelerations.push_back(0.); // theta
+			points[i].accelerations.push_back(xaccel); // x
+			points[i].accelerations.push_back(yaccel); // y
+			points[i].accelerations.push_back(0.); // theta
 
 #if 0
 			ROS_INFO_STREAM("dab = " << dab << " dbc = " << dbc);
@@ -422,39 +433,22 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 			                " Cy = " << Cy << " tCy = " << tCy);
 #endif
 		}
-		{
-			// Last point is also a special case since
-			// there's just one pretend cubic spline to consider
-			const size_t last = msg.points.size() - 1;
-			const double Ax = msg.points[last-1].positions[0];
-			const double Ay = msg.points[last-1].positions[1];
-			const double tAx = msg.points[last-1].velocities[0];
-			const double tAy = msg.points[last-1].velocities[1];
-			const double Bx = msg.points[last].positions[0];
-			const double By = msg.points[last].positions[1];
-			const double tBx = msg.points[last].velocities[0];
-			const double tBy = msg.points[last].velocities[1];
-
-			const double xaccel = 6.0 * Ax + 2.0 * tAx + 4.0 * tBx - 6.0 * Bx;
-			const double yaccel = 6.0 * Ay + 2.0 * tAy + 4.0 * tBy - 6.0 * By;
-
-			msg.points[last].accelerations.push_back(xaccel); // x
-			msg.points[last].accelerations.push_back(yaccel); // y
-			msg.points[last].accelerations.push_back(0.); // theta
-		}
 	}
 
-	ros::message_operations::Printer<::base_trajectory::GenerateSplineRequest_<std::allocator<void>>>::stream(std::cout, "", msg);
+	for (size_t i = 0; i < points.size(); i++)
+	{
+		ROS_INFO_STREAM("points[" << i << "]");
+		ros::message_operations::Printer<::trajectory_msgs::JointTrajectoryPoint_<std::allocator<void>>>::stream(std::cout, "  ", points[i]);
+	}
 
 	// Actually generate the new trajectory
 	// This will create spline coefficents for
 	// each of the x,y,z paths
-	Trajectory trajectory;
 	try
 	{
 		trajectory_msgs::JointTrajectory jtm;
 		jtm.joint_names = joint_names;
-		jtm.points = msg.points;
+		jtm.points = points;
 		trajectory = joint_trajectory_controller::initJointTrajectory<Trajectory>(jtm, next_update_time, options);
 		if (trajectory.empty())
 		{
@@ -472,11 +466,63 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 		ROS_ERROR("Unexpected exception caught when initializing trajectory from ROS message data.");
 		return false;
 	}
+	return true;
+}
+
+// input should be JointTrajectory[] custom message
+// Output wil be array of spline coefficents swerve_point_generator/Coefs[] for x, y, orientation
+bool callback(base_trajectory::GenerateSpline::Request &msg,
+			  base_trajectory::GenerateSpline::Response &out_msg)
+{
+	// Hold current position if trajectory is empty
+	if (msg.points.empty())
+	{
+		ROS_DEBUG("Empty trajectory command, stopping.");
+		return false;
+	}
+	// TODO - operate in two modes
+	// 1 - if velocity and accelerations are empty, run a full optimization
+	// 2 - if both are set, just generate a spline based on them, then
+	//     convert that into an optimal path to follow
+	for (size_t i = 0; i < msg.points.size(); ++i)
+	{
+		if (msg.points[i].positions.size() != 3)
+		{
+			ROS_ERROR_STREAM("Input point " << i << " must have 3 positions (x, y, orientation)");
+			return false;
+		}
+		if (msg.points[i].velocities.size())
+		{
+			if (msg.points[i].velocities.size() != 3)
+			{
+				ROS_ERROR_STREAM("Input point " << i << " must have 0 or 3 velocities (x, y, orientation)");
+				return false;
+			}
+			if ((msg.points[i].accelerations.size() != 0) &&
+				(msg.points[i].accelerations.size() != 3))
+			{
+				ROS_ERROR_STREAM("Input point " << i << " must have 0 or 3 accelerations (x, y, orientation)");
+				return false;
+			}
+		}
+		else if (msg.points[i].accelerations.size())
+		{
+			ROS_ERROR_STREAM("Input point " << i << " must have 0 accelerations since there are also 0 velocities for that point)");
+			return false;
+		}
+	}
+
+	std::vector<OptParams> optParams(msg.points.size());
+	Trajectory trajectory;
+	if (!generateSpline(msg.points, optParams, trajectory))
+		return false;
 
 	out_msg.orient_coefs.resize(trajectory[0].size());
 	out_msg.x_coefs.resize(trajectory[0].size());
 	out_msg.y_coefs.resize(trajectory[0].size());
 
+	const std::vector<std::string> joint_names = {"x_linear_joint", "y_linear_joint", "z_rotation_joint"};
+	const size_t n_joints = joint_names.size();
 	for (size_t seg = 0; seg < trajectory[0].size(); seg++)
 	{
 		for (size_t joint = 0; joint < n_joints; joint++)
@@ -546,6 +592,217 @@ bool generate(base_trajectory::GenerateSpline::Request &msg,
 	return true;
 }
 
+// From http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
+// equation 14
+double perpDistance(const std::vector<double> &l1, const std::vector<double> &l2,
+		double px, double py)
+{
+	return fabs((l2[0] - l1[0]) * (l1[1] - py) - (l1[0] - px) * (l2[1] - l1[1])) /
+		   hypot(l2[0] - l1[0], l2[1] - l1[1]);
+
+}
+// evaluate spline - inputs are spline coeffs (Trajectory), waypoints, dmax, vmax, amax, acentmax
+//                   returns time taken to drive spline, cost, possibly waypoints
+//
+//
+struct ArclengthAndTime
+{
+	ArclengthAndTime(const double arclength, const double time) :
+		arclength_(arclength),
+		time_(time)
+	{
+	}
+	double arclength_;
+	double time_;
+};
+
+double simpsonsRule(const double periodT,
+					const double startXdot, const double startYdot,
+					const double midXdot, const double midYdot,
+					const double endXdot, const double endYdot)
+{
+	return periodT / 6. * (hypot(startXdot, startYdot) + 4. * hypot(midXdot, midYdot) + hypot(endXdot, endYdot));
+}
+
+// Recursive function to get arc length of x/y path using
+// subdivision.
+// Basic algorithm breaks the segment into two halves. If the
+// estimated length of the two halves is close enough to the length
+// estimated for the full length of the segment, assume the algorithm
+// has converged and keep that result (use the two halves since they're
+// likely more accurate).
+// If the sum of the halves are too far off from the total length
+// recursively call the function on the first and second halves.
+// Returns two things - arcLengthAndTime is a vector of
+// <cumulative arclength at that time, time> tuples, hopefully increasing in time
+// along with totalLength, which is the total length calculated so far.
+void getPathSegLength(std::vector<ArclengthAndTime> &arclengthAndTime,
+		const Trajectory &trajectory,
+		double &totalLength,
+		const double parentLength,
+		const double startTime,
+		const double endTime,
+		const double startXdot,
+		const double startYdot,
+		const double midXdot,
+		const double midYdot,
+		const double endXdot,
+		const double endYdot)
+{
+	constexpr double epsilon = 1.0e-5;
+	const double midTime = (startTime + endTime) / 2.0;
+
+	// TODO : Perhaps a check on dT being too small?
+
+	Segment::State xState;
+	Segment::State yState;
+
+	// Simpson's rule needs start and end values and
+	// also one at the midpoint. Since we're evaluating
+	// each half, that means the mid point for each segment
+	// is at 1/4 and 3/4 between start and end time
+	const double quarterTime = (startTime + midTime) / 2.0;
+	sample(trajectory[0], quarterTime, xState);
+	sample(trajectory[1], quarterTime, yState);
+	const double quarterXdot = xState.velocity[0];
+	const double quarterYdot = yState.velocity[0];
+
+	const double threeQuarterTime = (midTime + endTime) / 2.0;
+	sample(trajectory[0], threeQuarterTime, xState);
+	sample(trajectory[1], threeQuarterTime, yState);
+	const double threeQuarterXdot = xState.velocity[0];
+	const double threeQuarterYdot = yState.velocity[0];
+
+	const double firstHalfLength = simpsonsRule(midTime - startTime, startXdot, startYdot, quarterXdot, quarterYdot, midXdot, midYdot);
+	const double secondHalfLength = simpsonsRule(endTime - midTime, midXdot, midYdot, threeQuarterXdot, threeQuarterYdot, endXdot, endYdot);
+
+	// If the two halves are close enough in length to the total
+	// estimated length, assume the result has converged enough
+	// to use - add both values to the list and return
+	if (fabs((totalLength - (firstHalfLength + secondHalfLength)) / totalLength) < epsilon)
+	{
+		totalLength += firstHalfLength;
+		arclengthAndTime.push_back(ArclengthAndTime(totalLength, midTime));
+		totalLength += secondHalfLength;
+		arclengthAndTime.push_back(ArclengthAndTime(totalLength, endTime));
+	}
+	// Otherwise, split each half segment into another half
+	// and recursively repeat the process
+	getPathSegLength(arclengthAndTime, trajectory,
+			totalLength,
+			firstHalfLength,
+			startTime, midTime,
+			startXdot, startYdot,
+			quarterXdot, quarterYdot,
+			midXdot, midYdot);
+	getPathSegLength(arclengthAndTime, trajectory,
+			totalLength,
+			secondHalfLength,
+			midTime, endTime,
+			midXdot, midYdot,
+			threeQuarterXdot, threeQuarterYdot,
+			endXdot, endYdot);
+}
+
+void getPathLength(const Trajectory &trajectory,
+				   std::vector<ArclengthAndTime> &arclengthAndTime,
+				   double &totalLength)
+{
+	const double endTime = trajectory[0].back().endTime();
+	const double midTime = endTime / 2.0;
+
+	Segment::State xState;
+	Segment::State yState;
+
+	// Get initial conditions for getPathSegLength call
+	// for this particular segment
+	sample(trajectory[0], 0, xState);
+	sample(trajectory[1], 0, yState);
+	const double startXdot = xState.velocity[0];
+	const double startYdot = yState.velocity[0];
+
+	sample(trajectory[0], midTime, xState);
+	sample(trajectory[1], midTime, yState);
+	const double midXdot = xState.velocity[0];
+	const double midYdot = yState.velocity[0];
+
+	sample(trajectory[0], endTime, xState);
+	sample(trajectory[1], endTime, yState);
+	const double endXdot = xState.velocity[0];
+	const double endYdot = yState.velocity[0];
+
+	totalLength = 0.0;
+	arclengthAndTime.clear();
+
+	getPathSegLength(arclengthAndTime,
+			trajectory,
+			totalLength,
+			std::numeric_limits<double>::max(), // bogus previous length
+			0, endTime, // start, end time
+			startXdot, startYdot,
+			midXdot, midYdot,
+			endXdot, endYdot);
+
+	// Build piecewise quintic bezier spline connecting each point in arcLengthAndTime
+	// that gives function from time->arclength.
+	// Then construct the inverse, a vector of times which correspond to roughly equal
+	// sized arc-length intervals along the entire path
+}
+
+bool evaluateSpline(const Trajectory &trajectory,
+					const std::vector<trajectory_msgs::JointTrajectoryPoint> &points,
+					double dMax, // limit of path excursion from straight line b/t waypoints
+					double vMax, // max overall velocity
+					double aMax, // max allowed acceleration
+					double aCentMax, // max allowed centripetal acceleration
+					double &time,    // time taken to drive the path
+					double &cost)    // cost of the path
+{
+	time = 0.0;
+	cost = 0.0;
+	const double dt = 0.05; // 20 samples per segment
+
+	trajectory_interface::PosVelAccState<double> prevXState;
+	trajectory[0][0].sample(0.0, prevXState);
+	trajectory_interface::PosVelAccState<double> prevYState;
+	trajectory[0][0].sample(0.0, prevYState);
+
+	for (size_t seg = 0; seg < trajectory[0].size(); seg++)
+	{
+		// get velocity from start point
+		double currV = hypot(prevXState.velocity[0], prevYState.velocity[0]);
+		std::vector<double> sampleT;        // time for each sample in the forward pass - reused for the back pass
+		std::vector<double> sampleDeltaS;   // change in position along spline for each step
+		std::vector<double> sampleVForward; // allowed forward V at step
+		for (double t = dt; t < 1.0; t += dt)
+		{
+			sampleT.push_back(t);
+			trajectory_interface::PosVelAccState<double> xState;
+			trajectory[0][seg].sample(t, xState);
+			trajectory_interface::PosVelAccState<double> yState;
+			trajectory[1][seg].sample(t, yState);
+			trajectory_interface::PosVelAccState<double> thetaState;
+			trajectory[2][seg].sample(t, thetaState);
+
+			// Save distance between prev and current position for this timestep
+			sampleDeltaS.push_back(hypot(xState.position[0] - prevXState.position[0],
+										 yState.position[0] - prevYState.position[0]));
+
+			// Get curvature for this sample
+			const double pXdot = xState.velocity[0];
+			const double pXdotdot = xState.acceleration[0];
+			const double pYdot = yState.velocity[0];
+			const double pYdotdot = yState.acceleration[0];
+			const double curvature = (pXdot * pYdotdot - pYdot * pXdotdot) / pow(pXdot * pXdot + pYdot * pYdot, 3./2.);
+			// Get orthogonal distance between spline position and
+			// line segment connecting the corresponding waypoints
+			const double distToLine = perpDistance(points[seg].positions, points[seg+1].positions, xState.position[0], yState.position[0]);
+		}
+	}
+	return true;
+}
+
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "base_trajectory");
@@ -556,7 +813,7 @@ int main(int argc, char **argv)
 	nh.param<double>("loop_hz", loop_hz, 100.);
 	period = ros::Duration(1.0 / loop_hz);
 
-	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", generate);
+	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", callback);
 
 	ros::spin();
 }
