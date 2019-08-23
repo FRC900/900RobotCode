@@ -27,12 +27,17 @@ class MyQuinticSplineSegment: public QuinticSplineSegment<ScalarType>
 		}
 };
 }
+/** Coefficients represent a quintic polynomial like so:
+  *
+  * <tt> coefs_[0] + coefs_[1]*x + coefs_[2]*x^2 + coefs_[3]*x^3 + coefs_[4]*x^4 + coefs_[5]*x^5 </tt>
+  */
+typedef std::vector<std::array<double, 6>> SplineCoefs;
 
 // Define typedefs - we're generating Quinitc (5-th order polynomial) splines
 // which have doubles as their datatype
 typedef joint_trajectory_controller::JointTrajectorySegment<trajectory_interface::MyQuinticSplineSegment<double>> Segment;
 
-// Each TrajectoryPerJoint is a vector of segments, each a spline which makes up 
+// Each TrajectoryPerJoint is a vector of segments, each a spline which makes up
 // the total path for that dimension (x, y, orientation)
 typedef std::vector<Segment> TrajectoryPerJoint;
 
@@ -628,12 +633,26 @@ struct ArclengthAndTime
 // If this is done, then return the error and if it is below
 // a threshold, use that value. Otherwise, split segment
 // in half and recursively calculate both.
-double simpsonsRule(const double periodT,
-					const double startXdot, const double startYdot,
-					const double midXdot, const double midYdot,
-					const double endXdot, const double endYdot)
+void simpsonsRule(double &estimate, double &error,
+				  const double startT, const double endT,
+				  const SplineCoefs &xStartCoefs,
+				  const SplineCoefs &yStartCoefs,
+				  const SplineCoefs &xEndCoefs,
+				  const SplineCoefs &yEndCoefs,
+				  const double startXdot, const double startYdot,
+				  const double midXdot, const double midYdot,
+				  const double endXdot, const double endYdot)
 {
-	return periodT / 6. * (hypot(startXdot, startYdot) + 4. * hypot(midXdot, midYdot) + hypot(endXdot, endYdot));
+	const double periodT = endT - startT;
+	estimate = periodT / 6.0 * (hypot(startXdot, startYdot) + 4.0 * hypot(midXdot, midYdot) + hypot(endXdot, endYdot));
+
+	const double commonErrorTerm = (1.0/90.0) * pow(periodT / 2.0, 5.0);
+	const double startError = hypot(120.0 * xStartCoefs[0][5] * startT + 24.0 * xStartCoefs[0][4],
+									120.0 * yStartCoefs[0][5] * startT + 24.0 * yStartCoefs[0][4]);
+	const double endError = hypot(120.0 * xEndCoefs[0][5] * endT + 24.0 * xEndCoefs[0][4],
+								  120.0 * yEndCoefs[0][5] * endT + 24.0 * yEndCoefs[0][4]);
+
+	error = commonErrorTerm * std::max(startError, endError);
 }
 
 // Recursive function to get arc length of x/y path using
@@ -648,16 +667,17 @@ double simpsonsRule(const double periodT,
 // Returns two things - arcLengthAndTime is a vector of
 // <cumulative arclength at that time, time> tuples, hopefully increasing in time
 // along with totalLength, which is the total length calculated so far.
-void getPathSegLength(std::vector<ArclengthAndTime> &arclengthAndTime,
+bool getPathSegLength(std::vector<ArclengthAndTime> &arclengthAndTime,
 		const Trajectory &trajectory,
 		double &totalLength,
-		const double parentLength,
+		TrajectoryPerJoint::const_iterator startXIt,
+		TrajectoryPerJoint::const_iterator startYIt,
+		TrajectoryPerJoint::const_iterator endXIt,
+		TrajectoryPerJoint::const_iterator endYIt,
 		const double startTime,
 		const double endTime,
 		const double startXdot,
 		const double startYdot,
-		const double midXdot,
-		const double midYdot,
 		const double endXdot,
 		const double endYdot)
 {
@@ -670,95 +690,118 @@ void getPathSegLength(std::vector<ArclengthAndTime> &arclengthAndTime,
 	Segment::State yState;
 
 	// Simpson's rule needs start and end values and
-	// also one at the midpoint. Since we're evaluating
-	// each half, that means the mid point for each segment
-	// is at 1/4 and 3/4 between start and end time
-	const double quarterTime = (startTime + midTime) / 2.0;
-	sample(trajectory[0], quarterTime, xState);
-	sample(trajectory[1], quarterTime, yState);
-	const double quarterXdot = xState.velocity[0];
-	const double quarterYdot = yState.velocity[0];
-
-	const double threeQuarterTime = (midTime + endTime) / 2.0;
-	sample(trajectory[0], threeQuarterTime, xState);
-	sample(trajectory[1], threeQuarterTime, yState);
-	const double threeQuarterXdot = xState.velocity[0];
-	const double threeQuarterYdot = yState.velocity[0];
-
-	const double firstHalfLength = simpsonsRule(midTime - startTime, startXdot, startYdot, quarterXdot, quarterYdot, midXdot, midYdot);
-	const double secondHalfLength = simpsonsRule(endTime - midTime, midXdot, midYdot, threeQuarterXdot, threeQuarterYdot, endXdot, endYdot);
-
-	// If the two halves are close enough in length to the total
-	// estimated length, assume the result has converged enough
-	// to use - add both values to the list and return
-	if (fabs((totalLength - (firstHalfLength + secondHalfLength)) / totalLength) < epsilon)
+	// also one at the midpoint.
+	TrajectoryPerJoint::const_iterator midXIt = sample(trajectory[0], midTime, xState);
+	if (midXIt == trajectory[0].cend())
 	{
-		totalLength += firstHalfLength;
-		arclengthAndTime.push_back(ArclengthAndTime(totalLength, midTime));
-		totalLength += secondHalfLength;
-		arclengthAndTime.push_back(ArclengthAndTime(totalLength, endTime));
+		ROS_ERROR_STREAM("base_trajectory : could not sample mid xState at time " << midTime);
+		return false;
 	}
-	// Otherwise, split each half segment into another half
-	// and recursively repeat the process
-	getPathSegLength(arclengthAndTime, trajectory,
-			totalLength,
-			firstHalfLength,
-			startTime, midTime,
-			startXdot, startYdot,
-			quarterXdot, quarterYdot,
-			midXdot, midYdot);
-	getPathSegLength(arclengthAndTime, trajectory,
-			totalLength,
-			secondHalfLength,
-			midTime, endTime,
-			midXdot, midYdot,
-			threeQuarterXdot, threeQuarterYdot,
-			endXdot, endYdot);
+
+	TrajectoryPerJoint::const_iterator midYIt = sample(trajectory[1], midTime, yState);
+	if (midYIt == trajectory[1].cend())
+	{
+		ROS_ERROR_STREAM("base_trajectory : could not sample mid yState at time " << midTime);
+		return false;
+	}
+	const double midXdot = xState.velocity[0];
+	const double midYdot = yState.velocity[0];
+
+	double estimate;
+	double error;
+
+	simpsonsRule(estimate, error,
+				 startTime, endTime,
+				 startXIt->getCoefs(), startYIt->getCoefs(),
+				 endXIt->getCoefs(), endYIt->getCoefs(),
+				 startXdot, startYdot, midXdot, midYdot, endXdot, endYdot);
+
+	// If the error magnitude is less than epsilon,
+	// use this approximation for the arclength from
+	// start to end
+	if (fabs(error) < epsilon)
+	{
+		totalLength += estimate;
+		arclengthAndTime.push_back(ArclengthAndTime(totalLength, endTime));
+		return true;
+	}
+
+	// Otherwise, split segment in half
+	// and recursively calculate the length of each half.
+	if (!getPathSegLength(arclengthAndTime, trajectory, totalLength,
+						  startXIt, startYIt,
+						  midXIt, midYIt,
+						  startTime, midTime,
+						  startXdot, startYdot,
+						  midXdot, midYdot))
+		return false;
+	if (!getPathSegLength(arclengthAndTime, trajectory, totalLength,
+						  midXIt, midYIt,
+						  endXIt, endYIt,
+						  midTime, endTime,
+						  midXdot, midYdot,
+						  endXdot, endYdot))
+		return false;
+	return true;
 }
 
-void getPathLength(const Trajectory &trajectory,
-				   std::vector<ArclengthAndTime> &arclengthAndTime,
-				   double &totalLength)
+bool getPathLength(std::vector<ArclengthAndTime> &arclengthAndTime,
+				   double &totalLength,
+				   const Trajectory &trajectory)
 {
-	const double endTime = trajectory[0].back().endTime();
-	const double midTime = endTime / 2.0;
-
 	Segment::State xState;
 	Segment::State yState;
 
 	// Get initial conditions for getPathSegLength call
 	// for this particular segment
-	sample(trajectory[0], 0, xState);
-	sample(trajectory[1], 0, yState);
+	TrajectoryPerJoint::const_iterator startXIt = sample(trajectory[0], 0, xState);
+	if (startXIt == trajectory[0].cend())
+	{
+		ROS_ERROR("base_trajectory : could not sample initial xState 0");
+		return false;
+	}
+
+	TrajectoryPerJoint::const_iterator startYIt = sample(trajectory[1], 0, yState);
+	if (startYIt == trajectory[1].cend())
+	{
+		ROS_ERROR("base_trajectory : could not sample initial yState 0");
+		return false;
+	}
 	const double startXdot = xState.velocity[0];
 	const double startYdot = yState.velocity[0];
 
-	sample(trajectory[0], midTime, xState);
-	sample(trajectory[1], midTime, yState);
-	const double midXdot = xState.velocity[0];
-	const double midYdot = yState.velocity[0];
+	const double endTime = trajectory[0].back().endTime();
+	TrajectoryPerJoint::const_iterator endXIt = sample(trajectory[0], endTime, xState);
+	if (endXIt == trajectory[0].cend())
+	{
+		ROS_ERROR("base_trajectory : could not sample initial xState end");
+		return false;
+	}
+	TrajectoryPerJoint::const_iterator endYIt = sample(trajectory[1], endTime, yState);
+	if (endYIt == trajectory[1].cend())
+	{
+		ROS_ERROR("base_trajectory : could not sample initial yState end");
+		return false;
+	}
 
-	sample(trajectory[0], endTime, xState);
-	sample(trajectory[1], endTime, yState);
 	const double endXdot = xState.velocity[0];
 	const double endYdot = yState.velocity[0];
 
 	totalLength = 0.0;
 	arclengthAndTime.clear();
 
-	getPathSegLength(arclengthAndTime,
-			trajectory,
-			totalLength,
-			std::numeric_limits<double>::max(), // bogus previous length
+	getPathSegLength(arclengthAndTime, trajectory, totalLength,
+			startXIt, startYIt,
+			endXIt, endYIt,
 			0, endTime, // start, end time
 			startXdot, startYdot,
-			midXdot, midYdot,
 			endXdot, endYdot);
 
 	// Build piecewise quintic bezier spline connecting each point in arcLengthAndTime
 	// that gives function from time->arclength.
 	// Then construct the inverse, a vector of times which correspond to roughly equal
 	// sized arc-length intervals along the entire path
+	return true;
 }
 
 bool evaluateSpline(const Trajectory &trajectory,
