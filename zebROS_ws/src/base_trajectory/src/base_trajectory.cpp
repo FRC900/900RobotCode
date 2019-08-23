@@ -616,6 +616,18 @@ struct ArclengthAndTime
 	double time_;
 };
 
+// Real way to do this is return magnitude of max error term for
+// the approximation :
+// 1/90 * (periodT/2)^5 * max(f''''(startT), f''''(endT))
+// f'''' is weird because is is hypot(fx''''(), fy''''())
+// f'''' is the 4th derivative of the spline function =
+// 120 * acoeff + 24* bcoeff.
+// Complicating matters - start and end can come from different
+// spline segments, so we need an aStart, bStart, aend, bEnd
+// as well.
+// If this is done, then return the error and if it is below
+// a threshold, use that value. Otherwise, split segment
+// in half and recursively calculate both.
 double simpsonsRule(const double periodT,
 					const double startXdot, const double startYdot,
 					const double midXdot, const double midYdot,
