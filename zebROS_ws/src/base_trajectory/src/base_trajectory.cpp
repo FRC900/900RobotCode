@@ -182,6 +182,22 @@ struct OptParams
 		, length_(0.)
 	{
 	}
+
+	const size_t size(void) const
+	{
+		return 3;
+	}
+
+	double& operator[](size_t i)
+	{
+		if (i == 0)
+			return posX_;
+		if (i == 1)
+			return posY_;
+		if (i == 2)
+			return length_;
+		throw std::out_of_range ("out of range in OptParams operator[]");
+	}
 };
 
 // Helper function for finding 2nd derivative
@@ -890,7 +906,98 @@ bool evaluateSpline(const Trajectory &trajectory,
 	return true;
 }
 
+bool RPROP(
+		const std::vector<trajectory_msgs::JointTrajectoryPoint> &points,
+		double dMax, // limit of path excursion from straight line b/t waypoints
+		double vMax, // max overall velocity
+		double aMax, // max allowed acceleration
+		double wheelRadius, // radius from center to wheels
+		double aCentMax) // max allowed centripetal acceleration
+{
+	// Generate initial trajectory, evaluate to get cost
+	Trajectory bestTrajectory;
+	double bestCost;
 
+	// initialize params to 0
+	std::vector<OptParams> bestOptParams(points.size());
+	Trajectory trajectory;
+	if (!generateSpline(points, bestOptParams, bestTrajectory))
+		return false;
+
+	double time;
+	if (!evaluateSpline(bestTrajectory, points,
+				0.2, // limit of path excursion from straight line b/t waypoints
+				4.5, // max overall velocity
+				2.5, // max allowed acceleration
+				0.3682, // wheel radius
+				3.5, // max allowed centripetal acceleration
+				time,    // time taken to drive the path
+				bestCost))   // cost of the path
+	{
+		ROS_ERROR("base_trajectory_node : RPROP initial call returned false");
+		return false;
+	}
+
+	double deltaTerm = std::numeric_limits<double>::max();
+	constexpr double deltaTermEpsilon = 0.1;
+
+	while (deltaTerm > deltaTermEpsilon)
+	{
+		deltaTerm = 0;
+		auto optParams = bestOptParams;
+		for (size_t i = 0; i < optParams.size(); i++) // index of param optimized
+		{
+			for (size_t j = 0; i < optParams.size(); j++)
+			{
+				double deltaCost = std::numeric_limits<double>::max();
+				constexpr double deltaCostEpsilon = 0.1;
+				double currCost = bestCost;
+				double dparam = .1; // TODO - dparam_0 should be configurable
+				while (deltaCost > deltaCostEpsilon)
+				{
+					Trajectory thisTrajectory;
+					optParams[i][j] += dparam;
+					if (!generateSpline(points, optParams, thisTrajectory))
+						return false;
+
+					double thisCost;
+					if (!evaluateSpline(thisTrajectory, points,
+								0.2, // limit of path excursion from straight line b/t waypoints
+								4.5, // max overall velocity
+								2.5, // max allowed acceleration
+								0.3682, // wheel radius
+								3.5, // max allowed centripetal acceleration
+								time,    // time taken to drive the path
+								thisCost))   // cost of the path
+					{
+						ROS_ERROR("base_trajectory_node : RPROP initial call returned false");
+						return false;
+					}
+
+					if (thisCost < bestCost)
+					{
+						deltaTerm = std::max(deltaTerm, bestCost - thisCost);
+						bestTrajectory = thisTrajectory;
+						bestCost = thisCost;
+						bestOptParams = optParams;
+						break;
+					}
+					if (thisCost < currCost)
+					{
+						dparam *= 1.2;
+					}
+					else
+					{
+						dparam *= -0.5;
+					}
+					deltaCost = fabs(thisCost - currCost);
+					currCost = thisCost;
+				}
+			}
+		}
+	}
+	return true;
+}
 // input should be JointTrajectory[] custom message
 // Output wil be array of spline coefficents swerve_point_generator/Coefs[] for x, y, orientation
 bool callback(base_trajectory::GenerateSpline::Request &msg,
