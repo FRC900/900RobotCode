@@ -144,9 +144,12 @@ void writeMatlabCode(const base_trajectory::GenerateSpline::Response &msg)
 	printPolyval(s, "dorient", msg.orient_coefs.size(), msg.end_points);
 	printPolyval(s, "ddorient", msg.orient_coefs.size(), msg.end_points);
 	printPolyval(s, "dddorient", msg.orient_coefs.size(), msg.end_points);
+	s << "figure(1)" << std::endl;
 	s << "subplot(1,1,1)" << std::endl;
 	s << "subplot(3,2,1)" << std::endl;
 	s << "plot(px_y, py_y)" << std::endl;
+	s << "subplot(3,2,2)" << std::endl;
+	s << "plot(x, porient_y, x, pdorient_y)" << std::endl;
 	s << "subplot(3,2,3)" << std::endl;
 	s << "plot (x,px_y, x, py_y)" << std::endl;
 	s << "subplot(3,2,4)" << std::endl;
@@ -492,10 +495,6 @@ double perpDistance(const std::vector<double> &l1, const std::vector<double> &l2
 		   hypot(l2[0] - l1[0], l2[1] - l1[1]);
 
 }
-// evaluate spline - inputs are spline coeffs (Trajectory), waypoints, dmax, vmax, amax, acentmax
-//                   returns time taken to drive spline, cost, possibly waypoints
-//
-//
 struct ArclengthAndTime
 {
 	ArclengthAndTime(const double arcLength, const double time) :
@@ -595,7 +594,7 @@ bool getPathSegLength(std::vector<ArclengthAndTime> &arcLengthAndTime,
 				 startXIt->getCoefs(), startYIt->getCoefs(),
 				 endXIt->getCoefs(), endYIt->getCoefs(),
 				 startXdot, startYdot, midXdot, midYdot, endXdot, endYdot);
-	ROS_INFO_STREAM("simpsonsRule : startTime = " << startTime << " endTime = " << endTime << " error = " << error);
+	//ROS_INFO_STREAM("simpsonsRule : startTime = " << startTime << " endTime = " << endTime << " error = " << error);
 
 	// If the error magnitude is less than epsilon,
 	// use this approximation for the arcLength from
@@ -700,6 +699,7 @@ bool getPathLength(Trajectory &arcLengthTrajectory,
 	// Then construct the inverse, a vector of times which correspond to roughly equal
 	// sized arc-length intervals along the entire path
 	equalArcLengthTimes.clear();
+	equalArcLengthTimes.push_back(0); // start at t==0
 	constexpr double distBetweenArcLengths = 0.05; //5 cm
 	constexpr double distanceEpsilon = 0.001; // 5 mm
 	constexpr double midTimeInflation = 1.25;
@@ -715,12 +715,12 @@ bool getPathLength(Trajectory &arcLengthTrajectory,
 	// keep track of the jump to get from one location to another. Use
 	// this as a starting guess for the next arclength increment
 	double prevStart = 0.0;
-	double prevTimeDelta = points.back().time_from_start.toSec() / 2.0;
+	double prevTimeDelta = endTime / 2.0;
 
 	size_t iterCount = 0;
 	for (double currDistance = distBetweenArcLengths; currDistance <= totalLength; currDistance += distBetweenArcLengths)
 	{
-		double end = points.back().time_from_start.toSec();
+		double end = endTime;
 		double mid = start + prevTimeDelta;
 		while((end - mid) > 0.001) // Quit if time delta gets too small
 		{
@@ -749,6 +749,12 @@ bool getPathLength(Trajectory &arcLengthTrajectory,
 			mid = (start + end) / 2.0;
 		}
 
+		if (mid > endTime)
+		{
+			equalArcLengthTimes.push_back(endTime);
+			break;
+		}
+
 		equalArcLengthTimes.push_back(mid);
 		start = mid;
 		// Use starting "midpoint" guess of of start time plus
@@ -765,17 +771,25 @@ bool getPathLength(Trajectory &arcLengthTrajectory,
 	return true;
 }
 
+// evaluate spline - inputs are spline coeffs (Trajectory), waypoints, dmax, vmax, amax, acentmax
+//                   returns time taken to drive spline, cost, possibly waypoints
 bool evaluateSpline(const Trajectory &trajectory,
 					const std::vector<trajectory_msgs::JointTrajectoryPoint> &points,
 					double dMax, // limit of path excursion from straight line b/t waypoints
 					double vMax, // max overall velocity
 					double aMax, // max allowed acceleration
+					double wheelRadius, // radius from center to wheels
 					double aCentMax, // max allowed centripetal acceleration
 					double &time,    // time taken to drive the path
 					double &cost)    // cost of the path
 {
 
+	// arcLengthTrajectory takes in a time and returns the x-y distance
+	// traveled up to that time.
 	Trajectory arcLengthTrajectory;
+	// equalArcLengthTimes is a vector of times. Each entry is the time
+	// of an equally-spaced sample from arcLengthTrajectory. That is
+	// sample i is arclength (approx) d away from sample i-1 and i+1 for all i.
 	std::vector<double> equalArcLengthTimes;
 	double totalLength;
 	if (!getPathLength(arcLengthTrajectory, equalArcLengthTimes, totalLength, trajectory))
@@ -784,48 +798,95 @@ bool evaluateSpline(const Trajectory &trajectory,
 		return false;
 	}
 
-	time = 0.0;
-	cost = 0.0;
-	return true;
-	const double dt = 0.05; // 20 samples per segment
+	// Starting at arclength 0
+	double prevArcLength = 0;
 
-	trajectory_interface::PosVelAccState<double> prevXState;
-	trajectory[0][0].sample(0.0, prevXState);
-	trajectory_interface::PosVelAccState<double> prevYState;
-	trajectory[0][0].sample(0.0, prevYState);
+	std::vector<double> deltaS;   // change in position along spline for each step
+	std::vector<double> distanceToPathMidpoint;
+	std::vector<double> vTrans; // max velocity allowed at each step
+	std::vector<double> vRot;
 
-	for (size_t seg = 0; seg < trajectory[0].size(); seg++)
+	// Add 0th entries for arrays so indices line up with equalArcLengthTimes
+	deltaS.push_back(0);
+	distanceToPathMidpoint.push_back(0);
+	vTrans.push_back(0);
+	vRot.push_back(0);
+	size_t seg = 0;
+	for (size_t i = 1; i < equalArcLengthTimes.size(); i++)
 	{
-		// get velocity from start point
-		double currV = hypot(prevXState.velocity[0], prevYState.velocity[0]);
-		std::vector<double> sampleT;        // time for each sample in the forward pass - reused for the back pass
-		std::vector<double> sampleDeltaS;   // change in position along spline for each step
-		std::vector<double> sampleVForward; // allowed forward V at step
-		for (double t = dt; t < 1.0; t += dt)
-		{
-			sampleT.push_back(t);
-			trajectory_interface::PosVelAccState<double> xState;
-			trajectory[0][seg].sample(t, xState);
-			trajectory_interface::PosVelAccState<double> yState;
-			trajectory[1][seg].sample(t, yState);
-			trajectory_interface::PosVelAccState<double> thetaState;
-			trajectory[2][seg].sample(t, thetaState);
+		const double t = equalArcLengthTimes[i];
+		while (points[seg+1].time_from_start < ros::Duration(t))
+			seg += 1;
+		ROS_INFO_STREAM("processing index " << i << " t=" << t <<" seg=" << seg);
+		// Save distance between prev and current position for this timestep
+		// This should be nearly constant between points, but
+		// get the exact value for each to be more precise
+		Segment::State arcLengthState;
+		sample(arcLengthTrajectory[0], t, arcLengthState);
+		deltaS.push_back(arcLengthState.position[0] - prevArcLength);
+		prevArcLength = arcLengthState.position[0];
 
-			// Save distance between prev and current position for this timestep
-			sampleDeltaS.push_back(hypot(xState.position[0] - prevXState.position[0],
-										 yState.position[0] - prevYState.position[0]));
+		Segment::State xState;
+		sample(trajectory[0], t, xState);
+		Segment::State yState;
+		sample(trajectory[1], t, yState);
+		Segment::State thetaState;
+		sample(trajectory[2], t, thetaState);
 
-			// Get curvature for this sample
-			const double pXdot = xState.velocity[0];
-			const double pXdotdot = xState.acceleration[0];
-			const double pYdot = yState.velocity[0];
-			const double pYdotdot = yState.acceleration[0];
-			const double curvature = (pXdot * pYdotdot - pYdot * pXdotdot) / pow(pXdot * pXdot + pYdot * pYdot, 3./2.);
-			// Get orthogonal distance between spline position and
-			// line segment connecting the corresponding waypoints
-			const double distToLine = perpDistance(points[seg].positions, points[seg+1].positions, xState.position[0], yState.position[0]);
-		}
+		// Get orthogonal distance between spline position and
+		// line segment connecting the corresponding waypoints
+		distanceToPathMidpoint.push_back(perpDistance(points[seg].positions, points[seg+1].positions, xState.position[0], yState.position[0]));
+		//ROS_INFO_STREAM("perpDistance = " << distanceToPathMidpoint.back() <<
+				//" p1: " << points[seg].positions[0] << "," << points[seg].positions[1] <<
+				//" p2: " << points[seg+1].positions[0] << "," << points[seg+1].positions[1] <<
+				//" x: " << xState.position[0] << " y: " << yState.position[0]);
+
+		// Get curvature for this sample
+		const double pXdot = xState.velocity[0];
+		const double pXdotdot = xState.acceleration[0];
+		const double pYdot = yState.velocity[0];
+		const double pYdotdot = yState.acceleration[0];
+		const double curvature = (pXdot * pYdotdot - pYdot * pXdotdot) / pow(pXdot * pXdot + pYdot * pYdot, 3.0/2.0);
+		//ROS_INFO_STREAM("curvature = " << curvature);
+
+		// First pass of vTrans limits by absolute max velocity
+		// and also velocity limited by max centripetal acceleration
+		// Assume rotational velocity is a hard constraint we have to hit
+		vTrans.push_back(std::min(vMax - fabs(thetaState.velocity[0]) * wheelRadius, sqrt(aCentMax / fabs(curvature))));
+		//ROS_INFO_STREAM("vTrans[" << i << "==" << equalArcLengthTimes[i] <<"]=" << vTrans[i]);
 	}
+
+	// Forward pass
+	for (size_t i = 1; i < vTrans.size(); i++)
+	{
+		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i - 1] * vTrans[i - 1]) + 2.0 * aMax * deltaS[i]);
+		ROS_INFO_STREAM("vTrans[" << i << "==" << equalArcLengthTimes[i] <<"]=" << vTrans[i]);
+	}
+
+	// Backwards pass
+	vTrans.back() = 0; // Hard-code end velocity for now. TODO - make it grab from last point or spline segment
+	for (size_t i = vTrans.size() - 2; i > 0; i--)
+	{
+		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i + 1] * vTrans[i + 1]) + 2.0 * aMax * deltaS[i - 1]);
+		ROS_INFO_STREAM("vTrans[" << i << "==" << equalArcLengthTimes[i] <<"]=" << vTrans[i]);
+	}
+
+	std::vector<double> remappedTimes;
+	remappedTimes.push_back(0);
+	for (size_t i = 1; i < vTrans.size(); i++)
+	{
+		remappedTimes.push_back(remappedTimes.back() + ((2.0 * deltaS[i]) / (vTrans[i - 1] + vTrans[i])));
+	}
+	time = remappedTimes.back();
+
+	cost = 0.0;
+	for (const auto d: distanceToPathMidpoint)
+	{
+		cost += exp(25.0 *((fabs(d) / dMax) - 0.9));
+	}
+	cost += time;
+	ROS_INFO_STREAM("time = " << time << " cost = " << cost);
+
 	return true;
 }
 
@@ -881,16 +942,19 @@ bool callback(base_trajectory::GenerateSpline::Request &msg,
 	double time;
 	double cost;
 	if (!evaluateSpline(trajectory, msg.points,
-				0, // limit of path excursion from straight line b/t waypoints
-				0, // max overall velocity
-				0, // max allowed acceleration
-				0, // max allowed centripetal acceleration
+				0.2, // limit of path excursion from straight line b/t waypoints
+				4.5, // max overall velocity
+				2.5, // max allowed acceleration
+				0.3682, // wheel radius
+				3.5, // max allowed centripetal acceleration
 				time,    // time taken to drive the path
 				cost))   // cost of the path
 	{
 		ROS_ERROR("base_trajectory_node : evaluateSpline() returned false");
 		return false;
 	}
+	// Convert from Trajectory type into the correct output
+	// message type
 	out_msg.orient_coefs.resize(trajectory[0].size());
 	out_msg.x_coefs.resize(trajectory[0].size());
 	out_msg.y_coefs.resize(trajectory[0].size());
