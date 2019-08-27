@@ -4,3 +4,4 @@ swerve_point_generator/Coefs[] orient_coefs
 swerve_point_generator/Coefs[] x_coefs
 swerve_point_generator/Coefs[] y_coefs
 float64[] end_points
+nav_msgs/Path path
