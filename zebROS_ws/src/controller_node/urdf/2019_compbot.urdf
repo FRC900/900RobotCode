@@ -56,7 +56,7 @@
     <link name="zed_right_camera_optical_frame"/>
 
 <!-- IMU -->    
-    <joint name="imu_link_joint" type="floating">
+    <joint name="imu_link_joint" type="fixed">
         <parent link="zed_camera_center"/>
         <child link="zed_imu_link"/>
         <origin xyz="0 0 0" rpy="0 0 0" />
