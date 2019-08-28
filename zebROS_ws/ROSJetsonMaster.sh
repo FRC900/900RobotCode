@@ -6,19 +6,14 @@ if [ -f /.dockerenv ] ; then
     echo "Sourcing Docker environment"
     source /opt/ros/melodic/setup.bash
     source /home/ubuntu/2019Offseason/zebROS_ws/devel/setup.bash
-    export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 8`
+    export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 7`
 elif [ -f /home/ubuntu/2019Offseason/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Jetson / native Linux environment"
     source /opt/ros/melodic/setup.bash
     source /home/ubuntu/2019Offseason/zebROS_ws/devel/setup.bash
     #export ROS_IP=10.9.0.8
-    export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 5`
-elif [ -f /home/ryan/2019Offseason/zebROS_ws/devel/setup.bash ] ; then
-    # Jetson-specific configuration
-    echo "Sourcing Ryan / native Linux environment"
-    source /home/ryan/2019Offseason/zebROS_ws/devel/setup.bash
-    export ROS_IP=10.9.0.12
+    export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 7`
 elif [ -f /home/ofugikawa/2019Offseason/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Olivia / native Linux environment"
@@ -35,7 +30,7 @@ else
     echo "Unknown environment! Trying to proceed anyway using local environment."
     source /opt/ros/melodic/setup.bash
     source $HOME/2019Offseason/zebROS_ws/devel/setup.bash
-    export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 5`
+    export ROS_IP=`ip route get 10.9.0.1 | head -1 | cut -d ' ' -f 7`
 fi
 
 # Common configuration
