@@ -1,7 +1,7 @@
 # Various compiler optimizations to apply to all nodes
 
 if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE Release)
+	set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
 add_definitions(-std=c++14 -Wno-deprecated-declarations -Wno-switch -ftrack-macro-expansion=0 -DPCL_ONLY_CORE_POINT_TYPES=ON -DNO_EXPLICIT_INSTANTIATIONS -Wall -DNON_POLLING)
