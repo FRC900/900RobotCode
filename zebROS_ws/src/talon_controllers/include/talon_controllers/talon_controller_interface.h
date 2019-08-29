@@ -1052,6 +1052,8 @@ class TalonControllerInterface
 
 			const int follow_can_id = talon_.state()->getCANID();
 
+			// If more than 1 joints are passed in, everything
+			// but the first is to be set up as a follower
 			follower_talons_.resize(n.size() - 1);
 			for (size_t i = 1; i < n.size(); i++)
 			{
@@ -1620,8 +1622,7 @@ class TalonControllerInterface
 			ROS_WARN("init past readParams");
 
 			talon = tci->getHandle(params.joint_name_);
-			if (!writeParamsToHW(params, talon, update_params))
-				return false;
+			writeParamsToHW(params, talon, update_params);
 
 			ROS_WARN("init past writeParamsToHW");
 			if (dynamic_reconfigure)
@@ -1670,10 +1671,16 @@ class TalonControllerInterface
 		// hardware. Make this a separate method outside of
 		// init() so that dynamic reconfigure callback can write
 		// values using this method at any time
-		virtual bool writeParamsToHW(const TalonCIParams &params,
+		// Technically, this writes to the talon command buffers
+		// (via the talon_ handle), which doesn't actually write
+		// to hardware. But writing to those buffers queues up an
+		// actual write to the hardware in write() in the hardware
+		// interface
+		virtual void writeParamsToHW(const TalonCIParams &params,
 				hardware_interface::TalonCommandHandle talon,
 				bool update_params = true)
 		{
+			talon->lock();
 			// perform additional hardware init here
 			// but don't set mode - either force the caller to
 			// set it or use one of the derived, fixed-mode
@@ -1762,8 +1769,7 @@ class TalonControllerInterface
 			// so they can be queried later?
 			if (update_params)
 				params_ = params;
-
-			return true;
+			talon->unlock();
 		}
 };
 

@@ -657,6 +657,9 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		if (!can_ctre_mc_local_hardwares_[joint_id])
 			continue;
 
+		if (!talon_command_[joint_id].try_lock())
+			continue;
+
 		custom_profile_write(joint_id);
 
 		auto &ts = talon_state_[joint_id];
@@ -1006,6 +1009,8 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 
 		if (tc.clearStickyFaultsChanged())
 			ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" sticky_faults");
+
+		tc.unlock();
 	}
 	last_robot_enabled = robot_enabled;
 

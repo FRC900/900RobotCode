@@ -1582,6 +1582,9 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 	{
 		if (!can_ctre_mc_local_hardwares_[joint_id])
 			continue;
+		if (!talon_command_[joint_id].try_lock())
+			continue;
+
 
 		custom_profile_write(joint_id);
 
@@ -1612,7 +1615,10 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 #endif
 
 		if (!victor && !talon) // skip unintialized Talons
+		{
+			talon_command_[joint_id].unlock();
 			continue;
+		}
 
 		// Save some typing by making references to commonly
 		// used variables
@@ -2357,6 +2363,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				tc.setClearStickyFaults();
 			}
 		}
+		talon_command_[joint_id].unlock();
 	}
 
 	last_robot_enabled = match_data_.isEnabled();

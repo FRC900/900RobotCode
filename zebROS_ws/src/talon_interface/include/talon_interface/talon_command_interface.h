@@ -202,7 +202,8 @@ class TalonHWCommand
 			custom_profile_hz_(50.0),
 
 			enable_read_thread_(true),
-			enable_read_thread_changed_(false)
+			enable_read_thread_changed_(false),
+			mutex_(std::make_shared<std::mutex>())
 		{
 			status_frame_periods_[Status_1_General] = status_1_general_default;
 			status_frame_periods_[Status_2_Feedback0] = status_2_feedback0_default;
@@ -2057,6 +2058,19 @@ class TalonHWCommand
 			return true;
 		}
 
+		void lock(void)
+		{
+			mutex_->lock();
+		}
+		bool try_lock(void)
+		{
+			return mutex_->try_lock();
+		}
+		void unlock(void)
+		{
+			mutex_->unlock();
+		}
+
 	private:
 		double    command_; // motor setpoint - % vbus, velocity, position, etc
 		bool      command_changed_;
@@ -2190,6 +2204,12 @@ class TalonHWCommand
 
 		bool enable_read_thread_;
 		bool enable_read_thread_changed_;
+
+		// Normally the read-update-write process will lead to
+		// sequential operation.  controller init happens asynchronously,
+		// though, so lock the command entry for a given talon when
+		// that talon's controller is being initialized
+		std::shared_ptr<std::mutex> mutex_;
 };
 
 // Handle - used by each controller to get, by name of the
