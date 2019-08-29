@@ -1,0 +1,5 @@
+File for new people learning Git! Put your name below and push the change onto the internet repository.
+
+Names
+Adam Kosinski
+
