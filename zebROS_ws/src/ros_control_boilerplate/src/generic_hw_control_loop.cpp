@@ -46,10 +46,13 @@ namespace ros_control_boilerplate
 {
 GenericHWControlLoop::GenericHWControlLoop(
 	ros::NodeHandle &nh, boost::shared_ptr<ros_control_boilerplate::FRCRobotInterface> hardware_interface)
-	: nh_(nh), hardware_interface_(hardware_interface), tracer_("GenericHWControlLoop " + nh.getNamespace())
+	: nh_(nh)
+	, hardware_interface_(hardware_interface)
+	, controller_manager_(hardware_interface_.get(), nh_)
+	, tracer_("GenericHWControlLoop " + nh.getNamespace())
 {
 	// Create the controller manager
-	controller_manager_.reset(new controller_manager::ControllerManager(hardware_interface_.get(), nh_));
+	//controller_manager_.reset(new controller_manager::ControllerManager(hardware_interface_.get(), nh_));
 
 	// Load rosparams
 	ros::NodeHandle rpsnh(nh, name_);
@@ -100,7 +103,7 @@ void GenericHWControlLoop::update(void)
 
 	// Control
 	tracer_.start_unique("update");
-	controller_manager_->update(ros::Time::now(), elapsed_time_);
+	controller_manager_.update(ros::Time::now(), elapsed_time_);
 
 	// Output
 	tracer_.start_unique("write");

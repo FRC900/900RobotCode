@@ -91,19 +91,18 @@ class GenericHWControlLoop
 		struct timespec last_time_;
 		struct timespec current_time_;
 
+		/** \brief Abstract Hardware Interface for your robot */
+		boost::shared_ptr<ros_control_boilerplate::FRCRobotInterface> hardware_interface_;
+
 		/** \brief ROS Controller Manager and Runner
 		 *
 		 * This class advertises a ROS interface for loading, unloading, starting, and
 		 * stopping ros_control-based controllers. It also serializes execution of all
 		 * running controllers in \ref update.
 		 */
-		boost::shared_ptr<controller_manager::ControllerManager> controller_manager_;
-
-		/** \brief Abstract Hardware Interface for your robot */
-		boost::shared_ptr<ros_control_boilerplate::FRCRobotInterface> hardware_interface_;
+		controller_manager::ControllerManager controller_manager_;
 
 		Tracer tracer_;
-
 };  // end class
 
 }  // namespace
