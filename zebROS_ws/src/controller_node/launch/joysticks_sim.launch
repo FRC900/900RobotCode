@@ -15,6 +15,7 @@
 		<node name="joy_node" pkg="joy" type="joy_node" output="screen">
 			<param name="autorepeat_rate" type="double" value="100"/>
 			<param name="coalesce_interval" type="double" value="0.01"/>
+			<param name="deadzone" type="double" value="0.0"/>
 		</node>
 		<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
 			<remap from="joy_in" to="/joy0/joy" />
@@ -27,6 +28,7 @@
 			<param name="dev" value="/dev/input/js1"/>
 			<param name="autorepeat_rate" type="double" value="100"/>
 			<param name="coalesce_interval" type="double" value="0.01"/>
+			<param name="deadzone" type="double" value="0.0"/>
 		</node>
 		<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
 			<remap from="joy_in" to="/joy1/joy" />
