@@ -43,6 +43,7 @@ sudo make uninstall && make clean && make -j4 && sudo make install
 # 
 # Keep each package on a separate line to aid in git merging
 # Try to keep them in alphabetic order to make it easier to find duplicates
+curl -sSL http://get.gazebosim.org | sh
 sudo apt install -y \
 	ros-melodic-ros-base \
 	liblua5.3-dev \
@@ -57,11 +58,14 @@ sudo apt install -y \
 	ros-melodic-control-msgs \
 	ros-melodic-cv-bridge \
 	ros-melodic-ecl-geometry \
+	ros-melodic-gazebo-ros-control \
+	ros-melodic-gazebo-ros-pkgs \
 	ros-melodic-grid-map-core \
 	ros-melodic-grid-map-cv \
 	ros-melodic-grid-map-ros \
 	ros-melodic-hardware-interface \
 	ros-melodic-joint-limits-interface \
+	ros-melodic-joint-state-publisher \
 	ros-melodic-joystick-drivers \
 	ros-melodic-map-server \
 	ros-melodic*mux* \
