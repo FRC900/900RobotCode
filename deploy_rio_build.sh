@@ -24,6 +24,6 @@ else
 		echo "RIO RSYNC call failed"
 		/bin/false
 	else
-		echo "Synchronization of the RIO complete"
+		echo "Synchronization to RIO complete"
 	fi
 fi

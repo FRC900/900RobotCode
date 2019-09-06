@@ -154,7 +154,7 @@ if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
 			exit 1
 		fi
 	done
-	echo "Synchronization complete"
+	echo "Synchronization from Jetson complete"
 fi
 
 # Copy from laptop to jetson.  Make it an actual sync - don't ignore
@@ -174,7 +174,7 @@ do
 		exit 1
 	fi
 done
-echo "Synchronization complete"
+echo "Synchronization to Jetson complete"
 
 # Run local roboRIO cross build as one process.
 # Then synchronize cross build products to roboRIO.
