@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd ~/2019Offseason/zebROS_ws/
+
 if [ -z $ROS_ROOT ]; then
 	PATH=$PATH:$HOME/frc2019/roborio/bin
 	source ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/melodic/setup.bash
