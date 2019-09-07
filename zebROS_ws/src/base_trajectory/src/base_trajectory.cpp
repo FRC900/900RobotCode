@@ -1075,7 +1075,6 @@ bool RPROP(
 	// initialize params to 0 offset in x, y and tangent
 	// length for all spline points
 	std::vector<OptParams> bestOptParams(points.size());
-	Trajectory trajectory;
 	if (!generateSpline(points, bestOptParams, bestTrajectory))
 	{
 		ROS_ERROR("base_trajectory_node : RPROP initial generateSpline() falied");
