@@ -48,7 +48,7 @@ class DriverStationSim(Plugin):
         # tell from pane to pane.
 
         auto_pub = rospy.Publisher("/frcrobot_rio/autonomous_mode", AutoMode, queue_size=3)
-        match_pub = rospy.Publisher("/frcrobot_rio/match_data", MatchSpecificData, queue_size=3)
+        match_pub = rospy.Publisher("/frcrobot_rio/match_data_in", MatchSpecificData, queue_size=3)
 
         def pub_data(self):
             r = rospy.Rate(100)

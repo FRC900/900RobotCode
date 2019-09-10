@@ -583,7 +583,7 @@ void FRCRobotSimInterface::init(void)
 		sim_joy_thread_ = std::thread(std::bind(&TeleopJointsKeyboard::keyboardLoop, &teleop_joy_));
 
 	limit_switch_srv_ = nh_.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit,this);
-    match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data", 1, &FRCRobotSimInterface::match_data_callback, this);
+    match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data_in", 1, &FRCRobotSimInterface::match_data_callback, this);
 
 	linebreak_sensor_srv_ = nh_.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
 	ROS_INFO_NAMED("frcrobot_sim_interface", "FRCRobotSimInterface Ready.");
