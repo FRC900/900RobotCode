@@ -10,6 +10,12 @@ Johnny
 Sahil Azad
 Joahan Castaneda
 Duncan Glynn
+<<<<<<< HEAD
+<<<<<<< HEAD
+Arvin Singh Kushwaha (ASK)
+=======
+=======
+>>>>>>> 4fc46304a244187ea8d3b6ad752e4f7e731a91f3
 Mikella Pittman
 Clara Wang
 Cindy Zhu :P
@@ -32,4 +38,8 @@ ______
              ///.----..>        \             _ -~             `.  ^-`  ^-_
                ///-._ _ _ _ _ _ _}^ - - - - ~                     ~-- ,.-~
                                                                   /.-~
+<<<<<<< HEAD
 cowsay
+>>>>>>> d9959da5ebe0e7b20b8cf8012837768349bb35b3
+=======
+>>>>>>> 4fc46304a244187ea8d3b6ad752e4f7e731a91f3
