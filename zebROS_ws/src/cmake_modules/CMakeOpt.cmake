@@ -4,14 +4,18 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif()
 
-add_definitions(-std=c++14 -Wno-deprecated-declarations -Wno-switch -ftrack-macro-expansion=0 -DPCL_ONLY_CORE_POINT_TYPES=ON -DNO_EXPLICIT_INSTANTIATIONS -Wall -DNON_POLLING)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+
+add_definitions(-Wno-deprecated-declarations -Wno-switch -ftrack-macro-expansion=0 -DPCL_ONLY_CORE_POINT_TYPES=ON -DNO_EXPLICIT_INSTANTIATIONS -Wall -DNON_POLLING)
 #add_definitions(-Wall -Wextra -Wno-switch)
 
 if (DEFINED CMAKE_TOOLCHAIN_FILE)  # Cross-build for Rio
   # Everything is in the toolchain file
 else() # Native builds
-  set (CMAKE_RANLIB "gcc-ranlib")
-  set (CMAKE_AR     "gcc-ar")
+  set (CMAKE_RANLIB "gcc-ranlib" )
+  set (CMAKE_AR     "gcc-ar"     )
   
   if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf") # Jetson TK1
 	set (OPT_FLAGS "-Ofast -flto=4 -fno-finite-math-only -mcpu=cortex-a15 -mfpu=neon-vfpv4 -fvect-cost-model")
@@ -28,6 +32,8 @@ endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${OPT_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${OPT_FLAGS} -fuse-linker-plugin")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${OPT_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} ${OPT_FLAGS} -fuse-linker-plugin")
 
 # Configure CCache if available
 find_program(CCACHE_FOUND ccache)

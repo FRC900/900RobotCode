@@ -16,8 +16,6 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 set(BOOST_ROOT ${ARM_PREFIX})
 set(Boost_NO_SYSTEM_PATHS=ON)
 
-add_definitions(-std=c++11)
-
 find_program(CMAKE_RANLIB ${ARM_PREFIX}-gcc-ranlib)
 find_program(CMAKE_AR ${ARM_PREFIX}-gcc-ar)
 set(OPT_FLAGS "-O3 -flto=4 -mcpu=cortex-a9 -mfpu=neon -fvect-cost-model")

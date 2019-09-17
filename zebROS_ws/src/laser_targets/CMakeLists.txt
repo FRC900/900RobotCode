@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(laser_targets)
 
 include ("../cmake_modules/CMakeOpt.cmake")
+
 if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 
 ## Find catkin macros and libraries

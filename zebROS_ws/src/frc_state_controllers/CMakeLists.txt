@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(frc_state_controllers)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
-
 include("../cmake_modules/CMakeOpt.cmake")
 
 ## Find catkin macros and libraries

@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(path_to_goal)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+include("../cmake_modules/CMakeOpt.cmake")
 
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 
