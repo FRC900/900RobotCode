@@ -42,11 +42,6 @@ generate_messages(
 )
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-#find_package(Gflags REQUIRED)
-#find_package(Eigen3 REQUIRED)
-
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
 
 catkin_package(
   INCLUDE_DIRS
@@ -77,6 +72,10 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
+add_library(frc_robot_interface STATIC
+	src/frc_robot_interface.cpp
+	src/generic_hw_control_loop.cpp)
+
 # Sim version of main control
 # executable.  For now this just prints debugging
 # info for testing code which doens't actually hit
@@ -85,12 +84,11 @@ include_directories(
 add_executable(frcrobot_sim_main 
 	src/frcrobot_sim_main.cpp
 	src/frcrobot_sim_interface.cpp
-	src/frc_robot_interface.cpp
-	src/generic_hw_control_loop.cpp
 )
 
 target_link_libraries(frcrobot_sim_main
 	${catkin_LIBRARIES}
+	frc_robot_interface
 )
 
 # Forces messages to be generated before
@@ -112,8 +110,6 @@ install(TARGETS
 set (FRCROBOT_HW_MAIN_SRCS 
 	src/frcrobot_hw_main.cpp
 	src/frcrobot_hw_interface.cpp
-	src/frc_robot_interface.cpp
-	src/generic_hw_control_loop.cpp
 )
 
 set (WPI_SYSROOT $ENV{HOME}/frc2019/roborio/arm-frc2019-linux-gnueabi)
@@ -125,7 +121,7 @@ include_directories(
 )
 
 # Base regardless of OS type
-set (WPI_BASE_LIB_DIR   ${WPI_SYSROOT}/lib/wpilib/linux)
+set (WPI_BASE_LIB_DIR ${WPI_SYSROOT}/lib/wpilib/linux)
 
 # Rio-only code
 if ("${ARM_PREFIX}" STREQUAL "arm-frc2019-linux-gnueabi")
@@ -189,6 +185,7 @@ include_directories(${ALLWPILIB}/hal/src/main/native/athena)
 # Add socketcan library to everything but the Rio
 # This adds code to use linux CAN sockets to talk to
 # the CAN bus for the Jetson
+# Also add all of the wpilib code needed to talk to PCM and PDP
 if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2019-linux-gnueabi")
 	set (CTRE_USER_LIBS 
 		${CTRE_USER_LIBS}
@@ -217,18 +214,18 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2019-linux-gnueabi")
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringRef.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Twine.cpp
 	)
-file(GLOB
-	ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/*.cpp
-	ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/networktables/*.cpp
-	ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/tables/*.cpp)
+
+	file(GLOB
+		ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/*.cpp
+		ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/networktables/*.cpp
+		ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/tables/*.cpp
+	)
 
 	if (1)
 	add_executable(frcrobot_phoenixsim_main
 		src/frcrobot_phoenixsim_interface.cpp
 		src/frcrobot_phoenixsim_main.cpp
 		src/frcrobot_hw_interface.cpp
-		src/frc_robot_interface.cpp
-		src/generic_hw_control_loop.cpp
 		src/dummy_wpilib_common.cpp
 		src/dummy_wpilib_phoenixsim.cpp
 		${ALLWPILIB}/hal/src/main/native/cpp/cpp/fpga_clock.cpp
@@ -314,7 +311,7 @@ file(GLOB
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringRef.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Twine.cpp
 		${ntcore_native_src}
-		)
+	)
 
 	target_link_libraries(frcrobot_phoenixsim_main
 		${catkin_LIBRARIES}
@@ -322,7 +319,8 @@ file(GLOB
 		${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.a
 		${CTRE_LIB_DIR}/libCTRE_PhoenixCanutils.a
 		${CTRE_LIB_DIR}/../shared/libCTRE_PhoenixPlatform_sim.so
-		)
+		frc_robot_interface
+	)
 	## Add cmake target dependencies of the executable
 	## same as for the library above. This is needed to force
 	## talon controller messages to be built before the
@@ -330,7 +328,7 @@ file(GLOB
 	add_dependencies(frcrobot_phoenixsim_main
 		${${PROJECT_NAME}_EXPORTED_TARGETS}
 		${catkin_EXPORTED_TARGETS}
-		)
+	)
 
 	# Install executable on the off chance you'd ever
 	# want to run sim on the RoboRIO
@@ -351,6 +349,7 @@ target_link_libraries(frcrobot_hw_main
 	${catkin_LIBRARIES}
 	${PLATFORM_SPECIFIC_LIBS}
 	${CTRE_USER_LIBS}
+	frc_robot_interface
 )
 
 ## Add cmake target dependencies of the executable
