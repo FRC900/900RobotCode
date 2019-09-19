@@ -1,6 +1,6 @@
 // base_trajectory.cpp
 // Generates a spline-based path connecting input waypoints
-// Implements an algorithm similar to that found in 
+// Implements an algorithm similar to that found in
 // http://www2.informatik.uni-freiburg.de/~lau/students/Sprunk2008.pdf
 // http://www2.informatik.uni-freiburg.de/~lau/paper/lau09iros.pdf
 // http://ais.informatik.uni-freiburg.de/teaching/ws09/robotics2/projects/mr2-p6-paper.pdf
@@ -19,6 +19,48 @@
 #include <base_trajectory/GenerateSpline.h>
 
 #include <angles/angles.h>
+#include <ddynamic_reconfigure/ddynamic_reconfigure.h>
+
+// Various tuning paramters - will be read as params
+// and exposed as dynamic reconfigure options
+//
+// Used for determining arclength vs. time function.  This is the
+// maximum allowed error reported from the simpson's rule approximation
+// of the segment. Segments with errors greater than this are subdivided
+// and each subsegment's length is evaluated separetely, leading to a
+// more accurate approximation
+double segLengthEpsilon;
+
+// Used to generate equally-spaced points along the entire
+// arclength of the x-y spline.  Points are spaced
+// distBetweenArcLengths apart, +/- distBetweenArcLengthEpsilon
+// midTimeInflation is used to bias the binary search value - since
+// the search is for monotonically increasing arglengths, the code assumes
+// that the "mid"point of the next search should be the location of the
+// last point found plus the previous distance between points.  The "mid"point
+// is moved a bit futher out to account for cases where the curvature changes
+//  - it is more efficent to be a little bit beyond the expected value rather than
+//  closer to it.  midTimeInflation is the multipler for that distance.
+double distBetweenArcLengths; // 3 cm
+double distBetweeArcLengthEpsilon; // 2.5 mm
+double midTimeInflation;
+
+// RPROP optimization parameters.  The code skips to the next optimization
+// variable if the deltaCost for a step is less than deltaCost.  This value is
+// gradually decreased as the result is optimized. This holds the initial and
+// minimum value of deltaCost
+double initialDeltaCostEpsilon;
+double minDeltaCostEpsilon;
+
+// Initial change added to optimization parameter in the RPROP loop
+double initialDParam;
+
+// Robot limits for evaluating path cost
+double pathLimitDistance;
+double maxVel;
+double maxLinearAcc;
+double wheelRadius;
+double maxCentAcc;
 
 // Simple class to turn debugging output on and off
 class MessageFilter : public ros::console::FilterBase
@@ -640,7 +682,6 @@ bool getPathSegLength(std::vector<ArclengthAndTime> &arcLengthAndTime,
 		const double endXdot,
 		const double endYdot)
 {
-	constexpr double epsilon = 1.0e-4; // TODO : config item
 	const double midTime = (startTime + endTime) / 2.0;
 
 	// TODO : Perhaps a check on dT being too small?
@@ -678,7 +719,7 @@ bool getPathSegLength(std::vector<ArclengthAndTime> &arcLengthAndTime,
 	// If the error magnitude is less than epsilon,
 	// use this approximation for the arcLength from
 	// start to end
-	if (fabs(error) < epsilon)
+	if (fabs(error) < segLengthEpsilon)
 	{
 		totalLength += estimate;
 		arcLengthAndTime.push_back(ArclengthAndTime(totalLength, endTime));
@@ -779,15 +820,11 @@ bool getPathLength(Trajectory &arcLengthTrajectory,
 	// sized arc-length intervals along the entire path
 	equalArcLengthTimes.clear();
 	equalArcLengthTimes.push_back(0); // start at t==0
-	constexpr double distBetweenArcLengths = 0.03; // 3 cm
-	constexpr double distanceEpsilon = 0.005; // 2.5 mm
-	constexpr double midTimeInflation = 1.25;
 
 	// For each cumulative distance
 	// start = prev found time, end = last time
 	// Binary search to get sample[] within tolerance of desired cumulative disance
 	// Push that result onto equalArcLengthTimes
-	//
 	double start = 0.0;
 
 	// since we're looking for more or less monotonincally increasing values
@@ -813,7 +850,7 @@ bool getPathLength(Trajectory &arcLengthTrajectory,
 			iterCount += 1;
 			const double delta = currDistance - state.position[0];
 			//ROS_INFO_STREAM_FILTER(&messageFilter, "currDistance = " << currDistance << " start=" << start << " mid=" << mid << " end=" << end << " position[0]=" << state.position[0] << " delta=" << delta);
-			if (fabs(delta) < distanceEpsilon)
+			if (fabs(delta) < distBetweeArcLengthEpsilon)
 			{
 				break;
 			}
@@ -1095,8 +1132,6 @@ bool RPROP(
 		return false;
 	}
 
-	constexpr double initialDeltaCostEpsilon = 0.05;
-	constexpr double minDeltaCostEpsilon = 0.005;
 	double deltaCostEpsilon = initialDeltaCostEpsilon;
 
 	while (deltaCostEpsilon >= minDeltaCostEpsilon)
@@ -1117,7 +1152,7 @@ bool RPROP(
 				auto optParams = bestOptParams;
 				double deltaCost = std::numeric_limits<double>::max();
 				double currCost = bestCost;
-				double dparam = .05; // TODO - dparam_0 should be configurable
+				double dparam = initialDParam;
 				// One exit criteria for the inner loop is if the cost
 				// stops improving by an appreciable amount while changing
 				// this one parameter. Track that here
@@ -1283,11 +1318,11 @@ bool callback(base_trajectory::GenerateSpline::Request &msg,
 
 	if (!RPROP(trajectory,
 				msg.points,
-				0.2, // limit of path excursion from straight line b/t waypoints
-				4.5, // max overall velocity
-				2.5, // max allowed acceleration
-				0.3682, // wheel radius
-				3.5)) // max allowed centripetal acceleration
+				pathLimitDistance, // limit of path excursion from straight line b/t waypoints
+				maxVel, // max overall velocity
+				maxLinearAcc, // max allowed acceleration
+				wheelRadius, // wheel radius
+				maxCentAcc)) // max allowed centripetal acceleration
 	{
 		ROS_ERROR("base_trajectory_node : RPROP() returned false");
 		return false;
@@ -1310,6 +1345,36 @@ int main(int argc, char **argv)
 	nh.param<double>("loop_hz", loop_hz, 100.);
 	period = ros::Duration(1.0 / loop_hz);
 
+	ddynamic_reconfigure::DDynamicReconfigure ddr;
+	nh.param("seg_length_epslion", segLengthEpsilon, 1.0e-4);
+    ddr.registerVariable<double>("seg_length_epsilon", &segLengthEpsilon, "maximum error for each segment when parameterizing spline arclength", 0, .1);
+
+	nh.param("dist_between_arc_lengths", distBetweenArcLengths, 0.03); // 3 cm
+	nh.param("dist_between_arc_lengths_epsilon", distBetweeArcLengthEpsilon, 0.0025); // 2.5 mm
+	nh.param("mid_time_inflation", midTimeInflation, 1.25);
+	ddr.registerVariable<double>("dist_between_arc_lengths", &distBetweenArcLengths, "equal-spaced arc length distance", 0, 0.5);
+	ddr.registerVariable<double>("dist_between_arc_lengths_epsilon", &distBetweeArcLengthEpsilon, "error tolerance for dist_between_arc_length", 0, 0.5);
+	ddr.registerVariable<double>("mid_time_inflation", &midTimeInflation, "multiplier to prev distance for picking midpoint of next distance searched in arc length subdivision", 0, 3);
+
+	nh.param("initial_delta_cost_epsilon", initialDeltaCostEpsilon, 0.05);
+	nh.param("min_delta_cost_epsilon", minDeltaCostEpsilon, 0.005);
+	ddr.registerVariable<double>("initial_delta_cost_epsilon", &initialDeltaCostEpsilon, "RPROP initial deltaCost value", 0, 1);
+	ddr.registerVariable<double>("min_delta_cost_epsilon", &minDeltaCostEpsilon, "RPROP minimum deltaCost value", 0, 1);
+	nh.param("initial_dparam", initialDParam, 0.05);
+	ddr.registerVariable<double>("initial_dparam", &initialDParam, "RPROP initial optimization value change", 0, 2);
+
+	nh.param("path_distance_limit", pathLimitDistance, 0.2);
+	nh.param("max_vel", maxVel, 4.5);
+	nh.param("max_linear_acc", maxLinearAcc, 2.5);
+	nh.param("wheel_radius", wheelRadius, 0.3682);
+	nh.param("max_cent_acc", maxCentAcc, 3.5);
+
+	ddr.registerVariable<double>("path_distance_limit", &pathLimitDistance, "how far robot can diverge from straight-line path between waypoints", 0, 2);
+	ddr.registerVariable<double>("max_vel", &maxVel, "max translational velocity", 0, 20);
+	ddr.registerVariable<double>("max_linear_acc", &maxLinearAcc, "max linear acceleration", 0, 10);
+	ddr.registerVariable<double>("wheel_radius", &wheelRadius, "robot's wheel radius", 0, 2);
+	ddr.registerVariable<double>("max_cent_acc", &maxCentAcc, "max centrepital acceleration", 0, 10);
+    ddr.publishServicesTopics();
 	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", callback);
 
 	ros::spin();
