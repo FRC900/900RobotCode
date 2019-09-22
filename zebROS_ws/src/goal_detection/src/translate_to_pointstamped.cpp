@@ -87,10 +87,10 @@ int main(int argc, char ** argv)
 	ros::init(argc, argv, "translate_to_pointstamped");
 	ros::NodeHandle nh;
 
-	ros::Subscriber zed_msg_sub = nh.subscribe("/goal_detection_node/goal_detect_msg", 10, &ZEDMsgCallback);
-	ros::Subscriber c920_msg_sub = nh.subscribe("/c920_goal_detection_node/goal_detect_msg", 10, &C920MsgCallback);
-	zed_point_msg_pub = nh.advertise<geometry_msgs::PointStamped>("/align_hatch/pointstamped_goal_msg", 10);
-	c920_point_msg_pub = nh.advertise<geometry_msgs::PointStamped>("/align_cargo/pointstamped_goal_msg", 10);
+	ros::Subscriber zed_msg_sub = nh.subscribe("/goal_detection/goal_detect_msg", 2, &ZEDMsgCallback);
+	ros::Subscriber c920_msg_sub = nh.subscribe("/c920_goal_detection/goal_detect_msg", 2, &C920MsgCallback);
+	zed_point_msg_pub = nh.advertise<geometry_msgs::PointStamped>("/align_hatch/pointstamped_goal_msg", 1);
+	c920_point_msg_pub = nh.advertise<geometry_msgs::PointStamped>("/align_cargo/pointstamped_goal_msg", 1);
 
 	ros::spin();
 
