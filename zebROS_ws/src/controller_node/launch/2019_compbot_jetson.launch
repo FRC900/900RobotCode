@@ -213,7 +213,7 @@
 			<param name="min_loop_frequency" value="100.0" />
 			<param name="topic_from_controller" value="cargo_distance_pid/x_command" />     
 			<param name="setpoint_topic" value="cargo_distance_pid/setpoint" />
-			<param name="topic_from_plant" value="cargo_distance_pid/state" />
+			<param name="topic_from_plant" value="cargo_distance_pid/setpoint" />
 			<remap from="pid_debug" to="cargo_distance_pid/pid_debug"/>
 			<remap from="pid_enable" to="cargo_distance_pid/pid_enable"/>
 		</node>
@@ -305,7 +305,7 @@
 			<param name="min_loop_frequency" value="100.0" />
 			<param name="topic_from_controller" value="hatch_panel_distance_pid/y_command" />     
 			<param name="setpoint_topic" value="hatch_panel_distance_pid/setpoint" />
-			<param name="topic_from_plant" value="hatch_panel_distance_pid/state" />
+			<param name="topic_from_plant" value="hatch_panel_distance_pid/setpoint" />
 			<remap from="pid_debug" to="hatch_panel_distance_pid/pid_debug"/>
 			<remap from="pid_enable" to="hatch_panel_distance_pid/pid_enable"/>
 		</node>
@@ -324,11 +324,10 @@
     
 	<include file="$(find realsense2_camera)/launch/rs_t265.launch" >
 		<!-- didn't seem to work, retest
-		<param name="camera" value="rs_t265" />
+		<arg name="camera" value="rs_t265" />
 		-->
 	</include>
 
-	<!--include file="$(find realsense2_camera)/launch/rs_t265.launch" /-->
 	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
 	<include file="$(find controller_node)/launch/record_2019_no_zed.launch" if="$(arg record)" />
 

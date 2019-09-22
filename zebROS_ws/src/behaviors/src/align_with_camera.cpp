@@ -1,3 +1,9 @@
+// Node which reads camera data, translates coordinates to frame of the
+// mechanism which needs to be lined up, and publishes a distance needed
+// to move to line up with the camera detection
+// TODO : debate splitting this up - it kinda combines a few things
+// which might be better separate - translating between frames, adding latency
+// compensation and then adding a controller to move towards the target
 #include <ros/ros.h>
 #include <vector>
 #include "geometry_msgs/Twist.h"
@@ -172,6 +178,8 @@ int main(int argc, char ** argv)
 		}
 		last_command_published = cmd_msg.data;
 
+		// Mimic PID node debug info - index 0 is error,
+		// which is all that used by the align server code
 		aligned_msg.data[0] = error;
 		successful_y_align.publish(aligned_msg);
 
