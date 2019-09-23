@@ -1233,7 +1233,12 @@ bool callback(base_trajectory::GenerateSpline::Request &msg,
 	// Hold current position if trajectory is empty
 	if (msg.points.empty())
 	{
-		ROS_DEBUG("Empty trajectory command, stopping.");
+		ROS_ERROR("Empty trajectory command, nothing to do.");
+		return false;
+	}
+	if (msg.points.size() < 2)
+	{
+		ROS_ERROR("Need at least two points - add a starting point at time 0?");
 		return false;
 	}
 	// TODO - operate in two modes
@@ -1315,6 +1320,7 @@ bool callback(base_trajectory::GenerateSpline::Request &msg,
 	trajectoryToSplineResponseMsg(tmp_msg, trajectory, jointNames);
 	writeMatlabCode(tmp_msg);
 	messageFilter.disable();
+	fflush(stdout);
 
 	if (!RPROP(trajectory,
 				msg.points,
