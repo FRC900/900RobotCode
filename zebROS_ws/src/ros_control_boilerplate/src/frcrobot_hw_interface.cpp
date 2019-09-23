@@ -1297,9 +1297,9 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			if(i == 0)
 			{
 				if(navX_zero_ != -10000)
-					offset_navX_[i] = navX_zero_ - navXs_[i]->GetFusedHeading() / 360. * 2. * M_PI;
+					offset_navX_[i] = navX_zero_ - navXs_[i]->GetYaw() / 360. * 2. * M_PI;
 			}
-			tempQ.setRPY(navXs_[i]->GetRoll() / -360 * 2 * M_PI, navXs_[i]->GetPitch() / -360 * 2 * M_PI, navXs_[i]->GetFusedHeading() / 360 * 2 * M_PI + offset_navX_[i]  );
+			tempQ.setRPY(navXs_[i]->GetRoll() / -360 * 2 * M_PI, navXs_[i]->GetPitch() / -360 * 2 * M_PI, navXs_[i]->GetYaw() / 360 * 2 * M_PI + offset_navX_[i]  );
 
 			imu_orientations_[i][3] = tempQ.w();
 			imu_orientations_[i][0] = tempQ.x();
