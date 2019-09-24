@@ -1307,7 +1307,8 @@ bool RPROP(
 
 
 // input should be JointTrajectory[] custom message
-// Output wil be array of spline coefficents swerve_point_generator/Coefs[] for x, y, orientation
+// Output wil be array of spline coefficents swerve_point_generator/Coefs[] for x, y, orientation,
+// along with a path consisting of waypoints evenly spaced along the spline
 bool callback(base_trajectory::GenerateSpline::Request &msg,
 			  base_trajectory::GenerateSpline::Response &out_msg)
 {
@@ -1319,7 +1320,13 @@ bool callback(base_trajectory::GenerateSpline::Request &msg,
 	}
 	if (msg.points.size() < 2)
 	{
-		ROS_ERROR("Need at least two points - add a starting point at time 0?");
+		ROS_WARN("Only one point passed into base_trajectory - adding a starting position of 0,0,0");
+		msg.points.push_back(msg.points[0]);
+		msg.points[0].positions.clear();
+		for (size_t i = 0; i < 3; i++)
+			msg.points[i].positions.push_back(0);
+		msg.points[0].velocities.clear();
+		msg.points[0].accelerations.clear();
 		return false;
 	}
 
