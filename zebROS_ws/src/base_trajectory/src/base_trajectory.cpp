@@ -1327,7 +1327,6 @@ bool callback(base_trajectory::GenerateSpline::Request &msg,
 			msg.points[i].positions.push_back(0);
 		msg.points[0].velocities.clear();
 		msg.points[0].accelerations.clear();
-		return false;
 	}
 
 	// Splines segments are each 1 arbitrary unit long.
