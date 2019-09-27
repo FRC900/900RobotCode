@@ -13,3 +13,4 @@ set sm
 ":au BufWrite *.h retab
 
 let c_space_errors=1
+set belloff=all
