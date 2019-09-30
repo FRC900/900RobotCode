@@ -317,8 +317,9 @@
 
 	</group>
     
-	<!--	<include file="$(find realsense2_camera)/launch/rs_t265.launch" >
-	</include>-->
+	<include file="$(find realsense2_camera)/launch/rs_t265.launch" >
+		<arg name="camera" value="rs_t265" />
+	</include>
 
 	<!--include file="$(find realsense2_camera)/launch/rs_t265.launch" /-->
 	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
