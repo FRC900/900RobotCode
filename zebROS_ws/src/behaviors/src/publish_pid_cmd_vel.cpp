@@ -105,7 +105,7 @@ int main(int argc, char ** argv)
 	}
 	if(!nh_private_params.getParam("ratio_xy_topic", ratio_xy_topic))
 	{
-		ROS_ERROR("Could not read ratio_xy in publish_pid_cmd_vel");
+		ROS_ERROR("Could not read ratio_xy_topic in publish_pid_cmd_vel");
 		ratio_imposed = false;
 	}
 	else {
