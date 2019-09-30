@@ -35,9 +35,9 @@ orient_pid:
     i1: 0.0
     d1: 0.0
 #change these values for debugging auto align
-do_orient: false
+do_orient: true
 track_target: false #If true doesn't actually align!!!!
-do_pid: false
+do_pid: true
 hold_orient: false
 constant_vel: -0.6
 do_align: true

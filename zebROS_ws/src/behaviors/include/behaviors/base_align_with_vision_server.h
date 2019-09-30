@@ -104,13 +104,13 @@ class BaseAlignVisionAction : public BaseAlignAction {
 			if(!nh_.getParam("do_orient", do_orient)){
 				ROS_ERROR("BaseAlignVision failed to load do_orient");
 			}
-			if(!nh_.getParam("track_target_", track_target_)){
+			if(!nh_.getParam("track_target", track_target_)){
 				ROS_ERROR("BaseAlignVision failed to load track_target");
 			}
-			if(!nh_.getParam("do_pid_", do_pid_)){
+			if(!nh_.getParam("do_pid", do_pid_)){
 				ROS_ERROR("BaseAlignVision failed to load do_pid");
 			}
-			if(!nh_.getParam("hold_orient_", hold_orient_)){
+			if(!nh_.getParam("hold_orient", hold_orient_)){
 				ROS_ERROR("BaseAlignVision failed to load hold_orient");
 			}
 			if(!nh_.getParam("constant_vel", constant_vel)){
