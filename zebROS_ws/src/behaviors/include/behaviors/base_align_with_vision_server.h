@@ -133,7 +133,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 			while(ros::ok()) {
 				if(update_ratio) {
 					const double y_error = get_axis_error("y");
-					const double x_error = get_axis_error("X");
+					const double x_error = get_axis_error("x");
 					ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error, x_error);
 					if((y_error != 0.0 && x_error != 0.0) || track_target_) {
 						if(x_error > 0.2 || track_target_) {
