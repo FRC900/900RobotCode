@@ -143,10 +143,10 @@ int main(int argc, char ** argv)
 		// goal timestamp. For each entry, sum up (time between prev and curr entry) * entry velocity
 		// then interpolate the distance moved for the saved entry where the code jumps past
 		// the goal timestamp.
-		const double latency_comp = last_command_published * ((ros::Time::now() - goal_timestamp).toSec() + extra_latency);
-		if(debug)
-			ROS_INFO_STREAM_THROTTLE(1, "Latency_comp = " << latency_comp << " error before = " << error);
-		error += latency_comp;
+		//const double latency_comp = last_command_published * ((ros::Time::now() - goal_timestamp).toSec() + extra_latency);
+		//if(debug)
+		//	ROS_INFO_STREAM_THROTTLE(1, "Latency_comp = " << latency_comp << " error before = " << error);
+		//error += latency_comp;
 
 		if(fabs(error) < error_threshold)
 		{

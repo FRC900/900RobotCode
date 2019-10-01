@@ -251,6 +251,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
             timed_out = check_timeout(start_time_, align_timeout_);
             preempted_ = check_preempted();
             if(preempted_ || timed_out) {
+				ROS_ERROR_STREAM("Base align with vision server timed out or preempted.");
                 return false;
             }
 
