@@ -147,64 +147,63 @@ namespace goal_detection
 					pub_debug_image_.publish(cv_bridge::CvImage(std_msgs::Header(), "bgr8", thisFrame).toImageMsg());
 				}
 
-				if (gd_msg.valid == false)
+				if (gd_msg.valid)
 				{
+					//Transform between goal frame and odometry/map.
+					static tf2_ros::TransformBroadcaster br;
+					for(size_t i = 0; i < gfd.size(); i++)
+					{
+						geometry_msgs::TransformStamped transformStamped;
+
+						transformStamped.header.stamp = gd_msg.header.stamp;
+						transformStamped.header.frame_id = frame_id;
+						std::stringstream child_frame;
+						child_frame << "goal_";
+						child_frame << i;
+						transformStamped.child_frame_id = child_frame.str();
+
+						transformStamped.transform.translation.x = gd_msg.location[i].x;
+						transformStamped.transform.translation.y = gd_msg.location[i].y;
+						transformStamped.transform.translation.z = gd_msg.location[i].z;
+
+						// Can't detect rotation yet, so publish 0 instead
+						tf2::Quaternion q;
+						q.setRPY(0, 0, 0);
+
+						transformStamped.transform.rotation.x = q.x();
+						transformStamped.transform.rotation.y = q.y();
+						transformStamped.transform.rotation.z = q.z();
+						transformStamped.transform.rotation.w = q.w();
+
+						br.sendTransform(transformStamped);
+					}
+
+					/*
+					//Transform between a fixed frame and the goal.
+					tf2_ros::Buffer tfBuffer;
+					tf2_ros::TransformListener tfListener(tfBuffer);
+
+					geometry_msgs::TransformStamped transformStampedOdomCamera;
+					try
+					{
+					transformStampedOdomCamera = tfBuffer.lookupTransform("odom", cvFrame->header.frame_id,
+					ros::Time(0));
+					}
+					catch (tf2::TransformException &ex)
+					{
+					ROS_WARN("%s", ex.what());
+					ros::Duration(1.0).sleep();
 					return;
+					}
+
+					geometry_msgs::TransformStamped transformStampedOdomGoal;
+
+					tf2::doTransform(transformStamped, transformStampedOdomGoal, transformStampedOdomCamera);
+
+					br.sendTransform(transformStampedOdomGoal);
+					*/
 				}
-
-				//Transform between goal frame and odometry/map.
-				static tf2_ros::TransformBroadcaster br;
-				for(size_t i = 0; i < gfd.size(); i++)
-				{
-					geometry_msgs::TransformStamped transformStamped;
-
-					transformStamped.header.stamp = gd_msg.header.stamp;
-					transformStamped.header.frame_id = frame_id;
-					std::stringstream child_frame;
-					child_frame << "goal_";
-					child_frame << i;
-					transformStamped.child_frame_id = child_frame.str();
-
-					transformStamped.transform.translation.x = gd_msg.location[i].x;
-					transformStamped.transform.translation.y = gd_msg.location[i].y;
-					transformStamped.transform.translation.z = gd_msg.location[i].z;
-
-					// Can't detect rotation yet, so publish 0 instead
-					tf2::Quaternion q;
-					q.setRPY(0, 0, 0);
-
-					transformStamped.transform.rotation.x = q.x();
-					transformStamped.transform.rotation.y = q.y();
-					transformStamped.transform.rotation.z = q.z();
-					transformStamped.transform.rotation.w = q.w();
-
-					br.sendTransform(transformStamped);
-				}
-
-				/*
-				//Transform between a fixed frame and the goal.
-				tf2_ros::Buffer tfBuffer;
-				tf2_ros::TransformListener tfListener(tfBuffer);
-
-				geometry_msgs::TransformStamped transformStampedOdomCamera;
-				try
-				{
-				transformStampedOdomCamera = tfBuffer.lookupTransform("odom", cvFrame->header.frame_id,
-				ros::Time(0));
-				}
-				catch (tf2::TransformException &ex)
-				{
-				ROS_WARN("%s", ex.what());
-				ros::Duration(1.0).sleep();
-				return;
-				}
-
-				geometry_msgs::TransformStamped transformStampedOdomGoal;
-
-				tf2::doTransform(transformStamped, transformStampedOdomGoal, transformStampedOdomCamera);
-
-				br.sendTransform(transformStampedOdomGoal);
-				*/
+				camera_mutex_.unlock();
 			}
 
 			void multiflexCB(const teraranger_array::RangeArray& msg)
@@ -223,6 +222,7 @@ namespace goal_detection
 				}
 				if (min_dist != std::numeric_limits<double>::max())
 					distance_from_terabee_ = min_dist;
+				multiflex_mutex_.unlock();
 			}
 
 			void callback_no_depth(const sensor_msgs::ImageConstPtr &frameMsg)
