@@ -40,8 +40,6 @@ namespace goal_detection
 
 			~GoalDetect()
 			{
-				if (gd_)
-					delete gd_;
 			}
 
 		protected:
@@ -64,6 +62,8 @@ namespace goal_detection
 
 				bool no_depth = false;
 				nh_.getParam("no_depth", no_depth);
+
+				distance_from_terabee_ = -1;
 
 				if (!no_depth)
 				{
@@ -100,7 +100,7 @@ namespace goal_detection
 				{
 					const cv::Point2f fov(config_.hFov * (M_PI / 180.),
 										  config_.hFov * (M_PI / 180.) * ((double)cvFrame->image.rows / cvFrame->image.cols));
-					gd_ = new GoalDetector(fov, cvFrame->image.size(), false);
+					gd_ = std::make_unique<GoalDetector>(fov, cvFrame->image.size(), false);
 				}
 				gd_->setCameraAngle(config_.camera_angle);
 				gd_->setBlueScale(config_.blue_scale);
@@ -235,8 +235,8 @@ namespace goal_detection
 			ros::Subscriber                                                terabee_sub_;
 			ros::Publisher                                                 pub_;
 			image_transport::Publisher                                     pub_debug_image_;
-			GoalDetector                                                  *gd_                    = NULL;
-			double                                                         distance_from_terabee_ = -1;
+			std::unique_ptr<GoalDetector>                                  gd_;
+			double                                                         distance_from_terabee_;
 			goal_detection::GoalDetectionConfig                            config_;
 			DynamicReconfigureWrapper<goal_detection::GoalDetectionConfig> drw_;
 			std::mutex                                                     mutex_;
