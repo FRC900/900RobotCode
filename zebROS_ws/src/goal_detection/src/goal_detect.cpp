@@ -89,7 +89,9 @@ namespace goal_detection
 
 			void callback(const sensor_msgs::ImageConstPtr &frameMsg, const sensor_msgs::ImageConstPtr &depthMsg)
 			{
-				std::lock_guard<std::mutex> l(mutex_);
+				//std::lock_guard<std::mutex> l(camera_mutex_);
+				if (!camera_mutex_.try_lock())  // If the previous message is still being
+					return;              // processed, drop this one
 				cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
 				cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
 
@@ -111,7 +113,7 @@ namespace goal_detection
 				//Send current color and depth image to the actual GoalDetector
 				gd_->findBoilers(cvFrame->image, cvDepth->image);
 
-				std::vector< GoalFound > gfd = gd_->return_found();
+				const std::vector< GoalFound > gfd = gd_->return_found();
 				goal_detection::GoalDetection gd_msg;
 
 				gd_msg.header.seq = frameMsg->header.seq;
@@ -207,6 +209,10 @@ namespace goal_detection
 
 			void multiflexCB(const teraranger_array::RangeArray& msg)
 			{
+				// If previous message is still being processed, drop
+				// this one.
+				if (!multiflex_mutex_.try_lock())
+					return;
 				double min_dist = std::numeric_limits<double>::max();
 				distance_from_terabee_ = -1;
 				for(int i = 0; i < 2; i++)
@@ -239,7 +245,8 @@ namespace goal_detection
 			double                                                         distance_from_terabee_;
 			goal_detection::GoalDetectionConfig                            config_;
 			DynamicReconfigureWrapper<goal_detection::GoalDetectionConfig> drw_;
-			std::mutex                                                     mutex_;
+			std::mutex                                                     camera_mutex_;
+			std::mutex                                                     multiflex_mutex_;
 	};
 } // namspace
 
