@@ -18,15 +18,15 @@ else() # Native builds
   set (CMAKE_AR     "gcc-ar"     )
   
   if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf") # Jetson TK1
-	set (OPT_FLAGS "-Ofast -flto=4 -fno-finite-math-only -mcpu=cortex-a15 -mfpu=neon-vfpv4 -fvect-cost-model")
+	set (OPT_FLAGS "-Ofast -flto=jobserver -fno-finite-math-only -mcpu=cortex-a15 -mfpu=neon-vfpv4 -fvect-cost-model")
     unset(CUDA_USE_STATIC_CUDA_RUNTIME CACHE)
     option(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
   elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu") # Jetson TX1/TX2
-	set (OPT_FLAGS "-Ofast -flto=4 -fno-finite-math-only -march=armv8-a+crypto -mcpu=cortex-a57+crypto -fvect-cost-model")
+	set (OPT_FLAGS "-Ofast -flto=jobserver -fno-finite-math-only -march=armv8-a+crypto -mcpu=cortex-a57+crypto -fvect-cost-model")
     unset(CUDA_USE_STATIC_CUDA_RUNTIME CACHE)
     option(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
   else() # x86? Mac?
-	set (OPT_FLAGS "-Ofast -flto=4 -fno-finite-math-only -march=native -mtune=native")
+	set (OPT_FLAGS "-Ofast -flto=jobserver -fno-finite-math-only -march=native -mtune=native")
   endif()
 endif()
 
