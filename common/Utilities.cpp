@@ -210,7 +210,7 @@ namespace zv_utils {
 	    return a;
 	}
 
-	std::pair<double,double> slopeOfMasked(ObjectType ot, const cv::Mat &depth, const cv::Mat &mask, cv::Point2f fov) {
+	std::pair<double,double> slopeOfMasked(const ObjectType &ot, const cv::Mat &depth, const cv::Mat &mask, cv::Point2f fov) {
 
 		CV_Assert(mask.depth() == CV_8U);
 		vector<double> slope_x_values;

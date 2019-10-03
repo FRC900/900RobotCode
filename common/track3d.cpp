@@ -453,7 +453,7 @@ void TrackedObjectList::processDetect(const vector<Rect> &detectedRects,
 		size_t detections = detectedPositions.size(); // number of detections this frame
 
 		//Cost[t][d] is the distance between old tracked location t
-		//and newly detected object d's position 
+		//and newly detected object d's position
 		vector< vector<double> > Cost(tracks,vector<double>(detections));
 
 		// Calculate cost for each track->pair combo
