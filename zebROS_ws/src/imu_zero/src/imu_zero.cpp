@@ -9,7 +9,7 @@
 
 // NAME THESE
 const double pi = 3.14159;
-const std::string sub_topic = "raw_imu";
+const std::string sub_topic = "imu";
 const std::string pub_topic = "zeroed_imu";
 const std::string service_name = "set_imu_zero";
 ros::Publisher pub;
@@ -21,11 +21,13 @@ double degToRad(double deg) {
   return rad;
 }
 
-void zeroCallback(const geometry_msgs::Quaternion raw_msg) {
-  tf2::convert(raw_msg, last_raw);
+void zeroCallback(const sensor_msgs::Imu::ConstPtr& raw_msg) {
+  tf2::convert(raw_msg -> orientation, last_raw);
   tf2::Quaternion zeroed = zero_rot * last_raw;
   zeroed.normalize();
-  pub.publish(tf2::toMsg(zeroed));
+  sensor_msgs::Imu zeroed_imu = *raw_msg;
+  zeroed_imu.orientation = tf2::toMsg(zeroed);
+  pub.publish(zeroed_imu);
 }
 
 bool zeroSet(imu_zero::imu_zero_angle::Request& req,
@@ -39,7 +41,7 @@ bool zeroSet(imu_zero::imu_zero_angle::Request& req,
 int main(int argc, char* argv[]) {
   ros::init(argc, argv, "imu_zero_node");
   ros::NodeHandle node;
-  pub = node.advertise<geometry_msgs::Quaternion>(pub_topic, 1);
+  pub = node.advertise<sensor_msgs::Imu>(pub_topic, 1);
   ros::Subscriber sub = node.subscribe(sub_topic, 1, zeroCallback);
   ros::ServiceServer svc = node.advertiseService(service_name, zeroSet);
   zero_rot.normalize();
