@@ -42,14 +42,13 @@
 #include <ros_control_boilerplate/frc_robot_interface.h>
 #include <atomic>
 #include <thread>
-#include <frc_msgs/CubeState.h>
 #include <frc_msgs/MatchSpecificData.h>
 #include <frc_msgs/JoystickState.h>
 
 #include <ros_control_boilerplate/set_limit_switch.h>
 
 #include <ros_control_boilerplate/LineBreakSensors.h>
-#include  <sensor_msgs/Joy.h>
+#include <sensor_msgs/Joy.h>
 
 
 namespace frcrobot_control
