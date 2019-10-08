@@ -27,7 +27,7 @@ std::string target_frame;
 geometry_msgs::PointStamped relative_goal_location;
 ros::Time goal_timestamp;
 
-constexpr bool debug = false;
+constexpr bool debug = true;
 
 void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 {
@@ -126,7 +126,7 @@ int main(int argc, char ** argv)
 		// the loop and bail if the target_frame is unrecognzed?
 		if(target_frame == "panel_outtake")
 		{
-			error = relative_goal_location.point.x;
+			error = relative_goal_location.point.x; //TODO check this
 		}
 		else if(target_frame == "cargo_outtake")
 		{

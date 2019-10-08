@@ -235,6 +235,8 @@ int main(int argc, char** argv)
 		ROS_ERROR("Could not addAxis(orient) in align_hatch_panels");
 		return -1;
 	}
-	ros::spin();
+	ros::AsyncSpinner Spinner(2);
+	Spinner.start();
+	ros::waitForShutdown();
 	return 0;
 }
