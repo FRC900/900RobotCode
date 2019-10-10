@@ -1,3 +1,22 @@
+/*
+NODE NAME: imu_zero_node
+
+SUBSCRIBES TO:
+sub_topic
+
+PUBLISHES TO:
+pub_topic
+
+SERVICES:
+set_imu_zero
+
+FUNCTIONALITY:
+Zeros z-axis orientation from IMU.
+Other IMU data is passed through.
+Zero point in degrees is set using service call.
+*/
+
+
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -7,8 +26,7 @@
 #include <imu_zero/imu_zero_angle.h>
 
 
-// NAME THESE
-const double pi = 3.14159;
+constexpr double pi = 3.14159;
 const std::string sub_topic = "imu";
 const std::string pub_topic = "zeroed_imu";
 const std::string service_name = "set_imu_zero";
