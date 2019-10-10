@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <launch>
 	<group ns="align_hatch">
+		<node name="translate_to_pointstamped" pkg="goal_detection" type="translate_to_pointstamped" output="screen">
+			<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
+		</node>
 		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
 		<node name="align_server" pkg="behaviors" type="align_hatch_server" output="screen" />
 

@@ -11,15 +11,8 @@
 	<arg name="static_map" default="True"/>
 	<arg name="record" default="false" />
 
-	<include file="$(find controller_node)/launch/tape_detection.launch" />
-	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
-
 	<group ns="frcrobot_jetson">
-
 		<!-- These need to be replaced with the real thing -->
-		<!--rosparam file="$(find ros_control_boilerplate)/config/2018_compbot_base_jetson.yaml" command="load"/>
-        <rosparam file="$(find ros_control_boilerplate)/config/2018_offseason_swerve.yaml" command="load"/>
-        <rosparam file="$(find ros_control_boilerplate)/config/talon_swerve_offsets_offseason.yaml" command="load"/-->
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_base_jetson.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_swerve_drive.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_offsets.yaml" command="load"/>
@@ -131,6 +124,15 @@
 	<!-- Create a new group for each align server, define params for every single topic, load all nodes used by that align server -->
 	<!--group ns="align_server_common "!-->
 
+	<!-- vision align -->
+	<include file="$(find controller_node)/launch/tape_detection.launch" />
+    <include file="$(find controller_node)/launch/multiflex_example.launch" />
+
+	<include file="$(find controller_node)/launch/2019_compbot_jetson_hatch_orient.launch"/>
+    
+	<!--
+	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
+	-->
         <!--
 	<group ns="align_cargo_rocketship">
 		<node name="cargo_distance_pid" pkg="pid" type="controller" >
@@ -178,19 +180,11 @@
 	</group> 
         -->
 
-
-
-	<!-- vision align -->
-	<node name="translate_to_pointstamped" pkg="goal_detection" type="translate_to_pointstamped" output="screen">
-		<param name="camera_goal_topic" value="/zed_goal/whatever" />
-	</node>
-
-    <include file="$(find controller_node)/launch/multiflex_example.launch" />
-
-	<include file="$(find controller_node)/launch/2019_compbot_jetson_hatch_orient.launch"/>
-    
         <!--
 	<group ns="align_cargo">
+		<node name="translate_to_pointstamped" pkg="goal_detection" type="translate_to_pointstamped" output="screen">
+			<remap from="goal_detect_msg" to="/c920goal_detection/goal_detect_msg" />
+		</node>
 
 		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
 		<node name="align_server" pkg="behaviors" type="align_cargo_cargoship_server" output="screen" />

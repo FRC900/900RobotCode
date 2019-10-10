@@ -92,6 +92,11 @@ int main(int argc, char ** argv)
 		ROS_ERROR_STREAM("Could not read error_threshold in align_with_camera");
 	if(!n_private_params.getParam("target_frame", target_frame))
 		ROS_ERROR_STREAM("Could not read target_frame in align_with_camera");
+	if((target_frame != "panel_outtake") && (target_frame != "cargo_outtake"))
+	{
+		ROS_ERROR("Unknown target_frame in align_with_camera");
+		return -1;
+	}
 
 	double extra_latency = 0.0;
 	if(!n_private_params.getParam("extra_latency", extra_latency))
@@ -124,22 +129,7 @@ int main(int argc, char ** argv)
 	while(ros::ok())
 	{
 		//bool aligned = false;
-		double error = 0;
-
-		// TODO : should probably check these error conditions outside
-		// the loop and bail if the target_frame is unrecognzed?
-		if(target_frame == "panel_outtake")
-		{
-			error = relative_goal_location.point.x; //TODO check this - seems that translate_to_pointstamped exchanges x & y for the zed - need to undo that, and change the read here to point.y.  Then the check for an unknown frame ID can be moved outside the main loop and this can be an unconditional assignment?
-		}
-		else if(target_frame == "cargo_outtake")
-		{
-			error = relative_goal_location.point.y;
-		}
-		else
-		{
-			ROS_ERROR_STREAM_THROTTLE(0.5, "Unknown target_frame in align_with_camera");
-		}
+		double error = relative_goal_location.point.y;
 
 		// Very basic latency compensation - assumes we've been moving a constant speed
 		// since the last camera frame was published.  For a more accurate estimate, keep
