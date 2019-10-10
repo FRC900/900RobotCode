@@ -7,27 +7,27 @@ class BaseAlignVisionAction : public BaseAlignAction {
 		std::thread ratioThread;
 		ros::Publisher ratio_xy_pub_;
 		ros::Publisher constant_vel_pub_;
-		bool ratio_imposed_ = false;
+		//bool ratio_imposed_ = false;
 
 		std::string reconfigure_orient_pid_topic_;
 
-		double p0;
-		double i0;
-		double d0;
-		double p1;
-		double i1;
-		double d1;
+		double p0_;
+		double i0_;
+		double d0_;
+		double p1_;
+		double i1_;
+		double d1_;
 
-		bool update_ratio = false;
+		bool update_ratio_ = false;
 
 		//TESTING PARAMS !!DANGER!!
-		bool do_orient = false;
+		bool do_orient_ = false;
 		bool track_target_ = false;
 		bool do_pid_ = false;
 		bool hold_orient_ = false;
 		bool do_align_flag_ = false;
 
-		double constant_vel = 0.0;
+		double constant_vel_ = 0.0;
 	public:
 		BaseAlignVisionAction(const std::string &name,
 
@@ -82,26 +82,26 @@ class BaseAlignVisionAction : public BaseAlignAction {
 					),
 			 reconfigure_orient_pid_topic_(reconfigure_orient_pid_topic)
 		{
-			if(!nh_.getParam("orient_pid/p0", p0)){
+			if(!nh_.getParam("orient_pid/p0", p0_)){
 				ROS_ERROR("BaseAlignVision failed to load p0");
 			}
-			if(!nh_.getParam("orient_pid/i0", i0)){
+			if(!nh_.getParam("orient_pid/i0", i0_)){
 				ROS_ERROR("BaseAlignVision failed to load i0");
 			}
-			if(!nh_.getParam("orient_pid/d0", d0)){
+			if(!nh_.getParam("orient_pid/d0", d0_)){
 				ROS_ERROR("BaseAlignVision failed to load d0");
 			}
-			if(!nh_.getParam("orient_pid/p1", p1)){
+			if(!nh_.getParam("orient_pid/p1", p1_)){
 				ROS_ERROR("BaseAlignVision failed to load p1");
 			}
-			if(!nh_.getParam("orient_pid/i1", i1)){
+			if(!nh_.getParam("orient_pid/i1", i1_)){
 				ROS_ERROR("BaseAlignVision failed to load i1");
 			}
-			if(!nh_.getParam("orient_pid/d1", d1)){
+			if(!nh_.getParam("orient_pid/d1", d1_)){
 				ROS_ERROR("BaseAlignVision failed to load d1");
 			}
 			//TESTING PARAMS !DANGER!
-			if(!nh_.getParam("do_orient", do_orient)){
+			if(!nh_.getParam("do_orient", do_orient_)){
 				ROS_ERROR("BaseAlignVision failed to load do_orient");
 			}
 			if(!nh_.getParam("track_target", track_target_)){
@@ -113,7 +113,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 			if(!nh_.getParam("hold_orient", hold_orient_)){
 				ROS_ERROR("BaseAlignVision failed to load hold_orient");
 			}
-			if(!nh_.getParam("constant_vel", constant_vel)){
+			if(!nh_.getParam("constant_vel", constant_vel_)){
 				ROS_ERROR("BaseAlignVision failed to load constant_vel");
 			}
 			if(!nh_.getParam("do_align", do_align_flag_)){
@@ -122,7 +122,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 
 			constant_vel_pub_ = nh_.advertise<std_msgs::Float64>(constant_vel_topic_, 1);
 			if(!ratio_xy_topic_.empty()) {
-				ratio_imposed_ = true;
+				//ratio_imposed_ = true;
 				ratio_xy_pub_ = nh_.advertise<std_msgs::Float64>(ratio_xy_topic_, 1);
 				ratioThread = std::thread(std::bind(&BaseAlignVisionAction::ratioPub, this));
 			}
@@ -131,7 +131,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 		void ratioPub() {
 			ros::Rate r(60);
 			while(ros::ok()) {
-				if(update_ratio) {
+				if(update_ratio_) {
 					const double y_error = get_axis_error("y");
 					const double x_error = get_axis_error("x");
 					ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error, x_error);
@@ -145,14 +145,14 @@ class BaseAlignVisionAction : public BaseAlignAction {
 					else {
 						//msg.data = 0.0;
 					}
-					update_ratio = false;
+					update_ratio_ = false;
 				}
 				r.sleep();
 			}
 		}
 
 		bool robot_align() {
-			update_ratio = true;
+			update_ratio_ = true;
             ros::Rate r(60);
             ROS_WARN("starting robot_align");
 
@@ -162,17 +162,18 @@ class BaseAlignVisionAction : public BaseAlignAction {
 			// TODO - make me a base class method
 			for (auto &axis : axis_states_)
 			{
-				axis.second.timed_out_ = false;
-				axis.second.aligned_ = false;
+				axis.second.timed_out_ = false; // TODO - should probably just be cleared at the top of the loop in do_orient()?
+				                                //         and if so, then probably could be made a local there?
+				axis.second.aligned_ = false; //TODO - doesn't do anything - will be overwritten by erreor_term_cb?
 			}
 
-            aligned_ = false;
+            aligned_ = false; // TODO - never used? If so, remove from here and the base class
 
-            load_new_pid(reconfigure_orient_pid_topic_, p0, d0, i0); //reset pid to stationary pid values
+            load_new_pid(reconfigure_orient_pid_topic_, p0_, d0_, i0_); //reset pid to stationary pid values
             //move mech out of the way
             //move_mech(r, false);
             //enable, wait for alignment, todo change this timeout, keep enabled
-			if(do_orient) {
+			if(do_orient_) {
 				ROS_WARN("starting orient align");
 				do_align("orient", r, true, true, align_timeout_, hold_orient_);
 				ROS_WARN("ending orient align");
@@ -188,6 +189,8 @@ class BaseAlignVisionAction : public BaseAlignAction {
             timed_out = check_timeout(start_time_, align_timeout_);
             preempted_ = check_preempted();
             if(preempted_ || timed_out) {
+				ROS_INFO_STREAM(__FILE__ << ":" << __LINE__ << " robot align returning false : preempted_ = "
+						<< preempted_ << " timed_out = " << timed_out);
                 return false;
             }
 
@@ -205,8 +208,9 @@ class BaseAlignVisionAction : public BaseAlignAction {
             //}
             //enable,don't wait for alignment, default timeout, don't keep enabled
 
-			load_new_pid(reconfigure_orient_pid_topic_, p1, d1, i1); //Set pid to in motion pid values
+			load_new_pid(reconfigure_orient_pid_topic_, p1_, d1_, i1_); //Set pid to in motion pid values
 			if(track_target_) {
+				// TODO : how to exit this loop successfully?
 				while(ros::ok() && !preempted_) {
 					ROS_ERROR_THROTTLE(0.2, "CONSTANTLY TRACKING TARGET DUE TO TESTING CONFIG IN ALIGN SERVER!!!!");
 					preempted_ = check_preempted();
@@ -215,7 +219,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 
                         enable_align(true);
 						std_msgs::Float64 constant_vel_msg;
-						constant_vel_msg.data = constant_vel;
+						constant_vel_msg.data = constant_vel_;
 						constant_vel_pub_.publish(constant_vel_msg);
 					}
 					else {
@@ -223,13 +227,14 @@ class BaseAlignVisionAction : public BaseAlignAction {
 						do_align("x", r, true);
 					}
 					r.sleep();
-					update_ratio = true;
+					update_ratio_ = true;
 				}
 			}
 			else if(!do_pid_) {
-				update_ratio = true;
+				update_ratio_ = true;
 				timed_out = false;
 				start_time_ = ros::Time::now().toSec();
+				// TODO : how to exit this loop successfully?
 				while(ros::ok() && !timed_out && !preempted_) {
 					ROS_ERROR_THROTTLE(0.2, "RUNNING CONSTANT VEL DUE TO TESTING CONFIG IN ALIGN SERVER!!!!");
 					timed_out = check_timeout(start_time_, align_timeout_);
@@ -237,7 +242,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 
                     enable_align(true);
 					std_msgs::Float64 constant_vel_msg;
-					constant_vel_msg.data = constant_vel;
+					constant_vel_msg.data = constant_vel_;
 					constant_vel_pub_.publish(constant_vel_msg);
 				}
 			}
@@ -247,14 +252,19 @@ class BaseAlignVisionAction : public BaseAlignAction {
 				do_align("x", r, true, true, align_timeout_, true);
 				ROS_WARN("ending y align");
 			}
+			// TODO : when to set enable_align(false)?
+
             //check if it timed out or preempted while waiting
-            timed_out = check_timeout(start_time_, align_timeout_);
-            preempted_ = check_preempted();
+			if (!timed_out && !preempted_)
+			{
+				timed_out = check_timeout(start_time_, align_timeout_);
+				preempted_ = check_preempted();
+			}
             if(preempted_ || timed_out) {
-				ROS_ERROR_STREAM("Base align with vision server timed out or preempted.");
+				ROS_ERROR_STREAM("Base align with vision server timed out or preempted : preempted_ = "
+						<< preempted_ << " timed_out = " << timed_out);
                 return false;
             }
-
 
             ROS_INFO("base align class: align succeeded");
             return true;

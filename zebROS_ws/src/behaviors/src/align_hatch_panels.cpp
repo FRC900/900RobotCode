@@ -3,7 +3,7 @@
 #include <std_msgs/Float64.h>
 
 // TODO - make a member of the align class
-bool debug;
+bool debug = true;
 
 /*
 class BaseAlignHatchPanelAction : public BaseAlignAction {

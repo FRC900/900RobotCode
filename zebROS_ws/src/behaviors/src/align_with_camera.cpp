@@ -21,7 +21,7 @@
 
 bool publish = false;
 bool publish_last = false;
-bool goals_found = false;
+//bool goals_found = false;
 tf2_ros::Buffer buffer;
 std::string target_frame;
 geometry_msgs::PointStamped relative_goal_location;
@@ -31,7 +31,7 @@ constexpr bool debug = true;
 
 void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 {
-	goals_found = true;
+	//goals_found = true;
 	try
 	{
 		if(debug)
@@ -59,6 +59,8 @@ void cameraCB(const geometry_msgs::PointStampedConstPtr& raw_goal_location)
 
 bool startStopAlign(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
 {
+	if (debug)
+		ROS_INFO_STREAM("called align_with_camera startStopAlign(" << req.data << ")");
 	publish = req.data;
 	res.success = true;
 
@@ -67,6 +69,8 @@ bool startStopAlign(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response
 
 void startStopCallback(std_msgs::Bool msg)
 {
+	if (debug)
+		ROS_INFO_STREAM("called align_with_camera startStopCallback(" << msg.data << ")");
 	publish = msg.data;
 }
 
@@ -126,7 +130,7 @@ int main(int argc, char ** argv)
 		// the loop and bail if the target_frame is unrecognzed?
 		if(target_frame == "panel_outtake")
 		{
-			error = relative_goal_location.point.x; //TODO check this
+			error = relative_goal_location.point.x; //TODO check this - seems that translate_to_pointstamped exchanges x & y for the zed - need to undo that, and change the read here to point.y.  Then the check for an unknown frame ID can be moved outside the main loop and this can be an unconditional assignment?
 		}
 		else if(target_frame == "cargo_outtake")
 		{

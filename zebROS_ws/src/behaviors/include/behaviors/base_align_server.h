@@ -245,6 +245,7 @@ class BaseAlignAction {
 			return true;
 		}
 
+#if 0 // TODO - not used
 		bool get_axis_timed_out(const std::string &name)
 		{
 			auto axis_it = axis_states_.find(name);
@@ -255,6 +256,7 @@ class BaseAlignAction {
 			}
 			return axis_it->second.timed_out_;
 		}
+#endif
 		double get_axis_error(const std::string &name)
 		{
 			auto axis_it = axis_states_.find(name);
@@ -333,7 +335,7 @@ class BaseAlignAction {
 			axis.aligned_ = (fabs(msg->data[0]) < axis.error_threshold_);
 			axis.error_ = msg->data[0];
 			if(debug)
-				ROS_WARN_STREAM_THROTTLE(1, name << " error: " << fabs(msg->data[0]));
+				ROS_WARN_STREAM_THROTTLE(1, name << " error: " << axis.error_ << " aligned: " << axis.aligned_);
 		}
 
 #if 0
@@ -383,14 +385,24 @@ class BaseAlignAction {
 			std_msgs::Bool enable_msg;
 			enable_msg.data = enable;
 			axis.enable_pub_.publish(enable_msg);
+			if (debug)
+				ROS_INFO_STREAM("do_align(" << name  << ") : set enable_pub = " << enable);
 
 			//Wait to be aligned
 			if(wait_for_alignment) {
 				while(ros::ok() && !axis.aligned_ && !preempted_ && !axis.timed_out_) {
-					enable_align();
+					enable_align(); // TODO - move outside loop?
 					axis.timed_out_ = check_timeout(start_time_, timeout);
 					preempted_ = check_preempted();
-					r.sleep();
+					if (debug)
+						ROS_INFO_STREAM("do_align(" << name
+								<< ") : axis.aligned_ = " << axis.aligned_
+								<< " axis.timed_out_ = " << axis.timed_out_
+								<< " start_time_ = " << start_time_
+								<< " timeout = " << timeout
+								<< " reempted_ = " << preempted_);
+					if (!axis.timed_out_ && !preempted_)
+						r.sleep();
 				}
 
 				//Set end enable state to keep_enabled
