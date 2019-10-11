@@ -14,6 +14,7 @@ sudo apt install -y \
 	ccache \
 	chromium-browser \
 	cmake \
+	cowsay \
 	exfat-fuse \
 	exfat-utils \
 	gdb \
@@ -301,3 +302,6 @@ sudo update-alternatives --install "/usr/bin/ld" "ld" "/usr/bin/ld.gold" 20
 sudo update-alternatives --install "/usr/bin/ld" "ld" "/usr/bin/ld.bfd" 10
 
 echo | sudo update-alternatives --config ld
+
+echo "source /home/ubuntu/2019Offseason/zebROS_ws/command_aliases.sh" >> /home/ubuntu/.bashrc
+
