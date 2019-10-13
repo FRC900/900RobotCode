@@ -240,11 +240,11 @@ bool callAlignHatch()
 	ROS_INFO("Waiting for align hatch server to start.");
 	if(!align_hatch_ac.waitForServer(ros::Duration(server_wait_timeout)))
 	{
-		ROS_ERROR("Could not find server.");
+		ROS_ERROR("callAlignHatch : Could not find server.");
 		return false;
 	}
 
-	ROS_INFO("Sending goal to the server.");
+	ROS_INFO("callAlignHatch : Sending goal to the server.");
 	behaviors::AlignGoal align_goal;
 	align_hatch_ac.sendGoal(align_goal);
 
@@ -254,16 +254,16 @@ bool callAlignHatch()
 	if (finished_before_timeout)
 	{
 		actionlib::SimpleClientGoalState state = align_hatch_ac.getState();
-		ROS_INFO("Action finished with state: %s",state.toString().c_str());
+		ROS_INFO("callAlignHatch : Action finished with state: %s",state.toString().c_str());
 		if(align_hatch_ac.getResult()->timed_out)
 		{
-			ROS_INFO("Align hatch server timed out!");
+			ROS_INFO("callAlignHatch : Align hatch server timed out!");
 		}
 		return true;
 	}
 	else
 	{
-		ROS_INFO("Action did not finish before the time out.");
+		ROS_INFO("callAlignHatch : Action did not finish before the time out.");
 		return false;
 	}
 }
