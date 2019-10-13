@@ -38,6 +38,6 @@ orient_pid:
 do_orient: true
 track_target: false #If true doesn't actually align!!!!
 do_pid: true
-hold_orient: false
+hold_orient: True 
 constant_vel: -0.6
 do_align: true

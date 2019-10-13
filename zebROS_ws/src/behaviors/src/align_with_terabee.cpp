@@ -44,14 +44,14 @@ void multiflexCB(const teraranger_array::RangeArray& msg)
 	{
 		if(msg.ranges[i].range == msg.ranges[i].range)
 		{
-			sensors_distances[i] = msg.ranges[i].range + adjust_terabee_dists[i];
+			sensors_distances[i] = -1*(-0.6192 * msg.ranges[i].range + 0.241)*msg.ranges[i].range + msg.ranges[i].range + adjust_terabee_dists[i];
 			if(msg.ranges[i].range > default_min_dist_) {
 				sensors_distances[i] = default_min_dist_ - .1;
 			}
 			if(i <= 1) {
 				min_dist_cargo_local = std::min(min_dist_cargo_local, static_cast<double>(sensors_distances[i]));
 			}
-			if(i == 2 || i == 3) {
+			if(i == 2/* || i == 3*/) { //TODO debug wacky sensor behavior
 				min_dist_local = std::min(min_dist_local, static_cast<double>(sensors_distances[i]));
 			}
 			//ROS_INFO_STREAM("i = " << i << " range = " << sensors_distances[i]);
