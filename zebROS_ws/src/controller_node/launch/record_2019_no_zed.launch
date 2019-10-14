@@ -7,8 +7,8 @@
 	  	/frcrobot_jetson/talon_states
 		/frcrobot_jetson/joint_states
 		/frcrobot_rio/joint_states
-		/frcrobot_rio/heartbeat
-		/frcrobot_jetson/heartbeat
+		/frcrobot_rio/uptime
+		/frcrobot_jetson/uptime
 		/frcrobot_rio/match_data
 		/frcrobot_jetson/swerve_drive_controller/cmd_vel
 		/teleop/swerve_drive_controller/cmd_vel
