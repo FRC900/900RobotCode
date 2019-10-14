@@ -23,7 +23,7 @@ Zero point in degrees is set using service call.
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <string>
-#include <imu_zero/imu_zero_angle.h>
+#include <imu_zero/ImuZeroAngle.h>
 
 
 constexpr double pi = 3.14159;
@@ -48,8 +48,8 @@ void zeroCallback(const sensor_msgs::Imu::ConstPtr& raw_msg) {
   pub.publish(zeroed_imu);
 }
 
-bool zeroSet(imu_zero::imu_zero_angle::Request& req,
-             imu_zero::imu_zero_angle::Response& res) {
+bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
+             imu_zero::ImuZeroAngle::Response& res) {
   // takes zero angle in degrees, converts to radians
   double a = degToRad(req.angle);
   zero_rot.setRPY(0.0, 0.0, - a);
