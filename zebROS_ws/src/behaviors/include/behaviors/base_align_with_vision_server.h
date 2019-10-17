@@ -138,21 +138,28 @@ class BaseAlignVisionAction : public BaseAlignAction {
 					if((y_error != 0.0 && x_error != 0.0) || track_target_) {
 						if(x_error > 0.2 || track_target_) {
 							std_msgs::Float64 msg;
-							msg.data = y_error/(x_error);
+							msg.data = (y_error+0.029)/(x_error);
 							ratio_xy_pub_.publish(msg);
+						}
+						else
+						{
+							//ROS_INFO_STREAM("Not publishing ratio because x_error < 0.2");
 						}
 					}
 					else {
-						//msg.data = 0.0;
+						//ROS_INFO_STREAM("Not publishing ratio because x_error or y_error is 0");
 					}
 					update_ratio_ = false;
+				}
+				else{
+					ROS_INFO_THROTTLE(0.25, "Not publishing ratio because update_ratio is false");
 				}
 				r.sleep();
 			}
 		}
 
 		bool robot_align() {
-			update_ratio_ = true;
+			update_ratio_ = false;
             ros::Rate r(60);
             ROS_WARN("starting robot_align");
 
@@ -177,6 +184,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 				ROS_WARN("starting orient align");
 				do_align("orient", r, true, true, align_timeout_, hold_orient_);
 				ROS_WARN("ending orient align");
+				ros::Duration(2).sleep();
 			}
 			else {
 				ROS_ERROR("SKIPPING ORIENT DUE TO TESTING PARAM!!!");
@@ -247,6 +255,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 				}
 			}
 			else {
+				update_ratio_ = true;
 				ROS_WARN("starting y align");
 				do_align("y", r, true);
 				do_align("x", r, true, true, align_timeout_, true);
