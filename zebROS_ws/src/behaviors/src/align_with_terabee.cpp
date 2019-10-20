@@ -51,7 +51,7 @@ void multiflexCB(const teraranger_array::RangeArray& msg)
 			if(i <= 1) {
 				min_dist_cargo_local = std::min(min_dist_cargo_local, static_cast<double>(sensors_distances[i]));
 			}
-			if(i == 2/* || i == 3*/) { //TODO debug wacky sensor behavior
+			if(i == 2 || i == 3) { //TODO debug wacky sensor behavior
 				min_dist_local = std::min(min_dist_local, static_cast<double>(sensors_distances[i]));
 			}
 			//ROS_INFO_STREAM("i = " << i << " range = " << sensors_distances[i]);
