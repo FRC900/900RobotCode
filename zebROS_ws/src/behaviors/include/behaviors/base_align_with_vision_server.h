@@ -28,6 +28,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 		bool do_align_flag_ = false;
 
 		double constant_vel_ = 0.0;
+		double after_orient_delay_ = 1.0;
 	public:
 		BaseAlignVisionAction(const std::string &name,
 
@@ -119,6 +120,9 @@ class BaseAlignVisionAction : public BaseAlignAction {
 			if(!nh_.getParam("do_align", do_align_flag_)){
 				ROS_ERROR("BaseAlignVision failed to load do_align");
 			}
+			if(!nh_.getParam("after_orient_delay", after_orient_delay_)){
+				ROS_ERROR("BaseAlignVision failed to load after_orient_delay");
+			}
 
 			constant_vel_pub_ = nh_.advertise<std_msgs::Float64>(constant_vel_topic_, 1);
 			if(!ratio_xy_topic_.empty()) {
@@ -184,7 +188,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 				ROS_WARN("starting orient align");
 				do_align("orient", r, true, true, align_timeout_, hold_orient_);
 				ROS_WARN("ending orient align");
-				ros::Duration(2).sleep();
+				ros::Duration(after_orient_delay_).sleep();
 			}
 			else {
 				ROS_ERROR("SKIPPING ORIENT DUE TO TESTING PARAM!!!");
