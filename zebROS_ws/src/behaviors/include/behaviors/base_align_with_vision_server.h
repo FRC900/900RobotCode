@@ -29,6 +29,10 @@ class BaseAlignVisionAction : public BaseAlignAction {
 
 		double constant_vel_ = 0.0;
 		double after_orient_delay_ = 1.0;
+
+		double minimum_x_for_any_pub_ = 0.2;
+		double minimum_y_for_nonzero_pub_ = 0.02;
+		double minimum_x_for_nonzero_pub_ = 0.4;
 	public:
 		BaseAlignVisionAction(const std::string &name,
 
@@ -123,6 +127,16 @@ class BaseAlignVisionAction : public BaseAlignAction {
 			if(!nh_.getParam("after_orient_delay", after_orient_delay_)){
 				ROS_ERROR("BaseAlignVision failed to load after_orient_delay");
 			}
+			//Ratio pub params
+			if(!nh_.getParam("minimum_x_for_any_pub", minimum_x_for_any_pub_)){
+				ROS_ERROR("BaseAlignVision failed to load minimum_x_for_any_pub");
+			}
+			if(!nh_.getParam("minimum_y_for_nonzero_pub", minimum_y_for_nonzero_pub_)){
+				ROS_ERROR("BaseAlignVision failed to load minimum_y_for_nonzero_pub");
+			}
+			if(!nh_.getParam("minimum_x_for_nonzero_pub", minimum_x_for_nonzero_pub_)){
+				ROS_ERROR("BaseAlignVision failed to load minimum_x_for_nonzero_pub");
+			}
 
 			constant_vel_pub_ = nh_.advertise<std_msgs::Float64>(constant_vel_topic_, 1);
 			if(!ratio_xy_topic_.empty()) {
@@ -140,20 +154,32 @@ class BaseAlignVisionAction : public BaseAlignAction {
 					const double x_error = get_axis_error("x");
 					ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error, x_error);
 					if((y_error != 0.0 && x_error != 0.0) || track_target_) {
-						if(x_error > 0.2 || track_target_) {
+						//if the robot is too close to the target, the ratio will be huge
+						if(x_error > minimum_x_for_any_pub_ || track_target_) {
 							std_msgs::Float64 msg;
-							msg.data = (y_error)/(x_error);
+							//if the robot is too close to the center of the target and the robot has large x_error, the ratio will be wrong
+							if(y_error > minimum_y_for_nonzero_pub_ || x_error < minimum_x_for_nonzero_pub_)
+							{
+								msg.data = (y_error)/(x_error);
+								update_ratio_ = false;
+							}
+							else
+							{
+								//wait until the robot is closer before moving in y-direction
+								msg.data = 0;
+							}
 							ratio_xy_pub_.publish(msg);
 						}
 						else
 						{
 							//ROS_INFO_STREAM("Not publishing ratio because x_error < 0.2");
+							update_ratio_ = false;
 						}
 					}
 					else {
+						update_ratio_ = false;
 						//ROS_INFO_STREAM("Not publishing ratio because x_error or y_error is 0");
 					}
-					update_ratio_ = false;
 				}
 				else{
 					ROS_INFO_THROTTLE(0.25, "Not publishing ratio because update_ratio is false");

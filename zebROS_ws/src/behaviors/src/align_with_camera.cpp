@@ -203,7 +203,7 @@ int main(int argc, char ** argv)
 		aligned_msg.data[0] = error;
 		successful_y_align.publish(aligned_msg);
 		std_msgs::Float64 msg;
-		msg.data = error;
+		msg.data = 0.0;
 		setpoint_pub.publish(msg);
 
 		publish_last = publish;

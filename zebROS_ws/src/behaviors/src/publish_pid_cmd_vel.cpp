@@ -139,7 +139,12 @@ int main(int argc, char ** argv)
 				}
 				else {
 					if(x_sub) {
-						cmd_vel_msg.linear.y = cmd_vel_msg.linear.x / ratio_xy;
+						if(fabs(ratio_xy) > 1e5) {
+							cmd_vel_msg.linear.y = cmd_vel_msg.linear.x / ratio_xy;
+						}
+						else {
+							cmd_vel_msg.linear.y = 0;
+						}
 					}
 					else {
 						cmd_vel_msg.linear.x = cmd_vel_msg.linear.y * ratio_xy;
