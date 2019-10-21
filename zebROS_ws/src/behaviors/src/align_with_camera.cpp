@@ -24,6 +24,10 @@ bool publish_last = false;
 //bool goals_found = false;
 tf2_ros::Buffer buffer;
 std::string target_frame;
+std::string axis;
+std::string state_publisher_topic;
+std::string enable_subscriber_topic;
+std::string setpoint_publisher_topic;
 geometry_msgs::PointStamped relative_goal_location;
 ros::Time goal_timestamp;
 
@@ -92,6 +96,14 @@ int main(int argc, char ** argv)
 		ROS_ERROR_STREAM("Could not read error_threshold in align_with_camera");
 	if(!n_private_params.getParam("target_frame", target_frame))
 		ROS_ERROR_STREAM("Could not read target_frame in align_with_camera");
+	if(!n_private_params.getParam("axis", axis))
+		ROS_ERROR_STREAM("Could not read axis in align_with_camera");
+	if(!n_private_params.getParam("state_publisher_topic", state_publisher_topic))
+		ROS_ERROR_STREAM("Could not read state_publisher_topic in align_with_camera");
+	if(!n_private_params.getParam("enable_subscriber_topic", enable_subscriber_topic))
+		ROS_ERROR_STREAM("Could not read enable_subscriber_topic in align_with_camera");
+	if(!n_private_params.getParam("setpoint_publisher_topic", setpoint_publisher_topic))
+		ROS_ERROR_STREAM("Could not read setpoint_publisher_topic in align_with_camera");
 	if((target_frame != "panel_outtake") && (target_frame != "cargo_outtake"))
 	{
 		ROS_ERROR("Unknown target_frame in align_with_camera");
@@ -105,13 +117,15 @@ int main(int argc, char ** argv)
 	//set up publisher for publish_pid_cmd_vel node
 	ros::Publisher command_pub = n.advertise<std_msgs::Float64>("align_with_camera/command", 1);
 	//set up feedback publisher for the align_server which uses this node
-	ros::Publisher successful_y_align = n.advertise<std_msgs::Float64MultiArray>("align_with_camera/aligned", 1);
+	ros::Publisher successful_y_align = n.advertise<std_msgs::Float64MultiArray>(state_publisher_topic, 1);
 	//set up enable subscriber from align_server
-	ros::Subscriber start_stop_sub = n.subscribe("align_with_camera/enable_pub", 1, &startStopCallback);
+	ros::Subscriber start_stop_sub = n.subscribe(enable_subscriber_topic, 1, &startStopCallback);
 	//set up camera subscriber with transforms
 	message_filters::Subscriber<geometry_msgs::PointStamped> camera_msg_sub(n, "pointstamped_goal_msg", 1);
 	//advertise service to start or stop align (who uses this?)
 	ros::ServiceServer start_stop_service = n.advertiseService("align_with_camera", startStopAlign);
+	//set up setpoint publisher
+	ros::Publisher setpoint_pub = n.advertise<std_msgs::Float64>(setpoint_publisher_topic, 1);
 
 	//set up transforms for camera -> mechanism
 	tf2_ros::TransformListener tf2(buffer);
@@ -129,7 +143,19 @@ int main(int argc, char ** argv)
 	while(ros::ok())
 	{
 		//bool aligned = false;
-		double error = relative_goal_location.point.y;
+		double error;
+	   	if(axis == "y")
+		{
+			error = relative_goal_location.point.y;
+		}
+		else if (axis == "x")
+		{
+			error = relative_goal_location.point.x;
+		}
+		else
+		{
+			ROS_ERROR_STREAM("AXIS IS NOT X OR Y IN ALIGN_WITH_CAMERA");
+		}
 
 		// Very basic latency compensation - assumes we've been moving a constant speed
 		// since the last camera frame was published.  For a more accurate estimate, keep
@@ -176,6 +202,9 @@ int main(int argc, char ** argv)
 		// which is all that used by the align server code
 		aligned_msg.data[0] = error;
 		successful_y_align.publish(aligned_msg);
+		std_msgs::Float64 msg;
+		msg.data = error;
+		setpoint_pub.publish(msg);
 
 		publish_last = publish;
 		ros::spinOnce();

@@ -9,6 +9,20 @@
 
 		<node name="align_with_camera" pkg="behaviors" type="align_with_camera" output="screen" >
 			<param name="target_frame" value="panel_outtake" />
+			<param name="axis" value="y" />
+			<param name="state_publisher_topic" value="align_with_camera/aligned" />
+			<param name="enable_subscriber_topic" value="align_with_camera/enable_pub" />
+			<param name="setpoint_publisher_topic" value="align_with_camera/setpoint" />
+		</node>
+
+		<!-- <node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/> -->
+
+		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_camera" output="screen" >
+			<param name="target_frame" value="panel_outtake" />
+			<param name="axis" value="x" />
+			<param name="state_publisher_topic" value="hatch_panel_distance_pid/state" />
+			<param name="enable_subscriber_topic" value="hatch_panel_distance_pid/pid_enable" />
+			<param name="setpoint_publisher_topic" value="hatch_panel_distance_pid/setpoint" />
 		</node>
 
 		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
@@ -36,7 +50,6 @@
 			<remap from="pid_enable" to="orient_pid/pid_enable" />
 		</node>
 
-		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 		<!-- Distance PID Hatch Panel -->
 		<node name="hatch_panel_distance_pid" pkg="pid" type="controller" >
 			<param name="node_name" value="hatch_panel_distance_pid" />

@@ -142,7 +142,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 					if((y_error != 0.0 && x_error != 0.0) || track_target_) {
 						if(x_error > 0.2 || track_target_) {
 							std_msgs::Float64 msg;
-							msg.data = (y_error+0.029)/(x_error);
+							msg.data = (y_error)/(x_error);
 							ratio_xy_pub_.publish(msg);
 						}
 						else
