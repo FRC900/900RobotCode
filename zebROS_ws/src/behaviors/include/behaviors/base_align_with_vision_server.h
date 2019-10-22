@@ -206,7 +206,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 
             aligned_ = false; // TODO - never used? If so, remove from here and the base class
 
-            load_new_pid(reconfigure_orient_pid_topic_, p0_, d0_, i0_); //reset pid to stationary pid values
+            load_new_pid(reconfigure_orient_pid_topic_, p0_, i0_, d0_); //reset pid to stationary pid values
             //move mech out of the way
             //move_mech(r, false);
             //enable, wait for alignment, todo change this timeout, keep enabled
@@ -246,7 +246,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
             //}
             //enable,don't wait for alignment, default timeout, don't keep enabled
 
-			load_new_pid(reconfigure_orient_pid_topic_, p1_, d1_, i1_); //Set pid to in motion pid values
+			load_new_pid(reconfigure_orient_pid_topic_, p1_, i1_, d1_); //Set pid to in motion pid values
 			if(track_target_) {
 				// TODO : how to exit this loop successfully?
 				while(ros::ok() && !preempted_) {
