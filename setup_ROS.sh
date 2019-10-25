@@ -21,16 +21,21 @@ sudo apt update
 #sudo apt install -y librealsense2-dev librealsense2-dkms librealsense2-utils
 
 # From source for the Jetson
-sudo apt install -y git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev 
-mkdir realsense_src && cd realsense_src
-wget https://github.com/IntelRealSense/librealsense/archive/v2.27.0.zip
-unzip v2.27.0.zip
-cd librealsense-2.27.0
+sudo apt install -y git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev ninja-build
+cd
+mkdir realsense_src
+cd realsense_src
+wget https://github.com/IntelRealSense/librealsense/archive/v2.29.0.zip
+unzip v2.29.0.zip
+cd librealsense-2.29.0
 sudo cp config/99-realsense-libusb.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && udevadm trigger
-mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=true ..
-sudo make uninstall && make clean && make -j6 && sudo make install
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=true  -GNinja ..
+sudo ninja uninstall && sudo ninja clean && sudo ninja install
+cd 
+rm -rf realsense_src
 
 # Add Individual Packages here
 # You can install a specific ROS package (replace underscores with dashes of the package name):
