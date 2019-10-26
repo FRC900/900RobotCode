@@ -53,7 +53,10 @@ sudo apt install -y \
 	python-numpy \
 	python-opencv \
 	python-pip \
+	python-qt4 \ 
 	python-scipy \
+	pyqt4-dev-tools \
+	qt4-designer \
 	rsync \
 	software-properties-common \
 	terminator \
