@@ -297,11 +297,11 @@ class BaseAlignAction {
 			dynamic_reconfigure::DoubleParameter d_scale;
 
 			p_scale.name = "Kp_scale";
-			p_scale.value = 10.0;
+			p_scale.value = 100.0;
 			i_scale.name = "Ki_scale";
-			i_scale.value = 1.0;
+			i_scale.value = 10.0;
 			d_scale.name = "Kd_scale";
-			d_scale.value = 1.0;
+			d_scale.value = 10.0;
 
 			p.name = "Kp";
 			p.value = p_ / p_scale.value;
@@ -534,7 +534,7 @@ class BaseAlignAction {
 		//Function to move mech out of the way of sensors
 		virtual bool move_mech(ros::Rate r, bool wait_for_result) {
 			behaviors::ElevatorGoal elev_goal;
-			elev_goal.setpoint_index = CARGO_SHIP;
+			elev_goal.setpoint_index = INTAKE;
 			elev_goal.place_cargo = false;
 			ac_elevator_.sendGoal(elev_goal);
 			if(wait_for_result) {
