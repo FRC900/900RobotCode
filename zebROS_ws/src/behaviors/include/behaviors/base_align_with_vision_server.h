@@ -208,7 +208,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 
             load_new_pid(reconfigure_orient_pid_topic_, p0_, i0_, d0_); //reset pid to stationary pid values
             //move mech out of the way
-            //move_mech(r, false);
+            move_mech(r, false);
             //enable, wait for alignment, todo change this timeout, keep enabled
 			if(do_orient_) {
 				ROS_WARN("starting orient align");
