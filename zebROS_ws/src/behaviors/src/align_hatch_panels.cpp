@@ -198,7 +198,7 @@ int main(int argc, char** argv)
 			"align_hatch_pid/ratio_xy",
 			"hatch_panel_distance_pid/y_command",
 
-			"align_hatch/orient_pid/set_parameters");
+			"/align_hatch/orient_pid/set_parameters");
 
 	// X-distance is hooked up to terabee distance
 	// coming from the align_with_terabee node

@@ -296,19 +296,19 @@ class BaseAlignAction {
 			dynamic_reconfigure::DoubleParameter i_scale;
 			dynamic_reconfigure::DoubleParameter d_scale;
 
-			p.name = "Kp";
-			p.value = p_;
-			i.name = "Ki";
-			i.value = i_;
-			d.name = "Kd";
-			d.value = d_;
-
 			p_scale.name = "Kp_scale";
-			p_scale.value = 100.0;
+			p_scale.value = 10.0;
 			i_scale.name = "Ki_scale";
-			i_scale.value = 100.0;
+			i_scale.value = 1.0;
 			d_scale.name = "Kd_scale";
-			d_scale.value = 100.0;
+			d_scale.value = 1.0;
+
+			p.name = "Kp";
+			p.value = p_ / p_scale.value;
+			i.name = "Ki";
+			i.value = i_ / i_scale.value;
+			d.name = "Kd";
+			d.value = d_ / d_scale.value;
 
 			conf.doubles.push_back(p_scale);
 			conf.doubles.push_back(p);
