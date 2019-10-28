@@ -43,6 +43,6 @@ constant_vel: -0.6
 do_align: true
 after_orient_delay: 1
 
-minimum_x_for_any_ratio: 0.2
-maximum_y_for_nonzero_ratio: 0.02
-minimum_x_for_nonzero_ratio: 0.5
+minimum_x_for_any_pub: 0.2
+minimum_y_for_nonzero_pub: 0.02
+minimum_x_for_nonzero_pub: 0.5

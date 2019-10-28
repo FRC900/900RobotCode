@@ -19,6 +19,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 		double d1_;
 
 		bool update_ratio_ = false;
+		bool publish_again_ = false;
 
 		//TESTING PARAMS !!DANGER!!
 		bool do_orient_ = false;
@@ -149,39 +150,59 @@ class BaseAlignVisionAction : public BaseAlignAction {
 		void ratioPub() {
 			ros::Rate r(60);
 			while(ros::ok()) {
-				if(update_ratio_) {
-					const double y_error = get_axis_error("y");
-					const double x_error = get_axis_error("x");
+				const double y_error = get_axis_error("y");
+				const double x_error = get_axis_error("x");
+				if(y_error == 0.0 || x_error == 0.0) {
+					ROS_WARN_THROTTLE(0.25, "Not publishing ratio because x or y error is 0");
 					ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error, x_error);
-					if((y_error != 0.0 && x_error != 0.0) || track_target_) {
-						//if the robot is too close to the target, the ratio will be huge
-						if(x_error > minimum_x_for_any_pub_ || track_target_) {
-							std_msgs::Float64 msg;
-							//if the robot is too close to the center of the target and the robot has large x_error, the ratio will be wrong
-							if(y_error > minimum_y_for_nonzero_pub_ || x_error < minimum_x_for_nonzero_pub_)
-							{
-								msg.data = (y_error)/(x_error);
-								update_ratio_ = false;
-							}
-							else
-							{
-								//wait until the robot is closer before moving in y-direction
-								msg.data = 0;
-							}
-							ratio_xy_pub_.publish(msg);
-						}
-						else
-						{
-							//ROS_INFO_STREAM("Not publishing ratio because x_error < 0.2");
-							update_ratio_ = false;
-						}
-					}
-					else {
+					continue;
+				}
+				std_msgs::Float64 msg;
+				if(x_error < minimum_x_for_any_pub_)
+				{
+					// Don't publish any ratio because the robot is too close to the target
+					ROS_INFO_THROTTLE(0.25, "Not publishing ratio because x_error < 0.2");
+					ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error, x_error);
+					update_ratio_ = false;
+				}
+				else if(x_error < minimum_x_for_nonzero_pub_) 
+				{
+					if(update_ratio_ || publish_again_)
+					{
+						ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error, x_error);
+						msg.data = (y_error)/(x_error);
+						ratio_xy_pub_.publish(msg);
 						update_ratio_ = false;
-						//ROS_INFO_STREAM("Not publishing ratio because x_error or y_error is 0");
+						publish_again_ = false;
+					}
+					else
+					{
+						ROS_INFO_THROTTLE(0.25, "Not publishing ratio because update_ratio is false or publish_again is not set");
+						ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error, x_error);
 					}
 				}
-				else{
+				else if(update_ratio_)
+				{
+					if(fabs(y_error) > minimum_y_for_nonzero_pub_)
+					{
+						ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error, x_error);
+						msg.data = (y_error)/(x_error);
+						ratio_xy_pub_.publish(msg);
+						update_ratio_ = false;
+						publish_again_ = true;
+					}
+					else
+					{
+						ROS_WARN_THROTTLE(0.25, "Waiting until the robot is closer before moving in y-direction");
+						ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error, x_error);
+						msg.data = 0;
+						ratio_xy_pub_.publish(msg);
+						update_ratio_ = false;
+						publish_again_ = true;
+					}
+				}
+				else
+				{
 					ROS_INFO_THROTTLE(0.25, "Not publishing ratio because update_ratio is false");
 				}
 				r.sleep();
