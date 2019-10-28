@@ -227,6 +227,8 @@ class BaseAlignVisionAction : public BaseAlignAction {
 
             aligned_ = false; // TODO - never used? If so, remove from here and the base class
 
+			disable_pid();
+
             load_new_pid(reconfigure_orient_pid_topic_, p0_, i0_, d0_); //reset pid to stationary pid values
             //move mech out of the way
             move_mech(r, false);
