@@ -40,8 +40,6 @@ namespace goal_detection
 
 			~GoalDetect()
 			{
-				if (gd_)
-					delete gd_;
 			}
 
 		protected:
@@ -64,6 +62,8 @@ namespace goal_detection
 
 				bool no_depth = false;
 				nh_.getParam("no_depth", no_depth);
+
+				distance_from_terabee_ = -1;
 
 				if (!no_depth)
 				{
@@ -89,7 +89,9 @@ namespace goal_detection
 
 			void callback(const sensor_msgs::ImageConstPtr &frameMsg, const sensor_msgs::ImageConstPtr &depthMsg)
 			{
-				std::lock_guard<std::mutex> l(mutex_);
+				//std::lock_guard<std::mutex> l(camera_mutex_);
+				if (!camera_mutex_.try_lock())  // If the previous message is still being
+					return;              // processed, drop this one
 				cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
 				cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
 
@@ -100,7 +102,7 @@ namespace goal_detection
 				{
 					const cv::Point2f fov(config_.hFov * (M_PI / 180.),
 										  config_.hFov * (M_PI / 180.) * ((double)cvFrame->image.rows / cvFrame->image.cols));
-					gd_ = new GoalDetector(fov, cvFrame->image.size(), false);
+					gd_ = std::make_unique<GoalDetector>(fov, cvFrame->image.size(), false);
 				}
 				gd_->setCameraAngle(config_.camera_angle);
 				gd_->setBlueScale(config_.blue_scale);
@@ -111,7 +113,7 @@ namespace goal_detection
 				//Send current color and depth image to the actual GoalDetector
 				gd_->findBoilers(cvFrame->image, cvDepth->image);
 
-				std::vector< GoalFound > gfd = gd_->return_found();
+				const std::vector< GoalFound > gfd = gd_->return_found();
 				goal_detection::GoalDetection gd_msg;
 
 				gd_msg.header.seq = frameMsg->header.seq;
@@ -145,68 +147,71 @@ namespace goal_detection
 					pub_debug_image_.publish(cv_bridge::CvImage(std_msgs::Header(), "bgr8", thisFrame).toImageMsg());
 				}
 
-				if (gd_msg.valid == false)
+				if (gd_msg.valid)
 				{
+					//Transform between goal frame and odometry/map.
+					static tf2_ros::TransformBroadcaster br;
+					for(size_t i = 0; i < gfd.size(); i++)
+					{
+						geometry_msgs::TransformStamped transformStamped;
+
+						transformStamped.header.stamp = gd_msg.header.stamp;
+						transformStamped.header.frame_id = frame_id;
+						std::stringstream child_frame;
+						child_frame << "goal_";
+						child_frame << i;
+						transformStamped.child_frame_id = child_frame.str();
+
+						transformStamped.transform.translation.x = gd_msg.location[i].x;
+						transformStamped.transform.translation.y = gd_msg.location[i].y;
+						transformStamped.transform.translation.z = gd_msg.location[i].z;
+
+						// Can't detect rotation yet, so publish 0 instead
+						tf2::Quaternion q;
+						q.setRPY(0, 0, 0);
+
+						transformStamped.transform.rotation.x = q.x();
+						transformStamped.transform.rotation.y = q.y();
+						transformStamped.transform.rotation.z = q.z();
+						transformStamped.transform.rotation.w = q.w();
+
+						br.sendTransform(transformStamped);
+					}
+
+					/*
+					//Transform between a fixed frame and the goal.
+					tf2_ros::Buffer tfBuffer;
+					tf2_ros::TransformListener tfListener(tfBuffer);
+
+					geometry_msgs::TransformStamped transformStampedOdomCamera;
+					try
+					{
+					transformStampedOdomCamera = tfBuffer.lookupTransform("odom", cvFrame->header.frame_id,
+					ros::Time(0));
+					}
+					catch (tf2::TransformException &ex)
+					{
+					ROS_WARN("%s", ex.what());
+					ros::Duration(1.0).sleep();
 					return;
+					}
+
+					geometry_msgs::TransformStamped transformStampedOdomGoal;
+
+					tf2::doTransform(transformStamped, transformStampedOdomGoal, transformStampedOdomCamera);
+
+					br.sendTransform(transformStampedOdomGoal);
+					*/
 				}
-
-				//Transform between goal frame and odometry/map.
-				static tf2_ros::TransformBroadcaster br;
-				for(size_t i = 0; i < gfd.size(); i++)
-				{
-					geometry_msgs::TransformStamped transformStamped;
-
-					transformStamped.header.stamp = gd_msg.header.stamp;
-					transformStamped.header.frame_id = frame_id;
-					std::stringstream child_frame;
-					child_frame << "goal_";
-					child_frame << i;
-					transformStamped.child_frame_id = child_frame.str();
-
-					transformStamped.transform.translation.x = gd_msg.location[i].x;
-					transformStamped.transform.translation.y = gd_msg.location[i].y;
-					transformStamped.transform.translation.z = gd_msg.location[i].z;
-
-					// Can't detect rotation yet, so publish 0 instead
-					tf2::Quaternion q;
-					q.setRPY(0, 0, 0);
-
-					transformStamped.transform.rotation.x = q.x();
-					transformStamped.transform.rotation.y = q.y();
-					transformStamped.transform.rotation.z = q.z();
-					transformStamped.transform.rotation.w = q.w();
-
-					br.sendTransform(transformStamped);
-				}
-
-				/*
-				//Transform between a fixed frame and the goal.
-				tf2_ros::Buffer tfBuffer;
-				tf2_ros::TransformListener tfListener(tfBuffer);
-
-				geometry_msgs::TransformStamped transformStampedOdomCamera;
-				try
-				{
-				transformStampedOdomCamera = tfBuffer.lookupTransform("odom", cvFrame->header.frame_id,
-				ros::Time(0));
-				}
-				catch (tf2::TransformException &ex)
-				{
-				ROS_WARN("%s", ex.what());
-				ros::Duration(1.0).sleep();
-				return;
-				}
-
-				geometry_msgs::TransformStamped transformStampedOdomGoal;
-
-				tf2::doTransform(transformStamped, transformStampedOdomGoal, transformStampedOdomCamera);
-
-				br.sendTransform(transformStampedOdomGoal);
-				*/
+				camera_mutex_.unlock();
 			}
 
 			void multiflexCB(const teraranger_array::RangeArray& msg)
 			{
+				// If previous message is still being processed, drop
+				// this one.
+				if (!multiflex_mutex_.try_lock())
+					return;
 				double min_dist = std::numeric_limits<double>::max();
 				distance_from_terabee_ = -1;
 				for(int i = 0; i < 2; i++)
@@ -217,6 +222,7 @@ namespace goal_detection
 				}
 				if (min_dist != std::numeric_limits<double>::max())
 					distance_from_terabee_ = min_dist;
+				multiflex_mutex_.unlock();
 			}
 
 			void callback_no_depth(const sensor_msgs::ImageConstPtr &frameMsg)
@@ -235,11 +241,12 @@ namespace goal_detection
 			ros::Subscriber                                                terabee_sub_;
 			ros::Publisher                                                 pub_;
 			image_transport::Publisher                                     pub_debug_image_;
-			GoalDetector                                                  *gd_                    = NULL;
-			double                                                         distance_from_terabee_ = -1;
+			std::unique_ptr<GoalDetector>                                  gd_;
+			double                                                         distance_from_terabee_;
 			goal_detection::GoalDetectionConfig                            config_;
 			DynamicReconfigureWrapper<goal_detection::GoalDetectionConfig> drw_;
-			std::mutex                                                     mutex_;
+			std::mutex                                                     camera_mutex_;
+			std::mutex                                                     multiflex_mutex_;
 	};
 } // namspace
 

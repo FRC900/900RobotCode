@@ -31,7 +31,7 @@
   <arg name="sub_rate" default="1" />
   <arg name="pub_rate" default="1" />
   <arg name="hFov" default="105.0" />
-  <arg name="camera_angle" default="-25.0" />
+  <arg name="camera_angle" default="0.0" />
 
   <!--
   <node name="goal_detection_node" pkg="goal_detection" type="goal_detection_node" output="screen">

@@ -1,3 +1,6 @@
+// Node which reads terabee distance sensor data and convert that into
+// commands intended to drive the robot.  Goal is to mimic a PID node
+// for integration into auto-align server code
 #include <ros/ros.h>
 #include <vector>
 #include "teraranger_array/RangeArray.h"
@@ -17,6 +20,7 @@
 // for special cases in the align server itself
 //   Note - now done for the result - turned it into a float64 array like
 //          the PID nodes so the align server can use common code to decode it
+//          Also done for hatch and cargo distance
 // TODO - also split up into two separate align with terabee nodes - one for
 // cargo, one for hatch?  If not, have two interfaces matching PID controllers,
 // one for cargo, one for hatch
@@ -40,14 +44,14 @@ void multiflexCB(const teraranger_array::RangeArray& msg)
 	{
 		if(msg.ranges[i].range == msg.ranges[i].range)
 		{
-			sensors_distances[i] = msg.ranges[i].range + adjust_terabee_dists[i];
+			sensors_distances[i] = -1*(-0.6192 * msg.ranges[i].range + 0.241)*msg.ranges[i].range + msg.ranges[i].range + adjust_terabee_dists[i];
 			if(msg.ranges[i].range > default_min_dist_) {
 				sensors_distances[i] = default_min_dist_ - .1;
 			}
 			if(i <= 1) {
 				min_dist_cargo_local = std::min(min_dist_cargo_local, static_cast<double>(sensors_distances[i]));
 			}
-			if(i == 2 || i == 3) {
+			if(i == 2 || i == 3) { //TODO debug wacky sensor behavior
 				min_dist_local = std::min(min_dist_local, static_cast<double>(sensors_distances[i]));
 			}
 			//ROS_INFO_STREAM("i = " << i << " range = " << sensors_distances[i]);
@@ -106,9 +110,9 @@ int main(int argc, char ** argv)
 	sensors_distances.resize(NUM_SENSORS);
 
 	ros::Publisher hatch_panel_distance_setpoint_pub = n.advertise<std_msgs::Float64>("hatch_panel_distance_pid/setpoint", 1);
-	ros::Publisher hatch_panel_distance_state_pub = n.advertise<std_msgs::Float64>("hatch_panel_distance_pid/state", 1);
-	ros::Publisher cargo_distance_state_pub = n.advertise<std_msgs::Float64>("cargo_distance_pid/state", 1);
+	ros::Publisher hatch_panel_distance_state_pub = n.advertise<std_msgs::Float64MultiArray>("hatch_panel_distance_pid/state", 1);
 	ros::Publisher cargo_distance_setpoint_pub = n.advertise<std_msgs::Float64>("cargo_distance_pid/setpoint", 1);
+	ros::Publisher cargo_distance_state_pub = n.advertise<std_msgs::Float64MultiArray>("cargo_distance_pid/state", 1);
 	ros::Publisher cargo_setpoint_pub = n.advertise<std_msgs::Float64>("cargo_pid/setpoint", 1);
 	ros::Publisher cargo_state_pub = n.advertise<std_msgs::Float64>("cargo_pid/state", 1);
 	ros::Publisher y_command_pub = n.advertise<std_msgs::Float64>("align_with_terabee/y_command", 1);
@@ -147,17 +151,23 @@ int main(int argc, char ** argv)
 		//deal with distance PID first
 		ros::spinOnce();
         if(fabs(min_dist) < default_min_dist_) {
-            std_msgs::Float64 distance_state_msg;
-            distance_state_msg.data = min_dist - distance_target;
-            hatch_panel_distance_state_pub.publish(distance_state_msg);
+            std_msgs::Float64 distance_setpoint_msg;
+            distance_setpoint_msg.data = min_dist - distance_target;
             hatch_panel_distance_setpoint_pub.publish(distance_setpoint_msg);
+			std_msgs::Float64MultiArray distance_state_msg;
+			distance_state_msg.data.resize(5);
+			distance_state_msg.data[0] = distance_setpoint_msg.data;
+            hatch_panel_distance_state_pub.publish(distance_state_msg);
         }
 		ros::spinOnce();
 		if(fabs(min_dist_cargo) < default_min_dist_) {
-            std_msgs::Float64 distance_state_msg;
-            distance_state_msg.data = distance_target - min_dist_cargo;
-            cargo_distance_state_pub.publish(distance_state_msg);
+            std_msgs::Float64 distance_setpoint_msg;
+            distance_setpoint_msg.data = distance_target - min_dist_cargo;
             cargo_distance_setpoint_pub.publish(distance_setpoint_msg);
+			std_msgs::Float64MultiArray distance_state_msg;
+			distance_state_msg.data.resize(5);
+			distance_state_msg.data[0] = distance_setpoint_msg.data;
+            cargo_distance_state_pub.publish(distance_state_msg);
 		}
 
 		//deal with cargo PID next
