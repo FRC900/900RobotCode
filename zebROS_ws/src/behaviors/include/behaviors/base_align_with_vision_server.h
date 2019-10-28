@@ -38,26 +38,8 @@ class BaseAlignVisionAction : public BaseAlignAction {
 		BaseAlignVisionAction(const std::string &name,
 
 							const std::string &enable_align_topic_,
-#if 0
-							const std::string &enable_orient_topic_,
-							const std::string &enable_x_topic_,
-							const std::string &enable_y_topic_,
-
-							const std::string &orient_error_topic_,
-							const std::string &x_error_topic_,
-							const std::string &y_error_topic_,
-#endif
 
 							const std::string &align_timeout_param_name_,
-#if 0
-							const std::string &orient_timeout_param_name_,
-							const std::string &x_timeout_param_name_,
-							const std::string &y_timeout_param_name_,
-
-							const std::string &orient_error_threshold_param_name_,
-							const std::string &x_error_threshold_param_name_,
-							const std::string &y_error_threshold_param_name_,
-#endif
 
 							const std::string &ratio_xy_topic_,
 							const std::string &constant_vel_topic_,
@@ -65,27 +47,9 @@ class BaseAlignVisionAction : public BaseAlignAction {
 							const std::string &reconfigure_orient_pid_topic):
 			BaseAlignAction(name,
 				enable_align_topic_,
-#if 0
-				enable_orient_topic_,
-				enable_x_topic_,
-				enable_y_topic_,
-
-				orient_error_topic_,
-				x_error_topic_,
-				y_error_topic_,
-#endif
 
 				align_timeout_param_name_
-#if 0
-				orient_timeout_param_name_,
-				x_timeout_param_name_,
-				y_timeout_param_name_,
-
-				orient_error_threshold_param_name_,
-				x_error_threshold_param_name_,
-				y_error_threshold_param_name_
-#endif
-					),
+			),
 			 reconfigure_orient_pid_topic_(reconfigure_orient_pid_topic)
 		{
 			if(!nh_.getParam("orient_pid/p0", p0_)){
@@ -332,4 +296,3 @@ class BaseAlignVisionAction : public BaseAlignAction {
             return true;
         }
 };
-

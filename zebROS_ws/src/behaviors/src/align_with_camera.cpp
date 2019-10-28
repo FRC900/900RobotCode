@@ -20,14 +20,9 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 bool publish = false;
-bool publish_last = false;
 //bool goals_found = false;
 tf2_ros::Buffer buffer;
 std::string target_frame;
-std::string axis;
-std::string state_publisher_topic;
-std::string enable_subscriber_topic;
-std::string setpoint_publisher_topic;
 geometry_msgs::PointStamped relative_goal_location;
 ros::Time goal_timestamp;
 
@@ -96,12 +91,16 @@ int main(int argc, char ** argv)
 		ROS_ERROR_STREAM("Could not read error_threshold in align_with_camera");
 	if(!n_private_params.getParam("target_frame", target_frame))
 		ROS_ERROR_STREAM("Could not read target_frame in align_with_camera");
+	std::string axis;
 	if(!n_private_params.getParam("axis", axis))
 		ROS_ERROR_STREAM("Could not read axis in align_with_camera");
+	std::string state_publisher_topic;
 	if(!n_private_params.getParam("state_publisher_topic", state_publisher_topic))
 		ROS_ERROR_STREAM("Could not read state_publisher_topic in align_with_camera");
+	std::string enable_subscriber_topic;
 	if(!n_private_params.getParam("enable_subscriber_topic", enable_subscriber_topic))
 		ROS_ERROR_STREAM("Could not read enable_subscriber_topic in align_with_camera");
+	std::string setpoint_publisher_topic;
 	if(!n_private_params.getParam("setpoint_publisher_topic", setpoint_publisher_topic))
 		ROS_ERROR_STREAM("Could not read setpoint_publisher_topic in align_with_camera");
 	if((target_frame != "panel_outtake") && (target_frame != "cargo_outtake"))
@@ -140,6 +139,7 @@ int main(int argc, char ** argv)
 
 	ros::Rate r(60);
 
+	bool publish_last = false;
 	while(ros::ok())
 	{
 		//bool aligned = false;
@@ -193,7 +193,7 @@ int main(int argc, char ** argv)
 		}
 		else if(!publish && publish_last)
 		{
-			cmd_msg.data= 0;
+			cmd_msg.data = 0;
 			command_pub.publish(cmd_msg);
 		}
 		last_command_published = cmd_msg.data;

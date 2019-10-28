@@ -12,7 +12,6 @@
 	<arg name="record" default="false" />
 
 	<group ns="frcrobot_jetson">
-		<!-- These need to be replaced with the real thing -->
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_base_jetson.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_swerve_drive.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_offsets.yaml" command="load"/>
@@ -22,7 +21,6 @@
 		<rosparam file="$(find behaviors)/config/alignmentOffsets.yaml" command="load"/>
 
 		<!--
-
 		<node name="zero_wheel_service" pkg="talon_swerve_drive_controller" type="zero_wheel_service" output="screen"> </node>
 		-->
 		<node name="dump_offsets_service" pkg="talon_swerve_drive_controller" type="dump_offsets_service" output="screen"> </node>

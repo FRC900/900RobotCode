@@ -80,17 +80,6 @@ class BaseAlignAction {
 
 		//Publishers for enabling PID loops and cmd_vel combiner
 		ros::Publisher enable_align_pub_;	//Enables the cmd_vel combiner
-#if 0
-		ros::Publisher enable_orient_pub_;	//Enables orient pid
-		ros::Publisher enable_x_pub_;		//Enables x-direction pid
-		ros::Publisher enable_y_pub_;		//Enables y-direction pid
-
-		//Subscribers for PID error
-		ros::Subscriber orient_error_sub_;	//orient error
-		ros::Subscriber x_error_sub_;		//x error
-		ros::Subscriber y_error_sub_;		//y error
-#endif
-
 		//Service client for forcefully stopping the robot
         ros::ServiceClient BrakeSrv_;
 
@@ -99,35 +88,9 @@ class BaseAlignAction {
 		//
 		//Whether we are aligned variables
 		bool aligned_ = false;				//overall aligned
-#if 0
-		bool orient_aligned_ = false;		//orient is aligned
-		bool x_aligned_ = false;			//x is aligned
-		bool y_aligned_ = false;			//y is aligned
-
-		//Error values
-		double orient_error_ = 0.0;			//orient error
-		double x_error_ = 0.0;				//x error
-		double y_error_ = 0.0;				//y error
-
-		//Whether axes are timed out
-		bool orient_timed_out_ = false;		//orient timed out
-		bool x_timed_out_ = false;			//x timed out
-		bool y_timed_out_ = false;			//y timed out
-#endif
 
 		//timeouts for overall align and specific axes
 		double align_timeout_ = 0.0;		//overall align timeout
-#if 0
-		double orient_timeout_ = 0.0;		//orient timeout
-		double x_timeout_ = 0.0;			//x timeout
-		double y_timeout_ = 0.0;			//y timeout
-
-		//maximum error to be aligned
-		double orient_error_threshold_ = 0.0;	//max orient error
-		double x_error_threshold_ = 0.0;		//max x error
-		double y_error_threshold_ = 0.0;		//max y error
-#endif
-
 		//is align preempted
 		bool preempted_ = false;
 
@@ -140,30 +103,9 @@ class BaseAlignAction {
 
 						//Topics that enable align PID loops
 						const std::string &enable_align_topic_, // global - turns on / off the publish_pid_cmd_vel node's output
-#if 0
-						const std::string &enable_orient_topic_,
-						const std::string &enable_x_topic_,
-						const std::string &enable_y_topic_,
-
-						//Topics with error values
-						const std::string &orient_error_topic_,
-						const std::string &x_error_topic_,
-						const std::string &y_error_topic_,
-#endif
-
 						//Paramater name with align timeouts
 						const std::string &align_timeout_param_name_ // global timeout for entire server CB
-#if 0
-						const std::string &orient_timeout_param_name_,
-						const std::string &x_timeout_param_name_,
-						const std::string &y_timeout_param_name_,
-
-						//Paramater name with error thresholds
-						const std::string &orient_error_threshold_param_name_,
-						const std::string &x_error_threshold_param_name_,
-						const std::string &y_error_threshold_param_name_
-#endif
-							)
+		)
 
 			: as_(nh_, name, boost::bind(&BaseAlignAction::executeCB, this, _1), false)
 			, action_name_(name)
@@ -171,16 +113,6 @@ class BaseAlignAction {
 
 			//Create publishers on the enable PID loop topics
 			, enable_align_pub_(nh_.advertise<std_msgs::Bool>(enable_align_topic_, 1, true))
-#if 0
-			, enable_orient_pub_(nh_.advertise<std_msgs::Bool>(enable_orient_topic_, 1, true))
-			, enable_x_pub_(nh_.advertise<std_msgs::Bool>(enable_x_topic_, 1, true))
-			, enable_y_pub_(nh_.advertise<std_msgs::Bool>(enable_y_topic_, 1, true))
-
-			//Create subscribers on the error topics
-			, orient_error_sub_(nh_.subscribe(orient_error_topic_, 1, &BaseAlignAction::orient_error_cb, this))
-			, x_error_sub_(nh_.subscribe(x_error_topic_, 1, &BaseAlignAction::x_error_cb, this))
-			, y_error_sub_(nh_.subscribe(y_error_topic_, 1, &BaseAlignAction::y_error_cb, this))
-#endif
 		{
             as_.start();
 
@@ -193,22 +125,6 @@ class BaseAlignAction {
 			//Get the timeout parameters
 			if(!nh_.getParam(align_timeout_param_name_, align_timeout_))
 				ROS_ERROR_STREAM("Could not read align_timeout_param_name_ in align_server");
-#if 0
-			if(!nh_.getParam(orient_timeout_param_name_, orient_timeout_))
-				ROS_ERROR_STREAM("Could not read orient_timeout_param_name_ in align_server");
-			if(!nh_.getParam(x_timeout_param_name_, x_timeout_))
-				ROS_ERROR_STREAM("Could not read x_timeout_param_name_ in align_server");
-			if(!nh_.getParam(y_timeout_param_name_, y_timeout_))
-				ROS_ERROR_STREAM("Could not read y_timeout_param_name_ in align_server");
-
-			//Get the error parameters
-			if(!nh_.getParam(orient_error_threshold_param_name_, orient_error_threshold_))
-				ROS_ERROR_STREAM("Could not read orient_error_threshold_param_name_ in align_server");
-			if(!nh_.getParam(x_error_threshold_param_name_, x_error_threshold_))
-				ROS_ERROR_STREAM("Could not read x_error_threshold_param_name_ in align_server");
-			if(!nh_.getParam(y_error_threshold_param_name_, y_error_threshold_))
-				ROS_ERROR_STREAM("Could not read y_error_threshold_param_name_ in align_server");
-#endif
 		}
 
 		~BaseAlignAction(void)
@@ -338,34 +254,6 @@ class BaseAlignAction {
 				ROS_WARN_STREAM_THROTTLE(1, name << " error: " << axis.error_ << " aligned: " << axis.aligned_);
 		}
 
-#if 0
-		//Default error callbacks for pid node
-		virtual void orient_error_cb(const std_msgs::Float64MultiArray &msg)
-		{
-			//Check if error less than threshold
-			orient_aligned_ = (fabs(msg.data[0]) < orient_error_threshold_);
-			orient_error_ =msg.data[0];
-			if(debug)
-				ROS_WARN_STREAM_THROTTLE(1, "orient error: " << fabs(msg.data[0]));
-		}
-		virtual void x_error_cb(const std_msgs::Float64MultiArray &msg)
-		{
-			//Check if error less than threshold
-			x_aligned_ = (fabs(msg.data[0]) < x_error_threshold_);
-			x_error_ = msg.data[0];
-			if(debug)
-				ROS_WARN_STREAM_THROTTLE(1, "x error: " << fabs(msg.data[0]));
-		}
-		virtual void y_error_cb(const std_msgs::Float64MultiArray &msg)
-		{
-			//Check if error less than threshold
-			y_aligned_ = (fabs(msg.data[0]) < y_error_threshold_);
-			y_error_ = msg.data[0];
-			if(debug)
-				ROS_WARN_STREAM_THROTTLE(1, "y error: " << fabs(msg.data[0]));
-		}
-#endif
-
 		//Functions to enable align PID
 		virtual void enable_align(bool enable=true) {
 			std_msgs::Bool enable_msg;
@@ -410,69 +298,6 @@ class BaseAlignAction {
 				axis.enable_pub_.publish(enable_msg);
 			}
 		}
-#if 0
-
-		virtual void align_orient(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=1.0, double keep_enabled=false) {
-			ROS_INFO_STREAM("Running align_orient");
-			std_msgs::Bool enable_msg;
-			enable_msg.data = enable;
-			enable_orient_pub_.publish(enable_msg);
-
-			//Wait to be aligned
-			if(wait_for_alignment) {
-				while(ros::ok() && !orient_aligned_ && !preempted_ && !orient_timed_out_) {
-					enable_align();
-					orient_timed_out_ = check_timeout(start_time_, timeout);
-					preempted_ = check_preempted();
-					r.sleep();
-				}
-
-				//Set end enable state to keep_enabled
-				enable_msg.data = keep_enabled;
-				enable_orient_pub_.publish(enable_msg);
-			}
-		}
-		virtual void align_x(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=1.0, double keep_enabled=false) {
-			std_msgs::Bool enable_msg;
-			enable_msg.data = enable;
-			enable_x_pub_.publish(enable_msg);
-
-			//Wait to be aligned
-			if(wait_for_alignment) {
-				while(ros::ok() && !x_aligned_ && !preempted_ && !x_timed_out_) {
-					enable_align();
-					x_timed_out_ = check_timeout(start_time_, timeout);
-					preempted_ = check_preempted();
-					r.sleep();
-				}
-
-				//Set end enable state to keep_enabled
-				enable_msg.data = keep_enabled;
-				enable_x_pub_.publish(enable_msg);
-			}
-		}
-		virtual void align_y(ros::Rate r, bool enable=true, bool wait_for_alignment=false, double timeout=1.0, double keep_enabled=false) {
-			ROS_INFO_STREAM("Running align_y");
-			std_msgs::Bool enable_msg;
-			enable_msg.data = enable;
-			enable_y_pub_.publish(enable_msg);
-			start_time_ = ros::Time::now().toSec();
-
-			//Wait to be aligned
-			if(wait_for_alignment) {
-				while(ros::ok() && !y_aligned_ && !preempted_ && !y_timed_out_) {
-					enable_align();
-					y_timed_out_ = check_timeout(start_time_, timeout);
-					preempted_ = check_preempted();
-					r.sleep();
-				}
-
-				//Set end enable state to keep_enabled
-				enable_msg.data = keep_enabled;
-				enable_y_pub_.publish(enable_msg);
-			}
-		}
-#endif
 
 		//TODO ability to define just order of orient, x, and y in config or launch file with timeouts and conditions for continuing to the next step and align in one direction throughout the whole time
 		//
@@ -553,11 +378,6 @@ class BaseAlignAction {
 			enable_align_pub_.publish(false_msg);
 			for (auto &axis : axis_states_)
 				axis.second.enable_pub_.publish(false_msg);
-#if 0
-			enable_orient_pub_.publish(false_msg);
-			enable_x_pub_.publish(false_msg);
-			enable_y_pub_.publish(false_msg);
-#endif
 		}
 
 		// Example align function
@@ -664,65 +484,3 @@ class BaseAlignAction {
 		}
 };
 
-/*int main(int argc, char** argv) {
-	ros::init(argc, argv, "align_server");
-
-	ros::NodeHandle n;
-	ros::NodeHandle n_private_params("~");
-	ros::NodeHandle n_params(n, "align_server_params");
-    ros::NodeHandle n_panel_params(n, "actionlib_hatch_panel_intake_params");
-
-	if(!n_params.getParam("align_timeout_", align_timeout_))
-		ROS_ERROR_STREAM("Could not read align_timeout_ in align_server");
-	if(!n_params.getParam("orient_timeout", orient_timeout))
-		ROS_ERROR_STREAM("Could not read orient_timeout in align_server");
-	if(!n_params.getParam("x_timeout", x_timeout))
-		ROS_ERROR_STREAM("Could not read x_timeout in align_server");
-	if(!n_params.getParam("y_timeout", y_timeout))
-		ROS_ERROR_STREAM("Could not read y_timeout in align_server");
-	if(!n_params.getParam("orient_error_threshold", orient_error_threshold))
-		ROS_ERROR_STREAM("Could not read orient_error_threshold in align_server");
-	if(!n_params.getParam("x_error_threshold", x_error_threshold))
-		ROS_ERROR_STREAM("Could not read x_error_threshold in align_server");
-	if(!n_params.getParam("cargo_error_threshold", y_error_threshold))
-		ROS_ERROR_STREAM("Could not read cargo_error_threshold in align_server");
-
-	if(!n_private_params.getParam("debug", debug))
-		ROS_ERROR_STREAM("Could not read debug in align_server");
-
-
-	std::shared_ptr<ros::Publisher> enable_navx_pub_ = std::make_shared<ros::Publisher>();
-	std::shared_ptr<ros::Publisher> hatch_panel_enable_distance_pub_ = std::make_shared<ros::Publisher>();
-	std::shared_ptr<ros::Publisher> cargo_enable_distance_pub_ = std::make_shared<ros::Publisher>();
-	std::shared_ptr<ros::Publisher> enable_y_pub_ = std::make_shared<ros::Publisher>();
-	std::shared_ptr<ros::Publisher> enable_align_hatch_pub_ = std::make_shared<ros::Publisher>();
-	std::shared_ptr<ros::Publisher> enable_align_cargo_pub_ = std::make_shared<ros::Publisher>();
-	std::shared_ptr<ros::Publisher> enable_cargo_pub_ = std::make_shared<ros::Publisher>();
-
-	*enable_navx_pub_ = n.advertise<std_msgs::Bool>("orient_pid/pid_enable", 1,  true);
-	*hatch_panel_enable_distance_pub_ = n.advertise<std_msgs::Bool>("hatch_panel_distance_pid/pid_enable", 1,  true);
-	*cargo_enable_distance_pub_ = n.advertise<std_msgs::Bool>("cargo_distance_pid/pid_enable", 1,  true);
-	*enable_y_pub_ = n.advertise<std_msgs::Bool>("align_with_camera/enable_y_pub", 1,  true);
-	*enable_cargo_pub_ = n.advertise<std_msgs::Bool>("cargo_pid/pid_enable", 1,  true);
-	*enable_align_hatch_pub_ = n.advertise<std_msgs::Bool>("align_hatch_pid/pid_enable", 1,  true);
-	*enable_align_cargo_pub_ = n.advertise<std_msgs::Bool>("align_cargo_pid/pid_enable", 1,  true);
-
-	BaseAlignAction align_action("align_server", enable_align_hatch_pub_, enable_navx_pub_, hatch_panel_enable_distance_pub_, enable_y_pub_, "orient_pid/pid_debug", "hatch_panel_distance_pid/pid_debug", "align_with_camera/y_aligned"); //TODO make the error topics params?
-
-
-	//Stop PID nodes from defaulting true
-	// TODO : why not just put this call in the BaseAlignAction constructor, then move
-	// all of the publishers to be straight member variables in BaseAlignAction
-	std_msgs::Bool false_msg;
-	false_msg.data = false;
-	enable_navx_pub_.publish(false_msg);
-	hatch_panel_enable_distance_pub_.publish(false_msg);
-	cargo_enable_distance_pub_.publish(false_msg);
-	enable_y_pub_.publish(false_msg);
-	enable_cargo_pub_.publish(false_msg);
-	enable_align_hatch_pub_.publish(false_msg);
-	enable_align_cargo_pub_.publish(false_msg);
-
-    ros::spin();
-	return 0;
-}*/
