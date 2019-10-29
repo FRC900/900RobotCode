@@ -125,9 +125,7 @@
 
 	<include file="$(find controller_node)/launch/2019_compbot_jetson_hatch_orient.launch"/>
     
-	<!--
 	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
-	-->
         <!--
 	<group ns="align_cargo_rocketship">
 		<node name="cargo_distance_pid" pkg="pid" type="controller" >
@@ -246,8 +244,8 @@
     
 	<include file="$(find realsense2_camera)/launch/rs_t265.launch" >
 		<!-- didn't seem to work, retest
-		<arg name="camera" value="rs_t265" />
 		-->
+		<arg name="camera" value="rs_t265" />
 	</include>
 
 	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />

@@ -12,49 +12,47 @@
 		/frcrobot_rio/match_data
 		/frcrobot_jetson/swerve_drive_controller/cmd_vel
 		/frcrobot_jetson/swerve_drive_controller/cmd_vel_out
-		/teleop/swerve_drive_controller/cmd_vel
-		/align_server/align_cargo_pid/pid_enable
-		/align_server/align_hatch_pid/pid_enable
+		/align_cargo/align_cargo/swerve_drive_controller/cmd_vel
+		/align_hatch/align_hatch/swerve_drive_controller/cmd_vel
+		/align_hatch/align_hatch_pid/pid_enable
+		/align_hatch/align_hatch_pid/ratio_xy
+		/align_hatch/align_with_camera/aligned
+		/align_hatch/align_with_camera/command
+		/align_hatch/align_with_camera/enable_pub
+		/align_hatch/align_with_camera/setpoint
+		/align_hatch/hatch_panel_distance_pid/pid_debug
+		/align_hatch/hatch_panel_distance_pid/pid_enable
+		/align_hatch/hatch_panel_distance_pid/setpoint
+		/align_hatch/hatch_panel_distance_pid/state
+		/align_hatch/hatch_panel_distance_pid/y_command
+		/align_hatch/orient_pid/orient_command
+		/align_hatch/orient_pid/pid_debug
+		/align_hatch/orient_pid/pid_enable
+		/align_hatch/orient_pid/setpoint
+		/align_hatch/orient_pid/state
+		/align_hatch/pointstamped_goal_msg
 		/align_server/align_pid/pid_enable
-		/align_server/align_pid/swerve_drive_controller/cmd_vel
 		/align_server/align_with_terabee/enable_y_pub
-		/align_server/align_with_terabee/y_aligned
-		/align_server/align_with_terabee/y_command
-		/align_server/cargo_distance_pid/pid_debug
-		/align_server/cargo_distance_pid/pid_enable
-		/align_server/cargo_distance_pid/state
-		/align_server/cargo_distance_pid/x_command
-		/align_server/cargo_pid/pid_debug
 		/align_server/cargo_pid/pid_enable
-		/align_server/cargo_pid/state
-		/align_server/cargo_pid/y_command
 		/align_server/distance_pid/pid_enable
-		/align_server/hatch_panel_distance_pid/pid_debug
-		/align_server/hatch_panel_distance_pid/pid_enable
-		/align_server/hatch_panel_distance_pid/state
-		/align_server/hatch_panel_distance_pid/x_command
-		/align_server/navX_pid/orient_command
-		/align_server/navX_pid/pid_debug
 		/align_server/navX_pid/pid_enable
-		/align_server/navX_pid/state
 		/climber/swerve_drive_controller/cmd_vel
 		/navX_snap_to_goal_pid/pid_debug
 		/multiflex_1/ranges_raw
+		/elevator/level_two
 		/frcrobot_jetson/swerve_drive_controller/odom
 		/frcrobot_rio/navx_mxp
 		/frcrobot_rio/robot_controller_states
 		/frcrobot_rio/joystick_states_raw
 		/frcrobot_jetson/pdp_states
 		/frcrobot_jetson/pcm_states
-		/goal_detection_node/goal_detect_msg
-		/zed_goal/odom
-		/zed_goal/pose
+		/goal_detection/goal_detect_msg
+		/hatch_outtake/swerve_drive_controller/cmd_vel
+		/rosout_agg
+		/teleop/swerve_drive_controller/cmd_vel
 		/teleop/translator0/joystick_states
 		/teleop/elevator_setpoint
 		/tf
 		/tf_static
-		/camera/accel/sample
-		/camera/gyro/sample
-		/camera/odom/sample
 		"/>
 </launch>

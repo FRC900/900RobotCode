@@ -13,7 +13,7 @@
   <!-- uvc camera nodelet -->
   <group ns="c920_camera" if="$(arg live_camera)" >
     <node pkg="nodelet" type="nodelet" name="uvc_camera" args="load uvc_camera/CameraNodelet /c920_nodelet_manager" output="screen">
-	  <param name="device" value="/dev/video0"/>
+	  <param name="device" value="/dev/C922"/>
 	  <param name="frame_id" value="c920_frame"/>
 	  <param name="fps" value="60"/>
 	  <param name="width" value="640"/>
@@ -22,6 +22,7 @@
   </group>
 
   <!-- goal detect nodelet -->
+<!-- Disable for now, just capture raw video
   <node pkg="nodelet" type="nodelet" name="c920_goal_detection" args="load goal_detection/GoalDetect /c920_nodelet_manager" output="screen">
 	  
   	<param name="sub_rate" value="$(arg sub_rate)" />
@@ -30,5 +31,6 @@
 	<param name="camera_angle" value="$(arg camera_angle)" />
 	<param name="no_depth" value="$(arg no_depth)" />
   </node>
+-->
 
 </launch>

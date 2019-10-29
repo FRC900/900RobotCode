@@ -35,6 +35,8 @@ fi
 
 top -b > /mnt/900_2/$(date +%Y%m%d%H%M%S)_top_log.txt
 
-v4l2-ctl -d `find /dev/v4l/by-id/ -name \*Webcam_C9\*` -c exposure_auto=1,exposure_absolute=20,brightness=5
+# Set brightness and exposure for C920 camera to low levels
+# for retro-tape detection
+#v4l2-ctl -d `find /dev/v4l/by-id/ -name \*Webcam_C9\*` -c exposure_auto=1,exposure_absolute=20,brightness=5
 
 /home/ubuntu/2019Offseason/jetson_setup/clocks.sh &
