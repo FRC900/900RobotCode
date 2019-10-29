@@ -353,7 +353,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 				goal_found.pos.y			   = left_info[i].pos.y + ((right_info[j].pos.y - left_info[i].pos.y) / 2.);
 				goal_found.pos.z			   = left_info[i].pos.z + ((right_info[j].pos.z - left_info[i].pos.z) / 2.);
 				goal_found.left_pos            = left_info[i].pos;
-				goal_found.right_pos           = right_info[i].pos;
+				goal_found.right_pos           = right_info[j].pos;
 				goal_found.distance            = sqrt(goal_found.pos.x * goal_found.pos.x + goal_found.pos.y * goal_found.pos.y);
 				goal_found.angle               = atan2f(goal_found.pos.x, goal_found.pos.y) * 180. / M_PI;
 				goal_found.confidence          = left_info[i].confidence + right_info[j].confidence;
@@ -397,7 +397,7 @@ void GoalDetector::findBoilers(const cv::Mat& image, const cv::Mat& depth) {
 						// replace return_found[k] with goal info.  This might not be needed
 						// TODO : otherwise, discard goal_found since the previously found goal in return_found
 						// was closer to the ideal goal
-					#if 0 
+#if 0
 						if(abs(left_info[i].pos.x - _return_found[k].pos.x) < min_dist_bwn_goals)
 						{
 							break;
@@ -806,7 +806,7 @@ void GoalDetector::drawOnFrame(Mat &image, const vector<vector<Point>> &contours
 		cout << "   angle: " << angle * 180. / M_PI << endl;
 #endif
 		if ((fabs(vx) > 1e-5) && (fabs(vy) > 1e-5))
-			line(image, Point2f(image.cols - 1, rightY), Point2f(0 ,leftY), Scalar(0,128,0), 2);
+			line(image, Point2f(image.cols - 1, rightY), Point2f(0 ,leftY), Scalar(0,128,0), 2, CV_AA);
 
 		Rect br(boundingRect(contours[i]));
 		//rectangle(image, br, Scalar(255,0,0), 3);
@@ -839,13 +839,11 @@ void GoalDetector::drawOnFrame(Mat &image, const vector<vector<Point>> &contours
 		rectangle(image, rr, Scalar(0,140,255), 3);
 		line(image,
 			 Point(lr.x + lr.width / 2.0, lr.y + lr.height / 2.0),
-			 Point(rr.x + rr.width / 2.0, lr.y + lr.height / 2.0),
-			 Scalar(0, 140, 255), 3);
+			 Point(rr.x + rr.width / 2.0, rr.y + rr.height / 2.0),
+			 Scalar(0, 140, 255), 3, CV_AA);
 		const double center_x = (lr.x + lr.width / 2.0 + rr.x + rr.width / 2.0) / 2.0;
-		const double center_y =  lr.y + lr.height / 2.0;
-		line(image,
-			 Point(center_x, center_y - 30.), Point(center_x, center_y + 30.),
-			 Scalar(0, 140, 255), 3);
+		const double center_y = (lr.y + lr.height / 2.0 + rr.y + rr.height / 2.0) / 2.0;
+		circle(image, Point(center_x, center_y), 8, Scalar(0, 140, 255), 2, CV_AA);
 	}
 }
 
