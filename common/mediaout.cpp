@@ -6,7 +6,7 @@ using namespace cv;
 
 // Set up variables to skip frames and split
 // between files as set up by the derived class
-// Initialize frameReady shared var to false and 
+// Initialize frameReady shared var to false and
 // kick off the writer thread
 MediaOut::MediaOut(int frameSkip, int framesPerFile) :
 	frameSkip_(max(frameSkip, 1)),
@@ -26,8 +26,8 @@ MediaOut::~MediaOut(void)
 	// written, then shut down the writer
 	// thread.  Once that's finished, exit
 	sync();
-  	thread_.interrupt();
-  	thread_.join();
+	thread_.interrupt();
+	thread_.join();
 }
 
 // Save a frame if there have been frameSkip_ frames
@@ -63,7 +63,7 @@ bool MediaOut::saveFrame(const Mat &frame, const Mat &depth)
 		// Copy input args to shared frame_ and depth_
 		// buffers. Do it unconditionally. This means that
 		// it is possible for the update thread to miss
-		// frames if two calls to this function come in back 
+		// frames if two calls to this function come in back
 		// to back. That's OK - the goal here is to
 		// write as many frames as possible
 		// without slowing down performance rather
@@ -91,25 +91,10 @@ bool MediaOut::saveFrame(const Mat &frame, const Mat &depth)
 	return true;
 }
 
-// Dummy member functions - base class shouldn't be called
-// directly so these shouldn't be used
-bool MediaOut::openNext(int fileCounter)
-{
-	(void)fileCounter;
-	return false;
-}
-
-bool MediaOut::write(const Mat &frame, const Mat &depth)
-{
-	(void)frame;
-	(void)depth;
-	return false;
-}
-
 // Separate thread to write video frames to disk
 // This runs as quickly as possible, but is also
 // designed to drop frames if it gets behind the
-// main processing thread.  
+// main processing thread.
 void MediaOut::writeThread(void)
 {
 	Mat frame;
@@ -120,13 +105,13 @@ void MediaOut::writeThread(void)
 		// Check that frameReady is set
 		// if it hasn't, that means there's
 		// no new data to write.  In that case,
-		// call wait() to release the mutex and 
+		// call wait() to release the mutex and
 		// loop around to try again. This lets a
 		// call to saveFrame to complete if one
 		// is waiting on the mutex.
 		// Once frameReady_ has been set, copy
 		// the data out of the member variables
-		// into a local var, release the lock, 
+		// into a local var, release the lock,
 		// and do the write with the copies
 		// of the Mats.  Using the copies will
 		// let saveFrame write new data to the shared vars
@@ -137,7 +122,7 @@ void MediaOut::writeThread(void)
 		// before writing to them.
 		// This way if the write() call takes too
 		// long it is possible for saveFrame to
-		// update the frame_ and depth_ vars more 
+		// update the frame_ and depth_ vars more
 		// than once before this thread reads them again.
 		// That will potentially drop frames, but it
 		// also lets the main thread run as quickly
@@ -155,12 +140,12 @@ void MediaOut::writeThread(void)
 		// Call a derived class' write() method
 		// to actually format and write the data to disk
 		write(frame, depth);
-		
+
 		// If there's no frame in the buffer above
 		// clear out writePending_
 		// Can't just unconditionally clear it since
 		// it is likely that saveFrame() added a new
-		// frame to the shared buffer while the 
+		// frame to the shared buffer while the
 		// write() call just above was taking place
 		{
 			boost::mutex::scoped_lock lock(matLock_);

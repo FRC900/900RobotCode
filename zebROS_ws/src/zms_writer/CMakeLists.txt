@@ -88,7 +88,6 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## DEPENDS: system dependencies of this project that dependent projects also need
 
 if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  include ("../cmake_modules/CMakeOpt.cmake")
   ## Find catkin macros and libraries
   ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
   ## is used, also find other catkin packages
@@ -106,13 +105,12 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   find_package(OpenCV REQUIRED)
   find_package(Boost COMPONENTS filesystem system serialization iostreams thread REQUIRED)
 
-catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES zms_writer
-  CATKIN_DEPENDS roscpp message_filters image_transport cv_bridge
-  DEPENDS
-)
-
+  catkin_package(
+  #  INCLUDE_DIRS include
+  #  LIBRARIES zms_writer
+    CATKIN_DEPENDS roscpp message_filters image_transport cv_bridge
+	DEPENDS
+  )
 
   ## Specify additional locations of header files
   ## Your package locations should be listed before other locations
@@ -146,6 +144,29 @@ catkin_package(
     ${Boost_LIBRARIES}
   )
 
+  ## Declare a C++ executable
+  add_executable(mjpeg_writer_node
+	  src/mjpeg_writer.cpp
+    ../../../common/aviout.cpp 
+    ../../../common/portable_binary_oarchive.cpp
+    ../../../common/portable_binary_iarchive.cpp
+    ../../../common/mediaout.cpp
+  )
+
+  ## Add cmake target dependencies of the executable
+  ## same as for the library above
+  add_dependencies(mjpeg_writer_node 
+    ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+    ${catkin_EXPORTED_TARGETS}
+  )
+
+  ## Specify libraries to link a library or executable target against
+  target_link_libraries(mjpeg_writer_node
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBS} 
+    ${Boost_LIBRARIES}
+  )
+
   #############
   ## Install ##
   #############
@@ -161,7 +182,7 @@ catkin_package(
   # )
 
   # Mark executables and/or libraries for installation
-  install(TARGETS zms_writer_node
+  install(TARGETS zms_writer_node mjpeg_writer_node
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
