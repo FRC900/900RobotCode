@@ -14,8 +14,8 @@ align_hatch_params:
     x_error_threshold: 0.02
     y_error_threshold: 0.02
     orient_error_threshold: 0.1
-    x_timeout: 100 # random values! TODO change me!
-    y_timeout: 100 # random values! TODO change me!
+    place_after_align: false
+    min_error_to_place: 0.1
 align_with_terabee_params: #params defined in align_with_terabee.cpp
     cmd_vel_to_pub: 0.7
     distance_bound: 0.07 

@@ -36,8 +36,9 @@ class BaseAlignVisionAction : public BaseAlignAction {
 		double minimum_x_for_nonzero_pub_ = 0.4;
 	public:
 		BaseAlignVisionAction(const std::string &name,
-
 							const std::string &enable_align_topic_,
+							const std::string &place_after_align_name_,
+							const std::string &min_error_to_place_name_,
 
 							const std::string &align_timeout_param_name_,
 
@@ -46,6 +47,8 @@ class BaseAlignVisionAction : public BaseAlignAction {
 
 							const std::string &reconfigure_orient_pid_topic):
 			BaseAlignAction(name,
+				place_after_align_name_,
+				min_error_to_place_name_,
 				enable_align_topic_,
 
 				align_timeout_param_name_

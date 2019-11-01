@@ -227,17 +227,17 @@ target_link_libraries(align_hatch_server
 #target_link_libraries(base_align_server
 #  ${catkin_LIBRARIES}
 #)
-add_executable(align_cargo_cargoship_server src/align_cargo_cargoship.cpp)
-add_dependencies(align_cargo_cargoship_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(align_cargo_cargoship_server
-  ${catkin_LIBRARIES}
-)
-
-add_executable(align_cargo_rocketship src/align_cargo_rocketship.cpp)
-add_dependencies(align_cargo_rocketship ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(align_cargo_rocketship
-  ${catkin_LIBRARIES}
-)
+# add_executable(align_cargo_cargoship_server src/align_cargo_cargoship.cpp)
+# add_dependencies(align_cargo_cargoship_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+# target_link_libraries(align_cargo_cargoship_server
+#   ${catkin_LIBRARIES}
+# )
+# 
+# add_executable(align_cargo_rocketship src/align_cargo_rocketship.cpp)
+# add_dependencies(align_cargo_rocketship ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+# target_link_libraries(align_cargo_rocketship
+#   ${catkin_LIBRARIES}
+# )
 #add_executable(base_align_server src/base_align_server.cpp)
 #add_dependencies(base_align_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 #target_link_libraries(base_align_server

@@ -23,6 +23,8 @@ int main(int argc, char** argv)
 
 	BaseAlignVisionAction align_hatch_action("align_hatch_server",
 			"align_hatch_pid/pid_enable",
+			"/align_hatch/align_hatch_params/place_after_align_name",
+			"/align_hatch/align_hatch_params/min_error_to_place",
 			"/align_hatch/align_hatch_params/align_timeout",
 			"align_hatch_pid/ratio_xy",
 			"hatch_panel_distance_pid/y_command",

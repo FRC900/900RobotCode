@@ -1,11 +1,14 @@
 #pragma once
 #include "ros/ros.h"
 #include "std_msgs/Bool.h"
+#include "std_msgs/Int8.h"
 #include "std_msgs/Float64MultiArray.h"
 #include "std_srvs/Empty.h"
 #include "behaviors/AlignGoal.h"
 #include "behaviors/AlignAction.h"
 #include "behaviors/ElevatorAction.h"
+#include "behaviors/PlaceGoal.h"
+#include "behaviors/PlaceAction.h"
 #include "behaviors/enumerated_elevator_indices.h"
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
@@ -76,10 +79,13 @@ class BaseAlignAction {
 		std::string action_name_;
 		// TODO this result should be a local var
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_; //Action client for controlling the elevato
+		actionlib::SimpleActionClient<behaviors::PlaceAction> ac_outtake_hatch_panel_;
 
 
 		//Publishers for enabling PID loops and cmd_vel combiner
 		ros::Publisher enable_align_pub_;	//Enables the cmd_vel combiner
+		ros::Subscriber elevator_setpoint_sub_;
+
 		//Service client for forcefully stopping the robot
         ros::ServiceClient BrakeSrv_;
 
@@ -96,6 +102,10 @@ class BaseAlignAction {
 
 		//start time of align
 		double start_time_ = -1.0;
+                bool placed_ = false;
+		int elevator_cur_setpoint_ = 0;
+		bool place_after_align_ = false;
+		double min_error_to_place_ = 0.1;
 
 	public:
 		//make the executeCB function run every time the actionlib server is called
@@ -103,6 +113,9 @@ class BaseAlignAction {
 
 						//Topics that enable align PID loops
 						const std::string &enable_align_topic_, // global - turns on / off the publish_pid_cmd_vel node's output
+						const std::string &place_after_align_name_,
+						const std::string &min_error_to_place_name_,
+
 						//Paramater name with align timeouts
 						const std::string &align_timeout_param_name_ // global timeout for entire server CB
 		)
@@ -110,9 +123,11 @@ class BaseAlignAction {
 			: as_(nh_, name, boost::bind(&BaseAlignAction::executeCB, this, _1), false)
 			, action_name_(name)
 			, ac_elevator_("/elevator/elevator_server", true)		//TODO maybe make this a generic part of the robot
+			, ac_outtake_hatch_panel_("/hatch_outtake/outtake_hatch_panel_server", true)
 
 			//Create publishers on the enable PID loop topics
 			, enable_align_pub_(nh_.advertise<std_msgs::Bool>(enable_align_topic_, 1, true))
+			, elevator_setpoint_sub_(nh_.subscribe("/teleop/elevator_setpoint", 1, &BaseAlignAction::elevatorSetpointCB, this))
 		{
             as_.start();
 
@@ -125,6 +140,10 @@ class BaseAlignAction {
 			//Get the timeout parameters
 			if(!nh_.getParam(align_timeout_param_name_, align_timeout_))
 				ROS_ERROR_STREAM("Could not read align_timeout_param_name_ in align_server");
+			if(!nh_.getParam(place_after_align_name_, place_after_align_))
+				ROS_ERROR_STREAM("Could not read place_after_align in align_server");
+			if(!nh_.getParam(min_error_to_place_name_, min_error_to_place_))
+				ROS_ERROR_STREAM("Could not read min_error_to_place in align_server");
 		}
 
 		~BaseAlignAction(void)
@@ -160,6 +179,7 @@ class BaseAlignAction {
 						error_threshold)));
 			return true;
 		}
+
 
 #if 0 // TODO - not used
 		bool get_axis_timed_out(const std::string &name)
@@ -254,6 +274,10 @@ class BaseAlignAction {
 				ROS_WARN_STREAM_THROTTLE(1, name << " error: " << axis.error_ << " aligned: " << axis.aligned_);
 		}
 
+		void elevatorSetpointCB(std_msgs::Int8 msg)
+		{
+			elevator_cur_setpoint_ = msg.data;
+		}
 		//Functions to enable align PID
 		virtual void enable_align(bool enable=true) {
 			std_msgs::Bool enable_msg;
@@ -282,6 +306,13 @@ class BaseAlignAction {
 					enable_align(); // TODO - move outside loop?
 					axis.timed_out_ = check_timeout(start_time_, timeout);
 					preempted_ = check_preempted();
+                                        if(place_after_align_ && name == "x")
+                                        {
+                                            if(get_axis_error(name) < min_error_to_place_ && !placed_) {
+                                                place_game_piece();
+                                                placed_ = true;
+                                            }
+                                        }
 					if (debug)
 						ROS_INFO_STREAM("do_align(" << name
 								<< ") : axis.aligned_ = " << axis.aligned_
@@ -369,6 +400,15 @@ class BaseAlignAction {
 				return true;
 			}
 		}
+
+		virtual void place_game_piece()
+		{
+			behaviors::PlaceGoal goal;
+			goal.setpoint_index = elevator_cur_setpoint_;
+            goal.end_setpoint_index = INTAKE;
+			ac_outtake_hatch_panel_.sendGoal(goal);
+		}
+
 
 		//Disable all PID nodes
 		virtual void disable_pid() {
