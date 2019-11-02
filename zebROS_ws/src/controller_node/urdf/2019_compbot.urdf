@@ -7,7 +7,7 @@
 	<joint name="zed_camera_center_joint" type="fixed"> 
         <parent link="base_link"/>
         <child link="zed_camera_center"/>
-		<origin xyz="-0.304589 -0.532 1.1684" rpy="0 0 0" />
+		<origin xyz="-0.304589 -0.570 1.1684" rpy="0 0 0" />
 	</joint>
     <link name="zed_camera_center">
         <visual>
