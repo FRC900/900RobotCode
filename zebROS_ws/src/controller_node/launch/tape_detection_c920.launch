@@ -9,17 +9,32 @@
   <arg name="no_depth" default="true" /> 
 
   <!-- Nodelet Manager -->
+  <!--
   <node pkg="nodelet" type="nodelet" name="c920_nodelet_manager" args="manager" output="screen" />
+-->
   <!-- uvc camera nodelet -->
   <group ns="c920_camera" if="$(arg live_camera)" >
+  <!--
     <node pkg="nodelet" type="nodelet" name="uvc_camera" args="load uvc_camera/CameraNodelet /c920_nodelet_manager" output="screen">
-	  <param name="device" value="/dev/C922"/>
+	  <param name="device" value="/dev/video3"/>
 	  <param name="frame_id" value="c920_frame"/>
 	  <param name="fps" value="60"/>
 	  <param name="width" value="640"/>
 	  <param name="height" value="360"/>
     </node>
+-->
+    <!-- other supported params: auto_exposure, exposure_absolute, brightness, power_line_frequency -->
   </group>
+  <node pkg="usb_cam" type="usb_cam_node" name="c920_camera" output="screen">
+	  <param name="device" value="/dev/C922"/>
+	  <param name="frame_id" value="c920_frame"/>
+	  <param name="fps" value="60"/>
+	  <param name="image_width" value="640"/>
+	  <param name="image_height" value="360"/>
+      <param name="pixel_format" value="yuyv" />
+    <param name="device" type="string" value="/dev/video3" />
+  </node>
+
 
   <!-- goal detect nodelet -->
 <!-- Disable for now, just capture raw video
