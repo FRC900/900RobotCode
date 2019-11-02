@@ -4,5 +4,5 @@ actionlib_hatch_panel_outtake_params: #params in outtake hatch panel server
     pause_time_after_extend: 0.5 #time to pause between piston actuations, in seconds
     pause_time_after_release: 0.25 #time to pause between piston actuations, in seconds
     pause_time_after_drawback: 0.25 #time to pause between piston actuations, in seconds
-    outtake_cmd_vel: -0.7
+    outtake_cmd_vel: -0.9
 

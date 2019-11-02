@@ -121,6 +121,7 @@ class BaseAlignVisionAction : public BaseAlignAction {
 				if(y_error == 0.0 || x_error == 0.0) {
 					ROS_WARN_THROTTLE(0.25, "Not publishing ratio because x or y error is 0");
 					ROS_WARN_THROTTLE(0.25, "Ratio pub: y_error: %f x_error:%f", y_error, x_error);
+					r.sleep();
 					continue;
 				}
 				std_msgs::Float64 msg;
