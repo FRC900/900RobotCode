@@ -54,5 +54,12 @@
 		/teleop/elevator_setpoint
 		/tf
 		/tf_static
+		/camera/accel/sample
+		/camera/gyro/sample
+		/camera/odom/sample
+		/rs_t265/accel/sample
+		/rs_t265/gyro/sample
+		/rs_t265/odom/sample
+		/c920_camera/image_raw
 		"/>
 </launch>

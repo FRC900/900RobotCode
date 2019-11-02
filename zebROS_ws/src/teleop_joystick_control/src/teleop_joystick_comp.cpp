@@ -58,7 +58,7 @@ double max_speed;
 double max_rot;
 
 // 500 msec to go from full back to full forward
-constexpr double drive_rate_limit_time = 500.;
+constexpr double drive_rate_limit_time = 100.;
 
 ros::Publisher elevator_setpoint;
 ros::Publisher JoystickRobotVel;

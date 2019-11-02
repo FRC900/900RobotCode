@@ -3,7 +3,7 @@
 <launch>
 
   <node name="rosbag_record_node" pkg="rosbag" type="record"
-	  args="record -o /mnt/900_2/ --bz2
+	  args="record -o /mnt/900_2/
 	  	/frcrobot_jetson/talon_states
 		/frcrobot_jetson/joint_states
 		/frcrobot_rio/joint_states
