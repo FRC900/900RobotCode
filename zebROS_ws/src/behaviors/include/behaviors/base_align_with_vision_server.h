@@ -47,10 +47,9 @@ class BaseAlignVisionAction : public BaseAlignAction {
 
 							const std::string &reconfigure_orient_pid_topic):
 			BaseAlignAction(name,
+				enable_align_topic_,
 				place_after_align_name_,
 				min_error_to_place_name_,
-				enable_align_topic_,
-
 				align_timeout_param_name_
 			),
 			 reconfigure_orient_pid_topic_(reconfigure_orient_pid_topic)

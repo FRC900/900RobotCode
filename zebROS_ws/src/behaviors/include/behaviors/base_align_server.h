@@ -306,13 +306,15 @@ class BaseAlignAction {
 					enable_align(); // TODO - move outside loop?
 					axis.timed_out_ = check_timeout(start_time_, timeout);
 					preempted_ = check_preempted();
-                                        if(place_after_align_ && name == "x")
-                                        {
-                                            if(get_axis_error(name) < min_error_to_place_ && !placed_) {
-                                                place_game_piece();
-                                                placed_ = true;
-                                            }
-                                        }
+					if(place_after_align_ && name == "x")
+					{
+						double error = get_axis_error(name);
+						if(error < min_error_to_place_ && !placed_ && error != 0.0) {
+							ROS_INFO_STREAM("Placing because axis " << name << " has error " << error);
+							place_game_piece();
+							placed_ = true;
+						}
+					}
 					if (debug)
 						ROS_INFO_STREAM("do_align(" << name
 								<< ") : axis.aligned_ = " << axis.aligned_
