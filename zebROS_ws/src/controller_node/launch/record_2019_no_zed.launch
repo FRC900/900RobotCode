@@ -4,19 +4,11 @@
 
   <node name="rosbag_record_node_no_zed" pkg="rosbag" type="record"
 	  launch-prefix="nice" 
-	  args="record -o /mnt/900_2/no_zed --bz2
-	  	/frcrobot_jetson/talon_states
-		/frcrobot_jetson/joint_states
-		/frcrobot_rio/joint_states
-		/frcrobot_rio/uptime
-		/frcrobot_jetson/uptime
-		/frcrobot_rio/match_data
-		/frcrobot_jetson/swerve_drive_controller/cmd_vel
-		/frcrobot_jetson/swerve_drive_controller/cmd_vel_out
+	  args="record -o /mnt/900_2/no_zed
 		/align_cargo/align_cargo/swerve_drive_controller/cmd_vel
-		/align_hatch/align_hatch/swerve_drive_controller/cmd_vel
 		/align_hatch/align_hatch_pid/pid_enable
 		/align_hatch/align_hatch_pid/ratio_xy
+		/align_hatch/align_hatch/swerve_drive_controller/cmd_vel
 		/align_hatch/align_with_camera/aligned
 		/align_hatch/align_with_camera/command
 		/align_hatch/align_with_camera/enable_pub
@@ -38,29 +30,28 @@
 		/align_server/distance_pid/pid_enable
 		/align_server/navX_pid/pid_enable
 		/climber/swerve_drive_controller/cmd_vel
-		/navX_snap_to_goal_pid/pid_debug
-		/multiflex_1/ranges_raw
 		/elevator/level_two
+		/frcrobot_jetson/joint_states
+		/frcrobot_jetson/pcm_states
+		/frcrobot_jetson/pdp_states
+		/frcrobot_jetson/swerve_drive_controller/cmd_vel
+		/frcrobot_jetson/swerve_drive_controller/cmd_vel_out
 		/frcrobot_jetson/swerve_drive_controller/odom
+	  	/frcrobot_jetson/talon_states
+		/frcrobot_jetson/uptime
+		/frcrobot_rio/joint_states
+		/frcrobot_rio/joystick_states_raw
+		/frcrobot_rio/match_data
 		/frcrobot_rio/navx_mxp
 		/frcrobot_rio/robot_controller_states
-		/frcrobot_rio/joystick_states_raw
-		/frcrobot_jetson/pdp_states
-		/frcrobot_jetson/pcm_states
+		/frcrobot_rio/uptime
 		/goal_detection/goal_detect_msg
 		/hatch_outtake/swerve_drive_controller/cmd_vel
+		/multiflex_1/ranges_raw
+		/navX_snap_to_goal_pid/pid_debug
 		/rosout_agg
+		/teleop/elevator_setpoint
 		/teleop/swerve_drive_controller/cmd_vel
 		/teleop/translator0/joystick_states
-		/teleop/elevator_setpoint
-		/tf
-		/tf_static
-		/camera/accel/sample
-		/camera/gyro/sample
-		/camera/odom/sample
-		/rs_t265/accel/sample
-		/rs_t265/gyro/sample
-		/rs_t265/odom/sample
-		/c920_camera/image_raw
 		"/>
 </launch>
