@@ -234,7 +234,7 @@ fi
 # Clean up Jetson
 sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/TensorRT /home/nvidia/libvisionworkd*
 # Save ~400MB
-sudo apt remove --purge -y thunderbird libreoffice-*
+sudo apt remove --purge -y thunderbird libreoffice-* unattended-upgrade
 
 # Install CTRE & navX libs
 mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
