@@ -62,3 +62,7 @@
     local-name: realtime_tools
     uri: https://github.com/FRC900/realtime_tools.git
     version: fix_non_realtime
+- git:
+    local-name: pid
+    uri: https://github.com/FRC900/pid.git
+    version: feed_forward 
