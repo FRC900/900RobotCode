@@ -36,7 +36,7 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 import math
 import matplotlib.pyplot as plt
-import pandas as pd
+#import pandas as pd
 
 import rospy
 from sensor_msgs.msg import Imu
@@ -180,7 +180,7 @@ class Beacons:
             # target
             reverse_angle = abs(self.beacons[i].robot_bearing(beaconangle))
             #print ("reverseangle = %f" % reverse_angle)
-            if (reverse_angle >= (math.pi / 2.0)):
+            if (reverse_angle >= (math.pi / 2.0 - .2)):
                 costs[i] = 1e5
                 continue
 
@@ -589,151 +589,151 @@ start_time = None
 pf = None
 imu_offset = -math.pi / 2.0
 imu_yaw = 0
-mutex = Lock()
+lock = Lock()
 
 def imu_cmd_vel_callback(imu_data, cmd_vel_data):
-    global mutex
-    mutex.acquire()
-    try:
-        print ("==========================")
-        global last_time
-        global start_time
-        if (last_time == None):
-            start_time = last_time = min(imu_data.header.stamp.to_sec(), cmd_vel_data.header.stamp.to_sec())
+    global lock
+    if lock.acquire(False):
+        try:
+            print ("==========================")
+            global last_time
+            global start_time
+            if (last_time == None):
+                start_time = last_time = min(imu_data.header.stamp.to_sec(), cmd_vel_data.header.stamp.to_sec())
 
-        global cmd_vel_u
-        cmd_vel_u = np.array([[cmd_vel_data.twist.linear.x, cmd_vel_data.twist.linear.y, cmd_vel_data.twist.angular.z]]).T
-        q = tf.transformations.quaternion_inverse((imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z, imu_data.orientation.w))
-        global imu_yaw # Make global for debugging for now
-        (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
-        #print("cmd_vel_u before")
-        #print(cmd_vel_u.T)
-        #print("imu_yaw %f "% imu_yaw)
-        new_x = math.cos(imu_yaw) * cmd_vel_u[0] - math.sin(imu_yaw) * cmd_vel_u[1]
-        new_y = math.sin(imu_yaw) * cmd_vel_u[0] + math.cos(imu_yaw) * cmd_vel_u[1]
-        cmd_vel_u[0] = new_x * 2
-        cmd_vel_u[1] = new_y * 2
-        #print("cmd_vel_u after")
-        #print(cmd_vel_u.T)
+            global cmd_vel_u
+            cmd_vel_u = np.array([[cmd_vel_data.twist.linear.x, cmd_vel_data.twist.linear.y, cmd_vel_data.twist.angular.z]]).T
+            q = tf.transformations.quaternion_inverse((imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z, imu_data.orientation.w))
+            global imu_yaw # Make global for debugging for now
+            (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
+            #print("cmd_vel_u before")
+            #print(cmd_vel_u.T)
+            #print("imu_yaw %f "% imu_yaw)
+            new_x = math.cos(imu_yaw) * cmd_vel_u[0] - math.sin(imu_yaw) * cmd_vel_u[1]
+            new_y = math.sin(imu_yaw) * cmd_vel_u[0] + math.cos(imu_yaw) * cmd_vel_u[1]
+            cmd_vel_u[0] = new_x * 2
+            cmd_vel_u[1] = new_y * 2
+            #print("cmd_vel_u after")
+            #print(cmd_vel_u.T)
 
-        now = cmd_vel_data.header.stamp.to_sec()
-        dt = now - last_time
-        #print ("imu_stamp time %f cmd_vel_stamp time %f" % (imu_data.header.stamp.to_sec(), cmd_vel_data.header.stamp.to_sec()))
-        #print("cmd_vel : start_time %f, last_time %f, now, %f, dt %f" % (start_time, last_time, now, dt))
-        last_time = now # force imu callback to reset last time
-        if (dt > 0.2):
-            dt = 0.03
-            #print ("adjusted dt %f" % dt)
+            now = cmd_vel_data.header.stamp.to_sec()
+            dt = now - last_time
+            #print ("imu_stamp time %f cmd_vel_stamp time %f" % (imu_data.header.stamp.to_sec(), cmd_vel_data.header.stamp.to_sec()))
+            #print("cmd_vel : start_time %f, last_time %f, now, %f, dt %f" % (start_time, last_time, now, dt))
+            last_time = now # force imu callback to reset last time
+            if (dt > 0.2):
+                dt = 0.03
+                #print ("adjusted dt %f" % dt)
 
-        if (cmd_vel_u[0,0] != 0 or cmd_vel_u[1,0] != 0):
-            #print ("moving particles");
-            B = np.array([[dt,  0.0, 0.0],
-                          [0.0, dt,  0.0],
-                          [0.0, 0.0,  dt], # TODO - do we care about commanded z-rotation?
-                          [1.0, 0.0, 0.0],
-                          [0.0, 1.0, 0.0],
-                          [0.0, 0.0, 1.0]])
+            if (cmd_vel_u[0,0] != 0 or cmd_vel_u[1,0] != 0):
+                #print ("moving particles");
+                B = np.array([[dt,  0.0, 0.0],
+                              [0.0, dt,  0.0],
+                              [0.0, 0.0,  dt], # TODO - do we care about commanded z-rotation?
+                              [1.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 1.0]])
 
-            global pf
-            pf.set_B(B)
-            pf.move_particles(cmd_vel_u)
+                global pf
+                pf.set_B(B)
+                pf.move_particles(cmd_vel_u)
 
-    finally:
-        mutex.release()
+        finally:
+            lock.release()
 
 def imu_callback(data):
-    global mutex
-    mutex.acquire()
-    try:
-        q = tf.transformations.quaternion_inverse((data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w))
-        global imu_yaw
-        (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
-        global pf
-        global imu_offset
-        #print("imu_yaw %f (%f)"% (imu_yaw, imu_yaw + imu_offset))
-        pf.rotate_particles(imu_yaw + imu_offset)
+    global lock
+    if lock.acquire(False):
+        try:
+            q = tf.transformations.quaternion_inverse((data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w))
+            global imu_yaw
+            (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
+            global pf
+            global imu_offset
+            #print("imu_yaw %f (%f)"% (imu_yaw, imu_yaw + imu_offset))
+            pf.rotate_particles(imu_yaw + imu_offset)
 
-    finally:
-        mutex.release()
+        finally:
+            lock.release()
 
 def cmd_vel_callback(data, args):
-    global mutex
-    mutex.acquire()
-    try:
-        global last_time
-        global start_time
-        global imu_yaw
+    global lock
+    if lock.acquire(False):
+        try:
+            global last_time
+            global start_time
+            global imu_yaw
 
-        #print ("cmd_vel_callback : rospy.get_time() = %f" % rospy.get_time())
-        cmd_vel_u = np.array([[data.linear.x, data.linear.y]]).T
-        #print("cmd_vel_u before")
-        #print(cmd_vel_u.T)
-        #print("imu_yaw %f" % imu_yaw)
-        new_x = math.cos(imu_yaw) * cmd_vel_u[0] - math.sin(imu_yaw) * cmd_vel_u[1]
-        new_y = math.sin(imu_yaw) * cmd_vel_u[0] + math.cos(imu_yaw) * cmd_vel_u[1]
-        cmd_vel_u[0] = new_x
-        cmd_vel_u[1] = new_y
-        #print("cmd_vel_u after")
-        #print(cmd_vel_u.T)
-        now = rospy.get_time()
-        dt = now - last_time
-        #print("cmd_vel : start_time %f, last_time %f, dt %f" % (start_time, last_time, dt))
-        last_time = None # force imu callback to reset last time
-        #if (dt > 0.3):
-            #dt = 0.02
-            #print ("adjusted dt %f" % dt)
-        if (cmd_vel_u[0,0] != 0 or cmd_vel_u[1,0] != 0):
-            #print ("moving particles");
-            B = np.array([[dt, 0.0],
-                          [0.0, dt],
-                          [1.0, 0.0],
-                          [0.0, 1.0]])
+            #print ("cmd_vel_callback : rospy.get_time() = %f" % rospy.get_time())
+            cmd_vel_u = np.array([[data.linear.x, data.linear.y]]).T
+            #print("cmd_vel_u before")
+            #print(cmd_vel_u.T)
+            #print("imu_yaw %f" % imu_yaw)
+            new_x = math.cos(imu_yaw) * cmd_vel_u[0] - math.sin(imu_yaw) * cmd_vel_u[1]
+            new_y = math.sin(imu_yaw) * cmd_vel_u[0] + math.cos(imu_yaw) * cmd_vel_u[1]
+            cmd_vel_u[0] = new_x
+            cmd_vel_u[1] = new_y
+            #print("cmd_vel_u after")
+            #print(cmd_vel_u.T)
+            now = rospy.get_time()
+            dt = now - last_time
+            #print("cmd_vel : start_time %f, last_time %f, dt %f" % (start_time, last_time, dt))
+            last_time = None # force imu callback to reset last time
+            #if (dt > 0.3):
+                #dt = 0.02
+                #print ("adjusted dt %f" % dt)
+            if (cmd_vel_u[0,0] != 0 or cmd_vel_u[1,0] != 0):
+                #print ("moving particles");
+                B = np.array([[dt, 0.0],
+                    [0.0, dt],
+                    [1.0, 0.0],
+                    [0.0, 1.0]])
 
-            pf = args
-            pf.set_B(B)
-            pf.move_particles(cmd_vel_u)
-        pf.rotate_particles(imu_yaw + imu_offset)
+                pf = args
+                pf.set_B(B)
+                pf.move_particles(cmd_vel_u)
+            pf.rotate_particles(imu_yaw + imu_offset)
 
-    finally:
-        mutex.release()
+        finally:
+            lock.release()
 
 def goal_detection_callback(data, args):
-    global mutex
-    mutex.acquire()
-    try:
-        global last_time
-        global start_time
-        global imu_yaw
-        global imu_offset
-        if (last_time == None):
-            start_time = last_time = data.header.stamp.to_sec();
-        pf = args
-        now = data.header.stamp.to_sec() - start_time
-        if (len(data.location) == 0):
-            debug_plot(None, pf.get_estimate(), None, None, Detections(), pf.get_px(), now)
-            return
-        z = Detections()
-        for i in range(len(data.location)):
-            # Fake transform to center of robot
-            x =  data.location[i].x + .1576
-            y = -data.location[i].y - .234
-            #print ("Raw detection loc.x = %f, loc.y = %f, x = %f, y = %f, imu_yaw = %f, imu_offset = %f" % (data.location[i].x, data.location[i].y, x, y, imu_yaw, imu_offset))
-            #print("x", x)
-            #print("y", y)
-            d = math.hypot(x, y)
-            b = normalize_angle(math.atan2(y, x) + imu_yaw + imu_offset)
-            z.append(Detection(np.array([d, b])))
-       
-        #xDR        = pf.update_dead_reckoning(xDR, cmd_vel_u)
-        xEst, PEst = pf.localize(z)
-        #print ("Guess actuals, loc =")
-        #print (xEst)
-        pf.guess_detection_actuals(z, np.array([xEst[0,0], xEst[1,0], xEst[2,0]]))
+    global lock
+    if lock.acquire(False):
+        try:
+            global last_time
+            global start_time
+            global imu_yaw
+            global imu_offset
+            if (last_time == None):
+                start_time = last_time = data.header.stamp.to_sec();
+            pf = args
+            now = data.header.stamp.to_sec() - start_time
+            if (len(data.location) == 0):
+                debug_plot(None, pf.get_estimate(), None, None, Detections(), pf.get_px(), now)
+                return
+            z = Detections()
+            for i in range(len(data.location)):
+                # Fake transform to center of robot
+                x =  data.location[i].x + .1576
+                y = -data.location[i].y - .234
+                #print ("Raw detection loc.x = %f, loc.y = %f, x = %f, y = %f, imu_yaw = %f, imu_offset = %f" % (data.location[i].x, data.location[i].y, x, y, imu_yaw, imu_offset))
+                #print("x", x)
+                #print("y", y)
+                d = math.hypot(x, y)
+                b = normalize_angle(math.atan2(y, x) + imu_yaw + imu_offset)
+                z.append(Detection(np.array([d, b])))
+           
+            #xDR        = pf.update_dead_reckoning(xDR, cmd_vel_u)
+            xEst, PEst = pf.localize(z)
+            #print ("Guess actuals, loc =")
+            #print (xEst)
+            pf.guess_detection_actuals(z, np.array([xEst[0,0], xEst[1,0], xEst[2,0]]))
 
-        debug_plot(None, xEst, PEst, None, z, pf.get_px(), now)
+            debug_plot(None, xEst, PEst, None, z, pf.get_px(), now)
 
-    finally:
-        mutex.release()
+        finally:
+            lock.release()
 
 # Beacon positions [x, y, orientation]
 # in this case, beacons are vision targets
@@ -850,7 +850,7 @@ def main():
     time = 0.0
 
     # Particle filter parameter
-    NP = 300  # Number of Particles
+    NP = 100  # Number of Particles
 
     # State Vectors [x y theta x' y' theta']'
     xTrue = np.array([[-7.00,0,0,0,0,0]]).T
