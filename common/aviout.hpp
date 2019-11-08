@@ -7,7 +7,7 @@
 class AVIOut : public MediaOut
 {
 	public:
-		AVIOut(const char *outFile, const cv::Size &size, int frameSkip = 1);
+		AVIOut(const char *outFile, const cv::Size &size, int framesPerFile = 250, int frameSkip = 1);
 		~AVIOut();
 
 		// Make non-copyable

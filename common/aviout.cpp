@@ -12,8 +12,8 @@ using namespace boost::filesystem;
 
 // Call the base class constructor plus init some 
 // local class members
-AVIOut::AVIOut(const char *outFile, const Size &size, int frameSkip):
-	MediaOut(frameSkip, 900),
+AVIOut::AVIOut(const char *outFile, const Size &size, int framesPerFile, int frameSkip):
+	MediaOut(frameSkip, framesPerFile),
 	size_(size),
 	writer_(NULL),
 	fileName_(outFile)

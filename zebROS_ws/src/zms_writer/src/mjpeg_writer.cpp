@@ -25,14 +25,14 @@ void callback(const sensor_msgs::ImageConstPtr &frameMsg)
 		char name[PATH_MAX];
 		do
 		{
-			sprintf(name, "/home/ubuntu/Videos/cap%d_0.avi", ++index);
+			sprintf(name, "/home/ubuntu/Videos/cap%d_0_0.avi", ++index);
 			struct stat statbuf;
 			rc = stat(name, &statbuf);
 		}
 		while (rc == 0);
 
 		sprintf(name, "/home/ubuntu/Videos/cap%d_0.avi", index);
-		aviOut = std::make_unique<AVIOut>(name, cvFrame->image.size(), 1);
+		aviOut = std::make_unique<AVIOut>(name, cvFrame->image.size(), std::numeric_limits<int>::max(), 1);
 	}
 
 	aviOut->saveFrame(cvFrame->image, cv::Mat());
@@ -45,7 +45,8 @@ int main(int argc, char **argv)
 
 	// Sync up timestamps to find image and depth
 	// data from the same frame
-	auto sub = nh.subscribe("/zed_goal/left/image_rect_color", 5, callback);
+	auto sub = nh.subscribe("/c920_camera/image_raw", 5, callback);
+	//auto sub = nh.subscribe("/zed_goal/left/image_rect_color", 5, callback);
 
 	ros::spin();
 
