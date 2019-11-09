@@ -45,8 +45,9 @@ from goal_detection.msg import GoalDetection
 import tf
 import tf2_geometry_msgs
 from geometry_msgs.msg import Quaternion, TransformStamped, Vector3Stamped
-import message_filters
+#import message_filters
 from threading import Lock
+import time
 
 
 DT = 0.1   # time tick [s]
@@ -158,7 +159,7 @@ class Beacons:
             #print("db = %f %f" % (db[0], db[1]))
             # Assume a max range for actual detections, screen out
             # beacons further away than that
-            if db[0] > 7.0:
+            if db[0] > 5.0:
                 #print("robot to beacon dist of %f too far" % db[0])
                 costs[i] = 1e5
                 continue
@@ -318,7 +319,7 @@ class Detections:
     def weights(self, loc, field_map, Q):
         if field_map.outside_field(loc):
             print("Outside field")
-            print(loc)
+            #print(loc)
             return 0
 
         # Assign each detection to a best-guess for
@@ -591,7 +592,8 @@ imu_offset = -math.pi / 2.0
 imu_yaw = 0
 lock = Lock()
 
-def imu_cmd_vel_callback(imu_data, cmd_vel_data):
+def cmd_vel_callback(cmd_vel_data):
+    fn_start_time = time.time()
     global lock
     if lock.acquire(False):
         try:
@@ -599,20 +601,20 @@ def imu_cmd_vel_callback(imu_data, cmd_vel_data):
             global last_time
             global start_time
             if (last_time == None):
-                start_time = last_time = min(imu_data.header.stamp.to_sec(), cmd_vel_data.header.stamp.to_sec())
+                start_time = last_time = cmd_vel_data.header.stamp.to_sec()
 
             global cmd_vel_u
             cmd_vel_u = np.array([[cmd_vel_data.twist.linear.x, cmd_vel_data.twist.linear.y, cmd_vel_data.twist.angular.z]]).T
-            q = tf.transformations.quaternion_inverse((imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z, imu_data.orientation.w))
+            #q = tf.transformations.quaternion_inverse((imu_data.orientation.x, imu_data.orientation.y, imu_data.orientation.z, imu_data.orientation.w))
             global imu_yaw # Make global for debugging for now
-            (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
+            #(roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
             #print("cmd_vel_u before")
             #print(cmd_vel_u.T)
             #print("imu_yaw %f "% imu_yaw)
             new_x = math.cos(imu_yaw) * cmd_vel_u[0] - math.sin(imu_yaw) * cmd_vel_u[1]
             new_y = math.sin(imu_yaw) * cmd_vel_u[0] + math.cos(imu_yaw) * cmd_vel_u[1]
-            cmd_vel_u[0] = new_x * 2
-            cmd_vel_u[1] = new_y * 2
+            cmd_vel_u[0] = new_x
+            cmd_vel_u[1] = new_y
             #print("cmd_vel_u after")
             #print(cmd_vel_u.T)
 
@@ -623,7 +625,7 @@ def imu_cmd_vel_callback(imu_data, cmd_vel_data):
             last_time = now # force imu callback to reset last time
             if (dt > 0.2):
                 dt = 0.03
-                #print ("adjusted dt %f" % dt)
+                print ("adjusted dt %f" % dt)
 
             if (cmd_vel_u[0,0] != 0 or cmd_vel_u[1,0] != 0):
                 #print ("moving particles");
@@ -640,11 +642,14 @@ def imu_cmd_vel_callback(imu_data, cmd_vel_data):
 
         finally:
             lock.release()
+            print "cmd_vel callback runtime = %f"%(time.time() - fn_start_time)
 
 def imu_callback(data):
     global lock
+    fn_start_time = time.time()
     if lock.acquire(False):
         try:
+            print ("**************************")
             q = tf.transformations.quaternion_inverse((data.orientation.x, data.orientation.y, data.orientation.z, data.orientation.w))
             global imu_yaw
             (roll, pitch, imu_yaw) = tf.transformations.euler_from_quaternion(q)
@@ -655,7 +660,9 @@ def imu_callback(data):
 
         finally:
             lock.release()
+            print "IMU callback runtime = %f"%(time.time() - fn_start_time)
 
+"""
 def cmd_vel_callback(data, args):
     global lock
     if lock.acquire(False):
@@ -696,11 +703,14 @@ def cmd_vel_callback(data, args):
 
         finally:
             lock.release()
+"""
 
 def goal_detection_callback(data, args):
     global lock
+    fn_start_time = time.time()
     if lock.acquire(False):
         try:
+            print ("ooooooooooooooooo")
             global last_time
             global start_time
             global imu_yaw
@@ -709,10 +719,13 @@ def goal_detection_callback(data, args):
                 start_time = last_time = data.header.stamp.to_sec();
             pf = args
             now = data.header.stamp.to_sec() - start_time
+            print "1:goal detect callback runtime = %f"%(time.time() - fn_start_time)
             if (len(data.location) == 0):
                 debug_plot(None, pf.get_estimate(), None, None, Detections(), pf.get_px(), now)
                 return
+            print "2:goal detect callback runtime = %f"%(time.time() - fn_start_time)
             z = Detections()
+            print "3:goal detect callback runtime = %f"%(time.time() - fn_start_time)
             for i in range(len(data.location)):
                 # Fake transform to center of robot
                 x =  data.location[i].x + .1576
@@ -726,14 +739,18 @@ def goal_detection_callback(data, args):
            
             #xDR        = pf.update_dead_reckoning(xDR, cmd_vel_u)
             xEst, PEst = pf.localize(z)
+            print "4:goal detect callback runtime = %f"%(time.time() - fn_start_time)
             #print ("Guess actuals, loc =")
             #print (xEst)
             pf.guess_detection_actuals(z, np.array([xEst[0,0], xEst[1,0], xEst[2,0]]))
+            print "5:goal detect callback runtime = %f"%(time.time() - fn_start_time)
 
             debug_plot(None, xEst, PEst, None, z, pf.get_px(), now)
+            print "6:goal detect callback runtime = %f"%(time.time() - fn_start_time)
 
         finally:
             lock.release()
+            print "7:goal detect callback runtime = %f"%(time.time() - fn_start_time)
 
 # Beacon positions [x, y, orientation]
 # in this case, beacons are vision targets
@@ -795,7 +812,10 @@ wall_coords1 = np.append(wall_coords1, wall_coords1 * [1,1,-1,-1], 0)
 
 wall_coords  = np.append(wall_coords,wall_coords1,0)
 
+debug_plot_count = 0
 def debug_plot(xTrue, xEst, PEst, xDR, z, px, now):
+    global debug_plot_count
+    fn_start_time = time.time()
     # store data history
     global hxEst
     global hxDR
@@ -805,25 +825,36 @@ def debug_plot(xTrue, xEst, PEst, xDR, z, px, now):
         hxDR = np.hstack((hxDR, xDR))
     if (xTrue is not None):
         hxTrue = np.hstack((hxTrue, xTrue))
+    print "1. debug_plot runtime = %f"%(time.time() - fn_start_time)
+    debug_plot_count += 1
+    if debug_plot_count < 20:
+        return
+    debug_plot_count = 0
 
     if show_animation:
+        print (".................")
         plt.cla()
 
         actual = z.get_actual();
+        print "2. debug_plot runtime = %f"%(time.time() - fn_start_time)
         plot_x = xEst
         if (xTrue is not None):
             plot_x = xTrue
+        print "3. debug_plot runtime = %f"%(time.time() - fn_start_time)
         for i in range(len(actual)):
             beacon = actual[i].get_coords()
             plt.plot([plot_x[0, 0], beacon[0]], [plot_x[1, 0], beacon[1]], "-k")
+        print "4. debug_plot runtime = %f"%(time.time() - fn_start_time)
 
         for i in range(len(wall_coords)):
             plt.plot(wall_coords[i][:2],wall_coords[i][2:],color='purple')
+        print "5. debug_plot runtime = %f"%(time.time() - fn_start_time)
 
         u = np.cos(beacon_coords[:,2])
         v = np.sin(beacon_coords[:,2])
         #plt.plot(beacon_coords[:, 0], beacon_coords[:, 1], ".k")
         plt.quiver(beacon_coords[:, 0], beacon_coords[:, 1], u, v)
+        print "6. debug_plot runtime = %f"%(time.time() - fn_start_time)
         if px is not None:
             plt.plot(px[0, :], px[1, :], ".r")
         plt.plot(np.array(hxTrue[0, :]).flatten(),
@@ -832,17 +863,20 @@ def debug_plot(xTrue, xEst, PEst, xDR, z, px, now):
                  np.array(hxDR[1, :]).flatten(), "-k")
         plt.plot(np.array(hxEst[0, :]).flatten(),
                  np.array(hxEst[1, :]).flatten(), "-r")
+        print "7. debug_plot runtime = %f"%(time.time() - fn_start_time)
         #print("xEst")
         #print(xEst)
         u = np.cos(xEst[2,0])
         v = np.sin(xEst[2,0])
         plt.quiver(xEst[0, 0], xEst[1, 0], u, v)
+        print "8. debug_plot runtime = %f"%(time.time() - fn_start_time)
         #if (PEst is not None):
             #plot_covariance_ellipse(xEst, PEst)
         plt.axis("equal")
         plt.grid(True)
         plt.text(-2, 0, str(now))
-        plt.pause(0.001)
+        plt.pause(0.0001)
+        print "9. debug_plot runtime = %f"%(time.time() - fn_start_time)
 
 def main():
     print(__file__ + " start!!")
@@ -850,7 +884,7 @@ def main():
     time = 0.0
 
     # Particle filter parameter
-    NP = 100  # Number of Particles
+    NP = 500  # Number of Particles
 
     # State Vectors [x y theta x' y' theta']'
     xTrue = np.array([[-7.00,0,0,0,0,0]]).T
@@ -932,12 +966,12 @@ def main():
 
     rospy.init_node('pf_localization', anonymous=True)
 
-    cmd_vel_sub = message_filters.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, queue_size = 2)
-    imu_sub     = message_filters.Subscriber("/frcrobot_rio/navx_mxp", Imu, queue_size = 2)
-    ts          = message_filters.ApproximateTimeSynchronizer([imu_sub, cmd_vel_sub], 10, 0.1)
-    ts.registerCallback(imu_cmd_vel_callback)
+    #cmd_vel_sub = message_filters.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, queue_size = 2)
+    #imu_sub     = message_filters.Subscriber("/frcrobot_rio/navx_mxp", Imu, queue_size = 2)
+    #ts          = message_filters.ApproximateTimeSynchronizer([imu_sub, cmd_vel_sub], 10, 0.1)
+    #ts.registerCallback(imu_cmd_vel_callback)
 
-    #cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel", Twist, cmd_vel_callback, (pf), queue_size = 2)
+    cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, cmd_vel_callback, queue_size = 2)
     imu_sub = rospy.Subscriber("/frcrobot_rio/navx_mxp", Imu, imu_callback, queue_size = 1)
     rospy.Subscriber("/goal_detection/goal_detect_msg", GoalDetection, goal_detection_callback, (pf), queue_size = 1)
 
