@@ -906,11 +906,11 @@ bool getPathLength(Trajectory &arcLengthTrajectory,
 bool evaluateSpline(double &cost,
 					const Trajectory &trajectory,
 					const std::vector<trajectory_msgs::JointTrajectoryPoint> &points,
-					double dMax, // limit of path excursion from straight line b/t waypoints
-					double vMax, // max overall velocity
-					double aMax, // max allowed acceleration
-					double wheelRadius, // radius from center to wheels
-					double aCentMax) // max allowed centripetal acceleration
+					const double dMax, // limit of path excursion from straight line b/t waypoints
+					const double vMax, // max overall velocity
+					const double aMax, // max allowed acceleration
+					const double wheelRadius, // radius from center to wheels
+					const double aCentMax) // max allowed centripetal acceleration
 {
 
 	// arcLengthTrajectory takes in a time and returns the x-y distance
@@ -1026,7 +1026,7 @@ bool evaluateSpline(double &cost,
 	// Forward pass
 	for (size_t i = 1; i < vTrans.size(); i++)
 	{
-		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i - 1] * vTrans[i - 1]) + 2.0 * aMax * deltaS[i]);
+		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i - 1] * vTrans[i - 1] + 2.0 * aMax * deltaS[i]));
 		//ROS_INFO_STREAM_FILTER(&messageFilter, "vTrans[" << i << "==" << equalArcLengthTimes[i] <<"]=" << vTrans[i]);
 	}
 
@@ -1034,21 +1034,28 @@ bool evaluateSpline(double &cost,
 	vTrans.back() = 0; // Hard-code end velocity for now. TODO - make it grab from last point or spline segment
 	for (size_t i = vTrans.size() - 2; i > 0; i--)
 	{
-		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i + 1] * vTrans[i + 1]) + 2.0 * aMax * deltaS[i - 1]);
+		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i + 1] * vTrans[i + 1] + 2.0 * aMax * deltaS[i - 1]));
 		//ROS_INFO_STREAM_FILTER(&messageFilter, "vTrans[" << i << "==" << equalArcLengthTimes[i] <<"]=" << vTrans[i]);
 	}
 
+	// Calculate arrival time at each of the equalLengthArcTimes distances
 	std::vector<double> remappedTimes;
 	remappedTimes.push_back(0);
 	for (size_t i = 1; i < vTrans.size(); i++)
 	{
-		remappedTimes.push_back(remappedTimes.back() + ((2.0 * deltaS[i]) / (vTrans[i - 1] + vTrans[i])));
+		remappedTimes.push_back(remappedTimes.back() + (2.0 * deltaS[i]) / (vTrans[i - 1] + vTrans[i]));
 	}
 
+	// Cost is total time to traverse the path plus a large
+	// penalty for moving more that dMax past the mipoint of the
+	// straight line segment connecting each waypoint. The latter
+	// imposes a constraint that the path can't be too curvy - and
+	// keeping close to the straight-line path should prevent it from running
+	// into obstacles too far off that path.
 	cost = remappedTimes.back();
 	for (const auto d: distanceToPathMidpoint)
 	{
-		cost += exp(25.0 *((fabs(d) / dMax) - 0.9));
+		cost += exp(25.0 * ((fabs(d) / dMax) - 0.9));
 	}
 	ROS_INFO_STREAM_FILTER(&messageFilter, "time = " << remappedTimes.back() << " cost = " << cost);
 
