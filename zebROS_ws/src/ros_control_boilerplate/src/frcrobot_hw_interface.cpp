@@ -1567,7 +1567,7 @@ bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, con
 	return false;
 }
 
-#define DEBUG_WRITE
+//#define DEBUG_WRITE
 void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 {
 	// Was the robot enabled last time write was run?
