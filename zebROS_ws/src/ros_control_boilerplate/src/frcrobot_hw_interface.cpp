@@ -1716,7 +1716,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			// the next time through the loop.
 			bool rc = safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Sum0, victor_sensor_terms[hardware_interface::SensorTerm_Sum0], timeoutMs),"ConfigSensorTerm Sum0");
 			rc &= safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Sum1, victor_sensor_terms[hardware_interface::SensorTerm_Sum1], timeoutMs),"ConfigSensorTerm Sum1");
-			rc = safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Diff0, victor_sensor_terms[hardware_interface::SensorTerm_Diff0], timeoutMs),"ConfigSensorTerm Diff0");
+			rc &= safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Diff0, victor_sensor_terms[hardware_interface::SensorTerm_Diff0], timeoutMs),"ConfigSensorTerm Diff0");
 			rc &= safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Diff1, victor_sensor_terms[hardware_interface::SensorTerm_Diff1], timeoutMs),"ConfigSensorTerm Diff1");
 			if (rc)
 			{

@@ -879,7 +879,7 @@ class TalonHWCommand
 				return;
 			}
 
-			if ((feedback_device <  FeedbackDevice_Uninitialized) &&
+			if ((feedback_device <  FeedbackDevice_Uninitialized) ||
 				(feedback_device >= FeedbackDevice_Last) )
 			{
 				ROS_WARN_STREAM("setSensorTerm Invalid feedback device requested");
