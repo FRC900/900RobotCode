@@ -129,6 +129,13 @@ do
 done
 echo "Time synchronized."
 
+echo "Killing code on remote "
+for i in "${JETSON_ADDR[@]}"
+do
+	ssh ubuntu@$i "/home/ubuntu/2019Offseason/zebROS_ws/kill_ros_.sh"
+done
+echo "ROS Killed on Jetson"
+
 # Bidirectional synchronization of the selected environment.
 echo "Synchronizing local changes TO $INSTALL_ENV environment."
 for i in "${JETSON_ADDR[@]}"
