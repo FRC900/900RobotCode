@@ -242,11 +242,10 @@ void FRCRobotHWInterface::init(void)
 
 			ctre_mc_read_state_mutexes_.push_back(std::make_shared<std::mutex>());
 			ctre_mc_read_thread_states_.push_back(std::make_shared<hardware_interface::TalonHWState>(can_ctre_mc_can_ids_[i]));
-			ctre_mc_thread_tracers_.push_back("ctre_mc_read_" + can_ctre_mc_names_[i] + " " + nh_.getNamespace());
 			ctre_mc_read_threads_.push_back(std::thread(&FRCRobotHWInterface::ctre_mc_read_thread, this,
 										  ctre_mcs_[i], ctre_mc_read_thread_states_[i],
 										  ctre_mc_read_state_mutexes_[i],
-										  ctre_mc_thread_tracers_[i]));
+										  std::make_unique<Tracer>("ctre_mc_read_" + can_ctre_mc_names_[i] + " " + nh_.getNamespace())));
 		}
 		else
 		{
@@ -493,10 +492,10 @@ void FRCRobotHWInterface::init(void)
 				if (!status && (compressors_[i] != HAL_kInvalidHandle))
 				{
 					pcm_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
-					pcm_thread_tracers_.push_back("PCM " + compressor_names_[i] + " " + nh_.getNamespace());
 					pcm_thread_.push_back(std::thread(&FRCRobotHWInterface::pcm_read_thread, this,
 								compressors_[i], compressor_pcm_ids_[i], pcm_read_thread_state_[i],
-								pcm_read_thread_mutexes_[i], pcm_thread_tracers_[i]));
+								pcm_read_thread_mutexes_[i],
+								std::make_unique<Tracer>("PCM " + compressor_names_[i] + " " + nh_.getNamespace())));
 					HAL_Report(HALUsageReporting::kResourceType_Compressor, compressor_pcm_ids_[i]);
 				}
 				else
@@ -544,10 +543,9 @@ void FRCRobotHWInterface::init(void)
 				else
 				{
 					pdp_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
-					pdp_thread_tracers_.push_back("PDP " + pdp_names_[i] + " " + nh_.getNamespace());
 					pdp_thread_.push_back(std::thread(&FRCRobotHWInterface::pdp_read_thread, this,
 										  pdps_[i], pdp_read_thread_state_[i], pdp_read_thread_mutexes_[i],
-										  pdp_thread_tracers_[i]));
+										  std::make_unique<Tracer>("PDP " + pdp_names_[i] + " " + nh_.getNamespace())));
 					HAL_Report(HALUsageReporting::kResourceType_PDP, pdp_modules_[i]);
 				}
 			}
@@ -592,7 +590,7 @@ void FRCRobotHWInterface::init(void)
 void FRCRobotHWInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController> ctre_mc,
 											std::shared_ptr<hardware_interface::TalonHWState> state,
 											std::shared_ptr<std::mutex> mutex,
-											Tracer tracer)
+											std::unique_ptr<Tracer> tracer)
 {
 	pthread_setname_np(pthread_self(), "ctre_mc_read");
 	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
@@ -604,7 +602,7 @@ void FRCRobotHWInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::mot
 
 	while(ros::ok())
 	{
-		tracer.start("talon read main_loop");
+		tracer->start("talon read main_loop");
 
 		hardware_interface::TalonMode talon_mode;
 		hardware_interface::FeedbackDevice encoder_feedback;
@@ -845,8 +843,8 @@ void FRCRobotHWInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::mot
 				state->setReverseLimitSwitch(reverse_limit_switch);
 			}
 		}
-		tracer.stop();
-		ROS_INFO_STREAM_THROTTLE(60, tracer.report());
+		tracer->stop();
+		ROS_INFO_STREAM_THROTTLE(60, tracer->report());
 		rate.sleep();
 	}
 }
@@ -859,7 +857,7 @@ void FRCRobotHWInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::mot
 void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 		std::shared_ptr<hardware_interface::PDPHWState> state,
 		std::shared_ptr<std::mutex> mutex,
-		Tracer tracer)
+		std::unique_ptr<Tracer> tracer)
 {
 	pthread_setname_np(pthread_self(), "pdp_read");
 	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
@@ -871,7 +869,7 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 		ROS_ERROR_STREAM("pdp_read_thread error clearing sticky faults : status = " << status);
 	while (ros::ok())
 	{
-		tracer.start("main loop");
+		tracer->start("main loop");
 
 		//read info from the PDP hardware
 		status = 0;
@@ -896,8 +894,8 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 			*state = pdp_state;
 		}
 
-		tracer.stop();
-		ROS_INFO_STREAM_THROTTLE(60, tracer.report());
+		tracer->stop();
+		ROS_INFO_STREAM_THROTTLE(60, tracer->report());
 		r.sleep();
 	}
 }
@@ -910,7 +908,7 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle, int32_t pcm_id,
 										  std::shared_ptr<hardware_interface::PCMState> state,
 										  std::shared_ptr<std::mutex> mutex,
-										  Tracer tracer)
+										  std::unique_ptr<Tracer> tracer)
 {
 	pthread_setname_np(pthread_self(), "pcm_read");
 	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
@@ -924,7 +922,7 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle
 	}
 	while (ros::ok())
 	{
-		tracer.start("main loop");
+		tracer->start("main loop");
 
 		hardware_interface::PCMState pcm_state(pcm_id);
 		status = 0;
@@ -954,8 +952,8 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle
 			*state = pcm_state;
 		}
 
-		tracer.stop();
-		ROS_INFO_STREAM_THROTTLE(60, tracer.report());
+		tracer->stop();
+		ROS_INFO_STREAM_THROTTLE(60, tracer->report());
 		r.sleep();
 	}
 }
