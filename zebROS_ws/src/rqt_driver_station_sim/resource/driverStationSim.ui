@@ -21,7 +21,7 @@
   <widget class="QWidget" name="centralwidget">
    <property name="geometry">
     <rect>
-     <x>0</x>
+     <x>10</x>
      <y>30</y>
      <width>171</width>
      <height>261</height>
@@ -54,9 +54,9 @@
             <widget class="QRadioButton" name="auto_mode">
              <property name="geometry">
               <rect>
-               <x>0</x>
+               <x>10</x>
                <y>90</y>
-               <width>161</width>
+               <width>131</width>
                <height>30</height>
               </rect>
              </property>
@@ -90,9 +90,9 @@ selection-background-color: rgb(255, 249, 69);</string>
             <widget class="QRadioButton" name="teleop_button">
              <property name="geometry">
               <rect>
-               <x>0</x>
-               <y>48</y>
-               <width>162</width>
+               <x>10</x>
+               <y>60</y>
+               <width>131</width>
                <height>30</height>
               </rect>
              </property>
@@ -127,9 +127,9 @@ selection-color: rgba(255, 255, 255, 0);
             <widget class="QRadioButton" name="practice_button">
              <property name="geometry">
               <rect>
-               <x>0</x>
-               <y>6</y>
-               <width>162</width>
+               <x>10</x>
+               <y>30</y>
+               <width>131</width>
                <height>30</height>
               </rect>
              </property>
@@ -169,13 +169,13 @@ selection-color: rgba(255, 255, 255, 0);</string>
           <item>
            <widget class="QGroupBox" name="groupBox_2">
             <property name="title">
-             <string>GroupBox</string>
+             <string/>
             </property>
             <widget class="QRadioButton" name="disable_button_2">
              <property name="geometry">
               <rect>
                <x>80</x>
-               <y>0</y>
+               <y>40</y>
                <width>82</width>
                <height>70</height>
               </rect>
@@ -226,8 +226,8 @@ selection-color: rgba(255, 255, 255, 0);
             <widget class="QRadioButton" name="enable_button_2">
              <property name="geometry">
               <rect>
-               <x>0</x>
-               <y>0</y>
+               <x>10</x>
+               <y>40</y>
                <width>74</width>
                <height>70</height>
               </rect>
@@ -306,8 +306,8 @@ background-color: rgba(255, 255, 255, 0);</string>
   <widget class="QCheckBox" name="timer_pause">
    <property name="geometry">
     <rect>
-     <x>270</x>
-     <y>310</y>
+     <x>0</x>
+     <y>370</y>
      <width>201</width>
      <height>71</height>
     </rect>
@@ -340,7 +340,7 @@ background-color: rgba(255, 255, 255, 0);</string>
      <x>190</x>
      <y>10</y>
      <width>901</width>
-     <height>301</height>
+     <height>381</height>
     </rect>
    </property>
    <property name="currentIndex">
@@ -348,7 +348,7 @@ background-color: rgba(255, 255, 255, 0);</string>
    </property>
    <widget class="QWidget" name="tab_3">
     <attribute name="title">
-     <string>Tab 1</string>
+     <string>AutoMode Select</string>
     </attribute>
     <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
@@ -702,7 +702,7 @@ p, li { white-space: pre-wrap; }
    </widget>
    <widget class="QWidget" name="tab_4">
     <attribute name="title">
-     <string>Tab 2</string>
+     <string>Simulated Inputs</string>
     </attribute>
    </widget>
   </widget>

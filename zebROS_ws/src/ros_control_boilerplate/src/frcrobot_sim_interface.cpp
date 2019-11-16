@@ -452,7 +452,9 @@ bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::R
 		if (!can_ctre_mc_local_hardwares_[joint_id])
 			continue;
         auto &ts = talon_state_[joint_id];
-        if(ts.getCANID() == req.target_joint_id) {
+        if((!req.target_joint_name.length() && (ts.getCANID() == req.target_joint_id)) ||
+		   (req.target_joint_name == can_ctre_mc_names_[joint_id]))
+		{
             ts.setForwardLimitSwitch(req.forward);
 			ts.setReverseLimitSwitch(req.reverse);
         }
@@ -623,14 +625,26 @@ void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
 bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBreakSensors::Request &req,
 							ros_control_boilerplate::LineBreakSensors::Response &/*res*/)
 {
-	if (req.j < digital_input_names_.size())
+	if (req.name.length())
+	{
+		for (size_t i = 0; i < digital_input_names_.size(); i++)
+		{
+			if (digital_input_names_[i] == req.name)
+			{
+				digital_input_state_[i] = req.value ? 1 : 0;
+				ROS_INFO_STREAM(digital_input_names_[i] << " set to " << (int)req.value);
+				break;
+			}
+		}
+	}
+	else if (req.j < digital_input_names_.size())
 	{
 		digital_input_state_[req.j] = req.value ? 1 : 0;
-		ROS_INFO_STREAM("req.j set to" << (int)req.value);
+		ROS_INFO_STREAM(digital_input_names_[req.j] << " set to " << (int)req.value);
 	}
 	else
 	{
-		ROS_INFO_STREAM("req.j not set to" << (int)req.value);
+		ROS_INFO_STREAM(digital_input_names_[req.j] << " not set to " << (int)req.value << " index out of bounds");
 	}
 	return true;
 }

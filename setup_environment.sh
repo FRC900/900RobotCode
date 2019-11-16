@@ -48,14 +48,15 @@ sudo apt install -y \
 	openssh-client \
 	pkg-config \
 	protobuf-compiler \
+	pyqt5-dev-tools \
 	python-dev \
 	python-matplotlib \
 	python-numpy \
 	python-opencv \
 	python-pip \
-	python-qt4 \ 
+	python-pyqt5 \
+	python-pyqtgraph \
 	python-scipy \
-	pyqt4-dev-tools \
 	qt4-designer \
 	rsync \
 	software-properties-common \
