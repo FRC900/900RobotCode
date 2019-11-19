@@ -9,82 +9,13 @@ using namespace cv;
 
 // How many consecutive frames a track must be missing before
 // it is erased
-const int missedFrameCountMax = 10;
+constexpr int missedFrameCountMax = 10;
 
-/*
-static Point3f screenToWorldCoords(const Rect &screen_position, double avg_depth, const Point2f &fov_size, const Size &frame_size, float cameraElevation)
-{
-	TODO COMMENT THIS
-	Method:
-		find the center of the rect
-		compute the distance from the center of the rect to center of image (pixels)
-		convert to degrees based on fov and image size
-		do a polar to cartesian cordinate conversion to find x,y,z of object
-	Equations:
-		x=rsin(inclination) * cos(azimuth)
-		y=rsin(inclination) * sin(azimuth)
-		z=rcos(inclination)
-	Notes:
-		Z is up, X is left-right, and Y is forward
-		(0,0,0) = (r,0,0) = right in front of you
-
-	Point2f rect_center(
-			screen_position.tl().x + (screen_position.width  / 2.0),
-			screen_position.tl().y + (screen_position.height / 2.0));
-	Point2f dist_to_center(
-			rect_center.x - (frame_size.width / 2.0),
-			-rect_center.y + (frame_size.height / 2.0));
-
-
-// This uses formula from http://www.chiefdelphi.com/forums/showpost.php?p=1571187&postcount=4
-	float azimuth = atan(dist_to_center.x / (.5 * frame_size.width / tan(fov_size.x / 2)));
-	float inclination = atan(dist_to_center.y / (.5 * frame_size.height / tan(fov_size.y / 2))) - cameraElevation;
-
-	Point3f retPt(
-			avg_depth * cosf(inclination) * sinf(azimuth),
-			avg_depth * cosf(inclination) * cosf(azimuth),
-			avg_depth * sinf(inclination));
-
-	//cout << "Distance to center: " << dist_to_center << endl;
-	//cout << "Actual Inclination: " << inclination << endl;
-	//cout << "Actual Azimuth: " << azimuth << endl;
-	//cout << "Actual location: " << retPt << endl;
-
-	return retPt;
-}
-
-static Rect worldToScreenCoords(const Point3f &_position, const ObjectType &_type, const Point2f &fov_size, const Size &frame_size, float cameraElevation)
-{
-	// TODO : replace magic numbers with an object depth property
-	// This constant is half a ball diameter (9.75-ish inches), converted to meters
-	// For example, goals will have 0 depth since we're just shooting at
-	// a plane. 3d objects will have depth, though, so we track the center of the
-	// rather than the front.
-	float r = sqrtf(_position.x * _position.x + _position.y * _position.y + _position.z * _position.z); // - (4.572 * 25.4)/1000.0;
-	float azimuth = asinf(_position.x / sqrt(_position.x * _position.x + _position.y * _position.y));
-	float inclination = asinf( _position.z / r ) + cameraElevation;
-
-	//inverse of formula in screenToWorldCoords()
-	Point2f dist_to_center(
-			tan(azimuth) * (0.5 * frame_size.width / tan(fov_size.x / 2)),
-			tan(inclination) * (0.5 * frame_size.height / tan(fov_size.y / 2)));
-
-	//cout << "Distance to center: " << dist_to_center << endl;
-	Point2f rect_center(
-			dist_to_center.x + (frame_size.width / 2.0),
-			-dist_to_center.y + (frame_size.height / 2.0));
-
-	Point2f angular_size( 2.0 * atan2f(_type.width(), (2.0*r)), 2.0 * atan2f(_type.height(), (2.0*r)));
-	Point2f screen_size(
-			angular_size.x * (frame_size.width / fov_size.x),
-			angular_size.y * (frame_size.height / fov_size.y));
-
-	Point topLeft(
-			cvRound(rect_center.x - (screen_size.x / 2.0)),
-			cvRound(rect_center.y - (screen_size.y / 2.0)));
-			return Rect(topLeft.x, topLeft.y, cvRound(screen_size.x), cvRound(screen_size.y));
-}
-*/
+// Constructor for a tracked object
+// Each object holds a unique ID for the tracked object
+// It is constructed with an object type, information
+// to locate it in space, and some params for the
+// Kalman Filter used to track it
 TrackedObject::TrackedObject(int               id,
 							 const ObjectType &type_in,
 							 const Rect       &screen_position,
@@ -103,6 +34,8 @@ TrackedObject::TrackedObject(int               id,
 		missedFrameCount_(0),
 		cameraElevation_(camera_elevation)
 {
+	// Set the robot-relative x,y,z coord of the object, and mark
+	// it as detected for this frame of video
 	setPosition(screen_position, avg_depth, fov_size, frame_size);
 	setDetected();
 
@@ -156,6 +89,7 @@ void TrackedObject::adjustPosition(const Eigen::Transform<double, 3, Eigen::Isom
 	}
 }
 #endif
+// TODO - try and do this without going back and forth between screen and world coords
 void TrackedObject::adjustPosition(const Mat &transform_mat, float depth, const Point2f &fov_size, const Size &frame_size)
 {
 	//get the position of the object on the screen
@@ -215,7 +149,7 @@ bool TrackedObject::tooManyMissedFrames(void) const
 		return true;
 
 	// Be more aggressive about dropping tracks which
-	// haven't been around long - kill them off if 
+	// haven't been around long - kill them off if
 	// they are seen in less than 33% of frames
 	if (detectHistory_.size() <= 10)
 	{
@@ -250,7 +184,7 @@ vector <Point> TrackedObject::getScreenPositionHistory(const Point2f &fov_size, 
 	return ret;
 }
 
-const double minDisplayRatio = 0.3;
+constexpr double minDisplayRatio = 0.3;
 
 // Return the percent of last detectHistory_.capacity() frames
 // the object was seen
@@ -307,10 +241,10 @@ Rect TrackedObject::getScreenPosition(const Point2f &fov_size, const Size &frame
 //kinda gimmicky but pretty cool and might have uses in the future
 double TrackedObject::contourArea(const Point2f &fov_size, const Size &frame_size) const
 {
-	Rect screen_position = getScreenPosition(fov_size, frame_size);
-	float scale_factor_x = (float)screen_position.width / type_.width();
-	float scale_factor_y = (float)screen_position.height / type_.height();
-	float scale_factor   = min(scale_factor_x, scale_factor_y);
+	const Rect screen_position = getScreenPosition(fov_size, frame_size);
+	const float scale_factor_x = (float)screen_position.width / type_.width();
+	const float scale_factor_y = (float)screen_position.height / type_.height();
+	const float scale_factor   = min(scale_factor_x, scale_factor_y);
 
 	vector<Point2f> scaled_contour;
 	for(size_t i = 0; i < type_.shape().size(); i++)
@@ -370,11 +304,11 @@ void TrackedObjectList::adjustLocation(const Mat &transform_mat)
 	for (auto it = list_.begin(); it != list_.end(); ++it)
 	{
 		//measure the amount that the position changed and apply the same change to the kalman filter
-		Point3f old_pos = it->getPosition();
+		const Point3f old_pos = it->getPosition();
 		//compute r and use it for depth (assume depth doesn't change)
-		float r = sqrt(it->getPosition().x * it->getPosition().x + it->getPosition().y * it->getPosition().y + it->getPosition().z * it->getPosition().z);
+		const float r = sqrt(it->getPosition().x * it->getPosition().x + it->getPosition().y * it->getPosition().y + it->getPosition().z * it->getPosition().z);
 		it->adjustPosition(transform_mat, r, fovSize_, imageSize_);
-		Point3f delta_pos = it->getPosition() - old_pos;
+		const Point3f delta_pos = it->getPosition() - old_pos;
 
 		it->adjustKF(delta_pos);
 	}
@@ -395,7 +329,7 @@ void TrackedObjectList::print(void) const
 	for (auto it = list_.cbegin(); it != list_.cend(); ++it)
 	{
 		cout << it->getId() << " location ";
-		Point3f position = it->getPosition();
+		const Point3f position = it->getPosition();
 		cout << "(" << position.x << "," << position.y << "," << position.z << ")" << endl;
 	}
 }
@@ -416,7 +350,7 @@ void TrackedObjectList::getDisplay(vector<TrackedObjectDisplay> &displayList) co
 	}
 }
 
-const double dist_thresh_ = 1.0; // FIX ME!
+constexpr double dist_thresh_ = 1.0; // FIX ME!
 //#define VERBOSE_TRACK
 
 // Process a set of detected rectangles
@@ -449,8 +383,8 @@ void TrackedObjectList::processDetect(const vector<Rect> &detectedRects,
 	vector<int> assignment;
 	if (list_.size())
 	{
-		size_t tracks = list_.size();		          // number of tracked objects from prev frames
-		size_t detections = detectedPositions.size(); // number of detections this frame
+		const size_t tracks = list_.size();		          // number of tracked objects from prev frames
+		const size_t detections = detectedPositions.size(); // number of detections this frame
 
 		//Cost[t][d] is the distance between old tracked location t
 		//and newly detected object d's position
@@ -460,7 +394,7 @@ void TrackedObjectList::processDetect(const vector<Rect> &detectedRects,
 		// The cost here is just the distance between them
 		// Also check to see if the types are the same, if they are not then set the cost extremely high so that it's never matched
 		auto it = list_.cbegin();
-		for(size_t t = 0; t < tracks;  ++t, ++it)
+		for(size_t t = 0; t < tracks; ++t, ++it)
 		{
 			// Point3f prediction=tracks[t]->prediction;
 			// cout << prediction << endl;
@@ -518,32 +452,26 @@ void TrackedObjectList::processDetect(const vector<Rect> &detectedRects,
 	while ((tr != list_.end()) && (as != assignment.end()))
 	{
 		// If track updated less than one time, than filter state is not correct.
+		const Point3f prediction = tr->predictKF();
 #ifdef VERBOSE_TRACK
 		cout << "Predict: " << endl;
-#endif
-		Point3f prediction = tr->predictKF();
-#ifdef VERBOSE_TRACK
 		cout << "prediction:" << prediction << endl;
 #endif
 
 		if(*as != -1) // If we have assigned detect, then update using its coordinates
 		{
-#ifdef VERBOSE_TRACK
-			cout << "Update match: " << endl;
-#endif
 			tr->setPosition(tr->updateKF(detectedPositions[*as]));
 #ifdef VERBOSE_TRACK
+			cout << "Update match: " << endl;
 			cout << tr->getScreenPosition(fovSize_, imageSize_) << endl;
 #endif
 			tr->setDetected();
 		}
 		else          // if not continue using predictions
 		{
-#ifdef VERBOSE_TRACK
-			cout << "Update no match: " << endl;
-#endif
 			tr->setPosition(tr->updateKF(prediction));
 #ifdef VERBOSE_TRACK
+			cout << "Update no match: " << endl;
 			cout << tr->getScreenPosition(fovSize_, imageSize_) << endl;
 #endif
 			tr->clearDetected();
