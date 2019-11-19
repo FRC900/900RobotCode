@@ -6,6 +6,8 @@ sudo sysctl -p
 sudo rfkill block wifi  
 sudo rfkill block bluetooth
 
+/home/ubuntu/2019Offseason/jetson_setup/can_up.sh
+
 . /home/ubuntu/2019Offseason/zebROS_ws/ROSJetsonMaster.sh
 #echo 1100-1200,443,80,554,1735 > /proc/sys/net/ipv4/ip_local_reserved_ports
 
