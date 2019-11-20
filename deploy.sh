@@ -129,10 +129,10 @@ do
 done
 echo "Time synchronized."
 
-echo "Killing code on remote "
+echo "Killing code on remotes "
 for i in "${JETSON_ADDR[@]}"
 do
-	ssh ubuntu@$i "/home/ubuntu/2019Offseason/zebROS_ws/kill_ros_.sh"
+	echo ubuntu | ssh -tt ubuntu@$i "sudo /home/ubuntu/2019Offseason/zebROS_ws/kill_ros_.sh"
 done
 echo "ROS Killed on Jetson"
 
