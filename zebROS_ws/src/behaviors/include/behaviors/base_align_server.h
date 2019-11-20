@@ -48,18 +48,17 @@ class AlignActionAxisState
 					  ros::NodeHandle &nh,
 				const std::string &enable_pub_topic,
 				const std::string &error_sub_topic,
-				//void(*error_sub_cb)(const std_msgs::Float64MultiArray &msg),
 				const boost::function<void(const std_msgs::Float64MultiArrayConstPtr &msg)> &error_sub_cb,
 				const double timeout,
 				const double error_threshold)
 			: enable_pub_(nh.advertise<std_msgs::Bool>(enable_pub_topic, 1, true))
 			, error_sub_(nh.subscribe(error_sub_topic, 1, error_sub_cb))
+			, aligned_(false)
+			, error_(0.0)
 			, timeout_(timeout)
 			, error_threshold_(error_threshold)
+			, timed_out_(false)
 		{
-			aligned_   = false;
-			error_     = false;
-			timed_out_ = false;
 		}
 		ros::Publisher enable_pub_;
 		ros::Subscriber error_sub_;
@@ -81,7 +80,6 @@ class BaseAlignAction {
 		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_; //Action client for controlling the elevato
 		actionlib::SimpleActionClient<behaviors::PlaceAction> ac_outtake_hatch_panel_;
 
-
 		//Publishers for enabling PID loops and cmd_vel combiner
 		ros::Publisher enable_align_pub_;	//Enables the cmd_vel combiner
 		ros::Subscriber elevator_setpoint_sub_;
@@ -102,7 +100,7 @@ class BaseAlignAction {
 
 		//start time of align
 		double start_time_ = -1.0;
-                bool placed_ = false;
+		bool placed_ = false;
 		int elevator_cur_setpoint_ = 0;
 		bool place_after_align_ = false;
 		double min_error_to_place_ = 0.1;
