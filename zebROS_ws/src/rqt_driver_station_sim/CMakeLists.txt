@@ -170,7 +170,6 @@ include_directories(
  install(PROGRAMS
    scripts/rqt_driver_station_sim
    src/rqt_driver_station_sim/driver_station_sim.py
-   src/rqt_driver_station_sim/driver_station_widget.py
    src/rqt_driver_station_sim/__init__.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
