@@ -192,22 +192,22 @@ if /bin/false; then
 
 	# turn on various config settings needed for USB tty, realsense, nvme, etc
 	zcat /proc/config.gz > .config
-	bash scripts/config --file .config \
-	   	--set-str LOCALVERSION -tegra \
-		--enable IIO_BUFFER \
-		--enable IIO_KFIFO_BUF \
-		--module IIO_TRIGGERED_BUFFER \
-		--enable IIO_TRIGGER \
-		--set-val IIO_CONSUMERS_PER_TRIGGER 2 \
-		--module HID_SENSOR_IIO_COMMON \
-		--module HID_SENSOR_IIO_TRIGGER \
-		--module HID_SENSOR_HUB \
-		--module HID_SENSOR_ACCEL_3D \
-		--module HID_SENSOR_GYRO_3D \
-		--module USB_ACM \
-		--module CAN_GS_USB \
-		--module JOYSTICK_XPAD \
-		--enable CONFIG_BLK_DEV_NVME
+    bash scripts/config --file .config \
+        --set-str LOCALVERSION -tegra \
+        --enable IIO_BUFFER \
+        --enable IIO_KFIFO_BUF \
+        --module IIO_TRIGGERED_BUFFER \
+        --enable IIO_TRIGGER \
+        --set-val IIO_CONSUMERS_PER_TRIGGER 2 \
+        --module HID_SENSOR_IIO_COMMON \
+        --module HID_SENSOR_IIO_TRIGGER \
+        --module HID_SENSOR_HUB \
+        --module HID_SENSOR_ACCEL_3D \
+        --module HID_SENSOR_GYRO_3D \
+        --module USB_ACM \
+        --module CAN_GS_USB \
+        --module JOYSTICK_XPAD \
+        --enable CONFIG_BLK_DEV_NVME
 
 	make -j6 clean
 	make -j6 prepare
@@ -219,24 +219,29 @@ if /bin/false; then
 
 	sudo depmod -a
 
-	tar -C ~/jetson_kernel/kernel/kernel-4.9 -cjf ~/j120_hardware_dtb_l4t32-2-3-1.tbz2 \
-		`find ~/jetson_kernel -name tegra186-quill-p3310-1000-a00-00-base.dtb | grep -v _ddot_` \
-		`find ~/jetson_kernel -name tegra186-quill-p3310-1000-c03-00-base.dtb | grep -v _ddot_` \
-		`find ~/jetson_kernel -name tegra186-quill-p3310-1000-c03-00-dsi-hdmi-dp.dtb | grep -v _ddot_` \
-		`find ~/jetson_kernel -name tegra186-quill-p3489-1000-a00-00-ucm1.dtb | grep -v _ddot_` \
-		`find ~/jetson_kernel -name tegra186-quill-p3489-1000-a00-00-ucm2.dtb | grep -v _ddot_` \
-		`find ~/jetson_kernel -name Image | grep -v _ddot_` \
-		`find ~/jetson_kernel -name zImage | grep -v _ddot_` 
+    tar -C ~/jetson_kernel/kernel/kernel-4.9 -cjf ~/j120_hardware_dtb_l4t32-2-3-1.tbz2 \
+        `find ~/jetson_kernel -name tegra186-quill-p3310-1000-a00-00-base.dtb | grep -v _ddot_` \
+        `find ~/jetson_kernel -name tegra186-quill-p3310-1000-as-0888.dtb | grep -v _ddot_` \
+        `find ~/jetson_kernel -name tegra186-quill-p3310-1000-c03-00-base.dtb | grep -v _ddot_` \
+        `find ~/jetson_kernel -name tegra186-quill-p3310-1000-c03-00-dsi-hdmi-dp.dtb | grep -v _ddot_` \
+        `find ~/jetson_kernel -name tegra186-quill-p3489-0888-a00-00-base.dtb | grep -v _ddot_` \
+        `find ~/jetson_kernel -name tegra186-quill-p3489-1000-a00-00-ucm1.dtb | grep -v _ddot_` \
+        `find ~/jetson_kernel -name tegra186-quill-p3489-1000-a00-00-ucm2.dtb | grep -v _ddot_` \
+        `find ~/jetson_kernel -name tegra194-p2888-0001-p2822-0000.dtb | grep -v _ddot_` \
+        `find ~/jetson_kernel -name tegra194-p2888-0001-p2822-0000-maxn.dtb | grep -v _ddot_` \
+        `find ~/jetson_kernel -name Image | grep -v _ddot_` \
+        `find ~/jetson_kernel -name zImage | grep -v _ddot_` 
 
-	tar -cjf ~/l4t32-2-3-1-modules.tbz2 \
-		`find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-iio-common.ko` \ # HID_SENSOR_IIO_COMMON
-		`find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-trigger.ko` \ # HID_SENSOR_IIO_TRIGGER
-		`find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-hub.ko` \ # HID_SENSOR_HUB
-		`find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-accel-3d.ko` \ # HID_SENSOR_ACCEL_3D
-		`find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-gyro-3d.ko` \ # HID_SENSOR_GYRO_3D
-		`find /lib/modules/4.9.140-tegra/kernel -name cdc-acm.ko` \ # USB_ACM
-		`find /lib/modules/4.9.140-tegra/kernel -name gs_usb.ko` \ # CAN_GS_USB
-		`find /lib/modules/4.9.140-tegra/kernel -name xpad.ko`   # JOYSTICK_XPAD
+
+    tar -cjf ~/l4t32-2-3-1-modules.tbz2 \
+        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-iio-common.ko` \ # HID_SENSOR_IIO_COMMON
+        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-trigger.ko` \ # HID_SENSOR_IIO_TRIGGER
+        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-hub.ko` \ # HID_SENSOR_HUB
+        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-accel-3d.ko` \ # HID_SENSOR_ACCEL_3D
+        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-gyro-3d.ko` \ # HID_SENSOR_GYRO_3D
+        `find /lib/modules/4.9.140-tegra/kernel -name cdc-acm.ko` \ # USB_ACM
+        `find /lib/modules/4.9.140-tegra/kernel -name gs_usb.ko` \ # CAN_GS_USB
+        `find /lib/modules/4.9.140-tegra/kernel -name xpad.ko`   # JOYSTICK_XPAD
 
 	# make -j6 M=drivers/usb/class
 	# make -j6 M=drivers/usb/serial
