@@ -233,14 +233,14 @@ if /bin/false; then
 
 
     tar -cjf ~/l4t32-2-3-1-modules.tbz2 \
-        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-iio-common.ko` \ # HID_SENSOR_IIO_COMMON
-        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-trigger.ko` \ # HID_SENSOR_IIO_TRIGGER
-        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-hub.ko` \ # HID_SENSOR_HUB
-        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-accel-3d.ko` \ # HID_SENSOR_ACCEL_3D
-        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-gyro-3d.ko` \ # HID_SENSOR_GYRO_3D
-        `find /lib/modules/4.9.140-tegra/kernel -name cdc-acm.ko` \ # USB_ACM
-        `find /lib/modules/4.9.140-tegra/kernel -name gs_usb.ko` \ # CAN_GS_USB
-        `find /lib/modules/4.9.140-tegra/kernel -name xpad.ko`   # JOYSTICK_XPAD
+        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-iio-common.ko` \
+        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-trigger.ko` \
+        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-hub.ko` \
+        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-accel-3d.ko` \
+        `find /lib/modules/4.9.140-tegra/kernel -name hid-sensor-gyro-3d.ko` \
+        `find /lib/modules/4.9.140-tegra/kernel -name cdc-acm.ko` \
+        `find /lib/modules/4.9.140-tegra/kernel -name gs_usb.ko` \
+        `find /lib/modules/4.9.140-tegra/kernel -name xpad.ko`
 
 	# make -j6 M=drivers/usb/class
 	# make -j6 M=drivers/usb/serial
