@@ -1,0 +1,351 @@
+diff -Naur hardware.orig/nvidia/platform/t18x/common/kernel-dts/t18x-common-plugin-manager/tegra186-quill-p3310-1000-a00-plugin-manager.dtsi hardware/nvidia/platform/t18x/common/kernel-dts/t18x-common-plugin-manager/tegra186-quill-p3310-1000-a00-plugin-manager.dtsi
+--- hardware.orig/nvidia/platform/t18x/common/kernel-dts/t18x-common-plugin-manager/tegra186-quill-p3310-1000-a00-plugin-manager.dtsi	2019-11-05 16:26:55.000000000 -0500
++++ hardware/nvidia/platform/t18x/common/kernel-dts/t18x-common-plugin-manager/tegra186-quill-p3310-1000-a00-plugin-manager.dtsi	2019-11-22 19:45:40.683062567 -0500
+@@ -94,11 +94,11 @@
+ #else
+ 				target = <&tegra_xusb_padctl_pinmux_default>;
+ 				_overlay_ {
+-					e3325-usb3-std-A-HS {
+-						status = "okay";
++					usb3-std-A-port2 {
++						status="okay";
+ 					};
+-					e3325-usb3-std-A-SS {
+-						status = "okay";
++					usb3-std-A-port3 {
++						status="okay";
+ 					};
+ 				};
+ #endif
+@@ -118,21 +118,21 @@
+ 				_overlay_ {
+ 					phys = <&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(0)>,
+ 							<&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(1)>,
+-							<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(1)>,
+ 							<&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(2)>,
+-							<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(0)>;
+-					phy-names = "utmi-0", "utmi-1", "usb3-1", "utmi-2", "usb3-0";
++							<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(0)>,
++							<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(1)>;
++					phy-names = "utmi-0", "utmi-1", "utmi-2", "usb3-0", "usb3-1";
+ 				};
+ #endif
+ 			};
+ 			override@2 {
+ 				target = <&tegra_main_gpio>;
+ 				_overlay_ {
+-					e3325_sdio_rst {
+-						status = "okay";
++					usb3-std-A-port2 {
++						status="okay";
+ 					};
+-					e3325_lane0_mux {
+-						status = "okay";
++					usb3-std-A-port3 {
++						status="okay";
+ 					};
+ 				};
+ 			};
+@@ -140,10 +140,10 @@
+ 				target = <&tegra_pcie>;
+ 				_overlay_ {
+ 					pci@1,0 {
+-						nvidia,num-lanes = <2>;
++						nvidia,num-lanes = <4>;
+ 					};
+ 					pci@2,0 {
+-						nvidia,num-lanes = <1>;
++						nvidia,num-lanes = <0>;
+ 					};
+ 					pci@3,0 {
+ 						nvidia,num-lanes = <1>;
+@@ -212,16 +212,18 @@
+ 					phys = <&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-0}>,
+ 						<&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-1}>,
+ 						<&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-2}>,
+-						<&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-0}>;
+-					phy-names = "usb2-0", "usb2-1", "usb2-2", "usb3-0";
++						<&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-0}>,
++						<&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-1}>;
++					phy-names = "usb2-0", "usb2-1", "usb2-2", "usb3-0", "usb3-1";
+ 				};
+ #else
+ 				_overlay_ {
+ 					phys = <&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(0)>,
+ 						<&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(1)>,
+ 						<&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(2)>,
+-						<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(0)>;
+-					phy-names = "utmi-0", "utmi-1", "utmi-2", "usb3-0";
++						<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(0)>,
++						<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(1)>;
++					phy-names = "utmi-0", "utmi-1", "utmi-2", "usb3-0", "usb3-1";
+ 				};
+ #endif
+ 			};
+@@ -231,10 +233,11 @@
+ 				_overlay_ {
+ 					ports {
+ 						usb3-1 {
+-							status = "disabled";
++							nvidia,usb2-companion = <1>;
++							status = "okay";
+ 						};
+ 						usb3-0 {
+-							nvidia,usb2-companion = <1>;
++							nvidia,usb2-companion = <2>;
+ 							status = "okay";
+ 						};
+ 					};
+@@ -243,10 +246,10 @@
+ 				target = <&tegra_xusb_padctl_pinmux_default>;
+ 				_overlay_ {
+ 					usb3-std-A-port2 {
+-						nvidia,lanes = "usb3-0";
++						nvidia,lanes = "usb3-1";
+ 					};
+-					e3325-usb3-std-A-HS {
+-						status = "okay";
++					usb3-std-A-port3 {
++						nvidia,lanes = "usb3-0";
+ 					};
+ 				};
+ #endif
+@@ -262,15 +265,19 @@
+ 				_overlay_ {
+ 					phys = <&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-0}>,
+ 						<&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-1}>,
+-						<&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-2}>;
+-					phy-names = "usb2-0", "usb2-1", "usb2-2";
++						<&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-2}>,
++						<&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-0}>,
++						<&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-1}>;
++					phy-names = "usb2-0", "usb2-1", "usb2-2", "usb3-0", "usb3-1";
+ 				};
+ #else
+ 				_overlay_ {
+ 					phys = <&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(0)>,
+ 						<&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(1)>,
+-						<&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(2)>;
+-					phy-names = "utmi-0", "utmi-1", "utmi-2";
++						<&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(2)>,
++						<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(0)>,
++						<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(1)>;
++					phy-names = "utmi-0", "utmi-1", "utmi-2", "usb3-0", "usb3-1";
+ 				};
+ #endif
+ 			};
+@@ -287,9 +294,9 @@
+ #else
+ 				target = <&tegra_xusb_padctl_pinmux_default>;
+ 				_overlay_ {
+-					usb3-std-A-port2 {
++					/*usb3-std-A-port2 {
+ 						status = "disabled";
+-					};
++					};*/
+ 				};
+ #endif
+ 			};
+diff -Naur hardware.orig/nvidia/platform/t18x/quill/kernel-dts/tegra186-quill-p3310-1000-a00-00-base.dts hardware/nvidia/platform/t18x/quill/kernel-dts/tegra186-quill-p3310-1000-a00-00-base.dts
+--- hardware.orig/nvidia/platform/t18x/quill/kernel-dts/tegra186-quill-p3310-1000-a00-00-base.dts	2019-11-05 16:26:55.000000000 -0500
++++ hardware/nvidia/platform/t18x/quill/kernel-dts/tegra186-quill-p3310-1000-a00-00-base.dts	2019-11-22 19:47:30.142319565 -0500
+@@ -121,16 +121,19 @@
+ 		phys = <&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-0}>,
+ 			<&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-1}>,
+ 			<&{/xusb_padctl@3520000/pads/usb2/lanes/usb2-2}>,
++			<&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-0}>,
+ 			<&{/xusb_padctl@3520000/pads/usb3/lanes/usb3-1}>;
+-		phy-names = "usb2-0", "usb2-1", "usb2-2", "usb3-1";
++		phy-names = "usb2-0", "usb2-1", "usb2-2", "usb3-0", "usb3-1";
+ 	};
+ #else
+ 	xhci@3530000 {
+ 		status = "okay";
+ 		phys = <&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(0)>,
+ 			<&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(1)>,
++			<&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(2)>,
++			<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(0)>,
+ 			<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(1)>;
+-		phy-names = "utmi-0", "utmi-1", "usb3-1";
++		phy-names = "utmi-0", "utmi-1", "utmi-2", "usb3-0", "usb3-1";
+ 		nvidia,boost_cpu_freq = <800>;
+ 	};
+ #endif
+@@ -204,6 +207,16 @@
+ 			usb3-0 {
+ 				nvidia,usb2-companion = <2>;
+ 			};
++			usb2-2 {
++				status = "okay";
++				mode = "host";
++				vbus-supply = <&battery_reg>;
++				nvidia,oc-pin = <1>;
++			};
++			usb3-0 {
++				nvidia,usb2-companion = <2>;
++				status = "okay";
++			};
+ 			usb3-1 {
+ 				nvidia,usb2-companion = <1>;
+ 				status = "okay";
+@@ -227,45 +240,64 @@
+ 		tegra_xusb_padctl_pinmux_default: pinmux {
+ 			/* Quill does not support usb3-micro AB */
+ 			usb2-micro-AB {
++				status = "okay";
+ 				nvidia,lanes = "otg-0";
+ 				nvidia,function = "xusb";
+ 				nvidia,port-cap = <TEGRA_PADCTL_PORT_OTG_CAP>;
+ 				nvidia,oc-pin = <0>;
+ 			};
+ 			usb2-std-A-port2 {
++				status = "okay";
+ 				nvidia,lanes = "otg-1";
+ 				nvidia,function = "xusb";
+ 				nvidia,port-cap = <TEGRA_PADCTL_PORT_HOST_ONLY>;
+ 				nvidia,oc-pin = <1>;
+ 			};
++			usb2-std-A-port3 {
++				status = "okay";
++				nvidia,lanes = "otg-2";
++				nvidia,function = "xusb";
++				nvidia,port-cap = <TEGRA_PADCTL_PORT_HOST_ONLY>;
++				nvidia,oc-pin = <1>;
++			};
++
+ 			usb3-std-A-port2 {
++				status = "okay";
+ 				nvidia,lanes = "usb3-1";
+ 				nvidia,port-cap = <TEGRA_PADCTL_PORT_HOST_ONLY>;
+ 				nvidia,oc-pin = <1>;
+ 			};
++			
++			usb3-std-A-port3 {
++				status = "okay";
++				nvidia,lanes = "usb3-0";
++				nvidia,port-cap = <TEGRA_PADCTL_PORT_HOST_ONLY>;
++				nvidia,oc-pin = <1>;
++			};
+ 
+-			e3325-usb3-std-A-HS {
++			/*e3325-usb3-std-A-HS {
+ 				nvidia,lanes = "otg-2";
+ 				nvidia,function = "xusb";
+ 				nvidia,port-cap = <TEGRA_PADCTL_PORT_HOST_ONLY>;
+-				status = "disabled";
++				//status = "disabled";
++				status = "okay";
+ 			};
+ 
+ 			e3325-usb3-std-A-SS {
+ 				nvidia,lanes = "usb3-0";
+ 				nvidia,port-cap = <TEGRA_PADCTL_PORT_HOST_ONLY>;
+ 				status = "disabled";
+-			};
++			};*/
+ 		};
+ 	};
+ 	pcie-controller@10003000 {
+ 		status = "okay";
+ 		pci@1,0 {
+-			nvidia,num-lanes = <2>;
++			nvidia,num-lanes = <4>;
+ 			status = "okay";
+ 		};
+ 		pci@2,0 {
+-			nvidia,num-lanes = <1>;
++			nvidia,num-lanes = <0>;
+ 			status = "disabled";
+ 		};
+ 		pci@3,0 {
+@@ -332,6 +364,42 @@
+ 	tegra_udrm: tegra_udrm {
+ 		compatible = "nvidia,tegra-udrm";
+ 	};
++
++	fixed-regulators {
++		vdd_fan: regulator@13 {
++			status = "okay";
++			compatible = "pwm-fan";
++			gpio = <&tegra_main_gpio TEGRA_MAIN_GPIO(J, 6) GPIO_ACTIVE_LOW>;  
++		};
++	};
++
++	pwm_fan_shared_data: pfsd {
++		status = "okay";
++		num_resources = <0>;
++		secret = <47>;
++		active_steps = <10>;
++		active_rpm = <0 1000 2000 3000 4000 5000 6000 7000 10000 11000>;
++		rpm_diff_tolerance = <2>;
++		active_rru = <40 2 1 1 1 1 1 1 1 1>;
++		active_rrd = <40 2 1 1 1 1 1 1 1 1>;
++		state_cap_lookup = <2 2 2 2 3 3 3 4 4 4>;
++		pwm_period = <45334>;
++		pwm_id = <3>;
++		step_time = <100>; 
++		state_cap = <7>;
++		active_pwm_max = <256>;
++		tach_period = <1000>;
++		pwm_gpio = <&tegra_main_gpio TEGRA_MAIN_GPIO(J, 6) GPIO_ACTIVE_LOW>;
++	};
++	pwm-fan {
++		status = "okay";
++		compatible = "pwm-fan";
++		#pwm-cells = <1>;
++		pwms = <&tegra_pwm4 0 45334>;
++		shared_data = <&pwm_fan_shared_data>;
++		active_pwm = <0 80 120 160 255 255 255 255 255 255>;
++	};
++
+ };
+ 
+ #if LINUX_VERSION >= 414
+diff -Naur hardware.orig/nvidia/platform/t18x/quill/kernel-dts/tegra186-quill-p3310-1000-c03-00-base.dts hardware/nvidia/platform/t18x/quill/kernel-dts/tegra186-quill-p3310-1000-c03-00-base.dts
+--- hardware.orig/nvidia/platform/t18x/quill/kernel-dts/tegra186-quill-p3310-1000-c03-00-base.dts	2019-11-05 16:26:55.000000000 -0500
++++ hardware/nvidia/platform/t18x/quill/kernel-dts/tegra186-quill-p3310-1000-c03-00-base.dts	2019-11-22 19:41:57.672353686 -0500
+@@ -111,7 +111,7 @@
+ 
+ 	pcie-controller@10003000 {
+ 		pci@1,0 {
+-			nvidia,num-lanes = <4>;
++			nvidia,num-lanes = <2>;
+ 			nvidia,disable-clock-request;
+ 		};
+ 		pci@2,0 {
+@@ -123,17 +123,31 @@
+ 	};
+ 
+         xhci@3530000 {
++		status = "okay";
+ 		phys = <&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(0)>,
+ 			<&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(1)>,
+-			<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(0)>;
+-		phy-names = "utmi-0", "utmi-1", "usb3-0";
++			<&tegra_xusb_padctl TEGRA_PADCTL_PHY_UTMI_P(2)>,
++			<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(0)>,
++			<&tegra_xusb_padctl TEGRA_PADCTL_PHY_USB3_P(1)>;
++		phy-names = "utmi-0", "utmi-1", "utmi-2", "usb3-0", "usb3-1";
+ 	};
+ 
+ 	pinctrl@3520000 {
+ 		pinmux {
+-			usb3-std-A-port2 {
+-				nvidia,lanes = "usb3-0";
++			usb2-std-A-port2 {
++				nvidia,lanes = "otg-1";
++				nvidia,port-cap = <TEGRA_PADCTL_PORT_HOST_ONLY>;
++				status = "okay";
++				
+ 			};
++			usb2-std-A-port3 {
++				nvidia,lanes = "otg-2";
++				nvidia,port-cap = <TEGRA_PADCTL_PORT_HOST_ONLY>;
++				status = "okay";
++			};
++			/*usb3-std-A-port2 {
++				nvidia,lanes = "usb3-1";
++			};*/
+ 		};
+ 	};
+ 
