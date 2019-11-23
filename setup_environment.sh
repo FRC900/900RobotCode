@@ -92,11 +92,10 @@ git clone https://github.com/leethomason/tinyxml2.git
 cd tinyxml2
 mkdir build
 cd build
-cmake ..
-make -j4
-sudo make install
+cmake -GNinja ..
+sudo ninja install
 cd ../..
-rm -rf tinyxml2
+sudo rm -rf tinyxml2
 
 #install zed sdk
 zed_fn="jetson_jp42"
