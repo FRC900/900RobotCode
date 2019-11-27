@@ -118,9 +118,9 @@ void TrackedObject::adjustPosition(const Mat &transform_mat, float depth, const 
 		pos_mat.at<double>(0,0) = screen_pos.x;
 		pos_mat.at<double>(0,1) = screen_pos.y;
 		pos_mat.at<double>(0,2) = 1.0;
-		Mat new_screen_pos_mat = transform_mat * pos_mat;
-		Point new_screen_pos(new_screen_pos_mat.at<double>(0),new_screen_pos_mat.at<double>(1));
-		Rect new_screen_rect(new_screen_pos.x,new_screen_pos.y,0,0);
+		new_screen_pos_mat = transform_mat * pos_mat;
+		new_screen_pos = Point(new_screen_pos_mat.at<double>(0),new_screen_pos_mat.at<double>(1));
+		new_screen_rect = Rect(new_screen_pos.x,new_screen_pos.y,0,0);
 		*it = type_.screenToWorldCoords(new_screen_rect, depth, fov_size, frame_size, cameraElevation_);
 	}
 }
@@ -362,7 +362,7 @@ void TrackedObjectList::processDetect(const vector<Rect> &detectedRects,
 {
 	vector<Point3f> detectedPositions;
 #ifdef VERBOSE_TRACK
-	if (detectedRects.size() || list_.size())
+	if (!detectedRects.empty() || !list_.empty())
 		cout << "---------- Start of process detect --------------" << endl;
 	print();
 	if (detectedRects.size() > 0)
@@ -381,7 +381,7 @@ void TrackedObjectList::processDetect(const vector<Rect> &detectedRects,
 	// Maps tracks to the closest new detected object.
 	// assignment[track] = index of closest detection
 	vector<int> assignment;
-	if (list_.size())
+	if (!list_.empty())
 	{
 		const size_t tracks = list_.size();		          // number of tracked objects from prev frames
 		const size_t detections = detectedPositions.size(); // number of detections this frame
@@ -498,7 +498,7 @@ void TrackedObjectList::processDetect(const vector<Rect> &detectedRects,
 	}
 #ifdef VERBOSE_TRACK
 	print();
-	if (detectedRects.size() || list_.size())
+	if (!detectedRects.empty() || !list_.empty())
 		cout << "---------- End of process detect --------------" << endl;
 #endif
 }
