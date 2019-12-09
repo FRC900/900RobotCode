@@ -4,7 +4,6 @@
 #include <panel_intake_controller/PanelIntakeSrv.h>
 #include <behaviors/PlaceAction.h>
 #include <behaviors/ElevatorAction.h>
-#include <behaviors/ElevatorAction.h>
 #include <thread>
 #include <geometry_msgs/Twist.h>
 #include <atomic>
