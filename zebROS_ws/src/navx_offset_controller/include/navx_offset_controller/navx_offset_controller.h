@@ -3,13 +3,10 @@
 
 
 #include <ros/ros.h>
-#include <vector>
 #include <hardware_interface/joint_state_interface.h> //manages joints that aren't talons
 #include <hardware_interface/joint_command_interface.h>
 #include <realtime_tools/realtime_buffer.h> //code for realtime buffer (stops multiple things from writing/reading same variable at the same time)
-#include <boost/shared_ptr.hpp>
 #include <controller_interface/controller.h> //manages controllers
-#include <atomic>
 #include <pluginlib/class_list_macros.h> //needed to compile as a controller
 
 #include <navx_offset_controller/NavXSrv.h>

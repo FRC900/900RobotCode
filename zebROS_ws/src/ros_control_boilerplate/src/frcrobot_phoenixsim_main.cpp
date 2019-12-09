@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 	spinner.start();
 
 	// Create the hardware interface specific to your robot
-	boost::shared_ptr<frcrobot_control::FRCRobotPhoenixSimInterface> frcrobot_phoenixsim_interface
+	std::shared_ptr<frcrobot_control::FRCRobotPhoenixSimInterface> frcrobot_phoenixsim_interface
 		(new frcrobot_control::FRCRobotPhoenixSimInterface(nh));
 	frcrobot_phoenixsim_interface->init();
 

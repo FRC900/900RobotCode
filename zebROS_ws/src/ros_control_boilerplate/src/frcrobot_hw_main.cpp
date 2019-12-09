@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 	spinner.start();
 
 	// Create the hardware interface specific to your robot
-	boost::shared_ptr<frcrobot_control::FRCRobotHWInterface> frcrobot_hw_interface
+	std::shared_ptr<frcrobot_control::FRCRobotHWInterface> frcrobot_hw_interface
 	(new frcrobot_control::FRCRobotHWInterface(nh));
 	frcrobot_hw_interface->init();
 

@@ -3,7 +3,6 @@
 
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_publisher.h>
-#include <boost/shared_ptr.hpp>
 #include <frc_interfaces/match_data_interface.h>
 #include "frc_msgs/MatchSpecificData.h"
 
@@ -24,7 +23,7 @@ class MatchStateController: public controller_interface::Controller<hardware_int
 
 	private:
 		hardware_interface::MatchStateHandle match_state_;
-		boost::shared_ptr<realtime_tools::RealtimePublisher<frc_msgs::MatchSpecificData> > realtime_pub_;
+		std::shared_ptr<realtime_tools::RealtimePublisher<frc_msgs::MatchSpecificData> > realtime_pub_;
 		ros::Time last_publish_time_;
 		double publish_rate_;
 

@@ -239,11 +239,11 @@ class TalonSwerveDriveController
 		realtime_tools::RealtimeBuffer<int> slot_;
 
 		/// Publish executed commands
-		boost::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped> > cmd_vel_pub_;
+		std::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped> > cmd_vel_pub_;
 
 		//Odometry related:
-		//boost::shared_ptr<realtime_tools::RealtimePublisher<nav_msgs::Odometry> > odom_pub_;
-		//boost::shared_ptr<realtime_tools::RealtimePublisher<tf::tfMessage> > tf_odom_pub_;
+		//std::shared_ptr<realtime_tools::RealtimePublisher<nav_msgs::Odometry> > odom_pub_;
+		//std::shared_ptr<realtime_tools::RealtimePublisher<tf::tfMessage> > tf_odom_pub_;
 		//Odometry odometry_;
 
 		/// Wheel radius (assuming it's the same for the left and right wheels):
