@@ -28,7 +28,6 @@ add_message_files (
   AutoModeStatus.msg
 )
 
-
 add_service_files (
   FILES
   set_limit_switch.srv
@@ -133,9 +132,11 @@ if ("${ARM_PREFIX}" STREQUAL "arm-frc2019-linux-gnueabi")
 	set (PLATFORM_SPECIFIC_LIBS
 		${WPI_SHARED_LIB_DIR}/libcameraserverd.so
 		${WPI_SHARED_LIB_DIR}/libntcored.so
-		${WPI_SHARED_LIB_DIR}/libvisa.so
 		${WPI_SHARED_LIB_DIR}/libwpilibcd.so
 		${WPI_SHARED_LIB_DIR}/libcscored.so
+		${WPI_SHARED_LIB_DIR}/libwpiHald.so
+		${WPI_SHARED_LIB_DIR}/libwpiutild.so
+		${WPI_SHARED_LIB_DIR}/libvisa.so
 		${WPI_SHARED_LIB_DIR}/libFRC_NetworkCommunication.so.19.0.0
 		${WPI_SHARED_LIB_DIR}/libNiFpga.so.18.0.0
 		${WPI_SHARED_LIB_DIR}/libNiFpgaLv.so.18.0.0
@@ -159,8 +160,6 @@ if ("${ARM_PREFIX}" STREQUAL "arm-frc2019-linux-gnueabi")
 		${WPI_SHARED_LIB_DIR}/libopencv_shaped.so.3.4
 		${WPI_SHARED_LIB_DIR}/libopencv_imgcodecsd.so.3.4
 		${WPI_SHARED_LIB_DIR}/libopencv_stitchingd.so.3.4
-		${WPI_SHARED_LIB_DIR}/libwpiHald.so
-		${WPI_SHARED_LIB_DIR}/libwpiutild.so
 		${WPI_SYSROOT}/lib/navx/linux/athena/static/libnavx_frc.a
 	)
 elseif ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") # Jetson TK1
