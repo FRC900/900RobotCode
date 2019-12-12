@@ -275,22 +275,22 @@ find /home/ubuntu/devsite.ctr-electronics.com -name \*linux\*zip | xargs -n 1 un
 rm -rf /home/ubuntu/devsite.ctr-electronics.com 
 
 cd /home/ubuntu 
-wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.366/navx-cpp-3.1.366-headers.zip 
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.399/navx-cpp-3.1.399-headers.zip 
 mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
 cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
-unzip -o /home/ubuntu/navx-cpp-3.1.366-headers.zip 
-rm /home/ubuntu/navx-cpp-3.1.366-headers.zip 
+unzip -o /home/ubuntu/navx-cpp-3.1.399-headers.zip 
+rm /home/ubuntu/navx-cpp-3.1.399-headers.zip 
 cd /home/ubuntu 
-wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.366/navx-cpp-3.1.366-linuxathena.zip 
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.399/navx-cpp-3.1.399-linuxathena.zip 
 mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
 cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
-unzip -o /home/ubuntu/navx-cpp-3.1.366-linuxathena.zip 
-rm /home/ubuntu/navx-cpp-3.1.366-linuxathena.zip 
+unzip -o /home/ubuntu/navx-cpp-3.1.399-linuxathena.zip 
+rm /home/ubuntu/navx-cpp-3.1.399-linuxathena.zip 
 cd /home/ubuntu 
-wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.366/navx-cpp-3.1.366-linuxathenastatic.zip 
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.399/navx-cpp-3.1.399-linuxathenastatic.zip 
 cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
-unzip -o /home/ubuntu/navx-cpp-3.1.366-linuxathenastatic.zip 
-rm /home/ubuntu/navx-cpp-3.1.366-linuxathenastatic.zip 
+unzip -o /home/ubuntu/navx-cpp-3.1.399-linuxathenastatic.zip 
+rm /home/ubuntu/navx-cpp-3.1.399-linuxathenastatic.zip 
 
 # Install wpilib headers by copying them from the local maven dir
 cd /home/ubuntu 
