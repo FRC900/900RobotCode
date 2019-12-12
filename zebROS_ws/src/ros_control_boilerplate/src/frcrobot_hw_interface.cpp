@@ -1588,7 +1588,6 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		if (!talon_command_[joint_id].try_lock())
 			continue;
 
-
 		custom_profile_write(joint_id);
 
 		//TODO : skip over most or all of this if the talon is in follower mode
@@ -1627,6 +1626,39 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		// used variables
 		auto &ts = talon_state_[joint_id];
 		auto &tc = talon_command_[joint_id];
+
+		// If the motor controller has been reset since the last write()
+		// call, reset all of the flags indicating that commands have been
+		// written to the controllers. This will force the config data
+		// to be re-written by the rest of the write() function
+		if (victor->HasResetOccurred())
+		{
+			for (size_t i = 0; i < hardware_interface::TALON_PIDF_SLOTS; i++)
+				tc.resetPIDF(i);
+			tc.resetAuxPidPolarity();
+			tc.resetIntegralAccumulator();
+			tc.resetMode();
+			tc.resetDemand1();
+			tc.resetPidfSlot();
+			tc.resetEncoderFeedback();
+			tc.resetRemoteEncoderFeedback();
+			tc.resetRemoteFeedbackFilters();
+			tc.resetSensorTerms();
+			tc.resetOutputShaping();
+			tc.resetVoltageCompensation();
+			tc.resetVelocityMeasurement();
+			tc.resetSensorPosition();
+			tc.resetLimitSwitchesSource();
+			tc.resetRemoteLimitSwitchesSource();
+			tc.resetSoftLimit();
+			tc.resetCurrentLimit();
+			tc.resetMotionCruise();
+			for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
+				tc.resetStatusFramePeriod(static_cast<hardware_interface::StatusFrame>(i));
+			for (int i = hardware_interface::Control_3_General; i < hardware_interface::Control_Last; i++)
+				tc.resetControlFramePeriod(static_cast<hardware_interface::ControlFrame>(i));
+			tc.resetMotionProfileTrajectoryPeriod();
+		}
 
 		bool enable_read_thread;
 		if (tc.enableReadThreadChanged(enable_read_thread))
