@@ -775,6 +775,8 @@ void FRCRobotHWInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::mot
 			reverse_limit_switch = sensor_collection.IsRevLimitSwitchClosed();
 		}
 
+		const int firmware_version = victor->GetFirmwareVersion();
+
 		// Actually update the TalonHWState shared between
 		// this thread and read()
 		// Do this all at once so the code minimizes the amount
@@ -842,6 +844,8 @@ void FRCRobotHWInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::mot
 				state->setForwardLimitSwitch(forward_limit_switch);
 				state->setReverseLimitSwitch(reverse_limit_switch);
 			}
+
+			state->setFirmwareVersion(firmware_version);
 		}
 		tracer->stop();
 		ROS_INFO_STREAM_THROTTLE(60, tracer->report());
@@ -1216,6 +1220,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			ts.setForwardSoftlimitHit(trts->getForwardSoftlimitHit());
 			ts.setReverseSoftlimitHit(trts->getReverseSoftlimitHit());
 			ts.setStickyFaults(trts->getStickyFaults());
+			ts.setFirmwareVersion(trts->getFirmwareVersion());
 		}
 	}
 

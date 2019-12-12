@@ -367,7 +367,10 @@ class TalonHWState
 			conversion_factor_(1.0),
 
 			// control of read thread
-			enable_read_thread_(true)
+			enable_read_thread_(true),
+
+			// motor controller firmware version
+			firmware_version_(-1)
 		{
 			status_frame_periods_[Status_1_General] = status_1_general_default;
 			status_frame_periods_[Status_2_Feedback0] = status_2_feedback0_default;
@@ -1325,6 +1328,16 @@ class TalonHWState
 			enable_read_thread_ = enable_read_thread;
 		}
 
+		void setFirmwareVersion(int firmware_version)
+		{
+			firmware_version_ = firmware_version;
+		}
+
+		int getFirmwareVersion(void) const
+		{
+			return firmware_version_;
+		}
+
 	private:
 		double setpoint_;
 		double position_;
@@ -1447,6 +1460,8 @@ class TalonHWState
 		double conversion_factor_;
 
 		bool enable_read_thread_;
+
+		int firmware_version_;
 };
 
 // Glue code to let this be registered in the list of

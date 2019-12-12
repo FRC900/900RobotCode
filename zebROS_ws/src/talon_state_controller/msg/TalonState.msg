@@ -153,5 +153,6 @@ string[]  faults
 string[]  sticky_faults
 float64[] conversion_factor
 talon_state_controller/CustomProfileStatus[] custom_profile_status
+string[]  firmware_version
 bool[]    water_game
 

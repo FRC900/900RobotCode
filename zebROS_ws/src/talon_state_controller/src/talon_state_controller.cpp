@@ -233,6 +233,7 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 		m.conversion_factor.push_back(0.0);
 		m.custom_profile_status.push_back(custom_profile_status_holder);
 
+		m.firmware_version.push_back("");
 		m.water_game.push_back(true);
 
 		talon_state_.push_back(hw->getHandle(joint_names[i]));
@@ -726,6 +727,15 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 				m.custom_profile_status[i] = custom_profile_status_holder;
 
 				m.conversion_factor[i] = ts->getConversionFactor();
+
+				int fw_ver = ts->getFirmwareVersion();
+
+				if (fw_ver >= 0)
+				{
+					char str[256];
+					sprintf(str, "2.2%d.%2.2d", (fw_ver >> 8) & 0xFF, fw_ver & 0xFF);
+					m.firmware_version[i] = str;
+				}
 			}
 			realtime_pub_->unlockAndPublish();
 		}
