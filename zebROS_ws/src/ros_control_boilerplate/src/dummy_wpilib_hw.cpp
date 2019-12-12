@@ -1,14 +1,10 @@
 #include <ctre/phoenix/platform/Platform.h>
 #include <ros/ros.h>
+#include <chrono>
 extern "C"
 {
 	static uint32_t GetPacketBaseTime() {
-		timespec t;
-		clock_gettime(CLOCK_MONOTONIC, &t);
-
-		// Convert t to milliseconds
-		uint64_t ms = t.tv_sec * 1000ull + t.tv_nsec / 1000000ull;
-		return ms & 0xFFFFFFFF;
+		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 	}
 
 	// This is the path for calls going through the new CANAPI.  Accesses
@@ -424,9 +420,7 @@ extern "C" {
 uint64_t HAL_GetFPGATime(int32_t* status)
 {
 	*status = 0;
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return ((uint64_t)tv.tv_sec * 1000000) + tv.tv_usec;
+	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
 HAL_Bool HAL_Initialize(int32_t, int32_t)

@@ -62,7 +62,7 @@ GenericHWControlLoop::GenericHWControlLoop(
 	rosparam_shortcuts::shutdownIfError(name_, error);
 
 	// Get current time for use with first update
-	clock_gettime(CLOCK_MONOTONIC, &last_time_);
+	last_time_ = std::chrono::steady_clock::now();
 
 	desired_update_period_ = ros::Duration(1.0 / loop_hz_);
 }
@@ -79,12 +79,11 @@ void GenericHWControlLoop::run(void)
 
 void GenericHWControlLoop::update(void)
 {
-	// Get change in time
-	clock_gettime(CLOCK_MONOTONIC, &current_time_);
-	elapsed_time_ =
-		ros::Duration((double)current_time_.tv_sec - (double)last_time_.tv_sec +
-				      ((double)current_time_.tv_nsec - (double)last_time_.tv_nsec) / BILLION);
-	last_time_ = current_time_;
+	// Get change in time in seconds
+	const auto current_time = std::chrono::steady_clock::now();
+	std::chrono::duration<double> elapsed_seconds = current_time - last_time_;
+	elapsed_time_ = ros::Duration(elapsed_seconds.count());
+	last_time_ = current_time;
 
 	// ROS_DEBUG_STREAM_THROTTLE_NAMED(1, "generic_hw_main","Sampled update loop with elapsed
 	// time " << elapsed_time_.toSec());

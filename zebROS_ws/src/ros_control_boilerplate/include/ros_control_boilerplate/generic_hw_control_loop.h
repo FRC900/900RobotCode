@@ -38,15 +38,12 @@
 */
 
 #pragma once
-#include <time.h>
+#include <chrono>
 #include <ros_control_boilerplate/frc_robot_interface.h>
 #include <ros_control_boilerplate/tracer.h>
 
 namespace ros_control_boilerplate
 {
-// Used to convert seconds elapsed to nanoseconds
-static const double BILLION = 1000000000.0;
-
 /**
  * \brief The control loop - repeatidly calls read() and write() to the hardware interface at a
  * specified frequency
@@ -88,8 +85,7 @@ class GenericHWControlLoop
 		// Timing
 		ros::Duration elapsed_time_;
 		double loop_hz_;
-		struct timespec last_time_;
-		struct timespec current_time_;
+		std::chrono::time_point<std::chrono::steady_clock> last_time_;
 
 		/** \brief Abstract Hardware Interface for your robot */
 		std::shared_ptr<ros_control_boilerplate::FRCRobotInterface> hardware_interface_;
