@@ -1003,6 +1003,8 @@ class TalonControllerInterface
 		{
 		}
 
+		virtual ~TalonControllerInterface() {}
+
 		// Standardize format for reading params for
 		// motor controller
 		virtual bool readParams(ros::NodeHandle &n, TalonCIParams &params)
