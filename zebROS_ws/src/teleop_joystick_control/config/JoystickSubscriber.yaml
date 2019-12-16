@@ -1,5 +1,0 @@
-joystick_params:
-    dead_zone: .1
-    slow_mode: .3
-    max_speed: 3.528
-    joystick_scale: 3
