@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-//#include <ros/console.h>
+
 using namespace std;
 using namespace Eigen;
 
@@ -51,7 +51,7 @@ array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
 	//ROS_WARN_STREAM("max rate r/s: " <<  multiplierSets_[rotationCenterID].maxRotRate_);
 	//ROS_INFO_STREAM("vel: " << velocityVector[0] << " " << velocityVector[1] << " rot: " << rotation);
 	speedsAndAngles = swerveMath_.wheelSpeedsAngles(mult_it->second.multipliers_, velocityVector, rotation, angle, norm);
-	for (int i = 0; i < WHEELCOUNT; i++)
+	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
 		//ROS_INFO_STREAM("PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
 		const double currpos = getWheelAngle(i, positionsNew[i]);
@@ -70,7 +70,7 @@ array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
 array<double, WHEELCOUNT> swerve::parkingAngles(const array<double, WHEELCOUNT> &positionsNew) const
 {
 	array<double, WHEELCOUNT> retAngles;
-	for (int i = 0; i < WHEELCOUNT; i++)
+	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
 		retAngles[i] = swerveMath_.parkingAngle_[i]; // TODO : find a way not to access member of swervemath here
 
@@ -111,14 +111,6 @@ void swerve::saveNewOffsets(bool /*useVals*/, array<double, WHEELCOUNT> /*newOff
 	}
 #endif
 }
-/*
-Vector2d calculateOdom()
-{
-
-//Steal code from steered wheel base
-
-}
-*/
 
 double swerve::getWheelAngle(int index, double pos) const
 {
@@ -128,7 +120,7 @@ double swerve::getWheelAngle(int index, double pos) const
 double swerve::furthestWheel(const Vector2d &centerOfRotation) const
 {
 	double maxD = 0;
-	for (int i = 0; i < WHEELCOUNT; i++)
+	for (size_t i = 0; i < WHEELCOUNT; i++)
 		maxD = std::max(maxD, hypot(wheelCoordinates_[i][0] - centerOfRotation[0], wheelCoordinates_[i][1] - centerOfRotation[1]));
 	return maxD;
 }

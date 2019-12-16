@@ -57,7 +57,6 @@ using ros::Time;
 using geometry_msgs::TwistConstPtr;
 using ros::Duration;
 
-const std::string talon_swerve_drive_controller::TalonSwerveDriveController::DEF_BASE_LINK = "base_link";
 const double talon_swerve_drive_controller::TalonSwerveDriveController::DEF_ODOM_PUB_FREQ = 100.;
 const bool talon_swerve_drive_controller::TalonSwerveDriveController::DEF_PUB_ODOM_TO_BASE = false;
 const std::string talon_swerve_drive_controller::TalonSwerveDriveController::DEF_ODOM_FRAME = "odom";
@@ -223,15 +222,6 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	        ROS_ERROR("Didn't read param num_profile_slots in talon_swerve");
 	*/
 	num_profile_slots_ = 20;
-
-	// Odometry related:
-	double publish_rate;
-	std::string base_link;
-	controller_nh.param("base_link", base_link, DEF_BASE_LINK);
-	controller_nh.param("publish_rate", publish_rate, 50.0);
-	ROS_INFO_STREAM_NAMED(name_, "Controller state will be published at "
-						  << publish_rate << "Hz.");
-	publish_period_ = ros::Duration(1.0 / publish_rate);
 
 	// Publish limited velocity:
 	controller_nh.param("publish_cmd", publish_cmd_, true);
@@ -491,12 +481,9 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 		odom_rigid_transf_.setIdentity();
 
 		wheel_pos_.resize(2, WHEELCOUNT);
-		//ROS_WARN("working h");
 		for (size_t i = 0; i < WHEELCOUNT; i++)
 		{
-			//ROS_INFO_STREAM("id: " << i << "pos" << wheel_coords_[i]);
 			wheel_pos_.col(i) = wheel_coords_[i];
-			//ROS_WARN("f1.test");
 		}
 
 		const Vector2d centroid = wheel_pos_.rowwise().mean();
@@ -549,39 +536,57 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	return true;
 }
 
-void TalonSwerveDriveController::compOdometry(const Time &time, const double inv_delta_t, const Commands command)
+void TalonSwerveDriveController::compOdometry(const Time &time, const double inv_delta_t, const std::array<double, WHEELCOUNT> &steer_angles)
 {
-	//ROS_INFO_STREAM("WORKS");
 	// Compute the rigid transform from wheel_pos_ to new_wheel_pos_.
 
-	/*std::array<double, WHEELCOUNT> steer_angles;
-	{
-		std::lock_guard<std::mutex> lock(steer_angles_mutex_);
-		steer_angles = steer_angles_;
-	}
+	// Use the encoder-reported wheel angle plus the difference between
+	// the previous and current wheel rotation to calculate motion for each
+	// wheel since the last odom value update.
+	// Add the movement of each wheel to the config-defined wheel coords
+	// From this, figure out a rigid body rotation and translation
+	// which best matches the difference in position of each of the wheels
 	for (size_t k = 0; k < WHEELCOUNT; k++)
 	{
+		// Read wheel rotation from encoder.  Subtract previous position
+		// to get the motion since the last odom update. Convert from rotation
+		// to linear distance using wheel radius and drive ratios
 		const double new_wheel_rot = speed_joints_[k].getPosition();
-		const double delta_rot = new_wheel_rot - last_wheel_rot_[k];
-		//int inverterD = (k%2==0) ? -1 : 1;
-		const double dist = -delta_rot * wheel_radius_ * driveRatios_.encodertoRotations; // * inverterD;
-		//NOTE: below is a hack, TODO: REMOVE
+		const double delta_rot     = new_wheel_rot - last_wheel_rot_[k];
+		const double dist          = delta_rot * wheel_radius_ * driveRatios_.encodertoRotations;
 
+		// Get the offset-corrected steering angle
 		const double steer_angle = swerveC_->getWheelAngle(k, steer_angles[k]);
-		const Eigen::Vector2d delta_pos = { -dist * sin(steer_angle), dist * cos(steer_angle)};
+
+		// delta_pos of the wheel in x,y - decompose vector into x&y components
+		const Eigen::Vector2d delta_pos = {dist * cos(steer_angle), dist * sin(steer_angle)};
+
+		// new_wheel_pos is constructed to hold x,y position given the assumption
+		// that the robot started with each wheel at the wheel_coords_ position
+		// Since we're just measuring a change in position, the initial position
+		// is arbitrary just as long as it is a valid wheel position shape.
+		// Note this is actually built as a transpose of the shape of wheel_coords
+		// to simplyify the math later
 		new_wheel_pos_(k, 0) = wheel_coords_[k][0] + delta_pos[0];
 		new_wheel_pos_(k, 1) = wheel_coords_[k][1] + delta_pos[1];
+#if 0
+		ROS_INFO_STREAM("steer_angle = " << steer_angle << " dist = " << dist << " delta_pos = " << delta_pos);
+		ROS_INFO_STREAM("x from " <<  wheel_coords_[k][0] << " to " << new_wheel_pos_(k, 0));
+		ROS_INFO_STREAM("y from " <<  wheel_coords_[k][1] << " to " << new_wheel_pos_(k, 1));
+#endif
 
-		//ROS_INFO_STREAM("id: " << k << " delta: " << delta_pos << " steer: " << steer_angle << " dist: " << dist);
+		// Save the previous wheel rotation to use next time odom is run
 		last_wheel_rot_[k] = new_wheel_rot;
 	}
 
-	const Eigen::RowVector2d new_wheel_centroid =
-		new_wheel_pos_.colwise().mean();
+	// http://nghiaho.com/?page_id=671, but that page talks about 3d transform where
+	//    are just looking for a 2d one (assumine the robot stays on the ground, not
+	//    that we can measure if it doesn't...)
+	// Also, https://igl.ethz.ch/projects/ARAP/svd_rot.pdf
+	// Find the translation+rotation that produces the least square error
+	// between (prev pos + transform) and current measured position
+	const Eigen::RowVector2d new_wheel_centroid = new_wheel_pos_.colwise().mean();
 	new_wheel_pos_.rowwise() -= new_wheel_centroid;
-
-	//ROS_INFO_STREAM("rows: " << wheel_pos_.rows() << " cols: " << wheel_pos_.cols());
-	//ROS_INFO_STREAM("neg wheel centroid" << neg_wheel_centroid_ << " new centroid: " << new_wheel_centroid);
 
 	const Matrix2d h = wheel_pos_ * new_wheel_pos_;
 	const Eigen::JacobiSVD<Matrix2d> svd(h, Eigen::ComputeFullU | Eigen::ComputeFullV);
@@ -590,24 +595,23 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 		rot.col(1) *= -1;
 
 	odom_rigid_transf_.matrix().block(0, 0, 2, 2) = rot;
-	odom_rigid_transf_.translation() =
-		rot * neg_wheel_centroid_ + new_wheel_centroid.transpose();
+	odom_rigid_transf_.translation() = rot * neg_wheel_centroid_ + new_wheel_centroid.transpose();
 	odom_to_base_ = odom_to_base_ * odom_rigid_transf_;
 
 	const double odom_x = odom_to_base_.translation().x();
 	const double odom_y = odom_to_base_.translation().y();
 	const double odom_yaw = atan2(odom_to_base_(1, 0), odom_to_base_(0, 0));
 
-	bool orientation_comped = false;
 
-	//ROS_INFO_STREAM("odom_x: " << odom_x << " odom_y: " << odom_y << " odom_yaw: " << odom_yaw);*/
+	//ROS_INFO_STREAM("odom_x: " << odom_x << " odom_y: " << odom_y << " odom_yaw: " << odom_yaw);
 	// Publish the odometry.
 	//TODO CHECK THIS PUB
 
 	geometry_msgs::Quaternion orientation;
+	bool orientation_comped = false;
 
 	// tf
-	/*if (pub_odom_to_base_ && time - last_odom_tf_pub_time_ >= odom_pub_period_ &&
+	if (pub_odom_to_base_ && time - last_odom_tf_pub_time_ >= odom_pub_period_ &&
 			odom_tf_pub_.trylock())
 	{
 		orientation = tf::createQuaternionMsgFromYaw(odom_yaw);
@@ -621,13 +625,13 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 		odom_tf_trans.transform.rotation = orientation;
 		ROS_INFO_STREAM(odom_x);
 		odom_tf_pub_.unlockAndPublish();
-		last_odom_tf_pub_time_ = time;
-	}*/
+		last_odom_tf_pub_time_ += odom_pub_period_;
+	}
 
 	// odom
 	if (time - last_odom_pub_time_ >= odom_pub_period_ && odom_pub_.trylock())
 	{
-		/*if (!orientation_comped)
+		if (!orientation_comped)
 			orientation = tf::createQuaternionMsgFromYaw(odom_yaw);
 
 		odom_pub_.msg_.header.stamp = time;
@@ -640,48 +644,18 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 		odom_pub_.msg_.twist.twist.linear.y =
 			odom_rigid_transf_.translation().y() * inv_delta_t;
 		odom_pub_.msg_.twist.twist.angular.z =
-			atan2(odom_rigid_transf_(1, 0), odom_rigid_transf_(0, 0)) * inv_delta_t;*/
-
-		nav_msgs::Odometry odom_msg;
-		//double delta_t = 1/inv_delta_t;
-		double delta_t = (time - last_odom_pub_time_).toSec();
-		static double odom_yaw = 0;
-		odom_yaw += command.ang * delta_t;
-		orientation = tf::createQuaternionMsgFromYaw(odom_yaw);
-
-		//first, we'll publish the transform over tf
-		geometry_msgs::TransformStamped odom_trans;
-		odom_trans.header.stamp = time;
-		odom_trans.header.frame_id = "odom";
-		odom_trans.child_frame_id = "base_link";
-
-		odom_trans.transform.translation.x += command.lin[0] * delta_t;
-		odom_trans.transform.translation.y += command.lin[1] * delta_t;
-		odom_trans.transform.translation.z = 0.0;
-		odom_trans.transform.rotation = orientation;
-
-		//send the transform
-		odom_tf_.sendTransform(odom_trans);
-
-		//then, publish the odometry message
-		odom_pub_.msg_.header.stamp = time;
-		odom_pub_.msg_.pose.pose.position.x += command.lin[0] * delta_t;
-		odom_pub_.msg_.pose.pose.position.y += command.lin[1] * delta_t;
-		odom_pub_.msg_.pose.pose.orientation = orientation;
-		odom_pub_.msg_.twist.twist.linear.x = command.lin[0];
-		odom_pub_.msg_.twist.twist.linear.y = command.lin[1];
-		odom_pub_.msg_.twist.twist.angular.x = command.ang;
+			atan2(odom_rigid_transf_(1, 0), odom_rigid_transf_(0, 0)) * inv_delta_t;
 
 		odom_pub_.unlockAndPublish();
 
-		last_odom_pub_time_ = time;
+		last_odom_pub_time_ += odom_pub_period_;
 	}
 }
 
 void TalonSwerveDriveController::update(const ros::Time &time, const ros::Duration &period)
 {
 	const double delta_t = period.toSec();
-	const double inv_delta_t = 1 / delta_t;
+	const double inv_delta_t = 1.0 / delta_t;
 
 	// Grab current steering angle, store it
 	// for other code to use
@@ -695,69 +669,8 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		steer_angles_ = steer_angles;
 	}
 
-#if 0
-	if (comp_odom_) compOdometry(time, inv_delta_t);
-#endif
+	if (comp_odom_) compOdometry(time, inv_delta_t, steer_angles);
 
-	/*
-	// COMPUTE AND PUBLISH ODOMETRY
-	if (open_loop_)
-	{
-	  odometry_.updateOpenLoop(last0_cmd_.lin, last0_cmd_.ang, time);
-	}
-	else
-	{
-	  double left_pos  = 0.0;
-	  double right_pos = 0.0;
-	  for (size_t i = 0; i < wheel_joints_size_; ++i)
-	  {
-	    const double lp = speed_joints_[i].getPosition();
-	    const double rp = steering_joints_[i].getPosition();
-	    if (std::isnan(lp) || std::isnan(rp))
-	      return;
-
-	    left_pos  += lp;
-	    right_pos += rp;
-	  }
-	  left_pos  /= wheel_joints_size_;
-	  right_pos /= wheel_joints_size_;
-
-	  // Estimate linear and angular velocity using joint information
-	  odometry_.update(left_pos, right_pos, time);
-	}
-
-	// Publish odometry message
-	if (last_state_publish_time_ + publish_period_ < time)
-	{
-	  last_state_publish_time_ += publish_period_;
-	  // Compute and store orientation info
-	  const geometry_msgs::Quaternion orientation(
-	        tf::createQuaternionMsgFromYaw(odometry_.getHeading()));
-
-	  // Populate odom message and publish
-	  if (odom_pub_->trylock())
-	  {
-	    odom_pub_->msg_.header.stamp = time;
-	    odom_pub_->msg_.pose.pose.position.x = odometry_.getX();
-	    odom_pub_->msg_.pose.pose.position.y = odometry_.getY();
-	    odom_pub_->msg_.pose.pose.orientation = orientation;
-	    odom_pub_->msg_.twist.twist.linear.x  = odometry_.getLinear();
-	    odom_pub_->msg_.twist.twist.angular.z = odometry_.getAngular();
-	    odom_pub_->unlockAndPublish();
-	  }
-
-	  // Publish tf /odom frame
-	  if (enable_odom_tf_ && tf_odom_pub_->trylock())
-	  {
-	    geometry_msgs::TransformStamped& odom_frame = tf_odom_pub_->msg_.transforms[0];
-	    odom_frame.header.stamp = time;
-	    odom_frame.transform.translation.x = odometry_.getX();
-	    odom_frame.transform.translation.y = odometry_.getY();
-	    odom_frame.transform.rotation = orientation;
-	    tf_odom_pub_->unlockAndPublish();
-	  }
-	}
-	*/
 	// MOVE ROBOT
 	// Retreive current velocity command and time step:
 
@@ -918,8 +831,6 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		const double dt = (time - curr_cmd.stamp).toSec();
 		const bool dont_set_angle_mode = dont_set_angle_mode_.load(std::memory_order_relaxed);
 
-		if (comp_odom_) compOdometry(time, inv_delta_t, curr_cmd);
-
 		//ROS_INFO_STREAM("ang_vel_tar: " << curr_cmd.ang << " lin_vel_tar: " << curr_cmd.lin);
 
 		// Brake if cmd_vel has timeout:
@@ -930,7 +841,6 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		}
 
 		static std::array<Vector2d, WHEELCOUNT> speeds_angles;
-		static double time_before_brake = 0;
 
 		for (size_t i = 0; i < wheel_joints_size_; ++i)
 		{
@@ -951,13 +861,13 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 
 		}
 		static double brake_last = ros::Time::now().toSec();
+		static double time_before_brake = 0;
 		if (fabs(curr_cmd.lin[0]) <= 1e-6 && fabs(curr_cmd.lin[1]) <= 1e-6 && fabs(curr_cmd.ang) <= 1e-6)
 		{
 			brake_last = ros::Time::now().toSec();
 
 			for (size_t i = 0; i < wheel_joints_size_; ++i)
 			{
-				//ROS_INFO_STREAM("id:" << i << " speed: " <<speeds_angles[i][0]);
 				speed_joints_[i].setCommand(0);
 				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
 			}
@@ -997,11 +907,9 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 
 		speeds_angles = swerveC_->motorOutputs(curr_cmd.lin, curr_cmd.ang, M_PI / 2.0, steer_angles, true, *(center_of_rotation_.readFromRT()));
 
-		// Set wheels velocities:
+		// Set wheel steering angles, as long as dont_set_angle_mode is false
 		for (size_t i = 0; !dont_set_angle_mode && (i < wheel_joints_size_); ++i)
 		{
-			//ROS_INFO_STREAM("id:" << i << " speed: " <<speeds_angles[i][0]);
-
 			steering_joints_[i].setCommand(speeds_angles[i][1]);
 		}
 
@@ -1142,7 +1050,6 @@ void TalonSwerveDriveController::cmdVelCallback(const geometry_msgs::Twist &comm
 		}
 
 		//These below are some simple bounds checks on the cmd vel input so we don't make dumb mistakes. (like try to get the swerve drive to fly away)
-		//Those counters exist to reduce spam somewhat
 		if (command.linear.z != 0)
 		{
 			ROS_ERROR_THROTTLE(1.0, "Rotors not up to speed!");

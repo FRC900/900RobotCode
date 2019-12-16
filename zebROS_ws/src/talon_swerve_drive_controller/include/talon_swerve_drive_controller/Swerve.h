@@ -63,9 +63,8 @@ struct driveModel
 }; //more info should be added to this struct
 }
 
-#define WHEELCOUNT 4
-
 // TODO : remove WHEELCOUNT, use vectors
+
 class swerve
 {
 	public:
@@ -86,10 +85,6 @@ class swerve
 
 		void saveNewOffsets(bool useVals, std::array<double, WHEELCOUNT> newOffsets, std::array<double, WHEELCOUNT> newPosition); //should these be doubles?
 		//Note that unless you pass vals in and set useVals to true, it will use the current wheel positions, wheels should be pointing to the right.
-		//Eigen::Vector2d currentOdom;
-		//Eigen::Vector2d calculateOdom(); //might be some associated private variables
-		//Probably should be called every
-		//
 
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinates_;
 		swerveDriveMath swerveMath_; //this should be public

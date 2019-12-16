@@ -127,10 +127,6 @@ class TalonSwerveDriveController
 
 		std::string name_;
 
-		/// Odometry related:
-		ros::Duration publish_period_;
-		ros::Time last_state_publish_time_;
-
 		std::shared_ptr<swerve> swerveC_;
 
 		/// Hardware handles:
@@ -151,7 +147,7 @@ class TalonSwerveDriveController
 			}), ang(0.0), stamp(0.0) {}
 		};
 
-		void compOdometry(const ros::Time &time, const double inv_delta_t, const Commands command);
+		void compOdometry(const ros::Time &time, const double inv_delta_t, const std::array<double, WHEELCOUNT> &steer_angles);
 
 		struct cmd_points
 		{
@@ -240,11 +236,6 @@ class TalonSwerveDriveController
 
 		/// Publish executed commands
 		std::shared_ptr<realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped> > cmd_vel_pub_;
-
-		//Odometry related:
-		//std::shared_ptr<realtime_tools::RealtimePublisher<nav_msgs::Odometry> > odom_pub_;
-		//std::shared_ptr<realtime_tools::RealtimePublisher<tf::tfMessage> > tf_odom_pub_;
-		//Odometry odometry_;
 
 		/// Wheel radius (assuming it's the same for the left and right wheels):
 		double wheel_radius_;
@@ -340,23 +331,6 @@ class TalonSwerveDriveController
 		/*
 		void setOdomPubFields(ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
 		*/
-
-		static const std::string DEF_BASE_LINK;
-		static const double DEF_CMD_VEL_TIMEOUT;
-
-		static const double DEF_LIN_SPEED_LIMIT;
-		static const double DEF_LIN_ACCEL_LIMIT;
-		static const double DEF_LIN_DECEL_LIMIT;
-
-		static const double DEF_YAW_SPEED_LIMIT;
-		static const double DEF_YAW_ACCEL_LIMIT;
-		static const double DEF_YAW_DECEL_LIMIT;
-
-		static const double DEF_FULL_AXLE_SPEED_ANG;
-		static const double DEF_ZERO_AXLE_SPEED_ANG;
-
-		static const double DEF_WHEEL_DIA_SCALE;
-
 		static const double DEF_ODOM_PUB_FREQ;
 		static const bool DEF_PUB_ODOM_TO_BASE;
 		static const std::string DEF_ODOM_FRAME;
@@ -367,8 +341,6 @@ class TalonSwerveDriveController
 		static const double DEF_SD;
 
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheel_coords_;
-
-//		static const Eigen::Vector2d X_DIR;
 
 		bool pub_odom_to_base_;       // Publish the odometry to base frame transform
 		ros::Duration odom_pub_period_;    // Odometry publishing period

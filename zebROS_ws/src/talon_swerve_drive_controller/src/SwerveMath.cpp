@@ -17,7 +17,7 @@ array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelMultipliersXY(const Eig
 {
 	array<double, WHEELCOUNT> wheelAngles;
 	array<double, WHEELCOUNT> wheelMultipliers;
-	for (int i = 0; i < WHEELCOUNT; i++) //increment for each wheel
+	for (size_t i = 0; i < WHEELCOUNT; i++) //increment for each wheel
 	{
 		const double x = wheelCoordinate_[i][0] - rotationCenter[0];
 		const double y = wheelCoordinate_[i][1] - rotationCenter[1];
@@ -26,7 +26,7 @@ array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelMultipliersXY(const Eig
 	}
 	normalize(wheelMultipliers, true);
 	array<Eigen::Vector2d, WHEELCOUNT> multipliersXY;
-	for (int i = 0; i < WHEELCOUNT; i++)
+	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
 		multipliersXY[i][0] = wheelMultipliers[i] * cos(wheelAngles[i]);
 		multipliersXY[i][1] = wheelMultipliers[i] * sin(wheelAngles[i]);
@@ -50,7 +50,7 @@ array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelSpeedsAngles(const arra
 	array<double, WHEELCOUNT> angles;
 	//Sum cartisian velocity for each wheel and then convert to polar coordinates
 
-	for (int i = 0; i < WHEELCOUNT; i++)
+	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
 		//int inverterD = (i%2==0) ? -1 : 1;
 		//Only the rotation of the robot differently effects each wheel
@@ -67,7 +67,7 @@ array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelSpeedsAngles(const arra
 	}
 	//Speed and angles are put into one array here because speeds needed to be normalized
 	array<Eigen::Vector2d, WHEELCOUNT> speedsAngles;
-	for (int i = 0; i < WHEELCOUNT; i++)
+	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
 		speedsAngles[i][0] = speeds[i];
 		speedsAngles[i][1] = angles[i];

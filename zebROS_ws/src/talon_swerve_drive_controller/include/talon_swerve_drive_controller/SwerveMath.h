@@ -3,9 +3,10 @@
 #include <vector>
 #include <Eigen/Dense>
 
+// TODO - remove this and use std::vectors instead?
+constexpr size_t WHEELCOUNT = 4;
 class swerveDriveMath
 {
-#define WHEELCOUNT 4
 		//WHEELCOUNT is defined so arrays can be used.
 		//Arrays are used over vectors for optimization, which may be invalid
 		//There is likely a better way to handle WHEELCOUNT
