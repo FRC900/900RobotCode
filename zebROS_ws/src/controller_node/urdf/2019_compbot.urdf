@@ -64,19 +64,19 @@
     <link name="zed_imu_link" />
 
 <!-- Realsense2 t265 -->
-	<link name="camera_pose_frame"/>
-    <joint name="camera_joint" type="fixed">
-        <parent link="base_link"/>
-        <child link="camera_pose_frame"/>
+	<link name="rs_t265_pose_frame"/>
+    <joint name="rs_t265_joint" type="fixed">
+        <parent link="rs_t265_pose_frame"/>
+        <child link="base_link"/>
 		<!-- after rotation, this is z, y, -x? 
 			 TODO : verify that the imu and odom frames
                     require this rotation
         <origin xyz="1.04 0 0.216" rpy="0 -1.57 0" />
          -->
-        <origin xyz="-0.216 0.0 1.04" rpy="0 0 0" />
+        <origin xyz="0.216 0.0 -1.04" rpy="0 0 0" />
     </joint>
 	<!--
-		 <link name="camera_link" />
+		 <link name="rs_t265_link" />
 	-->
 
 	<link name="panel_outtake"/>

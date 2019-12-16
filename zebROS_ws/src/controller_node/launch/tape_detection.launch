@@ -9,7 +9,7 @@
   -->
   <group ns="robot_state">
 	<param name="robot_description" textfile="$(find controller_node)/urdf/2019_compbot.urdf" />
-	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
   </group>
 
   <arg name="zed_node_name" default="zed_goal" />
