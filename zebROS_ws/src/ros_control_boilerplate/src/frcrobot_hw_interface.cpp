@@ -579,6 +579,33 @@ void FRCRobotHWInterface::init(void)
 
 	navX_zero_ = -10000;
 
+
+	double t_now = ros::Time::now().toSec();
+
+	t_prev_robot_iteration_ = t_now;
+	if(! nh_.getParam("generic_hw_control_loop/robot_iteration_hz", robot_iteration_hz_)) {
+		ROS_ERROR("Failed to read robot_iteration_hz in frcrobot_hw_interface");
+		robot_iteration_hz_ = 20;
+	}
+
+	t_prev_joystick_read_ = t_now;
+	if(! nh_.getParam("generic_hw_control_loop/joystick_read_hz", joystick_read_hz_)) {
+		ROS_ERROR("Failed to read joystick_read_hz in frcrobot_hw_interface");
+		joystick_read_hz_ = 50;
+	}
+
+	t_prev_match_data_read_ = t_now;
+	if(! nh_.getParam("generic_hw_control_loop/match_data_read_hz", match_data_read_hz_)) {
+		ROS_ERROR("Failed to read match_data_read_hz in frcrobot_hw_interface");
+		match_data_read_hz_ = 2;
+	}
+
+	t_prev_robot_controller_read_ = t_now;
+	if(! nh_.getParam("generic_hw_control_loop/robot_controller_read_hz", robot_controller_read_hz_)) {
+		ROS_ERROR("Failed to read robot_controller_read_hz in frcrobot_hw_interface");
+		robot_controller_read_hz_ = 20;
+	}
+
 	ROS_INFO_NAMED("frcrobot_hw_interface", "FRCRobotHWInterface Ready.");
 }
 
@@ -983,149 +1010,170 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 	if (robot_code_ready_)
 	{
 		read_tracer_.start_unique("OneIteration");
-		robot_->OneIteration();
+		//check if sufficient time has passed since last read
+		if(ros::Time::now().toSec() - t_prev_robot_iteration_ > (1/robot_iteration_hz_))
+		{
+			robot_->OneIteration();
+
+			t_prev_robot_iteration_ += 1/robot_iteration_hz_;
+		}
 
 		read_tracer_.start_unique("joysticks");
-		// Update joystick state as often as possible
-		auto time_now_t = ros::Time::now();
-		for (size_t i = 0; i < num_joysticks_; i++)
+		//check if sufficient time has passed since last read
+		if(ros::Time::now().toSec() - t_prev_joystick_read_ > (1/joystick_read_hz_))
 		{
-			if (realtime_pub_joysticks_[i]->trylock())
+			t_prev_joystick_read_ += 1/joystick_read_hz_;
+
+			auto time_now_t = ros::Time::now();
+			for (size_t i = 0; i < num_joysticks_; i++)
 			{
-				auto &m = realtime_pub_joysticks_[i]->msg_;
-				m.header.stamp = time_now_t;
+				if (realtime_pub_joysticks_[i]->trylock())
+				{
+					auto &m = realtime_pub_joysticks_[i]->msg_;
+					m.header.stamp = time_now_t;
 
-				m.axes.clear();
-				m.buttons.clear();
+					m.axes.clear();
+					m.buttons.clear();
 
-				for(int j = 0; j < joysticks_[i]->GetAxisCount(); j++)
-				{
-					m.axes.push_back(joysticks_[i]->GetRawAxis(j));
-				}
+					for(int j = 0; j < joysticks_[i]->GetAxisCount(); j++)
+					{
+						m.axes.push_back(joysticks_[i]->GetRawAxis(j));
+					}
 
-				for(int j = 0; j < joysticks_[i]->GetButtonCount(); j++)
-				{
-					m.buttons.push_back(joysticks_[i]->GetRawButton(j+1));
-				}
+					for(int j = 0; j < joysticks_[i]->GetButtonCount(); j++)
+					{
+						m.buttons.push_back(joysticks_[i]->GetRawButton(j+1));
+					}
 
-				bool direction_up = false;
-				bool direction_down = false;
-				bool direction_left = false;
-				bool direction_right = false;
-				switch (joysticks_[i]->GetPOV(0))
-				{
-					case 0 :
-						direction_up = true;
-						break;
-					case 45:
-						direction_up = true;
-						direction_right = true;
-						break;
-					case 90:
-						direction_right = true;
-						break;
-					case 135:
-						direction_down = true;
-						direction_right = true;
-						break;
-					case 180:
-						direction_down = true;
-						break;
-					case 225:
-						direction_down = true;
-						direction_left = true;
-						break;
-					case 270:
-						direction_left = true;
-						break;
-					case 315:
-						direction_up = true;
-						direction_left = true;
-						break;
-				}
+					bool direction_up = false;
+					bool direction_down = false;
+					bool direction_left = false;
+					bool direction_right = false;
+					switch (joysticks_[i]->GetPOV(0))
+					{
+						case 0 :
+							direction_up = true;
+							break;
+						case 45:
+							direction_up = true;
+							direction_right = true;
+							break;
+						case 90:
+							direction_right = true;
+							break;
+						case 135:
+							direction_down = true;
+							direction_right = true;
+							break;
+						case 180:
+							direction_down = true;
+							break;
+						case 225:
+							direction_down = true;
+							direction_left = true;
+							break;
+						case 270:
+							direction_left = true;
+							break;
+						case 315:
+							direction_up = true;
+							direction_left = true;
+							break;
+					}
 
-				if(direction_left)
-				{
-					m.axes.push_back(1.0);
-				}
-				else if (direction_right)
-				{
-					m.axes.push_back(-1.0);
-				}
-				else
-				{
-					m.axes.push_back(0.0);
-				}
+					if(direction_left)
+					{
+						m.axes.push_back(1.0);
+					}
+					else if (direction_right)
+					{
+						m.axes.push_back(-1.0);
+					}
+					else
+					{
+						m.axes.push_back(0.0);
+					}
 
-				if(direction_up)
-				{
-					m.axes.push_back(1.0);
+					if(direction_up)
+					{
+						m.axes.push_back(1.0);
+					}
+					else if (direction_down)
+					{
+						m.axes.push_back(-1.0);
+					}
+					else
+					{
+						m.axes.push_back(0.0);
+					}
+					realtime_pub_joysticks_[i]->unlockAndPublish();
 				}
-				else if (direction_down)
-				{
-					m.axes.push_back(-1.0);
-				}
-				else
-				{
-					m.axes.push_back(0.0);
-				}
-				realtime_pub_joysticks_[i]->unlockAndPublish();
 			}
+
 		}
 
 		read_tracer_.start_unique("match data");
 		int32_t status = 0;
-		match_data_.setMatchTimeRemaining(HAL_GetMatchTime(&status));
-		HAL_MatchInfo info;
-		HAL_GetMatchInfo(&info);
+		//check if sufficient time has passed since last read
+		if(ros::Time::now().toSec() - t_prev_match_data_read_ > (1/match_data_read_hz_))
+		{
+			t_prev_match_data_read_ += 1/match_data_read_hz_;
 
-		match_data_.setGameSpecificData(std::string(reinterpret_cast<char*>(info.gameSpecificMessage),
-                     info.gameSpecificMessageSize));
-		match_data_.setEventName(info.eventName);
+			status = 0;
+			match_data_.setMatchTimeRemaining(HAL_GetMatchTime(&status));
+			HAL_MatchInfo info;
+			HAL_GetMatchInfo(&info);
 
-		status = 0;
-		auto allianceStationID = HAL_GetAllianceStation(&status);
-		DriverStation::Alliance color;
-		switch (allianceStationID) {
-			case HAL_AllianceStationID_kRed1:
-			case HAL_AllianceStationID_kRed2:
-			case HAL_AllianceStationID_kRed3:
-				color = DriverStation::kRed;
-				break;
-			case HAL_AllianceStationID_kBlue1:
-			case HAL_AllianceStationID_kBlue2:
-			case HAL_AllianceStationID_kBlue3:
-				color = DriverStation::kBlue;
-				break;
-			default:
-				color = DriverStation::kInvalid;
+			match_data_.setGameSpecificData(std::string(reinterpret_cast<char*>(info.gameSpecificMessage),
+						info.gameSpecificMessageSize));
+			match_data_.setEventName(info.eventName);
+
+			status = 0;
+			auto allianceStationID = HAL_GetAllianceStation(&status);
+			DriverStation::Alliance color;
+			switch (allianceStationID) {
+				case HAL_AllianceStationID_kRed1:
+				case HAL_AllianceStationID_kRed2:
+				case HAL_AllianceStationID_kRed3:
+					color = DriverStation::kRed;
+					break;
+				case HAL_AllianceStationID_kBlue1:
+				case HAL_AllianceStationID_kBlue2:
+				case HAL_AllianceStationID_kBlue3:
+					color = DriverStation::kBlue;
+					break;
+				default:
+					color = DriverStation::kInvalid;
+			}
+			match_data_.setAllianceColor(color);
+
+			match_data_.setMatchType(static_cast<DriverStation::MatchType>(info.matchType));
+
+			int station_location;
+			switch (allianceStationID) {
+				case HAL_AllianceStationID_kRed1:
+				case HAL_AllianceStationID_kBlue1:
+					station_location = 1;
+					break;
+				case HAL_AllianceStationID_kRed2:
+				case HAL_AllianceStationID_kBlue2:
+					station_location = 2;
+					break;
+				case HAL_AllianceStationID_kRed3:
+				case HAL_AllianceStationID_kBlue3:
+					station_location = 3;
+					break;
+				default:
+					station_location = 0;
+			}
+			match_data_.setDriverStationLocation(station_location);
+
+			match_data_.setMatchNumber(info.matchNumber);
+			match_data_.setReplayNumber(info.replayNumber);
+			status = 0;
+			match_data_.setBatteryVoltage(HAL_GetVinVoltage(&status));
 		}
-		match_data_.setAllianceColor(color);
-
-		match_data_.setMatchType(static_cast<DriverStation::MatchType>(info.matchType));
-
-		int station_location;
-		switch (allianceStationID) {
-			case HAL_AllianceStationID_kRed1:
-			case HAL_AllianceStationID_kBlue1:
-				station_location = 1;
-				break;
-			case HAL_AllianceStationID_kRed2:
-			case HAL_AllianceStationID_kBlue2:
-				station_location = 2;
-				break;
-			case HAL_AllianceStationID_kRed3:
-			case HAL_AllianceStationID_kBlue3:
-				station_location = 3;
-				break;
-			default:
-				station_location = 0;
-		}
-		match_data_.setDriverStationLocation(station_location);
-
-		match_data_.setMatchNumber(info.matchNumber);
-		match_data_.setReplayNumber(info.replayNumber);
-
+		//read control word match data at full speed - contains enable info, and reads should be v fast
 		HAL_ControlWord controlWord;
 		HAL_GetControlWord(&controlWord);
 		match_data_.setEnabled(controlWord.enabled && controlWord.dsAttached);
@@ -1135,45 +1183,49 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 		match_data_.setTest(controlWord.test);
 		match_data_.setDSAttached(controlWord.dsAttached);
 		match_data_.setFMSAttached(controlWord.fmsAttached);
-		status = 0;
-		match_data_.setBatteryVoltage(HAL_GetVinVoltage(&status));
 
 		read_tracer_.start_unique("robot controller data");
-		status = 0;
-		robot_controller_state_.SetFPGAVersion(HAL_GetFPGAVersion(&status));
-		robot_controller_state_.SetFPGARevision(HAL_GetFPGARevision(&status));
-		robot_controller_state_.SetFPGATime(HAL_GetFPGATime(&status));
-		robot_controller_state_.SetUserButton(HAL_GetFPGAButton(&status));
-		robot_controller_state_.SetIsSysActive(HAL_GetSystemActive(&status));
-		robot_controller_state_.SetIsBrownedOut(HAL_GetBrownedOut(&status));
-		robot_controller_state_.SetInputVoltage(HAL_GetVinVoltage(&status));
-		robot_controller_state_.SetInputCurrent(HAL_GetVinCurrent(&status));
-		robot_controller_state_.SetVoltage3V3(HAL_GetUserVoltage3V3(&status));
-		robot_controller_state_.SetCurrent3V3(HAL_GetUserCurrent3V3(&status));
-		robot_controller_state_.SetEnabled3V3(HAL_GetUserActive3V3(&status));
-		robot_controller_state_.SetFaultCount3V3(HAL_GetUserCurrentFaults3V3(&status));
-		robot_controller_state_.SetVoltage5V(HAL_GetUserVoltage5V(&status));
-		robot_controller_state_.SetCurrent5V(HAL_GetUserCurrent5V(&status));
-		robot_controller_state_.SetEnabled5V(HAL_GetUserActive5V(&status));
-		robot_controller_state_.SetFaultCount5V(HAL_GetUserCurrentFaults5V(&status));
-		robot_controller_state_.SetVoltage6V(HAL_GetUserVoltage6V(&status));
-		robot_controller_state_.SetCurrent6V(HAL_GetUserCurrent6V(&status));
-		robot_controller_state_.SetEnabled6V(HAL_GetUserActive6V(&status));
-		robot_controller_state_.SetFaultCount6V(HAL_GetUserCurrentFaults6V(&status));
-		float percent_bus_utilization;
-		uint32_t bus_off_count;
-		uint32_t tx_full_count;
-		uint32_t receive_error_count;
-		uint32_t transmit_error_count;
-		HAL_CAN_GetCANStatus(&percent_bus_utilization, &bus_off_count,
-				&tx_full_count, &receive_error_count,
-				&transmit_error_count, &status);
+		//check if sufficient time has passed since last read
+		if(ros::Time::now().toSec() - t_prev_robot_controller_read_ > (1/robot_controller_read_hz_))
+		{
+			t_prev_robot_controller_read_ += 1/robot_controller_read_hz_;
 
-		robot_controller_state_.SetCANPercentBusUtilization(percent_bus_utilization);
-		robot_controller_state_.SetCANBusOffCount(bus_off_count);
-		robot_controller_state_.SetCANTxFullCount(tx_full_count);
-		robot_controller_state_.SetCANReceiveErrorCount(receive_error_count);
-		robot_controller_state_.SetCANTransmitErrorCount(transmit_error_count);
+			status = 0;
+			robot_controller_state_.SetFPGAVersion(HAL_GetFPGAVersion(&status));
+			robot_controller_state_.SetFPGARevision(HAL_GetFPGARevision(&status));
+			robot_controller_state_.SetFPGATime(HAL_GetFPGATime(&status));
+			robot_controller_state_.SetUserButton(HAL_GetFPGAButton(&status));
+			robot_controller_state_.SetIsSysActive(HAL_GetSystemActive(&status));
+			robot_controller_state_.SetIsBrownedOut(HAL_GetBrownedOut(&status));
+			robot_controller_state_.SetInputVoltage(HAL_GetVinVoltage(&status));
+			robot_controller_state_.SetInputCurrent(HAL_GetVinCurrent(&status));
+			robot_controller_state_.SetVoltage3V3(HAL_GetUserVoltage3V3(&status));
+			robot_controller_state_.SetCurrent3V3(HAL_GetUserCurrent3V3(&status));
+			robot_controller_state_.SetEnabled3V3(HAL_GetUserActive3V3(&status));
+			robot_controller_state_.SetFaultCount3V3(HAL_GetUserCurrentFaults3V3(&status));
+			robot_controller_state_.SetVoltage5V(HAL_GetUserVoltage5V(&status));
+			robot_controller_state_.SetCurrent5V(HAL_GetUserCurrent5V(&status));
+			robot_controller_state_.SetEnabled5V(HAL_GetUserActive5V(&status));
+			robot_controller_state_.SetFaultCount5V(HAL_GetUserCurrentFaults5V(&status));
+			robot_controller_state_.SetVoltage6V(HAL_GetUserVoltage6V(&status));
+			robot_controller_state_.SetCurrent6V(HAL_GetUserCurrent6V(&status));
+			robot_controller_state_.SetEnabled6V(HAL_GetUserActive6V(&status));
+			robot_controller_state_.SetFaultCount6V(HAL_GetUserCurrentFaults6V(&status));
+			float percent_bus_utilization;
+			uint32_t bus_off_count;
+			uint32_t tx_full_count;
+			uint32_t receive_error_count;
+			uint32_t transmit_error_count;
+			HAL_CAN_GetCANStatus(&percent_bus_utilization, &bus_off_count,
+					&tx_full_count, &receive_error_count,
+					&transmit_error_count, &status);
+
+			robot_controller_state_.SetCANPercentBusUtilization(percent_bus_utilization);
+			robot_controller_state_.SetCANBusOffCount(bus_off_count);
+			robot_controller_state_.SetCANTxFullCount(tx_full_count);
+			robot_controller_state_.SetCANReceiveErrorCount(receive_error_count);
+			robot_controller_state_.SetCANTransmitErrorCount(transmit_error_count);
+		}
 	}
 
 	read_tracer_.start_unique("can talons");
@@ -1347,11 +1399,11 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 }
 
 double FRCRobotHWInterface::getConversionFactor(int encoder_ticks_per_rotation,
-						hardware_interface::FeedbackDevice encoder_feedback,
-						hardware_interface::TalonMode talon_mode)
+		hardware_interface::FeedbackDevice encoder_feedback,
+		hardware_interface::TalonMode talon_mode)
 {
 	if((talon_mode == hardware_interface::TalonMode_Position) ||
-	   (talon_mode == hardware_interface::TalonMode_MotionMagic)) // TODO - maybe motion profile as well?
+			(talon_mode == hardware_interface::TalonMode_MotionMagic)) // TODO - maybe motion profile as well?
 	{
 		switch (encoder_feedback)
 		{
@@ -1698,7 +1750,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		ctre::phoenix::motorcontrol::RemoteFeedbackDevice talon_remote_feedback_device;
 		hardware_interface::RemoteFeedbackDevice internal_remote_feedback_device;
 		if (tc.remoteEncoderFeedbackChanged(internal_remote_feedback_device) &&
-			convertRemoteFeedbackDevice(internal_remote_feedback_device, talon_remote_feedback_device))
+				convertRemoteFeedbackDevice(internal_remote_feedback_device, talon_remote_feedback_device))
 		{
 			// Check for errors on Talon writes. If it fails, used the reset() call to
 			// set the changed var for the config items to true. This will trigger a re-try
@@ -1719,8 +1771,8 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		std::array<ctre::phoenix::motorcontrol::RemoteSensorSource, 2> victor_remote_feedback_filters;
 		if (tc.remoteFeedbackFiltersChanged(remote_feedback_device_ids, internal_remote_feedback_filters) &&
 
-			convertRemoteSensorSource(internal_remote_feedback_filters[0], victor_remote_feedback_filters[0]) &&
-			convertRemoteSensorSource(internal_remote_feedback_filters[0], victor_remote_feedback_filters[0]))
+				convertRemoteSensorSource(internal_remote_feedback_filters[0], victor_remote_feedback_filters[0]) &&
+				convertRemoteSensorSource(internal_remote_feedback_filters[0], victor_remote_feedback_filters[0]))
 		{
 			bool rc = safeTalonCall(victor->ConfigRemoteFeedbackFilter(remote_feedback_device_ids[0], victor_remote_feedback_filters[0], 0, timeoutMs),"ConfigRemoteFeedbackFilter (0)");
 			rc &= safeTalonCall(victor->ConfigRemoteFeedbackFilter(remote_feedback_device_ids[1], victor_remote_feedback_filters[1], 1, timeoutMs),"ConfigRemoteFeedbackFilter (1)");
@@ -1741,10 +1793,10 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		std::array<hardware_interface::FeedbackDevice, hardware_interface::SensorTerm_Last> internal_sensor_terms;
 		std::array<ctre::phoenix::motorcontrol::FeedbackDevice, hardware_interface::SensorTerm_Last> victor_sensor_terms;
 		if (tc.sensorTermsChanged(internal_sensor_terms) &&
-			convertFeedbackDevice(internal_sensor_terms[0], victor_sensor_terms[0]) &&
-			convertFeedbackDevice(internal_sensor_terms[1], victor_sensor_terms[1]) &&
-			convertFeedbackDevice(internal_sensor_terms[2], victor_sensor_terms[2]) &&
-			convertFeedbackDevice(internal_sensor_terms[3], victor_sensor_terms[3]))
+				convertFeedbackDevice(internal_sensor_terms[0], victor_sensor_terms[0]) &&
+				convertFeedbackDevice(internal_sensor_terms[1], victor_sensor_terms[1]) &&
+				convertFeedbackDevice(internal_sensor_terms[2], victor_sensor_terms[2]) &&
+				convertFeedbackDevice(internal_sensor_terms[3], victor_sensor_terms[3]))
 		{
 			// Check for errors on Talon writes. If it fails, used the reset() call to
 			// set the changed var for the config items to true. This will trigger a re-try
@@ -1781,14 +1833,14 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		bool motion_profile_mode = false;
 
 		if ((talon_mode == hardware_interface::TalonMode_Position) ||
-		    (talon_mode == hardware_interface::TalonMode_Velocity) ||
-		    (talon_mode == hardware_interface::TalonMode_Current ))
+				(talon_mode == hardware_interface::TalonMode_Velocity) ||
+				(talon_mode == hardware_interface::TalonMode_Current ))
 		{
 			close_loop_mode = true;
 		}
 		else if ((talon_mode == hardware_interface::TalonMode_MotionProfile) ||
-			     (talon_mode == hardware_interface::TalonMode_MotionMagic)   ||
-			     (talon_mode == hardware_interface::TalonMode_MotionProfileArc))
+				(talon_mode == hardware_interface::TalonMode_MotionMagic)   ||
+				(talon_mode == hardware_interface::TalonMode_MotionProfileArc))
 		{
 			close_loop_mode = true;
 			motion_profile_mode = true;
@@ -1875,7 +1927,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		if (tc.invertChanged(invert, sensor_phase))
 		{
 			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<
-							" invert = " << invert << " phase = " << sensor_phase);
+					" invert = " << invert << " phase = " << sensor_phase);
 			// TODO : can these calls fail. If so, what to do if they do?
 			victor->SetInverted(invert);
 			safeTalonCall(victor->GetLastError(), "SetInverted");
@@ -1888,7 +1940,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		hardware_interface::NeutralMode neutral_mode;
 		ctre::phoenix::motorcontrol::NeutralMode ctre_neutral_mode;
 		if (tc.neutralModeChanged(neutral_mode) &&
-			convertNeutralMode(neutral_mode, ctre_neutral_mode))
+				convertNeutralMode(neutral_mode, ctre_neutral_mode))
 		{
 
 			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " neutral mode");
@@ -1928,12 +1980,12 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		double nominal_output_reverse;
 		double neutral_deadband;
 		if (tc.outputShapingChanged(closed_loop_ramp,
-									open_loop_ramp,
-									peak_output_forward,
-									peak_output_reverse,
-									nominal_output_forward,
-									nominal_output_reverse,
-									neutral_deadband))
+					open_loop_ramp,
+					peak_output_forward,
+					peak_output_reverse,
+					nominal_output_forward,
+					nominal_output_reverse,
+					neutral_deadband))
 		{
 			bool rc = true;
 			rc &= safeTalonCall(victor->ConfigOpenloopRamp(open_loop_ramp, timeoutMs),"ConfigOpenloopRamp");
@@ -1965,8 +2017,8 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		int v_measurement_filter;
 		bool v_c_enable;
 		if (tc.voltageCompensationChanged(v_c_saturation,
-										  v_measurement_filter,
-										  v_c_enable))
+					v_measurement_filter,
+					v_c_enable))
 		{
 			bool rc = true;
 			rc &= safeTalonCall(victor->ConfigVoltageCompSaturation(v_c_saturation, timeoutMs),"ConfigVoltageCompSaturation");
@@ -2026,7 +2078,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		if (tc.sensorPositionChanged(sensor_position))
 		{
 			if (safeTalonCall(victor->SetSelectedSensorPosition(sensor_position / radians_scale, pidIdx, timeoutMs),
-					"SetSelectedSensorPosition"))
+						"SetSelectedSensorPosition"))
 			{
 				ROS_INFO_STREAM_THROTTLE(2, "Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " selected sensor position");
 			}
@@ -2047,7 +2099,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			ctre::phoenix::motorcontrol::LimitSwitchSource talon_local_reverse_source;
 			ctre::phoenix::motorcontrol::LimitSwitchNormal talon_local_reverse_normal;
 			if (tc.limitSwitchesSourceChanged(internal_local_forward_source, internal_local_forward_normal,
-											  internal_local_reverse_source, internal_local_reverse_normal) &&
+						internal_local_reverse_source, internal_local_reverse_normal) &&
 					convertLimitSwitchSource(internal_local_forward_source, talon_local_forward_source) &&
 					convertLimitSwitchNormal(internal_local_forward_normal, talon_local_forward_normal) &&
 					convertLimitSwitchSource(internal_local_reverse_source, talon_local_reverse_source) &&
@@ -2083,7 +2135,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		ctre::phoenix::motorcontrol::RemoteLimitSwitchSource talon_remote_reverse_source;
 		ctre::phoenix::motorcontrol::LimitSwitchNormal talon_remote_reverse_normal;
 		if (tc.remoteLimitSwitchesSourceChanged(internal_remote_forward_source, internal_remote_forward_normal, remote_forward_id,
-											    internal_remote_reverse_source, internal_remote_reverse_normal, remote_reverse_id) &&
+					internal_remote_reverse_source, internal_remote_reverse_normal, remote_reverse_id) &&
 				convertRemoteLimitSwitchSource(internal_remote_forward_source, talon_remote_forward_source) &&
 				convertLimitSwitchNormal(internal_remote_forward_normal, talon_remote_forward_normal) &&
 				convertRemoteLimitSwitchSource(internal_remote_reverse_source, talon_remote_reverse_source) &&
@@ -2114,10 +2166,10 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		bool softlimit_reverse_enable;
 		bool softlimit_override_enable;
 		if (tc.softLimitChanged(softlimit_forward_threshold,
-				softlimit_forward_enable,
-				softlimit_reverse_threshold,
-				softlimit_reverse_enable,
-				softlimit_override_enable))
+					softlimit_forward_enable,
+					softlimit_reverse_threshold,
+					softlimit_reverse_enable,
+					softlimit_override_enable))
 		{
 			double softlimit_forward_threshold_NU = softlimit_forward_threshold / radians_scale; //native units
 			double softlimit_reverse_threshold_NU = softlimit_reverse_threshold / radians_scale;
@@ -2311,7 +2363,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				//ROS_INFO_STREAM("id: " << joint_id << " pos: " << pt.position << " i: " << i++);
 			}
 			ROS_INFO_STREAM("Added joint " << joint_id << "=" <<
-							can_ctre_mc_names_[joint_id] << " motion profile trajectories");
+					can_ctre_mc_names_[joint_id] << " motion profile trajectories");
 		}
 
 		// Set new motor setpoint if either the mode or the setpoint has been changed
@@ -2332,7 +2384,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				ctre::phoenix::motorcontrol::ControlMode out_mode;
 				ctre::phoenix::motorcontrol::DemandType demand1_type_phoenix;
 				if (convertControlMode(in_mode, out_mode) &&
-					convertDemand1Type(demand1_type_internal, demand1_type_phoenix))
+						convertDemand1Type(demand1_type_internal, demand1_type_phoenix))
 				{
 					ts.setSetpoint(command); // set the state before converting it to native units
 					switch (out_mode)
@@ -2352,9 +2404,9 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 #ifdef DEBUG_WRITE
 					ROS_INFO_STREAM("called Set(4) on " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<
-									" out_mode = " << static_cast<int>(out_mode) << " command = " << command <<
-									" demand1_type_phoenix = " << static_cast<int>(demand1_type_phoenix) <<
-									" demand1_value = " << demand1_value);
+							" out_mode = " << static_cast<int>(out_mode) << " command = " << command <<
+							" demand1_type_phoenix = " << static_cast<int>(demand1_type_phoenix) <<
+							" demand1_value = " << demand1_value);
 #endif
 					ts.setNeutralOutput(false); // maybe make this a part of setSetpoint?
 
@@ -2452,9 +2504,9 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			}
 			solenoid_state_[i] = setpoint;
 			ROS_INFO_STREAM("Solenoid " << solenoid_names_[i] <<
-							" at id " << solenoid_ids_[i] <<
-							" / pcm " << solenoid_pcms_[i] <<
-							" = " << setpoint);
+					" at id " << solenoid_ids_[i] <<
+					" / pcm " << solenoid_pcms_[i] <<
+					" = " << setpoint);
 		}
 	}
 
@@ -2570,8 +2622,8 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 // Return true if conversion is OK, false if
 // an unknown mode is hit.
 bool FRCRobotHWInterface::convertControlMode(
-	const hardware_interface::TalonMode input_mode,
-	ctre::phoenix::motorcontrol::ControlMode &output_mode)
+		const hardware_interface::TalonMode input_mode,
+		ctre::phoenix::motorcontrol::ControlMode &output_mode)
 {
 	switch (input_mode)
 	{
@@ -2611,8 +2663,8 @@ bool FRCRobotHWInterface::convertControlMode(
 }
 
 bool FRCRobotHWInterface::convertDemand1Type(
-	const hardware_interface::DemandType input,
-	ctre::phoenix::motorcontrol::DemandType &output)
+		const hardware_interface::DemandType input,
+		ctre::phoenix::motorcontrol::DemandType &output)
 {
 	switch(input)
 	{
@@ -2634,8 +2686,8 @@ bool FRCRobotHWInterface::convertDemand1Type(
 }
 
 bool FRCRobotHWInterface::convertNeutralMode(
-	const hardware_interface::NeutralMode input_mode,
-	ctre::phoenix::motorcontrol::NeutralMode &output_mode)
+		const hardware_interface::NeutralMode input_mode,
+		ctre::phoenix::motorcontrol::NeutralMode &output_mode)
 {
 	switch (input_mode)
 	{
@@ -2658,8 +2710,8 @@ bool FRCRobotHWInterface::convertNeutralMode(
 }
 
 bool FRCRobotHWInterface::convertFeedbackDevice(
-	const hardware_interface::FeedbackDevice input_fd,
-	ctre::phoenix::motorcontrol::FeedbackDevice &output_fd)
+		const hardware_interface::FeedbackDevice input_fd,
+		ctre::phoenix::motorcontrol::FeedbackDevice &output_fd)
 {
 	switch (input_fd)
 	{
@@ -2698,8 +2750,8 @@ bool FRCRobotHWInterface::convertFeedbackDevice(
 }
 
 bool FRCRobotHWInterface::convertRemoteFeedbackDevice(
-	const hardware_interface::RemoteFeedbackDevice input_fd,
-	ctre::phoenix::motorcontrol::RemoteFeedbackDevice &output_fd)
+		const hardware_interface::RemoteFeedbackDevice input_fd,
+		ctre::phoenix::motorcontrol::RemoteFeedbackDevice &output_fd)
 {
 	switch (input_fd)
 	{
@@ -2730,8 +2782,8 @@ bool FRCRobotHWInterface::convertRemoteFeedbackDevice(
 }
 
 bool FRCRobotHWInterface::convertRemoteSensorSource(
-	const hardware_interface::RemoteSensorSource input_rss,
-	ctre::phoenix::motorcontrol::RemoteSensorSource &output_rss)
+		const hardware_interface::RemoteSensorSource input_rss,
+		ctre::phoenix::motorcontrol::RemoteSensorSource &output_rss)
 {
 	switch (input_rss)
 	{
@@ -2784,8 +2836,8 @@ bool FRCRobotHWInterface::convertRemoteSensorSource(
 }
 
 bool FRCRobotHWInterface::convertLimitSwitchSource(
-	const hardware_interface::LimitSwitchSource input_ls,
-	ctre::phoenix::motorcontrol::LimitSwitchSource &output_ls)
+		const hardware_interface::LimitSwitchSource input_ls,
+		ctre::phoenix::motorcontrol::LimitSwitchSource &output_ls)
 {
 	switch (input_ls)
 	{
@@ -2809,8 +2861,8 @@ bool FRCRobotHWInterface::convertLimitSwitchSource(
 }
 
 bool FRCRobotHWInterface::convertRemoteLimitSwitchSource(
-	const hardware_interface::RemoteLimitSwitchSource input_ls,
-	ctre::phoenix::motorcontrol::RemoteLimitSwitchSource &output_ls)
+		const hardware_interface::RemoteLimitSwitchSource input_ls,
+		ctre::phoenix::motorcontrol::RemoteLimitSwitchSource &output_ls)
 {
 	switch (input_ls)
 	{
@@ -2831,8 +2883,8 @@ bool FRCRobotHWInterface::convertRemoteLimitSwitchSource(
 }
 
 bool FRCRobotHWInterface::convertLimitSwitchNormal(
-	const hardware_interface::LimitSwitchNormal input_ls,
-	ctre::phoenix::motorcontrol::LimitSwitchNormal &output_ls)
+		const hardware_interface::LimitSwitchNormal input_ls,
+		ctre::phoenix::motorcontrol::LimitSwitchNormal &output_ls)
 {
 	switch (input_ls)
 	{
