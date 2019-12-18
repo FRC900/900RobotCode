@@ -6,7 +6,6 @@
 
 /* The logic for stopping and starting PID should probably be put in actionlib, not here */
 
-#include <screen_to_world/WorldVector.h>
 #include "std_msgs/Float64.h"
 #include "teraranger_array/RangeArray.h"
 #include "std_msgs/Bool.h"
