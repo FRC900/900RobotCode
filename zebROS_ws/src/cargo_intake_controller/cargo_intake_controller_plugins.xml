@@ -1,8 +1,0 @@
-<library path="lib/libcargo_intake_controller">
-	
-	<class name="cargo_intake_controller/CargoIntakeController" type="cargo_intake_controller::CargoIntakeController" base_class_type="controller_interface::ControllerBase">
-		<description>
-			Library file. Does stuff to make cargo_intake_controller exist.
-		</description>
-	</class>
-</library>

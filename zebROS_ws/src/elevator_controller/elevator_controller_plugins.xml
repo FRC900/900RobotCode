@@ -1,8 +1,0 @@
-<library path="lib/libelevator_controller">
-	
-	<class name="elevator_controller/ElevatorController" type="elevator_controller::ElevatorController" base_class_type="controller_interface::ControllerBase">
-		<description>
-			Library file. Does stuff to make elevator_controller exist.
-		</description>
-	</class>
-</library>

@@ -1,9 +1,0 @@
- <library path="lib/libclimber_controller">
-
-	 <class name="climber_controller/ClimberController" type="climber_controller::ClimberController" base_class_type="controller_interface::ControllerBase">
-	  <description>
-		  pneumatic leg thing for climber
-		 </description>
-         </class>
- </library>
-~              

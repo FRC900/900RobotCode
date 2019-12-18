@@ -1,4 +1,4 @@
-#include "cargo_intake_controller/cargo_intake_controller.h"
+#include "controllers_2019/cargo_intake_controller.h"
 
 namespace cargo_intake_controller
 {
@@ -63,7 +63,7 @@ void CargoIntakeController::update(const ros::Time &/*time*/, const ros::Duratio
 void CargoIntakeController::stopping(const ros::Time &/*time*/) {
 }
 
-bool CargoIntakeController::cmdService(cargo_intake_controller::CargoIntakeSrv::Request &req, cargo_intake_controller::CargoIntakeSrv::Response &/*res*/) {
+bool CargoIntakeController::cmdService(controllers_2019::CargoIntakeSrv::Request &req, controllers_2019::CargoIntakeSrv::Response &/*res*/) {
     if(isRunning())
     {
 		//take the service request for a certain amount of power (-1 to 1) and write it to the command variable

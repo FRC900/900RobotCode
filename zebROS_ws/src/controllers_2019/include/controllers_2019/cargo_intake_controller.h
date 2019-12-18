@@ -7,7 +7,7 @@
 #include <controller_interface/multi_interface_controller.h>
 #include <talon_controllers/talon_controller_interface.h> // "
 #include <pluginlib/class_list_macros.h> //to compile as a controller
-#include <cargo_intake_controller/CargoIntakeSrv.h>
+#include <controllers_2019/CargoIntakeSrv.h>
 
 namespace cargo_intake_controller
 {
@@ -47,8 +47,8 @@ class CargoIntakeController : public controller_interface::MultiInterfaceControl
             virtual void update(const ros::Time & time, const ros::Duration& period);
             virtual void stopping(const ros::Time &time);
 
-            virtual bool cmdService(cargo_intake_controller::CargoIntakeSrv::Request &req,
-					                cargo_intake_controller::CargoIntakeSrv::Response &res);
+            virtual bool cmdService(controllers_2019::CargoIntakeSrv::Request &req,
+					                controllers_2019::CargoIntakeSrv::Response &res);
 
         private:
             talon_controllers::TalonPercentOutputControllerInterface cargo_intake_joint_; //interface for the spinny part of the intake

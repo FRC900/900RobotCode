@@ -3,10 +3,9 @@
 #include "actionlib/client/simple_action_client.h"
 #include "behaviors/IntakeAction.h"
 #include "behaviors/ElevatorAction.h"
-#include "cargo_intake_controller/CargoIntakeSrv.h"
+#include "controllers_2019/CargoIntakeSrv.h"
 #include "sensor_msgs/JointState.h"
 #include <atomic>
-#include <ros/console.h>
 #include "behaviors/enumerated_elevator_indices.h"
 
 
@@ -45,7 +44,7 @@ class CargoIntakeAction {
 		service_connection_header["tcp_nodelay"] = "1";
 
 		//initialize the client being used to call the controller
-		cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+		cargo_intake_controller_client_ = nh_.serviceClient<controllers_2019::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 
 		//start subscribers subscribing
 		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
@@ -95,7 +94,7 @@ class CargoIntakeAction {
 			//send command to lower arm and run roller to the cargo intake controller ------
 			ROS_WARN("%s: lowering arm and spinning roller in",action_name_.c_str());
 			//define request to send to cargo intake controller
-			cargo_intake_controller::CargoIntakeSrv srv;
+			controllers_2019::CargoIntakeSrv srv;
 			srv.request.power = roller_power;
 			srv.request.intake_arm = true;
 			//send request to controller

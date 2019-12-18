@@ -9,14 +9,14 @@
 #include <std_msgs/Float64.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <std_msgs/Bool.h>
-#include "elevator_controller/ElevatorSrv.h"
+#include "controllers_2019/ElevatorSrv.h"
 #include <dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h>
-#include <elevator_controller/ElevatorConfig.h>
+#include <controllers_2019/ElevatorConfig.h>
 
 namespace elevator_controller
 {
 
-	class ElevatorCommand 
+	class ElevatorCommand
 {
 	public:
 		ElevatorCommand()
@@ -24,7 +24,7 @@ namespace elevator_controller
 		  position_ = 0;
 		  go_slow_ = false;
 		}
-	   	ElevatorCommand(double position, bool go_slow)
+		ElevatorCommand(double position, bool go_slow)
 		{
 		  position_ = position;
 		  go_slow_ = go_slow;
@@ -62,8 +62,8 @@ class ElevatorController : public controller_interface::MultiInterfaceController
             virtual void update(const ros::Time & time, const ros::Duration& period) override;
             virtual void stopping(const ros::Time &time) override;
 
-            bool cmdService(elevator_controller::ElevatorSrv::Request &req,
-			                elevator_controller::ElevatorSrv::Response &res);
+            bool cmdService(controllers_2019::ElevatorSrv::Request &req,
+			                controllers_2019::ElevatorSrv::Response &res);
 
 			void callback(elevator_controller::ElevatorConfig &config, uint32_t level);
 

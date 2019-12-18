@@ -1,0 +1,24 @@
+<library path="lib/libcontrollers_2019">
+	<class name="cargo_intake_controller/CargoIntakeController" type="cargo_intake_controller::CargoIntakeController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Library file. Does stuff to make cargo_intake_controller exist.
+		</description>
+	</class>
+
+	<class name="climber_controller/ClimberController" type="climber_controller::ClimberController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			pneumatic leg thing for climber
+		</description>
+	</class>
+
+	<class name="elevator_controller/ElevatorController" type="elevator_controller::ElevatorController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Library file. Does stuff to make elevator_controller exist.
+		</description>
+	</class>
+	<class name="panel_intake_controller/PanelIntakeController" type="panel_intake_controller::PanelIntakeController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Library file. Does stuff to make panel_intake_controller exist.
+		</description>
+	</class>
+</library>

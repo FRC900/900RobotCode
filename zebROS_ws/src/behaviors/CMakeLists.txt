@@ -11,19 +11,20 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   actionlib
-  teraranger_array
   actionlib_msgs
+  controllers_2019
   nav_msgs
+  message_generation
+  message_filters
+  ros_control_boilerplate
   roscpp
   rospy
   std_msgs
   std_srvs
-  message_generation
-  message_filters
-  ros_control_boilerplate
-  talon_swerve_drive_controller
   swerve_point_generator
+  talon_swerve_drive_controller
   tf2_ros
+  teraranger_array
 )
 
 include_directories(

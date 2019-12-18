@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
-#include <panel_intake_controller/PanelIntakeSrv.h>
+#include <controllers_2019/PanelIntakeSrv.h>
 #include <behaviors/IntakeAction.h>
 #include <behaviors/ElevatorAction.h>
 #include "behaviors/enumerated_elevator_indices.h"
@@ -38,7 +38,7 @@ class IntakeHatchPanelAction
 		service_connection_header["tcp_nodelay"] = "1";
 
 		//initialize the client being used to call the controller
-		panel_controller_client_ = nh_.serviceClient<panel_intake_controller::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command", false, service_connection_header);
+		panel_controller_client_ = nh_.serviceClient<controllers_2019::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command", false, service_connection_header);
 	}
 
 		~IntakeHatchPanelAction(void) {}
@@ -68,7 +68,7 @@ class IntakeHatchPanelAction
 			bool timed_out = false; // TODO : never set?
 
 			//define service
-			panel_intake_controller::PanelIntakeSrv srv;
+			controllers_2019::PanelIntakeSrv srv;
 			srv.request.claw_release = true;
 			srv.request.push_extend = false;
 			//send request to controller

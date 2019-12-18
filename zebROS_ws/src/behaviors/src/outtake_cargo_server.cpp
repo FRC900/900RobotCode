@@ -3,14 +3,9 @@
 #include "actionlib/client/simple_action_client.h"
 #include "behaviors/ElevatorAction.h"
 #include "behaviors/PlaceAction.h"
-#include "cargo_intake_controller/CargoIntakeSrv.h"
-#include "elevator_controller/ElevatorSrv.h"
+#include "controllers_2019/CargoIntakeSrv.h"
 #include "sensor_msgs/JointState.h"
-#include <atomic>
-#include <ros/console.h>
 #include "behaviors/enumerated_elevator_indices.h"
-
-
 
 //define global variables that will be defined based on config values
 double outtake_timeout; //timeout for the entire action
@@ -54,7 +49,7 @@ int linebreak_false_count = 0;
 			service_connection_header["tcp_nodelay"] = "1";
 
 			//initialize the client being used to call the controller
-			cargo_intake_controller_client_ = nh_.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+			cargo_intake_controller_client_ = nh_.serviceClient<controllers_2019::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 	}
 
 		~CargoOuttakeAction(void)
@@ -97,7 +92,7 @@ int linebreak_false_count = 0;
 			//make sure cargo mech is in the up position
 			//define request
 			ROS_WARN_STREAM("Setting initial state to cargo mech in outtake server");
-			cargo_intake_controller::CargoIntakeSrv srv;
+			controllers_2019::CargoIntakeSrv srv;
 			srv.request.power = holding_power;
 			srv.request.intake_arm = false;
 			//send request to controller

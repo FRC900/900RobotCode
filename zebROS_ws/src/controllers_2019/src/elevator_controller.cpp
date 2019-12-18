@@ -1,4 +1,4 @@
-#include "elevator_controller/elevator_controller.h"
+#include "controllers_2019/elevator_controller.h"
 
 namespace elevator_controller
 {
@@ -216,8 +216,8 @@ void ElevatorController::stopping(const ros::Time &/*time*/)
 }
 
 //Command Service Function
-bool ElevatorController::cmdService(elevator_controller::ElevatorSrv::Request  &req,
-									elevator_controller::ElevatorSrv::Response &/*response*/)
+bool ElevatorController::cmdService(controllers_2019::ElevatorSrv::Request  &req,
+									controllers_2019::ElevatorSrv::Response &/*response*/)
 {
 	if (req.position > 1.7) // TODO : get real measurement, make a param
 	{

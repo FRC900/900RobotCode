@@ -1,4 +1,4 @@
-#include "panel_intake_controller/panel_intake_controller.h"
+#include "controllers_2019/panel_intake_controller.h"
 
 namespace panel_intake_controller
 {
@@ -40,7 +40,7 @@ namespace panel_intake_controller
 	void PanelIntakeController::stopping(const ros::Time &/*time*/) {
 	}
 
-	bool PanelIntakeController::cmdService(panel_intake_controller::PanelIntakeSrv::Request &req, panel_intake_controller::PanelIntakeSrv::Response &/*response*/) {
+	bool PanelIntakeController::cmdService(controllers_2019::PanelIntakeSrv::Request &req, controllers_2019::PanelIntakeSrv::Response &/*response*/) {
 		if(isRunning())
 		{
 			panel_cmd_.writeFromNonRT(PanelCommand(!req.claw_release, req.push_extend));

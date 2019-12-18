@@ -26,8 +26,8 @@
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
 
-#include "panel_intake_controller/PanelIntakeSrv.h"
-#include "cargo_intake_controller/CargoIntakeSrv.h"
+#include "controllers_2019/PanelIntakeSrv.h"
+#include "controllers_2019/CargoIntakeSrv.h"
 
 #include "dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h"
 #include "teleop_joystick_control/TeleopJoystickCompConfig.h"
@@ -413,7 +413,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if (panel_push_extend)
 			{
 				ROS_INFO_STREAM("Toggling to clamped and not extended");
-				panel_intake_controller::PanelIntakeSrv srv;
+				controllers_2019::PanelIntakeSrv srv;
 				srv.request.claw_release = false;
 				srv.request.push_extend = false;
 				if (!manual_server_panelIn.call(srv))
@@ -422,7 +422,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			else
 			{
 				ROS_INFO_STREAM("Toggling to unclamped and extended");
-				panel_intake_controller::PanelIntakeSrv srv;
+				controllers_2019::PanelIntakeSrv srv;
 				srv.request.claw_release = true;
 				srv.request.push_extend = true;
 				if (!manual_server_panelIn.call(srv))
@@ -588,7 +588,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			ManualToggleClamp = !ManualToggleClamp;
 		    ROS_INFO_STREAM("Joystick2: buttonAPress");
-			panel_intake_controller::PanelIntakeSrv msg;
+			controllers_2019::PanelIntakeSrv msg;
 		    msg.request.claw_release = ManualToggleClamp;
 		    msg.request.push_extend = ManualTogglePush;
 			if (!manual_server_panelIn.call(msg))
@@ -619,7 +619,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			ManualTogglePush = !ManualTogglePush;
 			ROS_INFO_STREAM("Joystick2: buttonBPress");
-			panel_intake_controller::PanelIntakeSrv msg;
+			controllers_2019::PanelIntakeSrv msg;
 			msg.request.claw_release = ManualToggleClamp;
 			msg.request.push_extend = ManualTogglePush;
 			if (!manual_server_panelIn.call(msg))
@@ -984,9 +984,9 @@ int main(int argc, char **argv)
 
 	run_align = n.serviceClient<std_srvs::SetBool>("/align_with_terabee/run_align");
 
-	manual_server_panelIn = n.serviceClient<panel_intake_controller::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command");
+	manual_server_panelIn = n.serviceClient<controllers_2019::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command");
 	//manual_server_cargoOut = n.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/cargo_outtake_controller/cargo_outtake_command");
-	manual_server_cargoIn = n.serviceClient<cargo_intake_controller::CargoIntakeSrv>("/cargo_intake_controller/cargo_intake_command");
+	manual_server_cargoIn = n.serviceClient<controllers_2019::CargoIntakeSrv>("/cargo_intake_controller/cargo_intake_command");
 
     continue_outtake_client = n.serviceClient<std_srvs::Empty>("/hatch_outtake/continue_outtake_panel");
 
