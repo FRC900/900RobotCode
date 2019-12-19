@@ -335,45 +335,39 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 		ROS_ERROR("Could not read f_s_s in talon swerve drive controller");
 		return false;
 	}
-	if (!controller_nh.getParam("wheel_coords1x", wheel_coords_[0][0]))
+
+	XmlRpc::XmlRpcValue wheel_coords;
+
+	if(!controller_nh.getParam("wheel_coords", wheel_coords))
 	{
-		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords1x");
+		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords");
 		return false;
 	}
-	if (!controller_nh.getParam("wheel_coords2x", wheel_coords_[1][0]))
+	if(wheel_coords.getType() != XmlRpc::XmlRpcValue::TypeArray )
 	{
-		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords2x");
+	    ROS_ERROR("talon_swerve_drive_controller : param 'wheel_coords' is not a list");
 		return false;
 	}
-	if (!controller_nh.getParam("wheel_coords3x", wheel_coords_[2][0]))
+	for(int i=0; i < wheel_coords.size(); ++i)
 	{
-		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords3x");
-		return false;
-	}
-	if (!controller_nh.getParam("wheel_coords4x", wheel_coords_[3][0]))
-	{
-		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords4x");
-		return false;
-	}
-	if (!controller_nh.getParam("wheel_coords1y", wheel_coords_[0][1]))
-	{
-		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords1y");
-		return false;
-	}
-	if (!controller_nh.getParam("wheel_coords2y", wheel_coords_[1][1]))
-	{
-		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords2y");
-		return false;
-	}
-	if (!controller_nh.getParam("wheel_coords3y", wheel_coords_[2][1]))
-	{
-		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords3y");
-		return false;
-	}
-	if (!controller_nh.getParam("wheel_coords4y", wheel_coords_[3][1]))
-	{
-		ROS_ERROR("talon_swerve_drive_controller : could not read wheel_coords4y");
-		return false;
+		if(wheel_coords[i].getType() != XmlRpc::XmlRpcValue::TypeArray )
+		{
+			ROS_ERROR("talon_swerve_drive_controller : param wheel_coords[%d] is not a list", i);
+			return false;
+		}
+		if(wheel_coords[i].size() != 2)
+		{
+			ROS_ERROR("talon_swerve_drive_controller: param wheel_coords[%d] is not a pair", i);
+			return false;
+		}
+		if(	wheel_coords[i][0].getType() != XmlRpc::XmlRpcValue::TypeDouble ||
+			wheel_coords[i][1].getType() != XmlRpc::XmlRpcValue::TypeDouble)
+		{
+			ROS_ERROR("talon_swerve_drive_controller : param wheel_coords[%d] is not a pair of doubles", i);
+			return false;
+		}
+			wheel_coords_[i][0] = wheel_coords[i][0];
+			wheel_coords_[i][1] = wheel_coords[i][1];
 	}
 
 	ROS_INFO_STREAM("Coords: " << wheel_coords_[0] << "   " << wheel_coords_[1] << "   " << wheel_coords_[2] << "   " << wheel_coords_[3]);
