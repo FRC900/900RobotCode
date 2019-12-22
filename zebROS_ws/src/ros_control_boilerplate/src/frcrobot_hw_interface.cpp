@@ -1121,6 +1121,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 
 			status = 0;
 			match_data_.setMatchTimeRemaining(HAL_GetMatchTime(&status));
+			match_data_.setGetMatchTimeStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
 			HAL_MatchInfo info;
 			HAL_GetMatchInfo(&info);
 
@@ -1130,6 +1131,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 
 			status = 0;
 			auto allianceStationID = HAL_GetAllianceStation(&status);
+			match_data_.setGetAllianceStationStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
 			DriverStation::Alliance color;
 			switch (allianceStationID) {
 				case HAL_AllianceStationID_kRed1:
@@ -1172,6 +1174,7 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			match_data_.setReplayNumber(info.replayNumber);
 			status = 0;
 			match_data_.setBatteryVoltage(HAL_GetVinVoltage(&status));
+			match_data_.setGetVinVoltageStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
 		}
 		//read control word match data at full speed - contains enable info, and reads should be v fast
 		HAL_ControlWord controlWord;
@@ -1192,30 +1195,90 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 
 			status = 0;
 			robot_controller_state_.SetFPGAVersion(HAL_GetFPGAVersion(&status));
+			robot_controller_state_.SetFPGAVersionStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetFPGARevision(HAL_GetFPGARevision(&status));
+			robot_controller_state_.SetFPGARevisionStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetFPGATime(HAL_GetFPGATime(&status));
+			robot_controller_state_.SetFPGATimeStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetUserButton(HAL_GetFPGAButton(&status));
+			robot_controller_state_.SetUserButtonStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetIsSysActive(HAL_GetSystemActive(&status));
+			robot_controller_state_.SetIsSysActiveStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetIsBrownedOut(HAL_GetBrownedOut(&status));
+			robot_controller_state_.SetIsBrownedOutStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetInputVoltage(HAL_GetVinVoltage(&status));
+			robot_controller_state_.SetInputVoltageStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetInputCurrent(HAL_GetVinCurrent(&status));
+			robot_controller_state_.SetInputCurrentStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetVoltage3V3(HAL_GetUserVoltage3V3(&status));
+			robot_controller_state_.SetVoltage3V3Status(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetCurrent3V3(HAL_GetUserCurrent3V3(&status));
+			robot_controller_state_.SetCurrent3V3Status(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetEnabled3V3(HAL_GetUserActive3V3(&status));
+			robot_controller_state_.SetEnabled3V3Status(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetFaultCount3V3(HAL_GetUserCurrentFaults3V3(&status));
+			robot_controller_state_.SetFaultCount3V3Status(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetVoltage5V(HAL_GetUserVoltage5V(&status));
+			robot_controller_state_.SetVoltage5VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetCurrent5V(HAL_GetUserCurrent5V(&status));
+			robot_controller_state_.SetCurrent5VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetEnabled5V(HAL_GetUserActive5V(&status));
+			robot_controller_state_.SetEnabled5VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetFaultCount5V(HAL_GetUserCurrentFaults5V(&status));
+			robot_controller_state_.SetFaultCount5VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetVoltage6V(HAL_GetUserVoltage6V(&status));
+			robot_controller_state_.SetVoltage6VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetCurrent6V(HAL_GetUserCurrent6V(&status));
+			robot_controller_state_.SetCurrent6VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetEnabled6V(HAL_GetUserActive6V(&status));
+			robot_controller_state_.SetEnabled6VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
+			status = 0;
 			robot_controller_state_.SetFaultCount6V(HAL_GetUserCurrentFaults6V(&status));
+			robot_controller_state_.SetFaultCount6VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
+
 			float percent_bus_utilization;
 			uint32_t bus_off_count;
 			uint32_t tx_full_count;
 			uint32_t receive_error_count;
 			uint32_t transmit_error_count;
+			status = 0;
 			HAL_CAN_GetCANStatus(&percent_bus_utilization, &bus_off_count,
 					&tx_full_count, &receive_error_count,
 					&transmit_error_count, &status);
@@ -1225,6 +1288,8 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			robot_controller_state_.SetCANTxFullCount(tx_full_count);
 			robot_controller_state_.SetCANReceiveErrorCount(receive_error_count);
 			robot_controller_state_.SetCANTransmitErrorCount(transmit_error_count);
+
+			robot_controller_state_.SetCANDataStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
 		}
 	}
 

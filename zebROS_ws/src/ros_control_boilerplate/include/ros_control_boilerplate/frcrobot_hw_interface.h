@@ -73,7 +73,6 @@
 
 #include <AHRS.h>
 
-#include <frc_interfaces/robot_controller_interface.h>
 
 namespace frcrobot_control
 {

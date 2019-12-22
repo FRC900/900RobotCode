@@ -4,53 +4,56 @@
 namespace match_state_controller
 {
     bool MatchStateController::init(hardware_interface::MatchStateInterface *hw,
-			ros::NodeHandle					&root_nh,
-			ros::NodeHandle					&controller_nh)
+                                    ros::NodeHandle                            &root_nh,
+                                    ros::NodeHandle                            &controller_nh)
 
-	 {
-	     ROS_INFO_STREAM_NAMED("match_state_controller", "init is running");
+	{
+		ROS_INFO_STREAM_NAMED("match_state_controller", "init is running");
 
-	     //get match name, check if there is more or less than 1 match
-	     std::vector<std::string> match_names = hw->getNames();
-		 if (match_names.size() > 1) {
-			 ROS_ERROR_STREAM("Cannot initialize multiple match state joints");
-			 return false; }
-		 else if (match_names.size() < 1) {
-			 ROS_ERROR_STREAM("Cannot initialize zero match state joints");
-			 return false; }
+		//get match name, check if there is more or less than 1 match
+		std::vector<std::string> match_names = hw->getNames();
+		if (match_names.size() > 1) {
+			ROS_ERROR_STREAM("Cannot initialize multiple match state joints");
+			return false; }
+		else if (match_names.size() < 1) {
+			ROS_ERROR_STREAM("Cannot initialize zero match state joints");
+			return false; }
 
-	     const std::string match_name = match_names[0];
+		const std::string match_name = match_names[0];
 
-	     //get publish rate from config file
-	     if (!controller_nh.getParam("publish_rate", publish_rate_))
-			 ROS_ERROR("Could not read publish_rate in match state controller");
+		//get publish rate from config file
+		if (!controller_nh.getParam("publish_rate", publish_rate_))
+			ROS_ERROR("Could not read publish_rate in match state controller");
 
-	     //set up publisher
-	     realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::MatchSpecificData>(root_nh, "match_data", 4));
+		//set up publisher
+		realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::MatchSpecificData>(root_nh, "match_data", 4));
 
-	     auto &m = realtime_pub_->msg_;
+		auto &m = realtime_pub_->msg_;
 
-	     m.matchTimeRemaining = 0.0;
-	     m.gameSpecificData = "";
-	     m.eventName = "";
-	     m.allianceColor = 0.0;
-	     m.matchType = 0.0;
-	     m.driverStationLocation = 0.0;
-	     m.matchNumber = 0.0;
-	     m.replayNumber = 0.0;
-	     m.Enabled = false;
-	     m.Disabled = false;
-	     m.Autonomous = false;
-		 m.DSAttached = false;
-		 m.FMSAttached = false;
-	     m.OperatorControl = false;
-	     m.Test = false;
-	     m.BatteryVoltage = 0.0;
+		m.matchTimeRemaining = 0.0;
+		m.gameSpecificData = "";
+		m.eventName = "";
+		m.allianceColor = 0.0;
+		m.matchType = 0.0;
+		m.driverStationLocation = 0.0;
+		m.matchNumber = 0.0;
+		m.replayNumber = 0.0;
+		m.Enabled = false;
+		m.Disabled = false;
+		m.Autonomous = false;
+		m.DSAttached = false;
+		m.FMSAttached = false;
+		m.OperatorControl = false;
+		m.Test = false;
+		m.BatteryVoltage = 0.0;
+		m.getMatchTimeStatus = "";
+		m.getAllianceStationStatus = "";
+		m.getVinVoltageStatus = "";
 
-	     match_state_ = hw->getHandle(match_name);
+		match_state_ = hw->getHandle(match_name);
 
-	     return true;
-	 }
+		return true;
+	}
 
     void MatchStateController::starting(const ros::Time &time)
     {
@@ -59,7 +62,6 @@ namespace match_state_controller
 
     void MatchStateController::update(const ros::Time &time, const ros::Duration & )
 	{
-		//ROS_INFO_STREAM("pdp pub: " << publish_rate_);
 		if ((publish_rate_ > 0.0) && (last_publish_time_ + ros::Duration(1.0 / publish_rate_) < time))
 		{
 			if (realtime_pub_->trylock())
@@ -90,6 +92,9 @@ namespace match_state_controller
 				m.Test = ms->isTest();
 				m.BatteryVoltage = ms->getBatteryVoltage();
 
+				m.getMatchTimeStatus = ms->getGetMatchTimeStatus();
+				m.getAllianceStationStatus = ms->getGetAllianceStationStatus();
+				m.getVinVoltageStatus = ms->getGetVinVoltageStatus();
 				realtime_pub_->unlockAndPublish();
 			}
 		}

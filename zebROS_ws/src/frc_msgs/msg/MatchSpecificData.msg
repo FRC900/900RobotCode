@@ -19,3 +19,7 @@ bool DSAttached
 bool OperatorControl
 
 float64 BatteryVoltage
+
+string getMatchTimeStatus
+string getAllianceStationStatus
+string getVinVoltageStatus
