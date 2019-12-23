@@ -171,19 +171,20 @@ if /bin/false; then
 	git clone https://github.com/klapstoelpiloot/buildLibrealsense2Xavier.git 
 	# Note - need to switch back to the default linker to build the kernel image
 	cd
-	wget https://developer.nvidia.com/embedded/r32-2-3_Release_v1.0/Sources/T186/public_sources.tbz2 
-	tar -xf public_sources.tbz2 public_sources/kernel_src.tbz2
+	#wget https://developer.nvidia.com/embedded/r32-2-3_Release_v1.0/Sources/T186/public_sources.tbz2 
+	wget https://developer.nvidia.com/embedded/dlc/r32-3-1_Release_v1.0/Sources/T186/public_sources.tbz2
+	tar -xf public_sources.tbz2 Linux_for_Tegra/source/public/kernel_src.tbz2
 	mkdir jetson_kernel
 	cd jetson_kernel
-	tar -xf ../public_sources/kernel_src.tbz2
-	patch -p0 < ~/2019Offseason/j120_hardware_patch.txt
+	tar -xf ../Linux_for_Tegra/source/public/kernel_src.tbz2
+	patch -p0 < ~/2019Offseason/patch_j120_l4t32.2.3.txt
 
 	## Apply realsense patches to modules
 	cd ~/jetson_kernel/kernel/kernel-4.9
 	patch -p1 < ~/buildLibrealsense2Xavier/patches/realsense-camera-formats_ubuntu-bionic-Xavier-4.9.140.patch 
 	patch -p1 < ~/buildLibrealsense2Xavier/patches/realsense-metadata-ubuntu-bionic-Xavier-4.9.140.patch
 	patch -p1 < ~/buildLibrealsense2Xavier/patches/realsense-hid-ubuntu-bionic-Xavier-4.9.140.patch
-	patch -p1 < ~/realsense_src/librealsense-2.30.0/scripts/realsense-powerlinefrequency-control-fix.patch
+	patch -p1 < ~/realsense_src/librealsense-2.31.0/scripts/realsense-powerlinefrequency-control-fix.patch
 	# These are for the librealsense code, but don't actually seem to be used
 	#patch -p1 < ~/buildLibrealsense2Xavier/patches/model-views.patch
 	#patch -p1 < ~/buildLibrealsense2Xavier/patches/incomplete-frame.patch
