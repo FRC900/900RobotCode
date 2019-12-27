@@ -17,6 +17,7 @@
         /frcrobot/swerve_drive_controller/cmd_vel
         /frcrobot/swerve_drive_controller/odom
         /frcrobot/talon_states
+	  	/frcrobot/talon_configs
         /jetson_1/heartbeat
         /jetson_2/heartbeat
         /rio/heartbeat

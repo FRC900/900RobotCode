@@ -33,6 +33,9 @@ hardware_interface:
 talon_state_controller:
    type:         talon_state_controller/TalonStateController
    publish_rate: 50
+talon_config_controller:
+   type:         talon_config_controller/TalonConfigController
+   publish_rate: 5
 
 # Similar to above, but this one prints non-Talon state
 # (stuff that fits into the more standard ROS position/

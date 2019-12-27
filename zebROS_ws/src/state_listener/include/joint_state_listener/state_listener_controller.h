@@ -476,7 +476,7 @@ class TalonStateListenerController :
 		{
 			std::vector<ValueValid<hardware_interface::TalonHWState>> data;
 			for (size_t i = 0; i < joint_names_.size(); i++)
-				data.push_back(hardware_interface::TalonHWState(msg->can_id[i]));
+				data.push_back(hardware_interface::TalonHWState(0)); // dummy can ID since it isn't used
 			for (size_t i = 0; i < joint_names_.size(); i++)
 			{
 				auto it = std::find(msg->name.cbegin(), msg->name.cend(), joint_names_[i]);

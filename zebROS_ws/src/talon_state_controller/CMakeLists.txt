@@ -10,6 +10,7 @@ hardware_interface pluginlib controller_interface sensor_msgs talon_interface
 
 add_message_files (
   FILES
+  TalonConfig.msg
   TalonState.msg
   CustomProfileStatus.msg
 )
@@ -27,7 +28,7 @@ catkin_package(
   )
 
 include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
-add_library(${PROJECT_NAME} src/talon_state_controller.cpp)
+add_library(${PROJECT_NAME} src/talon_config_controller src/talon_state_controller.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable
@@ -58,6 +59,6 @@ install(TARGETS ${PROJECT_NAME}
   )
 
 install(FILES talon_state_plugin.xml
-              talon_state_controller.yaml
-              talon_state_controller.launch
+	#talon_state_controller.yaml
+	#talon_state_controller.launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

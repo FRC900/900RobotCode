@@ -72,10 +72,10 @@ void talon_cb(const talon_state_controller::TalonState &msg)
 	static int index_talon = -1;
 	if(index_talon == -1)
 	{
-		for(size_t i = 0; i < msg.can_id.size(); i++)
+		for(size_t i = 0; i < msg.name.size(); i++)
 		{
-			ROS_INFO_STREAM("id: " << msg.can_id[i]);
-			if(msg.can_id[i] == 14)
+			ROS_INFO_STREAM("id: " << msg.name[i]);
+			if(msg.name[i] == "br_angle")
 			{
 				index_talon = i;
 				break;
