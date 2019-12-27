@@ -6,6 +6,10 @@ sudo sysctl -p
 sudo rfkill block wifi  
 sudo rfkill block bluetooth
 
+# Allow scheduling of RT threads without cgroups
+sysctl -w kernel.sched_rt_runtime_us=-1
+ulimit -r unlimited
+
 /home/ubuntu/2019Offseason/jetson_setup/can_up.sh
 
 . /home/ubuntu/2019Offseason/zebROS_ws/ROSJetsonMaster.sh

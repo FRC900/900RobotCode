@@ -90,6 +90,10 @@
 #include <ctre/phoenix/platform/Platform.h>
 #include <ctre/phoenix/cci/Unmanaged_CCI.h>
 
+#ifdef __linux__
+#include <sched.h>
+#endif
+
 //
 // digital output, PWM, Pneumatics, compressor, nidec, talons
 //    controller on jetson  (local update = true, local hardware = false
@@ -579,7 +583,6 @@ void FRCRobotHWInterface::init(void)
 
 	navX_zero_ = -10000;
 
-
 	double t_now = ros::Time::now().toSec();
 
 	t_prev_robot_iteration_ = t_now;
@@ -606,6 +609,17 @@ void FRCRobotHWInterface::init(void)
 		robot_controller_read_hz_ = 20;
 	}
 
+#ifdef __linux__
+	struct sched_param schedParam{};
+
+	schedParam.sched_priority = sched_get_priority_min(SCHED_RR);
+	auto rc = pthread_setschedparam(pthread_self(), SCHED_RR, &schedParam);
+	ROS_INFO_STREAM("pthread_setschedparam() returned " << rc
+			<< " priority = " << schedParam.sched_priority
+			<< " errno = " << errno << " (" << strerror(errno) << ")");
+	pthread_setname_np(pthread_self(), "hwi_main_loop");
+#endif
+
 	ROS_INFO_NAMED("frcrobot_hw_interface", "FRCRobotHWInterface Ready.");
 }
 
@@ -619,7 +633,9 @@ void FRCRobotHWInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::mot
 											std::shared_ptr<std::mutex> mutex,
 											std::unique_ptr<Tracer> tracer)
 {
+#ifdef __linux__
 	pthread_setname_np(pthread_self(), "ctre_mc_read");
+#endif
 	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
 	ros::Rate rate(100); // TODO : configure me from a file or
 						 // be smart enough to run at the rate of the fastest status update?
@@ -890,7 +906,9 @@ void FRCRobotHWInterface::pdp_read_thread(int32_t pdp,
 		std::shared_ptr<std::mutex> mutex,
 		std::unique_ptr<Tracer> tracer)
 {
+#ifdef __linux__
 	pthread_setname_np(pthread_self(), "pdp_read");
+#endif
 	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
 	ros::Rate r(20); // TODO : Tune me?
 	int32_t status = 0;
@@ -941,7 +959,9 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle
 										  std::shared_ptr<std::mutex> mutex,
 										  std::unique_ptr<Tracer> tracer)
 {
+#ifdef __linux__
 	pthread_setname_np(pthread_self(), "pcm_read");
+#endif
 	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
 	ros::Rate r(20); // TODO : Tune me?
 	int32_t status = 0;
