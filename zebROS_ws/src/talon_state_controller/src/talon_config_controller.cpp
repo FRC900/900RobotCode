@@ -259,13 +259,15 @@ std::string TalonConfigController::feedbackDeviceToString(const hardware_interfa
 		case hardware_interface::FeedbackDevice_Uninitialized:
 			return "Uninitialized";
 		case hardware_interface::FeedbackDevice_QuadEncoder:
-			return "QuadEncoder";
+			return "QuadEncoder/CTRE_MagEncoder_Relative";
+		case hardware_interface::FeedbackDevice_IntegratedSensor:
+			return "IntegratedSensor";
 		case hardware_interface::FeedbackDevice_Analog:
 			return "Analog";
 		case hardware_interface::FeedbackDevice_Tachometer:
 			return "Tachometer";
 		case hardware_interface::FeedbackDevice_PulseWidthEncodedPosition:
-			return "PusleWidthEncodedPosition";
+			return "PusleWidthEncodedPosition/CTRE_MagEncoder_Absolute";
 		case hardware_interface::FeedbackDevice_SensorSum:
 			return  "SensorSum";
 		case hardware_interface::FeedbackDevice_SensorDifference:
@@ -273,7 +275,9 @@ std::string TalonConfigController::feedbackDeviceToString(const hardware_interfa
 		case hardware_interface::FeedbackDevice_RemoteSensor0:
 			return  "RemoteSensor0";
 		case hardware_interface::FeedbackDevice_RemoteSensor1:
-			return  "RemoteSensor0";
+			return  "RemoteSensor1";
+		case hardware_interface::FeedbackDevice_None:
+			return "None";
 		case hardware_interface::FeedbackDevice_SoftwareEmulatedSensor:
 			return "SoftwareEmulatedSensor";
 		default:
@@ -341,9 +345,6 @@ void TalonConfigController::update(const ros::Time &time, const ros::Duration & 
 				m.feedback_sensor[i] = feedbackDeviceToString(ts->getEncoderFeedback());
 				switch (ts->getRemoteEncoderFeedback())
 				{
-					case hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff:
-						m.remote_feedback_sensor[i] = "FactoryDefaultOff";
-						break;
 					case hardware_interface::RemoteFeedbackDevice_SensorSum:
 						m.remote_feedback_sensor[i] = "SensorSum";
 						break;
@@ -355,6 +356,9 @@ void TalonConfigController::update(const ros::Time &time, const ros::Duration & 
 						break;
 					case hardware_interface::RemoteFeedbackDevice_RemoteSensor1:
 						m.remote_feedback_sensor[i] = "RemoteSensor1";
+						break;
+					case hardware_interface::RemoteFeedbackDevice_None:
+						m.remote_feedback_sensor[i] = "None";
 						break;
 					case hardware_interface::RemoteFeedbackDevice_SoftwareEmulatedSensor:
 						m.remote_feedback_sensor[i] = "SoftwareEmulatedSensor";

@@ -54,7 +54,7 @@ class TalonCIParams
 			neutral_mode_(hardware_interface::NeutralMode_Coast),
 			feedback_type_(hardware_interface::FeedbackDevice_Uninitialized),
 			feedback_coefficient_(1.0),
-			remote_feedback_type_(hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff),
+			remote_feedback_type_(hardware_interface::RemoteFeedbackDevice_None),
 			ticks_per_rotation_(4096),
 			remote_feedback_device_ids_{0, 0},
 			remote_feedback_filters_{hardware_interface::RemoteSensorSource_Off, hardware_interface::RemoteSensorSource_Off},
@@ -420,9 +420,7 @@ class TalonCIParams
 			n.getParam("feedback_coefficient", feedback_coefficient_);
 			if (n.getParam("remote_feedback_type", str))
 			{
-				if (str == "FactoryDefaultOff")
-					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff;
-				else if (str == "SensorSum")
+				if (str == "SensorSum")
 					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_SensorSum;
 				else if (str == "SensorDifference")
 					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_SensorDifference;
@@ -430,6 +428,8 @@ class TalonCIParams
 					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_RemoteSensor0;
 				else if (str == "RemoteSensor1")
 					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_RemoteSensor1;
+				else if (str == "None")
+					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_None;
 				else if (str == "SoftwareEmulatedSensor")
 					remote_feedback_type_ = hardware_interface::RemoteFeedbackDevice_SoftwareEmulatedSensor;
 				else
@@ -920,34 +920,38 @@ class TalonCIParams
 		bool stringToFeedbackDevice(const std::string &str,
 				hardware_interface::FeedbackDevice &feedback_device) const
 		{
-				if (str == "QuadEncoder")
-					feedback_device = hardware_interface::FeedbackDevice_QuadEncoder;
-				else if (str == "Analog")
-					feedback_device = hardware_interface::FeedbackDevice_Analog;
-				else if (str == "Tachometer")
-					feedback_device = hardware_interface::FeedbackDevice_Tachometer;
-				else if (str == "PulseWidthEncodedPosition")
-					feedback_device = hardware_interface::FeedbackDevice_PulseWidthEncodedPosition;
-				else if (str == "SensorSum")
-					feedback_device = hardware_interface::FeedbackDevice_SensorSum;
-				else if (str == "SensorDifference")
-					feedback_device = hardware_interface::FeedbackDevice_SensorDifference;
-				else if (str == "RemoteSensor0")
-					feedback_device = hardware_interface::FeedbackDevice_RemoteSensor0;
-				else if (str == "RemoteSensor1")
-					feedback_device = hardware_interface::FeedbackDevice_RemoteSensor1;
-				else if (str == "SoftwareEmulatedSensor")
-					feedback_device = hardware_interface::FeedbackDevice_SoftwareEmulatedSensor;
-				else if (str == "CTRE_MagEncoder_Absolute")
-					feedback_device = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Absolute;
-				else if (str == "CTRE_MagEncoder_Relative")
-					feedback_device = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Relative;
-				else
-				{
-					ROS_ERROR_STREAM("Invalid feedback device name given : " << str);
-					return false;
-				}
-				return true;
+			if (str == "QuadEncoder")
+				feedback_device = hardware_interface::FeedbackDevice_QuadEncoder;
+			else if (str == "IntegratedSensor")
+				feedback_device = hardware_interface::FeedbackDevice_IntegratedSensor;
+			else if (str == "Analog")
+				feedback_device = hardware_interface::FeedbackDevice_Analog;
+			else if (str == "Tachometer")
+				feedback_device = hardware_interface::FeedbackDevice_Tachometer;
+			else if (str == "PulseWidthEncodedPosition")
+				feedback_device = hardware_interface::FeedbackDevice_PulseWidthEncodedPosition;
+			else if (str == "SensorSum")
+				feedback_device = hardware_interface::FeedbackDevice_SensorSum;
+			else if (str == "SensorDifference")
+				feedback_device = hardware_interface::FeedbackDevice_SensorDifference;
+			else if (str == "RemoteSensor0")
+				feedback_device = hardware_interface::FeedbackDevice_RemoteSensor0;
+			else if (str == "RemoteSensor1")
+				feedback_device = hardware_interface::FeedbackDevice_RemoteSensor1;
+			else if (str == "None")
+				feedback_device = hardware_interface::FeedbackDevice_None;
+			else if (str == "SoftwareEmulatedSensor")
+				feedback_device = hardware_interface::FeedbackDevice_SoftwareEmulatedSensor;
+			else if (str == "CTRE_MagEncoder_Absolute")
+				feedback_device = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Absolute;
+			else if (str == "CTRE_MagEncoder_Relative")
+				feedback_device = hardware_interface::FeedbackDevice_CTRE_MagEncoder_Relative;
+			else
+			{
+				ROS_ERROR_STREAM("Invalid feedback device name given : " << str);
+				return false;
+			}
+			return true;
 		}
 
 		bool stringToRemoteSensorSource(const std::string &str,

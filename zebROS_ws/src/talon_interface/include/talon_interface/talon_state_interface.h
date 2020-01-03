@@ -46,26 +46,28 @@ enum FeedbackDevice
 {
 	FeedbackDevice_Uninitialized,
 	FeedbackDevice_QuadEncoder,
-	FeedbackDevice_CTRE_MagEncoder_Relative = FeedbackDevice_QuadEncoder,
+	FeedbackDevice_IntegratedSensor,
 	FeedbackDevice_Analog,
 	FeedbackDevice_Tachometer,
 	FeedbackDevice_PulseWidthEncodedPosition,
-	FeedbackDevice_CTRE_MagEncoder_Absolute = FeedbackDevice_PulseWidthEncodedPosition,
 	FeedbackDevice_SensorSum,
 	FeedbackDevice_SensorDifference,
 	FeedbackDevice_RemoteSensor0,
 	FeedbackDevice_RemoteSensor1,
+	FeedbackDevice_None,
 	FeedbackDevice_SoftwareEmulatedSensor,
+	FeedbackDevice_CTRE_MagEncoder_Relative = FeedbackDevice_QuadEncoder,
+	FeedbackDevice_CTRE_MagEncoder_Absolute = FeedbackDevice_PulseWidthEncodedPosition,
 	FeedbackDevice_Last
 };
 
 enum RemoteFeedbackDevice
 {
-	RemoteFeedbackDevice_FactoryDefaultOff,
 	RemoteFeedbackDevice_SensorSum,
 	RemoteFeedbackDevice_SensorDifference,
 	RemoteFeedbackDevice_RemoteSensor0,
 	RemoteFeedbackDevice_RemoteSensor1,
+	RemoteFeedbackDevice_None,
 	RemoteFeedbackDevice_SoftwareEmulatedSensor,
 	RemoteFeedbackDevice_Last
 };
@@ -303,7 +305,7 @@ class TalonHWState
 			neutral_output_(false),
 			encoder_feedback_(FeedbackDevice_Uninitialized),
 			feedback_coefficient_(1.0),
-			encoder_feedback_remote_(RemoteFeedbackDevice_FactoryDefaultOff),
+			encoder_feedback_remote_(RemoteFeedbackDevice_None),
 			encoder_ticks_per_rotation_(4096),
 			remote_feedback_device_ids_{0, 0},
 			remote_feedback_filters_{RemoteSensorSource_Off, RemoteSensorSource_Off},
@@ -1245,7 +1247,7 @@ class TalonHWState
 		}
 		void setRemoteEncoderFeedback(RemoteFeedbackDevice encoder_feedback_remote)
 		{
-			if ((encoder_feedback_remote >= RemoteFeedbackDevice_FactoryDefaultOff) &&
+			if ((encoder_feedback_remote >= RemoteFeedbackDevice_SensorSum) &&
 				(encoder_feedback_remote <  RemoteFeedbackDevice_Last) )
 				encoder_feedback_remote_ = encoder_feedback_remote;
 			else

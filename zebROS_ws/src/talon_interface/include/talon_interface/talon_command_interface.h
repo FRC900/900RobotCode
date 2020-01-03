@@ -108,7 +108,7 @@ class TalonHWCommand
 			encoder_feedback_(FeedbackDevice_Uninitialized),
 			feedback_coefficient_(1.0),
 			encoder_feedback_changed_(false),
-			remote_encoder_feedback_(RemoteFeedbackDevice_FactoryDefaultOff),
+			remote_encoder_feedback_(RemoteFeedbackDevice_None),
 			remote_encoder_feedback_changed_(false),
 			encoder_ticks_per_rotation_(4096),
 			remote_feedback_device_ids_{0, 0},
@@ -781,7 +781,7 @@ class TalonHWCommand
 		}
 		void setRemoteEncoderFeedback(RemoteFeedbackDevice remote_encoder_feedback)
 		{
-			if ((remote_encoder_feedback >= RemoteFeedbackDevice_FactoryDefaultOff) &&
+			if ((remote_encoder_feedback >= RemoteFeedbackDevice_SensorSum) &&
 				(remote_encoder_feedback <  RemoteFeedbackDevice_Last) )
 			{
 				if (remote_encoder_feedback != remote_encoder_feedback_)

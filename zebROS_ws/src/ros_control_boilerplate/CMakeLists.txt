@@ -166,6 +166,7 @@ endif()
 set (CTRE_USER_LIBS
 	${CTRE_LIB_DIR}/libCTRE_Phoenix.a
 	${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.a
+	${CTRE_LIB_DIR}/libCTRE_PhoenixCore.a
 )
 
 set (ALLWPILIB ../../../allwpilib)
@@ -179,8 +180,8 @@ include_directories(${ALLWPILIB}/hal/src/main/native/athena)
 if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
 	set (CTRE_USER_LIBS 
 		${CTRE_USER_LIBS}
-		${CTRE_LIB_DIR}/libCTRE_PhoenixPlatform_socketcan.a
 		${CTRE_LIB_DIR}/libCTRE_PhoenixCanutils.a
+		${CTRE_LIB_DIR}/libCTRE_PhoenixPlatform_socketcan.a
 	)
 
 	set (FRCROBOT_HW_MAIN_SRCS ${FRCROBOT_HW_MAIN_SRCS} 
@@ -330,15 +331,15 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
 		if (NOT (("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
 				  "${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu"))  
 			set (CTRE_DIAGNOSTIC_LIBS 
-				${CTRE_DIAGNOSTIC_LIBS}
 				${CTRE_LIB_DIR}/libCTRE_PhoenixDiagnostics.a
 			)
 		endif()
 		target_link_libraries(frcrobot_phoenixsim_main
 			${catkin_LIBRARIES}
 			${CTRE_LIB_DIR}/libCTRE_Phoenix.a
-			${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.a
 			${CTRE_LIB_DIR}/libCTRE_PhoenixCanutils.a
+			${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.a
+			${CTRE_LIB_DIR}/libCTRE_PhoenixCore.a
 			${CTRE_LIB_DIR}/../shared/libCTRE_PhoenixPlatform_sim.so
 			${CTRE_DIAGNOSTIC_LIBS}
 			frc_robot_interface

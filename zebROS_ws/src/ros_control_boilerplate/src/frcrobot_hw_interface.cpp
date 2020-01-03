@@ -1731,9 +1731,18 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 		// If the original object was a talon, both talon and victor will be valid
 		// The original object was a victor, talon will be nullptr
-		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mcs_[joint_id]);
+		auto mc_enhanced = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mcs_[joint_id]);
+		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mcs_[joint_id]);
 		auto victor = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mcs_[joint_id]);
 #if 0
+		if (mc_enhanced)
+		{
+			ROS_ERROR_STREAM_THROTTLE(5.0, "mc_enhanced OK for id " << joint_id);
+		}
+		else
+		{
+			ROS_ERROR_STREAM_THROTTLE(5.0, "mc_enhanced NOT OK for id " << joint_id);
+		}
 		if (talon)
 		{
 			ROS_ERROR_STREAM_THROTTLE(5.0, "talon OK for id " << joint_id);
@@ -1814,10 +1823,10 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			// Only actually set this on the hardware for Talon devices. But set it in
 			// talon_states for both types of motor controllers. This allows the conversion
 			// functions to work properly?
-			if (talon)
+			if (mc_enhanced)
 			{
-				rc &= safeTalonCall(talon->ConfigSelectedFeedbackSensor(talon_feedback_device, pidIdx, timeoutMs),"ConfigSelectedFeedbackSensor");
-				rc &= safeTalonCall(talon->ConfigSelectedFeedbackCoefficient(feedback_coefficient, pidIdx, timeoutMs),"ConfigSelectedFeedbackCoefficient");
+				rc &= safeTalonCall(mc_enhanced->ConfigSelectedFeedbackSensor(talon_feedback_device, pidIdx, timeoutMs),"ConfigSelectedFeedbackSensor");
+				rc &= safeTalonCall(mc_enhanced->ConfigSelectedFeedbackCoefficient(feedback_coefficient, pidIdx, timeoutMs),"ConfigSelectedFeedbackCoefficient");
 			}
 			if (rc)
 			{
@@ -1912,8 +1921,8 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		bool motion_profile_mode = false;
 
 		if ((talon_mode == hardware_interface::TalonMode_Position) ||
-				(talon_mode == hardware_interface::TalonMode_Velocity) ||
-				(talon_mode == hardware_interface::TalonMode_Current ))
+			(talon_mode == hardware_interface::TalonMode_Velocity) ||
+			(talon_mode == hardware_interface::TalonMode_Current ))
 		{
 			close_loop_mode = true;
 		}
@@ -2123,7 +2132,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 
-		if (talon)
+		if (mc_enhanced)
 		{
 			hardware_interface::VelocityMeasurementPeriod internal_v_m_period;
 			ctre::phoenix::motorcontrol::VelocityMeasPeriod phoenix_v_m_period;
@@ -2133,8 +2142,8 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				convertVelocityMeasurementPeriod(internal_v_m_period, phoenix_v_m_period))
 			{
 				bool rc = true;
-				rc &= safeTalonCall(talon->ConfigVelocityMeasurementPeriod(phoenix_v_m_period, timeoutMs),"ConfigVelocityMeasurementPeriod");
-				rc &= safeTalonCall(talon->ConfigVelocityMeasurementWindow(v_m_window, timeoutMs),"ConfigVelocityMeasurementWindow");
+				rc &= safeTalonCall(mc_enhanced->ConfigVelocityMeasurementPeriod(phoenix_v_m_period, timeoutMs),"ConfigVelocityMeasurementPeriod");
+				rc &= safeTalonCall(mc_enhanced->ConfigVelocityMeasurementWindow(v_m_window, timeoutMs),"ConfigVelocityMeasurementWindow");
 
 				if (rc)
 				{
@@ -2163,7 +2172,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 
-		if (talon)
+		if (mc_enhanced)
 		{
 			hardware_interface::LimitSwitchSource internal_local_forward_source;
 			hardware_interface::LimitSwitchNormal internal_local_forward_normal;
@@ -2180,8 +2189,8 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				convertLimitSwitchSource(internal_local_reverse_source, talon_local_reverse_source) &&
 				convertLimitSwitchNormal(internal_local_reverse_normal, talon_local_reverse_normal) )
 			{
-				bool rc = safeTalonCall(talon->ConfigForwardLimitSwitchSource(talon_local_forward_source, talon_local_forward_normal, timeoutMs),"ConfigForwardLimitSwitchSource");
-				rc &= safeTalonCall(talon->ConfigReverseLimitSwitchSource(talon_local_reverse_source, talon_local_reverse_normal, timeoutMs),"ConfigReverseLimitSwitchSource");
+				bool rc = safeTalonCall(mc_enhanced->ConfigForwardLimitSwitchSource(talon_local_forward_source, talon_local_forward_normal, timeoutMs),"ConfigForwardLimitSwitchSource");
+				rc &= safeTalonCall(mc_enhanced->ConfigReverseLimitSwitchSource(talon_local_reverse_source, talon_local_reverse_normal, timeoutMs),"ConfigReverseLimitSwitchSource");
 
 				if (rc)
 				{
@@ -2304,7 +2313,10 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					tc.resetCurrentLimit();
 				}
 			}
+		}
 
+		if (mc_enhanced)
+		{
 			// TODO : fix for Victor non-enhanced status frames
 			for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
 			{
@@ -2315,7 +2327,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 					ctre::phoenix::motorcontrol::StatusFrameEnhanced status_frame_enhanced;
 					if (convertStatusFrame(status_frame, status_frame_enhanced))
 					{
-						if (safeTalonCall(talon->SetStatusFramePeriod(status_frame_enhanced, period), "SetStatusFramePeriod"))
+						if (safeTalonCall(mc_enhanced->SetStatusFramePeriod(status_frame_enhanced, period), "SetStatusFramePeriod"))
 						{
 							ts.setStatusFramePeriod(status_frame, period);
 							ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " status_frame " << i << "=" << static_cast<int>(period) << "mSec");
@@ -2793,31 +2805,37 @@ bool FRCRobotHWInterface::convertFeedbackDevice(
 	switch (input_fd)
 	{
 		case hardware_interface::FeedbackDevice_QuadEncoder:
-			output_fd = ctre::phoenix::motorcontrol::QuadEncoder;
+			output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::QuadEncoder;
+			break;
+		case hardware_interface::FeedbackDevice_IntegratedSensor:
+			output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::IntegratedSensor;
 			break;
 		case hardware_interface::FeedbackDevice_Analog:
-			output_fd = ctre::phoenix::motorcontrol::Analog;
+			output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::Analog;
 			break;
 		case hardware_interface::FeedbackDevice_Tachometer:
-			output_fd = ctre::phoenix::motorcontrol::Tachometer;
+			output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::Tachometer;
 			break;
 		case hardware_interface::FeedbackDevice_PulseWidthEncodedPosition:
-			output_fd = ctre::phoenix::motorcontrol::PulseWidthEncodedPosition;
+			output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::PulseWidthEncodedPosition;
 			break;
 		case hardware_interface::FeedbackDevice_SensorSum:
-			output_fd = ctre::phoenix::motorcontrol::SensorSum;
+			output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::SensorSum;
 			break;
 		case hardware_interface::FeedbackDevice_SensorDifference:
-			output_fd = ctre::phoenix::motorcontrol::SensorDifference;
+			output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::SensorDifference;
 			break;
 		case hardware_interface::FeedbackDevice_RemoteSensor0:
-			output_fd = ctre::phoenix::motorcontrol::RemoteSensor0;
+			output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::RemoteSensor0;
 			break;
 		case hardware_interface::FeedbackDevice_RemoteSensor1:
-			output_fd = ctre::phoenix::motorcontrol::RemoteSensor1;
+			output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::RemoteSensor1;
+			break;
+		case hardware_interface::FeedbackDevice_None:
+			output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::None;
 			break;
 		case hardware_interface::FeedbackDevice_SoftwareEmulatedSensor:
-			output_fd = ctre::phoenix::motorcontrol::SoftwareEmulatedSensor;
+			output_fd = ctre::phoenix::motorcontrol::FeedbackDevice::SoftwareEmulatedSensor;
 			break;
 		default:
 			ROS_WARN("Unknown feedback device seen in HW interface");
@@ -2832,23 +2850,23 @@ bool FRCRobotHWInterface::convertRemoteFeedbackDevice(
 {
 	switch (input_fd)
 	{
-		case hardware_interface::RemoteFeedbackDevice_FactoryDefaultOff:
-			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice_FactoryDefaultOff;
-			break;
 		case hardware_interface::RemoteFeedbackDevice_SensorSum:
-			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice_SensorSum;
+			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice::SensorSum;
 			break;
 		case hardware_interface::RemoteFeedbackDevice_SensorDifference:
-			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice_SensorDifference;
+			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice::SensorDifference;
 			break;
 		case hardware_interface::RemoteFeedbackDevice_RemoteSensor0:
-			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice_RemoteSensor0;
+			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice::RemoteSensor0;
 			break;
 		case hardware_interface::RemoteFeedbackDevice_RemoteSensor1:
-			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice_RemoteSensor1;
+			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice::RemoteSensor1;
+			break;
+		case hardware_interface::RemoteFeedbackDevice_None:
+			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice::None;
 			break;
 		case hardware_interface::RemoteFeedbackDevice_SoftwareEmulatedSensor:
-			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice_SoftwareEmulatedSensor;
+			output_fd = ctre::phoenix::motorcontrol::RemoteFeedbackDevice::SoftwareEmulatedSensor;
 			break;
 		default:
 			ROS_WARN("Unknown remote feedback device seen in HW interface");
