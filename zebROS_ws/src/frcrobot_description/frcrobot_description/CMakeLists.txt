@@ -150,6 +150,7 @@ include_directories(
 
 install(DIRECTORY launch urdf
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  PATTERN "*~" EXCLUDE
 )
 
 ## Mark executable scripts (Python etc.) for installation
