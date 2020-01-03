@@ -1,10 +1,10 @@
 #include <ros/ros.h>
 #include <std_srvs/Trigger.h>
-#include "talon_state_controller/TalonState.h"
+#include "talon_state_msgs/TalonState.h"
 #include <fstream>
 #include <sstream>
 
-talon_state_controller::TalonState talon_state_msg;
+talon_state_msgs::TalonState talon_state_msg;
 
 bool get_offsets_srv(std_srvs::Trigger::Request& /*req*/, std_srvs::Trigger::Response& /*res*/)
 {
@@ -37,7 +37,7 @@ bool get_offsets_srv(std_srvs::Trigger::Request& /*req*/, std_srvs::Trigger::Res
 	return true;
 }
 
-void talon_states_cb(const talon_state_controller::TalonState& msg)
+void talon_states_cb(const talon_state_msgs::TalonState& msg)
 {
 	talon_state_msg = msg;
 }

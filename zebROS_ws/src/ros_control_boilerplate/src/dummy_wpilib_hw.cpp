@@ -194,9 +194,30 @@ void frc::DigitalOutput::Set(bool)
 {
 	ROS_ERROR("Called DigitalOutput::set(bool) on unsupported platform");
 }
-  void frc::DigitalOutput::InitSendable(SendableBuilder&)
+void frc::DigitalOutput::InitSendable(SendableBuilder&)
 {
 	ROS_ERROR("Called frc::DigitalOutput::InitSendable(SendableBuilder& builder) on unsupported platform");
+}
+HAL_Handle frc::DigitalOutput::GetPortHandleForRouting() const
+{
+	ROS_ERROR("Called DigitalOutput::GetPortHandleForRouting() on unsupported platform");
+	return HAL_kInvalidHandle;
+}
+frc::AnalogTriggerType frc::DigitalOutput::GetAnalogTriggerTypeForRouting() const
+{
+	ROS_ERROR("Called DigitalOutput::GetAnalogTriggerTypeForRouting() on unsupported platform");
+	return static_cast<frc::AnalogTriggerType>(-1);
+}
+bool frc::DigitalOutput::IsAnalogTrigger() const
+{
+	ROS_ERROR("Called DigitalOutput::IsAnalogTrigger() on unsupported platform");
+	return false;
+}
+
+int frc::DigitalOutput::GetChannel() const
+{
+	ROS_ERROR("Called DigitalOutput::GetChannel() on unsupported platform");
+	return std::numeric_limits<int>::max();
 }
 
 #include <frc/DriverStation.h>
@@ -218,6 +239,22 @@ frc::DriverStation & frc::DriverStation::GetInstance()
 	ROS_ERROR("Called DriverStation::GetInstance() on unsupported platform");
 	static frc::DriverStation d;
 	return d;
+}
+
+bool frc::DriverStation::IsDisabled(void) const
+{
+	ROS_ERROR("Called DriverStation::IsDisabled() on unsupported platform");
+	return false;
+}
+bool frc::DriverStation::IsAutonomous(void) const
+{
+	ROS_ERROR("Called DriverStation::IsAutonomous() on unsupported platform");
+	return false;
+}
+bool frc::DriverStation::IsOperatorControl(void) const
+{
+	ROS_ERROR("Called DriverStation::IsOperatorControl() on unsupported platform");
+	return false;
 }
 
 #include <frc/ErrorBase.h>
@@ -319,6 +356,58 @@ void frc::IterativeRobotBase::TestPeriodic()
 	ROS_ERROR("Called IterativeRobotBase::TestPeriodic() on unsupported platform");
 }
 
+#include <frc/InterruptableSensorBase.h>
+void frc::InterruptableSensorBase::RequestInterrupts(HAL_InterruptHandlerFunction, void*)
+{
+	ROS_ERROR("Called frc::InterruptableSensorBase::RequestInterrupts(HAL_InterruptHandlerFunction handler, void* param) on unsupported platform");
+}
+void frc::InterruptableSensorBase::RequestInterrupts()
+{
+	ROS_ERROR("Called frc::InterruptableSensorBase::RequestInterrupts() on unsupported platform");
+}
+void frc::InterruptableSensorBase::CancelInterrupts()
+{
+	ROS_ERROR("Called frc::InterruptableSensorBase::CancelInterrupts() on unsupported platform");
+}
+frc::InterruptableSensorBase::WaitResult frc::InterruptableSensorBase::WaitForInterrupt(double, bool)
+{
+	ROS_ERROR("Called frc::InterruptableSensorBase::WaitForInterrupt(double timeout, bool ignorePrevious) on unsupported platform");
+	return frc::InterruptableSensorBase::kTimeout;
+}
+void frc::InterruptableSensorBase::EnableInterrupts()
+{
+	ROS_ERROR("Called frc::InterruptableSensorBase::EnableInterrupts() on unsupported platform");
+}
+void frc::InterruptableSensorBase::DisableInterrupts()
+{
+	ROS_ERROR("Called frc::InterruptableSensorBase::DisableInterrupts() on unsupported platform");
+}
+double frc::InterruptableSensorBase::ReadRisingTimestamp()
+{
+	ROS_ERROR("Called frc::InterruptableSensorBase::ReadRisingTimestamp() on unsupported platform");
+	return std::numeric_limits<double>::max();
+}
+double frc::InterruptableSensorBase::ReadFallingTimestamp()
+{
+	ROS_ERROR("Called frc::InterruptableSensorBase::ReadFallingTimestamp() on unsupported platform");
+	return std::numeric_limits<double>::max();
+}
+void frc::InterruptableSensorBase::RequestInterrupts(InterruptableSensorBase::InterruptEventHandler handler)
+{
+	ROS_ERROR("Called frc::InterruptableSensorBase::RequestInterrupts(InterruptEventHandler handler) on unsupported platform");
+}
+void frc::InterruptableSensorBase::SetUpSourceEdge(bool, bool)
+{
+	ROS_ERROR("Called frc::InterruptableSensorBase::SetUpSourceEdge(bool risingEdge, bool fallingEdge) on unsupported platform");
+}
+void frc::InterruptableSensorBase::AllocateInterrupts(bool)
+{
+	ROS_ERROR("Called frc::InterruptableSensorBase::AllocateInterrupts(bool watcher) on unsupported platform");
+}
+frc::InterruptableSensorBase::~InterruptableSensorBase()
+{
+}
+
 #include <frc/Watchdog.h>
 
 frc::Watchdog::Watchdog(double timeout, std::function<void()> callback)
@@ -352,35 +441,31 @@ void frc::LiveWindow::UpdateValues()
 	ROS_ERROR("Called LiveWindow::UpdateValues() on unsupported platform");
 }
 
-
 #include <frc/smartdashboard/SendableBase.h>
 frc::SendableBase::SendableBase(bool)
 {
 	ROS_ERROR("Called SendableBase::SendableBase(bool) on unsupported platform");
 }
-std::string frc::SendableBase::GetName() const
+
+#include <frc/smartdashboard/SendableRegistry.h>
+struct frc::SendableRegistry::Impl {
+};
+frc::SendableRegistry::SendableRegistry()
 {
-	ROS_ERROR("Called string frc::SendableBase::GetName() const on unsupported platform");
-	return std::string();
 }
-void frc::SendableBase::SetName(const wpi::Twine&)
+frc::SendableRegistry& frc::SendableRegistry::GetInstance()
 {
-	ROS_ERROR("Called ::SendableBase::SetName(const wpi::Twine& name) on unsupported platform");
+	ROS_ERROR("Called SendableRegistry::GetInstance() on unsupported platform");
+	static frc::SendableRegistry s;
+	return s;
 }
-std::string frc::SendableBase::GetSubsystem() const
+bool frc::SendableRegistry::Remove(frc::Sendable* sendable)
 {
-	ROS_ERROR("Called string frc::SendableBase::GetSubsystem() const on unsupported platform");
-	return std::string();
-}
-void frc::SendableBase::SetSubsystem(const wpi::Twine&)
-{
-	ROS_ERROR("Called ::SendableBase::SetSubsystem(const wpi::Twine& subsystem) on unsupported platform");
+	(void)sendable;
+	ROS_ERROR("Called SendableRegistry::Remove(Sendable *sendable) on unsupported platform");
+	return false;
 }
 
-frc::SendableBase::~SendableBase()
-{
-	ROS_ERROR("Called SendableBase::~SendableBase() on unsupported platform");
-}
 
 #include <frc/smartdashboard/SmartDashboard.h>
 bool frc::SmartDashboard::PutBoolean(wpi::StringRef, bool)
@@ -659,7 +744,6 @@ HAL_PortHandle HAL_GetPortWithModule(int32_t module, int32_t channel) {
   return hal::createPortHandle(channel, module);
 }
 
-
 const char* HAL_GetErrorMessage(int32_t code) {
   switch (code) {
     case 0:
@@ -786,5 +870,4 @@ const char* HAL_GetErrorMessage(int32_t code) {
 }
 
 } // extern "C"
-
 

@@ -38,7 +38,6 @@
 */
 
 #pragma once
-#include <thread>
 
 // ROS
 #include <ros/ros.h>
@@ -230,7 +229,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<bool>        pwm_inverts_;
 		std::vector<bool>        pwm_local_updates_;
 		std::vector<bool>        pwm_local_hardwares_;
-		std::size_t              num_pwm_;
+		std::size_t              num_pwms_;
 
 		std::vector<std::string> solenoid_names_;
 		std::vector<int>         solenoid_ids_;

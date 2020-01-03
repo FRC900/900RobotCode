@@ -1,11 +1,10 @@
 #include <ros/ros.h>
 #include <ros/console.h>
 #include <actionlib/server/simple_action_server.h>
-#include <behaviors/ElevatorAction.h>
-#include <controllers_2019/ElevatorSrv.h>
-#include <talon_state_controller/TalonState.h>
-#include <controllers_2019/ElevatorSrv.h>
-#include "behaviors/enumerated_elevator_indices.h"
+#include <behavior_actions/ElevatorAction.h>
+#include <controllers_2019_msgs/ElevatorSrv.h>
+#include <talon_state_msgs/TalonState.h>
+#include "behavior_actions/enumerated_elevator_indices.h"
 #include "std_srvs/SetBool.h"
 #include "std_msgs/Bool.h"
 #include <atomic>
@@ -19,7 +18,7 @@ constexpr size_t min_climb_idx = ELEVATOR_DEPLOY; //reference to minimum index i
 class ElevatorAction {
     protected:
         ros::NodeHandle nh_;
-        actionlib::SimpleActionServer<behaviors::ElevatorAction> as_;
+        actionlib::SimpleActionServer<behavior_actions::ElevatorAction> as_;
         std::string action_name_;
 
 
@@ -37,12 +36,12 @@ class ElevatorAction {
 		std::thread publishLvlThread_;
 		std::atomic<bool> stopped_;
 
-        void executeCB(const behaviors::ElevatorGoalConstPtr &goal)
+        void executeCB(const behavior_actions::ElevatorGoalConstPtr &goal)
         {
             ROS_INFO_STREAM("%s: Running callback " << action_name_.c_str());
             ros::Rate r(10);
 
-			behaviors::ElevatorFeedback feedback;
+			behavior_actions::ElevatorFeedback feedback;
             feedback.running = true;
             as_.publishFeedback(feedback);
 
@@ -99,7 +98,7 @@ class ElevatorAction {
 				bool success = false;
 
 				//send request to elevator controller
-				controllers_2019::ElevatorSrv srv;
+				controllers_2019_msgs::ElevatorSrv srv;
 				srv.request.position = elevator_cur_setpoint_;
 				srv.request.go_slow = false; //default
 				if(goal->setpoint_index >= (min_climb_idx + 1)) //then climbing, go slow, except for ELEVATOR_DEPLOY
@@ -135,7 +134,7 @@ class ElevatorAction {
 			if(preempted || timed_out)
 			{
 				ROS_WARN_STREAM("Elevator server timed out or was preempted");
-				controllers_2019::ElevatorSrv srv;
+				controllers_2019_msgs::ElevatorSrv srv;
 				srv.request.position = cur_position_;
 				srv.request.go_slow = false; //default
 				// Don't bother checking return code here, since what
@@ -144,7 +143,7 @@ class ElevatorAction {
 			}
 
 			//log state of action and set result of action
-			behaviors::ElevatorResult result;
+			behavior_actions::ElevatorResult result;
 			result.timed_out = timed_out;//timed_out refers to last controller call, but applies for whole action
 
 			if(timed_out)
@@ -172,7 +171,7 @@ class ElevatorAction {
 			return;
 		}
 
-		void talonStateCallback(const talon_state_controller::TalonState &talon_state)
+		void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
 		{
 			static size_t elevator_master_idx = std::numeric_limits<size_t>::max();
 			if (elevator_master_idx >= talon_state.name.size())
@@ -234,7 +233,7 @@ class ElevatorAction {
 			level_two_climb_ = nh_.advertiseService("level_two_climb_server", &ElevatorAction::levelTwoClimbServer,this);
 
 			//Client for elevator controller
-            elevator_client_ = nh_.serviceClient<controllers_2019::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
+            elevator_client_ = nh_.serviceClient<controllers_2019_msgs::ElevatorSrv>("/frcrobot_jetson/elevator_controller/elevator_service", false, service_connection_header);
 
 			//Talon states subscriber
             talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states",1, &ElevatorAction::talonStateCallback, this);

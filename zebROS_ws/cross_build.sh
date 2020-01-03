@@ -3,12 +3,31 @@
 cd ~/2019Offseason/zebROS_ws/
 
 if [ -z $ROS_ROOT ]; then
-	PATH=$PATH:$HOME/frc2019/roborio/bin
-	source ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/melodic/setup.bash
-elif [[ ! $ROS_ROOT = "$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/melodic/share/ros" ]]; then
+	PATH=$PATH:$HOME/wpilib/2020/roborio/bin
+	source ~/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic/setup.bash
+elif [[ ! $ROS_ROOT = "$HOME/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic/share/ros" ]]; then
 	echo "ROS is not configured for a cross build (maybe set up for a native build instead?)"
 	echo "Run ./cross_build.sh in a new terminal window"
 	exit 1
 fi
 
-catkin_make_isolated --install --use-ninja -DCMAKE_TOOLCHAIN_FILE=`pwd`/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF "$@"
+catkin config --profile cross -x _isolated --install --blacklist \
+	realsense2_camera \
+	realsense2_description \
+	robot_visualizer \
+	rosbag_scripts \
+	rospy_message_converter \
+	rqt_driver_station_sim \
+	velocity_controllers \
+	visualize_profile \
+	zed_ar_track_alvar_example \
+	zed_display_rviz \
+	zed_depth_sub_tutorial \
+	zed_nodelet_example \
+	zed_ros \
+	zed_rtabmap_example \
+	zed_tracking_sub_tutorial \
+	zed_video_sub_tutorial \
+	zed_wrapper \
+	zms_writer
+catkin build --profile cross -DCMAKE_TOOLCHAIN_FILE=`pwd`/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF "$@"

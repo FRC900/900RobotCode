@@ -3,7 +3,7 @@
 #include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
 #include <fstream>
-#include <talon_state_controller/TalonState.h>
+#include <talon_state_msgs/TalonState.h>
 
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
@@ -39,7 +39,7 @@ int main(int argc, char **argv)
 //name: [bl_angle, bl_drive, br_angle, br_drive, fl_angle, fl_drive, fr_angle, fr_drive, intake1, intake2, lift, lift_follower1, lift_follower2, pivot]
 	foreach(rosbag::MessageInstance const m, view)
 	{
-		talon_state_controller::TalonState::ConstPtr s = m.instantiate<talon_state_controller::TalonState>();
+		talon_state_msgs::TalonState::ConstPtr s = m.instantiate<talon_state_msgs::TalonState>();
 		if (s != NULL){
 			temp_file << s->header << std::endl;
 			/*for (int i = 0; i < 8; i++)

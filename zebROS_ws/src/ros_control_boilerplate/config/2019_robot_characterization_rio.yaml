@@ -1,0 +1,26 @@
+# ros_control_boilerplate Settings -----------------------
+# Settings for ros_control control loop
+generic_hw_control_loop:
+  loop_hz: 100
+  cycle_time_error_threshold: 0.01
+
+# Settings for ros_control hardware interface
+# Map a name for each valid joint to a CAN id
+# For future expansion, change hw_id to specify one
+# of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
+hardware_interface:
+   joints:
+       # Need a single CTRE hardware device defined so the Rio 
+       # broadcasts keepalive / enable signals.  Without this, talons
+       # controlled by the Jetson won't run. Use an unused CAN Id so that
+       # the Rio sending 0'd control frames to it won't interfere with
+       # operation of real Talons
+       - {name: dummy_talon, type: can_talon_srx, local: false}
+
+       - {name: robot_code_ready_jetson, local: false, type: ready}
+       - {name: robot_code_ready_rio, local: true, type: ready}
+         
+match_state_controller:
+   type:         match_state_controller/MatchStateController
+   publish_rate: 20
+

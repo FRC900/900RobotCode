@@ -1,5 +1,13 @@
 #include <ros/ros.h>
 
+#include <WPILibVersion.h>
+const char* GetWPILibVersion(void)
+{
+	ROS_ERROR("Called GetWPILibVersion on unsupported platform");
+	return "900.2020";
+}
+
+
 #include <AHRS.h>
 AHRS::AHRS(SPI::Port)
 {
@@ -350,7 +358,7 @@ uint8_t AHRS::GetActualUpdateRateInternal(uint8_t)
 
 #include <frc/DriverStation.h>
 #include <frc/GenericHID.h>
-frc::GenericHID::GenericHID(int) : m_ds(DriverStation::GetInstance())
+frc::GenericHID::GenericHID(int) : m_ds(&DriverStation::GetInstance())
 {
 	ROS_ERROR("Called GenericHID::GenericHID(int) on unsupported platform");
 }
@@ -391,146 +399,6 @@ int frc::GenericHID::GetAxisCount() const
 	ROS_ERROR("Called frc::Joystick::GetAxisCount() const on unsupported platform");
 	return -1;
 }
-#include <frc/Joystick.h>
-frc::Joystick::Joystick(int x) : GenericHID(x)
-{
-	ROS_ERROR("Called Joystick::Joystick(int) on unsupported platform");
-}
-void frc::Joystick::SetXChannel(int)
-{
-	ROS_ERROR("Called frc::Joystick::SetXChannel(int channel) on unsupported platform");
-}
-void frc::Joystick::SetYChannel(int)
-{
-	ROS_ERROR("Called frc::Joystick::SetYChannel(int channel) on unsupported platform");
-}
-void frc::Joystick::SetZChannel(int)
-{
-	ROS_ERROR("Called frc::Joystick::SetZChannel(int channel) on unsupported platform");
-}
-void frc::Joystick::SetTwistChannel(int)
-{
-	ROS_ERROR("Called frc::Joystick::SetTwistChannel(int channel) on unsupported platform");
-}
-void frc::Joystick::SetThrottleChannel(int)
-{
-	ROS_ERROR("Called frc::Joystick::SetThrottleChannel(int channel) on unsupported platform");
-}
-void frc::Joystick::SetAxisChannel(AxisType, int)
-{
-	ROS_ERROR("Called frc::Joystick::SetAxisChannel(AxisType axis, int channel) on unsupported platform");
-}
-int frc::Joystick::GetXChannel() const
-{
-	ROS_ERROR("Called frc::Joystick::GetXChannel() const on unsupported platform");
-	return -std::numeric_limits<int>::max();
-}
-int frc::Joystick::GetYChannel() const
-{
-	ROS_ERROR("Called frc::Joystick::GetYChannel() const on unsupported platform");
-	return -std::numeric_limits<int>::max();
-}
-int frc::Joystick::GetZChannel() const
-{
-	ROS_ERROR("Called frc::Joystick::GetZChannel() const on unsupported platform");
-	return -std::numeric_limits<int>::max();
-}
-int frc::Joystick::GetTwistChannel() const
-{
-	ROS_ERROR("Called frc::Joystick::GetTwistChannel() const on unsupported platform");
-	return -std::numeric_limits<int>::max();
-}
-int frc::Joystick::GetThrottleChannel() const
-{
-	ROS_ERROR("Called frc::Joystick::GetThrottleChannel() const on unsupported platform");
-	return -std::numeric_limits<int>::max();
-}
-double frc::Joystick::GetX(JoystickHand) const
-{
-	ROS_ERROR("Called frc::Joystick::GetX(JoystickHand hand = kRightHand) const on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-double frc::Joystick::GetY(JoystickHand) const
-{
-	ROS_ERROR("Called frc::Joystick::GetY(JoystickHand hand = kRightHand) const on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-double frc::Joystick::GetZ() const
-{
-	ROS_ERROR("Called frc::Joystick::GetZ() const on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-double frc::Joystick::GetTwist() const
-{
-	ROS_ERROR("Called frc::Joystick::GetTwist() const on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-double frc::Joystick::GetThrottle() const
-{
-	ROS_ERROR("Called frc::Joystick::GetThrottle() const on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-double frc::Joystick::GetAxis(AxisType) const
-{
-	ROS_ERROR("Called frc::Joystick::GetAxis(AxisType axis) const on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-bool frc::Joystick::GetTrigger() const
-{
-	ROS_ERROR("Called frc::Joystick::GetTrigger() const on unsupported platform");
-	return false;
-}
-bool frc::Joystick::GetTriggerPressed()
-{
-	ROS_ERROR("Called frc::Joystick::GetTriggerPressed() on unsupported platform");
-	return false;
-}
-bool frc::Joystick::GetTriggerReleased()
-{
-	ROS_ERROR("Called frc::Joystick::GetTriggerReleased() on unsupported platform");
-	return false;
-}
-bool frc::Joystick::GetTop() const
-{
-	ROS_ERROR("Called frc::Joystick::GetTop() const on unsupported platform");
-	return false;
-}
-bool frc::Joystick::GetTopPressed()
-{
-	ROS_ERROR("Called frc::Joystick::GetTopPressed() on unsupported platform");
-	return false;
-}
-bool frc::Joystick::GetTopReleased()
-{
-	ROS_ERROR("Called frc::Joystick::GetTopReleased() on unsupported platform");
-	return false;
-}
-Joystick* frc::Joystick::GetStickForPort(int)
-{
-	ROS_ERROR("Called Joystick* frc::Joystick::GetStickForPort(int port) on unsupported platform");
-	return nullptr;
-}
-bool frc::Joystick::GetButton(ButtonType) const
-{
-	ROS_ERROR("Called frc::Joystick::GetButton(ButtonType button) const on unsupported platform");
-	return false;
-}
-double frc::Joystick::GetMagnitude() const
-{
-	ROS_ERROR("Called frc::Joystick::GetMagnitude() const on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-double frc::Joystick::GetDirectionRadians() const
-{
-	ROS_ERROR("Called frc::Joystick::GetDirectionRadians() const on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-double frc::Joystick::GetDirectionDegrees() const
-{
-	ROS_ERROR("Called frc::Joystick::GetDirectionDegrees() const on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-
 
 #include <frc/NidecBrushless.h>
 frc::NidecBrushless::NidecBrushless(int pwmChannel, int dioChannel) : m_dio(dioChannel), m_pwm(pwmChannel)
@@ -742,51 +610,6 @@ PIDSourceType frc::PIDSource::GetPIDSourceType() const
 	return frc::PIDSourceType::kDisplacement;
 }
 
-#include <frc/InterruptableSensorBase.h>
-void frc::InterruptableSensorBase::RequestInterrupts(HAL_InterruptHandlerFunction, void*)
-{
-	ROS_ERROR("Called frc::InterruptableSensorBase::RequestInterrupts(HAL_InterruptHandlerFunction handler, void* param) on unsupported platform");
-}
-void frc::InterruptableSensorBase::RequestInterrupts()
-{
-	ROS_ERROR("Called frc::InterruptableSensorBase::RequestInterrupts() on unsupported platform");
-}
-void frc::InterruptableSensorBase::CancelInterrupts()
-{
-	ROS_ERROR("Called frc::InterruptableSensorBase::CancelInterrupts() on unsupported platform");
-}
-frc::InterruptableSensorBase::WaitResult frc::InterruptableSensorBase::WaitForInterrupt(double, bool)
-{
-	ROS_ERROR("Called frc::InterruptableSensorBase::WaitForInterrupt(double timeout, bool ignorePrevious) on unsupported platform");
-	return frc::InterruptableSensorBase::kTimeout;
-}
-void frc::InterruptableSensorBase::EnableInterrupts()
-{
-	ROS_ERROR("Called frc::InterruptableSensorBase::EnableInterrupts() on unsupported platform");
-}
-void frc::InterruptableSensorBase::DisableInterrupts()
-{
-	ROS_ERROR("Called frc::InterruptableSensorBase::DisableInterrupts() on unsupported platform");
-}
-double frc::InterruptableSensorBase::ReadRisingTimestamp()
-{
-	ROS_ERROR("Called frc::InterruptableSensorBase::ReadRisingTimestamp() on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-double frc::InterruptableSensorBase::ReadFallingTimestamp()
-{
-	ROS_ERROR("Called frc::InterruptableSensorBase::ReadFallingTimestamp() on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-void frc::InterruptableSensorBase::SetUpSourceEdge(bool, bool)
-{
-	ROS_ERROR("Called frc::InterruptableSensorBase::SetUpSourceEdge(bool risingEdge, bool fallingEdge) on unsupported platform");
-}
-void frc::InterruptableSensorBase::AllocateInterrupts(bool)
-{
-	ROS_ERROR("Called frc::InterruptableSensorBase::AllocateInterrupts(bool watcher) on unsupported platform");
-}
-
 #include <frc/Notifier.h>
 frc::Notifier::Notifier(std::function<void ()>)
 {
@@ -797,3 +620,8 @@ frc::Notifier::~Notifier()
 	ROS_ERROR("Called frc::Notifier::~Notifier() on unsupported platform");
 }
 
+#include <frc/SpeedController.h>
+void frc::SpeedController::SetVoltage(units::volt_t output)
+{
+	ROS_ERROR("Called frc::SpeedController::Set(volt_t output) on unsupported platform");
+}

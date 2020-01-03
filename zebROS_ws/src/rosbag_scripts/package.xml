@@ -58,9 +58,8 @@
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-  <depend>ros_control_boilerplate</depend>
   <depend>rosbag</depend>
-  <depend>talon_state_controller</depend>
+  <depend>talon_state_msgs</depend>
   <depend>frc_msgs</depend>
   <depend>rospy_message_converter</depend>
   <depend>message_generation</depend>

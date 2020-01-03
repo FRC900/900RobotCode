@@ -1,11 +1,11 @@
 #include <ros/ros.h>
 #include <actionlib/client/simple_action_client.h>
-#include <behaviors/IntakeAction.h>
-#include <behaviors/PlaceAction.h>
-#include <behaviors/ElevatorAction.h>
-#include <behaviors/ClimbAction.h>
-#include <behaviors/AlignAction.h>
-#include <behaviors/enumerated_elevator_indices.h>
+#include <behavior_actions/IntakeAction.h>
+#include <behavior_actions/PlaceAction.h>
+#include <behavior_actions/ElevatorAction.h>
+#include <behavior_actions/ClimbAction.h>
+#include <behavior_actions/AlignAction.h>
+#include <behavior_actions/enumerated_elevator_indices.h>
 #include <boost/algorithm/string.hpp>
 #include <string>
 
@@ -15,7 +15,7 @@ double server_exec_timeout = 20.0; //how long to wait for an actionlib server ca
 bool callElevator(int setpoint_idx)
 {
 	//create client to call actionlib server
-	actionlib::SimpleActionClient<behaviors::ElevatorAction> elevator_ac("/elevator/elevator_server", true);
+	actionlib::SimpleActionClient<behavior_actions::ElevatorAction> elevator_ac("/elevator/elevator_server", true);
 
 	ROS_INFO("Waiting for elevator server to start.");
 	if(!elevator_ac.waitForServer(ros::Duration(server_wait_timeout)))
@@ -25,7 +25,7 @@ bool callElevator(int setpoint_idx)
 
 	ROS_INFO("Sending goal to elevator server, setpoint = %d", setpoint_idx);
 	// send a goal to the action
-	behaviors::ElevatorGoal goal;
+	behavior_actions::ElevatorGoal goal;
 	goal.setpoint_index = setpoint_idx;
 	elevator_ac.sendGoal(goal);
 
@@ -53,7 +53,7 @@ bool callElevator(int setpoint_idx)
 bool callIntakeCargo()
 {
 	//create client to call actionlib server
-	actionlib::SimpleActionClient<behaviors::IntakeAction> intake_cargo_ac("/cargo_intake/cargo_intake_server", true);
+	actionlib::SimpleActionClient<behavior_actions::IntakeAction> intake_cargo_ac("/cargo_intake/cargo_intake_server", true);
 
 	ROS_INFO("Waiting for cargo intake server to start.");
 	if(!intake_cargo_ac.waitForServer(ros::Duration(server_wait_timeout)))
@@ -63,7 +63,7 @@ bool callIntakeCargo()
 
 	ROS_INFO("Sending goal to intake cargo server.");
 	// send a goal to the action
-	behaviors::IntakeGoal intake_cargo_goal;
+	behavior_actions::IntakeGoal intake_cargo_goal;
 	intake_cargo_ac.sendGoal(intake_cargo_goal);
 
 	//wait for the action to return
@@ -89,7 +89,7 @@ bool callIntakeCargo()
 bool callOuttakeCargo(int setpoint_idx)
 {
 	//create client to call actionlib server
-	actionlib::SimpleActionClient<behaviors::PlaceAction> outtake_cargo_ac("/cargo_outtake/cargo_outtake_server", true);
+	actionlib::SimpleActionClient<behavior_actions::PlaceAction> outtake_cargo_ac("/cargo_outtake/cargo_outtake_server", true);
 
 	ROS_INFO("Waiting for cargo outtake server to start.");
 	if(!outtake_cargo_ac.waitForServer(ros::Duration(server_wait_timeout)))
@@ -99,7 +99,7 @@ bool callOuttakeCargo(int setpoint_idx)
 
 	ROS_INFO("Sending goal to outtake cargo server.");
 	// send a goal to the action
-	behaviors::PlaceGoal outtake_cargo_goal;
+	behavior_actions::PlaceGoal outtake_cargo_goal;
 	outtake_cargo_goal.setpoint_index = setpoint_idx;
 	outtake_cargo_ac.sendGoal(outtake_cargo_goal);
 
@@ -126,7 +126,7 @@ bool callOuttakeCargo(int setpoint_idx)
 bool callIntakeHatchPanel()
 {
 	//create client to call actionlib server
-	actionlib::SimpleActionClient<behaviors::IntakeAction> intake_hatch_panel_ac("/hatch_intake/intake_hatch_panel_server", true);
+	actionlib::SimpleActionClient<behavior_actions::IntakeAction> intake_hatch_panel_ac("/hatch_intake/intake_hatch_panel_server", true);
 
 	ROS_INFO("Waiting for panel intake server to start.");
 	if(!intake_hatch_panel_ac.waitForServer(ros::Duration(server_wait_timeout)))
@@ -136,7 +136,7 @@ bool callIntakeHatchPanel()
 
 	ROS_INFO("Sending goal to intake hatch panel server.");
 	// send a goal to the action
-	behaviors::IntakeGoal intake_hatch_panel_goal;
+	behavior_actions::IntakeGoal intake_hatch_panel_goal;
 	intake_hatch_panel_ac.sendGoal(intake_hatch_panel_goal);
 
 	//wait for the action to return
@@ -162,7 +162,7 @@ bool callIntakeHatchPanel()
 bool callOuttakeHatchPanel(int setpoint_idx)
 {
 	//create client to call actionlib server
-	actionlib::SimpleActionClient<behaviors::PlaceAction> outtake_hatch_panel_ac("/hatch_outtake/outtake_hatch_panel_server", true);
+	actionlib::SimpleActionClient<behavior_actions::PlaceAction> outtake_hatch_panel_ac("/hatch_outtake/outtake_hatch_panel_server", true);
 
 	ROS_INFO("Waiting for panel outtake server to start.");
 	if(!outtake_hatch_panel_ac.waitForServer(ros::Duration(server_wait_timeout)))
@@ -172,7 +172,7 @@ bool callOuttakeHatchPanel(int setpoint_idx)
 
 	ROS_INFO("Sending goal to outtake hatch panel server.");
 	// send a goal to the action
-	behaviors::PlaceGoal outtake_hatch_panel_goal;
+	behavior_actions::PlaceGoal outtake_hatch_panel_goal;
 	outtake_hatch_panel_goal.setpoint_index = setpoint_idx;
 	outtake_hatch_panel_ac.sendGoal(outtake_hatch_panel_goal);
 
@@ -199,7 +199,7 @@ bool callOuttakeHatchPanel(int setpoint_idx)
 bool callClimber(int step)
 {
 	//create client to call actionlib server
-	actionlib::SimpleActionClient<behaviors::ClimbAction> climber_ac("/climber/climber_server", true);
+	actionlib::SimpleActionClient<behavior_actions::ClimbAction> climber_ac("/climber/climber_server", true);
 
 	ROS_INFO("Waiting for climber server to start.");
 	if(!climber_ac.waitForServer(ros::Duration(server_wait_timeout)))
@@ -209,7 +209,7 @@ bool callClimber(int step)
 
 	ROS_INFO("Sending goal to climber server.");
 	// send a goal to the action
-	behaviors::ClimbGoal climb_goal;
+	behavior_actions::ClimbGoal climb_goal;
 	climb_goal.step = step;
 	climber_ac.sendGoal(climb_goal);
 
@@ -235,7 +235,7 @@ bool callClimber(int step)
 
 bool callAlignHatch()
 {
-	actionlib::SimpleActionClient<behaviors::AlignAction> align_hatch_ac("/align_hatch/align_hatch_server", true);
+	actionlib::SimpleActionClient<behavior_actions::AlignAction> align_hatch_ac("/align_hatch/align_hatch_server", true);
 
 	ROS_INFO("Waiting for align hatch server to start.");
 	if(!align_hatch_ac.waitForServer(ros::Duration(server_wait_timeout)))
@@ -245,7 +245,7 @@ bool callAlignHatch()
 	}
 
 	ROS_INFO("callAlignHatch : Sending goal to the server.");
-	behaviors::AlignGoal align_goal;
+	behavior_actions::AlignGoal align_goal;
 	align_hatch_ac.sendGoal(align_goal);
 
 	//wait for the action to return

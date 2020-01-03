@@ -1,4 +1,3 @@
-#include <realtime_tools/realtime_buffer.h>
 #include "teleop_joystick_control/teleop_joystick_comp.h"
 #include "teleop_joystick_control/rate_limiter.h"
 #include "std_srvs/Empty.h"
@@ -8,26 +7,26 @@
 #include "std_msgs/Bool.h"
 #include "std_msgs/Int8.h"
 
-#include "behaviors/IntakeAction.h"
-#include "behaviors/IntakeGoal.h"
-#include "behaviors/PlaceAction.h"
-#include "behaviors/PlaceGoal.h"
-#include "behaviors/ElevatorAction.h"
-#include "behaviors/ElevatorGoal.h"
-#include "behaviors/ClimbAction.h"
-#include "behaviors/ClimbGoal.h"
-#include "behaviors/AlignAction.h"
-#include "behaviors/AlignGoal.h"
 #include "actionlib/client/simple_action_client.h"
-#include "behaviors/enumerated_elevator_indices.h"
+#include "behavior_actions/IntakeAction.h"
+#include "behavior_actions/IntakeGoal.h"
+#include "behavior_actions/PlaceAction.h"
+#include "behavior_actions/PlaceGoal.h"
+#include "behavior_actions/ElevatorAction.h"
+#include "behavior_actions/ElevatorGoal.h"
+#include "behavior_actions/ClimbAction.h"
+#include "behavior_actions/ClimbGoal.h"
+#include "behavior_actions/AlignAction.h"
+#include "behavior_actions/AlignGoal.h"
+#include "behavior_actions/enumerated_elevator_indices.h"
 
 #include "std_srvs/SetBool.h"
 #include "std_srvs/Empty.h"
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
 
-#include "controllers_2019/PanelIntakeSrv.h"
-#include "controllers_2019/CargoIntakeSrv.h"
+#include "controllers_2019_msgs/PanelIntakeSrv.h"
+#include "controllers_2019_msgs/CargoIntakeSrv.h"
 
 #include "dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h"
 #include "teleop_joystick_control/TeleopJoystickCompConfig.h"
@@ -80,14 +79,14 @@ ros::ServiceClient continue_outtake_client;
 ros::ServiceClient align_with_terabee;
 
 //use shared pointers to make the clients global
-std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_cargo_ac;
-std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_cargo_ac;
-std::shared_ptr<actionlib::SimpleActionClient<behaviors::IntakeAction>> intake_hatch_panel_ac;
-std::shared_ptr<actionlib::SimpleActionClient<behaviors::PlaceAction>> outtake_hatch_panel_ac;
-std::shared_ptr<actionlib::SimpleActionClient<behaviors::ElevatorAction>> elevator_ac;
-std::shared_ptr<actionlib::SimpleActionClient<behaviors::ClimbAction>> climber_ac;
-std::shared_ptr<actionlib::SimpleActionClient<behaviors::AlignAction>> align_hatch_ac;
-std::shared_ptr<actionlib::SimpleActionClient<behaviors::AlignAction>> align_cargo_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::IntakeAction>> intake_cargo_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::PlaceAction>> outtake_cargo_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::IntakeAction>> intake_hatch_panel_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::PlaceAction>> outtake_hatch_panel_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::ElevatorAction>> elevator_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::ClimbAction>> climber_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAction>> align_hatch_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAction>> align_cargo_ac;
 double navX_angle;
 
 bool ManualToggleClamp = false;
@@ -276,7 +275,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_WARN("Joystick1: buttonAPress - Auto Align");
 
 			preemptActionlibServers();
-			behaviors::AlignGoal goal;
+			behavior_actions::AlignGoal goal;
 			goal.trigger = true;
 			if(cargo_limit_switch_true_count > config.limit_switch_debounce_iterations) {
 				goal.has_cargo = true;
@@ -297,7 +296,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			enable_align.publish(enable_pid);
 			*/
 
-			//behaviors::AlignGoal goal;
+			//behavior_actions::AlignGoal goal;
 			//goal.trigger = true;
 			//align_hatch_ac->sendGoal(goal);
 		}
@@ -318,14 +317,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: bumperLeftPress");
 			preemptActionlibServers();
 			ROS_INFO_STREAM("Joystick1: Place Panel");
-			behaviors::PlaceGoal goal;
+			behavior_actions::PlaceGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_idx;
             goal.end_setpoint_index = INTAKE;
 			outtake_hatch_panel_ac->sendGoal(goal);
 			elevator_cur_setpoint_idx = 0;
 			/*
 			preemptActionlibServers();
-			behaviors::AlignGoal goal;
+			behavior_actions::AlignGoal goal;
 			goal.has_cargo = false;
 			align_hatch_ac->sendGoal(goal);
 			*/
@@ -369,7 +368,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("joystick1: buttonYPress");
 			preemptActionlibServers();
 
-			behaviors::IntakeGoal goal;
+			behavior_actions::IntakeGoal goal;
 			intake_hatch_panel_ac->sendGoal(goal);
 		}
 		//Joystick1: bumperLeft
@@ -382,7 +381,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 				//If we have a cargo, outtake it
 				ROS_INFO_STREAM("Joystick1: Place Cargo");
-				behaviors::PlaceGoal goal;
+				behavior_actions::PlaceGoal goal;
 				goal.setpoint_index = elevator_cur_setpoint_idx;
 				outtake_cargo_ac->sendGoal(goal);
 				elevator_cur_setpoint_idx = 0;
@@ -392,7 +391,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 				//If we don't have a cargo, intake one
 				ROS_INFO_STREAM("Joystick1: Intake Cargo");
-				behaviors::IntakeGoal goal;
+				behavior_actions::IntakeGoal goal;
 				intake_cargo_ac->sendGoal(goal);
 			}
 		}
@@ -403,7 +402,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
             //If we have a cargo, outtake it
 			preemptActionlibServers();
             ROS_INFO_STREAM("Joystick1: Place Cargo");
-            behaviors::PlaceGoal goal;
+            behavior_actions::PlaceGoal goal;
             goal.setpoint_index = elevator_cur_setpoint_idx;
 			goal.end_setpoint_index = INTAKE;
             outtake_cargo_ac->sendGoal(goal);
@@ -413,7 +412,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if (panel_push_extend)
 			{
 				ROS_INFO_STREAM("Toggling to clamped and not extended");
-				controllers_2019::PanelIntakeSrv srv;
+				controllers_2019_msgs::PanelIntakeSrv srv;
 				srv.request.claw_release = false;
 				srv.request.push_extend = false;
 				if (!manual_server_panelIn.call(srv))
@@ -422,7 +421,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			else
 			{
 				ROS_INFO_STREAM("Toggling to unclamped and extended");
-				controllers_2019::PanelIntakeSrv srv;
+				controllers_2019_msgs::PanelIntakeSrv srv;
 				srv.request.claw_release = true;
 				srv.request.push_extend = true;
 				if (!manual_server_panelIn.call(srv))
@@ -445,7 +444,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
             //If we don't have a cargo, intake one
 			preemptActionlibServers();
             ROS_INFO_STREAM("Joystick1: Intake Cargo");
-            behaviors::IntakeGoal goal;
+            behavior_actions::IntakeGoal goal;
             intake_cargo_ac->sendGoal(goal);
             /*
 			if (intake_arm_down)
@@ -507,7 +506,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Move the elevator to the current setpoint
 			ROS_WARN("Calling elevator server; move to setpoint %d", elevator_cur_setpoint_idx);
 			preemptActionlibServers();
-			behaviors::ElevatorGoal goal;
+			behavior_actions::ElevatorGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_idx;
 			if(cargo_limit_switch_true_count > config.limit_switch_debounce_iterations)
 			{
@@ -550,7 +549,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: Calling Climber Server");
 			preemptActionlibServers();
 			ROS_WARN("Climber current step = %d", climber_cur_step);
-			behaviors::ClimbGoal goal;
+			behavior_actions::ClimbGoal goal;
 			goal.step = climber_cur_step;
 			climber_ac->sendGoal(goal);
 			climber_cur_step = (climber_cur_step + 1) % climber_num_steps;
@@ -588,7 +587,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			ManualToggleClamp = !ManualToggleClamp;
 		    ROS_INFO_STREAM("Joystick2: buttonAPress");
-			controllers_2019::PanelIntakeSrv msg;
+			controllers_2019_msgs::PanelIntakeSrv msg;
 		    msg.request.claw_release = ManualToggleClamp;
 		    msg.request.push_extend = ManualTogglePush;
 			if (!manual_server_panelIn.call(msg))
@@ -619,7 +618,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		{
 			ManualTogglePush = !ManualTogglePush;
 			ROS_INFO_STREAM("Joystick2: buttonBPress");
-			controllers_2019::PanelIntakeSrv msg;
+			controllers_2019_msgs::PanelIntakeSrv msg;
 			msg.request.claw_release = ManualToggleClamp;
 			msg.request.push_extend = ManualTogglePush;
 			if (!manual_server_panelIn.call(msg))
@@ -973,20 +972,20 @@ int main(int argc, char **argv)
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
 	//initialize actionlib clients
-	intake_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>>("/cargo_intake/cargo_intake_server", true);
-	outtake_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::PlaceAction>>("/cargo_outtake/cargo_outtake_server", true);
-	intake_hatch_panel_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::IntakeAction>>("/hatch_intake/intake_hatch_panel_server", true);
-	outtake_hatch_panel_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::PlaceAction>>("/hatch_outtake/outtake_hatch_panel_server", true);
-	climber_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ClimbAction>>("/climber/climber_server", true);
-	align_hatch_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::AlignAction>>("/align_hatch/align_hatch_server", true);
-	align_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::AlignAction>>("/align_cargo/align_cargo_server", true);
-	elevator_ac = std::make_shared<actionlib::SimpleActionClient<behaviors::ElevatorAction>>("/elevator/elevator_server", true);
+	intake_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::IntakeAction>>("/cargo_intake/cargo_intake_server", true);
+	outtake_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::PlaceAction>>("/cargo_outtake/cargo_outtake_server", true);
+	intake_hatch_panel_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::IntakeAction>>("/hatch_intake/intake_hatch_panel_server", true);
+	outtake_hatch_panel_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::PlaceAction>>("/hatch_outtake/outtake_hatch_panel_server", true);
+	climber_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::ClimbAction>>("/climber/climber_server", true);
+	align_hatch_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::AlignAction>>("/align_hatch/align_hatch_server", true);
+	align_cargo_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::AlignAction>>("/align_cargo/align_cargo_server", true);
+	elevator_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::ElevatorAction>>("/elevator/elevator_server", true);
 
 	run_align = n.serviceClient<std_srvs::SetBool>("/align_with_terabee/run_align");
 
-	manual_server_panelIn = n.serviceClient<controllers_2019::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command");
+	manual_server_panelIn = n.serviceClient<controllers_2019_msgs::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command");
 	//manual_server_cargoOut = n.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/cargo_outtake_controller/cargo_outtake_command");
-	manual_server_cargoIn = n.serviceClient<controllers_2019::CargoIntakeSrv>("/cargo_intake_controller/cargo_intake_command");
+	manual_server_cargoIn = n.serviceClient<controllers_2019_msgs::CargoIntakeSrv>("/cargo_intake_controller/cargo_intake_command");
 
     continue_outtake_client = n.serviceClient<std_srvs::Empty>("/hatch_outtake/continue_outtake_panel");
 

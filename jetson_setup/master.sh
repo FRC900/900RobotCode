@@ -18,14 +18,16 @@ ulimit -r unlimited
 #echo 5800 5810 > /proc/sys/net/ipv4/ip_local_port_range
 #systemctl restart networking
 
-sudo chmod a+rw /dev/ttyACM0
+# TODO - this should be handled by 10-local.rules 
+#sudo chmod a+rw /dev/ttyACM0
 sudo umount /mnt/900_2 --lazy
 
 export CUDA_CACHE_MAXSIZE=104857600
 export CUDA_CACHE_PATH=/home/ubuntu/.nv/ComputeCache
 
-cd /home/ubuntu/2019Offseason/build
-python3 -m http.server 5805 &
+# TODO these should no longer be needed
+#cd /home/ubuntu/2019Offseason/build
+#python3 -m http.server 5805 &
 cd /home/ubuntu/2019Offseason/jetson_setup/
 
 if sudo mount /dev/nvme0n1p1 /mnt/900_2; then

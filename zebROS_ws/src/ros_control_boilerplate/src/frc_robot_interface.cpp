@@ -81,7 +81,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 	, num_nidec_brushlesses_(0)
 	, num_digital_inputs_(0)
 	, num_digital_outputs_(0)
-	, num_pwm_(0)
+	, num_pwms_(0)
 	, num_solenoids_(0)
 	, num_double_solenoids_(0)
 	, num_compressors_(0)
@@ -791,10 +791,10 @@ void FRCRobotInterface::init()
 			joint_remote_interface_.registerHandle(doh);
 	}
 
-	num_pwm_ = pwm_names_.size();
-	pwm_state_.resize(num_pwm_);
-	pwm_command_.resize(num_pwm_);
-	for (size_t i = 0; i < num_pwm_; i++)
+	num_pwms_ = pwm_names_.size();
+	pwm_state_.resize(num_pwms_);
+	pwm_command_.resize(num_pwms_);
+	for (size_t i = 0; i < num_pwms_; i++)
 	{
 		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << pwm_names_[i] << " at PWM channel " << pwm_pwm_channels_[i] << " / invert " << pwm_inverts_[i]);
 		pwm_state_[i] = std::numeric_limits<double>::max();

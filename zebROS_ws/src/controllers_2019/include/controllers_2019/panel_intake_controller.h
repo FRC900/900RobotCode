@@ -6,7 +6,7 @@
 #include <controller_interface/controller.h> //for writing controllers
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <std_msgs/Bool.h>
-#include "controllers_2019/PanelIntakeSrv.h"
+#include "controllers_2019_msgs/PanelIntakeSrv.h"
 
 namespace panel_intake_controller
 {
@@ -48,8 +48,8 @@ class PanelIntakeController : public controller_interface::Controller<hardware_i
             virtual void update(const ros::Time & time, const ros::Duration& period) override;
             virtual void stopping(const ros::Time &time) override;
 
-            virtual bool cmdService(controllers_2019::PanelIntakeSrv::Request &req,
-					                controllers_2019::PanelIntakeSrv::Response &res);
+            virtual bool cmdService(controllers_2019_msgs::PanelIntakeSrv::Request &req,
+					                controllers_2019_msgs::PanelIntakeSrv::Response &res);
 
         private:
             hardware_interface::JointHandle claw_joint_; //interface for the in/out solenoid joint

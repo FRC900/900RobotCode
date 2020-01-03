@@ -37,7 +37,7 @@ foreach(rosbag::MessageInstance const m, view_sick)
 rosbag::Bag write_bag;
 write_bag.open("_2018-11-03-11-08-20.bag.active", rosbag::bagmode::Write);
 
-for(int i = 0; i < laser_msg_write.size(); i++)
+for(size_t i = 0; i < laser_msg_write.size(); i++)
 {
     write_bag.write("/sick_tim/scan_modified", laser_msg_write[i].header.stamp, laser_msg_write[i]);
 }

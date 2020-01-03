@@ -3,6 +3,7 @@
 # with slight modifications on other Jetson hardware
 
 #install basic dependencies
+#sudo apt-add-repository ppa:ubuntu-toolchain-r/test -y 
 sudo apt update
 sudo apt -y upgrade
 
@@ -15,6 +16,7 @@ sudo apt install -y \
 	chromium-browser \
 	cmake \
 	cowsay \
+	dbus-x11 \
 	exfat-fuse \
 	exfat-utils \
 	gdb \
@@ -24,10 +26,13 @@ sudo apt install -y \
 	htop \
 	libatlas-base-dev \
 	libboost-all-dev \
+	libcanberra-gtk-module \
+	libcanberra-gtk3-module \
 	libeigen3-dev \
 	libflann-dev \
 	libgflags-dev \
 	libgoogle-glog-dev \
+	libgoogle-perftools-dev \
 	libgtk2.0-dev \
 	libhdf5-dev \
 	libhdf5-serial-dev \
@@ -68,6 +73,9 @@ sudo apt install -y \
 	wget \
 	xfonts-scalable
 
+#sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 30 --slave /usr/bin/g++ g++ /usr/bin/g++-9
+#sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 90 --slave /usr/bin/g++ g++ /usr/bin/g++-7
+
 #install caffe
 # cd
 # git clone https://github.com/BVLC/caffe.git
@@ -99,7 +107,7 @@ sudo rm -rf tinyxml2
 
 #install zed sdk
 zed_fn="jetson_jp42"
-wget --no-check-certificate https://www.stereolabs.com/download/$zed_fn
+wget --no-check-certificate https://download.stereolabs.com/zedsdk/2.8/$zed_fn
 chmod 755 $zed_fn
 ./$zed_fn
 rm ./$zed_fn
@@ -265,51 +273,52 @@ sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/TensorRT /home/n
 sudo apt remove --purge -y thunderbird libreoffice-* unattended-upgrade
 
 # Install CTRE & navX libs
-mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
-mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
+mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include 
+mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/ctre 
 cd /home/ubuntu 
 wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.14.1*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*"
-cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include 
+cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include 
 find /home/ubuntu/devsite.ctr-electronics.com -name \*headers\*zip | xargs -n 1 unzip -o 
-cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/ctre 
+cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/ctre 
 find /home/ubuntu/devsite.ctr-electronics.com -name \*linux\*zip | xargs -n 1 unzip -o 
 rm -rf /home/ubuntu/devsite.ctr-electronics.com 
 
 cd /home/ubuntu 
-wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.399/navx-cpp-3.1.399-headers.zip 
-mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
-cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/navx 
-unzip -o /home/ubuntu/navx-cpp-3.1.399-headers.zip 
-rm /home/ubuntu/navx-cpp-3.1.399-headers.zip 
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-headers.zip 
+mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/navx 
+cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/navx 
+unzip -o /home/ubuntu/navx-cpp-3.1.400-headers.zip 
+rm /home/ubuntu/navx-cpp-3.1.400-headers.zip 
 cd /home/ubuntu 
-wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.399/navx-cpp-3.1.399-linuxathena.zip 
-mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
-cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
-unzip -o /home/ubuntu/navx-cpp-3.1.399-linuxathena.zip 
-rm /home/ubuntu/navx-cpp-3.1.399-linuxathena.zip 
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-linuxathena.zip 
+mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/navx 
+cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/navx 
+unzip -o /home/ubuntu/navx-cpp-3.1.400-linuxathena.zip 
+rm /home/ubuntu/navx-cpp-3.1.400-linuxathena.zip 
 cd /home/ubuntu 
-wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.399/navx-cpp-3.1.399-linuxathenastatic.zip 
-cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/navx 
-unzip -o /home/ubuntu/navx-cpp-3.1.399-linuxathenastatic.zip 
-rm /home/ubuntu/navx-cpp-3.1.399-linuxathenastatic.zip 
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-linuxathenastatic.zip 
+cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/navx 
+unzip -o /home/ubuntu/navx-cpp-3.1.400-linuxathenastatic.zip 
+rm /home/ubuntu/navx-cpp-3.1.400-linuxathenastatic.zip 
 
 # Install wpilib headers by copying them from the local maven dir
+# TODO - need to update to acutal 2020 filenames once they are released
 cd /home/ubuntu 
-wget https://github.com/wpilibsuite/allwpilib/releases/download/v2019.4.1/WPILib_Linux-2019.4.1.tar.gz 
-mkdir -p /home/ubuntu/frc2019 
-cd /home/ubuntu/frc2019 
-tar -xzf /home/ubuntu/WPILib_Linux-2019.4.1.tar.gz 
-rm /home/ubuntu/WPILib_Linux-2019.4.1.tar.gz 
-cd /home/ubuntu/frc2019/tools 
-python ToolsUpdater.py 
-mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
-cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/lib/wpilib 
+wget https://github.com/wpilibsuite/allwpilib/releases/download/v2020.4.1/WPILib_Linux-2019.4.1.tar.gz 
+mkdir -p /home/ubuntu/wpilib/2020 
+cd /home/ubuntu/wpilib/2020 
+tar -xzf /home/ubuntu/WPILib_Linux-2020.4.1.tar.gz 
+rm /home/ubuntu/WPILib_Linux-2020.4.1.tar.gz 
+cd /home/ubuntu/wpilib/2020/tools 
+python3 ToolsUpdater.py 
+mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/wpilib 
+cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/wpilib 
 find ../../../.. -name \*athena\*zip | xargs -n1 unzip -o 
-mkdir -p /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
-cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib 
+mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/wpilib 
+cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/wpilib 
 find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o 
-rm -rf /home/ubuntu/frc2019/maven /home/ubuntu/frc2019/jdk
-sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
+rm -rf /home/ubuntu/wpilib/2020/maven /home/ubuntu/wpilib/2020/jdk
+sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 
 # Set up prereqs for deploy script
 mv ~/2019Offseason ~/2019Offseason.orig

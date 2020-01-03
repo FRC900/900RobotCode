@@ -34,7 +34,7 @@
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <talon_interface/talon_state_interface.h>
-#include <talon_state_controller/TalonConfig.h>
+#include <talon_state_msgs/TalonConfig.h>
 
 namespace talon_config_controller
 {
@@ -66,7 +66,7 @@ class TalonConfigController: public controller_interface::Controller<hardware_in
 
 	private:
 		std::vector<hardware_interface::TalonStateHandle> talon_state_;
-		std::shared_ptr<realtime_tools::RealtimePublisher<talon_state_controller::TalonConfig> > realtime_pub_;
+		std::shared_ptr<realtime_tools::RealtimePublisher<talon_state_msgs::TalonConfig> > realtime_pub_;
 		ros::Time last_publish_time_;
 		double publish_rate_;
 		size_t num_hw_joints_; ///< Number of joints present in the TalonInterface

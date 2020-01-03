@@ -10,8 +10,8 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   roscpp
   std_msgs
+  talon_state_msgs
   trajectory_msgs
-  talon_state_controller
 )
 
 ## System dependencies are found with CMake's conventions

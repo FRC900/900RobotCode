@@ -49,11 +49,12 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>ros_control_boilerplate</depend>
+  <depend>behavior_actions</depend>
+  <depend>controllers_2019_msgs</depend>
   <depend>message_filters</depend>
-  <depend>talon_swerve_drive_controller</depend>
+  <depend>frc_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>swerve_point_generator</depend>
+  <depend>talon_state_msgs</depend>
   <build_depend>message_generation</build_depend>
   <build_depend>nav_msgs</build_depend>
   <build_depend>roscpp</build_depend>

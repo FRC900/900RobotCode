@@ -40,7 +40,7 @@ namespace panel_intake_controller
 	void PanelIntakeController::stopping(const ros::Time &/*time*/) {
 	}
 
-	bool PanelIntakeController::cmdService(controllers_2019::PanelIntakeSrv::Request &req, controllers_2019::PanelIntakeSrv::Response &/*response*/) {
+	bool PanelIntakeController::cmdService(controllers_2019_msgs::PanelIntakeSrv::Request &req, controllers_2019_msgs::PanelIntakeSrv::Response &/*response*/) {
 		if(isRunning())
 		{
 			panel_cmd_.writeFromNonRT(PanelCommand(!req.claw_release, req.push_extend));

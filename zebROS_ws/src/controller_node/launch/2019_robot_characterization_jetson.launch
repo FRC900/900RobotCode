@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!-- set up robot characterization node. This drives the drive base using percent out
+	 and measures the response. Using data recorded from this process, it calculates
+	 controller characteristics for the robot
+-->
+<launch>
+
+	<!-- GDB functionality -->
+	<arg name="debug" default="false" />
+	<arg unless="$(arg debug)" name="launch_prefix" value="" />
+	<arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+	<arg name="hw_or_sim" default="hw" />
+
+	<group ns="frcrobot_jetson">
+		<rosparam file="$(find ros_control_boilerplate)/config/2019_robot_characterization_jetson.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2019_swerve_drive.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_offsets.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
+
+		<!-- Load hardware interface -->
+		<node name="frcrobot_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
+			output="screen" launch-prefix="$(arg launch_prefix)">
+		</node>
+
+		<!-- Load controller manager-->
+		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
+			output="screen" args="spawn match_state_listener_controller swerve_drive_controller talon_state_controller robot_code_ready_controller" />
+
+	</group>
+</launch>

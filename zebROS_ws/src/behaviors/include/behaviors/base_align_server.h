@@ -6,12 +6,12 @@
 #include "std_srvs/Empty.h"
 #include "behaviors/align_axis_config.h"
 #include "behaviors/align_axis_state.h"
-#include "behaviors/AlignGoal.h"
-#include "behaviors/AlignAction.h"
-#include "behaviors/ElevatorAction.h"
-#include "behaviors/PlaceGoal.h"
-#include "behaviors/PlaceAction.h"
-#include "behaviors/enumerated_elevator_indices.h"
+#include "behavior_actions/AlignGoal.h"
+#include "behavior_actions/AlignAction.h"
+#include "behavior_actions/ElevatorAction.h"
+#include "behavior_actions/PlaceGoal.h"
+#include "behavior_actions/PlaceAction.h"
+#include "behavior_actions/enumerated_elevator_indices.h"
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
 
@@ -26,11 +26,11 @@ class BaseAlignAction {
 	protected:
 		ros::NodeHandle nh_;
 
-		actionlib::SimpleActionServer<behaviors::AlignAction> as_; //create the actionlib server
+		actionlib::SimpleActionServer<behavior_actions::AlignAction> as_; //create the actionlib server
 		std::string action_name_;
 		// TODO this result should be a local var
-		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_; //Action client for controlling the elevato
-		actionlib::SimpleActionClient<behaviors::PlaceAction> ac_outtake_hatch_panel_;
+		actionlib::SimpleActionClient<behavior_actions::ElevatorAction> ac_elevator_; //Action client for controlling the elevato
+		actionlib::SimpleActionClient<behavior_actions::PlaceAction> ac_outtake_hatch_panel_;
 
 		//Publishers for enabling PID loops and cmd_vel combiner
 		ros::Publisher enable_align_pub_;	//Enables the cmd_vel combiner
@@ -341,7 +341,7 @@ class BaseAlignAction {
 		// modified as needed by other conditions
 		//Function to move mech out of the way of sensors
 		virtual bool move_mech(ros::Rate r, bool wait_for_result) {
-			behaviors::ElevatorGoal elev_goal;
+			behavior_actions::ElevatorGoal elev_goal;
 			elev_goal.setpoint_index = INTAKE;
 			elev_goal.place_cargo = false;
 			ac_elevator_.sendGoal(elev_goal);
@@ -355,7 +355,7 @@ class BaseAlignAction {
 
 		virtual void place_game_piece()
 		{
-			behaviors::PlaceGoal goal;
+			behavior_actions::PlaceGoal goal;
 			goal.setpoint_index = elevator_cur_setpoint_;
             goal.end_setpoint_index = INTAKE;
 			ac_outtake_hatch_panel_.sendGoal(goal);
@@ -432,7 +432,7 @@ class BaseAlignAction {
 		}
 
 		//define the function to be executed when the actionlib server is called
-		virtual void executeCB(const behaviors::AlignGoalConstPtr &goal) {
+		virtual void executeCB(const behavior_actions::AlignGoalConstPtr &goal) {
 			double start_time = ros::Time::now().toSec();
 			disable_pid();
 			ros::Rate r(20);
@@ -445,7 +445,7 @@ class BaseAlignAction {
 			}
 			disable_pid(); //Disable all align PID after execution
 
-			behaviors::AlignResult result; //variable to store result of the actionlib action
+			behavior_actions::AlignResult result; //variable to store result of the actionlib action
 
 			if (std::any_of(axis_states_.cbegin(), axis_states_.cend(),
 						[](const auto &axis) { return axis.second.timed_out_; } ))

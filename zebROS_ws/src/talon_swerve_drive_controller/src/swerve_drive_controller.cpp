@@ -388,6 +388,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 
 	cmd_vel_mode_.store(true, std::memory_order_relaxed);
 	dont_set_angle_mode_.store(false, std::memory_order_relaxed);
+	percent_out_drive_mode_.store(false, std::memory_order_relaxed);
 	center_of_rotation_.writeFromNonRT(Eigen::Vector2d{0,0});
 	/*
 	if (!setOdomParamsFromUrdf(root_nh,
@@ -441,6 +442,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	sub_command_ = controller_nh.subscribe("cmd_vel", 1, &TalonSwerveDriveController::cmdVelCallback, this);
 	brake_serv_ = controller_nh.advertiseService("brake", &TalonSwerveDriveController::brakeService, this);
 	dont_set_angle_mode_serv_ = controller_nh.advertiseService("dont_set_angle", &TalonSwerveDriveController::dontSetAngleModeService, this);
+	percent_out_drive_mode_serv_ = controller_nh.advertiseService("percent_out_drive_mode", &TalonSwerveDriveController::percentOutDriveModeService, this);
 	motion_profile_serv_ = controller_nh.advertiseService("run_profile", &TalonSwerveDriveController::motionProfileService, this);
 	change_center_of_rotation_serv_ = controller_nh.advertiseService("change_center_of_rotation", &TalonSwerveDriveController::changeCenterOfRotationService, this);
 
@@ -824,6 +826,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		Commands curr_cmd = *(command_.readFromRT());
 		const double dt = (time - curr_cmd.stamp).toSec();
 		const bool dont_set_angle_mode = dont_set_angle_mode_.load(std::memory_order_relaxed);
+		const bool percent_out_drive_mode = percent_out_drive_mode_.load(std::memory_order_relaxed);
 
 		//ROS_INFO_STREAM("ang_vel_tar: " << curr_cmd.ang << " lin_vel_tar: " << curr_cmd.lin);
 
@@ -911,8 +914,18 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		{
 			for (size_t i = 0; i < wheel_joints_size_; ++i)
 			{
-				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_Velocity);
-				speed_joints_[i].setCommand(speeds_angles[i][0]);
+				if (!percent_out_drive_mode)
+				{
+					speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_Velocity);
+					speed_joints_[i].setCommand(speeds_angles[i][0]);
+				}
+				else
+				{
+					// Debugging mode - used for robot characterization by sweeping
+					// from 0-100% output and measuring response
+					speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
+					speed_joints_[i].setCommand(hypot(curr_cmd.lin[0], curr_cmd.lin[1]));
+				}
 			}
 		}
 		else
@@ -1280,7 +1293,7 @@ bool TalonSwerveDriveController::dontSetAngleModeService(std_srvs::SetBool::Requ
 {
 	if (isRunning())
 	{
-		ROS_WARN_STREAM("dont_set_angle_mode set to = " << static_cast<int>(req.data));
+		ROS_WARN_STREAM("dont_set_angle_mode_ set to = " << static_cast<int>(req.data));
 		dont_set_angle_mode_.store(req.data, std::memory_order_relaxed);
 
 		res.success = true;
@@ -1290,7 +1303,26 @@ bool TalonSwerveDriveController::dontSetAngleModeService(std_srvs::SetBool::Requ
 	}
 	else
 	{
-		ROS_ERROR_NAMED(name_, "Can't set dont_set_angle_mode. Controller is not running.");
+		ROS_ERROR_NAMED(name_, "Can't set dont_set_angle_mode_. Controller is not running.");
+		return false;
+	}
+}
+
+bool TalonSwerveDriveController::percentOutDriveModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+{
+	if (isRunning())
+	{
+		ROS_WARN_STREAM("percent_out_drive_mode_mode_ set to = " << static_cast<int>(req.data));
+		percent_out_drive_mode_.store(req.data, std::memory_order_relaxed);
+
+		res.success = true;
+		res.message = "SUCCESS!";
+
+		return true;
+	}
+	else
+	{
+		ROS_ERROR_NAMED(name_, "Can't set percent_out_drive__mode_. Controller is not running.");
 		return false;
 	}
 }

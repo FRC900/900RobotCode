@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+  <group ns="robot_state">
+	<param name="robot_description" textfile="$(find controller_node)/urdf/2019_compbot.urdf" />
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+  </group>
+
+</launch>

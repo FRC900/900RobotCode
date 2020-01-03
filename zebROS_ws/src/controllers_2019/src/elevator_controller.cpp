@@ -216,8 +216,8 @@ void ElevatorController::stopping(const ros::Time &/*time*/)
 }
 
 //Command Service Function
-bool ElevatorController::cmdService(controllers_2019::ElevatorSrv::Request  &req,
-									controllers_2019::ElevatorSrv::Response &/*response*/)
+bool ElevatorController::cmdService(controllers_2019_msgs::ElevatorSrv::Request  &req,
+									controllers_2019_msgs::ElevatorSrv::Response &/*response*/)
 {
 	if (req.position > 1.7) // TODO : get real measurement, make a param
 	{

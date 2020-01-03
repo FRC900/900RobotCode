@@ -114,7 +114,7 @@ class TalonHWCommand
 			remote_feedback_device_ids_{0, 0},
 			remote_feedback_filters_{RemoteSensorSource_Off, RemoteSensorSource_Off},
 			remote_feedback_filters_changed_(false),
-			sensor_terms_{FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized},
+			sensor_terms_{FeedbackDevice_QuadEncoder, FeedbackDevice_QuadEncoder, FeedbackDevice_QuadEncoder, FeedbackDevice_QuadEncoder},
 			sensor_terms_changed_(false),
 
 			//output shaping

@@ -3,8 +3,6 @@ project(rosbag_scripts)
 
 include("../cmake_modules/CMakeOpt.cmake")
 
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
 
@@ -12,15 +10,14 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  frc_msgs
+  message_generation
+  rosbag
   roscpp
   rospy
-  std_msgs
-  frc_msgs
-  ros_control_boilerplate
-  rosbag
-  talon_state_controller
-  message_generation
   rospy_message_converter
+  std_msgs
+  talon_state_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -114,7 +111,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    LIBRARIES
-   CATKIN_DEPENDS roscpp rospy std_msgs ros_control_boilerplate rosbag frc_msgs talon_state_controller rospy_message_converter
+   CATKIN_DEPENDS roscpp rospy std_msgs rosbag frc_msgs talon_state_msgs rospy_message_converter
 #  DEPENDS system_lib
 )
 
@@ -211,7 +208,6 @@ install(PROGRAMS
 # catkin_add_gtest(${PROJECT_NAME}-test test/test_rosbag_scripts.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-endif()
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)

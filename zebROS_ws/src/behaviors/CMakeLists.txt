@@ -3,8 +3,6 @@ project(behaviors)
 
 include ("../cmake_modules/CMakeOpt.cmake")
 
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -12,19 +10,19 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   actionlib
   actionlib_msgs
-  controllers_2019
+  behavior_actions
+  controllers_2019_msgs
+  frc_msgs
   nav_msgs
   message_generation
   message_filters
-  ros_control_boilerplate
   roscpp
   rospy
   std_msgs
   std_srvs
-  swerve_point_generator
-  talon_swerve_drive_controller
-  tf2_ros
+  talon_state_msgs
   teraranger_array
+  tf2_ros
 )
 
 include_directories(
@@ -80,17 +78,17 @@ include_directories(
 # )
 
 ## Generate actions in the 'action' folder
-add_action_files(
-    DIRECTORY
-    action
-    FILES
-    Path.action
-	Intake.action
-	Place.action
-	Climb.action
-	Elevator.action
-	Align.action
-)
+#add_action_files(
+#DIRECTORY
+#action
+#FILES
+#Path.action
+#Intake.action
+#Place.action
+#Climb.action
+#Elevator.action
+#Align.action
+#)
 
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
@@ -131,12 +129,12 @@ add_action_files(
 # ACTIONLIB STUFF
 
 #find_package(catkin REQUIRED genmsg actionlib_msgs actionlib)
-generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
+#generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
 
 catkin_package(
    INCLUDE_DIRS include
    #LIBRARIES behaviors
-   CATKIN_DEPENDS actionlib_msgs actionlib nav_msgs roscpp rospy std_msgs teraranger_array tf2_ros
+   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions nav_msgs roscpp rospy std_msgs teraranger_array tf2_ros
    DEPENDS 
 )
 
@@ -285,11 +283,11 @@ install(DIRECTORY
 )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
@@ -309,5 +307,4 @@ install(DIRECTORY
 # endif()
 
 ## Add folders to be run by python nosetests
-endif()
 # catkin_add_nosetests(test)

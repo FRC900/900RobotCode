@@ -1,0 +1,39 @@
+# ros_control_boilerplate Settings -----------------------
+# Settings for ros_control control loop
+generic_hw_control_loop:
+  loop_hz: 100
+  cycle_time_error_threshold: 0.01
+
+# Settings for ros_control hardware interface
+# Map a name for each valid joint to a CAN id
+# For future expansion, change hw_id to specify one
+# of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
+hardware_interface:
+   run_hal_robot: false
+   can_interface: can0
+   joints:
+       - {name: fl_drive, type: can_talon_srx, can_id: 21, local: true}
+       - {name: fl_angle, type: can_talon_srx, can_id: 11, local: true}
+       - {name: fr_drive, type: can_talon_srx, can_id: 22, local: true}
+       - {name: fr_angle, type: can_talon_srx, can_id: 12, local: true}
+       - {name: br_drive, type: can_talon_srx, can_id: 24, local: true}
+       - {name: br_angle, type: can_talon_srx, can_id: 14, local: true}
+       - {name: bl_drive, type: can_talon_srx, can_id: 23, local: true}
+       - {name: bl_angle, type: can_talon_srx, can_id: 13, local: true}
+       - {name: robot_code_ready_jetson, local: true, type: ready}
+         
+
+# This one creates the /talon_states topic necessary in ROS
+# It doesn't actually control anything, just takes the internal
+# encoder state used by the hw manager and publishes it as
+# a ROS topic.  This is generic ROS stuff, so we'll have
+# to figure out what to map e.g. effort to in the Talon world
+talon_state_controller:
+   type:         talon_state_controller/TalonStateController
+   publish_rate: 100
+
+match_state_listener_controller:
+    type:      state_listener_controller/MatchStateListenerController
+    topic:     /frcrobot_rio/match_data
+
+

@@ -5,7 +5,7 @@ sudo rosdep init
 rosdep update
 mkdir ~/melodic_arm_cross_ws
 cd ~/melodic_arm_cross_ws
-rosinstall_generator ros ros_comm robot angles serial robot_localization controller_interface controller_manager combined_robot_hw joint_limits_interface transmission_interface controller_manager controller_interface hardware_interface controller_manager_tests controller_manager_msgs combined_robot_hw combined_robot_hw_tests tf2_tools tf2_eigen tf2_sensor_msgs rosparam_shortcuts rqt_controller_manager actionlib_tutorials image_transport rosbridge_suite --rosdistro melodic --deps --wet-only > melodic-ros_comm-wet.rosinstall
+rosinstall_generator ros ros_comm robot angles serial robot_localization controller_interface controller_manager combined_robot_hw joint_limits_interface transmission_interface controller_manager controller_interface hardware_interface controller_manager_tests controller_manager_msgs combined_robot_hw combined_robot_hw_tests tf2_tools tf2_eigen tf2_sensor_msgs rosparam_shortcuts rqt_controller_manager actionlib_tutorials image_transport --rosdistro melodic --deps --wet-only > melodic-ros_comm-wet.rosinstall
 
 #edit melodic-ros_comm-wet.rosinstall and remove entries for realtime_tools, filter
 sed -i -e '/local-name: filters/{N;N;N;d}' melodic-ros_comm-wet.rosinstall
@@ -29,8 +29,7 @@ tar -xzvf 1.0.0.tar.gz
 rm 1.0.0.tar.gz
 mv urdfdom-1.0.0 urdfdom
 cd urdfdom
-echo ' 
-<?xml version="1.0"?>
+echo '<?xml version="1.0"?>
 <package>
   <name>urdfdom</name>
   <version>1.0.0</version>
@@ -65,15 +64,15 @@ sed -i -e '/<\/package>/i  <build_depend>urdfdom_headers<\/build_depend>' urdf/u
 
 cd ~/melodic_arm_cross_ws
 # Do a fresh build - kill off any lingering dependencies
-rm -rf ~/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/melodic devel_isolated build_isolated
+rm -rf ~/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic devel_isolated build_isolated
 
 # Note - if this fails looking for gencpp*cmake, run from a new terminal
 # window where no ROS setup.bash has previously been sourced
-./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/frc2019/roborio/arm-frc2019-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2019Offseason/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
+./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2019Offseason/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
 
 # Add newly built cross-libs to git repo so they are
 # used for subsequent Rio imagings
-cd /home/ubuntu/frc2019/roborio/arm-frc2019-linux-gnueabi
+cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi
 rm ~/2019Offseason/roscore_roborio.tar.bz2
 tar -cjf ~/2019Offseason/roscore_roborio.tar.bz2 opt/ros/melodic
 

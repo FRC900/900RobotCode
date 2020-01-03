@@ -520,7 +520,7 @@ void FRCRobotSimInterface::init(void)
 							  " as Digital Output " << digital_output_dio_channels_[i] <<
 							  " invert " << digital_output_inverts_[i]);
 
-	for (size_t i = 0; i < num_pwm_; i++)
+	for (size_t i = 0; i < num_pwms_; i++)
 		ROS_INFO_STREAM_NAMED("frcrobot_sim_interface",
 							  "Loading joint " << i << "=" << pwm_names_[i] <<
 							  (pwm_local_updates_[i] ? " local" : " remote") << " update, " <<
@@ -1046,7 +1046,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 					" set to " << converted_command);
 		}
 	}
-	for (size_t i = 0; i < num_pwm_; i++)
+	for (size_t i = 0; i < num_pwms_; i++)
 	{
 		const int setpoint = pwm_command_[i] * ((pwm_inverts_[i] & pwm_local_updates_[i]) ? -1 : 1);
 		if (pwm_state_[i] != setpoint)

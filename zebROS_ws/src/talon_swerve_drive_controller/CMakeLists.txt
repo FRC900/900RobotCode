@@ -6,17 +6,19 @@ include ("../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED COMPONENTS
     cmake_modules
     controller_interface
+    geometry_msgs
+    message_generation
+    nav_msgs
     std_msgs
 	std_srvs
-    nav_msgs
-    geometry_msgs
-    trajectory_msgs
     realtime_tools
-    talon_interface
+	roscpp
     talon_controllers
+    talon_interface
+	talon_state_msgs
     tf
+    trajectory_msgs
     urdf
-    message_generation
 )
 
 find_package(Eigen3 REQUIRED)

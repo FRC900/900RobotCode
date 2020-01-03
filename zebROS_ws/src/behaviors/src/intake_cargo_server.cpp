@@ -1,12 +1,12 @@
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
-#include "behaviors/IntakeAction.h"
-#include "behaviors/ElevatorAction.h"
-#include "controllers_2019/CargoIntakeSrv.h"
+#include "behavior_actions/IntakeAction.h"
+#include "behavior_actions/ElevatorAction.h"
+#include "controllers_2019_msgs/CargoIntakeSrv.h"
 #include "sensor_msgs/JointState.h"
 #include <atomic>
-#include "behaviors/enumerated_elevator_indices.h"
+#include "behavior_actions/enumerated_elevator_indices.h"
 
 
 //define global variables that will be defined based on config values
@@ -22,9 +22,9 @@ class CargoIntakeAction {
 	protected:
 		ros::NodeHandle nh_;
 
-		actionlib::SimpleActionServer<behaviors::IntakeAction> as_; //create the actionlib server
+		actionlib::SimpleActionServer<behavior_actions::IntakeAction> as_; //create the actionlib server
 		std::string action_name_;
-		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
+		actionlib::SimpleActionClient<behavior_actions::ElevatorAction> ac_elevator_;
 
 		ros::ServiceClient cargo_intake_controller_client_; //create a ros client to send requests to the controller
 		std::atomic<int> linebreak_true_count_; //counts how many times in a row the linebreak reported there's a cargo
@@ -44,7 +44,7 @@ class CargoIntakeAction {
 		service_connection_header["tcp_nodelay"] = "1";
 
 		//initialize the client being used to call the controller
-		cargo_intake_controller_client_ = nh_.serviceClient<controllers_2019::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
+		cargo_intake_controller_client_ = nh_.serviceClient<controllers_2019_msgs::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);
 
 		//start subscribers subscribing
 		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &CargoIntakeAction::jointStateCallback, this);
@@ -55,7 +55,7 @@ class CargoIntakeAction {
 		}
 
 		//define the function to be executed when the actionlib server is called
-		void executeCB(const behaviors::IntakeGoalConstPtr &/*goal*/)
+		void executeCB(const behavior_actions::IntakeGoalConstPtr &/*goal*/)
 		{
 			ROS_INFO("%s: Running callback", action_name_.c_str());
 
@@ -86,7 +86,7 @@ class CargoIntakeAction {
 			linebreak_true_count_ = 0; //when this gets higher than linebreak_debounce_iterations, we'll consider the gamepiece intooketh
 
 			ROS_INFO("Cargo intake server: sending elevator to intake setpoint");
-			behaviors::ElevatorGoal elevator_goal;
+			behavior_actions::ElevatorGoal elevator_goal;
 			elevator_goal.setpoint_index = INTAKE;
 			elevator_goal.place_cargo = true;
 			ac_elevator_.sendGoal(elevator_goal);
@@ -94,7 +94,7 @@ class CargoIntakeAction {
 			//send command to lower arm and run roller to the cargo intake controller ------
 			ROS_WARN("%s: lowering arm and spinning roller in",action_name_.c_str());
 			//define request to send to cargo intake controller
-			controllers_2019::CargoIntakeSrv srv;
+			controllers_2019_msgs::CargoIntakeSrv srv;
 			srv.request.power = roller_power;
 			srv.request.intake_arm = true;
 			//send request to controller
@@ -138,7 +138,7 @@ class CargoIntakeAction {
 			}
 
 			//log state of action and set result of action
-			behaviors::IntakeResult result; //variable to store result of the actionlib action
+			behavior_actions::IntakeResult result; //variable to store result of the actionlib action
 			result.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
 			if(!success || timed_out)
 			{

@@ -151,10 +151,12 @@ if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
 	for i in "${JETSON_ADDR[@]}"
 	do
 		rsync -avzru --ignore-times --exclude '.git' --exclude 'zebROS_ws/build*' \
-			--exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
+			--exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' --exclude 'zebROS_ws/logs*' \
 			--exclude '*~' --exclude '*.sw[op]'  --exclude '*CMakeFiles*' \
 			--exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2/documents' --exclude 'build' \
-			--exclude '*.zms' --exclude '*.stl' --exclude '*.dae' \
+			--exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
+			--exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
+			--exclude 'desmos_js' \
 			$i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/
 		if [ $? -ne 0 ]; then
 			echo "Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
@@ -171,10 +173,12 @@ fi
 for i in "${JETSON_ADDR[@]}"
 do
 	rsync -avzr $RSYNC_OPTIONS --ignore-times --exclude '.git' --exclude 'zebROS_ws/build*' \
-		--exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' \
+		--exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' --exclude 'zebROS_ws/logs*' \
 		--exclude '*~' --exclude '*.sw[op]' --exclude '*CMakeFiles*' \
 		--exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2/documents' --exclude 'build' \
-		--exclude '*.zms' --exclude '*.stl' --exclude '*.dae' \
+		--exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
+		--exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
+		--exclude 'desmos_js' \
 		$LOCAL_CLONE_LOCATION/ $i:$JETSON_ENV_LOCATION/
 	if [ $? -ne 0 ]; then
 		echo "Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"
@@ -192,12 +196,12 @@ RIO_BUILD_PROCESS=$!
 JETSON_BUILD_PROCESSES=()
 for i in "${JETSON_ADDR[@]}"
 do
-	(echo "Starting Jetson $i native build" && \
-		ssh $i "cd $JETSON_CLONE_LOCATION/zebROS_ws && \
-		source /opt/ros/melodic/setup.bash && \
-		source /home/ubuntu/2019Offseason/zebROS_ws/ROSJetsonMaster.sh && \
-		catkin_make --use-ninja" && \
-		echo "Jetson $i native build complete") &
+	echo "Starting Jetson $i native build" 
+	(
+		ssh -XC $i terminator -T \"Jetson $i\" -x "$JETSON_CLONE_LOCATION/zebROS_ws/native_build.sh || \
+		     	                        read -p 'Jetson Build FAILED - press ENTER to close window'" && \
+		echo "Jetson $i native build complete"
+	) &
 	JETSON_BUILD_PROCESSES+=($!)
 done
 
@@ -208,6 +212,12 @@ RIO_RC=$?
 echo " ... RIO_BUILD_PROCESS $RIO_BUILD_PROCESS returned $RIO_RC"
 
 # Capture return code from Jetson build process(es)
+# TODO - this doesn't actually capture the return code from
+# the jetson native build, but instead from the xterm command
+# which returns success if it was able to launch the command
+# Think about how to capture build status on the Jetson and return
+# it back here - maybe echo $? to a file, copy it back, check the
+# value in it, then delete it?
 JETSON_RCS=()
 for i in "${JETSON_BUILD_PROCESSES[@]}"
 do

@@ -11,14 +11,15 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>roscpp</depend>
-  <depend>behaviors</depend>
-  <depend>control_msgs</depend>
   <depend>actionlib</depend>
+  <depend>behavior_actions</depend>
   <depend>cmake_modules</depend>
+  <depend>control_msgs</depend>
+  <depend>controllers_2019_msgs</depend>
   <depend>frc_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>talon_state_controller</depend>
+  <depend>roscpp</depend>
+  <depend>talon_state_msgs</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>dynamic_reconfigure_wrapper</depend>
 

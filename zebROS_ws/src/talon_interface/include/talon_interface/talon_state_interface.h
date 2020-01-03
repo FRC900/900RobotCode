@@ -299,7 +299,7 @@ class TalonHWState
 			slot_(0),
 			invert_(false),
 			sensor_phase_(false),
-			neutral_mode_(NeutralMode_Uninitialized),
+			neutral_mode_(NeutralMode_Coast),
 			neutral_output_(false),
 			encoder_feedback_(FeedbackDevice_Uninitialized),
 			feedback_coefficient_(1.0),
@@ -307,7 +307,7 @@ class TalonHWState
 			encoder_ticks_per_rotation_(4096),
 			remote_feedback_device_ids_{0, 0},
 			remote_feedback_filters_{RemoteSensorSource_Off, RemoteSensorSource_Off},
-			sensor_terms_{FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized, FeedbackDevice_Uninitialized},
+			sensor_terms_{FeedbackDevice_QuadEncoder, FeedbackDevice_QuadEncoder, FeedbackDevice_QuadEncoder, FeedbackDevice_QuadEncoder},
 
 			//output shaping
 			close_loop_ramp_(0),
@@ -316,7 +316,7 @@ class TalonHWState
 			peak_output_reverse_(-1.),
 			nominal_output_forward_(0.),
 			nominal_output_reverse_(0.),
-			neutral_deadband_(0.),
+			neutral_deadband_(41.0/1023.0),
 
 			// voltage compensation
 			voltage_compensation_saturation_(12.5),
@@ -346,9 +346,9 @@ class TalonHWState
 			softlimits_override_enable_(false),
 
 			// current limiting
-			current_limit_peak_amps_(0),
-			current_limit_peak_msec_(0),
-			current_limit_continuous_amps_(0),
+			current_limit_peak_amps_(1),
+			current_limit_peak_msec_(1),
+			current_limit_continuous_amps_(1),
 			current_limit_enable_(false),
 
 			motion_cruise_velocity_(0),

@@ -4,30 +4,28 @@ project(talon_state_controller)
 include("../cmake_modules/CMakeOpt.cmake")
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS realtime_tools roscpp
-hardware_interface pluginlib controller_interface sensor_msgs talon_interface
- std_msgs message_generation)
+find_package(catkin REQUIRED COMPONENTS
+	controller_interface
+	hardware_interface
+	message_generation
+	pluginlib
+	realtime_tools
+	roscpp
+	sensor_msgs
+	talon_interface
+	talon_state_msgs
+	std_msgs
+)
 
-add_message_files (
-  FILES
-  TalonConfig.msg
-  TalonState.msg
-  CustomProfileStatus.msg
-)
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  talon_state_controller
-)
 # Declare catkin package
 catkin_package(
   CATKIN_DEPENDS realtime_tools roscpp hardware_interface pluginlib
-  controller_interface sensor_msgs message_runtime
+  controller_interface sensor_msgs message_runtime talon_state_msgs
   INCLUDE_DIRS include
   #LIBRARIES ${PROJECT_NAME}
   )
 
-include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS})
 add_library(${PROJECT_NAME} src/talon_config_controller src/talon_state_controller.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 

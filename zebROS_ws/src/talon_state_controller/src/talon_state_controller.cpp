@@ -57,11 +57,11 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 
 	// realtime publisher
 	realtime_pub_.reset(new
-						realtime_tools::RealtimePublisher<talon_state_controller::TalonState>(root_nh, "talon_states", 1));
+						realtime_tools::RealtimePublisher<talon_state_msgs::TalonState>(root_nh, "talon_states", 4));
 
 	auto &m = realtime_pub_->msg_;
 	// get joints and allocate message
-	talon_state_controller::CustomProfileStatus custom_profile_status_holder;
+	talon_state_msgs::CustomProfileStatus custom_profile_status_holder;
 
 	for (size_t i = 0; i < num_hw_joints_; i++)
 	{
@@ -128,7 +128,7 @@ void TalonStateController::starting(const ros::Time &time)
 
 void TalonStateController::update(const ros::Time &time, const ros::Duration & /*period*/)
 {
-	talon_state_controller::CustomProfileStatus custom_profile_status_holder;
+	talon_state_msgs::CustomProfileStatus custom_profile_status_holder;
 
 	// limit rate of publishing
 	if (publish_rate_ > 0.0 && last_publish_time_ + ros::Duration(1.0 / publish_rate_) < time)

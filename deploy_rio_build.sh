@@ -18,6 +18,8 @@ else
 	ssh $ROBORIO_ADDR "/etc/init.d/nilvrt stop"
 	rsync -avz --delete \
 		--exclude '*~' --exclude '*.sw[op]' \
+		--exclude '*.stl' --exclude '*.dae' \
+		--exclude 'pixy2/documents' \
 		$ROS_CODE_LOCATION/install_isolated/ \
 		$ROBORIO_ADDR:$RIO_INSTALL_LOCATION 
 	if [ $? -ne 0 ] ; then

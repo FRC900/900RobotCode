@@ -9,7 +9,7 @@
 #include <std_msgs/Float64.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <std_msgs/Bool.h>
-#include "controllers_2019/ElevatorSrv.h"
+#include "controllers_2019_msgs/ElevatorSrv.h"
 #include <dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h>
 #include <controllers_2019/ElevatorConfig.h>
 
@@ -62,8 +62,8 @@ class ElevatorController : public controller_interface::MultiInterfaceController
             virtual void update(const ros::Time & time, const ros::Duration& period) override;
             virtual void stopping(const ros::Time &time) override;
 
-            bool cmdService(controllers_2019::ElevatorSrv::Request &req,
-			                controllers_2019::ElevatorSrv::Response &res);
+            bool cmdService(controllers_2019_msgs::ElevatorSrv::Request &req,
+			                controllers_2019_msgs::ElevatorSrv::Response &res);
 
 			void callback(elevator_controller::ElevatorConfig &config, uint32_t level);
 

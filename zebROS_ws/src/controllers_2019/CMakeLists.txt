@@ -8,9 +8,9 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   controller_interface
+  controllers_2019_msgs
   dynamic_reconfigure_wrapper
   hardware_interface
-  message_generation
   pluginlib
   realtime_tools
   roscpp
@@ -61,12 +61,12 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate services in the 'srv' folder
-add_service_files(
-   FILES
-   CargoIntakeSrv.srv
-   ElevatorSrv.srv
-   PanelIntakeSrv.srv
-)
+#add_service_files(
+#FILES
+#CargoIntakeSrv.srv
+#ElevatorSrv.srv
+#PanelIntakeSrv.srv
+#)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -76,10 +76,10 @@ add_service_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-)
+#generate_messages(
+#DEPENDENCIES
+#std_msgs
+#)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

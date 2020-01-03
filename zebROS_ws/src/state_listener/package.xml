@@ -53,7 +53,7 @@
   <build_depend>realtime_tools</build_depend>
   <build_depend>hardware_interface</build_depend>
   <build_depend>talon_interface</build_depend>
-  <build_depend>talon_state_controller</build_depend>
+  <build_depend>talon_state_msgs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_export_depend>controller_interface</build_export_depend>
   <build_export_depend>realtime_tools</build_export_depend>
@@ -64,17 +64,15 @@
   <exec_depend>realtime_tools</exec_depend>
   <exec_depend>hardware_interface</exec_depend>
   <exec_depend>talon_interface</exec_depend>
-  <exec_depend>talon_state_controller</exec_depend>
+  <exec_depend>talon_state_msgs</exec_depend>
   <exec_depend>message_runtime</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <depend>frc_msgs</depend>
   <depend>frc_interfaces</depend>
 
-
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
     <controller_interface plugin="${prefix}/state_listener_plugins.xml"/>
-
   </export>
 </package>

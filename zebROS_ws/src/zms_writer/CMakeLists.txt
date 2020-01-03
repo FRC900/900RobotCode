@@ -87,107 +87,105 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 
-if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  ## Find catkin macros and libraries
-  ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
-  ## is used, also find other catkin packages
-  find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    message_filters
-    image_transport
-	cv_bridge
-  )
+## Find catkin macros and libraries
+## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
+## is used, also find other catkin packages
+find_package(catkin REQUIRED COMPONENTS
+   cv_bridge
+   image_transport
+   message_filters
+   roscpp
+)
 
-  ###########
-  ## Build ##
-  ###########
-  ## System dependencies are found with CMake's conventions
-  find_package(OpenCV REQUIRED)
-  find_package(Boost COMPONENTS filesystem system serialization iostreams thread REQUIRED)
+###########
+## Build ##
+###########
+## System dependencies are found with CMake's conventions
+find_package(OpenCV REQUIRED)
+find_package(Boost COMPONENTS filesystem system serialization iostreams thread REQUIRED)
 
-  catkin_package(
-  #  INCLUDE_DIRS include
-  #  LIBRARIES zms_writer
-    CATKIN_DEPENDS roscpp message_filters image_transport cv_bridge
-	DEPENDS
-  )
+catkin_package(
+#  INCLUDE_DIRS include
+#  LIBRARIES zms_writer
+  CATKIN_DEPENDS roscpp message_filters image_transport cv_bridge
+  DEPENDS
+)
 
-  ## Specify additional locations of header files
-  ## Your package locations should be listed before other locations
-  list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
-  include_directories(
-    ${catkin_INCLUDE_DIRS}
-    ${OpenCV_INCLUDE_DIRS} 
-    ../../../common
-  )
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
+list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS} 
+  ../../../common
+)
 
-  ## Declare a C++ executable
-  add_executable(zms_writer_node
-	  src/zms_writer.cpp
-    ../../../common/zmsout.cpp 
-    ../../../common/portable_binary_oarchive.cpp
-    ../../../common/portable_binary_iarchive.cpp
-    ../../../common/mediaout.cpp
-  )
+## Declare a C++ executable
+add_executable(zms_writer_node
+    src/zms_writer.cpp
+  ../../../common/zmsout.cpp 
+  ../../../common/portable_binary_oarchive.cpp
+  ../../../common/portable_binary_iarchive.cpp
+  ../../../common/mediaout.cpp
+)
 
-  ## Add cmake target dependencies of the executable
-  ## same as for the library above
-  add_dependencies(zms_writer_node 
-    ${${PROJECT_NAME}_EXPORTED_TARGETS} 
-    ${catkin_EXPORTED_TARGETS}
-  )
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(zms_writer_node 
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
 
-  ## Specify libraries to link a library or executable target against
-  target_link_libraries(zms_writer_node
-    ${catkin_LIBRARIES}
-    ${OpenCV_LIBS} 
-    ${Boost_LIBRARIES}
-  )
+## Specify libraries to link a library or executable target against
+target_link_libraries(zms_writer_node
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS} 
+  ${Boost_LIBRARIES}
+)
 
-  ## Declare a C++ executable
-  add_executable(mjpeg_writer_node
-	  src/mjpeg_writer.cpp
-    ../../../common/aviout.cpp 
-    ../../../common/portable_binary_oarchive.cpp
-    ../../../common/portable_binary_iarchive.cpp
-    ../../../common/mediaout.cpp
-  )
+## Declare a C++ executable
+add_executable(mjpeg_writer_node
+    src/mjpeg_writer.cpp
+  ../../../common/aviout.cpp 
+  ../../../common/portable_binary_oarchive.cpp
+  ../../../common/portable_binary_iarchive.cpp
+  ../../../common/mediaout.cpp
+)
 
-  ## Add cmake target dependencies of the executable
-  ## same as for the library above
-  add_dependencies(mjpeg_writer_node 
-    ${${PROJECT_NAME}_EXPORTED_TARGETS} 
-    ${catkin_EXPORTED_TARGETS}
-  )
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(mjpeg_writer_node 
+  ${${PROJECT_NAME}_EXPORTED_TARGETS} 
+  ${catkin_EXPORTED_TARGETS}
+)
 
-  ## Specify libraries to link a library or executable target against
-  target_link_libraries(mjpeg_writer_node
-    ${catkin_LIBRARIES}
-    ${OpenCV_LIBS} 
-    ${Boost_LIBRARIES}
-  )
+## Specify libraries to link a library or executable target against
+target_link_libraries(mjpeg_writer_node
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS} 
+  ${Boost_LIBRARIES}
+)
 
-  #############
-  ## Install ##
-  #############
+#############
+## Install ##
+#############
 
-  # all install targets should use catkin DESTINATION variables
-  # See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
+# all install targets should use catkin DESTINATION variables
+# See http://ros.org/doc/api/catkin/html/adv_user_guide/variables.html
 
-  ## Mark executable scripts (Python etc.) for installation
-  ## in contrast to setup.py, you can choose the destination
-  # install(PROGRAMS
-  #   scripts/my_python_script
-  #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  # )
+## Mark executable scripts (Python etc.) for installation
+## in contrast to setup.py, you can choose the destination
+# install(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
-  # Mark executables and/or libraries for installation
-  install(TARGETS zms_writer_node mjpeg_writer_node
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-  )
-endif()
+# Mark executables and/or libraries for installation
+install(TARGETS zms_writer_node mjpeg_writer_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/

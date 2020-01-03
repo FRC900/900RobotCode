@@ -8,7 +8,7 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
 endif()
 
-add_definitions(-Wno-deprecated-declarations -Wno-switch -ftrack-macro-expansion=0 -DPCL_ONLY_CORE_POINT_TYPES=ON -DNO_EXPLICIT_INSTANTIATIONS -Wall -DNON_POLLING)
+add_definitions(-Wno-deprecated-declarations -Wno-switch -ftrack-macro-expansion=0 -fno-var-tracking-assignments -DPCL_ONLY_CORE_POINT_TYPES=ON -DNO_EXPLICIT_INSTANTIATIONS -Wall -DNON_POLLING)
 #add_definitions(-Wall -Wextra -Wno-switch)
 
 if (DEFINED CMAKE_TOOLCHAIN_FILE)  # Cross-build for Rio
@@ -17,17 +17,17 @@ else() # Native builds
   set (CMAKE_RANLIB "gcc-ranlib" )
   set (CMAKE_AR     "gcc-ar"     )
   
-  set (OPT_FLAGS "${OPT_FLAGS} -Ofast -ffunction-sections -fdata-sections -Wl,-gc-sections")
+  set (OPT_FLAGS "${OPT_FLAGS} -Ofast -fno-finite-math-only -flto=2")
   if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf") # Jetson TK1
-	set (OPT_FLAGS "-flto=jobserver -fno-finite-math-only -mcpu=cortex-a15 -mfpu=neon-vfpv4 -fvect-cost-model")
+	set (OPT_FLAGS "${OPT_FLAGS} -mcpu=cortex-a15 -mfpu=neon-vfpv4 -fvect-cost-model")
     unset(CUDA_USE_STATIC_CUDA_RUNTIME CACHE)
     option(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
   elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu") # Jetson TX1/TX2
-	set (OPT_FLAGS "${OPT_FLAGS} -flto=jobserver -fno-finite-math-only -march=armv8-a+crypto -mcpu=cortex-a57+crypto -fvect-cost-model")
+	set (OPT_FLAGS "${OPT_FLAGS} -march=armv8-a+crypto -mcpu=cortex-a57+crypto -fvect-cost-model")
     unset(CUDA_USE_STATIC_CUDA_RUNTIME CACHE)
     option(CUDA_USE_STATIC_CUDA_RUNTIME OFF)
   else() # x86? Mac?
-	set (OPT_FLAGS "${OPT_FLAGS} -flto=jobserver -fno-finite-math-only -march=native -mtune=native")
+    set (OPT_FLAGS "${OPT_FLAGS} -march=native -mtune=native")
   endif()
 endif()
 

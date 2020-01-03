@@ -54,7 +54,7 @@ bool TalonConfigController::init(hardware_interface::TalonStateInterface *hw,
 
 	// realtime publisher
 	realtime_pub_.reset(new
-						realtime_tools::RealtimePublisher<talon_state_controller::TalonConfig>(root_nh, "talon_configs", 1));
+						realtime_tools::RealtimePublisher<talon_state_msgs::TalonConfig>(root_nh, "talon_configs", 1));
 
 	auto &m = realtime_pub_->msg_;
 

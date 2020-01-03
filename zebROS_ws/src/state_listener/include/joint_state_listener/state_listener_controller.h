@@ -7,7 +7,7 @@
 #include <sensor_msgs/Imu.h>
 #include "frc_interfaces/remote_joint_interface.h"
 #include "frc_msgs/PDPData.h"
-#include "talon_state_controller/TalonState.h"
+#include "talon_state_msgs/TalonState.h"
 #include "frc_msgs/MatchSpecificData.h"
 
 namespace state_listener_controller
@@ -415,7 +415,7 @@ class TalonStateListenerController :
 				return false;
 			}
 
-			sub_command_ = n.subscribe<talon_state_controller::TalonState>(topic, 1, &TalonStateListenerController::commandCB, this);
+			sub_command_ = n.subscribe<talon_state_msgs::TalonState>(topic, 1, &TalonStateListenerController::commandCB, this);
 			return true;
 		}
 
@@ -472,7 +472,7 @@ class TalonStateListenerController :
 		// "command" topic.
 		realtime_tools::RealtimeBuffer<std::vector<ValueValid<hardware_interface::TalonHWState>>> command_buffer_;
 
-		virtual void commandCB(const talon_state_controller::TalonStateConstPtr &msg)
+		virtual void commandCB(const talon_state_msgs::TalonStateConstPtr &msg)
 		{
 			std::vector<ValueValid<hardware_interface::TalonHWState>> data;
 			for (size_t i = 0; i < joint_names_.size(); i++)

@@ -2,26 +2,26 @@ cmake_minimum_required(VERSION 2.8.3)
 project(base_trajectory)
 
 include ("../cmake_modules/CMakeOpt.cmake")
-
+#Append Gperftools_DIR 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  cmake_modules
-  roscpp
   angles
+  cmake_modules
+  ddynamic_reconfigure
   joint_trajectory_controller
-  swerve_point_generator
-  std_msgs
   nav_msgs
   message_generation
+  roscpp
+  std_msgs
   trajectory_msgs
-  talon_swerve_drive_controller
-  ddynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+LIST(APPEND CMAKE_MODULE_PATH "/home/ubuntu/2019Offseason/zebROS_ws/src/cmake_modules")
+find_package(Gperftools REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -54,11 +54,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  Coefs.msg
+)
 
 ## Generate services in the 'srv' folder
 add_service_files(
@@ -79,7 +78,6 @@ generate_messages(
    std_msgs  # Or other packages containing msgs
    nav_msgs
    trajectory_msgs
-   swerve_point_generator
    base_trajectory
 )
 
@@ -115,7 +113,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 	LIBRARIES ${PROJECT_NAME}
-	CATKIN_DEPENDS joint_trajectory_controller roscpp swerve_point_generator
+	CATKIN_DEPENDS joint_trajectory_controller roscpp
 #  DEPENDS system_lib
 )
 
@@ -142,6 +140,7 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
 )
 
 add_executable(driver_node src/driver.cpp)

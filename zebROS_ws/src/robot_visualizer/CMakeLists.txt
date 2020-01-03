@@ -5,12 +5,12 @@ include ("../cmake_modules/CMakeOpt.cmake")
 
 find_package(catkin REQUIRED COMPONENTS
     cmake_modules
+	geometry_msgs
+	message_generation
 	roscpp
 	std_msgs
-	geometry_msgs
+    talon_state_msgs
 	trajectory_msgs
-	message_generation
-    talon_state_controller
 )
 
 find_package(Eigen3 REQUIRED)

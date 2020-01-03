@@ -48,12 +48,12 @@ rm -rf realsense_src
 # 
 # Keep each package on a separate line to aid in git merging
 # Try to keep them in alphabetic order to make it easier to find duplicates
-curl -sSL http://get.gazebosim.org | sh
 sudo apt install -y \
 	ros-melodic-ros-base \
 	liblua5.3-dev \
 	libsuitesparse-dev \
 	ninja-build \
+	python-catkin-tools \
 	python-pyqtgraph \
 	python-rosdep \
 	python-rosinstall \
@@ -63,8 +63,6 @@ sudo apt install -y \
 	ros-melodic-control-msgs \
 	ros-melodic-cv-bridge \
 	ros-melodic-ecl-geometry \
-	ros-melodic-gazebo-ros-control \
-	ros-melodic-gazebo-ros-pkgs \
 	ros-melodic-grid-map-core \
 	ros-melodic-grid-map-cv \
 	ros-melodic-grid-map-ros \
@@ -97,6 +95,13 @@ sudo apt install -y \
 	ros-melodic-usb-cam \
 	ros-melodic-xacro \
 	terminator 
+
+# Install gazebo sim - commented out because we don't
+# want/need it taking up space on the Jetson
+#curl -sSL http://get.gazebosim.org | sh
+# sudo apt install -y \
+#	ros-melodic-gazebo-ros-control \
+#	ros-melodic-gazebo-ros-pkgs \
 
 # Not for melodic - ros-melodic-hector-slam ros-melodic-hector-slam-launch ros-melodic-gmapping 
 # handled by wstool for now ros-melodic-teraranger-* 

@@ -1,10 +1,10 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
-#include <controllers_2019/PanelIntakeSrv.h>
-#include <behaviors/IntakeAction.h>
-#include <behaviors/ElevatorAction.h>
-#include "behaviors/enumerated_elevator_indices.h"
+#include <controllers_2019_msgs/PanelIntakeSrv.h>
+#include <behavior_actions/IntakeAction.h>
+#include <behavior_actions/ElevatorAction.h>
+#include "behavior_actions/enumerated_elevator_indices.h"
 
 //define global variables that will be set based on config values
 double elevator_timeout;
@@ -17,11 +17,11 @@ class IntakeHatchPanelAction
 {
 	protected:
 		ros::NodeHandle nh_;
-		actionlib::SimpleActionServer<behaviors::IntakeAction> as_;
+		actionlib::SimpleActionServer<behavior_actions::IntakeAction> as_;
 		std::string action_name_;
 
 		//Create actionlib client for the elevator server
-		actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
+		actionlib::SimpleActionClient<behavior_actions::ElevatorAction> ac_elevator_;
 		//Service client for hatch panel mech
 		ros::ServiceClient panel_controller_client_;
 
@@ -38,12 +38,12 @@ class IntakeHatchPanelAction
 		service_connection_header["tcp_nodelay"] = "1";
 
 		//initialize the client being used to call the controller
-		panel_controller_client_ = nh_.serviceClient<controllers_2019::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command", false, service_connection_header);
+		panel_controller_client_ = nh_.serviceClient<controllers_2019_msgs::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command", false, service_connection_header);
 	}
 
 		~IntakeHatchPanelAction(void) {}
 
-		void executeCB(const behaviors::IntakeGoalConstPtr &/*goal*/)
+		void executeCB(const behavior_actions::IntakeGoalConstPtr &/*goal*/)
 		{
 			ROS_INFO("Hatch Panel Intake Server Running");
 
@@ -68,7 +68,7 @@ class IntakeHatchPanelAction
 			bool timed_out = false; // TODO : never set?
 
 			//define service
-			controllers_2019::PanelIntakeSrv srv;
+			controllers_2019_msgs::PanelIntakeSrv srv;
 			srv.request.claw_release = true;
 			srv.request.push_extend = false;
 			//send request to controller
@@ -80,7 +80,7 @@ class IntakeHatchPanelAction
 			ros::spinOnce(); //update everything
 
 			//move elevator to intake location
-			behaviors::ElevatorGoal elev_goal;
+			behavior_actions::ElevatorGoal elev_goal;
 			elev_goal.setpoint_index = INTAKE;
 			elev_goal.place_cargo = false;
 			ac_elevator_.sendGoal(elev_goal);
@@ -149,7 +149,7 @@ class IntakeHatchPanelAction
 			ros::spinOnce(); //update everything
 
 			//log state of action and set result of action
-			behaviors::IntakeResult result;
+			behavior_actions::IntakeResult result;
 			result.timed_out = timed_out;
 
 			if(timed_out)

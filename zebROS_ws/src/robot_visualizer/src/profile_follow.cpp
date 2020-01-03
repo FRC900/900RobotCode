@@ -67,7 +67,7 @@ bool follow_service(robot_visualizer::ProfileFollower::Request &req, robot_visua
 	return true;
 }
 
-void talon_cb(const talon_state_controller::TalonState &msg)
+void talon_cb(const talon_state_msgs::TalonState &msg)
 {
 	static int index_talon = -1;
 	if(index_talon == -1)

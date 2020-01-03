@@ -54,7 +54,7 @@
 
 #include <ctre/phoenix/motorcontrol/can/TalonSRX.h>
 #include <ctre/phoenix/motorcontrol/can/VictorSPX.h>
-#include <frc/IterativeRobotBase.h>
+#include "WPILibVersion.h"
 #include <frc/AnalogInput.h>
 #include <frc/DriverStation.h>
 #include <frc/NidecBrushless.h>
@@ -65,8 +65,6 @@
 #include <frc/DoubleSolenoid.h>
 #include <frc/Compressor.h>
 #include <frc/Joystick.h>
-#include <frc/livewindow/LiveWindow.h>
-#include <frc/smartdashboard/SmartDashboard.h>
 #include <hal/HALBase.h>
 #include <hal/DriverStation.h>
 #include <hal/FRCUsageReporting.h>
@@ -79,95 +77,55 @@ namespace frcrobot_control
 // Very simple code to communicate with the HAL. This recieves
 // packets from the driver station and lets the field management
 // know our robot is alive.
-class ROSIterativeRobot : public frc::IterativeRobotBase
+class ROSIterativeRobot
 {
 	public:
-		ROSIterativeRobot(void) : IterativeRobotBase(0.02)
+		ROSIterativeRobot(void) : m_ds(DriverStation::GetInstance())
 		{
+			if (!HAL_Initialize(500, 0))
+			{
+				ROS_ERROR("FATAL ERROR: HAL could not be initialized");
+				std::terminate();
+			}
+			std::FILE* file = nullptr;
+			file = std::fopen("/tmp/frc_versions/FRC_Lib_Version.ini", "w");
+
+			if (file != nullptr) {
+				std::fputs("C++ ", file);
+				std::fputs(GetWPILibVersion(), file);
+				std::fclose(file);
+			}
+
 			HAL_Report(HALUsageReporting::kResourceType_Framework, HALUsageReporting::kFramework_ROS);
 			HAL_Report(HALUsageReporting::kResourceType_RobotDrive, 900, 0, "field centric swerve");
+			//HAL_Report(HALUsageReporting::kResourceType_kKinematics, HALUsageReporting::kKinematics_SwerveDrive);
 #if 0
 			for (int i = 0; i < 900; i++)
 				HAL_Report(HALUsageReporting::kResourceType_NidecBrushless, 900);
 #endif
-			HAL_Report(HALUsageReporting::kResourceType_NidecBrushless, 900);
 			HAL_Report(HALUsageReporting::kResourceType_Language, 900, 0, "C++/CMake/Javascript/Python/Shell/PERL");
 		}
 
-		void StartCompetition(void) override
+		void StartCompetition(void) const
 		{
-			RobotInit();
 			HAL_ObserveUserProgramStarting();
-			LiveWindow::GetInstance()->SetEnabled(false);
-			LiveWindow::GetInstance()->DisableAllTelemetry();
 		}
 
-		void OneIteration(void)
-		{
-			// wait for driver station data so the loop doesn't hog the CPU
-			//DriverStation::GetInstance().WaitForData(.01);
-			LoopFunc();
-		}
-
-	private:
-		void LoopFunc(bool use_livewindow = false)
+		void OneIteration(void) const
 		{
 			// Call the appropriate function depending upon the current robot mode
-			if (IsDisabled()) {
-				// Call DisabledInit() if we are now just entering disabled mode from
-				// either a different mode or from power-on.
-				if (m_lastMode != Mode::kDisabled) {
-					if (use_livewindow)
-						LiveWindow::GetInstance()->SetEnabled(false);
-					DisabledInit();
-					m_lastMode = Mode::kDisabled;
-				}
+			if (m_ds.IsDisabled()) {
 				HAL_ObserveUserProgramDisabled();
-				DisabledPeriodic();
-			} else if (IsAutonomous()) {
-				// Call AutonomousInit() if we are now just entering autonomous mode from
-				// either a different mode or from power-on.
-				if (m_lastMode != Mode::kAutonomous) {
-					if (use_livewindow)
-						LiveWindow::GetInstance()->SetEnabled(false);
-					AutonomousInit();
-					m_lastMode = Mode::kAutonomous;
-				}
+			} else if (m_ds.IsAutonomous()) {
 				HAL_ObserveUserProgramAutonomous();
-				AutonomousPeriodic();
-			} else if (IsOperatorControl()) {
-				// Call TeleopInit() if we are now just entering teleop mode from
-				// either a different mode or from power-on.
-				if (m_lastMode != Mode::kTeleop) {
-					if (use_livewindow)
-						LiveWindow::GetInstance()->SetEnabled(false);
-					TeleopInit();
-					m_lastMode = Mode::kTeleop;
-					//Scheduler::GetInstance()->SetEnabled(true);
-				}
+			} else if (m_ds.IsOperatorControl()) {
 				HAL_ObserveUserProgramTeleop();
-				TeleopPeriodic();
 			} else {
-				// Call TestInit() if we are now just entering test mode from
-				// either a different mode or from power-on.
-				if (m_lastMode != Mode::kTest) {
-					if (use_livewindow)
-						LiveWindow::GetInstance()->SetEnabled(true);
-					TestInit();
-					m_lastMode = Mode::kTest;
-				}
 				HAL_ObserveUserProgramTest();
-				TestPeriodic();
 			}
-			RobotPeriodic();
-			//SmartDashboard::UpdateValues();
-			if (use_livewindow)
-				LiveWindow::GetInstance()->UpdateValues();
 		}
-
-		enum class Mode { kNone, kDisabled, kAutonomous, kTeleop, kTest };
-
-		Mode m_lastMode = Mode::kNone;
+	private:
+		DriverStation& m_ds;
 };
 
 class DoubleSolenoidHandle
