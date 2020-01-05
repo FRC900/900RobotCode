@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<launch>
+
+	<!-- GDB functionality -->
+	<arg name="debug" default="false" />
+	<arg unless="$(arg debug)" name="launch_prefix" value="" />
+	<arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+	<arg name="joy_or_key" default="joy" />
+	<arg name="hw_or_sim" default="hw" />
+	<arg name="static_map" default="True"/>
+	<arg name="record" default="false" />
+
+	<group ns="frcrobot_rio">
+
+		<!-- Load controller settings -->
+		<!-- These need to be replaced with the real thing -->
+		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_base_rio.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_rio.yaml" command="load"/>
+
+		<!-- Load hardware interface -->
+		<node name="frcrobot_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
+			output="screen" launch-prefix="$(arg launch_prefix)">
+			<remap if="$(eval arg('joy_or_key')=='key')" from="/frcrobot_rio/joystick_states_raw_key" to="/frcrobot_rio/joystick_states_raw"/>
+		</node>
+
+		<!-- Load controller manager -->
+		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
+			output="screen" args="spawn joint_state_controller joint_state_listener_controller imu_sensor_controller match_state_controller navx_offset_controller robot_controller_state_controller robot_code_ready_controller" />
+
+		<node name="uptime_rio" pkg="uptime" type="uptime_node" output="screen" />
+	</group>
+
+</launch>

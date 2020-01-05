@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <node name="rosbag_record_node" pkg="rosbag" type="record"
+	  launch-prefix="nice" 
+	  args="record -o /mnt/900_2/
+		/align_cargo/align_cargo/swerve_drive_controller/cmd_vel
+		/align_hatch/align_hatch_pid/pid_enable
+		/align_hatch/align_hatch_pid/ratio_xy
+		/align_hatch/align_hatch/swerve_drive_controller/cmd_vel
+		/align_hatch/align_with_camera/aligned
+		/align_hatch/align_with_camera/command
+		/align_hatch/align_with_camera/enable_pub
+		/align_hatch/align_with_camera/setpoint
+		/align_hatch/hatch_panel_distance_pid/pid_debug
+		/align_hatch/hatch_panel_distance_pid/pid_enable
+		/align_hatch/hatch_panel_distance_pid/setpoint
+		/align_hatch/hatch_panel_distance_pid/state
+		/align_hatch/hatch_panel_distance_pid/y_command
+		/align_hatch/orient_pid/orient_command
+		/align_hatch/orient_pid/pid_debug
+		/align_hatch/orient_pid/pid_enable
+		/align_hatch/orient_pid/setpoint
+		/align_hatch/orient_pid/state
+		/align_hatch/pointstamped_goal_msg
+		/align_server/align_pid/pid_enable
+		/align_server/align_with_terabee/enable_y_pub
+		/align_server/cargo_pid/pid_enable
+		/align_server/distance_pid/pid_enable
+		/align_server/navX_pid/pid_enable
+		/climber/swerve_drive_controller/cmd_vel
+		/elevator/level_two
+		/frcrobot_jetson/joint_states
+		/frcrobot_jetson/pcm_states
+		/frcrobot_jetson/pdp_states
+		/frcrobot_jetson/swerve_drive_controller/cmd_vel
+		/frcrobot_jetson/swerve_drive_controller/cmd_vel_out
+		/frcrobot_jetson/swerve_drive_controller/odom
+	  	/frcrobot_jetson/talon_states
+	  	/frcrobot_jetson/talon_configs
+		/frcrobot_jetson/uptime
+		/frcrobot_rio/joint_states
+		/frcrobot_rio/joystick_states_raw
+		/frcrobot_rio/match_data
+		/frcrobot_rio/navx_mxp
+		/frcrobot_rio/robot_controller_states
+		/frcrobot_rio/uptime
+		/goal_detection/goal_detect_msg
+		/hatch_outtake/swerve_drive_controller/cmd_vel
+		/multiflex_1/ranges_raw
+		/navX_snap_to_goal_pid/pid_debug
+		/rosout_agg
+		/teleop/elevator_setpoint
+		/teleop/swerve_drive_controller/cmd_vel
+		/teleop/translator0/joystick_states
+		/c920_camera/image_raw
+		/c920_camera/camera_info
+		/rs_t265/accel/sample
+		/rs_t265/gyro/sample
+		/rs_t265/odom/sample
+		/zed_goal/depth/depth_registered
+		/zed_goal/left/camera_info
+		/zed_goal/left/image_rect_color
+		/zed_goal/odom
+		/zed_goal/pose
+		"/>
+</launch>
