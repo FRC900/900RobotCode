@@ -204,7 +204,6 @@ void TeleopJointsKeyboard::keyboardLoop()
 			joints_pub_.publish(cmd_);
 		}
 
-		ros::spinOnce();
 		loop_rate.sleep();
 
 		int rc = pollKeyboard(kfd, c);
@@ -619,7 +618,6 @@ void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
 			robot_code_ready_ = true;
 		}
 	}
-    ros::spinOnce();
 }
 
 bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBreakSensors::Request &req,
