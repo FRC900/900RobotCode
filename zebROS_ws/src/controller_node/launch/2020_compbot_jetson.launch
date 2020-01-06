@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml vedsion="1.0"?>
 <launch>
 
 	<!-- GDB functionality -->
@@ -12,10 +12,10 @@
 	<arg name="record" default="false" />
 
 	<group ns="frcrobot_jetson">
-		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_base_jetson.yaml" command="load"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/2019_swerve_drive.yaml" command="load"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_offsets.yaml" command="load"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/2019_elevator_params.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2020_compbot_base_jetson.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2020_swerve_drive.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2020_compbot_offsets.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2020_elevator_params.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 		<!--
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
@@ -125,7 +125,7 @@
 	<include file="$(find controller_node)/launch/tape_detection.launch" />
     <include file="$(find controller_node)/launch/multiflex_example.launch" />
 
-	<include file="$(find controller_node)/launch/2019_compbot_jetson_hatch_orient.launch"/>
+	<include file="$(find controller_node)/launch/2020_compbot_jetson_hatch_orient.launch"/>
     
 	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
         <!--
@@ -250,7 +250,7 @@
 		<arg name="camera" value="rs_t265" />
 	</include>
 
-	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
-	<include file="$(find controller_node)/launch/record_2019_no_zed.launch" if="$(arg record)" />
+	<include file="$(find controller_node)/launch/record_2020_compbot.launch" if="$(arg record)" />
+	<include file="$(find controller_node)/launch/record_2020_no_zed.launch" if="$(arg record)" />
 
 </launch>
