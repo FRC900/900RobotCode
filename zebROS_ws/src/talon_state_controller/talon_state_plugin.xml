@@ -1,12 +1,12 @@
 <library path="lib/libtalon_state_controller">
 	<class name="talon_state_controller/TalonStateController" type="talon_state_controller::TalonStateController" base_class_type="controller_interface::ControllerBase">
 		<description>
-			The talon state controller is publishes the current talon state as a sensor_msgs/TalonState message. The talon state controller expects a TalonStateInterface type of hardware interface.
+			The talon state controller is publishes the current talon state as a talon_state_msgs/TalonState message. The talon state controller expects a TalonStateInterface type of hardware interface.
 		</description>
 	</class>
 	<class name="talon_config_controller/TalonConfigController" type="talon_config_controller::TalonConfigController" base_class_type="controller_interface::ControllerBase">
 		<description>
-			The talon config controller is publishes the current talon config as a sensor_msgs/TalonState message. The talon config controller expects a TalonStateInterface type of hardware interface.
+			The talon config controller is publishes the current talon config as a talon_state_msgs/TalonConfig message. The talon config controller expects a TalonStateInterface type of hardware interface.
 		</description>
 	</class>
 </library>
