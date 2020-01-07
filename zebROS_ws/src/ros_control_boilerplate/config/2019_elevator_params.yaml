@@ -45,7 +45,7 @@ elevator_controller:
         softlimit_forward_enable: False
 
         voltage_compensation_enable: True
-        voltage_compensation_saturation: 12.5
+        voltage_compensation_saturation: 12
         
         conversion_factor: 0.02959
         neutral_deadband: 0.001
