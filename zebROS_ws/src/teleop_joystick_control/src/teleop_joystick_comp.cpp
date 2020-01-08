@@ -215,7 +215,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		rotation *= max_rot;
 
 		// Rate-limit changes in rotation
-		static rate_limiter::RateLimiter rotation_rate_limit(-max_rot, max_rot, config.drive_rate_limit_time);
+		static rate_limiter::RateLimiter rotation_rate_limit(-max_rot, max_rot, config.rotate_rate_limit_time);
 		rotation = rotation_rate_limit.applyLimit(rotation, joystick_states_array[0].header.stamp);
 
 		static bool sendRobotZero = false;
@@ -952,6 +952,10 @@ int main(int argc, char **argv)
 	if(!n_params.getParam("drive_rate_limit_time", config.drive_rate_limit_time))
 	{
 		ROS_ERROR("Could not read drive_rate_limit_time in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("rotate_rate_limit_time", config.rotate_rate_limit_time))
+	{
+		ROS_ERROR("Could not read rotate_rate_limit_time in teleop_joystick_comp");
 	}
 
 	max_speed = config.max_speed;
