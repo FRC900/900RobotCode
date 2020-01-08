@@ -56,9 +56,6 @@ teleop_joystick_control::TeleopJoystickCompConfig config;
 double max_speed;
 double max_rot;
 
-// 500 msec to go from full back to full forward
-constexpr double drive_rate_limit_time = 100.;
-
 ros::Publisher elevator_setpoint;
 ros::Publisher JoystickRobotVel;
 ros::Publisher cargo_pid;
@@ -199,8 +196,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		// This applies a ramp to the output - it limits the amount of change per
 		// unit time that's allowed.  This helps limit extreme current draw in
 		// cases where the robot is changing direction rapidly.
-		static rate_limiter::RateLimiter x_rate_limit(-max_speed, max_speed, drive_rate_limit_time);
-		static rate_limiter::RateLimiter y_rate_limit(-max_speed, max_speed, drive_rate_limit_time);
+		static rate_limiter::RateLimiter x_rate_limit(-max_speed, max_speed, config.drive_rate_limit_time);
+		static rate_limiter::RateLimiter y_rate_limit(-max_speed, max_speed, config.drive_rate_limit_time);
 
 		// Convert back to rectangular coordinates for the x and Y velocity
 		const double xSpeed = x_rate_limit.applyLimit(magnitude * cos(direction), joystick_states_array[0].header.stamp);
@@ -218,7 +215,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		rotation *= max_rot;
 
 		// Rate-limit changes in rotation
-		static rate_limiter::RateLimiter rotation_rate_limit(-max_rot, max_rot, drive_rate_limit_time);
+		static rate_limiter::RateLimiter rotation_rate_limit(-max_rot, max_rot, config.rotate_rate_limit_time);
 		rotation = rotation_rate_limit.applyLimit(rotation, joystick_states_array[0].header.stamp);
 
 		static bool sendRobotZero = false;
@@ -951,6 +948,14 @@ int main(int argc, char **argv)
 	if(!n_params.getParam("max_rot_slow", config.max_rot_slow))
 	{
 		ROS_ERROR("Could not read max_rot_slow in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("drive_rate_limit_time", config.drive_rate_limit_time))
+	{
+		ROS_ERROR("Could not read drive_rate_limit_time in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("rotate_rate_limit_time", config.rotate_rate_limit_time))
+	{
+		ROS_ERROR("Could not read rotate_rate_limit_time in teleop_joystick_comp");
 	}
 
 	max_speed = config.max_speed;
