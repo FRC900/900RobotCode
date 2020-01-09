@@ -13,14 +13,14 @@
 
 //REMEMBER TO INCLUDE CUSTOM SERVICE
 
-namespace intake_controller
+namespace climber_controller
 {
 
 //this is the controller class, used to make a controller
-class IntakeController : public controller_interface::MultiInterfaceController<hardware_interface::PositionJointInterface, hardware_interface::TalonCommandInterface>
+class ClimberController : public controller_interface::MultiInterfaceController<hardware_interface::PositionJointInterface, hardware_interface::TalonCommandInterface>
 {
         public:
-            IntakeController()
+            ClimberController()
             {
             }
 

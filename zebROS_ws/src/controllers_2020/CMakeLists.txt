@@ -77,15 +77,15 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-   DEPENDENCIES
-   std_msgs
-   intake_controller
-   indexer_controller
-   shooter_controller
-   climber_controller
-   control_panel_controller
- )
+#generate_messages(
+	#DEPENDENCIES
+   #   std_msgs
+   #intake_controller
+   #indexer_controller
+   #shooter_controller
+   #climber_controller
+   # control_panel_controller
+   # )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -116,12 +116,12 @@ generate_messages(
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
-#catkin_package(
+catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES controllers_2020
 #  CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
-#)
+)
 
 ###########
 ## Build ##
@@ -130,7 +130,7 @@ generate_messages(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+ include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -237,12 +237,4 @@ install(FILES
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp rospy std_msgs realtime_tools hardware_interface controller_interface message_generation message_runtime pluginlib talon_controllers
-)
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
 
