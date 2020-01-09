@@ -67,7 +67,7 @@ hardware_interface:
 # encoder state used by the hw manager and publishes it as
 # a ROS topic.  This is generic ROS stuff, so we'll have
 # to figure out what to map e.g. effort to in the Talon world
-talon_state_controller:
+talon_state_controller_rio:
    type:         talon_state_controller/TalonStateController
    publish_rate: 100
 talon_config_controller:
@@ -77,7 +77,7 @@ talon_config_controller:
 # Similar to above, but this one prints non-Talon state
 # (stuff that fits into the more standard ROS position/
 # speed/effort paradigm)
-joint_state_controller:
+joint_state_controller_rio:
    type:         joint_state_controller/JointStateController
    publish_rate: 100
 
