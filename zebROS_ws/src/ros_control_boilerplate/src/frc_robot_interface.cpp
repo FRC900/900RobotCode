@@ -875,8 +875,6 @@ void FRCRobotInterface::init()
 	imu_angular_velocity_covariances_.resize(num_navX_);
 	imu_linear_accelerations_.resize(num_navX_);
 	imu_linear_acceleration_covariances_.resize(num_navX_);
-	navX_state_.resize(num_navX_);
-	offset_navX_.resize(num_navX_);
 
 	for (size_t i = 0; i < num_navX_; i++)
 	{
@@ -910,17 +908,6 @@ void FRCRobotInterface::init()
 			hardware_interface::ImuWritableSensorHandle ish(imu_data);
 			imu_remote_interface_.registerHandle(ish);
 		}
-
-		// Set up a command interface to set an
-		// offset for reported heading
-		hardware_interface::JointStateHandle nxsh(navX_names_[i], &navX_state_[i], &navX_state_[i], &navX_state_[i]);
-		joint_state_interface_.registerHandle(nxsh);
-		if (!navX_locals_[i])
-		{
-			hardware_interface::JointHandle nxh(nxsh, &navX_state_[i]); /// writing directly to state?
-			joint_remote_interface_.registerHandle(nxh);
-		}
-		offset_navX_[i] = 0;
 	}
 
 	num_analog_inputs_ = analog_input_names_.size();
@@ -1027,6 +1014,10 @@ void FRCRobotInterface::init()
 			joint_remote_interface_.registerHandle(ch);
 	}
 
+	// TODO : Think some more on how this will work.  Previous idea of making them
+	// definable joints was good as well, but required some hard coding to
+	// convert from name to an actual variable. This requires hard-coding here
+	// but not in the read or write code.  Not sure which is better
 	auto dummy_joints = getDummyJoints();
 	for (auto d : dummy_joints)
 	{

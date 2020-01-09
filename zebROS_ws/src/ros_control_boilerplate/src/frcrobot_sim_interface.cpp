@@ -437,13 +437,6 @@ void FRCRobotSimInterface::match_data_callback(const frc_msgs::MatchSpecificData
 	match_data_.setBatteryVoltage(match_data.BatteryVoltage);
 }
 
-std::vector<ros_control_boilerplate::DummyJoint> FRCRobotSimInterface::getDummyJoints(void)
-{
-	std::vector<ros_control_boilerplate::DummyJoint> dummy_joints;
-	dummy_joints.push_back(Dumify(navX_zero_));
-	return dummy_joints;
-}
-
 bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,ros_control_boilerplate::set_limit_switch::Response &/*res*/)
 {
 	for (std::size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)

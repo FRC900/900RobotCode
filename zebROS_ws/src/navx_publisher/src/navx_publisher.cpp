@@ -72,10 +72,10 @@ int main(int argc, char **argv)
 	// Set up publishers
 	// Raw_pub publishes in the ENU (east north up) orientation
 	// instead of NED (north east down)
-	ros::Publisher time_pub = nh.advertise<navx_publisher::stampedUInt64>("time", 75);
-	ros::Publisher imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 75);
-	ros::Publisher raw_pub = nh.advertise<sensor_msgs::Imu>("raw", 75);
-	ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 75);
+	ros::Publisher time_pub = nh.advertise<navx_publisher::stampedUInt64>("time", 5);
+	ros::Publisher imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 5);
+	ros::Publisher raw_pub = nh.advertise<sensor_msgs::Imu>("raw", 5);
+	ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 5);
 	navx_publisher::stampedUInt64 timestamp;
 	sensor_msgs::Imu imu_msg;
 	sensor_msgs::Imu imu_msg_raw;
@@ -139,7 +139,10 @@ int main(int argc, char **argv)
 	bool firstrun = true;
 
 	ros::Rate loop_time(210);
-	AHRS nx("/dev/ttyACM0", AHRS::SerialDataType::kProcessedData, 200);
+	ros::NodeHandle nh_local("~");
+	const std::string device(nh_local.param("device", std::string("/dev/ttyACM0")));
+
+	AHRS nx(device, AHRS::SerialDataType::kProcessedData, 200);
 	nx.ZeroYaw();
 	while (ros::ok())
 	{
@@ -167,6 +170,7 @@ int main(int argc, char **argv)
 			//pull orientation data from NavX
 			//all in one shot
 			// TODO - revise to use fusedHeading for nx_yaw
+			//        or not, depending on debugging fusedHeading drift problem
 			nx.GetRPYQAccel(nx_roll, nx_pitch, nx_yaw,
 							nx_qx, nx_qy, nx_qz, nx_qw,
 							nx_ax, nx_ay, nx_az,

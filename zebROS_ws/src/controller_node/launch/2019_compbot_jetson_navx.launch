@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+
+	<node name="navx_publisher" pkg="navx_publisher" type="navx_publisher_node" output="screen">
+		<param name="device" value="/dev/NAVX"/>
+	</node>
+	<node name="imu_zero" pkg="imu_zero" type="imu_zero_node" output="screen">
+		<!--
+		<remap from="zeroed_imu" to="/frcrobot_rio/navx_mxp"/>
+		-->
+	</node>
+
+</launch>

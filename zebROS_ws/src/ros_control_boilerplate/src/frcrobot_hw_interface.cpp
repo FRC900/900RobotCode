@@ -177,17 +177,6 @@ FRCRobotHWInterface::~FRCRobotHWInterface()
 		pdp_thread_[i].join();
 }
 
-// TODO : Think some more on how this will work.  Previous idea of making them
-// definable joints was good as well, but required some hard coding to
-// convert from name to an actual variable. This requires hard-coding here
-// but not in the read or write code.  Not sure which is better
-std::vector<ros_control_boilerplate::DummyJoint> FRCRobotHWInterface::getDummyJoints(void)
-{
-	std::vector<ros_control_boilerplate::DummyJoint> dummy_joints;
-	dummy_joints.push_back(Dumify(navX_zero_));
-	return dummy_joints;
-}
-
 void FRCRobotHWInterface::init(void)
 {
 	// Do base class init. This loads common interface info
@@ -581,9 +570,7 @@ void FRCRobotHWInterface::init(void)
 		}
 	}
 
-	navX_zero_ = -10000;
-
-	double t_now = ros::Time::now().toSec();
+	const double t_now = ros::Time::now().toSec();
 
 	t_prev_robot_iteration_ = t_now;
 	if(! nh_.getParam("generic_hw_control_loop/robot_iteration_hz", robot_iteration_hz_)) {
@@ -1430,12 +1417,9 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			//navXs_[i]->IsMagnetometerCalibrated();
 			//
 			tf2::Quaternion tempQ;
-			if(i == 0)
-			{
-				if(navX_zero_ != -10000)
-					offset_navX_[i] = navX_zero_ - navXs_[i]->GetYaw() / 360. * 2. * M_PI;
-			}
-			tempQ.setRPY(navXs_[i]->GetRoll() / -360 * 2 * M_PI, navXs_[i]->GetPitch() / -360 * 2 * M_PI, navXs_[i]->GetYaw() / 360 * 2 * M_PI + offset_navX_[i]  );
+			tempQ.setRPY(navXs_[i]->GetRoll()  / -360. * 2. * M_PI,
+						 navXs_[i]->GetPitch() / -360. * 2. * M_PI,
+						 navXs_[i]->GetYaw()   /  360. * 2. * M_PI);
 
 			imu_orientations_[i][3] = tempQ.w();
 			imu_orientations_[i][0] = tempQ.x();
@@ -1451,8 +1435,6 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			//navXs_[i]->GetDisplacementZ();
 			//navXs_[i]->GetAngle(); //continous
 			//TODO: add setter functions
-
-			navX_state_[i] = offset_navX_[i];
 		}
 	}
 

@@ -44,7 +44,7 @@ hardware_interface:
        - {name: climber_linebreak_1, type: digital_input, dio_channel: 5, invert: true, local: true}
        - {name: climber_linebreak_2, type: digital_input, dio_channel: 6, invert: true, local: true}
          
-       - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}
+         #- {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}
        - {name: joystick, type: joystick, id: 0, local: true}
        - {name: joystick_rumble, type: rumble, rumble_port: 0}
        - {name: robot_code_ready_jetson, local: false, type: ready}
@@ -99,9 +99,6 @@ match_state_controller:
 pcm_state_controller:
    type : pcm_state_controller/PCMStateController
    publish_rate: 20
-
-navx_offset_controller:
-    type: navx_offset_controller/NavXOffsetController
 
 robot_controller_state_controller:
    type: robot_controller_state_controller/RobotControllerStateController
