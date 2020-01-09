@@ -167,17 +167,18 @@ set (CTRE_USER_LIBS
 	${CTRE_LIB_DIR}/libCTRE_Phoenix.a
 	${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.a
 	${CTRE_LIB_DIR}/libCTRE_PhoenixCore.a
+	${CTRE_LIB_DIR}/libCTRE_PhoenixDiagnostics.a
 )
 
 set (ALLWPILIB ../../../allwpilib)
 # Used to find HALInitializer from wpilib internal repo
 include_directories(${ALLWPILIB}/hal/src/main/native/athena)
 
-# Add socketcan library to everything but the Rio
-# This adds code to use linux CAN sockets to talk to
-# the CAN bus for the Jetson
-# Also add all of the wpilib code needed to talk to PCM and PDP
 if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
+    # Add socketcan library to everything but the Rio
+    # This adds code to use linux CAN sockets to talk to
+    # the CAN bus for the Jetson
+    # Also add all of the wpilib code needed to talk to PCM and PDP
 	set (CTRE_USER_LIBS 
 		${CTRE_USER_LIBS}
 		${CTRE_LIB_DIR}/libCTRE_PhoenixCanutils.a
@@ -215,6 +216,9 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
 		ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/tables/*.cpp
 	)
 
+    # Don't build sim code for Jetson TK or TX architectures
+	# Also won't be built for the Rio because of the outer if-block
+	# surrounds all of this code
 	if (NOT (("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
 		      "${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu"))  
 		add_executable(frcrobot_phoenixsim_main
@@ -328,20 +332,15 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
 			${ntcore_native_src}
 		)
 
-		if (NOT (("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
-				  "${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu"))  
-			set (CTRE_DIAGNOSTIC_LIBS 
-				${CTRE_LIB_DIR}/libCTRE_PhoenixDiagnostics.a
-			)
-		endif()
+	    # Everything but Platform_socketcan.a
 		target_link_libraries(frcrobot_phoenixsim_main
 			${catkin_LIBRARIES}
 			${CTRE_LIB_DIR}/libCTRE_Phoenix.a
 			${CTRE_LIB_DIR}/libCTRE_PhoenixCanutils.a
 			${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.a
 			${CTRE_LIB_DIR}/libCTRE_PhoenixCore.a
+			${CTRE_LIB_DIR}/libCTRE_PhoenixDiagnostics.a
 			${CTRE_LIB_DIR}/../shared/libCTRE_PhoenixPlatform_sim.so
-			${CTRE_DIAGNOSTIC_LIBS}
 			frc_robot_interface
 		)
 		## Add cmake target dependencies of the executable
@@ -353,8 +352,7 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
 			${catkin_EXPORTED_TARGETS}
 		)
 
-		# Install executable on the off chance you'd ever
-		# want to run sim on the RoboRIO
+		# Install executable
 		install(TARGETS
 		  frcrobot_phoenixsim_main
 		  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -362,14 +360,6 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
 		)
 	endif()
 
-endif()
-
-if (NOT (("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
-		  "${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu"))  
-	set (CTRE_USER_LIBS 
-		${CTRE_USER_LIBS}
-		${CTRE_LIB_DIR}/libCTRE_PhoenixDiagnostics.a
-	)
 endif()
 
 add_executable(frcrobot_hw_main ${FRCROBOT_HW_MAIN_SRCS})
@@ -396,7 +386,6 @@ add_executable(q_to_rpy src/q_to_rpy.cpp)
 target_link_libraries(q_to_rpy
 	${catkin_LIBRARIES}
 	${PLATFORM_SPECIFIC_LIBS}
-	${CTRE_USER_LIBS}
 )
 
 add_dependencies(q_to_rpy
