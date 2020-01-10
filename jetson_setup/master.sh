@@ -25,9 +25,6 @@ sudo umount /mnt/900_2 --lazy
 export CUDA_CACHE_MAXSIZE=104857600
 export CUDA_CACHE_PATH=/home/ubuntu/.nv/ComputeCache
 
-# TODO these should no longer be needed
-#cd /home/ubuntu/2020RobotCode/build
-#python3 -m http.server 5805 &
 cd /home/ubuntu/2020RobotCode/jetson_setup/
 
 if sudo mount /dev/nvme0n1p1 /mnt/900_2; then

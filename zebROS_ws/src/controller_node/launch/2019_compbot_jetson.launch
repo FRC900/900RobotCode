@@ -44,13 +44,6 @@
 		<include file="$(find controller_node)/launch/2019_compbot_jetson_navx.launch" />
 	</group>
 
-	<group ns="rosbridge_server">
-		<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
-			<arg name="port" value="5803"/>
-		</include>
-        <node name="talon_throttler" type="throttle" pkg="topic_tools" args="messages /frcrobot_jetson/talon_states 10 /frcrobot_jetson/talon_states_throttled" />
-        <node name="joint_throttler" type="throttle" pkg="topic_tools" args="messages /frcrobot_jetson/joint_states 10 /frcrobot_jetson/joint_states_throttled" />
-	</group>
 
 
 	<group ns="teleop">

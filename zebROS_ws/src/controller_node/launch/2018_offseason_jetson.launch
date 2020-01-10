@@ -32,15 +32,6 @@
 
 		<node name="heartbeat_jetson" pkg="heartbeat_node" type="heartbeat" output="screen" />
 	</group>
-
-	<group ns="rosbridge_server">
-		<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" > 
-			<arg name="port" value="5803"/>
-		</include>
-        <node name="talon_throttler" type="throttle" pkg="topic_tools" args="messages /frcrobot_jetson/talon_states 10 /frcrobot_jetson/talon_states_throttled" />
-        <node name="joint_throttler" type="throttle" pkg="topic_tools" args="messages /frcrobot_jetson/joint_states 10 /frcrobot_jetson/joint_states_throttled" />
-	</group>
-
 	<group if="$(eval arg('hw_or_sim')=='hw')">
 		<include file="$(find controller_node)/launch/multiflex_example.launch" />
 	</group>

@@ -77,7 +77,6 @@ sudo apt install -y \
 	ros-melodic-pid \
 	ros-melodic-robot-localization \
 	ros-melodic-robot-state-publisher \
-	ros-melodic-rosbridge-suite \
 	ros-melodic-roslint \
 	ros-melodic-rosparam-shortcuts \
 	ros-melodic-rqt \
