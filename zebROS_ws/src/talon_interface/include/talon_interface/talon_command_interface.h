@@ -274,7 +274,7 @@ class TalonHWCommand
 				ROS_WARN("Invalid index passed to TalonHWCommand::setP()");
 				return;
 			}
-			if (oldP != p_[index])
+			if (fabs(oldP - p_[index]) > double_value_epsilon)
 			{
 				pidf_changed_[index] = true;
 				p_[index] = oldP;
@@ -297,7 +297,7 @@ class TalonHWCommand
 				ROS_WARN("Invalid index passed to TalonHWCommand::setI()");
 				return;
 			}
-			if (ii != i_[index])
+			if (fabs(ii - i_[index]) > double_value_epsilon)
 			{
 				pidf_changed_[index] = true;
 				i_[index] = ii;
@@ -320,7 +320,7 @@ class TalonHWCommand
 				ROS_WARN("Invalid index passed to TalonHWCommand::setD()");
 				return;
 			}
-			if (dd != d_[index])
+			if (fabs(dd - d_[index]) > double_value_epsilon)
 			{
 				pidf_changed_[index] = true;
 				d_[index] = dd;
@@ -343,7 +343,7 @@ class TalonHWCommand
 				ROS_WARN("Invalid index passed to TalonHWCommand::setF()");
 				return;
 			}
-			if (ff != f_[index])
+			if (fabs(ff - f_[index]) > double_value_epsilon)
 			{
 				pidf_changed_[index] = true;
 				f_[index] = ff;
@@ -433,7 +433,7 @@ class TalonHWCommand
 				ROS_WARN("Invalid index passed to TalonHWCommand::setClosedLoopPeakOutput()");
 				return;
 			}
-			if (closed_loop_peak_output != closed_loop_peak_output_[index])
+			if (fabs(closed_loop_peak_output - closed_loop_peak_output_[index]) > double_value_epsilon)
 			{
 				pidf_changed_[index] = true;
 				closed_loop_peak_output_[index] = closed_loop_peak_output;
@@ -551,8 +551,9 @@ class TalonHWCommand
 
 		void set(double command)
 		{
-			command_changed_ = command_ != command;
 			command_ = command;
+			if (fabs(command_ - command) > double_value_epsilon)
+				command_changed_ = true;
 		}
 
 		void setMode(TalonMode mode)
@@ -610,7 +611,7 @@ class TalonHWCommand
 
 		void setDemand1Value(double demand_value)
 		{
-			if (demand1_value_ != demand_value)
+			if (fabs(demand1_value_ - demand_value) > double_value_epsilon)
 			{
 				demand1_value_   = demand_value;
 				demand1_changed_ = true;
@@ -755,7 +756,7 @@ class TalonHWCommand
 		}
 		void setFeedbackCoefficient(double feedback_coefficient)
 		{
-			if (feedback_coefficient != feedback_coefficient_)
+			if (fabs(feedback_coefficient - feedback_coefficient_) > double_value_epsilon)
 			{
 				feedback_coefficient_ = feedback_coefficient;
 				encoder_feedback_changed_ = true;
@@ -914,7 +915,7 @@ class TalonHWCommand
 		//output shaping
 		void setClosedloopRamp(double closed_loop_ramp)
 		{
-			if (closed_loop_ramp_ != closed_loop_ramp)
+			if (fabs(closed_loop_ramp_ - closed_loop_ramp) > double_value_epsilon)
 			{
 				closed_loop_ramp_ = closed_loop_ramp;
 				output_shaping_changed_ = true;
@@ -926,7 +927,7 @@ class TalonHWCommand
 		}
 		void setOpenloopRamp(double open_loop_ramp)
 		{
-			if (open_loop_ramp_ != open_loop_ramp)
+			if (fabs(open_loop_ramp_ - open_loop_ramp) > double_value_epsilon)
 			{
 				open_loop_ramp_ = open_loop_ramp;
 				output_shaping_changed_ = true;
@@ -939,7 +940,7 @@ class TalonHWCommand
 
 		void setPeakOutputForward(double peak_output_forward)
 		{
-			if (peak_output_forward != peak_output_forward_)
+			if (fabs(peak_output_forward - peak_output_forward_) > double_value_epsilon)
 			{
 				peak_output_forward_ = peak_output_forward;
 				output_shaping_changed_ = true;
@@ -952,7 +953,7 @@ class TalonHWCommand
 
 		void setPeakOutputReverse(double peak_output_reverse)
 		{
-			if (peak_output_reverse != peak_output_reverse_)
+			if (fabs(peak_output_reverse - peak_output_reverse_) > double_value_epsilon)
 			{
 				peak_output_reverse_ = peak_output_reverse;
 				output_shaping_changed_ = true;
@@ -965,7 +966,7 @@ class TalonHWCommand
 
 		void setNominalOutputForward(double nominal_output_forward)
 		{
-			if (nominal_output_forward != nominal_output_forward_)
+			if (fabs(nominal_output_forward - nominal_output_forward_) > double_value_epsilon)
 			{
 				nominal_output_forward_ = nominal_output_forward;
 				output_shaping_changed_ = true;
@@ -978,7 +979,7 @@ class TalonHWCommand
 
 		void setNominalOutputReverse(double nominal_output_reverse)
 		{
-			if (nominal_output_reverse != nominal_output_reverse_)
+			if (fabs(nominal_output_reverse - nominal_output_reverse_) > double_value_epsilon)
 			{
 				nominal_output_reverse_ = nominal_output_reverse;
 				output_shaping_changed_ = true;
@@ -991,7 +992,7 @@ class TalonHWCommand
 
 		void setNeutralDeadband(double neutral_deadband)
 		{
-			if (neutral_deadband != neutral_deadband_)
+			if (fabs(neutral_deadband - neutral_deadband_) > double_value_epsilon)
 			{
 				neutral_deadband_ = neutral_deadband;
 				output_shaping_changed_ = true;
@@ -1028,7 +1029,7 @@ class TalonHWCommand
 
 		void setVoltageCompensationSaturation(double voltage)
 		{
-			if (voltage != voltage_compensation_saturation_)
+			if (fabs(voltage - voltage_compensation_saturation_) > double_value_epsilon)
 			{
 				voltage_compensation_saturation_ = voltage;
 				voltage_compensation_changed_ = true;
@@ -1320,7 +1321,7 @@ class TalonHWCommand
 		// softlimits
 		void setForwardSoftLimitThreshold(double threshold)
 		{
-			if (threshold != softlimit_forward_threshold_)
+			if (fabs(threshold - softlimit_forward_threshold_) > double_value_epsilon)
 			{
 				softlimit_forward_threshold_ = threshold;
 				softlimit_changed_ = true;
@@ -1345,7 +1346,7 @@ class TalonHWCommand
 		}
 		void setReverseSoftLimitThreshold(double threshold)
 		{
-			if (threshold != softlimit_reverse_threshold_)
+			if (fabs(threshold - softlimit_reverse_threshold_) > double_value_epsilon)
 			{
 				softlimit_reverse_threshold_ = threshold;
 				softlimit_changed_ = true;
@@ -1468,7 +1469,7 @@ class TalonHWCommand
 
 		void setMotionCruiseVelocity(double velocity)
 		{
-			if (velocity != motion_cruise_velocity_)
+			if (fabs(velocity - motion_cruise_velocity_) > double_value_epsilon)
 			{
 				motion_cruise_velocity_ = velocity;
 				motion_cruise_changed_ = true;
@@ -1480,7 +1481,7 @@ class TalonHWCommand
 		}
 		void setMotionAcceleration(double acceleration)
 		{
-			if (acceleration != motion_acceleration_)
+			if (fabs(acceleration - motion_acceleration_) > double_value_epsilon)
 			{
 				motion_acceleration_ = acceleration;
 				motion_cruise_changed_ = true;
@@ -1718,7 +1719,7 @@ class TalonHWCommand
 
 		void setConversionFactor(double conversion_factor)
 		{
-			if (conversion_factor != conversion_factor_)
+			if (fabs(conversion_factor - conversion_factor_) > double_value_epsilon)
 			{
 				conversion_factor_ = conversion_factor;
 				conversion_factor_changed_ = true;
@@ -2044,7 +2045,7 @@ class TalonHWCommand
 			enable_read_thread_ = enable_read_thread;
 			enable_read_thread_changed_ = true;
 		}
-		double getEnableReadThread(void) const
+		bool getEnableReadThread(void) const
 		{
 			return enable_read_thread_;
 		}
@@ -2210,6 +2211,8 @@ class TalonHWCommand
 		// though, so lock the command entry for a given talon when
 		// that talon's controller is being initialized
 		std::shared_ptr<std::mutex> mutex_;
+
+		static constexpr double double_value_epsilon = 0.0001;
 };
 
 // Handle - used by each controller to get, by name of the

@@ -1459,7 +1459,7 @@ class TalonControllerInterface
 
 		void setPeakOutputForward(double peak)
 		{
-			if (peak == params_.peak_output_forward_)
+			if (fabs(peak - params_.peak_output_forward_) < double_value_epsilon)
 				return;
 			params_.peak_output_forward_ = peak;
 
@@ -1469,33 +1469,28 @@ class TalonControllerInterface
 
 		void setPeakOutputReverse(double peak)
 		{
-			if (peak == params_.peak_output_reverse_)
+			if (fabs(peak - params_.peak_output_reverse_) < double_value_epsilon)
 				return;
 			params_.peak_output_reverse_ = peak;
-
 			syncDynamicReconfigure();
 			talon_->setPeakOutputReverse(peak);
 		}
 
 		void setClosedloopRamp(double closed_loop_ramp)
 		{
-			if (closed_loop_ramp == params_.closed_loop_ramp_)
+			if (fabs(closed_loop_ramp - params_.closed_loop_ramp_) < double_value_epsilon)
 				return;
 			params_.closed_loop_ramp_ = closed_loop_ramp;
-
 			syncDynamicReconfigure();
-
 			talon_->setClosedloopRamp(params_.closed_loop_ramp_);
 		}
 
 		void setOpenloopRamp(double open_loop_ramp)
 		{
-			if (open_loop_ramp == params_.open_loop_ramp_)
+			if (fabs(open_loop_ramp - params_.open_loop_ramp_) < double_value_epsilon)
 				return;
 			params_.open_loop_ramp_ = open_loop_ramp;
-
 			syncDynamicReconfigure();
-
 			talon_->setOpenloopRamp(params_.open_loop_ramp_);
 		}
 
@@ -1510,7 +1505,7 @@ class TalonControllerInterface
 
 		void setDemand1Value(double demand1_value)
 		{
-			if (demand1_value == params_.demand1_value_)
+			if (fabs(demand1_value - params_.demand1_value_) < double_value_epsilon)
 				return;
 			params_.demand1_value_ = demand1_value;
 			syncDynamicReconfigure();
@@ -1519,7 +1514,7 @@ class TalonControllerInterface
 
 		virtual void setCustomProfileHz(const double &hz)
 		{
-			if (hz == params_.custom_profile_hz_)
+			if (fabs(hz - params_.custom_profile_hz_) < double_value_epsilon)
                 return;
             params_.custom_profile_hz_ = hz;
 
@@ -1777,6 +1772,7 @@ class TalonControllerInterface
 				params_ = params;
 			talon->unlock();
 		}
+		static constexpr double double_value_epsilon = 0.0001;
 };
 
 // A derived class which disables mode switching. Any
