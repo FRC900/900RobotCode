@@ -1,0 +1,256 @@
+<?xml version="1.0"?>
+<launch>
+
+	<!-- GDB functionality -->
+	<arg name="debug" default="false" />
+	<arg unless="$(arg debug)" name="launch_prefix" value="" />
+	<arg if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+	<arg name="hw_or_sim" default="hw" />
+	<arg name="joy_or_key" default="joy" />
+	<arg name="static_map" default="True"/>
+	<arg name="record" default="false" />
+
+	<group ns="frcrobot_jetson">
+		<rosparam file="$(find ros_control_boilerplate)/config/2020_compbot_base_jetson.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2020_swerve_drive.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2020_compbot_offsets.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2019_elevator_params.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
+		<!--
+		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
+		-->
+		<rosparam file="$(find behaviors)/config/alignmentOffsets.yaml" command="load"/>
+
+		<!--
+		<node name="zero_wheel_service" pkg="talon_swerve_drive_controller" type="zero_wheel_service" output="screen"> </node>
+		-->
+		<node name="dump_offsets_service" pkg="talon_swerve_drive_controller" type="dump_offsets_service" output="screen"> </node>
+
+		<!-- Load hardware interface -->
+		<node name="frcrobot_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
+			output="screen" launch-prefix="$(arg launch_prefix)">
+		</node>
+
+		<!-- Load controller manager-->
+		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
+			output="screen" args="spawn cargo_intake_controller climber_controller panel_intake_controller joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller pcm_state_controller pdp_state_controller elevator_controller swerve_drive_controller robot_code_ready_controller" />
+
+
+		<node name="uptime_jetson" pkg="uptime" type="uptime_node" output="screen" />
+	</group>
+
+
+	<group ns="rosbridge_server">
+		<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+			<arg name="port" value="5803"/>
+		</include>
+        <node name="talon_throttler" type="throttle" pkg="topic_tools" args="messages /frcrobot_jetson/talon_states 10 /frcrobot_jetson/talon_states_throttled" />
+        <node name="joint_throttler" type="throttle" pkg="topic_tools" args="messages /frcrobot_jetson/joint_states 10 /frcrobot_jetson/joint_states_throttled" />
+	</group>
+
+
+	<group ns="teleop">
+		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
+		<node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" >
+			<remap from="navx_mxp" to="/frcrobot_rio/navx_mxp"/>
+		</node>
+
+		<group ns="translator0">
+			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen"/>
+		</group>
+
+		<group ns="translator1" if="$(eval arg('joy_or_key')=='two_joy')">
+			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen" >
+				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw1" />
+			</node>
+		</group>
+	</group>
+
+	<!-- Actionlib servers!!! -->
+	<!-- Include this at the top level so all actionlib servers can find it -->
+	<rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
+	<group ns="elevator">
+		<rosparam file="$(find behaviors)/config/elevatorServer.yaml" command="load"/>
+		<node name="elevator_ac_server" pkg="behaviors" type="elevator_server" output="screen" />
+	</group>
+	<group ns="climber">
+		<rosparam file="$(find behaviors)/config/climberServer.yaml" command="load"/>
+		<node name="climber_ac_server" pkg="behaviors" type="climber_server" output="screen" />
+	</group>
+	<group ns="cargo_intake">
+		<rosparam file="$(find behaviors)/config/intakeCargoServer.yaml" command="load"/>
+		<node name="intake_cargo_ac_server" pkg="behaviors" type="intake_cargo_server" output="screen" />
+	</group>
+	<group ns="cargo_outtake">
+		<rosparam file="$(find behaviors)/config/outtakeCargoServer.yaml" command="load"/>
+		<node name="outtake_cargo_ac_server" pkg="behaviors" type="outtake_cargo_server" output="screen" />
+	</group>
+	<group ns="hatch_intake">
+		<rosparam file="$(find behaviors)/config/intakeHatchPanelServer.yaml" command="load"/>
+		<node name="intake_hatch_ac_server" pkg="behaviors" type="intake_hatch_panel_server" output="screen" />
+	</group>
+	<group ns="hatch_outtake">
+		<rosparam file="$(find behaviors)/config/outtakeHatchPanelServer.yaml" command="load"/>
+		<node name="outtake_hatch_ac_server" pkg="behaviors" type="outtake_hatch_panel_server" output="screen" />
+	</group>
+
+	<!-- <group ns="path_to_goal">
+		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
+		<node name="robot_visualize" pkg="robot_visualizer" type="robot_visualize" output="screen" />
+		<node name="profile_follow" pkg="robot_visualizer" type="profile_follow" output="screen" />
+		<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node>
+		<rosparam file="$(find swerve_point_generator)/config/point_gen.yaml" command="load"/>
+		<node name="point_gen" pkg="swerve_point_generator" type="point_gen" output="screen" />
+		<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/2018FRC_field.yaml" output="screen" if="$(arg static_map)">
+			<param name="frame_id" value="/map"/>
+		</node>
+		<node name="path_to_goal_ac_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
+		<node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
+	</group>
+	-->
+
+	<group ns="cmd_vel_mux">
+		<node name="twist_mux" pkg="twist_mux" type="twist_mux">
+			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux.yaml"/>
+			<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
+		</node>
+	</group>
+
+	<!-- TODO need a way to use the same PID node in multiple align servers without copying and pasting topics -->
+	<!-- Create a new group for each align server, define params for every single topic, load all nodes used by that align server -->
+	<!--group ns="align_server_common "!-->
+
+	<!-- vision align -->
+	<include file="$(find controller_node)/launch/tape_detection.launch" />
+    <include file="$(find controller_node)/launch/multiflex_example.launch" />
+
+	<include file="$(find controller_node)/launch/2019_compbot_jetson_hatch_orient.launch"/>
+    
+	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
+        <!--
+	<group ns="align_cargo_rocketship">
+		<node name="cargo_distance_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="cargo_distance_pid" />
+			<param name="Kp" value="4.8" />
+			<param name="Ki" value="0.0" />
+			<param name="Kd" value="0.1" />
+			<param name="upper_limit" value="2" />
+			<param name="lower_limit" value="-2" />
+			<param name="windup_limit" value="10" />
+			<param name="max_loop_frequency" value="100.0" />
+			<param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="x_pid/x_command" />
+			<param name="setpoint_topic" value="x_pid/x_setpoint" />
+			<param name="topic_from_plant" value="x_pid/x_state" />
+			<remap from="pid_debug" to="x_pid/pid_debug" />
+			<remap from="pid_enable" to="x_pid/pid_enable" />
+		</node>
+
+		<node name="cargo_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="cargo_pid" />
+			<param name="Kp" value="5.0" />
+			<param name="Ki" value="0.0" />
+			<param name="Kd" value="0.0" />
+			<param name="upper_limit" value="1" />
+			<param name="lower_limit" value="-1" />
+			<param name="windup_limit" value="10" />
+			<param name="max_loop_frequency" value="100.0" />
+			<param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="y_pid/y_command" />
+			<param name="setpoint_topic" value="y_pid/y_setpoint" />
+			<param name="topic_from_plant" value="y_pid/y_state" />
+			<remap from="pid_debug" to="y_pid/pid_debug" />
+			<remap from="pid_enable" to="y_pid/pid_enable" />
+		</node>
+
+		<node name="align_pid_cargo_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+			<param name="orient_topic" value="orient_pid/orient_command" />
+			<param name="x_topic" value="x_pid/x_command" />
+			<param name="y_topic" value="y_pid/y_command" />
+			<param name="command_timeout" value="0.5" />
+			<param name="enable_topic" value="align_pid/pid_enable" />
+			<param name="name" value="align_pid" />
+		</node>
+	</group> 
+        -->
+
+        <!--
+	<group ns="align_cargo">
+		<node name="translate_to_pointstamped" pkg="goal_detection" type="translate_to_pointstamped" output="screen">
+			<remap from="goal_detect_msg" to="/c920goal_detection/goal_detect_msg" />
+		</node>
+
+		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
+		<node name="align_server" pkg="behaviors" type="align_cargo_cargoship_server" output="screen" />
+
+		<node name="align_with_camera" pkg="behaviors" type="align_with_camera" output="screen" >
+			<param name="target_frame" value="cargo_outtake" /> 
+		</node>
+		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
+
+		<node name="cargo_distance_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="cargo_distance_pid" />
+			<param name="Kp" value="4.8" />
+			<param name="Ki" value="0.0" />
+			<param name="Kd" value="0.0" />
+			<param name="upper_limit" value="2" />
+			<param name="lower_limit" value="-2" />
+			<param name="windup_limit" value="10" />
+			<param name="max_loop_frequency" value="100.0" />
+			<param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="cargo_distance_pid/x_command" />
+			<param name="setpoint_topic" value="cargo_distance_pid/setpoint" />
+			<param name="topic_from_plant" value="cargo_distance_pid/setpoint" />
+			<remap from="pid_debug" to="cargo_distance_pid/pid_debug"/>
+			<remap from="pid_enable" to="cargo_distance_pid/pid_enable"/>
+		</node>
+
+
+		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
+
+		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" >
+			<remap from="navX_pid/setpoint" to="orient_pid/setpoint"/>
+			<remap from="navX_pid/state" to="orient_pid/state"/>
+		</node>
+		<node name="orient_pid" pkg="pid" type="controller" >
+			<param name="node_name" value="orient_pid" />
+			<param name="Kp" value="13.0" />
+			<param name="Ki" value="0.0" />
+			<param name="Kd" value="0.0" />
+			<param name="upper_limit" value="8" />
+			<param name="lower_limit" value="-8" />
+			<param name="windup_limit" value="10" />
+			<param name="angle_error" value="false" />
+			<param name="angle_wrap" value="false" />
+			<param name="max_loop_frequency" value="100.0" />
+			<param name="min_loop_frequency" value="100.0" />
+			<param name="topic_from_controller" value="orient_pid/orient_command" />
+			<param name="setpoint_topic" value="orient_pid/setpoint" />
+			<param name="topic_from_plant" value="orient_pid/state" />
+			<remap from="pid_debug" to="orient_pid/pid_debug"/>
+			<remap from="pid_enable" to="orient_pid/pid_enable"/>
+		</node>
+
+		<node name="align_pid_cargo_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+			<param name="orient_topic" value="orient_pid/orient_command" />
+			<param name="x_topic" value="cargo_distance_pid/x_command" />
+			<param name="ratio_xy_topic" value="align_cargo_pid/ratio_xy" />
+			<param name="command_timeout" value="0.5" />
+			<param name="enable_topic" value="align_cargo_pid/pid_enable" />
+			<param name="name" value="align_pid" />
+		</node>
+
+	</group>
+        -->
+    
+	<include file="$(find realsense2_camera)/launch/rs_t265.launch" >
+		<!-- didn't seem to work, retest
+		-->
+		<arg name="camera" value="rs_t265" />
+	</include>
+
+	<include file="$(find controller_node)/launch/record_2020_compbot.launch" if="$(arg record)" />
+	<include file="$(find controller_node)/launch/record_2020_no_zed.launch" if="$(arg record)" />
+
+</launch>
