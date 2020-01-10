@@ -17,7 +17,7 @@ else() # Native builds
   set (CMAKE_RANLIB "gcc-ranlib" )
   set (CMAKE_AR     "gcc-ar"     )
   
-  set (OPT_FLAGS "${OPT_FLAGS} -Ofast -fno-finite-math-only -flto=2 -fno-fat-lto-objects")
+  set (OPT_FLAGS "${OPT_FLAGS} -Ofast -fno-finite-math-only -flto=2 -fno-fat-lto-objects -ffunction-sections -fdata-sections -Wl,-gc-sections")
   if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf") # Jetson TK1
 	set (OPT_FLAGS "${OPT_FLAGS} -mcpu=cortex-a15 -mfpu=neon-vfpv4 -fvect-cost-model")
     unset(CUDA_USE_STATIC_CUDA_RUNTIME CACHE)
