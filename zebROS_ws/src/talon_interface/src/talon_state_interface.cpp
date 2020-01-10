@@ -1,4 +1,3 @@
-
 #include "talon_interface/talon_state_interface.h"
 
 namespace hardware_interface
@@ -137,6 +136,10 @@ namespace hardware_interface
 		control_frame_periods_[Control_4_Advanced] = control_4_advanced_default;
 		control_frame_periods_[Control_5_FeedbackOutputOverride] = control_5_feedbackoutputoverride_default;
 		control_frame_periods_[Control_6_MotProfAddTrajPoint] = control_6_motprofaddtrajpoint_default;
+	}
+
+	TalonHWState::~TalonHWState()
+	{
 	}
 
 	double TalonHWState::getSetpoint(void) const

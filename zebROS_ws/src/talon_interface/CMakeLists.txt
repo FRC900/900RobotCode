@@ -121,6 +121,7 @@ include_directories(
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME} STATIC
+  src/talon_command_interface.cpp
   src/talon_state_interface.cpp
 )
 

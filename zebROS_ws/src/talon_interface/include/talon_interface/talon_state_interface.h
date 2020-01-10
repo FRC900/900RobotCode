@@ -260,6 +260,7 @@ class TalonHWState
 {
 	public:
 		TalonHWState(int can_id);
+		~TalonHWState();
 		double getSetpoint(void) const;
 
 		double getPosition(void) const;
