@@ -33,7 +33,7 @@ namespace climber_controller
 
         //Initialize your ROS server
         /* Ex:
-        mech_service_ = controller_nh.advertiseService("mech_command", &MechController::cmdService, this);
+        climber_service_ = controller_nh.advertiseService("climber_command", &ClimberController::cmdService, this);
         */
 
         return true;
@@ -63,7 +63,7 @@ namespace climber_controller
     }
 
 	/*
-	bool ClimberController::cmdService(package::MechSrv::Request &req, package::MechSrv::Response &//response//) {
+	bool ClimberController::cmdService(package::ClimberSrv::Request &req, package::ClimberSrv::Response &//response//) {
         if(isRunning())
         {
             //assign request value to command buffer(s)
