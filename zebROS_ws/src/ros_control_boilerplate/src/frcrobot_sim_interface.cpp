@@ -120,7 +120,7 @@ void FRCRobotSimInterface::init(void)
 							  "Loading joint " << i << "=" << can_ctre_mc_names_[i] <<
 							  (can_ctre_mc_local_updates_[i] ? " local" : " remote") << " update, " <<
 							  (can_ctre_mc_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as " << (can_ctre_mc_is_falcon_[i] ? "Falcon500" : (can_ctre_mc_is_talon_[i] ? "TalonSRX" : "VictorSPX"))
+							  " as " << (can_ctre_mc_is_talon_fx_[i] ? "TalonFX" : (can_ctre_mc_is_talon_srx_[i] ? "TalonSRX" : "VictorSPX"))
 							  << " CAN id " << can_ctre_mc_can_ids_[i]);
 
 		ROS_WARN_STREAM("fails here? 56789: " << i);
@@ -481,7 +481,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			ts.setVoltageCompensationEnable(v_c_enable);
 		}
 
-		if (can_ctre_mc_is_talon_[joint_id] || can_ctre_mc_is_falcon_[joint_id])
+		if (can_ctre_mc_is_talon_fx_[joint_id] || can_ctre_mc_is_talon_srx_[joint_id])
 		{
 			hardware_interface::VelocityMeasurementPeriod v_m_period;
 			int v_m_window;
@@ -501,7 +501,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			ts.setPosition(sensor_position);
 		}
 
-		if (can_ctre_mc_is_talon_[joint_id] || can_ctre_mc_is_falcon_[joint_id])
+		if (can_ctre_mc_is_talon_fx_[joint_id] || can_ctre_mc_is_talon_srx_[joint_id])
 		{
 			hardware_interface::LimitSwitchSource internal_local_forward_source;
 			hardware_interface::LimitSwitchNormal internal_local_forward_normal;
@@ -538,7 +538,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			ts.setOverrideSoftLimitsEnable(softlimit_override_enable);
 		}
 
-		if (can_ctre_mc_is_talon_[joint_id])
+		if (can_ctre_mc_is_talon_srx_[joint_id])
 		{
 			int peak_amps;
 			int peak_msec;
@@ -554,7 +554,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 
-		if (can_ctre_mc_is_falcon_[joint_id])
+		if (can_ctre_mc_is_talon_fx_[joint_id])
 		{
 			double limit;
 			double trigger_threshold_current;
@@ -599,7 +599,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			}
 		}
 
-		if (can_ctre_mc_is_talon_[joint_id] || can_ctre_mc_is_falcon_[joint_id])
+		if (can_ctre_mc_is_talon_fx_[joint_id] || can_ctre_mc_is_talon_srx_[joint_id])
 		{
 			for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
 			{

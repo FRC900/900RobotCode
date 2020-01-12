@@ -1866,12 +1866,12 @@ bool TalonHWCommand::motorCommutationChanged(hardware_interface::MotorCommutatio
 {
 	motor_commutation = motor_commutation_;
 	const bool ret = motor_commutation_changed_;
-	motor_commutation_changed_ = true;
+	motor_commutation_changed_ = false;
 	return ret;
 }
 void TalonHWCommand::resetMotorCommutation(void)
 {
-	motor_commutation_changed_ = false;
+	motor_commutation_changed_ = true;
 }
 
 //TalonFX only
@@ -1891,12 +1891,12 @@ bool TalonHWCommand::absoluteSensorRangeChanged(hardware_interface::AbsoluteSens
 {
 	absolute_sensor_range = absolute_sensor_range_;
 	const bool ret = absolute_sensor_range_changed_;
-	absolute_sensor_range_changed_ = true;
+	absolute_sensor_range_changed_ = false;
 	return ret;
 }
 void TalonHWCommand::resetAbsoluteSensorRange(void)
 {
-	absolute_sensor_range_changed_ = false;
+	absolute_sensor_range_changed_ = true;
 }
 
 //TalonFX only
@@ -1916,12 +1916,12 @@ bool TalonHWCommand::sensorInitializationStrategyChanged(hardware_interface::Sen
 {
 	sensor_initialization_strategy = sensor_initialization_strategy_;
 	const bool ret = sensor_initialization_strategy_changed_;
-	sensor_initialization_strategy_changed_ = true;
+	sensor_initialization_strategy_changed_ = false;
 	return ret;
 }
 void TalonHWCommand::resetSensorInitializationStrategy(void)
 {
-	sensor_initialization_strategy_changed_ = false;
+	sensor_initialization_strategy_changed_ = true;
 }
 
 void TalonHWCommand::setCustomProfileDisable(bool disable)

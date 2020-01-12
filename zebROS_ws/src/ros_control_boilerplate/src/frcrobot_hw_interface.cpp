@@ -209,14 +209,14 @@ void FRCRobotHWInterface::init(void)
 							  "Loading joint " << i << "=" << can_ctre_mc_names_[i] <<
 							  (can_ctre_mc_local_updates_[i] ? " local" : " remote") << " update, " <<
 							  (can_ctre_mc_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as " << (can_ctre_mc_is_falcon_[i] ? "Falcon500" : (can_ctre_mc_is_talon_[i] ? "TalonSRX" : "VictorSPX"))
+							  " as " << (can_ctre_mc_is_talon_fx_[i] ? "TalonFX" : (can_ctre_mc_is_talon_srx_[i] ? "TalonSRX" : "VictorSPX"))
 							  << " CAN id " << can_ctre_mc_can_ids_[i]);
 
 		if (can_ctre_mc_local_hardwares_[i])
 		{
-			if (can_ctre_mc_is_falcon_[i])
+			if (can_ctre_mc_is_talon_fx_[i])
 				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonFX>(can_ctre_mc_can_ids_[i]));
-			else if (can_ctre_mc_is_talon_[i])
+			else if (can_ctre_mc_is_talon_srx_[i])
 				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_ctre_mc_can_ids_[i]));
 			else
 				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::VictorSPX>(can_ctre_mc_can_ids_[i]));
@@ -250,7 +250,11 @@ void FRCRobotHWInterface::init(void)
 			// which means both reads and writes will be skipped
 			if (run_hal_robot_)
 			{
-				if (can_ctre_mc_is_talon_[i])
+				if (can_ctre_mc_is_talon_fx_[i])
+				{
+					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonFX>(can_ctre_mc_can_ids_[i]));
+				}
+				else if (can_ctre_mc_is_talon_srx_[i])
 				{
 					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_ctre_mc_can_ids_[i]));
 				}
