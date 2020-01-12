@@ -86,6 +86,14 @@ int32[]   current_limit_peak_amps
 int32[]   current_limit_peak_msec
 int32[]   current_limit_continuous_amps
 bool[]    current_limit_enable
+float64[] supply_current_limit
+float64[] supply_current_trigger_threshold_current
+float64[] supply_current_trigger_threshold_time
+bool[]    supply_current_limit_enable
+float64[] stator_current_limit
+float64[] stator_current_trigger_threshold_current
+float64[] stator_current_trigger_threshold_time
+bool[]    stator_current_limit_enable
 float64[] motion_cruise_velocity
 float64[] motion_acceleration
 uint8[]   motion_s_curve_strength
@@ -109,6 +117,9 @@ uint8[]   control_5_feedbackoutputoverride_period
 uint8[]   control_6_motprofaddtrajpoint_period
 float64[] motion_profile_trajectory_period
 float64[] conversion_factor
+string[]  motor_commutation
+string[]  absolute_sensor_range
+string[]  sensor_initialization_strategy
 string[]  firmware_version
 bool[]    water_game
 
