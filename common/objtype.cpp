@@ -215,6 +215,32 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			contour_.push_back(Point2f(0.035,0.0));
 			name_ = "right_cargo_tape";
 			break;
+		case POWER_PORT_2020: //target on the POWER PORT (2020)
+			depth_ = 0;
+			contour_.push_back(Point2f(0,0));
+			contour_.push_back(Point2f(0.2492375,0.4318));
+			contour_.push_back(Point2f(0.7477125,0.4318));
+			contour_.push_back(Point2f(0.99695,0));
+			contour_.push_back(Point2f(0.9382912,0));
+			contour_.push_back(Point2f(0.7183831,0.381));
+			contour_.push_back(Point2f(0.2785669,0.381));
+			contour_.push_back(Point2f(0.0586588,0));
+			name_ = "power_port";
+			break;
+		case LOADING_BAY_2020: //target on the LOADING BAY (2020)
+			depth_ = 0;
+			contour_.push_back(Point2f(0.0508,0.2286));
+			contour_.push_back(Point2f(0.0508,0));
+			contour_.push_back(Point2f(0,0));
+			contour_.push_back(Point2f(0,0.2794));
+			contour_.push_back(Point2f(0.1778,0.2794));
+			contour_.push_back(Point2f(0.1778,0));
+			contour_.push_back(Point2f(0.0508,0));
+			contour_.push_back(Point2f(0.0508,0.0508));
+			contour_.push_back(Point2f(0.127,0.0508));
+			contour_.push_back(Point2f(0.127,0.2286));
+			name_ = "loading_bay";
+			break;
 		default:
 			cerr << "error initializing object!" << endl;
 	}

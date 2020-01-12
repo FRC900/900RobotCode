@@ -15,6 +15,8 @@ enum ObjectNum
     CUBE_2018,
     LEFT_CARGO_2019,
     RIGHT_CARGO_2019,
+	POWER_PORT_2020,
+	LOADING_BAY_2020,
 };
 
 //class to hold the type of object that a detected object is
