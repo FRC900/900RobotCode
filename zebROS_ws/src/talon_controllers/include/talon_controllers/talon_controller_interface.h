@@ -90,12 +90,27 @@ class TalonCIParams
 			current_limit_peak_msec_(10), // to avoid errata - see https://github.com/CrossTheRoadElec/Phoenix-Documentation/blob/master/README.md#motor-output-direction-is-incorrect-or-accelerates-when-current-limit-is-enabled and https://github.com/CrossTheRoadElec/Phoenix-Examples-Languages/blob/master/C%2B%2B/Current%20Limit/src/Robot.cpp#L37
 			current_limit_continuous_amps_(0),
 			current_limit_enable_(false),
+			// current limiting - TalonFX / Falcon500
+			supply_current_limit_(0),
+			supply_current_trigger_threshold_current_(0),
+			supply_current_trigger_threshold_time_(0),
+			supply_current_limit_enable_(false),
+
+			stator_current_limit_(0),
+			stator_current_trigger_threshold_current_(0),
+			stator_current_trigger_threshold_time_(0),
+			stator_current_limit_enable_(false),
+
 			motion_cruise_velocity_(0),
 			motion_acceleration_(0),
 			motion_s_curve_strength_(0),
 			motion_profile_trajectory_period_(0),
 
 			conversion_factor_(1.0),
+
+			motor_commutation_(hardware_interface::MotorCommutation::Trapezoidal),
+			absolute_sensor_range_(hardware_interface::Unsigned_0_to_360),
+			sensor_initialization_strategy_(hardware_interface::BootToZero),
 
 			custom_profile_hz_(20.0),
 
@@ -222,6 +237,16 @@ class TalonCIParams
 			current_limit_peak_msec_ = config.current_limit_peak_msec;
 			current_limit_continuous_amps_ = config.current_limit_continuous_amps;
 			current_limit_enable_ = config.current_limit_enable;
+
+			supply_current_limit_ = config.supply_current_limit;
+			supply_current_trigger_threshold_current_ = config.supply_current_trigger_threshold_current;
+			supply_current_trigger_threshold_time_ = config.supply_current_trigger_threshold_time;
+			supply_current_limit_enable_ = config.supply_current_limit_enable;
+			stator_current_limit_ = config.stator_current_limit;
+			stator_current_trigger_threshold_current_ = config.stator_current_trigger_threshold_current;
+			stator_current_trigger_threshold_time_ = config.stator_current_trigger_threshold_time;
+			stator_current_limit_enable_ = config.stator_current_limit_enable;
+
 			motion_cruise_velocity_ = config.motion_cruise_velocity;
 			motion_acceleration_ = config.motion_acceleration;
 			motion_s_curve_strength_ = config.motion_s_curve_strength;
@@ -247,6 +272,10 @@ class TalonCIParams
 			control_frame_periods_[hardware_interface::Control_5_FeedbackOutputOverride] = config.control_5_feedbackoutputoverride_period;
 			control_frame_periods_[hardware_interface::Control_6_MotProfAddTrajPoint] = config.control_6_motprofaddtrajpoint_period;
 			conversion_factor_ = config.conversion_factor;
+
+			motor_commutation_ = static_cast<hardware_interface::MotorCommutation>(config.motor_commutation);
+			absolute_sensor_range_ = static_cast<hardware_interface::AbsoluteSensorRange>(config.absolute_sensor_range);
+			sensor_initialization_strategy_ = static_cast<hardware_interface::SensorInitializationStrategy>(config.sensor_initialization_strategy);
 
 			custom_profile_hz_ = config.custom_profile_hz;
 		}
@@ -341,6 +370,14 @@ class TalonCIParams
 			config.current_limit_peak_msec = current_limit_peak_msec_;
 			config.current_limit_continuous_amps = current_limit_continuous_amps_;
 			config.current_limit_enable = current_limit_enable_;
+			config.supply_current_limit = supply_current_limit_;
+			config.supply_current_trigger_threshold_current = supply_current_trigger_threshold_current_;
+			config.supply_current_trigger_threshold_time = supply_current_trigger_threshold_time_;
+			config.supply_current_limit_enable = supply_current_limit_enable_;
+			config.stator_current_limit = stator_current_limit_;
+			config.stator_current_trigger_threshold_current = stator_current_trigger_threshold_current_;
+			config.stator_current_trigger_threshold_time = stator_current_trigger_threshold_time_;
+			config.stator_current_limit_enable = stator_current_limit_enable_;
 			config.motion_cruise_velocity = motion_cruise_velocity_;
 			config.motion_acceleration = motion_acceleration_;
 			config.motion_s_curve_strength = motion_s_curve_strength_;
@@ -367,6 +404,9 @@ class TalonCIParams
 			config.control_6_motprofaddtrajpoint_period = control_frame_periods_[hardware_interface::Control_6_MotProfAddTrajPoint];
 
 			config.conversion_factor = conversion_factor_;
+			config.motor_commutation = static_cast<int>(motor_commutation_);
+			config.absolute_sensor_range = absolute_sensor_range_;
+			config.sensor_initialization_strategy = sensor_initialization_strategy_;
 			config.custom_profile_hz = custom_profile_hz_;
 			return config;
 		}
@@ -387,6 +427,49 @@ class TalonCIParams
 			n.getParam("conversion_factor", conversion_factor_);
 			return true;
 		}
+
+		bool readTalonFXSensorConfig(ros::NodeHandle &n)
+		{
+			std::string str;
+			if (n.getParam("motor_commutation", str))
+			{
+				if (str == "Trapezoidal")
+					motor_commutation_ = hardware_interface::MotorCommutation::Trapezoidal;
+				else
+				{
+					ROS_ERROR("Invalid motor commutation (namespace: %s, %s) - valid options are Trapezoidal",
+							  n.getNamespace().c_str(), str.c_str());
+					return false;
+				}
+			}
+			if (n.getParam("absolute_sensor_range", str))
+			{
+				if (str == "Unsigned_0_to_360")
+					absolute_sensor_range_ = hardware_interface::Unsigned_0_to_360;
+				else if (str == "Signed_PlusMinus180")
+					absolute_sensor_range_ = hardware_interface::Signed_PlusMinus180;
+				else
+				{
+					ROS_ERROR("Invalid absolute sensor range (namespace: %s, %s) - valid options are Unsigned_0_to_360 and Signed_PlusMinus180",
+							  n.getNamespace().c_str(), str.c_str());
+					return false;
+				}
+			}
+			if (n.getParam("sensor_initialization_strategy", str))
+			{
+				if (str == "BootToZero")
+					sensor_initialization_strategy_ = hardware_interface::BootToZero;
+				else if (str == "BootToAbsolutePosition")
+					sensor_initialization_strategy_ = hardware_interface::BootToAbsolutePosition;
+				else
+				{
+					ROS_ERROR("Invalid sensor intitalization strategy (namespace: %s, %s) - valid options are BootToZero and BootToAbsolutePosition",
+							n.getNamespace().c_str(), str.c_str());
+					return false;
+				}
+			}
+			return true;
+		};
 
 		// Read a joint name from the given nodehandle's params
 		bool readNeutralMode(ros::NodeHandle &n)
@@ -409,7 +492,7 @@ class TalonCIParams
 			}
 			return true;
 		}
-		//TODOa: create a method that reads the feedback settings enum
+		//TODO: create a method that reads the feedback settings enum
 		bool readFeedbackType(ros::NodeHandle &n)
 		{
 			std::string str;
@@ -694,7 +777,7 @@ class TalonCIParams
 
 		bool readCurrentLimits(ros::NodeHandle &n)
 		{
-			int params_read = 0;
+			size_t params_read = 0;
 			if (n.getParam("current_limit_peak_amps", current_limit_peak_amps_))
 				params_read += 1;
 			if (n.getParam("current_limit_peak_msec", current_limit_peak_msec_))
@@ -704,6 +787,36 @@ class TalonCIParams
 			if (n.getParam("current_limit_enable", current_limit_enable_) &&
 				current_limit_enable_ && (params_read < 3))
 				ROS_WARN("Not all current limits set before enabling - using defaults might not work as expected");
+			return true;
+		}
+
+		bool readSupplyCurrentLimits(ros::NodeHandle &n)
+		{
+			int params_read = 0;
+			if (n.getParam("supply_current_limit", supply_current_limit_))
+				params_read += 1;
+			if (n.getParam("supply_current_trigger_threshold_current", supply_current_trigger_threshold_current_))
+				params_read += 1;
+			if (n.getParam("supply_current_trigger_threshold_time", supply_current_trigger_threshold_time_))
+				params_read += 1;
+			if (n.getParam("supply_current_limit_enable", supply_current_limit_enable_) &&
+				current_limit_enable_ && (params_read < 3))
+				ROS_WARN("Not all supply current limits set before enabling - using defaults might not work as expected");
+			return true;
+		}
+
+		bool readStatorCurrentLimits(ros::NodeHandle &n)
+		{
+			int params_read = 0;
+			if (n.getParam("stator_current_limit", stator_current_limit_))
+				params_read += 1;
+			if (n.getParam("stator_current_trigger_threshold_current", stator_current_trigger_threshold_current_))
+				params_read += 1;
+			if (n.getParam("stator_current_trigger_threshold_time", stator_current_trigger_threshold_time_))
+				params_read += 1;
+			if (n.getParam("stator_current_limit_enable", stator_current_limit_enable_) &&
+				current_limit_enable_ && (params_read < 3))
+				ROS_WARN("Not all stator current limits set before enabling - using defaults might not work as expected");
 			return true;
 		}
 
@@ -814,6 +927,18 @@ class TalonCIParams
 		int    current_limit_peak_msec_;
 		int    current_limit_continuous_amps_;
 		bool   current_limit_enable_;
+
+		// TalonFX / Falcon500 only
+		double supply_current_limit_;
+		double supply_current_trigger_threshold_current_;
+		double supply_current_trigger_threshold_time_;
+		bool   supply_current_limit_enable_;
+
+		double stator_current_limit_;
+		double stator_current_trigger_threshold_current_;
+		double stator_current_trigger_threshold_time_;
+		bool   stator_current_limit_enable_;
+
 		double motion_cruise_velocity_;
 		double motion_acceleration_;
 		double motion_s_curve_strength_;
@@ -822,6 +947,11 @@ class TalonCIParams
 		std::array<int, hardware_interface::Control_Last> control_frame_periods_;
 
 		double conversion_factor_;
+
+		// TalonFX / Falcon500 specific
+		hardware_interface::MotorCommutation motor_commutation_;
+		hardware_interface::AbsoluteSensorRange absolute_sensor_range_;
+		hardware_interface::SensorInitializationStrategy sensor_initialization_strategy_;
 
 		double custom_profile_hz_;
 
@@ -1028,11 +1158,14 @@ class TalonControllerInterface
 				   params.readLimitSwitches(n) &&
 				   params.readSoftLimits(n) &&
 				   params.readCurrentLimits(n) &&
+				   params.readSupplyCurrentLimits(n) &&
+				   params.readStatorCurrentLimits(n) &&
 				   params.readMotionControl(n) &&
 				   params.readStatusFramePeriods(n) &&
 				   params.readControlFramePeriods(n) &&
 				   params.readCustomProfile(n) &&
-				   params.readTalonThread(n);
+				   params.readTalonThread(n) &&
+				   params.readTalonFXSensorConfig(n);
 		}
 
 		// Read params from config file and use them to
@@ -1755,6 +1888,15 @@ class TalonControllerInterface
 			talon->setContinuousCurrentLimit(params.current_limit_continuous_amps_);
 			talon->setCurrentLimitEnable(params.current_limit_enable_);
 
+			talon->setSupplyCurrentLimit(params.supply_current_limit_);
+			talon->setSupplyCurrentTriggerThresholdCurrent(params.supply_current_trigger_threshold_current_);
+			talon->setSupplyCurrentTriggerThresholdTime(params.supply_current_trigger_threshold_time_);
+			talon->setSupplyCurrentLimitEnable(params.supply_current_limit_enable_);
+			talon->setStatorCurrentLimit(params.stator_current_limit_);
+			talon->setStatorCurrentTriggerThresholdCurrent(params.stator_current_trigger_threshold_current_);
+			talon->setStatorCurrentTriggerThresholdTime(params.stator_current_trigger_threshold_time_);
+			talon->setStatorCurrentLimitEnable(params.stator_current_limit_enable_);
+
 			talon->setMotionCruiseVelocity(params.motion_cruise_velocity_);
 			talon->setMotionAcceleration(params.motion_acceleration_);
 			talon->setMotionProfileTrajectoryPeriod(params.motion_profile_trajectory_period_);
@@ -1764,6 +1906,10 @@ class TalonControllerInterface
 				talon->setControlFramePeriod(static_cast<hardware_interface::ControlFrame>(i), params.control_frame_periods_[i]);
 
 			talon->setConversionFactor(params.conversion_factor_);
+
+			talon->setMotorCommutation(params.motor_commutation_);
+			talon->setAbsoluteSensorRange(params.absolute_sensor_range_);
+			talon->setSensorInitializationStrategy(params.sensor_initialization_strategy_);
 
 			talon->setCustomProfileHz(params.custom_profile_hz_);
 

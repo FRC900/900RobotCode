@@ -467,7 +467,7 @@ class TalonHWState
 		void setFaults(unsigned int faults);
 		void setStickyFaults(unsigned int sticky_faults);
 		void setConversionFactor(double conversion_factor);
-		//
+
 		//TalonFX only
 		void setMotorCommutation(hardware_interface::MotorCommutation motor_commutation);
 		hardware_interface::MotorCommutation getMotorCommutation(void) const;
