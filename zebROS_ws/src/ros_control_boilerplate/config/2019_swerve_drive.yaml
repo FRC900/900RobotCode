@@ -16,11 +16,19 @@ swerve_drive_controller:
     ang_accel_conv: 2.0
     max_rotational_vel: 10
     
-    f_s: 0.12
+    # Feedforward terms -
+    #   f_s is static feed forward - min % out that gets the robot to move at all
+    #   f_a is accel feed forward term (currently only used in motion profile follower mode
+    #  f_v is velocity feed forward term (currently only used in motion profile follower mode, talon vel feed forward term is used for normal driving
+    #
+    f_s: 0.115
     f_a: 0.005 #use torque curve instead? TODO: FIX
     f_v: 0.00315528
 
-    #TODO: FIX BELOW!!!!	
+    # Feedforward terms for steering
+    #   f_s_s is static feed forward 
+    #   f_s_v is velocity feed forward
+    #   Both are currently only used in motion profile follower mode
     f_s_s: 0.05
     f_s_v: 0.07
    
@@ -46,52 +54,52 @@ swerve_drive_controller:
     speed_joint_fl:
         joint: fl_drive #fix pid
         close_loop_values:
-            - {p: 0.01, i: 0.0001, d: 0.0, f: 0.075, i_zone: 650}
+            - {p: 0.35, i: 0.0, d: 5.0, f: 0.08, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         sensor_phase: true 
         invert_output: false 
         feedback_type: CTRE_MagEncoder_Relative
         voltage_compensation_enable: True
-        current_limit_continuous_amps: 20
+        current_limit_continuous_amps: 30
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
     speed_joint_fr:
         joint: fr_drive #fix pid
         close_loop_values:
-            - {p: 0.01, i: 0.0001, d: 0.0, f: 0.075, i_zone: 650}
+            - {p: 0.35, i: 0.0, d: 5.0, f: 0.08, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         sensor_phase: true 
         invert_output: false 
         feedback_type: CTRE_MagEncoder_Relative
         voltage_compensation_enable: True
-        current_limit_continuous_amps: 20
+        current_limit_continuous_amps: 30
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
     speed_joint_bl:
         joint: bl_drive #fix pid
         close_loop_values: 
-            - {p: 0.01, i: 0.0001, d: 0.0, f: 0.075, i_zone: 650}
+            - {p: 0.35, i: 0.0, d: 5.0, f: 0.08, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         feedback_type: CTRE_MagEncoder_Relative
         sensor_phase: true  
         invert_output: false 
         voltage_compensation_enable: True
-        current_limit_continuous_amps: 20
+        current_limit_continuous_amps: 30
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
     speed_joint_br:
         joint: br_drive #fix pid
         close_loop_values:
-            - {p: 0.01, i: 0.0001, d: 0.0, f: 0.075, i_zone: 650}
+            - {p: 0.35, i: 0.0, d: 5.0, f: 0.08, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         sensor_phase: True
         invert_output: false 
         feedback_type: CTRE_MagEncoder_Relative
         voltage_compensation_enable: True
-        current_limit_continuous_amps: 20
+        current_limit_continuous_amps: 30
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
