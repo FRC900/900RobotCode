@@ -200,6 +200,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<bool>        can_ctre_mc_local_updates_;
 		std::vector<bool>        can_ctre_mc_local_hardwares_;
 		std::vector<bool>        can_ctre_mc_is_talon_;
+		std::vector<bool>        can_ctre_mc_is_falcon_;
 		std::size_t              num_can_ctre_mcs_;
 
 		std::vector<std::string> nidec_brushless_names_;

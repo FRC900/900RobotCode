@@ -278,7 +278,7 @@ class TalonHWCommand
 		bool softLimitChanged(double &forward_threshold, bool &forward_enable, double &reverse_threshold, bool &reverse_enable, bool &override_enable);
 		void resetSoftLimit(void);
 
-		// current limits
+		// current limits - Talon SRX only
 		void setPeakCurrentLimit(int amps);
 		int getPeakCurrentLimit(void) const;
 
@@ -291,6 +291,35 @@ class TalonHWCommand
 
 		bool currentLimitChanged(int &peak_amps, int &peak_msec, int &continuous_amps, bool &enable);
 		void resetCurrentLimit(void);
+
+		// Current Limits - Talon FX / Falcon 500
+		void setSupplyCurrentLimit(double supply_current_limit);
+		double getSupplyCurrentLimit(void) const;
+		void setSupplyCurrentTriggerThresholdCurrent(double supply_current_trigger_threshold_current);
+		double getSupplyCurrentTriggerThresholdCurrent(void) const;
+		void setSupplyCurrentTriggerTimeTime(double supply_current_trigger_threshold_time);
+		double getSupplyCurrentTriggerTimeTime(void) const;
+		void setSupplyCurrentLimitEnable(bool supply_current_limit_enable);
+		bool getSupplyCurrentLimitEnable(void) const;
+		bool supplyCurrentLimitChanged(double &stator_current_limit,
+				double &supply_current_trigger_threshold_current,
+				double &supply_time_trigger_threshold_time,
+				double &supply_current_limit_enable);
+		void  resetSupplyCurrentLimit(void);
+
+		void setStatorCurrentLimit(bool stator_current_limit);
+		double getStatorCurrentLimit(void) const;
+		void setStatorCurrentTriggerThresholdCurrent(double stator_current_trigger_threshold_current);
+		double getStatorCurrentTriggerThresholdCurrent(void) const;
+		void setStatorCurrentTriggerTimeTime(double stator_current_trigger_threshold_time);
+		double getStatorCurrentTriggerTimeTime(void) const;
+		void setStatorCurrentLimitEnable(bool stator_current_limit_enable);
+		bool getStatorCurrentLimitEnable(void) const;
+		bool statorCurrentLimitChanged(double &stator_current_limit,
+				double &stator_current_trigger_threshold_current,
+				double &stator_time_trigger_threshold_time,
+				double &stator_current_limit_enable);
+		void  resetStatorCurrentLimit(void);
 
 		void setMotionCruiseVelocity(double velocity);
 		double getMotionCruiseVelocity(void) const;
@@ -346,8 +375,25 @@ class TalonHWCommand
 		double getConversionFactor(void) const;
 		bool conversionFactorChanged(double &conversion_factor);
 
-		void setCustomProfileDisable(bool disable);
+		//TalonFX only
+		void setMotorCommutation(hardware_interface::MotorCommutation motor_commutation);
+		hardware_interface::MotorCommutation getMotorCommutation(void) const;
+		bool motorCommutationChanged(hardware_interface::MotorCommutation &motor_commutation);
+		void resetMotorCommutation(void);
 
+		//TalonFX only
+		void setAbsoluteSensorRange(hardware_interface::AbsoluteSensorRange absolute_sensor_range);
+		hardware_interface::AbsoluteSensorRange getAbsoluteSensorRange(void) const;
+		bool absoluteSensorRangeChanged(hardware_interface::AbsoluteSensorRange &absolute_sensor_range);
+		void resetAbsoluteSensorRange(void);
+
+		//TalonFX only
+		void setSensorInitializationStrategy(hardware_interface::SensorInitializationStrategy sensor_initialization_strategy);
+		hardware_interface::SensorInitializationStrategy getSensorInitializationStrategy(void) const;
+		bool sensorInitializationStrategyChanged(hardware_interface::SensorInitializationStrategy &sensor_initialization_strategy);
+		void resetSensorInitializationStrategy(void);
+
+		void setCustomProfileDisable(bool disable);
 		bool getCustomProfileDisable(void) const;
 
 		std::vector<int> getCustomProfileNextSlot(void) const;
@@ -459,11 +505,25 @@ class TalonHWCommand
 		bool softlimits_override_enable_;
 		bool softlimit_changed_;
 
+		// Talon SRX only
 		int current_limit_peak_amps_;
 		int current_limit_peak_msec_;
 		int current_limit_continuous_amps_;
 		bool current_limit_enable_;
 		bool current_limit_changed_;
+
+		// TalonFX / Falcon500 only
+		double supply_current_limit_;
+		double supply_current_trigger_threshold_current_;
+		double supply_current_trigger_threshold_time_;
+		bool   supply_current_limit_enable_;
+		bool   supply_current_limit_changed_;
+
+		double stator_current_limit_;
+		double stator_current_trigger_threshold_current_;
+		double stator_current_trigger_threshold_time_;
+		bool   stator_current_limit_enable_;
+		bool   stator_current_limit_changed_;
 
 		// Talon expects the next two in integral sensorUnitsPer100ms,
 		// but at this level we're still dealing with
@@ -486,7 +546,7 @@ class TalonHWCommand
 
 		bool clear_sticky_faults_;
 
-		// 2 entries in the Talon HW for each of these settings
+		// TALON_PIDF_SLOTS entries in the Talon HW for each of these settings
 		std::array<double, TALON_PIDF_SLOTS> p_;
 		std::array<double, TALON_PIDF_SLOTS> i_;
 		std::array<double, TALON_PIDF_SLOTS> d_;
@@ -502,6 +562,16 @@ class TalonHWCommand
 
 		double conversion_factor_;
 		bool   conversion_factor_changed_;
+
+		// TalonFX / Falcon500 specific
+		hardware_interface::MotorCommutation motor_commutation_;
+		bool                                 motor_commutation_changed_;
+
+		hardware_interface::AbsoluteSensorRange absolute_sensor_range_;
+		bool                                    absolute_sensor_range_changed_;
+
+		hardware_interface::SensorInitializationStrategy sensor_initialization_strategy_;
+		bool                                             sensor_initialization_strategy_changed_;
 
 		bool custom_profile_disable_;
 		bool custom_profile_run_;

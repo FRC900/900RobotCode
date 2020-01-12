@@ -2,6 +2,8 @@
 
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include <state_handle/state_handle.h>
+#include "talon_interface/absolute_sensor_range.h"
+#include "talon_interface/sensor_initialization_strategy.h"
 
 namespace hardware_interface
 {
@@ -192,6 +194,10 @@ enum SetValueMotionProfile
 	Disable = 0, Enable = 1, Hold = 2,
 };
 
+enum class MotorCommutation {
+	Trapezoidal, //!< Trapezoidal Commutation
+};
+
 struct MotionProfileStatus
 {
 	int  topBufferRem;
@@ -374,6 +380,26 @@ class TalonHWState
 		int getContinuousCurrentLimit(void) const;
 		void setCurrentLimitEnable(bool enable);
 		bool getCurrentLimitEnable(void) const;
+
+		// Current Limits - Talon FX / Falcon 500
+		void setSupplyCurrentLimit(double supply_current_limit);
+		double getSupplyCurrentLimit(void) const;
+		void setSupplyCurrentTriggerThresholdCurrent(double supply_current_trigger_threshold_current);
+		double getSupplyCurrentTriggerThresholdCurrent(void) const;
+		void setSupplyCurrentTriggerTimeTime(double supply_current_trigger_threshold_time);
+		double getSupplyCurrentTriggerTimeTime(void) const;
+		void setSupplyCurrentLimitEnable(bool supply_current_limit_enable);
+		bool getSupplyCurrentLimitEnable(void) const;
+
+		void setStatorCurrentLimit(bool stator_current_limit);
+		double getStatorCurrentLimit(void) const;
+		void setStatorCurrentTriggerThresholdCurrent(double stator_current_trigger_threshold_current);
+		double getStatorCurrentTriggerThresholdCurrent(void) const;
+		void setStatorCurrentTriggerTimeTime(double stator_current_trigger_threshold_time);
+		double getStatorCurrentTriggerTimeTime(void) const;
+		void setStatorCurrentLimitEnable(bool stator_current_limit_enable);
+		bool getStatorCurrentLimitEnable(void) const;
+
 		void setMotionCruiseVelocity(double velocity);
 		double getMotionCruiseVelocity(void) const;
 		void setMotionAcceleration(double acceleration);
@@ -441,6 +467,19 @@ class TalonHWState
 		void setFaults(unsigned int faults);
 		void setStickyFaults(unsigned int sticky_faults);
 		void setConversionFactor(double conversion_factor);
+		//
+		//TalonFX only
+		void setMotorCommutation(hardware_interface::MotorCommutation motor_commutation);
+		hardware_interface::MotorCommutation getMotorCommutation(void) const;
+
+		//TalonFX only
+		void setAbsoluteSensorRange(hardware_interface::AbsoluteSensorRange absolute_sensor_range);
+		hardware_interface::AbsoluteSensorRange getAbsoluteSensorRange(void) const;
+
+		//TalonFX only
+		void setSensorInitializationStrategy(hardware_interface::SensorInitializationStrategy sensor_initialization_strategy);
+		hardware_interface::SensorInitializationStrategy getSensorInitializationStrategy(void) const;
+
 		void setEnableReadThread(bool enable_read_thread);
 		void setFirmwareVersion(int firmware_version);
 		int getFirmwareVersion(void) const;
@@ -543,6 +582,17 @@ class TalonHWState
 		int current_limit_continuous_amps_;
 		bool current_limit_enable_;
 
+		// TalonFX / Falcon500 only
+		double supply_current_limit_;
+		double supply_current_trigger_threshold_current_;
+		double supply_current_trigger_threshold_time_;
+		bool   supply_current_limit_enable_;
+
+		double stator_current_limit_;
+		double stator_current_trigger_threshold_current_;
+		double stator_current_trigger_threshold_time_;
+		bool   stator_current_limit_enable_;
+
 		// Talon expects these in integral sensorUnitsPer100ms,
 		// but at this level we're still dealing with
 		// radians/sec (or /sec^2 for acceleration)
@@ -565,6 +615,11 @@ class TalonHWState
 		unsigned int sticky_faults_;
 
 		double conversion_factor_;
+
+		// TalonFX / Falcon500 specific
+		hardware_interface::MotorCommutation motor_commutation_;
+		hardware_interface::AbsoluteSensorRange absolute_sensor_range_;
+		hardware_interface::SensorInitializationStrategy sensor_initialization_strategy_;
 
 		bool enable_read_thread_;
 

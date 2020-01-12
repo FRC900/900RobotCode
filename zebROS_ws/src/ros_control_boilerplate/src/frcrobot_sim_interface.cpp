@@ -120,7 +120,7 @@ void FRCRobotSimInterface::init(void)
 							  "Loading joint " << i << "=" << can_ctre_mc_names_[i] <<
 							  (can_ctre_mc_local_updates_[i] ? " local" : " remote") << " update, " <<
 							  (can_ctre_mc_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as " << (can_ctre_mc_is_talon_[i] ? "TalonSRX" : "VictorSPX")
+							  " as " << (can_ctre_mc_is_falcon_[i] ? "Falcon500" : (can_ctre_mc_is_talon_[i] ? "TalonSRX" : "VictorSPX"))
 							  << " CAN id " << can_ctre_mc_can_ids_[i]);
 
 		ROS_WARN_STREAM("fails here? 56789: " << i);

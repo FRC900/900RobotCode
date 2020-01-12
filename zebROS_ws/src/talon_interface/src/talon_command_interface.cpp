@@ -112,12 +112,25 @@ TalonHWCommand::TalonHWCommand(void) :
 	softlimits_override_enable_(true),
 	softlimit_changed_(true),
 
-	// current limiting
+	// current limiting - TalonSRX only
 	current_limit_peak_amps_(0),
 	current_limit_peak_msec_(10), // see https://github.com/CrossTheRoadElec/Phoenix-Documentation/blob/master/README.md#motor-output-direction-is-incorrect-or-accelerates-when-current-limit-is-enabled
 	current_limit_continuous_amps_(0),
 	current_limit_enable_(false),
 	current_limit_changed_(true),
+
+	// current limiting - TalonFX / Falcon500
+	supply_current_limit_(0),
+	supply_current_trigger_threshold_current_(0),
+	supply_current_trigger_threshold_time_(0),
+	supply_current_limit_enable_(false),
+	supply_current_limit_changed_(true),
+
+	stator_current_limit_(0),
+	stator_current_trigger_threshold_current_(0),
+	stator_current_trigger_threshold_time_(0),
+	stator_current_limit_enable_(false),
+	stator_current_limit_changed_(true),
 
 	motion_cruise_velocity_(0),
 	motion_acceleration_(0),
@@ -145,6 +158,15 @@ TalonHWCommand::TalonHWCommand(void) :
 
 	conversion_factor_(1.0),
 	conversion_factor_changed_(true),
+
+	motor_commutation_(hardware_interface::MotorCommutation::Trapezoidal),
+	motor_commutation_changed_(true),
+
+	absolute_sensor_range_(hardware_interface::Unsigned_0_to_360),
+	absolute_sensor_range_changed_(true),
+
+	sensor_initialization_strategy_(hardware_interface::BootToZero),
+	sensor_initialization_strategy_changed_(true),
 
 	custom_profile_disable_(false),
 	custom_profile_run_(false),
@@ -1354,7 +1376,7 @@ void TalonHWCommand::resetSoftLimit(void)
 	softlimit_changed_ = true;
 }
 
-// current limits
+// current limits - Talon SRX only
 void TalonHWCommand::setPeakCurrentLimit(int amps)
 {
 	if (amps != current_limit_peak_amps_)
@@ -1419,6 +1441,141 @@ bool TalonHWCommand::currentLimitChanged(int &peak_amps, int &peak_msec, int &co
 void TalonHWCommand::resetCurrentLimit(void)
 {
 	current_limit_changed_ = false;
+}
+
+// Current limits - TalonFX / Falcon500
+void TalonHWCommand::setSupplyCurrentLimit(double supply_current_limit)
+{
+	if (supply_current_limit_ != supply_current_limit)
+	{
+		supply_current_limit_ = supply_current_limit;
+		supply_current_limit_changed_ = true;
+	}
+}
+double TalonHWCommand::getSupplyCurrentLimit(void) const
+{
+	return supply_current_limit_;
+}
+void TalonHWCommand::setSupplyCurrentTriggerThresholdCurrent(double supply_current_trigger_threshold_current)
+{
+	if (supply_current_trigger_threshold_current_ != supply_current_trigger_threshold_current)
+	{
+		supply_current_trigger_threshold_current_ = supply_current_trigger_threshold_current;
+		supply_current_limit_changed_ = true;
+	}
+}
+double TalonHWCommand::getSupplyCurrentTriggerThresholdCurrent(void) const
+{
+	return supply_current_trigger_threshold_current_;
+}
+void TalonHWCommand::setSupplyCurrentTriggerTimeTime(double supply_current_trigger_threshold_time)
+{
+	if (supply_current_trigger_threshold_time_ != supply_current_trigger_threshold_time)
+	{
+		supply_current_trigger_threshold_time_ = supply_current_trigger_threshold_time;
+		supply_current_limit_changed_ = true;
+	}
+}
+double TalonHWCommand::getSupplyCurrentTriggerTimeTime(void) const
+{
+	return supply_current_trigger_threshold_time_;
+}
+void TalonHWCommand::setSupplyCurrentLimitEnable(bool supply_current_limit_enable)
+{
+	if (supply_current_limit_enable_ != supply_current_limit_enable)
+	{
+		supply_current_limit_enable_ = supply_current_limit_enable;
+		supply_current_limit_changed_ = true;
+	}
+}
+bool TalonHWCommand::getSupplyCurrentLimitEnable(void) const
+{
+	return supply_current_limit_enable_;
+}
+
+bool TalonHWCommand::supplyCurrentLimitChanged(double &supply_current_limit,
+		double &supply_current_trigger_threshold_current,
+		double &supply_current_trigger_threshold_time,
+		double &supply_current_limit_enable)
+{
+	supply_current_limit = supply_current_limit_;
+	supply_current_trigger_threshold_current = supply_current_trigger_threshold_current_;
+	supply_current_trigger_threshold_time = supply_current_trigger_threshold_time_;
+	supply_current_limit_enable = supply_current_limit_enable_;
+	const bool ret = supply_current_limit_changed_;
+	supply_current_limit_changed_ = false;
+	return ret;
+}
+void  TalonHWCommand::resetSupplyCurrentLimit(void)
+{
+	supply_current_limit_changed_ = true;
+}
+
+void TalonHWCommand::setStatorCurrentLimit(bool stator_current_limit)
+{
+	if (stator_current_limit_ != stator_current_limit)
+	{
+		stator_current_limit_ = stator_current_limit;
+		stator_current_limit_changed_ = true;
+	}
+}
+double TalonHWCommand::getStatorCurrentLimit(void) const
+{
+	return stator_current_limit_;
+}
+void TalonHWCommand::setStatorCurrentTriggerThresholdCurrent(double stator_current_trigger_threshold_current)
+{
+	if (stator_current_trigger_threshold_current_ != stator_current_trigger_threshold_current)
+	{
+		stator_current_trigger_threshold_current_ = stator_current_trigger_threshold_current;
+		stator_current_limit_changed_ = true;
+	}
+}
+double TalonHWCommand::getStatorCurrentTriggerThresholdCurrent(void) const
+{
+	return stator_current_trigger_threshold_current_;
+}
+void TalonHWCommand::setStatorCurrentTriggerTimeTime(double stator_current_trigger_threshold_time)
+{
+	if (stator_current_trigger_threshold_time_ != stator_current_trigger_threshold_time)
+	{
+		stator_current_trigger_threshold_time_ = stator_current_trigger_threshold_time;
+		stator_current_limit_changed_ = true;
+	}
+}
+double TalonHWCommand::getStatorCurrentTriggerTimeTime(void) const
+{
+	return stator_current_trigger_threshold_time_;
+}
+void TalonHWCommand::setStatorCurrentLimitEnable(bool stator_current_limit_enable)
+{
+	if (stator_current_limit_enable_ != stator_current_limit_enable)
+	{
+		stator_current_limit_enable_ = stator_current_limit_enable;
+		stator_current_limit_changed_ = true;
+	}
+}
+bool TalonHWCommand::getStatorCurrentLimitEnable(void) const
+{
+	return stator_current_limit_enable_;
+}
+
+bool TalonHWCommand::statorCurrentLimitChanged(double &stator_current_limit,
+		double &stator_current_trigger_threshold_current,
+		double &stator_current_trigger_threshold_time,
+		double &stator_current_limit_enable)
+{
+	stator_current_limit = stator_current_limit_;
+	stator_current_trigger_threshold_current = stator_current_trigger_threshold_current_;
+	stator_current_trigger_threshold_time = stator_current_trigger_threshold_time_;
+	stator_current_limit_enable = stator_current_limit_enable_;
+	const bool ret = stator_current_limit_changed_;
+	stator_current_limit_changed_ = false;
+	return ret;
+}
+void  TalonHWCommand::resetStatorCurrentLimit(void)
+{
+	stator_current_limit_changed_ = true;
 }
 
 void TalonHWCommand::setMotionCruiseVelocity(double velocity)
@@ -1690,6 +1847,81 @@ bool TalonHWCommand::conversionFactorChanged(double &conversion_factor)
 		return false;
 	conversion_factor_changed_ = false;
 	return true;
+}
+
+//TalonFX only
+void TalonHWCommand::setMotorCommutation(hardware_interface::MotorCommutation motor_commutation)
+{
+	if (motor_commutation_ != motor_commutation)
+	{
+		motor_commutation_ = motor_commutation;
+		motor_commutation_changed_ = true;
+	}
+}
+hardware_interface::MotorCommutation TalonHWCommand::getMotorCommutation(void) const
+{
+	return motor_commutation_;
+}
+bool TalonHWCommand::motorCommutationChanged(hardware_interface::MotorCommutation &motor_commutation)
+{
+	motor_commutation = motor_commutation_;
+	const bool ret = motor_commutation_changed_;
+	motor_commutation_changed_ = true;
+	return ret;
+}
+void TalonHWCommand::resetMotorCommutation(void)
+{
+	motor_commutation_changed_ = false;
+}
+
+//TalonFX only
+void TalonHWCommand::setAbsoluteSensorRange(hardware_interface::AbsoluteSensorRange absolute_sensor_range)
+{
+	if (absolute_sensor_range_ != absolute_sensor_range)
+	{
+		absolute_sensor_range_ = absolute_sensor_range;
+		absolute_sensor_range_changed_ = true;
+	}
+}
+hardware_interface::AbsoluteSensorRange TalonHWCommand::getAbsoluteSensorRange(void) const
+{
+	return absolute_sensor_range_;
+}
+bool TalonHWCommand::absoluteSensorRangeChanged(hardware_interface::AbsoluteSensorRange &absolute_sensor_range)
+{
+	absolute_sensor_range = absolute_sensor_range_;
+	const bool ret = absolute_sensor_range_changed_;
+	absolute_sensor_range_changed_ = true;
+	return ret;
+}
+void TalonHWCommand::resetAbsoluteSensorRange(void)
+{
+	absolute_sensor_range_changed_ = false;
+}
+
+//TalonFX only
+void TalonHWCommand::setSensorInitializationStrategy(hardware_interface::SensorInitializationStrategy sensor_initialization_strategy)
+{
+	if (sensor_initialization_strategy_ != sensor_initialization_strategy)
+	{
+		sensor_initialization_strategy_ = sensor_initialization_strategy;
+		sensor_initialization_strategy_changed_ = true;
+	}
+}
+hardware_interface::SensorInitializationStrategy TalonHWCommand::getSensorInitializationStrategy(void) const
+{
+	return sensor_initialization_strategy_;
+}
+bool TalonHWCommand::sensorInitializationStrategyChanged(hardware_interface::SensorInitializationStrategy &sensor_initialization_strategy)
+{
+	sensor_initialization_strategy = sensor_initialization_strategy_;
+	const bool ret = sensor_initialization_strategy_changed_;
+	sensor_initialization_strategy_changed_ = true;
+	return ret;
+}
+void TalonHWCommand::resetSensorInitializationStrategy(void)
+{
+	sensor_initialization_strategy_changed_ = false;
 }
 
 void TalonHWCommand::setCustomProfileDisable(bool disable)

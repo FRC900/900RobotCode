@@ -52,6 +52,7 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/Joy.h>
 
+#include <ctre/phoenix/motorcontrol/can/TalonFX.h>
 #include <ctre/phoenix/motorcontrol/can/TalonSRX.h>
 #include <ctre/phoenix/motorcontrol/can/VictorSPX.h>
 #include "WPILibVersion.h"
