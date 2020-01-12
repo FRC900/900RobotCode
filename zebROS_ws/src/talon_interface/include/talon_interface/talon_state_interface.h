@@ -195,7 +195,7 @@ enum SetValueMotionProfile
 };
 
 enum class MotorCommutation {
-	Trapezoidal, //!< Trapezoidal Commutation
+	Trapezoidal //!< Trapezoidal Commutation
 };
 
 struct MotionProfileStatus
@@ -386,17 +386,17 @@ class TalonHWState
 		double getSupplyCurrentLimit(void) const;
 		void setSupplyCurrentTriggerThresholdCurrent(double supply_current_trigger_threshold_current);
 		double getSupplyCurrentTriggerThresholdCurrent(void) const;
-		void setSupplyCurrentTriggerTimeTime(double supply_current_trigger_threshold_time);
-		double getSupplyCurrentTriggerTimeTime(void) const;
+		void setSupplyCurrentTriggerThresholdTime(double supply_current_trigger_threshold_time);
+		double getSupplyCurrentTriggerThresholdTime(void) const;
 		void setSupplyCurrentLimitEnable(bool supply_current_limit_enable);
 		bool getSupplyCurrentLimitEnable(void) const;
 
-		void setStatorCurrentLimit(bool stator_current_limit);
+		void setStatorCurrentLimit(double stator_current_limit);
 		double getStatorCurrentLimit(void) const;
 		void setStatorCurrentTriggerThresholdCurrent(double stator_current_trigger_threshold_current);
 		double getStatorCurrentTriggerThresholdCurrent(void) const;
-		void setStatorCurrentTriggerTimeTime(double stator_current_trigger_threshold_time);
-		double getStatorCurrentTriggerTimeTime(void) const;
+		void setStatorCurrentTriggerThresholdTime(double stator_current_trigger_threshold_time);
+		double getStatorCurrentTriggerThresholdTime(void) const;
 		void setStatorCurrentLimitEnable(bool stator_current_limit_enable);
 		bool getStatorCurrentLimitEnable(void) const;
 

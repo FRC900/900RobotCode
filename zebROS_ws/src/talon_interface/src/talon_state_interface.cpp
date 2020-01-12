@@ -713,6 +713,7 @@ bool TalonHWState::getCurrentLimitEnable(void) const
 {
 	return current_limit_enable_;
 }
+
 // Current limits - TalonFX / Falcon500
 void TalonHWState::setSupplyCurrentLimit(double supply_current_limit)
 {
@@ -730,11 +731,11 @@ double TalonHWState::getSupplyCurrentTriggerThresholdCurrent(void) const
 {
 	return supply_current_trigger_threshold_current_;
 }
-void TalonHWState::setSupplyCurrentTriggerTimeTime(double supply_current_trigger_threshold_time)
+void TalonHWState::setSupplyCurrentTriggerThresholdTime(double supply_current_trigger_threshold_time)
 {
 	supply_current_trigger_threshold_time_ = supply_current_trigger_threshold_time;
 }
-double TalonHWState::getSupplyCurrentTriggerTimeTime(void) const
+double TalonHWState::getSupplyCurrentTriggerThresholdTime(void) const
 {
 	return supply_current_trigger_threshold_time_;
 }
@@ -745,6 +746,40 @@ void TalonHWState::setSupplyCurrentLimitEnable(bool supply_current_limit_enable)
 bool TalonHWState::getSupplyCurrentLimitEnable(void) const
 {
 	return supply_current_limit_enable_;
+}
+
+// Current limits - TalonFX / Falcon500
+void TalonHWState::setStatorCurrentLimit(double stator_current_limit)
+{
+	stator_current_limit_ = stator_current_limit;
+}
+double TalonHWState::getStatorCurrentLimit(void) const
+{
+	return stator_current_limit_;
+}
+void TalonHWState::setStatorCurrentTriggerThresholdCurrent(double stator_current_trigger_threshold_current)
+{
+	stator_current_trigger_threshold_current_ = stator_current_trigger_threshold_current;
+}
+double TalonHWState::getStatorCurrentTriggerThresholdCurrent(void) const
+{
+	return stator_current_trigger_threshold_current_;
+}
+void TalonHWState::setStatorCurrentTriggerThresholdTime(double stator_current_trigger_threshold_time)
+{
+	stator_current_trigger_threshold_time_ = stator_current_trigger_threshold_time;
+}
+double TalonHWState::getStatorCurrentTriggerThresholdTime(void) const
+{
+	return stator_current_trigger_threshold_time_;
+}
+void TalonHWState::setStatorCurrentLimitEnable(bool stator_current_limit_enable)
+{
+	stator_current_limit_enable_ = stator_current_limit_enable;
+}
+bool TalonHWState::getStatorCurrentLimitEnable(void) const
+{
+	return stator_current_limit_enable_;
 }
 
 

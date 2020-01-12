@@ -1716,6 +1716,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		// If the original object was a talon, both talon and victor will be valid
 		// The original object was a victor, talon will be nullptr
 		auto mc_enhanced = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mcs_[joint_id]);
+		auto falcon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mcs_[joint_id]);
 		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mcs_[joint_id]);
 		auto victor = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mcs_[joint_id]);
 #if 0
@@ -1726,6 +1727,14 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		else
 		{
 			ROS_ERROR_STREAM_THROTTLE(5.0, "mc_enhanced NOT OK for id " << joint_id);
+		}
+		if (falcon)
+		{
+			ROS_ERROR_STREAM_THROTTLE(5.0, "falcon OK for id " << joint_id);
+		}
+		else
+		{
+			ROS_ERROR_STREAM_THROTTLE(5.0, "falcon NOT OK for id " << joint_id);
 		}
 		if (talon)
 		{
@@ -1745,7 +1754,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		}
 #endif
 
-		if (!victor && !talon) // skip unintialized Talons
+		if (!victor && !talon && !mc_enhanced && !falcon) // skip unintialized Talons
 		{
 			talon_command_[joint_id].unlock();
 			continue;
@@ -2300,6 +2309,92 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				else
 				{
 					tc.resetCurrentLimit();
+				}
+			}
+		}
+
+		if (falcon)
+		{
+			double limit;
+			double trigger_threshold_current;
+			double trigger_threshold_time;
+			double limit_enable;
+			if (tc.supplyCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
+			{
+				if (safeTalonCall(falcon->ConfigSupplyCurrentLimit(ctre::phoenix::motorcontrol::SupplyCurrentLimitConfiguration(limit_enable, limit, trigger_threshold_current, trigger_threshold_time), timeoutMs), "ConfigSupplyCurrentLimit"))
+				{
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " supply current limit");
+					ts.setSupplyCurrentLimit(limit);
+					ts.setSupplyCurrentLimitEnable(limit_enable);
+					ts.setSupplyCurrentTriggerThresholdCurrent(trigger_threshold_current);
+					ts.setSupplyCurrentTriggerThresholdTime(trigger_threshold_time);
+				}
+				else
+				{
+					tc.resetSupplyCurrentLimit();
+				}
+			}
+			if (tc.supplyCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
+			{
+				if (safeTalonCall(falcon->ConfigStatorCurrentLimit(ctre::phoenix::motorcontrol::StatorCurrentLimitConfiguration(limit_enable, limit, trigger_threshold_current, trigger_threshold_time), timeoutMs), "ConfigStatorCurrentLimit"))
+				{
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " stator current limit");
+					ts.setStatorCurrentLimit(limit);
+					ts.setStatorCurrentLimitEnable(limit_enable);
+					ts.setStatorCurrentTriggerThresholdCurrent(trigger_threshold_current);
+					ts.setStatorCurrentTriggerThresholdTime(trigger_threshold_time);
+				}
+				else
+				{
+					tc.resetStatorCurrentLimit();
+				}
+			}
+
+			hardware_interface::MotorCommutation motor_commutation;
+			ctre::phoenix::motorcontrol::MotorCommutation motor_commutation_ctre;
+			if (tc.motorCommutationChanged(motor_commutation) &&
+				convertMotorCommutation(motor_commutation, motor_commutation_ctre))
+			{
+				if (safeTalonCall(falcon->ConfigMotorCommutation(motor_commutation_ctre, timeoutMs), "ConfigMotorCommutation"))
+				{
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " motor commutation");
+					ts.setMotorCommutation(motor_commutation);
+				}
+				else
+				{
+					tc.resetMotorCommutation();
+				}
+			}
+
+			hardware_interface::AbsoluteSensorRange absolute_sensor_range;
+			ctre::phoenix::sensors::AbsoluteSensorRange absolute_sensor_range_ctre;
+			if (tc.absoluteSensorRangeChanged(absolute_sensor_range) &&
+				convertAbsoluteSensorRange(absolute_sensor_range, absolute_sensor_range_ctre))
+			{
+				if (safeTalonCall(falcon->ConfigIntegratedSensorAbsoluteRange(absolute_sensor_range_ctre, timeoutMs), "ConfigIntegratedSensorAbsoluteRange"))
+				{
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " absolute sensor range");
+					ts.setAbsoluteSensorRange(absolute_sensor_range);
+				}
+				else
+				{
+					tc.resetAbsoluteSensorRange();
+				}
+			}
+
+			hardware_interface::SensorInitializationStrategy sensor_initialization_strategy;
+			ctre::phoenix::sensors::SensorInitializationStrategy sensor_initialization_strategy_ctre;
+			if (tc.sensorInitializationStrategyChanged(sensor_initialization_strategy) &&
+				convertSensorInitializationStrategy(sensor_initialization_strategy, sensor_initialization_strategy_ctre))
+			{
+				if (safeTalonCall(falcon->ConfigIntegratedSensorInitializationStrategy(sensor_initialization_strategy_ctre, timeoutMs), "ConfigIntegratedSensorInitializationStrategy"))
+				{
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " absolute sensor range");
+					ts.setSensorInitializationStrategy(sensor_initialization_strategy);
+				}
+				else
+				{
+					tc.resetSensorInitializationStrategy();
 				}
 			}
 		}
@@ -3101,6 +3196,57 @@ bool FRCRobotHWInterface::convertControlFrame(const hardware_interface::ControlF
 	}
 	return true;
 
+}
+
+bool FRCRobotHWInterface::convertMotorCommutation(const hardware_interface::MotorCommutation input,
+		ctre::phoenix::motorcontrol::MotorCommutation &output)
+{
+	switch (input)
+	{
+		case hardware_interface::MotorCommutation::Trapezoidal:
+			output = ctre::phoenix::motorcontrol::MotorCommutation::Trapezoidal;
+			break;
+		default:
+			ROS_ERROR("Invalid input in convertMotorCommutation");
+			return false;
+	}
+	return true;
+}
+
+bool FRCRobotHWInterface::convertAbsoluteSensorRange(const hardware_interface::AbsoluteSensorRange input,
+		ctre::phoenix::sensors::AbsoluteSensorRange &output)
+{
+	switch (input)
+	{
+		case hardware_interface::Unsigned_0_to_360:
+			output = ctre::phoenix::sensors::Unsigned_0_to_360;
+			break;
+		case hardware_interface::Signed_PlusMinus180:
+			output = ctre::phoenix::sensors::Signed_PlusMinus180;
+			break;
+		default:
+			ROS_ERROR("Invalid input in convertAbsoluteSensorRange");
+			return false;
+	}
+	return true;
+}
+
+bool FRCRobotHWInterface::convertSensorInitializationStrategy(const hardware_interface::SensorInitializationStrategy input,
+		ctre::phoenix::sensors::SensorInitializationStrategy &output)
+{
+	switch (input)
+	{
+		case hardware_interface::BootToZero:
+			output = ctre::phoenix::sensors::BootToZero;
+			break;
+		case hardware_interface::BootToAbsolutePosition:
+			output = ctre::phoenix::sensors::BootToAbsolutePosition;
+			break;
+		default:
+			ROS_ERROR("Invalid input in convertSensorInitializationStrategy");
+			return false;
+	}
+	return true;
 }
 
 } // namespace

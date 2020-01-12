@@ -1468,7 +1468,7 @@ double TalonHWCommand::getSupplyCurrentTriggerThresholdCurrent(void) const
 {
 	return supply_current_trigger_threshold_current_;
 }
-void TalonHWCommand::setSupplyCurrentTriggerTimeTime(double supply_current_trigger_threshold_time)
+void TalonHWCommand::setSupplyCurrentTriggerThresholdTime(double supply_current_trigger_threshold_time)
 {
 	if (supply_current_trigger_threshold_time_ != supply_current_trigger_threshold_time)
 	{
@@ -1476,7 +1476,7 @@ void TalonHWCommand::setSupplyCurrentTriggerTimeTime(double supply_current_trigg
 		supply_current_limit_changed_ = true;
 	}
 }
-double TalonHWCommand::getSupplyCurrentTriggerTimeTime(void) const
+double TalonHWCommand::getSupplyCurrentTriggerThresholdTime(void) const
 {
 	return supply_current_trigger_threshold_time_;
 }
@@ -1535,7 +1535,7 @@ double TalonHWCommand::getStatorCurrentTriggerThresholdCurrent(void) const
 {
 	return stator_current_trigger_threshold_current_;
 }
-void TalonHWCommand::setStatorCurrentTriggerTimeTime(double stator_current_trigger_threshold_time)
+void TalonHWCommand::setStatorCurrentTriggerThresholdTime(double stator_current_trigger_threshold_time)
 {
 	if (stator_current_trigger_threshold_time_ != stator_current_trigger_threshold_time)
 	{
@@ -1543,7 +1543,7 @@ void TalonHWCommand::setStatorCurrentTriggerTimeTime(double stator_current_trigg
 		stator_current_limit_changed_ = true;
 	}
 }
-double TalonHWCommand::getStatorCurrentTriggerTimeTime(void) const
+double TalonHWCommand::getStatorCurrentTriggerThresholdTime(void) const
 {
 	return stator_current_trigger_threshold_time_;
 }
