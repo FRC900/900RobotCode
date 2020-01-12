@@ -2,7 +2,7 @@ teleop_params:
     num_joysticks: 2
     max_rot: 5
     max_rot_slow: 2.5
-    min_speed: 0.4  # Smallest linear speed which get the robot moving at all
+    min_speed: 0.15  # Smallest linear speed which get the robot moving at all
     max_speed: 3
     max_speed_slow: 1.5
     joystick_pow: 3
