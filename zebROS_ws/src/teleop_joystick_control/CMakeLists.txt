@@ -97,16 +97,27 @@ set_target_properties(snap_to_nearest_goal PROPERTIES OUTPUT_NAME
 target_link_libraries(snap_to_nearest_goal
 	${catkin_LIBRARIES}
 	)
-
 add_dependencies(snap_to_nearest_goal
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 	)
+
+add_executable(teleop_joints_keyboard src/teleop_joints_keyboard.cpp)
+set_target_properties(teleop_joints_keyboard PROPERTIES OUTPUT_NAME
+	teleop_joints_keyboard PREFIX "")
+target_link_libraries(teleop_joints_keyboard
+	${catkin_LIBRARIES}
+	)
+add_dependencies(teleop_joints_keyboard
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS}
+	)
+
 ## TOOLS ------------------------------------------------------
 
 # Install ------------------------------------------------------------
 # Install header files
-install(TARGETS teleop_joystick_comp translate_joystick_data_node
+install(TARGETS teleop_joystick_comp translate_joystick_data_node teleop_joints_keyboard
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
