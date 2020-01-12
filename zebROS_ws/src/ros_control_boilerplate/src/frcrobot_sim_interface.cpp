@@ -374,7 +374,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		double feedback_coefficient;
 		if (tc.encoderFeedbackChanged(internal_feedback_device, feedback_coefficient))
 		{
-			ROS_INFO("feedback");
+			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " feedback");
 			ts.setEncoderFeedback(internal_feedback_device);
 			ts.setFeedbackCoefficient(feedback_coefficient);
 		}
@@ -481,14 +481,17 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			ts.setVoltageCompensationEnable(v_c_enable);
 		}
 
-		hardware_interface::VelocityMeasurementPeriod v_m_period;
-		int v_m_window;
-
-		if (tc.velocityMeasurementChanged(v_m_period, v_m_window))
+		if (can_ctre_mc_is_talon_[joint_id] || can_ctre_mc_is_falcon_[joint_id])
 		{
-			ts.setVelocityMeasurementPeriod(v_m_period);
-			ts.setVelocityMeasurementWindow(v_m_window);
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" velocity measurement period / window");
+			hardware_interface::VelocityMeasurementPeriod v_m_period;
+			int v_m_window;
+
+			if (tc.velocityMeasurementChanged(v_m_period, v_m_window))
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" velocity measurement period / window");
+				ts.setVelocityMeasurementPeriod(v_m_period);
+				ts.setVelocityMeasurementWindow(v_m_window);
+			}
 		}
 
 		double sensor_position;
@@ -498,16 +501,19 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			ts.setPosition(sensor_position);
 		}
 
-		hardware_interface::LimitSwitchSource internal_local_forward_source;
-		hardware_interface::LimitSwitchNormal internal_local_forward_normal;
-		hardware_interface::LimitSwitchSource internal_local_reverse_source;
-		hardware_interface::LimitSwitchNormal internal_local_reverse_normal;
-		if (tc.limitSwitchesSourceChanged(internal_local_forward_source, internal_local_forward_normal,
-				internal_local_reverse_source, internal_local_reverse_normal))
+		if (can_ctre_mc_is_talon_[joint_id] || can_ctre_mc_is_falcon_[joint_id])
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" limit switches");
-			ts.setForwardLimitSwitchSource(internal_local_forward_source, internal_local_forward_normal);
-			ts.setReverseLimitSwitchSource(internal_local_reverse_source, internal_local_reverse_normal);
+			hardware_interface::LimitSwitchSource internal_local_forward_source;
+			hardware_interface::LimitSwitchNormal internal_local_forward_normal;
+			hardware_interface::LimitSwitchSource internal_local_reverse_source;
+			hardware_interface::LimitSwitchNormal internal_local_reverse_normal;
+			if (tc.limitSwitchesSourceChanged(internal_local_forward_source, internal_local_forward_normal,
+						internal_local_reverse_source, internal_local_reverse_normal))
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" limit switches");
+				ts.setForwardLimitSwitchSource(internal_local_forward_source, internal_local_forward_normal);
+				ts.setReverseLimitSwitchSource(internal_local_reverse_source, internal_local_reverse_normal);
+			}
 		}
 
 		double softlimit_forward_threshold;
@@ -532,27 +538,78 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			ts.setOverrideSoftLimitsEnable(softlimit_override_enable);
 		}
 
-		int peak_amps;
-		int peak_msec;
-		int continuous_amps;
-		bool enable;
-		if (tc.currentLimitChanged(peak_amps, peak_msec, continuous_amps, enable))
+		if (can_ctre_mc_is_talon_[joint_id])
 		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" peak current");
-			ts.setPeakCurrentLimit(peak_amps);
-			ts.setPeakCurrentDuration(peak_msec);
-			ts.setContinuousCurrentLimit(continuous_amps);
-			ts.setCurrentLimitEnable(enable);
+			int peak_amps;
+			int peak_msec;
+			int continuous_amps;
+			bool enable;
+			if (tc.currentLimitChanged(peak_amps, peak_msec, continuous_amps, enable))
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" peak current");
+				ts.setPeakCurrentLimit(peak_amps);
+				ts.setPeakCurrentDuration(peak_msec);
+				ts.setContinuousCurrentLimit(continuous_amps);
+				ts.setCurrentLimitEnable(enable);
+			}
 		}
 
-		for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
+		if (can_ctre_mc_is_falcon_[joint_id])
 		{
-			uint8_t period;
-			const hardware_interface::StatusFrame status_frame = static_cast<hardware_interface::StatusFrame>(i);
-			if (tc.statusFramePeriodChanged(status_frame, period) && (period != 0))
+			double limit;
+			double trigger_threshold_current;
+			double trigger_threshold_time;
+			double limit_enable;
+			if (tc.supplyCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
 			{
-				ts.setStatusFramePeriod(status_frame, period);
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" status_frame " << i << "=" << static_cast<int>(period) << "mSec");
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " supply current limit");
+				ts.setSupplyCurrentLimit(limit);
+				ts.setSupplyCurrentLimitEnable(limit_enable);
+				ts.setSupplyCurrentTriggerThresholdCurrent(trigger_threshold_current);
+				ts.setSupplyCurrentTriggerThresholdTime(trigger_threshold_time);
+			}
+			if (tc.supplyCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " stator current limit");
+				ts.setStatorCurrentLimit(limit);
+				ts.setStatorCurrentLimitEnable(limit_enable);
+				ts.setStatorCurrentTriggerThresholdCurrent(trigger_threshold_current);
+				ts.setStatorCurrentTriggerThresholdTime(trigger_threshold_time);
+			}
+
+			hardware_interface::MotorCommutation motor_commutation;
+			if (tc.motorCommutationChanged(motor_commutation))
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " motor commutation");
+				ts.setMotorCommutation(motor_commutation);
+			}
+
+			hardware_interface::AbsoluteSensorRange absolute_sensor_range;
+			if (tc.absoluteSensorRangeChanged(absolute_sensor_range))
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " absolute sensor range");
+				ts.setAbsoluteSensorRange(absolute_sensor_range);
+			}
+
+			hardware_interface::SensorInitializationStrategy sensor_initialization_strategy;
+			if (tc.sensorInitializationStrategyChanged(sensor_initialization_strategy))
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " absolute sensor range");
+				ts.setSensorInitializationStrategy(sensor_initialization_strategy);
+			}
+		}
+
+		if (can_ctre_mc_is_talon_[joint_id] || can_ctre_mc_is_falcon_[joint_id])
+		{
+			for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
+			{
+				uint8_t period;
+				const hardware_interface::StatusFrame status_frame = static_cast<hardware_interface::StatusFrame>(i);
+				if (tc.statusFramePeriodChanged(status_frame, period) && (period != 0))
+				{
+					ts.setStatusFramePeriod(status_frame, period);
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" status_frame " << i << "=" << static_cast<int>(period) << "mSec");
+				}
 			}
 		}
 
