@@ -67,6 +67,7 @@ sudo apt install -y \
 	ros-melodic-grid-map-cv \
 	ros-melodic-grid-map-ros \
 	ros-melodic-hardware-interface \
+	ros-melodic-imu-filter-madgwick \
 	ros-melodic-joint-limits-interface \
 	ros-melodic-joint-state-publisher \
 	ros-melodic-joystick-drivers \

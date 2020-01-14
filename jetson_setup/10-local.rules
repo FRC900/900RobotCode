@@ -4,3 +4,4 @@ ACTION=="add", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SYMLINK+="LIDA
 ACTION=="add", ATTRS{idVendor}=="0451", ATTRS{idProduct}=="bef3", SYMLINK+="MMWAVE", MODE="0777"
 ACTION=="add", ATTRS{idVendor}=="046D", ATTRS{idProduct}=="082d", SYMLINK+="C920", MODE="0777"
 ACTION=="add", ATTRS{idVendor}=="046D", ATTRS{idProduct}=="085c", SYMLINK+="C922", MODE="0777"
+ACTION=="add", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="ffee", SYMLINK+="ADI", MODE="0777"

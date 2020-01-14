@@ -352,3 +352,5 @@ echo | sudo update-alternatives --config ld
 
 echo "source /home/ubuntu/2020RobotCode/zebROS_ws/command_aliases.sh" >> /home/ubuntu/.bashrc
 
+# Give the ubuntu user dialout permission, which is used by the ADI IMU 
+sudo adduser ubuntu dialout

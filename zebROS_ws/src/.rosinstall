@@ -62,4 +62,7 @@
 - git:
     local-name: pid
     uri: https://github.com/FRC900/pid.git
-    version: feed_forward 
+    version: feed_forward
+- git:
+    local-name: adi_driver
+    uri: https://github.com/tork-a/adi_driver
