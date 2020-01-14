@@ -100,9 +100,6 @@ pcm_state_controller:
    type : pcm_state_controller/PCMStateController
    publish_rate: 20
 
-navx_offset_controller:
-    type: navx_offset_controller/NavXOffsetController
-
 robot_controller_state_controller:
    type: robot_controller_state_controller/RobotControllerStateController
    publish_rate: 100
