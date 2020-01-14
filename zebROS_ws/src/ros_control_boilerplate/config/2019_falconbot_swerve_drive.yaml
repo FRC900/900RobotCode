@@ -28,7 +28,7 @@ swerve_drive_controller:
     #   f_a is accel feed forward term (currently only used in motion profile follower mode
     #  f_v is velocity feed forward term (currently only used in motion profile follower mode, talon vel feed forward term is used for normal driving
     #
-    f_s: 0.115
+    f_s: 0.06
     f_a: 0.005 #use torque curve instead? TODO: FIX
     f_v: 0.00315528
 
@@ -61,7 +61,7 @@ swerve_drive_controller:
     speed_joint_fl:
         joint: fl_drive #fix pid
         close_loop_values:
-            - {p: 0.35, i: 0.0, d: 5.0, f: 0.08, i_zone: 650}
+            - {p: 0.035, i: 0.004, d: 1.0, f: 0.0397, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         sensor_phase: true 
         invert_output: false 
@@ -72,7 +72,7 @@ swerve_drive_controller:
     speed_joint_fr:
         joint: fr_drive #fix pid
         close_loop_values:
-            - {p: 0.35, i: 0.0, d: 5.0, f: 0.08, i_zone: 650}
+            - {p: 0.035, i: 0.004, d: 1.0, f: 0.0397, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         sensor_phase: true 
         invert_output: false 
@@ -83,7 +83,7 @@ swerve_drive_controller:
     speed_joint_bl:
         joint: bl_drive #fix pid
         close_loop_values: 
-            - {p: 0.35, i: 0.0, d: 5.0, f: 0.08, i_zone: 650}
+            - {p: 0.035, i: 0.004, d: 1.0, f: 0.0397, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         feedback_type: IntegratedSensor
         sensor_phase: true  
@@ -94,7 +94,7 @@ swerve_drive_controller:
     speed_joint_br:
         joint: br_drive #fix pid
         close_loop_values:
-            - {p: 0.35, i: 0.0, d: 5.0, f: 0.08, i_zone: 650}
+            - {p: 0.035, i: 0.004, d: 1.0, f: 0.0397, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         sensor_phase: True
         invert_output: false 
