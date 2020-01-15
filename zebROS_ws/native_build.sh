@@ -21,6 +21,8 @@ fi
 
 catkin config --blacklist \
 	velocity_controllers \
+        realsense2_camera \
+        realsense2_description \
 	zed_ar_track_alvar_example \
 	zed_display_rviz \
 	zed_depth_sub_tutorial \
