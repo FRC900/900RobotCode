@@ -527,9 +527,11 @@ void TalonHWCommand::resetIntegralAccumulator(void)
 
 void TalonHWCommand::set(double command)
 {
-	command_ = command;
 	if (fabs(command_ - command) > double_value_epsilon)
+        {
 		command_changed_ = true;
+                command_ = command;
+        }
 }
 
 void TalonHWCommand::setMode(TalonMode mode)
