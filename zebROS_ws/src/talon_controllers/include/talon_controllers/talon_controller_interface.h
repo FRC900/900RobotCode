@@ -126,8 +126,13 @@ class TalonCIParams
 		// Also pass in current params for ones which aren't
 		// dynamically reconfigurable - pass them through
 		// to the new one
-		TalonCIParams(const TalonConfigConfig &config)
+		TalonCIParams(const TalonCIParams &params, const TalonConfigConfig &config)
 		{
+			// Default to passed in params, overwrite dynamic reconfig values
+			// on top of them. This will preserve settings of things which aren't
+			// dynamic reconfig (joint name, enable read thread, etc) and then update
+			// the ones which are with updated dynamic reconfig values
+			*this = params;
 			p_[0] = config.p0;
 			p_[1] = config.p1;
 			p_[2] = config.p2;
@@ -244,8 +249,6 @@ class TalonCIParams
 			conversion_factor_ = config.conversion_factor;
 
 			custom_profile_hz_ = config.custom_profile_hz;
-
-			enable_read_thread_ = true;
 		}
 
 		// Copy from internal state to TalonConfigConfig state
@@ -1162,7 +1165,7 @@ class TalonControllerInterface
 					 config.invert_output,
 					 config.sensor_phase);
 
-			writeParamsToHW(TalonCIParams(config), talon_);
+			writeParamsToHW(TalonCIParams(params_, config), talon_);
 		}
 
 		// Set the setpoint for the motor controller
