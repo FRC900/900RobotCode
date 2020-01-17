@@ -50,9 +50,13 @@ void zeroCallback(const sensor_msgs::Imu::ConstPtr& raw_msg) {
 
 bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
              imu_zero::ImuZeroAngle::Response& res) {
+  double roll, pitch, yaw;
+  tf2::Matrix3x3(last_raw).getRPY(roll, pitch, yaw);
+
   // takes zero angle in degrees, converts to radians
   double a = degToRad(req.angle);
-  zero_rot.setRPY(0.0, 0.0, - a);
+
+  zero_rot.setRPY(0.0, 0.0, a - yaw);
   return true;
 }
 

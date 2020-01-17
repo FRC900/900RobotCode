@@ -113,7 +113,7 @@ void navXCallback(const sensor_msgs::Imu &navXState)
 	tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
 
 	if (yaw == yaw) // ignore NaN results
-		navX_angle = yaw;
+		navX_angle = -yaw;
 }
 
 void preemptActionlibServers()
@@ -973,7 +973,7 @@ int main(int argc, char **argv)
 	}
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	elevator_setpoint = n.advertise<std_msgs::Int8>("elevator_setpoint",1);
-	ros::Subscriber navX_heading = n.subscribe("navx_mxp", 1, &navXCallback);
+	ros::Subscriber navX_heading = n.subscribe("/navx_jetson/zeroed_imu", 1, &navXCallback);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
 	//initialize actionlib clients
