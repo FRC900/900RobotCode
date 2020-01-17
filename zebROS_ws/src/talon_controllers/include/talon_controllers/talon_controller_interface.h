@@ -186,8 +186,8 @@ class TalonCIParams
 			closed_loop_period_[3] = config.closed_loop_period3;
 			pidf_slot_ = config.pid_config;
 			aux_pid_polarity_ = config.aux_pid_polarity;
-			demand1_type_ = static_cast<hardware_interface::DemandType>(config.demand1_type);
-			demand1_value_ = config.demand1_value;
+			// demand1_type_ = static_cast<hardware_interface::DemandType>(config.demand1_type);
+			// demand1_value_ = config.demand1_value;
 			invert_output_ = config.invert_output;
 
 			sensor_phase_ = config.sensor_phase;
@@ -322,8 +322,8 @@ class TalonCIParams
 			config.closed_loop_period3 = closed_loop_period_[3];
 			config.pid_config    = pidf_slot_;
 			config.aux_pid_polarity = aux_pid_polarity_;
-			config.demand1_type = demand1_type_;
-			config.demand1_value = demand1_value_;
+			//  config.demand1_type = demand1_type_;
+			//  config.demand1_value = demand1_value_;
 			config.invert_output = invert_output_;
 			config.sensor_phase  = sensor_phase_;
 			config.feedback_type = feedback_type_;
@@ -1635,7 +1635,7 @@ class TalonControllerInterface
 			if (demand1_type == params_.demand1_type_)
 				return;
 			params_.demand1_type_ = demand1_type;
-			syncDynamicReconfigure();
+			// syncDynamicReconfigure();
 			talon_->setDemand1Type(demand1_type);
 		}
 
@@ -1644,7 +1644,7 @@ class TalonControllerInterface
 			if (fabs(demand1_value - params_.demand1_value_) < double_value_epsilon)
 				return;
 			params_.demand1_value_ = demand1_value;
-			syncDynamicReconfigure();
+			//  syncDynamicReconfigure();
 			talon_->setDemand1Value(demand1_value);
 		}
 
