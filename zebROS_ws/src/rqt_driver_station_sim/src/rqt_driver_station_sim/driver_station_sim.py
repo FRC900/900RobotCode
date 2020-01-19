@@ -174,9 +174,6 @@ class DriverStationSim(Plugin):
         self._widget.teleop_button.setChecked(True)
         def pub_data(self):
             r = rospy.Rate(20)
-            auto_msg = AutoMode()
-            auto_msg.mode = [0, 0, 0, 0]
-            auto_msg.delays = [0, 0, 0, 0]
             match_msg = MatchSpecificData()
 
             modes =  [0, 0, 0, 0]
@@ -247,22 +244,8 @@ class DriverStationSim(Plugin):
                 practice_last = practice
 
 
-                auto_msg.header.stamp = rospy.Time.now()
-
-                auto_msg.position = self._widget.start_pos.value();
-
-                auto_msg.mode[0] = self._widget.mode_0.value();
-                auto_msg.mode[1] = self._widget.mode_1.value();
-                auto_msg.mode[2] = self._widget.mode_2.value();
-                auto_msg.mode[3] = self._widget.mode_3.value();
-                
-                auto_msg.delays[0] = self._widget.delay_0.value();
-                auto_msg.delays[1] = self._widget.delay_1.value();
-                auto_msg.delays[2] = self._widget.delay_2.value();
-                auto_msg.delays[3] = self._widget.delay_3.value();
                 
                 match_pub.publish(match_msg)
-                auto_pub.publish(auto_msg)
                 r.sleep()
                 
         load_thread = threading.Thread(target=pub_data, args=(self,))
