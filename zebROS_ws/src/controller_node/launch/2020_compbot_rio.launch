@@ -29,6 +29,9 @@
 			output="screen" args="spawn joint_state_controller_rio joint_state_listener_controller imu_sensor_controller match_state_controller robot_controller_state_controller robot_code_ready_controller" />
 
 		<node name="uptime_rio" pkg="uptime" type="uptime_node" output="screen" />
-	</group>
 
+		<include file="$(find cpu_monitor)/launch/cpu_monitor.launch">
+			<arg name="poll_period" value="1"/>
+		</include>
+	</group>
 </launch>

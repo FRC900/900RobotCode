@@ -30,6 +30,7 @@
 		/align_server/distance_pid/pid_enable
 		/align_server/navX_pid/pid_enable
 		/climber/swerve_drive_controller/cmd_vel
+		/cpu_monitor/cpu_monitor/cpu
 		/elevator/level_two
 		/frcrobot_jetson/joint_states
 		/frcrobot_jetson/pcm_states
