@@ -1,5 +1,4 @@
 #include "teleop_joystick_control/teleop_joystick_comp.h"
-#include "teleop_joystick_control/rate_limiter.h"
 #include "std_srvs/Empty.h"
 
 #include "std_srvs/Trigger.h"
@@ -31,6 +30,10 @@
 #include "dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h"
 #include "teleop_joystick_control/TeleopJoystickCompConfig.h"
 
+#include "teleop_joystick_control/TeleopCmdVel.h"
+
+std::unique_ptr<TeleopCmdVel> teleop_cmd_vel;
+
 int elevator_cur_setpoint_idx;
 int climber_cur_step;
 
@@ -43,18 +46,11 @@ bool panel_push_extend = false;
 const int climber_num_steps = 4;
 const int elevator_num_setpoints = 4;
 
-bool robot_orient = false;
-double offset_angle = 0;
-
 // array of joystick_states messages for multiple joysticks
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 
 teleop_joystick_control::TeleopJoystickCompConfig config;
-
-// Set to either fast or slow max speeds based on mode
-double max_speed;
-double max_rot;
 
 ros::Publisher elevator_setpoint;
 ros::Publisher JoystickRobotVel;
@@ -91,19 +87,6 @@ bool ManualTogglePush = false;
 bool ManualToggleKicker = false;
 bool ManualToggleArm = false;
 
-double dead_zone_check(double test_axis, double dead_zone)
-{
-	// Less than dead_zone? Return 0
-	if (fabs(test_axis) <= fabs(dead_zone))
-		return 0;
-
-	// Scale the remaining values - just above dead_zone
-	// is 0, scaling up to 1.0 as the input value goes
-	// to 1.0. This avoids a jerk from 0->0.x as the input
-	// transitions from dead_zone to non-dead_zone
-	return (fabs(test_axis) - dead_zone) / (1.0 - dead_zone);
-}
-
 void navXCallback(const sensor_msgs::Imu &navXState)
 {
 	const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
@@ -132,9 +115,8 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 					teleop_joystick_control::RobotOrient::Response&/* res*/)
 {
 	// Used to switch between robot orient and field orient driving
-	robot_orient = req.robot_orient;
-	offset_angle = req.offset_angle;
-	ROS_WARN_STREAM("Robot Orient = " << (robot_orient) << ", Offset Angle = " << offset_angle);
+	teleop_cmd_vel->setRobotOrient(req.robot_orient, req.offset_angle);
+	ROS_WARN_STREAM("Robot Orient = " << req.robot_orient << ", Offset Angle = " << req.offset_angle);
 	return true;
 }
 
@@ -166,102 +148,25 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	//Only do this for the first joystick
 	if(joystick_id == 0)
 	{
-		// Raw joystick values for X & Y translation
-		const double leftStickX = joystick_states_array[0].leftStickX;
-		const double leftStickY = joystick_states_array[0].leftStickY;
-		//ROS_INFO_STREAM(__LINE__ << " "  << leftStickX << " " << leftStickY);
-
-		// Convert to polar coordinates
-		double direction = atan2(leftStickY, leftStickX);
-
-		// Do a dead zone check on the magnitude of the velocity,
-		// then scale it by a power function to increase resolution
-		// of low-speed inputs. This will give an output range from
-		// 0-100%
-		// Finally, scale it so that 0% corresponds to the minimum
-		// output needed to move the robot and 100% to the max
-		// configured speed
-		double magnitude = dead_zone_check(hypot(leftStickX, leftStickY), config.joystick_deadzone);
-		//ROS_INFO_STREAM(__LINE__ << " "  << magnitude);
-		if (magnitude != 0)
-		{
-			magnitude = pow(magnitude, config.joystick_pow);
-			//ROS_INFO_STREAM(__LINE__ << " "  << magnitude << " " << direction);
-			magnitude *= max_speed - config.min_speed;
-			//ROS_INFO_STREAM(__LINE__ << " "  << magnitude);
-			magnitude += config.min_speed;
-			//ROS_INFO_STREAM(__LINE__ << " "  << magnitude);
-		}
-
-		// This applies a ramp to the output - it limits the amount of change per
-		// unit time that's allowed.  This helps limit extreme current draw in
-		// cases where the robot is changing direction rapidly.
-		static rate_limiter::RateLimiter x_rate_limit(-max_speed, max_speed, config.drive_rate_limit_time);
-		static rate_limiter::RateLimiter y_rate_limit(-max_speed, max_speed, config.drive_rate_limit_time);
-
-		// Convert back to rectangular coordinates for the x and Y velocity
-		const double xSpeed = x_rate_limit.applyLimit(magnitude * cos(direction), joystick_states_array[0].header.stamp);
-		const double ySpeed = y_rate_limit.applyLimit(magnitude * sin(direction), joystick_states_array[0].header.stamp);
-		//ROS_INFO_STREAM(__LINE__ << " "  << xSpeed << " " << ySpeed);
-
-		// Rotation is a bit simpler since it is just one independent axis
-		const double rightStickX = dead_zone_check(joystick_states_array[0].rightStickX, config.joystick_deadzone);
-
-		// Scale the input by a power function to increase resolution
-		// of the slower settings. Use copysign to preserve the sign
-		// of the original input (keeps the direction correct)
-		double rotation = pow(rightStickX, config.rotation_pow);
-		rotation  = copysign(rotation, joystick_states_array[0].rightStickX);
-		rotation *= max_rot;
-
-		// Rate-limit changes in rotation
-		static rate_limiter::RateLimiter rotation_rate_limit(-max_rot, max_rot, config.rotate_rate_limit_time);
-		rotation = rotation_rate_limit.applyLimit(rotation, joystick_states_array[0].header.stamp);
-
 		static bool sendRobotZero = false;
-		if (xSpeed == 0.0 && ySpeed == 0.0 && rotation == 0.0)
+
+		geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], navX_angle, config);
+
+		if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (cmd_vel.angular.z == 0.0) && !sendRobotZero)
 		{
-			if (!sendRobotZero)
+			std_srvs::Empty empty;
+			if (!BrakeSrv.call(empty))
 			{
-				geometry_msgs::Twist vel;
-				vel.linear.x = 0;
-				vel.linear.y = 0;
-				vel.linear.z = 0;
-
-				vel.angular.x = 0;
-				vel.angular.y = 0;
-				vel.angular.z = 0;
-
-				JoystickRobotVel.publish(vel);
-				std_srvs::Empty empty;
-				if (!BrakeSrv.call(empty))
-				{
-					ROS_ERROR("BrakeSrv call failed in sendRobotZero");
-				}
-				ROS_INFO("BrakeSrv called");
-				sendRobotZero = true;
+				ROS_ERROR("BrakeSrv call failed in sendRobotZero_");
 			}
+			ROS_INFO("BrakeSrv called");
+
+			JoystickRobotVel.publish(cmd_vel);
+			sendRobotZero = true;
 		}
-		else // X or Y or rotation != 0 so tell the drive base to move
+		else if((cmd_vel.linear.x != 0.0) || (cmd_vel.linear.y != 0.0) || (cmd_vel.angular.z != 0.0))
 		{
-			//Publish drivetrain messages and call servers
-			Eigen::Vector2d joyVector;
-			joyVector[0] = -xSpeed; //intentionally flipped
-			joyVector[1] = -ySpeed;
-
-			const Eigen::Rotation2Dd rotate(robot_orient ? -offset_angle : -navX_angle);
-			const Eigen::Vector2d rotatedJoyVector = rotate.toRotationMatrix() * joyVector;
-
-			geometry_msgs::Twist vel;
-			vel.linear.x = rotatedJoyVector[1];
-			vel.linear.y = rotatedJoyVector[0];
-			vel.linear.z = 0;
-
-			vel.angular.x = 0;
-			vel.angular.y = 0;
-			vel.angular.z = -rotation;
-
-			JoystickRobotVel.publish(vel);
+			JoystickRobotVel.publish(cmd_vel);
 			sendRobotZero = false;
 		}
 
@@ -473,26 +378,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			ROS_INFO_STREAM("Joystick1: bumperRightRelease");
 
 		}
-		static bool slow_mode      = false;
-		static bool prev_slow_mode = false;
 		if(joystick_states_array[0].rightTrigger >= 0.5)
 		{
-			max_speed = config.max_speed_slow;
-			max_rot = config.max_rot_slow;
-			slow_mode = true;
+			teleop_cmd_vel->setSlowMode(true);
 		}
 		else
 		{
-			max_speed = config.max_speed;
-			max_rot = config.max_rot;
-			slow_mode = false;
-		}
-		if (prev_slow_mode != slow_mode)
-		{
-			x_rate_limit.updateMinMax(-max_speed, max_speed);
-			y_rate_limit.updateMinMax(-max_speed, max_speed);
-			rotation_rate_limit.updateMinMax(-max_rot, max_rot);
-			prev_slow_mode = slow_mode;
+			teleop_cmd_vel->setSlowMode(false);
 		}
 		if(joystick_states_array[0].leftTrigger >= 0.5)
 		{
@@ -958,8 +850,7 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read rotate_rate_limit_time in teleop_joystick_comp");
 	}
 
-	max_speed = config.max_speed;
-	max_rot = config.max_rot;
+	teleop_cmd_vel = std::make_unique<TeleopCmdVel>(config);
 
     navX_angle = M_PI / 2.;
 
