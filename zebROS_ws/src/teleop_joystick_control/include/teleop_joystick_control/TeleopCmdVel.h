@@ -18,13 +18,13 @@ class TeleopCmdVel
 
 		}
 
-		void setRobotOrient(bool robot_orient, double offset_angle)
+		void setRobotOrient(const bool &robot_orient, const double &offset_angle)
 		{
 			robot_orient_ = robot_orient;
 			offset_angle_ = offset_angle;
 		}
 
-		void setSlowMode(bool slow_mode)
+		void setSlowMode(const bool &slow_mode)
 		{
 			if(slow_mode_ == slow_mode)
 				return;
@@ -39,7 +39,7 @@ class TeleopCmdVel
 			slow_mode_ = slow_mode;
 		}
 
-		geometry_msgs::Twist generateCmdVel(const frc_msgs::JoystickState event, const double navX_angle, const teleop_joystick_control::TeleopJoystickCompConfig config)
+		geometry_msgs::Twist generateCmdVel(const frc_msgs::JoystickState &event, const double &navX_angle, const teleop_joystick_control::TeleopJoystickCompConfig &config)
 		{
 			config_ = config;
 
@@ -137,7 +137,7 @@ class TeleopCmdVel
 
 		teleop_joystick_control::TeleopJoystickCompConfig config_;
 
-		double dead_zone_check(double test_axis, double dead_zone)
+		double dead_zone_check(const double &test_axis, const double &dead_zone)
 		{
 			// Less than dead_zone? Return 0
 			if (fabs(test_axis) <= fabs(dead_zone))
