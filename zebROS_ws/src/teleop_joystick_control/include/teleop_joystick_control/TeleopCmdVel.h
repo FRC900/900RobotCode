@@ -6,7 +6,7 @@ class TeleopCmdVel
 {
 	public:
 
-		TeleopCmdVel(teleop_joystick_control::TeleopJoystickCompConfig config):
+		TeleopCmdVel(const teleop_joystick_control::TeleopJoystickCompConfig &config):
 			x_rate_limit_(-max_speed_, max_speed_, config.drive_rate_limit_time),
 			y_rate_limit_(-max_speed_, max_speed_, config.drive_rate_limit_time),
 			rotation_rate_limit_(-max_rot_, max_rot_, config.drive_rate_limit_time)
