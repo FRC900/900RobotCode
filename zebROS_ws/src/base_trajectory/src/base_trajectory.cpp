@@ -1456,7 +1456,7 @@ int main(int argc, char **argv)
 	period = ros::Duration(1.0 / loop_hz);
 
 	ddynamic_reconfigure::DDynamicReconfigure ddr;
-	nh.param("seg_length_epslion", segLengthEpsilon, 1.0e-4);
+	nh.param("seg_length_epsilon", segLengthEpsilon, 1.0e-4);
     ddr.registerVariable<double>("seg_length_epsilon", &segLengthEpsilon, "maximum error for each segment when parameterizing spline arclength", 0, .1);
 
 	nh.param("dist_between_arc_lengths", distBetweenArcLengths, 0.03); // 3 cm
