@@ -1,4 +1,4 @@
-<library path="lib/libcontrollers_2019">
+<library path="lib/libcontrollers_2020">
   
         <class name="intake_controller/IntakeController" type="intake_controller::IntakeController" base_class_type="controller_interface::ControllerBase">
                 <description>
@@ -24,6 +24,11 @@
         <class name="control_panel_controller/ControlPanelController" type="control_panel_controller::ControlPanelController" base_class_type="controller_interface::ControllerBase">
                 <description>
                         Does stuff to make control_panel_controller exist.
+                </description>
+        </class>
+        <class name="indexer_test_controller/IndexerTestController" type="indexer_test_controller::IndexerTestController" base_class_type="controller_interface::ControllerBase">
+                <description>
+                        Does stuff to make indexer_controller exist.
                 </description>
         </class>
 </library>

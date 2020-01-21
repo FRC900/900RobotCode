@@ -8,14 +8,12 @@ project(controllers_2020)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  rospy
-  realtime_tools
-  hardware_interface
   controller_interface
-  message_generation
-  message_runtime
+  ddynamic_reconfigure
+  hardware_interface
   pluginlib
+  realtime_tools
+  roscpp
   talon_controllers
 )
 
@@ -126,7 +124,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
- include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -134,6 +132,7 @@ include_directories(
  add_library(controllers_2020
    src/intake_controller.cpp
    src/indexer_controller.cpp
+   src/indexer_test_controller.cpp
    src/shooter_controller.cpp
    src/climber_controller.cpp
    src/control_panel_controller.cpp
