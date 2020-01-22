@@ -276,7 +276,7 @@ sudo apt remove --purge -y thunderbird libreoffice-* unattended-upgrade
 mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include 
 mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/ctre 
 cd /home/ubuntu
-wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.17.4*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*"
+wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.17.6*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*"
 cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include 
 find /home/ubuntu/devsite.ctr-electronics.com -name \*headers\*zip | xargs -n 1 unzip -o 
 cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/ctre 
@@ -304,11 +304,11 @@ rm /home/ubuntu/navx-cpp-3.1.400-linuxathenastatic.zip
 # Install wpilib headers by copying them from the local maven dir
 # TODO - need to update to acutal 2020 filenames once they are released
 cd /home/ubuntu 
-wget https://github.com/wpilibsuite/allwpilib/releases/download/v2020.4.1/WPILib_Linux-2019.4.1.tar.gz 
+wget https://github.com/wpilibsuite/allwpilib/releases/download/v2020.2.2/WPILib_Linux-2020.2.2.tar.gz 
 mkdir -p /home/ubuntu/wpilib/2020 
 cd /home/ubuntu/wpilib/2020 
-tar -xzf /home/ubuntu/WPILib_Linux-2020.4.1.tar.gz 
-rm /home/ubuntu/WPILib_Linux-2020.4.1.tar.gz 
+tar -xzf /home/ubuntu/WPILib_Linux-2020.2.2.tar.gz 
+rm /home/ubuntu/WPILib_Linux-2020.2.2.tar.gz 
 cd /home/ubuntu/wpilib/2020/tools 
 python3 ToolsUpdater.py 
 mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/wpilib 
