@@ -96,6 +96,17 @@ TalonHWState::TalonHWState(int can_id) :
 	current_limit_continuous_amps_(1),
 	current_limit_enable_(false),
 
+	// current limiting - TalonFX / Falcon500
+	supply_current_limit_(0),
+	supply_current_trigger_threshold_current_(0),
+	supply_current_trigger_threshold_time_(0),
+	supply_current_limit_enable_(false),
+
+	stator_current_limit_(0),
+	stator_current_trigger_threshold_current_(0),
+	stator_current_trigger_threshold_time_(0),
+	stator_current_limit_enable_(false),
+
 	motion_cruise_velocity_(0),
 	motion_acceleration_(0),
 	motion_s_curve_strength_(0),
@@ -110,6 +121,10 @@ TalonHWState::TalonHWState(int can_id) :
 	sticky_faults_(0),
 
 	conversion_factor_(1.0),
+
+	motor_commutation_(hardware_interface::MotorCommutation::Trapezoidal),
+	absolute_sensor_range_(hardware_interface::Unsigned_0_to_360),
+	sensor_initialization_strategy_(hardware_interface::BootToZero),
 
 	// control of read thread
 	enable_read_thread_(true),
@@ -699,6 +714,75 @@ bool TalonHWState::getCurrentLimitEnable(void) const
 	return current_limit_enable_;
 }
 
+// Current limits - TalonFX / Falcon500
+void TalonHWState::setSupplyCurrentLimit(double supply_current_limit)
+{
+	supply_current_limit_ = supply_current_limit;
+}
+double TalonHWState::getSupplyCurrentLimit(void) const
+{
+	return supply_current_limit_;
+}
+void TalonHWState::setSupplyCurrentTriggerThresholdCurrent(double supply_current_trigger_threshold_current)
+{
+	supply_current_trigger_threshold_current_ = supply_current_trigger_threshold_current;
+}
+double TalonHWState::getSupplyCurrentTriggerThresholdCurrent(void) const
+{
+	return supply_current_trigger_threshold_current_;
+}
+void TalonHWState::setSupplyCurrentTriggerThresholdTime(double supply_current_trigger_threshold_time)
+{
+	supply_current_trigger_threshold_time_ = supply_current_trigger_threshold_time;
+}
+double TalonHWState::getSupplyCurrentTriggerThresholdTime(void) const
+{
+	return supply_current_trigger_threshold_time_;
+}
+void TalonHWState::setSupplyCurrentLimitEnable(bool supply_current_limit_enable)
+{
+	supply_current_limit_enable_ = supply_current_limit_enable;
+}
+bool TalonHWState::getSupplyCurrentLimitEnable(void) const
+{
+	return supply_current_limit_enable_;
+}
+
+// Current limits - TalonFX / Falcon500
+void TalonHWState::setStatorCurrentLimit(double stator_current_limit)
+{
+	stator_current_limit_ = stator_current_limit;
+}
+double TalonHWState::getStatorCurrentLimit(void) const
+{
+	return stator_current_limit_;
+}
+void TalonHWState::setStatorCurrentTriggerThresholdCurrent(double stator_current_trigger_threshold_current)
+{
+	stator_current_trigger_threshold_current_ = stator_current_trigger_threshold_current;
+}
+double TalonHWState::getStatorCurrentTriggerThresholdCurrent(void) const
+{
+	return stator_current_trigger_threshold_current_;
+}
+void TalonHWState::setStatorCurrentTriggerThresholdTime(double stator_current_trigger_threshold_time)
+{
+	stator_current_trigger_threshold_time_ = stator_current_trigger_threshold_time;
+}
+double TalonHWState::getStatorCurrentTriggerThresholdTime(void) const
+{
+	return stator_current_trigger_threshold_time_;
+}
+void TalonHWState::setStatorCurrentLimitEnable(bool stator_current_limit_enable)
+{
+	stator_current_limit_enable_ = stator_current_limit_enable;
+}
+bool TalonHWState::getStatorCurrentLimitEnable(void) const
+{
+	return stator_current_limit_enable_;
+}
+
+
 void TalonHWState::setMotionCruiseVelocity(double velocity)
 {
 	motion_cruise_velocity_ = velocity;
@@ -1072,6 +1156,37 @@ void TalonHWState::setConversionFactor(double conversion_factor)
 {
 	conversion_factor_ = conversion_factor;
 }
+
+//TalonFX only
+void TalonHWState::setMotorCommutation(hardware_interface::MotorCommutation motor_commutation)
+{
+	motor_commutation_ = motor_commutation;
+}
+hardware_interface::MotorCommutation TalonHWState::getMotorCommutation(void) const
+{
+	return motor_commutation_;
+}
+
+//TalonFX only
+void TalonHWState::setAbsoluteSensorRange(hardware_interface::AbsoluteSensorRange absolute_sensor_range)
+{
+	absolute_sensor_range_ = absolute_sensor_range;
+}
+hardware_interface::AbsoluteSensorRange TalonHWState::getAbsoluteSensorRange(void) const
+{
+	return absolute_sensor_range_;
+}
+
+//TalonFX only
+void TalonHWState::setSensorInitializationStrategy(hardware_interface::SensorInitializationStrategy sensor_initialization_strategy)
+{
+	sensor_initialization_strategy_ = sensor_initialization_strategy;
+}
+hardware_interface::SensorInitializationStrategy TalonHWState::getSensorInitializationStrategy(void) const
+{
+	return sensor_initialization_strategy_;
+}
+
 void TalonHWState::setEnableReadThread(bool enable_read_thread)
 {
 	enable_read_thread_ = enable_read_thread;

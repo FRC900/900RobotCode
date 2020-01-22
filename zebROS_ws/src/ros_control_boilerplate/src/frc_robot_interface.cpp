@@ -141,7 +141,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			saw_local_keyword = true;
 		}
 
-		if ((joint_type == "can_talon_srx") || (joint_type == "can_victor_spx") )
+		if ((joint_type == "can_talon_srx") || (joint_type == "can_victor_spx") || (joint_type == "can_talon_fx"))
 		{
 			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
 
@@ -167,7 +167,8 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			can_ctre_mc_can_ids_.push_back(can_id);
 			can_ctre_mc_local_updates_.push_back(local_update);
 			can_ctre_mc_local_hardwares_.push_back(local_hardware);
-			can_ctre_mc_is_talon_.push_back(joint_type == "can_talon_srx");
+			can_ctre_mc_is_talon_srx_.push_back(joint_type == "can_talon_srx");
+			can_ctre_mc_is_talon_fx_.push_back(joint_type == "can_talon_fx");
 		}
 		else if (joint_type == "nidec_brushless")
 		{

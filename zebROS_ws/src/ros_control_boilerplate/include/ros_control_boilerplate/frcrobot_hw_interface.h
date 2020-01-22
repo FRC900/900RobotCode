@@ -52,6 +52,7 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/Joy.h>
 
+#include <ctre/phoenix/motorcontrol/can/TalonFX.h>
 #include <ctre/phoenix/motorcontrol/can/TalonSRX.h>
 #include <ctre/phoenix/motorcontrol/can/VictorSPX.h>
 #include "WPILibVersion.h"
@@ -198,6 +199,12 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 			ctre::phoenix::motorcontrol::StatusFrameEnhanced &output);
 		bool convertControlFrame(const hardware_interface::ControlFrame input,
 			ctre::phoenix::motorcontrol::ControlFrame &output);
+		bool convertMotorCommutation(const hardware_interface::MotorCommutation input,
+			ctre::phoenix::motorcontrol::MotorCommutation &output);
+		bool convertAbsoluteSensorRange(const hardware_interface::AbsoluteSensorRange input,
+			ctre::phoenix::sensors::AbsoluteSensorRange &output);
+		bool convertSensorInitializationStrategy(const hardware_interface::SensorInitializationStrategy input,
+			ctre::phoenix::sensors::SensorInitializationStrategy &output);
 
 		bool safeTalonCall(ctre::phoenix::ErrorCode error_code,
 				const std::string &talon_method_name);

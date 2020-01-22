@@ -159,6 +159,15 @@ bool TalonConfigController::init(hardware_interface::TalonStateInterface *hw,
 		m.current_limit_continuous_amps.push_back(0);
 		m.current_limit_enable.push_back(false);
 
+		m.supply_current_limit.push_back(0);
+		m.supply_current_trigger_threshold_current.push_back(0);
+		m.supply_current_trigger_threshold_time.push_back(0);
+		m.supply_current_limit_enable.push_back(false);
+		m.stator_current_limit.push_back(0);
+		m.stator_current_trigger_threshold_current.push_back(0);
+		m.stator_current_trigger_threshold_time.push_back(0);
+		m.stator_current_limit_enable.push_back(false);
+
 		m.motion_cruise_velocity.push_back(0);
 		m.motion_acceleration.push_back(0);
 		m.motion_s_curve_strength.push_back(0);
@@ -183,6 +192,10 @@ bool TalonConfigController::init(hardware_interface::TalonStateInterface *hw,
 
 		m.motion_profile_trajectory_period.push_back(0);
 		m.conversion_factor.push_back(0.0);
+
+		m.motor_commutation.push_back("");
+		m.absolute_sensor_range.push_back("");
+		m.sensor_initialization_strategy.push_back("");
 
 		m.firmware_version.push_back("");
 		m.water_game.push_back(true);
@@ -494,6 +507,15 @@ void TalonConfigController::update(const ros::Time &time, const ros::Duration & 
 				m.current_limit_continuous_amps[i] = ts->getContinuousCurrentLimit();
 				m.current_limit_enable[i] = ts->getCurrentLimitEnable();
 
+				m.supply_current_limit[i] = ts->getSupplyCurrentLimit();
+				m.supply_current_trigger_threshold_current[i] = ts->getSupplyCurrentTriggerThresholdCurrent();
+				m.supply_current_trigger_threshold_time[i] = ts->getSupplyCurrentTriggerThresholdTime();
+				m.supply_current_limit_enable[i] = ts->getSupplyCurrentLimitEnable();
+				m.stator_current_limit[i] = ts->getStatorCurrentLimit();
+				m.stator_current_trigger_threshold_current[i] = ts->getStatorCurrentTriggerThresholdCurrent();
+				m.stator_current_trigger_threshold_time[i] = ts->getStatorCurrentTriggerThresholdTime();
+				m.stator_current_limit_enable[i] = ts->getStatorCurrentLimitEnable();
+
 				m.motion_cruise_velocity[i] = ts->getMotionCruiseVelocity();
 				m.motion_acceleration[i] = ts->getMotionAcceleration();
 				m.motion_s_curve_strength[i] = ts->getMotionSCurveStrength();
@@ -520,6 +542,46 @@ void TalonConfigController::update(const ros::Time &time, const ros::Duration & 
 				m.motion_profile_trajectory_period[i] = ts->getMotionProfileTrajectoryPeriod();
 
 				m.conversion_factor[i] = ts->getConversionFactor();
+
+
+				const auto motor_commutation = ts->getMotorCommutation();
+				switch (motor_commutation)
+				{
+					case hardware_interface::MotorCommutation::Trapezoidal:
+						m.motor_commutation[i] = "Trapezoidal";
+						break;
+					default:
+						m.motor_commutation[i] = "Unknown";
+						break;
+				}
+
+				const auto absolute_sensor_range = ts->getAbsoluteSensorRange();
+				switch (absolute_sensor_range)
+				{
+					case hardware_interface::Unsigned_0_to_360:
+						m.absolute_sensor_range[i] = "Unsigned_0_to_360";
+						break;
+					case hardware_interface::Signed_PlusMinus180:
+						m.absolute_sensor_range[i] = "Signed_PlusMinus180";
+						break;
+					default:
+						m.absolute_sensor_range[i] = "Unknown";
+						break;
+				}
+
+				const auto sensor_initialization_strategy = ts->getSensorInitializationStrategy();
+				switch (sensor_initialization_strategy)
+				{
+					case hardware_interface::BootToZero:
+						m.sensor_initialization_strategy[i] = "BootToZero";
+						break;
+					case hardware_interface::BootToAbsolutePosition:
+						m.sensor_initialization_strategy[i] = "BootToAbsolutePosition";
+						break;
+					default:
+						m.sensor_initialization_strategy[i] = "Unknown";
+						break;
+				}
 
 				int fw_ver = ts->getFirmwareVersion();
 

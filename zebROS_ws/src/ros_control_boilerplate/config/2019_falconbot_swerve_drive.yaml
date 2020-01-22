@@ -1,0 +1,168 @@
+#TODO: Determine invert and sensor phase
+# - determine wheel radius (4 in?)
+# - determine wheel speed conversion factor
+# - get f_s
+# - get offsets
+# - tune velocity feed forward
+# - current limiting?
+# - tune velocity PID for drive
+swerve_drive_controller:
+    type:       talon_swerve_drive_controller/TalonSwerveDriveController
+    
+    speed: ['speed_joint_fl', 'speed_joint_fr', 'speed_joint_bl', 'speed_joint_br']
+    steering: ['steering_joint_fl', 'steering_joint_fr', 'steering_joint_bl', 'steering_joint_br']
+    publish_cmd: True
+    pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+    twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
+    # fix me
+    wheel_radius: 0.0381 # m
+    cmd_vel_timout: 0.5
+    max_speed: 3.0
+    max_accel: 1.8
+    max_brake_accel: 2.5
+    ang_accel_conv: 2.0
+    max_rotational_vel: 10
+    
+    # Feedforward terms -
+    #   f_s is static feed forward - min % out that gets the robot to move at all
+    #   f_a is accel feed forward term (currently only used in motion profile follower mode
+    #  f_v is velocity feed forward term (currently only used in motion profile follower mode, talon vel feed forward term is used for normal driving
+    #
+    f_s: 0.06
+    f_a: 0.005 #use torque curve instead? TODO: FIX
+    f_v: 0.00315528
+
+    # Feedforward terms for steering
+    #   f_s_s is static feed forward 
+    #   f_s_v is velocity feed forward
+    #   Both are currently only used in motion profile follower mode
+    f_s_s: 0.05
+    f_s_v: 0.07
+   
+    #consider adding stuff for the steering wheels too 
+    mass: 70
+    motor_free_speed: 5840
+    motor_stall_torque: 1.4
+    motor_quantity: 4
+    invert_wheel_angle: False
+    ratio_encoder_to_rotations: 0.193768996960486 
+    ratio_motor_to_rotations: 1 # TODO?
+    ratio_motor_to_steering: 1 # TODO?
+    encoder_drive_get_V_units: 1 
+    encoder_drive_set_V_units: 1 
+    encoder_drive_get_P_units: 1 
+    encoder_drive_set_P_units: 1
+    encoder_steering_get_units: 1
+    encoder_steering_set_units: 1
+
+    wheel_coords: [[-0.26035, 0.26035], [0.26035, 0.26035], [-0.26035, -0.26035], [0.26035, -0.26035]]
+ 
+    cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
+    speed_joint_fl:
+        joint: fl_drive #fix pid
+        close_loop_values:
+            - {p: 0.035, i: 0.0004, d: 1.0, f: 0.0397, i_zone: 650}
+            - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
+        sensor_phase: true 
+        invert_output: false 
+        feedback_type: IntegratedSensor
+        voltage_compensation_enable: True
+        dynamic_reconfigure: True
+        neutral_mode: Brake
+    speed_joint_fr:
+        joint: fr_drive #fix pid
+        close_loop_values:
+            - {p: 0.035, i: 0.0004, d: 1.0, f: 0.0397, i_zone: 650}
+            - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
+        sensor_phase: true 
+        invert_output: false 
+        feedback_type: IntegratedSensor
+        voltage_compensation_enable: True
+        dynamic_reconfigure: True
+        neutral_mode: Brake
+    speed_joint_bl:
+        joint: bl_drive #fix pid
+        close_loop_values: 
+            - {p: 0.035, i: 0.0004, d: 1.0, f: 0.0397, i_zone: 650}
+            - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
+        feedback_type: IntegratedSensor
+        sensor_phase: true  
+        invert_output: false 
+        voltage_compensation_enable: True
+        dynamic_reconfigure: True
+        neutral_mode: Brake
+    speed_joint_br:
+        joint: br_drive #fix pid
+        close_loop_values:
+            - {p: 0.035, i: 0.0004, d: 1.0, f: 0.0397, i_zone: 650}
+            - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
+        sensor_phase: True
+        invert_output: false 
+        feedback_type: IntegratedSensor
+        voltage_compensation_enable: True
+        dynamic_reconfigure: True
+        neutral_mode: Brake
+    steering_joint_fl:
+        joint: fl_angle
+        feedback_type: CTRE_MagEncoder_Absolute
+        close_loop_values:
+            #- {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+            - {p: 6.0, i: 0.01, d: 100.0, f: 0.92, i_zone: 0}
+            - {p: 1.5, i: 0.005, d: 0.0, f: 0.0, i_zone: 130}
+        invert_output: true
+        sensor_phase: false
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.0
+        nominal_output_reverse: 0.0
+        motion_cruise_velocity: 18
+        motion_acceleration: 120
+        voltage_compensation_enable: true
+    steering_joint_fr:
+        joint: fr_angle
+        feedback_type: CTRE_MagEncoder_Absolute
+        close_loop_values:
+            #- {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+            - {p: 6.0, i: 0.01, d: 100.0, f: 0.92, i_zone: 0}
+            - {p: 1.5, i: 0.005, d: 0.0, f: 0.0, i_zone: 130}
+        invert_output: true
+        sensor_phase: false 
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.0
+        nominal_output_reverse: 0.0
+        motion_cruise_velocity: 18
+        motion_acceleration: 120
+        voltage_compensation_enable: true
+    steering_joint_br:
+        joint: br_angle
+        feedback_type: CTRE_MagEncoder_Absolute
+        close_loop_values:
+            #- {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+            - {p: 6.0, i: 0.01, d: 100.0, f: 0.92, i_zone: 0}
+            - {p: 1.5, i: 0.005, d: 0.0, f: 0.0, i_zone: 130}
+        invert_output: true 
+        sensor_phase: false 
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.0
+        nominal_output_reverse: 0.0
+        motion_cruise_velocity: 18
+        motion_acceleration: 120
+        voltage_compensation_enable: true
+    steering_joint_bl:
+        joint: bl_angle
+        feedback_type: CTRE_MagEncoder_Absolute
+        close_loop_values:
+            #- {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+            - {p: 6.0, i: 0.01, d: 100.0, f: 0.92, i_zone: 0}
+            - {p: 1.5, i: 0.005, d: 0.0, f: 0.0, i_zone: 130}
+        invert_output: true 
+        sensor_phase: false 
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.0
+        nominal_output_reverse: 0.0
+        motion_cruise_velocity: 15
+        motion_acceleration: 85
+        voltage_compensation_enable: true

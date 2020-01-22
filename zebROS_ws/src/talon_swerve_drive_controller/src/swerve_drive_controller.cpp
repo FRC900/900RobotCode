@@ -868,7 +868,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 				speed_joints_[i].setCommand(0);
 				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
 			}
-			if (ros::Time::now().toSec() - time_before_brake > .5)
+			if (ros::Time::now().toSec() - time_before_brake > .1)
 			{
 				brake();
 			}
@@ -949,6 +949,8 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 			{
 				speed_joints_[i].setCommand(0);
 				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
+                                speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
+                                speed_joints_[i].setDemand1Value(0);
 			}
 		}
 		if (publish_cmd_ && cmd_vel_pub_->trylock())
@@ -1052,6 +1054,8 @@ void TalonSwerveDriveController::brake()
 	for (size_t i = 0; i < wheel_joints_size_; ++i)
 	{
 		speed_joints_[i].setCommand(0.0);
+                speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
+                speed_joints_[i].setDemand1Value(0);
 		if (!dont_set_angle_mode)
 			steering_joints_[i].setCommand(park_angles[i]);
 	}
