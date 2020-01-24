@@ -825,6 +825,11 @@ bool subdivideLength(std::vector<double> &equalLengthTimes,
 		prevTimeDelta = (start - prevStart) * midTimeInflation;
 		prevStart = start;
 	}
+	if (equalLengthTimes.back() != endTime)
+	{
+		ROS_WARN_STREAM("Addding endTime to equalLengthsTime array");
+		equalLengthTimes.push_back(endTime);
+	}
 	ROS_INFO_STREAM_FILTER(&messageFilter, "iterCount = " << iterCount);
 	return true;
 }
@@ -1210,11 +1215,11 @@ bool RPROP(
 	double bestCost;
 	if (!evaluateSpline(bestCost,
 				bestTrajectory, points,
-				0.2,    // limit of path excursion from straight line b/t waypoints
-				4.5,    // max overall velocity
-				2.5,    // max allowed acceleration
-				0.3682, // wheel radius
-				3.5))   // max allowed centripetal acceleration
+				dMax,    // limit of path excursion from straight line b/t waypoints
+				vMax,    // max overall velocity
+				aMax,    // max allowed acceleration
+				wheelRadius, // wheel radius
+				aCentMax))   // max allowed centripetal acceleration
 	{
 		ROS_ERROR("base_trajectory_node : RPROP initial evaluateSpline() falied");
 		return false;
