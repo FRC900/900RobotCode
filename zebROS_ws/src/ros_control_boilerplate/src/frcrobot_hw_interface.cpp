@@ -576,6 +576,53 @@ void FRCRobotHWInterface::init(void)
 		}
 	}
 
+	for (size_t i = 0; i < num_as726xs_; i++)
+	{
+		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
+							  "Loading as726x joint " << i << "=" << as726x_names_[i] <<
+							  (as726x_local_updates_[i] ? " local" : " remote") << " update, " <<
+							  (as726x_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
+							  " as as726x with port=" << as726x_ports_[i] <<
+							  " address=" << as726x_addresses_[i]);
+		if (as726x_local_hardwares_[i])
+		{
+			frc::I2C::Port port;
+			if (as726x_ports_[i] == "onboard")
+				port = frc::I2C::Port::kOnboard;
+			else if (as726x_ports_[i] == "mxp")
+				port = frc::I2C::Port::kMXP;
+			else
+			{
+				ROS_ERROR_STREAM("Invalid port specified for as726x - " <<
+						as726x_ports_[i] << "valid options are onboard and mxp");
+				return;
+			}
+
+			as726xs_.push_back(std::make_shared<as726x::roboRIO_AS726x>(port, as726x_addresses_[i]));
+			if (as726xs_.back()->begin())
+			{
+					as726x_read_thread_state_.push_back(std::make_shared<hardware_interface::as726x::AS726xState>(as726x_ports_[i], as726x_addresses_[i]));
+					as726x_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
+					as726x_thread_.push_back(std::thread(&FRCRobotHWInterface::as726x_read_thread, this,
+								as726xs_[i],
+								as726x_read_thread_state_[i],
+								as726x_read_thread_mutexes_[i],
+								std::make_unique<Tracer>("AS726x:" + as726x_names_[i] + " " + nh_.getNamespace())));
+			}
+			else
+			{
+				ROS_ERROR_STREAM("Error intializing as726x");
+				return;
+			}
+		}
+		else
+		{
+			as726xs_.push_back(nullptr);
+			as726x_read_thread_state_.push_back(nullptr);
+			as726x_read_thread_mutexes_.push_back(nullptr);
+		}
+	}
+
 	const double t_now = ros::Time::now().toSec();
 
 	t_prev_robot_iteration_ = t_now;
@@ -994,6 +1041,68 @@ void FRCRobotHWInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle
 
 		tracer->stop();
 		ROS_INFO_STREAM_THROTTLE(60, tracer->report());
+		r.sleep();
+	}
+}
+
+// The AS726x state reads happen in their own thread. This thread
+// loops at XHz to match the update rate of PCM CAN
+// status messages.  Each iteration, data read from the
+// AS726x color sensor is copied to a state buffer shared with the main read
+// thread.
+void FRCRobotHWInterface::as726x_read_thread(
+		std::shared_ptr<as726x::roboRIO_AS726x> as726x,
+		std::shared_ptr<hardware_interface::as726x::AS726xState> state,
+		std::shared_ptr<std::mutex> mutex,
+		std::unique_ptr<Tracer> tracer)
+{
+#ifdef __linux__
+	pthread_setname_np(pthread_self(), "as726x_read");
+#endif
+	ros::Duration(2).sleep(); // Sleep for a few seconds to let I2C start up
+	ros::Rate r(7); // TODO : Tune me?
+
+	uint16_t temperature;
+	std::array<uint16_t, 6> raw_channel_data;
+	std::array<float, 6> calibrated_channel_data;
+	while (ros::ok())
+	{
+		tracer->start("main loop");
+		// Create a scope for the lock protecting hardware accesses
+		{
+			std::lock_guard<std::mutex> l(*(as726x->getMutex()));
+			temperature = as726x->readTemperature();
+			as726x->startMeasurement();
+			auto data_ready_start = ros::Time::now();
+			bool timeout = false;
+			while (!as726x->dataReady() && !timeout)
+			{
+				ros::Duration(0.01).sleep();
+				if ((ros::Time::now() - data_ready_start).toSec() > 1.5)
+				{
+					timeout = true;
+				}
+			}
+			if (timeout)
+			{
+				ROS_WARN("Timeout waiting for as726 data ready");
+				tracer->stop();
+				continue;
+			}
+
+			as726x->readRawValues(&raw_channel_data[0], 6);
+			as726x->readCalibratedValues(&calibrated_channel_data[0], 6);
+		}
+		// Create a new scope for the lock protecting the shared state
+		{
+			std::lock_guard<std::mutex> l(*mutex);
+			state->setTemperature(temperature);
+			state->setRawChannelData(raw_channel_data);
+			state->setCalibratedChannelData(calibrated_channel_data);
+		}
+		tracer->stop();
+		ROS_INFO_STREAM_THROTTLE(60, tracer->report());
+		ros::Duration(0.1).sleep(); // allow time for write() to run
 		r.sleep();
 	}
 }
@@ -1463,6 +1572,19 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			pdp_state_[i] = *pdp_read_thread_state_[i];
 		}
 	}
+
+	read_tracer_.start_unique("as726xs");
+	for (size_t i = 0; i < num_as726xs_; i++)
+	{
+		if (as726x_local_updates_[i])
+		{
+			std::lock_guard<std::mutex> l(*as726x_read_thread_mutexes_[i]);
+			as726x_state_[i].setTemperature(as726x_read_thread_state_[i]->getTemperature());
+			as726x_state_[i].setRawChannelData(as726x_read_thread_state_[i]->getRawChannelData());
+			as726x_state_[i].setCalibratedChannelData(as726x_read_thread_state_[i]->getCalibratedChannelData());
+		}
+	}
+
 	read_tracer_.stop();
 	ROS_INFO_STREAM_THROTTLE(60, read_tracer_.report());
 }
@@ -2752,7 +2874,7 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 		}
 	}
 
-	for (size_t i = 0; i< num_compressors_; i++)
+	for (size_t i = 0; i < num_compressors_; i++)
 	{
 		if (compressor_command_[i] != compressor_state_[i])
 		{
@@ -2767,6 +2889,149 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			}
 			compressor_state_[i] = compressor_command_[i];
 			ROS_INFO_STREAM("Wrote compressor " << i << "=" << setpoint);
+		}
+	}
+
+	for (size_t i = 0; i < num_as726xs_; i++)
+	{
+		hardware_interface::as726x::IndLedCurrentLimits ind_led_current_limit;
+		bool ind_led_enable;
+		hardware_interface::as726x::DrvLedCurrentLimits drv_led_current_limit;
+		bool drv_led_enable;
+		hardware_interface::as726x::ConversionTypes conversion_type;
+		hardware_interface::as726x::ChannelGain gain;
+		uint8_t integration_time;
+
+		auto &ac = as726x_command_[i];
+		const bool ind_led_current_limit_changed = ac.indLedCurrentLimitChanged(ind_led_current_limit);
+		const bool ind_led_enable_changed        = ac.indLedEnableChanged(ind_led_enable);
+		const bool drv_led_current_limit_changed = ac.drvLedCurrentLimitChanged(drv_led_current_limit);
+		const bool drv_led_enable_changed        = ac.drvLedEnableChanged(drv_led_enable);
+		const bool conversion_type_changed       = ac.conversionTypeChanged(conversion_type);
+		const bool gain_changed                  = ac.gainChanged(gain);
+		const bool integration_time_changed      = ac.integrationTimeChanged(integration_time);
+		// Only attempt to lock access to the sensor if there's actually
+		// any changed config values to write to it
+		if (ind_led_current_limit_changed ||
+				ind_led_enable_changed ||
+				drv_led_current_limit_changed ||
+				drv_led_enable_changed ||
+				conversion_type_changed ||
+				gain_changed ||
+				integration_time_changed)
+		{
+			// Try to get a lock for this instance of AS726x.  If not available
+			// due to the read thread accessing the sensor,
+			// continue on to the next sensor in the loop one.  This way the code won't be waiting
+			// for a mutex to be released - it'll move on and try again next
+			// iteration of write()
+			std::unique_lock<std::mutex> l(*(as726xs_[i]->getMutex()), std::defer_lock);
+			if (!l.try_lock())
+			{
+				// If we can't get a lock this iteration, reset and try again next time through
+				if (ind_led_current_limit_changed)
+					ac.resetIndLedCurrentLimit();
+				if (ind_led_enable_changed)
+					ac.resetIndLedEnable();
+				if (drv_led_current_limit_changed)
+					ac.resetDrvLedCurrentLimit();
+				if (drv_led_enable_changed)
+					ac.resetDrvLedEnable();
+				if (conversion_type_changed)
+					ac.resetConversionType();
+				if (gain_changed)
+					ac.resetGain();
+				if (integration_time_changed)
+					ac.resetIntegrationTime();
+				continue;
+			}
+			auto &as = as726x_state_[i];
+
+			if (ind_led_current_limit_changed)
+			{
+				if (as726x_local_hardwares_[i])
+				{
+					as726x::ind_led_current_limits as726x_ind_led_current_limit;
+					if (convertAS726xIndLedCurrentLimit(ind_led_current_limit, as726x_ind_led_current_limit))
+						as726xs_[i]->setIndicateCurrent(as726x_ind_led_current_limit);
+				}
+				as.setIndLedCurrentLimit(ind_led_current_limit);
+				ROS_INFO_STREAM("Wrote as726x_[" << i << "]=" << as726x_names_[i] << " ind_led_current_limit = " << ind_led_current_limit);
+			}
+
+			if (ind_led_enable_changed)
+			{
+				if (as726x_local_hardwares_[i])
+				{
+					as726xs_[i]->indicateLED(ind_led_enable);
+				}
+				as.setIndLedEnable(ind_led_enable);
+				ROS_INFO_STREAM("Wrote as726x_[" << i << "]=" << as726x_names_[i] << " ind_led_enable = " << ind_led_enable);
+			}
+
+			if (drv_led_current_limit_changed)
+			{
+				if (as726x_local_hardwares_[i])
+				{
+					as726x::drv_led_current_limits as726x_drv_led_current_limit;
+					if (convertAS726xDrvLedCurrentLimit(drv_led_current_limit, as726x_drv_led_current_limit))
+						as726xs_[i]->setDrvCurrent(as726x_drv_led_current_limit);
+				}
+				as.setDrvLedCurrentLimit(drv_led_current_limit);
+				ROS_INFO_STREAM("Wrote as726x_[" << i << "]= " << as726x_names_[i] << " drv_led_current_limit = " << drv_led_current_limit);
+			}
+
+			if (drv_led_enable_changed)
+			{
+				if (as726x_local_hardwares_[i])
+				{
+					if (drv_led_enable)
+					{
+						as726xs_[i]->drvOn();
+					}
+					else
+					{
+						as726xs_[i]->drvOff();
+					}
+				}
+				as.setDrvLedEnable(drv_led_enable);
+				ROS_INFO_STREAM("Wrote as726x_[" << i << "]= " << as726x_names_[i] << " drv_led_enable = " << drv_led_enable);
+			}
+
+			if (conversion_type_changed)
+			{
+				if (as726x_local_hardwares_[i])
+				{
+					as726x::conversion_types as726x_conversion_type;
+					if (convertAS726xConversionType(conversion_type, as726x_conversion_type))
+						as726xs_[i]->setConversionType(as726x_conversion_type);
+				}
+				as.setConversionType(conversion_type);
+				ROS_INFO_STREAM("Wrote as726x_[" << i << "]= " << as726x_names_[i] << " conversion_type = " << conversion_type);
+			}
+
+			if (gain_changed)
+			{
+				if (as726x_local_hardwares_[i])
+				{
+					as726x::channel_gain as726x_gain;
+					if (convertAS726xChannelGain(gain, as726x_gain))
+						as726xs_[i]->setGain(as726x_gain);
+				}
+				as.setGain(gain);
+				ROS_INFO_STREAM("Wrote as726x_[" << i << "]= " << as726x_names_[i] << " channel_gain = " << gain);
+			}
+
+			if (integration_time_changed)
+			{
+				if (as726x_local_hardwares_[i])
+				{
+					as726xs_[i]->setIntegrationTime(integration_time);
+				}
+				as.setIntegrationTime(integration_time);
+				ROS_INFO_STREAM("Wrote as726x_[" << i << "]= " << as726x_names_[i] <<  " integration_time = "
+						<< static_cast<int>(integration_time));
+			}
 		}
 	}
 
@@ -3204,6 +3469,98 @@ bool FRCRobotHWInterface::convertControlFrame(const hardware_interface::ControlF
 	}
 	return true;
 
+}
+bool FRCRobotHWInterface::convertAS726xIndLedCurrentLimit(const hardware_interface::as726x::IndLedCurrentLimits input,
+		as726x::ind_led_current_limits &output) const
+{
+	switch (input)
+	{
+		case hardware_interface::as726x::IndLedCurrentLimits::IND_LIMIT_1MA:
+			output = as726x::ind_led_current_limits::LIMIT_1MA;
+			break;
+		case hardware_interface::as726x::IndLedCurrentLimits::IND_LIMIT_2MA:
+			output = as726x::ind_led_current_limits::LIMIT_2MA;
+			break;
+		case hardware_interface::as726x::IndLedCurrentLimits::IND_LIMIT_4MA:
+			output = as726x::ind_led_current_limits::LIMIT_4MA;
+			break;
+		case hardware_interface::as726x::IndLedCurrentLimits::IND_LIMIT_8MA:
+			output = as726x::ind_led_current_limits::LIMIT_8MA;
+			break;
+		default:
+			ROS_ERROR("Invalid input in convertAS72xIndLedCurrentLimit");
+			return false;
+	}
+	return true;
+}
+bool FRCRobotHWInterface::convertAS726xDrvLedCurrentLimit(const hardware_interface::as726x::DrvLedCurrentLimits input,
+		as726x::drv_led_current_limits &output) const
+{
+	switch (input)
+	{
+		case hardware_interface::as726x::DrvLedCurrentLimits::DRV_LIMIT_12MA5:
+			output = as726x::drv_led_current_limits::LIMIT_12MA5;
+			break;
+		case hardware_interface::as726x::DrvLedCurrentLimits::DRV_LIMIT_25MA:
+			output = as726x::drv_led_current_limits::LIMIT_25MA;
+			break;
+		case hardware_interface::as726x::DrvLedCurrentLimits::DRV_LIMIT_50MA:
+			output = as726x::drv_led_current_limits::LIMIT_50MA;
+			break;
+		case hardware_interface::as726x::DrvLedCurrentLimits::DRV_LIMIT_100MA:
+			output = as726x::drv_led_current_limits::LIMIT_100MA;
+			break;
+		default:
+			ROS_ERROR("Invalid input in convertAS72xDrvLedCurrentLimit");
+			return false;
+	}
+	return true;
+}
+bool FRCRobotHWInterface::convertAS726xConversionType(const hardware_interface::as726x::ConversionTypes input,
+		as726x::conversion_types &output) const
+{
+	switch (input)
+	{
+		case hardware_interface::as726x::ConversionTypes::MODE_0:
+			output = as726x::conversion_types::MODE_0;
+			break;
+		case hardware_interface::as726x::ConversionTypes::MODE_1:
+			output = as726x::conversion_types::MODE_1;
+			break;
+		case hardware_interface::as726x::ConversionTypes::MODE_2:
+			output = as726x::conversion_types::MODE_2;
+			break;
+		case hardware_interface::as726x::ConversionTypes::ONE_SHOT:
+			output = as726x::conversion_types::ONE_SHOT;
+			break;
+		default:
+			ROS_ERROR("Invalid input in convertAS726xConversionType");
+			return false;
+	}
+	return true;
+}
+bool FRCRobotHWInterface::convertAS726xChannelGain(const hardware_interface::as726x::ChannelGain input,
+		as726x::channel_gain &output) const
+{
+	switch (input)
+	{
+		case hardware_interface::as726x::ChannelGain::GAIN_1X:
+			output = as726x::channel_gain::GAIN_1X;
+			break;
+		case hardware_interface::as726x::ChannelGain::GAIN_3X7:
+			output = as726x::channel_gain::GAIN_3X7;
+			break;
+		case hardware_interface::as726x::ChannelGain::GAIN_16X:
+			output = as726x::channel_gain::GAIN_16X;
+			break;
+		case hardware_interface::as726x::ChannelGain::GAIN_64X:
+			output = as726x::channel_gain::GAIN_64X;
+			break;
+		default:
+			ROS_ERROR("Invalid input in convertAS726xChannelGain");
+			return false;
+	}
+	return true;
 }
 
 bool FRCRobotHWInterface::convertMotorCommutation(const hardware_interface::MotorCommutation input,

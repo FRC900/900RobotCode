@@ -48,6 +48,7 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <talon_interface/talon_command_interface.h>
+#include "as726x_interface/as726x_interface.h"
 #include "frc_interfaces/robot_controller_interface.h"
 #include "frc_interfaces/pcm_state_interface.h"
 #include "frc_interfaces/remote_joint_interface.h"
@@ -160,26 +161,28 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		ros::NodeHandle nh_;
 
 		// Hardware interfaces
-		hardware_interface::JointStateInterface        joint_state_interface_;
-		hardware_interface::TalonStateInterface        talon_state_interface_;
-		hardware_interface::RemoteTalonStateInterface  talon_remote_state_interface_;
-		hardware_interface::PDPStateInterface	       pdp_state_interface_;
-		hardware_interface::RemotePDPStateInterface	   pdp_remote_state_interface_;
-		hardware_interface::PCMStateInterface	       pcm_state_interface_;
-		hardware_interface::RemotePCMStateInterface	   pcm_remote_state_interface_;
+		hardware_interface::JointStateInterface                joint_state_interface_;
+		hardware_interface::TalonStateInterface                talon_state_interface_;
+		hardware_interface::RemoteTalonStateInterface          talon_remote_state_interface_;
+		hardware_interface::PDPStateInterface	               pdp_state_interface_;
+		hardware_interface::RemotePDPStateInterface	           pdp_remote_state_interface_;
+		hardware_interface::PCMStateInterface	               pcm_state_interface_;
+		hardware_interface::RemotePCMStateInterface	           pcm_remote_state_interface_;
+		hardware_interface::MatchStateInterface                match_state_interface_;
+		hardware_interface::RemoteMatchStateInterface          match_remote_state_interface_;
+		hardware_interface::as726x::AS726xStateInterface       as726x_state_interface_;
+		hardware_interface::as726x::RemoteAS726xStateInterface as726x_remote_state_interface_;
 
-		hardware_interface::MatchStateInterface        match_state_interface_;
-		hardware_interface::RemoteMatchStateInterface  match_remote_state_interface_;
 
-		hardware_interface::JointCommandInterface      joint_command_interface_;
-		hardware_interface::PositionJointInterface     joint_position_interface_;
-		hardware_interface::VelocityJointInterface     joint_velocity_interface_;
-		hardware_interface::EffortJointInterface       joint_effort_interface_;
-		hardware_interface::RemoteJointInterface       joint_remote_interface_;
-		hardware_interface::TalonCommandInterface      talon_command_interface_;
-
-		hardware_interface::ImuSensorInterface         imu_interface_;
-		hardware_interface::RemoteImuSensorInterface   imu_remote_interface_;
+		hardware_interface::JointCommandInterface          joint_command_interface_;
+		hardware_interface::PositionJointInterface         joint_position_interface_;
+		hardware_interface::VelocityJointInterface         joint_velocity_interface_;
+		hardware_interface::EffortJointInterface           joint_effort_interface_;
+		hardware_interface::RemoteJointInterface           joint_remote_interface_;
+		hardware_interface::TalonCommandInterface          talon_command_interface_;
+		hardware_interface::as726x::AS726xCommandInterface as726x_command_interface_;
+		hardware_interface::ImuSensorInterface             imu_interface_;
+		hardware_interface::RemoteImuSensorInterface       imu_remote_interface_;
 
 		hardware_interface::RobotControllerStateInterface robot_controller_state_interface_;
 
@@ -260,8 +263,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 
 		std::vector<std::string> rumble_names_;
 		std::vector<int>         rumble_ports_;
-		std::vector<int>         rumble_local_updates_;
-		std::vector<int>         rumble_local_hardwares_;
+		std::vector<bool>        rumble_local_updates_;
+		std::vector<bool>        rumble_local_hardwares_;
 		std::size_t              num_rumbles_;
 
 		std::vector<std::string> navX_names_;
@@ -290,6 +293,14 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<int>         joystick_ids_; // pretty sure this is montonic increasing by default?
 		std::vector<bool>        joystick_locals_;
 		std::size_t              num_joysticks_;
+
+		std::vector<std::string> as726x_names_;
+		std::vector<std::string> as726x_ports_;
+		std::vector<int>         as726x_addresses_;
+		std::vector<bool>        as726x_local_updates_;
+		std::vector<bool>        as726x_local_hardwares_;
+		std::size_t              num_as726xs_;
+
 
 		bool run_hal_robot_;
 		std::string can_interface_;
@@ -323,6 +334,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<std::array<double,9>> imu_linear_acceleration_covariances_;
 
 		std::vector<double> analog_input_state_;
+
+		std::vector<hardware_interface::as726x::AS726xState> as726x_state_;
 		// Same as above, but for pending commands to be
 		// written to the hardware
 		std::vector<hardware_interface::TalonHWCommand>  talon_command_;
@@ -338,6 +351,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<double> dummy_joint_velocity_;
 		std::vector<double> dummy_joint_effort_;
 		std::vector<double> dummy_joint_command_;
+
+		std::vector<hardware_interface::as726x::AS726xCommand> as726x_command_;
 
 		std::vector<double> robot_ready_signals_;
 		bool                robot_code_ready_;

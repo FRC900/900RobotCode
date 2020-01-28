@@ -15,6 +15,7 @@ hardware_interface:
          #- {name: talon9, local: false, type: can_talon_srx, can_id: 9}
          #- {name: pdp, local: true, type: pdp }
          #- {name: compressor, local: true, type: compressor, pcm_id: 0}
+       - {name: as726x, local: true, type: as726x, port: mxp, address: 73 } # 73 = 0x49
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
        - {name: do1, local: true, type: digital_output, dio_channel: 1}
@@ -70,3 +71,20 @@ talon9_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: talon9
     feedback_type: CTRE_MagEncoder_Absolute
+
+as726x_state_controller:
+    type: as726x_state_controller/AS726xStateController
+    joint_name: as726x
+    publish_rate: 20
+
+as726x_controller:
+    type: as726x_controller/AS726xController
+    joint_name: as726x
+    ind_led_current_limit: IND_LIMIT_1MA
+    ind_led_enable: false
+    drv_led_current_limit: DRV_LIMIT_12MA5
+    drv_led_enable: false
+    conversion_type: ONE_SHOT
+    channel_gain: GAIN_1X
+    integration_time: 10
+

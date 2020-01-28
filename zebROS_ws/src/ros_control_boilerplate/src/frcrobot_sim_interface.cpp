@@ -213,6 +213,25 @@ void FRCRobotSimInterface::init(void)
 		ROS_INFO_STREAM_NAMED("frcrobot_sim_interface",
 							  "Loading dummy joint " << i << "=" << dummy_joint_names_[i]);
 
+	for (size_t i = 0; i < num_as726xs_; i++)
+	{
+		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
+							  "Loading as726x joint " << i << "=" << as726x_names_[i] <<
+							  (as726x_local_updates_[i] ? " local" : " remote") << " update, " <<
+							  (as726x_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
+							  " as as726x with port=" << as726x_ports_[i] <<
+							  " address=" << as726x_addresses_[i]);
+		if (as726x_local_hardwares_[i])
+		{
+			if ((as726x_ports_[i] != "onboard") && (as726x_ports_[i] != "mxp"))
+			{
+				ROS_ERROR_STREAM("Invalid port specified for as726x - " <<
+						as726x_ports_[i] << "valid options are onboard and mxp");
+				return;
+			}
+		}
+	}
+
 	limit_switch_srv_ = nh_.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit,this);
     match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data_in", 1, &FRCRobotSimInterface::match_data_callback, this);
 
@@ -793,6 +812,63 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 				") right rumble = " << std::dec << right_rumble << "(" << std::hex << right_rumble <<  ")" << std::dec);
 		}
 	}
+
+	for (size_t i = 0; i < num_as726xs_; i++)
+	{
+		auto &as = as726x_state_[i];
+		auto &ac = as726x_command_[i];
+
+		hardware_interface::as726x::IndLedCurrentLimits ind_led_current_limit;
+		if (ac.indLedCurrentLimitChanged(ind_led_current_limit))
+		{
+			as.setIndLedCurrentLimit(ind_led_current_limit);
+			ROS_INFO_STREAM("Wrote as726x_[" << i << "]=" << as726x_names_[i] << " ind_led_current_limit = " << ind_led_current_limit);
+		}
+
+		bool ind_led_enable;
+		if (ac.indLedEnableChanged(ind_led_enable))
+		{
+			as.setIndLedEnable(ind_led_enable);
+			ROS_INFO_STREAM("Wrote as726x_[" << i << "]=" << as726x_names_[i] << " ind_led_enable = " << ind_led_enable);
+		}
+
+		hardware_interface::as726x::DrvLedCurrentLimits drv_led_current_limit;
+		if (ac.drvLedCurrentLimitChanged(drv_led_current_limit))
+		{
+			as.setDrvLedCurrentLimit(drv_led_current_limit);
+			ROS_INFO_STREAM("Wrote as726x_[" << i << "]=" << as726x_names_[i] << " drv_led_current_limit = " << drv_led_current_limit);
+		}
+
+		bool drv_led_enable;
+		if (ac.drvLedEnableChanged(drv_led_enable))
+		{
+			as.setDrvLedEnable(drv_led_enable);
+			ROS_INFO_STREAM("Wrote as726x_[" << i << "]=" << as726x_names_[i] << " drv_led_enable = " << drv_led_enable);
+		}
+
+		hardware_interface::as726x::ConversionTypes conversion_type;
+		if (ac.conversionTypeChanged(conversion_type))
+		{
+			as.setConversionType(conversion_type);
+			ROS_INFO_STREAM("Wrote as726x_[" << i << "]=" << as726x_names_[i] << " conversion_type = " << conversion_type);
+		}
+
+		hardware_interface::as726x::ChannelGain gain;
+		if (ac.gainChanged(gain))
+		{
+			as.setGain(gain);
+			ROS_INFO_STREAM("Wrote as726x_[" << i << "]=" << as726x_names_[i] << " channel_gain = " << gain);
+		}
+
+		uint8_t integration_time;
+		if (ac.integrationTimeChanged(integration_time))
+		{
+			as.setIntegrationTime(integration_time);
+			ROS_INFO_STREAM("Wrote as726x_[" << i << "]=" << as726x_names_[i] << " integration_time = "
+					<< static_cast<int>(integration_time));
+		}
+	}
+
 
 	for (size_t i = 0; i < num_dummy_joints_; i++)
 	{

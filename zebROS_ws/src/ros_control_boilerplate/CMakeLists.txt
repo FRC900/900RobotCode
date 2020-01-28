@@ -5,6 +5,7 @@ include ("../cmake_modules/CMakeOpt.cmake")
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(catkin REQUIRED COMPONENTS
+  as726x_interface
   cmake_modules
   realtime_tools
   hardware_interface
@@ -74,7 +75,8 @@ include_directories(
 
 add_library(frc_robot_interface STATIC
 	src/frc_robot_interface.cpp
-	src/generic_hw_control_loop.cpp)
+	src/generic_hw_control_loop.cpp
+	src/AS726x.cpp)
 
 # Don't build sim code for the Rio or Jetson -
 # saves time and space for something which will

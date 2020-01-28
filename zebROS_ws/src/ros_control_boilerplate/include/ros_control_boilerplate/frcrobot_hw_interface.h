@@ -71,6 +71,7 @@
 #include <hal/FRCUsageReporting.h>
 
 #include <AHRS.h>
+#include "ros_control_boilerplate/AS726x.h"
 
 
 namespace frcrobot_control
@@ -162,10 +163,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		virtual void write(ros::Duration &elapsed_time) override;
 
 	private:
-		void process_motion_profile_buffer_thread(double hz);
-
 		/* Get conversion factor for position, velocity, and closed-loop stuff */
-
 		double getConversionFactor(int encoder_ticks_per_rotation, hardware_interface::FeedbackDevice encoder_feedback, hardware_interface::TalonMode talon_mode);
 
 		bool convertControlMode(const hardware_interface::TalonMode input_mode,
@@ -205,6 +203,15 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 			ctre::phoenix::sensors::AbsoluteSensorRange &output);
 		bool convertSensorInitializationStrategy(const hardware_interface::SensorInitializationStrategy input,
 			ctre::phoenix::sensors::SensorInitializationStrategy &output);
+
+		bool convertAS726xIndLedCurrentLimit(const hardware_interface::as726x::IndLedCurrentLimits input,
+				as726x::ind_led_current_limits &output) const;
+		bool convertAS726xDrvLedCurrentLimit(const hardware_interface::as726x::DrvLedCurrentLimits input,
+				as726x::drv_led_current_limits &output) const;
+		bool convertAS726xConversionType(const hardware_interface::as726x::ConversionTypes input,
+				as726x::conversion_types &output) const;
+		bool convertAS726xChannelGain(const hardware_interface::as726x::ChannelGain input,
+				as726x::channel_gain &output) const;
 
 		bool safeTalonCall(ctre::phoenix::ErrorCode error_code,
 				const std::string &talon_method_name);
@@ -246,9 +253,6 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::vector<std::thread> pcm_thread_;
 		std::vector<HAL_CompressorHandle> compressors_;
 
-		std::thread motion_profile_thread_;
-		std::vector<std::shared_ptr<std::mutex>> motion_profile_mutexes_;
-
 		std::vector<std::shared_ptr<std::mutex>> pdp_read_thread_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::PDPHWState>> pdp_read_thread_state_;
 		void pdp_read_thread(int32_t pdp, std::shared_ptr<hardware_interface::PDPHWState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
@@ -257,6 +261,12 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		std::vector<std::shared_ptr<Joystick>> joysticks_;
 		std::vector<std::unique_ptr<realtime_tools::RealtimePublisher<sensor_msgs::Joy>>> realtime_pub_joysticks_;
+
+		std::vector<std::shared_ptr<as726x::roboRIO_AS726x>> as726xs_;
+		std::vector<std::shared_ptr<std::mutex>> as726x_read_thread_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::as726x::AS726xState>> as726x_read_thread_state_;
+		void as726x_read_thread(std::shared_ptr<as726x::roboRIO_AS726x> as726x, std::shared_ptr<hardware_interface::as726x::AS726xState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
+		std::vector<std::thread> as726x_thread_;
 
 		std::unique_ptr<ROSIterativeRobot> robot_;
 

@@ -670,6 +670,44 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			joystick_ids_.push_back(id);
 			joystick_locals_.push_back(local);
 		}
+		else if (joint_type == "as726x")
+		{
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
+
+			const bool has_port = joint_params.hasMember("port");
+			if (local_hardware && !has_port)
+				throw std::runtime_error("A port was specified for non-local hardware for joint " + joint_name);
+			std::string port_string;
+			if (local_hardware)
+			{
+				if (!has_port)
+					throw std::runtime_error("A port was not specified for joint " + joint_name);
+				XmlRpc::XmlRpcValue &xml_port = joint_params["port"];
+				if (!xml_port.valid() || xml_port.getType() != XmlRpc::XmlRpcValue::TypeString)
+					throw std::runtime_error("An invalid joint port was specified (expecting a string) for joint " + joint_name);
+				port_string = std::string(xml_port);
+			}
+
+			const bool has_address = joint_params.hasMember("address");
+			if (!local_hardware && has_address)
+				throw std::runtime_error("An address was specified for non-local hardware for joint " + joint_name);
+			int address = 0;
+			if (local_hardware)
+			{
+				if (!has_address)
+					throw std::runtime_error("An as726x address was not specified for joint " + joint_name);
+				XmlRpc::XmlRpcValue &xml_address = joint_params["address"];
+				if (!xml_address.valid() || xml_address.getType() != XmlRpc::XmlRpcValue::TypeInt)
+					throw std::runtime_error("An invalid address was specified (expecting an int) for joint " + joint_name);
+				address = xml_address;
+			}
+
+			as726x_names_.push_back(joint_name);
+			as726x_ports_.push_back(port_string);
+			as726x_addresses_.push_back(address);
+			as726x_local_updates_.push_back(local_update);
+			as726x_local_hardwares_.push_back(local_hardware);
+		}
 		else
 		{
 			std::stringstream s;
@@ -862,6 +900,29 @@ void FRCRobotInterface::init()
 		joint_position_interface_.registerHandle(rh);
 		if (!rumble_local_updates_[i])
 			joint_remote_interface_.registerHandle(rh);
+	}
+
+	num_as726xs_ = as726x_names_.size();
+	as726x_command_.resize(num_as726xs_);
+	for (size_t i = 0; i < num_as726xs_; i++)
+	{
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering AS726x Interface for " << as726x_names_[i]
+				<< " at port " << as726x_ports_[i]
+				<< " at address " << as726x_addresses_[i]);
+		as726x_state_.push_back(hardware_interface::as726x::AS726xState(as726x_ports_[i], as726x_addresses_[i]));
+	}
+	for (size_t i = 0; i < num_as726xs_; i++)
+	{
+		hardware_interface::as726x::AS726xStateHandle ash(as726x_names_[i], &as726x_state_[i]);
+		as726x_state_interface_.registerHandle(ash);
+
+		hardware_interface::as726x::AS726xCommandHandle aoh(ash, &as726x_command_[i]);
+		as726x_command_interface_.registerHandle(aoh);
+		if (!as726x_local_updates_[i])
+		{
+			hardware_interface::as726x::AS726xWritableStateHandle awsh(as726x_names_[i], &as726x_state_[i]); /// writing directly to state?
+			as726x_remote_state_interface_.registerHandle(awsh);
+		}
 	}
 
 	// Differentiate between navX and IMU here
@@ -1062,9 +1123,8 @@ void FRCRobotInterface::init()
 	// RealtimePublisher() for the data coming in from
 	// the DS
 	registerInterface(&talon_state_interface_);
-	registerInterface(&talon_remote_state_interface_);
-	registerInterface(&joint_state_interface_);
 	registerInterface(&talon_command_interface_);
+	registerInterface(&joint_state_interface_);
 	registerInterface(&joint_command_interface_);
 	registerInterface(&joint_position_interface_);
 	registerInterface(&joint_velocity_interface_);
@@ -1074,12 +1134,16 @@ void FRCRobotInterface::init()
 	registerInterface(&pcm_state_interface_);
 	registerInterface(&robot_controller_state_interface_);
 	registerInterface(&match_state_interface_);
+	registerInterface(&as726x_state_interface_);
+	registerInterface(&as726x_command_interface_);
 
 	registerInterface(&joint_remote_interface_); // list of Joints defined as remote
+	registerInterface(&talon_remote_state_interface_);
 	registerInterface(&pdp_remote_state_interface_);
 	registerInterface(&pcm_remote_state_interface_);
 	registerInterface(&imu_remote_interface_);
 	registerInterface(&match_remote_state_interface_);
+	registerInterface(&as726x_remote_state_interface_);
 
 	ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface Ready.");
 }

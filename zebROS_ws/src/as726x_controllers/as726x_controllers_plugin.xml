@@ -1,0 +1,12 @@
+<library path="lib/libas726x_controllers">
+	<class name="as726x_state_controller/AS726xStateController" type="as726x_state_controller::AS726xStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			The as726x state controller publishes the current as726x state as an frc_msgs/AS726xState message. The as726x state controller expects a as726x::AS726xStateInterface type of hardware interface.
+		</description>
+	</class>
+	<class name="as726x_controller/AS726xController" type="as726x_controller::AS726xController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			The as726x controller allows configuration of sensor setting through either params or dynamic reconfigure
+		</description>
+	</class>
+</library>
