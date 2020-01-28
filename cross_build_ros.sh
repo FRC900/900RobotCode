@@ -58,7 +58,7 @@ sed -i -e '/<\/package>/i  <build_depend>urdfdom_headers<\/build_depend>' urdf/u
 # Add class_loader to src/urdf/urdf package.xml exec_depend and CMakeLists CATKIN_DEPENDS
 
 # In a docker container : 
-# docker run -it --user ubuntu -v /home/kjaget/2020RobotCode:/home/ubuntu/2020RobotCode -v ~/melodic_arm_cross_ws:/home/ubuntu/melodic_arm_cross_ws  frc900/zebros-2020-beta-dev /bin/bash
+# docker run -it --user ubuntu -v /home/kjaget/2020RobotCode:/home/ubuntu/2020RobotCode -v ~/melodic_arm_cross_ws:/home/ubuntu/melodic_arm_cross_ws  frc900/zebros-2020-dev /bin/bash
 
 # Then run the following from inside the container :
 
