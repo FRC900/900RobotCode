@@ -1,9 +1,14 @@
 topics:
 -
+  name    : combine orient strafing
+  topic   : /teleop/orient_strafing/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 200
+-
   name    : teleop joystick comp
   topic   : /teleop/swerve_drive_controller/cmd_vel
   timeout : 0.2
-  priority: 200
+  priority: 175
 -
   name    : climber server
   topic   : /climber/swerve_drive_controller/cmd_vel

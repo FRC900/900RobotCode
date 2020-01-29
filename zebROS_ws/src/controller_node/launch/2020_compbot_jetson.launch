@@ -59,6 +59,19 @@
 				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw1" />
 			</node>
 		</group>
+		<group ns="orient_strafing"> <!--TODO Tune these values on a full weight robot -->
+			<node name="orient_strafing_pid" pkg="pid" type="controller" >
+				<param name="node_name" value="orient_strafing_pid" />
+				<param name="Kp" value="0.0" />
+				<param name="Ki" value="0.0" />
+				<param name="Kd" value="0.0" />
+				<param name="upper_limit" value="5" />
+				<param name="lower_limit" value="-5" />
+				<param name="windup_limit" value="5" />
+				<param name="angle_error" value="true" />
+			</node>
+			<node name="orient_strafing_node" pkg="teleop_joystick_control" type="orient_strafing_node" output="screen"/>
+		</group>
 	</group>
 
 	<!-- Actionlib servers!!! -->
