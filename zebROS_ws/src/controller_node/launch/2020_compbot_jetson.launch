@@ -45,7 +45,7 @@
 
 	<group ns="teleop">
 		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
-		<node name="2020_teleop_joystick_comp" pkg="teleop_joystick_control" type="2020_teleop_joystick_comp" output="screen" >
+		<node name="teleop_joystick_comp_2020" pkg="teleop_joystick_control" type="teleop_joystick_comp_2020" output="screen" >
 			<remap from="navx_mxp" to="/frcrobot_rio/navx_mxp"/>
 		</node>
 

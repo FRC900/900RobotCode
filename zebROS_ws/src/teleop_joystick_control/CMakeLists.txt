@@ -69,8 +69,8 @@ target_link_libraries(teleop_joystick_comp
 	${catkin_LIBRARIES}
 	)
 
-add_executable(2020_teleop_joystick_comp src/2020_teleop_joystick_comp.cpp)
-target_link_libraries(2020_teleop_joystick_comp
+add_executable(teleop_joystick_comp_2020 src/teleop_joystick_comp_2020.cpp)
+target_link_libraries(teleop_joystick_comp_2020
 	${catkin_LIBRARIES}
 	)
 
@@ -83,7 +83,7 @@ add_dependencies(teleop_joystick_comp
 	${catkin_EXPORTED_TARGETS}
 	)
 
-add_dependencies(2020_teleop_joystick_comp
+add_dependencies(teleop_joystick_comp_2020
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 	)
@@ -138,7 +138,7 @@ add_dependencies(teleop_joints_keyboard
 
 # Install ------------------------------------------------------------
 # Install header files
-install(TARGETS teleop_joystick_comp 2020_teleop_joystick_comp teleop_joints_keyboard
+install(TARGETS teleop_joystick_comp teleop_joystick_comp_2020 teleop_joints_keyboard
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
