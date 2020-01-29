@@ -15,7 +15,6 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/2020_compbot_base_jetson.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2020_swerve_drive.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2020_compbot_offsets.yaml" command="load"/>
-		<rosparam file="$(find ros_control_boilerplate)/config/2019_elevator_params.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 		<!--
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
@@ -35,7 +34,7 @@
 
 		<!-- Load controller manager-->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn cargo_intake_controller climber_controller panel_intake_controller joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller pcm_state_controller pdp_state_controller elevator_controller swerve_drive_controller robot_code_ready_controller" />
+			output="screen" args="spawn joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller pcm_state_controller pdp_state_controller swerve_drive_controller robot_code_ready_controller" />
 
 		<node name="uptime_jetson" pkg="uptime" type="uptime_node" output="screen" />
 
@@ -46,7 +45,7 @@
 
 	<group ns="teleop">
 		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
-		<node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" >
+		<node name="2020_teleop_joystick_comp" pkg="teleop_joystick_control" type="2020_teleop_joystick_comp" output="screen" >
 			<remap from="navx_mxp" to="/frcrobot_rio/navx_mxp"/>
 		</node>
 
@@ -77,30 +76,6 @@
 	<!-- Actionlib servers!!! -->
 	<!-- Include this at the top level so all actionlib servers can find it -->
 	<rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
-	<group ns="elevator">
-		<rosparam file="$(find behaviors)/config/elevatorServer.yaml" command="load"/>
-		<node name="elevator_ac_server" pkg="behaviors" type="elevator_server" output="screen" />
-	</group>
-	<group ns="climber">
-		<rosparam file="$(find behaviors)/config/climberServer.yaml" command="load"/>
-		<node name="climber_ac_server" pkg="behaviors" type="climber_server" output="screen" />
-	</group>
-	<group ns="cargo_intake">
-		<rosparam file="$(find behaviors)/config/intakeCargoServer.yaml" command="load"/>
-		<node name="intake_cargo_ac_server" pkg="behaviors" type="intake_cargo_server" output="screen" />
-	</group>
-	<group ns="cargo_outtake">
-		<rosparam file="$(find behaviors)/config/outtakeCargoServer.yaml" command="load"/>
-		<node name="outtake_cargo_ac_server" pkg="behaviors" type="outtake_cargo_server" output="screen" />
-	</group>
-	<group ns="hatch_intake">
-		<rosparam file="$(find behaviors)/config/intakeHatchPanelServer.yaml" command="load"/>
-		<node name="intake_hatch_ac_server" pkg="behaviors" type="intake_hatch_panel_server" output="screen" />
-	</group>
-	<group ns="hatch_outtake">
-		<rosparam file="$(find behaviors)/config/outtakeHatchPanelServer.yaml" command="load"/>
-		<node name="outtake_hatch_ac_server" pkg="behaviors" type="outtake_hatch_panel_server" output="screen" />
-	</group>
 
 	<!-- <group ns="path_to_goal">
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
@@ -132,88 +107,8 @@
 	<include file="$(find controller_node)/launch/tape_detection.launch" />
     <include file="$(find controller_node)/launch/multiflex_example.launch" />
 
-	<include file="$(find controller_node)/launch/2019_compbot_jetson_hatch_orient.launch"/>
-    
 	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
-        <!--
-	<group ns="align_cargo_rocketship">
-		<node name="cargo_distance_pid" pkg="pid" type="controller" >
-			<param name="node_name" value="cargo_distance_pid" />
-			<param name="Kp" value="4.8" />
-			<param name="Ki" value="0.0" />
-			<param name="Kd" value="0.1" />
-			<param name="upper_limit" value="2" />
-			<param name="lower_limit" value="-2" />
-			<param name="windup_limit" value="10" />
-			<param name="max_loop_frequency" value="100.0" />
-			<param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value="x_pid/x_command" />
-			<param name="setpoint_topic" value="x_pid/x_setpoint" />
-			<param name="topic_from_plant" value="x_pid/x_state" />
-			<remap from="pid_debug" to="x_pid/pid_debug" />
-			<remap from="pid_enable" to="x_pid/pid_enable" />
-		</node>
-
-		<node name="cargo_pid" pkg="pid" type="controller" >
-			<param name="node_name" value="cargo_pid" />
-			<param name="Kp" value="5.0" />
-			<param name="Ki" value="0.0" />
-			<param name="Kd" value="0.0" />
-			<param name="upper_limit" value="1" />
-			<param name="lower_limit" value="-1" />
-			<param name="windup_limit" value="10" />
-			<param name="max_loop_frequency" value="100.0" />
-			<param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value="y_pid/y_command" />
-			<param name="setpoint_topic" value="y_pid/y_setpoint" />
-			<param name="topic_from_plant" value="y_pid/y_state" />
-			<remap from="pid_debug" to="y_pid/pid_debug" />
-			<remap from="pid_enable" to="y_pid/pid_enable" />
-		</node>
-
-		<node name="align_pid_cargo_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
-			<param name="orient_topic" value="orient_pid/orient_command" />
-			<param name="x_topic" value="x_pid/x_command" />
-			<param name="y_topic" value="y_pid/y_command" />
-			<param name="command_timeout" value="0.5" />
-			<param name="enable_topic" value="align_pid/pid_enable" />
-			<param name="name" value="align_pid" />
-		</node>
-	</group> 
-        -->
-
-        <!--
-	<group ns="align_cargo">
-		<node name="translate_to_pointstamped" pkg="goal_detection" type="translate_to_pointstamped" output="screen">
-			<remap from="goal_detect_msg" to="/c920goal_detection/goal_detect_msg" />
-		</node>
-
-		<rosparam file="$(find behaviors)/config/align_server.yaml" command="load"/>
-		<node name="align_server" pkg="behaviors" type="align_cargo_cargoship_server" output="screen" />
-
-		<node name="align_with_camera" pkg="behaviors" type="align_with_camera" output="screen" >
-			<param name="target_frame" value="cargo_outtake" /> 
-		</node>
-		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
-
-		<node name="cargo_distance_pid" pkg="pid" type="controller" >
-			<param name="node_name" value="cargo_distance_pid" />
-			<param name="Kp" value="4.8" />
-			<param name="Ki" value="0.0" />
-			<param name="Kd" value="0.0" />
-			<param name="upper_limit" value="2" />
-			<param name="lower_limit" value="-2" />
-			<param name="windup_limit" value="10" />
-			<param name="max_loop_frequency" value="100.0" />
-			<param name="min_loop_frequency" value="100.0" />
-			<param name="topic_from_controller" value="cargo_distance_pid/x_command" />
-			<param name="setpoint_topic" value="cargo_distance_pid/setpoint" />
-			<param name="topic_from_plant" value="cargo_distance_pid/setpoint" />
-			<remap from="pid_debug" to="cargo_distance_pid/pid_debug"/>
-			<remap from="pid_enable" to="cargo_distance_pid/pid_enable"/>
-		</node>
-
-
+<!--
 		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
 
 		<node name="snap_to_nearest_goal" pkg="teleop_joystick_control" type="snap_to_nearest_goal" output="screen" >
@@ -238,16 +133,6 @@
 			<remap from="pid_debug" to="orient_pid/pid_debug"/>
 			<remap from="pid_enable" to="orient_pid/pid_enable"/>
 		</node>
-
-		<node name="align_pid_cargo_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
-			<param name="orient_topic" value="orient_pid/orient_command" />
-			<param name="x_topic" value="cargo_distance_pid/x_command" />
-			<param name="ratio_xy_topic" value="align_cargo_pid/ratio_xy" />
-			<param name="command_timeout" value="0.5" />
-			<param name="enable_topic" value="align_cargo_pid/pid_enable" />
-			<param name="name" value="align_pid" />
-		</node>
-
 	</group>
         -->
     
