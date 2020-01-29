@@ -262,6 +262,7 @@ class ServerNameAction {
 					action_client.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 				else { //if didn't succeed and nothing went wrong, keep waiting
+					ros::spinOnce();
 					r.sleep();
 				}
 			}
