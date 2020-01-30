@@ -6,6 +6,9 @@ using cv::gpu::GpuMat;
 #elif CV_MAJOR_VERSION == 3
 #include <opencv2/core/cuda.hpp>
 using cv::cuda::GpuMat;
+#elif CV_MAJOR_VERSION == 4
+#include <opencv2/highgui/highgui_c.h>
+using cv::cuda::GpuMat;
 #endif
 
 

@@ -361,6 +361,12 @@ sudo update-alternatives --install "/usr/bin/ld" "ld" "/usr/bin/ld.bfd" 10
 
 echo | sudo update-alternatives --config ld
 
+sudo ccache -C
+sudo ccache -c
+sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
+
+sudo ln -s /usr/include/opencv4 /usr/include/opencv
+
 echo "source /home/ubuntu/2020RobotCode/zebROS_ws/command_aliases.sh" >> /home/ubuntu/.bashrc
 
 # Give the ubuntu user dialout permission, which is used by the ADI IMU 
