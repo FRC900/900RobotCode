@@ -23,6 +23,7 @@ enum TalonMode
 	TalonMode_MotionProfile,
 	TalonMode_MotionMagic,
 	TalonMode_MotionProfileArc,
+        TalonMode_Music,
 	TalonMode_Disabled,
 	TalonMode_Last
 };
