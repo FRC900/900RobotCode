@@ -6,14 +6,14 @@ if [ -f /.dockerenv ] ; then
     echo "Sourcing Docker environment"
     source /opt/ros/melodic/setup.bash
     source /home/ubuntu/2020RobotCode/zebROS_ws/devel/setup.bash
-	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | cut -d ' ' -f 5`
+	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
 elif [ -f /home/ubuntu/2020RobotCode/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Jetson / native Linux environment"
     source /opt/ros/melodic/setup.bash
     source /home/ubuntu/2020RobotCode/zebROS_ws/devel/setup.bash
     #export ROS_IP=10.9.0.8
-	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | cut -d ' ' -f 5`
+	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
 elif [ -f /home/ofugikawa/2020RobotCode/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Olivia / native Linux environment"
@@ -31,7 +31,7 @@ else
     echo "Unknown environment! Trying to proceed anyway using local environment."
     source /opt/ros/melodic/setup.bash
     source $HOME/2020RobotCode/zebROS_ws/devel/setup.bash
-	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | cut -d ' ' -f 5`
+	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
 fi
 
 # Common configuration
