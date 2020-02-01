@@ -34,7 +34,7 @@
 
 		<!-- Load controller manager-->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller pcm_state_controller pdp_state_controller swerve_drive_controller robot_code_ready_controller" />
+			output="screen" args="spawn climber_controller joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller pcm_state_controller pdp_state_controller swerve_drive_controller robot_code_ready_controller" />
 
 		<node name="uptime_jetson" pkg="uptime" type="uptime_node" output="screen" />
 

@@ -65,7 +65,7 @@
         <depend>message_runtime</depend>
         <depend>pluginlib</depend>
         <depend>talon_controllers</depend>
- 
+		<depend>controllers_2020_msgs</depend> 
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -1,6 +1,6 @@
 #include "controllers_2019/climber_controller.h"
 
-namespace climber_controller
+namespace climber_controller_2019 //year necessary to differentiate from 2020 one
 {
 
 bool ClimberController::init(hardware_interface::PositionJointInterface *hw,
@@ -89,4 +89,4 @@ bool ClimberController::activateSrv(std_srvs::SetBool::Request &req,
 }//namespace
 
 //DON'T FORGET TO EXPORT THE CLASS SO CONTROLLER_MANAGER RECOGNIZES THIS AS A TYPE
-PLUGINLIB_EXPORT_CLASS(climber_controller::ClimberController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(climber_controller_2019::ClimberController, controller_interface::ControllerBase)

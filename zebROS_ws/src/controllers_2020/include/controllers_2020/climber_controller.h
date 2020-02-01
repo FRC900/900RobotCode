@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <ros/ros.h>
@@ -12,9 +11,31 @@
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 
 //REMEMBER TO INCLUDE CUSTOM SERVICE
+#include <controllers_2020_msgs/ClimberSrv.h>
 
-namespace climber_controller
+namespace climber_controller_2020
 {
+
+
+//class to store command data
+class ClimberCommand
+{
+	public:
+		ClimberCommand()
+			: winch_set_point_(0.0),
+			  deploy_(false),
+			  brake_(false)
+		{}
+		ClimberCommand(double winch_set_point, bool deploy, bool brake)
+		{
+			winch_set_point_ = winch_set_point;
+			deploy_ = deploy;
+			brake_ = brake;
+		}
+		double winch_set_point_;
+		bool deploy_;
+		bool brake_;
+};
 
 //this is the controller class, used to make a controller
 class ClimberController : public controller_interface::MultiInterfaceController<hardware_interface::PositionJointInterface, hardware_interface::TalonCommandInterface>
@@ -33,8 +54,15 @@ class ClimberController : public controller_interface::MultiInterfaceController<
             virtual void update(const ros::Time & time, const ros::Duration& period) override;
             virtual void stopping(const ros::Time &time) override;
 
+			bool cmdService(controllers_2020_msgs::ClimberSrv::Request &req,
+							controllers_2020_msgs::ClimberSrv::Response &res);
         private:
+			talon_controllers::TalonMotionMagicCloseLoopControllerInterface winch_joint_; //TODO correct type?
+			hardware_interface::JointHandle deploy_joint_; //piston to deploy the climber
+			hardware_interface::JointHandle brake_joint_; //piston brake
 
+			ros::ServiceServer climber_service_;
+			realtime_tools::RealtimeBuffer<ClimberCommand> cmd_buffer_;
 
 
 }; //class

@@ -8,7 +8,7 @@
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include <std_srvs/SetBool.h>
 
-namespace climber_controller
+namespace climber_controller_2019 //year necessary to differentiate from 2020 one
 {
 class ClimberController : public controller_interface::Controller<hardware_interface::PositionJointInterface>
 {

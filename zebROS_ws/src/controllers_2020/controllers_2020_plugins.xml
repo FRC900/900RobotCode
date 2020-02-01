@@ -16,7 +16,7 @@
                         Does stuff to make shooter_controller exist.
                 </description>
         </class>
-        <class name="climber_controller/ClimberController" type="climber_controller::ClimberController" base_class_type="controller_interface::ControllerBase">
+        <class name="climber_controller_2020/ClimberController" type="climber_controller_2020::ClimberController" base_class_type="controller_interface::ControllerBase">
                 <description>
                         Does stuff to make climber_controller exist.
                 </description>

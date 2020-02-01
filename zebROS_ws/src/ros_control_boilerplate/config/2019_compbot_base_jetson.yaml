@@ -88,7 +88,7 @@ cargo_outtake_controller:
     type: cargo_outtake_controller/CargoOuttakeController
 
 climber_controller:
-    type:           climber_controller/ClimberController
+    type:           climber_controller_2019/ClimberController #year needed to differentiate from 2020 controller
 
 panel_intake_controller:
     type:           panel_intake_controller/PanelIntakeController
