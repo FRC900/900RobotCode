@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <launch>
-
+	<arg name="primary_imu" default="ADI" />
 	<node name="navx_publisher" pkg="navx_publisher" type="navx_publisher_node" output="screen">
 		<param name="device" value="/dev/NAVX"/>
 	</node>
+	<include file="$(find adi_driver)/launch/adis16470.launch"> 
+		<arg name="device" value="/dev/ADI" />
+	</include>
 	<node name="imu_zero" pkg="imu_zero" type="imu_zero_node" output="screen">
-		<!--
-		<remap from="zeroed_imu" to="/frcrobot_rio/navx_mxp"/>
-		-->
+		<remap if="$(eval arg('primary_imu')=='NAVX')" from="imu/data" to="navx/data" />
 	</node>
-
 </launch>

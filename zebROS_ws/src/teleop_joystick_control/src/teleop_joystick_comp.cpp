@@ -65,7 +65,7 @@ ros::Publisher JoystickRobotVel;
 ros::Publisher cargo_pid;
 ros::Publisher terabee_pid;
 ros::Publisher distance_pid;
-ros::Publisher navX_pid;
+ros::Publisher imu_pid;
 ros::Publisher enable_align;
 
 ros::ServiceClient BrakeSrv;
@@ -88,23 +88,23 @@ std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::ElevatorAction>>
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::ClimbAction>> climber_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAction>> align_hatch_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAction>> align_cargo_ac;
-double navX_angle;
+double imu_angle;
 
 bool ManualToggleClamp = false;
 bool ManualTogglePush = false;
 bool ManualToggleKicker = false;
 bool ManualToggleArm = false;
 
-void navXCallback(const sensor_msgs::Imu &navXState)
+void imuCallback(const sensor_msgs::Imu &imuState)
 {
-	const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
+	const tf2::Quaternion imuQuat(imuState.orientation.x, imuState.orientation.y, imuState.orientation.z, imuState.orientation.w);
 	double roll;
 	double pitch;
 	double yaw;
-	tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
+	tf2::Matrix3x3(imuQuat).getRPY(roll, pitch, yaw);
 
 	if (yaw == yaw) // ignore NaN results
-		navX_angle = -yaw;
+		imu_angle = yaw;
 }
 
 void preemptActionlibServers()
@@ -164,7 +164,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	{
 		static bool sendRobotZero = false;
 
-		geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], navX_angle, config);
+		geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], imu_angle, config);
 
 		if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (cmd_vel.angular.z == 0.0) && !sendRobotZero)
 		{
@@ -418,9 +418,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		orient_strafing_angle_msg.data = orient_strafing_angle;
 		orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
 
-		std_msgs::Float64 navX_angle_msg;
-		navX_angle_msg.data = navX_angle;
-		orient_strafing_state_pub.publish(navX_angle_msg);
+		std_msgs::Float64 imu_angle_msg;
+		imu_angle_msg.data = imu_angle;
+		orient_strafing_state_pub.publish(imu_angle_msg);
 
 		//Joystick1: directionLeft
 		if(joystick_states_array[0].directionLeftPress)
@@ -885,7 +885,7 @@ int main(int argc, char **argv)
 
 	teleop_cmd_vel = std::make_unique<TeleopCmdVel>(config);
 
-    navX_angle = M_PI / 2.;
+    imu_angle = M_PI / 2.;
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
@@ -901,7 +901,7 @@ int main(int argc, char **argv)
 	orient_strafing_state_pub = n.advertise<std_msgs::Float64>("orient_strafing/state", 1);
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	elevator_setpoint = n.advertise<std_msgs::Int8>("elevator_setpoint",1);
-	ros::Subscriber navX_heading = n.subscribe("/navx_jetson/zeroed_imu", 1, &navXCallback);
+	ros::Subscriber imu_heading = n.subscribe("/imu/zeroed_imu", 1, &imuCallback);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
 	//initialize actionlib clients
@@ -925,7 +925,7 @@ int main(int argc, char **argv)
 	cargo_pid = n.advertise<std_msgs::Bool>("/align_server/cargo_pid/pid_enable", 1);
 	terabee_pid = n.advertise<std_msgs::Bool>("/align_server/align_with_terabee/enable_y_pub", 1);
 	distance_pid = n.advertise<std_msgs::Bool>("/align_server/distance_pid/pid_enable", 1);
-	navX_pid = n.advertise<std_msgs::Bool>("/align_server/navX_pid/pid_enable", 1);
+	imu_pid = n.advertise<std_msgs::Bool>("/align_server/navX_pid/pid_enable", 1);
 	enable_align = n.advertise<std_msgs::Bool>("/align_server/align_pid/pid_enable", 1);
 
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);

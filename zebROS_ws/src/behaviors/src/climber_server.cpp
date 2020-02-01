@@ -60,7 +60,7 @@ class ClimbAction {
 		//create subscribers to get data
 		ros::Subscriber match_data_sub_;
 		ros::Subscriber joint_states_sub_;
-		ros::Subscriber navX_sub_;
+		ros::Subscriber imu_sub_;
 		ros::Subscriber talon_states_sub_;
 
 		std::atomic<double> cmd_vel_forward_speed_;
@@ -68,8 +68,8 @@ class ClimbAction {
 
 		// Data from subscribers
 		double match_time_remaining_;
-		double navX_roll_;
-		double navX_pitch_;
+		double imu_roll_;
+		double imu_pitch_;
 		double elev_cur_position_;
 		bool climber_engaged_;
 
@@ -491,19 +491,19 @@ class ClimbAction {
 			return;
 		}
 
-		void navXCallback(const sensor_msgs::Imu &navXState)
+		void imuCallback(const sensor_msgs::Imu &imuState)
 		{
-			const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
+			const tf2::Quaternion imuQuat(imuState.orientation.x, imuState.orientation.y, imuState.orientation.z, imuState.orientation.w);
 			double roll;
 			double pitch;
 			double yaw;
-			tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
+			tf2::Matrix3x3(imuQuat).getRPY(roll, pitch, yaw);
 
 			if (roll == roll) // ignore NaN results
-				navX_roll_ = roll;
+				imu_roll_ = roll;
 
 			if (pitch == pitch) // ignore NaN results
-				navX_pitch_ = pitch;
+				imu_pitch_ = pitch;
 		}
 
 		/*
@@ -595,7 +595,7 @@ class ClimbAction {
 		//initialize the client being used to call the climber controller to engage the climber
 		climber_engage_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/climber_controller/climber_release_endgame", false, service_connection_header);
 
-		navX_sub_ = nh_.subscribe("/frcrobot_rio/navx_mxp", 1, &ClimbAction::navXCallback, this);
+		imu_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &ClimbAction::imuCallback, this);
 		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states",1,&ClimbAction::talonStateCallback, this);
 
 		cargo_intake_controller_client_ = nh_.serviceClient<controllers_2019_msgs::CargoIntakeSrv>("/frcrobot_jetson/cargo_intake_controller/cargo_intake_command", false, service_connection_header);

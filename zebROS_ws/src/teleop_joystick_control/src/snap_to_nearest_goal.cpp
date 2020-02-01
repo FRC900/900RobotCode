@@ -13,7 +13,7 @@
 #include <vector>
 
 ros::Publisher snapAnglePub;
-std::atomic<double> navX_angle;
+std::atomic<double> imu_angle;
 std::atomic<bool> has_cargo;
 std::atomic<bool> has_panel;
 
@@ -39,16 +39,16 @@ double nearest_angle(std::vector<double> angles, double cur_angle)
 	return snap_angle;
 }
 
-void navXCallback(const sensor_msgs::Imu &navXState)
+void imuCallback(const sensor_msgs::Imu &imuState)
 {
-    const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
+    const tf2::Quaternion imuQuat(imuState.orientation.x, imuState.orientation.y, imuState.orientation.z, imuState.orientation.w);
     double roll;
     double pitch;
     double yaw;
-    tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
+    tf2::Matrix3x3(imuQuat).getRPY(roll, pitch, yaw);
 
     if (yaw == yaw) // ignore NaN results
-        navX_angle.store(yaw, std::memory_order_relaxed);
+        imu_angle.store(yaw, std::memory_order_relaxed);
 }
 
 void jointStateCallback(const sensor_msgs::JointState &joint_state)
@@ -178,15 +178,14 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read linebreak_debounce_interations in teleop joystick snap to goal");
 	}
 
-
-	navX_angle = M_PI / 2;
+	imu_angle = M_PI / 2;
 	has_panel = true;
 	has_cargo = false;
 
 	ros::Subscriber joint_states_sub_ = nh.subscribe("/frcrobot_jetson/joint_states", 1, jointStateCallback);
-	ros::Subscriber navX_heading  = nh.subscribe("/frcrobot_rio/navx_mxp", 1, &navXCallback);
+	ros::Subscriber imu_heading  = nh.subscribe("/imu/zeroed_imu", 1, &imuCallback);
 	ros::Publisher snapAnglePub = nh.advertise<std_msgs::Float64>("navX_pid/setpoint", 10);
-	ros::Publisher navXStatePub = nh.advertise<std_msgs::Float64>("navX_pid/state", 10);
+	ros::Publisher imuStatePub = nh.advertise<std_msgs::Float64>("navX_pid/state", 10);
 	ROS_INFO("snap_to_angle_init");
 
 	ros::Rate r(100);
@@ -195,8 +194,8 @@ int main(int argc, char **argv)
 
 	while(ros::ok()) {
 		std_msgs::Float64 angle_snap;
-		std_msgs::Float64 navX_state;
-		double cur_angle = angles::normalize_angle_positive(-1*navX_angle.load(std::memory_order_relaxed));
+		std_msgs::Float64 imu_state;
+		double cur_angle = angles::normalize_angle_positive(-1*imu_angle.load(std::memory_order_relaxed));
 		has_panel = true;
 		if(has_panel) {
 			snap_angle = nearest_angle(hatch_panel_angles, cur_angle + M_PI/2) - M_PI/2; //TODO remove having to multiply negative one
@@ -212,16 +211,16 @@ int main(int argc, char **argv)
 		//snap_angle = nearest_angle(hatch_panel_angles, cur_angle + M_PI/2) - M_PI/2; //TODO remove having to multiply negative one
         //snap_angle = nearest_angle(cargo_angles, cur_angle);
 
-		double heading = angles::normalize_angle(-1*navX_angle.load(std::memory_order_relaxed));
+		double heading = angles::normalize_angle(-1*imu_angle.load(std::memory_order_relaxed));
 		double goal_angle = angles::normalize_angle(snap_angle);
 		double angle_diff = angles::normalize_angle(goal_angle - heading);
 		angle_snap.data = 0.0;
-		navX_state.data = angle_diff;
+		imu_state.data = angle_diff;
 		snapAnglePub.publish(angle_snap);
 		//ROS_WARN_STREAM_THROTTLE(0.1, "Angle diff: " << angle_diff);
 		//ROS_WARN_STREAM_THROTTLE(0.1, "Heading: " <<  heading);
 		//ROS_WARN_STREAM_THROTTLE(0.1, "Goal: " <<  goal_angle);
-        navXStatePub.publish(navX_state);
+        imuStatePub.publish(imu_state);
 
 		r.sleep();
 		ros::spinOnce();

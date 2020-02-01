@@ -85,7 +85,7 @@ int main(int argc, char ** argv)
 
 	//state subscribers
 	ros::Subscriber distance_sub = nh.subscribe("/multiflex_1/ranges_raw", 1, distanceCB);
-	ros::Subscriber angle_sub = nh.subscribe("/frcrobot_rio/navx_mxp", 1, jointStatesCB);
+	ros::Subscriber angle_sub = nh.subscribe("/imu/zeroed_imu", 1, jointStatesCB);
 
 	//required pid_enable topic for the pid node
 	// TODO : consider how namespaces are doing to work, since I assume

@@ -73,8 +73,8 @@ int main(int argc, char **argv)
 	// Raw_pub publishes in the ENU (east north up) orientation
 	// instead of NED (north east down)
 	ros::Publisher time_pub = nh.advertise<navx_publisher::stampedUInt64>("time", 5);
-	ros::Publisher imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 5);
-	ros::Publisher raw_pub = nh.advertise<sensor_msgs::Imu>("raw", 5);
+	ros::Publisher imu_pub = nh.advertise<sensor_msgs::Imu>("navx/data", 5);
+	ros::Publisher raw_pub = nh.advertise<sensor_msgs::Imu>("navx/raw", 5);
 	ros::Publisher odom_pub = nh.advertise<nav_msgs::Odometry>("odom", 5);
 	navx_publisher::stampedUInt64 timestamp;
 	sensor_msgs::Imu imu_msg;

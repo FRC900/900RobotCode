@@ -24,15 +24,16 @@ Zero point in degrees is set using service call.
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <string>
 #include <imu_zero/ImuZeroAngle.h>
-
+#include <std_srvs/Trigger.h>
 
 constexpr double pi = 3.14159;
-const std::string sub_topic = "imu";
+const std::string sub_topic = "imu/data";
 const std::string pub_topic = "zeroed_imu";
 const std::string service_name = "set_imu_zero";
 ros::Publisher pub;
 tf2::Quaternion zero_rot;
 tf2::Quaternion last_raw;
+ros::ServiceClient bias_estimate;
 
 double degToRad(double deg) {
   double rad = (deg / 180) * pi;
@@ -57,6 +58,13 @@ bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
   double a = degToRad(req.angle);
 
   zero_rot.setRPY(0.0, 0.0, a - yaw);
+
+  if(ros::service::exists("imu/bias_estimate", false))
+  {
+	std_srvs::Trigger biasCall;
+	bias_estimate.call(biasCall);
+  	ROS_INFO("Bias estimate: %s", biasCall.response.message.c_str());
+  }
   return true;
 }
 
@@ -67,6 +75,8 @@ int main(int argc, char* argv[]) {
   ros::Subscriber sub = node.subscribe(sub_topic, 1, zeroCallback);
   ros::ServiceServer svc = node.advertiseService(service_name, zeroSet);
   zero_rot.normalize();
+  if(ros::service::exists("imu/bias_estimate",false))
+  	bias_estimate = node.serviceClient<std_srvs::Trigger>("imu/bias_estimate");
 
   ros::spin();
   return 0;

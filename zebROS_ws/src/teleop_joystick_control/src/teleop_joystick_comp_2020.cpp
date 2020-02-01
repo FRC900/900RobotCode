@@ -38,18 +38,18 @@ ros::Publisher JoystickRobotVel;
 
 ros::ServiceClient BrakeSrv;
 
-double navX_angle;
+double imu_angle;
 
-void navXCallback(const sensor_msgs::Imu &navXState)
+void imuCallback(const sensor_msgs::Imu &imuState)
 {
-	const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
+	const tf2::Quaternion imuQuat(imuState.orientation.x, imuState.orientation.y, imuState.orientation.z, imuState.orientation.w);
 	double roll;
 	double pitch;
 	double yaw;
-	tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
+	tf2::Matrix3x3(imuQuat).getRPY(roll, pitch, yaw);
 
 	if (yaw == yaw) // ignore NaN results
-		navX_angle = yaw;
+		imu_angle = yaw;
 }
 
 void preemptActionlibServers()
@@ -102,7 +102,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	{
 		static bool sendRobotZero = false;
 
-		geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], navX_angle, config);
+		geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], imu_angle, config);
 
 		if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (cmd_vel.angular.z == 0.0) && !sendRobotZero)
 		{
@@ -210,9 +210,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		orient_strafing_angle_msg.data = orient_strafing_angle;
 		orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
 
-		std_msgs::Float64 navX_angle_msg;
-		navX_angle_msg.data = navX_angle;
-		orient_strafing_state_pub.publish(navX_angle_msg);
+		std_msgs::Float64 imu_angle_msg;
+		imu_angle_msg.data = imu_angle;
+		orient_strafing_state_pub.publish(imu_angle_msg);
 
 		//Joystick1: rightTrigger
 		if(joystick_states_array[0].rightTrigger >= 0.5)
@@ -465,7 +465,7 @@ int main(int argc, char **argv)
 
 	teleop_cmd_vel = std::make_unique<TeleopCmdVel>(config);
 
-	navX_angle = M_PI / 2.;
+	imu_angle = M_PI / 2.;
 
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
@@ -480,7 +480,7 @@ int main(int argc, char **argv)
 	orient_strafing_setpoint_pub = n.advertise<std_msgs::Float64>("orient_strafing/setpoint", 1);
 	orient_strafing_state_pub = n.advertise<std_msgs::Float64>("orient_strafing/state", 1);
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
-	ros::Subscriber navX_heading = n.subscribe("navx_mxp", 1, &navXCallback);
+	ros::Subscriber imu_heading = n.subscribe("/imu/zeroed_imu", 1, &imuCallback);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);

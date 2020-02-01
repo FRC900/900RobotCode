@@ -43,10 +43,10 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "imu_to_rpy");
     ros::NodeHandle n;
     rpy_publisher = n.advertise<geometry_msgs::Vector3>("rpy_angles", 5);
-    auto quat_subscriber = n.subscribe("/frcrobot_rio/navx_mxp", 5, MsgCallback);
+	auto quat_subscriber = n.subscribe("/imu/zeroed_imu", 5, MsgCallback);
 
     // check for incoming quaternions untill ctrl+c is pressed
-    ROS_INFO("waiting for /navx/imu");
+    ROS_INFO("waiting for zeroed_imu");
     ros::spin();
     return 0;
 }

@@ -14,5 +14,5 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <std_msgs/Float64.h>
 
-void navXCallback(const sensor_msgs::Imu &navXState);
+void imuCallback(const sensor_msgs::Imu &imuState);
 

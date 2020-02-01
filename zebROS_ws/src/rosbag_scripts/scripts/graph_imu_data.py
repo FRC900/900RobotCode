@@ -51,7 +51,7 @@ def run():
         topicList = readBagTopicList(bag)
 
         # figure out which topic is talon_states and which is pdp_states
-        imuTopic = "/frcrobot_rio/navx_mxp"
+        imuTopic = "/imu/zeroed_imu"
         
         # read Talon data
         imu_data = extract_data(bag, imuTopic , inputFileName)

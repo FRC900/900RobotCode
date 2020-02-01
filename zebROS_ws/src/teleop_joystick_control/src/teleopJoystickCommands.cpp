@@ -176,7 +176,7 @@ realtime_tools::RealtimeBuffer<CubeState> cubeState;
 
 std::atomic<bool> disableArmLimits;
 std::atomic<bool> clamped_c;
-std::atomic<double> navX_angle;
+std::atomic<double> imu_angle;
 std::atomic<double> matchTimeRemaining;
 
 void intakeGoToDefault(bool &intake_up)
@@ -1233,7 +1233,7 @@ void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 		{
 			orient_running = false;
 			sendRobotZero = false;
-			const double angle = -navX_angle.load(std::memory_order_relaxed) - M_PI / 2;
+			const double angle = -imu_angle.load(std::memory_order_relaxed) - M_PI / 2;
 			//const double angle = M_PI; //for testing
 			ROS_INFO_STREAM("angle = " << angle);
 			// TODO: look at using ros::angles package
@@ -1285,7 +1285,7 @@ void evaluateCommands(const frc_msgs::JoystickState::ConstPtr &JoystickState)
 		Eigen::Vector2d joyVector;
 		joyVector[0] = leftStickX; //intentionally flipped
 		joyVector[1] = -leftStickY;
-		Eigen::Rotation2Dd r(-navX_angle.load(std::memory_order_relaxed) - M_PI / 2);
+		Eigen::Rotation2Dd r(-imu_angle.load(std::memory_order_relaxed) - M_PI / 2);
 		Eigen::Vector2d rotatedJoyVector = r.toRotationMatrix() * joyVector;
 
 		geometry_msgs::Twist vel;
@@ -1368,7 +1368,7 @@ else if(matchTimeRemaining < 31 && matchTimeRemaining > 29) {
 rightRumble = 65535;
 }
 else if(matchTimeRemaining <17 && matchTimeRemaining > 14) {
-allback(const sensor_msgs::Imu &navXState)
+allback(const sensor_msgs::Imu &imuState)
 
 }
 rumbleTypeConverterPublish(leftRumble, rightRumble);
@@ -1444,7 +1444,7 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read exchange_delay");
 
 	disableArmLimits = false;
-	navX_angle = M_PI / 2;
+	imu_angle = M_PI / 2;
 	matchTimeRemaining = std::numeric_limits<double>::max();
 	outOfPoints = false;
 
@@ -1470,10 +1470,10 @@ int main(int argc, char **argv)
 	swerve_control = n.serviceClient<talon_swerve_drive_controller::MotionProfilePoints>("/frcrobot/swerve_drive_controller/run_profile", false, service_connection_header);
 	spline_gen = n.serviceClient<base_trajectory::GenerateSpline>("/base_trajectory/spline_gen", false, service_connection_header);
 
-	VisualizeService = n.serviceClient<robot_visualizer::ProfileFollower>("/frcrobot/visualize_auto", false, service_connection_header);    
+	VisualizeService = n.serviceClient<robot_visualizer::ProfileFollower>("/frcrobot/visualize_auto", false, service_connection_header);
 	ros::Subscriber joystick_sub  = n.subscribe("joystick_states", 1, &evaluateCommands);
 	ros::Subscriber match_data    = n.subscribe("match_data", 1, &match_data_callback);
-	ros::Subscriber navX_heading  = n.subscribe("/frcrobot/navx_mxp", 1, &navXCallback);
+	ros::Subscriber imu_heading  = n.subscribe("/imu/zeroed_imu", 1, &imuCallback);
 	ros::Subscriber elevator_odom = n.subscribe("/frcrobot/elevator_controller/odom", 1, &OdomCallback);
 	ros::Subscriber elevator_cmd  = n.subscribe("/frcrobot/elevator_controller/return_cmd_pos", 1, &elevCmdCallback);
 	ros::Subscriber cube_state    = n.subscribe("/frcrobot/elevator_controller/cube_state", 1, &cubeCallback);
@@ -1495,16 +1495,16 @@ void rumbleTypeConverterPublish(uint16_t leftRumble, uint16_t rightRumble)
 	JoystickRumble.publish(rumbleMsg);
 }
 
-void navXCallback(const sensor_msgs::Imu &navXState)
+void imuCallback(const sensor_msgs::Imu &imuState)
 {
-	const tf2::Quaternion navQuat(navXState.orientation.x, navXState.orientation.y, navXState.orientation.z, navXState.orientation.w);
+	const tf2::Quaternion imuQuat(imuState.orientation.x, imuState.orientation.y, imuState.orientation.z, imuState.orientation.w);
 	double roll;
 	double pitch;
 	double yaw;
-	tf2::Matrix3x3(navQuat).getRPY(roll, pitch, yaw);
+	tf2::Matrix3x3(imuQuat).getRPY(roll, pitch, yaw);
 
 	if (yaw == yaw) // ignore NaN results
-		navX_angle.store(yaw, std::memory_order_relaxed);
+		imu_angle.store(yaw, std::memory_order_relaxed);
 }
 
 void cube_rumble(bool has_cube)

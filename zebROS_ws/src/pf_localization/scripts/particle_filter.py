@@ -967,12 +967,12 @@ def main():
     rospy.init_node('pf_localization', anonymous=True)
 
     #cmd_vel_sub = message_filters.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, queue_size = 2)
-    #imu_sub     = message_filters.Subscriber("/frcrobot_rio/navx_mxp", Imu, queue_size = 2)
+    #imu_sub     = message_filters.Subscriber("/imu/zeroed_imu", Imu, queue_size = 2)
     #ts          = message_filters.ApproximateTimeSynchronizer([imu_sub, cmd_vel_sub], 10, 0.1)
     #ts.registerCallback(imu_cmd_vel_callback)
 
     cmd_vel_sub = rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", TwistStamped, cmd_vel_callback, queue_size = 2)
-    imu_sub = rospy.Subscriber("/frcrobot_rio/navx_mxp", Imu, imu_callback, queue_size = 1)
+    imu_sub = rospy.Subscriber("/imu/zeroed_imu", Imu, imu_callback, queue_size = 1)
     rospy.Subscriber("/goal_detection/goal_detect_msg", GoalDetection, goal_detection_callback, (pf), queue_size = 1)
 
     # spin() simply keeps python from exiting until this node is stopped

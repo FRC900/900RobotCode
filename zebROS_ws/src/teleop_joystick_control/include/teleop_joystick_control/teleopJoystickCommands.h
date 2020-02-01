@@ -23,7 +23,7 @@
 #include <talon_state_controller/CustomProfileStatus.h>
 
 void rumbleTypeConverterPublish(uint16_t leftRumble, uint16_t rightRumble);
-void navXCallback(const sensor_msgs::Imu &navXState);
+void imuCallback(const sensor_msgs::Imu &imuState);
 void cubeCallback(const elevator_controller::CubeState &cube);
 void jointStateCallback(const sensor_msgs::JointState &joint_state);
 void talonStateCallback(const talon_state_controller::TalonState &talon_state);
