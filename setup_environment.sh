@@ -276,7 +276,7 @@ sudo apt remove --purge -y thunderbird libreoffice-* unattended-upgrade
 mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include 
 mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/ctre 
 cd /home/ubuntu
-wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.18*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*"
+wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.18.1*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*"
 cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include 
 find /home/ubuntu/devsite.ctr-electronics.com -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o 
 cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/ctre 
