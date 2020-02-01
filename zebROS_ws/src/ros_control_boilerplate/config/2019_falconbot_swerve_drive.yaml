@@ -61,7 +61,7 @@ swerve_drive_controller:
     speed_joint_fl:
         joint: fl_drive #fix pid
         close_loop_values:
-            - {p: 0.035, i: 0.0004, d: 1.0, f: 0.0397, i_zone: 650}
+            - {p: 0.04, i: 0.0004, d: 0.3, f: 0.043, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         sensor_phase: true 
         invert_output: false 
@@ -72,7 +72,7 @@ swerve_drive_controller:
     speed_joint_fr:
         joint: fr_drive #fix pid
         close_loop_values:
-            - {p: 0.035, i: 0.0004, d: 1.0, f: 0.0397, i_zone: 650}
+            - {p: 0.04, i: 0.0004, d: 0.3, f: 0.043, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         sensor_phase: true 
         invert_output: false 
@@ -83,7 +83,7 @@ swerve_drive_controller:
     speed_joint_bl:
         joint: bl_drive #fix pid
         close_loop_values: 
-            - {p: 0.035, i: 0.0004, d: 1.0, f: 0.0397, i_zone: 650}
+            - {p: 0.04, i: 0.0004, d: 0.3, f: 0.043, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         feedback_type: IntegratedSensor
         sensor_phase: true  
@@ -94,7 +94,7 @@ swerve_drive_controller:
     speed_joint_br:
         joint: br_drive #fix pid
         close_loop_values:
-            - {p: 0.035, i: 0.0004, d: 1.0, f: 0.0397, i_zone: 650}
+            - {p: 0.04, i: 0.0004, d: 0.3, f: 0.043, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         sensor_phase: True
         invert_output: false 

@@ -64,12 +64,10 @@
 			<node name="orient_strafing_node" pkg="teleop_joystick_control" type="orient_strafing_node" output="screen"/>
 		</group>
 	</group>
-
 	<group ns="cmd_vel_mux">
 		<node name="twist_mux" pkg="twist_mux" type="twist_mux">
 			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux.yaml"/>
 			<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
 		</node>
 	</group>
-
 </launch>
