@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-	<arg name="primary_imu" default="ADI" />
+	<arg name="primary_imu" default="NAVX" />
 	<node name="navx_publisher" pkg="navx_publisher" type="navx_publisher_node" output="screen">
 		<param name="device" value="/dev/NAVX"/>
 	</node>

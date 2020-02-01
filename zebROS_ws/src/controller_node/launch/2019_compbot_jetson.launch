@@ -10,7 +10,7 @@
 	<arg name="joy_or_key" default="joy" />
 	<arg name="static_map" default="True"/>
 	<arg name="record" default="false" />
-	<arg name="primary_imu" default="ADI" />
+	<arg name="primary_imu" default="NAVX" />
 
 	<group ns="frcrobot_jetson">
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_base_jetson.yaml" command="load"/>
