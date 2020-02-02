@@ -270,7 +270,9 @@ fi
 # Clean up Jetson
 sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/TensorRT /home/nvidia/libvisionworkd*
 # Save ~400MB
-sudo apt remove --purge -y thunderbird libreoffice-* unattended-upgrade
+sudo apt remove --purge -y thunderbird libreoffice-*
+# Disable automatic updates
+sudo sed -i -e 's/APT::Periodic::Update-Package-Lists "1"/APT::Periodic::Update-Package-Lists "0"/' /etc/apt/apt.conf.d/10periodic
 
 # Install CTRE & navX libs
 mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include 
