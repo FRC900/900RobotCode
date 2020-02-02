@@ -37,6 +37,10 @@ sudo ninja uninstall && sudo ninja clean && sudo ninja install
 cd 
 rm -rf realsense_src
 
+sudo ccache -C
+sudo ccache -c
+sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccach
+
 # Add Individual Packages here
 # You can install a specific ROS package (replace underscores with dashes of the package name):
 # sudo apt-get install ros-melodic-PACKAGE
