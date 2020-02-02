@@ -30,7 +30,7 @@ namespace mech_controller
 			return false;
 		}
 		//initialize motor joint using those config values
-		if ( !motor_name_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, intake_motor_params) {
+		if ( !motor_name_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, intake_motor_params) ) {
 			ROS_ERROR("Cannot initialize ______ joint!");
 			return false;
 		}
