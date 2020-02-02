@@ -1634,6 +1634,10 @@ class TalonControllerInterface
 		{
 			if (demand1_type == params_.demand1_type_)
 				return;
+			if (demand1_type == hardware_interface::DemandType_AuxPID){
+				ROS_ERROR_STREAM("Demand Type is DemandType_AuxPID!");
+				return;
+			}
 			params_.demand1_type_ = demand1_type;
 			// syncDynamicReconfigure();
 			talon_->setDemand1Type(demand1_type);

@@ -122,11 +122,10 @@ class TalonHWCommand
 		DemandType getDemand1Type(void) const;
 
 		void setDemand1Value(double demand_value);
-
-		void resetDemand1(void);
-
 		double getDemand1Value(void) const;
+
 		bool demand1Changed(DemandType &type, double &value);
+		void resetDemand1(void);
 
 		void setNeutralMode(NeutralMode neutral_mode);
 		bool getNeutralMode(void);

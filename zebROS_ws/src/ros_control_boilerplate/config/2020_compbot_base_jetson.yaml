@@ -27,6 +27,14 @@ hardware_interface:
        - {name: climber_deploy_joint, type: solenoid, local_hardware: false, local_update: true}
        - {name: climber_elevator_brake_joint, type: solenoid, local_hardware: false, local_update: true}
 
+       - {name: control_panel_arm_joint, type: solenoid, local_hardware: false, local_update: true}
+       - {name: control_panel_joint, type: can_talon_srx, can_id: 32, local: true}
+       
+       - {name: elevator_master, type: can_talon_srx, can_id: 41, local: true}
+       - {name: elevator_follower1, type: can_talon_srx, can_id: 42, local: true}
+       - {name: elevator_follower2, type: can_talon_srx, can_id: 43, local: true}
+       - {name: elevator_follower3, type: can_talon_srx, can_id: 44, local: true}
+
        - {name: fl_drive, type: can_talon_srx, can_id: 21, local: true}
        - {name: fl_angle, type: can_talon_srx, can_id: 11, local: true}
        - {name: fr_drive, type: can_talon_srx, can_id: 22, local: true}
@@ -64,7 +72,29 @@ hardware_interface:
 # /frcrobot/talon_states
 
 #Set up controllers for main robot mechanisms
- 
+control_panel_controller:
+        type: control_panel_controller/ControlPanelController
+        control_panel_diameter: 32 #inches
+        wheel_diameter: 4 #inches, compliant wheel
+        control_panel_joint: "control_panel"
+        control_panel:
+                joint: control_panel_joint
+                type: talon_controllers/TalonMotionMagicCloseLoopController
+                feedback_type: CTRE_MagEncoder_Absolute
+                close_loop_values:
+                    - {p: 0.0, i: 0.000, d: 0.0, f: 0.0, i_zone: 0}
+                invert_output: true 
+                sensor_phase: false
+                peak_output_forward: 1.0
+                peak_output_reverse: -1.0
+                nominal_output_forward: 0.0
+                nominal_output_reverse: 0.0
+                motion_cruise_velocity: 3
+                motion_acceleration: 10
+                voltage_compensation_enable: True
+                dynamic_reconfigure: True
+
+
 climber_controller:
     type:  climber_controller_2020/ClimberController
     winch_joint: "winch"
@@ -340,6 +370,7 @@ bl_drive_position_controller:
     voltage_compensation_enable: true
     dynamic_reconfigure: True
         
+
 
 elevator_master_percent_output_controller:
     type: talon_controllers/TalonPercentOutputController
