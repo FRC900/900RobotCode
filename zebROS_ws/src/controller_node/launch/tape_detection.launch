@@ -30,7 +30,7 @@
 
   <arg name="sub_rate" default="1" />
   <arg name="pub_rate" default="1" />
-  <arg name="hFov" default="105.0" />
+  <arg name="hFov" default="87.0" />
   <arg name="camera_angle" default="0.0" />
 
   <!--
