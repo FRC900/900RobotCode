@@ -4,6 +4,7 @@
 //replace "package" with the name of the controllers package
 
 #include "package/mech_controller.h"
+#include <pluginlib/class_list_macros.h> //to compile as a controller
 
 namespace mech_controller
 {
