@@ -17,7 +17,7 @@ namespace mech_controller
 		hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
 		//Initialize piston joints
 		/* Ex:
-		push_joint_ = pos_joint_iface->getHandle("joint_name"); //joint_name comes from ros_control_boilerplate/config/[insert_year]_compbot_base_jetson.yaml
+		push_joint_ = pos_joint_iface->getHandle("joint_name"); //joint name comes from ros_control_boilerplate/config/[insert_year]_compbot_base_jetson.yaml
 		*/
 
 		//Initialize motor joints
