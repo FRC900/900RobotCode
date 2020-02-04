@@ -22,6 +22,11 @@ hardware_interface:
     
    joints:
        #TODO: Get config values of joints
+       - {name: turret_joint, type: can_talon_srx, can_id: 30, local: true}
+
+       - {name: cargo_intake_joint, type: can_talon_srx, can_id: 31, local: true}
+       - {name: cargo_intake_arm_joint, type: solenoid, local_hardware: false, local_update: true}
+       - {name: climber_ski_joint, type: solenoid, local_hardware: false, local_update: true}
 
        - {name: intake_arm_joint, type: solenoid, local_hardware: false, local_update: true}
        - {name: intake_joint, type: can_talon_srx, can_id: 33, local: true}
@@ -48,6 +53,9 @@ hardware_interface:
        - {name: bl_angle, type: can_talon_srx, can_id: 13, local: true}
        - {name: pdp, type: pdp}
        - {name: compressor, type: compressor, pcm_id: 0}
+
+       - {name: panel_claw, type: solenoid, local_hardware: false, local_update: true}
+       - {name: panel_push_extend, type: solenoid, local_hardware: false, local_update: true}
 
        - {name: panel_intake_limit_switch_1, type: digital_input, local: false}
        - {name: panel_intake_limit_switch_2, type: digital_input, local: false}
@@ -128,6 +136,36 @@ climber_controller:
         voltage_compensation_enable: True
         dynamic_reconfigure: True
 
+
+turret_controller:
+    type: turret_controller/TurretController
+
+    turret_joint: 'turret'
+
+    turret:
+        type: talon_controllers/TalonMotionMagicCloseLoopController
+        joint: turret_joint
+        feedback_type: CTRE_MagEncoder_Absolute
+        close_loop_values:
+            - {p: 0.0, i: 0.000, d: 0.0, f: 0.0, i_zone: 0} #not tuned
+        invert_output: true
+        sensor_phase: false
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.0
+        nominal_output_reverse: 0.0
+        motion_cruise_velocity: 20
+        motion_acceleration: 100
+        voltage_compensation: true
+        dynamic_reconfigure: true
+        limit_switch_local_forward_source: "FeedbackConnector"
+        limit_switch_local_forward_normal: "NormallyOpen"
+        limit_switch_local_reverse_source: "FeedbackConnector"
+        limit_switch_local_reverse_normal: "NormallyOpen"
+        softlimit_forward_threshold: 1.0 #Placeholder value
+        softlimit_forward_enable: true
+        softlimit_reverse_threshold: -1.0 #Placeholder value
+        softlimit_reverse_enable: true 
 
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal

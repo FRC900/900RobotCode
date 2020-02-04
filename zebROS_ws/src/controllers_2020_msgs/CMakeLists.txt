@@ -62,6 +62,7 @@ add_service_files(
    IntakeSrv.srv
    ClimberSrv.srv
    ControlPanelSrv.srv
+   TurretSrv.srv
 )
 
 ## Generate actions in the 'action' folder

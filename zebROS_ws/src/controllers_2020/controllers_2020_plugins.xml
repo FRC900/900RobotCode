@@ -31,5 +31,10 @@
                         Does stuff to make indexer_controller exist.
                 </description>
         </class>
+        <class name="turret_controller/TurretController" type="turret_controller::TurretController" base_class_type="controller_interface::ControllerBase">
+                <description>
+                        Does stuff to make turret_controller exist.
+                </description>
+        </class>
 </library>
 
