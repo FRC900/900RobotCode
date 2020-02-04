@@ -1,4 +1,5 @@
 #include "controllers_2020/control_panel_controller.h"
+#include <pluginlib/class_list_macros.h> //to compile as a controller
 
 namespace control_panel_controller
 {

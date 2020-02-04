@@ -8,7 +8,6 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <talon_controllers/talon_controller_interface.h>
 
-#include <pluginlib/class_list_macros.h> //to compile as a controller
 
 #include <controllers_2020_msgs/ControlPanelSrv.h>
 

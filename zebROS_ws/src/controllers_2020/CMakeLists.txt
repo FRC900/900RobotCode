@@ -15,10 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   realtime_tools
   roscpp
   talon_controllers
-  talon_interface
-  talon_state_msgs
   std_msgs
-  std_srvs
   controller_interface
   controllers_2020_msgs
 )
@@ -140,8 +137,8 @@ include_directories(
    src/indexer_test_controller.cpp
    src/shooter_controller.cpp
    src/climber_controller.cpp
+   src/intake_controller.cpp 
    src/control_panel_controller.cpp
-
 )
 
 ## Add cmake target dependencies of the library
