@@ -31,4 +31,4 @@ catkin config --blacklist \
 	zed_video_sub_tutorial \
 	$EXTRA_BLACKLIST_PACKAGES
 
-catkin build -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_WITH_OPENMP=ON "$@"
+catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON "$@"

@@ -7,7 +7,7 @@ endif()
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_definitions(-Wno-deprecated-declarations -Wno-switch -ftrack-macro-expansion=0 -fno-var-tracking-assignments -DPCL_ONLY_CORE_POINT_TYPES=ON -DNO_EXPLICIT_INSTANTIATIONS -Wall -DNON_POLLING)
 #add_definitions(-Wall -Wextra -Wno-switch)
 
