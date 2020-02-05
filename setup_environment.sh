@@ -28,6 +28,7 @@ sudo apt install -y \
 	libboost-all-dev \
 	libcanberra-gtk-module \
 	libcanberra-gtk3-module \
+	libclang-9-dev \
 	libeigen3-dev \
 	libflann-dev \
 	libgflags-dev \
