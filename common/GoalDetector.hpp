@@ -29,25 +29,19 @@ struct GoalInfo
 	cv::Point com;
 	cv::Rect br;
 	cv::RotatedRect rtRect;
-	cv::Point2f lineStart;
-	cv::Point2f lineEnd;
 };
 
 //This contains all the necessary info for a goal
 struct GoalFound
 {
 	cv::Point3f pos;
-	cv::Point3f left_pos;
-	cv::Point3f right_pos;
 	float distance;
 	float angle;
 	float confidence;
-	size_t left_contour_index;
-	size_t right_contour_index;
-	cv::Rect left_rect;
-	cv::Rect right_rect;
-	cv::RotatedRect left_rotated_rect;
-	cv::RotatedRect right_rotated_rect;
+	size_t contour_index;
+	cv::Rect rect;
+	cv::RotatedRect rotated_rect;
+	std::string id;
 };
 
 
@@ -58,7 +52,7 @@ class GoalDetector
 
 		std::vector< GoalFound > return_found(void) const;
 
-		void drawOnFrame(cv::Mat &image,const std::vector< std::vector< cv::Point>> &contours) const;
+		void drawOnFrame(cv::Mat &image,const std::vector< std::vector< cv::Point>> &contours, const std::vector< GoalFound > &goals) const;
 
 		//These are the three functions to call to run GoalDetector
 		//they fill in _contours, _infos, _depth_mins, etc
@@ -66,7 +60,7 @@ class GoalDetector
 
 		//If your objectypes have the same width it's safe to run
 		//getContours and computeConfidences with different types
-		void findBoilers(const cv::Mat& image, const cv::Mat& depth);
+		void findTargets(const cv::Mat& image, const cv::Mat& depth);
 		const std::vector< std::vector< cv::Point > > getContours(const cv::Mat& image);
 
 		bool Valid(void) const;
@@ -75,6 +69,7 @@ class GoalDetector
 		void setRedScale(double red_scale);
 		void setOtsuThreshold(int otsu_threshold);
 		void setMinConfidence(double min_valid_confidence);
+		void setTargetNum(ObjectNum target_num);
 
 	private:
 
@@ -91,13 +86,14 @@ class GoalDetector
 		int         _red_scale;
 
 		int         _camera_angle;
+		ObjectNum   _target_num;
 
 		float createConfidence(float expectedVal, float expectedStddev, float actualVal);
 		float distanceUsingFOV(ObjectType _goal_shape, const cv::Rect &rect) const;
 		float distanceUsingFixedHeight(const cv::Rect &rect,const cv::Point &center, float expected_delta_height) const;
 		bool generateThresholdAddSubtract(const cv::Mat& imageIn, cv::Mat& imageOut);
 		void isValid();
+		const std::string getObjectId(ObjectNum type);
 		const std::vector<DepthInfo> getDepths(const cv::Mat &depth, const std::vector< std::vector< cv::Point > > &contours, const ObjectNum &objtype, float expected_height);
 		const std::vector< GoalInfo > getInfo(const std::vector< std::vector< cv::Point > > &contours, const std::vector<DepthInfo> &depth_maxs, ObjectNum objtype);
 };
-

@@ -1,44 +1,22 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(goal_detection)
+project(field_obj)
 
-include ("../cmake_modules/CMakeOpt.cmake")
+## Compile as C++11, supported in ROS Kinetic and newer
+# add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-if (DEFINED CMAKE_TOOLCHAIN_FILE)
-  find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    geometry_msgs
-    field_obj
-    message_filters
-	nodelet
-    std_msgs
-    sensor_msgs
-    tf2
-    tf2_ros
-  )
-else()
-  find_package(catkin REQUIRED COMPONENTS
-    roscpp
-	image_transport
-	dynamic_reconfigure_wrapper
-    field_obj
-    message_filters
-    geometry_msgs
-	nodelet
-    std_msgs
-    sensor_msgs
-	teraranger_array
-    cv_bridge
-    tf2
-    tf2_ros
-  )
-endif()
+find_package(catkin REQUIRED COMPONENTS
+  geometry_msgs
+  std_msgs
+  message_filters
+  message_generation
+)
 
-find_package(orocos_kdl)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -55,10 +33,10 @@ find_package(orocos_kdl)
 ##   your messages/services/actions (e.g. std_msgs, actionlib_msgs, ...).
 ## * In the file package.xml:
 ##   * add a build_depend tag for "message_generation"
-##   * add a build_depend and a run_depend tag for each package in MSG_DEP_SET
+##   * add a build_depend and a exec_depend tag for each package in MSG_DEP_SET
 ##   * If MSG_DEP_SET isn't empty the following dependency has been pulled in
 ##     but can be declared for certainty nonetheless:
-##     * add a run_depend tag for "message_runtime"
+##     * add a exec_depend tag for "message_runtime"
 ## * In this file (CMakeLists.txt):
 ##   * add "message_generation" and every package in MSG_DEP_SET to
 ##     find_package(catkin REQUIRED COMPONENTS ...)
@@ -70,11 +48,11 @@ find_package(orocos_kdl)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-#add_message_files(
-#  FILES
-#  GoalDetection.msg
-#  Goal.msg
-#)
+ add_message_files(
+   FILES
+   Detection.msg
+   Object.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -91,11 +69,11 @@ find_package(orocos_kdl)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-#generate_messages(
-#  DEPENDENCIES
-#  std_msgs
-#  geometry_msgs
-#)
+ generate_messages(
+   DEPENDENCIES
+   geometry_msgs
+   std_msgs
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -104,7 +82,7 @@ find_package(orocos_kdl)
 ## To declare and build dynamic reconfigure parameters within this
 ## package, follow these steps:
 ## * In the file package.xml:
-##   * add a build_depend and a run_depend tag for "dynamic_reconfigure"
+##   * add a build_depend and a exec_depend tag for "dynamic_reconfigure"
 ## * In this file (CMakeLists.txt):
 ##   * add "dynamic_reconfigure" to
 ##     find_package(catkin REQUIRED COMPONENTS ...)
@@ -112,87 +90,67 @@ find_package(orocos_kdl)
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-    generate_dynamic_reconfigure_options(
-    cfg/GoalDetection.cfg
-    )
-endif()
+# generate_dynamic_reconfigure_options(
+#   cfg/DynReconf1.cfg
+#   cfg/DynReconf2.cfg
+# )
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 ## The catkin_package macro generates cmake config files for your package
 ## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if you package contains header files
+## INCLUDE_DIRS: uncomment this if your package contains header files
 ## LIBRARIES: libraries you create in this project that dependent projects also need
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES goal_detection
- CATKIN_DEPENDS roscpp message_runtime geometry_msgs std_msgs sensor_msgs
- #  DEPENDS system_lib
+#  LIBRARIES field_obj
+#  CATKIN_DEPENDS geometry_msgs std_msgs
+#  DEPENDS system_lib
 )
 
 ###########
 ## Build ##
 ###########
 
-if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-	add_executable(translate_to_pointstamped src/translate_to_pointstamped.cpp)
-	target_link_libraries(translate_to_pointstamped ${catkin_LIBRARIES})
-	add_dependencies(translate_to_pointstamped ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
+include_directories(
+# include
+  ${catkin_INCLUDE_DIRS}
+)
 
-  find_package(OpenCV REQUIRED)
-  ## Specify additional locations of header files
-  ## Your package locations should be listed before other locations
-  # include_directories(include)
-  include_directories(
-    ${catkin_INCLUDE_DIRS}
-    ${OpenCV_INCLUDE_DIRS}
-    ../../../common
-    ../../..
-  )
+## Declare a C++ library
+# add_library(${PROJECT_NAME}
+#   src/${PROJECT_NAME}/field_obj.cpp
+# )
 
-  ## Declare a C++ executable
-  add_executable(goal_detection_node
-    src/goal_detect_node.cpp
-  )
+## Add cmake target dependencies of the library
+## as an example, code may need to be generated before libraries
+## either from message generation or dynamic reconfigure
+# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-  list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
-  ## Specify libraries to link a library or executable target against
-  target_link_libraries(goal_detection_node
-    ${catkin_LIBRARIES}
-    ${OpenCV_LIBS}
-  )
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+# add_executable(${PROJECT_NAME}_node src/field_obj_node.cpp)
 
-  ## Add cmake target dependencies of the executable
-  ## same as for the library above
-  add_dependencies(goal_detection_node
-    ${${PROJECT_NAME}_EXPORTED_TARGETS}
-    ${catkin_EXPORTED_TARGETS}
-  )
+## Rename C++ executable without prefix
+## The above recommended prefix causes long target names, the following renames the
+## target back to the shorter version for ease of user use
+## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
+# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
-  add_library(GoalDetection
-	src/goal_detect.cpp
-    ../../../common/GoalDetector.cpp
-    ../../../common/Utilities.cpp
-    ../../../common/objtype.cpp
-    ../../../common/track3d.cpp
-    ../../../common/kalman.cpp
-    ../../../common/hungarian.cpp
-  )
-  target_link_libraries(GoalDetection
-	${catkin_LIBRARIES}
-	${OpenCV_LIBS}
-  )
+## Add cmake target dependencies of the executable
+## same as for the library above
+# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-  add_dependencies(GoalDetection
-    ${${PROJECT_NAME}_EXPORTED_TARGETS}
-    ${catkin_EXPORTED_TARGETS}
-  )
-
-endif()
+## Specify libraries to link a library or executable target against
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -208,14 +166,19 @@ endif()
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
-if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-# Mark executables and/or libraries for installation
-  install(TARGETS goal_detection_node
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION} # Might need to be ${CATKIN_GLOBAL_BIN_DESTINATION} ?
-  )
-endif()
+## Mark executables for installation
+## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
+# install(TARGETS ${PROJECT_NAME}_node
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+## Mark libraries for installation
+## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
+# install(TARGETS ${PROJECT_NAME}
+#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+# )
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/
@@ -236,7 +199,7 @@ endif()
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_goal_detection.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_field_obj.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

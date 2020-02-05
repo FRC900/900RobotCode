@@ -2,7 +2,7 @@
 <launch>
   <arg name="live_camera" default="true" />
 
-  <!-- 
+  <!--
 		 ZED needs transforms for its cameras, but we've modified them
          Launch the modified version here so that the ZED camera node
          always has them available
@@ -21,6 +21,7 @@
   <include file="$(find zed_wrapper)/launch/zed_camera.launch" if="$(arg live_camera)" >
   -->
   <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)" args="manager" output="screen" />
+
   <include file="$(find zed_wrapper)/launch/zed_camera_nodelet.launch" if="$(arg live_camera)">
 	  <arg name="nodelet_manager_name" value="$(arg nodelet_manager_name)" />
 	  <arg name="common_params_file"   value="$(find controller_node)/config/zed/common.yaml" />

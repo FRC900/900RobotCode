@@ -22,7 +22,9 @@
 
 #include "teraranger_array/RangeArray.h"
 
-#include "goal_detection/GoalDetection.h"
+#include "field_obj/Detection.h"
+#include "field_obj/Object.h"
+#include "objtype.hpp"
 
 #include "GoalDetector.hpp"
 #include "goal_detection/GoalDetectionConfig.h"
@@ -57,7 +59,7 @@ namespace goal_detection
 				nh_.param("blue_scale", config_.blue_scale, 0.90);
 				nh_.param("red_scale", config_.red_scale, 0.80);
 				nh_.param("otsu_threshold", config_.otsu_threshold, 5);
-				nh_.param("min_confidence", config_.min_confidence, 0.50);
+				nh_.param("min_confidence", config_.min_confidence, 0.30);
 				drw_.init(nh_, config_);
 
 				bool no_depth = false;
@@ -82,7 +84,7 @@ namespace goal_detection
 				}
 
 				// Set up publisher
-				pub_ = nh_.advertise<goal_detection::GoalDetection>("goal_detect_msg", pub_rate);
+				pub_ = nh_.advertise<field_obj::Detection>("goal_detect_msg", pub_rate);
 
 				pub_debug_image_ = it.advertise("debug_image", 2);
 			}
@@ -111,10 +113,20 @@ namespace goal_detection
 				gd_->setMinConfidence(config_.min_confidence);
 
 				//Send current color and depth image to the actual GoalDetector
-				gd_->findBoilers(cvFrame->image, cvDepth->image);
+				gd_->setTargetNum(POWER_PORT_2020);
+				gd_->findTargets(cvFrame->image, cvDepth->image);
+				std::vector< GoalFound > gfd_power_port = gd_->return_found();
 
-				const std::vector< GoalFound > gfd = gd_->return_found();
-				goal_detection::GoalDetection gd_msg;
+				gd_->setTargetNum(LOADING_BAY_2020);
+				gd_->findTargets(cvFrame->image, cvDepth->image);
+				std::vector< GoalFound > gfd_loading_bay = gd_->return_found();
+
+				std::vector< GoalFound > gfd;
+				gfd.reserve( gfd_power_port.size() + gfd_loading_bay.size() );
+				gfd.insert( gfd.end(), gfd_power_port.begin(), gfd_power_port.end() );
+				gfd.insert( gfd.end(), gfd_loading_bay.begin(), gfd_loading_bay.end() );
+
+				field_obj::Detection gd_msg;
 
 				gd_msg.header.seq = frameMsg->header.seq;
 				gd_msg.header.stamp = frameMsg->header.stamp;
@@ -129,25 +141,25 @@ namespace goal_detection
 				gd_msg.header.frame_id = frame_id;
 				for(size_t i = 0; i < gfd.size(); i++)
 				{
-					geometry_msgs::Point32 dummy;
-					dummy.x = gfd[i].pos.y;
-					dummy.y = gfd[i].pos.x;
-					dummy.z = gfd[i].pos.z;
-					gd_msg.location.push_back(dummy);
+					field_obj::Object dummy;
+					dummy.location.x = gfd[i].pos.y;
+					dummy.location.y = gfd[i].pos.x;
+					dummy.location.z = gfd[i].pos.z;
+					dummy.id = gfd[i].id;
+					dummy.confidence = gfd[i].confidence;
+					gd_msg.objects.push_back(dummy);
 				}
-
-				gd_msg.valid = gd_->Valid();
 
 				pub_.publish(gd_msg);
 
 				if (pub_debug_image_.getNumSubscribers() > 0)
 				{
 					cv::Mat thisFrame(cvFrame->image.clone());
-					gd_->drawOnFrame(thisFrame, gd_->getContours(thisFrame));
+					gd_->drawOnFrame(thisFrame, gd_->getContours(thisFrame), gfd);
 					pub_debug_image_.publish(cv_bridge::CvImage(std_msgs::Header(), "bgr8", thisFrame).toImageMsg());
 				}
 
-				if (gd_msg.valid)
+				if (gd_msg.objects.size() > 0)
 				{
 					//Transform between goal frame and odometry/map.
 					static tf2_ros::TransformBroadcaster br;
@@ -162,9 +174,9 @@ namespace goal_detection
 						child_frame << i;
 						transformStamped.child_frame_id = child_frame.str();
 
-						transformStamped.transform.translation.x = gd_msg.location[i].x;
-						transformStamped.transform.translation.y = gd_msg.location[i].y;
-						transformStamped.transform.translation.z = gd_msg.location[i].z;
+						transformStamped.transform.translation.x = gd_msg.objects[i].location.x;
+						transformStamped.transform.translation.y = gd_msg.objects[i].location.y;
+						transformStamped.transform.translation.z = gd_msg.objects[i].location.z;
 
 						// Can't detect rotation yet, so publish 0 instead
 						tf2::Quaternion q;

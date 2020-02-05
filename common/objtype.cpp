@@ -217,6 +217,7 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			break;
 		case POWER_PORT_2020: //target on the POWER PORT (2020)
 			depth_ = 0;
+			real_height_ = 0.5; // TODO: Fix this using actual height
 			contour_.push_back(Point2f(0,0));
 			contour_.push_back(Point2f(0.2492375,0.4318));
 			contour_.push_back(Point2f(0.7477125,0.4318));
@@ -229,6 +230,7 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			break;
 		case LOADING_BAY_2020: //target on the LOADING BAY (2020)
 			depth_ = 0;
+			real_height_ = 0; // TODO: fix this using actual height
 			contour_.push_back(Point2f(0.0508,0.2286));
 			contour_.push_back(Point2f(0.0508,0));
 			contour_.push_back(Point2f(0,0));
@@ -241,12 +243,20 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			contour_.push_back(Point2f(0.127,0.2286));
 			name_ = "loading_bay";
 			break;
+		case TEST_TARGET_2020:
+			depth_ = 0;
+			real_height_ = 0; // TODO: fix this using actual height
+			contour_.push_back(Point2f(0, 0));
+			contour_.push_back(Point2f(0, 0.102));
+			contour_.push_back(Point2f(0.102, 0));
+			contour_.push_back(Point2f(0.102, 0.102));
+			name_ = "test_target";
+			break;
 		default:
 			cerr << "error initializing object!" << endl;
 	}
 
 	computeProperties();
-
 }
 
 ObjectType::ObjectType(const vector< Point2f > &contour_in, const string &name_in, const float &depth_in) :
@@ -311,21 +321,21 @@ Point3f ObjectType::screenToWorldCoords(const Rect &screen_position, double avg_
 
 	// TODO : see about using camera params cx and cy here
 	// Those will be the actual optical center of the frame
-	Point2f rect_center(
+	const Point2f rect_center(
 			screen_position.x + (screen_position.width  / 2.0),
 			screen_position.y + (screen_position.height / 2.0));
-	Point2f dist_to_center(
+	const Point2f dist_to_center(
 			rect_center.x - (frame_size.width / 2.0),
 			-rect_center.y + (frame_size.height / 2.0));
 
 	// This uses formula from http://www.chiefdelphi.com/forums/showpost.php?p=1571187&postcount=4
-	float azimuth = atanf(dist_to_center.x / (.5 * frame_size.width / tanf(fov_size.x / 2)));
-	float inclination = atanf(dist_to_center.y / (.5 * frame_size.height / tanf(fov_size.y / 2))) - cameraElevation;
+	const float azimuth = atanf(dist_to_center.x / (.5 * frame_size.width / tanf(fov_size.x / 2)));
+	const float inclination = atanf(dist_to_center.y / (.5 * frame_size.height / tanf(fov_size.y / 2))) - cameraElevation;
 
 	// avg_depth is to front of object.  Add in half the
 	// object's depth to move to the center of it
 	avg_depth += depth_ / 2.;
-	Point3f retPt(
+	const Point3f retPt(
 			avg_depth * cosf(inclination) * sinf(azimuth),
 			avg_depth * cosf(inclination) * cosf(azimuth),
 			avg_depth * sinf(inclination));
@@ -344,30 +354,29 @@ Point3f ObjectType::screenToWorldCoords(const Rect &screen_position, double avg_
 Rect ObjectType::worldToScreenCoords(const Point3f &position, const Point2f &fov_size, const Size &frame_size, float cameraElevation) const
 {
 	// Object distance
-	float r = sqrtf(position.x * position.x + position.y * position.y + position.z * position.z) - depth_ / 2.;
+	const float r = sqrtf(position.x * position.x + position.y * position.y + position.z * position.z) - depth_ / 2.;
 
 	// Add depth_/2 back in to r since position.z isn't adjusted for object depth
 	// This will lead to a slightly inaccurate inclination
 	// since we're dividing z from the center of the object
 	// with r from the front of it
-	float inclination = asinf(position.z / (r+depth_/2.)) + cameraElevation;
-
-	float azimuth = asinf(position.x / sqrtf(position.x * position.x + position.y * position.y));
+	const float inclination = asinf(position.z / (r+depth_/2.)) + cameraElevation;
+	const float azimuth = asinf(position.x / sqrtf(position.x * position.x + position.y * position.y));
 
 	//inverse of formula in screenToWorldCoords()
-	Point2f dist_to_center(
+	const Point2f dist_to_center(
 			tanf(azimuth) * (0.5 * frame_size.width / tanf(fov_size.x / 2)),
 			tanf(inclination) * (0.5 * frame_size.height / tanf(fov_size.y / 2)));
-	Point2f rect_center(
+	const Point2f rect_center(
 			dist_to_center.x + (frame_size.width / 2.0),
 			-dist_to_center.y + (frame_size.height / 2.0));
 
-	Point2f angular_size(2.0 * atan2f(width_, 2.0*r), 2.0 * atan2f(height_, 2.0*r));
-	Point2f screen_size(
+	const Point2f angular_size(2.0 * atan2f(width_, 2.0*r), 2.0 * atan2f(height_, 2.0*r));
+	const Point2f screen_size(
 			angular_size.x * (frame_size.width / fov_size.x),
 			angular_size.y * (frame_size.height / fov_size.y));
 
-	Point topLeft(
+	const Point topLeft(
 			cvRound(rect_center.x - (screen_size.x / 2.0)),
 			cvRound(rect_center.y - (screen_size.y / 2.0)));
 
@@ -388,8 +397,8 @@ Rect ObjectType::worldToScreenCoords(const Point3f &position, const Point2f &fov
 float ObjectType::expectedDepth(const Rect &screen_position, const Size &frame_size, const float hfov) const
 {
 	// TODO : use larger of width, height for slightly better resolution
-	float percent_image = (float)screen_position.width / frame_size.width;
-	float size_fov      = percent_image * hfov;
+	const float percent_image = (float)screen_position.width / frame_size.width;
+	const float size_fov      = percent_image * hfov;
 	return width_ / (2.0 * tanf(size_fov / 2.0)) - depth_ / 2.;
 }
 
@@ -397,4 +406,3 @@ bool ObjectType::operator== (const ObjectType &t1) const
 {
 	return this->shape() == t1.shape();
 }
-

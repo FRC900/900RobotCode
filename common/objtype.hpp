@@ -17,6 +17,7 @@ enum ObjectNum
     RIGHT_CARGO_2019,
 	POWER_PORT_2020,
 	LOADING_BAY_2020,
+  TEST_TARGET_2020
 };
 
 //class to hold the type of object that a detected object is
@@ -75,4 +76,3 @@ class ObjectType
 		//called by constructor to compute properties
 		void computeProperties(void);
 };
-
