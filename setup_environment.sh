@@ -29,6 +29,7 @@ sudo apt install -y \
 	libcanberra-gtk-module \
 	libcanberra-gtk3-module \
 	libclang-9-dev \
+    libclang1-9 \ 
 	libeigen3-dev \
 	libflann-dev \
 	libgflags-dev \
