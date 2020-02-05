@@ -15,6 +15,7 @@
 *.exe
 *.pyc
 *.stackdump
+core
 
 # Metadata
 *.aliases
@@ -35,6 +36,7 @@ Makefile
 .ninja_log
 build.ninja
 rules.ninja 
+compile_command.json
 
 *.avi
 *.zms
@@ -44,4 +46,5 @@ rules.ninja
 
 # Rosbag files
 bagfiles_temp/*.bag
+
 
