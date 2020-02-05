@@ -373,3 +373,20 @@ echo "source /home/ubuntu/2020RobotCode/zebROS_ws/command_aliases.sh" >> /home/u
 
 # Give the ubuntu user dialout permission, which is used by the ADI IMU 
 sudo adduser ubuntu dialout
+
+git clone https://github.com/VundleVim/Vundle.vim.git /home/ubuntu/.vim/bundle/Vundle.vim
+vim +PluginInstall +qall
+ln -sf /home/ubuntu/.vim/bundle/vim-ros-ycm/.ycm_extra_conf.py /home/ubuntu/.vim/bundle/vim-ros-ycm/ycm_extra_conf.py
+mkdir /home/ubuntuycm_build
+cd /home/ubuntuycm_build
+cmake -G Ninja -DUSE_SYSTEM_LIBCLANG=ON . /home/ubuntu/.vim/bundle/YouCompleteMe/third_party/ycmd/cpp
+cmake --build . --target ycm_core --config Release
+cd /home/ubuntu
+rm -rf ycm_build
+mkdir regex_build
+cd regex_build
+cmake -G Ninja . /home/ubuntu/.vim/bundle/YouCompleteMe/third_party/ycmd/third_party/cregex
+cmake --build . --target _regex --config Release
+cd /home/ubuntu
+rm -rf regex_build
+
