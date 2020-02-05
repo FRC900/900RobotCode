@@ -9,34 +9,34 @@ const char* GetWPILibVersion(void)
 
 
 #include <AHRS.h>
-AHRS::AHRS(SPI::Port)
+AHRS::AHRS(frc::SPI::Port)
 {
 	ROS_ERROR("Called AHRS(SPI::Port spi_port_id) on unsupported platform");
 }
-AHRS::AHRS(I2C::Port)
+AHRS::AHRS(frc::I2C::Port)
 {
 	ROS_ERROR("Called AHRS(I2C::Port i2c_port_id) on unsupported platform");
 }
-AHRS::AHRS(SerialPort::Port)
+AHRS::AHRS(frc::SerialPort::Port)
 {
 	ROS_ERROR("Called AHRS(SerialPort::Port serial_port_id) on unsupported platform");
 }
 
-AHRS::AHRS(SPI::Port, uint8_t)
+AHRS::AHRS(frc::SPI::Port, uint8_t)
 {
 	ROS_ERROR("Called AHRS(SPI::Port spi_port_id, uint8_t update_rate_hz) on unsupported platform");
 }
-AHRS::AHRS(SPI::Port, uint32_t, uint8_t)
+AHRS::AHRS(frc::SPI::Port, uint32_t, uint8_t)
 {
 	ROS_ERROR("Called AHRS(SPI::Port spi_port_id, uint32_t spi_bitrate, uint8_t update_rate_hz) on unsupported platform");
 }
 
-AHRS::AHRS(I2C::Port, uint8_t)
+AHRS::AHRS(frc::I2C::Port, uint8_t)
 {
 	ROS_ERROR("Called AHRS(I2C::Port i2c_port_id, uint8_t update_rate_hz) on unsupported platform");
 }
 
-AHRS::AHRS(SerialPort::Port, AHRS::SerialDataType , uint8_t)
+AHRS::AHRS(frc::SerialPort::Port, AHRS::SerialDataType , uint8_t)
 {
 	ROS_ERROR("Called AHRS(SerialPort::Port serial_port_id, AHRS::SerialDataType data_type, uint8_t update_rate_hz) on unsupported platform");
 }
@@ -215,7 +215,7 @@ double AHRS::GetRate()
 	ROS_ERROR("Called GetRate() on unsupported platform");
 	return std::numeric_limits<double>::max();
 }
-void   AHRS::SetAngleAdjustment(double )
+void   AHRS::SetAngleAdjustment(double)
 {
 	ROS_ERROR("Called double angle) on unsupported platform");
 }
@@ -320,15 +320,15 @@ void AHRS::EnableLogging(bool)
 {
 	ROS_ERROR("Called bool AHRS::EnableLogging(bool enable) on unsupported platform");
 }
-void AHRS::SPIInit( SPI::Port, uint32_t, uint8_t)
+void AHRS::SPIInit(frc::SPI::Port, uint32_t, uint8_t)
 {
 	ROS_ERROR("Called AHRS::SPIInit( SPI::Port spi_port_id, uint32_t bitrate, uint8_t update_rate_hz ) on unsupported platform");
 }
-void AHRS::I2CInit( I2C::Port, uint8_t)
+void AHRS::I2CInit(frc::I2C::Port, uint8_t)
 {
 	ROS_ERROR("Called AHRS::I2CInit( I2C::Port i2c_port_id, uint8_t update_rate_hz ) on unsupported platform");
 }
-void AHRS::SerialInit(SerialPort::Port, AHRS::SerialDataType, uint8_t)
+void AHRS::SerialInit(frc::SerialPort::Port, AHRS::SerialDataType, uint8_t)
 {
 	ROS_ERROR("Called AHRS::SerialInit(SerialPort::Port serial_port_id, AHRS::SerialDataType data_type, uint8_t update_rate_hz) on unsupported platform");
 }
@@ -604,7 +604,7 @@ void frc::PIDSource::SetPIDSourceType(PIDSourceType)
 {
 	ROS_ERROR("Called frc::PIDSource::SetPIDSourceType(PIDSourceType pidSource) on unsupported platform");
 }
-PIDSourceType frc::PIDSource::GetPIDSourceType() const
+frc::PIDSourceType frc::PIDSource::GetPIDSourceType() const
 {
 	ROS_ERROR("Called frc::PIDSource::GetPIDSourceType() on unsupported platform");
 	return frc::PIDSourceType::kDisplacement;

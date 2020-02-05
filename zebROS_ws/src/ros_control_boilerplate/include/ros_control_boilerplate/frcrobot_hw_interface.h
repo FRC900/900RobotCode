@@ -82,7 +82,7 @@ namespace frcrobot_control
 class ROSIterativeRobot
 {
 	public:
-		ROSIterativeRobot(void) : m_ds(DriverStation::GetInstance())
+		ROSIterativeRobot(void) : m_ds(frc::DriverStation::GetInstance())
 		{
 			if (!HAL_Initialize(500, 0))
 			{
@@ -127,7 +127,7 @@ class ROSIterativeRobot
 			}
 		}
 	private:
-		DriverStation& m_ds;
+		frc::DriverStation& m_ds;
 };
 
 class DoubleSolenoidHandle
@@ -259,7 +259,7 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::vector<std::thread> pdp_thread_;
 		std::vector<int32_t> pdps_;
 
-		std::vector<std::shared_ptr<Joystick>> joysticks_;
+		std::vector<std::shared_ptr<frc::Joystick>> joysticks_;
 		std::vector<std::unique_ptr<realtime_tools::RealtimePublisher<sensor_msgs::Joy>>> realtime_pub_joysticks_;
 
 		std::vector<std::shared_ptr<as726x::roboRIO_AS726x>> as726xs_;

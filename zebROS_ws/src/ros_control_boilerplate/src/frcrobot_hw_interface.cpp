@@ -431,7 +431,7 @@ void FRCRobotHWInterface::init(void)
 		//TODO: fix how we use ids
 
 		if (navX_locals_[i])
-			navXs_.push_back(std::make_shared<AHRS>(SPI::Port::kMXP));
+			navXs_.push_back(std::make_shared<AHRS>(frc::SPI::Port::kMXP));
 		else
 			navXs_.push_back(nullptr);
 
@@ -561,7 +561,7 @@ void FRCRobotHWInterface::init(void)
 							  " as joystick with ID " << joystick_ids_[i]);
 		if (joystick_locals_[i])
 		{
-			joysticks_.push_back(std::make_shared<Joystick>(joystick_ids_[i]));
+			joysticks_.push_back(std::make_shared<frc::Joystick>(joystick_ids_[i]));
 			std::stringstream pub_name;
 			// TODO : maybe use pub_names instead, or joy id unconditionally?
 			pub_name << "joystick_states_raw";
@@ -1250,24 +1250,24 @@ void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
 			status = 0;
 			auto allianceStationID = HAL_GetAllianceStation(&status);
 			match_data_.setGetAllianceStationStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-			DriverStation::Alliance color;
+			frc::DriverStation::Alliance color;
 			switch (allianceStationID) {
 				case HAL_AllianceStationID_kRed1:
 				case HAL_AllianceStationID_kRed2:
 				case HAL_AllianceStationID_kRed3:
-					color = DriverStation::kRed;
+					color = frc::DriverStation::kRed;
 					break;
 				case HAL_AllianceStationID_kBlue1:
 				case HAL_AllianceStationID_kBlue2:
 				case HAL_AllianceStationID_kBlue3:
-					color = DriverStation::kBlue;
+					color = frc::DriverStation::kBlue;
 					break;
 				default:
-					color = DriverStation::kInvalid;
+					color = frc::DriverStation::kInvalid;
 			}
 			match_data_.setAllianceColor(color);
 
-			match_data_.setMatchType(static_cast<DriverStation::MatchType>(info.matchType));
+			match_data_.setMatchType(static_cast<frc::DriverStation::MatchType>(info.matchType));
 
 			int station_location;
 			switch (allianceStationID) {
@@ -2815,11 +2815,11 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 
 	for (size_t i = 0; i < num_double_solenoids_; i++)
 	{
-		DoubleSolenoid::Value setpoint = DoubleSolenoid::Value::kOff;
+		frc::DoubleSolenoid::Value setpoint = frc::DoubleSolenoid::Value::kOff;
 		if (double_solenoid_command_[i] >= 1.0)
-			setpoint = DoubleSolenoid::Value::kForward;
+			setpoint = frc::DoubleSolenoid::Value::kForward;
 		else if (double_solenoid_command_[i] <= -1.0)
-			setpoint = DoubleSolenoid::Value::kReverse;
+			setpoint = frc::DoubleSolenoid::Value::kReverse;
 
 		// Not sure if it makes sense to store command values
 		// in state or wpilib enum values
@@ -2829,9 +2829,9 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 			{
 				bool forward = false;
 				bool reverse = false;
-				if (setpoint == DoubleSolenoid::Value::kForward)
+				if (setpoint == frc::DoubleSolenoid::Value::kForward)
 					forward = true;
-				else if (setpoint == DoubleSolenoid::Value::kReverse)
+				else if (setpoint == frc::DoubleSolenoid::Value::kReverse)
 					reverse = true;
 
 				int32_t status = 0;
