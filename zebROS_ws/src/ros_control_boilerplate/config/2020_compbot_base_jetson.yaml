@@ -24,19 +24,18 @@ hardware_interface:
        #TODO: Get config values of joints
        - {name: turret_joint, type: can_talon_srx, can_id: 30, local: true}
 
-       - {name: cargo_intake_joint, type: can_talon_srx, can_id: 31, local: true}
-       - {name: cargo_intake_arm_joint, type: solenoid, local_hardware: false, local_update: true}
-       - {name: climber_ski_joint, type: solenoid, local_hardware: false, local_update: true}
-
        - {name: intake_arm_joint, type: solenoid, local_hardware: false, local_update: true}
        - {name: intake_joint, type: can_talon_srx, can_id: 33, local: true}
+
+       - {name: shooter_joint, type: can_talon_srx, can_id: 32, local: true}
+       - {name: shooter_hood_joint, type: solenoid, local_hardware: false, local_update: true}
 
        - {name: climber_winch_joint, type: can_talon_srx, can_id: 0, local: true} #TODO fix can id
        - {name: climber_deploy_joint, type: solenoid, local_hardware: false, local_update: true}
        - {name: climber_elevator_brake_joint, type: solenoid, local_hardware: false, local_update: true}
 
        - {name: control_panel_arm_joint, type: solenoid, local_hardware: false, local_update: true}
-       - {name: control_panel_joint, type: can_talon_srx, can_id: 32, local: true}
+       - {name: control_panel_joint, type: can_talon_srx, can_id: 34, local: true}
        
        - {name: elevator_master, type: can_talon_srx, can_id: 41, local: true}
        - {name: elevator_follower1, type: can_talon_srx, can_id: 42, local: true}
@@ -91,8 +90,6 @@ intake_controller:
                 type: talon_controllers/TalonPercentOutputController
                 invert_output: False
 
-
-
 control_panel_controller:
         type: control_panel_controller/ControlPanelController
         control_panel_diameter: 32 #inches
@@ -115,6 +112,37 @@ control_panel_controller:
                 voltage_compensation_enable: True
                 dynamic_reconfigure: True
 
+
+cargo_intake_controller:
+    type:   cargo_intake_controller/CargoIntakeController
+    
+    cargo_intake_joint: "cargo_intake"
+    cargo_intake:
+        joint: cargo_intake_joint
+        type: talon_controllers/TalonPercentOutputController
+        invert_output: True 
+    
+shooter_controller:
+    type: shooter_controller/ShooterController
+    shooter_joint: "shooter"
+    shooter:
+        joint: shooter_joint
+        type: talon_controllers/TalonVelocityCloseLoopController
+        feedback_type: CTRE_MagEncoder_Absolute
+        close_loop_values:
+            - {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+        invert_output: true
+        sensor_phase: false
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.0
+        nominal_output_reverse: 0.0
+        voltage_compensation_enable: true
+        dynamic_reconfigure: True
+
+    #note: the intake arm (solenoid joint) is currently being grabbed directly from the hardware_interface above
+cargo_outtake_controller:
+    type: cargo_outtake_controller/CargoOuttakeController
 
 climber_controller:
     type:  climber_controller_2020/ClimberController

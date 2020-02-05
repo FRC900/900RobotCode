@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <ros/ros.h>
@@ -9,13 +8,30 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <talon_controllers/talon_controller_interface.h>
 
-#include <pluginlib/class_list_macros.h> //to compile as a controller
-
-//REMEMBER TO INCLUDE CUSTOM SERVICE
+#include "controllers_2020_msgs/ShooterSrv.h"
+#include <realtime_tools/realtime_publisher.h>
+#include <std_msgs/Bool.h>
 
 namespace shooter_controller
 {
 
+
+class ShooterCommand
+{
+	public:
+		ShooterCommand()
+			: set_velocity_(0.0),
+			  shooter_hood_raise_(false)
+	    {
+		}
+		ShooterCommand(double set_velocity, bool shooter_hood_raise)
+		{
+			set_velocity_ = set_velocity;
+			shooter_hood_raise_ = shooter_hood_raise;
+		}
+		double set_velocity_;
+		bool shooter_hood_raise_;
+};
 //this is the controller class, used to make a controller
 class ShooterController : public controller_interface::MultiInterfaceController<hardware_interface::PositionJointInterface, hardware_interface::TalonCommandInterface>
 {
@@ -33,8 +49,19 @@ class ShooterController : public controller_interface::MultiInterfaceController<
             virtual void update(const ros::Time & time, const ros::Duration& period) override;
             virtual void stopping(const ros::Time &time) override;
 
+			bool cmdService(controllers_2020_msgs::ShooterSrv::Request &req,
+							controllers_2020_msgs::ShooterSrv::Response &res);
         private:
+			talon_controllers::TalonVelocityCloseLoopControllerInterface shooter_joint_;
+			hardware_interface::JointHandle shooter_hood_joint_;
 
+			ros::ServiceServer shooter_service_;
+		    realtime_tools::RealtimeBuffer<ShooterCommand> cmd_buffer_;
+
+                    std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Bool>> ready_to_shoot_pub_; 
+                    double time_to_raise_hood_;
+                    double speed_threshhold_;
+                    ros::Time last_command_time_;
 
 
 }; //class

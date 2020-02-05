@@ -49,7 +49,6 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>dynamic_reconfigure_wrapper</build_depend>
   <build_depend>hardware_interface</build_depend>
   <build_depend>pluginlib</build_depend>
   <build_depend>realtime_tools</build_depend>
@@ -59,7 +58,6 @@
   <build_depend>talon_interface</build_depend>
   <build_export_depend>controller_interface</build_export_depend>
   <build_export_depend>controllers_2020_msgs</build_export_depend>
-  <build_export_depend>dynamic_reconfigure_wrapper</build_export_depend>
   <build_export_depend>hardware_interface</build_export_depend>
   <build_export_depend>pluginlib</build_export_depend>
   <build_export_depend>realtime_tools</build_export_depend>
@@ -69,7 +67,6 @@
   <build_export_depend>talon_interface</build_export_depend>
   <exec_depend>controller_interface</exec_depend>
   <exec_depend>controllers_2020_msgs</exec_depend>
-  <exec_depend>dynamic_reconfigure_wrapper</exec_depend>
   <exec_depend>hardware_interface</exec_depend>
   <exec_depend>pluginlib</exec_depend>
   <exec_depend>realtime_tools</exec_depend>

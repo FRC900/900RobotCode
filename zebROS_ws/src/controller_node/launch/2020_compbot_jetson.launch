@@ -16,6 +16,7 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/2020_swerve_drive.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2020_compbot_offsets.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2020_shooter_params.yaml" command="load"/>
 		<!--
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
 		-->
@@ -34,7 +35,7 @@
 
 		<!-- Load controller manager-->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn climber_controller turret_controller control_panel_controller intake_controller joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller pcm_state_controller pdp_state_controller swerve_drive_controller robot_code_ready_controller" />
+			output="screen" args="spawn shooter_controller climber_controller turret_controller control_panel_controller intake_controller joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller pcm_state_controller pdp_state_controller swerve_drive_controller robot_code_ready_controller" />
 
 		<node name="uptime_jetson" pkg="uptime" type="uptime_node" output="screen" />
 
