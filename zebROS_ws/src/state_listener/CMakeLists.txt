@@ -13,7 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
   frc_interfaces
   frc_msgs
   hardware_interface
-  message_generation
   realtime_tools
   roscpp
   talon_interface
@@ -111,8 +110,8 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES state_listener
-#  CATKIN_DEPENDS controller_interface realtime_tools roscpp
-  DEPENDS message_runtime frc_msgs frc_interfaces talon_state_msgs
+  CATKIN_DEPENDS as726x_msgs frc_msgs talon_state_msgs
+#  DEPENDS frc_msgs talon_state_msgs
 )
 
 ###########
@@ -178,11 +177,11 @@ target_link_libraries(${PROJECT_NAME}
  )
 
 # Mark cpp header files for installation
- install(DIRECTORY include/${PROJECT_NAME}/
-   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-   FILES_MATCHING PATTERN "*.h"
-   PATTERN ".svn" EXCLUDE
- )
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+#   FILES_MATCHING PATTERN "*.h"
+#   PATTERN ".svn" EXCLUDE
+# )
 install(FILES state_listener_plugins.xml
 	#state_listener_controller.yaml
 	#state_listener_controller.launch
