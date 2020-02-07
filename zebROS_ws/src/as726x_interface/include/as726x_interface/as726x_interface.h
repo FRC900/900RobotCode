@@ -1,7 +1,7 @@
 #pragma once
 
 #include <hardware_interface/internal/hardware_resource_manager.h>
-#include <state_handle/state_handle.h>
+#include "state_handle/command_handle.h"
 
 namespace hardware_interface
 {
@@ -382,57 +382,7 @@ class RemoteAS726xStateInterface : public HardwareResourceManager<AS726xWritable
 // Handle - used by each controller to get, by name of the
 // corresponding joint, an interface with which to send commands
 // to a AS726x
-class AS726xCommandHandle: public AS726xStateHandle
-{
-	public:
-		AS726xCommandHandle(void) :
-			AS726xStateHandle(),
-			cmd_(0)
-		{
-		}
-
-		AS726xCommandHandle(const AS726xStateHandle &js, AS726xCommand *cmd) :
-			AS726xStateHandle(js),
-			cmd_(cmd)
-		{
-			if (!cmd_)
-				throw HardwareInterfaceException("Cannot create AS726x handle '" + js.getName() + "'. command pointer is null.");
-		}
-
-		// Operator which allows access to methods from
-		// the AS726xCommand member var associated with this
-		// handle
-		// Note that we could create separate methods in
-		// the handle class for every method in the State
-		// class, e.g.
-		//     double getFoo(void) const {assert(_state); return state_->getFoo();}
-		// but if each of them just pass things unchanged between
-		// the calling code and the State method there's no
-		// harm in making a single method to do so rather than
-		// dozens of getFoo() one-line methods
-		//
-		AS726xCommand *operator->()
-		{
-			assert(cmd_);
-			return cmd_;
-		}
-
-		// Get a pointer to the HW state associated with
-		// this AS726x.  Since CommandHandle is derived
-		// from StateHandle, there's a state embedded
-		// in each instance of a CommandHandle. Use
-		// this method to access it.
-		//
-		// handle->state()->getCANID();
-		//
-		const AS726xState *state(void) const
-		{
-			return AS726xStateHandle::operator->();
-		}
-
-	private:
-		AS726xCommand *cmd_;
-};
+typedef CommandHandle<AS726xCommand, AS726xState, AS726xStateHandle> AS726xCommandHandle;
 
 // Use ClaimResources here since we only want 1 controller
 // to be able to access a given AS726x at any particular time
