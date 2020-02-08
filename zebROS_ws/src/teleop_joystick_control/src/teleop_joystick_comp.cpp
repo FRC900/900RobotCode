@@ -104,7 +104,7 @@ void imuCallback(const sensor_msgs::Imu &imuState)
 	tf2::Matrix3x3(imuQuat).getRPY(roll, pitch, yaw);
 
 	if (yaw == yaw) // ignore NaN results
-		imu_angle = yaw;
+		imu_angle = -yaw;
 }
 
 void preemptActionlibServers()
