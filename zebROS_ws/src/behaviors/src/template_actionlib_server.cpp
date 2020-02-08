@@ -11,7 +11,7 @@
 #include <ros/console.h>
 
 //include action files - for this actionlib server and any it sends requests to
-#include "behaviors/ThingAction.h"
+#include "behavior_actions/ThingAction.h"
 
 //include controller service files and other service files
 // e.g. #include "controller_package/ControllerSrv.h"
@@ -23,11 +23,11 @@ class ServerNameAction {
 	protected:
 		ros::NodeHandle nh_;
 
-		actionlib::SimpleActionServer<behaviors::ThingAction> as_; //create the actionlib server
+		actionlib::SimpleActionServer<behavior_actions::ThingAction> as_; //create the actionlib server
 		std::string action_name_;
 
 		//clients to call other actionlib servers
-		//e.g. actionlib::SimpleActionClient<behaviors::ElevatorAction> ac_elevator_;
+		//e.g. actionlib::SimpleActionClient<behavior_actions::ElevatorAction> ac_elevator_;
 
 		//clients to call controllers
 		//e.g. ros::ServiceClient mech_controller_client_; //create a ros client to send requests to the controller
@@ -38,33 +38,6 @@ class ServerNameAction {
 		ros::Rate r{10}; //used for wait loops, curly brackets needed so it doesn't think this is a function
 		double start_time_;
 
-                //config variables, with defaults
-                double server_timeout_; //overall timeout for your server
-                double wait_for_server_timeout_; //timeout for waiting for other actionlib servers to become available before exiting this one
-
-	public:
-		//Constructor - create actionlib server; the executeCB function will run every time the actionlib server is called
-		ServerNameAction(const std::string &name, double server_timeout, double wait_for_server_timeout) :
-			as_(nh_, name, boost::bind(&ServerNameAction::executeCB, this, _1), false),
-			action_name_(name),
-                        server_timeout_(server_timeout),
-                        wait_for_server_timeout_(wait_for_server_timeout)
-			//ac_elevator_("/elevator/elevator_server", true) example how to initialize other action clients, don't forget to add a comma on the previous line
-	{
-		as_.start(); //start the actionlib server
-
-		//do networking stuff
-		std::map<std::string, std::string> service_connection_header;
-		service_connection_header["tcp_nodelay"] = "1";
-
-		//initialize client used to call controllers
-		//e.g. mech_controller_client_ = nh_.serviceClient<controller_package::ControllerSrv>("name_of_service", false, service_connection_header);
-
-	}
-
-		~ServerNameAction(void)
-		{
-		}
 
 		//Use to make pauses while still checking timed_out_ and preempted_
 		bool pause(const double duration, const std::string &activity)
@@ -94,7 +67,7 @@ class ServerNameAction {
 		}
 
 		//define the function to be executed when the actionlib server is called
-		void executeCB(const behaviors::ThingGoalConstPtr &goal)
+		void executeCB(const behavior_actions::ThingGoalConstPtr &goal)
 		{
 			ROS_INFO("%s: Running callback", action_name_.c_str());
 
@@ -180,7 +153,7 @@ class ServerNameAction {
 				ROS_INFO("what this is doing");
 				//Call actionlib server
 				/* e.g.
-				behaviors::ElevatorGoal elevator_goal;
+				behavior_actions::ElevatorGoal elevator_goal;
 				elevator_goal.place_cargo = true;
 				ac_elevator_.sendGoal(elevator_goal);
 				*/
@@ -199,7 +172,7 @@ class ServerNameAction {
 
 
 			//log result and set actionlib server state appropriately
-			behaviors::ThingResult result;
+			behavior_actions::ThingResult result;
 
 			if(preempted_) {
 				ROS_WARN("%s: Finished - Preempted", action_name_.c_str());
@@ -267,33 +240,66 @@ class ServerNameAction {
 				}
 			}
 		}
+
+	public:
+		//Constructor - create actionlib server; the executeCB function will run every time the actionlib server is called
+		ServerNameAction(const std::string &name) :
+			as_(nh_, name, boost::bind(&ServerNameAction::executeCB, this, _1), false),
+			action_name_(name)
+			//ac_elevator_("/elevator/elevator_server", true) example how to initialize other action clients, don't forget to add a comma on the previous line
+	{
+		as_.start(); //start the actionlib server
+
+		//do networking stuff
+		std::map<std::string, std::string> service_connection_header;
+		service_connection_header["tcp_nodelay"] = "1";
+
+		//initialize client used to call controllers
+		//e.g. mech_controller_client_ = nh_.serviceClient<controller_package::ControllerSrv>("name_of_service", false, service_connection_header);
+
+	}
+
+		~ServerNameAction(void)
+		{
+		}
+
+		//config values
+		double server_timeout_;
+		double wait_for_server_timeout_;
 };
 
 int main(int argc, char** argv) {
 	//create node
 	ros::init(argc, argv, "server_name_server");
-
-	//get config values
-	ros::NodeHandle n;
-
-        double server_timeout = 10;
-        double wait_for_server_timeout = 10;
-
-	/* e.g.
-	//ros::NodeHandle n_params_intake(n, "actionlib_cargo_intake_params"); //node handle for a lower-down namespace
-
-	if (!n.getParam("/teleop/teleop_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
-		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_server");
-
-	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
-		ROS_ERROR("Could not read wait_for_server_timeout_ in intake_sever");
-
-	if (!n_params_intake.getParam("roller_power", roller_power))
-		ROS_ERROR("Could not read roller_power in cargo_intake_server");
-	*/
+	ros::NodeHandle nh;
 
 	//create the actionlib server
-	ServerNameAction server_name_action("server_name_server", server_timeout, wait_for_server_timeout);
+	ServerNameAction server_name_action("server_name_server");
+
+	//get config values
+	if (!nh.getParam("/ - - namespace here - - /server_timeout", server_name_action.server_timeout_)) {
+		ROS_ERROR("Could not read server_timeout in server_name_server");
+		server_name_action.server_timeout_ = 10;
+	}
+	if (!nh.getParam("/ - - namespace here - - /wait_for_server_timeout", server_name_action.wait_for_server_timeout_)) {
+		ROS_ERROR("Could not read wait_for_server_timeout in server_name_sever");
+		server_name_action.wait_for_server_timeout_ = 10;
+	}
+
+	/* further examples:
+	//ros::NodeHandle n_params_intake(n, "actionlib_cargo_intake_params"); //node handle for a lower-down namespace
+
+	if (!n.getParam("/actionlib_params/linebreak_debounce_iterations", linebreak_debounce_iterations)) {
+		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_server");
+		linebreak_debounce_iterations = 10;
+	}
+
+	if (!n_params_intake.getParam("roller_power", roller_power)) {
+		ROS_ERROR("Could not read roller_power in cargo_intake_server");
+		roller_power = 1;
+	}
+	*/
+
 
 	ros::AsyncSpinner Spinner(2);
 	Spinner.start();
