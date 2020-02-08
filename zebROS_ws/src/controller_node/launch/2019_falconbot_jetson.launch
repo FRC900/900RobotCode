@@ -33,6 +33,7 @@
 	<group ns="imu">
 		<include file="$(find controller_node)/launch/2019_compbot_jetson_imu.launch">
 			<arg name="primary_imu" value="NAVX" />
+		</include>
 	</group>
 
 	<group ns="teleop">
