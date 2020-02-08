@@ -65,7 +65,8 @@
     version: feed_forward
 - git:
     local-name: adi_driver
-    uri: https://github.com/tork-a/adi_driver
+    uri: https://github.com/seiga-k/adi_driver.git
+    version: fix_low_level_interface
 - git:
     local-name: cpu_monitor
     uri: https://github.com/FRC900/cpu_monitor

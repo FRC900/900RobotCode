@@ -10,7 +10,7 @@
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="static_map" default="True"/>
 	<arg name="record" default="false" />
-	<arg name="primary_imu" default="NAVX" />
+	<arg name="primary_imu" default="ADI" />
 
 	<group ns="frcrobot_rio">
 

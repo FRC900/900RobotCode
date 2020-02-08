@@ -9,7 +9,6 @@
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="joy_or_key" default="joy" />
 	<arg name="record" default="false" />
-        <arg name="primary_imu" default="NAVX"/>
 
 	<group ns="frcrobot_jetson">
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_falconbot_base_jetson.yaml" command="load"/>
@@ -33,8 +32,7 @@
 
 	<group ns="imu">
 		<include file="$(find controller_node)/launch/2019_compbot_jetson_imu.launch">
-			<arg name="primary_imu" value="$(arg primary_imu)" />
-		</include>
+			<arg name="primary_imu" value="NAVX" />
 	</group>
 
 	<group ns="teleop">
