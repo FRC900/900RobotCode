@@ -31,7 +31,7 @@ hardware_interface:
        - {name: shooter_hood_joint, type: solenoid, local_hardware: false, local_update: true}
 
        - {name: climber_winch_joint, type: can_talon_srx, can_id: 0, local: true} #TODO fix can id
-       - {name: climber_deploy_joint, type: solenoid, local_hardware: false, local_update: true}
+       - {name: climber_deploy_joint, type: double_solenoid, local_hardware: false, local_update: true}
        - {name: climber_elevator_brake_joint, type: solenoid, local_hardware: false, local_update: true}
 
        - {name: control_panel_arm_joint, type: solenoid, local_hardware: false, local_update: true}

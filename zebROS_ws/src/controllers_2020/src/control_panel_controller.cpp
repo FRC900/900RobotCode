@@ -59,13 +59,13 @@ namespace control_panel_controller
 		const ControlPanelCommand control_panel_cmd = *(control_panel_cmd_.readFromRT());
 		double control_panel_arm_double;
 		if(control_panel_cmd.panel_arm_extend_ == true){
-			control_panel_arm_double = 1;
+			control_panel_arm_double = 1.0;
 		}
 		else {
-			control_panel_arm_double = 0;
+			control_panel_arm_double = 0.0;
 		}
 		control_panel_joint_.setCommand(control_panel_cmd.set_point_); //set the position command to the control panel motor
-		control_panel_arm_joint_.setCommand(control_panel_cmd.panel_arm_extend_);//set the extend/retract command to the control panel solenoid
+		control_panel_arm_joint_.setCommand(control_panel_arm_double);//set the extend/retract command to the control panel solenoid
 	}
 
 

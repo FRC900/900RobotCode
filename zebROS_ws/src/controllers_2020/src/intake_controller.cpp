@@ -48,13 +48,13 @@ namespace intake_controller
         const IntakeCommand intake_cmd = *(intake_cmd_.readFromRT());
 		double intake_arm_double;
 		if(intake_cmd.intake_arm_extend_ == true){
-			intake_arm_double = 1;
+			intake_arm_double = 1.0;
 		}
 		else {
-			intake_arm_double = 0;
+			intake_arm_double = 0.0;
 		}
 		intake_joint_.setCommand(intake_cmd.set_percent_out_);
-		intake_arm_joint_.setCommand(intake_cmd.intake_arm_extend_);
+		intake_arm_joint_.setCommand(intake_arm_double);
     }
 
     void IntakeController::stopping(const ros::Time &/*time*/) {

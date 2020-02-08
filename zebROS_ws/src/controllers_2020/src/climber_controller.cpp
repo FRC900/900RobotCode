@@ -61,7 +61,7 @@ namespace climber_controller_2020
 			deploy_joint_.setCommand(1.0);
 		}
 		else {
-			deploy_joint_.setCommand(0.0); //won't actually do anything during the match, lowering the climber is manual. Putting this here so we can deactivate the pcm channel, allowing us to manually undeploy while code is running (probably during testing)
+			deploy_joint_.setCommand(-1.0);
 		}
 
 		//set value of motors

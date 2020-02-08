@@ -27,7 +27,7 @@ hardware_interface:
        # to the Rio
        - {name: shooter_hood_joint, type: solenoid, pcm: 0, id: 5, local_hardware: true, local_update: false}
 
-       - {name: climber_deploy_joint, type: solenoid, pcm: 0, id: 1, local_hardware: true, local_update: false}
+       - {name: climber_deploy_joint, type: double_solenoid, pcm: 0, forward_id: 1, reverse_id: 2, local_hardware: true, local_update: false}
        - {name: climber_elevator_brake_joint, type: solenoid, pcm: 0, id: 0, local_hardware: true, local_update: false}
 
        - {name: intake_arm_joint, type: solenoid, pcm: 0, id: 2, local_hardware: true, local_update: false}
