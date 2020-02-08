@@ -44,7 +44,7 @@ class ServerNameAction {
 
 	public:
 		//Constructor - create actionlib server; the executeCB function will run every time the actionlib server is called
-		ServerNameAction(const std::string &name, server_timeout, wait_for_server_timeout) :
+		ServerNameAction(const std::string &name, double server_timeout, double wait_for_server_timeout) :
 			as_(nh_, name, boost::bind(&ServerNameAction::executeCB, this, _1), false),
 			action_name_(name),
                         server_timeout_(server_timeout),
