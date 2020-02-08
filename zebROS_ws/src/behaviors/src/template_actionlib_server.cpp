@@ -203,19 +203,19 @@ class ServerNameAction {
 
 			if(preempted_) {
 				ROS_WARN("%s: Finished - Preempted", action_name_.c_str());
-				result.timed_out_ = false;
+				result.timed_out = false;
 				result.success = false;
 				as_.setPreempted(result);
 			}
 			else if(timed_out_) {
 				ROS_WARN("%s: Finished - Timed Out", action_name_.c_str());
-				result.timed_out_ = true;
+				result.timed_out = true;
 				result.success = false;
 				as_.setSucceeded(result); //timed out is encoded as succeeded b/c actionlib doesn't have a timed out state
 			}
 			else { //implies succeeded
 				ROS_INFO("%s: Finished - Succeeded", action_name_.c_str());
-				result.timed_out_ = false;
+				result.timed_out = false;
 				result.success = true;
 				as_.setSucceeded(result);
 			}
