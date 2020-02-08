@@ -10,6 +10,10 @@ sudo rfkill block bluetooth
 sysctl -w kernel.sched_rt_runtime_us=-1
 ulimit -r unlimited
 
+systemctl stop ntp
+ntpdate 10.9.0.2
+systemctl start ntp
+
 /home/ubuntu/2020RobotCode/jetson_setup/can_up.sh
 
 . /home/ubuntu/2020RobotCode/zebROS_ws/ROSJetsonMaster.sh
