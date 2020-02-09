@@ -58,7 +58,8 @@
   <exec_depend>actionlib</exec_depend>
   <exec_depend>actionlib_msgs</exec_depend>
   <exec_depend>roscpp</exec_depend>
-
+  <depend>message_generation></depend>
+  <depend>message_runtime</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

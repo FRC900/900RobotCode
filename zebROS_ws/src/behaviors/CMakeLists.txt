@@ -138,6 +138,11 @@ catkin_package(
    DEPENDS 
 )
 
+add_executable(auto_node src/auto_node.cpp)
+target_link_libraries(auto_node ${catkin_LIBRARIES})
+add_dependencies(auto_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+
 add_executable(intake_cargo_server src/intake_cargo_server.cpp)
 target_link_libraries(intake_cargo_server ${catkin_LIBRARIES})
 add_dependencies(intake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+	<rosparam file="$(find behaviors)/config/auto_mode_config.yaml" command="load"/>
+	<node name="auto_node" pkg="behaviors" type="auto_node" output="screen"/>
+</launch>

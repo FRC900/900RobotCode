@@ -1,0 +1,35 @@
+#Config file for configuring autonomous modes and actions
+
+# MODES ---------------------------------------------------------------------------
+# arrays of actions (see below) that will be executed in order
+# format: auto_mode_[integer]: array
+
+auto_mode_1: ["intake", "pause_5_sec", "pause_2_sec", "elevator_to_high"] #example
+auto_mode_2: ["pause_2_sec","elevator_to_high","pause_2_sec"]
+
+
+# ACTIONS ------------------------------------------------------------------------
+# must have a value for "type", other stuff varies
+#valid action types: "intake_actionlib_server", "pause", "elevator_actionlib_server"
+
+#examples:
+
+intake:
+    type: "intake_actionlib_server"
+    goal:
+        "" #no goal items for this action
+
+elevator_to_high:
+    type: "elevator_actionlib_server"
+    goal:
+        setpoint_index: 2
+        place_cargo: false
+
+
+pause_2_sec:
+    type: "pause"
+    duration: 2 #sec
+
+pause_5_sec:
+    type: "pause"
+    duration: 5.0
