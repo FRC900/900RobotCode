@@ -270,7 +270,7 @@ struct OptParams
 	// object as if they were an array. Since the optimizer
 	// loops over all member vars, this turns the code
 	// in there into a simple for() loop
-	const size_t size(void) const
+	size_t size(void) const
 	{
 		return 3;
 	}
