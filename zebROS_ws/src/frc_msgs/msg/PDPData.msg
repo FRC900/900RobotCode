@@ -7,3 +7,4 @@ float64 totalPower
 float64 totalEnergy
 
 float64[16] current
+string[16] thingsPluggedIn

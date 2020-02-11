@@ -66,7 +66,7 @@ hardware_interface:
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
-         
+
 # Create controllers for each joint
 #
 # Entry is the name of the controller. It can be anything.  
@@ -228,6 +228,24 @@ joint_state_listener_controller:
 pdp_state_controller:
    type:         pdp_state_controller/PDPStateController
    publish_rate: 20
+   things_plugged_in_pdp_channel: 
+        ["thing1", #id 1
+         "thing2", #id 2
+         "thing3", #id 3
+         "thing4", #id 4 
+         "thing5", #id 5 
+         "thing6", #id 6 
+         "thing7", #id 7
+         "thing8", #id 8
+         "thing9", #id 9 
+         "thing10", #id 10
+         "thing11", #id 11 
+         "thing12", #id 12
+         "thing13", #id 13
+         "thing14", #id 14
+         "thing15", #id 15
+         "thing16" #id 16
+        ]
 
 pcm_state_controller:
    type:         pcm_state_controller/PCMStateController
