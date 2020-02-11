@@ -33,6 +33,7 @@ hardware_interface:
        - {name: climber_winch_joint, type: can_talon_srx, can_id: 0, local: true} #TODO fix can id
        - {name: climber_deploy_joint, type: double_solenoid, local_hardware: false, local_update: true}
        - {name: climber_elevator_brake_joint, type: solenoid, local_hardware: false, local_update: true}
+       - {name: indexer_joint, type: can_talon_srx, can_id: 67, local: true} #TODO find actual can id
 
        - {name: control_panel_arm_joint, type: solenoid, local_hardware: false, local_update: true}
        - {name: control_panel_joint, type: can_talon_srx, can_id: 34, local: true}
@@ -110,15 +111,6 @@ control_panel_controller:
                 dynamic_reconfigure: True
 
 
-cargo_intake_controller:
-    type:   cargo_intake_controller/CargoIntakeController
-    
-    cargo_intake_joint: "cargo_intake"
-    cargo_intake:
-        joint: cargo_intake_joint
-        type: talon_controllers/TalonPercentOutputController
-        invert_output: True 
-    
 shooter_controller:
     type: shooter_controller/ShooterController
     shooter_joint: "shooter"
@@ -136,10 +128,6 @@ shooter_controller:
         nominal_output_reverse: 0.0
         voltage_compensation_enable: true
         dynamic_reconfigure: True
-
-    #note: the intake arm (solenoid joint) is currently being grabbed directly from the hardware_interface above
-cargo_outtake_controller:
-    type: cargo_outtake_controller/CargoOuttakeController
 
 climber_controller:
     type:  climber_controller_2020/ClimberController
@@ -161,7 +149,26 @@ climber_controller:
         voltage_compensation_enable: True
         dynamic_reconfigure: True
 
+indexer_controller:
+    type:  indexer_controller/IndexerController
+    indexer_joint: "indexer"
+    indexer_speed: 2.0
+    indexer:
+        joint: indexer_joint
+        type: talon_controllers/TalonVelocityCloseLoopControllerInterface
+        feedback_type: CTRE_MagEncoder_Absolute
+        close_loop_values:
+            - {p: 0.0, i: 0.000, d: 0.0, f: 0.0, i_zone: 0}
+        invert_output: true
+        sensor_phase: false
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.0
+        nominal_output_reverse: 0.0
+        voltage_compensation_enable: True
+        dynamic_reconfigure: True
 
+        
 turret_controller:
     type: turret_controller/TurretController
 
