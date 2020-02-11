@@ -78,7 +78,7 @@ bool AS726xController::convertConversionType(const std::string &param_str,
 }
 
 bool AS726xController::init(hardware_interface::as726x::AS726xCommandInterface *hw,
-		                    ros::NodeHandle                                    &root_nh,
+		                    ros::NodeHandle                                    &/*root_nh*/,
 						    ros::NodeHandle                                    &controller_nh)
 {
 	std::string joint_name;
@@ -211,11 +211,11 @@ void AS726xController::integrationTimeCB(uint8_t integration_time)
 	integration_time_ = integration_time;
 }
 
-void AS726xController::starting(const ros::Time &time)
+void AS726xController::starting(const ros::Time &/*time*/)
 {
 }
 
-void AS726xController::update(const ros::Time &time, const ros::Duration & /*period*/)
+void AS726xController::update(const ros::Time &/*time*/, const ros::Duration & /*period*/)
 {
 	as726x_command_->setIndLedCurrentLimit(ind_led_current_limit_.load(std::memory_order_relaxed));
 	as726x_command_->setIndLedEnable(ind_led_enable_.load(std::memory_order_relaxed));
