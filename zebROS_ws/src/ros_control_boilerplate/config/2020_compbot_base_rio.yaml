@@ -25,25 +25,24 @@ hardware_interface:
        # Solenoids which are updated from controllers on the Jetson need
        # to be configured here so they can write to hardware attached
        # to the Rio
+       - {name: climber_deploy_joint, type: double_solenoid, pcm: 0, forward_id: 1, reverse_id: 2, local_hardware: true, local_update: false}
+       - {name: climber_elevator_brake_joint, type: solenoid, pcm: 0, id: 3, local_hardware: true, local_update: false}
+
+       - {name: intake_arm_joint, type: solenoid, pcm: 0, id: 0, local_hardware: true, local_update: false}
+
+       - {name: control_panel_arm_joint, type: solenoid, pcm: 0, id: 4, local_hardware: true, local_update: false}
+
        - {name: shooter_hood_joint, type: solenoid, pcm: 0, id: 5, local_hardware: true, local_update: false}
 
-       - {name: climber_deploy_joint, type: double_solenoid, pcm: 0, forward_id: 1, reverse_id: 2, local_hardware: true, local_update: false}
-       - {name: climber_elevator_brake_joint, type: solenoid, pcm: 0, id: 0, local_hardware: true, local_update: false}
+         # - {name: panel_intake_limit_switch_1, type: digital_input, dio_channel: 0, invert: true, local: true}
+         # - {name: panel_intake_limit_switch_2, type: digital_input, dio_channel: 1, invert: true, local: true}
+         # - {name: panel_intake_limit_switch_3, type: digital_input, dio_channel: 2, invert: true, local: true}
+         # - {name: panel_intake_limit_switch_4, type: digital_input, dio_channel: 3, invert: true, local: true}
 
-       - {name: intake_arm_joint, type: solenoid, pcm: 0, id: 2, local_hardware: true, local_update: false}
+         # - {name: cargo_intake_linebreak_1, type: digital_input, dio_channel: 4, invert: true, local: true}
 
-       - {name: control_panel_arm_joint, type: solenoid, pcm: 0, id: 3, local_hardware: true, local_update: false}
-
-       - {name: shooter_hood_raise, type: solenoid, pcm: 0, id: 4, local_hardware: true, local_update: false}
-       - {name: panel_intake_limit_switch_1, type: digital_input, dio_channel: 0, invert: true, local: true}
-       - {name: panel_intake_limit_switch_2, type: digital_input, dio_channel: 1, invert: true, local: true}
-       - {name: panel_intake_limit_switch_3, type: digital_input, dio_channel: 2, invert: true, local: true}
-       - {name: panel_intake_limit_switch_4, type: digital_input, dio_channel: 3, invert: true, local: true}
-
-       - {name: cargo_intake_linebreak_1, type: digital_input, dio_channel: 4, invert: true, local: true}
-
-       - {name: climber_linebreak_1, type: digital_input, dio_channel: 5, invert: true, local: true}
-       - {name: climber_linebreak_2, type: digital_input, dio_channel: 6, invert: true, local: true}
+         # - {name: climber_linebreak_1, type: digital_input, dio_channel: 5, invert: true, local: true}
+         # - {name: climber_linebreak_2, type: digital_input, dio_channel: 6, invert: true, local: true}
          
        - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}
        - {name: joystick, type: joystick, id: 0, local: true}

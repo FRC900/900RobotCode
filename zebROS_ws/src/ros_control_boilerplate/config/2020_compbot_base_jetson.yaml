@@ -53,18 +53,15 @@ hardware_interface:
        - {name: pdp, type: pdp}
        - {name: compressor, type: compressor, pcm_id: 0}
 
-       - {name: panel_claw, type: solenoid, local_hardware: false, local_update: true}
-       - {name: panel_push_extend, type: solenoid, local_hardware: false, local_update: true}
+         # - {name: panel_intake_limit_switch_1, type: digital_input, local: false}
+         # - {name: panel_intake_limit_switch_2, type: digital_input, local: false}
+         # - {name: panel_intake_limit_switch_3, type: digital_input, local: false}
+         # - {name: panel_intake_limit_switch_4, type: digital_input, local: false}
 
-       - {name: panel_intake_limit_switch_1, type: digital_input, local: false}
-       - {name: panel_intake_limit_switch_2, type: digital_input, local: false}
-       - {name: panel_intake_limit_switch_3, type: digital_input, local: false}
-       - {name: panel_intake_limit_switch_4, type: digital_input, local: false}
+         # - {name: cargo_intake_linebreak_1, type: digital_input, local: false}
 
-       - {name: cargo_intake_linebreak_1, type: digital_input, local: false}
-
-       - {name: climber_linebreak_1, type: digital_input, local: false}
-       - {name: climber_linebreak_2, type: digital_input, local: false}
+         # - {name: climber_linebreak_1, type: digital_input, local: false}
+         # - {name: climber_linebreak_2, type: digital_input, local: false}
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
