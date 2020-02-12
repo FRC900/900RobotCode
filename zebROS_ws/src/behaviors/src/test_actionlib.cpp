@@ -5,6 +5,7 @@
 #include <behavior_actions/ElevatorAction.h>
 #include <behavior_actions/ClimbAction.h>
 #include <behavior_actions/AlignAction.h>
+#include <path_follower/PathAction.h>
 #include <behavior_actions/enumerated_elevator_indices.h>
 #include <boost/algorithm/string.hpp>
 #include <string>
@@ -268,6 +269,52 @@ bool callAlignHatch()
 	}
 }
 
+bool callPath(double path_x_setpoint, double path_y_setpoint, double path_z_setpoint, double path_x2_setpoint, double path_y2_setpoint, double path_z2_setpoint)
+{
+        ROS_INFO_STREAM("path_x_setpoint = " << path_x_setpoint);
+	actionlib::SimpleActionClient<path_follower::PathAction> path_ac("/path_follower/path_follower_server", true);
+
+	ROS_INFO("Waiting for pure pursuit server to start.");
+	if(!path_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("callPath: Could not find server.");
+		return false;
+	}
+
+	ROS_INFO("callPath: Sending goal to the server.");
+	path_follower::PathGoal path_goal;
+	path_goal.points.resize(3);
+	path_goal.points[0].x = 0;
+	path_goal.points[0].y = 0;
+	path_goal.points[0].z = 0;
+	path_goal.points[1].x = path_x_setpoint;
+	path_goal.points[1].y = path_y_setpoint;
+	path_goal.points[1].z = path_z_setpoint;
+	path_goal.points[2].x = path_x2_setpoint;
+	path_goal.points[2].y = path_y2_setpoint;
+	path_goal.points[2].z = path_z2_setpoint;
+	path_ac.sendGoal(path_goal);
+
+	//wait for the action to return
+	bool finished_before_timeout = path_ac.waitForResult(ros::Duration(server_exec_timeout));
+
+	if (finished_before_timeout)
+	{
+		actionlib::SimpleClientGoalState state = path_ac.getState();
+		ROS_INFO("callPath: Action finished with state: %s",state.toString().c_str());
+		if(path_ac.getResult()->timed_out)
+		{
+			ROS_INFO("callPath: Path server timed out!");
+		}
+		return true;
+	}
+	else
+	{
+		ROS_INFO("callPath : Action did not finish before the time out.");
+		return false;
+	}
+}
+
 
 
 
@@ -287,6 +334,12 @@ int main (int argc, char **argv)
 	 */
 	std::string what_to_run;
 	std::string elevator_setpoint;
+        double path_x_setpoint;
+        double path_y_setpoint;
+        double path_z_setpoint;
+        double path_x2_setpoint;
+        double path_y2_setpoint;
+        double path_z2_setpoint;
 
 	what_to_run = ros::getROSArg(argc, argv, "run"); //if can't find the argument, will default to an empty string of length 0
 	boost::algorithm::to_lower(what_to_run); //convert to lower case
@@ -294,7 +347,7 @@ int main (int argc, char **argv)
 	if(what_to_run.length() == 0)
 	{
 		ROS_ERROR("You need to specify the run functionality with: rosrun behaviors test_actionlib run:=____");
-		ROS_ERROR("Possible values for run: all, intake_cargo, outtake_cargo, intake_hatch_panel, outtake_hatch_panel, elevator, climber0, climber1, climber2, climber3");
+		ROS_ERROR("Possible values for run: all, intake_cargo, outtake_cargo, intake_hatch_panel, outtake_hatch_panel, elevator, climber0, climber1, climber2, climber3, path");
 		ROS_ERROR("Note: 'all' will not run the climber");
 		return 0;
 	}
@@ -428,6 +481,28 @@ int main (int argc, char **argv)
 	else if(what_to_run == "align_hatch")
 	{
 		callAlignHatch();
+	}
+	else if(what_to_run == "path")
+	{
+			std::cout << "Enter x1: ";
+            std::cin >> path_x_setpoint;
+			std::cout << "Enter y1: ";
+            std::cin >> path_y_setpoint;
+			std::cout << "Enter z1: ";
+            std::cin >> path_z_setpoint;
+			std::cout << "Enter x2: ";
+            std::cin >> path_x2_setpoint;
+			std::cout << "Enter y2: ";
+            std::cin >> path_y2_setpoint;
+			std::cout << "Enter z2: ";
+            std::cin >> path_z2_setpoint;
+            ROS_WARN_STREAM("path_x_setpoint: " << path_x_setpoint);
+            ROS_WARN_STREAM("path_y_setpoint: " << path_y_setpoint);
+            ROS_WARN_STREAM("path_z_setpoint: " << path_z_setpoint);
+            ROS_WARN_STREAM("path_x2_setpoint: " << path_x2_setpoint);
+            ROS_WARN_STREAM("path_y2_setpoint: " << path_y2_setpoint);
+            ROS_WARN_STREAM("path_z2_setpoint: " << path_z2_setpoint);
+            callPath(path_x_setpoint, path_y_setpoint, path_z_setpoint, path_x2_setpoint, path_y2_setpoint, path_z2_setpoint);
 	}
 	else {
 		ROS_ERROR("Invalid run argument");

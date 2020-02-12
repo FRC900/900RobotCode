@@ -3,12 +3,14 @@
 #include <std_msgs/Bool.h>
 #include <geometry_msgs/Twist.h>
 #include <atomic>
+#include <cmath>
 
 ros::Time time_since_command;
 ros::Time time_since_orient;
 ros::Time time_since_x;
 ros::Time time_since_y;
 ros::Time time_since_pid_enable;
+ros::Time time_at_last_orient_state;
 ros::Time current_time;
 
 std::string orient_topic;
@@ -17,6 +19,7 @@ std::string y_topic;
 std::string enable_topic;
 std::string ratio_xy_topic;
 std::string name;
+std::string orient_state_topic;
 
 double command_timeout = 0.5; //Default value if param not loaded
 
@@ -25,6 +28,7 @@ ros::Subscriber y_pid_sub;
 ros::Subscriber orient_pid_sub;
 ros::Subscriber enable_pid_sub;
 ros::Subscriber ratio_xy_sub;
+ros::Subscriber orient_state_sub;
 
 geometry_msgs::Twist cmd_vel_msg;
 
@@ -34,6 +38,9 @@ bool orient_sub = false;
 bool x_sub = false;
 bool y_sub = false;
 bool ratio_imposed = false;
+double current_angle = 0;
+double x_command = 0;
+double y_command = 0;
 
 void orientCB(const std_msgs::Float64& msg)
 {
@@ -45,13 +52,13 @@ void xCB(const std_msgs::Float64& msg)
 {
 	time_since_command = ros::Time::now();
 	time_since_x = ros::Time::now();
-	cmd_vel_msg.linear.x = ((msg.data == msg.data) ? msg.data : 0.0);
+	x_command = ((msg.data == msg.data) ? msg.data : 0.0);
 }
 void yCB(const std_msgs::Float64& msg)
 {
 	time_since_command = ros::Time::now();
 	time_since_y = ros::Time::now();
-	cmd_vel_msg.linear.y = ((msg.data == msg.data) ? msg.data : 0.0);
+	y_command = ((msg.data == msg.data) ? msg.data : 0.0);
 }
 void enableCB(const std_msgs::Bool& msg)
 {
@@ -60,6 +67,13 @@ void enableCB(const std_msgs::Bool& msg)
 }
 void ratio_xyCB(const std_msgs::Float64& msg) {
 	ratio_xy = msg.data;
+}
+void orientStateCB(const std_msgs::Float64& msg) {
+        time_at_last_orient_state = ros::Time::now();
+		if(msg.data == msg.data)
+			current_angle = msg.data;
+		else
+			current_angle = 0;
 }
 
 int main(int argc, char ** argv)
@@ -116,6 +130,13 @@ int main(int argc, char ** argv)
 	{
 		ROS_ERROR("Could not read name in publish_pid_cmd_vel");
 	}
+        if(!nh_private_params.getParam("orient_state_topic", orient_state_topic))
+        {
+            ROS_ERROR("Could not read orient_state_topic in publish_pid_cmd_vel. Assuming robot_centric.");
+        }
+        else {
+            orient_state_sub = nh.subscribe(orient_state_topic, 1, &orientStateCB);
+        }
 
 	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(name + "/swerve_drive_controller/cmd_vel", 1);
 
@@ -152,6 +173,17 @@ int main(int argc, char ** argv)
 				}
 			}
 			time_since_x = ros::Time::now();
+                        double rotate_angle;
+                        if((current_time - time_at_last_orient_state).toSec() < command_timeout)
+                        {
+                            rotate_angle = -1 * current_angle;
+                        }
+                        else
+                        {
+                            rotate_angle = 0;
+                        }
+                        cmd_vel_msg.linear.x = x_command * cos(rotate_angle) - y_command * sin(rotate_angle);
+                        cmd_vel_msg.linear.y = x_command * sin(rotate_angle) + y_command * cos(rotate_angle);
 			cmd_vel_pub.publish(cmd_vel_msg);
 		}
 		else {

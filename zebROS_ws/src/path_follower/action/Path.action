@@ -1,0 +1,5 @@
+geometry_msgs/Point[] points
+---
+bool timed_out
+bool success
+---

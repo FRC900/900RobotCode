@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<launch>
+
+        <group ns="path_follower">
+            <rosparam file="$(find path_follower)/config/path_follower_config.yaml" command="load"/>
+
+            <node name="path_follower_server" pkg="path_follower" type="path_follower_server" output="screen"/>
+            <node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node>
+            <node name="path_follower_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
+                <param name="orient_topic" value="orient_pid/orient_command" />
+                <param name="x_topic" value="x_position_pid/x_command" />
+                <param name="y_topic" value="y_position_pid/y_command" />
+                <param name="command_timeout" value="0.5" />
+                <param name="enable_topic" value="path_follower_pid/pid_enable" />
+                <param name="name" value="path_follower_pid" />
+                <param name="orient_state_topic" value="orient_pid/orient_state"/>
+            </node>
+
+            <node name="x_position_pid" pkg="pid" type="controller" >
+                <param name="node_name" value="x_position_pid" />
+                <param name="Kp" value="1.0" />
+                <param name="Ki" value="0.0" />
+                <param name="Kd" value="0.0" />
+                <param name="upper_limit" value="10" />
+                <param name="lower_limit" value="-10" />
+                <param name="windup_limit" value="10" />
+                <param name="max_loop_frequency" value="100.0" />
+                <param name="min_loop_frequency" value="100.0" />
+                <param name="topic_from_controller" value="x_position_pid/x_command" />
+                <param name="setpoint_topic" value="x_position_pid/x_cmd_pub" />
+                <param name="topic_from_plant" value="x_position_pid/x_state_pub" />
+                <remap from="pid_debug" to="x_position_pid/pid_debug" />
+                <remap from="pid_enable" to="x_position_pid/pid_enable" />
+            </node>
+
+            <node name="y_position_pid" pkg="pid" type="controller" >
+                <param name="node_name" value="y_position_pid" />
+                <param name="Kp" value="1.0" />
+                <param name="Ki" value="0.0" />
+                <param name="Kd" value="0.0" />
+                <param name="upper_limit" value="10" />
+                <param name="lower_limit" value="-10" />
+                <param name="windup_limit" value="10" />
+                <param name="max_loop_frequency" value="100.0" />
+                <param name="min_loop_frequency" value="100.0" />
+                <param name="topic_from_controller" value="y_position_pid/y_command" />
+                <param name="setpoint_topic" value="y_position_pid/y_cmd_pub" />
+                <param name="topic_from_plant" value="y_position_pid/y_state_pub" />
+                <remap from="pid_debug" to="y_position_pid/pid_debug" />
+                <remap from="pid_enable" to="y_position_pid/pid_enable" />
+            </node>
+
+            <node name="orient_pid" pkg="pid" type="controller" >
+                <param name="node_name" value="orient_pid" />
+                <param name="Kp" value="-1.0" />
+                <param name="Ki" value="0.0" />
+                <param name="Kd" value="0.0" />
+                <param name="upper_limit" value="8" />
+                <param name="lower_limit" value="-8" />
+                <param name="windup_limit" value="10" />
+                <param name="angle_error" value="true" />
+                <param name="max_loop_frequency" value="100.0" />
+                <param name="min_loop_frequency" value="100.0" />
+                <param name="topic_from_controller" value="orient_pid/orient_command" />
+                <param name="setpoint_topic" value="orient_pid/orient_cmd_pub" />
+                <param name="topic_from_plant" value="orient_pid/orient_state" />
+                <remap from="pid_debug" to="orient_pid/pid_debug"/>
+                <remap from="pid_enable" to="orient_pid/pid_enable"/>
+            </node>
+        </group>
+
+</launch>

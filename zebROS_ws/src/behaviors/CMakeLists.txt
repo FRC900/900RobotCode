@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
   talon_state_msgs
   teraranger_array
   tf2_ros
+  path_follower
 )
 
 include_directories(
@@ -134,7 +135,7 @@ include_directories(
 catkin_package(
    INCLUDE_DIRS include
    #LIBRARIES behaviors
-   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions nav_msgs roscpp rospy std_msgs teraranger_array tf2_ros
+   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower nav_msgs roscpp rospy std_msgs teraranger_array tf2_ros
    DEPENDS 
 )
 

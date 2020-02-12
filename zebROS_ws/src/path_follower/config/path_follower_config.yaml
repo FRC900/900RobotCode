@@ -1,0 +1,8 @@
+path_follower:
+    lookahead_distance: 0.4
+    odom_topic: "/frcrobot_jetson/swerve_drive_controller/odom"
+    target_frame: "initial_pose"
+    final_pos_tol: 0.03
+    ros_rate: 10
+    server_timeout: 10
+    start_point_radius: 0.05
