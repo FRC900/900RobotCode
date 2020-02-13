@@ -163,6 +163,10 @@ add_executable(align_to_shoot_server src/align_to_shoot_server.cpp)
 target_link_libraries(align_to_shoot_server ${catkin_LIBRARIES})
 add_dependencies(align_to_shoot_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(rotate_panel_node src/rotate_panel_server.cpp)
+target_link_libraries(rotate_panel_node ${catkin_LIBRARIES})
+add_dependencies(rotate_panel_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_executable(intake_powercell_server src/intake_powercell_server.cpp)
 target_link_libraries(intake_powercell_server ${catkin_LIBRARIES})
 add_dependencies(intake_powercell_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

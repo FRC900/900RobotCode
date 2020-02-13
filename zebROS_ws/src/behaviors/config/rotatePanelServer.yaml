@@ -1,0 +1,4 @@
+rotateControlPanelParams:
+    rotations: 3.3
+    timeout: 4
+    wait_for_server_timeout: 4
