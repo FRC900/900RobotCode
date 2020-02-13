@@ -270,6 +270,12 @@ target_link_libraries(gotocolor_server
   ${catkin_LIBRARIES}
 )
 
+add_executable(shooter_actionlib_server src/shooter_actionlib_server.cpp)
+add_dependencies(shooter_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(shooter_actionlib_server
+  ${catkin_LIBRARIES}
+)
+
 #add_executable(base_align_server src/base_align_server.cpp)
 #add_dependencies(base_align_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 #target_link_libraries(base_align_server
