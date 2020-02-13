@@ -1,3 +1,2 @@
-bool indexer_forward
-bool indexer_reverse
+float64 indexer_velocity
 ---

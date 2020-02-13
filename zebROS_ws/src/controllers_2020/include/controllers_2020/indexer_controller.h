@@ -22,17 +22,14 @@ class IndexerCommand
 {
 	public:
 		IndexerCommand()
-			: indexer_forward_(false)
-			, indexer_reverse_(false)
+			: indexer_velocity_(0)
 		{
 		}
-		IndexerCommand(bool indexer_forward, bool indexer_reverse)
+		IndexerCommand(double indexer_velocity)
 		{
-			indexer_forward_ = indexer_forward;
-			indexer_reverse_ = indexer_reverse;
+			indexer_velocity_ = indexer_velocity;
 		}
-		bool indexer_forward_;
-		bool indexer_reverse_;
+		double indexer_velocity_;
 };
 
 class IndexerController : public controller_interface::MultiInterfaceController<hardware_interface::PositionJointInterface, hardware_interface::TalonCommandInterface>
@@ -51,15 +48,12 @@ class IndexerController : public controller_interface::MultiInterfaceController<
 		virtual void update(const ros::Time &time, const ros::Duration &period) override;
 		virtual void stopping(const ros::Time &time) override;
 		bool cmdService (controllers_2020_msgs::IndexerSrv::Request &req, controllers_2020_msgs::IndexerSrv::Response &/*response*/);
-		//void talonStateCallback(const talon_state_msgs::TalonState &talon_state);
 
 	private:
 		talon_controllers::TalonVelocityCloseLoopControllerInterface indexer_joint_; //interface for the indexer turning motor
 		realtime_tools::RealtimeBuffer<IndexerCommand> indexer_cmd_;
 		ros::ServiceServer indexer_service_;
-		ros::Subscriber talon_state_sub_;
 
-		double indexer_speed_;
 }; //class
 
 } //namespace

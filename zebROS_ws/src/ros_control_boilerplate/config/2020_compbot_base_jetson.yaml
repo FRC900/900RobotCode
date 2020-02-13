@@ -152,7 +152,6 @@ climber_controller:
 indexer_controller:
     type:  indexer_controller/IndexerController
     indexer_joint: "indexer"
-    indexer_speed: 2.0
     indexer:
         joint: indexer_joint
         type: talon_controllers/TalonVelocityCloseLoopControllerInterface
