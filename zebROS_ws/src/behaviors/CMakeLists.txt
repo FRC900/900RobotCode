@@ -176,6 +176,9 @@ add_dependencies(shooter_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${
 target_link_libraries(shooter_actionlib_server
   ${catkin_LIBRARIES}
 )
+add_executable(rotate_panel_node src/rotate_panel_server.cpp)
+target_link_libraries(rotate_panel_node ${catkin_LIBRARIES})
+add_dependencies(rotate_panel_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # 2019 actionlib servers
 add_executable(intake_cargo_server src/intake_cargo_server.cpp)
