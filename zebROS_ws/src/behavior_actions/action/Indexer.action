@@ -1,0 +1,5 @@
+uint8 action
+---
+bool success
+bool timed_out
+---

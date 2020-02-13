@@ -12,7 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   behavior_actions
   controllers_2019_msgs
+  controllers_2020_msgs
   frc_msgs
+  field_obj
   nav_msgs
   message_generation
   message_filters
@@ -225,6 +227,12 @@ target_link_libraries(align_with_camera
 add_executable(align_hatch_server src/align_hatch_panels.cpp)
 add_dependencies(align_hatch_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(align_hatch_server
+  ${catkin_LIBRARIES}
+)
+
+add_executable(shooter_actionlib_server src/shooter_actionlib_server.cpp)
+add_dependencies(shooter_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(shooter_actionlib_server
   ${catkin_LIBRARIES}
 )
 #add_executable(base_align_server src/base_align_server.cpp)

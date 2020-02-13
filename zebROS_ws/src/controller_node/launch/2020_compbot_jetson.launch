@@ -106,7 +106,7 @@
 
 	<!-- vision align -->
 	<include file="$(find controller_node)/launch/tape_detection.launch" />
-    <include file="$(find controller_node)/launch/multiflex_example.launch" />
+        <!-- <include file="$(find controller_node)/launch/multiflex_example.launch" />-->
 
 	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
 <!--
@@ -142,6 +142,11 @@
 		-->
 		<arg name="camera" value="rs_t265" />
 	</include>
+
+	<group ns="shooter">
+		<rosparam file="$(find behaviors)/config/shooter_actionlib.yaml" command="load"/>
+		<node name="shooter_ac_server" pkg="behaviors" type="shooter_actionlib_server" output="screen" />
+	</group>
 
 	<include file="$(find controller_node)/launch/record_2020_compbot.launch" if="$(arg record)" />
 	<include file="$(find controller_node)/launch/record_2020_no_zed.launch" if="$(arg record)" />

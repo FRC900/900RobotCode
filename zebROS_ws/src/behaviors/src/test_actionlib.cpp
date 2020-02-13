@@ -5,6 +5,7 @@
 #include <behavior_actions/ElevatorAction.h>
 #include <behavior_actions/ClimbAction.h>
 #include <behavior_actions/AlignAction.h>
+#include <behavior_actions/ShooterAction.h>
 #include <path_follower/PathAction.h>
 #include <behavior_actions/enumerated_elevator_indices.h>
 #include <boost/algorithm/string.hpp>
@@ -234,6 +235,42 @@ bool callClimber(int step)
 	}
 }
 
+bool callShooter()
+{
+	//create client to call actionlib server
+	actionlib::SimpleActionClient<behavior_actions::ShooterAction> shooter_ac("/shooter/shooter_server", true);
+
+	ROS_INFO("Waiting for shooter server to start.");
+	if(!shooter_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("Could not find server within %f seconds.", server_wait_timeout);
+	}
+
+	ROS_INFO("Sending goal to shooter server.");
+	// send a goal to the action
+	behavior_actions::ShooterGoal goal;
+	shooter_ac.sendGoal(goal);
+
+	//wait for the action to return
+	bool finished_before_timeout = shooter_ac.waitForResult(ros::Duration(server_exec_timeout));
+
+	if (finished_before_timeout)
+	{
+		actionlib::SimpleClientGoalState state = shooter_ac.getState();
+		ROS_INFO("Action finished with state: %s",state.toString().c_str());
+		if(shooter_ac.getResult()->timed_out)
+		{
+			ROS_INFO("Climber server timed out!");
+		}
+		return true;
+	}
+	else
+	{
+		ROS_INFO("Action did not finish before the time out.");
+		return false;
+	}
+}
+
 bool callAlignHatch()
 {
 	actionlib::SimpleActionClient<behavior_actions::AlignAction> align_hatch_ac("/align_hatch/align_hatch_server", true);
@@ -347,7 +384,7 @@ int main (int argc, char **argv)
 	if(what_to_run.length() == 0)
 	{
 		ROS_ERROR("You need to specify the run functionality with: rosrun behaviors test_actionlib run:=____");
-		ROS_ERROR("Possible values for run: all, intake_cargo, outtake_cargo, intake_hatch_panel, outtake_hatch_panel, elevator, climber0, climber1, climber2, climber3, path");
+		ROS_ERROR("Possible values for run: all, indexer, intake_cargo, outtake_cargo, intake_hatch_panel, outtake_hatch_panel, elevator, climber0, climber1, climber2, climber3, shooter, path");
 		ROS_ERROR("Note: 'all' will not run the climber");
 		return 0;
 	}
@@ -503,6 +540,10 @@ int main (int argc, char **argv)
             ROS_WARN_STREAM("path_y2_setpoint: " << path_y2_setpoint);
             ROS_WARN_STREAM("path_z2_setpoint: " << path_z2_setpoint);
             callPath(path_x_setpoint, path_y_setpoint, path_z_setpoint, path_x2_setpoint, path_y2_setpoint, path_z2_setpoint);
+	}
+	else if(what_to_run == "shooter")
+	{
+		callShooter();
 	}
 	else {
 		ROS_ERROR("Invalid run argument");
