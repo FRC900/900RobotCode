@@ -98,7 +98,7 @@ void GenericHWControlLoop::update(void)
 
 	// Input
 	tracer_.start_unique("read");
-	hardware_interface_->read(elapsed_time_);
+	hardware_interface_->read(ros::Time::now(), elapsed_time_);
 
 	// Control
 	tracer_.start_unique("update");
@@ -106,7 +106,7 @@ void GenericHWControlLoop::update(void)
 
 	// Output
 	tracer_.start_unique("write");
-	hardware_interface_->write(elapsed_time_);
+	hardware_interface_->write(ros::Time::now(), elapsed_time_);
 	tracer_.stop();
 
 	ROS_INFO_STREAM_THROTTLE(20, tracer_.report());

@@ -392,6 +392,7 @@ class roboRIO_AS726x : public AS726x
 {
 	public:
 		roboRIO_AS726x(const frc::I2C::Port &port, int deviceAddress = AS726x_ADDRESS);
+		virtual ~roboRIO_AS726x() { }
 	private:
 		virtual void read(uint8_t reg, uint8_t *buf, uint8_t num) override;
 		virtual void write(uint8_t reg, uint8_t *buf, uint8_t num) override;

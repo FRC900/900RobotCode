@@ -148,7 +148,7 @@ const int timeoutMs = 0; //If nonzero, function will wait for config success and
 FRCRobotHWInterface::FRCRobotHWInterface(ros::NodeHandle &nh, urdf::Model *urdf_model)
 	: ros_control_boilerplate::FRCRobotInterface(nh, urdf_model)
 	, robot_(nullptr)
-	, read_tracer_(nh_.getNamespace() + "::read()")
+	, read_tracer_(nh.getNamespace() + "::read()")
 {
 }
 
@@ -177,11 +177,15 @@ FRCRobotHWInterface::~FRCRobotHWInterface()
 		pdp_thread_[i].join();
 }
 
-void FRCRobotHWInterface::init(void)
+bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 {
 	// Do base class init. This loads common interface info
 	// used by both the real and sim interfaces
-	FRCRobotInterface::init();
+	if (!FRCRobotInterface::init(root_nh, robot_hw_nh))
+	{
+		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": FRCRobotInterface::init() returnd false");
+		return false;
+	}
 
 	if (run_hal_robot_)
 	{
@@ -240,7 +244,7 @@ void FRCRobotHWInterface::init(void)
 			ctre_mc_read_threads_.push_back(std::thread(&FRCRobotHWInterface::ctre_mc_read_thread, this,
 										    ctre_mcs_[i], ctre_mc_read_thread_states_[i],
 										    ctre_mc_read_state_mutexes_[i],
-										    std::make_unique<Tracer>("ctre_mc_read_" + can_ctre_mc_names_[i] + " " + nh_.getNamespace())));
+										    std::make_unique<Tracer>("ctre_mc_read_" + can_ctre_mc_names_[i] + " " + root_nh.getNamespace())));
 		}
 		else
 		{
@@ -494,7 +498,7 @@ void FRCRobotHWInterface::init(void)
 					pcm_thread_.push_back(std::thread(&FRCRobotHWInterface::pcm_read_thread, this,
 								compressors_[i], compressor_pcm_ids_[i], pcm_read_thread_state_[i],
 								pcm_read_thread_mutexes_[i],
-								std::make_unique<Tracer>("PCM " + compressor_names_[i] + " " + nh_.getNamespace())));
+								std::make_unique<Tracer>("PCM " + compressor_names_[i] + " " + root_nh.getNamespace())));
 					HAL_Report(HALUsageReporting::kResourceType_Compressor, compressor_pcm_ids_[i]);
 				}
 				else
@@ -544,7 +548,7 @@ void FRCRobotHWInterface::init(void)
 					pdp_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
 					pdp_thread_.push_back(std::thread(&FRCRobotHWInterface::pdp_read_thread, this,
 										  pdps_[i], pdp_read_thread_state_[i], pdp_read_thread_mutexes_[i],
-										  std::make_unique<Tracer>("PDP " + pdp_names_[i] + " " + nh_.getNamespace())));
+										  std::make_unique<Tracer>("PDP " + pdp_names_[i] + " " + root_nh.getNamespace())));
 					HAL_Report(HALUsageReporting::kResourceType_PDP, pdp_modules_[i]);
 				}
 			}
@@ -567,7 +571,7 @@ void FRCRobotHWInterface::init(void)
 			pub_name << "joystick_states_raw";
 			if (num_joysticks_ > 1)
 				pub_name << joystick_ids_[i];
-			realtime_pub_joysticks_.push_back(std::make_unique<realtime_tools::RealtimePublisher<sensor_msgs::Joy>>(nh_, pub_name.str(), 1));
+			realtime_pub_joysticks_.push_back(std::make_unique<realtime_tools::RealtimePublisher<sensor_msgs::Joy>>(root_nh, pub_name.str(), 1));
 		}
 		else
 		{
@@ -595,7 +599,7 @@ void FRCRobotHWInterface::init(void)
 			{
 				ROS_ERROR_STREAM("Invalid port specified for as726x - " <<
 						as726x_ports_[i] << "valid options are onboard and mxp");
-				return;
+				return false;
 			}
 
 			as726xs_.push_back(std::make_shared<as726x::roboRIO_AS726x>(port, as726x_addresses_[i]));
@@ -607,12 +611,14 @@ void FRCRobotHWInterface::init(void)
 								as726xs_[i],
 								as726x_read_thread_state_[i],
 								as726x_read_thread_mutexes_[i],
-								std::make_unique<Tracer>("AS726x:" + as726x_names_[i] + " " + nh_.getNamespace())));
+								std::make_unique<Tracer>("AS726x:" + as726x_names_[i] + " " + root_nh.getNamespace())));
 			}
 			else
 			{
 				ROS_ERROR_STREAM("Error intializing as726x");
-				return;
+				as726xs_.push_back(nullptr);
+				as726x_read_thread_state_.push_back(nullptr);
+				as726x_read_thread_mutexes_.push_back(nullptr);
 			}
 		}
 		else
@@ -626,25 +632,25 @@ void FRCRobotHWInterface::init(void)
 	const double t_now = ros::Time::now().toSec();
 
 	t_prev_robot_iteration_ = t_now;
-	if(! nh_.getParam("generic_hw_control_loop/robot_iteration_hz", robot_iteration_hz_)) {
+	if(! root_nh.getParam("generic_hw_control_loop/robot_iteration_hz", robot_iteration_hz_)) {
 		ROS_ERROR("Failed to read robot_iteration_hz in frcrobot_hw_interface");
 		robot_iteration_hz_ = 20;
 	}
 
 	t_prev_joystick_read_ = t_now;
-	if(! nh_.getParam("generic_hw_control_loop/joystick_read_hz", joystick_read_hz_)) {
+	if(! root_nh.getParam("generic_hw_control_loop/joystick_read_hz", joystick_read_hz_)) {
 		ROS_ERROR("Failed to read joystick_read_hz in frcrobot_hw_interface");
 		joystick_read_hz_ = 50;
 	}
 
 	t_prev_match_data_read_ = t_now;
-	if(! nh_.getParam("generic_hw_control_loop/match_data_read_hz", match_data_read_hz_)) {
+	if(! root_nh.getParam("generic_hw_control_loop/match_data_read_hz", match_data_read_hz_)) {
 		ROS_ERROR("Failed to read match_data_read_hz in frcrobot_hw_interface");
 		match_data_read_hz_ = 2;
 	}
 
 	t_prev_robot_controller_read_ = t_now;
-	if(! nh_.getParam("generic_hw_control_loop/robot_controller_read_hz", robot_controller_read_hz_)) {
+	if(! root_nh.getParam("generic_hw_control_loop/robot_controller_read_hz", robot_controller_read_hz_)) {
 		ROS_ERROR("Failed to read robot_controller_read_hz in frcrobot_hw_interface");
 		robot_controller_read_hz_ = 20;
 	}
@@ -661,6 +667,7 @@ void FRCRobotHWInterface::init(void)
 #endif
 
 	ROS_INFO_NAMED("frcrobot_hw_interface", "FRCRobotHWInterface Ready.");
+	return true;
 }
 
 // Each talon/victor gets their own read thread. The thread loops at a fixed rate
@@ -1107,7 +1114,7 @@ void FRCRobotHWInterface::as726x_read_thread(
 	}
 }
 
-void FRCRobotHWInterface::read(ros::Duration &/*elapsed_time*/)
+void FRCRobotHWInterface::read(const ros::Time& /*time*/, const ros::Duration& /*period*/)
 {
 	read_tracer_.start_unique("Check for ready");
 	if (run_hal_robot_ && !robot_code_ready_)
@@ -1819,7 +1826,7 @@ bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, con
 }
 
 //#define DEBUG_WRITE
-void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
+void FRCRobotHWInterface::write(const ros::Time& /*time*/, const ros::Duration& period)
 {
 	// Was the robot enabled last time write was run?
 	static bool last_robot_enabled = false;
@@ -3047,14 +3054,14 @@ void FRCRobotHWInterface::write(ros::Duration &elapsed_time)
 				//if (dummy_joint_names_[i].substr(2, std::string::npos) == "_angle")
 				{
 					// position mode
-					dummy_joint_velocity_[i] = (dummy_joint_command_[i] - dummy_joint_position_[i]) / elapsed_time.toSec();
+					dummy_joint_velocity_[i] = (dummy_joint_command_[i] - dummy_joint_position_[i]) / period.toSec();
 					dummy_joint_position_[i] = dummy_joint_command_[i];
 				}
 #if 0
 				else if (dummy_joint_names_[i].substr(2, std::string::npos) == "_drive")
 				{
 					// velocity mode
-					dummy_joint_position_[i] += dummy_joint_command_[i] * elapsed_time.toSec();
+					dummy_joint_position_[i] += dummy_joint_command_[i] * period.toSec();
 					dummy_joint_velocity_[i] = dummy_joint_command_[i];
 				}
 #endif

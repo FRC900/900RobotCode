@@ -95,12 +95,16 @@ bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::R
 	return true;
 }
 
-void FRCRobotSimInterface::init(void)
+bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 {
 	// Do base class init. This loads common interface info
 	// used by both the real and sim interfaces
 	ROS_WARN("Passes");
-	FRCRobotInterface::init();
+	if (!FRCRobotInterface::init(root_nh, robot_hw_nh))
+	{
+		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " : FRCRobotInterface::init() failed");
+		return false;
+	}
 	ROS_WARN("Passes");
 
 	ROS_WARN("fails here?1");
@@ -227,19 +231,20 @@ void FRCRobotSimInterface::init(void)
 			{
 				ROS_ERROR_STREAM("Invalid port specified for as726x - " <<
 						as726x_ports_[i] << "valid options are onboard and mxp");
-				return;
+				return false;
 			}
 		}
 	}
 
-	limit_switch_srv_ = nh_.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit,this);
-    match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data_in", 1, &FRCRobotSimInterface::match_data_callback, this);
+	limit_switch_srv_ = root_nh.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit,this);
+    match_data_sub_ = root_nh.subscribe("/frcrobot_rio/match_data_in", 1, &FRCRobotSimInterface::match_data_callback, this);
 
-	linebreak_sensor_srv_ = nh_.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
+	linebreak_sensor_srv_ = root_nh.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
 	ROS_INFO_NAMED("frcrobot_sim_interface", "FRCRobotSimInterface Ready.");
+	return true;
 }
 
-void FRCRobotSimInterface::read(ros::Duration &/*elapsed_time*/)
+void FRCRobotSimInterface::read(const ros::Time& /*time*/, const ros::Duration& /*period*/)
 {
 	for (std::size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
 	{
@@ -296,7 +301,7 @@ bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBre
 	return true;
 }
 
-void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
+void FRCRobotSimInterface::write(const ros::Time& /*time*/, const ros::Duration& period)
 {
 #if 0
 	ROS_INFO_STREAM_THROTTLE(1,
@@ -684,7 +689,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			if (tc.commandChanged(speed))
 				ts.setSetpoint(speed);
 
-			ts.setPosition(ts.getPosition() + speed * elapsed_time.toSec());
+			ts.setPosition(ts.getPosition() + speed * period.toSec());
 			ts.setSpeed(speed);
 		}
 		else if (simulate_mode == hardware_interface::TalonMode_MotionMagic)
@@ -696,7 +701,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 
 			const double position = ts.getPosition();
 			double velocity = ts.getSpeed();
-			const double dt = elapsed_time.toSec();
+			const double dt = period.toSec();
 
 			//change the nextVelocity call to non existent as it does not work and throws an error from a non-existent package
 			double next_pos = nextVelocity(position, setpoint, velocity, ts.getMotionCruiseVelocity(), ts.getMotionAcceleration(), dt);
@@ -722,7 +727,7 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 			if (tc.commandChanged(percent))
 				ts.setSetpoint(percent);
 
-			ts.setPosition(ts.getPosition() + percent*2*M_PI * elapsed_time.toSec());
+			ts.setPosition(ts.getPosition() + percent*2*M_PI * period.toSec());
 			ts.setSpeed(percent*2*M_PI);
 		}
 
@@ -879,13 +884,13 @@ void FRCRobotSimInterface::write(ros::Duration &elapsed_time)
 		//if (dummy_joint_names_[i].substr(2, std::string::npos) == "_angle")
 		{
 			// position mode
-			dummy_joint_velocity_[i] = (dummy_joint_command_[i] - dummy_joint_position_[i]) / elapsed_time.toSec();
+			dummy_joint_velocity_[i] = (dummy_joint_command_[i] - dummy_joint_position_[i]) / period.toSec();
 			dummy_joint_position_[i] = dummy_joint_command_[i];
 		}
 		//else if (dummy_joint_names_[i].substr(2, std::string::npos) == "_drive")
 		{
 			// position mode
-			//dummy_joint_position_[i] += dummy_joint_command_[i] * elapsed_time.toSec();
+			//dummy_joint_position_[i] += dummy_joint_command_[i] * period.toSec();
 			//dummy_joint_velocity_[i] = dummy_joint_command_[i];
 		}
 	}

@@ -76,7 +76,6 @@ void FRCRobotInterface::readJointLocalParams(XmlRpc::XmlRpcValue joint_params,
 
 FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_model) :
 	  name_("generic_hw_interface")
-	, nh_(nh)
 	, num_can_ctre_mcs_(0)
 	, num_nidec_brushlesses_(0)
 	, num_digital_inputs_(0)
@@ -99,7 +98,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 		urdf_model_ = urdf_model;
 
 	// Load rosparams
-	ros::NodeHandle rpnh(nh_, "hardware_interface"); // TODO(davetcoleman): change the namespace to "frc_robot_interface" aka name_
+	ros::NodeHandle rpnh(nh, "hardware_interface"); // TODO(davetcoleman): change the namespace to "frc_robot_interface" aka name_
 
 	// Read a list of joint information from ROS parameters.  Each entry in the list
 	// specifies a name for the joint and a hardware ID corresponding
@@ -719,7 +718,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 	can_interface_ = rpnh.param<std::string>("can_interface", "can0");
 }
 
-void FRCRobotInterface::init()
+bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 {
 	num_can_ctre_mcs_ = can_ctre_mc_names_.size();
 	// Create vectors of the correct size for
@@ -1146,6 +1145,7 @@ void FRCRobotInterface::init()
 	registerInterface(&as726x_remote_state_interface_);
 
 	ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface Ready.");
+	return true;
 }
 
 // Using the mode, setpoint, etc generated from a given Talon's custom profile,

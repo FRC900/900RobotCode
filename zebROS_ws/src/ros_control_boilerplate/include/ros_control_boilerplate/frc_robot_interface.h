@@ -109,13 +109,13 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		virtual ~FRCRobotInterface() {}
 
 		/** \brief Initialize the hardware interface */
-		virtual void init();
+		virtual bool init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh) override;
 
 		/** \brief Read the state from the robot hardware. */
-		virtual void read(ros::Duration &elapsed_time) = 0;
+		virtual void read(const ros::Time& time, const ros::Duration& period) override = 0;
 
 		/** \brief Write the command to the robot hardware. */
-		virtual void write(ros::Duration &elapsed_time) = 0;
+		virtual void write(const ros::Time& time, const ros::Duration& period) override = 0;
 
 		/** \brief Set all members to default values */
 		virtual void reset();
@@ -126,8 +126,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		 * with regard to necessary hardware interface switches. Start and stop list are disjoint.
 		 * This is just a check, the actual switch is done in doSwitch()
 		 */
-		virtual bool canSwitch(const std::list<hardware_interface::ControllerInfo> &/*start_list*/,
-							   const std::list<hardware_interface::ControllerInfo> &/*stop_list*/) const
+		virtual bool prepareSwitch(const std::list<hardware_interface::ControllerInfo> &/*start_list*/,
+							       const std::list<hardware_interface::ControllerInfo> &/*stop_list*/) override
 		{
 			return true;
 		}
@@ -138,7 +138,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		 * Start and stop list are disjoint. The feasability was checked in canSwitch() beforehand.
 		 */
 		virtual void doSwitch(const std::list<hardware_interface::ControllerInfo> &/*start_list*/,
-							  const std::list<hardware_interface::ControllerInfo> &/*stop_list*/)
+							  const std::list<hardware_interface::ControllerInfo> &/*stop_list*/) override
 		{
 		}
 
@@ -156,9 +156,6 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 
 		// Short name of this class
 		std::string name_;
-
-		// Startup and shutdown of the internal node inside a roscpp program
-		ros::NodeHandle nh_;
 
 		// Hardware interfaces
 		hardware_interface::JointStateInterface                joint_state_interface_;

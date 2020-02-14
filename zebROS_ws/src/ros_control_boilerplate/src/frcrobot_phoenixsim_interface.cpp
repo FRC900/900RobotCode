@@ -13,7 +13,7 @@ FRCRobotPhoenixSimInterface::FRCRobotPhoenixSimInterface(ros::NodeHandle &nh, ur
 {
 }
 
-void FRCRobotPhoenixSimInterface::init(void)
+bool FRCRobotPhoenixSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 {
 	for (size_t i = 0; i < can_ctre_mc_can_ids_.size(); i++)
 	{
@@ -28,16 +28,21 @@ void FRCRobotPhoenixSimInterface::init(void)
 	ros::Duration(1.0).sleep();
 
 	hal::init::InitializeHAL();
-	FRCRobotHWInterface::init();
+	if (!FRCRobotHWInterface::init(root_nh, robot_hw_nh))
+	{
+		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " : FRCRobotHWInterface::init() returned false");
+		return false;
+	}
+	return true;
 }
 
 
 // Write should grab the motor output and use it to run 1 timestep
 // of the underlying motor sim
-void FRCRobotPhoenixSimInterface::write(ros::Duration &elapsed_time)
+void FRCRobotPhoenixSimInterface::write(const ros::Time& time, const ros::Duration& period)
 {
 	c_FeedEnable(500);
-	FRCRobotHWInterface::write(elapsed_time);
+	FRCRobotHWInterface::write(time, period);
 
 	// Update the motor connected to each Talon here?
 }

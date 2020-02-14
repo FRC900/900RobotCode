@@ -37,7 +37,7 @@
 */
 
 
-//PURPOSE: Pulls togther stuff needed to run hw interface 
+//PURPOSE: Pulls togther stuff needed to run hw interface
 
 #include <ros_control_boilerplate/generic_hw_control_loop.h>
 #include <ros_control_boilerplate/frcrobot_hw_interface.h>
@@ -46,6 +46,7 @@ int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "frcrobot_hw_interface");
 	ros::NodeHandle nh;
+	ros::NodeHandle robot_nh(nh, "hardware_interface");
 
 	// NOTE: We run the ROS loop in a separate thread as external calls such
 	// as service callbacks to load controllers can block the (main) control loop
@@ -55,12 +56,16 @@ int main(int argc, char **argv)
 	// Create the hardware interface specific to your robot
 	std::shared_ptr<frcrobot_control::FRCRobotHWInterface> frcrobot_hw_interface
 	(new frcrobot_control::FRCRobotHWInterface(nh));
-	frcrobot_hw_interface->init();
+	if (!frcrobot_hw_interface->init(nh, robot_nh))
+	{
+		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " : frcrobot_hw_interface->init() returned false");
+		return -1;
+	}
 
 	// Start the control loop
 	ros_control_boilerplate::GenericHWControlLoop control_loop(nh, frcrobot_hw_interface);
 
-	control_loop.run(); // Blocks until shutdown signal recieved 
+	control_loop.run(); // Blocks until shutdown signal recieved
 
 	return 0;
 }
