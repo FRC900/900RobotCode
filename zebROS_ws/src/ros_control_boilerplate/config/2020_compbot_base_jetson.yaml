@@ -35,7 +35,6 @@ hardware_interface:
        - {name: climber_elevator_brake_joint, type: solenoid, local_hardware: false, local_update: true}
        - {name: indexer_joint, type: can_talon_srx, can_id: 67, local: true} #TODO find actual can id
 
-       - {name: control_panel_arm_joint, type: solenoid, local_hardware: false, local_update: true}
        - {name: control_panel_joint, type: can_talon_srx, can_id: 34, local: true}
        
        - {name: elevator_master, type: can_talon_srx, can_id: 41, local: true}

@@ -5,7 +5,6 @@
 
 //controller interfaces
 #include <controller_interface/multi_interface_controller.h>
-#include <hardware_interface/joint_command_interface.h>
 #include <talon_controllers/talon_controller_interface.h>
 
 
@@ -22,22 +21,19 @@ namespace control_panel_controller
 		public:
 			ControlPanelCommand()
 				: set_point_(0.0)
-				  , panel_arm_extend_(false)
 		{
 		}
-			ControlPanelCommand(double set_point, bool panel_arm_extend)
+			ControlPanelCommand(double set_point)
 			{
 				set_point_ = set_point;
-				panel_arm_extend_ = panel_arm_extend;
 			}
 			double set_point_;
-			bool panel_arm_extend_;
 	};
 
 
 
 
-	class ControlPanelController : public controller_interface::MultiInterfaceController<hardware_interface::PositionJointInterface, hardware_interface::TalonCommandInterface>
+	class ControlPanelController : public controller_interface::MultiInterfaceController<hardware_interface::TalonCommandInterface>
 	{
 		public:
 			ControlPanelController()
@@ -56,7 +52,6 @@ namespace control_panel_controller
 
 		private:
 			talon_controllers::TalonMotionMagicCloseLoopControllerInterface control_panel_joint_;//interface for the control panel turning motor
-			hardware_interface::JointHandle control_panel_arm_joint_; //interface for the control panel arm solenoid
 			realtime_tools::RealtimeBuffer<ControlPanelCommand> control_panel_cmd_;
 			ros::ServiceServer control_panel_service_;
 			double control_panel_diameter_;

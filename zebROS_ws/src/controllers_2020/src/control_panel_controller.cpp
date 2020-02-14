@@ -8,10 +8,6 @@ namespace control_panel_controller
 			ros::NodeHandle                 &controller_nh)
 	{
 		hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
-		hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
-
-		//initialize control panel arm joint (pnumatic piston for vertical actuation)
-		control_panel_arm_joint_ = pos_joint_iface->getHandle("control_panel_arm_joint"); //joint_name comes from ros_control_boilerplate/config/[insert_year]_compbot_base_jetson.yaml
 
 		//initialize control_panel_joint (motor for panel rotation)
 		//get control panel params from config file
@@ -48,7 +44,7 @@ namespace control_panel_controller
 		   cmd_buffer_.writeFromNonRT(true);
 		   */
 		control_panel_joint_.setSelectedSensorPosition(0.0); //set current encoder position to 0
-		control_panel_cmd_.writeFromNonRT(ControlPanelCommand(0,false));
+		control_panel_cmd_.writeFromNonRT(ControlPanelCommand(0));
 	}
 
 	void ControlPanelController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
@@ -57,15 +53,7 @@ namespace control_panel_controller
 		   const bool extend_cmd = *(cmd_buffer_.readFromRT());
 		   */
 		const ControlPanelCommand control_panel_cmd = *(control_panel_cmd_.readFromRT());
-		double control_panel_arm_double;
-		if(control_panel_cmd.panel_arm_extend_ == true){
-			control_panel_arm_double = 1.0;
-		}
-		else {
-			control_panel_arm_double = 0.0;
-		}
 		control_panel_joint_.setCommand(control_panel_cmd.set_point_); //set the position command to the control panel motor
-		control_panel_arm_joint_.setCommand(control_panel_arm_double);//set the extend/retract command to the control panel solenoid
 	}
 
 
@@ -75,10 +63,10 @@ namespace control_panel_controller
 		if(isRunning())
 		{
 			//assign request value to command buffer(s)
-			double rotation_ratio = (control_panel_diameter_/wheel_diameter_);
-			double set_point = (req.control_panel_rotations * rotation_ratio) + control_panel_joint_.getPosition();
+			double rotation_ratio = (control_panel_diameter_/wheel_diameter_) * 2*M_PI;
+			double set_point = (req.control_panel_rotations * rotation_ratio) + (*control_panel_cmd_.readFromRT()).set_point_; //buffer still has the old set point in it
 
-			control_panel_cmd_.writeFromNonRT(ControlPanelCommand(set_point , req.panel_arm_extend));
+			control_panel_cmd_.writeFromNonRT(ControlPanelCommand(set_point));
 		}
 		else
 		{
