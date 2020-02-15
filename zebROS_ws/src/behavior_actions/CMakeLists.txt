@@ -75,8 +75,11 @@ add_action_files(
 	AlignToShoot.action
 	Shooter.action
 	Indexer.action
+<<<<<<< HEAD
 	Eject.action
 	GoToColor.action
+=======
+>>>>>>> Updated rotate_panel_server, added it to twist_mux, added .action file,
 	RotatePanel.action
 )
 
