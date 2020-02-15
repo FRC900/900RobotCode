@@ -17,7 +17,7 @@
 //include msg types for goal subscriber
 #include "field_obj/Detection.h"
 #include "std_msgs/Bool.h"
-#include "std_msgs/Int32.h"
+#include "std_msgs/UInt8.h"
 
 //create the class for the actionlib server
 class ShooterAction {
@@ -111,8 +111,10 @@ class ShooterAction {
 				return;
 			}
 
-			while(num_balls_ > 0 && !timed_out_ && !preempted_)
+			//keep shooting balls until we don't have any
+			while(num_balls_ > 0 && !timed_out_ && !preempted_ && ros::ok())
 			{
+				//determine shooter velocity/hood raise and go there with shooter
 				ROS_INFO_STREAM(action_name_ << ": spinning up the shooter");
 				controllers_2020_msgs::ShooterSrv srv;
 				bool shooter_hood_raise;
@@ -123,22 +125,26 @@ class ShooterAction {
 				if(!shooter_client_.call(srv))
 				{
 					ROS_ERROR_STREAM(action_name_ << " can't call shooter service");
-					as_.setPreempted();
+					preempted_ = true;
 				}
 				ROS_INFO_STREAM(action_name_ << ": called shooter service");
+
+
+				//wait for shooter ready to shoot
 				double start_wait_for_ready_time = ros::Time::now().toSec();
 				while(!preempted_ && !timed_out_ && ros::ok())
 				{
 					ROS_INFO_STREAM(action_name_ << ": waiting for the shooter to be ready");
+					//check preempted
 					if(as_.isPreemptRequested() || !ros::ok()) {
-						ROS_ERROR_STREAM(action_name_ << ": preempt while calling shooter controller");
+						ROS_ERROR_STREAM(action_name_ << ": preempt while waiting for shooter to be ready");
 						preempted_ = true;
 					}
 					//test if succeeded, if so, break out of the loop
 					else if(ready_to_shoot_) {
 						break;
 					}
-					//check timed out 
+					//check timed out
 					else if (ros::Time::now().toSec() - start_time_ > server_timeout_ || ros::Time::now().toSec() - start_wait_for_ready_time > wait_for_ready_timeout_) {
 						ROS_ERROR_STREAM(action_name_ << ": timed out while calling shooter controller");
 						timed_out_ = true;
@@ -147,6 +153,7 @@ class ShooterAction {
 						r.sleep();
 					}
 				}
+				//feed ball into the shooter
 				if(!preempted_ && !timed_out_ && ros::ok())
 				{
 					ROS_INFO_STREAM(action_name_ << ": calling indexer server to feed one ball into the shooter");
@@ -156,18 +163,17 @@ class ShooterAction {
 					ac_indexer_.sendGoal(indexer_goal);
 					//wait for actionlib server
 					waitForActionlibServer(ac_indexer_, 30, "calling indexer server"); //method defined below. Args: action client, timeout in sec, description of activity
-					pause(wait_for_shoot_timeout_, "waiting for shooter to shoot after indexer fed in a ball");
 				}
 			}
 
-			//set final state using client calls - if you did preempt handling before, put a check here so don't override that
+			//set final state using client calls
 			controllers_2020_msgs::ShooterSrv srv;
 			srv.request.set_velocity = 0;
 			srv.request.shooter_hood_raise = false;
 			if(!shooter_client_.call(srv))
 			{
 				ROS_ERROR_STREAM(action_name_ << " can't call shooter service");
-				as_.setPreempted();
+				preempted_ = true;
 			}
 			ROS_INFO_STREAM(action_name_ << ": calling indexer server to go to intake position");
 			//Call actionlib server
@@ -256,7 +262,7 @@ class ShooterAction {
 			goal_msg_ = msg;
 		}
 
-		void numBallsCB(const std_msgs::Int32 &msg)
+		void numBallsCB(const std_msgs::UInt8 &msg)
 		{
 			num_balls_ = msg.data;
 		}
@@ -279,7 +285,7 @@ class ShooterAction {
 
 		ready_to_shoot_sub_ = nh_.subscribe("/frcrobot_jetson/shooter_controller/ready_to_shoot", 5, &ShooterAction::shooterReadyCB, this);
 		goal_sub_ = nh_.subscribe("/goal_sub", 5, &ShooterAction::goalDetectionCB, this);
-		num_balls_sub_ = nh_.subscribe("/indexer_actionlib_server/num_balls", 5, &ShooterAction::numBallsCB, this);
+		num_balls_sub_ = nh_.subscribe("/indexer/num_power_cells", 5, &ShooterAction::numBallsCB, this);
 	}
 
 		~ShooterAction(void)
@@ -290,8 +296,6 @@ class ShooterAction {
 		double server_timeout_;
 		double wait_for_server_timeout_;
 		double wait_for_ready_timeout_;
-		double wait_for_shoot_timeout_;
-		double wait_for_intake_position_timeout_;
 };
 
 int main(int argc, char** argv) {
@@ -303,7 +307,7 @@ int main(int argc, char** argv) {
 	ShooterAction shooter_action("shooter_server");
 
 	//get config values
-	ros::NodeHandle n_params_shooter(nh, "actionlib_params"); //node handle for a lower-down namespace
+	ros::NodeHandle n_params_shooter(nh, "actionlib_shooter_params"); //node handle for a lower-down namespace
 	if (!n_params_shooter.getParam("server_timeout", shooter_action.server_timeout_)) {
 		ROS_ERROR("Could not read server_timeout in shooter_server");
 		shooter_action.server_timeout_ = 10;
@@ -312,17 +316,9 @@ int main(int argc, char** argv) {
 		ROS_ERROR("Could not read wait_for_server_timeout in shooter_sever");
 		shooter_action.wait_for_server_timeout_ = 10;
 	}
-	if (!n_params_shooter.getParam("wait_for_shoot_timeout", shooter_action.wait_for_shoot_timeout_)) {
-		ROS_ERROR("Could not read wait_for_shoot_timeout in shooter_sever");
-		shooter_action.wait_for_shoot_timeout_ = 10;
-	}
 	if (!n_params_shooter.getParam("wait_for_ready_timeout", shooter_action.wait_for_ready_timeout_)) {
 		ROS_ERROR("Could not read wait_for_ready_timeout in shooter_sever");
 		shooter_action.wait_for_ready_timeout_ = 10;
-	}
-	if (!n_params_shooter.getParam("wait_for_intake_position_timeout", shooter_action.wait_for_intake_position_timeout_)) {
-		ROS_ERROR("Could not read wait_for_intake_position_timeout in shooter_sever");
-		shooter_action.wait_for_intake_position_timeout_ = 10;
 	}
 
 	ros::AsyncSpinner Spinner(2);

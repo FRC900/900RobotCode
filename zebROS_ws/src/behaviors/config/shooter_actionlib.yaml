@@ -1,6 +1,4 @@
-actionlib_params:
-    server_timeout: 5
+actionlib_shooter_params:
+    server_timeout: 10
     wait_for_server_timeout: 1
-    wait_for_shoot_timeout: 0.5
-    wait_for_intake_position_timeout: 0.5
     wait_for_ready_timeout: 1.0
