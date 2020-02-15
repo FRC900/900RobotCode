@@ -15,8 +15,16 @@
 #include "teleop_joystick_control/RobotOrient.h"
 #include "teleop_joystick_control/OrientStrafingAngle.h"
 
+#include <controllers_2020_msgs/ClimberSrv.h>
+#include <controllers_2020_msgs/ControlPanelSrv.h>
+#include <controllers_2020_msgs/IndexerSrv.h>
+#include <controllers_2020_msgs/IntakeSrv.h>
+#include <controllers_2020_msgs/ShooterSrv.h>
+#include <controllers_2020_msgs/TurretSrv.h>
+
 #include "dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h"
 #include "teleop_joystick_control/TeleopJoystickCompConfig.h"
+#include "teleop_joystick_control/TeleopJoystickCompDiagnosticsConfig.h"
 
 #include "teleop_joystick_control/TeleopCmdVel.h"
 
@@ -33,10 +41,18 @@ ros::Publisher orient_strafing_setpoint_pub;
 ros::Publisher orient_strafing_state_pub;
 
 teleop_joystick_control::TeleopJoystickCompConfig config;
+teleop_joystick_control::TeleopJoystickCompDiagnosticsConfig diagnostics_config;
 
 ros::Publisher JoystickRobotVel;
 
 ros::ServiceClient BrakeSrv;
+
+ros::ServiceClient climber_controller_client;
+ros::ServiceClient control_panel_controller_client;
+ros::ServiceClient indexer_controller_client;
+ros::ServiceClient intake_controller_client;
+ros::ServiceClient shooter_controller_client;
+ros::ServiceClient turret_controller_client;
 
 double imu_angle;
 
@@ -66,7 +82,7 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 }
 
 bool orientStrafingAngleCallback(teleop_joystick_control::OrientStrafingAngle::Request& req,
-										teleop_joystick_control::OrientStrafingAngle::Response&/* res*/)
+		teleop_joystick_control::OrientStrafingAngle::Response&/* res*/)
 {
 	orient_strafing_angle = req.angle;
 	return true;
@@ -195,7 +211,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		std_msgs::Bool enable_pub_msg;
 
-		if((joystick_states_array[0].leftTrigger >= 0.5) && (cmd_vel.angular.z == 0.0))
+		if((joystick_states_array[0].leftTrigger >= 0.5) && (cmd_vel.angular.z == 0.0)) //TODO Make a trigger point config value
 		{
 			enable_pub_msg.data = true;
 		}
@@ -215,7 +231,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		orient_strafing_state_pub.publish(imu_angle_msg);
 
 		//Joystick1: rightTrigger
-		if(joystick_states_array[0].rightTrigger >= 0.5)
+		if(joystick_states_array[0].rightTrigger >= 0.5) //TODO Make a trigger point config value
 		{
 			teleop_cmd_vel->setSlowMode(true);
 		}
@@ -270,9 +286,114 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	}
 	else if(joystick_id == 1)
 	{
+		static ros::Time last_header_stamp = joystick_states_array[1].header.stamp;
+
+		static controllers_2020_msgs::ClimberSrv climber_diagnostics;
+		static controllers_2020_msgs::ControlPanelSrv control_panel_diagnostics;
+		static controllers_2020_msgs::IndexerSrv indexer_diagnostics;
+		static controllers_2020_msgs::IntakeSrv intake_diagnostics;
+		static controllers_2020_msgs::ShooterSrv shooter_diagnostics;
+		static controllers_2020_msgs::TurretSrv turret_diagnostics;
+
+		static bool diagnostics_initialized = false;
+
+		if(!diagnostics_initialized)
+		{
+			//Initialize the climber command
+			climber_diagnostics.request.winch_set_point = 0.0;
+			climber_diagnostics.request.climber_deploy = true;
+			climber_diagnostics.request.climber_elevator_brake = true;
+
+			//Initialize the control panel command
+			control_panel_diagnostics.request.control_panel_rotations = 0.0;
+
+			//Initialize the indexer command
+			indexer_diagnostics.request.indexer_velocity = 0.0;
+
+			//Initialize the intake command
+			intake_diagnostics.request.intake_arm_extend = false;
+			intake_diagnostics.request.percent_out = 0.0;
+
+			//Initialize the shooter command
+			shooter_diagnostics.request.shooter_hood_raise = false;
+			shooter_diagnostics.request.set_velocity = 0.0;
+
+			//Initialize the turret command
+			turret_diagnostics.request.set_point = 0.0;
+
+			diagnostics_initialized = true;
+		}
+
+		//Joystick2: leftStickY
+		if(abs(joystick_states_array[1].leftStickY) > diagnostics_config.left_stick_trigger_point)
+		{
+			shooter_diagnostics.request.set_velocity += (std::copysign(diagnostics_config.shooter_setpoint_rate, joystick_states_array[1].leftStickY)
+					*(joystick_states_array[1].header.stamp - last_header_stamp).toSec());
+			ROS_WARN_STREAM("Calling shooter controller with set_velocity = " << shooter_diagnostics.request.set_velocity
+					<< " (" << (shooter_diagnostics.request.set_velocity*30/M_PI) << " rpm)");
+			shooter_controller_client.call(shooter_diagnostics);
+		}
+
+		//Joystick2: leftStickX
+		if(abs(joystick_states_array[1].leftStickX) > diagnostics_config.left_stick_trigger_point)
+		{
+			turret_diagnostics.request.set_point += (std::copysign(diagnostics_config.turret_setpoint_rate, joystick_states_array[1].leftStickX)
+					*(joystick_states_array[1].header.stamp - last_header_stamp).toSec());
+			turret_diagnostics.request.set_point = std::clamp(turret_diagnostics.request.set_point, -diagnostics_config.turret_angle_limit, diagnostics_config.turret_angle_limit);
+			ROS_WARN_STREAM("Calling turret controller with set_point = " << turret_diagnostics.request.set_point);
+			turret_controller_client.call(turret_diagnostics);
+		}
+
+		//Joystick2: rightStickY
+		if(abs(joystick_states_array[1].rightStickY) > 0.5) //TODO Make a trigger point config value
+		{
+			indexer_diagnostics.request.indexer_velocity += (std::copysign(diagnostics_config.indexer_setpoint_rate, joystick_states_array[1].leftStickY)
+					*(joystick_states_array[1].header.stamp - last_header_stamp).toSec());
+			ROS_WARN_STREAM("Calling indexer controller with indexer_velocity = " << indexer_diagnostics.request.indexer_velocity
+					<< " (" << (indexer_diagnostics.request.indexer_velocity*30/M_PI) << " rpm)");
+			indexer_controller_client.call(indexer_diagnostics);
+		}
+
+		//Joystick2: rightStickX
+		if(abs(joystick_states_array[1].rightStickX) > 0.5) //TODO Make a trigger point config value
+		{
+		}
+
+		//Joystick2: stickLeft
+		if(joystick_states_array[1].stickLeftPress)
+		{
+			shooter_diagnostics.request.set_velocity = 0.0;
+			ROS_WARN_STREAM("Calling shooter controller with set_velocity = 0.0 Stopping shooter!");
+			shooter_controller_client.call(shooter_diagnostics);
+		}
+		if(joystick_states_array[1].stickLeftButton)
+		{
+		}
+		if(joystick_states_array[1].stickLeftRelease)
+		{
+		}
+
+		//Joystick2: stickRight
+		if(joystick_states_array[1].stickRightPress)
+		{
+			indexer_diagnostics.request.indexer_velocity = 0.0;
+			ROS_WARN_STREAM("Calling indexer controller with indexer_velocity = 0.0 Stopping indexer!");
+			indexer_controller_client.call(indexer_diagnostics);
+		}
+		if(joystick_states_array[1].stickRightButton)
+		{
+		}
+		if(joystick_states_array[1].stickRightRelease)
+		{
+		}
+
 		//Joystick2: buttonA
 		if(joystick_states_array[1].buttonAPress)
 		{
+			control_panel_diagnostics.request.control_panel_rotations = diagnostics_config.control_panel_increment;
+			ROS_WARN_STREAM("Calling control panel controller with control_panel_rotations = " << control_panel_diagnostics.request.control_panel_rotations);
+			control_panel_controller_client.call(control_panel_diagnostics);
+			control_panel_diagnostics.request.control_panel_rotations = 0.0;
 		}
 		if(joystick_states_array[1].buttonAButton)
 		{
@@ -284,6 +405,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick2: buttonB
 		if(joystick_states_array[1].buttonBPress)
 		{
+			intake_diagnostics.request.percent_out = 0.0;
+			ROS_WARN_STREAM("Calling intake controller with percent_out = 0.0 Stopping intake!");
+			intake_controller_client.call(intake_diagnostics);
 		}
 		if(joystick_states_array[1].buttonBButton)
 		{
@@ -306,6 +430,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick2: buttonY
 		if(joystick_states_array[1].buttonYPress)
 		{
+			intake_diagnostics.request.intake_arm_extend = !intake_diagnostics.request.intake_arm_extend;
+			ROS_WARN_STREAM("Calling intake server with intake_arm_extend = " << intake_diagnostics.request.intake_arm_extend);
+			intake_controller_client.call(intake_diagnostics);
 		}
 		if(joystick_states_array[1].buttonYButton)
 		{
@@ -317,6 +444,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick2: bumperLeft
 		if(joystick_states_array[1].bumperLeftPress)
 		{
+			shooter_diagnostics.request.shooter_hood_raise = !shooter_diagnostics.request.shooter_hood_raise;
+			ROS_WARN_STREAM("Calling shooter controller with shooter_hood_raise = " << shooter_diagnostics.request.shooter_hood_raise);
+			shooter_controller_client.call(shooter_diagnostics);
 		}
 		if(joystick_states_array[1].bumperLeftButton)
 		{
@@ -331,13 +461,17 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		if(joystick_states_array[1].bumperRightButton)
 		{
+			intake_diagnostics.request.percent_out	+= diagnostics_config.intake_setpoint_rate*(joystick_states_array[1].header.stamp - last_header_stamp).toSec();
+			intake_diagnostics.request.percent_out = std::clamp(intake_diagnostics.request.percent_out, -1.0, 1.0);
+			ROS_WARN_STREAM("Calling intake controller with percent_out = " << intake_diagnostics.request.percent_out);
+			intake_controller_client.call(intake_diagnostics);
 		}
 		if(joystick_states_array[1].bumperRightRelease)
 		{
 		}
 
 		//Joystick2: leftTrigger
-		if(joystick_states_array[1].leftTrigger >= 0.5)
+		if(joystick_states_array[1].leftTrigger >= 0.5) //TODO Make a trigger point config value
 		{
 		}
 		else
@@ -345,8 +479,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 
 		//Joystick2: rightTrigger
-		if(joystick_states_array[1].rightTrigger >= 0.5)
+		if(joystick_states_array[1].rightTrigger >= 0.5) //TODO Make a trigger point config value
 		{
+			intake_diagnostics.request.percent_out	-= diagnostics_config.intake_setpoint_rate*(joystick_states_array[1].header.stamp - last_header_stamp).toSec();
+			intake_diagnostics.request.percent_out = std::clamp(intake_diagnostics.request.percent_out, -1.0, 1.0);
+			ROS_WARN_STREAM("Calling intake controller with percent_out = " << intake_diagnostics.request.percent_out);
+			intake_controller_client.call(intake_diagnostics);
 		}
 		else
 		{
@@ -355,6 +493,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick2: directionLeft
 		if(joystick_states_array[1].directionLeftPress)
 		{
+			climber_diagnostics.request.climber_deploy = !climber_diagnostics.request.climber_deploy;
+			ROS_WARN_STREAM("Calling climber controller with climber_deploy = " << climber_diagnostics.request.climber_deploy);
+			climber_controller_client.call(climber_diagnostics);
 		}
 		if(joystick_states_array[1].directionLeftButton)
 		{
@@ -366,6 +507,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick2: directionRight
 		if(joystick_states_array[1].directionRightPress)
 		{
+			climber_diagnostics.request.climber_elevator_brake = !climber_diagnostics.request.climber_elevator_brake;
+			ROS_WARN_STREAM("Calling climber controller with climber_elevator_brake = " << climber_diagnostics.request.climber_elevator_brake);
+			climber_controller_client.call(climber_diagnostics);
 		}
 		if(joystick_states_array[1].directionRightButton)
 		{
@@ -380,6 +524,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		if(joystick_states_array[1].directionUpButton)
 		{
+			climber_diagnostics.request.winch_set_point += diagnostics_config.climber_setpoint_rate*((joystick_states_array[1].header.stamp - last_header_stamp).toSec());
+			climber_diagnostics.request.winch_set_point = std::clamp(climber_diagnostics.request.winch_set_point, diagnostics_config.climber_low_bound, diagnostics_config.climber_high_bound);
+			ROS_WARN_STREAM("Calling climber controller with winch_set_point = " << climber_diagnostics.request.winch_set_point);
+			climber_controller_client.call(climber_diagnostics);
 		}
 		if(joystick_states_array[1].directionUpRelease)
 		{
@@ -391,10 +539,16 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		if(joystick_states_array[1].directionDownButton)
 		{
+			climber_diagnostics.request.winch_set_point -= diagnostics_config.climber_setpoint_rate*((joystick_states_array[1].header.stamp - last_header_stamp).toSec());
+			climber_diagnostics.request.winch_set_point = std::clamp(climber_diagnostics.request.winch_set_point, diagnostics_config.climber_low_bound, diagnostics_config.climber_high_bound);
+			ROS_WARN_STREAM("Calling climber controller with winch_set_point = " << climber_diagnostics.request.winch_set_point);
+			climber_controller_client.call(climber_diagnostics);
 		}
 		if(joystick_states_array[1].directionDownRelease)
 		{
 		}
+
+		last_header_stamp = joystick_states_array[1].header.stamp;
 	}
 }
 
@@ -407,6 +561,7 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "Joystick_controller");
 	ros::NodeHandle n;
 	ros::NodeHandle n_params(n, "teleop_params");
+	ros::NodeHandle n_diagnostics_params(n, "teleop_diagnostics_params");
 	ros::NodeHandle n_swerve_params(n, "/frcrobot_jetson/swerve_drive_controller");
 
 	int num_joysticks = 1;
@@ -463,6 +618,47 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read rotate_rate_limit_time in teleop_joystick_comp");
 	}
 
+	if(!n_diagnostics_params.getParam("climber_setpoint_rate", diagnostics_config.climber_setpoint_rate))
+	{
+		ROS_ERROR("Could not read climber_setpoint_rate in teleop_joystick_comp");
+	}
+	if(!n_diagnostics_params.getParam("climber_low_bound", diagnostics_config.climber_low_bound))
+	{
+		ROS_ERROR("Could not read climber_low_bound in teleop_joystick_comp");
+	}
+	if(!n_diagnostics_params.getParam("climber_high_bound", diagnostics_config.climber_high_bound))
+	{
+		ROS_ERROR("Could not read climber_high_bound in teleop_joystick_comp");
+	}
+	if(!n_diagnostics_params.getParam("shooter_setpoint_rate", diagnostics_config.shooter_setpoint_rate))
+	{
+		ROS_ERROR("Could not read shooter_setpoint_rate in teleop_joystick_comp");
+	}
+	if(!n_diagnostics_params.getParam("left_stick_trigger_point", diagnostics_config.left_stick_trigger_point))
+	{
+		ROS_ERROR("Could not read left_stick_trigger_point in teleop_joystick_comp");
+	}
+	if(!n_diagnostics_params.getParam("turret_setpoint_rate", diagnostics_config.turret_setpoint_rate))
+	{
+		ROS_ERROR("Could not read turret_setpoint_rate in teleop_joystick_comp");
+	}
+	if(!n_diagnostics_params.getParam("turret_angle_limit", diagnostics_config.turret_angle_limit))
+	{
+		ROS_ERROR("Could not read turret_angle_limit in teleop_joystick_comp");
+	}
+	if(!n_diagnostics_params.getParam("intake_setpoint_rate", diagnostics_config.intake_setpoint_rate))
+	{
+		ROS_ERROR("Could not read intake_setpoint_rate in teleop_joystick_comp");
+	}
+	if(!n_diagnostics_params.getParam("indexer_setpoint_rate", diagnostics_config.indexer_setpoint_rate))
+	{
+		ROS_ERROR("Could not read intake_setpoint_rate in teleop_joystick_comp");
+	}
+	if(!n_diagnostics_params.getParam("control_panel_increment", diagnostics_config.control_panel_increment))
+	{
+		ROS_ERROR("Could not read control_panel_increment in teleop_joystick_comp");
+	}
+
 	teleop_cmd_vel = std::make_unique<TeleopCmdVel>(config);
 
 	imu_angle = M_PI / 2.;
@@ -487,7 +683,14 @@ int main(int argc, char **argv)
 
 	ros::ServiceServer orient_strafing_angle_service = n.advertiseService("orient_strafing_angle", orientStrafingAngleCallback);
 
+	climber_controller_client = n.serviceClient<controllers_2020_msgs::ClimberSrv>("/frcrobot_jetson/climber_controller_2020/climber_command");
+	indexer_controller_client = n.serviceClient<controllers_2020_msgs::IndexerSrv>("/frcrobot_jetson/indexer_controller/indexer_command");
+	intake_controller_client = n.serviceClient<controllers_2020_msgs::IntakeSrv>("/frcrobot_jetson/intake_controller/intake_command");
+	shooter_controller_client = n.serviceClient<controllers_2020_msgs::ShooterSrv>("/frcrobot_jetson/shooter_controller/shooter_command");
+	turret_controller_client = n.serviceClient<controllers_2020_msgs::TurretSrv>("/frcrobot_jetson/turret_controller/shooter_command");
+
 	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompConfig> drw(n_params, config);
+	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompDiagnosticsConfig> diagnostics_drw(n_diagnostics_params, diagnostics_config);
 
 	//Read from _num_joysticks_ joysticks
 	// Set up this callback last, since it might use all of the various stuff

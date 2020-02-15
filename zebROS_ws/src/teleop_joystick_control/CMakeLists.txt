@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
 	cmake_modules
 	control_msgs
 	controllers_2019_msgs
+	controllers_2020_msgs
 	dynamic_reconfigure
 	dynamic_reconfigure_wrapper
 	frc_msgs
@@ -36,6 +37,7 @@ generate_messages (
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
 	cfg/TeleopJoystickComp.cfg
+	cfg/TeleopJoystickCompDiagnostics.cfg
 	)
 
 ## System dependencies are found with CMake's conventions

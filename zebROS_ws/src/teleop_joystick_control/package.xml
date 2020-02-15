@@ -16,6 +16,7 @@
   <depend>cmake_modules</depend>
   <depend>control_msgs</depend>
   <depend>controllers_2019_msgs</depend>
+  <depend>controllers_2020_msgs</depend>
   <depend>frc_msgs</depend>
   <depend>std_srvs</depend>
   <depend>roscpp</depend>
