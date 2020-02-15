@@ -1,10 +1,10 @@
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
 #include "behavior_actions/RotatePanelAction.h"
-#include "behavior_actions/rotate_panel_override.h"
 #include "sensor_msgs/JointState.h"
 #include "talon_state_msgs/TalonState.h"
-#include "controllers_2020_msgs/ControlPanelSrv"
+#include <controllers_2020_msgs/ControlPanelSrv.h>
+#include <controllers_2020_msgs/ClimberSrv.h>
 
 class RotatePanelAction {
 
@@ -14,10 +14,12 @@ class RotatePanelAction {
 		ros::NodeHandle nh_;
 		actionlib::SimpleActionServer<behavior_actions::RotatePanelAction> as_;
 		std::string action_name_;
-		ros::ServiceClient controller_client_;
+		ros::ServiceClient rotate_panel_client_;
+		ros::ServiceClient climber_client_;
 		behavior_actions::RotatePanelFeedback feedback_;
 		behavior_actions::RotatePanelResult result_;
 		ros::Subscriber talon_states_sub_;
+		ros::Publisher swerve_drive_publisher_;
 
 	public:
 
@@ -38,7 +40,9 @@ class RotatePanelAction {
 		std::map<std::string, std::string> service_connection_header;
 		service_connection_header["tcp_nodelay"] = "1";
 
-		controller_client_ = nh_.serviceClient<controllers_2020_msgs::ControlPanelSrv>("/frcrobot_jetson/controllers_2020/control_panel_controller", false, service_connection_header);
+		rotate_panel_client_ = nh_.serviceClient<controllers_2020_msgs::ControlPanelSrv>("/frcrobot_jetson/controllers_2020/control_panel_controller", false, service_connection_header);
+
+		climber_client_ = nh_.serviceClient<controllers_2020_msgs::ClimberSrv>("/frcrobot_jetson/controllers_2020/climber_controller", false, service_connection_header);
 
 		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &RotatePanelAction::TalonStateCallback, this);
 
@@ -50,7 +54,6 @@ class RotatePanelAction {
 
 		void TalonStateCallback(const talon_state_msgs::TalonState &talon_state)
 		{
-			int x = 1;
 		}
 
 		void executeCB(const behavior_actions::RotatePanelGoalConstPtr &goal) {
@@ -69,10 +72,14 @@ class RotatePanelAction {
 				//reset variables
 				start_time = ros::Time::now().toSec();
 				success = false;
-				control_panel_controller::RotatePanelSrv srv;
-				srv.request.rotations = rotations;
+				controllers_2020_msgs::ControlPanelSrv srv;
+				srv.request.control_panel_rotations = rotations;
+				controllers_2020_msgs::ClimberSrv climber_srv;
+				climber_srv.request.winch_set_point = 0;
+				climber_srv.request.climber_deploy = true;
+				climber_srv.request.climber_elevator_brake = true;
 
-				if (!controller_client_.call(srv))
+				if (!rotate_panel_client_.call(srv))
 				   {
 				   ROS_ERROR("Srv intake call failed in auto interpreter server intake");
 				   }
@@ -110,23 +117,6 @@ class RotatePanelAction {
 			as_.setSucceeded(result_);
 			return;
 		}
-
-		bool DS_Override(behavior_actions::rotate_panel_override::Request &req,
-				behavior_actions::rotate_panel_override::Response &res)
-		{
-			if (req.override == true)
-			{
-				preempted = true;
-				res.success = true;
-				res.override = true;
-				return true;
-			}
-
-			else
-			{
-				return false;
-			}
-		}
 };
 int main(int argc, char** argv) {
 	ros::init(argc, argv, "rotate_panel_server");
@@ -140,6 +130,10 @@ int main(int argc, char** argv) {
 	if(!n_params.getParam("timeout", rotate_panel_action.timeout))
 	{
 		ROS_ERROR_STREAM("Could not read timeout in rotateHatchPanel");
+	}
+	if(!n_params.getParam("wait_for_server_timeout", rotate_panel_action.wait_for_server_timeout))
+	{
+		ROS_ERROR_STREAM("Could not read wait_for_server_timeout in rotateHatchPanel");
 	}
 
 	ros::spin();
