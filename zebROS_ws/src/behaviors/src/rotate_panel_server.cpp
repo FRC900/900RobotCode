@@ -57,13 +57,24 @@ class RotatePanelAction {
 
 		void TalonStateCallback(const talon_state_msgs::TalonState &talon_state)
 		{
+			int total;
+			for (int i = 0; i < 18; i++)
+			{
+				total = total + talon_state.output_voltage[i];
+			}
+
+			total = total/18;
+
+			if (total >= 
+
+//ahhhhhhhhhhhhhhhhhhhhhhhhhh this is so broken dont mess with this garbage
+
 		}
 
 		void executeCB(const behavior_actions::RotatePanelGoalConstPtr &goal) {
 			ros::Rate r(10);
 			double start_time;
 			bool success;
-			result_.success = true;
 			preempted = false;
 			timed_out = false;
 			success = false;
