@@ -1,4 +1,5 @@
 #include "ros/ros.h"
+#include "geometry_msgs/Twist.h"
 #include "actionlib/server/simple_action_server.h"
 #include "behavior_actions/RotatePanelAction.h"
 #include "sensor_msgs/JointState.h"
@@ -19,7 +20,7 @@ class RotatePanelAction {
 		behavior_actions::RotatePanelFeedback feedback_;
 		behavior_actions::RotatePanelResult result_;
 		ros::Subscriber talon_states_sub_;
-		ros::Publisher swerve_drive_publisher_;
+		ros::Publisher cmd_vel_publisher_;
 
 	public:
 
@@ -39,6 +40,8 @@ class RotatePanelAction {
 
 		std::map<std::string, std::string> service_connection_header;
 		service_connection_header["tcp_nodelay"] = "1";
+
+		cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel",1);
 
 		rotate_panel_client_ = nh_.serviceClient<controllers_2020_msgs::ControlPanelSrv>("/frcrobot_jetson/controllers_2020/control_panel_controller", false, service_connection_header);
 
