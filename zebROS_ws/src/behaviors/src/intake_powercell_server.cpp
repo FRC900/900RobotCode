@@ -42,8 +42,8 @@ class PowerCellIntakeAction {
 		service_connection_header["tcp_nodelay"] = "1";
 
 		//initialize the client being used to call the controller
-		intake_arm_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeArmSrv>("/frcrobot_jetson/powercell_intake_controller/intake_arm_command", false, service_connection_header);
-		intake_arm_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeRollerSrv>("/frcrobot_jetson/powercell_intake_controller/intake_roller_command", false, service_connection_header);
+		intake_arm_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeArmSrv>("/frcrobot_jetson/intake_controller/intake_arm_command", false, service_connection_header);
+		intake_arm_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeRollerSrv>("/frcrobot_jetson/intake_controller/intake_roller_command", false, service_connection_header);
 
 		//start subscribers subscribing
 		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &PowerCellIntakeAction::jointStateCallback, this);

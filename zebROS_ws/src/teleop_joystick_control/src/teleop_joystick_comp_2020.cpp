@@ -688,8 +688,8 @@ int main(int argc, char **argv)
 
 	climber_controller_client = n.serviceClient<controllers_2020_msgs::ClimberSrv>("/frcrobot_jetson/climber_controller_2020/climber_command");
 	indexer_controller_client = n.serviceClient<controllers_2020_msgs::IndexerSrv>("/frcrobot_jetson/indexer_controller/indexer_command");
-	intake_arm_controller_client = n.serviceClient<controllers_2020_msgs::IntakeArmSrv>("/frcrobot_jetson/powercell_intake_controller/intake_arm_command");
-	intake_roller_controller_client = n.serviceClient<controllers_2020_msgs::IntakeRollerSrv>("/frcrobot_jetson/powercell_intake_controller/intake_roller_command");
+	intake_arm_controller_client = n.serviceClient<controllers_2020_msgs::IntakeArmSrv>("/frcrobot_jetson/intake_controller/intake_arm_command");
+	intake_roller_controller_client = n.serviceClient<controllers_2020_msgs::IntakeRollerSrv>("/frcrobot_jetson/intake_controller/intake_roller_command");
 	shooter_controller_client = n.serviceClient<controllers_2020_msgs::ShooterSrv>("/frcrobot_jetson/shooter_controller/shooter_command");
 	turret_controller_client = n.serviceClient<controllers_2020_msgs::TurretSrv>("/frcrobot_jetson/turret_controller/shooter_command");
 
