@@ -59,6 +59,8 @@
 				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw1" />
 			</node>
 		</group>
+
+
 		<group ns="orient_strafing"> <!--TODO Tune these values on a full weight robot -->
 			<node name="orient_strafing_pid" pkg="pid" type="controller" >
 				<param name="node_name" value="orient_strafing_pid" />
@@ -74,10 +76,15 @@
 		</group>
 	</group>
 
-	<!-- Actionlib servers!!! -->
-	<!-- Include this at the top level so all actionlib servers can find it -->
-	<rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
+	<!-- Actionlib servers !! -->
+	<!-- General actionlib config -->
+	<rosparam file="$(find behaviors)/config/2020_general_actionlib.yaml" command="load"/>
 
+	<group ns="indexer">
+		<rosparam file="$(find behaviors)/config/indexerServer.yaml" command="load"/>
+		<node name="indexer_ac_server" pkg="behaviors" type="indexer_server" output="screen" />
+	</group>
+	
 	<!-- <group ns="path_to_goal">
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
 		<node name="robot_visualize" pkg="robot_visualizer" type="robot_visualize" output="screen" />

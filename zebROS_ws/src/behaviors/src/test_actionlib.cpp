@@ -7,12 +7,14 @@
 #include <behavior_actions/AlignAction.h>
 #include <behavior_actions/ShooterAction.h>
 #include <path_follower/PathAction.h>
+#include <behavior_actions/IndexerAction.h>
 #include <behavior_actions/enumerated_elevator_indices.h>
 #include <boost/algorithm/string.hpp>
 #include <string>
 
 double server_wait_timeout = 20.0; //how long to wait for a server to exist before exiting, in sec.
 double server_exec_timeout = 20.0; //how long to wait for an actionlib server call to finish before timing out, in sec. Used for all actionlib calls
+
 
 bool callElevator(int setpoint_idx)
 {
@@ -354,6 +356,44 @@ bool callPath(double path_x_setpoint, double path_y_setpoint, double path_z_setp
 
 
 
+bool callIndexer(int indexer_action)
+{
+	//create client to call actionlib server
+	actionlib::SimpleActionClient<behavior_actions::IndexerAction> indexer_ac("/indexer/indexer_server", true);
+
+	ROS_INFO("Waiting for indexer server to start.");
+	if(!indexer_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("Could not find server within %f seconds.", server_wait_timeout);
+	}
+
+	ROS_INFO("Sending goal to indexer server.");
+	// send a goal to the action
+	behavior_actions::IndexerGoal indexer_goal;
+	indexer_goal.action = indexer_action;
+	indexer_ac.sendGoal(indexer_goal);
+
+	//wait for the action to return
+	bool finished_before_timeout = indexer_ac.waitForResult(ros::Duration(server_exec_timeout));
+
+	if (finished_before_timeout)
+	{
+		actionlib::SimpleClientGoalState state = indexer_ac.getState();
+		ROS_INFO("Action finished with state: %s",state.toString().c_str());
+		if(indexer_ac.getResult()->timed_out)
+		{
+			ROS_INFO("Indexer server timed out!");
+		}
+		return true;
+	}
+	else
+	{
+		ROS_INFO("Action did not finish before the time out.");
+		return false;
+	}
+}
+
+
 
 int main (int argc, char **argv)
 {
@@ -371,12 +411,13 @@ int main (int argc, char **argv)
 	 */
 	std::string what_to_run;
 	std::string elevator_setpoint;
-        double path_x_setpoint;
-        double path_y_setpoint;
-        double path_z_setpoint;
-        double path_x2_setpoint;
-        double path_y2_setpoint;
-        double path_z2_setpoint;
+	double path_x_setpoint;
+	double path_y_setpoint;
+	double path_z_setpoint;
+	double path_x2_setpoint;
+	double path_y2_setpoint;
+	double path_z2_setpoint;
+	int indexer_action;
 
 	what_to_run = ros::getROSArg(argc, argv, "run"); //if can't find the argument, will default to an empty string of length 0
 	boost::algorithm::to_lower(what_to_run); //convert to lower case
@@ -439,9 +480,9 @@ int main (int argc, char **argv)
 		elevator_setpoint = "N/A";
 	}
 
+
 	ROS_WARN("what_to_run: %s", what_to_run.c_str());
 	ROS_WARN("setpoint: %s", elevator_setpoint.c_str());
-
 
 	//Actually run stuff ---------------------------------
 
@@ -544,6 +585,32 @@ int main (int argc, char **argv)
 	else if(what_to_run == "shooter")
 	{
 		callShooter();
+	}
+	else if(what_to_run == "indexer")
+	{
+		std::cout << "Enter indexer action type (0-position intake, 1-intake a ball, or 2-feed a ball to shooter):";
+		std::cin >> indexer_action;
+		callIndexer(indexer_action);
+	}
+	else if(what_to_run == "shooter")
+	{
+		callShooter();
+	}
+	else if(what_to_run == "indexer")
+	{
+		std::cout << "Enter indexer action type (0-position intake, 1-intake a ball, or 2-feed a ball to shooter):";
+		std::cin >> indexer_action;
+		callIndexer(indexer_action);
+	}
+	else if(what_to_run == "shooter")
+	{
+		callShooter();
+	}
+	else if(what_to_run == "indexer")
+	{
+		std::cout << "Enter indexer action type (0,1,or 2):";
+		std::cin >> indexer_action;
+		callIndexer(indexer_action);
 	}
 	else {
 		ROS_ERROR("Invalid run argument");

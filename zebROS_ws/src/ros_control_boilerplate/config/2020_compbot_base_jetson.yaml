@@ -58,7 +58,9 @@ hardware_interface:
          # - {name: panel_intake_limit_switch_3, type: digital_input, local: false}
          # - {name: panel_intake_limit_switch_4, type: digital_input, local: false}
 
-         # - {name: cargo_intake_linebreak_1, type: digital_input, local: false}
+       - {name: intake_linebreak, type: digital_input, local: false}
+       - {name: indexer_linebreak, type: digital_input, local: false}
+       - {name: shooter_linebreak, type: digital_input, local: false}
 
          # - {name: climber_linebreak_1, type: digital_input, local: false}
          # - {name: climber_linebreak_2, type: digital_input, local: false}
