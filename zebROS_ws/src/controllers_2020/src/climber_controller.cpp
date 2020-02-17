@@ -61,7 +61,7 @@ namespace climber_controller_2020
 			deploy_joint_.setCommand(1.0);
 		}
 		else {
-			deploy_joint_.setCommand(-1.0);
+			deploy_joint_.setCommand(0.0); 
 		}
 
 		//set value of motors

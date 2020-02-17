@@ -9,6 +9,7 @@
 #include <behavior_actions/EjectAction.h>
 #include <path_follower/PathAction.h>
 #include <behavior_actions/IndexerAction.h>
+#include <behavior_actions/AlignToShootAction.h>
 #include <behavior_actions/enumerated_elevator_indices.h>
 #include <boost/algorithm/string.hpp>
 #include <string>
@@ -390,6 +391,40 @@ bool callPath(double path_x_setpoint, double path_y_setpoint, double path_z_setp
 		return false;
 	}
 }
+bool callAlignToShoot()
+{
+	actionlib::SimpleActionClient<behavior_actions::AlignToShootAction> align_to_shoot_ac("/align_to_shoot/align_to_shoot_server", true);
+
+	ROS_INFO("Waiting for align to_shoot server to start.");
+	if(!align_to_shoot_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("callAlignToShoot : Could not find server.");
+		return false;
+	}
+
+	ROS_INFO("callAlignToShoot : Sending goal to the server.");
+	behavior_actions::AlignToShootGoal align_goal;
+	align_to_shoot_ac.sendGoal(align_goal);
+
+	//wait for the action to return
+	bool finished_before_timeout = align_to_shoot_ac.waitForResult(ros::Duration(server_exec_timeout));
+
+	if (finished_before_timeout)
+	{
+		actionlib::SimpleClientGoalState state = align_to_shoot_ac.getState();
+		ROS_INFO("callAlignToShoot : Action finished with state: %s",state.toString().c_str());
+		if(align_to_shoot_ac.getResult()->timed_out)
+		{
+			ROS_INFO("callAlignToShoot : Align to_shoot server timed out!");
+		}
+		return true;
+	}
+	else
+	{
+		ROS_INFO("callAlignToShoot : Action did not finish before the time out.");
+		return false;
+	}
+}
 
 
 
@@ -663,19 +698,11 @@ int main (int argc, char **argv)
 	{
 		callShooter();
 	}
-	else if(what_to_run == "shooter")
-	{
-		callShooter();
-	}
 	else if(what_to_run == "indexer")
 	{
 		std::cout << "Enter indexer action type (0-position intake, 1-intake a ball, or 2-feed a ball to shooter):";
 		std::cin >> indexer_action;
 		callIndexer(indexer_action);
-	}
-	else if(what_to_run == "shooter")
-	{
-		callShooter();
 	}
 	else if(what_to_run == "eject")
 	{
@@ -691,7 +718,12 @@ int main (int argc, char **argv)
 
 		callEject(intake_backwards, indexer_backwards);
 	}
-	else {
+	else if(what_to_run == "align_to_shoot")
+	{
+		callAlignToShoot();
+	}
+	else
+	{
 		ROS_ERROR("Invalid run argument");
 		return 0;
 	}

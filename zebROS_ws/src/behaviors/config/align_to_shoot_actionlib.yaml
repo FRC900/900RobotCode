@@ -1,0 +1,5 @@
+actionlib_align_to_shoot_params:
+    server_timeout: 10
+    wait_for_server_timeout: 1
+    turn_turret_timeout: 1
+    max_turret_position_error: 0.01

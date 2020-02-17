@@ -162,4 +162,9 @@
 	<include file="$(find controller_node)/launch/record_2020_compbot.launch" if="$(arg record)" />
 	<include file="$(find controller_node)/launch/record_2020_no_zed.launch" if="$(arg record)" />
 
+	<group ns="align_to_shoot">
+		<rosparam file="$(find behaviors)/config/align_to_shoot_actionlib.yaml" command="load"/>
+		<node name="align_to_shoot_server" pkg="behaviors" type="align_to_shoot_server" output="screen" />
+	</group>
+
 </launch>
