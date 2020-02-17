@@ -59,7 +59,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate services in the 'srv' folder
 add_service_files(
    FILES
-   IntakeSrv.srv
+   IntakeArmSrv.srv
+   IntakeRollerSrv.srv
    ClimberSrv.srv
    TurretSrv.srv
    ShooterSrv.srv

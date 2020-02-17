@@ -18,7 +18,8 @@
 #include <controllers_2020_msgs/ClimberSrv.h>
 #include <controllers_2020_msgs/ControlPanelSrv.h>
 #include <controllers_2020_msgs/IndexerSrv.h>
-#include <controllers_2020_msgs/IntakeSrv.h>
+#include <controllers_2020_msgs/IntakeArmSrv.h>
+#include <controllers_2020_msgs/IntakeRollerSrv.h>
 #include <controllers_2020_msgs/ShooterSrv.h>
 #include <controllers_2020_msgs/TurretSrv.h>
 
@@ -50,7 +51,8 @@ ros::ServiceClient BrakeSrv;
 ros::ServiceClient climber_controller_client;
 ros::ServiceClient control_panel_controller_client;
 ros::ServiceClient indexer_controller_client;
-ros::ServiceClient intake_controller_client;
+ros::ServiceClient intake_arm_controller_client;
+ros::ServiceClient intake_roller_controller_client;
 ros::ServiceClient shooter_controller_client;
 ros::ServiceClient turret_controller_client;
 
@@ -291,7 +293,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		static controllers_2020_msgs::ClimberSrv climber_diagnostics;
 		static controllers_2020_msgs::ControlPanelSrv control_panel_diagnostics;
 		static controllers_2020_msgs::IndexerSrv indexer_diagnostics;
-		static controllers_2020_msgs::IntakeSrv intake_diagnostics;
+		static controllers_2020_msgs::IntakeArmSrv intake_arm_diagnostics;
+		static controllers_2020_msgs::IntakeRollerSrv intake_roller_diagnostics;
 		static controllers_2020_msgs::ShooterSrv shooter_diagnostics;
 		static controllers_2020_msgs::TurretSrv turret_diagnostics;
 
@@ -311,8 +314,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			indexer_diagnostics.request.indexer_velocity = 0.0;
 
 			//Initialize the intake command
-			intake_diagnostics.request.intake_arm_extend = false;
-			intake_diagnostics.request.percent_out = 0.0;
+			intake_arm_diagnostics.request.intake_arm_extend = false;
+			intake_roller_diagnostics.request.percent_out = 0.0;
 
 			//Initialize the shooter command
 			shooter_diagnostics.request.shooter_hood_raise = false;
@@ -405,9 +408,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick2: buttonB
 		if(joystick_states_array[1].buttonBPress)
 		{
-			intake_diagnostics.request.percent_out = 0.0;
+			intake_roller_diagnostics.request.percent_out = 0.0;
 			ROS_WARN_STREAM("Calling intake controller with percent_out = 0.0 Stopping intake!");
-			intake_controller_client.call(intake_diagnostics);
+			intake_roller_controller_client.call(intake_roller_diagnostics);
 		}
 		if(joystick_states_array[1].buttonBButton)
 		{
@@ -430,9 +433,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick2: buttonY
 		if(joystick_states_array[1].buttonYPress)
 		{
-			intake_diagnostics.request.intake_arm_extend = !intake_diagnostics.request.intake_arm_extend;
-			ROS_WARN_STREAM("Calling intake server with intake_arm_extend = " << intake_diagnostics.request.intake_arm_extend);
-			intake_controller_client.call(intake_diagnostics);
+			intake_arm_diagnostics.request.intake_arm_extend = !intake_arm_diagnostics.request.intake_arm_extend;
+			ROS_WARN_STREAM("Calling intake server with intake_arm_extend = " << intake_arm_diagnostics.request.intake_arm_extend);
+			intake_arm_controller_client.call(intake_arm_diagnostics);
 		}
 		if(joystick_states_array[1].buttonYButton)
 		{
@@ -461,10 +464,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		if(joystick_states_array[1].bumperRightButton)
 		{
-			intake_diagnostics.request.percent_out	+= diagnostics_config.intake_setpoint_rate*(joystick_states_array[1].header.stamp - last_header_stamp).toSec();
-			intake_diagnostics.request.percent_out = std::clamp(intake_diagnostics.request.percent_out, -1.0, 1.0);
-			ROS_WARN_STREAM("Calling intake controller with percent_out = " << intake_diagnostics.request.percent_out);
-			intake_controller_client.call(intake_diagnostics);
+			intake_roller_diagnostics.request.percent_out	+= diagnostics_config.intake_setpoint_rate*(joystick_states_array[1].header.stamp - last_header_stamp).toSec();
+			intake_roller_diagnostics.request.percent_out = std::clamp(intake_roller_diagnostics.request.percent_out, -1.0, 1.0);
+			ROS_WARN_STREAM("Calling intake controller with percent_out = " << intake_roller_diagnostics.request.percent_out);
+			intake_roller_controller_client.call(intake_roller_diagnostics);
 		}
 		if(joystick_states_array[1].bumperRightRelease)
 		{
@@ -481,10 +484,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		//Joystick2: rightTrigger
 		if(joystick_states_array[1].rightTrigger >= 0.5) //TODO Make a trigger point config value
 		{
-			intake_diagnostics.request.percent_out	-= diagnostics_config.intake_setpoint_rate*(joystick_states_array[1].header.stamp - last_header_stamp).toSec();
-			intake_diagnostics.request.percent_out = std::clamp(intake_diagnostics.request.percent_out, -1.0, 1.0);
-			ROS_WARN_STREAM("Calling intake controller with percent_out = " << intake_diagnostics.request.percent_out);
-			intake_controller_client.call(intake_diagnostics);
+			intake_roller_diagnostics.request.percent_out	-= diagnostics_config.intake_setpoint_rate*(joystick_states_array[1].header.stamp - last_header_stamp).toSec();
+			intake_roller_diagnostics.request.percent_out = std::clamp(intake_roller_diagnostics.request.percent_out, -1.0, 1.0);
+			ROS_WARN_STREAM("Calling intake controller with percent_out = " << intake_roller_diagnostics.request.percent_out);
+			intake_roller_controller_client.call(intake_roller_diagnostics);
 		}
 		else
 		{
@@ -685,7 +688,8 @@ int main(int argc, char **argv)
 
 	climber_controller_client = n.serviceClient<controllers_2020_msgs::ClimberSrv>("/frcrobot_jetson/climber_controller_2020/climber_command");
 	indexer_controller_client = n.serviceClient<controllers_2020_msgs::IndexerSrv>("/frcrobot_jetson/indexer_controller/indexer_command");
-	intake_controller_client = n.serviceClient<controllers_2020_msgs::IntakeSrv>("/frcrobot_jetson/intake_controller/intake_command");
+	intake_arm_controller_client = n.serviceClient<controllers_2020_msgs::IntakeArmSrv>("/frcrobot_jetson/powercell_intake_controller/intake_arm_command");
+	intake_roller_controller_client = n.serviceClient<controllers_2020_msgs::IntakeRollerSrv>("/frcrobot_jetson/powercell_intake_controller/intake_roller_command");
 	shooter_controller_client = n.serviceClient<controllers_2020_msgs::ShooterSrv>("/frcrobot_jetson/shooter_controller/shooter_command");
 	turret_controller_client = n.serviceClient<controllers_2020_msgs::TurretSrv>("/frcrobot_jetson/turret_controller/shooter_command");
 

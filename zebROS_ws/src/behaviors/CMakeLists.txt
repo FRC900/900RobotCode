@@ -74,9 +74,8 @@ include_directories(
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
+#add_service_files(
+# FILES
 #   Service2.srv
 # )
 
@@ -177,6 +176,9 @@ add_executable(outtake_hatch_panel_server src/outtake_hatch_panel_server.cpp)
 target_link_libraries(outtake_hatch_panel_server ${catkin_LIBRARIES})
 add_dependencies(outtake_hatch_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(intake_powercell_server src/intake_powercell_server.cpp)
+target_link_libraries(intake_powercell_server ${catkin_LIBRARIES})
+add_dependencies(intake_powercell_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 

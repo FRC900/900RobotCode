@@ -1,0 +1,4 @@
+actionlib_powercell_intake_params:  #from cargo_intake
+    roller_power: 0.6
+    holding_power: 0.2
+    intake_timeout: 50 #in seconds

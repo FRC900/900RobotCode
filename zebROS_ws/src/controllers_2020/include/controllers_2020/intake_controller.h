@@ -9,7 +9,8 @@
 #include <talon_controllers/talon_controller_interface.h>
 
 
-#include <controllers_2020_msgs/IntakeSrv.h>
+#include <controllers_2020_msgs/IntakeArmSrv.h>
+#include <controllers_2020_msgs/IntakeRollerSrv.h>
 
 //REMEMBER TO INCLUDE CUSTOM SERVICE
 
@@ -17,22 +18,6 @@ namespace intake_controller
 {
 
 
-class IntakeCommand
-{
-	public:
-	IntakeCommand()
-		: set_percent_out_(0.0)
-		, intake_arm_extend_(false)
-	{
-	}
-	IntakeCommand(double set_percent_out, bool intake_arm_extend)
-	{
-		set_percent_out_ = set_percent_out;
-		intake_arm_extend_ = intake_arm_extend;
-	}
-	double set_percent_out_;
-	bool intake_arm_extend_;
-};
 
 //this is the controller class, used to make a controller
 class IntakeController : public controller_interface::MultiInterfaceController<hardware_interface::PositionJointInterface, hardware_interface::TalonCommandInterface>
@@ -51,12 +36,15 @@ class IntakeController : public controller_interface::MultiInterfaceController<h
             virtual void update(const ros::Time & time, const ros::Duration& period) override;
             virtual void stopping(const ros::Time &time) override;
         private:
-            bool cmdService (controllers_2020_msgs::IntakeSrv::Request &req, controllers_2020_msgs::IntakeSrv::Response &);
+            bool cmdServiceArm (controllers_2020_msgs::IntakeArmSrv::Request &req, controllers_2020_msgs::IntakeArmSrv::Response &);
+            bool cmdServiceRoller (controllers_2020_msgs::IntakeRollerSrv::Request &req, controllers_2020_msgs::IntakeRollerSrv::Response &);
 
 			talon_controllers::TalonPercentOutputControllerInterface intake_joint_;//intake for intake motor
 			hardware_interface::JointHandle intake_arm_joint_;//interface for intake arm solenoid
-			realtime_tools::RealtimeBuffer<IntakeCommand> intake_cmd_;
-			ros::ServiceServer intake_service_;
+			realtime_tools::RealtimeBuffer<bool> arm_extend_cmd_buffer_;
+			realtime_tools::RealtimeBuffer<double> percent_out_cmd_buffer_;
+			ros::ServiceServer intake_arm_service_;
+			ros::ServiceServer intake_roller_service_;
 
 
 

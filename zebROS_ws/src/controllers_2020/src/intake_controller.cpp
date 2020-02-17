@@ -33,38 +33,54 @@ namespace intake_controller
 	}
 
         //Initialize your ROS server
-        intake_service_ = controller_nh.advertiseService("intake_command", &IntakeController::cmdService, this);
+        intake_arm_service_ = controller_nh.advertiseService("intake_arm_command", &IntakeController::cmdServiceArm, this);
+        intake_roller_service_ = controller_nh.advertiseService("intake_roller_command", &IntakeController::cmdServiceRoller, this);
 
 		return true;
     }
 
     void IntakeController::starting(const ros::Time &/*time*/) {
         //give command buffer(s) an initial value
-		intake_cmd_.writeFromNonRT(IntakeCommand(0,false));
+		arm_extend_cmd_buffer_.writeFromNonRT(false);
+		percent_out_cmd_buffer_.writeFromNonRT(true);
     }
 
     void IntakeController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
         //grab value from command buffer(s)
-        const IntakeCommand intake_cmd = *(intake_cmd_.readFromRT());
-		double intake_arm_double;
-		if(intake_cmd.intake_arm_extend_ == true){
-			intake_arm_double = 1.0;
+        const bool arm_extend_cmd = *(arm_extend_cmd_buffer_.readFromRT());
+		double arm_extend_double;
+		if(arm_extend_cmd == true){
+			arm_extend_double = 1.0;
 		}
 		else {
-			intake_arm_double = 0.0;
+			arm_extend_double = 0.0;
 		}
-		intake_joint_.setCommand(intake_cmd.set_percent_out_);
-		intake_arm_joint_.setCommand(intake_arm_double);
+		intake_joint_.setCommand(*percent_out_cmd_buffer_.readFromRT());
+		intake_arm_joint_.setCommand(arm_extend_double);
     }
 
     void IntakeController::stopping(const ros::Time &/*time*/) {
     }
-    bool IntakeController::cmdService(controllers_2020_msgs::IntakeSrv::Request &req, controllers_2020_msgs::IntakeSrv::Response &/*response*/) {
+
+	bool IntakeController::cmdServiceArm(controllers_2020_msgs::IntakeArmSrv::Request &req, controllers_2020_msgs::IntakeArmSrv::Response &/*response*/) {
         if(isRunning())
         {
             //assign request value to command buffer(s)
-            //Ex:
-            intake_cmd_.writeFromNonRT(IntakeCommand(req.percent_out, req.intake_arm_extend));
+            arm_extend_cmd_buffer_.writeFromNonRT(req.intake_arm_extend);
+        }
+        else
+        {
+            ROS_ERROR_STREAM("Can't accept new commands. IntakeController is not running.");
+            return false;
+        }
+        return true;
+    }
+
+	bool IntakeController::cmdServiceRoller(controllers_2020_msgs::IntakeRollerSrv::Request &req, controllers_2020_msgs::IntakeRollerSrv::Response &/*response*/) {
+        if(isRunning())
+        {
+            //assign request value to command buffer(s)
+            percent_out_cmd_buffer_.writeFromNonRT(req.percent_out);
         }
         else
         {
