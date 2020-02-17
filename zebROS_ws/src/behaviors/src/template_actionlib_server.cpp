@@ -35,7 +35,6 @@ class ServerNameAction {
 		//variables to store if server was preempted_ or timed out. If either true, skip everything (if statements). If both false, we assume success.
 		bool preempted_;
 		bool timed_out_;
-		ros::Rate r{10}; //used for wait loops, curly brackets needed so it doesn't think this is a function
 		double start_time_;
 
 
@@ -43,6 +42,7 @@ class ServerNameAction {
 		bool pause(const double duration, const std::string &activity)
 		{
 			const double pause_start_time = ros::Time::now().toSec();
+			ros::Rate r(10);
 
 			while(!preempted_ && !timed_out_ && ros::ok())
 			{
@@ -56,10 +56,12 @@ class ServerNameAction {
 					timed_out_ = true;
 					ROS_ERROR_STREAM("server_name_server: timeout during pause() - " << activity);
 				}
-
-				if((ros::Time::now().toSec() - pause_start_time) >= duration)
+				else if((ros::Time::now().toSec() - pause_start_time) >= duration)
 				{
 					return true; //pause worked like expected
+				}
+				else {
+					r.sleep();
 				}
 			}
 
@@ -110,6 +112,7 @@ class ServerNameAction {
 
 
 				//if necessary, run a loop to wait for the controller to finish
+				ros::Rate r(10);
 				while(!preempted_ && !timed_out_ && ros::ok())
 				{
 					//check preempted_
@@ -202,6 +205,7 @@ class ServerNameAction {
 			//activity is a description of what we're waiting for, e.g. "waiting for mechanism to extend" - helps identify where in the server this was called (for error msgs)
 		{
 			double request_time = ros::Time::now().toSec();
+			ros::Rate r(10);
 
 			//wait for actionlib server to finish
 			std::string state;
