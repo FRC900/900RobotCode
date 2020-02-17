@@ -120,7 +120,7 @@ shooter_controller:
         type: talon_controllers/TalonVelocityCloseLoopController
         feedback_type: CTRE_MagEncoder_Absolute
         close_loop_values:
-            - {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+            - {p: 0.06, i: 0.000, d: 0.0, f: 0.047, i_zone: 0}
         invert_output: true
         sensor_phase: false
         peak_output_forward: 1.0
