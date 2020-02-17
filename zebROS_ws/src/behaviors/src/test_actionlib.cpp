@@ -6,6 +6,7 @@
 #include <behavior_actions/ClimbAction.h>
 #include <behavior_actions/AlignAction.h>
 #include <behavior_actions/ShooterAction.h>
+#include <behavior_actions/EjectAction.h>
 #include <path_follower/PathAction.h>
 #include <behavior_actions/IndexerAction.h>
 #include <behavior_actions/enumerated_elevator_indices.h>
@@ -429,6 +430,43 @@ bool callIndexer(int indexer_action)
 	}
 }
 
+bool callEject(bool intake_backwards, bool indexer_backwards)
+{
+	//create client to call actionlib server
+	actionlib::SimpleActionClient<behavior_actions::EjectAction> eject_ac("/eject/eject_server", true);
+
+	ROS_INFO("Waiting for eject server to start.");
+	if(!eject_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("Could not find server within %f seconds.", server_wait_timeout);
+	}
+
+	ROS_INFO("Sending goal to eject server.");
+	// send a goal to the action
+	behavior_actions::EjectGoal eject_goal;
+	eject_goal.run_intake_backwards = intake_backwards;
+	eject_goal.run_indexer_backwards = indexer_backwards;
+	eject_ac.sendGoal(eject_goal);
+
+	//wait for the action to return
+	bool finished_before_timeout = eject_ac.waitForResult(ros::Duration(server_exec_timeout));
+
+	if (finished_before_timeout)
+	{
+		actionlib::SimpleClientGoalState state = eject_ac.getState();
+		ROS_INFO("Action finished with state: %s",state.toString().c_str());
+		if(eject_ac.getResult()->timed_out)
+		{
+			ROS_INFO("Eject server timed out!");
+		}
+		return true;
+	}
+	else
+	{
+		ROS_INFO("Action did not finish before the time out.");
+		return false;
+	}
+}
 
 
 int main (int argc, char **argv)
@@ -461,7 +499,7 @@ int main (int argc, char **argv)
 	if(what_to_run.length() == 0)
 	{
 		ROS_ERROR("You need to specify the run functionality with: rosrun behaviors test_actionlib run:=____");
-		ROS_ERROR("Possible values for run: all, indexer, intake_cargo, outtake_cargo, intake_hatch_panel, outtake_hatch_panel, elevator, climber0, climber1, climber2, climber3, shooter, path");
+		ROS_ERROR("Possible values for run: all, indexer, eject, intake_cargo, outtake_cargo, intake_hatch_panel, outtake_hatch_panel, elevator, climber0, climber1, climber2, climber3, shooter, path");
 		ROS_ERROR("Note: 'all' will not run the climber");
 		return 0;
 	}
@@ -638,6 +676,20 @@ int main (int argc, char **argv)
 	else if(what_to_run == "shooter")
 	{
 		callShooter();
+	}
+	else if(what_to_run == "eject")
+	{
+		std::string response;
+
+		std::cout << "Run intake backwards? (y/n):";
+		std::cin >> response;
+		bool intake_backwards = (response == "y" ? true : false);
+
+		std::cout << "Run indexer backwards? (y/n):";
+		std::cin >> response;
+		bool indexer_backwards = (response == "y" ? true : false);
+
+		callEject(intake_backwards, indexer_backwards);
 	}
 	else {
 		ROS_ERROR("Invalid run argument");

@@ -84,6 +84,10 @@
 		<rosparam file="$(find behaviors)/config/indexerServer.yaml" command="load"/>
 		<node name="indexer_ac_server" pkg="behaviors" type="indexer_server" output="screen" />
 	</group>
+	<group ns="eject">
+		<rosparam file="$(find behaviors)/config/ejectServer.yaml" command="load"/>
+		<node name="eject_ac_server" pkg="behaviors" type="eject_server" output="screen" />
+	</group>
 	
 	<!-- <group ns="path_to_goal">
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>

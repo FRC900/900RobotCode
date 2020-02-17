@@ -71,6 +71,7 @@ add_action_files(
 	Align.action
 	Shooter.action
 	Indexer.action
+	Eject.action
 )
 
 generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
