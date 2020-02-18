@@ -85,7 +85,7 @@ geometry_msgs::Pose PathFollower::run(nav_msgs::Odometry odom, double &total_dis
 		target_pos.orientation.w = 1;
 		return target_pos; //TODO: better way to handle errors? This will just time out the server
 	}
-	int last_index = num_waypoints_ - 1;
+	const size_t last_index = num_waypoints_ - 1;
 
 	// Find point in path closest to odometry reading
 	ROS_INFO_STREAM("num_waypoints = " << num_waypoints_);

@@ -47,7 +47,7 @@
 		</include>
 	</group>
 
-	<include file="$(find controller_node)/launch/path_follower.launch" command="load"/>
+	<include file="$(find controller_node)/launch/path_follower.launch"/>
 
 	<group ns="teleop">
 		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
