@@ -13,7 +13,7 @@
 
 //include controller service files and other service files
 #include "controllers_2020_msgs/IndexerSrv.h"
-#include "controllers_2020_msgs/IntakeSrv.h"
+#include "controllers_2020_msgs/IntakeRollerSrv.h"
 #include "sensor_msgs/JointState.h" //for linebreak sensor data
 #include "std_msgs/UInt8.h"
 
@@ -338,9 +338,9 @@ class IndexerAction {
 
 							ac_intake_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 
-							controllers_2020_msgs::IntakeSrv srv;
+							controllers_2020_msgs::IntakeRollerSrv srv;
 							srv.request.percent_out = 0;
-							srv.request.intake_arm_extend = false;
+							//srv.request.intake_arm_extend = false;
 							if(!intake_controller_client_.call(srv)){
 								ROS_ERROR("Indexer server - controller call to stop intake failed");
 							}
@@ -377,9 +377,9 @@ class IndexerAction {
 
 						ac_intake_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 
-						controllers_2020_msgs::IntakeSrv srv;
+						controllers_2020_msgs::IntakeRollerSrv srv;
 						srv.request.percent_out = 0;
-						srv.request.intake_arm_extend = false;
+						//srv.request.intake_arm_extend = false;
 						if(!intake_controller_client_.call(srv)){
 							ROS_ERROR("Indexer server - controller call to stop intake failed");
 						}
@@ -559,7 +559,7 @@ class IndexerAction {
 
 			//initialize clients used to call controllers
 			indexer_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IndexerSrv>("/frcrobot_jetson/indexer_controller/indexer_command", false, service_connection_header);
-			intake_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeSrv>("/frcrobot_jetson/intake_controller/intake_command", false, service_connection_header);
+			intake_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeRollerSrv>("/frcrobot_jetson/intake_controller/intake_command", false, service_connection_header);
 
 			//initialize subscribers
 			joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &IndexerAction::jointStateCallback, this);
