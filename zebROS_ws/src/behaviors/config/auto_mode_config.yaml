@@ -6,6 +6,7 @@
 
 auto_mode_1: ["intake", "pause_5_sec", "pause_2_sec", "elevator_to_high"] #example
 auto_mode_2: ["pause_2_sec","elevator_to_high","pause_2_sec"]
+auto_mode_3: ["path_to_trench_face_goal", "pause_2_sec", "elevator_to_high"]
 
 
 # ACTIONS ------------------------------------------------------------------------
@@ -25,6 +26,12 @@ elevator_to_high:
         setpoint_index: 2
         place_cargo: false
 
+path_to_trench_face_goal:
+    type: "path"
+    goal:
+        points:
+            - [1.0, 1.0, 3.14159]
+            - [2.0, 2.0, 6.28]
 
 pause_2_sec:
     type: "pause"

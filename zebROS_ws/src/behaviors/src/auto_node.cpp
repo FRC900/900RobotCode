@@ -3,9 +3,11 @@
 #include <behavior_actions/AutoMode.h> //msg file
 #include <std_srvs/Empty.h>
 #include <frc_msgs/MatchSpecificData.h>
+#include <geometry_msgs/Point32.h>
 
 #include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/ElevatorAction.h> //TODO remove this, it's for testing using last year's stuff
+#include <path_follower/PathAction.h>
 
 #include <thread>
 #include <atomic>
@@ -64,9 +66,9 @@ void updateAutoMode(const behavior_actions::AutoMode::ConstPtr& msg)
 void publishAutoState(ros::Publisher publisher)
 {
 	//give the thread a name
-	pthread_setname_np(pthread_self(), "auto_state_pub_thread");
+    pthread_setname_np(pthread_self(), "auto_state_pub_thread");
 
-	//publish
+    //publish
 	ros::Rate r(10); //TODO config
 	std_msgs::String msg;
 
@@ -158,7 +160,7 @@ int main(int argc, char** argv)
 	//TODO
 	//example:
 	actionlib::SimpleActionClient<behavior_actions::ElevatorAction> elevator_ac("/elevator/elevator_server", true);
-
+	actionlib::SimpleActionClient<path_follower::PathAction> path_ac("/path_follower/path_follower_server", true); //TODO fix this path
 
 	//other variables
 	ros::Rate r(10); //used in various places where we wait TODO: config?
@@ -284,6 +286,31 @@ int main(int argc, char** argv)
 				goal.setpoint_index = (int) action_data["goal"]["setpoint_index"];
 				elevator_ac.sendGoal(goal);
 				waitForActionlibServer(elevator_ac, 100, "elevator server thing");
+			}
+			else if(action_data["type"] == "path")
+			{
+				if(!path_ac.waitForServer(ros::Duration(5))){ROS_ERROR("Couldn't find path server");}
+				path_follower::PathGoal goal;
+
+				//initialize 0, 0, 0 point
+				geometry_msgs::Point point;
+				point.x = 0;
+				point.y = 0;
+				point.z = 0;
+				goal.points.push_back(point);
+
+				//read array of array of doubles
+				XmlRpc::XmlRpcValue points_config = action_data["goal"]["points"];
+				for(size_t i = 0; i < (unsigned) points_config.size(); i++)
+				{
+					point.x = (double) points_config[i][0];
+					point.y = (double) points_config[i][1];
+					point.z = (double) points_config[i][2];
+					goal.points.push_back(point);
+				}
+
+				path_ac.sendGoal(goal);
+				waitForActionlibServer(path_ac, 100, "running path");
 			}
 			else
 			{
