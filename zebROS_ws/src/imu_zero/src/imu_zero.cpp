@@ -63,7 +63,7 @@ bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
   {
 	std_srvs::Trigger biasCall;
 	bias_estimate.call(biasCall);
-  	ROS_INFO("Bias estimate: %s", biasCall.response.message.c_str());
+	ROS_INFO("Bias estimate: %s", biasCall.response.message.c_str());
   }
   return true;
 }
@@ -74,9 +74,9 @@ int main(int argc, char* argv[]) {
   pub = node.advertise<sensor_msgs::Imu>(pub_topic, 1);
   ros::Subscriber sub = node.subscribe(sub_topic, 1, zeroCallback);
   ros::ServiceServer svc = node.advertiseService(service_name, zeroSet);
-  zero_rot.normalize();
+  zero_rot.setRPY(0,0,0);
   if(ros::service::exists("imu/bias_estimate",false))
-  	bias_estimate = node.serviceClient<std_srvs::Trigger>("imu/bias_estimate");
+    bias_estimate = node.serviceClient<std_srvs::Trigger>("imu/bias_estimate");
 
   ros::spin();
   return 0;
