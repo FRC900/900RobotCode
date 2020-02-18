@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <launch>
   <arg name="with_filter" default="true"/>
   <arg name="with_rviz" default="false"/>
