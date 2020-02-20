@@ -6,30 +6,25 @@
   <arg name="device" default="/dev/ADI"/>
   <arg name="frame_id" default="imu"/>
   <arg name="burst_read" default="false"/>
-  <arg name="publish_temperature" default="true"/>
   <arg name="rate" default="100"/>
   <arg name="publish_tf" default="true"/>
-  <arg name="publish_debug_topics" default="false"/>
 
   <param if="$(arg with_rviz)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find adi_driver)/urdf/adis16470_breakout.urdf'" />
 
-  <node name="imu" pkg="adi_driver" type="adis16470_node" output="screen">
+  <node name="imu" pkg="adi_driver" type="adis16495_node" output="screen">
     <param name="device" value="$(arg device)"/>
     <param name="frame_id" value="$(arg frame_id)"/>
     <param name="burst_mode" value="$(arg burst_read)"/>
-    <param name="publish_temperature" value="$(arg publish_temperature)"/>
     <param name="rate" value="$(arg rate)"/>
-  	<param name="filter_cntrl" value="0" />
 	<!-- 0x708 hex = 1800 dec - looks like ROS doesn't like 
 		 reading hex values from config files? -->
-	<param name="bias_conffig" value="1800" />
-	</node>
+	<param name="bias_conf" value="1800" />
+  </node>
 
   <node if="$(arg with_filter)"
 	name="imu_filter" pkg="imu_filter_madgwick" type="imu_filter_node" output="screen">
     <param name="use_mag" value="false"/>
     <param name="publish_tf" value="$(arg publish_tf)"/>
-    <param name="publish_debug_topics" value="$(arg publish_debug_topics)"/>
   </node>
 
   <node if="$(arg with_rviz)"
