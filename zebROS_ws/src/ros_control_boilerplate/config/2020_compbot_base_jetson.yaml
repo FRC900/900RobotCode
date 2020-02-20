@@ -175,6 +175,10 @@ turret_controller:
 
     turret_joint: 'turret'
 
+    turret_zero_timeout: 5.0
+    turret_zero_percent_output: 0.1
+    turret_zero_angle: 1.0472
+
     turret:
         type: talon_controllers/TalonMotionMagicCloseLoopController
         joint: turret_joint
