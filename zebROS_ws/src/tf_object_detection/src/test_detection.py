@@ -1,35 +1,53 @@
-''' 
-Python code to run TF SSD object detction code
-'''
+#!/usr/bin/env python
+
 import cv2
 import glob
 import numpy as np
 import os
+import rospkg
 import sys
 import tensorflow as tf
 
-from PIL import Image
+import rospy
+from sensor_msgs.msg import Image
+from field_obj.msg import TFDetection, TFObject
+from cv_bridge import CvBridge, CvBridgeError
+
+bridge = CvBridge()
+
+category_index, detection_graph, sess, pub, pub_debug = None, None, None, None, None
+min_confidence = 0.5
 
 # This is needed since the modules are in a subdir of
 # the python script
-# These are 'borrowed' from the tensorflow models object 
+# These are 'borrowed' from the tensorflow models object
 # detection directory
 from os.path import dirname, abspath, join
-THIS_DIR = dirname(__file__)
+rospack = rospkg.RosPack()
+THIS_DIR = os.path.join(rospack.get_path('tf_object_detection'), 'src/')
 CODE_DIR = abspath(join(THIS_DIR, 'modules'))
 sys.path.append(CODE_DIR)
 from object_detection.utils import ops as utils_ops
 from object_detection.utils import label_map_util
 from object_detection.utils import visualization_utils as vis_util
 
+sub_topic = "/c920/rect_image"
+pub_topic = "obj_detection_msg"
+
 # Takes a image, and using the tensorflow session and graph
 # provided, runs inference on the image. This returns a list
 # of detections - each includes the object bounding box, type
 # and confidence
-def run_inference_for_single_image(image, sess, graph):
-  with graph.as_default():
+def run_inference_for_single_image(msg):
+  image_np = bridge.imgmsg_to_cv2(msg, "rgb8")
+  try:
+    image = np.expand_dims(image_np, axis=0)
+  except CvBridgeError as e:
+    print(e)
+
+  with detection_graph.as_default():
     # Get handles to input and output tensors
-    ops = tf.get_default_graph().get_operations()
+    ops = tf.compat.v1.get_default_graph().get_operations()
     all_tensor_names = {output.name for op in ops for output in op.outputs}
     tensor_dict = {}
     for key in [
@@ -55,7 +73,7 @@ def run_inference_for_single_image(image, sess, graph):
       # Follow the convention by adding back the batch dimension
       tensor_dict['detection_masks'] = tf.expand_dims(
           detection_masks_reframed, 0)
-    image_tensor = tf.get_default_graph().get_tensor_by_name('image_tensor:0')
+    image_tensor = tf.compat.v1.get_default_graph().get_tensor_by_name('image_tensor:0')
 
     # Run inference
     output_dict = sess.run(tensor_dict,
@@ -69,11 +87,53 @@ def run_inference_for_single_image(image, sess, graph):
     output_dict['detection_scores'] = output_dict['detection_scores'][0]
     if 'detection_masks' in output_dict:
       output_dict['detection_masks'] = output_dict['detection_masks'][0]
-  return output_dict
+
+    detection = TFDetection()
+    for i in range(output_dict['num_detections']):
+        obj = TFObject()
+        obj.confidence = output_dict['detection_scores'][i]
+        if obj.confidence < min_confidence:
+            continue
+        obj.tl.x = output_dict['detection_boxes'][i][1] * image.shape[2]
+        obj.tl.y = output_dict['detection_boxes'][i][0] * image.shape[1]
+        obj.br.x = output_dict['detection_boxes'][i][3] * image.shape[2]
+        obj.br.y = output_dict['detection_boxes'][i][2] * image.shape[1]
+        obj.id = output_dict['detection_classes'][i]
+        obj.label = str(category_index.get(output_dict['detection_classes'][i])['name'])
+        detection.objects.append(obj)
+
+    pub.publish(detection)
+
+    vis(output_dict, image_np)
+
+def vis(output_dict, image_np):
+    if pub_debug.get_num_connections() > 0:
+        vis_util.visualize_boxes_and_labels_on_image_array(
+                image_np,
+                output_dict['detection_boxes'],
+                output_dict['detection_classes'],
+                output_dict['detection_scores'],
+                category_index,
+                instance_masks=output_dict.get('detection_masks'),
+                use_normalized_coordinates=True,
+                line_thickness=4,
+                max_boxes_to_draw=50,
+                min_score_thresh=0.35,
+                groundtruth_box_visualization_color='yellow')
+        pub_debug.publish(bridge.cv2_to_imgmsg(image_np, encoding="rgb8"))
 
 def main():
     global THIS_DIR
-    print THIS_DIR
+    global detection_graph, sess, pub, category_index, pub_debug, sub_topic, min_confidence
+
+    rospy.init_node('tf_object_detection', anonymous = True)
+
+    if rospy.has_param('min_confidence'):
+        min_confidence = rospy.get_param('min_confidence')
+
+    if rospy.has_param('image_topic'):
+        sub_topic = rospy.get_param('image_topic')
+
 
     # Path to frozen detection graph. This is the actual model that is used for the object detection.
     # This shouldn't need to change
@@ -81,7 +141,6 @@ def main():
 
     # List of the strings that is used to add correct label for each box.
     PATH_TO_LABELS = os.path.join(THIS_DIR, '2020Game_label_map.pbtxt')
-    category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
 
     # Init TF detection graph and session
     detection_graph = tf.Graph()
@@ -91,93 +150,20 @@ def main():
         serialized_graph = fid.read()
         od_graph_def.ParseFromString(serialized_graph)
         tf.import_graph_def(od_graph_def, name='')
-      sess = tf.Session(graph=detection_graph)
 
-    # Pick an input video to run here
-    PATH_TO_TEST_IMAGES_DIR = '/home/ubuntu'
-    #cap = cv2.VideoCapture(os.path.join(PATH_TO_TEST_IMAGES_DIR, '2020_Field_Tour_Video_Alliance_Station.mp4'))
-    cap = cv2.VideoCapture(os.path.join(PATH_TO_TEST_IMAGES_DIR, '2020_Field_Tour_Video_Loading_Bay.mp4'))
-    #cap = cv2.VideoCapture(os.path.join(PATH_TO_TEST_IMAGES_DIR, '2020_Field_Tour_Video_Power_Port.mp4'))
-    #cap = cv2.VideoCapture(os.path.join(PATH_TO_TEST_IMAGES_DIR, '2020_INFINITE_RECHARGE_Field_Drone_Footage_Control_Panel.mp4'))
-    #cap = cv2.VideoCapture(os.path.join(PATH_TO_TEST_IMAGES_DIR, '2020_INFINITE_RECHARGE_Field_Drone_Video_Cross_Field_Views_1080p.mp4'))
-    #cap = cv2.VideoCapture(os.path.join(PATH_TO_TEST_IMAGES_DIR, '2020_INFINITE_RECHARGE_Field_Drone_Video_Field_from_Alliance_Station.mp4'))
-    #cap = cv2.VideoCapture(os.path.join(PATH_TO_TEST_IMAGES_DIR, '2020_INFINITE_RECHARGE_Field_Drone_Video_Field_from_Alliance_Station_1080p.mp4'))
-    #cap = cv2.VideoCapture(os.path.join(PATH_TO_TEST_IMAGES_DIR, '2020_INFINITE_RECHARGE_Field_Drone_Video_Shield_Generator.mp4'))
+    with detection_graph.as_default():
+        sess = tf.Session(graph=detection_graph)
+    category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
 
-    # Used to write annotated video (video with bounding boxes and labels) to an output mp4 file
-    #vid_writer = cv2.VideoWriter(os.path.join(PATH_TO_TEST_IMAGES_DIR, '2020_INFINITE_RECHARGE_Field_Drone_Video_Field_from_Alliance_Station_1080p_annotated.avi'), cv2.VideoWriter_fourcc(*"FMP4"), 30., (1920,1080))
-    while(True):
-      ret, cv_vid_image = cap.read()
-      next_frame = False
-      while (not next_frame):
-        image_np = cv2.cvtColor(cv_vid_image, cv2.COLOR_BGR2RGB)
-        # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-        image_np_expanded = np.expand_dims(image_np, axis=0)
-        #resized_image_np_expanded = np.expand_dims(resized_image_np, axis=0)
-        # Actual detection.
-        output_dict = run_inference_for_single_image(image_np_expanded, sess, detection_graph)
-        # output_dictionary will have detection box coordinates, along with the classes
-        # (index of the text labels) and confidence scores for each detection
-        print output_dict
-        # Visualization of the results of a detection.
-        vis_util.visualize_boxes_and_labels_on_image_array(
-            image_np,
-            output_dict['detection_boxes'],
-            output_dict['detection_classes'],
-            output_dict['detection_scores'],
-            category_index,
-            instance_masks=output_dict.get('detection_masks'),
-            use_normalized_coordinates=True,
-            line_thickness=4,
-            max_boxes_to_draw=50,
-            min_score_thresh=0.35,
-            groundtruth_box_visualization_color='yellow')
-        cv2.imshow('img', cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR))
-        #vid_writer.write(cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR))
-        key = cv2.waitKey(5) & 0xFF
-        if key == ord("f"):
-          next_frame = True
-        next_frame = True
-    '''
+    sub = rospy.Subscriber(sub_topic, Image, run_inference_for_single_image)
+    pub = rospy.Publisher(pub_topic, TFDetection, queue_size=10)
+    pub_debug = rospy.Publisher("debug_image", Image, queue_size=10)
 
-    ########################################
-    #### Code for testing against a list of images
-    ####    Useful for looking at results in more detail
-    ########################################
-    #TEST_IMAGE_PATHS = [ os.path.join(PATH_TO_TEST_IMAGES_DIR, 'Peak_Performance_2019_Quarterfinal_4-1.mp4_04290.png') ]
-    #TEST_IMAGE_PATHS = [ os.path.join(PATH_TO_TEST_IMAGES_DIR, 'Week_2_FRC_Clips_of_the_Week_2019.mp4_01539.png') ]
-    #TEST_IMAGE_PATHS = [ os.path.join(PATH_TO_TEST_IMAGES_DIR, 'Pearadox_360_Video.mp4_02940.png') ]
-    #TEST_IMAGE_PATHS = [ os.path.join(PATH_TO_TEST_IMAGES_DIR, 'FRC_Team_195_Destination_Deep_Space_in-match_Robot_Cameras.mp4_03496.png') ]
-    TEST_IMAGE_PATHS = sorted(glob.glob(os.path.join(PATH_TO_TEST_IMAGES_DIR, 'DSC*.JPG')))
-    for image_path in TEST_IMAGE_PATHS:
-      image = cv2.imread(image_path)
-      # the array based representation of the image will be used later in order to prepare the
-      # result image with boxes and labels on it.
-      image_np = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-      image_np = cv2.pyrDown(cv2.pyrDown(image_np));
-      # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
-      image_np_expanded = np.expand_dims(image_np, axis=0)
-      #resized_image_np_expanded = np.expand_dims(resized_image_np, axis=0)
-      # Actual detection.
-      output_dict = run_inference_for_single_image(image_np_expanded, sess, detection_graph)
-      # Visualization of the results of a detection.
-      print output_dict
-      vis_util.visualize_boxes_and_labels_on_image_array(
-          image_np,
-          output_dict['detection_boxes'],
-          output_dict['detection_classes'],
-          output_dict['detection_scores'],
-          category_index,
-          instance_masks=output_dict.get('detection_masks'),
-          use_normalized_coordinates=True,
-          line_thickness=4,
-          max_boxes_to_draw=50,
-          min_score_thresh=0.30)
-      cv2.imshow(image_path, cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR))
-      cv2.waitKey(0) & 0xFF
-      cv2.destroyWindow(image_path)
-    '''
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        print("Shutting down")
+    cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
-
