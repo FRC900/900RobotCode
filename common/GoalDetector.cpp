@@ -81,7 +81,7 @@ void GoalDetector::findTargets(const cv::Mat& image, const cv::Mat& depth) {
 	if(power_port_info.size() == 0)
 		return;
 #ifdef VERBOSE
-	cout << power_port_info.size() << " power port goals found" << endl;
+	cout << power_port_info.size() << " goals found" << endl;
 #endif
 
 	//loop through every power port goal found
@@ -98,15 +98,11 @@ void GoalDetector::findTargets(const cv::Mat& image, const cv::Mat& depth) {
 			if (power_port_info[i].confidence > _min_valid_confidence)
 			{
 				GoalFound goal_found;
-				goal_found.pos.x             = power_port_info[i].pos.x;
-				goal_found.pos.y			       = power_port_info[i].pos.y;
-				goal_found.pos.z			       = power_port_info[i].pos.z;
-				goal_found.distance          = sqrt(goal_found.pos.x * goal_found.pos.x + goal_found.pos.y * goal_found.pos.y);
-				goal_found.angle             = atan2f(goal_found.pos.x, goal_found.pos.y) * 180. / M_PI;
 				goal_found.confidence        = power_port_info[i].confidence;
 				goal_found.contour_index     = power_port_info[i].contour_index;
 				goal_found.rect		           = power_port_info[i].rect;
 				goal_found.rotated_rect      = power_port_info[i].rtRect;
+				goal_found.distance             = power_port_info[i].distance;
 				goal_found.id                = getObjectId(_target_num);
 
 				//These are the saved values for the best goal before moving on to
@@ -159,8 +155,8 @@ void GoalDetector::findTargets(const cv::Mat& image, const cv::Mat& depth) {
 				cout << "Number of goals: " << _return_found.size() << endl;
 				for(size_t n = 0; n < _return_found.size(); n++)
 				{
-					cout << "Goal " << n + 1 << " " << _return_found[n].contour_index << " pos: " << _return_found[n].pos <<
-						" distance: " << _return_found[n].distance << " angle: " << _return_found[n].angle << " confidence: " << _return_found[n].confidence << endl;
+					cout << "Goal " << n << " " << _return_found[n].contour_index <<
+						" distance: " << _return_found[n].distance << " confidence: "<< _return_found[n].confidence << endl;
 				}
 #endif
 			}
@@ -338,7 +334,6 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		cout << "br: " << br << endl;
 		cout << "com: " << goal_actual.com() << endl;
 		cout << "com_expected / actual: " << com_percent_expected << " " << com_percent_actual << endl;
-		cout << "position: " << goal_tracked_obj.getPosition() << endl;
 		//cout << "Angle: " << minAreaRect(contours[i]).angle << endl;
 		//cout << "lineStart: " << start_line << endl;
 		//cout << "lineEnd: " << end_line << endl;
@@ -349,18 +344,13 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 
 		// This goal passes the threshold required for us to consider it a goal
 		// Add it to the list of best goals
-		goal_info.pos           = goal_tracked_obj.getPosition();
 		goal_info.confidence    = confidence;
 		goal_info.distance      = depth_maxs[i].depth * cosf((_camera_angle/10.0) * (M_PI/180.0));
-		goal_info.angle		    = atan2f(goal_info.pos.x, goal_info.pos.y) * 180. / M_PI;
 		goal_info.rect		    = br;
 		goal_info.contour_index = i;
 		goal_info.depth_error   = depth_maxs[i].error;
 		goal_info.com           = goal_actual.com();
 		goal_info.br            = br;
-		//goal_info.rtRect        = rr;
-		//goal_info.lineStart     = start_line;
-		//goal_info.lineEnd       = end_line;
 		return_info.push_back(goal_info);
 
 	}

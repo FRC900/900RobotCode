@@ -25,6 +25,7 @@
 #include "field_obj/Detection.h"
 #include "field_obj/Object.h"
 #include "objtype.hpp"
+#include "convert_coords.h"
 
 #include "GoalDetector.hpp"
 #include "goal_detection/GoalDetectionConfig.h"
@@ -75,6 +76,8 @@ namespace goal_detection
 					// ApproximateTime takes a queue size as its constructor argument, hence SyncPolicy(xxx)
 					rgbd_sync_ = std::make_unique<message_filters::Synchronizer<RGBDSyncPolicy>>(RGBDSyncPolicy(10), *frame_sub_, *depth_sub_);
 					rgbd_sync_->registerCallback(boost::bind(&GoalDetect::callback, this, _1, _2));
+
+					camera_info_sub_ = nh_.subscribe("/zed_goal/left/camera_info", sub_rate, &GoalDetect::camera_info_callback, this);
 				}
 				else
 				{
@@ -139,14 +142,28 @@ namespace goal_detection
 					frame_id += "_frame";
 				}
 				gd_msg.header.frame_id = frame_id;
+
+				image_geometry::PinholeCameraModel model;
+				model.fromCameraInfo(camera_info_);
+				ConvertCoords cc(model);
+
+				#if 0
+					ROS_INFO_STREAM("Camera_info " << camera_info_);
+				#endif
+
 				for(size_t i = 0; i < gfd.size(); i++)
 				{
 					field_obj::Object dummy;
-					dummy.location.x = gfd[i].pos.y;
-					dummy.location.y = gfd[i].pos.x;
-					dummy.location.z = gfd[i].pos.z;
 					dummy.id = gfd[i].id;
 					dummy.confidence = gfd[i].confidence;
+
+					// Bounding rect in world coords
+					const cv::Point3f world_coord_scaled = cc.screen_to_world(gfd[i].rect, dummy.id, gfd[i].distance);
+
+					dummy.location.x = world_coord_scaled.z;
+					dummy.location.y = world_coord_scaled.x;
+					dummy.location.z = world_coord_scaled.y;
+					dummy.angle = atan2f(world_coord_scaled.x, world_coord_scaled.y) * 180. / M_PI;
 					gd_msg.objects.push_back(dummy);
 				}
 
@@ -190,31 +207,16 @@ namespace goal_detection
 						br.sendTransform(transformStamped);
 					}
 
-					/*
-					//Transform between a fixed frame and the goal.
-					tf2_ros::Buffer tfBuffer;
-					tf2_ros::TransformListener tfListener(tfBuffer);
-
-					geometry_msgs::TransformStamped transformStampedOdomCamera;
-					try
-					{
-					transformStampedOdomCamera = tfBuffer.lookupTransform("odom", cvFrame->header.frame_id,
-					ros::Time(0));
-					}
-					catch (tf2::TransformException &ex)
-					{
-					ROS_WARN("%s", ex.what());
-					ros::Duration(1.0).sleep();
-					return;
-					}
-
-					geometry_msgs::TransformStamped transformStampedOdomGoal;
-
-					tf2::doTransform(transformStamped, transformStampedOdomGoal, transformStampedOdomCamera);
-
-					br.sendTransform(transformStampedOdomGoal);
-					*/
 				}
+				camera_mutex_.unlock();
+			}
+
+			void camera_info_callback(const sensor_msgs::CameraInfoConstPtr &info)
+			{
+				if (!camera_mutex_.try_lock())  // If the previous message is still being
+					return;              // processed, drop this one
+
+				camera_info_ = *info;
 				camera_mutex_.unlock();
 			}
 
@@ -243,6 +245,7 @@ namespace goal_detection
 				cv::Mat depthMat(cvFrame->image.size(), CV_32FC1, cv::Scalar(distance_from_terabee_));
 				callback(frameMsg, cv_bridge::CvImage(std_msgs::Header(), "32FC1", depthMat).toImageMsg());
 			}
+
 			typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> RGBDSyncPolicy;
 
 			ros::NodeHandle                                                nh_;
@@ -259,7 +262,10 @@ namespace goal_detection
 			DynamicReconfigureWrapper<goal_detection::GoalDetectionConfig> drw_;
 			std::mutex                                                     camera_mutex_;
 			std::mutex                                                     multiflex_mutex_;
+
+			ros::Subscriber                                                camera_info_sub_;
+			sensor_msgs::CameraInfo                                        camera_info_;
 	};
-} // namspace
+} // namespace
 
 PLUGINLIB_EXPORT_CLASS(goal_detection::GoalDetect, nodelet::Nodelet)

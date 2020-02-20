@@ -1,4 +1,12 @@
 <?xml version="1.0"?>
+<!-- Code for running retro-tape detection using the ZED
+	 camera as input.  Also responsible for running transforms
+     for various camera and mechanism frames on the robot
+
+     Run without arguments to use a live camera
+     Set live_camera:= false to prevent running the ZED
+        camera node, e.g. for debugging from saved bag file
+-->
 <launch>
   <arg name="live_camera" default="true" />
 

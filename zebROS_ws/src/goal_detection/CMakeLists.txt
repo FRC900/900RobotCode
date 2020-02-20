@@ -12,6 +12,7 @@ if (DEFINED CMAKE_TOOLCHAIN_FILE)
     geometry_msgs
     field_obj
     message_filters
+	image_geometry
 	nodelet
     std_msgs
     sensor_msgs
@@ -26,6 +27,7 @@ else()
     field_obj
     message_filters
     geometry_msgs
+	image_geometry
 	nodelet
     std_msgs
     sensor_msgs
@@ -128,7 +130,7 @@ endif()
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES goal_detection
  CATKIN_DEPENDS roscpp message_runtime geometry_msgs std_msgs sensor_msgs
  #  DEPENDS system_lib
@@ -137,13 +139,10 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-
 if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-	add_executable(translate_to_pointstamped src/translate_to_pointstamped.cpp)
-	target_link_libraries(translate_to_pointstamped ${catkin_LIBRARIES})
-	add_dependencies(translate_to_pointstamped ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
   find_package(OpenCV REQUIRED)
+  list(FILTER catkin_LIBRARIES EXCLUDE REGEX "opencv_freetype")
+  list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
   ## Specify additional locations of header files
   ## Your package locations should be listed before other locations
   # include_directories(include)
@@ -152,6 +151,7 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     ${OpenCV_INCLUDE_DIRS}
     ../../../common
     ../../..
+    include
   )
 
   ## Declare a C++ executable
@@ -159,7 +159,6 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     src/goal_detect_node.cpp
   )
 
-  list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
   ## Specify libraries to link a library or executable target against
   target_link_libraries(goal_detection_node
     ${catkin_LIBRARIES}
@@ -181,7 +180,9 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     ../../../common/track3d.cpp
     ../../../common/kalman.cpp
     ../../../common/hungarian.cpp
+    src/convert_coords.cpp
   )
+
   target_link_libraries(GoalDetection
 	${catkin_LIBRARIES}
 	${OpenCV_LIBS}
@@ -191,6 +192,10 @@ if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     ${${PROJECT_NAME}_EXPORTED_TARGETS}
     ${catkin_EXPORTED_TARGETS}
   )
+
+  add_executable(translate_to_pointstamped src/translate_to_pointstamped.cpp)
+  target_link_libraries(translate_to_pointstamped ${catkin_LIBRARIES})
+  add_dependencies(translate_to_pointstamped ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 endif()
 
