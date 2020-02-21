@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 2.8.3)
 project(base_trajectory)
 
 include ("../cmake_modules/CMakeOpt.cmake")
-#Append Gperftools_DIR 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -18,8 +17,12 @@ find_package(catkin REQUIRED COMPONENTS
   trajectory_msgs
 )
 
+list(FILTER catkin_LIBRARIES EXCLUDE REGEX ".*libjoint_trajectory_controller.so.*")
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+
+#Append Gperftools_DIR 
 LIST(APPEND CMAKE_MODULE_PATH "/home/ubuntu/2020RobotCode/zebROS_ws/src/cmake_modules")
 find_package(Gperftools REQUIRED)
 
@@ -112,8 +115,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-# LIBRARIES ${PROJECT_NAME}
-	CATKIN_DEPENDS joint_trajectory_controller roscpp
+#  LIBRARIES ${PROJECT_NAME}
+	CATKIN_DEPENDS joint_trajectory_controller roscpp ddynamic_reconfigure
 #  DEPENDS system_lib
 )
 
@@ -144,7 +147,7 @@ target_link_libraries(${PROJECT_NAME}_node
 )
 
 add_executable(driver_node src/driver.cpp)
-  target_link_libraries(driver_node
+target_link_libraries(driver_node
   ${catkin_LIBRARIES}
 )
 # Add cmake target dependencies of the executable
