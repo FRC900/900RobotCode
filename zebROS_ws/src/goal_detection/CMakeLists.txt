@@ -12,7 +12,6 @@ if (DEFINED CMAKE_TOOLCHAIN_FILE)
     geometry_msgs
     field_obj
     message_filters
-	image_geometry
 	nodelet
     std_msgs
     sensor_msgs

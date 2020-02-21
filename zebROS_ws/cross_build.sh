@@ -18,6 +18,7 @@ catkin config --profile cross -x _isolated --install --blacklist \
 	rosbag_scripts \
 	rospy_message_converter \
 	rqt_driver_station_sim \
+	tf_object_detection \
 	velocity_controllers \
 	visualize_profile \
 	zed_ar_track_alvar_example \
