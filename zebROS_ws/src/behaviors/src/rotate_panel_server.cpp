@@ -11,7 +11,6 @@ class RotatePanelAction {
 
 	protected:
 
-
 		ros::NodeHandle nh_;
 		actionlib::SimpleActionServer<behavior_actions::RotatePanelAction> as_;
 		std::string action_name_;
@@ -57,17 +56,6 @@ class RotatePanelAction {
 
 		void TalonStateCallback(const talon_state_msgs::TalonState &talon_state)
 		{
-			int total;
-			for (int i = 0; i < 18; i++)
-			{
-				total = total + talon_state.output_voltage[i];
-			}
-
-			total = total/18;
-
-			if (total >= 
-
-//ahhhhhhhhhhhhhhhhhhhhhhhhhh this is so broken dont mess with this garbage
 
 		}
 
@@ -94,9 +82,9 @@ class RotatePanelAction {
 				climber_srv.request.climber_elevator_brake = true;
 
 				if (!rotate_panel_client_.call(srv))
-				   {
-				   ROS_ERROR("Srv intake call failed in auto interpreter server intake");
-				   }
+				{
+					ROS_ERROR("Srv intake call failed in auto interpreter server intake");
+				}
 
 				ros::spinOnce();
 
