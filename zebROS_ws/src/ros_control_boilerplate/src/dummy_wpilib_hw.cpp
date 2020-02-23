@@ -355,6 +355,15 @@ void frc::IterativeRobotBase::TestPeriodic()
 {
 	ROS_ERROR("Called IterativeRobotBase::TestPeriodic() on unsupported platform");
 }
+void frc::IterativeRobotBase::SimulationInit()
+{
+	ROS_ERROR("Called IterativeRobotBase::SimulationInit() on unsupported platform");
+}
+void frc::IterativeRobotBase::SimulationPeriodic()
+{
+	ROS_ERROR("Called IterativeRobotBase::SimulationPeriodic() on unsupported platform");
+}
+
 
 #include <frc/InterruptableSensorBase.h>
 void frc::InterruptableSensorBase::RequestInterrupts(HAL_InterruptHandlerFunction, void*)
