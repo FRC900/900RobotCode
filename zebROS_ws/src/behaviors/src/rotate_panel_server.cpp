@@ -28,6 +28,9 @@ class RotatePanelAction {
 		double wait_for_server_timeout;
 		bool preempted;
 		bool timed_out;
+		int stage;
+		int cmd_speed;
+		double minimum_current
 
 		RotatePanelAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&RotatePanelAction::executeCB, this, _1), false),
@@ -56,7 +59,13 @@ class RotatePanelAction {
 
 		void TalonStateCallback(const talon_state_msgs::TalonState &talon_state)
 		{
-
+			if (stage == 3)
+			{
+				if (talon_state.output_current[1] && talon_state.output_current[3] && talon_state.output_current[1] && talon_state.output_current[13] > minimum_current)
+				{
+					stage = 4;
+				}
+			}
 		}
 
 		void executeCB(const behavior_actions::RotatePanelGoalConstPtr &goal) {
@@ -69,24 +78,68 @@ class RotatePanelAction {
 
 			if(!preempted && !timed_out)
 			{
+
+				if(!rotate_panel_client_.waitForExistence(ros::Duration(wait_for_server_timeout)))
+				{
+					ROS_ERROR_STREAM("The control_panel_controller was not ready in time for the rotate_panel_server");
+					as_.setPreempted();
+					return;
+				}
+
+				if(!climber_client_.waitForExistence(ros::Duration(wait_for_server_timeout)))
+                {
+                    ROS_ERROR_STREAM("The climber_controller was not ready in time for the rotate_panel_server");
+                    as_.setPreempted();
+                    return;
+                }
+
 				ROS_INFO("Rotate Panel Server: Rotating Panel");
 
-				//reset variables
 				start_time = ros::Time::now().toSec();
 				success = false;
-				controllers_2020_msgs::ControlPanelSrv srv;
-				srv.request.control_panel_rotations = rotations;
+				stage = 1;
+
+				geometry_msgs::Twist cmd_vel_msg;
+
 				controllers_2020_msgs::ClimberSrv climber_srv;
+				controllers_2020_msgs::ControlPanelSrv srv;
+
 				climber_srv.request.winch_set_point = 0;
 				climber_srv.request.climber_deploy = true;
 				climber_srv.request.climber_elevator_brake = true;
+				stage = 2;
+
+				if (!climber_client_.call(srv))
+				{
+					ROS_ERROR("Srv failed in raising the climber");
+				}
+
+				cmd_vel_msg.linear.x = cmd_speed;
+				cmd_vel_msg.linear.y = 0.0;
+				cmd_vel_msg.linear.z = 0.0;
+				cmd_vel_msg.angular.x = 0.0;
+				cmd_vel_msg.angular.y = 0.0;
+				cmd_vel_msg.angular.z = 0.0;
+
+				cmd_vel_publisher_.publish(cmd_vel_msg);
+
+				stage = 3;
+
+				while (stage != 4)
+				{
+				}
+
+				srv.request.control_panel_rotations = rotations;
 
 				if (!rotate_panel_client_.call(srv))
 				{
-					ROS_ERROR("Srv intake call failed in auto interpreter server intake");
+					ROS_ERROR("Srv failed in rotating the panel");
 				}
 
-				ros::spinOnce();
+				stage = 5;
+
+				srv.request.control_panel_rotations = 0;
+				climber_srv.request.climber_deploy = false;
 
 				while(!success && !timed_out && !preempted) {
 					if(as_.isPreemptRequested() || !ros::ok()) {
@@ -137,6 +190,14 @@ int main(int argc, char** argv) {
 	{
 		ROS_ERROR_STREAM("Could not read wait_for_server_timeout in rotateHatchPanel");
 	}
+	if(!n_params.getParam("cmd_speed", rotate_panel_action.cmd_speed))
+    {
+        ROS_ERROR_STREAM("Could not read cmd_speed in rotateHatchPanel");
+    }
+    if(!n_params.getParam("minimum_current", rotate_panel_action.minimum_current))
+    {
+        ROS_ERROR_STREAM("Could not read minimum_current in rotateHatchPanel");
+    }
 
 	ros::spin();
 	return 0;
