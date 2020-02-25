@@ -1,6 +1,7 @@
 #!/bin/bash
 
 cd ~/2020RobotCode/zebROS_ws/
+echo INCOMPLETE > .native_build.status
 
 if [ -z $ROS_ROOT ]; then
 	source /opt/ros/melodic/setup.bash
@@ -32,3 +33,10 @@ catkin config --blacklist \
 	$EXTRA_BLACKLIST_PACKAGES
 
 catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON "$@"
+
+if [ $? -ne 0 ] ; then
+	echo FAIL > .native_build.status
+	/bin/false
+else
+	echo SUCCESS > .native_build.status
+fi

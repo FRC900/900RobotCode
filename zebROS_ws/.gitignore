@@ -14,3 +14,4 @@ install_native
 .vscode
 .catkin_tools
 callgrind.out.*
+.native_build.status

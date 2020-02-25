@@ -109,7 +109,7 @@ check_clockdiff() {
     TIMEDIFF=${TIMEDIFF#-}
     if [[ $TIMEDIFF -ge 600 ]]; then
         REMOTE_TIME=`ssh $1 date`
-        echo "Clock difference greater than 10 minutes."
+        echo -e "\e[1m\e[31mError\e[0m : Clock difference greater than 10 minutes."
         echo "    Local time: `date`"
         echo "    Time on $2: $REMOTE_TIME"
         exit 1
@@ -159,7 +159,7 @@ if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
 			--exclude 'desmos_js' \
 			$i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/
 		if [ $? -ne 0 ]; then
-			echo "Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
+			echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
 			exit 1
 		fi
 	done
@@ -181,7 +181,7 @@ do
 		--exclude 'desmos_js' \
 		$LOCAL_CLONE_LOCATION/ $i:$JETSON_ENV_LOCATION/
 	if [ $? -ne 0 ]; then
-		echo "Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"
+		echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"
 		exit 1
 	fi
 done
@@ -213,11 +213,8 @@ echo " ... RIO_BUILD_PROCESS $RIO_BUILD_PROCESS returned $RIO_RC"
 
 # Capture return code from Jetson build process(es)
 # TODO - this doesn't actually capture the return code from
-# the jetson native build, but instead from the xterm command
+# the jetson native build, but instead from the terminator command
 # which returns success if it was able to launch the command
-# Think about how to capture build status on the Jetson and return
-# it back here - maybe echo $? to a file, copy it back, check the
-# value in it, then delete it?
 JETSON_RCS=()
 for i in "${JETSON_BUILD_PROCESSES[@]}"
 do
@@ -232,14 +229,27 @@ done
 # have run their course to make errors easier to see
 EXIT_FAIL=0
 if [ $RIO_RC -ne 0 ] ; then
-	echo "Rio build/deploy failed"
+	echo -e "Rio build/deploy \e[1m\e[31mFAILED\e[0m"
 	EXIT_FAIL=1
 fi
 
+# JETSON_RCS will be the return code for terminator
 for i in "${JETSON_RCS[@]}"
 do
 	if [ $i -ne 0 ] ; then
-		echo "Jetson build/deploy failed"
+		echo -e "Jetson build/deploy \e[1m\e[31mFAILED\e[0m"
+		EXIT_FAIL=1
+	fi
+done
+
+# Also check the text in .native_build.status on each
+# Jetson for the return code of the actual catkin build
+# This is the more likely failure mode - compile errors, etc
+for i in "${JETSON_ADDR[@]}"
+do
+	ssh -C $i cat $JETSON_ROS_CODE_LOCATION/.native_build.status | grep -q SUCCESS
+	if [ $? -ne 0 ] ; then
+		echo -e "Jetson native_build \e[1m\e[31mFAILED\e[0m"
 		EXIT_FAIL=1
 	fi
 done
@@ -249,4 +259,4 @@ if [ $EXIT_FAIL -ne 0 ] ; then
 fi
 
 update_links
-echo "FINISHED SUCCESSFULLY"
+echo -e "\e[1m\e[32mFINISHED SUCCESSFULLY\e[0m"
