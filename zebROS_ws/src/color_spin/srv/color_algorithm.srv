@@ -1,0 +1,4 @@
+string sensor_color
+string fms_color
+---
+float64 rotate
