@@ -1,2 +1,2 @@
 Header header
-uint8 auto_mode
+int8 auto_mode #not a uint8 b/c hard to get those in rospy

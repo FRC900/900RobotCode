@@ -1,6 +1,6 @@
 #include <ros/ros.h>
-#include <std_msgs/String.h>
 #include <behavior_actions/AutoMode.h> //msg file
+#include <behavior_actions/AutoState.h> //msg file
 #include <std_srvs/Empty.h>
 #include <frc_msgs/MatchSpecificData.h>
 #include <geometry_msgs/Point32.h>
@@ -65,22 +65,27 @@ void updateAutoMode(const behavior_actions::AutoMode::ConstPtr& msg)
 //this is read by the dashboard to display it to the driver
 void publishAutoState(ros::Publisher publisher)
 {
+#ifdef __linux__
 	//give the thread a name
     pthread_setname_np(pthread_self(), "auto_state_pub_thread");
+#endif
 
     //publish
 	ros::Rate r(10); //TODO config
-	std_msgs::String msg;
+	behavior_actions::AutoState msg;
 
 	while(ros::ok()){
+		msg.header.stamp = ros::Time::now();
+		msg.id = auto_state;
+
 		switch(auto_state){
-			case NOT_READY: msg.data = "Not Ready"; break;
-			case READY: msg.data = "Ready"; break;
-			case RUNNING: msg.data = "Running"; break;
-			case DONE: msg.data = "Done"; break;
-			case ERROR: msg.data = "Error"; break;
+			case NOT_READY: msg.string = "Not Ready"; break;
+			case READY: msg.string = "Ready"; break;
+			case RUNNING: msg.string = "Running"; break;
+			case DONE: msg.string = "Done"; break;
+			case ERROR: msg.string = "Error"; break;
 			default:
-				msg.data = "Unknown State";
+				msg.string = "Unknown State";
 				ROS_ERROR("Unknown auto state - weirdness in auto_node");
 				break;
 		}
@@ -148,10 +153,8 @@ int main(int argc, char** argv)
 
 	//publishers
 	//auto state
-#ifdef __linux__
-	ros::Publisher state_pub = nh.advertise<std_msgs::String>("auto_state", 1);
+	ros::Publisher state_pub = nh.advertise<behavior_actions::AutoState>("auto_state", 1);
 	std::thread auto_state_pub_thread(publishAutoState, state_pub);
-#endif
 
 	//servers
 	ros::ServiceServer stop_auto_server = nh.advertiseService("stop_auto", stopAuto); //called by teleoop node to stop auto execution during teleop if driver wants

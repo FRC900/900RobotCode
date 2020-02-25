@@ -22,6 +22,7 @@
 		-->
 		<rosparam file="$(find behaviors)/config/alignmentOffsets.yaml" command="load"/>
 
+
 		<!--
 		<node name="zero_wheel_service" pkg="talon_swerve_drive_controller" type="zero_wheel_service" output="screen"> </node>
 		-->
@@ -44,6 +45,11 @@
 		</include>
 	</group>
 
+	<group ns="auto">
+		<node name="auto_node" pkg="behaviors" type="auto_node" output="screen"></node>
+		<rosparam file="$(find behaviors)/config/auto_mode_config.yaml" command="load"/>
+	</group>	
+		
 	<group ns="teleop">
 		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
 		<node name="teleop_joystick_comp_2020" pkg="teleop_joystick_control" type="teleop_joystick_comp_2020" output="screen" >
