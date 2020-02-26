@@ -9,6 +9,7 @@
 -->
 <launch>
   <arg name="live_camera" default="true" />
+  <arg name="camera_model" default="zed2" />
 
   <!--
 		 ZED needs transforms for its cameras, but we've modified them
@@ -25,31 +26,31 @@
   <!-- Nodelet Manager -->
   <arg name="nodelet_manager_name"  value="zed_nodelet_manager" />
 
-  <!--
+<!--
   <include file="$(find zed_wrapper)/launch/zed_camera.launch" if="$(arg live_camera)" >
-  -->
+-->
   <node pkg="nodelet" type="nodelet" name="$(arg nodelet_manager_name)" args="manager" output="screen" />
 
   <include file="$(find zed_wrapper)/launch/zed_camera_nodelet.launch" if="$(arg live_camera)">
 	  <arg name="nodelet_manager_name" value="$(arg nodelet_manager_name)" />
 	  <arg name="common_params_file"   value="$(find controller_node)/config/zed/common.yaml" />
+	  <arg name="camera_params_file"   value="$(find controller_node)/config/zed/$(arg camera_model).yaml" />
 	  <arg name="node_name"            value="$(arg zed_node_name)" />
 	  <arg name="publish_urdf"         value="false" />
+	  <arg name="camera_model"         value="$(arg camera_model" />
   </include>
 
   <arg name="sub_rate" default="1" />
   <arg name="pub_rate" default="1" />
-  <arg name="hFov" default="87.0" />
   <arg name="camera_angle" default="0.0" />
 
-  <!--
+<!--
   <node name="goal_detection_node" pkg="goal_detection" type="goal_detection_node" output="screen">
-	-->
+-->
 
   <node pkg="nodelet" type="nodelet" name="goal_detection" args="load goal_detection/GoalDetect /zed_nodelet_manager" output="screen">
   	<param name="sub_rate" value="$(arg sub_rate)" />
 	<param name="pub_rate" value="$(arg pub_rate)" />
-	<param name="hFov" value="$(arg hFov)" />
 	<param name="camera_angle" value="$(arg camera_angle)" />
   </node>
 

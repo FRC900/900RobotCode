@@ -243,6 +243,9 @@ const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< 
 
 const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contours, const vector<DepthInfo> &depth_maxs, ObjectNum objtype) {
 	const ObjectType goal_shape(objtype);
+#ifdef VERBOSE
+	std::cout << __PRETTY_FUNCTION__ << " : for goal_shape.name() = " << goal_shape.name() << std::endl;
+#endif
 	vector<GoalInfo> return_info;
 	// Create some target stats based on our idealized goal model
 	//center of mass as a percentage of the object size from left left
@@ -312,7 +315,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		const float confidence_com_y       = createConfidence(com_percent_expected.y, 0.13,  com_percent_actual.y);
 		const float confidence_filled_area = createConfidence(filledPercentageExpected, 0.33, filledPercentageActual);
 		const float confidence_ratio       = createConfidence(expectedRatio, 1.5,  actualRatio);
-		const float confidence_screen_area = createConfidence(1.0, 1.50, actualScreenArea);
+		const float confidence_screen_area = createConfidence(1.0, 0.50, actualScreenArea);
 
 		// higher confidence is better
 		const float confidence = (/*confidence_height*/ + confidence_com_x + confidence_com_y + confidence_filled_area + confidence_ratio + confidence_screen_area) / 5;

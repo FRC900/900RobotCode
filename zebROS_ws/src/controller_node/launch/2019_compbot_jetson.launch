@@ -119,7 +119,9 @@
 	<!--group ns="align_server_common "!-->
 
 	<!-- vision align -->
-	<include file="$(find controller_node)/launch/tape_detection.launch" />
+	<include file="$(find controller_node)/launch/tape_detection.launch">
+		<arg name="camera_model" value="zed2" />
+	</include>
 
 	<include file="$(find controller_node)/launch/2019_compbot_jetson_hatch_orient.launch"/>
     

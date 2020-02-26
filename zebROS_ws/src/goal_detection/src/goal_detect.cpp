@@ -55,7 +55,6 @@ namespace goal_detection
 				nh_.getParam("sub_rate", sub_rate);
 				nh_.getParam("pub_rate", pub_rate);
 
-				nh_.param("hFov", config_.hFov, 105.);
 				nh_.param("camera_angle", config_.camera_angle, -25.0);
 				nh_.param("blue_scale", config_.blue_scale, 0.90);
 				nh_.param("red_scale", config_.red_scale, 0.80);
@@ -67,6 +66,7 @@ namespace goal_detection
 				nh_.getParam("no_depth", no_depth);
 
 				distance_from_terabee_ = -1;
+				camera_info_valid_ = false;
 
 				if (!no_depth)
 				{
@@ -97,17 +97,22 @@ namespace goal_detection
 				//std::lock_guard<std::mutex> l(camera_mutex_);
 				if (!camera_mutex_.try_lock())  // If the previous message is still being
 					return;              // processed, drop this one
+				if (!camera_info_valid_)
+					return;
 				cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
 				cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
 
-				// Initialize goal detector object the first time
-				// through here. Use the size of the frame
-				// grabbed from the ZED messages
+				image_geometry::PinholeCameraModel model;
+				model.fromCameraInfo(camera_info_);
+				// Initialize goal detector object the first time through here. Use camera info to initialize
+				// goal detection state
 				if (gd_ == NULL)
 				{
-					const cv::Point2f fov(config_.hFov * (M_PI / 180.),
-										  config_.hFov * (M_PI / 180.) * ((double)cvFrame->image.rows / cvFrame->image.cols));
-					gd_ = std::make_unique<GoalDetector>(fov, cvFrame->image.size(), false);
+					const cv::Point2f fov(2.0 * atan2(2.0 * model.fx(), model.fullResolution().height),
+										  2.0 * atan2(2.0 * model.fy(), model.fullResolution().width));
+					ROS_INFO_STREAM("goal_detection : FoV = " << fov.x * 180. / M_PI << " , " << fov.y * 180 / M_PI);
+
+					gd_ = std::make_unique<GoalDetector>(fov, model.fullResolution(), false);
 				}
 				gd_->setCameraAngle(config_.camera_angle);
 				gd_->setBlueScale(config_.blue_scale);
@@ -143,8 +148,6 @@ namespace goal_detection
 				}
 				gd_msg.header.frame_id = frame_id;
 
-				image_geometry::PinholeCameraModel model;
-				model.fromCameraInfo(camera_info_);
 				ConvertCoords cc(model);
 
 				#if 0
@@ -217,6 +220,7 @@ namespace goal_detection
 					return;              // processed, drop this one
 
 				camera_info_ = *info;
+				camera_info_valid_ = true;
 				camera_mutex_.unlock();
 			}
 
@@ -265,6 +269,7 @@ namespace goal_detection
 
 			ros::Subscriber                                                camera_info_sub_;
 			sensor_msgs::CameraInfo                                        camera_info_;
+			bool                                                           camera_info_valid_;
 	};
 } // namespace
 
