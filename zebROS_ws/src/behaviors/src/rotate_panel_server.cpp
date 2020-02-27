@@ -1,9 +1,9 @@
 #include "ros/ros.h"
-#include "geometry_msgs/Twist.h"
+//#include "geometry_msgs/Twist.h"
 #include "actionlib/server/simple_action_server.h"
 #include "behavior_actions/RotatePanelAction.h"
-#include "sensor_msgs/JointState.h"
-#include "talon_state_msgs/TalonState.h"
+//#include "sensor_msgs/JointState.h"
+//#include "talon_state_msgs/TalonState.h"
 #include <controllers_2020_msgs/ControlPanelSrv.h>
 #include <controllers_2020_msgs/ClimberSrv.h>
 
@@ -18,8 +18,8 @@ class RotatePanelAction {
 		ros::ServiceClient climber_client_;
 		behavior_actions::RotatePanelFeedback feedback_;
 		behavior_actions::RotatePanelResult result_;
-		ros::Subscriber talon_states_sub_;
-		ros::Publisher cmd_vel_publisher_;
+		//ros::Subscriber talon_states_sub_;
+		//ros::Publisher cmd_vel_publisher_;
 
 	public:
 
@@ -29,8 +29,8 @@ class RotatePanelAction {
 		bool preempted;
 		bool timed_out;
 		int stage;
-		int cmd_speed;
-		double minimum_current
+		//int cmd_speed;
+		//double minimum_current
 
 		RotatePanelAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&RotatePanelAction::executeCB, this, _1), false),
@@ -43,13 +43,13 @@ class RotatePanelAction {
 		std::map<std::string, std::string> service_connection_header;
 		service_connection_header["tcp_nodelay"] = "1";
 
-		cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel",1);
+		//cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel",1);
 
 		rotate_panel_client_ = nh_.serviceClient<controllers_2020_msgs::ControlPanelSrv>("/frcrobot_jetson/controllers_2020/control_panel_controller", false, service_connection_header);
 
 		climber_client_ = nh_.serviceClient<controllers_2020_msgs::ClimberSrv>("/frcrobot_jetson/controllers_2020/climber_controller", false, service_connection_header);
 
-		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &RotatePanelAction::TalonStateCallback, this);
+		//talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &RotatePanelAction::TalonStateCallback, this);
 
 	}
 
@@ -57,7 +57,7 @@ class RotatePanelAction {
 		{
 		}
 
-		void TalonStateCallback(const talon_state_msgs::TalonState &talon_state)
+		/*void TalonStateCallback(const talon_state_msgs::TalonState &talon_state)
 		{
 			if (stage == 3)
 			{
@@ -66,7 +66,7 @@ class RotatePanelAction {
 					stage = 4;
 				}
 			}
-		}
+		}*/
 
 		void executeCB(const behavior_actions::RotatePanelGoalConstPtr &goal) {
 			ros::Rate r(10);
@@ -99,7 +99,7 @@ class RotatePanelAction {
 				success = false;
 				stage = 1;
 
-				geometry_msgs::Twist cmd_vel_msg;
+				//geometry_msgs::Twist cmd_vel_msg;
 
 				controllers_2020_msgs::ClimberSrv climber_srv;
 				controllers_2020_msgs::ControlPanelSrv srv;
@@ -114,20 +114,20 @@ class RotatePanelAction {
 					ROS_ERROR("Srv failed in raising the climber");
 				}
 
-				cmd_vel_msg.linear.x = cmd_speed;
-				cmd_vel_msg.linear.y = 0.0;
-				cmd_vel_msg.linear.z = 0.0;
-				cmd_vel_msg.angular.x = 0.0;
-				cmd_vel_msg.angular.y = 0.0;
-				cmd_vel_msg.angular.z = 0.0;
+				//cmd_vel_msg.linear.x = cmd_speed;
+				//cmd_vel_msg.linear.y = 0.0;
+				//cmd_vel_msg.linear.z = 0.0;
+				//cmd_vel_msg.angular.x = 0.0;
+				//cmd_vel_msg.angular.y = 0.0;
+				//cmd_vel_msg.angular.z = 0.0;
 
-				cmd_vel_publisher_.publish(cmd_vel_msg);
+				//cmd_vel_publisher_.publish(cmd_vel_msg);
 
 				stage = 3;
 
-				while (stage != 4)
-				{
-				}
+				//while (stage != 4)
+				//{
+				//}
 
 				srv.request.control_panel_rotations = rotations;
 
@@ -190,11 +190,11 @@ int main(int argc, char** argv) {
 	{
 		ROS_ERROR_STREAM("Could not read wait_for_server_timeout in rotateHatchPanel");
 	}
-	if(!n_params.getParam("cmd_speed", rotate_panel_action.cmd_speed))
+	//if(!n_params.getParam("cmd_speed", rotate_panel_action.cmd_speed))
     {
         ROS_ERROR_STREAM("Could not read cmd_speed in rotateHatchPanel");
     }
-    if(!n_params.getParam("minimum_current", rotate_panel_action.minimum_current))
+    //if(!n_params.getParam("minimum_current", rotate_panel_action.minimum_current))
     {
         ROS_ERROR_STREAM("Could not read minimum_current in rotateHatchPanel");
     }
