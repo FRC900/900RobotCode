@@ -300,7 +300,7 @@ bool callShooter()
 		ROS_INFO("Action finished with state: %s",state.toString().c_str());
 		if(shooter_ac.getResult()->timed_out)
 		{
-			ROS_INFO("Climber server timed out!");
+			ROS_INFO("Shooter server timed out!");
 		}
 		return true;
 	}
