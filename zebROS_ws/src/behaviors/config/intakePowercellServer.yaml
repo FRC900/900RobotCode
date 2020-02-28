@@ -1,4 +1,4 @@
-actionlib_powercell_intake_params:  #from cargo_intake
-    roller_power: 0.6
-    holding_power: 0.2
-    intake_timeout: 50 #in seconds
+actionlib_powercell_intake_params:
+    roller_percent_out: 0.6
+    wait_for_server_timeout: 10
+    server_timeout: 50 #in seconds - really large since we don't really want to timeout

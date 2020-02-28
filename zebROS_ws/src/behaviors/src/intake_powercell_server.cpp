@@ -1,19 +1,18 @@
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
+#include "actionlib/client/simple_action_client.h"
 #include "behavior_actions/IntakeAction.h"
+#include "behavior_actions/IndexerAction.h"
 #include "controllers_2020_msgs/IntakeArmSrv.h"
 #include "controllers_2020_msgs/IntakeRollerSrv.h"
 #include "sensor_msgs/JointState.h"
 #include <atomic>
 
+#include "behavior_actions/enumerated_indexer_actions.h"
+
+#include "behaviors/linebreak.h"
 
 //define global variables that will be defined based on config values
-
-// TODO - these need defaults
-double roller_power;
-double intake_timeout;
-int linebreak_debounce_iterations;
-double wait_for_server_timeout;
 
 class PowerCellIntakeAction {
 	protected:
@@ -26,24 +25,42 @@ class PowerCellIntakeAction {
 		ros::ServiceClient intake_arm_controller_client_;
 		ros::ServiceClient intake_roller_controller_client_;
 
-		std::atomic<int> linebreak_true_count_; //counts how many times in a row the linebreak reported there's a powercell
+		//create actionlib clients
+		actionlib::SimpleActionClient<behavior_actions::IndexerAction> ac_indexer_;
+
 		//create subscribers to get data
 		ros::Subscriber joint_states_sub_;
+
+		//intake linebreak (true if ball in the intake)
+		Linebreak intake_linebreak_{"intake_linebreak"};
+
+		//define variables that will be set true if the actionlib action is to be ended
+		//this will cause subsequent controller calls to be skipped
+		std::atomic<bool> preempted_ = false;
+		bool timed_out_ = false;
+		double start_time_;
+
 	public:
+		//config variables
+		double roller_percent_out_;
+		double server_timeout_;
+		double wait_for_server_timeout_;
+
 		//make the executeCB function run every time the actionlib server is called
 		PowerCellIntakeAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&PowerCellIntakeAction::executeCB, this, _1), false),
-			action_name_(name) //TODO make sure this is linked up correctly
+			action_name_(name),
+			ac_indexer_("/indexer/indexer_server", true)
 	{
 		as_.start(); //start the actionlib server
 
-		//do networking stuff?
+		//do networking stuff
 		std::map<std::string, std::string> service_connection_header;
 		service_connection_header["tcp_nodelay"] = "1";
 
 		//initialize the client being used to call the controller
 		intake_arm_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeArmSrv>("/frcrobot_jetson/intake_controller/intake_arm_command", false, service_connection_header);
-		intake_arm_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeRollerSrv>("/frcrobot_jetson/intake_controller/intake_roller_command", false, service_connection_header);
+		intake_roller_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeRollerSrv>("/frcrobot_jetson/intake_controller/intake_roller_command", false, service_connection_header);
 
 		//start subscribers subscribing
 		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &PowerCellIntakeAction::jointStateCallback, this);
@@ -57,36 +74,39 @@ class PowerCellIntakeAction {
 		void executeCB(const behavior_actions::IntakeGoalConstPtr &/*goal*/)
 		{
 			ROS_INFO("%s: Running callback", action_name_.c_str());
+			start_time_ = ros::Time::now().toSec();
+			preempted_ = false;
+			timed_out_ = false;
+
 
 			//wait for all actionlib servers we need
-			//TODO wait for indexer actionlib server
+			if(!ac_indexer_.waitForServer(ros::Duration(wait_for_server_timeout_)))
+			{
+				ROS_ERROR_STREAM(action_name_ << " couldn't find indexer actionlib server");
+				as_.setPreempted();
+				return;
+			}
 
 			//wait for all controller services we need
-			if(! intake_arm_controller_client_.waitForExistence(ros::Duration(wait_for_server_timeout)))
+			if(! intake_arm_controller_client_.waitForExistence(ros::Duration(wait_for_server_timeout_)))
 			{
 				ROS_ERROR_STREAM("Intake powercell server can't find powercell intake controller's arm ROS server");
 				as_.setPreempted();
 				return;
 			}
-			if(! intake_roller_controller_client_.waitForExistence(ros::Duration(wait_for_server_timeout)))
+			if(! intake_roller_controller_client_.waitForExistence(ros::Duration(wait_for_server_timeout_)))
 			{
 				ROS_ERROR_STREAM("Intake powercell server can't find powercell intake controller's roller ROS server");
 				as_.setPreempted();
 				return;
 			}
 
-			//define variables that will be reused for each controller call/actionlib server call
-			ros::Rate r(10);
-
-			//define variables that will be set true if the actionlib action is to be ended
-			//this will cause subsequent controller calls to be skipped, if the template below is copy-pasted
-			//if both of these are false, we assume the action succeeded
-			bool preempted = false;
-			bool timed_out = false;
-			linebreak_true_count_ = 0; //when this gets higher than linebreak_debounce_iterations, we'll consider the gamepiece intooket
 
 			//tell indexer actionlib server to move to position intake
-			//TODO
+			behavior_actions::IndexerGoal indexer_goal;
+			indexer_goal.action = POSITION_INTAKE;
+			ac_indexer_.sendGoal(indexer_goal);
+			//don't wait for it to finish, we need to start intaking immediately - moving to position intake is basically a 2nd priority thing. If it fails it's (hopefully) ok, we were going to cancel it anyways when we're ready to call the indexer server to intake a ball
 
 
 
@@ -97,44 +117,56 @@ class PowerCellIntakeAction {
 			arm_srv.request.intake_arm_extend = true;
 
 			controllers_2020_msgs::IntakeRollerSrv roller_srv;
-			roller_srv.request.percent_out = roller_power;
+			roller_srv.request.percent_out = roller_percent_out_;
 
 			//send requests to controller
 			if(!intake_arm_controller_client_.call(arm_srv))
 			{
 				ROS_ERROR("%s: powercell intake controller call to arm failed when starting the intake", action_name_.c_str());
-				preempted = true;
+				preempted_ = true;
 			}
 			if(!intake_roller_controller_client_.call(roller_srv))
 			{
 				ROS_ERROR("%s: powercell intake controller call to roller failed when starting the intake", action_name_.c_str());
-				preempted = true;
+				preempted_ = true;
 			}
 
 			//run a loop to wait for the controller to do its work. Stop if the action succeeded, if it timed out, or if the action was preempted
-			bool success = false;
-			const double start_time = ros::Time::now().toSec();
-			while(!success && !timed_out && !preempted && ros::ok())
+			ros::Rate r(10);
+			while(!timed_out_ && !preempted_ && ros::ok())
 			{
-				success = linebreak_true_count_ > linebreak_debounce_iterations;
-				timed_out = (ros::Time::now().toSec()-start_time) > intake_timeout;
-
-				if(as_.isPreemptRequested() || !ros::ok()) {
-					ROS_WARN(" %s: Preempted", action_name_.c_str());
-					preempted = true;
+				if(intake_linebreak_.triggered_)
+				{
+					//call indexer actionlib server to intake the ball
+					ac_indexer_.cancelGoalsAtAndBeforeTime(ros::Time::now()); //first make sure it isn't running (it might be from the earlier call to it)
+					behavior_actions::IndexerGoal indexer_goal;
+					indexer_goal.action = INTAKE_ONE_BALL;
+					ac_indexer_.sendGoal(indexer_goal);
+					waitForActionlibServer(ac_indexer_, 10, "waiting for indexer actionlib server to intake a ball");
+					//if it finishes successfully, this while loop will keep running, allowing multiple balls to be processed
 				}
-				else if(!success)
+
+				timed_out_ = (ros::Time::now().toSec()-start_time_) > server_timeout_;
+
+				if(as_.isPreemptRequested() || !ros::ok()) { //intended stopping mechanism is the driver preempting this actionlib server
+					ROS_WARN(" %s: preempted durng main while loop", action_name_.c_str());
+					preempted_ = true;
+				}
+				else
 				{
 					r.sleep();
 				}
 			}
 
-			//set ending state of controller no matter what happened: arm up and roller motors stopped
+			//set ending state of controller: arm up and roller motors stopped
 			arm_srv.request.intake_arm_extend = false;
 			roller_srv.request.percent_out = 0;
-			if(!intake_arm_controller_client_.call(arm_srv))
+			if(!preempted_)
 			{
-				ROS_ERROR("%s: powercell intake controller call to arm failed when setting final state", action_name_.c_str());
+				if(!intake_arm_controller_client_.call(arm_srv))
+				{
+					ROS_ERROR("%s: powercell intake controller call to arm failed when setting final state", action_name_.c_str());
+				}
 			}
 			if(!intake_roller_controller_client_.call(roller_srv))
 			{
@@ -143,14 +175,14 @@ class PowerCellIntakeAction {
 
 			//log state of action and set result of action
 			behavior_actions::IntakeResult result; //variable to store result of the actionlib action
-			result.timed_out = timed_out; //timed_out refers to last controller call, but applies for whole action
-			if(timed_out)
+			result.timed_out = timed_out_; //timed_out_ refers to last controller call, but applies for whole action
+			if(timed_out_)
 			{
 				ROS_WARN("%s: Timed Out", action_name_.c_str());
-				result.success = true;
+				result.success = true; //timed out is encoded as succeeded b/c actionlib has no state for timed out
 				as_.setSucceeded(result);
 			}
-			else if(preempted)
+			else if(preempted_)
 			{
 				ROS_WARN("%s: Preempted", action_name_.c_str());
 				result.success = false;
@@ -171,34 +203,57 @@ class PowerCellIntakeAction {
 		// dummy joint position values
 		void jointStateCallback(const sensor_msgs::JointState &joint_state)
 		{
-			//get index of linebreak sensor for this actionlib server
-			static size_t linebreak_idx = std::numeric_limits<size_t>::max();
-			if ((linebreak_idx >= joint_state.name.size()))
+			//update intake linebreak
+			if(!intake_linebreak_.update(joint_state))
 			{
-				for (size_t i = 0; i < joint_state.name.size(); i++)
-				{
-					if (joint_state.name[i] == "powercell_intake_linebreak_1") //TODO: define this in the hardware interface
-						linebreak_idx = i;
-				}
+				ROS_ERROR("Intake server - updating the intake linebreak failed, preempting");
+				preempted_ = true;
 			}
 
-			//update linebreak counts based on the value of the linebreak sensor
-			if (linebreak_idx < joint_state.position.size())
+		}
+
+		void waitForActionlibServer(auto &action_client, double timeout, const std::string &activity)
+			//activity is a description of what we're waiting for, e.g. "waiting for mechanism to extend" - helps identify where in the server this was called (for error msgs)
+		{
+			double request_time = ros::Time::now().toSec();
+			ros::Rate r(10);
+
+			//wait for actionlib server to finish
+			std::string state;
+			while(!preempted_ && !timed_out_ && ros::ok())
 			{
-				bool linebreak_true = (joint_state.position[linebreak_idx] != 0);
-				if(linebreak_true)
-				{
-					linebreak_true_count_ += 1;
+				state = action_client.getState().toString();
+
+				if(state == "PREEMPTED") {
+					ROS_ERROR_STREAM(action_name_ << ": external actionlib server returned preempted_ during " << activity);
+					preempted_ = true;
 				}
-				else
+				//check timeout - note: have to do this before checking if state is SUCCEEDED since timeouts are reported as SUCCEEDED
+				else if (ros::Time::now().toSec() - request_time > timeout || //timeout from what this file says
+						(state == "SUCCEEDED" && !action_client.getResult()->success)) //server times out by itself
 				{
-					linebreak_true_count_ = 0;
+					ROS_ERROR_STREAM(action_name_ << ": external actionlib server timed out during " << activity);
+					timed_out_ = true;
+					action_client.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
-			}
-			else
-			{
-				ROS_WARN_THROTTLE(2.0, "intake_powercell_server : intake line break sensor not found in joint_states");
-				linebreak_true_count_ = 0;
+				else if (state == "SUCCEEDED") { //must have succeeded since we already checked timeout possibility
+					break; //stop waiting
+				}
+				//checks related to this file's actionlib server
+				else if (as_.isPreemptRequested() || !ros::ok()) {
+					ROS_ERROR_STREAM(action_name_ << ": preempted_ during " << activity);
+					action_client.cancelGoalsAtAndBeforeTime(ros::Time::now());
+					preempted_ = true;
+				}
+				else if (ros::Time::now().toSec() - start_time_ > server_timeout_) {
+					ROS_ERROR_STREAM(action_name_ << ": timed out during " << activity);
+					timed_out_ = true;
+					action_client.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				}
+				else { //if didn't succeed and nothing went wrong, keep waiting
+					ros::spinOnce();
+					r.sleep();
+				}
 			}
 		}
 };
@@ -214,16 +269,18 @@ int main(int argc, char** argv) {
 	ros::NodeHandle n;
 	ros::NodeHandle n_params_intake(n, "actionlib_powercell_intake_params");
 
-	if (!n.getParam("/teleop/teleop_params/linebreak_debounce_iterations", linebreak_debounce_iterations))
-		ROS_ERROR("Could not read linebreak_debounce_iterations in intake_server");
-
-	if (!n.getParam("/actionlib_params/wait_for_server_timeout", wait_for_server_timeout))
+	if (!n_params_intake.getParam("wait_for_server_timeout", powercell_intake_action.wait_for_server_timeout_)) {
 		ROS_ERROR("Could not read wait_for_server_timeout in intake_sever");
-
-	if (!n_params_intake.getParam("roller_power", roller_power))
-		ROS_ERROR("Could not read roller_power in powercell_intake_server");
-	if (!n_params_intake.getParam("intake_timeout", intake_timeout))
-		ROS_ERROR("Could not read intake_timeout in powercell_intake_server");
+		powercell_intake_action.wait_for_server_timeout_ = 10;
+	}
+	if (!n_params_intake.getParam("roller_percent_out", powercell_intake_action.roller_percent_out_)) {
+		ROS_ERROR("Could not read roller_percent_out in powercell_intake_server");
+		powercell_intake_action.roller_percent_out_ = 0.6;
+	}
+	if (!n_params_intake.getParam("server_timeout", powercell_intake_action.server_timeout_)) {
+		ROS_ERROR("Could not read server_timeout in powercell_intake_server");
+		powercell_intake_action.server_timeout_ = 50;
+	}
 
 	ros::AsyncSpinner Spinner(2);
 	Spinner.start();

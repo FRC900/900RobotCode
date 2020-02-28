@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+#include <signal.h>
 #include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/IntakeAction.h>
 #include <behavior_actions/PlaceAction.h>
@@ -13,6 +14,7 @@
 #include <behavior_actions/enumerated_elevator_indices.h>
 #include <boost/algorithm/string.hpp>
 #include <string>
+#include <atomic>
 
 double server_wait_timeout = 20.0; //how long to wait for a server to exist before exiting, in sec.
 double server_exec_timeout = 20.0; //how long to wait for an actionlib server call to finish before timing out, in sec. Used for all actionlib calls
@@ -56,6 +58,7 @@ bool callElevator(int setpoint_idx)
 
 }
 
+
 bool callIntakePowercell()
 {
 	//create client to call actionlib server
@@ -73,15 +76,15 @@ bool callIntakePowercell()
 	intake_powercell_ac.sendGoal(intake_powercell_goal);
 
 	//wait for the action to return
-	bool finished_before_timeout = intake_powercell_ac.waitForResult(ros::Duration(server_exec_timeout));
+	bool finished_before_timeout = intake_powercell_ac.waitForResult(ros::Duration(0));
 
 	if (finished_before_timeout)
 	{
 		actionlib::SimpleClientGoalState state = intake_powercell_ac.getState();
-		ROS_INFO("Action finished with state: %s", state.toString().c_str());
+		ROS_INFO("Action finished with state: %s",state.toString().c_str());
 		if(intake_powercell_ac.getResult()->timed_out)
 		{
-			ROS_INFO("Intake cargo server timed out!");
+			ROS_INFO("Intake Server timed out!");
 		}
 		return true;
 	}
@@ -90,8 +93,7 @@ bool callIntakePowercell()
 		ROS_INFO("Action did not finish before the time out.");
 		return false;
 	}
-
-}	
+}
 bool callIntakeCargo()
 {
 	//create client to call actionlib server
@@ -503,6 +505,21 @@ bool callEject(bool intake_backwards, bool indexer_backwards)
 	}
 }
 
+#ifdef __linux__
+
+//function that runs when ctrl+C is pressed. Overriding the default one so that we can preempt actionlib servers when ctrl+C is pressed.
+void mySigIntHandler(int sig)
+{
+	//preempt all actionlib servers
+	ROS_WARN("Preempting all actionlib servers");
+	actionlib::SimpleActionClient<behavior_actions::IntakeAction>("/powercell_intake/powercell_intake_server", true).cancelGoalsAtAndBeforeTime(ros::Time::now());
+
+	ROS_ERROR("Calling shutdown");
+	//stop this node
+	ros::shutdown();
+}
+
+#endif
 
 int main (int argc, char **argv)
 {
@@ -595,7 +612,14 @@ int main (int argc, char **argv)
 
 	//Actually run stuff ---------------------------------
 
+#ifdef __linux__
+	ros::init(argc, argv, "test_actionlib", ros::init_options::NoSigintHandler); //last option for overriding the default ctrl+C handler
+	ros::NodeHandle nh;
+	signal(SIGINT, mySigIntHandler); //function to handle ctrl+C
+#else
 	ros::init(argc, argv, "test_actionlib");
+	ros::NodeHandle nh;
+#endif
 
 	//determine what to run and do it
 	std::string user_input;

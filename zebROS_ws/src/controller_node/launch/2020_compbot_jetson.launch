@@ -94,7 +94,12 @@
 		<rosparam file="$(find behaviors)/config/ejectServer.yaml" command="load"/>
 		<node name="eject_ac_server" pkg="behaviors" type="eject_server" output="screen" />
 	</group>
-	
+	<group ns="powercell_intake">
+		<rosparam file="$(find behaviors)/config/intakePowercellServer.yaml" command="load"/>
+		<node name="intake_ac_server" pkg="behaviors" type="intake_powercell_server" output="screen" />
+	</group>
+
+
 	<!-- <group ns="path_to_goal">
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
 		<node name="robot_visualize" pkg="robot_visualizer" type="robot_visualize" output="screen" />
