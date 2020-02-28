@@ -150,6 +150,9 @@ target_link_libraries(num_powercells_pub_node ${catkin_LIBRARIES})
 add_dependencies(num_powercells_pub_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # 2020 actionlib servers
+add_executable(rotate_panel_server src/rotate_panel_server.cpp)
+target_link_libraries(rotate_panel_server ${catkin_LIBRARIES})
+add_dependencies(rotate_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(indexer_server src/indexer_server.cpp)
 target_link_libraries(indexer_server ${catkin_LIBRARIES})
