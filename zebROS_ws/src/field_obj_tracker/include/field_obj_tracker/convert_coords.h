@@ -10,7 +10,7 @@ private:
 	image_geometry::PinholeCameraModel model_;
 
 public:
-	ConvertCoords(image_geometry::PinholeCameraModel model);
+	ConvertCoords(const image_geometry::PinholeCameraModel &model);
 	cv::Point3f screen_to_world( const cv::Rect &bounding_rect, const std::string &debug_name, const float depth ) const;
 	cv::Point2f world_to_screen( const cv::Point3f &pos, const std::string &debug_name ) const;
 };

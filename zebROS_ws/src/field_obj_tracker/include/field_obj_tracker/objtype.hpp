@@ -1,7 +1,8 @@
 #pragma once
 
 #include <vector>
-#include "opencv2_3_shim.hpp"
+#include "field_obj_tracker/opencv2_3_shim.hpp"
+#include <image_geometry/pinhole_camera_model.h>
 
 enum ObjectNum
 {
@@ -17,7 +18,7 @@ enum ObjectNum
     RIGHT_CARGO_2019,
 	POWER_PORT_2020,
 	LOADING_BAY_2020,
-  TEST_TARGET_2020
+	TEST_TARGET_2020
 };
 
 //class to hold the type of object that a detected object is
@@ -54,11 +55,11 @@ class ObjectType
 		bool operator== (const ObjectType &t1) const;
 
 		//coordinate conversions
-		cv::Point3f screenToWorldCoords(const cv::Rect &screen_position, double avg_depth, const cv::Point2f &fov_size, const cv::Size &frame_size, float cameraElevation) const;
+		cv::Point3f screenToWorldCoords(const cv::Rect &screen_position, double avg_depth, const image_geometry::PinholeCameraModel &model) const;
 
-		cv::Rect worldToScreenCoords(const cv::Point3f &_position, const cv::Point2f &fov_size, const cv::Size &frame_size, float cameraElevation) const;
+		cv::Rect worldToScreenCoords(const cv::Point3f &_position, const image_geometry::PinholeCameraModel &model) const;
 
-		float expectedDepth(const cv::Rect &screen_position, const cv::Size &frame_size, const float hfov) const;
+		float expectedDepth(const cv::Rect &screen_position, const image_geometry::PinholeCameraModel &model) const;
 
 	private:
 		std::vector< cv::Point2f > contour_;

@@ -5,8 +5,8 @@
 #include <list>
 //#include <Eigen/Geometry>
 #include <boost/circular_buffer.hpp>
-#include "kalman.hpp"
-#include "objtype.hpp"
+#include "field_obj_tracker/kalman.hpp"
+#include "field_obj_tracker/objtype.hpp"
 
 const size_t TrackedObjectHistoryLength = 20;
 
@@ -23,16 +23,14 @@ const size_t TrackedObjectHistoryLength = 20;
 class TrackedObject
 {
 	public :
-		TrackedObject( int         id,
-				const ObjectType  &type_in,
-				const cv::Rect    &screen_position,
-				double             avg_depth,
-				const cv::Point2f &fov_size,
-				const cv::Size    &frame_size,
-				float              camera_elevation = 0.0,
-				float              dt = 0.5,
-				float              accel_noise_mag = 0.25,
-				size_t             historyLength = TrackedObjectHistoryLength);
+		TrackedObject(int                                       id,
+					  const ObjectType                         &type_in,
+					  const cv::Rect                           &screen_position,
+					  double                                    avg_depth,
+					  const image_geometry::PinholeCameraModel &model,
+					  float                                     dt = 0.5,
+					  float                                     accel_noise_mag = 0.25,
+					  size_t                                    historyLength = TrackedObjectHistoryLength);
 
 		//~TrackedObject();
 
@@ -53,21 +51,21 @@ class TrackedObject
 		//contour area is the area of the contour stored in ObjectType
 		//scaled into the bounding rect
 		//only different in cases where contour is not a rectangle
-		double contourArea(const cv::Point2f &fov_size, const cv::Size &frame_size) const; //P.S. underestimates slightly
+		double contourArea(const image_geometry::PinholeCameraModel &model) const; //P.S. underestimates slightly
 
 		// Update current object position based on a 3d position or
 		//input rect on screen and depth
 		void setPosition(const cv::Point3f &new_position);
-		void setPosition(const cv::Rect &screen_position, double avg_depth, const cv::Point2f &fov_size, const cv::Size &frame_size);
+		void setPosition(const cv::Rect &screen_position, double avg_depth, const image_geometry::PinholeCameraModel &model);
 
 		// Adjust tracked object position based on motion
 		// of the camera
 		//void adjustPosition(const Eigen::Transform<double, 3, Eigen::Isometry> &delta_robot);
-		void adjustPosition(const cv::Mat &transform_mat, float depth, const cv::Point2f &fov_size, const cv::Size &frame_size);
+		void adjustPosition(const cv::Mat &transform_mat, float depth, const image_geometry::PinholeCameraModel &model);
 
 		//get position of a rect on the screen corresponding to the object size and location
 		//inverse of setPosition(Rect,depth)
-		cv::Rect getScreenPosition(const cv::Point2f &fov_size, const cv::Size &frame_size) const;
+		cv::Rect getScreenPosition(const image_geometry::PinholeCameraModel &model) const;
 		cv::Point3f getPosition(void) const { return position_; }
 
 		//void adjustKF(const Eigen::Transform<double, 3, Eigen::Isometry> &delta_robot);
@@ -75,7 +73,7 @@ class TrackedObject
 
 		cv::Point3f predictKF(void);
 		cv::Point3f updateKF(cv::Point3f pt);
-		std::vector<cv::Point> getScreenPositionHistory(const cv::Point2f &fov_size, const cv::Size &frame_size) const;
+		std::vector<cv::Point> getScreenPositionHistory(const image_geometry::PinholeCameraModel &model) const;
 
 		std::string getId(void) const { return id_; }
 		ObjectType getType(void) const { return type_; }
@@ -136,37 +134,33 @@ class TrackedObjectList
 		// Create a tracked object list.  Set the object width in inches
 		// (feet, meters, parsecs, whatever) and imageWidth in pixels since
 		// those stay constant for the entire length of the run
-		TrackedObjectList(const cv::Size &imageSize, 
-						  const cv::Point2f &fovSize, 
-						  float cameraElevation = 0.0f);
+		TrackedObjectList(const std::string &trackingBaseFrame);
 
 		// Adjust the angle of each tracked object based on
 		// the rotation of the robot straight from fovis
 		//void adjustLocation(const Eigen::Transform<double, 3, Eigen::Isometry> &delta_robot);
-		void adjustLocation(const cv::Mat &transform_mat);
+		void adjustLocation(const cv::Mat &transformMat, const image_geometry::PinholeCameraModel &model);
 
-		// Get position history for each tracked object
-		std::vector<std::vector<cv::Point>> getScreenPositionHistories(void) const;
+		// Get position history for each tracked object - used for visualization
+		std::vector<std::vector<cv::Point>> getScreenPositionHistories(const image_geometry::PinholeCameraModel &model) const;
 		// Simple printout of list into
 		void print(void) const;
 
 		// Return list of detect info for external processing
-		void getDisplay(std::vector<TrackedObjectDisplay> &displayList) const;
+		void getDisplay(std::vector<TrackedObjectDisplay> &displayList, const image_geometry::PinholeCameraModel &model) const;
 
 		// Process a set of detected rectangles
 		// Each will either match a previously detected object or
 		// if not, be added as new object to the list
 		void processDetect(const std::vector<cv::Rect> &detectedRects,
 						   const std::vector<float> &depths,
-						   const std::vector<ObjectType> &types);
+						   const std::vector<ObjectType> &types,
+						   const image_geometry::PinholeCameraModel &model);
 
 	private :
 		std::list<TrackedObject> list_; // list of currently valid detected objects
 		int detectCount_;               // ID of next object to be created
 
-		//values stay constant throughout the run but are needed for computing stuff
-		cv::Size    imageSize_;
-		cv::Point2f fovSize_;
-		float       cameraElevation_;
+		std::string trackingBaseFrame_; // ID for the frame to track objects in
 };
 

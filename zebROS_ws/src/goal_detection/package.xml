@@ -50,6 +50,8 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>teraranger_array</build_depend>
   <build_depend>tf2_ros</build_depend>
+  <build_depend>field_obj</build_depend>
+  <build_depend>field_obj_tracker</build_depend>
 
   <run_depend>roscpp</run_depend>
   <run_depend>nodelet</run_depend>

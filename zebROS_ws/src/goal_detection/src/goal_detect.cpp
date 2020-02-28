@@ -24,10 +24,10 @@
 
 #include "field_obj/Detection.h"
 #include "field_obj/Object.h"
-#include "objtype.hpp"
-#include "convert_coords.h"
+#include "field_obj_tracker/objtype.hpp"
+#include "field_obj_tracker/convert_coords.h"
 
-#include "GoalDetector.hpp"
+#include "goal_detection/GoalDetector.hpp"
 #include "goal_detection/GoalDetectionConfig.h"
 #include "dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h"
 
@@ -55,7 +55,6 @@ namespace goal_detection
 				nh_.getParam("sub_rate", sub_rate);
 				nh_.getParam("pub_rate", pub_rate);
 
-				nh_.param("camera_angle", config_.camera_angle, -25.0);
 				nh_.param("blue_scale", config_.blue_scale, 0.90);
 				nh_.param("red_scale", config_.red_scale, 0.80);
 				nh_.param("otsu_threshold", config_.otsu_threshold, 5);
@@ -96,8 +95,8 @@ namespace goal_detection
 			{
 				//std::lock_guard<std::mutex> l(camera_mutex_);
 				if (!camera_mutex_.try_lock())  // If the previous message is still being
-					return;              // processed, drop this one
-				if (!camera_info_valid_)
+					return;                     // processed, drop this one
+				if (!camera_info_valid_)        // Nothing in here works without valid camera info
 					return;
 				cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
 				cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
@@ -106,28 +105,17 @@ namespace goal_detection
 				model.fromCameraInfo(camera_info_);
 				// Initialize goal detector object the first time through here. Use camera info to initialize
 				// goal detection state
-				if (gd_ == NULL)
-				{
-					const cv::Point2f fov(2.0 * atan2(2.0 * model.fx(), model.fullResolution().height),
-										  2.0 * atan2(2.0 * model.fy(), model.fullResolution().width));
-					ROS_INFO_STREAM("goal_detection : FoV = " << fov.x * 180. / M_PI << " , " << fov.y * 180 / M_PI);
-
-					gd_ = std::make_unique<GoalDetector>(fov, model.fullResolution(), false);
-				}
-				gd_->setCameraAngle(config_.camera_angle);
-				gd_->setBlueScale(config_.blue_scale);
-				gd_->setRedScale(config_.red_scale);
-				gd_->setOtsuThreshold(config_.otsu_threshold);
-				gd_->setMinConfidence(config_.min_confidence);
+				gd_.setBlueScale(config_.blue_scale);
+				gd_.setRedScale(config_.red_scale);
+				gd_.setOtsuThreshold(config_.otsu_threshold);
+				gd_.setMinConfidence(config_.min_confidence);
 
 				//Send current color and depth image to the actual GoalDetector
-				gd_->setTargetNum(POWER_PORT_2020);
-				gd_->findTargets(cvFrame->image, cvDepth->image);
-				std::vector< GoalFound > gfd_power_port = gd_->return_found();
+				gd_.findTargets(cvFrame->image, cvDepth->image, POWER_PORT_2020, model);
+				std::vector< GoalFound > gfd_power_port = gd_.return_found();
 
-				gd_->setTargetNum(LOADING_BAY_2020);
-				gd_->findTargets(cvFrame->image, cvDepth->image);
-				std::vector< GoalFound > gfd_loading_bay = gd_->return_found();
+				gd_.findTargets(cvFrame->image, cvDepth->image, LOADING_BAY_2020, model);
+				std::vector< GoalFound > gfd_loading_bay = gd_.return_found();
 
 				std::vector< GoalFound > gfd;
 				gfd.reserve( gfd_power_port.size() + gfd_loading_bay.size() );
@@ -175,7 +163,7 @@ namespace goal_detection
 				if (pub_debug_image_.getNumSubscribers() > 0)
 				{
 					cv::Mat thisFrame(cvFrame->image.clone());
-					gd_->drawOnFrame(thisFrame, gd_->getContours(thisFrame), gfd);
+					gd_.drawOnFrame(thisFrame, gd_.getContours(thisFrame), gfd);
 					pub_debug_image_.publish(cv_bridge::CvImage(std_msgs::Header(), "bgr8", thisFrame).toImageMsg());
 				}
 
@@ -260,7 +248,7 @@ namespace goal_detection
 			ros::Subscriber                                                terabee_sub_;
 			ros::Publisher                                                 pub_;
 			image_transport::Publisher                                     pub_debug_image_;
-			std::unique_ptr<GoalDetector>                                  gd_;
+			GoalDetector                                                   gd_;
 			double                                                         distance_from_terabee_;
 			goal_detection::GoalDetectionConfig                            config_;
 			DynamicReconfigureWrapper<goal_detection::GoalDetectionConfig> drw_;

@@ -1,7 +1,7 @@
 #include <iomanip>
 #include <opencv2/highgui/highgui.hpp>
-#include "GoalDetector.hpp"
-#include "Utilities.hpp"
+#include "goal_detection/GoalDetector.hpp"
+#include "goal_detection/Utilities.hpp"
 
 using namespace std;
 using namespace cv;
@@ -9,34 +9,13 @@ using namespace cv;
 #define VERBOSE
 #define VERBOSE_DEEP
 
-int camera_angle_common = 25;
-
-void angleCallback(int value, void *data)
+GoalDetector::GoalDetector(void)
+	: _isValid(false)
+	, _min_valid_confidence(0.30)
+	, _otsu_threshold(5)
+	, _blue_scale(90)
+	, _red_scale(80)
 {
-	std::cout << "running AngleCallback with value " << value << endl;
-	//double angle = static_cast<double>(value)/-10;
-	//gd->setCameraAngle(angle);
-}
-
-GoalDetector::GoalDetector(const cv::Point2f &fov_size, const cv::Size &frame_size, bool gui) :
-	_fov_size(fov_size),
-	_frame_size(frame_size),
-	_isValid(false),
-	_min_valid_confidence(0.30),
-	_otsu_threshold(5),
-	_blue_scale(90),
-	_red_scale(80),
-	_camera_angle(0), // in tenths of a degree
-	_target_num(POWER_PORT_2020)
-{
-	if (gui)
-	{
-		cv::namedWindow("Goal Detect Adjustments", CV_WINDOW_NORMAL);
-		createTrackbar("Blue Scale","Goal Detect Adjustments", &_blue_scale, 100);
-		createTrackbar("Red Scale","Goal Detect Adjustments", &_red_scale, 100);
-		createTrackbar("Otsu Threshold","Goal Detect Adjustments", &_otsu_threshold, 255);
-		createTrackbar("Camera Angle","Goal Detect Adjustments", &camera_angle_common, 900, angleCallback, this);
-	}
 }
 
 // Compute a confidence score for an actual measurement given
@@ -53,8 +32,7 @@ float GoalDetector::createConfidence(float expectedVal, float expectedStddev, fl
 
 // Finds the intersection of two lines, or returns false.
 // The lines are defined by (o1, p1) and (o2, p2).
-bool intersection(Point2f o1, Point2f p1, Point2f o2, Point2f p2,
-                      Point2f &r)
+bool intersection(Point2f o1, Point2f p1, Point2f o2, Point2f p2, Point2f &r)
 {
     const Point2f x = o2 - o1;
     const Point2f d1 = p1 - o1;
@@ -69,15 +47,15 @@ bool intersection(Point2f o1, Point2f p1, Point2f o2, Point2f p2,
     return true;
 }
 
-void GoalDetector::findTargets(const cv::Mat& image, const cv::Mat& depth) {
+void GoalDetector::findTargets(const cv::Mat& image, const cv::Mat& depth, const ObjectNum objtype, const image_geometry::PinholeCameraModel &model) {
 	clear();
 	const vector<vector<Point>> goal_contours = getContours(image);
 	if (goal_contours.size() == 0)
 		return;
-	const vector<DepthInfo> goal_depths = getDepths(depth, goal_contours, _target_num, ObjectType(_target_num).real_height());
+	const vector<DepthInfo> goal_depths = getDepths(depth, goal_contours, objtype, model);
 
 	//compute confidences for power port tapes
-	const vector<GoalInfo> power_port_info = getInfo(goal_contours, goal_depths, _target_num);
+	const vector<GoalInfo> power_port_info = getInfo(image.size(), goal_contours, goal_depths, objtype, model);
 	if(power_port_info.size() == 0)
 		return;
 #ifdef VERBOSE
@@ -100,10 +78,10 @@ void GoalDetector::findTargets(const cv::Mat& image, const cv::Mat& depth) {
 				GoalFound goal_found;
 				goal_found.confidence        = power_port_info[i].confidence;
 				goal_found.contour_index     = power_port_info[i].contour_index;
-				goal_found.rect		           = power_port_info[i].rect;
+				goal_found.rect		         = power_port_info[i].rect;
 				goal_found.rotated_rect      = power_port_info[i].rtRect;
-				goal_found.distance             = power_port_info[i].distance;
-				goal_found.id                = getObjectId(_target_num);
+				goal_found.distance          = power_port_info[i].distance;
+				goal_found.id                = getObjectId(objtype);
 
 				//These are the saved values for the best goal before moving on to
 				//try and find another one.
@@ -198,10 +176,14 @@ const vector< vector < Point > > GoalDetector::getContours(const Mat& image) {
 	return return_contours;
 }
 
-const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< vector< Point > > &contours, const ObjectNum &objtype, float expected_height) {
+const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth,
+		const vector< vector< Point > > &contours,
+		const ObjectNum objtype,
+		const image_geometry::PinholeCameraModel &model)
+{
 	// Use to mask the contour off from the rest of the
 	// image - used when grabbing depth data for the contour
-	static Mat contour_mask(_frame_size, CV_8UC1, Scalar(0));
+	static Mat contour_mask(depth.size(), CV_8UC1, Scalar(0));
 	vector<DepthInfo> return_vec;
 	DepthInfo depthInfo;
 	for(size_t i = 0; i < contours.size(); i++) {
@@ -230,7 +212,7 @@ const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< 
 		if ((depth_z_min <= 0.) || (depth_z_max <= 0.)) {
 			depthInfo.error = true;
 			//ObjectType ot(objtype);
-			depth_z_min = depth_z_max = distanceUsingFOV(objtype, br);
+			depth_z_min = depth_z_max = ObjectType(objtype).expectedDepth(br, model);
 		}
 		else
 			depthInfo.error = false;
@@ -241,7 +223,12 @@ const vector<DepthInfo> GoalDetector::getDepths(const Mat &depth, const vector< 
 	return return_vec;
 }
 
-const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contours, const vector<DepthInfo> &depth_maxs, ObjectNum objtype) {
+const vector<GoalInfo> GoalDetector::getInfo(const cv::Size &frame_size,
+		const vector<vector<Point>> &contours,
+		const vector<DepthInfo> &depth_maxs,
+		ObjectNum objtype,
+		const image_geometry::PinholeCameraModel &model)
+{
 	const ObjectType goal_shape(objtype);
 #ifdef VERBOSE
 	std::cout << __PRETTY_FUNCTION__ << " : for goal_shape.name() = " << goal_shape.name() << std::endl;
@@ -265,10 +252,11 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		const Rect br(boundingRect(contours[i]));
 
 		// Remove objects which are obviously too small
-		if (br.area() <= (_frame_size.width * _frame_size.height * .0004))
+		const double areaLimit = static_cast<double>(frame_size.width) * frame_size.height * .0004;
+		if (br.area() <= areaLimit)
 		{
 #ifdef VERBOSE
-			cout << "Contour " << i << " area out of range " << br.area() << " vs " << _frame_size.width * _frame_size.height * .0004 << endl;
+			cout << "Contour " << i << " area out of range " << br.area() << " vs " << areaLimit << endl;
 #endif
 			continue;
 		}
@@ -289,13 +277,13 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		//create a trackedobject to get various statistics
 		//including area and x,y,z position of the goal
 		ObjectType goal_actual(contours[i], "Actual Goal", 0);
-		TrackedObject goal_tracked_obj(0, goal_shape, br, depth_maxs[i].depth, _fov_size, _frame_size, -((float)_camera_angle/10.) * M_PI / 180.0);
+		TrackedObject goal_tracked_obj(0, goal_shape, br, depth_maxs[i].depth, model);
 
 		// Gets the bounding box area observed divided by the
 		// bounding box area calculated given goal size and distance
 		// For an object the size of a goal we'd expect this to be
 		// close to 1.0 with some variance due to perspective
-		const float exp_area = goal_tracked_obj.getScreenPosition(_fov_size, _frame_size).area();
+		const float exp_area = goal_tracked_obj.getScreenPosition(model).area();
 		const float actualScreenArea = (float)br.area() / exp_area;
 
 		//percentage of the object filled in
@@ -348,7 +336,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const vector<vector<Point>> &contou
 		// This goal passes the threshold required for us to consider it a goal
 		// Add it to the list of best goals
 		goal_info.confidence    = confidence;
-		goal_info.distance      = depth_maxs[i].depth * cosf((_camera_angle/10.0) * (M_PI/180.0));
+		goal_info.distance      = depth_maxs[i].depth;
 		goal_info.rect		    = br;
 		goal_info.contour_index = i;
 		goal_info.depth_error   = depth_maxs[i].error;
@@ -406,15 +394,7 @@ bool GoalDetector::generateThresholdAddSubtract(const Mat& imageIn, Mat& imageOu
     return countNonZero(imageOut) != 0;
 }
 
-// Use the camera FOV, a known target size and the apparent size to
-// estimate distance to a target
-float GoalDetector::distanceUsingFOV(ObjectType _goal_shape, const Rect &rect) const
-{
-	float percent_image = (float)rect.height / _frame_size.height;
-	float size_fov = percent_image * _fov_size.y; //TODO fov size
-	return _goal_shape.height() / (2.0 * tanf(size_fov / 2.0));
-}
-
+#if 0
 float GoalDetector::distanceUsingFixedHeight(const Rect &/*rect*/, const Point &center, float expected_delta_height) const {
 	/*
 	cout << "Center: " << center << endl;
@@ -440,6 +420,7 @@ float GoalDetector::distanceUsingFixedHeight(const Rect &/*rect*/, const Point &
 	const float distance_diagonal = (focal_length_px * expected_delta_height) / (focal_length_px * sin((_camera_angle/10.0) * (M_PI/180.0)) + to_center);
 	return distance_diagonal;
 }
+#endif
 
 vector< GoalFound > GoalDetector::return_found(void) const
 {
@@ -537,11 +518,6 @@ void GoalDetector::isValid()
 #endif
 }
 
-void GoalDetector::setCameraAngle(double camera_angle)
-{
-	_camera_angle = camera_angle * 10;
-}
-
 void GoalDetector::setBlueScale(double blue_scale)
 {
 	_blue_scale = blue_scale * 100;
@@ -561,20 +537,7 @@ void GoalDetector::setMinConfidence(double min_valid_confidence)
 	_min_valid_confidence = min_valid_confidence;
 }
 
-void GoalDetector::setTargetNum(ObjectNum target_num)
+const string GoalDetector::getObjectId(ObjectNum type) const
 {
-	_target_num = target_num;
-}
-
-const string GoalDetector::getObjectId(ObjectNum type)
-{
-	switch (type)
-		{
-		    case POWER_PORT_2020:
-						return "power_port_2020";
-		    case LOADING_BAY_2020:
-		        return "loading_bay_2020";
-		    default:
-						return "unknown_type";
-		}
+	return ObjectType(type).name();
 }

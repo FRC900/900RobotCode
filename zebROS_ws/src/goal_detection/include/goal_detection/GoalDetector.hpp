@@ -8,7 +8,7 @@
 #include "opencv2/core/core.hpp"
 #include <boost/circular_buffer.hpp>
 
-#include "track3d.hpp"
+#include "field_obj_tracker/track3d.hpp"
 
 struct DepthInfo
 {
@@ -44,7 +44,7 @@ struct GoalFound
 class GoalDetector
 {
 	public:
-		GoalDetector(const cv::Point2f &fov_size, const cv::Size &frame_size, bool gui = false);
+		GoalDetector(void);
 
 		std::vector< GoalFound > return_found(void) const;
 
@@ -56,22 +56,16 @@ class GoalDetector
 
 		//If your objectypes have the same width it's safe to run
 		//getContours and computeConfidences with different types
-		void findTargets(const cv::Mat& image, const cv::Mat& depth);
+		void findTargets(const cv::Mat& image, const cv::Mat& depth, const ObjectNum objtype, const image_geometry::PinholeCameraModel &model);
 		const std::vector< std::vector< cv::Point > > getContours(const cv::Mat& image);
 
 		bool Valid(void) const;
-		void setCameraAngle(double camera_angle);
 		void setBlueScale(double blue_scale);
 		void setRedScale(double red_scale);
 		void setOtsuThreshold(int otsu_threshold);
 		void setMinConfidence(double min_valid_confidence);
-		void setTargetNum(ObjectNum target_num);
 
 	private:
-
-		cv::Point2f _fov_size;
-		cv::Size    _frame_size;
-
 		// Save detection info
 		bool        _isValid;
 		std::vector< GoalFound > _return_found;
@@ -81,15 +75,11 @@ class GoalDetector
 		int         _blue_scale;
 		int         _red_scale;
 
-		int         _camera_angle;
-		ObjectNum   _target_num;
-
 		float createConfidence(float expectedVal, float expectedStddev, float actualVal);
-		float distanceUsingFOV(ObjectType _goal_shape, const cv::Rect &rect) const;
-		float distanceUsingFixedHeight(const cv::Rect &rect,const cv::Point &center, float expected_delta_height) const;
+		//float distanceUsingFixedHeight(const cv::Rect &rect,const cv::Point &center, float expected_delta_height) const;
 		bool generateThresholdAddSubtract(const cv::Mat& imageIn, cv::Mat& imageOut);
 		void isValid();
-		const std::string getObjectId(ObjectNum type);
-		const std::vector<DepthInfo> getDepths(const cv::Mat &depth, const std::vector< std::vector< cv::Point > > &contours, const ObjectNum &objtype, float expected_height);
-		const std::vector< GoalInfo > getInfo(const std::vector< std::vector< cv::Point > > &contours, const std::vector<DepthInfo> &depth_maxs, ObjectNum objtype);
+		const std::string getObjectId(ObjectNum type) const;
+		const std::vector<DepthInfo> getDepths(const cv::Mat &depth, const std::vector< std::vector< cv::Point > > &contours, const ObjectNum objtype, const image_geometry::PinholeCameraModel &model);
+		const std::vector< GoalInfo > getInfo(const cv::Size &frame_size, const std::vector< std::vector< cv::Point > > &contours, const std::vector<DepthInfo> &depth_maxs, ObjectNum objtype, const image_geometry::PinholeCameraModel &model);
 };
