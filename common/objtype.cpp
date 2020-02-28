@@ -217,7 +217,7 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			break;
 		case POWER_PORT_2020: //target on the POWER PORT (2020)
 			depth_ = 0;
-			real_height_ = 0.5; // TODO: Fix this using actual height
+			real_height_ = 1.4796516; // TODO: Fix this using actual height
 			contour_.push_back(Point2f(0,0));
 			contour_.push_back(Point2f(0.2492375,0.4318));
 			contour_.push_back(Point2f(0.7477125,0.4318));
@@ -230,7 +230,7 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			break;
 		case LOADING_BAY_2020: //target on the LOADING BAY (2020)
 			depth_ = 0;
-			real_height_ = 0; // TODO: fix this using actual height
+			real_height_ = -.3046984:; // TODO: fix this using actual height
 			contour_.push_back(Point2f(0.0508,0.2286));
 			contour_.push_back(Point2f(0.0508,0));
 			contour_.push_back(Point2f(0,0));
