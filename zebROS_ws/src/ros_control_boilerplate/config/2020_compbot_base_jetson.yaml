@@ -182,7 +182,7 @@ turret_controller:
     turret:
         type: talon_controllers/TalonMotionMagicCloseLoopController
         joint: turret_joint
-        feedback_type: CTRE_MagEncoder_Absolute
+        feedback_type: QuadEncoder
         close_loop_values:
             - {p: 0.0, i: 0.000, d: 0.0, f: 0.0, i_zone: 0} #not tuned
         invert_output: true
