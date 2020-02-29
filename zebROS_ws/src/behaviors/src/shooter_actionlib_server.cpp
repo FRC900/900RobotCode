@@ -4,6 +4,11 @@
 #include <atomic>
 #include <ros/console.h>
 #include <mutex>
+#include <cmath>
+#include <vector>
+#include <map>
+#include <string>
+#include <algorithm>
 
 //include action files - for this actionlib server and any it sends requests to
 #include "behavior_actions/ShooterAction.h"
@@ -74,16 +79,53 @@ class ShooterAction {
 			return false; //wait loop must've been broken by preempt, global timeout, or ros not ok
 		}
 
+		double lerp(double a, double b, double f)
+		{
+			return a + f * (b - a);
+		}
+
+		double lerpTable(const std::vector<std::map<std::string, double>> &table, double dist)
+		{
+			size_t counter = 1;
+			for (; counter < table.size()-1; counter++)
+				if(table.at(counter).at("dist") < dist)
+					break;		
+			return lerp(table.at(counter).at("speed"), table.at(counter-1).at("speed"), (dist-table.at(counter).at("dist"))/(table.at(counter-1).at("dist")-table.at(counter).at("dist")));
+		}
+
 		bool getHoodAndVelocity(bool& hood_extended, double& shooter_speed)
 		{
 			field_obj::Detection local_goal_msg;
+			std::lock_guard<std::mutex> l(goal_msg_mutex_);
+			local_goal_msg = goal_msg_;
+
+			//get the goal position
+			geometry_msgs::Point32 goal_pos_;
+			for (const field_obj::Object &obj : local_goal_msg.objects)
 			{
-				std::lock_guard<std::mutex> l(goal_msg_mutex_);
-				local_goal_msg = goal_msg_;
+				if(obj.id == "PowerPort")
+				{
+					goal_pos_ = obj.location;
+				}
 			}
-			// use local_goal_msg here
-			hood_extended = true;
-			shooter_speed = 3;
+
+			//TODO: GET POSITION OF SHOOTER
+			//subscribe to a node and pass in translated points
+			geometry_msgs::Point32 shooter_pos_;
+			shooter_pos_.x = 0;
+			shooter_pos_.y = 0;
+			shooter_pos_.z = 0;
+
+			//obtain distance via trig
+			const double distance = std::hypot(goal_pos_.x - shooter_pos_.x, goal_pos_.y - shooter_pos_.y);
+
+			//obtain speed and hood values
+			hood_extended = distance > hood_threshold_;
+			if(hood_extended)
+				shooter_speed = lerpTable(hood_up_table_, distance);
+			else	
+				shooter_speed = lerpTable(hood_down_table_, distance);
+
 			return true;
 		}
 
@@ -296,7 +338,16 @@ class ShooterAction {
 		double server_timeout_;
 		double wait_for_server_timeout_;
 		double wait_for_ready_timeout_;
+		std::vector<std::map<std::string, double>> hood_up_table_;
+		std::vector<std::map<std::string, double>> hood_down_table_;
+		double hood_threshold_;
+
 };
+
+bool sortDistDescending(const std::map<std::string, double> &m1, const std::map<std::string, double> &m2)
+{
+    return m1.at("dist") > m2.at("dist");
+}
 
 int main(int argc, char** argv) {
 	//create node
@@ -313,13 +364,79 @@ int main(int argc, char** argv) {
 		shooter_action.server_timeout_ = 10;
 	}
 	if (!n_params_shooter.getParam("wait_for_server_timeout", shooter_action.wait_for_server_timeout_)) {
-		ROS_ERROR("Could not read wait_for_server_timeout in shooter_sever");
+		ROS_ERROR("Could not read wait_for_server_timeout in shooter_server");
 		shooter_action.wait_for_server_timeout_ = 10;
 	}
 	if (!n_params_shooter.getParam("wait_for_ready_timeout", shooter_action.wait_for_ready_timeout_)) {
-		ROS_ERROR("Could not read wait_for_ready_timeout in shooter_sever");
+		ROS_ERROR("Could not read wait_for_ready_timeout in shooter_server");
 		shooter_action.wait_for_ready_timeout_ = 10;
 	}
+	
+	XmlRpc::XmlRpcValue hood_up_list;
+	if(!n_params_shooter.getParam("hood_up_table", hood_up_list)){
+		ROS_ERROR("Couldn't read hood_up_table in shooter_actionlib.yaml");
+	}
+	for(int i = 0; i < hood_up_list.size(); i++)
+	{
+		XmlRpc::XmlRpcValue &shooter_point = hood_up_list[i];
+
+		std::map<std::string, double> shooter_map;
+
+	    if (shooter_point.hasMember("dist"))
+	    {
+		    XmlRpc::XmlRpcValue &xml_dist = shooter_point["dist"];
+		    if (!xml_dist.valid() || xml_dist.getType() != XmlRpc::XmlRpcValue::TypeDouble)
+				ROS_ERROR("An invalid shooter distance was specified (expecting an double) in hood_up_table in shooter_actionlib.yaml");
+		    shooter_map.at("dist") = xml_dist;
+		}
+
+		if (shooter_point.hasMember("speed"))
+	    {
+		    XmlRpc::XmlRpcValue &xml_speed = shooter_point["speed"];
+		    if (!xml_speed.valid() || xml_speed.getType() != XmlRpc::XmlRpcValue::TypeDouble)
+				ROS_ERROR("An invalid shooter speed was specified (expecting an double) in hood_up_table in shooter_actionlib.yaml");
+		    shooter_map.at("speed") = xml_speed;
+		}
+
+		shooter_action.hood_down_table_.push_back(shooter_map);
+	}
+
+	XmlRpc::XmlRpcValue hood_down_list;
+	if(!n_params_shooter.getParam("hood_down_table", hood_down_list)){
+		ROS_ERROR("Couldn't read hood_down_table in shooter_actionlib.yaml");
+	}
+	for(int i = 0; i < hood_down_list.size(); i++)
+	{
+		XmlRpc::XmlRpcValue &shooter_point = hood_down_list[i];
+
+		std::map<std::string, double> shooter_map;
+
+	    if (shooter_point.hasMember("dist"))
+	    {
+		    XmlRpc::XmlRpcValue &xml_dist = shooter_point["dist"];
+		    if (!xml_dist.valid() || xml_dist.getType() != XmlRpc::XmlRpcValue::TypeDouble)
+				ROS_ERROR("An invalid shooter distance was specified (expecting an double) in hood_down_table in shooter_actionlib.yaml");
+		    shooter_map.at("dist") = xml_dist;
+		}
+
+		if (shooter_point.hasMember("speed"))
+	    {
+		    XmlRpc::XmlRpcValue &xml_speed = shooter_point["speed"];
+		    if (!xml_speed.valid() || xml_speed.getType() != XmlRpc::XmlRpcValue::TypeDouble)
+				ROS_ERROR("An invalid shooter speed was specified (expecting an double) in hood_down_table in shooter_actionlib.yaml");
+		    shooter_map.at("speed") = xml_speed;
+		}
+
+		shooter_action.hood_down_table_.push_back(shooter_map);
+	}
+	
+	if(!n_params_shooter.getParam("hood_threshold", shooter_action.hood_threshold_)){
+		ROS_ERROR("Couldn't read hood_threshold in shooter_actionlib.yaml");
+		shooter_action.hood_threshold_ = 0.0;
+	}
+
+	std::sort(shooter_action.hood_up_table_.begin(), shooter_action.hood_up_table_.end(), sortDistDescending);
+    std::sort(shooter_action.hood_down_table_.begin(), shooter_action.hood_down_table_.end(), sortDistDescending);
 
 	ros::AsyncSpinner Spinner(2);
 	Spinner.start();
