@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
-<!-- node to fuse odometry and IMU data into
+<!-- node to fuse swerve odometry (x&y strafe) and IMU yaw data into
 	 one single filtered odometry message
 -->
 
 <launch>
-	<node name="ukf_localization_node" pkg="robot_localization" type="ukf_localization_node">
+	<node name="swerve_imu_ukf_node" pkg="robot_localization" type="ukf_localization_node">
+		<param name="frequency" value="100" />
 		<!-- 
 			Change the frame parametrs when re-localization
 			is implementated
@@ -16,6 +17,7 @@
 		<param name="world_frame" value="odom" />
 
 		<param name="two_d_mode" value="true" />
+		<param name="publish_tf" value="true" />
 
 		<!--
 			Sensor Configuration:
@@ -30,13 +32,12 @@
 			or the state estimation node will be confused as to the correct
 			source of information
 		-->
-		<!-- odom0 (ZED Visual Odom): x, y, z, roll, pitch, yaw -->
 		<!-- odom0 (wheel odom): x, y, z (z is always 0) -->
 		<!-- Think about whether we want Z, roll, pitch - the robot shouldn't
 			 have significant net motion in those directions 
 			 (unless we are tipping over) and even so, do
 			 we want to trust the navx data instead? -->
-		<param name="odom0" value="/frcrobot/swerve_drive_controller/odom" />
+		<param name="odom0" value="/frcrobot_jetson/swerve_drive_controller/odom" />
 		<rosparam param="odom0_config"> [true,  true,  false,
                                          false, false, false, 
                                          false, false, false,
@@ -44,7 +45,8 @@
                                          false, false, false]
         </rosparam>
 		<param name="odom0_differential" value="false" />
-		<param name="odom0_relative" value="false" />
+		<param name="odom0_relative"     value="false" />
+		<param name="odom0_nodelay"      value="true" />
 
 		<!-- odom1 (Wheel encoder odometry): x, y, yaw pos?
 			 Could probably get acceleration from the raw
@@ -62,16 +64,17 @@
 		<param name="odom1_relative" value="true" />
 -->
 		<!-- imu0 (NavX via Rio MXP): roll, pitch, yaw, x-acc, y-acc, z-acc -->
-		<!-- maybe add in r/p/y velocity? /-->
-		<param name="imu0" value="/frcrobot/navx_mxp" />
+		<!-- probably won't use roll or pitch but no harm fusing them -->
+		<param name="imu0" value="/imu/zeroed_imu" />
 		<rosparam param="imu0_config"> [false, false, false,
-                                        false, false, true, 
+                                        true,  true,  true,
                                         false, false, false,
                                         false, false, false,
                                         false, false, false]
         </rosparam>
-		<param name="imu0_differential" value="false"/>
-		<param name="imu0_relative" value="true" />
+		<param name="imu0_differential" value="true"/>
+		<param name="imu0_relative"     value="false" />
+		<param name="imu0_nodelay"      value="true" />
 		<param name="imu0_remove_gravitational_acceleration" value="false" />
 	</node>
 </launch>

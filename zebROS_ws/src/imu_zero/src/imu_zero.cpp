@@ -25,6 +25,7 @@ Zero point in degrees is set using service call.
 #include <string>
 #include <imu_zero/ImuZeroAngle.h>
 #include <std_srvs/Trigger.h>
+#include <robot_localization/SetPose.h>
 
 constexpr double pi = 3.14159;
 const std::string sub_topic = "imu/data";
@@ -34,9 +35,11 @@ ros::Publisher pub;
 tf2::Quaternion zero_rot;
 tf2::Quaternion last_raw;
 ros::ServiceClient bias_estimate;
+ros::ServiceClient ukf_zero_pos;
+
 
 double degToRad(double deg) {
-  double rad = (deg / 180) * pi;
+  const double rad = (deg / 180) * pi;
   return rad;
 }
 
@@ -55,15 +58,33 @@ bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
   tf2::Matrix3x3(last_raw).getRPY(roll, pitch, yaw);
 
   // takes zero angle in degrees, converts to radians
-  double a = degToRad(req.angle);
+  const double a = degToRad(req.angle);
 
   zero_rot.setRPY(0.0, 0.0, a - yaw);
 
-  if(ros::service::exists("imu/bias_estimate", false))
+  if(bias_estimate.exists())
   {
 	std_srvs::Trigger biasCall;
-	bias_estimate.call(biasCall);
+	if (!bias_estimate.call(biasCall))
+		ROS_ERROR("imu_zero : bias_estimate call failed");
 	ROS_INFO("Bias estimate: %s", biasCall.response.message.c_str());
+  }
+  if (ukf_zero_pos.exists())
+  {
+	  robot_localization::SetPose zeroPose;
+	  zeroPose.request.pose.header.stamp = ros::Time::now();
+	  zeroPose.request.pose.header.frame_id = "odom";
+	  // Needs more pose.pose.pose
+	  zeroPose.request.pose.pose.pose.position.x	= 0;
+	  zeroPose.request.pose.pose.pose.position.y	= 0;
+	  zeroPose.request.pose.pose.pose.position.z	= 0;
+	  tf2::Quaternion tf2_quat;
+	  tf2_quat.setRPY(0,0,0);
+	  tf2_quat.normalize();
+	  zeroPose.request.pose.pose.pose.orientation = tf2::toMsg(tf2_quat);
+	  if (!ukf_zero_pos.call(zeroPose))
+		  ROS_ERROR("imu_zero : ukf_zero_pos call failed");
+	  //ROS_INFO("Zero pose: %s", zeroPose.response.message.c_str());
   }
   return true;
 }
@@ -75,8 +96,8 @@ int main(int argc, char* argv[]) {
   ros::Subscriber sub = node.subscribe(sub_topic, 1, zeroCallback);
   ros::ServiceServer svc = node.advertiseService(service_name, zeroSet);
   zero_rot.setRPY(0,0,0);
-  if(ros::service::exists("imu/bias_estimate",false))
-    bias_estimate = node.serviceClient<std_srvs::Trigger>("imu/bias_estimate");
+  bias_estimate = node.serviceClient<std_srvs::Trigger>("imu/bias_estimate");
+  ukf_zero_pos = node.serviceClient<robot_localization::SetPose>("/swerve_imu_ukf/set_pose");
 
   ros::spin();
   return 0;

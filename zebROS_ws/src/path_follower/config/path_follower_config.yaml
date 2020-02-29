@@ -1,5 +1,7 @@
 path_follower:
     lookahead_distance: 0.4
+    # This fuses swerve_drive_controller/odom x&y strafe plus imu roll, pitch, yaw
+    #odom_topic: "/swerve_imu_ukf/odometry/filtered"
     odom_topic: "/frcrobot_jetson/swerve_drive_controller/odom"
     target_frame: "initial_pose"
     final_pos_tol: 0.03

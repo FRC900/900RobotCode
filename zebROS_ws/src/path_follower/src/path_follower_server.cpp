@@ -71,7 +71,8 @@ class PathAction
 			spline_gen_cli_ = nh_.serviceClient<base_trajectory::GenerateSpline>("/path_follower/base_trajectory/spline_gen", false, service_connection_header);
 
 			odom_sub_ = nh_.subscribe(odom_topic_, 1, &PathAction::odomCallback, this);
-			yaw_sub_ = nh_.subscribe("/navx_jetson/imu_zeroed", 1, &PathAction::yawCallback, this);
+			// TODO : maybe grab this from the odom topic as well?
+			yaw_sub_ = nh_.subscribe("/imu/imu_zeroed", 1, &PathAction::yawCallback, this);
 
 			combine_cmd_vel_pub_ = nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1000);
 
