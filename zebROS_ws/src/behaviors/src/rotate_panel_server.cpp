@@ -1,7 +1,7 @@
 #include "ros/ros.h"
 //#include "geometry_msgs/Twist.h"
 #include "actionlib/server/simple_action_server.h"
-#include "behavior_actions/RotatePanelAction.h"
+#include <behavior_actions/RotatePanelAction.h>
 //#include "sensor_msgs/JointState.h"
 //#include "talon_state_msgs/TalonState.h"
 #include <controllers_2020_msgs/ControlPanelSrv.h>
@@ -45,9 +45,9 @@ class RotatePanelAction {
 
 		//cmd_vel_publisher_ = nh_.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel",1);
 
-		rotate_panel_client_ = nh_.serviceClient<controllers_2020_msgs::ControlPanelSrv>("/frcrobot_jetson/controllers_2020/control_panel_controller", false, service_connection_header);
+		rotate_panel_client_ = nh_.serviceClient<controllers_2020_msgs::ControlPanelSrv>("/frcrobot_jetson/control_panel_controller/control_panel_command", false, service_connection_header);
 
-		climber_client_ = nh_.serviceClient<controllers_2020_msgs::ClimberSrv>("/frcrobot_jetson/controllers_2020/climber_controller", false, service_connection_header);
+		climber_client_ = nh_.serviceClient<controllers_2020_msgs::ClimberSrv>("/frcrobot_jetson/climber_controller/climber_command", false, service_connection_header);
 
 		//talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &RotatePanelAction::TalonStateCallback, this);
 
@@ -109,7 +109,7 @@ class RotatePanelAction {
 				climber_srv.request.climber_elevator_brake = true;
 				stage = 2;
 
-				if (!climber_client_.call(srv))
+				if (!climber_client_.call(climber_srv))
 				{
 					ROS_ERROR("Srv failed in raising the climber");
 				}
