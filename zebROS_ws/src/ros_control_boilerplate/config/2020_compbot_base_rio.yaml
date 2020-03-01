@@ -39,8 +39,9 @@ hardware_interface:
         
          #TODO fix dio channels
        - {name: intake_linebreak, type: digital_input, dio_channel: 0, invert: true, local: true}
-       - {name: indexer_linebreak, type: digital_input, dio_channel: 1, invert: true, local: true}
-       - {name: shooter_linebreak, type: digital_input, dio_channel: 2, invert: true, local: true}
+       - {name: indexer_front_linebreak, type: digital_input, dio_channel: 1, invert: true, local: true}
+       - {name: indexer_linebreak, type: digital_input, dio_channel: 2, invert: true, local: true}
+       - {name: shooter_linebreak, type: digital_input, dio_channel: 3, invert: true, local: true}
 
          # - {name: climber_linebreak_1, type: digital_input, dio_channel: 5, invert: true, local: true}
          # - {name: climber_linebreak_2, type: digital_input, dio_channel: 6, invert: true, local: true}

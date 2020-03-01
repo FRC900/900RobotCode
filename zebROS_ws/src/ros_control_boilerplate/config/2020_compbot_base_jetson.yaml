@@ -60,6 +60,7 @@ hardware_interface:
          # - {name: panel_intake_limit_switch_4, type: digital_input, local: false}
 
        - {name: intake_linebreak, type: digital_input, local: false}
+       - {name: indexer_front_linebreak, type: digital_input, local: false}
        - {name: indexer_linebreak, type: digital_input, local: false}
        - {name: shooter_linebreak, type: digital_input, local: false}
 
