@@ -119,6 +119,9 @@ class ShooterAction {
 			//obtain distance via trig
 			const double distance = std::hypot(goal_pos_.x - shooter_pos_.x, goal_pos_.y - shooter_pos_.y);
 
+			if(distance > max_dist_ || distance < min_dist_)
+				return false;
+      
 			//obtain speed and hood values
 			hood_extended = distance > hood_threshold_;
 			if(hood_extended)
@@ -161,7 +164,12 @@ class ShooterAction {
 				controllers_2020_msgs::ShooterSrv srv;
 				bool shooter_hood_raise;
 				double shooter_velocity;
-				getHoodAndVelocity(shooter_hood_raise, shooter_velocity);
+				if(!getHoodAndVelocity(shooter_hood_raise, shooter_velocity))
+				{
+					ROS_ERROR_STREAM(action_name_ << " tried to shoot ball while out of range");
+					preempted_ = true;
+					break;
+				}
 				srv.request.shooter_hood_raise = shooter_hood_raise;
 				srv.request.set_velocity = shooter_velocity;
 				if(!shooter_client_.call(srv))
@@ -341,6 +349,8 @@ class ShooterAction {
 		std::vector<std::map<std::string, double>> hood_up_table_;
 		std::vector<std::map<std::string, double>> hood_down_table_;
 		double hood_threshold_;
+		double max_dist_;
+		double min_dist_;
 
 };
 
@@ -437,6 +447,9 @@ int main(int argc, char** argv) {
 
 	std::sort(shooter_action.hood_up_table_.begin(), shooter_action.hood_up_table_.end(), sortDistDescending);
     std::sort(shooter_action.hood_down_table_.begin(), shooter_action.hood_down_table_.end(), sortDistDescending);
+
+	shooter_action.max_dist_ = shooter_action.hood_up_table_.at(0).at("dist");
+	shooter_action.min_dist_ = shooter_action.hood_down_table_.back().at("dist");
 
 	ros::AsyncSpinner Spinner(2);
 	Spinner.start();
