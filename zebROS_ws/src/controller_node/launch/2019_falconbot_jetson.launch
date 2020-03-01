@@ -38,6 +38,13 @@
 		</include>
 	</group>
 
+	<group ns="auto">
+		<node name="auto_node" pkg="behaviors" type="auto_node" output="screen"></node>
+		<rosparam file="$(find behaviors)/config/auto_mode_config.yaml" command="load"/>
+	</group>	
+
+	<include file="$(find controller_node)/launch/path_follower.launch"/>
+
 	<group ns="swerve_imu_ukf">
 		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu" />
 		<include file="$(find controller_node)/launch/fuse_odom.launch"/>

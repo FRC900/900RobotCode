@@ -7,6 +7,7 @@
 auto_mode_1: ["intake", "pause_5_sec", "pause_2_sec", "elevator_to_high"] #example
 auto_mode_2: ["pause_2_sec","pause_5_sec"]
 auto_mode_3: ["path_to_trench_face_goal", "pause_2_sec", "elevator_to_high"]
+auto_mode_4: ["pause_2_sec", "drive_test", "pause_2_sec"]
 
 
 # ACTIONS ------------------------------------------------------------------------
@@ -32,6 +33,13 @@ path_to_trench_face_goal:
         points:
             - [1.0, 1.0, 3.14159]
             - [2.0, 2.0, 6.28]
+
+drive_test:
+    type: "path"
+    goal:
+        points:
+            - [0.5, 0.0, 0.0]
+            - [-0.5, 0.0, 0.0]
 
 pause_2_sec:
     type: "pause"

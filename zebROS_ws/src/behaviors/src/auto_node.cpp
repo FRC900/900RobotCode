@@ -46,7 +46,7 @@ bool stopAuto(std_srvs::Empty::Request &req,
 //subscriber callback for match data
 void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg)
 {
-	if(msg->Autonomous)
+	if(msg->Autonomous && msg->Enabled)
 	{
 		auto_started = true; //only want to set this to true, never set it to false afterwards
 	}
