@@ -146,6 +146,10 @@ add_executable(auto_node src/auto_node.cpp)
 target_link_libraries(auto_node ${catkin_LIBRARIES})
 add_dependencies(auto_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(num_powercells_pub_node src/num_powercells_pub_node.cpp)
+target_link_libraries(num_powercells_pub_node ${catkin_LIBRARIES})
+add_dependencies(num_powercells_pub_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 # 2020 actionlib servers
 
 add_executable(indexer_server src/indexer_server.cpp)

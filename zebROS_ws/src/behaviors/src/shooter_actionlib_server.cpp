@@ -15,6 +15,8 @@
 #include "behavior_actions/IndexerGoal.h"
 #include "behavior_actions/IndexerAction.h"
 
+#include "behavior_actions/enumerated_indexer_actions.h"
+
 //include controller service files and other service files
 #include "controllers_2020_msgs/ShooterSrv.h"
 #include "controllers_2020_msgs/IndexerSrv.h"
@@ -209,7 +211,7 @@ class ShooterAction {
 					ROS_INFO_STREAM(action_name_ << ": calling indexer server to feed one ball into the shooter");
 					//Call actionlib server
 					behavior_actions::IndexerGoal indexer_goal;
-					indexer_goal.action = 1; //TODO make this into an enum
+					indexer_goal.action = SHOOT_ONE_BALL;
 					ac_indexer_.sendGoal(indexer_goal);
 					//wait for actionlib server
 					waitForActionlibServer(ac_indexer_, 30, "calling indexer server"); //method defined below. Args: action client, timeout in sec, description of activity
@@ -228,7 +230,7 @@ class ShooterAction {
 			ROS_INFO_STREAM(action_name_ << ": calling indexer server to go to intake position");
 			//Call actionlib server
 			behavior_actions::IndexerGoal indexer_goal;
-			indexer_goal.action = 0; //TODO make this into an enum
+			indexer_goal.action = POSITION_INTAKE;
 			ac_indexer_.sendGoal(indexer_goal);
 			//wait for actionlib server
 			waitForActionlibServer(ac_indexer_, 30, "calling indexer server"); //method defined below. Args: action client, timeout in sec, description of activity
@@ -288,6 +290,7 @@ class ShooterAction {
 				else if (as_.isPreemptRequested() || !ros::ok()) {
 					ROS_ERROR_STREAM(action_name_ << ": preempted_ during " << activity);
 					preempted_ = true;
+					//don't preempt the other one - the indexer actionlib server, so that we can finish shooting the current ball when preempted, before stopping
 				}
 				else if (ros::Time::now().toSec() - start_time_ > server_timeout_) {
 					ROS_ERROR_STREAM(action_name_ << ": timed out during " << activity);
@@ -335,7 +338,7 @@ class ShooterAction {
 
 		ready_to_shoot_sub_ = nh_.subscribe("/frcrobot_jetson/shooter_controller/ready_to_shoot", 5, &ShooterAction::shooterReadyCB, this);
 		goal_sub_ = nh_.subscribe("/goal_sub", 5, &ShooterAction::goalDetectionCB, this);
-		num_balls_sub_ = nh_.subscribe("/indexer/num_power_cells", 5, &ShooterAction::numBallsCB, this);
+		num_balls_sub_ = nh_.subscribe("/num_indexer_powercells", 5, &ShooterAction::numBallsCB, this); //subscribing to indexer powercells b/c can't shoot balls in the intake
 	}
 
 		~ShooterAction(void)

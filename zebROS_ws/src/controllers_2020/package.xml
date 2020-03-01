@@ -72,6 +72,7 @@
   <exec_depend>realtime_tools</exec_depend>
   <exec_depend>roscpp</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+  <depend>std_srvs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

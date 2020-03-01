@@ -28,9 +28,6 @@ class PowerCellIntakeAction {
 		//create actionlib clients
 		actionlib::SimpleActionClient<behavior_actions::IndexerAction> ac_indexer_;
 
-		//create subscribers to get data
-		ros::Subscriber joint_states_sub_;
-
 		//intake linebreak (true if ball in the intake)
 		Linebreak intake_linebreak_{"intake_linebreak"};
 
@@ -61,9 +58,6 @@ class PowerCellIntakeAction {
 		//initialize the client being used to call the controller
 		intake_arm_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeArmSrv>("/frcrobot_jetson/intake_controller/intake_arm_command", false, service_connection_header);
 		intake_roller_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeRollerSrv>("/frcrobot_jetson/intake_controller/intake_roller_command", false, service_connection_header);
-
-		//start subscribers subscribing
-		joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &PowerCellIntakeAction::jointStateCallback, this);
 	}
 
 		~PowerCellIntakeAction(void)
@@ -198,19 +192,6 @@ class PowerCellIntakeAction {
 			return;
 		}
 
-		// Function to be called whenever the subscriber for the joint states topic receives a message
-		// Grabs various info from hw_interface using
-		// dummy joint position values
-		void jointStateCallback(const sensor_msgs::JointState &joint_state)
-		{
-			//update intake linebreak
-			if(!intake_linebreak_.update(joint_state))
-			{
-				ROS_ERROR("Intake server - updating the intake linebreak failed, preempting");
-				preempted_ = true;
-			}
-
-		}
 
 		void waitForActionlibServer(auto &action_client, double timeout, const std::string &activity)
 			//activity is a description of what we're waiting for, e.g. "waiting for mechanism to extend" - helps identify where in the server this was called (for error msgs)

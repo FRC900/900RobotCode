@@ -35,6 +35,7 @@ namespace intake_controller
         //Initialize your ROS server
         intake_arm_service_ = controller_nh.advertiseService("intake_arm_command", &IntakeController::cmdServiceArm, this);
         intake_roller_service_ = controller_nh.advertiseService("intake_roller_command", &IntakeController::cmdServiceRoller, this);
+		intake_disable_service_ = controller_nh.advertiseService("intake_disable", &IntakeController::disableIntakeCallback, this);
 
 		return true;
     }
@@ -43,6 +44,8 @@ namespace intake_controller
         //give command buffer(s) an initial value
 		arm_extend_cmd_buffer_.writeFromNonRT(false);
 		percent_out_cmd_buffer_.writeFromNonRT(0.0);
+
+		forward_disabled_.writeFromNonRT(false);
     }
 
     void IntakeController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
@@ -55,7 +58,15 @@ namespace intake_controller
 		else {
 			arm_extend_double = 0.0;
 		}
-		intake_joint_.setCommand(*percent_out_cmd_buffer_.readFromRT());
+
+		//if moving forwards was disabled by the indexer server, don't allow forward movement
+		double percent_out_cmd = *percent_out_cmd_buffer_.readFromRT();
+		if(*forward_disabled_.readFromRT() && percent_out_cmd > 0)
+		{
+			percent_out_cmd = 0.0;
+		}
+
+		intake_joint_.setCommand(percent_out_cmd);
 		intake_arm_joint_.setCommand(arm_extend_double);
     }
 
@@ -81,6 +92,19 @@ namespace intake_controller
         {
             //assign request value to command buffer(s)
             percent_out_cmd_buffer_.writeFromNonRT(req.percent_out);
+        }
+        else
+        {
+            ROS_ERROR_STREAM("Can't accept new commands. IntakeController is not running.");
+            return false;
+        }
+        return true;
+    }
+
+	bool IntakeController::disableIntakeCallback(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &) {
+        if(isRunning())
+        {
+            forward_disabled_.writeFromNonRT(req.data);
         }
         else
         {

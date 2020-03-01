@@ -11,8 +11,7 @@
 
 #include <controllers_2020_msgs/IntakeArmSrv.h>
 #include <controllers_2020_msgs/IntakeRollerSrv.h>
-
-//REMEMBER TO INCLUDE CUSTOM SERVICE
+#include <std_srvs/SetBool.h>
 
 namespace intake_controller
 {
@@ -39,12 +38,17 @@ class IntakeController : public controller_interface::MultiInterfaceController<h
             bool cmdServiceArm (controllers_2020_msgs::IntakeArmSrv::Request &req, controllers_2020_msgs::IntakeArmSrv::Response &);
             bool cmdServiceRoller (controllers_2020_msgs::IntakeRollerSrv::Request &req, controllers_2020_msgs::IntakeRollerSrv::Response &);
 
+			bool disableIntakeCallback(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &);
+
 			talon_controllers::TalonPercentOutputControllerInterface intake_joint_;//intake for intake motor
 			hardware_interface::JointHandle intake_arm_joint_;//interface for intake arm solenoid
 			realtime_tools::RealtimeBuffer<bool> arm_extend_cmd_buffer_;
 			realtime_tools::RealtimeBuffer<double> percent_out_cmd_buffer_;
 			ros::ServiceServer intake_arm_service_;
 			ros::ServiceServer intake_roller_service_;
+
+			ros::ServiceServer intake_disable_service_;
+			realtime_tools::RealtimeBuffer<bool> forward_disabled_; //set to true by the indexer server when it's finishing up properly storing a ball, to ensure the proper gap
 
 
 

@@ -13,6 +13,8 @@ class Linebreak {
 		int false_count_;
 		int debounce_iterations_;
 
+		ros::Subscriber joint_states_sub_;
+
 	public: //all need to be std::atomic because code running asynchronously might want to access it
 		std::atomic<bool> triggered_;
 
@@ -23,8 +25,8 @@ class Linebreak {
 		std::atomic<bool> falling_edge_happened_;
 		std::atomic<bool> pulsed_; //if rising edge followed by falling edge
 
-		//called every time the joint state subscriber callback is run
-		bool update(const sensor_msgs::JointState &joint_state)
+		//this is the callback function to /frcrobot_jetson/joint_states, which has linebreak data published at 100 hz
+		void update(const sensor_msgs::JointState &joint_state)
 		{
 			//set idx if it hasn't already been set
 			if ( idx_ >= joint_state.name.size() ) //idx_ is infinitely big before it's set
@@ -37,10 +39,9 @@ class Linebreak {
 				}
 				//if the index wasn't set, couldn't find it
 				if ( idx_ >= joint_state.name.size() ) {
-					ROS_ERROR_STREAM("Linebreak named " << name_ << " not found in joint_states");
+					ROS_ERROR_STREAM("Linebreak named " << name_ << " not found in joint_states, updating it failed");
 					true_count_ = 0;
 					false_count_ = 0;
-					return false;
 				}
 			}
 
@@ -59,7 +60,7 @@ class Linebreak {
 			if (true_count_ > debounce_iterations_){
 				triggered_ = true;
 			}
-			else if (false_count_ > debounce_iterations_){
+			else if (false_count_ > 0){ //note: required to have no debouncing on the falling edge in order for num_powercells_pub_node.cpp to work
 				triggered_ = false;
 			}
 
@@ -79,7 +80,6 @@ class Linebreak {
 			}
 
 
-			return true;
 		}
 
 		void resetPulseDetection()
@@ -99,8 +99,12 @@ class Linebreak {
 			false_count_ = 0;
 			triggered_ = false;
 
-			//search for debounce iterations param and get it
+			//some stuff below needs a node handle
 			ros::NodeHandle nh;
+
+			joint_states_sub_ = nh.subscribe("/frcrobot_jetson/joint_states", 1, &Linebreak::update, this);
+
+			//search for debounce iterations param and get it
 			if(!nh.getParam("/actionlib_params/linebreak_debounce_iterations", debounce_iterations_))
 			{
 				ROS_ERROR("Couldn't find param /actionlib_params/linebreak_debounce_iterations. Using default of 3.");

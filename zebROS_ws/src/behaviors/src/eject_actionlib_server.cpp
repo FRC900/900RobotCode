@@ -1,9 +1,3 @@
-//THIS IS A TEMPLATE FILE. TO USE, COPY IT AND REPLACE:
-// Eject	with your server's name, e.g. CargoIntake
-// eject	with your server's name, e.g. cargo_intake
-// Eject		with the name of your action file (if file is Intake.action, replace w/ Intake)
-
-
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
@@ -18,6 +12,8 @@
 #include "controllers_2020_msgs/IntakeArmSrv.h"
 #include "controllers_2020_msgs/IndexerSrv.h"
 
+
+#include "behaviors/linebreak.h" //contains the Linebreak class, which has logic for processing linebreak signals
 
 //create the class for the actionlib server
 class EjectAction {
@@ -36,37 +32,6 @@ class EjectAction {
 		bool preempted_;
 		bool timed_out_;
 		double start_time_;
-
-
-		//Use to make pauses while still checking timed_out_ and preempted_
-		bool pause(const double duration, const std::string &activity)
-		{
-			const double pause_start_time = ros::Time::now().toSec();
-			ros::Rate r(10);
-
-			while(!preempted_ && !timed_out_ && ros::ok())
-			{
-				if(as_.isPreemptRequested() || !ros::ok())
-				{
-					preempted_ = true;
-					ROS_ERROR_STREAM("eject_server: preempt during pause() - " << activity);
-				}
-				else if ((ros::Time::now().toSec() - start_time_) >= server_timeout_)
-				{
-					timed_out_ = true;
-					ROS_ERROR_STREAM("eject_server: timeout during pause() - " << activity);
-				}
-				else if((ros::Time::now().toSec() - pause_start_time) >= duration)
-				{
-					return true; //pause worked like expected
-				}
-				else {
-					r.sleep();
-				}
-			}
-
-			return false; //wait loop must've been broken by preempt, global timeout, or ros not ok
-		}
 
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behavior_actions::EjectGoalConstPtr &goal)
@@ -207,56 +172,12 @@ class EjectAction {
 		}
 
 
-		void waitForActionlibServer(auto &action_client, double timeout, const std::string &activity)
-			//activity is a description of what we're waiting for, e.g. "waiting for mechanism to extend" - helps identify where in the server this was called (for error msgs)
-		{
-			double request_time = ros::Time::now().toSec();
-			ros::Rate r(10);
-
-			//wait for actionlib server to finish
-			std::string state;
-			while(!preempted_ && !timed_out_ && ros::ok())
-			{
-				state = action_client.getState().toString();
-
-				if(state == "PREEMPTED") {
-					ROS_ERROR_STREAM(action_name_ << ": external actionlib server returned preempted_ during " << activity);
-					preempted_ = true;
-				}
-				//check timeout - note: have to do this before checking if state is SUCCEEDED since timeouts are reported as SUCCEEDED
-				else if (ros::Time::now().toSec() - request_time > timeout || //timeout from what this file says
-						(state == "SUCCEEDED" && !action_client.getResult()->success)) //server times out by itself
-				{
-					ROS_ERROR_STREAM(action_name_ << ": external actionlib server timed out during " << activity);
-					timed_out_ = true;
-					action_client.cancelGoalsAtAndBeforeTime(ros::Time::now());
-				}
-				else if (state == "SUCCEEDED") { //must have succeeded since we already checked timeout possibility
-					break; //stop waiting
-				}
-				//checks related to this file's actionlib server
-				else if (as_.isPreemptRequested() || !ros::ok()) {
-					ROS_ERROR_STREAM(action_name_ << ": preempted_ during " << activity);
-					preempted_ = true;
-				}
-				else if (ros::Time::now().toSec() - start_time_ > server_timeout_) {
-					ROS_ERROR_STREAM(action_name_ << ": timed out during " << activity);
-					timed_out_ = true;
-					action_client.cancelGoalsAtAndBeforeTime(ros::Time::now());
-				}
-				else { //if didn't succeed and nothing went wrong, keep waiting
-					ros::spinOnce();
-					r.sleep();
-				}
-			}
-		}
 
 	public:
 		//Constructor - create actionlib server; the executeCB function will run every time the actionlib server is called
 		EjectAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&EjectAction::executeCB, this, _1), false),
 			action_name_(name)
-			//ac_elevator_("/elevator/elevator_server", true) example how to initialize other action clients, don't forget to add a comma on the previous line
 	{
 		as_.start(); //start the actionlib server
 
@@ -301,7 +222,7 @@ int main(int argc, char** argv) {
 	}
 	if (!eject_params_nh.getParam("intake_percent_out", eject_action.intake_percent_out_)) {
 		ROS_ERROR("Could not read intake_percent_out in eject_sever");
-		eject_action.intake_percent_out_ = -0.5;
+		eject_action.intake_percent_out_ = -0.5; //TODO better default
 	}
 	if (!eject_params_nh.getParam("indexer_velocity", eject_action.indexer_velocity_)) {
 		ROS_ERROR("Could not read indexer_velocity in eject_sever");

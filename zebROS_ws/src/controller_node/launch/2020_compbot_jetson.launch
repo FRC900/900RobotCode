@@ -94,6 +94,9 @@
 		</group>
 	</group>
 
+	<node name="num_powercells_pub_node" pkg="behaviors" type="num_powercells_pub_node" output="screen" />
+	<param name="initial_num_powercells" value="3"/>
+
 	<!-- Actionlib servers !! -->
 	<!-- General actionlib config -->
 	<rosparam file="$(find behaviors)/config/2020_general_actionlib.yaml" command="load"/>
