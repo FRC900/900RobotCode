@@ -3,5 +3,10 @@ actionlib_shooter_params:
     wait_for_server_timeout: 1
     wait_for_ready_timeout: 1.0
     hood_threshold: 10.0 #if the distance > 10, hood is not down
-    hood_up_table: [{dist: 30.0, speed: 460.0}, {dist: 20.0, speed: 415.0}, {dist: 10.0, speed: 420.0}]
-    hood_down_table: [{dist: 10.0, speed: 315.0}, {dist: 2, speed: 250.0}]
+    hood_up_table: 
+        - {dist: 30.0, speed: 460.0}
+        - {dist: 20.0, speed: 415.0}
+        - {dist: 10.0, speed: 420.0}
+    hood_down_table: 
+        - {dist: 10.0, speed: 315.0}
+        - {dist: 2.0, speed: 250.0}

@@ -408,13 +408,14 @@ int main(int argc, char** argv) {
 		    shooter_map["speed"] = xml_speed;
 		}
 
-		shooter_action.hood_down_table_.push_back(shooter_map);
+		shooter_action.hood_up_table_.push_back(shooter_map);
 	}
 
 	XmlRpc::XmlRpcValue hood_down_list;
 	if(!n_params_shooter.getParam("hood_down_table", hood_down_list)){
 		ROS_ERROR("Couldn't read hood_down_table in shooter_actionlib.yaml");
 	}
+
 	for(int i = 0; i < hood_down_list.size(); i++)
 	{
 		XmlRpc::XmlRpcValue &shooter_point = hood_down_list[i];
@@ -448,7 +449,7 @@ int main(int argc, char** argv) {
 	std::sort(shooter_action.hood_up_table_.begin(), shooter_action.hood_up_table_.end(), sortDistDescending);
     std::sort(shooter_action.hood_down_table_.begin(), shooter_action.hood_down_table_.end(), sortDistDescending);
 
-	shooter_action.max_dist_ = shooter_action.hood_up_table_.at(0).at("dist");
+	shooter_action.max_dist_ = shooter_action.hood_up_table_.front().at("dist");
 	shooter_action.min_dist_ = shooter_action.hood_down_table_.back().at("dist");
 
 	ros::AsyncSpinner Spinner(2);
