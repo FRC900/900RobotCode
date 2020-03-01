@@ -397,7 +397,7 @@ int main(int argc, char** argv) {
 		    XmlRpc::XmlRpcValue &xml_dist = shooter_point["dist"];
 		    if (!xml_dist.valid() || xml_dist.getType() != XmlRpc::XmlRpcValue::TypeDouble)
 				ROS_ERROR("An invalid shooter distance was specified (expecting an double) in hood_up_table in shooter_actionlib.yaml");
-		    shooter_map.at("dist") = xml_dist;
+		    shooter_map["dist"] = xml_dist;
 		}
 
 		if (shooter_point.hasMember("speed"))
@@ -405,7 +405,7 @@ int main(int argc, char** argv) {
 		    XmlRpc::XmlRpcValue &xml_speed = shooter_point["speed"];
 		    if (!xml_speed.valid() || xml_speed.getType() != XmlRpc::XmlRpcValue::TypeDouble)
 				ROS_ERROR("An invalid shooter speed was specified (expecting an double) in hood_up_table in shooter_actionlib.yaml");
-		    shooter_map.at("speed") = xml_speed;
+		    shooter_map["speed"] = xml_speed;
 		}
 
 		shooter_action.hood_down_table_.push_back(shooter_map);
@@ -426,7 +426,7 @@ int main(int argc, char** argv) {
 		    XmlRpc::XmlRpcValue &xml_dist = shooter_point["dist"];
 		    if (!xml_dist.valid() || xml_dist.getType() != XmlRpc::XmlRpcValue::TypeDouble)
 				ROS_ERROR("An invalid shooter distance was specified (expecting an double) in hood_down_table in shooter_actionlib.yaml");
-		    shooter_map.at("dist") = xml_dist;
+		    shooter_map["dist"] = xml_dist;
 		}
 
 		if (shooter_point.hasMember("speed"))
@@ -434,7 +434,7 @@ int main(int argc, char** argv) {
 		    XmlRpc::XmlRpcValue &xml_speed = shooter_point["speed"];
 		    if (!xml_speed.valid() || xml_speed.getType() != XmlRpc::XmlRpcValue::TypeDouble)
 				ROS_ERROR("An invalid shooter speed was specified (expecting an double) in hood_down_table in shooter_actionlib.yaml");
-		    shooter_map.at("speed") = xml_speed;
+		    shooter_map["speed"] = xml_speed;
 		}
 
 		shooter_action.hood_down_table_.push_back(shooter_map);
