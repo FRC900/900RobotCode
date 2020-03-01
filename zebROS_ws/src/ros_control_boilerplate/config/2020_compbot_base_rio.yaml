@@ -51,6 +51,7 @@ hardware_interface:
        - {name: joystick_rumble, type: rumble, rumble_port: 0}
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
+       - {name: green_led, local: true, type: digital_output, dio_channel: 4}
          
 # Create controllers for each joint
 #
@@ -106,3 +107,6 @@ robot_controller_state_controller:
    type: robot_controller_state_controller/RobotControllerStateController
    publish_rate: 100
 
+green_led_controller:
+    type: position_controllers/JointPositionController
+    joint: green_led

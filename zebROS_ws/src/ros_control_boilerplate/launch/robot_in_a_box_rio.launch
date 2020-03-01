@@ -20,6 +20,6 @@
 
 		<!-- Load controller manager -->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn joint_state_controller robot_controller_state_controller match_state_controller joint_state_listener_controller do1_controller talon_state_controller talon_config_controller as726x_state_controller as726x_controller robot_code_ready_controller" />
+			output="screen" args="spawn joint_state_controller robot_controller_state_controller match_state_controller joint_state_listener_controller green_led_controller do1_controller talon_state_controller talon_config_controller as726x_state_controller as726x_controller robot_code_ready_controller" />
 	</group>
 </launch>
