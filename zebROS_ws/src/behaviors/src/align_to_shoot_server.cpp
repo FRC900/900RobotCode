@@ -16,6 +16,9 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <sensor_msgs/Imu.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <geometry_msgs/PointStamped.h>
 
 //create the class for the actionlib server
 class AlignToShootAction
@@ -40,6 +43,9 @@ class AlignToShootAction
 		//clients to call controllers
 		ros::ServiceClient turret_controller_client_;
 
+                tf2_ros::Buffer tf_buffer_;
+                tf2_ros::TransformListener tf_listener_;
+
 		//variables to store if server was preempted_ or timed out. If either true, skip everything (if statements). If both false, we assume success.
 		bool preempted_;
 		bool timed_out_;
@@ -50,21 +56,22 @@ class AlignToShootAction
 		//Constructor - create actionlib server; the executeCB function will run every time the actionlib server is called
 		AlignToShootAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&AlignToShootAction::executeCB, this, _1), false),
-			action_name_(name)
+			action_name_(name),
+                        tf_listener_(tf_buffer_)
 		{
 			as_.start(); //start the actionlib server
 
-			//do networking stuff
-			std::map<std::string, std::string> service_connection_header;
-			service_connection_header["tcp_nodelay"] = "1";
+		//do networking stuff
+		std::map<std::string, std::string> service_connection_header;
+		service_connection_header["tcp_nodelay"] = "1";
 
-			goal_detection_data_sub_ = nh_.subscribe("/goal_detection/goal_detect_msg", 1, &AlignToShootAction::goalDetectionCallback, this);
-			talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &AlignToShootAction::talonStateCallback, this);
-			//robot_heading_sub_ = nh_.subscribe("/imu/data", 1, &AlignToShootAction::robotHeadingCallback, this);
+		goal_detection_data_sub_ = nh_.subscribe("/goal_detection/goal_detect_msg", 1, &AlignToShootAction::goalDetectionCallback, this);
+		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &AlignToShootAction::talonStateCallback, this);
+		//robot_heading_sub_ = nh_.subscribe("/imu/data", 1, &AlignToShootAction::robotHeadingCallback, this);
 
-			//initialize client used to call controllers
-			turret_controller_client_ = nh_.serviceClient<controllers_2020_msgs::TurretSrv>("/frcrobot_jetson/turret_controller/turret_command", false, service_connection_header);
-		}
+		//initialize client used to call controllers
+		turret_controller_client_ = nh_.serviceClient<controllers_2020_msgs::TurretSrv>("/frcrobot_jetson/turret_controller/turret_command", false, service_connection_header);
+	}
 
 		~AlignToShootAction(void)
 		{
@@ -135,7 +142,7 @@ class AlignToShootAction
 			}
 		}
 
-		double getTurretPosition()
+		bool getTurretPosition(double &setpoint)
 		{
 			//use goal_msg and angle of robot to determine turret position
 			// will need to implement zed -> robot -> turret transforms, and probably do that transform in the goalDetectionCallback
@@ -151,7 +158,60 @@ class AlignToShootAction
 				std::lock_guard<std::mutex> l(goal_msg_mutex_);
 				local_goal_msg = goal_msg_;
 			}
-			return 2;
+
+			//get the goal position
+			geometry_msgs::Point32 goal_pos_;
+			bool found_goal = false;
+			for (const field_obj::Object &obj : local_goal_msg.objects)
+			{
+				if(obj.id == "power_port")
+				{
+					goal_pos_ = obj.location;
+					found_goal = true;
+				}
+			}
+
+			if(found_goal)
+			{
+				// find transformed goal position
+				geometry_msgs::PointStamped goal_pos_from_zed;
+				goal_pos_from_zed.header = local_goal_msg.header;
+				goal_pos_from_zed.point.x = goal_pos_.x;
+				goal_pos_from_zed.point.y = goal_pos_.y;
+				goal_pos_from_zed.point.z = goal_pos_.z;
+
+				geometry_msgs::PointStamped transformed_goal_pos;
+				geometry_msgs::TransformStamped zed_to_turret_transform;
+				try {
+					zed_to_turret_transform = tf_buffer_.lookupTransform("turret_center", "zed_camera_center", ros::Time::now());
+					tf2::doTransform(goal_pos_from_zed, transformed_goal_pos, zed_to_turret_transform);
+				}
+				catch (tf2::TransformException &ex) {
+					ROS_WARN("Align to shoot server failed to do ZED->turret transform - %s", ex.what());
+					return false;
+				}
+				ROS_INFO_STREAM("original goal_pos: (" << goal_pos_.x << ", " << goal_pos_.y << ", " << goal_pos_.z << ")");
+				ROS_INFO_STREAM("transformed goal_pos: (" << transformed_goal_pos.point.x << ", " << transformed_goal_pos.point.y << ", " << transformed_goal_pos.point.z << ")");
+
+				const double align_angle = -atan2(transformed_goal_pos.point.y, transformed_goal_pos.point.x);
+				ROS_WARN_STREAM("Align server - Align angle (radians): " << align_angle);
+				setpoint = align_angle;
+                                if(setpoint < turret_soft_limit_reverse_ || setpoint > turret_soft_limit_forward_)
+                                {
+                                    ROS_ERROR_STREAM("Align server - align setpoint " << setpoint << " out of range");
+                                    return false;
+                                }
+                                else 
+                                {
+                                    ROS_WARN_STREAM("Align server - Align setpoint: " << setpoint);
+                                }
+			}
+			else
+			{
+				return false;
+			}
+
+			return true;
 		}
 
 		void executeCB(const behavior_actions::AlignToShootGoalConstPtr &goal)
@@ -176,11 +236,18 @@ class AlignToShootAction
 			ROS_INFO_STREAM(action_name_ << ": calling turret controller");
 			//call controller client, if failed set preempted_ = true, and log an error msg
 			controllers_2020_msgs::TurretSrv srv;
-			srv.request.set_point = getTurretPosition();
-			if (!turret_controller_client_.call(srv))
+			if( ! getTurretPosition(srv.request.set_point))
 			{
-				ROS_ERROR_STREAM("Failed to call turret_controller_client_ in AlignToShootAction");
+				ROS_ERROR("Align server - couldn't get turret setpoint");
 				preempted_ = true;
+			}
+			if(!preempted_ && !timed_out_ && ros::ok())
+			{
+				if (!turret_controller_client_.call(srv))
+				{
+					ROS_ERROR_STREAM("Failed to call turret_controller_client_ in AlignToShootAction");
+					preempted_ = true;
+				}
 			}
 
 			const double start_turret_time = ros::Time::now().toSec();
@@ -250,7 +317,7 @@ class AlignToShootAction
 
 
 		void waitForActionlibServer(auto &action_client, double timeout, const std::string &activity)
-		//activity is a description of what we're waiting for, e.g. "waiting for mechanism to extend" - helps identify where in the server this was called (for error msgs)
+			//activity is a description of what we're waiting for, e.g. "waiting for mechanism to extend" - helps identify where in the server this was called (for error msgs)
 		{
 			double request_time = ros::Time::now().toSec();
 
@@ -268,7 +335,7 @@ class AlignToShootAction
 				}
 				//check timeout - note: have to do this before checking if state is SUCCEEDED since timeouts are reported as SUCCEEDED
 				else if (ros::Time::now().toSec() - request_time > timeout || //timeout from what this file says
-						 (state == "SUCCEEDED" && !action_client.getResult()->success)) //server times out by itself
+						(state == "SUCCEEDED" && !action_client.getResult()->success)) //server times out by itself
 				{
 					ROS_ERROR_STREAM(action_name_ << ": external actionlib server timed out during " << activity);
 					timed_out_ = true;
@@ -303,6 +370,9 @@ class AlignToShootAction
 		double turn_turret_timeout_; //timeout for waiting for turret to go to position
 		double max_turret_position_error_;
 
+                double turret_soft_limit_forward_;
+                double turret_soft_limit_reverse_;
+
 };
 
 int main(int argc, char **argv)
@@ -315,6 +385,17 @@ int main(int argc, char **argv)
 
 	//create the actionlib server
 	AlignToShootAction align_to_shoot_action("align_to_shoot_server");
+
+        if(!n.getParam("/frcrobot_jetson/turret_controller/turret/softlimit_forward_threshold", align_to_shoot_action.turret_soft_limit_forward_))
+        {
+            ROS_ERROR("Could not read turret_soft_limit_forward in align_server");
+            align_to_shoot_action.turret_soft_limit_forward_ = 0.45;
+        }
+        if(!n.getParam("/frcrobot_jetson/turret_controller/turret/softlimit_reverse_threshold", align_to_shoot_action.turret_soft_limit_reverse_))
+        {
+            ROS_ERROR("Could not read turret_soft_limit_reverse in align_server");
+            align_to_shoot_action.turret_soft_limit_reverse_ = -0.2;
+        }
 
 	ros::NodeHandle n_params_align(n, "actionlib_align_to_shoot_params"); //node handle for a lower-down namespace
 	if (!n_params_align.getParam("server_timeout", align_to_shoot_action.server_timeout_))

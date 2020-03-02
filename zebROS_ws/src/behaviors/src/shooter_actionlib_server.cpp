@@ -9,6 +9,9 @@
 #include <map>
 #include <string>
 #include <algorithm>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <geometry_msgs/PointStamped.h>
 
 //include action files - for this actionlib server and any it sends requests to
 #include "behavior_actions/ShooterAction.h"
@@ -54,6 +57,9 @@ class ShooterAction {
 		ros::Rate r{10}; //used for wait loops, curly brackets needed so it doesn't think this is a function
 		double start_time_;
 
+                tf2_ros::Buffer tf_buffer_;
+                std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+
 		//Use to make pauses while still checking timed_out_ and preempted_
 		bool pause(const double duration, const std::string &activity)
 		{
@@ -91,7 +97,7 @@ class ShooterAction {
 			size_t counter = 1;
 			for (; counter < table.size()-1; counter++)
 				if(table.at(counter).at("dist") < dist)
-					break;		
+					break;
 			return lerp(table.at(counter).at("speed"), table.at(counter-1).at("speed"), (dist-table.at(counter).at("dist"))/(table.at(counter-1).at("dist")-table.at(counter).at("dist")));
 		}
 
@@ -105,30 +111,43 @@ class ShooterAction {
 			geometry_msgs::Point32 goal_pos_;
 			for (const field_obj::Object &obj : local_goal_msg.objects)
 			{
-				if(obj.id == "PowerPort")
+				if(obj.id == "power_port")
 				{
 					goal_pos_ = obj.location;
 				}
 			}
 
-			//TODO: GET POSITION OF SHOOTER
-			//subscribe to a node and pass in translated points
-			geometry_msgs::Point32 shooter_pos_;
-			shooter_pos_.x = 0;
-			shooter_pos_.y = 0;
-			shooter_pos_.z = 0;
+                        // find transformed goal position
+                        geometry_msgs::PointStamped goal_pos_from_zed;
+                        goal_pos_from_zed.header = local_goal_msg.header;
+                        goal_pos_from_zed.point.x = goal_pos_.x;
+                        goal_pos_from_zed.point.y = goal_pos_.y;
+                        goal_pos_from_zed.point.z = goal_pos_.z;
+
+                        geometry_msgs::PointStamped transformed_goal_pos;
+                        geometry_msgs::TransformStamped zed_to_turret_transform;
+                        try {
+                            zed_to_turret_transform = tf_buffer_.lookupTransform("turret_center", "zed_camera_center", ros::Time::now());
+                            tf2::doTransform(goal_pos_from_zed, transformed_goal_pos, zed_to_turret_transform);
+                        }
+                        catch (tf2::TransformException &ex) {
+                            ROS_WARN("Shooter actionlib server failed to do ZED->turret transform - %s", ex.what());
+                            return false;
+                        }
+                        ROS_INFO_STREAM("original goal_pos: (" << goal_pos_.x << ", " << goal_pos_.y << ", " << goal_pos_.z << ")");
+                        ROS_INFO_STREAM("transformed goal_pos: (" << transformed_goal_pos.point.x << ", " << transformed_goal_pos.point.y << ", " << transformed_goal_pos.point.z << ")");
 
 			//obtain distance via trig
-			const double distance = std::hypot(goal_pos_.x - shooter_pos_.x, goal_pos_.y - shooter_pos_.y);
+			const double distance = std::hypot(transformed_goal_pos.point.x, transformed_goal_pos.point.y);
 
 			if(distance > max_dist_ || distance < min_dist_)
 				return false;
-      
+
 			//obtain speed and hood values
 			hood_extended = distance > hood_threshold_;
 			if(hood_extended)
 				shooter_speed = lerpTable(hood_up_table_, distance);
-			else	
+			else
 				shooter_speed = lerpTable(hood_down_table_, distance);
 
 			return true;
@@ -339,6 +358,9 @@ class ShooterAction {
 		ready_to_shoot_sub_ = nh_.subscribe("/frcrobot_jetson/shooter_controller/ready_to_shoot", 5, &ShooterAction::shooterReadyCB, this);
 		goal_sub_ = nh_.subscribe("/goal_sub", 5, &ShooterAction::goalDetectionCB, this);
 		num_balls_sub_ = nh_.subscribe("/num_indexer_powercells", 5, &ShooterAction::numBallsCB, this); //subscribing to indexer powercells b/c can't shoot balls in the intake
+                
+                // initialize transform listener
+                tf_listener_ = std::make_shared<tf2_ros::TransformListener>(tf_buffer_);
 	}
 
 		~ShooterAction(void)

@@ -155,7 +155,7 @@ namespace goal_detection
 					const cv::Point3f world_coord_scaled = cc.screen_to_world(gfd[i].rect, dummy.id, gfd[i].distance);
 
 					dummy.location.x = world_coord_scaled.z;
-					dummy.location.y = world_coord_scaled.x;
+					dummy.location.y = -world_coord_scaled.x;
 					dummy.location.z = world_coord_scaled.y;
 					dummy.angle = atan2f(world_coord_scaled.x, world_coord_scaled.y) * 180. / M_PI;
 					gd_msg.objects.push_back(dummy);

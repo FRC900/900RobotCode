@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+
+<robot name="2020_compbot">
+
+    <link name="base_link"/>
+
+    <link name="zed_camera_center">
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://zed_wrapper/urdf/models/ZEDM.stl" />
+            </geometry>
+            <material name="light_grey">
+                <color rgba="0 0 0 0.9"/>
+            </material>
+        </visual>
+    </link>
+    <joint name="zed_camera_center_joint" type="fixed"> 
+        <parent link="base_link"/>
+        <child link="zed_camera_center"/>
+        <origin xyz="0.1588 -0.1226 0.605155" rpy="0 0 0" />
+    </joint>
+
+    <link name="turret_center"/>
+    <joint name="turret_center_joint" type="fixed"> 
+        <parent link="base_link"/>
+        <child link="turret_center"/>
+        <origin xyz="-0.0658 -0.22067 0.4692" rpy="0 0 0" />
+    </joint>
+
+    <!-- Left Camera -->
+    <joint name="zed_left_camera_joint" type="fixed">
+        <parent link="zed_camera_center"/>
+        <child link="zed_left_camera_frame"/>
+        <origin xyz="0 0.03 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="zed_left_camera_frame" />
+
+    <joint name="zed_left_camera_optical_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="-1.57079632679 0.0 -1.57079632679"/>
+        <parent link="zed_left_camera_frame"/>
+        <child link="zed_left_camera_optical_frame"/>
+    </joint>
+
+    <link name="zed_left_camera_optical_frame"/>
+
+    <!-- Right Camera -->
+    <joint name="zed_right_camera_joint" type="fixed">
+        <parent link="zed_camera_center"/>
+        <child link="zed_right_camera_frame"/>
+        <origin xyz="0 -0.03 0" rpy="0 0 0" />
+    </joint>
+
+    <link name="zed_right_camera_frame" />
+
+    <joint name="zed_right_camera_optical_joint" type="fixed">
+        <origin xyz="0 0 0" rpy="-1.57079632679 0.0 -1.57079632679"/>
+        <parent link="zed_right_camera_frame"/>
+        <child link="zed_right_camera_optical_frame"/>
+    </joint>
+
+    <link name="zed_right_camera_optical_frame"/>
+
+    <!-- IMU -->    
+    <joint name="imu_link_joint" type="fixed">
+        <parent link="zed_camera_center"/>
+        <child link="zed_imu_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+    </joint>
+    <link name="zed_imu_link" />
+
+    <!-- Realsense2 t265 -->
+    <link name="rs_t265_pose_frame"/>
+    <joint name="rs_t265_joint" type="fixed">
+        <parent link="rs_t265_pose_frame"/>
+        <child link="base_link"/>
+        <!-- after rotation, this is z, y, -x? 
+                         TODO : verify that the imu and odom frames
+                    require this rotation
+        <origin xyz="1.04 0 0.216" rpy="0 -1.57 0" />
+         -->
+        <origin xyz="0.216 0.0 -1.04" rpy="0 0 0" />
+    </joint>
+</robot>
+
