@@ -117,8 +117,11 @@ namespace goal_detection
 				gd_.findTargets(cvFrame->image, cvDepth->image, LOADING_BAY_2020, model);
 				std::vector< GoalFound > gfd_loading_bay = gd_.return_found();
 
+				gd_.findTargets(cvFrame->image, cvDepth->image, TEST_TARGET_2020, model);
+				std::vector< GoalFound > gfd_test = gd_.return_found();
+
 				std::vector< GoalFound > gfd;
-				gfd.reserve( gfd_power_port.size() + gfd_loading_bay.size() );
+				gfd.reserve( gfd_power_port.size() + gfd_loading_bay.size() + gfd_test.size() );
 				gfd.insert( gfd.end(), gfd_power_port.begin(), gfd_power_port.end() );
 				gfd.insert( gfd.end(), gfd_loading_bay.begin(), gfd_loading_bay.end() );
 

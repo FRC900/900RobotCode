@@ -1,147 +1,140 @@
+#include "particle_filter.hpp"
+#include "world_model.hpp"
+#include <random>
+#include <vector>
+#include <utility>
 
-class DistanceAndBearing
-{
-	public:
-		DistanceAndBearing(const double distance, const double bearing)
-			: distance_(distance)
-			, bearing_(bearing)
-		{
-		}
-
-		distance(void) const
-		{
-			return distance_;
-		}
-		bearing(void) const
-		{
-			return bearing_;
-		}
-	private:
-		double distance_;
-		double bearing_;
-};
-
-class BeaconCoord
-{
-	public:
-		BeaconCoord(const double x, const double y, const double angle)
-			: x_(x)
-			, y_(y)
-			, angle_(angle)
-		{
-		}
-
-		double x(void)     const { return x_; }
-		double y(void)     const { return y_; }
-		double angle(void) const { return angle_; }
-
-	private:
-		double x_;
-		double y_;
-		double angle_;
-};
-
-// Beacon - holds field-centric x,y,angle coordinates
-//         of targets on the field
-class Beacon
-{
-	public:
-		Beacon(const BeaconCoord &state)
-			: coord_(state)
-		{
-		}
-
-		const BeaconCoord &Get(void) const
-		{
-			return coord_;
-		}
-
-		DistanceAndBearing distance(const Coord &coord, bool reverse_angle = false) const
-		{
-			double dx = coord_.x() - coord.x();
-			double dy = coord_.y() - coord.y();
-			if (reverse_angle)
-			{
-				dx = -dx;
-				dy = -dy;
-			}
-			const double distance = hypot(dx, dy);
-			const double bearing  = angles::normalize_angle(atan2(dy, dx));
-			return DistanceAndBearing(distance, bearing);
-		}
-
-		double robotBearing(const double angle) const
-		{
-			const double abs_bearing = M_PI - angle;
-			const double rel_bearing = abs_bearing - coord_.angle();
-			return angles::normalize_angle(rel_bearing);
-		}
-	private:
-		BeaconCoord coord_;
-};
-
-class Beacons
-{
-	public:
-		Beacons(const std::vector<Beacons> &beacons)
-			: beacons_(beacons)
-		{
-		}
-
-		void append(const Beacon &beacon)
-		{
-			beacons_.push_back(beacon);
-		}
-
-		bool at(size_t i, Beacon &beacon) const
-		{
-			if (i < beacons_.size())
-			{
-				beacon = beacons_[i];
-				return true;
-			}
-			return false;
-		}
-		constexpr double invalidCost = 1e6;
-		constexpr double maxDetectionDistance = 7.0; //meters
-
-		std::vector<double> getCosts(const Coord &robotLoc, const Detection &detection)
-		{
-			std::vector<double> costs;
-			costs.resize(beacons_.size());
-
-			auto beaconDistanceAndAngle = detection.distanceAndAngle();
-			for (size_t i = 0; i < beacons_.size(); i++)
-			{
-				auto robotDistanceAndAngle = beacons_[i].distance(robotLoc);
-				if (robotDistanceAndAngle > maxDetectionDistance)
-				{
-					costs[i] = invalidCost;
-					continue;
-				}
-				if (fabs(angles::normalize_angle(robotDistanceAndAngle.angle() - robotLoc.angle())) > 0.85)
-				{
-					costs[i] = invalidCost;
-					continue;
-				}
-				const double deltaRange = fabs(beaconDistanceAndAngle.distance() - robotDistanceAndAngle.distance());
-				const double deltaAngle = fabs(beaconDistanceAndAngle.angle() - robotDistanceAndAngle.angle());
+#include <iostream>
+#include <ros/ros.h>
 
 
-				// Check that angle from target to robot is
-				// between +/- pi/2. This is a quick way to rule
-				// out cases where it would be looking through
-				// a wall to see the target
-				reverseAngle = fabs(beacons_[i].robotBearing(beaconDistanceAndAngle.angle()));
-				if (reverseAngle >= (M_PI / 2.0))
-				{
-					costs[i] = invalidCost;
-					continue;
-				}
-			}
+ParticleFilter::ParticleFilter(const WorldModel& w,
+                               double x_min, double x_max, double y_min, double y_max,
+                               double ns, double rs, size_t n) :
+                               world_(w), num_particles_(n),
+                               noise_stdev_(ns), rot_noise_stdev_(rs) {
+  rng_ = std::mt19937(0);
+  init(x_min, x_max, y_min, y_max);
+}
 
-		}
+void ParticleFilter::constrain_particles() {
+  for (Particle& p : particles_) {
+    world_.constrain_to_world(p);
+  }
+}
 
-	private:
-		std::vector<Beacon> beacons_;
+void ParticleFilter::init(const double x_min, const double x_max, const double y_min, const double y_max) {
+  std::vector<double> bounds = world_.get_boundaries();
+  double x_l = std::max(x_min, bounds[0]);
+  double x_u = std::min(x_max, bounds[1]);
+  double y_l = std::max(y_min, bounds[2]);
+  double y_u = std::min(y_max, bounds[3]);
+  for (size_t i = 0; i < num_particles_; i++) {
+    std::uniform_real_distribution<double> x_distribution(x_l, x_u);
+  	std::uniform_real_distribution<double> y_distribution(y_l, y_u);
+    std::uniform_real_distribution<double> rot_distribution(0, 6.283);
+    double x = x_distribution(rng_);
+    double y = y_distribution(rng_);
+    double rot = rot_distribution(rng_);
+    Particle p = {x, y, rot};
+    particles_.push_back(p);
+  }
+  normalize();
+}
+
+//Normalize weights to sum to 1
+void ParticleFilter::normalize() {
+  double sum = 0;
+  for (const Particle& p : particles_) {
+    sum += p.weight_;
+  }
+  for (Particle& p : particles_) {
+    if (sum != 0) p.weight_ /= sum;
+    else p.weight_ = 1.0 / particles_.size();
+  }
+}
+
+void ParticleFilter::noise_rot() {
+  std::normal_distribution<double> rot_dist(0, rot_noise_stdev_);
+  for (Particle& p : particles_) {
+    p.rot_ += rot_dist(rng_);
+  }
+}
+
+void ParticleFilter::noise_pos() {
+  std::normal_distribution<double> pos_dist(0, noise_stdev_);
+  for (Particle& p : particles_) {
+    p.x_ += pos_dist(rng_);
+    p.y_ += pos_dist(rng_);
+  }
+}
+
+//Particles with higher weights are more likely to be resampled
+void ParticleFilter::resample() {
+  std::vector<Particle> new_particles;
+  new_particles.reserve(num_particles_);
+  for (int i = 0; i < num_particles_; i++) {
+    const double r = ((double) rng_() - rng_.min()) / (rng_.max() - rng_.min());
+    // std::cout << r << '\n';
+    double a = 0;
+    for (const Particle& p : particles_) {
+      a += p.weight_;
+      if (a > r) {
+        new_particles.push_back(p);
+        break;
+      }
+    }
+  }
+  particles_ = new_particles;
+  normalize();
+}
+
+Particle ParticleFilter::predict() {
+  double weight = 0;
+  Particle res {0, 0, 0};
+  double s = 0;
+  double c = 0;
+  for (const Particle& p : particles_) {
+    res.x_ += p.x_ * p.weight_;
+    res.y_ += p.y_ * p.weight_;
+    c += cos(p.rot_) * p.weight_;
+    s += sin(p.rot_) * p.weight_;
+    weight += p.weight_;
+  }
+  res.x_ /= weight;
+  res.y_ /= weight;
+  c /= weight;
+  s /= weight;
+  res.rot_ = atan2(s, c);
+  return res;
+}
+
+void ParticleFilter::motion_update(double delta_x, double delta_y, double delta_rot) {
+  for (Particle& p : particles_) {
+    // p.x_ += delta_x;
+    // p.y_ += delta_y;
+    p.rot_ += delta_rot;
+    p.x_ += delta_x * cos(p.rot_) + delta_y * sin(p.rot_);
+    p.y_ += delta_x * sin(p.rot_) + delta_y * cos(p.rot_);
+  }
+  constrain_particles();
+}
+
+void ParticleFilter::set_rotation(double rot) {
+  for (Particle& p : particles_) {
+    p.rot_ = rot;
+  }
+  noise_rot();
+}
+
+//assigns the reciprocal of the computed error of each particles assignment vector to the respective particle
+void ParticleFilter::assign_weights(std::vector<std::pair<double, double> > mBeacons) {
+  for (Particle& p : particles_) {
+    p.weight_ = 1 / world_.total_distance(p, mBeacons);
+  }
+  normalize();
+}
+
+std::vector<Particle> ParticleFilter::get_particles() const {
+  return particles_;
 }

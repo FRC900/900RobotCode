@@ -6,8 +6,8 @@
 using namespace std;
 using namespace cv;
 
-#define VERBOSE
-#define VERBOSE_DEEP
+// #define VERBOSE
+// #define VERBOSE_DEEP
 
 GoalDetector::GoalDetector(void)
 	: _isValid(false)

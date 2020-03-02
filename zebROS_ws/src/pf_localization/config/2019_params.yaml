@@ -1,0 +1,27 @@
+field_dims:
+  x_min: -8.24
+  x_max: 8.24
+  y_min: -4.10
+  y_max: 4.10
+
+init_dims:
+  x_min: -8.24
+  x_max: -6.24
+  y_min: -4.10
+  y_max: 4.10
+
+num_particles: 200
+
+noise_stdev:
+  position: 0.1
+  rotation: 0.1
+
+beacons:
+  - [2.07, 3.63]
+  - [2.44, 3.39]
+  - [2.81, 3.63]
+  - [2.66, 0.28]
+  - [1.64, 0.71]
+  - [1.08, 0.71]
+  - [0.53, 0.71]
+  - [8.26, 3.44]

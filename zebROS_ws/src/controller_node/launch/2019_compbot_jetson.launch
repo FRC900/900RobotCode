@@ -129,7 +129,7 @@
 	</include>
 
 	<include file="$(find controller_node)/launch/2019_compbot_jetson_hatch_orient.launch"/>
-    
+
 	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
         <!--
 	<group ns="align_cargo_rocketship">
@@ -175,7 +175,7 @@
 			<param name="enable_topic" value="align_pid/pid_enable" />
 			<param name="name" value="align_pid" />
 		</node>
-	</group> 
+	</group>
         -->
 
         <!--
@@ -188,7 +188,7 @@
 		<node name="align_server" pkg="behaviors" type="align_cargo_cargoship_server" output="screen" />
 
 		<node name="align_with_camera" pkg="behaviors" type="align_with_camera" output="screen" >
-			<param name="target_frame" value="cargo_outtake" /> 
+			<param name="target_frame" value="cargo_outtake" />
 		</node>
 		<node name="align_with_terabee_node" pkg="behaviors" type="align_with_terabee_node" output="screen"/>
 
@@ -246,7 +246,7 @@
 
 	</group>
         -->
-    
+
 	<include file="$(find realsense2_camera)/launch/rs_t265.launch" >
 		<!-- didn't seem to work, retest
 		-->
@@ -255,5 +255,7 @@
 
 	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
 	<include file="$(find controller_node)/launch/record_2019_no_zed.launch" if="$(arg record)" />
+
+	<include file="$(find controller_node)/launch/pf_localization.launch"/>
 
 </launch>

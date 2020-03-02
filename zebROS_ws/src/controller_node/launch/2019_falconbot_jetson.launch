@@ -84,4 +84,8 @@
 			<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel"/>
 		</node>
 	</group>
+	<include file="$(find controller_node)/launch/tape_detection.launch">
+		<arg name="camera_model" value="zed2" />
+	</include>
+	<include file="$(find controller_node)/launch/pf_localization.launch"/>
 </launch>
