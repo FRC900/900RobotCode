@@ -58,7 +58,7 @@ class ShooterAction {
 		double start_time_;
 
                 tf2_ros::Buffer tf_buffer_;
-                std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+                tf2_ros::TransformListener tf_listener_;
 
 		//Use to make pauses while still checking timed_out_ and preempted_
 		bool pause(const double duration, const std::string &activity)
@@ -344,7 +344,8 @@ class ShooterAction {
 		ShooterAction(const std::string &name) :
 			as_(nh_, name, boost::bind(&ShooterAction::executeCB, this, _1), false),
 			action_name_(name),
-			ac_indexer_("/indexer/indexer_server", true)
+			ac_indexer_("/indexer/indexer_server", true),
+			tf_listener_(tf_buffer_)
 	{
 		as_.start(); //start the actionlib server
 
@@ -358,9 +359,6 @@ class ShooterAction {
 		ready_to_shoot_sub_ = nh_.subscribe("/frcrobot_jetson/shooter_controller/ready_to_shoot", 5, &ShooterAction::shooterReadyCB, this);
 		goal_sub_ = nh_.subscribe("/goal_sub", 5, &ShooterAction::goalDetectionCB, this);
 		num_balls_sub_ = nh_.subscribe("/num_indexer_powercells", 5, &ShooterAction::numBallsCB, this); //subscribing to indexer powercells b/c can't shoot balls in the intake
-                
-                // initialize transform listener
-                tf_listener_ = std::make_shared<tf2_ros::TransformListener>(tf_buffer_);
 	}
 
 		~ShooterAction(void)
