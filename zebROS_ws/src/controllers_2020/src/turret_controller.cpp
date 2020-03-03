@@ -61,6 +61,8 @@ namespace turret_controller
 		last_zeroed_  = false;
 		last_time_moving_ = ros::Time::now();
 		cmd_buffer_.writeFromNonRT(0.0);
+		turret_joint_.setForwardSoftLimitEnable(false);
+		turret_joint_.setReverseSoftLimitEnable(false);
 	}
 
 	void TurretController::update(const ros::Time &/*time*/, const ros::Duration &/*period*/) {
@@ -73,6 +75,8 @@ namespace turret_controller
 				zeroed_ = true;
 				last_zeroed_ = true;
 				turret_joint_.setSelectedSensorPosition(turret_zero_angle_);
+				turret_joint_.setForwardSoftLimitEnable(true);
+				turret_joint_.setReverseSoftLimitEnable(true);
 			}
 		}
 		else

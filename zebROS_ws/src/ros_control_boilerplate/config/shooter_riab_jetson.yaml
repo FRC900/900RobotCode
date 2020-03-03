@@ -48,15 +48,68 @@ talon_config_controller:
    type:         talon_config_controller/TalonConfigController
    publish_rate: 5
 
+shooter_controller:
+    type: shooter_controller/ShooterController
+    shooter_joint: "shooter"
+    shooter:
+        joint: shooter_joint
+        type: talon_controllers/TalonVelocityCloseLoopController
+        feedback_type: IntegratedSensor
+        close_loop_values:
+            - {p: 0.06, i: 0.000, d: 0.0, f: 0.047, i_zone: 0}
+        invert_output: false 
+        sensor_phase: false
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.0
+        nominal_output_reverse: 0.0
+        voltage_compensation_enable: true
+        dynamic_reconfigure: True
+
+turret_controller:
+    type: turret_controller/TurretController
+    turret_joint: 'turret'
+    turret_zero_timeout: 5.0
+    turret_zero_percent_output: -0.2
+    turret_zero_angle: -1.0181
+
+    turret: #starts as a percent out controller then switches to motion magic after zeroing
+        joint: turret_joint
+        feedback_type: QuadEncoder
+        close_loop_values:
+            - {p: 100.0, i: 0.000, d: 0.0, f: 5.0, i_zone: 0} #tuned for the cart
+        invert_output: false
+        sensor_phase: false
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.1
+        nominal_output_reverse: -0.1
+        motion_cruise_velocity: 4.0
+        motion_acceleration: 15.0
+        voltage_compensation: true
+        dynamic_reconfigure: true
+        limit_switch_local_forward_source: "FeedbackConnector"
+        limit_switch_local_forward_normal: "NormallyOpen"
+        limit_switch_local_reverse_source: "FeedbackConnector"
+        limit_switch_local_reverse_normal: "NormallyOpen"
+        softlimit_forward_threshold: 0.35
+        softlimit_forward_enable: true
+        softlimit_reverse_threshold: -0.95
+        softlimit_reverse_enable: true
+        conversion_factor: 1.733 # Range of turret motion = pi/2 radians = 0.907 motor units. 0.907 / (pi/2) = 0.577
+
+intake_controller:
+        type: intake_controller/IntakeController
+        intake_joint: "intake"
+        intake:
+                joint: intake_joint
+                type: talon_controllers/TalonPercentOutputController
+                invert_output: False
+
+
 # Similar to above, but this one prints non-Talon state
 # (stuff that fits into the more standard ROS position/
-falcon1_controller:
-    type: talon_controllers/TalonVelocityCloseLoopController
-    joint: falcon1 
-    dynamic_reconfigure: True
-    voltage_compensation_enable: True
-    feedback_type: IntegratedSensor 
-
+#
 # Create a controller called talon3_controller
 #  That name is used by spawner in the launch file to 
 #  actually start this controller
