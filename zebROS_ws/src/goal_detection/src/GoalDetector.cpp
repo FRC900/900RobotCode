@@ -306,7 +306,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const cv::Size &frame_size,
 		const float confidence_screen_area = createConfidence(1.0, 0.50, actualScreenArea);
 
 		// higher confidence is better
-		const float confidence = (/*confidence_height*/ + confidence_com_x + confidence_com_y + confidence_filled_area + confidence_ratio + confidence_screen_area) / 5;
+		const float confidence = (confidence_height + confidence_com_x + confidence_com_y + confidence_filled_area + confidence_ratio + confidence_screen_area) / 6.;
 
 #ifdef VERBOSE
 		cout << "-------------------------------------------" << endl;

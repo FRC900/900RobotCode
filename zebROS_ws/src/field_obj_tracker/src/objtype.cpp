@@ -7,7 +7,7 @@
 using namespace std;
 using namespace cv;
 
-ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
+ObjectType::ObjectType(ObjectNum contour_type_id) {
 	switch(contour_type_id) {
 		//loads one of the preset shapes into the
 		//object
@@ -254,7 +254,7 @@ ObjectType::ObjectType(ObjectNum contour_type_id=UNINITIALIZED) {
 			name_ = "test_target";
 			break;
 		default:
-			cerr << "error initializing object!" << endl;
+			throw std::invalid_argument("ObjectType::ObjectType() - error initializing object, unknown type!");
 	}
 
 	computeProperties();
