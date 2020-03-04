@@ -55,10 +55,10 @@ class IndexerAction {
 		double start_time_;
 
 		//other variables
-		std::atomic<int> n_indexer_balls_ = 3; //balls anywhere in the indexer, default of 3
-		std::atomic<int> n_stored_balls_ = 3; //properly stored balls (after the indexer linebreak, to ensure a gap)
+		std::atomic<int> n_indexer_balls_{3}; //balls anywhere in the indexer, default of 3
+		std::atomic<int> n_stored_balls_{3}; //properly stored balls (after the indexer linebreak, to ensure a gap)
 
-		std::atomic<bool> just_stored_new_ball_ = false; //set to true by the n stored balls callback, used by action INTAKE_ONE_BALL, which sets it to false upon using it
+		std::atomic<bool> just_stored_new_ball_{false}; //set to true by the n stored balls callback, used by action INTAKE_ONE_BALL, which sets it to false upon using it
 
 		void checkPreemptedAndTimedOut(const std::string &activity)
 		{
