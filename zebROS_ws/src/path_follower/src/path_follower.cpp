@@ -57,21 +57,6 @@ geometry_msgs::Pose PathFollower::run(nav_msgs::Odometry odom, double &total_dis
 	ROS_INFO_STREAM("current_position = " << odom.pose.pose.position.x
 					<< " " << odom.pose.pose.position.y);
 
-	double current_x = odom.pose.pose.position.x;
-	double current_y = odom.pose.pose.position.y;
-	double current_x_path, current_y_path;
-	size_t current_waypoint_index = 0; //the index BEFORE the point on the path
-	double minimum_distance = std::numeric_limits<double>::max();
-
-	double start_x;
-	double start_y;
-	double end_x;
-	double end_y;
-	double dx;
-	double dy;
-
-	double magnitude_projection; // distance from the waypoint to the point on the path
-	double distance_to_travel = 0; // distance from the point on the path, along the path
 	if (num_waypoints_ == 0)
 	{
 		ROS_ERROR_STREAM("No waypoints in path");
@@ -85,6 +70,22 @@ geometry_msgs::Pose PathFollower::run(nav_msgs::Odometry odom, double &total_dis
 		target_pos.orientation.w = 1;
 		return target_pos; //TODO: better way to handle errors? This will just time out the server
 	}
+
+	double current_x = odom.pose.pose.position.x;
+	double current_y = odom.pose.pose.position.y;
+	double current_x_path, current_y_path;
+	size_t current_waypoint_index = 0; //the index BEFORE the point on the path
+	double minimum_distance = std::numeric_limits<double>::max();
+
+	double start_x;
+	double start_y;
+	double end_x;
+	double end_y;
+	double dx;
+	double dy;
+
+	double magnitude_projection = 0; // distance from the waypoint to the point on the path
+	double distance_to_travel = 0; // distance from the point on the path, along the path
 	const size_t last_index = num_waypoints_ - 1;
 
 	// Find point in path closest to odometry reading
