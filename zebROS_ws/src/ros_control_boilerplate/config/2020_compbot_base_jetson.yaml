@@ -120,7 +120,7 @@ shooter_controller:
     shooter:
         joint: shooter_joint
         type: talon_controllers/TalonVelocityCloseLoopController
-        feedback_type: CTRE_MagEncoder_Absolute
+        feedback_type: IntegratedSensor
         close_loop_values:
             - {p: 0.06, i: 0.000, d: 0.0, f: 0.047, i_zone: 0}
         invert_output: true
@@ -138,7 +138,7 @@ climber_controller:
     winch:
         joint: climber_winch_joint
         type: talon_controllers/TalonMotionMagicCloseLoopController
-        feedback_type: CTRE_MagEncoder_Absolute
+        feedback_type: IntegratedSensor
         close_loop_values:
             - {p: 0.0, i: 0.000, d: 0.0, f: 0.0, i_zone: 0}
         invert_output: true
