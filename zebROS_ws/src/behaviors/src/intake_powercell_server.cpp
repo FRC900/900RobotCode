@@ -33,7 +33,7 @@ class PowerCellIntakeAction {
 
 		//define variables that will be set true if the actionlib action is to be ended
 		//this will cause subsequent controller calls to be skipped
-		std::atomic<bool> preempted_ = false;
+		bool preempted_ = false;
 		bool timed_out_ = false;
 		double start_time_;
 
