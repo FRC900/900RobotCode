@@ -16,19 +16,18 @@ class RotatePanelAction {
 		std::string action_name_;
 		ros::ServiceClient rotate_panel_client_;
 		ros::ServiceClient climber_client_;
-		behavior_actions::RotatePanelFeedback feedback_;
-		behavior_actions::RotatePanelResult result_;
 		//ros::Subscriber talon_states_sub_;
 		//ros::Publisher cmd_vel_publisher_;
+
+	private:
+
+		int stage_;
 
 	public:
 
 		double timeout;
 		double rotations;
 		double wait_for_server_timeout;
-		bool preempted;
-		bool timed_out;
-		int stage;
 		//int cmd_speed;
 		//double minimum_current
 
@@ -59,22 +58,24 @@ class RotatePanelAction {
 
 		/*void TalonStateCallback(const talon_state_msgs::TalonState &talon_state)
 		{
-			if (stage == 3)
+			if (stage_ == 3)
 			{
 				if (talon_state.output_current[1] && talon_state.output_current[3] && talon_state.output_current[1] && talon_state.output_current[13] > minimum_current)
 				{
-					stage = 4;
+					stage_ = 4;
 				}
 			}
 		}*/
 
 		void executeCB(const behavior_actions::RotatePanelGoalConstPtr &goal) {
 			ros::Rate r(10);
+
+			behavior_actions::RotatePanelResult result_;
+
 			double start_time;
-			bool success;
-			preempted = false;
-			timed_out = false;
-			success = false;
+			bool preempted = false;
+			bool timed_out = false;
+			bool success = false;
 
 			if(!preempted && !timed_out)
 			{
@@ -97,7 +98,7 @@ class RotatePanelAction {
 
 				start_time = ros::Time::now().toSec();
 				success = false;
-				stage = 1;
+				stage_ = 1;
 
 				//geometry_msgs::Twist cmd_vel_msg;
 
@@ -107,7 +108,7 @@ class RotatePanelAction {
 				climber_srv.request.winch_set_point = 0;
 				climber_srv.request.climber_deploy = true;
 				climber_srv.request.climber_elevator_brake = true;
-				stage = 2;
+				stage_ = 2;
 
 				if (!climber_client_.call(climber_srv))
 				{
@@ -123,9 +124,9 @@ class RotatePanelAction {
 
 				//cmd_vel_publisher_.publish(cmd_vel_msg);
 
-				stage = 3;
+				stage_ = 3;
 
-				//while (stage != 4)
+				//while (stage_ != 4)
 				//{
 				//}
 
@@ -136,7 +137,7 @@ class RotatePanelAction {
 					ROS_ERROR("Srv failed in rotating the panel");
 				}
 
-				stage = 5;
+				stage_ = 5;
 
 				srv.request.control_panel_rotations = 0;
 				climber_srv.request.climber_deploy = false;
