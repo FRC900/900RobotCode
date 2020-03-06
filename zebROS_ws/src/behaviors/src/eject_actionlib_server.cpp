@@ -29,18 +29,14 @@ class EjectAction {
 		ros::ServiceClient indexer_controller_client_;
 
 		//variables to store if server was preempted_ or timed out. If either true, skip everything (if statements). If both false, we assume success.
-		bool preempted_;
-		bool timed_out_;
-		double start_time_;
-
 		//define the function to be executed when the actionlib server is called
 		void executeCB(const behavior_actions::EjectGoalConstPtr &goal)
 		{
 			ROS_INFO("%s: Running callback", action_name_.c_str());
 
-			start_time_ = ros::Time::now().toSec();
-			preempted_ = false;
-			timed_out_ = false;
+			double start_time_ = ros::Time::now().toSec();
+			bool preempted_ = false;
+			bool timed_out_ = false;
 
 
 			//wait for all controller servers we need
@@ -175,7 +171,7 @@ class EjectAction {
 
 	public:
 		//Constructor - create actionlib server; the executeCB function will run every time the actionlib server is called
-		EjectAction(const std::string &name) :
+		EjectAction(const std::string &name, ros::NodeHandle eject_params_nh) :
 			as_(nh_, name, boost::bind(&EjectAction::executeCB, this, _1), false),
 			action_name_(name)
 	{
@@ -189,12 +185,31 @@ class EjectAction {
 		intake_roller_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeRollerSrv>("/frcrobot_jetson/intake_controller/intake_roller_command", false, service_connection_header);
 		intake_arm_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeArmSrv>("/frcrobot_jetson/intake_controller/intake_arm_command", false, service_connection_header);
 		indexer_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IndexerSrv>("/frcrobot_jetson/indexer_controller/indexer_command", false, service_connection_header);
+		if (!eject_params_nh.getParam("server_timeout", server_timeout_)) {
+			ROS_ERROR("Could not read server_timeout in eject_server");
+			server_timeout_ = 10;
+		}
+		if (!eject_params_nh.getParam("wait_for_server_timeout", wait_for_server_timeout_)) {
+			ROS_ERROR("Could not read wait_for_server_timeout in eject_sever");
+			wait_for_server_timeout_ = 10;
+		}
+		if (!eject_params_nh.getParam("intake_percent_out", intake_percent_out_)) {
+			ROS_ERROR("Could not read intake_percent_out in eject_sever");
+			intake_percent_out_ = -0.5; //TODO better default
+		}
+		if (!eject_params_nh.getParam("indexer_velocity", indexer_velocity_)) {
+			ROS_ERROR("Could not read indexer_velocity in eject_sever");
+			indexer_velocity_ = -4; //TODO better default
+		}
+
+	
 	}
 
 		~EjectAction(void)
 		{
 		}
 
+	private:
 		//config values
 		double server_timeout_;
 		double wait_for_server_timeout_;
@@ -206,30 +221,11 @@ int main(int argc, char** argv) {
 	//create node
 	ros::init(argc, argv, "eject_server");
 	ros::NodeHandle nh;
+	ros::NodeHandle eject_params_nh(nh, "eject_actionlib_params");
 
 	//create the actionlib server
-	EjectAction eject_action("eject_server");
-
-	//get config values
-	ros::NodeHandle eject_params_nh(nh, "eject_actionlib_params");
-	if (!eject_params_nh.getParam("server_timeout", eject_action.server_timeout_)) {
-		ROS_ERROR("Could not read server_timeout in eject_server");
-		eject_action.server_timeout_ = 10;
-	}
-	if (!eject_params_nh.getParam("wait_for_server_timeout", eject_action.wait_for_server_timeout_)) {
-		ROS_ERROR("Could not read wait_for_server_timeout in eject_sever");
-		eject_action.wait_for_server_timeout_ = 10;
-	}
-	if (!eject_params_nh.getParam("intake_percent_out", eject_action.intake_percent_out_)) {
-		ROS_ERROR("Could not read intake_percent_out in eject_sever");
-		eject_action.intake_percent_out_ = -0.5; //TODO better default
-	}
-	if (!eject_params_nh.getParam("indexer_velocity", eject_action.indexer_velocity_)) {
-		ROS_ERROR("Could not read indexer_velocity in eject_sever");
-		eject_action.indexer_velocity_ = -4; //TODO better default
-	}
-
-
+	EjectAction eject_action("eject_server", eject_params_nh);
+	
 	ros::AsyncSpinner Spinner(2);
 	Spinner.start();
 	ros::waitForShutdown();

@@ -132,7 +132,7 @@ class PowerCellIntakeAction {
 				if(intake_linebreak_.triggered_)
 				{
 					//call indexer actionlib server to intake the ball
-					ac_indexer_.cancelGoalsAtAndBeforeTime(ros::Time::now()); //first make sure it isn't running (it might be from the earlier call to it)
+					//sending a new call to the indexer actionlib will cancel it if it is already running
 					behavior_actions::IndexerGoal indexer_goal;
 					indexer_goal.action = INTAKE_ONE_BALL;
 					ac_indexer_.sendGoal(indexer_goal);
