@@ -2,12 +2,19 @@
 #include <behaviors/linebreak.h>
 #include <sensor_msgs/JointState.h>
 #include <talon_state_msgs/TalonState.h>
+#include <frc_msgs/MatchSpecificData.h>
 #include <std_msgs/UInt8.h>
-
+#include <std_srvs/Empty.h>
 
 //velocity variables, updated by talonStateCallback()
 double intake_percent_out = 0; //default to 0
 double indexer_velocity = 0;
+	
+//storage variables for num balls
+int num_balls = 3; //default is 3
+int num_indexer_balls = 3;
+int num_stored_balls = 3;
+
 
 
 //subscriber callback functions
@@ -46,6 +53,23 @@ void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
 	}
 }
 
+//Checks whether or not the robot is disabled
+bool disabled = true;
+
+void matchDataCallback(const frc_msgs::MatchSpecificData & matchdata)
+{
+	disabled = matchdata.Disabled;
+}
+
+//Callback function to reset all ball counters
+bool resetBall(std_srvs::Empty::Request &req,
+			   std_srvs::Empty::Response &res)
+{
+	num_balls = 0;
+	num_indexer_balls = 0;
+	num_stored_balls = 0;
+	return true;
+}
 
 int main(int argc, char **argv)
 {
@@ -61,20 +85,22 @@ int main(int argc, char **argv)
 
 	//subscribers
 	ros::Subscriber talon_states_sub = nh.subscribe("/frcrobot_jetson/talon_states", 1, talonStateCallback);
+	ros::Subscriber match_data_sub = nh.subscribe("/frcrobot_rio/match_data", 1, matchDataCallback);
 
 	//publishers
 	ros::Publisher num_balls_pub = nh.advertise<std_msgs::UInt8>("num_powercells", 1);
 	ros::Publisher num_indexer_balls_pub = nh.advertise<std_msgs::UInt8>("num_indexer_powercells", 1);
 	ros::Publisher num_stored_balls_pub = nh.advertise<std_msgs::UInt8>("num_stored_powercells", 1);
 
-	//storage variables for num balls
-	int num_balls = 3; //default is 3
-	int num_indexer_balls = 3;
-	int num_stored_balls = 3;
+	//reset all ball counts to 0
+	ros::ServiceServer reset_ball_count = nh.advertiseService("reset_ball", resetBall);
 
-	nh.getParam("/initial_num_powercells", num_balls);
-	num_indexer_balls = num_balls; //assume all the initial balls are properly stored in the indexer
-	num_stored_balls = num_balls;
+	//checks to make sure the parameter read was successful
+	if(nh.getParam("/initial_num_powercells", num_balls))
+	{
+		num_indexer_balls = num_balls; //assume all the initial balls are properly stored in the indexer
+		num_stored_balls = num_balls;
+	}
 
 	//loop and process logic
 	ros::Rate r(20);
@@ -86,6 +112,7 @@ int main(int argc, char **argv)
 		//TODO check that positive velocity means forward
 
 		//only do linebreak checks if this velocity is the same as last velocity - otherwise we can't guarantee the ball's direction of motion
+	if (disabled == false) {
 		if((intake_percent_out > 0 && last_intake_percent_out > 0) || (intake_percent_out < 0 && last_intake_percent_out < 0)) {
 
 			//intake linebreak checks
@@ -96,7 +123,12 @@ int main(int argc, char **argv)
 			}
 			else if(intake_percent_out < 0 && intake_linebreak.falling_edge_happened_) {
 				ROS_WARN_STREAM("Ball exited intake; percent out: " << intake_percent_out);
+				if(num_balls > 0) {
 				num_balls--;
+				}
+				else {
+				ROS_ERROR("Sensor detected ball being shot but number of balls was already at 0");
+				}
 				intake_linebreak.resetPulseDetection();
 			}
 		}
@@ -111,7 +143,12 @@ int main(int argc, char **argv)
 			}
 			if(indexer_velocity < 0 && indexer_front_linebreak.falling_edge_happened_) {
 				ROS_WARN_STREAM("Ball exited indexer; speed setpoint: " << indexer_velocity);
+				if(num_indexer_balls > 0) {
 				num_indexer_balls--;
+				}
+				else {
+				ROS_ERROR("Sensor detected ball being shot but number of balls was already at 0");
+				}
 				indexer_front_linebreak.resetPulseDetection();
 			}
 
@@ -125,20 +162,41 @@ int main(int argc, char **argv)
 			}
 			if(indexer_velocity < 0 && indexer_linebreak.falling_edge_happened_) {
 				ROS_WARN_STREAM("Ball exited stored; speed setpoint: " << indexer_velocity);
+				if(num_stored_balls > 0) {
 				num_stored_balls--;
+				}
+				else {
+				ROS_ERROR("Sensor detected ball being shot but number of balls was already at 0");
+				}
+
 				indexer_linebreak.resetPulseDetection();
 			}
 
 			//shooter linebreak checks
 			if(indexer_velocity > 0 && shooter_linebreak.falling_edge_happened_) {
 				ROS_WARN_STREAM("Ball left shooter; speed setpoint: " << indexer_velocity);
+				if(num_balls > 0) {
 				num_balls--;
+				}
+				else {
+				ROS_ERROR("Sensor detected ball being shot but number of balls was already at 0");
+				}
+				if(num_indexer_balls > 0) {
 				num_indexer_balls--;
+				}
+				else {
+				ROS_ERROR("Sensor detected ball being shot but number of balls was already at 0");
+				}
+				if(num_stored_balls > 0) {
 				num_stored_balls--;
+				}
+				else {
+				ROS_ERROR("Sensor detected ball being shot but number of balls was already at 0");
+				}
 				shooter_linebreak.resetPulseDetection();
 			}
 		}
-
+		}
 		last_intake_percent_out = intake_percent_out;
 		last_indexer_velocity = indexer_velocity;
 
