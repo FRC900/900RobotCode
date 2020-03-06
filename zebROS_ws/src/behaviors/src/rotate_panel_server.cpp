@@ -19,15 +19,15 @@ class RotatePanelAction {
 		//ros::Subscriber talon_states_sub_;
 		//ros::Publisher cmd_vel_publisher_;
 
+
 	private:
 
-		int stage_;
+		double timeout;
+        double rotations;
+        double wait_for_server_timeout;
 
 	public:
 
-		double timeout;
-		double rotations;
-		double wait_for_server_timeout;
 		//int cmd_speed;
 		//double minimum_current
 
@@ -55,17 +55,6 @@ class RotatePanelAction {
 		~RotatePanelAction(void)
 		{
 		}
-
-		/*void TalonStateCallback(const talon_state_msgs::TalonState &talon_state)
-		{
-			if (stage_ == 3)
-			{
-				if (talon_state.output_current[1] && talon_state.output_current[3] && talon_state.output_current[1] && talon_state.output_current[13] > minimum_current)
-				{
-					stage_ = 4;
-				}
-			}
-		}*/
 
 		void executeCB(const behavior_actions::RotatePanelGoalConstPtr &goal) {
 			ros::Rate r(10);
@@ -98,7 +87,6 @@ class RotatePanelAction {
 
 				start_time = ros::Time::now().toSec();
 				success = false;
-				stage_ = 1;
 
 				//geometry_msgs::Twist cmd_vel_msg;
 
@@ -108,7 +96,6 @@ class RotatePanelAction {
 				climber_srv.request.winch_set_point = 0;
 				climber_srv.request.climber_deploy = true;
 				climber_srv.request.climber_elevator_brake = true;
-				stage_ = 2;
 
 				if (!climber_client_.call(climber_srv))
 				{
@@ -124,20 +111,12 @@ class RotatePanelAction {
 
 				//cmd_vel_publisher_.publish(cmd_vel_msg);
 
-				stage_ = 3;
-
-				//while (stage_ != 4)
-				//{
-				//}
-
 				srv.request.control_panel_rotations = rotations;
 
 				if (!rotate_panel_client_.call(srv))
 				{
 					ROS_ERROR("Srv failed in rotating the panel");
 				}
-
-				stage_ = 5;
 
 				srv.request.control_panel_rotations = 0;
 				climber_srv.request.climber_deploy = false;
