@@ -22,12 +22,18 @@ namespace climber_controller_2020
             ROS_ERROR_STREAM("Could not read climber winch_joint_params");
             return false;
         }
+
+		if( !controller_nh.getParam("softlimit_offset_from_start", softlimit_offset_))
+		{
+			ROS_ERROR("Could not read softlimit_offset_from_start in climber_controller");
+			softlimit_offset_ = 0.1;
+		}
+
         //initialize motor joint using those config values
         if ( !winch_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, winch_motor_params) ) {
             ROS_ERROR("Cannot initialize winch joint!");
             return false;
         }
-
 
         //Initialize your ROS server
         climber_service_ = controller_nh.advertiseService("climber_command", &ClimberController::cmdService, this);
@@ -38,6 +44,11 @@ namespace climber_controller_2020
     void ClimberController::starting(const ros::Time &/*time*/) {
         // Set the initial position of the winch to 0
         winch_joint_.setSelectedSensorPosition(0.0);
+
+		// set reverse softlimit to just a bit above initial position
+		winch_joint_.setReverseSoftLimitThreshold(softlimit_offset_);
+		winch_joint_.setReverseSoftLimitEnable(true);
+
         //give command buffer(s) an initial value
         cmd_buffer_.writeFromNonRT(ClimberCommand(0.0, false, true));
     }
@@ -61,7 +72,7 @@ namespace climber_controller_2020
 			deploy_joint_.setCommand(1.0);
 		}
 		else {
-			deploy_joint_.setCommand(0.0); 
+			deploy_joint_.setCommand(0.0);
 		}
 
 		//set value of motors

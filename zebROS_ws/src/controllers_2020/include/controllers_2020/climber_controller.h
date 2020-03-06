@@ -64,6 +64,7 @@ class ClimberController : public controller_interface::MultiInterfaceController<
 			ros::ServiceServer climber_service_;
 			realtime_tools::RealtimeBuffer<ClimberCommand> cmd_buffer_;
 
+			double softlimit_offset_;
 
 }; //class
 
