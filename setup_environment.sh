@@ -50,7 +50,6 @@ sudo apt install -y \
 	net-tools \
 	ninja-build \
 	nmap \
-	ntp \
 	ntpdate \
 	openssh-client \
 	pkg-config \
@@ -117,9 +116,6 @@ rm ./$zed_fn
 #mount and setup autostart script
 sudo mkdir /mnt/900_2
 cd ~/2020RobotCode
-
-# edit /etc/init.d/ntp to contain the line: <ntpd -gq> before all content already there.
-sudo cp ntp-client.conf /etc/ntp.conf  # edit /etc/ntp.conf to be a copy of ntp-client.conf in 2020RobotCode
 
 # Set up can0 network interface
 cd

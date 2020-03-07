@@ -53,10 +53,10 @@ namespace intake_controller
         const bool arm_extend_cmd = *(arm_extend_cmd_buffer_.readFromRT());
 		double arm_extend_double;
 		if(arm_extend_cmd == true){
-			arm_extend_double = 1.0;
+			arm_extend_double = 0.0;
 		}
 		else {
-			arm_extend_double = 0.0;
+			arm_extend_double = 1.0;
 		}
 
 		//if moving forwards was disabled by the indexer server, don't allow forward movement

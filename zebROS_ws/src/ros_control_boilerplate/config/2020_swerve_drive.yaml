@@ -1,4 +1,3 @@
-#TODO: FIX ALL CONSTANTS
 swerve_drive_controller:
     type:       talon_swerve_drive_controller/TalonSwerveDriveController
     
@@ -7,16 +6,16 @@ swerve_drive_controller:
     publish_cmd: True
     pose_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
     twist_covariance_diagonal: [0.001, 0.001, 1000000.0, 1000000.0, 1000000.0, 1000.0]
-    # fix me
-    wheel_radius: 0.0381 # m
+
+    wheel_radius: 0.0508 # m
     cmd_vel_timout: 0.5
-    max_speed: 3.0
-    max_accel: 1.8
-    max_brake_accel: 2.5
+    max_speed: 5.75 # TODO
+    max_accel: 1.8 # TODO
+    max_brake_accel: 2.5 # TODO 
     ang_accel_conv: 2.0
-    max_rotational_vel: 10
+    max_rotational_vel: 10 # TODO
     
-    f_s: 0.12
+    f_s: 0.035
     f_a: 0.005 #use torque curve instead? TODO: FIX
     f_v: 0.00315528
 
@@ -30,7 +29,7 @@ swerve_drive_controller:
     motor_stall_torque: 1.4
     motor_quantity: 4
     invert_wheel_angle: False
-    ratio_encoder_to_rotations: 0.5714 # TODO?
+    ratio_encoder_to_rotations: 0.148148148 # Test me 
     ratio_motor_to_rotations: 1 # TODO?
     ratio_motor_to_steering: 1 # TODO?
     encoder_drive_get_V_units: 1 
@@ -40,41 +39,45 @@ swerve_drive_controller:
     encoder_steering_get_units: 1
     encoder_steering_set_units: 1
 
-    wheel_coords: [[-0.26035, 0.26035], [0.26035, 0.26035], [-0.26035, -0.26035], [0.26035, -0.26035]]
+    wheel_coords: [[-0.28575, 0.28575], [0.28575, 0.28575], [-0.28575, -0.28575], [0.28575, -0.28575]]
  
     cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
     speed_joint_fl:
         joint: fl_drive #fix pid
         close_loop_values:
-            - {p: 0.01, i: 0.0001, d: 0.0, f: 0.075, i_zone: 650}
+            - {p: 0.12, i: 0.0, d: 4.0, f: 0.042, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         sensor_phase: true 
         invert_output: false 
-        feedback_type: CTRE_MagEncoder_Relative
+        feedback_type: IntegratedSensor
         voltage_compensation_enable: True
         current_limit_continuous_amps: 20
+        closed_loop_ramp: 0.25
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
+        neutral_deadband: 0.01
     speed_joint_fr:
         joint: fr_drive #fix pid
         close_loop_values:
-            - {p: 0.01, i: 0.0001, d: 0.0, f: 0.075, i_zone: 650}
+            - {p: 0.12, i: 0.0, d: 4.0, f: 0.042, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         sensor_phase: true 
         invert_output: false 
-        feedback_type: CTRE_MagEncoder_Relative
+        feedback_type: IntegratedSensor
         voltage_compensation_enable: True
         current_limit_continuous_amps: 20
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
+        neutral_deadband: 0.01
+        closed_loop_ramp: 0.25
     speed_joint_bl:
         joint: bl_drive #fix pid
         close_loop_values: 
-            - {p: 0.01, i: 0.0001, d: 0.0, f: 0.075, i_zone: 650}
+            - {p: 0.12, i: 0.0, d: 4.0, f: 0.042, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
-        feedback_type: CTRE_MagEncoder_Relative
+        feedback_type: IntegratedSensor
         sensor_phase: true  
         invert_output: false 
         voltage_compensation_enable: True
@@ -82,25 +85,28 @@ swerve_drive_controller:
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
+        neutral_deadband: 0.01
+        closed_loop_ramp: 0.25
     speed_joint_br:
         joint: br_drive #fix pid
         close_loop_values:
-            - {p: 0.01, i: 0.0001, d: 0.0, f: 0.075, i_zone: 650}
+            - {p: 0.12, i: 0.0, d: 4.0, f: 0.042, i_zone: 650}
             - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
         sensor_phase: True
         invert_output: false 
-        feedback_type: CTRE_MagEncoder_Relative
+        feedback_type: IntegratedSensor
         voltage_compensation_enable: True
         current_limit_continuous_amps: 20
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
+        neutral_deadband: 0.01
+        closed_loop_ramp: 0.25
     steering_joint_fl:
         joint: fl_angle
         feedback_type: CTRE_MagEncoder_Absolute
         close_loop_values:
-            #- {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
-            - {p: 5.0, i: 0.000, d: 70.0, f: 1.0, i_zone: 0}
+            - {p: 1.5, i: 0.000, d: 25.0, f: 1.0, i_zone: 0}
             - {p: 1.5, i: 0.005, d: 0.0, f: 0.0, i_zone: 130}
         invert_output: true
         sensor_phase: false
@@ -109,14 +115,13 @@ swerve_drive_controller:
         nominal_output_forward: 0.0
         nominal_output_reverse: 0.0
         motion_cruise_velocity: 15
-        motion_acceleration: 85
+        motion_acceleration: 150
         voltage_compensation_enable: true
     steering_joint_fr:
         joint: fr_angle
         feedback_type: CTRE_MagEncoder_Absolute
         close_loop_values:
-            #- {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
-            - {p: 5.0, i: 0.000, d: 70.0, f: 1.0, i_zone: 0}
+            - {p: 1.5, i: 0.000, d: 25.0, f: 1.0, i_zone: 0}
             - {p: 1.5, i: 0.005, d: 0.0, f: 0.0, i_zone: 130}
         invert_output: true
         sensor_phase: false 
@@ -125,14 +130,13 @@ swerve_drive_controller:
         nominal_output_forward: 0.0
         nominal_output_reverse: 0.0
         motion_cruise_velocity: 15
-        motion_acceleration: 85
+        motion_acceleration: 150 
         voltage_compensation_enable: true
     steering_joint_br:
         joint: br_angle
         feedback_type: CTRE_MagEncoder_Absolute
         close_loop_values:
-            #- {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
-            - {p: 5.0, i: 0.000, d: 70.0, f: 1.0, i_zone: 0}
+            - {p: 1.5, i: 0.000, d: 25.0, f: 1.0, i_zone: 0}
             - {p: 1.5, i: 0.005, d: 0.0, f: 0.0, i_zone: 130}
         invert_output: true 
         sensor_phase: false 
@@ -141,14 +145,13 @@ swerve_drive_controller:
         nominal_output_forward: 0.0
         nominal_output_reverse: 0.0
         motion_cruise_velocity: 15
-        motion_acceleration: 85
+        motion_acceleration: 150 
         voltage_compensation_enable: true
     steering_joint_bl:
         joint: bl_angle
         feedback_type: CTRE_MagEncoder_Absolute
         close_loop_values:
-            #- {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
-            - {p: 5.0, i: 0.000, d: 70.0, f: 1.0, i_zone: 0}
+            - {p: 1.5, i: 0.000, d: 25.0, f: 1.0, i_zone: 0}
             - {p: 1.5, i: 0.005, d: 0.0, f: 0.0, i_zone: 130}
         invert_output: true 
         sensor_phase: false 
@@ -157,5 +160,5 @@ swerve_drive_controller:
         nominal_output_forward: 0.0
         nominal_output_reverse: 0.0
         motion_cruise_velocity: 15
-        motion_acceleration: 85
+        motion_acceleration: 150 
         voltage_compensation_enable: true

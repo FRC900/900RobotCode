@@ -853,7 +853,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 			}
 
 			speed_joints_[i].setPIDFSlot(0);
-			speed_joints_[i].setClosedloopRamp(0);
+			//speed_joints_[i].setClosedloopRamp(0);
 			//speed_joints_[i].setDemand1Value(0);
 
 		}

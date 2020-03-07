@@ -10,10 +10,6 @@ sudo rfkill block bluetooth
 sysctl -w kernel.sched_rt_runtime_us=-1
 ulimit -r unlimited
 
-systemctl stop ntp
-ntpdate 10.9.0.2
-systemctl start ntp
-
 /home/ubuntu/2020RobotCode/jetson_setup/can_up.sh
 
 . /home/ubuntu/2020RobotCode/zebROS_ws/ROSJetsonMaster.sh
@@ -35,11 +31,11 @@ if sudo mount /dev/nvme0n1p1 /mnt/900_2; then
 		date >> /home/ubuntu/mounted.txt
 		echo worked >> /home/ubuntu/mounted.txt
 		sudo chmod a+rw /mnt/900_2/
-		roslaunch controller_node 2019_compbot_combined.launch record:=true
+		roslaunch controller_node 2020_compbot_combined.launch record:=true
 else
 		date >> /home/ubuntu/mounted.txt
 		echo did not mount >> /home/ubuntu/mounted.txt
-		roslaunch controller_node 2019_compbot_combined.launch
+		roslaunch controller_node 2020_compbot_combined.launch
 fi
 
 top -b > /mnt/900_2/$(date +%Y%m%d%H%M%S)_top_log.txt

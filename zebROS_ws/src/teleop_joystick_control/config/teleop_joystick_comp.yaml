@@ -3,14 +3,14 @@ teleop_params:
     max_rot: 5
     max_rot_slow: 2.5
     min_speed: 0.15  # Smallest linear speed which get the robot moving at all
-    max_speed: 3
+    max_speed: 5.75
     max_speed_slow: 1.5
     joystick_pow: 1
     rotation_pow: 5     #Scaling factors used in teleop_joystick_comp1
     joystick_deadzone: 0.125
     limit_switch_debounce_iterations: 2 #Used in teleop_joystick_comp for detecting hatch_panels
     linebreak_debounce_iterations: 2 #Used in actionlib servers for intaking cargo and teleop_joystick_comp for detecting cargo
-    drive_rate_limit_time: 150
+    drive_rate_limit_time: 200
     rotate_rate_limit_time: 150
 
 teleop_diagnostics_params:

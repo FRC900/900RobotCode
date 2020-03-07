@@ -62,17 +62,17 @@ namespace climber_controller_2020
 
         //Set values of the pistons based on the command. Can be 1.0, 0.0, or -1.0. -1.0 is only used with double solenoids
         if(brake_cmd == true){
-			brake_joint_.setCommand(1.0);
+			brake_joint_.setCommand(0.0);
 		}
 		else {
-			brake_joint_.setCommand(0.0);
+			brake_joint_.setCommand(1.0);
 		}
 
 		if(deploy_cmd == true){
-			deploy_joint_.setCommand(1.0);
+			deploy_joint_.setCommand(-1.0);
 		}
 		else {
-			deploy_joint_.setCommand(0.0);
+			deploy_joint_.setCommand(1.0); 
 		}
 
 		//set value of motors
