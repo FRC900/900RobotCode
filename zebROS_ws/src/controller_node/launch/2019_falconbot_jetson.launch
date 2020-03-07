@@ -49,6 +49,11 @@
 		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu" />
 		<include file="$(find controller_node)/launch/fuse_odom.launch"/>
 	</group>
+	
+	<group ns="auto">
+		<node name="auto_node" pkg="behaviors" type="auto_node" output="screen"></node>
+		<rosparam file="$(find behaviors)/config/auto_mode_config.yaml" command="load"/>
+	</group>
 
 	<group ns="teleop">
 		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
@@ -77,6 +82,19 @@
 			</node>
 			<node name="orient_strafing_node" pkg="teleop_joystick_control" type="orient_strafing_node" output="screen"/>
 		</group>
+	</group>
+	<group ns="path_to_goal">
+		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
+		<node name="robot_visualize" pkg="robot_visualizer" type="robot_visualize" output="screen" />
+		<node name="profile_follow" pkg="robot_visualizer" type="profile_follow" output="screen" />
+		<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node>
+		<rosparam file="$(find swerve_point_generator)/config/point_gen.yaml" command="load"/>
+		<node name="point_gen" pkg="swerve_point_generator" type="point_gen" output="screen" />
+		<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/2018FRC_field.yaml" output="screen" if="$(arg static_map)">
+			<param name="frame_id" value="/map"/>
+		</node>
+		<node name="path_to_goal_ac_server" pkg="path_to_goal" type="path_to_goal_server" output="screen" />
+		<node name="test_client" pkg="path_to_goal" type="test_client" output="screen" />
 	</group>
 	<group ns="cmd_vel_mux">
 		<node name="twist_mux" pkg="twist_mux" type="twist_mux">

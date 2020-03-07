@@ -4,10 +4,9 @@
 # arrays of actions (see below) that will be executed in order
 # format: auto_mode_[integer]: array
 
-auto_mode_1: ["intake", "pause_5_sec", "pause_2_sec", "elevator_to_high"] #example
-auto_mode_2: ["pause_2_sec","pause_5_sec"]
-auto_mode_3: ["path_to_trench_face_goal", "pause_2_sec", "elevator_to_high"]
-auto_mode_4: ["pause_2_sec", "drive_test", "pause_2_sec"]
+auto_mode_1: ["start_intake", "path_to_trench_face_goal", "stop_intake", "shoot", "pause_2_sec"] #example
+auto_mode_2: ["start_intake", "pause_2_sec", "stop_intake", "pause_5_sec"]
+auto_mode_3: ["path_to_trench_face_goal", "pause_2_sec"]
 
 
 # ACTIONS ------------------------------------------------------------------------
@@ -16,16 +15,20 @@ auto_mode_4: ["pause_2_sec", "drive_test", "pause_2_sec"]
 
 #examples:
 
-intake:
+start_intake:
     type: "intake_actionlib_server"
     goal:
-        "" #no goal items for this action
+        "start"
 
-elevator_to_high:
-    type: "elevator_actionlib_server"
+stop_intake:
+    type: "intake_actionlib_server"
     goal:
-        setpoint_index: 2
-        place_cargo: false
+        "stop"
+
+shoot:
+    type: "shooter_actionlib_server"
+    goal:
+        ""
 
 path_to_trench_face_goal:
     type: "path"

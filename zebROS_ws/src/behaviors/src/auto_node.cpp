@@ -7,6 +7,8 @@
 
 #include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/ElevatorAction.h> //TODO remove this, it's for testing using last year's stuff
+#include <behavior_actions/IntakeAction.h>
+#include <behavior_actions/ShooterAction.h>
 #include <path_follower/PathAction.h>
 
 #include <thread>
@@ -160,10 +162,10 @@ int main(int argc, char** argv)
 	ros::ServiceServer stop_auto_server = nh.advertiseService("stop_auto", stopAuto); //called by teleoop node to stop auto execution during teleop if driver wants
 
 	//actionlib clients
-	//TODO
-	//example:
 	actionlib::SimpleActionClient<behavior_actions::ElevatorAction> elevator_ac("/elevator/elevator_server", true);
 	actionlib::SimpleActionClient<path_follower::PathAction> path_ac("/path_follower/path_follower_server", true); //TODO fix this path
+	actionlib::SimpleActionClient<behavior_actions::ShooterAction> shooter_ac("/shooter/shooter_server", true);
+	actionlib::SimpleActionClient<behavior_actions::IntakeAction> intake_ac("/powercell_intake/powercell_intake_server", true);
 
 	//other variables
 	ros::Rate r(10); //used in various places where we wait TODO: config?
@@ -269,26 +271,41 @@ int main(int argc, char** argv)
 					r.sleep();
 				}
 			}
-			//placeholder - TODO actually do stuff here
 			else if(action_data["type"] == "intake_actionlib_server")
 			{
-				//do stuff
+				//for some reason this is necessary, even if the server has been up and running for a while
+				if(!intake_ac.waitForServer(ros::Duration(5))){
+					ROS_ERROR("Auto node - couldn't find intake actionlib server");
+					auto_state = ERROR;
+					if(auto_state_pub_thread.joinable()){
+						auto_state_pub_thread.join();
+					}
+					return 1;
+				}
+
+				if(action_data["goal"] == "stop")
+				{
+					intake_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());	
+				}
+				else {
+					behavior_actions::IntakeGoal goal;
+					intake_ac.sendGoal(goal);
+				}
 			}
-			//TODO remove test
-			else if(action_data["type"] == "elevator_actionlib_server")
+			else if(action_data["type"] == "shooter_actionlib_server")
 			{
-				if(!elevator_ac.waitForServer(ros::Duration(5))){
-					ROS_ERROR("Auto node - couldn't find elevator actionlib server");
+				if(!shooter_ac.waitForServer(ros::Duration(5))){
+					ROS_ERROR("Auto node - couldn't find shooter actionlib server");
 					auto_state = ERROR;
 					if(auto_state_pub_thread.joinable()){
 						auto_state_pub_thread.join();
 					}
 					return 1;
 				} //for some reason this is necessary, even if the server has been up and running for a while
-				behavior_actions::ElevatorGoal goal;
-				goal.setpoint_index = (int) action_data["goal"]["setpoint_index"];
-				elevator_ac.sendGoal(goal);
-				waitForActionlibServer(elevator_ac, 100, "elevator server thing");
+				behavior_actions::ShooterGoal goal;
+                                goal.mode = 0;
+				shooter_ac.sendGoal(goal);
+				waitForActionlibServer(shooter_ac, 100, "intake server");
 			}
 			else if(action_data["type"] == "path")
 			{

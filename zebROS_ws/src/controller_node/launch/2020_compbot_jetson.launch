@@ -57,6 +57,8 @@
 		<include file="$(find controller_node)/launch/fuse_odom.launch"/>
 	</group>
 
+	<include file="$(find controller_node)/launch/path_follower.launch"/>
+
 	<group ns="auto">
 		<node name="auto_node" pkg="behaviors" type="auto_node" output="screen"></node>
 		<rosparam file="$(find behaviors)/config/auto_mode_config.yaml" command="load"/>
