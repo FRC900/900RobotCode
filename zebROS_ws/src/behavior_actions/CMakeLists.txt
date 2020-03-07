@@ -52,6 +52,7 @@ add_message_files(
   FILES
   AutoMode.msg
   AutoState.msg
+  ShooterOffset.msg
 )
 
 ## Generate services in the 'srv' folder

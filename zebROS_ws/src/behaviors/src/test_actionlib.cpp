@@ -277,7 +277,7 @@ bool callClimber(int step)
 	}
 }
 
-bool callShooter()
+bool callShooter(int mode)
 {
 	//create client to call actionlib server
 	actionlib::SimpleActionClient<behavior_actions::ShooterAction> shooter_ac("/shooter/shooter_server", true);
@@ -291,6 +291,7 @@ bool callShooter()
 	ROS_INFO("Sending goal to shooter server.");
 	// send a goal to the action
 	behavior_actions::ShooterGoal goal;
+	goal.mode = mode;
 	shooter_ac.sendGoal(goal);
 
 	//wait for the action to return
@@ -393,7 +394,7 @@ bool callPath(double path_x_setpoint, double path_y_setpoint, double path_z_setp
 		return false;
 	}
 }
-bool callAlignToShoot()
+bool callAlignToShoot(int mode)
 {
 	actionlib::SimpleActionClient<behavior_actions::AlignToShootAction> align_to_shoot_ac("/align_to_shoot/align_to_shoot_server", true);
 
@@ -406,6 +407,7 @@ bool callAlignToShoot()
 
 	ROS_INFO("callAlignToShoot : Sending goal to the server.");
 	behavior_actions::AlignToShootGoal align_goal;
+	align_goal.mode = mode;
 	align_to_shoot_ac.sendGoal(align_goal);
 
 	//wait for the action to return
@@ -513,6 +515,7 @@ void mySigIntHandler(int sig)
 	//preempt all actionlib servers
 	ROS_WARN("Preempting all actionlib servers");
 	actionlib::SimpleActionClient<behavior_actions::IntakeAction>("/powercell_intake/powercell_intake_server", true).cancelGoalsAtAndBeforeTime(ros::Time::now());
+	actionlib::SimpleActionClient<behavior_actions::ShooterAction>("/shooter/shooter_server", true).cancelGoalsAtAndBeforeTime(ros::Time::now());
 
 	ROS_ERROR("Calling shutdown");
 	//stop this node
@@ -720,7 +723,10 @@ int main (int argc, char **argv)
 	}
 	else if(what_to_run == "shooter")
 	{
-		callShooter();
+		int mode;
+		std::cout << "Mode? (0-auto, 1-near, 2-far)\n";
+		std::cin >> mode;
+		callShooter(mode);
 	}
 	else if(what_to_run == "indexer")
 	{
@@ -744,7 +750,10 @@ int main (int argc, char **argv)
 	}
 	else if(what_to_run == "align_to_shoot")
 	{
-		callAlignToShoot();
+		int mode;
+		std::cout << "Mode? (0 = auto; 1+ = face straight ahead)\n";
+		std::cin >> mode;
+		callAlignToShoot(mode);
 	}
 	else
 	{
