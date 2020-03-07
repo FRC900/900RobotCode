@@ -284,6 +284,10 @@ class MatchStateListenerController :
 			data.setTest(msg->Test);
 
 			data.setBatteryVoltage(msg->BatteryVoltage);
+
+			data.setGetMatchTimeStatus(msg->getMatchTimeStatus);
+			data.setGetAllianceStationStatus(msg->getAllianceStationStatus);
+			data.setGetVinVoltageStatus(msg->getVinVoltageStatus);
 			command_buffer_.writeFromNonRT(data);
 		}
 };
