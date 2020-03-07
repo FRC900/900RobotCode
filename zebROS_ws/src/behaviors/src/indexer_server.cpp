@@ -34,19 +34,16 @@ class IndexerAction {
 		//clients to call controllers
 		ros::ServiceClient indexer_controller_client_; //create a ros client to send requests to the controller
 		ros::ServiceClient intake_controller_client_;
-		ros::ServiceClient disable_intake_forwards_client_; //used by updateIntakeDisable()
 
 		//clients for actionlib servers
 		actionlib::SimpleActionClient<behavior_actions::IntakeAction> ac_intake_; //only used for preempting the intake actionlib server
 
 		//subscribers
 		ros::Subscriber n_indexer_balls_sub_;
-		ros::Subscriber n_stored_balls_sub_;
 
 		//linebreak sensors
 		Linebreak intake_linebreak_{"intake_linebreak"};
 		Linebreak indexer_linebreak_{"indexer_linebreak"}; //just inside the entrance to the indexer
-		Linebreak indexer_front_linebreak{"indexer_front_linebreak"}; //rising edge triggered = indexer has control over this ball, intake has control of any balls directly behind it
 		Linebreak shooter_linebreak_{"shooter_linebreak"}; //just before the shooter
 
 		//variables to store if server was preempted_ or timed out. If either true, skip everything (if statements). If both false, we assume success.
@@ -56,9 +53,7 @@ class IndexerAction {
 
 		//other variables
 		std::atomic<int> n_indexer_balls_{3}; //balls anywhere in the indexer, default of 3
-		std::atomic<int> n_stored_balls_{3}; //properly stored balls (after the indexer linebreak, to ensure a gap)
 
-		std::atomic<bool> just_stored_new_ball_{false}; //set to true by the n stored balls callback, used by action INTAKE_ONE_BALL, which sets it to false upon using it
 
 		void checkPreemptedAndTimedOut(const std::string &activity)
 		{
@@ -77,58 +72,6 @@ class IndexerAction {
 		void numIndexerBallsCallback(const std_msgs::UInt8 &msg)
 		{
 			n_indexer_balls_ = msg.data;
-			updateIntakeDisable();
-		}
-
-		void numStoredBallsCallback(const std_msgs::UInt8 &msg)
-		{
-			int prev_n_stored_balls = n_stored_balls_;
-			n_stored_balls_ = msg.data;
-			if(prev_n_stored_balls < n_stored_balls_)
-			{
-				just_stored_new_ball_ = true;
-			}
-			updateIntakeDisable();
-		}
-
-		void updateIntakeDisable()
-		{
-			static bool disabled = false; //intake starts enabled
-
-			//disable the intake if there's a ball between the front of the indexer and the proper storage point (indexer linebreak) - meaning not enough gap
-			if(n_indexer_balls_ > n_stored_balls_)
-			{
-				if(!disabled){
-					//disable
-					std_srvs::SetBool srv;
-					srv.request.data = true; //disabled = true
-					if(!disable_intake_forwards_client_.call(srv))
-					{
-						ROS_ERROR("Indexer server - disabling intake forwards call to intake controller failed");
-						preempted_ = true;
-					}
-					disabled = true;
-				}
-			}
-			else //otherwise, the intake should be enabled
-			{
-				if(disabled){
-					//enable
-					std_srvs::SetBool srv;
-					srv.request.data = false; //disabled = false
-					if(!disable_intake_forwards_client_.call(srv))
-					{
-						ROS_ERROR("Indexer server - enabling intake forwards call to intake controller failed");
-						preempted_ = true;
-					}
-					disabled = false;
-					//if there's a ball in the intake, we better preempt the current indexer action and intake it, since the intake is about to shove a ball in the indexer.
-					//Since all balls are properly stored, the gap will be ensured
-					if(intake_linebreak_.triggered_){
-						preempted_ = true;
-					}//TODO might not need this if action INTAKE_ONE_BALL stops when the new ball causes a rising edge on the indexer gap linebreak
-				}
-			}
 		}
 
 
@@ -137,7 +80,7 @@ class IndexerAction {
 		{
 			ROS_INFO("Indexer server - going to position intake");
 
-			if (n_stored_balls_ > 0 && !indexer_linebreak_.triggered_ && !preempted_ && !timed_out_ && ros::ok()){ //note: going backwards only relevant for stored balls
+			if (n_indexer_balls_ > 0 && !indexer_linebreak_.triggered_ && !preempted_ && !timed_out_ && ros::ok()){
 				//set velocity to reverse
 				controllers_2020_msgs::IndexerSrv srv;
 				srv.request.indexer_velocity = -indexer_speed_; //TODO make sure negative means backward
@@ -239,23 +182,17 @@ class IndexerAction {
 				case POSITION_INTAKE: //go to position intake
                 {
 					ROS_INFO_STREAM("Going to position intake in indexer actionlib server");
-					if(n_stored_balls_ != n_indexer_balls_)
-					{
-						//then there are some improperly stored balls. To correctly get to position intake, we should do the INTAKE_ONE_BALL action to store those balls properly.
-						//To accomplish this, don't break out of this case, automatically go onto INTAKE_ONE_BALL
-					}
-					else if(!preempted_ && !timed_out_ && ros::ok())
+					if(!preempted_ && !timed_out_ && ros::ok())
 					{
 						goToPositionIntake();
-						break;
 					}
 				}
+					break;
 				case INTAKE_ONE_BALL:
                 { //braces here fix a cross-initialization error
 
 					ROS_INFO_STREAM("Intaking a ball in indexer actionlib server");
 
-					just_stored_new_ball_ = false; //we want to detect a new ball that got stored AFTER this action started
 
 					if(!preempted_ && !timed_out_ && ros::ok())
 					{
@@ -309,7 +246,6 @@ class IndexerAction {
 
 							controllers_2020_msgs::IntakeRollerSrv srv;
 							srv.request.percent_out = 0;
-							//srv.request.intake_arm_extend = false;
 							if(!intake_controller_client_.call(srv)){
 								ROS_ERROR("Indexer server - controller call to stop intake failed");
 							}
@@ -320,14 +256,6 @@ class IndexerAction {
 							ROS_INFO("Indexer server - successfully intaked the ball!");
 							break;
 						}
-
-						/* logic for if we stop as soon as rising edge on indexer linebreak
-						if(just_stored_new_ball_)
-						{
-							ROS_INFO("Indexer server - successfully intaked the ball!");
-							just_stored_new_ball_ = false;
-							break;
-						}*/
 
 						checkPreemptedAndTimedOut("waiting for ball to be fully intaked");
 						if(!preempted_ && !timed_out_){
@@ -340,10 +268,7 @@ class IndexerAction {
 					//go to positionIntake
 					if(!preempted_ && !timed_out_ && ros::ok())
 					{
-						if(n_stored_balls_ == n_indexer_balls_) //only back up the indexer if all balls are properly stored
-						{
-							goToPositionIntake();
-						}
+						goToPositionIntake();
 					}
 
 				}
@@ -413,7 +338,6 @@ class IndexerAction {
 
 			//set final state using client calls - if you did preempt handling before, put a check here so don't override that
 
-
 			//log result and set actionlib server state appropriately
 			behavior_actions::IndexerResult result;
 
@@ -441,7 +365,6 @@ class IndexerAction {
 		}
 
 
-
 	public:
 		//Constructor - create actionlib server; the executeCB function will run every time the actionlib server is called
 		IndexerAction(const std::string &name) :
@@ -458,11 +381,9 @@ class IndexerAction {
 			//initialize clients used to call controllers
 			indexer_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IndexerSrv>("/frcrobot_jetson/indexer_controller/indexer_command", false, service_connection_header);
 			intake_controller_client_ = nh_.serviceClient<controllers_2020_msgs::IntakeRollerSrv>("/frcrobot_jetson/intake_controller/intake_command", false, service_connection_header);
-			disable_intake_forwards_client_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/intake_controller/intake_disable", false, service_connection_header);
 
 			//initialize subscribers
 			n_indexer_balls_sub_ = nh_.subscribe("/num_indexer_powercells", 1, &IndexerAction::numIndexerBallsCallback, this);
-			n_stored_balls_sub_ = nh_.subscribe("/num_stored_powercells", 1, &IndexerAction::numStoredBallsCallback, this);
 		}
 
 		~IndexerAction(void)

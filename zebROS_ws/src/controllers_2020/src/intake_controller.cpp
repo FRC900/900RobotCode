@@ -61,10 +61,10 @@ namespace intake_controller
 
 		//if moving forwards was disabled by the indexer server, don't allow forward movement
 		double percent_out_cmd = *percent_out_cmd_buffer_.readFromRT();
-		if(*forward_disabled_.readFromRT() && percent_out_cmd > 0)
+		/*if(*forward_disabled_.readFromRT() && percent_out_cmd > 0)
 		{
 			percent_out_cmd = 0.0;
-		}
+		}*/
 
 		intake_joint_.setCommand(percent_out_cmd);
 		intake_arm_joint_.setCommand(arm_extend_double);

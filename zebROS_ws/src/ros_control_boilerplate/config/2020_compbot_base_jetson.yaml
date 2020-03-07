@@ -50,7 +50,6 @@ hardware_interface:
        - {name: compressor, type: compressor, pcm_id: 0}
 
        - {name: intake_linebreak, type: digital_input, local: false}
-       - {name: indexer_front_linebreak, type: digital_input, local: false}
        - {name: indexer_linebreak, type: digital_input, local: false}
        - {name: shooter_linebreak, type: digital_input, local: false}
 
