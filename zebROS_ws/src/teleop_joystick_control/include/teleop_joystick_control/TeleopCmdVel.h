@@ -74,7 +74,7 @@ class TeleopCmdVel
 			// of the slower settings. Use copysign to preserve the sign
 			// of the original input (keeps the direction correct)
 			double rotation = pow(rightStickX, config.rotation_pow);
-			rotation  = copysign(rotation, rightStickX);
+			rotation  = copysign(rotation, event.rightStickX);
 			rotation *= max_rot;
 
 			// Rate-limit changes in rotation
