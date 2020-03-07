@@ -1,33 +1,61 @@
 <?xml version="1.0"?>
 <launch>
-	<arg name="joy_or_key" default="joy" />
 
-	<group ns="joy0" unless="$(eval arg('joy_or_key')=='key')">
+	<arg name="joy_or_key" default="joy"/>
+	<arg name="button_box" default="true"/>
+
+	<group ns="button_box_joy" if="$(arg button_box)">
+
+		<node name="joy_node" pkg="joy" type="joy_node" output="screen">
+			<param name="dev" value="/dev/input/js1" unless="$(eval arg('joy_or_key')=='key')"/>
+			<param name="autorepeat_rate" type="double" value="100"/>
+			<param name="coalesce_interval" type="double" value="0.01"/>
+			<param name="deadzone" type="double" value="0.0"/>
+			<remap from="joy" to="/frcrobot_rio/button_box_states_raw"/>
+		</node>
+
+	</group>
+
+	<group ns="joy1" unless="$(eval arg('joy_or_key')=='key')">
+
 		<node name="joy_node" pkg="joy" type="joy_node" output="screen">
 			<param name="autorepeat_rate" type="double" value="100"/>
 			<param name="coalesce_interval" type="double" value="0.01"/>
 			<param name="deadzone" type="double" value="0.0"/>
 		</node>
+
 		<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
-			<remap from="joy_in" to="/joy0/joy" />
-			<remap from="joy_out" to="/frcrobot_rio/joystick_states_raw"/>
-			<rosparam command="load" file="$(find teleop_joystick_control)/config/joystick_remap.yaml"/>
-		</node>
-	</group>	
-	<group ns="joy1" if="$(eval arg('joy_or_key')=='two_joy')">
-		<node name="joy_node" pkg="joy" type="joy_node" output="screen">
-			<param name="dev" value="/dev/input/js1"/>
-			<param name="autorepeat_rate" type="double" value="100"/>
-			<param name="coalesce_interval" type="double" value="0.01"/>
-			<param name="deadzone" type="double" value="0.0"/>
-		</node>
-		<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
-			<remap from="joy_in" to="/joy1/joy" />
+			<remap from="joy_in" to="joy" />
 			<remap from="joy_out" to="/frcrobot_rio/joystick_states_raw1"/>
 			<rosparam command="load" file="$(find teleop_joystick_control)/config/joystick_remap.yaml"/>
 		</node>
-	</group>
-	<group ns="keyboard" if="$(eval arg('joy_or_key')=='key')">
-		<node name="keyboard_node" pkg="teleop_joystick_control" type="teleop_joints_keyboard" output="screen" launch-prefix="terminator -x $(env HOME)/2020RobotCode/zebROS_ws/ROSStandard.sh "></node>
+
 	</group>	
+
+	<group ns="joy2" if="$(eval arg('joy_or_key')=='two_joy')">
+
+		<node name="joy_node" pkg="joy" type="joy_node" output="screen">
+			<param name="dev" value="/dev/input/js1" unless="$(arg button_box)"/>
+			<param name="dev" value="/dev/input/js2" if="$(arg button_box)"/>
+			<param name="autorepeat_rate" type="double" value="100"/>
+			<param name="coalesce_interval" type="double" value="0.01"/>
+			<param name="deadzone" type="double" value="0.0"/>
+		</node>
+
+		<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
+			<remap from="joy_in" to="joy" />
+			<remap from="joy_out" to="/frcrobot_rio/joystick_states_raw2"/>
+			<rosparam command="load" file="$(find teleop_joystick_control)/config/joystick_remap.yaml"/>
+		</node>
+
+	</group>
+
+	<group ns="keyboard" if="$(eval arg('joy_or_key')=='key')">
+
+		<node name="keyboard_node" pkg="teleop_joystick_control" type="teleop_joints_keyboard" output="screen" launch-prefix="terminator -x $(env HOME)/2020RobotCode/zebROS_ws/ROSStandard.sh ">
+			<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw1"/>
+		</node>
+
+	</group>	
+
 </launch>

@@ -568,9 +568,8 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 			joysticks_.push_back(std::make_shared<frc::Joystick>(joystick_ids_[i]));
 			std::stringstream pub_name;
 			// TODO : maybe use pub_names instead, or joy id unconditionally?
-			pub_name << "joystick_states_raw";
-			if (num_joysticks_ > 1)
-				pub_name << joystick_ids_[i];
+			pub_name << "js";
+			pub_name << joystick_ids_[i];
 			realtime_pub_joysticks_.push_back(std::make_unique<realtime_tools::RealtimePublisher<sensor_msgs::Joy>>(root_nh, pub_name.str(), 1));
 		}
 		else

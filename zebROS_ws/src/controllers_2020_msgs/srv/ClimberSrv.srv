@@ -1,4 +1,4 @@
-float64 winch_set_point
+float64 winch_percent_out
 bool climber_deploy
 bool climber_elevator_brake
 ---

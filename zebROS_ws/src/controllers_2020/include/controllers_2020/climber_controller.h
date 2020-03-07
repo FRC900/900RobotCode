@@ -22,17 +22,17 @@ class ClimberCommand
 {
 	public:
 		ClimberCommand()
-			: winch_set_point_(0.0),
+			: winch_percent_out_(0.0),
 			  deploy_(false),
 			  brake_(false)
 		{}
-		ClimberCommand(double winch_set_point, bool deploy, bool brake)
+		ClimberCommand(double winch_percent_out, bool deploy, bool brake)
 		{
-			winch_set_point_ = winch_set_point;
+			winch_percent_out_ = winch_percent_out;
 			deploy_ = deploy;
 			brake_ = brake;
 		}
-		double winch_set_point_;
+		double winch_percent_out_;
 		bool deploy_;
 		bool brake_;
 };
@@ -57,7 +57,7 @@ class ClimberController : public controller_interface::MultiInterfaceController<
 			bool cmdService(controllers_2020_msgs::ClimberSrv::Request &req,
 							controllers_2020_msgs::ClimberSrv::Response &res);
         private:
-			talon_controllers::TalonMotionMagicCloseLoopControllerInterface winch_joint_; //TODO correct type?
+			talon_controllers::TalonPercentOutputControllerInterface winch_joint_; //TODO correct type?
 			hardware_interface::JointHandle deploy_joint_; //piston to deploy the climber
 			hardware_interface::JointHandle brake_joint_; //piston brake
 

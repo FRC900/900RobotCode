@@ -12,13 +12,14 @@ teleop_params:
     linebreak_debounce_iterations: 2 #Used in actionlib servers for intaking cargo and teleop_joystick_comp for detecting cargo
     drive_rate_limit_time: 200
     rotate_rate_limit_time: 150
+    climber_align_angle: -1.178097 # -3*pi/8 radians or -67.5 degrees 
+    climber_time_lock: 30
+    trigger_threshold: 0.5
+    stick_threshold: 0.5
 
 teleop_diagnostics_params:
-    climber_setpoint_rate: 6.28 #Rate of change in position in radians/second
-    climber_low_bound: 0.0
-    climber_high_bound: 1000.0
+    climber_percent_out: 0.6 
     shooter_setpoint_rate: 10.472 #Rate of change in angular velocity in radians/second^2 (100 rpm/second)
-    left_stick_trigger_point: 0.5
     turret_setpoint_rate: 0.6981 #Rate of change in position of turret in radians/second
     turret_angle_limit: 1.047 #Bilateral limit on turret angle in radians
     intake_setpoint_rate: 0.1 #Rate of change in intake percent out (percent/second)

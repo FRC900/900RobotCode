@@ -90,9 +90,17 @@ add_dependencies(teleop_joystick_comp_2020
 	${catkin_EXPORTED_TARGETS}
 	)
 
+add_executable(translate_button_box_data_node src/translate_button_box_data.cpp)
+target_link_libraries(translate_button_box_data_node
+	${catkin_LIBRARIES}
+	)
+
+add_dependencies(translate_button_box_data_node
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS}
+	)
+
 add_executable(translate_joystick_data_node src/translate_joystick_data.cpp)
-set_target_properties(translate_joystick_data_node PROPERTIES OUTPUT_NAME 
-	translate_joystick_data_node PREFIX "")
 target_link_libraries(translate_joystick_data_node
 	${catkin_LIBRARIES}
 	)

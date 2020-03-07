@@ -9,6 +9,7 @@
 
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="joy_or_key" default="joy" />
+	<arg name="button_box" default="true"/>
 	<arg name="static_map" default="True"/>
 	<arg name="record" default="false"/>
 	<arg name="primary_imu" default="ADI"/>
@@ -19,6 +20,7 @@
 	<group if="$(eval arg('hw_or_sim')=='sim')">
 		<include file="$(find controller_node)/launch/joysticks_sim.launch">
 			<arg name="joy_or_key" value="$(arg joy_or_key)" />
+			<arg name="button_box" value="$(arg button_box)" />
 		</include>
 	</group>
 
