@@ -13,6 +13,8 @@ from sensor_msgs.msg import Image
 from field_obj.msg import TFDetection, TFObject
 from cv_bridge import CvBridge, CvBridgeError
 
+import uuid
+
 bridge = CvBridge()
 
 category_index, detection_graph, sess, pub, pub_debug = None, None, None, None, None
@@ -104,6 +106,8 @@ def run_inference_for_single_image(msg):
 
     pub.publish(detection)
 
+    #hard_neg_mine(output_dict, image_np)
+
     vis(output_dict, image_np)
 
 def vis(output_dict, image_np):
@@ -118,9 +122,22 @@ def vis(output_dict, image_np):
                 use_normalized_coordinates=True,
                 line_thickness=4,
                 max_boxes_to_draw=50,
-                min_score_thresh=0.35,
+                min_score_thresh=min_confidence,
                 groundtruth_box_visualization_color='yellow')
         pub_debug.publish(bridge.cv2_to_imgmsg(image_np, encoding="rgb8"))
+
+
+def hard_neg_mine(output_dict, image_np):
+    for i in range(output_dict['num_detections']):
+        obj = TFObject()
+        obj.confidence = output_dict['detection_scores'][i]
+        if obj.confidence >= min_confidence:
+
+            filename = 'hard_neg_' + str(uuid.uuid4()) + '.png'
+            print "saving " + filename
+            cv2.imwrite(filename, cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR))
+            continue
+
 
 def main():
     global THIS_DIR
