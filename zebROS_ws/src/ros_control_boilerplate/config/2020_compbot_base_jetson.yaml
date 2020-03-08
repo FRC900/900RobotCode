@@ -122,7 +122,7 @@ climber_controller:
     type:  climber_controller_2020/ClimberController
     softlimit_offset_from_start: 10 #how much above the initial climber position to set the reverse soft limit 
     initial_up_offset: 180
-    initial_up_percent_out: 0.15
+    initial_up_percent_out: 0.3
     winch_joint: "winch"
     winch:
         joint: climber_winch_joint
@@ -140,7 +140,7 @@ indexer_controller:
         type: talon_controllers/TalonVelocityCloseLoopControllerInterface
         feedback_type: CTRE_MagEncoder_Absolute
         close_loop_values:
-            - {p: 0.0, i: 0.000, d: 0.0, f: 0.0, i_zone: 0}
+            - {p: 0.0, i: 0.000, d: 0.0, f: 10.0, i_zone: 0}
         invert_output: true 
         sensor_phase: false
         peak_output_forward: 1.0
