@@ -104,7 +104,7 @@ class TeleopCmdVel
 
 				vel.linear.x = rotatedJoyVector[1];
 				vel.linear.y = rotatedJoyVector[0];
-				vel.angular.z = rotation;
+				vel.angular.z = -rotation;
 			}
 
 			return vel;
