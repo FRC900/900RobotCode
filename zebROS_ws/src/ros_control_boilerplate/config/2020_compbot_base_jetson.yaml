@@ -121,6 +121,8 @@ shooter_controller:
 climber_controller:
     type:  climber_controller_2020/ClimberController
     softlimit_offset_from_start: 10 #how much above the initial climber position to set the reverse soft limit 
+    initial_up_offset: 180
+    initial_up_percent_out: 0.15
     winch_joint: "winch"
     winch:
         joint: climber_winch_joint

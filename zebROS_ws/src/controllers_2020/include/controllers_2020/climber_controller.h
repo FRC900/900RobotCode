@@ -65,6 +65,8 @@ class ClimberController : public controller_interface::MultiInterfaceController<
 			realtime_tools::RealtimeBuffer<ClimberCommand> cmd_buffer_;
 
 			double softlimit_offset_;
+			double initial_up_offset_;
+			double initial_up_percent_out_;
 
 }; //class
 
