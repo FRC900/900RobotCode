@@ -18,7 +18,7 @@ teleop_params:
     stick_threshold: 0.5
 
 teleop_diagnostics_params:
-    climber_percent_out_up: 0.1
+    climber_percent_out_up: 0.3
     climber_percent_out_down: -0.4
     shooter_setpoint_rate: 10.472 #Rate of change in angular velocity in radians/second^2 (100 rpm/second)
     turret_setpoint_rate: 0.6981 #Rate of change in position of turret in radians/second

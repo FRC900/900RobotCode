@@ -731,7 +731,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 						ROS_WARN_STREAM("Calling climber controller to release brake!");
 
 						//Set percent out
-						climber_controller_cmd.request.winch_percent_out = -diagnostics_config.climber_percent_out_down;
+						climber_controller_cmd.request.winch_percent_out = diagnostics_config.climber_percent_out_down;
 						ROS_WARN_STREAM("Calling climber controller with winch_percent_out = " << climber_controller_cmd.request.winch_percent_out);
 						climber_controller_client.call(climber_controller_cmd);
 					}
@@ -1030,7 +1030,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].directionDownPress)
 			{
 				//Set percent out
-				climber_controller_cmd.request.winch_percent_out = -diagnostics_config.climber_percent_out_down;
+				climber_controller_cmd.request.winch_percent_out = diagnostics_config.climber_percent_out_down;
 				ROS_WARN_STREAM("Calling climber controller with winch_percent_out = " << climber_controller_cmd.request.winch_percent_out);
 				climber_controller_client.call(climber_controller_cmd);
 			}
