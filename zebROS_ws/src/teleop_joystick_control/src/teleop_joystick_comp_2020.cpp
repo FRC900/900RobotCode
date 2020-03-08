@@ -227,7 +227,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 				ROS_WARN_STREAM("Calling climber controller to release brake!");
 
 				//Set percent out
-				climber_controller_cmd.request.winch_percent_out = diagnostics_config.climber_percent_out;
+				climber_controller_cmd.request.winch_percent_out = diagnostics_config.climber_percent_out_up;
 				ROS_WARN_STREAM("Calling climber controller with winch_percent_out = " << climber_controller_cmd.request.winch_percent_out);
 				climber_controller_client.call(climber_controller_cmd);
 			}
@@ -267,7 +267,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 				ROS_WARN_STREAM("Calling climber controller to release brake!");
 
 				//Set percent out
-				climber_controller_cmd.request.winch_percent_out = -diagnostics_config.climber_percent_out;
+				climber_controller_cmd.request.winch_percent_out = diagnostics_config.climber_percent_out_down;
 				ROS_WARN_STREAM("Calling climber controller with winch_percent_out = " << climber_controller_cmd.request.winch_percent_out);
 				climber_controller_client.call(climber_controller_cmd);
 			}
@@ -693,7 +693,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 						ROS_WARN_STREAM("Calling climber controller to release brake!");
 
 						//Set percent out
-						climber_controller_cmd.request.winch_percent_out = diagnostics_config.climber_percent_out;
+						climber_controller_cmd.request.winch_percent_out = diagnostics_config.climber_percent_out_up;
 						ROS_WARN_STREAM("Calling climber controller with winch_percent_out = " << climber_controller_cmd.request.winch_percent_out);
 						climber_controller_client.call(climber_controller_cmd);
 					}
@@ -731,7 +731,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 						ROS_WARN_STREAM("Calling climber controller to release brake!");
 
 						//Set percent out
-						climber_controller_cmd.request.winch_percent_out = -diagnostics_config.climber_percent_out;
+						climber_controller_cmd.request.winch_percent_out = -diagnostics_config.climber_percent_out_down;
 						ROS_WARN_STREAM("Calling climber controller with winch_percent_out = " << climber_controller_cmd.request.winch_percent_out);
 						climber_controller_client.call(climber_controller_cmd);
 					}
@@ -1011,7 +1011,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].directionUpPress)
 			{
 				//Set percent out
-				climber_controller_cmd.request.winch_percent_out = diagnostics_config.climber_percent_out;
+				climber_controller_cmd.request.winch_percent_out = diagnostics_config.climber_percent_out_up;
 				ROS_WARN_STREAM("Calling climber controller with winch_percent_out = " << climber_controller_cmd.request.winch_percent_out);
 				climber_controller_client.call(climber_controller_cmd);
 			}
@@ -1030,7 +1030,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].directionDownPress)
 			{
 				//Set percent out
-				climber_controller_cmd.request.winch_percent_out = -diagnostics_config.climber_percent_out;
+				climber_controller_cmd.request.winch_percent_out = -diagnostics_config.climber_percent_out_down;
 				ROS_WARN_STREAM("Calling climber controller with winch_percent_out = " << climber_controller_cmd.request.winch_percent_out);
 				climber_controller_client.call(climber_controller_cmd);
 			}
@@ -1143,9 +1143,13 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read climber_time_lock in teleop_joystick_comp");
 	}
 
-	if(!n_diagnostics_params.getParam("climber_percent_out", diagnostics_config.climber_percent_out))
+	if(!n_diagnostics_params.getParam("climber_percent_out_up", diagnostics_config.climber_percent_out_up))
 	{
-		ROS_ERROR("Could not read climber_setpoint_rate in teleop_joystick_comp");
+		ROS_ERROR("Could not read climber_percent_out_up in teleop_joystick_comp");
+	}
+	if(!n_diagnostics_params.getParam("climber_percent_out_down", diagnostics_config.climber_percent_out_down))
+	{
+		ROS_ERROR("Could not read climber_percent_out_down in teleop_joystick_comp");
 	}
 	if(!n_diagnostics_params.getParam("shooter_setpoint_rate", diagnostics_config.shooter_setpoint_rate))
 	{
