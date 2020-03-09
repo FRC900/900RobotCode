@@ -58,6 +58,15 @@ for topic, msg, t in bag.read_messages([match_topic]):
 
     if(m['Enabled'] == True and isEnabled == False):
         isEnabled = True
+        # There's a short disabled period between auto and teleop
+        # Combine that into one enabled period
+        if (len(disable_times) > 0):
+            elapsed_time = disable_times[-1] - enable_times[-1]
+            if (elapsed_time > 13) and (elapsed_time < 17) and ((this_time - disable_times[-1]) < 3) and (int(match_types[-1]) > 0):
+                disable_times.pop()
+                print 'Combining auto and teleop'
+                continue
+
         enable_times.append(this_time)
         match_numbers.append(str(m['matchNumber']))
         if match_numbers[-1] == 0:
@@ -73,7 +82,8 @@ for topic, msg, t in bag.read_messages([match_topic]):
     if(isEnabled == True and m['Enabled']==False):
         isEnabled = False
         disable_times.append(this_time)
-        print "Disable at " + str(disable_times[-1]) + " " + str(match_numbers[-1]) + " " + str(replay_numbers[-1]) + " " + str(event_names[-1])
+        elapsed_time = disable_times[-1] - enable_times[-1]
+        print "Disable at " + str(disable_times[-1]) + " elapsed = " + str(elapsed_time)
 
 # If we're still enabled at the end of the bag file, tag the last
 # message time as the end of the bag file to copy
@@ -85,33 +95,45 @@ if len(enable_times) != len(disable_times):
 mkdir_p('trimmed')
 mkdir_p('done')
 for i in range(len(enable_times)):
-    if (match_types[i] > 0):
-        elapsed_time = disable_times[i] - enable_times[i]
-        if (elapsed_time > 135) and (elapsed_time < 165):
-            #Script input
-            date_str = datetime.datetime.utcfromtimestamp(enable_times[i]).strftime("%Y%m%d_%H%M%S");
+    if int(match_types[i]) == 0:
+       continue
+    if int(match_numbers[i]) == 0:
+       continue
+    if int(replay_numbers[i]) == 0:
+        continue
+    if len(event_names[i]) == 0:
+        continue
 
-            # Replay 1 is the normal case of a match not being replayed - don't include that in the filename 
-            replay_str = ""
-            if (int(replay_numbers[i]) > 1):
-                replay_str = "R"+replay_numbers[i]
-            file_name = "match_"+matchType(match_types[i])+match_numbers[i]+replay_str+"_"+event_names[i]+"_"+date_str+".bag"
-            print(file_name)
-            print(enable_times[i])
-            print(disable_times[i])
-            print "Elapsed time = " + str(elapsed_time)
+    #Script input
+    date_str = datetime.datetime.utcfromtimestamp(enable_times[i]).strftime("%Y%m%d_%H%M%S");
 
-            if os.path.isfile(os.path.join('trimmed', file_name)):
-                print "Output file exists - exiting instead of overwriting"
-                sys.exit()
+    # Replay 1 is the normal case of a match not being replayed - don't include that in the filename 
+    replay_str = ""
+    if (int(replay_numbers[i]) > 1):
+        replay_str = "R"+replay_numbers[i]
+    if (len(match_numbers[i]) < 2):
+        match_numbers[i] = '0' + match_numbers[i]
+    file_name = "match_"+matchType(match_types[i])+match_numbers[i]+replay_str+"_"+event_names[i]+"_"+date_str+".bag"
+    print(file_name)
+    print('Enable at  ' + str(enable_times[i]) + " (or " + str(enable_times[i]-first_time) + "s)") 
+    print('Disable at ' + str(disable_times[i]) + " (or " + str(disable_times[i]-first_time) + "s)")
+    elapsed_time = disable_times[i] - enable_times[i]
+    print "Elapsed time = " + str(elapsed_time)
 
-            #Context output
-            print("Time of Enable: " + str(enable_times[i]) + " (or " + str(enable_times[i]-first_time) + "s)")
-            print("Match Number: " + str(match_numbers[i]))
-            print("Event Name: " + str(event_names[i]))
+    if os.path.isfile(os.path.join('trimmed', file_name)):
+        print "Output file exists - exiting instead of overwriting"
+        sys.exit()
 
-            sys_call = 'rosbag filter ' + bagfile_path + ' ' + os.path.join('trimmed', file_name) + ' \"t.to_sec() >= ' + str(enable_times[i] - 10.0) + ' and t.to_sec() <= ' + str(disable_times[i] + 10.0) + '\"'
-            print (sys_call)
-            os.system(sys_call)
+    #Context output
+    print("Time of Enable: " + str(enable_times[i]) + " (or " + str(enable_times[i]-first_time) + "s)")
+    print("Match Number: " + str(match_numbers[i]))
+    print("Event Name: " + str(event_names[i]))
+
+    sys_call = 'rosbag filter ' + bagfile_path + ' ' + os.path.join('trimmed', file_name) + ' \"t.to_sec() >= ' + str(enable_times[i] - 10.0) + ' and t.to_sec() <= ' + str(disable_times[i] + 10.0) + '\"'
+    print (sys_call)
+    os.system(sys_call)
+
+if len(enable_times) == 0:
+    print 'Note - robot not enabled in bag data'
 
 os.rename(bagfile_path, os.path.join('done', bagfile_path))

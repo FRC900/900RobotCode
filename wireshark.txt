@@ -1,0 +1,11 @@
+sudo apt install gnutls-bin
+wget https://github.com/wireshark/wireshark/archive/wireshark-2.6.12.tar.gz
+ tar -xzf wireshark-2.6.12.tar.gz 
+cd wireshark-wireshark-2.6.12
+sudo apt install libgcrypt20-dev qt5multimedia-dev libqt5svg5-dev libssh-dev libgnutls28-dev
+
+cmake -GNinja -DCUSTOM_PLUGIN_SRC_DIR="plugins/epan/base" .. && sudo ninja install
+cmake -GNinja -DCUSTOM_PLUGIN_SRC_DIR="plugins/epan/CTRE" .. && sudo ninja install
+
+sudo wireshark -dcan.subdissector=frc-can
+
