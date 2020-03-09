@@ -1,3 +1,10 @@
+# Script to process bag files from matches
+# The script parses match data to figure out enable/diable times
+# in the bag file. If there is valid match data for a given enabled
+# period, extraact the data from that time span into a separate bag
+# file.  
+# This automates the process of renaming generic bag files into ones
+# with informative names, including event name, match number and time/date
 import rospy
 import rosbag
 import datetime
