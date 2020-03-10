@@ -152,16 +152,16 @@ class PowerCellIntakeAction {
 				}
 			}
 
-			//set ending state of controller: arm up and roller motors stopped
-			arm_srv.request.intake_arm_extend = false;
-			roller_srv.request.percent_out = 0;
+			//set ending state of controller: roller motors stopped
+			/*arm_srv.request.intake_arm_extend = false;
 			if(!preempted_)
 			{
 				if(!intake_arm_controller_client_.call(arm_srv))
 				{
 					ROS_ERROR("%s: powercell intake controller call to arm failed when setting final state", action_name_.c_str());
 				}
-			}
+			}*/
+			roller_srv.request.percent_out = 0;
 			if(!intake_roller_controller_client_.call(roller_srv))
 			{
 				ROS_ERROR("%s: powercell intake controller call to roller failed when setting final state", action_name_.c_str());

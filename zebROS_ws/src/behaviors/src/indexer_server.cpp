@@ -92,8 +92,14 @@ class IndexerAction {
 
 				//keep going backwards until indexer linebreak is triggered (until ball right in front of intake)
 				ros::Rate r(10); //TODO config?
+				const double position_intake_start_time = ros::Time::now().toSec();
 				while (!indexer_linebreak_.triggered_ && !preempted_ && !timed_out_ && ros::ok())
 				{
+					if(ros::Time::now().toSec() - position_intake_start_time > position_intake_timeout_) {
+						ROS_ERROR("Indexer server - position intake timed out!");
+						timed_out_ = true;
+						break;
+					}
 					checkPreemptedAndTimedOut("going to position intake");
 					if(!preempted_ && !timed_out_){
 						r.sleep(); //sleep if we didn't preempt or timeout
@@ -132,8 +138,14 @@ class IndexerAction {
 
 				//keep going forwards until shooter linebreak is triggered (until ball right in front of shooter)
 				ros::Rate r(10); //TODO config?
+				const double position_shoot_start_time = ros::Time::now().toSec();
 				while (!shooter_linebreak_.triggered_ && !preempted_ && !timed_out_ && ros::ok())
 				{
+					if(ros::Time::now().toSec() - position_shoot_start_time > position_shoot_timeout_) {
+						ROS_ERROR("Indexer server - position shoot timed out!");
+						timed_out_ = true;
+						break;
+					}
 					checkPreemptedAndTimedOut("going to position shoot");
 					if(!preempted_ && !timed_out_){
 						r.sleep(); //sleep if we didn't preempt or timeout
@@ -386,6 +398,8 @@ class IndexerAction {
 		//config variables
 		double server_timeout_; //overall timeout for your server
 		double wait_for_server_timeout_; //timeout for waiting for other actionlib servers to become available before exiting this one
+		double position_intake_timeout_;
+		double position_shoot_timeout_;
 		double indexer_speed_;
 };
 
@@ -407,6 +421,14 @@ int main(int argc, char** argv) {
 	if (! nh_indexer.getParam("wait_for_server_timeout", indexer_action.wait_for_server_timeout_) ){
 		ROS_ERROR("Couldn't read wait_for_server_timeout in indexer server");
 		indexer_action.wait_for_server_timeout_ = 10;
+	}
+	if (! nh_indexer.getParam("position_intake_timeout", indexer_action.position_intake_timeout_) ){
+		ROS_ERROR("Couldn't read position_intake_timeout in indexer server");
+		indexer_action.position_intake_timeout_ = 2;
+	}
+	if (! nh_indexer.getParam("position_shoot_timeout", indexer_action.position_shoot_timeout_) ){
+		ROS_ERROR("Couldn't read position_shoot_timeout in indexer server");
+		indexer_action.position_shoot_timeout_ = 2;
 	}
 	if (! nh_indexer.getParam("indexer_speed", indexer_action.indexer_speed_) ){
 		ROS_ERROR("Couldn't read indexer_speed in indexer server");
