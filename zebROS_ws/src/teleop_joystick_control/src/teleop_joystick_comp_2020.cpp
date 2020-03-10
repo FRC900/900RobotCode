@@ -194,6 +194,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	}
 	if(button_box.leftRedRelease)
 	{
+		eject_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 
 	if(button_box.rightRedPress)
@@ -211,6 +212,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	}
 	if(button_box.rightRedRelease)
 	{
+		eject_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 
 	if(button_box.leftSwitchUpPress)
