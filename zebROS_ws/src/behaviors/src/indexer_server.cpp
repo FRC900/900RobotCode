@@ -251,7 +251,7 @@ class IndexerAction {
 							}
 						}
 
-						if(indexer_linebreak_.pulsed_)
+						if(indexer_linebreak_.rising_edge_happened_)
 						{
 							ROS_INFO("Indexer server - successfully intaked the ball!");
 							break;
@@ -263,13 +263,6 @@ class IndexerAction {
 						}
 					}
 
-					//NOTE: don't do this if doing the stop-as-soon-as-rising-edge-on-indexer-linebreak logic
-
-					//go to positionIntake
-					if(!preempted_ && !timed_out_ && ros::ok())
-					{
-						goToPositionIntake();
-					}
 
 				}
 					break;

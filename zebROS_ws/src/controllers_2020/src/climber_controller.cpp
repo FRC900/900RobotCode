@@ -76,7 +76,7 @@ namespace climber_controller_2020
 
 
 		//set value of motors
-		if(!went_up_at_start)
+		if(false/*!went_up_at_start*/) //if(false) guarantees we won't do the climber start sequence
 		{
 			if(winch_joint_.getPosition() < initial_up_offset_)
 			{

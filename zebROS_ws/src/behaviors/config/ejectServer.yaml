@@ -1,5 +1,5 @@
 eject_actionlib_params:
-    server_timeout: 10
+    server_timeout: 5
     wait_for_server_timeout: 10
-    intake_percent_out: -0.5 #TODO figure out
+    intake_percent_out: -0.7 #TODO figure out
     indexer_velocity: -4.0 #TODO not sure what this should be
