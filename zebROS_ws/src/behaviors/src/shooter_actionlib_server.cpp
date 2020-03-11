@@ -125,10 +125,10 @@ class ShooterAction {
 			/* commented out b/c we want to leave the light on all the time for now
 			std_msgs::Float64 msg;
 			if(turn_on) {
-				msg.data = 0.0; //0 is on so the default is on
+				msg.data = 1.0;
 			}
 			else {
-				msg.data = 1.0;
+				msg.data = 0.0;
 			}
 			green_light_pub_.publish(msg);
 			*/
