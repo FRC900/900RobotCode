@@ -202,3 +202,5 @@ install_package("libgpg-error-dev");
 install_package("libassuan-dev");
 
 install_package("gperftools-dev");
+
+install_package("python-psutil");
