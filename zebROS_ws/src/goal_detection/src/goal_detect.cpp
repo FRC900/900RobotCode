@@ -97,7 +97,10 @@ namespace goal_detection
 				if (!camera_mutex_.try_lock())  // If the previous message is still being
 					return;                     // processed, drop this one
 				if (!camera_info_valid_)        // Nothing in here works without valid camera info
+				{
+					camera_mutex_.unlock();
 					return;
+				}
 				cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
 				cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
 
@@ -120,10 +123,12 @@ namespace goal_detection
 				gd_.findTargets(cvFrame->image, cvDepth->image, TEST_TARGET_2020, model);
 				std::vector< GoalFound > gfd_test = gd_.return_found();
 
+#if 0
 				std::vector< GoalFound > gfd;
 				gfd.reserve( gfd_power_port.size() + gfd_loading_bay.size() + gfd_test.size() );
 				gfd.insert( gfd.end(), gfd_power_port.begin(), gfd_power_port.end() );
 				gfd.insert( gfd.end(), gfd_loading_bay.begin(), gfd_loading_bay.end() );
+#endif
 
 				field_obj::Detection gd_msg;
 

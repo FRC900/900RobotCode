@@ -1,6 +1,7 @@
 # params/common_yaml
 # Common parameters to Stereolabs ZED and ZED mini cameras
 ---
+
 # Dynamic parameters cannot have a namespace
 brightness:                 3                                   # Dynamic
 contrast:                   4                                   # Dynamic
@@ -9,12 +10,13 @@ saturation:                 4                                   # Dynamic
 sharpness:                  4                                   # Dynamic
 gamma:                      8                                   # Dynamic - Requires SDK >=v3.1
 auto_exposure_gain:         false                               # Dynamic
-gain:                       40                                  # Dynamic - works only if `auto_exposure_gain` is false
-exposure:                   40                                  # Dynamic - works only if `auto_exposure_gain` is false
+gain:                       15                                  # Dynamic - works only if `auto_exposure_gain` is false
+exposure:                   25                                  # Dynamic - works only if `auto_exposure_gain` is false
 auto_whitebalance:          true                                # Dynamic
 whitebalance_temperature:   42                                  # Dynamic - works only if `auto_whitebalance` is false
 depth_confidence:           50                                  # Dynamic
-pub_frame_rate:             60.0                                # Dynamic - frequency of publishing of video and depth data
+depth_texture_conf:         100                                 # Dynamic
+pub_frame_rate:             30.0                                # Dynamic - frequency of publishing of video and depth data
 point_cloud_freq:           15.0                                # Dynamic - frequency of the pointcloud publishing (equal or less to `frame_rate` value)
 
 general:
@@ -22,7 +24,7 @@ general:
     zed_id:                     0
     serial_number:              0
     resolution:                 2                               # '0': HD2K, '1': HD1080, '2': HD720, '3': VGA
-    frame_rate:                 60
+    grab_frame_rate:            30                              # Frequency of frame grabbing for internal SDK operations
     gpu_id:                     -1
     base_frame:                 'base_link'                     # must be equal to the frame_id used in the URDF file
     verbose:                    true
@@ -31,8 +33,8 @@ general:
     camera_flip:                false
 
 video:
-     img_downsample_factor:      1.0                             # Resample factor for images [0.01,1.0] The SDK works with native image sizes, but publishes rescaled image.
-     extrinsic_in_camera_frame:  true                            # if `false` extrinsic parameter in `camera_info` will use ROS native frame (X FORWARD, Z UP) instead of the camera frame (Z FORWARD, Y DOWN) [`true` use old behavior as for version < v3.1]
+    img_downsample_factor:      1.0                             # Resample factor for images [0.01,1.0] The SDK works with native image sizes, but publishes rescaled image.
+    extrinsic_in_camera_frame:  true                            # if `false` extrinsic parameter in `camera_info` will use ROS native frame (X FORWARD, Z UP) instead of the camera frame (Z FORWARD, Y DOWN) [`true` use old behavior as for version < v3.1]
 
 depth:
     quality:                    1                               # '0': NONE, '1': PERFORMANCE, '2': QUALITY, '3': ULTRA
@@ -44,10 +46,9 @@ depth:
 pos_tracking:
     publish_tf:                 false                           # publish `odom -> base_link` TF
     publish_map_tf:             false                           # publish `map -> odom` TF
-    world_frame:                'map'                           # the reference fixed frame (same as `map_frame` or `odometry_frame`)
     map_frame:                  'map'
     odometry_frame:             'odom'
-    odometry_memory_db_path:    ''
+    area_memory_db_path:        ''
     area_memory:                true                            # Enable to detect loop closure
     floor_alignment:            false                           # Enable to automatically calculate camera/floor offset
     initial_base_pose:          [0.0,0.0,0.0, 0.0,0.0,0.0]      # Initial position of the `base_frame` -> [X, Y, Z, R, P, Y]
@@ -62,4 +63,5 @@ mapping:
     resolution:                 0.05                            # maps resolution in meters [0.01f, 0.2f]
     max_mapping_range:          -1                              # maximum depth range while mapping in meters (-1 for automatic calculation) [2.0, 20.0]
     fused_pointcloud_freq:      1.0                             # frequency of the publishing of the fused colored point cloud
+
 
