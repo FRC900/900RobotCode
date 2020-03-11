@@ -367,11 +367,11 @@ class AlignToShootAction
 				}
 			}
 
+			const double start_turret_time = ros::Time::now().toSec();
 			bool turret_timed_out = false; //This determines if this service call timed out, not if the entire server timed out
 			//if necessary, run a loop to wait for the controller to finish
 			while (!preempted_ && !timed_out_ && !turret_timed_out && ros::ok())
 			{
-				double start_turret_time = ros::Time::now().toSec();
 				//check preempted_
 				if (as_.isPreemptRequested() || !ros::ok())
 				{
