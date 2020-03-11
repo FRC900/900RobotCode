@@ -78,7 +78,7 @@ namespace shooter_controller
         if(ready_to_shoot_pub_->trylock())
         {
             auto &m = ready_to_shoot_pub_->msg_;
-            if(((ros::Time::now() - last_command_time_).toSec() > time_to_raise_hood_) &&
+            if(/*((ros::Time::now() - last_command_time_).toSec() > time_to_raise_hood_) &&*/
                     fabs(shooter_joint_.getSpeed() - shooter_cmd.set_velocity_) < speed_threshhold_ &&
                     fabs(shooter_cmd.set_velocity_) > 1e-6)
             {

@@ -1,7 +1,7 @@
 actionlib_shooter_params:
     server_timeout: 10
     wait_for_server_timeout: 1
-    wait_for_ready_timeout: 1.0
+    wait_for_ready_timeout: 10.0
     get_speed_timeout: 1 #waiting for the ZED to detect something
     hood_threshold: 10.0 #if the distance > 10, hood is not down
     hood_up_table: 
