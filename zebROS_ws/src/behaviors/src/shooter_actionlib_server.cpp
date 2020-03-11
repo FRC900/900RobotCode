@@ -316,7 +316,8 @@ class ShooterAction {
 					}
 				}
 				//feed ball into the shooter
-				if(!preempted_ && !timed_out_ && ros::ok())
+				//wait for the align to succeed before calling the indexer
+				while(!preempted_ && !timed_out_ && ros::ok())
 				{
 					//check if the turret align finished
 					std::string align_state = ac_align_.getState().toString();
@@ -330,6 +331,16 @@ class ShooterAction {
 						//wait for actionlib server
 						waitForActionlibServer(ac_indexer_, 30, "calling indexer server", true); //method defined below. Args: action client, timeout in sec, description of activity
 							//note: last arg is ignore_preempt, we want to wait for the current ball to finish shooting when the shooter is preempted - so don't stop waiting if we get preempted
+						break;
+					}
+					else if(as_.isPreemptRequested() || !ros::ok()) {
+						ROS_ERROR_STREAM(action_name_ << ": preempt while waiting for align to succeed so we can call the indexer");
+						preempted_ = true;
+					}
+					//check timed out
+					else if (ros::Time::now().toSec() - start_time_ > server_timeout_ || ros::Time::now().toSec() - start_wait_for_ready_time > wait_for_ready_timeout_) {
+						ROS_ERROR_STREAM(action_name_ << ": timed out while waiting for align to succeed so we can call the indexer");
+						timed_out_ = true;
 					}
 					else {
 						r.sleep();
