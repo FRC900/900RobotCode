@@ -63,7 +63,7 @@ while [[ $# -gt 0 ]] ; do
     -u|--update-links-only)
         UPDATE_LINKS_ONLY=1
         shift
-	;;
+    ;;
     *) # unknown option
         POSITIONAL+=("$1") # save it in an array for later
         shift # past argument
@@ -87,11 +87,11 @@ update_links() {
     ssh $ROBORIO_ADDR "rm $RIO_CLONE_LOCATION && \
         ln -s $RIO_ENV_LOCATION $RIO_CLONE_LOCATION"
 
-	for i in "${JETSON_ADDR[@]}"
-	do
-		ssh $i "rm $JETSON_CLONE_LOCATION && \
-			ln -s $JETSON_ENV_LOCATION $JETSON_CLONE_LOCATION"
-	done
+    for i in "${JETSON_ADDR[@]}"
+    do
+        ssh $i "rm $JETSON_CLONE_LOCATION && \
+            ln -s $JETSON_ENV_LOCATION $JETSON_CLONE_LOCATION"
+    done
     echo "Symlinks updated."
 }
 
@@ -125,14 +125,14 @@ echo "Checking time synchronization..."
 check_clockdiff "$ROBORIO_ADDR" "roboRIO"
 for i in "${JETSON_ADDR[@]}"
 do
-	check_clockdiff "$i" "Jetson.$i"
+    check_clockdiff "$i" "Jetson.$i"
 done
 echo "Time synchronized."
 
 echo "Killing code on remotes "
 for i in "${JETSON_ADDR[@]}"
 do
-	echo ubuntu | ssh -tt ubuntu@$i "sudo /home/ubuntu/2020RobotCode/zebROS_ws/kill_ros_.sh"
+    echo ubuntu | ssh -tt ubuntu@$i "sudo /home/ubuntu/2020RobotCode/zebROS_ws/kill_ros_.sh"
 done
 echo "ROS Killed on Jetson"
 
@@ -140,30 +140,30 @@ echo "ROS Killed on Jetson"
 echo "Synchronizing local changes TO $INSTALL_ENV environment."
 for i in "${JETSON_ADDR[@]}"
 do
-	scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $i:$JETSON_ROS_CODE_LOCATION
+    scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $i:$JETSON_ROS_CODE_LOCATION
 done
 scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $ROBORIO_ADDR:$RIO_ROS_CODE_LOCATION
 
 # If two-way syncing is enabled, copy newer files from the Jetson(s)
 # to the dev laptop
 if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
-	echo "Synchronizing remote changes FROM $INSTALL_ENV environment."
-	for i in "${JETSON_ADDR[@]}"
-	do
-		rsync -avzru --ignore-times --exclude '.git' --exclude 'zebROS_ws/build*' \
-			--exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' --exclude 'zebROS_ws/logs*' \
-			--exclude '*~' --exclude '*.sw[op]'  --exclude '*CMakeFiles*' \
-			--exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2/documents' --exclude 'build' \
-			--exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
-			--exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
-			--exclude 'desmos_js' \
-			$i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/
-		if [ $? -ne 0 ]; then
-			echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
-			exit 1
-		fi
-	done
-	echo "Synchronization from Jetson complete"
+    echo "Synchronizing remote changes FROM $INSTALL_ENV environment."
+    for i in "${JETSON_ADDR[@]}"
+    do
+        rsync -avzru --ignore-times --exclude '.git' --exclude 'zebROS_ws/build*' \
+            --exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' --exclude 'zebROS_ws/logs*' \
+            --exclude '*~' --exclude '*.sw[op]'  --exclude '*CMakeFiles*' \
+            --exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2/documents' --exclude 'build' \
+            --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
+            --exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
+            --exclude 'desmos_js' \
+            $i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/
+        if [ $? -ne 0 ]; then
+            echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
+            exit 1
+        fi
+    done
+    echo "Synchronization from Jetson complete"
 fi
 
 # Copy from laptop to jetson.  Make it an actual sync - don't ignore
@@ -172,18 +172,18 @@ fi
 # versions of code
 for i in "${JETSON_ADDR[@]}"
 do
-	rsync -avzr $RSYNC_OPTIONS --ignore-times --exclude '.git' --exclude 'zebROS_ws/build*' \
-		--exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' --exclude 'zebROS_ws/logs*' \
-		--exclude '*~' --exclude '*.sw[op]' --exclude '*CMakeFiles*' \
-		--exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2/documents' --exclude 'build' \
-		--exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
-		--exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
-		--exclude 'desmos_js' \
-		$LOCAL_CLONE_LOCATION/ $i:$JETSON_ENV_LOCATION/
-	if [ $? -ne 0 ]; then
-		echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"
-		exit 1
-	fi
+    rsync -avzr $RSYNC_OPTIONS --ignore-times --exclude '.git' --exclude 'zebROS_ws/build*' \
+        --exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' --exclude 'zebROS_ws/logs*' \
+        --exclude '*~' --exclude '*.sw[op]' --exclude '*CMakeFiles*' \
+        --exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2/documents' --exclude 'build' \
+        --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
+        --exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
+        --exclude 'desmos_js' \
+        $LOCAL_CLONE_LOCATION/ $i:$JETSON_ENV_LOCATION/
+    if [ $? -ne 0 ]; then
+        echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"
+        exit 1
+    fi
 done
 echo "Synchronization to Jetson complete"
 
@@ -196,13 +196,13 @@ RIO_BUILD_PROCESS=$!
 JETSON_BUILD_PROCESSES=()
 for i in "${JETSON_ADDR[@]}"
 do
-	echo "Starting Jetson $i native build" 
-	(
-		ssh -XC $i terminator -T \"Jetson $i\" -x "$JETSON_CLONE_LOCATION/zebROS_ws/native_build.sh || \
-		     	                        read -p 'Jetson Build FAILED - press ENTER to close window'" && \
-		echo "Jetson $i native build complete"
-	) &
-	JETSON_BUILD_PROCESSES+=($!)
+    echo "Starting Jetson $i native build" 
+    (
+        ssh -XC $i terminator -T \"Jetson $i\" -x "$JETSON_CLONE_LOCATION/zebROS_ws/native_build.sh || \
+                                         read -p 'Jetson Build FAILED - press ENTER to close window'" && \
+        echo "Jetson $i native build complete"
+    ) &
+    JETSON_BUILD_PROCESSES+=($!)
 done
 
 # Capture return code from Rio build processes
@@ -218,28 +218,28 @@ echo " ... RIO_BUILD_PROCESS $RIO_BUILD_PROCESS returned $RIO_RC"
 JETSON_RCS=()
 for i in "${JETSON_BUILD_PROCESSES[@]}"
 do
-	echo "Waiting for JETSON_BUILD_PROCESS $i"
-	wait $i
-	JETSON_RC=$?
-	JETSON_RCS+=($JETSON_RC)
-	echo " ... JETSON_BUILD_PROCESS $i returned $JETSON_RC"
+    echo "Waiting for JETSON_BUILD_PROCESS $i"
+    wait $i
+    JETSON_RC=$?
+    JETSON_RCS+=($JETSON_RC)
+    echo " ... JETSON_BUILD_PROCESS $i returned $JETSON_RC"
 done
 
 # Print diagnostic info after all builds / deploys
 # have run their course to make errors easier to see
 EXIT_FAIL=0
 if [ $RIO_RC -ne 0 ] ; then
-	echo -e "Rio build/deploy \e[1m\e[31mFAILED\e[0m"
-	EXIT_FAIL=1
+    echo -e "Rio build/deploy \e[1m\e[31mFAILED\e[0m"
+    EXIT_FAIL=1
 fi
 
 # JETSON_RCS will be the return code for terminator
 for i in "${JETSON_RCS[@]}"
 do
-	if [ $i -ne 0 ] ; then
-		echo -e "Jetson build/deploy \e[1m\e[31mFAILED\e[0m"
-		EXIT_FAIL=1
-	fi
+    if [ $i -ne 0 ] ; then
+        echo -e "Jetson build/deploy \e[1m\e[31mFAILED\e[0m"
+        EXIT_FAIL=1
+    fi
 done
 
 # Also check the text in .native_build.status on each
@@ -247,15 +247,15 @@ done
 # This is the more likely failure mode - compile errors, etc
 for i in "${JETSON_ADDR[@]}"
 do
-	ssh -C $i cat $JETSON_ROS_CODE_LOCATION/.native_build.status | grep -q SUCCESS
-	if [ $? -ne 0 ] ; then
-		echo -e "Jetson native_build \e[1m\e[31mFAILED\e[0m"
-		EXIT_FAIL=1
-	fi
+    ssh -C $i cat $JETSON_ROS_CODE_LOCATION/.native_build.status | grep -q SUCCESS
+    if [ $? -ne 0 ] ; then
+        echo -e "Jetson native_build \e[1m\e[31mFAILED\e[0m"
+        EXIT_FAIL=1
+    fi
 done
 
 if [ $EXIT_FAIL -ne 0 ] ; then
-	exit 1
+    exit 1
 fi
 
 update_links
