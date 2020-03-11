@@ -42,7 +42,7 @@ namespace intake_controller
 
     void IntakeController::starting(const ros::Time &/*time*/) {
         //give command buffer(s) an initial value
-		arm_extend_cmd_buffer_.writeFromNonRT(false);
+		arm_extend_cmd_buffer_.writeFromNonRT(true);
 		percent_out_cmd_buffer_.writeFromNonRT(0.0);
 
 		forward_disabled_.writeFromNonRT(false);
