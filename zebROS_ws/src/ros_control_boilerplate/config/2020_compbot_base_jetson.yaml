@@ -27,8 +27,8 @@ hardware_interface:
        - {name: intake_arm_joint, type: solenoid, local_hardware: false, local_update: true}
        - {name: intake_joint, type: can_talon_srx, can_id: 33, local: true}
 
-         # - {name: shooter_joint, type: can_talon_srx, can_id: 32, local: true}
-         # - {name: shooter_hood_joint, type: solenoid, local_hardware: false, local_update: true}
+       - {name: shooter_joint, type: can_talon_srx, can_id: 32, local: true}
+       - {name: shooter_hood_joint, type: solenoid, local_hardware: false, local_update: true}
 
        - {name: climber_winch_joint, type: can_talon_srx, can_id: 40, local: true} #TODO fix can id
        - {name: climber_deploy_joint, type: double_solenoid, local_hardware: false, local_update: true}
@@ -140,7 +140,7 @@ indexer_controller:
         type: talon_controllers/TalonVelocityCloseLoopControllerInterface
         feedback_type: CTRE_MagEncoder_Absolute
         close_loop_values:
-            - {p: 0.0, i: 0.000, d: 0.0, f: 10.0, i_zone: 0}
+            - {p: 0.0, i: 0.000, d: 0.0, f: 5.0, i_zone: 0}
         invert_output: true 
         sensor_phase: false
         peak_output_forward: 1.0
