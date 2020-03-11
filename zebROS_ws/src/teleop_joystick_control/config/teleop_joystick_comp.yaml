@@ -16,13 +16,15 @@ teleop_params:
     climber_time_lock: 30
     trigger_threshold: 0.5
     stick_threshold: 0.5
-
-teleop_diagnostics_params:
+    shooter_turret_offset_rate: 0.0333 #Converts to ~1ft/second on the face of the goal from a 30ft range
+    shooter_speed_offset_rate: 10.0 #TODO Completely arbitrary units, needs tuning
+    control_panel_increment: 0.125 #Number of control panel rotations to increment the control panel
     climber_percent_out_up: 0.3
     climber_percent_out_down: -0.4
+
+teleop_diagnostics_params:
     shooter_setpoint_rate: 10.472 #Rate of change in angular velocity in radians/second^2 (100 rpm/second)
     turret_setpoint_rate: 0.6981 #Rate of change in position of turret in radians/second
     turret_angle_limit: 1.047 #Bilateral limit on turret angle in radians
     intake_setpoint_rate: 0.1 #Rate of change in intake percent out (percent/second)
     indexer_setpoint_rate: 10.472 #Rate of change in indexer angular velocity in radians/second^2 (100 rpm/second)
-    control_panel_increment: 0.125 #Number of control panel rotations to increment the control panel

@@ -36,6 +36,7 @@ hardware_interface:
        - {name: intake_linebreak, type: digital_input, dio_channel: 0, invert: true, local: true}
        - {name: indexer_linebreak, type: digital_input, dio_channel: 2, invert: true, local: true}
        - {name: shooter_linebreak, type: digital_input, dio_channel: 3, invert: true, local: true}
+       - {name: green_led, type: digital_output, dio_channel: 4, local: true}
 
        - {name: navx_mxp, type: navX, frame_id: navx, id: 0, local: true}
        - {name: joystick, type: joystick, id: 0, local: true}
@@ -45,7 +46,6 @@ hardware_interface:
        - {name: joystick_rumble, type: rumble, rumble_port: 2}
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
-       - {name: green_led, local: true, type: digital_output, dio_channel: 4}
          
 # Create controllers for each joint
 #

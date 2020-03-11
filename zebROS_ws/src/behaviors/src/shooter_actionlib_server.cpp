@@ -601,6 +601,7 @@ class ShooterAction {
 		//subscribers
 		ready_to_shoot_sub_ = nh_.subscribe("/frcrobot_jetson/shooter_controller/ready_to_shoot", 5, &ShooterAction::shooterReadyCB, this);
 		goal_sub_ = nh_.subscribe("/goal_detection/goal_detect_msg", 5, &ShooterAction::goalDetectionCB, this);
+		shooter_offset_sub_ = nh_.subscribe("/teleop/teleop_shooter_offsets", 5, &ShooterAction::shooterOffsetCB, this);
 
 		//publish thread for if in range
 		in_range_pub_thread_ = std::thread(std::bind(&ShooterAction::publishInRangeThread, this));
