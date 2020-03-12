@@ -160,7 +160,9 @@
 	</include>
         <!-- <include file="$(find controller_node)/launch/multiflex_example.launch" />-->
 
+		<!--
 	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
+-->
 <!--
 		<rosparam file="$(find teleop_joystick_control)/config/goal_angles.yaml" command="load"/>
 

@@ -177,9 +177,16 @@ class ShooterAction {
 				//obtain distance via trig
 				const double distance = std::hypot(transformed_goal_pos.point.x, transformed_goal_pos.point.y);
 
-				if(distance > max_dist_ || distance < min_dist_)
+				if(distance > max_dist_)
+				{
+					ROS_ERROR_STREAM("Shooter server - farther than max dist (" << max_dist_ << "), can't shoot");
 					return false;
-
+				}
+				if(distance < min_dist_)
+				{
+					ROS_ERROR_STREAM("Shooter server - closer than min dist (" << min_dist_ << "), can't shoot");
+					return false;
+				}
 				//obtain speed and hood values
 				hood_extended = distance > hood_threshold_;
 				if(hood_extended)
@@ -188,6 +195,7 @@ class ShooterAction {
 					shooter_speed = lerpTable(hood_down_table_, distance);
 			}
 			else {
+				ROS_ERROR("Shooter server - couldn't find a goal in getHoodAndVelocity()");
 				return false; //if didn't find a goal, return false
 			}
 
@@ -255,7 +263,7 @@ class ShooterAction {
 					//run a while loop in case the ZED takes its sweet time detecting a goal
 					const double get_speed_start_time = ros::Time::now().toSec();
 					bool got_speed = false;
-					while(!timed_out_ && !preempted_ && ros::ok())
+					while(!timed_out_ && !preempted_ && ros::ok() && !got_speed)
 					{
 						got_speed = getHoodAndVelocity(shooter_hood_raise, shooter_velocity);
 						if(as_.isPreemptRequested() || !ros::ok())

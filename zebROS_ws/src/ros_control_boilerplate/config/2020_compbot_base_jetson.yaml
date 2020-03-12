@@ -109,7 +109,7 @@ shooter_controller:
         feedback_type: IntegratedSensor
         close_loop_values:
             - {p: 0.06, i: 0.000, d: 0.0, f: 0.047, i_zone: 0}
-        invert_output: true
+        invert_output: false 
         sensor_phase: false
         peak_output_forward: 1.0
         peak_output_reverse: -1.0
@@ -117,6 +117,7 @@ shooter_controller:
         nominal_output_reverse: 0.0
         voltage_compensation_enable: true
         dynamic_reconfigure: True
+        neutral_mode: Coast
 
 climber_controller:
     type:  climber_controller_2020/ClimberController
@@ -155,8 +156,8 @@ turret_controller:
     type: turret_controller/TurretController
     turret_joint: 'turret'
     turret_zero_timeout: 5.0
-    turret_zero_percent_output: -0.2
-    turret_zero_angle: -0.5472
+    turret_zero_percent_output: -0.4
+    turret_zero_angle: -0.3434
 
     turret: #starts as a percent out controller then switches to motion magic after zeroing
         joint: turret_joint
@@ -164,7 +165,7 @@ turret_controller:
         close_loop_values:
             - {p: 2.8, i: 0.000, d: 0.0, f: 5.0, i_zone: 0} #tuned for the cart
         invert_output: false
-        sensor_phase: true
+        sensor_phase: false
         peak_output_forward: 1.0
         peak_output_reverse: -1.0
         nominal_output_forward: 0.1
@@ -177,11 +178,11 @@ turret_controller:
         limit_switch_local_forward_normal: "NormallyOpen"
         limit_switch_local_reverse_source: "FeedbackConnector"
         limit_switch_local_reverse_normal: "NormallyOpen"
-        softlimit_forward_threshold: 0.2
+        softlimit_forward_threshold: 0.1
         softlimit_forward_enable: true
-        softlimit_reverse_threshold: -0.45
+        softlimit_reverse_threshold: -0.35
         softlimit_reverse_enable: true
-        conversion_factor: 0.577  # Range of turret motion = pi/2 radians = 0.907 motor units. 0.907 / (pi/2) = 0.577
+        conversion_factor: 1.74  # Range of turret motion = pi/2 radians = 0.907 motor units. 0.907 / (pi/2) = 0.577
 
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal
