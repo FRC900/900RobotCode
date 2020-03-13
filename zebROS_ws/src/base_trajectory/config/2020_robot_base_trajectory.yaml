@@ -1,0 +1,44 @@
+
+base_trajectory:
+    # maximum error for each segment when parameterizing spline arclength (meters)
+    seg_length_epsilon: .0001
+
+    # equal-spaced arc length distance sampled from parameterized spline (meters)
+    dist_between_arc_lengths: 0.03
+    # error tolerance for above (meters)
+    dist_between_arc_lengths_epsilon: 0.0025
+
+    # multiplier to prev distance for picking midpoint of next distance searched in arc length subdivision
+    mid_time_inflation: 1.25
+
+    # spacing of waypoints along final generated path (meters)
+    path_dist_between_arc_lengths: 0.30
+    # error tolerance for final path waypoint spacing (meters)
+    path_dist_between_arc_lengths_epsilon: 0.01
+
+    # RPROP initial deltaCost value
+    initial_delta_cost_epsilon: 0.05
+
+    # RPROP minimum deltaCost value
+    min_delta_cost_epsilon: 0.005
+
+    # RPROP initial optimization value change
+    initialDParam: 0.05
+
+    # how far robot can diverge from straight-line path between waypoints (meters)
+    path_distance_limit: 0.2
+
+    # Max robot translational velocity (meters/sec)
+    max_vel: 4.5
+
+    # Maximum robot linear acceleration (meters/sec^2)
+    max_linear_acc: 2.5
+
+    # Maximum robot linear deceleration (meters/sec^2)
+    max_linear_dec: 2.5
+
+    # Robot wheel radius (meters)
+    wheel_radius: 0.0381
+  
+    # max centrepital acceleration (meters/sec^2)
+    max_cent_acc: 3.5

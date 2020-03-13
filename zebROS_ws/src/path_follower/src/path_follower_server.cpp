@@ -159,12 +159,28 @@ class PathAction
 				spline_gen_srv.request.points[i].positions[1] = goal->points[i].y;
 				spline_gen_srv.request.points[i].positions[2] = goal->points[i].z;
 			}
+
+			const size_t constraint_num = goal->constraints.size();
+			spline_gen_srv.request.constraints.resize(point_num);
+			for (size_t i = 0; i < constraint_num; i++)
+			{
+				spline_gen_srv.request.constraints[i].corner1.x = goal->constraints[i].corner1.x;
+				spline_gen_srv.request.constraints[i].corner2.x = goal->constraints[i].corner2.x;
+				spline_gen_srv.request.constraints[i].corner1.y = goal->constraints[i].corner1.y;
+				spline_gen_srv.request.constraints[i].corner2.y = goal->constraints[i].corner2.y;
+				spline_gen_srv.request.constraints[i].max_accel = (goal->constraints[i].max_accel < 0 ? std::numeric_limits<double>::max() : goal->constraints[i].max_accel);
+				spline_gen_srv.request.constraints[i].max_decel = (goal->constraints[i].max_decel < 0 ? std::numeric_limits<double>::max() : goal->constraints[i].max_decel);
+				spline_gen_srv.request.constraints[i].max_vel = (goal->constraints[i].max_vel <= 0 ? std::numeric_limits<double>::max() : goal->constraints[i].max_vel);
+				spline_gen_srv.request.constraints[i].max_cent_accel = (goal->constraints[i].max_cent_accel < 0 ? std::numeric_limits<double>::max() : goal->constraints[i].max_cent_accel);
+				spline_gen_srv.request.constraints[i].path_limit_distance = (goal->constraints[i].path_limit_distance < 0 ? std::numeric_limits<double>::max() : goal->constraints[i].path_limit_distance);
+			}
+
 			if (!spline_gen_cli_.call(spline_gen_srv))
 			{
 				ROS_ERROR_STREAM("Can't call spline gen service in path_follower_server");
 
 			}
-			size_t num_waypoints = spline_gen_srv.response.path.poses.size();
+			const size_t num_waypoints = spline_gen_srv.response.path.poses.size();
 
 			//debug
 			for (size_t i = 0; i < spline_gen_srv.response.end_points.size(); i++)
@@ -317,6 +333,7 @@ int main(int argc, char **argv)
 	double server_timeout = 5.0;
 	int ros_rate = 20;
 	double start_point_radius = 0.05;
+
 	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
 	nh.getParam("/path_follower/path_follower/lookahead_distance", lookahead_distance);
 	nh.getParam("/path_follower/path_follower/final_pos_tol", final_pos_tol);
@@ -340,17 +357,17 @@ int main(int argc, char **argv)
 	if (!path_action_server.addAxis(x_axis))
 	{
 		ROS_ERROR_STREAM("Error adding x_axis to path_action_server.");
-		return false;
+		return -1;
 	}
 	if (!path_action_server.addAxis(y_axis))
 	{
 		ROS_ERROR_STREAM("Error adding y_axis to path_action_server.");
-		return false;
+		return -1;
 	}
 	if (!path_action_server.addAxis(z_axis))
 	{
 		ROS_ERROR_STREAM("Error adding z_axis to path_action_server.");
-		return false;
+		return -1;
 	}
 
 	ros::spin();

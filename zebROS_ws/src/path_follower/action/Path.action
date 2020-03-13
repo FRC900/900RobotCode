@@ -1,4 +1,5 @@
 geometry_msgs/Point[] points
+base_trajectory/Constraint[] constraints
 ---
 bool timed_out
 bool success

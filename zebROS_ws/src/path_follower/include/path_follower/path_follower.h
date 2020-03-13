@@ -112,6 +112,9 @@ class PathFollower
 		// path length getter
 		const double getPathLength();
 
+		// interpolation function, just for cleanness 
+		double interpolate(double start_t, double end_t, double start_x, double end_x, double current_t) const;
+
 		// contains the main control loop
 		geometry_msgs::Pose run(nav_msgs::Odometry odom, double &distance_travelled);
 };

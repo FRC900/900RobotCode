@@ -60,6 +60,7 @@ find_package(Gperftools REQUIRED)
 add_message_files(
   FILES
   Coefs.msg
+  Constraint.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -134,7 +135,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/base_trajectory.cpp src/matlab_printer.cpp)
+add_executable(${PROJECT_NAME}_node src/base_trajectory.cpp src/matlab_printer.cpp src/kinematic_constraints.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

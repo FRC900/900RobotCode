@@ -47,6 +47,16 @@ double PathFollower::getYaw(const geometry_msgs::Quaternion q)
 	return yaw;
 }
 
+double PathFollower::interpolate(double start_t, double end_t, double start_x, double end_x, double current_t) const
+{
+	if(current_t <= start_t)
+		return start_x;
+	else if(current_t >= end_t)
+		return end_x;
+	else
+		return start_x + (end_x - start_x) / (end_t - start_t) * (current_t - start_t);
+}
+
 // The idea would be to have other code be responsible for getting current
 // position and passing it in to run. run would then return a pose (x_pos, y_pos,
 // orientation) and whoever called run would be responsible for sending that
@@ -71,25 +81,28 @@ geometry_msgs::Pose PathFollower::run(nav_msgs::Odometry odom, double &total_dis
 		return target_pos; //TODO: better way to handle errors? This will just time out the server
 	}
 
+	size_t current_waypoint_index = 0; //the index BEFORE the point on the path
+	ros::Time current_time = ros::Time::now();
+
+	double magnitude_projection = 0; // distance from the waypoint to the point on the path
+	const size_t last_index = num_waypoints_ - 1;
+	double final_x, final_y, final_orientation;
+
+	// Find point in path closest to odometry reading
+	ROS_INFO_STREAM("num_waypoints = " << num_waypoints_);
+
+	/*
 	double current_x = odom.pose.pose.position.x;
 	double current_y = odom.pose.pose.position.y;
 	double current_x_path, current_y_path;
-	size_t current_waypoint_index = 0; //the index BEFORE the point on the path
-	double minimum_distance = std::numeric_limits<double>::max();
-
 	double start_x;
 	double start_y;
 	double end_x;
 	double end_y;
 	double dx;
 	double dy;
-
-	double magnitude_projection = 0; // distance from the waypoint to the point on the path
 	double distance_to_travel = 0; // distance from the point on the path, along the path
-	const size_t last_index = num_waypoints_ - 1;
-
-	// Find point in path closest to odometry reading
-	ROS_INFO_STREAM("num_waypoints = " << num_waypoints_);
+	double minimum_distance = std::numeric_limits<double>::max();
 	for (size_t i = 0; i < last_index; i++)
 	{
 		ROS_INFO_STREAM("test_point = " << path_.poses[i].pose.position.x << ", " << path_.poses[i].pose.position.y << ", " << getYaw(path_.poses[i].pose.orientation));
@@ -193,7 +206,6 @@ geometry_msgs::Pose PathFollower::run(nav_msgs::Odometry odom, double &total_dis
 	}
 	ROS_INFO_STREAM("index before end point: " << end_i);
 
-	double final_x, final_y, final_orientation;
 	if (end_i == last_index) // if the lookahead distance is after the path has ended
 	{
 		ROS_INFO_STREAM("Current index is " << end_i << "; going to the end of the path");
@@ -219,6 +231,30 @@ geometry_msgs::Pose PathFollower::run(nav_msgs::Odometry odom, double &total_dis
 		ROS_INFO_STREAM("start yaw = " << start_yaw << ", end_yaw = " << end_yaw << ", dx = " << dx << ", dy = " << dy);
 		final_orientation = start_yaw + (end_yaw - start_yaw) * ((lookahead_distance_ - distance_to_travel) / distance_between_waypoints);
 	}
+	*/
+
+	size_t index = 0; // index of point after current time
+	for(; index < last_index; index++)
+	{
+		if(path_.poses[index].header.stamp > current_time)
+			break;
+	}
+	final_x = interpolate(path_.poses[index - 1].header.stamp.toSec(),
+			path_.poses[index].header.stamp.toSec(),
+			path_.poses[index - 1].pose.position.x,
+			path_.poses[index].pose.position.x,
+			current_time.toSec());
+	final_y = interpolate(path_.poses[index - 1].header.stamp.toSec(),
+			path_.poses[index].header.stamp.toSec(),
+			path_.poses[index - 1].pose.position.y,
+			path_.poses[index].pose.position.y,
+			current_time.toSec());
+	final_orientation = interpolate(path_.poses[index - 1].header.stamp.toSec(),
+			path_.poses[index].header.stamp.toSec(),
+			getYaw(path_.poses[index - 1].pose.orientation),
+			getYaw(path_.poses[index].pose.orientation),
+			current_time.toSec());
+
 	ROS_INFO_STREAM("drive to coordinates: (" << final_x << ", " << final_y << ")");
 	ROS_INFO_STREAM("drive to orientation: " << final_orientation);
 

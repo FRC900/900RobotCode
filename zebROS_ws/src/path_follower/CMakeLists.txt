@@ -79,6 +79,7 @@ generate_messages(
   actionlib_msgs
   geometry_msgs
   nav_msgs
+  base_trajectory
 )
 
 ################################################

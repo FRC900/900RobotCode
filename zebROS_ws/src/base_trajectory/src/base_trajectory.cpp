@@ -11,6 +11,7 @@
 
 #include <angles/angles.h>
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
+#include "base_trajectory/kinematic_constraints.h"
 #include "base_trajectory/matlab_printer.h"
 #include "base_trajectory/message_filter.h"
 #include "spline_util/spline_util.h"
@@ -53,11 +54,8 @@ double minDeltaCostEpsilon;
 double initialDParam;
 
 // Robot limits for evaluating path cost
-double pathLimitDistance;
-double maxVel;
-double maxLinearAcc;
 double wheelRadius;
-double maxCentAcc;
+KinematicConstraints kinematicConstraints;
 
 MessageFilter messageFilter(true);
 
@@ -105,17 +103,21 @@ struct OptParams
 	// in there into a simple for() loop
 	size_t size(void) const
 	{
-		return 3;
+		return 1;
 	}
 
 	double& operator[](size_t i)
 	{
+		if (i == 0)
+			return length_;
+#if 0
 		if (i == 0)
 			return posX_;
 		if (i == 1)
 			return posY_;
 		if (i == 2)
 			return length_;
+#endif
 		throw std::out_of_range ("out of range in OptParams operator[]");
 	}
 };
@@ -651,17 +653,16 @@ bool subdivideLength(std::vector<double> &equalLengthTimes,
 //                   Creates a velocity profile bound by those constraints
 //                   returns cost for the path in cost, true if the evaluation succeeds and false
 //                   if it fails
+//
+// equalArcLengthTimes is a vector of times. Each entry is the time
+// of an equally-spaced sample from arcLengthTrajectory. That is
+// sample i is arclength d away from both samples i-1 and i+1 for all i.
 template <class T>
 bool evaluateTrajectory(double &cost,
 						std::vector<double> &equalArcLengthTimes,
 						std::vector<double> &remappedTimes,
 						std::vector<double> &vTrans,
-						const Trajectory<T> &trajectory,
-						const double dMax, // limit of path excursion from straight line b/t waypoints
-						const double vMax, // max overall velocity
-						const double aMax, // max allowed acceleration
-						const double wheelRadius, // radius from center to wheels
-						const double aCentMax) // max allowed centripetal acceleration
+						const Trajectory<T> &trajectory)
 {
 	// arcLengthTrajectory takes in a time and returns the x-y distance
 	// traveled up to that time.
@@ -684,25 +685,12 @@ bool evaluateTrajectory(double &cost,
 		ROS_INFO_STREAM("equalArcLengthTimes[" << i << "]=" << equalArcLengthTimes[i]);
 #endif
 
-	// equalArcLengthTimes is a vector of times. Each entry is the time
-	// of an equally-spaced sample from arcLengthTrajectory. That is
-	// sample i is arclength d away from both samples i-1 and i+1 for all i.
-
-	std::vector<double> deltaS;   // change in position along spline for each step
-	std::vector<double> distanceToPathMidpoint;
-
 	// Declare these static so they're not constantly created
 	// and destroyed on every call to the function
 	static typename Segment<T>::State arcLengthState;
 	static typename Segment<T>::State xState;
 	static typename Segment<T>::State yState;
 	static typename Segment<T>::State thetaState;
-
-	// Add 0th entries for arrays so indices line up with equalArcLengthTimes
-	// Starting at arclength 0
-	deltaS.push_back(0);
-	double prevArcLength = 0;
-	distanceToPathMidpoint.push_back(0);
 
 	// Init translational velocity from requested starting x&y velocities
 	vTrans.clear();
@@ -740,6 +728,17 @@ bool evaluateTrajectory(double &cost,
 			controlPointPositions.back().push_back(xState.position[0]);
 		}
 	}
+
+	// Add 0th entries for arrays so indices line up with equalArcLengthTimes
+	// Starting at arclength 0
+	std::vector<double> deltaS;   // change in position along spline for each step
+	deltaS.push_back(0);
+	double prevArcLength = 0;
+	std::vector<double> distanceToPathMidpoint;
+	distanceToPathMidpoint.push_back(0);
+
+	std::vector<Kinematics> kinematics;
+	kinematics.push_back(kinematicConstraints.getKinematics(0,0));
 
 	for (size_t i = 1; i < equalArcLengthTimes.size(); i++)
 	{
@@ -796,6 +795,7 @@ bool evaluateTrajectory(double &cost,
 		distanceToPathMidpoint.push_back(
 				pointToLineSegmentDistance(controlPointPositions[seg], controlPointPositions[seg + 1],
 										   xState.position[0], yState.position[0]));
+		kinematics.push_back(kinematicConstraints.getKinematics( xState.position[0], yState.position[0]));
 #if 0
 		ROS_INFO_STREAM_FILTER(&messageFilter, "pointToLineSegmentDistance = " << distanceToPathMidpoint.back() <<
 				" p1: " << controlPointPositions[seg][0] << "," << controlPointPositions[seg][1] <<
@@ -824,9 +824,10 @@ bool evaluateTrajectory(double &cost,
 		// First pass of vTrans limits by absolute max velocity
 		// and also velocity limited by max centripetal acceleration
 		// Assume rotational velocity is a hard constraint we have to hit
-		vTrans.push_back(vMax - fabs(thetaState.velocity[0]) * wheelRadius);
+		const auto &k = kinematics.back();
+		vTrans.push_back(k.maxVel_ - fabs(thetaState.velocity[0]) * wheelRadius);
 		if (curvature != 0) // avoid divide by 0 again
-			vTrans.back() = std::min(vTrans.back(), sqrt(aCentMax / fabs(curvature)));
+			vTrans.back() = std::min(vTrans.back(), sqrt(k.maxCentAccel_ / fabs(curvature)));
 		//ROS_INFO_STREAM("vTrans0[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
 	}
 
@@ -837,7 +838,7 @@ bool evaluateTrajectory(double &cost,
 	// Forward pass
 	for (size_t i = 1; i < vTrans.size(); i++)
 	{
-		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i - 1] * vTrans[i - 1] + 2.0 * aMax * deltaS[i]));
+		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i - 1] * vTrans[i - 1] + 2.0 * kinematics[i].maxAccel_ * deltaS[i]));
 		//ROS_INFO_STREAM("vTrans1[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
 	}
 
@@ -861,7 +862,7 @@ bool evaluateTrajectory(double &cost,
 	//ROS_INFO_STREAM("vTrans2[" << vTrans.size()-1 << "]=" << equalArcLengthTimes[vTrans.size()-1] << "," << vTrans[vTrans.size()-1]);
 	for (size_t i = vTrans.size() - 2; i > 0; i--)
 	{
-		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i + 1] * vTrans[i + 1] + 2.0 * aMax * deltaS[i + 1]));
+		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i + 1] * vTrans[i + 1] + 2.0 * kinematics[i].maxDecel_ * deltaS[i + 1]));
 		//ROS_INFO_STREAM("vTrans2[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
 	}
 
@@ -875,15 +876,15 @@ bool evaluateTrajectory(double &cost,
 	}
 
 	// Cost is total time to traverse the path plus a large
-	// penalty for moving more than dMax away from the mipoint of the
+	// penalty for moving more than distMax away from the mipoint of the
 	// straight line segment connecting each waypoint. The latter
 	// imposes a constraint that the path can't be too curvy - and
 	// keeping close to the straight-line path should prevent it from running
 	// into obstacles too far off that path.
 	cost = remappedTimes.back();
-	for (const auto d: distanceToPathMidpoint)
+	for (size_t i = 0; i < distanceToPathMidpoint.size(); i++)
 	{
-		cost += exp(25.0 * ((fabs(d) / dMax) - 0.9));
+		cost += exp(25.0 * ((fabs(distanceToPathMidpoint[i]) / kinematics[i].pathLimitDistance_) - 0.9));
 	}
 	ROS_INFO_STREAM_FILTER(&messageFilter, "time = " << remappedTimes.back() << " cost = " << cost);
 
@@ -939,16 +940,7 @@ void trajectoryToSplineResponseMsg(base_trajectory::GenerateSpline::Response &ou
 	std::vector<double> equalArcLengthTimes;
 	std::vector<double> remappedTimes;
 	std::vector<double> vTrans;
-	if (!evaluateTrajectory(cost,
-				equalArcLengthTimes,
-				remappedTimes,
-				vTrans,
-				trajectory,
-				pathLimitDistance, // limit of path excursion from straight line b/t waypoints
-				maxVel, // max overall velocity
-				maxLinearAcc, // max allowed acceleration
-				wheelRadius, // wheel radius
-				maxCentAcc)) // max allowed centripetal acceleration
+	if (!evaluateTrajectory(cost, equalArcLengthTimes, remappedTimes, vTrans, trajectory))
 	{
 		ROS_ERROR("base_trajectory_node trajectoryToSplineResponseMsg : evaluateTrajectory() returned false");
 		return;
@@ -1047,12 +1039,7 @@ template <class T>
 bool RPROP(
 		Trajectory<T> &bestTrajectory,
 		const std::vector<trajectory_msgs::JointTrajectoryPoint> &points,
-		const std::vector<std::string> &jointNames,
-		double dMax, // limit of path excursion from straight line b/t waypoints
-		double vMax, // max overall velocity
-		double aMax, // max allowed acceleration
-		double wheelRadius, // radius from center to wheels
-		double aCentMax) // max allowed centripetal acceleration
+		const std::vector<std::string> &jointNames)
 {
 	// initialize params to 0 offset in x, y and tangent
 	// length for all spline points
@@ -1068,16 +1055,7 @@ bool RPROP(
 	std::vector<double> equalArcLengthTimes;
 	std::vector<double> remappedTimes;
 	std::vector<double> vTrans;
-	if (!evaluateTrajectory(bestCost,
-				equalArcLengthTimes,
-				remappedTimes,
-				vTrans,
-				bestTrajectory,
-				dMax,    // limit of path excursion from straight line b/t waypoints
-				vMax,    // max overall velocity
-				aMax,    // max allowed acceleration
-				wheelRadius, // wheel radius
-				aCentMax))   // max allowed centripetal acceleration
+	if (!evaluateTrajectory(bestCost, equalArcLengthTimes, remappedTimes, vTrans, bestTrajectory))
 	{
 		ROS_ERROR("base_trajectory_node : RPROP initial evaluateTrajectory() falied");
 		return false;
@@ -1121,16 +1099,7 @@ bool RPROP(
 					}
 
 					double thisCost;
-					if (!evaluateTrajectory(thisCost,
-										equalArcLengthTimes,
-										remappedTimes,
-										vTrans,
-										thisTrajectory,
-										dMax, // limit of path excursion from straight line b/t waypoints
-										vMax, // max overall velocity
-										aMax, // max allowed acceleration
-										wheelRadius, // wheel radius
-										aCentMax)) // max allowed centripetal acceleration
+					if (!evaluateTrajectory(thisCost, equalArcLengthTimes, remappedTimes, vTrans, thisTrajectory))
 					{
 						ROS_ERROR("base_trajectory_node : RPROP evaluateTrajectory() failed");
 						return false;
@@ -1275,6 +1244,8 @@ bool callback(base_trajectory::GenerateSpline::Request &msg,
 	}
 
 	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " : runOptimization = " << runOptimization);
+	kinematicConstraints.resetConstraints();
+	kinematicConstraints.addConstraints(msg.constraints);
 
 	std::vector<OptParams> optParams(msg.points.size());
 	Trajectory<double> trajectory;
@@ -1288,16 +1259,7 @@ bool callback(base_trajectory::GenerateSpline::Request &msg,
 		std::vector<double> equalArcLengthTimes;
 		std::vector<double> remappedTimes;
 		std::vector<double> vTrans;
-		if (!evaluateTrajectory(cost,
-					equalArcLengthTimes,
-					remappedTimes,
-					vTrans,
-					trajectory,
-					pathLimitDistance, // limit of path excursion from straight line b/t waypoints
-					maxVel, // max overall velocity
-					maxLinearAcc, // max allowed acceleration
-					wheelRadius, // wheel radius
-					maxCentAcc)) // max allowed centripetal acceleration
+		if (!evaluateTrajectory(cost, equalArcLengthTimes, remappedTimes, vTrans, trajectory))
 		{
 			ROS_ERROR("base_trajectory_node : evaluateTrajectory() returned false");
 			return false;
@@ -1310,14 +1272,7 @@ bool callback(base_trajectory::GenerateSpline::Request &msg,
 		fflush(stdout);
 
 		// Call optimization, get optimizated result in trajectory
-		if (!RPROP(trajectory,
-					msg.points,
-					jointNames,
-					pathLimitDistance, // limit of path excursion from straight line b/t waypoints
-					maxVel, // max overall velocity
-					maxLinearAcc, // max allowed acceleration
-					wheelRadius, // wheel radius
-					maxCentAcc)) // max allowed centripetal acceleration
+		if (!RPROP(trajectory, msg.points, jointNames))
 		{
 			ROS_ERROR("base_trajectory_node : RPROP() returned false");
 			return false;
@@ -1332,6 +1287,39 @@ bool callback(base_trajectory::GenerateSpline::Request &msg,
 			(ros::Time::now() - startTime).toSec() <<
 			" seconds");
 	return true;
+}
+
+
+
+void pathLimitDistanceCB(double pathLimitDistance)
+{
+	auto k = kinematicConstraints.globalKinematics();
+	k.pathLimitDistance_ = pathLimitDistance;
+	kinematicConstraints.globalKinematics(k);
+}
+void maxVelCB(double maxVel)
+{
+	auto k = kinematicConstraints.globalKinematics();
+	k.maxVel_ = maxVel;
+	kinematicConstraints.globalKinematics(k);
+}
+void maxLinearAccCB(double maxLinearAcc)
+{
+	auto k = kinematicConstraints.globalKinematics();
+	k.maxAccel_ = maxLinearAcc;
+	kinematicConstraints.globalKinematics(k);
+}
+void maxLinearDecCB(double maxLinearDec)
+{
+	auto k = kinematicConstraints.globalKinematics();
+	k.maxDecel_ = maxLinearDec;
+	kinematicConstraints.globalKinematics(k);
+}
+void maxCentAccCB(double maxCentAcc)
+{
+	auto k = kinematicConstraints.globalKinematics();
+	k.maxCentAccel_ = maxCentAcc;
+	kinematicConstraints.globalKinematics(k);
 }
 
 int main(int argc, char **argv)
@@ -1361,17 +1349,27 @@ int main(int argc, char **argv)
 	nh.param("initial_dparam", initialDParam, 0.05);
 	ddr.registerVariable<double>("initial_dparam", &initialDParam, "RPROP initial optimization value change", 0, 2);
 
+	double pathLimitDistance;
+	double maxVel;
+	double maxLinearAcc;
+	double maxLinearDec;
+	double maxCentAcc;
+
 	nh.param("path_distance_limit", pathLimitDistance, 0.2);
 	nh.param("max_vel", maxVel, 4.5);
 	nh.param("max_linear_acc", maxLinearAcc, 2.5);
-	nh.param("wheel_radius", wheelRadius, 0.03682);
+	nh.param("max_linear_dec", maxLinearDec, 2.5);
 	nh.param("max_cent_acc", maxCentAcc, 3.5);
+	kinematicConstraints.globalKinematics(Kinematics(maxLinearAcc, maxLinearDec, maxVel, maxCentAcc, pathLimitDistance));
 
-	ddr.registerVariable<double>("path_distance_limit", &pathLimitDistance, "how far robot can diverge from straight-line path between waypoints", 0, 2);
-	ddr.registerVariable<double>("max_vel", &maxVel, "max translational velocity", 0, 20);
-	ddr.registerVariable<double>("max_linear_acc", &maxLinearAcc, "max linear acceleration", 0, 10);
+	ddr.registerVariable<double>("path_distance_limit", pathLimitDistance, pathLimitDistanceCB, "how far robot can diverge from straight-line path between waypoints");
+	ddr.registerVariable<double>("max_vel", maxVel, maxVelCB, "max translational velocity");
+	ddr.registerVariable<double>("max_linear_acc", maxLinearAcc, maxLinearAccCB, "max linear acceleration");
+	ddr.registerVariable<double>("max_linear_dec", maxLinearDec, maxLinearDecCB, "max linear deceleration");
+	ddr.registerVariable<double>("max_cent_acc", maxCentAcc, maxCentAccCB, "max centrepital acceleration");
+
+	nh.param("wheel_radius", wheelRadius, 0.03682);
 	ddr.registerVariable<double>("wheel_radius", &wheelRadius, "robot's wheel radius", 0, 2);
-	ddr.registerVariable<double>("max_cent_acc", &maxCentAcc, "max centrepital acceleration", 0, 10);
     ddr.publishServicesTopics();
 	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", callback);
 
