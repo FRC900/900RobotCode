@@ -2,5 +2,5 @@ actionlib_indexer_params:
     server_timeout: 20 #TODO make shorter, it's 20 sec for testing
     wait_for_server_timeout: 10
     position_intake_timeout: 2
-    position_shoot_timeout: 2
+    position_shoot_timeout: 1
     indexer_speed: 4 #TODO fix

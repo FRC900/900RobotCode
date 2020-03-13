@@ -80,7 +80,7 @@ class IndexerAction {
 		{
 			ROS_INFO("Indexer server - going to position intake");
 
-			if (n_indexer_balls_ > 0 && !indexer_linebreak_.triggered_ && !preempted_ && !timed_out_ && ros::ok()){
+			if (!indexer_linebreak_.triggered_ && !preempted_ && !timed_out_ && ros::ok()){
 				//set velocity to reverse
 				controllers_2020_msgs::IndexerSrv srv;
 				srv.request.indexer_velocity = -indexer_speed_; //TODO make sure negative means backward
@@ -126,7 +126,7 @@ class IndexerAction {
 		{
 			ROS_INFO("Indexer server - going to position shoot.");
 
-			if (n_indexer_balls_ > 0 && !shooter_linebreak_.triggered_ && !preempted_ && !timed_out_ && ros::ok()){
+			if (!shooter_linebreak_.triggered_ && !preempted_ && !timed_out_ && ros::ok()){
 				//set velocity to forwards
 				controllers_2020_msgs::IndexerSrv srv;
 				srv.request.indexer_velocity = indexer_speed_; //TODO make sure positive means forward
@@ -283,7 +283,7 @@ class IndexerAction {
 					ROS_INFO_STREAM("Feeding a ball to the shooter in indexer actionlib server");
 
 					//shoot if you've got the balls
-					if(n_indexer_balls_ > 0 && !preempted_ && !timed_out_ && ros::ok())
+					if(!preempted_ && !timed_out_ && ros::ok())
 					{
 						//set indexer velocity forwards
 						controllers_2020_msgs::IndexerSrv srv;

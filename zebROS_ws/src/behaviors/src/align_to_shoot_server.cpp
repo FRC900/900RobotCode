@@ -253,8 +253,8 @@ class AlignToShootAction
 					ROS_WARN("Align to shoot server failed to do ZED->turret transform - %s", ex.what());
 					return false;
 				}
-				ROS_INFO_STREAM("original goal_pos: (" << goal_pos_.x << ", " << goal_pos_.y << ", " << goal_pos_.z << ")");
-				ROS_INFO_STREAM("transformed goal_pos: (" << transformed_goal_pos.point.x << ", " << transformed_goal_pos.point.y << ", " << transformed_goal_pos.point.z << ")");
+				ROS_INFO_STREAM("align server - original goal_pos: (" << goal_pos_.x << ", " << goal_pos_.y << ", " << goal_pos_.z << ")");
+				ROS_INFO_STREAM("align server - transformed goal_pos: (" << transformed_goal_pos.point.x << ", " << transformed_goal_pos.point.y << ", " << transformed_goal_pos.point.z << ")");
 
 				const double align_angle = -atan2(transformed_goal_pos.point.y, transformed_goal_pos.point.x);
 				ROS_WARN_STREAM("Align server - Align angle (radians): " << align_angle);
