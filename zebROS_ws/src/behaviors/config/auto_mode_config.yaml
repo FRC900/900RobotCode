@@ -1,13 +1,16 @@
 #Config file for configuring autonomous modes and actions
 
+# CONSTANTS -----------------------------------------------------------------------
+goal_to_wall_y_dist: 2.404
+
 # MODES ---------------------------------------------------------------------------
 # arrays of actions (see below) that will be executed in order
 # format: auto_mode_[integer]: array
 
 auto_mode_1: ["start_intake", "path_to_trench_face_goal", "stop_intake", "shoot", "pause_2_sec"] #example
-auto_mode_2: ["start_intake", "pause_2_sec", "stop_intake", "pause_5_sec"]
-auto_mode_3: ["path_to_trench_face_goal", "pause_2_sec"]
-
+auto_mode_2: ["pause_2_sec","pause_5_sec"]
+auto_mode_3: ["drive_back", "path_to_trench_after_drive_back"]
+auto_mode_4: ["drive_back", "shoot", "path_to_trench_after_drive_back"]
 
 # ACTIONS ------------------------------------------------------------------------
 # must have a value for "type", other stuff varies
@@ -30,19 +33,28 @@ shoot:
     goal:
         ""
 
-path_to_trench_face_goal:
+drive_back:
     type: "path"
     goal:
+        apply_offset: false 
         points:
-            - [1.0, 1.0, 3.14159]
-            - [2.0, 2.0, 6.28]
+            - [-0.7, 0.0, 0.0] # move back length of robot
 
-drive_test:
+path_to_trench_from_starting:
     type: "path"
     goal:
+        apply_offset: true
         points:
-            - [0.5, 0.0, 0.0]
-            - [-0.5, 0.0, 0.0]
+            - [-3.0, -1.69938, 0.0] #from starting position to in front of the trench
+            - [-4.2, -1.69938, 0.0] #drive toward the trench distance of 2 balls
+
+path_to_trench_after_drive_back:
+    type: "path"
+    goal:
+        apply_offset: true
+        points:
+            - [-2.3, -1.69938, 0.0] 
+            - [-3.5, -1.69938, 0.0]
 
 pause_2_sec:
     type: "pause"
