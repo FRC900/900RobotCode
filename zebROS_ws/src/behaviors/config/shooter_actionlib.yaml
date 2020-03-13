@@ -4,13 +4,14 @@ actionlib_shooter_params:
     wait_for_ready_timeout: 10.0
     get_speed_timeout: 1 #waiting for the ZED to detect something
     hood_up_table: 
-        - {dist: 30.0, speed: 460.0}
-        - {dist: 20.0, speed: 415.0}
-        - {dist: 10.0, speed: 420.0}
+        - {dist: 7.887, speed: 480.0}
+        - {dist: 6.136, speed: 450.0}
+        - {dist: 4.669, speed: 450.0}
+        - {dist: 3.560, speed: 550.0}
 
     #fixed speeds for manual shooting
     near_shooting_speed: 300.0 #with hood down
-    far_shooting_speed: 415.0 #with hood up
+    far_shooting_speed: 450.0 #with hood up
 
     #fine tuning config, read by teleop code
     speed_tuning_increment: 20 #shooter velocity units
