@@ -49,7 +49,8 @@ class PathAction
 				   double server_timeout,
 				   int ros_rate,
 				   double start_point_radius,
-				   const std::string &odom_topic)
+				   const std::string &odom_topic,
+				   double time_offset)
 			: nh_(nh)
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
@@ -76,7 +77,7 @@ class PathAction
 
 			combine_cmd_vel_pub_ = nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1000);
 
-			path_follower_ = std::make_shared<PathFollower>(lookahead_distance_, start_point_radius_);
+			path_follower_ = std::make_shared<PathFollower>(lookahead_distance_, start_point_radius_, time_offset);
 		}
 
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
@@ -333,6 +334,7 @@ int main(int argc, char **argv)
 	double server_timeout = 5.0;
 	int ros_rate = 20;
 	double start_point_radius = 0.05;
+	double time_offset = 0;
 
 	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
 	nh.getParam("/path_follower/path_follower/lookahead_distance", lookahead_distance);
@@ -341,6 +343,7 @@ int main(int argc, char **argv)
 	nh.getParam("/path_follower/path_follower/ros_rate", ros_rate);
 	nh.getParam("/path_follower/path_follower/start_point_radius", start_point_radius);
 	nh.getParam("/path_follower/path_follower/odom_topic", odom_topic);
+	nh.getParam("/path_follower/path_follower/time_offset", time_offset);
 
 	PathAction path_action_server("path_follower_server", nh,
 								  lookahead_distance,
@@ -348,7 +351,8 @@ int main(int argc, char **argv)
 								  server_timeout,
 								  ros_rate,
 								  start_point_radius,
-								  odom_topic);
+								  odom_topic,
+								  time_offset);
 
 	AlignActionAxisConfig x_axis("x", "x_position_pid/pid_enable", "x_position_pid/x_cmd_pub", "x_position_pid/x_state_pub", "x_position_pid/pid_debug", "x_timeout_param", "x_error_threshold_param");
 	AlignActionAxisConfig y_axis("y", "y_position_pid/pid_enable", "y_position_pid/y_cmd_pub", "y_position_pid/y_state_pub", "y_position_pid/pid_debug", "y_timeout_param", "y_error_threshold_param");

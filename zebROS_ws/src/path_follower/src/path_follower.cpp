@@ -236,7 +236,7 @@ geometry_msgs::Pose PathFollower::run(nav_msgs::Odometry odom, double &total_dis
 	size_t index = 0; // index of point after current time
 	for(; index < last_index; index++)
 	{
-		if(path_.poses[index].header.stamp > current_time)
+		if(path_.poses[index].header.stamp > current_time + time_offset_)
 			break;
 	}
 	final_x = interpolate(path_.poses[index - 1].header.stamp.toSec(),

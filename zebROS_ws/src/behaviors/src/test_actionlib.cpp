@@ -375,6 +375,15 @@ bool callPath(double path_x_setpoint, double path_y_setpoint, double path_z_setp
 	path_goal.points[2].z = path_z2_setpoint;
 	path_ac.sendGoal(path_goal);
 
+	/*
+	path_goal.constraints.resize(1);
+	path_goal.constraints[0].corner1.x = 0.75;
+	path_goal.constraints[0].corner1.y = 0.75;
+	path_goal.constraints[0].corner2.x = 1.25;
+	path_goal.constraints[0].corner2.y = 1.25;
+	path_goal.constraints[0].max_vel = 0.5;
+	*/
+
 	//wait for the action to return
 	bool finished_before_timeout = path_ac.waitForResult(ros::Duration(server_exec_timeout));
 

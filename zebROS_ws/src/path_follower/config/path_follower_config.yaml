@@ -8,3 +8,4 @@ path_follower:
     ros_rate: 10
     server_timeout: 10
     start_point_radius: 0.05
+    time_offset: 0.5

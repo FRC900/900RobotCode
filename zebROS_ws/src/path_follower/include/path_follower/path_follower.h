@@ -94,13 +94,16 @@ class PathFollower
 		double path_length_;
 		std::vector<double> vec_path_length_;
 		double start_point_radius_;
+		ros::Duration time_offset_;
 
 	public:
 		PathFollower(double lookahead_distance,
-					 double start_point_radius)
+					 double start_point_radius,
+					 double time_offset)
 		{
 			lookahead_distance_ = lookahead_distance;
 			start_point_radius_ = start_point_radius;
+			time_offset_ = ros::Duration(time_offset);
 		}
 
 		// load nav_msgs::Path

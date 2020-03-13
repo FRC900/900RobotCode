@@ -11,6 +11,7 @@ auto_mode_1: ["start_intake", "path_to_trench_face_goal", "stop_intake", "shoot"
 auto_mode_2: ["pause_2_sec","pause_5_sec"]
 auto_mode_3: ["drive_back", "path_to_trench_after_drive_back"]
 auto_mode_4: ["drive_back", "shoot", "path_to_trench_after_drive_back"]
+auto_mode_5: ["drive_test_angle", "start_intake", "drive_forward", "stop_intake"]
 
 # ACTIONS ------------------------------------------------------------------------
 # must have a value for "type", other stuff varies
@@ -63,3 +64,19 @@ pause_2_sec:
 pause_5_sec:
     type: "pause"
     duration: 5.0
+
+drive_test_angle:
+    type: "path"
+    goal:
+        apply_offset: false 
+        points:
+            - [1.0, -1.0, 0.0]
+            - [2.0, 0.0, 0.0] 
+
+drive_forward:
+    type: "path"
+    goal:
+        apply_offset: false 
+        points:
+            - [1.5, 0.0, 0.0]
+

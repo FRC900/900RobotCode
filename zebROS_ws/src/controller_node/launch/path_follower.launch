@@ -18,7 +18,7 @@
 
             <node name="x_position_pid" pkg="pid" type="controller" >
                 <param name="node_name" value="x_position_pid" />
-                <param name="Kp" value="1.0" />
+                <param name="Kp" value="2.0" />
                 <param name="Ki" value="0.0" />
                 <param name="Kd" value="0.0" />
                 <param name="upper_limit" value="10" />
@@ -35,7 +35,7 @@
 
             <node name="y_position_pid" pkg="pid" type="controller" >
                 <param name="node_name" value="y_position_pid" />
-                <param name="Kp" value="1.0" />
+                <param name="Kp" value="2.0" />
                 <param name="Ki" value="0.0" />
                 <param name="Kd" value="0.0" />
                 <param name="upper_limit" value="10" />
