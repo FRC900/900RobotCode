@@ -9,7 +9,7 @@
 #include <behavior_actions/ElevatorAction.h> //TODO remove this, it's for testing using last year's stuff
 #include <behavior_actions/IntakeAction.h>
 #include <behavior_actions/ShooterAction.h>
-#include <path_follower/PathAction.h>
+#include <path_follower_msgs/PathAction.h>
 
 #include <thread>
 #include <atomic>
@@ -163,7 +163,7 @@ int main(int argc, char** argv)
 
 	//actionlib clients
 	actionlib::SimpleActionClient<behavior_actions::ElevatorAction> elevator_ac("/elevator/elevator_server", true);
-	actionlib::SimpleActionClient<path_follower::PathAction> path_ac("/path_follower/path_follower_server", true); //TODO fix this path
+	actionlib::SimpleActionClient<path_follower_msgs::PathAction> path_ac("/path_follower/path_follower_server", true); //TODO fix this path
 	actionlib::SimpleActionClient<behavior_actions::ShooterAction> shooter_ac("/shooter/shooter_server", true);
 	actionlib::SimpleActionClient<behavior_actions::IntakeAction> intake_ac("/powercell_intake/powercell_intake_server", true);
 
@@ -310,7 +310,7 @@ int main(int argc, char** argv)
 			else if(action_data["type"] == "path")
 			{
 				if(!path_ac.waitForServer(ros::Duration(5))){ROS_ERROR("Couldn't find path server");}
-				path_follower::PathGoal goal;
+				path_follower_msgs::PathGoal goal;
 
 				//initialize 0, 0, 0 point
 				geometry_msgs::Point point;

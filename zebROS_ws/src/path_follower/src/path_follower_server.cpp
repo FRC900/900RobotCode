@@ -1,8 +1,8 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-#include <base_trajectory/GenerateSpline.h>
-#include <path_follower/PathAction.h>
-#include <path_follower/PathGoal.h>
+#include "base_trajectory_msgs/GenerateSpline.h"
+#include <path_follower_msgs/PathAction.h>
+#include <path_follower_msgs/PathGoal.h>
 #include <path_follower/axis_state.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
@@ -18,7 +18,7 @@ class PathAction
 {
 	protected:
 		ros::NodeHandle nh_;
-		actionlib::SimpleActionServer<path_follower::PathAction> as_;
+		actionlib::SimpleActionServer<path_follower_msgs::PathAction> as_;
 		std::string action_name_;
 
 		ros::ServiceClient spline_gen_cli_;
@@ -68,7 +68,7 @@ class PathAction
 			service_connection_header["tcp_nodelay"] = "1";
 
 			// TODO - not sure which namespace base_trajectory should go in
-			spline_gen_cli_ = nh_.serviceClient<base_trajectory::GenerateSpline>("/path_follower/base_trajectory/spline_gen", false, service_connection_header);
+			spline_gen_cli_ = nh_.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen", false, service_connection_header);
 
 			odom_sub_ = nh_.subscribe(odom_topic_, 1, &PathAction::odomCallback, this);
 			// TODO : maybe grab this from the odom topic as well?
@@ -142,14 +142,14 @@ class PathAction
 				ROS_WARN_STREAM_THROTTLE(1, name << " error: " << axis.error_ << " aligned: " << axis.aligned_);
 		}
 
-		void executeCB(const path_follower::PathGoalConstPtr &goal)
+		void executeCB(const path_follower_msgs::PathGoalConstPtr &goal)
 		{
 			bool preempted = false;
 			bool timed_out = false;
 			bool succeeded = false;
 
 			// Generate the waypoints of the spline
-			base_trajectory::GenerateSpline spline_gen_srv;
+			base_trajectory_msgs::GenerateSpline spline_gen_srv;
 			const size_t point_num = goal->points.size();
 			spline_gen_srv.request.points.resize(point_num);
 			for (size_t i = 0; i < point_num; i++)
@@ -297,7 +297,7 @@ class PathAction
 			z_axis.enable_pub_.publish(enable_msg);
 
 			//log result and set actionlib server state appropriately
-			path_follower::PathResult result;
+			path_follower_msgs::PathResult result;
 
 			if (preempted)
 			{

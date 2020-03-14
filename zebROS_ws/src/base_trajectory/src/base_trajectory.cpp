@@ -5,7 +5,7 @@
 // http://www2.informatik.uni-freiburg.de/~lau/paper/lau09iros.pdf
 // http://ais.informatik.uni-freiburg.de/teaching/ws09/robotics2/projects/mr2-p6-paper.pdf
 //
-#include <base_trajectory/GenerateSpline.h>
+#include <base_trajectory_msgs/GenerateSpline.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
@@ -894,7 +894,7 @@ bool evaluateTrajectory(double &cost,
 // Convert from Trajectory type into the correct output
 // message type
 template <class T>
-void trajectoryToSplineResponseMsg(base_trajectory::GenerateSpline::Response &out_msg,
+void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Response &out_msg,
 								   const Trajectory<T> &trajectory,
 								   const std::vector<std::string> &jointNames)
 {
@@ -1151,8 +1151,8 @@ bool RPROP(
 // input should be JointTrajectory[] custom message
 // Output wil be array of spline coefficents base_trajectory/Coefs[] for x, y, orientation,
 // along with a path consisting of waypoints evenly spaced along the spline
-bool callback(base_trajectory::GenerateSpline::Request &msg,
-			  base_trajectory::GenerateSpline::Response &out_msg)
+bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
+			  base_trajectory_msgs::GenerateSpline::Response &out_msg)
 {
 	const std::vector<std::string> jointNames = {"x_linear_joint", "y_linear_joint", "z_rotation_joint"};
 	const size_t nJoints = jointNames.size();
@@ -1265,7 +1265,7 @@ bool callback(base_trajectory::GenerateSpline::Request &msg,
 			return false;
 		}
 
-		base_trajectory::GenerateSpline::Response tmp_msg;
+		base_trajectory_msgs::GenerateSpline::Response tmp_msg;
 		trajectoryToSplineResponseMsg(tmp_msg, trajectory, jointNames);
 		writeMatlabSplines(tmp_msg);
 		messageFilter.disable();

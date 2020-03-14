@@ -18,7 +18,7 @@ set(Boost_NO_SYSTEM_PATHS=ON)
 
 find_program(CMAKE_RANLIB ${ARM_PREFIX}-gcc-ranlib)
 find_program(CMAKE_AR ${ARM_PREFIX}-gcc-ar)
-set(OPT_FLAGS "-O3 -flto=2 -fno-fat-lto-objects -mcpu=cortex-a9 -mfpu=neon -fvect-cost-model -ffunction-sections -fdata-sections -Wl,-gc-sections")
+set(OPT_FLAGS "-O3 -flto=2 -fno-fat-lto-objects -mcpu=cortex-a9 -mfpu=neon -fvect-cost-model -ffunction-sections -fdata-sections -Wl,-gc-sections -Wno-psabi")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${OPT_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${OPT_FLAGS}")
 set(CMAKE_INSTALL_RPATH "$ENV{HOME}/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic/lib")

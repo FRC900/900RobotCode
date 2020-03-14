@@ -5,7 +5,7 @@
 #include "base_trajectory/message_filter.h"
 
 // For printing out matlab code for testing
-static void printCoefs(std::stringstream &s, const std::string &name, const std::vector<base_trajectory::Coefs> &coefs)
+static void printCoefs(std::stringstream &s, const std::string &name, const std::vector<base_trajectory_msgs::Coefs> &coefs)
 {
 	for (size_t i = 0; i < coefs.size(); i++)
 	{
@@ -43,7 +43,7 @@ static void printPolyval(std::stringstream &s, const std::string &name, size_t s
 }
 
 // Generate matlab / octave code for displaying generated splines
-void writeMatlabSplines(const base_trajectory::GenerateSpline::Response &msg)
+void writeMatlabSplines(const base_trajectory_msgs::GenerateSpline::Response &msg)
 {
 	std::stringstream s;
 	s << std::endl;

@@ -8,17 +8,15 @@ include ("../cmake_modules/CMakeOpt.cmake")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  base_trajectory_msgs
+  control_toolbox
+  message_filters
+  nav_msgs
+  path_follower_msgs
   roscpp
-  geometry_msgs
-  base_trajectory
   std_msgs
-  std_srvs
   tf2
   tf2_ros
-  message_filters
-  actionlib_msgs
-  nav_msgs
-  control_toolbox
 )
 
 ## System dependencies are found with CMake's conventions
@@ -61,27 +59,6 @@ find_package(catkin REQUIRED COMPONENTS
 #   Message2.msg
 # )
 
-## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  Point.srv
-)
-
-## Generate actions in the 'action' folder
-add_action_files(
-  FILES
-  Path.action
-)
-
-## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  actionlib_msgs
-  geometry_msgs
-  nav_msgs
-  base_trajectory
-)
-
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
 ################################################
@@ -114,7 +91,7 @@ generate_messages(
 catkin_package(
   # INCLUDE_DIRS include
   # LIBRARIES path_follower
-  CATKIN_DEPENDS geometry_msgs base_trajectory roscpp std_msgs std_srvs actionlib_msgs nav_msgs 
+  CATKIN_DEPENDS base_trajectory_msgs geometry_msgs roscpp std_msgs std_srvs actionlib_msgs nav_msgs 
   # DEPENDS system_lib
 )
 

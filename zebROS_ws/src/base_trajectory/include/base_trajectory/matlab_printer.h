@@ -1,6 +1,6 @@
 
-#include "base_trajectory/GenerateSpline.h"
+#include "base_trajectory_msgs/GenerateSpline.h"
 
-void writeMatlabSplines(const base_trajectory::GenerateSpline::Response &msg);
+void writeMatlabSplines(const base_trajectory_msgs::GenerateSpline::Response &msg);
 void writeMatlabPath(const std::vector<geometry_msgs::PoseStamped> &poses);
 

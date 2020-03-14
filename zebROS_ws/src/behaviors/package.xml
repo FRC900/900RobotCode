@@ -78,7 +78,8 @@
   <exec_depend>message_generation</exec_depend> 
   <depend>teraranger_array</depend>
   <depend>tf2_ros</depend>
-  <depend>path_follower</depend>
+  <depend>path_follower_msgs</depend>
+  <depend>field_obj</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

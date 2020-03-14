@@ -37,7 +37,7 @@ void Kinematics::limit(const Kinematics &other)
 	pathLimitDistance_ = std::min(pathLimitDistance_, other.pathLimitDistance_);
 }
 
-Constraint::Constraint(const base_trajectory::Constraint &msg)
+Constraint::Constraint(const base_trajectory_msgs::Constraint &msg)
 	: minX_(std::min(msg.corner1.x, msg.corner2.x))
 	, maxX_(std::max(msg.corner1.x, msg.corner2.x))
 	, minY_(std::min(msg.corner1.y, msg.corner2.y))
@@ -76,13 +76,13 @@ KinematicConstraints::KinematicConstraints(const Kinematics &kinematics)
 {
 }
 
-void KinematicConstraints::addConstraints(const std::vector<base_trajectory::Constraint> &msg)
+void KinematicConstraints::addConstraints(const std::vector<base_trajectory_msgs::Constraint> &msg)
 {
 	for (const auto m : msg)
 		addConstraint(m);
 }
 
-void KinematicConstraints::addConstraint(const base_trajectory::Constraint &msg)
+void KinematicConstraints::addConstraint(const base_trajectory_msgs::Constraint &msg)
 {
 	constraints_.push_back(Constraint(msg));
 }

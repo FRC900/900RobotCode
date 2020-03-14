@@ -5,7 +5,7 @@
 //
 #pragma once
 
-#include "base_trajectory/Constraint.h"
+#include "base_trajectory_msgs/Constraint.h"
 #include "ros/ros.h"
 
 class Kinematics
@@ -24,7 +24,7 @@ class Kinematics
 class Constraint
 {
 	public:
-		Constraint(const base_trajectory::Constraint &msg);
+		Constraint(const base_trajectory_msgs::Constraint &msg);
 
 		Kinematics getKinematics(double robotX, double robotY) const;
 
@@ -43,8 +43,8 @@ class KinematicConstraints
 		KinematicConstraints(void);
 		KinematicConstraints(const Kinematics &kinematics);
 
-		void addConstraint(const base_trajectory::Constraint &msg);
-		void addConstraints(const std::vector<base_trajectory::Constraint> &msg);
+		void addConstraint(const base_trajectory_msgs::Constraint &msg);
+		void addConstraints(const std::vector<base_trajectory_msgs::Constraint> &msg);
 		void resetConstraints(void);
 
 		Kinematics globalKinematics(void) const;

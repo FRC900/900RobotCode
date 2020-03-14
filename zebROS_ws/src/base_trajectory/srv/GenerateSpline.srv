@@ -1,8 +1,0 @@
-trajectory_msgs/JointTrajectoryPoint[] points
-base_trajectory/Constraint[]           constraints
----
-Coefs[] orient_coefs
-Coefs[] x_coefs
-Coefs[] y_coefs
-float64[] end_points
-nav_msgs/Path path

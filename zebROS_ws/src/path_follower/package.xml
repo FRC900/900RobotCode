@@ -70,9 +70,9 @@
   <depend>actionlib_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>message_filters</depend>
-  <depend>base_trajectory</depend>
+  <depend>base_trajectory_msgs</depend>
   <depend>control_toolbox</depend>
-
+  <depend>path_follower_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
