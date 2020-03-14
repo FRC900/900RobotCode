@@ -286,7 +286,7 @@ class AlignToShootAction
 #endif
 
 			ros::Publisher in_range_pub = nh_.advertise<std_msgs::Bool>("turret_in_range", 1);
-			ros::Rate r(2); //2 hz is fine for GUI display
+			ros::Rate r(10); //10 hz is fine for GUI display
 			std_msgs::Bool msg;
 
 			while(ros::ok())
