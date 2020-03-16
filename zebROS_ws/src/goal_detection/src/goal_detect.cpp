@@ -93,14 +93,12 @@ namespace goal_detection
 
 			void callback(const sensor_msgs::ImageConstPtr &frameMsg, const sensor_msgs::ImageConstPtr &depthMsg)
 			{
-				//std::lock_guard<std::mutex> l(camera_mutex_);
-				if (!camera_mutex_.try_lock())  // If the previous message is still being
-					return;                     // processed, drop this one
+				std::unique_lock<std::mutex> l(camera_mutex_, std::try_to_lock);
+				if (!l.owns_lock())             // If the previous message is still being
+					return;                     // processed, the lock won't be acquired - return in that case
 				if (!camera_info_valid_)        // Nothing in here works without valid camera info
-				{
-					camera_mutex_.unlock();
 					return;
-				}
+
 				cv_bridge::CvImageConstPtr cvFrame = cv_bridge::toCvShare(frameMsg, sensor_msgs::image_encodings::BGR8);
 				cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
 
@@ -120,19 +118,13 @@ namespace goal_detection
 				gd_.findTargets(cvFrame->image, cvDepth->image, LOADING_BAY_2020, model);
 				std::vector< GoalFound > gfd_loading_bay = gd_.return_found();
 
-#if 0
 				gd_.findTargets(cvFrame->image, cvDepth->image, TEST_TARGET_2020, model);
 				std::vector< GoalFound > gfd_test = gd_.return_found();
-#endif
-
-				std::vector< GoalFound > gfd_test;
 
 				std::vector< GoalFound > gfd;
 				gfd.reserve( gfd_power_port.size() + gfd_loading_bay.size() + gfd_test.size() );
 				gfd.insert( gfd.end(), gfd_power_port.begin(), gfd_power_port.end() );
-#if 0
 				gfd.insert( gfd.end(), gfd_loading_bay.begin(), gfd_loading_bay.end() );
-#endif
 
 				field_obj::Detection gd_msg;
 
@@ -211,25 +203,23 @@ namespace goal_detection
 					}
 
 				}
-				camera_mutex_.unlock();
 			}
 
 			void camera_info_callback(const sensor_msgs::CameraInfoConstPtr &info)
 			{
-				if (!camera_mutex_.try_lock())  // If the previous message is still being
-					return;              // processed, drop this one
+				std::unique_lock<std::mutex> l(camera_mutex_, std::try_to_lock);
+				if (!l.owns_lock())             // If the previous message is still being
+					return;                     // processed, the lock won't be acquired - return in that case
 
 				camera_info_ = *info;
 				camera_info_valid_ = true;
-				camera_mutex_.unlock();
 			}
 
 			void multiflexCB(const teraranger_array::RangeArray& msg)
 			{
-				// If previous message is still being processed, drop
-				// this one.
-				if (!multiflex_mutex_.try_lock())
-					return;
+				std::unique_lock<std::mutex> l(multiflex_mutex_, std::try_to_lock);
+				if (!l.owns_lock())             // If the previous terabee message is still being
+					return;                     // processed, the lock won't be acquired - return in that case
 				double min_dist = std::numeric_limits<double>::max();
 				distance_from_terabee_ = -1;
 				for(int i = 0; i < 2; i++)
@@ -240,7 +230,6 @@ namespace goal_detection
 				}
 				if (min_dist != std::numeric_limits<double>::max())
 					distance_from_terabee_ = min_dist;
-				multiflex_mutex_.unlock();
 			}
 
 			void callback_no_depth(const sensor_msgs::ImageConstPtr &frameMsg)
