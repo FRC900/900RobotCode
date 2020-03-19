@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD 17)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  std_msgs
   talon_state_msgs
 )
 
@@ -186,6 +187,50 @@ add_dependencies(robot_characterization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${ca
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(robot_characterization
+  ${catkin_LIBRARIES}
+)
+
+add_executable(robot_characterization_singlemotor 
+	src/robot_characterization_singlemotor.cpp
+	${ntcore_native_src}
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/leb128.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/raw_istream.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/raw_socket_istream.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/raw_socket_ostream.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/Base64.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/SafeThread.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/SocketError.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPAcceptor.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPConnector.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPConnector_parallel.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPStream.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/raw_ostream.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Error.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ErrorHandling.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Hashing.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ManagedStatic.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/NativeFormatting.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Path.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallPtrSet.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallVector.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringMap.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringRef.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Twine.cpp
+)
+
+## Rename C++ executable without prefix
+## The above recommended prefix causes long target names, the following renames the
+## target back to the shorter version for ease of user use
+## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
+# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(robot_characterization_singlemotor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(robot_characterization_singlemotor
   ${catkin_LIBRARIES}
 )
 
