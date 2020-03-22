@@ -8,7 +8,10 @@ hardware_interface:
    run_hal_robot: false
    can_interface: can0
    joints:
-       - {name: falcon1, type: can_talon_fx, can_id: 7,local: true}
+       - {name: falcon1, type: can_talon_fx, can_id: 1,local: true}
+       - {name: falcon2, type: can_talon_fx, can_id: 2,local: true}
+       - {name: falcon3, type: can_talon_fx, can_id: 3,local: true}
+       - {name: falcon4, type: can_talon_fx, can_id: 4,local: true}
        - {name: pdp, local: true, type: pdp}
        - {name: compressor, local: true, type: compressor, pcm_id: 0}
        - {name: robot_code_ready_jetson, local: true, type: ready}

@@ -5,13 +5,12 @@ include ("../cmake_modules/CMakeOpt.cmake")
 
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED COMPONENTS
-  control_msgs
   controller_interface
+  dynamic_reconfigure
   message_generation
   realtime_tools
+  roscpp
   talon_interface
-  urdf
-  dynamic_reconfigure
 )
 
 generate_dynamic_reconfigure_options(cfg/TalonConfig.cfg)
@@ -22,13 +21,11 @@ generate_messages(DEPENDENCIES talon_controllers)
 # Declare catkin package
 catkin_package(
   CATKIN_DEPENDS
-    control_msgs
     controller_interface
+	dynamic_reconfigure
 	message_runtime
     realtime_tools
 	talon_interface
-    urdf
-	dynamic_reconfigure
   INCLUDE_DIRS include
   #LIBRARIES ${PROJECT_NAME}
 )

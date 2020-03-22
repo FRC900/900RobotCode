@@ -268,17 +268,33 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 					std::string str;
 					if (faults)
 					{
-						if (faults & mask) str += "UnderVoltage "; mask <<= 1;
-						if (faults & mask) str += "ForwardLimitSwitch "; mask <<= 1;
-						if (faults & mask) str += "ReverseLimitSwitch "; mask <<= 1;
-						if (faults & mask) str += "ForwardSoftLimit "; mask <<= 1;
-						if (faults & mask) str += "ReverseSoftLimit "; mask <<= 1;
-						if (faults & mask) str += "HardwareFailure "; mask <<= 1;
-						if (faults & mask) str += "ResetDuringEn "; mask <<= 1;
-						if (faults & mask) str += "SensorOverflow "; mask <<= 1;
-						if (faults & mask) str += "SensorOutOfPhase "; mask <<= 1;
-						if (faults & mask) str += "HardwareESDReset "; mask <<= 1;
+						if (faults & mask) str += "UnderVoltage ";
+						mask <<= 1;
+						if (faults & mask) str += "ForwardLimitSwitch ";
+						mask <<= 1;
+						if (faults & mask) str += "ReverseLimitSwitch ";
+						mask <<= 1;
+						if (faults & mask) str += "ForwardSoftLimit ";
+						mask <<= 1;
+						if (faults & mask) str += "ReverseSoftLimit ";
+						mask <<= 1;
+						if (faults & mask) str += "HardwareFailure ";
+						mask <<= 1;
+						if (faults & mask) str += "ResetDuringEn ";
+						mask <<= 1;
+						if (faults & mask) str += "SensorOverflow ";
+						mask <<= 1;
+						if (faults & mask) str += "SensorOutOfPhase ";
+						mask <<= 1;
+						if (faults & mask) str += "HardwareESDReset ";
+						mask <<= 1;
 						if (faults & mask) str += "RemoteLossOfSignal ";
+						mask <<= 1;
+						if (faults & mask) str += "APIError ";
+						mask <<= 1;
+						if (faults & mask) str += "SupplyOverV ";
+						mask <<= 1;
+						if (faults & mask) str += "SupplyUnstable ";
 					}
 					m.faults[i] = str;
 				}
@@ -289,16 +305,31 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 					std::string str;
 					if (faults)
 					{
-						if (faults & mask) str += "UnderVoltage "; mask <<= 1;
-						if (faults & mask) str += "ForwardLimitSwitch "; mask <<= 1;
-						if (faults & mask) str += "ReverseLimitSwitch "; mask <<= 1;
-						if (faults & mask) str += "ForwardSoftLimit "; mask <<= 1;
-						if (faults & mask) str += "ReverseSoftLimit "; mask <<= 1;
-						if (faults & mask) str += "ResetDuringEn "; mask <<= 1;
-						if (faults & mask) str += "SensorOverflow "; mask <<= 1;
-						if (faults & mask) str += "SensorOutOfPhase "; mask <<= 1;
-						if (faults & mask) str += "HardwareESDReset "; mask <<= 1;
+						if (faults & mask) str += "UnderVoltage ";
+						mask <<= 1;
+						if (faults & mask) str += "ForwardLimitSwitch ";
+						mask <<= 1;
+						if (faults & mask) str += "ReverseLimitSwitch ";
+						mask <<= 1;
+						if (faults & mask) str += "ForwardSoftLimit ";
+						mask <<= 1;
+						if (faults & mask) str += "ReverseSoftLimit ";
+						mask <<= 1;
+						if (faults & mask) str += "ResetDuringEn ";
+						mask <<= 1;
+						if (faults & mask) str += "SensorOverflow ";
+						mask <<= 1;
+						if (faults & mask) str += "SensorOutOfPhase ";
+						mask <<= 1;
+						if (faults & mask) str += "HardwareESDReset ";
+						mask <<= 1;
 						if (faults & mask) str += "RemoteLossOfSignal ";
+						mask <<= 1;
+						if (faults & mask) str += "APIError ";
+						mask <<= 1;
+						if (faults & mask) str += "SupplyOverV ";
+						mask <<= 1;
+						if (faults & mask) str += "SupplyUnstable ";
 					}
 					m.sticky_faults[i] = str;
 				}

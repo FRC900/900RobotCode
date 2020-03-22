@@ -23,7 +23,7 @@ enum TalonMode
 	TalonMode_MotionProfile,
 	TalonMode_MotionMagic,
 	TalonMode_MotionProfileArc,
-        TalonMode_Music,
+    TalonMode_Music,
 	TalonMode_Disabled,
 	TalonMode_Last
 };
@@ -90,6 +90,7 @@ enum RemoteSensorSource
 	RemoteSensorSource_GadgeteerPigeon_Yaw,
 	RemoteSensorSource_GadgeteerPigeon_Pitch,
 	RemoteSensorSource_GadgeteerPigeon_Roll,
+	RemoteSensorSource_CANCoder,
 	RemoteSensorSource_Last
 };
 
@@ -158,6 +159,8 @@ enum StatusFrame
 	Status_13_Base_PIDF0,
 	Status_14_Turn_PIDF1,
 	Status_15_FirmwareApiStatus,
+	Status_17_Targets1,
+	Status_Brushless_Current,
 	Status_Last
 };
 static const uint8_t status_1_general_default = 10;
@@ -174,6 +177,8 @@ static const uint8_t status_12_feedback1_default = 250;
 static const uint8_t status_13_base_pidf0_default = 160;
 static const uint8_t status_14_turn_pidf1_default = 250;
 static const uint8_t status_15_firmwareapistatus_default = 160;
+static const uint8_t status_17_targets1_default = 0;
+static const uint8_t status_brushless_current_default = 0;
 
 enum ControlFrame
 {
@@ -633,6 +638,7 @@ class TalonHWState
 typedef StateHandle<const TalonHWState> TalonStateHandle;
 typedef StateHandle<TalonHWState> TalonWritableStateHandle;
 class TalonStateInterface : public HardwareResourceManager<TalonStateHandle> {};
+class RemoteTalonStateInterface : public HardwareResourceManager<TalonWritableStateHandle, ClaimResources> {};
 
 }
 

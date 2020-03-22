@@ -373,7 +373,6 @@ class TalonHWCommand
 
 		void setConversionFactor(double conversion_factor);
 		double getConversionFactor(void) const;
-		bool conversionFactorChanged(double &conversion_factor);
 
 		//TalonFX only
 		void setMotorCommutation(hardware_interface::MotorCommutation motor_commutation);
@@ -561,7 +560,6 @@ class TalonHWCommand
 		bool   aux_pid_polarity_changed_;
 
 		double conversion_factor_;
-		bool   conversion_factor_changed_;
 
 		// TalonFX / Falcon500 specific
 		hardware_interface::MotorCommutation motor_commutation_;

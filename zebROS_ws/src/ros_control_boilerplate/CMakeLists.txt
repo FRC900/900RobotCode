@@ -2,32 +2,24 @@ cmake_minimum_required(VERSION 2.8.3)
 project(ros_control_boilerplate)
 
 include ("../cmake_modules/CMakeOpt.cmake")
-set(CMAKE_CXX_STANDARD 17)
 
 find_package(catkin REQUIRED COMPONENTS
   as726x_interface
   cmake_modules
-  realtime_tools
-  hardware_interface
   controller_manager
-  roscpp
   control_msgs
-  trajectory_msgs
-  actionlib
-  urdf
-  std_msgs
-  sensor_msgs
-  rosparam_shortcuts
-  talon_interface
-  message_generation
   frc_msgs
   frc_interfaces
-)
-
-add_message_files (
-  FILES
-  AutoMode.msg
-  AutoModeStatus.msg
+  hardware_interface
+  message_generation
+  realtime_tools
+  roscpp
+  rosparam_shortcuts
+  sensor_msgs
+  std_msgs
+  talon_interface
+  trajectory_msgs
+  urdf
 )
 
 add_service_files (
@@ -48,18 +40,17 @@ catkin_package(
   INCLUDE_DIRS
     include
   CATKIN_DEPENDS
-	hardware_interface
-	controller_manager
+	as726x_interface
 	control_msgs
-	trajectory_msgs
-	actionlib
-	urdf
-	std_msgs
 	frc_msgs
 	frc_interfaces
-	sensor_msgs
+	hardware_interface
+	roscpp
 	rosparam_shortcuts
+	sensor_msgs
+	std_msgs
 	talon_interface
+	trajectory_msgs
 	message_runtime
   LIBRARIES
 )
@@ -77,6 +68,9 @@ add_library(frc_robot_interface STATIC
 	src/frc_robot_interface.cpp
 	src/generic_hw_control_loop.cpp
 	src/AS726x.cpp)
+target_link_libraries(frc_robot_interface 
+	${catkin_LIBRARIES}
+)
 
 # Don't build sim code for the Rio or Jetson -
 # saves time and space for something which will

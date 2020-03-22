@@ -7,7 +7,6 @@
 #include "frc_interfaces/match_data_interface.h"
 #include "frc_interfaces/pcm_state_interface.h"
 #include "frc_interfaces/pdp_state_interface.h"
-#include "talon_interface/talon_state_interface.h"
 
 // Create a separate type of joint interface for joints which
 // are read from hardware on another controller_manager.  This
@@ -61,5 +60,4 @@ namespace hardware_interface
 	class RemotePDPStateInterface   : public HardwareResourceManager<PDPWritableStateHandle,   ClaimResources> {};
 	class RemotePCMStateInterface   : public HardwareResourceManager<PCMWritableStateHandle,   ClaimResources> {};
 	class RemoteMatchStateInterface : public HardwareResourceManager<MatchStateWritableHandle, ClaimResources> {};
-	class RemoteTalonStateInterface : public HardwareResourceManager<TalonWritableStateHandle, ClaimResources> {};
 }

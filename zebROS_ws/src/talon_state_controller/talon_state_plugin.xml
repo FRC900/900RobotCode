@@ -1,12 +1,22 @@
 <library path="lib/libtalon_state_controller">
 	<class name="talon_state_controller/TalonStateController" type="talon_state_controller::TalonStateController" base_class_type="controller_interface::ControllerBase">
 		<description>
-			The talon state controller is publishes the current talon state as a talon_state_msgs/TalonState message. The talon state controller expects a TalonStateInterface type of hardware interface.
+			The talon state controller publishes the current talon state as a talon_state_msgs/TalonState message. The talon state controller expects a TalonStateInterface type of hardware interface.
 		</description>
 	</class>
 	<class name="talon_config_controller/TalonConfigController" type="talon_config_controller::TalonConfigController" base_class_type="controller_interface::ControllerBase">
 		<description>
-			The talon config controller is publishes the current talon config as a talon_state_msgs/TalonConfig message. The talon config controller expects a TalonStateInterface type of hardware interface.
+			The talon config controller publishes the current talon config as a talon_state_msgs/TalonConfig message. The talon config controller expects a TalonStateInterface type of hardware interface.
+		</description>
+	</class>
+	<class name="canifier_state_controller/CANifierStateController" type="canifier_state_controller::CANifierStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			The CANifier state controller publishes the current CANifier State as a talon_state_msgs/CANifierConfig message. The CANifierState controller expects a CANifierStateInterface type of hardware interface.
+		</description>
+	</class>
+	<class name="cancoder_state_controller/CANCoderStateController" type="cancoder_state_controller::CANCoderStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			The CANCoder state controller publishes the current CANCoder State as a talon_state_msgs/CANCoderConfig message. The CANCoderState controller expects a CANCoderStateInterface type of hardware interface.
 		</description>
 	</class>
 </library>

@@ -50,9 +50,11 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+  CANCoderState.msg
+  CANifierState.msg
+  CustomProfileStatus.msg
   TalonConfig.msg
   TalonState.msg
-  CustomProfileStatus.msg
 )
 
 ## Generate services in the 'srv' folder

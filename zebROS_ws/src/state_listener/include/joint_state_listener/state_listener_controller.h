@@ -6,10 +6,11 @@
 #include <sensor_msgs/JointState.h>
 #include <sensor_msgs/Imu.h>
 #include "as726x_interface/as726x_interface.h"
-#include "frc_interfaces/remote_joint_interface.h"
 #include "as726x_msgs/AS726xState.h"
+#include "frc_interfaces/remote_joint_interface.h"
 #include "frc_msgs/MatchSpecificData.h"
 #include "frc_msgs/PDPData.h"
+#include "talon_interface/talon_state_interface.h"
 #include "talon_state_msgs/TalonState.h"
 
 namespace state_listener_controller

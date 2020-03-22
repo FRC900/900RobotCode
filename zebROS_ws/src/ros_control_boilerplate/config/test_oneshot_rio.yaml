@@ -1,0 +1,50 @@
+# ros_control_boilerplate Settings -----------------------
+# Settings for ros_control control loop
+generic_hw_control_loop:
+  loop_hz: 100
+  cycle_time_error_threshold: 0.01
+
+# Settings for ros_control hardware interface
+# Map a name for each valid joint to a CAN id
+# For future expansion, change hw_id to specify one
+# of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
+hardware_interface:
+   joints:
+       - {name: hood_extend_joint, type: solenoid, pcm: 0, id: 1, local_hardware: true, local_update: false}
+       - {name: hood_retract_joint, type: solenoid, pcm: 0, id: 2, local_hardware: true, local_update: false}
+       
+       - {name: robot_code_ready_jetson, local: false, type: ready}
+       - {name: robot_code_ready_rio, local: true, type: ready}
+       
+joint_state_controller:
+   type:         joint_state_controller/JointStateController
+   publish_rate: 100
+joint_mode_state_controller:
+   type:         joint_mode_state_controller/JointModeStateController
+   publish_rate: 100
+# This one creates the /talon_states topic necessary in ROS
+# It doesn't actually control anything, just takes the internal
+# encoder state used by the hw manager and publishes it as
+# a ROS topic.  This is generic ROS stuff, so we'll have
+# to figure out what to map e.g. effort to in the Talon world
+talon_state_controller:
+   type:         talon_state_controller/TalonStateController
+   publish_rate: 100
+talon_config_controller:
+   type:         talon_config_controller/TalonConfigController
+   publish_rate: 100
+       
+match_state_controller:
+   type:         match_state_controller/MatchStateController
+   publish_rate: 20
+
+robot_controller_state_controller:
+   type: robot_controller_state_controller/RobotControllerStateController
+   publish_rate: 20
+
+joint_state_listener_controller:
+    type:      state_listener_controller/JointStateListenerController
+    topic:     /frcrobot_jetson/joint_states
+joint_mode_listener_controller:
+    type:      state_listener_controller/JointModeListenerController
+    topic:     /frcrobot_jetson/joint_modes

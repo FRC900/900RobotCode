@@ -7,6 +7,7 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  hardware_interface
   roscpp
   state_handle
 )
@@ -103,7 +104,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES frc_interfaces
-   CATKIN_DEPENDS state_handle roscpp
+   CATKIN_DEPENDS hardware_interface roscpp state_handle
 #  DEPENDS system_lib
 )
 

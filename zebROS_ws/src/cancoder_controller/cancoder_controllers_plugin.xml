@@ -1,0 +1,7 @@
+<library path="lib/libcancoder_controller">
+	<class name="cancoder_controller/CANCoderController" type="cancoder_controller::CANCoderController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			The cancoder controller allows configuration of device settings through either params or dynamic reconfigure
+		</description>
+	</class>
+</library>

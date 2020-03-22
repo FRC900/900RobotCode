@@ -29,9 +29,6 @@
  * Original joint_state_controller Author: Wim Meeussen
  */
 
-#include <algorithm>
-#include <cstddef>
-
 #include "as726x_controllers/as726x_controller.h"
 
 namespace as726x_controller
@@ -88,8 +85,8 @@ bool AS726xController::init(hardware_interface::as726x::AS726xCommandInterface *
 		ROS_ERROR_STREAM("as726x controller - could not read joint_name param");
 		return false;
 	}
-	as726x_command_ = hw->getHandle(joint_name);
 	ROS_INFO("Got joint %s in as726x controller", joint_name.c_str());
+	as726x_command_ = hw->getHandle(joint_name);
 
 	std::string param_str;
 	ind_led_current_limit_ = hardware_interface::as726x::IndLedCurrentLimits::IND_LIMIT_1MA;

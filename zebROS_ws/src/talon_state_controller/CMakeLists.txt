@@ -26,7 +26,12 @@ catkin_package(
   )
 
 include_directories(include ${catkin_INCLUDE_DIRS})
-add_library(${PROJECT_NAME} src/talon_config_controller src/talon_state_controller.cpp)
+add_library(${PROJECT_NAME}
+	src/cancoder_state_controller.cpp
+   	src/canifier_state_controller.cpp
+   	src/talon_config_controller.cpp
+   	src/talon_state_controller.cpp
+)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 ## Add cmake target dependencies of the executable

@@ -1,8 +1,9 @@
 #pragma once
 #include <dynamic_reconfigure/server.h>
-#include <talon_interface/talon_command_interface.h>
-#include <talon_controllers/TalonConfigConfig.h>
 #include <XmlRpcValue.h>
+
+#include "talon_interface/talon_command_interface.h"
+#include "talon_controllers/TalonConfigConfig.h"
 
 namespace talon_controllers
 {
@@ -130,6 +131,8 @@ class TalonCIParams
 			status_frame_periods_[hardware_interface::Status_13_Base_PIDF0] = hardware_interface::status_13_base_pidf0_default;
 			status_frame_periods_[hardware_interface::Status_14_Turn_PIDF1] = hardware_interface::status_14_turn_pidf1_default;
 			status_frame_periods_[hardware_interface::Status_15_FirmwareApiStatus] = hardware_interface::status_15_firmwareapistatus_default;
+			status_frame_periods_[hardware_interface::Status_17_Targets1] = hardware_interface::status_17_targets1_default;
+			status_frame_periods_[hardware_interface::Status_Brushless_Current] = hardware_interface::status_brushless_current_default;
 
 			control_frame_periods_[hardware_interface::Control_3_General] = hardware_interface::control_3_general_default;
 			control_frame_periods_[hardware_interface::Control_4_Advanced] = hardware_interface::control_4_advanced_default;
@@ -266,6 +269,8 @@ class TalonCIParams
 			status_frame_periods_[hardware_interface::Status_13_Base_PIDF0] = config.status_13_base_pidf0_period;
 			status_frame_periods_[hardware_interface::Status_14_Turn_PIDF1] = config.status_14_turn_pidf1_period;
 			status_frame_periods_[hardware_interface::Status_15_FirmwareApiStatus] = config.status_15_firmwareapistatus_period;
+			status_frame_periods_[hardware_interface::Status_17_Targets1] = config.status_17_targets1_period;
+			status_frame_periods_[hardware_interface::Status_Brushless_Current] = config.status_brushless_current_period;
 
 			control_frame_periods_[hardware_interface::Control_3_General] = config.control_3_general_period;
 			control_frame_periods_[hardware_interface::Control_4_Advanced] = config.control_4_advanced_period;
@@ -397,6 +402,8 @@ class TalonCIParams
 			config.status_13_base_pidf0_period = status_frame_periods_[hardware_interface::Status_13_Base_PIDF0];
 			config.status_14_turn_pidf1_period = status_frame_periods_[hardware_interface::Status_14_Turn_PIDF1];
 			config.status_15_firmwareapistatus_period = status_frame_periods_[hardware_interface::Status_15_FirmwareApiStatus];
+			config.status_17_targets1_period = status_frame_periods_[hardware_interface::Status_17_Targets1];
+			config.status_brushless_current_period = status_frame_periods_[hardware_interface::Status_Brushless_Current];
 
 			config.control_3_general_period = control_frame_periods_[hardware_interface::Control_3_General];
 			config.control_4_advanced_period = control_frame_periods_[hardware_interface::Control_4_Advanced];
@@ -845,6 +852,8 @@ class TalonCIParams
 			n.getParam("status_13_base_pidf0_period", status_frame_periods_[hardware_interface::Status_13_Base_PIDF0]);
 			n.getParam("status_14_turn_pidf1_period", status_frame_periods_[hardware_interface::Status_14_Turn_PIDF1]);
 			n.getParam("status_15_firmwareapistatus_period", status_frame_periods_[hardware_interface::Status_15_FirmwareApiStatus]);
+			n.getParam("status_17_targets1_period", status_frame_periods_[hardware_interface::Status_17_Targets1]);
+			n.getParam("status_17_brushless_current_period", status_frame_periods_[hardware_interface::Status_Brushless_Current]);
 			return true;
 		}
 

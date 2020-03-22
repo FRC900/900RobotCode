@@ -52,8 +52,8 @@
   <build_depend>roscpp</build_depend>
   <build_export_depend>roscpp</build_export_depend>
   <exec_depend>roscpp</exec_depend>
+  <depend>hardware_interface</depend>
   <depend>state_handle</depend>
-
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

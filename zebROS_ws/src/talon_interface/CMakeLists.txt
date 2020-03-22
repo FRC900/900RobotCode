@@ -121,6 +121,10 @@ include_directories(
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME} STATIC
+  src/cancoder_state_interface.cpp
+  src/cancoder_command_interface.cpp
+  src/canifier_command_interface.cpp
+  src/canifier_state_interface.cpp
   src/talon_command_interface.cpp
   src/talon_state_interface.cpp
 )

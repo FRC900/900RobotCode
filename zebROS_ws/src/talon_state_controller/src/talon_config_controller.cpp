@@ -185,6 +185,8 @@ bool TalonConfigController::init(hardware_interface::TalonStateInterface *hw,
 		m.status_13_base_pidf0_period.push_back(0);
 		m.status_14_turn_pidf1_period.push_back(0);
 		m.status_15_firmwareapistatus_period.push_back(0);
+		m.status_17_targets1_period.push_back(0);
+		m.status_brushless_current_period.push_back(0);
 		m.control_3_general_period.push_back(0);
 		m.control_4_advanced_period.push_back(0);
 		m.control_5_feedbackoutputoverride_period.push_back(0);
@@ -328,6 +330,8 @@ std::string TalonConfigController::remoteSensorSourceToString(const hardware_int
 			return "GadgeteerPigeon_Pitch";
 		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Roll:
 			return "GadgeteerPigeon_Roll";
+		case hardware_interface::RemoteSensorSource_CANCoder:
+			return "CANCoder";
 		default:
 			return "Unknown";
 	}
@@ -534,6 +538,8 @@ void TalonConfigController::update(const ros::Time &time, const ros::Duration & 
 				m.status_13_base_pidf0_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_13_Base_PIDF0);
 				m.status_14_turn_pidf1_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_14_Turn_PIDF1);
 				m.status_15_firmwareapistatus_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_15_FirmwareApiStatus);
+				m.status_17_targets1_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_17_Targets1);
+				m.status_brushless_current_period[i] = ts->getStatusFramePeriod(hardware_interface::Status_Brushless_Current);
 
 				m.control_3_general_period[i] = ts->getControlFramePeriod(hardware_interface::Control_3_General);
 				m.control_4_advanced_period[i] = ts->getControlFramePeriod(hardware_interface::Control_4_Advanced);
@@ -583,7 +589,7 @@ void TalonConfigController::update(const ros::Time &time, const ros::Duration & 
 						break;
 				}
 
-				int fw_ver = ts->getFirmwareVersion();
+				const int fw_ver = ts->getFirmwareVersion();
 
 				if (fw_ver >= 0)
 				{

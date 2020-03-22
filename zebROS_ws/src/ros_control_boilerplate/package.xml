@@ -14,6 +14,7 @@
   <build_depend>message_generation</build_depend>
 
   <depend>roscpp</depend>
+  <depend>as726x_interface</depend>
   <depend>cmake_modules</depend>
   <depend>hardware_interface</depend>
   <depend>controller_manager</depend>
