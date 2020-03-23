@@ -66,6 +66,9 @@ cd ~/melodic_arm_cross_ws
 # Do a fresh build - kill off any lingering dependencies
 rm -rf ~/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic devel_isolated build_isolated
 
+#catkin config --install --install-space $HOME/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic 
+#catkin build -DCMAKE_TOOLCHAIN_FILE=$HOME/2020RobotCode/zebROS_ws/rostoolchain.cmake
+
 # Note - if this fails looking for gencpp*cmake, run from a new terminal
 # window where no ROS setup.bash has previously been sourced
 ./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2020RobotCode/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
