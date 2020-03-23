@@ -24,14 +24,8 @@ catkin config --profile cross -x _isolated --install --blacklist \
 	tf_object_detection \
 	velocity_controllers \
 	visualize_profile \
-	zed_ar_track_alvar_example \
-	zed_display_rviz \
-	zed_depth_sub_tutorial \
-	zed_nodelet_example \
+	zed_nodelets \
 	zed_ros \
-	zed_rtabmap_example \
-	zed_tracking_sub_tutorial \
-	zed_video_sub_tutorial \
 	zed_wrapper \
 	zms_writer
 catkin build --profile cross -DCMAKE_TOOLCHAIN_FILE=`pwd`/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF "$@"

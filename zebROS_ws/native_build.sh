@@ -22,14 +22,7 @@ fi
 
 catkin config --blacklist \
 	velocity_controllers \
-	zed_ar_track_alvar_example \
-	zed_display_rviz \
-	zed_depth_sub_tutorial \
-	zed_nodelet_example \
 	zed_ros \
-	zed_rtabmap_example \
-	zed_tracking_sub_tutorial \
-	zed_video_sub_tutorial \
 	$EXTRA_BLACKLIST_PACKAGES
 
 catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON "$@"
