@@ -100,6 +100,7 @@ bool AS726xController::init(hardware_interface::as726x::AS726xCommandInterface *
 	controller_nh.param("ind_led_enable", bool_val, false);
 	ind_led_enable_= bool_val;
 
+	drv_led_current_limit_ = hardware_interface::as726x::DrvLedCurrentLimits::DRV_LIMIT_12MA5;
 	if (controller_nh.getParam("drv_led_current_limit", param_str))
 	{
 		if (!convertDrvLedCurrentLimit(param_str, drv_led_current_limit_))
@@ -129,47 +130,47 @@ bool AS726xController::init(hardware_interface::as726x::AS726xCommandInterface *
 
     ddr_.registerEnumVariable<int>
 		("ind_led_current_limit",
-		 static_cast<int>(ind_led_current_limit_.load(std::memory_order_relaxed)),
+		 boost::bind(&AS726xController::getIndLedCurrentLimit, this),
 		 boost::bind(&as726x_controller::AS726xController::indLedCurrentLimitCB, this, _1),
 		 "Current limit for Ind LED",
 		 ind_led_current_limit_enum_map_);
 
     ddr_.registerVariable<bool>
 		("ind_led_enable",
-		 ind_led_enable_.load(std::memory_order_relaxed),
+		 boost::bind(&AS726xController::getIndLedEnable, this),
 		 boost::bind(&AS726xController::indLedEnableCB, this, _1),
 		 "Ind LED Enable");
 
     ddr_.registerEnumVariable<int>
 		("drv_led_current_limit",
-		 static_cast<int>(drv_led_current_limit_.load(std::memory_order_relaxed)),
+		 boost::bind(&AS726xController::getDrvLedCurrentLimit, this),
 		 boost::bind(&as726x_controller::AS726xController::drvLedCurrentLimitCB, this, _1),
 		 "Current limit for Drv LED",
 		 drv_led_current_limit_enum_map_);
 
     ddr_.registerVariable<bool>
 		("drv_led_enable",
-		 drv_led_enable_.load(std::memory_order_relaxed),
+		 boost::bind(&AS726xController::getDrvLedEnable, this),
 		 boost::bind(&AS726xController::drvLedEnableCB, this, _1),
 		 "Drv LED Enable");
 
     ddr_.registerEnumVariable<int>
 		("converstion_type",
-		 static_cast<int>(conversion_type_.load(std::memory_order_relaxed)),
+		 boost::bind(&AS726xController::getConversionType, this),
 		 boost::bind(&as726x_controller::AS726xController::conversionTypeCB, this, _1),
 		 "Sensor conversion type",
 		 conversion_types_enum_map_);
 
     ddr_.registerEnumVariable<int>
 		("channel_gain",
-		 static_cast<int>(channel_gain_.load(std::memory_order_relaxed)),
+		 boost::bind(&AS726xController::getChannelGain, this),
 		 boost::bind(&as726x_controller::AS726xController::channelGainCB, this, _1),
 		 "Sensor channel gain",
 		 channel_gain_enum_map_);
 
     ddr_.registerVariable<int>
 		("integration_time",
-		 static_cast<int>(integration_time_.load(std::memory_order_relaxed)),
+		 boost::bind(&AS726xController::getIntegrationTime, this),
 		 boost::bind(&AS726xController::integrationTimeCB, this, _1),
 		 "Intergation Time",
 		 std::numeric_limits<uint8_t>::min(),
@@ -207,6 +208,42 @@ void AS726xController::integrationTimeCB(uint8_t integration_time)
 {
 	integration_time_ = integration_time;
 }
+
+int  AS726xController::getIndLedCurrentLimit(void) const
+{
+	return ind_led_current_limit_;
+}
+
+bool AS726xController::getIndLedEnable(void) const
+{
+	return ind_led_enable_;
+}
+
+int  AS726xController::getDrvLedCurrentLimit(void) const
+{
+	return drv_led_current_limit_;
+}
+
+bool AS726xController::getDrvLedEnable(void) const
+{
+	return drv_led_enable_;
+}
+
+int  AS726xController::getConversionType(void) const
+{
+	return conversion_type_;
+}
+
+int  AS726xController::getChannelGain(void) const
+{
+	return channel_gain_;
+}
+
+int  AS726xController::getIntegrationTime(void) const
+{
+	return integration_time_;
+}
+
 
 void AS726xController::starting(const ros::Time &/*time*/)
 {

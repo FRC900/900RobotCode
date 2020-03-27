@@ -143,5 +143,13 @@ class AS726xController: public controller_interface::Controller<hardware_interfa
 		void conversionTypeCB(int conversion_type);
 		void channelGainCB(int channel_gain);
 		void integrationTimeCB(uint8_t integration_time);
+
+		int  getIndLedCurrentLimit(void) const;
+		bool getIndLedEnable(void) const;
+		int  getDrvLedCurrentLimit(void) const;
+		bool getDrvLedEnable(void) const;
+		int  getConversionType(void) const;
+		int  getChannelGain(void) const;
+		int  getIntegrationTime(void) const;
 };
 } // namespace
