@@ -1,12 +1,9 @@
 #CURRENTLY THIS FILE IS NOT EDITED. USE AN ACTUAL CONTROLLER CMAKE FILE TO FIGURE OUT HOW TO COMPILE
 
-
-
 cmake_minimum_required(VERSION 2.8.3)
 project(template_controller)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+include ("../cmake_modules/CMakeOpt.cmake")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
