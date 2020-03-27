@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <mutex>
+#include "canifier_controller_msgs/CanifierLED.h"
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 #include "talon_interface/canifier_command_interface.h"
 
@@ -12,7 +13,7 @@ class CANifierCIParams
 	public:
 		CANifierCIParams(ros::NodeHandle n);
 
-		void setLEDOutput(hardware_interface::canifier::LEDChannel index, double value, bool update_dynamic = true);
+		void setLEDOutput(hardware_interface::canifier::LEDChannel index, double value, bool lock, bool update_dynamic = true);
 		void setGeneralPinOutputEnable(hardware_interface::canifier::GeneralPin index, bool value, bool update_dynamic = true);
 		void setGeneralPinOutput(hardware_interface::canifier::GeneralPin index, bool value, bool update_dynamic = true);
 		void setVelocityMeasurementPeriod(int period, bool update_dynamic = true);
@@ -25,7 +26,8 @@ class CANifierCIParams
 		void setStatusFramePeriod(hardware_interface::canifier::CANifierStatusFrame frame_id, int period, bool update_dynamic = true);
 		void setControlFramePeriod(hardware_interface::canifier::CANifierControlFrame frame_id, int period, bool update_dynamic = true);
 
-		double getLEDOutput(hardware_interface::canifier::LEDChannel index) const;
+		double getLEDOutput(hardware_interface::canifier::LEDChannel index, bool lock) const;
+		std::shared_ptr<std::mutex> getLEDOutputMutex(void);
 		bool   getGeneralPinOutputEnable(hardware_interface::canifier::GeneralPin index) const;
 		bool   getGeneralPinOutput(hardware_interface::canifier::GeneralPin index) const;
 		hardware_interface::canifier::CANifierVelocityMeasPeriod getVelocityMeasurementPeriod(void) const;
@@ -38,8 +40,11 @@ class CANifierCIParams
 		int    getStatusFramePeriod(hardware_interface::canifier::CANifierStatusFrame frame_id) const;
 		int    getControlFramePeriod(hardware_interface::canifier::CANifierControlFrame frame_id) const;
 
+		void   updateDDR(void);
+
 	private:
-		std::array<std::atomic<double>, hardware_interface::canifier::LEDChannel::LEDChannelLast>                    led_output_;
+		std::array<double, hardware_interface::canifier::LEDChannel::LEDChannelLast>                                 led_output_;
+		std::shared_ptr<std::mutex>                                                                                  led_output_mutex_;
 		std::array<std::atomic<bool>,   hardware_interface::canifier::GeneralPin::GeneralPin_LAST>                   general_pin_output_enable_;
 		std::array<std::atomic<bool>,   hardware_interface::canifier::GeneralPin::GeneralPin_LAST>                   general_pin_output_;
 		std::atomic<hardware_interface::canifier::CANifierVelocityMeasPeriod>                                        velocity_measurement_period_;
@@ -68,6 +73,18 @@ class CANifierCIParams
 
 		template <typename T, size_t S>
 		void  readIntoArray(ros::NodeHandle &n, const std::string &name, size_t index, std::array<std::atomic<T>, S> &array)
+		{
+			if (index >= array.size())
+			{
+				ROS_ERROR_STREAM ("Internal error reading " << name << " in " << __PRETTY_FUNCTION__ << " : index out of bounds");
+				return;
+			}
+			T val;
+			if (n.getParam(name, val))
+				array[index] = val;
+		}
+		template <typename T, size_t S>
+		void  readIntoArray(ros::NodeHandle &n, const std::string &name, size_t index, std::array<T, S> &array)
 		{
 			if (index >= array.size())
 			{
@@ -139,6 +156,11 @@ class CANifierControllerInterface
 		bool                                                set_quadrature_position_;
 		double                                              new_quadrature_position_;
 		std::atomic<bool>                                   clear_sticky_faults_;
+		ros::ServiceServer                                  led_service_;
+
+
+		bool ledService(canifier_controller_msgs::CanifierLED::Request &req,
+				canifier_controller_msgs::CanifierLED::Request &/*res*/);
 };
 
 } // namespace canifier_controller_interfac

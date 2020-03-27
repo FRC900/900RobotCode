@@ -3,7 +3,8 @@
 namespace canifier_controller_interface
 {
 CANifierCIParams::CANifierCIParams(ros::NodeHandle n)
-	: ddr_(n)
+	: led_output_mutex_(std::make_shared<std::mutex>())
+    , ddr_(n)
 {
 	// First set defaults for all params
 	for (auto &lo : led_output_)
@@ -89,9 +90,9 @@ CANifierCIParams::CANifierCIParams(ros::NodeHandle n)
 	readIntoArray(n, "control_2_pwm_output_period", hardware_interface::canifier::CANifierControlFrame::CANifier_Control_2_PwmOutput, control_frame_period_);
 
 	// Then hook them up to dynamic reconfigure options
-	ddr_.registerVariable<double>("led_channela_output", boost::bind(&CANifierCIParams::getLEDOutput, this, hardware_interface::canifier::LEDChannel::LEDChannelA), boost::bind(&CANifierCIParams::setLEDOutput, this, hardware_interface::canifier::LEDChannel::LEDChannelA, _1, false), "LED Channel A output", 0.0, 1.0);
-	ddr_.registerVariable<double>("led_channelb_output", boost::bind(&CANifierCIParams::getLEDOutput, this, hardware_interface::canifier::LEDChannel::LEDChannelB), boost::bind(&CANifierCIParams::setLEDOutput, this, hardware_interface::canifier::LEDChannel::LEDChannelB, _1, false), "LED Channel B output", 0.0, 1.0);
-	ddr_.registerVariable<double>("led_channelc_output", boost::bind(&CANifierCIParams::getLEDOutput, this, hardware_interface::canifier::LEDChannel::LEDChannelC), boost::bind(&CANifierCIParams::setLEDOutput, this, hardware_interface::canifier::LEDChannel::LEDChannelC, _1, false), "LED Channel C output", 0.0, 1.0);
+	ddr_.registerVariable<double>("led_channela_output", boost::bind(&CANifierCIParams::getLEDOutput, this, hardware_interface::canifier::LEDChannel::LEDChannelA, true), boost::bind(&CANifierCIParams::setLEDOutput, this, hardware_interface::canifier::LEDChannel::LEDChannelA, _1, true, false), "LED Channel A output", 0.0, 1.0);
+	ddr_.registerVariable<double>("led_channelb_output", boost::bind(&CANifierCIParams::getLEDOutput, this, hardware_interface::canifier::LEDChannel::LEDChannelB, true), boost::bind(&CANifierCIParams::setLEDOutput, this, hardware_interface::canifier::LEDChannel::LEDChannelB, _1, true, false), "LED Channel B output", 0.0, 1.0);
+	ddr_.registerVariable<double>("led_channelc_output", boost::bind(&CANifierCIParams::getLEDOutput, this, hardware_interface::canifier::LEDChannel::LEDChannelC, true), boost::bind(&CANifierCIParams::setLEDOutput, this, hardware_interface::canifier::LEDChannel::LEDChannelC, _1, true, false), "LED Channel C output", 0.0, 1.0);
 	ddr_.registerVariable<bool>("quadidx_output_enable", boost::bind(&CANifierCIParams::getGeneralPinOutputEnable, this, hardware_interface::canifier::GeneralPin::QUAD_IDX), boost::bind(&CANifierCIParams::setGeneralPinOutputEnable, this, hardware_interface::canifier::GeneralPin::QUAD_IDX, _1, false), "General Pins QUAD_IDX output enable");
 	ddr_.registerVariable<bool>("quadb_output_enable", boost::bind(&CANifierCIParams::getGeneralPinOutputEnable, this, hardware_interface::canifier::GeneralPin::QUAD_B), boost::bind(&CANifierCIParams::setGeneralPinOutputEnable, this, hardware_interface::canifier::GeneralPin::QUAD_B, _1, false), "General Pins QUAD_B output enable");
 	ddr_.registerVariable<bool>("quada_output_enable", boost::bind(&CANifierCIParams::getGeneralPinOutputEnable, this, hardware_interface::canifier::GeneralPin::QUAD_A), boost::bind(&CANifierCIParams::setGeneralPinOutputEnable, this, hardware_interface::canifier::GeneralPin::QUAD_A, _1, false), "General Pins QUAD_A output enable");
@@ -145,12 +146,17 @@ CANifierCIParams::CANifierCIParams(ros::NodeHandle n)
 	ddr_.publishServicesTopics();
 }
 
-
-void CANifierCIParams::setLEDOutput(hardware_interface::canifier::LEDChannel index, double value, bool update_dynamic)
+void CANifierCIParams::setLEDOutput(hardware_interface::canifier::LEDChannel index, double value, bool lock, bool update_dynamic)
 {
 	if ((index <= hardware_interface::canifier::LEDChannel::LEDChannelFirst) ||
 	    (index >= hardware_interface::canifier::LEDChannel::LEDChannelLast) )
+	{
+		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " index out of range (" << index << ")");
 		return;
+	}
+	std::unique_lock<std::mutex> l(*led_output_mutex_, std::defer_lock);
+	if (lock)
+		l.lock();
 	const bool update_published_info = update_dynamic && (led_output_[index] != value);
 	led_output_[index] = value;
 	if (update_published_info)
@@ -162,7 +168,10 @@ void CANifierCIParams::setGeneralPinOutputEnable(hardware_interface::canifier::G
 {
 	if ((index <= hardware_interface::canifier::GeneralPin::GeneralPin_FIRST) ||
 		(index >= hardware_interface::canifier::GeneralPin::GeneralPin_LAST))
+	{
+		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " index out of range (" << index << ")");
 		return;
+	}
 	const bool update_published_info = update_dynamic && (general_pin_output_enable_[index] != value);
 	general_pin_output_enable_[index] = value;
 	if (update_published_info)
@@ -175,7 +184,10 @@ void CANifierCIParams::setGeneralPinOutput(hardware_interface::canifier::General
 {
 	if ((index <= hardware_interface::canifier::GeneralPin::GeneralPin_FIRST) ||
 		(index >= hardware_interface::canifier::GeneralPin::GeneralPin_LAST))
+	{
+		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " index out of range (" << index << ")");
 		return;
+	}
 	const bool update_published_info = update_dynamic && (general_pin_output_[index] != value);
 	general_pin_output_[index] = value;
 	if (update_published_info)
@@ -297,7 +309,7 @@ void CANifierCIParams::setControlFramePeriod(hardware_interface::canifier::CANif
 	}
 }
 
-double CANifierCIParams::getLEDOutput(hardware_interface::canifier::LEDChannel index) const
+double CANifierCIParams::getLEDOutput(hardware_interface::canifier::LEDChannel index, bool lock) const
 {
 	if ((index <= hardware_interface::canifier::LEDChannel::LEDChannelFirst) ||
 	    (index >= hardware_interface::canifier::LEDChannel::LEDChannelLast) )
@@ -305,8 +317,17 @@ double CANifierCIParams::getLEDOutput(hardware_interface::canifier::LEDChannel i
 		ROS_ERROR_STREAM("Error in " << __PRETTY_FUNCTION__ << " : index out of bounds");
 		return -std::numeric_limits<double>::max();
 	}
+	std::unique_lock<std::mutex> l(*led_output_mutex_, std::defer_lock);
+	if (lock)
+		l.lock();
 	return led_output_[index];
 }
+
+std::shared_ptr<std::mutex> CANifierCIParams::getLEDOutputMutex(void)
+{
+	return led_output_mutex_;
+}
+
 bool CANifierCIParams::getGeneralPinOutputEnable(hardware_interface::canifier::GeneralPin index) const
 {
 	if ((index <= hardware_interface::canifier::GeneralPin::GeneralPin_FIRST) ||
@@ -388,22 +409,35 @@ int CANifierCIParams::getControlFramePeriod(hardware_interface::canifier::CANifi
 	return control_frame_period_[frame_id];
 }
 
+void CANifierCIParams::updateDDR(void)
+{
+	ddr_.updatePublishedInformation();
+}
+
 CANifierControllerInterface::CANifierControllerInterface(ros::NodeHandle &n, const std::string &joint_name, hardware_interface::canifier::CANifierCommandHandle handle)
 	: params_(ros::NodeHandle(n, joint_name))
 	, handle_(handle)
 	, set_quadrature_position_{false}
 	, new_quadrature_position_{0.0}
 	, clear_sticky_faults_{false}
+	, led_service_(n.advertiseService("led_command", &CANifierControllerInterface::ledService, this))
 {
 }
 
 void CANifierControllerInterface::update(void)
 {
-	for (size_t i = hardware_interface::canifier::LEDChannel::LEDChannelFirst + 1; i < hardware_interface::canifier::LEDChannel::LEDChannelLast; i++)
 	{
-		const auto led_channel = static_cast<hardware_interface::canifier::LEDChannel>(i);
-		handle_->setLEDOutput(led_channel, params_.getLEDOutput(led_channel));
+		// Only update the hardware if the LED output info can be locked and accessed atomically
+		std::unique_lock<std::mutex> l(*(params_.getLEDOutputMutex()), std::try_to_lock);
+
+		if (l.owns_lock())
+		{
+			handle_->setLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelA, params_.getLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelA, false));
+			handle_->setLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelB, params_.getLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelB, false));
+			handle_->setLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelC, params_.getLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelC, false));
+		}
 	}
+
 	for (size_t i = hardware_interface::canifier::GeneralPin::GeneralPin_FIRST + 1; i < hardware_interface::canifier::GeneralPin::GeneralPin_LAST; i++)
 	{
 		const auto general_pin = static_cast<hardware_interface::canifier::GeneralPin>(i);
@@ -412,6 +446,7 @@ void CANifierControllerInterface::update(void)
 	}
 
 	{
+		// Only update the hardware if the output info can be locked and accessed atomically
 		std::unique_lock<std::mutex> l(set_quadrature_position_mutex_, std::try_to_lock);
 
 		if (l.owns_lock() && set_quadrature_position_)
@@ -463,7 +498,7 @@ void CANifierControllerInterface::setClearStickyFaults(void)
 }
 void CANifierControllerInterface::setLEDOutput(hardware_interface::canifier::LEDChannel index, double value)
 {
-	params_.setLEDOutput(index, value);
+	params_.setLEDOutput(index, value, true);
 }
 void CANifierControllerInterface::setGeneralPinOutputEnable(hardware_interface::canifier::GeneralPin index, bool value)
 {
@@ -508,6 +543,20 @@ void CANifierControllerInterface::setStatusFramePeriod(hardware_interface::canif
 void CANifierControllerInterface::setControlFramePeriod(hardware_interface::canifier::CANifierControlFrame frame_id, int period)
 {
 	params_.setControlFramePeriod(frame_id, period);
+}
+
+bool CANifierControllerInterface::ledService(canifier_controller_msgs::CanifierLED::Request &req,
+		canifier_controller_msgs::CanifierLED::Request &/*res*/)
+{
+	{
+		// Lock this so all three channels are updated atomically
+		std::lock_guard<std::mutex> l(*(params_.getLEDOutputMutex()));
+		params_.setLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelA, req.r, false, false);
+		params_.setLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelB, req.g, false, false);
+		params_.setLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelC, req.b, false, false);
+	}
+	params_.updateDDR();
+	return true;
 }
 
 }; // namespace canifier_controller_interface
