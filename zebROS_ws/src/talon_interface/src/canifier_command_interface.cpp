@@ -67,7 +67,7 @@ namespace canifier
 			ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " : led channel out of range");
 			return;
 		}
-		if (percentOutput != led_output_[led_channel])
+		if (fabs(percentOutput - led_output_[led_channel]) > 0.001)
 		{
 			led_output_[led_channel] = percentOutput;
 			led_output_changed_[led_channel] = true;
@@ -172,7 +172,7 @@ namespace canifier
 	}
 	void CANifierHWCommand::setQuadraturePosition(double position)
 	{
-		if (quadrature_position_ != position)
+		if (fabs(quadrature_position_ - position) > 0.0001)
 		{
 			quadrature_position_ = position;
 			quadrature_position_changed_ = true;
@@ -321,7 +321,7 @@ namespace canifier
 			ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " : PWM channel out of range");
 			return;
 		}
-		if (pwm_output_[channel] != value)
+		if (fabs(pwm_output_[channel] - value) > 0.0001)
 		{
 			pwm_output_[channel] = value;
 			pwm_output_changed_[channel] = true;
