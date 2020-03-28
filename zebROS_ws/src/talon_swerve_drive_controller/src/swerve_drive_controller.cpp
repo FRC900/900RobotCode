@@ -1112,7 +1112,7 @@ void TalonSwerveDriveController::cmdVelCallback(const geometry_msgs::Twist &comm
 	}
 	else
 	{
-		ROS_ERROR_NAMED(name_, "Can't accept new commands. Controller is not running.");
+		ROS_ERROR_STREAM_NAMED(name_, __PRETTY_FUNCTION__ << " : Can't accept new commands. Controller is not running.");
 	}
 }
 
@@ -1263,7 +1263,7 @@ bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_control
 	}
 	else
 	{
-		ROS_ERROR_NAMED(name_, "Can't accept new commands. Controller is not running.");
+		ROS_ERROR_STREAM_NAMED(name_, __PRETTY_FUNCTION__ << " : Can't accept new commands. Controller is not running.");
 		return false;
 	}
 }
@@ -1280,7 +1280,7 @@ bool TalonSwerveDriveController::changeCenterOfRotationService(talon_swerve_driv
 	}
 	else
 	{
-		ROS_ERROR_NAMED(name_, "Can't accept new commands. Controller is not running.");
+		ROS_ERROR_STREAM_NAMED(name_, __PRETTY_FUNCTION__ << " : Can't accept new commands. Controller is not running.");
 		return false;
 	}
 }
@@ -1341,7 +1341,7 @@ bool TalonSwerveDriveController::percentOutDriveModeService(std_srvs::SetBool::R
 	}
 	else
 	{
-		ROS_ERROR_NAMED(name_, "Can't set percent_out_drive__mode_. Controller is not running.");
+		ROS_ERROR_NAMED(name_, "Can't set percent_out_drive_mode_. Controller is not running.");
 		return false;
 	}
 }
