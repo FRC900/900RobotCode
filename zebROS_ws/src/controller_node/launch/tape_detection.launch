@@ -17,7 +17,12 @@
          always has them available
   -->
   <group ns="robot_state">
-	<param name="robot_description" textfile="$(find controller_node)/urdf/2020_compbot.urdf" />
+	<param name="robot_description"
+		                   command="$(find xacro)/xacro '$(find controller_node)/urdf/2020_compbot.xacro'
+                            camera_name:=zed
+                            camera_model:=$(arg camera_model)"
+	/>
+
 	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
   </group>
 
