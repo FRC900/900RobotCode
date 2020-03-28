@@ -109,8 +109,12 @@ endif()
 
 # Main control executable
 set (FRCROBOT_HW_MAIN_SRCS 
+	src/as726x_convert.cpp
+	src/cancoder_convert.cpp
+	src/canifier_convert.cpp
 	src/frcrobot_hw_main.cpp
 	src/frcrobot_hw_interface.cpp
+	src/talon_convert.cpp
 )
 
 set (WPI_SYSROOT $ENV{HOME}/wpilib/2020/roborio/arm-frc2020-linux-gnueabi)
@@ -223,6 +227,10 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
 			src/frcrobot_hw_interface.cpp
 			src/dummy_wpilib_common.cpp
 			src/dummy_wpilib_phoenixsim.cpp
+			src/as726x_convert.cpp
+			src/cancoder_convert.cpp
+			src/canifier_convert.cpp
+			src/talon_convert.cpp
 			${ALLWPILIB}/hal/src/main/native/cpp/cpp/fpga_clock.cpp
 			${ALLWPILIB}/hal/src/main/native/cpp/handles/HandlesInternal.cpp
 			${ALLWPILIB}/hal/src/main/native/cpp/Main.cpp

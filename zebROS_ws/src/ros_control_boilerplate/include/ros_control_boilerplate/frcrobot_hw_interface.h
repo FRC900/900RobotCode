@@ -71,7 +71,11 @@
 #include "frc_msgs/MatchSpecificData.h"
 
 #include "ros_control_boilerplate/AS726x.h"
+#include "ros_control_boilerplate/as726x_convert.h"
+#include "ros_control_boilerplate/cancoder_convert.h"
+#include "ros_control_boilerplate/canifier_convert.h"
 #include "ros_control_boilerplate/frc_robot_interface.h"
+#include "ros_control_boilerplate/talon_convert.h"
 #include "ros_control_boilerplate/tracer.h"
 
 namespace frcrobot_control
@@ -165,77 +169,6 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		/* Get conversion factor for position, velocity, and closed-loop stuff */
 		double getConversionFactor(int encoder_ticks_per_rotation, hardware_interface::FeedbackDevice encoder_feedback, hardware_interface::TalonMode talon_mode) const;
 
-		bool convertControlMode(const hardware_interface::TalonMode input_mode,
-								ctre::phoenix::motorcontrol::ControlMode &output_mode) const;
-		bool convertDemand1Type( const hardware_interface::DemandType input,
-				ctre::phoenix::motorcontrol::DemandType &output) const;
-		bool convertNeutralMode(const hardware_interface::NeutralMode input_mode,
-								ctre::phoenix::motorcontrol::NeutralMode &output_mode) const;
-		bool convertFeedbackDevice(
-			const hardware_interface::FeedbackDevice input_fd,
-			ctre::phoenix::motorcontrol::FeedbackDevice &output_fd) const;
-		bool convertRemoteFeedbackDevice(
-			const hardware_interface::RemoteFeedbackDevice input_fd,
-			ctre::phoenix::motorcontrol::RemoteFeedbackDevice &output_fd) const;
-		bool convertRemoteSensorSource(
-				const hardware_interface::RemoteSensorSource input_rss,
-				ctre::phoenix::motorcontrol::RemoteSensorSource &output_rss) const;
-		bool convertLimitSwitchSource(
-			const hardware_interface::LimitSwitchSource input_ls,
-			ctre::phoenix::motorcontrol::LimitSwitchSource &output_ls) const;
-		bool convertRemoteLimitSwitchSource(
-			const hardware_interface::RemoteLimitSwitchSource input_ls,
-			ctre::phoenix::motorcontrol::RemoteLimitSwitchSource &output_ls) const;
-		bool convertLimitSwitchNormal(
-			const hardware_interface::LimitSwitchNormal input_ls,
-			ctre::phoenix::motorcontrol::LimitSwitchNormal &output_ls) const;
-		bool convertVelocityMeasurementPeriod(
-			const hardware_interface::VelocityMeasurementPeriod input_v_m_p,
-			ctre::phoenix::motorcontrol::VelocityMeasPeriod &output_v_m_period) const;
-		bool convertStatusFrame(const hardware_interface::StatusFrame input,
-			ctre::phoenix::motorcontrol::StatusFrameEnhanced &output) const;
-		bool convertControlFrame(const hardware_interface::ControlFrame input,
-			ctre::phoenix::motorcontrol::ControlFrame &output) const;
-		bool convertMotorCommutation(const hardware_interface::MotorCommutation input,
-			ctre::phoenix::motorcontrol::MotorCommutation &output) const;
-		bool convertAbsoluteSensorRange(const hardware_interface::AbsoluteSensorRange input,
-			ctre::phoenix::sensors::AbsoluteSensorRange &output) const;
-		bool convertSensorInitializationStrategy(const hardware_interface::SensorInitializationStrategy input,
-			ctre::phoenix::sensors::SensorInitializationStrategy &output) const;
-
-		bool convertCANifierGeneralPin(const hardware_interface::canifier::GeneralPin input,
-				ctre::phoenix::CANifier::GeneralPin &output) const;
-		bool convertCANifierPWMChannel(hardware_interface::canifier::PWMChannel input,
-				ctre::phoenix::CANifier::PWMChannel &output) const;
-		bool convertCANifierLEDChannel(hardware_interface::canifier::LEDChannel input,
-				ctre::phoenix::CANifier::LEDChannel &output) const;
-		bool convertCANifierVelocityMeasurementPeriod(hardware_interface::canifier::CANifierVelocityMeasPeriod input,
-				ctre::phoenix::CANifierVelocityMeasPeriod &output) const;
-		bool convertCANifierStatusFrame(hardware_interface::canifier::CANifierStatusFrame input,
-				ctre::phoenix::CANifierStatusFrame &output) const;
-		bool convertCANifierControlFrame(hardware_interface::canifier::CANifierControlFrame input,
-				ctre::phoenix::CANifierControlFrame &output) const;
-
-		bool convertCANCoderMagnetFieldStrength(ctre::phoenix::sensors::MagnetFieldStrength input,
-				hardware_interface::cancoder::MagnetFieldStrength &output) const;
-		bool convertCANCoderVelocityMeasPeriod(hardware_interface::cancoder::SensorVelocityMeasPeriod input,
-				ctre::phoenix::sensors::SensorVelocityMeasPeriod &output) const;
-		bool convertCANCoderAbsoluteSensorRange(hardware_interface::cancoder::AbsoluteSensorRange input,
-				ctre::phoenix::sensors::AbsoluteSensorRange &output) const;
-		bool convertCANCoderInitializationStrategy(hardware_interface::cancoder::SensorInitializationStrategy input,
-				ctre::phoenix::sensors::SensorInitializationStrategy &output) const;
-		bool convertCANCoderTimeBase(hardware_interface::cancoder::SensorTimeBase input,
-				ctre::phoenix::sensors::SensorTimeBase &output) const;
-
-		bool convertAS726xIndLedCurrentLimit(const hardware_interface::as726x::IndLedCurrentLimits input,
-				as726x::ind_led_current_limits &output) const;
-		bool convertAS726xDrvLedCurrentLimit(const hardware_interface::as726x::DrvLedCurrentLimits input,
-				as726x::drv_led_current_limits &output) const;
-		bool convertAS726xConversionType(const hardware_interface::as726x::ConversionTypes input,
-				as726x::conversion_types &output) const;
-		bool convertAS726xChannelGain(const hardware_interface::as726x::ChannelGain input,
-				as726x::channel_gain &output) const;
-
 		bool safeTalonCall(ctre::phoenix::ErrorCode error_code,
 				const std::string &talon_method_name);
 
@@ -306,6 +239,11 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::unique_ptr<ROSIterativeRobot> robot_;
 
 		Tracer read_tracer_;
+
+		as726x_convert::AS726xConvert as726x_convert_;
+		cancoder_convert::CANCoderConvert cancoder_convert_;
+		canifier_convert::CANifierConvert canifier_convert_;
+		talon_convert::TalonConvert talon_convert_;
 };  // class
 
 }  // namespace
