@@ -3,17 +3,17 @@
 ---
 
 # Dynamic parameters cannot have a namespace
-brightness:                 3                                   # Dynamic
+brightness:                 4                                   # Dynamic
 contrast:                   4                                   # Dynamic
 hue:                        6                                   # Dynamic
 saturation:                 4                                   # Dynamic
 sharpness:                  4                                   # Dynamic
 gamma:                      8                                   # Dynamic - Requires SDK >=v3.1
 auto_exposure_gain:         false                               # Dynamic
-gain:                       15                                  # Dynamic - works only if `auto_exposure_gain` is false
+gain:                       10                                  # Dynamic - works only if `auto_exposure_gain` is false
 exposure:                   25                                  # Dynamic - works only if `auto_exposure_gain` is false
-auto_whitebalance:          true                                # Dynamic
-whitebalance_temperature:   42                                  # Dynamic - works only if `auto_whitebalance` is false
+auto_whitebalance:          false                               # Dynamic
+whitebalance_temperature:   37                                  # Dynamic - works only if `auto_whitebalance` is false
 depth_confidence:           50                                  # Dynamic
 depth_texture_conf:         100                                 # Dynamic
 pub_frame_rate:             30.0                                # Dynamic - frequency of publishing of video and depth data

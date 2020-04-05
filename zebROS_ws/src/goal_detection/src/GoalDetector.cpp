@@ -6,8 +6,8 @@
 using namespace std;
 using namespace cv;
 
-// #define VERBOSE
-// #define VERBOSE_DEEP
+//#define VERBOSE
+//#define VERBOSE_DEEP
 
 GoalDetector::GoalDetector(void)
 	: _isValid(false)
@@ -252,7 +252,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const cv::Size &frame_size,
 		const Rect br(boundingRect(contours[i]));
 
 		// Remove objects which are obviously too small
-		const double areaLimit = static_cast<double>(frame_size.width) * frame_size.height * .0004;
+		const double areaLimit = static_cast<double>(frame_size.width) * frame_size.height * .0002;
 		if (br.area() <= areaLimit)
 		{
 #ifdef VERBOSE
@@ -290,15 +290,18 @@ const vector<GoalInfo> GoalDetector::getInfo(const cv::Size &frame_size,
 		const float filledPercentageActual = goal_actual.area() / goal_actual.boundingArea();
 
 		//center of mass as a percentage of the object size from left and top
-		Point2f com_percent_actual((goal_actual.com().x - br.tl().x) / goal_actual.width(),
-								   (goal_actual.com().y - br.tl().y) / goal_actual.height());
+		const auto goal_actual_com = goal_actual.com();
+		const auto br_tl = br.tl();
+		const Point2f com_percent_actual((goal_actual_com.x - br_tl.x) / goal_actual.width(),
+								         (goal_actual_com.y - br_tl.y) / goal_actual.height());
 
 		//parameters for the normal distributions
 		//values for standard deviation were determined by
 		//taking the standard deviation of a bunch of values from the goal
 		//confidence is near 0.5 when value is near the mean
 		//confidence is small or large when value is not near mean
-		const float confidence_height      = createConfidence(goal_shape.real_height(), 0.2, goal_tracked_obj.getPosition().z - ( goal_shape.height() / 2.0 ));
+		const float expected_real_height   = goal_tracked_obj.getPosition().y - goal_shape.height() / 2.0;
+		const float confidence_height      = createConfidence(goal_shape.real_height(), 0.2, expected_real_height);
 		const float confidence_com_x       = createConfidence(com_percent_expected.x, 0.13,  com_percent_actual.x);
 		const float confidence_com_y       = createConfidence(com_percent_expected.y, 0.13,  com_percent_actual.y);
 		const float confidence_filled_area = createConfidence(filledPercentageExpected, 0.33, filledPercentageActual);
@@ -318,7 +321,7 @@ const vector<GoalInfo> GoalDetector::getInfo(const cv::Size &frame_size,
 		cout << "confidence_ratio: " << confidence_ratio << endl;
 		cout << "confidence_screen_area: " << confidence_screen_area << endl;
 		cout << "confidence: " << confidence << endl;
-		cout << "Height exp/act: " << goal_shape.real_height() << "/" <<  goal_tracked_obj.getPosition().z - goal_shape.height() / 2.0 << endl;
+		cout << "Height exp/act: " << goal_shape.real_height() << "/" <<  expected_real_height << endl;
 		cout << "Depth max: " << depth_maxs[i].depth << " " << depth_maxs[i].error << endl;
 		cout << "Screen Area exp/act: " << (int)exp_area << "/" << br.area() << endl;
 		cout << "Aspect ratio exp/act : " << expectedRatio << "/" << actualRatio << endl;

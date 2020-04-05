@@ -249,8 +249,8 @@ ObjectType::ObjectType(ObjectNum contour_type_id) {
 			real_height_ = 0; // TODO: fix this using actual height
 			contour_.push_back(Point2f(0, 0));
 			contour_.push_back(Point2f(0, 0.102));
-			contour_.push_back(Point2f(0.102, 0));
 			contour_.push_back(Point2f(0.102, 0.102));
+			contour_.push_back(Point2f(0.102, 0));
 			name_ = "test_target";
 			break;
 		default:
