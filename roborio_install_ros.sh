@@ -53,7 +53,10 @@ ssh -p 22 admin@$1 'pip install --upgrade pip'
 ssh -p 22 admin@$1 'opkg install python-numpy'
 ssh -p 22 admin@$1 'pip --no-cache-dir install catkin_pkg catkin_tools rospkg rosdistro vcstools rosdep wstool rosinstall rosinstall_generator defusedxml empy python-gnupg'
 ssh -p 22 admin@$1 'rm -rf ~/.cache'
-
+scp -P 22 ~/2020RobotCode/tflite_runtime-1.15.2-cp27-none-linux_armv7l.whl admin@$1:.
+ssh -p 22 admin@$1 'pip --no-cache-dir install tflite_runtime-1.15.2-cp27-none-linux_armv7l.whl'
+ssh -p 22 admin@$1 'rm tflite_runtime-1.15.2-cp27-none-linux_armv7l.whl'
+ssh -p 22 admin@$1 'rm -rf ~/.cache'
 
 # Copy over ROS tar.bz2 file, extract to / on the Rio
 scp -P 22 ~/2020RobotCode/roscore_roborio.tar.bz2 admin@$1:.
