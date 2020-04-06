@@ -1,0 +1,17 @@
+Keras install issues : 
+
+Not enough space in /tmp to install numpy, scipy - added external drive, set TMPDIR=/mnt 
+Not enough memory to build, need usb drive as swap
+
+opkg install git gcc-symlinks binutils swig libjpeg-dev g++ g++-symlinks 
+
+mount external USB drive
+cd /mnt
+wget https://github.com/tensorflow/tensorflow/archive/v1.15.2.tar.gz
+tar -xzf v1.15.2.tar.gz
+edit tensorflow-1.15.2/tensorflow/lite/tools/make/download_dependencies.sh,
+	 comment out the find line
+cd tensorflow-1.15.2/tensorflow/lite/tools/pip_package
+
+PYTHON=python ./build_pip_package.sh
+
