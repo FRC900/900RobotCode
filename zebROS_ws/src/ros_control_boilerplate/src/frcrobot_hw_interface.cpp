@@ -177,7 +177,7 @@ FRCRobotHWInterface::~FRCRobotHWInterface()
 	for (size_t i = 0; i < num_cancoders_; i++)
 		cancoder_read_threads_[i].join();
 	for (size_t i = 0; i < num_canifiers_; i++)
-		cancoder_read_threads_[i].join();
+		canfier_read_threads_[i].join();
 }
 
 bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
