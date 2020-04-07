@@ -142,6 +142,9 @@ sudo systemctl stop nv-l4t-usb-device-mode.service
 
 # Set up ssh host config (add port 5801) 
 sudo sed "s/#Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && sudo mv sshd_config /etc/ssh
+
+sudo bash -c "echo NTP=10.9.0.2 >> /etc/systemd/timesyncd.conf"
+sudo bash -c "echo FallbackNTP=ntp.ubuntu.com >> /etc/systemd/timesyncd.conf"
     
 # and keys for connections to Rio
 mkdir -p ~/.ssh
