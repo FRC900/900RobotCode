@@ -5,11 +5,11 @@
 #include "base_trajectory/message_filter.h"
 
 // For printing out matlab code for testing
-static void printCoefs(std::stringstream &s, const std::string &name, const std::vector<base_trajectory_msgs::Coefs> &coefs)
+static void printCoefs(std::stringstream &s, const std::string &name, const std::vector<base_trajectory_msgs::Coefs> &coefs, int figureNum)
 {
 	for (size_t i = 0; i < coefs.size(); i++)
 	{
-		s << "p" << name << i << " = [";
+		s << "p" << name << i << "_" << figureNum << " = [";
 		for (size_t j = 0; j < coefs[i].spline.size(); j++)
 		{
 			s << coefs[i].spline[j];
@@ -21,9 +21,9 @@ static void printCoefs(std::stringstream &s, const std::string &name, const std:
 }
 
 // For printing out matlab code for testing
-static void printPolyval(std::stringstream &s, const std::string &name, size_t size, const std::vector<double> &end_points)
+static void printPolyval(std::stringstream &s, const std::string &name, size_t size, const std::vector<double> &end_points, int figureNum)
 {
-	s << "p" << name << "_y = [";
+	s << "p" << name << "_y_" << figureNum << " = [";
 	for (size_t i = 0; i < size; i++)
 	{
 		double x_offset;
@@ -35,7 +35,7 @@ static void printPolyval(std::stringstream &s, const std::string &name, size_t s
 		{
 			x_offset = end_points[i - 1];
 		}
-		s << "polyval(p" << name << i << ", x" << i << " - " << x_offset << ")";
+		s << "polyval(p" << name << i << "_" << figureNum << ", x" << i << "_" << figureNum << " - " << x_offset << ")";
 		if (i < size - 1)
 			s << ", ";
 	}
@@ -43,7 +43,7 @@ static void printPolyval(std::stringstream &s, const std::string &name, size_t s
 }
 
 // Generate matlab / octave code for displaying generated splines
-void writeMatlabSplines(const base_trajectory_msgs::GenerateSpline::Response &msg)
+void writeMatlabSplines(const base_trajectory_msgs::GenerateSpline::Response &msg, int figureNum, const std::string &label)
 {
 	std::stringstream s;
 	s << std::endl;
@@ -61,66 +61,79 @@ void writeMatlabSplines(const base_trajectory_msgs::GenerateSpline::Response &ms
 			range = msg.end_points[i] - msg.end_points[i-1];
 			prev_x = msg.end_points[i-1];
 		}
-		s << "x" << i << " = " << prev_x << ":" << range / 100.
+		s << "x" << i << "_" << figureNum << " = " << prev_x << ":" << range / 100.
 		  << ":" << msg.end_points[i] << ";" << std::endl;
 	}
-	s << "x = [";
+	s << "x_" << figureNum << " = [";
 	for (size_t i = 0; i < msg.end_points.size(); i++)
 	{
-		s << "x" << i;
+		s << "x" << i << "_" << figureNum;
 		if (i < msg.end_points.size() - 1)
 			s << ", ";
 	}
 	s << "];" << std::endl;
 	s << std::endl;
-	printCoefs(s, "x", msg.x_coefs);
-	printCoefs(s, "y", msg.y_coefs);
-	printCoefs(s, "orient", msg.orient_coefs);
+	printCoefs(s, "x", msg.x_coefs, figureNum);
+	printCoefs(s, "y", msg.y_coefs, figureNum);
+	printCoefs(s, "orient", msg.orient_coefs, figureNum);
 	for (size_t i = 0; i < msg.x_coefs.size(); i++)
 	{
-		s << "pdx" << i << " = polyder(px" << i << ");" << std::endl;
-		s << "pddx" << i << " = polyder(pdx" << i << ");" << std::endl;
-		s << "pdddx" << i << " = polyder(pddx" << i << ");" << std::endl;
-		s << "pdy" << i << " = polyder(py" << i << ");" << std::endl;
-		s << "pddy" << i << " = polyder(pdy" << i << ");" << std::endl;
-		s << "pdddy" << i << " = polyder(pddy" << i << ");" << std::endl;
-		s << "pdorient" << i << " = polyder(porient" << i << ");" << std::endl;
-		s << "pddorient" << i << " = polyder(pdorient" << i << ");" << std::endl;
-		s << "pdddorient" << i << " = polyder(pddorient" << i << ");" << std::endl;
+		s << "pdx" << i << "_" << figureNum << " = polyder(px" << i << "_" << figureNum << ");" << std::endl;
+		s << "pddx" << i << "_" << figureNum << " = polyder(pdx" << i << "_" << figureNum << ");" << std::endl;
+		s << "pdddx" << i << "_" << figureNum << " = polyder(pddx" << i << "_" << figureNum << ");" << std::endl;
+		s << "pdy" << i << "_" << figureNum << " = polyder(py" << i << "_" << figureNum << ");" << std::endl;
+		s << "pddy" << i << "_" << figureNum << " = polyder(pdy" << i << "_" << figureNum << ");" << std::endl;
+		s << "pdddy" << i << "_" << figureNum << " = polyder(pddy" << i << "_" << figureNum << ");" << std::endl;
+		s << "pdorient" << i << "_" << figureNum << " = polyder(porient" << i << "_" << figureNum << ");" << std::endl;
+		s << "pddorient" << i << "_" << figureNum << " = polyder(pdorient" << i << "_" << figureNum << ");" << std::endl;
+		s << "pdddorient" << i << "_" << figureNum << " = polyder(pddorient" << i << "_" << figureNum << ");" << std::endl;
 	}
-	printPolyval(s, "x", msg.x_coefs.size(), msg.end_points);
-	printPolyval(s, "dx", msg.x_coefs.size(), msg.end_points);
-	printPolyval(s, "ddx", msg.x_coefs.size(), msg.end_points);
-	printPolyval(s, "dddx", msg.x_coefs.size(), msg.end_points);
-	printPolyval(s, "y", msg.y_coefs.size(), msg.end_points);
-	printPolyval(s, "dy", msg.y_coefs.size(), msg.end_points);
-	printPolyval(s, "ddy", msg.y_coefs.size(), msg.end_points);
-	printPolyval(s, "dddy", msg.y_coefs.size(), msg.end_points);
-	printPolyval(s, "orient", msg.orient_coefs.size(), msg.end_points);
-	printPolyval(s, "dorient", msg.orient_coefs.size(), msg.end_points);
-	printPolyval(s, "ddorient", msg.orient_coefs.size(), msg.end_points);
-	printPolyval(s, "dddorient", msg.orient_coefs.size(), msg.end_points);
-	s << "figure(1)" << std::endl;
+	printPolyval(s, "x", msg.x_coefs.size(), msg.end_points, figureNum);
+	printPolyval(s, "dx", msg.x_coefs.size(), msg.end_points, figureNum);
+	printPolyval(s, "ddx", msg.x_coefs.size(), msg.end_points, figureNum);
+	printPolyval(s, "dddx", msg.x_coefs.size(), msg.end_points, figureNum);
+	printPolyval(s, "y", msg.y_coefs.size(), msg.end_points, figureNum);
+	printPolyval(s, "dy", msg.y_coefs.size(), msg.end_points, figureNum);
+	printPolyval(s, "ddy", msg.y_coefs.size(), msg.end_points, figureNum);
+	printPolyval(s, "dddy", msg.y_coefs.size(), msg.end_points, figureNum);
+	printPolyval(s, "orient", msg.orient_coefs.size(), msg.end_points, figureNum);
+	printPolyval(s, "dorient", msg.orient_coefs.size(), msg.end_points, figureNum);
+	printPolyval(s, "ddorient", msg.orient_coefs.size(), msg.end_points, figureNum);
+	printPolyval(s, "dddorient", msg.orient_coefs.size(), msg.end_points, figureNum);
+	s << "figure(" << figureNum << ")" << std::endl;
 	s << "subplot(1,1,1)" << std::endl;
 	s << "subplot(3,2,1)" << std::endl;
-	s << "plot(px_y, py_y)" << std::endl;
+	s << "title('" << label << "')" << std::endl;
+	s << "plot(px_y_" << figureNum << ", py_y_" << figureNum << ")" << std::endl;
+	s << "xlabel('X position')" << std::endl;
+	s << "ylabel('Y position')" << std::endl;
 	s << "subplot(3,2,2)" << std::endl;
-	s << "plot(x, porient_y, x, pdorient_y)" << std::endl;
+	s << "plot(x_" << figureNum << ", porient_y_" << figureNum << ", x_" << figureNum << ", pdorient_y_" << figureNum << ")" << std::endl;
+	s << "xlabel('arbT')" << std::endl;
+	s << "ylabel('Orient / dOrient')" << std::endl;
 	s << "subplot(3,2,3)" << std::endl;
-	s << "plot (x,px_y, x, py_y)" << std::endl;
+	s << "plot (x_" << figureNum << ",px_y_" << figureNum << ", x_" << figureNum << ", py_y_" << figureNum << ")" << std::endl;
+	s << "xlabel('arbT')" << std::endl;
+	s << "ylabel('X / Y Position')" << std::endl;
 	s << "subplot(3,2,4)" << std::endl;
-	s << "plot (x,pdx_y, x, pdy_y)" << std::endl;
+	s << "plot (x_" << figureNum << ",pdx_y_" << figureNum << ", x_" << figureNum << ", pdy_y_" << figureNum << ")" << std::endl;
+	s << "xlabel('arbT')" << std::endl;
+	s << "ylabel('X / Y Velocity')" << std::endl;
 	s << "subplot(3,2,5)" << std::endl;
-	s << "plot (x,pddx_y, x, pddy_y)" << std::endl;
+	s << "plot (x_" << figureNum << ",pddx_y_" << figureNum << ", x_" << figureNum << ", pddy_y_" << figureNum << ")" << std::endl;
+	s << "xlabel('arbT')" << std::endl;
+	s << "ylabel('X / Y Acceleration')" << std::endl;
 	s << "subplot(3,2,6)" << std::endl;
-	s << "plot (x,pdddx_y, x, pdddy_y)" << std::endl;
+	s << "plot (x_" << figureNum << ",pdddx_y_" << figureNum << ", x_" << figureNum << ", pdddy_y_" << figureNum << ")" << std::endl;
+	s << "xlabel('arbT')" << std::endl;
+	s << "ylabel('X / Y Jerk')" << std::endl;
 	ROS_INFO_STREAM_FILTER(&messageFilter, "Matlab_splines : " << s.str());
 
 }
 
-static void writeMatlabDoubleArray(std::stringstream &s, const std::string &name, const std::vector<double> &values)
+static void writeMatlabDoubleArray(std::stringstream &s, const std::string &name, const std::vector<double> &values, int figureNum)
 {
-	s << name << " = [";
+	s << name << "_" << figureNum << " = [";
 	for (size_t i = 0; i < values.size(); i++)
 	{
 		s << values[i];
@@ -130,7 +143,7 @@ static void writeMatlabDoubleArray(std::stringstream &s, const std::string &name
 	s << "];" << std::endl;
 }
 
-void writeMatlabPath(const std::vector<geometry_msgs::PoseStamped> &poses)
+void writeMatlabPath(const std::vector<geometry_msgs::PoseStamped> &poses, int figureNum, const std::string &label)
 {
 	if (poses.size() == 0)
 	{
@@ -179,27 +192,32 @@ void writeMatlabPath(const std::vector<geometry_msgs::PoseStamped> &poses)
 	}
 
 	std::stringstream str;
-	writeMatlabDoubleArray(str, "path_t", positions[0]);
-	writeMatlabDoubleArray(str, "path_x", positions[1]);
-	writeMatlabDoubleArray(str, "path_y", positions[2]);
-	writeMatlabDoubleArray(str, "path_r", positions[3]);
-	writeMatlabDoubleArray(str, "path_dx", velocities[0]);
-	writeMatlabDoubleArray(str, "path_dy", velocities[1]);
-	writeMatlabDoubleArray(str, "path_dr", velocities[2]);
-	writeMatlabDoubleArray(str, "path_ddx", accelerations[0]);
-	writeMatlabDoubleArray(str, "path_ddy", accelerations[1]);
-	writeMatlabDoubleArray(str, "path_ddr", accelerations[2]);
-	str << "figure(2)" << std::endl;
+	writeMatlabDoubleArray(str, "path_t", positions[0], figureNum);
+	writeMatlabDoubleArray(str, "path_x", positions[1], figureNum);
+	writeMatlabDoubleArray(str, "path_y", positions[2], figureNum);
+	writeMatlabDoubleArray(str, "path_r", positions[3], figureNum);
+	writeMatlabDoubleArray(str, "path_dx", velocities[0], figureNum);
+	writeMatlabDoubleArray(str, "path_dy", velocities[1], figureNum);
+	writeMatlabDoubleArray(str, "path_dr", velocities[2], figureNum);
+	writeMatlabDoubleArray(str, "path_ddx", accelerations[0], figureNum);
+	writeMatlabDoubleArray(str, "path_ddy", accelerations[1], figureNum);
+	writeMatlabDoubleArray(str, "path_ddr", accelerations[2], figureNum);
+	str << "figure(" << figureNum << ")" << std::endl;
 	str << "subplot(1,1,1)" << std::endl;
-	str << "subplot(3,2,1)" << std::endl;
-	str << "plot(path_t, path_x, path_t, path_y)" << std::endl;
-	str << "subplot(3,2,2)" << std::endl;
-	str << "plot(path_t, path_dx, path_t, path_dy)" << std::endl;
-	str << "subplot(3,2,3)" << std::endl;
-	str << "plot(path_t, path_ddx, path_t, path_ddy)" << std::endl;
-	str << "subplot(3,2,4)" << std::endl;
-	str << "subplot(3,2,5)" << std::endl;
-	str << "subplot(3,2,6)" << std::endl;
+	str << "subplot(2,2,1)" << std::endl;
+	str << "title('" << label << "')" << std::endl;
+	str << "plot(path_t_" << figureNum << ", path_x_" << figureNum << ", path_t_" << figureNum << ", path_y_" << figureNum << ")" << std::endl;
+	str << "xlabel('T(seconds)')" << std::endl;
+	str << "ylabel('X / Y Position')" << std::endl;
+	str << "subplot(2,2,2)" << std::endl;
+	str << "plot(path_t_" << figureNum << ", path_dx_" << figureNum << ", path_t_" << figureNum << ", path_dy_" << figureNum << ")" << std::endl;
+	str << "xlabel('T(seconds)')" << std::endl;
+	str << "ylabel('X / Y Velocity')" << std::endl;
+	str << "subplot(2,2,3)" << std::endl;
+	str << "plot(path_t_" << figureNum << ", path_ddx_" << figureNum << ", path_t_" << figureNum << ", path_ddy_" << figureNum << ")" << std::endl;
+	str << "xlabel('T(seconds)')" << std::endl;
+	str << "ylabel('X / Y Acceleration')" << std::endl;
+	str << "subplot(2,2,4)" << std::endl;
 
 	ROS_INFO_STREAM_FILTER(&messageFilter, "Matlab_paths: " << std::endl << str.str());
 }

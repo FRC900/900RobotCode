@@ -86,14 +86,16 @@ void printTrajectory(const Trajectory<T> &trajectory, const std::vector<std::str
 // to improve the overall cost of following the spline
 struct OptParams
 {
-	double posX_;
+	double posX_; // offset from requested waypoint in x and y
 	double posY_;
-	double length_;
+	double length_;       // These control the
+	double length_scale_; // curveature vs. velocity at waypoints
 
 	OptParams(void)
 		: posX_(0.)
 		, posY_(0.)
 		, length_(0.)
+		, length_scale_(0.75)
 	{
 	}
 
@@ -103,13 +105,15 @@ struct OptParams
 	// in there into a simple for() loop
 	size_t size(void) const
 	{
-		return 1;
+		return 2;
 	}
 
 	double& operator[](size_t i)
 	{
 		if (i == 0)
 			return length_;
+		if (i == 1)
+			return length_scale_;
 #if 0
 		if (i == 0)
 			return posX_;
@@ -117,10 +121,22 @@ struct OptParams
 			return posY_;
 		if (i == 2)
 			return length_;
+		if (i == 3)
+			return length_scale_;
 #endif
 		throw std::out_of_range ("out of range in OptParams operator[]");
 	}
+	friend std::ostream& operator<< (std::ostream& stream, const OptParams &optParams);
 };
+
+std::ostream& operator<< (std::ostream& stream, const OptParams &optParams)
+{
+	//stream << "posX_:" << optParams.posX_;
+	//stream << " posY_:" << optParams.posY_;
+	stream << "length_:" << optParams.length_;
+	stream << " length_scale_:" << optParams.length_scale_;
+	return stream;
+}
 
 // Helper function for finding 2nd derivative
 // (acceleration) term of start and end point
@@ -216,7 +232,7 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 		// at the waypoints.  Bigger than 1 ==> curvier path with
 		// higher speeds.  Less than 1 ==> tigher turns to stay
 		// closer to straight paths.
-		const double length = std::min(prevLength, currLength) * .75 + optParams[i].length_;
+		const double length = std::min(prevLength, currLength) * optParams[i].length_scale_ + optParams[i].length_;
 
 		// Don't overwrite requested input velocities
 		if (points[i].velocities.size() == 0)
@@ -825,9 +841,9 @@ bool evaluateTrajectory(double &cost,
 		// and also velocity limited by max centripetal acceleration
 		// Assume rotational velocity is a hard constraint we have to hit
 		const auto &k = kinematics.back();
-		vTrans.push_back(k.maxVel_ - fabs(thetaState.velocity[0]) * wheelRadius);
+		vTrans.push_back(k.getMaxVel() - fabs(thetaState.velocity[0]) * wheelRadius);
 		if (curvature != 0) // avoid divide by 0 again
-			vTrans.back() = std::min(vTrans.back(), sqrt(k.maxCentAccel_ / fabs(curvature)));
+			vTrans.back() = std::min(vTrans.back(), sqrt(k.getMaxCentAccel() / fabs(curvature)));
 		//ROS_INFO_STREAM("vTrans0[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
 	}
 
@@ -838,7 +854,7 @@ bool evaluateTrajectory(double &cost,
 	// Forward pass
 	for (size_t i = 1; i < vTrans.size(); i++)
 	{
-		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i - 1] * vTrans[i - 1] + 2.0 * kinematics[i].maxAccel_ * deltaS[i]));
+		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i - 1] * vTrans[i - 1] + 2.0 * kinematics[i].getMaxAccel() * deltaS[i]));
 		//ROS_INFO_STREAM("vTrans1[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
 	}
 
@@ -862,7 +878,7 @@ bool evaluateTrajectory(double &cost,
 	//ROS_INFO_STREAM("vTrans2[" << vTrans.size()-1 << "]=" << equalArcLengthTimes[vTrans.size()-1] << "," << vTrans[vTrans.size()-1]);
 	for (size_t i = vTrans.size() - 2; i > 0; i--)
 	{
-		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i + 1] * vTrans[i + 1] + 2.0 * kinematics[i].maxDecel_ * deltaS[i + 1]));
+		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i + 1] * vTrans[i + 1] + 2.0 * kinematics[i].getMaxDecel() * deltaS[i + 1]));
 		//ROS_INFO_STREAM("vTrans2[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
 	}
 
@@ -884,7 +900,7 @@ bool evaluateTrajectory(double &cost,
 	cost = remappedTimes.back();
 	for (size_t i = 0; i < distanceToPathMidpoint.size(); i++)
 	{
-		cost += exp(25.0 * ((fabs(distanceToPathMidpoint[i]) / kinematics[i].pathLimitDistance_) - 0.9));
+		cost += exp(25.0 * ((fabs(distanceToPathMidpoint[i]) / kinematics[i].getPathLimitDistance()) - 0.9));
 	}
 	ROS_INFO_STREAM_FILTER(&messageFilter, "time = " << remappedTimes.back() << " cost = " << cost);
 
@@ -1020,7 +1036,7 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 		pose.pose.orientation = orientation;
 		out_msg.path.poses.push_back(pose);
 	}
-	writeMatlabPath(out_msg.path.poses);
+	writeMatlabPath(out_msg.path.poses, 3, "Optimized Paths vs real time");
 }
 
 // Algorithm to optimize parameters using the sign
@@ -1044,6 +1060,9 @@ bool RPROP(
 	// initialize params to 0 offset in x, y and tangent
 	// length for all spline points
 	std::vector<OptParams> bestOptParams(points.size());
+	ROS_INFO_STREAM("RPROP initial params: ");
+	for (const auto &it: bestOptParams)
+		ROS_INFO_STREAM("     " << it);
 	if (!generateSpline(points, bestOptParams, jointNames, bestTrajectory))
 	{
 		ROS_ERROR("base_trajectory_node : RPROP initial generateSpline() falied");
@@ -1118,7 +1137,7 @@ bool RPROP(
 						bestCostChanged = true;
 						ROS_INFO_STREAM_FILTER(&messageFilter, "+++++++++ New best cost : " <<  bestCost);
 						for (const auto &it: bestOptParams)
-							ROS_INFO_STREAM_FILTER(&messageFilter, "     posX_:" << it.posX_ << " posY_:" << it.posY_ << " length_:" << it.length_);
+							ROS_INFO_STREAM_FILTER(&messageFilter, "     " << it);
 						break;
 					}
 					// Use sign of difference between this cost and the
@@ -1144,6 +1163,9 @@ bool RPROP(
 		if (!bestCostChanged)
 			deltaCostEpsilon /= 1.75;
 	}
+	ROS_INFO_STREAM("RPROP best params: ");
+	for (const auto &it: bestOptParams)
+		ROS_INFO_STREAM("     " << it);
 	return true;
 }
 
@@ -1267,7 +1289,7 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 
 		base_trajectory_msgs::GenerateSpline::Response tmp_msg;
 		trajectoryToSplineResponseMsg(tmp_msg, trajectory, jointNames);
-		writeMatlabSplines(tmp_msg);
+		writeMatlabSplines(tmp_msg, 1, "Initial Splines");
 		messageFilter.disable();
 		fflush(stdout);
 
@@ -1281,7 +1303,7 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 	}
 
 	trajectoryToSplineResponseMsg(out_msg, trajectory, jointNames);
-	writeMatlabSplines(out_msg);
+	writeMatlabSplines(out_msg, 2, "Optimized Splines");
 	fflush(stdout);
 	ROS_INFO_STREAM("base_trajectory_callback took " <<
 			(ros::Time::now() - startTime).toSec() <<
@@ -1290,36 +1312,57 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 }
 
 
+// Callbacks for ddynamic reconfigure code
+void pathLimitDistanceSetCB(double pathLimitDistance)
+{
+	auto k = kinematicConstraints.globalKinematics();
+	k.setPathLimitDistance(pathLimitDistance);
+	kinematicConstraints.globalKinematics(k);
+}
+void maxVelSetCB(double maxVel)
+{
+	auto k = kinematicConstraints.globalKinematics();
+	k.setMaxVel(maxVel);
+	kinematicConstraints.globalKinematics(k);
+}
+void maxLinearAccSetCB(double maxLinearAcc)
+{
+	auto k = kinematicConstraints.globalKinematics();
+	k.setMaxAccel(maxLinearAcc);
+	kinematicConstraints.globalKinematics(k);
+}
+void maxLinearDecSetCB(double maxLinearDec)
+{
+	auto k = kinematicConstraints.globalKinematics();
+	k.setMaxDecel(maxLinearDec);
+	kinematicConstraints.globalKinematics(k);
+}
+void maxCentAccSetCB(double maxCentAcc)
+{
+	auto k = kinematicConstraints.globalKinematics();
+	k.setMaxCentAccel(maxCentAcc);
+	kinematicConstraints.globalKinematics(k);
+}
 
-void pathLimitDistanceCB(double pathLimitDistance)
+double pathLimitDistanceGetCB(void)
 {
-	auto k = kinematicConstraints.globalKinematics();
-	k.pathLimitDistance_ = pathLimitDistance;
-	kinematicConstraints.globalKinematics(k);
+	return kinematicConstraints.globalKinematics().getPathLimitDistance();
 }
-void maxVelCB(double maxVel)
+double maxVelGetCB(void)
 {
-	auto k = kinematicConstraints.globalKinematics();
-	k.maxVel_ = maxVel;
-	kinematicConstraints.globalKinematics(k);
+	return kinematicConstraints.globalKinematics().getMaxVel();
 }
-void maxLinearAccCB(double maxLinearAcc)
+double maxLinearAccGetCB(void)
 {
-	auto k = kinematicConstraints.globalKinematics();
-	k.maxAccel_ = maxLinearAcc;
-	kinematicConstraints.globalKinematics(k);
+	return kinematicConstraints.globalKinematics().getMaxAccel();
 }
-void maxLinearDecCB(double maxLinearDec)
+double maxLinearDecGetCB(void)
 {
-	auto k = kinematicConstraints.globalKinematics();
-	k.maxDecel_ = maxLinearDec;
-	kinematicConstraints.globalKinematics(k);
+	return kinematicConstraints.globalKinematics().getMaxDecel();
 }
-void maxCentAccCB(double maxCentAcc)
+double maxCentAccGetCB(void)
 {
-	auto k = kinematicConstraints.globalKinematics();
-	k.maxCentAccel_ = maxCentAcc;
-	kinematicConstraints.globalKinematics(k);
+	return kinematicConstraints.globalKinematics().getMaxCentAccel();
 }
 
 int main(int argc, char **argv)
@@ -1362,11 +1405,11 @@ int main(int argc, char **argv)
 	nh.param("max_cent_acc", maxCentAcc, 3.5);
 	kinematicConstraints.globalKinematics(Kinematics(maxLinearAcc, maxLinearDec, maxVel, maxCentAcc, pathLimitDistance));
 
-	ddr.registerVariable<double>("path_distance_limit", pathLimitDistance, pathLimitDistanceCB, "how far robot can diverge from straight-line path between waypoints");
-	ddr.registerVariable<double>("max_vel", maxVel, maxVelCB, "max translational velocity");
-	ddr.registerVariable<double>("max_linear_acc", maxLinearAcc, maxLinearAccCB, "max linear acceleration");
-	ddr.registerVariable<double>("max_linear_dec", maxLinearDec, maxLinearDecCB, "max linear deceleration");
-	ddr.registerVariable<double>("max_cent_acc", maxCentAcc, maxCentAccCB, "max centrepital acceleration");
+	ddr.registerVariable<double>("path_distance_limit", pathLimitDistanceGetCB, pathLimitDistanceSetCB, "how far robot can diverge from straight-line path between waypoints");
+	ddr.registerVariable<double>("max_vel", maxVelGetCB, maxVelSetCB, "max translational velocity");
+	ddr.registerVariable<double>("max_linear_acc", maxLinearAccGetCB, maxLinearAccSetCB, "max linear acceleration");
+	ddr.registerVariable<double>("max_linear_dec", maxLinearDecGetCB, maxLinearDecSetCB, "max linear deceleration");
+	ddr.registerVariable<double>("max_cent_acc", maxCentAccGetCB, maxCentAccSetCB, "max centrepital acceleration");
 
 	nh.param("wheel_radius", wheelRadius, 0.03682);
 	ddr.registerVariable<double>("wheel_radius", &wheelRadius, "robot's wheel radius", 0, 2);

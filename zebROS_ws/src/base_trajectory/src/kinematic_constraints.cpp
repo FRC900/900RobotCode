@@ -27,14 +27,55 @@ void Kinematics::limit(const Kinematics &other)
 	maxDecel_          = std::min(maxDecel_, other.maxDecel_);
 	if(other.maxVel_ > 0)
 	{
-		maxVel_            = std::min(maxVel_, other.maxVel_);
+		maxVel_        = std::min(maxVel_, other.maxVel_);
 	}
 	else
 	{
-		ROS_ERROR_STREAM("Tried to set maxVel to 0. Keeping at default.");
+		ROS_WARN_STREAM("Tried to set maxVel to <= 0. Retaining previous value.");
 	}
 	maxCentAccel_      = std::min(maxCentAccel_, other.maxCentAccel_);
 	pathLimitDistance_ = std::min(pathLimitDistance_, other.pathLimitDistance_);
+}
+
+double Kinematics::getMaxAccel(void) const
+{
+	return maxAccel_;
+}
+double Kinematics::getMaxDecel(void) const
+{
+	return maxDecel_;
+}
+double Kinematics::getMaxVel(void) const
+{
+	return maxVel_;
+}
+double Kinematics::getMaxCentAccel(void) const
+{
+	return maxCentAccel_;
+}
+double Kinematics::getPathLimitDistance(void) const
+{
+	return pathLimitDistance_;
+}
+void   Kinematics::setMaxAccel(double max_accel)
+{
+	maxAccel_ = max_accel;
+}
+void   Kinematics::setMaxDecel(double max_decel)
+{
+	maxDecel_ = max_decel;
+}
+void   Kinematics::setMaxVel(double max_vel)
+{
+	maxVel_ = max_vel;
+}
+void   Kinematics::setMaxCentAccel(double max_cent_accel)
+{
+	maxCentAccel_ = max_cent_accel;
+}
+void   Kinematics::setPathLimitDistance(double path_limit_distance)
+{
+	pathLimitDistance_ = path_limit_distance;
 }
 
 Constraint::Constraint(const base_trajectory_msgs::Constraint &msg)
