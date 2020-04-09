@@ -551,9 +551,9 @@ bool CANifierControllerInterface::ledService(canifier_controller_msgs::CanifierL
 	{
 		// Lock this so all three channels are updated atomically
 		std::lock_guard<std::mutex> l(*(params_.getLEDOutputMutex()));
-		params_.setLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelA, req.r, false, false);
-		params_.setLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelB, req.g, false, false);
-		params_.setLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelC, req.b, false, false);
+		params_.setLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelA, req.b, false, false);
+		params_.setLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelB, req.r, false, false);
+		params_.setLEDOutput(hardware_interface::canifier::LEDChannel::LEDChannelC, req.g, false, false);
 	}
 	params_.updateDDR();
 	return true;
