@@ -1,7 +1,11 @@
 # Various compiler optimizations to apply to all nodes
 
 if(NOT CMAKE_BUILD_TYPE)
+  if (DEFINED CMAKE_TOOLCHAIN_FILE)  # Cross-build for Rio
+	set(CMAKE_BUILD_TYPE Release)
+  else()
 	set(CMAKE_BUILD_TYPE RelWithDebInfo)
+  endif()
 endif()
 
 if(NOT CMAKE_CXX_STANDARD)

@@ -18,16 +18,15 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   message_generation
   message_filters
+  path_follower_msgs
   roscpp
   rospy
+  sensor_msgs
   std_msgs
   std_srvs
   talon_state_msgs
   teraranger_array
   tf2_ros
-  path_follower_msgs
-  field_obj
-  sensor_msgs
 )
 
 include_directories(
@@ -37,7 +36,6 @@ include_directories(
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -136,7 +134,7 @@ include_directories(
 #generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
 
 catkin_package(
-   INCLUDE_DIRS include
+   #INCLUDE_DIRS include
    #LIBRARIES behaviors
    CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower_msgs nav_msgs roscpp rospy std_msgs teraranger_array tf2_ros
    DEPENDS 
@@ -164,6 +162,16 @@ add_executable(align_to_shoot_server src/align_to_shoot_server.cpp)
 target_link_libraries(align_to_shoot_server ${catkin_LIBRARIES})
 add_dependencies(align_to_shoot_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(intake_powercell_server src/intake_powercell_server.cpp)
+target_link_libraries(intake_powercell_server ${catkin_LIBRARIES})
+add_dependencies(intake_powercell_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(shooter_actionlib_server src/shooter_actionlib_server.cpp)
+add_dependencies(shooter_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(shooter_actionlib_server
+  ${catkin_LIBRARIES}
+)
+
 # 2019 actionlib servers
 add_executable(intake_cargo_server src/intake_cargo_server.cpp)
 target_link_libraries(intake_cargo_server ${catkin_LIBRARIES})
@@ -189,15 +197,11 @@ add_executable(outtake_hatch_panel_server src/outtake_hatch_panel_server.cpp)
 target_link_libraries(outtake_hatch_panel_server ${catkin_LIBRARIES})
 add_dependencies(outtake_hatch_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(intake_powercell_server src/intake_powercell_server.cpp)
-target_link_libraries(intake_powercell_server ${catkin_LIBRARIES})
-add_dependencies(intake_powercell_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-
 
 add_executable(test_actionlib src/test_actionlib.cpp)
 target_link_libraries(test_actionlib ${catkin_LIBRARIES})
 add_dependencies(test_actionlib ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 #add_executable(dummy src/dummy.cpp)
 #target_link_libraries(
 #    dummy
@@ -205,7 +209,7 @@ add_dependencies(test_actionlib ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_
 #)
 #add_dependencies(
 #	dummy
-#    ${behaviors_EXPORTED_TARGETS}
+#   ${behaviors_EXPORTED_TARGETS}
 #	${catkin_EXPORTED_TARGETS}
 #)
 ###########
@@ -255,11 +259,6 @@ target_link_libraries(align_hatch_server
   ${catkin_LIBRARIES}
 )
 
-add_executable(shooter_actionlib_server src/shooter_actionlib_server.cpp)
-add_dependencies(shooter_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(shooter_actionlib_server
-  ${catkin_LIBRARIES}
-)
 #add_executable(base_align_server src/base_align_server.cpp)
 #add_dependencies(base_align_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 #target_link_libraries(base_align_server
@@ -276,11 +275,6 @@ target_link_libraries(shooter_actionlib_server
 # target_link_libraries(align_cargo_rocketship
 #   ${catkin_LIBRARIES}
 # )
-#add_executable(base_align_server src/base_align_server.cpp)
-#add_dependencies(base_align_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-#target_link_libraries(base_align_server
-#  ${catkin_LIBRARIES}
-#)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -308,7 +302,26 @@ target_link_libraries(shooter_actionlib_server
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS intake_cargo_server outtake_cargo_server elevator_server publish_pid_cmd_vel_node state_setpoint_publisher_node
+install(TARGETS 
+	align_to_shoot_server
+	align_hatch_server
+	align_with_camera
+	align_with_terabee_node
+	auto_node
+	climber_server
+	eject_server
+	elevator_server
+	indexer_server
+	intake_cargo_server
+	intake_hatch_panel_server
+	intake_powercell_server
+	num_powercells_pub_node
+	outtake_cargo_server
+	outtake_hatch_panel_server
+	publish_pid_cmd_vel_node
+	shooter_actionlib_server
+	state_setpoint_publisher_node
+	test_actionlib
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -322,11 +335,11 @@ install(DIRECTORY
 )
 
 ## Mark cpp header files for installation
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-  FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
-)
+#install(DIRECTORY include/${PROJECT_NAME}/
+# DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+# FILES_MATCHING PATTERN "*.h"
+# PATTERN ".svn" EXCLUDE
+#)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

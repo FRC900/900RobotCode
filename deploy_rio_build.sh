@@ -16,10 +16,11 @@ else
 	echo "roboRIO cross build complete"
 	echo "Synchronizing $INSTALL_ENV cross build to roboRIO"
 	ssh $ROBORIO_ADDR "/etc/init.d/nilvrt stop"
+	arm-frc2020-linux-gnueabi-strip `find install_isolated -name frcrobot_hw_main`
 	rsync -avz --delete \
 		--exclude '*~' --exclude '*.sw[op]' \
 		--exclude '*.stl' --exclude '*.dae' \
-		--exclude 'pixy2/documents' \
+		--exclude 'pixy2/documents' --exclude '*.a' \
 		$ROS_CODE_LOCATION/install_isolated/ \
 		$ROBORIO_ADDR:$RIO_INSTALL_LOCATION 
 	if [ $? -ne 0 ] ; then
