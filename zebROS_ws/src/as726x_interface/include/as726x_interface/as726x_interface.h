@@ -1,3 +1,10 @@
+// Classes to hold state and command for AS726x hardware interface integration
+// The state class hold data read from the hardware interface ::read() method from
+//   the sensor hardware. This data is used by controllers that need to access
+//   sensor state
+// The command class holds commands written to hardware by the hardware interface
+//   ::write() method. Controllers can write to this class to send commands to
+//   the hardware itself
 #pragma once
 
 #include <hardware_interface/internal/hardware_resource_manager.h>
@@ -81,96 +88,32 @@ enum ColorChannel {
 class AS726xState
 {
 	public:
-		AS726xState(const std::string &port, int address)
-			: port_(port)
-			, address_(address)
-			, ind_led_current_limit_(IND_LIMIT_1MA)
-			, ind_led_enable_(false)
-			, drv_led_current_limit_(DRV_LIMIT_12MA5)
-			, drv_led_enable_(false)
-			, conversion_type_(ONE_SHOT)
-			, gain_(GAIN_1X)
-			, integration_time_(50)
-			, temperature_(0)
-			, raw_channel_data_{0}
-			, calibrated_channel_data_{0.0}
-		{
-		}
+		AS726xState(const std::string &port, int address);
 
-		std::string                              getPort(void) const                  { return port_; }
-		int                                      getAddress(void) const               { return address_; }
-		IndLedCurrentLimits                      getIndLedCurrentLimit(void) const    { return ind_led_current_limit_; }
-		bool                                     getIndLedEnable(void) const          { return ind_led_enable_; }
-		DrvLedCurrentLimits                      getDrvLedCurrentLimit(void) const    { return drv_led_current_limit_; }
-		bool                                     getDrvLedEnable(void) const          { return drv_led_enable_; }
-		ConversionTypes                          getConversionType(void) const        { return conversion_type_; }
-		ChannelGain                              getGain(void) const                  { return gain_; }
-		uint8_t                                  getIntegrationTime(void) const       { return integration_time_; }
-		uint8_t                                  getTemperature(void) const           { return temperature_; }
-		std::array<uint16_t, COLOR_CHANNEL_LAST> getRawChannelData(void) const        { return raw_channel_data_; }
-		std::array<float, COLOR_CHANNEL_LAST>    getCalibratedChannelData(void) const { return calibrated_channel_data_; }
+		std::string                              getPort(void) const;
+		int                                      getAddress(void) const;
+		IndLedCurrentLimits                      getIndLedCurrentLimit(void) const;
+		bool                                     getIndLedEnable(void) const;
+		DrvLedCurrentLimits                      getDrvLedCurrentLimit(void) const;
+		bool                                     getDrvLedEnable(void) const;
+		ConversionTypes                          getConversionType(void) const;
+		ChannelGain                              getGain(void) const;
+		uint8_t                                  getIntegrationTime(void) const;
+		uint8_t                                  getTemperature(void) const;
+		std::array<uint16_t, COLOR_CHANNEL_LAST> getRawChannelData(void) const;
+		std::array<float, COLOR_CHANNEL_LAST>    getCalibratedChannelData(void) const;
 
 
-		void setIndLedCurrentLimit(const IndLedCurrentLimits &ind_led_current_limit)
-		{
-			if ((ind_led_current_limit < IND_LIMIT_1MA) || (ind_led_current_limit >= IND_LIMIT_LAST))
-			{
-				ROS_ERROR_STREAM("enum argument out of range in " << __FUNCTION__);
-				return;
-			}
-			ind_led_current_limit_ = ind_led_current_limit;
-		}
-		void setIndLedEnable(bool ind_led_enable)
-		{
-			ind_led_enable_ = ind_led_enable;
-		}
-		void setDrvLedCurrentLimit(const DrvLedCurrentLimits &drv_led_current_limit)
-		{
-			if ((drv_led_current_limit < DRV_LIMIT_12MA5) || (drv_led_current_limit >= DRV_LIMIT_LAST))
-			{
-				ROS_ERROR_STREAM("enum argument out of range in " << __FUNCTION__);
-				return;
-			}
-			drv_led_current_limit_ = drv_led_current_limit;
-		}
-		void setDrvLedEnable(bool drv_led_enable)
-		{
-			drv_led_enable_ = drv_led_enable;
-		}
-		void setConversionType(const ConversionTypes &conversion_type)
-		{
-			if ((conversion_type < MODE_0) || (conversion_type >= ConversionTypes_Last))
-			{
-				ROS_ERROR_STREAM("enum argument out of range in " << __FUNCTION__);
-				return;
-			}
-			conversion_type_ = conversion_type;
-		}
-		void setGain(const ChannelGain &gain)
-		{
-			if ((gain < GAIN_1X) || (gain >= GAIN_LAST))
-			{
-				ROS_ERROR_STREAM("enum argument out of range in " << __FUNCTION__);
-				return;
-			}
-			gain_ = gain;
-		}
-		void setIntegrationTime(uint8_t integration_time)
-		{
-			integration_time_ = integration_time;
-		}
-		void setTemperature(uint8_t temperature)
-		{
-			temperature_ = temperature;
-		}
-		void setRawChannelData(const std::array<uint16_t, COLOR_CHANNEL_LAST> &raw_channel_data)
-		{
-			raw_channel_data_ = raw_channel_data;
-		}
-		void setCalibratedChannelData(const std::array<float, COLOR_CHANNEL_LAST> &calibrated_channel_data)
-		{
-			calibrated_channel_data_ = calibrated_channel_data;
-		}
+		void setIndLedCurrentLimit(const IndLedCurrentLimits &ind_led_current_limit);
+		void setIndLedEnable(bool ind_led_enable);
+		void setDrvLedCurrentLimit(const DrvLedCurrentLimits &drv_led_current_limit);
+		void setDrvLedEnable(bool drv_led_enable);
+		void setConversionType(const ConversionTypes &conversion_type);
+		void setGain(const ChannelGain &gain);
+		void setIntegrationTime(uint8_t integration_time);
+		void setTemperature(uint8_t temperature);
+		void setRawChannelData(const std::array<uint16_t, COLOR_CHANNEL_LAST> &raw_channel_data);
+		void setCalibratedChannelData(const std::array<float, COLOR_CHANNEL_LAST> &calibrated_channel_data);
 
 	private:
 		std::string                              port_;
@@ -190,172 +133,39 @@ class AS726xState
 class AS726xCommand
 {
 	public:
-		AS726xCommand()
-			: ind_led_current_limit_(IND_LIMIT_1MA)
-			, ind_led_current_limit_changed_(true)
-			, ind_led_enable_(false)
-			, ind_led_enable_changed_(true)
-			, drv_led_current_limit_(DRV_LIMIT_12MA5)
-			, drv_led_current_limit_changed_(true)
-			, drv_led_enable_(false)
-			, drv_led_enable_changed_(true)
-			, conversion_type_(ONE_SHOT)
-			, conversion_type_changed_(true)
-			, gain_(GAIN_1X)
-			, gain_changed_(true)
-			, integration_time_(50)
-			, integration_time_changed_(true)
-		{
-		}
+		AS726xCommand(void);
 
-		IndLedCurrentLimits getIndLedCurrentLimit(void) const  { return ind_led_current_limit_; }
-		bool                getIndLedEnable(void) const        { return ind_led_enable_; }
-		DrvLedCurrentLimits getDrvLedCurrentLimit(void) const  { return drv_led_current_limit_; }
-		bool                getDrvLedEnable(void) const        { return drv_led_enable_; }
-		ConversionTypes     getConversionType(void) const      { return conversion_type_; }
-		ChannelGain         getGain(void) const                { return gain_; }
-		uint8_t             getIntegrationTime(void) const     { return integration_time_; }
+		IndLedCurrentLimits getIndLedCurrentLimit(void) const;
+		bool                getIndLedEnable(void) const;
+		DrvLedCurrentLimits getDrvLedCurrentLimit(void) const;
+		bool                getDrvLedEnable(void) const;
+		ConversionTypes     getConversionType(void) const;
+		ChannelGain         getGain(void) const;
+		uint8_t             getIntegrationTime(void) const;
 
-		void setIndLedCurrentLimit(IndLedCurrentLimits ind_led_current_limit)
-		{
-			if ((ind_led_current_limit < IND_LIMIT_1MA) || (ind_led_current_limit >= IND_LIMIT_LAST))
-			{
-				ROS_ERROR_STREAM("enum argument out of range in " << __FUNCTION__);
-				return;
-			}
-			if (ind_led_current_limit != ind_led_current_limit_)
-			{
-				ind_led_current_limit_ = ind_led_current_limit;
-				ind_led_current_limit_changed_ = true;
-			}
-		}
-		void setIndLedEnable(bool ind_led_enable)
-		{
-			if (ind_led_enable != ind_led_enable_)
-			{
-				ind_led_enable_ = ind_led_enable;
-				ind_led_enable_changed_ = true;
-			}
-		}
-		void setDrvLedCurrentLimit(DrvLedCurrentLimits drv_led_current_limit)
-		{
-			if ((drv_led_current_limit < DRV_LIMIT_12MA5) || (drv_led_current_limit >= DRV_LIMIT_LAST))
-			{
-				ROS_ERROR_STREAM("enum argument out of range in " << __FUNCTION__);
-				return;
-			}
-			if (drv_led_current_limit != drv_led_current_limit_)
-			{
-				drv_led_current_limit_ = drv_led_current_limit;
-				drv_led_current_limit_changed_ = true;
-			}
-		}
-		void setDrvLedEnable(bool drv_led_enable)
-		{
-			if (drv_led_enable != drv_led_enable_)
-			{
-				drv_led_enable_ = drv_led_enable;
-				drv_led_enable_changed_ = true;
-			}
-		}
-		void setConversionType(ConversionTypes conversion_type)
-		{
-			if ((conversion_type < MODE_0) || (conversion_type >= ConversionTypes_Last))
-			{
-				ROS_ERROR_STREAM("enum argument out of range in " << __FUNCTION__);
-				return;
-			}
-			if (conversion_type != conversion_type_)
-			{
-				conversion_type_ = conversion_type;
-				conversion_type_changed_ = true;
-			}
-		}
-		void setGain(ChannelGain gain)
-		{
-			if ((gain < GAIN_1X) || (gain >= GAIN_LAST))
-			{
-				ROS_ERROR_STREAM("enum argument out of range in " << __FUNCTION__);
-				return;
-			}
-			if (gain != gain_)
-			{
-				gain_ = gain;
-				gain_changed_ = true;
-			}
-		}
-		void setIntegrationTime(uint8_t integration_time)
-		{
-			if (integration_time != integration_time_)
-			{
-				integration_time_ = integration_time;
-				integration_time_changed_ = true;
-			}
-		}
+		void setIndLedCurrentLimit(IndLedCurrentLimits ind_led_current_limit);
+		void setIndLedEnable(bool ind_led_enable);
+		void setDrvLedCurrentLimit(DrvLedCurrentLimits drv_led_current_limit);
+		void setDrvLedEnable(bool drv_led_enable);
+		void setConversionType(ConversionTypes conversion_type);
+		void setGain(ChannelGain gain);
+		void setIntegrationTime(uint8_t integration_time);
 
-		bool indLedCurrentLimitChanged(IndLedCurrentLimits &ind_led_current_limit)
-		{
-			ind_led_current_limit = ind_led_current_limit_;
-			const bool ret = ind_led_current_limit_changed_;
-			ind_led_current_limit_changed_ = false;
-			return ret;
-		}
+		bool indLedCurrentLimitChanged(IndLedCurrentLimits &ind_led_current_limit);
+		bool indLedEnableChanged(bool &ind_led_enable);
+		bool drvLedCurrentLimitChanged(DrvLedCurrentLimits &drv_led_current_limit);
+		bool drvLedEnableChanged(bool &drv_led_enable);
+		bool conversionTypeChanged(ConversionTypes &conversion_type);
+		bool gainChanged(ChannelGain &gain);
+		bool integrationTimeChanged(uint8_t &integration_time);
 
-		bool indLedEnableChanged(bool &ind_led_enable)
-		{
-			ind_led_enable = ind_led_enable_;
-			const bool ret = ind_led_enable_changed_;
-			ind_led_enable_changed_ = false;
-			return ret;
-		}
-
-		bool drvLedCurrentLimitChanged(DrvLedCurrentLimits &drv_led_current_limit)
-		{
-			drv_led_current_limit = drv_led_current_limit_;
-			const bool ret = drv_led_current_limit_changed_;
-			drv_led_current_limit_changed_ = false;
-			return ret;
-		}
-
-		bool drvLedEnableChanged(bool &drv_led_enable)
-		{
-			drv_led_enable = drv_led_enable_;
-			const bool ret = drv_led_enable_changed_;
-			drv_led_enable_changed_ =false;
-			return ret;
-		}
-
-		bool conversionTypeChanged(ConversionTypes &conversion_type)
-		{
-			conversion_type = conversion_type_;
-			const bool ret  = conversion_type_changed_;
-			conversion_type_changed_ = false;
-			return ret;
-		}
-
-		bool gainChanged(ChannelGain &gain)
-		{
-			gain = gain_;
-			const bool ret = gain_changed_;
-			gain_changed_ = false;
-			return ret;
-		}
-
-		bool integrationTimeChanged(uint8_t &integration_time)
-		{
-			integration_time = integration_time_;
-			const bool ret = integration_time_changed_;
-			integration_time_changed_ = false;
-			return ret;
-		}
-
-		void resetIndLedCurrentLimit(void) { ind_led_current_limit_changed_ = true; }
-		void resetIndLedEnable(void)       { ind_led_enable_changed_ = true; }
-		void resetDrvLedCurrentLimit(void) { drv_led_current_limit_changed_ = true; }
-		void resetDrvLedEnable(void)       { drv_led_enable_changed_ = true; }
-		void resetConversionType(void)     { conversion_type_changed_ = true; }
-		void resetGain(void)               { gain_changed_ = true; }
-		void resetIntegrationTime(void)    { integration_time_changed_ = true; }
+		void resetIndLedCurrentLimit(void);
+		void resetIndLedEnable(void);
+		void resetDrvLedCurrentLimit(void);
+		void resetDrvLedEnable(void);
+		void resetConversionType(void);
+		void resetGain(void);
+		void resetIntegrationTime(void);
 
 	private:
 		IndLedCurrentLimits ind_led_current_limit_;
