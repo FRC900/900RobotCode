@@ -1405,14 +1405,14 @@ int main(int argc, char **argv)
 	nh.param("max_cent_acc", maxCentAcc, 3.5);
 	kinematicConstraints.globalKinematics(Kinematics(maxLinearAcc, maxLinearDec, maxVel, maxCentAcc, pathLimitDistance));
 
-	ddr.registerVariable<double>("path_distance_limit", pathLimitDistanceGetCB, pathLimitDistanceSetCB, "how far robot can diverge from straight-line path between waypoints");
-	ddr.registerVariable<double>("max_vel", maxVelGetCB, maxVelSetCB, "max translational velocity");
-	ddr.registerVariable<double>("max_linear_acc", maxLinearAccGetCB, maxLinearAccSetCB, "max linear acceleration");
-	ddr.registerVariable<double>("max_linear_dec", maxLinearDecGetCB, maxLinearDecSetCB, "max linear deceleration");
-	ddr.registerVariable<double>("max_cent_acc", maxCentAccGetCB, maxCentAccSetCB, "max centrepital acceleration");
+	ddr.registerVariable<double>("path_distance_limit", pathLimitDistanceGetCB, pathLimitDistanceSetCB, "how far robot can diverge from straight-line path between waypoints", 0, 20);
+	ddr.registerVariable<double>("max_vel", maxVelGetCB, maxVelSetCB, "max translational velocity", 0, 20);
+	ddr.registerVariable<double>("max_linear_acc", maxLinearAccGetCB, maxLinearAccSetCB, "max linear acceleration", 0, 50);
+	ddr.registerVariable<double>("max_linear_dec", maxLinearDecGetCB, maxLinearDecSetCB, "max linear deceleration", 0, 50);
+	ddr.registerVariable<double>("max_cent_acc", maxCentAccGetCB, maxCentAccSetCB, "max centrepital acceleration", 0, 20);
 
 	nh.param("wheel_radius", wheelRadius, 0.03682);
-	ddr.registerVariable<double>("wheel_radius", &wheelRadius, "robot's wheel radius", 0, 2);
+	ddr.registerVariable<double>("wheel_radius", &wheelRadius, "robot's wheel radius", 0, .15);
     ddr.publishServicesTopics();
 	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", callback);
 
