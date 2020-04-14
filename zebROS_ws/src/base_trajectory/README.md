@@ -28,3 +28,82 @@ Configuration parameters:
 
 	wheel_radius : robot's wheel radius
 
+Example Service Calls :
+
+rosservice call /base_trajectory/spline_gen "points:
+- positions: [0 , 0, 0]
+  velocities: []
+  accelerations: []
+  effort: []
+  time_from_start: {secs: 0, nsecs: 0}
+- positions: [1, 3, 0]
+  velocities: []
+  accelerations: []
+  effort: []
+  time_from_start: {secs: 1, nsecs: 0}
+- positions: [0, 6, 0]
+  velocities: []
+  accelerations: []
+  effort: []
+  time_from_start: {secs: 2, nsecs: 0}
+  "
+
+rosservice call /base_trajectory/spline_gen "points:
+- positions: [0 , 0, 0]
+  velocities: []
+  accelerations: []
+  effort: []
+  time_from_start: {secs: 0, nsecs: 0}
+- positions: [1, -0.05, 3]
+  velocities: []
+  accelerations: []
+  effort: []
+  time_from_start: {secs: 1, nsecs: 0}
+- positions: [3, 1, 0]
+  velocities: []
+  accelerations: []
+  effort: []
+  time_from_start: {secs: 2, nsecs: 0}
+- positions: [2, 3, 0]
+  velocities: []
+  accelerations: []
+  effort: []
+  time_from_start: {secs: 3, nsecs: 0}
+- positions: [1, 1, 0]
+  velocities: []
+  accelerations: []
+  effort: []
+  time_from_start: {secs: 4, nsecs: 0}
+- positions: [0, 2, 0]
+  velocities: []
+  accelerations: []
+  effort: []
+  time_from_start: {secs: 5, nsecs: 0}
+- positions: [2, 2.5, 0]
+  velocities: []
+  accelerations: []
+  effort: []
+  time_from_start: {secs: 6, nsecs: 0}
+  "
+
+rosservice call /base_trajectory/spline_gen "points:
+- positions: [0, 0, 0]
+  velocities: []
+  accelerations: []
+  effort: []
+  time_from_start: {secs: 0, nsecs: 0}
+- positions: [0, 10, 0]
+  velocities: []
+  accelerations: []
+  effort: []
+  time_from_start: {secs: 1, nsecs: 0}
+
+constraints:
+- corner1: {x: -2.0, y: 3.0, z: 0.0}
+  corner2: {x: 2.0, y: 2.0, z: 0.0}
+  max_accel: 2.5
+  max_decel: 2.5
+  max_vel: 1.0
+  max_cent_accel: 3.5
+  path_limit_distance: 0.2"
+
