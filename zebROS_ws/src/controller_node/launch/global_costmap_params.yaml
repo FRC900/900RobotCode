@@ -10,7 +10,7 @@ global_costmap:
   static_map: false
   rolling_window: true
   map_type: costmap
-  width: 20.0
-  height: 20.0
-  origin_x: 10.0
-  origin_y: 10.0
+  width: 40.0
+  height: 40.0
+  origin_x: 20.0
+  origin_y: 20.0

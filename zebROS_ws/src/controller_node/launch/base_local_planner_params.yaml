@@ -31,7 +31,7 @@ EBandPlannerROS:
 
 TebLocalPlannerROS:
     #odom_topic: odometry/filtered
-  map_frame: /map
+  map_frame: map
      
   # Trajectory
    
@@ -52,13 +52,13 @@ TebLocalPlannerROS:
      
   # Robot
           
-  max_vel_x: 3.811
-  max_vel_y: 3.811
-  max_vel_x_backwards: 3.811
-  max_vel_theta: 2.094
-  acc_lim_x: 1.5
-  acc_lim_y: 1.5
-  acc_lim_theta: 3.5
+  max_vel_x: 5.5
+  max_vel_y: 5.5
+  max_vel_x_backwards: 5.5
+  max_vel_theta: 5
+  acc_lim_x: 4.5
+  acc_lim_y: 4.5
+  acc_lim_theta: 6.5
   min_turning_radius: 0.0
   footprint_model: # types: "point", "circular", "two_circles", "line", "polygon"
     type: "polygon"

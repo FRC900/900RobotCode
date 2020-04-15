@@ -39,7 +39,7 @@
 
 	<!--  ****** Maps *****  -->
 	<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/2018FRC_field_half_size.yaml" output="screen" if="$(arg static_map)">
-		<param name="frame_id" value="/map"/>
+		<param name="frame_id" value="map"/>
 	</node>
 
 	<node pkg="amcl" type="amcl" name="amcl" output="screen" if="$(arg static_map)">
