@@ -21,6 +21,7 @@ catkin config --profile cross -x _isolated --install --blacklist \
 	rosbag_scripts \
 	rospy_message_converter \
 	rqt_driver_station_sim \
+	stage_ros \
 	tf_object_detection \
 	velocity_controllers \
 	visualize_profile \

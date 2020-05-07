@@ -8,11 +8,14 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  field_obj
+  geometry_msgs
+  marker_msgs
   message_filters
   message_generation
+  nav_msgs
+  sensor_msgs
   std_msgs
-  geometry_msgs
-  field_obj
 )
 
 
@@ -153,6 +156,46 @@ include_directories(
  )
 
 
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+add_executable(fake_cmd_vel_out_node src/fake_cmd_vel_out.cpp)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(fake_cmd_vel_out_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(fake_cmd_vel_out_node
+  ${catkin_LIBRARIES}
+)
+
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+add_executable(fake_imu_node src/fake_imu.cpp)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(fake_imu_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(fake_imu_node
+  ${catkin_LIBRARIES}
+)
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+add_executable(fake_goal_detect_node src/fake_goal_detect.cpp)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(fake_goal_detect_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(fake_goal_detect_node
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############

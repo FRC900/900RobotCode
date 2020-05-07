@@ -64,6 +64,9 @@
   <exec_depend>geometry_msgs</exec_depend>
 
   <depend>field_obj</depend>
+  <depend>marker_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

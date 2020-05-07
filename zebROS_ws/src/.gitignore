@@ -21,3 +21,4 @@ ddynamic_reconfigure
 pid
 cpu_monitor
 adi_driver
+stage_ros

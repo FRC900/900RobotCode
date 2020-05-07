@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!--
+
+  Simulate a omni (swerve) robot in stage for PF localization testing
+  - stage
+ -->
+<launch>
+	<!--  ************** Global Parameters ***************  -->
+	<param name="/use_sim_time" value="true"/>
+
+	<!--  ************** Stage Simulator ***************  -->
+	<node pkg="stage_ros" type="stageros" name="stageros" args="$(find controller_node)/stage/2020FRC_robot_simple.world">
+		<remap from="base_scan" to="scan"/>
+	</node>
+
+	<!--  ************** Nodes to convert output of stage to inputs expected by particle filter ***************  -->
+	<node pkg="pf_localization" type="fake_cmd_vel_out_node" name="fake_cmd_vel_out" >
+		<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel_out"/>
+	</node>
+
+	<node pkg="pf_localization" type="fake_imu_node" name="fake_imu" >
+		<remap from="imu" to="/imu/zeroed_imu" />
+	</node>
+
+	<node pkg="pf_localization" type="fake_goal_detect_node" name="fake_goal_detect" >
+		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
+	</node>
+
+	<rosparam file="$(find pf_localization)/config/test_params.yaml" command="load"/>
+	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" >
+	</node>
+
+</launch>

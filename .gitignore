@@ -36,7 +36,7 @@ Makefile
 .ninja_log
 build.ninja
 rules.ninja 
-compile_command.json
+compile_commands.json
 
 *.avi
 *.zms
@@ -46,5 +46,3 @@ compile_command.json
 
 # Rosbag files
 bagfiles_temp/*.bag
-
-

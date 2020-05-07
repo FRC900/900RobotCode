@@ -1,0 +1,148 @@
+# Top-level world file for stage simulation
+include "robots/2020FRC_robot.inc"
+
+# Object detection model - used as a base for each target
+# we can detect using tensorflow object detection
+# TODO - maybe also retro targets?
+define objdet_target model
+(
+ size [ 0.15 0.15 0.20 ]
+ gui_move 0
+ gui_nose 0
+ gripper_return -1
+ ranger_return -1
+)
+
+# Model for the basic floorplan - walls, and field obstacles
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 1
+
+  gui_nose 0
+  gui_grid 0
+  gui_move 0
+  gui_outline 0
+  gripper_return -1
+  fiducial_return -1
+  ranger_return 1
+)
+
+resolution 0.02
+interval_sim 100  # simulation timestep in milliseconds
+
+window
+(
+  size [ 1200.0 600.0 ]
+  center [ 0.0 0.0 ]
+  rotate [ 0.0 0.0 ]
+  scale 60
+)
+
+# Load the 2020 FRC map into the floorplan
+# Size determines how pixels map to meters
+# Pose fixes the center of the field
+# See the output from 2020RobotCode/field_map for these values
+floorplan
+(
+  name "2020FRC_field"
+  bitmap "../maps/2020FRC_field.png"
+  size [17.5812 9.80288 2.0 ]
+  pose [ 7.99147 4.10229 0.0 0.0 ]
+)
+
+# throw in a robot
+omnidir_robot
+(
+  pose [ 2.5 2.5 0.0 0.0 ]
+  name "robot"
+)
+
+# Auto-generated from the Axis Labeling spreadsheet
+objdet_target ( pose [ 0 5.806186 2.49555 0 ] fiducial_return 1 color "red")
+objdet_target ( pose [ 15.98295 2.404364 2.49555 0 ] fiducial_return 2 color "blue")
+objdet_target ( pose [ 0 5.806186 0.5842 0 ] fiducial_return 3 color "red")
+objdet_target ( pose [ 15.98295 2.404364 0.5842 0 ] fiducial_return 4 color "blue")
+objdet_target ( pose [ 15.98295 2.404364 1.412875 0 ] fiducial_return 5 color "yellow")
+objdet_target ( pose [ 0 5.806186 1.412875 0 ] fiducial_return 5 color "yellow")
+objdet_target ( pose [ 15.98295 3.369564 2.2098 0 ] fiducial_return 7 color "blue")
+objdet_target ( pose [ 15.80515 1.011936 2.2098 0 ] fiducial_return 7 color "blue")
+objdet_target ( pose [ -0.000253999999999976 4.840986 2.2098 0 ] fiducial_return 6 color "red")
+objdet_target ( pose [ 0.1778 7.198614 2.2098 0 ] fiducial_return 6 color "red")
+objdet_target ( pose [ 15.98295 5.653786 0.4572 0 ] fiducial_return 8 color "red")
+objdet_target ( pose [ 0 2.556764 0.4572 0 ] fiducial_return 9 color "blue")
+objdet_target ( pose [ 15.98295 6.263386 0.508 0 ] fiducial_return 10 color "red")
+objdet_target ( pose [ 15.98295 5.044186 0.6096 0 ] fiducial_return 11 color "red")
+objdet_target ( pose [ -0.000253999999999976 1.947164 0.508 0 ] fiducial_return 12 color "blue")
+objdet_target ( pose [ -0.000253999999999976 3.166364 0.6096 0 ] fiducial_return 13 color "blue")
+objdet_target ( pose [ 15.22095 5.65404 0 0 ] fiducial_return 14 color "red")
+objdet_target ( pose [ 0.761746000000001 5.80644 0 0 ] fiducial_return 14 color "red")
+objdet_target ( pose [ 10.736072 6.80085 0 0 ] fiducial_return 14 color "red")
+objdet_target ( pose [ 5.24637 6.80085 0 0 ] fiducial_return 14 color "red")
+objdet_target ( pose [ 15.22095 2.404364 0 0 ] fiducial_return 15 color "blue")
+objdet_target ( pose [ 0.761746000000001 2.556764 0 0 ] fiducial_return 15 color "blue")
+objdet_target ( pose [ 5.24637 1.4097 0 0 ] fiducial_return 15 color "blue")
+objdet_target ( pose [ 10.736072 1.4097 0 0 ] fiducial_return 15 color "blue")
+objdet_target ( pose [ 15.60195 0.659892 1.9304 0 ] fiducial_return 16 color "red")
+objdet_target ( pose [ 15.98295 3.952875 1.9304 0 ] fiducial_return 16 color "red")
+objdet_target ( pose [ 15.60195 7.550658 1.9304 0 ] fiducial_return 16 color "red")
+objdet_target ( pose [ 0.381 0.659892 1.9304 0 ] fiducial_return 17 color "blue")
+objdet_target ( pose [ 0 4.257675 1.9304 0 ] fiducial_return 17 color "blue")
+objdet_target ( pose [ 0.381 7.550658 1.9304 0 ] fiducial_return 17 color "blue")
+objdet_target ( pose [ 15.60195 0.659892 1.9304 0 ] fiducial_return 18 color "green")
+objdet_target ( pose [ 15.98295 3.952875 1.9304 0 ] fiducial_return 18 color "green")
+objdet_target ( pose [ 15.60195 7.550658 1.9304 0 ] fiducial_return 18 color "green")
+objdet_target ( pose [ 0.381 0.659892 1.9304 0 ] fiducial_return 18 color "green")
+objdet_target ( pose [ 0 4.257675 1.9304 0 ] fiducial_return 18 color "green")
+objdet_target ( pose [ 0.381 7.550658 1.9304 0 ] fiducial_return 18 color "green")
+objdet_target ( pose [ 9.0932 6.85165 1.0033 0 ] fiducial_return 19 color "green")
+objdet_target ( pose [ 6.88467 1.3716 1.0033 0 ] fiducial_return 19 color "green")
+objdet_target ( pose [ 9.0932 6.85165 0 0 ] fiducial_return 20 color "yellow")
+objdet_target ( pose [ 6.88467 1.3716 0 0 ] fiducial_return 20 color "yellow")
+objdet_target ( pose [ 5.878957 3.230245 2.39395 0 ] fiducial_return 22 color "red")
+objdet_target ( pose [ 10.103231 4.980305 2.39395 0 ] fiducial_return 23 color "blue")
+objdet_target ( pose [ 5.878957 3.230245 2.39395 0 ] fiducial_return 21 color "green")
+objdet_target ( pose [ 10.103231 4.980305 2.39395 0 ] fiducial_return 21 color "green")
+objdet_target ( pose [ 5.229098 4.1459912 2.220722 0 ] fiducial_return 24 color "brown")
+objdet_target ( pose [ 8.741664 5.8960512 2.220722 0 ] fiducial_return 24 color "brown")
+objdet_target ( pose [ 7.241032 2.3144988 2.220722 0 ] fiducial_return 24 color "brown")
+objdet_target ( pose [ 10.752582 4.0645588 2.220722 0 ] fiducial_return 24 color "green")
+objdet_target ( pose [ 7.805928 1.867916 2.67335 0 ] fiducial_return 25 color "gray")
+objdet_target ( pose [ 6.502908 2.406904 2.67335 0 ] fiducial_return 25 color "gray")
+objdet_target ( pose [ 10.187686 2.853944 2.67335 0 ] fiducial_return 25 color "gray")
+objdet_target ( pose [ 10.726674 4.156964 2.67335 0 ] fiducial_return 25 color "gray")
+objdet_target ( pose [ 9.479788 5.803646 2.67335 0 ] fiducial_return 25 color "gray")
+objdet_target ( pose [ 8.176768 6.342634 2.67335 0 ] fiducial_return 25 color "gray")
+objdet_target ( pose [ 5.793994 5.356606 2.67335 0 ] fiducial_return 25 color "gray")
+objdet_target ( pose [ 5.255006 4.053586 2.67335 0 ] fiducial_return 25 color "gray")
+objdet_target ( pose [ 7.11962 1.583182 2.54635 0 ] fiducial_return 26 color "yellow")
+objdet_target ( pose [ 6.787642 1.720596 2.54635 0 ] fiducial_return 26 color "yellow")
+objdet_target ( pose [ 10.8740194 3.138678 2.54635 0 ] fiducial_return 26 color "yellow")
+objdet_target ( pose [ 11.011408 3.4706306 2.54635 0 ] fiducial_return 26 color "yellow")
+objdet_target ( pose [ 9.195054 6.4899794 2.54635 0 ] fiducial_return 26 color "yellow")
+objdet_target ( pose [ 8.863076 6.627368 2.54635 0 ] fiducial_return 26 color "yellow")
+objdet_target ( pose [ 5.1076606 5.071872 2.54635 0 ] fiducial_return 26 color "yellow")
+objdet_target ( pose [ 4.970272 4.739894 2.54635 0 ] fiducial_return 26 color "yellow")
+objdet_target ( pose [ 7.991094 4.105275 0 0 ] fiducial_return 27 color "brown")
+objdet_target ( pose [ 5.878957 3.230245 0 0 ] fiducial_return 30 color "purple")
+objdet_target ( pose [ 10.103231 4.980305 0 0 ] fiducial_return 30 color "purple")
+objdet_target ( pose [ 6.985381 5.84962 0 0 ] fiducial_return 28 color "red")
+objdet_target ( pose [ 8.996807 2.36093 0 0 ] fiducial_return 29 color "blue")
+objdet_target ( pose [ 4.87299 4.97459 0 0 ] fiducial_return 31 color "red")
+objdet_target ( pose [ 9.097772 6.72465 0 0 ] fiducial_return 31 color "red")
+objdet_target ( pose [ 6.884924 1.4859 0 0 ] fiducial_return 32 color "blue")
+objdet_target ( pose [ 11.10869 3.23596 0 0 ] fiducial_return 32 color "blue")
+objdet_target ( pose [ 0.1905 7.220712 1.9304 0 ] fiducial_return 33 color "yellow")
+objdet_target ( pose [ 0 4.964557 1.9304 0 ] fiducial_return 33 color "yellow")
+objdet_target ( pose [ 0 3.550793 1.9304 0 ] fiducial_return 33 color "yellow")
+objdet_target ( pose [ 0.1905 0.989838 1.9304 0 ] fiducial_return 33 color "yellow")
+objdet_target ( pose [ 15.79245 7.220712 1.9304 0 ] fiducial_return 33 color "yellow")
+objdet_target ( pose [ 15.98295 4.65963 1.9304 0 ] fiducial_return 33 color "yellow")
+objdet_target ( pose [ 15.98295 3.245993 1.9304 0 ] fiducial_return 33 color "yellow")
+objdet_target ( pose [ 15.79245 0.989838 1.9304 0 ] fiducial_return 33 color "yellow")
+objdet_target ( pose [ 15.98295 0 0 0 ] fiducial_return 33 color "yellow")
+objdet_target ( pose [ 6.7183 0.70485 0.9144 0 ] fiducial_return 36 color "orange")
+objdet_target ( pose [ 9.26465 7.5057 0.9144 0 ] fiducial_return 36 color "orange")

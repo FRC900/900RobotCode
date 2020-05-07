@@ -17,7 +17,7 @@ fi
 EXTRA_BLACKLIST_PACKAGES=""
 uname -a | grep -q x86_64
 if [ $? -eq 1 ]; then
-	EXTRA_BLACKLIST_PACKAGES="robot_characterization robot_visualizer rosbag_scripts rospy_message_converter rqt_driver_station_sim visualize_profile zms_writer"
+	EXTRA_BLACKLIST_PACKAGES="robot_characterization robot_visualizer rosbag_scripts rospy_message_converter rqt_driver_station_sim stage_ros visualize_profile zms_writer"
 fi
 
 catkin config --blacklist \

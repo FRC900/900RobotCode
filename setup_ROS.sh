@@ -76,6 +76,7 @@ sudo apt install -y \
 	ros-melodic-joint-state-publisher \
 	ros-melodic-joystick-drivers \
 	ros-melodic-map-server \
+	ros-melodic-marker-msgs \
 	ros-melodic*mux* \
 	ros-melodic-navigation \
 	ros-melodic-pcl-conversions \
