@@ -29,7 +29,14 @@ catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON "$@"
 
 if [ $? -ne 0 ] ; then
 	echo FAIL > .native_build.status
+	uname -a | grep -q x86_64
+	if [ $? -eq 1 ]; then
+		read -n 1 -s -r -p "Press any key to continue"
+		echo
+	fi
 	/bin/false
 else
 	echo SUCCESS > .native_build.status
+	/bin/true
 fi
+
