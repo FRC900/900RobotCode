@@ -26,8 +26,7 @@ Configuration parameters:
 	max_linear_dec : max linear deceleration
 	max_cent_acc : max centrepital acceleration
 
-	wheel_radius : robot's wheel radius
-
+	drive_base_radius : robot's drive base radius - half the distance of the diagonal between two opposite wheels"
 Example Service Calls :
 
 rosservice call /base_trajectory/spline_gen "points:
