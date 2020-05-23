@@ -54,7 +54,7 @@ double minDeltaCostEpsilon;
 double initialDParam;
 
 // Robot limits for evaluating path cost
-double wheelRadius;
+double driveBaseRadius;
 KinematicConstraints kinematicConstraints;
 
 MessageFilter messageFilter(true);
@@ -841,7 +841,7 @@ bool evaluateTrajectory(double &cost,
 		// and also velocity limited by max centripetal acceleration
 		// Assume rotational velocity is a hard constraint we have to hit
 		const auto &k = kinematics.back();
-		vTrans.push_back(k.getMaxVel() - fabs(thetaState.velocity[0]) * wheelRadius);
+		vTrans.push_back(k.getMaxVel() - fabs(thetaState.velocity[0]) * driveBaseRadius);
 		if (curvature != 0) // avoid divide by 0 again
 			vTrans.back() = std::min(vTrans.back(), sqrt(k.getMaxCentAccel() / fabs(curvature)));
 		//ROS_INFO_STREAM("vTrans0[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
@@ -1411,8 +1411,8 @@ int main(int argc, char **argv)
 	ddr.registerVariable<double>("max_linear_dec", maxLinearDecGetCB, maxLinearDecSetCB, "max linear deceleration", 0, 50);
 	ddr.registerVariable<double>("max_cent_acc", maxCentAccGetCB, maxCentAccSetCB, "max centrepital acceleration", 0, 20);
 
-	nh.param("wheel_radius", wheelRadius, 0.03682);
-	ddr.registerVariable<double>("wheel_radius", &wheelRadius, "robot's wheel radius", 0, .15);
+	nh.param("drive_base_radius", driveBaseRadius, 0.40411);
+	ddr.registerVariable<double>("drive_base_radius", &driveBaseRadius, "robot's drive base radius - half the distance of the diagonal between two opposite wheels", 0, .75);
     ddr.publishServicesTopics();
 	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", callback);
 
