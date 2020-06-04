@@ -80,7 +80,6 @@ sudo apt install -y \
 	ros-melodic*mux* \
 	ros-melodic-navigation \
 	ros-melodic-pcl-conversions \
-	ros-melodic-pid \
 	ros-melodic-robot-localization \
 	ros-melodic-robot-state-publisher \
 	ros-melodic-rosbridge-suite \
