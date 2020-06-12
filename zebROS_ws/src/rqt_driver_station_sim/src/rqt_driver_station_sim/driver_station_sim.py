@@ -13,7 +13,7 @@ from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget
 
-from ros_control_boilerplate.msg import AutoMode
+from behavior_actions.msg import AutoMode
 from frc_msgs.msg import MatchSpecificData
 from ros_control_boilerplate.srv import LineBreakSensors, set_limit_switch
 
