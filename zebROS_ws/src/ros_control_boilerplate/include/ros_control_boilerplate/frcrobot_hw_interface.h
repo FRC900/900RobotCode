@@ -74,6 +74,7 @@
 #include "ros_control_boilerplate/as726x_convert.h"
 #include "ros_control_boilerplate/cancoder_convert.h"
 #include "ros_control_boilerplate/canifier_convert.h"
+#include "ros_control_boilerplate/DSError.h"
 #include "ros_control_boilerplate/frc_robot_interface.h"
 #include "ros_control_boilerplate/talon_convert.h"
 #include "ros_control_boilerplate/tracer.h"
@@ -186,6 +187,9 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		double t_prev_robot_controller_read_;
 		double robot_controller_read_hz_;
 
+		// Count sequential CAN errors
+		size_t can_error_count_;
+
 		std::vector<std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController>> ctre_mcs_;
 
 		// Maintain a separate read thread for each talon SRX
@@ -244,6 +248,9 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		cancoder_convert::CANCoderConvert cancoder_convert_;
 		canifier_convert::CANifierConvert canifier_convert_;
 		talon_convert::TalonConvert talon_convert_;
+
+		bool DSErrorCallback(ros_control_boilerplate::DSError::Request &req, ros_control_boilerplate::DSError::Response &res);
+		ros::ServiceServer ds_error_server_;
 };  // class
 
 }  // namespace

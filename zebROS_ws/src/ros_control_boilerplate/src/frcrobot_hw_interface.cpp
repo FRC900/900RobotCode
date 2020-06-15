@@ -78,6 +78,8 @@
 #include <networktables/NetworkTable.h>
 #include <hal/CAN.h>
 #include <hal/Compressor.h>
+#include <hal/DriverStation.h>
+#include <hal/Errors.h>
 #include <hal/PDP.h>
 #include <hal/Power.h>
 #include <hal/Solenoid.h>
@@ -178,6 +180,10 @@ FRCRobotHWInterface::~FRCRobotHWInterface()
 		cancoder_read_threads_[i].join();
 	for (size_t i = 0; i < num_canifiers_; i++)
 		canifier_read_threads_[i].join();
+
+	// Hack to get error reporting thread to exit
+	if (!run_hal_robot_)
+		HAL_SendError(false, -900, false, "", "", "", false);
 }
 
 bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
@@ -196,6 +202,7 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 		// a CAN Talon object to avoid NIFPGA: Resource not initialized
 		// errors? See https://www.chiefdelphi.com/forums/showpost.php?p=1640943&postcount=3
 		robot_.reset(new ROSIterativeRobot());
+		ds_error_server_ = robot_hw_nh.advertiseService("/frcrobot_rio/ds_error_service", &FRCRobotHWInterface::DSErrorCallback, this);
 	}
 	else
 	{
@@ -207,8 +214,14 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 		hal::init::InitializePDP();
 		hal::init::InitializeSolenoid();
 
-		ctre::phoenix::platform::can::SetCANInterface(can_interface_.c_str());
+		const auto rc = ctre::phoenix::platform::can::SetCANInterface(can_interface_.c_str());
+		if (rc != 0)
+		{
+			HAL_SendError(true, -1, false, "SetCANInterface failed - likely CAN adapter failure", "", "", true);
+		}
 	}
+
+	can_error_count_ = 0;
 
 	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
 	{
@@ -718,7 +731,8 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 	pthread_setname_np(pthread_self(), "hwi_main_loop");
 #endif
 
-	ROS_INFO_NAMED("frcrobot_hw_interface", "FRCRobotHWInterface Ready.");
+	ROS_INFO_STREAM(robot_hw_nh.getNamespace() << " : FRCRobotHWInterface Ready.");
+	HAL_SendError(true, 0, false, std::string(robot_hw_nh.getNamespace() + " : FRCRobotHWInterface Ready").c_str(), "", "", true);
 	return true;
 }
 
@@ -1962,11 +1976,14 @@ double FRCRobotHWInterface::getConversionFactor(int encoder_ticks_per_rotation,
 
 bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name)
 {
-	//ROS_INFO_STREAM("safeTalonCall(" << talon_method_name << ")");
+	//ROS_INFO_STREAM("safeTalonCall(" << talon_method_name << ") = " << error_code);
 	std::string error_name;
+	static bool error_sent = false;
 	switch (error_code)
 	{
 		case ctre::phoenix::OK :
+			can_error_count_ = 0;
+			error_sent = false;
 			return true; // Yay us!
 
 		case ctre::phoenix::CAN_MSG_STALE :
@@ -2131,6 +2148,12 @@ bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, con
 
 	}
 	ROS_ERROR_STREAM("Error calling " << talon_method_name << " : " << error_name);
+	can_error_count_++;
+	if ((can_error_count_> 1000) && !error_sent)
+	{
+		HAL_SendError(true, -1, false, "safeTalonCall - too many CAN bus errors!", "", "", true);
+		error_sent = true;
+	}
 	return false;
 }
 
@@ -3861,6 +3884,13 @@ void FRCRobotHWInterface::write(const ros::Time& /*time*/, const ros::Duration& 
 			}
 		}
 	}
+}
+
+bool FRCRobotHWInterface::DSErrorCallback(ros_control_boilerplate::DSError::Request &req, ros_control_boilerplate::DSError::Response &res)
+{
+	ROS_ERROR_STREAM("HWI received DSErrorCallback " << req.details.c_str());
+	HAL_SendError(true, req.error_code, false, req.details.c_str(), "", "", true);
+	return true;
 }
 
 } // namespace
