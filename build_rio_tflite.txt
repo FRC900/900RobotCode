@@ -10,8 +10,9 @@ cd /mnt
 wget https://github.com/tensorflow/tensorflow/archive/v1.15.2.tar.gz
 tar -xzf v1.15.2.tar.gz
 edit tensorflow-1.15.2/tensorflow/lite/tools/make/download_dependencies.sh,
-	 comment out the find line
+	 comment out the find line (busybox find isn't happy with the command)
 cd tensorflow-1.15.2/tensorflow/lite/tools/pip_package
 
 PYTHON=python ./build_pip_package.sh
 
+Look for results in /tmp/tflite_pip/python/dist/tflite_runtime*
