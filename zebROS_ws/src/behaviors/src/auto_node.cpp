@@ -18,11 +18,14 @@
 
 //VARIABLES ---------------------------------------------------------
 int auto_mode = -1; //-1 if nothing selected
+double distance_from_center = 0.0; // distance from robot to center of goal; left is positive, right is negative
 std::vector<std::string> auto_steps; //stores string of action names to do, read from the auto mode array in the config file
 
 bool auto_started = false; //set to true when enter auto time period
 bool auto_stopped = false; //set to true if driver stops auto (callback: stopAuto() ) - note: this node will keep doing actions during teleop if not finished and the driver doesn't stop auto
 //All actions check if(auto_started && !auto_stopped) before proceeding.
+
+double goal_to_wall_y_dist = 2.404;
 
 enum AutoStates {
 	NOT_READY,
@@ -60,6 +63,7 @@ void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg)
 void updateAutoMode(const behavior_actions::AutoMode::ConstPtr& msg)
 {
 	auto_mode = msg->auto_mode;
+	distance_from_center = -1 * (goal_to_wall_y_dist - msg->distance_from_wall); // left is positive, right is negative
 }
 
 
@@ -225,6 +229,10 @@ int main(int argc, char** argv)
 
 	//other variables
 	ros::Rate r(10); //used in various places where we wait TODO: config?
+	if(! nh.getParam("goal_to_wall_y_dist", goal_to_wall_y_dist)){
+		ROS_ERROR_STREAM("Couldn't read goal_to_wall_y_dist in auto node"); //defaults to 2.404
+		return 1;
+	}
 
 	// TODO - turn this into a loop
 	//        Once auto has run, wait at the end of the loop until a service call
@@ -338,6 +346,10 @@ int main(int argc, char** argv)
 				{
 					point.x = (double) points_config[i][0];
 					point.y = (double) points_config[i][1];
+					if(action_data["goal"]["apply_offset"])
+					{
+						point.y -= distance_from_center; // if the robot is not centered to goal, adjust path
+					}
 					point.z = (double) points_config[i][2];
 					goal.points.push_back(point);
 				}
