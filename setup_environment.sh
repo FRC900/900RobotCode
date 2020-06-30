@@ -107,7 +107,7 @@ cd ../..
 sudo rm -rf tinyxml2
 
 #install zed sdk
-wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.1/jp43/jetsons
+wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.2/jp44/jetsons
 chmod 755 jetsons
 ./jetsons
 rm ./jetsons
@@ -382,3 +382,4 @@ git fetch origin
 git checkout legacy-py2
 git submodule update --init --recursive
 ./install.py --clang-completer --system-libclang --ninja 
+

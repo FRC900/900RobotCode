@@ -72,6 +72,7 @@
 
 #include <tf2/LinearMath/Matrix3x3.h>
 #include "ros_control_boilerplate/frcrobot_hw_interface.h"
+#include "ros_control_boilerplate/error_queue.h"
 
 //HAL / wpilib includes
 #include <HALInitializer.h>
@@ -180,10 +181,6 @@ FRCRobotHWInterface::~FRCRobotHWInterface()
 		cancoder_read_threads_[i].join();
 	for (size_t i = 0; i < num_canifiers_; i++)
 		canifier_read_threads_[i].join();
-
-	// Hack to get error reporting thread to exit
-	if (!run_hal_robot_)
-		HAL_SendError(false, -900, false, "", "", "", false);
 }
 
 bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
@@ -213,6 +210,8 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 		hal::init::InitializePCMInternal();
 		hal::init::InitializePDP();
 		hal::init::InitializeSolenoid();
+
+		errorQueue = std::make_unique<ErrorQueue>();
 
 		const auto rc = ctre::phoenix::platform::can::SetCANInterface(can_interface_.c_str());
 		if (rc != 0)
@@ -732,7 +731,7 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 #endif
 
 	ROS_INFO_STREAM(robot_hw_nh.getNamespace() << " : FRCRobotHWInterface Ready.");
-	HAL_SendError(true, 0, false, std::string(robot_hw_nh.getNamespace() + " : FRCRobotHWInterface Ready").c_str(), "", "", true);
+	HAL_SendError(true, 0, false, std::string("(Not an error) " + robot_hw_nh.getNamespace() + " : FRCRobotHWInterface Ready").c_str(), "", "", true);
 	return true;
 }
 

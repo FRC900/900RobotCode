@@ -718,70 +718,14 @@ int32_t HAL_SetJoystickOutputs(int32_t, int64_t,
 	return -1;
 }
 
-#include "ros_control_boilerplate/DSError.h"
-// This will be called by non-Rio code which wants to report an error
-// It will make a service call to the rio ds_error_service with the
-// error data. The rio is then responsible for making an call to
-// the actual DS-connected HAL_SendError function to display it on
-// the DS.
-// The errors are added to a queue so HAL_SendError can return immediately
-// The queue is read by a separate thread - error_queue_thread_fn.
-// This thread reads from the queue in a loop and makes a service call to
-// the rio hardware interface to send each message to the DS in order
-//
-#include <mutex>
-#include <queue>
-std::queue<std::pair<int32_t, std::string>> error_queue;
-std::mutex error_queue_mutex;
-std::condition_variable error_queue_condition_variable;
-
-void error_queue_thread_fn(void)
-{
-	ros::NodeHandle nh;
-	auto ds_error_client_ = nh.serviceClient<ros_control_boilerplate::DSError>("/frcrobot_rio/ds_error_service");
-	if (!ds_error_client_.waitForExistence(ros::Duration(30)))
-	{
-		ROS_ERROR("Timeout waiting for /frcrobot_rio/ds_error_service");
-		return;
-	}
-
-	std::pair<int32_t, std::string> msg_pair;
-	while (true)
-	{
-		// Scope makes sure the lock is released
-		// after getting data from the queue and
-		// not held during the service call itself
-		{
-			std::unique_lock<std::mutex> l(error_queue_mutex);
-			while (error_queue.empty())
-				error_queue_condition_variable.wait(l);
-			msg_pair = error_queue.front();
-			error_queue.pop();
-		}
-		ros_control_boilerplate::DSError msg;
-		// Hack to get the thread to exit when quitting the hwi
-		if (msg_pair.first == -900)
-			return;
-		msg.request.error_code = msg_pair.first;
-		msg.request.details    = msg_pair.second;
-		if (!ds_error_client_.call(msg.request, msg.response))
-		{
-			ROS_ERROR("ds_error_client call failed");
-		}
-	}
-}
-
-std::thread error_queue_thread(error_queue_thread_fn);
+#include <ros_control_boilerplate/error_queue.h>
 int32_t HAL_SendError(HAL_Bool isError, int32_t errorCode, HAL_Bool isLVCode, const char *details, const char *location, const char *callStack, HAL_Bool printMsg)
 {
     ROS_ERROR_STREAM("HAL_SendError called : errorCode = " << errorCode
 			<< " = \"" <<  HAL_GetErrorMessage(errorCode)
 			<< "\" : details = \"" << details << "\"");
 
-	std::lock_guard<std::mutex> l(error_queue_mutex);
-    error_queue.push(std::make_pair(errorCode, std::string(details)));
-	error_queue_condition_variable.notify_one();
-
+	errorQueue->enqueue(errorCode, std::string(details));
 	return 0;
 }
 
