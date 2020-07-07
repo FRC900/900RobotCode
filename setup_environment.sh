@@ -43,7 +43,6 @@ sudo apt install -y \
     liblua5.3-dev \
     libpcl-dev \
     libproj-dev \
-    libprotobuf-dev \
     libsnappy-dev \
     libsuitesparse-dev \
     libtinyxml2-dev \
@@ -53,7 +52,6 @@ sudo apt install -y \
     ntpdate \
     openssh-client \
     pkg-config \
-    protobuf-compiler \
     pyqt5-dev-tools \
     python-dev \
     python-matplotlib \
@@ -384,8 +382,53 @@ git submodule update --init --recursive
 ./install.py --clang-completer --system-libclang --ninja 
 
 # Install tensorflow on Jetson
-sudo apt update
-sudo apt install libhdf5-serial-dev hdf5-tools libhdf5-dev zlib1g-dev zip libjpeg8-dev liblapack-dev libblas-dev gfortran python3-pip python3-opencv python3-pil python3-matplotlib
-sudo pip3 install --install-option="--jobs=6" -U pip testresources setuptools
-sudo pip3 install --install-option="--jobs=6" -U numpy==1.16.1 future==0.17.1 mock==3.0.5 h5py==2.9.0 keras_preprocessing==1.0.5 keras_applications==1.0.8 gast==0.2.2 futures protobuf pybind11
-sudo pip3 install --install-option="--jobs=6" --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v44 tensorflow==1.15.2+nv20.04
+#sudo apt update
+#sudo apt install libhdf5-serial-dev hdf5-tools libhdf5-dev zlib1g-dev zip libjpeg8-dev liblapack-dev libblas-dev gfortran python3-pip python3-opencv python3-pil python3-matplotlib
+#sudo pip3 install --install-option="--jobs=6" -U pip testresources setuptools
+#sudo pip3 install --install-option="--jobs=6" -U numpy==1.16.1 future==0.17.1 mock==3.0.5 h5py==2.9.0 keras_preprocessing==1.0.5 keras_applications==1.0.8 gast==0.2.2 futures pybind11
+#sudo pip3 install --install-option="--jobs=6" --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v44 tensorflow==1.15.2+nv20.04
+
+#Build working version of protobuf from source
+mkdir -p ~/src
+cd ~/src
+sudo apt-get install -y autoconf libtool
+if [ ! -f protobuf-python-3.12.3.zip ]; then
+  wget https://github.com/protocolbuffers/protobuf/releases/download/v3.12.3/protobuf-all-3.12.3.zip
+fi
+if [ ! -f protoc-3.12.3-linux-aarch_64.zip ]; then
+  wget https://github.com/protocolbuffers/protobuf/releases/download/v3.12.3/protoc-3.12.3-linux-aarch_64.zip
+fi
+
+echo "** Install protoc"
+unzip protobuf-python-3.12.3.zip
+unzip protoc-3.12.3-linux-aarch_64.zip -d protoc-3.12.3
+sudo cp protoc-3.12.3/bin/protoc /usr/local/bin/protoc
+echo "** Build and install protobuf-3.12.3 libraries"
+export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp
+cd protobuf-3.12.3/
+./autogen.sh
+./configure --prefix=/usr/local
+sed -i 's/-g -O2/-g -O2 -fPIC/' Makefile
+make -j6
+make -j6 check
+sudo make -j6 install
+sudo ldconfig
+
+echo "** Update python protobuf module"
+# remove previous installation of python protobuf module
+sudo python -m pip uninstall -y protobuf
+sudo python -m pip install Cython
+cd python/
+# force compilation with c++11 standard
+python setup.py build --cpp_implementation
+# Probably fails?
+python setup.py test --cpp_implementation
+sudo python setup.py install --cpp_implementation
+
+cd ~/2020RobotCode
+sudo apt-get install -y libhdf5-serial-dev hdf5-tools
+sudo dpkg install libnccl*arm64.deb
+sudo python -m pip install -U pip six numpy wheel setuptools mock h5py
+sudo python -m pip install -U keras_applications
+sudo python -m pip install -U keras_preprocessing
+sudo python -m pip install tensorflow-1.15.3-*.whl
