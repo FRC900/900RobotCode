@@ -62,21 +62,26 @@ MessageFilter messageFilter(true);
 template <class T>
 void printTrajectory(const Trajectory<T> &trajectory, const std::vector<std::string> &jointNames)
 {
+	// Prevent spending time generating messages which are never actually printed
+	if (!messageFilter.isEnabled())
+	{
+		return;
+	}
 	const size_t n_joints = jointNames.size();
 	for (size_t seg = 0; seg < trajectory[0].size(); seg++)
 	{
 		for (size_t joint = 0; joint < n_joints; joint++)
 		{
-			ROS_INFO_STREAM_FILTER(&messageFilter, "joint = " << jointNames[joint] << " seg = " << seg <<
+			ROS_INFO_STREAM("joint = " << jointNames[joint] << " seg = " << seg <<
 			                " start_time = " << trajectory[joint][seg].startTime() <<
 			                " end_time = " << trajectory[joint][seg].endTime());
 			auto coefs = trajectory[joint][seg].getCoefs();
 
 			std::stringstream s;
 			s << "coefs ";
-			for (size_t i = 0; i < coefs[i].size(); ++i)
+			for (size_t i = 0; i < coefs[0].size(); ++i)
 				s << coefs[0][i] << " ";
-			ROS_INFO_STREAM_FILTER(&messageFilter, s.str());
+			ROS_INFO_STREAM(s.str());
 		}
 	}
 }
