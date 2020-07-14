@@ -661,9 +661,18 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 				port = frc::I2C::Port::kMXP;
 			else
 			{
-				ROS_ERROR_STREAM("Invalid port specified for as726x - " <<
-						as726x_ports_[i] << "valid options are onboard and mxp");
-				return false;
+				// Allow arbitrary integer ports to open /dev/i2c-<number> devices
+				// on the Jetson or other linux platforms
+				try
+				{
+					port = static_cast<frc::I2C::Port>(std::stoi(as726x_ports_[i]));
+				}
+				catch(...)
+				{
+					ROS_ERROR_STREAM("Invalid port specified for as726x - " <<
+							as726x_ports_[i] << "valid options are onboard, mxp, or a number");
+					return false;
+				}
 			}
 
 			as726xs_.push_back(std::make_shared<as726x::roboRIO_AS726x>(port, as726x_addresses_[i]));

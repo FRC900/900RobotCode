@@ -35,6 +35,7 @@ sudo apt install -y \
     libgflags-dev \
     libgoogle-glog-dev \
     libgoogle-perftools-dev \
+    libgpiod-dev \
     libgtk2.0-dev \
     libhdf5-dev \
     libhdf5-serial-dev \
