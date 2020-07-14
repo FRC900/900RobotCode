@@ -8,6 +8,7 @@
 #include "as726x_interface/as726x_interface.h"
 #include "as726x_msgs/AS726xState.h"
 #include "frc_interfaces/remote_joint_interface.h"
+#include "frc_msgs/JointMode.h"
 #include "frc_msgs/MatchSpecificData.h"
 #include "frc_msgs/PDPData.h"
 #include "talon_interface/talon_state_interface.h"
@@ -104,13 +105,11 @@ class JointStateListenerController :
 		std::vector<std::string> joint_names_;
 		std::vector<hardware_interface::JointHandle> handles_;
 
-		// Real-time buffer holds the last command value read from the
-		// "command" topic.
+		// Real-time buffer holds the last command value read from the "command" topic.
 		realtime_tools::RealtimeBuffer<std::vector<ValueValid<double>>> command_buffer_;
 
 		// Iterate through each desired joint state.  If it is found in
 		// the message, save the value here in the realtime buffer.
-		// // TODO : figure out how to hack this to use a ConstPtr type instead
 		virtual void commandCB(const sensor_msgs::JointStateConstPtr &msg)
 		{
 			std::vector<ValueValid<double>> ret;
@@ -120,7 +119,7 @@ class JointStateListenerController :
 				auto it = std::find(msg->name.cbegin(), msg->name.cend(), joint_names_[i]);
 				if (it != msg->name.cend())
 				{
-					const size_t loc = it - msg->name.cbegin();
+					const size_t loc = std::distance(msg->name.cbegin(), it);
 					ret[i].value_ = msg->position[loc];
 					ret[i].valid_ = true;
 				}
@@ -128,6 +127,87 @@ class JointStateListenerController :
 			command_buffer_.writeFromNonRT(ret);
 		}
 };
+
+class JointModeListenerController :
+	public controller_interface::Controller<hardware_interface::RemoteJointModeInterface>
+{
+	public:
+		JointModeListenerController() {}
+		~JointModeListenerController()
+		{
+			sub_command_.shutdown();
+		}
+
+		virtual bool init(hardware_interface::RemoteJointModeInterface *hw, ros::NodeHandle &n) override
+		{
+			// Read list of hw, make a list, grab handles for them, plus allocate storage space
+			joint_names_ = hw->getNames();
+			for (auto j : joint_names_)
+			{
+				ROS_INFO_STREAM("Joint Mode Listener Controller got joint " << j);
+				handles_.push_back(hw->getHandle(j));
+			}
+
+			std::string topic;
+
+			// get topic to subscribe to
+			if (!n.getParam("topic", topic))
+			{
+				ROS_ERROR("Joint Mode Listener Controller : Parameter 'topic' not set");
+				return false;
+			}
+
+			// Might wantt to make message type a template
+			// parameter as well?
+			sub_command_ = n.subscribe<frc_msgs::JointMode>(topic, 1, &JointModeListenerController::commandCB, this);
+			return true;
+		}
+
+		virtual void starting(const ros::Time & /*time*/) override
+		{
+		}
+		virtual void stopping(const ros::Time & /*time*/) override
+		{
+		}
+
+		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
+		{
+			// Take the most recent set of values read from the joint_modes
+			// topic and write them to the local joints
+			std::vector<ValueValid<int>> vals = *command_buffer_.readFromRT();
+			for (size_t i = 0; i < vals.size(); i++)
+				if (vals[i].valid_)
+					handles_[i].setMode(static_cast<hardware_interface::JointCommandModes>(vals[i].value_));
+		}
+
+	private:
+		ros::Subscriber sub_command_;
+		std::vector<std::string> joint_names_;
+		std::vector<hardware_interface::JointModeHandle> handles_;
+
+		// Real-time buffer holds the last command value read from the "command" topic.
+		realtime_tools::RealtimeBuffer<std::vector<ValueValid<int>>> command_buffer_;
+
+		// Iterate through each desired joint mode.  If it is found in
+		// the message, save the value here in the realtime buffer.
+		virtual void commandCB(const frc_msgs::JointModeConstPtr &msg)
+		{
+			std::vector<ValueValid<int>> ret;
+			ret.resize(joint_names_.size());
+			for (size_t i = 0; i < joint_names_.size(); i++)
+			{
+				auto it = std::find(msg->name.cbegin(), msg->name.cend(), joint_names_[i]);
+				if (it != msg->name.cend())
+				{
+					const size_t loc = std::distance(msg->name.cbegin(), it);
+					ret[i].value_ = msg->mode[loc];
+					ret[i].valid_ = true;
+				}
+			}
+			command_buffer_.writeFromNonRT(ret);
+		}
+};
+
 
 class PDPStateListenerController :
 	public controller_interface::Controller<hardware_interface::RemotePDPStateInterface>
@@ -168,7 +248,6 @@ class PDPStateListenerController :
 		}
 		virtual void stopping(const ros::Time & /*time*/) override
 		{
-			//handles_.release();
 		}
 
 		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
@@ -242,7 +321,6 @@ class MatchStateListenerController :
 		}
 		virtual void stopping(const ros::Time & /*time*/) override
 		{
-			//handles_.release();
 		}
 
 		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
@@ -332,7 +410,6 @@ class IMUStateListenerController :
 		}
 		virtual void stopping(const ros::Time & /*time*/) override
 		{
-			//handles_.release();
 		}
 
 		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override

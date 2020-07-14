@@ -1025,18 +1025,38 @@ void FRCRobotSimInterface::write(const ros::Time& /*time*/, const ros::Duration&
 		}
 	}
 
-	for (size_t i = 0; i< num_solenoids_; i++)
+	for (size_t i = 0; i < num_solenoids_; i++)
 	{
-		const bool setpoint = solenoid_command_[i] > 0;
-		if (solenoid_state_[i] != setpoint)
+		// MODE_POSITION is standard on/off setting
+		if (solenoid_mode_[i] == hardware_interface::JointCommandModes::MODE_POSITION)
 		{
-			solenoid_state_[i] = setpoint;
-			ROS_INFO_STREAM("Solenoid " << solenoid_names_[i] <<
-							" at id " << solenoid_ids_[i] <<
-							" / pcm " << solenoid_pcms_[i] <<
-							" = " << setpoint);
+			const bool setpoint = solenoid_command_[i] > 0;
+			if ((solenoid_mode_[i] != prev_solenoid_mode_[i]) || (solenoid_state_[i] != setpoint))
+			{
+				solenoid_state_[i] = setpoint;
+				ROS_INFO_STREAM("Solenoid " << solenoid_names_[i] <<
+						" at id " << solenoid_ids_[i] <<
+						" / pcm " << solenoid_pcms_[i] <<
+						" = " << static_cast<int>(setpoint));
+			}
 		}
+		else if (solenoid_mode_[i] == hardware_interface::JointCommandModes::MODE_EFFORT)
+		{
+			if (solenoid_command_[i] > 0)
+			{
+				ROS_INFO_STREAM("Solenoid one shot " << solenoid_names_[i] <<
+						" at id " << solenoid_ids_[i] <<
+						" / pcm " << solenoid_pcms_[i] <<
+						" = " << solenoid_command_[i]);
+				solenoid_pwm_state_[i] = solenoid_command_[i];
+				solenoid_command_[i] = 0;
+			}
+		}
+		else
+			ROS_ERROR_STREAM("Invalid solenoid_mode_[i] = " << static_cast<int>(solenoid_mode_[i]));
+		prev_solenoid_mode_[i] = solenoid_mode_[i];
 	}
+
 
 	for (size_t i = 0; i < num_double_solenoids_; i++)
 	{

@@ -19,7 +19,7 @@
 
 		<!-- Load controller manager -->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn talon_state_controller talon_config_controller canifier_controller joint_state_controller joint_state_listener_controller canifier_state_controller match_state_listener_controller robot_code_ready_controller" />
+			output="screen" args="spawn talon_state_controller talon_config_controller canifier_controller joint_state_controller joint_state_listener_controller canifier_state_controller joint_mode_state_controller joint_mode_listener_controller match_state_listener_controller robot_code_ready_controller" />
 	</group>
 
 </launch>

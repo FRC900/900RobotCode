@@ -28,10 +28,10 @@ class PCMStateController: public controller_interface::Controller<hardware_inter
 
 		virtual bool init(hardware_interface::PCMStateInterface *hw,
 						  ros::NodeHandle                       &root_nh,
-						  ros::NodeHandle                       &controller_nh);
-		virtual void starting(const ros::Time &time);
-		virtual void update(const ros::Time &time, const ros::Duration & /*period*/);
-		virtual void stopping(const ros::Time & /*time*/);
+						  ros::NodeHandle                       &controller_nh) override;
+		virtual void starting(const ros::Time &time) override;
+		virtual void update(const ros::Time &time, const ros::Duration & /*period*/) override;
+		virtual void stopping(const ros::Time & /*time*/) override;
 
 	private:
 		std::vector<hardware_interface::PCMStateHandle> pcm_state_;

@@ -955,21 +955,32 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw
 	}
 	num_solenoids_ = solenoid_names_.size();
 	solenoid_state_.resize(num_solenoids_);
+	solenoid_pwm_state_.resize(num_solenoids_);
 	solenoid_command_.resize(num_solenoids_);
+	solenoid_mode_.resize(num_solenoids_);
+	prev_solenoid_mode_.resize(num_solenoids_);
 	for (size_t i = 0; i < num_solenoids_; i++)
 	{
 		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << solenoid_names_[i] << " at id " << solenoid_ids_[i]<< " at pcm " << solenoid_pcms_[i]);
 
 		solenoid_state_[i] = std::numeric_limits<double>::max();
+		solenoid_pwm_state_[i] = 0;
 		solenoid_command_[i] = 0;
+		solenoid_mode_[i] = hardware_interface::JointCommandModes::MODE_POSITION;
+		prev_solenoid_mode_[i] = hardware_interface::JointCommandModes::BEGIN;
 
-		hardware_interface::JointStateHandle ssh(solenoid_names_[i], &solenoid_state_[i], &solenoid_state_[i], &solenoid_state_[i]);
+		hardware_interface::JointStateHandle ssh(solenoid_names_[i], &solenoid_state_[i], &solenoid_state_[i], &solenoid_pwm_state_[i]);
 		joint_state_interface_.registerHandle(ssh);
 
-		hardware_interface::JointHandle soh(ssh, &solenoid_command_[i]);
-		joint_position_interface_.registerHandle(soh);
+		hardware_interface::JointHandle sch(ssh, &solenoid_command_[i]);
+		joint_position_interface_.registerHandle(sch);
 		if (!solenoid_local_updates_[i])
-			joint_remote_interface_.registerHandle(soh);
+			joint_remote_interface_.registerHandle(sch);
+
+		hardware_interface::JointModeHandle smh(solenoid_names_[i], &solenoid_mode_[i]);
+		joint_mode_interface_.registerHandle(smh);
+		if (!!solenoid_local_updates_[i])
+			joint_mode_remote_interface_.registerHandle(smh);
 	}
 
 	num_double_solenoids_ = double_solenoid_names_.size();
@@ -985,10 +996,10 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw
 		hardware_interface::JointStateHandle dssh(double_solenoid_names_[i], &double_solenoid_state_[i], &double_solenoid_state_[i], &double_solenoid_state_[i]);
 		joint_state_interface_.registerHandle(dssh);
 
-		hardware_interface::JointHandle dsoh(dssh, &double_solenoid_command_[i]);
-		joint_position_interface_.registerHandle(dsoh);
+		hardware_interface::JointHandle dsch(dssh, &double_solenoid_command_[i]);
+		joint_position_interface_.registerHandle(dsch);
 		if (!double_solenoid_local_updates_[i])
-			joint_remote_interface_.registerHandle(dsoh);
+			joint_remote_interface_.registerHandle(dsch);
 	}
 	num_rumbles_ = rumble_names_.size();
 	rumble_state_.resize(num_rumbles_);
@@ -1256,6 +1267,9 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw
 	registerInterface(&imu_remote_interface_);
 	registerInterface(&match_remote_state_interface_);
 	registerInterface(&as726x_remote_state_interface_);
+
+	registerInterface(&joint_mode_interface_);
+	registerInterface(&joint_mode_remote_interface_);
 
 	ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface Ready.");
 	return true;

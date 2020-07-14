@@ -1,0 +1,32 @@
+<library path="lib/libfrc_state_controller">
+
+	<class name="joint_mode_state_controller/JointModeStateController" type="joint_mode_state_controller::JointModeStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read joint_mode info from hardware interface and publish it
+		</description>
+	</class>
+
+	<class name="match_state_controller/MatchStateController" type="match_state_controller::MatchStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read match info from hardware interface and publish it
+		</description>
+	</class>
+
+	<class name="pcm_state_controller/PCMStateController" type="pcm_state_controller::PCMStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read PCM info from hardware interface and publish it
+		</description>
+	</class>
+
+	<class name="pdp_state_controller/PDPStateController" type="pdp_state_controller::PDPStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read PDP info from hardware interface and publish it
+		</description>
+	</class>
+
+	<class name="robot_controller_state_controller/RobotControllerStateController" type="robot_controller_state_controller::RobotControllerStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read robot controller info from hardware interface and publish it
+		</description>
+	</class>
+</library>

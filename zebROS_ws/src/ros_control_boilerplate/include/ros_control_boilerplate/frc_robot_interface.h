@@ -46,6 +46,7 @@
 // ROS Controls
 #include <controller_manager/controller_manager.h>
 #include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/joint_mode_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include "as726x_interface/as726x_interface.h"
 #include "frc_interfaces/pcm_state_interface.h"
@@ -188,6 +189,9 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		hardware_interface::RemoteImuSensorInterface       imu_remote_interface_;
 
 		hardware_interface::RobotControllerStateInterface  robot_controller_state_interface_;
+
+		hardware_interface::JointModeInterface            joint_mode_interface_;
+		hardware_interface::RemoteJointModeInterface      joint_mode_remote_interface_;
 
 		std::vector<CustomProfileState> custom_profile_state_;
 
@@ -332,6 +336,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<double> digital_output_state_; //No actual data
 		std::vector<double> pwm_state_; //No actual data
 		std::vector<double> solenoid_state_;
+		std::vector<double> solenoid_pwm_state_;
 		std::vector<double> double_solenoid_state_;
 		std::vector<double> rumble_state_; //No actual data
 		std::vector<double> compressor_state_;
@@ -361,6 +366,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<double> digital_output_command_;
 		std::vector<double> pwm_command_;
 		std::vector<double> solenoid_command_;
+		std::vector<hardware_interface::JointCommandModes> solenoid_mode_;
+		std::vector<hardware_interface::JointCommandModes> prev_solenoid_mode_;
 		std::vector<double> double_solenoid_command_;
 		std::vector<double> rumble_command_;
 		std::vector<double> compressor_command_;

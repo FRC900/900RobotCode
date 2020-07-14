@@ -125,30 +125,15 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(pdp_state_controller src/pdp_state_controller.cpp)
-target_link_libraries(pdp_state_controller ${catkin_LIBRARIES})
-add_dependencies(pdp_state_controller
-    ${${PROJECT_NAME}_EXPORTED_TARGETS}
-    ${catkin_EXPORTED_TARGETS}
+add_library(frc_state_controller
+	src/joint_mode_state_controller.cpp
+   	src/pcm_state_controller.cpp
+   	src/pdp_state_controller.cpp
+	src/match_state_controller.cpp
+   	src/robot_controller_state_controller.cpp
 )
-
-add_library(pcm_state_controller src/pcm_state_controller.cpp)
-target_link_libraries(pcm_state_controller ${catkin_LIBRARIES})
-add_dependencies(pcm_state_controller
-    ${${PROJECT_NAME}_EXPORTED_TARGETS}
-    ${catkin_EXPORTED_TARGETS}
-)
-
-add_library(match_state_controller src/match_state_controller.cpp)
-target_link_libraries(match_state_controller ${catkin_LIBRARIES})
-add_dependencies(match_state_controller
-    ${${PROJECT_NAME}_EXPORTED_TARGETS}
-    ${catkin_EXPORTED_TARGETS}
-)
-
-add_library(robot_controller_state_controller src/robot_controller_state_controller.cpp)
-target_link_libraries(robot_controller_state_controller ${catkin_LIBRARIES})
-add_dependencies(robot_controller_state_controller
+target_link_libraries(frc_state_controller ${catkin_LIBRARIES})
+add_dependencies(frc_state_controller
     ${${PROJECT_NAME}_EXPORTED_TARGETS}
     ${catkin_EXPORTED_TARGETS}
 )
@@ -190,7 +175,7 @@ add_dependencies(robot_controller_state_controller
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS pdp_state_controller pcm_state_controller match_state_controller robot_controller_state_controller
+install(TARGETS frc_state_controller
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -200,16 +185,12 @@ install(TARGETS pdp_state_controller pcm_state_controller match_state_controller
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.h"
-  PATTERN ".svn" EXCLUDE
 )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 install(FILES
-    pdp_controller_plugins.xml
-    robot_controller_controller_plugins.xml
-    match_state_controller_plugins.xml
-    pcm_controller_plugins.xml
-   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  frc_state_controller_plugin.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
 #############

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/joint_mode_interface.h>
 #define private protected
 #include <hardware_interface/imu_sensor_interface.h>
 #undef private
@@ -15,6 +16,7 @@
 namespace hardware_interface
 {
 	class RemoteJointInterface : public JointCommandInterface {};
+	class RemoteJointModeInterface : public JointModeInterface {};
 	class ImuWritableSensorHandle: public ImuSensorHandle
 	{
 		public:

@@ -1,7 +1,0 @@
-<library path="lib/libpcm_state_controller">
-	<class name="pcm_state_controller/PCMStateController" type="pcm_state_controller::PCMStateController" base_class_type="controller_interface::ControllerBase">
-		<description>
-			Read info from the PCM
-		</description>
-	</class>
-</library>

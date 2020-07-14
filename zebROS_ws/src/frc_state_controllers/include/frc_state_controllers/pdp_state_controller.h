@@ -1,5 +1,4 @@
-#ifndef PDP_STATE_CONTROLLER
-#define PDP_STATE_CONTROLLER
+#pragma once
 
 #include <controller_interface/controller.h>
 #include <hardware_interface/joint_state_interface.h>
@@ -19,10 +18,10 @@ class PDPStateController: public controller_interface::Controller<hardware_inter
 
 		virtual bool init(hardware_interface::PDPStateInterface *hw,
 							ros::NodeHandle						&root_nh,
-							ros::NodeHandle						&controller_nh);
-		virtual void starting(const ros::Time &time);
-		virtual void update(const ros::Time &time, const ros::Duration & );
-		virtual void stopping(const ros::Time &time);
+							ros::NodeHandle						&controller_nh) override;
+		virtual void starting(const ros::Time &time) override;
+		virtual void update(const ros::Time &time, const ros::Duration & ) override;
+		virtual void stopping(const ros::Time &time) override;
 
 	private:
 		hardware_interface::PDPStateHandle pdp_state_;
@@ -33,5 +32,3 @@ class PDPStateController: public controller_interface::Controller<hardware_inter
 }; //class
 
 } //namespace
-
-#endif

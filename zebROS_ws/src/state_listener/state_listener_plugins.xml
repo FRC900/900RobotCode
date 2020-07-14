@@ -6,6 +6,12 @@
     </description>
   </class>
 
+  <class name="state_listener_controller/JointModeListenerController" type="state_listener_controller::JointModeListenerController" base_class_type="controller_interface::ControllerBase">
+    <description>
+      Listens to sensor_msgs::JointMode messages for joints marked as remote, writes their value to the local controller
+    </description>
+  </class>
+
   <class name="state_listener_controller/PDPStateListenerController" type="state_listener_controller::PDPStateListenerController" base_class_type="controller_interface::ControllerBase">
     <description>
       Listens to pdp_state_controller::PDPData messages for joints marked as remote, writes their value to the local controller

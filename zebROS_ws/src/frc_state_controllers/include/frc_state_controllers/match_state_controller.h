@@ -1,5 +1,4 @@
-#ifndef MATCH_STATE_CONTROLLER
-#define MATCH_STATE_CONTROLLER
+#pragma once
 
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_publisher.h>
@@ -30,5 +29,3 @@ class MatchStateController: public controller_interface::Controller<hardware_int
 }; //class
 
 } //namespace
-
-#endif
