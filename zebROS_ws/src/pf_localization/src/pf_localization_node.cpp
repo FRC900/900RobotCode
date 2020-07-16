@@ -2,6 +2,7 @@
 #include "world_model.hpp"
 #include "particle.hpp"
 #include "pf_localization/pf_pose.h"
+#include "pf_localization/pf_debug.h"
 #include "field_obj/Detection.h"
 #include "nav_msgs/Odometry.h"
 
@@ -27,6 +28,7 @@ const std::string rot_topic = "/imu/zeroed_imu";
 const std::string cmd_topic = "/frcrobot_jetson/swerve_drive_controller/cmd_vel_out";
 const std::string goal_pos_topic = "/goal_detection/goal_detect_msg";
 
+const std::string pub_debug_topic = "pf_debug";
 const std::string pub_topic = "predicted_pose";
 
 ros::Time last_time;
@@ -198,6 +200,7 @@ int main(int argc, char **argv) {
   ros::Subscriber odom_sub = nh_.subscribe(cmd_topic, 1, cmdCallback);
   ros::Subscriber goal_sub = nh_.subscribe(goal_pos_topic, 1, goalCallback);
   ros::Publisher pub_ = nh_.advertise<pf_localization::pf_pose>(pub_topic, 1);
+  ros::Publisher pub_debug = nh_.advertise<pf_localization::pf_debug>(pub_debug_topic, 1);
 
 
   ros::Rate rate(10);
@@ -210,6 +213,20 @@ int main(int argc, char **argv) {
     pose.y = prediction.y_;
     pose.rot = prediction.rot_;
     pub_.publish(pose);
+
+    if(pub_debug.getNumSubscribers() > 0){
+      pf_localization::pf_debug debug;
+
+      for (Particle p : pf->get_particles()) {
+        pf_localization::pf_pose particle;
+        particle.x = p.x_;
+        particle.y = p.y_;
+        particle.rot = p.rot_;
+        debug.particles.push_back(particle);
+      }
+
+      pub_debug.publish(debug);
+    }
 
     delta_x = 0;
     delta_y = 0;

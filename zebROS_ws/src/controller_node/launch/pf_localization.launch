@@ -1,12 +1,18 @@
 <?xml version="1.0"?>
 <launch>
 
+  <arg name="vis" default="false" />
+
   <group ns="pf_localization">
     <rosparam command="load" file="$(find pf_localization)/config/test_params.yaml" />
     <node name="pf_localization" pkg="pf_localization" type="pf_localization_node" output= "screen">
     </node>
+    <node name="pf_visualization" pkg="pf_localization" type="pf_vis.py" output="screen" if="$(arg vis)">
+    </node>
   </group>
 
-  <!-- <include file="$(find controller_node)/launch/bag_tape_detection.launch"/> -->
+  <include file="$(find controller_node)/launch/tape_detection.launch">
+    <arg name="live_camera" value="false" />
+  </include>
 
 </launch>

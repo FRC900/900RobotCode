@@ -35,7 +35,7 @@ def twist_callback(data):
         print all_dist_measurements[:,1]
         print all_dist_measurements[:,0]
         print angles
-        
+
         print ("cov", np.cov(dists, angles))
         centers, labels = kmeans2(all_dist_measurements, int(len(avg_loc)))
         print centers
