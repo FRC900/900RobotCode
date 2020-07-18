@@ -192,11 +192,9 @@
 	</group>
         -->
 
-<!--
-	<include file="$(find realsense2_camera)/launch/rs_t265.launch" >
+	<include file="$(find controller_node)/launch/rs_t265.launch" >
 		<arg name="camera" value="rs_t265" />
 	</include>
-	-->
 
 	<group ns="shooter">
 		<rosparam file="$(find behaviors)/config/shooter_actionlib.yaml" command="load"/>
