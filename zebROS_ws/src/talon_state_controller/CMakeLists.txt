@@ -31,6 +31,7 @@ add_library(${PROJECT_NAME}
    	src/canifier_state_controller.cpp
    	src/talon_config_controller.cpp
    	src/talon_state_controller.cpp
+   	src/orchestra_state_controller.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 

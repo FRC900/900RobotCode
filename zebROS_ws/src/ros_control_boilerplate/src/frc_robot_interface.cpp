@@ -761,6 +761,22 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 			as726x_local_updates_.push_back(local_update);
 			as726x_local_hardwares_.push_back(local_hardware);
 		}
+		else if (joint_type == "orchestra")
+		{
+			talon_orchestra_names_.push_back(joint_name);
+
+			const bool has_id = joint_params.hasMember("id");
+			int orchestra_id = 0;
+			if (!has_id)
+				throw std::runtime_error("An orchestra id was not specified for joint " + joint_name);
+			XmlRpc::XmlRpcValue &xml_orchestra_id = joint_params["id"];
+			if (!xml_orchestra_id.valid() ||
+					xml_orchestra_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				throw std::runtime_error("An invalid joint orchestra id was specified (expecting an int) for joint " + joint_name);
+			orchestra_id = xml_orchestra_id;
+
+			talon_orchestra_ids_.push_back(orchestra_id);
+		}
 		else
 		{
 			std::stringstream s;
@@ -1234,6 +1250,30 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw
 		robot_controller_state_interface_.registerHandle(rcsh);
 	}
 
+	num_talon_orchestras_ = talon_orchestra_names_.size();
+	orchestra_command_.resize(num_talon_orchestras_);
+
+	for (size_t i = 0; i < num_talon_orchestras_; i++)
+	{
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Orchestra Interface for " << talon_orchestra_names_[i] << " at hw ID " << talon_orchestra_ids_[i]);
+
+		// Create orchestra state interface
+		orchestra_state_.push_back(hardware_interface::OrchestraState(talon_orchestra_ids_[i]));
+	}
+	for (size_t i = 0; i < num_talon_orchestras_; i++)
+	{
+		// Create state interface for the given orchestra
+		// and point it to the data stored in the
+		// corresponding orchestra_state array entry
+		hardware_interface::OrchestraStateHandle osh(talon_orchestra_names_[i], &orchestra_state_[i]);
+		talon_orchestra_state_interface_.registerHandle(osh);
+
+		// Do the same for a command interface for
+		// the same orchestra 
+		hardware_interface::OrchestraCommandHandle och(osh, &orchestra_command_[i]);
+		talon_orchestra_command_interface_.registerHandle(och);
+	}
+
 	// Publish various FRC-specific data using generic joint state for now
 	// For simple things this might be OK, but for more complex state
 	// (e.g. joystick) it probably makes more sense to write a
@@ -1257,6 +1297,8 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw
 	registerInterface(&match_state_interface_);
 	registerInterface(&as726x_state_interface_);
 	registerInterface(&as726x_command_interface_);
+	registerInterface(&talon_orchestra_state_interface_);
+	registerInterface(&talon_orchestra_command_interface_);
 
 	registerInterface(&talon_remote_state_interface_);
 	registerInterface(&canifier_remote_state_interface_);

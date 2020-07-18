@@ -1,0 +1,8 @@
+<library path="lib/liborchestra_controller">
+
+  <class name="orchestra_controller/OrchestraController" type="orchestra_controller::OrchestraController" base_class_type="controller_interface::ControllerBase">
+    <description>
+		Orchestra controller
+    </description>
+  </class>
+</library>

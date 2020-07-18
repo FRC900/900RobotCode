@@ -55,6 +55,8 @@ add_message_files(
   CustomProfileStatus.msg
   TalonConfig.msg
   TalonState.msg
+  InstrumentList.msg
+  OrchestraState.msg
 )
 
 ## Generate services in the 'srv' folder

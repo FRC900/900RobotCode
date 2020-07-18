@@ -57,6 +57,8 @@
 #include "talon_interface/cancoder_command_interface.h"
 #include "talon_interface/canifier_command_interface.h"
 #include "talon_interface/talon_command_interface.h"
+#include "talon_interface/orchestra_state_interface.h"
+#include "talon_interface/orchestra_command_interface.h"
 
 namespace ros_control_boilerplate
 {
@@ -175,6 +177,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		hardware_interface::RemoteMatchStateInterface          match_remote_state_interface_;
 		hardware_interface::as726x::AS726xStateInterface       as726x_state_interface_;
 		hardware_interface::as726x::RemoteAS726xStateInterface as726x_remote_state_interface_;
+                hardware_interface::OrchestraStateInterface            talon_orchestra_state_interface_;
 
 		hardware_interface::JointCommandInterface          joint_command_interface_;
 		hardware_interface::PositionJointInterface         joint_position_interface_;
@@ -187,6 +190,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		hardware_interface::as726x::AS726xCommandInterface as726x_command_interface_;
 		hardware_interface::ImuSensorInterface             imu_interface_;
 		hardware_interface::RemoteImuSensorInterface       imu_remote_interface_;
+                hardware_interface::OrchestraCommandInterface      talon_orchestra_command_interface_;
 
 		hardware_interface::RobotControllerStateInterface  robot_controller_state_interface_;
 
@@ -320,6 +324,10 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<bool>        as726x_local_hardwares_;
 		std::size_t              num_as726xs_;
 
+                std::vector<std::string> talon_orchestra_names_;
+                std::size_t              num_talon_orchestras_;
+                std::vector<int>         talon_orchestra_ids_;
+
 		bool run_hal_robot_;
 		std::string can_interface_;
 
@@ -344,6 +352,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<hardware_interface::PCMState> pcm_state_;
 		hardware_interface::RobotControllerState robot_controller_state_;
 		hardware_interface::MatchHWState match_data_;
+                std::vector<hardware_interface::OrchestraState> orchestra_state_;
 
 		// Each entry in the vector is an array. That array holds
 		// the data returned from one particular imu
@@ -371,6 +380,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<double> double_solenoid_command_;
 		std::vector<double> rumble_command_;
 		std::vector<double> compressor_command_;
+                std::vector<hardware_interface::OrchestraCommand> orchestra_command_;
 
 		std::vector<double> dummy_joint_position_;
 		std::vector<double> dummy_joint_velocity_;

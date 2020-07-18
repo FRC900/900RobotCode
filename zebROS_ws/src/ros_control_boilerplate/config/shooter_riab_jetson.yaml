@@ -18,6 +18,8 @@ hardware_interface:
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
        - {name: do1, local: false, type: digital_output}
        - {name: do2, local_update: true, local_hardware: false, type: digital_output}
+
+       - {name: babys_first_orchestra, type: orchestra, id: 1}
        
 joint_state_controller:
    type:         joint_state_controller/JointStateController
@@ -109,6 +111,12 @@ intake_controller:
                 type: talon_controllers/TalonPercentOutputController
                 invert_output: False
 
+orchestra_controller:
+    type:      orchestra_controller/OrchestraController
+
+orchestra_state_controller:
+    type:   orchestra_state_controller/OrchestraStateController
+    publish_rate: 10
 
 # Similar to above, but this one prints non-Talon state
 # (stuff that fits into the more standard ROS position/

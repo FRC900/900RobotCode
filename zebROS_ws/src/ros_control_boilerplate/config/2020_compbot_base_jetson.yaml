@@ -38,13 +38,13 @@ hardware_interface:
 
          # - {name: control_panel_joint, type: can_talon_srx, can_id: 34, local: true}
 
-       - {name: fl_drive, type: can_talon_srx, can_id: 21, local: true}
+       - {name: fl_drive, type: can_talon_fx, can_id: 21, local: true}
        - {name: fl_angle, type: can_talon_srx, can_id: 11, local: true}
-       - {name: fr_drive, type: can_talon_srx, can_id: 22, local: true}
+       - {name: fr_drive, type: can_talon_fx, can_id: 22, local: true}
        - {name: fr_angle, type: can_talon_srx, can_id: 12, local: true}
-       - {name: br_drive, type: can_talon_srx, can_id: 24, local: true}
+       - {name: br_drive, type: can_talon_fx, can_id: 24, local: true}
        - {name: br_angle, type: can_talon_srx, can_id: 14, local: true}
-       - {name: bl_drive, type: can_talon_srx, can_id: 23, local: true}
+       - {name: bl_drive, type: can_talon_fx, can_id: 23, local: true}
        - {name: bl_angle, type: can_talon_srx, can_id: 13, local: true}
        - {name: pdp, type: pdp}
        - {name: compressor, type: compressor, pcm_id: 0}
@@ -55,6 +55,8 @@ hardware_interface:
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
+
+       - {name: babys_first_orchestra, type: orchestra, id: 1}
 
 # Create controllers for each joint
 #
@@ -239,6 +241,9 @@ pcm_state_controller:
 match_state_listener_controller:
     type:      state_listener_controller/MatchStateListenerController
     topic:     /frcrobot_rio/match_data
+
+orchestra_controller:
+    type:      orchestra_controller/OrchestraController
 
 # These controllers are defined for testing indivudal motors 
 # but are not actually used for normal swerve drive control

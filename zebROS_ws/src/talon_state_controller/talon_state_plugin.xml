@@ -19,4 +19,9 @@
 			The CANCoder state controller publishes the current CANCoder State as a talon_state_msgs/CANCoderConfig message. The CANCoderState controller expects a CANCoderStateInterface type of hardware interface.
 		</description>
 	</class>
+	<class name="orchestra_state_controller/OrchestraStateController" type="orchestra_state_controller::OrchestraStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			The Orchestra state controller publishes the current Orchestra State as a talon_state_msgs/OrchestraState message. The OrchestraState controller expects a OrchestraStateInterface type of hardware interface.
+		</description>
+	</class>
 </library>

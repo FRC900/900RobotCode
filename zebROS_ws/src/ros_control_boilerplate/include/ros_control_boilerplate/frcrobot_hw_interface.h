@@ -50,6 +50,7 @@
 #include <ctre/phoenix/motorcontrol/can/TalonSRX.h>
 #include <ctre/phoenix/motorcontrol/can/VictorSPX.h>
 #include <ctre/phoenix/CANifier.h>
+#include <ctre/phoenix/music/Orchestra.h>
 #include "WPILibVersion.h"
 #include <frc/AnalogInput.h>
 #include <frc/DriverStation.h>
@@ -239,6 +240,8 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::vector<std::shared_ptr<hardware_interface::as726x::AS726xState>> as726x_read_thread_state_;
 		void as726x_read_thread(std::shared_ptr<as726x::roboRIO_AS726x> as726x, std::shared_ptr<hardware_interface::as726x::AS726xState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
 		std::vector<std::thread> as726x_thread_;
+
+                std::vector<std::shared_ptr<ctre::phoenix::music::Orchestra>> talon_orchestras_;
 
 		std::unique_ptr<ROSIterativeRobot> robot_;
 

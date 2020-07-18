@@ -251,6 +251,11 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 			}
 		}
 	}
+	for (size_t i = 0; i < num_talon_orchestras_; i++)
+	{
+		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
+							  "Loading joint " << i << "=" << talon_orchestra_names_[i]);
+	}
 
 	limit_switch_srv_ = root_nh.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit,this);
     match_data_sub_ = root_nh.subscribe("/frcrobot_rio/match_data_in", 1, &FRCRobotSimInterface::match_data_callback, this);
@@ -1149,6 +1154,64 @@ void FRCRobotSimInterface::write(const ros::Time& /*time*/, const ros::Duration&
 			as.setIntegrationTime(integration_time);
 			ROS_INFO_STREAM("Wrote as726x_[" << i << "]=" << as726x_names_[i] << " integration_time = "
 					<< static_cast<int>(integration_time));
+		}
+	}
+
+	for(size_t i = 0; i < num_talon_orchestras_; i++)
+	{
+		auto &oc = orchestra_command_[i];
+		auto &os = orchestra_state_[i];
+		std::string music_file_path;
+		std::vector<std::string> instruments;
+		if(oc.clearInstrumentsChanged())
+		{
+			ROS_INFO_STREAM("Talon Orchestra " << talon_orchestra_names_[i] << " cleared instruments.");
+		}
+		if(oc.instrumentsChanged(instruments))
+		{
+				for(size_t j = 0; j < instruments.size(); j++)
+				{
+					size_t can_index = std::numeric_limits<size_t>::max();
+					for(size_t k = 0; k < can_ctre_mc_names_.size(); k++)
+					{
+						if(can_ctre_mc_names_[k] == instruments[j])
+						{
+							can_index = k;
+							break;
+						}
+					}
+					if(can_index == std::numeric_limits<size_t>::max())
+					{
+						ROS_ERROR_STREAM("Talon Orchestra " <<  talon_orchestra_names_[i] << " failed to add " << instruments[j] << " because it does not exist");
+					}
+					else if(can_ctre_mc_is_talon_fx_[can_index])
+					{
+						ROS_INFO_STREAM("Talon Orchestra " <<  talon_orchestra_names_[i] << " added Falcon " << "falcon_name");
+					}
+					else
+						ROS_INFO_STREAM("Talon Orchestra " <<  talon_orchestra_names_[i] << " failed to add " << instruments[j] << " because it is not a TalonFX");
+				}
+				os.setInstruments(instruments);
+		}
+		if(oc.musicChanged(music_file_path))
+		{
+				os.setChirpFilePath(music_file_path);
+				ROS_INFO_STREAM("Talon Orchestra " << talon_orchestra_names_[i] << " loaded music at " << music_file_path);
+		}
+		if(oc.pauseChanged())
+		{
+				os.setPaused();
+				ROS_INFO_STREAM("Talon Orchestra " << talon_orchestra_names_[i] << " pausing");
+		}
+		if(oc.playChanged())
+		{
+				os.setPlaying();
+				ROS_INFO_STREAM("Talon Orchestra " << talon_orchestra_names_[i] << " playing");
+		}
+		if(oc.stopChanged())
+		{
+				os.setStopped();
+				ROS_INFO_STREAM("Talon Orchestra " << talon_orchestra_names_[i] << " stopping");
 		}
 	}
 
