@@ -283,6 +283,7 @@ set (CTRE_USER_LIBS
 
 # Used to find HALInitializer from wpilib internal repo
 include_directories(${ALLWPILIB}/hal/src/main/native/athena)
+include_directories(${ALLWPILIB}/hal/src/main/native/include)
 
 if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
     # Add socketcan library to everything but the Rio
