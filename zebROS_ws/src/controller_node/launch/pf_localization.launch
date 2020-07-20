@@ -11,8 +11,10 @@
     </node>
   </group>
 
+  <!-- Commenting out because tape_detection.launch is also included in 2020_compbot_jetson.launch
   <include file="$(find controller_node)/launch/tape_detection.launch">
     <arg name="live_camera" value="false" />
   </include>
+-->
 
 </launch>
