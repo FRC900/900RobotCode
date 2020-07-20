@@ -9,6 +9,7 @@
 #include <behavior_actions/ShooterAction.h>
 #include <behavior_actions/EjectAction.h>
 #include <path_follower_msgs/PathAction.h>
+#include <behavior_actions/GoToColorAction.h>
 #include <behavior_actions/IndexerAction.h>
 #include <behavior_actions/AlignToShootAction.h>
 #include <behavior_actions/enumerated_elevator_indices.h>
@@ -516,6 +517,42 @@ bool callEject(bool intake_backwards, bool indexer_backwards)
 	}
 }
 
+bool callGoToColor()
+{
+	//create client to call actionlib server
+	actionlib::SimpleActionClient<behavior_actions::GoToColorAction> gotocolor_ac("/go_to_color_server", true);
+
+	ROS_INFO("Waiting for go_to_color_control_panel_server to start.");
+	if(!gotocolor_ac.waitForServer(ros::Duration(server_wait_timeout)))
+	{
+		ROS_ERROR("Could not find server within %f seconds.", server_wait_timeout);
+	}
+
+	ROS_INFO("Sending goal to go_to_color_control_panelserver.");
+	// send a goal to the action
+	behavior_actions::GoToColorGoal color_goal;
+	gotocolor_ac.sendGoal(color_goal);
+
+	//wait for the action to return
+	bool finished_before_timeout = gotocolor_ac.waitForResult(ros::Duration(server_exec_timeout));
+
+	if (finished_before_timeout)
+	{
+		actionlib::SimpleClientGoalState state = gotocolor_ac.getState();
+		ROS_INFO("Action finished with state: %s",state.toString().c_str());
+		if(gotocolor_ac.getResult()->timed_out)
+		{
+			ROS_INFO("Go to color server timed out!");
+		}
+		return true;
+	}
+	else
+	{
+		ROS_INFO("Action did not finish before the time out.");
+		return false;
+	}
+}
+
 #ifdef __linux__
 
 //function that runs when ctrl+C is pressed. Overriding the default one so that we can preempt actionlib servers when ctrl+C is pressed.
@@ -766,6 +803,10 @@ int main (int argc, char **argv)
 		std::cout << "Mode? (0 = auto; 1+ = face straight ahead)\n";
 		std::cin >> mode;
 		callAlignToShoot(mode);
+	}
+	else if(what_to_run == "go_to_color")
+	{
+		callGoToColor();
 	}
 	else
 	{

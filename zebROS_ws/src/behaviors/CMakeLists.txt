@@ -11,10 +11,12 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib
   actionlib_msgs
   behavior_actions
+  color_spin
   controllers_2019_msgs
   controllers_2020_msgs
   frc_msgs
   field_obj
+  geometry_msgs
   nav_msgs
   message_generation
   message_filters
@@ -136,7 +138,7 @@ include_directories(
 catkin_package(
    #INCLUDE_DIRS include
    #LIBRARIES behaviors
-   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower_msgs nav_msgs roscpp rospy std_msgs teraranger_array tf2_ros
+   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower_msgs nav_msgs roscpp rospy std_msgs teraranger_array tf2_ros geometry_msgs controllers_2020_msgs color_spin frc_msgs
    DEPENDS 
 )
 
@@ -256,6 +258,12 @@ target_link_libraries(align_with_camera
 add_executable(align_hatch_server src/align_hatch_panels.cpp)
 add_dependencies(align_hatch_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 target_link_libraries(align_hatch_server
+  ${catkin_LIBRARIES}
+)
+
+add_executable(gotocolor_server src/gotocolor_server.cpp)
+add_dependencies(gotocolor_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(gotocolor_server
   ${catkin_LIBRARIES}
 )
 

@@ -16,7 +16,7 @@ bool rotate(color_spin::color_algorithm::Request &req,
 		 {
 			 case 'Y': res.rotate = .125;
 					   break;
-			 case 'C': res.rotate = .25;
+			 case 'B': res.rotate = .25;
 					   break;
 			 case 'G': res.rotate = -.125;
 					   break;
@@ -33,7 +33,7 @@ bool rotate(color_spin::color_algorithm::Request &req,
 		 {
 			 case 'R': res.rotate = .125;
 					   break;
-			 case 'C': res.rotate = -.125;
+			 case 'B': res.rotate = -.125;
 					   break;
 			 case 'Y': res.rotate = .25;
 					   break; 
@@ -45,7 +45,7 @@ bool rotate(color_spin::color_algorithm::Request &req,
 					   break;
 		 }
 		 break;
-	 case 'C':
+	 case 'B':
 		 switch(req.fms_color[0])
 		 {
 			 case 'R': res.rotate = .25;
@@ -54,7 +54,7 @@ bool rotate(color_spin::color_algorithm::Request &req,
 					   break;
 			 case 'Y': res.rotate = -.125;
 					   break;
-			 case 'C': //ROS_ERROR("FMS COLOR AND SENSOR COLOR ARE THE SAME");
+			 case 'B': //ROS_ERROR("FMS COLOR AND SENSOR COLOR ARE THE SAME");
 					   res.rotate = .0;
 					   break;
 			 default: ROS_ERROR("FMS COLOR IS STRANGE");
@@ -67,7 +67,7 @@ bool rotate(color_spin::color_algorithm::Request &req,
 		 {
 			 case 'R': res.rotate = -.125;
 					   break;
-			 case 'C': res.rotate = .125;
+			 case 'B': res.rotate = .125;
 					   break;
 			 case 'G': res.rotate = .25;
 					   break;

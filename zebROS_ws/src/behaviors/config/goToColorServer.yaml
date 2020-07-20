@@ -1,0 +1,3 @@
+actionlib_gotocolor_params:
+        climb_wait_time: 1
+        spin_pause: 1

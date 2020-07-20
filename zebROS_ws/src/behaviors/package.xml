@@ -56,6 +56,8 @@
   <depend>frc_msgs</depend>
   <depend>std_srvs</depend>
   <depend>talon_state_msgs</depend>
+  <depend>color_spin</depend>
+  <depend>geometry_msgs</depend>
   <build_depend>message_generation</build_depend>
   <build_depend>nav_msgs</build_depend>
   <build_depend>roscpp</build_depend>
