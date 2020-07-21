@@ -160,9 +160,10 @@ if ("${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
 	)
 elseif ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") # Jetson TK1
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/raspbian/static)    # Who knows if this will work
+	find_library(LIB_GPIOD libgpiod.a)
 elseif ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") # Jetson TX1/TX2/Xavier AGX/Xavier NX
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/jetsontx/static)
-	set (PLATFORM_SPECIFIC_LIBS ${PLATFORM_SPECIFIC_LIBS} /usr/local/lib/libgpiod.a) # TODO - don't hard-code my location
+	find_library(LIB_GPIOD libgpiod.a)
 else() # x86-64, hopefully. First person to try and build native on a Mac gets kicked off the team
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/x86-64/static)
 endif()
@@ -424,6 +425,7 @@ target_link_libraries(frcrobot_hw_main
 	${catkin_LIBRARIES}
 	${PLATFORM_SPECIFIC_LIBS}
 	${CTRE_USER_LIBS}
+	${LIB_GPIOD}
 	frc_robot_interface
 )
 
