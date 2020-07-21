@@ -401,19 +401,26 @@ if [ ! -f protoc-3.12.3-linux-aarch_64.zip ]; then
 fi
 
 echo "** Install protoc"
-unzip protobuf-python-3.12.3.zip
+unzip protobuf-all-3.12.3.zip
 unzip protoc-3.12.3-linux-aarch_64.zip -d protoc-3.12.3
 sudo cp protoc-3.12.3/bin/protoc /usr/local/bin/protoc
 echo "** Build and install protobuf-3.12.3 libraries"
 export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp
 cd protobuf-3.12.3/
-./autogen.sh
-./configure --prefix=/usr/local
+cd cmake
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -Dprotobuf_BUILD_TESTS=OFF ..
+
+#./autogen.sh
+#./configure --prefix=/usr/local
+
 sed -i 's/-g -O2/-g -O2 -fPIC/' Makefile
-make -j6
-make -j6 check
-sudo make -j6 install
+make -j`nproc --all`
+#make -j`nproc --all` check
+sudo make -j`nproc --all` install
 sudo ldconfig
+cd ../..
 
 echo "** Update python protobuf module"
 # remove previous installation of python protobuf module
@@ -426,9 +433,21 @@ python setup.py build --cpp_implementation
 python setup.py test --cpp_implementation
 sudo python setup.py install --cpp_implementation
 
+cd &&\
+    wget https://github.com/git-lfs/git-lfs/releases/download/v2.11.0/git-lfs-linux-arm64-v2.11.0.tar.gz &&\
+	mkdir git-lfs-install &&\
+	cd git-lfs-install &&\
+	tar -xzf ../git-lfs-linux-arm64-v2.11.0.tar.gz &&\
+	sudo ./install.sh &&\
+	cd &&\
+	rm -rf git-lfs-linux-amd64-v2.11.0.tar.gz git-lfs-install &&\
+	git lfs install &&\
+	cd ~/2020RobotCode &&\
+	git lfs pull
+
 cd ~/2020RobotCode
 sudo apt-get install -y libhdf5-serial-dev hdf5-tools
-sudo dpkg install libnccl*arm64.deb
+sudo dpkg -i libnccl*arm64.deb
 sudo python -m pip install -U pip six numpy wheel setuptools mock h5py
 sudo python -m pip install -U keras_applications
 sudo python -m pip install -U keras_preprocessing
