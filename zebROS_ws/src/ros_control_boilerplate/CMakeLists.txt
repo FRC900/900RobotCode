@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   hardware_interface
   message_generation
   realtime_tools
+  remote_joint_interface
   roscpp
   rosparam_shortcuts
   sensor_msgs

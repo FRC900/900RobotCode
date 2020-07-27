@@ -26,12 +26,12 @@ class PCMStateController: public controller_interface::Controller<hardware_inter
 	public:
 		PCMStateController() : publish_rate_(0.0) {}
 
-		virtual bool init(hardware_interface::PCMStateInterface *hw,
-						  ros::NodeHandle                       &root_nh,
-						  ros::NodeHandle                       &controller_nh) override;
-		virtual void starting(const ros::Time &time) override;
-		virtual void update(const ros::Time &time, const ros::Duration & /*period*/) override;
-		virtual void stopping(const ros::Time & /*time*/) override;
+		bool init(hardware_interface::PCMStateInterface *hw,
+				  ros::NodeHandle                       &root_nh,
+				  ros::NodeHandle                       &controller_nh) override;
+		void starting(const ros::Time &time) override;
+		void update(const ros::Time &time, const ros::Duration & /*period*/) override;
+		void stopping(const ros::Time & /*time*/) override;
 
 	private:
 		std::vector<hardware_interface::PCMStateHandle> pcm_state_;
@@ -41,4 +41,4 @@ class PCMStateController: public controller_interface::Controller<hardware_inter
 		size_t num_pcms_;
 };
 
-}
+} // namespace pcm_state_controller

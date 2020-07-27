@@ -75,5 +75,7 @@ class PCMState
 
 typedef StateHandle<const PCMState> PCMStateHandle;
 typedef StateHandle<PCMState> PCMWritableStateHandle;
-class PCMStateInterface: public HardwareResourceManager<PCMStateHandle> {};
+class PCMStateInterface       : public HardwareResourceManager<PCMStateHandle> {};
+class RemotePCMStateInterface : public HardwareResourceManager<PCMWritableStateHandle, ClaimResources> {};
+
 } // namespace

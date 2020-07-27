@@ -32,6 +32,7 @@
 #pragma once
 
 #include <controller_interface/controller.h>
+#include <realtime_tools/realtime_buffer.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <as726x_interface/as726x_interface.h>
 #include <as726x_msgs/AS726xState.h>
@@ -57,12 +58,12 @@ class AS726xStateController: public controller_interface::Controller<hardware_in
 	public:
 		AS726xStateController() : publish_rate_(0.0) {}
 
-		virtual bool init(hardware_interface::as726x::AS726xStateInterface *hw,
+		bool init(hardware_interface::as726x::AS726xStateInterface *hw,
 						  ros::NodeHandle                                  &root_nh,
 						  ros::NodeHandle                                  &controller_nh) override;
-		virtual void starting(const ros::Time &time) override;
-		virtual void update(const ros::Time &time, const ros::Duration & /*period*/) override;
-		virtual void stopping(const ros::Time & /*time*/) override;
+		void starting(const ros::Time &time) override;
+		void update(const ros::Time &time, const ros::Duration & /*period*/) override;
+		void stopping(const ros::Time & /*time*/) override;
 
 	private:
 		std::vector<hardware_interface::as726x::AS726xStateHandle> as726x_state_;
@@ -71,4 +72,48 @@ class AS726xStateController: public controller_interface::Controller<hardware_in
 		double publish_rate_;
 		size_t num_hw_joints_; ///< Number of joints present in the AS726xStateInterface
 };
+} // namespace
+
+namespace state_listener_controller
+{
+// since not all joint names are guaranteed to be found in the
+// joint state message, keep track of which ones have using
+// this class. Only write values during update if valid end up
+// being true.
+// TODO - move to a separate package so it isn't duplicated?
+template <class T>
+class ValueValid
+{
+	public:
+		ValueValid() : valid_(false) { }
+		ValueValid(const T &value) : value_(value), valid_(false) {}
+		T      value_;
+		bool   valid_;
+};
+
+class AS726xStateListenerController :
+	public controller_interface::Controller<hardware_interface::as726x::RemoteAS726xStateInterface>
+{
+	public:
+		AS726xStateListenerController();
+		~AS726xStateListenerController();
+		bool init(hardware_interface::as726x::RemoteAS726xStateInterface *hw, ros::NodeHandle &n) override;
+		void starting(const ros::Time & /*time*/) override;
+		void stopping(const ros::Time & /*time*/) override;
+		void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override;
+
+	private:
+		ros::Subscriber sub_command_;
+		std::vector<std::string> joint_names_;
+		std::vector<hardware_interface::as726x::AS726xWritableStateHandle> handles_;
+
+		// Real-time buffer holds the last command value read from the
+		// "command" topic.
+		realtime_tools::RealtimeBuffer<std::vector<ValueValid<hardware_interface::as726x::AS726xState>>> command_buffer_;
+
+		// Iterate through each desired joint state.  If it is found in
+		// the message, save the value here in the realtime buffer.
+		void commandCB(const as726x_msgs::AS726xStateConstPtr &msg);
+};
+
 } // namespace

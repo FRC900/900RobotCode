@@ -11,17 +11,6 @@
       Listens to sensor_msgs::JointMode messages for joints marked as remote, writes their value to the local controller
     </description>
   </class>
-
-  <class name="state_listener_controller/PDPStateListenerController" type="state_listener_controller::PDPStateListenerController" base_class_type="controller_interface::ControllerBase">
-    <description>
-      Listens to pdp_state_controller::PDPData messages for joints marked as remote, writes their value to the local controller
-    </description>
-  </class>
-  <class name="state_listener_controller/MatchStateListenerController" type="state_listener_controller::MatchStateListenerController" base_class_type="controller_interface::ControllerBase">
-    <description>
-      Listens to pdp_state_controller::MatchData messages for joints marked as remote, writes their value to the local controller
-    </description>
-  </class>
 e
   <class name="state_listener_controller/IMUStateListenerController" type="state_listener_controller::IMUStateListenerController" base_class_type="controller_interface::ControllerBase">
     <description>

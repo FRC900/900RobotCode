@@ -94,6 +94,75 @@ void PDPStateController::update(const ros::Time &time, const ros::Duration & )
 
 void PDPStateController::stopping(const ros::Time & )
 {}
+} // namespace
+
+namespace state_listener_controller
+{
+PDPStateListenerController::PDPStateListenerController()
+{
 }
 
-PLUGINLIB_EXPORT_CLASS( pdp_state_controller::PDPStateController, controller_interface::ControllerBase)
+PDPStateListenerController::~PDPStateListenerController()
+{
+	sub_command_.shutdown();
+}
+
+bool PDPStateListenerController::init(hardware_interface::RemotePDPStateInterface *hw, ros::NodeHandle &n)
+{
+	// Read list of hw, make a list, grab handles for them, plus allocate storage space
+	auto joint_names = hw->getNames();
+	if (joint_names.size() == 0)
+	{
+		ROS_ERROR("PDP State Listener Controller : no remote pdp joints defined");
+	}
+	ROS_INFO_STREAM("PDP State Listener Controller got joint " << joint_names[0]);
+	handle_ = hw->getHandle(joint_names[0]);
+
+	std::string topic;
+
+	// get topic to subscribe to
+	if (!n.getParam("topic", topic))
+	{
+		ROS_ERROR("Parameter 'topic' not set");
+		return false;
+	}
+
+	sub_command_ = n.subscribe<frc_msgs::PDPData>(topic, 1, &PDPStateListenerController::commandCB, this);
+	return true;
+}
+
+void PDPStateListenerController::starting(const ros::Time & /*time*/)
+{
+}
+void PDPStateListenerController::stopping(const ros::Time & /*time*/)
+{
+}
+
+void PDPStateListenerController::update(const ros::Time & /*time*/, const ros::Duration & /*period*/)
+{
+	// Quick way to do a shallow copy of the entire HW state
+	*(handle_.operator->()) = *command_buffer_.readFromRT();
+}
+
+// Iterate through each desired joint state.  If it is found in
+// the message, save the value here in the realtime buffer.
+void PDPStateListenerController::commandCB(const frc_msgs::PDPDataConstPtr &msg)
+{
+	hardware_interface::PDPHWState data;
+
+	data.setVoltage(msg->voltage);
+	data.setTemperature(msg->temperature);
+	data.setTotalCurrent(msg->totalCurrent);
+	data.setTotalPower(msg->totalPower);
+	data.setTotalEnergy(msg->totalEnergy);
+	for (size_t channel = 0; channel <= 15; channel++)
+		data.setCurrent(msg->current[channel], channel);
+	command_buffer_.writeFromNonRT(data);
+}
+
+
+
+} // namespace state_listener_controller
+
+PLUGINLIB_EXPORT_CLASS(pdp_state_controller::PDPStateController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(state_listener_controller::PDPStateListenerController, controller_interface::ControllerBase)

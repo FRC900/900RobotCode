@@ -115,5 +115,7 @@ class MatchHWState
 typedef StateHandle<const MatchHWState> MatchStateHandle;
 typedef StateHandle<MatchHWState> MatchStateWritableHandle;
 
-class MatchStateInterface: public HardwareResourceManager<MatchStateHandle> {};
+class MatchStateInterface       : public HardwareResourceManager<MatchStateHandle> {};
+class RemoteMatchStateInterface : public HardwareResourceManager<MatchStateWritableHandle, ClaimResources> {};
+
 }

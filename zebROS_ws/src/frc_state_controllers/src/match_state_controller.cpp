@@ -103,5 +103,84 @@ namespace match_state_controller
     void MatchStateController::stopping(const ros::Time & )
     {}
 }
+namespace state_listener_controller
+{
+MatchStateListenerController::MatchStateListenerController() {}
+MatchStateListenerController::~MatchStateListenerController()
+{
+	sub_command_.shutdown();
+}
+
+bool MatchStateListenerController::init(hardware_interface::RemoteMatchStateInterface *hw, ros::NodeHandle &n)
+{
+	// Read list of hw, make a list, grab handles for them, plus allocate storage space
+	auto joint_names = hw->getNames();
+	if (joint_names.size() == 0)
+	{
+		ROS_ERROR("Match State Listener Controller : no remote match joints defined. Don't run this on a roboRio");
+	}
+	ROS_INFO_STREAM("Match State Listener Controller got joint " << joint_names[0]);
+	handle_ = hw->getHandle(joint_names[0]);
+
+	std::string topic;
+
+	// get topic to subscribe to
+	if (!n.getParam("topic", topic))
+	{
+		ROS_ERROR("Parameter 'topic' not set");
+		return false;
+	}
+
+	sub_command_ = n.subscribe<frc_msgs::MatchSpecificData>(topic, 1, &MatchStateListenerController::commandCB, this);
+	return true;
+}
+
+void MatchStateListenerController::starting(const ros::Time & /*time*/)
+{
+}
+void MatchStateListenerController::stopping(const ros::Time & /*time*/)
+{
+}
+
+void MatchStateListenerController::update(const ros::Time & /*time*/, const ros::Duration & /*period*/)
+{
+	// Quick way to do a shallow copy of the entire HW state
+	*(handle_.operator->()) = *command_buffer_.readFromRT();
+}
+
+// Iterate through each desired joint state.  If it is found in
+// the message, save the value here in the realtime buffer.
+void MatchStateListenerController::commandCB(const frc_msgs::MatchSpecificDataConstPtr &msg)
+{
+	hardware_interface::MatchHWState data;
+	data.setMatchTimeRemaining(msg->matchTimeRemaining);
+
+	data.setGameSpecificData(msg->gameSpecificData);
+	data.setEventName(msg->eventName);
+
+	data.setAllianceColor(msg->allianceColor);
+	data.setMatchType(msg->matchType);
+	data.setDriverStationLocation(msg->driverStationLocation);
+	data.setMatchNumber(msg->matchNumber);
+	data.setReplayNumber(msg->replayNumber);
+
+	data.setEnabled(msg->Enabled);
+	data.setDisabled(msg->Disabled);
+	data.setAutonomous(msg->Autonomous);
+	data.setFMSAttached(msg->FMSAttached);
+	data.setDSAttached(msg->DSAttached);
+	data.setOperatorControl(msg->OperatorControl);
+	data.setTest(msg->Test);
+
+	data.setBatteryVoltage(msg->BatteryVoltage);
+
+	data.setGetMatchTimeStatus(msg->getMatchTimeStatus);
+	data.setGetAllianceStationStatus(msg->getAllianceStationStatus);
+	data.setGetVinVoltageStatus(msg->getVinVoltageStatus);
+	command_buffer_.writeFromNonRT(data);
+}
+
+} // namespace state_listener_controller
 
 PLUGINLIB_EXPORT_CLASS(match_state_controller::MatchStateController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(state_listener_controller::MatchStateListenerController, controller_interface::ControllerBase)

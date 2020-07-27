@@ -32,6 +32,7 @@
 #pragma once
 
 #include <controller_interface/controller.h>
+#include <realtime_tools/realtime_buffer.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <talon_interface/talon_state_interface.h>
 #include <talon_state_msgs/TalonState.h>
@@ -57,12 +58,12 @@ class TalonStateController: public controller_interface::Controller<hardware_int
 	public:
 		TalonStateController() : publish_rate_(0.0) {}
 
-		virtual bool init(hardware_interface::TalonStateInterface *hw,
+		bool init(hardware_interface::TalonStateInterface *hw,
 						  ros::NodeHandle                         &root_nh,
 						  ros::NodeHandle                         &controller_nh) override;
-		virtual void starting(const ros::Time &time) override;
-		virtual void update(const ros::Time &time, const ros::Duration & /*period*/) override;
-		virtual void stopping(const ros::Time & /*time*/) override;
+		void starting(const ros::Time &time) override;
+		void update(const ros::Time &time, const ros::Duration & /*period*/) override;
+		void stopping(const ros::Time & /*time*/) override;
 
 	private:
 		std::vector<hardware_interface::TalonStateHandle> talon_state_;
@@ -72,3 +73,46 @@ class TalonStateController: public controller_interface::Controller<hardware_int
 		size_t num_hw_joints_; ///< Number of joints present in the TalonStateInterface
 };
 } // namespace
+
+
+namespace state_listener_controller
+{
+	// since not all joint names are guaranteed to be found in the
+// joint state message, keep track of which ones have using
+// this class. Only write values during update if valid end up
+// being true.
+template <class T>
+class ValueValid
+{
+	public:
+		ValueValid() : valid_(false) { }
+		ValueValid(const T &value) : value_(value), valid_(false) {}
+		T      value_;
+		bool   valid_;
+};
+
+class TalonStateListenerController :
+	public controller_interface::Controller<hardware_interface::RemoteTalonStateInterface>
+{
+	public:
+		TalonStateListenerController();
+		~TalonStateListenerController();
+
+		bool init(hardware_interface::RemoteTalonStateInterface *hw, ros::NodeHandle &n) override;
+		void starting(const ros::Time & /*time*/) override;
+		void stopping(const ros::Time & /*time*/) override;
+		void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override;
+
+	private:
+		ros::Subscriber sub_command_;
+		std::vector<std::string> joint_names_;
+		std::vector<hardware_interface::TalonWritableStateHandle> handles_;
+
+		// Real-time buffer holds the last command value read from the
+		// "command" topic.
+		realtime_tools::RealtimeBuffer<std::vector<ValueValid<hardware_interface::TalonHWState>>> command_buffer_;
+
+		void commandCB(const talon_state_msgs::TalonStateConstPtr &msg);
+};
+
+} // namespace state_listener_controller

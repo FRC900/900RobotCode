@@ -351,6 +351,119 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 void TalonStateController::stopping(const ros::Time & /*time*/)
 {}
 
+} // namespate talon_state_controller
+
+namespace state_listener_controller
+{
+TalonStateListenerController::TalonStateListenerController() {}
+TalonStateListenerController::~TalonStateListenerController()
+{
+	sub_command_.shutdown();
 }
 
+bool TalonStateListenerController::init(hardware_interface::RemoteTalonStateInterface *hw, ros::NodeHandle &n)
+{
+	// Read list of hw, make a list, grab handles for them, plus allocate storage space
+	joint_names_ = hw->getNames();
+	for (const auto &j : joint_names_)
+	{
+		ROS_INFO_STREAM("Joint State Listener Controller got joint " << j);
+		handles_.push_back(hw->getHandle(j));
+	}
+
+	std::string topic;
+
+	// get topic to subscribe to
+	if (!n.getParam("topic", topic))
+	{
+		ROS_ERROR("Parameter 'topic' not set");
+		return false;
+	}
+
+	sub_command_ = n.subscribe<talon_state_msgs::TalonState>(topic, 1, &TalonStateListenerController::commandCB, this);
+	return true;
+}
+
+void TalonStateListenerController::starting(const ros::Time & /*time*/)
+{
+}
+void TalonStateListenerController::stopping(const ros::Time & /*time*/)
+{
+	//handles_.release();
+}
+
+void TalonStateListenerController::update(const ros::Time & /*time*/, const ros::Duration & /*period*/)
+{
+	// Take the most recent set of values read from the joint_states
+	// topic and write them to the local joints
+	auto vals = *command_buffer_.readFromRT();
+	for (size_t i = 0; i < vals.size(); i++)
+	{
+		if (vals[i].valid_)
+		{
+			auto ts = vals[i].value_;
+			handles_[i]->setPosition(ts.getPosition());
+			handles_[i]->setSpeed(ts.getSpeed());
+			handles_[i]->setOutputCurrent(ts.getOutputCurrent());
+			handles_[i]->setBusVoltage(ts.getBusVoltage());
+			handles_[i]->setMotorOutputPercent(ts.getMotorOutputPercent());
+			handles_[i]->setOutputVoltage(ts.getOutputVoltage());
+			handles_[i]->setTemperature(ts.getTemperature());
+			handles_[i]->setClosedLoopError(ts.getClosedLoopError());
+			handles_[i]->setIntegralAccumulator(ts.getIntegralAccumulator());
+			handles_[i]->setErrorDerivative(ts.getErrorDerivative());
+			handles_[i]->setClosedLoopTarget(ts.getClosedLoopTarget());
+			handles_[i]->setActiveTrajectoryPosition(ts.getActiveTrajectoryPosition());
+			handles_[i]->setActiveTrajectoryVelocity(ts.getActiveTrajectoryVelocity());
+			handles_[i]->setActiveTrajectoryHeading(ts.getActiveTrajectoryHeading());
+			handles_[i]->setMotionProfileTopLevelBufferCount(ts.getMotionProfileTopLevelBufferCount());
+			handles_[i]->setFaults(ts.getFaults());
+			handles_[i]->setForwardLimitSwitch(ts.getForwardLimitSwitch());
+			handles_[i]->setReverseLimitSwitch(ts.getReverseLimitSwitch());
+			handles_[i]->setForwardSoftlimitHit(ts.getForwardSoftlimitHit());
+			handles_[i]->setReverseSoftlimitHit(ts.getReverseSoftlimitHit());
+			handles_[i]->setStickyFaults(ts.getStickyFaults());
+		}
+	}
+}
+
+void TalonStateListenerController::commandCB(const talon_state_msgs::TalonStateConstPtr &msg)
+{
+	std::vector<ValueValid<hardware_interface::TalonHWState>> data;
+	for (size_t i = 0; i < joint_names_.size(); i++)
+		data.push_back(hardware_interface::TalonHWState(0)); // dummy CAN ID since it isn't used
+	for (size_t i = 0; i < joint_names_.size(); i++)
+	{
+		auto it = std::find(msg->name.cbegin(), msg->name.cend(), joint_names_[i]);
+		if (it != msg->name.cend())
+		{
+			data[i].value_.setPosition(msg->position[i]);
+			data[i].value_.setSpeed(msg->speed[i]);
+			data[i].value_.setOutputCurrent(msg->output_voltage[i]);
+			data[i].value_.setBusVoltage(msg->bus_voltage[i]);
+			data[i].value_.setMotorOutputPercent(msg->motor_output_percent[i]);
+			data[i].value_.setOutputVoltage(msg->output_voltage[i]);
+			data[i].value_.setTemperature(msg->temperature[i]);
+			data[i].value_.setClosedLoopError(msg->closed_loop_error[i]);
+			data[i].value_.setIntegralAccumulator(msg->integral_accumulator[i]);
+			data[i].value_.setErrorDerivative(msg->error_derivative[i]);
+			data[i].value_.setClosedLoopTarget(msg->closed_loop_target[i]);
+			data[i].value_.setActiveTrajectoryPosition(msg->active_trajectory_position[i]);
+			data[i].value_.setActiveTrajectoryVelocity(msg->active_trajectory_velocity[i]);
+			data[i].value_.setActiveTrajectoryHeading(msg->active_trajectory_heading[i]);
+			data[i].value_.setMotionProfileTopLevelBufferCount(msg->motion_profile_top_level_buffer_count[i]);
+			//data[i].value_.setFaults(msg->getFaults[i]);
+			data[i].value_.setForwardLimitSwitch(msg->forward_limit_switch[i]);
+			data[i].value_.setReverseLimitSwitch(msg->reverse_limit_switch[i]);
+			data[i].value_.setForwardSoftlimitHit(msg->forward_softlimit[i]);
+			data[i].value_.setReverseSoftlimitHit(msg->reverse_softlimit[i]);
+			//data[i].value_.setStickyFaults(msg->getStickyFaults[i]);
+			data[i].valid_ = true;
+		}
+	}
+	command_buffer_.writeFromNonRT(data);
+}
+} // namespace state_listener_controller
+
 PLUGINLIB_EXPORT_CLASS(talon_state_controller::TalonStateController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(state_listener_controller::TalonStateListenerController, controller_interface::ControllerBase)

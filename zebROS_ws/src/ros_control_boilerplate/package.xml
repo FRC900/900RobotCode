@@ -30,6 +30,7 @@
   <depend>message_runtime</depend>
   <depend>frc_interfaces</depend>
   <depend>frc_msgs</depend>
+  <depend>remote_joint_interface</depend>
 
   <export>
   </export>

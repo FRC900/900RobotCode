@@ -182,4 +182,141 @@ void AS726xStateController::stopping(const ros::Time & /*time*/)
 
 }
 
+namespace state_listener_controller
+{
+AS726xStateListenerController::AS726xStateListenerController() {}
+AS726xStateListenerController::~AS726xStateListenerController()
+{
+	sub_command_.shutdown();
+}
+
+bool AS726xStateListenerController::init(hardware_interface::as726x::RemoteAS726xStateInterface *hw, ros::NodeHandle &n)
+{
+	// Read list of hw, make a list, grab handles for them, plus allocate storage space
+	joint_names_ = hw->getNames();
+	if (joint_names_.size() == 0)
+	{
+		ROS_ERROR("AS726x State Listener Controller : no remote as726x joints defined");
+	}
+	for (auto j : joint_names_)
+	{
+		ROS_INFO_STREAM("AS726x State Listener Controller got joint " << j);
+		handles_.push_back(hw->getHandle(j));
+	}
+
+	std::string topic;
+
+	// get topic to subscribe to
+	if (!n.getParam("topic", topic))
+	{
+		ROS_ERROR("Parameter 'topic' not set");
+		return false;
+	}
+
+	sub_command_ = n.subscribe<as726x_msgs::AS726xState>(topic, 1, &AS726xStateListenerController::commandCB, this);
+	return true;
+}
+
+void AS726xStateListenerController::starting(const ros::Time & /*time*/)
+{
+}
+void AS726xStateListenerController::stopping(const ros::Time & /*time*/)
+{
+	//handles_.release();
+}
+
+void AS726xStateListenerController::update(const ros::Time & /*time*/, const ros::Duration & /*period*/)
+{
+	// Take the most recent set of values read from the joint_states
+	// topic and write them to the local joints
+	auto vals = *command_buffer_.readFromRT();
+	for (size_t i = 0; i < vals.size(); i++)
+		if (vals[i].valid_)
+			// Quick way to do a shallow copy of the entire HW state
+			*(handles_[i].operator->()) = vals[i].value_;
+}
+
+
+// Iterate through each desired joint state.  If it is found in
+// the message, save the value here in the realtime buffer.
+void AS726xStateListenerController::commandCB(const as726x_msgs::AS726xStateConstPtr &msg)
+{
+	std::vector<ValueValid<hardware_interface::as726x::AS726xState>> data;
+	for (size_t i = 0; i < joint_names_.size(); i++)
+	{
+		auto it = std::find(msg->name.cbegin(), msg->name.cend(), joint_names_[i]);
+		if (it != msg->name.cend())
+		{
+			const size_t loc = it - msg->name.cbegin();
+			data.push_back(hardware_interface::as726x::AS726xState(msg->port[loc], msg->address[loc]));
+
+			hardware_interface::as726x::IndLedCurrentLimits ind_led_current_limit = static_cast< hardware_interface::as726x::IndLedCurrentLimits>(0);
+			if (msg->ind_led_current_limit[loc] == "1mA")
+				ind_led_current_limit = hardware_interface::as726x::IndLedCurrentLimits::IND_LIMIT_1MA;
+			else if (msg->ind_led_current_limit[loc] == "2mA")
+				ind_led_current_limit = hardware_interface::as726x::IndLedCurrentLimits::IND_LIMIT_2MA;
+			else if (msg->ind_led_current_limit[loc] == "4mA")
+				ind_led_current_limit = hardware_interface::as726x::IndLedCurrentLimits::IND_LIMIT_4MA;
+			else if (msg->ind_led_current_limit[loc] == "8mA")
+				ind_led_current_limit = hardware_interface::as726x::IndLedCurrentLimits::IND_LIMIT_8MA;
+			data[i].value_.setIndLedCurrentLimit(ind_led_current_limit);
+			data[i].value_.setIndLedEnable(msg->ind_led_enable[loc]);
+
+			hardware_interface::as726x::DrvLedCurrentLimits drv_led_current_limit = static_cast<hardware_interface::as726x::DrvLedCurrentLimits>(0);
+			if (msg->drv_led_current_limit[loc] == "12mA5")
+				drv_led_current_limit = hardware_interface::as726x::DrvLedCurrentLimits::DRV_LIMIT_12MA5;
+			else if (msg->drv_led_current_limit[loc] == "25mA")
+				drv_led_current_limit = hardware_interface::as726x::DrvLedCurrentLimits::DRV_LIMIT_25MA;
+			else if (msg->drv_led_current_limit[loc] == "50mA")
+				drv_led_current_limit = hardware_interface::as726x::DrvLedCurrentLimits::DRV_LIMIT_50MA;
+			else if (msg->drv_led_current_limit[loc] == "100mA")
+				drv_led_current_limit = hardware_interface::as726x::DrvLedCurrentLimits::DRV_LIMIT_100MA;
+			data[i].value_.setDrvLedCurrentLimit(drv_led_current_limit);
+
+			hardware_interface::as726x::ConversionTypes conversion_type = static_cast<hardware_interface::as726x::ConversionTypes>(0);
+			if (msg->conversion_type[loc] == "MODE_0")
+				conversion_type = hardware_interface::as726x::ConversionTypes::MODE_0;
+			else if (msg->conversion_type[loc] == "MODE_1")
+				conversion_type = hardware_interface::as726x::ConversionTypes::MODE_1;
+			else if (msg->conversion_type[loc] == "MODE_2")
+				conversion_type = hardware_interface::as726x::ConversionTypes::MODE_2;
+			else if (msg->conversion_type[loc] == "ONE_SHOT")
+				conversion_type = hardware_interface::as726x::ConversionTypes::ONE_SHOT;
+			data[i].value_.setConversionType(conversion_type);
+
+			hardware_interface::as726x::ChannelGain gain = static_cast<hardware_interface::as726x::ChannelGain>(0);
+			if (msg->gain[loc] == "GAIN_1X")
+				gain = hardware_interface::as726x::ChannelGain::GAIN_1X;
+			else if (msg->gain[loc] == "GAIN_3X7")
+				gain = hardware_interface::as726x::ChannelGain::GAIN_3X7;
+			else if (msg->gain[loc] == "GAIN_16X")
+				gain = hardware_interface::as726x::ChannelGain::GAIN_16X;
+			else if (msg->gain[loc] == "GAIN_64X")
+				gain = hardware_interface::as726x::ChannelGain::GAIN_64X;
+			data[i].value_.setGain(gain);
+			data[i].value_.setIntegrationTime(msg->integration_time[loc]);
+			data[i].value_.setTemperature(msg->temperature[loc]);
+			std::array<uint16_t, 6> raw_channel_data;
+			std::array<float, 6> calibrated_channel_data;
+			for (size_t j = 0; j < 6; j++)
+			{
+				raw_channel_data[j] = msg->raw_channel_data[loc].raw_channel_data[j];
+				calibrated_channel_data[j] = msg->calibrated_channel_data[loc].calibrated_channel_data[j];
+			}
+			data[i].value_.setRawChannelData(raw_channel_data);
+			data[i].value_.setCalibratedChannelData(calibrated_channel_data);
+			data[i].valid_ = true;
+		}
+		else
+		{
+			data.push_back(hardware_interface::as726x::AS726xState("", 0));
+		}
+	}
+
+	command_buffer_.writeFromNonRT(data);
+}
+
+} // namespace
+
 PLUGINLIB_EXPORT_CLASS(as726x_state_controller::AS726xStateController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS(state_listener_controller::AS726xStateListenerController, controller_interface::ControllerBase)
