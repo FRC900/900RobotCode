@@ -1,0 +1,75 @@
+
+Glad to see it was a minor change to get bearing-only working, shows the
+design was solid to begin with.
+
+But since it is a one line change, there is a way to do this a bit better.  In
+the interest of not duplicating code, it is possible to make a single PF
+assign weights method and use a bit of OO trickery to get it to call the
+correct measurment depending on how the PF is initialized
+
+The two differences between the assign weights functions are the summing loop
+and the world distance call.
+
+Making the first a method of Beacon will help.  Idea is to make Beacon a pure
+virtual base class and then make a derived PositionBeacon and BearingBeacon,
+each with a sumPosition() method.  You could call a common
+assign_weights_position which takes a vector of pointers to the base class and
+if you pass in the correct derived class type in that vector the correct
+sumPosition() call would happen automatically
+
+It looks like you could do something similar in world model. Again, the only
+major difference between the total_distance and total_angle methods looks to
+be the distances vs. angle_distances call.  Instead of making that part of the
+world model, make it a method of the base Beacon type, and override that
+function in the derived PositionBeacon and BearingBeacon classes. That turns
+the call in total_* into a simple 
+
+    dists.push_back(b->distance(rel));
+
+call, where the details of what distance means is determined by what type b
+happens to be. that should make it so total_* doesn't care about what beacon
+type it is working with - it lets the beacon class figure out what a distance
+means for that particular beacon type.
+
+Note - you could probably do something similar with templates - instead of a
+pointer to the base class, make that argument a class template, where the types used
+for the template are either a PositionBeacon or DistanceBeacon. Not sure I
+have a real preference either way.
+
+You might want to add some appropriate constructors for Beacon, either to the
+base class or seaprate for each derived class to set the values needed for
+the, but what's needed should be obvious based on how they're used in the node
+
+If this works as I expect, I think this will also get a long way towards
+supporting mixed cameras - have different callbacks pass in the appropriate
+derived beacon class into assign_weights an it should handle things
+automatically?
+
+
+Other notes
+
+- is there a need for delta_x,y in cmdCallback? It looks like ->motion_update
+adds the values passed in, but then is accumulating them to add them again
+if a second Twist messge comes in before the PF updates?  Seems like this
+would add too much motion - each Twist value might get accumulated and added
+multiple times?
+- code ignores the return code of success in goalCallback
+- minor optimization in callback - only do the transform if measurement.size() > 0
+- make pf a unique_ptr instead of having to use new/delete
+
+- world_model - fix order of initializers, world_ will be inititalzied after
+	num_particles_ (there should be a compiler warning here)
+- world model init - 6.283 no magic numbers , use 2. * M_PI instead (and yeah,
+		technically 2 is a magic number too I guess, but you know what I mean)
+- world model - Beacon b in the first for loop can be a reference, probably a
+const reference
+- same with m_of_type
+- and make the string arg of of_type a const ref too
+- single_particle_relative - make vector arg pass by ref
+- is_in_world isn't called
+
+- constructors for bearing should make the string args passed by const ref
+
+For the bearing-only distance, think about using the ROS angles package to
+normalize the angle once after subtracting the un-fmod'd angles.
+

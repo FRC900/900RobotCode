@@ -19,7 +19,6 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   nav_msgs
   message_generation
-  message_filters
   path_follower_msgs
   roscpp
   rospy

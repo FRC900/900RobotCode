@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   field_obj
   geometry_msgs
   marker_msgs
-  message_filters
   message_generation
   nav_msgs
   sensor_msgs
