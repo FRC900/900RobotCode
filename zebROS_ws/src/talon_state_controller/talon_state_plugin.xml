@@ -4,6 +4,12 @@
 			The talon state controller publishes the current talon state as a talon_state_msgs/TalonState message. The talon state controller expects a TalonStateInterface type of hardware interface.
 		</description>
 	</class>
+	<class name="state_listener_controller/TalonStateListenerController" type="state_listener_controller::TalonStateListenerController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Listens to talon_state messages for talons marked as remote, writes their value to the local controller
+		</description>
+	</class>
+
 	<class name="talon_config_controller/TalonConfigController" type="talon_config_controller::TalonConfigController" base_class_type="controller_interface::ControllerBase">
 		<description>
 			The talon config controller publishes the current talon config as a talon_state_msgs/TalonConfig message. The talon config controller expects a TalonStateInterface type of hardware interface.

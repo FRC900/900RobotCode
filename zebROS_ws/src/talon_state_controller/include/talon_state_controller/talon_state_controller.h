@@ -74,7 +74,6 @@ class TalonStateController: public controller_interface::Controller<hardware_int
 };
 } // namespace
 
-
 namespace state_listener_controller
 {
 	// since not all joint names are guaranteed to be found in the

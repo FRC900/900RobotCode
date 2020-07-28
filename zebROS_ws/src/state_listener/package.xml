@@ -52,8 +52,6 @@
   <build_depend>controller_interface</build_depend>
   <build_depend>realtime_tools</build_depend>
   <build_depend>hardware_interface</build_depend>
-  <build_depend>talon_interface</build_depend>
-  <build_depend>talon_state_msgs</build_depend>
   <build_depend>roscpp</build_depend>
   <build_export_depend>controller_interface</build_export_depend>
   <build_export_depend>realtime_tools</build_export_depend>
