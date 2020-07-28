@@ -131,7 +131,7 @@ class RotatePanelAction {
 				controllers_2020_msgs::ControlPanelSrv srv;
 
 				//Request that the climber extend, stay at the 0 setpoint, and engage the brake
-				climber_srv.request.winch_set_point = 0;
+				climber_srv.request.winch_percent_out = 0;
 				climber_srv.request.climber_deploy = true;
 				climber_srv.request.climber_elevator_brake = true;
 
