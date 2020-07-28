@@ -52,7 +52,6 @@
   <depend>behavior_actions</depend>
   <depend>controllers_2019_msgs</depend>
   <depend>controllers_2020_msgs</depend>
-  <depend>message_filters</depend>
   <depend>frc_msgs</depend>
   <depend>std_srvs</depend>
   <depend>talon_state_msgs</depend>
