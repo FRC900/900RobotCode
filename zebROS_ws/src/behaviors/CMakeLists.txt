@@ -166,10 +166,6 @@ add_executable(align_to_shoot_server src/align_to_shoot_server.cpp)
 target_link_libraries(align_to_shoot_server ${catkin_LIBRARIES})
 add_dependencies(align_to_shoot_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(rotate_panel_node src/rotate_panel_server.cpp)
-target_link_libraries(rotate_panel_node ${catkin_LIBRARIES})
-add_dependencies(rotate_panel_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 add_executable(intake_powercell_server src/intake_powercell_server.cpp)
 target_link_libraries(intake_powercell_server ${catkin_LIBRARIES})
 add_dependencies(intake_powercell_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -179,10 +175,6 @@ add_dependencies(shooter_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${
 target_link_libraries(shooter_actionlib_server
   ${catkin_LIBRARIES}
 )
-add_executable(rotate_panel_node src/rotate_panel_server.cpp)
-target_link_libraries(rotate_panel_node ${catkin_LIBRARIES})
-add_dependencies(rotate_panel_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
 # 2019 actionlib servers
 add_executable(intake_cargo_server src/intake_cargo_server.cpp)
 target_link_libraries(intake_cargo_server ${catkin_LIBRARIES})
@@ -273,12 +265,6 @@ target_link_libraries(align_hatch_server
 add_executable(gotocolor_server src/gotocolor_server.cpp)
 add_dependencies(gotocolor_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(gotocolor_server
-  ${catkin_LIBRARIES}
-)
-
-add_executable(shooter_actionlib_server src/shooter_actionlib_server.cpp)
-add_dependencies(shooter_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(shooter_actionlib_server
   ${catkin_LIBRARIES}
 )
 

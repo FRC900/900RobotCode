@@ -32,6 +32,7 @@
 #include "std_msgs/Float64.h"
 #include "behavior_actions/ShooterOffset.h"
 
+
 bool sortDistDescending(const std::map<std::string, double> &m1, const std::map<std::string, double> &m2)
 {
 	return m1.at("dist") > m2.at("dist");
@@ -227,6 +228,8 @@ class ShooterAction {
 				as_.setPreempted();
 				return;
 			}
+
+
 
 			//align the turret
 			behavior_actions::AlignToShootGoal align_goal;
@@ -602,6 +605,7 @@ int main(int argc, char** argv) {
 
 	//create the actionlib server
 	ShooterAction shooter_action("shooter_server");
+
 
 	ros::AsyncSpinner Spinner(2);
 	Spinner.start();

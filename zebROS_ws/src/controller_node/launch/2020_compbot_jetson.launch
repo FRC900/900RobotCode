@@ -133,11 +133,6 @@
         <node name="rotate_panel_server" pkg="behaviors" type="rotate_panel_server" output="screen" />
     </group>
 
-	<group ns="rotate_panel">
-		<rosparam file="$(find behaviors)/config/rotatePanelServer.yaml" command="load"/>
-        <node name="rotate_panel_server" pkg="behaviors" type="rotate_panel_server" output="screen" />
-    </group>
-
 	<!-- <group ns="path_to_goal">
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
 		<node name="robot_visualize" pkg="robot_visualizer" type="robot_visualize" output="screen" />
