@@ -2,6 +2,7 @@
 #include <signal.h>
 #include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/IntakeAction.h>
+#include <behavior_actions/RotatePanelAction.h>
 #include <behavior_actions/PlaceAction.h>
 #include <behavior_actions/ElevatorAction.h>
 #include <behavior_actions/ClimbAction.h>
@@ -19,6 +20,43 @@
 
 double server_wait_timeout = 20.0; //how long to wait for a server to exist before exiting, in sec.
 double server_exec_timeout = 20.0; //how long to wait for an actionlib server call to finish before timing out, in sec. Used for all actionlib calls
+
+bool callRotatePanel()
+{
+    //create client to call actionlib server
+    actionlib::SimpleActionClient<behavior_actions::RotatePanelAction> rotate_panel_ac("/rotate_panel/rotate_panel_server", true);
+
+    ROS_INFO("Waiting for rotate_panel server to start.");
+    if(!rotate_panel_ac.waitForServer(ros::Duration(server_wait_timeout)))
+    {
+        ROS_ERROR("Could not find server within %f seconds.", server_wait_timeout);
+    }
+
+    ROS_INFO("Sending goal to rotate panel server");
+
+	behavior_actions::RotatePanelGoal goal;
+    rotate_panel_ac.sendGoal(goal);
+
+    //wait for the action to return
+    bool finished_before_timeout = rotate_panel_ac.waitForResult(ros::Duration(server_exec_timeout));
+
+    if (finished_before_timeout)
+    {
+        actionlib::SimpleClientGoalState state = rotate_panel_ac.getState();
+        ROS_INFO("Action finished with state: %s",state.toString().c_str());
+        if(rotate_panel_ac.getResult()->timed_out)
+        {
+            ROS_INFO("Rotate_Panel Server timed out!");
+        }
+        return true;
+    }
+    else
+    {
+        ROS_INFO("Action did not finish before the time out.");
+        return false;
+    }
+
+}
 
 
 bool callElevator(int setpoint_idx)
@@ -603,7 +641,7 @@ int main (int argc, char **argv)
 	if(what_to_run.length() == 0)
 	{
 		ROS_ERROR("You need to specify the run functionality with: rosrun behaviors test_actionlib run:=____");
-		ROS_ERROR("Possible values for run: all, indexer, eject, intake_cargo, outtake_cargo, intake_hatch_panel, outtake_hatch_panel, elevator, climber0, climber1, climber2, climber3, shooter, path");
+		ROS_ERROR("Possible values for run: all, indexer, eject, rotate_panel intake_cargo, outtake_cargo, intake_hatch_panel, outtake_hatch_panel, elevator, climber0, climber1, climber2, climber3, shooter, path");
 		ROS_ERROR("Note: 'all' will not run the climber");
 		return 0;
 	}
@@ -725,6 +763,10 @@ int main (int argc, char **argv)
 	}
 	else if(what_to_run == "intake_hatch_panel") {
 		callIntakeHatchPanel();
+	}
+	else if (what_to_run == "rotate_panel")
+	{
+		callRotatePanel();
 	}
 	else if(what_to_run == "outtake_hatch_panel") {
 		callOuttakeHatchPanel(setpoint_idx);

@@ -1,0 +1,5 @@
+---
+bool success
+bool preempted
+bool timed_out
+---

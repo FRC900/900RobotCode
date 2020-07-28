@@ -29,4 +29,10 @@ topics:
   topic   : /path_follower/path_follower_pid/swerve_drive_controller/cmd_vel
   timeout : 0.2
   priority: 130
+  #-
+# name    : rotate_panel
+# topic   : /rotate_panel/swerve_drive_controller/cmd_vel
+# timeout : 0.2
+# priority: 150
+  
 locks: []

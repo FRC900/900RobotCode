@@ -77,6 +77,7 @@ add_action_files(
 	Indexer.action
 	Eject.action
 	GoToColor.action
+	RotatePanel.action
 )
 
 generate_messages(DEPENDENCIES actionlib_msgs std_msgs)

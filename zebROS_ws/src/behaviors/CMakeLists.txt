@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   field_obj
   geometry_msgs
   nav_msgs
-  message_generation
+  message_generation # No messages generated, but catkin build prioritizes packages which depend on this, so leave it in to hopefully get this package building early in the process
   path_follower_msgs
   roscpp
   rospy
@@ -150,6 +150,9 @@ target_link_libraries(num_powercells_pub_node ${catkin_LIBRARIES})
 add_dependencies(num_powercells_pub_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # 2020 actionlib servers
+add_executable(rotate_panel_server src/rotate_panel_server.cpp)
+target_link_libraries(rotate_panel_server ${catkin_LIBRARIES})
+add_dependencies(rotate_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(indexer_server src/indexer_server.cpp)
 target_link_libraries(indexer_server ${catkin_LIBRARIES})
@@ -172,7 +175,6 @@ add_dependencies(shooter_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${
 target_link_libraries(shooter_actionlib_server
   ${catkin_LIBRARIES}
 )
-
 # 2019 actionlib servers
 add_executable(intake_cargo_server src/intake_cargo_server.cpp)
 target_link_libraries(intake_cargo_server ${catkin_LIBRARIES})

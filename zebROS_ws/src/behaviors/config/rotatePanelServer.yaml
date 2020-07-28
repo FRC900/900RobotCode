@@ -1,0 +1,6 @@
+rotateControlPanelParams:
+    rotations: 3.3
+    timeout: 12
+    wait_for_server_timeout: 12
+    #cmd_speed: 0.2
+    #minimum_current: 0.25
