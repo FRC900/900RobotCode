@@ -8,10 +8,11 @@ project(base_trajectory_msgs)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  joint_trajectory_controller
+  geometry_msgs
   message_generation
   nav_msgs
   std_msgs
+  trajectory_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -72,6 +73,7 @@ generate_messages(
    std_msgs  # Or other packages containing msgs
    nav_msgs
    trajectory_msgs
+   geometry_msgs
    base_trajectory_msgs
 )
 
