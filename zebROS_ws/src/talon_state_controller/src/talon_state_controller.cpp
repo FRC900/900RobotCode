@@ -371,9 +371,8 @@ bool TalonStateListenerController::init(hardware_interface::RemoteTalonStateInte
 		handles_.push_back(hw->getHandle(j));
 	}
 
-	std::string topic;
-
 	// get topic to subscribe to
+	std::string topic;
 	if (!n.getParam("topic", topic))
 	{
 		ROS_ERROR("Parameter 'topic' not set");
@@ -396,12 +395,12 @@ void TalonStateListenerController::update(const ros::Time & /*time*/, const ros:
 {
 	// Take the most recent set of values read from the joint_states
 	// topic and write them to the local joints
-	auto vals = *command_buffer_.readFromRT();
+	const auto vals = *command_buffer_.readFromRT();
 	for (size_t i = 0; i < vals.size(); i++)
 	{
-		if (vals[i].valid_)
+		if (vals[i])
 		{
-			auto ts = vals[i].value_;
+			const auto &ts = (*vals[i]);
 			handles_[i]->setPosition(ts.getPosition());
 			handles_[i]->setSpeed(ts.getSpeed());
 			handles_[i]->setOutputCurrent(ts.getOutputCurrent());
@@ -429,36 +428,42 @@ void TalonStateListenerController::update(const ros::Time & /*time*/, const ros:
 
 void TalonStateListenerController::commandCB(const talon_state_msgs::TalonStateConstPtr &msg)
 {
-	std::vector<ValueValid<hardware_interface::TalonHWState>> data;
-	for (size_t i = 0; i < joint_names_.size(); i++)
-		data.push_back(hardware_interface::TalonHWState(0)); // dummy CAN ID since it isn't used
+	// Each entry in data corresponds to an index in joint_names_
+	// If the message has that name, copy the talon state into data
+	// If the message doesn't have that name, set the entry to std::nullopt
+	std::vector<std::optional<hardware_interface::TalonHWState>> data;
 	for (size_t i = 0; i < joint_names_.size(); i++)
 	{
-		auto it = std::find(msg->name.cbegin(), msg->name.cend(), joint_names_[i]);
+		const auto it = std::find(msg->name.cbegin(), msg->name.cend(), joint_names_[i]);
 		if (it != msg->name.cend())
 		{
-			data[i].value_.setPosition(msg->position[i]);
-			data[i].value_.setSpeed(msg->speed[i]);
-			data[i].value_.setOutputCurrent(msg->output_voltage[i]);
-			data[i].value_.setBusVoltage(msg->bus_voltage[i]);
-			data[i].value_.setMotorOutputPercent(msg->motor_output_percent[i]);
-			data[i].value_.setOutputVoltage(msg->output_voltage[i]);
-			data[i].value_.setTemperature(msg->temperature[i]);
-			data[i].value_.setClosedLoopError(msg->closed_loop_error[i]);
-			data[i].value_.setIntegralAccumulator(msg->integral_accumulator[i]);
-			data[i].value_.setErrorDerivative(msg->error_derivative[i]);
-			data[i].value_.setClosedLoopTarget(msg->closed_loop_target[i]);
-			data[i].value_.setActiveTrajectoryPosition(msg->active_trajectory_position[i]);
-			data[i].value_.setActiveTrajectoryVelocity(msg->active_trajectory_velocity[i]);
-			data[i].value_.setActiveTrajectoryHeading(msg->active_trajectory_heading[i]);
-			data[i].value_.setMotionProfileTopLevelBufferCount(msg->motion_profile_top_level_buffer_count[i]);
-			//data[i].value_.setFaults(msg->getFaults[i]);
-			data[i].value_.setForwardLimitSwitch(msg->forward_limit_switch[i]);
-			data[i].value_.setReverseLimitSwitch(msg->reverse_limit_switch[i]);
-			data[i].value_.setForwardSoftlimitHit(msg->forward_softlimit[i]);
-			data[i].value_.setReverseSoftlimitHit(msg->reverse_softlimit[i]);
-			//data[i].value_.setStickyFaults(msg->getStickyFaults[i]);
-			data[i].valid_ = true;
+			const auto j = std::distance(msg->name.cbegin(), it);
+			data.push_back(hardware_interface::TalonHWState(0)); // dummy CAN ID since it isn't used
+			data[i]->setPosition(msg->position[j]);
+			data[i]->setSpeed(msg->speed[j]);
+			data[i]->setOutputCurrent(msg->output_voltage[j]);
+			data[i]->setBusVoltage(msg->bus_voltage[j]);
+			data[i]->setMotorOutputPercent(msg->motor_output_percent[j]);
+			data[i]->setOutputVoltage(msg->output_voltage[j]);
+			data[i]->setTemperature(msg->temperature[j]);
+			data[i]->setClosedLoopError(msg->closed_loop_error[j]);
+			data[i]->setIntegralAccumulator(msg->integral_accumulator[j]);
+			data[i]->setErrorDerivative(msg->error_derivative[j]);
+			data[i]->setClosedLoopTarget(msg->closed_loop_target[j]);
+			data[i]->setActiveTrajectoryPosition(msg->active_trajectory_position[j]);
+			data[i]->setActiveTrajectoryVelocity(msg->active_trajectory_velocity[j]);
+			data[i]->setActiveTrajectoryHeading(msg->active_trajectory_heading[j]);
+			data[i]->setMotionProfileTopLevelBufferCount(msg->motion_profile_top_level_buffer_count[j]);
+			//data[i]->setFaults(msg->getFaults[j]);
+			data[i]->setForwardLimitSwitch(msg->forward_limit_switch[j]);
+			data[i]->setReverseLimitSwitch(msg->reverse_limit_switch[j]);
+			data[i]->setForwardSoftlimitHit(msg->forward_softlimit[j]);
+			data[i]->setReverseSoftlimitHit(msg->reverse_softlimit[j]);
+			//data[i]->setStickyFaults(msg->getStickyFaults[j]);
+		}
+		else
+		{
+			data.push_back(std::nullopt);
 		}
 	}
 	command_buffer_.writeFromNonRT(data);

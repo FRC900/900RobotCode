@@ -76,20 +76,6 @@ class AS726xStateController: public controller_interface::Controller<hardware_in
 
 namespace state_listener_controller
 {
-// since not all joint names are guaranteed to be found in the
-// joint state message, keep track of which ones have using
-// this class. Only write values during update if valid end up
-// being true.
-// TODO - move to a separate package so it isn't duplicated?
-template <class T>
-class ValueValid
-{
-	public:
-		ValueValid() : valid_(false) { }
-		ValueValid(const T &value) : value_(value), valid_(false) {}
-		T      value_;
-		bool   valid_;
-};
 
 class AS726xStateListenerController :
 	public controller_interface::Controller<hardware_interface::as726x::RemoteAS726xStateInterface>
@@ -109,7 +95,7 @@ class AS726xStateListenerController :
 
 		// Real-time buffer holds the last command value read from the
 		// "command" topic.
-		realtime_tools::RealtimeBuffer<std::vector<ValueValid<hardware_interface::as726x::AS726xState>>> command_buffer_;
+		realtime_tools::RealtimeBuffer<std::vector<std::optional<hardware_interface::as726x::AS726xState>>> command_buffer_;
 
 		// Iterate through each desired joint state.  If it is found in
 		// the message, save the value here in the realtime buffer.

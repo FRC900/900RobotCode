@@ -76,20 +76,6 @@ class TalonStateController: public controller_interface::Controller<hardware_int
 
 namespace state_listener_controller
 {
-	// since not all joint names are guaranteed to be found in the
-// joint state message, keep track of which ones have using
-// this class. Only write values during update if valid end up
-// being true.
-template <class T>
-class ValueValid
-{
-	public:
-		ValueValid() : valid_(false) { }
-		ValueValid(const T &value) : value_(value), valid_(false) {}
-		T      value_;
-		bool   valid_;
-};
-
 class TalonStateListenerController :
 	public controller_interface::Controller<hardware_interface::RemoteTalonStateInterface>
 {
@@ -109,7 +95,7 @@ class TalonStateListenerController :
 
 		// Real-time buffer holds the last command value read from the
 		// "command" topic.
-		realtime_tools::RealtimeBuffer<std::vector<ValueValid<hardware_interface::TalonHWState>>> command_buffer_;
+		realtime_tools::RealtimeBuffer<std::vector<std::optional<hardware_interface::TalonHWState>>> command_buffer_;
 
 		void commandCB(const talon_state_msgs::TalonStateConstPtr &msg);
 };

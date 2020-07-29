@@ -27,20 +27,6 @@ namespace state_listener_controller
  * - \b command (sensor_msgs::JointState) : The joint state topic
  */
 
-// since not all joint names are guaranteed to be found in the
-// joint state message, keep track of which ones have using
-// this class. Only write values during update if valid end up
-// being true.
-template <class T>
-class ValueValid
-{
-	public:
-		ValueValid() : valid_(false) { }
-		ValueValid(const T &value) : value_(value), valid_(false) {}
-		T      value_;
-		bool   valid_;
-};
-
 class JointStateListenerController :
 	public controller_interface::Controller<hardware_interface::RemoteJointInterface>
 {
@@ -88,10 +74,10 @@ class JointStateListenerController :
 		{
 			// Take the most recent set of values read from the joint_states
 			// topic and write them to the local joints
-			std::vector<ValueValid<double>> vals = *command_buffer_.readFromRT();
+			const auto vals = *command_buffer_.readFromRT();
 			for (size_t i = 0; i < vals.size(); i++)
-				if (vals[i].valid_)
-					handles_[i].setCommand(vals[i].value_);
+				if (vals[i])
+					handles_[i].setCommand(*(vals[i]));
 		}
 
 	private:
@@ -100,22 +86,23 @@ class JointStateListenerController :
 		std::vector<hardware_interface::JointHandle> handles_;
 
 		// Real-time buffer holds the last command value read from the "command" topic.
-		realtime_tools::RealtimeBuffer<std::vector<ValueValid<double>>> command_buffer_;
+		realtime_tools::RealtimeBuffer<std::vector<std::optional<double>>> command_buffer_;
 
 		// Iterate through each desired joint state.  If it is found in
 		// the message, save the value here in the realtime buffer.
 		void commandCB(const sensor_msgs::JointStateConstPtr &msg)
 		{
-			std::vector<ValueValid<double>> ret;
-			ret.resize(joint_names_.size());
+			std::vector<std::optional<double>> ret;
 			for (size_t i = 0; i < joint_names_.size(); i++)
 			{
 				auto it = std::find(msg->name.cbegin(), msg->name.cend(), joint_names_[i]);
 				if (it != msg->name.cend())
 				{
-					const size_t loc = std::distance(msg->name.cbegin(), it);
-					ret[i].value_ = msg->position[loc];
-					ret[i].valid_ = true;
+					ret.push_back(msg->position[std::distance(msg->name.cbegin(), it)]);
+				}
+				else
+				{
+					ret.push_back(std::nullopt);
 				}
 			}
 			command_buffer_.writeFromNonRT(ret);
@@ -168,10 +155,10 @@ class JointModeListenerController :
 		{
 			// Take the most recent set of values read from the joint_modes
 			// topic and write them to the local joints
-			std::vector<ValueValid<int>> vals = *command_buffer_.readFromRT();
+			const auto vals = *command_buffer_.readFromRT();
 			for (size_t i = 0; i < vals.size(); i++)
-				if (vals[i].valid_)
-					handles_[i].setMode(static_cast<hardware_interface::JointCommandModes>(vals[i].value_));
+				if (vals[i])
+					handles_[i].setMode(static_cast<hardware_interface::JointCommandModes>(*(vals[i])));
 		}
 
 	private:
@@ -180,26 +167,38 @@ class JointModeListenerController :
 		std::vector<hardware_interface::JointModeHandle> handles_;
 
 		// Real-time buffer holds the last command value read from the "command" topic.
-		realtime_tools::RealtimeBuffer<std::vector<ValueValid<int>>> command_buffer_;
+		realtime_tools::RealtimeBuffer<std::vector<std::optional<int>>> command_buffer_;
 
 		// Iterate through each desired joint mode.  If it is found in
 		// the message, save the value here in the realtime buffer.
 		void commandCB(const frc_msgs::JointModeConstPtr &msg)
 		{
-			std::vector<ValueValid<int>> ret;
-			ret.resize(joint_names_.size());
+			std::vector<std::optional<int>> ret;
 			for (size_t i = 0; i < joint_names_.size(); i++)
 			{
 				auto it = std::find(msg->name.cbegin(), msg->name.cend(), joint_names_[i]);
 				if (it != msg->name.cend())
 				{
-					const size_t loc = std::distance(msg->name.cbegin(), it);
-					ret[i].value_ = msg->mode[loc];
-					ret[i].valid_ = true;
+					ret.push_back(msg->mode[std::distance(msg->name.cbegin(), it)]);
+				}
+				else
+				{
+					ret.push_back(std::nullopt);
 				}
 			}
 			command_buffer_.writeFromNonRT(ret);
 		}
+};
+
+struct IMUStateData
+{
+	std::string           frame_id_;
+	std::array<double, 4> orientation_;
+	std::array<double, 9> orientation_covariance_;
+	std::array<double, 3> angular_velocity_;
+	std::array<double, 9> angular_velocity_covariance_;
+	std::array<double, 3> linear_acceleration_;
+	std::array<double, 9> linear_acceleration_covariance_;
 };
 
 class IMUStateListenerController :
@@ -218,14 +217,17 @@ class IMUStateListenerController :
 			auto joint_names = hw->getNames();
 			if (joint_names.size() == 0)
 			{
-				ROS_ERROR("IMU State Listener Controller : no remote pdp joints defined");
+				ROS_ERROR("IMU State Listener Controller : no remote IMU joints defined");
+			}
+			else if (joint_names.size() > 1)
+			{
+				ROS_ERROR("IMU State Listener Controller : More than 1 remote IMU joints defined");
 			}
 			ROS_INFO_STREAM("IMU State listener got joint " << joint_names[0]);
 			handle_ = hw->getHandle(joint_names[0]);
 
-			std::string topic;
-
 			// get topic to subscribe to
+			std::string topic;
 			if (!n.getParam("topic", topic))
 			{
 				ROS_ERROR("Parameter 'topic' not set");
@@ -247,55 +249,43 @@ class IMUStateListenerController :
 		{
 			const auto data = *command_buffer_.readFromRT();
 
-			handle_.setFrameId(data.frame_id);
-			handle_.setOrientation(&data_orientation_[0]);
-			handle_.setOrientationCovariance(&data_orientation_covariance_[0]);
-			handle_.setAngularVelocity(&data_angular_velocity_[0]);
-			handle_.setAngularVelocityCovariance(&data_angular_velocity_covariance_[0]);
-			handle_.setLinearAcceleration(&data_linear_acceleration_[0]);
-			handle_.setLinearAccelerationCovariance(&data_linear_acceleration_covariance_[0]);
+			handle_.setFrameId(data.frame_id_);
+			handle_.setOrientation(&data.orientation_[0]);
+			handle_.setOrientationCovariance(&data.orientation_covariance_[0]);
+			handle_.setAngularVelocity(&data.angular_velocity_[0]);
+			handle_.setAngularVelocityCovariance(&data.angular_velocity_covariance_[0]);
+			handle_.setLinearAcceleration(&data.linear_acceleration_[0]);
+			handle_.setLinearAccelerationCovariance(&data.linear_acceleration_covariance_[0]);
 		}
 
 	private:
 		ros::Subscriber sub_command_;
 		hardware_interface::ImuWritableSensorHandle handle_;
 
-		// Real-time buffer holds the last command value read from the
-		// "command" topic.
-		realtime_tools::RealtimeBuffer<hardware_interface::ImuSensorHandle::Data> command_buffer_;
-		std::array<double, 4> data_orientation_;
-		std::array<double, 9> data_orientation_covariance_;
-		std::array<double, 3> data_angular_velocity_;
-		std::array<double, 9> data_angular_velocity_covariance_;
-		std::array<double, 3> data_linear_acceleration_;
-		std::array<double, 9> data_linear_acceleration_covariance_;
+		// Real-time buffer holds the last command value read from the remote IMU state topic
+		// TODO : support more than 1 IMU?
+		realtime_tools::RealtimeBuffer<IMUStateData> command_buffer_;
 
 		void commandCB(const sensor_msgs::ImuConstPtr &msg)
 		{
-			hardware_interface::ImuSensorHandle::Data data;
+			IMUStateData data;
 
-			data.frame_id = msg->header.frame_id;
-			data.orientation = data_orientation_.begin();
-			data.orientation_covariance = data_orientation_covariance_.begin();
-			data.angular_velocity = data_angular_velocity_.begin();
-			data.angular_velocity_covariance = data_angular_velocity_covariance_.begin();
-			data.linear_acceleration = data_linear_acceleration_.begin();
-			data.linear_acceleration_covariance = data_linear_acceleration_covariance_.begin();
+			data.frame_id_ = msg->header.frame_id;
 
-			data_orientation_[0] = msg->orientation.x;
-			data_orientation_[1] = msg->orientation.y;
-			data_orientation_[2] = msg->orientation.z;
-			data_orientation_[3] = msg->orientation.w;
-			std::copy(msg->orientation_covariance.cbegin(), msg->orientation_covariance.cend(), data_orientation_covariance_.begin());
-			data_angular_velocity_[0] = msg->angular_velocity.x;
-			data_angular_velocity_[1] = msg->angular_velocity.y;
-			data_angular_velocity_[2] = msg->angular_velocity.z;
-			std::copy(msg->angular_velocity_covariance.cbegin(), msg->angular_velocity_covariance.cend(), data_angular_velocity_covariance_.begin());
+			data.orientation_[0] = msg->orientation.x;
+			data.orientation_[1] = msg->orientation.y;
+			data.orientation_[2] = msg->orientation.z;
+			data.orientation_[3] = msg->orientation.w;
+			std::copy(msg->orientation_covariance.cbegin(), msg->orientation_covariance.cend(), data.orientation_covariance_.begin());
+			data.angular_velocity_[0] = msg->angular_velocity.x;
+			data.angular_velocity_[1] = msg->angular_velocity.y;
+			data.angular_velocity_[2] = msg->angular_velocity.z;
+			std::copy(msg->angular_velocity_covariance.cbegin(), msg->angular_velocity_covariance.cend(), data.angular_velocity_covariance_.begin());
 
-			data_linear_acceleration_[0] = msg->linear_acceleration.x;
-			data_linear_acceleration_[1] = msg->linear_acceleration.y;
-			data_linear_acceleration_[2] = msg->linear_acceleration.z;
-			std::copy(msg->linear_acceleration_covariance.cbegin(), msg->linear_acceleration_covariance.cend(), data_linear_acceleration_covariance_.begin());
+			data.linear_acceleration_[0] = msg->linear_acceleration.x;
+			data.linear_acceleration_[1] = msg->linear_acceleration.y;
+			data.linear_acceleration_[2] = msg->linear_acceleration.z;
+			std::copy(msg->linear_acceleration_covariance.cbegin(), msg->linear_acceleration_covariance.cend(), data.linear_acceleration_covariance_.begin());
 
 			command_buffer_.writeFromNonRT(data);
 		}
