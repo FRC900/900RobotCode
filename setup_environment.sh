@@ -159,7 +159,7 @@ sudo chmod 640 /root/.ssh/authorized_keys
 sudo chmod 700 /root/.ssh
 
 cd ~/2020RobotCode
-sudo cp ./jetson_setup/10-local.rules /etc/udev/rules.d/
+sudo cp ./jetson_setup/10-local.rules ./jetson_setup/99-gpio.rules /etc/udev/rules.d/
 sudo service udev reload
 sleep 2
 sudo service udev restart
