@@ -13,7 +13,7 @@
 #include <nav_msgs/Path.h>
 #include <nav_msgs/Odometry.h>
 #include <string>
-#include <control_toolbox/pid.h>
+//#include <control_toolbox/pid.h>
 //#include <tf/transform_datatypes.h>
 //#include <tf/tf.h>
 #include <geometry_msgs/Pose.h>
@@ -115,7 +115,7 @@ class PathFollower
 		// path length getter
 		const double getPathLength();
 
-		// interpolation function, just for cleanness 
+		// interpolation function, just for cleanness
 		double interpolate(double start_t, double end_t, double start_x, double end_x, double current_t) const;
 
 		// contains the main control loop
