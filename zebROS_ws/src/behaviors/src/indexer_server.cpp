@@ -83,7 +83,7 @@ class IndexerAction {
 			if (!indexer_linebreak_.triggered_ && !preempted_ && !timed_out_ && ros::ok()){
 				//set velocity to reverse
 				controllers_2020_msgs::IndexerSrv srv;
-				srv.request.indexer_velocity = -indexer_speed_; //TODO make sure negative means backward
+				srv.request.indexer_velocity = -indexer_speed_;
 				if ( !indexer_controller_client_.call(srv) )
 				{
 					ROS_ERROR("Indexer controller failed in indexer server, in goToPositionIntake()");
@@ -239,7 +239,7 @@ class IndexerAction {
 
 					}
 
-					//wait for ball to be intaked - ball is intaked if the indexer linebreak pulses on then off
+					//wait for ball to be intaked - ball is intaked if the indexer linebreak gets a rising edge
 					indexer_linebreak_.resetPulseDetection(); //clear previous checks for rising/falling edges
 					ros::Rate r(10); //TODO config?
 					while(!preempted_ && !timed_out_ && ros::ok())
@@ -282,7 +282,7 @@ class IndexerAction {
                 {
 					ROS_INFO_STREAM("Feeding a ball to the shooter in indexer actionlib server");
 
-					//shoot if you've got the balls
+					//shoot if you've got the balls - or if not I guess, we removed the num balls check for reliability
 					if(!preempted_ && !timed_out_ && ros::ok())
 					{
 						//set indexer velocity forwards
