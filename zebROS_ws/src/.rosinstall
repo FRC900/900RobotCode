@@ -72,6 +72,6 @@
     local-name: cpu_monitor
     uri: https://github.com/FRC900/cpu_monitor
 - git:
-    local-name: stage_ros.git
+    local-name: stage_ros
     uri: https://github.com/FRC900/stage_ros
 
