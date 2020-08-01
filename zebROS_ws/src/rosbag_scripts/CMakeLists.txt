@@ -11,7 +11,6 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   frc_msgs
-  message_generation
   rosbag
   roscpp
   rospy

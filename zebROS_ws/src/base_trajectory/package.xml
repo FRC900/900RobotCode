@@ -56,8 +56,6 @@
   <depend>spline_util</depend>
   <depend>angles</depend>
   <depend>nav_msgs</depend>
-  <build_depend>message_generation</build_depend>
-  <exec_depend>message_runtime</exec_depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
   </export>

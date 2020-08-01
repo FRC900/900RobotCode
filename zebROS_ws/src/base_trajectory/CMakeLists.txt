@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   ddynamic_reconfigure
   joint_trajectory_controller
-  message_generation
   nav_msgs
   roscpp
   spline_util

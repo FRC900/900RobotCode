@@ -7,7 +7,6 @@ include("../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED COMPONENTS
 	controller_interface
 	hardware_interface
-	message_generation
 	pluginlib
 	realtime_tools
 	roscpp
@@ -20,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
 # Declare catkin package
 catkin_package(
   CATKIN_DEPENDS realtime_tools roscpp hardware_interface pluginlib
-  controller_interface sensor_msgs message_runtime talon_state_msgs
+  controller_interface sensor_msgs talon_state_msgs
   INCLUDE_DIRS include
   #LIBRARIES ${PROJECT_NAME}
   )
@@ -63,6 +62,4 @@ install(TARGETS ${PROJECT_NAME}
   )
 
 install(FILES talon_state_plugin.xml
-	#talon_state_controller.yaml
-	#talon_state_controller.launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

@@ -18,7 +18,6 @@ find_package(catkin REQUIRED COMPONENTS
   field_obj
   geometry_msgs
   nav_msgs
-  message_generation # No messages generated, but catkin build prioritizes packages which depend on this, so leave it in to hopefully get this package building early in the process
   path_follower_msgs
   roscpp
   rospy
