@@ -370,6 +370,18 @@ sudo ln -s /usr/include/opencv4 /usr/include/opencv
 
 echo "source /home/ubuntu/2020RobotCode/zebROS_ws/command_aliases.sh" >> /home/ubuntu/.bashrc
 
+# Install make 4.3 (>4.2 is required for -flto=jobserver support
+cd
+wget https://ftp.gnu.org/gnu/make/make-4.3.tar.gz
+tar -xf make-4.3.tar.gz
+mkdir make-4.3/build
+cd make-4.3/build
+../configure --prefix=/usr
+sudo make -j`nproc --all` install
+cd
+rm -rf make-4.3*
+
+
 # Give the ubuntu user dialout permission, which is used by the ADI IMU 
 sudo adduser ubuntu dialout
 
@@ -421,6 +433,9 @@ make -j`nproc --all`
 sudo make -j`nproc --all` install
 sudo ldconfig
 cd ../..
+
+# Fix bug in released version of catkin_tools
+sudo sed -i 's/ errno.EINTR/ errno.EINTR and e.errno != errno.EAGAIN/'  /usr/lib/python2.7/dist-packages/catkin_tools/execution/job_server.py
 
 echo "** Update python protobuf module"
 # remove previous installation of python protobuf module

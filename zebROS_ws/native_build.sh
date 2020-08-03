@@ -15,9 +15,11 @@ elif [[ ! $ROS_ROOT = "/opt/ros/melodic/share/ros" ]]; then
 fi
 
 EXTRA_BLACKLIST_PACKAGES=""
+EXTRA_CMD_LINE=""
 uname -a | grep -q x86_64
 if [ $? -eq 1 ]; then
-	EXTRA_BLACKLIST_PACKAGES="robot_characterization robot_visualizer rosbag_scripts rospy_message_converter rqt_driver_station_sim stage_ros visualize_profile zms_writer"
+	EXTRA_BLACKLIST_PACKAGES="demo_tf_node robot_characterization robot_visualizer rosbag_scripts rospy_message_converter rqt_driver_station_sim stage_ros template_controller visualize_profile zms_writer"
+	EXTRA_CMD_LINE="--limit-status-rate 5"
 fi
 
 catkin config --blacklist \
@@ -25,7 +27,7 @@ catkin config --blacklist \
 	zed_ros \
 	$EXTRA_BLACKLIST_PACKAGES
 
-catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON "$@"
+catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON $EXTRA_CMD_LINE "$@"
 
 if [ $? -ne 0 ] ; then
 	echo FAIL > .native_build.status
