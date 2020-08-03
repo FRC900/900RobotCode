@@ -70,11 +70,10 @@ add_service_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
    DEPENDENCIES
-   std_msgs  # Or other packages containing msgs
-   nav_msgs
-   trajectory_msgs
    geometry_msgs
-   base_trajectory_msgs
+   nav_msgs
+   std_msgs
+   trajectory_msgs
 )
 
 ## Generate messages in the 'msg' folder
@@ -136,7 +135,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES base_trajectory_msgs
-#  CATKIN_DEPENDS joint_trajectory_cntroller message_generation nav_msgs std_msgs
+  CATKIN_DEPENDS message_runtime nav_msgs std_msgs trajectory_msgs
 #  DEPENDS system_lib
 )
 
@@ -146,10 +145,10 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-# include
-  ${catkin_INCLUDE_DIRS}
-)
+# include_directories(
+#  include
+#  ${catkin_INCLUDE_DIRS}
+# )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

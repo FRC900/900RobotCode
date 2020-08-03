@@ -9,6 +9,7 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   controller_interface
+  controllers_2020_msgs
   ddynamic_reconfigure
   hardware_interface
   pluginlib
@@ -18,8 +19,6 @@ find_package(catkin REQUIRED COMPONENTS
   talon_interface
   std_msgs
   std_srvs
-  controller_interface
-  controllers_2020_msgs
 )
 
 ## System dependencies are found with CMake's conventions

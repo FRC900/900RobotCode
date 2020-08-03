@@ -2,7 +2,7 @@
   <name>talon_state_controller</name>
   <version>0.0.1</version>
   <description>Controller to publish talon state</description>
-  <maintainer email="programmers@team900.org">Team 900i</maintainer>
+  <maintainer email="programmers@team900.org">FRC Team 900 Programmers</maintainer>
 
   <license>BSD</license>
 
@@ -17,13 +17,12 @@
   <depend>controller_interface</depend>
   <depend>hardware_interface</depend>
   <depend>pluginlib</depend>
-  <depend>sensor_msgs</depend>
   <depend>realtime_tools</depend>
   <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
   <depend>talon_interface</depend>
   <depend>talon_state_msgs</depend>
-  <build_depend>message_generation</build_depend>
-  <exec_depend>message_runtime</exec_depend>
   <test_depend>rostest</test_depend>
 
   <export>

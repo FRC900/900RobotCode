@@ -6,41 +6,23 @@ include ("../cmake_modules/CMakeOpt.cmake")
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-if (DEFINED CMAKE_TOOLCHAIN_FILE)
-  find_package(catkin REQUIRED COMPONENTS
+find_package(catkin REQUIRED COMPONENTS
+	cv_bridge
 	dynamic_reconfigure_wrapper
-    field_obj
-    geometry_msgs
+	field_obj
+	field_obj_tracker
+	geometry_msgs
 	image_geometry
 	image_transport
-    message_filters
+	message_filters
 	nodelet
-    roscpp
-    sensor_msgs
-    std_msgs
+	roscpp
+	sensor_msgs
+	std_msgs
 	teraranger_array
-    tf2
-    tf2_ros
-  )
-else()
-  find_package(catkin REQUIRED COMPONENTS
-    cv_bridge
-	dynamic_reconfigure_wrapper
-    field_obj
-    field_obj_tracker
-    geometry_msgs
-	image_geometry
-	image_transport
-    message_filters
-	nodelet
-    roscpp
-    sensor_msgs
-    std_msgs
-	teraranger_array
-    tf2
-    tf2_ros
-  )
-endif()
+	tf2
+	tf2_ros
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -118,11 +100,7 @@ endif()
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-    generate_dynamic_reconfigure_options(
-    cfg/GoalDetection.cfg
-    )
-endif()
+generate_dynamic_reconfigure_options(cfg/GoalDetection.cfg)
 
 ###################################
 ## catkin specific configuration ##
@@ -134,69 +112,66 @@ endif()
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
+#  INCLUDE_DIRS include
 #  LIBRARIES goal_detection
  CATKIN_DEPENDS roscpp message_runtime geometry_msgs std_msgs sensor_msgs
- #  DEPENDS system_lib
+#  DEPENDS system_lib
 )
 
 ###########
 ## Build ##
 ###########
-if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-  find_package(OpenCV REQUIRED)
-  list(FILTER catkin_LIBRARIES EXCLUDE REGEX "opencv_freetype")
-  list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
-  ## Specify additional locations of header files
-  ## Your package locations should be listed before other locations
-  # include_directories(include)
-  include_directories(
-    ${catkin_INCLUDE_DIRS}
-    ${OpenCV_INCLUDE_DIRS}
-    ../../../common
-    include
-  )
+find_package(OpenCV REQUIRED)
+list(FILTER catkin_LIBRARIES EXCLUDE REGEX "opencv_freetype")
+list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
+## Specify additional locations of header files
+## Your package locations should be listed before other locations
+# include_directories(include)
+include_directories(
+	${catkin_INCLUDE_DIRS}
+	${OpenCV_INCLUDE_DIRS}
+	../../../common
+	include
+)
 
-  ## Declare a C++ executable
-  add_executable(goal_detection_node
-    src/goal_detect_node.cpp
-  )
+## Declare a C++ executable
+add_executable(goal_detection_node
+	src/goal_detect_node.cpp
+)
 
-  ## Specify libraries to link a library or executable target against
-  target_link_libraries(goal_detection_node
-    ${catkin_LIBRARIES}
-    ${OpenCV_LIBS}
-  )
-
-  ## Add cmake target dependencies of the executable
-  ## same as for the library above
-  add_dependencies(goal_detection_node
-    ${${PROJECT_NAME}_EXPORTED_TARGETS}
-    ${catkin_EXPORTED_TARGETS}
-  )
-
-  add_library(GoalDetection
-	src/goal_detect.cpp
-    src/GoalDetector.cpp
-    src/Utilities.cpp
-    ../../../common/hungarian.cpp
-  )
-
-  target_link_libraries(GoalDetection
+## Specify libraries to link a library or executable target against
+target_link_libraries(goal_detection_node
 	${catkin_LIBRARIES}
 	${OpenCV_LIBS}
-  )
+)
 
-  add_dependencies(GoalDetection
-    ${${PROJECT_NAME}_EXPORTED_TARGETS}
-    ${catkin_EXPORTED_TARGETS}
-  )
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(goal_detection_node
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS}
+)
 
-  add_executable(translate_to_pointstamped src/translate_to_pointstamped.cpp)
-  target_link_libraries(translate_to_pointstamped ${catkin_LIBRARIES})
-  add_dependencies(translate_to_pointstamped ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_library(GoalDetection
+	src/goal_detect.cpp
+	src/GoalDetector.cpp
+	src/Utilities.cpp
+	../../../common/hungarian.cpp
+)
 
-endif()
+target_link_libraries(GoalDetection
+	${catkin_LIBRARIES}
+	${OpenCV_LIBS}
+)
+
+add_dependencies(GoalDetection
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS}
+)
+
+add_executable(translate_to_pointstamped src/translate_to_pointstamped.cpp)
+target_link_libraries(translate_to_pointstamped ${catkin_LIBRARIES})
+add_dependencies(translate_to_pointstamped ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #############
 ## Install ##
@@ -212,14 +187,12 @@ endif()
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
-if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 # Mark executables and/or libraries for installation
-  install(TARGETS goal_detection_node
-    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION} # Might need to be ${CATKIN_GLOBAL_BIN_DESTINATION} ?
-  )
-endif()
+install(TARGETS goal_detection_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION} # Might need to be ${CATKIN_GLOBAL_BIN_DESTINATION} ?
+)
 
 ## Mark cpp header files for installation
 # install(DIRECTORY include/${PROJECT_NAME}/

@@ -13,7 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
   talon_interface
   talon_controller_msgs
   pluginlib
-  hardware_interface
 )
 
 generate_dynamic_reconfigure_options(cfg/TalonConfig.cfg)

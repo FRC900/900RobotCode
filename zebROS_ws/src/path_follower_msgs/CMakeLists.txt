@@ -103,7 +103,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES path_follower_msgs
-  CATKIN_DEPENDS actionlib_msgs base_trajectory_msgs geometry_msgs message_generation nav_msgs trajectory_msgs
+  CATKIN_DEPENDS actionlib_msgs base_trajectory_msgs geometry_msgs message_runtime nav_msgs trajectory_msgs
 #  DEPENDS system_lib
 )
 
@@ -113,10 +113,10 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
+#include_directories(
 # include
-  ${catkin_INCLUDE_DIRS}
-)
+#${catkin_INCLUDE_DIRS}
+#)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

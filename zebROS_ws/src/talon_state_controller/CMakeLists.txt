@@ -11,9 +11,9 @@ find_package(catkin REQUIRED COMPONENTS
 	realtime_tools
 	roscpp
 	sensor_msgs
+	std_msgs
 	talon_interface
 	talon_state_msgs
-	std_msgs
 )
 
 # Declare catkin package
