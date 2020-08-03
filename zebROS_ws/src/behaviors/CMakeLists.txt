@@ -319,6 +319,7 @@ install(TARGETS
 	climber_server
 	eject_server
 	elevator_server
+	gotocolor_server
 	indexer_server
 	intake_cargo_server
 	intake_hatch_panel_server
@@ -327,6 +328,7 @@ install(TARGETS
 	outtake_cargo_server
 	outtake_hatch_panel_server
 	publish_pid_cmd_vel_node
+	rotate_panel_server
 	shooter_actionlib_server
 	state_setpoint_publisher_node
 	test_actionlib

@@ -148,7 +148,7 @@ add_dependencies(teleop_joints_keyboard
 
 # Install ------------------------------------------------------------
 # Install header files
-install(TARGETS teleop_joystick_comp teleop_joystick_comp_2020 teleop_joints_keyboard
+install(TARGETS teleop_joystick_comp teleop_joystick_comp_2020 teleop_joints_keyboard translate_button_box_data_node translate_joystick_data_node orient_strafing_node snap_to_nearest_goal
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
