@@ -3,6 +3,7 @@
 2020 Robot Code
 
 Package list 
+adi\_driver - submodule - ADI IMU ROS node
 as726x\_controllers - ROS controller for as726x color sensor
 as726x\_interface - state and command interfaces for as726x color sensor
 as726x\_msgs - custom messages for as726x color sensor
@@ -25,8 +26,8 @@ cpu\_monitor - submodule - package which logs CPU use of other nodes
 ddynamic\_reconfigure - submodule - wrapper code to simplify using ROS dynamic reconfigure
 demo\_tf\_node - example code for using ROS tf transforms between various reference frames
 dynamic\_reconfigure\_wrapper - wrapper code to simplify using ROS dynamic reconfigure - obsolete, use ddynamic\_reconfigure instead for new code
-field\_obj - Code to identify characteristics of objects on the field
-field\_obj\_tracker - custom messages for field\_obj package
+field\_obj - custom messages for field\_obj package
+field\_obj\_tracker - Code to identify characteristics of objects on the field
 frc\_interfaces - state and command interfaces for FRC-specific data - match data, PCM, PDP, etc
 frc\_msgs - message used by frc\_state\_contrllers package
 frcrobot\_description - URDF definitions for swerve robots
@@ -48,7 +49,7 @@ ros\_controllers - submodule - ROS package that needs to be built locally to pic
 rospy\_message\_converter
 rqt\_driver\_station\_sim - simulated driver station for simulation interface
 spline\_util - helper code to generate and use splines
-stage\_ros - submodule - stage simulator for ROS, provides basic 2d graphical sim of robot and sensors
+stage\_ros - submodule - stage simulator for ROS, provides basic 2d graphical sim of robot and sensors (fork which includes fiducial markers)
 state\_handle - helper code for defining ROS state and command interfaces and handles
 state\_listener - ROS controller used to pass joint data between hardware interfaces
 static\_controller - ROS controller which publishes a constant value when loaded - used to indicate that all other controllers have been started and the robot is ready to enable
