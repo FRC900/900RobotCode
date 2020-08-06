@@ -160,8 +160,7 @@ void shutdownNode(AutoStates state, const std::string &msg)
 	if (msg.length()) {
 		if (auto_state == ERROR) {
 			ROS_ERROR_STREAM(msg);
-		}
-		else {
+		} else {
 			ROS_INFO_STREAM(msg);
 		}
 	}
@@ -270,10 +269,15 @@ int main(int argc, char** argv)
 				return 1;
 			}
 			// TODO :
-			//   create a std::map<std::string, std::function(XmlRpc::XmlRpcValue)>
+			//   create a std::unordered_map<std::string, std::function<bool(XmlRpc::XmlRpcValue)>
+			//   Each auto action type would then be implmeneted in a separate function
 			//   Look up the map using action_data["type"], call the function returned
 			//   from the lookup with action_data as an argument.
-			//   Each auto action type would then be implmeneted in a separate function
+			//   use the bool return type to figure out if the call succeeded or failed, or possibly
+			//      change the return type to an int for more options for return status if needed
+			//   This should allow for cleaner logic in main for error checking and exiting
+			//     the auto loop and won't really make it harder to code the various types, since
+			//     they're all already in their own if() block anyway.
 
 			// CODE FOR ACTIONS HERE --------------------------------------------------
 			//figure out what to do based on the action type, and do it
@@ -286,9 +290,8 @@ int main(int argc, char** argv)
 				double duration;
 				if((action_data["duration"].getType() == XmlRpc::XmlRpcValue::Type::TypeDouble) ||
 				   (action_data["duration"].getType() == XmlRpc::XmlRpcValue::Type::TypeInt) ) {
-					duration = (double) action_data["duration"];
-				}
-				else {
+					duration = static_cast<double>(action_data["duration"]);
+				} else {
 					shutdownNode(ERROR, "Auto node - duration is not a double or int in '" + auto_steps[i] + "' action");
 					return 1;
 				}
@@ -308,11 +311,9 @@ int main(int argc, char** argv)
 					return 1;
 				}
 
-				if(action_data["goal"] == "stop")
-				{
+				if(action_data["goal"] == "stop") {
 					intake_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
-				}
-				else {
+				} else {
 					behavior_actions::IntakeGoal goal;
 					intake_ac.sendGoal(goal);
 				}
@@ -330,7 +331,10 @@ int main(int argc, char** argv)
 			}
 			else if(action_data["type"] == "path")
 			{
-				if(!path_ac.waitForServer(ros::Duration(5))){ROS_ERROR("Couldn't find path server"); return 1;}
+				if(!path_ac.waitForServer(ros::Duration(5))){
+					shutdownNode(ERROR, "Couldn't find path server");
+					return 1;
+				}
 				path_follower_msgs::PathGoal goal;
 
 				//initialize 0, 0, 0 point
