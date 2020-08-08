@@ -8,7 +8,6 @@ include ("../cmake_modules/CMakeOpt.cmake")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  base_trajectory_msgs
   nav_msgs
   path_follower_msgs
   roscpp
@@ -89,7 +88,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   # INCLUDE_DIRS include
   # LIBRARIES path_follower
-  CATKIN_DEPENDS base_trajectory_msgs geometry_msgs roscpp std_msgs std_srvs nav_msgs 
+  CATKIN_DEPENDS geometry_msgs roscpp std_msgs std_srvs nav_msgs 
   # DEPENDS system_lib
 )
 

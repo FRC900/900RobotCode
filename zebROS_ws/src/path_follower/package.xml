@@ -69,7 +69,6 @@
   <exec_depend>tf2_ros</exec_depend>
   <depend>actionlib_msgs</depend>
   <depend>nav_msgs</depend>
-  <depend>base_trajectory_msgs</depend>
   <depend>path_follower_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -25,7 +25,6 @@
   <build_depend>trajectory_msgs</build_depend>
 
   <depend>roscpp</depend>
-  <depend>realtime_tools</depend>
   <depend>message_runtime</depend>
 
   <export>
