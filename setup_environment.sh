@@ -467,3 +467,8 @@ sudo python -m pip install -U pip six numpy wheel setuptools mock h5py
 sudo python -m pip install -U keras_applications
 sudo python -m pip install -U keras_preprocessing
 sudo python -m pip install tensorflow-1.15.3-*.whl
+
+# Patch catkin tools/pkg for faster builds
+cd /usr/lib/python2.7/dist-packages
+sudo patch -p0 < ~/2020RobotCode/catkin_pkg.patch
+sudo patch -p0 < ~/2020RobotCode/catkin_tools.patch
