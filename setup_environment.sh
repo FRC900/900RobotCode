@@ -62,6 +62,7 @@ sudo apt install -y \
     python-pyqt5 \
     python-pyqtgraph \
     python-scipy \
+	python3 \
     qt4-designer \
     rsync \
     software-properties-common \
@@ -390,9 +391,8 @@ vim +PluginInstall +qall
 ln -sf /home/ubuntu/.vim/bundle/vim-ros-ycm/.ycm_extra_conf.py /home/ubuntu/.vim/bundle/vim-ros-ycm/ycm_extra_conf.py
 cd /home/ubuntu/.vim/bundle/YouCompleteMe
 git fetch origin
-git checkout legacy-py2
 git submodule update --init --recursive
-./install.py --clang-completer --system-libclang --ninja 
+python3 ./install.py --clang-completer --system-libclang --ninja 
 
 # Install tensorflow on Jetson
 #sudo apt update
