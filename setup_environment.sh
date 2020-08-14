@@ -472,3 +472,14 @@ sudo python -m pip install tensorflow-1.15.3-*.whl
 cd /usr/lib/python2.7/dist-packages
 sudo patch -p0 < ~/2020RobotCode/catkin_pkg.patch
 sudo patch -p0 < ~/2020RobotCode/catkin_tools.patch
+
+cd /home/ubuntu
+git clone https://github.com/tensorflow/models.git
+cd models
+git submodule init
+git submodule update
+cd /home/ubuntu/models/research
+protoc object_detection/protos/*.proto --python_out=.
+sudo python -m pip install --no-cache-dir .
+cd slim
+sudo python -m pip install --no-cache-dir .
