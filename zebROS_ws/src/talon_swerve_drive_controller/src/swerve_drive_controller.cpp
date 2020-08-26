@@ -36,13 +36,7 @@
 
 #include <cmath>
 
-#include <boost/assign.hpp>
-
-#include <Eigen/Dense>
-
 #include <tf/transform_datatypes.h>
-#include <urdf_parser/urdf_parser.h>
-#include <urdf/urdfdom_compatibility.h>
 
 #include <talon_swerve_drive_controller/swerve_drive_controller.h>
 

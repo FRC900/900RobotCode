@@ -1,3 +1,4 @@
+#include <Eigen/Dense>
 #include <geometry_msgs/Twist.h>
 #include "teleop_joystick_control/rate_limiter.h"
 #include "teleop_joystick_control/TeleopJoystickCompConfig.h"

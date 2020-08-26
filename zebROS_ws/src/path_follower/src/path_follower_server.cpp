@@ -6,11 +6,8 @@
 #include <path_follower/axis_state.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
-#include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Odometry.h>
-#include <tf/transform_datatypes.h>
 #include <sensor_msgs/Imu.h>
-#include <tf/tf.h>
 #include <path_follower/path_follower.h>
 #include <geometry_msgs/Quaternion.h>
 

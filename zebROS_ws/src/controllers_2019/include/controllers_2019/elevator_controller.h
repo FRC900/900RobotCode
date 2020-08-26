@@ -6,9 +6,7 @@
 #include <realtime_tools/realtime_buffer.h>
 #include <controller_interface/multi_interface_controller.h>
 #include <talon_controllers/talon_controller_interface.h> // "
-#include <std_msgs/Float64.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
-#include <std_msgs/Bool.h>
 #include "controllers_2019_msgs/ElevatorSrv.h"
 #include <dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h>
 #include <controllers_2019/ElevatorConfig.h>

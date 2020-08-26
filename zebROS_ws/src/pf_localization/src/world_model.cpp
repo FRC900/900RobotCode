@@ -1,14 +1,7 @@
 #include "world_model.hpp"
 #include <cmath>
-#include <random>
 #include <utility>
 #include <algorithm>
-
-#include <iostream>
-#include <string>
-
-#include <ros/ros.h>
-
 
 WorldModel::WorldModel(const std::vector<std::pair<double, double> >& beacons,
                        double x_min, double x_max, double y_min, double y_max) :

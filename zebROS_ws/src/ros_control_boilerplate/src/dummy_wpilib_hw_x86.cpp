@@ -1,6 +1,6 @@
 // Extra stub functions needed to get wpilib to link against
 // the hardware interface on x86 targets
-#include <ros/ros.h>
+#include <ros/console.h>
 
 #include <frc/DigitalInput.h>
 frc::DigitalInput::DigitalInput(int)

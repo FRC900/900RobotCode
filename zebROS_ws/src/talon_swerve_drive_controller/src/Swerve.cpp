@@ -1,9 +1,7 @@
 //#include <ros/ros.h>
 #include <talon_swerve_drive_controller/900Math.h>
 #include <talon_swerve_drive_controller/Swerve.h>
-#include <iostream>
 #include <fstream>
-#include <iomanip>
 
 using namespace std;
 using namespace Eigen;

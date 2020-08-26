@@ -1,6 +1,6 @@
 // Stub code for wpilib I2C functions - used to make the wpilib
 // code compile on platforms which don't support I2C hardware
-#include <ros/ros.h>
+#include <ros/console.h>
 #include <frc/I2C.h>
 frc::I2C::I2C(frc::I2C::Port port, int deviceAddress)
     : m_port(static_cast<HAL_I2CPort>(port)), m_deviceAddress(deviceAddress)

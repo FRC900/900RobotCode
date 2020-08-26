@@ -5,9 +5,10 @@
 // http://www2.informatik.uni-freiburg.de/~lau/paper/lau09iros.pdf
 // http://ais.informatik.uni-freiburg.de/teaching/ws09/robotics2/projects/mr2-p6-paper.pdf
 //
+#include <cmath>
+#include <cstdio>
 #include <base_trajectory_msgs/GenerateSpline.h>
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
 
 #include <angles/angles.h>
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>

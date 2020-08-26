@@ -1,6 +1,3 @@
-#include <atomic>
-#include "std_srvs/Empty.h"
-#include <hardware_interface/joint_command_interface.h>
 #include "sensor_msgs/Imu.h"
 #include "sensor_msgs/JointState.h"
 #include "ros/ros.h"
@@ -8,14 +5,13 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include "angles/angles.h"
 #include "std_msgs/Float64.h"
-#include "std_msgs/Float64MultiArray.h"
 
 #include <vector>
 
 ros::Publisher snapAnglePub;
-std::atomic<double> imu_angle;
-std::atomic<bool> has_cargo;
-std::atomic<bool> has_panel;
+double imu_angle;
+bool has_cargo;
+bool has_panel;
 
 std::vector<double> hatch_panel_angles;
 std::vector<double> cargo_angles;
@@ -48,7 +44,7 @@ void imuCallback(const sensor_msgs::Imu &imuState)
     tf2::Matrix3x3(imuQuat).getRPY(roll, pitch, yaw);
 
     if (yaw == yaw) // ignore NaN results
-        imu_angle.store(yaw, std::memory_order_relaxed);
+        imu_angle = yaw;
 }
 
 void jointStateCallback(const sensor_msgs::JointState &joint_state)
@@ -120,16 +116,16 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
             }
 
 		    if(linebreak_true_cargo_count >	linebreak_debounce_iterations) {
-                has_cargo.store(true);
+                has_cargo = true;
             }
             else {
-                has_cargo.store(false);
+                has_cargo = false;
             }
 		    if(limit_switch_true_panel_count >	limit_switch_debounce_iterations) {
-                has_panel.store(true);
+                has_panel = true;
             }
             else {
-                has_panel.store(false);
+                has_panel = false;
             }
         }
         else
@@ -195,7 +191,7 @@ int main(int argc, char **argv)
 	while(ros::ok()) {
 		std_msgs::Float64 angle_snap;
 		std_msgs::Float64 imu_state;
-		double cur_angle = angles::normalize_angle_positive(-1*imu_angle.load(std::memory_order_relaxed));
+		double cur_angle = angles::normalize_angle_positive(-imu_angle);
 		has_panel = true;
 		if(has_panel) {
 			snap_angle = nearest_angle(hatch_panel_angles, cur_angle + M_PI/2) - M_PI/2; //TODO remove having to multiply negative one
@@ -206,12 +202,12 @@ int main(int argc, char **argv)
 		else {
 			snap_angle = nearest_angle(nothing_angles, cur_angle);
 		}
-		
+
 		//TODO make this not a hack (ASSUMES hatch panel)
 		//snap_angle = nearest_angle(hatch_panel_angles, cur_angle + M_PI/2) - M_PI/2; //TODO remove having to multiply negative one
         //snap_angle = nearest_angle(cargo_angles, cur_angle);
 
-		double heading = angles::normalize_angle(-1*imu_angle.load(std::memory_order_relaxed));
+		double heading = angles::normalize_angle(-imu_angle);
 		double goal_angle = angles::normalize_angle(snap_angle);
 		double angle_diff = angles::normalize_angle(goal_angle - heading);
 		angle_snap.data = 0.0;

@@ -2,7 +2,7 @@
 // called. These functions let us build wpilib-dependent code on x86 and Jetson targets
 // by stubbing out functions which aren't actually used
 #include <ctre/phoenix/platform/Platform.h>
-#include <ros/ros.h>
+#include <ros/console.h>
 #include <chrono>
 extern "C"
 {
@@ -327,7 +327,6 @@ void frc::LiveWindow::UpdateValues()
 #include <HALInitializer.h>
 extern "C" {
 
-#include <sys/time.h>
 uint64_t HAL_GetFPGATime(int32_t* status)
 {
 	*status = 0;

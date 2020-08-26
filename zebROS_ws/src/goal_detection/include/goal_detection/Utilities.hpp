@@ -1,19 +1,12 @@
-//standard include
-#include <math.h>
-#include <iostream>
-#include <fstream>
-
-//#include <Eigen/Geometry>
-#include <cmath>
-
-//opencv include
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/core/core.hpp"
-
 #ifndef UTILITIES
 #define UTILITIES
+#include <vector>
+#include <utility>
 
+#include "opencv2/core/core.hpp"
 #include "field_obj_tracker/objtype.hpp"
+#include "image_geometry/pinhole_camera_model.h"
+
 namespace zv_utils {
 
 std::pair<float, float> minOfDepthMat(const cv::Mat& img, const cv::Mat& mask, const cv::Rect& bound_rect, int range);

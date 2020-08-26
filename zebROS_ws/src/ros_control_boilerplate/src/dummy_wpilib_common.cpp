@@ -1,6 +1,6 @@
 // Stub functions to replace WPIlib code which accesses hardware
 // which doesn't exist on certain platforms.
-#include <ros/ros.h>
+#include <ros/console.h>
 
 #include <WPILibVersion.h>
 const char* GetWPILibVersion(void)

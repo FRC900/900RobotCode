@@ -7,7 +7,6 @@ published /rpy_angles (message oftype geometry_msgs::Vector3.h)
 
 #include "ros/ros.h"
 #include "geometry_msgs/Vector3.h"
-#include "geometry_msgs/Quaternion.h"
 #include "sensor_msgs/Imu.h"
 #include "tf/transform_datatypes.h"
 

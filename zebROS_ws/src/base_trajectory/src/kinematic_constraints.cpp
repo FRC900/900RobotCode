@@ -119,7 +119,7 @@ KinematicConstraints::KinematicConstraints(const Kinematics &kinematics)
 
 void KinematicConstraints::addConstraints(const std::vector<base_trajectory_msgs::Constraint> &msg)
 {
-	for (const auto m : msg)
+	for (const auto &m : msg)
 		addConstraint(m);
 }
 

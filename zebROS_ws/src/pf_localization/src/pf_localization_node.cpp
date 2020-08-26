@@ -4,7 +4,6 @@
 #include "pf_localization/pf_pose.h"
 #include "pf_localization/pf_debug.h"
 #include "field_obj/Detection.h"
-#include "nav_msgs/Odometry.h"
 
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>

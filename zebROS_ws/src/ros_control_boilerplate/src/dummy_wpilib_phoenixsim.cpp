@@ -1,5 +1,5 @@
-#include <ros/ros.h>
-
+#include <ros/console.h>
+#include <string>             // for string
 
 namespace hal {
 namespace init {
@@ -80,9 +80,10 @@ void frc::MotorSafety::CheckMotors()
 	ROS_INFO("Called frc::MotorSafety::CheckMotors()");
 }
 
+#include "cscore_c.h"         // for CS_Source, CS_Status
+#include "cscore_cpp.h"       // for GetSourceName
 // Avoid including all of cscore- this is the only function so far that
 // is needed by sim code
-#include <cscore_oo.h>
 std::string cs::GetSourceName(CS_Source source, CS_Status* status) {
 	ROS_ERROR("Called cs::GetSourceName (CS_Sourcesource, CS_Status *status) on unsupported platform");
 	return "Not a CS Source";

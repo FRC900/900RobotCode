@@ -4,10 +4,6 @@
 #include <vector>
 #include <utility>
 
-#include <iostream>
-#include <ros/ros.h>
-
-
 ParticleFilter::ParticleFilter(const WorldModel& w,
                                double x_min, double x_max, double y_min, double y_max,
                                double ns, double rs, size_t n) :
@@ -31,7 +27,7 @@ void ParticleFilter::init(const double x_min, const double x_max, const double y
   double y_u = std::min(y_max, bounds[3]);
   for (size_t i = 0; i < num_particles_; i++) {
     std::uniform_real_distribution<double> x_distribution(x_l, x_u);
-  	std::uniform_real_distribution<double> y_distribution(y_l, y_u);
+	std::uniform_real_distribution<double> y_distribution(y_l, y_u);
     std::uniform_real_distribution<double> rot_distribution(0, 6.283);
     double x = x_distribution(rng_);
     double y = y_distribution(rng_);

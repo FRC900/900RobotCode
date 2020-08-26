@@ -1,4 +1,3 @@
-#include <iomanip>
 #include <opencv2/highgui/highgui.hpp>
 #include "goal_detection/GoalDetector.hpp"
 #include "goal_detection/Utilities.hpp"

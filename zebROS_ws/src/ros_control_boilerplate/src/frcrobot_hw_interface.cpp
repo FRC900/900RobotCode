@@ -70,17 +70,17 @@
 #include <cmath>
 #include <iostream>
 
-#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
 #include "ros_control_boilerplate/frcrobot_hw_interface.h"
 #include "ros_control_boilerplate/error_queue.h"
 
 //HAL / wpilib includes
 #include <HALInitializer.h>
-#include <networktables/NetworkTable.h>
+//#include <networktables/NetworkTable.h>
 #include <hal/CAN.h>
 #include <hal/Compressor.h>
 #include <hal/DriverStation.h>
-#include <hal/Errors.h>
+//#include <hal/Errors.h>
 #include <hal/PDP.h>
 #include <hal/Power.h>
 #include <hal/Solenoid.h>
@@ -88,7 +88,7 @@
 
 #include <ctre/phoenix/motorcontrol/SensorCollection.h>
 #include <ctre/phoenix/platform/Platform.h>
-#include <ctre/phoenix/cci/Unmanaged_CCI.h>
+//#include <ctre/phoenix/cci/Unmanaged_CCI.h>
 
 #ifdef __linux__
 #include <sched.h>

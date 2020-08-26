@@ -26,11 +26,6 @@
                         Does stuff to make control_panel_controller exist.
                 </description>
         </class>
-        <class name="indexer_test_controller/IndexerTestController" type="indexer_test_controller::IndexerTestController" base_class_type="controller_interface::ControllerBase">
-                <description>
-                        Does stuff to make indexer_controller exist.
-                </description>
-        </class>
         <class name="turret_controller/TurretController" type="turret_controller::TurretController" base_class_type="controller_interface::ControllerBase">
                 <description>
                         Does stuff to make turret_controller exist.

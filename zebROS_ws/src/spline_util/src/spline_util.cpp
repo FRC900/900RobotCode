@@ -1,4 +1,6 @@
+#include "joint_trajectory_controller/init_joint_trajectory.h"
 #include "spline_util/spline_util.h"
+
 template <class T>
 bool initSpline(Trajectory<T> &trajectory,
 				std::vector<std::string> jointNames,

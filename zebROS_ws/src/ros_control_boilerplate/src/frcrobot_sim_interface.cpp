@@ -39,10 +39,8 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 
 #include <ros_control_boilerplate/frcrobot_sim_interface.h>
 #include <ros_control_boilerplate/nextVelocity.h>
-#include <termios.h>
 
 #include <ros/ros.h>
-#include <sensor_msgs/JointState.h>
 
 #include <ros_control_boilerplate/set_limit_switch.h>
 

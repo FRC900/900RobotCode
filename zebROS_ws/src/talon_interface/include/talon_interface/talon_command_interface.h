@@ -2,7 +2,6 @@
 
 #include <memory>
 #include <mutex>
-#include <string>
 #include "talon_interface/talon_state_interface.h"
 #include "state_handle/command_handle.h"
 

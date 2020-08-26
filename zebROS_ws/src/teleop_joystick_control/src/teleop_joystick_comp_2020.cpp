@@ -1,16 +1,18 @@
-#include "teleop_joystick_control/teleop_joystick_comp.h"
-#include "std_srvs/Empty.h"
-
-#include "std_srvs/Trigger.h"
+#include "ros/ros.h"
+#include "frc_msgs/JoystickState.h"
+#include "sensor_msgs/JointState.h"
+#include "geometry_msgs/Twist.h"
+#include <string>
+#include <cmath>
+#include <sensor_msgs/Imu.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
-#include "std_msgs/Int8.h"
 
-#include "actionlib/client/simple_action_client.h"
-
-#include "std_srvs/SetBool.h"
 #include "std_srvs/Empty.h"
+
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
 #include "teleop_joystick_control/OrientStrafingAngle.h"

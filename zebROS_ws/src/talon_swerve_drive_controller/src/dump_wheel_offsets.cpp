@@ -2,7 +2,6 @@
 #include <std_srvs/Trigger.h>
 #include "talon_state_msgs/TalonState.h"
 #include <fstream>
-#include <sstream>
 
 talon_state_msgs::TalonState talon_state_msg;
 

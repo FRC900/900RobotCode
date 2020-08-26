@@ -1,11 +1,19 @@
-#include "teleop_joystick_control/teleop_joystick_comp.h"
-#include "std_srvs/Empty.h"
-
-#include "std_srvs/Trigger.h"
+#include "ros/ros.h"
+#include "frc_msgs/JoystickState.h"
+#include "sensor_msgs/JointState.h"
+#include "geometry_msgs/Twist.h"
+#include <string>
+#include <cmath>
+#include <sensor_msgs/Imu.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/Int8.h"
+
+#include "std_srvs/Empty.h"
+#include "std_srvs/SetBool.h"
 
 #include "actionlib/client/simple_action_client.h"
 #include "behavior_actions/IntakeAction.h"
@@ -20,14 +28,12 @@
 #include "behavior_actions/AlignGoal.h"
 #include "behavior_actions/enumerated_elevator_indices.h"
 
-#include "std_srvs/SetBool.h"
-#include "std_srvs/Empty.h"
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
 #include "teleop_joystick_control/OrientStrafingAngle.h"
 
 #include "controllers_2019_msgs/PanelIntakeSrv.h"
-#include "controllers_2019_msgs/CargoIntakeSrv.h"
+//#include "controllers_2019_msgs/CargoIntakeSrv.h"
 
 #include "dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h"
 #include "teleop_joystick_control/TeleopJoystickCompConfig.h"
@@ -73,7 +79,7 @@ ros::ServiceClient run_align;
 
 ros::ServiceClient manual_server_panelIn;
 ros::ServiceClient manual_server_cargoOut;
-ros::ServiceClient manual_server_cargoIn;
+//ros::ServiceClient manual_server_cargoIn;
 
 ros::ServiceClient continue_outtake_client;
 
@@ -918,7 +924,7 @@ int main(int argc, char **argv)
 
 	manual_server_panelIn = n.serviceClient<controllers_2019_msgs::PanelIntakeSrv>("/frcrobot_jetson/panel_intake_controller/panel_command");
 	//manual_server_cargoOut = n.serviceClient<cargo_outtake_controller::CargoOuttakeSrv>("/cargo_outtake_controller/cargo_outtake_command");
-	manual_server_cargoIn = n.serviceClient<controllers_2019_msgs::CargoIntakeSrv>("/cargo_intake_controller/cargo_intake_command");
+	//manual_server_cargoIn = n.serviceClient<controllers_2019_msgs::CargoIntakeSrv>("/cargo_intake_controller/cargo_intake_command");
 
     continue_outtake_client = n.serviceClient<std_srvs::Empty>("/hatch_outtake/continue_outtake_panel");
 

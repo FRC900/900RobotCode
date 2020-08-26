@@ -5,8 +5,11 @@
 #define private protected
 #include <trajectory_interface/quintic_spline_segment.h>
 #undef private
-#include <joint_trajectory_controller/init_joint_trajectory.h>
 #include <joint_trajectory_controller/joint_trajectory_segment.h>
+#include <array>
+#include <string>
+#include <vector>
+#include "trajectory_msgs/JointTrajectoryPoint.h"
 
 // Some template / polymorphism magic to add a getCoefs()
 // method to the spline type used by the rest of the code

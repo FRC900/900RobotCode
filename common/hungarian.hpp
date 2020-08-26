@@ -1,7 +1,5 @@
 // from https://raw.githubusercontent.com/Smorodov/Multitarget-tracker/master/HungarianAlg/HungarianAlg.h
 #include <vector>
-#include <iostream>
-#include <limits>
 // http://community.topcoder.com/tc?module=Static&d1=tutorials&d2=hungarianAlgorithm
 class AssignmentProblemSolver
 {
