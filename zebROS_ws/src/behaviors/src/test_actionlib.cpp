@@ -16,7 +16,6 @@
 #include <behavior_actions/enumerated_elevator_indices.h>
 #include <boost/algorithm/string.hpp>
 #include <string>
-#include <atomic>
 
 double server_wait_timeout = 20.0; //how long to wait for a server to exist before exiting, in sec.
 double server_exec_timeout = 20.0; //how long to wait for an actionlib server call to finish before timing out, in sec. Used for all actionlib calls

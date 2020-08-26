@@ -24,7 +24,6 @@
 
 //include controller service files and other service files
 #include "controllers_2020_msgs/ShooterSrv.h"
-#include "controllers_2020_msgs/IndexerSrv.h"
 
 //include msg types
 #include "field_obj/Detection.h"
@@ -399,7 +398,8 @@ class ShooterAction {
 
 		}
 
-		void waitForActionlibServer(auto &action_client, double timeout, const std::string &activity, bool ignore_preempt=false)
+		template <class T>
+		void waitForActionlibServer(T &action_client, double timeout, const std::string &activity, bool ignore_preempt=false)
 			//activity is a description of what we're waiting for, e.g. "waiting for mechanism to extend" - helps identify where in the server this was called (for error msgs)
 		{
 			double request_time = ros::Time::now().toSec();

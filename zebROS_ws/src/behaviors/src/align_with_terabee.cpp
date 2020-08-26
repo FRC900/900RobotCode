@@ -2,14 +2,13 @@
 // commands intended to drive the robot.  Goal is to mimic a PID node
 // for integration into auto-align server code
 #include <ros/ros.h>
+#include <cmath>
 #include <vector>
 #include "teraranger_array/RangeArray.h"
-#include "geometry_msgs/Twist.h"
 #include "std_srvs/SetBool.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/Float64MultiArray.h"
-#include <atomic>
 
 #define NUM_SENSORS 8
 
@@ -30,9 +29,9 @@ std::vector<double> adjust_terabee_dists;
 bool publish = false;
 bool publish_last = false;
 
-const double default_min_dist_ = 1.5;
-std::atomic<double> min_dist;
-std::atomic<double> min_dist_cargo;
+constexpr double default_min_dist_ = 1.5;
+double min_dist;
+double min_dist_cargo;
 double min_dist_local;
 double min_dist_cargo_local;
 

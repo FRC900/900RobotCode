@@ -4,10 +4,8 @@
 #include <behavior_actions/AutoState.h> //msg file
 #include <std_srvs/Empty.h>
 #include <frc_msgs/MatchSpecificData.h>
-#include <geometry_msgs/Point32.h>
 
 #include <actionlib/client/simple_action_client.h>
-#include <behavior_actions/ElevatorAction.h> //TODO remove this, it's for testing using last year's stuff
 #include <behavior_actions/IntakeAction.h>
 #include <behavior_actions/ShooterAction.h>
 #include <path_follower_msgs/PathAction.h>

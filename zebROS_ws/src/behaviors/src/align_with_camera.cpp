@@ -5,19 +5,18 @@
 // which might be better separate - translating between frames, adding latency
 // compensation and then adding a controller to move towards the target
 #include <ros/ros.h>
+#include <cmath>
 #include <vector>
-#include "geometry_msgs/Twist.h"
 #include "geometry_msgs/PointStamped.h"
+#include "message_filters/subscriber.h"
 #include "std_srvs/SetBool.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/Float64MultiArray.h"
 //tf stuff
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/message_filter.h"
-#include "message_filters/subscriber.h"
-#include "geometry_msgs/PointStamped.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 bool publish = false;
 //bool goals_found = false;
@@ -144,7 +143,7 @@ int main(int argc, char ** argv)
 	{
 		//bool aligned = false;
 		double error;
-	   	if(axis == "y")
+		if(axis == "y")
 		{
 			error = relative_goal_location.point.y;
 		}
@@ -155,6 +154,7 @@ int main(int argc, char ** argv)
 		else
 		{
 			ROS_ERROR_STREAM("AXIS IS NOT X OR Y IN ALIGN_WITH_CAMERA");
+			break;
 		}
 
 		// Very basic latency compensation - assumes we've been moving a constant speed

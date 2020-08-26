@@ -4,8 +4,6 @@
 // for aligning with the cargoship using the ZED camera
 //
 #include "behaviors/base_align_with_vision_server.h"
-#include <thread>
-#include <std_msgs/Float64.h>
 
 // TODO - make a member of the align class
 bool debug = true;

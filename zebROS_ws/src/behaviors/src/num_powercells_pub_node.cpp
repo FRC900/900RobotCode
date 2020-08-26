@@ -1,10 +1,8 @@
 #include <ros/ros.h>
 #include <behaviors/linebreak.h>
-#include <sensor_msgs/JointState.h>
 #include <talon_state_msgs/TalonState.h>
 #include <frc_msgs/MatchSpecificData.h>
 #include <std_msgs/UInt8.h>
-#include <std_srvs/Empty.h>
 #include <behavior_actions/resetBallSrv.h>
 
 //velocity variables, updated by talonStateCallback()

@@ -1,7 +1,5 @@
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
-#include "actionlib/client/simple_action_client.h"
-#include <atomic>
 #include <ros/console.h>
 
 //include action files - for this actionlib server and any it sends requests to
@@ -11,9 +9,6 @@
 #include "controllers_2020_msgs/IntakeRollerSrv.h"
 #include "controllers_2020_msgs/IntakeArmSrv.h"
 #include "controllers_2020_msgs/IndexerSrv.h"
-
-
-#include "behaviors/linebreak.h" //contains the Linebreak class, which has logic for processing linebreak signals
 
 //create the class for the actionlib server
 class EjectAction {

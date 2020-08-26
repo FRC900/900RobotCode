@@ -2,7 +2,6 @@
 #include "actionlib/server/simple_action_server.h"
 #include "actionlib/client/simple_action_client.h"
 #include <atomic>
-#include <thread>
 #include <ros/console.h>
 
 //include action files - for this actionlib server and any it sends requests to
@@ -14,14 +13,9 @@
 //include controller service files and other service files
 #include "controllers_2020_msgs/IndexerSrv.h"
 #include "controllers_2020_msgs/IntakeRollerSrv.h"
-#include "sensor_msgs/JointState.h" //for linebreak sensor data
 #include "std_msgs/UInt8.h" //for subscribing to num balls
-#include "std_srvs/SetBool.h" //for disabling the intake
 
 #include "behaviors/linebreak.h" //contains a class used for linebreak logic
-
-
-
 
 //create the class for the actionlib server
 class IndexerAction {

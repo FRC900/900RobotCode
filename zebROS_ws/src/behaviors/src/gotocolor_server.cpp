@@ -6,11 +6,8 @@
 
 #include "ros/ros.h"
 #include "actionlib/server/simple_action_server.h"
-#include "actionlib/client/simple_action_client.h"
 #include <atomic>
-#include <ros/console.h>
 #include <cctype>
-#include <string>
 
 //include action files - for this actionlib server and any it sends requests to
 #include "behavior_actions/GoToColorAction.h"
@@ -22,8 +19,6 @@
 #include "color_spin/color_algorithm.h"
 #include "controllers_2020_msgs/ControlPanelSrv.h"
 #include "controllers_2020_msgs/ClimberSrv.h"
-#include "geometry_msgs/Twist.h"
-#include "talon_state_msgs/TalonState.h"
 #include "std_msgs/Int8.h"
 
 enum colors{blue, red, yellow, green};
@@ -37,7 +32,7 @@ class GoToColorControlPanelAction {
 		ros::Subscriber color_detect_sub_;
 		actionlib::SimpleActionServer<behavior_actions::GoToColorAction> as_; //create the actionlib server
 		std::string action_name_;
-		
+
 		//ros::Publisher cmd_vel_publisher_;
 
 		//clients to call controllers
@@ -52,8 +47,8 @@ class GoToColorControlPanelAction {
 		ros::Rate r{10}; //used for wait loops, curly brackets needed so it doesn't think this is a function
 		double start_time_;
 
-		std::string goal_color_ = "";
-		std::string current_color_;
+		std::atomic<char> goal_color_{0};
+		char current_color_;
 
 		/*
 		std::atomic<double> cmd_vel_forward_speed_;
@@ -72,7 +67,7 @@ class GoToColorControlPanelAction {
 		/*
 		double drive_forward_speed;
 		double back_up_speed;
-		
+
 		double avg_current;header
 		double avg_current_limit;
 
@@ -174,7 +169,7 @@ class GoToColorControlPanelAction {
 			preempted_ = false;
 			timed_out_ = false;
 
-			if(goal_color_ == "")
+			if(goal_color_ == '\0')
 			{
 				ROS_ERROR_STREAM("Can't spin to color, match data hasn't given a color");
 				return;
@@ -258,7 +253,7 @@ class GoToColorControlPanelAction {
 					ROS_ERROR_STREAM(action_name_ << ": preempt while calling color algorithm");
 					preempted_ = true;
 				}
-                      
+
 				if(!preempted_ && !timed_out_ && ros::ok()) //Send rotation to control panel controller
 				{
 					controllers_2020_msgs::ControlPanelSrv panel_srv;
@@ -268,7 +263,7 @@ class GoToColorControlPanelAction {
 						preempted_ = true;
 					}
 				}
-				
+
 				//check preempted_
 				if(as_.isPreemptRequested() || !ros::ok()) {
 					ROS_ERROR_STREAM(action_name_ << ": preempt while calling control panel controller");
@@ -300,7 +295,7 @@ class GoToColorControlPanelAction {
 
 			//Retract the climber
 			controllers_2020_msgs::ClimberSrv climb_srv;
-			climb_srv.request.winch_percent_out = 0;	
+			climb_srv.request.winch_percent_out = 0;
 			climb_srv.request.climber_deploy = false;
 			climb_srv.request.climber_elevator_brake = true;
 			if(!climber_controller_client_.call(climb_srv))
@@ -338,7 +333,8 @@ class GoToColorControlPanelAction {
 		}
 
 
-		void waitForActionlibServer(auto &action_client, double timeout, const std::string &activity)
+		template <class T>
+		void waitForActionlibServer(T &action_client, double timeout, const std::string &activity)
 			//activity is a description of what we're waiting for, e.g. "waiting for mechanism to extend" - helps identify where in the server this was called (for error msgs)
 		{
 			double request_time = ros::Time::now().toSec();
@@ -388,23 +384,23 @@ class GoToColorControlPanelAction {
 		void detectColorCallback(const std_msgs::Int8 &color_data){
 			switch(color_data.data) {
 				case blue:
-					current_color_ = "B";
+					current_color_ = 'B';
 					break;
 
 				case red:
-					current_color_ = "R";
+					current_color_ = 'R';
 					break;
 
 				case yellow:
-					current_color_ = "Y";
+					current_color_ = 'Y';
 					break;
 
 				case green:
-					current_color_ = "G";
+					current_color_ = 'G';
 					break;
+
 				default:
 					ROS_ERROR_STREAM(action_name_ << ": color detect didn't return valid color");
-					
 			}
 		}
 
@@ -474,7 +470,7 @@ int main(int argc, char** argv) {
                 ROS_ERROR("Could not read avg_current_limit in go_to_color_control_panel_server");
                 go_to_color_control_panel.avg_current_limit = .01;
         }
-	
+
 	if (!n.getParam("/actionlib_gotocolor_params/num_drive_motors", go_to_color_control_panel.num_drive_motors))
         {
                 ROS_ERROR("Could not read num_drive_motors in go_to_color_control_panel_server");

@@ -4,7 +4,6 @@
 #include "behavior_actions/ElevatorAction.h"
 #include "behavior_actions/PlaceAction.h"
 #include "controllers_2019_msgs/CargoIntakeSrv.h"
-#include "sensor_msgs/JointState.h"
 #include "behavior_actions/enumerated_elevator_indices.h"
 
 //define global variables that will be defined based on config values
