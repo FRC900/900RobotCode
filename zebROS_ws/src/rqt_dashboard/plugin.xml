@@ -1,0 +1,20 @@
+<library path="lib/libagent_gui">
+  <class name="rqt_dashboard" type="rqt_dashboard.dashboard.Dashboard" base_class_type="rqt_gui_py::Plugin">
+    <description>
+        Dashboard to run on the driver station, used for things like zeroing the IMU and picking auto mode
+    </description>
+    <qtgui>
+      <!-- optional grouping...
+      <group>
+        <label>Group</label>
+      </group>
+      <group>
+        <label>Subgroup</label>
+      </group>
+      -->
+      <label>Rqt Dashboard</label>
+      <icon type="theme">system-help</icon>
+      <statustip>This is a dashboard to run on the driver station</statustip>
+    </qtgui>
+  </class>
+</library>

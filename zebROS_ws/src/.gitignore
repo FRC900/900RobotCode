@@ -22,3 +22,5 @@ pid
 cpu_monitor
 adi_driver
 stage_ros
+ros_bridge
+
