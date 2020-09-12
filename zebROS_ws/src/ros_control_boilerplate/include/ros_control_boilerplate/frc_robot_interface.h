@@ -39,26 +39,49 @@
 
 #pragma once
 
-// ROS
-#include <ros/ros.h>
-#include <urdf/model.h>
+#include <thread>
+#include <unordered_map>
 
-// ROS Controls
+// ROS
 #include <controller_manager/controller_manager.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/joint_mode_interface.h>
 #include <hardware_interface/robot_hw.h>
+#include <ros/ros.h>
+#include <realtime_tools/realtime_publisher.h>
+#include <urdf/model.h>
+
+// ROS Controls
 #include "as726x_interface/as726x_interface.h"
+#include "frc_interfaces/match_data_interface.h"
 #include "frc_interfaces/pcm_state_interface.h"
 #include "frc_interfaces/pdp_state_interface.h"
-#include "frc_interfaces/match_data_interface.h"
 #include "frc_interfaces/robot_controller_interface.h"
+#include "frc_msgs/ButtonBoxState.h"
+#include "frc_msgs/JoystickState.h"
 #include "remote_joint_interface/remote_joint_interface.h"
+#include "ros_control_boilerplate/ros_iterative_robot.h"
 #include "talon_interface/cancoder_command_interface.h"
 #include "talon_interface/canifier_command_interface.h"
-#include "talon_interface/talon_command_interface.h"
-#include "talon_interface/orchestra_state_interface.h"
 #include "talon_interface/orchestra_command_interface.h"
+#include "talon_interface/talon_command_interface.h"
+
+#include "ros_control_boilerplate/tracer.h"
+
+// WPILIB stuff
+#include <hal/FRCUsageReporting.h>
+#include <hal/HALBase.h>
+#include <hal/Types.h>
+
+// Use forward declarations to avoid including a whole bunch of
+// WPIlib headers we don't care about - this speeds up the build process
+class AHRS;
+namespace frc { class AnalogInput; }
+namespace frc { class DigitalInput; }
+namespace frc { class DigitalOutput; }
+namespace frc { class Joystick; }
+namespace frc { class NidecBrushless; }
+namespace frc { class PWM; }
 
 namespace ros_control_boilerplate
 {
@@ -98,19 +121,31 @@ class CustomProfileState
 	std::vector<std::vector<double>> saved_times_;
 };
 
+//Stuff from frcrobot_hw_interface
+class DoubleSolenoidHandle
+{
+	public:
+		DoubleSolenoidHandle(HAL_SolenoidHandle forward, HAL_SolenoidHandle reverse)
+			: forward_(forward)
+			  , reverse_(reverse)
+		{
+		}
+		HAL_SolenoidHandle forward_;
+		HAL_SolenoidHandle reverse_;
+};
+
 /// \brief Hardware interface for a robot
 class FRCRobotInterface : public hardware_interface::RobotHW
 {
 	public:
+		//******Stuff from frcrobot_hw_interface
 		/**
 		 * \brief Constructor
 		 * \param nh - Node handle for topics.
 		 * \param urdf - optional pointer to a parsed robot model
 		 */
 		FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_model = NULL);
-
-		/** \brief Destructor */
-		virtual ~FRCRobotInterface() {}
+		~FRCRobotInterface();
 
 		/** \brief Initialize the hardware interface */
 		virtual bool init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh) override;
@@ -124,6 +159,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		/** \brief Set all members to default values */
 		virtual void reset();
 
+		//******
 		/**
 		 * \brief Check (in non-realtime) if given controllers could be started and stopped from the
 		 * current state of the RobotHW
@@ -131,10 +167,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		 * This is just a check, the actual switch is done in doSwitch()
 		 */
 		virtual bool prepareSwitch(const std::list<hardware_interface::ControllerInfo> &/*start_list*/,
-							       const std::list<hardware_interface::ControllerInfo> &/*stop_list*/) override
-		{
-			return true;
-		}
+							       const std::list<hardware_interface::ControllerInfo> &/*stop_list*/) override;
 
 		/**
 		 * \brief Perform (in non-realtime) all necessary hardware interface switches in order to start
@@ -207,6 +240,9 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 								  const bool saw_local_keyword,
 								  bool &local_update,
 								  bool &local_hardware);
+		void readConfig(ros::NodeHandle rpnh);
+		void createInterfaces(void);
+		bool initDevices(ros::NodeHandle root_nh);
 
 		// Configuration
 		std::vector<std::string> can_ctre_mc_names_;
@@ -315,6 +351,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<std::string> joystick_names_;
 		std::vector<int>         joystick_ids_; // pretty sure this is montonic increasing by default?
 		std::vector<bool>        joystick_locals_;
+		std::vector<std::string> joystick_types_;
 		std::size_t              num_joysticks_;
 
 		std::vector<std::string> as726x_names_;
@@ -352,7 +389,9 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<hardware_interface::PCMState> pcm_state_;
 		hardware_interface::RobotControllerState robot_controller_state_;
 		hardware_interface::MatchHWState match_data_;
-                std::vector<hardware_interface::OrchestraState> orchestra_state_;
+	    std::vector<hardware_interface::OrchestraState> orchestra_state_;
+		std::mutex match_data_mutex_;
+		std::mutex joystick_mutex_;
 
 		// Each entry in the vector is an array. That array holds
 		// the data returned from one particular imu
@@ -391,6 +430,69 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 
 		std::vector<double> robot_ready_signals_;
 		bool                robot_code_ready_;
+
+		/* Get conversion factor for position, velocity, and closed-loop stuff */
+
+		double getConversionFactor(int encoder_ticks_per_rotation, hardware_interface::FeedbackDevice encoder_feedback, hardware_interface::TalonMode talon_mode);
+		//certain data will be read at a slower rate than the main loop, for computational efficiency
+		//robot iteration calls - sending stuff to driver station
+		double t_prev_robot_iteration_;
+		double robot_iteration_hz_;
+
+		double t_prev_joystick_read_;
+		double joystick_read_hz_;
+
+		double t_prev_match_data_read_;
+		double match_data_read_hz_;
+
+		double t_prev_robot_controller_read_;
+		double robot_controller_read_hz_;
+
+
+		// Maintain a separate read thread for each talon SRX
+		std::vector<std::shared_ptr<std::mutex>> ctre_mc_read_state_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::TalonHWState>> ctre_mc_read_thread_states_;
+		std::vector<std::thread> ctre_mc_read_threads_;
+
+		std::vector<std::shared_ptr<frc::NidecBrushless>> nidec_brushlesses_;
+		std::vector<std::shared_ptr<frc::DigitalInput>> digital_inputs_;
+		std::vector<std::shared_ptr<frc::DigitalOutput>> digital_outputs_;
+		std::vector<std::shared_ptr<frc::PWM>> PWMs_;
+		std::vector<HAL_SolenoidHandle> solenoids_;
+		std::vector<DoubleSolenoidHandle> double_solenoids_;
+		std::vector<std::shared_ptr<AHRS>> navXs_;
+		std::vector<std::shared_ptr<frc::AnalogInput>> analog_inputs_;
+
+		std::vector<std::shared_ptr<std::mutex>> pcm_read_thread_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::PCMState>> pcm_read_thread_state_;
+		void pcm_read_thread(HAL_CompressorHandle compressor_handle, int32_t pcm_id, std::shared_ptr<hardware_interface::PCMState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
+		std::vector<std::thread> pcm_thread_;
+		std::vector<HAL_CompressorHandle> compressors_;
+
+		std::vector<std::shared_ptr<std::mutex>> pdp_read_thread_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::PDPHWState>> pdp_read_thread_state_;
+		void pdp_read_thread(int32_t pdp, std::shared_ptr<hardware_interface::PDPHWState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
+		std::vector<std::thread> pdp_thread_;
+		std::vector<int32_t> pdps_;
+		std::vector<std::shared_ptr<frc::Joystick>> joysticks_;
+		std::vector<bool> joystick_up_last_;
+		std::vector<bool> joystick_down_last_;
+		std::vector<bool> joystick_left_last_;
+		std::vector<bool> joystick_right_last_;
+		std::vector<frc_msgs::ButtonBoxState> prev_button_box_state_;
+
+		void joystick_pub_function(int i);
+		void button_box_pub_function(int i);
+		const std::unordered_map<std::string, std::function<void(int)>> joystick_fn_map_
+		{
+			{"joystick", std::bind(&FRCRobotInterface::joystick_pub_function, this, std::placeholders::_1)},
+			{"button_box", std::bind(&FRCRobotInterface::button_box_pub_function, this, std::placeholders::_1)}
+		};
+		std::vector<std::unique_ptr<realtime_tools::RealtimePublisher<frc_msgs::JoystickState>>> realtime_pub_joysticks_;
+		std::vector<std::unique_ptr<realtime_tools::RealtimePublisher<frc_msgs::ButtonBoxState>>> realtime_pub_button_boxes_;
+
+		std::unique_ptr<ROSIterativeRobot> robot_;
+		Tracer read_tracer_;
 
 };  // class
 

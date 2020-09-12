@@ -39,13 +39,12 @@
 
 #pragma once
 
-#include <ros_control_boilerplate/frc_robot_interface.h>
-#include <frc_msgs/MatchSpecificData.h>
+#include <sensor_msgs/Joy.h>
+#include "frc_msgs/MatchSpecificData.h"
 
-#include <ros_control_boilerplate/set_limit_switch.h>
-
-#include <ros_control_boilerplate/LineBreakSensors.h>
-
+#include "ros_control_boilerplate/frc_robot_interface.h"
+#include "ros_control_boilerplate/LineBreakSensors.h"
+#include "ros_control_boilerplate/set_limit_switch.h"
 
 namespace frcrobot_control
 {
@@ -72,10 +71,11 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 
 	private:
         ros::Subscriber match_data_sub_;
+		std::vector<ros::Subscriber> joystick_subs_;
         void match_data_callback(const frc_msgs::MatchSpecificData &match_data);
+		void joystickCallback(const sensor_msgs::JoyConstPtr &msg, int32_t joystick_num);
 		bool evaluateDigitalInput(ros_control_boilerplate::LineBreakSensors::Request &req, ros_control_boilerplate::LineBreakSensors::Response &res);
 
-		std::mutex match_data_mutex_;
 		ros::ServiceServer linebreak_sensor_srv_;
 		ros::ServiceServer limit_switch_srv_;
 };  // class

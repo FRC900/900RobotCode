@@ -26,6 +26,7 @@ class MatchHWState
 			ds_attached_(false),
 			operator_control_(true),
 			test_(false),
+			e_stopped_(false),
 
 			battery_voltage_(0.0),
 			get_match_time_status_("0: "),
@@ -36,7 +37,7 @@ class MatchHWState
 		//access and set
         double getMatchTimeRemaining(void)            const {return match_time_remaining_;}
 
-        std::string getGameSpecificData(void)         const {return game_specific_data_;}
+        std::vector<uint8_t> getGameSpecificData(void)const {return game_specific_data_;}
         std::string getEventName(void)                const {return event_name_;}
 
         int getAllianceColor(void)                    const {return alliance_color_;}
@@ -52,6 +53,7 @@ class MatchHWState
         bool isDSAttached(void)                       const {return ds_attached_;}
         bool isOperatorControl(void)                  const {return operator_control_;}
         bool isTest(void)                             const {return test_;}
+		bool isEStopped(void)                         const {return e_stopped_;}
 
         double getBatteryVoltage(void)                const {return battery_voltage_;}
 
@@ -61,7 +63,7 @@ class MatchHWState
 
         void setMatchTimeRemaining(double match_time_remaining)         {match_time_remaining_ = match_time_remaining;}
 
-        void setGameSpecificData(const std::string &game_specific_data) {game_specific_data_ = game_specific_data;}
+        void setGameSpecificData(const std::vector<uint8_t> &game_specific_data) {game_specific_data_ = game_specific_data;}
 
         void setEventName(const std::string &event_name)                {event_name_ = event_name;}
 
@@ -78,6 +80,7 @@ class MatchHWState
         void setDSAttached(bool ds_attached)                            {ds_attached_ = ds_attached;}
         void setOperatorControl(bool operator_control)                  {operator_control_ = operator_control;}
         void setTest(bool test)                                         {test_ = test;}
+		void setEStopped(bool e_stopped)                                {e_stopped_ = e_stopped;}
 
         void setBatteryVoltage(double battery_voltage)                  {battery_voltage_ = battery_voltage;}
 
@@ -88,7 +91,7 @@ class MatchHWState
 	private:
 		double      match_time_remaining_;
 
-		std::string game_specific_data_;
+		std::vector<uint8_t> game_specific_data_;
 		std::string event_name_;
 
 		int         alliance_color_;
@@ -104,6 +107,7 @@ class MatchHWState
 		bool        ds_attached_;
 		bool        operator_control_;
 		bool        test_;
+		bool        e_stopped_;
 
 		double      battery_voltage_;
 

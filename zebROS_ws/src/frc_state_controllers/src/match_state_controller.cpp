@@ -26,12 +26,12 @@ namespace match_state_controller
 			ROS_ERROR("Could not read publish_rate in match state controller");
 
 		//set up publisher
-		realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::MatchSpecificData>(root_nh, "match_data", 4));
+		realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::MatchSpecificData>(root_nh, "match_data", 2));
 
 		auto &m = realtime_pub_->msg_;
 
 		m.matchTimeRemaining = 0.0;
-		m.gameSpecificData = "";
+		m.gameSpecificData.clear();
 		m.eventName = "";
 		m.allianceColor = 0.0;
 		m.matchType = 0.0;
@@ -45,6 +45,7 @@ namespace match_state_controller
 		m.FMSAttached = false;
 		m.OperatorControl = false;
 		m.Test = false;
+		m.EStopped = false;
 		m.BatteryVoltage = 0.0;
 		m.getMatchTimeStatus = "";
 		m.getAllianceStationStatus = "";
@@ -72,7 +73,7 @@ namespace match_state_controller
 
 				m.header.stamp = time;
 
-				auto &ms = match_state_;
+				const auto &ms = match_state_;
 
 				//read from the object and stuff it in a msg
 				m.matchTimeRemaining = ms->getMatchTimeRemaining();
@@ -90,6 +91,7 @@ namespace match_state_controller
 				m.FMSAttached = ms->isFMSAttached();
 				m.OperatorControl = ms->isOperatorControl();
 				m.Test = ms->isTest();
+				m.EStopped = ms->isEStopped();
 				m.BatteryVoltage = ms->getBatteryVoltage();
 
 				m.getMatchTimeStatus = ms->getGetMatchTimeStatus();

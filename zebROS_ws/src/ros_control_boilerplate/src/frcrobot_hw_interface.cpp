@@ -70,21 +70,15 @@
 #include <cmath>
 #include <iostream>
 
-#include <tf2/LinearMath/Quaternion.h>
 #include "ros_control_boilerplate/frcrobot_hw_interface.h"
 #include "ros_control_boilerplate/error_queue.h"
 
 //HAL / wpilib includes
 #include <HALInitializer.h>
-//#include <networktables/NetworkTable.h>
-#include <hal/CAN.h>
 #include <hal/Compressor.h>
 #include <hal/DriverStation.h>
-//#include <hal/Errors.h>
 #include <hal/PDP.h>
-#include <hal/Power.h>
 #include <hal/Solenoid.h>
-#include <frc/Joystick.h>
 
 #include <ctre/phoenix/motorcontrol/SensorCollection.h>
 #include <ctre/phoenix/platform/Platform.h>
@@ -163,18 +157,6 @@ FRCRobotHWInterface::~FRCRobotHWInterface()
 		}
 	}
 
-	for (size_t i = 0; i < num_solenoids_; i++)
-		HAL_FreeSolenoidPort(solenoids_[i]);
-	for (size_t i = 0; i < num_double_solenoids_; i++)
-	{
-		HAL_FreeSolenoidPort(double_solenoids_[i].forward_);
-		HAL_FreeSolenoidPort(double_solenoids_[i].reverse_);
-	}
-
-	for (size_t i = 0; i < num_compressors_; i++)
-		pcm_thread_[i].join();
-	for (size_t i = 0; i < num_pdps_; i++)
-		pdp_thread_[i].join();
 	for (size_t i = 0; i < num_as726xs_; i++)
 		as726x_thread_[i].join();
 	for (size_t i = 0; i < num_cancoders_; i++)
@@ -185,26 +167,13 @@ FRCRobotHWInterface::~FRCRobotHWInterface()
 
 bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 {
-	// Do base class init. This loads common interface info
-	// used by both the real and sim interfaces
-	if (!FRCRobotInterface::init(root_nh, robot_hw_nh))
-	{
-		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": FRCRobotInterface::init() returnd false");
-		return false;
-	}
-
 	if (run_hal_robot_)
 	{
-		// Make sure to initialize WPIlib code before creating
-		// a CAN Talon object to avoid NIFPGA: Resource not initialized
-		// errors? See https://www.chiefdelphi.com/forums/showpost.php?p=1640943&postcount=3
-		robot_.reset(new ROSIterativeRobot());
 		ds_error_server_ = robot_hw_nh.advertiseService("/frcrobot_rio/ds_error_service", &FRCRobotHWInterface::DSErrorCallback, this);
 	}
 	else
 	{
-		// This is for non Rio-based robots.  Call init for the wpilib HAL code
-		// we've "borrowed" before using them
+		// This is for non Rio-based robots.  Call init for the wpilib HAL code we've "borrowed" before using them
 		hal::init::InitializeCANAPI();
 		hal::init::InitializeCompressor();
 		hal::init::InitializePCMInternal();
@@ -218,6 +187,14 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 		{
 			HAL_SendError(true, -1, false, "SetCANInterface failed - likely CAN adapter failure", "", "", true);
 		}
+	}
+
+	// Do base class init. This loads common interface info
+	// used by both the real and sim interfaces
+	if (!FRCRobotInterface::init(root_nh, robot_hw_nh))
+	{
+		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": FRCRobotInterface::init() returnd false");
+		return false;
 	}
 
 	can_error_count_ = 0;
@@ -342,305 +319,6 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 			cancoders_.push_back(nullptr);
 			cancoder_read_state_mutexes_.push_back(nullptr);
 			cancoder_read_thread_states_.push_back(nullptr);
-		}
-	}
-	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-							  "Loading joint " << i << "=" << nidec_brushless_names_[i] <<
-							  (nidec_brushless_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (nidec_brushless_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as PWM channel " << nidec_brushless_pwm_channels_[i] <<
-							  " / DIO channel " << nidec_brushless_dio_channels_[i] <<
-							  " invert " << nidec_brushless_inverts_[i]);
-
-		if (nidec_brushless_local_hardwares_[i])
-		{
-			nidec_brushlesses_.push_back(std::make_shared<frc::NidecBrushless>(nidec_brushless_pwm_channels_[i], nidec_brushless_dio_channels_[i]));
-			nidec_brushlesses_[i]->SetInverted(nidec_brushless_inverts_[i]);
-		}
-		else
-			nidec_brushlesses_.push_back(nullptr);
-	}
-	for (size_t i = 0; i < num_digital_inputs_; i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-							  "Loading joint " << i << "=" << digital_input_names_[i] <<
-							  " local = " << digital_input_locals_[i] <<
-							  " as Digital Input " << digital_input_dio_channels_[i] <<
-							  " invert " << digital_input_inverts_[i]);
-
-		if (digital_input_locals_[i])
-		{
-			bool need_new_hal_din = true;
-			for (size_t j = 0; (j < i) && need_new_hal_din; j++)
-			{
-				if (digital_input_dio_channels_[i] == digital_input_dio_channels_[j])
-				{
-					digital_inputs_.push_back(digital_inputs_[j]);
-					need_new_hal_din = false;
-						ROS_WARN_STREAM("DIn " << digital_input_names_[i] <<
-								" uses same channel (" << digital_input_dio_channels_[i] <<
-								") as " <<  digital_input_names_[j]);
-				}
-			}
-			if (need_new_hal_din)
-				digital_inputs_.push_back(std::make_shared<frc::DigitalInput>(digital_input_dio_channels_[i]));
-		}
-		else
-		{
-			digital_inputs_.push_back(nullptr);
-		}
-	}
-	for (size_t i = 0; i < num_digital_outputs_; i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-							  "Loading joint " << i << "=" << digital_output_names_[i] <<
-							  (digital_output_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (digital_output_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as Digital Output " << digital_output_dio_channels_[i] <<
-							  " invert " << digital_output_inverts_[i]);
-
-		if (digital_output_local_hardwares_[i])
-			digital_outputs_.push_back(std::make_shared<frc::DigitalOutput>(digital_output_dio_channels_[i]));
-		else
-			digital_outputs_.push_back(nullptr);
-	}
-	for (size_t i = 0; i < num_pwms_; i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-							  "Loading joint " << i << "=" << pwm_names_[i] <<
-							  (pwm_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (pwm_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as Digitial Output " << pwm_pwm_channels_[i] <<
-							  " invert " << pwm_inverts_[i]);
-
-		if (pwm_local_hardwares_[i])
-		{
-			PWMs_.push_back(std::make_shared<frc::PWM>(pwm_pwm_channels_[i]));
-			PWMs_[i]->SetSafetyEnabled(true);
-		}
-		else
-			PWMs_.push_back(nullptr);
-	}
-	for (size_t i = 0; i < num_solenoids_; i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-							  "Loading joint " << i << "=" << solenoid_names_[i] <<
-							  (solenoid_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (solenoid_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as Solenoid " << solenoid_ids_[i]
-							  << " with pcm " << solenoid_pcms_[i]);
-
-		// Need to have 1 solenoid instantiated on the Rio to get
-		// support for compressor and so on loaded?
-		if (solenoid_local_hardwares_[i])
-		{
-			int32_t status = 0;
-			solenoids_.push_back(HAL_InitializeSolenoidPort(HAL_GetPortWithModule(solenoid_pcms_[i], solenoid_ids_[i]), &status));
-			if (solenoids_.back() == HAL_kInvalidHandle)
-				ROS_ERROR_STREAM("Error intializing solenoid : status=" << status);
-			else
-				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
-						solenoid_ids_[i], solenoid_pcms_[i]);
-		}
-		else
-			solenoids_.push_back(HAL_kInvalidHandle);
-	}
-	for (size_t i = 0; i < num_double_solenoids_; i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-							  "Loading joint " << i << "=" << double_solenoid_names_[i] <<
-							  (double_solenoid_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (double_solenoid_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as Double Solenoid forward " << double_solenoid_forward_ids_[i] <<
-							  " reverse " << double_solenoid_reverse_ids_[i]
-							  << " with pcm " << double_solenoid_pcms_[i]);
-
-		if (double_solenoid_local_hardwares_[i])
-		{
-			int32_t forward_status = 0;
-			int32_t reverse_status = 0;
-			auto forward_handle = HAL_InitializeSolenoidPort(
-					HAL_GetPortWithModule(double_solenoid_pcms_[i], double_solenoid_forward_ids_[i]),
-					&forward_status);
-			auto reverse_handle = HAL_InitializeSolenoidPort(
-					HAL_GetPortWithModule(double_solenoid_pcms_[i], double_solenoid_reverse_ids_[i]),
-					&reverse_status);
-			if ((forward_handle != HAL_kInvalidHandle) &&
-			    (reverse_handle != HAL_kInvalidHandle) )
-			{
-				double_solenoids_.push_back(DoubleSolenoidHandle(forward_handle, reverse_handle));
-				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
-						double_solenoid_forward_ids_[i], double_solenoid_pcms_[i]);
-				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
-						double_solenoid_reverse_ids_[i], double_solenoid_pcms_[i]);
-			}
-			else
-			{
-				ROS_ERROR_STREAM("Error intializing double solenoid : status=" << forward_status << " : " << reverse_status);
-				double_solenoids_.push_back(DoubleSolenoidHandle(HAL_kInvalidHandle, HAL_kInvalidHandle));
-				HAL_FreeSolenoidPort(forward_handle);
-				HAL_FreeSolenoidPort(reverse_handle);
-			}
-		}
-		else
-		{
-			double_solenoids_.push_back(DoubleSolenoidHandle(HAL_kInvalidHandle, HAL_kInvalidHandle));
-		}
-	}
-
-	//RIGHT NOW THIS WILL ONLY WORK IF THERE IS ONLY ONE NAVX INSTANTIATED
-	for(size_t i = 0; i < num_navX_; i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-				"Loading joint " << i << "=" << navX_names_[i] <<
-				" as navX id " << navX_ids_[i] <<
-				" local = " << navX_locals_[i]);
-		//TODO: fix how we use ids
-
-		if (navX_locals_[i])
-			navXs_.push_back(std::make_shared<AHRS>(frc::SPI::Port::kMXP));
-		else
-			navXs_.push_back(nullptr);
-
-		// This is a guess so TODO : get better estimates
-		imu_orientation_covariances_[i] = {0.0015, 0.0, 0.0, 0.0, 0.0015, 0.0, 0.0, 0.0, 0.0015};
-		imu_angular_velocity_covariances_[i] = {0.0015, 0.0, 0.0, 0.0, 0.0015, 0.0, 0.0, 0.0, 0.0015};
-		imu_linear_acceleration_covariances_[i] ={0.0015, 0.0, 0.0, 0.0, 0.0015, 0.0, 0.0, 0.0, 0.0015};
-		break; // TODO : only support 1 for now - if we need more, need to define
-		       // the interface in config files somehow
-	}
-	for (size_t i = 0; i < num_analog_inputs_; i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-							  "Loading joint " << i << "=" << analog_input_names_[i] <<
-							  " local = " << analog_input_locals_[i] <<
-							  " as Analog Input " << analog_input_analog_channels_[i]);
-		if (analog_input_locals_[i])
-		{
-			bool need_new_hal_ain = true;
-			for (size_t j = 0; (j < i) && need_new_hal_ain; j++)
-			{
-				if (analog_input_analog_channels_[i] == analog_input_analog_channels_[j])
-				{
-					analog_inputs_.push_back(analog_inputs_[j]);
-					need_new_hal_ain = false;
-						ROS_WARN_STREAM("AIn " << analog_input_names_[i] <<
-								" uses same channel (" << analog_input_analog_channels_[i] <<
-								") as " <<  analog_input_names_[j]);
-				}
-			}
-			if (need_new_hal_ain)
-				analog_inputs_.push_back(std::make_shared<frc::AnalogInput>(analog_input_analog_channels_[i]));
-		}
-		else
-			analog_inputs_.push_back(nullptr);
-	}
-	for (size_t i = 0; i < num_compressors_; i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-							  "Loading joint " << i << "=" << compressor_names_[i] <<
-							  (compressor_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (compressor_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as Compressor with pcm " << compressor_pcm_ids_[i]);
-
-		pcm_read_thread_state_.push_back(std::make_shared<hardware_interface::PCMState>(compressor_pcm_ids_[i]));
-		if (compressor_local_hardwares_[i])
-		{
-			if (!HAL_CheckCompressorModule(compressor_pcm_ids_[i]))
-			{
-				ROS_ERROR("Invalid Compressor PCM ID");
-				compressors_.push_back(HAL_kInvalidHandle);
-			}
-			else
-			{
-				int32_t status = 0;
-				compressors_.push_back(HAL_InitializeCompressor(compressor_pcm_ids_[i], &status));
-				if (!status && (compressors_[i] != HAL_kInvalidHandle))
-				{
-					pcm_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
-					pcm_thread_.push_back(std::thread(&FRCRobotHWInterface::pcm_read_thread, this,
-								compressors_[i], compressor_pcm_ids_[i], pcm_read_thread_state_[i],
-								pcm_read_thread_mutexes_[i],
-								std::make_unique<Tracer>("PCM " + compressor_names_[i] + " " + root_nh.getNamespace())));
-					HAL_Report(HALUsageReporting::kResourceType_Compressor, compressor_pcm_ids_[i]);
-				}
-				else
-				{
-					ROS_ERROR_STREAM("compressor init error : status = "
-							<< status << ":" << HAL_GetErrorMessage(status));
-				}
-			}
-		}
-		else
-			compressors_.push_back(HAL_kInvalidHandle);
-	}
-
-	// No real init needed here, just report the config loaded for them
-	for (size_t i = 0; i < num_rumbles_; i++)
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-							  "Loading joint " << i << "=" << rumble_names_[i] <<
-							  (rumble_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (rumble_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as Rumble with port" << rumble_ports_[i]);
-
-	for (size_t i = 0; i < num_pdps_; i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-							  "Loading joint " << i << "=" << pdp_names_[i] <<
-							  " local = " << pdp_locals_[i] <<
-							  " as PDP");
-
-		if (pdp_locals_[i])
-		{
-			if (!HAL_CheckPDPModule(pdp_modules_[i]))
-			{
-				ROS_ERROR("Invalid PDP module number");
-				pdps_.push_back(HAL_kInvalidHandle);
-			}
-			else
-			{
-				int32_t status = 0;
-				pdps_.push_back(HAL_InitializePDP(pdp_modules_[i], &status));
-				pdp_read_thread_state_.push_back(std::make_shared<hardware_interface::PDPHWState>());
-				if (pdps_[i] == HAL_kInvalidHandle)
-				{
-					ROS_ERROR_STREAM("Could not initialize PDP module, status = " << status);
-				}
-				else
-				{
-					pdp_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
-					pdp_thread_.push_back(std::thread(&FRCRobotHWInterface::pdp_read_thread, this,
-										  pdps_[i], pdp_read_thread_state_[i], pdp_read_thread_mutexes_[i],
-										  std::make_unique<Tracer>("PDP " + pdp_names_[i] + " " + root_nh.getNamespace())));
-					HAL_Report(HALUsageReporting::kResourceType_PDP, pdp_modules_[i]);
-				}
-			}
-		}
-		else
-			pdps_.push_back(HAL_kInvalidHandle);
-	}
-
-	for (size_t i = 0; i < num_joysticks_; i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-							  "Loading joint " << i << "=" << joystick_names_[i] <<
-							  " local = " << joystick_locals_[i] <<
-							  " as joystick with ID " << joystick_ids_[i]);
-		if (joystick_locals_[i])
-		{
-			joysticks_.push_back(std::make_shared<frc::Joystick>(joystick_ids_[i]));
-			std::stringstream pub_name;
-			// TODO : maybe use pub_names instead, or joy id unconditionally?
-			pub_name << "js";
-			pub_name << joystick_ids_[i];
-			realtime_pub_joysticks_.push_back(std::make_unique<realtime_tools::RealtimePublisher<sensor_msgs::Joy>>(root_nh, pub_name.str(), 1));
-		}
-		else
-		{
-			joysticks_.push_back(nullptr);
-			realtime_pub_joysticks_.push_back(nullptr);
 		}
 	}
 
@@ -1386,309 +1064,9 @@ void FRCRobotHWInterface::as726x_read_thread(
 	}
 }
 
-void FRCRobotHWInterface::read(const ros::Time& /*time*/, const ros::Duration& /*period*/)
+void FRCRobotHWInterface::read(const ros::Time& time, const ros::Duration& period)
 {
-	read_tracer_.start_unique("Check for ready");
-	if (run_hal_robot_ && !robot_code_ready_)
-	{
-		// This will be written by the last controller to be
-		// spawned - waiting here prevents the robot from
-		// reporting robot code ready to the field until
-		// all other controllers are started
-		if (std::all_of(robot_ready_signals_.cbegin(),
-						robot_ready_signals_.cend(),
-						[](double d) { return d != 0.0;} ))
-		{
-			robot_->StartCompetition();
-			robot_code_ready_ = true;
-		}
-	}
-
-	if (robot_code_ready_)
-	{
-		read_tracer_.start_unique("OneIteration");
-		//check if sufficient time has passed since last read
-		if(ros::Time::now().toSec() - t_prev_robot_iteration_ > (1/robot_iteration_hz_))
-		{
-			robot_->OneIteration();
-
-			t_prev_robot_iteration_ += 1/robot_iteration_hz_;
-		}
-
-		read_tracer_.start_unique("joysticks");
-		//check if sufficient time has passed since last read
-		if(ros::Time::now().toSec() - t_prev_joystick_read_ > (1/joystick_read_hz_))
-		{
-			t_prev_joystick_read_ += 1/joystick_read_hz_;
-
-			auto time_now_t = ros::Time::now();
-			for (size_t i = 0; i < num_joysticks_; i++)
-			{
-				if (realtime_pub_joysticks_[i]->trylock())
-				{
-					auto &m = realtime_pub_joysticks_[i]->msg_;
-					m.header.stamp = time_now_t;
-
-					m.axes.clear();
-					m.buttons.clear();
-
-					for(int j = 0; j < joysticks_[i]->GetAxisCount(); j++)
-					{
-						m.axes.push_back(joysticks_[i]->GetRawAxis(j));
-					}
-
-					for(int j = 0; j < joysticks_[i]->GetButtonCount(); j++)
-					{
-						m.buttons.push_back(joysticks_[i]->GetRawButton(j+1));
-					}
-
-					bool direction_up = false;
-					bool direction_down = false;
-					bool direction_left = false;
-					bool direction_right = false;
-					switch (joysticks_[i]->GetPOV(0))
-					{
-						case 0 :
-							direction_up = true;
-							break;
-						case 45:
-							direction_up = true;
-							direction_right = true;
-							break;
-						case 90:
-							direction_right = true;
-							break;
-						case 135:
-							direction_down = true;
-							direction_right = true;
-							break;
-						case 180:
-							direction_down = true;
-							break;
-						case 225:
-							direction_down = true;
-							direction_left = true;
-							break;
-						case 270:
-							direction_left = true;
-							break;
-						case 315:
-							direction_up = true;
-							direction_left = true;
-							break;
-					}
-
-					if(direction_left)
-					{
-						m.axes.push_back(1.0);
-					}
-					else if (direction_right)
-					{
-						m.axes.push_back(-1.0);
-					}
-					else
-					{
-						m.axes.push_back(0.0);
-					}
-
-					if(direction_up)
-					{
-						m.axes.push_back(1.0);
-					}
-					else if (direction_down)
-					{
-						m.axes.push_back(-1.0);
-					}
-					else
-					{
-						m.axes.push_back(0.0);
-					}
-					realtime_pub_joysticks_[i]->unlockAndPublish();
-				}
-			}
-
-		}
-
-		read_tracer_.start_unique("match data");
-		int32_t status = 0;
-		//check if sufficient time has passed since last read
-		if(ros::Time::now().toSec() - t_prev_match_data_read_ > (1/match_data_read_hz_))
-		{
-			t_prev_match_data_read_ += 1/match_data_read_hz_;
-
-			status = 0;
-			match_data_.setMatchTimeRemaining(HAL_GetMatchTime(&status));
-			match_data_.setGetMatchTimeStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-			HAL_MatchInfo info;
-			HAL_GetMatchInfo(&info);
-
-			match_data_.setGameSpecificData(std::string(reinterpret_cast<char*>(info.gameSpecificMessage),
-						info.gameSpecificMessageSize));
-			match_data_.setEventName(info.eventName);
-
-			status = 0;
-			auto allianceStationID = HAL_GetAllianceStation(&status);
-			match_data_.setGetAllianceStationStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-			frc::DriverStation::Alliance color;
-			switch (allianceStationID) {
-				case HAL_AllianceStationID_kRed1:
-				case HAL_AllianceStationID_kRed2:
-				case HAL_AllianceStationID_kRed3:
-					color = frc::DriverStation::kRed;
-					break;
-				case HAL_AllianceStationID_kBlue1:
-				case HAL_AllianceStationID_kBlue2:
-				case HAL_AllianceStationID_kBlue3:
-					color = frc::DriverStation::kBlue;
-					break;
-				default:
-					color = frc::DriverStation::kInvalid;
-			}
-			match_data_.setAllianceColor(color);
-
-			match_data_.setMatchType(static_cast<frc::DriverStation::MatchType>(info.matchType));
-
-			int station_location;
-			switch (allianceStationID) {
-				case HAL_AllianceStationID_kRed1:
-				case HAL_AllianceStationID_kBlue1:
-					station_location = 1;
-					break;
-				case HAL_AllianceStationID_kRed2:
-				case HAL_AllianceStationID_kBlue2:
-					station_location = 2;
-					break;
-				case HAL_AllianceStationID_kRed3:
-				case HAL_AllianceStationID_kBlue3:
-					station_location = 3;
-					break;
-				default:
-					station_location = 0;
-			}
-			match_data_.setDriverStationLocation(station_location);
-
-			match_data_.setMatchNumber(info.matchNumber);
-			match_data_.setReplayNumber(info.replayNumber);
-			status = 0;
-			match_data_.setBatteryVoltage(HAL_GetVinVoltage(&status));
-			match_data_.setGetVinVoltageStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-		}
-		//read control word match data at full speed - contains enable info, and reads should be v fast
-		HAL_ControlWord controlWord;
-		HAL_GetControlWord(&controlWord);
-		match_data_.setEnabled(controlWord.enabled && controlWord.dsAttached);
-		match_data_.setDisabled(!(controlWord.enabled && controlWord.dsAttached));
-		match_data_.setAutonomous(controlWord.autonomous);
-		match_data_.setOperatorControl(!(controlWord.autonomous || controlWord.test));
-		match_data_.setTest(controlWord.test);
-		match_data_.setDSAttached(controlWord.dsAttached);
-		match_data_.setFMSAttached(controlWord.fmsAttached);
-
-		read_tracer_.start_unique("robot controller data");
-		//check if sufficient time has passed since last read
-		if(ros::Time::now().toSec() - t_prev_robot_controller_read_ > (1/robot_controller_read_hz_))
-		{
-			t_prev_robot_controller_read_ += 1/robot_controller_read_hz_;
-
-			status = 0;
-			robot_controller_state_.SetFPGAVersion(HAL_GetFPGAVersion(&status));
-			robot_controller_state_.SetFPGAVersionStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetFPGARevision(HAL_GetFPGARevision(&status));
-			robot_controller_state_.SetFPGARevisionStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetFPGATime(HAL_GetFPGATime(&status));
-			robot_controller_state_.SetFPGATimeStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetUserButton(HAL_GetFPGAButton(&status));
-			robot_controller_state_.SetUserButtonStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetIsSysActive(HAL_GetSystemActive(&status));
-			robot_controller_state_.SetIsSysActiveStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetIsBrownedOut(HAL_GetBrownedOut(&status));
-			robot_controller_state_.SetIsBrownedOutStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetInputVoltage(HAL_GetVinVoltage(&status));
-			robot_controller_state_.SetInputVoltageStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetInputCurrent(HAL_GetVinCurrent(&status));
-			robot_controller_state_.SetInputCurrentStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetVoltage3V3(HAL_GetUserVoltage3V3(&status));
-			robot_controller_state_.SetVoltage3V3Status(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetCurrent3V3(HAL_GetUserCurrent3V3(&status));
-			robot_controller_state_.SetCurrent3V3Status(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetEnabled3V3(HAL_GetUserActive3V3(&status));
-			robot_controller_state_.SetEnabled3V3Status(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetFaultCount3V3(HAL_GetUserCurrentFaults3V3(&status));
-			robot_controller_state_.SetFaultCount3V3Status(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetVoltage5V(HAL_GetUserVoltage5V(&status));
-			robot_controller_state_.SetVoltage5VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetCurrent5V(HAL_GetUserCurrent5V(&status));
-			robot_controller_state_.SetCurrent5VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetEnabled5V(HAL_GetUserActive5V(&status));
-			robot_controller_state_.SetEnabled5VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetFaultCount5V(HAL_GetUserCurrentFaults5V(&status));
-			robot_controller_state_.SetFaultCount5VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetVoltage6V(HAL_GetUserVoltage6V(&status));
-			robot_controller_state_.SetVoltage6VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetCurrent6V(HAL_GetUserCurrent6V(&status));
-			robot_controller_state_.SetCurrent6VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetEnabled6V(HAL_GetUserActive6V(&status));
-			robot_controller_state_.SetEnabled6VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			status = 0;
-			robot_controller_state_.SetFaultCount6V(HAL_GetUserCurrentFaults6V(&status));
-			robot_controller_state_.SetFaultCount6VStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-
-			float percent_bus_utilization;
-			uint32_t bus_off_count;
-			uint32_t tx_full_count;
-			uint32_t receive_error_count;
-			uint32_t transmit_error_count;
-			status = 0;
-			HAL_CAN_GetCANStatus(&percent_bus_utilization, &bus_off_count,
-					&tx_full_count, &receive_error_count,
-					&transmit_error_count, &status);
-
-			robot_controller_state_.SetCANPercentBusUtilization(percent_bus_utilization);
-			robot_controller_state_.SetCANBusOffCount(bus_off_count);
-			robot_controller_state_.SetCANTxFullCount(tx_full_count);
-			robot_controller_state_.SetCANReceiveErrorCount(receive_error_count);
-			robot_controller_state_.SetCANTransmitErrorCount(transmit_error_count);
-
-			robot_controller_state_.SetCANDataStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-		}
-	}
+	FRCRobotInterface::read(time, period);
 
 	read_tracer_.start_unique("can talons");
 	for (size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
@@ -1796,135 +1174,6 @@ void FRCRobotHWInterface::read(const ros::Time& /*time*/, const ros::Duration& /
 		}
 	}
 
-	read_tracer_.start_unique("nidec");
-	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
-	{
-		if (nidec_brushless_local_updates_[i])
-			brushless_vel_[i] = nidec_brushlesses_[i]->Get();
-	}
-	read_tracer_.start_unique("digital in");
-	for (size_t i = 0; i < num_digital_inputs_; i++)
-	{
-		//State should really be a bool - but we're stuck using
-		//ROS control code which thinks everything to and from
-		//hardware are doubles
-		if (digital_input_locals_[i])
-			digital_input_state_[i] = (digital_inputs_[i]->Get()^digital_input_inverts_[i]) ? 1 : 0;
-	}
-#if 0
-	for (size_t i = 0; i < num_digital_outputs_; i++)
-	{
-		if (!digital_output_local_updates_[i])
-			digital_output_state_[i] = digital_output_command_[i];
-	}
-	for (size_t i = 0; i < num_pwms_; i++)
-	{
-		// Just reflect state of output in status
-		if (!pwm_local_updates_[i])
-			pwm_state_[i] = pwm_command_[i];
-	}
-#endif
-	read_tracer_.start_unique("solenoid");
-	for (size_t i = 0; i < num_solenoids_; i++)
-	{
-		if (solenoid_local_updates_[i])
-		{
-			int32_t status = 0;
-			const auto state = HAL_GetSolenoid(solenoids_[i], &status);
-			if (status == 0)
-			{
-				solenoid_state_[i] = state;
-			}
-			else
-			{
-				ROS_ERROR_STREAM("Error reading solenoid status : name="
-						<< solenoid_names_[i] << ", id=" << solenoid_ids_[i] << ", state = " << state);
-			}
-		}
-	}
-#if 0
-	for (size_t i = 0; i < num_double_solenoids_; i++)
-	{
-		if (!double_solenoid_local_updates_[i])
-			double_solenoid_state_[i] = double_solenoid_command_[i];
-	}
-#endif
-	read_tracer_.start_unique("analog in");
-	for (size_t i = 0; i < num_analog_inputs_; i++)
-	{
-		if (analog_input_locals_[i])
-			analog_input_state_[i] = analog_inputs_[i]->GetValue() *analog_input_a_[i] + analog_input_b_[i];
-	}
-	read_tracer_.start_unique("navX");
-	//navX read here
-	for (size_t i = 0; i < num_navX_; i++)
-	{
-		if (navX_locals_[i])
-		{
-			// TODO : double check we're reading
-			// the correct data
-
-			// navXs_[i]->GetFusedHeading();
-			// navXs_[i]->GetPitch();
-			// navXs_[i]->GetRoll();
-
-			// TODO : Fill in imu_angular_velocity[i][]
-
-			//navXs_[i]->IsCalibrating();
-			//navXs_[i]->IsConnected();
-			//navXs_[i]->GetLastSensorTimestamp();
-			//
-			imu_linear_accelerations_[i][0] = navXs_[i]->GetWorldLinearAccelX();
-			imu_linear_accelerations_[i][1] = navXs_[i]->GetWorldLinearAccelY();
-			imu_linear_accelerations_[i][2] = navXs_[i]->GetWorldLinearAccelZ();
-
-			//navXs_[i]->IsMoving();
-			//navXs_[i]->IsRotating();
-			//navXs_[i]->IsMagneticDisturbance();
-			//navXs_[i]->IsMagnetometerCalibrated();
-			//
-			tf2::Quaternion tempQ;
-			tempQ.setRPY(navXs_[i]->GetRoll()  / -360. * 2. * M_PI,
-						 navXs_[i]->GetPitch() / -360. * 2. * M_PI,
-						 navXs_[i]->GetYaw()   /  360. * 2. * M_PI);
-
-			imu_orientations_[i][3] = tempQ.w();
-			imu_orientations_[i][0] = tempQ.x();
-			imu_orientations_[i][1] = tempQ.y();
-			imu_orientations_[i][2] = tempQ.z();
-
-			imu_angular_velocities_[i][0] = navXs_[i]->GetVelocityX();
-			imu_angular_velocities_[i][1] = navXs_[i]->GetVelocityY();
-			imu_angular_velocities_[i][2] = navXs_[i]->GetVelocityZ();
-
-			//navXs_[i]->GetDisplacementX();
-			//navXs_[i]->GetDisplacementY();
-			//navXs_[i]->GetDisplacementZ();
-			//navXs_[i]->GetAngle(); //continous
-			//TODO: add setter functions
-		}
-	}
-
-	read_tracer_.start_unique("compressors");
-	for (size_t i = 0; i < num_compressors_; i++)
-	{
-		if (compressor_local_updates_[i])
-		{
-			std::lock_guard<std::mutex> l(*pcm_read_thread_mutexes_[i]);
-			pcm_state_[i] = *pcm_read_thread_state_[i];
-		}
-	}
-
-	read_tracer_.start_unique("pdps");
-	for (size_t i = 0; i < num_pdps_; i++)
-	{
-		if (pdp_locals_[i])
-		{
-			std::lock_guard<std::mutex> l(*pdp_read_thread_mutexes_[i]);
-			pdp_state_[i] = *pdp_read_thread_state_[i];
-		}
-	}
-
 	read_tracer_.start_unique("as726xs");
 	for (size_t i = 0; i < num_as726xs_; i++)
 	{
@@ -1936,18 +1185,18 @@ void FRCRobotHWInterface::read(const ros::Time& /*time*/, const ros::Duration& /
 			as726x_state_[i].setCalibratedChannelData(as726x_read_thread_state_[i]->getCalibratedChannelData());
 		}
 	}
-        
-        for(size_t i = 0; i < num_talon_orchestras_; i++)
-        {
-			if(talon_orchestras_[i]->IsPlaying())
-			{
-				orchestra_state_[i].setPlaying();
-			}
-			else
-			{
-				orchestra_state_[i].setStopped();
-			}
-        }
+
+	for(size_t i = 0; i < num_talon_orchestras_; i++)
+	{
+		if(talon_orchestras_[i]->IsPlaying())
+		{
+			orchestra_state_[i].setPlaying();
+		}
+		else
+		{
+			orchestra_state_[i].setStopped();
+		}
+	}
 
 	read_tracer_.stop();
 	ROS_INFO_STREAM_THROTTLE(60, read_tracer_.report());
@@ -2226,10 +1475,20 @@ bool FRCRobotHWInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, con
 }
 
 //#define DEBUG_WRITE
-void FRCRobotHWInterface::write(const ros::Time& /*time*/, const ros::Duration& period)
+void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& period)
 {
+	FRCRobotInterface::write(time, period);
 	// Was the robot enabled last time write was run?
 	static bool last_robot_enabled = false;
+	bool robot_enabled = false;
+	{
+		std::unique_lock<std::mutex> l(match_data_mutex_, std::try_to_lock);
+		if (l.owns_lock())
+			robot_enabled = match_data_.isEnabled();
+		else
+			robot_enabled = last_robot_enabled;
+	}
+
 
 #if 0
 	if (!run_hal_robot_ && num_can_ctre_mcs_)
@@ -3078,7 +2337,7 @@ void FRCRobotHWInterface::write(const ros::Time& /*time*/, const ros::Duration& 
 		}
 
 		// Set new motor setpoint if either the mode or the setpoint has been changed
-		if (match_data_.isEnabled())
+		if (robot_enabled)
 		{
 			double command;
 			hardware_interface::TalonMode in_mode;
@@ -3163,8 +2422,7 @@ void FRCRobotHWInterface::write(const ros::Time& /*time*/, const ros::Duration& 
 		}
 		talon_command_[joint_id].unlock();
 	}
-
-	last_robot_enabled = match_data_.isEnabled();
+	last_robot_enabled = robot_enabled;
 
 	for (size_t joint_id = 0; joint_id < num_canifiers_; ++joint_id)
 	{
@@ -3439,7 +2697,6 @@ void FRCRobotHWInterface::write(const ros::Time& /*time*/, const ros::Duration& 
 			}
 		}
 	}
-
 	for (size_t joint_id = 0; joint_id < num_cancoders_; ++joint_id)
 	{
 		if (!cancoder_local_hardwares_[joint_id])
@@ -3646,184 +2903,6 @@ void FRCRobotHWInterface::write(const ros::Time& /*time*/, const ros::Duration& 
 			{
 				cc.setClearStickyFaults();
 			}
-		}
-	}
-
-	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
-	{
-		if (nidec_brushless_local_hardwares_[i])
-			nidec_brushlesses_[i]->Set(brushless_command_[i]);
-	}
-
-	for (size_t i = 0; i < num_digital_outputs_; i++)
-	{
-		// Only invert the desired output once, on the controller
-		// where the update originated
-		const bool converted_command = (digital_output_command_[i] > 0) ^ (digital_output_inverts_[i] && digital_output_local_updates_[i]);
-		if (converted_command != digital_output_state_[i])
-		{
-			if (digital_output_local_hardwares_[i])
-				digital_outputs_[i]->Set(converted_command);
-			digital_output_state_[i] = converted_command;
-			ROS_INFO_STREAM("Wrote digital output " << i << "=" << converted_command);
-		}
-	}
-
-	for (size_t i = 0; i < num_pwms_; i++)
-	{
-		const int setpoint = pwm_command_[i] * ((pwm_inverts_[i] & pwm_local_updates_[i]) ? -1 : 1);
-		if (pwm_state_[i] != setpoint)
-		{
-			if (pwm_local_hardwares_[i])
-				PWMs_[i]->SetSpeed(setpoint);
-			pwm_state_[i] = setpoint;
-			ROS_INFO_STREAM("PWM " << pwm_names_[i] <<
-					" at channel" <<  pwm_pwm_channels_[i] <<
-					" set to " << pwm_state_[i]);
-		}
-	}
-
-	for (size_t i = 0; i < num_solenoids_; i++)
-	{
-		// MODE_POSITION is standard on/off setting
-		if (solenoid_mode_[i] == hardware_interface::JointCommandModes::MODE_POSITION)
-		{
-			const bool setpoint = solenoid_command_[i] > 0;
-			if ((solenoid_mode_[i] != prev_solenoid_mode_[i]) || (solenoid_state_[i] != setpoint))
-			{
-				int32_t status = 0;
-				if (solenoid_local_hardwares_[i])
-				{
-					HAL_SetSolenoid(solenoids_[i], setpoint, &status);
-					if (status != 0)
-						ROS_ERROR_STREAM("Error setting solenoid " << solenoid_names_[i] <<
-								" to " << setpoint << " status = " << status);
-				}
-				if (status == 0)
-				{
-					//solenoid_state_[i] = setpoint;
-					ROS_INFO_STREAM("Solenoid " << solenoid_names_[i] <<
-							" at id " << solenoid_ids_[i] <<
-							" / pcm " << solenoid_pcms_[i] <<
-							" = " << static_cast<int>(setpoint));
-				}
-			}
-		}
-		else if (solenoid_mode_[i] == hardware_interface::JointCommandModes::MODE_EFFORT)
-		{
-			if (solenoid_command_[i] > 0)
-			{
-				int32_t status = 0;
-				if (solenoid_local_hardwares_[i])
-				{
-					HAL_SetOneShotDuration(solenoids_[i], solenoid_command_[i], &status);
-					if (status != 0)
-					{
-						ROS_ERROR_STREAM("Error setting solenoid " << solenoid_names_[i] <<
-								" one shot duration to " << solenoid_command_[i] << " status = " << status);
-					}
-					else
-					{
-						HAL_FireOneShot(solenoids_[i], &status);
-						if (status != 0)
-						{
-							ROS_ERROR_STREAM("Error setting solenoid " << solenoid_names_[i] <<
-									" fire one shot, status = " << status);
-						}
-					}
-				}
-				if (status == 0)
-				{
-					ROS_INFO_STREAM("Solenoid one shot " << solenoid_names_[i] <<
-							" at id " << solenoid_ids_[i] <<
-							" / pcm " << solenoid_pcms_[i] <<
-							" = " << solenoid_command_[i]);
-					solenoid_pwm_state_[i] = solenoid_command_[i];
-					solenoid_command_[i] = 0;
-				}
-			}
-		}
-		else
-			ROS_ERROR_STREAM("Invalid solenoid_mode_[i] = " << static_cast<int>(solenoid_mode_[i]));
-		prev_solenoid_mode_[i] = solenoid_mode_[i];
-	}
-
-	for (size_t i = 0; i < num_double_solenoids_; i++)
-	{
-		frc::DoubleSolenoid::Value setpoint = frc::DoubleSolenoid::Value::kOff;
-		if (double_solenoid_command_[i] >= 1.0)
-			setpoint = frc::DoubleSolenoid::Value::kForward;
-		else if (double_solenoid_command_[i] <= -1.0)
-			setpoint = frc::DoubleSolenoid::Value::kReverse;
-
-		// Not sure if it makes sense to store command values
-		// in state or wpilib enum values
-		if (double_solenoid_state_[i] != double_solenoid_command_[i])
-		{
-			if (double_solenoid_local_hardwares_[i])
-			{
-				bool forward = false;
-				bool reverse = false;
-				if (setpoint == frc::DoubleSolenoid::Value::kForward)
-					forward = true;
-				else if (setpoint == frc::DoubleSolenoid::Value::kReverse)
-					reverse = true;
-
-				int32_t status = 0;
-				HAL_SetSolenoid(double_solenoids_[i].forward_, forward, &status);
-				if (status != 0)
-					ROS_ERROR_STREAM("Error setting double solenoid " << double_solenoid_names_[i] <<
-							" forward to " << forward << " status = " << status);
-				else
-					ROS_INFO_STREAM("Setting double solenoid " << double_solenoid_names_[i] <<
-							" forward to " << forward);
-				status = 0;
-				HAL_SetSolenoid(double_solenoids_[i].reverse_, reverse, &status);
-				if (status != 0)
-					ROS_ERROR_STREAM("Error setting double solenoid " << double_solenoid_names_[i] <<
-							" reverse to " << reverse << " status = " << status);
-				else
-					ROS_INFO_STREAM("Setting double solenoid " << double_solenoid_names_[i] <<
-							" reverse to " << reverse);
-			}
-			double_solenoid_state_[i] = double_solenoid_command_[i];
-			ROS_INFO_STREAM("Double solenoid " << double_solenoid_names_[i] <<
-					" at forward id " << double_solenoid_forward_ids_[i] <<
-					" / reverse id " << double_solenoid_reverse_ids_[i] <<
-					" / pcm " << double_solenoid_pcms_[i] <<
-					" = " << setpoint);
-		}
-	}
-
-	for (size_t i = 0; i < num_rumbles_; i++)
-	{
-		if (rumble_state_[i] != rumble_command_[i])
-		{
-			const unsigned int rumbles = *((unsigned int*)(&rumble_command_[i]));
-			const unsigned int left_rumble  = (rumbles >> 16) & 0xFFFF;
-			const unsigned int right_rumble = (rumbles      ) & 0xFFFF;
-			if (rumble_local_hardwares_[i])
-				HAL_SetJoystickOutputs(rumble_ports_[i], 0, left_rumble, right_rumble);
-			rumble_state_[i] = rumble_command_[i];
-			ROS_INFO_STREAM("Wrote rumble " << i << "=" << rumble_command_[i]);
-		}
-	}
-
-	for (size_t i = 0; i < num_compressors_; i++)
-	{
-		if (compressor_command_[i] != compressor_state_[i])
-		{
-			const bool setpoint = compressor_command_[i] > 0;
-			if (compressor_local_hardwares_[i])
-			{
-				int32_t status = 0;
-				HAL_SetCompressorClosedLoopControl(compressors_[i], setpoint, &status);
-				if (status)
-					ROS_ERROR_STREAM("SetCompressorClosedLoopControl status:" << status
-							<< " " << HAL_GetErrorMessage(status));
-			}
-			compressor_state_[i] = compressor_command_[i];
-			ROS_INFO_STREAM("Wrote compressor " << i << "=" << setpoint);
 		}
 	}
 

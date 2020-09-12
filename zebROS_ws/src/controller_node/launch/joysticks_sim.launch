@@ -11,7 +11,7 @@
 			<param name="autorepeat_rate" type="double" value="100"/>
 			<param name="coalesce_interval" type="double" value="0.01"/>
 			<param name="deadzone" type="double" value="0.0"/>
-			<remap from="joy" to="/frcrobot_rio/button_box_states_raw"/>
+			<remap from="joy" to="/frcrobot_rio/js1_in"/>
 		</node>
 
 	</group>
@@ -26,7 +26,7 @@
 
 		<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
 			<remap from="joy_in" to="joy" />
-			<remap from="joy_out" to="/frcrobot_rio/joystick_states_raw1"/>
+			<remap from="joy_out" to="/frcrobot_rio/js0_in"/>
 			<rosparam command="load" file="$(find teleop_joystick_control)/config/joystick_remap.yaml"/>
 		</node>
 
@@ -44,7 +44,7 @@
 
 		<node pkg="teleop_joystick_control" type="joystick_remap.py" name="joystick_remap" >
 			<remap from="joy_in" to="joy" />
-			<remap from="joy_out" to="/frcrobot_rio/joystick_states_raw2"/>
+			<remap from="joy_out" to="/frcrobot_rio/js2_in"/>
 			<rosparam command="load" file="$(find teleop_joystick_control)/config/joystick_remap.yaml"/>
 		</node>
 

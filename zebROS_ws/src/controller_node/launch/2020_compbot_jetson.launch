@@ -75,23 +75,6 @@
 		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
 		<node name="teleop_joystick_comp_2020" pkg="teleop_joystick_control" type="teleop_joystick_comp_2020" output="screen"/>
 
-		<group ns="translator1">
-			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen">
-				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw1"/>
-			</node>
-		</group>
-		
-		<group ns="button_box_translator" if="$(arg button_box)">
-			<node name="translate_button_box_data_node" pkg="teleop_joystick_control" type="translate_button_box_data_node" output="screen"/>
-		</group>
-
-		<group ns="translator2" if="$(eval arg('joy_or_key')=='two_joy')">
-			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen">
-				<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw2"/>
-			</node>
-		</group>
-
-
 		<group ns="orient_strafing"> <!--TODO Tune these values on a full weight robot -->
 			<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
 			<node name="orient_strafing_pid" pkg="pid" type="controller" >

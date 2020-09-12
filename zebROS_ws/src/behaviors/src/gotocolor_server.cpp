@@ -377,7 +377,7 @@ class GoToColorControlPanelAction {
 		}
 
 		void matchColorCallback(const frc_msgs::MatchSpecificData &match_data){
-			if(match_data.gameSpecificData.length() > 0)
+			if(match_data.gameSpecificData.size() > 0)
 				goal_color_= std::toupper(match_data.gameSpecificData.at(0));
 		}
 

@@ -1353,7 +1353,7 @@ int main(int argc, char **argv)
 	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompConfig> drw(n_params, config);
 	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompDiagnosticsConfig> diagnostics_drw(n_diagnostics_params, diagnostics_config);
 
-	//Read from _num_joysticks_ joysticks
+	//Read from _num_joysticks joysticks
 	// Set up this callback last, since it might use all of the various stuff
 	// initialized above here. Setting it up first risks the chance that a callback
 	// happens immediately and tries to use them before they have valid values
@@ -1362,14 +1362,13 @@ int main(int argc, char **argv)
 	for(int j = 0; j < num_joysticks; j++)
 	{
 		std::stringstream s;
-		s << "/teleop/translator";
+		s << "/frcrobot_rio/joystick_states";
 		s << (j+1);
-		s << "/joystick_states";
 		topic_array.push_back(s.str());
 		subscriber_array.push_back(n.subscribe(topic_array[j], 1, &evaluateCommands));
 	}
 
-	ros::Subscriber button_box_sub = n.subscribe("button_box_translator/button_box_states", 1, &buttonBoxCallback);
+	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 
 	ROS_WARN("joy_init");
 

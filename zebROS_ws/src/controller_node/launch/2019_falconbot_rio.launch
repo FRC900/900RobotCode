@@ -19,7 +19,6 @@
 		<!-- Load hardware interface -->
 		<node name="frcrobot_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
 			output="screen" launch-prefix="$(arg launch_prefix)">
-			<remap if="$(eval arg('joy_or_key')=='key')" from="/frcrobot_rio/joystick_states_raw_key" to="/frcrobot_rio/joystick_states_raw"/>
 		</node>
 
 		<!-- Load controller manager -->

@@ -52,7 +52,7 @@ TeleopJointsKeyboard::TeleopJointsKeyboard(ros::NodeHandle &nh)
 	// Hard-code this to frcrobot_rio namespace so that it matches
 	// the real robot hardware, where joystick data comes from the
 	// driver station via the Rio
-	joints_pub_ = nh.advertise<sensor_msgs::Joy>("/frcrobot_rio/joystick_states_raw", 1);
+	joints_pub_ = nh.advertise<sensor_msgs::Joy>("/frcrobot_rio/js0_in", 1);
 }
 
 TeleopJointsKeyboard::~TeleopJointsKeyboard()

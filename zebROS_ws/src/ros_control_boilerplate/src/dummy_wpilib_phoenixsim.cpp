@@ -74,12 +74,6 @@ void InitializeSPI()
 }
 }
 
-#include <frc/MotorSafety.h>
-void frc::MotorSafety::CheckMotors()
-{
-	ROS_INFO("Called frc::MotorSafety::CheckMotors()");
-}
-
 #include "cscore_c.h"         // for CS_Source, CS_Status
 #include "cscore_cpp.h"       // for GetSourceName
 // Avoid including all of cscore- this is the only function so far that

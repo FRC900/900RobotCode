@@ -39,11 +39,17 @@
 
 #pragma once
 #include <chrono>
-#include <ros_control_boilerplate/frc_robot_interface.h>
-#include <ros_control_boilerplate/tracer.h>
+#include <memory>
+
+#include "ros/duration.h"
+#include "ros/node_handle.h"
+#include "controller_manager/controller_manager.h"
+
+#include "ros_control_boilerplate/tracer.h"
 
 namespace ros_control_boilerplate
 {
+class FRCRobotInterface;
 /**
  * \brief The control loop - repeatidly calls read() and write() to the hardware interface at a
  * specified frequency

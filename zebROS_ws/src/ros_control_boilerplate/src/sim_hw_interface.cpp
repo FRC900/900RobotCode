@@ -78,6 +78,7 @@ void SimHWInterface::read(ros::Duration &/*elapsed_time*/)
 
 void SimHWInterface::write(ros::Duration &elapsed_time)
 {
+	FRCRobotInterface::init();
 	// Safety
 	enforceLimits(elapsed_time);
 

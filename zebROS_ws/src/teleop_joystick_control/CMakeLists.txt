@@ -90,26 +90,6 @@ add_dependencies(teleop_joystick_comp_2020
 	${catkin_EXPORTED_TARGETS}
 	)
 
-add_executable(translate_button_box_data_node src/translate_button_box_data.cpp)
-target_link_libraries(translate_button_box_data_node
-	${catkin_LIBRARIES}
-	)
-
-add_dependencies(translate_button_box_data_node
-	${${PROJECT_NAME}_EXPORTED_TARGETS}
-	${catkin_EXPORTED_TARGETS}
-	)
-
-add_executable(translate_joystick_data_node src/translate_joystick_data.cpp)
-target_link_libraries(translate_joystick_data_node
-	${catkin_LIBRARIES}
-	)
-
-add_dependencies(translate_joystick_data_node
-	${${PROJECT_NAME}_EXPORTED_TARGETS}
-	${catkin_EXPORTED_TARGETS}
-	)
-
 add_executable(orient_strafing_node src/orient_strafing.cpp)
 set_target_properties(orient_strafing_node PROPERTIES OUTPUT_NAME 
 	orient_strafing_node PREFIX "")
@@ -148,7 +128,7 @@ add_dependencies(teleop_joints_keyboard
 
 # Install ------------------------------------------------------------
 # Install header files
-install(TARGETS teleop_joystick_comp teleop_joystick_comp_2020 teleop_joints_keyboard translate_button_box_data_node translate_joystick_data_node orient_strafing_node snap_to_nearest_goal
+install(TARGETS teleop_joystick_comp teleop_joystick_comp_2020 teleop_joints_keyboard orient_strafing_node snap_to_nearest_goal
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

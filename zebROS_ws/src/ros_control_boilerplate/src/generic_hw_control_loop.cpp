@@ -37,10 +37,13 @@
    using MONOTOIC system time
 */
 
-#include <ros_control_boilerplate/generic_hw_control_loop.h>
+#include <ros/ros.h>
+
+#include "ros_control_boilerplate/generic_hw_control_loop.h"
+#include "ros_control_boilerplate/frc_robot_interface.h"
 
 // ROS parameter loading
-#include <rosparam_shortcuts/rosparam_shortcuts.h>
+#include "rosparam_shortcuts/rosparam_shortcuts.h"
 
 namespace ros_control_boilerplate
 {
