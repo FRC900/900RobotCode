@@ -50,13 +50,13 @@ catkin_package(
 	frc_msgs
 	frc_interfaces
 	hardware_interface
+	message_runtime
 	roscpp
 	rosparam_shortcuts
 	sensor_msgs
 	std_msgs
 	talon_interface
 	trajectory_msgs
-	message_runtime
   LIBRARIES
 )
 
@@ -65,7 +65,7 @@ catkin_package(
 ###########
 
 include_directories(
-  include/
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -229,7 +229,7 @@ set (FRCROBOT_HW_MAIN_SRCS
 set (WPI_SYSROOT $ENV{HOME}/wpilib/2020/roborio/arm-frc2020-linux-gnueabi)
 include_directories(
 	${catkin_INCLUDE_DIRS}
-	${WPI_SYSROOT}/include/wpilib
+	#	${WPI_SYSROOT}/include/wpilib
 	${WPI_SYSROOT}/include
 	${WPI_SYSROOT}/include/navx
 )
@@ -285,6 +285,12 @@ set (CTRE_USER_LIBS
 include_directories(${ALLWPILIB}/hal/src/main/native/athena)
 include_directories(${ALLWPILIB}/hal/src/main/native/include)
 
+# Used to find main frc/*.h, frc2/*.h, hal/*.h and wpi/*.h
+include_directories(${ALLWPILIB}/wpilibc/src/main/native/include)
+include_directories(${ALLWPILIB}/wpimath/src/main/native/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/include)
+include_directories(${WPI_SYSROOT}/include/wpilib)
+
 if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
     # Add socketcan library to everything but the Rio
     # This adds code to use linux CAN sockets to talk to
@@ -307,8 +313,10 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
 		${ALLWPILIB}/hal/src/main/native/athena/Solenoid.cpp
 		${ALLWPILIB}/hal/src/main/native/athena/ctre/CtreCanNode.cpp
 		${ALLWPILIB}/hal/src/main/native/athena/ctre/PCM.cpp
+		${ALLWPILIB}/hal/src/main/native/cpp/cpp/fpga_clock.cpp
 		${ALLWPILIB}/hal/src/main/native/cpp/handles/HandlesInternal.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Joystick.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/Tracer.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/raw_ostream.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Error.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ErrorHandling.cpp
@@ -317,6 +325,7 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/NativeFormatting.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Path.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallVector.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringMap.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringRef.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Twine.cpp
 	)

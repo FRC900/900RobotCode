@@ -25,7 +25,6 @@ extern "C"
 	}
 }
 
-#include <ctre/phoenix/platform/Platform.h>
 extern "C"
 {
 	// These calls haven't been run through the CANAPI yet - PCM?
@@ -616,6 +615,11 @@ int32_t HAL_SendError(HAL_Bool isError, int32_t errorCode, HAL_Bool isLVCode, co
 
 	errorQueue->enqueue(errorCode, std::string(details));
 	return 0;
+}
+
+void frc::DriverStation::ReportWarning(wpi::Twine const & error)
+{
+	errorQueue->enqueue(-1, error.str());
 }
 
 #include <frc/Timer.h>
