@@ -52,7 +52,7 @@
 
 	<group ns="keyboard" if="$(eval arg('joy_or_key')=='key')">
 
-		<node name="keyboard_node" pkg="teleop_joystick_control" type="teleop_joints_keyboard" output="screen" launch-prefix="terminator -x $(env HOME)/2020RobotCode/zebROS_ws/ROSStandard.sh ">
+		<node name="keyboard_node" pkg="teleop_joystick_control" type="teleop_joints_keyboard" output="screen" launch-prefix="terminator -x $(env HOME)/2020Offseason/zebROS_ws/ROSStandard.sh ">
 			<remap from="/frcrobot_rio/joystick_states_raw" to="/frcrobot_rio/joystick_states_raw1"/>
 		</node>
 

@@ -45,7 +45,7 @@ window
 # Load the 2020 FRC map into the floorplan
 # Size determines how pixels map to meters
 # Pose fixes the center of the field
-# See the output from 2020RobotCode/field_map for these values
+# See the output from 2020Offseason/field_map for these values
 floorplan
 (
   name "2020FRC_field"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/2020RobotCode/zebROS_ws/
+cd ~/2020Offseason/zebROS_ws/
 echo INCOMPLETE > .native_build.status
 
 if [ -z $ROS_ROOT ]; then

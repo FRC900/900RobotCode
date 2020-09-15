@@ -58,7 +58,7 @@ sed -i -e '/<\/package>/i  <build_depend>urdfdom_headers<\/build_depend>' urdf/u
 # Add class_loader to src/urdf/urdf package.xml exec_depend and CMakeLists CATKIN_DEPENDS
 
 # In a docker container : 
-# docker run -it --user ubuntu -v /home/kjaget/2020RobotCode:/home/ubuntu/2020RobotCode -v ~/melodic_arm_cross_ws:/home/ubuntu/melodic_arm_cross_ws  frc900/zebros-2020-dev /bin/bash
+# docker run -it --user ubuntu -v /home/kjaget/2020Offseason:/home/ubuntu/2020RobotCode -v ~/melodic_arm_cross_ws:/home/ubuntu/melodic_arm_cross_ws  frc900/zebros-2020-dev /bin/bash
 
 # Then run the following from inside the container :
 
@@ -67,18 +67,18 @@ cd ~/melodic_arm_cross_ws
 rm -rf ~/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic devel_isolated build_isolated
 
 #catkin config --install --install-space $HOME/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic 
-#catkin build -DCMAKE_TOOLCHAIN_FILE=$HOME/2020RobotCode/zebROS_ws/rostoolchain.cmake
+#catkin build -DCMAKE_TOOLCHAIN_FILE=$HOME/2020Offseason/zebROS_ws/rostoolchain.cmake
 
 # Note - if this fails looking for gencpp*cmake, run from a new terminal
 # window where no ROS setup.bash has previously been sourced
-./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2020RobotCode/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
+./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2020Offseason/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
 
 # Add newly built cross-libs to git repo so they are
 # used for subsequent Rio imagings
 cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi
-rm ~/2020RobotCode/roscore_roborio.tar.bz2
-tar -cf ~/2020RobotCode/roscore_roborio.tar opt/ros/melodic
-bzip2 -9 ~/2020RobotCode/roscore_roborio.tar
+rm ~/2020Offseason/roscore_roborio.tar.bz2
+tar -cf ~/2020Offseason/roscore_roborio.tar opt/ros/melodic
+bzip2 -9 ~/2020Offseason/roscore_roborio.tar
 
 # !!!NOTE!!! - important - copy roscore_melodic_roborio.tar.bz2 into the docker repo
 # so it gets picked up in subsequent builds

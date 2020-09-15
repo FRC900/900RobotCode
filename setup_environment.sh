@@ -114,7 +114,7 @@ rm ./jetsons
 
 #mount and setup autostart script
 sudo mkdir /mnt/900_2
-cd ~/2020RobotCode
+cd ~/2020Offseason
 
 # Set up can0 network interface
 cd
@@ -149,17 +149,17 @@ sudo bash -c "echo FallbackNTP=ntp.ubuntu.com >> /etc/systemd/timesyncd.conf"
 # and keys for connections to Rio
 mkdir -p ~/.ssh
 cd ~/.ssh
-tar -xjf ~/2020RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 
+tar -xjf ~/2020Offseason/jetson_setup/jetson_dot_ssh.tar.bz2 
 chmod 640 authorized_keys
 cd ~
 chmod 700 .ssh
 
 sudo mkdir -p /root/.ssh
-sudo tar -xjf /home/ubuntu/2020RobotCode/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
+sudo tar -xjf /home/ubuntu/2020Offseason/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
 sudo chmod 640 /root/.ssh/authorized_keys
 sudo chmod 700 /root/.ssh
 
-cd ~/2020RobotCode
+cd ~/2020Offseason
 sudo cp ./jetson_setup/10-local.rules ./jetson_setup/99-gpio.rules /etc/udev/rules.d/
 sudo service udev reload
 sleep 2
@@ -185,7 +185,7 @@ if /bin/false; then
     mkdir jetson_kernel
     cd jetson_kernel
     tar -xf ../Linux_for_Tegra/source/public/kernel_src.tbz2
-    patch -p0 < ~/2020RobotCode/patch_j120_l4t32.2.3.txt
+    patch -p0 < ~/2020Offseason/patch_j120_l4t32.2.3.txt
 
     ## Apply realsense patches to modules
     cd ~/jetson_kernel/kernel/kernel-4.9
@@ -341,18 +341,18 @@ rm -rf /home/ubuntu/wpilib/2020/maven /home/ubuntu/wpilib/2020/jdk
 sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 
 # Set up prereqs for deploy script
-mv ~/2020RobotCode ~/2020RobotCode.orig
-ln -s ~/2020RobotCode.orig ~/2020RobotCode
-mkdir -p ~/2020RobotCode.prod/zebROS_ws
-mkdir -p ~/2020RobotCode.dev/zebROS_ws
+mv ~/2020Offseason ~/2020RobotCode.orig
+ln -s ~/2020Offseason.orig ~/2020RobotCode
+mkdir -p ~/2020Offseason.prod/zebROS_ws
+mkdir -p ~/2020Offseason.dev/zebROS_ws
 
 sudo mkdir -p /usr/local/zed/settings
 sudo chmod 755 /usr/local/zed/settings
-sudo cp ~/2020RobotCode/calibration_files/*.conf /usr/local/zed/settings
+sudo cp ~/2020Offseason/calibration_files/*.conf /usr/local/zed/settings
 sudo chmod 644 /usr/local/zed/settings/*
 
-cp ~/2020RobotCode/.vimrc ~/2020RobotCode/.gvimrc ~
-sudo cp ~/2020RobotCode/kjaget.vim /usr/share/vim/vim80/colors
+cp ~/2020Offseason/.vimrc ~/2020RobotCode/.gvimrc ~
+sudo cp ~/2020Offseason/kjaget.vim /usr/share/vim/vim80/colors
 
 git config --global user.email "progammers@team900.org"
 git config --global user.name "Team900 Jetson TX2"
@@ -369,7 +369,7 @@ sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 
 sudo ln -s /usr/include/opencv4 /usr/include/opencv
 
-echo "source /home/ubuntu/2020RobotCode/zebROS_ws/command_aliases.sh" >> /home/ubuntu/.bashrc
+echo "source /home/ubuntu/2020Offseason/zebROS_ws/command_aliases.sh" >> /home/ubuntu/.bashrc
 
 # Install make 4.3 (>4.2 is required for -flto=jobserver support
 cd
@@ -457,10 +457,10 @@ cd &&\
 	cd &&\
 	rm -rf git-lfs-linux-amd64-v2.11.0.tar.gz git-lfs-install &&\
 	git lfs install &&\
-	cd ~/2020RobotCode &&\
+	cd ~/2020Offseason &&\
 	git lfs pull
 
-cd ~/2020RobotCode
+cd ~/2020Offseason
 sudo apt-get install -y libhdf5-serial-dev hdf5-tools
 sudo dpkg -i libnccl*arm64.deb
 sudo python -m pip install -U pip six numpy wheel setuptools mock h5py
@@ -470,8 +470,8 @@ sudo python -m pip install tensorflow-1.15.3-*.whl
 
 # Patch catkin tools/pkg for faster builds
 cd /usr/lib/python2.7/dist-packages
-sudo patch -p0 < ~/2020RobotCode/catkin_pkg.patch
-sudo patch -p0 < ~/2020RobotCode/catkin_tools.patch
+sudo patch -p0 < ~/2020Offseason/catkin_pkg.patch
+sudo patch -p0 < ~/2020Offseason/catkin_tools.patch
 
 cd /home/ubuntu
 git clone https://github.com/tensorflow/models.git

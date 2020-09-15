@@ -15,7 +15,7 @@
 	# Overwride the downloaded jetpack files with 
 	# the updates ones built to support the J120
 	# cd somewhere
-	# extract ~/2020RobotCode/j120_hardware_dtb_l4t32-2-3-1.tbz2
+	# extract ~/2020Offseason/j120_hardware_dtb_l4t32-2-3-1.tbz2
 	cp `find . -name Image | head -n1 ` ~/nvidia/nvidia_sdk/JetPack_4.2.3_Linux_GA_P3310/Linux_for_Tegra/kernel
 	sudo cp `find . -name Image | head -n1` ~/nvidia/nvidia_sdk/JetPack_4.2.3_Linux_GA_P3310/Linux_for_Tegra/rootfs/boot
 

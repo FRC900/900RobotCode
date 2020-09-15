@@ -23,7 +23,7 @@ list(FILTER catkin_LIBRARIES EXCLUDE REGEX ".*libjoint_trajectory_controller.so.
 # find_package(Boost REQUIRED COMPONENTS system)
 
 #Append Gperftools_DIR 
-LIST(APPEND CMAKE_MODULE_PATH "/home/ubuntu/2020RobotCode/zebROS_ws/src/cmake_modules")
+LIST(APPEND CMAKE_MODULE_PATH "/home/ubuntu/2020Offseason/zebROS_ws/src/cmake_modules")
 find_package(Gperftools REQUIRED)
 
 

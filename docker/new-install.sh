@@ -42,12 +42,12 @@ cd &&\
 
 # Install repo - perhaps ssh version inside container, worry about SSH keys?
 cd 
-git clone https://github.com/FRC900/2020RobotCode.git
-cd 2020RobotCode
+git clone https://github.com/FRC900/2020Offseason.git
+cd 2020Offseason
 git submodule update --init --recursive
 docker run --net=host -v  /tmp/.X11-unix:/tmp/.X11-unix \
- -v $HOME/2020RobotCode:/home/ubuntu/2020RobotCode \
- -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-2020-dev:latest "wstool update -t /home/ubuntu/2020RobotCode/zebROS_ws/src -j2"
+ -v $HOME/2020Offseason:/home/ubuntu/2020RobotCode \
+ -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-2020-dev:latest "wstool update -t /home/ubuntu/2020Offseason/zebROS_ws/src -j2"
 
 cd
 wget https://downloads.slack-edge.com/linux_releases/slack-desktop-4.0.2-amd64.deb

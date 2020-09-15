@@ -119,12 +119,12 @@ sudo rosdep init
 # To find available packages, use:
 rosdep update
 
-cd ~/2020RobotCode/zebROS_ws/src
+cd ~/2020Offseason/zebROS_ws/src
 #wstool init
 #cd ..
 
 # These should all be merged in the GIT repo version
-# of the code.  Check 2020RobotCode/zebROS_ws/src/.rosinstall to
+# of the code.  Check 2020Offseason/zebROS_ws/src/.rosinstall to
 # verify.  Leaving the commands here just in case we need to recreate
 # a workspace elsewhere
 
@@ -156,5 +156,5 @@ rosdep install --from-paths . --ignore-src --rosdistro=melodic -y
 
 #source /opt/ros/melodic/setup.bash
 
-#cd ~/2020RobotCode/zebROS_ws
+#cd ~/2020Offseason/zebROS_ws
 #catkin_make

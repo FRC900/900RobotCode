@@ -11,7 +11,7 @@ create a corresponding optimized TRT file.
 
 If the frozen graph is not found, it will try to create it using
 checkpoint files. This mode is not likely to be necessary since we don't
-put checkpoint files in the 2020RobotCode repo.  It is left over from
+put checkpoint files in the 2020Offseason repo.  It is left over from
 the stand-alone script in the tensorflow workspace, but the purposes
 of this script and that one have diverged.
 
@@ -19,7 +19,7 @@ of this script and that one have diverged.
 # Dir where model.ckpt* files are being generated
 import sys
 import os.path
-SAVED_MODEL_DIR='/home/ubuntu/2020RobotCode/zebROS_ws/src/tf_object_detection/src'
+SAVED_MODEL_DIR='/home/ubuntu/2020Offseason/zebROS_ws/src/tf_object_detection/src'
 CHECKPOINT_NUMBER='118209'
 sys.path.append(os.path.join(SAVED_MODEL_DIR, 'modules'))
 sys.path.append(os.path.join(os.path.join(SAVED_MODEL_DIR, 'modules'), 'slim'))
