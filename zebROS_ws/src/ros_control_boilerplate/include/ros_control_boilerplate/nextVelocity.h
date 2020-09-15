@@ -20,7 +20,7 @@ double nextVelocity(double v, double vt, double &a, double am, double jm, double
 	int signDiffV = sign(diffv);
 	int signA = sign(a);
 	double nV;
-	bool finish;
+	bool finish = false;
 	if(pow(a, 2)/jm >= diffv*signA) //Fix tendency to overshoot?
 	{
 		//overshoot
@@ -33,7 +33,6 @@ double nextVelocity(double v, double vt, double &a, double am, double jm, double
 		else
 		{
 			a = (a -  signA * jm * cr);
-			finish = false;
 			//cout<<"return from peak accel"<<endl;
 		}
 	}
@@ -44,16 +43,15 @@ double nextVelocity(double v, double vt, double &a, double am, double jm, double
 		if(abs(a) > am)
 		{
 			a = signDiffV*am;
-			finish = false;
 		}
 		if(abs(a*cr) > abs(diffv)) //verify and fix
 		{
 			a = (diffv/cr); //if we can get to target now, do it
 			finish =true;
-		}	
+		}
 	}
 	nV = v + a * cr;
-	if(finish) {a=0;} 
+	if(finish) {a=0;}
 	return nV;
 }
 #endif
