@@ -1,6 +1,6 @@
-# 2020 Robot Code [![Build Status](https://travis-ci.com/FRC900/2020Offseason.svg?token=T6hJWxFcNyyzxifXQqW5&branch=master)](https://travis-ci.com/FRC900/2020RobotCode)
+# 2020 Offseason Code [![Build Status](https://travis-ci.com/FRC900/2020Offseason.svg?token=T6hJWxFcNyyzxifXQqW5&branch=master)](https://travis-ci.com/FRC900/2020Offseason)
 
-2020 Robot Code
+2020 Offseason Code
 
 Package list 
  - adi\_driver - submodule - ADI IMU ROS node

@@ -341,8 +341,8 @@ rm -rf /home/ubuntu/wpilib/2020/maven /home/ubuntu/wpilib/2020/jdk
 sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 
 # Set up prereqs for deploy script
-mv ~/2020Offseason ~/2020RobotCode.orig
-ln -s ~/2020Offseason.orig ~/2020RobotCode
+mv ~/2020Offseason ~/2020Offseason.orig
+ln -s ~/2020Offseason.orig ~/2020Offseason
 mkdir -p ~/2020Offseason.prod/zebROS_ws
 mkdir -p ~/2020Offseason.dev/zebROS_ws
 
@@ -351,7 +351,7 @@ sudo chmod 755 /usr/local/zed/settings
 sudo cp ~/2020Offseason/calibration_files/*.conf /usr/local/zed/settings
 sudo chmod 644 /usr/local/zed/settings/*
 
-cp ~/2020Offseason/.vimrc ~/2020RobotCode/.gvimrc ~
+cp ~/2020Offseason/.vimrc ~/2020Offseason/.gvimrc ~
 sudo cp ~/2020Offseason/kjaget.vim /usr/share/vim/vim80/colors
 
 git config --global user.email "progammers@team900.org"

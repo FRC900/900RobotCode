@@ -55,7 +55,7 @@ do
 			  #	&&  -e $practice_merge_file ]]
 			then
 				echo this is one of a series of split practice bags. merging to $practice_merge_file
-				cp $HOME/2020Offseason/$practice_merge_file $HOME/2020RobotCode/unmerged_${practice_merge_file}
+				cp $HOME/2020Offseason/$practice_merge_file $HOME/2020Offseason/unmerged_${practice_merge_file}
 				~/2020Offseason/zebROS_ws/src/rosbag_scripts/scripts/merge_bagfiles.py $practice_merge_file $var unmerged_$practice_merge_file -v
 				practice_count=$(( $practice_count + 1 ))
 				continue

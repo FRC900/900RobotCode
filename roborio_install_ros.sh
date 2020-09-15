@@ -132,7 +132,7 @@ scp -P 22 ~/2020Offseason/rio_bashrc.sh admin@$1:.
 scp -P 22 ~/2020Offseason/zebROS_ws/ROSJetsonMaster.sh admin@$1:.
 
 # Set up prereqs for deploy script
-ssh -p 22 admin@$1 'mv ~/2020Offseason ~/2020RobotCode.orig'
-ssh -p 22 admin@$1 'ln -s ~/2020Offseason.orig ~/2020RobotCode'
+ssh -p 22 admin@$1 'mv ~/2020Offseason ~/2020Offseason.orig'
+ssh -p 22 admin@$1 'ln -s ~/2020Offseason.orig ~/2020Offseason'
 ssh -p 22 admin@$1 'mkdir -p ~/2020Offseason.prod/zebROS_ws'
 ssh -p 22 admin@$1 'mkdir -p ~/2020Offseason.dev/zebROS_ws'

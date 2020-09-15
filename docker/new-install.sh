@@ -46,7 +46,7 @@ git clone https://github.com/FRC900/2020Offseason.git
 cd 2020Offseason
 git submodule update --init --recursive
 docker run --net=host -v  /tmp/.X11-unix:/tmp/.X11-unix \
- -v $HOME/2020Offseason:/home/ubuntu/2020RobotCode \
+ -v $HOME/2020Offseason:/home/ubuntu/2020Offseason \
  -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-2020-dev:latest "wstool update -t /home/ubuntu/2020Offseason/zebROS_ws/src -j2"
 
 cd
