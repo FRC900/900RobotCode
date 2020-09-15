@@ -48,46 +48,46 @@ CANCoderCIParams::CANCoderCIParams(ros::NodeHandle n)
 	ddr_.publishServicesTopics();
 }
 
-	void CANCoderCIParams::setVelocityMeasPeriod(int velocity_meas_period, bool update_dynamic)
+void CANCoderCIParams::setVelocityMeasPeriod(int velocity_meas_period, bool update_dynamic)
+{
+	const bool publish_update = update_dynamic && (velocity_meas_period != velocity_meas_period_);
+	velocity_meas_period_ = static_cast<hardware_interface::cancoder::SensorVelocityMeasPeriod>(velocity_meas_period);
+	if (publish_update)
 	{
-		const bool publish_update = update_dynamic && (velocity_meas_period != velocity_meas_period_);
-		velocity_meas_period_ = static_cast<hardware_interface::cancoder::SensorVelocityMeasPeriod>(velocity_meas_period);
-		if (publish_update)
-		{
-			ddr_.updatePublishedInformation();
-		}
+		ddr_.updatePublishedInformation();
 	}
-	void CANCoderCIParams::setVelocityMeasWindow(int velocity_meas_window, bool update_dynamic)
+}
+void CANCoderCIParams::setVelocityMeasWindow(int velocity_meas_window, bool update_dynamic)
+{
+	const bool publish_update = update_dynamic && (velocity_meas_window != velocity_meas_window_);
+	velocity_meas_window_ = velocity_meas_window;
+	if (publish_update)
 	{
-		const bool publish_update = update_dynamic && (velocity_meas_window != velocity_meas_window_);
-		velocity_meas_window_ = velocity_meas_window;
-		if (publish_update)
-		{
-			ddr_.updatePublishedInformation();
-		}
+		ddr_.updatePublishedInformation();
 	}
-	void CANCoderCIParams::setAbsoluteSensorRange(int absolute_sensor_range, bool update_dynamic)
+}
+void CANCoderCIParams::setAbsoluteSensorRange(int absolute_sensor_range, bool update_dynamic)
+{
+	const bool publish_update = update_dynamic && (absolute_sensor_range != absolute_sensor_range_);
+	absolute_sensor_range_ = static_cast<hardware_interface::cancoder::AbsoluteSensorRange>(absolute_sensor_range);
+	if (publish_update)
 	{
-		const bool publish_update = update_dynamic && (absolute_sensor_range != absolute_sensor_range_);
-		absolute_sensor_range_ = static_cast<hardware_interface::cancoder::AbsoluteSensorRange>(absolute_sensor_range);
-		if (publish_update)
-		{
-			ddr_.updatePublishedInformation();
-		}
+		ddr_.updatePublishedInformation();
 	}
-	void CANCoderCIParams::setMagnetOffset(double magnet_offset, bool update_dynamic)
+}
+void CANCoderCIParams::setMagnetOffset(double magnet_offset, bool update_dynamic)
+{
+	const bool publish_update = update_dynamic && (magnet_offset != magnet_offset_);
+	magnet_offset_ = magnet_offset;
+	if (publish_update)
 	{
-		const bool publish_update = update_dynamic && (magnet_offset != magnet_offset_);
-		magnet_offset_ = magnet_offset;
-		if (publish_update)
-		{
-			ddr_.updatePublishedInformation();
-		}
+		ddr_.updatePublishedInformation();
 	}
-	void CANCoderCIParams::setInitializationStrategy(int initialization_strategy, bool update_dynamic)
-	{
-		const bool publish_update = update_dynamic && (initialization_strategy != initialization_strategy_);
-		initialization_strategy_ = static_cast<hardware_interface::cancoder::SensorInitializationStrategy>(initialization_strategy);
+}
+void CANCoderCIParams::setInitializationStrategy(int initialization_strategy, bool update_dynamic)
+{
+	const bool publish_update = update_dynamic && (initialization_strategy != initialization_strategy_);
+	initialization_strategy_ = static_cast<hardware_interface::cancoder::SensorInitializationStrategy>(initialization_strategy);
 	if (publish_update)
 	{
 		ddr_.updatePublishedInformation();
