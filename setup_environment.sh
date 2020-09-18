@@ -391,8 +391,9 @@ vim +PluginInstall +qall
 ln -sf /home/ubuntu/.vim/bundle/vim-ros-ycm/.ycm_extra_conf.py /home/ubuntu/.vim/bundle/vim-ros-ycm/ycm_extra_conf.py
 cd /home/ubuntu/.vim/bundle/YouCompleteMe
 git fetch origin
+git checkout legacy-py2
 git submodule update --init --recursive
-python3 ./install.py --clang-completer --system-libclang --ninja 
+python2.7 ./install.py --clang-completer --system-libclang --ninja 
 
 # Install tensorflow on Jetson
 #sudo apt update
