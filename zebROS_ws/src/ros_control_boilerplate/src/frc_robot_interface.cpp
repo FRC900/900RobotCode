@@ -2556,11 +2556,27 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		if (!pwm_local_updates_[i])
 			pwm_state_[i] = pwm_command_[i];
 	}
+#endif
+	read_tracer_.start_unique("solenoid");
 	for (size_t i = 0; i < num_solenoids_; i++)
 	{
-		if (!solenoid_local_updates_[i])
-			solenoid_state_[i] = solenoid_command_[i];
+		if (solenoid_local_updates_[i])
+		{
+			int32_t status = 0;
+			const auto state = HAL_GetSolenoid(solenoids_[i], &status);
+			if (status == 0)
+			{
+				solenoid_state_[i] = state;
+			}
+			else
+			{
+				ROS_ERROR_STREAM("Error reading solenoid status : name="
+						<< solenoid_names_[i] << ", id=" << solenoid_ids_[i] << ", state = " << state);
+			}
+		}
 	}
+
+#if 0
 	for (size_t i = 0; i < num_double_solenoids_; i++)
 	{
 		if (!double_solenoid_local_updates_[i])
@@ -2699,23 +2715,72 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 
 	for (size_t i = 0; i < num_solenoids_; i++)
 	{
-		const bool setpoint = solenoid_command_[i] > 0;
-		if (solenoid_state_[i] != setpoint)
+		// MODE_POSITION is standard on/off setting
+		if (solenoid_mode_[i] == hardware_interface::JointCommandModes::MODE_POSITION)
 		{
-			if (solenoid_local_hardwares_[i])
+			const bool setpoint = solenoid_command_[i] > 0;
+			if ((solenoid_mode_[i] != prev_solenoid_mode_[i]) || (solenoid_state_[i] != setpoint))
 			{
 				int32_t status = 0;
-				HAL_SetSolenoid(solenoids_[i], setpoint, &status);
+				if (solenoid_local_hardwares_[i])
+				{
+					HAL_SetSolenoid(solenoids_[i], setpoint, &status);
+				}
 				if (status != 0)
+				{
 					ROS_ERROR_STREAM("Error setting solenoid " << solenoid_names_[i] <<
 							" to " << setpoint << " status = " << status);
+				}
+				else
+				{
+					ROS_INFO_STREAM("Solenoid " << solenoid_names_[i] <<
+							" at id " << solenoid_ids_[i] <<
+							" / pcm " << solenoid_pcms_[i] <<
+							" = " << static_cast<int>(setpoint));
+				}
 			}
-			solenoid_state_[i] = setpoint;
-			ROS_INFO_STREAM("Solenoid " << solenoid_names_[i] <<
-					" at id " << solenoid_ids_[i] <<
-					" / pcm " << solenoid_pcms_[i] <<
-					" = " << setpoint);
 		}
+		// MODE_EFFORT is PWM via one-shot duration pulses
+		else if (solenoid_mode_[i] == hardware_interface::JointCommandModes::MODE_EFFORT)
+		{
+			if (solenoid_command_[i] > 0)
+			{
+				int32_t status = 0;
+				if (solenoid_local_hardwares_[i])
+				{
+					// TODO - do we need to wait for previous one-shot to expire before sending another one?
+					HAL_SetOneShotDuration(solenoids_[i], solenoid_command_[i], &status);
+					if (status != 0)
+					{
+						ROS_ERROR_STREAM("Error setting solenoid " << solenoid_names_[i] <<
+								" one shot duration to " << solenoid_command_[i] << " status = " << status);
+					}
+					else
+					{
+						HAL_FireOneShot(solenoids_[i], &status);
+						if (status != 0)
+						{
+							ROS_ERROR_STREAM("Error setting solenoid " << solenoid_names_[i] <<
+									" fire one shot, status = " << status);
+						}
+					}
+				}
+				if (status == 0)
+				{
+					ROS_INFO_STREAM("Solenoid one shot " << solenoid_names_[i] <<
+							" at id " << solenoid_ids_[i] <<
+							" / pcm " << solenoid_pcms_[i] <<
+							" = " << solenoid_command_[i]);
+					solenoid_pwm_state_[i] = solenoid_command_[i];
+					solenoid_command_[i] = 0;
+				}
+			}
+		}
+		else
+		{
+			ROS_ERROR_STREAM("Invalid solenoid_mode_[i] = " << static_cast<int>(solenoid_mode_[i]));
+		}
+		prev_solenoid_mode_[i] = solenoid_mode_[i];
 	}
 
 	for (size_t i = 0; i < num_double_solenoids_; i++)
