@@ -193,7 +193,8 @@ class PowerCellIntakeAction {
 		}
 
 
-		void waitForActionlibServer(auto &action_client, double timeout, const std::string &activity)
+		template<class T>
+		void waitForActionlibServer(T &action_client, double timeout, const std::string &activity)
 			//activity is a description of what we're waiting for, e.g. "waiting for mechanism to extend" - helps identify where in the server this was called (for error msgs)
 		{
 			double request_time = ros::Time::now().toSec();
