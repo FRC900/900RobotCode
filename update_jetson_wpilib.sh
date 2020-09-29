@@ -5,6 +5,11 @@
 #   env to make sure that the local build env is correct one
 #   to push to the Jetson
 
+which docker | grep -q docker
+if [ $? -ne 1 ] ; then
+	echo "This script must be run from inside a docker conatiner"
+fi
+
 ssh -p 22 ubuntu@$1 'rm -rf /home/ubuntu/wpilib/2020'
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/ctre'
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/navx'

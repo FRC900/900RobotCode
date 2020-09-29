@@ -5,6 +5,10 @@
 # Must be run from inside docker container - this script copies wpilib
 #   libraries to the Rio, and those only exist inside the container
 #   matching the version of wpilib expected on the Rio
+which docker | grep -q docker
+if [ $? -ne 1 ] ; then
+	echo "This script must be run from inside a docker conatiner"
+fi
 
 # Set time and date on Rio to match the system
 # we're installing from.  This should be close enough
