@@ -365,12 +365,15 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
 	    # Everything but Platform_socketcan.a
 		target_link_libraries(frcrobot_phoenixsim_main
 			${catkin_LIBRARIES}
-			${CTRE_LIB_DIR}/libCTRE_Phoenix.a
-			${CTRE_LIB_DIR}/libCTRE_PhoenixCanutils.a
-			${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.a
-			${CTRE_LIB_DIR}/libCTRE_PhoenixCore.a
-			${CTRE_LIB_DIR}/libCTRE_PhoenixDiagnostics.a
 			${CTRE_LIB_DIR}/../shared/libCTRE_PhoenixPlatform_sim.so
+			${CTRE_USER_LIBS}
+			#${CTRE_LIB_DIR}/libCTRE_Phoenix.a
+			#${CTRE_LIB_DIR}/libCTRE_PhoenixCanutils.a
+			#${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.a
+			#${CTRE_LIB_DIR}/libCTRE_PhoenixCore.a
+			#${CTRE_LIB_DIR}/libCTRE_PhoenixDiagnostics.a
+			#${CTRE_LIB_DIR}/libCTRE_PhoenixCanutils.a
+			#${CTRE_LIB_DIR}/libCTRE_PhoenixPlatform_socketcan.a
 			frc_robot_interface
 			frc_sim_wpilib
 			convert
