@@ -1141,7 +1141,7 @@ void FRCRobotInterface::createInterfaces(void)
 	prev_solenoid_mode_.resize(num_solenoids_);
 	for (size_t i = 0; i < num_solenoids_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << solenoid_names_[i] << " at id " << solenoid_ids_[i]<< " at pcm " << solenoid_pcms_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << solenoid_names_[i] << " at id " << solenoid_ids_[i] << " at pcm " << solenoid_pcms_[i]);
 
 		solenoid_state_[i] = std::numeric_limits<double>::max();
 		solenoid_pwm_state_[i] = 0;
@@ -1159,7 +1159,7 @@ void FRCRobotInterface::createInterfaces(void)
 
 		hardware_interface::JointModeHandle smh(solenoid_names_[i], &solenoid_mode_[i]);
 		joint_mode_interface_.registerHandle(smh);
-		if (!!solenoid_local_updates_[i])
+		if (!solenoid_local_updates_[i])
 			joint_mode_remote_interface_.registerHandle(smh);
 	}
 
@@ -1727,7 +1727,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 							  "Loading joint " << i << "=" << rumble_names_[i] <<
 							  (rumble_local_updates_[i] ? " local" : " remote") << " update, " <<
 							  (rumble_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as Rumble with port" << rumble_ports_[i]);
+							  " as Rumble with port " << rumble_ports_[i]);
 
 	for (size_t i = 0; i < num_pdps_; i++)
 	{
@@ -2560,7 +2560,7 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 	read_tracer_.start_unique("solenoid");
 	for (size_t i = 0; i < num_solenoids_; i++)
 	{
-		if (solenoid_local_updates_[i])
+		if (solenoid_local_hardwares_[i])
 		{
 			int32_t status = 0;
 			const auto state = HAL_GetSolenoid(solenoids_[i], &status);
@@ -2571,7 +2571,7 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 			else
 			{
 				ROS_ERROR_STREAM("Error reading solenoid status : name="
-						<< solenoid_names_[i] << ", id=" << solenoid_ids_[i] << ", state = " << state);
+						<< solenoid_names_[i] << ", id=" << solenoid_ids_[i] << ", status=" << status);
 			}
 		}
 	}
@@ -2737,6 +2737,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 							" at id " << solenoid_ids_[i] <<
 							" / pcm " << solenoid_pcms_[i] <<
 							" = " << static_cast<int>(setpoint));
+					solenoid_state_[i] = setpoint;
 				}
 			}
 		}
@@ -2771,7 +2772,12 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 							" at id " << solenoid_ids_[i] <<
 							" / pcm " << solenoid_pcms_[i] <<
 							" = " << solenoid_command_[i]);
+					// TODO - should we re-load this saved pwm command after the previous
+					// one expires, or require a controller to monitor and reload?
 					solenoid_pwm_state_[i] = solenoid_command_[i];
+					// TODO - this will be polled in the read() function on interface local
+					// to the hardware. How will the remote interface get that state update?
+					solenoid_state_[i] = 1;
 					solenoid_command_[i] = 0;
 				}
 			}
