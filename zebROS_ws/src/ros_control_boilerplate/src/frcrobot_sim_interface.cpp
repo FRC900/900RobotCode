@@ -39,8 +39,9 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 #include <ros/ros.h>
 
 #include "frc/DriverStation.h"
-#include "mockdata/DIOData.h"
-#include "mockdata/DriverStationData.h"
+#include "hal/simulation/DIOData.h"
+#include "hal/simulation/DriverStationData.h"
+
 
 #include <ros_control_boilerplate/frcrobot_sim_interface.h>
 #include <ros_control_boilerplate/nextVelocity.h>

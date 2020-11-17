@@ -84,7 +84,7 @@ set (ALLWPILIB ../../../allwpilib)
 # Don't build sim code for the Rio or Jetson -
 # saves time and space for something which will
 # never be run
-if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi") OR
+if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi") OR
 	     ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
 		 ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") )) 
     # Sim version of main control
@@ -226,7 +226,7 @@ set (FRCROBOT_HW_MAIN_SRCS
 	src/frcrobot_hw_interface.cpp
 )
 
-set (WPI_SYSROOT $ENV{HOME}/wpilib/2020/roborio/arm-frc2020-linux-gnueabi)
+set (WPI_SYSROOT $ENV{HOME}/wpilib/2021/roborio/arm-frc2021-linux-gnueabi)
 include_directories(
 	${catkin_INCLUDE_DIRS}
 	#	${WPI_SYSROOT}/include/wpilib
@@ -238,7 +238,7 @@ include_directories(
 set (WPI_BASE_LIB_DIR ${WPI_SYSROOT}/lib/wpilib/linux)
 
 # Rio-only code
-if ("${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
+if ("${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi")
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/athena/static)
 
 	# Link against wpi user libraries for CAN talon and navX-MXP code and
@@ -291,7 +291,7 @@ include_directories(${ALLWPILIB}/wpimath/src/main/native/include)
 include_directories(${ALLWPILIB}/wpiutil/src/main/native/include)
 include_directories(${WPI_SYSROOT}/include/wpilib)
 
-if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi")
+if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi")
     # Add socketcan library to everything but the Rio
     # This adds code to use linux CAN sockets to talk to
     # the CAN bus for the Jetson

@@ -8,4 +8,4 @@ set -o pipefail
 
 docker run -it --net=host -v  /tmp/.X11-unix:/tmp/.X11-unix \
  -v $HOME/2020Offseason:/home/ubuntu/2020Offseason \
- -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-2020-dev:latest /bin/bash
+ -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-2021-beta:latest /bin/bash
