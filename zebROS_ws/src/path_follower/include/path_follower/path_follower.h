@@ -83,8 +83,8 @@ class PathFollower
 		nav_msgs::Path path_;
 
 		double lookahead_distance_;
-		size_t num_waypoints_;
-		double path_length_;
+		size_t num_waypoints_ = 0;
+		double path_length_ = 0.0;
 		std::vector<double> vec_path_length_;
 		double start_point_radius_;
 		ros::Duration time_offset_;
@@ -103,10 +103,10 @@ class PathFollower
 		bool loadPath(const nav_msgs::Path &path);
 
 		// get yaw from geometry_msgs quaternion
-		static double getYaw(const geometry_msgs::Quaternion q);
+		double getYaw(const geometry_msgs::Quaternion &q) const;
 
 		// path length getter
-		const double getPathLength();
+		double getPathLength() const;
 
 		// interpolation function, just for cleanness
 		double interpolate(double start_t, double end_t, double start_x, double end_x, double current_t) const;

@@ -28,7 +28,7 @@ class PathAction
 		std::map<std::string, AlignActionAxisState> axis_states_;
 		ros::Publisher combine_cmd_vel_pub_;
 
-		std::shared_ptr<PathFollower> path_follower_;
+		PathFollower path_follower_;
 		double lookahead_distance_;
 		double final_pos_tol_;
 		double server_timeout_;
@@ -40,7 +40,7 @@ class PathAction
 		int ros_rate_;
 
 	public:
-		PathAction(const std::string &name, ros::NodeHandle nh,
+		PathAction(const std::string &name, const ros::NodeHandle &nh,
 				   double lookahead_distance,
 				   double final_pos_tol,
 				   double server_timeout,
@@ -51,6 +51,7 @@ class PathAction
 			: nh_(nh)
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
+			, path_follower_(lookahead_distance, start_point_radius, time_offset)
 			, debug_(false) // TODO - config item?
 		{
 			as_.start();
@@ -74,7 +75,6 @@ class PathAction
 
 			combine_cmd_vel_pub_ = nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1000);
 
-			path_follower_ = std::make_shared<PathFollower>(lookahead_distance_, start_point_radius_, time_offset);
 		}
 
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
@@ -194,12 +194,12 @@ class PathAction
 			}
 
 			//debug
-			ROS_INFO_STREAM(spline_gen_srv.response.path.poses[num_waypoints - 1].pose.position.x << ", " << spline_gen_srv.response.path.poses[num_waypoints - 1].pose.position.y << ", " << PathFollower::getYaw(spline_gen_srv.response.path.poses[num_waypoints - 1].pose.orientation));
+			ROS_INFO_STREAM(spline_gen_srv.response.path.poses[num_waypoints - 1].pose.position.x << ", " << spline_gen_srv.response.path.poses[num_waypoints - 1].pose.position.y << ", " << path_follower_.getYaw(spline_gen_srv.response.path.poses[num_waypoints - 1].pose.orientation));
 
 			ros::Rate r(ros_rate_);
 
 			// send path to pure pursuit
-			if (!path_follower_->loadPath(spline_gen_srv.response.path))
+			if (!path_follower_.loadPath(spline_gen_srv.response.path))
 			{
 				ROS_ERROR_STREAM("Failed to load path");
 				preempted = true;
@@ -212,7 +212,7 @@ class PathAction
 			{
 
 				// odom_.pose.pose.orientation = orientation_;
-				geometry_msgs::Pose next_waypoint = path_follower_->run(odom_, distance_travelled);
+				geometry_msgs::Pose next_waypoint = path_follower_.run(odom_, distance_travelled);
 
 				// TODO - think about what the target point and axis are
 				// We want to end up driving to a point on the path some
@@ -249,10 +249,10 @@ class PathAction
 				auto &z_axis = z_axis_it->second;
 				z_axis.enable_pub_.publish(enable_msg);
 
-				command_msg.data = PathFollower::getYaw(next_waypoint.orientation);
+				command_msg.data = path_follower_.getYaw(next_waypoint.orientation);
 				z_axis.command_pub_.publish(command_msg);
 				// state_msg.data = PathFollower::getYaw(orientation_);
-				state_msg.data = PathFollower::getYaw(odom_.pose.pose.orientation);
+				state_msg.data = path_follower_.getYaw(odom_.pose.pose.orientation);
 				z_axis.state_pub_.publish(state_msg);
 
 				if (as_.isPreemptRequested() || !ros::ok())

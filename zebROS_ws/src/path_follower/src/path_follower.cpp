@@ -30,12 +30,12 @@ bool PathFollower::loadPath(const nav_msgs::Path &path)
 	return true;
 }
 
-const double PathFollower::getPathLength()
+double PathFollower::getPathLength() const
 {
 	return path_length_;
 }
 
-double PathFollower::getYaw(const geometry_msgs::Quaternion q)
+double PathFollower::getYaw(const geometry_msgs::Quaternion &q) const
 {
 	double roll, pitch, yaw;
 	tf2::Quaternion tf_q(
