@@ -46,7 +46,7 @@
 #include "ros_control_boilerplate/LineBreakSensors.h"
 #include "ros_control_boilerplate/set_limit_switch.h"
 
-namespace frcrobot_control
+namespace ros_control_boilerplate
 {
 /// \brief Hardware interface for a robot
 class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface

@@ -38,6 +38,7 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 */
 #include <ros/ros.h>
 
+#include <ctre/phoenix/cci/Unmanaged_CCI.h>
 #include "frc/DriverStation.h"
 #include "hal/simulation/DIOData.h"
 #include "hal/simulation/DriverStationData.h"
@@ -48,7 +49,7 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 #include <ros_control_boilerplate/set_limit_switch.h>
 
 
-namespace frcrobot_control
+namespace ros_control_boilerplate
 {
 
 FRCRobotSimInterface::FRCRobotSimInterface(ros::NodeHandle &nh,
@@ -306,10 +307,17 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 
 void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& period)
 {
+	// TODO : needed for standalone robots, but not
+	// when we have a rio attached. Config item?
+	if (!run_hal_robot_ && num_can_ctre_mcs_)
+	{
+		c_FeedEnable(period.toNSec() / 1000000); // nsec -> msec conversion
+	}
+
 	FRCRobotInterface::read(time, period);
 	for (size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
 	{
-		// Do nothing
+		// 
     }
 }
 

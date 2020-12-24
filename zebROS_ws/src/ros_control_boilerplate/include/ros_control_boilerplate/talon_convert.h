@@ -1,3 +1,4 @@
+#pragma once
 #include "talon_interface/talon_state_interface.h"
 #include <ctre/phoenix/motorcontrol/ControlFrame.h>
 #include <ctre/phoenix/motorcontrol/ControlMode.h>

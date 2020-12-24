@@ -1,3 +1,4 @@
+#pragma once
 #include "as726x_interface/as726x_interface.h"
 #include "ros_control_boilerplate/AS726x.h"
 

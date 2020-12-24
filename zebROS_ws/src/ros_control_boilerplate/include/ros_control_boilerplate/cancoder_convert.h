@@ -1,3 +1,4 @@
+#pragma once
 #include <ctre/phoenix/sensors/AbsoluteSensorRange.h>
 #include <ctre/phoenix/sensors/MagnetFieldStrength.h>
 #include <ctre/phoenix/sensors/SensorInitializationStrategy.h>

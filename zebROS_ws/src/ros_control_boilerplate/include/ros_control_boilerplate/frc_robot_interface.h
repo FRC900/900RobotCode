@@ -61,6 +61,7 @@
 #include "frc_msgs/JoystickState.h"
 #include "remote_joint_interface/remote_joint_interface.h"
 #include "ros_control_boilerplate/ros_iterative_robot.h"
+#include "ros_control_boilerplate/talon_convert.h"
 #include "talon_interface/cancoder_command_interface.h"
 #include "talon_interface/canifier_command_interface.h"
 #include "talon_interface/orchestra_command_interface.h"
@@ -72,6 +73,11 @@
 #include <hal/FRCUsageReporting.h>
 #include <hal/HALBase.h>
 #include <hal/Types.h>
+
+// CTRE
+#include <ctre/phoenix/motorcontrol/can/TalonFX.h>
+#include <ctre/phoenix/motorcontrol/can/TalonSRX.h>
+#include <ctre/phoenix/motorcontrol/can/VictorSPX.h>
 
 // Use forward declarations to avoid including a whole bunch of
 // WPIlib headers we don't care about - this speeds up the build process
@@ -431,9 +437,6 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<double> robot_ready_signals_;
 		bool                robot_code_ready_;
 
-		/* Get conversion factor for position, velocity, and closed-loop stuff */
-
-		double getConversionFactor(int encoder_ticks_per_rotation, hardware_interface::FeedbackDevice encoder_feedback, hardware_interface::TalonMode talon_mode);
 		//certain data will be read at a slower rate than the main loop, for computational efficiency
 		//robot iteration calls - sending stuff to driver station
 		double t_prev_robot_iteration_;
@@ -449,10 +452,20 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		double robot_controller_read_hz_;
 
 
+		/* Get conversion factor for position, velocity, and closed-loop stuff */
+		double getConversionFactor(int encoder_ticks_per_rotation, hardware_interface::FeedbackDevice encoder_feedback, hardware_interface::TalonMode talon_mode) const;
+
+		// Count sequential CAN errors
+		size_t can_error_count_;
+		bool safeTalonCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name);
+
+		std::vector<std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController>> ctre_mcs_;
+
 		// Maintain a separate read thread for each talon SRX
 		std::vector<std::shared_ptr<std::mutex>> ctre_mc_read_state_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::TalonHWState>> ctre_mc_read_thread_states_;
 		std::vector<std::thread> ctre_mc_read_threads_;
+		void ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController> ctre_mc, std::shared_ptr<hardware_interface::TalonHWState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
 
 		std::vector<std::shared_ptr<frc::NidecBrushless>> nidec_brushlesses_;
 		std::vector<std::shared_ptr<frc::DigitalInput>> digital_inputs_;
@@ -493,6 +506,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 
 		std::unique_ptr<ROSIterativeRobot> robot_;
 		Tracer read_tracer_;
+
+		talon_convert::TalonConvert talon_convert_;
 
 };  // class
 
