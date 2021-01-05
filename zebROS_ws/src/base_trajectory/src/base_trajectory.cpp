@@ -361,7 +361,7 @@ double distSquared(const double px, const double py, const std::vector<double> &
 double pointToLineSegmentDistance(const std::vector<double> &v, const std::vector<double> &w,
 		double px, double py)
 {
-	const float l2 = distSquared(v, w);
+	const double l2 = distSquared(v, w);
 	if (l2 == 0.0)
 		return sqrt(distSquared(px, py, v));   // v == w case, distance to single point
 	// Consider the line extending the segment, parameterized as v + t (w - v).
@@ -449,7 +449,7 @@ bool getPathSegLength(std::vector<ArclengthAndTime> &arcLengthAndTime,
 	// Simpson's rule needs the provided start and end values and
 	// also one at the midpoint. Grab the midpoint values here
 	static typename Segment<T>::State xState;
-	typename TrajectoryPerJoint<T>::const_iterator midXIt = sample(trajectory[0], midTime, xState);
+	auto midXIt = sample(trajectory[0], midTime, xState);
 	if (midXIt == trajectory[0].cend())
 	{
 		ROS_ERROR_STREAM("base_trajectory : could not sample mid xState at time " << midTime);
@@ -457,7 +457,7 @@ bool getPathSegLength(std::vector<ArclengthAndTime> &arcLengthAndTime,
 	}
 
 	static typename Segment<T>::State yState;
-	typename TrajectoryPerJoint<T>::const_iterator midYIt = sample(trajectory[1], midTime, yState);
+	auto midYIt = sample(trajectory[1], midTime, yState);
 	if (midYIt == trajectory[1].cend())
 	{
 		ROS_ERROR_STREAM("base_trajectory : could not sample mid yState at time " << midTime);
@@ -514,14 +514,14 @@ bool getPathLength(Trajectory<T> &arcLengthTrajectory,
 
 	// Get initial conditions for getPathSegLength call
 	// for this particular segment
-	typename TrajectoryPerJoint<T>::const_iterator startXIt = sample(trajectory[0], 0, xState);
+	auto startXIt = sample(trajectory[0], 0, xState);
 	if (startXIt == trajectory[0].cend())
 	{
 		ROS_ERROR("base_trajectory : could not sample initial xState 0");
 		return false;
 	}
 
-	typename TrajectoryPerJoint<T>::const_iterator startYIt = sample(trajectory[1], 0, yState);
+	auto startYIt = sample(trajectory[1], 0, yState);
 	if (startYIt == trajectory[1].cend())
 	{
 		ROS_ERROR("base_trajectory : could not sample initial yState 0");
@@ -531,13 +531,13 @@ bool getPathLength(Trajectory<T> &arcLengthTrajectory,
 	const double startYdot = yState.velocity[0];
 
 	const double endTime = trajectory[0].back().endTime();
-	typename TrajectoryPerJoint<T>::const_iterator endXIt = sample(trajectory[0], endTime, xState);
+	auto endXIt = sample(trajectory[0], endTime, xState);
 	if (endXIt == trajectory[0].cend())
 	{
 		ROS_ERROR("base_trajectory : could not sample initial xState end");
 		return false;
 	}
-	typename TrajectoryPerJoint<T>::const_iterator endYIt = sample(trajectory[1], endTime, yState);
+	auto endYIt = sample(trajectory[1], endTime, yState);
 	if (endYIt == trajectory[1].cend())
 	{
 		ROS_ERROR("base_trajectory : could not sample initial yState end");
@@ -565,13 +565,13 @@ bool getPathLength(Trajectory<T> &arcLengthTrajectory,
 	// between each point
 	std::vector<trajectory_msgs::JointTrajectoryPoint> points;
 	// Start with initial position 0
-	points.push_back(trajectory_msgs::JointTrajectoryPoint());
+	points.emplace_back(trajectory_msgs::JointTrajectoryPoint());
 	points.back().positions.push_back(0);
 	points.back().time_from_start = ros::Duration(0);
 	// Then add the rest of the arc length intervals calculated above
 	for (const auto &alt : arcLengthAndTime)
 	{
-		points.push_back(trajectory_msgs::JointTrajectoryPoint());
+		points.emplace_back(trajectory_msgs::JointTrajectoryPoint());
 		points.back().positions.push_back(alt.arcLength_);
 		points.back().time_from_start = ros::Duration(alt.time_);
 	}
@@ -621,7 +621,7 @@ bool subdivideLength(std::vector<double> &equalLengthTimes,
 		double mid = start + prevTimeDelta;
 		while((end - mid) > 0.001) // Quit if time delta gets too small
 		{
-			typename TrajectoryPerJoint<T>::const_iterator trajIt = sample(trajectory[0], mid, state);
+			auto trajIt = sample(trajectory[0], mid, state);
 			if (trajIt == trajectory[0].cend())
 			{
 				ROS_ERROR_STREAM("base_trajectory : could not sample mid state at time " << mid);
@@ -716,7 +716,7 @@ bool evaluateTrajectory(double &cost,
 
 	// Init translational velocity from requested starting x&y velocities
 	vTrans.clear();
-	typename TrajectoryPerJoint<T>::const_iterator it = sample(trajectory[0], 0, xState);
+	auto it = sample(trajectory[0], 0, xState);
 	if (it >= trajectory[0].cend())
 	{
 		ROS_ERROR_STREAM("base_trajectory : evaluateTrajectory could not sample xState at time 0");
@@ -738,7 +738,7 @@ bool evaluateTrajectory(double &cost,
 	std::vector<std::vector<double>> controlPointPositions;
 	for (size_t i = 0; i <= static_cast<size_t>(equalArcLengthTimes.back()); i++)
 	{
-		controlPointPositions.push_back(std::vector<double>());
+		controlPointPositions.emplace_back(std::vector<double>());
 		for (size_t j = 0; j <= 1; j++)
 		{
 			it = sample(trajectory[j], i, xState);
@@ -775,7 +775,7 @@ bool evaluateTrajectory(double &cost,
 		// Save distance between prev and current position for this timestep
 		// This should be nearly constant between points, but
 		// get the exact value for each to be more precise
-		typename TrajectoryPerJoint<T>::const_iterator arcLengthIt = sample(arcLengthTrajectory[0], t, arcLengthState);
+		auto arcLengthIt = sample(arcLengthTrajectory[0], t, arcLengthState);
 		if (arcLengthIt == arcLengthTrajectory[0].cend())
 		{
 			ROS_ERROR_STREAM("base_trajectory : evaluateTrajectory could not sample arcLengthState at time " << t);
@@ -787,7 +787,7 @@ bool evaluateTrajectory(double &cost,
 		// Since seg is set to the current spline segment, use this to
 		// index into each trajectory. This saves time compared to searching
 		// through the range of times in each trajectory array
-		typename TrajectoryPerJoint<T>::const_iterator xIt = trajectory[0].cbegin() + seg;
+		auto xIt = trajectory[0].cbegin() + seg;
 		if (xIt >= trajectory[0].cend())
 		{
 			ROS_ERROR_STREAM("base_trajectory : evaluateTrajectory could not sample xState at time " << t << ", seg = " << seg << ", trajectory[0].size() = " << trajectory[0].size());
@@ -795,7 +795,7 @@ bool evaluateTrajectory(double &cost,
 		}
 		xIt->sample(t, xState);
 
-		typename TrajectoryPerJoint<T>::const_iterator yIt = trajectory[1].cbegin() + seg;
+		auto yIt = trajectory[1].cbegin() + seg;
 		if (yIt >= trajectory[1].cend())
 		{
 			ROS_ERROR_STREAM("base_trajectory : evaluateTrajectory could not sample yState at time " << t << ", seg = " << seg << ", trajectory[1].size() = " << trajectory[1].size());
@@ -803,7 +803,7 @@ bool evaluateTrajectory(double &cost,
 		}
 		yIt->sample(t, yState);
 
-		typename TrajectoryPerJoint<T>::const_iterator thetaIt = trajectory[2].cbegin() + seg;
+		auto thetaIt = trajectory[2].cbegin() + seg;
 		if (thetaIt >= trajectory[2].cend())
 		{
 			ROS_ERROR_STREAM("base_trajectory : evaluateTrajectory could not sample thetaState at time " << t << ", seg = " << seg << ", trajectory[2].size() = " << trajectory[2].size());
@@ -954,7 +954,7 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 		}
 
 		// All splines in a waypoint end at the same time?
-		out_msg.end_points.push_back(trajectory[0][seg].endTime());
+		out_msg.end_points.emplace_back(trajectory[0][seg].endTime());
 	}
 	// Grab velocity profile, use that to construct a set of position
 	// waypoints for the robot in wall-clock time
@@ -989,14 +989,14 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 		const auto currentTime = equalArcLengthTimes[(i == 0) ? (i + 1) : ((i == equalArcLengthTimes.size() - 1) ? (i - 1) : (i))];
 		//ROS_INFO_STREAM("base_trajectory trajectoryToSplineResponseMsg : equalArcLengthTimes[]=" << currentTime);
 
-		typename TrajectoryPerJoint<T>::const_iterator xIt = sample(trajectory[0], currentTime, xState);
+		auto xIt = sample(trajectory[0], currentTime, xState);
 		if (xIt == trajectory[0].cend())
 		{
 			ROS_ERROR_STREAM("base_trajectory trajectoryToSplineResponseMsg : could not sample xState at time " << currentTime);
 			return;
 		}
 
-		typename TrajectoryPerJoint<T>::const_iterator yIt = sample(trajectory[1], currentTime, yState);
+		auto yIt = sample(trajectory[1], currentTime, yState);
 		if (yIt == trajectory[1].cend())
 		{
 			ROS_ERROR_STREAM("base_trajectory trajectoryToSplineResponseMsg : could not sample yState at time " << currentTime);
@@ -1025,7 +1025,7 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 
 		prevVTrans = vTrans[i];
 
-		typename TrajectoryPerJoint<T>::const_iterator orientationIt = sample(trajectory[2], equalArcLengthTimes[i], rotState);
+		auto orientationIt = sample(trajectory[2], equalArcLengthTimes[i], rotState);
 		if (orientationIt == trajectory[2].cend())
 		{
 			ROS_ERROR_STREAM("base_trajectory trajectoryToSplineResponseMsg : could not sample orientationState at time " << currentTime);
