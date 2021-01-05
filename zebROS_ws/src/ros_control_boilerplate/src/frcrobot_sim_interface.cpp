@@ -36,10 +36,14 @@
 Desc:   Example ros_control hardware interface blank template for the FRCRobot
 For a more detailed simulation example, see sim_hw_interface.cpp
 */
+#include <memory> // for make_unique()
 #include <ros/ros.h>
 
-#include <ctre/phoenix/cci/Unmanaged_CCI.h>
+#include "ctre/phoenix/unmanaged/Unmanaged.h"
+#include "ctre/phoenix/motorcontrol/can/WPI_TalonSRX.h"
 #include "frc/DriverStation.h"
+#include "frc/simulation/BatterySim.h"
+#include "frc/simulation/RoboRioSim.h"
 #include "hal/simulation/DIOData.h"
 #include "hal/simulation/DriverStationData.h"
 
@@ -215,27 +219,13 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 {
 	// Do base class init. This loads common interface info
 	// used by both the real and sim interfaces
-	ROS_WARN("Passes");
+	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " line: " << __LINE__);
 	if (!FRCRobotInterface::init(root_nh, robot_hw_nh))
 	{
 		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " failed");
 		return false;
 	}
-	ROS_WARN("Passes");
 
-	ROS_WARN("fails here?1");
-	// Loop through the list of joint names
-	// specified as params for the hardware_interface.
-	// For each of them, create a Talon object. This
-	// object is used to send and recieve commands
-	// and status to/from the physical Talon motor
-	// controller on the robot.  Use this pointer
-	// to initialize each Talon with various params
-	// set for that motor controller in config files.
-	// TODO : assert can_ctre_mc_names_.size() == can_ctre_mc_can_ids_.size()
-
-	limit_switch_srv_ = root_nh.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit,this);
-    match_data_sub_ = root_nh.subscribe("/frcrobot_rio/match_data_in", 1, &FRCRobotSimInterface::match_data_callback, this);
     //TODO fix joystick topic
 	for (size_t i = 0; i < HAL_kMaxJoysticks; i++)
 	{
@@ -244,21 +234,6 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 		joystick_subs_.push_back(root_nh.subscribe<sensor_msgs::Joy>(s.str(), 1, boost::bind(&FRCRobotSimInterface::joystickCallback, this, _1, i)));
 	}
 
-	linebreak_sensor_srv_ = root_nh.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
-	ROS_INFO_NAMED("frcrobot_sim_interface", "FRCRobotSimInterface Ready.");
-	for (size_t i = 0; i < can_ctre_mc_names_.size(); i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_sim_interface",
-							  "Loading joint " << i << "=" << can_ctre_mc_names_[i] <<
-							  (can_ctre_mc_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (can_ctre_mc_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as " << (can_ctre_mc_is_talon_fx_[i] ? "TalonFX" : (can_ctre_mc_is_talon_srx_[i] ? "TalonSRX" : "VictorSPX"))
-							  << " CAN id " << can_ctre_mc_can_ids_[i]);
-
-		ROS_WARN_STREAM("fails here? 56789: " << i);
-		// Loop through the list of joint names
-
-	}
 	for (size_t i = 0; i < num_canifiers_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_sim_interface",
@@ -267,6 +242,7 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 							  (canifier_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
 							  " at CAN id " << canifier_can_ids_[i]);
 	}
+
 	for (size_t i = 0; i < num_cancoders_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_sim_interface",
@@ -295,11 +271,47 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 			}
 		}
 	}
+
 	for (size_t i = 0; i < num_talon_orchestras_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
 							  "Loading joint " << i << "=" << talon_orchestra_names_[i]);
 	}
+
+	// Hard-code a simulation for the shooter flywheel
+	shooter_sim_joint_index_ = std::numeric_limits<size_t>::max();
+	for (size_t i = 0; i < num_can_ctre_mcs_; ++i)
+	{
+		if (can_ctre_mc_names_[i] == "shooter_joint")
+		{
+			shooter_sim_joint_index_ = i;
+			break;
+		}
+	}
+	// TODO - maybe also check for local hardware?
+	if (shooter_sim_joint_index_ != std::numeric_limits<size_t>::max())
+	{
+		units::kilogram_square_meter_t moi{0.000471735121};
+		//units::pound_square_inch_t moi_english{1.612};
+		// This is in rad, so small values to line up with a small
+		// amount of uncertainty in the encoder reading
+		const std::array<double, 1> shooter_sim_std_dev = {0.0025};
+		shooter_sim_ = std::make_unique<frc::sim::FlywheelSim>(frc::DCMotor::Falcon500(1), 24./34., moi, shooter_sim_std_dev);
+	}
+	else
+	{
+		// This will be expected for the Rio - we only want to run sim code in one
+		// place, and that should be the Jetson
+		ROS_WARN("Couldn't find joint 'shooter_joint' in config, not running shooter sim");
+		shooter_sim_ = nullptr;
+	}
+
+	// Do these last to prevent callbacks from triggering before data
+	// used by them is initialized
+	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " line: " << __LINE__);
+	limit_switch_srv_ = root_nh.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit, this);
+	linebreak_sensor_srv_ = root_nh.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
+    match_data_sub_ = root_nh.subscribe("/frcrobot_rio/match_data_in", 1, &FRCRobotSimInterface::match_data_callback, this);
 
 	ROS_INFO_NAMED("frcrobot_sim_interface", "FRCRobotSimInterface Ready.");
 	return true;
@@ -307,18 +319,59 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 
 void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& period)
 {
+	// Run WPIlib physics sim for each mechanism.
+	// Right now those mechanisms are hard-coded, but in the future make
+	// them configurable via config file?
+	// This could happen at the end of write() or beginning of read(),
+	// shouldn't matter which just so long as the sim mechanisms are
 	// TODO : needed for standalone robots, but not
-	// when we have a rio attached. Config item?
-	if (!run_hal_robot_ && num_can_ctre_mcs_)
+	// updated once per control loop using the appropriate timestep
+
+	if (num_can_ctre_mcs_)
 	{
-		c_FeedEnable(period.toNSec() / 1000000); // nsec -> msec conversion
+		ctre::phoenix::unmanaged::Unmanaged::FeedEnable(100);
+	}
+
+	if (shooter_sim_)
+	{
+		// Get current state of motor controller commanded output voltage
+		units::volt_t shooter_motor_voltage{talon_state_[shooter_sim_joint_index_].getOutputVoltage()};
+		// Update simulation with that voltage
+		shooter_sim_->SetInputVoltage(shooter_motor_voltage);
+		// Simulate one timestep using that voltage
+		shooter_sim_->Update(units::second_t{period.toSec()});
+
+		// Read state of simulated mechanism, update sim motor controller
+		// with the output state
+		// Convert from mechanism speed to motor speed, since that's where the encoder is
+		const auto shooter_velocity{shooter_sim_->GetAngularVelocity().to<double>() * 24./34.};
+		// rad / sec * (4096. native units / 2PI rad) /(10. 100ms per sec) = native units / 100msec
+		// TODO : need conversion function
+		const auto shooter_velocity_native_units = shooter_velocity * 4096. / 10.;
+
+		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(ctre_mcs_[shooter_sim_joint_index_]);
+
+		ROS_INFO_STREAM("Motor voltage = " << talon_state_[shooter_sim_joint_index_].getOutputVoltage());
+		ROS_INFO_STREAM("Shooter velocity (rad/sec) = " << shooter_velocity);
+		ROS_INFO_STREAM("Shooter velocity (native units / 100msec) = " << shooter_velocity_native_units);
+		if (talon)
+		{
+			talon->GetSimCollection().AddQuadraturePosition(shooter_velocity_native_units * period.toSec());
+			talon->GetSimCollection().SetQuadratureVelocity(shooter_velocity_native_units);
+
+			const auto shooter_current{shooter_sim_->GetCurrentDraw().to<double>()};
+			ROS_INFO_STREAM("shooter_current = " << shooter_current);
+			talon->GetSimCollection().SetMotorCurrent(shooter_current);
+			// TODO : should collect currents for each sim mechanism and pass
+			// them all in to BatterySim::Calculate at once
+			const auto vin_voltage = frc::sim::BatterySim::Calculate({shooter_sim_->GetCurrentDraw()});
+			// TODO : victor-> ?
+			talon->GetSimCollection().SetBusVoltage(vin_voltage.to<double>());
+			frc::sim::RoboRioSim::SetVInVoltage(vin_voltage);
+		}
 	}
 
 	FRCRobotInterface::read(time, period);
-	for (size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
-	{
-		// 
-    }
 }
 
 bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBreakSensors::Request &req,
@@ -351,6 +404,7 @@ bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBre
 void FRCRobotSimInterface::write(const ros::Time& time, const ros::Duration& period)
 {
 	FRCRobotInterface::write(time, period);
+#if 0
 	// Was the robot enabled last time write was run?
 	static bool last_robot_enabled = false;
 
@@ -783,6 +837,7 @@ void FRCRobotSimInterface::write(const ros::Time& time, const ros::Duration& per
 		tc.unlock();
 	}
 	last_robot_enabled = robot_enabled;
+#endif
 	for (std::size_t joint_id = 0; joint_id < num_canifiers_; ++joint_id)
 	{
 		if (!canifier_local_hardwares_[joint_id])

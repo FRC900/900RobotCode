@@ -39,15 +39,19 @@
 #include <ros_control_boilerplate/frc_robot_interface.h>
 #include <errno.h>                                    // for errno
 #include <ext/alloc_traits.h>                         // for __alloc_traits<...
+#ifdef __linux__
 #include <pthread.h>                                  // for pthread_self
 #include <sched.h>                                    // for sched_get_prior...
+#endif
 #include <string.h>                                   // for size_t, strerror
 #include <algorithm>                                  // for max, all_of
 #include <cmath>                                      // for M_PI
 #include <cstdint>                                    // for uint8_t, int32_t
 #include <iostream>                                   // for operator<<, bas...
 #include "AHRS.h"                                     // for AHRS
-#include <ctre/phoenix/platform/Platform.h>           // for SetCANInterface
+#include "ctre/phoenix/motorcontrol/can/WPI_TalonFX.h"
+#include "ctre/phoenix/motorcontrol/can/WPI_TalonSRX.h"
+#include "ctre/phoenix/motorcontrol/can/WPI_VictorSPX.h"
 #include "frc/AnalogInput.h"                          // for AnalogInput
 #include "frc/DigitalInput.h"                         // for DigitalInput
 #include "frc/DigitalOutput.h"                        // for DigitalOutput
@@ -90,8 +94,10 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 	ros::Rate rate(100); // TODO : configure me from a file or
 						 // be smart enough to run at the rate of the fastest status update?
 
-	auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mc);
 	auto victor = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mc);
+	auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mc);
+	auto talonsrx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mc);
+	auto talonfx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mc);
 
 	while(ros::ok())
 	{
@@ -157,14 +163,12 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 		ctre::phoenix::motorcontrol::StickyFaults sticky_faults;
 		safeTalonCall(victor->GetStickyFaults(sticky_faults), "GetStickyFault");
 
-		// Temp / Voltage status 4 == 160 mSec default
 		const double bus_voltage = victor->GetBusVoltage();
 		safeTalonCall(victor->GetLastError(), "GetBusVoltage");
 
 		const double temperature = victor->GetTemperature(); //returns in Celsius
 		safeTalonCall(victor->GetLastError(), "GetTemperature");
 
-		// TODO : not sure about this one being in status 4
 		const double output_voltage = victor->GetMotorOutputVoltage();
 		safeTalonCall(victor->GetLastError(), "GetMotorOutputVoltage");
 
@@ -253,12 +257,18 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 			internal_status.timeDurMs = talon_status.timeDurMs;
 		}
 
-		// SensorCollection - 160msec(?) default
 		bool forward_limit_switch = false;
 		bool reverse_limit_switch = false;
-		if (talon)
+		if (talonsrx)
 		{
-			auto sensor_collection = talon->GetSensorCollection();
+			auto sensor_collection = talonsrx->GetSensorCollection();
+
+			forward_limit_switch = sensor_collection.IsFwdLimitSwitchClosed();
+			reverse_limit_switch = sensor_collection.IsRevLimitSwitchClosed();
+		}
+		else if (talonfx)
+		{
+			auto sensor_collection = talonfx->GetSensorCollection();
 
 			forward_limit_switch = sensor_collection.IsFwdLimitSwitchClosed();
 			reverse_limit_switch = sensor_collection.IsRevLimitSwitchClosed();
@@ -1179,20 +1189,6 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 
 FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_model) :
 	  name_("generic_hw_interface")
-	, num_can_ctre_mcs_(0)
-	, num_nidec_brushlesses_(0)
-	, num_digital_inputs_(0)
-	, num_digital_outputs_(0)
-	, num_pwms_(0)
-	, num_solenoids_(0)
-	, num_double_solenoids_(0)
-	, num_compressors_(0)
-	, num_rumbles_(0)
-	, num_navX_(0)
-	, num_analog_inputs_(0)
-	, num_dummy_joints_(0)
-    , num_ready_signals_(0)
-	, robot_code_ready_(false)
 	, read_tracer_("FRCRobotInterface " + nh.getNamespace() + "::read()")
 {
 	// Check if the URDF model needs to be loaded
@@ -1217,10 +1213,22 @@ FRCRobotInterface::~FRCRobotInterface()
 		HAL_FreeSolenoidPort(double_solenoids_[i].reverse_);
 	}
 
+	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
+	{
+		if (can_ctre_mc_local_hardwares_[i])
+		{
+			ctre_mc_read_threads_[i].join();
+		}
+	}
+
 	for (size_t i = 0; i < num_compressors_; i++)
+	{
 		pcm_thread_[i].join();
+	}
 	for (size_t i = 0; i < num_pdps_; i++)
+	{
 		pdp_thread_[i].join();
+	}
 }
 
 void FRCRobotInterface::createInterfaces(void)
@@ -1758,19 +1766,12 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		// errors? See https://www.chiefdelphi.com/forums/showpost.php?p=1640943&postcount=3
 		robot_ = std::make_unique<ROSIterativeRobot>();
 	}
-	else
-	{
-		const auto rc = ctre::phoenix::platform::can::SetCANInterface(can_interface_.c_str());
-		if (rc != 0)
-		{
-			HAL_SendError(true, -1, false, "SetCANInterface failed - likely CAN adapter failure", "", "", true);
-		}
-	}
+	can_error_count_ = 0;
 
 	//Stuff below is from frcrobot_hw_interface
 	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
 	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
+		ROS_INFO_STREAM_NAMED("frc_robot_interface",
 							  "Loading joint " << i << "=" << can_ctre_mc_names_[i] <<
 							  (can_ctre_mc_local_updates_[i] ? " local" : " remote") << " update, " <<
 							  (can_ctre_mc_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
@@ -1780,11 +1781,11 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		if (can_ctre_mc_local_hardwares_[i])
 		{
 			if (can_ctre_mc_is_talon_fx_[i])
-				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonFX>(can_ctre_mc_can_ids_[i]));
+				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
 			else if (can_ctre_mc_is_talon_srx_[i])
-				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_ctre_mc_can_ids_[i]));
+				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
 			else
-				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::VictorSPX>(can_ctre_mc_can_ids_[i]));
+				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(can_ctre_mc_can_ids_[i]));
 
 			ctre_mcs_[i]->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0,
 							  ctre::phoenix::motorcontrol::DemandType::DemandType_Neutral, 0);
@@ -1797,7 +1798,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			// by -1 from firmware version read - somehow tag
 			// the entry in ctre_mcs_[] as uninitialized.
 			// This probably should be a fatal error
-			ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
+			ROS_INFO_STREAM_NAMED("frc_robot_interface",
 								  "\tMotor controller firmware version " << ctre_mcs_[i]->GetFirmwareVersion());
 
 			ctre_mc_read_state_mutexes_.push_back(std::make_shared<std::mutex>());
@@ -1817,15 +1818,15 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			{
 				if (can_ctre_mc_is_talon_fx_[i])
 				{
-					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonFX>(can_ctre_mc_can_ids_[i]));
+					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
 				}
 				else if (can_ctre_mc_is_talon_srx_[i])
 				{
-					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_ctre_mc_can_ids_[i]));
+					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
 				}
 				else
 				{
-					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::VictorSPX>(can_ctre_mc_can_ids_[i]));
+					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(can_ctre_mc_can_ids_[i]));
 				}
 			}
 			else
@@ -3097,13 +3098,24 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		//TODO : skip over most or all of this if the talon is in follower mode
 		//       Only do the Set() call and then never do anything else?
 
-		// If the original object was a talon, both talon and victor will be valid
-		// The original object was a victor, talon will be nullptr
-		auto mc_enhanced = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mcs_[joint_id]);
-		auto falcon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mcs_[joint_id]);
-		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mcs_[joint_id]);
+		// Victor is really the common parent of all other motor controllers, functions called via this
+		// pointer are common to all controllers
 		auto victor = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mcs_[joint_id]);
-#if 0
+		// This pointer is used to call features which don't exist on victor but do exist on both versions
+		// of the talons (feedback sources, current data, etc)
+		auto mc_enhanced = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mcs_[joint_id]);
+		// Pointers to access specific features from each of these motor controllers
+		auto falcon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::WPI_TalonFX>(ctre_mcs_[joint_id]);
+		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(ctre_mcs_[joint_id]);
+#if 1
+		if (victor)
+		{
+			ROS_ERROR_STREAM_THROTTLE(5.0, "victor OK for id " << joint_id);
+		}
+		else
+		{
+			ROS_ERROR_STREAM_THROTTLE(5.0, "victor NOT OK for id " << joint_id);
+		}
 		if (mc_enhanced)
 		{
 			ROS_ERROR_STREAM_THROTTLE(5.0, "mc_enhanced OK for id " << joint_id);
@@ -3127,14 +3139,6 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		else
 		{
 			ROS_ERROR_STREAM_THROTTLE(5.0, "talon NOT OK for id " << joint_id);
-		}
-		if (victor)
-		{
-			ROS_ERROR_STREAM_THROTTLE(5.0, "victor OK for id " << joint_id);
-		}
-		else
-		{
-			ROS_ERROR_STREAM_THROTTLE(5.0, "victor NOT OK for id " << joint_id);
 		}
 #endif
 
@@ -3225,7 +3229,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		ctre::phoenix::motorcontrol::RemoteFeedbackDevice talon_remote_feedback_device;
 		hardware_interface::RemoteFeedbackDevice internal_remote_feedback_device;
 		if (tc.remoteEncoderFeedbackChanged(internal_remote_feedback_device) &&
-				talon_convert_.remoteFeedbackDevice(internal_remote_feedback_device, talon_remote_feedback_device))
+			talon_convert_.remoteFeedbackDevice(internal_remote_feedback_device, talon_remote_feedback_device))
 		{
 			// Check for errors on Talon writes. If it fails, used the reset() call to
 			// set the changed var for the config items to true. This will trigger a re-try
@@ -3264,10 +3268,10 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		std::array<hardware_interface::FeedbackDevice, hardware_interface::SensorTerm_Last> internal_sensor_terms;
 		std::array<ctre::phoenix::motorcontrol::FeedbackDevice, hardware_interface::SensorTerm_Last> victor_sensor_terms;
 		if (tc.sensorTermsChanged(internal_sensor_terms) &&
-				talon_convert_.feedbackDevice(internal_sensor_terms[0], victor_sensor_terms[0]) &&
-				talon_convert_.feedbackDevice(internal_sensor_terms[1], victor_sensor_terms[1]) &&
-				talon_convert_.feedbackDevice(internal_sensor_terms[2], victor_sensor_terms[2]) &&
-				talon_convert_.feedbackDevice(internal_sensor_terms[3], victor_sensor_terms[3]))
+			talon_convert_.feedbackDevice(internal_sensor_terms[0], victor_sensor_terms[0]) &&
+			talon_convert_.feedbackDevice(internal_sensor_terms[1], victor_sensor_terms[1]) &&
+			talon_convert_.feedbackDevice(internal_sensor_terms[2], victor_sensor_terms[2]) &&
+			talon_convert_.feedbackDevice(internal_sensor_terms[3], victor_sensor_terms[3]))
 		{
 			// Check for errors on Talon writes. If it fails, used the reset() call to
 			// set the changed var for the config items to true. This will trigger a re-try
@@ -3310,8 +3314,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			close_loop_mode = true;
 		}
 		else if ((talon_mode == hardware_interface::TalonMode_MotionProfile) ||
-				(talon_mode == hardware_interface::TalonMode_MotionMagic)   ||
-				(talon_mode == hardware_interface::TalonMode_MotionProfileArc))
+				 (talon_mode == hardware_interface::TalonMode_MotionMagic)   ||
+				 (talon_mode == hardware_interface::TalonMode_MotionProfileArc))
 		{
 			close_loop_mode = true;
 			motion_profile_mode = true;
@@ -3411,7 +3415,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		hardware_interface::NeutralMode neutral_mode;
 		ctre::phoenix::motorcontrol::NeutralMode ctre_neutral_mode;
 		if (tc.neutralModeChanged(neutral_mode) &&
-				talon_convert_.neutralMode(neutral_mode, ctre_neutral_mode))
+			talon_convert_.neutralMode(neutral_mode, ctre_neutral_mode))
 		{
 
 			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " neutral mode");
@@ -3440,7 +3444,6 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 				tc.resetIntegralAccumulator();
-
 		}
 
 		double closed_loop_ramp;
@@ -3451,12 +3454,12 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		double nominal_output_reverse;
 		double neutral_deadband;
 		if (tc.outputShapingChanged(closed_loop_ramp,
-					open_loop_ramp,
-					peak_output_forward,
-					peak_output_reverse,
-					nominal_output_forward,
-					nominal_output_reverse,
-					neutral_deadband))
+									open_loop_ramp,
+									peak_output_forward,
+									peak_output_reverse,
+									nominal_output_forward,
+									nominal_output_reverse,
+									neutral_deadband))
 		{
 			bool rc = true;
 			rc &= safeTalonCall(victor->ConfigOpenloopRamp(open_loop_ramp, timeoutMs),"ConfigOpenloopRamp");
@@ -3488,8 +3491,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		int v_measurement_filter;
 		bool v_c_enable;
 		if (tc.voltageCompensationChanged(v_c_saturation,
-					v_measurement_filter,
-					v_c_enable))
+			v_measurement_filter,
+			v_c_enable))
 		{
 			bool rc = true;
 			rc &= safeTalonCall(victor->ConfigVoltageCompSaturation(v_c_saturation, timeoutMs),"ConfigVoltageCompSaturation");

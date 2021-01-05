@@ -67,7 +67,6 @@
 
 //PURPOSE: File that reads and writes to hardware
 
-#include <cmath>
 #include <iostream>
 
 #include "ros_control_boilerplate/frcrobot_hw_interface.h"
@@ -75,11 +74,9 @@
 
 //HAL / wpilib includes
 #include <HALInitializer.h>
-#include <hal/Compressor.h>
 #include <hal/DriverStation.h>
-#include <hal/PDP.h>
-#include <hal/Solenoid.h>
 
+#include <ctre/phoenix/platform/Platform.h>           // for SetCANInterface
 //#include <ctre/phoenix/cci/Unmanaged_CCI.h>
 
 #ifdef __linux__
@@ -145,14 +142,6 @@ FRCRobotHWInterface::FRCRobotHWInterface(ros::NodeHandle &nh, urdf::Model *urdf_
 // Clean up whatever we've created in init()
 FRCRobotHWInterface::~FRCRobotHWInterface()
 {
-	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
-	{
-		if (can_ctre_mc_local_hardwares_[i])
-		{
-			ctre_mc_read_threads_[i].join();
-		}
-	}
-
 	for (size_t i = 0; i < num_as726xs_; i++)
 		as726x_thread_[i].join();
 	for (size_t i = 0; i < num_cancoders_; i++)
@@ -177,7 +166,11 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 		hal::init::InitializeSolenoid();
 
 		errorQueue = std::make_unique<ErrorQueue>();
-
+		const auto rc = ctre::phoenix::platform::can::SetCANInterface(can_interface_.c_str());
+		if (rc != 0)
+		{
+			HAL_SendError(true, -1, false, "SetCANInterface failed - likely CAN adapter failure", "", "", true);
+		}
 	}
 
 	// Do base class init. This loads common interface info
@@ -186,80 +179,6 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 	{
 		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << ": FRCRobotInterface::init() returnd false");
 		return false;
-	}
-
-	can_error_count_ = 0;
-
-	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-							  "Loading joint " << i << "=" << can_ctre_mc_names_[i] <<
-							  (can_ctre_mc_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (can_ctre_mc_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as " << (can_ctre_mc_is_talon_fx_[i] ? "TalonFX" : (can_ctre_mc_is_talon_srx_[i] ? "TalonSRX" : "VictorSPX"))
-							  << " CAN id " << can_ctre_mc_can_ids_[i]);
-
-		if (can_ctre_mc_local_hardwares_[i])
-		{
-			if (can_ctre_mc_is_talon_fx_[i])
-				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonFX>(can_ctre_mc_can_ids_[i]));
-			else if (can_ctre_mc_is_talon_srx_[i])
-				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_ctre_mc_can_ids_[i]));
-			else
-				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::VictorSPX>(can_ctre_mc_can_ids_[i]));
-
-			ctre_mcs_[i]->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0,
-							  ctre::phoenix::motorcontrol::DemandType::DemandType_Neutral, 0);
-
-			// Clear sticky faults
-			//safeTalonCall(ctre_mcs_[i]->ClearStickyFaults(timeoutMs), "ClearStickyFaults()");
-
-
-			// TODO : if the motor controller doesn't initialize - maybe known
-			// by -1 from firmware version read - somehow tag
-			// the entry in ctre_mcs_[] as uninitialized.
-			// This probably should be a fatal error
-			ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
-								  "\tMotor controller firmware version " << ctre_mcs_[i]->GetFirmwareVersion());
-
-			ctre_mc_read_state_mutexes_.push_back(std::make_shared<std::mutex>());
-			ctre_mc_read_thread_states_.push_back(std::make_shared<hardware_interface::TalonHWState>(can_ctre_mc_can_ids_[i]));
-			ctre_mc_read_threads_.push_back(std::thread(&FRCRobotHWInterface::ctre_mc_read_thread, this,
-										    ctre_mcs_[i], ctre_mc_read_thread_states_[i],
-										    ctre_mc_read_state_mutexes_[i],
-										    std::make_unique<Tracer>("ctre_mc_read_" + can_ctre_mc_names_[i] + " " + root_nh.getNamespace())));
-		}
-		else
-		{
-			// Need to have a CAN talon object created on the Rio
-			// for that talon to be enabled.  Don't want to do anything with
-			// them, though, so the local flags should be set to false
-			// which means both reads and writes will be skipped
-			if (run_hal_robot_)
-			{
-				if (can_ctre_mc_is_talon_fx_[i])
-				{
-					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonFX>(can_ctre_mc_can_ids_[i]));
-				}
-				else if (can_ctre_mc_is_talon_srx_[i])
-				{
-					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::TalonSRX>(can_ctre_mc_can_ids_[i]));
-				}
-				else
-				{
-					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::VictorSPX>(can_ctre_mc_can_ids_[i]));
-				}
-			}
-			else
-			{
-				// Add a null pointer as the can ctre_mc for this index - no
-				// actual local hardware identified for it so nothing to create.
-				// Just keep the indexes of all the various can_ctre_mc arrays in sync
-				ctre_mcs_.push_back(nullptr);
-			}
-			ctre_mc_read_state_mutexes_.push_back(nullptr);
-			ctre_mc_read_thread_states_.push_back(nullptr);
-		}
 	}
 
 	for (size_t i = 0; i < num_canifiers_; i++)

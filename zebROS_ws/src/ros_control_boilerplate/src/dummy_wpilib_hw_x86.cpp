@@ -80,60 +80,6 @@ int frc::DigitalOutput::GetChannel() const
 	return std::numeric_limits<int>::max();
 }
 
-#include <frc/smartdashboard/SendableBase.h>
-frc::SendableBase::SendableBase(bool)
-{
-	ROS_ERROR("Called SendableBase::SendableBase(bool) on unsupported platform");
-}
-
-#include <frc/smartdashboard/SendableRegistry.h>
-struct frc::SendableRegistry::Impl {
-};
-frc::SendableRegistry::SendableRegistry()
-{
-}
-frc::SendableRegistry& frc::SendableRegistry::GetInstance()
-{
-	ROS_ERROR("Called SendableRegistry::GetInstance() on unsupported platform");
-	static frc::SendableRegistry s;
-	return s;
-}
-bool frc::SendableRegistry::Remove(frc::Sendable* sendable)
-{
-	(void)sendable;
-	ROS_ERROR("Called SendableRegistry::Remove(Sendable *sendable) on unsupported platform");
-	return false;
-}
-
-#include <networktables/NetworkTable.h>
-bool nt::NetworkTable::GetBoolean(wpi::StringRef, bool) const
-{
-	ROS_ERROR("Called NetworkTable::GetBoolean(wpi::StringRef, bool) const on unsupported platform");
-	return false;
-}
-double nt::NetworkTable::GetNumber(wpi::StringRef, double) const
-{
-	ROS_ERROR("Called NetworkTable::GetNumber(wpi::StringRef, double) const on unsupported platform");
-	return std::numeric_limits<double>::max();
-}
-std::shared_ptr<NetworkTable> nt::NetworkTable::GetTable(wpi::StringRef)
-{
-	ROS_ERROR("Called NetworkTable::GetTable(wpi::StringRef) on unsupported platform");
-	return nullptr;
-}
-
-#include <frc/smartdashboard/SmartDashboard.h>
-bool frc::SmartDashboard::PutBoolean(wpi::StringRef, bool)
-{
-	ROS_ERROR("Called SmartDashboard::PutBoolean(wpi::StringRef, bool) on unsupported platform");
-	return false;
-}
-bool frc::SmartDashboard::PutNumber(wpi::StringRef, double)
-{
-	ROS_ERROR("Called SmartDashboard::PutNumber(wpi::StringRef, double) on unsupported platform");
-	return false;
-}
-
 #include <frc/ErrorBase.h>
 frc::ErrorBase::ErrorBase()
 {
@@ -184,5 +130,10 @@ bool frc::ErrorBase::StatusIsFatal() const
 {
 	ROS_ERROR("Called ErrorBase::StatusIsFatal() const on unsupported platform");
 	return false;
+}
+
+void frc::ErrorBase::SetGlobalError(int, wpi::Twine const&, wpi::StringRef, wpi::StringRef, int)
+{
+	ROS_ERROR_STREAM("Called " << __PRETTY_FUNCTION__ << "on unsupported platform");
 }
 

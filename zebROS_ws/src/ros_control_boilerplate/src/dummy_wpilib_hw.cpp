@@ -204,6 +204,11 @@ bool frc::DriverStation::IsOperatorControl(void) const
 	ROS_ERROR("Called DriverStation::IsOperatorControl() on unsupported platform");
 	return false;
 }
+bool frc::DriverStation::IsTest(void) const
+{
+	ROS_ERROR("Called DriverStation::IsTest() on unsupported platform");
+	return false;
+}
 #include <frc/GenericHID.h>
 frc::GenericHID::GenericHID(int) : m_ds(&DriverStation::GetInstance())
 {
