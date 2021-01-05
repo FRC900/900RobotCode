@@ -37,13 +37,13 @@
 */
 #include <ros/ros.h>
 #include <ros_control_boilerplate/frc_robot_interface.h>
-#include <errno.h>                                    // for errno
+#include <cerrno>                                     // for errno
 #include <ext/alloc_traits.h>                         // for __alloc_traits<...
 #ifdef __linux__
 #include <pthread.h>                                  // for pthread_self
 #include <sched.h>                                    // for sched_get_prior...
 #endif
-#include <string.h>                                   // for size_t, strerror
+#include <cstring>                                    // for size_t, strerror
 #include <algorithm>                                  // for max, all_of
 #include <cmath>                                      // for M_PI
 #include <cstdint>                                    // for uint8_t, int32_t
@@ -197,22 +197,7 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 
 			closed_loop_target = victor->GetClosedLoopTarget(pidIdx) * closed_loop_scale;
 			safeTalonCall(victor->GetLastError(), "GetClosedLoopTarget");
-			state->setClosedLoopTarget(closed_loop_target);
 
-			// Reverse engineer the individual P,I,D,F components used
-			// to generate closed-loop control signals to the motor
-			// This is just for debugging PIDF tuning
-			const int pidf_slot = state->getSlot();
-			const double kp = state->getPidfP(pidf_slot);
-			const double ki = state->getPidfI(pidf_slot);
-			const double kd = state->getPidfD(pidf_slot);
-			const double kf = state->getPidfF(pidf_slot);
-
-			const double native_closed_loop_error = closed_loop_error / closed_loop_scale;
-			state->setPTerm(native_closed_loop_error * kp);
-			state->setITerm(integral_accumulator * ki);
-			state->setDTerm(error_derivative * kd);
-			state->setFTerm(closed_loop_target / closed_loop_scale * kf);
 		}
 
 		// Targets Status 10 - 160 mSec default
@@ -318,11 +303,26 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 				state->setClosedLoopError(closed_loop_error);
 				state->setIntegralAccumulator(integral_accumulator);
 				state->setErrorDerivative(error_derivative);
+				// Reverse engineer the individual P,I,D,F components used
+				// to generate closed-loop control signals to the motor
+				// This is just for debugging PIDF tuning
+				const auto closed_loop_scale = getConversionFactor(encoder_ticks_per_rotation, encoder_feedback, talon_mode) * conversion_factor;
+				const auto pidf_slot = state->getSlot();
+				const auto kp = state->getPidfP(pidf_slot);
+				const auto ki = state->getPidfI(pidf_slot);
+				const auto kd = state->getPidfD(pidf_slot);
+				const auto native_closed_loop_error = closed_loop_error / closed_loop_scale;
+				state->setPTerm(native_closed_loop_error * kp);
+				state->setITerm(integral_accumulator * ki);
+				state->setDTerm(error_derivative * kd);
 				if ((talon_mode != hardware_interface::TalonMode_MotionProfile) &&
 					(talon_mode != hardware_interface::TalonMode_MotionMagic) &&
 					(talon_mode != hardware_interface::TalonMode_MotionProfileArc))
 				{
 					state->setClosedLoopTarget(closed_loop_target);
+
+					const double kf = state->getPidfF(pidf_slot);
+					state->setFTerm(closed_loop_target / closed_loop_scale * kf);
 				}
 			}
 
@@ -1120,7 +1120,7 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 			joystick_ids_.push_back(id);
 			joystick_locals_.push_back(local);
 			joystick_types_.push_back(joint_type);
-			prev_button_box_state_.push_back(frc_msgs::ButtonBoxState());
+			prev_button_box_state_.emplace_back(frc_msgs::ButtonBoxState());
 		}
 		else if (joint_type == "as726x")
 		{
@@ -1192,7 +1192,7 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 	, read_tracer_("FRCRobotInterface " + nh.getNamespace() + "::read()")
 {
 	// Check if the URDF model needs to be loaded
-	if (urdf_model == NULL)
+	if (urdf_model == nullptr)
 		loadURDF(nh, "robot_description");
 	else
 		urdf_model_ = urdf_model;
@@ -1251,7 +1251,7 @@ void FRCRobotInterface::createInterfaces(void)
 		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Talon Interface for " << can_ctre_mc_names_[i] << " at hw ID " << can_ctre_mc_can_ids_[i]);
 
 		// Add this controller to the list of tracked TalonHWState objects
-		talon_state_.push_back(hardware_interface::TalonHWState(can_ctre_mc_can_ids_[i]));
+		talon_state_.emplace_back(hardware_interface::TalonHWState(can_ctre_mc_can_ids_[i]));
 	}
 	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
 	{
@@ -1270,7 +1270,7 @@ void FRCRobotInterface::createInterfaces(void)
 			hardware_interface::TalonWritableStateHandle twsh(can_ctre_mc_names_[i], &talon_state_[i]); /// writing directly to state?
 			talon_remote_state_interface_.registerHandle(twsh);
 		}
-		custom_profile_state_.push_back(CustomProfileState());
+		custom_profile_state_.emplace_back(CustomProfileState());
 	}
 
 	num_canifiers_ = canifier_names_.size();
@@ -1281,7 +1281,7 @@ void FRCRobotInterface::createInterfaces(void)
 	for (size_t i = 0; i < num_canifiers_; i++)
 	{
 		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering CANifier Interface for " << canifier_names_[i] << " at hw ID " << canifier_can_ids_[i]);
-		canifier_state_.push_back(hardware_interface::canifier::CANifierHWState(canifier_can_ids_[i]));
+		canifier_state_.emplace_back(hardware_interface::canifier::CANifierHWState(canifier_can_ids_[i]));
 	}
 	for (size_t i = 0; i < num_canifiers_; i++)
 	{
@@ -1310,7 +1310,7 @@ void FRCRobotInterface::createInterfaces(void)
 	for (size_t i = 0; i < num_cancoders_; i++)
 	{
 		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering CANCoder Interface for " << cancoder_names_[i] << " at hw ID " << cancoder_can_ids_[i]);
-		cancoder_state_.push_back(hardware_interface::cancoder::CANCoderHWState(cancoder_can_ids_[i]));
+		cancoder_state_.emplace_back(hardware_interface::cancoder::CANCoderHWState(cancoder_can_ids_[i]));
 	}
 	for (size_t i = 0; i < num_cancoders_; i++)
 	{
@@ -1486,7 +1486,7 @@ void FRCRobotInterface::createInterfaces(void)
 		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering AS726x Interface for " << as726x_names_[i]
 				<< " at port " << as726x_ports_[i]
 				<< " at address " << as726x_addresses_[i]);
-		as726x_state_.push_back(hardware_interface::as726x::AS726xState(as726x_ports_[i], as726x_addresses_[i]));
+		as726x_state_.emplace_back(hardware_interface::as726x::AS726xState(as726x_ports_[i], as726x_addresses_[i]));
 	}
 	for (size_t i = 0; i < num_as726xs_; i++)
 	{
@@ -1569,7 +1569,7 @@ void FRCRobotInterface::createInterfaces(void)
 	compressor_state_.resize(num_compressors_);
 	compressor_command_.resize(num_compressors_);
 	for (size_t i = 0; i < num_compressors_; i++)
-		pcm_state_.push_back(hardware_interface::PCMState(compressor_pcm_ids_[i]));
+		pcm_state_.emplace_back(hardware_interface::PCMState(compressor_pcm_ids_[i]));
 	for (size_t i = 0; i < num_compressors_; i++)
 	{
 		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for compressor / PCM : " << compressor_names_[i] << " at pcm_id " << compressor_pcm_ids_[i]);
@@ -1658,7 +1658,7 @@ void FRCRobotInterface::createInterfaces(void)
 	// convert from name to an actual variable. This requires hard-coding here
 	// but not in the read or write code.  Not sure which is better
 	auto dummy_joints = getDummyJoints();
-	for (auto d : dummy_joints)
+	for (const auto &d : dummy_joints)
 	{
 		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for DummyVar: " << d.name_);
 
@@ -1702,7 +1702,7 @@ void FRCRobotInterface::createInterfaces(void)
 		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Orchestra Interface for " << talon_orchestra_names_[i] << " at hw ID " << talon_orchestra_ids_[i]);
 
 		// Create orchestra state interface
-		orchestra_state_.push_back(hardware_interface::OrchestraState(talon_orchestra_ids_[i]));
+		orchestra_state_.emplace_back(hardware_interface::OrchestraState(talon_orchestra_ids_[i]));
 	}
 	for (size_t i = 0; i < num_talon_orchestras_; i++)
 	{
@@ -1803,10 +1803,10 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 
 			ctre_mc_read_state_mutexes_.push_back(std::make_shared<std::mutex>());
 			ctre_mc_read_thread_states_.push_back(std::make_shared<hardware_interface::TalonHWState>(can_ctre_mc_can_ids_[i]));
-			ctre_mc_read_threads_.push_back(std::thread(&FRCRobotInterface::ctre_mc_read_thread, this,
-										    ctre_mcs_[i], ctre_mc_read_thread_states_[i],
-										    ctre_mc_read_state_mutexes_[i],
-										    std::make_unique<Tracer>("ctre_mc_read_" + can_ctre_mc_names_[i] + " " + root_nh.getNamespace())));
+			ctre_mc_read_threads_.emplace_back(std::thread(&FRCRobotInterface::ctre_mc_read_thread, this,
+											   ctre_mcs_[i], ctre_mc_read_thread_states_[i],
+											   ctre_mc_read_state_mutexes_[i],
+											   std::make_unique<Tracer>("ctre_mc_read_" + can_ctre_mc_names_[i] + " " + root_nh.getNamespace())));
 		}
 		else
 		{
@@ -1967,7 +1967,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			if ((forward_handle != HAL_kInvalidHandle) &&
 			    (reverse_handle != HAL_kInvalidHandle) )
 			{
-				double_solenoids_.push_back(DoubleSolenoidHandle(forward_handle, reverse_handle));
+				double_solenoids_.emplace_back(DoubleSolenoidHandle(forward_handle, reverse_handle));
 				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
 						double_solenoid_forward_ids_[i], double_solenoid_pcms_[i]);
 				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
@@ -1976,14 +1976,14 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			else
 			{
 				ROS_ERROR_STREAM("Error intializing double solenoid : status=" << forward_status << " : " << reverse_status);
-				double_solenoids_.push_back(DoubleSolenoidHandle(HAL_kInvalidHandle, HAL_kInvalidHandle));
+				double_solenoids_.emplace_back(DoubleSolenoidHandle(HAL_kInvalidHandle, HAL_kInvalidHandle));
 				HAL_FreeSolenoidPort(forward_handle);
 				HAL_FreeSolenoidPort(reverse_handle);
 			}
 		}
 		else
 		{
-			double_solenoids_.push_back(DoubleSolenoidHandle(HAL_kInvalidHandle, HAL_kInvalidHandle));
+			double_solenoids_.emplace_back(DoubleSolenoidHandle(HAL_kInvalidHandle, HAL_kInvalidHandle));
 		}
 	}
 
@@ -2057,10 +2057,10 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 				if (!status && (compressors_[i] != HAL_kInvalidHandle))
 				{
 					pcm_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
-					pcm_thread_.push_back(std::thread(&FRCRobotInterface::pcm_read_thread, this,
-								compressors_[i], compressor_pcm_ids_[i], pcm_read_thread_state_[i],
-								pcm_read_thread_mutexes_[i],
-								std::make_unique<Tracer>("PCM " + compressor_names_[i] + " " + root_nh.getNamespace())));
+					pcm_thread_.emplace_back(std::thread(&FRCRobotInterface::pcm_read_thread, this,
+											 compressors_[i], compressor_pcm_ids_[i], pcm_read_thread_state_[i],
+											 pcm_read_thread_mutexes_[i],
+											 std::make_unique<Tracer>("PCM " + compressor_names_[i] + " " + root_nh.getNamespace())));
 					HAL_Report(HALUsageReporting::kResourceType_Compressor, compressor_pcm_ids_[i]);
 				}
 				else
@@ -2108,9 +2108,9 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 				else
 				{
 					pdp_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
-					pdp_thread_.push_back(std::thread(&FRCRobotInterface::pdp_read_thread, this,
-										  pdps_[i], pdp_read_thread_state_[i], pdp_read_thread_mutexes_[i],
-										  std::make_unique<Tracer>("PDP " + pdp_names_[i] + " " + root_nh.getNamespace())));
+					pdp_thread_.emplace_back(std::thread(&FRCRobotInterface::pdp_read_thread, this,
+											 pdps_[i], pdp_read_thread_state_[i], pdp_read_thread_mutexes_[i],
+											 std::make_unique<Tracer>("PDP " + pdp_names_[i] + " " + root_nh.getNamespace())));
 					HAL_Report(HALUsageReporting::kResourceType_PDP, pdp_modules_[i]);
 				}
 			}
@@ -3706,7 +3706,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			double limit;
 			double trigger_threshold_current;
 			double trigger_threshold_time;
-			double limit_enable;
+			bool   limit_enable;
 			if (tc.supplyCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
 			{
 				if (safeTalonCall(falcon->ConfigSupplyCurrentLimit(ctre::phoenix::motorcontrol::SupplyCurrentLimitConfiguration(limit_enable, limit, trigger_threshold_current, trigger_threshold_time), timeoutMs), "ConfigSupplyCurrentLimit"))
@@ -3722,7 +3722,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 					tc.resetSupplyCurrentLimit();
 				}
 			}
-			if (tc.supplyCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
+			if (tc.statorCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
 			{
 				if (safeTalonCall(falcon->ConfigStatorCurrentLimit(ctre::phoenix::motorcontrol::StatorCurrentLimitConfiguration(limit_enable, limit, trigger_threshold_current, trigger_threshold_time), timeoutMs), "ConfigStatorCurrentLimit"))
 				{
@@ -3793,7 +3793,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
 			{
 				uint8_t period;
-				const hardware_interface::StatusFrame status_frame = static_cast<hardware_interface::StatusFrame>(i);
+				const auto status_frame = static_cast<hardware_interface::StatusFrame>(i);
 				if (tc.statusFramePeriodChanged(status_frame, period) && (period != 0))
 				{
 					ctre::phoenix::motorcontrol::StatusFrameEnhanced status_frame_enhanced;
@@ -3814,7 +3814,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		for (int i = hardware_interface::Control_3_General; i < hardware_interface::Control_Last; i++)
 		{
 			uint8_t period;
-			const hardware_interface::ControlFrame control_frame = static_cast<hardware_interface::ControlFrame>(i);
+			const auto control_frame = static_cast<hardware_interface::ControlFrame>(i);
 			if (tc.controlFramePeriodChanged(control_frame, period) && (period != 0))
 			{
 				ctre::phoenix::motorcontrol::ControlFrame control_frame_phoenix;
@@ -3836,7 +3836,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		{
 			double motion_cruise_velocity;
 			double motion_acceleration;
-			unsigned int motion_s_curve_strength;
+			int motion_s_curve_strength;
 			if (tc.motionCruiseChanged(motion_cruise_velocity, motion_acceleration, motion_s_curve_strength))
 			{
 				//converted from rad/sec to native units
@@ -4414,7 +4414,7 @@ bool FRCRobotInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, const
 			error_name = "ConfigFactoryDefaultRequiresHigherFirm";
 			break;
 		case ctre::phoenix::ConfigMotionSCurveRequiresHigherFirm:
-			error_name = "TalonFXFirmwarePreVBatDetect";
+			error_name = "ConfigMotionSCurveRequiresHigherFirm";
 			break;
 		case ctre::phoenix::TalonFXFirmwarePreVBatDetect:
 			error_name = "TalonFXFirmwarePreVBatDetect";

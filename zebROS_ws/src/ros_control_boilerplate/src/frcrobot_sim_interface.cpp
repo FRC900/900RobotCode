@@ -47,11 +47,8 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 #include "hal/simulation/DIOData.h"
 #include "hal/simulation/DriverStationData.h"
 
-
 #include <ros_control_boilerplate/frcrobot_sim_interface.h>
-#include <ros_control_boilerplate/nextVelocity.h>
 #include <ros_control_boilerplate/set_limit_switch.h>
-
 
 namespace ros_control_boilerplate
 {
@@ -61,9 +58,7 @@ FRCRobotSimInterface::FRCRobotSimInterface(ros::NodeHandle &nh,
 	: ros_control_boilerplate::FRCRobotInterface(nh, urdf_model)
 {
 }
-FRCRobotSimInterface::~FRCRobotSimInterface()
-{
-}
+FRCRobotSimInterface::~FRCRobotSimInterface() = default;
 
 void FRCRobotSimInterface::match_data_callback(const frc_msgs::MatchSpecificData &match_data) {
 	std::lock_guard<std::mutex> l(match_data_mutex_);

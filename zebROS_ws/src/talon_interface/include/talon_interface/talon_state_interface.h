@@ -410,8 +410,8 @@ class TalonHWState
 		double getMotionCruiseVelocity(void) const;
 		void setMotionAcceleration(double acceleration);
 		double getMotionAcceleration(void) const;
-		void setMotionSCurveStrength(unsigned int s_curve_strength);
-		unsigned int getMotionSCurveStrength(void) const;
+		void setMotionSCurveStrength(int s_curve_strength);
+		int getMotionSCurveStrength(void) const;
 		void setMotionProfileTopLevelBufferCount(int count);
 		int getMotionProfileTopLevelBufferCount(void) const;
 		void setMotionProfileTopLevelBufferFull(bool is_full);
@@ -605,7 +605,7 @@ class TalonHWState
 		double motion_cruise_velocity_;
 		double motion_acceleration_;
 
-		unsigned int motion_s_curve_strength_;
+		int motion_s_curve_strength_;
 
 		// Motion profiling
 		int motion_profile_top_level_buffer_count_;

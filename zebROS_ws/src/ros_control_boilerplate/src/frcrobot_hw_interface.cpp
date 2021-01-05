@@ -125,13 +125,6 @@
 //
 namespace ros_control_boilerplate
 {
-// Dummy vars are used to create joints which are accessed via variable name
-// in the low level control code. So far this is only used for sending data
-// to the driver station and back via network tables.
-
-constexpr int pidIdx = 0; //0 for primary closed-loop, 1 for cascaded closed-loop
-constexpr int timeoutMs = 0; //If nonzero, function will wait for config success and report an error if it times out. If zero, no blocking or checking is performed
-
 // Constructor. Pass appropriate params to base class constructor,
 // initialze robot_ pointer to NULL
 FRCRobotHWInterface::FRCRobotHWInterface(ros::NodeHandle &nh, urdf::Model *urdf_model)
@@ -191,13 +184,13 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 
 		if (canifier_local_hardwares_[i])
 		{
-			canifiers_.push_back(std::make_shared<ctre::phoenix::CANifier>(canifier_can_ids_[i]));
-			canifier_read_state_mutexes_.push_back(std::make_shared<std::mutex>());
-			canifier_read_thread_states_.push_back(std::make_shared<hardware_interface::canifier::CANifierHWState>(canifier_can_ids_[i]));
-			canifier_read_threads_.push_back(std::thread(&FRCRobotHWInterface::canifier_read_thread, this,
-										    canifiers_[i], canifier_read_thread_states_[i],
-										    canifier_read_state_mutexes_[i],
-										    std::make_unique<Tracer>("canifier_read_" + canifier_names_[i] + " " + root_nh.getNamespace())));
+			canifiers_.emplace_back(std::make_shared<ctre::phoenix::CANifier>(canifier_can_ids_[i]));
+			canifier_read_state_mutexes_.emplace_back(std::make_shared<std::mutex>());
+			canifier_read_thread_states_.emplace_back(std::make_shared<hardware_interface::canifier::CANifierHWState>(canifier_can_ids_[i]));
+			canifier_read_threads_.emplace_back(std::thread(&FRCRobotHWInterface::canifier_read_thread, this,
+												canifiers_[i], canifier_read_thread_states_[i],
+												canifier_read_state_mutexes_[i],
+												std::make_unique<Tracer>("canifier_read_" + canifier_names_[i] + " " + root_nh.getNamespace())));
 		}
 		else
 		{
@@ -216,13 +209,13 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 
 		if (cancoder_local_hardwares_[i])
 		{
-			cancoders_.push_back(std::make_shared<ctre::phoenix::sensors::CANCoder>(cancoder_can_ids_[i]));
-			cancoder_read_state_mutexes_.push_back(std::make_shared<std::mutex>());
-			cancoder_read_thread_states_.push_back(std::make_shared<hardware_interface::cancoder::CANCoderHWState>(cancoder_can_ids_[i]));
-			cancoder_read_threads_.push_back(std::thread(&FRCRobotHWInterface::cancoder_read_thread, this,
-										    cancoders_[i], cancoder_read_thread_states_[i],
-										    cancoder_read_state_mutexes_[i],
-										    std::make_unique<Tracer>("cancoder_read_" + cancoder_names_[i] + " " + root_nh.getNamespace())));
+			cancoders_.emplace_back(std::make_shared<ctre::phoenix::sensors::CANCoder>(cancoder_can_ids_[i]));
+			cancoder_read_state_mutexes_.emplace_back(std::make_shared<std::mutex>());
+			cancoder_read_thread_states_.emplace_back(std::make_shared<hardware_interface::cancoder::CANCoderHWState>(cancoder_can_ids_[i]));
+			cancoder_read_threads_.emplace_back(std::thread(&FRCRobotHWInterface::cancoder_read_thread, this,
+												cancoders_[i], cancoder_read_thread_states_[i],
+												cancoder_read_state_mutexes_[i],
+												std::make_unique<Tracer>("cancoder_read_" + cancoder_names_[i] + " " + root_nh.getNamespace())));
 		}
 		else
 		{
@@ -263,16 +256,16 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 				}
 			}
 
-			as726xs_.push_back(std::make_shared<as726x::roboRIO_AS726x>(port, as726x_addresses_[i]));
+			as726xs_.emplace_back(std::make_shared<as726x::roboRIO_AS726x>(port, as726x_addresses_[i]));
 			if (as726xs_.back()->begin())
 			{
-					as726x_read_thread_state_.push_back(std::make_shared<hardware_interface::as726x::AS726xState>(as726x_ports_[i], as726x_addresses_[i]));
-					as726x_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
-					as726x_thread_.push_back(std::thread(&FRCRobotHWInterface::as726x_read_thread, this,
-								as726xs_[i],
-								as726x_read_thread_state_[i],
-								as726x_read_thread_mutexes_[i],
-								std::make_unique<Tracer>("AS726x:" + as726x_names_[i] + " " + root_nh.getNamespace())));
+					as726x_read_thread_state_.emplace_back(std::make_shared<hardware_interface::as726x::AS726xState>(as726x_ports_[i], as726x_addresses_[i]));
+					as726x_read_thread_mutexes_.emplace_back(std::make_shared<std::mutex>());
+					as726x_thread_.emplace_back(std::thread(&FRCRobotHWInterface::as726x_read_thread, this,
+												as726xs_[i],
+												as726x_read_thread_state_[i],
+												as726x_read_thread_mutexes_[i],
+												std::make_unique<Tracer>("AS726x:" + as726x_names_[i] + " " + root_nh.getNamespace())));
 			}
 			else
 			{

@@ -802,7 +802,7 @@ double TalonHWState::getMotionAcceleration(void) const
 	return motion_acceleration_;
 }
 
-void TalonHWState::setMotionSCurveStrength(unsigned int s_curve_strength)
+void TalonHWState::setMotionSCurveStrength(int s_curve_strength)
 {
 	if (s_curve_strength > 8)
 	{
@@ -812,7 +812,7 @@ void TalonHWState::setMotionSCurveStrength(unsigned int s_curve_strength)
 
 	motion_s_curve_strength_ = s_curve_strength;
 }
-unsigned int TalonHWState::getMotionSCurveStrength(void) const
+int TalonHWState::getMotionSCurveStrength(void) const
 {
 	return motion_s_curve_strength_;
 }
