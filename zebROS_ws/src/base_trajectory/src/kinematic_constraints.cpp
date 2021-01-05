@@ -125,7 +125,7 @@ void KinematicConstraints::addConstraints(const std::vector<base_trajectory_msgs
 
 void KinematicConstraints::addConstraint(const base_trajectory_msgs::Constraint &msg)
 {
-	constraints_.push_back(Constraint(msg));
+	constraints_.emplace_back(Constraint(msg));
 }
 
 void KinematicConstraints::resetConstraints(void)
