@@ -1781,7 +1781,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		if (can_ctre_mc_local_hardwares_[i])
 		{
 			if (can_ctre_mc_is_talon_fx_[i])
-				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
+				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonFX>(can_ctre_mc_can_ids_[i]));
 			else if (can_ctre_mc_is_talon_srx_[i])
 				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
 			else
@@ -1818,7 +1818,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			{
 				if (can_ctre_mc_is_talon_fx_[i])
 				{
-					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
+					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonFX>(can_ctre_mc_can_ids_[i]));
 				}
 				else if (can_ctre_mc_is_talon_srx_[i])
 				{
@@ -3107,7 +3107,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		// Pointers to access specific features from each of these motor controllers
 		auto falcon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::WPI_TalonFX>(ctre_mcs_[joint_id]);
 		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(ctre_mcs_[joint_id]);
-#if 1
+#if 0
 		if (victor)
 		{
 			ROS_ERROR_STREAM_THROTTLE(5.0, "victor OK for id " << joint_id);
