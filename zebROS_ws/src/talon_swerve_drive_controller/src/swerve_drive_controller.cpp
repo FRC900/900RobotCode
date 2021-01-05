@@ -182,7 +182,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 									  ros::NodeHandle &controller_nh)
 {
 	const std::string complete_ns = controller_nh.getNamespace();
-	std::size_t id = complete_ns.find_last_of("/");
+	std::size_t id = complete_ns.find_last_of('/');
 	name_ = complete_ns.substr(id + 1);
 
 	// Get joint names from the parameter server
@@ -726,27 +726,27 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		if (cur_prof_cmd.buffer)
 		{
 			ROS_WARN("buffer in controller - pre loop");
-			for (size_t p = 0; p < cur_prof_cmd.profiles.size(); p++)
+			for (const auto &profile : cur_prof_cmd.profiles)
 			{
 				ROS_WARN("buffer in controller");
-				const int point_count2 = cur_prof_cmd.profiles[p].drive_pos.size();
+				const int point_count2 = profile.drive_pos.size();
 				ROS_INFO_STREAM("points: " << point_count2);
 				for (size_t i = 0; i < WHEELCOUNT; i++)
 				{
-					holder_points_[i][0].mode = cur_prof_cmd.profiles[p].hold[0][i] ? hardware_interface::TalonMode_PercentOutput : hardware_interface::TalonMode_Position;
-					holder_points_[i][1].mode = cur_prof_cmd.profiles[p].hold[0][i] ? hardware_interface::TalonMode_MotionMagic : hardware_interface::TalonMode_Position;
+					holder_points_[i][0].mode = profile.hold[0][i] ? hardware_interface::TalonMode_PercentOutput : hardware_interface::TalonMode_Position;
+					holder_points_[i][1].mode = profile.hold[0][i] ? hardware_interface::TalonMode_MotionMagic : hardware_interface::TalonMode_Position;
 
 					holder_points_[i][0].pidSlot = 1;
-					holder_points_[i][1].pidSlot = cur_prof_cmd.profiles[p].hold[0][i] ? 0 : 1; //0 and 1 are the same right now
+					holder_points_[i][1].pidSlot = profile.hold[0][i] ? 0 : 1; //0 and 1 are the same right now
 
-					holder_points_[i][0].setpoint = cur_prof_cmd.profiles[p].hold[0][i] ? 0 : cur_prof_cmd.profiles[p].drive_pos[0][i];
-					holder_points_[i][1].setpoint = cur_prof_cmd.profiles[p].steer_pos[0][i];
+					holder_points_[i][0].setpoint = profile.hold[0][i] ? 0 : profile.drive_pos[0][i];
+					holder_points_[i][1].setpoint = profile.steer_pos[0][i];
 
-					holder_points_[i][0].fTerm = cur_prof_cmd.profiles[p].hold[0][i] ? 0 : cur_prof_cmd.profiles[p].drive_f[0][i];
-					holder_points_[i][1].fTerm = cur_prof_cmd.profiles[p].hold[0][i] ? 0 : cur_prof_cmd.profiles[p].steer_f[0][i];
+					holder_points_[i][0].fTerm = profile.hold[0][i] ? 0 : profile.drive_f[0][i];
+					holder_points_[i][1].fTerm = profile.hold[0][i] ? 0 : profile.steer_f[0][i];
 
-					holder_points_[i][0].duration = cur_prof_cmd.profiles[p].dt;
-					holder_points_[i][1].duration = cur_prof_cmd.profiles[p].dt;
+					holder_points_[i][0].duration = profile.dt;
+					holder_points_[i][1].duration = profile.dt;
 
 					holder_points_[i][0].zeroPos = true;
 					holder_points_[i][1].zeroPos = false;
@@ -760,23 +760,23 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 					holder_points_[i][0].zeroPos = false;
 				}
 
-				const int point_count = cur_prof_cmd.profiles[p].drive_pos.size();
+				const int point_count = profile.drive_pos.size();
 				ROS_INFO_STREAM("points: " << point_count);
 				for (int i = 1; i < point_count; i++)
 				{
 					for (size_t k = 0; k < WHEELCOUNT; k++)
 					{
-						holder_points_[k][0].mode = cur_prof_cmd.profiles[p].hold[i][k] ? hardware_interface::TalonMode_PercentOutput : hardware_interface::TalonMode_Position;
-						holder_points_[k][1].mode = cur_prof_cmd.profiles[p].hold[i][k] ? hardware_interface::TalonMode_MotionMagic : hardware_interface::TalonMode_Position;
+						holder_points_[k][0].mode = profile.hold[i][k] ? hardware_interface::TalonMode_PercentOutput : hardware_interface::TalonMode_Position;
+						holder_points_[k][1].mode = profile.hold[i][k] ? hardware_interface::TalonMode_MotionMagic : hardware_interface::TalonMode_Position;
 
-						holder_points_[k][0].setpoint = cur_prof_cmd.profiles[p].hold[i][k] ? 0 : cur_prof_cmd.profiles[p].drive_pos[i][k];
-						holder_points_[k][1].setpoint = cur_prof_cmd.profiles[p].steer_pos[i][k];
+						holder_points_[k][0].setpoint = profile.hold[i][k] ? 0 : profile.drive_pos[i][k];
+						holder_points_[k][1].setpoint = profile.steer_pos[i][k];
 
-						holder_points_[k][0].fTerm = cur_prof_cmd.profiles[p].hold[i][k] ? 0 : cur_prof_cmd.profiles[p].drive_f[i][k];
-						holder_points_[k][1].fTerm = cur_prof_cmd.profiles[p].hold[i][k] ? 0 : cur_prof_cmd.profiles[p].steer_f[i][k];
+						holder_points_[k][0].fTerm = profile.hold[i][k] ? 0 : profile.drive_f[i][k];
+						holder_points_[k][1].fTerm = profile.hold[i][k] ? 0 : profile.steer_f[i][k];
 						//ROS_INFO_STREAM("f: " << holder_points_[k][0].fTerm);
 
-						holder_points_[k][1].pidSlot = cur_prof_cmd.profiles[p].hold[i][k] ? 0 : 1;
+						holder_points_[k][1].pidSlot = profile.hold[i][k] ? 0 : 1;
 
 						full_profile_[k][0].push_back(holder_points_[k][0]); //Rather than buffering like this we should write directly to full profile at some point
 						full_profile_[k][1].push_back(holder_points_[k][1]); //Rather than buffering like this we should write directly to full profile at some point
@@ -785,8 +785,8 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 				ROS_WARN("done1");
 				for (size_t k = 0; k < WHEELCOUNT; k++)
 				{
-					speed_joints_[k].overwriteCustomProfilePoints(full_profile_[k][0], cur_prof_cmd.profiles[p].slot);
-					steering_joints_[k].overwriteCustomProfilePoints(full_profile_[k][1], cur_prof_cmd.profiles[p].slot);
+					speed_joints_[k].overwriteCustomProfilePoints(full_profile_[k][0], profile.slot);
+					steering_joints_[k].overwriteCustomProfilePoints(full_profile_[k][1], profile.slot);
 				}
 
 				ROS_WARN("done");
