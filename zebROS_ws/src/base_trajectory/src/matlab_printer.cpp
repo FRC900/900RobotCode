@@ -1,3 +1,4 @@
+#include <fstream>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
@@ -127,6 +128,11 @@ void writeMatlabSplines(const base_trajectory_msgs::GenerateSpline::Response &ms
 	s << "plot (x_" << figureNum << ",pdddx_y_" << figureNum << ", x_" << figureNum << ", pdddy_y_" << figureNum << ")" << std::endl;
 	s << "xlabel('arbT')" << std::endl;
 	s << "ylabel('X / Y Jerk')" << std::endl;
+
+	const std::string filename(label + ".m");
+	std::ofstream of(filename);
+	of << s.str();
+
 	ROS_INFO_STREAM_FILTER(&messageFilter, "Matlab_splines : " << s.str());
 
 }
@@ -218,6 +224,12 @@ void writeMatlabPath(const std::vector<geometry_msgs::PoseStamped> &poses, int f
 	str << "xlabel('T(seconds)')" << std::endl;
 	str << "ylabel('X / Y Acceleration')" << std::endl;
 	str << "subplot(2,2,4)" << std::endl;
+	str << "plot(path_x_" << figureNum << ", path_y_" << figureNum << ")" << std::endl;
+	str << "xlabel('X position')" << std::endl;
+	str << "ylabel('Y position')" << std::endl;
+	const std::string filename(label + ".m");
+	std::ofstream of(filename);
+	of << str.str();
 
 	ROS_INFO_STREAM_FILTER(&messageFilter, "Matlab_paths: " << std::endl << str.str());
 }

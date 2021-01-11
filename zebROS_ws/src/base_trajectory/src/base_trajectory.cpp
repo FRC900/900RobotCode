@@ -898,7 +898,7 @@ bool evaluateTrajectory(double &cost,
 	}
 
 	// Cost is total time to traverse the path plus a large
-	// penalty for moving more than distMax away from the mipoint of the
+	// penalty for moving more than distMax away from the midpoint of the
 	// straight line segment connecting each waypoint. The latter
 	// imposes a constraint that the path can't be too curvy - and
 	// keeping close to the straight-line path should prevent it from running
