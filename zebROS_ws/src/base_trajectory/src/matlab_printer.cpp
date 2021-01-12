@@ -133,8 +133,7 @@ void writeMatlabSplines(const base_trajectory_msgs::GenerateSpline::Response &ms
 	std::ofstream of(filename);
 	of << s.str();
 
-	ROS_INFO_STREAM_FILTER(&messageFilter, "Matlab_splines : " << s.str());
-
+	//ROS_INFO_STREAM_FILTER(&messageFilter, "Matlab_splines : " << s.str());
 }
 
 static void writeMatlabDoubleArray(std::stringstream &s, const std::string &name, const std::vector<double> &values, int figureNum)
@@ -231,7 +230,7 @@ void writeMatlabPath(const std::vector<geometry_msgs::PoseStamped> &poses, int f
 	std::ofstream of(filename);
 	of << str.str();
 
-	ROS_INFO_STREAM_FILTER(&messageFilter, "Matlab_paths: " << std::endl << str.str());
+	//ROS_INFO_STREAM_FILTER(&messageFilter, "Matlab_paths: " << std::endl << str.str());
 }
 
 
