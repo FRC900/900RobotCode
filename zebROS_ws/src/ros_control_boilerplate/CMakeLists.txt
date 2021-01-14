@@ -131,6 +131,9 @@ if ("${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi")
 		${WPI_SHARED_LIB_DIR}/libni_rtlog.so.2.8.0
 		${WPI_SYSROOT}/lib/navx/linux/athena/static/libnavx_frc.a
 	)
+	set (FRCROBOT_HW_MAIN_SRCS ${FRCROBOT_HW_MAIN_SRCS}
+		src/dummy_wpilib_rio.cpp
+	)
 elseif ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") # Jetson TK1
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/raspbian/shared)    # Who knows if this will work
 	find_library(LIB_GPIOD libgpiod.a)

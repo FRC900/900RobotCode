@@ -83,6 +83,7 @@
 #include <sched.h>
 #endif
 
+extern "C" { void HALSIM_SetControlWord(HAL_ControlWord); }
 //
 // digital output, PWM, Pneumatics, compressor, nidec, talons
 //    controller on jetson  (local update = true, local hardware = false
@@ -433,8 +434,7 @@ void FRCRobotHWInterface::canifier_read_thread(std::shared_ptr<ctre::phoenix::CA
 			state->setFaults(faults);
 			state->setStickyFaults(sticky_faults);
 		}
-		tracer->stop();
-		ROS_INFO_STREAM_THROTTLE(60, tracer->report());
+		tracer->report(60);
 		rate.sleep();
 	}
 }
@@ -518,8 +518,7 @@ void FRCRobotHWInterface::cancoder_read_thread(std::shared_ptr<ctre::phoenix::se
 			state->setFaults(faults);
 			state->setStickyFaults(sticky_faults);
 		}
-		tracer->stop();
-		ROS_INFO_STREAM_THROTTLE(60, tracer->report());
+		tracer->report(60);
 		rate.sleep();
 	}
 }
@@ -579,8 +578,7 @@ void FRCRobotHWInterface::as726x_read_thread(
 			state->setRawChannelData(raw_channel_data);
 			state->setCalibratedChannelData(calibrated_channel_data);
 		}
-		tracer->stop();
-		ROS_INFO_STREAM_THROTTLE(60, tracer->report());
+		tracer->report(60);
 		ros::Duration(0.1).sleep(); // allow time for write() to run
 		r.sleep();
 	}
@@ -660,6 +658,7 @@ void FRCRobotHWInterface::read(const ros::Time& time, const ros::Duration& perio
 		}
 	}
 
+	read_tracer_.start_unique("talon orchestras");
 	for(size_t i = 0; i < num_talon_orchestras_; i++)
 	{
 		if(talon_orchestras_[i]->IsPlaying())
@@ -671,15 +670,38 @@ void FRCRobotHWInterface::read(const ros::Time& time, const ros::Duration& perio
 			orchestra_state_[i].setStopped();
 		}
 	}
-
 	read_tracer_.stop();
-	ROS_INFO_STREAM_THROTTLE(60, read_tracer_.report());
 }
 
 //#define DEBUG_WRITE
 void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& period)
 {
 	FRCRobotInterface::write(time, period);
+
+	// This is used to set a variable which is queried by the Jetson/x86
+	// frc::Driverstation stub functions.  Using data from the Rio &
+	// real driverstation, it exports robot state to a variable that is then
+	// used by calls to a faked frc::DriverStation::IsEnabled() ... set of
+	// functions. These functions are used internally by other wpilib code
+	// pulled into Jetson and x86 builds, so this lets those calls get the
+	// correct value for current robot states
+	// For the Rio, the HALSIM_SetControlWord() call does nothing, since in
+	// that case the real frc::DriverStation code is used which is actually
+	// hooked up directly to the real driver station.
+	{
+		std::unique_lock<std::mutex> l(match_data_mutex_, std::try_to_lock);
+		if (l.owns_lock())
+		{
+			HAL_ControlWord cw;
+			cw.enabled = match_data_.isEnabled();
+			cw.autonomous = match_data_.isAutonomous();
+			cw.test = match_data_.isTest();
+			cw.eStop = match_data_.isEStopped();
+			cw.fmsAttached = match_data_.isFMSAttached();
+			cw.dsAttached = match_data_.isDSAttached();
+			HALSIM_SetControlWord(cw);
+		}
+	}
 
 	for (size_t joint_id = 0; joint_id < num_canifiers_; ++joint_id)
 	{

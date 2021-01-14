@@ -120,6 +120,8 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 		// Note that this isn't a complete list - only the values
 		// used by the read thread are copied over.  Update
 		// as needed when more are read
+		double bus_voltage;
+		double temperature;
 		{
 			std::lock_guard<std::mutex> l(*mutex);
 			if (!state->getEnableReadThread())
@@ -128,6 +130,8 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 			encoder_feedback = state->getEncoderFeedback();
 			encoder_ticks_per_rotation = state->getEncoderTicksPerRotation();
 			conversion_factor = state->getConversionFactor();
+			bus_voltage = state->getBusVoltage();
+			temperature = state->getTemperature();
 		}
 
 		// TODO : in main read() loop copy status from talon being followed
@@ -163,11 +167,14 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 		ctre::phoenix::motorcontrol::StickyFaults sticky_faults;
 		safeTalonCall(victor->GetStickyFaults(sticky_faults), "GetStickyFault");
 
-		const double bus_voltage = victor->GetBusVoltage();
-		safeTalonCall(victor->GetLastError(), "GetBusVoltage");
+		if (!skip_bus_voltage_temperature_)
+		{
+			bus_voltage = victor->GetBusVoltage();
+			safeTalonCall(victor->GetLastError(), "GetBusVoltage");
 
-		const double temperature = victor->GetTemperature(); //returns in Celsius
-		safeTalonCall(victor->GetLastError(), "GetTemperature");
+			temperature = victor->GetTemperature(); //returns in Celsius
+			safeTalonCall(victor->GetLastError(), "GetTemperature");
+		}
 
 		const double output_voltage = victor->GetMotorOutputVoltage();
 		safeTalonCall(victor->GetLastError(), "GetMotorOutputVoltage");
@@ -346,8 +353,7 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 
 			state->setFirmwareVersion(firmware_version);
 		}
-		tracer->stop();
-		ROS_INFO_STREAM_THROTTLE(60, tracer->report());
+		tracer->report(60);
 		rate.sleep();
 	}
 }
@@ -399,8 +405,7 @@ void FRCRobotInterface::pdp_read_thread(int32_t pdp,
 			*state = pdp_state;
 		}
 
-		tracer->stop();
-		ROS_INFO_STREAM_THROTTLE(60, tracer->report());
+		tracer->report(60);
 		r.sleep();
 	}
 }
@@ -459,8 +464,7 @@ void FRCRobotInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle, 
 			*state = pcm_state;
 		}
 
-		tracer->stop();
-		ROS_INFO_STREAM_THROTTLE(60, tracer->report());
+		tracer->report(60);
 		r.sleep();
 	}
 }
@@ -1781,7 +1785,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		if (can_ctre_mc_local_hardwares_[i])
 		{
 			if (can_ctre_mc_is_talon_fx_[i])
-				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonFX>(can_ctre_mc_can_ids_[i]));
+				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
 			else if (can_ctre_mc_is_talon_srx_[i])
 				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
 			else
@@ -2910,6 +2914,11 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 			trts->setEncoderTicksPerRotation(ts.getEncoderTicksPerRotation());
 			trts->setConversionFactor(ts.getConversionFactor());
 			trts->setEnableReadThread(ts.getEnableReadThread());
+			// There looks like a bug in sim which requires us to read these
+			// more slowly.  Pass the previously-read value in to use as
+			// a default for iterations where the value isn't read
+			trts->setBusVoltage(ts.getBusVoltage());
+			trts->setTemperature(ts.getTemperature());
 
 			// Copy talon state values read in the read thread into the
 			// talon state shared globally with the rest of the hardware
@@ -3069,8 +3078,7 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 			pdp_state_[i] = *pdp_read_thread_state_[i];
 		}
 	}
-	read_tracer_.stop();
-	ROS_INFO_STREAM_THROTTLE(60, read_tracer_.report());
+	read_tracer_.report(60);
 }
 
 void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period)

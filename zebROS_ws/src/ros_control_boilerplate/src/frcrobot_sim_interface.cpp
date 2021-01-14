@@ -44,6 +44,7 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 #include "frc/DriverStation.h"
 #include "frc/simulation/BatterySim.h"
 #include "frc/simulation/RoboRioSim.h"
+#include "hal/HALBase.h"
 #include "hal/simulation/DIOData.h"
 #include "hal/simulation/DriverStationData.h"
 
@@ -212,6 +213,7 @@ bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::R
 
 bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 {
+	skip_bus_voltage_temperature_  = true;
 	// Do base class init. This loads common interface info
 	// used by both the real and sim interfaces
 	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " line: " << __LINE__);
@@ -322,11 +324,14 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 	// TODO : needed for standalone robots, but not
 	// updated once per control loop using the appropriate timestep
 
+	read_tracer_.start_unique("FeedEnable");
 	if (num_can_ctre_mcs_)
 	{
 		ctre::phoenix::unmanaged::Unmanaged::FeedEnable(100);
 	}
-
+	read_tracer_.start_unique("HAL_SimPeriodicBefore");
+	HAL_SimPeriodicBefore();
+	read_tracer_.start_unique("ShooterSim");
 	if (shooter_sim_)
 	{
 		// Get current state of motor controller commanded output voltage
@@ -346,17 +351,17 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 
 		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(ctre_mcs_[shooter_sim_joint_index_]);
 
-		ROS_INFO_STREAM("Motor voltage = " << talon_state_[shooter_sim_joint_index_].getOutputVoltage());
-		ROS_INFO_STREAM("Shooter velocity (rad/sec) = " << shooter_velocity);
-		ROS_INFO_STREAM("Shooter velocity (native units / 100msec) = " << shooter_velocity_native_units);
+		//ROS_INFO_STREAM("Motor voltage = " << talon_state_[shooter_sim_joint_index_].getOutputVoltage());
+		//ROS_INFO_STREAM("Shooter velocity (rad/sec) = " << shooter_velocity);
+		//ROS_INFO_STREAM("Shooter velocity (native units / 100msec) = " << shooter_velocity_native_units);
 		if (talon)
 		{
 			talon->GetSimCollection().AddQuadraturePosition(shooter_velocity_native_units * period.toSec());
 			talon->GetSimCollection().SetQuadratureVelocity(shooter_velocity_native_units);
 
 			const auto shooter_current{shooter_sim_->GetCurrentDraw().to<double>()};
-			ROS_INFO_STREAM("shooter_current = " << shooter_current);
-			talon->GetSimCollection().SetMotorCurrent(shooter_current);
+			//ROS_INFO_STREAM("shooter_current = " << shooter_current);
+			talon->GetSimCollection().SetStatorCurrent(shooter_current);
 			// TODO : should collect currents for each sim mechanism and pass
 			// them all in to BatterySim::Calculate at once
 			const auto vin_voltage = frc::sim::BatterySim::Calculate({shooter_sim_->GetCurrentDraw()});
@@ -365,6 +370,9 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 			frc::sim::RoboRioSim::SetVInVoltage(vin_voltage);
 		}
 	}
+	read_tracer_.start_unique("HAL_SimPeriodicAfter");
+	HAL_SimPeriodicAfter();
+	read_tracer_.stop();
 
 	FRCRobotInterface::read(time, period);
 }

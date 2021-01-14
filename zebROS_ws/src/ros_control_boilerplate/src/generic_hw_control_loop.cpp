@@ -117,9 +117,8 @@ void GenericHWControlLoop::update(void)
 	elapsed_seconds = current_time - last_time_write_;
 	last_time_write_ = current_time;
 	hardware_interface_->write(ros::Time::now(), ros::Duration(elapsed_seconds.count()));
-	tracer_.stop();
 
-	ROS_INFO_STREAM_THROTTLE(20, tracer_.report());
+	tracer_.report(20);
 }
 
 }  // namespace

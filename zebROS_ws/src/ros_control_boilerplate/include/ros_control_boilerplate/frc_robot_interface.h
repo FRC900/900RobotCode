@@ -39,6 +39,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <thread>
 #include <unordered_map>
 
@@ -461,6 +462,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<std::shared_ptr<std::mutex>> ctre_mc_read_state_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::TalonHWState>> ctre_mc_read_thread_states_;
 		std::vector<std::thread> ctre_mc_read_threads_;
+		std::atomic<bool> skip_bus_voltage_temperature_{false};
 		void ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController> ctre_mc, std::shared_ptr<hardware_interface::TalonHWState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
 
 		std::vector<std::shared_ptr<frc::NidecBrushless>> nidec_brushlesses_;
