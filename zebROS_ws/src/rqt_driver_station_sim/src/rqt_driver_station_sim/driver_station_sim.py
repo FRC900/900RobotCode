@@ -174,7 +174,6 @@ class DriverStationSim(Plugin):
         self._widget.teleop_button.setChecked(True)
         def pub_data(self):
             r = rospy.Rate(20)
-            match_msg = MatchSpecificData()
 
             modes =  [0, 0, 0, 0]
             match_msg = MatchSpecificData()
@@ -238,12 +237,14 @@ class DriverStationSim(Plugin):
                 match_msg.driverStationLocation = 1
                 match_msg.matchNumber = 1
                 match_msg.Autonomous = auto
+                match_msg.DSAttached = True
+                
+                # TODO - FMS attached
+                # TODO - EStopped?
 
                 enable_last = match_msg.Enabled
                 auto_last = auto
                 practice_last = practice
-
-
                 
                 match_pub.publish(match_msg)
                 r.sleep()

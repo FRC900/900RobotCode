@@ -47,6 +47,7 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 #include "hal/HALBase.h"
 #include "hal/simulation/DIOData.h"
 #include "hal/simulation/DriverStationData.h"
+#include "../sim/HALInitializer.h"
 
 #include <ros_control_boilerplate/frcrobot_sim_interface.h>
 #include <ros_control_boilerplate/set_limit_switch.h>
@@ -222,6 +223,7 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " failed");
 		return false;
 	}
+	hal::init::InitializeDriverStationData();
 
     //TODO fix joystick topic
 	for (size_t i = 0; i < HAL_kMaxJoysticks; i++)
