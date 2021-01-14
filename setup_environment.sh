@@ -278,7 +278,7 @@ sudo sed -i -e 's/APT::Periodic::Update-Package-Lists "1"/APT::Periodic::Update-
 mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include 
 mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre 
 cd /home/ubuntu
-wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.19.1*" -R "md5,sha1,pom,jar,*windows*,*debug*"
+wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.19.4*" -R "md5,sha1,pom,jar,*windows*,*debug*"
 cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include 
 find /home/ubuntu/devsite.ctr-electronics.com -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o 
 cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre 
