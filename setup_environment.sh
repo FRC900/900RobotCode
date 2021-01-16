@@ -326,9 +326,9 @@ cd /home/ubuntu
 wget https://github.com/wpilibsuite/allwpilib/releases/download/v2021.1.2/WPILib_Linux-2021.1.2.tar.gz
 mkdir -p /home/ubuntu/wpilib/2021
 cd /home/ubuntu/wpilib/2021
-tar -xzf /home/ubuntu/WPILib_${wpilibver}.tar.gz
-tar -xzf WPILib_${wpilibver}/WPILib_${wpilibver}-artifacts.tar.gz
-rm /home/ubuntu/WPILib_${wpilibver}.tar.gz
+tar -xzf /home/ubuntu/WPILib_Linux-2021.1.2.tar.gz
+tar -xzf WPILib_Linux-2021.1.2/WPILib_Linux-2021.1.2-artifacts.tar.gz
+rm /home/ubuntu/WPILib_Linux-2021.1.2.tar.gz
 cd /home/ubuntu/wpilib/2021/tools
 python3 ToolsUpdater.py
 mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/wpilib
@@ -337,7 +337,7 @@ find ../../../.. -name \*athena\*zip | grep -v debug | xargs -n1 unzip -o
 mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib
 cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib
 find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
-rm -rf /home/ubuntu/wpilib/2021/maven /home/ubuntu/wpilib/frc2021/jdk /home/ubuntu/wpilib/2021/WPILib_${wpilibver} /home/ubuntu/wpilb2021/utility
+rm -rf /home/ubuntu/wpilib/2021/maven /home/ubuntu/wpilib/frc2021/jdk /home/ubuntu/wpilib/2021/WPILib_Linux-2021.1.2 /home/ubuntu/wpilb2021/utility
 sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 
 # Set up prereqs for deploy script
@@ -484,4 +484,4 @@ sudo python -m pip install --no-cache-dir .
 cd slim
 sudo python -m pip install --no-cache-dir .
 
-RUN echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre/linux/x86-64/shared" >> ~/.bashrc
+echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre/linux/x86-64/shared" >> ~/.bashrc
