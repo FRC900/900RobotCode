@@ -83,7 +83,7 @@ namespace shooter_controller
                     fabs(shooter_cmd.set_velocity_) > 1e-6)
             {
                 m.data = true;
-                ready_to_shoot_pub_->unlockAndPublish(); 
+                ready_to_shoot_pub_->unlockAndPublish();
             }
             else
             {
