@@ -39,6 +39,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <thread>
 #include <unordered_map>
 
@@ -61,6 +62,7 @@
 #include "frc_msgs/JoystickState.h"
 #include "remote_joint_interface/remote_joint_interface.h"
 #include "ros_control_boilerplate/ros_iterative_robot.h"
+#include "ros_control_boilerplate/talon_convert.h"
 #include "talon_interface/cancoder_command_interface.h"
 #include "talon_interface/canifier_command_interface.h"
 #include "talon_interface/orchestra_command_interface.h"
@@ -72,6 +74,9 @@
 #include <hal/FRCUsageReporting.h>
 #include <hal/HALBase.h>
 #include <hal/Types.h>
+
+// CTRE
+#include <ctre/phoenix/motorcontrol/IMotorController.h>
 
 // Use forward declarations to avoid including a whole bunch of
 // WPIlib headers we don't care about - this speeds up the build process
@@ -251,19 +256,19 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<bool>        can_ctre_mc_local_hardwares_;
 		std::vector<bool>        can_ctre_mc_is_talon_fx_;
 		std::vector<bool>        can_ctre_mc_is_talon_srx_;
-		std::size_t              num_can_ctre_mcs_;
+		std::size_t              num_can_ctre_mcs_{0};
 
 		std::vector<std::string> canifier_names_;
 		std::vector<int>         canifier_can_ids_;
 		std::vector<bool>        canifier_local_updates_;
 		std::vector<bool>        canifier_local_hardwares_;
-		std::size_t              num_canifiers_;
+		std::size_t              num_canifiers_{0};
 
 		std::vector<std::string> cancoder_names_;
 		std::vector<int>         cancoder_can_ids_;
 		std::vector<bool>        cancoder_local_updates_;
 		std::vector<bool>        cancoder_local_hardwares_;
-		std::size_t              num_cancoders_;
+		std::size_t              num_cancoders_{0};
 
 		std::vector<std::string> nidec_brushless_names_;
 		std::vector<int>         nidec_brushless_pwm_channels_;
@@ -271,35 +276,35 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<bool>        nidec_brushless_inverts_;
 		std::vector<bool>        nidec_brushless_local_updates_;
 		std::vector<bool>        nidec_brushless_local_hardwares_;
-		std::size_t              num_nidec_brushlesses_;
+		std::size_t              num_nidec_brushlesses_{0};
 
 		//I think inverts are worth having on below 3
 		std::vector<std::string> digital_input_names_;
 		std::vector<int>         digital_input_dio_channels_;
 		std::vector<bool>        digital_input_inverts_;
 		std::vector<bool>        digital_input_locals_;
-		std::size_t              num_digital_inputs_;
+		std::size_t              num_digital_inputs_{0};
 
 		std::vector<std::string> digital_output_names_;
 		std::vector<int>         digital_output_dio_channels_;
 		std::vector<bool>        digital_output_inverts_;
 		std::vector<bool>        digital_output_local_updates_;
 		std::vector<bool>        digital_output_local_hardwares_;
-		std::size_t              num_digital_outputs_;
+		std::size_t              num_digital_outputs_{0};
 
 		std::vector<std::string> pwm_names_;
 		std::vector<int>         pwm_pwm_channels_;
 		std::vector<bool>        pwm_inverts_;
 		std::vector<bool>        pwm_local_updates_;
 		std::vector<bool>        pwm_local_hardwares_;
-		std::size_t              num_pwms_;
+		std::size_t              num_pwms_{0};
 
 		std::vector<std::string> solenoid_names_;
 		std::vector<int>         solenoid_ids_;
 		std::vector<int>         solenoid_pcms_;
 		std::vector<bool>        solenoid_local_updates_;
 		std::vector<bool>        solenoid_local_hardwares_;
-		std::size_t              num_solenoids_;
+		std::size_t              num_solenoids_{0};
 
 		std::vector<std::string> double_solenoid_names_;
 		std::vector<int>         double_solenoid_forward_ids_;
@@ -307,68 +312,67 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<int>         double_solenoid_pcms_;
 		std::vector<bool>        double_solenoid_local_updates_;
 		std::vector<bool>        double_solenoid_local_hardwares_;
-		std::size_t              num_double_solenoids_;
+		std::size_t              num_double_solenoids_{0};
 
 		std::vector<std::string> compressor_names_;
 		std::vector<int>         compressor_pcm_ids_;
 		std::vector<bool>        compressor_local_updates_;
 		std::vector<bool>        compressor_local_hardwares_;
-		std::size_t              num_compressors_;
+		std::size_t              num_compressors_{0};
 
 		std::vector<std::string> pdp_names_;
 		std::vector<int32_t>     pdp_modules_;
 		std::vector<bool>        pdp_locals_;
-		std::size_t              num_pdps_;
+		std::size_t              num_pdps_{0};
 
 		std::vector<std::string> rumble_names_;
 		std::vector<int>         rumble_ports_;
 		std::vector<bool>        rumble_local_updates_;
 		std::vector<bool>        rumble_local_hardwares_;
-		std::size_t              num_rumbles_;
+		std::size_t              num_rumbles_{0};
 
 		std::vector<std::string> navX_names_;
 		std::vector<std::string> navX_frame_ids_;
 		std::vector<int>         navX_ids_;
 		std::vector<bool>        navX_locals_;
-
-		std::size_t              num_navX_;
+		std::size_t              num_navX_{0};
 
 		std::vector<std::string> analog_input_names_;
 		std::vector<int>         analog_input_analog_channels_;
 		std::vector<double>      analog_input_a_;
 		std::vector<double>      analog_input_b_;
 		std::vector<bool>        analog_input_locals_;
-		std::size_t              num_analog_inputs_;
+		std::size_t              num_analog_inputs_{0};
 
 		std::vector<std::string> dummy_joint_names_;
 		std::vector<bool>        dummy_joint_locals_; // Not sure if this is needed?
-		std::size_t              num_dummy_joints_;
+		std::size_t              num_dummy_joints_{0};
 
 		std::vector<std::string> ready_signal_names_;
 		std::vector<bool>        ready_signal_locals_;
-		std::size_t              num_ready_signals_;
+		std::size_t              num_ready_signals_{0};
 
 		std::vector<std::string> joystick_names_;
 		std::vector<int>         joystick_ids_; // pretty sure this is montonic increasing by default?
 		std::vector<bool>        joystick_locals_;
 		std::vector<std::string> joystick_types_;
-		std::size_t              num_joysticks_;
+		std::size_t              num_joysticks_{0};
 
 		std::vector<std::string> as726x_names_;
 		std::vector<std::string> as726x_ports_;
 		std::vector<int>         as726x_addresses_;
 		std::vector<bool>        as726x_local_updates_;
 		std::vector<bool>        as726x_local_hardwares_;
-		std::size_t              num_as726xs_;
+		std::size_t              num_as726xs_{0};
 
                 std::vector<std::string> talon_orchestra_names_;
-                std::size_t              num_talon_orchestras_;
+                std::size_t              num_talon_orchestras_{0};
                 std::vector<int>         talon_orchestra_ids_;
 
-		bool run_hal_robot_;
-		std::string can_interface_;
+		bool run_hal_robot_{true};
+		std::string can_interface_{"can0"};
 
-		urdf::Model *urdf_model_;
+		urdf::Model *urdf_model_{nullptr};
 
 		// Array holding master cached state of hardware
 		// resources
@@ -429,11 +433,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<hardware_interface::as726x::AS726xCommand> as726x_command_;
 
 		std::vector<double> robot_ready_signals_;
-		bool                robot_code_ready_;
+		bool                robot_code_ready_{false};
 
-		/* Get conversion factor for position, velocity, and closed-loop stuff */
-
-		double getConversionFactor(int encoder_ticks_per_rotation, hardware_interface::FeedbackDevice encoder_feedback, hardware_interface::TalonMode talon_mode);
 		//certain data will be read at a slower rate than the main loop, for computational efficiency
 		//robot iteration calls - sending stuff to driver station
 		double t_prev_robot_iteration_;
@@ -448,11 +449,21 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		double t_prev_robot_controller_read_;
 		double robot_controller_read_hz_;
 
+		/* Get conversion factor for position, velocity, and closed-loop stuff */
+		double getConversionFactor(int encoder_ticks_per_rotation, hardware_interface::FeedbackDevice encoder_feedback, hardware_interface::TalonMode talon_mode) const;
+
+		// Count sequential CAN errors
+		size_t can_error_count_{0};
+		bool safeTalonCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name);
+
+		std::vector<std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController>> ctre_mcs_;
 
 		// Maintain a separate read thread for each talon SRX
 		std::vector<std::shared_ptr<std::mutex>> ctre_mc_read_state_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::TalonHWState>> ctre_mc_read_thread_states_;
 		std::vector<std::thread> ctre_mc_read_threads_;
+		std::atomic<bool> skip_bus_voltage_temperature_{false};
+		void ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController> ctre_mc, std::shared_ptr<hardware_interface::TalonHWState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
 
 		std::vector<std::shared_ptr<frc::NidecBrushless>> nidec_brushlesses_;
 		std::vector<std::shared_ptr<frc::DigitalInput>> digital_inputs_;
@@ -491,8 +502,10 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<std::unique_ptr<realtime_tools::RealtimePublisher<frc_msgs::JoystickState>>> realtime_pub_joysticks_;
 		std::vector<std::unique_ptr<realtime_tools::RealtimePublisher<frc_msgs::ButtonBoxState>>> realtime_pub_button_boxes_;
 
-		std::unique_ptr<ROSIterativeRobot> robot_;
+		std::unique_ptr<ROSIterativeRobot> robot_{nullptr};
 		Tracer read_tracer_;
+
+		talon_convert::TalonConvert talon_convert_;
 
 };  // class
 

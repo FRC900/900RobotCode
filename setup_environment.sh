@@ -107,7 +107,7 @@ cd ../..
 sudo rm -rf tinyxml2
 
 #install zed sdk
-wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.2/jp44/jetsons
+wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.3/jp44/jetsons
 chmod 755 jetsons
 ./jetsons
 rm ./jetsons
@@ -275,31 +275,31 @@ sudo apt remove --purge -y thunderbird libreoffice-*
 sudo sed -i -e 's/APT::Periodic::Update-Package-Lists "1"/APT::Periodic::Update-Package-Lists "0"/' /etc/apt/apt.conf.d/10periodic
 
 # Install CTRE & navX libs
-mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include 
-mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/ctre 
+mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include 
+mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre 
 cd /home/ubuntu
-wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.18.3*,firmware-sim*zip" -R "md5,sha1,pom,jar,*windows*,*debug*"
-cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include 
+wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.19.4*" -R "md5,sha1,pom,jar,*windows*,*debug*"
+cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include 
 find /home/ubuntu/devsite.ctr-electronics.com -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o 
-cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/ctre 
+cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre 
 find /home/ubuntu/devsite.ctr-electronics.com -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o 
 rm -rf /home/ubuntu/devsite.ctr-electronics.com 
 
 cd /home/ubuntu 
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-headers.zip 
-mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/navx 
-cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/navx 
+mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/navx 
+cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/navx 
 unzip -o /home/ubuntu/navx-cpp-3.1.400-headers.zip 
 rm /home/ubuntu/navx-cpp-3.1.400-headers.zip 
 cd /home/ubuntu 
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-linuxathena.zip 
-mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/navx 
-cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/navx 
+mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/navx 
+cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/navx 
 unzip -o /home/ubuntu/navx-cpp-3.1.400-linuxathena.zip 
 rm /home/ubuntu/navx-cpp-3.1.400-linuxathena.zip 
 cd /home/ubuntu 
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-linuxathenastatic.zip 
-cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/navx 
+cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/navx 
 unzip -o /home/ubuntu/navx-cpp-3.1.400-linuxathenastatic.zip 
 rm /home/ubuntu/navx-cpp-3.1.400-linuxathenastatic.zip 
 
@@ -310,35 +310,35 @@ mkdir sparkmax
 cd sparkmax
 unzip ../SPARK-MAX-SDK-v1.5.2.zip
 rm ../SPARK-MAX-SDK-v1.5.2.zip
-mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/rev
-cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/rev
+mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/rev
+cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/rev
 find /home/ubuntu/sparkmax/maven/com/revrobotics/frc/SparkMax-cpp -name \*athena\*zip | grep -v debug | xargs -n 1 unzip -o
 find /home/ubuntu/sparkmax/maven/com/revrobotics/frc/SparkMax-cpp -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o
 find /home/ubuntu/sparkmax/maven/com/revrobotics/frc/SparkMax-driver -name \*athena\*zip | grep -v debug | xargs -n 1 unzip -o
 find /home/ubuntu/sparkmax/maven/com/revrobotics/frc/SparkMax-driver -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o
-cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include
+cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include
 find /home/ubuntu/sparkmax/maven/com/revrobotics/frc/SparkMax-cpp -name \*header\*zip | grep -v debug | xargs -n 1 unzip -o
 find /home/ubuntu/sparkmax/maven/com/revrobotics/frc/SparkMax-driver -name \*header\*zip | grep -v debug | xargs -n 1 unzip -o
 rm -rf /home/ubuntu/sparkmax
 
 # Install wpilib headers by copying them from the local maven dir
-# TODO - need to update to acutal 2020 filenames once they are released
 cd /home/ubuntu 
-wget https://github.com/wpilibsuite/allwpilib/releases/download/v2020.3.2/WPILib_Linux-2020.3.2.tar.gz 
-mkdir -p /home/ubuntu/wpilib/2020 
-cd /home/ubuntu/wpilib/2020 
-tar -xzf /home/ubuntu/WPILib_Linux-2020.3.2.tar.gz 
-rm /home/ubuntu/WPILib_Linux-2020.3.2.tar.gz 
-cd /home/ubuntu/wpilib/2020/tools 
-python3 ToolsUpdater.py 
-mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/wpilib 
-cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/lib/wpilib 
-find ../../../.. -name \*athena\*zip | xargs -n1 unzip -o 
-mkdir -p /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/wpilib 
-cd /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/wpilib 
-find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o 
-rm -rf /home/ubuntu/wpilib/2020/maven /home/ubuntu/wpilib/2020/jdk
-sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
+wget https://github.com/wpilibsuite/allwpilib/releases/download/v2021.2.1/WPILib_Linux-2021.2.1.tar.gz
+mkdir -p /home/ubuntu/wpilib/2021
+cd /home/ubuntu/wpilib/2021
+tar -xzf /home/ubuntu/WPILib_Linux-2021.2.1.tar.gz
+tar -xzf WPILib_Linux-2021.2.1/WPILib_Linux-2021.2.1-artifacts.tar.gz
+rm /home/ubuntu/WPILib_Linux-2021.2.1.tar.gz
+cd /home/ubuntu/wpilib/2021/tools
+python3 ToolsUpdater.py
+mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/wpilib
+cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/wpilib
+find ../../../.. -name \*athena\*zip | grep -v debug | xargs -n1 unzip -o
+mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib
+cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib
+find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
+rm -rf /home/ubuntu/wpilib/2021/maven /home/ubuntu/wpilib/frc2021/jdk /home/ubuntu/wpilib/2021/WPILib_Linux-2021.2.1 /home/ubuntu/wpilb2021/utility
+sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 
 # Set up prereqs for deploy script
 mv ~/2020Offseason ~/2020Offseason.orig
@@ -381,7 +381,6 @@ cd make-4.3/build
 sudo make -j`nproc --all` install
 cd
 rm -rf make-4.3*
-
 
 # Give the ubuntu user dialout permission, which is used by the ADI IMU 
 sudo adduser ubuntu dialout
@@ -450,13 +449,13 @@ python setup.py test --cpp_implementation
 sudo python setup.py install --cpp_implementation
 
 cd &&\
-    wget https://github.com/git-lfs/git-lfs/releases/download/v2.11.0/git-lfs-linux-arm64-v2.11.0.tar.gz &&\
+    wget https://github.com/git-lfs/git-lfs/releases/download/v2.13.1/git-lfs-linux-arm64-v2.13.1.tar.gz &&\
 	mkdir git-lfs-install &&\
 	cd git-lfs-install &&\
-	tar -xzf ../git-lfs-linux-arm64-v2.11.0.tar.gz &&\
+	tar -xzf ../git-lfs-linux-arm64-v2.13.1.tar.gz &&\
 	sudo ./install.sh &&\
 	cd &&\
-	rm -rf git-lfs-linux-amd64-v2.11.0.tar.gz git-lfs-install &&\
+	rm -rf git-lfs-linux-arm64-v2.13.1.tar.gz git-lfs-install &&\
 	git lfs install &&\
 	cd ~/2020Offseason &&\
 	git lfs pull
@@ -484,3 +483,5 @@ protoc object_detection/protos/*.proto --python_out=.
 sudo python -m pip install --no-cache-dir .
 cd slim
 sudo python -m pip install --no-cache-dir .
+
+echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre/linux/x86-64/shared" >> ~/.bashrc

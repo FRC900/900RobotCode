@@ -82,16 +82,11 @@ class GenericHWControlLoop
 		ros::NodeHandle nh_;
 
 		// Name of this class
-		std::string name_ = "generic_hw_control_loop";
+		const std::string name_ = "generic_hw_control_loop";
 
 		// Settings
 		ros::Duration desired_update_period_;
 		double cycle_time_error_threshold_;
-
-		// Timing
-		ros::Duration elapsed_time_;
-		double loop_hz_;
-		std::chrono::time_point<std::chrono::steady_clock> last_time_;
 
 		/** \brief Abstract Hardware Interface for your robot */
 		std::shared_ptr<ros_control_boilerplate::FRCRobotInterface> hardware_interface_;
@@ -103,6 +98,12 @@ class GenericHWControlLoop
 		 * running controllers in \ref update.
 		 */
 		controller_manager::ControllerManager controller_manager_;
+		//
+		// Timing
+		double loop_hz_;
+		std::chrono::time_point<std::chrono::steady_clock> last_time_;
+		std::chrono::time_point<std::chrono::steady_clock> last_time_update_;
+		std::chrono::time_point<std::chrono::steady_clock> last_time_write_;
 
 		Tracer tracer_;
 };  // end class

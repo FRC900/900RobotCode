@@ -25,7 +25,6 @@ extern "C"
 	}
 }
 
-#include <ctre/phoenix/platform/Platform.h>
 extern "C"
 {
 	// These calls haven't been run through the CANAPI yet - PCM?
@@ -190,21 +189,34 @@ frc::DriverStation & frc::DriverStation::GetInstance()
 	return d;
 }
 
-bool frc::DriverStation::IsDisabled(void) const
+#include <hal/DriverStation.h>
+bool frc::DriverStation::IsEnabled(void) const
 {
-	ROS_ERROR("Called DriverStation::IsDisabled() on unsupported platform");
-	return false;
+	HAL_ControlWord controlWord;
+	HAL_GetControlWord(&controlWord);
+	return controlWord.enabled && controlWord.dsAttached;
 }
-bool frc::DriverStation::IsAutonomous(void) const
-{
-	ROS_ERROR("Called DriverStation::IsAutonomous() on unsupported platform");
-	return false;
+bool frc::DriverStation::IsDisabled() const {
+	HAL_ControlWord controlWord;
+	HAL_GetControlWord(&controlWord);
+	return !(controlWord.enabled && controlWord.dsAttached);
 }
-bool frc::DriverStation::IsOperatorControl(void) const
-{
-	ROS_ERROR("Called DriverStation::IsOperatorControl() on unsupported platform");
-	return false;
+bool frc::DriverStation::IsAutonomous() const {
+	HAL_ControlWord controlWord;
+	HAL_GetControlWord(&controlWord);
+	return controlWord.autonomous;
 }
+bool frc::DriverStation::IsOperatorControl() const {
+	HAL_ControlWord controlWord;
+	HAL_GetControlWord(&controlWord);
+	return !(controlWord.autonomous || controlWord.test);
+}
+bool frc::DriverStation::IsTest() const {
+  HAL_ControlWord controlWord;
+  HAL_GetControlWord(&controlWord);
+  return controlWord.test;
+}
+
 #include <frc/GenericHID.h>
 frc::GenericHID::GenericHID(int) : m_ds(&DriverStation::GetInstance())
 {
@@ -552,10 +564,19 @@ int64_t HAL_Report(int32_t resource, int32_t instanceNumber,
 	return -1;
 }
 
-int32_t HAL_GetControlWord(HAL_ControlWord*)
+static HAL_ControlWord HALSIM_controlword = {0};
+int32_t HAL_GetControlWord(HAL_ControlWord *controlword)
 {
-	ROS_INFO_STREAM("Called HAL_GetControlWord() on unsupported platform");
-	return -1;
+	*controlword = HALSIM_controlword;
+	return 0;
+}
+
+// Allow non-DS attached HW interfaces to set a simulated
+// control word. Used to keep DriverStation::Is* calls in
+// sync with actual robot state
+void HALSIM_SetControlWord(HAL_ControlWord controlword)
+{
+	HALSIM_controlword = controlword ;
 }
 
 HAL_AllianceStationID HAL_GetAllianceStation(int32_t* status)
@@ -578,7 +599,6 @@ int32_t HAL_GetMatchInfo(HAL_MatchInfo*)
 
 } /// extern "C"
 
-#include <hal/DriverStation.h>
 
 void HAL_ObserveUserProgramAutonomous(void)
 {
@@ -616,6 +636,11 @@ int32_t HAL_SendError(HAL_Bool isError, int32_t errorCode, HAL_Bool isLVCode, co
 
 	errorQueue->enqueue(errorCode, std::string(details));
 	return 0;
+}
+
+void frc::DriverStation::ReportWarning(wpi::Twine const & error)
+{
+	errorQueue->enqueue(-1, error.str());
 }
 
 #include <frc/Timer.h>

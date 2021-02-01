@@ -5,9 +5,11 @@ set -o pipefail
 
 # IP addresses of the roboRIO and Jetson to deploy code on.
 ROBORIO_ADDR=10.9.0.2
+#ROBORIO_ADDR=192.168.0.169
 
 # This can be an array of IP address if there are multiple Jetsons
 JETSON_ADDR=(10.9.0.8)
+#JETSON_ADDR=(192.168.0.183)
 
 # Environment to deploy to (prod or dev).
 INSTALL_ENV=dev
@@ -157,6 +159,7 @@ if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
             --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
             --exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
             --exclude 'desmos_js' --exclude '.md5sum' --exclude 'trt_graph.pb'\
+			--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
             $i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/
         if [ $? -ne 0 ]; then
             echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
@@ -179,6 +182,7 @@ do
         --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
         --exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
         --exclude 'desmos_js' --exclude '.md5sum' --exclude 'trt_graph.pb'\
+		--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
         $LOCAL_CLONE_LOCATION/ $i:$JETSON_ENV_LOCATION/
     if [ $? -ne 0 ]; then
         echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"

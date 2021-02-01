@@ -36,18 +36,23 @@
 Desc:   Example ros_control hardware interface blank template for the FRCRobot
 For a more detailed simulation example, see sim_hw_interface.cpp
 */
+#include <memory> // for make_unique()
 #include <ros/ros.h>
 
+#include "ctre/phoenix/unmanaged/Unmanaged.h"
+#include "ctre/phoenix/motorcontrol/can/WPI_TalonSRX.h"
 #include "frc/DriverStation.h"
-#include "mockdata/DIOData.h"
-#include "mockdata/DriverStationData.h"
+#include "frc/simulation/BatterySim.h"
+#include "frc/simulation/RoboRioSim.h"
+#include "hal/HALBase.h"
+#include "hal/simulation/DIOData.h"
+#include "hal/simulation/DriverStationData.h"
+#include "../sim/HALInitializer.h"
 
 #include <ros_control_boilerplate/frcrobot_sim_interface.h>
-#include <ros_control_boilerplate/nextVelocity.h>
 #include <ros_control_boilerplate/set_limit_switch.h>
 
-
-namespace frcrobot_control
+namespace ros_control_boilerplate
 {
 
 FRCRobotSimInterface::FRCRobotSimInterface(ros::NodeHandle &nh,
@@ -55,9 +60,7 @@ FRCRobotSimInterface::FRCRobotSimInterface(ros::NodeHandle &nh,
 	: ros_control_boilerplate::FRCRobotInterface(nh, urdf_model)
 {
 }
-FRCRobotSimInterface::~FRCRobotSimInterface()
-{
-}
+FRCRobotSimInterface::~FRCRobotSimInterface() = default;
 
 void FRCRobotSimInterface::match_data_callback(const frc_msgs::MatchSpecificData &match_data) {
 	std::lock_guard<std::mutex> l(match_data_mutex_);
@@ -211,29 +214,17 @@ bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::R
 
 bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 {
+	skip_bus_voltage_temperature_  = true;
 	// Do base class init. This loads common interface info
 	// used by both the real and sim interfaces
-	ROS_WARN("Passes");
+	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " line: " << __LINE__);
 	if (!FRCRobotInterface::init(root_nh, robot_hw_nh))
 	{
 		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " failed");
 		return false;
 	}
-	ROS_WARN("Passes");
+	hal::init::InitializeDriverStationData();
 
-	ROS_WARN("fails here?1");
-	// Loop through the list of joint names
-	// specified as params for the hardware_interface.
-	// For each of them, create a Talon object. This
-	// object is used to send and recieve commands
-	// and status to/from the physical Talon motor
-	// controller on the robot.  Use this pointer
-	// to initialize each Talon with various params
-	// set for that motor controller in config files.
-	// TODO : assert can_ctre_mc_names_.size() == can_ctre_mc_can_ids_.size()
-
-	limit_switch_srv_ = root_nh.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit,this);
-    match_data_sub_ = root_nh.subscribe("/frcrobot_rio/match_data_in", 1, &FRCRobotSimInterface::match_data_callback, this);
     //TODO fix joystick topic
 	for (size_t i = 0; i < HAL_kMaxJoysticks; i++)
 	{
@@ -242,21 +233,6 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 		joystick_subs_.push_back(root_nh.subscribe<sensor_msgs::Joy>(s.str(), 1, boost::bind(&FRCRobotSimInterface::joystickCallback, this, _1, i)));
 	}
 
-	linebreak_sensor_srv_ = root_nh.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
-	ROS_INFO_NAMED("frcrobot_sim_interface", "FRCRobotSimInterface Ready.");
-	for (size_t i = 0; i < can_ctre_mc_names_.size(); i++)
-	{
-		ROS_INFO_STREAM_NAMED("frcrobot_sim_interface",
-							  "Loading joint " << i << "=" << can_ctre_mc_names_[i] <<
-							  (can_ctre_mc_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (can_ctre_mc_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as " << (can_ctre_mc_is_talon_fx_[i] ? "TalonFX" : (can_ctre_mc_is_talon_srx_[i] ? "TalonSRX" : "VictorSPX"))
-							  << " CAN id " << can_ctre_mc_can_ids_[i]);
-
-		ROS_WARN_STREAM("fails here? 56789: " << i);
-		// Loop through the list of joint names
-
-	}
 	for (size_t i = 0; i < num_canifiers_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_sim_interface",
@@ -265,6 +241,7 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 							  (canifier_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
 							  " at CAN id " << canifier_can_ids_[i]);
 	}
+
 	for (size_t i = 0; i < num_cancoders_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_sim_interface",
@@ -293,11 +270,47 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 			}
 		}
 	}
+
 	for (size_t i = 0; i < num_talon_orchestras_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
 							  "Loading joint " << i << "=" << talon_orchestra_names_[i]);
 	}
+
+	// Hard-code a simulation for the shooter flywheel
+	shooter_sim_joint_index_ = std::numeric_limits<size_t>::max();
+	for (size_t i = 0; i < num_can_ctre_mcs_; ++i)
+	{
+		if (can_ctre_mc_names_[i] == "shooter_joint")
+		{
+			shooter_sim_joint_index_ = i;
+			break;
+		}
+	}
+	// TODO - maybe also check for local hardware?
+	if (shooter_sim_joint_index_ != std::numeric_limits<size_t>::max())
+	{
+		units::kilogram_square_meter_t moi{0.000471735121};
+		//units::pound_square_inch_t moi_english{1.612};
+		// This is in rad, so small values to line up with a small
+		// amount of uncertainty in the encoder reading
+		const std::array<double, 1> shooter_sim_std_dev = {0.0025};
+		shooter_sim_ = std::make_unique<frc::sim::FlywheelSim>(frc::DCMotor::Falcon500(1), 24./34., moi, shooter_sim_std_dev);
+	}
+	else
+	{
+		// This will be expected for the Rio - we only want to run sim code in one
+		// place, and that should be the Jetson
+		ROS_WARN("Couldn't find joint 'shooter_joint' in config, not running shooter sim");
+		shooter_sim_ = nullptr;
+	}
+
+	// Do these last to prevent callbacks from triggering before data
+	// used by them is initialized
+	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " line: " << __LINE__);
+	limit_switch_srv_ = root_nh.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit, this);
+	linebreak_sensor_srv_ = root_nh.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
+    match_data_sub_ = root_nh.subscribe("/frcrobot_rio/match_data_in", 1, &FRCRobotSimInterface::match_data_callback, this);
 
 	ROS_INFO_NAMED("frcrobot_sim_interface", "FRCRobotSimInterface Ready.");
 	return true;
@@ -305,11 +318,104 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 
 void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& period)
 {
-	FRCRobotInterface::read(time, period);
-	for (size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
+	// Run WPIlib physics sim for each mechanism.
+	// Right now those mechanisms are hard-coded, but in the future make
+	// them configurable via config file?
+	// This could happen at the end of write() or beginning of read(),
+	// shouldn't matter which just so long as the sim mechanisms are
+	// TODO : needed for standalone robots, but not
+	// updated once per control loop using the appropriate timestep
+
+	read_tracer_.start_unique("FeedEnable");
+	if (num_can_ctre_mcs_)
 	{
-		// Do nothing
-    }
+		ctre::phoenix::unmanaged::Unmanaged::FeedEnable(100);
+	}
+	read_tracer_.start_unique("HAL_SimPeriodicBefore");
+	HAL_SimPeriodicBefore();
+	read_tracer_.start_unique("ShooterSim");
+#if 0
+	// This needs work.  It kinda takes commands but ends up at the wrong
+	// steady-state velocity.  Could be from the gearing, the unit conversion,
+	// or something else (or a combo of all of them)
+	// It is left here as an example of things we could do :
+	//   - read motor output voltate
+	//   - apply that voltage as input to a simulation
+	//   - get the simulate state and feed that back to the motor controller sim
+	if (shooter_sim_)
+	{
+		const auto talon_motor_voltage = talon_state_[shooter_sim_joint_index_].getOutputVoltage();
+		//const auto talon_motor_voltage = ctre_mcs_[shooter_sim_joint_index_]->GetMotorOutputVoltage();
+		// Get current state of motor controller commanded output voltage
+		units::volt_t shooter_motor_voltage{talon_motor_voltage};
+		// Update simulation with that voltage
+		shooter_sim_->SetInputVoltage(shooter_motor_voltage);
+		// Simulate one timestep using that voltage
+		shooter_sim_->Update(units::second_t{period.toSec()});
+
+		// Read state of simulated mechanism, update sim motor controller
+		// with the output state
+		// Convert from mechanism speed to motor speed, since that's where the encoder is
+		const auto shooter_velocity{shooter_sim_->GetAngularVelocity().to<double>() * (24./34.)};
+		// rad / sec * (4096. native units / 2PI rad) /(10. 100ms per sec) = native units / 100msec
+		// TODO : need conversion function
+		const auto shooter_velocity_native_units = shooter_velocity * (4096. / (2 * M_PI)) / 10.;
+
+		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(ctre_mcs_[shooter_sim_joint_index_]);
+
+		if (talon)
+		{
+			ROS_INFO_STREAM("Motor voltage = " << talon_motor_voltage);
+			ROS_INFO_STREAM("Shooter velocity (rad/sec) = " << shooter_velocity);
+			ROS_INFO_STREAM("Shooter velocity (native units / 100msec) = " << shooter_velocity_native_units);
+			ROS_INFO_STREAM("Period = " << period.toSec());
+			safeTalonCall(talon->GetSimCollection().AddQuadraturePosition(shooter_velocity_native_units * period.toSec()), "AddQuadraturePosition");
+			safeTalonCall(talon->GetSimCollection().SetQuadratureVelocity(shooter_velocity_native_units), "SetQuadratureVelocity");
+
+			const auto shooter_current{shooter_sim_->GetCurrentDraw().to<double>()};
+			ROS_INFO_STREAM("shooter_current = " << shooter_current);
+			safeTalonCall(talon->GetSimCollection().SetStatorCurrent(shooter_current), "SetStatorCurrent");
+			// TODO : should collect currents for each sim mechanism and pass
+			// them all in to BatterySim::Calculate at once
+			const auto vin_voltage = frc::sim::BatterySim::Calculate({shooter_sim_->GetCurrentDraw()});
+			// TODO : victor-> ?
+			talon->GetSimCollection().SetBusVoltage(vin_voltage.to<double>());
+			frc::sim::RoboRioSim::SetVInVoltage(vin_voltage);
+		}
+	}
+
+	if (shooter_sim_ && false)
+	{
+		auto wpitalonsrx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(ctre_mcs_[shooter_sim_joint_index_]);
+		wpitalonsrx->GetSimCollection().AddQuadraturePosition(18000*.01);
+		wpitalonsrx->GetSimCollection().SetQuadratureVelocity(18000);
+		auto victor = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mcs_[shooter_sim_joint_index_]);
+		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mcs_[shooter_sim_joint_index_]);
+		auto talonsrx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mcs_[shooter_sim_joint_index_]);
+		ROS_INFO_STREAM("IMotorController->getSelectedSensorPosition() = " << victor->GetSelectedSensorPosition(0));
+		safeTalonCall(victor->GetLastError(), "GetSelectedSensorPosition");
+		ROS_INFO_STREAM("IMotorControllerEnhance->getSelectedSensorPosition() = " << talon->GetSelectedSensorPosition(0));
+		safeTalonCall(talon->GetLastError(), "GetSelectedSensorPosition");
+		ROS_INFO_STREAM("TalonSRX->getSelectedSensorPosition() = " << talonsrx->GetSelectedSensorPosition(0));
+		safeTalonCall(talonsrx->GetLastError(), "GetSelectedSensorPosition");
+		ROS_INFO_STREAM("WPITalonSRX->getSelectedSensorPosition() = " << wpitalonsrx->GetSelectedSensorPosition(0));
+		safeTalonCall(wpitalonsrx->GetLastError(), "GetSelectedSensorPosition");
+		ROS_INFO_STREAM("IMotorController->getSelectedSensorVelocity() = " << victor->GetSelectedSensorVelocity(0));
+		safeTalonCall(victor->GetLastError(), "GetSelectedSensorVelocity");
+		ROS_INFO_STREAM("IMotorControllerEnhance->getSelectedSensorVelocity() = " << talon->GetSelectedSensorVelocity(0));
+		safeTalonCall(talon->GetLastError(), "GetSelectedSensorPosition");
+		ROS_INFO_STREAM("TalonSRX->getSelectedSensorVelocity() = " << talonsrx->GetSelectedSensorVelocity(0));
+		safeTalonCall(talonsrx->GetLastError(), "GetSelectedSensorPosition");
+		ROS_INFO_STREAM("WPITalonSRX->getSelectedSensorVelocity() = " << wpitalonsrx->GetSelectedSensorVelocity(0));
+		safeTalonCall(wpitalonsrx->GetLastError(), "GetSelectedSensorPosition");
+	}
+#endif
+
+	read_tracer_.start_unique("HAL_SimPeriodicAfter");
+	HAL_SimPeriodicAfter();
+	read_tracer_.stop();
+
+	FRCRobotInterface::read(time, period);
 }
 
 bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBreakSensors::Request &req,
@@ -342,438 +448,6 @@ bool FRCRobotSimInterface::evaluateDigitalInput(ros_control_boilerplate::LineBre
 void FRCRobotSimInterface::write(const ros::Time& time, const ros::Duration& period)
 {
 	FRCRobotInterface::write(time, period);
-	// Was the robot enabled last time write was run?
-	static bool last_robot_enabled = false;
-
-	// Is match data reporting the robot enabled now?
-	bool robot_enabled = false;
-	{
-		std::unique_lock<std::mutex> l(match_data_mutex_, std::try_to_lock);
-		if (l.owns_lock())
-			robot_enabled = match_data_.isEnabled();
-		else
-			robot_enabled = last_robot_enabled;
-	}
-
-	for (size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
-	{
-		if (!can_ctre_mc_local_hardwares_[joint_id])
-			continue;
-
-		if (!talon_command_[joint_id].try_lock())
-			continue;
-
-		custom_profile_write(joint_id);
-
-		auto &ts = talon_state_[joint_id];
-		auto &tc = talon_command_[joint_id];
-
-		// If commanded mode changes, copy it over
-		// to current state
-		hardware_interface::TalonMode new_mode = tc.getMode();
-
-		// Only set mode to requested one when robot is enabled
-		if (robot_enabled)
-		{
-			if (tc.modeChanged(new_mode))
-			{
-				ts.setTalonMode(new_mode);
-				ROS_INFO_STREAM("Set joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" mode " << (int)new_mode);
-			}
-			hardware_interface::DemandType demand1_type_internal;
-			double demand1_value;
-			if (tc.demand1Changed(demand1_type_internal, demand1_value))
-			{
-				ts.setDemand1Type(demand1_type_internal);
-				ts.setDemand1Value(demand1_value);
-
-				ROS_INFO_STREAM("Set joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" demand1 type / value");
-			}
-		}
-		else
-		{
-			// Update talon state with requested setpoints for
-			// debugging. Don't actually write them to the physical
-			// Talons until the robot is re-enabled, though.
-			ts.setSetpoint(tc.get());
-			ts.setDemand1Type(tc.getDemand1Type());
-			ts.setDemand1Value(tc.getDemand1Value());
-			if (last_robot_enabled)
-			{
-				// On the switch from robot enabled to robot disabled, set Talons to ControlMode::Disabled
-				// call resetMode() to queue up a change back to the correct mode / setpoint
-				// when the robot switches from disabled back to enabled
-				tc.resetMode();
-				tc.resetDemand1();
-				ts.setTalonMode(hardware_interface::TalonMode_Disabled);
-				ROS_INFO_STREAM("Robot disabled - called Set(Disabled) on " << joint_id << "=" << can_ctre_mc_names_[joint_id]);
-			}
-		}
-
-		bool close_loop_mode = false;
-		bool motion_profile_mode = false;
-
-		// Use requested next talon mode here to update
-		// Talon config.  This way settings will be written
-		// even if the robot is disabled.  It will also insure
-		// that config relevant to the requested mode is
-		// written before switching to that mode.
-		if ((new_mode == hardware_interface::TalonMode_Position) ||
-		    (new_mode == hardware_interface::TalonMode_Velocity) ||
-		    (new_mode == hardware_interface::TalonMode_Current ))
-		{
-			close_loop_mode = true;
-		}
-		else if ((new_mode == hardware_interface::TalonMode_MotionProfile) ||
-			     (new_mode == hardware_interface::TalonMode_MotionMagic))
-		{
-			close_loop_mode = true;
-			motion_profile_mode = true;
-		}
-
-		hardware_interface::FeedbackDevice internal_feedback_device;
-		double feedback_coefficient;
-		if (tc.encoderFeedbackChanged(internal_feedback_device, feedback_coefficient))
-		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " feedback");
-			ts.setEncoderFeedback(internal_feedback_device);
-			ts.setFeedbackCoefficient(feedback_coefficient);
-		}
-
-		// Only update PID settings if closed loop
-		// mode has been requested
-		if (close_loop_mode)
-		{
-			int slot;
-			const bool slot_changed = tc.slotChanged(slot);
-
-			double p;
-			double i;
-			double d;
-			double f;
-			int   iz;
-			int   allowable_closed_loop_error;
-			double max_integral_accumulator;
-			double closed_loop_peak_output;
-			int    closed_loop_period;
-			if (tc.pidfChanged(p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period, slot))
-			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" PIDF slot " << slot << " config values");
-				ts.setPidfP(p, slot);
-				ts.setPidfI(i, slot);
-				ts.setPidfD(d, slot);
-				ts.setPidfF(f, slot);
-				ts.setPidfIzone(iz, slot);
-				ts.setAllowableClosedLoopError(allowable_closed_loop_error, slot);
-				ts.setMaxIntegralAccumulator(max_integral_accumulator, slot);
-				ts.setClosedLoopPeakOutput(closed_loop_peak_output, slot);
-				ts.setClosedLoopPeriod(closed_loop_period, slot);
-			}
-
-			if (slot_changed)
-			{
-				ts.setSlot(slot);
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " PIDF slot to " << slot);
-			}
-		}
-		// Invert / sensor phase matters for all modes
-		bool invert;
-		bool sensor_phase;
-		if (tc.invertChanged(invert, sensor_phase))
-		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" invert / phase");
-			ts.setInvert(invert);
-			ts.setSensorPhase(sensor_phase);
-		}
-
-		hardware_interface::NeutralMode neutral_mode;
-		if (tc.neutralModeChanged(neutral_mode))
-		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" neutral mode");
-			ts.setNeutralMode(neutral_mode);
-		}
-
-		if (tc.neutralOutputChanged())
-		{
-			ROS_INFO_STREAM("Set joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" neutral output");
-			ts.setNeutralOutput(true);
-		}
-
-		double iaccum;
-		if (close_loop_mode && tc.integralAccumulatorChanged(iaccum))
-		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" integral accumulator");
-		}
-
-		double closed_loop_ramp;
-		double open_loop_ramp;
-		double peak_output_forward;
-		double peak_output_reverse;
-		double nominal_output_forward;
-		double nominal_output_reverse;
-		double neutral_deadband;
-		if (tc.outputShapingChanged(closed_loop_ramp,
-									open_loop_ramp,
-									peak_output_forward,
-									peak_output_reverse,
-									nominal_output_forward,
-									nominal_output_reverse,
-									neutral_deadband))
-		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" output shaping");
-			ts.setOpenloopRamp(open_loop_ramp);
-			ts.setClosedloopRamp(closed_loop_ramp);
-			ts.setPeakOutputForward(peak_output_forward);
-			ts.setPeakOutputReverse(peak_output_reverse);
-			ts.setNominalOutputForward(nominal_output_forward);
-			ts.setNominalOutputReverse(nominal_output_reverse);
-			ts.setNeutralDeadband(neutral_deadband);
-		}
-		double v_c_saturation;
-		int v_measurement_filter;
-		bool v_c_enable;
-		if (tc.voltageCompensationChanged(v_c_saturation,
-									v_measurement_filter,
-									v_c_enable))
-		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" voltage compensation");
-			ts.setVoltageCompensationSaturation(v_c_saturation);
-			ts.setVoltageMeasurementFilter(v_measurement_filter);
-			ts.setVoltageCompensationEnable(v_c_enable);
-		}
-
-		if (can_ctre_mc_is_talon_fx_[joint_id] || can_ctre_mc_is_talon_srx_[joint_id])
-		{
-			hardware_interface::VelocityMeasurementPeriod v_m_period;
-			int v_m_window;
-
-			if (tc.velocityMeasurementChanged(v_m_period, v_m_window))
-			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" velocity measurement period / window");
-				ts.setVelocityMeasurementPeriod(v_m_period);
-				ts.setVelocityMeasurementWindow(v_m_window);
-			}
-		}
-
-		double sensor_position;
-		if (tc.sensorPositionChanged(sensor_position))
-		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" selected sensor position");
-			ts.setPosition(sensor_position);
-		}
-
-		if (can_ctre_mc_is_talon_fx_[joint_id] || can_ctre_mc_is_talon_srx_[joint_id])
-		{
-			hardware_interface::LimitSwitchSource internal_local_forward_source;
-			hardware_interface::LimitSwitchNormal internal_local_forward_normal;
-			hardware_interface::LimitSwitchSource internal_local_reverse_source;
-			hardware_interface::LimitSwitchNormal internal_local_reverse_normal;
-			if (tc.limitSwitchesSourceChanged(internal_local_forward_source, internal_local_forward_normal,
-						internal_local_reverse_source, internal_local_reverse_normal))
-			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" limit switches");
-				ts.setForwardLimitSwitchSource(internal_local_forward_source, internal_local_forward_normal);
-				ts.setReverseLimitSwitchSource(internal_local_reverse_source, internal_local_reverse_normal);
-			}
-		}
-
-		double softlimit_forward_threshold;
-		bool softlimit_forward_enable;
-		double softlimit_reverse_threshold;
-		bool softlimit_reverse_enable;
-		bool softlimit_override_enable;
-		if (tc.softLimitChanged(softlimit_forward_threshold,
-				softlimit_forward_enable,
-				softlimit_reverse_threshold,
-				softlimit_reverse_enable,
-				softlimit_override_enable))
-		{
-			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" soft limits " <<
-					std::endl << "\tforward enable=" << softlimit_forward_enable << " forward threshold=" << softlimit_forward_threshold <<
-					std::endl << "\treverse enable=" << softlimit_reverse_enable << " reverse threshold=" << softlimit_reverse_threshold <<
-					std::endl << "\toverride_enable=" << softlimit_override_enable);
-			ts.setForwardSoftLimitThreshold(softlimit_forward_threshold);
-			ts.setForwardSoftLimitEnable(softlimit_forward_enable);
-			ts.setReverseSoftLimitThreshold(softlimit_reverse_threshold);
-			ts.setReverseSoftLimitEnable(softlimit_reverse_enable);
-			ts.setOverrideSoftLimitsEnable(softlimit_override_enable);
-		}
-
-		if (can_ctre_mc_is_talon_srx_[joint_id])
-		{
-			int peak_amps;
-			int peak_msec;
-			int continuous_amps;
-			bool enable;
-			if (tc.currentLimitChanged(peak_amps, peak_msec, continuous_amps, enable))
-			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" peak current");
-				ts.setPeakCurrentLimit(peak_amps);
-				ts.setPeakCurrentDuration(peak_msec);
-				ts.setContinuousCurrentLimit(continuous_amps);
-				ts.setCurrentLimitEnable(enable);
-			}
-		}
-
-		if (can_ctre_mc_is_talon_fx_[joint_id])
-		{
-			double limit;
-			double trigger_threshold_current;
-			double trigger_threshold_time;
-			double limit_enable;
-			if (tc.supplyCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
-			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " supply current limit");
-				ts.setSupplyCurrentLimit(limit);
-				ts.setSupplyCurrentLimitEnable(limit_enable);
-				ts.setSupplyCurrentTriggerThresholdCurrent(trigger_threshold_current);
-				ts.setSupplyCurrentTriggerThresholdTime(trigger_threshold_time);
-			}
-			if (tc.supplyCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
-			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " stator current limit");
-				ts.setStatorCurrentLimit(limit);
-				ts.setStatorCurrentLimitEnable(limit_enable);
-				ts.setStatorCurrentTriggerThresholdCurrent(trigger_threshold_current);
-				ts.setStatorCurrentTriggerThresholdTime(trigger_threshold_time);
-			}
-
-			hardware_interface::MotorCommutation motor_commutation;
-			if (tc.motorCommutationChanged(motor_commutation))
-			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " motor commutation");
-				ts.setMotorCommutation(motor_commutation);
-			}
-
-			hardware_interface::AbsoluteSensorRange absolute_sensor_range;
-			if (tc.absoluteSensorRangeChanged(absolute_sensor_range))
-			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " absolute sensor range");
-				ts.setAbsoluteSensorRange(absolute_sensor_range);
-			}
-
-			hardware_interface::SensorInitializationStrategy sensor_initialization_strategy;
-			if (tc.sensorInitializationStrategyChanged(sensor_initialization_strategy))
-			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " absolute sensor range");
-				ts.setSensorInitializationStrategy(sensor_initialization_strategy);
-			}
-		}
-
-		if (can_ctre_mc_is_talon_fx_[joint_id] || can_ctre_mc_is_talon_srx_[joint_id])
-		{
-			for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
-			{
-				uint8_t period;
-				const hardware_interface::StatusFrame status_frame = static_cast<hardware_interface::StatusFrame>(i);
-				if (tc.statusFramePeriodChanged(status_frame, period) && (period != 0))
-				{
-					ts.setStatusFramePeriod(status_frame, period);
-					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" status_frame " << i << "=" << static_cast<int>(period) << "mSec");
-				}
-			}
-		}
-
-		if (motion_profile_mode)
-		{
-			double motion_cruise_velocity;
-			double motion_acceleration;
-			unsigned int motion_s_curve_strength;
-			if (tc.motionCruiseChanged(motion_cruise_velocity, motion_acceleration, motion_s_curve_strength))
-			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" cruise velocity / acceleration");
-				ts.setMotionCruiseVelocity(motion_cruise_velocity);
-				ts.setMotionAcceleration(motion_acceleration);
-				ts.setMotionSCurveStrength(motion_s_curve_strength);
-			}
-
-			int motion_profile_trajectory_period;
-			if (tc.motionProfileTrajectoryPeriodChanged(motion_profile_trajectory_period))
-			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" motion profile trajectory period");
-				ts.setMotionProfileTrajectoryPeriod(motion_profile_trajectory_period);
-			}
-
-			if (tc.clearMotionProfileTrajectoriesChanged())
-				ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" motion profile trajectories");
-
-			if (tc.clearMotionProfileHasUnderrunChanged())
-				ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" motion profile underrun changed");
-
-			std::vector<hardware_interface::TrajectoryPoint> trajectory_points;
-
-			if (tc.motionProfileTrajectoriesChanged(trajectory_points))
-				ROS_INFO_STREAM("Added " << trajectory_points.size() << " points to joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" motion profile trajectories");
-		}
-
-		hardware_interface::TalonMode simulate_mode = ts.getTalonMode();
-		if (simulate_mode == hardware_interface::TalonMode_Position)
-		{
-			// Assume instant velocity
-			double position;
-
-			if (tc.commandChanged(position))
-				ts.setSetpoint(position);
-
-			ts.setPosition(position);
-			ts.setSpeed(0);
-		}
-		else if (simulate_mode == hardware_interface::TalonMode_Velocity)
-		{
-			// Assume instant acceleration for now
-			double speed;
-
-			if (tc.commandChanged(speed))
-				ts.setSetpoint(speed);
-
-			ts.setPosition(ts.getPosition() + speed * period.toSec());
-			ts.setSpeed(speed);
-		}
-		else if (simulate_mode == hardware_interface::TalonMode_MotionMagic)
-		{
-			double setpoint;
-
-			if (tc.commandChanged(setpoint))
-				ts.setSetpoint(setpoint);
-
-			const double position = ts.getPosition();
-			double velocity = ts.getSpeed();
-			const double dt = period.toSec();
-
-			//change the nextVelocity call to non existent as it does not work and throws an error from a non-existent package
-			double next_pos = nextVelocity(position, setpoint, velocity, ts.getMotionCruiseVelocity(), ts.getMotionAcceleration(), dt);
-			//ROS_WARN_STREAM("max vel: " <<ts.getMotionCruiseVelocity()<< " max accel: " << ts.getMotionAcceleration());
-
-			//Talons don't allow overshoot, the profiling algorithm above does
-			if ((position <= setpoint && setpoint < next_pos) || (position >= setpoint && setpoint > next_pos))
-			{
-				next_pos = setpoint;
-				velocity = 0;
-			}
-			ts.setPosition(next_pos);
-			ts.setSpeed(velocity);
-		}
-		else if (simulate_mode == hardware_interface::TalonMode_Disabled)
-		{
-			ts.setSpeed(0); // Don't know how to simulate decel, so just pretend we are stopped
-		}
-		else if (simulate_mode == hardware_interface::TalonMode_PercentOutput)
-		{
-			double percent;
-
-			if (tc.commandChanged(percent))
-				ts.setSetpoint(percent);
-
-			ts.setPosition(ts.getPosition() + percent*2*M_PI * period.toSec());
-			ts.setSpeed(percent*2*M_PI);
-		}
-
-		if (tc.clearStickyFaultsChanged())
-			ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<" sticky_faults");
-
-		tc.unlock();
-	}
-	last_robot_enabled = robot_enabled;
 	for (std::size_t joint_id = 0; joint_id < num_canifiers_; ++joint_id)
 	{
 		if (!canifier_local_hardwares_[joint_id])

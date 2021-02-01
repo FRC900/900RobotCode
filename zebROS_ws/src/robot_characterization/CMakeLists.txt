@@ -115,7 +115,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-set (WPI_SYSROOT $ENV{HOME}/wpilib/2020/roborio/arm-frc2020-linux-gnueabi)
+set (WPI_SYSROOT $ENV{HOME}/wpilib/2021/roborio/arm-frc2021-linux-gnueabi)
 
 include_directories(
 # include

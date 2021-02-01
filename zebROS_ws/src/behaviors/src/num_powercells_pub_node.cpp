@@ -38,10 +38,10 @@ void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
 			}
 		}
 		if (intake_idx >= talon_state.name.size()) {
-			ROS_ERROR("Num balls publisher couldn't find intake_joint motor");
+			ROS_ERROR_THROTTLE(10, "Num balls publisher couldn't find intake_joint motor");
 		}
 		if (indexer_idx >= talon_state.name.size()) {
-			ROS_ERROR("Num balls publisher couldn't find intake_joint motor");
+			ROS_ERROR_THROTTLE(10, "Num balls publisher couldn't find indexer_joint motor");
 		}
 	}
 	else

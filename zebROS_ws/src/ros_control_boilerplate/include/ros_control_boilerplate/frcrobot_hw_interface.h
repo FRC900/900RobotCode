@@ -46,9 +46,6 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/Joy.h>
 
-#include <ctre/phoenix/motorcontrol/can/TalonFX.h>
-#include <ctre/phoenix/motorcontrol/can/TalonSRX.h>
-#include <ctre/phoenix/motorcontrol/can/VictorSPX.h>
 #include <ctre/phoenix/CANifier.h>
 #include <ctre/phoenix/music/Orchestra.h>
 #include "WPILibVersion.h"
@@ -77,76 +74,10 @@
 #include "ros_control_boilerplate/canifier_convert.h"
 #include "ros_control_boilerplate/DSError.h"
 #include "ros_control_boilerplate/frc_robot_interface.h"
-#include "ros_control_boilerplate/talon_convert.h"
 #include "ros_control_boilerplate/tracer.h"
 
-namespace frcrobot_control
+namespace ros_control_boilerplate
 {
-// Very simple code to communicate with the HAL. This recieves
-// packets from the driver station and lets the field management
-// know our robot is alive.
-class ROSIterativeRobot
-{
-	public:
-		ROSIterativeRobot(void) : m_ds(frc::DriverStation::GetInstance())
-		{
-			if (!HAL_Initialize(500, 0))
-			{
-				ROS_ERROR("FATAL ERROR: HAL could not be initialized");
-				std::terminate();
-			}
-			std::FILE* file = std::fopen("/tmp/frc_versions/FRC_Lib_Version.ini", "w");
-
-			if (file != nullptr) {
-				std::fputs("C++ ", file);
-				std::fputs(GetWPILibVersion(), file);
-				std::fclose(file);
-			}
-
-			HAL_Report(HALUsageReporting::kResourceType_Framework, HALUsageReporting::kFramework_ROS);
-			HAL_Report(HALUsageReporting::kResourceType_RobotDrive, 900, 0, "field centric swerve");
-			//HAL_Report(HALUsageReporting::kResourceType_kKinematics, HALUsageReporting::kKinematics_SwerveDrive);
-#if 0
-			for (int i = 0; i < 900; i++)
-				HAL_Report(HALUsageReporting::kResourceType_NidecBrushless, 900);
-#endif
-			HAL_Report(HALUsageReporting::kResourceType_Language, 900, 0, "C++/CMake/Javascript/Python/Shell/PERL");
-		}
-
-		void StartCompetition(void) const
-		{
-			HAL_ObserveUserProgramStarting();
-		}
-
-		void OneIteration(void) const
-		{
-			// Call the appropriate function depending upon the current robot mode
-			if (m_ds.IsDisabled()) {
-				HAL_ObserveUserProgramDisabled();
-			} else if (m_ds.IsAutonomous()) {
-				HAL_ObserveUserProgramAutonomous();
-			} else if (m_ds.IsOperatorControl()) {
-				HAL_ObserveUserProgramTeleop();
-			} else {
-				HAL_ObserveUserProgramTest();
-			}
-		}
-	private:
-		frc::DriverStation& m_ds;
-};
-
-class DoubleSolenoidHandle
-{
-	public:
-		DoubleSolenoidHandle(HAL_SolenoidHandle forward, HAL_SolenoidHandle reverse)
-			: forward_(forward)
-		    , reverse_(reverse)
-	{
-	}
-		HAL_SolenoidHandle forward_;
-		HAL_SolenoidHandle reverse_;
-};
-
 /// \brief Hardware interface for a robot
 class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 {
@@ -168,37 +99,6 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		virtual void write(const ros::Time& time, const ros::Duration& period) override;
 
 	private:
-		/* Get conversion factor for position, velocity, and closed-loop stuff */
-		double getConversionFactor(int encoder_ticks_per_rotation, hardware_interface::FeedbackDevice encoder_feedback, hardware_interface::TalonMode talon_mode) const;
-
-		bool safeTalonCall(ctre::phoenix::ErrorCode error_code,
-				const std::string &talon_method_name);
-
-		//certain data will be read at a slower rate than the main loop, for computational efficiency
-		//robot iteration calls - sending stuff to driver station
-		double t_prev_robot_iteration_;
-		double robot_iteration_hz_;
-
-		double t_prev_joystick_read_;
-		double joystick_read_hz_;
-
-		double t_prev_match_data_read_;
-		double match_data_read_hz_;
-
-		double t_prev_robot_controller_read_;
-		double robot_controller_read_hz_;
-
-		// Count sequential CAN errors
-		size_t can_error_count_;
-
-		std::vector<std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController>> ctre_mcs_;
-
-		// Maintain a separate read thread for each talon SRX
-		std::vector<std::shared_ptr<std::mutex>> ctre_mc_read_state_mutexes_;
-		std::vector<std::shared_ptr<hardware_interface::TalonHWState>> ctre_mc_read_thread_states_;
-		std::vector<std::thread> ctre_mc_read_threads_;
-		void ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController> ctre_mc, std::shared_ptr<hardware_interface::TalonHWState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
-
 		std::vector<std::shared_ptr<ctre::phoenix::CANifier>> canifiers_;
 		std::vector<std::shared_ptr<std::mutex>> canifier_read_state_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::canifier::CANifierHWState>> canifier_read_thread_states_;
@@ -211,43 +111,17 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::vector<std::thread> cancoder_read_threads_;
 		void cancoder_read_thread(std::shared_ptr<ctre::phoenix::sensors::CANCoder> cancoder, std::shared_ptr<hardware_interface::cancoder::CANCoderHWState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
 
-		std::vector<std::shared_ptr<frc::NidecBrushless>> nidec_brushlesses_;
-		std::vector<std::shared_ptr<frc::DigitalInput>> digital_inputs_;
-		std::vector<std::shared_ptr<frc::DigitalOutput>> digital_outputs_;
-		std::vector<std::shared_ptr<frc::PWM>> PWMs_;
-		std::vector<HAL_SolenoidHandle> solenoids_;
-		std::vector<DoubleSolenoidHandle> double_solenoids_;
-		std::vector<std::shared_ptr<AHRS>> navXs_;
-		std::vector<std::shared_ptr<frc::AnalogInput>> analog_inputs_;
-
-		std::vector<std::shared_ptr<std::mutex>> pcm_read_thread_mutexes_;
-		std::vector<std::shared_ptr<hardware_interface::PCMState>> pcm_read_thread_state_;
-		void pcm_read_thread(HAL_CompressorHandle compressor_handle, int32_t pcm_id, std::shared_ptr<hardware_interface::PCMState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
-
-		std::vector<std::shared_ptr<std::mutex>> pdp_read_thread_mutexes_;
-		std::vector<std::shared_ptr<hardware_interface::PDPHWState>> pdp_read_thread_state_;
-		void pdp_read_thread(int32_t pdp, std::shared_ptr<hardware_interface::PDPHWState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
-		std::vector<std::thread> pdp_thread_;
-		std::vector<int32_t> pdps_;
-
-		std::vector<std::shared_ptr<frc::Joystick>> joysticks_;
-
 		std::vector<std::shared_ptr<as726x::roboRIO_AS726x>> as726xs_;
 		std::vector<std::shared_ptr<std::mutex>> as726x_read_thread_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::as726x::AS726xState>> as726x_read_thread_state_;
 		void as726x_read_thread(std::shared_ptr<as726x::roboRIO_AS726x> as726x, std::shared_ptr<hardware_interface::as726x::AS726xState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
 		std::vector<std::thread> as726x_thread_;
 
-                std::vector<std::shared_ptr<ctre::phoenix::music::Orchestra>> talon_orchestras_;
-
-		std::unique_ptr<ROSIterativeRobot> robot_;
-
-		Tracer read_tracer_;
+		std::vector<std::shared_ptr<ctre::phoenix::music::Orchestra>> talon_orchestras_;
 
 		as726x_convert::AS726xConvert as726x_convert_;
 		cancoder_convert::CANCoderConvert cancoder_convert_;
 		canifier_convert::CANifierConvert canifier_convert_;
-		talon_convert::TalonConvert talon_convert_;
 
 		bool DSErrorCallback(ros_control_boilerplate::DSError::Request &req, ros_control_boilerplate::DSError::Response &res);
 		ros::ServiceServer ds_error_server_;

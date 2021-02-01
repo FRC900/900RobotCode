@@ -4,8 +4,10 @@
 #pragma once
 
 #include <chrono>
-#include <map>
+#include <unordered_map>
 #include <string>
+
+#include <ros/console.h>
 
 class TracerEntry
 {
@@ -28,8 +30,10 @@ class Tracer
 	public:
 		Tracer(const std::string &name)
 			:name_(name)
+			, last_report_time_(ros::Time::now())
 		{
 		}
+		~Tracer() = default;
 
 		// Mark the start of an event to time.  If the named event exists,
 		// use it. Otherwise create a new event entry in the map of events
@@ -97,40 +101,28 @@ class Tracer
 					stop(it.first);
 		}
 
-		std::string report(const std::string &label, const bool auto_stop = true)
+		void report(const double timeout, const bool auto_stop = true)
 		{
-			auto entry = map_.find(label);
-
-			// If not found, create a new entry for this label
-			if (entry == map_.end())
+			if (auto_stop)
+				for (auto &it : map_)
+					if (it.second.started_)
+						stop(it.first);
+			if ((ros::Time::now() - last_report_time_).toSec() >= timeout)
 			{
-				ROS_ERROR_STREAM("Tracer::report : couldn't find label " << label);
-				return std::string();
+				std::stringstream s;
+				s << name_ << ":" << std::endl;
+				for (auto &it : map_)
+				{
+					const double avg_time = it.second.total_time_ / std::chrono::duration<double>(it.second.count_);
+					s << "\t" << it.first << " = " << avg_time << std::endl;
+				}
+				ROS_INFO_STREAM(s.str());
+				last_report_time_ += ros::Duration(timeout);
 			}
-			if (auto_stop && entry->second.started_)
-				stop(label);
-
-			std::stringstream s;
-			const double avg_time = entry->second.total_time_ / std::chrono::duration<double>(entry->second.count_);
-			s << name_ << ":" << label << " = " << avg_time;
-			return s.str();
-		}
-
-		std::string report(const bool auto_stop = true)
-		{
-			std::stringstream s;
-			s << name_ << ":" << std::endl;
-			for (auto &it : map_)
-			{
-				if (auto_stop && it.second.started_)
-					stop(it.first);
-				const double avg_time = it.second.total_time_ / std::chrono::duration<double>(it.second.count_);
-				s << "\t" << it.first << " = " << avg_time << std::endl;
-			}
-			return s.str();
 		}
 
 	private:
 		std::string name_;
-		std::map<std::string, TracerEntry> map_;
+		std::unordered_map<std::string, TracerEntry> map_;
+		ros::Time last_report_time_;
 };

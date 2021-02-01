@@ -54,9 +54,6 @@ GenericHWControlLoop::GenericHWControlLoop(
 	, controller_manager_(hardware_interface_.get(), nh_)
 	, tracer_("GenericHWControlLoop " + nh.getNamespace())
 {
-	// Create the controller manager
-	//controller_manager_.reset(new controller_manager::ControllerManager(hardware_interface_.get(), nh_));
-
 	// Load rosparams
 	ros::NodeHandle rpsnh(nh, name_);
 	std::size_t error = 0;
@@ -65,7 +62,9 @@ GenericHWControlLoop::GenericHWControlLoop(
 	rosparam_shortcuts::shutdownIfError(name_, error);
 
 	// Get current time for use with first update
-	last_time_ = std::chrono::steady_clock::now();
+	last_time_        = std::chrono::steady_clock::now();
+	last_time_update_ = last_time_;
+	last_time_write_  = last_time_;
 
 	desired_update_period_ = ros::Duration(1.0 / loop_hz_);
 }
@@ -83,36 +82,43 @@ void GenericHWControlLoop::run(void)
 void GenericHWControlLoop::update(void)
 {
 	// Get change in time in seconds
-	const auto current_time = std::chrono::steady_clock::now();
+	tracer_.start_unique("get_loop_time");
+	auto current_time = std::chrono::steady_clock::now();
 	std::chrono::duration<double> elapsed_seconds = current_time - last_time_;
-	elapsed_time_ = ros::Duration(elapsed_seconds.count());
+	const ros::Duration elapsed_time = ros::Duration(elapsed_seconds.count());
 	last_time_ = current_time;
 
-	// ROS_DEBUG_STREAM_THROTTLE_NAMED(1, "generic_hw_main","Sampled update loop with elapsed
-	// time " << elapsed_time_.toSec());
+	// ROS_DEBUG_STREAM_THROTTLE_NAMED(1, "generic_hw_main","Sampled update loop with elapsed time " << elapsed_time.toSec());
 
 	// Error check cycle time
-	const double cycle_time_error = (elapsed_time_ - desired_update_period_).toSec();
+	const double cycle_time_error = (elapsed_time - desired_update_period_).toSec();
 	if (cycle_time_error > cycle_time_error_threshold_)
 		ROS_WARN_STREAM_NAMED(name_, "Cycle time exceeded error threshold by: "
 							  << std::setprecision(3) << cycle_time_error
-							  << ", cycle time: " << std::setprecision(3) << elapsed_time_
+							  << ", cycle time: " << std::setprecision(3) << elapsed_time
 							  << ", threshold: " << cycle_time_error_threshold_);
 
 	// Input
 	tracer_.start_unique("read");
-	hardware_interface_->read(ros::Time::now(), elapsed_time_);
+	hardware_interface_->read(ros::Time::now(), elapsed_time);
 
 	// Control
 	tracer_.start_unique("update");
-	controller_manager_.update(ros::Time::now(), elapsed_time_);
+	// Might be overkill to worry about difference in elapsed time
+	// added by read taking a variable amount of time?
+	current_time = std::chrono::steady_clock::now();
+	elapsed_seconds = current_time - last_time_update_;
+	last_time_update_ = current_time;
+	controller_manager_.update(ros::Time::now(), ros::Duration(elapsed_seconds.count()));
 
 	// Output
 	tracer_.start_unique("write");
-	hardware_interface_->write(ros::Time::now(), elapsed_time_);
-	tracer_.stop();
+	current_time = std::chrono::steady_clock::now();
+	elapsed_seconds = current_time - last_time_write_;
+	last_time_write_ = current_time;
+	hardware_interface_->write(ros::Time::now(), ros::Duration(elapsed_seconds.count()));
 
-	ROS_INFO_STREAM_THROTTLE(20, tracer_.report());
+	tracer_.report(20);
 }
 
 }  // namespace

@@ -1501,7 +1501,7 @@ bool TalonHWCommand::getSupplyCurrentLimitEnable(void) const
 bool TalonHWCommand::supplyCurrentLimitChanged(double &supply_current_limit,
 		double &supply_current_trigger_threshold_current,
 		double &supply_current_trigger_threshold_time,
-		double &supply_current_limit_enable)
+		bool   &supply_current_limit_enable)
 {
 	supply_current_limit = supply_current_limit_;
 	supply_current_trigger_threshold_current = supply_current_trigger_threshold_current_;
@@ -1568,7 +1568,7 @@ bool TalonHWCommand::getStatorCurrentLimitEnable(void) const
 bool TalonHWCommand::statorCurrentLimitChanged(double &stator_current_limit,
 		double &stator_current_trigger_threshold_current,
 		double &stator_current_trigger_threshold_time,
-		double &stator_current_limit_enable)
+		bool   &stator_current_limit_enable)
 {
 	stator_current_limit = stator_current_limit_;
 	stator_current_trigger_threshold_current = stator_current_trigger_threshold_current_;
@@ -1607,7 +1607,7 @@ double TalonHWCommand::getMotionAcceleration(void) const
 {
 	return motion_acceleration_;
 }
-void TalonHWCommand::setMotionSCurveStrength(unsigned int s_curve_strength)
+void TalonHWCommand::setMotionSCurveStrength(int s_curve_strength)
 {
 	if ((s_curve_strength != motion_s_curve_strength_) &&
 		(s_curve_strength <= 8))
@@ -1616,12 +1616,12 @@ void TalonHWCommand::setMotionSCurveStrength(unsigned int s_curve_strength)
 		motion_cruise_changed_ = true;
 	}
 }
-unsigned int TalonHWCommand::getMotionSCurveStrength(void) const
+int TalonHWCommand::getMotionSCurveStrength(void) const
 {
 	return motion_s_curve_strength_;
 }
 
-bool TalonHWCommand::motionCruiseChanged(double &velocity, double &acceleration, unsigned int &s_curve_strength)
+bool TalonHWCommand::motionCruiseChanged(double &velocity, double &acceleration, int &s_curve_strength)
 {
 	velocity = motion_cruise_velocity_;
 	acceleration = motion_acceleration_;

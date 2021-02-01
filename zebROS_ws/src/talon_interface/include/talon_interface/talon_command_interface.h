@@ -303,7 +303,7 @@ class TalonHWCommand
 		bool supplyCurrentLimitChanged(double &stator_current_limit,
 				double &supply_current_trigger_threshold_current,
 				double &supply_time_trigger_threshold_time,
-				double &supply_current_limit_enable);
+				bool &supply_current_limit_enable);
 		void  resetSupplyCurrentLimit(void);
 
 		void setStatorCurrentLimit(bool stator_current_limit);
@@ -317,17 +317,17 @@ class TalonHWCommand
 		bool statorCurrentLimitChanged(double &stator_current_limit,
 				double &stator_current_trigger_threshold_current,
 				double &stator_time_trigger_threshold_time,
-				double &stator_current_limit_enable);
+				bool &stator_current_limit_enable);
 		void  resetStatorCurrentLimit(void);
 
 		void setMotionCruiseVelocity(double velocity);
 		double getMotionCruiseVelocity(void) const;
 		void setMotionAcceleration(double acceleration);
 		double getMotionAcceleration(void) const;
-		void setMotionSCurveStrength(unsigned int s_curve_strength);
-		unsigned int getMotionSCurveStrength(void) const;
+		void setMotionSCurveStrength(int s_curve_strength);
+		int getMotionSCurveStrength(void) const;
 
-		bool motionCruiseChanged(double &velocity, double &acceleration, unsigned int &s_curve_strength);
+		bool motionCruiseChanged(double &velocity, double &acceleration, int &s_curve_strength);
 		void resetMotionCruise(void);
 
 		// This is a one shot - when set, it needs to
@@ -528,7 +528,7 @@ class TalonHWCommand
 		// radians/sec (or /sec^2 for acceleration)
 		double motion_cruise_velocity_;
 		double motion_acceleration_;
-		unsigned int motion_s_curve_strength_;
+		int motion_s_curve_strength_;
 		bool motion_cruise_changed_;
 
 		bool motion_profile_clear_trajectories_;
