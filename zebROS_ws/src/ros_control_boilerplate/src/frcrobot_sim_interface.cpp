@@ -334,10 +334,20 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 	read_tracer_.start_unique("HAL_SimPeriodicBefore");
 	HAL_SimPeriodicBefore();
 	read_tracer_.start_unique("ShooterSim");
+#if 0
+	// This needs work.  It kinda takes commands but ends up at the wrong
+	// steady-state velocity.  Could be from the gearing, the unit conversion,
+	// or something else (or a combo of all of them)
+	// It is left here as an example of things we could do :
+	//   - read motor output voltate
+	//   - apply that voltage as input to a simulation
+	//   - get the simulate state and feed that back to the motor controller sim
 	if (shooter_sim_)
 	{
+		const auto talon_motor_voltage = talon_state_[shooter_sim_joint_index_].getOutputVoltage();
+		//const auto talon_motor_voltage = ctre_mcs_[shooter_sim_joint_index_]->GetMotorOutputVoltage();
 		// Get current state of motor controller commanded output voltage
-		units::volt_t shooter_motor_voltage{talon_state_[shooter_sim_joint_index_].getOutputVoltage()};
+		units::volt_t shooter_motor_voltage{talon_motor_voltage};
 		// Update simulation with that voltage
 		shooter_sim_->SetInputVoltage(shooter_motor_voltage);
 		// Simulate one timestep using that voltage
@@ -346,24 +356,25 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 		// Read state of simulated mechanism, update sim motor controller
 		// with the output state
 		// Convert from mechanism speed to motor speed, since that's where the encoder is
-		const auto shooter_velocity{shooter_sim_->GetAngularVelocity().to<double>() * 24./34.};
+		const auto shooter_velocity{shooter_sim_->GetAngularVelocity().to<double>() * (24./34.)};
 		// rad / sec * (4096. native units / 2PI rad) /(10. 100ms per sec) = native units / 100msec
 		// TODO : need conversion function
-		const auto shooter_velocity_native_units = shooter_velocity * 4096. / 10.;
+		const auto shooter_velocity_native_units = shooter_velocity * (4096. / (2 * M_PI)) / 10.;
 
 		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(ctre_mcs_[shooter_sim_joint_index_]);
 
-		//ROS_INFO_STREAM("Motor voltage = " << talon_state_[shooter_sim_joint_index_].getOutputVoltage());
-		//ROS_INFO_STREAM("Shooter velocity (rad/sec) = " << shooter_velocity);
-		//ROS_INFO_STREAM("Shooter velocity (native units / 100msec) = " << shooter_velocity_native_units);
 		if (talon)
 		{
-			talon->GetSimCollection().AddQuadraturePosition(shooter_velocity_native_units * period.toSec());
-			talon->GetSimCollection().SetQuadratureVelocity(shooter_velocity_native_units);
+			ROS_INFO_STREAM("Motor voltage = " << talon_motor_voltage);
+			ROS_INFO_STREAM("Shooter velocity (rad/sec) = " << shooter_velocity);
+			ROS_INFO_STREAM("Shooter velocity (native units / 100msec) = " << shooter_velocity_native_units);
+			ROS_INFO_STREAM("Period = " << period.toSec());
+			safeTalonCall(talon->GetSimCollection().AddQuadraturePosition(shooter_velocity_native_units * period.toSec()), "AddQuadraturePosition");
+			safeTalonCall(talon->GetSimCollection().SetQuadratureVelocity(shooter_velocity_native_units), "SetQuadratureVelocity");
 
 			const auto shooter_current{shooter_sim_->GetCurrentDraw().to<double>()};
-			//ROS_INFO_STREAM("shooter_current = " << shooter_current);
-			talon->GetSimCollection().SetStatorCurrent(shooter_current);
+			ROS_INFO_STREAM("shooter_current = " << shooter_current);
+			safeTalonCall(talon->GetSimCollection().SetStatorCurrent(shooter_current), "SetStatorCurrent");
 			// TODO : should collect currents for each sim mechanism and pass
 			// them all in to BatterySim::Calculate at once
 			const auto vin_voltage = frc::sim::BatterySim::Calculate({shooter_sim_->GetCurrentDraw()});
@@ -372,6 +383,34 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 			frc::sim::RoboRioSim::SetVInVoltage(vin_voltage);
 		}
 	}
+
+	if (shooter_sim_ && false)
+	{
+		auto wpitalonsrx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(ctre_mcs_[shooter_sim_joint_index_]);
+		wpitalonsrx->GetSimCollection().AddQuadraturePosition(18000*.01);
+		wpitalonsrx->GetSimCollection().SetQuadratureVelocity(18000);
+		auto victor = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mcs_[shooter_sim_joint_index_]);
+		auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mcs_[shooter_sim_joint_index_]);
+		auto talonsrx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mcs_[shooter_sim_joint_index_]);
+		ROS_INFO_STREAM("IMotorController->getSelectedSensorPosition() = " << victor->GetSelectedSensorPosition(0));
+		safeTalonCall(victor->GetLastError(), "GetSelectedSensorPosition");
+		ROS_INFO_STREAM("IMotorControllerEnhance->getSelectedSensorPosition() = " << talon->GetSelectedSensorPosition(0));
+		safeTalonCall(talon->GetLastError(), "GetSelectedSensorPosition");
+		ROS_INFO_STREAM("TalonSRX->getSelectedSensorPosition() = " << talonsrx->GetSelectedSensorPosition(0));
+		safeTalonCall(talonsrx->GetLastError(), "GetSelectedSensorPosition");
+		ROS_INFO_STREAM("WPITalonSRX->getSelectedSensorPosition() = " << wpitalonsrx->GetSelectedSensorPosition(0));
+		safeTalonCall(wpitalonsrx->GetLastError(), "GetSelectedSensorPosition");
+		ROS_INFO_STREAM("IMotorController->getSelectedSensorVelocity() = " << victor->GetSelectedSensorVelocity(0));
+		safeTalonCall(victor->GetLastError(), "GetSelectedSensorVelocity");
+		ROS_INFO_STREAM("IMotorControllerEnhance->getSelectedSensorVelocity() = " << talon->GetSelectedSensorVelocity(0));
+		safeTalonCall(talon->GetLastError(), "GetSelectedSensorPosition");
+		ROS_INFO_STREAM("TalonSRX->getSelectedSensorVelocity() = " << talonsrx->GetSelectedSensorVelocity(0));
+		safeTalonCall(talonsrx->GetLastError(), "GetSelectedSensorPosition");
+		ROS_INFO_STREAM("WPITalonSRX->getSelectedSensorVelocity() = " << wpitalonsrx->GetSelectedSensorVelocity(0));
+		safeTalonCall(wpitalonsrx->GetLastError(), "GetSelectedSensorPosition");
+	}
+#endif
+
 	read_tracer_.start_unique("HAL_SimPeriodicAfter");
 	HAL_SimPeriodicAfter();
 	read_tracer_.stop();
