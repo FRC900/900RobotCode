@@ -19,20 +19,14 @@ bool initSpline(Trajectory<T> &trajectory,
 		// Initialize offsets due to wrapping joints to zero
 		std::vector<Scalar<T>> position_offset(1, 0.0);
 
-#if 0
-		//Initialize segment tolerance per joint
-		joint_trajectory_controller::SegmentTolerancesPerJoint<Scalar> tolerances_per_joint;
-		tolerances_per_joint.state_tolerance = tolerances.state_tolerance[joint_id];
-		tolerances_per_joint.goal_state_tolerance = tolerances.goal_state_tolerance[joint_id];
-		tolerances_per_joint.goal_time_tolerance = tolerances.goal_time_tolerance;
-#endif
-
 		while (std::distance(it, points.end()) >= 2)
 		{
 			std::vector<trajectory_msgs::JointTrajectoryPoint>::const_iterator next_it = it; ++next_it;
 
 			trajectory_msgs::JointTrajectoryPoint it_point_per_joint, next_it_point_per_joint;
 
+			// Error checking and insuring positions, velocities and accelerations arrays are
+			// allt he same size
 			if (!joint_trajectory_controller::isValid(*it, it->positions.size()))
 				throw(std::invalid_argument("Size mismatch in trajectory point position, velocity or acceleration data."));
 			if (!it->positions.empty())     {it_point_per_joint.positions.resize(1, it->positions[joint_id]);}
@@ -47,11 +41,8 @@ bool initSpline(Trajectory<T> &trajectory,
 			if (!next_it->accelerations.empty()) {next_it_point_per_joint.accelerations.resize(1, next_it->accelerations[joint_id]);}
 			next_it_point_per_joint.time_from_start = next_it->time_from_start;
 
-			Segment<T> segment(ros::Time(0), it_point_per_joint, next_it_point_per_joint, position_offset);
-#if 0
-			segment.setTolerances(tolerances_per_joint);
-#endif
-			result_traj_per_joint.push_back(segment);
+			// Segment actually creates the spline segment between points it and next_it
+			result_traj_per_joint.emplace_back(Segment<T>(ros::Time(0), it_point_per_joint, next_it_point_per_joint, position_offset));
 			++it;
 		}
 
