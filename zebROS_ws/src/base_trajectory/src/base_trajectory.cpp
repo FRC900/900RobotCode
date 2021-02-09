@@ -482,7 +482,7 @@ bool getPathSegLength(std::vector<ArclengthAndTime> &arcLengthAndTime,
 	if (fabs(error) < segLengthEpsilon)
 	{
 		totalLength += estimate;
-		arcLengthAndTime.push_back(ArclengthAndTime(totalLength, endTime));
+		arcLengthAndTime.emplace_back(ArclengthAndTime(totalLength, endTime));
 		return true;
 	}
 
@@ -760,7 +760,7 @@ bool evaluateTrajectory(double &cost,
 	distanceToPathMidpoint.push_back(0);
 
 	std::vector<Kinematics> kinematics;
-	kinematics.push_back(kinematicConstraints.getKinematics(0,0));
+	kinematics.emplace_back(kinematicConstraints.getKinematics(0,0));
 
 	for (size_t i = 1; i < equalArcLengthTimes.size(); i++)
 	{
@@ -817,7 +817,7 @@ bool evaluateTrajectory(double &cost,
 		distanceToPathMidpoint.push_back(
 				pointToLineSegmentDistance(controlPointPositions[seg], controlPointPositions[seg + 1],
 										   xState.position[0], yState.position[0]));
-		kinematics.push_back(kinematicConstraints.getKinematics( xState.position[0], yState.position[0]));
+		kinematics.emplace_back(kinematicConstraints.getKinematics(xState.position[0], yState.position[0]));
 #if 0
 		ROS_INFO_STREAM_FILTER(&messageFilter, "pointToLineSegmentDistance = " << distanceToPathMidpoint.back() <<
 				" p1: " << controlPointPositions[seg][0] << "," << controlPointPositions[seg][1] <<
@@ -954,7 +954,7 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 		}
 
 		// All splines in a waypoint end at the same time?
-		out_msg.end_points.emplace_back(trajectory[0][seg].endTime());
+		out_msg.end_points.push_back(trajectory[0][seg].endTime());
 	}
 	// Grab velocity profile, use that to construct a set of position
 	// waypoints for the robot in wall-clock time
@@ -1040,7 +1040,7 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 		orientation.w = tf_orientation.getW();
 
 		pose.pose.orientation = orientation;
-		out_msg.path.poses.push_back(pose);
+		out_msg.path.poses.emplace_back(pose);
 	}
 	writeMatlabPath(out_msg.path.poses, 3, "Optimized Paths vs real time");
 }
