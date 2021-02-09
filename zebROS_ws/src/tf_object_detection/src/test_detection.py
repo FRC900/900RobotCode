@@ -18,7 +18,7 @@ import uuid
 bridge = CvBridge()
 
 category_index, detection_graph, sess, pub, pub_debug = None, None, None, None, None
-min_confidence = 0.5
+min_confidence = 0.1
 
 # This is needed since the modules are in a subdir of
 # the python script
@@ -107,6 +107,7 @@ def run_inference_for_single_image(msg):
     pub.publish(detection)
 
     #hard_neg_mine(output_dict, image_np)
+    #mine_undetected_power_cells(output_dict, image_np)
 
     vis(output_dict, image_np)
 
@@ -127,6 +128,30 @@ def vis(output_dict, image_np):
         pub_debug.publish(bridge.cv2_to_imgmsg(image_np, encoding="rgb8"))
 
 
+def mine_undetected_power_cells(output_dict, image_np):
+    save_file = False
+    if output_dict['num_detections'] == 0:
+        save_file = True
+    else:
+        for i in range(output_dict['num_detections']):
+            if str(category_index.get(output_dict['detection_classes'][i])['name']) != "power_cell":
+                if float(output_dict['detection_scores'][i]) > min_confidence:
+                    rospy.loginfo(str(category_index.get(output_dict['detection_classes'][i])['name']))
+                    rospy.loginfo("Hard negative")
+                    save_file = True
+                    break
+ 
+            elif float(output_dict['detection_scores'][i]) < min_confidence:
+                rospy.loginfo("Missing power cell")
+                save_file = True
+                break
+
+    if save_file:
+        filename = 'powercell_' + str(uuid.uuid4()) + '.png'
+        rospy.loginfo("saving " + filename)
+        cv2.imwrite(filename, cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR))
+
+
 def hard_neg_mine(output_dict, image_np):
     for i in range(output_dict['num_detections']):
         obj = TFObject()
@@ -134,7 +159,7 @@ def hard_neg_mine(output_dict, image_np):
         if obj.confidence >= min_confidence:
 
             filename = 'hard_neg_' + str(uuid.uuid4()) + '.png'
-            print "saving " + filename
+            rospy.loginfo("saving " + filename)
             cv2.imwrite(filename, cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR))
             continue
 
@@ -155,6 +180,8 @@ def main():
     # Path to frozen detection graph. This is the actual model that is used for the object detection.
     # This shouldn't need to change
     PATH_TO_FROZEN_GRAPH = os.path.join(THIS_DIR, 'frozen_inference_graph.pb')
+    rospy.logwarn(PATH_TO_FROZEN_GRAPH)
+    #PATH_TO_FROZEN_GRAPH = os.path.join(THIS_DIR, 'trt_ssd_mobilenet_v2.pb')
 
     # List of the strings that is used to add correct label for each box.
     PATH_TO_LABELS = os.path.join(THIS_DIR, '2020Game_label_map.pbtxt')
@@ -169,7 +196,10 @@ def main():
         tf.import_graph_def(od_graph_def, name='')
 
     with detection_graph.as_default():
-        sess = tf.Session(graph=detection_graph)
+        config = tf.compat.v1.ConfigProto()
+        config.gpu_options.allow_growth = True
+        sess = tf.Session(graph=detection_graph, config=config)
+    print("Past Session")
     category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
 
     sub = rospy.Subscriber(sub_topic, Image, run_inference_for_single_image)
