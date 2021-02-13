@@ -71,7 +71,7 @@ class PathAction
 
 			odom_sub_ = nh_.subscribe(odom_topic_, 1, &PathAction::odomCallback, this);
 			// TODO : maybe grab this from the odom topic as well?
-			yaw_sub_ = nh_.subscribe("/imu/imu_zeroed", 1, &PathAction::yawCallback, this);
+			yaw_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this);
 
 			combine_cmd_vel_pub_ = nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1000);
 
