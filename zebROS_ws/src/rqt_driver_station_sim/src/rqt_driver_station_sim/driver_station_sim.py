@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 import os
 import argparse
 import rospy
@@ -13,12 +12,15 @@ from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget
 
-from behavior_actions.msg import AutoMode
+from behavior_actions.msg import AutoMode, AutoState
 from frc_msgs.msg import MatchSpecificData
 from ros_control_boilerplate.srv import LineBreakSensors, set_limit_switch
 
 class DriverStationSim(Plugin):
+    auto_state_signal = QtCore.pyqtSignal(int)
     def _read_joint_param(self, param_key, where, talons, ains, dins):
+        if not rospy.has_param(param_key):
+            return
         joint_param = rospy.get_param(param_key)
         for jp in joint_param:
             if ('local' in jp) and (jp['local'] == False):
@@ -70,6 +72,35 @@ class DriverStationSim(Plugin):
             linebreak_service(0, sender.objectName(), sender.isChecked())
         except rospy.ServiceException, e:
             print "linebreak_service call failed: %s"%e
+
+
+    def _auto_state_callback(self, msg):
+        self.auto_state_signal.emit(int(msg.id));
+
+
+    def auto_state_slot(self, state):
+        if(self.auto_state != state):
+            self.auto_state = state
+            self.display_auto_state()
+    
+
+    def display_auto_state(self):
+        if self.auto_state == 0:
+            self._widget.auto_state_readback_text.setText("Not ready")
+            self._widget.auto_state_readback_text.setStyleSheet("background-color:#ff5555;")
+        elif self.auto_state == 1: 
+            self._widget.auto_state_readback_text.setText("Ready, waiting for auto period")
+            self._widget.auto_state_readback_text.setStyleSheet("background-color:#ffffff;") 
+        elif self.auto_state == 2: 
+            self._widget.auto_state_readback_text.setText("Running")
+            self._widget.auto_state_readback_text.setStyleSheet("background-color:#ffff00")       
+        elif self.auto_state == 3: 
+            self._widget.auto_state_readback_text.setText("Finished")
+            self._widget.auto_state_readback_text.setStyleSheet("background-color:#00ff00;")
+	elif self.auto_state == 4:
+	    self._widget.auto_state_readback_text.setText("Error")
+            self._widget.auto_state_readback_text.setStyleSheet("background-color:#ff5555;")
+
 
     def __init__(self, context):
         super(DriverStationSim, self).__init__(context)
@@ -167,8 +198,13 @@ class DriverStationSim(Plugin):
             self._widget.ain_vertical_layout.addWidget(self._widget.ain_buttons[i])
         self._widget.sim_input_horizontal_layout.addLayout(self._widget.ain_vertical_layout)
 
-        auto_pub = rospy.Publisher("/frcrobot_rio/autonomous_mode", AutoMode, queue_size=3)
-        match_pub = rospy.Publisher("/frcrobot_rio/match_data_in", MatchSpecificData, queue_size=3)
+        match_pub = rospy.Publisher("/frcrobot_rio/match_data_in", MatchSpecificData, queue_size=2)
+        auto_mode_pub = rospy.Publisher("/auto/auto_mode", AutoMode, queue_size=1)
+
+        self.auto_state_signal.connect(self.auto_state_slot)
+        rospy.Subscriber("/auto/auto_state", AutoState, self._auto_state_callback)
+        self.auto_state = 0
+        self.display_auto_state()
 
         self._widget.disable_button_2.setChecked(True)
         self._widget.teleop_button.setChecked(True)
@@ -232,7 +268,8 @@ class DriverStationSim(Plugin):
                     match_msg.Enabled = False
 
                 #Publish Data
-                # match_msg.allianceData = self._widget.match_data.text()
+                match_msg.header.stamp = rospy.Time.now()
+                match_msg.gameSpecificData = [ord(c) for c in self._widget.game_specific_data.text()]
                 match_msg.allianceColor = 1
                 match_msg.driverStationLocation = 1
                 match_msg.matchNumber = 1
@@ -247,8 +284,16 @@ class DriverStationSim(Plugin):
                 practice_last = practice
                 
                 match_pub.publish(match_msg)
+
+                # Publish integer auto mode to auto_mode node
+                auto_mode_msg = AutoMode()
+                auto_mode_msg.header.stamp = rospy.Time.now()
+                auto_mode_msg.auto_mode = int(self._widget.auto_mode_text.text())
+                auto_mode_msg.distance_from_wall = float(self._widget.distance_from_wall_text.text())
+                auto_mode_pub.publish(auto_mode_msg)
+
                 r.sleep()
-                
+
         load_thread = threading.Thread(target=pub_data, args=(self,))
         load_thread.start()
         if context.serial_number() > 1:

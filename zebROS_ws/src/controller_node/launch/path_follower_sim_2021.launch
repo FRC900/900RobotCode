@@ -29,6 +29,12 @@
 	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" >
 	</node>
 
+	<!-- set up auto node to create paths -->
+	<group ns="auto">
+		<node name="auto_node" pkg="behaviors" type="auto_node" output="screen"></node>
+		<rosparam file="$(find behaviors)/config/auto_mode_config.yaml" command="load"/>
+	</group>
+
 	<include file="$(find controller_node)/launch/path_follower.launch">
 		<arg name="odom_topic" value="/odom"/>
 	</include>
@@ -40,6 +46,10 @@
 	<node name="twist_mux" pkg="twist_mux" type="twist_mux">
 		<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux.yaml"/>
 		<remap from="cmd_vel_out" to="/cmd_vel"/>
+	</node>
+
+	<node pkg="rqt_driver_station_sim" type="rqt_driver_station_sim" name="rqt_driver_station_sim" >
+		<remap from="/frcrobot_rio/match_data_in" to="/frcrobot_rio/match_data" />
 	</node>
 </group>
 </launch>
