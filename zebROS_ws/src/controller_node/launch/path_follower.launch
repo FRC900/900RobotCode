@@ -1,10 +1,15 @@
 <?xml version="1.0"?>
 <launch>
+		<!-- allow us to hook up sim odom topics for stage sim testing -->
+		<arg name="odom_topic" default="/frcrobot_jetson/swerve_drive_controller/odom"/>
 
         <group ns="path_follower">
             <rosparam file="$(find path_follower)/config/path_follower_config.yaml" command="load"/>
 
-            <node name="path_follower_server" pkg="path_follower" type="path_follower_server" output="screen"/>
+            <node name="path_follower_server" pkg="path_follower" type="path_follower_server" output="screen">
+				<param name="odom_topic" value="$(arg odom_topic)"/>
+			</node>
+
             <node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node>
             <node name="path_follower_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
                 <param name="orient_topic" value="orient_pid/orient_command" />

@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<!--
+  Simulate a omni (swerve) robot in stage for path following testing
+ -->
+<launch>
+	<!--  ************** Global Parameters ***************  -->
+	<param name="/use_sim_time" value="true"/>
+
+	<!--  ************** Stage Simulator ***************  -->
+	<node pkg="stage_ros" type="stageros" name="stageros" args="$(find controller_node)/stage/2021PathFollower.world">
+		<remap from="base_scan" to="scan"/>
+		<remap from="odom" to="/frcrobot_jetson/swerve_drive_controller/odom"/>
+	</node>
+
+	<!--  ************** Nodes to convert output of stage to inputs expected by particle filter ***************  -->
+	<node pkg="pf_localization" type="fake_cmd_vel_out_node" name="fake_cmd_vel_out" >
+		<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel_out"/>
+	</node>
+
+	<node pkg="pf_localization" type="fake_imu_node" name="fake_imu" >
+		<remap from="imu" to="/imu/zeroed_imu" />
+	</node>
+
+	<node pkg="pf_localization" type="fake_goal_detect_node" name="fake_goal_detect" >
+		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
+	</node>
+
+	<rosparam file="$(find pf_localization)/config/test_params.yaml" command="load"/>
+	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" >
+	</node>
+
+	<!-- set up auto node to create paths -->
+	<group ns="auto">
+		<node name="auto_node" pkg="behaviors" type="auto_node" output="screen"></node>
+		<rosparam file="$(find behaviors)/config/auto_mode_config.yaml" command="load"/>
+	</group>
+
+	<include file="$(find controller_node)/launch/path_follower.launch">
+		<arg name="odom_topic" value="/odom"/>
+	</include>
+	<!-- Super sketchy way to hook up cmd vel output from path follower to stage /cmd_vel topic 
+		 I could say this is because it is a closer match to the real robot but it is really just
+         being reused out of laziness.
+	-->
+	<group ns="cmd_vel_mux">
+	<node name="twist_mux" pkg="twist_mux" type="twist_mux">
+		<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux.yaml"/>
+		<remap from="cmd_vel_out" to="/cmd_vel"/>
+	</node>
+
+	<node pkg="rqt_driver_station_sim" type="rqt_driver_station_sim" name="rqt_driver_station_sim" >
+		<remap from="/frcrobot_rio/match_data_in" to="/frcrobot_rio/match_data" />
+	</node>
+</group>
+</launch>
