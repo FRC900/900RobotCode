@@ -1,15 +1,16 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include "base_trajectory_msgs/GenerateSpline.h"
+#include <ddynamic_reconfigure/ddynamic_reconfigure.h>
+#include <geometry_msgs/Quaternion.h>
+#include <nav_msgs/Odometry.h>
 #include <path_follower_msgs/PathAction.h>
 #include <path_follower_msgs/PathGoal.h>
 #include <path_follower/axis_state.h>
+#include <path_follower/path_follower.h>
+#include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/Imu.h>
-#include <path_follower/path_follower.h>
-#include <geometry_msgs/Quaternion.h>
 
 class PathAction
 {
@@ -32,7 +33,7 @@ class PathAction
 		double lookahead_distance_;
 		double final_pos_tol_;
 		double server_timeout_;
-		double start_point_radius_;
+		//double start_point_radius_;
 		std::string odom_topic_;
 
 		bool debug_;
@@ -61,7 +62,7 @@ class PathAction
 			final_pos_tol_ = final_pos_tol;
 			server_timeout_ = server_timeout;
 			ros_rate_ = ros_rate;
-			start_point_radius_ = start_point_radius;
+			//start_point_radius_ = start_point_radius;
 
 			std::map<std::string, std::string> service_connection_header;
 			service_connection_header["tcp_nodelay"] = "1";
@@ -73,8 +74,7 @@ class PathAction
 			// TODO : maybe grab this from the odom topic as well?
 			yaw_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this);
 
-			combine_cmd_vel_pub_ = nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1000);
-
+			combine_cmd_vel_pub_ = nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 10);
 		}
 
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
@@ -180,11 +180,13 @@ class PathAction
 			}
 			const size_t num_waypoints = spline_gen_srv.response.path.poses.size();
 
+#if 0
 			//debug
 			for (size_t i = 0; i < spline_gen_srv.response.end_points.size(); i++)
 			{
 				ROS_INFO_STREAM("end point at " << i << " is " << spline_gen_srv.response.end_points[i]);
 			}
+#endif
 
 			//replacement for actual transforms, for now
 			for (size_t i = 0; i < num_waypoints; i++) //TODO hacky fix
@@ -210,7 +212,6 @@ class PathAction
 			start_time_ = ros::Time::now().toSec();
 			while (ros::ok() && !preempted && !timed_out && !succeeded)
 			{
-
 				// odom_.pose.pose.orientation = orientation_;
 				geometry_msgs::Pose next_waypoint = path_follower_.run(odom_, distance_travelled);
 
@@ -248,7 +249,6 @@ class PathAction
 				auto z_axis_it = axis_states_.find("z");
 				auto &z_axis = z_axis_it->second;
 				z_axis.enable_pub_.publish(enable_msg);
-
 				command_msg.data = path_follower_.getYaw(next_waypoint.orientation);
 				z_axis.command_pub_.publish(command_msg);
 				// state_msg.data = PathFollower::getYaw(orientation_);
@@ -318,6 +318,49 @@ class PathAction
 				result.success = true;
 				as_.setSucceeded(result);
 			}
+
+			ROS_INFO_STREAM("Elapsed time driving = " << ros::Time::now().toSec() - start_time_);
+		}
+
+		// Assortet get/set methods used by dynamic reoconfigure callback code
+		void setLookaheadDistance(double lookahead_distance)
+		{
+			lookahead_distance_ = lookahead_distance;
+		}
+
+		double getLookaheadDistance(void) const
+		{
+			return lookahead_distance_;
+		}
+
+		void setFinalPosTol(double final_pos_tol)
+		{
+			final_pos_tol_ = final_pos_tol;
+		}
+
+		double getFinalPosTol(void) const
+		{
+			return final_pos_tol_;
+		}
+
+		void setServerTimeout(double server_timeout)
+		{
+			server_timeout_ = server_timeout;
+		}
+
+		double getServerTimeout(void) const
+		{
+			return server_timeout_;
+		}
+
+		void setRosRate(double ros_rate)
+		{
+			ros_rate_ = ros_rate;
+		}
+
+		double getRosRate(void) const
+		{
+			return ros_rate_;
 		}
 };
 
@@ -370,6 +413,30 @@ int main(int argc, char **argv)
 		ROS_ERROR_STREAM("Error adding z_axis to path_action_server.");
 		return -1;
 	}
+
+	ddynamic_reconfigure::DDynamicReconfigure ddr;
+	ddr.registerVariable<double>
+		("lookahead_distance",
+		 boost::bind(&PathAction::getLookaheadDistance, &path_action_server),
+		 boost::bind(&PathAction::setLookaheadDistance, &path_action_server, _1),
+		 "how far ahead the path follower looks to pick the next point to drive to", 0, 10);
+	ddr.registerVariable<double>
+		("final_pos_tol",
+		 boost::bind(&PathAction::getFinalPosTol, &path_action_server),
+		 boost::bind(&PathAction::setFinalPosTol, &path_action_server, _1),
+		 "tolerance for hitting final waypoint", 0, 1);
+	ddr.registerVariable<double>
+		("server_timeout",
+		 boost::bind(&PathAction::getServerTimeout, &path_action_server),
+		 boost::bind(&PathAction::setServerTimeout, &path_action_server, _1),
+		 "how long to wait before timing out", 0, 150);
+	ddr.registerVariable<int>
+		("ros_rate",
+		 boost::bind(&PathAction::getRosRate, &path_action_server),
+		 boost::bind(&PathAction::setRosRate, &path_action_server, _1),
+		 "how far ahead the path follower looks to pick the next point to drive to", 0, 100);
+    ddr.publishServicesTopics();
+
 
 	ros::spin();
 
