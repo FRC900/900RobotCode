@@ -25,16 +25,27 @@ void Kinematics::limit(const Kinematics &other)
 {
 	maxAccel_          = std::min(maxAccel_, other.maxAccel_);
 	maxDecel_          = std::min(maxDecel_, other.maxDecel_);
+	// If velocity is limited to 0, the robot will get stuck
 	if(other.maxVel_ > 0)
 	{
 		maxVel_        = std::min(maxVel_, other.maxVel_);
 	}
 	else
 	{
-		ROS_WARN_STREAM("Tried to set maxVel to <= 0. Retaining previous value.");
+		ROS_WARN_STREAM("Tried to set Kinematics() maxVel to <= 0. Retaining previous value.");
 	}
 	maxCentAccel_      = std::min(maxCentAccel_, other.maxCentAccel_);
-	pathLimitDistance_ = std::min(pathLimitDistance_, other.pathLimitDistance_);
+
+	// The cost function divides by path limit distance, so avoid NaN
+	// costs by disallowing path limit distance of 0
+	if(other.pathLimitDistance_ > 0)
+	{
+		pathLimitDistance_ = std::min(pathLimitDistance_, other.pathLimitDistance_);
+	}
+	else
+	{
+		ROS_WARN_STREAM("Tried to set Kinematics() pathLimitDistance to <= 0. Retaining previous value.");
+	}
 }
 
 double Kinematics::getMaxAccel(void) const
