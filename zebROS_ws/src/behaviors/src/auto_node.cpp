@@ -92,6 +92,10 @@ std::atomic<bool> publish_autostate{true};
 void publishAutoState(ros::NodeHandle &nh)
 {
 #ifdef __linux__
+	// Run status thread at idle priority
+	struct sched_param sp{};
+	sched_setscheduler(0, SCHED_IDLE, &sp);
+
 	//give the thread a name
     pthread_setname_np(pthread_self(), "auto_state_pub");
 #endif
