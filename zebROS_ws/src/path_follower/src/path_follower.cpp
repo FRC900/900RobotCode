@@ -255,8 +255,7 @@ geometry_msgs::Pose PathFollower::run(nav_msgs::Odometry odom, double &total_dis
 			getYaw(path_.poses[index].pose.orientation),
 			current_time.toSec());
 
-	ROS_INFO_STREAM("drive to coordinates: (" << final_x << ", " << final_y << ")");
-	ROS_INFO_STREAM("drive to orientation: " << final_orientation);
+	ROS_INFO_STREAM("drive to coordinates: (" << final_x << ", " << final_y << ", " << final_orientation << ")");
 
 	// Convert back to quaternion
 	tf2::Quaternion q_final_tf = tf2::Quaternion(tf2Scalar(0), tf2Scalar(0), tf2Scalar(final_orientation));
