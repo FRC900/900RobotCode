@@ -74,7 +74,10 @@ class PathAction
 			// TODO : maybe grab this from the odom topic as well?
 			yaw_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this);
 
-			combine_cmd_vel_pub_ = nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 10);
+			combine_cmd_vel_pub_ = nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true);
+			std_msgs::Bool bool_msg;
+			bool_msg.data = false;
+			combine_cmd_vel_pub_.publish(bool_msg);
 		}
 
 		void odomCallback(const nav_msgs::Odometry &odom_msg)

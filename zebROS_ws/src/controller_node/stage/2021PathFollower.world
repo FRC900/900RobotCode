@@ -32,7 +32,9 @@ define floorplan model
 )
 
 resolution 0.02
-interval_sim 100  # simulation timestep in milliseconds
+interval_sim 5  # simulation timestep in milliseconds
+interval_real 5
+threads 2
 
 window
 (
@@ -61,7 +63,7 @@ omnidir_robot
 )
 
 # Simulated AR tags
-objdet_target ( pose [ -1 0.0 1 0 ] fiducial_return 0 color "red")
+objdet_target ( pose [ -1 0.0 1 0 ] fiducial_return 0 color "cyan")
 objdet_target ( pose [ -1 0.5 1 0 ] fiducial_return 1 color "yellow")
 objdet_target ( pose [ -1 1.0 1 0 ] fiducial_return 2 color "green")
 objdet_target ( pose [ -1 1.5 1 0 ] fiducial_return 3 color "blue")
