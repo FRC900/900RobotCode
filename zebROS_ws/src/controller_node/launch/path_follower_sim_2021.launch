@@ -25,7 +25,7 @@
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
 	</node>
 
-	<rosparam file="$(find pf_localization)/config/test_params.yaml" command="load"/>
+	<rosparam file="$(find pf_localization)/config/2021_params.yaml" command="load"/>
 	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" >
 	</node>
 
