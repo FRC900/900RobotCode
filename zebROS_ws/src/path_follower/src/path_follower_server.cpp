@@ -32,36 +32,41 @@ class PathAction
 		PathFollower path_follower_;
 		double lookahead_distance_;
 		double final_pos_tol_;
+		double final_rot_tol_;
 		double server_timeout_;
 		//double start_point_radius_;
-		std::string odom_topic_;
 
 		bool debug_;
-		double start_time_;
 		int ros_rate_;
+
+		// If true, use odom for x and y position and a separate yaw topic
+		// (from an IMU, perhaps) for the orientation.
+		// If false, use odom for x, y and orientation.
+		bool use_odom_orientation_;
 
 	public:
 		PathAction(const std::string &name, const ros::NodeHandle &nh,
 				   double lookahead_distance,
 				   double final_pos_tol,
+				   double final_rot_tol,
 				   double server_timeout,
 				   int ros_rate,
 				   double start_point_radius,
 				   const std::string &odom_topic,
+				   bool use_odom_orientation,
 				   double time_offset)
 			: nh_(nh)
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
 			, path_follower_(lookahead_distance, start_point_radius, time_offset)
+			, lookahead_distance_(lookahead_distance)
+			, final_pos_tol_(final_pos_tol)
+			, final_rot_tol_(final_rot_tol)
+			, server_timeout_(server_timeout)
 			, debug_(false) // TODO - config item?
+			, ros_rate_(ros_rate)
+			, use_odom_orientation_(use_odom_orientation)
 		{
-			as_.start();
-
-			odom_topic_ = odom_topic;
-			lookahead_distance_ = lookahead_distance;
-			final_pos_tol_ = final_pos_tol;
-			server_timeout_ = server_timeout;
-			ros_rate_ = ros_rate;
 			//start_point_radius_ = start_point_radius;
 
 			std::map<std::string, std::string> service_connection_header;
@@ -70,14 +75,18 @@ class PathAction
 			// TODO - not sure which namespace base_trajectory should go in
 			spline_gen_cli_ = nh_.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen", false, service_connection_header);
 
-			odom_sub_ = nh_.subscribe(odom_topic_, 1, &PathAction::odomCallback, this);
-			// TODO : maybe grab this from the odom topic as well?
-			yaw_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this);
+			odom_sub_ = nh_.subscribe(odom_topic, 1, &PathAction::odomCallback, this);
+			if (!use_odom_orientation_)
+			{
+				yaw_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this);
+			}
 
 			combine_cmd_vel_pub_ = nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true);
 			std_msgs::Bool bool_msg;
 			bool_msg.data = false;
 			combine_cmd_vel_pub_.publish(bool_msg);
+
+			as_.start();
 		}
 
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
@@ -179,31 +188,41 @@ class PathAction
 			if (!spline_gen_cli_.call(spline_gen_srv))
 			{
 				ROS_ERROR_STREAM("Can't call spline gen service in path_follower_server");
-
+				return;
 			}
 			const size_t num_waypoints = spline_gen_srv.response.path.poses.size();
 
-#if 0
-			//debug
-			for (size_t i = 0; i < spline_gen_srv.response.end_points.size(); i++)
+			// Since paths are robot-centric, the initial odom value is 0,0,0 for the path.
+			// Set this up as a transfrom to apply to each point in the path. This has the
+			// effect of changing robot centric coordinates into odom-centric coordinates
+			// Since we're using odom-centric values to drive against, this simplifies a
+			// lot of the code later.
+			geometry_msgs::TransformStamped odom_to_base_link_tf;
+			odom_to_base_link_tf.transform.translation.x = odom_.pose.pose.position.x;
+			odom_to_base_link_tf.transform.translation.y = odom_.pose.pose.position.y;
+			odom_to_base_link_tf.transform.translation.z = 0;
+			if (use_odom_orientation_)
 			{
-				ROS_INFO_STREAM("end point at " << i << " is " << spline_gen_srv.response.end_points[i]);
+				odom_to_base_link_tf.transform.rotation = odom_.pose.pose.orientation;
 			}
-#endif
+			else
+			{
+				odom_to_base_link_tf.transform.rotation = orientation_;
+			}
+			//ros::message_operations::Printer< ::geometry_msgs::TransformStamped_<std::allocator<void>> >::stream(std::cout, "", odom_to_base_link_tf);
 
-			//replacement for actual transforms, for now
-			for (size_t i = 0; i < num_waypoints; i++) //TODO hacky fix
-			{
-				spline_gen_srv.response.path.poses[i].pose.position.x += odom_.pose.pose.position.x;
-				spline_gen_srv.response.path.poses[i].pose.position.y += odom_.pose.pose.position.y;
-			}
+			// Transform the final point from robot to odom coordinates. Used each iteration to
+			// see if we've reached the end point, so do it once here rather than each time through
+			// the loop
+			geometry_msgs::Pose final_pose_transformed = spline_gen_srv.response.path.poses.back().pose;
+			tf2::doTransform(final_pose_transformed, final_pose_transformed, odom_to_base_link_tf);
 
 			//debug
 			ROS_INFO_STREAM(spline_gen_srv.response.path.poses[num_waypoints - 1].pose.position.x << ", " << spline_gen_srv.response.path.poses[num_waypoints - 1].pose.position.y << ", " << path_follower_.getYaw(spline_gen_srv.response.path.poses[num_waypoints - 1].pose.orientation));
 
 			ros::Rate r(ros_rate_);
 
-			// send path to pure pursuit
+			// send path to initialize path follower
 			if (!path_follower_.loadPath(spline_gen_srv.response.path))
 			{
 				ROS_ERROR_STREAM("Failed to load path");
@@ -212,72 +231,96 @@ class PathAction
 
 			//in loop, send PID enable commands to rotation, x, y
 			double distance_travelled = 0;
-			start_time_ = ros::Time::now().toSec();
+			const auto start_time = ros::Time::now().toSec();
 			while (ros::ok() && !preempted && !timed_out && !succeeded)
 			{
-				// odom_.pose.pose.orientation = orientation_;
+				// If using a separate topic for orientation, merge the x+y from odom
+				// with the orientiation from that separate topic here
+				if (!use_odom_orientation_)
+				{
+					odom_.pose.pose.orientation = orientation_;
+				}
+				// This gets the point closest to current time plus lookahead distance
+				// on the path. We use this to generate a target for the x,y,orientation
+				// PID controllers.
 				geometry_msgs::Pose next_waypoint = path_follower_.run(odom_, distance_travelled);
 
-				// TODO - think about what the target point and axis are
-				// We want to end up driving to a point on the path some
-				// distance ahead of where we currently are
-				// Since the segments are each straight lines, should be fairly
-				// simple to advance some distance to find the target waypoint
-				// Need to worry about coordinate frames, since the robot will
-				// potentially be rotated such that it's x&y don't correspond
-				// to the path x&y coordinate axes
+				//ROS_INFO_STREAM("Before transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << path_follower_.getYaw(next_waypoint.orientation) << ")");
+				tf2::doTransform(next_waypoint, next_waypoint, odom_to_base_link_tf);
+				//ROS_INFO_STREAM("After transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << path_follower_.getYaw(next_waypoint.orientation) << ")");
+
 				std_msgs::Bool enable_msg;
 				enable_msg.data = true;
 				std_msgs::Float64 command_msg;
-				std_msgs::Float64 state_msg;
 
 				combine_cmd_vel_pub_.publish(enable_msg);
 
+				// For each axis of motion, publish the corresponding next
+				// waypoint coordinate to each of the PID controllers
+				// And also make sure they continue to be enabled
+				// TODO - see if we can enable once at the start of the callback instead?
 				auto x_axis_it = axis_states_.find("x");
 				auto &x_axis = x_axis_it->second;
 				x_axis.enable_pub_.publish(enable_msg);
 				command_msg.data = next_waypoint.position.x;
 				x_axis.command_pub_.publish(command_msg);
-				state_msg.data = odom_.pose.pose.position.x;
-				x_axis.state_pub_.publish(state_msg);
 
 				auto y_axis_it = axis_states_.find("y");
 				auto &y_axis = y_axis_it->second;
 				y_axis.enable_pub_.publish(enable_msg);
 				command_msg.data = next_waypoint.position.y;
 				y_axis.command_pub_.publish(command_msg);
-				state_msg.data = odom_.pose.pose.position.y;
-				y_axis.state_pub_.publish(state_msg);
 
 				auto z_axis_it = axis_states_.find("z");
 				auto &z_axis = z_axis_it->second;
 				z_axis.enable_pub_.publish(enable_msg);
 				command_msg.data = path_follower_.getYaw(next_waypoint.orientation);
 				z_axis.command_pub_.publish(command_msg);
-				// state_msg.data = PathFollower::getYaw(orientation_);
-				state_msg.data = path_follower_.getYaw(odom_.pose.pose.orientation);
-				z_axis.state_pub_.publish(state_msg);
 
 				if (as_.isPreemptRequested() || !ros::ok())
 				{
 					ROS_ERROR_STREAM(action_name_ << ": preempted");
 					preempted = true;
 				}
-				else if ((fabs(spline_gen_srv.response.path.poses[num_waypoints - 1].pose.position.x - odom_.pose.pose.position.x) < final_pos_tol_) &&
-						 (fabs(spline_gen_srv.response.path.poses[num_waypoints - 1].pose.position.y - odom_.pose.pose.position.y) < final_pos_tol_))
-				{
-					ROS_INFO_STREAM(action_name_ << ": succeeded");
-					ROS_INFO_STREAM("endpoint_x = " << spline_gen_srv.response.path.poses[num_waypoints - 1].pose.position.x << ", odom_x = " << odom_.pose.pose.position.x);
-					succeeded = true;
-				}
-				else if (ros::Time::now().toSec() - start_time_ > server_timeout_)
+				else if (ros::Time::now().toSec() - start_time > server_timeout_)
 				{
 					ROS_ERROR_STREAM(action_name_ << ": timed out");
 					timed_out = true;
 				}
 
+				// Spin once to get the most up to date odom and yaw info
 				ros::spinOnce();
-				r.sleep();
+
+				const double orientation_state = path_follower_.getYaw(odom_.pose.pose.orientation);
+				//ROS_INFO_STREAM("orientation_state = " << orientation_state);
+
+				if ((fabs(final_pose_transformed.position.x - odom_.pose.pose.position.x) < final_pos_tol_) &&
+					(fabs(final_pose_transformed.position.y - odom_.pose.pose.position.y) < final_pos_tol_) &&
+					(fabs(path_follower_.getYaw(final_pose_transformed.orientation) - orientation_state) < final_rot_tol_))
+				{
+					ROS_INFO_STREAM(action_name_ << ": succeeded");
+					ROS_INFO_STREAM("endpoint_x = " << final_pose_transformed.position.x << ", odom_x = " << odom_.pose.pose.position.x);
+					ROS_INFO_STREAM("endpoint_y = " << final_pose_transformed.position.y << ", odom_y = " << odom_.pose.pose.position.y);
+					ROS_INFO_STREAM("endpoint_rot = " << path_follower_.getYaw(final_pose_transformed.orientation) << ", odom_rot = " << orientation_state);
+					ROS_INFO_STREAM("distance_travelled = " << distance_travelled);
+					succeeded = true;
+				}
+				else if (!preempted && !timed_out)
+				{
+					// Pass along the current x, y and orient robot states
+					// to the PID controllers for each axis
+					std_msgs::Float64 state_msg;
+					state_msg.data = odom_.pose.pose.position.x;
+					x_axis.state_pub_.publish(state_msg);
+
+					state_msg.data = odom_.pose.pose.position.y;
+					y_axis.state_pub_.publish(state_msg);
+
+					state_msg.data = orientation_state;
+					z_axis.state_pub_.publish(state_msg);
+
+					r.sleep();
+				}
 			}
 
 			std_msgs::Bool enable_msg;
@@ -322,7 +365,7 @@ class PathAction
 				as_.setSucceeded(result);
 			}
 
-			ROS_INFO_STREAM("Elapsed time driving = " << ros::Time::now().toSec() - start_time_);
+			ROS_INFO_STREAM("Elapsed time driving = " << ros::Time::now().toSec() - start_time);
 		}
 
 		// Assortet get/set methods used by dynamic reoconfigure callback code
@@ -344,6 +387,16 @@ class PathAction
 		double getFinalPosTol(void) const
 		{
 			return final_pos_tol_;
+		}
+
+		void setFinalRotTol(double final_rot_tol)
+		{
+			final_rot_tol_ = final_rot_tol;
+		}
+
+		double getFinalRotTol(void) const
+		{
+			return final_rot_tol_;
 		}
 
 		void setServerTimeout(double server_timeout)
@@ -374,27 +427,33 @@ int main(int argc, char **argv)
 
 	double lookahead_distance = 0.1;
 	double final_pos_tol = 0.01;
-	double server_timeout = 5.0;
+	double final_rot_tol = 0.01;
+	double server_timeout = 15.0;
 	int ros_rate = 20;
 	double start_point_radius = 0.05;
 	double time_offset = 0;
+	bool use_odom_orientation = false;
 
 	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
 	nh.getParam("/path_follower/path_follower/lookahead_distance", lookahead_distance);
 	nh.getParam("/path_follower/path_follower/final_pos_tol", final_pos_tol);
+	nh.getParam("/path_follower/path_follower/final_rot_tol", final_rot_tol);
 	nh.getParam("/path_follower/path_follower/server_timeout", server_timeout);
 	nh.getParam("/path_follower/path_follower/ros_rate", ros_rate);
 	nh.getParam("/path_follower/path_follower/start_point_radius", start_point_radius);
 	nh.getParam("/path_follower/path_follower/odom_topic", odom_topic);
+	nh.getParam("/path_follower/path_follower/use_odom_orientation", use_odom_orientation);
 	nh.getParam("/path_follower/path_follower/time_offset", time_offset);
 
 	PathAction path_action_server("path_follower_server", nh,
 								  lookahead_distance,
 								  final_pos_tol,
+								  final_rot_tol,
 								  server_timeout,
 								  ros_rate,
 								  start_point_radius,
 								  odom_topic,
+								  use_odom_orientation,
 								  time_offset);
 
 	AlignActionAxisConfig x_axis("x", "x_position_pid/pid_enable", "x_position_pid/x_cmd_pub", "x_position_pid/x_state_pub", "x_position_pid/pid_debug", "x_timeout_param", "x_error_threshold_param");
@@ -427,7 +486,12 @@ int main(int argc, char **argv)
 		("final_pos_tol",
 		 boost::bind(&PathAction::getFinalPosTol, &path_action_server),
 		 boost::bind(&PathAction::setFinalPosTol, &path_action_server, _1),
-		 "tolerance for hitting final waypoint", 0, 1);
+		 "linear tolerance for hitting final waypoint", 0, 1);
+	ddr.registerVariable<double>
+		("final_rot_tol",
+		 boost::bind(&PathAction::getFinalRotTol, &path_action_server),
+		 boost::bind(&PathAction::setFinalRotTol, &path_action_server, _1),
+		 "rotational tolerance for hitting final waypoint", 0, 1);
 	ddr.registerVariable<double>
 		("server_timeout",
 		 boost::bind(&PathAction::getServerTimeout, &path_action_server),
@@ -439,7 +503,6 @@ int main(int argc, char **argv)
 		 boost::bind(&PathAction::setRosRate, &path_action_server, _1),
 		 "how far ahead the path follower looks to pick the next point to drive to", 0, 100);
     ddr.publishServicesTopics();
-
 
 	ros::spin();
 

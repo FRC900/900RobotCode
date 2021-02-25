@@ -7,7 +7,7 @@
 	<param name="/use_sim_time" value="true"/>
 
 	<!--  ************** Stage Simulator ***************  -->
-	<node pkg="stage_ros" type="stageros" name="stageros" args="$(find controller_node)/stage/2021PathFollower.world">
+	<node pkg="stage_ros" type="stageros" name="stageros" args="$(find controller_node)/stage/2021PathFollower.world" output="screen">
 		<remap from="base_scan" to="scan"/>
 		<remap from="odom" to="/frcrobot_jetson/swerve_drive_controller/odom"/>
 	</node>
@@ -17,9 +17,18 @@
 		<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel_out"/>
 	</node>
 
-	<node pkg="pf_localization" type="fake_imu_node" name="fake_imu" >
-		<remap from="imu" to="/imu/zeroed_imu" />
-	</node>
+	<group ns="imu">
+		<node pkg="pf_localization" type="fake_imu_node" name="fake_imu" >
+			<remap from="imu" to="/imu/imu/data" />
+			<remap from="/imu/base_pose_ground_truth" to="/base_pose_ground_truth" />
+		</node>
+
+		<node pkg="imu_zero" type="imu_zero_node" name="imu_zero" >
+		</node>
+	</group>
+
+	<include file="$(find controller_node)/launch/fuse_odom.launch"/>
+	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetoodom" args="0 0 0 0 0 0 1 base_link imu" />
 
 	<node pkg="pf_localization" type="fake_goal_detect_node" name="fake_goal_detect" >
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
@@ -43,13 +52,13 @@
          being reused out of laziness.
 	-->
 	<group ns="cmd_vel_mux">
-	<node name="twist_mux" pkg="twist_mux" type="twist_mux">
-		<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux.yaml"/>
-		<remap from="cmd_vel_out" to="/cmd_vel"/>
-	</node>
+		<node name="twist_mux" pkg="twist_mux" type="twist_mux">
+			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/twist_mux.yaml"/>
+			<remap from="cmd_vel_out" to="/cmd_vel"/>
+		</node>
 
-	<node pkg="rqt_driver_station_sim" type="rqt_driver_station_sim" name="rqt_driver_station_sim" >
-		<remap from="/frcrobot_rio/match_data_in" to="/frcrobot_rio/match_data" />
-	</node>
-</group>
+		<node pkg="rqt_driver_station_sim" type="rqt_driver_station_sim" name="rqt_driver_station_sim" >
+			<remap from="/frcrobot_rio/match_data_in" to="/frcrobot_rio/match_data" />
+		</node>
+	</group>
 </launch>
