@@ -188,6 +188,11 @@ class PathAction
 			if (!spline_gen_cli_.call(spline_gen_srv))
 			{
 				ROS_ERROR_STREAM("Can't call spline gen service in path_follower_server");
+				//log result and set actionlib server state appropriately
+				path_follower_msgs::PathResult result;
+				result.timed_out = false;
+				result.success = false;
+				as_.setAborted(result);
 				return;
 			}
 			const size_t num_waypoints = spline_gen_srv.response.path.poses.size();
