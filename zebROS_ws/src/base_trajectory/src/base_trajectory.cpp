@@ -61,6 +61,8 @@ KinematicConstraints kinematicConstraints;
 
 MessageFilter messageFilter(true);
 
+int optimizationCounterMax = 500;
+
 template <class T>
 void printTrajectory(const Trajectory<T> &trajectory, const std::vector<std::string> &jointNames)
 {
@@ -1191,6 +1193,7 @@ bool RPROP(
 		// those need to be hit exactly.
 		for (size_t i = 1; i < (bestOptParams.size() - 1); i++) // index of param optimized
 		{
+			int optimizationCounter = 0;
 			// OptParams is overloaded to act like an array
 			// for accessing individual params for each point
 			for (size_t j = 0; j < bestOptParams[i].size(); j++)
@@ -1255,6 +1258,20 @@ bool RPROP(
 					deltaCost = fabs(thisCost - currCost);
 					ROS_INFO_STREAM_FILTER(&messageFilter, "RPROP : i=" << i << " j=" << j << " bestCost=" << bestCost << " thisCost=" << thisCost << " currCost=" << currCost << " deltaCost=" << deltaCost << " deltaCostEpsilon=" << deltaCostEpsilon);
 					currCost = thisCost;
+
+					if (thisCost > 150)
+					{
+						optimizationCounter++;
+					}
+					else
+					{
+						optimizationCounter = 0;
+					}
+					if (optimizationCounter > optimizationCounterMax)
+					{
+						// ROS_INFO_STREAM("broken out of the optimization loop");
+						break;
+					}
 				}
 			}
 		}
@@ -1513,6 +1530,9 @@ int main(int argc, char **argv)
 	ddr.registerVariable<double>("drive_base_radius", &driveBaseRadius, "robot's drive base radius - half the distance of the diagonal between two opposite wheels", 0, .75);
     ddr.publishServicesTopics();
 	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", callback);
+
+	nh.param("optimization_counter_max", optimizationCounterMax, 500);
+	ddr.registerVariable<int>("optimization_counter_max", &optimizationCounterMax, "Iteration count for breaking out of optimization loop", 0, 500000);
 
 	ros::spin();
 }
