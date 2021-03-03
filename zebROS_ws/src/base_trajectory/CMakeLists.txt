@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   angles
   base_trajectory_msgs
   cmake_modules
+  costmap_2d
   ddynamic_reconfigure
   joint_trajectory_controller
   nav_msgs

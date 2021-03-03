@@ -8,8 +8,10 @@
 #include <cmath>
 #include <cstdio>
 #include <base_trajectory_msgs/GenerateSpline.h>
+#include <costmap_2d/costmap_2d_ros.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <angles/angles.h>
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
@@ -62,6 +64,8 @@ KinematicConstraints kinematicConstraints;
 MessageFilter messageFilter(true);
 
 int optimizationCounterMax = 500;
+
+std::unique_ptr<costmap_2d::Costmap2DROS> costmap;
 
 template <class T>
 void printTrajectory(const Trajectory<T> &trajectory, const std::vector<std::string> &jointNames)
@@ -1528,11 +1532,16 @@ int main(int argc, char **argv)
 
 	nh.param("drive_base_radius", driveBaseRadius, 0.40411);
 	ddr.registerVariable<double>("drive_base_radius", &driveBaseRadius, "robot's drive base radius - half the distance of the diagonal between two opposite wheels", 0, .75);
-    ddr.publishServicesTopics();
-	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", callback);
 
 	nh.param("optimization_counter_max", optimizationCounterMax, 500);
 	ddr.registerVariable<int>("optimization_counter_max", &optimizationCounterMax, "Iteration count for breaking out of optimization loop", 0, 500000);
+
+	ddr.publishServicesTopics();
+	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", callback);
+
+	tf2_ros::Buffer buffer(ros::Duration(10));
+	tf2_ros::TransformListener tf(buffer);
+	costmap = std::make_unique<costmap_2d::Costmap2DROS>("/costmap", buffer);
 
 	ros::spin();
 }
