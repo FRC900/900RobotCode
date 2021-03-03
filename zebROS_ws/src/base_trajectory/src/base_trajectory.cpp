@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <base_trajectory_msgs/GenerateSpline.h>
 #include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <angles/angles.h>
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
@@ -385,32 +386,53 @@ struct ArclengthAndTime
 	double time_;
 };
 
+
+// Figure out how far a wheel has to move linearly
+// to produce the requested rotation. This is to
+// make sure all 3 dimensions of motion are using
+// the same units.
+// This also works for velocities
+double rotationToLinear(const double radians)
+{
+	// A wheel facing diagonally will produce 2pi radians of
+	// robot rotation after moving linearly in a circle of
+	// 2*wheelbase_radius * pi.
+	// Canceling out 2 pi :
+	// 1 radian rotation = 1 wheelbase_radius linear meters
+	return driveBaseRadius * radians;
+}
+
+
 // Use Simpson's rule to estimate arc length between start and
 // and time.  Function is combining dx and dy into a length,
 // so use hypot(dx,dy) as the function being evaluated.
-// Get the uppwer bound of the error as well - this lets
+// Get the upper bound of the error as well - this lets
 // us know if the estimate is within the bounds specified
 // for calculating the estimate.
 void simpsonsRule(double &estimate, double &error,
 				  const double startT, const double endT,
 				  const SplineCoefs &xStartCoefs,
 				  const SplineCoefs &yStartCoefs,
+				  const SplineCoefs &oStartCoefs,
 				  const SplineCoefs &xEndCoefs,
 				  const SplineCoefs &yEndCoefs,
-				  const double startXdot, const double startYdot,
-				  const double midXdot, const double midYdot,
-				  const double endXdot, const double endYdot)
+				  const SplineCoefs &oEndCoefs,
+				  const double startXdot, const double startYdot, const double startOdot,
+				  const double midXdot, const double midYdot, const double midOdot,
+				  const double endXdot, const double endYdot, const double endOdot)
 {
 	const double periodT = endT - startT;
-	estimate = periodT / 6.0 * (hypot(startXdot, startYdot) + 4.0 * hypot(midXdot, midYdot) + hypot(endXdot, endYdot));
+	estimate = periodT / 6.0 * (hypot(startXdot, startYdot, startOdot) + 4.0 * hypot(midXdot, midYdot, midOdot) + hypot(endXdot, endYdot, endOdot));
 
 	const double commonErrorTerm = (1.0/90.0) * pow(periodT / 2.0, 5.0);
 	// Error term is a line (mx+b) so min/max is going to be at one end
 	// or the other.
 	const double startError = hypot(120.0 * xStartCoefs[0][5] * startT + 24.0 * xStartCoefs[0][4],
-									120.0 * yStartCoefs[0][5] * startT + 24.0 * yStartCoefs[0][4]);
+									120.0 * yStartCoefs[0][5] * startT + 24.0 * yStartCoefs[0][4],
+									120.0 * oStartCoefs[0][5] * startT + 24.0 * oStartCoefs[0][4]);
 	const double endError = hypot(120.0 * xEndCoefs[0][5] * endT + 24.0 * xEndCoefs[0][4],
-								  120.0 * yEndCoefs[0][5] * endT + 24.0 * yEndCoefs[0][4]);
+								  120.0 * yEndCoefs[0][5] * endT + 24.0 * yEndCoefs[0][4],
+								  120.0 * oEndCoefs[0][5] * endT + 24.0 * oEndCoefs[0][4]);
 
 	error = commonErrorTerm * std::max(startError, endError);
 }
@@ -433,14 +455,18 @@ bool getPathSegLength(std::vector<ArclengthAndTime> &arcLengthAndTime,
 		double &totalLength,
 		typename TrajectoryPerJoint<T>::const_iterator startXIt,
 		typename TrajectoryPerJoint<T>::const_iterator startYIt,
+		typename TrajectoryPerJoint<T>::const_iterator startOIt,
 		typename TrajectoryPerJoint<T>::const_iterator endXIt,
 		typename TrajectoryPerJoint<T>::const_iterator endYIt,
+		typename TrajectoryPerJoint<T>::const_iterator endOIt,
 		const double startTime,
 		const double endTime,
 		const double startXdot,
 		const double startYdot,
+		const double startOdot,
 		const double endXdot,
-		const double endYdot)
+		const double endYdot,
+		const double endOdot)
 {
 	const double midTime = (startTime + endTime) / 2.0;
 
@@ -463,17 +489,28 @@ bool getPathSegLength(std::vector<ArclengthAndTime> &arcLengthAndTime,
 		ROS_ERROR_STREAM("base_trajectory : could not sample mid yState at time " << midTime);
 		return false;
 	}
+
+	static typename Segment<T>::State oState;
+	auto midOIt = sample(trajectory[2], midTime, oState);
+	if (midOIt == trajectory[2].cend())
+	{
+		ROS_ERROR_STREAM("base_trajectory : could not sample mid oState at time " << midTime);
+		return false;
+	}
 	const double midXdot = xState.velocity[0];
 	const double midYdot = yState.velocity[0];
+	const double midOdot = rotationToLinear(oState.velocity[0]);
 
 	double estimate;
 	double error;
 
 	simpsonsRule(estimate, error,
 				 startTime, endTime,
-				 startXIt->getCoefs(), startYIt->getCoefs(),
-				 endXIt->getCoefs(), endYIt->getCoefs(),
-				 startXdot, startYdot, midXdot, midYdot, endXdot, endYdot);
+				 startXIt->getCoefs(), startYIt->getCoefs(), startOIt->getCoefs(),
+				 endXIt->getCoefs(), endYIt->getCoefs(), endOIt->getCoefs(),
+				 startXdot, startYdot, startOdot,
+				 midXdot, midYdot, midOdot,
+				 endXdot, endYdot, endOdot);
 	//ROS_INFO_STREAM_FILTER(&messageFilter, "simpsonsRule : startTime = " << startTime << " endTime = " << endTime << " error = " << error);
 
 	// If the error magnitude is less than epsilon,
@@ -489,18 +526,18 @@ bool getPathSegLength(std::vector<ArclengthAndTime> &arcLengthAndTime,
 	// Otherwise, split segment in half
 	// and recursively calculate the length of each half.
 	if (!getPathSegLength(arcLengthAndTime, trajectory, totalLength,
-						  startXIt, startYIt,
-						  midXIt, midYIt,
+						  startXIt, startYIt, startOIt,
+						  midXIt, midYIt, midOIt,
 						  startTime, midTime,
-						  startXdot, startYdot,
-						  midXdot, midYdot))
+						  startXdot, startYdot, startOdot,
+						  midXdot, midYdot, midOdot))
 		return false;
 	if (!getPathSegLength(arcLengthAndTime, trajectory, totalLength,
-						  midXIt, midYIt,
-						  endXIt, endYIt,
+						  midXIt, midYIt, midOIt,
+						  endXIt, endYIt, endOIt,
 						  midTime, endTime,
-						  midXdot, midYdot,
-						  endXdot, endYdot))
+						  midXdot, midYdot, midOdot,
+						  endXdot, endYdot, endOdot))
 		return false;
 	return true;
 }
@@ -511,6 +548,7 @@ bool getPathLength(Trajectory<T> &arcLengthTrajectory,
 {
 	static typename Segment<T>::State xState;
 	static typename Segment<T>::State yState;
+	static typename Segment<T>::State oState; // o for orientation
 
 	// Get initial conditions for getPathSegLength call
 	// for this particular segment
@@ -527,8 +565,17 @@ bool getPathLength(Trajectory<T> &arcLengthTrajectory,
 		ROS_ERROR("base_trajectory : could not sample initial yState 0");
 		return false;
 	}
+
+	auto startOIt = sample(trajectory[2], 0, oState);
+	if (startOIt == trajectory[2].cend())
+	{
+		ROS_ERROR("base_trajectory : could not sample initial oState 0");
+		return false;
+	}
+
 	const double startXdot = xState.velocity[0];
 	const double startYdot = yState.velocity[0];
+	const double startOdot = rotationToLinear(oState.velocity[0]);
 
 	const double endTime = trajectory[0].back().endTime();
 	auto endXIt = sample(trajectory[0], endTime, xState);
@@ -543,21 +590,27 @@ bool getPathLength(Trajectory<T> &arcLengthTrajectory,
 		ROS_ERROR("base_trajectory : could not sample initial yState end");
 		return false;
 	}
+	auto endOIt = sample(trajectory[2], endTime, oState);
+	if (endOIt == trajectory[2].cend())
+	{
+		ROS_ERROR("base_trajectory : could not sample initial oState end");
+		return false;
+	}
 
 	const double endXdot = xState.velocity[0];
 	const double endYdot = yState.velocity[0];
+	const double endOdot = rotationToLinear(oState.velocity[0]);
 
 	double totalLength = 0.0;
 
-	// Generate a list of time -> arclength pairs stored
-	// in arcLengthAndTime
+	// Generate a list of time -> arclength pairs stored in arcLengthAndTime
 	std::vector<ArclengthAndTime> arcLengthAndTime;
 	if (!getPathSegLength(arcLengthAndTime, trajectory, totalLength,
-			startXIt, startYIt,
-			endXIt, endYIt,
+			startXIt, startYIt, startOIt,
+			endXIt, endYIt, endOIt,
 			0, endTime, // start, end time
-			startXdot, startYdot,
-			endXdot, endYdot))
+			startXdot, startYdot, startOdot,
+			endXdot, endYdot, endOdot))
 		return false;
 
 	// Create a path between each of these length/time
@@ -679,6 +732,7 @@ bool subdivideLength(std::vector<double> &equalLengthTimes,
 // equalArcLengthTimes is a vector of times. Each entry is the time
 // of an equally-spaced sample from arcLengthTrajectory. That is
 // sample i is arclength d away from both samples i-1 and i+1 for all i.
+//#define VERBOSE_EVALUATE_TRAJECTORY
 template <class T>
 bool evaluateTrajectory(double &cost,
 						std::vector<double> &equalArcLengthTimes,
@@ -702,7 +756,7 @@ bool evaluateTrajectory(double &cost,
 		ROS_ERROR("evaluateTrajectory : subdivideLength() failed");
 		return false;
 	}
-#if 0
+#ifdef VERBOSE_EVALUATE_TRAJECTORY
 	for (size_t i = 0; i < equalArcLengthTimes.size(); i++)
 		ROS_INFO_STREAM("equalArcLengthTimes[" << i << "]=" << equalArcLengthTimes[i]);
 #endif
@@ -728,7 +782,13 @@ bool evaluateTrajectory(double &cost,
 		ROS_ERROR_STREAM("base_trajectory : evaluateTrajectory could not sample yState at time 0");
 		return false;
 	}
-	vTrans.push_back(hypot(xState.velocity[0], yState.velocity[0]));
+	it = sample(trajectory[1], 0, thetaState);
+	if (it >= trajectory[1].cend())
+	{
+		ROS_ERROR_STREAM("base_trajectory : evaluateTrajectory could not sample thetaState at time 0");
+		return false;
+	}
+	vTrans.push_back(hypot(xState.velocity[0], yState.velocity[0], rotationToLinear(thetaState.velocity[0])));
 
 	// Grab positions from each of the control points on the trajectory
 	// Since the trajectory is still in arbitrary-time that means every integer
@@ -811,18 +871,22 @@ bool evaluateTrajectory(double &cost,
 		}
 		thetaIt->sample(t, thetaState);
 
-		//ROS_INFO_STREAM("[" << i << "] = x: " << xState.position[0] << " y: " << yState.position[0]);
+#ifdef VERBOSE_EVALUATE_TRAJECTORY
+		ROS_INFO_STREAM("[" << i << "] = x: " << xState.position[0] << " y: " << yState.position[0] << " o: " << thetaState.position[0]);
+#endif
 		// Get orthogonal distance between spline position and
 		// line segment connecting the corresponding waypoints
 		distanceToPathMidpoint.push_back(
 				pointToLineSegmentDistance(controlPointPositions[seg], controlPointPositions[seg + 1],
 										   xState.position[0], yState.position[0]));
 		kinematics.emplace_back(kinematicConstraints.getKinematics(xState.position[0], yState.position[0]));
-#if 0
+#if 1
+#ifdef VERBOSE_EVALUATE_TRAJECTORY
 		ROS_INFO_STREAM_FILTER(&messageFilter, "pointToLineSegmentDistance = " << distanceToPathMidpoint.back() <<
 				" p1: " << controlPointPositions[seg][0] << "," << controlPointPositions[seg][1] <<
 				" p2: " << controlPointPositions[seg+1][0] << "," << controlPointPositions[seg+1][1] <<
 				" x: " << xState.position[0] << " y: " << yState.position[0]);
+#endif
 #endif
 
 		// Get curvature for this sample
@@ -831,8 +895,10 @@ bool evaluateTrajectory(double &cost,
 		const double pYdot = yState.velocity[0];
 		const double pYdotdot = yState.acceleration[0];
 #if 0
+#ifdef VERBOSE_EVALUATE_TRAJECTORY
 		ROS_INFO_STREAM("pXdot = " << pXdot << ", pXdotdot = " << pXdotdot << ", pYdot = " << pYdot << ", pYdotdot = " << pYdotdot
 				<< ", num = " << pXdot * pYdotdot - pYdot * pXdotdot << ", denom = " << pXdot * pXdot + pYdot * pYdot);
+#endif
 #endif
 		const double num   = pXdot * pYdotdot - pYdot * pXdotdot;
 		const double denom = pXdot * pXdot + pYdot * pYdot;
@@ -841,27 +907,39 @@ bool evaluateTrajectory(double &cost,
 			curvature = num / pow(denom, 3.0/2.0);
 		else
 			curvature = 0;
-		//ROS_INFO_STREAM("curvature = " << curvature);
+#if 0
+#ifdef VERBOSE_EVALUATE_TRAJECTORY
+		ROS_INFO_STREAM("num = " << num << " denom = " << denom << " curvature = " << curvature);
+#endif
+#endif
 
 		// First pass of vTrans limits by absolute max velocity
 		// and also velocity limited by max centripetal acceleration
-		// Assume rotational velocity is a hard constraint we have to hit
+		// Convert rotational velocity to linear velocity needed to
+		// achieve that rotation and include it as part of "translating" through
+		// a 3-d path
 		const auto &k = kinematics.back();
-		vTrans.push_back(k.getMaxVel() - fabs(thetaState.velocity[0]) * driveBaseRadius);
+		vTrans.push_back(k.getMaxVel());
 		if (curvature != 0) // avoid divide by 0 again
 			vTrans.back() = std::min(vTrans.back(), sqrt(k.getMaxCentAccel() / fabs(curvature)));
-		//ROS_INFO_STREAM("vTrans0[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
+#ifdef VERBOSE_EVALUATE_TRAJECTORY
+		ROS_INFO_STREAM("vTrans0[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
+#endif
 	}
 
-#if 0
+#if 1
+#ifdef VERBOSE_EVALUATE_TRAJECTORY
 	for (size_t i = 0; i < deltaS.size(); i++)
 		ROS_INFO_STREAM("deltaS[" << i << "]=" << deltaS[i]);
+#endif
 #endif
 	// Forward pass
 	for (size_t i = 1; i < vTrans.size(); i++)
 	{
 		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i - 1] * vTrans[i - 1] + 2.0 * kinematics[i].getMaxAccel() * deltaS[i]));
-		//ROS_INFO_STREAM("vTrans1[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
+#ifdef VERBOSE_EVALUATE_TRAJECTORY
+		ROS_INFO_STREAM("vTrans1[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
+#endif
 	}
 
 	// Backwards pass
@@ -879,13 +957,23 @@ bool evaluateTrajectory(double &cost,
 		ROS_ERROR_STREAM("base_trajectory : evaluateTrajectory could not sample yState at time 0");
 		return false;
 	}
-	vTrans.back() = hypot(xState.velocity[0], yState.velocity[0]);
+	it = sample(trajectory[2], equalArcLengthTimes.back(), thetaState);
+	if (it >= trajectory[2].cend())
+	{
+		ROS_ERROR_STREAM("base_trajectory : evaluateTrajectory could not sample thetaState at time 0");
+		return false;
+	}
+	vTrans.back() = hypot(xState.velocity[0], yState.velocity[0], rotationToLinear(thetaState.velocity[0]));
 
-	//ROS_INFO_STREAM("vTrans2[" << vTrans.size()-1 << "]=" << equalArcLengthTimes[vTrans.size()-1] << "," << vTrans[vTrans.size()-1]);
+#ifdef VERBOSE_EVALUATE_TRAJECTORY
+	ROS_INFO_STREAM("vTrans2[" << vTrans.size()-1 << "]=" << equalArcLengthTimes[vTrans.size()-1] << "," << vTrans[vTrans.size()-1]);
+#endif
 	for (size_t i = vTrans.size() - 2; i > 0; i--)
 	{
 		vTrans[i] = std::min(vTrans[i], sqrt(vTrans[i + 1] * vTrans[i + 1] + 2.0 * kinematics[i].getMaxDecel() * deltaS[i + 1]));
-		//ROS_INFO_STREAM("vTrans2[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
+#ifdef VERBOSE_EVALUATE_TRAJECTORY
+		ROS_INFO_STREAM("vTrans2[" << i << "]=" << equalArcLengthTimes[i] << "," << vTrans[i]);
+#endif
 	}
 
 	// Calculate arrival time at each of the equalLengthArcTimes distances
@@ -894,7 +982,9 @@ bool evaluateTrajectory(double &cost,
 	for (size_t i = 1; i < vTrans.size(); i++)
 	{
 		remappedTimes.push_back(remappedTimes.back() + (2.0 * deltaS[i]) / (vTrans[i - 1] + vTrans[i]));
-		//ROS_INFO_STREAM("remappedTimes[" << i << "]=" << remappedTimes[i]);
+#ifdef VERBOSE_EVALUATE_TRAJECTORY
+		ROS_INFO_STREAM("remappedTimes[" << i << "]=" << remappedTimes[i]);
+#endif
 	}
 
 	// Cost is total time to traverse the path plus a large
@@ -1002,21 +1092,28 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 			ROS_ERROR_STREAM("base_trajectory trajectoryToSplineResponseMsg : could not sample yState at time " << currentTime);
 			return;
 		}
-		//ROS_INFO_STREAM("xState.velocity[0] = " << xState.velocity[0] << ", " << "yState.velocity[0] = " << yState.velocity[0]);
+#if 0
+		ROS_INFO_STREAM("xState.velocity[0] = " << xState.velocity[0] << ", " << "yState.velocity[0] = " << yState.velocity[0]);
+#endif
 
 		// Get the angle of the velocity vector at spline time t, add the
 		// average vTrans velocity times dt tims the x & y components of the velocity vector
 		// to calculate the new displacement
-		const double velocityVectorAngle = atan2(yState.velocity[0], xState.velocity[0]);
-
 		const double dt = remappedTimes[i] - prevRemappedTime;
 		prevRemappedTime = remappedTimes[i];
+		double dx = 0;
+		double dy = 0;
+		if ((xState.velocity[0] != 0) || (yState.velocity[0] != 0))
+		{
+			const double velocityVectorAngle = atan2(yState.velocity[0], xState.velocity[0]);
+			dx = ((vTrans[i] + prevVTrans) / 2.0) * cos(velocityVectorAngle) * dt;
+			dy = ((vTrans[i] + prevVTrans) / 2.0) * sin(velocityVectorAngle) * dt;
+		}
 
-		prevX = pose.pose.position.x = prevX + ((vTrans[i] + prevVTrans) / 2.0) * cos(velocityVectorAngle) * dt;
-		prevY = pose.pose.position.y = prevY + ((vTrans[i] + prevVTrans) / 2.0) * sin(velocityVectorAngle) * dt;
+		prevX = pose.pose.position.x = prevX + dx;
+		prevY = pose.pose.position.y = prevY + dy;
 #if 0
-		ROS_INFO_STREAM("velocityVectorAngle = " << velocityVectorAngle
-				<< ", dt = " << dt
+		ROS_INFO_STREAM("dt = " << dt
 				<< ", vTrans[" << i << "]= " << vTrans[i]
 				<< ", prevVTrans = " << prevVTrans);
 		ROS_INFO_STREAM("prevX = " << prevX);
@@ -1025,21 +1122,16 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 
 		prevVTrans = vTrans[i];
 
-		auto orientationIt = sample(trajectory[2], equalArcLengthTimes[i], rotState);
-		if (orientationIt == trajectory[2].cend())
+		auto rotIt = sample(trajectory[2], equalArcLengthTimes[i], rotState);
+		if (rotIt == trajectory[2].cend())
 		{
-			ROS_ERROR_STREAM("base_trajectory trajectoryToSplineResponseMsg : could not sample orientationState at time " << currentTime);
+			ROS_ERROR_STREAM("base_trajectory trajectoryToSplineResponseMsg : could not sample rotState at time " << currentTime);
 			return;
 		}
 		geometry_msgs::Quaternion orientation;
 		tf2::Quaternion tf_orientation;
 		tf_orientation.setRPY(0, 0, rotState.position[0]);
-		orientation.x = tf_orientation.getX();
-		orientation.y = tf_orientation.getY();
-		orientation.z = tf_orientation.getZ();
-		orientation.w = tf_orientation.getW();
-
-		pose.pose.orientation = orientation;
+		pose.pose.orientation = tf2::toMsg(tf_orientation);
 		out_msg.path.poses.emplace_back(pose);
 	}
 	writeMatlabPath(out_msg.path.poses, 3, "Optimized Paths vs real time");
