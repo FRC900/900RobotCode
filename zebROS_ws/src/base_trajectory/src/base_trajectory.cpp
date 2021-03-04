@@ -254,6 +254,8 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 			points[i].velocities.push_back(length * sin(angle)); // y
 		if (points[i].velocities.size() == 2)
 			points[i].velocities.push_back(0.0); // theta TODO : what if there is rotation both before and after this waypoint?
+		                                                // probably just use the difference between mi[2] and mip1[2].
+														// Need a length and length scale for this case?
 
 #if 0
 		ROS_INFO_STREAM_FILTER(&messageFilter, "prevAngle " << prevAngle << " prevLength " << prevLength);
@@ -265,6 +267,11 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 		prevAngle = currAngle;
 		prevLength = currLength;
 	}
+	// TODO :
+	// if optimizing endpoint speed is allowed, do it here.  The code should just
+	// decompose the endpoint optParam speed into x and y components like the
+	// code above and push them onto points.back().velocities in order
+	// (don't forget to zero out theta)
 
 	// Guess for acceleration term is explained in
 	// http://www2.informatik.uni-freiburg.de/~lau/students/Sprunk2008.pdf
