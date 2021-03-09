@@ -25,9 +25,9 @@ sudo apt install -y git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libg
 cd
 mkdir realsense_src
 cd realsense_src
-wget https://github.com/IntelRealSense/librealsense/archive/v2.41.0.zip
-unzip v2.41.0.zip
-cd librealsense-2.41.0
+wget https://github.com/IntelRealSense/librealsense/archive/v2.42.0.zip
+unzip v2.42.0.zip
+cd librealsense-2.42.0
 sudo cp config/99-realsense-libusb.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && udevadm trigger
 mkdir build
@@ -100,6 +100,15 @@ sudo apt install -y \
 	ros-melodic-usb-cam \
 	ros-melodic-xacro \
 	terminator 
+
+# Patch catkin tools/pkg for faster builds
+cd /usr/lib/python2.7/dist-packages
+sudo patch -p0 < ~/2020Offseason/catkin_pkg.patch
+sudo patch -p0 < ~/2020Offseason/catkin_tools.patch
+
+# Fix bug in released version of catkin_tools - TODO check me
+sudo sed -i 's/ errno.EINTR/ errno.EINTR and e.errno != errno.EAGAIN/'  /usr/lib/python2.7/dist-packages/catkin_tools/execution/job_server.py
+
 
 # Install gazebo sim - commented out because we don't
 # want/need it taking up space on the Jetson
