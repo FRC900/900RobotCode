@@ -54,3 +54,6 @@ trt_graph.pb
 Initial Splines.m
 Optimized Paths vs real time.m
 Optimized Splines.m
+
+# VS code environment
+.vscode/
