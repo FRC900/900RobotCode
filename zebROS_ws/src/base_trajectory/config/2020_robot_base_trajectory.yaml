@@ -21,11 +21,14 @@ initial_delta_cost_epsilon: 0.05
 # RPROP minimum deltaCost value
 min_delta_cost_epsilon: 0.005
 
+# RPROP max consecutive inner loop iterations where change in cost is < delta cost before exiting
+max_delta_cost_exit_counter: 3
+
 # RPROP initial optimization value change
-initialDParam: 0.05
+initialDParam: 0.25
 
 # how far robot can diverge from straight-line path between waypoints (meters)
-path_distance_limit: 0.2
+path_distance_limit: 2
 
 # Max robot translational velocity (meters/sec)
 max_vel: 4.5
@@ -40,7 +43,7 @@ max_linear_dec: 2.5
 drive_base_radius: 0.40411
 
 # max centrepital acceleration (meters/sec^2)
-max_cent_acc: 3.5
+max_cent_acc: 8
 
 # Number of iterations of consecutive huge costs before 
 # moving on to the next variable

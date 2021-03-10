@@ -18,6 +18,7 @@
 #include "base_trajectory/kinematic_constraints.h"
 #include "base_trajectory/matlab_printer.h"
 #include "base_trajectory/message_filter.h"
+#include "base_trajectory/opt_params.h"
 #include "spline_util/spline_util.h"
 
 #include <ros/ros.h> //isn't included in this file yet, but not sure if it's in headers or not?
@@ -54,6 +55,11 @@ double pathDistBetweenArcLengthsEpsilon; // 1 cm
 // minimum value of deltaCost
 double initialDeltaCostEpsilon;
 double minDeltaCostEpsilon;
+
+// How many consecutive attemps at optimization the resulting cost is
+// change is less than the minimum before moving on to the next variable
+int maxDeltaCostExitCounter;
+
 
 // Initial change added to optimization parameter in the RPROP loop
 double initialDParam;
@@ -93,63 +99,6 @@ void printTrajectory(const Trajectory<T> &trajectory, const std::vector<std::str
 			ROS_INFO_STREAM(s.str());
 		}
 	}
-}
-
-// Optimization parameters - these are deltas added to
-// the original guess for the spline generation used
-// to improve the overall cost of following the spline
-struct OptParams
-{
-	double posX_; // offset from requested waypoint in x and y
-	double posY_;
-	double length_;       // These control the
-	double length_scale_; // curveature vs. velocity at waypoints
-
-	OptParams(void)
-		: posX_(0.)
-		, posY_(0.)
-		, length_(0.)
-		, length_scale_(0.75)
-	{
-	}
-
-	// Syntax to let callers use the values in this
-	// object as if they were an array. Since the optimizer
-	// loops over all member vars, this turns the code
-	// in there into a simple for() loop
-	size_t size(void) const
-	{
-		return 2;
-	}
-
-	double& operator[](size_t i)
-	{
-		if (i == 0)
-			return length_;
-		if (i == 1)
-			return length_scale_;
-#if 0
-		if (i == 0)
-			return posX_;
-		if (i == 1)
-			return posY_;
-		if (i == 2)
-			return length_;
-		if (i == 3)
-			return length_scale_;
-#endif
-		throw std::out_of_range ("out of range in OptParams operator[]");
-	}
-	friend std::ostream& operator<< (std::ostream& stream, const OptParams &optParams);
-};
-
-std::ostream& operator<< (std::ostream& stream, const OptParams &optParams)
-{
-	//stream << "posX_:" << optParams.posX_;
-	//stream << " posY_:" << optParams.posY_;
-	stream << "length_:" << optParams.length_;
-	stream << " length_scale_:" << optParams.length_scale_;
-	return stream;
 }
 
 // Helper function for finding 2nd derivative
@@ -204,7 +153,7 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 	// Paper says to make the coord system based off the
 	// tangent direction (perp & parallel to tangent)
 	// We'll see if that makes a difference
-	for (size_t i = 1; i < (points.size() - 1); i++)
+	for (size_t i = 0; i < points.size(); i++)
 	{
 		points[i].positions[0] += optParams[i].posX_;
 		points[i].positions[1] += optParams[i].posY_;
@@ -246,7 +195,7 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 		// at the waypoints.  Bigger than 1 ==> curvier path with
 		// higher speeds.  Less than 1 ==> tigher turns to stay
 		// closer to straight paths.
-		const double length = std::min(prevLength, currLength) * optParams[i].length_scale_ + optParams[i].length_;
+		const double length = std::min(prevLength, currLength) * optParams[i].lengthScale_ + optParams[i].length_;
 
 		// Don't overwrite requested input velocities
 		if (points[i].velocities.size() == 0)
@@ -254,10 +203,11 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 		if (points[i].velocities.size() == 1)
 			points[i].velocities.push_back(length * sin(angle)); // y
 		if (points[i].velocities.size() == 2)
-			points[i].velocities.push_back(0.0); // theta TODO : what if there is rotation both before and after this waypoint?
-		                                                // probably just use the difference between mi[2] and mip1[2].
+			points[i].velocities.push_back(fabs(mip1[2] - mi[2])); // theta TODO : Check me
 														// Need a length and length scale for this case?
 
+		points[i].velocities[0] += optParams[i].deltaVMagnitude_ * cos(angle + optParams[i].deltaVDirection_);
+		points[i].velocities[1] += optParams[i].deltaVMagnitude_ * sin(angle + optParams[i].deltaVDirection_);
 #if 0
 		ROS_INFO_STREAM_FILTER(&messageFilter, "prevAngle " << prevAngle << " prevLength " << prevLength);
 		ROS_INFO_STREAM_FILTER(&messageFilter, "currAngle " << currAngle << " currLength " << currLength);
@@ -268,11 +218,19 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 		prevAngle = currAngle;
 		prevLength = currLength;
 	}
-	// TODO :
-	// if optimizing endpoint speed is allowed, do it here.  The code should just
-	// decompose the endpoint optParam speed into x and y components like the
-	// code above and push them onto points.back().velocities in order
-	// (don't forget to zero out theta)
+	// Save some typing
+	auto &pb = points.back();
+	const auto opb = optParams.back();
+	// prevAngle after exiting the loop is the direction from the 2nd to last to the
+	// last point.  Decompose the optParms dv magnitude into x and y components
+	// and set it here.
+	// TODO - this overwrites the previous values, which might be weird if users specified
+	// a final velocity?
+	pb.velocities[0] = opb.deltaVMagnitude_ * cos(prevAngle + opb.deltaVDirection_); // x
+	pb.velocities[1] = opb.deltaVMagnitude_ * sin(prevAngle + opb.deltaVDirection_); // y
+	pb.velocities[2] = 0; // theta TODO : anything to do here?
+	//ROS_INFO_STREAM("pb.velocities = " << pb.velocities[0] << ", " << pb.velocities[1] << " opb.deltaVMagnitude_= " << opb.deltaVMagnitude_
+			//<< " opb.deltaVDirection_=" << opb.deltaVDirection_);
 
 	// Guess for acceleration term is explained in
 	// http://www2.informatik.uni-freiburg.de/~lau/students/Sprunk2008.pdf
@@ -1169,11 +1127,12 @@ template <class T>
 bool RPROP(
 		Trajectory<T> &bestTrajectory,
 		const std::vector<trajectory_msgs::JointTrajectoryPoint> &points,
+		const std::vector<OptParams> &initOptParams,
 		const std::vector<std::string> &jointNames)
 {
 	// initialize params to 0 offset in x, y and tangent
 	// length for all spline points
-	std::vector<OptParams> bestOptParams(points.size());
+	std::vector<OptParams> bestOptParams = initOptParams;
 	ROS_INFO_STREAM("RPROP initial params: ");
 	for (const auto &it: bestOptParams)
 		ROS_INFO_STREAM("     " << it);
@@ -1194,6 +1153,7 @@ bool RPROP(
 		return false;
 	}
 
+	unsigned int optimizationAttempts = 0;
 	double deltaCostEpsilon = initialDeltaCostEpsilon;
 
 	while (deltaCostEpsilon >= minDeltaCostEpsilon)
@@ -1205,7 +1165,7 @@ bool RPROP(
 		// Ignore the first and last point - can't
 		// optimize the starting and end position since
 		// those need to be hit exactly.
-		for (size_t i = 1; i < (bestOptParams.size() - 1); i++) // index of param optimized
+		for (size_t i = 0; i < bestOptParams.size(); i++) // index of point being optimized
 		{
 			int optimizationCounter = 0;
 			// OptParams is overloaded to act like an array
@@ -1216,16 +1176,28 @@ bool RPROP(
 				double deltaCost = std::numeric_limits<double>::max();
 				double currCost = bestCost;
 				double dparam = initialDParam;
+				// If a parameter is already maxed out, start this pass
+				// of the optimization by moving away from that maximum
+				// Without this, the initial call to IncrementVariable will
+				// fail and the code will never move values off their maximum
+				if (optParams[i].IsAtMax(j))
+					dparam *= -1;
 				// One exit criteria for the inner loop is if the cost
 				// stops improving by an appreciable amount while changing
 				// this one parameter. Track that here
-				while (deltaCost > deltaCostEpsilon)
+				// Break after several consecutive attempts stop improving
+				// the results by enough - this will let the code check both
+				// positive and negative directions
+				int deltaCostExitCounter = 0;
+				while (deltaCostExitCounter < maxDeltaCostExitCounter)
 				{
 					// Alter one optimization parameter
 					// and see how it changes the cost compared
 					// to the last iteration
+					if (!optParams[i].IncrementVariable(j, dparam))
+						break;
+
 					Trajectory<T> thisTrajectory;
-					optParams[i][j] += dparam;
 					if (!generateSpline(points, optParams, jointNames, thisTrajectory))
 					{
 						ROS_ERROR("base_trajectory_node : RPROP generateSpline() falied");
@@ -1238,6 +1210,7 @@ bool RPROP(
 						ROS_ERROR("base_trajectory_node : RPROP evaluateTrajectory() failed");
 						return false;
 					}
+					optimizationAttempts += 1;
 
 					// If cost is better than the best cost, record it and
 					// move on to optimizing the next parameter. It is possible
@@ -1270,7 +1243,16 @@ bool RPROP(
 					}
 					// Record values for next iteration
 					deltaCost = fabs(thisCost - currCost);
-					ROS_INFO_STREAM_FILTER(&messageFilter, "RPROP : i=" << i << " j=" << j << " bestCost=" << bestCost << " thisCost=" << thisCost << " currCost=" << currCost << " deltaCost=" << deltaCost << " deltaCostEpsilon=" << deltaCostEpsilon);
+					ROS_INFO_STREAM_FILTER(&messageFilter, "RPROP : optimizationAttempts=" << optimizationAttempts << " i=" << i << " j=" << j << " bestCost=" << bestCost << " thisCost=" << thisCost << " currCost=" << currCost << " deltaCost=" << deltaCost << " deltaCostEpsilon=" << deltaCostEpsilon);
+					if (deltaCost < deltaCostEpsilon)
+					{
+						deltaCostExitCounter += 1;
+					}
+					else
+					{
+						deltaCostExitCounter = 0;
+					}
+
 					currCost = thisCost;
 
 					if (thisCost > 150)
@@ -1292,6 +1274,7 @@ bool RPROP(
 		if (!bestCostChanged)
 			deltaCostEpsilon /= 1.75;
 	}
+	ROS_INFO_STREAM("RPROP optimizationAttempts=" << optimizationAttempts);
 	ROS_INFO_STREAM("RPROP best params: ");
 	for (const auto &it: bestOptParams)
 		ROS_INFO_STREAM("     " << it);
@@ -1394,11 +1377,33 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 		msg.points.back().velocities.push_back(0.);
 	}
 
+
 	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " : runOptimization = " << runOptimization);
 	kinematicConstraints.resetConstraints();
 	kinematicConstraints.addConstraints(msg.constraints);
 
-	std::vector<OptParams> optParams(msg.points.size());
+	std::vector<OptParams> optParams;
+	for (size_t i = 0; i < msg.path_offset_limit.size(); i++)
+	{
+		optParams.push_back(OptParams(msg.path_offset_limit[i].min_x,
+									  msg.path_offset_limit[i].max_x,
+									  msg.path_offset_limit[i].min_y,
+									  msg.path_offset_limit[i].max_y));
+	}
+	while (optParams.size() < msg.points.size())
+	{
+		optParams.push_back(OptParams());
+	}
+	if (msg.optimize_final_velocity)
+	{
+		optParams.back().setDeltaV(0, kinematicConstraints.globalKinematics().getMaxVel(), -M_PI, M_PI);
+	}
+	// Length and length scale aren't used for first and last point
+	// so disable those params here to speed up RPROP a bit - no point
+	// in trying to change variables which don't actually change the path
+	optParams[0].clearLengthLimits();
+	optParams.back().clearLengthLimits();
+
 	Trajectory<double> trajectory;
 	if (!generateSpline(msg.points, optParams, jointNames, trajectory))
 		return false;
@@ -1423,7 +1428,7 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 		fflush(stdout);
 
 		// Call optimization, get optimizated result in trajectory
-		if (!RPROP(trajectory, msg.points, jointNames))
+		if (!RPROP(trajectory, msg.points, optParams, jointNames))
 		{
 			ROS_ERROR("base_trajectory_node : RPROP() returned false");
 			return false;
@@ -1516,9 +1521,11 @@ int main(int argc, char **argv)
 
 	nh.param("initial_delta_cost_epsilon", initialDeltaCostEpsilon, 0.05);
 	nh.param("min_delta_cost_epsilon", minDeltaCostEpsilon, 0.005);
+	nh.param("max_delta_cost_exit_counter", maxDeltaCostExitCounter, 3);
 	ddr.registerVariable<double>("initial_delta_cost_epsilon", &initialDeltaCostEpsilon, "RPROP initial deltaCost value", 0, 1);
 	ddr.registerVariable<double>("min_delta_cost_epsilon", &minDeltaCostEpsilon, "RPROP minimum deltaCost value", 0, 1);
-	nh.param("initial_dparam", initialDParam, 0.05);
+	ddr.registerVariable<int>("max_delta_cost_exit_counter", &maxDeltaCostExitCounter, "RPROP inner iteration with low change in code exit criteria", 0, 10);
+	nh.param("initial_dparam", initialDParam, 0.25);
 	ddr.registerVariable<double>("initial_dparam", &initialDParam, "RPROP initial optimization value change", 0, 2);
 
 	double pathLimitDistance;
@@ -1527,11 +1534,11 @@ int main(int argc, char **argv)
 	double maxLinearDec;
 	double maxCentAcc;
 
-	nh.param("path_distance_limit", pathLimitDistance, 0.2);
+	nh.param("path_distance_limit", pathLimitDistance, 2.0);
 	nh.param("max_vel", maxVel, 4.5);
 	nh.param("max_linear_acc", maxLinearAcc, 2.5);
 	nh.param("max_linear_dec", maxLinearDec, 2.5);
-	nh.param("max_cent_acc", maxCentAcc, 3.5);
+	nh.param("max_cent_acc", maxCentAcc, 8.0);
 	kinematicConstraints.globalKinematics(Kinematics(maxLinearAcc, maxLinearDec, maxVel, maxCentAcc, pathLimitDistance));
 
 	ddr.registerVariable<double>("path_distance_limit", pathLimitDistanceGetCB, pathLimitDistanceSetCB, "how far robot can diverge from straight-line path between waypoints", 0, 20);
@@ -1552,6 +1559,7 @@ int main(int argc, char **argv)
 	tf2_ros::Buffer buffer(ros::Duration(10));
 	tf2_ros::TransformListener tf(buffer);
 	costmap = std::make_unique<costmap_2d::Costmap2DROS>("/costmap", buffer);
+
 	local_plan_pub = nh.advertise<nav_msgs::Path>("local_plan", 1000, true);
 
 	ros::spin();
