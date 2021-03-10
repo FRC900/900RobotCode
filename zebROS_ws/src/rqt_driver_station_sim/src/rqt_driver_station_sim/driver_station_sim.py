@@ -106,6 +106,7 @@ class DriverStationSim(Plugin):
         super(DriverStationSim, self).__init__(context)
         # Give QObjects reasonable names
         self.setObjectName('DriverStationSim')
+        self.stop_pub = False
 
         # Process standalone plugin command-line arguments
         from argparse import ArgumentParser
@@ -202,7 +203,7 @@ class DriverStationSim(Plugin):
         auto_mode_pub = rospy.Publisher("/auto/auto_mode", AutoMode, queue_size=1)
 
         self.auto_state_signal.connect(self.auto_state_slot)
-        rospy.Subscriber("/auto/auto_state", AutoState, self._auto_state_callback)
+        self.auto_state_sub = rospy.Subscriber("/auto/auto_state", AutoState, self._auto_state_callback)
         self.auto_state = 0
         self.display_auto_state()
 
@@ -218,7 +219,7 @@ class DriverStationSim(Plugin):
             auto_last = False
             practice_last = False
             auto_duration = 0
-            while(not rospy.is_shutdown()):
+            while not self.stop_pub and not rospy.is_shutdown():
                 #Robot State Values
                 enable = self._widget.enable_button_2.isChecked()
                 disable = self._widget.disable_button_2.isChecked()
@@ -294,6 +295,9 @@ class DriverStationSim(Plugin):
 
                 r.sleep()
 
+            match_pub.unregister()
+            auto_mode_pub.unregister()
+
         load_thread = threading.Thread(target=pub_data, args=(self,))
         load_thread.start()
         if context.serial_number() > 1:
@@ -303,6 +307,11 @@ class DriverStationSim(Plugin):
 
     def shutdown_plugin(self):
         # TODO unregister all publishers here
+        self.stop_pub = True
+
+        if self.auto_state_sub is not None:
+            self.auto_state_sub.unregister()
+
         pass
 
     def save_settings(self, plugin_settings, instance_settings):
