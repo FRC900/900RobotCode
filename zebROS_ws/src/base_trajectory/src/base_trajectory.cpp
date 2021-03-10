@@ -20,6 +20,7 @@
 #include "base_trajectory/message_filter.h"
 #include "spline_util/spline_util.h"
 
+#include <ros/ros.h> //isn't included in this file yet, but not sure if it's in headers or not?
 // Various tuning paramters - will be read as params
 // and exposed as dynamic reconfigure options
 //
@@ -1018,6 +1019,7 @@ bool evaluateTrajectory(double &cost,
 
 // Convert from Trajectory type into the correct output
 // message type
+ros::Publisher local_plan_pub;
 template <class T>
 void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Response &out_msg,
 								   const Trajectory<T> &trajectory,
@@ -1072,7 +1074,7 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 	}
 	out_msg.path.poses.clear();
 	out_msg.path.header.stamp = ros::Time::now();
-	out_msg.path.header.frame_id = "initial_pose";
+	out_msg.path.header.frame_id = "base_link";
 	typename Segment<T>::State xState;
 	typename Segment<T>::State yState;
 	typename Segment<T>::State rotState;
@@ -1083,7 +1085,7 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 	for (size_t i = 0; i < equalArcLengthTimes.size(); i++)
 	{
 		geometry_msgs::PoseStamped pose;
-		pose.header.frame_id = "initial_pose";
+		pose.header.frame_id = "base_link";
 		// Remapped times is wall-clock time
 		pose.header.stamp = out_msg.path.header.stamp + ros::Duration(remappedTimes[i]);
 		// equalArcLenghtTimes is arbitrary spline time
@@ -1148,6 +1150,7 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 		out_msg.path.poses.emplace_back(pose);
 	}
 	writeMatlabPath(out_msg.path.poses, 3, "Optimized Paths vs real time");
+	local_plan_pub.publish(out_msg.path);
 }
 
 // Algorithm to optimize parameters using the sign
@@ -1549,6 +1552,7 @@ int main(int argc, char **argv)
 	tf2_ros::Buffer buffer(ros::Duration(10));
 	tf2_ros::TransformListener tf(buffer);
 	costmap = std::make_unique<costmap_2d::Costmap2DROS>("/costmap", buffer);
+	local_plan_pub = nh.advertise<nav_msgs::Path>("local_plan", 1000, true);
 
 	ros::spin();
 }
