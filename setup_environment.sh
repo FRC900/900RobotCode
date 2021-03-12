@@ -74,6 +74,19 @@ sudo apt install -y \
     wget \
     xfonts-scalable
 
+#TensorRT requires a newer version of cmake than standard apt repos provide
+cd
+wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
+wget https://github.com/Kitware/CMake/releases/download/v3.19.6/cmake-3.19.6.tar.gz 
+tar -xf cmake-3.19.6.tar.gz
+cd cmake-3.19.6
+cmake -GNinja -DCMAKE_BUILD_TYPE:STRING=Release .
+ninja
+sudo ninja install
+sudo mv /usr/bin/cmake /usr/bin/cmake.old
+cd ..
+sudo rm -rf cmake-3.19.6*
+
 #sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 30 --slave /usr/bin/g++ g++ /usr/bin/g++-10
 #sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 90 --slave /usr/bin/g++ g++ /usr/bin/g++-7
 
@@ -372,6 +385,16 @@ sudo python -m pip install --ignore-installed .
 cd slim
 sudo python -m pip install --ignore-installed .
 
+cd
+git clone https://github.com/NVIDIA/TensorRT.git 
+cd TensorRT 
+git submodule update --init --recursive 
+mkdir build 
+cd build 
+cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF .. 
+ninja
+
+echo "export PATH=$PATH:/home/ubuntu/.local/bin:/home/ubuntu/tensorflow_workspace/tools:/usr/local/cuda/bin" >> /home/ubuntu/.bashrc
 echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre/linux/x86-64/shared:/usr/local/lib" >> ~/.bashrc
 
 # Set up Gold linker - speed up libPCL links
