@@ -53,7 +53,7 @@ void drawCircle(cv::Mat& image, const cv::Point &center, const double radius, co
 	cv::Point image_center = map_to_image(center);
 
 	// Now we can draw a filled circle
-	cv::circle(image, image_center, radius, color, CV_FILLED, 8);
+	cv::circle(image, image_center, radius, color, cv::FILLED, 8);
 }
 
 int main(int argc, char **argv)
