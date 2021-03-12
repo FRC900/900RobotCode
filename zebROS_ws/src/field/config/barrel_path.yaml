@@ -1,0 +1,10 @@
+field_dims:
+  width: 360
+  height: 180
+
+imagename: "barrel_path.png"
+
+obstacles:
+  - {type: "circle", center: [150, 60], radius: 20.0}
+  - {type: "circle", center: [240, 120], radius: 20.0}
+  - {type: "circle", center: [300, 60], radius: 20.0}
