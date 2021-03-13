@@ -20,7 +20,11 @@
 		<arg name="cam_yaw"              value="0.0" />
 	</include>
 
+	<!--
 	<arg name="marker_size" default="29.214" />
+	-->
+	<!-- 7 7/8" on 8.5x11 paper -->
+	<arg name="marker_size" default="20.0025" />
 	<arg name="max_new_marker_error" default="0.08" />
 	<arg name="max_track_error" default="0.2" />
 
