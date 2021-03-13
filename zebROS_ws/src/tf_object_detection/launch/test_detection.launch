@@ -1,6 +1,25 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="input_type" default="video" /> <!-- video, bag, or live_camera -->
+  <arg name="input_type"    default="video" /> <!-- video, bag, or live_camera -->
+  <arg name="zed_name"      default="zed_objdet" />
+  <arg name="zed_node_name" default="zed_objdet" />
+  <arg name="camera_model"  default="zed2" />
+
+  <include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml" if=$(eval input_type != 'video')>
+    <arg name="common_params_file"   value="$(find controller_node)/config/zed_objdet/common.yaml" />
+    <arg name="camera_params_file"   value="$(find controller_node)/config/zed_objdet/$(arg camera_model).yaml" />
+    <arg name="node_name"            value="$(arg zed_node_name)" />
+    <arg name="publish_urdf"         value="true" />
+    <arg name="camera_name"          value="$(arg zed_name)" />
+    <arg name="camera_model"         value="$(arg camera_model)" />
+    <arg name="base_frame"           value="base_link" />
+    <arg name="cam_pos_x"            value="0.0" />
+    <arg name="cam_pos_y"            value="0.0" />
+    <arg name="cam_pos_z"            value="0.0" />
+    <arg name="cam_roll"             value="0.0" />
+	<arg name="cam_pitch"            value="0.349" /> <!-- 20 degrees down -->
+    <arg name="cam_yaw"              value="1.570796" />
+  </include>
 
   <group ns="tf_object_detection">
     <rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />

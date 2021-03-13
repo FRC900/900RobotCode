@@ -1,2 +1,3 @@
-min_confidence: 0.5
-image_topic: "/c920/rect_image"
+min_confidence: 0.2
+#image_topic: "/c920/rect_image"
+image_topic: '/zed_objdetect/left/image_rect_color"

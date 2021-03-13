@@ -11,6 +11,13 @@
 		<arg name="publish_urdf"         value="true" />
 		<arg name="camera_name"          value="$(arg zed_name)" />
 		<arg name="camera_model"         value="$(arg camera_model)" />
+		<arg name="base_frame"           value="base_link" />
+		<arg name="cam_pos_x"            value="0.1588" />
+		<arg name="cam_pos_y"            value="-0.1226" />
+		<arg name="cam_pos_z"            value="0.605155" />
+		<arg name="cam_roll"             value="0.0" />
+		<arg name="cam_pitch"            value="0.0" />
+		<arg name="cam_yaw"              value="0.0" />
 	</include>
 
 	<arg name="marker_size" default="29.214" />
@@ -23,6 +30,7 @@
 	<arg name="cam_image_topic" default="/zed_ar/point_cloud/cloud_registered" />
 	<arg name="cam_info_topic" default="/zed_ar/left/camera_info" />
 	-->
+	<!-- TODO - would grayscale work? -->
 	<arg name="cam_image_topic" default="/zed_ar/left/image_rect_color" />
 	<arg name="cam_info_topic" default="/zed_ar/left/camera_info" />
 	<arg name="output_frame" default="/zed_ar_left_camera_frame" />
