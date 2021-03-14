@@ -21,7 +21,6 @@
 #include "base_trajectory/opt_params.h"
 #include "spline_util/spline_util.h"
 
-#include <ros/ros.h> //isn't included in this file yet, but not sure if it's in headers or not?
 // Various tuning paramters - will be read as params
 // and exposed as dynamic reconfigure options
 //
@@ -60,7 +59,6 @@ double minDeltaCostEpsilon;
 // change is less than the minimum before moving on to the next variable
 int maxDeltaCostExitCounter;
 
-
 // Initial change added to optimization parameter in the RPROP loop
 double initialDParam;
 
@@ -70,9 +68,13 @@ KinematicConstraints kinematicConstraints;
 
 MessageFilter messageFilter(true);
 
-int optimizationCounterMax = 500;
+int optimizationCounterMax;
 
 std::unique_ptr<costmap_2d::Costmap2DROS> costmap;
+
+std::string pathFrameID;
+std::unique_ptr<tf2_ros::Buffer>            tfBuffer;
+std::unique_ptr<tf2_ros::TransformListener> tfListener;
 
 template <class T>
 void printTrajectory(const Trajectory<T> &trajectory, const std::vector<std::string> &jointNames)
@@ -1032,7 +1034,7 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 	}
 	out_msg.path.poses.clear();
 	out_msg.path.header.stamp = ros::Time::now();
-	out_msg.path.header.frame_id = "base_link";
+	out_msg.path.header.frame_id = pathFrameID;
 	typename Segment<T>::State xState;
 	typename Segment<T>::State yState;
 	typename Segment<T>::State rotState;
@@ -1043,7 +1045,7 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 	for (size_t i = 0; i < equalArcLengthTimes.size(); i++)
 	{
 		geometry_msgs::PoseStamped pose;
-		pose.header.frame_id = "base_link";
+		pose.header.frame_id = pathFrameID;
 		// Remapped times is wall-clock time
 		pose.header.stamp = out_msg.path.header.stamp + ros::Duration(remappedTimes[i]);
 		// equalArcLenghtTimes is arbitrary spline time
@@ -1281,6 +1283,46 @@ bool RPROP(
 	return true;
 }
 
+// Transform the x,y, theta values encoded in positions from
+// a source reference frame (included in fromHeader) to a
+// different destination frame (in toFrame)
+bool transformTrajectoryPoint(std::vector<double> &positions,
+							  const std_msgs::Header &fromHeader,
+							  const std::string &toFrame)
+{
+	if (fromHeader.frame_id.size() == 0)
+		return true;
+
+	geometry_msgs::PoseStamped poseStamped;
+
+	//ROS_INFO_STREAM("From pose " << positions[0] << ", " << positions[1] << ", " << positions[2] << " in frame " << fromHeader.frame_id);
+	poseStamped.header = fromHeader;
+	poseStamped.pose.position.x = positions[0];
+	poseStamped.pose.position.y = positions[1];
+	poseStamped.pose.position.z = 0;
+	tf2::Quaternion quaternion;
+	quaternion.setRPY(0,0,positions[2]);
+	poseStamped.pose.orientation = tf2::toMsg(quaternion);
+
+	try
+	{
+		poseStamped = tfBuffer->transform(poseStamped, toFrame);
+	}
+	catch(...)
+	{
+		ROS_ERROR_STREAM("base_trajectory : Error transforming from " << fromHeader.frame_id << " to " << toFrame);
+		return false;
+	}
+	positions[0] = poseStamped.pose.position.x;
+	positions[1] = poseStamped.pose.position.y;
+	const tf2::Quaternion poseQuat(poseStamped.pose.orientation.x, poseStamped.pose.orientation.y, poseStamped.pose.orientation.z, poseStamped.pose.orientation.w);
+	double roll;
+	double pitch;
+	tf2::Matrix3x3(poseQuat).getRPY(roll, pitch, positions[2]);
+
+	//ROS_INFO_STREAM("To pose " << positions[0] << ", " << positions[1] << ", " << positions[2] << " in frame " << toFrame);
+	return true;
+}
 
 // input should be JointTrajectory[] custom message
 // Output wil be array of spline coefficents base_trajectory/Coefs[] for x, y, orientation,
@@ -1377,6 +1419,26 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 		msg.points.back().velocities.push_back(0.);
 	}
 
+	// cases where points are generated relative to other frames, e.g. from camera
+	// data or relative to a fixed map
+	// The second pass optionally applies a transform from a given frame back to base
+	// link. This would be useful if we want a particular point to be relative to a
+	// different part of the robot rather than the center - e.g. moving the intake
+	// over a game piece rather than running it over with the center of the robot
+	// Note first point should be 0,0,0, don't transform this since the starting
+	// point has to be robot-relative and at the robot's current position
+	std_msgs::Header header = msg.header;
+	header.frame_id = pathFrameID;
+	for (size_t i = 1; i < msg.points.size(); i++)
+	{
+		if (!transformTrajectoryPoint(msg.points[i].positions, msg.header, pathFrameID))
+			return false;
+		if (i < msg.point_frame_id.size())
+		{
+			if (!transformTrajectoryPoint(msg.points[i].positions, header, msg.point_frame_id[i]))
+				return false;
+		}
+	}
 
 	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " : runOptimization = " << runOptimization);
 	kinematicConstraints.resetConstraints();
@@ -1504,6 +1566,9 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "base_trajectory");
 	ros::NodeHandle nh;
 
+	tfBuffer = std::make_unique<tf2_ros::Buffer>();
+	tfListener = std::make_unique<tf2_ros::TransformListener>(*tfBuffer);;
+
 	ddynamic_reconfigure::DDynamicReconfigure ddr;
 	nh.param("seg_length_epsilon", segLengthEpsilon, 1.0e-4);
     ddr.registerVariable<double>("seg_length_epsilon", &segLengthEpsilon, "maximum error for each segment when parameterizing spline arclength", 0, .1);
@@ -1553,12 +1618,11 @@ int main(int argc, char **argv)
 	nh.param("optimization_counter_max", optimizationCounterMax, 500);
 	ddr.registerVariable<int>("optimization_counter_max", &optimizationCounterMax, "Iteration count for breaking out of optimization loop", 0, 500000);
 
+	nh.param("path_frame_id", pathFrameID, std::string("base_link"));
 	ddr.publishServicesTopics();
 	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", callback);
 
-	tf2_ros::Buffer buffer(ros::Duration(10));
-	tf2_ros::TransformListener tf(buffer);
-	costmap = std::make_unique<costmap_2d::Costmap2DROS>("/costmap", buffer);
+	costmap = std::make_unique<costmap_2d::Costmap2DROS>("/costmap", *tfBuffer);
 
 	local_plan_pub = nh.advertise<nav_msgs::Path>("local_plan", 1000, true);
 

@@ -1,4 +1,6 @@
+std_msgs/Header                        header
 trajectory_msgs/JointTrajectoryPoint[] points
+string[]                               point_frame_id
 PathOffsetLimit[]                      path_offset_limit
 bool                                   optimize_final_velocity
 Constraint[]                           constraints
