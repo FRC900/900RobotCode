@@ -6,6 +6,7 @@
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Imu.h>
 #include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 class FakeIMU
 {
@@ -13,26 +14,34 @@ class FakeIMU
 		FakeIMU(ros::NodeHandle &n)
 			: rd_{}
 			, gen_{rd_()}
-			, zCovariance_(0.02)
+			, zCovariance_(0.000001)
 			, sub_(n.subscribe("base_pose_ground_truth", 2, &FakeIMU::cmdVelCallback, this))
 			, pub_(n.advertise<sensor_msgs::Imu>("imu", 2))
 
 		{
 			n.param("zCovariance", zCovariance_, zCovariance_);
-			normalDistribution_ = std::normal_distribution<double>{0, zCovariance_ * zCovariance_};
+			normalDistribution_ = std::normal_distribution<double>{0, sqrt(zCovariance_)};
 		}
 
-		// Read Twist message, save it to be republished in the pubThread below
+		// Read Odom message add noise, republish
 		void cmdVelCallback(const nav_msgs::OdometryConstPtr &msgIn)
 		{
 			sensor_msgs::Imu msgOut;
-			msgOut.header = msgIn->header;
-			tf2::Quaternion myQuaternion;
-			myQuaternion.setRPY( 0, 0, msgIn->pose.pose.orientation.z + normalDistribution_(gen_) );
-			msgOut.orientation.x = myQuaternion.x();
-			msgOut.orientation.y = myQuaternion.y();
-			msgOut.orientation.z = myQuaternion.z();
-			msgOut.orientation.w = myQuaternion.w();
+			msgOut.header.stamp = msgIn->header.stamp;
+			msgOut.header.frame_id = "imu";
+			tf2::Quaternion myQuaternion(msgIn->pose.pose.orientation.x,
+										 msgIn->pose.pose.orientation.y,
+										 msgIn->pose.pose.orientation.z,
+										 msgIn->pose.pose.orientation.w);
+			tf2::Quaternion randomRot;
+			randomRot.setRPY(normalDistribution_(gen_),
+							 normalDistribution_(gen_),
+							 normalDistribution_(gen_));
+			msgOut.orientation = tf2::toMsg(randomRot * myQuaternion);
+			msgOut.orientation_covariance = { 0.000001, 0.0, 0.0,
+											  0.0, 0.000001, 0.0,
+											  0.0, 0.0, 0.000001};
+
 			pub_.publish(msgOut);
 		}
 

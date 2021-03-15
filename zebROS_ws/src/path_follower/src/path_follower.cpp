@@ -14,11 +14,11 @@ bool PathFollower::loadPath(const nav_msgs::Path &path)
 		return false;
 	}
 	path_length_ = 0;
+	vec_path_length_.clear();
 	vec_path_length_.push_back(0); // Path length at the first waypoint is 0
-	ROS_INFO_STREAM("0: (" << path_.poses[0].pose.position.x << ", " << path_.poses[0].pose.position.y << ")");
 	for (size_t i = 0; i < num_waypoints_ - 1; i++)
 	{
-		ROS_INFO_STREAM(i << ": (" << path_.poses[i + 1].pose.position.x << ", " << path_.poses[i + 1].pose.position.y << ", " << getYaw(path_.poses[i + 1].pose.orientation) << ")");
+		ROS_INFO_STREAM(i << ": (" << path_.poses[i].header.stamp.toSec() << ", " << path_.poses[i + 1].pose.position.x << ", " << path_.poses[i + 1].pose.position.y << ", " << getYaw(path_.poses[i + 1].pose.orientation) << ")");
 		double start_x = path_.poses[i].pose.position.x;
 		double start_y = path_.poses[i].pose.position.y;
 		double end_x = path_.poses[i + 1].pose.position.x;
@@ -65,7 +65,8 @@ geometry_msgs::Pose PathFollower::run(nav_msgs::Odometry odom, double &total_dis
 {
 	ROS_INFO_STREAM("----------------------------------------------");
 	ROS_INFO_STREAM("current_position = " << odom.pose.pose.position.x
-					<< " " << odom.pose.pose.position.y);
+					<< " " << odom.pose.pose.position.y
+					<< " " << getYaw(odom.pose.pose.orientation));
 
 	if (num_waypoints_ == 0)
 	{
@@ -234,8 +235,11 @@ geometry_msgs::Pose PathFollower::run(nav_msgs::Odometry odom, double &total_dis
 	*/
 
 	size_t index = 0; // index of point after current time
+	size_t now_index = 0;
 	for(; index < last_index; index++)
 	{
+		if(path_.poses[index].header.stamp < current_time + time_offset_)
+			now_index += 1;
 		if(path_.poses[index].header.stamp > current_time + time_offset_)
 			break;
 	}
@@ -255,8 +259,37 @@ geometry_msgs::Pose PathFollower::run(nav_msgs::Odometry odom, double &total_dis
 			getYaw(path_.poses[index].pose.orientation),
 			current_time.toSec());
 
-	ROS_INFO_STREAM("drive to coordinates: (" << final_x << ", " << final_y << ")");
-	ROS_INFO_STREAM("drive to orientation: " << final_orientation);
+	ROS_INFO_STREAM("drive to coordinates: " << index << " (" << final_x << ", " << final_y << ", " << final_orientation << ")");
+
+	double now_x;
+	double now_y;
+	double now_orientation;
+	if (now_index > 0)
+	{
+		now_x = interpolate(path_.poses[now_index - 1].header.stamp.toSec(),
+				path_.poses[now_index].header.stamp.toSec(),
+				path_.poses[now_index - 1].pose.position.x,
+				path_.poses[now_index].pose.position.x,
+				current_time.toSec());
+		now_y = interpolate(path_.poses[now_index - 1].header.stamp.toSec(),
+				path_.poses[now_index].header.stamp.toSec(),
+				path_.poses[now_index - 1].pose.position.y,
+				path_.poses[now_index].pose.position.y,
+				current_time.toSec());
+		now_orientation = interpolate(path_.poses[now_index - 1].header.stamp.toSec(),
+				path_.poses[now_index].header.stamp.toSec(),
+				getYaw(path_.poses[now_index - 1].pose.orientation),
+				getYaw(path_.poses[now_index].pose.orientation),
+				current_time.toSec());
+	}
+	else
+	{
+		now_x = path_.poses[0].pose.position.x;
+		now_y = path_.poses[0].pose.position.y;
+		now_orientation = getYaw(path_.poses[0].pose.orientation);
+	}
+
+	ROS_INFO_STREAM("now coordinates: " << now_index << " (" << now_x << ", " << now_y << ", " << now_orientation << ")");
 
 	// Convert back to quaternion
 	tf2::Quaternion q_final_tf = tf2::Quaternion(tf2Scalar(0), tf2Scalar(0), tf2Scalar(final_orientation));

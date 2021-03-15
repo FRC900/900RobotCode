@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   angles
   base_trajectory_msgs
   cmake_modules
+  costmap_2d
   ddynamic_reconfigure
   joint_trajectory_controller
   nav_msgs
@@ -106,7 +107,11 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/base_trajectory.cpp src/matlab_printer.cpp src/kinematic_constraints.cpp)
+add_executable(${PROJECT_NAME}_node
+   	src/base_trajectory.cpp
+   	src/kinematic_constraints.cpp
+   	src/matlab_printer.cpp
+   	src/opt_params.cpp )
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

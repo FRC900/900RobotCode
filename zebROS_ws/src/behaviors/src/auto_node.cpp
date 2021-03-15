@@ -92,13 +92,17 @@ std::atomic<bool> publish_autostate{true};
 void publishAutoState(ros::NodeHandle &nh)
 {
 #ifdef __linux__
+	// Run status thread at idle priority
+	struct sched_param sp{};
+	sched_setscheduler(0, SCHED_IDLE, &sp);
+
 	//give the thread a name
     pthread_setname_np(pthread_self(), "auto_state_pub");
 #endif
 
     //publish
 	ros::Rate r(10); //TODO config
-	ros::Publisher state_pub = nh.advertise<behavior_actions::AutoState>("auto_state", 1);
+	ros::Publisher state_pub = nh.advertise<behavior_actions::AutoState>("auto_state", 1, true);
 
 	publish_autostate = true;
 	while(publish_autostate) {
@@ -109,6 +113,7 @@ void publishAutoState(ros::NodeHandle &nh)
 	}
 	// Force one last message to go out before exiting
 	doPublishAutostate(state_pub);
+	r.sleep();
 }
 
 
@@ -130,6 +135,10 @@ void waitForActionlibServer(T &action_client, double timeout, const std::string 
 			ROS_ERROR_STREAM("Auto node - " << activity << " got preempted");
 			auto_stopped = true;
 		}
+		else if(state == "ABORTED") {
+			ROS_ERROR_STREAM("Auto node - " << activity << " was aborted / rejected");
+			auto_stopped = true;
+		}
 		//check timeout - note: have to do this before checking if state is SUCCEEDED since timeouts are reported as SUCCEEDED
 		else if (ros::Time::now().toSec() - request_time > timeout || //timeout from what this file says
 				(state == "SUCCEEDED" && !action_client.getResult()->success)) //server times out by itself
@@ -139,9 +148,11 @@ void waitForActionlibServer(T &action_client, double timeout, const std::string 
 			action_client.cancelGoalsAtAndBeforeTime(ros::Time::now());
 		}
 		else if (state == "SUCCEEDED") { //must have succeeded since we already checked timeout possibility
+			ROS_WARN_STREAM("Auto node - " << activity << " succeeded");
 			break; //stop waiting
 		}
 		else if (auto_stopped){
+			ROS_WARN_STREAM("Auto node - auto_stopped set");
 			action_client.cancelGoalsAtAndBeforeTime(ros::Time::now());
 		}
 		else { //if didn't succeed and nothing went wrong, keep waiting
@@ -367,7 +378,7 @@ int main(int argc, char** argv)
 		}
 	}
 
-	shutdownNode(DONE, auto_stopped? "Auto node - Autonomous actions stopped before completion" : "Auto node - Autonomous actions completed!");
+	shutdownNode(DONE, auto_stopped ? "Auto node - Autonomous actions stopped before completion" : "Auto node - Autonomous actions completed!");
 	return 0;
 }
 

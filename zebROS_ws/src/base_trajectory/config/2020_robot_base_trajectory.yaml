@@ -1,44 +1,90 @@
+# maximum error for each segment when parameterizing spline arclength (meters)
+seg_length_epsilon: .0001
 
-base_trajectory:
-    # maximum error for each segment when parameterizing spline arclength (meters)
-    seg_length_epsilon: .0001
+# equal-spaced arc length distance sampled from parameterized spline (meters)
+dist_between_arc_lengths: 0.03
+# error tolerance for above (meters)
+dist_between_arc_lengths_epsilon: 0.0025
 
-    # equal-spaced arc length distance sampled from parameterized spline (meters)
-    dist_between_arc_lengths: 0.03
-    # error tolerance for above (meters)
-    dist_between_arc_lengths_epsilon: 0.0025
+# multiplier to prev distance for picking midpoint of
+# next distance searched in arc length subdivision
+mid_time_inflation: 1.25
 
-    # multiplier to prev distance for picking midpoint of next distance searched in arc length subdivision
-    mid_time_inflation: 1.25
+# spacing of waypoints along final generated path (meters)
+path_dist_between_arc_lengths: 0.30
+# error tolerance for final path waypoint spacing (meters)
+path_dist_between_arc_lengths_epsilon: 0.01
 
-    # spacing of waypoints along final generated path (meters)
-    path_dist_between_arc_lengths: 0.30
-    # error tolerance for final path waypoint spacing (meters)
-    path_dist_between_arc_lengths_epsilon: 0.01
+# RPROP initial deltaCost value
+initial_delta_cost_epsilon: 0.05
 
-    # RPROP initial deltaCost value
-    initial_delta_cost_epsilon: 0.05
+# RPROP minimum deltaCost value
+min_delta_cost_epsilon: 0.005
 
-    # RPROP minimum deltaCost value
-    min_delta_cost_epsilon: 0.005
+# RPROP max consecutive inner loop iterations where change in cost is < delta cost before exiting
+max_delta_cost_exit_counter: 3
 
-    # RPROP initial optimization value change
-    initialDParam: 0.05
+# RPROP initial optimization value change
+initialDParam: 0.25
 
-    # how far robot can diverge from straight-line path between waypoints (meters)
-    path_distance_limit: 0.2
+# how far robot can diverge from straight-line path between waypoints (meters)
+path_distance_limit: 2
 
-    # Max robot translational velocity (meters/sec)
-    max_vel: 4.5
+# Max robot translational velocity (meters/sec)
+max_vel: 4.5
 
-    # Maximum robot linear acceleration (meters/sec^2)
-    max_linear_acc: 2.5
+# Maximum robot linear acceleration (meters/sec^2)
+max_linear_acc: 2.5
 
-    # Maximum robot linear deceleration (meters/sec^2)
-    max_linear_dec: 2.5
+# Maximum robot linear deceleration (meters/sec^2)
+max_linear_dec: 2.5
 
-    # Robot wheel radius (meters)
-    wheel_radius: 0.0381
+# Robot drivebase radius (meters)
+drive_base_radius: 0.40411
+
+# max centrepital acceleration (meters/sec^2)
+max_cent_acc: 8
+
+# what frame to generate the path coords in
+path_frame_id: "base_link"
+
+# Number of iterations of consecutive huge costs before 
+# moving on to the next variable
+optimization_counter_max: 500
+
+costmap:
+    footprint:
+        - [-0.5, 0.5]
+        - [-0.5, -0.5]
+        - [0.5, -0.5]
+        - [0.5, 0.5]
+    global_frame: map
+    robot_base_frame: base_link
+    update_frequency: 5.0
+    publish_frequency: 2.0
+    transform_tolerance: 0.5
+    rolling_window: false # use absolute position in static map
+  # These should be set when the static layer loads a map
+  # width: 5.0
+  # height: 5.0
+  # resolution: 0.05
+  # origin_x: 2.0
+  # origin_y: 2.0
   
-    # max centrepital acceleration (meters/sec^2)
-    max_cent_acc: 3.5
+    # Static layer comes from the map topic.  Inflation increases
+    # obstacle sizes by robot footprint to detect collisions based
+    # on robot size
+    plugins:
+       - {name: static_layer,    type: "costmap_2d::StaticLayer"}
+      #- {name: obstacle_layer,  type: "costmap_2d::ObstacleLayer"} # For dynamic obstacle detection
+       - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+
+    inflation_layer:
+        enabled:              true
+        cost_scaling_factor:  10.0  # exponential rate at which the obstacle cost drops off (default: 10)
+        inflation_radius:     0.75  # max. distance from an obstacle at which costs are incurred for planning paths.
+
+    static_layer:
+        enabled: true
+        map_topic: /path_follower/map
+

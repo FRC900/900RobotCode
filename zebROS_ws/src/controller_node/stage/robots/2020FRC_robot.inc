@@ -14,9 +14,11 @@ define normal_camera fiducial
 
 define omnidir_robot position
 (
+  update_interval 5
   pose [ 0.0 0.0 0.0 0.0 ]
 
-  odom_error [ 0.03 0.03 999999 999999 999999 0.02 ]
+  localization "odom"
+  odom_error [ 0.03 0.03 0.0 0.02 ]
 
   size [ 0.75 0.75 0.40 ]
   origin [ 0.0 0.0 0.0 0.0 ]
@@ -25,6 +27,8 @@ define omnidir_robot position
 
   # kinematics
   drive "omni"
+  #velocity_bounds [-5.5 5.5 -5.5 5.5 0 0 -90 90]
+  #acceleration_bounds[-4.5 4.5 -4.5 4.5 0 0 -90 90]
 
   # spawn sensors
   normal_camera(pose [ 0.1 -0.1 1.65 0.0 ])

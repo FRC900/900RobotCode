@@ -23,3 +23,6 @@ target_link_libraries( main ${OpenCV_LIBS} )
 
 add_executable( 2020field 2020field.cpp )
 target_link_libraries( 2020field ${OpenCV_LIBS} )
+
+add_executable( 2021emptyfield 2021emptyfield.cpp )
+target_link_libraries( 2021emptyfield ${OpenCV_LIBS} )

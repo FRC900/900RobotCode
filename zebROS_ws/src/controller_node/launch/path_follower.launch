@@ -1,11 +1,23 @@
 <?xml version="1.0"?>
 <launch>
+		<!-- allow us to hook up sim odom topics for stage sim testing -->
+		<arg name="odom_topic" default="/frcrobot_jetson/swerve_drive_controller/odom"/>
 
         <group ns="path_follower">
             <rosparam file="$(find path_follower)/config/path_follower_config.yaml" command="load"/>
 
-            <node name="path_follower_server" pkg="path_follower" type="path_follower_server" output="screen"/>
-            <node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" > </node>
+            <node name="path_follower_server" pkg="path_follower" type="path_follower_server" output="screen">
+				<param name="odom_topic" value="$(arg odom_topic)"/>
+			</node>
+			<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/2018FRC_field.yaml" output="screen">
+				<param name="frame_id" value="/map"/>
+			</node>
+
+			<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" >
+				<rosparam file="$(find base_trajectory)/config/2020_robot_base_trajectory.yaml" command="load"/>
+		   	</node>
+			<!-- TODO - remove me after pf localization publishes this -->
+			<node pkg="tf2_ros" type="static_transform_publisher" name="link_odomtomap" args="2.5 2.5 0 0 0 0 1 map odom" />
             <node name="path_follower_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
                 <param name="orient_topic" value="orient_pid/orient_command" />
                 <param name="x_topic" value="x_position_pid/x_command" />
@@ -52,9 +64,9 @@
 
             <node name="orient_pid" pkg="pid" type="controller" >
                 <param name="node_name" value="orient_pid" />
-                <param name="Kp" value="-1.0" />
-                <param name="Ki" value="0.0" />
-                <param name="Kd" value="0.0" />
+                <param name="Kp" value="-13" />
+                <param name="Ki" value="0" />
+                <param name="Kd" value="0" />
                 <param name="upper_limit" value="8" />
                 <param name="lower_limit" value="-8" />
                 <param name="windup_limit" value="10" />

@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
 import cv2
-import glob
 import numpy as np
-import os
+from os.path import join
 import rospkg
-import sys
 import tensorflow as tf
 
 import rospy
@@ -17,24 +15,17 @@ import uuid
 
 bridge = CvBridge()
 
-category_index, detection_graph, sess, pub, pub_debug = None, None, None, None, None
-min_confidence = 0.5
+category_index, detection_graph, sess, pub, pub_debug, vis = None, None, None, None, None, None
+min_confidence = 0.1
 
 # This is needed since the modules are in a subdir of
 # the python script
 # These are 'borrowed' from the tensorflow models object
 # detection directory
-from os.path import dirname, abspath, join
-rospack = rospkg.RosPack()
-THIS_DIR = os.path.join(rospack.get_path('tf_object_detection'), 'src/')
-CODE_DIR = abspath(join(THIS_DIR, 'modules'))
-sys.path.append(CODE_DIR)
 from object_detection.utils import ops as utils_ops
 from object_detection.utils import label_map_util
-from object_detection.utils import visualization_utils as vis_util
-
-sub_topic = "/c920/rect_image"
-pub_topic = "obj_detection_msg"
+#from object_detection.utils import visualization_utils as vis_util
+from visualization import BBoxVisualization
 
 # Takes a image, and using the tensorflow session and graph
 # provided, runs inference on the image. This returns a list
@@ -107,11 +98,14 @@ def run_inference_for_single_image(msg):
     pub.publish(detection)
 
     #hard_neg_mine(output_dict, image_np)
+    #mine_undetected_power_cells(output_dict, image_np)
 
-    vis(output_dict, image_np)
+    visualize(output_dict, image_np)
 
-def vis(output_dict, image_np):
+def visualize(output_dict, image_np):
     if pub_debug.get_num_connections() > 0:
+        '''
+        Much slower version using tf vis_util
         vis_util.visualize_boxes_and_labels_on_image_array(
                 image_np,
                 output_dict['detection_boxes'],
@@ -124,24 +118,62 @@ def vis(output_dict, image_np):
                 max_boxes_to_draw=50,
                 min_score_thresh=min_confidence,
                 groundtruth_box_visualization_color='yellow')
+        '''
+        num_detections = output_dict['num_detections']
+        vis.draw_bboxes(image_np,
+                        output_dict['detection_boxes'][:num_detections],
+                        output_dict['detection_scores'][:num_detections],
+                        output_dict['detection_classes'][:num_detections],
+                        min_confidence)
         pub_debug.publish(bridge.cv2_to_imgmsg(image_np, encoding="rgb8"))
 
 
+# In cases where a known number of power cells are visible in an image
+# we can auto-detect cases where the wrong number of cells are detected
+# save those images to use as examples for the next round of training
+def mine_undetected_power_cells(output_dict, image_np):
+    save_file = False
+    if output_dict['num_detections'] == 0:
+        save_file = True
+    else:
+        for i in range(output_dict['num_detections']):
+            if str(category_index.get(output_dict['detection_classes'][i])['name']) != "power_cell":
+                if float(output_dict['detection_scores'][i]) > min_confidence:
+                    rospy.loginfo(str(category_index.get(output_dict['detection_classes'][i])['name']))
+                    rospy.loginfo("Hard negative")
+                    save_file = True
+                    break
+ 
+            elif float(output_dict['detection_scores'][i]) < min_confidence:
+                rospy.loginfo("Missing power cell")
+                save_file = True
+                break
+
+    if save_file:
+        filename = 'powercell_' + str(uuid.uuid4()) + '.png'
+        rospy.loginfo("saving " + filename)
+        cv2.imwrite(filename, cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR))
+
+
+# If objects are detected in videos which have none of the objects
+# actually showing up, the detection code failed. Save those images
+# to feed back into the next round of training
 def hard_neg_mine(output_dict, image_np):
     for i in range(output_dict['num_detections']):
         obj = TFObject()
         obj.confidence = output_dict['detection_scores'][i]
         if obj.confidence >= min_confidence:
-
             filename = 'hard_neg_' + str(uuid.uuid4()) + '.png'
-            print "saving " + filename
+            rospy.loginfo("saving " + filename)
             cv2.imwrite(filename, cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR))
             continue
 
 
 def main():
-    global THIS_DIR
-    global detection_graph, sess, pub, category_index, pub_debug, sub_topic, min_confidence
+    global detection_graph, sess, pub, category_index, pub_debug, min_confidence, vis
+
+    sub_topic = "/c920/rect_image"
+    pub_topic = "obj_detection_msg"
 
     rospy.init_node('tf_object_detection', anonymous = True)
 
@@ -151,13 +183,16 @@ def main():
     if rospy.has_param('image_topic'):
         sub_topic = rospy.get_param('image_topic')
 
-
     # Path to frozen detection graph. This is the actual model that is used for the object detection.
     # This shouldn't need to change
-    PATH_TO_FROZEN_GRAPH = os.path.join(THIS_DIR, 'frozen_inference_graph.pb')
+    rospack = rospkg.RosPack()
+    THIS_DIR = join(rospack.get_path('tf_object_detection'), 'src/')
+    PATH_TO_FROZEN_GRAPH = join(THIS_DIR, 'frozen_inference_graph.pb')
+    #PATH_TO_FROZEN_GRAPH = join(THIS_DIR, 'trt_ssd_mobilenet_v2.pb')
+    rospy.logwarn("Loading graph from " + str(PATH_TO_FROZEN_GRAPH))
 
     # List of the strings that is used to add correct label for each box.
-    PATH_TO_LABELS = os.path.join(THIS_DIR, '2020Game_label_map.pbtxt')
+    PATH_TO_LABELS = join(THIS_DIR, '2020Game_label_map.pbtxt')
 
     # Init TF detection graph and session
     detection_graph = tf.Graph()
@@ -169,18 +204,25 @@ def main():
         tf.import_graph_def(od_graph_def, name='')
 
     with detection_graph.as_default():
-        sess = tf.Session(graph=detection_graph)
+        config = tf.compat.v1.ConfigProto()
+        config.gpu_options.allow_growth = True
+        sess = tf.Session(graph=detection_graph, config=config)
+    print("Past Session")
     category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
+    category_dict = {0: 'background'}
+    for k in category_index.keys():
+        category_dict[k] = category_index[k]['name']
+    vis = BBoxVisualization(category_dict)
 
     sub = rospy.Subscriber(sub_topic, Image, run_inference_for_single_image)
-    pub = rospy.Publisher(pub_topic, TFDetection, queue_size=10)
-    pub_debug = rospy.Publisher("debug_image", Image, queue_size=10)
+    pub = rospy.Publisher(pub_topic, TFDetection, queue_size=2)
+    pub_debug = rospy.Publisher("debug_image", Image, queue_size=1)
 
     try:
         rospy.spin()
     except KeyboardInterrupt:
         print("Shutting down")
-    cv2.destroyAllWindows()
+    #cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()

@@ -18,6 +18,7 @@
 
 		<param name="two_d_mode" value="true" />
 		<param name="publish_tf" value="true" />
+		<param name="reset_on_time_jump" value="true" />
 
 		<!--
 			Sensor Configuration:
@@ -63,7 +64,8 @@
 		<param name="odom1_differential" value="false" />
 		<param name="odom1_relative" value="true" />
 -->
-		<!-- imu0 (NavX via Rio MXP): roll, pitch, yaw, x-acc, y-acc, z-acc -->
+		<!-- imu0 (IMU attached to Jetson via USB): 
+			 roll, pitch, yaw, x-acc, y-acc, z-acc -->
 		<!-- probably won't use roll or pitch but no harm fusing them -->
 		<param name="imu0" value="/imu/zeroed_imu" />
 		<rosparam param="imu0_config"> [false, false, false,

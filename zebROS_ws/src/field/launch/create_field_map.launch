@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+  <group ns="create_field_map">
+    <rosparam command="load" file="$(find field)/config/slalom_path.yaml" />
+    <node name="create_field_map" pkg="field" type="create_field_map" output= "screen">
+    </node>
+  </group>
+</launch>

@@ -1,43 +1,43 @@
+<?xml version="1.0"?>
 <launch>
-	  <arg name="resolution" default="3" />
-	  <arg name="frame_rate" default="30" />
-	  <arg name="quality" default="3" />
-	  <arg name="brightness" default="-1" />
-	  <arg name="contrast" default="5" />
-	  <arg name="hue" default="6" />
-	  <arg name="saturation" default="-1" />
-	  <arg name="gain" default="-1" />
-	  <arg name="exposure" default="-1" />
-	  <arg name="whitebalance" default="-1" />
-	  <arg name="name" default="zed_goal" />
+	<arg name="zed_name"      default="zed_ar" />
+	<arg name="zed_node_name" default="zed_ar" />
+	<arg name="camera_model"  default="zed2" />
 
-	  <arg name="record" default="False" />
-	  <arg name="down_sample" default="False" />
-	  <arg name="sub_rate" default="10" />
-	  <arg name="pub_rate" default="1" />
+	<include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml">
+		<arg name="common_params_file"   value="$(find controller_node)/config/zed_ar/common.yaml" />
+		<arg name="camera_params_file"   value="$(find controller_node)/config/zed_ar/$(arg camera_model).yaml" />
+		<arg name="node_name"            value="$(arg zed_node_name)" />
+		<arg name="publish_urdf"         value="true" />
+		<arg name="camera_name"          value="$(arg zed_name)" />
+		<arg name="camera_model"         value="$(arg camera_model)" />
+		<arg name="base_frame"           value="base_link" />
+		<arg name="cam_pos_x"            value="0.1588" />
+		<arg name="cam_pos_y"            value="-0.1226" />
+		<arg name="cam_pos_z"            value="0.605155" />
+		<arg name="cam_roll"             value="0.0" />
+		<arg name="cam_pitch"            value="0.0" />
+		<arg name="cam_yaw"              value="0.0" />
+	</include>
 
-	  <group ns="$(arg name)">
-	    <include file="$(find zed_wrapper)/launch/zed_camera.launch">
-	      <!--<arg name="zed_name" value="$(arg name)" />-->
-	      <arg name="resolution" value="$(arg resolution)" />
-	      <arg name="frame_rate" value="$(arg frame_rate)" />
-	      <arg name="quality" value="$(arg quality)" />
-	      <arg name="brightness" value="$(arg brightness)" />
-	      <arg name="contrast" value="$(arg contrast)" />
-	      <arg name="hue" value="$(arg hue)" />
-	      <arg name="saturation" value="$(arg saturation)" />
-	      <arg name="gain" value="$(arg gain)" />
-	      <arg name="exposure" value="$(arg exposure)" />
-	      <arg name="whitebalance" value="$(arg whitebalance)" />
-	    </include>
-	</group>
-
-	<arg name="marker_size" default="4.4" />
+	<!--
+	<arg name="marker_size" default="29.214" />
+	-->
+	<!-- 7 7/8" on 8.5x11 paper -->
+	<arg name="marker_size" default="20.0025" />
 	<arg name="max_new_marker_error" default="0.08" />
 	<arg name="max_track_error" default="0.2" />
-	<arg name="cam_image_topic" default="/zed_goal/left/image_rect_color" />
-	<arg name="cam_info_topic" default="/zed_goal/left/camera_info" />
+
+	<!--
+	<arg name="cam_image_topic" default="/zed_ar/left/image_rect_color" />
 	<arg name="output_frame" default="/zed_left_camera_optical_frame" />
+	<arg name="cam_image_topic" default="/zed_ar/point_cloud/cloud_registered" />
+	<arg name="cam_info_topic" default="/zed_ar/left/camera_info" />
+	-->
+	<!-- TODO - would grayscale work? -->
+	<arg name="cam_image_topic" default="/zed_ar/left/image_rect_color" />
+	<arg name="cam_info_topic" default="/zed_ar/left/camera_info" />
+	<arg name="output_frame" default="/zed_ar_left_camera_frame" />
 
 	<node name="ar_track_alvar" pkg="ar_track_alvar" type="individualMarkersNoKinect" respawn="false" output="screen">
 		<param name="marker_size"           type="double" value="$(arg marker_size)" />
@@ -49,12 +49,16 @@
 		<remap from="camera_info"   to="$(arg cam_info_topic)" />
 	</node>
 
-	<node pkg="tf2_ros" type="static_transform_publisher" name="link_cameratobase" args="-.19 .23 -.06 0 0 0 1 zed_left_camera_optical_frame base_frame" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="link_odomtomap" args="0 0 0 0 0 0 1 map odom" />
+	<!--
+	<node pkg="tf2_ros" type="static_transform_publisher" name="link_cameratobase" args="0 0 0 0 0 0 1 zed_camera_center base_link" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="link_cameratobase" args="0 0 0 0 0 0 1 odom map" />
 
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetoarmfront" args="0 0 0.8 0 0 0 1 base_frame arm_frame" />
 
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetoarmback" args="0 0 -0.8 0 0 0 1 base_frame arm_frame" />
 
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_artoexchange" args="0 -1.17 0 0 0 0 1 ar_marker_0 exchange_frame" />
+	-->
 
 </launch>

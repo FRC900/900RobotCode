@@ -1785,7 +1785,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		if (can_ctre_mc_local_hardwares_[i])
 		{
 			if (can_ctre_mc_is_talon_fx_[i])
-				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
+				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonFX>(can_ctre_mc_can_ids_[i]));
 			else if (can_ctre_mc_is_talon_srx_[i])
 				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
 			else

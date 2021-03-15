@@ -12,6 +12,7 @@ elif [[ ! $ROS_ROOT = "$HOME/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/r
 fi
 
 catkin config --profile cross -x _isolated --install --blacklist \
+	base_trajectory \
 	demo_tf_node \
 	field_obj_tracker \
 	goal_detection \

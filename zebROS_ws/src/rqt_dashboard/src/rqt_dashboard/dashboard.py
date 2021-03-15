@@ -154,7 +154,7 @@ class Dashboard(Plugin):
 
 
     def autoStateCallback(self, msg):
-        self.autoStateSignal.emit(int(msg.id));
+        self.autoStateSignal.emit(int(msg['id']))
 
     def autoStateSlot(self, state):
         #self.lock.acquire()
@@ -181,7 +181,7 @@ class Dashboard(Plugin):
 
 
     def nBallsCallback(self, msg):
-        self.nBallsSignal.emit(int(msg.data))
+        self.nBallsSignal.emit(int(msg['data']))
 
     def nBallsSlot(self, state):
         if(self.n_balls != state):
@@ -206,13 +206,13 @@ class Dashboard(Plugin):
                 display.setText("Couldn't read # balls")
 
     def shooterInRangeCallback(self, msg):
-        self.shooterInRangeSignal.emit(bool(msg.data))
+        self.shooterInRangeSignal.emit(bool(msg['data']))
 
     def shooterInRangeSlot(self, in_range):
         self.shooter_in_range = in_range #set here so that it's set synchronously with the other slots
 
     def turretInRangeCallback(self, msg):
-        self.turretInRangeSignal.emit(bool(msg.data))
+        self.turretInRangeSignal.emit(bool(msg['data']))
         self.updateInRange()
 
     def turretInRangeSlot(self, in_range):
@@ -314,10 +314,19 @@ class Dashboard(Plugin):
             r.sleep()
 
     def shutdown_plugin(self):
-        self.auto_state_sub.unregister()
-        self.n_balls_sub.unregister()
-        self.shooter_in_range_sub.unregister()
-        self.turret_in_range_sub.unregister()
+
+        if self.auto_state_sub is not None:
+            self.auto_state_sub.unregister()
+        
+        if self.n_balls_sub is not None:
+            self.n_balls_sub.unregister()
+        
+        if self.shooter_in_range_sub is not None:
+            self.shooter_in_range_sub.unregister()
+
+        if self.turret_in_range_sub is not None:
+            self.turret_in_range_sub.unregister()
+        
         self.client.close()
 
 
@@ -337,4 +346,3 @@ class Dashboard(Plugin):
         # This will enable a setting button (gear icon) in each dock widget title bar
         # Usually used to open a modal configuration dialog
         pass
-

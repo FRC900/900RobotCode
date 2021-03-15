@@ -1,0 +1,465 @@
+# ros_control_boilerplate Settings -----------------------
+# Settings for ros_control control loop
+generic_hw_control_loop:
+  loop_hz: 100
+  cycle_time_error_threshold: 0.01
+    #some processes have lower frequencies than the main control loop
+  robot_iteration_hz: 20
+  joystick_read_hz: 50
+  match_data_read_hz: 2
+  robot_controller_read_hz: 20
+
+
+# Settings for ros_control hardware interface
+# Map a name for each valid joint to a CAN id
+# For future expansion, change hw_id to specify one
+# of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
+hardware_interface:
+   # Identify this as a non-Rio controller using Linux
+   # socketCan device can0 to communicate
+   run_hal_robot: false
+   can_interface: can0
+    
+   joints:
+       #TODO: Get config values of joints
+       #- {name: turret_joint, type: can_talon_srx, can_id: 30, local: true}
+
+       - {name: intake_arm_joint, type: solenoid, local_hardware: false, local_update: true}
+       - {name: intake_joint, type: can_talon_srx, can_id: 33, local: true}
+
+         #- {name: shooter_joint, type: can_talon_srx, can_id: 32, local: true}
+         #- {name: shooter_hood_joint, type: solenoid, local_hardware: false, local_update: true}
+
+         #- {name: climber_winch_joint, type: can_talon_srx, can_id: 40, local: true} #TODO fix can id
+         #- {name: climber_deploy_joint, type: double_solenoid, local_hardware: false, local_update: true}
+         #- {name: climber_elevator_brake_joint, type: solenoid, local_hardware: false, local_update: true}
+       
+       - {name: indexer_joint, type: can_talon_srx, can_id: 35, local: true} #TODO find actual can id
+
+         # - {name: control_panel_joint, type: can_talon_srx, can_id: 34, local: true}
+
+       - {name: fl_drive, type: can_talon_fx, can_id: 21, local: true}
+       - {name: fl_angle, type: can_talon_srx, can_id: 11, local: true}
+       - {name: fr_drive, type: can_talon_fx, can_id: 22, local: true}
+       - {name: fr_angle, type: can_talon_srx, can_id: 12, local: true}
+       - {name: br_drive, type: can_talon_fx, can_id: 24, local: true}
+       - {name: br_angle, type: can_talon_srx, can_id: 14, local: true}
+       - {name: bl_drive, type: can_talon_fx, can_id: 23, local: true}
+       - {name: bl_angle, type: can_talon_srx, can_id: 13, local: true}
+       - {name: pdp, type: pdp}
+       - {name: compressor, type: compressor, pcm_id: 0}
+
+       - {name: intake_linebreak, type: digital_input, local: false}
+       - {name: indexer_linebreak, type: digital_input, local: false}
+       - {name: shooter_linebreak, type: digital_input, local: false}
+
+       - {name: robot_code_ready_jetson, local: true, type: ready}
+       - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
+
+         #- {name: babys_first_orchestra, type: orchestra, id: 1}
+
+# Create controllers for each joint
+#
+# Entry is the name of the controller. It can be anything.  
+# It will create a namespace with that name under the main
+# controller namespace. Subscribed topics for that controller
+# will be most often show up under 
+# <top level controller manager ns>/<controller ns>/topic
+# e.g.
+# /frcrobot/joint1_talon_controller/command
+# /frcrobot/joint2_talon_controller/command
+# /frcrobot/talon_states
+
+#Set up controllers for main robot mechanisms
+intake_controller:
+        type: intake_controller/IntakeController
+        intake_joint: "intake"
+        intake:
+                joint: intake_joint
+                type: talon_controllers/TalonPercentOutputController
+                invert_output: False
+
+control_panel_controller:
+        type: control_panel_controller/ControlPanelController
+        control_panel_diameter: 32 #inches
+        wheel_diameter: 4 #inches, compliant wheel
+        control_panel_joint: "control_panel"
+        control_panel:
+                joint: control_panel_joint
+                type: talon_controllers/TalonMotionMagicCloseLoopController
+                feedback_type: CTRE_MagEncoder_Absolute
+                close_loop_values:
+                    - {p: 0.0, i: 0.000, d: 0.0, f: 0.0, i_zone: 0}
+                invert_output: true 
+                sensor_phase: false
+                peak_output_forward: 1.0
+                peak_output_reverse: -1.0
+                nominal_output_forward: 0.0
+                nominal_output_reverse: 0.0
+                motion_cruise_velocity: 3
+                motion_acceleration: 10
+                voltage_compensation_enable: True
+                dynamic_reconfigure: True
+
+
+shooter_controller:
+    type: shooter_controller/ShooterController
+    shooter_joint: "shooter"
+    shooter:
+        joint: shooter_joint
+        type: talon_controllers/TalonVelocityCloseLoopController
+        feedback_type: IntegratedSensor
+        close_loop_values:
+            - {p: 0.06, i: 0.000, d: 0.0, f: 0.047, i_zone: 0}
+        invert_output: false 
+        sensor_phase: false
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.0
+        nominal_output_reverse: 0.0
+        voltage_compensation_enable: true
+        dynamic_reconfigure: True
+        neutral_mode: Coast
+
+climber_controller:
+    type:  climber_controller_2020/ClimberController
+    softlimit_offset_from_start: 30 #how much above the initial climber position to set the reverse soft limit 
+    initial_up_offset: 180
+    initial_up_percent_out: 0.3
+    winch_joint: "winch"
+    winch:
+        joint: climber_winch_joint
+        type: talon_controllers/TalonPercentOutputController
+        feedback_type: IntegratedSensor
+        invert_output: false
+        voltage_compensation_enable: True
+        dynamic_reconfigure: True
+
+indexer_controller:
+    type:  indexer_controller/IndexerController
+    indexer_joint: "indexer"
+    indexer:
+        joint: indexer_joint
+        type: talon_controllers/TalonVelocityCloseLoopControllerInterface
+        feedback_type: CTRE_MagEncoder_Absolute
+        close_loop_values:
+            - {p: 0.0, i: 0.000, d: 0.0, f: 5.0, i_zone: 0}
+        invert_output: true 
+        sensor_phase: false
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.0
+        nominal_output_reverse: 0.0
+        voltage_compensation_enable: True
+        dynamic_reconfigure: True
+
+        
+turret_controller:
+    type: turret_controller/TurretController
+    turret_joint: 'turret'
+    turret_zero_timeout: 5.0
+    turret_zero_percent_output: -0.4
+    turret_zero_angle: -0.3434
+
+    turret: #starts as a percent out controller then switches to motion magic after zeroing
+        joint: turret_joint
+        feedback_type: QuadEncoder
+        close_loop_values:
+            - {p: 2.8, i: 0.000, d: 0.0, f: 5.0, i_zone: 0} #tuned for the cart
+        invert_output: false
+        sensor_phase: false
+        peak_output_forward: 1.0
+        peak_output_reverse: -1.0
+        nominal_output_forward: 0.1
+        nominal_output_reverse: -0.1
+        motion_cruise_velocity: 2.5
+        motion_acceleration: 5.0
+        voltage_compensation: true
+        dynamic_reconfigure: true
+        limit_switch_local_forward_source: "FeedbackConnector"
+        limit_switch_local_forward_normal: "NormallyOpen"
+        limit_switch_local_reverse_source: "FeedbackConnector"
+        limit_switch_local_reverse_normal: "NormallyOpen"
+        softlimit_forward_threshold: 0.1
+        softlimit_forward_enable: true
+        softlimit_reverse_threshold: -0.35
+        softlimit_reverse_enable: true
+        conversion_factor: 1.74  # Range of turret motion = pi/2 radians = 0.907 motor units. 0.907 / (pi/2) = 0.577
+
+# This one creates the /talon_states topic necessary in ROS
+# It doesn't actually control anything, just takes the internal
+# encoder state used by the hw manager and publishes it as
+# a ROS topic.  This is generic ROS stuff, so we'll have
+# to figure out what to map e.g. effort to in the Talon world
+talon_state_controller_jetson:
+   type:         talon_state_controller/TalonStateController
+   publish_rate: 100
+talon_config_controller:
+   type:         talon_config_controller/TalonConfigController
+   publish_rate: 5
+
+# Similar to above, but this one prints non-Talon state
+# (stuff that fits into the more standard ROS position/
+# speed/effort paradigm)
+joint_state_controller_jetson:
+   type:         joint_state_controller/JointStateController
+   publish_rate: 100
+
+# Used to listen for remote joint states published from the given topic
+# (in this case the Rio) and copy them to internal copies of 
+# joint data
+joint_state_listener_controller:
+    type:      state_listener_controller/JointStateListenerController
+    topic:     /frcrobot_rio/joint_states
+
+pdp_state_controller:
+   type:         pdp_state_controller/PDPStateController
+   publish_rate: 20
+   things_plugged_in_pdp_channel: 
+        ["", #id 1
+         "bl_drive", #id 2
+         "fl_drive", #id 3
+         "fl_angle", #id 4 
+         "intake_joint", #id 5 
+         "", #id 6 
+         "", #id 7
+         "", #id 8
+         "", #id 9 
+         "br_angle", #id 10
+         "fr_angle", #id 11 
+         "", #id 12
+         "climber_winch_joint", #id 13
+         "br_drive", #id 14
+         "fr_drive", #id 15
+         "" #id 16
+        ]
+
+pcm_state_controller:
+   type:         pcm_state_controller/PCMStateController
+   publish_rate: 20
+
+match_state_listener_controller:
+    type:      state_listener_controller/MatchStateListenerController
+    topic:     /frcrobot_rio/match_data
+
+orchestra_controller:
+    type:      orchestra_controller/OrchestraController
+
+# These controllers are defined for testing indivudal motors 
+# but are not actually used for normal swerve drive control
+# TODO Sensor phase default for angle motors is good
+fl_drive_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: fl_drive
+    invert: true
+    feedback_type: CTRE_MagEncoder_Relative
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+fl_angle_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: fl_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+fr_drive_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: fr_drive
+    invert: true
+    feedback_type: CTRE_MagEncoder_Relative
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+fr_angle_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: fr_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+bl_drive_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: bl_drive
+    invert: true
+    feedback_type: CTRE_MagEncoder_Relative
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+bl_angle_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: bl_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+br_drive_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: br_drive
+    invert: true
+    feedback_type: CTRE_MagEncoder_Relative
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+br_angle_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: br_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+fl_angle_position_controller:
+    type: talon_controllers/TalonPositionCloseLoopController
+    joint: fl_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 4.2, i: 0.006, d: 45.0, f: 0.47, i_zone: 500}
+        - {p: 7.5, i: 0.000, d: 00, f: 0.0, i_zone: 0}
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+# ANGLE MOTION MAGIC CONTROLLERS
+
+fr_angle_motionmagic_controller:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: fr_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+    invert_output: true 
+    sensor_phase: false
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+fl_angle_motionmagic_controller:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: fl_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+    invert_output: true 
+    sensor_phase: false
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+br_angle_motionmagic_controller:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: br_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+    invert_output: true  
+    sensor_phase: false
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+bl_angle_motionmagic_controller:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: bl_angle
+    feedback_type: CTRE_MagEncoder_Absolute
+    close_loop_values:
+        - {p: 2.0, i: 0.002, d: 0.0, f: 1.0, i_zone: 0}
+    invert_output: true
+    sensor_phase: false
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+# DRIVE POSITION CONTROLLERS
+fr_drive_position_controller:
+    type: talon_controllers/TalonPositionCloseLoopController
+    joint: fr_drive 
+    feedback_type: CTRE_MagEncoder_Relative
+    close_loop_values:
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
+    invert_output: true
+    sensor_phase: true
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+fl_drive_position_controller:
+    type: talon_controllers/TalonPositionCloseLoopController
+    joint: fl_drive 
+    feedback_type: CTRE_MagEncoder_Relative
+    close_loop_values:
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
+    invert_output: true
+    sensor_phase: true
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+br_drive_position_controller:
+    type: talon_controllers/TalonPositionCloseLoopController
+    joint: br_drive 
+    feedback_type: CTRE_MagEncoder_Relative
+    close_loop_values:
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
+    invert_output: true
+    sensor_phase: true
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+
+bl_drive_position_controller:
+    type: talon_controllers/TalonPositionCloseLoopController
+    joint: bl_drive 
+    feedback_type: CTRE_MagEncoder_Relative
+    close_loop_values:
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
+        - {p: 0.0, i: 0.0, d: 0.0, f: 0.0, i_zone: 0}
+    invert_output: true
+    sensor_phase: true
+    peak_output_forward: 1.0
+    peak_output_reverse: -1.0
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 32
+    motion_acceleration: 150
+    voltage_compensation_enable: true
+    dynamic_reconfigure: True
+        
+
+

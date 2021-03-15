@@ -53,17 +53,25 @@ class AlignActionAxisState
 			, error_(0.0)
 			, timeout_(timeout)
 			, error_threshold_(error_threshold)
-			, timed_out_(false)
 		{
+			// Set defaults for PID node topics to prevent
+			// spam of "Waiting for first setpoint message."
+			std_msgs::Bool bool_msg;
+			bool_msg.data = false;
+			enable_pub_.publish(bool_msg);
+
+			std_msgs::Float64 float64_msg;
+			float64_msg.data = 0.0;
+			command_pub_.publish(float64_msg);
+			state_pub_.publish(float64_msg);
 		}
 		ros::Publisher enable_pub_;
 		ros::Publisher command_pub_;
-                ros::Publisher state_pub_;
+		ros::Publisher state_pub_;
 		ros::Subscriber error_sub_;
 		bool aligned_;
 		double error_;
 		double timeout_;
 		double error_threshold_;
-		bool timed_out_;
 };
 
