@@ -13,13 +13,19 @@ struct OptParams
 	double maxOffX_{0};
 	double minOffY_{0};
 	double maxOffY_{0};
-	double length_{0};       // These control the
+	double length_{0};       // These control the curveature vs. velocity at waypoints
 	double minLength_{-std::numeric_limits<double>::max()};
 	double maxLength_{std::numeric_limits<double>::max()};
-	double lengthScale_{0.75}; // curveature vs. velocity at waypoints
+	double lengthScale_{0.75};
 	double minLengthScale_{-std::numeric_limits<double>::max()};
 	double maxLengthScale_{std::numeric_limits<double>::max()};
-	double deltaVMagnitude_{0};
+	double minRotLength_{-std::numeric_limits<double>::max()};
+	double maxRotLength_{std::numeric_limits<double>::max()};
+	double rotLength_{0};
+	double rotLengthScale_{0.75};
+	double minRotLengthScale_{-std::numeric_limits<double>::max()};
+	double maxRotLengthScale_{std::numeric_limits<double>::max()};
+	double deltaVMagnitude_{0}; // Last waypoint velocity vector
 	double deltaVDirection_{0};
 	double minDeltaVMagnitude_{0};
 	double maxDeltaVMagnitude_{0};

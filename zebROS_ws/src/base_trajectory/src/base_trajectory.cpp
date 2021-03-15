@@ -178,6 +178,8 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 	double prevLength = hypot(points[1].positions[0] - points[0].positions[0],
 							  points[1].positions[1] - points[0].positions[1]);
 
+	double prevRotLength = points[1].positions[2] - points[0].positions[2];
+
 	for (size_t i = 1; i < (points.size() - 1); i++)
 	{
 		const auto &mi   = points[i].positions;
@@ -192,12 +194,14 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 		const double angle = angles::normalize_angle_positive(prevAngle + deltaAngle / 2.0);
 
 		const double currLength = hypot(mip1[0] - mi[0], mip1[1] - mi[1]);
+		const double currRotLength = mip1[2] - mi[2];
 
 		// Adding a scaling factor here controls the velocity
 		// at the waypoints.  Bigger than 1 ==> curvier path with
 		// higher speeds.  Less than 1 ==> tigher turns to stay
 		// closer to straight paths.
 		const double length = std::min(prevLength, currLength) * optParams[i].lengthScale_ + optParams[i].length_;
+		const double rotLength = (prevRotLength + currRotLength) / 2.0 * optParams[i].rotLengthScale_ + optParams[i].rotLength_;
 
 		// Don't overwrite requested input velocities
 		if (points[i].velocities.size() == 0)
@@ -205,7 +209,7 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 		if (points[i].velocities.size() == 1)
 			points[i].velocities.push_back(length * sin(angle)); // y
 		if (points[i].velocities.size() == 2)
-			points[i].velocities.push_back(fabs(mip1[2] - mi[2])); // theta TODO : Check me
+			points[i].velocities.push_back(rotLength); // theta TODO : Check me
 														// Need a length and length scale for this case?
 
 		points[i].velocities[0] += optParams[i].deltaVMagnitude_ * cos(angle + optParams[i].deltaVDirection_);
