@@ -10,8 +10,8 @@ const double border = width * .05;
 
 cv::Point map_to_image(cv::Point map_coord)
 {
-	double image_x = map_coord.x / inches_per_pixel + border;
-	double image_y = (height - map_coord.y / inches_per_pixel) + border;
+	const double image_x = map_coord.x / inches_per_pixel + border;
+	const double image_y = (height - map_coord.y / inches_per_pixel) + border;
 	return cv::Point(image_x, image_y);
 }
 
@@ -39,7 +39,7 @@ void drawPoly(cv::Mat& image, const std::vector<cv::Point>& points, const cv::Sc
 	// Convert map coordinates to image coordinates
 	const size_t num_points = points.size();
 	cv::Point image_vertices[num_points];
-	for(int i = 0; i < num_points; ++i){
+	for(size_t i = 0; i < num_points; ++i){
 		image_vertices[i] = map_to_image(points[i]);
 	}
 
@@ -137,10 +137,34 @@ int main(int argc, char **argv)
   }
 
 	// Calculations for various inputs to stage and map_server
-	double meter_per_pixel = (field_width * .0254) / width;
+	const double meter_per_pixel = (field_width * .0254) / width;
 	ROS_INFO_STREAM("meters per pixel: " << meter_per_pixel);
 	ROS_INFO_STREAM("width x height: " << meter_per_pixel * image.cols << " " << meter_per_pixel * image.rows);
 	ROS_INFO_STREAM("pose " << (meter_per_pixel * image.cols) / 2. - border * meter_per_pixel << " " << (meter_per_pixel * image.rows) / 2. - border * meter_per_pixel);
+
+	// Write mapserver yaml file
+	std::string yaml_file_name(imagename);
+	auto ext_pos = yaml_file_name.find_last_of(".png");
+	if (ext_pos == std::string::npos)
+		ext_pos = yaml_file_name.find_last_of(".PNG");
+	if (ext_pos == std::string::npos)
+		ext_pos = yaml_file_name.find_last_of(".jpg");
+	if (ext_pos == std::string::npos)
+		ext_pos = yaml_file_name.find_last_of(".JPG");
+	if (ext_pos == std::string::npos)
+		ROS_ERROR_STREAM("Can't figure out extension of " << imagename << ", not writing yaml file");
+	else
+	{
+		yaml_file_name.erase(ext_pos-3, 4);
+		yaml_file_name += ".yaml";
+		std::ofstream of(yaml_file_name);
+		of << "image: " << imagename << std::endl;
+		of << "resolution: " << meter_per_pixel << std::endl;
+		of << "origin: [" << meter_per_pixel * -border << ", " << meter_per_pixel * -border << ", 0]" << std::endl;
+		of << "occupied_thresh: 0.65" << std::endl;
+		of << "free_thresh: 0.196" << std::endl;
+		of << "negate: 0" << std::endl;
+	}
 
 	// Write and show field image
 	cv::imwrite(imagename, image);
