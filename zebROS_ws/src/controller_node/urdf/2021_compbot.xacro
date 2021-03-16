@@ -2,39 +2,18 @@
 
 <robot name="2021_compbot" xmlns:xacro="http://ros.org/wiki/xacro">
 
-    <link name="intake_center"/>
-    <joint name="intake_center_joint" type="fixed"> 
+    <link name="base_link"/>
+    <link name="turret_center"/>
+    <joint name="turret_center_joint" type="fixed"> 
         <parent link="base_link"/>
-        <child link="intake_center"/>
-        <origin xyz="0.6586 0.0 0.0" rpy="0 0 0" />
+        <child link="turret_center"/>
+        <origin xyz="-0.0658 -0.22067 0.4692" rpy="0 0 0" />
     </joint>
 
-    <!-- Realsense2 t265 -->
-    <link name="rs_t265_pose_frame"/>
-    <joint name="rs_t265_joint" type="fixed">
-        <parent link="rs_t265_pose_frame"/>
-        <child link="base_link"/>
-        <!-- after rotation, this is z, y, -x? 
-                         TODO : verify that the imu and odom frames
-                    require this rotation
-        <origin xyz="1.04 0 0.216" rpy="0 -1.57 0" />
-         -->
-        <origin xyz="0.216 0.0 -1.04" rpy="0 0 0" />
+    <link name="intake"/>
+    <joint name="intake_joint" type="fixed"> 
+        <parent link="base_link"/>
+        <child link="intake"/>
+        <origin xyz="-0.6332 0.0 0.0" rpy="0 0 3.14159265" />
     </joint>
-
-	<!-- set from node launching ZED wrapper
-
-    <xacro:arg name="base_frame"    default="base_link" />
-    <xacro:arg name="cam_pos_x"     default="0.1588" />
-    <xacro:arg name="cam_pos_y"     default="-0.1226" />
-    <xacro:arg name="cam_pos_z"     default="0.605155" />
-    <xacro:arg name="cam_roll"      default="0.0" />
-    <xacro:arg name="cam_pitch"     default="0.5" />
-    <xacro:arg name="cam_yaw"       default="0.0" />
-    <xacro:arg name="camera_name"   default="zed2_ar" />
-    <xacro:arg name="camera_model"  default="zed2" />
-	
-	<xacro:include filename="$(find zed_wrapper)/urdf/zed_descr.urdf.xacro"/>
-	-->
 </robot>
-

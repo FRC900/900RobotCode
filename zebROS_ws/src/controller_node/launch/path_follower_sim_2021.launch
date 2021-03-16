@@ -29,7 +29,7 @@
 
 	<include file="$(find controller_node)/launch/fuse_odom.launch"/>
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetoimu" args="0 0 0 0 0 0 1 base_link imu" />
-	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetointake" args="0.5 0 0 0 0 0 1 base_link intake" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetointake" args="-0.6332 0 0 0 0 3.14159265 base_link intake" />
 
 	<node pkg="pf_localization" type="fake_goal_detect_node" name="fake_goal_detect" >
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />

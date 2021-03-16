@@ -1626,7 +1626,7 @@ int main(int argc, char **argv)
 	ddr.publishServicesTopics();
 	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", callback);
 
-	costmap = std::make_unique<costmap_2d::Costmap2DROS>("/costmap", *tfBuffer);
+//	costmap = std::make_unique<costmap_2d::Costmap2DROS>("/costmap", *tfBuffer);
 
 	local_plan_pub = nh.advertise<nav_msgs::Path>("local_plan", 1000, true);
 

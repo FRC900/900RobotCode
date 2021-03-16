@@ -10,7 +10,6 @@
 	<arg name="hw_or_sim" default="hw" />
 	<arg name="joy_or_key" default="joy" />
 	<arg name="button_box" default="true"/>
-	<arg name="static_map" default="True"/>
 	<arg name="record" default="false"/>
 	
     <!-- Jetson Nodes -->
@@ -35,5 +34,10 @@
     <!-- Jetson 2 Nodes -->
     <!-- <machine name="jetson_2" address="10.9.0.9" env-loader="/home/ubuntu/2020Offseason/zebROS_ws/ROSJetsonMaster.sh" user="ubuntu" password="ubuntu" default="true"/>
     <include file="$(find behaviors)/launch/jetson2_sensor_nodes.launch"/> -->
+	<group if="$(eval arg('hw_or_sim')=='hw')">
+		<machine name="jetson2" address="10.9.0.9" env-loader="/home/admin/2020Offseason/zebROS_ws/ROSJetsonMaster.sh" user="admin" password="admin" default="true"/>
+	</group>
+
+    <include file="$(find controller_node)/launch/2021_compbot_jetson2.launch" pass_all_args="true"/>
 
 </launch>

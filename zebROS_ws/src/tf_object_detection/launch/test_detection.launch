@@ -13,12 +13,12 @@
     <arg name="camera_name"          value="$(arg zed_name)" />
     <arg name="camera_model"         value="$(arg camera_model)" />
     <arg name="base_frame"           value="base_link" />
-    <arg name="cam_pos_x"            value="0.0" />
-    <arg name="cam_pos_y"            value="0.0" />
-    <arg name="cam_pos_z"            value="0.0" />
+    <arg name="cam_pos_x"            value="0.2111" />
+    <arg name="cam_pos_y"            value="0.02819" />
+    <arg name="cam_pos_z"            value="0.9652" />
     <arg name="cam_roll"             value="0.0" />
 	<arg name="cam_pitch"            value="0.349" /> <!-- 20 degrees down -->
-    <arg name="cam_yaw"              value="1.570796" />
+    <arg name="cam_yaw"              value="3.14159" />
   </include>
 
   <group ns="tf_object_detection">
