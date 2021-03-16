@@ -82,6 +82,7 @@ def run_inference_for_single_image(msg):
       output_dict['detection_masks'] = output_dict['detection_masks'][0]
 
     detection = TFDetection()
+    detection.header = msg.header
     for i in range(output_dict['num_detections']):
         obj = TFObject()
         obj.confidence = output_dict['detection_scores'][i]

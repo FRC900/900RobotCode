@@ -1,69 +1,138 @@
 #include <ros/ros.h>
+#include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include <image_transport/subscriber_filter.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
+#include "field_obj/Detection.h"
 #include "field_obj/TFDetection.h"
-bool caminfovalid{false};
-ros::Publisher pub_;
+#include "field_obj_tracker/convert_coords.h"
+#include "field_obj_tracker/objtype.hpp"
+
+ros::Publisher pub;
+
 sensor_msgs::CameraInfo caminfo;
+bool caminfovalid {false};
+
+// Capture camera info published about the camera - needed for screen to world to work
 void camera_info_callback(const sensor_msgs::CameraInfoConstPtr &info)
 {
-caminfo = *info;
-caminfovalid = true;
-
-	return;
+	caminfo = *info;
+	caminfovalid = true;
 }
 
-void callback(const field_obj::TFDetectionConstPtr &obj_detection, const sensor_msgs::ImageConstPtr &depthMsg)
-{if (!caminfovalid)
+// Get the average of the values in the cv::Mat depth contained within
+// the supplied bounding rectangle
+double avgOfDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect)
+{
+	double sum = 0.0;
+	unsigned count = 0;
+	for (int j = bound_rect.tl().y+1; j < bound_rect.br().y; j++) //for each row
+	{
+		const float *ptr_depth = depth.ptr<float>(j);
 
-	return;
+		for (int i = bound_rect.tl().x+1; i < bound_rect.br().x; i++) //for each pixel in row
+		{
+			if (!(isnan(ptr_depth[i]) || isinf(ptr_depth[i]) || (ptr_depth[i] <= 0)))
+			{
+				sum += ptr_depth[i];
+				count += 1;
+			}
+		}
+	}
+	if (count == 0)
+		return -1;
+	return sum / count;
+}
 
-	cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::    image_encodings::TYPE_32FC1);
 
+// For each object in objDetectionMsg, look up the depth reported in depthMsg at the center of the
+// object's bounding rectangle. Use that to convert from 2D screen coordinates to 3D world coordinates
+void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const sensor_msgs::ImageConstPtr &depthMsg)
+{
+	if (!caminfovalid)
+		return;
+
+	cv_bridge::CvImageConstPtr cvDepth = cv_bridge::toCvShare(depthMsg, sensor_msgs::image_encodings::TYPE_32FC1);
+
+	// Initialize published message with header info from objDetectionMsg
+	field_obj::Detection out_msg;
+	out_msg.header = objDetectionMsg->header;
+
+	// Create objects needed to convert from 2d screen to 3d world coords
 	image_geometry::PinholeCameraModel model;
-	model.fromCameraInfo(camera_info_);
-	
-		field_obj::Detection gd_msg;
+	model.fromCameraInfo(caminfo);
+	const ConvertCoords cc(model);
+	// Iterate over each object. Convert from camera to world coords.
+	for (const auto &camObject : objDetectionMsg->objects)
+	{
+		// Create an output object, copy over info from the object detection info
+		field_obj::Object worldObject;
+		worldObject.id = camObject.id;
+		worldObject.confidence = camObject.confidence;
+		// Generate a bounding rect (in camera coords) from the camera object
+		const cv::Point rectTL(camObject.tl.x, camObject.tl.y);
+		const cv::Point rectBR(camObject.br.x, camObject.br.y);
+		const cv::Rect  rect(rectTL, rectBR);
 
-	gd_msg.header.seq = frameMsg->header.seq;
-    gd_msg.header.stamp = frameMsg->header.stamp;
-    std::string frame_id = frameMsg->header.frame_id;
+		// Create a small bounding rectangle to sample depths from the center
+		// of the detected object.  Note, this will only work with power cells
+		// and other objects which don't have holes in the middle (mmmm ... donuts!)
+		const cv::Point2f objRectCenter = 0.5 * (rectTL + rectBR);
+		const cv::Point2f objCenterBounds(3, 3);
+		const cv::Rect  objCenterRect(objRectCenter - objCenterBounds, objRectCenter + objCenterBounds);
 
-	ConvertCoords cc(model);
-	 for(size_t i = 0; i < gfd.size(); i++)
-                 {      
-				 field_obj::Object dummy;
-                     dummy.id = gfd[i].id;
-                     dummy.confidence = gfd[i].confidence; 
-                    const cv::Point3f world_coord_scaled = cc.screen_to_world(gfd[i].rect, dummy.    id, gfd[i].distance);
+		// Get the distance to the object by sampling the depth image at the center of the
+		// object's bounding rectangle.
+		const double objDistance = avgOfDepthMat(cvDepth->image, objCenterRect);
+		if (objDistance < 0)
+		{
+			ROS_ERROR_STREAM("Depth of object at " << objRectCenter << " with bounding rect " << objCenterRect << " objDistance < 0 : " << objDistance);
+			continue;
+		}
+		const cv::Point3f world_coord_scaled = cc.screen_to_world(rect, worldObject.id, objDistance);
 
-                    dummy.location.x = world_coord_scaled.z;
-                    dummy.location.y = -world_coord_scaled.x;
-                    dummy.location.z = world_coord_scaled.y;
-                    dummy.angle = atan2f(world_coord_scaled.x, world_coord_scaled.y) * 180. / M_P    I;
-                     gd_msg.objects.push_back(dummy);
-               }
-pub_.publish(gd_msg);
+		// Convert from camera_optical_frame to camera_frame - could do this
+		// using transforms in the future?
+		worldObject.location.x = world_coord_scaled.z;
+		worldObject.location.y = -world_coord_scaled.x;
+		worldObject.location.z = world_coord_scaled.y;
+		// TODO - double check this, it whould probably be worldObject.location.x & y?
+		worldObject.angle = atan2f(world_coord_scaled.x, world_coord_scaled.y) * 180. / M_PI;
+
+		// Add the 3d object info to the list of objects in the output message
+		out_msg.objects.push_back(worldObject);
+	}
+	pub.publish(out_msg);
 }
-int main (int argc, char**argv){
-typedef message_filters::sync_policies::ApproximateTime<field_obj::TFDetection, sensor_msgs::Image> RGBDSyncPolicy;
-ros::NodeHandle nh;
-image_transport::ImageTransport it(nh);
+int main (int argc, char **argv)
+{
+	ros::NodeHandle nh;
+	image_transport::ImageTransport it(nh);
 
-	  std::unique_ptr<image_transport::SubscriberFilter>             depth_sub_;
-	depth_sub_ = std::make_unique<image_transport::SubscriberFilter>(it, "/zed_goal/depth/depth_registered",1);
+	// Create a filter subscriber to camera depth info
+	std::unique_ptr<image_transport::SubscriberFilter> depth_sub;
+	depth_sub = std::make_unique<image_transport::SubscriberFilter>(it, "/zed_objdetect/depth/depth_registered", 1);
 
-	pub_ = nh.advertise<field_obj::Detection>("object_detection_world", pub_rate);
+	// And another filer subscriber to the TF object detection
+	std::unique_ptr<message_filters::Subscriber<field_obj::TFDetection>> obsub;
+	obsub = std::make_unique<message_filters::Subscriber<field_obj::TFDetection>>(nh, "obj_detection_msg", 1);
 
-	message_filters::Subscriber<field_obj::TFDetection> Obsub (nh,"obj_detection_msg",1);
-	   std::unique_ptr<message_filters::Synchronizer<RGBDSyncPolicy>> rgbd_sync_;
-	rgbd_sync_ = std::make_unique<message_filters::Synchronizer<RGBDSyncPolicy>>(RGBDSyncPolicy(10), Obsub, *depth_sub_);
+	// Create a synchronizer which combines the two - it calls the callback function when it matches
+	// up a message from each subscriber which have the (approximately) same timestamps
+	// TODO - try this with an exact synchronizer?
+	typedef message_filters::sync_policies::ApproximateTime<field_obj::TFDetection, sensor_msgs::Image> ObjDepthSyncPolicy;
+	std::unique_ptr<message_filters::Synchronizer<ObjDepthSyncPolicy>> obj_depth_sync;
+	obj_depth_sync = std::make_unique<message_filters::Synchronizer<ObjDepthSyncPolicy>>(ObjDepthSyncPolicy(10), *obsub, *depth_sub);
 
-rgbd_sync_->registerCallback(boost::bind(callback, _1, _2)    );
-ros::Subscriber camera_info_sub_ = nh.subscribe("/zed_goal/left/camera_info", 1, camera_info_callback);
+	obj_depth_sync->registerCallback(boost::bind(callback, _1, _2));
 
-	
- }
+	// Set up a simple subscriber to capture camera info
+	ros::Subscriber camera_info_sub_ = nh.subscribe("/zed_objdetect/left/camera_info", 2, camera_info_callback);
+
+	// And a publisher to published converted 3d coords
+	pub = nh.advertise<field_obj::Detection>("object_detection_world", 2);
+
+	ros::spin();
+}

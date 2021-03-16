@@ -1,21 +1,21 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(tf_object_detection)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+include ("../cmake_modules/CMakeOpt.cmake")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  rospy
-  roscpp
   cv_bridge
-  sensor_msgs
-  std_msgs
   field_obj
+  field_obj_tracker
   image_transport
   message_filters
+  roscpp
+  rospy
+  sensor_msgs
+  std_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -117,7 +117,7 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-
+list(FILTER catkin_LIBRARIES EXCLUDE REGEX "opencv_freetype")
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
