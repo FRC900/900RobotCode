@@ -69,7 +69,7 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 	{
 		// Create an output object, copy over info from the object detection info
 		field_obj::Object worldObject;
-		worldObject.id = camObject.id;
+		worldObject.id = camObject.label;
 		worldObject.confidence = camObject.confidence;
 		// Generate a bounding rect (in camera coords) from the camera object
 		const cv::Point rectTL(camObject.tl.x, camObject.tl.y);
@@ -98,8 +98,7 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 		worldObject.location.x = world_coord_scaled.z;
 		worldObject.location.y = -world_coord_scaled.x;
 		worldObject.location.z = world_coord_scaled.y;
-		// TODO - double check this, it whould probably be worldObject.location.x & y?
-		worldObject.angle = atan2f(world_coord_scaled.x, world_coord_scaled.y) * 180. / M_PI;
+		worldObject.angle = atan2(worldObject.location.y, worldObject.location.x) * 180. / M_PI;
 
 		// Add the 3d object info to the list of objects in the output message
 		out_msg.objects.push_back(worldObject);
@@ -108,6 +107,7 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 }
 int main (int argc, char **argv)
 {
+	ros::init(argc, argv, "tf_object_screen_to_world");
 	ros::NodeHandle nh;
 	image_transport::ImageTransport it(nh);
 

@@ -83,6 +83,7 @@ def run_inference_for_single_image(msg):
 
     detection = TFDetection()
     detection.header = msg.header
+    detection.header.frame_id = detection.header.frame_id.replace("_optical_frame", "")
     for i in range(output_dict['num_detections']):
         obj = TFObject()
         obj.confidence = output_dict['detection_scores'][i]
