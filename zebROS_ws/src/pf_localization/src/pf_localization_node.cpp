@@ -1,3 +1,4 @@
+#define USE_MATH_DEFINES_
 #include "particle_filter.hpp"
 #include "world_model.hpp"
 #include "particle.hpp"
@@ -21,11 +22,8 @@
 #include <cmath>
 #include <memory>
 
-#define USE_MATH_DEFINES_
-
 #define VERBOSE
 // #define EXTREME_VERBOSE
-
 
 const std::string rot_topic = "/imu/zeroed_imu";
 const std::string cmd_topic = "/frcrobot_jetson/swerve_drive_controller/cmd_vel_out";
@@ -40,9 +38,6 @@ ros::Time last_time;
 ros::Time last_measurement;
 double rot = 0;
 double noise_delta_t = 0;  // if the time since the last measurement is greater than this, positional noise will not be applied
-// std::vector<Beacon > measurement;
-// test bearing only
-std::vector<BearingBeacon> measurement;
 std::unique_ptr<ParticleFilter> pf;
 
 double degToRad(double deg) {
@@ -68,7 +63,6 @@ void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
 }
 
 void goalCallback(const field_obj::Detection::ConstPtr& msg){
-  measurement.clear();
   geometry_msgs::TransformStamped zed_to_baselink = tf_buffer_.lookupTransform("base_link", msg->header.frame_id, ros::Time::now());
 
   double roll, pitch, yaw;
@@ -80,16 +74,9 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg){
   double tx = zed_to_baselink.transform.translation.x;
   double ty = zed_to_baselink.transform.translation.y;
 
-  // for(const field_obj::Object& p : msg->objects) {
-  //   Beacon m {p.location.x, p.location.y, p.id};
-  //   measurement.push_back(m);
-  // }
-  // if (measurement.size() > 0){
-  //   bool success = pf->assign_weights_position(measurement, Particle(tx, ty, r));
-  //   pf->resample();
-  //   last_measurement = ros::Time::now();
-  // }
-
+  #ifdef BEARING_ONLY
+  static std::vector<BearingBeacon> measurement;
+  measurement.clear();
   // bearing only test
   for(const field_obj::Object& p : msg->objects) {
     BearingBeacon m {atan2(p.location.y, p.location.x), p.id};
@@ -100,6 +87,20 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg){
     pf->resample();
     last_measurement = ros::Time::now();
   }
+  #else
+  // test bearing only
+  static std::vector<Beacon> measurement;
+  measurement.clear();
+  for(const field_obj::Object& p : msg->objects) {
+    Beacon m {p.location.x, p.location.y, p.id};
+    measurement.push_back(m);
+  }
+  if (measurement.size() > 0){
+    bool success = pf->assign_weights_position(measurement, Particle(tx, ty, r));
+    pf->resample();
+    last_measurement = ros::Time::now();
+  }
+  #endif
 
   #ifdef EXTREME_VERBOSE
   ROS_INFO("goalCallback called");
@@ -247,6 +248,7 @@ int main(int argc, char **argv) {
     pose.rot = prediction.rot_;
     pub_.publish(pose);
 
+	// TODO - don't publish if predictions are NaN or Inf
     static tf2_ros::TransformBroadcaster br;
     geometry_msgs::TransformStamped transformStamped;
 

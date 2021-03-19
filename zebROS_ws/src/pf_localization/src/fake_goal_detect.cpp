@@ -34,7 +34,9 @@ class FakeGoalDetection
 				dummy.location.x = p.x + normalDistribution_(gen_);
 				dummy.location.y = p.y + normalDistribution_(gen_);
 				dummy.location.z = p.z + normalDistribution_(gen_);
-				dummy.angle = atan2f(dummy.location.x, dummy.location.y) * 180. / M_PI;
+				dummy.angle = atan2(dummy.location.y, dummy.location.x) * 180. / M_PI;
+				dummy.confidence = msgIn->markers[i].ids_confidence[0];
+				dummy.id = std::to_string(msgIn->markers[i].ids[0]);
 				msgOut.objects.push_back(dummy);
 			}
 			pub_.publish(msgOut);

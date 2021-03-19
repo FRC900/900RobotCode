@@ -7,6 +7,7 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  ar_track_alvar_msgs
   rospy
   roscpp
   field_obj
@@ -197,6 +198,20 @@ add_dependencies(fake_goal_detect_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${cat
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(fake_goal_detect_node
+  ${catkin_LIBRARIES}
+)
+
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+add_executable(ar_msg_to_goal_detect_node src/ar_msg_to_goal_detect.cpp)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(ar_msg_to_goal_detect_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(ar_msg_to_goal_detect_node
   ${catkin_LIBRARIES}
 )
 #############
