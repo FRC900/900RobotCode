@@ -17,7 +17,7 @@
 		<param name="world_frame" value="odom" />
 
 		<param name="two_d_mode" value="true" />
-		<param name="publish_tf" value="true" />
+		<param name="publish_tf" value="false" />
 		<param name="reset_on_time_jump" value="true" />
 
 		<!--

@@ -51,7 +51,7 @@ floorplan
 (
   name "2021_empty_field"
   bitmap "../maps/2021_empty_field.png"
-  size [ 10.0584 5.4864 2.0 ]
+  size [ 10.0584 5.4864 0.1 ]
   pose [  4.572  2.286  0.0 0.0 ]
 )
 

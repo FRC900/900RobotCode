@@ -18,9 +18,9 @@ define omnidir_robot position
   pose [ 0.0 0.0 0.0 0.0 ]
 
   localization "odom"
-  odom_error [ 0.03 0.03 0.0 0.02 ]
+  odom_error [ 0.02 0.02 0.0 0.002 ]
 
-  size [ 0.75 0.75 0.40 ]
+  size [ 0.889 0.889 0.30 ]
   origin [ 0.0 0.0 0.0 0.0 ]
   gui_nose 1
   color "red"
@@ -31,5 +31,5 @@ define omnidir_robot position
   #acceleration_bounds[-4.5 4.5 -4.5 4.5 0 0 -90 90]
 
   # spawn sensors
-  normal_camera(pose [ 0.1 -0.1 1.65 0.0 ])
+  normal_camera(pose [ 0.1 -0.1 0.65 0.0 ])
 )

@@ -12,23 +12,20 @@ class FakeGoalDetection
 		FakeGoalDetection(ros::NodeHandle &n)
 			: rd_{}
 			, gen_{rd_()}
-			, covariance_(0.05)
-			, outputFrameID_("zed_camera_center")
+			, covariance_(0.0004)
 			, sub_(n.subscribe("base_marker_detection", 2, &FakeGoalDetection::cmdVelCallback, this))
 			, pub_(n.advertise<field_obj::Detection>("goal_detect_msg", 2))
 
 		{
 			n.param("covariance", covariance_, covariance_);
-			n.param("outputFrameID", outputFrameID_, outputFrameID_);
-			normalDistribution_ = std::normal_distribution<double>{0, covariance_ * covariance_};
+			normalDistribution_ = std::normal_distribution<double>{0, sqrt(covariance_)};
 		}
 
-		// Read Twist message, save it to be republished in the pubThread below
+		// Translate stage base_marker_detection into our custom goal detection message
 		void cmdVelCallback(const marker_msgs::MarkerDetectionConstPtr &msgIn)
 		{
 			field_obj::Detection msgOut;
 			msgOut.header = msgIn->header;
-			msgOut.header.frame_id = outputFrameID_;
 			for(size_t i = 0; i < msgIn->markers.size(); i++)
 			{
 				field_obj::Object dummy;
@@ -48,7 +45,6 @@ class FakeGoalDetection
 		std::mt19937 gen_;
 		std::normal_distribution<double> normalDistribution_;
 		double covariance_;
-		std::string outputFrameID_;
 		ros::Subscriber sub_;
 		ros::Publisher  pub_;
 };
@@ -63,4 +59,3 @@ int main(int argc, char** argv)
 	ros::spin();
 	return 0;
 }
-

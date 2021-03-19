@@ -8,7 +8,9 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <sensor_msgs/Imu.h>
 #include <iostream>
@@ -244,6 +246,29 @@ int main(int argc, char **argv) {
     pose.y = prediction.y_;
     pose.rot = prediction.rot_;
     pub_.publish(pose);
+
+    static tf2_ros::TransformBroadcaster br;
+    geometry_msgs::TransformStamped transformStamped;
+
+    transformStamped.header.stamp = last_time;
+    transformStamped.header.frame_id = "map";
+    std::stringstream child_frame;
+    child_frame << "base_link";
+    transformStamped.child_frame_id = child_frame.str();
+
+    transformStamped.transform.translation.x = prediction.x_;
+    transformStamped.transform.translation.y = prediction.y_;
+    transformStamped.transform.translation.z = 0;
+
+    tf2::Quaternion q;
+    q.setRPY(0, 0, prediction.rot_);
+
+    transformStamped.transform.rotation.x = q.x();
+    transformStamped.transform.rotation.y = q.y();
+    transformStamped.transform.rotation.z = q.z();
+    transformStamped.transform.rotation.w = q.w();
+
+    br.sendTransform(transformStamped);
 
     if(pub_debug.getNumSubscribers() > 0){
       pf_localization::pf_debug debug;
