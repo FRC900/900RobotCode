@@ -46,6 +46,13 @@ joint_state_controller:
 # encoder state used by the hw manager and publishes it as
 # a ROS topic.  This is generic ROS stuff, so we'll have
 # to figure out what to map e.g. effort to in the Talon world
+falcon1_percentout_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: falcon1
+    feedback_type: IntegratedSensor
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
 talon_state_controller:
    type:         talon_state_controller/TalonStateController
    publish_rate: 100

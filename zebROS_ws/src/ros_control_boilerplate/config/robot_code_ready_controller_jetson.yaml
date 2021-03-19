@@ -10,4 +10,3 @@ robot_code_ready_controller:
     type: static_controller/StaticController
     joint: robot_code_ready_jetson
     value: 900.0
-

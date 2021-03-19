@@ -1379,7 +1379,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
                 }
                 else{
                     ROS_ERROR_STREAM("Failed to clear instruments in orchestra");
-                    oc.resetClearInstruments();
+                    //oc.resetClearInstruments();
                 }
             }
             if(oc.musicChanged(music_file_path))
@@ -1391,7 +1391,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
                 }
                 else{
                     ROS_ERROR_STREAM("Failed to load music into orchestra");
-                    oc.resetMusic();
+                    //oc.resetMusic();
                 }
             }
             if(oc.pauseChanged())
@@ -1403,7 +1403,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
                 }
                 else{
                     ROS_ERROR_STREAM("Failed to pause orchestra");
-                    oc.pause();
+                    //oc.pause();
                 }
             }
             if(oc.playChanged())
@@ -1415,7 +1415,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
                 }
                 else{
                     ROS_ERROR_STREAM("Failed to play orchestra");
-                    oc.play();
+                    //oc.play();
                 }
             }
             if(oc.stopChanged())
@@ -1427,7 +1427,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
                 }
                 else{
                     ROS_ERROR_STREAM("Failed to stop orchestra");
-                    oc.stop();
+                    //oc.stop();
                 }
             }
         }

@@ -7,7 +7,6 @@
 
 	<arg name="hw_or_sim" default="hw" />
 
-
     <include file="$(find ros_control_boilerplate)/launch/shooter_riab_jetson.launch" pass_all_args="true"/>
     <!-- RIO Nodes -->
 	<group if="$(eval arg('hw_or_sim')=='hw')">

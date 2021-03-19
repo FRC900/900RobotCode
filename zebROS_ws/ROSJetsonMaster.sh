@@ -35,7 +35,7 @@ else
 fi
 
 # Common configuration
-export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre/linux/aarch64bionic/shared:/usr/local/lib
 export ROS_MASTER_URI=http://10.9.0.8:5802
 export ROSLAUNCH_SSH_UNKNOWN=1
 echo "ROS_IP set to $ROS_IP"
