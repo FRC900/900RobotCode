@@ -25,9 +25,10 @@ public:
   Particle predict();
   void noise_rot();
   void noise_pos();
-  void motion_update(double delta_x, double delta_y, double delta_rot);
-  void set_rotation(double rot);
-  void assign_weights(std::vector<std::pair<double, double> > mBeacons);
+  bool motion_update(double delta_x, double delta_y, double delta_rot);
+  bool set_rotation(double rot);
+  bool assign_weights_position(std::vector<Beacon> mBeacons, const Particle& offset);
+  bool assign_weights_bearing(std::vector<BearingBeacon> mBeacons, const Particle& offset);
   void resample();
   std::vector<Particle> get_particles() const;
 };

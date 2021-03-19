@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<launch>
+	<!-- GDB functionality -->
+	<arg name="debug" default="false" />
+  <arg name="primary_imu" default="NAVX" />
+	<arg unless="$(arg debug)" name="launch_prefix" value="" />
+	<arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+	<arg name="hw_or_sim" default="hw" />
+
+	<group ns="frcrobot_jetson">
+
+		<!-- Load controller settings -->
+		<rosparam file="$(find ros_control_boilerplate)/config/indexer_test_jetson.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/2019_swerve_drive.yaml" command="load"/>
+		<!-- Load hardware interface -->
+		<node name="frcrobot_jetson_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
+			output="screen" launch-prefix="$(arg launch_prefix)">
+		</node>
+
+		<!-- Load controller manager -->
+		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
+			output="screen" args="spawn indexer_test_controller talon_state_controller talon_config_controller joint_state_controller joint_state_listener_controller match_state_listener_controller pdp_state_controller robot_code_ready_controller swerve_drive_controller" />
+	</group>
+  <group ns="imu">
+		<include file="$(find controller_node)/launch/2019_compbot_jetson_imu.launch">
+			<arg name="primary_imu" value="$(arg primary_imu)" />
+		</include>
+	</group>
+  <group>
+    <param name="robot_description" textfile="$(find controller_node)/urdf/2020_compbot.urdf"/>
+    <node name="robot_state_publisher" pkg="robot_state_publsher" type="robot_state_publisher"/>
+  </group>
+  <include file="$(find controller_node)/launch/tape_detection.launch"/>
+  <include file="$(find controller_node)/launch/pf_localization.launch"/>
+
+</launch>

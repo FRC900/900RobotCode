@@ -1,0 +1,11 @@
+Newly found bugs:
+- motion_update in cmdCallback currently assumes no rotation change
+
+Possible improvements:
+- WorldModel::init_particle should be implemented and used by ParticleFilter::init
+
+Fixes made:
+- delta_x,y now local and only track change since last motion update
+- unique_ptr for pf in pf_localization_node
+- M_PI in ParticleFilter init
+- const reference in beacon constructor args

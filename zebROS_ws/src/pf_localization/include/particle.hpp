@@ -8,6 +8,7 @@ struct Particle {
   double weight_;
 
   Particle(double x, double y, double rot): x_(x), y_(y), rot_(rot), weight_(1) {}
+  Particle() : x_(0), y_(0), rot_(0), weight_(1) {}
 };
 
 #endif

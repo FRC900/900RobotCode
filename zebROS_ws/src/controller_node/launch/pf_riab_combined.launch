@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+	<!-- GDB functionality -->
+	<arg name="debug" default="false" />
+	<arg unless="$(arg debug)" name="launch_prefix" value="" />
+	<arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+	<arg name="hw_or_sim" default="hw" />
+
+    <include file="$(find controller_node)/launch/pf_riab_jetson.launch" pass_all_args="true"/>
+    <!-- RIO Nodes -->
+	<group if="$(eval arg('hw_or_sim')=='hw')">
+		<machine name="roboRIO" address="10.9.0.2" env-loader="/home/admin/2020RobotCode/zebROS_ws/ROSJetsonMaster.sh" user="admin" password="admin" default="true"/>
+	</group>
+
+    <include file="$(find controller_node)/launch/pf_riab_rio.launch" pass_all_args="true"/>
+</launch>

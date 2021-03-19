@@ -7,6 +7,7 @@
 
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
+#include <tf2_ros/transform_listener.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <sensor_msgs/Imu.h>
@@ -16,6 +17,7 @@
 #include <utility>
 #include <XmlRpcValue.h>
 #include <cmath>
+#include <memory>
 
 #define USE_MATH_DEFINES_
 
@@ -30,14 +32,16 @@ const std::string goal_pos_topic = "/goal_detection/goal_detect_msg";
 const std::string pub_debug_topic = "pf_debug";
 const std::string pub_topic = "predicted_pose";
 
+tf2_ros::Buffer tf_buffer_;
+
 ros::Time last_time;
 ros::Time last_measurement;
-double delta_x = 0;
-double delta_y = 0;
 double rot = 0;
 double noise_delta_t = 0;  // if the time since the last measurement is greater than this, positional noise will not be applied
-std::vector<std::pair<double, double> > measurement;
-ParticleFilter* pf = nullptr;
+// std::vector<Beacon > measurement;
+// test bearing only
+std::vector<BearingBeacon> measurement;
+std::unique_ptr<ParticleFilter> pf;
 
 double degToRad(double deg) {
   double rad = (deg / 180) * M_PI;
@@ -63,17 +67,43 @@ void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
 
 void goalCallback(const field_obj::Detection::ConstPtr& msg){
   measurement.clear();
+  geometry_msgs::TransformStamped zed_to_baselink = tf_buffer_.lookupTransform("base_link", msg->header.frame_id, ros::Time::now());
+
+  double roll, pitch, yaw;
+  tf2::Quaternion raw;
+  tf2::convert(zed_to_baselink.transform.rotation, raw);
+  tf2::Matrix3x3(raw).getRPY(roll, pitch, yaw);
+  double r = degToRad(yaw);
+
+  double tx = zed_to_baselink.transform.translation.x;
+  double ty = zed_to_baselink.transform.translation.y;
+
+  // for(const field_obj::Object& p : msg->objects) {
+  //   Beacon m {p.location.x, p.location.y, p.id};
+  //   measurement.push_back(m);
+  // }
+  // if (measurement.size() > 0){
+  //   bool success = pf->assign_weights_position(measurement, Particle(tx, ty, r));
+  //   pf->resample();
+  //   last_measurement = ros::Time::now();
+  // }
+
+  // bearing only test
   for(const field_obj::Object& p : msg->objects) {
-    measurement.push_back(std::make_pair(p.location.x, p.location.y));
+    BearingBeacon m {atan2(p.location.y, p.location.x), p.id};
+    measurement.push_back(m);
   }
   if (measurement.size() > 0){
-    pf->assign_weights(measurement);
+    bool success = pf->assign_weights_bearing(measurement, Particle(tx, ty, r));
     pf->resample();
+    last_measurement = ros::Time::now();
   }
-  last_measurement = ros::Time::now();
+
   #ifdef EXTREME_VERBOSE
   ROS_INFO("goalCallback called");
   #endif
+
+
 }
 
 void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
@@ -81,8 +111,8 @@ void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
   double x_vel = msg->twist.linear.x;
   double y_vel = msg->twist.linear.y;
 
-  delta_x += x_vel * timestep;
-  delta_y += y_vel * timestep;
+  double delta_x = x_vel * timestep;
+  double delta_y = y_vel * timestep;
 
   last_time = msg->header.stamp;
 
@@ -102,6 +132,7 @@ int main(int argc, char **argv) {
   ros::NodeHandle nh_;
   last_time = ros::Time::now();
   last_measurement = ros::Time::now();
+  tf2_ros::TransformListener tf_listener_(tf_buffer_);
 
   #ifdef VERBOSE
   ROS_INFO_STREAM(nh_.getNamespace());
@@ -111,7 +142,7 @@ int main(int argc, char **argv) {
   double f_x_min, f_x_max, f_y_min, f_y_max, i_x_min, i_x_max, i_y_min, i_y_max, p_stdev, r_stdev;
   int num_particles;
 
-  std::vector<std::pair<double, double> > beacons;
+  std::vector<Beacon > beacons;
 
   if (!nh_.getParam("noise_delta_t", noise_delta_t)) {
     ROS_ERROR("noise_delta_t not specified");
@@ -177,14 +208,15 @@ int main(int argc, char **argv) {
   ROS_INFO_STREAM(f_x_min << ' ' << i_x_min << ' ' << p_stdev);
 
   for (size_t i = 0; i < (unsigned) xml_beacons.size(); i++) {
-    beacons.push_back(std::make_pair(xml_beacons[i][0], xml_beacons[i][1]));
+    Beacon b {xml_beacons[i][0], xml_beacons[i][1], xml_beacons[i][2]};
+    beacons.push_back(b);
   }
 
   WorldModel world(beacons, f_x_min, f_x_max, f_y_min, f_y_max);
-  pf = new ParticleFilter(world,
-                          i_x_min, i_x_max, i_y_min, i_y_max,
-                          p_stdev, r_stdev,
-                          num_particles);
+  pf = std::make_unique<ParticleFilter>(world,
+                                        i_x_min, i_x_max, i_y_min, i_y_max,
+                                        p_stdev, r_stdev,
+                                        num_particles);
 
   #ifdef VERBOSE
   for (Particle p : pf->get_particles()) {
@@ -227,13 +259,9 @@ int main(int argc, char **argv) {
       pub_debug.publish(debug);
     }
 
-    delta_x = 0;
-    delta_y = 0;
     rate.sleep();
     ros::spinOnce();
   }
-
-  delete pf;
 
   return 0;
 }
