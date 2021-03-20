@@ -63,7 +63,7 @@ class Dashboard(Plugin):
         rospy.loginfo('Starting the Dashboard. Welcome :)')
 
         #Start client -rosbridge
-        self.client = roslibpy.Ros(host='localhost', port=5803)
+        self.client = roslibpy.Ros(host='10.9.0.8', port=5803)
         self.client.run()
 
         # Give QObjects reasonable names
@@ -95,7 +95,7 @@ class Dashboard(Plugin):
         # Load the map configurations
         with open(MAP_CONFIGURATION, 'r') as f:
             self.map_cfg = json.load(f, object_pairs_hook=OrderedDict)
-        
+
         for path_name, map_cfg_path in self.map_cfg.items():
             if map_cfg_path:
                 self.map_cfg[path_name] = os.path.join(MAP_PATH, map_cfg_path)
@@ -108,10 +108,10 @@ class Dashboard(Plugin):
         # Set up signal-slot connections
         self._widget.set_imu_angle_button.clicked.connect(self.setImuAngle)
         self._widget.imu_angle.valueChanged.connect(self.imuAngleChanged)
-        
+
         self._widget.auto_wall_dist_button.clicked.connect(self.setAutoWallDist)
         self._widget.auto_wall_dist.valueChanged.connect(self.autoWallDistChanged)
-        
+
         self._widget.ball_reset_button.clicked.connect(self.resetBallCount)
         self._widget.ball_reset_count.valueChanged.connect(self.resetBallChanged)
 
@@ -120,7 +120,7 @@ class Dashboard(Plugin):
 
         self._widget.clear_btn.released.connect(self.draw_pad.reloadImage)
         self._widget.execute_path_btn.released.connect(self.start_execute_path)
-        
+
         # Add buttons for auto modes
         v_layout = self._widget.auto_mode_v_layout #vertical layout storing the buttons
         self.auto_mode_button_group = QButtonGroup(self._widget) # needs to be a member variable so the publisher can access it to see which auto mode was selected
@@ -136,10 +136,10 @@ class Dashboard(Plugin):
             new_h_layout.setContentsMargins(0, 0, 0, 0)
 
             new_button = QRadioButton("Mode " + str(mode_idx + 1))
-            new_button.setStyleSheet("font-weight: bold") 
+            new_button.setStyleSheet("font-weight: bold")
             self.auto_mode_button_group.addButton(new_button, mode_idx + 1) #  Second arg is the button's id
             new_h_layout.addWidget( new_button )
-            
+
             new_h_layout.addWidget( QLabel(", ".join(auto_sequence)) )
 
             hSpacer = QSpacerItem(0, 0, QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -163,18 +163,18 @@ class Dashboard(Plugin):
         publish_thread = Thread(target=self.publish_thread) #args=(self,))
         publish_thread.start()
 
-        
-        self.n_balls = -1 #don't know n balls at first 
+
+        self.n_balls = -1 #don't know n balls at first
 
         #in range stuff
         self.shooter_in_range = False
         self.turret_in_range = False
         self._widget.in_range_display.setPixmap(NOT_IN_RANGE_IMG)
 
-        # Show _widget.windowTitle on left-top of each plugin (when 
-        # it's set in _widget). This is useful when you open multiple 
-        # plugins at once. Also if you open multiple instances of your 
-        # plugin at once, these lines add number to make it easy to 
+        # Show _widget.windowTitle on left-top of each plugin (when
+        # it's set in _widget). This is useful when you open multiple
+        # plugins at once. Also if you open multiple instances of your
+        # plugin at once, these lines add number to make it easy to
         # tell from pane to pane.
         if context.serial_number() > 1:
             self._widget.setWindowTitle(self._widget.windowTitle() + (' (%d)' % context.serial_number()))
@@ -245,8 +245,8 @@ class Dashboard(Plugin):
                 'accelerations': [],
                 'effort': [],
                 'time_from_start': {'secs': 0, 'nsecs': 0}
-            } 
-            for pt in coords  
+            }
+            for pt in coords
         ]
 
         path_offset_limits = [{
@@ -285,7 +285,7 @@ class Dashboard(Plugin):
                 'dynamic_path': result['path']
             }
             # self.callExecutePath(result['path'])
-        
+
             rospy.loginfo("Finished setting robot path")
 
         except (rospy.ServiceException, rospy.ROSException) as e: # the second exception happens if the wait for service times out
@@ -332,18 +332,18 @@ class Dashboard(Plugin):
         if(self.autoState != state):
             self.autoState = state
             self.displayAutoState()
-    
+
     def displayAutoState(self):
         if self.autoState == 0:
             self._widget.auto_state_display.setText("Not ready")
             self._widget.auto_state_display.setStyleSheet("background-color:#ff5555;")
-        elif self.autoState == 1: 
+        elif self.autoState == 1:
             self._widget.auto_state_display.setText("Ready, waiting for auto period")
-            self._widget.auto_state_display.setStyleSheet("background-color:#ffffff;") 
-        elif self.autoState == 2: 
+            self._widget.auto_state_display.setStyleSheet("background-color:#ffffff;")
+        elif self.autoState == 2:
             self._widget.auto_state_display.setText("Running")
-            self._widget.auto_state_display.setStyleSheet("background-color:#ffff00")       
-        elif self.autoState == 3: 
+            self._widget.auto_state_display.setStyleSheet("background-color:#ffff00")
+        elif self.autoState == 3:
             self._widget.auto_state_display.setText("Finished")
             self._widget.auto_state_display.setStyleSheet("background-color:#00ff00;")
         elif self.autoState == 4:
@@ -355,13 +355,13 @@ class Dashboard(Plugin):
         self.nBallsSignal.emit(int(msg['data']))
 
     def nBallsSlot(self, state):
-        
+
         if self.n_balls == state:
             return
-        
+
         self.n_balls = state
         display = self._widget.n_balls_display
-        
+
         if state == 0:
             display.setPixmap(BALL_IMG_0)
         elif state == 1:
@@ -437,12 +437,12 @@ class Dashboard(Plugin):
 
     def autoWallDistChanged(self):
         self._widget.auto_wall_dist_button.setStyleSheet(RED_STYLE)
-    
+
 
     def resetBallCount(self):
-        nballs = self._widget.ball_reset_count.value() 
+        nballs = self._widget.ball_reset_count.value()
         rospy.loginfo("Manually reset ball count: {0:d} balls".format(nballs))
-        
+
         # call the service
         try:
             rospy.wait_for_service("/reset_ball", 1) #timeout in sec, TODO maybe put in config file?
@@ -506,16 +506,16 @@ class Dashboard(Plugin):
 
         if self.auto_state_sub is not None:
             self.auto_state_sub.unregister()
-        
+
         if self.n_balls_sub is not None:
             self.n_balls_sub.unregister()
-        
+
         if self.shooter_in_range_sub is not None:
             self.shooter_in_range_sub.unregister()
 
         if self.turret_in_range_sub is not None:
             self.turret_in_range_sub.unregister()
-        
+
         self.client.close()
 
         rospy.loginfo('All done shutting down. Bye!')
@@ -530,7 +530,7 @@ class Dashboard(Plugin):
         # TODO restore intrinsic configuration, usually using:
         # v = instance_settings.value(k)
         pass
-    
+
 
     def trigger_configuration(self):
         # Comment in to signal that the plugin has a way to configure

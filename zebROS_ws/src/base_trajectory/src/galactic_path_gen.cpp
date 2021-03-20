@@ -23,6 +23,7 @@ bool genPath(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
     spline_gen_srv.request.header = lastObjectDetection.header;
 
     const size_t objects_num = lastObjectDetection.objects.size();
+		ROS_INFO_STREAM("galactic_path_gen : objects_num: " << objects_num);
 
     std::vector<std::pair<double, double>> points;
     points.push_back(std::make_pair(0,0)); // may need to worry about transforms between beginning/end point and intake?

@@ -83,7 +83,7 @@ def run_inference_for_single_image(msg):
 
     detection = TFDetection()
     detection.header = msg.header
-    detection.header.frame_id = detection.header.frame_id.replace("_optical_frame", "")
+    detection.header.frame_id = detection.header.frame_id.replace("_optical_frame", "_frame")
     for i in range(output_dict['num_detections']):
         obj = TFObject()
         obj.confidence = output_dict['detection_scores'][i]
@@ -145,7 +145,7 @@ def mine_undetected_power_cells(output_dict, image_np):
                     rospy.loginfo("Hard negative")
                     save_file = True
                     break
- 
+
             elif float(output_dict['detection_scores'][i]) < min_confidence:
                 rospy.loginfo("Missing power cell")
                 save_file = True
