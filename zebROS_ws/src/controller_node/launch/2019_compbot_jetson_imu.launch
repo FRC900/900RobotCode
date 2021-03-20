@@ -4,7 +4,7 @@
 	<node if="$(eval arg('primary_imu')=='NAVX')" name="navx_publisher" pkg="navx_publisher" type="navx_publisher_node" output="screen">
 		<param name="device" value="/dev/NAVX"/>
 	</node>
-	<include if="$(eval arg('primary_imu')=='ADI')" file="$(find controller_node)/launch/adis16470.launch"> 
+	<include if="$(eval arg('primary_imu')=='ADI')" file="$(find controller_node)/launch/adis16495.launch"> 
 		<arg name="device" value="/dev/ADI" />
 	</include>
 	<node name="imu_zero" pkg="imu_zero" type="imu_zero_node" output="screen">

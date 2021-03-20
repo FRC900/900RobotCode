@@ -7,10 +7,11 @@ goal_to_wall_y_dist: 2.404
 # arrays of actions (see below) that will be executed in order
 # format: auto_mode_[integer]: array
 #
-auto_mode_1: ["barrel_racing_path"]
-auto_mode_2: ["bounce_path"]
-auto_mode_2: ["slalom_path"]
-auto_mode_4: ["dynamic_path"]
+auto_mode_1: ["tuning"]
+auto_mode_2: ["barrel_racing_path"]
+auto_mode_3: ["bounce_path"]
+auto_mode_3: ["slalom_path"]
+auto_mode_5: ["dynamic_path"]
 
 #auto_mode_1: ["start_intake", "path_to_trench_face_goal", "stop_intake", "shoot", "pause_2_sec"] #example
 #auto_mode_2: ["pause_2_sec","pause_5_sec"]
@@ -18,6 +19,14 @@ auto_mode_4: ["dynamic_path"]
 #auto_mode_4: ["drive_back", "shoot", "path_to_trench_after_drive_back"]
 #auto_mode_5: ["drive_test_angle", "start_intake", "drive_forward", "stop_intake"]
 #auto_mode_6: ["drive_path_test_1"]
+tuning:
+  type: "path"
+  goal:
+    apply_offset: false
+    points:
+      - [1.0, 0.0, 0.0]
+      - [2.0, 2.0, 0.0]
+      - [3.0, 1.0, 0.0]
 
 barrel_racing_path:
   type: "path"
