@@ -19,8 +19,11 @@ class ArMsgToGoalDetect
 		// Translate ar_track_alvar marker msg into our custom goal detection message
 		void cmdVelCallback(const ar_track_alvar_msgs::AlvarMarkers &msgIn)
 		{
+			if (msgIn.markers.size() == 0)
+				return;
+
 			field_obj::Detection msgOut;
-			msgOut.header = msgIn.header;
+			msgOut.header = msgIn.markers[0].header;
 			for (const auto &m : msgIn.markers)
 			{
 				field_obj::Object dummy;

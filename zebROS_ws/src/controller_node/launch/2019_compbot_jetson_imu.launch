@@ -6,6 +6,7 @@
 	</node>
 	<include if="$(eval arg('primary_imu')=='ADI')" file="$(find controller_node)/launch/adis16495.launch"> 
 		<arg name="device" value="/dev/ADI" />
+		<arg name="publish_tf" value="false" />
 	</include>
 	<node name="imu_zero" pkg="imu_zero" type="imu_zero_node" output="screen">
 		<remap if="$(eval arg('primary_imu')=='NAVX')" from="imu/data" to="navx/data" />
