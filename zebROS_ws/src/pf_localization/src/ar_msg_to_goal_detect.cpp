@@ -24,6 +24,9 @@ class ArMsgToGoalDetect
 
 			field_obj::Detection msgOut;
 			msgOut.header = msgIn.markers[0].header;
+			if (msgOut.header.frame_id[0] == '/')
+				msgOut.header.frame_id = msgOut.header.frame_id.substr(1, msgOut.header.frame_id.size());
+
 			for (const auto &m : msgIn.markers)
 			{
 				field_obj::Object dummy;
