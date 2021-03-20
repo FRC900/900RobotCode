@@ -13,12 +13,12 @@
 #include <thread>
 #include <atomic>
 
-
+#include "std_msgs/Bool.h"
 //VARIABLES ---------------------------------------------------------
 int auto_mode = -1; //-1 if nothing selected
 double distance_from_center = 0.0; // distance from robot to center of goal; left is positive, right is negative
 std::vector<std::string> auto_steps; //stores string of action names to do, read from the auto mode array in the config file
-
+bool enable_teleop = false;
 bool auto_started = false; //set to true when enter auto time period
 bool auto_stopped = false; //set to true if driver stops auto (callback: stopAuto() ) - note: this node will keep doing actions during teleop if not finished and the driver doesn't stop auto
 //All actions check if(auto_started && !auto_stopped) before proceeding.
@@ -50,7 +50,7 @@ bool stopAuto(std_srvs::Empty::Request &req,
 //subscriber callback for match data
 void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg)
 {
-	if(msg->Autonomous && msg->Enabled)
+	if((msg->Autonomous && msg->Enabled) || (msg->Enabled && enable_teleop))
 	{
 		auto_started = true; //only want to set this to true, never set it to false afterwards
 	}
@@ -64,6 +64,10 @@ void updateAutoMode(const behavior_actions::AutoMode::ConstPtr& msg)
 	distance_from_center = -1 * (goal_to_wall_y_dist - msg->distance_from_wall); // left is positive, right is negative
 }
 
+void enable_auto_in_teleop(const std_msgs::Bool::ConstPtr& msg)
+{
+	enable_teleop = msg->data;
+}
 
 void doPublishAutostate(ros::Publisher &state_pub)
 {
@@ -223,6 +227,7 @@ int main(int argc, char** argv)
 	ros::Subscriber match_data_sub = nh.subscribe("/frcrobot_rio/match_data", 1, matchDataCallback);
 	//dashboard (to get auto mode)
 	ros::Subscriber auto_mode_sub = nh.subscribe("auto_mode", 1, updateAutoMode); //TODO get correct topic name (namespace)
+	ros::Subscriber enable_auto_in_teleop_sub = nh.subscribe("/enable_auto_in_teleop", 1, enable_auto_in_teleop);
 
 	//auto state
 	auto_state_pub_thread = std::thread(publishAutoState, std::ref(nh));
@@ -381,4 +386,3 @@ int main(int argc, char** argv)
 	shutdownNode(DONE, auto_stopped ? "Auto node - Autonomous actions stopped before completion" : "Auto node - Autonomous actions completed!");
 	return 0;
 }
-
