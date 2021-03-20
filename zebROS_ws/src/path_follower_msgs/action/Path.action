@@ -1,5 +1,4 @@
-geometry_msgs/Point[] points
-base_trajectory_msgs/Constraint[] constraints
+nav_msgs/Path path
 ---
 bool timed_out
 bool success

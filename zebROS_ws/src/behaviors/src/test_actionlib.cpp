@@ -389,6 +389,7 @@ bool callAlignHatch()
 
 bool callPath(double path_x_setpoint, double path_y_setpoint, double path_z_setpoint, double path_x2_setpoint, double path_y2_setpoint, double path_z2_setpoint)
 {
+  #if 0
         ROS_INFO_STREAM("path_x_setpoint = " << path_x_setpoint);
 	actionlib::SimpleActionClient<path_follower_msgs::PathAction> path_ac("/path_follower/path_follower_server", true);
 
@@ -440,6 +441,8 @@ bool callPath(double path_x_setpoint, double path_y_setpoint, double path_z_setp
 		ROS_INFO("callPath : Action did not finish before the time out.");
 		return false;
 	}
+  #endif
+  return true;
 }
 bool callAlignToShoot(int mode)
 {

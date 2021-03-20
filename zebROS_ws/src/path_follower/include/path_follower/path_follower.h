@@ -88,6 +88,7 @@ class PathFollower
 		std::vector<double> vec_path_length_;
 		double start_point_radius_;
 		ros::Duration time_offset_;
+		ros::Duration start_time_offset_;
 
 	public:
 		PathFollower(double lookahead_distance,

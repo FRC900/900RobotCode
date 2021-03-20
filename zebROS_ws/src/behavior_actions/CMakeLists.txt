@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   message_generation
   roscpp
+  nav_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -59,6 +60,7 @@ add_message_files(
 add_service_files(
   FILES
   resetBallSrv.srv
+  DynamicPath.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -80,7 +82,7 @@ add_action_files(
 	RotatePanel.action
 )
 
-generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
+generate_messages(DEPENDENCIES actionlib_msgs nav_msgs std_msgs)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

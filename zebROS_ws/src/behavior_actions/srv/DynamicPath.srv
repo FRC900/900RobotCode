@@ -1,0 +1,3 @@
+string path_name
+nav_msgs/Path dynamic_path
+---

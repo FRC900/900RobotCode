@@ -27,6 +27,7 @@ bool PathFollower::loadPath(const nav_msgs::Path &path)
 		path_length_ += hypot(end_x - start_x, end_y - start_y);
 		vec_path_length_.push_back(path_length_);
 	}
+	start_time_offset_ = ros::Duration(ros::Time::now().toSec());
 	return true;
 }
 
@@ -83,7 +84,9 @@ geometry_msgs::Pose PathFollower::run(nav_msgs::Odometry odom, double &total_dis
 	}
 
 	size_t current_waypoint_index = 0; //the index BEFORE the point on the path
-	ros::Time current_time = ros::Time::now();
+	// Timestamps in path are relative to when they were created.
+	// Offset them here to be relative the time the path starts running
+	const ros::Time current_time = ros::Time::now() - start_time_offset_ + ros::Duration(path_.poses[0].header.stamp.toSec());
 
 	double magnitude_projection = 0; // distance from the waypoint to the point on the path
 	const size_t last_index = num_waypoints_ - 1;

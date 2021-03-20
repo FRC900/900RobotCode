@@ -1,6 +1,5 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-#include "base_trajectory_msgs/GenerateSpline.h"
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <geometry_msgs/Quaternion.h>
 #include <nav_msgs/Odometry.h>
@@ -18,8 +17,6 @@ class PathAction
 		ros::NodeHandle nh_;
 		actionlib::SimpleActionServer<path_follower_msgs::PathAction> as_;
 		std::string action_name_;
-
-		ros::ServiceClient spline_gen_cli_;
 
 		ros::Subscriber odom_sub_;
 		nav_msgs::Odometry odom_;
@@ -69,12 +66,7 @@ class PathAction
 		{
 			//start_point_radius_ = start_point_radius;
 
-			std::map<std::string, std::string> service_connection_header;
-			service_connection_header["tcp_nodelay"] = "1";
-
 			// TODO - not sure which namespace base_trajectory should go in
-			spline_gen_cli_ = nh_.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen", false, service_connection_header);
-
 			odom_sub_ = nh_.subscribe(odom_topic, 1, &PathAction::odomCallback, this);
 			if (!use_odom_orientation_)
 			{
@@ -158,44 +150,7 @@ class PathAction
 			bool timed_out = false;
 			bool succeeded = false;
 
-			// Generate the waypoints of the spline
-			base_trajectory_msgs::GenerateSpline spline_gen_srv;
-			const size_t point_num = goal->points.size();
-			spline_gen_srv.request.points.resize(point_num);
-			for (size_t i = 0; i < point_num; i++)
-			{
-				spline_gen_srv.request.points[i].positions.resize(3);
-				spline_gen_srv.request.points[i].positions[0] = goal->points[i].x;
-				spline_gen_srv.request.points[i].positions[1] = goal->points[i].y;
-				spline_gen_srv.request.points[i].positions[2] = goal->points[i].z;
-			}
-
-			const size_t constraint_num = goal->constraints.size();
-			spline_gen_srv.request.constraints.resize(constraint_num);
-			for (size_t i = 0; i < constraint_num; i++)
-			{
-				spline_gen_srv.request.constraints[i].corner1.x = goal->constraints[i].corner1.x;
-				spline_gen_srv.request.constraints[i].corner2.x = goal->constraints[i].corner2.x;
-				spline_gen_srv.request.constraints[i].corner1.y = goal->constraints[i].corner1.y;
-				spline_gen_srv.request.constraints[i].corner2.y = goal->constraints[i].corner2.y;
-				spline_gen_srv.request.constraints[i].max_accel = (goal->constraints[i].max_accel < 0 ? std::numeric_limits<double>::max() : goal->constraints[i].max_accel);
-				spline_gen_srv.request.constraints[i].max_decel = (goal->constraints[i].max_decel < 0 ? std::numeric_limits<double>::max() : goal->constraints[i].max_decel);
-				spline_gen_srv.request.constraints[i].max_vel = (goal->constraints[i].max_vel <= 0 ? std::numeric_limits<double>::max() : goal->constraints[i].max_vel);
-				spline_gen_srv.request.constraints[i].max_cent_accel = (goal->constraints[i].max_cent_accel <= 0 ? std::numeric_limits<double>::max() : goal->constraints[i].max_cent_accel);
-				spline_gen_srv.request.constraints[i].path_limit_distance = (goal->constraints[i].path_limit_distance <= 0 ? std::numeric_limits<double>::max() : goal->constraints[i].path_limit_distance);
-			}
-
-			if (!spline_gen_cli_.call(spline_gen_srv))
-			{
-				ROS_ERROR_STREAM("Can't call spline gen service in path_follower_server");
-				//log result and set actionlib server state appropriately
-				path_follower_msgs::PathResult result;
-				result.timed_out = false;
-				result.success = false;
-				as_.setAborted(result);
-				return;
-			}
-			const size_t num_waypoints = spline_gen_srv.response.path.poses.size();
+			const size_t num_waypoints = goal->path.poses.size();
 
 			// Since paths are robot-centric, the initial odom value is 0,0,0 for the path.
 			// Set this up as a transfrom to apply to each point in the path. This has the
@@ -219,16 +174,16 @@ class PathAction
 			// Transform the final point from robot to odom coordinates. Used each iteration to
 			// see if we've reached the end point, so do it once here rather than each time through
 			// the loop
-			geometry_msgs::Pose final_pose_transformed = spline_gen_srv.response.path.poses.back().pose;
+			geometry_msgs::Pose final_pose_transformed = goal->path.poses.back().pose;
 			tf2::doTransform(final_pose_transformed, final_pose_transformed, odom_to_base_link_tf);
 
 			//debug
-			ROS_INFO_STREAM(spline_gen_srv.response.path.poses[num_waypoints - 1].pose.position.x << ", " << spline_gen_srv.response.path.poses[num_waypoints - 1].pose.position.y << ", " << path_follower_.getYaw(spline_gen_srv.response.path.poses[num_waypoints - 1].pose.orientation));
+			ROS_INFO_STREAM(goal->path.poses[num_waypoints - 1].pose.position.x << ", " << goal->path.poses[num_waypoints - 1].pose.position.y << ", " << path_follower_.getYaw(goal->path.poses[num_waypoints - 1].pose.orientation));
 
 			ros::Rate r(ros_rate_);
 
 			// send path to initialize path follower
-			if (!path_follower_.loadPath(spline_gen_srv.response.path))
+			if (!path_follower_.loadPath(goal->path))
 			{
 				ROS_ERROR_STREAM("Failed to load path");
 				preempted = true;

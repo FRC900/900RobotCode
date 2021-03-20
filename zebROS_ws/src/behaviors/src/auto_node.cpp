@@ -5,9 +5,13 @@
 #include <std_srvs/Empty.h>
 #include <frc_msgs/MatchSpecificData.h>
 
+#include "base_trajectory_msgs/GenerateSpline.h"
+#include "base_trajectory_msgs/PathOffsetLimit.h"
+
 #include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/IntakeAction.h>
 #include <behavior_actions/ShooterAction.h>
+#include <behavior_actions/DynamicPath.h>
 #include <path_follower_msgs/PathAction.h>
 
 #include <thread>
@@ -34,6 +38,9 @@ enum AutoStates {
 };
 std::atomic<int> auto_state(NOT_READY); //This state is published by the publish thread
 
+std::map<std::string, nav_msgs::Path> premade_paths;
+
+ros::ServiceClient spline_gen_cli_;
 
 //FUNCTIONS -------
 
@@ -56,7 +63,6 @@ void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg)
 	}
 }
 
-
 //subscriber callback for dashboard data
 void updateAutoMode(const behavior_actions::AutoMode::ConstPtr& msg)
 {
@@ -67,6 +73,12 @@ void updateAutoMode(const behavior_actions::AutoMode::ConstPtr& msg)
 void enable_auto_in_teleop(const std_msgs::Bool::ConstPtr& msg)
 {
 	enable_teleop = msg->data;
+}
+
+bool dynamic_path_storage(behavior_actions::DynamicPath::Request &req, behavior_actions::DynamicPath::Response &res)
+{
+	premade_paths[req.path_name] = req.dynamic_path;
+	return true;
 }
 
 void doPublishAutostate(ros::Publisher &state_pub)
@@ -185,14 +197,132 @@ void shutdownNode(AutoStates state, const std::string &msg)
 }
 
 
-bool waitForAutoStart(void)
+bool waitForAutoStart(ros::NodeHandle nh)
 {
 	ros::Rate r(20);
+
+	std::string frame_id;
+	bool optimize_final_velocity;
+
+	XmlRpc::XmlRpcValue xml_point_frame_ids, xml_path_offset_limit_array;
+
+	if (!nh.getParam("frame_id", frame_id))
+	{
+    ROS_ERROR("frame id not specified");
+    return -1;
+	}
+
+	if (!nh.getParam("optimize_final_velocity", optimize_final_velocity))
+	{
+		ROS_ERROR("optimize final velocity not specified");
+		return -1;
+	}
+
+	if (!nh.getParam("point_frame_id", xml_point_frame_ids))
+	{
+		ROS_ERROR("point frame id not specified");
+		return -1;
+	}
+
+	if (!nh.getParam("path_offset_limit", xml_path_offset_limit_array))
+	{
+    throw std::runtime_error("Couldn't read ");
+	}
 
 	//wait for auto period to start
 	while( ros::ok() && !auto_stopped )
 	{
 		ros::spinOnce(); //spin so the subscribers can update
+
+		std::vector<std::string> auto_steps; //stores string of action names to do, read from the auto mode array in the config file
+		//read sequence of actions from config
+		if (auto_mode >= 0)
+		{
+			if(nh.getParam("auto_mode_" + std::to_string(auto_mode), auto_steps))
+			{
+				for (size_t j = 0; j < auto_steps.size(); j++) {
+					XmlRpc::XmlRpcValue action_data;
+					if(nh.getParam(auto_steps[j], action_data)) {
+						if(action_data["type"] == "path") {
+							if (premade_paths.find(auto_steps[j]) != premade_paths.end()) {
+								continue;
+							}
+							//read array of array of doubles
+							XmlRpc::XmlRpcValue points_config = action_data["goal"]["points"];
+
+							// Generate the waypoints of the spline
+							base_trajectory_msgs::GenerateSpline spline_gen_srv;
+							const size_t point_num = points_config.size() + 1;
+							spline_gen_srv.request.points.resize(point_num);
+							spline_gen_srv.request.points[0].positions.resize(3);
+							spline_gen_srv.request.points[0].positions[0] = 0;
+							spline_gen_srv.request.points[0].positions[1] = 0;
+							spline_gen_srv.request.points[0].positions[2] = 0;
+							for (size_t i = 0; i < point_num-1; i++)
+							{
+								spline_gen_srv.request.points[i+1].positions.resize(3);
+								spline_gen_srv.request.points[i+1].positions[0] = (double) points_config[i][0];
+								spline_gen_srv.request.points[i+1].positions[1] = (double) points_config[i][1];
+								spline_gen_srv.request.points[i+1].positions[2] = (double) points_config[i][2];
+							}
+
+							spline_gen_srv.request.header.frame_id = frame_id;
+							spline_gen_srv.request.header.stamp = ros::Time::now();
+
+							for (size_t i = 0; i < (unsigned) xml_point_frame_ids.size(); i++)
+							{
+								std::string point_frame_id = xml_point_frame_ids[i];
+								spline_gen_srv.request.point_frame_id.push_back(point_frame_id);
+							}
+
+							for (int i = 0; i < xml_path_offset_limit_array.size(); i++)
+							{
+						    XmlRpc::XmlRpcValue &dictionary = xml_path_offset_limit_array[i];
+								base_trajectory_msgs::PathOffsetLimit path_offset_limit;
+						    if (dictionary.hasMember("min_x"))
+						    {
+						        XmlRpc::XmlRpcValue &dictionary_entry = dictionary["min_x"];
+						        if (!dictionary_entry.valid() || ((dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeDouble) && (dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeInt)))
+						            throw std::runtime_error("An invalid dictionary entry was read (expecting a double or int)");
+						        path_offset_limit.min_x = dictionary_entry;
+						    }
+								if (dictionary.hasMember("min_y"))
+						    {
+						        XmlRpc::XmlRpcValue &dictionary_entry = dictionary["min_y"];
+						        if (!dictionary_entry.valid() || ((dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeDouble) && (dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeInt)))
+						            throw std::runtime_error("An invalid dictionary entry was read (expecting a double or int)");
+						        path_offset_limit.min_y = dictionary_entry;
+						    }
+								if (dictionary.hasMember("max_x"))
+						    {
+						        XmlRpc::XmlRpcValue &dictionary_entry = dictionary["max_x"];
+						        if (!dictionary_entry.valid() || ((dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeDouble) && (dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeInt)))
+						            throw std::runtime_error("An invalid dictionary entry was read (expecting a double or int)");
+						        path_offset_limit.max_x = dictionary_entry;
+						    }
+								if (dictionary.hasMember("max_y"))
+						    {
+						        XmlRpc::XmlRpcValue &dictionary_entry = dictionary["max_y"];
+						        if (!dictionary_entry.valid() || ((dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeDouble) && (dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeInt)))
+						            throw std::runtime_error("An invalid dictionary entry was read (expecting a double or int)");
+						        path_offset_limit.max_y = dictionary_entry;
+						    }
+								spline_gen_srv.request.path_offset_limit.push_back(path_offset_limit);
+							}
+
+							if (!spline_gen_cli_.call(spline_gen_srv))
+							{
+								ROS_ERROR_STREAM("Can't call spline gen service in path_follower_server");
+								return false;
+							}
+							premade_paths[auto_steps[j]] = spline_gen_srv.response.path;
+						}
+					}
+				}
+			}
+		}
+
+
 
 		if(auto_mode > 0){
 			auto_state = READY;
@@ -222,12 +352,19 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "auto_node");
 	ros::NodeHandle nh;
 
+	std::map<std::string, std::string> service_connection_header;
+	service_connection_header["tcp_nodelay"] = "1";
+	spline_gen_cli_ = nh.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen", false, service_connection_header);
+
 	//subscribers
 	//rio match data (to know if we're in auto period)
 	ros::Subscriber match_data_sub = nh.subscribe("/frcrobot_rio/match_data", 1, matchDataCallback);
 	//dashboard (to get auto mode)
 	ros::Subscriber auto_mode_sub = nh.subscribe("auto_mode", 1, updateAutoMode); //TODO get correct topic name (namespace)
 	ros::Subscriber enable_auto_in_teleop_sub = nh.subscribe("/enable_auto_in_teleop", 1, enable_auto_in_teleop);
+
+	//
+	ros::ServiceServer path_finder = nh.advertiseService("dynamic_path", dynamic_path_storage);
 
 	//auto state
 	auto_state_pub_thread = std::thread(publishAutoState, std::ref(nh));
@@ -256,7 +393,7 @@ int main(int argc, char** argv)
 	ROS_INFO("Auto node - waiting for autonomous to start");
 
 	//wait for auto period to start
-	if (!waitForAutoStart())
+	if (!waitForAutoStart(nh))
 		return 0;
 
 	//EXECUTE AUTONOMOUS ACTIONS --------------------------------------------------------------------------
@@ -264,6 +401,7 @@ int main(int argc, char** argv)
 	ROS_INFO_STREAM("Auto node - Executing auto mode " << auto_mode);
 	auto_state = RUNNING;
 
+	std::vector<std::string> auto_steps; //stores string of action names to do, read from the auto mode array in the config file
 	//read sequence of actions from config
 	if(! nh.getParam("auto_mode_" + std::to_string(auto_mode), auto_steps)){
 		shutdownNode(ERROR, "Couldn't read auto_mode_" + std::to_string(auto_mode) + " config value in auto node");
@@ -335,8 +473,8 @@ int main(int argc, char** argv)
 			else if(action_data["type"] == "shooter_actionlib_server")
 			{
 				if(!shooter_ac.waitForServer(ros::Duration(5))){
-					shutdownNode(ERROR, "Auto node - couldn't find shooter actionlib server");
 					return 1;
+					shutdownNode(ERROR, "Auto node - couldn't find shooter actionlib server");
 				} //for some reason this is necessary, even if the server has been up and running for a while
 				behavior_actions::ShooterGoal goal;
 				goal.mode = 0;
@@ -349,31 +487,19 @@ int main(int argc, char** argv)
 					shutdownNode(ERROR, "Couldn't find path server");
 					return 1;
 				}
-				path_follower_msgs::PathGoal goal;
+				int iteration_value = action_data["goal"]["iterations"];
 
-				//initialize 0, 0, 0 point
-				geometry_msgs::Point point;
-				point.x = 0;
-				point.y = 0;
-				point.z = 0;
-				goal.points.push_back(point);
-
-				//read array of array of doubles
-				XmlRpc::XmlRpcValue points_config = action_data["goal"]["points"];
-				for(int i = 0; i < points_config.size(); i++)
+				while(iteration_value > 0)
 				{
-					point.x = (double) points_config[i][0];
-					point.y = (double) points_config[i][1];
-					if(action_data["goal"]["apply_offset"])
-					{
-						point.y -= distance_from_center; // if the robot is not centered to goal, adjust path
+					path_follower_msgs::PathGoal goal;
+					if (premade_paths.find(auto_steps[i]) == premade_paths.end()) {
+						shutdownNode(ERROR, "Can't find premade path " + std::string(auto_steps[i]));
 					}
-					point.z = (double) points_config[i][2];
-					goal.points.push_back(point);
+					goal.path = premade_paths[auto_steps[i]];
+					path_ac.sendGoal(goal);
+					waitForActionlibServer(path_ac, 100, "running path");
+					iteration_value --;
 				}
-
-				path_ac.sendGoal(goal);
-				waitForActionlibServer(path_ac, 100, "running path");
 			}
 			else
 			{
