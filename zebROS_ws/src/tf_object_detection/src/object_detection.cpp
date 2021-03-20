@@ -10,6 +10,10 @@
 #include "field_obj_tracker/convert_coords.h"
 #include "field_obj_tracker/objtype.hpp"
 
+#include <geometry_msgs/TransformStamped.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_ros/transform_broadcaster.h>
+
 ros::Publisher pub;
 
 sensor_msgs::CameraInfo caminfo;
@@ -103,7 +107,40 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 		// Add the 3d object info to the list of objects in the output message
 		out_msg.objects.push_back(worldObject);
 	}
+
 	pub.publish(out_msg);
+
+	if (out_msg.objects.size() > 0)
+	{
+		//Transform between goal frame and odometry/map.
+		static tf2_ros::TransformBroadcaster br;
+		for(size_t i = 0; i < out_msg.objects.size(); i++)
+		{
+			geometry_msgs::TransformStamped transformStamped;
+
+			transformStamped.header.stamp = out_msg.header.stamp;
+			transformStamped.header.frame_id = out_msg.header.frame_id;
+			std::stringstream child_frame;
+			child_frame << "detection_";
+			child_frame << i;
+			transformStamped.child_frame_id = child_frame.str();
+
+			transformStamped.transform.translation.x = out_msg.objects[i].location.x;
+			transformStamped.transform.translation.y = out_msg.objects[i].location.y;
+			transformStamped.transform.translation.z = out_msg.objects[i].location.z;
+
+			// Can't detect rotation yet, so publish 0 instead
+			tf2::Quaternion q;
+			q.setRPY(0, 0, out_msg.objects[i].angle);
+
+			transformStamped.transform.rotation.x = q.x();
+			transformStamped.transform.rotation.y = q.y();
+			transformStamped.transform.rotation.z = q.z();
+			transformStamped.transform.rotation.w = q.w();
+
+			br.sendTransform(transformStamped);
+		}
+	}
 }
 int main (int argc, char **argv)
 {
