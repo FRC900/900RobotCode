@@ -1,0 +1,11 @@
+field_dims:
+  width: 360
+  height: 180
+
+imagename: "lightspeed_path.png"
+
+obstacles:
+  - {type: "polygon", num_points: 3, p1: [180, 120], p2: [180, 150], p3: [210, 120]}
+  - {type: "polygon", num_points: 3, p1: [180, 60], p2: [270, 120], p3: [300, 60]}
+  - {type: "polygon", num_points: 4, p1: [90, 110], p2: [90, 130], p3: [120, 130], p4: [120, 110]}
+  - {type: "polygon", num_points: 4, p1: [90, 50], p2: [90, 70], p3: [120, 70], p4: [120, 50]}
