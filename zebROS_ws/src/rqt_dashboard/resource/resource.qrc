@@ -7,7 +7,7 @@
     <file>4_balls.png</file>
     <file>5_balls.png</file>
     <file>more_than_5_balls.png</file>
-	<file>GreenTarget.png</file>
-	<file>RedTarget.png</file>
+    <file>GreenTarget.png</file>
+    <file>RedTarget.png</file>
   </qresource>
 </RCC>
