@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   nav_msgs
   trajectory_msgs
+  field_obj
 )
 
 ## System dependencies are found with CMake's conventions
