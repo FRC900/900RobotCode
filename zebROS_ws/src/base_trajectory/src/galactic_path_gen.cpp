@@ -6,6 +6,7 @@
 #include "field_obj/Detection.h"
 
 ros::ServiceClient spline_gen_cli;
+ros::ServiceClient dynamic_path_cli;
 
 field_obj::Detection lastObjectDetection;
 
@@ -56,9 +57,22 @@ bool genPath(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
     }
 
     spline_gen_srv.request.optimize_final_velocity = true; // flag for optimized velocity
+	ROS_INFO_STREAM("galactic_path_gen : reg: " << spline_gen_srv.request);
 
     if (!spline_gen_cli.call(spline_gen_srv))
-	    ROS_ERROR_STREAM("Can't call spline gen service in path_follower_server");
+	{
+	    ROS_ERROR_STREAM("Can't call spline gen service in galactic_path_gen");
+		return false;
+	}
+	behavior_actions::DynamicPath dynamic_path_srv;
+	dynamic_path_srv.request.path_name = "dynamic_path";
+	dynamic_path_srv.request.dynamic_path = spline_gen_srv.response.path;
+    if (!dynamic_path_cli.call(dynamic_path_srv))
+	{
+	    ROS_ERROR_STREAM("Can't call dynamic path service in galactic_path_gen");
+		return false;
+	}
+	return true;
 
 	/*
     res.orient_coefs = spline_gen_srv.response.orient_coefs;
@@ -79,8 +93,8 @@ int main(int argc, char **argv)
 	ros::Subscriber powercellSubscriber = nh.subscribe("object_detection_world", 1, objectDetectCallback);
     ros::ServiceServer svc = nh.advertiseService("galactic_path_gen", genPath);
 
-    spline_gen_cli = nh.serviceClient<base_trajectory_msgs::GenerateSpline>("/base_trajectory/spline_gen");
-    auto dynamic_path_cli = nh.serviceClient<behavior_actions::DynamicPath>("/auto/dynamic_path");
+    spline_gen_cli = nh.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen");
+    dynamic_path_cli = nh.serviceClient<behavior_actions::DynamicPath>("/auto/dynamic_path");
 
     ros::spin();
     return 0;

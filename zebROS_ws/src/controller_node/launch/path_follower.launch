@@ -68,7 +68,7 @@
 
             <node name="orient_pid" pkg="pid" type="controller" >
                 <param name="node_name" value="orient_pid" />
-                <param name="Kp" value="-13" />
+                <param name="Kp" value="-08" />
                 <param name="Ki" value="0" />
                 <param name="Kd" value="0" />
                 <param name="upper_limit" value="8" />
