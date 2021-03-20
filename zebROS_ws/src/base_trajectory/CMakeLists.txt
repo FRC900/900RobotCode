@@ -8,6 +8,7 @@ include ("../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED COMPONENTS
   angles
   base_trajectory_msgs
+  behavior_actions
   cmake_modules
   costmap_2d
   ddynamic_reconfigure

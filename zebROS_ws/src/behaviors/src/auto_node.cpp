@@ -196,38 +196,68 @@ void shutdownNode(AutoStates state, const std::string &msg)
 	}
 }
 
+bool readStringParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, std::string &val)
+{
+	if (!params.hasMember(param_name))
+		return true;
+	XmlRpc::XmlRpcValue &param = params[param_name];
+	if (!param.valid())
+		throw std::runtime_error(param_name + " was not a valid string type");
+	if (param.getType() == XmlRpc::XmlRpcValue::TypeString)
+	{
+		val = (double)param;
+		return true;
+	}
+	throw std::runtime_error("A non-string value was read for" + param_name);
+
+	return true;
+}
+
+bool readFloatParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, double &val)
+{
+	if (!params.hasMember(param_name))
+		return true;
+	XmlRpc::XmlRpcValue &param = params[param_name];
+	if (!param.valid())
+		throw std::runtime_error(param_name + " was not a valid double type");
+	if (param.getType() == XmlRpc::XmlRpcValue::TypeDouble)
+	{
+		val = (double)param;
+		return true;
+	}
+	else if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
+	{
+		val = (int)param;
+		return true;
+	}
+	else
+		throw std::runtime_error("A non-double value was read for" + param_name);
+
+	return true;
+}
+
+bool readBoolParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, bool &val)
+{
+	if (!params.hasMember(param_name))
+		return true;
+	XmlRpc::XmlRpcValue &param = params[param_name];
+	if (!param.valid())
+		throw std::runtime_error(param_name + " was not a valid bool type");
+	if (param.getType() == XmlRpc::XmlRpcValue::TypeBoolean)
+	{
+		val = (bool)param;
+		return true;
+	}
+	else
+		throw std::runtime_error("A non-bool value was read for" + param_name);
+
+	return true;
+}
+
 
 bool waitForAutoStart(ros::NodeHandle nh)
 {
 	ros::Rate r(20);
-
-	std::string frame_id;
-	bool optimize_final_velocity;
-
-	XmlRpc::XmlRpcValue xml_point_frame_ids, xml_path_offset_limit_array;
-
-	if (!nh.getParam("frame_id", frame_id))
-	{
-    ROS_ERROR("frame id not specified");
-    return -1;
-	}
-
-	if (!nh.getParam("optimize_final_velocity", optimize_final_velocity))
-	{
-		ROS_ERROR("optimize final velocity not specified");
-		return -1;
-	}
-
-	if (!nh.getParam("point_frame_id", xml_point_frame_ids))
-	{
-		ROS_ERROR("point frame id not specified");
-		return -1;
-	}
-
-	if (!nh.getParam("path_offset_limit", xml_path_offset_limit_array))
-	{
-    throw std::runtime_error("Couldn't read ");
-	}
 
 	//wait for auto period to start
 	while( ros::ok() && !auto_stopped )
@@ -266,48 +296,48 @@ bool waitForAutoStart(ros::NodeHandle nh)
 								spline_gen_srv.request.points[i+1].positions[2] = (double) points_config[i][2];
 							}
 
+							std::string frame_id;
+							readStringParam("frame_id", action_data, frame_id);
+
 							spline_gen_srv.request.header.frame_id = frame_id;
 							spline_gen_srv.request.header.stamp = ros::Time::now();
 
-							for (size_t i = 0; i < (unsigned) xml_point_frame_ids.size(); i++)
-							{
-								std::string point_frame_id = xml_point_frame_ids[i];
-								spline_gen_srv.request.point_frame_id.push_back(point_frame_id);
-							}
+							bool optimize_final_velocity{false};
+							readBoolParam("optimize_final_velocity", action_data, optimize_final_velocity);
+							spline_gen_srv.request.optimize_final_velocity = optimize_final_velocity;
 
-							for (int i = 0; i < xml_path_offset_limit_array.size(); i++)
+							if (action_data.hasMember("point_frame_id"))
 							{
-						    XmlRpc::XmlRpcValue &dictionary = xml_path_offset_limit_array[i];
-								base_trajectory_msgs::PathOffsetLimit path_offset_limit;
-						    if (dictionary.hasMember("min_x"))
-						    {
-						        XmlRpc::XmlRpcValue &dictionary_entry = dictionary["min_x"];
-						        if (!dictionary_entry.valid() || ((dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeDouble) && (dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeInt)))
-						            throw std::runtime_error("An invalid dictionary entry was read (expecting a double or int)");
-						        path_offset_limit.min_x = dictionary_entry;
-						    }
-								if (dictionary.hasMember("min_y"))
-						    {
-						        XmlRpc::XmlRpcValue &dictionary_entry = dictionary["min_y"];
-						        if (!dictionary_entry.valid() || ((dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeDouble) && (dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeInt)))
-						            throw std::runtime_error("An invalid dictionary entry was read (expecting a double or int)");
-						        path_offset_limit.min_y = dictionary_entry;
-						    }
-								if (dictionary.hasMember("max_x"))
-						    {
-						        XmlRpc::XmlRpcValue &dictionary_entry = dictionary["max_x"];
-						        if (!dictionary_entry.valid() || ((dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeDouble) && (dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeInt)))
-						            throw std::runtime_error("An invalid dictionary entry was read (expecting a double or int)");
-						        path_offset_limit.max_x = dictionary_entry;
-						    }
-								if (dictionary.hasMember("max_y"))
-						    {
-						        XmlRpc::XmlRpcValue &dictionary_entry = dictionary["max_y"];
-						        if (!dictionary_entry.valid() || ((dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeDouble) && (dictionary_entry.getType() != XmlRpc::XmlRpcValue::TypeInt)))
-						            throw std::runtime_error("An invalid dictionary entry was read (expecting a double or int)");
-						        path_offset_limit.max_y = dictionary_entry;
-						    }
-								spline_gen_srv.request.path_offset_limit.push_back(path_offset_limit);
+								XmlRpc::XmlRpcValue xml_point_frame_ids = action_data["point_frame_id"];
+								if (!xml_point_frame_ids.valid())
+									throw std::runtime_error("point_frame_ids not valid");
+								if (xml_point_frame_ids.getType() != XmlRpc::XmlRpcValue::TypeArray)
+									throw std::runtime_error("point_frame_ids not an array");
+
+								for (int i = 0; i < xml_point_frame_ids.size(); i++)
+								{
+									std::string point_frame_id = xml_point_frame_ids[i];
+									spline_gen_srv.request.point_frame_id.push_back(point_frame_id);
+								}
+							}
+							if (action_data.hasMember("path_offset_limit"))
+							{
+								XmlRpc::XmlRpcValue xml_path_offset_limits = action_data["path_offset_limit"];
+								if (!xml_path_offset_limits.valid())
+									throw std::runtime_error("path_offset_limits not valid");
+								if (xml_path_offset_limits.getType() != XmlRpc::XmlRpcValue::TypeArray)
+									throw std::runtime_error("path_offset_limits not an array");
+
+								for (int i = 0; i < xml_path_offset_limits.size(); i++)
+								{
+									base_trajectory_msgs::PathOffsetLimit path_offset_msg;
+									readFloatParam("min_x", xml_path_offset_limits[i], path_offset_msg.min_x);
+									readFloatParam("max_x", xml_path_offset_limits[i], path_offset_msg.max_x);
+									readFloatParam("min_y", xml_path_offset_limits[i], path_offset_msg.min_y);
+									readFloatParam("max_y", xml_path_offset_limits[i], path_offset_msg.max_y);
+
+									spline_gen_srv.request.path_offset_limit.push_back(path_offset_msg);
+								}
 							}
 
 							if (!spline_gen_cli_.call(spline_gen_srv))
@@ -487,7 +517,7 @@ int main(int argc, char** argv)
 					shutdownNode(ERROR, "Couldn't find path server");
 					return 1;
 				}
-				int iteration_value = action_data["goal"]["iterations"];
+				int iteration_value = 1;//action_data["goal"]["iterations"];
 
 				while(iteration_value > 0)
 				{

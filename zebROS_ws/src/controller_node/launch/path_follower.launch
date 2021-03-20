@@ -16,6 +16,9 @@
 			<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" >
 				<rosparam file="$(find base_trajectory)/config/2020_robot_base_trajectory.yaml" command="load"/>
 		   	</node>
+			<node name="galactic_path_server" pkg="base_trajectory" type="galactic_path_server" output="screen" >
+				<rosparam file="$(find base_trajectory)/config/2020_robot_base_trajectory.yaml" command="load"/>
+		   	</node>
 			<!-- TODO - remove me after pf localization publishes this 
 			<node pkg="tf2_ros" type="static_transform_publisher" name="link_odomtomap" args="2.5 2.5 0 0 0 0 1 map odom" />
 -->

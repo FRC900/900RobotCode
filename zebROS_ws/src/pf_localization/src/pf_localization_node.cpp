@@ -63,7 +63,16 @@ void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
 }
 
 void goalCallback(const field_obj::Detection::ConstPtr& msg){
-  geometry_msgs::TransformStamped zed_to_baselink = tf_buffer_.lookupTransform("base_link", msg->header.frame_id, ros::Time::now());
+  geometry_msgs::TransformStamped zed_to_baselink;
+  try
+  {
+	zed_to_baselink = tf_buffer_.lookupTransform("base_link", msg->header.frame_id, ros::Time::now());
+  }
+  catch(...)
+  {
+	ROS_WARN_STREAM("pf_localization : transform failed");
+	return;
+  }
 
   double roll, pitch, yaw;
   tf2::Quaternion raw;
