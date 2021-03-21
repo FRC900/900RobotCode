@@ -35,6 +35,7 @@
  */
 
 #include <cmath>
+#include <angles/angles.h>
 
 #include <tf/transform_datatypes.h>
 
@@ -378,7 +379,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 		offsets.push_back(dbl_val);
 	}
 
-	profile_queue_num = controller_nh.advertise<std_msgs::UInt16>("profile_queue_num", 1);
+	profile_queue_num_.init(controller_nh, "profile_queue_num", 1);
 
 	cmd_vel_mode_.store(true, std::memory_order_relaxed);
 	dont_set_angle_mode_.store(false, std::memory_order_relaxed);
@@ -480,8 +481,6 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 		wheel_pos_.colwise() -= centroid;
 		neg_wheel_centroid_ = -centroid;
 
-		new_wheel_pos_.resize(WHEELCOUNT, 2);
-
 		std::string odom_frame, base_frame;
 		controller_nh.param("odometry_frame", odom_frame, DEF_ODOM_FRAME);
 		controller_nh.param("base_frame", base_frame, DEF_BASE_FRAME);
@@ -520,15 +519,29 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 		for (size_t row = 0; row < WHEELCOUNT; row++)
 		{
 			last_wheel_rot_[row] = speed_joints_[row].getPosition();
+			last_wheel_angle_[row] = steering_joints_[row].getPosition();
 		}
 	}
 
 	return true;
 }
 
+double TalonSwerveDriveController::angle_midpoint(double start_angle, double end_angle) const
+{
+	double deltaAngle = end_angle - start_angle;
+	while (deltaAngle < -M_PI)
+		deltaAngle += 2.0 * M_PI;
+	while (deltaAngle > M_PI)
+		deltaAngle -= 2.0 * M_PI;
+	// TODO - this angle is just going to have cos and sin called on it,
+	// might not need to be normalized?
+	return angles::normalize_angle(start_angle + deltaAngle / 2.0);
+}
+
 void TalonSwerveDriveController::compOdometry(const Time &time, const double inv_delta_t, const std::array<double, WHEELCOUNT> &steer_angles)
 {
-	// Compute the rigid transform from wheel_pos_ to new_wheel_pos_.
+	// Compute the rigid transform from last timestep's robot orientation
+	// to the current robot orientation
 
 	// Use the encoder-reported wheel angle plus the difference between
 	// the previous and current wheel rotation to calculate motion for each
@@ -536,6 +549,8 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 	// Add the movement of each wheel to the config-defined wheel coords
 	// From this, figure out a rigid body rotation and translation
 	// which best matches the difference in position of each of the wheels
+	Eigen::MatrixX2d new_wheel_pos;
+	new_wheel_pos.resize(WHEELCOUNT, 2);
 	for (size_t k = 0; k < WHEELCOUNT; k++)
 	{
 		// Read wheel rotation from encoder.  Subtract previous position
@@ -547,9 +562,15 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 
 		// Get the offset-corrected steering angle
 		const double steer_angle = swerveC_->getWheelAngle(k, steer_angles[k]);
+		// And then average it with the last reading - moving the full
+		// wheel rot distance in a direction of the average of the start
+		// and end steer directions for this timestep is an approximation
+		// of the actual direction. It ignores changes in speed of the
+		// steer motor, but it is the best we can do given the info we have.
+		const double average_steer_angle = angle_midpoint(last_wheel_angle_[k], steer_angle);
 
 		// delta_pos of the wheel in x,y - decompose vector into x&y components
-		const Eigen::Vector2d delta_pos = {dist * cos(steer_angle), dist * sin(steer_angle)};
+		const Eigen::Vector2d delta_pos{dist * cos(average_steer_angle), dist * sin(average_steer_angle)};
 
 		// new_wheel_pos is constructed to hold x,y position given the assumption
 		// that the robot started with each wheel at the wheel_coords_ position
@@ -557,16 +578,18 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 		// is arbitrary just as long as it is a valid wheel position shape.
 		// Note this is actually built as a transpose of the shape of wheel_coords
 		// to simplyify the math later
-		new_wheel_pos_(k, 0) = wheel_coords_[k][0] + delta_pos[0];
-		new_wheel_pos_(k, 1) = wheel_coords_[k][1] + delta_pos[1];
+		new_wheel_pos(k, 0) = wheel_coords_[k][0] + delta_pos[0];
+		new_wheel_pos(k, 1) = wheel_coords_[k][1] + delta_pos[1];
 #if 0
-		ROS_INFO_STREAM("steer_angle = " << steer_angle << " dist = " << dist << " delta_pos = " << delta_pos);
-		ROS_INFO_STREAM("x from " <<  wheel_coords_[k][0] << " to " << new_wheel_pos_(k, 0));
-		ROS_INFO_STREAM("y from " <<  wheel_coords_[k][1] << " to " << new_wheel_pos_(k, 1));
+		ROS_INFO_STREAM("last_wheel_angle_[k]=" << last_wheel_angle_[k] << " steer_angle=" << steer_angle << " average_steer_angle=" << average_steer_angle)
+		ROS_INFO_STREAM("dist=" << dist << " delta_pos=" << delta_pos);
+		ROS_INFO_STREAM("x from " <<  wheel_coords_[k][0] << " to " << new_wheel_pos(k, 0));
+		ROS_INFO_STREAM("y from " <<  wheel_coords_[k][1] << " to " << new_wheel_pos(k, 1));
 #endif
 
-		// Save the previous wheel rotation to use next time odom is run
+		// Save the previous wheel rotation / steer angle to use next time odom is run
 		last_wheel_rot_[k] = new_wheel_rot;
+		last_wheel_angle_[k] = steer_angle;
 	}
 
 	// http://nghiaho.com/?page_id=671, but that page talks about 3d transform where
@@ -575,10 +598,10 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 	// Also, https://igl.ethz.ch/projects/ARAP/svd_rot.pdf
 	// Find the translation+rotation that produces the least square error
 	// between (prev pos + transform) and current measured position
-	const Eigen::RowVector2d new_wheel_centroid = new_wheel_pos_.colwise().mean();
-	new_wheel_pos_.rowwise() -= new_wheel_centroid;
+	const Eigen::RowVector2d new_wheel_centroid = new_wheel_pos.colwise().mean();
+	new_wheel_pos.rowwise() -= new_wheel_centroid;
 
-	const Matrix2d h = wheel_pos_ * new_wheel_pos_;
+	const Matrix2d h = wheel_pos_ * new_wheel_pos;
 	const Eigen::JacobiSVD<Matrix2d> svd(h, Eigen::ComputeFullU | Eigen::ComputeFullV);
 	Matrix2d rot = svd.matrixV() * svd.matrixU().transpose();
 	if (rot.determinant() < 0)
@@ -586,12 +609,12 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 
 	odom_rigid_transf_.matrix().block(0, 0, 2, 2) = rot;
 	odom_rigid_transf_.translation() = rot * neg_wheel_centroid_ + new_wheel_centroid.transpose();
+	// add motion for this timestep to the overall odom_to_base transform
 	odom_to_base_ = odom_to_base_ * odom_rigid_transf_;
 
 	const double odom_x = odom_to_base_.translation().x();
 	const double odom_y = odom_to_base_.translation().y();
 	const double odom_yaw = atan2(odom_to_base_(1, 0), odom_to_base_(0, 0));
-
 
 	//ROS_INFO_STREAM("odom_x: " << odom_x << " odom_y: " << odom_y << " odom_yaw: " << odom_yaw);
 	// Publish the odometry.
@@ -610,8 +633,8 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 		geometry_msgs::TransformStamped &odom_tf_trans =
 			odom_tf_pub_.msg_.transforms[0];
 		odom_tf_trans.header.stamp = time;
-		odom_tf_trans.transform.translation.x = odom_x;
-		odom_tf_trans.transform.translation.y = odom_y;
+		odom_tf_trans.transform.translation.x = odom_y; // TODO terrible hacky
+		odom_tf_trans.transform.translation.y = -odom_y; // TODO terrible hacky
 		odom_tf_trans.transform.rotation = orientation;
 		ROS_INFO_STREAM(odom_x);
 		odom_tf_pub_.unlockAndPublish();
@@ -644,8 +667,7 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 
 void TalonSwerveDriveController::update(const ros::Time &time, const ros::Duration &period)
 {
-	const double delta_t = period.toSec();
-	const double inv_delta_t = 1.0 / delta_t;
+	const double inv_delta_t = 1.0 / period.toSec();
 
 	// Grab current steering angle, store it
 	// for other code to use
@@ -1007,10 +1029,12 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		//ROS_ERROR_STREAM(slot_local);
 	}
 
-	std_msgs::UInt16 pub_queue_hold;
-	pub_queue_hold.data = slot_ret;
+	if (profile_queue_num_.trylock())
+	{
+		profile_queue_num_.msg_.data = slot_ret;
+		profile_queue_num_.unlockAndPublish();
+	}
 
-	profile_queue_num.publish(pub_queue_hold);
 	if (slot_ret_diff_last_sum > 20)
 	{
 		ROS_ERROR("potential profile slot issue with swerve");
