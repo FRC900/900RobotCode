@@ -40,7 +40,7 @@ double segLengthEpsilon;
 // last point found plus the previous distance between points.  The "mid"point
 // is moved a bit futher out to account for cases where the curvature changes
 //  - it is more efficent to be a little bit beyond the expected value rather than
-//  closer to it.  midTimeInflation is the multipler for that distance.
+// closer to it.  midTimeInflation is the multipler for that distance.
 double distBetweenArcLengths; // 3 cm
 double distBetweenArcLengthEpsilon; // 2.5 mm
 double midTimeInflation;
@@ -1294,7 +1294,9 @@ bool transformTrajectoryPoint(std::vector<double> &positions,
 							  const std_msgs::Header &fromHeader,
 							  const std::string &toFrame)
 {
-	if (fromHeader.frame_id.size() == 0)
+	if ((fromHeader.frame_id.size() == 0) || (fromHeader.frame_id == ""))
+		return true;
+	if ((toFrame.size() == 0) or (toFrame == ""))
 		return true;
 
 	geometry_msgs::PoseStamped poseStamped;
