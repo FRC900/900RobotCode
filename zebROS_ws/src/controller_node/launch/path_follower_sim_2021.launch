@@ -31,7 +31,9 @@
 		<arg name="port" value="5803"/>
 	</include>
 
+	<!--
 	<include file="$(find controller_node)/launch/fuse_odom.launch"/>
+	-->
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetoimu" args="0 0 0 0 0 0 1 base_link imu" />
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetointake" args="-0.6332 0 0 0 0 3.14159265 base_link intake" />
 

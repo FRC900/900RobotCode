@@ -1312,9 +1312,9 @@ bool transformTrajectoryPoint(std::vector<double> &positions,
 	{
 		poseStamped = tfBuffer->transform(poseStamped, toFrame);
 	}
-	catch(...)
+	catch(tf2::TransformException &ex)
 	{
-		ROS_ERROR_STREAM("base_trajectory : Error transforming from " << fromHeader.frame_id << " to " << toFrame);
+		ROS_ERROR_STREAM("base_trajectory : Error transforming from " << fromHeader.frame_id << " to " << toFrame << " : " << ex.what());
 		return false;
 	}
 	positions[0] = poseStamped.pose.position.x;

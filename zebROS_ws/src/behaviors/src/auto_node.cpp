@@ -53,7 +53,6 @@ bool stopAuto(std_srvs::Empty::Request &req,
 	return true;
 }
 
-
 //subscriber callback for match data
 void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg)
 {
@@ -77,6 +76,7 @@ void enable_auto_in_teleop(const std_msgs::Bool::ConstPtr& msg)
 
 bool dynamic_path_storage(behavior_actions::DynamicPath::Request &req, behavior_actions::DynamicPath::Response &res)
 {
+	ROS_INFO_STREAM("auto_node : addding " << req.path_name << " to premade_paths");
 	premade_paths[req.path_name] = req.dynamic_path;
 	return true;
 }
@@ -212,6 +212,25 @@ bool readStringParam(const std::string &param_name, XmlRpc::XmlRpcValue &params,
 
 	return true;
 }
+
+bool readIntParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, int &val)
+{
+	if (!params.hasMember(param_name))
+		return true;
+	XmlRpc::XmlRpcValue &param = params[param_name];
+	if (!param.valid())
+		throw std::runtime_error(param_name + " was not a valid int type");
+	if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
+	{
+		val = (int)param;
+		return true;
+	}
+	else
+		throw std::runtime_error("A non-double value was read for" + param_name);
+
+	return true;
+}
+
 
 bool readFloatParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, double &val)
 {
@@ -447,29 +466,30 @@ int main(int argc, char** argv)
 			//read data from config needed to carry out the action
 			XmlRpc::XmlRpcValue action_data;
 			if(! nh.getParam(auto_steps[i], action_data)){
-				shutdownNode(ERROR, "Auto node - Couldn't read data for '" + auto_steps[i] + "' auto action from config file");
-				return 1;
+				//shutdownNode(ERROR, "Auto node - Couldn't read data for '" + auto_steps[i] + "' auto action from config file");
+				//return 1;
 			}
-			// TODO :
-			//   create a std::unordered_map<std::string, std::function<bool(XmlRpc::XmlRpcValue)>
-			//   Each auto action type would then be implmeneted in a separate function
-			//   Look up the map using action_data["type"], call the function returned
-			//   from the lookup with action_data as an argument.
-			//   use the bool return type to figure out if the call succeeded or failed, or possibly
-			//      change the return type to an int for more options for return status if needed
-			//   This should allow for cleaner logic in main for error checking and exiting
-			//     the auto loop and won't really make it harder to code the various types, since
-			//     they're all already in their own if() block anyway.
 
 			// CODE FOR ACTIONS HERE --------------------------------------------------
 			//figure out what to do based on the action type, and do it
+			std::string action_data_type;
+			if (action_data.hasMember("type"))
+				action_data_type = static_cast<std::string>(action_data["type"]);
+			else
+				action_data_type = "path"; // assume this is a dynamic path, hope for the best
 
-			if(action_data["type"] == "pause")
+			if(action_data_type == "pause")
 			{
 				const double start_time = ros::Time::now().toSec();
 
 				//read duration - user could've entered a double or an int, we don't know which
 				double duration;
+				if (!readFloatParam("duration", action_data, duration))
+				{
+					shutdownNode(ERROR, "Auto node - duration is not a double or int in '" + auto_steps[i] + "' action");
+					return 1;
+				}
+#if 0
 				if((action_data["duration"].getType() == XmlRpc::XmlRpcValue::Type::TypeDouble) ||
 				   (action_data["duration"].getType() == XmlRpc::XmlRpcValue::Type::TypeInt) ) {
 					duration = static_cast<double>(action_data["duration"]);
@@ -477,6 +497,7 @@ int main(int argc, char** argv)
 					shutdownNode(ERROR, "Auto node - duration is not a double or int in '" + auto_steps[i] + "' action");
 					return 1;
 				}
+#endif
 
 				//wait
 				while (ros::Time::now().toSec() - start_time < duration && !auto_stopped && ros::ok())
@@ -485,7 +506,7 @@ int main(int argc, char** argv)
 					r.sleep();
 				}
 			}
-			else if(action_data["type"] == "intake_actionlib_server")
+			else if(action_data_type == "intake_actionlib_server")
 			{
 				//for some reason this is necessary, even if the server has been up and running for a while
 				if(!intake_ac.waitForServer(ros::Duration(5))){
@@ -493,6 +514,11 @@ int main(int argc, char** argv)
 					return 1;
 				}
 
+				if (!action_data.hasMember("goal"))
+				{
+					shutdownNode(ERROR,"Auto node - intake_actionlib_server call missing \"goal\" field");
+					return 1;
+				}
 				if(action_data["goal"] == "stop") {
 					intake_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				} else {
@@ -500,7 +526,7 @@ int main(int argc, char** argv)
 					intake_ac.sendGoal(goal);
 				}
 			}
-			else if(action_data["type"] == "shooter_actionlib_server")
+			else if(action_data_type == "shooter_actionlib_server")
 			{
 				if(!shooter_ac.waitForServer(ros::Duration(5))){
 					return 1;
@@ -511,13 +537,15 @@ int main(int argc, char** argv)
 				shooter_ac.sendGoal(goal);
 				waitForActionlibServer(shooter_ac, 100, "intake server");
 			}
-			else if(action_data["type"] == "path")
+			else if(action_data_type == "path")
 			{
 				if(!path_ac.waitForServer(ros::Duration(5))){
 					shutdownNode(ERROR, "Couldn't find path server");
 					return 1;
 				}
-				int iteration_value = 1;//action_data["goal"]["iterations"];
+				int iteration_value = 1;
+				if (action_data.hasMember("goal"))
+					readIntParam("iterations", action_data["goal"], iteration_value);
 
 				while(iteration_value > 0)
 				{
@@ -533,7 +561,7 @@ int main(int argc, char** argv)
 			}
 			else
 			{
-				shutdownNode(ERROR, "Auto node - Invalid type of action: " + std::string(action_data["type"]));
+				shutdownNode(ERROR, "Auto node - Invalid type of action: " + std::string(action_data_type));
 				return 1;
 			}
 		}

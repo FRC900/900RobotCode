@@ -68,10 +68,8 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg){
   {
 	zed_to_baselink = tf_buffer_.lookupTransform("base_link", msg->header.frame_id, ros::Time::now());
   }
-  catch(...)
-  {
-	ROS_WARN_STREAM("pf_localization : transform failed");
-	return;
+  catch (tf2::TransformException &ex){
+	  ROS_ERROR_STREAM("pf_localization : tranform from " << msg->header.frame_id << " to base_link failed : " << ex.what());
   }
 
   double roll, pitch, yaw;
