@@ -205,9 +205,9 @@ class PathAction
 				// PID controllers.
 				geometry_msgs::Pose next_waypoint = path_follower_.run(odom_, distance_travelled);
 
-				//ROS_INFO_STREAM("Before transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << path_follower_.getYaw(next_waypoint.orientation) << ")");
+				ROS_INFO_STREAM("Before transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << path_follower_.getYaw(next_waypoint.orientation) << ")");
 				tf2::doTransform(next_waypoint, next_waypoint, odom_to_base_link_tf);
-				//ROS_INFO_STREAM("After transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << path_follower_.getYaw(next_waypoint.orientation) << ")");
+				ROS_INFO_STREAM("After transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << path_follower_.getYaw(next_waypoint.orientation) << ")");
 
 				std_msgs::Bool enable_msg;
 				enable_msg.data = true;

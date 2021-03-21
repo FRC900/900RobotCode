@@ -54,14 +54,15 @@ bool genPath(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
         spline_gen_srv.request.points[i].positions.resize(3);
         spline_gen_srv.request.points[i].positions[0] = points[i].first;
         spline_gen_srv.request.points[i].positions[1] = points[i].second;
-        if(i > 0)
+        if ((i != 0) && (i != (points_num - 1))) // Don't snap robot heading when driving from first point and to last one
         {
-            spline_gen_srv.request.points[i].positions[2] = std::atan2(points[i].second-points[i-1].second, points[i].first-points[i-1].first) * 0.66; // right triangle math to calculate angle
+            spline_gen_srv.request.points[i].positions[2] = std::atan2(points[i].second-points[i-1].second, points[i].first-points[i-1].first) * 0.6; // right triangle math to calculate angle
             spline_gen_srv.request.point_frame_id[i] = "intake";
         }
         else
         {
             spline_gen_srv.request.points[i].positions[2] = prev_angle;
+            spline_gen_srv.request.point_frame_id[i] = "intake";
         }
 		prev_angle = spline_gen_srv.request.points[i].positions[2];
 
