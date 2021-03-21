@@ -169,8 +169,8 @@
 	<include file="$(find controller_node)/launch/record_2020_compbot.launch" if="$(arg record)" />
 	<!--
 	<include file="$(find controller_node)/launch/record_2020_no_zed.launch" if="$(arg record)" />
-	-->
 
 	<include file="$(find controller_node)/launch/pf_localization.launch"/>
+	-->
 
 </launch>

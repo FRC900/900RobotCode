@@ -1299,7 +1299,7 @@ bool transformTrajectoryPoint(std::vector<double> &positions,
 
 	geometry_msgs::PoseStamped poseStamped;
 
-	//ROS_INFO_STREAM("From pose " << positions[0] << ", " << positions[1] << ", " << positions[2] << " in frame " << fromHeader.frame_id);
+	ROS_INFO_STREAM("From pose " << positions[0] << ", " << positions[1] << ", " << positions[2] << " in frame " << fromHeader.frame_id);
 	poseStamped.header = fromHeader;
 	poseStamped.pose.position.x = positions[0];
 	poseStamped.pose.position.y = positions[1];
@@ -1324,7 +1324,7 @@ bool transformTrajectoryPoint(std::vector<double> &positions,
 	double pitch;
 	tf2::Matrix3x3(poseQuat).getRPY(roll, pitch, positions[2]);
 
-	//ROS_INFO_STREAM("To pose " << positions[0] << ", " << positions[1] << ", " << positions[2] << " in frame " << toFrame);
+	ROS_INFO_STREAM("  To pose " << positions[0] << ", " << positions[1] << ", " << positions[2] << " in frame " << toFrame);
 	return true;
 }
 

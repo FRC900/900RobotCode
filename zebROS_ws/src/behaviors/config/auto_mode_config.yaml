@@ -12,7 +12,7 @@ auto_mode_2: ["barrel_racing_path"]
 auto_mode_3: ["bounce_path"]
 auto_mode_4: ["slalom_path"]
 auto_mode_5: ["dynamic_path"]
-auto_mode_6: ["galactic_search_path"]
+auto_mode_6: ["start_intake", "galactic_search_path"]
 
 #auto_mode_1: ["start_intake", "path_to_trench_face_goal", "stop_intake", "shoot", "pause_2_sec"] #example
 #auto_mode_2: ["pause_2_sec","pause_5_sec"]
