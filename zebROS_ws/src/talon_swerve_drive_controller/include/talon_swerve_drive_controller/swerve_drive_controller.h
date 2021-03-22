@@ -118,12 +118,11 @@ class TalonSwerveDriveController
 	private:
 		int num_profile_slots_;
 
-		bool comp_odom_;
-		Eigen::Matrix2Xd wheel_pos_;
+		Eigen::MatrixX2d new_wheel_pos_;
+		std::array<double, WHEELCOUNT> last_wheel_rot_;	//
+
 		Eigen::Vector2d neg_wheel_centroid_;
-		std::array<double, WHEELCOUNT> last_wheel_rot_;	    // used for odom calcs
-		std::array<double, WHEELCOUNT> last_wheel_angle_;	//
-		double angle_midpoint(double start_angle, double end_angle) const;
+		bool comp_odom_;
 
 		std::string name_;
 
@@ -350,8 +349,9 @@ class TalonSwerveDriveController
 		Eigen::Affine2d init_odom_to_base_;  // Initial odometry to base frame transform
 		Eigen::Affine2d odom_to_base_;       // Odometry to base frame transform
 		Eigen::Affine2d odom_rigid_transf_;
+		Eigen::Matrix2Xd wheel_pos_;
 
-		realtime_tools::RealtimePublisher<std_msgs::UInt16> profile_queue_num_;
+		ros::Publisher profile_queue_num;
 
 		realtime_tools::RealtimePublisher<nav_msgs::Odometry> odom_pub_;
 		tf2_ros::TransformBroadcaster odom_tf_;
