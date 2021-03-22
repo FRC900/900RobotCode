@@ -435,6 +435,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 
 	sub_command_ = controller_nh.subscribe("cmd_vel", 1, &TalonSwerveDriveController::cmdVelCallback, this);
 	brake_serv_ = controller_nh.advertiseService("brake", &TalonSwerveDriveController::brakeService, this);
+	reset_odom_serv_ = controller_nh.advertiseService("reset_odom", &TalonSwerveDriveController::resetOdomService, this);
 	dont_set_angle_mode_serv_ = controller_nh.advertiseService("dont_set_angle", &TalonSwerveDriveController::dontSetAngleModeService, this);
 	percent_out_drive_mode_serv_ = controller_nh.advertiseService("percent_out_drive_mode", &TalonSwerveDriveController::percentOutDriveModeService, this);
 	motion_profile_serv_ = controller_nh.advertiseService("run_profile", &TalonSwerveDriveController::motionProfileService, this);
@@ -443,6 +444,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	double odom_pub_freq;
 	controller_nh.param("odometry_publishing_frequency", odom_pub_freq, DEF_ODOM_PUB_FREQ);
 
+	reset_odom_.writeFromNonRT(false);
 	comp_odom_ = odom_pub_freq > 0;
 	//ROS_WARN("COMPUTING ODOM");
 	if (comp_odom_)
@@ -528,6 +530,11 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 
 void TalonSwerveDriveController::compOdometry(const Time &time, const double inv_delta_t, const std::array<double, WHEELCOUNT> &steer_angles)
 {
+	const auto reset_odom = *(reset_odom_.readFromRT());
+	if (reset_odom)
+	{
+		odom_to_base_.setIdentity();
+	}
 	// Compute the rigid transform from wheel_pos_ to new_wheel_pos_.
 
 	// Use the encoder-reported wheel angle plus the difference between
@@ -1280,6 +1287,22 @@ bool TalonSwerveDriveController::changeCenterOfRotationService(talon_swerve_driv
 }
 
 
+bool TalonSwerveDriveController::resetOdomService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+{
+	if (isRunning())
+	{
+		reset_odom_.writeFromNonRT(req.data);
+		res.success = true;
+		return true;
+	}
+	else
+	{
+		res.success = false;
+		ROS_ERROR_NAMED(name_, "resetOdom service cann't accept new commands. Controller is not running.");
+		return false;
+	}
+
+}
 bool TalonSwerveDriveController::brakeService(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*res*/)
 {
 	if (isRunning())

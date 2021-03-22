@@ -229,6 +229,9 @@ class TalonSwerveDriveController
 		ros::ServiceServer dont_set_angle_mode_serv_;
 		ros::ServiceServer percent_out_drive_mode_serv_;
 
+		ros::ServiceServer reset_odom_serv_;
+		realtime_tools::RealtimeBuffer<bool> reset_odom_;
+
 		std::array<std::array<hardware_interface::CustomProfilePoint, 2>, WHEELCOUNT> holder_points_;
 		std::array<std::array<std::vector<hardware_interface::CustomProfilePoint>, 2>, WHEELCOUNT> full_profile_;
 
@@ -298,6 +301,7 @@ class TalonSwerveDriveController
 		bool brakeService(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res);
 		bool dontSetAngleModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
 		bool percentOutDriveModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
+		bool resetOdomService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res);
 
 		/**
 		 * \brief Get the wheel names from a wheel param
