@@ -302,6 +302,11 @@ bool waitForAutoStart(ros::NodeHandle nh)
 								return false;
 							}
 							XmlRpc::XmlRpcValue path_goal = action_data["goal"];
+							if (!action_data["goal"].hasMember("points"))
+							{
+								ROS_ERROR_STREAM("auto_node : path " << auto_steps[j] << " has no points?");
+								return false;
+							}
 							XmlRpc::XmlRpcValue points_config = path_goal["points"];
 
 							// Generate the waypoints of the spline

@@ -125,7 +125,7 @@ int main(int argc, char **argv)
 		if(type == "circle")
 		{
 			cv::Point center = cv::Point(xml_obstacle["center"][0], xml_obstacle["center"][1]);
-			drawCircle(image, center, xml_obstacle["radius"], cv::Scalar(0,0,0));
+			drawCircle(image, center, (double)xml_obstacle["radius"], cv::Scalar(0,0,0));
 		}
 		else if(type == "polygon")
 		{

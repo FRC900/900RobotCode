@@ -49,12 +49,12 @@ window
 # PNG is black and white image
 floorplan
 (
-  name "barrel_path"
-  bitmap "../maps/barrel_path.png"
-  #name "bounce_path"
-  #bitmap "../maps/bounce_path.png"
-  #name "slalom_path"
-  #bitmap "../maps/slalom_path.png"
+#  name "barrel_path"
+#   bitmap "../maps/barrel_path.png"
+  name "bounce_path"
+  bitmap "../maps/bounce_path.png"
+  # name "slalom_path"
+  # bitmap "../maps/slalom_path.png"
   size [ 27.432 22.86 4 ]
   pose [  4.572  2.286  0.0 0.0 ]
 )
@@ -62,7 +62,9 @@ floorplan
 # throw in a robot
 omnidir_robot
 (
-  pose [ 1.1684 2.286 0.0 0.0 ]
+  # Everything but slalom
+  pose [ 1.0414 2.286 0.0 0.0 ]
+  # Slalom pose [ 1.0414 .762 0.0 0.0 ]
   name "robot"
 )
 

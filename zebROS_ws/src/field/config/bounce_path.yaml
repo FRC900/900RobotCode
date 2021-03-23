@@ -5,5 +5,15 @@ field_dims:
 imagename: "bounce_path.png"
 
 obstacles:
-  - {type: "polygon", num_points: 3, p1: [120, 120], p2: [150, 120], p3: [150, 60]}
-  - {type: "polygon", num_points: 4, p1: [210, 120], p2: [240, 120], p3: [240, 60], p4: [210, 60]}
+  - {type: "polygon", num_points: 3, p1: [118, 122], p2: [152, 122], p3: [152, 58]}
+  - {type: "polygon", num_points: 4, p1: [208, 122], p2: [242, 122], p3: [238, 58], p4: [208, 58]}
+  - {type: "polygon", num_points: 3, p1: [0, 62], p2: [92, 62], p3: [92, 28]}
+  - {type: "circle", center: [30,  60], radius: 3.0}
+  - {type: "circle", center: [60,  60], radius: 3.0}
+  - {type: "circle", center: [30, 120], radius: 3.0}
+  - {type: "circle", center: [60, 120], radius: 3.0}
+  - {type: "circle", center: [300, 60], radius: 3.0}
+  - {type: "circle", center: [330, 60], radius: 3.0}
+  - {type: "circle", center: [300, 120], radius: 3.0}
+  - {type: "circle", center: [330, 120], radius: 3.0}
+    
