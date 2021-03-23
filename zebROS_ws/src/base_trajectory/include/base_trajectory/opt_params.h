@@ -38,6 +38,7 @@ struct OptParams
 	void setDeltaV(double minMagnitude, double maxMagnitude, double minDirection, double maxDirection);
 
 	void clearLengthLimits(void);
+	void clearRotationLengthLimits(void);
 
 	bool IsAtMax(size_t index) const;
 

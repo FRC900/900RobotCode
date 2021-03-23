@@ -1472,6 +1472,18 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 	optParams[0].clearLengthLimits();
 	optParams.back().clearLengthLimits();
 
+	// If the robot doesn't rotate at a given waypoint, don't bother trying
+	// to optimize the rotational velocity and accel at each waypoint,
+	// everything should be 0
+	for (size_t i = 1; i < (msg.points.size() - 1); i++)
+	{
+		if ((fabs(msg.points[i-1].positions[2] - msg.points[i].positions[2]) < 0.00001) &&
+		    (fabs(msg.points[i].positions[2] - msg.points[i+1].positions[2]) < 0.00001))
+		{
+			optParams[i].clearRotationLengthLimits();
+		}
+	}
+
 	Trajectory<double> trajectory;
 	if (!generateSpline(msg.points, optParams, jointNames, trajectory))
 		return false;

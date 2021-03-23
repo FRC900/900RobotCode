@@ -29,6 +29,11 @@ void OptParams::clearLengthLimits(void)
 	maxLength_ = length_;
 	minLengthScale_ = lengthScale_;
 	maxLengthScale_ = lengthScale_;
+	clearRotationLengthLimits();
+}
+
+void OptParams::clearRotationLengthLimits(void)
+{
 	minRotLength_ = rotLength_;
 	maxRotLength_ = rotLength_;
 	minRotLengthScale_ = rotLengthScale_;
