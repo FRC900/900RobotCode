@@ -20,8 +20,8 @@
 				<rosparam file="$(find base_trajectory)/config/2020_robot_base_trajectory.yaml" command="load"/>
 		   	</node>
 			<!-- TODO - remove me after pf localization publishes this 
-			<node pkg="tf2_ros" type="static_transform_publisher" name="link_odomtomap" args="2.5 2.5 0 0 0 0 1 map odom" />
 -->
+			<node pkg="tf2_ros" type="static_transform_publisher" name="static_maptobase" args="1.1684 2.286 0 0 0 0 map base_link" />
             <node name="path_follower_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
                 <param name="orient_topic" value="orient_pid/orient_command" />
                 <param name="x_topic" value="x_position_pid/x_command" />

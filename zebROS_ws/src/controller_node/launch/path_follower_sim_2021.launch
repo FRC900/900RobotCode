@@ -45,8 +45,10 @@
 	</node>
 
 	<rosparam file="$(find pf_localization)/config/2021_params.yaml" command="load"/>
+	<!--
 	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" >
 	</node>
+	-->
 
 	<!-- set up auto node to create paths -->
 	<group ns="auto">

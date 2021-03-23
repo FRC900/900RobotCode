@@ -38,7 +38,7 @@ threads 2
 
 window
 (
-  size [ 1200.0 600.0 ]
+  size [ 1200.0  600.0 ]
   center [ 0.0 0.0 ]
   rotate [ 0.0 0.0 ]
   scale 60
@@ -51,7 +51,11 @@ floorplan
 (
   name "barrel_path"
   bitmap "../maps/barrel_path.png"
-  size [ 10.0584 5.4864 0.1 ]
+  #name "bounce_path"
+  #bitmap "../maps/bounce_path.png"
+  #name "slalom_path"
+  #bitmap "../maps/slalom_path.png"
+  size [ 27.432 22.86 4 ]
   pose [  4.572  2.286  0.0 0.0 ]
 )
 
