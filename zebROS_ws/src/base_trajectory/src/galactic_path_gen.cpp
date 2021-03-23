@@ -47,34 +47,51 @@ bool genPath(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
     std::sort(points.begin(), points.end()); // sort on x coordinate
 
     size_t points_num = points.size();
-    spline_gen_srv.request.points.resize(points_num);
-    spline_gen_srv.request.point_frame_id.resize(points_num);
+    spline_gen_srv.request.points.resize(2*points_num-2);
+    spline_gen_srv.request.point_frame_id.resize(2*points_num-2);
 	double prev_angle = 0;
+	size_t point_index = 0;
 	for (size_t i = 0; i < points_num; i++) // copy points into spline request
 	{
-		spline_gen_srv.request.points[i].positions.resize(3);
-		spline_gen_srv.request.points[i].positions[0] = points[i].first + 0.075;
-		spline_gen_srv.request.points[i].positions[1] = points[i].second;
 		if ((i == 0) || (i == (points_num - 1)))
 		{
 			// Facing forward for the last point increases our chances
 			// of running over the ball
-			spline_gen_srv.request.points[i].positions[2] = 0;
+			spline_gen_srv.request.points[point_index].positions.resize(3);
+			spline_gen_srv.request.points[point_index].positions[2] = 0;
+			spline_gen_srv.request.points[point_index].positions[0] = points[i].first + 0.075;
+			spline_gen_srv.request.points[point_index].positions[1] = points[i].second;
+			spline_gen_srv.request.point_frame_id[point_index] = "intake";
+			base_trajectory_msgs::PathOffsetLimit path_offset_limit;
+			if (i == (points_num - 1)) // Allow moving the y position of the last waypoint
+			{
+				//path_offset_limit.min_y = -2.25;
+				//path_offset_limit.max_y = 2.25;
+			}
+			spline_gen_srv.request.path_offset_limit.push_back(path_offset_limit);
+			point_index++;
 		}
 		else
 		{
-			spline_gen_srv.request.points[i].positions[2] = std::atan2(points[i].second-points[i-1].second, points[i].first-points[i-1].first) * 0.1; // right triangle math to calculate angle
-		}
-		spline_gen_srv.request.point_frame_id[i] = "intake";
-		prev_angle = spline_gen_srv.request.points[i].positions[2];
+			spline_gen_srv.request.points[point_index].positions.resize(3);
+			spline_gen_srv.request.points[point_index].positions[2] = 0;//std::atan2(points[i].second-points[i-1].second, points[i].first-points[i-1].first) * 0.1; // right triangle math to calculate angle
+			spline_gen_srv.request.points[point_index].positions[0] = points[i].first + 0.075 - .1; // left side of point
+			spline_gen_srv.request.points[point_index].positions[1] = points[i].second;
+			spline_gen_srv.request.point_frame_id[point_index] = "intake";
+			base_trajectory_msgs::PathOffsetLimit path_offset_limit;
+			spline_gen_srv.request.path_offset_limit.push_back(path_offset_limit);
+			point_index++;
 
-		base_trajectory_msgs::PathOffsetLimit path_offset_limit;
-		if (i == (points_num - 1)) // Allow moving the y position of the last waypoint
-		{
-			//path_offset_limit.min_y = -2.25;
-			//path_offset_limit.max_y = 2.25;
+			spline_gen_srv.request.points[point_index].positions.resize(3);
+			spline_gen_srv.request.points[point_index].positions[2] = 0;//std::atan2(points[i].second-points[i-1].second, points[i].first-points[i-1].first) * 0.1; // right triangle math to calculate angle
+			spline_gen_srv.request.points[point_index].positions[0] = points[i].first + 0.075 + .1; //right side of point
+			spline_gen_srv.request.points[point_index].positions[1] = points[i].second;
+			spline_gen_srv.request.point_frame_id[point_index] = "intake";
+			base_trajectory_msgs::PathOffsetLimit path_offset_limit_2;
+			spline_gen_srv.request.path_offset_limit.push_back(path_offset_limit_2);
+			point_index++;
 		}
-		spline_gen_srv.request.path_offset_limit.push_back(path_offset_limit);
+		//prev_angle = spline_gen_srv.request.points[i].positions[2];
 	}
 
     spline_gen_srv.request.optimize_final_velocity = true; // flag for optimized velocity
