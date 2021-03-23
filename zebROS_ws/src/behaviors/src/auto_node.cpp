@@ -205,7 +205,7 @@ bool readStringParam(const std::string &param_name, XmlRpc::XmlRpcValue &params,
 		throw std::runtime_error(param_name + " was not a valid string type");
 	if (param.getType() == XmlRpc::XmlRpcValue::TypeString)
 	{
-		val = (double)param;
+		val = static_cast<std::string>(param);
 		return true;
 	}
 	throw std::runtime_error("A non-string value was read for" + param_name);
@@ -222,7 +222,7 @@ bool readIntParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, in
 		throw std::runtime_error(param_name + " was not a valid int type");
 	if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
 	{
-		val = (int)param;
+		val = static_cast<int>(param);
 		return true;
 	}
 	else
@@ -241,12 +241,12 @@ bool readFloatParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, 
 		throw std::runtime_error(param_name + " was not a valid double type");
 	if (param.getType() == XmlRpc::XmlRpcValue::TypeDouble)
 	{
-		val = (double)param;
+		val = static_cast<double>(param);
 		return true;
 	}
 	else if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
 	{
-		val = (int)param;
+		val = static_cast<int>(param);
 		return true;
 	}
 	else
@@ -264,7 +264,7 @@ bool readBoolParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, b
 		throw std::runtime_error(param_name + " was not a valid bool type");
 	if (param.getType() == XmlRpc::XmlRpcValue::TypeBoolean)
 	{
-		val = (bool)param;
+		val = static_cast<bool>(param);
 		return true;
 	}
 	else
@@ -296,8 +296,13 @@ bool waitForAutoStart(ros::NodeHandle nh)
 							if (premade_paths.find(auto_steps[j]) != premade_paths.end()) {
 								continue;
 							}
-							//read array of array of doubles
-							XmlRpc::XmlRpcValue points_config = action_data["goal"]["points"];
+							if (!action_data.hasMember("goal"))
+							{
+								ROS_ERROR_STREAM("auto_node : path " << auto_steps[j] << " has no 'goal' data");
+								return false;
+							}
+							XmlRpc::XmlRpcValue path_goal = action_data["goal"];
+							XmlRpc::XmlRpcValue points_config = path_goal["points"];
 
 							// Generate the waypoints of the spline
 							base_trajectory_msgs::GenerateSpline spline_gen_srv;
@@ -316,18 +321,18 @@ bool waitForAutoStart(ros::NodeHandle nh)
 							}
 
 							std::string frame_id;
-							readStringParam("frame_id", action_data, frame_id);
+							readStringParam("frame_id", path_goal, frame_id);
 
 							spline_gen_srv.request.header.frame_id = frame_id;
 							spline_gen_srv.request.header.stamp = ros::Time::now();
 
 							bool optimize_final_velocity{false};
-							readBoolParam("optimize_final_velocity", action_data, optimize_final_velocity);
+							readBoolParam("optimize_final_velocity", path_goal, optimize_final_velocity);
 							spline_gen_srv.request.optimize_final_velocity = optimize_final_velocity;
 
-							if (action_data.hasMember("point_frame_id"))
+							if (path_goal.hasMember("point_frame_id"))
 							{
-								XmlRpc::XmlRpcValue xml_point_frame_ids = action_data["point_frame_id"];
+								XmlRpc::XmlRpcValue xml_point_frame_ids = path_goal["point_frame_id"];
 								if (!xml_point_frame_ids.valid())
 									throw std::runtime_error("point_frame_ids not valid");
 								if (xml_point_frame_ids.getType() != XmlRpc::XmlRpcValue::TypeArray)
@@ -339,9 +344,9 @@ bool waitForAutoStart(ros::NodeHandle nh)
 									spline_gen_srv.request.point_frame_id.push_back(point_frame_id);
 								}
 							}
-							if (action_data.hasMember("path_offset_limit"))
+							if (path_goal.hasMember("path_offset_limit"))
 							{
-								XmlRpc::XmlRpcValue xml_path_offset_limits = action_data["path_offset_limit"];
+								XmlRpc::XmlRpcValue xml_path_offset_limits = path_goal["path_offset_limit"];
 								if (!xml_path_offset_limits.valid())
 									throw std::runtime_error("path_offset_limits not valid");
 								if (xml_path_offset_limits.getType() != XmlRpc::XmlRpcValue::TypeArray)
@@ -359,6 +364,7 @@ bool waitForAutoStart(ros::NodeHandle nh)
 								}
 							}
 
+							ROS_INFO_STREAM("auto_node : calling spline_gen_cli_ with " << spline_gen_srv.request);
 							if (!spline_gen_cli_.call(spline_gen_srv))
 							{
 								ROS_ERROR_STREAM("Can't call spline gen service in path_follower_server");

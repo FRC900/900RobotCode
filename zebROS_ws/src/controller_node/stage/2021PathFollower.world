@@ -49,8 +49,8 @@ window
 # PNG is black and white image
 floorplan
 (
-  name "2021_empty_field"
-  bitmap "../maps/2021_empty_field.png"
+  name "barrel_path"
+  bitmap "../maps/barrel_path.png"
   size [ 10.0584 5.4864 0.1 ]
   pose [  4.572  2.286  0.0 0.0 ]
 )
@@ -58,7 +58,7 @@ floorplan
 # throw in a robot
 omnidir_robot
 (
-  pose [ 2.5 2.5 0.0 0.0 ]
+  pose [ 1.1684 2.286 0.0 0.0 ]
   name "robot"
 )
 

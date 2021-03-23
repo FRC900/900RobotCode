@@ -49,11 +49,6 @@ map_relative_barrel_racing_path:
       - [9.45, 2.29, 0.0]
       - [0.76, 2.29, 0.0]
     frame_id: "map"
-    point_frame_id: []
-    path_offset_limit:
-      - {min_x: 0, max_x: 0, min_y: 0, max_y: 0}
-    optimize_final_velocity: true
-    iteration: 1
 
 map_relative_bounce_path:
   type: "path"
