@@ -8,9 +8,9 @@ goal_to_wall_y_dist: 2.404
 # format: auto_mode_[integer]: array
 #
 auto_mode_1: ["tuning"]
-auto_mode_2: ["barrel_racing_path"]
-auto_mode_3: ["bounce_path"]
-auto_mode_4: ["slalom_path"]
+auto_mode_2: ["map_relative_barrel_racing_path"]
+auto_mode_3: ["map_relative_bounce_path"]
+auto_mode_4: ["map_relative_slalom_path"]
 auto_mode_5: ["dynamic_path"]
 auto_mode_6: ["galactic_search_path"]
 
@@ -20,6 +20,11 @@ auto_mode_6: ["galactic_search_path"]
 #auto_mode_4: ["drive_back", "shoot", "path_to_trench_after_drive_back"]
 #auto_mode_5: ["drive_test_angle", "start_intake", "drive_forward", "stop_intake"]
 #auto_mode_6: ["drive_path_test_1"]
+
+# ACTIONS ------------------------------------------------------------------------
+# must have a value for "type", other stuff varies
+#valid action types: "intake_actionlib_server", "pause", "elevator_actionlib_server"
+
 tuning:
   type: "path"
   goal:
@@ -29,51 +34,68 @@ tuning:
       - [2.0, 2.0, 0.0]
       - [3.0, 1.0, 0.0]
 
-barrel_racing_path:
+map_relative_barrel_racing_path:
   type: "path"
   goal:
     apply_offset: false
     points:
-      - [1.0, 0.0, 0.0] # TODO these are wrong
-      - [2.0, 3.0, 0.0]
-      - [4.0, 1.0, 0.0]
+      - [6.25, 2.29, 0.0]
+      - [3.81, 0.46, 0.0]
+      - [1.98, 2.29, 0.0]
+      - [8.69, 2.29, 0.0]
+      - [6.10, 4.42, 0.0]
+      - [4.57, 3.05, 0.0]
+      - [7.62, 0.46, 0.0]
+      - [9.45, 2.29, 0.0]
+      - [0.76, 2.29, 0.0]
     frame_id: "map"
     point_frame_id: []
     path_offset_limit:
       - {min_x: 0, max_x: 0, min_y: 0, max_y: 0}
     optimize_final_velocity: true
+    iteration: 1
 
-bounce_path:
+map_relative_bounce_path:
   type: "path"
   goal:
     apply_offset: false
     points:
-      - [1.0, 0.0, 0.0]
-      - [2.0, 3.0, 0.0]
-      - [4.0, 1.0, 0.0]
+      - [2.29, 3.81, 0.0]
+      - [3.35, 0.76, 0.0]
+      - [4.27, 0.76, 0.0]
+      - [4.57, 3.81, 0.0]
+      - [4.88, 0.76, 0.0]
+      - [6.71, 0.76, 0.0]
+      - [6.86, 3.81, 0.0]
+      - [8.38, 2.29, 0.0]
     frame_id: "map"
     point_frame_id: []
     path_offset_limit:
       - {min_x: 0, max_x: 0, min_y: 0, max_y: 0}
     optimize_final_velocity: true
+    iteration: 1
 
-slalom_path:
+map_relative_slalom_path:
   type: "path"
   goal:
     apply_offset: false
     points:
-      - [1.0, 0.0, 0.0]
-      - [2.0, 3.0, 0.0]
-      - [4.0, 1.0, 0.0]
+      - [2.29, 2.29, 0.0]
+      - [6.86, 2.29, 0.0]
+      - [6.86, 0.76, 0.0]
+      - [8.38, 0.76, 0.0]
+      - [8.38, 2.29, 0.0]
+      - [6.86, 2.29, 0.0]
+      - [6.86, 0.76, 0.0]
+      - [2.29, 0.76, 0.0]
+      - [0.76, 2.29, 0.0]
     frame_id: "map"
     point_frame_id: []
     path_offset_limit:
       - {min_x: 0, max_x: 0, min_y: 0, max_y: 0}
     optimize_final_velocity: true
+    iteration: 1
 
-# ACTIONS ------------------------------------------------------------------------
-# must have a value for "type", other stuff varies
-#valid action types: "intake_actionlib_server", "pause", "elevator_actionlib_server"
 
 #examples:
 

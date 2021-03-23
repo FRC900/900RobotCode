@@ -121,7 +121,8 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 			transformStamped.header.stamp = out_msg.header.stamp;
 			transformStamped.header.frame_id = out_msg.header.frame_id;
 			std::stringstream child_frame;
-			child_frame << "detection_";
+			child_frame << out_msg.objects[i].id;
+			child_frame << "_";
 			child_frame << i;
 			transformStamped.child_frame_id = child_frame.str();
 

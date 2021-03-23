@@ -31,19 +31,19 @@ initialDParam: 0.25
 path_distance_limit: 2
 
 # Max robot translational velocity (meters/sec)
-max_vel: 4.5
+max_vel: 2.0
 
 # Maximum robot linear acceleration (meters/sec^2)
-max_linear_acc: 2.5
+max_linear_acc: 2.0
 
 # Maximum robot linear deceleration (meters/sec^2)
-max_linear_dec: 2.5
+max_linear_dec: 2.0
+
+# max centrepital acceleration (meters/sec^2)
+max_cent_acc: 3.0
 
 # Robot drivebase radius (meters)
 drive_base_radius: 0.40411
-
-# max centrepital acceleration (meters/sec^2)
-max_cent_acc: 8
 
 # what frame to generate the path coords in
 path_frame_id: "base_link"

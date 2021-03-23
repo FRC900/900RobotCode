@@ -29,10 +29,11 @@ bool genPath(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
     std::vector<std::pair<double, double>> points;
     points.push_back(std::make_pair(0,0)); // may need to worry about transforms between beginning/end point and intake?
 
-    for (size_t i = 0; i < objects_num; i++) // filter out power cell detections
-        if(lastObjectDetection.objects[i].id == "power_cell")
-            points.push_back(std::make_pair(lastObjectDetection.objects[i].location.x, lastObjectDetection.objects[i].location.y));
+	for (size_t i = 0; i < objects_num; i++) // filter out power cell detections
+		if(lastObjectDetection.objects[i].id == "power_cell")
+			points.push_back(std::make_pair(lastObjectDetection.objects[i].location.x, lastObjectDetection.objects[i].location.y));
 
+	points.back().second *= .90; // TODO -ugh
 	if (points.size() == 1) // No power cells added
 	{
 		ROS_INFO("galactic_path_gen : no power cells detected");
@@ -40,8 +41,8 @@ bool genPath(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
 		return false;
 	}
 
-    // need to determine last point
-    points.push_back(std::make_pair(7.62, points[points.size()-1].second)); // probably best practice to make 7.62 (distance between start and end line) a config value at some point
+	// need to determine last point
+    points.push_back(std::make_pair(7.62+1.25, points[points.size()-1].second)); // probably best practice to make 7.62 (distance between start and end line) a config value at some point
 
     std::sort(points.begin(), points.end()); // sort on x coordinate
 
@@ -49,31 +50,32 @@ bool genPath(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
     spline_gen_srv.request.points.resize(points_num);
     spline_gen_srv.request.point_frame_id.resize(points_num);
 	double prev_angle = 0;
-    for (size_t i = 0; i < points_num; i++) // copy points into spline request
-    {
-        spline_gen_srv.request.points[i].positions.resize(3);
-        spline_gen_srv.request.points[i].positions[0] = points[i].first;
-        spline_gen_srv.request.points[i].positions[1] = points[i].second;
-        if ((i != 0) && (i != (points_num - 1))) // Don't snap robot heading when driving from first point and to last one
-        {
-            spline_gen_srv.request.points[i].positions[2] = std::atan2(points[i].second-points[i-1].second, points[i].first-points[i-1].first) * 0.6; // right triangle math to calculate angle
-            spline_gen_srv.request.point_frame_id[i] = "intake";
-        }
-        else
-        {
-            spline_gen_srv.request.points[i].positions[2] = prev_angle;
-            spline_gen_srv.request.point_frame_id[i] = "intake";
-        }
+	for (size_t i = 0; i < points_num; i++) // copy points into spline request
+	{
+		spline_gen_srv.request.points[i].positions.resize(3);
+		spline_gen_srv.request.points[i].positions[0] = points[i].first + 0.075;
+		spline_gen_srv.request.points[i].positions[1] = points[i].second;
+		if ((i == 0) || (i == (points_num - 1)))
+		{
+			// Facing forward for the last point increases our chances
+			// of running over the ball
+			spline_gen_srv.request.points[i].positions[2] = 0;
+		}
+		else
+		{
+			spline_gen_srv.request.points[i].positions[2] = std::atan2(points[i].second-points[i-1].second, points[i].first-points[i-1].first) * 0.1; // right triangle math to calculate angle
+		}
+		spline_gen_srv.request.point_frame_id[i] = "intake";
 		prev_angle = spline_gen_srv.request.points[i].positions[2];
 
 		base_trajectory_msgs::PathOffsetLimit path_offset_limit;
 		if (i == (points_num - 1)) // Allow moving the y position of the last waypoint
 		{
-			path_offset_limit.min_y = -2.25;
-			path_offset_limit.max_y = 2.25;
+			//path_offset_limit.min_y = -2.25;
+			//path_offset_limit.max_y = 2.25;
 		}
 		spline_gen_srv.request.path_offset_limit.push_back(path_offset_limit);
-    }
+	}
 
     spline_gen_srv.request.optimize_final_velocity = true; // flag for optimized velocity
 	ROS_INFO_STREAM("galactic_path_gen : reg: " << spline_gen_srv.request);

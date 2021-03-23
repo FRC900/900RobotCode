@@ -20,6 +20,8 @@ class PathAction
 
 		ros::Subscriber odom_sub_;
 		nav_msgs::Odometry odom_;
+		ros::Subscriber pose_sub_;
+		geometry_msgs::PoseStamped pose_;;
 		ros::Subscriber yaw_sub_;
 		geometry_msgs::Quaternion orientation_;
 
@@ -41,6 +43,9 @@ class PathAction
 		// If false, use odom for x, y and orientation.
 		bool use_odom_orientation_;
 
+		// If true, use the subscribed pose topic for odom rather than the odom subscriber
+		bool use_pose_for_odom_;
+
 	public:
 		PathAction(const std::string &name, const ros::NodeHandle &nh,
 				   double lookahead_distance,
@@ -50,7 +55,9 @@ class PathAction
 				   int ros_rate,
 				   double start_point_radius,
 				   const std::string &odom_topic,
+				   const std::string &pose_topic,
 				   bool use_odom_orientation,
+				   bool use_pose_for_odom,
 				   double time_offset)
 			: nh_(nh)
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
@@ -60,9 +67,10 @@ class PathAction
 			, final_pos_tol_(final_pos_tol)
 			, final_rot_tol_(final_rot_tol)
 			, server_timeout_(server_timeout)
-			, debug_(false) // TODO - config item?
+			, debug_(true) // TODO - config item?
 			, ros_rate_(ros_rate)
 			, use_odom_orientation_(use_odom_orientation)
+			, use_pose_for_odom_(use_pose_for_odom)
 		{
 			//start_point_radius_ = start_point_radius;
 
@@ -72,6 +80,7 @@ class PathAction
 			{
 				yaw_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this);
 			}
+			pose_sub_ = nh_.subscribe(pose_topic, 1, &PathAction::poseCallback, this);
 
 			combine_cmd_vel_pub_ = nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true);
 			std_msgs::Bool bool_msg;
@@ -83,8 +92,23 @@ class PathAction
 
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
 		{
-			odom_ = odom_msg;
+			if (!use_pose_for_odom_)
+				odom_ = odom_msg;
 			//odom_.pose.pose.position.y *= -1;
+		}
+
+		void poseCallback(const geometry_msgs::PoseStamped &pose_msg)
+		{
+			pose_ = pose_msg;
+#if 0
+			pose_.pose.position.x *= -1; // TODO - the camera is mounted facing backwards
+			pose_.pose.position.y *= -1; // make this better - pass in the source frame and do a tf
+#endif
+			if (use_pose_for_odom_)
+			{
+				odom_.header = pose_msg.header;
+				odom_.pose.pose = pose_msg.pose;
+			}
 		}
 
 		void yawCallback(const sensor_msgs::Imu &yaw_msg)
@@ -157,6 +181,7 @@ class PathAction
 			// effect of changing robot centric coordinates into odom-centric coordinates
 			// Since we're using odom-centric values to drive against, this simplifies a
 			// lot of the code later.
+			ros::spinOnce();
 			geometry_msgs::TransformStamped odom_to_base_link_tf;
 			odom_to_base_link_tf.transform.translation.x = odom_.pose.pose.position.x;
 			odom_to_base_link_tf.transform.translation.y = odom_.pose.pose.position.y;
@@ -176,6 +201,9 @@ class PathAction
 			// the loop
 			geometry_msgs::Pose final_pose_transformed = goal->path.poses.back().pose;
 			tf2::doTransform(final_pose_transformed, final_pose_transformed, odom_to_base_link_tf);
+
+			const auto starting_odom = odom_;
+			const auto starting_pose = pose_;
 
 			//debug
 			ROS_INFO_STREAM(goal->path.poses[num_waypoints - 1].pose.position.x << ", " << goal->path.poses[num_waypoints - 1].pose.position.y << ", " << path_follower_.getYaw(goal->path.poses[num_waypoints - 1].pose.orientation));
@@ -259,10 +287,10 @@ class PathAction
 					(fabs(path_follower_.getYaw(final_pose_transformed.orientation) - orientation_state) < final_rot_tol_))
 				{
 					ROS_INFO_STREAM(action_name_ << ": succeeded");
-					ROS_INFO_STREAM("endpoint_x = " << final_pose_transformed.position.x << ", odom_x = " << odom_.pose.pose.position.x);
-					ROS_INFO_STREAM("endpoint_y = " << final_pose_transformed.position.y << ", odom_y = " << odom_.pose.pose.position.y);
-					ROS_INFO_STREAM("endpoint_rot = " << path_follower_.getYaw(final_pose_transformed.orientation) << ", odom_rot = " << orientation_state);
-					ROS_INFO_STREAM("distance_travelled = " << distance_travelled);
+					ROS_INFO_STREAM("    endpoint_x = " << final_pose_transformed.position.x << ", odom_x = " << odom_.pose.pose.position.x);
+					ROS_INFO_STREAM("    endpoint_y = " << final_pose_transformed.position.y << ", odom_y = " << odom_.pose.pose.position.y);
+					ROS_INFO_STREAM("    endpoint_rot = " << path_follower_.getYaw(final_pose_transformed.orientation) << ", odom_rot = " << orientation_state);
+					ROS_INFO_STREAM("    distance_travelled = " << distance_travelled);
 					succeeded = true;
 				}
 				else if (!preempted && !timed_out)
@@ -279,9 +307,14 @@ class PathAction
 					state_msg.data = orientation_state;
 					z_axis.state_pub_.publish(state_msg);
 
+					ros::spinOnce();
 					r.sleep();
 				}
 			}
+			ROS_INFO_STREAM("    delta odom_ = " << odom_.pose.pose.position.x - starting_odom.pose.pose.position.x
+					<< ", " << odom_.pose.pose.position.y - starting_odom.pose.pose.position.y);
+			ROS_INFO_STREAM("    delta pose_ = " << pose_.pose.position.x - starting_pose.pose.position.x
+					<< ", " << pose_.pose.position.y - starting_pose.pose.position.y);
 
 			std_msgs::Bool enable_msg;
 			enable_msg.data = false;
@@ -393,8 +426,10 @@ int main(int argc, char **argv)
 	double start_point_radius = 0.05;
 	double time_offset = 0;
 	bool use_odom_orientation = false;
+	bool use_pose_for_odom = false;
 
 	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
+	std::string pose_topic = "/zed_ar/pose";
 	nh.getParam("/path_follower/path_follower/lookahead_distance", lookahead_distance);
 	nh.getParam("/path_follower/path_follower/final_pos_tol", final_pos_tol);
 	nh.getParam("/path_follower/path_follower/final_rot_tol", final_rot_tol);
@@ -402,8 +437,10 @@ int main(int argc, char **argv)
 	nh.getParam("/path_follower/path_follower/ros_rate", ros_rate);
 	nh.getParam("/path_follower/path_follower/start_point_radius", start_point_radius);
 	nh.getParam("/path_follower/path_follower/odom_topic", odom_topic);
+	nh.getParam("/path_follower/path_follower/pose_topic", pose_topic);
 	nh.getParam("/path_follower/path_follower/use_odom_orientation", use_odom_orientation);
 	nh.getParam("/path_follower/path_follower/time_offset", time_offset);
+	nh.getParam("/path_follower/path_follower/use_pose_for_odom", use_pose_for_odom);
 
 	PathAction path_action_server("path_follower_server", nh,
 								  lookahead_distance,
@@ -413,7 +450,9 @@ int main(int argc, char **argv)
 								  ros_rate,
 								  start_point_radius,
 								  odom_topic,
+								  pose_topic,
 								  use_odom_orientation,
+								  use_pose_for_odom,
 								  time_offset);
 
 	AlignActionAxisConfig x_axis("x", "x_position_pid/pid_enable", "x_position_pid/x_cmd_pub", "x_position_pid/x_state_pub", "x_position_pid/pid_debug", "x_timeout_param", "x_error_threshold_param");
