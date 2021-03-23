@@ -7,7 +7,7 @@
 double field_width, field_height, inches_per_pixel; //field dimensions in inches
 int height;
 const int width = 1200;
-const double border = width * .05;
+const double border = width;
 
 cv::Point map_to_image(cv::Point map_coord)
 {
@@ -93,6 +93,8 @@ int main(int argc, char **argv)
 	ROS_INFO_STREAM(image.size() << " " << image.depth() << " " << image.channels());
 
 	// Draw field border
+	cv::rectangle(image, cv::Point(0,0), cv::Point(image.cols-1, image.rows-1), cv::Scalar(0,0,0), 4);
+#if 0
 	for (int row = 0; row < image.rows; row++)
 	{
 		for (int col = 0; col < image.cols; col++)
@@ -113,6 +115,7 @@ int main(int argc, char **argv)
 			}
 		}
 	}
+#endif
 
 	// Draw field obstacles
 	for (size_t i = 0; i < (unsigned) xml_obstacles_list.size(); i++) {
