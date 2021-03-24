@@ -16,7 +16,7 @@ else
 	echo "roboRIO cross build complete"
 	echo "Synchronizing $INSTALL_ENV cross build to roboRIO"
 	ssh $ROBORIO_ADDR "/etc/init.d/nilvrt stop"
-	arm-frc2020-linux-gnueabi-strip `find install_isolated/ -executable -type f | grep -v \.py | grep -v \.sh`
+	arm-frc2021-linux-gnueabi-strip `find install_isolated/ -executable -type f | grep -v \.py | grep -v \.sh`
 
 	rsync -avz --delete \
 		--exclude '*~' --exclude '*.sw[op]' \
