@@ -1,6 +1,6 @@
 # Verify path gen accel and velocity
-rosservice call /frcrobot_jetson/intake_controller/intake_arm_command "intake_arm_extend: true" 
-rosservice call /frcrobot_jetson/intake_controller/intake_roller_command "percent_out: 0.8" 
+rosservice call /frcrobot_jetson/intake_controller/intake_arm_command "intake_arm_extend: false" 
+rosservice call /frcrobot_jetson/intake_controller/intake_roller_command "percent_out: 0.9" 
 rosservice call /frcrobot_jetson/indexer_controller/indexer_command "indexer_velocity: 1.5"
 ROS_NAMESPACE=auto rosrun behaviors auto_node 
 
@@ -37,6 +37,8 @@ rosservice call /frcrobot_jetson/indexer_controller/indexer_command "indexer_vel
 rosservice call /imu/set_imu_zero "angle: 0.0"
 
 
+
+
 /path_follower/x_position_pid/parameter_descriptions
 /path_follower/x_position_pid/parameter_updates
 /path_follower/x_position_pid/pid_debug
@@ -49,3 +51,28 @@ rosservice call /imu/set_imu_zero "angle: 0.0"
 state = odom reading
 command = setpoint
 cmd_pub =  PID output
+
+rosservice call /imu/set_imu_zero "angle: 0.0"
+
+####################################################
+rosservice call /frcrobot_jetson/intake_controller/intake_arm_command "intake_arm_extend: true" 
+
+rosservice call /zed_ar/reset_tracking "{}" 
+sleep 3
+ROS_NAMESPACE=auto rosrun behaviors auto_node 
+
+rostopic pub -1 /auto/auto_mode behavior_actions/AutoMode "header:
+  seq: 0
+  stamp:
+    secs: 0
+    nsecs: 0
+  frame_id: ''
+auto_mode: 4
+distance_from_wall: 0.0" 
+
+rosservice call /frcrobot_jetson/swerve_drive_controller/reset_odom "data: true"
+rosservice call /frcrobot_jetson/swerve_drive_controller/reset_odom "data: false"
+
+rosservice call /zed_ar/reset_tracking "{}" 
+
+

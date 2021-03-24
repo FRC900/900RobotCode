@@ -22,11 +22,11 @@
 			<!-- TODO - remove me after pf localization publishes this 
 -->
 			<!-- Everything but slalom path
+			<node pkg="tf2_ros" type="static_transform_publisher" name="static_maptobase" args="1.0414 2.286 0 0 0 map zed_ar_odom" />
 			-->
-			<node pkg="tf2_ros" type="static_transform_publisher" name="static_maptobase" args="1.0414 2.286 0 0 0 0 map base_link" />
 			<!-- Slalom path
-			<node pkg="tf2_ros" type="static_transform_publisher" name="static_maptobase" args="1.0414 0.762 0 0 0 0 map base_link" />
 				 -->
+			<node pkg="tf2_ros" type="static_transform_publisher" name="static_maptobase" args="1.0414 0.762 0 0 0 0 map zed_ar_odom" />
             <node name="path_follower_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
                 <param name="orient_topic" value="orient_pid/orient_command" />
                 <param name="x_topic" value="x_position_pid/x_command" />

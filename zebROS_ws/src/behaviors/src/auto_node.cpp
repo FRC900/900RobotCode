@@ -329,7 +329,7 @@ bool waitForAutoStart(ros::NodeHandle nh)
 							readStringParam("frame_id", path_goal, frame_id);
 
 							spline_gen_srv.request.header.frame_id = frame_id;
-							spline_gen_srv.request.header.stamp = ros::Time::now();
+							spline_gen_srv.request.header.stamp = ros::Time::now() - ros::Duration(2); // TODO -fixme
 
 							bool optimize_final_velocity{false};
 							readBoolParam("optimize_final_velocity", path_goal, optimize_final_velocity);

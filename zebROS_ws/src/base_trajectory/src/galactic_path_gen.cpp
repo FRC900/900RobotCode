@@ -33,7 +33,7 @@ bool genPath(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
 		if(lastObjectDetection.objects[i].id == "power_cell")
 			points.push_back(std::make_pair(lastObjectDetection.objects[i].location.x, lastObjectDetection.objects[i].location.y));
 
-	points.back().second *= .90; // TODO -ugh
+	//points.back().second *= .90; // TODO -ugh
 	if (points.size() == 1) // No power cells added
 	{
 		ROS_INFO("galactic_path_gen : no power cells detected");
@@ -41,15 +41,13 @@ bool genPath(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
 		return false;
 	}
 
-	// need to determine last point
-    points.push_back(std::make_pair(7.62+1.25, points[points.size()-1].second)); // probably best practice to make 7.62 (distance between start and end line) a config value at some point
-
     std::sort(points.begin(), points.end()); // sort on x coordinate
 
+    points.push_back(std::make_pair(7.62+1.25, points.back().second)); // probably best practice to make 7.62 (distance between start and end line) a config value at some point
+
     size_t points_num = points.size();
-    spline_gen_srv.request.points.resize(2*points_num-2);
-    spline_gen_srv.request.point_frame_id.resize(2*points_num-2);
-	double prev_angle = 0;
+    spline_gen_srv.request.points.resize(3*points_num-4); // 3 * (point_num - 2) + 2
+    spline_gen_srv.request.point_frame_id.resize(3*points_num-4);
 	size_t point_index = 0;
 	for (size_t i = 0; i < points_num; i++) // copy points into spline request
 	{
@@ -59,7 +57,7 @@ bool genPath(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
 			// of running over the ball
 			spline_gen_srv.request.points[point_index].positions.resize(3);
 			spline_gen_srv.request.points[point_index].positions[2] = 0;
-			spline_gen_srv.request.points[point_index].positions[0] = points[i].first + 0.075;
+			spline_gen_srv.request.points[point_index].positions[0] = points[i].first;
 			spline_gen_srv.request.points[point_index].positions[1] = points[i].second;
 			spline_gen_srv.request.point_frame_id[point_index] = "intake";
 			base_trajectory_msgs::PathOffsetLimit path_offset_limit;
@@ -75,7 +73,7 @@ bool genPath(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
 		{
 			spline_gen_srv.request.points[point_index].positions.resize(3);
 			spline_gen_srv.request.points[point_index].positions[2] = 0;//std::atan2(points[i].second-points[i-1].second, points[i].first-points[i-1].first) * 0.1; // right triangle math to calculate angle
-			spline_gen_srv.request.points[point_index].positions[0] = points[i].first + 0.075 - .1; // left side of point
+			spline_gen_srv.request.points[point_index].positions[0] = points[i].first - .175; // left side of point
 			spline_gen_srv.request.points[point_index].positions[1] = points[i].second;
 			spline_gen_srv.request.point_frame_id[point_index] = "intake";
 			base_trajectory_msgs::PathOffsetLimit path_offset_limit;
@@ -84,11 +82,20 @@ bool genPath(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
 
 			spline_gen_srv.request.points[point_index].positions.resize(3);
 			spline_gen_srv.request.points[point_index].positions[2] = 0;//std::atan2(points[i].second-points[i-1].second, points[i].first-points[i-1].first) * 0.1; // right triangle math to calculate angle
-			spline_gen_srv.request.points[point_index].positions[0] = points[i].first + 0.075 + .1; //right side of point
+			spline_gen_srv.request.points[point_index].positions[0] = points[i].first + .175; //right side of point
 			spline_gen_srv.request.points[point_index].positions[1] = points[i].second;
 			spline_gen_srv.request.point_frame_id[point_index] = "intake";
 			base_trajectory_msgs::PathOffsetLimit path_offset_limit_2;
 			spline_gen_srv.request.path_offset_limit.push_back(path_offset_limit_2);
+			point_index++;
+
+			spline_gen_srv.request.points[point_index].positions.resize(3);
+			spline_gen_srv.request.points[point_index].positions[2] = 0;//std::atan2(points[i].second-points[i-1].second, points[i].first-points[i-1].first) * 0.1; // right triangle math to calculate angle
+			spline_gen_srv.request.points[point_index].positions[0] = points[i].first + .375; //right side of point
+			spline_gen_srv.request.points[point_index].positions[1] = points[i].second;
+			spline_gen_srv.request.point_frame_id[point_index] = "intake";
+			base_trajectory_msgs::PathOffsetLimit path_offset_limit_3;
+			spline_gen_srv.request.path_offset_limit.push_back(path_offset_limit_3);
 			point_index++;
 		}
 		//prev_angle = spline_gen_srv.request.points[i].positions[2];
