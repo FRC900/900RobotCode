@@ -969,13 +969,13 @@ class TalonCIParams
 	private:
 		// Read a double named <param_type> from the array/map
 		// in params
-		bool findFloatParam(std::string param_type, XmlRpc::XmlRpcValue &params, double &val) const
+		bool findFloatParam(std::string param_name, XmlRpc::XmlRpcValue &params, double &val) const
 		{
-			if (!params.hasMember(param_type))
+			if (!params.hasMember(param_name))
 				return false;
-			XmlRpc::XmlRpcValue &param = params[param_type];
+			XmlRpc::XmlRpcValue &param = params[param_name];
 			if (!param.valid())
-				throw std::runtime_error(param_type + " was not a double valid type");
+				throw std::runtime_error(param_name + " was not a valid double type");
 			if (param.getType() == XmlRpc::XmlRpcValue::TypeDouble)
 			{
 				val = (double)param;
@@ -987,24 +987,24 @@ class TalonCIParams
 				return true;
 			}
 			else
-				throw std::runtime_error("A non-double value was passed for" + param_type);
+				throw std::runtime_error("A non-double value was passed for" + param_name);
 
 			return false;
 		}
 
-		// Read an integer named <param_type> from the array/map
+		// Read an integer named <param_name> from the array/map
 		// in params
-		bool findIntParam(std::string param_type, XmlRpc::XmlRpcValue &params, int &val) const
+		bool findIntParam(std::string param_name, XmlRpc::XmlRpcValue &params, int &val) const
 		{
-			if (!params.hasMember(param_type))
+			if (!params.hasMember(param_name))
 				return false;
-			XmlRpc::XmlRpcValue &param = params[param_type];
+			XmlRpc::XmlRpcValue &param = params[param_name];
 			if (!param.valid())
-				throw std::runtime_error(param_type + " was not a valid int type");
+				throw std::runtime_error(param_name + " was not a valid int type");
 			if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
 				val = (int)param;
 			else
-				throw std::runtime_error("A non-int value was passed for" + param_type);
+				throw std::runtime_error("A non-int value was passed for" + param_name);
 			return false;
 		}
 
