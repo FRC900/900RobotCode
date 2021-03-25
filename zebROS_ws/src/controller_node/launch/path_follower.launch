@@ -13,8 +13,8 @@
 				<param name="frame_id" value="/map"/>
 			</node>
 
+			<rosparam file="$(find base_trajectory)/config/2020_robot_base_trajectory.yaml" command="load"/>
 			<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" >
-				<rosparam file="$(find base_trajectory)/config/2020_robot_base_trajectory.yaml" command="load"/>
 		   	</node>
 			<node name="galactic_path_server" pkg="base_trajectory" type="galactic_path_server" output="screen" >
 				<rosparam file="$(find base_trajectory)/config/2020_robot_base_trajectory.yaml" command="load"/>
@@ -39,7 +39,7 @@
 
             <node name="x_position_pid" pkg="pid" type="controller" >
                 <param name="node_name" value="x_position_pid" />
-                <param name="Kp" value="4.5" />
+                <param name="Kp" value="4.25" />
                 <param name="Ki" value="0.0" />
                 <param name="Kd" value="0.0" />
                 <param name="upper_limit" value="10" />
@@ -56,7 +56,7 @@
 
             <node name="y_position_pid" pkg="pid" type="controller" >
                 <param name="node_name" value="y_position_pid" />
-                <param name="Kp" value="4.5" />
+                <param name="Kp" value="4.25" />
                 <param name="Ki" value="0.0" />
                 <param name="Kd" value="0.0" />
                 <param name="upper_limit" value="10" />
