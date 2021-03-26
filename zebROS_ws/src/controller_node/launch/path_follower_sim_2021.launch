@@ -35,6 +35,8 @@
 	<include file="$(find controller_node)/launch/fuse_odom.launch"/>
 	-->
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetoimu" args="0 0 0 0 0 0 1 base_link imu" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="static_arzedmap" args="0 0 0 0 0 0 zed_ar_odom base_link" />
+
 	<group ns="robot_state">
 		<param name="robot_description" command="$(find xacro)/xacro '$(find controller_node)/urdf/2021_compbot.xacro'" />
 		<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
@@ -51,13 +53,13 @@
 	-->
 
 	<!-- set up auto node to create paths -->
-	<group ns="auto">
-		<node name="auto_node" pkg="behaviors" type="auto_node" output="screen"></node>
-		<rosparam file="$(find behaviors)/config/auto_mode_config.yaml" command="load"/>
-	</group>
+	<include file="$(find controller_node)/launch/auto_node.launch"/>
 
 	<include file="$(find controller_node)/launch/path_follower.launch">
+		<!--
 		<arg name="odom_topic" value="/odom"/>
+-->
+		<arg name="use_pose_for_odom" value="false"/>
 	</include>
 	<!-- Super sketchy way to hook up cmd vel output from path follower to stage /cmd_vel topic 
 		 I could say this is because it is a closer match to the real robot but it is really just

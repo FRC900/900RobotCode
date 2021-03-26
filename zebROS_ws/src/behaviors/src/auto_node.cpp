@@ -277,6 +277,11 @@ bool readBoolParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, b
 bool waitForAutoStart(ros::NodeHandle nh)
 {
 	ros::Rate r(20);
+	// In sim, time starts at 0. We subtract 2 seconds from the currentt time
+	// when fetching transforms to make sure they've had a chance to be published
+	// Make sure we don't ever use a time less than 0 because of this by skipping
+	// a few seconds here
+	ros::Duration(2.5).sleep();
 
 	//wait for auto period to start
 	while( ros::ok() && !auto_stopped )
@@ -382,8 +387,6 @@ bool waitForAutoStart(ros::NodeHandle nh)
 			}
 		}
 
-
-
 		if(auto_mode > 0){
 			auto_state = READY;
 		}
@@ -415,6 +418,7 @@ int main(int argc, char** argv)
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
 	spline_gen_cli_ = nh.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen", false, service_connection_header);
+	spline_gen_cli_.waitForExistence(ros::Duration(10.0));
 
 	//subscribers
 	//rio match data (to know if we're in auto period)
@@ -423,7 +427,7 @@ int main(int argc, char** argv)
 	ros::Subscriber auto_mode_sub = nh.subscribe("auto_mode", 1, updateAutoMode); //TODO get correct topic name (namespace)
 	ros::Subscriber enable_auto_in_teleop_sub = nh.subscribe("/enable_auto_in_teleop", 1, enable_auto_in_teleop);
 
-	//
+	// Used to pass in dynamic paths from other nodes
 	ros::ServiceServer path_finder = nh.advertiseService("dynamic_path", dynamic_path_storage);
 
 	//auto state
