@@ -20,11 +20,10 @@
 			<rosparam file="$(find base_trajectory)/config/2020_robot_base_trajectory.yaml" command="load"/>
 			<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" >
 		   	</node>
-			<node name="galactic_path_server" pkg="base_trajectory" type="galactic_path_server" output="screen" >
-				<rosparam file="$(find base_trajectory)/config/2020_robot_base_trajectory.yaml" command="load"/>
+			<node name="galactic_path_server" pkg="behaviors" type="galactic_path_server" output="screen" >
 		   	</node>
-			<!-- TODO - remove me after pf localization publishes this 
--->
+
+			<!-- TODO - remove me after pf localization publishes this -->
 			<!-- Everything but slalom path
 			-->
 			<node pkg="tf2_ros" type="static_transform_publisher" name="static_maptobase" args="1.0414 2.286 0 0 0 0 map zed_ar_odom" />
