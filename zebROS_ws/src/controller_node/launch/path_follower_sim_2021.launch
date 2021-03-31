@@ -53,7 +53,7 @@
 	-->
 
 	<!-- set up auto node to create paths -->
-	<include file="$(find controller_node)/launch/auto_node.launch"/>
+	<include file="$(find behaviors)/launch/auto_node.launch"/>
 
 	<include file="$(find controller_node)/launch/path_follower.launch">
 		<!--
