@@ -1389,10 +1389,11 @@ bool transformConstraintPoint(geometry_msgs::Point &point,
 	std::vector<double> position;
 	position.push_back(point.x);
 	position.push_back(point.y);
+	position.push_back(0);
 	if (!transformTrajectoryPoint(position, fromHeader, toFrame))
 		return false;
 	point.x = position[0];
-	point.y = position[0];
+	point.y = position[1];
 	return true;
 }
 
