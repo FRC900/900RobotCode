@@ -1,3 +1,4 @@
+Header header
 geometry_msgs/Point corner1
 geometry_msgs/Point corner2
 float64             max_accel

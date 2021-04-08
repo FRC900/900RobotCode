@@ -1367,7 +1367,7 @@ bool transformTrajectoryPoint(std::vector<double> &positions,
 	}
 	catch(tf2::TransformException &ex)
 	{
-		ROS_ERROR_STREAM("base_trajectory : Error transforming from " << fromHeader.frame_id << " to " << toFrame << " : " << ex.what());
+		ROS_ERROR_STREAM("base_trajectory : Error transforming frame from " << fromHeader.frame_id << " to " << toFrame << " : " << ex.what());
 		return false;
 	}
 	positions[0] = poseStamped.pose.position.x;
@@ -1380,6 +1380,22 @@ bool transformTrajectoryPoint(std::vector<double> &positions,
 	ROS_INFO_STREAM("  To pose " << positions[0] << ", " << positions[1] << ", " << positions[2] << " in frame " << toFrame);
 	return true;
 }
+
+bool transformConstraintPoint(geometry_msgs::Point &point,
+							  const std_msgs::Header &fromHeader,
+							  const std::string &toFrame)
+{
+
+	std::vector<double> position;
+	position.push_back(point.x);
+	position.push_back(point.y);
+	if (!transformTrajectoryPoint(position, fromHeader, toFrame))
+		return false;
+	point.x = position[0];
+	point.y = position[0];
+	return true;
+}
+
 
 // input should be JointTrajectory[] custom message
 // Output wil be array of spline coefficents base_trajectory/Coefs[] for x, y, orientation,
@@ -1499,6 +1515,12 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 
 	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " : runOptimization = " << runOptimization);
 	kinematicConstraints.resetConstraints();
+	for (auto &constraint : msg.constraints)
+	{
+		if (!transformConstraintPoint(constraint.corner1, constraint.header, pathFrameID) ||
+		    !transformConstraintPoint(constraint.corner2, constraint.header, pathFrameID))
+			return false;
+	}
 	kinematicConstraints.addConstraints(msg.constraints);
 
 	std::vector<OptParams> optParams;
