@@ -2,6 +2,9 @@
 #include "spline_util/spline_util.h"
 
 template <class T>
+using Scalar = typename Segment<T>::Scalar;
+
+template <class T>
 bool initSpline(Trajectory<T> &trajectory,
 				std::vector<std::string> jointNames,
 				const std::vector<trajectory_msgs::JointTrajectoryPoint> &points)

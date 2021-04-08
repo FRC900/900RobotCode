@@ -41,9 +41,6 @@ using Segment = joint_trajectory_controller::JointTrajectorySegment<trajectory_i
 template <class T>
 using TrajectoryPerJoint = std::vector<Segment<T>>;
 
-template <class T>
-using Scalar = typename Segment<T>::Scalar;
-
 // A vector of those is created to hold x, y and orientation in one struct.
 template <class T>
 using Trajectory = std::vector<TrajectoryPerJoint<T>>;

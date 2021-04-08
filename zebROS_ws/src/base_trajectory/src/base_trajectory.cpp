@@ -621,9 +621,7 @@ bool getPathLength(Trajectory<T> &arcLengthTrajectory,
 // that trajectory
 template <class T>
 bool subdivideLength(std::vector<double> &equalLengthTimes,
-			const Trajectory<T> &trajectory,
-			const double distanceBetweenLengths,
-			const double distanceEpsilon)
+			const Trajectory<T> &trajectory)
 {
 	equalLengthTimes.clear();
 	equalLengthTimes.push_back(0); // start at t==0
@@ -646,7 +644,7 @@ bool subdivideLength(std::vector<double> &equalLengthTimes,
 	const double totalLength = state.position[0];
 
 	size_t iterCount = 0;
-	for (double currDistance = distanceBetweenLengths; currDistance <= totalLength; currDistance += distanceBetweenLengths)
+	for (double currDistance = distBetweenArcLengths; currDistance <= totalLength; currDistance += distBetweenArcLengths)
 	{
 		double end = endTime;
 		double mid = start + prevTimeDelta;
@@ -661,7 +659,7 @@ bool subdivideLength(std::vector<double> &equalLengthTimes,
 			iterCount += 1;
 			const double delta = currDistance - state.position[0];
 			//ROS_INFO_STREAM_FILTER(&messageFilter, "currDistance = " << currDistance << " start=" << start << " mid=" << mid << " end=" << end << " position[0]=" << state.position[0] << " delta=" << delta);
-			if (fabs(delta) < distanceEpsilon)
+			if (fabs(delta) < distBetweenArcLengthEpsilon)
 			{
 				break;
 			}
@@ -702,6 +700,23 @@ bool subdivideLength(std::vector<double> &equalLengthTimes,
 }
 
 
+// Each spline segment is subdivided into multiple smaller arcs,
+// picked such that these smaller arcs can be reasonably approximated
+// by straight lines.  This function converts from an arc length
+// fractional time into an integer segment time. The conversion is relatively
+// simple except for the end condition...
+size_t arcLengthTimeToSegTime(const std::vector<double> &equalArcLengthTimes, size_t i)
+{
+	// trajectory segments are still arbitrary times, each 1 unit long.
+	// Thus, times 0 .. 0.99999 will be in segment 0, 1 .. 1.99999 in seg 1, and so on
+	// The exception is the last time - the end time is at the end of segment t - 1
+	size_t seg = std::floor(equalArcLengthTimes[i]);
+	if (i == (equalArcLengthTimes.size() - 1))
+		seg -= 1;
+	return seg;
+}
+
+
 // evaluate trajectory - inputs are spline coeffs (Trajectory), plus various kinematic constraints
 //                   Creates a velocity profile bound by those constraints
 //                   returns cost for the path in cost, true if the evaluation succeeds and false
@@ -713,6 +728,7 @@ bool subdivideLength(std::vector<double> &equalLengthTimes,
 //#define VERBOSE_EVALUATE_TRAJECTORY
 template <class T>
 bool evaluateTrajectory(double &cost,
+						std::vector<double> &segCosts,
 						std::vector<double> &equalArcLengthTimes,
 						std::vector<double> &remappedTimes,
 						std::vector<double> &vTrans,
@@ -728,8 +744,7 @@ bool evaluateTrajectory(double &cost,
 	}
 	// equalArcLengthTimes will contain times that are
 	// spaced equidistant along the arc length passed in
-	if (!subdivideLength(equalArcLengthTimes, arcLengthTrajectory,
-						 distBetweenArcLengths, distBetweenArcLengthEpsilon))
+	if (!subdivideLength(equalArcLengthTimes, arcLengthTrajectory))
 	{
 		ROS_ERROR("evaluateTrajectory : subdivideLength() failed");
 		return false;
@@ -803,12 +818,8 @@ bool evaluateTrajectory(double &cost,
 	for (size_t i = 1; i < equalArcLengthTimes.size(); i++)
 	{
 		const double t = equalArcLengthTimes[i];
-		// trajectory segments are still arbitrary times, each 1 unit long.
-		// Thus, times 0 .. 0.99999 will be in segment 0, 1 .. 1.99999 in seg 1, and so on
-		// The exception is the last time - the end time is at the end of segment t - 1
-		size_t seg = std::floor(t);
-		if (i == (equalArcLengthTimes.size() - 1))
-			seg -= 1;
+		const auto seg = arcLengthTimeToSegTime(equalArcLengthTimes, i);
+
 		//ROS_INFO_STREAM_FILTER(&messageFilter, "processing index " << i << " t=" << t <<" seg=" << seg);
 		// Save distance between prev and current position for this timestep
 		// This should be nearly constant between points, but
@@ -957,11 +968,15 @@ bool evaluateTrajectory(double &cost,
 	// Calculate arrival time at each of the equalLengthArcTimes distances
 	remappedTimes.clear();
 	remappedTimes.push_back(0);
+	std::vector<double> arcSegCosts;
+	arcSegCosts.push_back(0);
 	for (size_t i = 1; i < vTrans.size(); i++)
 	{
 		remappedTimes.push_back(remappedTimes.back() + (2.0 * deltaS[i]) / (vTrans[i - 1] + vTrans[i]));
+		arcSegCosts.push_back(remappedTimes[i] - remappedTimes[i-1]);
 #ifdef VERBOSE_EVALUATE_TRAJECTORY
 		ROS_INFO_STREAM("remappedTimes[" << i << "]=" << remappedTimes[i]);
+		ROS_INFO_STREAM("arcSegCosts.back()=" << arcSegCosts.back());
 #endif
 	}
 
@@ -974,9 +989,43 @@ bool evaluateTrajectory(double &cost,
 	cost = remappedTimes.back();
 	for (size_t i = 0; i < distanceToPathMidpoint.size(); i++)
 	{
-		cost += exp(25.0 * ((fabs(distanceToPathMidpoint[i]) / kinematics[i].getPathLimitDistance()) - 0.9));
+		const double pathLimitDistanceCost = exp(25.0 * ((fabs(distanceToPathMidpoint[i]) / kinematics[i].getPathLimitDistance()) - 0.9));
+		cost += pathLimitDistanceCost;
+		arcSegCosts[i] += pathLimitDistanceCost;
 	}
 	ROS_INFO_STREAM_FILTER(&messageFilter, "time = " << remappedTimes.back() << " cost = " << cost);
+
+	// Generate a cost-per-spline-segment vector
+	segCosts = std::vector<double>(std::floor(equalArcLengthTimes.back()), 0.0);
+	for (size_t i = 0; i < equalArcLengthTimes.size(); i++)
+	{
+		const auto seg = arcLengthTimeToSegTime(equalArcLengthTimes, i);
+		if (i < (equalArcLengthTimes.size() - 1))
+		{
+			const auto segp1 = arcLengthTimeToSegTime(equalArcLengthTimes, i+1);
+			if (seg != segp1)
+			{
+				// split this arcSegCost proportionally between two segments
+				const double deltaT = equalArcLengthTimes[i+1] - equalArcLengthTimes[i];
+				const double segPercent = (static_cast<double>(segp1) - equalArcLengthTimes[i]) / deltaT;
+				segCosts[seg]   += arcSegCosts[i] * segPercent;
+				segCosts[seg+1] += arcSegCosts[i] * (1.0 - segPercent);
+				continue;
+			}
+		}
+		segCosts[seg] += arcSegCosts[i];
+	}
+
+#if 0
+	for (size_t i = 0; i < equalArcLengthTimes.size(); i++)
+	{
+		ROS_INFO_STREAM("eal : " << equalArcLengthTimes[i] << ", " << arcSegCosts[i]);
+	}
+	for (const auto &st : segCosts)
+	{
+		ROS_INFO_STREAM("st : " << st);
+	}
+#endif
 
 	return true;
 }
@@ -1028,10 +1077,11 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 	// Grab velocity profile, use that to construct a set of position
 	// waypoints for the robot in wall-clock time
 	double cost;
+	std::vector<double> segCosts;
 	std::vector<double> equalArcLengthTimes;
 	std::vector<double> remappedTimes;
 	std::vector<double> vTrans;
-	if (!evaluateTrajectory(cost, equalArcLengthTimes, remappedTimes, vTrans, trajectory))
+	if (!evaluateTrajectory(cost, segCosts, equalArcLengthTimes, remappedTimes, vTrans, trajectory))
 	{
 		ROS_ERROR("base_trajectory_node trajectoryToSplineResponseMsg : evaluateTrajectory() returned false");
 		return;
@@ -1150,10 +1200,11 @@ bool RPROP(
 
 	// Generate initial trajectory, evaluate to get cost
 	double bestCost;
+	std::vector<double> segCosts;
 	std::vector<double> equalArcLengthTimes;
 	std::vector<double> remappedTimes;
 	std::vector<double> vTrans;
-	if (!evaluateTrajectory(bestCost, equalArcLengthTimes, remappedTimes, vTrans, bestTrajectory))
+	if (!evaluateTrajectory(bestCost, segCosts, equalArcLengthTimes, remappedTimes, vTrans, bestTrajectory))
 	{
 		ROS_ERROR("base_trajectory_node : RPROP initial evaluateTrajectory() falied");
 		return false;
@@ -1211,7 +1262,7 @@ bool RPROP(
 					}
 
 					double thisCost;
-					if (!evaluateTrajectory(thisCost, equalArcLengthTimes, remappedTimes, vTrans, thisTrajectory))
+					if (!evaluateTrajectory(thisCost, segCosts, equalArcLengthTimes, remappedTimes, vTrans, thisTrajectory))
 					{
 						ROS_ERROR("base_trajectory_node : RPROP evaluateTrajectory() failed");
 						return false;
@@ -1492,10 +1543,11 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 	{
 		// Display starting spline cost
 		double cost;
+		std::vector<double> segCosts;
 		std::vector<double> equalArcLengthTimes;
 		std::vector<double> remappedTimes;
 		std::vector<double> vTrans;
-		if (!evaluateTrajectory(cost, equalArcLengthTimes, remappedTimes, vTrans, trajectory))
+		if (!evaluateTrajectory(cost, segCosts, equalArcLengthTimes, remappedTimes, vTrans, trajectory))
 		{
 			ROS_ERROR("base_trajectory_node : evaluateTrajectory() returned false");
 			return false;
