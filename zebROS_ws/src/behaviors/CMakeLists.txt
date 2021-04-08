@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   actionlib
   actionlib_msgs
+  base_trajectory_msgs
   behavior_actions
   color_spin
   controllers_2019_msgs

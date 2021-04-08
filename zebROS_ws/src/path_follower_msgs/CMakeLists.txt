@@ -9,12 +9,10 @@ project(path_follower_msgs)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
-  base_trajectory_msgs
   geometry_msgs
   message_generation
   nav_msgs
   trajectory_msgs
-  field_obj
 )
 
 ## System dependencies are found with CMake's conventions
@@ -51,10 +49,9 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 ## Generate services in the 'srv' folder
 
-add_service_files(
-  FILES
-  Point.srv
-)
+#add_service_files(
+#FILES
+#)
 
 ## Generate actions in the 'action' folder
 add_action_files(
@@ -66,7 +63,6 @@ add_action_files(
 generate_messages(
   DEPENDENCIES
   actionlib_msgs
-  base_trajectory_msgs
   geometry_msgs
   nav_msgs
   trajectory_msgs
@@ -104,7 +100,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES path_follower_msgs
-  CATKIN_DEPENDS actionlib_msgs base_trajectory_msgs geometry_msgs message_runtime nav_msgs trajectory_msgs
+  CATKIN_DEPENDS actionlib_msgs geometry_msgs message_runtime nav_msgs trajectory_msgs
 #  DEPENDS system_lib
 )
 
