@@ -1167,6 +1167,49 @@ void trajectoryToSplineResponseMsg(base_trajectory_msgs::GenerateSpline::Respons
 	local_plan_pub.publish(out_msg.path);
 }
 
+bool addWayPointAfter(size_t index,
+		std::vector<trajectory_msgs::JointTrajectoryPoint> &points,
+		std::vector<OptParams> &optParams)
+{
+	if (index >= (points.size() - 1))
+	{
+		ROS_ERROR("Trying to add point after end of trajectory");
+		return false;
+	}
+	double xp       = points[index].positions[0];
+	double xpp1     = points[index + 1].positions[0];
+	double yp       = points[index].positions[1];
+	double ypp1     = points[index + 1].positions[1];
+	double thetap   = points[index].positions[2];
+	double thetapp1 = points[index+1].positions[2];
+
+	trajectory_msgs::JointTrajectoryPoint point;
+	point.positions.push_back((xp + xpp1) / 2.0);
+	point.positions.push_back((yp + ypp1) / 2.0);
+	point.positions.push_back((thetap + thetapp1) / 2.0);
+
+#if 0 // let optimizer figure these values out
+	for (size_t i = 0; i < 3; i++)
+	{
+		point.velocities.push_back(0.0);
+		point.accelerations.push_back(0.0);
+	}
+#endif
+
+	points.insert(points.begin() + index, point);
+	for (size_t i = 0; i < points.size(); i++)
+		points[i].time_from_start = ros::Duration(static_cast<double>(i));
+
+	const double dx = fabs((xpp1 - xp) / 2.0) * 1.2;
+	const double dy = fabs((ypp1 - yp) / 2.0) * 1.2;
+	OptParams optParam(-dx, dx, -dy, dy);
+
+	optParams.insert(optParams.begin() + index, optParam);
+
+	return true;
+}
+
+
 // Algorithm to optimize parameters using the sign
 // of the change in cost function.
 // The parameters in this case are an offset to the X&Y positions
