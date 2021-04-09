@@ -66,11 +66,11 @@ bool OptParams::IsAtMax(size_t index) const
 	{
 		return deltaVDirection_ >= maxDeltaVDirection_;
 	}
-	if (index == 6) // length_
+	if (index == 6) // rotLength_
 	{
 		return rotLength_ >= maxRotLength_;
 	}
-	if (index == 7) // lengthScale_
+	if (index == 7) // rotLengthScale_
 	{
 		return rotLengthScale_ >= maxRotLengthScale_;
 	}

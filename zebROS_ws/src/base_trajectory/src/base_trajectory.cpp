@@ -103,6 +103,23 @@ void printTrajectory(const Trajectory<T> &trajectory, const std::vector<std::str
 	}
 }
 
+// Figure out how far a wheel has to move linearly
+// to produce the requested rotation. This is to
+// make sure all 3 dimensions of motion are using
+// the same units.
+// This also works for velocities
+double rotationToLinear(const double radians)
+{
+	// A wheel facing diagonally will produce 2pi radians of
+	// robot rotation after moving linearly in a circle of
+	// 2*wheelbase_radius * pi.
+	// Canceling out 2 pi :
+	// 1 radian rotation = 1 wheelbase_radius linear meters
+	return driveBaseRadius * radians;
+}
+
+
+
 // Helper function for finding 2nd derivative
 // (acceleration) term of start and end point
 void setFirstLastPointAcceleration(const std::vector<double> &p1, const std::vector<double> &p2,
@@ -114,22 +131,27 @@ void setFirstLastPointAcceleration(const std::vector<double> &p1, const std::vec
 	// Rename vars to match notation in the paper
 	const double Ax  = p1[0];
 	const double Ay  = p1[1];
+	const double At  = p1[2];
 	const double tAx = v1[0];
 	const double tAy = v1[1];
+	const double tAt = v1[2];
 	const double Bx  = p2[0];
 	const double By  = p2[1];
+	const double Bt  = p2[2];
 	const double tBx = v2[0];
 	const double tBy = v2[1];
+	const double tBt = v2[2];
 
 	const double xaccel = 6.0 * Ax + 2.0 * tAx + 4.0 * tBx - 6.0 * Bx;
 	const double yaccel = 6.0 * Ay + 2.0 * tAy + 4.0 * tBy - 6.0 * By;
+	const double taccel = 6.0 * At + 2.0 * tAt + 4.0 * tBt - 6.0 * Bt;
 
 	if (accelerations.size() == 0)
 		accelerations.push_back(xaccel); // x
 	if (accelerations.size() == 1)
 		accelerations.push_back(yaccel); // y
 	if (accelerations.size() == 2)
-		accelerations.push_back(0.); // theta
+		accelerations.push_back(taccel); // theta
 }
 
 // Find the angle that line p1p2 is pointing at
@@ -196,7 +218,7 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 		const double currLength = hypot(mip1[0] - mi[0], mip1[1] - mi[1]);
 		const double currRotLength = mip1[2] - mi[2];
 
-		// Adding a scaling factor here controls the velocity
+		// Adding a scaling factor here controlling the velocity
 		// at the waypoints.  Bigger than 1 ==> curvier path with
 		// higher speeds.  Less than 1 ==> tigher turns to stay
 		// closer to straight paths.
@@ -210,7 +232,6 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 			points[i].velocities.push_back(length * sin(angle)); // y
 		if (points[i].velocities.size() == 2)
 			points[i].velocities.push_back(rotLength); // theta TODO : Check me
-														// Need a length and length scale for this case?
 
 		points[i].velocities[0] += optParams[i].deltaVMagnitude_ * cos(angle + optParams[i].deltaVDirection_);
 		points[i].velocities[1] += optParams[i].deltaVMagnitude_ * sin(angle + optParams[i].deltaVDirection_);
@@ -273,23 +294,29 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 
 		const double Ax = points[i-1].positions[0];
 		const double Ay = points[i-1].positions[1];
+		const double At = points[i-1].positions[2];
 		const double tAx = points[i-1].velocities[0];
 		const double tAy = points[i-1].velocities[1];
+		const double tAt = points[i-1].velocities[2];
 
 		const double Bx = points[i].positions[0];
 		const double By = points[i].positions[1];
+		const double Bt = points[i].positions[2];
 		const double tBx = points[i].velocities[0];
 		const double tBy = points[i].velocities[1];
+		const double tBt = points[i].velocities[2];
 
 		const double Cx = points[i+1].positions[0];
 		const double Cy = points[i+1].positions[1];
+		const double Ct = points[i+1].positions[2];
 		const double tCx = points[i+1].velocities[0];
 		const double tCy = points[i+1].velocities[1];
+		const double tCt = points[i+1].velocities[2];
 
 		// L2 distance between A and B
-		const double dab = hypot(Bx - Ax, By - Ay);
+		const double dab = hypot(Bx - Ax, By - Ay, rotationToLinear(Bt - At));
 		// L2 distance between B and C
-		const double dbc = hypot(Cx - Bx, Cy - By);
+		const double dbc = hypot(Cx - Bx, Cy - By, rotationToLinear(Ct - Bt));
 
 		// Weighting factors
 		const double alpha = dbc / (dab + dbc);
@@ -299,6 +326,8 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 							  beta  * (-6.0 * Bx - 4.0 * tBx - 2.0 * tCx + 6.0 * Cx);
 		const double yaccel = alpha * ( 6.0 * Ay + 2.0 * tAy + 4.0 * tBy - 6.0 * By) +
 							  beta  * (-6.0 * By - 4.0 * tBy - 2.0 * tCy + 6.0 * Cy);
+		const double taccel = alpha * ( 6.0 * At + 2.0 * tAt + 4.0 * tBt - 6.0 * Bt) +
+							  beta  * (-6.0 * Bt - 4.0 * tBt - 2.0 * tCt + 6.0 * Ct);
 
 		// Don't overwrite requested input accelerations
 		if (points[i].accelerations.size() == 0)
@@ -306,16 +335,20 @@ bool generateSpline(      std::vector<trajectory_msgs::JointTrajectoryPoint> poi
 		if (points[i].accelerations.size() == 1)
 			points[i].accelerations.push_back(yaccel); // y
 		if (points[i].accelerations.size() == 2)
-			points[i].accelerations.push_back(0.); // theta
+			points[i].accelerations.push_back(taccel); // theta
 
 #if 0
-		ROS_INFO_STREAM_FILTER(&messageFilter, "dab = " << dab << " dbc = " << dbc);
-		ROS_INFO_STREAM_FILTER(&messageFilter, "Ax = " << Ax << " tAx = " << tAx <<
+		ROS_INFO_STREAM("dab = " << dab << " dbc = " << dbc);
+		ROS_INFO_STREAM("xaccel = " << xaccel << " yaccel = " << yaccel << " taccel = " << taccel);
+		ROS_INFO_STREAM("Ax = " << Ax << " tAx = " << tAx <<
 						" Bx = " << Bx << " tBx = " << tBx <<
 						" Cx = " << Cx << " tCx = " << tCx);
-		ROS_INFO_STREAM_FILTER(&messageFilter, "Ay = " << Ay << " tAy = " << tAy <<
+		ROS_INFO_STREAM("Ay = " << Ay << " tAy = " << tAy <<
 						" By = " << By << " tBy = " << tBy <<
 						" Cy = " << Cy << " tCy = " << tCy);
+		ROS_INFO_STREAM("At = " << At << " tAt = " << tAt <<
+						" Bt = " << Bt << " tBt = " << tBt <<
+						" Ct = " << Ct << " tCt = " << tCt);
 #endif
 	}
 
@@ -363,22 +396,6 @@ struct ArclengthAndTime
 	double arcLength_;
 	double time_;
 };
-
-
-// Figure out how far a wheel has to move linearly
-// to produce the requested rotation. This is to
-// make sure all 3 dimensions of motion are using
-// the same units.
-// This also works for velocities
-double rotationToLinear(const double radians)
-{
-	// A wheel facing diagonally will produce 2pi radians of
-	// robot rotation after moving linearly in a circle of
-	// 2*wheelbase_radius * pi.
-	// Canceling out 2 pi :
-	// 1 radian rotation = 1 wheelbase_radius linear meters
-	return driveBaseRadius * radians;
-}
 
 
 // Use Simpson's rule to estimate arc length between start and
