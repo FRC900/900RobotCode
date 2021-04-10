@@ -129,7 +129,7 @@ void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
 
   // TODO - check return code
   pf->motion_update(delta_x, delta_y, 0);
-  if ((ros::Time::now() - last_measurement).toSec() < noise_delta_t) {
+  if ((ros::Time::now() - last_measurement).toSec() > noise_delta_t) {
     pf->noise_pos();
     pf->noise_rot();
   }
