@@ -1,4 +1,4 @@
-noise_delta_t: 1.0
+noise_delta_t: 0.0
 
 field_dims:
   x_min: 0.0
