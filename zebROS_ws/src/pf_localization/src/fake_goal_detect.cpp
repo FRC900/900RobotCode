@@ -28,6 +28,8 @@ class FakeGoalDetection
 			msgOut.header = msgIn->header;
 			for(size_t i = 0; i < msgIn->markers.size(); i++)
 			{
+				if (msgIn->markers[i].ids[0] == -1) // stage publishes odom as marker -1
+					continue;                       // ignore it here
 				field_obj::Object dummy;
 
 				const auto &p = msgIn->markers[i].pose.position;

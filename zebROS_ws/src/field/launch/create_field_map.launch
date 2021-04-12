@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>
+  <arg name="map_name" default="bounce_path" />
   <group ns="create_field_map">
-    <rosparam command="load" file="$(find field)/config/bounce_path.yaml" />
+    <rosparam command="load" file="$(find field)/config/$(arg map_name).yaml" />
     <node name="create_field_map" pkg="field" type="create_field_map" output= "screen">
     </node>
   </group>

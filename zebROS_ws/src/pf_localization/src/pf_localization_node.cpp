@@ -66,8 +66,8 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg){
   {
 	zed_to_baselink = tf_buffer_.lookupTransform("base_link", msg->header.frame_id, ros::Time::now());
   }
-  catch (tf2::TransformException &ex){
-	  ROS_ERROR_STREAM("pf_localization : tranform from " << msg->header.frame_id << " to base_link failed : " << ex.what());
+  catch (const tf2::TransformException &ex){
+	  ROS_ERROR_STREAM("pf_localization : transform from " << msg->header.frame_id << " to base_link failed : " << ex.what());
   }
 
   double roll, pitch, r;
@@ -92,9 +92,10 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg){
   }
   if (measurement.size() > 0){
 	// TODO - use this return code
-    bool success = pf->assign_weights_bearing(measurement, Particle(tx, ty, r));
-    pf->resample();
-    last_measurement = ros::Time::now();
+    if (pf->assign_weights_bearing(measurement, Particle(tx, ty, r))) {
+	  pf->resample();
+	  last_measurement = ros::Time::now();
+	}
   }
   #else
   // test bearing only
@@ -106,9 +107,10 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg){
   }
   if (measurement.size() > 0){
 	// TODO - use this return code
-    bool success = pf->assign_weights_position(measurement, Particle(tx, ty, r));
-    pf->resample();
-    last_measurement = ros::Time::now();
+    if (pf->assign_weights_position(measurement, Particle(tx, ty, r))) {
+	  pf->resample();
+	  last_measurement = ros::Time::now();
+	}
   }
   #endif
 
@@ -153,6 +155,10 @@ int main(int argc, char **argv) {
   XmlRpc::XmlRpcValue xml_beacons;
   double f_x_min, f_x_max, f_y_min, f_y_max, i_x_min, i_x_max, i_y_min, i_y_max, p_stdev, r_stdev;
   int num_particles;
+  std::string odom_frame_id = "odom";
+  std::string map_frame_id = "map";
+  double tmp_tolerance = 0.1;
+  ros::Duration tf_tolerance;
 
   std::vector<Beacon > beacons;
 
@@ -219,6 +225,12 @@ int main(int argc, char **argv) {
 
   ROS_INFO_STREAM(f_x_min << ' ' << i_x_min << ' ' << p_stdev);
 
+  nh_.param("map_frame_id", map_frame_id, std::string("map"));
+  nh_.param("odom_frame_id", odom_frame_id, std::string("odom"));
+  nh_.param("tf_tolerance", tmp_tolerance, 0.1);
+  tf_tolerance.fromSec(tmp_tolerance);
+
+
   // TODO - I think this fails if a beacon is specified as an int
   for (size_t i = 0; i < (unsigned) xml_beacons.size(); i++) {
     Beacon b {xml_beacons[i][0], xml_beacons[i][1], xml_beacons[i][2]};
@@ -246,6 +258,7 @@ int main(int argc, char **argv) {
   ros::Publisher pub_ = nh_.advertise<pf_localization::pf_pose>(pub_topic, 1);
   ros::Publisher pub_debug = nh_.advertise<pf_localization::pf_debug>(pub_debug_topic, 1);
 
+  tf2_ros::TransformBroadcaster tfbr;
 
   // TODO - rethink this - right now spin is only called at 10hz, and with
   // subscriber queue sizes at 1, I think that means it will drop a number of
@@ -267,29 +280,47 @@ int main(int argc, char **argv) {
     pose.rot = prediction.rot_;
     pub_.publish(pose);
 
-	// TODO - don't publish if predictions are NaN or Inf
-    static tf2_ros::TransformBroadcaster br;
-    geometry_msgs::TransformStamped transformStamped;
+	const double tmp = prediction.x_ + prediction.y_ + prediction.rot_;
+	if (!std::isnan(tmp) && !std::isinf(tmp))
+	{
+		geometry_msgs::PoseStamped odom_to_map;
+		try
+		{
+			// Subtract out odom->base_link from calculated prediction map->base_link,
+			// leaving a map->odom transform to broadcast
+			// Borrowed from similar code in
+			// https://github.com/ros-planning/navigation/blob/noetic-devel/amcl/src/amcl_node.cpp
+			tf2::Quaternion q;
+			q.setRPY(0, 0, prediction.rot_);
+			tf2::Transform tmp_tf(q, tf2::Vector3(prediction.x_, prediction.y_, 0.0));
 
-    transformStamped.header.stamp = last_time;
-    transformStamped.header.frame_id = "map";
-    std::stringstream child_frame;
-    child_frame << "base_link";
-    transformStamped.child_frame_id = child_frame.str();
+			geometry_msgs::PoseStamped baselink_to_map;
+			baselink_to_map.header.frame_id = "base_link";
+			baselink_to_map.header.stamp = last_time;
+			tf2::toMsg(tmp_tf.inverse(), baselink_to_map.pose);
 
-    transformStamped.transform.translation.x = prediction.x_;
-    transformStamped.transform.translation.y = prediction.y_;
-    transformStamped.transform.translation.z = 0;
+			// baselink_to_map transformed from base_link to odom == odom->map
+			tf_buffer_.transform(baselink_to_map, odom_to_map, odom_frame_id);
+		}
+		catch (const tf2::TransformException &ex)
+		{
+			ROS_ERROR_STREAM("pf_localization : transform from base_link to " << odom_frame_id << " failed in map->odom broadcaser : " << ex.what());
+		}
 
-    tf2::Quaternion q;
-    q.setRPY(0, 0, prediction.rot_);
+		geometry_msgs::TransformStamped transformStamped;
 
-    transformStamped.transform.rotation.x = q.x();
-    transformStamped.transform.rotation.y = q.y();
-    transformStamped.transform.rotation.z = q.z();
-    transformStamped.transform.rotation.w = q.w();
+		transformStamped.header.stamp = last_time + tf_tolerance;
+		transformStamped.header.frame_id = map_frame_id;
+		transformStamped.child_frame_id = odom_frame_id;
 
-    br.sendTransform(transformStamped);
+		// Computed transform is odom->map, but need to invert
+		// it to publish map->odom instead
+		tf2::Transform odom_to_map_tf;
+		tf2::convert(odom_to_map.pose, odom_to_map_tf);
+		tf2::convert(odom_to_map_tf.inverse(), transformStamped.transform);
+
+		tfbr.sendTransform(transformStamped);
+	}
 
     if(pub_debug.getNumSubscribers() > 0){
       pf_localization::pf_debug debug;

@@ -34,9 +34,22 @@
 	<!--
 	<include file="$(find controller_node)/launch/fuse_odom.launch"/>
 	-->
+	<!--
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetoimu" args="0 0 0 0 0 0 1 base_link imu" />
 	<node pkg="tf2_ros" type="static_transform_publisher" name="static_arzedmap" args="0 0 0 0 0 0 zed_ar_odom base_link" />
 
+	-->
+	<node pkg="tf" type="static_transform_publisher" name="link_basetoimu" args="0 0 0 0 0 0 1 base_link imu 10" />
+
+	<!-- stage publishes an odom->base_footprint transform.  Link zed_ar_odom to odom using an identity transform.
+		 Same with base_footprint to base_link
+         This makes the map->zed_ar_odom->base_link relationship from the real robot the same here, with some extra
+         0,0,0... transforms tying everything together.
+		 Use the TF broadcaster rather than tf2_ros since costmap2d seems to think that static transform broadcasts
+         are too old to use?
+	-->
+	<node pkg="tf" type="static_transform_publisher" name="static_arzedodom" args="0 0 0 0 0 0 zed_ar_odom odom 10" />
+	<node pkg="tf" type="static_transform_publisher" name="static_basefootprintlink" args="0 0 0 0 0 0 base_footprint base_link 10" />
 	<group ns="robot_state">
 		<param name="robot_description" command="$(find xacro)/xacro '$(find controller_node)/urdf/2021_compbot.xacro'" />
 		<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
@@ -49,6 +62,8 @@
 	<rosparam file="$(find pf_localization)/config/skills_challenge_params.yaml" command="load"/>
 	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" output="screen" >
 	</node>
+	<!--
+	-->
 
 	<!-- set up auto node to create paths -->
 	<include file="$(find behaviors)/launch/auto_node.launch"/>

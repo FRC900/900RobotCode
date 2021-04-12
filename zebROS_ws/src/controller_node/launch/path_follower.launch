@@ -25,8 +25,8 @@
 
 			<!-- TODO - remove me after pf localization publishes this -->
 			<!-- Everything but slalom path
-			-->
 			<node pkg="tf2_ros" type="static_transform_publisher" name="static_maptobase" args="1.0414 2.286 0 0 0 0 map zed_ar_odom" />
+			-->
 			<!-- Slalom path
 			<node pkg="tf2_ros" type="static_transform_publisher" name="static_maptobase" args="1.0414 0.762 0 0 0 0 map zed_ar_odom" />
 				 -->

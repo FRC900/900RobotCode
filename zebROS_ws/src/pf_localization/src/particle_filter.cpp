@@ -6,8 +6,23 @@
 #include <vector>
 #include <utility>
 #include <cmath>
+#include <ros/console.h>
 
-
+std::ostream& operator<<(std::ostream& os, const Particle &p)
+{
+	os << "Particle(" << p.x_ << ", " << p.y_ << ", " << p.rot_ << ", " << p.weight_ << ")";
+	return os;
+}
+std::ostream& operator<<(std::ostream &os, const Beacon& b)
+{
+	os << " Beacon(" << b.x_ << ", " << b.y_ << " ," << b.type_ << ")";
+	return os;
+}
+std::ostream& operator<<(std::ostream &os, const BearingBeacon& b)
+{
+	os << " Beacon(" << b.angle_ << " ," << b.type_ << ")";
+	return os;
+}
 ParticleFilter::ParticleFilter(const WorldModel& w,
                                double x_min, double x_max, double y_min, double y_max,
                                double ns, double rs, size_t n) :
@@ -74,7 +89,7 @@ void ParticleFilter::resample() {
   new_particles.reserve(num_particles_);
   for (size_t i = 0; i < num_particles_; i++) {
     const double r = ((double) rng_() - rng_.min()) / (rng_.max() - rng_.min());
-    // std::cout << r << '\n';
+    //std::cout << r << '\n';
     double a = 0;
     for (const Particle& p : particles_) {
       a += p.weight_;
@@ -90,7 +105,7 @@ void ParticleFilter::resample() {
 
 Particle ParticleFilter::predict() {
   double weight = 0;
-  Particle res {0, 0, 0}; // TODO - default constructor for Particle
+  Particle res;
   double s = 0;
   double c = 0;
   for (const Particle& p : particles_) {
@@ -154,8 +169,14 @@ bool ParticleFilter::assign_weights_position(std::vector<Beacon> mBeacons, const
     return false;
   }
 
+  std::vector<double> total_distances;
   for (Particle& p : particles_) {
-    p.weight_ = 1.0 / world_.total_distance(p, mBeacons, offset);
+	total_distances.push_back(world_.total_distance(p, mBeacons, offset));
+	if (total_distances.back() == 0)
+		return false;
+  }
+  for (size_t i = 0; i < particles_.size(); i++) {
+    particles_[i].weight_ = 1.0 / total_distances[i];
   }
   normalize();
   return true;
@@ -174,9 +195,27 @@ bool ParticleFilter::assign_weights_bearing(std::vector<BearingBeacon> mBeacons,
     return false;
   }
 
+  std::vector<double> total_angles;
   for (Particle& p : particles_) {
-    p.weight_ = 1 / world_.total_angle(p, mBeacons, offset);
+    total_angles.push_back(world_.total_angle(p, mBeacons, offset));
+	if (total_angles.back() == 0)
+		return false;
+  }
+  for (size_t i = 0; i < particles_.size(); i++) {
+    particles_[i].weight_ = 1 / total_angles[i];
   }
   normalize();
   return true;
+}
+
+void ParticleFilter::check_particles(const char *file, int line) const
+{
+	for (const auto &p : particles_)
+	{
+		if (!p.isValid())
+		{
+			ROS_INFO_STREAM("check_particles failed " << file << " : " << line);
+			return;
+		}
+	}
 }

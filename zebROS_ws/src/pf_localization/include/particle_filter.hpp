@@ -6,6 +6,7 @@
 #include "world_model.hpp"
 #include "particle.hpp"
 
+#define CHECK_PARTICLES(o) o->check_particles(__FILE__, __LINE__);
 class ParticleFilter {
 private:
   size_t num_particles_;
@@ -31,6 +32,7 @@ public:
   bool assign_weights_bearing(std::vector<BearingBeacon> mBeacons, const Particle& offset);
   void resample();
   std::vector<Particle> get_particles() const;
+  void check_particles(const char *file, int line) const;
 };
 
 

@@ -1,0 +1,9 @@
+field_dims:
+  width: 360
+  height: 180
+
+imagename: "box_test.png"
+
+obstacles:
+  - {type: "polygon", num_points: 4, p1: [150, 150], p2: [300, 150], p3: [300, 50], p4: [150, 50]}
+    

@@ -8,8 +8,6 @@
 #include <iostream>
 #include <string>
 
-#include <ros/ros.h>
-
 
 WorldModel::WorldModel(const std::vector<Beacon>& beacons,
                        double x_min, double x_max, double y_min, double y_max) :
@@ -108,10 +106,12 @@ double WorldModel::total_distance(const Particle& p, const std::vector<Beacon>& 
   for (const std::pair<std::string, std::vector<Beacon> >& m_of_type : by_type) {
     std::vector<int> assignment;
     std::vector<std::vector<double> > dists;
-    std::vector<Beacon> rel = of_type(particle_relative(p, offset), m_of_type.first);
+    const std::vector<Beacon> rel{of_type(particle_relative(p, offset), m_of_type.first)};
     for (const Beacon& b : m_of_type.second) {
       dists.push_back(distances(b, rel));
     }
+	if (dists.size() == 0)
+		continue;
     solver_.Solve(dists, assignment);
     double res = 0;
     for (size_t i = 0; i < assignment.size(); i++) {
@@ -137,10 +137,12 @@ double WorldModel::total_angle(const Particle& p, const std::vector<BearingBeaco
   for (const std::pair<std::string, std::vector<BearingBeacon> >& m_of_type : by_type) {
     std::vector<int> assignment;
     std::vector<std::vector<double> > dists;
-    std::vector<Beacon> rel = of_type(particle_relative(p, offset), m_of_type.first);
+    const std::vector<Beacon> rel = of_type(particle_relative(p, offset), m_of_type.first);
     for (const BearingBeacon& b : m_of_type.second) {
       dists.push_back(angle_distances(b, rel));
     }
+	if (dists.size() == 0)
+		continue;
     solver_.Solve(dists, assignment);
     double res = 0;
     for (size_t i = 0; i < assignment.size(); i++) {

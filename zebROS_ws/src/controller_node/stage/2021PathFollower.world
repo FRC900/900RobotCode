@@ -49,6 +49,8 @@ window
 # PNG is black and white image
 floorplan
 (
+#name "box_test"
+#bitmap "../maps/box_test.png"
   name "barrel_path"
    bitmap "../maps/barrel_path.png"
 # name "bounce_path"

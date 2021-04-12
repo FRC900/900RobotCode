@@ -166,7 +166,8 @@
 	<!--
 	<include file="$(find controller_node)/launch/record_2020_no_zed.launch" if="$(arg record)" />
 
-	<include file="$(find controller_node)/launch/pf_localization.launch"/>
 	-->
+	<rosparam file="$(find pf_localization)/config/skills_challenge_params.yaml" command="load"/>
+	<include file="$(find controller_node)/launch/pf_localization.launch"/>
 
 </launch>
