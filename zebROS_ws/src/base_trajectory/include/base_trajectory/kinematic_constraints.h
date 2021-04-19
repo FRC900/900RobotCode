@@ -8,62 +8,65 @@
 #include "base_trajectory_msgs/Constraint.h"
 #include "ros/ros.h"
 
+template <class T>
 class Kinematics
 {
 	public:
 		Kinematics(void);
-		Kinematics(double maxAccel, double maxDecel, double maxVel, double maxCentAccel, double pathLimitDistance);
+		Kinematics(T maxAccel, T maxDecel, T maxVel, T maxCentAccel, T pathLimitDistance);
 		void limit(const Kinematics &other);
-		double getMaxAccel(void) const;
-		double getMaxDecel(void) const;
-		double getMaxVel(void) const;
-		double getMaxCentAccel(void) const;
-		double getPathLimitDistance(void) const;
-		void   setMaxAccel(double max_accel);
-		void   setMaxDecel(double max_decel);
-		void   setMaxVel(double max_vel);
-		void   setMaxCentAccel(double max_cent_accel);
-		void   setPathLimitDistance(double path_limit_distance);
+		T getMaxAccel(void) const;
+		T getMaxDecel(void) const;
+		T getMaxVel(void) const;
+		T getMaxCentAccel(void) const;
+		T getPathLimitDistance(void) const;
+		void   setMaxAccel(T max_accel);
+		void   setMaxDecel(T max_decel);
+		void   setMaxVel(T max_vel);
+		void   setMaxCentAccel(T max_cent_accel);
+		void   setPathLimitDistance(T path_limit_distance);
 
 	private:
-		double maxAccel_;
-		double maxDecel_;
-		double maxVel_;
-		double maxCentAccel_;
-		double pathLimitDistance_;
+		T maxAccel_;
+		T maxDecel_;
+		T maxVel_;
+		T maxCentAccel_;
+		T pathLimitDistance_;
 };
 
+template <class T>
 class Constraint
 {
 	public:
 		Constraint(const base_trajectory_msgs::Constraint &msg);
 
-		Kinematics getKinematics(double robotX, double robotY) const;
+		Kinematics<T> getKinematics(T robotX, T robotY) const;
 
 	private:
-		bool inRange(double robotX, double robotY) const;
-		double minX_;
-		double maxX_;
-		double minY_;
-		double maxY_;
-		Kinematics kinematics_;
+		bool inRange(T robotX, T robotY) const;
+		T minX_;
+		T maxX_;
+		T minY_;
+		T maxY_;
+		Kinematics<T> kinematics_;
 };
 
+template <class T>
 class KinematicConstraints
 {
 	public:
 		KinematicConstraints(void);
-		KinematicConstraints(const Kinematics &kinematics);
+		KinematicConstraints(const Kinematics<T> &kinematics);
 
 		void addConstraint(const base_trajectory_msgs::Constraint &msg);
 		void addConstraints(const std::vector<base_trajectory_msgs::Constraint> &msg);
 		void resetConstraints(void);
 
-		Kinematics globalKinematics(void) const;
-		void       globalKinematics(const Kinematics globalKinematics);
-		Kinematics getKinematics(double robotX, double robotY) const;
+		Kinematics<T> globalKinematics(void) const;
+		void          globalKinematics(const Kinematics<T> &globalKinematics);
+		Kinematics<T> getKinematics(T robotX, T robotY) const;
 
 	private:
-		std::vector<Constraint> constraints_;
-		Kinematics              globalKinematics_;
+		std::vector<Constraint<T>> constraints_;
+		Kinematics<T>              globalKinematics_;
 };

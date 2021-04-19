@@ -64,7 +64,7 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg){
   geometry_msgs::TransformStamped zed_to_baselink;
   try
   {
-	zed_to_baselink = tf_buffer_.lookupTransform("base_link", msg->header.frame_id, ros::Time::now());
+	zed_to_baselink = tf_buffer_.lookupTransform("base_link", msg->header.frame_id, ros::Time::now(), ros::Duration(0.02));
   }
   catch (const tf2::TransformException &ex){
 	  ROS_ERROR_STREAM("pf_localization : transform from " << msg->header.frame_id << " to base_link failed : " << ex.what());
@@ -300,7 +300,7 @@ int main(int argc, char **argv) {
 			tf2::toMsg(tmp_tf.inverse(), baselink_to_map.pose);
 
 			// baselink_to_map transformed from base_link to odom == odom->map
-			tf_buffer_.transform(baselink_to_map, odom_to_map, odom_frame_id);
+			tf_buffer_.transform(baselink_to_map, odom_to_map, odom_frame_id, ros::Duration(0.02));
 		}
 		catch (const tf2::TransformException &ex)
 		{

@@ -42,6 +42,7 @@ sudo apt install -y \
     libleveldb-dev \
     liblmdb-dev \
     liblua5.3-dev \
+	libnlopt-dev \
     libpcl-dev \
     libproj-dev \
     libsnappy-dev \

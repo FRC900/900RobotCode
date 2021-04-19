@@ -8,7 +8,7 @@ obstacles:
   - {type: "circle", center: [150, 60], radius: 3.0}
   - {type: "circle", center: [240, 120], radius: 3.0}
   - {type: "circle", center: [300, 60], radius: 3.0}
-  - {type: "circle", center: [30,  60], radius: 3.0}
-  - {type: "circle", center: [60,  60], radius: 3.0}
-  - {type: "circle", center: [30, 120], radius: 3.0}
-  - {type: "circle", center: [60, 120], radius: 3.0}
+  - {type: "circle", center: [30,  50], radius: 3.0}
+  - {type: "circle", center: [60,  50], radius: 3.0}
+  - {type: "circle", center: [30, 130], radius: 3.0}
+  - {type: "circle", center: [60, 130], radius: 3.0}

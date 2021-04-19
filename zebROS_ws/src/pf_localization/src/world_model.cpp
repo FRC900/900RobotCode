@@ -53,7 +53,7 @@ std::vector<double> WorldModel::angle_distances(const BearingBeacon& m,
   std::vector<double> res;
   for (const Beacon& b : rel) {
     BearingBeacon ba {atan2(b.y_, b.x_), b.type_};
-    double diff = abs(fmod(m.angle_, (2 * M_PI)) - fmod(ba.angle_, (2 * M_PI)));
+    double diff = std::abs(fmod(m.angle_, (2 * M_PI)) - fmod(ba.angle_, (2 * M_PI)));
     if (diff > M_PI) diff -= 2 * M_PI;
     res.push_back(diff);
   }
@@ -103,7 +103,7 @@ double WorldModel::total_distance(const Particle& p, const std::vector<Beacon>& 
     }
     by_type[b.type_].push_back(b);
   }
-  for (const std::pair<std::string, std::vector<Beacon> >& m_of_type : by_type) {
+  for (const auto & m_of_type : by_type) {
     std::vector<int> assignment;
     std::vector<std::vector<double> > dists;
     const std::vector<Beacon> rel{of_type(particle_relative(p, offset), m_of_type.first)};
@@ -125,6 +125,7 @@ double WorldModel::total_distance(const Particle& p, const std::vector<Beacon>& 
 }
 
 // like total_distance, but bearing only
+// TODO - merge with above somehow
 double WorldModel::total_angle(const Particle& p, const std::vector<BearingBeacon>& m, const Particle& offset) {
   double total_res = 0;
   std::map<std::string, std::vector<BearingBeacon> > by_type;
@@ -134,7 +135,7 @@ double WorldModel::total_angle(const Particle& p, const std::vector<BearingBeaco
     }
     by_type[b.type_].push_back(b);
   }
-  for (const std::pair<std::string, std::vector<BearingBeacon> >& m_of_type : by_type) {
+  for (const auto & m_of_type : by_type) {
     std::vector<int> assignment;
     std::vector<std::vector<double> > dists;
     const std::vector<Beacon> rel = of_type(particle_relative(p, offset), m_of_type.first);

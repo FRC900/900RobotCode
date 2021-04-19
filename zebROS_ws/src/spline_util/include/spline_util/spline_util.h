@@ -1,49 +1,35 @@
 #pragma once
-// Let's break C++!
-// Need to access a private variable from quintic_spline_segment
-// by using a derived class. What could possibly go wrong?
-#define private protected
-#include <trajectory_interface/quintic_spline_segment.h>
-#undef private
-#include <joint_trajectory_controller/joint_trajectory_segment.h>
+#include <ros/console.h>
+#include <spline_util/simple_spline_segment.h>
 #include <array>
-#include <string>
 #include <vector>
-#include "trajectory_msgs/JointTrajectoryPoint.h"
 
-// Some template / polymorphism magic to add a getCoefs()
-// method to the spline type used by the rest of the code
-namespace trajectory_interface
-{
-template<class ScalarType>
-class MyQuinticSplineSegment: public QuinticSplineSegment<ScalarType>
-{
-	public:
-		std::vector<typename QuinticSplineSegment<ScalarType>::SplineCoefficients> getCoefs(void) const
-		{
-			return this->coefs_;
-		}
-};
-}
 /** Coefficients represent a quintic polynomial like so:
   *
   * <tt> coefs_[0] + coefs_[1]*x + coefs_[2]*x^2 + coefs_[3]*x^3 + coefs_[4]*x^4 + coefs_[5]*x^5 </tt>
   */
-typedef std::vector<std::array<double, 6>> SplineCoefs;
 
-// Define typedefs - we're generating Quinitc (5-th order polynomial) splines
-// which have doubles as their datatype
-template <class T>
-using Segment = joint_trajectory_controller::JointTrajectorySegment<trajectory_interface::MyQuinticSplineSegment<T>>;
+// A segment needs a variable type for the data - in our case, floats or doubles
+// The order s 1 for linear, 3 for cubic and 5 for quintic splines
+using trajectory_interface::SegmentState;
+template <class T, size_t Order>
+using Segment = trajectory_interface::SimpleSplineSegment<T, Order>;
 
 // Each TrajectoryPerJoint is a vector of segments, each a spline which makes up
 // the total path for that dimension (x, y, orientation)
-template <class T>
-using TrajectoryPerJoint = std::vector<Segment<T>>;
+template <class T, size_t Order>
+using TrajectoryPerJoint = std::vector<Segment<T, Order>>;
 
 // A vector of those is created to hold x, y and orientation in one struct.
+template <class T, size_t Order>
+using Trajectory = std::vector<TrajectoryPerJoint<T, Order>>;
+
+constexpr size_t ARCLENGTH_TRAJECTORY_ORDER = 3;
 template <class T>
-using Trajectory = std::vector<TrajectoryPerJoint<T>>;
+using ArcLengthTrajectory = Trajectory<T, ARCLENGTH_TRAJECTORY_ORDER>;
+
+template <class T>
+using XYTTrajectory = Trajectory<T, 5>;
 
 // Create a set of spline segments which smoothly pass through
 // each of the points defined in points.
@@ -68,10 +54,14 @@ using Trajectory = std::vector<TrajectoryPerJoint<T>>;
 //	ROS_ERROR_STREAM("base_trajectory : could not sample state at time " << <whatever time>);
 //	return false;
 // }
-// double traj_0_pos = state.position[0];
+// auto traj_0_pos = state.position[0];
 //
-template <class T>
-bool initSpline(Trajectory<T> &trajectory,
-				std::vector<std::string> jointNames,
-				const std::vector<trajectory_msgs::JointTrajectoryPoint> &points);
-
+template <class T, size_t Joints>
+struct InitSplinePoints
+{
+	T time_from_start;
+	std::array<trajectory_interface::SegmentState<T>, Joints> state;
+};
+template <class T, size_t Order, size_t Joints>
+bool initSpline(Trajectory<T, Order> &trajectory,
+				const std::vector<InitSplinePoints<T, Joints>> &points);

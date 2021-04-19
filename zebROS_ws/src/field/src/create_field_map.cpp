@@ -6,17 +6,17 @@
 
 double field_width, field_height, inches_per_pixel; //field dimensions in inches
 int height;
-const int width = 1200;
+const int width = 500;
 const double border = width;
 
-cv::Point map_to_image(cv::Point map_coord)
+cv::Point2f map_to_image(cv::Point2f map_coord)
 {
 	const double image_x = map_coord.x / inches_per_pixel + border;
 	const double image_y = (height - map_coord.y / inches_per_pixel) + border;
-	return cv::Point(image_x, image_y);
+	return cv::Point2f(image_x, image_y);
 }
 
-void drawRotatedRectangle(cv::Mat& image, const cv::Point &centerPoint, const cv::Size &rectangleSize, const double rotationDegrees, const cv::Scalar &color)
+void drawRotatedRectangle(cv::Mat& image, const cv::Point2f &centerPoint, const cv::Size &rectangleSize, const double rotationDegrees, const cv::Scalar &color)
 {
 	// Create the rotated rectangle
 	cv::RotatedRect rotatedRectangle(centerPoint, rectangleSize, rotationDegrees);
@@ -35,7 +35,7 @@ void drawRotatedRectangle(cv::Mat& image, const cv::Point &centerPoint, const cv
 	cv::fillConvexPoly(image, vertices, 4, color);
 }
 
-void drawPoly(cv::Mat& image, const std::vector<cv::Point>& points, const cv::Scalar &color)
+void drawPoly(cv::Mat& image, const std::vector<cv::Point2f>& points, const cv::Scalar &color)
 {
 	// Convert map coordinates to image coordinates
 	const size_t num_points = points.size();
@@ -48,10 +48,10 @@ void drawPoly(cv::Mat& image, const std::vector<cv::Point>& points, const cv::Sc
 	cv::fillConvexPoly(image, image_vertices, num_points, color);
 }
 
-void drawCircle(cv::Mat& image, const cv::Point &center, const double radius, const cv::Scalar &color)
+void drawCircle(cv::Mat& image, const cv::Point2f &center, const double radius, const cv::Scalar &color)
 {
 	// Convert field coordinates to image coordinates
-	cv::Point image_center = map_to_image(center);
+	cv::Point2f image_center = map_to_image(center);
 
 	// Now we can draw a filled circle
 	cv::circle(image, image_center, radius, color, cv::FILLED, 8);
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
 	ROS_INFO_STREAM(image.size() << " " << image.depth() << " " << image.channels());
 
 	// Draw field border
-	cv::rectangle(image, cv::Point(0,0), cv::Point(image.cols-1, image.rows-1), cv::Scalar(0,0,0), 4);
+	cv::rectangle(image, cv::Point2f(0,0), cv::Point2f(image.cols-1, image.rows-1), cv::Scalar(0,0,0), 4);
 #if 0
 	for (int row = 0; row < image.rows; row++)
 	{
@@ -124,17 +124,17 @@ int main(int argc, char **argv)
 
 		if(type == "circle")
 		{
-			cv::Point center = cv::Point(xml_obstacle["center"][0], xml_obstacle["center"][1]);
+			cv::Point2f center = cv::Point(xml_obstacle["center"][0], xml_obstacle["center"][1]);
 			drawCircle(image, center, (double)xml_obstacle["radius"], cv::Scalar(0,0,0));
 		}
 		else if(type == "polygon")
 		{
-			std::vector<cv::Point> points;
+			std::vector<cv::Point2f> points;
 			std::string p = "p";
 			int num_points = xml_obstacle["num_points"];
 			for(int i = 1; i < num_points + 1; ++i)
 			{
-				points.push_back(cv::Point(xml_obstacle[p + std::to_string(i)][0], xml_obstacle[p + std::to_string(i)][1]));
+				points.push_back(cv::Point2f(cv::Point(xml_obstacle[p + std::to_string(i)][0], xml_obstacle[p + std::to_string(i)][1])));
 			}
 			drawPoly(image, points, cv::Scalar(0,0,0));
 		}

@@ -12,8 +12,16 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-add_definitions(-Wno-deprecated-declarations -Wno-switch -ftrack-macro-expansion=0 -fno-var-tracking-assignments -DPCL_ONLY_CORE_POINT_TYPES=ON -DNO_EXPLICIT_INSTANTIATIONS -Wall -DNON_POLLING -Wno-psabi)
-#add_definitions(-Wall -Wextra -Wno-switch)
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-declarations>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-switch>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-ftrack-macro-expansion=0>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-fno-var-tracking-assignments>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-DPCL_ONLY_CORE_POINT_TYPES=ON>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-DNO_EXPLICIT_INSTANTIATIONS>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-DNON_POLLING>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-psabi>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wextra>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-pedantic>")
 
 if (DEFINED CMAKE_TOOLCHAIN_FILE)  # Cross-build for Rio
   # Everything is in the toolchain file
@@ -21,7 +29,7 @@ else() # Native builds
   set (CMAKE_RANLIB "gcc-ranlib" )
   set (CMAKE_AR     "gcc-ar"     )
   
-  set (OPT_FLAGS "${OPT_FLAGS} -Ofast -fno-finite-math-only -flto=jobserver -fno-fat-lto-objects -ffunction-sections -fdata-sections -Wl,-gc-sections")
+  set (OPT_FLAGS "${OPT_FLAGS} -O3 -fno-finite-math-only -flto=jobserver -fno-fat-lto-objects -ffunction-sections -fdata-sections -Wl,-gc-sections")
   if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf") # Jetson TK1
 	set (OPT_FLAGS "${OPT_FLAGS} -mcpu=cortex-a15 -mfpu=neon-vfpv4 -fvect-cost-model")
     unset(CUDA_USE_STATIC_CUDA_RUNTIME CACHE)

@@ -1,20 +1,22 @@
 #include <fstream>
+#include <ros/console.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
 #include "base_trajectory/matlab_printer.h"
-#include "base_trajectory/message_filter.h"
 
 // For printing out matlab code for testing
-static void printCoefs(std::stringstream &s, const std::string &name, const std::vector<base_trajectory_msgs::Coefs> &coefs, int figureNum)
+template <class T, size_t O>
+static void printCoefs(std::stringstream &s, const std::string &name, const TrajectoryPerJoint<T, O> &tpj, int figureNum)
 {
-	for (size_t i = 0; i < coefs.size(); i++)
+	for (size_t i = 0; i < tpj.size(); i++)
 	{
+		const auto &coefs = tpj[i].getCoefs();
 		s << "p" << name << i << "_" << figureNum << " = [";
-		for (size_t j = 0; j < coefs[i].spline.size(); j++)
+		for (int j = coefs.size() - 1; j >= 0; j--)
 		{
-			s << coefs[i].spline[j];
-			if (j < coefs[i].spline.size() - 1)
+			s << coefs[j];
+			if (j != 0)
 				s << ", ";
 		}
 		s << "];" << std::endl;
@@ -22,10 +24,11 @@ static void printCoefs(std::stringstream &s, const std::string &name, const std:
 }
 
 // For printing out matlab code for testing
-static void printPolyval(std::stringstream &s, const std::string &name, size_t size, const std::vector<double> &end_points, int figureNum)
+template <class T, size_t O>
+static void printPolyval(std::stringstream &s, const std::string &name, const TrajectoryPerJoint<T, O> &tpj, int figureNum)
 {
 	s << "p" << name << "_y_" << figureNum << " = [";
-	for (size_t i = 0; i < size; i++)
+	for (size_t i = 0; i < tpj.size(); i++)
 	{
 		double x_offset;
 		if (i == 0)
@@ -34,73 +37,19 @@ static void printPolyval(std::stringstream &s, const std::string &name, size_t s
 		}
 		else
 		{
-			x_offset = end_points[i - 1];
+			x_offset = tpj[i - 1].endTime();
 		}
 		s << "polyval(p" << name << i << "_" << figureNum << ", x" << i << "_" << figureNum << " - " << x_offset << ")";
-		if (i < size - 1)
+		if (i < (tpj.size() - 1))
+		{
 			s << ", ";
+		}
 	}
 	s << "];" << std::endl;
 }
 
-// Generate matlab / octave code for displaying generated splines
-void writeMatlabSplines(const base_trajectory_msgs::GenerateSpline::Response &msg, int figureNum, const std::string &label)
+void writeMatlabSplinesBoilerplate(std::stringstream &s, int figureNum, const std::string &label)
 {
-	std::stringstream s;
-	s << std::endl;
-	for (size_t i = 0; i < msg.end_points.size(); i++)
-	{
-		double range;
-		double prev_x;
-		if (i == 0)
-		{
-			range = msg.end_points[0];
-			prev_x = 0;
-		}
-		else
-		{
-			range = msg.end_points[i] - msg.end_points[i-1];
-			prev_x = msg.end_points[i-1];
-		}
-		s << "x" << i << "_" << figureNum << " = " << prev_x << ":" << range / 100.
-		  << ":" << msg.end_points[i] << ";" << std::endl;
-	}
-	s << "x_" << figureNum << " = [";
-	for (size_t i = 0; i < msg.end_points.size(); i++)
-	{
-		s << "x" << i << "_" << figureNum;
-		if (i < msg.end_points.size() - 1)
-			s << ", ";
-	}
-	s << "];" << std::endl;
-	s << std::endl;
-	printCoefs(s, "x", msg.x_coefs, figureNum);
-	printCoefs(s, "y", msg.y_coefs, figureNum);
-	printCoefs(s, "orient", msg.orient_coefs, figureNum);
-	for (size_t i = 0; i < msg.x_coefs.size(); i++)
-	{
-		s << "pdx" << i << "_" << figureNum << " = polyder(px" << i << "_" << figureNum << ");" << std::endl;
-		s << "pddx" << i << "_" << figureNum << " = polyder(pdx" << i << "_" << figureNum << ");" << std::endl;
-		s << "pdddx" << i << "_" << figureNum << " = polyder(pddx" << i << "_" << figureNum << ");" << std::endl;
-		s << "pdy" << i << "_" << figureNum << " = polyder(py" << i << "_" << figureNum << ");" << std::endl;
-		s << "pddy" << i << "_" << figureNum << " = polyder(pdy" << i << "_" << figureNum << ");" << std::endl;
-		s << "pdddy" << i << "_" << figureNum << " = polyder(pddy" << i << "_" << figureNum << ");" << std::endl;
-		s << "pdorient" << i << "_" << figureNum << " = polyder(porient" << i << "_" << figureNum << ");" << std::endl;
-		s << "pddorient" << i << "_" << figureNum << " = polyder(pdorient" << i << "_" << figureNum << ");" << std::endl;
-		s << "pdddorient" << i << "_" << figureNum << " = polyder(pddorient" << i << "_" << figureNum << ");" << std::endl;
-	}
-	printPolyval(s, "x", msg.x_coefs.size(), msg.end_points, figureNum);
-	printPolyval(s, "dx", msg.x_coefs.size(), msg.end_points, figureNum);
-	printPolyval(s, "ddx", msg.x_coefs.size(), msg.end_points, figureNum);
-	printPolyval(s, "dddx", msg.x_coefs.size(), msg.end_points, figureNum);
-	printPolyval(s, "y", msg.y_coefs.size(), msg.end_points, figureNum);
-	printPolyval(s, "dy", msg.y_coefs.size(), msg.end_points, figureNum);
-	printPolyval(s, "ddy", msg.y_coefs.size(), msg.end_points, figureNum);
-	printPolyval(s, "dddy", msg.y_coefs.size(), msg.end_points, figureNum);
-	printPolyval(s, "orient", msg.orient_coefs.size(), msg.end_points, figureNum);
-	printPolyval(s, "dorient", msg.orient_coefs.size(), msg.end_points, figureNum);
-	printPolyval(s, "ddorient", msg.orient_coefs.size(), msg.end_points, figureNum);
-	printPolyval(s, "dddorient", msg.orient_coefs.size(), msg.end_points, figureNum);
 	s << "figure(" << figureNum << ")" << std::endl;
 	s << "subplot(1,1,1)" << std::endl;
 	s << "subplot(3,3,1)" << std::endl;
@@ -109,7 +58,6 @@ void writeMatlabSplines(const base_trajectory_msgs::GenerateSpline::Response &ms
 	s << "xlabel('X position')" << std::endl;
 	s << "ylabel('Y position')" << std::endl;
 	s << "subplot(3,3,2)" << std::endl;
-	s << "title('" << label << "')" << std::endl;
 	s << "plot3(px_y_" << figureNum << ", py_y_" << figureNum << ", porient_y_" << figureNum << ")" << std::endl;
 	s << "xlabel('X position')" << std::endl;
 	s << "ylabel('Y position')" << std::endl;
@@ -134,6 +82,60 @@ void writeMatlabSplines(const base_trajectory_msgs::GenerateSpline::Response &ms
 	s << "plot (x_" << figureNum << ",pdddx_y_" << figureNum << ", x_" << figureNum << ", pdddy_y_" << figureNum << ")" << std::endl;
 	s << "xlabel('arbT')" << std::endl;
 	s << "ylabel('X / Y Jerk')" << std::endl;
+}
+
+// Generate matlab / octave code for displaying generated splines from the input trajectory
+template <class T, size_t O>
+void writeMatlabSplines(const Trajectory<T, O> &trajectory, int figureNum, const std::string &label)
+{
+	std::stringstream s;
+	s << std::endl;
+	double prev_x = 0;
+	for (size_t i = 0; i < trajectory[0].size(); i++)
+	{
+		const auto this_x = trajectory[0][i].endTime();
+		const auto range = this_x - prev_x;
+		s << "x" << i << "_" << figureNum << " = " << prev_x << ":" << range / 100.
+		  << ":" << this_x << ";" << std::endl;
+		prev_x = this_x;
+	}
+	s << "x_" << figureNum << " = [";
+	for (size_t i = 0; i < trajectory[0].size(); i++)
+	{
+		s << "x" << i << "_" << figureNum;
+		if (i < trajectory[0].size() - 1)
+			s << ", ";
+	}
+	s << "];" << std::endl;
+	s << std::endl;
+	printCoefs(s, "x", trajectory[0], figureNum);
+	printCoefs(s, "y", trajectory[1], figureNum);
+	printCoefs(s, "orient", trajectory[2], figureNum);
+	for (size_t i = 0; i < trajectory[0].size(); i++)
+	{
+		s << "pdx" << i << "_" << figureNum << " = polyder(px" << i << "_" << figureNum << ");" << std::endl;
+		s << "pddx" << i << "_" << figureNum << " = polyder(pdx" << i << "_" << figureNum << ");" << std::endl;
+		s << "pdddx" << i << "_" << figureNum << " = polyder(pddx" << i << "_" << figureNum << ");" << std::endl;
+		s << "pdy" << i << "_" << figureNum << " = polyder(py" << i << "_" << figureNum << ");" << std::endl;
+		s << "pddy" << i << "_" << figureNum << " = polyder(pdy" << i << "_" << figureNum << ");" << std::endl;
+		s << "pdddy" << i << "_" << figureNum << " = polyder(pddy" << i << "_" << figureNum << ");" << std::endl;
+		s << "pdorient" << i << "_" << figureNum << " = polyder(porient" << i << "_" << figureNum << ");" << std::endl;
+		s << "pddorient" << i << "_" << figureNum << " = polyder(pdorient" << i << "_" << figureNum << ");" << std::endl;
+		s << "pdddorient" << i << "_" << figureNum << " = polyder(pddorient" << i << "_" << figureNum << ");" << std::endl;
+	}
+	printPolyval(s, "x", trajectory[0], figureNum);
+	printPolyval(s, "dx", trajectory[0], figureNum);
+	printPolyval(s, "ddx", trajectory[0], figureNum);
+	printPolyval(s, "dddx", trajectory[0], figureNum);
+	printPolyval(s, "y", trajectory[1], figureNum);
+	printPolyval(s, "dy", trajectory[1], figureNum);
+	printPolyval(s, "ddy", trajectory[1], figureNum);
+	printPolyval(s, "dddy", trajectory[1], figureNum);
+	printPolyval(s, "orient", trajectory[2], figureNum);
+	printPolyval(s, "dorient", trajectory[2], figureNum);
+	printPolyval(s, "ddorient", trajectory[2], figureNum);
+	printPolyval(s, "dddorient", trajectory[2], figureNum);
+	writeMatlabSplinesBoilerplate(s, figureNum, label);
 
 	const std::string filename(label + ".m");
 	std::ofstream of(filename);
@@ -141,6 +143,9 @@ void writeMatlabSplines(const base_trajectory_msgs::GenerateSpline::Response &ms
 
 	//ROS_INFO_STREAM_FILTER(&messageFilter, "Matlab_splines : " << s.str());
 }
+
+template void writeMatlabSplines(const XYTTrajectory<double> &trajectory, int figureNum, const std::string &label);
+template void writeMatlabSplines(const ArcLengthTrajectory<double> &trajectory, int figureNum, const std::string &label);
 
 static void writeMatlabDoubleArray(std::stringstream &s, const std::string &name, const std::vector<double> &values, int figureNum)
 {
@@ -220,12 +225,10 @@ void writeMatlabPath(const std::vector<geometry_msgs::PoseStamped> &poses, int f
 	str << "plot(path_t_" << figureNum << ", path_x_" << figureNum << ", path_t_" << figureNum << ", path_y_" << figureNum << ")" << std::endl;
 	str << "xlabel('T(seconds)')" << std::endl;
 	str << "subplot(2,3,2)" << std::endl;
-	str << "title('" << label << "')" << std::endl;
 	str << "plot(path_t_" << figureNum << ", path_r_" << figureNum << ", path_t_" << figureNum << ", path_dr_" << figureNum << ")" << std::endl;
 	str << "xlabel('T(seconds)')" << std::endl;
 	str << "ylabel('Orientation Position/Velocity')" << std::endl;
 	str << "subplot(2,3,3)" << std::endl;
-	str << "title('" << label << "')" << std::endl;
 	str << "plot3(path_x_" << figureNum << ", path_y_" << figureNum << ", path_r_" << figureNum << ")" << std::endl;
 	str << "xlabel('X position')" << std::endl;
 	str << "ylabel('Y position')" << std::endl;
@@ -249,4 +252,48 @@ void writeMatlabPath(const std::vector<geometry_msgs::PoseStamped> &poses, int f
 	//ROS_INFO_STREAM_FILTER(&messageFilter, "Matlab_paths: " << std::endl << str.str());
 }
 
+// Write matlab code to generate a series of png images from plots output by
+// writeMatlabSplines code
+void writeMatlabMovieScript(const size_t frameCount, const std::string &label)
+{
+	std::stringstream s;
 
+	s << label << 1 << std::endl;
+	s << "figure(1);" << std::endl;
+	s << "subplot(1,1,1);" << std::endl;
+	s << "plot(px_y_" << 1 << ", py_y_" << 1 << ");" << std::endl;
+	s << "xlimits = xlim; ylimits = ylim;" << std::endl;
+
+	for (size_t figureNum = 2; figureNum < frameCount; figureNum++)
+	{
+		s << label << figureNum << std::endl;
+		s << "figure(1);" << std::endl;
+		s << "subplot(1,1,1);" << std::endl;
+		s << "plot(px_y_" << figureNum << ", py_y_" << figureNum << ");" << std::endl;
+		s << "xl = xlim; yl = ylim;" << std::endl;
+		s << "xlimits(1) = min(xlimits(1), xl(1));" << std::endl;
+		s << "xlimits(2) = max(xlimits(2), xl(2));" << std::endl;
+		s << "ylimits(1) = min(ylimits(1), yl(1));" << std::endl;
+		s << "ylimits(2) = max(ylimits(2), yl(2));" << std::endl;
+		s << "pause(0.05);" << std::endl;
+		s << "close all" << std::endl;
+	}
+
+	for (size_t figureNum = 1; figureNum < frameCount; figureNum++)
+	{
+		s << label << figureNum << std::endl;
+		s << "figure(1);" << std::endl;
+		s << "subplot(1,1,1);" << std::endl;
+		s << "title('" << label << "');" << std::endl;
+		s << "plot(px_y_" << figureNum << ", py_y_" << figureNum << ");" << std::endl;
+		s << "xlabel('X position');" << std::endl;
+		s << "ylabel('Y position');" << std::endl;
+		s << "xlim(xlimits); ylim(ylimits);" << std::endl;
+		s << "saveas(1, \"frame" << figureNum << ".png\");" << std::endl;
+		s << "pause(0.05);" << std::endl;
+		s << "close all;" << std::endl;
+	}
+	const std::string filename(label + "Script.m");
+	std::ofstream of(filename);
+	of << s.str();
+}

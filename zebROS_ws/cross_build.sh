@@ -14,7 +14,6 @@ fi
 catkin config --profile cross -x _isolated --install --blacklist \
 	base_trajectory \
 	demo_tf_node \
-	field_obj_tracker \
 	goal_detection \
 	pf_localization \
 	realsense2_camera \

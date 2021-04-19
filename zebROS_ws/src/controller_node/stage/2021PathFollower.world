@@ -51,7 +51,7 @@ floorplan
 (
 #name "box_test"
 #bitmap "../maps/box_test.png"
-  name "barrel_path"
+name "barrel_path"
    bitmap "../maps/barrel_path.png"
 # name "bounce_path"
 # bitmap "../maps/bounce_path.png"

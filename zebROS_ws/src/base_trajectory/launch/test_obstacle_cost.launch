@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+	<!--
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/box_test.yaml" output="screen">
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/slalom_path.yaml" output="screen">
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/bounce_path.yaml" output="screen">
+	-->
+	<node pkg="tf" type="static_transform_publisher" name="link_basetomap" args="0 0 0 0 0 0 1 map base_link 10" />
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/barrel_path.yaml" output="screen">
+		<param name="frame_id" value="/map"/>
+	</node>
+	<rosparam file="$(find base_trajectory)/config/test_obstacle_cost.yaml" command="load"/>
+	<node name="test_obstacle_cost" pkg="base_trajectory" type="test_obstacle_cost" output="screen">
+		<param name="frame_id" value="/map"/>
+	</node>
+</launch>

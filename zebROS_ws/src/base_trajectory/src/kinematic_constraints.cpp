@@ -1,16 +1,18 @@
 #include <limits>
 #include "base_trajectory/kinematic_constraints.h"
 
-Kinematics::Kinematics(void)
-	: maxAccel_(std::numeric_limits<double>::max())
-	, maxDecel_(std::numeric_limits<double>::max())
-	, maxVel_(std::numeric_limits<double>::max())
-	, maxCentAccel_(std::numeric_limits<double>::max())
-	, pathLimitDistance_(std::numeric_limits<double>::max())
+template <class T>
+Kinematics<T>::Kinematics(void)
+	: maxAccel_(std::numeric_limits<T>::max())
+	, maxDecel_(std::numeric_limits<T>::max())
+	, maxVel_(std::numeric_limits<T>::max())
+	, maxCentAccel_(std::numeric_limits<T>::max())
+	, pathLimitDistance_(std::numeric_limits<T>::max())
 {
 }
 
-Kinematics::Kinematics(double maxAccel, double maxDecel, double maxVel, double maxCentAccel, double pathLimitDistance)
+template <class T>
+Kinematics<T>::Kinematics(T maxAccel, T maxDecel, T maxVel, T maxCentAccel, T pathLimitDistance)
 	: maxAccel_(maxAccel)
 	, maxDecel_(maxDecel)
 	, maxVel_(maxVel)
@@ -21,7 +23,8 @@ Kinematics::Kinematics(double maxAccel, double maxDecel, double maxVel, double m
 
 // Limit the kinematics to the min of the current values
 // and the one in other
-void Kinematics::limit(const Kinematics &other)
+template <class T>
+void Kinematics<T>::limit(const Kinematics &other)
 {
 	maxAccel_          = std::min(maxAccel_, other.maxAccel_);
 	maxDecel_          = std::min(maxDecel_, other.maxDecel_);
@@ -48,48 +51,59 @@ void Kinematics::limit(const Kinematics &other)
 	}
 }
 
-double Kinematics::getMaxAccel(void) const
+template <class T>
+T Kinematics<T>::getMaxAccel(void) const
 {
 	return maxAccel_;
 }
-double Kinematics::getMaxDecel(void) const
+template <class T>
+T Kinematics<T>::getMaxDecel(void) const
 {
 	return maxDecel_;
 }
-double Kinematics::getMaxVel(void) const
+template <class T>
+T Kinematics<T>::getMaxVel(void) const
 {
 	return maxVel_;
 }
-double Kinematics::getMaxCentAccel(void) const
+template <class T>
+T Kinematics<T>::getMaxCentAccel(void) const
 {
 	return maxCentAccel_;
 }
-double Kinematics::getPathLimitDistance(void) const
+template <class T>
+T Kinematics<T>::getPathLimitDistance(void) const
 {
 	return pathLimitDistance_;
 }
-void   Kinematics::setMaxAccel(double max_accel)
+template <class T>
+void Kinematics<T>::setMaxAccel(T max_accel)
 {
 	maxAccel_ = max_accel;
 }
-void   Kinematics::setMaxDecel(double max_decel)
+template <class T>
+void Kinematics<T>::setMaxDecel(T max_decel)
 {
 	maxDecel_ = max_decel;
 }
-void   Kinematics::setMaxVel(double max_vel)
+template <class T>
+void Kinematics<T>::setMaxVel(T max_vel)
 {
 	maxVel_ = max_vel;
 }
-void   Kinematics::setMaxCentAccel(double max_cent_accel)
+template <class T>
+void Kinematics<T>::setMaxCentAccel(T max_cent_accel)
 {
 	maxCentAccel_ = max_cent_accel;
 }
-void   Kinematics::setPathLimitDistance(double path_limit_distance)
+template <class T>
+void Kinematics<T>::setPathLimitDistance(T path_limit_distance)
 {
 	pathLimitDistance_ = path_limit_distance;
 }
 
-Constraint::Constraint(const base_trajectory_msgs::Constraint &msg)
+template <class T>
+Constraint<T>::Constraint(const base_trajectory_msgs::Constraint &msg)
 	: minX_(std::min(msg.corner1.x, msg.corner2.x))
 	, maxX_(std::max(msg.corner1.x, msg.corner2.x))
 	, minY_(std::min(msg.corner1.y, msg.corner2.y))
@@ -99,14 +113,16 @@ Constraint::Constraint(const base_trajectory_msgs::Constraint &msg)
 }
 
 // Check to see if the x,y are in range of this Constraint definition
-bool Constraint::inRange(double robotX, double robotY) const
+template <class T>
+bool Constraint<T>::inRange(T robotX, T robotY) const
 {
 	return ((robotX >= minX_) && (robotX <= maxX_) &&
 	        (robotY >= minY_) && (robotY <= maxY_));
 }
 
 // Get the kinematic limits for the current x, y position
-Kinematics Constraint::getKinematics(double robotX, double robotY) const
+template <class T>
+Kinematics<T> Constraint<T>::getKinematics(T robotX, T robotY) const
 {
 	// They are either the limits specified by this set of Constraints
 	// if the x,y are in range
@@ -116,49 +132,57 @@ Kinematics Constraint::getKinematics(double robotX, double robotY) const
 	// Or return a set of max values for the limits so the previous
 	// constraints are used instead (either global or from another
 	// coord-matching set of Constraints)
-	return Kinematics();
+	return Kinematics<T>();
 }
 
-KinematicConstraints::KinematicConstraints(void)
+template <class T>
+KinematicConstraints<T>::KinematicConstraints(void)
 {
 }
 
-KinematicConstraints::KinematicConstraints(const Kinematics &kinematics)
+template <class T>
+KinematicConstraints<T>::KinematicConstraints(const Kinematics<T> &kinematics)
 	: globalKinematics_(kinematics)
 {
 }
 
-void KinematicConstraints::addConstraints(const std::vector<base_trajectory_msgs::Constraint> &msg)
+template <class T>
+void KinematicConstraints<T>::addConstraints(const std::vector<base_trajectory_msgs::Constraint> &msg)
 {
 	for (const auto &m : msg)
 		addConstraint(m);
 }
 
-void KinematicConstraints::addConstraint(const base_trajectory_msgs::Constraint &msg)
+template <class T>
+void KinematicConstraints<T>::addConstraint(const base_trajectory_msgs::Constraint &msg)
 {
-	constraints_.emplace_back(Constraint(msg));
+	constraints_.emplace_back(Constraint<T>(msg));
 }
 
-void KinematicConstraints::resetConstraints(void)
+template <class T>
+void KinematicConstraints<T>::resetConstraints(void)
 {
 	constraints_.clear();
 }
 
-Kinematics KinematicConstraints::globalKinematics(void) const
+template <class T>
+Kinematics<T> KinematicConstraints<T>::globalKinematics(void) const
 {
 	return globalKinematics_;
 }
 
-void KinematicConstraints::globalKinematics(const Kinematics globalKinematics)
+template <class T>
+void KinematicConstraints<T>::globalKinematics(const Kinematics<T> &globalKinematics)
 {
 	globalKinematics_ = globalKinematics;
 }
 
 // The kinemaic limits for this x,y position are the min of all the applicable
 // limits for that coord - global or any constraints in which the x and y are in range
-Kinematics KinematicConstraints::getKinematics(double robotX, double robotY) const
+template <class T>
+Kinematics<T> KinematicConstraints<T>::getKinematics(T robotX, T robotY) const
 {
-	Kinematics ret(globalKinematics_);
+	Kinematics<T> ret(globalKinematics_);
 
 	for (const auto &c : constraints_)
 	{
@@ -166,3 +190,10 @@ Kinematics KinematicConstraints::getKinematics(double robotX, double robotY) con
 	}
 	return ret;
 }
+
+template class Constraint<double>;
+template class Kinematics<double>;
+template class KinematicConstraints<double>;
+//template class Constraint<float>;
+//template class Kinematics<float>;
+//template class KinematicConstraints<float>;

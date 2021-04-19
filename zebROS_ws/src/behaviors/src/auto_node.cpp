@@ -362,6 +362,8 @@ bool waitForAutoStart(ros::NodeHandle nh)
 								if (xml_path_offset_limits.getType() != XmlRpc::XmlRpcValue::TypeArray)
 									throw std::runtime_error("path_offset_limits not an array");
 
+								// Add empty offset limit for initial 0,0,0 waypoint
+								spline_gen_srv.request.path_offset_limit.push_back(base_trajectory_msgs::PathOffsetLimit());
 								for (int i = 0; i < xml_path_offset_limits.size(); i++)
 								{
 									base_trajectory_msgs::PathOffsetLimit path_offset_msg;
@@ -418,7 +420,7 @@ int main(int argc, char** argv)
 	std::map<std::string, std::string> service_connection_header;
 	service_connection_header["tcp_nodelay"] = "1";
 	spline_gen_cli_ = nh.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen", false, service_connection_header);
-	spline_gen_cli_.waitForExistence(ros::Duration(10.0));
+	spline_gen_cli_.waitForExistence(ros::Duration(30.0));
 
 	//subscribers
 	//rio match data (to know if we're in auto period)

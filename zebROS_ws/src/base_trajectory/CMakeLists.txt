@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(base_trajectory)
+project(base_trajectory LANGUAGES CXX CUDA)
 
 include ("../cmake_modules/CMakeOpt.cmake")
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   angles
   base_trajectory_msgs
-  behavior_actions
   cmake_modules
   costmap_2d
   ddynamic_reconfigure
@@ -28,7 +28,6 @@ list(FILTER catkin_LIBRARIES EXCLUDE REGEX ".*libjoint_trajectory_controller.so.
 #Append Gperftools_DIR 
 LIST(APPEND CMAKE_MODULE_PATH "/home/ubuntu/2020Offseason/zebROS_ws/src/cmake_modules")
 find_package(Gperftools REQUIRED)
-
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -94,7 +93,7 @@ catkin_package(
 	CATKIN_DEPENDS roscpp ddynamic_reconfigure
 #  DEPENDS system_lib
 )
-
+find_package(CUDA REQUIRED)
 ###########
 ## Build ##
 ###########
@@ -104,17 +103,36 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${CUDA_INCLUDE_DIRS}
 )
 
+find_library(nlopt_LIBRARY nlopt REQUIRED)
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node
    	src/base_trajectory.cpp
+	src/cuda_utils.cu
    	src/kinematic_constraints.cpp
+	src/obstacle_calculator.cpp
+	src/obstacle_cost_impl_cpu.cpp
+	src/obstacle_gradient_impl.cpp
+	src/obstacle_gradient_impl_cuda.cu
+	src/obstacle_gradient_impl_cpu.cpp
+	src/obstacle_gradient_impl_threaded.cpp
+   	src/opt_params.cpp
+   	src/opt_params_list.cpp
    	src/matlab_printer.cpp
-   	src/opt_params.cpp )
+	src/sample_trajectory_impl.cpp
+	src/sample_trajectory_impl_cpu.cpp
+	)
 
+add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_61>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-gencode=arch=compute_61,code=sm_61>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-gencode=arch=compute_62,code=sm_62>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-gencode=arch=compute_72,code=sm_72>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-std=gnu++11>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-O3>")
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -122,8 +140,68 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   ${GPERFTOOLS_LIBRARIES}
+  ${CUDA_nvToolsExt_LIBRARY}
+  ${nlopt_LIBRARY}
 )
 
+add_executable(test_obstacle_cost
+	src/cuda_utils.cu
+	src/obstacle_cost.cpp
+	src/obstacle_cost_impl_cpu.cpp
+	src/obstacle_cost_impl_cuda.cu
+   	src/test_obstacle_cost.cpp
+   	)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(test_obstacle_cost ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Specify libraries to link a library or executable target against
+target_link_libraries(test_obstacle_cost
+  ${catkin_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
+  ${CUDA_nvToolsExt_LIBRARY}
+)
+add_executable(test_obstacle_gradient
+	src/cuda_utils.cu
+	src/obstacle_gradient.cpp
+	src/obstacle_gradient_impl.cpp
+	src/obstacle_gradient_impl_cpu.cpp
+	src/obstacle_gradient_impl_cuda.cu
+	src/obstacle_gradient_impl_threaded.cpp
+   	src/test_obstacle_gradient.cpp
+   	)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(test_obstacle_gradient ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Specify libraries to link a library or executable target against
+target_link_libraries(test_obstacle_gradient
+  ${catkin_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
+  ${CUDA_nvToolsExt_LIBRARY}
+)
+
+add_executable(test_sample_trajectory
+	src/cuda_spline_utils.cu
+	src/cuda_utils.cu
+	src/sample_trajectory.cpp
+	src/sample_trajectory_impl.cpp
+	src/sample_trajectory_impl_cpu.cpp
+	src/sample_trajectory_impl_cuda.cu
+	src/sample_trajectory_impl_hybrid.cu
+	src/sample_trajectory_impl_threaded.cpp
+   	src/test_sample_trajectory.cpp
+   	)
+
+## Add cmake target dependencies of the executable
+## same as for the library above
+add_dependencies(test_sample_trajectory ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Specify libraries to link a library or executable target against
+target_link_libraries(test_sample_trajectory
+  ${catkin_LIBRARIES}
+  ${GPERFTOOLS_LIBRARIES}
+  ${CUDA_nvToolsExt_LIBRARY}
+)
 
 #############
 ## Install ##

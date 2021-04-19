@@ -13,6 +13,11 @@
 			</group>
             <node name="path_follower_server" pkg="path_follower" type="path_follower_server" output="screen">
 			</node>
+			<!--
+			<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/box_test.yaml" output="screen">
+			<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/slalom_path.yaml" output="screen">
+			<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/bounce_path.yaml" output="screen">
+				-->
 			<node name="map_server" pkg="map_server" type="map_server" args="$(find controller_node)/maps/barrel_path.yaml" output="screen">
 				<param name="frame_id" value="/map"/>
 			</node>

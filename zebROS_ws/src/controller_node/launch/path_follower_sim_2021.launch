@@ -3,6 +3,8 @@
   Simulate a omni (swerve) robot in stage for path following testing
  -->
 <launch>
+	<!-- useful for running sim stuff on a laptop and path follower on a jetson -->
+	<arg name="run_path_follower" default="True" />
 	<!--  ************** Global Parameters ***************  -->
 	<param name="/use_sim_time" value="true"/>
 
@@ -68,7 +70,7 @@
 	<!-- set up auto node to create paths -->
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
 
-	<include file="$(find controller_node)/launch/path_follower.launch">
+	<include file="$(find controller_node)/launch/path_follower.launch" if="$(eval arg('run_path_follower'))">
 		<!--
 		<arg name="odom_topic" value="/odom"/>
 -->

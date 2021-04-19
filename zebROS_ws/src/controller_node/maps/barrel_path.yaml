@@ -1,5 +1,5 @@
 image: barrel_path.png
-resolution: 0.00762
+resolution: 0.018288
 origin: [-9.144, -9.144, 0]
 occupied_thresh: 0.65
 free_thresh: 0.196
