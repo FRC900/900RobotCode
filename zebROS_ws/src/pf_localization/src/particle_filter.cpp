@@ -11,8 +11,8 @@
 ParticleFilter::ParticleFilter(const WorldModel& w,
                                double x_min, double x_max, double y_min, double y_max,
                                double ns, double rs, size_t n) :
-                               world_(w), num_particles_(n),
-                               noise_stdev_(ns), rot_noise_stdev_(rs) {
+                               num_particles_(n),
+                               noise_stdev_(ns), rot_noise_stdev_(rs), world_(w) {
   rng_ = std::mt19937(0);
   init(x_min, x_max, y_min, y_max);
 }
@@ -24,20 +24,19 @@ void ParticleFilter::constrain_particles() {
 }
 
 void ParticleFilter::init(const double x_min, const double x_max, const double y_min, const double y_max) {
-  std::vector<double> bounds = world_.get_boundaries();
+  const std::vector<double> &bounds = world_.get_boundaries();
   double x_l = std::max(x_min, bounds[0]);
   double x_u = std::min(x_max, bounds[1]);
   double y_l = std::max(y_min, bounds[2]);
   double y_u = std::min(y_max, bounds[3]);
+  std::uniform_real_distribution<double> x_distribution(x_l, x_u);
+  std::uniform_real_distribution<double> y_distribution(y_l, y_u);
+  std::uniform_real_distribution<double> rot_distribution(0, 2 * M_PI);
   for (size_t i = 0; i < num_particles_; i++) {
-    std::uniform_real_distribution<double> x_distribution(x_l, x_u);
-	  std::uniform_real_distribution<double> y_distribution(y_l, y_u);
-    std::uniform_real_distribution<double> rot_distribution(0, 2 * M_PI);
     double x = x_distribution(rng_);
     double y = y_distribution(rng_);
     double rot = rot_distribution(rng_);
-    Particle p = {x, y, rot};
-    particles_.push_back(p);
+    particles_.emplace_back(Particle{x, y, rot});
   }
   normalize();
 }
@@ -73,7 +72,7 @@ void ParticleFilter::noise_pos() {
 void ParticleFilter::resample() {
   std::vector<Particle> new_particles;
   new_particles.reserve(num_particles_);
-  for (int i = 0; i < num_particles_; i++) {
+  for (size_t i = 0; i < num_particles_; i++) {
     const double r = ((double) rng_() - rng_.min()) / (rng_.max() - rng_.min());
     // std::cout << r << '\n';
     double a = 0;
@@ -91,7 +90,7 @@ void ParticleFilter::resample() {
 
 Particle ParticleFilter::predict() {
   double weight = 0;
-  Particle res {0, 0, 0};
+  Particle res {0, 0, 0}; // TODO - default constructor for Particle
   double s = 0;
   double c = 0;
   for (const Particle& p : particles_) {
@@ -115,6 +114,14 @@ bool ParticleFilter::motion_update(double delta_x, double delta_y, double delta_
     // p.y_ += delta_y;
     double abs_delta_x = delta_x * cos(p.rot_) + delta_y * sin(p.rot_);
     double abs_delta_y = delta_x * sin(p.rot_) + delta_y * cos(p.rot_);
+	// TODO - do we really want to return here, or should it try to
+	// motion update the rest of the particles?
+	// Maybe split the check - if d_x or d_y are inf/nan, nothing we can do
+	// If a single particle rotation is inf/nan, reset it to 0 or a
+	// a random number in [-pi,pi]?
+	// Then hoist the check for d_x, d_y outside the loop, return false for
+	// that case. Remove the return false here to the particles which do
+	// pass are constrained properly
     if (std::isnan(delta_rot + abs_delta_x + abs_delta_y) || std::isinf(delta_rot + abs_delta_x + abs_delta_y)) {
       return false;
     }
@@ -140,7 +147,7 @@ bool ParticleFilter::set_rotation(double rot) {
 //assigns the reciprocal of the computed error of each particles assignment vector to the respective particle
 bool ParticleFilter::assign_weights_position(std::vector<Beacon> mBeacons, const Particle& offset) {
   double test_sum = offset.x_ + offset.y_ + offset.rot_;
-  for (Beacon b : mBeacons) {
+  for (const Beacon& b : mBeacons) {
     test_sum += b.x_ + b.y_;
   }
   if (std::isnan(test_sum) || std::isinf(test_sum)) {
@@ -148,7 +155,7 @@ bool ParticleFilter::assign_weights_position(std::vector<Beacon> mBeacons, const
   }
 
   for (Particle& p : particles_) {
-    p.weight_ = 1 / world_.total_distance(p, mBeacons, offset);
+    p.weight_ = 1.0 / world_.total_distance(p, mBeacons, offset);
   }
   normalize();
   return true;
@@ -160,7 +167,7 @@ std::vector<Particle> ParticleFilter::get_particles() const {
 
 bool ParticleFilter::assign_weights_bearing(std::vector<BearingBeacon> mBeacons, const Particle& offset) {
   double test_sum = offset.x_ + offset.y_ + offset.rot_;
-  for (BearingBeacon b : mBeacons) {
+  for (const BearingBeacon& b : mBeacons) {
     test_sum += b.angle_;
   }
   if (std::isnan(test_sum) || std::isinf(test_sum)) {

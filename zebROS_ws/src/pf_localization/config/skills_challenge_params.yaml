@@ -16,7 +16,7 @@ num_particles: 200
 
 noise_stdev:
   position: 0.02
-  rotation: 0.02
+  rotation: 0.01
 
 beacons:
   - [-1.72, -0.2, "1"]

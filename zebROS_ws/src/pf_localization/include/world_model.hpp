@@ -14,7 +14,7 @@ private:
                                 const std::vector<Beacon>& rel) const;
   std::vector<double> angle_distances(const BearingBeacon& m,
                                       const std::vector<Beacon>& rel) const;
-  std::vector<Beacon> of_type(const std::vector<Beacon>& bcns, std::string type);
+  std::vector<Beacon> of_type(const std::vector<Beacon>& bcns, const std::string &type);
   std::vector<Beacon> single_particle_relative(const Particle& p, const std::vector<Beacon> bcns) const;
 public:
   std::vector<Beacon> particle_relative(const Particle& p, const Particle& offset) const;

@@ -46,11 +46,9 @@
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
 	</node>
 
-	<rosparam file="$(find pf_localization)/config/2021_params.yaml" command="load"/>
-	<!--
-	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" >
+	<rosparam file="$(find pf_localization)/config/skills_challenge_params.yaml" command="load"/>
+	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" output="screen" >
 	</node>
-	-->
 
 	<!-- set up auto node to create paths -->
 	<include file="$(find behaviors)/launch/auto_node.launch"/>

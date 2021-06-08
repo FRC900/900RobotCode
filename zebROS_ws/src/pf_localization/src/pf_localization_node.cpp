@@ -40,13 +40,9 @@ double rot = 0;
 double noise_delta_t = 0;  // if the time since the last measurement is greater than this, positional noise will not be applied
 std::unique_ptr<ParticleFilter> pf;
 
-double degToRad(double deg) {
-  double rad = (deg / 180) * M_PI;
-  return rad;
-}
-
 //formats and prints particle attributes
-void print_particle(Particle p) {
+// TODO - add Particle ostream<< operator
+void print_particle(const Particle& p) {
   ROS_INFO_STREAM(p.x_ << ", " << p.y_ << ", " << p.rot_ << ", " << p.weight_);
 }
 
@@ -55,14 +51,16 @@ void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
   tf2::Quaternion raw;
   tf2::convert(msg -> orientation, raw);
   tf2::Matrix3x3(raw).getRPY(roll, pitch, yaw);
-  rot = degToRad(yaw);
-  pf->set_rotation(rot);
+  // TODO - check return code here
+  pf->set_rotation(yaw);
   #ifdef EXTREME_VERBOSE
   ROS_INFO("rotCallback called");
   #endif
 }
 
 void goalCallback(const field_obj::Detection::ConstPtr& msg){
+  // TODO - just transform all of the detection coords to base_link here,
+  // remove the need to do so inside the particle filter
   geometry_msgs::TransformStamped zed_to_baselink;
   try
   {
@@ -72,24 +70,28 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg){
 	  ROS_ERROR_STREAM("pf_localization : tranform from " << msg->header.frame_id << " to base_link failed : " << ex.what());
   }
 
-  double roll, pitch, yaw;
+  double roll, pitch, r;
   tf2::Quaternion raw;
   tf2::convert(zed_to_baselink.transform.rotation, raw);
-  tf2::Matrix3x3(raw).getRPY(roll, pitch, yaw);
-  double r = degToRad(yaw);
+  tf2::Matrix3x3(raw).getRPY(roll, pitch, r);
 
   double tx = zed_to_baselink.transform.translation.x;
   double ty = zed_to_baselink.transform.translation.y;
 
+  // TODO - how to merge these?
   #ifdef BEARING_ONLY
   static std::vector<BearingBeacon> measurement;
   measurement.clear();
   // bearing only test
   for(const field_obj::Object& p : msg->objects) {
+  // TODO - emplace_back
+  // TODO - make constructor of Beacon and BearingBeacon the same,
+  // more atan2 call into BearingBeacon constructor
     BearingBeacon m {atan2(p.location.y, p.location.x), p.id};
     measurement.push_back(m);
   }
   if (measurement.size() > 0){
+	// TODO - use this return code
     bool success = pf->assign_weights_bearing(measurement, Particle(tx, ty, r));
     pf->resample();
     last_measurement = ros::Time::now();
@@ -103,6 +105,7 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg){
     measurement.push_back(m);
   }
   if (measurement.size() > 0){
+	// TODO - use this return code
     bool success = pf->assign_weights_position(measurement, Particle(tx, ty, r));
     pf->resample();
     last_measurement = ros::Time::now();
@@ -112,8 +115,6 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg){
   #ifdef EXTREME_VERBOSE
   ROS_INFO("goalCallback called");
   #endif
-
-
 }
 
 void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
@@ -126,6 +127,7 @@ void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
 
   last_time = msg->header.stamp;
 
+  // TODO - check return code
   pf->motion_update(delta_x, delta_y, 0);
   if ((ros::Time::now() - last_measurement).toSec() < noise_delta_t) {
     pf->noise_pos();
@@ -217,6 +219,7 @@ int main(int argc, char **argv) {
 
   ROS_INFO_STREAM(f_x_min << ' ' << i_x_min << ' ' << p_stdev);
 
+  // TODO - I think this fails if a beacon is specified as an int
   for (size_t i = 0; i < (unsigned) xml_beacons.size(); i++) {
     Beacon b {xml_beacons[i][0], xml_beacons[i][1], xml_beacons[i][2]};
     beacons.push_back(b);
@@ -229,7 +232,7 @@ int main(int argc, char **argv) {
                                         num_particles);
 
   #ifdef VERBOSE
-  for (Particle p : pf->get_particles()) {
+  for (const Particle& p : pf->get_particles()) {
     print_particle(p);
   }
   ROS_INFO_STREAM("\n\n");
@@ -244,6 +247,15 @@ int main(int argc, char **argv) {
   ros::Publisher pub_debug = nh_.advertise<pf_localization::pf_debug>(pub_debug_topic, 1);
 
 
+  // TODO - rethink this - right now spin is only called at 10hz, and with
+  // subscriber queue sizes at 1, I think that means it will drop a number of
+  // messages
+  // Make publishing part of the goal callback.  Do the normal goal detect processing,
+  // then keep track of the last time the prediction was published. If it has been
+  // long enough, publish a new prediction - move all the code from here to that
+  // conditional inside the goal callback
+  // Then here, just do a ros::Spin() - this should catch all of the messages
+  // as they appear
   ros::Rate rate(10);
   while (ros::ok()) {
 
@@ -282,7 +294,7 @@ int main(int argc, char **argv) {
     if(pub_debug.getNumSubscribers() > 0){
       pf_localization::pf_debug debug;
 
-      for (Particle p : pf->get_particles()) {
+      for (const Particle& p : pf->get_particles()) {
         pf_localization::pf_pose particle;
         particle.x = p.x_;
         particle.y = p.y_;

@@ -69,9 +69,9 @@ omnidir_robot
 )
 
 # Simulated AR tags
-objdet_target ( pose [ -1 0.0 1 0 ] fiducial_return 0 color "cyan")
-objdet_target ( pose [ -1 0.5 1 0 ] fiducial_return 1 color "yellow")
-objdet_target ( pose [ -1 1.0 1 0 ] fiducial_return 2 color "green")
-objdet_target ( pose [ -1 1.5 1 0 ] fiducial_return 3 color "blue")
-objdet_target ( pose [ -1 2.0 1 0 ] fiducial_return 4 color "purple")
-objdet_target ( pose [ -1 2.5 1 0 ] fiducial_return 5 color "orange")
+objdet_target ( pose [ -1.72 -0.2   1 0 ] fiducial_return 1 color "cyan")
+objdet_target ( pose [ -1.72  0.48  1 0 ] fiducial_return 0 color "yellow")
+objdet_target ( pose [ -1.72  1.145 1 0 ] fiducial_return 2 color "green")
+objdet_target ( pose [ -1.72  1.638 1 0 ] fiducial_return 4 color "blue")
+objdet_target ( pose [ -1.72  2.263 1 0 ] fiducial_return 5 color "purple")
+objdet_target ( pose [ -1.72  3.103 1 0 ] fiducial_return 3 color "orange")
