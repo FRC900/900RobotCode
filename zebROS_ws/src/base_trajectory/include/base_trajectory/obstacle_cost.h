@@ -1,3 +1,5 @@
+// Used to calculate the cost of a path due to obstacles
+// encountered along the path
 #ifndef INC_OBSTACLE_COST_
 #define INC_OBSTACLE_COST_
 

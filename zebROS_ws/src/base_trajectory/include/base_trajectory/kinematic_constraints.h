@@ -8,6 +8,8 @@
 #include "base_trajectory_msgs/Constraint.h"
 #include "ros/ros.h"
 
+// Set of values describing the simulated robot motion
+// while evaluating paths
 template <class T>
 class Kinematics
 {
@@ -34,6 +36,8 @@ class Kinematics
 		T pathLimitDistance_;
 };
 
+// Constraints are kinematics plus a location where
+// they apply
 template <class T>
 class Constraint
 {
@@ -51,6 +55,7 @@ class Constraint
 		Kinematics<T> kinematics_;
 };
 
+// A set of all the constraints defined for the path generation
 template <class T>
 class KinematicConstraints
 {

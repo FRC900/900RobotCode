@@ -1897,7 +1897,7 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 	std_msgs::Header header = msg.header;
 	header.frame_id = pathFrameID;
 
-	// Calculate inverse if path to map transform to get the map to path frame
+	// Calculate inverse of path to map transform to get the map to path frame
 	// transform.
 	tf2::Transform invtf;
 	fromMsg(pathToMapTransform.transform, invtf);

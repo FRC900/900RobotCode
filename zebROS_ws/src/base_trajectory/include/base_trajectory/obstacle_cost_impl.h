@@ -14,13 +14,12 @@ class ObstacleCostImpl
 	public:
 		ObstacleCostImpl(void) = default;
 		virtual ~ObstacleCostImpl() = default;
-		virtual bool calculate(
-								std::vector<T> &arcSegCosts,
-								std::shared_ptr<costmap_2d::Costmap2DROS> costmap,
-								const geometry_msgs::TransformStamped &pathToMapTransform,
-								const std::vector<unsigned int> &potentials,
-								const std::vector<SegmentState<T>> &xStates,
-								const std::vector<SegmentState<T>> &yStates) = 0;
+		virtual bool calculate(std::vector<T> &arcSegCosts,
+							   std::shared_ptr<costmap_2d::Costmap2DROS> costmap,
+							   const geometry_msgs::TransformStamped &pathToMapTransform,
+							   const std::vector<unsigned int> &potentials,
+							   const std::vector<SegmentState<T>> &xStates,
+							   const std::vector<SegmentState<T>> &yStates) = 0;
 
 };
 
