@@ -140,6 +140,7 @@ include_directories(
 
 # Add network table source code
 set (ALLWPILIB ../../../allwpilib)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/include)
 file(GLOB
 	ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/*.cpp
 	ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/networktables/*.cpp
