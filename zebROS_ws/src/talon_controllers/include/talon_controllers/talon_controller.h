@@ -6,7 +6,7 @@
 #include <realtime_tools/realtime_buffer.h>
 #include <std_msgs/Float64.h>
 #include <talon_controllers/talon_controller_interface.h>
-#include <talon_controllers/PidfSlot.h>
+#include <talon_controller_msgs/PidfSlot.h>
 
 namespace talon_controllers
 {
@@ -117,8 +117,8 @@ class TalonCloseLoopController :
 
 	private:
 		ros::ServiceServer pidf_service_;
-		bool pidf_slot_service(talon_controllers::PidfSlot::Request  &req,
-		                       talon_controllers::PidfSlot::Response &/*res*/)
+		bool pidf_slot_service(talon_controller_msgs::PidfSlot::Request  &req,
+		                       talon_controller_msgs::PidfSlot::Response &/*res*/)
 		{
 			return this->talon_if_.setPIDFSlot(req.pidf_slot);
 		}

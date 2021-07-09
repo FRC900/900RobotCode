@@ -57,6 +57,7 @@ add_service_files(
   FILES
   LoadMusicSrv.srv
   LoadInstrumentsSrv.srv
+  PidfSlot.srv
   SetOrchestraStateSrv.srv
 )
 

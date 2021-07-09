@@ -17,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 generate_dynamic_reconfigure_options(cfg/TalonConfig.cfg)
 
-add_service_files(FILES PidfSlot.srv)
 generate_messages(DEPENDENCIES talon_controllers)
 
 # Declare catkin package
