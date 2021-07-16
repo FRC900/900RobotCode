@@ -408,6 +408,14 @@ bool waitForAutoStart(ros::NodeHandle nh)
 	return false;
 }
 
+bool resetMaps(std_srvs::Empty::Request &req,
+			  std_srvs::Empty::Response &res) {
+
+	premade_paths.clear();
+	ROS_INFO_STREAM("premade paths were cleared");
+	return true;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -437,6 +445,7 @@ int main(int argc, char** argv)
 
 	//servers
 	ros::ServiceServer stop_auto_server = nh.advertiseService("stop_auto", stopAuto); //called by teleop node to stop auto execution during teleop if driver wants
+	ros::ServiceServer reset_maps = nh.advertiseService("reset_maps", resetMaps);
 
 	//actionlib clients
 	actionlib::SimpleActionClient<path_follower_msgs::PathAction> path_ac("/path_follower/path_follower_server", true); //TODO fix this path
