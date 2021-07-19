@@ -559,5 +559,5 @@ bool CANifierControllerInterface::ledService(canifier_controller_msgs::CanifierL
 	return true;
 }
 
-}; // namespace canifier_controller_interface
+} // namespace canifier_controller_interface
 

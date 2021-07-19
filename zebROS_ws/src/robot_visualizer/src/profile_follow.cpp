@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
 		//ROS_WARN("4");
 		robot_state_pub.publish(state_msg);
 	}
-};
+}
 
 bool follow_service(robot_visualizer::ProfileFollower::Request &req, robot_visualizer::ProfileFollower::Response &/*res*/)
 {

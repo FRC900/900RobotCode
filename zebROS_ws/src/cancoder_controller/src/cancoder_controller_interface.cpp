@@ -322,5 +322,5 @@ void CANCoderControllerInterface::setConversionFactor(double conversion_factor)
 {
 	params_.setConversionFactor(conversion_factor);
 }
-}; // namespace cancoder_controller_interface
+} // namespace cancoder_controller_interface
 

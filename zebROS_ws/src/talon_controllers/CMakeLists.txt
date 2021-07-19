@@ -17,8 +17,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 generate_dynamic_reconfigure_options(cfg/TalonConfig.cfg)
 
-generate_messages(DEPENDENCIES talon_controllers)
-
 # Declare catkin package
 catkin_package(
   CATKIN_DEPENDS

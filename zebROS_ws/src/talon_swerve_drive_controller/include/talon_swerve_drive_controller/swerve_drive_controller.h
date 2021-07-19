@@ -364,6 +364,6 @@ class TalonSwerveDriveController
 		ros::Time last_odom_tf_pub_time_;
 };
 
-PLUGINLIB_EXPORT_CLASS(talon_swerve_drive_controller::TalonSwerveDriveController, controller_interface::ControllerBase);
+PLUGINLIB_EXPORT_CLASS(talon_swerve_drive_controller::TalonSwerveDriveController, controller_interface::ControllerBase)
 
 } // namespace diff_drive_controller

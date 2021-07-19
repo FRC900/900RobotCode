@@ -21,7 +21,7 @@ class PathAction
 		ros::Subscriber odom_sub_;
 		nav_msgs::Odometry odom_;
 		ros::Subscriber pose_sub_;
-		geometry_msgs::PoseStamped pose_;;
+		geometry_msgs::PoseStamped pose_;
 		ros::Subscriber yaw_sub_;
 		geometry_msgs::Quaternion orientation_;
 
@@ -29,11 +29,9 @@ class PathAction
 		ros::Publisher combine_cmd_vel_pub_;
 
 		PathFollower path_follower_;
-		double lookahead_distance_;
 		double final_pos_tol_;
 		double final_rot_tol_;
 		double server_timeout_;
-		//double start_point_radius_;
 
 		bool debug_;
 		int ros_rate_;
@@ -48,12 +46,10 @@ class PathAction
 
 	public:
 		PathAction(const std::string &name, const ros::NodeHandle &nh,
-				   double lookahead_distance,
 				   double final_pos_tol,
 				   double final_rot_tol,
 				   double server_timeout,
 				   int ros_rate,
-				   double start_point_radius,
 				   const std::string &odom_topic,
 				   const std::string &pose_topic,
 				   bool use_odom_orientation,
@@ -62,8 +58,7 @@ class PathAction
 			: nh_(nh)
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
-			, path_follower_(lookahead_distance, start_point_radius, time_offset)
-			, lookahead_distance_(lookahead_distance)
+			, path_follower_(time_offset)
 			, final_pos_tol_(final_pos_tol)
 			, final_rot_tol_(final_rot_tol)
 			, server_timeout_(server_timeout)
@@ -72,7 +67,6 @@ class PathAction
 			, use_odom_orientation_(use_odom_orientation)
 			, use_pose_for_odom_(use_pose_for_odom)
 		{
-			//start_point_radius_ = start_point_radius;
 
 			// TODO - not sure which namespace base_trajectory should go in
 			odom_sub_ = nh_.subscribe(odom_topic, 1, &PathAction::odomCallback, this);
@@ -230,8 +224,11 @@ class PathAction
 				}
 				// This gets the point closest to current time plus lookahead distance
 				// on the path. We use this to generate a target for the x,y,orientation
-				// PID controllers.
-				geometry_msgs::Pose next_waypoint = path_follower_.run(odom_, distance_travelled);
+				ROS_INFO_STREAM("----------------------------------------------");
+				ROS_INFO_STREAM("current_position = " << odom_.pose.pose.position.x
+					<< " " << odom_.pose.pose.position.y
+					<< " " << path_follower_.getYaw(odom_.pose.pose.orientation));	// PID controllers.
+				geometry_msgs::Pose next_waypoint = path_follower_.run(distance_travelled);
 
 				ROS_INFO_STREAM("Before transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << path_follower_.getYaw(next_waypoint.orientation) << ")");
 				tf2::doTransform(next_waypoint, next_waypoint, odom_to_base_link_tf);
@@ -361,17 +358,7 @@ class PathAction
 			ROS_INFO_STREAM("Elapsed time driving = " << ros::Time::now().toSec() - start_time);
 		}
 
-		// Assortet get/set methods used by dynamic reoconfigure callback code
-		void setLookaheadDistance(double lookahead_distance)
-		{
-			lookahead_distance_ = lookahead_distance;
-		}
-
-		double getLookaheadDistance(void) const
-		{
-			return lookahead_distance_;
-		}
-
+		// Assorted get/set methods used by dynamic reoconfigure callback code
 		void setFinalPosTol(double final_pos_tol)
 		{
 			final_pos_tol_ = final_pos_tol;
@@ -418,24 +405,20 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "path_follower_server");
 	ros::NodeHandle nh;
 
-	double lookahead_distance = 0.1;
 	double final_pos_tol = 0.01;
 	double final_rot_tol = 0.01;
 	double server_timeout = 15.0;
 	int ros_rate = 20;
-	double start_point_radius = 0.05;
 	double time_offset = 0;
 	bool use_odom_orientation = false;
 	bool use_pose_for_odom = false;
 
 	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
 	std::string pose_topic = "/zed_ar/pose";
-	nh.getParam("/path_follower/path_follower/lookahead_distance", lookahead_distance);
 	nh.getParam("/path_follower/path_follower/final_pos_tol", final_pos_tol);
 	nh.getParam("/path_follower/path_follower/final_rot_tol", final_rot_tol);
 	nh.getParam("/path_follower/path_follower/server_timeout", server_timeout);
 	nh.getParam("/path_follower/path_follower/ros_rate", ros_rate);
-	nh.getParam("/path_follower/path_follower/start_point_radius", start_point_radius);
 	nh.getParam("/path_follower/path_follower/odom_topic", odom_topic);
 	nh.getParam("/path_follower/path_follower/pose_topic", pose_topic);
 	nh.getParam("/path_follower/path_follower/use_odom_orientation", use_odom_orientation);
@@ -443,12 +426,10 @@ int main(int argc, char **argv)
 	nh.getParam("/path_follower/path_follower/use_pose_for_odom", use_pose_for_odom);
 
 	PathAction path_action_server("path_follower_server", nh,
-								  lookahead_distance,
 								  final_pos_tol,
 								  final_rot_tol,
 								  server_timeout,
 								  ros_rate,
-								  start_point_radius,
 								  odom_topic,
 								  pose_topic,
 								  use_odom_orientation,
@@ -476,11 +457,6 @@ int main(int argc, char **argv)
 	}
 
 	ddynamic_reconfigure::DDynamicReconfigure ddr;
-	ddr.registerVariable<double>
-		("lookahead_distance",
-		 boost::bind(&PathAction::getLookaheadDistance, &path_action_server),
-		 boost::bind(&PathAction::setLookaheadDistance, &path_action_server, _1),
-		 "how far ahead the path follower looks to pick the next point to drive to", 0, 10);
 	ddr.registerVariable<double>
 		("final_pos_tol",
 		 boost::bind(&PathAction::getFinalPosTol, &path_action_server),

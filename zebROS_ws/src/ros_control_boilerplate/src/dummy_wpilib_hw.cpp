@@ -359,7 +359,7 @@ double frc::InterruptableSensorBase::ReadFallingTimestamp()
 	ROS_ERROR("Called frc::InterruptableSensorBase::ReadFallingTimestamp() on unsupported platform");
 	return std::numeric_limits<double>::max();
 }
-void frc::InterruptableSensorBase::RequestInterrupts(InterruptableSensorBase::InterruptEventHandler handler)
+void frc::InterruptableSensorBase::RequestInterrupts(InterruptableSensorBase::InterruptEventHandler /*handler*/)
 {
 	ROS_ERROR("Called frc::InterruptableSensorBase::RequestInterrupts(InterruptEventHandler handler) on unsupported platform");
 }
@@ -564,7 +564,7 @@ int64_t HAL_Report(int32_t resource, int32_t instanceNumber,
 	return -1;
 }
 
-static HAL_ControlWord HALSIM_controlword = {0};
+static HAL_ControlWord HALSIM_controlword = {0,0,0,0,0,0,0};
 int32_t HAL_GetControlWord(HAL_ControlWord *controlword)
 {
 	*controlword = HALSIM_controlword;
@@ -628,7 +628,7 @@ int32_t HAL_SetJoystickOutputs(int32_t, int64_t,
 }
 
 #include <ros_control_boilerplate/error_queue.h>
-int32_t HAL_SendError(HAL_Bool isError, int32_t errorCode, HAL_Bool isLVCode, const char *details, const char *location, const char *callStack, HAL_Bool printMsg)
+int32_t HAL_SendError(HAL_Bool /*isError*/, int32_t errorCode, HAL_Bool /*isLVCode*/, const char *details, const char *location, const char *callStack, HAL_Bool printMsg)
 {
     ROS_ERROR_STREAM("HAL_SendError called : errorCode = " << errorCode
 			<< " = \"" <<  HAL_GetErrorMessage(errorCode)

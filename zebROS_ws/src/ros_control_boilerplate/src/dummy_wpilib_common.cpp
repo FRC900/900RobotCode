@@ -544,7 +544,7 @@ frc::Notifier::~Notifier()
 }
 
 #include <frc/SpeedController.h>
-void frc::SpeedController::SetVoltage(units::volt_t output)
+void frc::SpeedController::SetVoltage(units::volt_t /*output*/)
 {
 	ROS_ERROR("Called frc::SpeedController::Set(volt_t output) on unsupported platform");
 }
@@ -588,7 +588,7 @@ void SendableRegistry::Add(Sendable* sendable, const wpi::Twine& subsystem, cons
 void AddLW(Sendable* sendable, const wpi::Twine& name);
 
 #endif
-void SendableRegistry::AddLW(Sendable* sendable, const wpi::Twine& moduleType, int channel)
+void SendableRegistry::AddLW(Sendable* /*sendable*/, const wpi::Twine& /*moduleType*/, int /*channel*/)
 {
 }
 #if 0
@@ -619,7 +619,7 @@ std::string GetName(const Sendable* sendable) const
 void SetName(Sendable* sendable, const wpi::Twine& name);
 #endif
 
-void SendableRegistry::SetName(Sendable* sendable, const wpi::Twine& moduleType, int channel)
+void SendableRegistry::SetName(Sendable* /*sendable*/, const wpi::Twine& /*moduleType*/, int /*channel*/)
 {
 }
 
@@ -673,7 +673,7 @@ namespace frc
 	SendableBase::SendableBase(bool)
 	{
 	}
-};
+}
 
 #include "ntcore_cpp.h"
 #include "networktables/NetworkTable.h"
@@ -964,5 +964,5 @@ std::shared_ptr<NetworkTable> NetworkTableInstance::GetTable(const Twine& /*key*
 	return std::make_shared<NetworkTable>(0, "", pi);
 }
 
-};
+} // namespace nt
 

@@ -39,13 +39,13 @@ void drawPoly(cv::Mat& image, const std::vector<cv::Point2f>& points, const cv::
 {
 	// Convert map coordinates to image coordinates
 	const size_t num_points = points.size();
-	cv::Point image_vertices[num_points];
+	std::vector<cv::Point> image_vertices(num_points);
 	for(size_t i = 0; i < num_points; ++i){
 		image_vertices[i] = map_to_image(points[i]);
 	}
 
 	// Now we can fill the triangle with our specific color
-	cv::fillConvexPoly(image, image_vertices, num_points, color);
+	cv::fillConvexPoly(image, image_vertices.data(), num_points, color);
 }
 
 void drawCircle(cv::Mat& image, const cv::Point2f &center, const double radius, const cv::Scalar &color)

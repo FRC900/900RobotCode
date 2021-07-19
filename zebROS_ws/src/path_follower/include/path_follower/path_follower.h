@@ -82,21 +82,15 @@ class PathFollower
 	private:
 		nav_msgs::Path path_;
 
-		double lookahead_distance_;
 		size_t num_waypoints_ = 0;
 		double path_length_ = 0.0;
 		std::vector<double> vec_path_length_;
-		double start_point_radius_;
 		ros::Duration time_offset_;
 		ros::Duration start_time_offset_;
 
 	public:
-		PathFollower(double lookahead_distance,
-					 double start_point_radius,
-					 double time_offset)
+		PathFollower(double time_offset)
 		{
-			lookahead_distance_ = lookahead_distance;
-			start_point_radius_ = start_point_radius;
 			time_offset_ = ros::Duration(time_offset);
 		}
 
@@ -113,6 +107,6 @@ class PathFollower
 		double interpolate(double start_t, double end_t, double start_x, double end_x, double current_t) const;
 
 		// contains the main control loop
-		geometry_msgs::Pose run(nav_msgs::Odometry odom, double &distance_travelled);
+		geometry_msgs::Pose run(double &distance_travelled);
 };
 
