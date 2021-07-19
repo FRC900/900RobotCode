@@ -50,6 +50,7 @@ cd ~/melodic_arm_cross_ws/src
 touch .rosinstall
 wstool merge ../melodic-ros_comm-wet.rosinstall
 wstool update -j8
+rm -rf navigation/map_server
 
 # add "<depend>urdfdom_headers</depend>" to src/urdf/urdf_parser_plugin/package.xml
 sed -i -e '/<\/package>/i  <build_depend>urdfdom_headers<\/build_depend>' urdf/urdf_parser_plugin/package.xml 
@@ -66,12 +67,13 @@ cd ~/melodic_arm_cross_ws
 # Do a fresh build - kill off any lingering dependencies
 rm -rf ~/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/opt/ros/melodic devel_isolated build_isolated
 
-#catkin config --install --install-space $HOME/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/opt/ros/melodic 
-#catkin build -DCMAKE_TOOLCHAIN_FILE=$HOME/2020Offseason/zebROS_ws/rostoolchain.cmake
 
 # Note - if this fails looking for gencpp*cmake, run from a new terminal
 # window where no ROS setup.bash has previously been sourced
-./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2020Offseason/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
+#./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2020Offseason/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
+
+catkin config --install --install-space $HOME/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/opt/ros/melodic 
+catkin build -DCMAKE_TOOLCHAIN_FILE=$HOME/2020Offseason/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release 
 
 # Add newly built cross-libs to git repo so they are
 # used for subsequent Rio imagings
