@@ -1,34 +1,34 @@
 #define _USE_MATH_DEFINES
 
-#include "particle_filter.hpp"
-#include "world_model.hpp"
-#include <random>
-#include <vector>
-#include <utility>
+#include "pf_localization/particle_filter.hpp"
+#include "pf_localization/world_model.hpp"
 #include <cmath>
 #include <ros/console.h>
 
 std::ostream& operator<<(std::ostream& os, const Particle &p)
 {
-	os << "Particle(" << p.x_ << ", " << p.y_ << ", " << p.rot_ << ", " << p.weight_ << ")";
-	return os;
+    os << "Particle(" << p.x_ << ", " << p.y_ << ", " << p.rot_ << ", " << p.weight_ << ")";
+    return os;
 }
-std::ostream& operator<<(std::ostream &os, const Beacon& b)
+std::ostream& operator<<(std::ostream &os, const PositionBeacon& b)
 {
-	os << " Beacon(" << b.x_ << ", " << b.y_ << " ," << b.type_ << ")";
-	return os;
+    os << "Beacon(" << b.x_ << ", " << b.y_ << ", " << b.type_ << ")";
+    return os;
 }
 std::ostream& operator<<(std::ostream &os, const BearingBeacon& b)
 {
-	os << " Beacon(" << b.angle_ << " ," << b.type_ << ")";
-	return os;
+    os << "Beacon(" << b.angle_ << ", " << b.type_ << ")";
+    return os;
 }
+
 ParticleFilter::ParticleFilter(const WorldModel& w,
                                double x_min, double x_max, double y_min, double y_max,
                                double ns, double rs, size_t n) :
                                num_particles_(n),
-                               noise_stdev_(ns), rot_noise_stdev_(rs), world_(w) {
-  rng_ = std::mt19937(0);
+                               rng_(std::mt19937(0)),
+                               rot_dist_(0, rs),
+                               pos_dist_(0, ns),
+                               world_(w) {
   init(x_min, x_max, y_min, y_max);
 }
 
@@ -39,18 +39,22 @@ void ParticleFilter::constrain_particles() {
 }
 
 void ParticleFilter::init(const double x_min, const double x_max, const double y_min, const double y_max) {
-  const std::vector<double> &bounds = world_.get_boundaries();
-  double x_l = std::max(x_min, bounds[0]);
-  double x_u = std::min(x_max, bounds[1]);
-  double y_l = std::max(y_min, bounds[2]);
-  double y_u = std::min(y_max, bounds[3]);
+  double world_x_min;
+  double world_x_max;
+  double world_y_min;
+  double world_y_max;
+  world_.get_boundaries(world_x_min, world_x_max, world_y_min, world_y_max);
+  const double x_l = std::max(x_min, world_x_min);
+  const double x_u = std::min(x_max, world_x_max);
+  const double y_l = std::max(y_min, world_y_min);
+  const double y_u = std::min(y_max, world_y_max);
   std::uniform_real_distribution<double> x_distribution(x_l, x_u);
   std::uniform_real_distribution<double> y_distribution(y_l, y_u);
   std::uniform_real_distribution<double> rot_distribution(0, 2 * M_PI);
   for (size_t i = 0; i < num_particles_; i++) {
-    double x = x_distribution(rng_);
-    double y = y_distribution(rng_);
-    double rot = rot_distribution(rng_);
+    const double x = x_distribution(rng_);
+    const double y = y_distribution(rng_);
+    const double rot = rot_distribution(rng_);
     particles_.emplace_back(Particle{x, y, rot});
   }
   normalize();
@@ -69,17 +73,15 @@ void ParticleFilter::normalize() {
 }
 
 void ParticleFilter::noise_rot() {
-  std::normal_distribution<double> rot_dist(0, rot_noise_stdev_);
   for (Particle& p : particles_) {
-    p.rot_ += rot_dist(rng_);
+    p.rot_ += rot_dist_(rng_);
   }
 }
 
 void ParticleFilter::noise_pos() {
-  std::normal_distribution<double> pos_dist(0, noise_stdev_);
   for (Particle& p : particles_) {
-    p.x_ += pos_dist(rng_);
-    p.y_ += pos_dist(rng_);
+    p.x_ += pos_dist_(rng_);
+    p.y_ += pos_dist_(rng_);
   }
 }
 
@@ -129,17 +131,19 @@ bool ParticleFilter::motion_update(double delta_x, double delta_y, double delta_
     // p.y_ += delta_y;
     double abs_delta_x = delta_x * cos(p.rot_) + delta_y * sin(p.rot_);
     double abs_delta_y = delta_x * sin(p.rot_) + delta_y * cos(p.rot_);
-	// TODO - do we really want to return here, or should it try to
-	// motion update the rest of the particles?
-	// Maybe split the check - if d_x or d_y are inf/nan, nothing we can do
-	// If a single particle rotation is inf/nan, reset it to 0 or a
-	// a random number in [-pi,pi]?
-	// Then hoist the check for d_x, d_y outside the loop, return false for
-	// that case. Remove the return false here to the particles which do
-	// pass are constrained properly
+    // TODO - do we really want to return here, or should it try to
+    // motion update the rest of the particles?
+    // Maybe split the check - if d_x or d_y are inf/nan, nothing we can do
+    // If a single particle rotation is inf/nan, reset it to 0 or a
+    // a random number in [-pi,pi]?
+    // Then hoist the check for d_x, d_y outside the loop, return false for
+    // that case. Remove the return false here to the particles which do
+    // pass are constrained properly
+#ifdef CHECK_NAN
     if (std::isnan(delta_rot + abs_delta_x + abs_delta_y) || std::isinf(delta_rot + abs_delta_x + abs_delta_y)) {
       return false;
     }
+#endif
     p.rot_ += delta_rot;
     p.x_ += abs_delta_x;
     p.y_ += abs_delta_y;
@@ -149,9 +153,11 @@ bool ParticleFilter::motion_update(double delta_x, double delta_y, double delta_
 }
 
 bool ParticleFilter::set_rotation(double rot) {
+#ifdef CHECK_NAN
   if (std::isnan(rot) || std::isinf(rot)) {
     return false;
   }
+#endif
   for (Particle& p : particles_) {
     p.rot_ = rot;
   }
@@ -160,20 +166,25 @@ bool ParticleFilter::set_rotation(double rot) {
 }
 
 //assigns the reciprocal of the computed error of each particles assignment vector to the respective particle
-bool ParticleFilter::assign_weights_position(std::vector<Beacon> mBeacons, const Particle& offset) {
+bool ParticleFilter::assign_weights(const std::vector<std::shared_ptr<BeaconBase>> &mBeacons) {
+  if (mBeacons.size() == 0)
+	return false;
+
+#ifdef CHECK_NAN
   double test_sum = offset.x_ + offset.y_ + offset.rot_;
-  for (const Beacon& b : mBeacons) {
-    test_sum += b.x_ + b.y_;
+  for (const auto& b : mBeacons) {
+    test_sum += b->debugSum();
   }
   if (std::isnan(test_sum) || std::isinf(test_sum)) {
     return false;
   }
+#endif
 
   std::vector<double> total_distances;
   for (Particle& p : particles_) {
-	total_distances.push_back(world_.total_distance(p, mBeacons, offset));
-	if (total_distances.back() == 0)
-		return false;
+    total_distances.push_back(world_.total_distance(p, mBeacons));
+    if (total_distances.back() == 0)
+      return false;
   }
   for (size_t i = 0; i < particles_.size(); i++) {
     particles_[i].weight_ = 1.0 / total_distances[i];
@@ -186,36 +197,13 @@ std::vector<Particle> ParticleFilter::get_particles() const {
   return particles_;
 }
 
-bool ParticleFilter::assign_weights_bearing(std::vector<BearingBeacon> mBeacons, const Particle& offset) {
-  double test_sum = offset.x_ + offset.y_ + offset.rot_;
-  for (const BearingBeacon& b : mBeacons) {
-    test_sum += b.angle_;
+void ParticleFilter::check_particles(const char *file, int line) const {
+  for (const auto &p : particles_)
+  {
+    if (!p.isValid())
+    {
+      ROS_INFO_STREAM("check_particles failed " << file << " : " << line);
+      return;
+    }
   }
-  if (std::isnan(test_sum) || std::isinf(test_sum)) {
-    return false;
-  }
-
-  std::vector<double> total_angles;
-  for (Particle& p : particles_) {
-    total_angles.push_back(world_.total_angle(p, mBeacons, offset));
-	if (total_angles.back() == 0)
-		return false;
-  }
-  for (size_t i = 0; i < particles_.size(); i++) {
-    particles_[i].weight_ = 1 / total_angles[i];
-  }
-  normalize();
-  return true;
-}
-
-void ParticleFilter::check_particles(const char *file, int line) const
-{
-	for (const auto &p : particles_)
-	{
-		if (!p.isValid())
-		{
-			ROS_INFO_STREAM("check_particles failed " << file << " : " << line);
-			return;
-		}
-	}
 }

@@ -8,7 +8,7 @@
 class FakeCmdVelOut
 {
 	public:
-		FakeCmdVelOut(ros::NodeHandle &n) 
+		FakeCmdVelOut(ros::NodeHandle &n)
 			: sub_(n.subscribe("cmd_vel", 2, &FakeCmdVelOut::cmdVelCallback, this))
 			, thread_(std::bind(&FakeCmdVelOut::pubThread, this, std::ref(n)))
 			, base_watchdog_timeout_(0.2)

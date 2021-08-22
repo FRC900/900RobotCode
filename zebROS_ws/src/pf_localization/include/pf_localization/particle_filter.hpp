@@ -1,18 +1,18 @@
 #ifndef PARTICLE_FILTER_HEADER
 #define PARTICLE_FILTER_HEADER
 
-#include <utility>
+#include <memory>
 #include <random>
-#include "world_model.hpp"
 #include "particle.hpp"
+#include "world_model.hpp"
 
 #define CHECK_PARTICLES(o) o->check_particles(__FILE__, __LINE__);
 class ParticleFilter {
 private:
   size_t num_particles_;
-  double noise_stdev_;
-  double rot_noise_stdev_;
   std::mt19937 rng_;
+  std::normal_distribution<double> pos_dist_;
+  std::normal_distribution<double> rot_dist_;
   std::vector<Particle> particles_;
   WorldModel world_;
   void normalize();
@@ -28,8 +28,7 @@ public:
   void noise_pos();
   bool motion_update(double delta_x, double delta_y, double delta_rot);
   bool set_rotation(double rot);
-  bool assign_weights_position(std::vector<Beacon> mBeacons, const Particle& offset);
-  bool assign_weights_bearing(std::vector<BearingBeacon> mBeacons, const Particle& offset);
+  bool assign_weights(const std::vector<std::shared_ptr<BeaconBase>> &mBeacons);
   void resample();
   std::vector<Particle> get_particles() const;
   void check_particles(const char *file, int line) const;

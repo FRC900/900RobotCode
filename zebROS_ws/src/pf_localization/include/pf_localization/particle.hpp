@@ -2,7 +2,7 @@
 #define PARTICLE_HEADER
 #include <cmath>
 #include <ostream>
-
+// #define CHECK_NAN
 struct Particle {
   double x_;
   double y_;

@@ -41,7 +41,7 @@
 	<node pkg="tf2_ros" type="static_transform_publisher" name="static_arzedmap" args="0 0 0 0 0 0 zed_ar_odom base_link" />
 
 	-->
-	<node pkg="tf" type="static_transform_publisher" name="link_basetoimu" args="0 0 0 0 0 0 1 base_link imu 10" />
+	<node pkg="tf" type="static_transform_publisher" name="link_basetoimu" args="0 0 0 0 0 0 1 base_link imu 100" />
 
 	<!-- stage publishes an odom->base_footprint transform.  Link zed_ar_odom to odom using an identity transform.
 		 Same with base_footprint to base_link
@@ -50,8 +50,8 @@
 		 Use the TF broadcaster rather than tf2_ros since costmap2d seems to think that static transform broadcasts
          are too old to use?
 	-->
-	<node pkg="tf" type="static_transform_publisher" name="static_arzedodom" args="0 0 0 0 0 0 zed_ar_odom odom 10" />
-	<node pkg="tf" type="static_transform_publisher" name="static_basefootprintlink" args="0 0 0 0 0 0 base_footprint base_link 10" />
+	<node pkg="tf" type="static_transform_publisher" name="static_arzedodom" args="0 0 0 0 0 0 zed_ar_odom odom 100" />
+	<node pkg="tf" type="static_transform_publisher" name="static_basefootprintlink" args="0 0 0 0 0 0 base_footprint base_link 100" />
 	<group ns="robot_state">
 		<param name="robot_description" command="$(find xacro)/xacro '$(find controller_node)/urdf/2021_compbot.xacro'" />
 		<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
@@ -73,7 +73,7 @@
 	<include file="$(find controller_node)/launch/path_follower.launch" if="$(eval arg('run_path_follower'))">
 		<!--
 		<arg name="odom_topic" value="/odom"/>
--->
+		-->
 		<arg name="use_pose_for_odom" value="false"/>
 	</include>
 	<!-- Super sketchy way to hook up cmd vel output from path follower to stage /cmd_vel topic 

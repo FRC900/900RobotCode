@@ -1,7 +1,6 @@
 // Simple node to generate a fake goal detection message in simulation
 // Reads base_marker_detection message from stage ros, converts to our custom
 // goal detect message. Adds noise to x and y positions of the converted detections
-#include <random>
 #include <ros/ros.h>
 #include <ar_track_alvar_msgs/AlvarMarkers.h>
 #include "field_obj/Detection.h"

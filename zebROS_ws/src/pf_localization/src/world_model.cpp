@@ -1,69 +1,51 @@
 #define _USE_MATH_DEFINES
 
-#include "world_model.hpp"
-#include <cmath>
-#include <utility>
 #include <algorithm>
+#include <cmath>
 #include <map>
-#include <iostream>
 #include <string>
+#include <utility>
 
+#include "pf_localization/world_model.hpp"
 
-WorldModel::WorldModel(const std::vector<Beacon>& beacons,
+WorldModel::WorldModel(const std::vector<PositionBeacon>& beacons,
                        double x_min, double x_max, double y_min, double y_max) :
-  beacons_(beacons), boundaries_ {x_min, x_max, y_min, y_max} {}
+  beacons_(beacons), x_min_(x_min), x_max_(x_max), y_min_(y_min), y_max_(y_max) {}
 
-std::vector<double> WorldModel::get_boundaries() { // TODO - make boundaries a std::array?
-  std::vector<double> res;
-  for (size_t i = 0; i < 4; i++) {
-    res.push_back(boundaries_[i]);
-  }
-  return res;
+void WorldModel::get_boundaries(double &x_min, double &x_max, double &y_min, double &y_max) const {
+	x_min = x_min_;
+	x_max = x_max_;
+	y_min = y_min_;
+	y_max = y_max_;
 }
 
+#if 0
 //checks if a given particle is within the defined boundaries
 bool WorldModel::is_in_world(const Particle& p) const {
-  if(p.x_ < boundaries_[0] || p.x_ > boundaries_[1]){
+  if(p.x_ < x_min_ || p.x_ > x_max_){
     return false;
   }
-  if(p.y_ < boundaries_[2] || p.y_ > boundaries_[3]){
+  if(p.y_ < y_min_ || p.y_ > y_max_){
     return false;
   }
   return true;
 }
+#endif
 
 //moves a given particle to the nearest position that is within the defined boundaries
 void WorldModel::constrain_to_world(Particle& p) const {
-  p.x_ = std::min(boundaries_[1], std::max(boundaries_[0], p.x_));
-  p.y_ = std::min(boundaries_[3], std::max(boundaries_[2], p.y_));
+  p.x_ = std::min(x_max_, std::max(x_min_, p.x_));
+  p.y_ = std::min(y_max_, std::max(y_min_, p.y_));
 }
 
-//computes distances from a position a set of beacon positions
-std::vector<double> WorldModel::distances(const Beacon& m,
-                                          const std::vector<Beacon>& rel) const {
-  std::vector<double> res;
-  for (const Beacon& b : rel) {
-    res.push_back(hypot(m.x_ - b.x_, m.y_ - b.y_));
-  }
-  return res;
-}
-
-std::vector<double> WorldModel::angle_distances(const BearingBeacon& m,
-                                                const std::vector<Beacon>& rel) const {
-  std::vector<double> res;
-  for (const Beacon& b : rel) {
-    BearingBeacon ba {atan2(b.y_, b.x_), b.type_};
-    double diff = std::abs(fmod(m.angle_, (2 * M_PI)) - fmod(ba.angle_, (2 * M_PI)));
-    if (diff > M_PI) diff -= 2 * M_PI;
-    res.push_back(diff);
-  }
-  return res;
-}
-
-//gets the coordinates of all the beacons relative to a given particle
-std::vector<Beacon> WorldModel::single_particle_relative(const Particle& p, const std::vector<Beacon> bcns) const {
-  std::vector<Beacon> res;
-  for (const Beacon& b : bcns) {
+//gets the coordinates of all the field beacons of a given type relative to a given particle
+//returns - a vector, one entry per beacon of matching type. each entry is the offset (x,y)
+//from the input particle position p and the corresponding beacon position
+std::vector<PositionBeacon> WorldModel::single_particle_relative(const Particle& p, const std::vector<PositionBeacon> &bcns, const std::string &type) const {
+  std::vector<PositionBeacon> res;
+  for (const PositionBeacon& b : bcns) {
+    if (b.type_ != type)
+      continue;
     double x = b.x_ - p.x_;
     double y = b.y_ - p.y_;
     double r = hypot(x, y);
@@ -71,87 +53,54 @@ std::vector<Beacon> WorldModel::single_particle_relative(const Particle& p, cons
     theta -= p.rot_;
     x = r * cos(theta);
     y = r * sin(theta);
-    res.emplace_back(Beacon{x, y, b.type_});
+    res.emplace_back(PositionBeacon{x, y, b.type_});
   }
   return res;
 }
 
-std::vector<Beacon> WorldModel::particle_relative(const Particle& p, const Particle& offset) const {
-  return single_particle_relative(offset, single_particle_relative(p, beacons_));
-}
-
-std::vector<Beacon> WorldModel::of_type(const std::vector<Beacon>& bcns, const std::string &type) {
-  std::vector<Beacon> res;
-  for (const Beacon& b : bcns) {
-    if (b.type_ == type) {
-      res.push_back(b);
-    }
+//Uses hungarian algorithm to pair particle relative beacons and robot relative beacons and returns the total error
+//(sum of distance errors from particle to robot beacons)
+double WorldModel::total_distance(const Particle& p, const std::vector<std::shared_ptr<BeaconBase>>& m) {
+  // Create mapping of <type of detection, vector of detections of that type>
+  // Use this to handle mapping from a set of detections of a given type to the
+  // most likely set of beacons they line up with
+  // TODO - might be simpler to just sort beacons by type, then loop through the array in order
+  //        grabbing all of one type. Once we see the next type, calc the dists for the current
+  //        type then repeat until all entries are processed
+  std::map<std::string, std::vector<std::shared_ptr<BeaconBase>> > by_type;
+  for (const auto & b : m) {
+	// Create empty vector per type if not there already, then append
+	// detection to that vector
+	by_type.emplace(b->type_, std::vector<std::shared_ptr<BeaconBase>>());
+    by_type[b->type_].push_back(b);
   }
-  return res;
-}
-
-//Uses hungarian algorithm to pair particle relative beacons and robot relative beacons and returns the total error (sum of distance errors from particle to robot beacons)
-// TODO - might be simpler to just sort beacons by type, then loop through the array in order
-//        grabbing all of one type. Once we see the next type, calc the dists for the current
-//        type then repeat until all entries are processed
-double WorldModel::total_distance(const Particle& p, const std::vector<Beacon>& m, const Particle& offset) {
+  // Loop over each detection type. For that, do an optimal assigment
+  // of detections with beacons of the same type as the detection
   double total_res = 0;
-  std::map<std::string, std::vector<Beacon> > by_type;
-  for (const Beacon& b : m) {
-    if (by_type.count(b.type_) == 0) {
-      by_type[b.type_] = std::vector<Beacon>();
-    }
-    by_type[b.type_].push_back(b);
-  }
-  for (const auto & m_of_type : by_type) {
-    std::vector<int> assignment;
+  for (const auto & m_of_type : by_type) { // m_of_type = detections of a given type
     std::vector<std::vector<double> > dists;
-    const std::vector<Beacon> rel{of_type(particle_relative(p, offset), m_of_type.first)};
-    for (const Beacon& b : m_of_type.second) {
-      dists.push_back(distances(b, rel));
+    // expected distance between the particle and the field beacons
+    // Only match up beacons with the same type as the current detection type
+    const std::vector<PositionBeacon> rel{single_particle_relative(p, beacons_, m_of_type.first)};
+    // For each detection of this type, create a list of distances from
+    // that detection to each field beacon of that same type
+    for (const auto& b : m_of_type.second) { // b is each detection of this type
+      dists.push_back(b->distances(rel));
     }
-	if (dists.size() == 0)
-		continue;
+    if (dists.size() == 0)
+      continue;
+	// Match up detections with the most likely mapping to a beacon.
+    std::vector<int> assignment;
     solver_.Solve(dists, assignment);
-    double res = 0;
+    // For each match from detection to beacon, add the
+    // distance the detection is off from ideal to the
+    // total cumulative distance for this particular particle
     for (size_t i = 0; i < assignment.size(); i++) {
-      if (assignment[i] < 0) continue;
-      res += dists[i][assignment[i]];
+      if (assignment[i] >= 0)
+        total_res += dists[i][assignment[i]];
     }
-    total_res += res;
   }
 
   return total_res;
 }
 
-// like total_distance, but bearing only
-// TODO - merge with above somehow
-double WorldModel::total_angle(const Particle& p, const std::vector<BearingBeacon>& m, const Particle& offset) {
-  double total_res = 0;
-  std::map<std::string, std::vector<BearingBeacon> > by_type;
-  for (const BearingBeacon& b : m) {
-    if (by_type.count(b.type_) == 0) {
-      by_type[b.type_] = std::vector<BearingBeacon>();
-    }
-    by_type[b.type_].push_back(b);
-  }
-  for (const auto & m_of_type : by_type) {
-    std::vector<int> assignment;
-    std::vector<std::vector<double> > dists;
-    const std::vector<Beacon> rel = of_type(particle_relative(p, offset), m_of_type.first);
-    for (const BearingBeacon& b : m_of_type.second) {
-      dists.push_back(angle_distances(b, rel));
-    }
-	if (dists.size() == 0)
-		continue;
-    solver_.Solve(dists, assignment);
-    double res = 0;
-    for (size_t i = 0; i < assignment.size(); i++) {
-      if (assignment[i] < 0) continue;
-      res += dists[i][assignment[i]];
-    }
-    total_res += res;
-  }
-
-  return total_res;
-}
