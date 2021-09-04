@@ -37,8 +37,6 @@ std::unique_ptr<tf2_ros::TransformBroadcaster> tfbr;
 ros::Duration tf_tolerance;
 ros::Publisher pub;
 ros::Publisher pub_debug;
-ros::Duration publish_period;
-ros::Time next_publish_time;
 
 tf2_ros::Buffer tf_buffer_;
 
@@ -59,13 +57,8 @@ void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
   #endif
 }
 
-void publish_prediction()
+void publish_prediction(const ros::TimerEvent &/*event*/)
 {
-  // Only publish if enough time has elapsed since
-  // the previous published message
-  if (next_publish_time > ros::Time::now())
-    return;
-  next_publish_time += publish_period;
   const Particle prediction = pf->predict();
 
   // Publish message with predicted pose
@@ -159,7 +152,6 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg, const bool bearingO
 
   if (pf->assign_weights(measurement)) {
     pf->resample();
-    publish_prediction();
     last_measurement = ros::Time::now();
   }
 
@@ -303,17 +295,14 @@ int main(int argc, char **argv) {
   pub = nh_.advertise<pf_localization::pf_pose>(pub_topic, 1);
   pub_debug = nh_.advertise<pf_localization::pf_debug>(pub_debug_topic, 1);
 
-
+  tfbr = std::make_unique<tf2_ros::TransformBroadcaster>();
   double publish_rate;
   nh_.param("publish_rate", publish_rate, 10.);
-  publish_period.fromSec(1. / publish_rate);
-  tf_tolerance.fromSec(tmp_tolerance);
+  auto pubTimer = nh_.createTimer(ros::Duration(1./ publish_rate), publish_prediction);
 
   const auto now = ros::Time::now();
-  next_publish_time = now + publish_period;
   last_time = now;
   last_measurement = now;
-  tfbr = std::make_unique<tf2_ros::TransformBroadcaster>();
   ros::spin();
 
   return 0;
