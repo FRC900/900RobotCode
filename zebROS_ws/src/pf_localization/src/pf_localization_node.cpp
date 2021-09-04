@@ -53,7 +53,6 @@ void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
   tf2::Quaternion raw;
   tf2::convert(msg -> orientation, raw);
   tf2::Matrix3x3(raw).getRPY(roll, pitch, yaw);
-  // TODO - check return code here
   pf->set_rotation(yaw);
   #ifdef EXTREME_VERBOSE
   ROS_INFO("rotCallback called");

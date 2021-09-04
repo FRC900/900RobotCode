@@ -12,6 +12,24 @@ define normal_camera fiducial
 	color "purple"
 )
 
+# terabee evo 3m
+define terabee_distance sensor
+(
+  # define the size of each transducer [xsize ysize zsize] in meters
+  size [0.01 0.05 0.01 ] 
+  # define the range bounds [min max]
+  range [0.01 3.0]
+  # define the angular field of view in degrees
+  fov 2
+  # define the number of samples spread over the fov
+  samples 1
+)
+
+define single_terrabee ranger
+(
+  terabee_distance(pose [ 0 0 0 0 ] )
+)
+
 define omnidir_robot position
 (
   update_interval 5
@@ -33,5 +51,7 @@ define omnidir_robot position
   acceleration_bounds [-4.5 4.5 -4.5 4.5 0 0 -90 90]
 
   # spawn sensors
-  normal_camera(pose [ 0.1 -0.1 0.65 0.0 ])
+  normal_camera(pose [ 0.1 -0.1 0.65 0.0 ] )
+
+  single_terrabee(pose [0.0 0.4445 0.1 90 ] )
 )

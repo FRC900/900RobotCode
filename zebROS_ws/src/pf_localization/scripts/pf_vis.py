@@ -1,30 +1,32 @@
 #!/usr/bin/env python
 
-import sys
-import numpy as np
 import matplotlib.pyplot as plt
-import math
 
 import rospy
 from pf_localization.msg import pf_debug, pf_pose
+from nav_msgs.msg import Odometry
 
-particles_topic = "/pf_localization/pf_debug"
-pf_pose_topic = "/pf_localization/predicted_pose"
+particles_topic = "/pf_debug"
+pf_pose_topic = "/predicted_pose"
+ground_truth_topic = "/base_pose_ground_truth"
 
 x_data = []
 y_data = []
 rot_data = []
 predicted_x = []
 predicted_y = []
+ground_truth_x = []
+ground_truth_y = []
 error = []
 
 fig, axes = plt.subplots(nrows=1, ncols=1)
 ax = axes
-pln, = ax.plot([], [], 'r.')
-ln, = ax.plot([], [], 'b.')
+pln, = ax.plot([], [], 'r.', markersize=2)
+ln,  = ax.plot([], [], 'b.', markersize=.15)
+gtn, = ax.plot([], [], 'g.', markersize=2)
 
 def update_particles(particle_msg):
-    global x_data, y_data, rot_data, actual_x, actual_y
+    global x_data, y_data, rot_data
 
     x_data = []
     y_data = []
@@ -33,7 +35,6 @@ def update_particles(particle_msg):
         x_data.append(p.x)
         y_data.append(p.y)
         rot_data.append(p.rot)
-    pln.set_data(predicted_x, predicted_y)
     ln.set_data(x_data, y_data)
     plt.draw()
 
@@ -43,6 +44,14 @@ def update_pose(pose_msg):
     predicted_x.append(pose_msg.x)
     predicted_y.append(pose_msg.y)
     pln.set_data(predicted_x, predicted_y)
+    plt.draw()
+
+def update_ground_truth(ground_truth_msg):
+    global ground_truth_x, ground_truth_y
+
+    ground_truth_x.append(ground_truth_msg.pose.pose.position.x)
+    ground_truth_y.append(ground_truth_msg.pose.pose.position.y)
+    gtn.set_data(ground_truth_x, ground_truth_y)
     plt.draw()
 
 def main():
@@ -83,6 +92,7 @@ def main():
 
     sub_particles = rospy.Subscriber(particles_topic, pf_debug, update_particles)
     sub_pose = rospy.Subscriber(pf_pose_topic, pf_pose, update_pose)
+    sub_ground_truth = rospy.Subscriber(ground_truth_topic, Odometry, update_ground_truth)
 
     plt.show()
 
