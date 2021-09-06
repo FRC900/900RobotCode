@@ -810,7 +810,12 @@ void TalonHWCommand::setRemoteFeedbackDeviceId(int remote_feedback_device_id, si
 {
 	if (remote_ordinal >= 2)
 	{
-		ROS_WARN("setRemoteFeedbackFilter : remote_ordinal too large");
+		ROS_WARN("setRemoteFeedbackDeviceId: remote_ordinal too large");
+		return;
+	}
+	if (remote_feedback_device_id > 15)
+	{
+		ROS_WARN("setRemoteFeedbackDeviceId: remote_feedback_device_id must be <= 15");
 		return;
 	}
 	remote_feedback_device_ids_[remote_ordinal] = remote_feedback_device_id;

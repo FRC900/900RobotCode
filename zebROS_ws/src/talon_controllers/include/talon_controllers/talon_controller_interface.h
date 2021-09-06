@@ -532,6 +532,11 @@ class TalonCIParams
 				}
 			}
 			n.getParam("remote_feedback_device_id0", remote_feedback_device_ids_[0]);
+			if (remote_feedback_device_ids_[0] > 15)
+			{
+				ROS_ERROR_STREAM("remote_feedback_device_id0 must be less than 15");
+				return false;
+			}
 			if (n.getParam("remote_feedback_filter0", str) &&
 				!stringToRemoteSensorSource(str, remote_feedback_filters_[0]))
 			{
@@ -539,6 +544,11 @@ class TalonCIParams
 				return false;
 			}
 			n.getParam("remote_feedback_device_id1", remote_feedback_device_ids_[1]);
+			if (remote_feedback_device_ids_[1] > 15)
+			{
+				ROS_ERROR_STREAM("remote_feedback_device_id1 must be less than 15");
+				return false;
+			}
 			if (n.getParam("remote_feedback_filter1", str) &&
 				stringToRemoteSensorSource(str, remote_feedback_filters_[1]))
 			{
