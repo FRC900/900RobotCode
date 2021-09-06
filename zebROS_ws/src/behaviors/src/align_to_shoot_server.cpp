@@ -5,22 +5,23 @@
 #include <thread>
 #include <ros/console.h>
 
+#include <geometry_msgs/PointStamped.h>
+#include <sensor_msgs/Imu.h>
+#include <std_msgs/Bool.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+
 //include action files - for this actionlib server and any it sends requests to
 #include "behavior_actions/AlignToShootAction.h"
 
 //include controller service files and other service files
 #include "controllers_2020_msgs/TurretSrv.h"
 
-#include "field_obj/Detection.h"
 #include "behavior_actions/ShooterOffset.h"
+#include "field_obj/Detection.h"
 #include "talon_state_msgs/TalonState.h"
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <sensor_msgs/Imu.h>
-#include <tf2_ros/transform_listener.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <geometry_msgs/PointStamped.h>
-#include <std_msgs/Bool.h>
 
 //create the class for the actionlib server
 class AlignToShootAction
@@ -222,7 +223,7 @@ class AlignToShootAction
 			}
 
 			//get the goal position
-			geometry_msgs::Point32 goal_pos_;
+			geometry_msgs::Point goal_pos_;
 			bool found_goal = false;
 			for (const field_obj::Object &obj : local_goal_msg.objects)
 			{

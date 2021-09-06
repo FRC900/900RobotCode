@@ -141,7 +141,7 @@ class ShooterAction {
 
 			//get the goal position
 			bool found_goal = false;
-			geometry_msgs::Point32 goal_pos_;
+			geometry_msgs::Point goal_pos_;
 			for (const field_obj::Object &obj : local_goal_msg.objects)
 			{
 				if(obj.id == "power_port")
