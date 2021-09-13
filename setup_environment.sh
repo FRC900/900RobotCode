@@ -121,7 +121,7 @@ cd ../..
 sudo rm -rf tinyxml2
 
 #install zed sdk
-wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.4/jp45/jetsons
+wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.5/jp45/jetsons
 chmod 755 jetsons
 ./jetsons
 rm ./jetsons

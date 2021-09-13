@@ -10,6 +10,9 @@
     local-name: zed-ros-wrapper
     uri: https://github.com/FRC900/zed-ros-wrapper.git
 - git:
+    local-name: zed-ros-interfaces
+    uri: https://github.com/stereolabs/zed-ros-interfaces.git
+- git:
     local-name: ros_controllers/forward_command_controller
     uri: https://github.com/ros-gbp/ros_controllers-release.git
     version: release/melodic/forward_command_controller/0.17.0-1
