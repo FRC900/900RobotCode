@@ -2,7 +2,6 @@ steered_wheel_base_controller
 rplidar_ros
 teleop_twist_joy
 zed-ros-wrapper
-zed-ros-interfaces
 /CMakeLists.txt
 px_ros_pkg
 ros_controllers
