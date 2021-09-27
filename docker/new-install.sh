@@ -27,7 +27,7 @@ sudo gpasswd -a $USER docker
 
 # log out, log back in (probably also need a restart anyway after apt upgrade)
 
-docker pull frc900/zebros-2020-dev:latest
+docker pull frc900/zebros-2021-dev:latest
 
 # Install git-lfs
 cd &&\
@@ -47,7 +47,7 @@ cd 2020Offseason
 git submodule update --init --recursive
 docker run --net=host -v  /tmp/.X11-unix:/tmp/.X11-unix \
  -v $HOME/2020Offseason:/home/ubuntu/2020Offseason \
- -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-2020-dev:latest "wstool update -t /home/ubuntu/2020Offseason/zebROS_ws/src -j2"
+ -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-2021-dev:latest "wstool update -t /home/ubuntu/2020Offseason/zebROS_ws/src -j2"
 
 cd
 wget https://downloads.slack-edge.com/linux_releases/slack-desktop-4.0.2-amd64.deb
