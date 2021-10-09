@@ -91,25 +91,25 @@ void publish_prediction(const ros::TimerEvent &/*event*/)
 
       // baselink_to_map transformed from base_link to odom == odom->map
       tf_buffer_.transform(baselink_to_map, odom_to_map, odom_frame_id, ros::Duration(0.02));
+
+      geometry_msgs::TransformStamped transformStamped;
+
+      transformStamped.header.stamp = last_time + tf_tolerance;
+      transformStamped.header.frame_id = map_frame_id;
+      transformStamped.child_frame_id = odom_frame_id;
+
+      // Computed transform is odom->map, but need to invert
+      // it to publish map->odom instead
+      tf2::Transform odom_to_map_tf;
+      tf2::convert(odom_to_map.pose, odom_to_map_tf);
+      tf2::convert(odom_to_map_tf.inverse(), transformStamped.transform);
+
+      tfbr->sendTransform(transformStamped);
     }
     catch (const tf2::TransformException &ex)
     {
-      ROS_ERROR_STREAM("pf_localization : transform from base_link to " << odom_frame_id << " failed in map->odom broadcaser : " << ex.what());
+      ROS_ERROR_STREAM_THROTTLE(5, "pf_localization : transform from base_link to " << odom_frame_id << " failed in map->odom broadcaser : " << ex.what());
     }
-
-    geometry_msgs::TransformStamped transformStamped;
-
-    transformStamped.header.stamp = last_time + tf_tolerance;
-    transformStamped.header.frame_id = map_frame_id;
-    transformStamped.child_frame_id = odom_frame_id;
-
-    // Computed transform is odom->map, but need to invert
-    // it to publish map->odom instead
-    tf2::Transform odom_to_map_tf;
-    tf2::convert(odom_to_map.pose, odom_to_map_tf);
-    tf2::convert(odom_to_map_tf.inverse(), transformStamped.transform);
-
-    tfbr->sendTransform(transformStamped);
   }
 
   if(pub_debug.getNumSubscribers() > 0){
@@ -136,7 +136,9 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg, const bool bearingO
   try {
     zed_to_baselink = tf_buffer_.lookupTransform("base_link", msg->header.frame_id, ros::Time::now(), ros::Duration(0.02));
   }
-  catch (const tf2::TransformException &ex){
+  catch (const tf2::TransformException &ex) {
+	ROS_ERROR_STREAM_THROTTLE(5, "PF localization not running - fix base_link to " << msg->header.frame_id << " transform");
+    return;
   }
 
   std::vector<std::shared_ptr<BeaconBase>> measurement;
