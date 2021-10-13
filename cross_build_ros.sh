@@ -5,7 +5,7 @@ sudo rosdep init
 rosdep update
 mkdir ~/melodic_arm_cross_ws
 cd ~/melodic_arm_cross_ws
-rosinstall_generator ros ros_comm robot angles serial robot_localization controller_interface controller_manager combined_robot_hw joint_limits_interface transmission_interface controller_manager controller_interface hardware_interface controller_manager_tests controller_manager_msgs combined_robot_hw combined_robot_hw_tests tf2_tools tf2_eigen tf2_sensor_msgs rosparam_shortcuts rqt_controller_manager actionlib_tutorials image_transport image_geometry marker_msgs costmap_2d --rosdistro melodic --deps --wet-only > melodic-ros_comm-wet.rosinstall
+rosinstall_generator ros ros_comm robot angles serial robot_localization controller_interface controller_manager combined_robot_hw joint_limits_interface transmission_interface controller_manager controller_interface hardware_interface controller_manager_tests controller_manager_msgs combined_robot_hw combined_robot_hw_tests tf2_tools tf2_eigen tf2_sensor_msgs rosparam_shortcuts rqt_controller_manager actionlib_tutorials image_transport image_geometry marker_msgs --rosdistro melodic --deps --wet-only > melodic-ros_comm-wet.rosinstall
 
 #edit melodic-ros_comm-wet.rosinstall and remove entries for realtime_tools, filter
 sed -i -e '/local-name: filters/{N;N;N;d}' melodic-ros_comm-wet.rosinstall
