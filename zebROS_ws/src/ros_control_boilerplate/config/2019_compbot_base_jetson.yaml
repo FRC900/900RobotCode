@@ -3,8 +3,10 @@
 generic_hw_control_loop:
   loop_hz: 100
   cycle_time_error_threshold: 0.01
-    #some processes have lower frequencies than the main control loop
-  robot_iteration_hz: 20
+  #some processes have lower frequencies than the main control loop
+  ctre_mc_read_hz: 100
+  pcm_read_hz: 20
+  pdp_read_hz: 20robot_iteration_hz: 20
   joystick_read_hz: 50
   match_data_read_hz: 2
   robot_controller_read_hz: 20

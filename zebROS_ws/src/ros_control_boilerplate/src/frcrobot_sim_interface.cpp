@@ -120,7 +120,12 @@ void FRCRobotSimInterface::match_data_callback(const frc_msgs::MatchSpecificData
 }
 
 void FRCRobotSimInterface::joystickCallback(const sensor_msgs::JoyConstPtr &msg, int32_t joystick_num) {
-	std::lock_guard<std::mutex> l(joystick_mutex_);
+	if (static_cast<size_t>(joystick_num) >= joystick_sim_write_mutex_.size())
+	{
+		ROS_WARN_STREAM_THROTTLE(2, "Sim joystick input for index " << joystick_num
+				<< " is bigger than configured joystick count ( " << joystick_sim_write_mutex_.size() << ")");
+		return;
+	}
 
 	HAL_JoystickAxes hal_axes;
 	hal_axes.count = std::min(msg->axes.size(), 6UL); // the last two entries (6,7) are for POV
@@ -141,11 +146,11 @@ void FRCRobotSimInterface::joystickCallback(const sensor_msgs::JoyConstPtr &msg,
 		hal_buttons.buttons = ((msg->buttons[i] ? 1 : 0) << i) | hal_buttons.buttons;
 	}
 
+	HAL_JoystickPOVs hal_povs;
+	hal_povs.count = 1;
+	std::memset(hal_povs.povs, -1, sizeof(hal_povs.povs));
 	if (msg->axes.size() >= 8)
 	{
-		HAL_JoystickPOVs hal_povs;
-		hal_povs.count = 1;
-		std::memset(hal_povs.povs, -1, sizeof(hal_povs.povs));
 		//TODO Do we have a standard epsilon somewhere in here?
 		//TODO - also check see if it needs to be < -1e-5
 		const bool direction_left = msg->axes[6] > 1e-5;
@@ -185,11 +190,12 @@ void FRCRobotSimInterface::joystickCallback(const sensor_msgs::JoyConstPtr &msg,
 		{
 			hal_povs.povs[0] = 315;
 		}
-		HALSIM_SetJoystickPOVs(joystick_num, &hal_povs);
 	}
 	//TODO check default pov?
 	//TODO do you need to set JoystickDescriptor?
 
+	std::lock_guard<std::mutex> l(*(joystick_sim_write_mutex_[joystick_num]));
+	HALSIM_SetJoystickPOVs(joystick_num, &hal_povs);
 	HALSIM_SetJoystickAxes(joystick_num, &hal_axes);
 	HALSIM_SetJoystickButtons(joystick_num,
 			&hal_buttons);
@@ -214,24 +220,18 @@ bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::R
 
 bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 {
-	skip_bus_voltage_temperature_  = true;
 	// Do base class init. This loads common interface info
 	// used by both the real and sim interfaces
 	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " line: " << __LINE__);
+
+	// Work around CTRE sim bug?
+	skip_bus_voltage_temperature_ = true;
 	if (!FRCRobotInterface::init(root_nh, robot_hw_nh))
 	{
 		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " failed");
 		return false;
 	}
 	hal::init::InitializeDriverStationData();
-
-    //TODO fix joystick topic
-	for (size_t i = 0; i < HAL_kMaxJoysticks; i++)
-	{
-		std::stringstream s;
-		s << "js" << i << "_in";
-		joystick_subs_.push_back(root_nh.subscribe<sensor_msgs::Joy>(s.str(), 1, boost::bind(&FRCRobotSimInterface::joystickCallback, this, _1, i)));
-	}
 
 	for (size_t i = 0; i < num_canifiers_; i++)
 	{
@@ -312,6 +312,15 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 	linebreak_sensor_srv_ = root_nh.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
     match_data_sub_ = root_nh.subscribe("/frcrobot_rio/match_data_in", 1, &FRCRobotSimInterface::match_data_callback, this);
 
+    //TODO fix joystick topic names?
+	for (size_t i = 0; i < num_joysticks_; i++)
+	{
+		std::stringstream s;
+		s << "js" << i << "_in";
+		joystick_subs_.push_back(root_nh.subscribe<sensor_msgs::Joy>(s.str(), 1, boost::bind(&FRCRobotSimInterface::joystickCallback, this, _1, i)));
+	}
+
+
 	ROS_INFO_NAMED("frcrobot_sim_interface", "FRCRobotSimInterface Ready.");
 	return true;
 }
@@ -329,7 +338,7 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 	read_tracer_.start_unique("FeedEnable");
 	if (num_can_ctre_mcs_)
 	{
-		ctre::phoenix::unmanaged::Unmanaged::FeedEnable(100);
+		ctre::phoenix::unmanaged::Unmanaged::FeedEnable(2 * 1000./ctre_mc_read_hz_);
 	}
 	read_tracer_.start_unique("HAL_SimPeriodicBefore");
 	HAL_SimPeriodicBefore();

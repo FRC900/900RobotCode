@@ -1,13 +1,11 @@
-#pragma once
+#ifndef PDP_STATE_CONTROLLER_INC_
+#define PDP_STATE_CONTROLLER_INC_
 
 #include <controller_interface/controller.h>
-#include <hardware_interface/joint_state_interface.h>
 #include <realtime_tools/realtime_buffer.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <frc_msgs/PDPData.h>
 #include <frc_interfaces/pdp_state_interface.h>
-#include <pluginlib/class_list_macros.h>
-#include <sensor_msgs/JointState.h>
 
 namespace pdp_state_controller
 {
@@ -60,3 +58,4 @@ class PDPStateListenerController :
 		virtual void commandCB(const frc_msgs::PDPDataConstPtr &msg);
 };
 } //namespace
+#endif

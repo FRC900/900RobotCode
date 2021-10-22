@@ -37,15 +37,16 @@
 */
 #include <ros/ros.h>
 #include <ros_control_boilerplate/frc_robot_interface.h>
-#include <cerrno>                                     // for errno
 #include <ext/alloc_traits.h>                         // for __alloc_traits<...
 #ifdef __linux__
 #include <pthread.h>                                  // for pthread_self
 #include <sched.h>                                    // for sched_get_prior...
+#include <sstream>
 #endif
-#include <cstring>                                    // for size_t, strerror
 #include <algorithm>                                  // for max, all_of
 #include <cmath>                                      // for M_PI
+#include <cerrno>                                     // for errno
+#include <cstring>                                    // for size_t, strerror
 #include <cstdint>                                    // for uint8_t, int32_t
 #include <iostream>                                   // for operator<<, bas...
 #include "AHRS.h"                                     // for AHRS
@@ -85,19 +86,26 @@ constexpr int timeoutMs = 0; //If nonzero, function will wait for config success
 void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController> ctre_mc,
 											std::shared_ptr<hardware_interface::TalonHWState> state,
 											std::shared_ptr<std::mutex> mutex,
-											std::unique_ptr<Tracer> tracer)
+											std::unique_ptr<Tracer> tracer,
+											double poll_frequency)
 {
 #ifdef __linux__
-	pthread_setname_np(pthread_self(), "ctre_mc_read");
+	std::stringstream thread_name;
+	// Use abbreviations since pthread_setname will fail if name is >= 16 characters
+	thread_name << "ctre_mc_rd_" << state->getCANID();
+	if (pthread_setname_np(pthread_self(), thread_name.str().c_str()))
+	{
+		ROS_ERROR_STREAM("Error setting thread name " << thread_name.str() << " " << errno);
+	}
 #endif
-	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
-	ros::Rate rate(100); // TODO : configure me from a file or
-						 // be smart enough to run at the rate of the fastest status update?
+	ros::Duration(2.75 + state->getCANID() * 0.05).sleep(); // Sleep for a few seconds to let CAN start up
+	ROS_INFO_STREAM("Starting ctre_mc " << state->getCANID() << " thread at " << ros::Time::now());
+	ros::Rate rate(poll_frequency); // TODO : be smart enough to run at the rate of the fastest status update?
 
-	auto victor = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mc);
-	auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mc);
-	auto talonsrx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mc);
-	auto talonfx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mc);
+	const auto victor = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mc);
+	const auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mc);
+	const auto talonsrx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mc);
+	const auto talonfx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mc);
 
 	while(ros::ok())
 	{
@@ -204,7 +212,6 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 
 			closed_loop_target = victor->GetClosedLoopTarget(pidIdx) * closed_loop_scale;
 			safeTalonCall(victor->GetLastError(), "GetClosedLoopTarget");
-
 		}
 
 		// Targets Status 10 - 160 mSec default
@@ -366,25 +373,30 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 void FRCRobotInterface::pdp_read_thread(int32_t pdp,
 		std::shared_ptr<hardware_interface::PDPHWState> state,
 		std::shared_ptr<std::mutex> mutex,
-		std::unique_ptr<Tracer> tracer)
+		std::unique_ptr<Tracer> tracer,
+		double poll_frequency)
 {
 #ifdef __linux__
-	pthread_setname_np(pthread_self(), "pdp_read");
+	if (pthread_setname_np(pthread_self(), "pdp_read"))
+	{
+		ROS_ERROR_STREAM("Error setting thread name pdp_read " << errno);
+	}
 #endif
-	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
-	ros::Rate r(20); // TODO : Tune me?
+	ros::Duration(1.9).sleep(); // Sleep for a few seconds to let CAN start up
+	ROS_INFO_STREAM("Starting pdp read thread at " << ros::Time::now());
+	ros::Rate r(poll_frequency);
 	int32_t status = 0;
 	HAL_ClearPDPStickyFaults(pdp, &status);
 	HAL_ResetPDPTotalEnergy(pdp, &status);
 	if (status)
 		ROS_ERROR_STREAM("pdp_read_thread error clearing sticky faults : status = " << status);
+	hardware_interface::PDPHWState pdp_state;
 	while (ros::ok())
 	{
 		tracer->start("main loop");
 
 		//read info from the PDP hardware
 		status = 0;
-		hardware_interface::PDPHWState pdp_state;
 		pdp_state.setVoltage(HAL_GetPDPVoltage(pdp, &status));
 		pdp_state.setTemperature(HAL_GetPDPTemperature(pdp, &status));
 		pdp_state.setTotalCurrent(HAL_GetPDPTotalCurrent(pdp, &status));
@@ -416,15 +428,22 @@ void FRCRobotInterface::pdp_read_thread(int32_t pdp,
 // PCM is copied to a state buffer shared with the main read
 // thread.
 void FRCRobotInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle, int32_t pcm_id,
-										  std::shared_ptr<hardware_interface::PCMState> state,
-										  std::shared_ptr<std::mutex> mutex,
-										  std::unique_ptr<Tracer> tracer)
+										std::shared_ptr<hardware_interface::PCMState> state,
+										std::shared_ptr<std::mutex> mutex,
+										std::unique_ptr<Tracer> tracer,
+										double poll_frequency)
 {
 #ifdef __linux__
-	pthread_setname_np(pthread_self(), "pcm_read");
+	std::stringstream s;
+	s << "pcm_read_" << pcm_id;
+	if (pthread_setname_np(pthread_self(), s.str().c_str()))
+	{
+		ROS_ERROR_STREAM("Error setting thread name " << s.str() << " " << errno);
+	}
 #endif
-	ros::Duration(2).sleep(); // Sleep for a few seconds to let CAN start up
-	ros::Rate r(20); // TODO : Tune me?
+	ros::Duration(2.1 + pcm_id/10.).sleep(); // Sleep for a few seconds to let CAN start up
+	ros::Rate r(poll_frequency);
+	ROS_INFO_STREAM("Starting pcm " << pcm_id << " read thread at " << ros::Time::now());
 	int32_t status = 0;
 	HAL_ClearAllPCMStickyFaults(pcm_id, &status);
 	if (status)
@@ -1100,31 +1119,24 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 			ready_signal_names_.push_back(joint_name);
 			ready_signal_locals_.push_back(local);
 		}
-		else if ((joint_type == "joystick") || (joint_type == "button_box"))
+		else if (joint_type == "joystick")
 		{
-			const bool has_id = joint_params.hasMember("id");
-			if (!local && has_id)
+			if (!local)
 				throw std::runtime_error("A joystick ID was specified for non-local hardware for joint " + joint_name);
-			int id = 0;
-			if (local)
-			{
-				if (!has_id)
-					throw std::runtime_error("A joystick ID was not specified for joint " + joint_name);
-				XmlRpc::XmlRpcValue &xml_id = joint_params["id"];
-				if (!xml_id.valid() ||
-					xml_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
-					throw std::runtime_error("An invalid joystick id was specified (expecting an int) for joint " + joint_name);
+			const bool has_id = joint_params.hasMember("id");
+			if (!has_id)
+				throw std::runtime_error("A joystick ID was not specified for joint " + joint_name);
+			XmlRpc::XmlRpcValue &xml_id = joint_params["id"];
+			if (!xml_id.valid() ||
+				xml_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				throw std::runtime_error("An invalid joystick id was specified (expecting an int) for joint " + joint_name);
 
-				id = xml_id;
-				auto it = std::find(joystick_ids_.cbegin(), joystick_ids_.cend(), id);
-				if (it != joystick_ids_.cend())
-					throw std::runtime_error("A duplicate joystick ID was specified for joint " + joint_name);
-			}
+			int id = xml_id;
+			auto it = std::find(joystick_ids_.cbegin(), joystick_ids_.cend(), id);
+			if (it != joystick_ids_.cend())
+				throw std::runtime_error("A duplicate joystick ID was specified for joint " + joint_name);
 			joystick_names_.push_back(joint_name);
 			joystick_ids_.push_back(id);
-			joystick_locals_.push_back(local);
-			joystick_types_.push_back(joint_type);
-			prev_button_box_state_.emplace_back(frc_msgs::ButtonBoxState());
 		}
 		else if (joint_type == "as726x")
 		{
@@ -1209,30 +1221,37 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 
 FRCRobotInterface::~FRCRobotInterface()
 {
-	for (size_t i = 0; i < num_solenoids_; i++)
-		HAL_FreeSolenoidPort(solenoids_[i]);
-	for (size_t i = 0; i < num_double_solenoids_; i++)
+	auto safe_free_solenoid_ports = [](auto s)
 	{
-		HAL_FreeSolenoidPort(double_solenoids_[i].forward_);
-		HAL_FreeSolenoidPort(double_solenoids_[i].reverse_);
-	}
-
-	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
-	{
-		if (can_ctre_mc_local_hardwares_[i])
+		if (s != HAL_kInvalidHandle)
 		{
-			ctre_mc_read_threads_[i].join();
+			HAL_FreeSolenoidPort(s);
 		}
+	};
+	for (auto &s : solenoids_)
+	{
+		safe_free_solenoid_ports(s);
+	}
+	for (auto &ds : double_solenoids_)
+	{
+		safe_free_solenoid_ports(ds.forward_);
+		safe_free_solenoid_ports(ds.reverse_);
 	}
 
-	for (size_t i = 0; i < num_compressors_; i++)
+	// Simple lambda function to wait for all valid threads to exit
+	auto join_threads = [](std::vector<std::thread> &threads)
 	{
-		pcm_thread_[i].join();
-	}
-	for (size_t i = 0; i < num_pdps_; i++)
-	{
-		pdp_thread_[i].join();
-	}
+		for (auto &t : threads)
+		{
+			if (t.joinable())
+			{
+				t.join();
+			}
+		}
+	};
+	join_threads(ctre_mc_read_threads_);
+	join_threads(pcm_threads_);
+	join_threads(pdp_threads_);
 }
 
 void FRCRobotInterface::createInterfaces(void)
@@ -1252,7 +1271,7 @@ void FRCRobotInterface::createInterfaces(void)
 	// set for that motor controller in config files.
 	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Talon Interface for " << can_ctre_mc_names_[i] << " at hw ID " << can_ctre_mc_can_ids_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Talon Interface for : " << can_ctre_mc_names_[i] << " at hw ID " << can_ctre_mc_can_ids_[i]);
 
 		// Add this controller to the list of tracked TalonHWState objects
 		talon_state_.emplace_back(hardware_interface::TalonHWState(can_ctre_mc_can_ids_[i]));
@@ -1284,7 +1303,7 @@ void FRCRobotInterface::createInterfaces(void)
 
 	for (size_t i = 0; i < num_canifiers_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering CANifier Interface for " << canifier_names_[i] << " at hw ID " << canifier_can_ids_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering CANifier Interface for : " << canifier_names_[i] << " at hw ID " << canifier_can_ids_[i]);
 		canifier_state_.emplace_back(hardware_interface::canifier::CANifierHWState(canifier_can_ids_[i]));
 	}
 	for (size_t i = 0; i < num_canifiers_; i++)
@@ -1313,7 +1332,7 @@ void FRCRobotInterface::createInterfaces(void)
 
 	for (size_t i = 0; i < num_cancoders_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering CANCoder Interface for " << cancoder_names_[i] << " at hw ID " << cancoder_can_ids_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering CANCoder Interface for : " << cancoder_names_[i] << " at hw ID " << cancoder_can_ids_[i]);
 		cancoder_state_.emplace_back(hardware_interface::cancoder::CANCoderHWState(cancoder_can_ids_[i]));
 	}
 	for (size_t i = 0; i < num_cancoders_; i++)
@@ -1344,7 +1363,7 @@ void FRCRobotInterface::createInterfaces(void)
 
 	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << nidec_brushless_names_[i] << " at PWM channel " << nidec_brushless_pwm_channels_[i] << " / DIO channel " << nidec_brushless_dio_channels_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering NIDEC interface for : " << nidec_brushless_names_[i] << " at PWM channel " << nidec_brushless_pwm_channels_[i] << " / DIO channel " << nidec_brushless_dio_channels_[i]);
 
 		brushless_command_[i] = 0;
 
@@ -1487,7 +1506,7 @@ void FRCRobotInterface::createInterfaces(void)
 	as726x_command_.resize(num_as726xs_);
 	for (size_t i = 0; i < num_as726xs_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering AS726x Interface for " << as726x_names_[i]
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering AS726x Interface for : " << as726x_names_[i]
 				<< " at port " << as726x_ports_[i]
 				<< " at address " << as726x_addresses_[i]);
 		as726x_state_.emplace_back(hardware_interface::as726x::AS726xState(as726x_ports_[i], as726x_addresses_[i]));
@@ -1664,7 +1683,7 @@ void FRCRobotInterface::createInterfaces(void)
 	auto dummy_joints = getDummyJoints();
 	for (const auto &d : dummy_joints)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for DummyVar: " << d.name_);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for DummyVar : " << d.name_);
 
 		*d.address_ = 0;
 
@@ -1680,17 +1699,32 @@ void FRCRobotInterface::createInterfaces(void)
 	}
 	if (run_hal_robot_)
 	{
-		hardware_interface::MatchStateHandle msh("match_name", &match_data_);
+		ROS_INFO_NAMED(name_, "FRCRobotInterface: Registering match data interface");
+		hardware_interface::MatchStateHandle msh("match_data", &match_data_);
 		match_state_interface_.registerHandle(msh);
 	}
 	else
 	{
-		hardware_interface::MatchStateWritableHandle msh("match_name", &match_data_);
+		ROS_INFO_NAMED(name_, "FRCRobotInterface: Registering remote match data interface");
+		hardware_interface::MatchStateWritableHandle msh("match_data", &match_data_);
 		match_remote_state_interface_.registerHandle(msh);
 	}
 
-	// TODO : add joint interface for joysticks
 	num_joysticks_ = joystick_names_.size();
+	for (size_t i = 0; i < num_joysticks_; i++)
+	{
+		joystick_state_.push_back(hardware_interface::JoystickState(joystick_names_[i].c_str(), joystick_ids_[i]));
+	}
+	for (size_t i = 0; i < num_joysticks_; i++)
+	{
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Joystick interface for : " << joystick_names_[i] << " at hw ID " << joystick_ids_[i]);
+
+		// Create state interface for the given orchestra
+		// and point it to the data stored in the
+		// corresponding orchestra_state array entry
+		hardware_interface::JoystickStateHandle jsh(joystick_names_[i], &joystick_state_[i]);
+		joystick_state_interface_.registerHandle(jsh);
+	}
 
 	if (run_hal_robot_)
 	{
@@ -1703,7 +1737,7 @@ void FRCRobotInterface::createInterfaces(void)
 
 	for (size_t i = 0; i < num_talon_orchestras_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Orchestra Interface for " << talon_orchestra_names_[i] << " at hw ID " << talon_orchestra_ids_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Orchestra Interface for : " << talon_orchestra_names_[i] << " at hw ID " << talon_orchestra_ids_[i]);
 
 		// Create orchestra state interface
 		orchestra_state_.emplace_back(hardware_interface::OrchestraState(talon_orchestra_ids_[i]));
@@ -1742,6 +1776,7 @@ void FRCRobotInterface::createInterfaces(void)
 	registerInterface(&pdp_state_interface_);
 	registerInterface(&pcm_state_interface_);
 	registerInterface(&robot_controller_state_interface_);
+	registerInterface(&joystick_state_interface_);
 	registerInterface(&match_state_interface_);
 	registerInterface(&as726x_state_interface_);
 	registerInterface(&as726x_command_interface_);
@@ -1810,7 +1845,8 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			ctre_mc_read_threads_.emplace_back(std::thread(&FRCRobotInterface::ctre_mc_read_thread, this,
 											   ctre_mcs_[i], ctre_mc_read_thread_states_[i],
 											   ctre_mc_read_state_mutexes_[i],
-											   std::make_unique<Tracer>("ctre_mc_read_" + can_ctre_mc_names_[i] + " " + root_nh.getNamespace())));
+											   std::make_unique<Tracer>("ctre_mc_read_" + can_ctre_mc_names_[i] + " " + root_nh.getNamespace()),
+											   ctre_mc_read_hz_));
 		}
 		else
 		{
@@ -2061,10 +2097,11 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 				if (!status && (compressors_[i] != HAL_kInvalidHandle))
 				{
 					pcm_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
-					pcm_thread_.emplace_back(std::thread(&FRCRobotInterface::pcm_read_thread, this,
-											 compressors_[i], compressor_pcm_ids_[i], pcm_read_thread_state_[i],
-											 pcm_read_thread_mutexes_[i],
-											 std::make_unique<Tracer>("PCM " + compressor_names_[i] + " " + root_nh.getNamespace())));
+					pcm_threads_.emplace_back(std::thread(&FRCRobotInterface::pcm_read_thread, this,
+											  compressors_[i], compressor_pcm_ids_[i], pcm_read_thread_state_[i],
+											  pcm_read_thread_mutexes_[i],
+											  std::make_unique<Tracer>("PCM " + compressor_names_[i] + " " + root_nh.getNamespace()),
+											  pcm_read_hz_));
 					HAL_Report(HALUsageReporting::kResourceType_Compressor, compressor_pcm_ids_[i]);
 				}
 				else
@@ -2098,106 +2135,80 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			if (!HAL_CheckPDPModule(pdp_modules_[i]))
 			{
 				ROS_ERROR("Invalid PDP module number");
-				pdps_.push_back(HAL_kInvalidHandle);
 			}
 			else
 			{
 				int32_t status = 0;
-				pdps_.push_back(HAL_InitializePDP(pdp_modules_[i], &status));
+				const auto pdp_handle = HAL_InitializePDP(pdp_modules_[i], &status);
 				pdp_read_thread_state_.push_back(std::make_shared<hardware_interface::PDPHWState>());
-				if (pdps_[i] == HAL_kInvalidHandle)
+				if ((pdp_handle == HAL_kInvalidHandle) || status)
 				{
 					ROS_ERROR_STREAM("Could not initialize PDP module, status = " << status);
 				}
 				else
 				{
 					pdp_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
-					pdp_thread_.emplace_back(std::thread(&FRCRobotInterface::pdp_read_thread, this,
-											 pdps_[i], pdp_read_thread_state_[i], pdp_read_thread_mutexes_[i],
-											 std::make_unique<Tracer>("PDP " + pdp_names_[i] + " " + root_nh.getNamespace())));
+					pdp_threads_.emplace_back(std::thread(&FRCRobotInterface::pdp_read_thread, this,
+											  pdp_handle, pdp_read_thread_state_[i], pdp_read_thread_mutexes_[i],
+											  std::make_unique<Tracer>("PDP " + pdp_names_[i] + " " + root_nh.getNamespace()),
+											  pdp_read_hz_));
 					HAL_Report(HALUsageReporting::kResourceType_PDP, pdp_modules_[i]);
 				}
 			}
 		}
-		else
-			pdps_.push_back(HAL_kInvalidHandle);
 	}
 
 	for (size_t i = 0; i < num_joysticks_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frc_robot_interface",
 							  "Loading joint " << i << "=" << joystick_names_[i] <<
-							  " local = " << joystick_locals_[i] <<
-							  " as joystick with ID " << joystick_ids_[i] <<
-							  " type " << joystick_types_[i]);
-		if (joystick_locals_[i])
-		{
-			joysticks_.push_back(std::make_shared<frc::Joystick>(joystick_ids_[i]));
-			std::stringstream pub_name;
-			// TODO : maybe use pub_names instead, or joy id unconditionally?
-			pub_name << "js" << joystick_ids_[i];
-			if (joystick_types_[i] == "joystick")
-			{
-				realtime_pub_joysticks_.push_back(std::make_unique<realtime_tools::RealtimePublisher<frc_msgs::JoystickState>>(root_nh, pub_name.str(), 1));
-				realtime_pub_button_boxes_.push_back(nullptr);
-			}
-			else if (joystick_types_[i] == "button_box")
-			{
-				realtime_pub_joysticks_.push_back(nullptr);
-				realtime_pub_button_boxes_.push_back(std::make_unique<realtime_tools::RealtimePublisher<frc_msgs::ButtonBoxState>>(root_nh, pub_name.str(), 1));
-			}
-			else
-			{
-				ROS_ERROR_STREAM("Could not initialize Joystick, unknown type");
-				return false;
-			}
-		}
-		else
-		{
-			joysticks_.push_back(nullptr);
-			realtime_pub_joysticks_.push_back(nullptr);
-		}
-		joystick_up_last_.push_back(false);
-		joystick_down_last_.push_back(false);
-		joystick_right_last_.push_back(false);
-		joystick_left_last_.push_back(false);
+							  " as joystick with ID " << joystick_ids_[i]);
+		joysticks_.push_back(std::make_shared<frc::Joystick>(joystick_ids_[i]));
+		joystick_sim_write_mutex_.push_back(std::make_shared<std::mutex>());
 	}
 	return true;
 }
 
 bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 {
-	createInterfaces();
-	ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface Interfaces Ready.");
-	if (!initDevices(root_nh))
-		return false;
-	ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface Devices Ready.");
-
+	if(! root_nh.param("generic_hw_control_loop/ctre_mc_read_hz", ctre_mc_read_hz_, ctre_mc_read_hz_)) {
+		ROS_ERROR("Failed to read ctre_mc_read_hz in frc_robot_interface");
+	}
+	if(! root_nh.param("generic_hw_control_loop/pcm_read_hz", pcm_read_hz_, pcm_read_hz_)) {
+		ROS_ERROR("Failed to read pcm_read_hz in frc_robot_interface");
+	}
+	if(! root_nh.param("generic_hw_control_loop/pdp_read_hz", pdp_read_hz_, pdp_read_hz_)) {
+		ROS_ERROR("Failed to read pdp_read_hz in frc_robot_interface");
+	}
 	const double t_now = ros::Time::now().toSec();
-
 	t_prev_robot_iteration_ = t_now;
-	if(! root_nh.getParam("generic_hw_control_loop/robot_iteration_hz", robot_iteration_hz_)) {
+	if(! root_nh.param("generic_hw_control_loop/robot_iteration_hz", robot_iteration_hz_, robot_iteration_hz_)) {
 		ROS_ERROR("Failed to read robot_iteration_hz in frc_robot_interface");
-		robot_iteration_hz_ = 20;
 	}
 
 	t_prev_joystick_read_ = t_now;
-	if(! root_nh.getParam("generic_hw_control_loop/joystick_read_hz", joystick_read_hz_)) {
+	if(! root_nh.param("generic_hw_control_loop/joystick_read_hz", joystick_read_hz_, joystick_read_hz_)) {
 		ROS_ERROR("Failed to read joystick_read_hz in frc_robot_interface");
-		joystick_read_hz_ = 50;
 	}
 
 	t_prev_match_data_read_ = t_now;
-	if(! root_nh.getParam("generic_hw_control_loop/match_data_read_hz", match_data_read_hz_)) {
+	if(! root_nh.param("generic_hw_control_loop/match_data_read_hz", match_data_read_hz_, match_data_read_hz_)) {
 		ROS_ERROR("Failed to read match_data_read_hz in frc_robot_interface");
-		match_data_read_hz_ = 2;
 	}
 
 	t_prev_robot_controller_read_ = t_now;
-	if(! root_nh.getParam("generic_hw_control_loop/robot_controller_read_hz", robot_controller_read_hz_)) {
+	if(! root_nh.param("generic_hw_control_loop/robot_controller_read_hz", robot_controller_read_hz_, robot_controller_read_hz_)) {
 		ROS_ERROR("Failed to read robot_controller_read_hz in frc_robot_interface");
-		robot_controller_read_hz_ = 20;
 	}
+
+	ROS_INFO_STREAM("Controller Frequencies:" << std::endl <<
+			"\tctre_mc_read : " << ctre_mc_read_hz_ << std::endl <<
+			"\tpcm_read : " << pcm_read_hz_ << std::endl <<
+			"\tpdp_read : " << pdp_read_hz_ << std::endl <<
+			"\trobot_iteration : " << robot_iteration_hz_ << std::endl <<
+			"\tjoystick_read : " << joystick_read_hz_ << std::endl <<
+			"\tmatch_data_read : " << match_data_read_hz_ << std::endl <<
+			"\trobot_controller_read : " << robot_controller_read_hz_);
 
 #ifdef __linux__
 	struct sched_param schedParam{};
@@ -2207,8 +2218,16 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw
 	ROS_INFO_STREAM("pthread_setschedparam() returned " << rc
 			<< " priority = " << schedParam.sched_priority
 			<< " errno = " << errno << " (" << strerror(errno) << ")");
-	pthread_setname_np(pthread_self(), "hwi_main_loop");
+	if (pthread_setname_np(pthread_self(), "hwi_main_loop"))
+	{
+		ROS_ERROR_STREAM("Error setting thread name hwi_main_loop " << errno);
+	}
 #endif
+	createInterfaces();
+	ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface Create Interfaces Ready.");
+	if (!initDevices(root_nh))
+		return false;
+	ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface Devices Ready.");
 
 	ROS_INFO_NAMED("frc_robot_interface", "FRCRobotInterface Ready.");
 
@@ -2446,206 +2465,6 @@ void FRCRobotInterface::custom_profile_write(int joint_id)
 	ts.setCustomProfileStatus(ps);
 }
 
-// Function responsible for reading from an FRC joystick object
-// and publishing that as an frc_msgs::JoystickState message
-void FRCRobotInterface::joystick_pub_function(int i)
-{
-	//ROS_INFO_STREAM(__PRETTY_FUNCTION__ << "(" << i << ")");
-	if (!realtime_pub_joysticks_[i])
-	{
-		ROS_ERROR_STREAM("Internal error in joystick_pub_function(" << i << ") : realtime_pub_joysticks_[i] == nullptr");
-		return;
-	}
-	if (realtime_pub_joysticks_[i]->trylock())
-	{
-		//ROS_INFO_STREAM("The joystick publisher " << i << " is unlocked");
-		auto &m = realtime_pub_joysticks_[i]->msg_;
-		m.header.stamp = ros::Time::now();
-
-		int raw_axis_count = joysticks_[i]->GetAxisCount();
-
-		m.leftStickX = raw_axis_count > 0 ? joysticks_[i]->GetRawAxis(0) : 0.0;
-		m.leftStickY = raw_axis_count > 1 ? joysticks_[i]->GetRawAxis(1) : 0.0;
-		m.leftTrigger = raw_axis_count > 2 ? joysticks_[i]->GetRawAxis(2) : 0.0;
-		m.rightTrigger = raw_axis_count > 3 ? joysticks_[i]->GetRawAxis(3) : 0.0;
-		m.rightStickX = raw_axis_count > 4 ? joysticks_[i]->GetRawAxis(4) : 0.0;
-		m.rightStickY = raw_axis_count > 5 ? joysticks_[i]->GetRawAxis(5) : 0.0;
-
-		int raw_button_count = joysticks_[i]->GetButtonCount();
-
-		m.buttonAButton		= raw_button_count > 0 ? joysticks_[i]->GetRawButton(1) : false;
-		m.buttonAPress		= raw_button_count > 0 ? joysticks_[i]->GetRawButtonPressed(1) : false;
-		m.buttonARelease	= raw_button_count > 0 ? joysticks_[i]->GetRawButtonReleased(1) : false;
-		m.buttonBButton		= raw_button_count > 1 ? joysticks_[i]->GetRawButton(2) : false;
-		m.buttonBPress		= raw_button_count > 1 ? joysticks_[i]->GetRawButtonPressed(2) : false;
-		m.buttonBRelease	= raw_button_count > 1 ? joysticks_[i]->GetRawButtonReleased(2) : false;
-		m.buttonXButton		= raw_button_count > 2 ? joysticks_[i]->GetRawButton(3) : false;
-		m.buttonXPress		= raw_button_count > 2 ? joysticks_[i]->GetRawButtonPressed(3) : false;
-		m.buttonXRelease	= raw_button_count > 2 ? joysticks_[i]->GetRawButtonReleased(3) : false;
-		m.buttonYButton		= raw_button_count > 3 ? joysticks_[i]->GetRawButton(4) : false;
-		m.buttonYPress		= raw_button_count > 3 ? joysticks_[i]->GetRawButtonPressed(4) : false;
-		m.buttonYRelease	= raw_button_count > 3 ? joysticks_[i]->GetRawButtonReleased(4) : false;
-		m.bumperLeftButton	= raw_button_count > 4 ? joysticks_[i]->GetRawButton(5) : false;
-		m.bumperLeftPress	= raw_button_count > 4 ? joysticks_[i]->GetRawButtonPressed(5) : false;
-		m.bumperLeftRelease	= raw_button_count > 4 ? joysticks_[i]->GetRawButtonReleased(5) : false;
-		m.bumperRightButton	= raw_button_count > 5 ? joysticks_[i]->GetRawButton(6) : false;
-		m.bumperRightPress	= raw_button_count > 5 ? joysticks_[i]->GetRawButtonPressed(6) : false;
-		m.bumperRightRelease= raw_button_count > 5 ? joysticks_[i]->GetRawButtonReleased(6) : false;
-		m.buttonBackButton	= raw_button_count > 6 ? joysticks_[i]->GetRawButton(7) : false;
-		m.buttonBackPress	= raw_button_count > 6 ? joysticks_[i]->GetRawButtonPressed(7) : false;
-		m.buttonBackRelease	= raw_button_count > 6 ? joysticks_[i]->GetRawButtonReleased(7) : false;
-		m.buttonStartButton = raw_button_count > 7 ? joysticks_[i]->GetRawButton(8) : false;
-		m.buttonStartPress	= raw_button_count > 7 ? joysticks_[i]->GetRawButtonPressed(8) : false;
-		m.buttonStartRelease= raw_button_count > 7 ? joysticks_[i]->GetRawButtonReleased(8) : false;
-		m.stickLeftButton	= raw_button_count > 8 ? joysticks_[i]->GetRawButton(9) : false;
-		m.stickLeftPress	= raw_button_count > 8 ? joysticks_[i]->GetRawButtonPressed(9) : false;
-		m.stickLeftRelease	= raw_button_count > 8 ? joysticks_[i]->GetRawButtonReleased(9) : false;
-		m.stickRightButton	= raw_button_count > 9 ? joysticks_[i]->GetRawButton(10) : false;
-		m.stickRightPress	= raw_button_count > 9 ? joysticks_[i]->GetRawButtonPressed(10) : false;
-		m.stickRightRelease	= raw_button_count > 9 ? joysticks_[i]->GetRawButtonReleased(10) : false;
-
-		if (joysticks_[i]->GetPOVCount() > 0)
-		{
-			bool joystick_up = false;
-			bool joystick_down = false;
-			bool joystick_left = false;
-			bool joystick_right = false;
-			switch (joysticks_[i]->GetPOV(0))
-			{
-				case 0 :
-					joystick_up = true;
-					break;
-				case 45:
-					joystick_up = true;
-					joystick_right = true;
-					break;
-				case 90:
-					joystick_right = true;
-					break;
-				case 135:
-					joystick_down = true;
-					joystick_right = true;
-					break;
-				case 180:
-					joystick_down = true;
-					break;
-				case 225:
-					joystick_down = true;
-					joystick_left = true;
-					break;
-				case 270:
-					joystick_left = true;
-					break;
-				case 315:
-					joystick_up = true;
-					joystick_left = true;
-					break;
-			}
-
-			m.directionUpButton = joystick_up;
-			m.directionUpPress = joystick_up && !joystick_up_last_[i];
-			m.directionUpRelease = !joystick_up && joystick_up_last_[i];
-
-			m.directionDownButton = joystick_down;
-			m.directionDownPress = joystick_down && !joystick_down_last_[i];
-			m.directionDownRelease = !joystick_down && joystick_down_last_[i];
-
-			m.directionLeftButton = joystick_left;
-			m.directionLeftPress = joystick_left && !joystick_left_last_[i];
-			m.directionLeftRelease = !joystick_left && joystick_left_last_[i];
-
-			m.directionRightButton = joystick_right;
-			m.directionRightPress = joystick_right && !joystick_right_last_[i];
-			m.directionRightRelease = !joystick_right && joystick_right_last_[i];
-
-			joystick_up_last_[i] = joystick_up;
-			joystick_down_last_[i] = joystick_down;
-			joystick_left_last_[i] = joystick_left;
-			joystick_right_last_[i] = joystick_right;
-
-		}
-		realtime_pub_joysticks_[i]->unlockAndPublish();
-	}
-}
-
-void FRCRobotInterface::button_box_pub_function(int i)
-{
-	//ROS_INFO_STREAM(__PRETTY_FUNCTION__ << "(" << i << ")");
-	if (!realtime_pub_button_boxes_[i])
-	{
-		ROS_ERROR_STREAM("Internal error in joystick_pub_function(" << i << ") : realtime_pub_button_boxes_[i] == nullptr");
-		return;
-	}
-	if (realtime_pub_button_boxes_[i]->trylock())
-	{
-		//ROS_INFO_STREAM("The joystick publisher " << i << " is unlocked");
-		auto &m = realtime_pub_button_boxes_[i]->msg_;
-		m.header.stamp = ros::Time::now();
-
-		int raw_button_count = joysticks_[i]->GetButtonCount();
-		m.lockingSwitchButton		= raw_button_count > 0	? joysticks_[i]->GetRawButton(1)	: false;
-		m.topRedButton				= raw_button_count > 1	? joysticks_[i]->GetRawButton(2)	: false;
-		m.leftRedButton				= raw_button_count > 2	? joysticks_[i]->GetRawButton(3)	: false;
-		m.rightRedButton			= raw_button_count > 3	? joysticks_[i]->GetRawButton(4)	: false;
-		m.leftSwitchUpButton		= raw_button_count > 4	? joysticks_[i]->GetRawButton(5)	: false;
-		m.leftSwitchDownButton		= raw_button_count > 5	? joysticks_[i]->GetRawButton(6)	: false;
-		m.rightSwitchUpButton		= raw_button_count > 6	? joysticks_[i]->GetRawButton(7)	: false;
-		m.rightSwitchDownButton		= raw_button_count > 7	? joysticks_[i]->GetRawButton(8)	: false;
-		m.leftBlueButton			= raw_button_count > 8	? joysticks_[i]->GetRawButton(9)	: false;
-		m.rightBlueButton			= raw_button_count > 9	? joysticks_[i]->GetRawButton(10)	: false;
-		m.yellowButton				= raw_button_count > 10	? joysticks_[i]->GetRawButton(11)	: false;
-		m.leftGreenButton			= raw_button_count > 11	? joysticks_[i]->GetRawButton(12)	: false;
-		m.rightGreenButton			= raw_button_count > 12	? joysticks_[i]->GetRawButton(13)	: false;
-		m.topGreenButton			= raw_button_count > 13	? joysticks_[i]->GetRawButton(14)	: false;
-		m.bottomGreenButton			= raw_button_count > 14	? joysticks_[i]->GetRawButton(15)	: false;
-		m.bottomSwitchUpButton		= raw_button_count > 15	? joysticks_[i]->GetRawButton(16)	: false;
-		m.bottomSwitchDownButton	= raw_button_count > 16	? joysticks_[i]->GetRawButton(17)	: false;
-
-		// Creating press booleans by comparing the last publish to the current one
-		m.lockingSwitchPress		= !prev_button_box_state_[i].lockingSwitchButton	&& m.lockingSwitchButton;
-		m.topRedPress				= !prev_button_box_state_[i].topRedButton			&& m.topRedButton;
-		m.leftRedPress				= !prev_button_box_state_[i].leftRedButton			&& m.leftRedButton;
-		m.rightRedPress				= !prev_button_box_state_[i].rightRedButton			&& m.rightRedButton;
-		m.leftSwitchUpPress			= !prev_button_box_state_[i].leftSwitchUpButton		&& m.leftSwitchUpButton;
-		m.leftSwitchDownPress		= !prev_button_box_state_[i].leftSwitchDownButton	&& m.leftSwitchDownButton;
-		m.rightSwitchUpPress		= !prev_button_box_state_[i].rightSwitchUpButton	&& m.rightSwitchUpButton;
-		m.rightSwitchDownPress		= !prev_button_box_state_[i].rightSwitchDownButton	&& m.rightSwitchDownButton;
-		m.leftBluePress				= !prev_button_box_state_[i].leftBlueButton			&& m.leftBlueButton;
-		m.rightBluePress			= !prev_button_box_state_[i].rightBlueButton		&& m.rightBlueButton;
-		m.yellowPress				= !prev_button_box_state_[i].yellowButton			&& m.yellowButton;
-		m.leftGreenPress			= !prev_button_box_state_[i].leftGreenButton		&& m.leftGreenButton;
-		m.rightGreenPress			= !prev_button_box_state_[i].rightGreenButton		&& m.rightGreenButton;
-		m.topGreenPress				= !prev_button_box_state_[i].topGreenButton			&& m.topGreenButton;
-		m.bottomGreenPress			= !prev_button_box_state_[i].bottomGreenButton		&& m.bottomGreenButton;
-		m.bottomSwitchUpPress		= !prev_button_box_state_[i].bottomSwitchUpButton	&& m.bottomSwitchUpButton;
-		m.bottomSwitchDownPress		= !prev_button_box_state_[i].bottomSwitchDownButton	&& m.bottomSwitchDownButton;
-
-		// Creating release booleans by comparing the last publish to the current one
-		m.lockingSwitchRelease		= prev_button_box_state_[i].lockingSwitchButton		&& !m.lockingSwitchButton;
-		m.topRedRelease				= prev_button_box_state_[i].topRedButton			&& !m.topRedButton;
-		m.leftRedRelease			= prev_button_box_state_[i].leftRedButton			&& !m.leftRedButton;
-		m.rightRedRelease			= prev_button_box_state_[i].rightRedButton			&& !m.rightRedButton;
-		m.leftSwitchUpRelease		= prev_button_box_state_[i].leftSwitchUpButton		&& !m.leftSwitchUpButton;
-		m.leftSwitchDownRelease		= prev_button_box_state_[i].leftSwitchDownButton	&& !m.leftSwitchDownButton;
-		m.rightSwitchUpRelease		= prev_button_box_state_[i].rightSwitchUpButton		&& !m.rightSwitchUpButton;
-		m.rightSwitchDownRelease	= prev_button_box_state_[i].rightSwitchDownButton	&& !m.rightSwitchDownButton;
-		m.leftBlueRelease			= prev_button_box_state_[i].leftBlueButton			&& !m.leftBlueButton;
-		m.rightBlueRelease			= prev_button_box_state_[i].rightBlueButton			&& !m.rightBlueButton;
-		m.yellowRelease				= prev_button_box_state_[i].yellowButton			&& !m.yellowButton;
-		m.leftGreenRelease			= prev_button_box_state_[i].leftGreenButton			&& !m.leftGreenButton;
-		m.rightGreenRelease			= prev_button_box_state_[i].rightGreenButton		&& !m.rightGreenButton;
-		m.topGreenRelease			= prev_button_box_state_[i].topGreenButton			&& !m.topGreenButton;
-		m.bottomGreenRelease		= prev_button_box_state_[i].bottomGreenButton		&& !m.bottomGreenButton;
-		m.bottomSwitchUpRelease		= prev_button_box_state_[i].bottomSwitchUpButton	&& !m.bottomSwitchUpButton;
-		m.bottomSwitchDownRelease	= prev_button_box_state_[i].bottomSwitchDownButton	&& !m.bottomSwitchDownButton;
-
-		realtime_pub_button_boxes_[i]->unlockAndPublish();
-
-		// Save previous state to monitor button state changes in next iteration
-		prev_button_box_state_[i] = m;
-	}
-}
-
 void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 {
 #if 0
@@ -2678,7 +2497,7 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 	{
 		read_tracer_.start_unique("OneIteration");
 		//check if sufficient time has passed since last read
-		if(ros::Time::now().toSec() - t_prev_robot_iteration_ > (1./robot_iteration_hz_))
+		if(time.toSec() - t_prev_robot_iteration_ > (1./robot_iteration_hz_))
 		{
 			robot_->OneIteration();
 
@@ -2686,38 +2505,44 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		}
 
 		read_tracer_.start_unique("joysticks");
-		//check if sufficient time has passed since last read
-		//ROS_INFO_STREAM("Starting joystick pub");
-		if (joystick_mutex_.try_lock())
+		if(time.toSec() - t_prev_joystick_read_ > (1./joystick_read_hz_))
 		{
-			//ROS_INFO_STREAM("Joystick mutex is locked");
-			if(ros::Time::now().toSec() - t_prev_joystick_read_ > (1./joystick_read_hz_))
+			// Only update the time count if all joystick state date is updated
+			// This will force another update next time through this loop if some
+			// of the joystick data wasn't published due to the sim layer holding
+			// the mutex for them.
+			bool updated_all = true;
+			for (size_t joystick = 0; joystick < num_joysticks_; joystick++)
 			{
-				//ROS_INFO_STREAM("The timing on the joystick stuff is fine");
-				t_prev_joystick_read_ += 1./joystick_read_hz_;
-
-				for (size_t i = 0; i < num_joysticks_; i++)
+				// In sim, the joystick input code will lock this mutex while
+				// it is writing the sim joystick values. If that is in progress
+				// skip the read of the joystick data this iteration
+				std::unique_lock<std::mutex> l(*(joystick_sim_write_mutex_[joystick]), std::try_to_lock);
+				if (l.owns_lock())
 				{
-					auto it = joystick_fn_map_.find(joystick_types_[i]);
-					if (it == joystick_fn_map_.end())
-					{
-						ROS_ERROR_STREAM("Internal error - could not find function for joystick pub type " << joystick_types_[i]);
-					}
-					else
-					{
-						it->second(i);
-					}
+					joystick_state_.clear();
+					for (auto i = 0; i < joysticks_[joystick]->GetAxisCount(); i++)
+						joystick_state_[joystick].addAxis(joysticks_[joystick]->GetRawAxis(i));
+					for (auto i = 0; i < joysticks_[joystick]->GetButtonCount(); i++)
+						joystick_state_[joystick].addButton(joysticks_[joystick]->GetRawButton(i+1));
+					for (auto i = 0; i < joysticks_[joystick]->GetPOVCount(); i++)
+						joystick_state_[joystick].addPOV(joysticks_[joystick]->GetPOV(i));
+				}
+				else
+				{
+					updated_all = false;
 				}
 			}
-			joystick_mutex_.unlock();
+			if (updated_all)
+				t_prev_joystick_read_ += 1./joystick_read_hz_;
 		}
 
 		int32_t status = 0;
 		read_tracer_.start_unique("match data");
+		//check if sufficient time has passed since last read
 		if (match_data_mutex_.try_lock())
 		{
-			//check if sufficient time has passed since last read
-			if(ros::Time::now().toSec() - t_prev_match_data_read_ > (1./match_data_read_hz_))
+			if(time.toSec() - t_prev_match_data_read_ > (1./match_data_read_hz_))
 			{
 				t_prev_match_data_read_ += 1./match_data_read_hz_;
 
@@ -2793,9 +2618,9 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 
 		read_tracer_.start_unique("robot controller data");
 		//check if sufficient time has passed since last read
-		if(ros::Time::now().toSec() - t_prev_robot_controller_read_ > (1/robot_controller_read_hz_))
+		if(time.toSec() - t_prev_robot_controller_read_ > (1./robot_controller_read_hz_))
 		{
-			t_prev_robot_controller_read_ += 1/robot_controller_read_hz_;
+			t_prev_robot_controller_read_ += 1./robot_controller_read_hz_;
 
 			status = 0;
 			robot_controller_state_.SetFPGAVersion(HAL_GetFPGAVersion(&status));
@@ -2901,7 +2726,9 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 	{
 		if (can_ctre_mc_local_hardwares_[joint_id])
 		{
-			std::lock_guard<std::mutex> l(*ctre_mc_read_state_mutexes_[joint_id]);
+			std::unique_lock<std::mutex> l(*ctre_mc_read_state_mutexes_[joint_id], std::try_to_lock);
+			if (!l.owns_lock())
+				continue;
 			auto &ts   = talon_state_[joint_id];
 			auto &trts = ctre_mc_read_thread_states_[joint_id];
 
@@ -3064,8 +2891,11 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 	{
 		if (compressor_local_updates_[i])
 		{
-			std::lock_guard<std::mutex> l(*pcm_read_thread_mutexes_[i]);
-			pcm_state_[i] = *pcm_read_thread_state_[i];
+			std::unique_lock<std::mutex> l(*pcm_read_thread_mutexes_[i], std::try_to_lock);
+			if (l.owns_lock())
+			{
+				pcm_state_[i] = *pcm_read_thread_state_[i];
+			}
 		}
 	}
 
@@ -3074,8 +2904,11 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 	{
 		if (pdp_locals_[i])
 		{
-			std::lock_guard<std::mutex> l(*pdp_read_thread_mutexes_[i]);
-			pdp_state_[i] = *pdp_read_thread_state_[i];
+			std::unique_lock<std::mutex> l(*pdp_read_thread_mutexes_[i], std::try_to_lock);
+			if (l.owns_lock())
+			{
+				pdp_state_[i] = *pdp_read_thread_state_[i];
+			}
 		}
 	}
 	read_tracer_.report(60);
@@ -3084,14 +2917,13 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period)
 {
 	// Was the robot enabled last time write was run?
-	static bool last_robot_enabled = false;
 	bool robot_enabled = false;
 	{
 		std::unique_lock<std::mutex> l(match_data_mutex_, std::try_to_lock);
 		if (l.owns_lock())
 			robot_enabled = match_data_.isEnabled();
 		else
-			robot_enabled = last_robot_enabled;
+			robot_enabled = last_robot_enabled_;
 	}
 
 	for (size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
@@ -3558,7 +3390,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			if (safeTalonCall(victor->SetSelectedSensorPosition(sensor_position / radians_scale, pidIdx, timeoutMs),
 						"SetSelectedSensorPosition"))
 			{
-				ROS_INFO_STREAM_THROTTLE(2, "Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " selected sensor position");
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " selected sensor position");
 			}
 			else
 			{
@@ -3995,7 +3827,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			ts.setSetpoint(tc.get());
 			ts.setDemand1Type(tc.getDemand1Type());
 			ts.setDemand1Value(tc.getDemand1Value());
-			if (last_robot_enabled)
+			if (last_robot_enabled_)
 			{
 				// On the switch from robot enabled to robot disabled, set Talons to ControlMode::Disabled
 				// call resetMode() to queue up a change back to the correct mode / setpoint
@@ -4021,7 +3853,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		}
 		talon_command_[joint_id].unlock();
 	}
-	last_robot_enabled = robot_enabled;
+	last_robot_enabled_ = robot_enabled;
 
 	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
 	{

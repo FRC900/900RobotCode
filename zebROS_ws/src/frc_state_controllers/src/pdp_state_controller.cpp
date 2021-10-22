@@ -160,9 +160,8 @@ void PDPStateListenerController::commandCB(const frc_msgs::PDPDataConstPtr &msg)
 	command_buffer_.writeFromNonRT(data);
 }
 
-
-
 } // namespace state_listener_controller
 
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(pdp_state_controller::PDPStateController, controller_interface::ControllerBase)
 PLUGINLIB_EXPORT_CLASS(state_listener_controller::PDPStateListenerController, controller_interface::ControllerBase)

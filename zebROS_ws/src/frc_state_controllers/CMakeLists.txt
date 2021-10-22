@@ -126,7 +126,9 @@ include_directories(
 
 ## Declare a C++ library
 add_library(frc_state_controller
+	src/button_box_state_controller.cpp
 	src/joint_mode_state_controller.cpp
+	src/joystick_state_controller.cpp
    	src/pcm_state_controller.cpp
    	src/pdp_state_controller.cpp
 	src/match_state_controller.cpp

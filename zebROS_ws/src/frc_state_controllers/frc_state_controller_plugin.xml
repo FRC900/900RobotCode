@@ -1,5 +1,15 @@
 <library path="lib/libfrc_state_controller">
 
+	<class name="button_box_state_controller/ButtonBoxStateController" type="button_box_state_controller::ButtonBoxStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read button box info from hardware interface and publish it
+		</description>
+	</class>
+	<class name="joystick_state_controller/JoystickStateController" type="joystick_state_controller::JoystickStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read joystick info from hardware interface and publish it
+		</description>
+	</class>
 	<class name="joint_mode_state_controller/JointModeStateController" type="joint_mode_state_controller::JointModeStateController" base_class_type="controller_interface::ControllerBase">
 		<description>
 			Read joint_mode info from hardware interface and publish it

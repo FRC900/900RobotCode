@@ -4,6 +4,9 @@ generic_hw_control_loop:
   loop_hz: 100
   cycle_time_error_threshold: 0.01
   #some processes have lower frequencies than the main control loop
+  ctre_mc_read_hz: 100
+  pcm_read_hz: 20
+  pdp_read_hz: 20
   robot_iteration_hz: 20
   joystick_read_hz: 50
   match_data_read_hz: 2
@@ -39,9 +42,9 @@ hardware_interface:
        - {name: green_led, type: digital_output, dio_channel: 4, local: true}
 
        - {name: joystick0, type: joystick, id: 0, local: true}
-       - {name: joystick_rumble0, type: rumble, rumble_port: 0}
-       - {name: button_box, type: button_box, id: 1, local: true}
+       - {name: button_box, type: joystick, id: 1, local: true}
        - {name: joystick2, type: joystick, id: 2, local: true}
+       - {name: joystick_rumble0, type: rumble, rumble_port: 0}
        - {name: joystick_rumble2, type: rumble, rumble_port: 2}
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
@@ -99,3 +102,19 @@ robot_controller_state_controller:
 green_led_controller:
     type: position_controllers/JointPositionController
     joint: green_led
+
+joystick_controller:
+    type: joystick_state_controller/JoystickStateController
+    name: joystick0
+    publish_rate: 50
+
+joystick2_controller:
+    type: joystick_state_controller/JoystickStateController
+    name: joystick2
+    publish_rate: 50
+
+button_box_controller:
+    type: joystick_state_controller/JoystickStateController
+    name: button_box
+    publish_rate: 50
+

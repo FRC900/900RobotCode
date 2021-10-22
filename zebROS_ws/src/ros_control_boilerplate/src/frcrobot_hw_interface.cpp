@@ -292,43 +292,6 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
                 talon_orchestras_.push_back(std::make_shared<ctre::phoenix::music::Orchestra>());
 	}
 
-	const double t_now = ros::Time::now().toSec();
-
-	t_prev_robot_iteration_ = t_now;
-	if(! root_nh.getParam("generic_hw_control_loop/robot_iteration_hz", robot_iteration_hz_)) {
-		ROS_ERROR("Failed to read robot_iteration_hz in frcrobot_hw_interface");
-		robot_iteration_hz_ = 20;
-	}
-
-	t_prev_joystick_read_ = t_now;
-	if(! root_nh.getParam("generic_hw_control_loop/joystick_read_hz", joystick_read_hz_)) {
-		ROS_ERROR("Failed to read joystick_read_hz in frcrobot_hw_interface");
-		joystick_read_hz_ = 50;
-	}
-
-	t_prev_match_data_read_ = t_now;
-	if(! root_nh.getParam("generic_hw_control_loop/match_data_read_hz", match_data_read_hz_)) {
-		ROS_ERROR("Failed to read match_data_read_hz in frcrobot_hw_interface");
-		match_data_read_hz_ = 2;
-	}
-
-	t_prev_robot_controller_read_ = t_now;
-	if(! root_nh.getParam("generic_hw_control_loop/robot_controller_read_hz", robot_controller_read_hz_)) {
-		ROS_ERROR("Failed to read robot_controller_read_hz in frcrobot_hw_interface");
-		robot_controller_read_hz_ = 20;
-	}
-
-#ifdef __linux__
-	struct sched_param schedParam{};
-
-	schedParam.sched_priority = sched_get_priority_min(SCHED_RR);
-	auto rc = pthread_setschedparam(pthread_self(), SCHED_RR, &schedParam);
-	ROS_INFO_STREAM("pthread_setschedparam() returned " << rc
-			<< " priority = " << schedParam.sched_priority
-			<< " errno = " << errno << " (" << strerror(errno) << ")");
-	pthread_setname_np(pthread_self(), "hwi_main_loop");
-#endif
-
 	ROS_INFO_STREAM(robot_hw_nh.getNamespace() << " : FRCRobotHWInterface Ready.");
 	HAL_SendError(true, 0, false, std::string("(Not an error) " + robot_hw_nh.getNamespace() + " : FRCRobotHWInterface Ready").c_str(), "", "", true);
 	return true;
