@@ -268,7 +268,6 @@ int main(int argc, char **argv) {
   nh_.param("tf_tolerance", tmp_tolerance, 0.1);
   tf_tolerance.fromSec(tmp_tolerance);
 
-
   // TODO - I think this fails if a beacon is specified as an int
   for (size_t i = 0; i < (unsigned) xml_beacons.size(); i++) {
     PositionBeacon b {xml_beacons[i][0], xml_beacons[i][1], xml_beacons[i][2]};

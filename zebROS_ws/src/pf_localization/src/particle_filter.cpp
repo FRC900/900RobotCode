@@ -26,8 +26,8 @@ ParticleFilter::ParticleFilter(const WorldModel& w,
                                double ns, double rs, size_t n) :
                                num_particles_(n),
                                rng_(std::mt19937(0)),
-                               rot_dist_(0, rs),
                                pos_dist_(0, ns),
+                               rot_dist_(0, rs),
                                world_(w) {
   init(x_min, x_max, y_min, y_max);
 }
@@ -129,8 +129,8 @@ bool ParticleFilter::motion_update(double delta_x, double delta_y, double delta_
   for (Particle& p : particles_) {
     // p.x_ += delta_x;
     // p.y_ += delta_y;
-    double abs_delta_x = delta_x * cos(p.rot_) + delta_y * sin(p.rot_);
-    double abs_delta_y = delta_x * sin(p.rot_) + delta_y * cos(p.rot_);
+    const double abs_delta_x = delta_x * cos(p.rot_) + delta_y * sin(p.rot_);
+    const double abs_delta_y = delta_x * sin(p.rot_) + delta_y * cos(p.rot_);
     // TODO - do we really want to return here, or should it try to
     // motion update the rest of the particles?
     // Maybe split the check - if d_x or d_y are inf/nan, nothing we can do

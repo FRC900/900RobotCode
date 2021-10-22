@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-class PositionBeacon;
+struct PositionBeacon;
 struct BeaconBase {
 	const std::string type_;
 	BeaconBase(const std::string &type) : type_(type) {}
@@ -28,7 +28,7 @@ struct BeaconBase {
 struct PositionBeacon : BeaconBase {
   const double x_;
   const double y_;
-  PositionBeacon(double x, double y, const std::string& type) : x_(x), y_(y), BeaconBase(type) {}
+  PositionBeacon(double x, double y, const std::string& type) : BeaconBase(type), x_(x), y_(y) {}
   std::vector<double> distances(const std::vector<PositionBeacon>& rel) const override
   {
 	  std::vector<double> res;
@@ -44,7 +44,7 @@ std::ostream& operator<<(std::ostream &os, const PositionBeacon& b);
 
 struct BearingBeacon : BeaconBase {
   const double angle_;
-  BearingBeacon(double x, double y, const std::string& type) : angle_(atan2(y, x)), BeaconBase(type) {}
+  BearingBeacon(double x, double y, const std::string& type) : BeaconBase(type), angle_(atan2(y, x)) {}
   std::vector<double> distances(const std::vector<PositionBeacon>& rel) const override
   {
 	  std::vector<double> res;

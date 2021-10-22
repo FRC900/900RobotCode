@@ -60,7 +60,7 @@ std::vector<PositionBeacon> WorldModel::single_particle_relative(const Particle&
 
 //Uses hungarian algorithm to pair particle relative beacons and robot relative beacons and returns the total error
 //(sum of distance errors from particle to robot beacons)
-double WorldModel::total_distance(const Particle& p, const std::vector<std::shared_ptr<BeaconBase>>& m) {
+double WorldModel::total_distance(const Particle& p, const std::vector<std::shared_ptr<BeaconBase>>& m) const {
   // Create mapping of <type of detection, vector of detections of that type>
   // Use this to handle mapping from a set of detections of a given type to the
   // most likely set of beacons they line up with

@@ -9,12 +9,12 @@
 #define CHECK_PARTICLES(o) o->check_particles(__FILE__, __LINE__);
 class ParticleFilter {
 private:
-  size_t num_particles_;
+  const size_t num_particles_;
   std::mt19937 rng_;
   std::normal_distribution<double> pos_dist_;
   std::normal_distribution<double> rot_dist_;
   std::vector<Particle> particles_;
-  WorldModel world_;
+  const WorldModel world_;
   void normalize();
   void init(const double x_min, const double x_max, const double y_min, const double y_max);
   void constrain_particles();

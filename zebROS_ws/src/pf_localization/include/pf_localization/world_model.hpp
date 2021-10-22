@@ -25,7 +25,7 @@ public:
   //bool is_in_world(const Particle& p) const;
   void constrain_to_world(Particle& p) const;
   void init_particle(Particle& p, double x_min, double x_max, double y_min, double y_max);
-  double total_distance(const Particle& p, const std::vector<std::shared_ptr<BeaconBase>>& m);
+  double total_distance(const Particle& p, const std::vector<std::shared_ptr<BeaconBase>>& m) const;
 };
 
 #endif
