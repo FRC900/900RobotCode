@@ -456,7 +456,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 
 		// Count sequential CAN errors
 		size_t can_error_count_{0};
-		bool safeTalonCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name);
+		bool safeTalonCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name, const int talon_id);
 
 		std::vector<std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController>> ctre_mcs_;
 

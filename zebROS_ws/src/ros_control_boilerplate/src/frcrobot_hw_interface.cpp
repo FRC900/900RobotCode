@@ -709,7 +709,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 			if (cc.ledOutputChanged(led_channel, percent_output) &&
 				canifier_convert_.LEDChannel(led_channel, ctre_led_channel))
 			{
-				if (safeTalonCall(canifier->SetLEDOutput(percent_output, ctre_led_channel), "canifier->SetLEDOutput"))
+				if (safeTalonCall(canifier->SetLEDOutput(percent_output, ctre_led_channel), "canifier->SetLEDOutput", cs.getCANId()))
 				{
 					cs.setLEDOutput(led_channel, percent_output);
 					ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
@@ -730,7 +730,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 			if (cc.generalPinOutputChanged(general_pin, value, output_enable) &&
 					canifier_convert_.generalPin(general_pin, ctre_general_pin))
 			{
-				if (safeTalonCall(canifier->SetGeneralOutput(ctre_general_pin, value, output_enable), "canifier->SetGeneralOutput"))
+				if (safeTalonCall(canifier->SetGeneralOutput(ctre_general_pin, value, output_enable), "canifier->SetGeneralOutput", cs.getCANId()))
 				{
 					cs.setGeneralPinOutput(general_pin, value);
 					cs.setGeneralPinOutputEnable(general_pin, output_enable);
@@ -753,7 +753,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		if (cc.quadraturePositionChanged(position))
 		{
 			const double radians_scale = getConversionFactor(cs.getEncoderTicksPerRotation(), hardware_interface::FeedbackDevice_QuadEncoder, hardware_interface::TalonMode_Position) * cs.getConversionFactor();
-			if (safeTalonCall(canifier->SetQuadraturePosition(position / radians_scale), "canifier->SetQuadraturePosition"))
+			if (safeTalonCall(canifier->SetQuadraturePosition(position / radians_scale), "canifier->SetQuadraturePosition", cs.getCANId()))
 			{
 				// Don't set state encoder position, let it be read at the next read() call
 				ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
@@ -770,7 +770,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		if (cc.velocityMeasurementPeriodChanged(period) &&
 			canifier_convert_.velocityMeasurementPeriod(period, ctre_period))
 		{
-			if (safeTalonCall(canifier->ConfigVelocityMeasurementPeriod(ctre_period), "canifier->ConfigVelocityMeasurementPeriod"))
+			if (safeTalonCall(canifier->ConfigVelocityMeasurementPeriod(ctre_period), "canifier->ConfigVelocityMeasurementPeriod", cs.getCANId()))
 			{
 				ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
 						<< " : Set velocity measurement Period to " << period);
@@ -785,7 +785,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		int window;
 		if (cc.velocityMeasurementWindowChanged(window))
 		{
-			if (safeTalonCall(canifier->ConfigVelocityMeasurementWindow(window), "canifier->ConfigVelocityMeasurementWindow"))
+			if (safeTalonCall(canifier->ConfigVelocityMeasurementWindow(window), "canifier->ConfigVelocityMeasurementWindow", cs.getCANId()))
 			{
 				ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
 						<< " : Set velocity measurement window to " << window);
@@ -800,7 +800,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		bool clear_position_on_limit_f;
 		if (cc.clearPositionOnLimitFChanged(clear_position_on_limit_f))
 		{
-			if (safeTalonCall(canifier->ConfigClearPositionOnLimitF(clear_position_on_limit_f), "canifier->ConfigClearPositionOnLimitF"))
+			if (safeTalonCall(canifier->ConfigClearPositionOnLimitF(clear_position_on_limit_f), "canifier->ConfigClearPositionOnLimitF", cs.getCANId()))
 			{
 				ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
 						<< " : Set clear position on limit F to " << clear_position_on_limit_f);
@@ -815,7 +815,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		bool clear_position_on_limit_r;
 		if (cc.clearPositionOnLimitRChanged(clear_position_on_limit_r))
 		{
-			if (safeTalonCall(canifier->ConfigClearPositionOnLimitR(clear_position_on_limit_r), "canifier->ConfigClearPositionOnLimitR"))
+			if (safeTalonCall(canifier->ConfigClearPositionOnLimitR(clear_position_on_limit_r), "canifier->ConfigClearPositionOnLimitR", cs.getCANId()))
 			{
 				ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
 						<< " : Set clear position on limit R to " << clear_position_on_limit_r);
@@ -830,7 +830,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		bool clear_position_on_quad_idx;
 		if (cc.clearPositionOnQuadIdxChanged(clear_position_on_quad_idx))
 		{
-			if (safeTalonCall(canifier->ConfigClearPositionOnQuadIdx(clear_position_on_quad_idx), "canifier->ConfigClearPositionOnQuadIdx"))
+			if (safeTalonCall(canifier->ConfigClearPositionOnQuadIdx(clear_position_on_quad_idx), "canifier->ConfigClearPositionOnQuadIdx", cs.getCANId()))
 			{
 				ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
 						<< " : Set clear position on quad idx to " << clear_position_on_quad_idx);
@@ -850,7 +850,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 			if (cc.pwmOutputEnableChanged(pwm_channel, output_enable) &&
 				canifier_convert_.PWMChannel(pwm_channel, ctre_pwm_channel))
 			{
-				if (safeTalonCall(canifier->EnablePWMOutput(ctre_pwm_channel, output_enable), "canifier->EnablePWMOutput"))
+				if (safeTalonCall(canifier->EnablePWMOutput(ctre_pwm_channel, output_enable), "canifier->EnablePWMOutput", cs.getCANId()))
 				{
 					ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
 							<< " : Set pwm channel " << pwm_channel << " output enable to " << static_cast<int>(output_enable));
@@ -871,7 +871,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 			if (cc.pwmOutputChanged(pwm_channel, output) &&
 				canifier_convert_.PWMChannel(pwm_channel, ctre_pwm_channel))
 			{
-				if (safeTalonCall(canifier->SetPWMOutput(ctre_pwm_channel, output), "canifier->SetPWMOutput"))
+				if (safeTalonCall(canifier->SetPWMOutput(ctre_pwm_channel, output), "canifier->SetPWMOutput", cs.getCANId()))
 				{
 					ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
 							<< " : Set pwm channel " << pwm_channel << " output to " << output);
@@ -892,7 +892,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 			if (cc.statusFramePeriodChanged(frame_id, period) &&
 				canifier_convert_.statusFrame(frame_id, ctre_frame_id))
 			{
-				if (safeTalonCall(canifier->SetStatusFramePeriod(ctre_frame_id, period), "canifier->SetStatusFramePeriod"))
+				if (safeTalonCall(canifier->SetStatusFramePeriod(ctre_frame_id, period), "canifier->SetStatusFramePeriod", cs.getCANId()))
 				{
 					ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
 							<< " : Set frame_id " << i << " status period to " << period);
@@ -913,7 +913,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 			if (cc.controlFramePeriodChanged(frame_id, period) &&
 				canifier_convert_.controlFrame(frame_id, ctre_frame_id))
 			{
-				if (safeTalonCall(canifier->SetControlFramePeriod(ctre_frame_id, period), "canifier->SetControlFramePeriod,"))
+				if (safeTalonCall(canifier->SetControlFramePeriod(ctre_frame_id, period), "canifier->SetControlFramePeriod", cs.getCANId()))
 				{
 					ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
 							<< " : Set frame_id " << i << " control period to " << period);
@@ -928,7 +928,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 
 		if (cc.clearStickyFaultsChanged())
 		{
-			if (safeTalonCall(canifier->ClearStickyFaults(), "canifier->ClearStickyFaults()"))
+			if (safeTalonCall(canifier->ClearStickyFaults(), "canifier->ClearStickyFaults()", cs.getCANId()))
 			{
 				ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id] << " : cleared sticky faults");
 				// No corresponding status field
@@ -966,7 +966,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		double position;
 		if (cc.positionChanged(position))
 		{
-			if (safeTalonCall(cancoder->SetPosition(position / cs.getConversionFactor()), "cancoder->SetPosition"))
+			if (safeTalonCall(cancoder->SetPosition(position / cs.getConversionFactor()), "cancoder->SetPosition", cs.getDeviceNumber()))
 			{
 				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
 						<< " : Set position to " << position);
@@ -979,7 +979,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		}
 		if (cc.positionToAbsoluteChanged())
 		{
-			if (safeTalonCall(cancoder->SetPositionToAbsolute(), "cancoder->SetPositionToAbsolute"))
+			if (safeTalonCall(cancoder->SetPositionToAbsolute(), "cancoder->SetPositionToAbsolute", cs.getDeviceNumber()))
 			{
 				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
 						<< " : Set position to absolute");
@@ -995,7 +995,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		if (cc.velocityMeasPeriodChanged(velocity_meas_period) &&
 			cancoder_convert_.velocityMeasPeriod(velocity_meas_period, ctre_velocity_meas_period))
 		{
-			if (safeTalonCall(cancoder->ConfigVelocityMeasurementPeriod(ctre_velocity_meas_period), "cancoder->ConfigVelocityMeasurementPeriod"))
+			if (safeTalonCall(cancoder->ConfigVelocityMeasurementPeriod(ctre_velocity_meas_period), "cancoder->ConfigVelocityMeasurementPeriod", cs.getDeviceNumber()))
 			{
 				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
 						<< " : Set velocity measurement period to " << static_cast<int>(ctre_velocity_meas_period));
@@ -1010,7 +1010,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		int velocity_meas_window;
 		if (cc.velocityMeasWindowChanged(velocity_meas_window))
 		{
-			if (safeTalonCall(cancoder->ConfigVelocityMeasurementWindow(velocity_meas_window), "cancoder->ConfigVelocityMeasurementWindow"))
+			if (safeTalonCall(cancoder->ConfigVelocityMeasurementWindow(velocity_meas_window), "cancoder->ConfigVelocityMeasurementWindow", cs.getDeviceNumber()))
 			{
 				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
 						<< " : Set velocity measurement window to " << velocity_meas_window);
@@ -1026,7 +1026,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		if (cc.absoluteSensorRangeChanged(absolute_sensor_range) &&
 			cancoder_convert_.absoluteSensorRange(absolute_sensor_range, ctre_absolute_sensor_range))
 		{
-			if (safeTalonCall(cancoder->ConfigAbsoluteSensorRange(ctre_absolute_sensor_range), "cancoder->ConfigAbsoluteSensorRange"))
+			if (safeTalonCall(cancoder->ConfigAbsoluteSensorRange(ctre_absolute_sensor_range), "cancoder->ConfigAbsoluteSensorRange", cs.getDeviceNumber()))
 			{
 				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
 						<< " : Set absolute sensor range to " << absolute_sensor_range);
@@ -1041,7 +1041,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		double magnet_offset;
 		if (cc.magnetOffsetChanged(magnet_offset))
 		{
-			if (safeTalonCall(cancoder->ConfigMagnetOffset(magnet_offset), "cancoder->ConfigMagnetOffset"))
+			if (safeTalonCall(cancoder->ConfigMagnetOffset(magnet_offset), "cancoder->ConfigMagnetOffset", cs.getDeviceNumber()))
 			{
 				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
 						<< " : Set magnet offset to " << magnet_offset);
@@ -1058,7 +1058,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		if (cc.InitializationStrategyChanged(initialization_strategy) &&
 			cancoder_convert_.initializationStrategy(initialization_strategy, ctre_initialization_strategy))
 		{
-			if (safeTalonCall(cancoder->ConfigSensorInitializationStrategy(ctre_initialization_strategy), "cancoder->ConfigSensorInitializationStrategy"))
+			if (safeTalonCall(cancoder->ConfigSensorInitializationStrategy(ctre_initialization_strategy), "cancoder->ConfigSensorInitializationStrategy", cs.getDeviceNumber()))
 			{
 				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
 						<< " : Set sensor intitialization strategy to " << initialization_strategy);
@@ -1076,7 +1076,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		if (cc.feedbackCoefficientChanged(feedback_coefficient, unit_string, time_base) &&
 			cancoder_convert_.timeBase(time_base, ctre_time_base))
 		{
-			if (safeTalonCall(cancoder->ConfigFeedbackCoefficient(feedback_coefficient, unit_string, ctre_time_base), "cancoder->ConfigFeedbackCoefficient"))
+			if (safeTalonCall(cancoder->ConfigFeedbackCoefficient(feedback_coefficient, unit_string, ctre_time_base), "cancoder->ConfigFeedbackCoefficient", cs.getDeviceNumber()))
 			{
 				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
 						<< " : Set feedback coefficient to  " << feedback_coefficient << " " << unit_string << " " << time_base);
@@ -1093,7 +1093,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		bool direction;
 		if (cc.directionChanged(direction))
 		{
-			if (safeTalonCall(cancoder->ConfigSensorDirection(direction), "cancoder->ConfigSensorDirection"))
+			if (safeTalonCall(cancoder->ConfigSensorDirection(direction), "cancoder->ConfigSensorDirection", cs.getDeviceNumber()))
 			{
 				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
 						<< " : Set direction to " << direction);
@@ -1108,7 +1108,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		int sensor_data_status_frame_period;
 		if (cc.sensorDataStatusFramePeriodChanged(sensor_data_status_frame_period))
 		{
-			if (safeTalonCall(cancoder->SetStatusFramePeriod(ctre::phoenix::sensors::CANCoderStatusFrame::CANCoderStatusFrame_SensorData, sensor_data_status_frame_period), "cancoder->SetStatusFramePeriod(SensorData)"))
+			if (safeTalonCall(cancoder->SetStatusFramePeriod(ctre::phoenix::sensors::CANCoderStatusFrame::CANCoderStatusFrame_SensorData, sensor_data_status_frame_period), "cancoder->SetStatusFramePeriod(SensorData)", cs.getDeviceNumber()))
 			{
 				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
 						<< " : Set sensor data status frame period to " << sensor_data_status_frame_period);
@@ -1123,7 +1123,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		int vbat_and_faults_status_frame_period;
 		if (cc.sensorDataStatusFramePeriodChanged(vbat_and_faults_status_frame_period))
 		{
-			if (safeTalonCall(cancoder->SetStatusFramePeriod(ctre::phoenix::sensors::CANCoderStatusFrame::CANCoderStatusFrame_VbatAndFaults, vbat_and_faults_status_frame_period), "cancoder->SetStatusFramePeriod(VbatAndFaults)"))
+			if (safeTalonCall(cancoder->SetStatusFramePeriod(ctre::phoenix::sensors::CANCoderStatusFrame::CANCoderStatusFrame_VbatAndFaults, vbat_and_faults_status_frame_period), "cancoder->SetStatusFramePeriod(VbatAndFaults)", cs.getDeviceNumber()))
 			{
 				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
 						<< " : Set vbat and fault status frame period to " << vbat_and_faults_status_frame_period);
@@ -1137,7 +1137,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 
 		if (cc.clearStickyFaultsChanged())
 		{
-			if (safeTalonCall(cancoder->ClearStickyFaults(), "cancoder->ClearStickyFaults"))
+			if (safeTalonCall(cancoder->ClearStickyFaults(), "cancoder->ClearStickyFaults", cs.getDeviceNumber()))
 			{
 				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id] << " : Sticky faults cleared");
 			}
@@ -1299,7 +1299,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
             std::vector<std::string> instruments;
             if(oc.clearInstrumentsChanged())
             {
-                if(safeTalonCall(talon_orchestras_[i]->ClearInstruments(), "ClearInstruments"))
+                if(safeTalonCall(talon_orchestras_[i]->ClearInstruments(), "ClearInstruments", 0))
                 {
                     ROS_INFO_STREAM("Talon Orchestra " << talon_orchestra_names_[i] << " cleared instruments.");
                 }
@@ -1309,7 +1309,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
             }
             if(oc.instrumentsChanged(instruments))
             {
-                if(safeTalonCall(talon_orchestras_[i]->ClearInstruments(), "ClearInstruments"))
+                if(safeTalonCall(talon_orchestras_[i]->ClearInstruments(), "ClearInstruments", 0))
                 {
                     for(size_t j = 0; j < instruments.size(); j++)
                     {
@@ -1328,7 +1328,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
                         }
                         else if(can_ctre_mc_is_talon_fx_[can_index])
                         {
-                            if(safeTalonCall(talon_orchestras_[i]->AddInstrument(*(std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mcs_[can_index]))), "AddInstrument"))
+                            if(safeTalonCall(talon_orchestras_[i]->AddInstrument(*(std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mcs_[can_index]))), "AddInstrument", 0))
                                 ROS_INFO_STREAM("Talon Orchestra " <<  talon_orchestra_names_[i] << " added Falcon " << "falcon_name");
                             else{
                                 ROS_ERROR_STREAM("Failed to add instrument to orchestra");
@@ -1347,7 +1347,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
             }
             if(oc.musicChanged(music_file_path))
             {
-                if(safeTalonCall(talon_orchestras_[i]->LoadMusic(music_file_path), "LoadMusic"))
+                if(safeTalonCall(talon_orchestras_[i]->LoadMusic(music_file_path), "LoadMusic", 0))
                 {
                     os.setChirpFilePath(music_file_path);
                     ROS_INFO_STREAM("Talon Orchestra " << talon_orchestra_names_[i] << " loaded music at " << music_file_path);
@@ -1359,7 +1359,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
             }
             if(oc.pauseChanged())
             {
-                if(safeTalonCall(talon_orchestras_[i]->Pause(), "Pause"))
+                if(safeTalonCall(talon_orchestras_[i]->Pause(), "Pause", 0))
                 {
                     //os.setPaused();
                     ROS_INFO_STREAM("Talon Orchestra " << talon_orchestra_names_[i] << " pausing");
@@ -1371,7 +1371,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
             }
             if(oc.playChanged())
             {
-                if(safeTalonCall(talon_orchestras_[i]->Play(), "Play"))
+                if(safeTalonCall(talon_orchestras_[i]->Play(), "Play", 0))
                 {
                     //os.setPlaying();
                     ROS_INFO_STREAM("Talon Orchestra " << talon_orchestra_names_[i] << " playing");
@@ -1383,7 +1383,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
             }
             if(oc.stopChanged())
             {
-                if(safeTalonCall(talon_orchestras_[i]->Stop(), "Stop"))
+                if(safeTalonCall(talon_orchestras_[i]->Stop(), "Stop", 0))
                 {
                     //os.setStopped();
                     ROS_INFO_STREAM("Talon Orchestra " << talon_orchestra_names_[i] << " stopping");

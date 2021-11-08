@@ -151,41 +151,41 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 		const double radians_per_second_scale = getConversionFactor(encoder_ticks_per_rotation, encoder_feedback, hardware_interface::TalonMode_Velocity) * conversion_factor;
 
 		const double motor_output_percent = victor->GetMotorOutputPercent();
-		safeTalonCall(victor->GetLastError(), "GetMotorOutputPercent");
+		safeTalonCall(victor->GetLastError(), "GetMotorOutputPercent", state->getCANID());
 
 		ctre::phoenix::motorcontrol::Faults faults;
-		safeTalonCall(victor->GetFaults(faults), "GetFaults");
+		safeTalonCall(victor->GetFaults(faults), "GetFaults", state->getCANID());
 
 		// applied control mode - cached
 		// soft limit and limit switch override - cached
 
 		const double position = victor->GetSelectedSensorPosition(pidIdx) * radians_scale;
-		safeTalonCall(victor->GetLastError(), "GetSelectedSensorPosition");
+		safeTalonCall(victor->GetLastError(), "GetSelectedSensorPosition", state->getCANID());
 
 		const double velocity = victor->GetSelectedSensorVelocity(pidIdx) * radians_per_second_scale;
-		safeTalonCall(victor->GetLastError(), "GetSelectedSensorVelocity");
+		safeTalonCall(victor->GetLastError(), "GetSelectedSensorVelocity", state->getCANID());
 
 		double output_current = -1;
 		if (talon)
 		{
 			output_current = talon->GetOutputCurrent();
-			safeTalonCall(victor->GetLastError(), "GetOutputCurrent");
+			safeTalonCall(victor->GetLastError(), "GetOutputCurrent", state->getCANID());
 		}
 
 		ctre::phoenix::motorcontrol::StickyFaults sticky_faults;
-		safeTalonCall(victor->GetStickyFaults(sticky_faults), "GetStickyFault");
+		safeTalonCall(victor->GetStickyFaults(sticky_faults), "GetStickyFault", state->getCANID());
 
 		if (!skip_bus_voltage_temperature_)
 		{
 			bus_voltage = victor->GetBusVoltage();
-			safeTalonCall(victor->GetLastError(), "GetBusVoltage");
+			safeTalonCall(victor->GetLastError(), "GetBusVoltage", state->getCANID());
 
 			temperature = victor->GetTemperature(); //returns in Celsius
-			safeTalonCall(victor->GetLastError(), "GetTemperature");
+			safeTalonCall(victor->GetLastError(), "GetTemperature", state->getCANID());
 		}
 
 		const double output_voltage = victor->GetMotorOutputVoltage();
-		safeTalonCall(victor->GetLastError(), "GetMotorOutputVoltage");
+		safeTalonCall(victor->GetLastError(), "GetMotorOutputVoltage", state->getCANID());
 
 		double closed_loop_error = 0;
 		double integral_accumulator = 0;
@@ -202,16 +202,16 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 			const double closed_loop_scale = getConversionFactor(encoder_ticks_per_rotation, encoder_feedback, talon_mode) * conversion_factor;
 
 			closed_loop_error = victor->GetClosedLoopError(pidIdx) * closed_loop_scale;
-			safeTalonCall(victor->GetLastError(), "GetClosedLoopError");
+			safeTalonCall(victor->GetLastError(), "GetClosedLoopError", state->getCANID());
 
 			integral_accumulator = victor->GetIntegralAccumulator(pidIdx) * closed_loop_scale;
-			safeTalonCall(victor->GetLastError(), "GetIntegralAccumulator");
+			safeTalonCall(victor->GetLastError(), "GetIntegralAccumulator", state->getCANID());
 
 			error_derivative = victor->GetErrorDerivative(pidIdx) * closed_loop_scale;
-			safeTalonCall(victor->GetLastError(), "GetErrorDerivative");
+			safeTalonCall(victor->GetLastError(), "GetErrorDerivative", state->getCANID());
 
 			closed_loop_target = victor->GetClosedLoopTarget(pidIdx) * closed_loop_scale;
-			safeTalonCall(victor->GetLastError(), "GetClosedLoopTarget");
+			safeTalonCall(victor->GetLastError(), "GetClosedLoopTarget", state->getCANID());
 		}
 
 		// Targets Status 10 - 160 mSec default
@@ -223,15 +223,15 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 			(talon_mode == hardware_interface::TalonMode_MotionProfileArc))
 		{
 			active_trajectory_position = victor->GetActiveTrajectoryPosition() * radians_scale;
-			safeTalonCall(victor->GetLastError(), "GetActiveTrajectoryPosition");
+			safeTalonCall(victor->GetLastError(), "GetActiveTrajectoryPosition", state->getCANID());
 
 			active_trajectory_velocity = victor->GetActiveTrajectoryVelocity() * radians_per_second_scale;
-			safeTalonCall(victor->GetLastError(), "GetActiveTrajectoryVelocity");
+			safeTalonCall(victor->GetLastError(), "GetActiveTrajectoryVelocity", state->getCANID());
 
 			if (talon_mode == hardware_interface::TalonMode_MotionProfileArc)
 			{
 				active_trajectory_heading = victor->GetActiveTrajectoryPosition(1) * 2. * M_PI / 360.; //returns in degrees
-				safeTalonCall(victor->GetLastError(), "GetActiveTrajectoryHeading");
+				safeTalonCall(victor->GetLastError(), "GetActiveTrajectoryHeading", state->getCANID());
 			}
 		}
 
@@ -241,7 +241,7 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 		{
 			mp_top_level_buffer_count = victor->GetMotionProfileTopLevelBufferCount();
 			ctre::phoenix::motion::MotionProfileStatus talon_status;
-			safeTalonCall(victor->GetMotionProfileStatus(talon_status), "GetMotionProfileStatus");
+			safeTalonCall(victor->GetMotionProfileStatus(talon_status), "GetMotionProfileStatus", state->getCANID());
 
 			internal_status.topBufferRem = talon_status.topBufferRem;
 			internal_status.topBufferCnt = talon_status.topBufferCnt;
@@ -1830,7 +1830,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 							  ctre::phoenix::motorcontrol::DemandType::DemandType_Neutral, 0);
 
 			// Clear sticky faults
-			//safeTalonCall(ctre_mcs_[i]->ClearStickyFaults(timeoutMs), "ClearStickyFaults()");
+			//safeTalonCall(ctre_mcs_[i]->ClearStickyFaults(timeoutMs), "ClearStickyFaults()", can_ctre_mc_can_ids_[i]);
 
 
 			// TODO : if the motor controller doesn't initialize - maybe known
@@ -3051,8 +3051,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			// functions to work properly?
 			if (mc_enhanced)
 			{
-				rc &= safeTalonCall(mc_enhanced->ConfigSelectedFeedbackSensor(talon_feedback_device, pidIdx, timeoutMs),"ConfigSelectedFeedbackSensor");
-				rc &= safeTalonCall(mc_enhanced->ConfigSelectedFeedbackCoefficient(feedback_coefficient, pidIdx, timeoutMs),"ConfigSelectedFeedbackCoefficient");
+				rc &= safeTalonCall(mc_enhanced->ConfigSelectedFeedbackSensor(talon_feedback_device, pidIdx, timeoutMs),"ConfigSelectedFeedbackSensor", ts.getCANID());
+				rc &= safeTalonCall(mc_enhanced->ConfigSelectedFeedbackCoefficient(feedback_coefficient, pidIdx, timeoutMs),"ConfigSelectedFeedbackCoefficient", ts.getCANID());
 			}
 			if (rc)
 			{
@@ -3074,7 +3074,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			// Check for errors on Talon writes. If it fails, used the reset() call to
 			// set the changed var for the config items to true. This will trigger a re-try
 			// the next time through the loop.
-			if (safeTalonCall(victor->ConfigSelectedFeedbackSensor(talon_remote_feedback_device, pidIdx, timeoutMs), "ConfigSelectedFeedbackSensor (Remote)"))
+			if (safeTalonCall(victor->ConfigSelectedFeedbackSensor(talon_remote_feedback_device, pidIdx, timeoutMs), "ConfigSelectedFeedbackSensor (Remote)", ts.getCANID()))
 			{
 				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " remote feedback sensor");
 				ts.setRemoteEncoderFeedback(internal_remote_feedback_device);
@@ -3092,8 +3092,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			talon_convert_.remoteSensorSource(internal_remote_feedback_filters[0], victor_remote_feedback_filters[0]) &&
 			talon_convert_.remoteSensorSource(internal_remote_feedback_filters[1], victor_remote_feedback_filters[1]))
 		{
-			if (safeTalonCall(victor->ConfigRemoteFeedbackFilter(remote_feedback_device_ids[0], victor_remote_feedback_filters[0], 0, timeoutMs), "ConfigRemoteFeedbackFilter (0)") &&
-				safeTalonCall(victor->ConfigRemoteFeedbackFilter(remote_feedback_device_ids[1], victor_remote_feedback_filters[1], 1, timeoutMs), "ConfigRemoteFeedbackFilter (1)"))
+			if (safeTalonCall(victor->ConfigRemoteFeedbackFilter(remote_feedback_device_ids[0], victor_remote_feedback_filters[0], 0, timeoutMs), "ConfigRemoteFeedbackFilter (0)", ts.getCANID()) &&
+				safeTalonCall(victor->ConfigRemoteFeedbackFilter(remote_feedback_device_ids[1], victor_remote_feedback_filters[1], 1, timeoutMs), "ConfigRemoteFeedbackFilter (1)", ts.getCANID()))
 			{
 				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " remote feedback filters");
 				ts.setRemoteFeedbackDeviceIds(remote_feedback_device_ids);
@@ -3116,10 +3116,10 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			// Check for errors on Talon writes. If it fails, used the reset() call to
 			// set the changed var for the config items to true. This will trigger a re-try
 			// the next time through the loop.
-			if (safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Sum0, victor_sensor_terms[0], timeoutMs),"ConfigSensorTerm Sum0") &&
-				safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Sum1, victor_sensor_terms[1], timeoutMs),"ConfigSensorTerm Sum1") &&
-				safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Diff0, victor_sensor_terms[2], timeoutMs),"ConfigSensorTerm Diff0") &&
-				safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Diff1, victor_sensor_terms[3], timeoutMs),"ConfigSensorTerm Diff1"))
+			if (safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Sum0, victor_sensor_terms[0], timeoutMs),"ConfigSensorTerm Sum0", ts.getCANID()) &&
+				safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Sum1, victor_sensor_terms[1], timeoutMs),"ConfigSensorTerm Sum1", ts.getCANID()) &&
+				safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Diff0, victor_sensor_terms[2], timeoutMs),"ConfigSensorTerm Diff0", ts.getCANID()) &&
+				safeTalonCall(victor->ConfigSensorTerm(ctre::phoenix::motorcontrol::SensorTerm::SensorTerm_Diff1, victor_sensor_terms[3], timeoutMs),"ConfigSensorTerm Diff1", ts.getCANID()))
 			{
 				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " sensor terms");
 				ts.setSensorTerms(internal_sensor_terms);
@@ -3179,16 +3179,16 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			if (tc.pidfChanged(p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period, slot))
 			{
 				bool rc = true;
-				rc &= safeTalonCall(victor->Config_kP(slot, p, timeoutMs), "Config_kP");
-				rc &= safeTalonCall(victor->Config_kI(slot, i, timeoutMs), "Config_kI");
-				rc &= safeTalonCall(victor->Config_kD(slot, d, timeoutMs), "Config_kD");
-				rc &= safeTalonCall(victor->Config_kF(slot, f, timeoutMs), "Config_kF");
-				rc &= safeTalonCall(victor->Config_IntegralZone(slot, iz, timeoutMs), "Config_IntegralZone");
+				rc &= safeTalonCall(victor->Config_kP(slot, p, timeoutMs), "Config_kP", ts.getCANID());
+				rc &= safeTalonCall(victor->Config_kI(slot, i, timeoutMs), "Config_kI", ts.getCANID());
+				rc &= safeTalonCall(victor->Config_kD(slot, d, timeoutMs), "Config_kD", ts.getCANID());
+				rc &= safeTalonCall(victor->Config_kF(slot, f, timeoutMs), "Config_kF", ts.getCANID());
+				rc &= safeTalonCall(victor->Config_IntegralZone(slot, iz, timeoutMs), "Config_IntegralZone", ts.getCANID());
 				// TODO : Scale these two?
-				rc &= safeTalonCall(victor->ConfigAllowableClosedloopError(slot, allowable_closed_loop_error, timeoutMs), "ConfigAllowableClosedloopError");
-				rc &= safeTalonCall(victor->ConfigMaxIntegralAccumulator(slot, max_integral_accumulator, timeoutMs), "ConfigMaxIntegralAccumulator");
-				rc &= safeTalonCall(victor->ConfigClosedLoopPeakOutput(slot, closed_loop_peak_output, timeoutMs), "ConfigClosedLoopPeakOutput");
-				rc &= safeTalonCall(victor->ConfigClosedLoopPeriod(slot, closed_loop_period, timeoutMs), "ConfigClosedLoopPeriod");
+				rc &= safeTalonCall(victor->ConfigAllowableClosedloopError(slot, allowable_closed_loop_error, timeoutMs), "ConfigAllowableClosedloopError", ts.getCANID());
+				rc &= safeTalonCall(victor->ConfigMaxIntegralAccumulator(slot, max_integral_accumulator, timeoutMs), "ConfigMaxIntegralAccumulator", ts.getCANID());
+				rc &= safeTalonCall(victor->ConfigClosedLoopPeakOutput(slot, closed_loop_peak_output, timeoutMs), "ConfigClosedLoopPeakOutput", ts.getCANID());
+				rc &= safeTalonCall(victor->ConfigClosedLoopPeriod(slot, closed_loop_period, timeoutMs), "ConfigClosedLoopPeriod", ts.getCANID());
 
 				if (rc)
 				{
@@ -3212,7 +3212,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			bool aux_pid_polarity;
 			if (tc.auxPidPolarityChanged(aux_pid_polarity))
 			{
-				if (safeTalonCall(victor->ConfigAuxPIDPolarity(aux_pid_polarity, timeoutMs), "ConfigAuxPIDPolarity"))
+				if (safeTalonCall(victor->ConfigAuxPIDPolarity(aux_pid_polarity, timeoutMs), "ConfigAuxPIDPolarity", ts.getCANID()))
 				{
 					ROS_INFO_STREAM("Updated joint " << joint_id << " PIDF polarity to " << aux_pid_polarity << std::endl);
 					ts.setAuxPidPolarity(aux_pid_polarity);
@@ -3225,7 +3225,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 
 			if (slot_changed)
 			{
-				if (safeTalonCall(victor->SelectProfileSlot(slot, pidIdx), "SelectProfileSlot"))
+				if (safeTalonCall(victor->SelectProfileSlot(slot, pidIdx), "SelectProfileSlot", ts.getCANID()))
 				{
 					ROS_INFO_STREAM("Updated joint " << joint_id << " PIDF slot to " << slot << std::endl);
 					ts.setSlot(slot);
@@ -3245,9 +3245,9 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 					" invert = " << invert << " phase = " << sensor_phase);
 			// TODO : can these calls fail. If so, what to do if they do?
 			victor->SetInverted(invert);
-			safeTalonCall(victor->GetLastError(), "SetInverted");
+			safeTalonCall(victor->GetLastError(), "SetInverted", ts.getCANID());
 			victor->SetSensorPhase(sensor_phase);
-			safeTalonCall(victor->GetLastError(), "SetSensorPhase");
+			safeTalonCall(victor->GetLastError(), "SetSensorPhase", ts.getCANID());
 			ts.setInvert(invert);
 			ts.setSensorPhase(sensor_phase);
 		}
@@ -3260,7 +3260,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 
 			ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " neutral mode");
 			victor->SetNeutralMode(ctre_neutral_mode);
-			safeTalonCall(victor->GetLastError(), "SetNeutralMode");
+			safeTalonCall(victor->GetLastError(), "SetNeutralMode", ts.getCANID());
 			ts.setNeutralMode(neutral_mode);
 		}
 
@@ -3268,7 +3268,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		{
 			ROS_INFO_STREAM("Set joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " neutral output");
 			victor->NeutralOutput();
-			safeTalonCall(victor->GetLastError(), "NeutralOutput");
+			safeTalonCall(victor->GetLastError(), "NeutralOutput", ts.getCANID());
 			ts.setNeutralOutput(true);
 		}
 
@@ -3276,7 +3276,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		if (close_loop_mode && tc.integralAccumulatorChanged(iaccum))
 		{
 			//The units on this aren't really right?
-			if (safeTalonCall(victor->SetIntegralAccumulator(iaccum / closed_loop_scale, pidIdx, timeoutMs), "SetIntegralAccumulator"))
+			if (safeTalonCall(victor->SetIntegralAccumulator(iaccum / closed_loop_scale, pidIdx, timeoutMs), "SetIntegralAccumulator", ts.getCANID()))
 			{
 				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " integral accumulator");
 				// Do not set talon state - this changes
@@ -3302,13 +3302,13 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 									neutral_deadband))
 		{
 			bool rc = true;
-			rc &= safeTalonCall(victor->ConfigOpenloopRamp(open_loop_ramp, timeoutMs),"ConfigOpenloopRamp");
-			rc &= safeTalonCall(victor->ConfigClosedloopRamp(closed_loop_ramp, timeoutMs),"ConfigClosedloopRamp");
-			rc &= safeTalonCall(victor->ConfigPeakOutputForward(peak_output_forward, timeoutMs),"ConfigPeakOutputForward");          // 100
-			rc &= safeTalonCall(victor->ConfigPeakOutputReverse(peak_output_reverse, timeoutMs),"ConfigPeakOutputReverse");          // -100
-			rc &= safeTalonCall(victor->ConfigNominalOutputForward(nominal_output_forward, timeoutMs),"ConfigNominalOutputForward"); // 0
-			rc &= safeTalonCall(victor->ConfigNominalOutputReverse(nominal_output_reverse, timeoutMs),"ConfigNominalOutputReverse"); // 0
-			rc &= safeTalonCall(victor->ConfigNeutralDeadband(neutral_deadband, timeoutMs),"ConfigNeutralDeadband");                 // 0
+			rc &= safeTalonCall(victor->ConfigOpenloopRamp(open_loop_ramp, timeoutMs),"ConfigOpenloopRamp", ts.getCANID());
+			rc &= safeTalonCall(victor->ConfigClosedloopRamp(closed_loop_ramp, timeoutMs),"ConfigClosedloopRamp", ts.getCANID());
+			rc &= safeTalonCall(victor->ConfigPeakOutputForward(peak_output_forward, timeoutMs),"ConfigPeakOutputForward", ts.getCANID());          // 100
+			rc &= safeTalonCall(victor->ConfigPeakOutputReverse(peak_output_reverse, timeoutMs),"ConfigPeakOutputReverse", ts.getCANID());          // -100
+			rc &= safeTalonCall(victor->ConfigNominalOutputForward(nominal_output_forward, timeoutMs),"ConfigNominalOutputForward", ts.getCANID()); // 0
+			rc &= safeTalonCall(victor->ConfigNominalOutputReverse(nominal_output_reverse, timeoutMs),"ConfigNominalOutputReverse", ts.getCANID()); // 0
+			rc &= safeTalonCall(victor->ConfigNeutralDeadband(neutral_deadband, timeoutMs),"ConfigNeutralDeadband", ts.getCANID());                 // 0
 
 			if (rc)
 			{
@@ -3335,14 +3335,14 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			v_c_enable))
 		{
 			bool rc = true;
-			rc &= safeTalonCall(victor->ConfigVoltageCompSaturation(v_c_saturation, timeoutMs),"ConfigVoltageCompSaturation");
-			rc &= safeTalonCall(victor->ConfigVoltageMeasurementFilter(v_measurement_filter, timeoutMs),"ConfigVoltageMeasurementFilter");
+			rc &= safeTalonCall(victor->ConfigVoltageCompSaturation(v_c_saturation, timeoutMs),"ConfigVoltageCompSaturation", ts.getCANID());
+			rc &= safeTalonCall(victor->ConfigVoltageMeasurementFilter(v_measurement_filter, timeoutMs),"ConfigVoltageMeasurementFilter", ts.getCANID());
 
 			if (rc)
 			{
 				// Only enable once settings are correctly written to the Talon
 				victor->EnableVoltageCompensation(v_c_enable);
-				rc &= safeTalonCall(victor->GetLastError(), "EnableVoltageCompensation");
+				rc &= safeTalonCall(victor->GetLastError(), "EnableVoltageCompensation", ts.getCANID());
 			}
 			if (rc)
 			{
@@ -3368,8 +3368,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				talon_convert_.velocityMeasurementPeriod(internal_v_m_period, phoenix_v_m_period))
 			{
 				bool rc = true;
-				rc &= safeTalonCall(mc_enhanced->ConfigVelocityMeasurementPeriod(phoenix_v_m_period, timeoutMs),"ConfigVelocityMeasurementPeriod");
-				rc &= safeTalonCall(mc_enhanced->ConfigVelocityMeasurementWindow(v_m_window, timeoutMs),"ConfigVelocityMeasurementWindow");
+				rc &= safeTalonCall(mc_enhanced->ConfigVelocityMeasurementPeriod(phoenix_v_m_period, timeoutMs),"ConfigVelocityMeasurementPeriod", ts.getCANID());
+				rc &= safeTalonCall(mc_enhanced->ConfigVelocityMeasurementWindow(v_m_window, timeoutMs),"ConfigVelocityMeasurementWindow", ts.getCANID());
 
 				if (rc)
 				{
@@ -3388,7 +3388,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		if (tc.sensorPositionChanged(sensor_position))
 		{
 			if (safeTalonCall(victor->SetSelectedSensorPosition(sensor_position / radians_scale, pidIdx, timeoutMs),
-						"SetSelectedSensorPosition"))
+						"SetSelectedSensorPosition", ts.getCANID()))
 			{
 				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " selected sensor position");
 			}
@@ -3415,8 +3415,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				talon_convert_.limitSwitchSource(internal_local_reverse_source, talon_local_reverse_source) &&
 				talon_convert_.limitSwitchNormal(internal_local_reverse_normal, talon_local_reverse_normal) )
 			{
-				bool rc = safeTalonCall(mc_enhanced->ConfigForwardLimitSwitchSource(talon_local_forward_source, talon_local_forward_normal, timeoutMs),"ConfigForwardLimitSwitchSource");
-				rc &= safeTalonCall(mc_enhanced->ConfigReverseLimitSwitchSource(talon_local_reverse_source, talon_local_reverse_normal, timeoutMs),"ConfigReverseLimitSwitchSource");
+				bool rc = safeTalonCall(mc_enhanced->ConfigForwardLimitSwitchSource(talon_local_forward_source, talon_local_forward_normal, timeoutMs),"ConfigForwardLimitSwitchSource", ts.getCANID());
+				rc &= safeTalonCall(mc_enhanced->ConfigReverseLimitSwitchSource(talon_local_reverse_source, talon_local_reverse_normal, timeoutMs),"ConfigReverseLimitSwitchSource", ts.getCANID());
 
 				if (rc)
 				{
@@ -3452,8 +3452,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			talon_convert_.limitSwitchNormal(internal_remote_reverse_normal, talon_remote_reverse_normal) )
 		{
 			bool rc = true;
-			rc &= safeTalonCall(victor->ConfigForwardLimitSwitchSource(talon_remote_forward_source, talon_remote_forward_normal, remote_forward_id, timeoutMs),"ConfigForwardLimitSwitchSource(Remote)");
-			rc &= safeTalonCall(victor->ConfigReverseLimitSwitchSource(talon_remote_reverse_source, talon_remote_reverse_normal, remote_reverse_id, timeoutMs),"ConfigReverseLimitSwitchSource(Remote)");
+			rc &= safeTalonCall(victor->ConfigForwardLimitSwitchSource(talon_remote_forward_source, talon_remote_forward_normal, remote_forward_id, timeoutMs),"ConfigForwardLimitSwitchSource(Remote)", ts.getCANID());
+			rc &= safeTalonCall(victor->ConfigReverseLimitSwitchSource(talon_remote_reverse_source, talon_remote_reverse_normal, remote_reverse_id, timeoutMs),"ConfigReverseLimitSwitchSource(Remote)", ts.getCANID());
 
 			if (rc)
 			{
@@ -3485,11 +3485,11 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			const double softlimit_reverse_threshold_NU = softlimit_reverse_threshold / radians_scale;
 			victor->OverrideSoftLimitsEnable(softlimit_override_enable);
 			bool rc = true;
-			rc &= safeTalonCall(victor->GetLastError(), "OverrideSoftLimitsEnable");
-			rc &= safeTalonCall(victor->ConfigForwardSoftLimitThreshold(softlimit_forward_threshold_NU, timeoutMs),"ConfigForwardSoftLimitThreshold");
-			rc &= safeTalonCall(victor->ConfigForwardSoftLimitEnable(softlimit_forward_enable, timeoutMs),"ConfigForwardSoftLimitEnable");
-			rc &= safeTalonCall(victor->ConfigReverseSoftLimitThreshold(softlimit_reverse_threshold_NU, timeoutMs),"ConfigReverseSoftLimitThreshold");
-			rc &= safeTalonCall(victor->ConfigReverseSoftLimitEnable(softlimit_reverse_enable, timeoutMs),"ConfigReverseSoftLimitEnable");
+			rc &= safeTalonCall(victor->GetLastError(), "OverrideSoftLimitsEnable", ts.getCANID());
+			rc &= safeTalonCall(victor->ConfigForwardSoftLimitThreshold(softlimit_forward_threshold_NU, timeoutMs),"ConfigForwardSoftLimitThreshold", ts.getCANID());
+			rc &= safeTalonCall(victor->ConfigForwardSoftLimitEnable(softlimit_forward_enable, timeoutMs),"ConfigForwardSoftLimitEnable", ts.getCANID());
+			rc &= safeTalonCall(victor->ConfigReverseSoftLimitThreshold(softlimit_reverse_threshold_NU, timeoutMs),"ConfigReverseSoftLimitThreshold", ts.getCANID());
+			rc &= safeTalonCall(victor->ConfigReverseSoftLimitEnable(softlimit_reverse_enable, timeoutMs),"ConfigReverseSoftLimitEnable", ts.getCANID());
 
 			if (rc)
 			{
@@ -3518,13 +3518,13 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			if (tc.currentLimitChanged(peak_amps, peak_msec, continuous_amps, enable))
 			{
 				bool rc = true;
-				rc &= safeTalonCall(talon->ConfigPeakCurrentLimit(peak_amps, timeoutMs),"ConfigPeakCurrentLimit");
-				rc &= safeTalonCall(talon->ConfigPeakCurrentDuration(peak_msec, timeoutMs),"ConfigPeakCurrentDuration");
-				rc &= safeTalonCall(talon->ConfigContinuousCurrentLimit(continuous_amps, timeoutMs),"ConfigContinuousCurrentLimit");
+				rc &= safeTalonCall(talon->ConfigPeakCurrentLimit(peak_amps, timeoutMs),"ConfigPeakCurrentLimit", ts.getCANID());
+				rc &= safeTalonCall(talon->ConfigPeakCurrentDuration(peak_msec, timeoutMs),"ConfigPeakCurrentDuration", ts.getCANID());
+				rc &= safeTalonCall(talon->ConfigContinuousCurrentLimit(continuous_amps, timeoutMs),"ConfigContinuousCurrentLimit", ts.getCANID());
 				if (rc)
 				{
 					talon->EnableCurrentLimit(enable);
-					rc &= safeTalonCall(talon->GetLastError(), "EnableCurrentLimit");
+					rc &= safeTalonCall(talon->GetLastError(), "EnableCurrentLimit", ts.getCANID());
 				}
 				if (rc)
 				{
@@ -3549,7 +3549,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			bool   limit_enable;
 			if (tc.supplyCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
 			{
-				if (safeTalonCall(falcon->ConfigSupplyCurrentLimit(ctre::phoenix::motorcontrol::SupplyCurrentLimitConfiguration(limit_enable, limit, trigger_threshold_current, trigger_threshold_time), timeoutMs), "ConfigSupplyCurrentLimit"))
+				if (safeTalonCall(falcon->ConfigSupplyCurrentLimit(ctre::phoenix::motorcontrol::SupplyCurrentLimitConfiguration(limit_enable, limit, trigger_threshold_current, trigger_threshold_time), timeoutMs), "ConfigSupplyCurrentLimit", ts.getCANID()))
 				{
 					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " supply current limit");
 					ts.setSupplyCurrentLimit(limit);
@@ -3564,7 +3564,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			if (tc.statorCurrentLimitChanged(limit, trigger_threshold_current, trigger_threshold_time, limit_enable))
 			{
-				if (safeTalonCall(falcon->ConfigStatorCurrentLimit(ctre::phoenix::motorcontrol::StatorCurrentLimitConfiguration(limit_enable, limit, trigger_threshold_current, trigger_threshold_time), timeoutMs), "ConfigStatorCurrentLimit"))
+				if (safeTalonCall(falcon->ConfigStatorCurrentLimit(ctre::phoenix::motorcontrol::StatorCurrentLimitConfiguration(limit_enable, limit, trigger_threshold_current, trigger_threshold_time), timeoutMs), "ConfigStatorCurrentLimit", ts.getCANID()))
 				{
 					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " stator current limit");
 					ts.setStatorCurrentLimit(limit);
@@ -3583,7 +3583,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			if (tc.motorCommutationChanged(motor_commutation) &&
 				talon_convert_.motorCommutation(motor_commutation, motor_commutation_ctre))
 			{
-				if (safeTalonCall(falcon->ConfigMotorCommutation(motor_commutation_ctre, timeoutMs), "ConfigMotorCommutation"))
+				if (safeTalonCall(falcon->ConfigMotorCommutation(motor_commutation_ctre, timeoutMs), "ConfigMotorCommutation", ts.getCANID()))
 				{
 					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " motor commutation");
 					ts.setMotorCommutation(motor_commutation);
@@ -3599,7 +3599,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			if (tc.absoluteSensorRangeChanged(absolute_sensor_range) &&
 				talon_convert_.absoluteSensorRange(absolute_sensor_range, absolute_sensor_range_ctre))
 			{
-				if (safeTalonCall(falcon->ConfigIntegratedSensorAbsoluteRange(absolute_sensor_range_ctre, timeoutMs), "ConfigIntegratedSensorAbsoluteRange"))
+				if (safeTalonCall(falcon->ConfigIntegratedSensorAbsoluteRange(absolute_sensor_range_ctre, timeoutMs), "ConfigIntegratedSensorAbsoluteRange", ts.getCANID()))
 				{
 					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " absolute sensor range");
 					ts.setAbsoluteSensorRange(absolute_sensor_range);
@@ -3615,7 +3615,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			if (tc.sensorInitializationStrategyChanged(sensor_initialization_strategy) &&
 				talon_convert_.sensorInitializationStrategy(sensor_initialization_strategy, sensor_initialization_strategy_ctre))
 			{
-				if (safeTalonCall(falcon->ConfigIntegratedSensorInitializationStrategy(sensor_initialization_strategy_ctre, timeoutMs), "ConfigIntegratedSensorInitializationStrategy"))
+				if (safeTalonCall(falcon->ConfigIntegratedSensorInitializationStrategy(sensor_initialization_strategy_ctre, timeoutMs), "ConfigIntegratedSensorInitializationStrategy", ts.getCANID()))
 				{
 					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " absolute sensor range");
 					ts.setSensorInitializationStrategy(sensor_initialization_strategy);
@@ -3639,7 +3639,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 					ctre::phoenix::motorcontrol::StatusFrameEnhanced status_frame_enhanced;
 					if (talon_convert_.statusFrame(status_frame, status_frame_enhanced))
 					{
-						if (safeTalonCall(mc_enhanced->SetStatusFramePeriod(status_frame_enhanced, period), "SetStatusFramePeriod"))
+						if (safeTalonCall(mc_enhanced->SetStatusFramePeriod(status_frame_enhanced, period), "SetStatusFramePeriod", ts.getCANID()))
 						{
 							ts.setStatusFramePeriod(status_frame, period);
 							ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " status_frame " << i << "=" << static_cast<int>(period) << "mSec");
@@ -3660,7 +3660,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				ctre::phoenix::motorcontrol::ControlFrame control_frame_phoenix;
 				if (talon_convert_.controlFrame(control_frame, control_frame_phoenix))
 				{
-					if (safeTalonCall(victor->SetControlFramePeriod(control_frame_phoenix, period), "SetControlFramePeriod"))
+					if (safeTalonCall(victor->SetControlFramePeriod(control_frame_phoenix, period), "SetControlFramePeriod", ts.getCANID()))
 					{
 						ts.setControlFramePeriod(control_frame, period);
 						ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " control_frame " << i << "=" << static_cast<int>(period) << "mSec");
@@ -3680,9 +3680,9 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			if (tc.motionCruiseChanged(motion_cruise_velocity, motion_acceleration, motion_s_curve_strength))
 			{
 				//converted from rad/sec to native units
-				bool rc = safeTalonCall(victor->ConfigMotionCruiseVelocity(motion_cruise_velocity / radians_per_second_scale, timeoutMs),"ConfigMotionCruiseVelocity(");
-				rc &= safeTalonCall(victor->ConfigMotionAcceleration(motion_acceleration / radians_per_second_scale, timeoutMs),"ConfigMotionAcceleration(");
-				rc &= safeTalonCall(victor->ConfigMotionSCurveStrength(motion_s_curve_strength, timeoutMs), "ConfigMotionSCurveStrength");
+				bool rc = safeTalonCall(victor->ConfigMotionCruiseVelocity(motion_cruise_velocity / radians_per_second_scale, timeoutMs),"ConfigMotionCruiseVelocity(", ts.getCANID());
+				rc &= safeTalonCall(victor->ConfigMotionAcceleration(motion_acceleration / radians_per_second_scale, timeoutMs),"ConfigMotionAcceleration(", ts.getCANID());
+				rc &= safeTalonCall(victor->ConfigMotionSCurveStrength(motion_s_curve_strength, timeoutMs), "ConfigMotionSCurveStrength", ts.getCANID());
 
 				if (rc)
 				{
@@ -3699,7 +3699,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			int motion_profile_trajectory_period;
 			if (tc.motionProfileTrajectoryPeriodChanged(motion_profile_trajectory_period))
 			{
-				if (safeTalonCall(victor->ConfigMotionProfileTrajectoryPeriod(motion_profile_trajectory_period, timeoutMs),"ConfigMotionProfileTrajectoryPeriod"))
+				if (safeTalonCall(victor->ConfigMotionProfileTrajectoryPeriod(motion_profile_trajectory_period, timeoutMs),"ConfigMotionProfileTrajectoryPeriod", ts.getCANID()))
 				{
 					ts.setMotionProfileTrajectoryPeriod(motion_profile_trajectory_period);
 					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " motion profile trajectory period");
@@ -3712,7 +3712,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 
 			if (tc.clearMotionProfileTrajectoriesChanged())
 			{
-				if (safeTalonCall(victor->ClearMotionProfileTrajectories(), "ClearMotionProfileTrajectories"))
+				if (safeTalonCall(victor->ClearMotionProfileTrajectories(), "ClearMotionProfileTrajectories", ts.getCANID()))
 				{
 					ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " motion profile trajectories");
 				}
@@ -3724,7 +3724,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 
 			if (tc.clearMotionProfileHasUnderrunChanged())
 			{
-				if (safeTalonCall(victor->ClearMotionProfileHasUnderrun(timeoutMs),"ClearMotionProfileHasUnderrun"))
+				if (safeTalonCall(victor->ClearMotionProfileHasUnderrun(timeoutMs),"ClearMotionProfileHasUnderrun", ts.getCANID()))
 				{
 					ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " motion profile underrun changed");
 				}
@@ -3842,7 +3842,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 
 		if (tc.clearStickyFaultsChanged())
 		{
-			if (safeTalonCall(victor->ClearStickyFaults(timeoutMs), "ClearStickyFaults"))
+			if (safeTalonCall(victor->ClearStickyFaults(timeoutMs), "ClearStickyFaults", ts.getCANID()))
 			{
 				ROS_INFO_STREAM("Cleared joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " sticky_faults");
 			}
@@ -4143,7 +4143,7 @@ double FRCRobotInterface::getConversionFactor(int encoder_ticks_per_rotation,
 	}
 }
 
-bool FRCRobotInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name)
+bool FRCRobotInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name, const int talon_id)
 {
 	//ROS_INFO_STREAM("safeTalonCall(" << talon_method_name << ") = " << error_code);
 	std::string error_name;
@@ -4341,7 +4341,7 @@ bool FRCRobotInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, const
 			}
 
 	}
-	ROS_ERROR_STREAM("Error calling " << talon_method_name << " : " << error_name);
+	ROS_ERROR_STREAM("Error : CANid = " << talon_id << " calling " << talon_method_name << " : " << error_name);
 	can_error_count_++;
 	if ((can_error_count_> 1000) && !error_sent)
 	{
