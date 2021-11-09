@@ -121,7 +121,7 @@ cd ../..
 sudo rm -rf tinyxml2
 
 #install zed sdk
-wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.5/jp45/jetsons
+wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.6/jp45/jetsons
 chmod 755 jetsons
 ./jetsons
 rm ./jetsons
@@ -173,7 +173,7 @@ sudo tar -xjf /home/ubuntu/2020Offseason/scripts/jetson_setup/jetson_dot_ssh.tar
 sudo chmod 640 /root/.ssh/authorized_keys
 sudo chmod 700 /root/.ssh
 
-cd ~/2020Offseason
+cd ~/2020Offseason/scripts
 sudo cp ./jetson_setup/10-local.rules ./jetson_setup/99-gpio.rules /etc/udev/rules.d/
 sudo service udev reload
 sleep 2
@@ -274,7 +274,9 @@ cd &&\
 	sudo ./install.sh &&\
 	cd &&\
 	rm -rf git-lfs-linux-arm64-v2.13.1.tar.gz git-lfs-install &&\
-	git lfs install
+	git lfs install &&\
+	cd ~/2020Offseason &&\
+	git lfs pull
 
 git config --global user.email "progammers@team900.org"
 git config --global user.name "Team900 Jetson NX"
@@ -366,7 +368,7 @@ sudo python setup.py install --cpp_implementation
 cd
 sudo rm -rf src
 
-cd ~/2020Offseason
+cd ~/2020Offseason/scripts/jetson_install
 sudo apt-get install -y libhdf5-serial-dev hdf5-tools
 sudo dpkg -i libnccl*arm64.deb
 sudo python -m pip install --upgrade pip six numpy wheel setuptools mock h5py
@@ -377,8 +379,7 @@ sudo python -m pip install tensorflow-1.15.3-*.whl
 cd /home/ubuntu
 git clone https://github.com/tensorflow/models.git
 cd models
-git submodule init
-git submodule update
+git submodule update --init --recursive
 cd /home/ubuntu/models/research
 git checkout c787baad4fcf3e008107be0662a4138194b24522^
 protoc object_detection/protos/*.proto --python_out=.
@@ -387,9 +388,11 @@ cd slim
 sudo python -m pip install --ignore-installed .
 
 cd
+export PATH=$PATH:/usr/local/cuda/bin
 git clone https://github.com/NVIDIA/TensorRT.git 
 cd TensorRT 
 git submodule update --init --recursive 
+git checkout 20.11
 mkdir build 
 cd build 
 cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF .. 

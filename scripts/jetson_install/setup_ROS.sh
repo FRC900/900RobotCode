@@ -10,29 +10,26 @@
 # Setup sources.lst
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
 # Setup keys
-sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
 # Grab new package lists from ros.org
 sudo apt update
 
 # For intel realsense - from apt for x86 laptops, not yet (if ever) available for AARCH64
-#sudo apt-key adv --keyserver keys.gnupg.net --recv-key C8B3A55A6F3EFCDE || sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key C8B3A55A6F3EFCDE 
-#sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/apt-repo xenial main" -u 
-#sudo apt update
-#sudo apt install -y librealsense2-dev librealsense2-dkms librealsense2-utils
+# See https://github.com/IntelRealSense/librealsense/blob/master/doc/distribution_linux.md or our Dockerfile
 
 # From source for the Jetson
-sudo apt install -y git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev ninja-build
+sudo apt install -y git libssl-dev libusb-1.0-0-dev pkg-config libgtk-3-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev ninja-build libcurl3
 cd
 mkdir realsense_src
 cd realsense_src
-wget https://github.com/IntelRealSense/librealsense/archive/v2.42.0.zip
-unzip v2.42.0.zip
-cd librealsense-2.42.0
+wget https://github.com/IntelRealSense/librealsense/archive/v2.49.0.zip
+unzip v2.49.0.zip
+cd librealsense-2.49.0
 sudo cp config/99-realsense-libusb.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && udevadm trigger
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=true  -GNinja ..
+cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=false -GNinja ..
 sudo ninja uninstall && sudo ninja clean && sudo ninja install
 cd 
 rm -rf realsense_src
