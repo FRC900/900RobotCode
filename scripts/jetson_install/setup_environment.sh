@@ -187,15 +187,19 @@ sudo apt remove --purge -y thunderbird libreoffice-*
 sudo sed -i -e 's/APT::Periodic::Update-Package-Lists "1"/APT::Periodic::Update-Package-Lists "0"/' /etc/apt/apt.conf.d/10periodic
 
 # Install CTRE & navX libs
+# TODO - redo using zip from ctre web site
 mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include 
 mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre 
 cd /home/ubuntu
-wget -e robots=off -U mozilla -r -np http://devsite.ctr-electronics.com/maven/release/com/ctre/phoenix/ -A "*5.19.4*" -R "md5,sha1,pom,jar,*windows*,*debug*"
+mkdir ctre
+cd ctre
+wget https://github.com/CrossTheRoadElec/Phoenix-Releases/releases/download/v5.19.4.1/CTRE_Phoenix_FRC_Linux_5.19.4.zip
+unzip CTRE_Phoenix_FRC_Linux_5.19.4.zip 
 cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include 
-find /home/ubuntu/devsite.ctr-electronics.com -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o 
+find /home/ubuntu/ctre -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o 
 cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre 
-find /home/ubuntu/devsite.ctr-electronics.com -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o 
-rm -rf /home/ubuntu/devsite.ctr-electronics.com 
+find /home/ubuntu/ctre -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o 
+rm -rf /home/ubuntu/ctre 
 
 cd /home/ubuntu 
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-headers.zip 
@@ -235,12 +239,12 @@ rm -rf /home/ubuntu/sparkmax
 
 # Install wpilib headers by copying them from the local maven dir
 cd /home/ubuntu 
-wget https://github.com/wpilibsuite/allwpilib/releases/download/v2021.2.2/WPILib_Linux-2021.2.2.tar.gz
+wget https://github.com/wpilibsuite/allwpilib/releases/download/v2021.3.1/WPILib_Linux-2021.3.1.tar.gz
 mkdir -p /home/ubuntu/wpilib/2021
 cd /home/ubuntu/wpilib/2021
-tar -xzf /home/ubuntu/WPILib_Linux-2021.2.2.tar.gz
-tar -xzf WPILib_Linux-2021.2.2/WPILib_Linux-2021.2.2-artifacts.tar.gz
-rm /home/ubuntu/WPILib_Linux-2021.2.2.tar.gz
+tar -xzf /home/ubuntu/WPILib_Linux-2021.3.1.tar.gz
+tar -xzf WPILib_Linux-2021.3.1/WPILib_Linux-2021.3.1-artifacts.tar.gz
+rm /home/ubuntu/WPILib_Linux-2021.3.1.tar.gz
 cd /home/ubuntu/wpilib/2021/tools
 python3 ToolsUpdater.py
 mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/wpilib
@@ -249,7 +253,7 @@ find ../../../.. -name \*athena\*zip | grep -v debug | xargs -n1 unzip -o
 mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib
 cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib
 find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
-rm -rf /home/ubuntu/wpilib/2021/maven /home/ubuntu/wpilib/frc2021/jdk /home/ubuntu/wpilib/2021/WPILib_Linux-2021.2.2 /home/ubuntu/wpilb2021/utility
+rm -rf /home/ubuntu/wpilib/2021/maven /home/ubuntu/wpilib/frc2021/jdk /home/ubuntu/wpilib/2021/WPILib_Linux-2021.3.1 /home/ubuntu/wpilb2021/utility
 sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 
 # Set up prereqs for deploy script
