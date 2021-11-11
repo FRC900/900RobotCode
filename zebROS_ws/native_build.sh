@@ -23,6 +23,8 @@ if [ $? -eq 1 ]; then
 fi
 
 catkin config --blacklist \
+	realsense2_camera \
+	realsense2_description \
 	velocity_controllers \
 	zed_ros \
 	$EXTRA_BLACKLIST_PACKAGES
