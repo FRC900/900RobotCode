@@ -90,25 +90,8 @@ ssh -p 22 admin@$1 'source /opt/ros/melodic/setup.bash && cd 2020Offseason/zebRO
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
 ##################-----------------------------#################
-#Edit /etc/ntp.conf to be a copy of ntp-server in 2020Offseason#
-scp -P 22 ~/2020Offseason/scripts/RIO_setup/ntp-server.conf admin@$1:/etc/ntp.conf
-
-#---------------------------------------------------------------#
-#               to setup RTC on the rio
-#   Plug the rtc into the i2c port on the rio while unpowered
-#
-scp -P 22 ~/2020Offseason/scripts/RIO_setup/rtc-bq32k.ko admin@$1:.
-ssh -p 22 admin@$1 'mv rtc-bq32k.ko /lib/modules/`uname -r`/kernel'
-ssh -p 22 admin@$1 'depmod'
-ssh -p 22 admin@$1 'i2cdetect -y 2'
-ssh -p 22 admin@$1 'echo bq32000 0x68 | tee /sys/class/i2c-adapter/i2c-2/new_device'
-ssh -p 22 admin@$1 'hwclock -w'
-
-scp -P 22 ~/2020Offseason/scripts/RIO_setup/setupClock admin@$1:/etc/init.d/setupClock
-ssh -p 22 admin@$1 'chmod +x /etc/init.d/setupClock'
-ssh -p 22 admin@$1 'ln -sf /etc/init.d/setupClock /etc/init.d/hwclock.sh'
-ssh -p 22 admin@$1 '/usr/sbin/update-rc.d -f setupClock defaults'
-ssh -p 22 admin@$1 '/usr/sbin/update-rc.d -f hwclock.sh defaults'
+#Edit /etc/ntp.conf to be a copy of ntpClient in 2020Offseason#
+scp -P 22 ~/2020Offseason/scripts/RIO_setup/ntpClient.conf admin@$1:/etc/ntp.conf
 
 # Copy wpilib to roborio
 ssh -p 22 admin@$1 mkdir wpilib
