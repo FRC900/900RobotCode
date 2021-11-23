@@ -5,6 +5,7 @@
 #include <random>
 #include "particle.hpp"
 #include "world_model.hpp"
+#include <geometry_msgs/PoseWithCovariance.h>
 
 #define CHECK_PARTICLES(o) o->check_particles(__FILE__, __LINE__);
 class ParticleFilter {
@@ -23,7 +24,7 @@ public:
   ParticleFilter(const WorldModel& w,
                  double x_min, double x_max, double y_min, double y_max,
                  double ns, double rs, size_t n);
-  Particle predict();
+  geometry_msgs::PoseWithCovariance predict();
   void noise_rot();
   void noise_pos();
   bool motion_update(double delta_x, double delta_y, double delta_rot);

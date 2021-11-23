@@ -2,7 +2,6 @@
 #include "pf_localization/particle_filter.hpp"
 #include "pf_localization/world_model.hpp"
 #include "pf_localization/particle.hpp"
-#include "pf_localization/pf_pose.h"
 #include "pf_localization/pf_debug.h"
 #include "field_obj/Detection.h"
 
@@ -13,6 +12,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/TwistStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <geometry_msgs/PoseWithCovariance.h>
 #include <sensor_msgs/Imu.h>
 #include <iostream>
 #include <ros/ros.h>
@@ -59,18 +60,26 @@ void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
 
 void publish_prediction(const ros::TimerEvent &/*event*/)
 {
-  const Particle prediction = pf->predict();
+  const geometry_msgs::PoseWithCovariance prediction = pf->predict();
+  geometry_msgs::PoseWithCovarianceStamped predictionStamped;
 
-  // Publish message with predicted pose
-  // TODO - see if std ROS odom message is a better fit than a custom messge
-  pf_localization::pf_pose pose;
-  pose.x = prediction.x_;
-  pose.y = prediction.y_;
-  pose.rot = prediction.rot_;
-  pub.publish(pose);
+  predictionStamped.pose = prediction;
+  predictionStamped.header.stamp = ros::Time::now();
+  predictionStamped.header.frame_id = map_frame_id;
+
+  pub.publish(predictionStamped);
 
   // Publish map->odom transform describing this position
-  const double tmp = prediction.x_ + prediction.y_ + prediction.rot_;
+  const tf2::Quaternion q(prediction.pose.orientation.x,
+    prediction.pose.orientation.y,
+    prediction.pose.orientation.z,
+    prediction.pose.orientation.w);
+
+  tf2::Vector3 pos(prediction.pose.position.x,
+    prediction.pose.position.y,
+    0.0);
+
+  const double tmp = pos.getX() + pos.getY() + pos.getZ() + q.getX() + q.getY() + q.getZ() + q.getW();
   if (!std::isnan(tmp) && !std::isinf(tmp))
   {
     geometry_msgs::PoseStamped odom_to_map;
@@ -80,9 +89,7 @@ void publish_prediction(const ros::TimerEvent &/*event*/)
       // leaving a map->odom transform to broadcast
       // Borrowed from similar code in
       // https://github.com/ros-planning/navigation/blob/noetic-devel/amcl/src/amcl_node.cpp
-      tf2::Quaternion q;
-      q.setRPY(0, 0, prediction.rot_);
-      tf2::Transform tmp_tf(q, tf2::Vector3(prediction.x_, prediction.y_, 0.0));
+      tf2::Transform tmp_tf(q, pos);
 
       geometry_msgs::PoseStamped baselink_to_map;
       baselink_to_map.header.frame_id = "base_link";
@@ -293,7 +300,7 @@ int main(int argc, char **argv) {
   ros::Subscriber odom_sub = nh_.subscribe(cmd_topic, 1, cmdCallback);
   ros::Subscriber goal_sub = nh_.subscribe<field_obj::Detection>(goal_pos_topic, 1, boost::bind(goalCallback, _1, false));
 
-  pub = nh_.advertise<pf_localization::pf_pose>(pub_topic, 1);
+  pub = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>(pub_topic, 1);
   pub_debug = nh_.advertise<pf_localization::pf_debug>(pub_debug_topic, 1);
 
   tfbr = std::make_unique<tf2_ros::TransformBroadcaster>();

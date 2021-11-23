@@ -2,7 +2,10 @@
 
 #include "pf_localization/particle_filter.hpp"
 #include "pf_localization/world_model.hpp"
+#include <geometry_msgs/PoseWithCovariance.h>
+#include <tf2/LinearMath/Quaternion.h>
 #include <cmath>
+#include <angles/angles.h>
 #include <ros/console.h>
 
 std::ostream& operator<<(std::ostream& os, const Particle &p)
@@ -105,24 +108,67 @@ void ParticleFilter::resample() {
   normalize();
 }
 
-Particle ParticleFilter::predict() {
+geometry_msgs::PoseWithCovariance ParticleFilter::predict() {
   double weight = 0;
-  Particle res;
+  double x = 0;
+  double y = 0;
   double s = 0;
   double c = 0;
+
   for (const Particle& p : particles_) {
-    res.x_ += p.x_ * p.weight_;
-    res.y_ += p.y_ * p.weight_;
+    // Add weighted values to means
+    x += p.x_ * p.weight_;
+    y += p.y_ * p.weight_;
     c += cos(p.rot_) * p.weight_;
     s += sin(p.rot_) * p.weight_;
     weight += p.weight_;
   }
-  res.x_ /= weight;
-  res.y_ /= weight;
+
+  // Divide by weight to get the weighted average
+  x /= weight;
+  y /= weight;
   c /= weight;
   s /= weight;
-  res.rot_ = atan2(s, c);
-  return res;
+  double rot = atan2(s, c);
+
+  double covariance[9] = {0};
+  for (const Particle& p : particles_) {
+    // Put distances into an array so they can be accessed in a loop
+    double differences[3] = {p.x_ - x, p.y_ - y, angles::shortest_angular_distance(p.rot_, rot)};
+
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        int index = i * 3 + j;
+        covariance[index] += differences[i] * differences[j] * p.weight_;
+      }
+    }
+  }
+
+  // Packing everything into PoseWithCovariance
+  geometry_msgs::PoseWithCovariance pose;
+
+  std::fill(std::begin(pose.covariance), std::begin(pose.covariance)+36, 1000);
+  for(int i = 0; i < 3; i++) {
+    for(int j = 0; j < 3; j++) {
+      // Offset to skip to z rotation
+      int row = i > 1 ? i + 3 : i;
+      int column = j > 1 ? j + 3 : j;
+      pose.covariance[row * 6 + column] = covariance[i * 3 + j] / weight;
+    }
+  }
+
+  pose.pose.position.x = x;
+  pose.pose.position.y = y;
+  pose.pose.position.z = 0;
+
+  tf2::Quaternion q;
+  q.setRPY(0, 0, rot);
+  pose.pose.orientation.x = q.getX();
+  pose.pose.orientation.y = q.getY();
+  pose.pose.orientation.z = q.getZ();
+  pose.pose.orientation.w = q.getW();
+
+  return pose;
 }
 
 bool ParticleFilter::motion_update(double delta_x, double delta_y, double delta_rot) {
