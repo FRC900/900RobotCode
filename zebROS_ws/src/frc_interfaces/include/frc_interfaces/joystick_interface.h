@@ -94,7 +94,7 @@ class JoystickState
 		// For these, don't flag an error, just return 0/false
 		// That gives a reasonable default when an
 		// axis / button / pov is missing
-		bool getAxis(size_t index) const
+		float getAxis(size_t index) const
 		{
 			if (index >= axises_.size())
 				return 0.0;
@@ -116,6 +116,9 @@ class JoystickState
 	private:
 		const size_t       id_;
 		const std::string  name_;
+		// Store these as a raw vector mimicing the WPI HAL view
+		// of joysticks. State controllers are responsible for translating
+		// them to our joystick / button box / whatever message types
 		std::vector<float> axises_;
 		std::vector<bool>  buttons_;
 		std::vector<int>   povs_;

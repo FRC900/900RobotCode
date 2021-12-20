@@ -2520,13 +2520,20 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 				std::unique_lock<std::mutex> l(*(joystick_sim_write_mutex_[joystick]), std::try_to_lock);
 				if (l.owns_lock())
 				{
-					joystick_state_.clear();
-					for (auto i = 0; i < joysticks_[joystick]->GetAxisCount(); i++)
-						joystick_state_[joystick].addAxis(joysticks_[joystick]->GetRawAxis(i));
-					for (auto i = 0; i < joysticks_[joystick]->GetButtonCount(); i++)
-						joystick_state_[joystick].addButton(joysticks_[joystick]->GetRawButton(i+1));
-					for (auto i = 0; i < joysticks_[joystick]->GetPOVCount(); i++)
-						joystick_state_[joystick].addPOV(joysticks_[joystick]->GetPOV(i));
+#if 0
+					ROS_INFO_STREAM_THROTTLE(0.25, "Reading joystick index " << joystick <<
+							" name = " << joystick_names_[joystick] <<
+							" id = " << joystick_ids_[joystick]);
+#endif
+					auto &state = joystick_state_[joystick];
+					const auto &stick = joysticks_[joystick];
+					state.clear();
+					for (auto i = 0; i < stick->GetAxisCount(); i++)
+						state.addAxis(stick->GetRawAxis(i));
+					for (auto i = 0; i < stick->GetButtonCount(); i++)
+						state.addButton(stick->GetRawButton(i+1));
+					for (auto i = 0; i < stick->GetPOVCount(); i++)
+						state.addPOV(stick->GetPOV(i));
 				}
 				else
 				{
