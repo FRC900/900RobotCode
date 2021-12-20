@@ -13,6 +13,7 @@ elif [[ ! $ROS_ROOT = "/opt/ros/melodic/share/ros" ]]; then
 	echo "Run ./native_build.sh in a new terminal window"
 	exit 1
 fi
+export PATH=$PATH:/usr/local/cuda/bin
 
 EXTRA_BLACKLIST_PACKAGES=""
 EXTRA_CMD_LINE=""

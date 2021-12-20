@@ -27,8 +27,9 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
   [[ $SOURCE != /* ]] && SOURCE="$THIS_DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
 done
 LOCAL_CLONE_LOCATION="$( cd -P "$( dirname "$SOURCE" )" >/dev/null && pwd )"
-ROS_CODE_LOCATION=$LOCAL_CLONE_LOCATION/zebROS_ws
+ROS_CODE_LOCATION=$LOCAL_CLONE_LOCATION/../zebROS_ws
 RSYNC_OPTIONS="--delete"
+
 
 usage() {
     echo "Usage: $0 [-d|-p]"
@@ -159,8 +160,8 @@ if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
             --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
             --exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
             --exclude 'desmos_js' --exclude '.md5sum' --exclude 'trt_graph.pb'\
-			--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
-            $i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/
+			--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' --exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools' \
+            $i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/../
         if [ $? -ne 0 ]; then
             echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
             exit 1
@@ -182,8 +183,8 @@ do
         --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
         --exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
         --exclude 'desmos_js' --exclude '.md5sum' --exclude 'trt_graph.pb'\
-		--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
-        $LOCAL_CLONE_LOCATION/ $i:$JETSON_ENV_LOCATION/
+		--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' --exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools' \
+        $LOCAL_CLONE_LOCATION/../ $i:$JETSON_ENV_LOCATION/
     if [ $? -ne 0 ]; then
         echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"
         exit 1
@@ -200,7 +201,7 @@ RIO_BUILD_PROCESS=$!
 JETSON_BUILD_PROCESSES=()
 for i in "${JETSON_ADDR[@]}"
 do
-    echo "Starting Jetson $i native build" 
+    echo "Starting Jetson $i native build using $JETSON_CLONE_LOCATION/zebROS_ws/native_build.sh" 
     (
         ssh -XC $i terminator -T \"Jetson $i\" -x "$JETSON_CLONE_LOCATION/zebROS_ws/native_build.sh || \
                                          read -p 'Jetson Build FAILED - press ENTER to close window'" && \
