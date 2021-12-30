@@ -22,6 +22,8 @@
 #include <cmath>
 #include <memory>
 
+#include<std_srvs/Empty.h>
+
 #define VERBOSE
 // #define EXTREME_VERBOSE
 
@@ -31,6 +33,8 @@ const std::string goal_pos_topic = "/goal_detection/goal_detect_msg";
 
 const std::string pub_debug_topic = "pf_debug";
 const std::string pub_topic = "predicted_pose";
+
+const std::string reinit_pf_service = "/re_init_pf";
 
 std::string odom_frame_id = "odom";
 std::string map_frame_id = "map";
@@ -191,6 +195,11 @@ void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
   #endif
 }
 
+bool handle_re_init_pf(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res){
+  pf->reinit();
+  return true;
+}
+
 int main(int argc, char **argv) {
   ros::init(argc, argv, "pf_localization_node");
   ros::NodeHandle nh_;
@@ -301,6 +310,8 @@ int main(int argc, char **argv) {
   ros::Subscriber goal_sub = nh_.subscribe<field_obj::Detection>(goal_pos_topic, 1, boost::bind(goalCallback, _1, false));
 
   pub = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>(pub_topic, 1);
+  ros::ServiceServer re_init_pf_server = nh_.advertiseService(reinit_pf_service, handle_re_init_pf);
+
   pub_debug = nh_.advertise<pf_localization::pf_debug>(pub_debug_topic, 1);
 
   tfbr = std::make_unique<tf2_ros::TransformBroadcaster>();

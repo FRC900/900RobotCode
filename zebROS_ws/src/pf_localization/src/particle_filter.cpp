@@ -63,6 +63,16 @@ void ParticleFilter::init(const double x_min, const double x_max, const double y
   normalize();
 }
 
+void ParticleFilter::reinit(){
+  particles_.clear();
+  double world_x_min;
+  double world_x_max;
+  double world_y_min;
+  double world_y_max;
+  world_.get_boundaries(world_x_min, world_x_max, world_y_min, world_y_max);
+  init(world_x_min, world_x_max, world_y_min, world_y_max);
+}
+
 //Normalize weights to sum to 1
 void ParticleFilter::normalize() {
   double sum = 0;

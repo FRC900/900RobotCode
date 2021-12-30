@@ -33,6 +33,7 @@ public:
   void resample();
   std::vector<Particle> get_particles() const;
   void check_particles(const char *file, int line) const;
+  void reinit();
 };
 
 

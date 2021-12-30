@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   sensor_msgs
   std_msgs
+  std_srvs
   tf2
   tf2_ros
 )
@@ -63,7 +64,6 @@ find_package(catkin REQUIRED COMPONENTS
  )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
 #   FILES
 #   Service1.srv
 #   Service2.srv
