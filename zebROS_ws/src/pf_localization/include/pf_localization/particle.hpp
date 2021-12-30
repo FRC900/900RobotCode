@@ -2,6 +2,8 @@
 #define PARTICLE_HEADER
 #include <cmath>
 #include <ostream>
+#include <tf2/LinearMath/Quaternion.h>
+#include <geometry_msgs/Pose.h>
 // #define CHECK_NAN
 struct Particle {
   double x_;
@@ -15,6 +17,21 @@ struct Particle {
   {
 	  const double sum = x_ + y_ + rot_ + weight_;
 	  return !std::isnan(sum) && !std::isinf(sum);
+  }
+
+  static geometry_msgs::Pose poseFrom2D(double x, double y, double rot) {
+    geometry_msgs::Pose pose;
+    pose.position.x = x;
+    pose.position.y = y;
+    pose.position.z = 0;
+
+    tf2::Quaternion q;
+    q.setRPY(0, 0, rot);
+    pose.orientation.x = q.getX();
+    pose.orientation.y = q.getY();
+    pose.orientation.z = q.getZ();
+    pose.orientation.w = q.getW();
+    return pose;
   }
 };
 

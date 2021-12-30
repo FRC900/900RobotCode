@@ -167,16 +167,7 @@ geometry_msgs::PoseWithCovariance ParticleFilter::predict() {
     }
   }
 
-  pose.pose.position.x = x;
-  pose.pose.position.y = y;
-  pose.pose.position.z = 0;
-
-  tf2::Quaternion q;
-  q.setRPY(0, 0, rot);
-  pose.pose.orientation.x = q.getX();
-  pose.pose.orientation.y = q.getY();
-  pose.pose.orientation.z = q.getZ();
-  pose.pose.orientation.w = q.getW();
+  pose.pose = Particle::poseFrom2D(x, y, rot);
 
   return pose;
 }

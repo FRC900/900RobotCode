@@ -3,8 +3,11 @@
 import matplotlib.pyplot as plt
 
 import rospy
-from pf_localization.msg import pf_debug, pf_pose
+#from pf_localization.msg import pf_debug, pf_pose
 from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Quaternion
+from tf.transformations import euler_from_quaternion
+from geometry_msgs.msg import PoseArray, PoseWithCovarianceStamped
 
 particles_topic = "/pf_debug"
 pf_pose_topic = "/predicted_pose"
@@ -25,24 +28,25 @@ pln, = ax.plot([], [], 'r.', markersize=2)
 ln,  = ax.plot([], [], 'b.', markersize=.15)
 gtn, = ax.plot([], [], 'g.', markersize=2)
 
-def update_particles(particle_msg):
+def update_particles(pose_array):
     global x_data, y_data, rot_data
 
     x_data = []
     y_data = []
     rot_data = []
-    for p in particle_msg.particles:
-        x_data.append(p.x)
-        y_data.append(p.y)
-        rot_data.append(p.rot)
+    for p in pose_array.poses:
+        x_data.append(p.position.x)
+        y_data.append(p.position.y)
+        angles = euler_from_quaternion([p.orientation.x, p.orientation.y, p.orientation.z, p.orientation.w]);
+        rot_data.append(angles[2])
     ln.set_data(x_data, y_data)
     plt.draw()
 
 def update_pose(pose_msg):
     global predicted_x, predicted_y
 
-    predicted_x.append(pose_msg.x)
-    predicted_y.append(pose_msg.y)
+    predicted_x.append(pose_msg.pose.pose.position.x)
+    predicted_y.append(pose_msg.pose.pose.position.y)
     pln.set_data(predicted_x, predicted_y)
     plt.draw()
 
@@ -90,8 +94,8 @@ def main():
         beacon_y.append(b[1])
     ax.plot(beacon_x, beacon_y, 'ko')
 
-    sub_particles = rospy.Subscriber(particles_topic, pf_debug, update_particles)
-    sub_pose = rospy.Subscriber(pf_pose_topic, pf_pose, update_pose)
+    sub_particles = rospy.Subscriber(particles_topic, PoseArray, update_particles)
+    sub_pose = rospy.Subscriber(pf_pose_topic, PoseWithCovarianceStamped, update_pose)
     sub_ground_truth = rospy.Subscriber(ground_truth_topic, Odometry, update_ground_truth)
 
     plt.show()
