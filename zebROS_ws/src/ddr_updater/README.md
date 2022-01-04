@@ -1,0 +1,1 @@
+Class providing access to a ddynamic\_reconfigure server and code to force an update of that server from code. Used in cases where the dynamic reconfigurable vars can be updated via dynamic reconfigure GUI and also from the code itself.  The forced update allows changes internally in the code to be reflected in the GUI, keeping the two in sync.

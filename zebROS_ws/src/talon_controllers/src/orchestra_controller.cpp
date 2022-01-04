@@ -136,5 +136,5 @@ bool OrchestraController::reloadInstrumentsService(talon_controller_msgs::LoadIn
 }
 
 }
-
+#include "pluginlib/class_list_macros.hpp"
 PLUGINLIB_EXPORT_CLASS( orchestra_controller::OrchestraController, controller_interface::ControllerBase)

@@ -2214,10 +2214,17 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw
 	struct sched_param schedParam{};
 
 	schedParam.sched_priority = sched_get_priority_min(SCHED_RR);
-	auto rc = pthread_setschedparam(pthread_self(), SCHED_RR, &schedParam);
-	ROS_INFO_STREAM("pthread_setschedparam() returned " << rc
-			<< " priority = " << schedParam.sched_priority
-			<< " errno = " << errno << " (" << strerror(errno) << ")");
+	const auto rc = pthread_setschedparam(pthread_self(), SCHED_RR, &schedParam);
+	if (rc)
+	{
+		ROS_WARN_STREAM("pthread_setschedparam() returned " << rc
+				<< " priority = " << schedParam.sched_priority
+				<< " errno = " << errno << " (" << strerror(errno) << ")");
+	}
+	else
+	{
+		ROS_INFO_STREAM("pthread_setschedparam() succeeded");
+	}
 	if (pthread_setname_np(pthread_self(), "hwi_main_loop"))
 	{
 		ROS_ERROR_STREAM("Error setting thread name hwi_main_loop " << errno);

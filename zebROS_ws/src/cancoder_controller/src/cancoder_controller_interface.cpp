@@ -1,9 +1,10 @@
+#include <cmath>
 #include "cancoder_controller/cancoder_controller_interface.h"
 
 namespace cancoder_controller_interface
 {
 CANCoderCIParams::CANCoderCIParams(ros::NodeHandle n)
-	: ddr_(n)
+	: DDRUpdater(n)
 {
 	// Set values to sensible defaults
 	velocity_meas_period_ = hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_100Ms;
@@ -48,13 +49,20 @@ CANCoderCIParams::CANCoderCIParams(ros::NodeHandle n)
 	ddr_.publishServicesTopics();
 }
 
+// Functions to update params from either DDR callbacks or the interface.
+// First arg holds the value to set
+// Second arg is true if coming from the interface, meaning it needs
+// to force an update to the dynamic interface values to stay in sync
+// Second arg is false if the source of the call is a DDR update. In
+// that case, don't update the dynamic interface value since
+// the value has already been updated there.
 void CANCoderCIParams::setVelocityMeasPeriod(int velocity_meas_period, bool update_dynamic)
 {
 	const bool publish_update = update_dynamic && (velocity_meas_period != velocity_meas_period_);
 	velocity_meas_period_ = static_cast<hardware_interface::cancoder::SensorVelocityMeasPeriod>(velocity_meas_period);
 	if (publish_update)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANCoderCIParams::setVelocityMeasWindow(int velocity_meas_window, bool update_dynamic)
@@ -63,7 +71,7 @@ void CANCoderCIParams::setVelocityMeasWindow(int velocity_meas_window, bool upda
 	velocity_meas_window_ = velocity_meas_window;
 	if (publish_update)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANCoderCIParams::setAbsoluteSensorRange(int absolute_sensor_range, bool update_dynamic)
@@ -72,7 +80,7 @@ void CANCoderCIParams::setAbsoluteSensorRange(int absolute_sensor_range, bool up
 	absolute_sensor_range_ = static_cast<hardware_interface::cancoder::AbsoluteSensorRange>(absolute_sensor_range);
 	if (publish_update)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANCoderCIParams::setMagnetOffset(double magnet_offset, bool update_dynamic)
@@ -81,7 +89,7 @@ void CANCoderCIParams::setMagnetOffset(double magnet_offset, bool update_dynamic
 	magnet_offset_ = magnet_offset;
 	if (publish_update)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANCoderCIParams::setInitializationStrategy(int initialization_strategy, bool update_dynamic)
@@ -90,7 +98,7 @@ void CANCoderCIParams::setInitializationStrategy(int initialization_strategy, bo
 	initialization_strategy_ = static_cast<hardware_interface::cancoder::SensorInitializationStrategy>(initialization_strategy);
 	if (publish_update)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANCoderCIParams::setFeedbackCoefficient(double feedback_coefficient, bool update_dynamic)
@@ -99,7 +107,7 @@ void CANCoderCIParams::setFeedbackCoefficient(double feedback_coefficient, bool 
 	feedback_coefficient_ = feedback_coefficient;
 	if (publish_update)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANCoderCIParams::setUnitString(const std::string &unit_string, bool update_dynamic)
@@ -112,7 +120,7 @@ void CANCoderCIParams::setUnitString(const std::string &unit_string, bool update
 	}
 	if (publish_update)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANCoderCIParams::setTimeBase(int time_base, bool update_dynamic)
@@ -121,7 +129,7 @@ void CANCoderCIParams::setTimeBase(int time_base, bool update_dynamic)
 	time_base_ = static_cast<hardware_interface::cancoder::SensorTimeBase>(time_base);
 	if (publish_update)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANCoderCIParams::setDirection(bool direction, bool update_dynamic)
@@ -130,7 +138,7 @@ void CANCoderCIParams::setDirection(bool direction, bool update_dynamic)
 	direction_ = direction;
 	if (publish_update)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANCoderCIParams::setSensorDataStatusFramePeriod(int sensor_data_status_frame_period, bool update_dynamic)
@@ -139,7 +147,7 @@ void CANCoderCIParams::setSensorDataStatusFramePeriod(int sensor_data_status_fra
 	sensor_data_status_frame_period_ = sensor_data_status_frame_period;
 	if (publish_update)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANCoderCIParams::setVBatAndFaultsStatusFramePeriod(int vbat_and_faults_status_frame_period, bool update_dynamic)
@@ -148,7 +156,7 @@ void CANCoderCIParams::setVBatAndFaultsStatusFramePeriod(int vbat_and_faults_sta
 	vbat_and_faults_status_frame_period_ = vbat_and_faults_status_frame_period;
 	if (publish_update)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANCoderCIParams::setConversionFactor(double conversion_factor, bool update_dynamic)
@@ -157,7 +165,7 @@ void CANCoderCIParams::setConversionFactor(double conversion_factor, bool update
 	conversion_factor_ = conversion_factor;
 	if (publish_update)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 

@@ -3,13 +3,11 @@
 
 #include <ros/ros.h>
 #include <controller_interface/controller.h>
-#include <talon_interface/orchestra_command_interface.h>
 #include <realtime_tools/realtime_buffer.h>
-#include <pluginlib/class_list_macros.h>
-#include <ros/node_handle.h>
 #include <talon_controller_msgs/LoadInstrumentsSrv.h>
 #include <talon_controller_msgs/LoadMusicSrv.h>
 #include <talon_controller_msgs/SetOrchestraStateSrv.h>
+#include <talon_interface/orchestra_command_interface.h>
 
 namespace orchestra_controller
 {

@@ -1,4 +1,9 @@
 #pragma once
+#include <thread>
+#ifdef __linux__
+#include <sched.h>
+#endif
+
 #include <dynamic_reconfigure/server.h>
 #include <XmlRpcValue.h>
 
@@ -189,8 +194,8 @@ class TalonCIParams
 			closed_loop_period_[3] = config.closed_loop_period3;
 			pidf_slot_ = config.pid_config;
 			aux_pid_polarity_ = config.aux_pid_polarity;
-			// demand1_type_ = static_cast<hardware_interface::DemandType>(config.demand1_type);
-			// demand1_value_ = config.demand1_value;
+			demand1_type_ = static_cast<hardware_interface::DemandType>(config.demand1_type);
+			demand1_value_ = config.demand1_value;
 			invert_output_ = config.invert_output;
 
 			sensor_phase_ = config.sensor_phase;
@@ -327,8 +332,8 @@ class TalonCIParams
 			config.closed_loop_period3 = closed_loop_period_[3];
 			config.pid_config    = pidf_slot_;
 			config.aux_pid_polarity = aux_pid_polarity_;
-			//  config.demand1_type = demand1_type_;
-			//  config.demand1_value = demand1_value_;
+			config.demand1_type = demand1_type_;
+			config.demand1_value = demand1_value_;
 			config.invert_output = invert_output_;
 			config.sensor_phase  = sensor_phase_;
 			config.feedback_type = feedback_type_;
@@ -1153,13 +1158,23 @@ class TalonCIParams
 class TalonControllerInterface
 {
 	public:
-		TalonControllerInterface(void) :
-			srv_(nullptr),
-			srv_mutex_(nullptr)
+		TalonControllerInterface(void)
+			: srv_mutex_{std::make_shared<boost::recursive_mutex>()}
+			, srv_update_thread_flag_{}
+		    , srv_update_thread_active_{false}
+		    , srv_update_thread_{}
 		{
+			srv_update_thread_flag_.test_and_set();
 		}
 
-		virtual ~TalonControllerInterface() {}
+		virtual ~TalonControllerInterface()
+		{
+			if (srv_update_thread_.joinable())
+			{
+				srv_update_thread_active_ = false;
+				srv_update_thread_.join();
+			}
+		}
 
 		// Standardize format for reading params for
 		// motor controller
@@ -1193,7 +1208,7 @@ class TalonControllerInterface
 								  hardware_interface::TalonStateInterface * /*tsi*/,
 								  ros::NodeHandle &n)
 		{
-			return init(tci, n, talon_, srv_mutex_, srv_, true) &&
+			return init(tci, n, talon_, srv_mutex_, false) &&
 				   setInitialMode();
 		}
 
@@ -1215,9 +1230,7 @@ class TalonControllerInterface
 			follower_talons_.resize(n.size() - 1);
 			for (size_t i = 1; i < n.size(); i++)
 			{
-				follower_srv_mutexes_.push_back(nullptr);
-				follower_srvs_.push_back(nullptr);
-				if (!init(tci, n[i], follower_talons_[i-1], follower_srv_mutexes_[i-1], follower_srvs_[i-1], false))
+				if (!init(tci, n[i], follower_talons_[i-1], nullptr, true))
 					return false;
 				follower_talons_[i-1]->setMode(hardware_interface::TalonMode_Follower);
 				follower_talons_[i-1]->set(follow_can_id);
@@ -1650,12 +1663,13 @@ class TalonControllerInterface
 		{
 			if (demand1_type == params_.demand1_type_)
 				return;
-			if (demand1_type == hardware_interface::DemandType_AuxPID){
-				ROS_ERROR_STREAM("Demand Type is DemandType_AuxPID!");
+			if (demand1_type == hardware_interface::DemandType_AuxPID)
+			{
+				ROS_ERROR_STREAM("Demand Type is DemandType_AuxPID! Not supported!");
 				return;
 			}
 			params_.demand1_type_ = demand1_type;
-			// syncDynamicReconfigure();
+			syncDynamicReconfigure();
 			talon_->setDemand1Type(demand1_type);
 		}
 
@@ -1664,7 +1678,7 @@ class TalonControllerInterface
 			if (fabs(demand1_value - params_.demand1_value_) < double_value_epsilon)
 				return;
 			params_.demand1_value_ = demand1_value;
-			//  syncDynamicReconfigure();
+			syncDynamicReconfigure();
 			talon_->setDemand1Value(demand1_value);
 		}
 
@@ -1742,16 +1756,21 @@ class TalonControllerInterface
 		//#endif
 
 	protected:
-		hardware_interface::TalonCommandHandle                          talon_;
-		TalonCIParams                                                   params_;
-		std::shared_ptr<dynamic_reconfigure::Server<TalonConfigConfig>> srv_;
-		std::shared_ptr<boost::recursive_mutex>                         srv_mutex_;
+		TalonCIParams                                        params_;
+		hardware_interface::TalonCommandHandle               talon_;
+		std::shared_ptr<boost::recursive_mutex>              srv_mutex_;
+
+		// Variables for a thread which updates the dynamic reconfigure server
+		// when vars are updated from calls to the interafce. This keeps the
+		// values in the dynamic reconfigure GUI in sync with the values set
+		// via functions called in this interface
+		std::atomic_flag                                     srv_update_thread_flag_;
+		std::atomic<bool>                                    srv_update_thread_active_;
+		std::thread                                          srv_update_thread_;
 
 		// List of follower talons associated with the master
 		// listed above
-		std::vector<hardware_interface::TalonCommandHandle>                          follower_talons_;
-		std::vector<std::shared_ptr<dynamic_reconfigure::Server<TalonConfigConfig>>> follower_srvs_;
-		std::vector<std::shared_ptr<boost::recursive_mutex>>                         follower_srv_mutexes_;
+		std::vector<hardware_interface::TalonCommandHandle>  follower_talons_;
 
 		// Used to set initial (and only) talon
 		// mode for FixedMode derived classes
@@ -1765,23 +1784,27 @@ class TalonControllerInterface
 		virtual bool init(hardware_interface::TalonCommandInterface *tci,
 							ros::NodeHandle &n,
 							hardware_interface::TalonCommandHandle &talon,
-							std::shared_ptr<boost::recursive_mutex> &srv_mutex,
-							std::shared_ptr<dynamic_reconfigure::Server<talon_controllers::TalonConfigConfig>> &srv,
-							bool update_params)
+							std::shared_ptr<boost::recursive_mutex> srv_mutex,
+							bool follower)
 		{
 			ROS_WARN("init start");
+
 			// Read params from startup and intialize Talon using them
 			TalonCIParams params;
 			if (!readParams(n, params))
 			   return false;
-			bool dynamic_reconfigure;
-			n.param<bool>("dynamic_reconfigure", dynamic_reconfigure, false);
 			ROS_WARN("init past readParams");
 
 			talon = tci->getHandle(params.joint_name_);
-			writeParamsToHW(params, talon, update_params);
-
+			writeParamsToHW(params, talon, !follower);
 			ROS_WARN("init past writeParamsToHW");
+
+			bool dynamic_reconfigure = false;
+			// Only allow dynamic reconfigure to be active for non-follower talons
+			if (!follower)
+			{
+				n.param<bool>("dynamic_reconfigure", dynamic_reconfigure, dynamic_reconfigure);
+			}
 			if (dynamic_reconfigure)
 			{
 				// Create dynamic_reconfigure Server. Pass in n
@@ -1789,8 +1812,7 @@ class TalonControllerInterface
 				// under the node's name.  Doing so allows multiple
 				// copies of the class to be started, each getting
 				// their own namespace.
-				srv_mutex = std::make_shared<boost::recursive_mutex>();
-				srv = std::make_shared<dynamic_reconfigure::Server<talon_controllers::TalonConfigConfig>>(*srv_mutex_, n);
+				auto srv = std::make_shared<dynamic_reconfigure::Server<talon_controllers::TalonConfigConfig>>(*srv_mutex, n);
 
 				ROS_WARN("init updateConfig");
 				// Without this, the first call to callback()
@@ -1803,6 +1825,9 @@ class TalonControllerInterface
 				// time parameters are changed using
 				// rqt_reconfigure or the like
 				srv->setCallback(boost::bind(&TalonControllerInterface::callback, this, _1, _2));
+
+				// Create a thread to update the server with new values written by users of this interface
+				srv_update_thread_ = std::thread(std::bind(&TalonControllerInterface::srvUpdateThread, this, srv));
 			}
 			ROS_WARN("init returning");
 
@@ -1810,17 +1835,52 @@ class TalonControllerInterface
 		}
 
 		// If dynamic reconfigure is running then update
-		// the reported config there with the new internal
-		// state
-		void syncDynamicReconfigure(void)
+		// the reported config there with the new internal state
+		// Trigger a write of the current CIParams to the DDR server. This needs
+		// to happen if the values have been updated via the interface code.
+		// The meaning of the flag - set == no new updates, cleared == data has
+		// been updated via code and the reconfigure gui needs that new data sent
+		// to it to stay in sync
+		// This call is on the control loop update path and needs to be quick.
+		// atomic_flags are lock free, so clearing it should be a fast operation
+		// which never blocks.  Thus, with any luck it won't slow down the
+		// control loop by any significant amount.
+		void syncDynamicReconfigure()
 		{
-			if (srv_)
+			srv_update_thread_flag_.clear();
+		}
+
+		// Loop forever, waiting for requests from the main thread
+		// to update values from this class to the DDR server.
+		void srvUpdateThread(std::shared_ptr<dynamic_reconfigure::Server<TalonConfigConfig>> srv)
+		{
+			ROS_INFO_STREAM("srvUpdateThread started for joint " << params_.joint_name_);
+			// Early out if ddr isn't used for this controller
+			if (!srv)
+				return;
+#ifdef __linux__
+			struct sched_param sp;
+			sp.sched_priority = 0;
+			sched_setscheduler(0, SCHED_IDLE, &sp); // GUI update is low priority compared to driving the robot
+			pthread_setname_np(pthread_self(), "tci_ddr_upd");
+			ROS_INFO_STREAM("srvUpdateThread priority set for joint " << params_.joint_name_);
+#endif
+			srv_update_thread_active_ = true;
+			ros::Rate r(10);
+			while (srv_update_thread_active_)
 			{
-				TalonConfigConfig config(params_.toConfig());
-				// first call in updateConfig is another lock, this is probably
-				// redundant
-				// boost::recursive_mutex::scoped_lock lock(*srv_mutex_);
-				srv_->updateConfig(config);
+				// Loop forever, periodically checking for the flag to be cleared
+				// Test and set returns the previous value of the variable and sets
+				// it, all in one atomic operation.  The set will reset the flag
+				// so after running updateConfig() the code will loop back and wait
+				// here for the next time the flag is cleared by syncDynamicReconfigure.
+				if (!srv_update_thread_flag_.test_and_set())
+				{
+					TalonConfigConfig config(params_.toConfig());
+					srv->updateConfig(config);
+				}
+
+				r.sleep();
 			}
 		}
 

@@ -3,8 +3,8 @@
 namespace canifier_controller_interface
 {
 CANifierCIParams::CANifierCIParams(ros::NodeHandle n)
-	: led_output_mutex_(std::make_shared<std::mutex>())
-    , ddr_(n)
+	: DDRUpdater(n)
+	, led_output_mutex_(std::make_shared<std::mutex>())
 {
 	// First set defaults for all params
 	for (auto &lo : led_output_)
@@ -161,7 +161,7 @@ void CANifierCIParams::setLEDOutput(hardware_interface::canifier::LEDChannel ind
 	led_output_[index] = value;
 	if (update_published_info)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANifierCIParams::setGeneralPinOutputEnable(hardware_interface::canifier::GeneralPin index, bool value, bool update_dynamic)
@@ -176,7 +176,7 @@ void CANifierCIParams::setGeneralPinOutputEnable(hardware_interface::canifier::G
 	general_pin_output_enable_[index] = value;
 	if (update_published_info)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 
@@ -192,7 +192,7 @@ void CANifierCIParams::setGeneralPinOutput(hardware_interface::canifier::General
 	general_pin_output_[index] = value;
 	if (update_published_info)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANifierCIParams::setVelocityMeasurementPeriod(int period, bool update_dynamic)
@@ -207,7 +207,7 @@ void CANifierCIParams::setVelocityMeasurementPeriod(int period, bool update_dyna
 	velocity_measurement_period_ = static_cast<hardware_interface::canifier::CANifierVelocityMeasPeriod>(period);
 	if (update_published_info)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 
@@ -217,7 +217,7 @@ void CANifierCIParams::setVelocityMeasurementWindow(int window, bool update_dyna
 	velocity_measurement_window_ = window;
 	if (update_published_info)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANifierCIParams::setClearPositionOnLimitF(bool value, bool update_dynamic)
@@ -226,7 +226,7 @@ void CANifierCIParams::setClearPositionOnLimitF(bool value, bool update_dynamic)
 	clear_position_on_limit_f_ = value;
 	if (update_published_info)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANifierCIParams::setClearPositionOnLimitR(bool value, bool update_dynamic)
@@ -235,7 +235,7 @@ void CANifierCIParams::setClearPositionOnLimitR(bool value, bool update_dynamic)
 	clear_position_on_limit_r_ = value;
 	if (update_published_info)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANifierCIParams::setClearPositionOnQuadIdx(bool value, bool update_dynamic)
@@ -244,7 +244,7 @@ void CANifierCIParams::setClearPositionOnQuadIdx(bool value, bool update_dynamic
 	clear_position_on_quad_idx_ = value;
 	if (update_published_info)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANifierCIParams::setPWMOutputEnable(hardware_interface::canifier::PWMChannel index, bool value, bool update_dynamic)
@@ -259,7 +259,7 @@ void CANifierCIParams::setPWMOutputEnable(hardware_interface::canifier::PWMChann
 	pwm_output_enable_[index] = value;
 	if (update_published_info)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANifierCIParams::setPWMOutput(hardware_interface::canifier::PWMChannel index, double value, bool update_dynamic)
@@ -274,7 +274,7 @@ void CANifierCIParams::setPWMOutput(hardware_interface::canifier::PWMChannel ind
 	pwm_output_[index] = value;
 	if (update_published_info)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 void CANifierCIParams::setStatusFramePeriod(hardware_interface::canifier::CANifierStatusFrame frame_id, int period, bool update_dynamic)
@@ -289,7 +289,7 @@ void CANifierCIParams::setStatusFramePeriod(hardware_interface::canifier::CANifi
 	status_frame_period_[frame_id] = period;
 	if (update_published_info)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 
 }
@@ -305,7 +305,7 @@ void CANifierCIParams::setControlFramePeriod(hardware_interface::canifier::CANif
 	control_frame_period_[frame_id] = period;
 	if (update_published_info)
 	{
-		ddr_.updatePublishedInformation();
+		triggerDDRUpdate();
 	}
 }
 
@@ -411,7 +411,7 @@ int CANifierCIParams::getControlFramePeriod(hardware_interface::canifier::CANifi
 
 void CANifierCIParams::updateDDR(void)
 {
-	ddr_.updatePublishedInformation();
+	triggerDDRUpdate();
 }
 
 CANifierControllerInterface::CANifierControllerInterface(ros::NodeHandle &n, const std::string &joint_name, hardware_interface::canifier::CANifierCommandHandle handle)

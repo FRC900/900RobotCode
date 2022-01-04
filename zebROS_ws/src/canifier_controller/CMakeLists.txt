@@ -9,6 +9,7 @@ include ("../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED COMPONENTS
   canifier_controller_msgs
   controller_interface
+  ddr_updater
   ddynamic_reconfigure
   realtime_tools
   roscpp

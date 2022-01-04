@@ -2,8 +2,8 @@
 
 #include <controller_interface/controller.h>
 #include <controller_interface/multi_interface_controller.h>
-#include <ros/node_handle.h>
 #include <realtime_tools/realtime_buffer.h>
+#include <ros/ros.h>
 #include <std_msgs/Float64.h>
 #include <talon_controllers/talon_controller_interface.h>
 #include <talon_controller_msgs/PidfSlot.h>

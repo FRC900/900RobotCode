@@ -130,9 +130,8 @@ class TalonSwerveDriveController
 		std::shared_ptr<swerve> swerveC_;
 
 		/// Hardware handles:
-		//TODO: IMPORTANT, make generalized, and check
-		std::vector<talon_controllers::TalonControllerInterface> speed_joints_;
-		std::vector<talon_controllers::TalonControllerInterface> steering_joints_;
+		std::array<talon_controllers::TalonControllerInterface, WHEELCOUNT> speed_joints_;
+		std::array<talon_controllers::TalonControllerInterface, WHEELCOUNT> steering_joints_;
 		/// Velocity command related:
 
 		struct Commands
@@ -273,9 +272,6 @@ class TalonSwerveDriveController
 		/// Whether to publish odometry to tf or not:
 		//bool enable_odom_tf_;
 
-		/// Number of wheel joints:
-		size_t wheel_joints_size_;
-
 		/// Speed limiters:
 		//Commands last1_cmd_;
 		//Commands last0_cmd_;
@@ -314,7 +310,7 @@ class TalonSwerveDriveController
 		 */
 		bool getWheelNames(ros::NodeHandle &controller_nh,
 						   const std::string &wheel_param,
-						   std::vector<std::string> &wheel_names);
+						   std::array<std::string, WHEELCOUNT> &wheel_names);
 
 		/**
 		 * \brief Sets odometry parameters from the URDF, i.e. the wheel radius and separation

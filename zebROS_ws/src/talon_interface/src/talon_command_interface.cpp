@@ -63,9 +63,9 @@ TalonHWCommand::TalonHWCommand(void) :
 	encoder_ticks_per_rotation_(4096),
 	remote_feedback_device_ids_{0, 0},
 	remote_feedback_filters_{RemoteSensorSource_Off, RemoteSensorSource_Off},
-	remote_feedback_filters_changed_(false),
+	remote_feedback_filters_changed_(true),
 	sensor_terms_{FeedbackDevice_QuadEncoder, FeedbackDevice_QuadEncoder, FeedbackDevice_QuadEncoder, FeedbackDevice_QuadEncoder},
-	sensor_terms_changed_(false),
+	sensor_terms_changed_(true),
 
 	//output shaping
 	closed_loop_ramp_(0),
@@ -818,8 +818,11 @@ void TalonHWCommand::setRemoteFeedbackDeviceId(int remote_feedback_device_id, si
 		ROS_WARN("setRemoteFeedbackDeviceId: remote_feedback_device_id must be <= 15");
 		return;
 	}
-	remote_feedback_device_ids_[remote_ordinal] = remote_feedback_device_id;
-	remote_feedback_filters_changed_ = true;
+	if (remote_feedback_device_ids_[remote_ordinal] != remote_feedback_device_id)
+	{
+		remote_feedback_device_ids_[remote_ordinal] = remote_feedback_device_id;
+		remote_feedback_filters_changed_ = true;
+	}
 }
 void TalonHWCommand::setRemoteFeedbackFilter(RemoteSensorSource remote_sensor_source, size_t remote_ordinal)
 {
@@ -834,8 +837,12 @@ void TalonHWCommand::setRemoteFeedbackFilter(RemoteSensorSource remote_sensor_so
 		ROS_WARN("setRemoteFeedbackFilter : remote_sensor_source out of range");
 		return;
 	}
-	remote_feedback_filters_[remote_ordinal] = remote_sensor_source;
-	remote_feedback_filters_changed_ = true;
+	if (remote_feedback_filters_[remote_ordinal] != remote_sensor_source)
+	{
+		remote_feedback_filters_[remote_ordinal] = remote_sensor_source;
+		remote_feedback_filters_changed_ = true;
+	}
+
 }
 bool TalonHWCommand::remoteFeedbackFiltersChanged(std::array<int, 2> &remote_feedback_device_ids, std::array<RemoteSensorSource, 2> &remote_feedback_filters)
 {
@@ -872,8 +879,11 @@ void TalonHWCommand::setSensorTerm(FeedbackDevice feedback_device, SensorTerm se
 		ROS_WARN_STREAM("setSensorTerm Invalid feedback device requested");
 		return;
 	}
-	sensor_terms_[sensor_terms] = feedback_device;
-	sensor_terms_changed_ = true;
+	if (sensor_terms_[sensor_terms] != feedback_device)
+	{
+		sensor_terms_[sensor_terms] = feedback_device;
+		sensor_terms_changed_ = true;
+	}
 }
 bool TalonHWCommand::sensorTermsChanged(std::array<FeedbackDevice, SensorTerm_Last> &sensor_terms)
 {

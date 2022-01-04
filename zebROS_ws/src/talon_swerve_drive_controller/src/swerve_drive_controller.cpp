@@ -173,8 +173,7 @@ TalonSwerveDriveController::TalonSwerveDriveController() :
 	cmd_vel_timeout_(0.5), //Change to 5.0 for auto path planning testing
 	allow_multiple_cmd_vel_publishers_(true),
 	base_frame_id_("base_link"),
-	odom_frame_id_("odom"),
-	wheel_joints_size_(0)
+	odom_frame_id_("odom")
 {
 }
 
@@ -187,7 +186,8 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	name_ = complete_ns.substr(id + 1);
 
 	// Get joint names from the parameter server
-	std::vector<std::string> speed_names, steering_names;
+	std::array<std::string, WHEELCOUNT> speed_names;
+	std::array<std::string, WHEELCOUNT> steering_names;
 	if (!getWheelNames(controller_nh, "speed", speed_names) or
 		!getWheelNames(controller_nh, "steering", steering_names))
 	{
@@ -201,12 +201,12 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 							   "#steering (" << steering_names.size() << ").");
 		return false;
 	}
-	else
+	if (speed_names.size() != WHEELCOUNT)
 	{
-		wheel_joints_size_ = speed_names.size();
-
-		speed_joints_.resize(wheel_joints_size_);
-		steering_joints_.resize(wheel_joints_size_);
+		ROS_ERROR_STREAM_NAMED(name_,
+							   "#speed (" << speed_names.size() << ") != " <<
+							   "WHEELCOUNT (" << WHEELCOUNT << ").");
+		return false;
 	}
 
 	/*ros::NodeHandle n; //Is this bad?
@@ -422,7 +422,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	*/
 
 	swerveC_ = std::make_shared<swerve>(wheel_coords_, offsets, driveRatios_, units_, model_);
-	for (size_t i = 0; i < wheel_joints_size_; ++i)
+	for (size_t i = 0; i < WHEELCOUNT; ++i)
 	{
 		ROS_INFO_STREAM_NAMED(name_,
 							  "Adding speed motors with joint name: " << speed_names[i]
@@ -862,7 +862,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 
 		static std::array<Vector2d, WHEELCOUNT> speeds_angles;
 
-		for (size_t i = 0; i < wheel_joints_size_; ++i)
+		for (size_t i = 0; i < WHEELCOUNT; ++i)
 		{
 			steering_joints_[i].setCustomProfileRun(false);
 			speed_joints_[i].setCustomProfileRun(false);
@@ -886,7 +886,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		{
 			brake_last = ros::Time::now().toSec();
 
-			for (size_t i = 0; i < wheel_joints_size_; ++i)
+			for (size_t i = 0; i < WHEELCOUNT; ++i)
 			{
 				speed_joints_[i].setCommand(0);
 				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
@@ -897,7 +897,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 			}
 			else
 			{
-				for (size_t i = 0; !dont_set_angle_mode && (i < wheel_joints_size_); ++i)
+				for (size_t i = 0; !dont_set_angle_mode && (i < WHEELCOUNT); ++i)
 				{
 					steering_joints_[i].setCommand(speeds_angles[i][1]);
 				}
@@ -928,14 +928,14 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		speeds_angles = swerveC_->motorOutputs(curr_cmd.lin, curr_cmd.ang, M_PI / 2.0, steer_angles, true, *(center_of_rotation_.readFromRT()));
 
 		// Set wheel steering angles, as long as dont_set_angle_mode is false
-		for (size_t i = 0; !dont_set_angle_mode && (i < wheel_joints_size_); ++i)
+		for (size_t i = 0; !dont_set_angle_mode && (i < WHEELCOUNT); ++i)
 		{
 			steering_joints_[i].setCommand(speeds_angles[i][1]);
 		}
 
 		if (ros::Time::now().toSec() - .1 > brake_last || ros::Time::now().toSec() - .1 > mode_last_time)
 		{
-			for (size_t i = 0; i < wheel_joints_size_; ++i)
+			for (size_t i = 0; i < WHEELCOUNT; ++i)
 			{
 				if (!percent_out_drive_mode)
 				{
@@ -968,7 +968,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		}
 		else
 		{
-			for (size_t i = 0; i < wheel_joints_size_; ++i)
+			for (size_t i = 0; i < WHEELCOUNT; ++i)
 			{
 				speed_joints_[i].setCommand(0);
 				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
@@ -992,7 +992,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 	{
 		ROS_INFO_STREAM_THROTTLE(.5, "out of points = " << steering_joints_[0].getCustomProfileStatus().outOfPoints);
 		mode_last_time =::Time::now().toSec();
-		for (size_t i = 0; !set_profile_run && (i < wheel_joints_size_); ++i)
+		for (size_t i = 0; !set_profile_run && (i < WHEELCOUNT); ++i)
 		{
 			steering_joints_[i].setCustomProfileRun(true);
 			speed_joints_[i].setCustomProfileRun(true);
@@ -1027,7 +1027,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 	static uint16_t slot_ret = 0;
 	static int slot_ret_diff_last_sum;
 
-	for (size_t i = 0; i < wheel_joints_size_; ++i)
+	for (size_t i = 0; i < WHEELCOUNT; ++i)
 	{
 		if (slot_ret != steering_joints_[i].getCustomProfileSlot()) slot_ret_diff_last_sum += 1;
 
@@ -1076,7 +1076,7 @@ void TalonSwerveDriveController::brake()
 		steer_angles = steer_angles_;
 	}
 	const std::array<double, WHEELCOUNT> park_angles = swerveC_->parkingAngles(steer_angles);
-	for (size_t i = 0; i < wheel_joints_size_; ++i)
+	for (size_t i = 0; i < WHEELCOUNT; ++i)
 	{
 		speed_joints_[i].setCommand(0.0);
                 speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
@@ -1469,7 +1469,7 @@ void TalonSwerveDriveController::cmdCallback(const talon_swerve_drive_controller
 
 bool TalonSwerveDriveController::getWheelNames(ros::NodeHandle &controller_nh,
 		const std::string &wheel_param,
-		std::vector<std::string> &wheel_names)
+		std::array<std::string, WHEELCOUNT> &wheel_names)
 {
 	XmlRpc::XmlRpcValue wheel_list;
 	if (!controller_nh.getParam(wheel_param, wheel_list))
@@ -1487,6 +1487,13 @@ bool TalonSwerveDriveController::getWheelNames(ros::NodeHandle &controller_nh,
 								   "Wheel param '" << wheel_param << "' is an empty list");
 			return false;
 		}
+		if (wheel_list.size() != WHEELCOUNT)
+		{
+			ROS_ERROR_STREAM_NAMED(name_,
+								   "Wheel param size (" << wheel_list.size() <<
+								   " != WHEELCOUNT (" << WHEELCOUNT <<")." );
+			return false;
+		}
 
 		for (int i = 0; i < wheel_list.size(); ++i)
 		{
@@ -1499,15 +1506,10 @@ bool TalonSwerveDriveController::getWheelNames(ros::NodeHandle &controller_nh,
 			}
 		}
 
-		wheel_names.resize(wheel_list.size());
 		for (int i = 0; i < wheel_list.size(); ++i)
 		{
 			wheel_names[i] = static_cast<std::string>(wheel_list[i]);
 		}
-	}
-	else if (wheel_list.getType() == XmlRpc::XmlRpcValue::TypeString)
-	{
-		wheel_names.push_back(wheel_list);
 	}
 	else
 	{

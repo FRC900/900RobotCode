@@ -3,12 +3,12 @@
 #include <atomic>
 #include <mutex>
 #include "canifier_controller_msgs/CanifierLED.h"
-#include "ddynamic_reconfigure/ddynamic_reconfigure.h"
+#include "ddr_updater/ddr_updater.h"
 #include "talon_interface/canifier_command_interface.h"
 
 namespace canifier_controller_interface
 {
-class CANifierCIParams
+class CANifierCIParams : public ddr_updater::DDRUpdater
 {
 	public:
 		CANifierCIParams(ros::NodeHandle n);
@@ -56,8 +56,6 @@ class CANifierCIParams
 		std::array<std::atomic<double>, hardware_interface::canifier::PWMChannel::PWMChannelLast>                    pwm_output_;
 		std::array<std::atomic<int>,    hardware_interface::canifier::CANifierStatusFrame::CANifierStatusFrame_Last> status_frame_period_;
 		std::array<std::atomic<int>,    hardware_interface::canifier::CANifierControlFrame::CANifier_Control_Last>   control_frame_period_;
-
-		ddynamic_reconfigure::DDynamicReconfigure                                                                    ddr_;
 
 		const std::map<std::string, int> velocity_measurement_period_enum_map_ =
 		{

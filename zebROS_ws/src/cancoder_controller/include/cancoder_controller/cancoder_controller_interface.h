@@ -2,12 +2,12 @@
 
 #include <atomic>
 #include <mutex>
-#include "ddynamic_reconfigure/ddynamic_reconfigure.h"
+#include "ddr_updater/ddr_updater.h"
 #include "talon_interface/cancoder_command_interface.h"
 
 namespace cancoder_controller_interface
 {
-class CANCoderCIParams
+class CANCoderCIParams : public ddr_updater::DDRUpdater
 {
 	public:
 		CANCoderCIParams(ros::NodeHandle n);
@@ -52,8 +52,6 @@ class CANCoderCIParams
 		std::atomic<int>                                                        sensor_data_status_frame_period_;
 		std::atomic<int>                                                        vbat_and_faults_status_frame_period_;
 		std::atomic<double>                                                     conversion_factor_;
-
-		ddynamic_reconfigure::DDynamicReconfigure                               ddr_;
 
 		const std::map<std::string, int> velocity_measurement_period_enum_map_ =
 		{
