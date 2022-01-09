@@ -173,8 +173,9 @@ target_link_libraries(test_depth_detection
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
  install(PROGRAMS
-   src/test_detection.py
+   src/trtdetection.py
    src/pub_video.py
+   src/test_detection.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 

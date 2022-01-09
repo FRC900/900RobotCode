@@ -21,16 +21,14 @@
     <arg name="cam_yaw"              value="0.0" />
   </include>
 
-  <group ns="tf_object_detection">
-    <rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
-    <node pkg="tf_object_detection" name="tf_object_detection" type="test_detection.py" output="screen">
-    </node>
-    <node pkg="tf_object_detection" name="tf_object_screen_to_world" type="tf_object_screen_to_world" output="screen">
-    </node>
-  </group>
+  <group ns="obj_detection">
+  <rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
+  <node pkg="tf_object_detection" name="tf_object_detection" type="trtdetection.py" output="screen">
+  </node>
 
-
+	<!--Possible that this should not be in namespace?-->
   <node pkg="tf_object_detection" name="pub_video" type="pub_video.py" output="screen" if="$(eval input_type == 'video')">
     <rosparam command="load" file="$(find tf_object_detection)/config/pub_video_config.yaml" />
-  </node>
+</node>
+</group>
 </launch>

@@ -1,1 +1,6 @@
 trt_graph.pb
+*.png
+*.jpg
+*.mp4
+*.bin
+*.md5sum*
