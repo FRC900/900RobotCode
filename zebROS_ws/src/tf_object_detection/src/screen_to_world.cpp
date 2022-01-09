@@ -14,6 +14,8 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
 
+#include "depth_algorithms.h"
+
 ros::Publisher pub;
 
 sensor_msgs::CameraInfo caminfo;
@@ -25,31 +27,6 @@ void camera_info_callback(const sensor_msgs::CameraInfoConstPtr &info)
 	caminfo = *info;
 	caminfovalid = true;
 }
-
-// Get the average of the values in the cv::Mat depth contained within
-// the supplied bounding rectangle
-double avgOfDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect)
-{
-	double sum = 0.0;
-	unsigned count = 0;
-	for (int j = bound_rect.tl().y+1; j < bound_rect.br().y; j++) //for each row
-	{
-		const float *ptr_depth = depth.ptr<float>(j);
-
-		for (int i = bound_rect.tl().x+1; i < bound_rect.br().x; i++) //for each pixel in row
-		{
-			if (!(isnan(ptr_depth[i]) || isinf(ptr_depth[i]) || (ptr_depth[i] <= 0)))
-			{
-				sum += ptr_depth[i];
-				count += 1;
-			}
-		}
-	}
-	if (count == 0)
-		return -1;
-	return sum / count;
-}
-
 
 // For each object in objDetectionMsg, look up the depth reported in depthMsg at the center of the
 // object's bounding rectangle. Use that to convert from 2D screen coordinates to 3D world coordinates
@@ -80,19 +57,15 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 		const cv::Point rectBR(camObject.br.x, camObject.br.y);
 		const cv::Rect  rect(rectTL, rectBR);
 
-		// Create a small bounding rectangle to sample depths from the center
-		// of the detected object.  Note, this will only work with power cells
-		// and other objects which don't have holes in the middle (mmmm ... donuts!)
+		// Find the center of the detected object
 		const cv::Point2f objRectCenter = 0.5 * (rectTL + rectBR);
-		const cv::Point2f objCenterBounds(3, 3);
-		const cv::Rect  objCenterRect(objRectCenter - objCenterBounds, objRectCenter + objCenterBounds);
 
-		// Get the distance to the object by sampling the depth image at the center of the
+		// Get the distance to the object by finding contours within the depth data inside the
 		// object's bounding rectangle.
-		const double objDistance = avgOfDepthMat(cvDepth->image, objCenterRect);
+		const float objDistance = usefulDepthMat(cvDepth->image, rect, false, algorithm);
 		if (objDistance < 0)
 		{
-			ROS_ERROR_STREAM("Depth of object at " << objRectCenter << " with bounding rect " << objCenterRect << " objDistance < 0 : " << objDistance);
+			ROS_ERROR_STREAM("Depth of object at " << objRectCenter << " with bounding rect " << rect << " objDistance < 0 : " << objDistance);
 			continue;
 		}
 		const cv::Point3f world_coord_scaled = cc.screen_to_world(rect, worldObject.id, objDistance);
@@ -143,6 +116,7 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 		}
 	}
 }
+
 int main (int argc, char **argv)
 {
 	ros::init(argc, argv, "tf_object_screen_to_world");
@@ -164,6 +138,7 @@ int main (int argc, char **argv)
 	std::unique_ptr<message_filters::Synchronizer<ObjDepthSyncPolicy>> obj_depth_sync;
 	obj_depth_sync = std::make_unique<message_filters::Synchronizer<ObjDepthSyncPolicy>>(ObjDepthSyncPolicy(10), *obsub, *depth_sub);
 
+	// obj_depth_sync->setMaxIntervalDuration(ros::Duration(1, 0)); // for testing rosbags
 	obj_depth_sync->registerCallback(boost::bind(callback, _1, _2));
 
 	// Set up a simple subscriber to capture camera info

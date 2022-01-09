@@ -1,0 +1,2 @@
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+rostopic pub /test_depth std_msgs/String $SCRIPT_DIR/$1
