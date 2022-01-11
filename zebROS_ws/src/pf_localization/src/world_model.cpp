@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <utility>
 
@@ -38,6 +38,17 @@ void WorldModel::constrain_to_world(Particle& p) const {
   p.y_ = std::min(y_max_, std::max(y_min_, p.y_));
 }
 
+PositionBeacon particle_relative_beacon(const Particle &p, const PositionBeacon &b) {
+    double x = b.x_ - p.x_;
+    double y = b.y_ - p.y_;
+    double r = hypot(x, y);
+    double theta = atan2(y, x);
+    theta -= p.rot_;
+    x = r * cos(theta);
+    y = r * sin(theta);
+    return PositionBeacon{x, y, b.type_};
+}
+
 //gets the coordinates of all the field beacons of a given type relative to a given particle
 //returns - a vector, one entry per beacon of matching type. each entry is the offset (x,y)
 //from the input particle position p and the corresponding beacon position
@@ -46,58 +57,49 @@ std::vector<PositionBeacon> WorldModel::single_particle_relative(const Particle&
   for (const PositionBeacon& b : bcns) {
     if (b.type_ != type)
       continue;
-    double x = b.x_ - p.x_;
-    double y = b.y_ - p.y_;
-    double r = hypot(x, y);
-    double theta = atan2(y, x);
-    theta -= p.rot_;
-    x = r * cos(theta);
-    y = r * sin(theta);
-    res.emplace_back(PositionBeacon{x, y, b.type_});
+    res.emplace_back(particle_relative_beacon(p, b));
   }
   return res;
 }
 
+struct beacons {
+  std::vector<PositionBeacon> rel;
+  std::vector<std::vector<double>> dists;
+};
+
 //Uses hungarian algorithm to pair particle relative beacons and robot relative beacons and returns the total error
 //(sum of distance errors from particle to robot beacons)
 double WorldModel::total_distance(const Particle& p, const std::vector<std::shared_ptr<BeaconBase>>& m) const {
-  // Create mapping of <type of detection, vector of detections of that type>
-  // Use this to handle mapping from a set of detections of a given type to the
-  // most likely set of beacons they line up with
-  // TODO - might be simpler to just sort beacons by type, then loop through the array in order
-  //        grabbing all of one type. Once we see the next type, calc the dists for the current
-  //        type then repeat until all entries are processed
-  std::map<std::string, std::vector<std::shared_ptr<BeaconBase>> > by_type;
-  for (const auto & b : m) {
-	// Create empty vector per type if not there already, then append
-	// detection to that vector
-	by_type.emplace(b->type_, std::vector<std::shared_ptr<BeaconBase>>());
-    by_type[b->type_].push_back(b);
+  std::unordered_map<std::string, beacons> beacons_by_type;
+
+  // Put relative distances of field beacons into beacons_by_type
+  for (const auto &b : beacons_) {
+    beacons_by_type[b.type_].rel.push_back(particle_relative_beacon(p, b));
   }
+
+  // For each detection of this type, create a list of distances from
+  // that detection to each field beacon of that same type
+  for (const auto &b : m) {
+    beacons &search = beacons_by_type.at(b->type_);
+    search.dists.push_back(b->distances(search.rel));
+  }
+
   // Loop over each detection type. For that, do an optimal assigment
   // of detections with beacons of the same type as the detection
   double total_res = 0;
-  for (const auto & m_of_type : by_type) { // m_of_type = detections of a given type
-    std::vector<std::vector<double> > dists;
-    // expected distance between the particle and the field beacons
-    // Only match up beacons with the same type as the current detection type
-    const std::vector<PositionBeacon> rel{single_particle_relative(p, beacons_, m_of_type.first)};
-    // For each detection of this type, create a list of distances from
-    // that detection to each field beacon of that same type
-    for (const auto& b : m_of_type.second) { // b is each detection of this type
-      dists.push_back(b->distances(rel));
-    }
-    if (dists.size() == 0)
+  for (auto &pair: beacons_by_type) {
+    if (pair.second.dists.size() == 0) {
       continue;
-	// Match up detections with the most likely mapping to a beacon.
+    }
+    // Match up detections with the most likely mapping to a beacon.
     std::vector<int> assignment;
-    solver_.Solve(dists, assignment);
+    solver_.Solve(pair.second.dists, assignment);
     // For each match from detection to beacon, add the
     // distance the detection is off from ideal to the
     // total cumulative distance for this particular particle
     for (size_t i = 0; i < assignment.size(); i++) {
       if (assignment[i] >= 0)
-        total_res += dists[i][assignment[i]];
+        total_res += pair.second.dists[i][assignment[i]];
     }
   }
 
