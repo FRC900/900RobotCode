@@ -13,7 +13,18 @@ rostopic pub -1 /auto/auto_mode behavior_actions/AutoMode "header:
 auto_mode: 6
 distance_from_wall: 0.0" 
 
-rosservice call /path_follower/galactic_path_gen "{}" 
+rosservice call /path_follower/game_piece_path_gen "object_id: 'power_cell'
+max_objects: 255
+endpoint:
+  position:
+    x: 8.87
+    y: 0.0
+    z: 0.0
+  orientation:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    w: 0.0" 
 rosservice call /frcrobot_jetson/swerve_drive_controller/reset_odom "data: true"
 rosservice call /frcrobot_jetson/swerve_drive_controller/reset_odom "data: false"
 

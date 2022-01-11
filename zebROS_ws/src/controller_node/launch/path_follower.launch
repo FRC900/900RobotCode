@@ -25,7 +25,8 @@
 			<rosparam file="$(find base_trajectory)/config/2020_robot_base_trajectory.yaml" command="load"/>
 			<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" >
 		   	</node>
-			<node name="galactic_path_server" pkg="behaviors" type="galactic_path_server" output="screen" >
+			<rosparam file="$(find behaviors)/config/game_piece_path_config.yaml" command="load"/>
+			<node name="game_piece_path_server" pkg="behaviors" type="game_piece_path_server" output="screen" >
 		   	</node>
 
 			<!-- TODO - remove me after pf localization publishes this -->

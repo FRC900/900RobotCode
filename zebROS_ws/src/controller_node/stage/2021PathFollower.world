@@ -51,8 +51,10 @@ floorplan
 (
 #name "box_test"
 #bitmap "../maps/box_test.png"
-name "barrel_path"
-   bitmap "../maps/barrel_path.png"
+#name "barrel_path"
+#   bitmap "../maps/barrel_path.png"
+name "empty"
+  bitmap "../maps/2021_empty_field.png"
 # name "bounce_path"
 # bitmap "../maps/bounce_path.png"
   # name "slalom_path"
@@ -72,8 +74,10 @@ omnidir_robot
 
 # Simulated AR tags
 objdet_target ( pose [ -1.72 -0.2   1 0 ] fiducial_return 1 color "cyan")
-objdet_target ( pose [ -1.72  0.48  1 0 ] fiducial_return 0 color "yellow")
+objdet_target ( pose [ -1.72  0.48  1 0 ] fiducial_return 6 color "yellow")
 objdet_target ( pose [ -1.72  1.145 1 0 ] fiducial_return 2 color "green")
 objdet_target ( pose [ -1.72  1.638 1 0 ] fiducial_return 4 color "blue")
 objdet_target ( pose [ -1.72  2.263 1 0 ] fiducial_return 5 color "purple")
 objdet_target ( pose [ -1.72  3.103 1 0 ] fiducial_return 3 color "orange")
+objdet_target ( pose [ 3 1 5 0 ] size [ 0.18 0.18 0.18 ] fiducial_return 900 color "yellow") # 900 = power cell
+objdet_target ( pose [ 4 2 5 0 ] size [ 0.18 0.18 0.18 ] fiducial_return 900 color "yellow") # 900 = power cell

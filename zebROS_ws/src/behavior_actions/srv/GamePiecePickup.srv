@@ -1,0 +1,6 @@
+string object_id
+uint8 max_objects
+geometry_msgs/Pose endpoint # only x position, y position, and z rotation will be used
+---
+bool success
+string message
