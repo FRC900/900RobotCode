@@ -129,7 +129,7 @@ rm ./jetsons
 
 #mount and setup autostart script
 sudo mkdir /mnt/900_2
-cd ~/2020Offseason
+cd ~/2022RobotCode
 
 # Set up can0 network interface
 cd
@@ -164,17 +164,17 @@ sudo bash -c "echo FallbackNTP=ntp.ubuntu.com >> /etc/systemd/timesyncd.conf"
 # and keys for connections to Rio
 mkdir -p ~/.ssh
 cd ~/.ssh
-tar -xjf ~/2020Offseason/scripts/jetson_setup/jetson_dot_ssh.tar.bz2 
+tar -xjf ~/2022RobotCode/scripts/jetson_setup/jetson_dot_ssh.tar.bz2 
 chmod 640 authorized_keys
 cd ~
 chmod 700 .ssh
 
 sudo mkdir -p /root/.ssh
-sudo tar -xjf /home/ubuntu/2020Offseason/scripts/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
+sudo tar -xjf /home/ubuntu/2022RobotCode/scripts/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
 sudo chmod 640 /root/.ssh/authorized_keys
 sudo chmod 700 /root/.ssh
 
-cd ~/2020Offseason/scripts
+cd ~/2022RobotCode/scripts
 sudo cp ./jetson_setup/10-local.rules ./jetson_setup/99-gpio.rules /etc/udev/rules.d/
 sudo service udev reload
 sleep 2
@@ -258,18 +258,18 @@ rm -rf /home/ubuntu/wpilib/2021/maven /home/ubuntu/wpilib/frc2021/jdk /home/ubun
 sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 
 # Set up prereqs for deploy script
-mv ~/2020Offseason ~/2020Offseason.orig
-ln -s ~/2020Offseason.orig ~/2020Offseason
-mkdir -p ~/2020Offseason.prod/zebROS_ws
-mkdir -p ~/2020Offseason.dev/zebROS_ws
+mv ~/2022RobotCode ~/2022RobotCode.orig
+ln -s ~/2022RobotCode.orig ~/2022RobotCode
+mkdir -p ~/2022RobotCode.prod/zebROS_ws
+mkdir -p ~/2022RobotCode.dev/zebROS_ws
 
 sudo mkdir -p /usr/local/zed/settings
 sudo chmod 755 /usr/local/zed/settings
-sudo cp ~/2020Offseason/scripts/jetson_install/calibration_files/*.conf /usr/local/zed/settings
+sudo cp ~/2022RobotCode/scripts/jetson_install/calibration_files/*.conf /usr/local/zed/settings
 sudo chmod 644 /usr/local/zed/settings/*
 
-cp ~/2020Offseason/.vimrc ~/2020Offseason/.gvimrc ~
-sudo cp ~/2020Offseason/kjaget.vim /usr/share/vim/vim80/colors
+cp ~/2022RobotCode/.vimrc ~/2022RobotCode/.gvimrc ~
+sudo cp ~/2022RobotCode/kjaget.vim /usr/share/vim/vim80/colors
 
 cd &&\
     wget https://github.com/git-lfs/git-lfs/releases/download/v2.13.1/git-lfs-linux-arm64-v2.13.1.tar.gz &&\
@@ -280,7 +280,7 @@ cd &&\
 	cd &&\
 	rm -rf git-lfs-linux-arm64-v2.13.1.tar.gz git-lfs-install &&\
 	git lfs install &&\
-	cd ~/2020Offseason &&\
+	cd ~/2022RobotCode &&\
 	git lfs pull
 
 git config --global user.email "progammers@team900.org"
@@ -292,7 +292,7 @@ sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 
 sudo ln -s /usr/include/opencv4 /usr/include/opencv
 
-echo "source /home/ubuntu/2020Offseason/zebROS_ws/command_aliases.sh" >> /home/ubuntu/.bashrc
+echo "source /home/ubuntu/2022RobotCode/zebROS_ws/command_aliases.sh" >> /home/ubuntu/.bashrc
 
 # Install make 4.3 (>4.2 is required for -flto=jobserver support
 cd
@@ -373,7 +373,7 @@ sudo python setup.py install --cpp_implementation
 cd
 sudo rm -rf src
 
-cd ~/2020Offseason/scripts/jetson_install
+cd ~/2022RobotCode/scripts/jetson_install
 sudo apt-get install -y libhdf5-serial-dev hdf5-tools
 sudo dpkg -i libnccl*arm64.deb
 sudo python -m pip install --upgrade pip six numpy wheel setuptools mock h5py

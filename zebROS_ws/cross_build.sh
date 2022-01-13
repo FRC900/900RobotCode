@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/2020Offseason/zebROS_ws/
+cd ~/2022RobotCode/zebROS_ws/
 
 if [ -z $ROS_ROOT ]; then
 	#PATH=$PATH:$HOME/wpilib/2021/roborio/bin

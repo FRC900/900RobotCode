@@ -57,22 +57,22 @@ ssh -p 22 admin@$1 'pip install --upgrade pip'
 ssh -p 22 admin@$1 'opkg install python-numpy'
 ssh -p 22 admin@$1 'pip --no-cache-dir install catkin_pkg catkin_tools rospkg rosdistro vcstools rosdep wstool rosinstall rosinstall_generator defusedxml empy python-gnupg'
 ssh -p 22 admin@$1 'rm -rf ~/.cache'
-scp -P 22 ~/2020Offseason/scripts/RIO_setup/tflite_runtime-1.15.2-cp27-none-linux_armv7l.whl admin@$1:.
+scp -P 22 ~/2022RobotCode/scripts/RIO_setup/tflite_runtime-1.15.2-cp27-none-linux_armv7l.whl admin@$1:.
 ssh -p 22 admin@$1 'pip --no-cache-dir install tflite_runtime-1.15.2-cp27-none-linux_armv7l.whl'
 ssh -p 22 admin@$1 'rm tflite_runtime-1.15.2-cp27-none-linux_armv7l.whl'
 ssh -p 22 admin@$1 'rm -rf ~/.cache'
 
 # Copy over ROS tar.bz2 file, extract to / on the Rio
-scp -P 22 ~/2020Offseason/scripts/RIO_setup/roscore_roborio.tar.bz2 admin@$1:.
+scp -P 22 ~/2022RobotCode/scripts/RIO_setup/roscore_roborio.tar.bz2 admin@$1:.
 ssh -p 22 admin@$1 'cd / && tar -xjf ~/roscore_roborio.tar.bz2'
 ssh -p 22 admin@$1 'rm ~/roscore_roborio.tar.bz2'
-#scp -P 22 ~/2020Offseason/os_detect.py admin@$1:/usr/lib/python2.7/site-packages/rospkg/
+#scp -P 22 ~/2022RobotCode/os_detect.py admin@$1:/usr/lib/python2.7/site-packages/rospkg/
 
 #ssh -p 22 admin@$1 'opkg install python3-pyyaml'
 #ssh -p 22 admin@$1 'opkg clean'
 #ssh -p 22 admin@$1 'opkg install python3-setuptools python3-pyyaml python3-docutils python3-misc python3-xmlrpc python3-json python3-pydoc'
 #ssh -p 22 admin@$1 'opkg clean'
-#scp -P 22 ~/2020Offseason/os_detect.py admin@$1:/usr/lib/python3.5/site-packages/rospkg/
+#scp -P 22 ~/2022RobotCode/os_detect.py admin@$1:/usr/lib/python3.5/site-packages/rospkg/
 
 # Try to simulate what the cross-build environment looks like 
 # This will prevent weird bugs where sourcing install_isolated/setup.bash
@@ -85,13 +85,13 @@ ssh -p 22 admin@$1 'ln -s /usr/include /include'
 
 # Create workspace. Do a build in the empty workspace to set
 # up various scripts for later use. TODO : See if this is needed?
-ssh -p 22 admin@$1 'mkdir -p 2020Offseason/zebROS_ws/src'
-ssh -p 22 admin@$1 'source /opt/ros/melodic/setup.bash && cd 2020Offseason/zebROS_ws && catkin_make_isolated --install'
+ssh -p 22 admin@$1 'mkdir -p 2022RobotCode/zebROS_ws/src'
+ssh -p 22 admin@$1 'source /opt/ros/melodic/setup.bash && cd 2022RobotCode/zebROS_ws && catkin_make_isolated --install'
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
 ##################-----------------------------#################
-#Edit /etc/ntp.conf to be a copy of ntpClient in 2020Offseason#
-scp -P 22 ~/2020Offseason/scripts/RIO_setup/ntpClient.conf admin@$1:/etc/ntp.conf
+#Edit /etc/ntp.conf to be a copy of ntpClient in 2022RobotCode#
+scp -P 22 ~/2022RobotCode/scripts/RIO_setup/ntpClient.conf admin@$1:/etc/ntp.conf
 
 # Copy wpilib to roborio
 ssh -p 22 admin@$1 mkdir wpilib
@@ -103,7 +103,7 @@ scp -P 22 *.so admin@$1:wpilib
 ssh -p 22 admin@$1 rm wpilib/*d.so wpilib/*jni.so
 
 # Set up ssh keys
-scp -P 22 ~/2020Offseason/scripts/jetson_setup/roborio_dot_ssh.tar.bz2 admin@$1:.
+scp -P 22 ~/2022RobotCode/scripts/jetson_setup/roborio_dot_ssh.tar.bz2 admin@$1:.
 ssh -p 22 admin@$1 'mkdir .ssh'
 ssh -p 22 admin@$1 'cd .ssh && tar -xjf ../roborio_dot_ssh.tar.bz2'
 ssh -p 22 admin@$1 'rm roborio_dot_ssh.tar.bz2'
@@ -117,11 +117,11 @@ ssh -p 22 admin@$1 "/etc/init.d/sshd restart"
 sleep 5
 
 # Copy rio_bashrc.sh, ROSJetsonMaster.sh to /home/admin
-scp -P 22 ~/2020Offseason/scripts/RIO_setup/rio_bashrc.sh admin@$1:.
-scp -P 22 ~/2020Offseason/zebROS_ws/ROSJetsonMaster.sh admin@$1:.
+scp -P 22 ~/2022RobotCode/scripts/RIO_setup/rio_bashrc.sh admin@$1:.
+scp -P 22 ~/2022RobotCode/zebROS_ws/ROSJetsonMaster.sh admin@$1:.
 
 # Set up prereqs for deploy script
-ssh -p 22 admin@$1 'mv ~/2020Offseason ~/2020Offseason.orig'
-ssh -p 22 admin@$1 'ln -s ~/2020Offseason.orig ~/2020Offseason'
-ssh -p 22 admin@$1 'mkdir -p ~/2020Offseason.prod/zebROS_ws'
-ssh -p 22 admin@$1 'mkdir -p ~/2020Offseason.dev/zebROS_ws'
+ssh -p 22 admin@$1 'mv ~/2022RobotCode ~/2022RobotCode.orig'
+ssh -p 22 admin@$1 'ln -s ~/2022RobotCode.orig ~/2022RobotCode'
+ssh -p 22 admin@$1 'mkdir -p ~/2022RobotCode.prod/zebROS_ws'
+ssh -p 22 admin@$1 'mkdir -p ~/2022RobotCode.dev/zebROS_ws'

@@ -100,8 +100,8 @@ sudo apt install -y \
 
 # Patch catkin tools/pkg for faster builds
 cd /usr/lib/python2.7/dist-packages
-sudo patch -p0 < ~/2020Offseason/scripts/jetson_install/catkin_pkg.patch
-sudo patch -p0 < ~/2020Offseason/scripts/jetson_install/catkin_tools.patch
+sudo patch -p0 < ~/2022RobotCode/scripts/jetson_install/catkin_pkg.patch
+sudo patch -p0 < ~/2022RobotCode/scripts/jetson_install/catkin_tools.patch
 
 # Fix bug in released version of catkin_tools - TODO check me
 sudo sed -i 's/ errno.EINTR/ errno.EINTR and e.errno != errno.EAGAIN/'  /usr/lib/python2.7/dist-packages/catkin_tools/execution/job_server.py
@@ -125,12 +125,12 @@ sudo rosdep init
 # To find available packages, use:
 rosdep update
 
-cd ~/2020Offseason/zebROS_ws/src
+cd ~/2022RobotCode/zebROS_ws/src
 #wstool init
 #cd ..
 
 # These should all be merged in the GIT repo version
-# of the code.  Check 2020Offseason/zebROS_ws/src/.rosinstall to
+# of the code.  Check 2022RobotCode/zebROS_ws/src/.rosinstall to
 # verify.  Leaving the commands here just in case we need to recreate
 # a workspace elsewhere
 
@@ -162,5 +162,5 @@ rosdep install --from-paths . --ignore-src --rosdistro=melodic -y
 
 #source /opt/ros/melodic/setup.bash
 
-#cd ~/2020Offseason/zebROS_ws
+#cd ~/2022RobotCode/zebROS_ws
 #catkin_make

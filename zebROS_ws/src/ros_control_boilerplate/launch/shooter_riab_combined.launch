@@ -10,7 +10,7 @@
     <include file="$(find ros_control_boilerplate)/launch/shooter_riab_jetson.launch" pass_all_args="true"/>
     <!-- RIO Nodes -->
 	<group if="$(eval arg('hw_or_sim')=='hw')">
-		<machine name="roboRIO" address="10.9.0.2" env-loader="/home/admin/2020Offseason/zebROS_ws/ROSJetsonMaster.sh" user="admin" password="admin" default="true"/>
+		<machine name="roboRIO" address="10.9.0.2" env-loader="/home/admin/2022RobotCode/zebROS_ws/ROSJetsonMaster.sh" user="admin" password="admin" default="true"/>
 	</group>
 
     <include file="$(find ros_control_boilerplate)/launch/shooter_riab_rio.launch" pass_all_args="true"/>

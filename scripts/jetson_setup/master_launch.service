@@ -12,7 +12,7 @@ ExecStartPre=/usr/sbin/nvpmodel -m 0 ; \
 			 /usr/bin/jetson_clocks ; \
 			 /bin/sh -ec 'sleep 30' ;
 
-ExecStart=/bin/bash -ec "/home/ubuntu/2020Offseason/jetson_setup/master.sh || true" 
+ExecStart=/bin/bash -ec "/home/ubuntu/2022RobotCode/jetson_setup/master.sh || true" 
 
 Restart=on-failure
 
