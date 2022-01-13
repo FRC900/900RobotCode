@@ -353,6 +353,7 @@ bool generateSpline(const std::vector<trajectory_msgs::JointTrajectoryPoint> &po
 		initSplinePoints[i].time_from_start = points[i].time_from_start.toSec();
 		initSplinePoints[i].state[0].position = points[i].positions[0] + optParams[i].posX_;
 		initSplinePoints[i].state[1].position = points[i].positions[1] + optParams[i].posY_;
+		initSplinePoints[i].state[2].position = points[i].positions[2];
 		//points[i].positions[0] += optParams[i].posX_;
 		//points[i].positions[1] += optParams[i].posY_;
 	}
@@ -372,7 +373,7 @@ bool generateSpline(const std::vector<trajectory_msgs::JointTrajectoryPoint> &po
 	//
 	T prevAngle = getLineAngle(points[0].positions, points[1].positions);
 	T prevLength = hypot(points[1].positions[0] - points[0].positions[0],
-							  points[1].positions[1] - points[0].positions[1]);
+						 points[1].positions[1] - points[0].positions[1]);
 
 	T prevRotLength = points[1].positions[2] - points[0].positions[2];
 
@@ -1502,6 +1503,11 @@ bool NLOPT(
 	opt.set_ftol_abs(0.05);
 	std::vector<double> x;
 	optParams.toVector(x);
+	if (!x.size())
+	{
+		ROS_WARN("base_trajectory : no parameters to optimize");
+		return true;
+	}
 
 	double cost;
 	try
