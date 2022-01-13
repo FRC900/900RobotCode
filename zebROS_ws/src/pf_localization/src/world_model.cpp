@@ -80,8 +80,11 @@ double WorldModel::total_distance(const Particle& p, const std::vector<std::shar
   // For each detection of this type, create a list of distances from
   // that detection to each field beacon of that same type
   for (const auto &b : m) {
-    beacons &search = beacons_by_type.at(b->type_);
-    search.dists.push_back(b->distances(search.rel));
+    const auto it = beacons_by_type.find(b->type_);
+	if (it != beacons_by_type.cend())
+	{
+		it->second.dists.push_back(b->distances(it->second.rel));
+	}
   }
 
   // Loop over each detection type. For that, do an optimal assigment
