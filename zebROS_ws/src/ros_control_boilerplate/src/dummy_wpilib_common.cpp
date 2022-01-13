@@ -9,7 +9,6 @@ const char* GetWPILibVersion(void)
 	return "900.2020";
 }
 
-
 #include <AHRS.h>
 AHRS::AHRS(frc::SPI::Port)
 {
@@ -207,12 +206,12 @@ float  AHRS::GetDisplacementZ()
 	ROS_ERROR("Called GetDisplacementZ() on unsupported platform");
 	return std::numeric_limits<float>::max();
 }
-double AHRS::GetAngle()
+double AHRS::GetAngle() const
 {
 	ROS_ERROR("Called GetAngle() on unsupported platform");
 	return std::numeric_limits<double>::max();
 }
-double AHRS::GetRate()
+double AHRS::GetRate() const
 {
 	ROS_ERROR("Called GetRate() on unsupported platform");
 	return std::numeric_limits<double>::max();
@@ -343,22 +342,21 @@ int AHRS::ThreadFunc(IIOProvider *)
 	ROS_ERROR("Called int AHRS::ThreadFunc(IIOProvider *io_provider) on unsupported platform");
 	return -1;
 }
-void AHRS::InitSendable(frc::SendableBuilder&)
+void AHRS::InitSendable(wpi::SendableBuilder&)
 {
-	ROS_ERROR("Called AHRS::InitSendable(frc::SendableBuilder&) on unsupported platform");
-}
-double AHRS::PIDGet()
-{
-	ROS_ERROR("Called AHRS::PIDGet() on unsupported platform");
-	return std::numeric_limits<double>::max();
+	ROS_ERROR("Called AHRS::InitSendable(wpi::SendableBuilder&) on unsupported platform");
 }
 uint8_t AHRS::GetActualUpdateRateInternal(uint8_t)
 {
 	ROS_ERROR("Called AHRS::GetActualUpdateRateInternal(uint8_t update_rate) on unsupported platform");
 	return std::numeric_limits<uint8_t>::max();
 }
+void AHRS::Calibrate()
+{
+	ROS_ERROR("Called AHRS::Calibrate() on unsupported platform");
+}
 
-#include <frc/NidecBrushless.h>
+#include <frc/motorcontrol/NidecBrushless.h>
 frc::NidecBrushless::NidecBrushless(int pwmChannel, int dioChannel) : m_dio(dioChannel), m_pwm(pwmChannel)
 {
 	ROS_ERROR("Called NidecBrushless::NidecBrushless(int, int) on unsupported platform");
@@ -396,12 +394,7 @@ void frc::NidecBrushless::Enable()
 	ROS_ERROR("Called ::NidecBrushless::Enable() on unsupported platform");
 }
 
-void frc::NidecBrushless::PIDWrite(double)
-{
-	ROS_ERROR("Called ::NidecBrushless::PIDWrite(double output) on unsupported platform");
-}
-
-void frc::NidecBrushless::GetDescription(wpi::raw_ostream&) const
+std::string frc::NidecBrushless::GetDescription() const
 {
 	ROS_ERROR("Called ::NidecBrushless::GetDescription(wpi::raw_ostream& desc) const on unsupported platform");
 }
@@ -412,13 +405,13 @@ int frc::NidecBrushless::GetChannel() const
 	return -1;
 }
 
-void frc::NidecBrushless::InitSendable(SendableBuilder&)
+void frc::NidecBrushless::InitSendable(wpi::SendableBuilder&)
 {
 	ROS_ERROR("Called ::NidecBrushless::InitSendable(SendableBuilder& builder) on unsupported platform");
 }
 
 #include <frc/PWM.h>
-frc::PWM::PWM(int)
+frc::PWM::PWM(int, bool)
 {
 	ROS_ERROR("Called PWM::PWM(int) on unsupported platform");
 }
@@ -481,19 +474,9 @@ void frc::PWM::GetRawBounds(int32_t*, int32_t*, int32_t*, int32_t*, int32_t*)
 {
 	ROS_ERROR("Called PWM::GetRawBounds(int32_t* max, int32_t* deadbandMax, int32_t* center, int32_t* deadbandMin, int32_t* min) on unsupported platform");
 }
-void frc::PWM::InitSendable(SendableBuilder&)
+void frc::PWM::InitSendable(wpi::SendableBuilder&)
 {
-	ROS_ERROR("Called PWM::InitSendable(SendableBuilder& builder) on unsupported platform");
-}
-
-void frc::PWM::StopMotor()
-{
-	ROS_ERROR("Called PWM::StopMotor() on unsupported platform");
-}
-
-void frc::PWM::GetDescription(wpi::raw_ostream &) const
-{
-	ROS_ERROR("Called PWM::GetDescription(wpi::raw_ostream &) on unsupported platform");
+	ROS_ERROR("Called PWM::InitSendable(wpi::SendableBuilder& builder) on unsupported platform");
 }
 
 #include <frc/RobotBase.h>
@@ -513,13 +496,9 @@ bool frc::RobotBase::IsOperatorControl() const
 	return false;
 }
 #include <frc/DriverStation.h>
-frc::RobotBase::RobotBase() : m_ds(DriverStation::GetInstance())
+frc::RobotBase::RobotBase()
 {
 	ROS_ERROR("Called RobotBase::RobotBase() on unsupported platform");
-}
-frc::RobotBase::~RobotBase()
-{
-	ROS_ERROR("Called RobotBase::~RobotBase() on unsupported platform");
 }
 
 #include <frc/PIDSource.h>
@@ -553,9 +532,10 @@ void frc::SpeedController::SetVoltage(units::volt_t /*output*/)
 // The plan is bypassing the default WPIlib code will let us get rid of a lot of other
 // unused functions - networktables, etc.
 //
-#include "frc/smartdashboard/SendableRegistry.h"
+#include "wpi/sendable/SendableRegistry.h"
 
-namespace frc {
+namespace wpi{
+#if 0
 
 struct SendableRegistry::Impl
 {
@@ -568,7 +548,6 @@ SendableRegistry& SendableRegistry::GetInstance()
 	return s;
 }
 
-#if 0
 void SendableRegistry::Add(Sendable* sendable, const wpi::Twine& name)
 {
 }
@@ -584,17 +563,25 @@ void SendableRegistry::Add(Sendable* sendable, const wpi::Twine& moduleType, int
 void SendableRegistry::Add(Sendable* sendable, const wpi::Twine& subsystem, const wpi::Twine& name)
 {
 }
-
-void AddLW(Sendable* sendable, const wpi::Twine& name);
-
 #endif
-void SendableRegistry::AddLW(Sendable* /*sendable*/, const wpi::Twine& /*moduleType*/, int /*channel*/)
-{
-}
-#if 0
 
-void AddLW(Sendable* sendable, const wpi::Twine& moduleType, int moduleNumber,
-		 int channel);
+void SendableRegistry::AddLW(Sendable* /*sendable*/, std::string_view /*name*/)
+{
+	ROS_ERROR("Called SendableRegistry::AddLW(Sendable *, std::string_view) on unsupported platform");
+}
+
+void SendableRegistry::AddLW(Sendable* /*sendable*/, std::string_view /*moduleType*/, int /*channel*/)
+{
+	ROS_ERROR("Called SendableRegistry::AddLW(Sendable *, std::string_view, int) on unsupported platform");
+}
+
+void SendableRegistry::AddLW(Sendable* /*sendable*/, std::string_view /*moduleType*/, int /*moduleNumber*/, int /*channel*/)
+{
+	ROS_ERROR("Called SendableRegistry::AddLW(Sendable *, std::string_view, int, int) on unsupported platform");
+}
+
+
+#if 0
 
 void AddLW(Sendable* sendable, const wpi::Twine& subsystem,
 		 const wpi::Twine& name);
@@ -602,12 +589,13 @@ void AddLW(Sendable* sendable, const wpi::Twine& subsystem,
 void AddChild(Sendable* parent, Sendable* child);
 
 void AddChild(Sendable* parent, void* child);
-
 #endif
+
 bool SendableRegistry::Remove(Sendable* /*sendable*/)
 {
 return true;
 }
+
 #if 0
 
 void Move(Sendable* to, Sendable* from);
@@ -616,10 +604,13 @@ bool Contains(const Sendable* sendable) const
 
 std::string GetName(const Sendable* sendable) const
 
-void SetName(Sendable* sendable, const wpi::Twine& name);
+void SetName(Sendable* /*sendable*/, std::string_view /* name*/)
+{
+}
 #endif
 
-void SendableRegistry::SetName(Sendable* /*sendable*/, const wpi::Twine& /*moduleType*/, int /*channel*/)
+
+void SendableRegistry::SetName(Sendable* /*sendable*/, std::string_view /*moduleType*/, int /*channel*/)
 {
 }
 
@@ -659,14 +650,15 @@ void ForeachLiveWindow(
   int dataHandle,
   wpi::function_ref<void(CallbackData& cbdata)> callback) const
 
-#endif
 SendableRegistry::SendableRegistry()
 {
 }
 
-}  // namespace frc
+#endif
+}  // namespace wpi
 
-#include "frc/smartdashboard/SendableBase.h"
+#if 0
+#include "wpi/sendable/SendableBase.h"
 namespace frc
 {
 
@@ -674,7 +666,58 @@ namespace frc
 	{
 	}
 }
+#endif
 
+#include "networktables/NetworkTable.h"
+#include "networktables/NetworkTableInstance.h"
+#include "networktables/NetworkTableValue.h"
+namespace nt
+{
+Value::Value()
+{
+}
+Value::Value(NT_Type /*type*/, uint64_t /*time*/, const private_init&)
+{
+}
+Value::~Value()
+{
+}
+
+bool SetEntryValue(NT_Entry, std::shared_ptr<Value>)
+{
+	return true;
+}
+void SetEntryTypeValue(NT_Entry /*entry*/, std::shared_ptr<Value> /*value*/)
+{
+}
+
+NT_Inst GetDefaultInstance()
+{
+	static NT_Inst nti;
+	return nti;
+}
+
+NetworkTable::NetworkTable(NT_Inst /*inst*/, std::string_view /*path*/, NetworkTable::private_init const & /*pi*/)
+{
+}
+
+NetworkTable::~NetworkTable()
+{
+}
+
+std::shared_ptr<NetworkTable> NetworkTableInstance::GetTable(std::string_view /*key*/) const
+{
+	return std::make_shared<NetworkTable>(0, "", NetworkTable::private_init{});
+}
+
+NetworkTableEntry NetworkTable::GetEntry(std::string_view /*key*/) const
+{
+	return NetworkTableEntry();
+}
+
+
+}
+#if 0
 #include "ntcore_cpp.h"
 #include "networktables/NetworkTable.h"
 #include "networktables/NetworkTableInstance.h"
@@ -903,6 +946,7 @@ StringRef NetworkTable::GetPath() const
 {
 	return StringRef();
 }
+#endif
 
 /*
 const char* NetworkTable::SaveEntries(const Twine& filename) const
@@ -917,6 +961,7 @@ const char* LoadEntries(
 	return nullptr;
 }
 */
+#if 0
 void NetworkTable::AddTableListener(ITableListener* /*listener*/)
 {
 }
@@ -966,3 +1011,117 @@ std::shared_ptr<NetworkTable> NetworkTableInstance::GetTable(const Twine& /*key*
 
 } // namespace nt
 
+#endif
+
+#include "wpi/json.h"
+const char *wpi::json::type_name() const noexcept
+{
+	ROS_ERROR("Called wpi::json::type_name() const on unsupported platform");
+	return nullptr;
+}
+
+wpi::json::reference wpi::json::at(std::string_view /*key*/)
+{
+	ROS_ERROR("Called wpi::json::at(string_view) on unsupported platform");
+	return *this;
+}
+wpi::json::const_reference wpi::json::at(std::string_view /*key*/) const
+{
+	ROS_ERROR("Called wpi::json::at(string_view) const on unsupported platform");
+	return *this;
+}
+
+wpi::json::json(wpi::json::initializer_list_t /*init*/,
+               bool /*type_deduction = true*/,
+               wpi::json::value_t/*manual_type = value_t::array*/)
+{
+	ROS_ERROR("Called wpi::json::json(wpi::json::initializer_list_t, bool, wpi::json::value_t) on unsupported platform");
+}
+
+void wpi::json::json_value::destroy(wpi::detail::value_t) noexcept
+{
+	ROS_ERROR("Called wpi::json::json_value::destroy(wpi::detal::value_t) on unsupported platform");
+}
+
+wpi::detail::type_error wpi::detail::type_error::create(int,std::string_view what_arg, std::string_view type_info)
+{
+	ROS_ERROR("Called static wpi::detail::type_error::create(int, std::string_view, std::string_view) const on unsupported platform");
+}
+
+
+#if 0
+#include <rev/CANSparkMaxLowLevel.h>
+
+rev::CANSparkMaxLowLevel::CANSparkMaxLowLevel(int deviceID, rev::CANSparkMaxLowLevel::MotorType type)
+	: m_motorType(type)
+	, m_deviceID(deviceID)
+{
+	ROS_ERROR("Called CANSparkMaxLowLevel(int deviceID, MotorType type) on unsupported platform");
+}
+rev::CANSparkMaxLowLevel::~CANSparkMaxLowLevel()
+{
+	ROS_ERROR("Called CANSparkMaxLowLevel::CANSparkMaxLowLevel() on unsupported platform");
+}
+
+
+#include <rev/CANSparkMax.h>
+rev::CANSparkMax::CANSparkMax(int deviceID, rev::CANSparkMaxLowLevel::MotorType type)
+	: CANSparkMaxLowLevel(deviceID, type)
+{
+	ROS_ERROR("And also called CANSparkMax::CANSparkMax(int deviceID, MotorType type) on unsupported platform");
+}
+
+void rev::CANSparkMax::Set(double speed)
+{
+	(void)speed;
+	ROS_ERROR("Called CANSparkMax::Set(double speed) on unsupported platform");
+}
+
+double rev::CANSparkMax::Get(void) const
+{
+	ROS_ERROR("Called CANSparkMax::Get() on unsupported platform");
+	return 900;
+}
+
+void rev::CANSparkMax::SetInverted(bool isInverted)
+{
+	(void)isInverted;
+	ROS_ERROR("Called CANSparkMax::SetInverted(bool isInverted) on unsupported platform");
+}
+bool rev::CANSparkMax::GetInverted() const
+{
+	ROS_ERROR("Called CANSparkMax::GetInverted() on unsupported platform");
+	return false;
+}
+void rev::CANSparkMax::Disable()
+{
+	ROS_ERROR("Called CANSparkMax::Disable() on unsupported platform");
+}
+void rev::CANSparkMax::StopMotor()
+{
+	ROS_ERROR("Called CANSparkMax::StopMotor() on unsupported platform");
+}
+void rev::CANSparkMax::PIDWrite(double output)
+{
+	(void)output;
+	ROS_ERROR("Called CANSparkMax::PIDWrite() on unsupported platform");
+}
+
+bool rev::CANSparkMax::IsFollower()
+{
+	ROS_ERROR("Called CANSparkMax::IsFollower() on unsupported platform");
+	return false;
+}
+
+uint16_t rev::CANSparkMax::GetFaults()
+{
+	ROS_ERROR("Called CANSparkMax::GetFaults() on unsupported platform");
+	return 0xFFFF;
+}
+
+uint16_t rev::CANSparkMax::GetStickyFaults()
+{
+	ROS_ERROR("Called CANSparkMax::GetStickyFaults() on unsupported platform");
+	return 0xFFFF;
+}
+#endif

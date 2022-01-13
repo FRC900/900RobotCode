@@ -4,7 +4,11 @@
 // the Rio, so this is a no-op
 extern "C"
 {
-void HALSIM_SetControlWord(HAL_ControlWord controlword)
+void HALSIM_SetControlWord(HAL_ControlWord /*controlword*/)
 {
 }
+
 }
+#include <string>
+void HAL_SetCANBusString(const std::string &/*bus*/) { }
+

@@ -239,9 +239,10 @@ extern "C" {
 static std::map<uint8_t, struct gpiod_line *> gpiodLineMap;
 static struct gpiod_chip *gpiodChip = nullptr;
 HAL_DigitalHandle HAL_InitializeDIOPort(HAL_PortHandle portHandle,
-                                        HAL_Bool input, int32_t* status)
+                                        HAL_Bool input, const char *location,
+										int32_t* status)
 {
-	ROS_INFO_STREAM(__PRETTY_FUNCTION__ << " portHandle = " << portHandle << " input = " << static_cast<int>(input));
+	ROS_INFO_STREAM(__PRETTY_FUNCTION__ << " location = " << location << " portHandle = " << portHandle << " input = " << static_cast<int>(input));
 	if (*status)
 		return HAL_kInvalidHandle;
 
@@ -574,12 +575,13 @@ HAL_Bool HAL_CheckRelayChannel(int32_t channel) {
 #endif
 
 #include <frc/DriverStation.h>
-double frc::DriverStation::GetMatchTime(void) const
+double frc::DriverStation::GetMatchTime()
 {
 	ROS_ERROR("Called DriverStation::GetMatchTime() on unsupported platform");
 	return std::numeric_limits<double>::max();
 }
 
+#if 0
 #include <wpi/SmallString.h>
 #include <hal/DriverStation.h>
 void frc::DriverStation::ReportError(bool isError, int32_t code,
@@ -594,16 +596,17 @@ void frc::DriverStation::ReportError(bool isError, int32_t code,
                 location.toNullTerminatedStringRef(locationTemp).data(),
                 stack.toNullTerminatedStringRef(stackTemp).data(), 1);
 }
+#endif
 
 
 #include <frc/Timer.h>
 namespace frc {
-double GetTime()
+units::second_t GetTime()
 {
 	using std::chrono::duration;
 	using std::chrono::duration_cast;
 	using std::chrono::system_clock;
-	return duration_cast<duration<double>>(system_clock::now().time_since_epoch()).count();
+	return static_cast<units::second_t>(duration_cast<duration<double>>(system_clock::now().time_since_epoch()).count());
 }
 }
 

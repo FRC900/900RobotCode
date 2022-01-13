@@ -37,6 +37,7 @@
 */
 #include <ros/ros.h>
 #include <ros_control_boilerplate/frc_robot_interface.h>
+#include "hardware_interface/joint_mode_interface.h"  // for JointCommandModes
 #include <ext/alloc_traits.h>                         // for __alloc_traits<...
 #ifdef __linux__
 #include <pthread.h>                                  // for pthread_self
@@ -50,6 +51,7 @@
 #include <cstdint>                                    // for uint8_t, int32_t
 #include <iostream>                                   // for operator<<, bas...
 #include "AHRS.h"                                     // for AHRS
+#include "CTREPDP.h"
 #include "ctre/phoenix/motorcontrol/can/WPI_TalonFX.h"
 #include "ctre/phoenix/motorcontrol/can/WPI_TalonSRX.h"
 #include "ctre/phoenix/motorcontrol/can/WPI_VictorSPX.h"
@@ -59,17 +61,21 @@
 #include "frc/DoubleSolenoid.h"                       // for DoubleSolenoid
 #include "frc/DriverStation.h"                        // for DriverStation
 #include "frc/Joystick.h"                             // for Joystick
-#include "frc/NidecBrushless.h"                       // for NidecBrushless
+#include "frc/motorcontrol/NidecBrushless.h"          // for NidecBrushless
+#include "frc/PneumaticsBase.h"
+#include "frc/PneumaticsModuleType.h"
 #include "frc/PWM.h"                                  // for PWM
 #include "hal/CAN.h"                                  // for HAL_CAN_GetCANS...
-#include "hal/Compressor.h"                           // for HAL_GetCompressor
+#include "hal/CTREPCM.h"
+//#include "hal/Compressor.h"                           // for HAL_GetCompressor
 #include "hal/DriverStation.h"                        // for HAL_GetAlliance...
 #include "hal/DriverStationTypes.h"                   // for HAL_ControlWord
 #include "hal/HALBase.h"                              // for HAL_GetErrorMes...
-#include "hal/PDP.h"                                  // for HAL_ClearPDPSti...
+//#include "hal/PDP.h"                                  // for HAL_ClearPDPSti...
 #include "hal/Power.h"                                // for HAL_GetVinVoltage
-#include "hal/Solenoid.h"                             // for HAL_FreeSolenoi...
-#include "hardware_interface/joint_mode_interface.h"  // for JointCommandModes
+#include "hal/REVPH.h"
+//#include "hal/Solenoid.h"                             // for HAL_FreeSolenoi...
+#include "REVPDH.h"
 #include "tf2/LinearMath/Quaternion.h"                // for Quaternion
 
 //PURPOSE: Stuff used by to run both hw and sim interfaces
@@ -100,14 +106,13 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 #endif
 	ros::Duration(2.75 + state->getCANID() * 0.05).sleep(); // Sleep for a few seconds to let CAN start up
 	ROS_INFO_STREAM("Starting ctre_mc " << state->getCANID() << " thread at " << ros::Time::now());
-	ros::Rate rate(poll_frequency); // TODO : be smart enough to run at the rate of the fastest status update?
 
 	const auto victor = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorController>(ctre_mc);
 	const auto talon = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::IMotorControllerEnhanced>(ctre_mc);
 	const auto talonsrx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mc);
 	const auto talonfx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mc);
 
-	while(ros::ok())
+	for (ros::Rate rate(poll_frequency); ros::ok(); rate.sleep())
 	{
 		tracer->start("talon read main_loop");
 
@@ -361,7 +366,230 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 			state->setFirmwareVersion(firmware_version);
 		}
 		tracer->report(60);
+	}
+}
+
+
+// Each cancoder gets their own read thread. The thread loops at a fixed rate
+// reading all state from that cancoder. The state is copied to a shared buffer
+// at the end of each iteration of the loop.
+// The code tries to only read status when we expect there to be new
+// data given the update rate of various CAN messages.
+void FRCRobotInterface::cancoder_read_thread(std::shared_ptr<ctre::phoenix::sensors::CANCoder> cancoder,
+											std::shared_ptr<hardware_interface::cancoder::CANCoderHWState> state,
+											std::shared_ptr<std::mutex> mutex,
+											std::unique_ptr<Tracer> tracer,
+											double poll_frequency)
+{
+#ifdef __linux__
+	std::stringstream thread_name{"cancdr_read_"};
+
+	if (pthread_setname_np(pthread_self(), thread_name.str().c_str()))
+	{
+		ROS_ERROR_STREAM("Error setting thread name " << thread_name.str() << " " << errno);
+	}
+#endif
+	ros::Duration(2.452 + state->getDeviceNumber() * 0.07).sleep(); // Sleep for a few seconds to let CAN start up
+	ros::Rate rate(poll_frequency); // TODO : configure me from a file or
+						 // be smart enough to run at the rate of the fastest status update?
+
+	while(ros::ok())
+	{
+		tracer->start("cancoder read main_loop");
+
+		double conversion_factor;
+
+		// Update local status with relevant global config
+		// values set by write(). This way, items configured
+		// by controllers will be reflected in the state here
+		// used when reading from talons.
+		// Realistically they won't change much (except maybe mode)
+		// but unless it causes performance problems reading them
+		// each time through the loop is easier than waiting until
+		// they've been correctly set by write() before using them
+		// here.
+		// Note that this isn't a complete list - only the values
+		// used by the read thread are copied over.  Update
+		// as needed when more are read
+		{
+			std::lock_guard<std::mutex> l(*mutex);
+			conversion_factor = state->getConversionFactor();
+		}
+		//TODO redo using feedback coefficent
+
+		// Use FeedbackDevice_QuadEncoder to force getConversionFactor to use the encoder_ticks_per_rotation
+		// variable to calculate these values
+		const double position = cancoder->GetPosition() * conversion_factor;
+		const double velocity = cancoder->GetVelocity() * conversion_factor;
+		const double absolute_position = cancoder->GetAbsolutePosition() * conversion_factor;
+		const double bus_voltage = cancoder->GetBusVoltage();
+		const auto ctre_magnet_field_strength = cancoder->GetMagnetFieldStrength();
+		hardware_interface::cancoder::MagnetFieldStrength magnet_field_strength;
+		cancoder_convert_.magnetFieldStrength(ctre_magnet_field_strength, magnet_field_strength);
+		const double last_timestamp = cancoder->GetLastTimestamp();
+		const int firmware_version = cancoder->GetFirmwareVersion();
+
+		ctre::phoenix::sensors::CANCoderFaults ctre_faults;
+		cancoder->GetFaults(ctre_faults);
+		const unsigned faults = ctre_faults.ToBitfield();
+		ctre::phoenix::sensors::CANCoderStickyFaults ctre_sticky_faults;
+		cancoder->GetStickyFaults(ctre_sticky_faults);
+		const unsigned sticky_faults = ctre_sticky_faults.ToBitfield();
+
+		// Actually update the CANCoderHWState shared between
+		// this thread and read()
+		// Do this all at once so the code minimizes the amount
+		// of time with mutex locked
+		{
+			// Lock the state entry to make sure writes
+			// are atomic - reads won't grab data in
+			// the middle of a write
+			std::lock_guard<std::mutex> l(*mutex);
+			state->setPosition(position);
+			state->setVelocity(velocity);
+			state->setAbsolutePosition(absolute_position);
+			state->setBusVoltage(bus_voltage);
+			state->setMagnetFieldStrength(magnet_field_strength);
+			state->setLastTimestamp(last_timestamp);
+			state->setFirmwareVersion(firmware_version);
+			state->setFaults(faults);
+			state->setStickyFaults(sticky_faults);
+		}
+		tracer->report(60);
 		rate.sleep();
+	}
+}
+
+// The PDP reads happen in their own thread. This thread
+// loops at 20Hz to match the update rate of PDP CAN
+// status messages.  Each iteration, data read from the
+// PDP is copied to a state buffer shared with the main read
+// thread.
+void FRCRobotInterface::pdh_read_thread(int32_t pdh,
+		std::shared_ptr<hardware_interface::PDHHWState> state,
+		std::shared_ptr<std::mutex> mutex,
+		std::unique_ptr<Tracer> tracer,
+		double poll_frequency)
+{
+#ifdef __linux__
+	if (pthread_setname_np(pthread_self(), "pdh_read"))
+	{
+		ROS_ERROR_STREAM("Error setting thread name pdh_read " << errno);
+	}
+#endif
+	ros::Duration(1.9).sleep(); // Sleep for a few seconds to let CAN start up
+	ROS_INFO_STREAM("Starting pdh read thread at " << ros::Time::now());
+	int32_t status = 0;
+	HAL_ClearREVPDHStickyFaults(pdh, &status);
+	if (status)
+		ROS_ERROR_STREAM("pdh_read_thread error clearing faults : status = " << status);
+	status = 0;
+	hardware_interface::PDHHWState pdh_state(HAL_GetREVPDHModuleNumber(pdh, &status));
+	if (status)
+		ROS_ERROR_STREAM("pdh_read_thread error reading PDH module number: status = " << status);
+	status = 0;
+	HAL_PowerDistributionVersion pdh_version;
+	HAL_GetREVPDHVersion(pdh, &pdh_version, &status);
+	if (status)
+		ROS_ERROR_STREAM("pdh_read_thread error reading PDH version : status = " << status);
+	pdh_state.setFirmwareMajor(pdh_version.firmwareMajor);
+	pdh_state.setFirmwareMinor(pdh_version.firmwareMinor);
+	pdh_state.setFirmwareFix(pdh_version.firmwareFix);
+	pdh_state.setHardwareMajor(pdh_version.hardwareMajor);
+	pdh_state.setHardwareMinor(pdh_version.hardwareMinor);
+	pdh_state.setUniqueID(pdh_version.uniqueId);
+	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
+	{
+		tracer->start("main loop");
+
+		//read info from the PDH hardware
+		status = 0;
+		pdh_state.setVoltage(HAL_GetREVPDHVoltage(pdh, &status));
+		HAL_PowerDistributionFaults faults;
+		HAL_GetREVPDHFaults(pdh, &faults, &status);
+		HAL_PowerDistributionStickyFaults sticky_faults;
+		HAL_GetREVPDHStickyFaults(pdh, &sticky_faults, &status);
+
+
+#if 0
+		pdh_state.setEnabled(HAL_IsREVPDHEnabled(pdh, &status));
+#endif
+		pdh_state.setBrownout(faults.brownout);
+		pdh_state.setStickyBrownout(sticky_faults.brownout);
+		pdh_state.setCANWarning(faults.canWarning);
+		pdh_state.setStickyCANWarning(sticky_faults.canWarning);
+		pdh_state.setStickyCANBusOff(sticky_faults.canBusOff);
+		pdh_state.setHardwareFault(faults.hardwareFault);
+		pdh_state.setChannelBreakerFault(faults.channel0BreakerFault, 0);
+		pdh_state.setChannelBreakerFault(faults.channel1BreakerFault, 1);
+		pdh_state.setChannelBreakerFault(faults.channel2BreakerFault, 2);
+		pdh_state.setChannelBreakerFault(faults.channel3BreakerFault, 3);
+		pdh_state.setChannelBreakerFault(faults.channel4BreakerFault, 4);
+		pdh_state.setChannelBreakerFault(faults.channel5BreakerFault, 5);
+		pdh_state.setChannelBreakerFault(faults.channel6BreakerFault, 6);
+		pdh_state.setChannelBreakerFault(faults.channel7BreakerFault, 7);
+		pdh_state.setChannelBreakerFault(faults.channel8BreakerFault, 8);
+		pdh_state.setChannelBreakerFault(faults.channel9BreakerFault, 9);
+		pdh_state.setChannelBreakerFault(faults.channel10BreakerFault, 10);
+		pdh_state.setChannelBreakerFault(faults.channel11BreakerFault, 11);
+		pdh_state.setChannelBreakerFault(faults.channel12BreakerFault, 12);
+		pdh_state.setChannelBreakerFault(faults.channel13BreakerFault, 13);
+		pdh_state.setChannelBreakerFault(faults.channel14BreakerFault, 14);
+		pdh_state.setChannelBreakerFault(faults.channel15BreakerFault, 15);
+		pdh_state.setChannelBreakerFault(faults.channel16BreakerFault, 16);
+		pdh_state.setChannelBreakerFault(faults.channel17BreakerFault, 17);
+		pdh_state.setChannelBreakerFault(faults.channel18BreakerFault, 18);
+		pdh_state.setChannelBreakerFault(faults.channel19BreakerFault, 19);
+		pdh_state.setChannelBreakerFault(faults.channel20BreakerFault, 20);
+		pdh_state.setChannelBreakerFault(faults.channel21BreakerFault, 21);
+		pdh_state.setChannelBreakerFault(faults.channel22BreakerFault, 22);
+		pdh_state.setChannelBreakerFault(faults.channel23BreakerFault, 23);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel0BreakerFault, 0);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel1BreakerFault, 1);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel2BreakerFault, 2);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel3BreakerFault, 3);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel4BreakerFault, 4);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel5BreakerFault, 5);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel6BreakerFault, 6);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel7BreakerFault, 7);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel8BreakerFault, 8);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel9BreakerFault, 9);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel10BreakerFault, 10);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel11BreakerFault, 11);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel12BreakerFault, 12);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel13BreakerFault, 13);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel14BreakerFault, 14);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel15BreakerFault, 15);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel16BreakerFault, 16);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel17BreakerFault, 17);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel18BreakerFault, 18);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel19BreakerFault, 19);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel20BreakerFault, 20);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel21BreakerFault, 21);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel22BreakerFault, 22);
+		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel23BreakerFault, 23);
+		pdh_state.setStickyHasReset(sticky_faults.hasReset);
+		pdh_state.setTotalCurrent(HAL_GetREVPDHTotalCurrent(pdh, &status));
+		pdh_state.setSwitchableChannelState(HAL_GetREVPDHSwitchableChannelState(pdh, &status));
+
+		for (size_t channel = 0; channel < 20; channel++)
+		{
+			pdh_state.setChannelCurrent(HAL_GetREVPDHChannelCurrent(pdh, channel, &status), channel);
+		}
+		if (status)
+		{
+			ROS_ERROR_STREAM("pdh_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
+		}
+
+		{
+			// Copy to state shared with read() thread
+			// Put this in a separate scope so lock_guard is released
+			// as soon as the state is finished copying
+			std::lock_guard<std::mutex> l(*mutex);
+			*state = pdh_state;
+		}
+
+		tracer->report(60);
 	}
 }
 
@@ -384,14 +612,13 @@ void FRCRobotInterface::pdp_read_thread(int32_t pdp,
 #endif
 	ros::Duration(1.9).sleep(); // Sleep for a few seconds to let CAN start up
 	ROS_INFO_STREAM("Starting pdp read thread at " << ros::Time::now());
-	ros::Rate r(poll_frequency);
 	int32_t status = 0;
 	HAL_ClearPDPStickyFaults(pdp, &status);
 	HAL_ResetPDPTotalEnergy(pdp, &status);
 	if (status)
 		ROS_ERROR_STREAM("pdp_read_thread error clearing sticky faults : status = " << status);
 	hardware_interface::PDPHWState pdp_state;
-	while (ros::ok())
+	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
 	{
 		tracer->start("main loop");
 
@@ -418,16 +645,16 @@ void FRCRobotInterface::pdp_read_thread(int32_t pdp,
 		}
 
 		tracer->report(60);
-		r.sleep();
 	}
 }
+
 
 // The PCM state reads happen in their own thread. This thread
 // loops at 20Hz to match the update rate of PCM CAN
 // status messages.  Each iteration, data read from the
 // PCM is copied to a state buffer shared with the main read
 // thread.
-void FRCRobotInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle, int32_t pcm_id,
+void FRCRobotInterface::pcm_read_thread(HAL_CTREPCMHandle pcm_handle, int32_t pcm_id,
 										std::shared_ptr<hardware_interface::PCMState> state,
 										std::shared_ptr<std::mutex> mutex,
 										std::unique_ptr<Tracer> tracer,
@@ -442,35 +669,34 @@ void FRCRobotInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle, 
 	}
 #endif
 	ros::Duration(2.1 + pcm_id/10.).sleep(); // Sleep for a few seconds to let CAN start up
-	ros::Rate r(poll_frequency);
 	ROS_INFO_STREAM("Starting pcm " << pcm_id << " read thread at " << ros::Time::now());
 	int32_t status = 0;
-	HAL_ClearAllPCMStickyFaults(pcm_id, &status);
+	HAL_ClearAllCTREPCMStickyFaults(pcm_id, &status);
 	if (status)
 	{
 		ROS_ERROR_STREAM("pcm_read_thread error clearing sticky faults : status = "
 				<< status << ":" << HAL_GetErrorMessage(status));
 	}
-	while (ros::ok())
+	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
 	{
 		tracer->start("main loop");
 
 		hardware_interface::PCMState pcm_state(pcm_id);
 		status = 0;
-		pcm_state.setEnabled(HAL_GetCompressor(compressor_handle, &status));
-		pcm_state.setPressureSwitch(HAL_GetCompressorPressureSwitch(compressor_handle, &status));
-		pcm_state.setCompressorCurrent(HAL_GetCompressorCurrent(compressor_handle, &status));
-		pcm_state.setClosedLoopControl(HAL_GetCompressorClosedLoopControl(compressor_handle, &status));
-		pcm_state.setCurrentTooHigh(HAL_GetCompressorCurrentTooHighFault(compressor_handle, &status));
-		pcm_state.setCurrentTooHighSticky(HAL_GetCompressorCurrentTooHighStickyFault(compressor_handle, &status));
+		pcm_state.setCompressorEnabled(HAL_GetCTREPCMCompressor(pcm_handle, &status));
+		pcm_state.setPressureSwitch(HAL_GetCTREPCMPressureSwitch(pcm_handle, &status));
+		pcm_state.setCompressorCurrent(HAL_GetCTREPCMCompressorCurrent(pcm_handle, &status));
+		pcm_state.setClosedLoopControl(HAL_GetCTREPCMClosedLoopControl(pcm_handle, &status));
+		pcm_state.setCurrentTooHigh(HAL_GetCTREPCMCompressorCurrentTooHighFault(pcm_handle, &status));
+		pcm_state.setCurrentTooHighSticky(HAL_GetCTREPCMCompressorCurrentTooHighStickyFault(pcm_handle, &status));
 
-		pcm_state.setShorted(HAL_GetCompressorShortedFault(compressor_handle, &status));
-		pcm_state.setShortedSticky(HAL_GetCompressorShortedStickyFault(compressor_handle, &status));
-		pcm_state.setNotConntected(HAL_GetCompressorNotConnectedFault(compressor_handle, &status));
-		pcm_state.setNotConnecteSticky(HAL_GetCompressorNotConnectedStickyFault(compressor_handle, &status));
-		pcm_state.setVoltageFault(HAL_GetPCMSolenoidVoltageFault(pcm_id, &status));
-		pcm_state.setVoltageStickFault(HAL_GetPCMSolenoidVoltageStickyFault(pcm_id, &status));
-		pcm_state.setSolenoidBlacklist(HAL_GetPCMSolenoidBlackList(pcm_id, &status));
+		pcm_state.setShorted(HAL_GetCTREPCMCompressorShortedFault(pcm_handle, &status));
+		pcm_state.setShortedSticky(HAL_GetCTREPCMCompressorShortedStickyFault(pcm_handle, &status));
+		pcm_state.setNotConntected(HAL_GetCTREPCMCompressorNotConnectedFault(pcm_handle, &status));
+		pcm_state.setNotConnecteSticky(HAL_GetCTREPCMCompressorNotConnectedStickyFault(pcm_handle, &status));
+		pcm_state.setVoltageFault(HAL_GetCTREPCMSolenoidVoltageFault(pcm_id, &status));
+		pcm_state.setVoltageSticky(HAL_GetCTREPCMSolenoidVoltageStickyFault(pcm_id, &status));
+		pcm_state.setSolenoidDisabledList(HAL_GetCTREPCMSolenoidDisabledList(pcm_id, &status));
 
 		if (status)
 			ROS_ERROR_STREAM("pcm_read_thread : status = " << status << ":" << HAL_GetErrorMessage(status));
@@ -484,10 +710,59 @@ void FRCRobotInterface::pcm_read_thread(HAL_CompressorHandle compressor_handle, 
 		}
 
 		tracer->report(60);
-		r.sleep();
 	}
 }
-void FRCRobotInterface::readJointLocalParams(XmlRpc::XmlRpcValue joint_params,
+
+// The PH state reads happen in their own thread. This thread
+// loops at 20Hz to match the update rate of PH CAN
+// status messages.  Each iteration, data read from the
+// PH is copied to a state buffer shared with the main read
+// thread.
+void FRCRobotInterface::ph_read_thread(HAL_REVPHHandle ph_handle, int32_t ph_id,
+										std::shared_ptr<hardware_interface::PHHWState> state,
+										std::shared_ptr<std::mutex> mutex,
+										std::unique_ptr<Tracer> tracer,
+										double poll_frequency)
+{
+#ifdef __linux__
+	std::stringstream s;
+	s << "ph_read_" << ph_id;
+	if (pthread_setname_np(pthread_self(), s.str().c_str()))
+	{
+		ROS_ERROR_STREAM("Error setting thread name " << s.str() << " " << errno);
+	}
+#endif
+	ros::Duration(1.7 + ph_id/10.).sleep(); // Sleep for a few seconds to let CAN start up
+	ROS_INFO_STREAM("Starting ph " << ph_id << " read thread at " << ros::Time::now());
+	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
+	{
+		tracer->start("main loop");
+
+		hardware_interface::PHHWState ph_state(ph_id);
+		int32_t status = 0;
+		ph_state.setCompressorEnabled(HAL_GetREVPHCompressor(ph_handle, &status));
+		ph_state.setPressureSwitch(HAL_GetREVPHPressureSwitch(ph_handle, &status));
+		ph_state.setCompressorCurrent(HAL_GetREVPHCompressorCurrent(ph_handle, &status));
+		for (size_t i = 0; i < 2; i++)
+			ph_state.setAnalogVoltage(HAL_GetREVPHAnalogVoltage(ph_handle, i, &status), i);
+		if (status)
+		{
+			ROS_ERROR_STREAM("ph_read_thread : status = " << status << ":" << HAL_GetErrorMessage(status));
+		}
+
+		{
+			// Copy to state shared with read() thread
+			// Put this in a separate scope so lock_guard is released
+			// as soon as the state is finished copying
+			std::lock_guard<std::mutex> l(*mutex);
+			*state = ph_state;
+		}
+
+		tracer->report(60);
+	}
+}
+
+void FRCRobotInterface::readJointLocalParams(const XmlRpc::XmlRpcValue &joint_params,
 											 const bool local,
 											 const bool saw_local_keyword,
 											 bool &local_update,
@@ -498,7 +773,7 @@ void FRCRobotInterface::readJointLocalParams(XmlRpc::XmlRpcValue joint_params,
 	{
 		if (saw_local_keyword)
 			throw std::runtime_error("local can't be combined with local_update");
-		XmlRpc::XmlRpcValue &xml_joint_local_update = joint_params["local_update"];
+		const XmlRpc::XmlRpcValue &xml_joint_local_update = joint_params["local_update"];
 		if (!xml_joint_local_update.valid() ||
 			xml_joint_local_update.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
 			throw std::runtime_error("An invalid joint local_update was specified (expecting a boolean).");
@@ -509,12 +784,62 @@ void FRCRobotInterface::readJointLocalParams(XmlRpc::XmlRpcValue joint_params,
 	{
 		if (saw_local_keyword)
 			throw std::runtime_error("local can't be combined with local_hardware");
-		XmlRpc::XmlRpcValue &xml_joint_local_hardware = joint_params["local_hardware"];
+		const XmlRpc::XmlRpcValue &xml_joint_local_hardware = joint_params["local_hardware"];
 		if (!xml_joint_local_hardware.valid() ||
 			xml_joint_local_hardware.getType() != XmlRpc::XmlRpcValue::TypeBoolean)
 			throw std::runtime_error("An invalid joint local_hardware was specified (expecting a boolean).");
 		local_hardware = xml_joint_local_hardware;
 	}
+}
+
+int FRCRobotInterface::readIntParam(const XmlRpc::XmlRpcValue &joint_params,
+		bool local_hardware,
+		const char *key,
+		const std::string &joint_name)
+{
+	const bool has_key = joint_params.hasMember(key);
+	if (!local_hardware && has_key)
+		throw std::runtime_error(std::string("A ") + key +
+				" was specified for non-local hardware for joint " + joint_name);
+	int ret_val = 0;
+	if (local_hardware)
+	{
+		if (!has_key)
+			throw std::runtime_error(std::string("A ") + key + " was not specified for joint " + joint_name);
+		const XmlRpc::XmlRpcValue &param_val = joint_params[key];
+		if (!param_val.valid() || (param_val.getType() != XmlRpc::XmlRpcValue::TypeInt))
+			throw std::runtime_error(std::string("An invalid ") + key +
+					" was specified (expecting an int) for joint " + joint_name);
+		ret_val = param_val;
+	}
+	return ret_val;
+}
+
+frc::PneumaticsModuleType FRCRobotInterface::readSolenoidModuleType(const XmlRpc::XmlRpcValue &joint_params,
+		bool local_hardware,
+		const std::string &joint_name)
+{
+	const bool has_module_type = joint_params.hasMember("module_type");
+	if (!local_hardware && has_module_type)
+		throw std::runtime_error("A module_type was specified for non-local hardware for joint " + joint_name);
+	frc::PneumaticsModuleType solenoid_module_type;
+	if (local_hardware)
+	{
+		if (!has_module_type)
+			throw std::runtime_error("A module_type was not specified for joint " + joint_name);
+		XmlRpc::XmlRpcValue &xml_solenoid_module_type = joint_params["module_type"];
+		if (!xml_solenoid_module_type.valid() ||
+				xml_solenoid_module_type.getType() != XmlRpc::XmlRpcValue::TypeString)
+			throw std::runtime_error("An invalid module_type was specified (expecting a string) for joint " + joint_name);
+		std::string solenoid_module_string = xml_solenoid_module_type;
+		if (solenoid_module_string == "ctrepcm")
+			solenoid_module_type = frc::PneumaticsModuleType::CTREPCM;
+		else if (solenoid_module_string == "revph")
+			solenoid_module_type = frc::PneumaticsModuleType::REVPH;
+		else
+			throw std::runtime_error("Unknown module_type for " + joint_name + ", expecting \"ctrepcm\" or \"revph\"");
+	}
+	return solenoid_module_type;
 }
 
 void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
@@ -641,6 +966,37 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 			cancoder_can_ids_.push_back(can_id);
 			cancoder_local_updates_.push_back(local_update);
 			cancoder_local_hardwares_.push_back(local_hardware);
+		}
+		else if (joint_type == "can_spark_max")
+		{
+			if (!joint_params.hasMember("can_id"))
+				throw std::runtime_error("A CAN Spark Max can_id was not specified");
+			XmlRpc::XmlRpcValue &xml_can_id = joint_params["can_id"];
+			if (!xml_can_id.valid() ||
+				xml_can_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+				throw std::runtime_error("An invalid joint can_id was specified (expecting an int).");
+			const int can_id = xml_can_id;
+
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
+
+			if (!joint_params.hasMember("motor_type"))
+				throw std::runtime_error("A CAN Spark Max motor_type was not specified");
+			XmlRpc::XmlRpcValue &xml_motor_type = joint_params["motor_type"];
+			if (!xml_motor_type.valid() ||
+					xml_motor_type.getType() != XmlRpc::XmlRpcValue::TypeString)
+				throw std::runtime_error("An invalid motor_type was specified (expecting a string)");
+			const std::string motor_type = xml_motor_type;
+			if (motor_type == "brushed")
+				spark_max_motor_types_.push_back(hardware_interface::kBrushed);
+			else if (motor_type == "brushless")
+				spark_max_motor_types_.push_back(hardware_interface::kBrushless);
+			else
+				throw std::runtime_error("Motor_type not valid : expecting \"brushed\" or \"brushless\"");
+
+			spark_max_names_.push_back(joint_name);
+			spark_max_can_ids_.push_back(can_id);
+			spark_max_local_updates_.push_back(local_update);
+			spark_max_local_hardwares_.push_back(local_hardware);
 		}
 		else if (joint_type == "nidec_brushless")
 		{
@@ -826,48 +1182,33 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 		{
 			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
 
-			const bool has_id = joint_params.hasMember("id");
-			if (!local_hardware && has_id)
-				throw std::runtime_error("A solenoid id was specified for non-local hardware for joint " + joint_name);
-			int solenoid_id = 0;
-			if (local_hardware)
-			{
-				if (!has_id)
-					throw std::runtime_error("A solenoid id was not specified");
-				XmlRpc::XmlRpcValue &xml_solenoid_id = joint_params["id"];
-				if (!xml_solenoid_id.valid() ||
-					xml_solenoid_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
-					throw std::runtime_error("An invalid joint solenoid id was specified (expecting an int) for joint " + joint_name);
-				solenoid_id = xml_solenoid_id;
-			}
+			const int solenoid_channel = readIntParam(joint_params, local_hardware, "channel", joint_name);
+			frc::PneumaticsModuleType solenoid_module_type = frc::PneumaticsModuleType::CTREPCM;
+			int solenoid_module_id = -1;
 
-			const bool has_pcm = joint_params.hasMember("pcm");
-			if (!local_hardware && has_pcm)
-				throw std::runtime_error("A solenoid pcm was specified for non-local hardware for joint " + joint_name);
-			int solenoid_pcm = 0;
 			if (local_hardware)
 			{
-				if (!has_pcm)
-					throw std::runtime_error("A solenoid pcm was not specified for joint " + joint_name);
-				XmlRpc::XmlRpcValue &xml_solenoid_pcm = joint_params["pcm"];
-				if (!xml_solenoid_pcm.valid() ||
-						xml_solenoid_pcm.getType() != XmlRpc::XmlRpcValue::TypeInt)
-					throw std::runtime_error("An invalid joint solenoid pcm was specified (expecting an int) for joint " + joint_name);
-				solenoid_pcm = xml_solenoid_pcm;
-				for (size_t j = 0; j < solenoid_pcms_.size(); j++)
-					if ((solenoid_pcms_[j] == solenoid_pcm) &&
-					    (solenoid_ids_[j] == solenoid_id))
-					throw std::runtime_error("Duplicate solenoid pcm & id was specified for joint " + joint_name);
-				for (size_t j = 0; j < double_solenoid_pcms_.size(); j++)
-					if ((double_solenoid_pcms_[j] == solenoid_pcm) &&
-					   ((double_solenoid_forward_ids_[j] == solenoid_id) ||
-						(double_solenoid_reverse_ids_[j] == solenoid_id) ))
-					throw std::runtime_error("Duplicate solenoid pcm & id was specified for joint " + joint_name);
+				solenoid_module_type = readSolenoidModuleType(joint_params, local_hardware, joint_name);
+				solenoid_module_id = readIntParam(joint_params, local_hardware, "module_id", joint_name);
+				for (size_t j = 0; j < solenoid_module_ids_.size(); j++)
+					if ((solenoid_module_ids_[j] == solenoid_module_id) &&
+						(solenoid_module_types_[j] == solenoid_module_type) &&
+					    (solenoid_channels_[j] == solenoid_channel))
+					throw std::runtime_error("Duplicate solenoid module_id & id was specified for joint " + joint_name +
+							" (previously used in " + solenoid_names_[j] + ")");
+				for (size_t j = 0; j < double_solenoid_module_ids_.size(); j++)
+					if ((double_solenoid_module_ids_[j] == solenoid_module_id) &&
+						(solenoid_module_types_[j] == solenoid_module_type) &&
+					   ((double_solenoid_forward_channels_[j] == solenoid_channel) ||
+						(double_solenoid_reverse_channels_[j] == solenoid_channel) ))
+					throw std::runtime_error("Duplicate solenoid module & channel was reused in joint " + joint_name +
+							" (previously used in " + double_solenoid_names_[j] + ")");
 			}
 
 			solenoid_names_.push_back(joint_name);
-			solenoid_ids_.push_back(solenoid_id);
-			solenoid_pcms_.push_back(solenoid_pcm);
+			solenoid_channels_.push_back(solenoid_channel);
+			solenoid_module_types_.push_back(solenoid_module_type);
+			solenoid_module_ids_.push_back(solenoid_module_id);
 			solenoid_local_updates_.push_back(local_update);
 			solenoid_local_hardwares_.push_back(local_hardware);
 		}
@@ -875,68 +1216,43 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 		{
 			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
 
-			const bool has_forward_id = joint_params.hasMember("forward_id");
-			if (!local_hardware && has_forward_id)
-				throw std::runtime_error("A double solenoid forward_id was specified for non-local hardware for joint " + joint_name);
-			int double_solenoid_forward_id = 0;
+			const int double_solenoid_forward_channel = readIntParam(joint_params, local_hardware, "forward_channel", joint_name);
+			const int double_solenoid_reverse_channel = readIntParam(joint_params, local_hardware, "reverse_channel", joint_name);
+			frc::PneumaticsModuleType double_solenoid_module_type = frc::PneumaticsModuleType::CTREPCM;
+			int double_solenoid_module_id = -1;
+
 			if (local_hardware)
 			{
-				if (!has_forward_id)
-					throw std::runtime_error("A double solenoid forward_id was not specified for joint " + joint_name);
-				XmlRpc::XmlRpcValue &xml_double_solenoid_forward_id = joint_params["forward_id"];
-				if (!xml_double_solenoid_forward_id.valid() ||
-					xml_double_solenoid_forward_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
-					throw std::runtime_error("An invalid joint double solenoid forward_id was specified (expecting an int) for joint " + joint_name);
-				double_solenoid_forward_id = xml_double_solenoid_forward_id;
-			}
+				double_solenoid_module_type = readSolenoidModuleType(joint_params, local_hardware, joint_name);
+				double_solenoid_module_id = readIntParam(joint_params, local_hardware, "solenoid", joint_name);
+				if (double_solenoid_forward_channel == double_solenoid_reverse_channel)
+					throw std::runtime_error("Double solenoid " + joint_name +
+							" delcared with the same forward and reverse channel");
 
-			const bool has_reverse_id = joint_params.hasMember("reverse_id");
-			if (!local_hardware && has_reverse_id)
-				throw std::runtime_error("A double solenoid reverse_id was specified for non-local hardware for joint " + joint_name);
-					int double_solenoid_reverse_id = 0;
-			if (local_hardware)
-			{
-				if (!has_reverse_id)
-					throw std::runtime_error("A double solenoid reverse_id was not specified for joint " + joint_name);
-				XmlRpc::XmlRpcValue &xml_double_solenoid_reverse_id = joint_params["reverse_id"];
-				if (!xml_double_solenoid_reverse_id.valid() ||
-					xml_double_solenoid_reverse_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
-					throw std::runtime_error("An invalid joint double solenoid reverse_id was specified (expecting an int) for joint " + joint_name);
-				double_solenoid_reverse_id = xml_double_solenoid_reverse_id;
-			}
+				for (size_t j = 0; j < solenoid_module_ids_.size(); j++)
+					if ((solenoid_module_ids_[j] == double_solenoid_module_id) &&
+					    (solenoid_module_types_[j] == double_solenoid_module_type) &&
+					    ((solenoid_channels_[j] == double_solenoid_forward_channel) ||
+						 (solenoid_channels_[j] == double_solenoid_reverse_channel) ))
+					throw std::runtime_error("Duplicate solenoid module_id & channel was specified for joint "
+							+ joint_name + " (previously used in " + solenoid_names_[j] + ")");
 
-			const bool has_pcm = joint_params.hasMember("pcm");
-			if (!local_hardware && has_pcm)
-				throw std::runtime_error("A double solenoid pcm was specified for non-local hardware for joint " + joint_name);
-			int double_solenoid_pcm = 0;
-			if (local_hardware)
-			{
-				if (!has_pcm)
-					throw std::runtime_error("A double solenoid pcm was not specified for joint " + joint_name);
-				XmlRpc::XmlRpcValue &xml_double_solenoid_pcm = joint_params["pcm"];
-				if (!xml_double_solenoid_pcm.valid() ||
-						xml_double_solenoid_pcm.getType() != XmlRpc::XmlRpcValue::TypeInt)
-					throw std::runtime_error("An invalid joint double solenoid pcm was specified (expecting an int) for joint " + joint_name);
-				double_solenoid_pcm = xml_double_solenoid_pcm;
-
-				for (size_t j = 0; j < solenoid_pcms_.size(); j++)
-					if ((solenoid_pcms_[j] == double_solenoid_pcm) &&
-					    ((solenoid_ids_[j] == double_solenoid_forward_id) ||
-						 (solenoid_ids_[j] == double_solenoid_reverse_id) ))
-					throw std::runtime_error("Duplicate solenoid pcm & id was specified for joint " + joint_name);
-				for (size_t j = 0; j < double_solenoid_pcms_.size(); j++)
-					if ((double_solenoid_pcms_[j] == double_solenoid_pcm) &&
-					   ((double_solenoid_forward_ids_[j] == double_solenoid_forward_id) ||
-					    (double_solenoid_forward_ids_[j] == double_solenoid_reverse_id) ||
-					    (double_solenoid_reverse_ids_[j] == double_solenoid_forward_id) ||
-					    (double_solenoid_reverse_ids_[j] == double_solenoid_reverse_id) ))
-					throw std::runtime_error("Duplicate solenoid pcm & id was specified for joint " + joint_name);
+				for (size_t j = 0; j < double_solenoid_module_ids_.size(); j++)
+					if ((double_solenoid_module_ids_[j] == double_solenoid_module_id) &&
+					     (solenoid_module_types_[j] == double_solenoid_module_type) &&
+					   ((double_solenoid_forward_channels_[j] == double_solenoid_forward_channel) ||
+					    (double_solenoid_forward_channels_[j] == double_solenoid_reverse_channel) ||
+					    (double_solenoid_reverse_channels_[j] == double_solenoid_forward_channel) ||
+					    (double_solenoid_reverse_channels_[j] == double_solenoid_reverse_channel) ))
+					throw std::runtime_error("Duplicate solenoid module_id & channel was specified for joint "
+							+ joint_name + " (previously used in " + double_solenoid_names_[j] + ")");
 			}
 
 			double_solenoid_names_.push_back(joint_name);
-			double_solenoid_forward_ids_.push_back(double_solenoid_forward_id);
-			double_solenoid_reverse_ids_.push_back(double_solenoid_reverse_id);
-			double_solenoid_pcms_.push_back(double_solenoid_pcm);
+			double_solenoid_forward_channels_.push_back(double_solenoid_forward_channel);
+			double_solenoid_reverse_channels_.push_back(double_solenoid_reverse_channel);
+			double_solenoid_module_types_.push_back(double_solenoid_module_type);
+			double_solenoid_module_ids_.push_back(double_solenoid_module_id);
 			double_solenoid_local_updates_.push_back(local_update);
 			double_solenoid_local_hardwares_.push_back(local_hardware);
 		}
@@ -1061,32 +1377,53 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 			analog_input_analog_channels_.push_back(analog_input_analog_channel);
 			analog_input_locals_.push_back(local);
 		}
-		else if (joint_type == "compressor")
+		else if (joint_type == "pcm")
 		{
 			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
 
 			const bool has_pcm_id = joint_params.hasMember("pcm_id");
 			if (!local_hardware && has_pcm_id)
-				throw std::runtime_error("A compressor pcm id was specified for non-local hardware for joint " + joint_name);
-			int compressor_pcm_id = 0;
+				throw std::runtime_error("A PCM id was specified for non-local hardware for joint " + joint_name);
+			int pcm_id = 0;
 			if (local_hardware)
 			{
 				if (!has_pcm_id)
-					throw std::runtime_error("A compressor pcm id was not specified for joint " + joint_name);
-				XmlRpc::XmlRpcValue &xml_compressor_pcm_id = joint_params["pcm_id"];
-				if (!xml_compressor_pcm_id.valid() ||
-						xml_compressor_pcm_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
-					throw std::runtime_error("An invalid compressor joint pcm id was specified (expecting an int) for joint " + joint_name);
-				compressor_pcm_id = xml_compressor_pcm_id;
-				auto it = std::find(compressor_pcm_ids_.cbegin(), compressor_pcm_ids_.cend(), compressor_pcm_id);
-				if (it != compressor_pcm_ids_.cend())
-					throw std::runtime_error("A duplicate compressor CAN id was specified for joint " + joint_name);
+					throw std::runtime_error("A PCM id was not specified for joint " + joint_name);
+				XmlRpc::XmlRpcValue &xml_pcm_id = joint_params["pcm_id"];
+				if (!xml_pcm_id.valid() || xml_pcm_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+					throw std::runtime_error("An PCM id was specified (expecting an int) for joint " + joint_name);
+				pcm_id = xml_pcm_id;
+				if (std::find(pcm_ids_.cbegin(), pcm_ids_.cend(), pcm_id) != pcm_ids_.cend())
+					throw std::runtime_error("A duplicate PCM id was specified for joint " + joint_name);
 			}
 
-			compressor_names_.push_back(joint_name);
-			compressor_pcm_ids_.push_back(compressor_pcm_id);
-			compressor_local_updates_.push_back(local_update);
-			compressor_local_hardwares_.push_back(local_hardware);
+			pcm_names_.push_back(joint_name);
+			pcm_ids_.push_back(pcm_id);
+			pcm_local_updates_.push_back(local_update);
+			pcm_local_hardwares_.push_back(local_hardware);
+		}
+		else if (joint_type == "pdh")
+		{
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
+			int32_t pdh_module = 0;
+			if (joint_params.hasMember("module"))
+			{
+				if (!local)
+					throw std::runtime_error("A PDH id was specified for non-local hardware for joint " + joint_name);
+				XmlRpc::XmlRpcValue &xml_pdh_module = joint_params["module"];
+				if (!xml_pdh_module.valid() ||
+					 xml_pdh_module.getType() != XmlRpc::XmlRpcValue::TypeInt)
+					throw std::runtime_error("An invalid PDH joint module id was specified (expecting an int) for joint " + joint_name);
+				pdh_module = xml_pdh_module;
+				auto it = std::find(pdh_modules_.cbegin(), pdh_modules_.cend(), pdh_module);
+				if (it != pdh_modules_.cend())
+					throw std::runtime_error("A duplicate PDH module was specified for joint " + joint_name);
+			}
+
+			pdh_names_.push_back(joint_name);
+			pdh_local_updates_.push_back(local_update);
+			pdh_local_hardwares_.push_back(local_hardware);
+			pdh_modules_.push_back(pdh_module);
 		}
 		else if (joint_type == "pdp")
 		{
@@ -1108,6 +1445,31 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 			pdp_names_.push_back(joint_name);
 			pdp_locals_.push_back(local);
 			pdp_modules_.push_back(pdp_module);
+		}
+		else if (joint_type == "ph")
+		{
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
+
+			const bool has_ph_id = joint_params.hasMember("ph_id");
+			if (!local_hardware && has_ph_id)
+				throw std::runtime_error("A PH id was specified for non-local hardware for joint " + joint_name);
+			int ph_id = 0;
+			if (local_hardware)
+			{
+				if (!has_ph_id)
+					throw std::runtime_error("A PH id was not specified for joint " + joint_name);
+				XmlRpc::XmlRpcValue &xml_ph_id = joint_params["ph_id"];
+				if (!xml_ph_id.valid() || xml_ph_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+					throw std::runtime_error("An PH id was specified (expecting an int) for joint " + joint_name);
+				ph_id = xml_ph_id;
+				if (std::find(ph_ids_.cbegin(), ph_ids_.cend(), ph_id) != ph_ids_.cend())
+					throw std::runtime_error("A duplicate PH id was specified for joint " + joint_name);
+			}
+
+			ph_names_.push_back(joint_name);
+			ph_ids_.push_back(ph_id);
+			ph_local_updates_.push_back(local_update);
+			ph_local_hardwares_.push_back(local_hardware);
 		}
 		else if (joint_type == "dummy")
 		{
@@ -1206,6 +1568,7 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_model) :
 	  name_("generic_hw_interface")
 	, read_tracer_("FRCRobotInterface " + nh.getNamespace() + "::read()")
+	, write_tracer_("FRCRobotInterface " + nh.getNamespace() + "::write()")
 {
 	// Check if the URDF model needs to be loaded
 	if (urdf_model == nullptr)
@@ -1221,24 +1584,8 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 
 FRCRobotInterface::~FRCRobotInterface()
 {
-	auto safe_free_solenoid_ports = [](auto s)
-	{
-		if (s != HAL_kInvalidHandle)
-		{
-			HAL_FreeSolenoidPort(s);
-		}
-	};
-	for (auto &s : solenoids_)
-	{
-		safe_free_solenoid_ports(s);
-	}
-	for (auto &ds : double_solenoids_)
-	{
-		safe_free_solenoid_ports(ds.forward_);
-		safe_free_solenoid_ports(ds.reverse_);
-	}
-
-	// Simple lambda function to wait for all valid threads to exit
+	// Simple lambda function to wait for
+	// all valid threads in a vector to exit
 	auto join_threads = [](std::vector<std::thread> &threads)
 	{
 		for (auto &t : threads)
@@ -1250,8 +1597,11 @@ FRCRobotInterface::~FRCRobotInterface()
 		}
 	};
 	join_threads(ctre_mc_read_threads_);
+	join_threads(cancoder_read_threads_);
 	join_threads(pcm_threads_);
 	join_threads(pdp_threads_);
+	join_threads(pdh_threads_);
+	join_threads(ph_threads_);
 }
 
 void FRCRobotInterface::createInterfaces(void)
@@ -1354,6 +1704,38 @@ void FRCRobotInterface::createInterfaces(void)
 		}
 	}
 
+	num_spark_maxs_ = spark_max_names_.size();
+	// Create vectors of the correct size for
+	// Spark Max HW state and commands
+	spark_max_command_.resize(num_spark_maxs_);
+
+	for (size_t i = 0; i < num_spark_maxs_; i++)
+	{
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Spark Max Interface for " << spark_max_names_[i] << " at hw ID " << spark_max_can_ids_[i]);
+
+		// Create joint state interface
+		spark_max_state_.push_back(hardware_interface::SparkMaxHWState(spark_max_can_ids_[i], spark_max_motor_types_[i]));
+	}
+	for (size_t i = 0; i < num_spark_maxs_; i++)
+	{
+		// Create state interface for the given Talon
+		// and point it to the data stored in the
+		// corresponding spark_max_state array entry
+		hardware_interface::SparkMaxStateHandle smsh(spark_max_names_[i], &spark_max_state_[i]);
+		spark_max_state_interface_.registerHandle(smsh);
+
+		// Do the same for a command interface for
+		// the same spark_max
+		hardware_interface::SparkMaxCommandHandle smch(smsh, &spark_max_command_[i]);
+		spark_max_command_interface_.registerHandle(smch);
+		if (!spark_max_local_updates_[i])
+		{
+			hardware_interface::SparkMaxWritableStateHandle smwsh(spark_max_names_[i], &spark_max_state_[i]); /// writing directly to state?
+			spark_max_remote_state_interface_.registerHandle(smwsh);
+		}
+		custom_profile_state_.push_back(CustomProfileState());
+	}
+
 	// Set vectors to correct size to hold data
 	// for each of the brushless motors we're trying
 	// to control
@@ -1444,7 +1826,11 @@ void FRCRobotInterface::createInterfaces(void)
 	prev_solenoid_mode_.resize(num_solenoids_);
 	for (size_t i = 0; i < num_solenoids_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << solenoid_names_[i] << " at id " << solenoid_ids_[i] << " at pcm " << solenoid_pcms_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : "
+				<< solenoid_names_[i] <<
+				" at channel " << solenoid_channels_[i] <<
+				" at " << (solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
+				" id " << solenoid_module_ids_[i]);
 
 		solenoid_state_[i] = std::numeric_limits<double>::max();
 		solenoid_pwm_state_[i] = 0;
@@ -1471,7 +1857,12 @@ void FRCRobotInterface::createInterfaces(void)
 	double_solenoid_command_.resize(num_double_solenoids_);
 	for (size_t i = 0; i < num_double_solenoids_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : " << double_solenoid_names_[i] << " at forward id " << double_solenoid_forward_ids_[i] << " at reverse id " << double_solenoid_reverse_ids_[i] << " at pcm " << double_solenoid_pcms_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : "
+				<< double_solenoid_names_[i] <<
+				" at forward channel " << double_solenoid_forward_channels_[i] <<
+				" & reverse channel " << double_solenoid_reverse_channels_[i] <<
+				" at " << (double_solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
+				" id " << double_solenoid_module_ids_[i]);
 
 		double_solenoid_state_[i] = std::numeric_limits<double>::max();
 		double_solenoid_command_[i] = 0;
@@ -1516,8 +1907,8 @@ void FRCRobotInterface::createInterfaces(void)
 		hardware_interface::as726x::AS726xStateHandle ash(as726x_names_[i], &as726x_state_[i]);
 		as726x_state_interface_.registerHandle(ash);
 
-		hardware_interface::as726x::AS726xCommandHandle aoh(ash, &as726x_command_[i]);
-		as726x_command_interface_.registerHandle(aoh);
+		hardware_interface::as726x::AS726xCommandHandle ach(ash, &as726x_command_[i]);
+		as726x_command_interface_.registerHandle(ach);
 		if (!as726x_local_updates_[i])
 		{
 			hardware_interface::as726x::AS726xWritableStateHandle awsh(as726x_names_[i], &as726x_state_[i]); /// writing directly to state?
@@ -1588,33 +1979,80 @@ void FRCRobotInterface::createInterfaces(void)
 			joint_remote_interface_.registerHandle(aih);
 		}
 	}
-	num_compressors_ = compressor_names_.size();
-	compressor_state_.resize(num_compressors_);
-	compressor_command_.resize(num_compressors_);
-	for (size_t i = 0; i < num_compressors_; i++)
-		pcm_state_.emplace_back(hardware_interface::PCMState(compressor_pcm_ids_[i]));
-	for (size_t i = 0; i < num_compressors_; i++)
+	num_pcms_ = pcm_names_.size();
+	pcm_compressor_closed_loop_enable_state_.resize(num_pcms_);
+	pcm_compressor_closed_loop_enable_command_.resize(num_pcms_);
+	for (size_t i = 0; i < num_pcms_; i++)
+		pcm_state_.emplace_back(hardware_interface::PCMState(pcm_ids_[i]));
+	for (size_t i = 0; i < num_pcms_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for compressor / PCM : " << compressor_names_[i] << " at pcm_id " << compressor_pcm_ids_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for PCM : "
+				<< pcm_names_[i] << " at pcm_id " << pcm_ids_[i]);
 
-		// Default compressors to running
-		compressor_command_[i] = 1;
-		compressor_state_[i] = std::numeric_limits<double>::max();
+		// Default compressors to running and set state to a different
+		// value to force a write to HW the first write() iteration
+		pcm_compressor_closed_loop_enable_command_[i] = 1;
+		pcm_compressor_closed_loop_enable_state_[i] = std::numeric_limits<double>::max();
 
-		hardware_interface::JointStateHandle csh(compressor_names_[i], &compressor_state_[i], &compressor_state_[i], &compressor_state_[i]);
-		joint_state_interface_.registerHandle(csh);
+		hardware_interface::JointStateHandle csh(pcm_names_[i],
+												&pcm_compressor_closed_loop_enable_state_[i],
+												&pcm_compressor_closed_loop_enable_state_[i],
+												&pcm_compressor_closed_loop_enable_state_[i]);
 
-		hardware_interface::JointHandle cch(csh, &compressor_command_[i]);
+		hardware_interface::JointHandle cch(csh, &pcm_compressor_closed_loop_enable_command_[i]);
 		joint_position_interface_.registerHandle(cch);
-		if (!compressor_local_updates_[i])
+		if (!pcm_local_updates_[i])
 			joint_remote_interface_.registerHandle(cch);
 
-		hardware_interface::PCMStateHandle pcmsh(compressor_names_[i], &pcm_state_[i]);
+		hardware_interface::PCMStateHandle pcmsh(pcm_names_[i], &pcm_state_[i]);
 		pcm_state_interface_.registerHandle(pcmsh);
-		if (!compressor_local_updates_[i])
+		if (!pcm_local_updates_[i])
 		{
-			hardware_interface::PCMWritableStateHandle rpcmsh(compressor_names_[i], &pcm_state_[i]);
+			hardware_interface::PCMWritableStateHandle rpcmsh(pcm_names_[i], &pcm_state_[i]);
 			pcm_remote_state_interface_.registerHandle(rpcmsh);
+		}
+	}
+
+	num_phs_ = ph_names_.size();
+	for (size_t i = 0; i < num_phs_; i++)
+		ph_state_.emplace_back(hardware_interface::PHHWState(ph_ids_[i]));
+	for (size_t i = 0; i < num_phs_; i++)
+	{
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for PH : "
+				<< ph_names_[i] << " at ph_id " << ph_ids_[i]);
+
+		hardware_interface::PHStateHandle phsh(ph_names_[i], &ph_state_[i]);
+		ph_state_interface_.registerHandle(phsh);
+
+		hardware_interface::PHCommandHandle phch(phsh, &ph_command_[i]);
+		ph_command_interface_.registerHandle(phch);
+
+		if (!ph_local_updates_[i])
+		{
+			hardware_interface::PHWritableStateHandle pwsh(ph_names_[i], &ph_state_[i]);
+			ph_remote_state_interface_.registerHandle(pwsh);
+		}
+	}
+
+	num_pdhs_ = pdh_names_.size();
+	for (size_t i = 0; i < num_pdhs_; i++)
+	{
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for PDH : "
+				<< pdh_names_[i] << " at module ID " << pdh_modules_[i]);
+		pdh_state_.emplace_back(hardware_interface::PDHHWState(pdh_modules_[i]));
+	}
+	pdh_command_.resize(num_pdhs_);
+	for (size_t i = 0; i < num_pdhs_; i++)
+	{
+		hardware_interface::PDHStateHandle psh(pdh_names_[i], &pdh_state_[i]);
+		pdh_state_interface_.registerHandle(psh);
+
+		hardware_interface::PDHCommandHandle pch(psh, &pdh_command_[i]);
+		pdh_command_interface_.registerHandle(pch);
+		if (!pdh_local_updates_[i])
+		{
+			hardware_interface::PDHWritableStateHandle pwsh(pdh_names_[i], &pdh_state_[i]);
+			pdh_remote_state_interface_.registerHandle(pwsh);
 		}
 	}
 
@@ -1767,14 +2205,19 @@ void FRCRobotInterface::createInterfaces(void)
 	registerInterface(&canifier_command_interface_);
 	registerInterface(&cancoder_state_interface_);
 	registerInterface(&cancoder_command_interface_);
+	registerInterface(&spark_max_state_interface_);
+	registerInterface(&spark_max_command_interface_);
 	registerInterface(&joint_state_interface_);
 	registerInterface(&joint_command_interface_);
 	registerInterface(&joint_position_interface_);
 	registerInterface(&joint_velocity_interface_);
 	registerInterface(&joint_effort_interface_); // empty for now
 	registerInterface(&imu_interface_);
-	registerInterface(&pdp_state_interface_);
 	registerInterface(&pcm_state_interface_);
+	registerInterface(&pdh_state_interface_);
+	registerInterface(&pdh_command_interface_);
+	registerInterface(&pdp_state_interface_);
+	registerInterface(&ph_state_interface_);
 	registerInterface(&robot_controller_state_interface_);
 	registerInterface(&joystick_state_interface_);
 	registerInterface(&match_state_interface_);
@@ -1786,9 +2229,12 @@ void FRCRobotInterface::createInterfaces(void)
 	registerInterface(&talon_remote_state_interface_);
 	registerInterface(&canifier_remote_state_interface_);
 	registerInterface(&cancoder_remote_state_interface_);
+	registerInterface(&spark_max_remote_state_interface_);
 	registerInterface(&joint_remote_interface_); // list of Joints defined as remote
-	registerInterface(&pdp_remote_state_interface_);
 	registerInterface(&pcm_remote_state_interface_);
+	registerInterface(&pdh_remote_state_interface_);
+	registerInterface(&pdp_remote_state_interface_);
+	registerInterface(&ph_remote_state_interface_);
 	registerInterface(&imu_remote_interface_);
 	registerInterface(&match_remote_state_interface_);
 	registerInterface(&as726x_remote_state_interface_);
@@ -1881,6 +2327,33 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		}
 	}
 
+	for (size_t i = 0; i < num_cancoders_; i++)
+	{
+		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
+							  "Loading joint " << i << "=" << cancoder_names_[i] <<
+							  (cancoder_local_updates_[i] ? " local" : " remote") << " update, " <<
+							  (cancoder_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
+							  " at CAN id " << cancoder_can_ids_[i]);
+
+		if (cancoder_local_hardwares_[i])
+		{
+			cancoders_.emplace_back(std::make_shared<ctre::phoenix::sensors::CANCoder>(cancoder_can_ids_[i]));
+			cancoder_read_state_mutexes_.emplace_back(std::make_shared<std::mutex>());
+			cancoder_read_thread_states_.emplace_back(std::make_shared<hardware_interface::cancoder::CANCoderHWState>(cancoder_can_ids_[i]));
+			cancoder_read_threads_.emplace_back(std::thread(&FRCRobotInterface::cancoder_read_thread, this,
+												cancoders_[i], cancoder_read_thread_states_[i],
+												cancoder_read_state_mutexes_[i],
+												std::make_unique<Tracer>("cancoder_read_" + cancoder_names_[i] + " " + root_nh.getNamespace()),
+												cancoder_read_hz_));
+		}
+		else
+		{
+			cancoders_.push_back(nullptr);
+			cancoder_read_state_mutexes_.push_back(nullptr);
+			cancoder_read_thread_states_.push_back(nullptr);
+		}
+	}
+
 	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frc_robot_interface",
@@ -1955,7 +2428,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		if (pwm_local_hardwares_[i])
 		{
 			PWMs_.push_back(std::make_shared<frc::PWM>(pwm_pwm_channels_[i]));
-			PWMs_[i]->SetSafetyEnabled(true);
+			//PWMs_[i]->SetSafetyEnabled(true);
 		}
 		else
 			PWMs_.push_back(nullptr);
@@ -1966,64 +2439,69 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 							  "Loading joint " << i << "=" << solenoid_names_[i] <<
 							  (solenoid_local_updates_[i] ? " local" : " remote") << " update, " <<
 							  (solenoid_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as Solenoid " << solenoid_ids_[i]
-							  << " with pcm " << solenoid_pcms_[i]);
+							  " as solenoid at channel " << solenoid_channels_[i] <<
+							  " at " << (solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
+							  " id " << solenoid_module_ids_[i]);
 
 		// Need to have 1 solenoid instantiated on the Rio to get
 		// support for compressor and so on loaded?
 		if (solenoid_local_hardwares_[i])
 		{
-			int32_t status = 0;
-			solenoids_.push_back(HAL_InitializeSolenoidPort(HAL_GetPortWithModule(solenoid_pcms_[i], solenoid_ids_[i]), &status));
-			if (solenoids_.back() == HAL_kInvalidHandle)
-				ROS_ERROR_STREAM("Error intializing solenoid : status=" << status);
-			else
-				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
-						solenoid_ids_[i], solenoid_pcms_[i]);
+			pneumatics_.push_back(frc::PneumaticsBase::GetForType(solenoid_module_ids_[i], solenoid_module_types_[i]));
+			if (pneumatics_.back()->CheckSolenoidChannel(solenoid_channels_[i]))
+			{
+				ROS_ERROR_STREAM("Solenoid channel out of range in joint " << solenoid_names_[i]);
+			}
+			else if (pneumatics_.back()->CheckAndReserveSolenoids(1U << solenoid_channels_[i]))
+			{
+				ROS_ERROR_STREAM("Solenoid channel already allocated in joint " << solenoid_names_[i]);
+			}
+
+			HAL_Report(HALUsageReporting::kResourceType_Solenoid, solenoid_channels_[i] + 1,
+					pneumatics_.back()->GetModuleNumber() + 1);
 		}
 		else
-			solenoids_.push_back(HAL_kInvalidHandle);
+			pneumatics_.push_back(HAL_kInvalidHandle);
 	}
+
 	for (size_t i = 0; i < num_double_solenoids_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frc_robot_interface",
 							  "Loading joint " << i << "=" << double_solenoid_names_[i] <<
 							  (double_solenoid_local_updates_[i] ? " local" : " remote") << " update, " <<
 							  (double_solenoid_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as Double Solenoid forward " << double_solenoid_forward_ids_[i] <<
-							  " reverse " << double_solenoid_reverse_ids_[i]
-							  << " with pcm " << double_solenoid_pcms_[i]);
+							  " as double solenoid at forward channel " << double_solenoid_forward_channels_[i] <<
+							  " & reverse channel " << double_solenoid_reverse_channels_[i] <<
+							  " at " << (double_solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
+							  " id " << double_solenoid_module_ids_[i]);
 
 		if (double_solenoid_local_hardwares_[i])
 		{
-			int32_t forward_status = 0;
-			int32_t reverse_status = 0;
-			auto forward_handle = HAL_InitializeSolenoidPort(
-					HAL_GetPortWithModule(double_solenoid_pcms_[i], double_solenoid_forward_ids_[i]),
-					&forward_status);
-			auto reverse_handle = HAL_InitializeSolenoidPort(
-					HAL_GetPortWithModule(double_solenoid_pcms_[i], double_solenoid_reverse_ids_[i]),
-					&reverse_status);
-			if ((forward_handle != HAL_kInvalidHandle) &&
-			    (reverse_handle != HAL_kInvalidHandle) )
+			double_pneumatics_.push_back(frc::PneumaticsBase::GetForType(solenoid_module_ids_[i], solenoid_module_types_[i]));
+			if (double_pneumatics_.back()->CheckSolenoidChannel(double_solenoid_forward_channels_[i]))
 			{
-				double_solenoids_.emplace_back(DoubleSolenoidHandle(forward_handle, reverse_handle));
-				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
-						double_solenoid_forward_ids_[i], double_solenoid_pcms_[i]);
-				HAL_Report(HALUsageReporting::kResourceType_Solenoid,
-						double_solenoid_reverse_ids_[i], double_solenoid_pcms_[i]);
+				ROS_ERROR_STREAM("Double solenoid forward channel out of range in joint " << solenoid_names_[i]);
 			}
-			else
+			else if (double_pneumatics_.back()->CheckAndReserveSolenoids(1U << double_solenoid_forward_channels_[i]))
 			{
-				ROS_ERROR_STREAM("Error intializing double solenoid : status=" << forward_status << " : " << reverse_status);
-				double_solenoids_.emplace_back(DoubleSolenoidHandle(HAL_kInvalidHandle, HAL_kInvalidHandle));
-				HAL_FreeSolenoidPort(forward_handle);
-				HAL_FreeSolenoidPort(reverse_handle);
+				ROS_ERROR_STREAM("Double solenoid forward channel already allocated in joint " << solenoid_names_[i]);
 			}
+			if (double_pneumatics_.back()->CheckSolenoidChannel(double_solenoid_reverse_channels_[i]))
+			{
+				ROS_ERROR_STREAM("Double solenoid reverse channel out of range in joint " << solenoid_names_[i]);
+			}
+			else if (double_pneumatics_.back()->CheckAndReserveSolenoids(1U << double_solenoid_reverse_channels_[i]))
+			{
+				ROS_ERROR_STREAM("Double solenoid reverse channel already allocated in joint " << solenoid_names_[i]);
+			}
+			HAL_Report(HALUsageReporting::kResourceType_Solenoid, double_solenoid_forward_channels_[i] + 1,
+					pneumatics_.back()->GetModuleNumber() + 1);
+			HAL_Report(HALUsageReporting::kResourceType_Solenoid, double_solenoid_reverse_channels_[i] + 1,
+					pneumatics_.back()->GetModuleNumber() + 1);
 		}
 		else
 		{
-			double_solenoids_.emplace_back(DoubleSolenoidHandle(HAL_kInvalidHandle, HAL_kInvalidHandle));
+			double_pneumatics_.push_back(nullptr);
 		}
 	}
 
@@ -2037,7 +2515,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		//TODO: fix how we use ids
 
 		if (navX_locals_[i])
-			navXs_.push_back(std::make_shared<AHRS>(SPI::Port::kMXP));
+			navXs_.push_back(std::make_shared<AHRS>(frc::SPI::Port::kMXP));
 		else
 			navXs_.push_back(nullptr);
 
@@ -2074,45 +2552,72 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		else
 			analog_inputs_.push_back(nullptr);
 	}
-	for (size_t i = 0; i < num_compressors_; i++)
+	for (size_t i = 0; i < num_pcms_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frc_robot_interface",
-							  "Loading joint " << i << "=" << compressor_names_[i] <<
-							  (compressor_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (compressor_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as Compressor with pcm " << compressor_pcm_ids_[i]);
+							  "Loading joint " << i << "=" << pcm_names_[i] <<
+							  (pcm_local_updates_[i] ? " local" : " remote") << " update, " <<
+							  (pcm_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
+							  " as PCM " << pcm_ids_[i]);
 
-		pcm_read_thread_state_.push_back(std::make_shared<hardware_interface::PCMState>(compressor_pcm_ids_[i]));
-		if (compressor_local_hardwares_[i])
+		pcm_read_thread_state_.push_back(std::make_shared<hardware_interface::PCMState>(pcm_ids_[i]));
+		if (pcm_local_hardwares_[i])
 		{
-			if (!HAL_CheckCompressorModule(compressor_pcm_ids_[i]))
+			int32_t status = 0;
+			pcms_.push_back(HAL_InitializeCTREPCM(pcm_ids_[i], __FUNCTION__, &status));
+			if (!status && (pcms_[i] != HAL_kInvalidHandle))
 			{
-				ROS_ERROR("Invalid Compressor PCM ID");
-				compressors_.push_back(HAL_kInvalidHandle);
+				pcm_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
+				pcm_threads_.emplace_back(std::thread(&FRCRobotInterface::pcm_read_thread, this,
+										  pcms_[i], pcm_ids_[i], pcm_read_thread_state_[i],
+										  pcm_read_thread_mutexes_[i],
+										  std::make_unique<Tracer>("PCM " + pcm_names_[i] + " " + root_nh.getNamespace()),
+										  pcm_read_hz_));
+				HAL_Report(HALUsageReporting::kResourceType_Compressor, pcm_ids_[i]);
+				HAL_Report(HALUsageReporting::kResourceType_PCM, ph_ids_[i]);
 			}
 			else
 			{
-				int32_t status = 0;
-				compressors_.push_back(HAL_InitializeCompressor(compressor_pcm_ids_[i], &status));
-				if (!status && (compressors_[i] != HAL_kInvalidHandle))
-				{
-					pcm_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
-					pcm_threads_.emplace_back(std::thread(&FRCRobotInterface::pcm_read_thread, this,
-											  compressors_[i], compressor_pcm_ids_[i], pcm_read_thread_state_[i],
-											  pcm_read_thread_mutexes_[i],
-											  std::make_unique<Tracer>("PCM " + compressor_names_[i] + " " + root_nh.getNamespace()),
-											  pcm_read_hz_));
-					HAL_Report(HALUsageReporting::kResourceType_Compressor, compressor_pcm_ids_[i]);
-				}
-				else
-				{
-					ROS_ERROR_STREAM("compressor init error : status = "
-							<< status << ":" << HAL_GetErrorMessage(status));
-				}
+				ROS_ERROR_STREAM("PCM init error : status = "
+						<< status << ":" << HAL_GetErrorMessage(status));
 			}
 		}
 		else
-			compressors_.push_back(HAL_kInvalidHandle);
+			pcms_.push_back(HAL_kInvalidHandle);
+	}
+
+	for (size_t i = 0; i < num_phs_; i++)
+	{
+		ROS_INFO_STREAM_NAMED("frc_robot_interface",
+							  "Loading joint " << i << "=" << ph_names_[i] <<
+							  (ph_local_updates_[i] ? " local" : " remote") << " update, " <<
+							  (ph_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
+							  " as PH " << ph_ids_[i]);
+
+		ph_read_thread_state_.push_back(std::make_shared<hardware_interface::PHHWState>(ph_ids_[i]));
+		if (ph_local_hardwares_[i])
+		{
+			int32_t status = 0;
+			phs_.push_back(HAL_InitializeREVPH(ph_ids_[i], __FUNCTION__, &status));
+			if (!status && (phs_[i] != HAL_kInvalidHandle))
+			{
+				ph_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
+				ph_threads_.emplace_back(std::thread(&FRCRobotInterface::ph_read_thread, this,
+										  phs_[i], ph_ids_[i], ph_read_thread_state_[i],
+										  ph_read_thread_mutexes_[i],
+										  std::make_unique<Tracer>("PH " + ph_names_[i] + " " + root_nh.getNamespace()),
+										  ph_read_hz_));
+				HAL_Report(HALUsageReporting::kResourceType_Compressor, ph_ids_[i]);
+				//HAL_Report(HALUsageReporting::kResourceType_PH, ph_ids_[i]);
+			}
+			else
+			{
+				ROS_ERROR_STREAM("PH init error : status = "
+						<< status << ":" << HAL_GetErrorMessage(status));
+			}
+		}
+		else
+			phs_.push_back(HAL_kInvalidHandle);
 	}
 
 	// No real init needed here, just report the config loaded for them
@@ -2123,6 +2628,47 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 							  (rumble_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
 							  " as Rumble with port " << rumble_ports_[i]);
 
+	for (size_t i = 0; i < num_pdhs_; i++)
+	{
+		ROS_INFO_STREAM_NAMED("frc_robot_interface",
+							  "Loading joint " << i << "=" << pdh_names_[i] <<
+							  (pdh_local_updates_[i] ? " local" : " remote") << " update, " <<
+							  (pdh_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
+							  " as PDH");
+
+		if (pdh_local_hardwares_[i])
+		{
+			if (!HAL_CheckREVPDHModuleNumber(pdh_modules_[i]))
+			{
+				ROS_ERROR("Invalid PDH module number");
+				pdhs_.push_back(HAL_kInvalidHandle);
+			}
+			else
+			{
+				int32_t status = 0;
+				const auto pdh_handle = HAL_InitializeREVPDH(pdh_modules_[i], __FUNCTION__, &status);
+				phs_.push_back(pdh_handle);
+				pdh_read_thread_state_.push_back(std::make_shared<hardware_interface::PDHHWState>(pdh_modules_[i]));
+				if ((pdh_handle == HAL_kInvalidHandle) || status)
+				{
+					ROS_ERROR_STREAM("Could not initialize PDH module, status = " << status);
+				}
+				else
+				{
+					pdh_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
+					pdh_threads_.emplace_back(std::thread(&FRCRobotInterface::pdh_read_thread, this,
+											  pdh_handle, pdh_read_thread_state_[i], pdh_read_thread_mutexes_[i],
+											  std::make_unique<Tracer>("PDH " + pdh_names_[i] + " " + root_nh.getNamespace()),
+											  pdh_read_hz_));
+					//HAL_Report(HALUsageReporting::kResourceType_PDH, pdh_modules_[i]);
+				}
+			}
+		}
+		else
+		{
+			pdhs_.push_back(HAL_kInvalidHandle);
+		}
+	}
 	for (size_t i = 0; i < num_pdps_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frc_robot_interface",
@@ -2139,7 +2685,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			else
 			{
 				int32_t status = 0;
-				const auto pdp_handle = HAL_InitializePDP(pdp_modules_[i], &status);
+				const auto pdp_handle = HAL_InitializePDP(pdp_modules_[i], __FUNCTION__, &status);
 				pdp_read_thread_state_.push_back(std::make_shared<hardware_interface::PDPHWState>());
 				if ((pdp_handle == HAL_kInvalidHandle) || status)
 				{
@@ -2171,40 +2717,64 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 
 bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh)
 {
-	if(! root_nh.param("generic_hw_control_loop/ctre_mc_read_hz", ctre_mc_read_hz_, ctre_mc_read_hz_)) {
+	ros::NodeHandle param_nh(root_nh, "generic_hw_control_loop");
+	if(! param_nh.param("ctre_mc_read_hz", ctre_mc_read_hz_, ctre_mc_read_hz_)) {
 		ROS_ERROR("Failed to read ctre_mc_read_hz in frc_robot_interface");
 	}
-	if(! root_nh.param("generic_hw_control_loop/pcm_read_hz", pcm_read_hz_, pcm_read_hz_)) {
+	if(! param_nh.param("cancoder_read_hz", cancoder_read_hz_, cancoder_read_hz_)) {
+		ROS_ERROR("Failed to read cancoder_read_hz in frc_robot_interface");
+	}
+	if(! param_nh.param("canifier_read_hz", canifier_read_hz_, canifier_read_hz_)) {
+		ROS_ERROR("Failed to read canifier_read_hz in frc_robot_interface");
+	}
+	if(! param_nh.param("spark_max_read_hz", spark_max_read_hz_, spark_max_read_hz_)) {
+		ROS_ERROR("Failed to read spark_max_read_hz in frc_robot_interface");
+	}
+	if(! param_nh.param("pcm_read_hz", pcm_read_hz_, pcm_read_hz_)) {
 		ROS_ERROR("Failed to read pcm_read_hz in frc_robot_interface");
 	}
-	if(! root_nh.param("generic_hw_control_loop/pdp_read_hz", pdp_read_hz_, pdp_read_hz_)) {
+	if(! param_nh.param("pdh_read_hz", pdh_read_hz_, pdh_read_hz_)) {
+		ROS_ERROR("Failed to read pdh_read_hz in frc_robot_interface");
+	}
+	if(! param_nh.param("pdp_read_hz", pdp_read_hz_, pdp_read_hz_)) {
 		ROS_ERROR("Failed to read pdp_read_hz in frc_robot_interface");
+	}
+	if(! param_nh.param("ph_read_hz", ph_read_hz_, ph_read_hz_)) {
+		ROS_ERROR("Failed to read ph_read_hz in frc_robot_interface");
+	}
+	if(! param_nh.param("as726x_read_hz", as726x_read_hz_, as726x_read_hz_)) {
+		ROS_ERROR("Failed to read as726x_read_hz in frc_robot_interface");
 	}
 	const double t_now = ros::Time::now().toSec();
 	t_prev_robot_iteration_ = t_now;
-	if(! root_nh.param("generic_hw_control_loop/robot_iteration_hz", robot_iteration_hz_, robot_iteration_hz_)) {
+	if(! param_nh.param("robot_iteration_hz", robot_iteration_hz_, robot_iteration_hz_)) {
 		ROS_ERROR("Failed to read robot_iteration_hz in frc_robot_interface");
 	}
 
 	t_prev_joystick_read_ = t_now;
-	if(! root_nh.param("generic_hw_control_loop/joystick_read_hz", joystick_read_hz_, joystick_read_hz_)) {
+	if(! param_nh.param("joystick_read_hz", joystick_read_hz_, joystick_read_hz_)) {
 		ROS_ERROR("Failed to read joystick_read_hz in frc_robot_interface");
 	}
 
 	t_prev_match_data_read_ = t_now;
-	if(! root_nh.param("generic_hw_control_loop/match_data_read_hz", match_data_read_hz_, match_data_read_hz_)) {
+	if(! param_nh.param("match_data_read_hz", match_data_read_hz_, match_data_read_hz_)) {
 		ROS_ERROR("Failed to read match_data_read_hz in frc_robot_interface");
 	}
 
 	t_prev_robot_controller_read_ = t_now;
-	if(! root_nh.param("generic_hw_control_loop/robot_controller_read_hz", robot_controller_read_hz_, robot_controller_read_hz_)) {
+	if(! param_nh.param("robot_controller_read_hz", robot_controller_read_hz_, robot_controller_read_hz_)) {
 		ROS_ERROR("Failed to read robot_controller_read_hz in frc_robot_interface");
 	}
 
 	ROS_INFO_STREAM("Controller Frequencies:" << std::endl <<
 			"\tctre_mc_read : " << ctre_mc_read_hz_ << std::endl <<
+			"\tcancoder_read : " << cancoder_read_hz_ << std::endl <<
+			"\tcanifier_read : " << canifier_read_hz_ << std::endl <<
 			"\tpcm_read : " << pcm_read_hz_ << std::endl <<
+			"\tpdh_read : " << pdh_read_hz_ << std::endl <<
 			"\tpdp_read : " << pdp_read_hz_ << std::endl <<
+			"\tph_read : " << ph_read_hz_ << std::endl <<
+			"\tas726x_read : " << as726x_read_hz_ << std::endl <<
 			"\trobot_iteration : " << robot_iteration_hz_ << std::endl <<
 			"\tjoystick_read : " << joystick_read_hz_ << std::endl <<
 			"\tmatch_data_read : " << match_data_read_hz_ << std::endl <<
@@ -2572,24 +3142,24 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 				status = 0;
 				auto allianceStationID = HAL_GetAllianceStation(&status);
 				match_data_.setGetAllianceStationStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-				DriverStation::Alliance color;
+				frc::DriverStation::Alliance color;
 				switch (allianceStationID) {
 					case HAL_AllianceStationID_kRed1:
 					case HAL_AllianceStationID_kRed2:
 					case HAL_AllianceStationID_kRed3:
-						color = DriverStation::kRed;
+						color = frc::DriverStation::kRed;
 						break;
 					case HAL_AllianceStationID_kBlue1:
 					case HAL_AllianceStationID_kBlue2:
 					case HAL_AllianceStationID_kBlue3:
-						color = DriverStation::kBlue;
+						color = frc::DriverStation::kBlue;
 						break;
 					default:
-						color = DriverStation::kInvalid;
+						color = frc::DriverStation::kInvalid;
 				}
 				match_data_.setAllianceColor(color);
 
-				match_data_.setMatchType(static_cast<DriverStation::MatchType>(info.matchType));
+				match_data_.setMatchType(static_cast<frc::DriverStation::MatchType>(info.matchType));
 
 				int station_location;
 				switch (allianceStationID) {
@@ -2790,6 +3360,32 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		}
 	}
 
+	read_tracer_.start_unique("cancoder");
+	for (size_t joint_id = 0; joint_id < num_cancoders_; ++joint_id)
+	{
+		if (cancoder_local_hardwares_[joint_id])
+		{
+			std::unique_lock<std::mutex> l(*cancoder_read_state_mutexes_[joint_id], std::try_to_lock);
+			if (!l.owns_lock())
+				continue;
+			auto &cs   = cancoder_state_[joint_id];
+			auto &crts = cancoder_read_thread_states_[joint_id];
+
+			// These are used to convert position and velocity units - make sure the
+			// read thread's local copy of state is kept up to date
+			crts->setConversionFactor(cs.getConversionFactor());
+
+			cs.setPosition(crts->getPosition());
+			cs.setVelocity(crts->getVelocity());
+			cs.setAbsolutePosition(crts->getAbsolutePosition());
+			cs.setBusVoltage(crts->getBusVoltage());
+			cs.setMagnetFieldStrength(crts->getMagnetFieldStrength());
+			cs.setLastTimestamp(crts->getLastTimestamp());
+			cs.setFirmwareVersion(crts->getFirmwareVersion());
+			cs.setFaults(crts->getFaults());
+			cs.setStickyFaults(crts->getStickyFaults());
+		}
+	}
 	read_tracer_.start_unique("nidec");
 	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
 	{
@@ -2823,17 +3419,9 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 	{
 		if (solenoid_local_hardwares_[i])
 		{
-			int32_t status = 0;
-			const auto state = HAL_GetSolenoid(solenoids_[i], &status);
-			if (status == 0)
-			{
-				solenoid_state_[i] = state;
-			}
-			else
-			{
-				ROS_ERROR_STREAM("Error reading solenoid status : name="
-						<< solenoid_names_[i] << ", id=" << solenoid_ids_[i] << ", status=" << status);
-			}
+			unsigned int solenoids = pneumatics_[i]->GetSolenoids();
+			bool state = (solenoids & (1U << solenoid_channels_[i])) != 0;
+			solenoid_state_[i] = state;
 		}
 	}
 
@@ -2900,15 +3488,28 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		}
 	}
 
-	read_tracer_.start_unique("compressors");
-	for (size_t i = 0; i < num_compressors_; i++)
+	read_tracer_.start_unique("pcms");
+	for (size_t i = 0; i < num_pcms_; i++)
 	{
-		if (compressor_local_updates_[i])
+		if (pcm_local_updates_[i])
 		{
 			std::unique_lock<std::mutex> l(*pcm_read_thread_mutexes_[i], std::try_to_lock);
 			if (l.owns_lock())
 			{
 				pcm_state_[i] = *pcm_read_thread_state_[i];
+			}
+		}
+	}
+
+	read_tracer_.start_unique("pdhs");
+	for (size_t i = 0; i < num_pdhs_; i++)
+	{
+		if (pdh_local_updates_[i])
+		{
+			std::unique_lock<std::mutex> l(*pdh_read_thread_mutexes_[i], std::try_to_lock);
+			if (l.owns_lock())
+			{
+				pdh_state_[i] = *pdh_read_thread_state_[i];
 			}
 		}
 	}
@@ -2925,12 +3526,27 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 			}
 		}
 	}
+
+	read_tracer_.start_unique("phs");
+	for (size_t i = 0; i < num_phs_; i++)
+	{
+		if (ph_local_updates_[i])
+		{
+			std::unique_lock<std::mutex> l(*ph_read_thread_mutexes_[i], std::try_to_lock);
+			if (l.owns_lock())
+			{
+				ph_state_[i] = *ph_read_thread_state_[i];
+			}
+		}
+	}
+
 	read_tracer_.report(60);
 }
 
 void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period)
 {
 	// Was the robot enabled last time write was run?
+	write_tracer_.start_unique("read match data");
 	bool robot_enabled = false;
 	{
 		std::unique_lock<std::mutex> l(match_data_mutex_, std::try_to_lock);
@@ -2940,6 +3556,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			robot_enabled = last_robot_enabled_;
 	}
 
+	write_tracer_.start_unique("ctre mc");
 	for (size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
 	{
 		if (!can_ctre_mc_local_hardwares_[joint_id])
@@ -3045,8 +3662,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			tc.resetSensorInitializationStrategy();
 		}
 
-		bool enable_read_thread;
-		if (tc.enableReadThreadChanged(enable_read_thread))
+		if (bool enable_read_thread; tc.enableReadThreadChanged(enable_read_thread))
 			ts.setEnableReadThread(enable_read_thread);
 
 		hardware_interface::FeedbackDevice internal_feedback_device = hardware_interface::FeedbackDevice_Uninitialized;
@@ -3869,6 +4485,216 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 	}
 	last_robot_enabled_ = robot_enabled;
 
+	for (size_t joint_id = 0; joint_id < num_cancoders_; ++joint_id)
+	{
+		if (!cancoder_local_hardwares_[joint_id])
+			continue;
+
+		// Save some typing by making references to commonly
+		// used variables
+		auto &cancoder = cancoders_[joint_id];
+		auto &cs = cancoder_state_[joint_id];
+		auto &cc = cancoder_command_[joint_id];
+		if (cancoder->HasResetOccurred())
+		{
+			cc.resetPosition();
+			cc.resetVelocityMeasPeriod();
+			cc.resetVelocityMeasWindow();
+			cc.resetAbsoluteSensorRange();
+			cc.resetMagnetOffset();
+			cc.resetInitializationStrategy();
+			cc.resetFeedbackCoefficient();
+			cc.resetDirection();
+			cc.resetSensorDataStatusFramePeriod();
+			cc.resetVBatAndFaultsStatusFramePeriod();
+		}
+		cs.setConversionFactor(cc.getConversionFactor());
+		double position;
+		if (cc.positionChanged(position))
+		{
+			if (safeTalonCall(cancoder->SetPosition(position / cs.getConversionFactor()), "cancoder->SetPosition", cs.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
+						<< " : Set position to " << position);
+				// Don't set state - it will be updated in next read() loop
+			}
+			else
+			{
+				cc.resetPosition();
+			}
+		}
+		if (cc.positionToAbsoluteChanged())
+		{
+			if (safeTalonCall(cancoder->SetPositionToAbsolute(), "cancoder->SetPositionToAbsolute", cs.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
+						<< " : Set position to absolute");
+				// Don't set state - it will be updated in next read() loop
+			}
+			else
+			{
+				cc.setPositionToAbsolute();
+			}
+		}
+		hardware_interface::cancoder::SensorVelocityMeasPeriod velocity_meas_period;
+		ctre::phoenix::sensors::SensorVelocityMeasPeriod ctre_velocity_meas_period;
+		if (cc.velocityMeasPeriodChanged(velocity_meas_period) &&
+			cancoder_convert_.velocityMeasPeriod(velocity_meas_period, ctre_velocity_meas_period))
+		{
+			if (safeTalonCall(cancoder->ConfigVelocityMeasurementPeriod(ctre_velocity_meas_period), "cancoder->ConfigVelocityMeasurementPeriod", cs.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
+						<< " : Set velocity measurement period to " << static_cast<int>(ctre_velocity_meas_period));
+				cs.setVelocityMeasPeriod(velocity_meas_period);
+			}
+			else
+			{
+				cc.resetVelocityMeasPeriod();
+			}
+		}
+
+		int velocity_meas_window;
+		if (cc.velocityMeasWindowChanged(velocity_meas_window))
+		{
+			if (safeTalonCall(cancoder->ConfigVelocityMeasurementWindow(velocity_meas_window), "cancoder->ConfigVelocityMeasurementWindow", cs.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
+						<< " : Set velocity measurement window to " << velocity_meas_window);
+				cs.setVelocityMeasWindow(velocity_meas_window);
+			}
+			else
+			{
+				cc.resetVelocityMeasWindow();
+			}
+		}
+		hardware_interface::cancoder::AbsoluteSensorRange absolute_sensor_range;
+		ctre::phoenix::sensors::AbsoluteSensorRange ctre_absolute_sensor_range;
+		if (cc.absoluteSensorRangeChanged(absolute_sensor_range) &&
+			cancoder_convert_.absoluteSensorRange(absolute_sensor_range, ctre_absolute_sensor_range))
+		{
+			if (safeTalonCall(cancoder->ConfigAbsoluteSensorRange(ctre_absolute_sensor_range), "cancoder->ConfigAbsoluteSensorRange", cs.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
+						<< " : Set absolute sensor range to " << absolute_sensor_range);
+				cs.setAbsoluteSensorRange(absolute_sensor_range);
+			}
+			else
+			{
+				cc.resetAbsoluteSensorRange();
+			}
+		}
+
+		double magnet_offset;
+		if (cc.magnetOffsetChanged(magnet_offset))
+		{
+			if (safeTalonCall(cancoder->ConfigMagnetOffset(magnet_offset), "cancoder->ConfigMagnetOffset", cs.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
+						<< " : Set magnet offset to " << magnet_offset);
+				cs.setMagnetOffset(magnet_offset);
+			}
+			else
+			{
+				cc.resetMagnetOffset();
+			}
+		}
+
+		hardware_interface::cancoder::SensorInitializationStrategy initialization_strategy;
+		ctre::phoenix::sensors::SensorInitializationStrategy ctre_initialization_strategy;
+		if (cc.InitializationStrategyChanged(initialization_strategy) &&
+			cancoder_convert_.initializationStrategy(initialization_strategy, ctre_initialization_strategy))
+		{
+			if (safeTalonCall(cancoder->ConfigSensorInitializationStrategy(ctre_initialization_strategy), "cancoder->ConfigSensorInitializationStrategy", cs.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
+						<< " : Set sensor intitialization strategy to " << initialization_strategy);
+				cs.setInitializationStrategy(initialization_strategy);
+			}
+			else
+			{
+				cc.resetInitializationStrategy();
+			}
+		}
+		double feedback_coefficient;
+		std::string unit_string;
+		hardware_interface::cancoder::SensorTimeBase time_base;
+		ctre::phoenix::sensors::SensorTimeBase ctre_time_base;
+		if (cc.feedbackCoefficientChanged(feedback_coefficient, unit_string, time_base) &&
+			cancoder_convert_.timeBase(time_base, ctre_time_base))
+		{
+			if (safeTalonCall(cancoder->ConfigFeedbackCoefficient(feedback_coefficient, unit_string, ctre_time_base), "cancoder->ConfigFeedbackCoefficient", cs.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
+						<< " : Set feedback coefficient to  " << feedback_coefficient << " " << unit_string << " " << time_base);
+				cs.setFeedbackCoefficient(feedback_coefficient);
+				cs.setUnitString(unit_string);
+				cs.setTimeBase(time_base);
+			}
+			else
+			{
+				cc.resetFeedbackCoefficient();
+			}
+		}
+
+		bool direction;
+		if (cc.directionChanged(direction))
+		{
+			if (safeTalonCall(cancoder->ConfigSensorDirection(direction), "cancoder->ConfigSensorDirection", cs.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
+						<< " : Set direction to " << direction);
+				cs.setDirection(direction);
+			}
+			else
+			{
+				cc.resetDirection();
+			}
+		}
+
+		int sensor_data_status_frame_period;
+		if (cc.sensorDataStatusFramePeriodChanged(sensor_data_status_frame_period))
+		{
+			if (safeTalonCall(cancoder->SetStatusFramePeriod(ctre::phoenix::sensors::CANCoderStatusFrame::CANCoderStatusFrame_SensorData, sensor_data_status_frame_period), "cancoder->SetStatusFramePeriod(SensorData)", cs.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
+						<< " : Set sensor data status frame period to " << sensor_data_status_frame_period);
+				cs.setSensorDataStatusFramePeriod(sensor_data_status_frame_period);
+			}
+			else
+			{
+				cc.resetSensorDataStatusFramePeriod();
+			}
+		}
+
+		int vbat_and_faults_status_frame_period;
+		if (cc.sensorDataStatusFramePeriodChanged(vbat_and_faults_status_frame_period))
+		{
+			if (safeTalonCall(cancoder->SetStatusFramePeriod(ctre::phoenix::sensors::CANCoderStatusFrame::CANCoderStatusFrame_VbatAndFaults, vbat_and_faults_status_frame_period), "cancoder->SetStatusFramePeriod(VbatAndFaults)", cs.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id]
+						<< " : Set vbat and fault status frame period to " << vbat_and_faults_status_frame_period);
+				cs.setVbatAndFaultsStatusFramePeriod(vbat_and_faults_status_frame_period);
+			}
+			else
+			{
+				cc.resetVBatAndFaultsStatusFramePeriod();
+			}
+		}
+
+		if (cc.clearStickyFaultsChanged())
+		{
+			if (safeTalonCall(cancoder->ClearStickyFaults(), "cancoder->ClearStickyFaults", cs.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("CANcoder " << cancoder_names_[joint_id] << " : Sticky faults cleared");
+			}
+			else
+			{
+				cc.setClearStickyFaults();
+			}
+		}
+	}
+
+	write_tracer_.start_unique("nidec");
 	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
 	{
 		if (nidec_brushless_local_hardwares_[i])
@@ -3881,6 +4707,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		}
 	}
 
+	write_tracer_.start_unique("digital outputs");
 	for (size_t i = 0; i < num_digital_outputs_; i++)
 	{
 		// Only invert the desired output once, on the controller
@@ -3895,6 +4722,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		}
 	}
 
+	write_tracer_.start_unique("pwms");
 	for (size_t i = 0; i < num_pwms_; i++)
 	{
 		const int setpoint = pwm_command_[i] * ((pwm_inverts_[i] & pwm_local_updates_[i]) ? -1 : 1);
@@ -3909,32 +4737,27 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		}
 	}
 
+	write_tracer_.start_unique("solenoids");
 	for (size_t i = 0; i < num_solenoids_; i++)
 	{
 		// MODE_POSITION is standard on/off setting
 		if (solenoid_mode_[i] == hardware_interface::JointCommandModes::MODE_POSITION)
 		{
-			const bool setpoint = solenoid_command_[i] > 0;
-			if ((solenoid_mode_[i] != prev_solenoid_mode_[i]) || (solenoid_state_[i] != setpoint))
+			const bool on = solenoid_command_[i] > 0;
+			if ((solenoid_mode_[i] != prev_solenoid_mode_[i]) || (solenoid_state_[i] != on))
 			{
 				int32_t status = 0;
 				if (solenoid_local_hardwares_[i])
 				{
-					HAL_SetSolenoid(solenoids_[i], setpoint, &status);
+					int mask = 1 << solenoid_channels_[i];
+					int value = on ? (0xFFFF & mask) : 0;
+					pneumatics_[i]->SetSolenoids(mask, value);
 				}
-				if (status != 0)
-				{
-					ROS_ERROR_STREAM("Error setting solenoid " << solenoid_names_[i] <<
-							" to " << setpoint << " status = " << status);
-				}
-				else
-				{
-					ROS_INFO_STREAM("Solenoid " << solenoid_names_[i] <<
-							" at id " << solenoid_ids_[i] <<
-							" / pcm " << solenoid_pcms_[i] <<
-							" = " << static_cast<int>(setpoint));
-					solenoid_state_[i] = setpoint;
-				}
+				ROS_INFO_STREAM_NAMED(name_, "Solenoid " << solenoid_names_[i] <<
+						" at channel " << solenoid_channels_[i] <<
+						" at " << (solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
+						" id " << solenoid_module_ids_[i] <<
+						" = " << static_cast<int>(on));
 			}
 		}
 		// MODE_EFFORT is PWM via one-shot duration pulses
@@ -3946,36 +4769,21 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				if (solenoid_local_hardwares_[i])
 				{
 					// TODO - do we need to wait for previous one-shot to expire before sending another one?
-					HAL_SetOneShotDuration(solenoids_[i], solenoid_command_[i], &status);
-					if (status != 0)
-					{
-						ROS_ERROR_STREAM("Error setting solenoid " << solenoid_names_[i] <<
-								" one shot duration to " << solenoid_command_[i] << " status = " << status);
-					}
-					else
-					{
-						HAL_FireOneShot(solenoids_[i], &status);
-						if (status != 0)
-						{
-							ROS_ERROR_STREAM("Error setting solenoid " << solenoid_names_[i] <<
-									" fire one shot, status = " << status);
-						}
-					}
+					pneumatics_[i]->SetOneShotDuration(solenoid_channels_[i], static_cast<units::second_t>(solenoid_command_[i]));
+					pneumatics_[i]->FireOneShot(solenoid_channels_[i]);
 				}
-				if (status == 0)
-				{
-					ROS_INFO_STREAM("Solenoid one shot " << solenoid_names_[i] <<
-							" at id " << solenoid_ids_[i] <<
-							" / pcm " << solenoid_pcms_[i] <<
-							" = " << solenoid_command_[i]);
-					// TODO - should we re-load this saved pwm command after the previous
-					// one expires, or require a controller to monitor and reload?
-					solenoid_pwm_state_[i] = solenoid_command_[i];
-					// TODO - this will be polled in the read() function on interface local
-					// to the hardware. How will the remote interface get that state update?
-					solenoid_state_[i] = 1;
-					solenoid_command_[i] = 0;
-				}
+				ROS_INFO_STREAM_NAMED(name_, "Solenoid one shot " << solenoid_names_[i] <<
+						" at channel " << solenoid_channels_[i] <<
+						" at " << (solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
+						" id " << solenoid_module_ids_[i] <<
+						" = " << solenoid_command_[i]);
+				// TODO - should we re-load this saved pwm command after the previous
+				// one expires, or require a controller to monitor and reload?
+				solenoid_pwm_state_[i] = solenoid_command_[i];
+				// TODO - this will be polled in the read() function on interface local
+				// to the hardware. How will the remote interface get that state update?
+				solenoid_state_[i] = 1;
+				solenoid_command_[i] = 0;
 			}
 		}
 		else
@@ -3985,53 +4793,43 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		prev_solenoid_mode_[i] = solenoid_mode_[i];
 	}
 
+	write_tracer_.start_unique("double solenoids");
 	for (size_t i = 0; i < num_double_solenoids_; i++)
 	{
-		DoubleSolenoid::Value setpoint = DoubleSolenoid::Value::kOff;
-		if (double_solenoid_command_[i] >= 1.0)
-			setpoint = DoubleSolenoid::Value::kForward;
-		else if (double_solenoid_command_[i] <= -1.0)
-			setpoint = DoubleSolenoid::Value::kReverse;
-
 		// Not sure if it makes sense to store command values
 		// in state or wpilib enum values
 		if (double_solenoid_state_[i] != double_solenoid_command_[i])
 		{
 			if (double_solenoid_local_hardwares_[i])
 			{
-				bool forward = false;
-				bool reverse = false;
-				if (setpoint == DoubleSolenoid::Value::kForward)
-					forward = true;
-				else if (setpoint == DoubleSolenoid::Value::kReverse)
-					reverse = true;
+				int value;
+				int forward_mask = 1 << double_solenoid_forward_channels_[i];
+				int reverse_mask = 1 << double_solenoid_reverse_channels_[i];
+				if (double_solenoid_command_[i] >= 1.0)
+					value = forward_mask;
+				else if (double_solenoid_command_[i] <= -1.0)
+					value = reverse_mask;
+				else
+					value = 0;
 
-				int32_t status = 0;
-				HAL_SetSolenoid(double_solenoids_[i].forward_, forward, &status);
-				if (status != 0)
-					ROS_ERROR_STREAM("Error setting double solenoid " << double_solenoid_names_[i] <<
-							" forward to " << forward << " status = " << status);
-				else
-					ROS_INFO_STREAM("Setting double solenoid " << double_solenoid_names_[i] <<
-							" forward to " << forward);
-				status = 0;
-				HAL_SetSolenoid(double_solenoids_[i].reverse_, reverse, &status);
-				if (status != 0)
-					ROS_ERROR_STREAM("Error setting double solenoid " << double_solenoid_names_[i] <<
-							" reverse to " << reverse << " status = " << status);
-				else
-					ROS_INFO_STREAM("Setting double solenoid " << double_solenoid_names_[i] <<
-							" reverse to " << reverse);
+				double_pneumatics_[i]->SetSolenoids(forward_mask | reverse_mask, value);
+
+				ROS_INFO_STREAM("Setting double solenoid " << double_solenoid_names_[i] <<
+						" forward to " << (value & forward_mask) ? 1 : 0);
+				ROS_INFO_STREAM("Setting double solenoid " << double_solenoid_names_[i] <<
+						" reverse to " << (value & reverse_mask) ? 1 : 0);
 			}
 			double_solenoid_state_[i] = double_solenoid_command_[i];
-			ROS_INFO_STREAM("Double solenoid " << double_solenoid_names_[i] <<
-					" at forward id " << double_solenoid_forward_ids_[i] <<
-					" / reverse id " << double_solenoid_reverse_ids_[i] <<
-					" / pcm " << double_solenoid_pcms_[i] <<
-					" = " << setpoint);
+			ROS_INFO_STREAM_NAMED(name_, "Double solenoid " << double_solenoid_names_[i] <<
+					" at forward channel " << double_solenoid_forward_channels_[i] <<
+					" & reverse channel " << double_solenoid_reverse_channels_[i] <<
+					" at " << (double_solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
+					" id " << double_solenoid_module_ids_[i] <<
+					" = " << double_solenoid_command_[i]);
 		}
 	}
 
+	write_tracer_.start_unique("rumbles");
 	for (size_t i = 0; i < num_rumbles_; i++)
 	{
 		if (rumble_state_[i] != rumble_command_[i])
@@ -4046,25 +4844,159 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		}
 	}
 
-	for (size_t i = 0; i < num_compressors_; i++)
+	write_tracer_.start_unique("pcms");
+	for (size_t i = 0; i < num_pcms_; i++)
 	{
-		if (compressor_command_[i] != compressor_state_[i])
+		if (pcm_compressor_closed_loop_enable_command_[i] != pcm_compressor_closed_loop_enable_state_[i])
 		{
-			const bool setpoint = compressor_command_[i] > 0;
-			if (compressor_local_hardwares_[i])
+			if (pcm_local_hardwares_[i])
 			{
 				int32_t status = 0;
-				HAL_SetCompressorClosedLoopControl(compressors_[i], setpoint, &status);
+				const bool setpoint = pcm_compressor_closed_loop_enable_command_[i] > 0;
+				HAL_SetCTREPCMClosedLoopControl(pcms_[i], setpoint, &status);
 				if (status)
-					ROS_ERROR_STREAM("SetCompressorClosedLoopControl status:" << status
+					ROS_ERROR_STREAM("status: SetCTREPCMCompressorClosedLoopControl" << status
 							<< " " << HAL_GetErrorMessage(status));
 			}
-			compressor_state_[i] = compressor_command_[i];
-			ROS_INFO_STREAM("Wrote compressor " << i << "=" << setpoint);
+			// TODO - should we retry if status != 0?
+			pcm_compressor_closed_loop_enable_state_[i] = pcm_compressor_closed_loop_enable_command_[i];
+			ROS_INFO_STREAM("Wrote pcm " << i << " closedloop enable ="
+					<< pcm_compressor_closed_loop_enable_command_[i]);
 		}
 	}
 
+	write_tracer_.start_unique("phs");
+	for (size_t i = 0; i < num_phs_; i++)
+	{
+		double compressor_min_analog_voltage;
+		double compressor_max_analog_voltage;
+		bool compressor_force_disable;
+		bool compressor_use_digital;
+		if (ph_command_[i].closedLoopControlChanged(compressor_min_analog_voltage, compressor_max_analog_voltage,
+									 compressor_force_disable, compressor_use_digital))
+		{
+			if (ph_local_hardwares_[i])
+			{
+				int32_t status = 0;
+				if (compressor_force_disable)
+				{
+					HAL_SetREVPHClosedLoopControlDisabled(phs_[i], &status);
+					if (status)
+					{
+						ROS_ERROR_STREAM("status: HAL_SetREVPHClosedLoopControlDisabled " << status
+								<< " " << HAL_GetErrorMessage(status));
+						//TODO - retry?
+					}
+				}
+				else
+				{
+					if (compressor_use_digital)
+					{
+						HAL_SetREVPHClosedLoopControlDigital(phs_[i], &status);
+						if (status)
+						{
+							ROS_ERROR_STREAM("status: HAL_SetREVPHClosedLoopControlDigital " << status
+									<< " " << HAL_GetErrorMessage(status));
+							//TODO - retry?
+						}
+					}
+					else
+					{
+						HAL_SetREVPHClosedLoopControlAnalog(phs_[i], compressor_min_analog_voltage, compressor_max_analog_voltage, &status);
+						if (status)
+						{
+							ROS_ERROR_STREAM("status: HAL_SetREVPHClosedLoopControlAnalog " << status
+									<< " " << HAL_GetErrorMessage(status));
+							//TODO - retry?
+						}
+					}
+					// TODO - hybrid?
+					// void HAL_SetREVPHClosedLoopControlHybrid(HAL_REVPHHandle handle,
+                                         //double minAnalogVoltage,
+                                         //double maxAnalogVoltage,
+                                         //int32_t* status);
+				}
+			}
+			ROS_INFO_STREAM("Wrote ph " << i
+					<< " min_analog_voltage=" << compressor_min_analog_voltage
+					<< " max_analog_voltage=" << compressor_max_analog_voltage
+					<< " compressor_force_disable=" << static_cast<int>(compressor_force_disable)
+					<< " compressor_use_digital=" << static_cast<int>(compressor_use_digital));
+		}
+	}
+
+	write_tracer_.start_unique("pdhs");
+	for (size_t i = 0; i < num_pdhs_; i++)
+	{
+		auto &pc = pdh_command_[i];
+
+		if (bool enable; pc.switchableChannelEnableChanged(enable))
+		{
+			if (pdh_local_hardwares_[i])
+			{
+				int32_t status = 0;
+				HAL_SetREVPDHSwitchableChannel(pdhs_[i], enable, &status);
+				if (status == 0)
+				{
+					ROS_INFO_STREAM("Set PDH " << pdh_names_[i]
+							<< " enable = " << static_cast<int>(enable));
+				}
+				else
+				{
+					ROS_ERROR_STREAM("Error setting PDH " << pdh_names_[i]
+							<< " enable = " << static_cast<int>(enable)
+							<< " : status = " << status
+							<< " : " << HAL_GetErrorMessage(status));
+					pc.resetSwitchableChannelEnable();
+				}
+			}
+		}
+
+		if (pc.clearStickyFaultsChanged())
+		{
+			if (pdh_local_hardwares_[i])
+			{
+				int32_t status = 0;
+				HAL_ClearREVPDHStickyFaults(pdhs_[i], &status);
+				if (status == 0)
+				{
+					ROS_INFO_STREAM("Cleared sticky faults on PDH " << pdh_names_[i]);
+				}
+				else
+				{
+					ROS_ERROR_STREAM("Error clearing sticky faults on " << pdh_names_[i]
+							<< " : status = " << status
+							<< " : " << HAL_GetErrorMessage(status));
+					pc.setClearStickyFaults();
+				}
+			}
+		}
+
+#if 0 // Gone from wpilib code
+		if (pc.identifyPDHChanged())
+		{
+			if (pdh_local_hardwares_[i])
+			{
+				int32_t status = 0;
+				HAL_REV_IdentifyPDH(pdhs_[i], &status);
+				if (status == 0)
+				{
+					ROS_INFO_STREAM("Identified PDH " << pdh_names_[i]);
+				}
+				else
+				{
+					ROS_ERROR_STREAM("Error identifying PDH " << pdh_names_[i]
+							<< " : status = " << status
+							<< " : " << HAL_GetErrorMessage(status));
+					pc.setIdentifyPDH();
+				}
+			}
+		}
+#endif
+	}
+
 	// TODO : what to do about this?
+	write_tracer_.start_unique("dummy joints");
 	for (size_t i = 0; i < num_dummy_joints_; i++)
 	{
 		if (dummy_joint_locals_[i])
@@ -4090,6 +5022,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 		}
 	}
+	write_tracer_.report(60);
 
 }
 
@@ -4344,6 +5277,53 @@ bool FRCRobotInterface::safeTalonCall(ctre::phoenix::ErrorCode error_code, const
 			break;
 		case ctre::phoenix::MusicNotSupported:
 			error_name = "MusicNotSupported";
+			break;
+
+
+		case kInvalidGuid:
+			error_name = "kInvalidGuid";
+			break;
+		case kInvalidClass:
+			error_name = "kInvalidClass";
+			break;
+		case kInvalidProtocol:
+			error_name = "kInvalidProtocol";
+			break;
+		case kInvalidPath:
+			error_name = "kInvalidPath";
+			break;
+		case kGeneralWinUsbError:
+			error_name = "kGeneralWinUsbError";
+			break;
+		case kFailedSetup:
+			error_name = "kFailedSetup";
+			break;
+		case kListenFailed:
+			error_name = "kListenFailed";
+			break;
+		case kSendFailed:
+			error_name = "kSendFailed";
+			break;
+		case kReceiveFailed:
+			error_name = "kReceiveFailed";
+			break;
+		case kInvalidRespFormat:
+			error_name = "kInvalidRespFormat";
+			break;
+		case kWinUsbInitFailed:
+			error_name = "kWinUsbInitFailed";
+			break;
+		case kWinUsbQueryFailed:
+			error_name = "kWinUsbQueryFailed";
+			break;
+		case kWinUsbGeneralError:
+			error_name = "kWinUsbGeneralError";
+			break;
+		case kAccessDenied:
+			error_name = "kAccessDenied";
+			break;
+		case kFirmwareInvalidResponse:
+			error_name = "kFirmwareInvalidResponse";
 			break;
 
 		default:

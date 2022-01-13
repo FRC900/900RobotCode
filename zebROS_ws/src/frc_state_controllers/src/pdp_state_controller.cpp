@@ -38,7 +38,7 @@ bool PDPStateController::init(hardware_interface::PDPStateInterface *hw,
         ROS_ERROR("No things plugged in specified");
 	}
 
-	for(int channel = 0; channel <= 15; channel++)
+	for(size_t channel = 0; channel < m.current.size(); channel++)
 	{
 		m.current[channel] = 0;
 		XmlRpc::XmlRpcValue thing_plugged_in = thingsPluggedIn[channel];
@@ -82,7 +82,7 @@ void PDPStateController::update(const ros::Time &time, const ros::Duration & )
 			m.totalPower = ps->getTotalPower();
 			m.totalEnergy = ps->getTotalEnergy();
 
-			for(int channel = 0; channel <= 15; channel++)
+			for(size_t channel = 0; channel < m.current.size(); channel++)
 			{
 				m.current[channel] = ps->getCurrent(channel);
 			}
@@ -98,15 +98,6 @@ void PDPStateController::stopping(const ros::Time & )
 
 namespace state_listener_controller
 {
-PDPStateListenerController::PDPStateListenerController()
-{
-}
-
-PDPStateListenerController::~PDPStateListenerController()
-{
-	sub_command_.shutdown();
-}
-
 bool PDPStateListenerController::init(hardware_interface::RemotePDPStateInterface *hw, ros::NodeHandle &n)
 {
 	// Read list of hw, make a list, grab handles for them, plus allocate storage space
@@ -123,7 +114,7 @@ bool PDPStateListenerController::init(hardware_interface::RemotePDPStateInterfac
 	// get topic to subscribe to
 	if (!n.getParam("topic", topic))
 	{
-		ROS_ERROR("Parameter 'topic' not set");
+		ROS_ERROR("PDP State Listener Controller parameter 'topic' not set");
 		return false;
 	}
 
@@ -155,8 +146,10 @@ void PDPStateListenerController::commandCB(const frc_msgs::PDPDataConstPtr &msg)
 	data.setTotalCurrent(msg->totalCurrent);
 	data.setTotalPower(msg->totalPower);
 	data.setTotalEnergy(msg->totalEnergy);
-	for (size_t channel = 0; channel <= 15; channel++)
+	for (size_t channel = 0; channel < msg->current.size() ; channel++)
+	{
 		data.setCurrent(msg->current[channel], channel);
+	}
 	command_buffer_.writeFromNonRT(data);
 }
 

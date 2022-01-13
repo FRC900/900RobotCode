@@ -13,10 +13,6 @@ namespace joystick_state_controller
 class JoystickStateController: public controller_interface::Controller<hardware_interface::JoystickStateInterface>
 {
 	public:
-		JoystickStateController()
-		{
-        }
-
 		bool init(hardware_interface::JoystickStateInterface *hw,
 				  ros::NodeHandle							&root_nh,
 				  ros::NodeHandle							&controller_nh) override;

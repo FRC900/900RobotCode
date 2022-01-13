@@ -35,7 +35,7 @@
 #include <pluginlib/class_list_macros.h>
 #include "frc_state_controllers/pcm_state_controller.h"
 
-namespace pcm_state_controller 
+namespace pcm_state_controller
 {
 
 bool PCMStateController::init(hardware_interface::PCMStateInterface *hw,
@@ -70,8 +70,8 @@ bool PCMStateController::init(hardware_interface::PCMStateInterface *hw,
 	for (size_t i = 0; i < num_pcms_; i++)
 	{
 		m.name.push_back(pcm_names[i]);
-		m.pcm_id.push_back(-1);
-		m.enabled.push_back(false);
+		m.id.push_back(-1);
+		m.compressor_enabled.push_back(false);
 		m.pressure_switch.push_back(false);
 		m.compressor_current.push_back(0.0);
 		m.closed_loop_control.push_back(false);
@@ -83,7 +83,7 @@ bool PCMStateController::init(hardware_interface::PCMStateInterface *hw,
 		m.not_connected_sticky.push_back(false);
 		m.voltage_fault.push_back(false);
 		m.voltage_sticky_fault.push_back(false);
-		m.solenoid_blacklist.push_back(0);
+		m.solenoid_disabled_list.push_back(0);
 
 		pcm_state_.push_back(hw->getHandle(pcm_names[i]));
 	}
@@ -113,8 +113,8 @@ void PCMStateController::update(const ros::Time &time, const ros::Duration & /*p
 			for (unsigned i = 0; i < num_pcms_; i++)
 			{
 				auto &pcms = pcm_state_[i];
-				m.pcm_id[i] = pcms->getPCMId();
-				m.enabled[i] = pcms->getEnabled();
+				m.id[i] = pcms->getId();
+				m.compressor_enabled[i] = pcms->getCompressorEnabled();
 				m.pressure_switch[i] = pcms->getPressureSwitch();
 				m.compressor_current[i] = pcms->getCompressorCurrent();
 				m.closed_loop_control[i] = pcms->getClosedLoopControl();
@@ -125,8 +125,8 @@ void PCMStateController::update(const ros::Time &time, const ros::Duration & /*p
 				m.not_connected[i] = pcms->getNotConnected();
 				m.not_connected_sticky[i] = pcms->getNotConnectedSticky();
 				m.voltage_fault[i] = pcms->getVoltageFault();
-				m.voltage_sticky_fault[i] = pcms->getVoltageStickyFault();
-				m.solenoid_blacklist[i] = pcms->getSolenoidBlacklist();
+				m.voltage_sticky_fault[i] = pcms->getVoltageSticky();
+				m.solenoid_disabled_list[i] = pcms->getSolenoidDisabledList();
 			}
 			realtime_pub_->unlockAndPublish();
 		}

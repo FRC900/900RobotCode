@@ -1,0 +1,12 @@
+<library path="lib/libspark_max_state_controller">
+	<class name="spark_max_state_controller/SparkMaxStateController" type="spark_max_state_controller::SparkMaxStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			The spark max state controller is publishes the current spark max state as a spark_max_state_msgs/SparkMaxState message. The spark_max state controller expects a SparkMaxStateInterface type of hardware interface.
+		</description>
+	</class>
+	<class name="spark_max_config_controller/SparkMaxConfigController" type="spark_max_config_controller::SparkMaxConfigController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			The spark max config controller is publishes the current spark max config as a spark_max_state_msgs/SparkMaxConfig message. The spark_max config controller expects a SparkMaxStateInterface type of hardware interface.
+		</description>
+	</class>
+</library>

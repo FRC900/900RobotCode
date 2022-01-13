@@ -52,7 +52,9 @@ add_message_files(
   JoystickState.msg
   MatchSpecificData.msg
   PCMState.msg
+  PDHData.msg
   PDPData.msg
+  PHState.msg
   RobotControllerData.msg
   RobotControllerCANData.msg
 )

@@ -50,18 +50,19 @@
 #include <ctre/phoenix/music/Orchestra.h>
 #include "WPILibVersion.h"
 #include <frc/AnalogInput.h>
-#include <frc/DriverStation.h>
-#include <frc/NidecBrushless.h>
-#include <frc/DigitalInput.h>
-#include <frc/DigitalOutput.h>
-#include <frc/PWMSpeedController.h>
-#include <frc/Solenoid.h>
-#include <frc/DoubleSolenoid.h>
 #include <frc/Compressor.h>
 #include <frc/Joystick.h>
+#include <frc/DigitalInput.h>
+#include <frc/DigitalOutput.h>
+#include <frc/DoubleSolenoid.h>
+#include <frc/DriverStation.h>
+#include <frc/Solenoid.h>
+#include <frc/motorcontrol/NidecBrushless.h>
+#include <frc/motorcontrol/PWMMotorController.h>
 #include <hal/HALBase.h>
 #include <hal/DriverStation.h>
 #include <hal/FRCUsageReporting.h>
+#include <rev/CANSparkMax.h>
 
 #include <AHRS.h>
 
@@ -70,10 +71,10 @@
 
 #include "ros_control_boilerplate/AS726x.h"
 #include "ros_control_boilerplate/as726x_convert.h"
-#include "ros_control_boilerplate/cancoder_convert.h"
 #include "ros_control_boilerplate/canifier_convert.h"
 #include "ros_control_boilerplate/DSError.h"
 #include "ros_control_boilerplate/frc_robot_interface.h"
+#include "ros_control_boilerplate/rev_convert.h"
 #include "ros_control_boilerplate/tracer.h"
 
 namespace ros_control_boilerplate
@@ -99,29 +100,48 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		virtual void write(const ros::Time& time, const ros::Duration& period) override;
 
 	private:
+		bool safeSparkMaxCall(rev::REVLibError can_error,
+				const std::string &spark_max_method_name,
+				int id);
+
 		std::vector<std::shared_ptr<ctre::phoenix::CANifier>> canifiers_;
 		std::vector<std::shared_ptr<std::mutex>> canifier_read_state_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::canifier::CANifierHWState>> canifier_read_thread_states_;
 		std::vector<std::thread> canifier_read_threads_;
-		void canifier_read_thread(std::shared_ptr<ctre::phoenix::CANifier> canifier, std::shared_ptr<hardware_interface::canifier::CANifierHWState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
+		void canifier_read_thread(std::shared_ptr<ctre::phoenix::CANifier> canifier,
+				std::shared_ptr<hardware_interface::canifier::CANifierHWState> state,
+				std::shared_ptr<std::mutex> mutex,
+				std::unique_ptr<Tracer> tracer,
+				double poll_frequency);
 
-		std::vector<std::shared_ptr<ctre::phoenix::sensors::CANCoder>> cancoders_;
-		std::vector<std::shared_ptr<std::mutex>> cancoder_read_state_mutexes_;
-		std::vector<std::shared_ptr<hardware_interface::cancoder::CANCoderHWState>> cancoder_read_thread_states_;
-		std::vector<std::thread> cancoder_read_threads_;
-		void cancoder_read_thread(std::shared_ptr<ctre::phoenix::sensors::CANCoder> cancoder, std::shared_ptr<hardware_interface::cancoder::CANCoderHWState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
+		std::vector<std::shared_ptr<rev::CANSparkMax>>           can_spark_maxs_;
+		std::vector<std::shared_ptr<rev::SparkMaxPIDController>> can_spark_max_pid_controllers_;
+
+		// Maintain a separate read thread for each spark_max SRX
+		std::vector<std::shared_ptr<std::mutex>> spark_max_read_state_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::SparkMaxHWState>> spark_max_read_thread_states_;
+		std::vector<std::thread> spark_max_read_threads_;
+		void spark_max_read_thread(std::shared_ptr<rev::CANSparkMax> spark_max,
+				std::shared_ptr<hardware_interface::SparkMaxHWState> state,
+				std::shared_ptr<std::mutex> mutex,
+				std::unique_ptr<Tracer> tracer,
+				double poll_frequency);
 
 		std::vector<std::shared_ptr<as726x::roboRIO_AS726x>> as726xs_;
 		std::vector<std::shared_ptr<std::mutex>> as726x_read_thread_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::as726x::AS726xState>> as726x_read_thread_state_;
-		void as726x_read_thread(std::shared_ptr<as726x::roboRIO_AS726x> as726x, std::shared_ptr<hardware_interface::as726x::AS726xState> state, std::shared_ptr<std::mutex> mutex, std::unique_ptr<Tracer> tracer);
 		std::vector<std::thread> as726x_thread_;
+		void as726x_read_thread(std::shared_ptr<as726x::roboRIO_AS726x> as726x,
+				std::shared_ptr<hardware_interface::as726x::AS726xState> state,
+				std::shared_ptr<std::mutex> mutex,
+				std::unique_ptr<Tracer> tracer,
+				double poll_frequency);
 
 		std::vector<std::shared_ptr<ctre::phoenix::music::Orchestra>> talon_orchestras_;
 
 		as726x_convert::AS726xConvert as726x_convert_;
-		cancoder_convert::CANCoderConvert cancoder_convert_;
 		canifier_convert::CANifierConvert canifier_convert_;
+		rev_convert::RevConvert rev_convert_;
 
 		bool DSErrorCallback(ros_control_boilerplate::DSError::Request &req, ros_control_boilerplate::DSError::Response &res);
 		ros::ServiceServer ds_error_server_;

@@ -24,6 +24,7 @@ find_package(catkin REQUIRED COMPONENTS
   talon_interface
   trajectory_msgs
   urdf
+  spark_max_interface
 )
 
 add_service_files (
@@ -54,6 +55,7 @@ catkin_package(
 	roscpp
 	rosparam_shortcuts
 	sensor_msgs
+	spark_max_interface
 	std_msgs
 	talon_interface
 	trajectory_msgs
@@ -64,41 +66,35 @@ catkin_package(
 ## Build ##
 ###########
 
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
-
+# Various source which is common to both sim and hardware
+# interface, regardless of platform being run
 add_library(frc_robot_interface STATIC
 	src/AS726x.cpp
 	src/frc_robot_interface.cpp
 	src/generic_hw_control_loop.cpp
 	src/ros_iterative_robot.cpp
-)
-target_link_libraries(frc_robot_interface 
-	${catkin_LIBRARIES}
-)
-
-set (ALLWPILIB ../../../allwpilib)
-
-add_library(convert STATIC
 	src/as726x_convert.cpp
 	src/cancoder_convert.cpp
 	src/canifier_convert.cpp
+	src/rev_convert.cpp
 	src/talon_convert.cpp
 )
 
 # Main control executable
+# Additional files will be appended based on the platform being built
+# for - x86 has access to much less real hardware than the Jetson, so
+# some files which make sense for one case don't for the other
 set (FRCROBOT_HW_MAIN_SRCS 
 	src/error_queue.cpp
 	src/frcrobot_hw_main.cpp
 	src/frcrobot_hw_interface.cpp
 )
 
-set (WPI_SYSROOT $ENV{HOME}/wpilib/2021/roborio/arm-frc2021-linux-gnueabi)
+set (ALLWPILIB ../../../allwpilib)
+set (WPI_SYSROOT $ENV{HOME}/wpilib/2022/roborio/arm-frc2022-linux-gnueabi)
 include_directories(
+	include
 	${catkin_INCLUDE_DIRS}
-	#	${WPI_SYSROOT}/include/wpilib
 	${WPI_SYSROOT}/include
 	${WPI_SYSROOT}/include/navx
 )
@@ -107,8 +103,9 @@ include_directories(
 set (WPI_BASE_LIB_DIR ${WPI_SYSROOT}/lib/wpilib/linux)
 
 # Rio-only code
-if ("${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi")
+if ("${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/athena/shared)
+	set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/athena/shared)
 
 	# Link against wpi user libraries for CAN talon and navX-MXP code and
 	# wpilib for HAL, driver station, and so on
@@ -117,18 +114,13 @@ if ("${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi")
 		${WPI_SHARED_LIB_DIR}/libntcore.so
 		${WPI_SHARED_LIB_DIR}/libwpilibc.so
 		${WPI_SHARED_LIB_DIR}/libwpiHal.so
+		${WPI_SHARED_LIB_DIR}/libwpimath.so
 		${WPI_SHARED_LIB_DIR}/libwpiutil.so
-		${WPI_SHARED_LIB_DIR}/libvisa.so
-		${WPI_SHARED_LIB_DIR}/libFRC_NetworkCommunication.so.20.0.0
-		${WPI_SHARED_LIB_DIR}/libNiFpga.so.19.0.0
-		${WPI_SHARED_LIB_DIR}/libNiFpgaLv.so.19.0.0
-		${WPI_SHARED_LIB_DIR}/libRoboRIO_FRC_ChipObject.so.20.0.0
-		${WPI_SHARED_LIB_DIR}/libNiRioSrv.so.19.0.0
-		${WPI_SHARED_LIB_DIR}/libniriodevenum.so.19.0.0
-		${WPI_SHARED_LIB_DIR}/libniriosession.so.18.0.0
-		${WPI_SHARED_LIB_DIR}/libni_emb.so.12.0.0
-		${WPI_SHARED_LIB_DIR}/libnirio_emb_can.so.16.0.0
-		${WPI_SHARED_LIB_DIR}/libni_rtlog.so.2.8.0
+		${WPI_SHARED_LIB_DIR}/libvisa.so.21.0.0
+		${WPI_SHARED_LIB_DIR}/libembcanshim.so
+		${WPI_SHARED_LIB_DIR}/libfpgalvshim.so
+		${WPI_SHARED_LIB_DIR}/libFRC_NetworkCommunication.so.22.0.0
+		${WPI_SHARED_LIB_DIR}/libRoboRIO_FRC_ChipObject.so.22.0.0
 		${WPI_SYSROOT}/lib/navx/linux/athena/static/libnavx_frc.a
 	)
 	set (FRCROBOT_HW_MAIN_SRCS ${FRCROBOT_HW_MAIN_SRCS}
@@ -136,23 +128,21 @@ if ("${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi")
 	)
 elseif ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") # Jetson TK1
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/raspbian/shared)    # Who knows if this will work
+	set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/raspbian/shared)
 	find_library(LIB_GPIOD libgpiod.a)
 elseif ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") # Jetson TX1/TX2/Xavier AGX/Xavier NX
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/aarch64bionic/shared)
+	set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/aarch64bionic/shared)
 	find_library(LIB_GPIOD libgpiod.a)
 else() # x86-64, hopefully. First person to try and build native on a Mac gets kicked off the team
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/x86-64/shared)
+	set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/x86-64/shared)
 endif()
   
-# All platforms need these, they just live
-# in different dirs for different architectures
-set (CTRE_USER_LIBS
-	${CTRE_LIB_DIR}/../static/libCTRE_Phoenix_WPI.a
-	${CTRE_LIB_DIR}/../static/libCTRE_Phoenix.a
-	${CTRE_LIB_DIR}/libCTRE_PhoenixCore.so
-	${CTRE_LIB_DIR}/libCTRE_PhoenixDiagnostics.so
+set (REV_USER_LIBS
+	${REV_LIB_DIR}/libREVLibDriver.so
+	${REV_LIB_DIR}/libREVLib.so
 )
-
 # Used to find HALInitializer from wpilib internal repo
 include_directories(${ALLWPILIB}/hal/src/main/native/athena)
 include_directories(${ALLWPILIB}/hal/src/main/native/include)
@@ -161,55 +151,63 @@ include_directories(${ALLWPILIB}/hal/src/main/native/include)
 include_directories(${ALLWPILIB}/wpilibc/src/main/native/include)
 include_directories(${ALLWPILIB}/wpimath/src/main/native/include)
 include_directories(${ALLWPILIB}/wpiutil/src/main/native/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/fmtlib/include)
 include_directories(${WPI_SYSROOT}/include/wpilib)
 
-if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi")
-    # Add socketcan library to everything but the Rio
-    # This adds code to use linux CAN sockets to talk to
-    # the CAN bus for the Jetson
-    # Also add all of the wpilib code needed to talk to PCM and PDP
-	set (CTRE_USER_LIBS 
-		${CTRE_USER_LIBS}
-		${CTRE_LIB_DIR}/libCTRE_PhoenixCanutils.so
-	)
+# Non-rio builds are more complex - we have to grab appropriate
+# parts of WPIlib source and include it manually
+if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
     # This is needed for non-RIO hardware platforms
 	set (PLATFORM_SPECIFIC_LIBS
 		${PLATFORM_SPECIFIC_LIBS}
-		${CTRE_LIB_DIR}/libCTRE_PhoenixPlatform_socketcan.so
+		#${CTRE_LIB_DIR}/libCTRE_PhoenixPlatform_socketcan.so
 	)
+
+	# WPIlib code common to both hardware and sim interfaces.
+	# Create it as a library to avoid building all of these twice
+	add_library(frc_common_wpilib STATIC
+		${ALLWPILIB}/hal/src/main/native/cpp/cpp/fpga_clock.cpp
+		${ALLWPILIB}/hal/src/main/native/cpp/ErrorHandling.cpp
+		${ALLWPILIB}/hal/src/main/native/cpp/handles/HandlesInternal.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/Compressor.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/DoubleSolenoid.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/Errors.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/Joystick.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/MotorSafety.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/PneumaticsBase.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/PneumaticsControlModule.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/PneumaticHub.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotController.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/SensorUtil.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/Solenoid.cpp
+		${ALLWPILIB}/wpimath/src/main/native/cpp/geometry/Rotation2d.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/fs.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ErrorHandling.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Hashing.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ManagedStatic.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/raw_ostream.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallPtrSet.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallVector.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringMap.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/fmtlib/src/format.cpp
+	)
+    set(FRC_COMMON_WPILIB frc_common_wpilib)
 
 	set (FRCROBOT_HW_MAIN_SRCS ${FRCROBOT_HW_MAIN_SRCS} 
 		src/dummy_wpilib_common.cpp
 		src/dummy_wpilib_hw.cpp
 		${ALLWPILIB}/hal/src/main/native/athena/CANAPI.cpp
-		${ALLWPILIB}/hal/src/main/native/athena/Compressor.cpp
+		${ALLWPILIB}/hal/src/main/native/athena/CTREPCM.cpp
+		${ALLWPILIB}/hal/src/main/native/athena/CTREPDP.cpp
 		${ALLWPILIB}/hal/src/main/native/athena/HALInitializer.cpp
-		${ALLWPILIB}/hal/src/main/native/athena/PCMInternal.cpp
-		${ALLWPILIB}/hal/src/main/native/athena/PDP.cpp
+		#${ALLWPILIB}/hal/src/main/native/athena/Ports.cpp
+		${ALLWPILIB}/hal/src/main/native/athena/REVPDH.cpp
+		${ALLWPILIB}/hal/src/main/native/athena/rev/PDHFrames.cpp
+		${ALLWPILIB}/hal/src/main/native/athena/REVPH.cpp
+		${ALLWPILIB}/hal/src/main/native/athena/rev/PHFrames.cpp
 		${ALLWPILIB}/hal/src/main/native/athena/SimDevice.cpp
-		${ALLWPILIB}/hal/src/main/native/athena/Solenoid.cpp
-		${ALLWPILIB}/hal/src/main/native/athena/ctre/CtreCanNode.cpp
-		${ALLWPILIB}/hal/src/main/native/athena/ctre/PCM.cpp
-		${ALLWPILIB}/hal/src/main/native/athena/mockdata/MockHooks.cpp
-		${ALLWPILIB}/hal/src/main/native/athena/mockdata/SimDeviceData.cpp
-		${ALLWPILIB}/hal/src/main/native/cpp/cpp/fpga_clock.cpp
-		${ALLWPILIB}/hal/src/main/native/cpp/handles/HandlesInternal.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/Joystick.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/MotorSafety.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotController.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Tracer.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/raw_ostream.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Error.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ErrorHandling.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Hashing.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ManagedStatic.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/NativeFormatting.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Path.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallPtrSet.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallVector.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringMap.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringRef.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Twine.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/SafeThread.cpp
 	)
 
 	if ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") # Jetson TX1/TX2/Xaver AGX/Xavier NX
@@ -217,18 +215,20 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi")
 			src/nano_nx_dio_hal.cpp
 			src/nano_nx_i2c_hal.cpp
 			src/nano_nx_spi_hal.cpp
+			${ALLWPILIB}/hal/src/main/native/athena/mockdata/SimDeviceData.cpp
+			${ALLWPILIB}/hal/src/main/native/athena/mockdata/MockHooks.cpp
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalInput.cpp
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalOutput.cpp
-			${ALLWPILIB}/wpilibc/src/main/native/cpp/ErrorBase.cpp
-			${ALLWPILIB}/wpilibc/src/main/native/cpp/Error.cpp
-			${ALLWPILIB}/wpilibc/src/main/native/cpp/frc2/Timer.cpp
+			#${ALLWPILIB}/wpilibc/src/main/native/cpp/Error.cpp
+			#${ALLWPILIB}/wpilibc/src/main/native/cpp/frc2/Timer.cpp
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/I2C.cpp
-			${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotController.cpp
-			${ALLWPILIB}/wpilibc/src/main/native/cpp/SensorUtil.cpp
-			${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringMap.cpp
+			#${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotController.cpp #TODO- duplicate?
+			#${ALLWPILIB}/wpilibc/src/main/native/cpp/SensorUtil.cpp
+			${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ConvertUTF.cpp
+			${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ConvertUTFWrapper.cpp
 			${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
-			${ALLWPILIB}/wpiutil/src/main/native/unix/Demangle.cpp
-			${ALLWPILIB}/wpiutil/src/main/native/unix/StackTrace.cpp
+			#${ALLWPILIB}/wpiutil/src/main/native/unix/Demangle.cpp
+			#${ALLWPILIB}/wpiutil/src/main/native/unix/StackTrace.cpp
 		)
 	else() # anything we don't want to support GPIO access on - x86, older Jetson, etc
 		set (FRCROBOT_HW_MAIN_SRCS ${FRCROBOT_HW_MAIN_SRCS}
@@ -241,17 +241,13 @@ endif()
 # Don't build sim code for the Rio or Jetson -
 # saves time and space for something which will
 # never be run
-if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi") OR
+if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi") OR
 	     ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
 		 ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") )) 
-    # Sim version of main control
-    # executable.  For now this just prints debugging
-    # info for testing code which doens't actually hit
-    # RoboRIO or CAN hardware.
+    # Sim version of main control executable.  This hooks into
+	# WPIlib sim code, which maintains state for simulated hardware
 
 	add_library(frc_sim_wpilib STATIC
-		${ALLWPILIB}/hal/src/main/native/cpp/cpp/fpga_clock.cpp
-		${ALLWPILIB}/hal/src/main/native/cpp/handles/HandlesInternal.cpp
 		${ALLWPILIB}/hal/src/main/native/cpp/Main.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/Accelerometer.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/AddressableLED.cpp
@@ -263,9 +259,9 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi") OR
 		${ALLWPILIB}/hal/src/main/native/sim/AnalogTrigger.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/CANAPI.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/CAN.cpp
-		${ALLWPILIB}/hal/src/main/native/sim/Compressor.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/Constants.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/Counter.cpp
+		${ALLWPILIB}/hal/src/main/native/sim/CTREPCM.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/DigitalInternal.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/DIO.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/DriverStation.cpp
@@ -283,65 +279,45 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi") OR
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/AnalogOutData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/AnalogTriggerData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/CanDataInternal.cpp
+		${ALLWPILIB}/hal/src/main/native/sim/mockdata/CTREPCMData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/DigitalPWMData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/DIOData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/DriverStationData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/DutyCycleData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/EncoderData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/I2CData.cpp
-		${ALLWPILIB}/hal/src/main/native/sim/mockdata/PCMData.cpp
-		${ALLWPILIB}/hal/src/main/native/sim/mockdata/PDPData.cpp
+		${ALLWPILIB}/hal/src/main/native/sim/mockdata/PowerDistributionData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/PWMData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/RelayData.cpp
+		${ALLWPILIB}/hal/src/main/native/sim/mockdata/REVPHData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/RoboRioData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/SimDeviceData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/SPIAccelerometerData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/mockdata/SPIData.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/MockHooks.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/Notifier.cpp
-		${ALLWPILIB}/hal/src/main/native/sim/PDP.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/Ports.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/Power.cpp
+		${ALLWPILIB}/hal/src/main/native/sim/PowerDistribution.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/PWM.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/Relay.cpp
+		${ALLWPILIB}/hal/src/main/native/sim/REVPH.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/SerialPort.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/SimDevice.cpp
-		${ALLWPILIB}/hal/src/main/native/sim/Solenoid.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/SPI.cpp
 		${ALLWPILIB}/hal/src/main/native/sim/Threads.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/AnalogInput.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalInput.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalOutput.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/DriverStation.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/ErrorBase.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/Error.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/frc2/Timer.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/GenericHID.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/InterruptableSensorBase.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/IterativeRobotBase.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/Joystick.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/MotorSafety.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotController.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotState.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/SensorUtil.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/Timer.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/Utility.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/Watchdog.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/CallbackStore.cpp
-		${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/FlywheelSim.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/RoboRioSim.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Error.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ErrorHandling.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Hashing.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ManagedStatic.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/NativeFormatting.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Path.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/raw_ostream.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallPtrSet.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallVector.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringMap.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringRef.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Twine.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/Timer.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/Watchdog.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/StringExtras.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/unix/Demangle.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/unix/StackTrace.cpp
@@ -350,20 +326,22 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi") OR
 	add_executable(frcrobot_sim_main 
 		src/frcrobot_sim_main.cpp
 		src/frcrobot_sim_interface.cpp
+		src/dummy_powerdistribution.cpp
 		src/dummy_wpilib_common.cpp
 	)
 
 	target_link_libraries(frcrobot_sim_main
-		${catkin_LIBRARIES}
 		frc_robot_interface
 		frc_sim_wpilib
-		convert
+		${FRC_COMMON_WPILIB}
+		${CTRE_LIB_DIR}/libCTRE_PhoenixSim.so
 		${CTRE_LIB_DIR}/libCTRE_PhoenixCCISim.so
-		${CTRE_USER_LIBS}
-		${CTRE_LIB_DIR}/libCTRE_PhoenixCCISim.so
-		${CTRE_LIB_DIR}/libCTRE_PhoenixPlatform_sim.so
+		${CTRE_LIB_DIR}/libCTRE_Phoenix_WPISim.so
+		${CTRE_LIB_DIR}/libCTRE_SimCANCoder.so
+		${CTRE_LIB_DIR}/libCTRE_SimTalonFX.so
 		${CTRE_LIB_DIR}/libCTRE_SimTalonSRX.so
 		${CTRE_LIB_DIR}/libCTRE_SimVictorSPX.so
+		${catkin_LIBRARIES}
 	)
 
     # Forces messages to be generated before
@@ -378,21 +356,23 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2021-linux-gnueabi") OR
 	  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 	)
-endif()
 
+endif()
 
 add_executable(frcrobot_hw_main ${FRCROBOT_HW_MAIN_SRCS})
 
 # Link against wpi user libraries for CAN talon and navX-MXP code and
 # wpilib for HAL, driver station, and so on
 target_link_libraries(frcrobot_hw_main
-	${catkin_LIBRARIES}
 	${LIB_GPIOD}
+	${REV_USER_LIBS}
 	frc_robot_interface
-	convert
-	${CTRE_USER_LIBS}
+	${FRC_COMMON_WPILIB}
+	${CTRE_LIB_DIR}/libCTRE_Phoenix.so
 	${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.so
+	${CTRE_LIB_DIR}/libCTRE_Phoenix_WPI.so
 	${PLATFORM_SPECIFIC_LIBS}
+	${catkin_LIBRARIES}
 )
 
 ## Add cmake target dependencies of the executable
@@ -402,6 +382,13 @@ target_link_libraries(frcrobot_hw_main
 add_dependencies(frcrobot_hw_main
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
+)
+
+# Install executables
+install(TARGETS
+  frcrobot_hw_main
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 add_executable(q_to_rpy src/q_to_rpy.cpp)
@@ -414,13 +401,6 @@ add_dependencies(q_to_rpy
   ${catkin_EXPORTED_TARGETS}
 )
 ## Install ------------------------------------------------------------
-
-# Install executables
-install(TARGETS
-  frcrobot_hw_main
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
 
 if (0)
 # Test trajectory generator node

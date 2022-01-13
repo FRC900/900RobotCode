@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(path_follower)
 
-## Compile as C++11, supported in ROS Kinetic and newer
 include ("../cmake_modules/CMakeOpt.cmake")
 
 ## Find catkin macros and libraries

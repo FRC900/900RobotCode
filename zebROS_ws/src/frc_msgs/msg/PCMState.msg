@@ -1,8 +1,8 @@
 Header   header
 
 string[]  name
-int32[]   pcm_id
-bool[]    enabled
+int32[]   id
+bool[]    compressor_enabled
 bool[]    pressure_switch
 float64[] compressor_current
 bool[]    closed_loop_control
@@ -14,4 +14,4 @@ bool[]    not_connected
 bool[]    not_connected_sticky
 bool[]    voltage_fault
 bool[]    voltage_sticky_fault
-uint32[]  solenoid_blacklist
+uint32[]  solenoid_disabled_list

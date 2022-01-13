@@ -1,4 +1,6 @@
-#pragma once
+#ifndef ROBOT_CONTROLLER_STATE_CONTROLLER_INC_
+#define ROBOT_CONTROLLER_STATE_CONTROLLER_INC_
+
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_publisher.h>
 #include <frc_interfaces/robot_controller_interface.h>
@@ -9,8 +11,6 @@ namespace robot_controller_state_controller
     class RobotControllerStateController: public controller_interface::Controller<hardware_interface::RobotControllerStateInterface>
 	{
 	public:
-		RobotControllerStateController() : publish_rate_(0.0) {}
-
 		virtual bool init(hardware_interface::RobotControllerStateInterface *hw,
 						  ros::NodeHandle                                   &root_nh,
 						  ros::NodeHandle                                   &controller_nh) override;
@@ -22,7 +22,8 @@ namespace robot_controller_state_controller
 		hardware_interface::RobotControllerStateHandle rc_state_;
 		std::shared_ptr<realtime_tools::RealtimePublisher<frc_msgs::RobotControllerData>> realtime_pub_;
 		ros::Time last_publish_time_;
-		double publish_rate_;
+		double publish_rate_{20};
 	};
-}
+} // namespace
 
+#endif

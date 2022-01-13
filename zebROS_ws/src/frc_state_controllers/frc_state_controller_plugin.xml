@@ -24,13 +24,31 @@
 
 	<class name="state_listener_controller/MatchStateListenerController" type="state_listener_controller::MatchStateListenerController" base_class_type="controller_interface::ControllerBase">
 		<description>
-			Listens to pdp_state_controller::MatchData messages for joints marked as remote, writes their value to the local controller
+			Listens to frc_msgs::MatchData messages for joints marked as remote, writes their value to the local controller
 		</description>
 	</class>
 
 	<class name="pcm_state_controller/PCMStateController" type="pcm_state_controller::PCMStateController" base_class_type="controller_interface::ControllerBase">
 		<description>
 			Read PCM info from hardware interface and publish it
+		</description>
+	</class>
+
+	<class name="pdh_state_controller/PDHStateController" type="pdh_state_controller::PDHStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read PDH info from hardware interface and publish it
+		</description>
+	</class>
+
+	<class name="pdh_controller/PDHStateController" type="pdh_controller::PDHController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Interface for setting PDH switchable channel, and for triggering clear faults and identify PDH actions
+		</description>
+	</class>
+
+	<class name="state_listener_controller/PDHStateListenerController" type="state_listener_controller::PDHStateListenerController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Listens to frc_msgs::PDHData messages for joints marked as remote, writes their value to the local controller
 		</description>
 	</class>
 
@@ -42,7 +60,13 @@
 
 	<class name="state_listener_controller/PDPStateListenerController" type="state_listener_controller::PDPStateListenerController" base_class_type="controller_interface::ControllerBase">
 		<description>
-			Listens to pdp_state_controller::PDPData messages for joints marked as remote, writes their value to the local controller
+			Listens to frc_msgs::PDPData messages for joints marked as remote, writes their value to the local controller
+		</description>
+	</class>
+
+	<class name="ph_state_controller/PHStateController" type="ph_state_controller::PHStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read PH info from hardware interface and publish it
 		</description>
 	</class>
 

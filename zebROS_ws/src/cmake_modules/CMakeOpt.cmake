@@ -19,8 +19,8 @@ add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-fno-var-tracking-assignments>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-DPCL_ONLY_CORE_POINT_TYPES=ON>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-DNO_EXPLICIT_INSTANTIATIONS>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-DNON_POLLING>")
-add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-psabi>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wextra>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-psabi>")
 #add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-pedantic>")
 
 if (DEFINED CMAKE_TOOLCHAIN_FILE)  # Cross-build for Rio
@@ -29,7 +29,7 @@ else() # Native builds
   set (CMAKE_RANLIB "gcc-ranlib" )
   set (CMAKE_AR     "gcc-ar"     )
   
-  set (OPT_FLAGS "${OPT_FLAGS} -O3 -fno-finite-math-only -flto=jobserver -fno-fat-lto-objects -ffunction-sections -fdata-sections -Wl,-gc-sections")
+  set (OPT_FLAGS "${OPT_FLAGS} -O3 -fno-finite-math-only -flto=jobserver -fno-fat-lto-objects -fuse-linker-plugin -ffunction-sections -fdata-sections -Wl,-gc-sections")
   if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf") # Jetson TK1
 	set (OPT_FLAGS "${OPT_FLAGS} -mcpu=cortex-a15 -mfpu=neon-vfpv4 -fvect-cost-model")
     unset(CUDA_USE_STATIC_CUDA_RUNTIME CACHE)
@@ -44,9 +44,9 @@ else() # Native builds
 endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${OPT_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${OPT_FLAGS} -fuse-linker-plugin")
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${OPT_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${OPT_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} ${OPT_FLAGS} -fuse-linker-plugin")
+set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "${CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO} ${OPT_FLAGS}")
 
 # Configure CCache if available
 find_program(CCACHE_FOUND ccache)

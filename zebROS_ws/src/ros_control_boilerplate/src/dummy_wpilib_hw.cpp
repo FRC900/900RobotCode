@@ -4,6 +4,13 @@
 #include <ctre/phoenix/platform/Platform.h>
 #include <ros/console.h>
 #include <chrono>
+
+#include <hal/CAN.h>
+
+static std::string canBus{};
+// Not actually a HAL call, added here to set the canBus string from inside the HWI
+void HAL_SetCANBusString(const std::string &bus) { canBus = bus; }
+
 extern "C"
 {
 	static uint32_t GetPacketBaseTime() {
@@ -15,18 +22,50 @@ extern "C"
 	// cache and were not found
 	void HAL_CAN_SendMessage(uint32_t messageID, const uint8_t *data, uint8_t dataSize, int32_t periodMs, int32_t *status)
 	{
-		ctre::phoenix::platform::can::CANComm_SendMessage(messageID, data, dataSize, periodMs, status);
+		ctre::phoenix::platform::can::CANComm_SendMessage(messageID, data, dataSize, periodMs, status, canBus.c_str());
 	}
 	void HAL_CAN_ReceiveMessage(uint32_t *messageID, uint32_t messageIDMask, uint8_t *data, uint8_t *dataSize, uint32_t *timeStamp, int32_t *status)
 	{
-		ctre::phoenix::platform::can::CANComm_ReceiveMessage(messageID, messageIDMask, data, dataSize, timeStamp, status);
+		ctre::phoenix::platform::can::CANComm_ReceiveMessage(messageID, messageIDMask, data, dataSize, timeStamp, status, canBus.c_str());
 		// For some reason, CANAPI uses a weird timeStamp. Emulate it here
 		*timeStamp = GetPacketBaseTime();
 	}
-}
 
-extern "C"
-{
+	void HAL_CAN_OpenStreamSession(uint32_t* sessionHandle, uint32_t messageID,
+                               uint32_t messageIDMask, uint32_t maxMessages,
+                               int32_t* status) {
+		ctre::phoenix::platform::can::CANComm_OpenStreamSession(
+				sessionHandle, messageID, messageIDMask, maxMessages, status, canBus.c_str());
+	}
+	void HAL_CAN_CloseStreamSession(uint32_t sessionHandle) {
+		ctre::phoenix::platform::can::CANComm_CloseStreamSession(sessionHandle, canBus.c_str());
+	}
+	void HAL_CAN_ReadStreamSession(uint32_t sessionHandle,
+			struct HAL_CANStreamMessage* messages,
+			uint32_t messagesToRead, uint32_t* messagesRead,
+			int32_t* status) {
+		ctre::phoenix::platform::can::canframe_t localMessages[messagesToRead];
+		ctre::phoenix::platform::can::CANComm_ReadStreamSession(
+				sessionHandle, localMessages,
+				messagesToRead, messagesRead, status, canBus.c_str());
+		for (uint32_t i = 0; i < *messagesRead; i++)
+		{
+			messages[i].messageID = localMessages[i].arbID;
+			messages[i].timeStamp = localMessages[i].timeStampUs;
+			memcpy(messages[i].data, localMessages[i].data, sizeof(localMessages[i].data));
+			messages[i].dataSize = localMessages[i].len;
+		}
+	}
+#if 0
+	void HAL_CAN_GetCANStatus(float* percentBusUtilization, uint32_t* busOffCount,
+			uint32_t* txFullCount, uint32_t* receiveErrorCount,
+			uint32_t* transmitErrorCount, int32_t* status) {
+		FRC_NetworkCommunication_CANSessionMux_getCANStatus(
+				percentBusUtilization, busOffCount, txFullCount, receiveErrorCount,
+				transmitErrorCount, status);
+	}
+#endif
+
 	// These calls haven't been run through the CANAPI yet - PCM?
 	void FRC_NetworkCommunication_CANSessionMux_sendMessage(uint32_t messageID, const uint8_t *data, uint8_t dataSize, int32_t periodMs, int32_t *status)
 	{
@@ -39,11 +78,11 @@ extern "C"
 		if ((arbId == CONTROL_1) || (arbId == CONTROL_2) || (arbId == CONTROL_3))
 			return;
 
-		ctre::phoenix::platform::can::CANComm_SendMessage(messageID, data, dataSize, periodMs, status);
+		ctre::phoenix::platform::can::CANComm_SendMessage(messageID, data, dataSize, periodMs, status, canBus.c_str());
 	}
 	void FRC_NetworkCommunication_CANSessionMux_receiveMessage(uint32_t *messageID, uint32_t messageIDMask, uint8_t *data, uint8_t *dataSize, uint32_t *timeStamp, int32_t *status)
 	{
-		ctre::phoenix::platform::can::CANComm_ReceiveMessage(messageID, messageIDMask, data, dataSize, timeStamp, status);
+		ctre::phoenix::platform::can::CANComm_ReceiveMessage(messageID, messageIDMask, data, dataSize, timeStamp, status, canBus.c_str());
 	}
 }
 
@@ -159,29 +198,25 @@ double frc::AnalogInput::GetSampleRate()
 	ROS_ERROR("Called frc::AnalogInput::GetSampleRate() on unsupported platform");
 	return std::numeric_limits<double>::max();
 }
-double frc::AnalogInput::PIDGet()
+void SetSimDevice(HAL_SimDeviceHandle device)
 {
-	ROS_ERROR("Called frc::AnalogInput::PIDGet() on unsupported platform");
-	return std::numeric_limits<double>::max();
+	ROS_ERROR("Called frc::AnalogInput::SetSimDevice() on unsupported platform");
 }
-void frc::AnalogInput::InitSendable(SendableBuilder&)
+
+void frc::AnalogInput::InitSendable(wpi::SendableBuilder&)
 {
 	ROS_ERROR("Called frc::AnalogInput::InitSendable(SendableBuilder& builder) on unsupported platform");
 }
 #include <frc/DriverStation.h>
-class frc::MatchDataSender {
+#if 0
+namespace frc {
+class MatchDataSender {
   MatchDataSender() {
   }
 };
+}
+#endif
 
-frc::DriverStation::DriverStation()
-{
-	ROS_ERROR("Called DriverStation::DriverStation() on unsupported platform");
-}
-frc::DriverStation::~DriverStation()
-{
-	ROS_ERROR("Called DriverStation:~:DriverStation() on unsupported platform");
-}
 frc::DriverStation & frc::DriverStation::GetInstance()
 {
 	ROS_ERROR("Called DriverStation::GetInstance() on unsupported platform");
@@ -190,35 +225,35 @@ frc::DriverStation & frc::DriverStation::GetInstance()
 }
 
 #include <hal/DriverStation.h>
-bool frc::DriverStation::IsEnabled(void) const
+bool frc::DriverStation::IsEnabled(void)
 {
 	HAL_ControlWord controlWord;
 	HAL_GetControlWord(&controlWord);
 	return controlWord.enabled && controlWord.dsAttached;
 }
-bool frc::DriverStation::IsDisabled() const {
+bool frc::DriverStation::IsDisabled() {
 	HAL_ControlWord controlWord;
 	HAL_GetControlWord(&controlWord);
 	return !(controlWord.enabled && controlWord.dsAttached);
 }
-bool frc::DriverStation::IsAutonomous() const {
+bool frc::DriverStation::IsAutonomous() {
 	HAL_ControlWord controlWord;
 	HAL_GetControlWord(&controlWord);
 	return controlWord.autonomous;
 }
-bool frc::DriverStation::IsOperatorControl() const {
+bool frc::DriverStation::IsOperatorControl() {
 	HAL_ControlWord controlWord;
 	HAL_GetControlWord(&controlWord);
 	return !(controlWord.autonomous || controlWord.test);
 }
-bool frc::DriverStation::IsTest() const {
+bool frc::DriverStation::IsTest() {
   HAL_ControlWord controlWord;
   HAL_GetControlWord(&controlWord);
   return controlWord.test;
 }
 
 #include <frc/GenericHID.h>
-frc::GenericHID::GenericHID(int) : m_ds(&DriverStation::GetInstance())
+frc::GenericHID::GenericHID(int)
 {
 	ROS_ERROR("Called GenericHID::GenericHID(int) on unsupported platform");
 }
@@ -269,10 +304,14 @@ int frc::GenericHID::GetPOVCount() const
 
 #include <frc/IterativeRobotBase.h>
 frc::IterativeRobotBase::IterativeRobotBase(double period)
-    : m_period(period),
-      m_watchdog(period, [] { } )
+    : IterativeRobotBase(units::second_t(period))
 {
 	ROS_ERROR("Called IterativeRobotBase::IterativeRobotBase(double) on unsupported platform");
+}
+frc::IterativeRobotBase::IterativeRobotBase(units::second_t period)
+	: m_watchdog(period, [] { })
+{
+	ROS_ERROR("Called IterativeRobotBase::IterativeRobotBase(units::second_t) on unsupported platform");
 }
 void frc::IterativeRobotBase::AutonomousInit()
 {
@@ -282,6 +321,10 @@ void frc::IterativeRobotBase::AutonomousPeriodic()
 {
 	ROS_ERROR("Called IterativeRobotBase::AutonomousPeriodic() on unsupported platform");
 }
+void frc::IterativeRobotBase::AutonomousExit()
+{
+	ROS_ERROR("Called IterativeRobotBase::AutonomousExit() on unsupported platform");
+}
 void frc::IterativeRobotBase::DisabledInit()
 {
 	ROS_ERROR("Called IterativeRobotBase::DisabledInit() on unsupported platform");
@@ -289,6 +332,10 @@ void frc::IterativeRobotBase::DisabledInit()
 void frc::IterativeRobotBase::DisabledPeriodic()
 {
 	ROS_ERROR("Called IterativeRobotBase::DisabledPeriodic() on unsupported platform");
+}
+void frc::IterativeRobotBase::DisabledExit()
+{
+	ROS_ERROR("Called IterativeRobotBase::DisabledExit() on unsupported platform");
 }
 void frc::IterativeRobotBase::RobotInit()
 {
@@ -306,6 +353,10 @@ void frc::IterativeRobotBase::TeleopPeriodic()
 {
 	ROS_ERROR("Called IterativeRobotBase::TeleopPeriodic() on unsupported platform");
 }
+void frc::IterativeRobotBase::TeleopExit()
+{
+	ROS_ERROR("Called IterativeRobotBase::TeleopExit() on unsupported platform");
+}
 void frc::IterativeRobotBase::TestInit()
 {
 	ROS_ERROR("Called IterativeRobotBase::TestInit() on unsupported platform");
@@ -313,6 +364,10 @@ void frc::IterativeRobotBase::TestInit()
 void frc::IterativeRobotBase::TestPeriodic()
 {
 	ROS_ERROR("Called IterativeRobotBase::TestPeriodic() on unsupported platform");
+}
+void frc::IterativeRobotBase::TestExit()
+{
+	ROS_ERROR("Called IterativeRobotBase::TestExit() on unsupported platform");
 }
 void frc::IterativeRobotBase::SimulationInit()
 {
@@ -323,6 +378,7 @@ void frc::IterativeRobotBase::SimulationPeriodic()
 	ROS_ERROR("Called IterativeRobotBase::SimulationPeriodic() on unsupported platform");
 }
 
+#if 0
 #include <frc/InterruptableSensorBase.h>
 void frc::InterruptableSensorBase::RequestInterrupts(HAL_InterruptHandlerFunction, void*)
 {
@@ -374,12 +430,15 @@ void frc::InterruptableSensorBase::AllocateInterrupts(bool)
 frc::InterruptableSensorBase::~InterruptableSensorBase()
 {
 }
+#endif
+
 
 #include <frc/Watchdog.h>
 
-frc::Watchdog::Watchdog(double timeout, std::function<void()> callback)
-    : m_timeout(static_cast<int64_t>(timeout * 1.0e6))
+frc::Watchdog::Watchdog(units::second_t timeout, std::function<void()> callback)
+    : m_timeout(static_cast<units::second_t>(timeout))
     , m_callback(callback)
+	, m_impl(nullptr)
 {
 	ROS_ERROR("Called frc::Watchdog::Watchdog(double timeout, std::function<void()> callback) on unsupported platform");
 }
@@ -415,7 +474,7 @@ extern "C" {
 uint64_t HAL_GetFPGATime(int32_t* status)
 {
 	*status = 0;
-	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
 HAL_Bool HAL_Initialize(int32_t, int32_t)
@@ -461,9 +520,9 @@ HAL_Bool HAL_GetBrownedOut(int32_t* status)
 
 double HAL_GetVinVoltage(int32_t* status)
 {
-	ROS_ERROR("Called HAL_GetVinVoltage() on unsupported platform");
+	//ROS_ERROR("Called HAL_GetVinVoltage() on unsupported platform");
 	*status = 0;
-	return -1;
+	return 12.; /* Just to be safe, fake a reasonable voltage */
 }
 double HAL_GetVinCurrent(int32_t* status)
 {
@@ -540,6 +599,16 @@ HAL_Bool HAL_GetUserActive3V3(int32_t* status)
 int32_t HAL_GetUserCurrentFaults3V3(int32_t* status)
 {
 	ROS_ERROR("Called HAL_GetUserCurrentFaults3V3() on unsupported platform");
+	*status = 0;
+	return -1;
+}
+void HAL_SetBrownoutVoltage(double voltage, int32_t* status)
+{
+	ROS_ERROR("Called HAL_SetBrownoutVoltage(double, int32_t*) on unsupported platform");
+	*status = 0;
+}
+double HAL_GetBrownoutVoltage(int32_t* status) {
+	ROS_ERROR("Called HAL_GetBrownoutVoltage(int32_t*) on unsupported platform");
 	*status = 0;
 	return -1;
 }
@@ -638,16 +707,18 @@ int32_t HAL_SendError(HAL_Bool /*isError*/, int32_t errorCode, HAL_Bool /*isLVCo
 	return 0;
 }
 
+#if 0
 void frc::DriverStation::ReportWarning(wpi::Twine const & error)
 {
 	errorQueue->enqueue(-1, error.str());
 }
+#endif
 
 #include <frc/Timer.h>
-double frc::Timer::GetFPGATimestamp()
+units::second_t frc::Timer::GetFPGATimestamp()
 {
 	ROS_ERROR("Called frc::Timer::GetFPGATimestamp() on unsupported platform");
-	return -1;
+	return static_cast<units::second_t>(-1.0);
 }
 
 
@@ -661,13 +732,15 @@ double frc::Timer::GetFPGATimestamp()
 #include "hal/handles/HandlesInternal.h"
 #include "hal/CAN.h"
 #include "hal/Errors.h"
-#include "ctre/ctre.h"
-#include "FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h"
+#include "../sim/ErrorsInternal.h"
+//#include "ctre/ctre.h"
+//#include "FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h"
 #include "FRC_NetworkCommunication/FRCComm.h"
-#include "visa/visa.h"
+//#include "visa/visa.h"
 
 extern "C" {
 
+#if 0
 /**
  * @deprecated Uses module numbers
  */
@@ -677,6 +750,7 @@ HAL_PortHandle HAL_GetPortWithModule(int32_t module, int32_t channel) {
   if (module < 0 || module >= 255) return HAL_kInvalidHandle;
   return hal::createPortHandle(channel, module);
 }
+#endif
 
 const char* HAL_GetErrorMessage(int32_t code) {
   switch (code) {
@@ -808,4 +882,42 @@ const char* HAL_GetErrorMessage(int32_t code) {
 }
 
 } // extern "C"
+
+namespace wpi {
+
+std::string GetStackTrace(int /*offset*/)
+{
+	ROS_ERROR("Called wpi::GetStackTrace(int offset) const on unsupported platform");
+	return std::string{};
+}
+
+}  // namespace wpi
+
+
+#include "hal/Notifier.h"
+HAL_NotifierHandle HAL_InitializeNotifier(int32_t* status) {
+	*status = 0;
+	return 1;
+}
+void HAL_StopNotifier(HAL_NotifierHandle notifierHandle, int32_t* status) {
+	(void)notifierHandle;
+	*status = 0;
+}
+
+void HAL_CleanNotifier(HAL_NotifierHandle notifierHandle, int32_t* status) {
+	(void)notifierHandle;
+	*status = 0;
+}
+void HAL_UpdateNotifierAlarm(HAL_NotifierHandle notifierHandle,
+                             uint64_t triggerTime, int32_t* status) {
+	(void)notifierHandle;
+	(void)triggerTime;
+	*status = 0;
+}
+uint64_t HAL_WaitForNotifierAlarm(HAL_NotifierHandle notifierHandle,
+                                  int32_t* status) {
+	(void)notifierHandle;
+	*status = 0;
+	return 1;
+}
 

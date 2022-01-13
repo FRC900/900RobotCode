@@ -5,12 +5,15 @@ generic_hw_control_loop:
   cycle_time_error_threshold: 0.01
   #some processes have lower frequencies than the main control loop
   ctre_mc_read_hz: 10
+  canifier_read_hz: 100
+  cancoder_read_hz: 100
   pcm_read_hz: 20
   pdp_read_hz: 20
   robot_iteration_hz: 20
   joystick_read_hz: 50
   match_data_read_hz: 2
   robot_controller_read_hz: 20
+  as726x_read_hz: 7
 
 
 # Settings for ros_control hardware interface
@@ -50,7 +53,7 @@ hardware_interface:
        - {name: bl_drive, type: can_talon_fx, can_id: 23, local: true}
        - {name: bl_angle, type: can_talon_srx, can_id: 13, local: true}
        - {name: pdp, type: pdp}
-       - {name: compressor, type: compressor, pcm_id: 0}
+       - {name: pcm, type: pcm, pcm_id: 0}
 
        - {name: intake_linebreak, type: digital_input, local: false}
        - {name: indexer_linebreak, type: digital_input, local: false}

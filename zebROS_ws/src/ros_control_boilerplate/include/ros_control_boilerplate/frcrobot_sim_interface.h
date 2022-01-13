@@ -42,7 +42,7 @@
 #include <sensor_msgs/Joy.h>
 #include "frc_msgs/MatchSpecificData.h"
 
-#include "frc/simulation/FlywheelSim.h"
+//#include "frc/simulation/FlywheelSim.h"
 
 #include "ros_control_boilerplate/frc_robot_interface.h"
 #include "ros_control_boilerplate/LineBreakSensors.h"
@@ -81,7 +81,7 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 		ros::ServiceServer linebreak_sensor_srv_;
 		ros::ServiceServer limit_switch_srv_;
 
-		std::unique_ptr<frc::sim::FlywheelSim> shooter_sim_;
+		//std::unique_ptr<frc::sim::FlywheelSim> shooter_sim_;
 		size_t shooter_sim_joint_index_;
 };  // class
 

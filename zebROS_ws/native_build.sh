@@ -30,7 +30,7 @@ catkin config --blacklist \
 	zed_ros \
 	$EXTRA_BLACKLIST_PACKAGES
 
-catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON $EXTRA_CMD_LINE "$@"
+catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON -DCMAKE_CXX_STANDARD=17 $EXTRA_CMD_LINE "$@"
 
 if [ $? -ne 0 ] ; then
 	echo FAIL > .native_build.status

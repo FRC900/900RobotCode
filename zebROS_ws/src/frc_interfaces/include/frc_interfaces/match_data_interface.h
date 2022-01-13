@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MATCH_DATA_INTERFACE_INC_
+#define MATCH_DATA_INTERFACE_INC_
 
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include <state_handle/state_handle.h>
@@ -10,30 +11,6 @@ namespace hardware_interface
 class MatchHWState
 {
 	public:
-		MatchHWState(void) :
-			match_time_remaining_(0),
-
-			alliance_color_(0),
-			match_type_(0),
-			driver_station_location_(0),
-			match_number_(0),
-			replay_number_(0),
-
-			enabled_(false),
-			disabled_(true),
-			autonomous_(false),
-			fms_attached_(false),
-			ds_attached_(false),
-			operator_control_(true),
-			test_(false),
-			e_stopped_(false),
-
-			battery_voltage_(0.0),
-			get_match_time_status_("0: "),
-			get_alliance_station_status_("0: "),
-			get_vin_voltage_status_("0: ")
-		{}
-
 		//access and set
         double getMatchTimeRemaining(void)            const {return match_time_remaining_;}
 
@@ -89,31 +66,31 @@ class MatchHWState
         void setGetVinVoltageStatus(const std::string &status)          {get_vin_voltage_status_ = status;}
 
 	private:
-		double      match_time_remaining_;
+		double      match_time_remaining_{0};
 
 		std::vector<uint8_t> game_specific_data_;
 		std::string event_name_;
 
-		int         alliance_color_;
-		int         match_type_;
-		int         driver_station_location_;
-		int         match_number_;
-		int         replay_number_;
+		int         alliance_color_{0};
+		int         match_type_{0};
+		int         driver_station_location_{0};
+		int         match_number_{0};
+		int         replay_number_{0};
 
-		bool        enabled_;
-		bool        disabled_;
-		bool        autonomous_;
-		bool        fms_attached_;
-		bool        ds_attached_;
-		bool        operator_control_;
-		bool        test_;
-		bool        e_stopped_;
+		bool        enabled_{false};
+		bool        disabled_{true};
+		bool        autonomous_{false};
+		bool        fms_attached_{false};
+		bool        ds_attached_{false};
+		bool        operator_control_{false};
+		bool        test_{false};
+		bool        e_stopped_{false};
 
-		double      battery_voltage_;
+		double      battery_voltage_{0};
 
-		std::string get_match_time_status_;
-		std::string get_alliance_station_status_;
-		std::string get_vin_voltage_status_;
+		std::string get_match_time_status_{"0: "};
+		std::string get_alliance_station_status_{"0: "};
+		std::string get_vin_voltage_status_{"0: "};
 };
 
 typedef StateHandle<const MatchHWState> MatchStateHandle;
@@ -123,3 +100,4 @@ class MatchStateInterface       : public HardwareResourceManager<MatchStateHandl
 class RemoteMatchStateInterface : public HardwareResourceManager<MatchStateWritableHandle, ClaimResources> {};
 
 }
+#endif

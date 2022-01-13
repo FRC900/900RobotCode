@@ -1,0 +1,27 @@
+<library path="lib/libspark_max_controllers">
+	<class name="spark_max_controllers/SparkMaxDutyCycleController" type="spark_max_controllers::SparkMaxDutyCycleController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Configure and run a SparkMax in duty cycle mode 
+		</description>
+	</class>
+	<class name="spark_max_controllers/SparkMaxFollowerController" type="spark_max_controllers::SparkMaxFollowerController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Configure and run a SparkMax in follower (slave) mode
+		</description>
+	</class>
+	<class name="spark_max_controllers/SparkMaxPositionCloseLoopController" type="spark_max_controllers::SparkMaxPositionCloseLoopController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Configure and run a SparkMax in position close loop (PIDF) mode
+		</description>
+	</class>
+	<class name="spark_max_controllers/SparkMaxVelocityCloseLoopController" type="spark_max_controllers::SparkMaxVelocityCloseLoopController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Configure and run a SparkMax in velocity close loop (PIDF) mode
+		</description>
+	</class> 
+	<class name="spark_max_controllers/SparkMaxVoltageCloseLoopController" type="spark_max_controllers::SparkMaxVoltageCloseLoopController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Configure and run a SparkMax in voltage close loop (PIDF) mode
+		</description>
+	</class> 
+</library>

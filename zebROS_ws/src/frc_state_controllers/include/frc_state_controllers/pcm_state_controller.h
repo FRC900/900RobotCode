@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PCM_STATE_CONTROLLER_INC_
+#define PCM_STATE_CONTROLLER_INC_
 
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_publisher.h>
@@ -24,8 +25,6 @@ namespace pcm_state_controller
 class PCMStateController: public controller_interface::Controller<hardware_interface::PCMStateInterface>
 {
 	public:
-		PCMStateController() : publish_rate_(0.0) {}
-
 		bool init(hardware_interface::PCMStateInterface *hw,
 				  ros::NodeHandle                       &root_nh,
 				  ros::NodeHandle                       &controller_nh) override;
@@ -37,8 +36,10 @@ class PCMStateController: public controller_interface::Controller<hardware_inter
 		std::vector<hardware_interface::PCMStateHandle> pcm_state_;
 		std::shared_ptr<realtime_tools::RealtimePublisher<frc_msgs::PCMState> > realtime_pub_;
 		ros::Time last_publish_time_;
-		double publish_rate_;
-		size_t num_pcms_;
+		double publish_rate_{20};
+		size_t num_pcms_{0};
 };
 
 } // namespace pcm_state_controller
+
+#endif

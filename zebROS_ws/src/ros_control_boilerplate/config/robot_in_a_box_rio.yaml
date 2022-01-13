@@ -14,7 +14,7 @@ hardware_interface:
        - {name: dummy_talon, local: false, type: can_talon_srx}
          #- {name: talon9, local: false, type: can_talon_srx, can_id: 9}
          #- {name: pdp, local: true, type: pdp }
-         #- {name: compressor, local: true, type: compressor, pcm_id: 0}
+         #- {name: pcm, local: true, type: pcm, pcm_id: 0}
        - {name: as726x, local: true, type: as726x, port: mxp, address: 73 } # 73 = 0x49
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}

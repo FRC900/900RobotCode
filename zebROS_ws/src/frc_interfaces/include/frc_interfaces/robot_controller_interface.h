@@ -14,58 +14,6 @@ namespace hardware_interface
 class RobotControllerState
 {
 	public :
-		RobotControllerState(void)
-			//data from HAL function calls
-			: fpga_version_(0)
-		    , fpga_revision_(0)
-		    , fpga_time_(0)
-		    , user_button_(false)
-			, is_sys_active_(false)
-			, is_browned_out_(false)
-			, input_voltage_(0.0)
-			, input_current_(0.0)
-			, voltage3v3_(0.0)
-			, current3v3_(0.0)
-			, enabled3v3_(false)
-			, fault_count3v3_(0)
-			, voltage5v_(0.0)
-			, current5v_(0.0)
-			, enabled5v_(false)
-			, fault_count5v_(0)
-			, voltage6v_(0.0)
-			, current6v_(0.0)
-			, enabled6v_(false)
-			, fault_count6v_(0)
-			, can_percent_bus_utilization_(0.0)
-			, can_bus_off_count_(0)
-			, can_tx_full_count_(0)
-			, can_receive_error_count_(0)
-			, can_transmit_error_count_(0)
-
-			//status values from the HAL function calls
-			, fpga_version_status_("0: ")
-		    , fpga_revision_status_("0: ")
-		    , fpga_time_status_("0: ")
-		    , user_button_status_("0: ")
-			, is_sys_active_status_("0: ")
-			, is_browned_out_status_("0: ")
-			, input_voltage_status_("0: ")
-			, input_current_status_("0: ")
-			, voltage3v3_status_("0: ")
-			, current3v3_status_("0: ")
-			, enabled3v3_status_("0: ")
-			, fault_count3v3_status_("0: ")
-			, voltage5v_status_("0: ")
-			, current5v_status_("0: ")
-			, enabled5v_status_("0: ")
-			, fault_count5v_status_("0: ")
-			, voltage6v_status_("0: ")
-			, current6v_status_("0: ")
-			, enabled6v_status_("0: ")
-			, fault_count6v_status_("0: ")
-			, can_data_status_("0: ")
-		{
-		}
 		int         GetFPGAVersion(void) const              { return fpga_version_; }
 		int64_t     GetFPGARevision(void) const             { return fpga_revision_; }
 		uint64_t    GetFPGATime(void) const                 { return fpga_time_; }
@@ -164,54 +112,54 @@ class RobotControllerState
 		void SetCANDataStatus(const std::string &can_data_status)            { can_data_status_ = can_data_status; }
 
 	private:
-		int         fpga_version_;
-		int64_t     fpga_revision_;
-		uint64_t    fpga_time_;
-		bool        user_button_;
-		bool        is_sys_active_;
-		bool        is_browned_out_;
-		double      input_voltage_;
-		double      input_current_;
-		double      voltage3v3_;
-		double      current3v3_;
-		bool        enabled3v3_;
-		int         fault_count3v3_;
-		double      voltage5v_;
-		double      current5v_;
-		bool        enabled5v_;
-		int         fault_count5v_;
-		double      voltage6v_;
-		double      current6v_;
-		bool        enabled6v_;
-		int         fault_count6v_;
-		float       can_percent_bus_utilization_;
-		int         can_bus_off_count_;
-		int         can_tx_full_count_;
-		int         can_receive_error_count_;
-		int         can_transmit_error_count_;
+		int         fpga_version_{0};
+		int64_t     fpga_revision_{0};
+		uint64_t    fpga_time_{0};
+		bool        user_button_{false};
+		bool        is_sys_active_{false};
+		bool        is_browned_out_{false};
+		double      input_voltage_{0};
+		double      input_current_{0};
+		double      voltage3v3_{0};
+		double      current3v3_{0};
+		bool        enabled3v3_{0};
+		int         fault_count3v3_{0};
+		double      voltage5v_{0};
+		double      current5v_{0};
+		bool        enabled5v_{0};
+		int         fault_count5v_{0};
+		double      voltage6v_{0};
+		double      current6v_{0};
+		bool        enabled6v_{0};
+		int         fault_count6v_{0};
+		float       can_percent_bus_utilization_{0};
+		int         can_bus_off_count_{0};
+		int         can_tx_full_count_{0};
+		int         can_receive_error_count_{0};
+		int         can_transmit_error_count_{0};
 
 		//status values
-		std::string fpga_version_status_;
-		std::string fpga_revision_status_;
-		std::string fpga_time_status_;
-		std::string user_button_status_;
-		std::string is_sys_active_status_;
-		std::string is_browned_out_status_;
-		std::string input_voltage_status_;
-		std::string input_current_status_;
-		std::string voltage3v3_status_;
-		std::string current3v3_status_;
-		std::string enabled3v3_status_;
-		std::string fault_count3v3_status_;
-		std::string voltage5v_status_;
-		std::string current5v_status_;
-		std::string enabled5v_status_;
-		std::string fault_count5v_status_;
-		std::string voltage6v_status_;
-		std::string current6v_status_;
-		std::string enabled6v_status_;
-		std::string fault_count6v_status_;
-		std::string can_data_status_;
+		std::string fpga_version_status_{"0: "};
+		std::string fpga_revision_status_{"0: "};
+		std::string fpga_time_status_{"0: "};
+		std::string user_button_status_{"0: "};
+		std::string is_sys_active_status_{"0: "};
+		std::string is_browned_out_status_{"0: "};
+		std::string input_voltage_status_{"0: "};
+		std::string input_current_status_{"0: "};
+		std::string voltage3v3_status_{"0: "};
+		std::string current3v3_status_{"0: "};
+		std::string enabled3v3_status_{"0: "};
+		std::string fault_count3v3_status_{"0: "};
+		std::string voltage5v_status_{"0: "};
+		std::string current5v_status_{"0: "};
+		std::string enabled5v_status_{"0: "};
+		std::string fault_count5v_status_{"0: "};
+		std::string voltage6v_status_{"0: "};
+		std::string current6v_status_{"0: "};
+		std::string enabled6v_status_{"0: "};
+		std::string fault_count6v_status_{"0: "};
+		std::string can_data_status_{"0: "};
 };
 
 typedef StateHandle<const RobotControllerState> RobotControllerStateHandle;

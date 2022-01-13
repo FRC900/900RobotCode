@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.0.2)
 project(robot_characterization)
 
 include ("../cmake_modules/CMakeOpt.cmake")
-set(CMAKE_CXX_STANDARD 17)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -115,7 +114,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-set (WPI_SYSROOT $ENV{HOME}/wpilib/2021/roborio/arm-frc2021-linux-gnueabi)
+set (WPI_SYSROOT $ENV{HOME}/wpilib/2022/roborio/arm-frc2022-linux-gnueabi)
 
 include_directories(
 # include
@@ -141,39 +140,52 @@ include_directories(
 # Add network table source code
 set (ALLWPILIB ../../../allwpilib)
 include_directories(${ALLWPILIB}/wpiutil/src/main/native/include)
-file(GLOB
-	ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/*.cpp
-	ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/networktables/*.cpp
-	ntcore_native_src ${ALLWPILIB}/ntcore/src/main/native/cpp/tables/*.cpp
-)
 
-add_executable(robot_characterization 
-	src/robot_characterization.cpp
-	${ntcore_native_src}
+set (WPILIBSRC
+	${ALLWPILIB}/ntcore/src/main/native/cpp/Message.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/LoggerImpl.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/Storage_save.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/WireDecoder.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/NetworkConnection.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/Storage_load.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/InstanceImpl.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/ntcore_cpp.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/WireEncoder.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/ntcore_c.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/Value.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/Dispatcher.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/Storage.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/SequenceNumber.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/EntryNotifier.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/ConnectionNotifier.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/RpcServer.cpp
+	${ALLWPILIB}/ntcore/src/main/native/cpp/DsClient.cpp
+
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/fs.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/leb128.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/raw_istream.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/raw_socket_istream.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/raw_socket_ostream.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/Base64.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/Logger.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/SafeThread.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/StringExtras.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/SocketError.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPAcceptor.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPConnector.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPConnector_parallel.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPStream.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/fmtlib/src/format.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/raw_ostream.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Error.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ErrorHandling.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Hashing.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ManagedStatic.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/NativeFormatting.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Path.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallPtrSet.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallVector.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringMap.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringRef.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Twine.cpp
+)
+
+add_executable(robot_characterization 
+	src/robot_characterization.cpp
+	${WPILIBSRC}
 )
 
 ## Rename C++ executable without prefix
@@ -193,31 +205,7 @@ target_link_libraries(robot_characterization
 
 add_executable(robot_characterization_singlemotor 
 	src/robot_characterization_singlemotor.cpp
-	${ntcore_native_src}
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/leb128.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/raw_istream.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/raw_socket_istream.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/raw_socket_ostream.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/Base64.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/SafeThread.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/SocketError.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPAcceptor.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPConnector.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPConnector_parallel.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPStream.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/raw_ostream.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Error.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ErrorHandling.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Hashing.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ManagedStatic.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/NativeFormatting.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Path.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallPtrSet.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallVector.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringMap.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringRef.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Twine.cpp
+	${WPILIBSRC}
 )
 
 ## Rename C++ executable without prefix

@@ -5,12 +5,15 @@ generic_hw_control_loop:
   cycle_time_error_threshold: 0.01
   #some processes have lower frequencies than the main control loop
   ctre_mc_read_hz: 100
+  canifier_read_hz: 100
+  cancoder_read_hz: 100
   pcm_read_hz: 20
   pdp_read_hz: 20
   robot_iteration_hz: 20
   joystick_read_hz: 50
   match_data_read_hz: 2
   robot_controller_read_hz: 20
+  as726x_read_hz: 7
 
 # Settings for ros_control hardware interface
 # Map a name for each valid joint to a CAN id
@@ -28,14 +31,14 @@ hardware_interface:
        # Solenoids which are updated from controllers on the Jetson need
        # to be configured here so they can write to hardware attached
        # to the Rio
-       - {name: cargo_intake_arm_joint, type: solenoid, pcm: 0, id: 0, local_hardware: true, local_update: false}
-       - {name: climber_ski_joint, type: solenoid, pcm: 0, id: 3, local_hardware: true, local_update: false}
+       - {name: cargo_intake_arm_joint, type: solenoid, module_type: ctrepcm, module_id: 0, id: 0, local_hardware: true, local_update: false}
+       - {name: climber_ski_joint, type: solenoid, module_type: ctrepcm, module_id: 0, id: 3, local_hardware: true, local_update: false}
 
-       - {name: climber_feet_retract, type: double_solenoid, pcm: 0, forward_id: 4, reverse_id: 5, local_hardware: true, local_update: false}
-       - {name: climber_release_endgame, type: double_solenoid, pcm: 0, forward_id: 6, reverse_id: 7, local_hardware: true, local_update: false}
+       - {name: climber_feet_retract, type: double_solenoid, module_type: ctrepcm, module_id: 0, forward_id: 4, reverse_id: 5, local_hardware: true, local_update: false}
+       - {name: climber_release_endgame, type: double_solenoid, module_type: ctrepcm, module_id: 0, forward_id: 6, reverse_id: 7, local_hardware: true, local_update: false}
 
-       - {name: panel_claw, type: solenoid, pcm: 0, id: 2, local_hardware: true, local_update: false}
-       - {name: panel_push_extend, type: solenoid, pcm: 0, id: 1, local_hardware: true, local_update: false}
+       - {name: panel_claw, type: solenoid, module_type: ctrepcm, module_id: 0, id: 2, local_hardware: true, local_update: false}
+       - {name: panel_push_extend, type: solenoid, module_type: ctrepcm, module_id: 0, id: 1, local_hardware: true, local_update: false}
 
        - {name: panel_intake_limit_switch_1, type: digital_input, dio_channel: 0, invert: true, local: true}
        - {name: panel_intake_limit_switch_2, type: digital_input, dio_channel: 1, invert: true, local: true}

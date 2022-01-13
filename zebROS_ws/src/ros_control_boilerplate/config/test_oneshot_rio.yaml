@@ -10,8 +10,8 @@ generic_hw_control_loop:
 # of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
 hardware_interface:
    joints:
-       - {name: hood_extend_joint, type: solenoid, pcm: 0, id: 1, local_hardware: true, local_update: false}
-       - {name: hood_retract_joint, type: solenoid, pcm: 0, id: 2, local_hardware: true, local_update: false}
+       - {name: hood_extend_joint, type: solenoid, module_type: ctrepcm, module_id: 0, id: 1, local_hardware: true, local_update: false}
+       - {name: hood_retract_joint, type: solenoid, module_type: ctrepcm, module_id: 0, id: 2, local_hardware: true, local_update: false}
        
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}

@@ -14,8 +14,11 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#include <cstring>
+#include <memory>
 #include <mutex>
 #include <sstream>
+#include <vector>
 
 #include "HALInitializer.h"
 #include "hal/HAL.h"

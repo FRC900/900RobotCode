@@ -57,11 +57,15 @@
 #include "frc_interfaces/joystick_interface.h"
 #include "frc_interfaces/match_data_interface.h"
 #include "frc_interfaces/pcm_state_interface.h"
+#include "frc_interfaces/ph_command_interface.h"
+#include "frc_interfaces/pdh_command_interface.h"
 #include "frc_interfaces/pdp_state_interface.h"
 #include "frc_interfaces/robot_controller_interface.h"
 #include "remote_joint_interface/remote_joint_interface.h"
+#include "ros_control_boilerplate/cancoder_convert.h"
 #include "ros_control_boilerplate/ros_iterative_robot.h"
 #include "ros_control_boilerplate/talon_convert.h"
+#include "spark_max_interface/spark_max_command_interface.h"
 #include "talon_interface/cancoder_command_interface.h"
 #include "talon_interface/canifier_command_interface.h"
 #include "talon_interface/orchestra_command_interface.h"
@@ -70,6 +74,8 @@
 #include "ros_control_boilerplate/tracer.h"
 
 // WPILIB stuff
+#include <frc/PneumaticsModuleType.h>
+#include <hal/CTREPCM.h>
 #include <hal/FRCUsageReporting.h>
 #include <hal/HALBase.h>
 #include <hal/Types.h>
@@ -85,6 +91,7 @@ namespace frc { class DigitalInput; }
 namespace frc { class DigitalOutput; }
 namespace frc { class Joystick; }
 namespace frc { class NidecBrushless; }
+namespace frc { class PneumaticsBase; }
 namespace frc { class PWM; }
 
 namespace ros_control_boilerplate
@@ -206,10 +213,16 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		hardware_interface::canifier::RemoteCANifierStateInterface canifier_remote_state_interface_;
 		hardware_interface::cancoder::CANCoderStateInterface   cancoder_state_interface_;
 		hardware_interface::cancoder::RemoteCANCoderStateInterface cancoder_remote_state_interface_;
-		hardware_interface::PDPStateInterface	               pdp_state_interface_;
-		hardware_interface::RemotePDPStateInterface	           pdp_remote_state_interface_;
+		hardware_interface::SparkMaxStateInterface             spark_max_state_interface_;
+		hardware_interface::RemoteSparkMaxStateInterface       spark_max_remote_state_interface_;
 		hardware_interface::PCMStateInterface	               pcm_state_interface_;
 		hardware_interface::RemotePCMStateInterface	           pcm_remote_state_interface_;
+		hardware_interface::PDHStateInterface	               pdh_state_interface_;
+		hardware_interface::RemotePDHStateInterface	           pdh_remote_state_interface_;
+		hardware_interface::PDPStateInterface	               pdp_state_interface_;
+		hardware_interface::RemotePDPStateInterface	           pdp_remote_state_interface_;
+		hardware_interface::PHStateInterface	               ph_state_interface_;
+		hardware_interface::RemotePHStateInterface	           ph_remote_state_interface_;
 		hardware_interface::JoystickStateInterface             joystick_state_interface_;
 		hardware_interface::MatchStateInterface                match_state_interface_;
 		hardware_interface::RemoteMatchStateInterface          match_remote_state_interface_;
@@ -225,6 +238,9 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		hardware_interface::TalonCommandInterface          talon_command_interface_;
 		hardware_interface::canifier::CANifierCommandInterface canifier_command_interface_;
 		hardware_interface::cancoder::CANCoderCommandInterface cancoder_command_interface_;
+		hardware_interface::SparkMaxCommandInterface       spark_max_command_interface_;
+		hardware_interface::PDHCommandInterface            pdh_command_interface_;
+		hardware_interface::PHCommandInterface             ph_command_interface_;
 		hardware_interface::as726x::AS726xCommandInterface as726x_command_interface_;
 		hardware_interface::ImuSensorInterface             imu_interface_;
 		hardware_interface::RemoteImuSensorInterface       imu_remote_interface_;
@@ -240,11 +256,18 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		void custom_profile_write(int joint_id);
 		void custom_profile_set_talon(hardware_interface::TalonMode mode, double setpoint, double fTerm, int joint_id, int pidSlot, bool zeroPos);
 
-		void readJointLocalParams(XmlRpc::XmlRpcValue joint_params,
+		void readJointLocalParams(const XmlRpc::XmlRpcValue &joint_params,
 								  const bool local,
 								  const bool saw_local_keyword,
 								  bool &local_update,
 								  bool &local_hardware);
+		int readIntParam(const XmlRpc::XmlRpcValue &joint_params,
+						 bool local_hardware,
+						 const char *key,
+						 const std::string& joint_name);
+		frc::PneumaticsModuleType readSolenoidModuleType(const XmlRpc::XmlRpcValue &joint_params,
+														 bool local_hardware,
+														 const std::string &joint_name);
 		void readConfig(ros::NodeHandle rpnh);
 		void createInterfaces(void);
 		bool initDevices(ros::NodeHandle root_nh);
@@ -269,6 +292,14 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<bool>        cancoder_local_updates_;
 		std::vector<bool>        cancoder_local_hardwares_;
 		std::size_t              num_cancoders_{0};
+
+		// Configuration
+		std::vector<std::string>                   spark_max_names_;
+		std::vector<int>                           spark_max_can_ids_;
+		std::vector<hardware_interface::MotorType> spark_max_motor_types_;
+		std::vector<bool>                          spark_max_local_updates_;
+		std::vector<bool>                          spark_max_local_hardwares_;
+		std::size_t                                num_spark_maxs_{0};
 
 		std::vector<std::string> nidec_brushless_names_;
 		std::vector<int>         nidec_brushless_pwm_channels_;
@@ -299,26 +330,40 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<bool>        pwm_local_hardwares_;
 		std::size_t              num_pwms_{0};
 
-		std::vector<std::string> solenoid_names_;
-		std::vector<int>         solenoid_ids_;
-		std::vector<int>         solenoid_pcms_;
-		std::vector<bool>        solenoid_local_updates_;
-		std::vector<bool>        solenoid_local_hardwares_;
-		std::size_t              num_solenoids_{0};
+		std::vector<std::string>               solenoid_names_;
+		std::vector<int>                       solenoid_channels_;
+		std::vector<frc::PneumaticsModuleType> solenoid_module_types_;
+		std::vector<int>                       solenoid_module_ids_;
+		std::vector<bool>                      solenoid_local_updates_;
+		std::vector<bool>                      solenoid_local_hardwares_;
+		std::size_t                            num_solenoids_{0};
 
-		std::vector<std::string> double_solenoid_names_;
-		std::vector<int>         double_solenoid_forward_ids_;
-		std::vector<int>         double_solenoid_reverse_ids_;
-		std::vector<int>         double_solenoid_pcms_;
-		std::vector<bool>        double_solenoid_local_updates_;
-		std::vector<bool>        double_solenoid_local_hardwares_;
-		std::size_t              num_double_solenoids_{0};
+		std::vector<std::string>               double_solenoid_names_;
+		std::vector<int>                       double_solenoid_forward_channels_;
+		std::vector<int>                       double_solenoid_reverse_channels_;
+		std::vector<frc::PneumaticsModuleType> double_solenoid_module_types_;
+		std::vector<int>                       double_solenoid_module_ids_;
+		std::vector<bool>                      double_solenoid_local_updates_;
+		std::vector<bool>                      double_solenoid_local_hardwares_;
+		std::size_t                            num_double_solenoids_{0};
 
-		std::vector<std::string> compressor_names_;
-		std::vector<int>         compressor_pcm_ids_;
-		std::vector<bool>        compressor_local_updates_;
-		std::vector<bool>        compressor_local_hardwares_;
-		std::size_t              num_compressors_{0};
+		std::vector<std::string> pcm_names_;
+		std::vector<int>         pcm_ids_;
+		std::vector<bool>        pcm_local_updates_;
+		std::vector<bool>        pcm_local_hardwares_;
+		std::size_t              num_pcms_{0};
+
+		std::vector<std::string> ph_names_;
+		std::vector<int>         ph_ids_;
+		std::vector<bool>        ph_local_updates_;
+		std::vector<bool>        ph_local_hardwares_;
+		std::size_t              num_phs_{0};
+
+		std::vector<std::string> pdh_names_;
+		std::vector<int32_t>     pdh_modules_;
+		std::vector<bool>        pdh_local_updates_;
+		std::vector<bool>        pdh_local_hardwares_;
+		std::size_t              num_pdhs_{0};
 
 		std::vector<std::string> pdp_names_;
 		std::vector<int32_t>     pdp_modules_;
@@ -376,6 +421,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<hardware_interface::TalonHWState> talon_state_;
 		std::vector<hardware_interface::canifier::CANifierHWState> canifier_state_;
 		std::vector<hardware_interface::cancoder::CANCoderHWState> cancoder_state_;
+		std::vector<hardware_interface::SparkMaxHWState> spark_max_state_;
 		std::vector<double> brushless_vel_;
 
 		std::vector<double> digital_input_state_;
@@ -385,9 +431,12 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<double> solenoid_pwm_state_;
 		std::vector<double> double_solenoid_state_;
 		std::vector<double> rumble_state_; //No actual data
-		std::vector<double> compressor_state_;
-		std::vector<hardware_interface::PDPHWState> pdp_state_;
+		std::vector<double> pcm_compressor_closed_loop_enable_state_;
 		std::vector<hardware_interface::PCMState> pcm_state_;
+		std::vector<hardware_interface::PDHHWState> pdh_state_;
+		std::vector<hardware_interface::PDPHWState> pdp_state_;
+		std::vector<hardware_interface::PHHWState> ph_state_;
+		std::vector<hardware_interface::PHHWCommand> ph_command_;
 		hardware_interface::RobotControllerState robot_controller_state_;
 		std::vector<hardware_interface::JoystickState> joystick_state_;
 		hardware_interface::MatchHWState match_data_;
@@ -412,6 +461,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<hardware_interface::TalonHWCommand> talon_command_;
 		std::vector<hardware_interface::canifier::CANifierHWCommand> canifier_command_;
 		std::vector<hardware_interface::cancoder::CANCoderHWCommand> cancoder_command_;
+		std::vector<hardware_interface::PDHHWCommand> pdh_command_;
+		std::vector<hardware_interface::SparkMaxHWCommand> spark_max_command_;
 		std::vector<double> brushless_command_;
 		std::vector<double> digital_output_command_;
 		std::vector<double> pwm_command_;
@@ -420,7 +471,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<hardware_interface::JointCommandModes> prev_solenoid_mode_;
 		std::vector<double> double_solenoid_command_;
 		std::vector<double> rumble_command_;
-		std::vector<double> compressor_command_;
+		std::vector<double> pcm_compressor_closed_loop_enable_command_;
+		std::vector<double> ph_compressor_closed_loop_enable_command_;
                 std::vector<hardware_interface::OrchestraCommand> orchestra_command_;
 
 		std::vector<double> dummy_joint_position_;
@@ -437,8 +489,14 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		//certain data will be read at a slower rate than the main loop, for computational efficiency
 		//robot iteration calls - sending stuff to driver station
 		double ctre_mc_read_hz_{100};
+		double cancoder_read_hz_{100};
+		double canifier_read_hz_{100};
+		double spark_max_read_hz_{100};
 		double pcm_read_hz_{20};
+		double ph_read_hz_{20};
+		double pdh_read_hz_{20};
 		double pdp_read_hz_{20};
+		double as726x_read_hz_{7};
 		double t_prev_robot_iteration_;
 		double robot_iteration_hz_{50};
 
@@ -471,25 +529,57 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 												 std::unique_ptr<Tracer> tracer,
 												 double poll_frequency);
 
+		std::vector<std::shared_ptr<ctre::phoenix::sensors::CANCoder>> cancoders_;
+		std::vector<std::shared_ptr<std::mutex>> cancoder_read_state_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::cancoder::CANCoderHWState>> cancoder_read_thread_states_;
+		std::vector<std::thread> cancoder_read_threads_;
+		void cancoder_read_thread(std::shared_ptr<ctre::phoenix::sensors::CANCoder> cancoder,
+				std::shared_ptr<hardware_interface::cancoder::CANCoderHWState> state,
+				std::shared_ptr<std::mutex> mutex,
+				std::unique_ptr<Tracer> tracer,
+				double poll_frequency);
+
 		std::vector<std::shared_ptr<frc::NidecBrushless>> nidec_brushlesses_;
 		std::vector<std::shared_ptr<frc::DigitalInput>> digital_inputs_;
 		std::vector<std::shared_ptr<frc::DigitalOutput>> digital_outputs_;
 		std::vector<std::shared_ptr<frc::PWM>> PWMs_;
-		std::vector<HAL_SolenoidHandle> solenoids_;
-		std::vector<DoubleSolenoidHandle> double_solenoids_;
+		std::vector<std::shared_ptr<frc::PneumaticsBase>> pneumatics_;
+		std::vector<std::shared_ptr<frc::PneumaticsBase>> double_pneumatics_;
 		std::vector<std::shared_ptr<AHRS>> navXs_;
 		std::vector<std::shared_ptr<frc::AnalogInput>> analog_inputs_;
 
 		std::vector<std::shared_ptr<std::mutex>> pcm_read_thread_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::PCMState>> pcm_read_thread_state_;
-		void pcm_read_thread(HAL_CompressorHandle compressor_handle,
+		void pcm_read_thread(HAL_CTREPCMHandle pcm_handle,
 							 int32_t pcm_id,
 							 std::shared_ptr<hardware_interface::PCMState> state,
 							 std::shared_ptr<std::mutex> mutex,
 							 std::unique_ptr<Tracer> tracer,
 							 double poll_frequency);
 		std::vector<std::thread> pcm_threads_;
-		std::vector<HAL_CompressorHandle> compressors_;
+		std::vector<HAL_CTREPCMHandle> pcms_;
+
+		std::vector<std::shared_ptr<std::mutex>> ph_read_thread_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::PHHWState>> ph_read_thread_state_;
+		void ph_read_thread(HAL_REVPHHandle ph_handle,
+							 int32_t ph_id,
+							 std::shared_ptr<hardware_interface::PHHWState> state,
+							 std::shared_ptr<std::mutex> mutex,
+							 std::unique_ptr<Tracer> tracer,
+							 double poll_frequency);
+		std::vector<std::thread> ph_threads_;
+		std::vector<HAL_REVPHHandle> phs_;
+
+		std::vector<std::shared_ptr<std::mutex>> pdh_read_thread_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::PDHHWState>> pdh_read_thread_state_;
+		void pdh_read_thread(int32_t pdh,
+							 std::shared_ptr<hardware_interface::PDHHWState> state,
+							 std::shared_ptr<std::mutex> mutex,
+							 std::unique_ptr<Tracer> tracer,
+							 double poll_frequency);
+		std::vector<std::thread> pdh_threads_;
+		std::vector<int32_t> pdhs_;
+
 
 		std::vector<std::shared_ptr<std::mutex>> pdp_read_thread_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::PDPHWState>> pdp_read_thread_state_;
@@ -504,8 +594,10 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 
 		std::unique_ptr<ROSIterativeRobot> robot_{nullptr};
 		Tracer read_tracer_;
+		Tracer write_tracer_;
 
 		talon_convert::TalonConvert talon_convert_;
+		cancoder_convert::CANCoderConvert cancoder_convert_;
 
 };  // class
 

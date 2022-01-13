@@ -29,6 +29,7 @@
   <depend>talon_interface</depend>
   <depend>message_runtime</depend>
   <depend>frc_interfaces</depend>
+  <depend>spark_max_interface</depend>
   <depend>frc_msgs</depend>
   <depend>remote_joint_interface</depend>
 
