@@ -13,6 +13,9 @@ fi
 
 catkin config --profile cross -x _isolated --install --blacklist \
 	base_trajectory \
+	color_spin \
+	controllers_2019 \
+	controllers_2019_msgs \
 	demo_tf_node \
 	goal_detection \
 	pf_localization \

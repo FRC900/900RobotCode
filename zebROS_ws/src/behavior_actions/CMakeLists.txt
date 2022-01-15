@@ -58,7 +58,7 @@ add_message_files(
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  resetBallSrv.srv
+  #resetBallSrv.srv
   DynamicPath.srv
   GamePiecePickup.srv
 )
@@ -70,16 +70,16 @@ add_action_files(
     FILES
     Path.action
 	Intake.action
-	Place.action
-	Climb.action
-	Elevator.action
-	Align.action
+	#Place.action
+	#Climb.action
+	#Elevator.action
+	#Align.action
 	AlignToShoot.action
 	Shooter.action
 	Indexer.action
 	Eject.action
-	GoToColor.action
-	RotatePanel.action
+	#GoToColor.action
+	#RotatePanel.action
 )
 
 generate_messages(DEPENDENCIES actionlib_msgs nav_msgs std_msgs)

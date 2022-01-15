@@ -24,6 +24,9 @@ if [ $? -eq 1 ]; then
 fi
 
 catkin config --blacklist \
+	color_spin \
+	controllers_2019 \
+	controllers_2019_msgs \
 	realsense2_camera \
 	realsense2_description \
 	velocity_controllers \

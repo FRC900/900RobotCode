@@ -12,9 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   actionlib_msgs
   base_trajectory_msgs
   behavior_actions
-  color_spin
-  controllers_2019_msgs
-  controllers_2020_msgs
+  #color_spin
+  #controllers_2019_msgs
+  #controllers_2020_msgs
   frc_msgs
   field_obj
   geometry_msgs
@@ -26,7 +26,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   std_srvs
   talon_state_msgs
-  teraranger_array
+  #teraranger_array
   tf2_ros
 )
 
@@ -85,18 +85,13 @@ include_directories(
 #DIRECTORY
 #action
 #FILES
-#Path.action
-#Intake.action
-#Place.action
-#Climb.action
-#Elevator.action
-#Align.action
 #)
 
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   nav_msgs#   std_msgs
+#   nav_msgs
+#   std_msgs
 # )
 
 ################################################
@@ -137,20 +132,26 @@ include_directories(
 catkin_package(
    #INCLUDE_DIRS include
    #LIBRARIES behaviors
-   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower_msgs nav_msgs roscpp rospy std_msgs teraranger_array tf2_ros geometry_msgs controllers_2020_msgs color_spin frc_msgs
+   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower_msgs nav_msgs roscpp rospy std_msgs tf2_ros geometry_msgs frc_msgs
    DEPENDS 
 )
 
+# Generic actionlib code
 add_executable(auto_node src/auto_node.cpp)
 target_link_libraries(auto_node ${catkin_LIBRARIES})
 add_dependencies(auto_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-# 2021 actionlib servers
+# Used by path planner to merge separate x,y,rotation into one Twist message
+add_executable(publish_pid_cmd_vel_node src/publish_pid_cmd_vel.cpp)
+add_dependencies(publish_pid_cmd_vel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(publish_pid_cmd_vel_node ${catkin_LIBRARIES})
+
 add_executable(game_piece_path_server src/game_piece_path_gen.cpp)
 target_link_libraries(game_piece_path_server ${catkin_LIBRARIES})
 add_dependencies(game_piece_path_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # 2020 actionlib servers
+if (0)
 add_executable(num_powercells_pub_node src/num_powercells_pub_node.cpp)
 target_link_libraries(num_powercells_pub_node ${catkin_LIBRARIES})
 add_dependencies(num_powercells_pub_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -176,10 +177,13 @@ target_link_libraries(intake_powercell_server ${catkin_LIBRARIES})
 add_dependencies(intake_powercell_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(shooter_actionlib_server src/shooter_actionlib_server.cpp)
+target_link_libraries(shooter_actionlib_server ${catkin_LIBRARIES})
 add_dependencies(shooter_actionlib_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(shooter_actionlib_server
-  ${catkin_LIBRARIES}
-)
+
+add_executable(gotocolor_server src/gotocolor_server.cpp)
+target_link_libraries(gotocolor_server ${catkin_LIBRARIES})
+add_dependencies(gotocolor_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 # 2019 actionlib servers
 add_executable(intake_cargo_server src/intake_cargo_server.cpp)
 target_link_libraries(intake_cargo_server ${catkin_LIBRARIES})
@@ -205,10 +209,11 @@ add_executable(outtake_hatch_panel_server src/outtake_hatch_panel_server.cpp)
 target_link_libraries(outtake_hatch_panel_server ${catkin_LIBRARIES})
 add_dependencies(outtake_hatch_panel_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-
 add_executable(test_actionlib src/test_actionlib.cpp)
 target_link_libraries(test_actionlib ${catkin_LIBRARIES})
 add_dependencies(test_actionlib ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+endif()
 
 #add_executable(dummy src/dummy.cpp)
 #target_link_libraries(
@@ -234,44 +239,23 @@ add_dependencies(test_actionlib ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-add_executable(publish_pid_cmd_vel_node src/publish_pid_cmd_vel.cpp)
-add_dependencies(publish_pid_cmd_vel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(publish_pid_cmd_vel_node
-  ${catkin_LIBRARIES}
-)
-
+if (0)
 add_executable(state_setpoint_publisher_node src/state_setpoint_publisher.cpp)
 add_dependencies(state_setpoint_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(state_setpoint_publisher_node
-  ${catkin_LIBRARIES}
-)
+target_link_libraries(state_setpoint_publisher_node ${catkin_LIBRARIES})
 
 add_executable(align_with_terabee_node src/align_with_terabee.cpp)
 add_dependencies(align_with_terabee_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(align_with_terabee_node
-  ${catkin_LIBRARIES}
-)
+target_link_libraries(align_with_terabee_node ${catkin_LIBRARIES})
 
 add_executable(align_with_camera src/align_with_camera.cpp)
 add_dependencies(align_with_camera ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(align_with_camera
-  ${catkin_LIBRARIES}
-)
+target_link_libraries(align_with_camera ${catkin_LIBRARIES})
 
 add_executable(align_hatch_server src/align_hatch_panels.cpp)
 add_dependencies(align_hatch_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(align_hatch_server
-  ${catkin_LIBRARIES}
-)
-
-add_executable(gotocolor_server src/gotocolor_server.cpp)
-add_dependencies(gotocolor_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(gotocolor_server
-  ${catkin_LIBRARIES}
-)
+target_link_libraries(align_hatch_server ${catkin_LIBRARIES})
+endif()
 
 #add_executable(base_align_server src/base_align_server.cpp)
 #add_dependencies(base_align_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
@@ -317,28 +301,29 @@ target_link_libraries(gotocolor_server
 
 ## Mark executables and/or libraries for installation
 install(TARGETS 
-	align_to_shoot_server
-	align_hatch_server
-	align_with_camera
-	align_with_terabee_node
 	auto_node
-	climber_server
-	eject_server
-	elevator_server
-	game_piece_path_server
-	gotocolor_server
-	indexer_server
-	intake_cargo_server
-	intake_hatch_panel_server
-	intake_powercell_server
-	num_powercells_pub_node
-	outtake_cargo_server
-	outtake_hatch_panel_server
 	publish_pid_cmd_vel_node
-	rotate_panel_server
-	shooter_actionlib_server
-	state_setpoint_publisher_node
-	test_actionlib
+	game_piece_path_server
+
+	#align_to_shoot_server
+	#align_hatch_server
+	#align_with_camera
+	#align_with_terabee_node
+	#climber_server
+	#eject_server
+	#elevator_server
+	#gotocolor_server
+	#indexer_server
+	#intake_cargo_server
+	#intake_hatch_panel_server
+	#intake_powercell_server
+	#num_powercells_pub_node
+	#outtake_cargo_server
+	#outtake_hatch_panel_server
+	#rotate_panel_server
+	#shooter_actionlib_server
+	#state_setpoint_publisher_node
+	#test_actionlib
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

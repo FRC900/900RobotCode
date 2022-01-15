@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
 	behavior_actions
 	cmake_modules
 	control_msgs
-	controllers_2019_msgs
 	controllers_2020_msgs
 	dynamic_reconfigure
 	dynamic_reconfigure_wrapper
@@ -66,10 +65,28 @@ include_directories(
 	${Eigen3_INCLUDE_DIRS}
 	)
 
-add_executable(teleop_joystick_comp src/teleop_joystick_comp.cpp)
-target_link_libraries(teleop_joystick_comp
-	${catkin_LIBRARIES}
-	)
+if (0) # 2019 code, left for reference if needed
+	add_executable(teleop_joystick_comp src/teleop_joystick_comp.cpp)
+	target_link_libraries(teleop_joystick_comp
+		${catkin_LIBRARIES}
+		)
+	add_dependencies(teleop_joystick_comp
+		${${PROJECT_NAME}_EXPORTED_TARGETS}
+		${catkin_EXPORTED_TARGETS}
+		)
+
+	add_executable(snap_to_nearest_goal src/snap_to_nearest_goal.cpp)
+	set_target_properties(snap_to_nearest_goal PROPERTIES OUTPUT_NAME 
+		snap_to_nearest_goal PREFIX "")
+	target_link_libraries(snap_to_nearest_goal
+		${catkin_LIBRARIES}
+		)
+	add_dependencies(snap_to_nearest_goal
+		${${PROJECT_NAME}_EXPORTED_TARGETS}
+		${catkin_EXPORTED_TARGETS}
+		)
+
+endif()
 
 add_executable(teleop_joystick_comp_2020 src/teleop_joystick_comp_2020.cpp)
 target_link_libraries(teleop_joystick_comp_2020
@@ -80,11 +97,6 @@ target_link_libraries(teleop_joystick_comp_2020
 # same as for the library above. This is needed to force
 # talon controller messages to be built before the
 # talon controller code tries to use them
-add_dependencies(teleop_joystick_comp
-	${${PROJECT_NAME}_EXPORTED_TARGETS}
-	${catkin_EXPORTED_TARGETS}
-	)
-
 add_dependencies(teleop_joystick_comp_2020
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
@@ -98,17 +110,6 @@ target_link_libraries(orient_strafing_node
 	)
 
 add_dependencies(orient_strafing_node
-	${${PROJECT_NAME}_EXPORTED_TARGETS}
-	${catkin_EXPORTED_TARGETS}
-	)
-
-add_executable(snap_to_nearest_goal src/snap_to_nearest_goal.cpp)
-set_target_properties(snap_to_nearest_goal PROPERTIES OUTPUT_NAME 
-	snap_to_nearest_goal PREFIX "")
-target_link_libraries(snap_to_nearest_goal
-	${catkin_LIBRARIES}
-	)
-add_dependencies(snap_to_nearest_goal
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 	)
@@ -128,7 +129,7 @@ add_dependencies(teleop_joints_keyboard
 
 # Install ------------------------------------------------------------
 # Install header files
-install(TARGETS teleop_joystick_comp teleop_joystick_comp_2020 teleop_joints_keyboard orient_strafing_node snap_to_nearest_goal
+install(TARGETS teleop_joystick_comp_2020 teleop_joints_keyboard orient_strafing_node
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
