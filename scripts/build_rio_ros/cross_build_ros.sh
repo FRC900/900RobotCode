@@ -66,7 +66,7 @@ sed -i -e '/<\/package>/i  <build_depend>urdfdom_headers<\/build_depend>' urdf/u
 
 cd ~/melodic_arm_cross_ws
 # Do a fresh build - kill off any lingering dependencies
-rm -rf ~/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/melodic devel_isolated build_isolated
+rm -rf ~/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/melodic devel_isolated build_isolated build devel .catkin_tool .logs
 
 
 # Note - if this fails looking for gencpp*cmake, run from a new terminal
