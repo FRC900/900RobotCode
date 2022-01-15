@@ -1,3 +1,4 @@
 game_piece_path_gen_params:
   game_piece_frame_id: "intake"
   game_piece_intake_offsets: [0.0]
+  maximum_z: 10.0

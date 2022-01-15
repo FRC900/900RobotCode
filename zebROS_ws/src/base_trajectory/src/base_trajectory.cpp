@@ -2198,4 +2198,3 @@ int main(int argc, char **argv)
 
 	ros::spin();
 }
-

@@ -81,3 +81,6 @@ objdet_target ( pose [ -1.72  2.263 1 0 ] fiducial_return 5 color "purple")
 objdet_target ( pose [ -1.72  3.103 1 0 ] fiducial_return 3 color "orange")
 objdet_target ( pose [ 3 1 5 0 ] size [ 0.18 0.18 0.18 ] fiducial_return 900 color "yellow") # 900 = power cell
 objdet_target ( pose [ 4 2 5 0 ] size [ 0.18 0.18 0.18 ] fiducial_return 900 color "yellow") # 900 = power cell
+objdet_target ( pose [ 1 1 5 0 ] size [ 0.18 0.18 0.18 ] fiducial_return 900 color "yellow") # 900 = power cell
+objdet_target ( pose [ -1 2 5 0 ] size [ 0.18 0.18 0.18 ] fiducial_return 900 color "yellow") # 900 = power cell
+objdet_target ( pose [ -3 -3 5 0 ] size [ 0.18 0.18 0.18 ] fiducial_return 900 color "yellow") # 900 = power cell

@@ -4,3 +4,4 @@ geometry_msgs/Pose endpoint # only x position, y position, and z rotation will b
 ---
 bool success
 string message
+nav_msgs/Path path
