@@ -42,9 +42,7 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 	out_msg.header = objDetectionMsg->header;
 
 	// Create objects needed to convert from 2d screen to 3d world coords
-	image_geometry::PinholeCameraModel model;
-	model.fromCameraInfo(caminfo);
-	const ConvertCoords cc(model);
+	const ConvertCoords cc(caminfo);
 	// Iterate over each object. Convert from camera to world coords.
 	for (const auto &camObject : objDetectionMsg->objects)
 	{

@@ -1,0 +1,33 @@
+field_dims:
+  width: 324
+  height: 672
+
+imagename: "rapid_react_field.png"
+
+obstacles:
+  # Guardrails
+  - {type: "polygon", num_points: 4, p1: [0, 12], p2: [0, 594], p3: [3, 594], p4: [3, 12]}
+  - {type: "polygon", num_points: 4, p1: [321, 78], p2: [321, 660], p3: [324, 660], p4: [324, 78]}
+
+
+  # Truss structures
+  - {type: "polygon", num_points: 4, p1: [3, 12], p2: [3, 26], p3: [17, 26], p4: [17, 12]}
+  - {type: "polygon", num_points: 4, p1: [3, 128], p2: [3, 141], p3: [17, 141], p4: [17, 128]}
+  - {type: "polygon", num_points: 4, p1: [101, 12], p2: [101, 26], p3: [114, 26], p4: [114, 12]}
+  - {type: "polygon", num_points: 4, p1: [101, 128], p2: [101, 141], p3: [114, 141], p4: [114, 128]}
+
+  - {type: "polygon", num_points: 4, p1: [210, 531], p2: [210, 545], p3: [224, 545], p4: [224, 531]}
+  - {type: "polygon", num_points: 4, p1: [210, 647], p2: [210, 660], p3: [224, 660], p4: [224, 647]}
+  - {type: "polygon", num_points: 4, p1: [308, 531], p2: [308, 545], p3: [321, 545], p4: [321, 531]}
+  - {type: "polygon", num_points: 4, p1: [308, 647], p2: [308, 660], p3: [321, 660], p4: [321, 647]}
+
+  # Driver Stations
+  - {type: "polygon", num_points: 4, p1: [0, 0], p2: [0, 12], p3: [252, 12], p4: [252, 0]}
+  - {type: "polygon", num_points: 4, p1: [72, 660], p2: [72, 672], p3: [324, 672], p4: [324, 660]}
+
+  # Terminals
+  - {type: "polygon", num_points: 3, p1: [252, 12], p2: [324, 12], p3: [324, 78]}
+  - {type: "polygon", num_points: 3, p1: [0, 594], p2: [0, 660], p3: [72, 660]}
+
+  # Hub
+  - {type: "circle", center: [163,336], radius: 60.2}

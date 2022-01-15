@@ -304,19 +304,21 @@ void ObjectType::computeProperties()
 }
 
 // Given a rectangular bounding box and measured (or estimated) depth, return the world coords of the object
-Point3f ObjectType::screenToWorldCoords(const Rect &screen_position, double avg_depth, const image_geometry::PinholeCameraModel &model) const
+Point3f ObjectType::screenToWorldCoords(const Rect &screen_position, double avg_depth, const sensor_msgs::CameraInfo &camera_info_) const
 {
 	// avg_depth is to front of object.  Add in half the
 	// object's depth to move to the center of it
 	avg_depth += depth_ / 2.;
-	return ConvertCoords(model).screen_to_world(screen_position, name_, avg_depth);
+	return ConvertCoords(camera_info_).screen_to_world(screen_position, name_, avg_depth);
 }
 
 // Given the real-world position of the object, build a rectangle bounding box in screen coords for it
-Rect ObjectType::worldToScreenCoords(const Point3f &position, const image_geometry::PinholeCameraModel &model) const
+Rect ObjectType::worldToScreenCoords(const Point3f &position, const sensor_msgs::CameraInfo &camera_info_) const
 {
+	image_geometry::PinholeCameraModel model;
+	model.fromCameraInfo(camera_info_);
 	// TODO - handle object depth?
-	const Point2f screen_center = ConvertCoords(model).world_to_screen(position, name_);
+	const Point2f screen_center = ConvertCoords(camera_info_).world_to_screen(position, name_);
 
 	// Object distance
 	const float r = sqrtf(position.x * position.x + position.y * position.y + position.z * position.z) - depth_ / 2.;

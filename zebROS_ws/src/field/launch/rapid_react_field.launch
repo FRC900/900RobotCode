@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+  <group ns="create_field_map">
+    <rosparam command="load" file="$(find field)/config/rapid_react_field.yaml" />
+    <node name="create_rapid_react_field" pkg="field" type="create_field_map" output= "screen" />
+  </group>
+</launch>

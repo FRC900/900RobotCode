@@ -3,9 +3,10 @@
 #include "field_obj_tracker/convert_coords.h"
 #include <ros/ros.h>
 
-ConvertCoords::ConvertCoords(const image_geometry::PinholeCameraModel &model)
-  : model_(model)
+
+ConvertCoords::ConvertCoords(const sensor_msgs::CameraInfo camera_info)
 {
+  model_.fromCameraInfo(camera_info);
 }
 
 cv::Point3f ConvertCoords::screen_to_world( const cv::Rect &bounding_rect, const std::string &debug_name, const float depth ) const {

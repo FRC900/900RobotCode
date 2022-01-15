@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!-- Launch file for the simulator joysticks -->
+<launch>
+
+	<!-- GDB functionality -->
+	<arg name="debug" default="false" />
+	<arg unless="$(arg debug)" name="launch_prefix" value="" />
+	<arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+	<arg name="joy_or_key" default="key" />
+	<arg name="hw_or_sim" default="sim" />
+
+	<!--  ************** Including teleop node ***************  -->
+	<include file="$(find controller_node)/launch/teleop.launch"/>
+
+	<group ns="frcrobot_rio">
+
+		<!-- Load controller settings -->
+		<!-- These need to be replaced with the real thing -->
+		<rosparam file="$(find ros_control_boilerplate)/config/joysticks_for_simulator.yaml" command="load"/>
+		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_rio.yaml" command="load"/>
+
+		<!-- Load hardware interface -->
+		<node name="frcrobot_$(arg hw_or_sim)_interface" pkg="ros_control_boilerplate" type="frcrobot_$(arg hw_or_sim)_main"
+			output="screen" launch-prefix="$(arg launch_prefix)">
+			<remap from="js0" to="joystick_states1"/>
+		</node>
+
+		<!--  ************** Including joysticks_sim launch file ***************  -->
+		<include file="$(find controller_node)/launch/joysticks_sim.launch">
+			<arg name="joy_or_key" value="$(arg joy_or_key)"/>
+		</include>
+
+		<!-- Load controller manager -->
+		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
+			output="screen" args="spawn joint_state_controller_rio joint_state_listener_controller joystick_controller match_state_controller robot_controller_state_controller robot_code_ready_controller" />
+
+		<node name="uptime_rio" pkg="uptime" type="uptime_node" output="screen" />
+
+		<include file="$(find cpu_monitor)/launch/cpu_monitor.launch">
+			<arg name="poll_period" value="1"/>
+		</include>
+
+	</group>
+</launch>

@@ -27,7 +27,7 @@ TrackedObject::TrackedObject(int                                       id,
 		type_(type_in),
 		detectHistory_(historyLength),
 		positionHistory_(historyLength),
-		KF_(type_.screenToWorldCoords(screen_position, avg_depth, model),
+		KF_(type_.screenToWorldCoords(screen_position, avg_depth, model.cameraInfo()),
 			dt, accel_noise_mag),
 		missedFrameCount_(0)
 {
@@ -65,7 +65,7 @@ void TrackedObject::setPosition(const Point3f &new_position)
 void TrackedObject::setPosition(const Rect &screen_position, double avg_depth,
 		                        const image_geometry::PinholeCameraModel &model)
 {
-	setPosition(type_.screenToWorldCoords(screen_position, avg_depth, model));
+	setPosition(type_.screenToWorldCoords(screen_position, avg_depth, model.cameraInfo()));
 }
 
 #if 0
@@ -110,7 +110,7 @@ void TrackedObject::adjustPosition(const Mat &transform_mat, float depth, const 
 	//update the history
 	for (auto it = positionHistory_.begin(); it != positionHistory_.end(); ++it)
 	{
-		screen_rect = type_.worldToScreenCoords(*it, model);
+		screen_rect = type_.worldToScreenCoords(*it, model.cameraInfo());
 		screen_pos = Point(screen_rect.tl().x + screen_rect.width / 2, screen_rect.tl().y + screen_rect.height / 2);
 		pos_mat.at<double>(0,0) = screen_pos.x;
 		pos_mat.at<double>(0,1) = screen_pos.y;
@@ -118,7 +118,7 @@ void TrackedObject::adjustPosition(const Mat &transform_mat, float depth, const 
 		new_screen_pos_mat = transform_mat * pos_mat;
 		new_screen_pos = Point(new_screen_pos_mat.at<double>(0),new_screen_pos_mat.at<double>(1));
 		new_screen_rect = Rect(new_screen_pos.x,new_screen_pos.y,0,0);
-		*it = type_.screenToWorldCoords(new_screen_rect, depth, model);
+		*it = type_.screenToWorldCoords(new_screen_rect, depth, model.cameraInfo());
 	}
 }
 
@@ -175,7 +175,7 @@ vector <Point> TrackedObject::getScreenPositionHistory(const image_geometry::Pin
 
 	for (auto it = positionHistory_.begin(); it != positionHistory_.end(); ++it)
 	{
-		Rect screen_rect(type_.worldToScreenCoords(*it, model));
+		Rect screen_rect(type_.worldToScreenCoords(*it, model.cameraInfo()));
 		ret.push_back(Point(cvRound(screen_rect.x + screen_rect.width / 2.),cvRound( screen_rect.y + screen_rect.height / 2.)));
 	}
 	return ret;
@@ -230,7 +230,7 @@ double TrackedObject::getDetectedRatio(void) const
 
 Rect TrackedObject::getScreenPosition(const image_geometry::PinholeCameraModel &model) const
 {
-	return type_.worldToScreenCoords(position_, model);
+	return type_.worldToScreenCoords(position_, model.cameraInfo());
 }
 
 
@@ -368,7 +368,7 @@ void TrackedObjectList::processDetect(const vector<Rect> &detectedRects,
 	for (size_t i = 0; i < detectedRects.size(); i++)
 	{
 		detectedPositions.push_back(
-				types[i].screenToWorldCoords(detectedRects[i], depths[i], model));
+				types[i].screenToWorldCoords(detectedRects[i], depths[i], model.cameraInfo()));
 #ifdef VERBOSE_TRACK
 		cout << "Detected rect [" << i << "] = " << detectedRects[i] << " positions[" << detectedPositions.size() - 1 << "]:" << detectedPositions[detectedPositions.size()-1] << endl;
 #endif

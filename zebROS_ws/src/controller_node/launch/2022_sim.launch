@@ -1,15 +1,14 @@
 <?xml version="1.0"?>
 <!--
-  Simulate a omni (swerve) robot in stage for path following testing
+  Simulate a omni (swerve) robot in 2022 field stage
  -->
 <launch>
 	<!-- useful for running sim stuff on a laptop and path follower on a jetson -->
 	<arg name="run_path_follower" default="True" />
 	<!--  ************** Global Parameters ***************  -->
 	<param name="/use_sim_time" value="true"/>
-
 	<!--  ************** Stage Simulator ***************  -->
-	<node pkg="stage_ros" type="stageros" name="stageros" args="$(find controller_node)/stage/2021PathFollower.world" output="screen">
+	<node pkg="stage_ros" type="stageros" name="stageros" args="$(find controller_node)/stage/2022_rapid_react.world" output="screen">
 		<remap from="base_scan" to="scan"/>
 		<remap from="odom" to="/frcrobot_jetson/swerve_drive_controller/odom"/>
 	</node>
@@ -33,12 +32,15 @@
 		<arg name="port" value="5803"/>
 	</include>
 
+	<include file="$(find controller_node)/launch/joysticks_for_simulator.launch"/>
+
 	<!--
 	<include file="$(find controller_node)/launch/fuse_odom.launch"/>
 	-->
 	<!--
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetoimu" args="0 0 0 0 0 0 1 base_link imu" />
 	<node pkg="tf2_ros" type="static_transform_publisher" name="static_arzedmap" args="0 0 0 0 0 0 zed_ar_odom base_link" />
+
 	-->
 	<node pkg="tf" type="static_transform_publisher" name="link_basetoimu" args="0 0 0 0 0 0 1 base_link imu 100" />
 
@@ -75,9 +77,7 @@
 		-->
 		<arg name="use_pose_for_odom" value="false"/>
 	</include>
-	<!-- Super sketchy way to hook up cmd vel output from path follower to stage /cmd_vel topic
-		 I could say this is because it is a closer match to the real robot but it is really just
-         being reused out of laziness.
+	<!-- Hook up cmd vel output from path follower to stage /cmd_vel topic
 	-->
 	<group ns="cmd_vel_mux">
 		<node name="twist_mux" pkg="twist_mux" type="twist_mux">
@@ -85,8 +85,6 @@
 			<remap from="cmd_vel_out" to="/cmd_vel"/>
 		</node>
 
-		<node pkg="rqt_driver_station_sim" type="rqt_driver_station_sim" name="rqt_driver_station_sim" >
-			<remap from="/frcrobot_rio/match_data_in" to="/frcrobot_rio/match_data" />
-		</node>
+		<node pkg="rqt_driver_station_sim" type="rqt_driver_station_sim" name="rqt_driver_station_sim" />
 	</group>
 </launch>

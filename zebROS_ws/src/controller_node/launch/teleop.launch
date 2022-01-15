@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<launch>
+
+  <group ns="teleop">
+    <rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
+    <node name="teleop_joystick_comp_2020" pkg="teleop_joystick_control" type="teleop_joystick_comp_2020" output="screen"/>
+
+    <group ns="orient_strafing"> <!--TODO Tune these values on a full weight robot -->
+      <rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
+      <node name="orient_strafing_pid" pkg="pid" type="controller" >
+        <param name="node_name" value="orient_strafing_pid" />
+        <param name="Kp" value="4.5" />
+        <param name="Ki" value="0.0" />
+        <param name="Kd" value="0.0" />
+        <param name="upper_limit" value="7.5" />
+        <param name="lower_limit" value="-7.5" />
+        <param name="windup_limit" value="7.5" />
+        <param name="angle_error" value="true" />
+      </node>
+      <node name="orient_strafing_node" pkg="teleop_joystick_control" type="orient_strafing_node" output="screen"/>
+    </group>
+  </group>
+
+</launch>

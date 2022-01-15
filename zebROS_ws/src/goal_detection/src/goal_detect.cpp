@@ -137,7 +137,7 @@ namespace goal_detection
 				}
 				gd_msg.header.frame_id = frame_id;
 
-				ConvertCoords cc(model);
+				ConvertCoords cc(camera_info_);
 
 				#if 0
 					ROS_INFO_STREAM("Camera_info " << camera_info_);

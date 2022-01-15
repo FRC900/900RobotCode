@@ -1,0 +1,89 @@
+# Top-level world file for the rapid react field stage simulation
+include "robots/2022FRC_robot.inc"
+
+# Object detection model - used as a base for each target
+# we can detect using tensorflow object detection
+# TODO - maybe also retro targets?
+define objdet_target model
+(
+ size [ 0.200 0.200 0.050 ]
+ gui_move 0
+ gui_nose 0
+ gripper_return 1
+ ranger_return -1.000
+)
+
+# Model for the basic floorplan - walls, and field obstacles
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 1
+
+  gui_nose 0
+  gui_grid 0
+  gui_move 0
+  gui_outline 0
+  gripper_return 1
+  fiducial_return -1
+  ranger_return 1.000
+)
+
+resolution 0.02
+interval_sim 5  # simulation timestep in milliseconds
+interval_real 5
+threads 2
+
+window
+(
+  size [ 1299  609 ]
+  center [ 0.000 0.000 ]
+  rotate [ 0.000 0.000 ]
+  scale 60.000
+)
+
+# Size determines how pixels map to meters
+# Pose fixes the center of the field
+# PNG is black and white image
+floorplan
+(
+  name "rapid_react_field_map"
+  bitmap "../maps/rapid_react_field_cad_cropped.png"
+  size [16.459 8.205 4.000] #[24.6888 33.5274 4] x, y, size of the map (meters)
+  pose [ 8.2296  4.1148  0.000 0.000 ] #[  4.1148 8.5341  0.0 0.0 ] x, y, z, rotation
+)
+
+# throw in a robot
+omnidir_robot
+(
+  # Everything but slalom
+  pose [ 1.041 2.286 0.000 0.000 ]
+  # Slalom pose [ 1.0414 .762 0.0 0.0 ]
+  name "robot"
+)
+
+# Simulated AR tags
+objdet_target ( pose [ -1.720 -0.200   1.000 0.000 ] fiducial_return 1 color "cyan")
+objdet_target ( pose [ -1.720  0.480  1.000 0.000 ] fiducial_return 0 color "yellow")
+objdet_target ( pose [ -1.720  1.145 1.000 0.000 ] fiducial_return 2 color "green")
+objdet_target ( pose [ -1.720  1.638 1.000 0.000 ] fiducial_return 4 color "blue")
+objdet_target ( pose [ -1.720  2.263 1.000 0.000 ] fiducial_return 5 color "purple")
+objdet_target ( pose [ -1.720  3.103 1.000 0.000 ] fiducial_return 3 color "orange")
+
+# Game pieces
+objdet_target ( pose [ 5.983873  7.3156 1.000 0.000 ] fiducial_return 4 color "red")
+objdet_target ( pose [ 4.940  6.2156 1.000 0.000 ] fiducial_return 4 color "blue")
+objdet_target ( pose [ 4.436 3.2846 1.000 0.000 ] fiducial_return 4 color "red")
+objdet_target ( pose [ 5.053 1.8996 1.000 0.000 ] fiducial_return 4 color "blue")
+objdet_target ( pose [ 7.562 0.2786 1.000 0.000 ] fiducial_return 4 color "blue")
+objdet_target ( pose [ 9.084 0.3516 1.000 0.000 ] fiducial_return 4 color "red")
+objdet_target ( pose [ 10.463326 1.0126 1.000 0.000 ] fiducial_return 4 color "blue")
+objdet_target ( pose [ 11.513 2.06834 1.000 0.000 ] fiducial_return 4 color "red")
+objdet_target ( pose [ 12.017 4.9996 1.000 0.000 ] fiducial_return 4 color "blue")
+objdet_target ( pose [ 11.400 6.3846 1.000 0.000 ] fiducial_return 4 color "red")
+objdet_target ( pose [ 8.885 7.9726 1.000 0.000 ] fiducial_return 4 color "red")
+objdet_target ( pose [ 7.369 7.9326 1.000 0.000 ] fiducial_return 4 color "blue")
+objdet_target ( pose [ 1.061930 1.151857 1.000 0.000 ] fiducial_return 4 color "blue")
+objdet_target ( pose [ 15.391619 7.132289 1.000 0.000 ] fiducial_return 4 color "red")

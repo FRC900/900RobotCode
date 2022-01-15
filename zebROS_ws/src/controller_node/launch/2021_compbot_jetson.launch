@@ -70,28 +70,9 @@
 	-->
 	</group>
 
+	<include file="$(find controller_node)/launch/teleop.launch"/>
 	<include file="$(find controller_node)/launch/path_follower.launch"/>
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
-
-	<group ns="teleop">
-		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
-		<node name="teleop_joystick_comp_2020" pkg="teleop_joystick_control" type="teleop_joystick_comp_2020" output="screen"/>
-
-		<group ns="orient_strafing"> <!--TODO Tune these values on a full weight robot -->
-			<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
-			<node name="orient_strafing_pid" pkg="pid" type="controller" >
-				<param name="node_name" value="orient_strafing_pid" />
-				<param name="Kp" value="4.5" />
-				<param name="Ki" value="0.0" />
-				<param name="Kd" value="0.0" />
-				<param name="upper_limit" value="7.5" />
-				<param name="lower_limit" value="-7.5" />
-				<param name="windup_limit" value="7.5" />
-				<param name="angle_error" value="true" />
-			</node>
-			<node name="orient_strafing_node" pkg="teleop_joystick_control" type="orient_strafing_node" output="screen"/>
-		</group>
-	</group>
 
 	<node name="num_powercells_pub_node" pkg="behaviors" type="num_powercells_pub_node" output="screen" />
 	<param name="initial_num_powercells" value="0"/>
@@ -128,7 +109,7 @@
 	</group>
 
 	<!-- vision align -->
-	<!-- 
+	<!--
 	<include file="$(find controller_node)/launch/tape_detection.launch">
 		<arg name="camera_model" value="zed2" />
 	</include>
@@ -136,11 +117,11 @@
 	<include file="$(find tf_object_detection)/launch/test_detection.launch">
 		<arg name="input_type" value="live_camera" />
 	</include>
-	
-	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" > 
+
+	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
 		<arg name="port" value="5803"/>
 	</include>
-	
+
 	<!--
 	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
 	-->

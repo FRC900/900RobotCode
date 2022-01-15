@@ -224,7 +224,7 @@ namespace zv_utils {
 
 			for (int i = 0; i < depth.cols; i++) {
 				if (ptr_mask[i] && (ptr_depth[i] > 0)) {
-					cv::Point3f pos = ot.screenToWorldCoords(cv::Rect(i,j,0,0), ptr_depth[i], model);
+					cv::Point3f pos = ot.screenToWorldCoords(cv::Rect(i,j,0,0), ptr_depth[i], model.cameraInfo());
 					slope_x_values.push_back(pos.x);
 					slope_y_values.push_back(pos.y);
 					slope_z_values.push_back(pos.z);

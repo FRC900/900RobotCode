@@ -135,6 +135,8 @@ map_relative_slalom_path:
       - {min_x: 0, max_x: 0, min_y: 0, max_y: 0}
       - {min_x: 0, max_x: 0, min_y: 0, max_y: 0}
 
+galactic_search_path:
+  drive_path_test_1
 
 #examples:
 
