@@ -4,7 +4,7 @@
 #include <ros/ros.h>
 
 
-ConvertCoords::ConvertCoords(const sensor_msgs::CameraInfo camera_info)
+ConvertCoords::ConvertCoords(const sensor_msgs::CameraInfo &camera_info)
 {
   model_.fromCameraInfo(camera_info);
 }
