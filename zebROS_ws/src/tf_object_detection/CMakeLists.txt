@@ -9,6 +9,7 @@ include ("../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   field_obj
+  frc_msgs
   field_obj_tracker
   image_transport
   message_filters
@@ -143,6 +144,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(tf_object_screen_to_world src/screen_to_world.cpp src/depth_algorithms.cpp)
 add_executable(test_depth_detection src/test_depth_detection.cpp src/depth_algorithms.cpp)
+add_executable(cargo_detection_filter src/cargo_filter.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -154,6 +156,7 @@ add_executable(test_depth_detection src/test_depth_detection.cpp src/depth_algor
 ## same as for the library above
 add_dependencies(tf_object_screen_to_world ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(test_depth_detection ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(cargo_detection_filter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(tf_object_screen_to_world
@@ -162,6 +165,9 @@ target_link_libraries(tf_object_screen_to_world
 target_link_libraries(test_depth_detection
  ${catkin_LIBRARIES}
 )
+target_link_libraries(cargo_detection_filter
+ ${catkin_LIBRARIES}
+ )
 
 #############
 ## Install ##
