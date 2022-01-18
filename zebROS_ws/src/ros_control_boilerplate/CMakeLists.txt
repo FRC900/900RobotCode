@@ -236,6 +236,20 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
 			src/dummy_wpilib_i2c.cpp
 		)
 	endif()
+
+	add_library(wpilibc src/dummy_library.cpp)
+	add_library(wpiHal  src/dummy_library.cpp)
+	add_library(wpimath src/dummy_library.cpp)
+	add_library(wpiutil src/dummy_library.cpp)
+	install(TARGETS
+		wpilibc
+		wpiHal
+		wpimath
+		wpiutil
+	  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+	  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+	)
+
 endif()
 
 # Don't build sim code for the Rio or Jetson -
