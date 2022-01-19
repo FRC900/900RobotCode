@@ -7,7 +7,7 @@ import rospkg
 import threading
 from PyQt5.QtWidgets import QWidget, QCheckBox, QApplication, QHBoxLayout, QVBoxLayout
 from PyQt5 import QtCore, QtWidgets
-#from PyQt5 import QtGui 
+#from PyQt5 import QtGui
 from qt_gui.plugin import Plugin
 from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget
@@ -82,25 +82,38 @@ class DriverStationSim(Plugin):
         if(self.auto_state != state):
             self.auto_state = state
             self.display_auto_state()
-    
+
 
     def display_auto_state(self):
         if self.auto_state == 0:
             self._widget.auto_state_readback_text.setText("Not ready")
             self._widget.auto_state_readback_text.setStyleSheet("background-color:#ff5555;")
-        elif self.auto_state == 1: 
+        elif self.auto_state == 1:
             self._widget.auto_state_readback_text.setText("Ready, waiting for auto period")
-            self._widget.auto_state_readback_text.setStyleSheet("background-color:#ffffff;") 
-        elif self.auto_state == 2: 
+            self._widget.auto_state_readback_text.setStyleSheet("background-color:#ffffff;")
+        elif self.auto_state == 2:
             self._widget.auto_state_readback_text.setText("Running")
-            self._widget.auto_state_readback_text.setStyleSheet("background-color:#ffff00")       
-        elif self.auto_state == 3: 
+            self._widget.auto_state_readback_text.setStyleSheet("background-color:#ffff00")
+        elif self.auto_state == 3:
             self._widget.auto_state_readback_text.setText("Finished")
             self._widget.auto_state_readback_text.setStyleSheet("background-color:#00ff00;")
-	elif self.auto_state == 4:
-	    self._widget.auto_state_readback_text.setText("Error")
+        elif self.auto_state == 4:
+            self._widget.auto_state_readback_text.setText("Error")
             self._widget.auto_state_readback_text.setStyleSheet("background-color:#ff5555;")
 
+    def get_alliance_location(self): # returns (allianceColor, driverStationLocation) -- for color, 0 = red and 1 = blue
+        if self._widget.red1.isChecked():
+            return 0, 1
+        if self._widget.red2.isChecked():
+            return 0, 2
+        if self._widget.red3.isChecked():
+            return 0, 3
+        if self._widget.blue1.isChecked():
+            return 1, 1
+        if self._widget.blue2.isChecked():
+            return 1, 2
+        if self._widget.blue3.isChecked():
+            return 1, 3
 
     def __init__(self, context):
         super(DriverStationSim, self).__init__(context)
@@ -128,10 +141,10 @@ class DriverStationSim(Plugin):
         loadUi(ui_file, self._widget)
         # Give QObjects reasonable names
         self._widget.setObjectName('DriverStationSim')
-        # Show _widget.windowTitle on left-top of each plugin (when 
-        # it's set in _widget). This is useful when you open multiple 
-        # plugins at once. Also if you open multiple instances of your 
-        # plugin at once, these lines add number to make it easy to 
+        # Show _widget.windowTitle on left-top of each plugin (when
+        # it's set in _widget). This is useful when you open multiple
+        # plugins at once. Also if you open multiple instances of your
+        # plugin at once, these lines add number to make it easy to
         # tell from pane to pane.
 
         talons = []
@@ -271,19 +284,18 @@ class DriverStationSim(Plugin):
                 #Publish Data
                 match_msg.header.stamp = rospy.Time.now()
                 match_msg.gameSpecificData = [ord(c) for c in self._widget.game_specific_data.text()]
-                match_msg.allianceColor = 1
-                match_msg.driverStationLocation = 1
+                match_msg.allianceColor, match_msg.driverStationLocation = self.get_alliance_location()
                 match_msg.matchNumber = 1
                 match_msg.Autonomous = auto
                 match_msg.DSAttached = True
-                
+
                 # TODO - FMS attached
                 # TODO - EStopped?
 
                 enable_last = match_msg.Enabled
                 auto_last = auto
                 practice_last = practice
-                
+
                 match_pub.publish(match_msg)
 
                 # Publish integer auto mode to auto_mode node
@@ -323,7 +335,7 @@ class DriverStationSim(Plugin):
         # TODO restore intrinsic configuration, usually using:
         # v = instance_settings.value(k)
         pass
-    
+
     def _parse_args(self, argv):
         parser = argparse.ArgumentParser(prog="rqt_driver_station_sim", add_help=False)
         DriverStationSim.add_arguments(parser)

@@ -16,6 +16,7 @@
 
 #include <thread>
 #include <atomic>
+#include <functional>
 
 #include "std_msgs/Bool.h"
 //VARIABLES ---------------------------------------------------------
@@ -42,6 +43,8 @@ std::map<std::string, nav_msgs::Path> premade_paths;
 
 ros::ServiceClient spline_gen_cli_;
 
+std::function<void()> preemptAll; // function to preempt all actions, set in main
+
 //FUNCTIONS -------
 
 //server callback for stop autonomous execution
@@ -58,7 +61,13 @@ void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg)
 {
 	if((msg->Autonomous && msg->Enabled) || (msg->Enabled && enable_teleop))
 	{
+		auto_stopped = false;
 		auto_started = true; //only want to set this to true, never set it to false afterwards
+	}
+	if((auto_started && !msg->Enabled))
+	{
+		auto_started = false;
+		preemptAll();
 	}
 }
 
@@ -194,6 +203,7 @@ void shutdownNode(AutoStates state, const std::string &msg)
 	if(auto_state_pub_thread.joinable()) {
 		auto_state_pub_thread.join(); // waits until auto state publisher thread finishes
 	}
+	exit(0);
 }
 
 bool readStringParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, std::string &val)
@@ -273,9 +283,28 @@ bool readBoolParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, b
 	return true;
 }
 
+bool waitForAutoEnd(ros::NodeHandle nh) // returns true if no errors
+{
+	ros::spinOnce();
+
+	ros::Rate r(20);
+	bool isOk = ros::ok();
+	while (isOk && !auto_stopped && auto_started)
+	{
+		isOk = ros::ok();
+		ros::spinOnce(); // spin so the subscribers can update
+		r.sleep(); // wait for 1/20 of a second
+	}
+	if (!isOk) { // ROS not being ok is an error, return false
+		return false;
+	}
+	return true;
+}
 
 bool waitForAutoStart(ros::NodeHandle nh)
 {
+	ros::spinOnce();
+
 	ros::Rate r(20);
 	// In sim, time starts at 0. We subtract 2 seconds from the currentt time
 	// when fetching transforms to make sure they've had a chance to be published
@@ -404,7 +433,7 @@ bool waitForAutoStart(ros::NodeHandle nh)
 		r.sleep();
 	}
 
-	shutdownNode(DONE, "Auto node - code stopped before execution");
+	// shutdownNode(DONE, "Auto node - code stopped before execution");
 	return false;
 }
 
@@ -415,7 +444,6 @@ bool resetMaps(std_srvs::Empty::Request &req,
 	ROS_INFO_STREAM("premade paths were cleared");
 	return true;
 }
-
 
 int main(int argc, char** argv)
 {
@@ -451,6 +479,11 @@ int main(int argc, char** argv)
 	actionlib::SimpleActionClient<path_follower_msgs::PathAction> path_ac("/path_follower/path_follower_server", true); //TODO fix this path
 	actionlib::SimpleActionClient<behavior_actions::ShooterAction> shooter_ac("/shooter/shooter_server", true);
 	actionlib::SimpleActionClient<behavior_actions::IntakeAction> intake_ac("/powercell_intake/powercell_intake_server", true);
+	preemptAll = [&path_ac, &shooter_ac, &intake_ac](){ // must include all actions called
+		path_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
+		shooter_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
+		intake_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
+	};
 
 	//other variables
 	ros::Rate r(10); //used in various places where we wait TODO: config?
@@ -459,140 +492,144 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	// TODO - turn this into a loop
-	//        Once auto has run, wait at the end of the loop until a service call
-	//        resets the code back to the start. Or maybe just look for the robot to to into
-	//        teleop and then disabled.  This will be useful for testing
-	//        - rather than constantly restarting code, just call the service and go again.
-	//WAIT FOR MATCH TO START --------------------------------------------------------------------------
-	ROS_INFO("Auto node - waiting for autonomous to start");
+	while(true) { // will exit when shutdownNode is called
+		//WAIT FOR MATCH TO START --------------------------------------------------------------------------
+		ROS_INFO("Auto node - waiting for autonomous to start");
 
-	//wait for auto period to start
-	if (!waitForAutoStart(nh))
-		return 0;
+		//wait for auto period to start
+		if (!waitForAutoStart(nh))
+			continue;
 
-	//EXECUTE AUTONOMOUS ACTIONS --------------------------------------------------------------------------
+		//EXECUTE AUTONOMOUS ACTIONS --------------------------------------------------------------------------
 
-	ROS_INFO_STREAM("Auto node - Executing auto mode " << auto_mode);
-	auto_state = RUNNING;
+		ROS_INFO_STREAM("Auto node - Executing auto mode " << auto_mode);
+		auto_state = RUNNING;
 
-	std::vector<std::string> auto_steps; //stores string of action names to do, read from the auto mode array in the config file
-	//read sequence of actions from config
-	if(! nh.getParam("auto_mode_" + std::to_string(auto_mode), auto_steps)){
-		shutdownNode(ERROR, "Couldn't read auto_mode_" + std::to_string(auto_mode) + " config value in auto node");
-		return 1;
-	}
+		std::vector<std::string> auto_steps; //stores string of action names to do, read from the auto mode array in the config file
+		//read sequence of actions from config
+		if(! nh.getParam("auto_mode_" + std::to_string(auto_mode), auto_steps)){
+			shutdownNode(ERROR, "Couldn't read auto_mode_" + std::to_string(auto_mode) + " config value in auto node");
+			return 1;
+		}
 
-	//run through actions in order
-	for(size_t i = 0; i < auto_steps.size(); i++){
-		if(auto_started && !auto_stopped)
-		{
-			ROS_INFO_STREAM("Auto node - running step " << i << ": " << auto_steps[i]);
-
-			//read data from config needed to carry out the action
-			XmlRpc::XmlRpcValue action_data;
-			if(! nh.getParam(auto_steps[i], action_data)){
-				//shutdownNode(ERROR, "Auto node - Couldn't read data for '" + auto_steps[i] + "' auto action from config file");
-				//return 1;
-			}
-
-			// CODE FOR ACTIONS HERE --------------------------------------------------
-			//figure out what to do based on the action type, and do it
-			std::string action_data_type;
-			if (action_data.hasMember("type"))
-				action_data_type = static_cast<std::string>(action_data["type"]);
-			else
-				action_data_type = "path"; // assume this is a dynamic path, hope for the best
-
-			if(action_data_type == "pause")
+		//run through actions in order
+		for(size_t i = 0; i < auto_steps.size(); i++){
+			if(auto_started && !auto_stopped)
 			{
-				const double start_time = ros::Time::now().toSec();
+				ROS_INFO_STREAM("Auto node - running step " << i << ": " << auto_steps[i]);
 
-				//read duration - user could've entered a double or an int, we don't know which
-				double duration;
-				if (!readFloatParam("duration", action_data, duration))
-				{
-					shutdownNode(ERROR, "Auto node - duration is not a double or int in '" + auto_steps[i] + "' action");
-					return 1;
-				}
-#if 0
-				if((action_data["duration"].getType() == XmlRpc::XmlRpcValue::Type::TypeDouble) ||
-				   (action_data["duration"].getType() == XmlRpc::XmlRpcValue::Type::TypeInt) ) {
-					duration = static_cast<double>(action_data["duration"]);
-				} else {
-					shutdownNode(ERROR, "Auto node - duration is not a double or int in '" + auto_steps[i] + "' action");
-					return 1;
-				}
-#endif
-
-				//wait
-				while (ros::Time::now().toSec() - start_time < duration && !auto_stopped && ros::ok())
-				{
-					ros::spinOnce();
-					r.sleep();
-				}
-			}
-			else if(action_data_type == "intake_actionlib_server")
-			{
-				//for some reason this is necessary, even if the server has been up and running for a while
-				if(!intake_ac.waitForServer(ros::Duration(5))){
-					shutdownNode(ERROR,"Auto node - couldn't find intake actionlib server");
-					return 1;
+				//read data from config needed to carry out the action
+				XmlRpc::XmlRpcValue action_data;
+				if(! nh.getParam(auto_steps[i], action_data)){
+					//shutdownNode(ERROR, "Auto node - Couldn't read data for '" + auto_steps[i] + "' auto action from config file");
+					//return 1;
 				}
 
-				if (!action_data.hasMember("goal"))
-				{
-					shutdownNode(ERROR,"Auto node - intake_actionlib_server call missing \"goal\" field");
-					return 1;
-				}
-				if(action_data["goal"] == "stop") {
-					intake_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
-				} else {
-					behavior_actions::IntakeGoal goal;
-					intake_ac.sendGoal(goal);
-				}
-			}
-			else if(action_data_type == "shooter_actionlib_server")
-			{
-				if(!shooter_ac.waitForServer(ros::Duration(5))){
-					return 1;
-					shutdownNode(ERROR, "Auto node - couldn't find shooter actionlib server");
-				} //for some reason this is necessary, even if the server has been up and running for a while
-				behavior_actions::ShooterGoal goal;
-				goal.mode = 0;
-				shooter_ac.sendGoal(goal);
-				waitForActionlibServer(shooter_ac, 100, "intake server");
-			}
-			else if(action_data_type == "path")
-			{
-				if(!path_ac.waitForServer(ros::Duration(5))){
-					shutdownNode(ERROR, "Couldn't find path server");
-					return 1;
-				}
-				int iteration_value = 1;
-				if (action_data.hasMember("goal"))
-					readIntParam("iterations", action_data["goal"], iteration_value);
+				// CODE FOR ACTIONS HERE --------------------------------------------------
+				//figure out what to do based on the action type, and do it
+				std::string action_data_type;
+				if (action_data.hasMember("type"))
+					action_data_type = static_cast<std::string>(action_data["type"]);
+				else
+					action_data_type = "path"; // assume this is a dynamic path, hope for the best
 
-				while(iteration_value > 0)
+				if(action_data_type == "pause")
 				{
-					path_follower_msgs::PathGoal goal;
-					if (premade_paths.find(auto_steps[i]) == premade_paths.end()) {
-						shutdownNode(ERROR, "Can't find premade path " + std::string(auto_steps[i]));
+					const double start_time = ros::Time::now().toSec();
+
+					//read duration - user could've entered a double or an int, we don't know which
+					double duration;
+					if (!readFloatParam("duration", action_data, duration))
+					{
+						shutdownNode(ERROR, "Auto node - duration is not a double or int in '" + auto_steps[i] + "' action");
+						return 1;
 					}
-					goal.path = premade_paths[auto_steps[i]];
-					path_ac.sendGoal(goal);
-					waitForActionlibServer(path_ac, 100, "running path");
-					iteration_value --;
+	#if 0
+					if((action_data["duration"].getType() == XmlRpc::XmlRpcValue::Type::TypeDouble) ||
+					   (action_data["duration"].getType() == XmlRpc::XmlRpcValue::Type::TypeInt) ) {
+						duration = static_cast<double>(action_data["duration"]);
+					} else {
+						shutdownNode(ERROR, "Auto node - duration is not a double or int in '" + auto_steps[i] + "' action");
+						return 1;
+					}
+	#endif
+
+					//wait
+					while (ros::Time::now().toSec() - start_time < duration && !auto_stopped && ros::ok())
+					{
+						ros::spinOnce();
+						r.sleep();
+					}
+				}
+				else if(action_data_type == "intake_actionlib_server")
+				{
+					//for some reason this is necessary, even if the server has been up and running for a while
+					if(!intake_ac.waitForServer(ros::Duration(5))){
+						shutdownNode(ERROR,"Auto node - couldn't find intake actionlib server");
+						return 1;
+					}
+
+					if (!action_data.hasMember("goal"))
+					{
+						shutdownNode(ERROR,"Auto node - intake_actionlib_server call missing \"goal\" field");
+						return 1;
+					}
+					if(action_data["goal"] == "stop") {
+						intake_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
+					} else {
+						behavior_actions::IntakeGoal goal;
+						intake_ac.sendGoal(goal);
+					}
+				}
+				else if(action_data_type == "shooter_actionlib_server")
+				{
+					if(!shooter_ac.waitForServer(ros::Duration(5))){
+						return 1;
+						shutdownNode(ERROR, "Auto node - couldn't find shooter actionlib server");
+					} //for some reason this is necessary, even if the server has been up and running for a while
+					behavior_actions::ShooterGoal goal;
+					goal.mode = 0;
+					shooter_ac.sendGoal(goal);
+					waitForActionlibServer(shooter_ac, 100, "intake server");
+				}
+				else if(action_data_type == "path")
+				{
+					if(!path_ac.waitForServer(ros::Duration(5))){
+						shutdownNode(ERROR, "Couldn't find path server");
+						return 1;
+					}
+					int iteration_value = 1;
+					if (action_data.hasMember("goal"))
+						readIntParam("iterations", action_data["goal"], iteration_value);
+
+					while(iteration_value > 0)
+					{
+						path_follower_msgs::PathGoal goal;
+						if (premade_paths.find(auto_steps[i]) == premade_paths.end()) {
+							shutdownNode(ERROR, "Can't find premade path " + std::string(auto_steps[i]));
+						}
+						goal.path = premade_paths[auto_steps[i]];
+						path_ac.sendGoal(goal);
+						waitForActionlibServer(path_ac, 100, "running path");
+						iteration_value --;
+					}
+				}
+				else
+				{
+					shutdownNode(ERROR, "Auto node - Invalid type of action: " + std::string(action_data_type));
+					return 1;
 				}
 			}
-			else
-			{
-				shutdownNode(ERROR, "Auto node - Invalid type of action: " + std::string(action_data_type));
-				return 1;
-			}
+		}
+
+		auto_state = DONE;
+		ROS_INFO_STREAM("auto_node completed, waiting for auto to end");
+		if (!waitForAutoEnd(nh)) {
+			shutdownNode(ERROR, "ROS is not ok :(");
+		} else {
+			auto_state = READY;
 		}
 	}
 
-	shutdownNode(DONE, auto_stopped ? "Auto node - Autonomous actions stopped before completion" : "Auto node - Autonomous actions completed!");
 	return 0;
 }
