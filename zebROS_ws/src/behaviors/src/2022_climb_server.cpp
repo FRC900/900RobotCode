@@ -12,7 +12,7 @@ protected:
   // other state data we have
 public:
   uint8_t state = 0;
-  uint8_t rung = 0;
+  uint8_t rung = 0; // 0 = ground, 1 = medium, 2 = high, 3 = traversal
   bool exited = false;
   ClimbStateMachine(bool waitForHuman)
   {
@@ -114,35 +114,103 @@ public:
     }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state6, this);
-    exited = true;
   }
   void state6()
   {
-
+    state = 6;
+    ROS_INFO_STREAM("State 6");
+    ROS_INFO_STREAM("---");
+    ROS_INFO_STREAM("Detaching static hooks");
+    ros::Duration(0.8).sleep();
+    ROS_INFO_STREAM("Detached static hooks");
+    if (rung != 0) {
+      ROS_INFO_STREAM("Waiting for robot to stop swinging");
+      ros::Duration(2).sleep();
+      ROS_INFO_STREAM("Robot stopped swinging");
+    }
+    if (waitForHuman_)
+    {
+      ROS_INFO_STREAM("Waiting for human...");
+      // REPLACE WITH JOYSTICK TEMPLATE
+      ROS_INFO_STREAM("Thank you human, proceeding :)");
+    }
+    ROS_INFO_STREAM("");
+    nextFunction_ = boost::bind(&ClimbStateMachine::state7, this);
   }
   void state7()
   {
-
+    state = 7;
+    ROS_INFO_STREAM("State 7");
+    ROS_INFO_STREAM("---");
+    ROS_INFO_STREAM("Lowering dynamic arms fully");
+    ros::Duration(1.5).sleep();
+    rung++;
+    ROS_INFO_STREAM("Lowered dynamic arms fully. Robot is fully supported by rung " << std::to_string(rung) << ".");
+    if (waitForHuman_)
+    {
+      ROS_INFO_STREAM("Waiting for human...");
+      // REPLACE WITH JOYSTICK TEMPLATE
+      ROS_INFO_STREAM("Thank you human, proceeding :)");
+    }
+    ROS_INFO_STREAM("");
+    nextFunction_ = boost::bind(&ClimbStateMachine::state8, this);
   }
   void state8()
   {
-
+    state = 8;
+    ROS_INFO_STREAM("State 8");
+    ROS_INFO_STREAM("---");
+    ROS_INFO_STREAM("Attaching static hooks");
+    ros::Duration(0.8).sleep();
+    ROS_INFO_STREAM("Attached static hooks");
+    if (rung == 3)
+    {
+      ROS_INFO_STREAM("Climb is done! Woohoo!!");
+      exited = true;
+      return;
+    }
+    if (waitForHuman_)
+    {
+      ROS_INFO_STREAM("Waiting for human...");
+      // REPLACE WITH JOYSTICK TEMPLATE
+      ROS_INFO_STREAM("Thank you human, proceeding :)");
+    }
+    ROS_INFO_STREAM("");
+    nextFunction_ = boost::bind(&ClimbStateMachine::state9, this);
   }
   void state9()
   {
-
+    state = 9;
+    ROS_INFO_STREAM("State 9");
+    ROS_INFO_STREAM("---");
+    ROS_INFO_STREAM("Raising dynamic arms slightly");
+    ros::Duration(1).sleep();
+    ROS_INFO_STREAM("Raised dynamic arms slightly");
+    if (waitForHuman_)
+    {
+      ROS_INFO_STREAM("Waiting for human...");
+      // REPLACE WITH JOYSTICK TEMPLATE
+      ROS_INFO_STREAM("Thank you human, proceeding :)");
+    }
+    ROS_INFO_STREAM("");
+    nextFunction_ = boost::bind(&ClimbStateMachine::state10, this);
   }
   void state10()
   {
-
-  }
-  void state11()
-  {
-
-  }
-  void state12()
-  {
-
+    state = 10;
+    ROS_INFO_STREAM("State 10");
+    ROS_INFO_STREAM("---");
+    ROS_INFO_STREAM("Retracting dynamic arm pistons");
+    ros::Duration(1).sleep();
+    ROS_INFO_STREAM("Retracted dynamic arm pistons");
+    if (waitForHuman_)
+    {
+      ROS_INFO_STREAM("Waiting for human...");
+      // REPLACE WITH JOYSTICK TEMPLATE
+      ROS_INFO_STREAM("Thank you human, proceeding :)");
+    }
+    ROS_INFO_STREAM("");
+    nextFunction_ = boost::bind(&ClimbStateMachine::state3, this);
   }
 };
 
