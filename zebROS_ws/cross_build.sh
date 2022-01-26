@@ -5,7 +5,7 @@ cd ~/2022RobotCode/zebROS_ws/
 if [ -z $ROS_ROOT ]; then
 	#PATH=$PATH:$HOME/wpilib/2022/roborio/bin
 	source ~/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/melodic/setup.bash
-elif [[ ! $ROS_ROOT = "$HOME/wpilib/2020/roborio/arm-frc2020-linux-gnueabi/opt/ros/melodic/share/ros" ]]; then
+elif [[ ! $ROS_ROOT = "$HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/melodic/share/ros" ]]; then
 	echo "ROS is not configured for a cross build (maybe set up for a native build instead?)"
 	echo "Run ./cross_build.sh in a new terminal window"
 	exit 1

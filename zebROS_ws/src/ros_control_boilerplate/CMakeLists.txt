@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(ros_control_boilerplate)
-if(NOT CMAKE_BUILD_TYPE AND DEFINED CMAKE_TOOLCHAIN_FILE)  # Cross-build for Rio
-  set(CMAKE_BUILD_TYPE RelWithDebInfo)
-endif()
 
 include ("../cmake_modules/CMakeOpt.cmake")
 
@@ -157,12 +154,6 @@ include_directories(${WPI_SYSROOT}/include/wpilib)
 # Non-rio builds are more complex - we have to grab appropriate
 # parts of WPIlib source and include it manually
 if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
-    # This is needed for non-RIO hardware platforms
-	set (PLATFORM_SPECIFIC_LIBS
-		${PLATFORM_SPECIFIC_LIBS}
-		#${CTRE_LIB_DIR}/libCTRE_PhoenixPlatform_socketcan.so
-	)
-
 	# WPIlib code common to both hardware and sim interfaces.
 	# Create it as a library to avoid building all of these twice
 	add_library(frc_common_wpilib STATIC
@@ -200,7 +191,6 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
 		${ALLWPILIB}/hal/src/main/native/athena/CTREPCM.cpp
 		${ALLWPILIB}/hal/src/main/native/athena/CTREPDP.cpp
 		${ALLWPILIB}/hal/src/main/native/athena/HALInitializer.cpp
-		#${ALLWPILIB}/hal/src/main/native/athena/Ports.cpp
 		${ALLWPILIB}/hal/src/main/native/athena/REVPDH.cpp
 		${ALLWPILIB}/hal/src/main/native/athena/rev/PDHFrames.cpp
 		${ALLWPILIB}/hal/src/main/native/athena/REVPH.cpp
@@ -219,16 +209,9 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
 			${ALLWPILIB}/hal/src/main/native/athena/mockdata/MockHooks.cpp
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalInput.cpp
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalOutput.cpp
-			#${ALLWPILIB}/wpilibc/src/main/native/cpp/Error.cpp
-			#${ALLWPILIB}/wpilibc/src/main/native/cpp/frc2/Timer.cpp
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/I2C.cpp
-			#${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotController.cpp #TODO- duplicate?
-			#${ALLWPILIB}/wpilibc/src/main/native/cpp/SensorUtil.cpp
 			${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ConvertUTF.cpp
 			${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ConvertUTFWrapper.cpp
-			${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
-			#${ALLWPILIB}/wpiutil/src/main/native/unix/Demangle.cpp
-			#${ALLWPILIB}/wpiutil/src/main/native/unix/StackTrace.cpp
 		)
 	else() # anything we don't want to support GPIO access on - x86, older Jetson, etc
 		set (FRCROBOT_HW_MAIN_SRCS ${FRCROBOT_HW_MAIN_SRCS}
@@ -249,7 +232,6 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
 	  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 	)
-
 endif()
 
 # Don't build sim code for the Rio or Jetson -

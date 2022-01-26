@@ -26,6 +26,9 @@ bool PDHStateController::init(hardware_interface::PDHStateInterface *hw,
 		ROS_ERROR("Could not read publish_rate in PDH state controller");
 	}
 
+	realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::PDHData>(root_nh, "pdh_states", 2));
+	pdh_state_ = hw->getHandle(pdh_name);
+
 	auto &m = realtime_pub_->msg_;
 	if (m.current.size() != m.thingsPluggedIn.size() ||
 	    m.current.size() != m.channelBreakerFault.size() ||
@@ -66,21 +69,19 @@ bool PDHStateController::init(hardware_interface::PDHStateInterface *hw,
     if(!controller_nh.getParam("things_plugged_in_pdh_channel", thingsPluggedIn)){
         ROS_ERROR("No things plugged in specified");
 	}
-
-	for(size_t channel = 0; channel < m.current.size(); channel++)
+	else
 	{
-		m.current[channel] = 0;
-		XmlRpc::XmlRpcValue thing_plugged_in = thingsPluggedIn[channel];
-		if(!thing_plugged_in.valid() || thing_plugged_in.getType() != XmlRpc::XmlRpcValue::TypeString){
-			ROS_ERROR("An invalid thing_plugged_in name was specified (expecting a string)");
-		} else {
-			std::string thing_string = thing_plugged_in;
-			m.thingsPluggedIn[channel] = thing_string;
+		for(size_t channel = 0; channel < m.current.size(); channel++)
+		{
+			XmlRpc::XmlRpcValue thing_plugged_in = thingsPluggedIn[channel];
+			if(!thing_plugged_in.valid() || thing_plugged_in.getType() != XmlRpc::XmlRpcValue::TypeString){
+				ROS_ERROR_STREAM("An invalid thing_plugged_in name was specified for channel " << channel << " (expecting a string)");
+			} else {
+				std::string thing_string = thing_plugged_in;
+				m.thingsPluggedIn[channel] = thing_string;
+			}
 		}
 	}
-
-	realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::PDHData>(root_nh, "pdh_states", 2));
-	pdh_state_ = hw->getHandle(pdh_name);
 
 	return true;
 }

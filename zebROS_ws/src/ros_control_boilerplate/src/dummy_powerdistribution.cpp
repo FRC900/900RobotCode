@@ -119,7 +119,7 @@ HAL_REVPDHHandle HAL_InitializePDP(int32_t module,
 
 HAL_Bool HAL_CheckPDPModule(int32_t module)
 {
-	return HAL_CheckPowerDistributionModule(module, HAL_PowerDistributionType_kRev);
+	return HAL_CheckPowerDistributionModule(module, HAL_PowerDistributionType_kCTRE);
 }
 
 double HAL_GetPDPTemperature(HAL_PDPHandle handle, int32_t* status)

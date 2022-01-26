@@ -63,7 +63,7 @@ sudo apt install -y \
     python-pyqt5 \
     python-pyqtgraph \
     python-scipy \
-	python3 \
+    python3 \
     qt4-designer \
     rsync \
     software-properties-common \
@@ -79,15 +79,15 @@ sudo apt install -y \
 #TensorRT requires a newer version of cmake than standard apt repos provide
 cd
 #wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
-wget https://github.com/Kitware/CMake/releases/download/v3.19.6/cmake-3.19.6.tar.gz 
-tar -xf cmake-3.19.6.tar.gz
-cd cmake-3.19.6
+wget https://github.com/Kitware/CMake/releases/download/v3.21.3/cmake-3.21.3.tar.gz 
+tar -xf cmake-3.21.3.tar.gz
+cd cmake-3.21.3
 cmake -GNinja -DCMAKE_BUILD_TYPE:STRING=Release .
 sudo ninja install
 sudo mv /usr/bin/cmake /usr/bin/cmake.old
 sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
 cd ..
-sudo rm -rf cmake-3.19.6*
+sudo rm -rf cmake-3.21.3*
 
 #sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 30 --slave /usr/bin/g++ g++ /usr/bin/g++-10
 #sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 90 --slave /usr/bin/g++ g++ /usr/bin/g++-7
@@ -189,73 +189,65 @@ sudo sed -i -e 's/APT::Periodic::Update-Package-Lists "1"/APT::Periodic::Update-
 
 # Install CTRE & navX libs
 # TODO - redo using zip from ctre web site
-mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include 
-mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre 
-cd /home/ubuntu
-mkdir ctre
-cd ctre
-wget https://github.com/CrossTheRoadElec/Phoenix-Releases/releases/download/v5.19.4.1/CTRE_Phoenix_FRC_Linux_5.19.4.zip
-unzip CTRE_Phoenix_FRC_Linux_5.19.4.zip 
-cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include 
-find /home/ubuntu/ctre -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o 
-cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre 
-find /home/ubuntu/ctre -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o 
-rm -rf /home/ubuntu/ctre 
+mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include
+mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ctre
+mkdir -p /home/ubuntu/ctre
+cd /home/ubuntu/ctre
+python3 /home/ubuntu/2022RobotCode/scripts/jetson_install/download_maven.py https://maven.ctr-electronics.com/release/com/ctre/phoenix/Phoenix-frc2022-latest.json
+cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include
+find /home/ubuntu/ctre -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o
+cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ctre
+find /home/ubuntu/ctre -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o
+rm -rf /home/ubuntu/ctre /home/ubuntu/download_maven.py
 
 cd /home/ubuntu 
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-headers.zip 
-mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/navx 
-cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/navx 
+mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/navx 
+cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/navx 
 unzip -o /home/ubuntu/navx-cpp-3.1.400-headers.zip 
 rm /home/ubuntu/navx-cpp-3.1.400-headers.zip 
 cd /home/ubuntu 
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-linuxathena.zip 
-mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/navx 
-cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/navx 
+mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx 
+cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx 
 unzip -o /home/ubuntu/navx-cpp-3.1.400-linuxathena.zip 
 rm /home/ubuntu/navx-cpp-3.1.400-linuxathena.zip 
 cd /home/ubuntu 
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-linuxathenastatic.zip 
-cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/navx 
+cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx 
 unzip -o /home/ubuntu/navx-cpp-3.1.400-linuxathenastatic.zip 
 rm /home/ubuntu/navx-cpp-3.1.400-linuxathenastatic.zip 
 
 # And Rev sparkmax stuff
 cd /home/ubuntu
-wget http://www.revrobotics.com/content/sw/max/sdk/SPARK-MAX-SDK-v1.5.2.zip
 mkdir sparkmax
 cd sparkmax
-unzip ../SPARK-MAX-SDK-v1.5.2.zip
-rm ../SPARK-MAX-SDK-v1.5.2.zip
-mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/rev
-cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/rev
-find /home/ubuntu/sparkmax/maven/com/revrobotics/frc/SparkMax-cpp -name \*athena\*zip | grep -v debug | xargs -n 1 unzip -o
-find /home/ubuntu/sparkmax/maven/com/revrobotics/frc/SparkMax-cpp -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o
-find /home/ubuntu/sparkmax/maven/com/revrobotics/frc/SparkMax-driver -name \*athena\*zip | grep -v debug | xargs -n 1 unzip -o
-find /home/ubuntu/sparkmax/maven/com/revrobotics/frc/SparkMax-driver -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o
-cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include
-find /home/ubuntu/sparkmax/maven/com/revrobotics/frc/SparkMax-cpp -name \*header\*zip | grep -v debug | xargs -n 1 unzip -o
-find /home/ubuntu/sparkmax/maven/com/revrobotics/frc/SparkMax-driver -name \*header\*zip | grep -v debug | xargs -n 1 unzip -o
-rm -rf /home/ubuntu/sparkmax
+python3 /home/ubuntu/2022RobotCode/scripts/jetson_install/download_maven.py https://software-metadata.revrobotics.com/REVLib.json
+cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include
+find /home/ubuntu/sparkmax -name \*header\*zip | grep -v debug | xargs -n 1 unzip -o
+mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev
+cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev
+find /home/ubuntu/sparkmax -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o
+rm -rf /home/ubuntu/sparkmax /home/ubuntu/download_maven.py
 
 # Install wpilib headers by copying them from the local maven dir
 cd /home/ubuntu 
-wget https://github.com/wpilibsuite/allwpilib/releases/download/v2021.3.1/WPILib_Linux-2021.3.1.tar.gz
-mkdir -p /home/ubuntu/wpilib/2021
-cd /home/ubuntu/wpilib/2021
-tar -xzf /home/ubuntu/WPILib_Linux-2021.3.1.tar.gz
-tar -xzf WPILib_Linux-2021.3.1/WPILib_Linux-2021.3.1-artifacts.tar.gz
-rm /home/ubuntu/WPILib_Linux-2021.3.1.tar.gz
-cd /home/ubuntu/wpilib/2021/tools
+wget https://github.com/wpilibsuite/allwpilib/releases/download/v2022.2.1/WPILib_Linux-2022.2.1.tar.gz
+mkdir -p /home/ubuntu/wpilib/2022
+cd /home/ubuntu/wpilib/2022
+tar -xzf /home/ubuntu/WPILib_Linux-2022.2.1.tar.gz
+tar -xzf WPILib_Linux-2022.2.1/WPILib_Linux-2022.2.1-artifacts.tar.gz
+rm /home/ubuntu/WPILib_Linux-2022.2.1.tar.gz
+cd /home/ubuntu/wpilib/2022/tools
 python3 ToolsUpdater.py
-mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/wpilib
-cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/wpilib
+mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/wpilib
+cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/wpilib
 find ../../../.. -name \*athena\*zip | grep -v debug | xargs -n1 unzip -o
-mkdir -p /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib
-cd /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib
+mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/wpilib
+cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/wpilib
 find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
-rm -rf /home/ubuntu/wpilib/2021/maven /home/ubuntu/wpilib/frc2021/jdk /home/ubuntu/wpilib/2021/WPILib_Linux-2021.3.1 /home/ubuntu/wpilb2021/utility
-sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
+rm -rf /home/ubuntu/wpilib/2022/maven /home/ubuntu/wpilib/frc2022/jdk /home/ubuntu/wpilib/2022/WPILib_Linux-2022.2.1 /home/ubuntu/wpilb2022/utility
+sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 
 # Set up prereqs for deploy script
 mv ~/2022RobotCode ~/2022RobotCode.orig
@@ -271,17 +263,17 @@ sudo chmod 644 /usr/local/zed/settings/*
 cp ~/2022RobotCode/.vimrc ~/2022RobotCode/.gvimrc ~
 sudo cp ~/2022RobotCode/kjaget.vim /usr/share/vim/vim80/colors
 
-cd &&\
-    wget https://github.com/git-lfs/git-lfs/releases/download/v2.13.1/git-lfs-linux-arm64-v2.13.1.tar.gz &&\
-	mkdir git-lfs-install &&\
-	cd git-lfs-install &&\
-	tar -xzf ../git-lfs-linux-arm64-v2.13.1.tar.gz &&\
-	sudo ./install.sh &&\
-	cd &&\
-	rm -rf git-lfs-linux-arm64-v2.13.1.tar.gz git-lfs-install &&\
-	git lfs install &&\
-	cd ~/2022RobotCode &&\
-	git lfs pull
+cd
+wget https://github.com/git-lfs/git-lfs/releases/download/v3.0.1/git-lfs-linux-arm64-v3.0.1.tar.gz
+mkdir git-lfs-install
+cd git-lfs-install
+tar -xzf ../git-lfs-linux-arm64-v3.0.1.tar.gz
+sudo ./install.sh
+cd
+rm -rf git-lfs-linux-arm64-v3.0.1.tar.gz git-lfs-install
+git lfs install
+cd ~/2022RobotCode
+git lfs pull
 
 git config --global user.email "progammers@team900.org"
 git config --global user.name "Team900 Jetson NX"

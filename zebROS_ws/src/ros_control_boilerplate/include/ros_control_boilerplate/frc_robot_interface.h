@@ -74,7 +74,7 @@
 #include "ros_control_boilerplate/tracer.h"
 
 // WPILIB stuff
-#include <frc/PneumaticsModuleType.h>
+#include "frc/PneumaticsModuleType.h"
 #include <hal/CTREPCM.h>
 #include <hal/FRCUsageReporting.h>
 #include <hal/HALBase.h>
@@ -89,10 +89,13 @@ class AHRS;
 namespace frc { class AnalogInput; }
 namespace frc { class DigitalInput; }
 namespace frc { class DigitalOutput; }
+namespace frc { class DoubleSolenoid; }
 namespace frc { class Joystick; }
 namespace frc { class NidecBrushless; }
-namespace frc { class PneumaticsBase; }
+namespace frc { class PneumaticHub; }
+namespace frc { class PneumaticsControlModule; }
 namespace frc { class PWM; }
+namespace frc { class Solenoid; }
 
 namespace ros_control_boilerplate
 {
@@ -130,19 +133,6 @@ class CustomProfileState
 	hardware_interface::CustomProfileStatus status_;
 	std::vector<std::vector<hardware_interface::CustomProfilePoint>> saved_points_;
 	std::vector<std::vector<double>> saved_times_;
-};
-
-//Stuff from frcrobot_hw_interface
-class DoubleSolenoidHandle
-{
-	public:
-		DoubleSolenoidHandle(HAL_SolenoidHandle forward, HAL_SolenoidHandle reverse)
-			: forward_(forward)
-			  , reverse_(reverse)
-		{
-		}
-		HAL_SolenoidHandle forward_;
-		HAL_SolenoidHandle reverse_;
 };
 
 /// \brief Hardware interface for a robot
@@ -543,32 +533,30 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<std::shared_ptr<frc::DigitalInput>> digital_inputs_;
 		std::vector<std::shared_ptr<frc::DigitalOutput>> digital_outputs_;
 		std::vector<std::shared_ptr<frc::PWM>> PWMs_;
-		std::vector<std::shared_ptr<frc::PneumaticsBase>> pneumatics_;
-		std::vector<std::shared_ptr<frc::PneumaticsBase>> double_pneumatics_;
+		std::vector<std::unique_ptr<frc::Solenoid>> solenoids_;
+		std::vector<std::unique_ptr<frc::DoubleSolenoid>> double_solenoids_;
 		std::vector<std::shared_ptr<AHRS>> navXs_;
 		std::vector<std::shared_ptr<frc::AnalogInput>> analog_inputs_;
 
 		std::vector<std::shared_ptr<std::mutex>> pcm_read_thread_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::PCMState>> pcm_read_thread_state_;
-		void pcm_read_thread(HAL_CTREPCMHandle pcm_handle,
-							 int32_t pcm_id,
+		void pcm_read_thread(std::shared_ptr<frc::PneumaticsControlModule> pcm,
 							 std::shared_ptr<hardware_interface::PCMState> state,
 							 std::shared_ptr<std::mutex> mutex,
 							 std::unique_ptr<Tracer> tracer,
 							 double poll_frequency);
 		std::vector<std::thread> pcm_threads_;
-		std::vector<HAL_CTREPCMHandle> pcms_;
+		std::vector<std::shared_ptr<frc::PneumaticsControlModule>> pcms_;
 
 		std::vector<std::shared_ptr<std::mutex>> ph_read_thread_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::PHHWState>> ph_read_thread_state_;
-		void ph_read_thread(HAL_REVPHHandle ph_handle,
-							 int32_t ph_id,
+		void ph_read_thread(std::shared_ptr<frc::PneumaticHub> ph_handle,
 							 std::shared_ptr<hardware_interface::PHHWState> state,
 							 std::shared_ptr<std::mutex> mutex,
 							 std::unique_ptr<Tracer> tracer,
 							 double poll_frequency);
 		std::vector<std::thread> ph_threads_;
-		std::vector<HAL_REVPHHandle> phs_;
+		std::vector<std::shared_ptr<frc::PneumaticHub>> phs_;
 
 		std::vector<std::shared_ptr<std::mutex>> pdh_read_thread_mutexes_;
 		std::vector<std::shared_ptr<hardware_interface::PDHHWState>> pdh_read_thread_state_;

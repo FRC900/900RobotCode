@@ -31,10 +31,10 @@ hardware_interface:
        # Solenoids which are updated from controllers on the Jetson need
        # to be configured here so they can write to hardware attached
        # to the Rio
-       #- {name: climber_deploy_joint, type: double_solenoid, module_type: ctrepcm, module_id: 0, forward_id: 2, reverse_id: 4, local_hardware: true, local_update: false}
-       #- {name: climber_elevator_brake_joint, type: solenoid, module_type: ctrepcm, module_id: 0, id: 1, local_hardware: true, local_update: false}
+       #- {name: climber_deploy_joint, type: double_solenoid, module_type: ctrepcm, module_id: 0, forward_channel: 2, reverse_channel: 4, local_hardware: true, local_update: false}
+       #- {name: climber_elevator_brake_joint, type: solenoid, module_type: ctrepcm, module_id: 0, channel: 1, local_hardware: true, local_update: false}
 
-         #- {name: shooter_hood_joint, type: solenoid, module_type: ctrepcm, module_id: 0, id: 3, local_hardware: true, local_update: false}
+         #- {name: shooter_hood_joint, type: solenoid, module_type: ctrepcm, module_id: 0, channel: 3, local_hardware: true, local_update: false}
 
        - {name: joystick0, type: joystick, id: 0, local: true}
        - {name: button_box, type: joystick, id: 1, local: true}

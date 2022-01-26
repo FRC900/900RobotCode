@@ -43,7 +43,7 @@ ssh -p 22 admin@$1 'opkg install ntp ntp-tickadj ntp-utils ntpdate rsync htop cu
 ssh -p 22 admin@$1 'opkg clean'
 ssh -p 22 admin@$1 'opkg install gflags gflags-bash-completion libglog0 gperftools-dev openssl'
 ssh -p 22 admin@$1 'opkg clean'
-ssh -p 22 admin@$1 'opkg install gpgme-dev gpgme libgpg-error-dev libgpg-error0 libassuan-dev libassuan0'
+ssh -p 22 admin@$1 'opkg install gpgme-dev gpgme libgpg-error-dev libgpg-error0 libassuan-dev libassuan0 rsync'
 ssh -p 22 admin@$1 'opkg clean'
 
 # This installs python3 which takes up a lot of space - avoid installing it if possible
@@ -78,8 +78,8 @@ ssh -p 22 admin@$1 'rm ~/roscore_roborio.tar.bz2'
 # This will prevent weird bugs where sourcing install_isolated/setup.bash
 #   will overwrite the settings from /opt/ros/melodic/setup.bash leading
 #   to errors finding basic ROS tools
-ssh -p 22 admin@$1 'mkdir -p /home/ubuntu/wpilib/2021/roborio'
-ssh -p 22 admin@$1 'ln -s / /home/ubuntu/wpilib/2021/roborio/arm-frc2021-linux-gnueabi'
+ssh -p 22 admin@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio'
+ssh -p 22 admin@$1 'ln -s / /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi'
 # TODO -is this needed?
 ssh -p 22 admin@$1 'ln -s /usr/include /include'
 
@@ -95,9 +95,11 @@ scp -P 22 ~/2022RobotCode/scripts/RIO_setup/ntpClient.conf admin@$1:/etc/ntp.con
 
 # Copy wpilib to roborio
 ssh -p 22 admin@$1 mkdir wpilib
-cd ~/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/wpilib/linux/athena/shared
+cd ~/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/wpilib/linux/athena/shared
 scp -P 22 *.so admin@$1:wpilib
-cd ~/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/lib/ctre/linux/athena/shared
+cd ~/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ctre/linux/athena/shared
+scp -P 22 *.so admin@$1:wpilib
+cd ~/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev/linux/athena/shared
 scp -P 22 *.so admin@$1:wpilib
 # Remove debugging versions of libraries to save space
 ssh -p 22 admin@$1 rm wpilib/*d.so wpilib/*jni.so

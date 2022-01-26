@@ -121,12 +121,15 @@ catkin_package(
 ###########
 ## Build ##
 ###########
+find_package(OpenCV REQUIRED)
 list(FILTER catkin_LIBRARIES EXCLUDE REGEX "opencv_freetype")
+list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -161,9 +164,11 @@ add_dependencies(cargo_detection_filter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${ca
 ## Specify libraries to link a library or executable target against
 target_link_libraries(tf_object_screen_to_world
  ${catkin_LIBRARIES}
+ ${OpenCV_LIBS}
 )
 target_link_libraries(test_depth_detection
  ${catkin_LIBRARIES}
+ ${OpenCV_LIBS}
 )
 target_link_libraries(cargo_detection_filter
  ${catkin_LIBRARIES}

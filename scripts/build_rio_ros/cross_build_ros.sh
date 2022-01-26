@@ -71,7 +71,7 @@ rm -rf ~/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/melodic devel_iso
 
 # Note - if this fails looking for gencpp*cmake, run from a new terminal
 # window where no ROS setup.bash has previously been sourced
-#./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/wpilib/2021/roborio/arm-frc2021-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2022RobotCode/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
+#./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2022RobotCode/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
 
 catkin config --install --install-space $HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/melodic 
 catkin build -DCMAKE_TOOLCHAIN_FILE=$HOME/2022RobotCode/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release 

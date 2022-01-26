@@ -54,7 +54,7 @@ class PHHWCommand
 			compressor_min_analog_voltage = compressor_min_analog_voltage_;
 			compressor_max_analog_voltage = compressor_max_analog_voltage_;
 			compressor_force_disable = compressor_force_disable_;
-			compressor_use_digital = compressor_use_digital;
+			compressor_use_digital = compressor_use_digital_;
 			const bool ret = closed_loop_control_changed_;
 			closed_loop_control_changed_ = false;
 			return ret;

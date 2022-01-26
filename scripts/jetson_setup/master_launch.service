@@ -1,8 +1,8 @@
-# zebROS 2020
+# zebROS 2022
 # Copy this to /etc/systemd/system/ 
 
 [Unit]
-Description=2020 ROS Master Startup Script
+Description=2022 ROS Master Startup Script
 
 [Service]
 Type=simple

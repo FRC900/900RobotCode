@@ -567,19 +567,18 @@ void SendableRegistry::Add(Sendable* sendable, const wpi::Twine& subsystem, cons
 
 void SendableRegistry::AddLW(Sendable* /*sendable*/, std::string_view /*name*/)
 {
-	ROS_ERROR("Called SendableRegistry::AddLW(Sendable *, std::string_view) on unsupported platform");
+	//ROS_ERROR("Called SendableRegistry::AddLW(Sendable *, std::string_view) on unsupported platform");
 }
 
 void SendableRegistry::AddLW(Sendable* /*sendable*/, std::string_view /*moduleType*/, int /*channel*/)
 {
-	ROS_ERROR("Called SendableRegistry::AddLW(Sendable *, std::string_view, int) on unsupported platform");
+	//ROS_ERROR("Called SendableRegistry::AddLW(Sendable *, std::string_view, int) on unsupported platform");
 }
 
 void SendableRegistry::AddLW(Sendable* /*sendable*/, std::string_view /*moduleType*/, int /*moduleNumber*/, int /*channel*/)
 {
-	ROS_ERROR("Called SendableRegistry::AddLW(Sendable *, std::string_view, int, int) on unsupported platform");
+	//ROS_ERROR("Called SendableRegistry::AddLW(Sendable *, std::string_view, int, int) on unsupported platform");
 }
-
 
 #if 0
 
@@ -596,10 +595,12 @@ bool SendableRegistry::Remove(Sendable* /*sendable*/)
 return true;
 }
 
+
+void SendableRegistry::Move(Sendable* /*to*/, Sendable* /*from*/)
+{
+}
+
 #if 0
-
-void Move(Sendable* to, Sendable* from);
-
 bool Contains(const Sendable* sendable) const
 
 std::string GetName(const Sendable* sendable) const
