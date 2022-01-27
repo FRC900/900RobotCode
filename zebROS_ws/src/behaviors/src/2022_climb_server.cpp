@@ -7,6 +7,8 @@
 #include <map>
 
 // How to launch hardware in simulation: roslaunch controller_node 2022_compbot_combined.launch hw_or_sim:=sim
+// Driver station (contains simulated inputs): rosrun rqt_driver_station_sim rqt_driver_station_sim &
+// axclient.py (actionlib client GUI): rosrun actionlib axclient.py /climb_server_2022 &
 
 class ClimbStateMachine
 {
@@ -28,6 +30,7 @@ public:
   uint8_t state = 0;
   uint8_t rung = 0; // 0 = ground, 1 = medium, 2 = high, 3 = traversal
   bool exited = false;
+  bool success = false; // whether it exited without errors
   ClimbStateMachine(bool waitForHuman)
   {
     waitForHuman_ = waitForHuman;
@@ -63,6 +66,9 @@ public:
     ROS_INFO_STREAM("State 2");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Extending dynamic arm pistons");
+    std_msgs::Float64 dpMsg;
+    dpMsg.data = 1.0;
+    dynamic_arm_piston_.publish(dpMsg);
     ros::Duration(0.8).sleep();
     ROS_INFO_STREAM("Extended dynamic arm pistons");
     if (waitForHuman_)
@@ -103,6 +109,9 @@ public:
     } else
     {
       ROS_INFO_STREAM("Extending dynamic arm pistons to hit next rung");
+      std_msgs::Float64 dpMsg;
+      dpMsg.data = 1.0;
+      dynamic_arm_piston_.publish(dpMsg);
       ros::Duration(0.8).sleep();
       ROS_INFO_STREAM("Extended dynamic arm pistons");
     }
@@ -121,7 +130,23 @@ public:
     ROS_INFO_STREAM("State 5");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Lowering dynamic arms a bit to touch rung");
-    ros::Duration(1).sleep();
+    // Use motor (eventually)
+    ros::Rate r(10); // 10 Hz loop
+    int counter = 0;
+    while (!(d1_ls && d2_ls)) {
+      ros::spinOnce();
+      if ((d1_ls == 1) ^ (d2_ls == 1)) { // if one hook has touched but the other has not,
+        if (counter >= 20) { // and it has been two seconds since the robot was imbalanced,
+          exited = true;
+          ROS_ERROR_STREAM("2022_climb_server : The robot is imbalanced. Aborting climb.");
+          return;
+        } else {
+          counter++;
+        }
+      }
+      r.sleep();
+    }
+    ros::Duration(1).sleep(); // stop swinging
     ROS_INFO_STREAM("Lowered dynamic arms a bit to touch rung");
     if (waitForHuman_)
     {
@@ -138,6 +163,9 @@ public:
     ROS_INFO_STREAM("State 6");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Detaching static hooks");
+    std_msgs::Float64 spMsg;
+    spMsg.data = 0.0;
+    static_hook_piston_.publish(spMsg);
     ros::Duration(0.8).sleep();
     ROS_INFO_STREAM("Detached static hooks");
     if (rung != 0) {
@@ -178,11 +206,29 @@ public:
     ROS_INFO_STREAM("State 8");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Attaching static hooks");
-    ros::Duration(0.8).sleep();
+    std_msgs::Float64 spMsg;
+    spMsg.data = 1.0;
+    static_hook_piston_.publish(spMsg);
+    ros::Rate r(10); // 10 Hz loop
+    int counter = 0;
+    while (!(s1_ls && s2_ls)) {
+      ros::spinOnce();
+      if ((s1_ls == 1) ^ (s2_ls == 1)) { // if one hook has touched but the other has not,
+        if (counter >= 20) { // and it has been two seconds since the robot was imbalanced,
+          exited = true;
+          ROS_ERROR_STREAM("2022_climb_server : The robot is imbalanced. Aborting climb.");
+          return;
+        } else {
+          counter++;
+        }
+      }
+      r.sleep();
+    }
     ROS_INFO_STREAM("Attached static hooks");
     if (rung == 3)
     {
       ROS_INFO_STREAM("Climb is done! Woohoo!!");
+      success = true;
       exited = true;
       return;
     }
@@ -218,6 +264,9 @@ public:
     ROS_INFO_STREAM("State 10");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Retracting dynamic arm pistons");
+    std_msgs::Float64 dpMsg;
+    dpMsg.data = 0.0;
+    dynamic_arm_piston_.publish(dpMsg);
     ros::Duration(1).sleep();
     ROS_INFO_STREAM("Retracted dynamic arm pistons");
     if (waitForHuman_)
@@ -246,7 +295,6 @@ public:
       if (index < joint_state.position.size())
       {
         *nameVar.second = joint_state.position[index];
-        ROS_INFO_STREAM(nameVar.first << " = " << *nameVar.second);
       }
       else
       {
@@ -282,7 +330,6 @@ public:
 
   void executeCB(const behavior_actions::Climb2022GoalConstPtr &goal)
   {
-    bool success = true;
     ClimbStateMachine sm(true);
     // start executing the action
     while (!sm.exited)
@@ -293,7 +340,7 @@ public:
         ROS_INFO("%s: Preempted", action_name_.c_str());
         // set the action state to preempted
         as_.setPreempted();
-        success = false;
+        sm.success = false;
         break;
       }
       sm.next();
@@ -302,13 +349,16 @@ public:
       as_.publishFeedback(feedback_);
     }
 
-    if(success)
+    result_.success = sm.success;
+    if (result_.success)
     {
-      result_.success = true;
       ROS_INFO("%s: Succeeded", action_name_.c_str());
-      // set the action state to succeeded
-      as_.setSucceeded(result_);
+    } else
+    {
+      ROS_INFO("%s: Failed", action_name_.c_str());
     }
+    // set the action state to success or not
+    as_.setSucceeded(result_);
   }
 };
 
