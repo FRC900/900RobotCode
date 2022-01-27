@@ -2,6 +2,11 @@
 #include <actionlib/server/simple_action_server.h>
 #include "behavior_actions/Climb2022Action.h"
 #include <functional>
+#include <std_msgs/Float64.h>
+#include "sensor_msgs/JointState.h"
+#include <map>
+
+// How to launch hardware in simulation: roslaunch controller_node 2022_compbot_combined.launch hw_or_sim:=sim
 
 class ClimbStateMachine
 {
@@ -9,6 +14,15 @@ protected:
   ros::NodeHandle nh_;
   boost::function<void()> nextFunction_;
   bool waitForHuman_ = true;
+  ros::Publisher dynamic_arm_piston_;
+  ros::Publisher static_hook_piston_;
+
+  ros::Subscriber joint_states_sub_;
+
+  double d1_ls; // d = dynamic, s = static, ls = limit switch
+  double d2_ls;
+  double s1_ls;
+  double s2_ls;
   // other state data we have
 public:
   uint8_t state = 0;
@@ -18,6 +32,9 @@ public:
   {
     waitForHuman_ = waitForHuman;
     nextFunction_ = boost::bind(&ClimbStateMachine::state1, this);
+    dynamic_arm_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/dynamic_arm_solenoid_controller/command", 2);
+    static_hook_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/static_hook_solenoid_controller/command", 2);
+    joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbStateMachine::jointStateCallback, this);
   }
   void next()
   {
@@ -211,6 +228,31 @@ public:
     }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state3, this);
+  }
+  void jointStateCallback(const sensor_msgs::JointState joint_state)
+  {
+    std::map<std::string, double*> stateNamesToVariables = {{"climber_dynamic1_limit_switch", &d1_ls}, {"climber_dynamic2_limit_switch", &d2_ls}, {"climber_static1_limit_switch", &s1_ls}, {"climber_static2_limit_switch", &s2_ls}};
+    for (auto const &nameVar : stateNamesToVariables)
+    {
+      // get index of sensor
+      size_t index = std::numeric_limits<size_t>::max();
+      for (size_t i = 0; i < joint_state.name.size(); i++)
+      {
+        if (joint_state.name[i] == nameVar.first)
+          index = i;
+      }
+
+      //update linebreak counts based on the value of the linebreak sensor
+      if (index < joint_state.position.size())
+      {
+        *nameVar.second = joint_state.position[index];
+        ROS_INFO_STREAM(nameVar.first << " = " << *nameVar.second);
+      }
+      else
+      {
+        ROS_WARN_STREAM_THROTTLE(2.0, "2022_climb_server : " << nameVar.first << " sensor not found in joint_states");
+      }
+    }
   }
 };
 
