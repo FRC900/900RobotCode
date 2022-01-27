@@ -170,12 +170,14 @@ class PathAction
 
 			const size_t num_waypoints = goal->path.poses.size();
 
+			// Spin once to get the most up to date odom and yaw info
+			ros::spinOnce();
+
 			// Since paths are robot-centric, the initial odom value is 0,0,0 for the path.
 			// Set this up as a transfrom to apply to each point in the path. This has the
 			// effect of changing robot centric coordinates into odom-centric coordinates
 			// Since we're using odom-centric values to drive against, this simplifies a
 			// lot of the code later.
-			ros::spinOnce();
 			geometry_msgs::TransformStamped odom_to_base_link_tf;
 			odom_to_base_link_tf.transform.translation.x = odom_.pose.pose.position.x;
 			odom_to_base_link_tf.transform.translation.y = odom_.pose.pose.position.y;
@@ -216,6 +218,9 @@ class PathAction
 			const auto start_time = ros::Time::now().toSec();
 			while (ros::ok() && !preempted && !timed_out && !succeeded)
 			{
+				// Spin once to get the most up to date odom and yaw info
+				ros::spinOnce();
+
 				// If using a separate topic for orientation, merge the x+y from odom
 				// with the orientiation from that separate topic here
 				if (!use_odom_orientation_)
@@ -273,9 +278,6 @@ class PathAction
 					timed_out = true;
 				}
 
-				// Spin once to get the most up to date odom and yaw info
-				ros::spinOnce();
-
 				const double orientation_state = path_follower_.getYaw(odom_.pose.pose.orientation);
 				//ROS_INFO_STREAM("orientation_state = " << orientation_state);
 
@@ -304,7 +306,6 @@ class PathAction
 					state_msg.data = orientation_state;
 					z_axis.state_pub_.publish(state_msg);
 
-					ros::spinOnce();
 					r.sleep();
 				}
 			}
