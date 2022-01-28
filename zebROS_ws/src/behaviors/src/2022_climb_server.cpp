@@ -21,28 +21,26 @@ protected:
   ros::Publisher static_hook_piston_;
 
   ros::Subscriber joint_states_sub_;
-  ros::Subscriber       cancel_sub_;
 
   double d1_ls; // d = dynamic, s = static, ls = limit switch
   double d2_ls;
   double s1_ls;
   double s2_ls;
 
-  bool preempted_ = false;
+  actionlib::SimpleActionServer<behavior_actions::Climb2022Action> &as_;
   // other state data we have
 public:
   uint8_t state = 0;
   uint8_t rung = 0; // 0 = ground, 1 = medium, 2 = high, 3 = traversal
   bool exited = false;
   bool success = false; // whether it exited without errors
-  ClimbStateMachine(bool waitForHuman)
+  ClimbStateMachine(bool waitForHuman, actionlib::SimpleActionServer<behavior_actions::Climb2022Action> &as_): as_(as_)
   {
     waitForHuman_ = waitForHuman;
     nextFunction_ = boost::bind(&ClimbStateMachine::state1, this);
     dynamic_arm_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/dynamic_arm_solenoid_controller/command", 2);
     static_hook_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/static_hook_solenoid_controller/command", 2);
     joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbStateMachine::jointStateCallback, this);
-    cancel_sub_ = nh_.subscribe("climb_server_2022/cancel", 1, &ClimbStateMachine::preemptCallback, this);
   }
   void next()
   {
@@ -54,13 +52,20 @@ public:
     for (int i = 0; i < time * 100.0; i++)
     {
       ros::spinOnce();
-      if (preempted_) {
+      if (as_.isPreemptRequested() || !ros::ok()) {
         return true;
       }
       r.sleep();
     }
     return false;
   }
+  // Sensors needed:
+  /*- State 3: encoder -- fully raised doesn't have to be super accurate
+    - State 5: dynamic hook limit switches
+    - State 7: limit switch at bottom, and encoder
+    - State 9: encoder
+    Total: encoder, limit switch at bottom, limit switches on dynamic and static hooks
+  */
   void state1()
   {
     state = 1;
@@ -79,7 +84,7 @@ public:
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Extending dynamic arm pistons");
     ros::spinOnce();
-    if (preempted_) {
+    if (as_.isPreemptRequested() || !ros::ok()) {
       return;
     }
     std_msgs::Float64 dpMsg;
@@ -96,7 +101,7 @@ public:
     ROS_INFO_STREAM("State 3");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Raising dynamic arms fully");
-    if (sleepCheckingForPreempt(1.5)) return; // simulate waiting for arms to be fully extended (limit switch? encoders?)
+    if (sleepCheckingForPreempt(1.5)) return; // simulate waiting for arms to be fully extended (limit switch? encoders? color sensor?)
     ROS_INFO_STREAM("Raised dynamic arms fully");
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state4, this);
@@ -114,7 +119,7 @@ public:
     {
       ROS_INFO_STREAM("Extending dynamic arm pistons to hit next rung");
       ros::spinOnce();
-      if (preempted_) {
+      if (as_.isPreemptRequested() || !ros::ok()) {
         return;
       }
       std_msgs::Float64 dpMsg;
@@ -133,8 +138,12 @@ public:
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Lowering dynamic arms a bit to touch rung");
     // Use motor (eventually)
-    ros::Rate r(10); // 10 Hz loop
+    ros::Rate r(10); // 10 Hz loop. Consider making faster.
+    // NOTE **don't use full speed**. Motion profiling/motion magic? Or just 20-30%
+    // Define max acceleration & velocity -- trapezoidal graph
     int counter = 0;
+    // TODO make sure the arms are going at about even speeds
+    // (e.g. if switch 1 is hit, shut off motor 1. if switch 2 is hit, shut off motor 2. and so on)
     while (!(d1_ls && d2_ls)) {
       ros::spinOnce();
       if ((d1_ls == 1) ^ (d2_ls == 1)) { // if one hook has touched but the other has not,
@@ -146,7 +155,7 @@ public:
           counter++;
         }
       }
-      if (preempted_) {
+      if (as_.isPreemptRequested() || !ros::ok()) {
         exited = true;
         return;
       }
@@ -164,7 +173,7 @@ public:
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Detaching static hooks");
     ros::spinOnce();
-    if (preempted_) {
+    if (as_.isPreemptRequested() || !ros::ok()) {
       return;
     }
     std_msgs::Float64 spMsg;
@@ -186,6 +195,8 @@ public:
     ROS_INFO_STREAM("State 7");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Lowering dynamic arms fully");
+    // Limit switch & encoder combination. Tell motor to go to the static hook vertical position and stop when it hits the position of the static hooks or limit switch, whichever comes first.
+    // Definitely want motion profiling.
     if (sleepCheckingForPreempt(1.5)) return;
     rung++;
     ROS_INFO_STREAM("Lowered dynamic arms fully. Robot is fully supported by rung " << std::to_string(rung) << ".");
@@ -199,7 +210,7 @@ public:
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Attaching static hooks");
     ros::spinOnce();
-    if (preempted_) {
+    if (as_.isPreemptRequested() || !ros::ok()) {
       return;
     }
     std_msgs::Float64 spMsg;
@@ -218,7 +229,7 @@ public:
           counter++;
         }
       }
-      if (preempted_) {
+      if (as_.isPreemptRequested() || !ros::ok()) {
         exited = true;
         return;
       }
@@ -241,6 +252,7 @@ public:
     ROS_INFO_STREAM("State 9");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Raising dynamic arms slightly");
+    // Encoder, doesn't matter how accurate
     if (sleepCheckingForPreempt(1)) return;
     ROS_INFO_STREAM("Raised dynamic arms slightly");
     ROS_INFO_STREAM("");
@@ -253,7 +265,7 @@ public:
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Retracting dynamic arm pistons");
     ros::spinOnce();
-    if (preempted_) {
+    if (as_.isPreemptRequested() || !ros::ok()) {
       return;
     }
     std_msgs::Float64 dpMsg;
@@ -288,9 +300,6 @@ public:
       }
     }
   }
-  void preemptCallback(const actionlib_msgs::GoalID /*msg*/) {
-    preempted_ = true;
-  }
 };
 
 class ClimbAction2022
@@ -319,7 +328,7 @@ public:
 
   void executeCB(const behavior_actions::Climb2022GoalConstPtr &goal)
   {
-    ClimbStateMachine sm(true);
+    ClimbStateMachine sm(true, as_);
     // start executing the action
     while (!sm.exited)
     {
