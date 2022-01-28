@@ -5,6 +5,7 @@
 #include <std_msgs/Float64.h>
 #include "sensor_msgs/JointState.h"
 #include <map>
+#include "actionlib_msgs/GoalID.h"
 
 // How to launch hardware in simulation: roslaunch controller_node 2022_compbot_combined.launch hw_or_sim:=sim
 // Driver station (contains simulated inputs): rosrun rqt_driver_station_sim rqt_driver_station_sim &
@@ -20,11 +21,14 @@ protected:
   ros::Publisher static_hook_piston_;
 
   ros::Subscriber joint_states_sub_;
+  ros::Subscriber       cancel_sub_;
 
   double d1_ls; // d = dynamic, s = static, ls = limit switch
   double d2_ls;
   double s1_ls;
   double s2_ls;
+
+  bool preempted_ = false;
   // other state data we have
 public:
   uint8_t state = 0;
@@ -38,10 +42,24 @@ public:
     dynamic_arm_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/dynamic_arm_solenoid_controller/command", 2);
     static_hook_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/static_hook_solenoid_controller/command", 2);
     joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbStateMachine::jointStateCallback, this);
+    cancel_sub_ = nh_.subscribe("climb_server_2022/cancel", 1, &ClimbStateMachine::preemptCallback, this);
   }
   void next()
   {
     nextFunction_();
+  }
+  bool sleepCheckingForPreempt(double time) // true if preempted, false if not
+  {
+    ros::Rate r(100); // 100 Hz loop
+    for (int i = 0; i < time * 100.0; i++)
+    {
+      ros::spinOnce();
+      if (preempted_) {
+        return true;
+      }
+      r.sleep();
+    }
+    return false;
   }
   void state1()
   {
@@ -49,14 +67,8 @@ public:
     ROS_INFO_STREAM("State 1");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Aligning...");
-    ros::Duration(2.0).sleep(); // simulate aligning
+    if (sleepCheckingForPreempt(2.0)) return; // simulate aligning
     ROS_INFO_STREAM("Aligned");
-    if (waitForHuman_)
-    {
-      ROS_INFO_STREAM("Waiting for human...");
-      // REPLACE WITH JOYSTICK TEMPLATE
-      ROS_INFO_STREAM("Thank you human, proceeding :)");
-    }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state2, this);
   }
@@ -66,17 +78,15 @@ public:
     ROS_INFO_STREAM("State 2");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Extending dynamic arm pistons");
+    ros::spinOnce();
+    if (preempted_) {
+      return;
+    }
     std_msgs::Float64 dpMsg;
     dpMsg.data = 1.0;
     dynamic_arm_piston_.publish(dpMsg);
-    ros::Duration(0.8).sleep();
+    if (sleepCheckingForPreempt(0.8)) return;
     ROS_INFO_STREAM("Extended dynamic arm pistons");
-    if (waitForHuman_)
-    {
-      ROS_INFO_STREAM("Waiting for human...");
-      // REPLACE WITH JOYSTICK TEMPLATE
-      ROS_INFO_STREAM("Thank you human, proceeding :)");
-    }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state3, this);
   }
@@ -86,14 +96,8 @@ public:
     ROS_INFO_STREAM("State 3");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Raising dynamic arms fully");
-    ros::Duration(1.5).sleep(); // simulate waiting for arms to be fully extended (limit switch? encoders?)
+    if (sleepCheckingForPreempt(1.5)) return; // simulate waiting for arms to be fully extended (limit switch? encoders?)
     ROS_INFO_STREAM("Raised dynamic arms fully");
-    if (waitForHuman_)
-    {
-      ROS_INFO_STREAM("Waiting for human...");
-      // REPLACE WITH JOYSTICK TEMPLATE
-      ROS_INFO_STREAM("Thank you human, proceeding :)");
-    }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state4, this);
   }
@@ -105,21 +109,19 @@ public:
     if (rung == 0)
     {
       ROS_INFO_STREAM("Driving Backwards");
-      ros::Duration(1).sleep();
+      if (sleepCheckingForPreempt(1)) return;
     } else
     {
       ROS_INFO_STREAM("Extending dynamic arm pistons to hit next rung");
+      ros::spinOnce();
+      if (preempted_) {
+        return;
+      }
       std_msgs::Float64 dpMsg;
       dpMsg.data = 1.0;
       dynamic_arm_piston_.publish(dpMsg);
-      ros::Duration(0.8).sleep();
+      if (sleepCheckingForPreempt(0.8)) return;
       ROS_INFO_STREAM("Extended dynamic arm pistons");
-    }
-    if (waitForHuman_)
-    {
-      ROS_INFO_STREAM("Waiting for human...");
-      // REPLACE WITH JOYSTICK TEMPLATE
-      ROS_INFO_STREAM("Thank you human, proceeding :)");
     }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state5, this);
@@ -144,16 +146,14 @@ public:
           counter++;
         }
       }
+      if (preempted_) {
+        exited = true;
+        return;
+      }
       r.sleep();
     }
-    ros::Duration(1).sleep(); // stop swinging
+    if (sleepCheckingForPreempt(1)) return; // stop swinging
     ROS_INFO_STREAM("Lowered dynamic arms a bit to touch rung");
-    if (waitForHuman_)
-    {
-      ROS_INFO_STREAM("Waiting for human...");
-      // REPLACE WITH JOYSTICK TEMPLATE
-      ROS_INFO_STREAM("Thank you human, proceeding :)");
-    }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state6, this);
   }
@@ -163,21 +163,19 @@ public:
     ROS_INFO_STREAM("State 6");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Detaching static hooks");
+    ros::spinOnce();
+    if (preempted_) {
+      return;
+    }
     std_msgs::Float64 spMsg;
     spMsg.data = 0.0;
     static_hook_piston_.publish(spMsg);
-    ros::Duration(0.8).sleep();
+    if (sleepCheckingForPreempt(0.8)) return;
     ROS_INFO_STREAM("Detached static hooks");
     if (rung != 0) {
       ROS_INFO_STREAM("Waiting for robot to stop swinging");
-      ros::Duration(2).sleep();
+      if (sleepCheckingForPreempt(2)) return;
       ROS_INFO_STREAM("Robot stopped swinging");
-    }
-    if (waitForHuman_)
-    {
-      ROS_INFO_STREAM("Waiting for human...");
-      // REPLACE WITH JOYSTICK TEMPLATE
-      ROS_INFO_STREAM("Thank you human, proceeding :)");
     }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state7, this);
@@ -188,15 +186,9 @@ public:
     ROS_INFO_STREAM("State 7");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Lowering dynamic arms fully");
-    ros::Duration(1.5).sleep();
+    if (sleepCheckingForPreempt(1.5)) return;
     rung++;
     ROS_INFO_STREAM("Lowered dynamic arms fully. Robot is fully supported by rung " << std::to_string(rung) << ".");
-    if (waitForHuman_)
-    {
-      ROS_INFO_STREAM("Waiting for human...");
-      // REPLACE WITH JOYSTICK TEMPLATE
-      ROS_INFO_STREAM("Thank you human, proceeding :)");
-    }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state8, this);
   }
@@ -206,6 +198,10 @@ public:
     ROS_INFO_STREAM("State 8");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Attaching static hooks");
+    ros::spinOnce();
+    if (preempted_) {
+      return;
+    }
     std_msgs::Float64 spMsg;
     spMsg.data = 1.0;
     static_hook_piston_.publish(spMsg);
@@ -222,6 +218,10 @@ public:
           counter++;
         }
       }
+      if (preempted_) {
+        exited = true;
+        return;
+      }
       r.sleep();
     }
     ROS_INFO_STREAM("Attached static hooks");
@@ -232,12 +232,6 @@ public:
       exited = true;
       return;
     }
-    if (waitForHuman_)
-    {
-      ROS_INFO_STREAM("Waiting for human...");
-      // REPLACE WITH JOYSTICK TEMPLATE
-      ROS_INFO_STREAM("Thank you human, proceeding :)");
-    }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state9, this);
   }
@@ -247,14 +241,8 @@ public:
     ROS_INFO_STREAM("State 9");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Raising dynamic arms slightly");
-    ros::Duration(1).sleep();
+    if (sleepCheckingForPreempt(1)) return;
     ROS_INFO_STREAM("Raised dynamic arms slightly");
-    if (waitForHuman_)
-    {
-      ROS_INFO_STREAM("Waiting for human...");
-      // REPLACE WITH JOYSTICK TEMPLATE
-      ROS_INFO_STREAM("Thank you human, proceeding :)");
-    }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state10, this);
   }
@@ -264,17 +252,15 @@ public:
     ROS_INFO_STREAM("State 10");
     ROS_INFO_STREAM("---");
     ROS_INFO_STREAM("Retracting dynamic arm pistons");
+    ros::spinOnce();
+    if (preempted_) {
+      return;
+    }
     std_msgs::Float64 dpMsg;
     dpMsg.data = 0.0;
     dynamic_arm_piston_.publish(dpMsg);
-    ros::Duration(1).sleep();
+    if (sleepCheckingForPreempt(1)) return;
     ROS_INFO_STREAM("Retracted dynamic arm pistons");
-    if (waitForHuman_)
-    {
-      ROS_INFO_STREAM("Waiting for human...");
-      // REPLACE WITH JOYSTICK TEMPLATE
-      ROS_INFO_STREAM("Thank you human, proceeding :)");
-    }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state3, this);
   }
@@ -301,6 +287,9 @@ public:
         ROS_WARN_STREAM_THROTTLE(2.0, "2022_climb_server : " << nameVar.first << " sensor not found in joint_states");
       }
     }
+  }
+  void preemptCallback(const actionlib_msgs::GoalID /*msg*/) {
+    preempted_ = true;
   }
 };
 
@@ -344,9 +333,24 @@ public:
         break;
       }
       sm.next();
+      // check that preempt has not been requested by the client
+      if (as_.isPreemptRequested() || !ros::ok())
+      {
+        ROS_INFO("%s: Preempted", action_name_.c_str());
+        // set the action state to preempted
+        as_.setPreempted();
+        sm.success = false;
+        break;
+      }
       feedback_.state = sm.state;
       feedback_.rung = sm.rung;
       as_.publishFeedback(feedback_);
+      if (goal->waitingforhuman)
+      {
+        ROS_INFO_STREAM("Waiting for human...");
+        // REPLACE WITH JOYSTICK TEMPLATE
+        ROS_INFO_STREAM("Thank you human, proceeding :)");
+      }
     }
 
     result_.success = sm.success;
