@@ -32,8 +32,8 @@ define floorplan model
 )
 
 resolution 0.02
-interval_sim 5  # simulation timestep in milliseconds
-interval_real 5
+interval_sim 10 # simulation timestep in milliseconds
+interval_real 10
 threads 2
 
 window
@@ -51,7 +51,7 @@ floorplan
 (
   name "rapid_react_field_map"
   bitmap "../maps/rapid_react_field_cad_cropped.png"
-  size [16.459 8.205 4.000] #[24.6888 33.5274 4] x, y, size of the map (meters)
+  size [16.459 8.205 0.300] #[24.6888 33.5274 4] x, y, size of the map (meters)
   pose [ 8.2296  4.1148  0.000 0.000 ] #[  4.1148 8.5341  0.0 0.0 ] x, y, z, rotation
 )
 
