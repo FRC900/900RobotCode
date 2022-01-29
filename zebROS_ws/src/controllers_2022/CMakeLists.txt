@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   controllers_2022_msgs
   controller_interface
   ddynamic_reconfigure
+  dynamic_reconfigure_wrapper
   hardware_interface
   pluginlib
   realtime_tools
@@ -17,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   std_srvs
   talon_controllers
+  talon_interface
 )
 
 ## System dependencies are found with CMake's conventions
@@ -133,13 +135,17 @@ include_directories(
 ## Declare a C++ library
 ## TODO - uncomment and add source files here
 add_library(controllers_2022
+<<<<<<< HEAD
   src/intake_controller.cpp
+=======
+  src/dynamic_arm_controller.cpp
+>>>>>>> b6f4cc1b (Started creating a controller for the dynamic arm)
 )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# TODO - uncomment me add_dependencies(controllers_2022 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(controllers_2022 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -157,7 +163,7 @@ add_library(controllers_2022
 #add_dependencies(controllers_2022 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# TODO - uncomment me target_link_libraries(controllers_2022 ${catkin_LIBRARIES})
+target_link_libraries(controllers_2022 ${catkin_LIBRARIES})
 
 #############
 ## Install ##
