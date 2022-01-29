@@ -1140,6 +1140,8 @@ class TalonCIParams
 				source = hardware_interface::RemoteSensorSource_GadgeteerPigeon_Pitch;
 			else if (str == "GadgeteerPigeon_Roll")
 				source = hardware_interface::RemoteSensorSource_GadgeteerPigeon_Roll;
+			else if (str == "CANCoder")
+				source = hardware_interface::RemoteSensorSource_CANCoder;
 			else
 			{
 				ROS_ERROR_STREAM("Invalid remote sensor source filter type : " << str);
