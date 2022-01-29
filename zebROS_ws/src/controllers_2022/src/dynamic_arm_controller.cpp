@@ -21,70 +21,70 @@ bool DynamicArmController::init(hardware_interface::RobotHW *hw,
 
   if (!controller_nh.getParam("full_height", config_.full_height))
   {
-    ROS_ERROR("Could not find full_height");
+    ROS_ERROR("dynamic_arm_controller : Could not find full_height");
     return false;
   }
 
   if (!controller_nh.getParam("distance_above_rung", config_.distance_above_rung))
   {
-    ROS_ERROR("Could not find distance_above_rung");
+    ROS_ERROR("dynamic_arm_controller : Could not find distance_above_rung");
     return false;
   }
 
   if (!controller_nh.getParam("dynamic_arm_zeroing_percent_output", config_.dynamic_arm_zeroing_percent_output))
 	{
-		ROS_ERROR("Could not find dynamic_arm_zeroing_percent_output");
+		ROS_ERROR("dynamic_arm_controller : Could not find dynamic_arm_zeroing_percent_output");
 		return false;
 	}
 
 	if (!controller_nh.getParam("dynamic_arm_zeroing_timeout", config_.dynamic_arm_zeroing_timeout))
 	{
-		ROS_ERROR("Could not find dynamic_arm_zeroing_timeout");
+		ROS_ERROR("dynamic_arm_controller : Could not find dynamic_arm_zeroing_timeout");
 		return false;
 	}
 
   if (!controller_nh.getParam("motion_magic_velocity_fast", config_.motion_magic_velocity_fast))
   {
-    ROS_ERROR("Could not find motion_magic_velocity_fast");
+    ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_velocity_fast");
     return false;
   }
 
   if (!controller_nh.getParam("motion_magic_velocity_slow", config_.motion_magic_velocity_slow))
   {
-    ROS_ERROR("Could not find motion_magic_velocity_slow");
+    ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_velocity_slow");
     return false;
   }
 
   if (!controller_nh.getParam("motion_magic_acceleration_fast", config_.motion_magic_acceleration_fast))
   {
-    ROS_ERROR("Could not find motion_magic_acceleration_fast");
+    ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_acceleration_fast");
     return false;
   }
 
   if (!controller_nh.getParam("motion_magic_acceleration_slow", config_.motion_magic_acceleration_slow))
   {
-    ROS_ERROR("Could not find motion_magic_acceleration_slow");
+    ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_acceleration_slow");
     return false;
   }
 
   /*
   if (!controller_nh.getParam("motion_s_curve_strength",config_.motion_s_curve_strength))
   {
-    ROS_ERROR("Could not find motion_s_curve_strength");
+    ROS_ERROR("dynamic_arm_controller : Could not find motion_s_curve_strength");
     return false;
   }*/
   // get config values for the dynamic arm talons
   XmlRpc::XmlRpcValue dynamic_arm_params;
   if (!controller_nh.getParam("dynamic_arm_joint", dynamic_arm_params))
   {
-    ROS_ERROR("Could not find dynamic_arm_joint");
+    ROS_ERROR("dynamic_arm_controller : Could not find dynamic_arm_joint");
     return false;
   }
 
   //initialize the dynamic_arm joint
   if(!dynamic_arm_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, dynamic_arm_params))
   {
-    ROS_ERROR("Cannot initialize dynamic_arm joint!");dynamic_arm_joint_.setCommand(0.0);
+    ROS_ERROR("dynamic_arm_controller : Cannot initialize dynamic_arm joint!");dynamic_arm_joint_.setCommand(0.0);
   }
 
   dynamic_arm_service_ = controller_nh.advertiseService("dynamic_arm_service", &DynamicArmController::cmdService, this);
@@ -109,7 +109,7 @@ void DynamicArmController::update(const ros::Time &time, const ros::Duration &/*
   // If we hit the limit switch, (re)zero the position.
   if (dynamic_arm_joint_.getReverseLimitSwitch())
   {
-    ROS_INFO_THROTTLE(2, "DynamicArmController : hit bottom limit switch");
+    ROS_INFO_THROTTLE(2, "dynamic_arm_controller : hit bottom limit switch");
     if (!last_zeroed_)
     {
       zeroed_ = true;

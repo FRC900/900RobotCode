@@ -92,6 +92,13 @@ dynamic_arm_controller:
   type: dynamic_arm_controller/DynamicArmController
   dynamic_arm_joint: ['dynamic_arm_leader', 'dynamic_arm_follower']
 
+  dynamic_arm_zeroing_percent_output: -0.2 # TODO : tune me
+  # If there are no negative velocity readings while zeroing
+  # for this amount of time, assume the dynamic arm is stuck
+  # or has hit bottom and the limit switch is broken.  Stop
+  # trying to drive down to prevent killing the motor
+  dynamic_arm_zeroing_timeout: 2.0
+
   distance_above_rung: 0.1
   full_height: 1.5
 
