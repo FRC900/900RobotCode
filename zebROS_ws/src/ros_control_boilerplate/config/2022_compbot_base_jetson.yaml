@@ -48,8 +48,8 @@ hardware_interface:
        - {name: climber_dynamic2_limit_switch, type: digital_input, local: false}
        - {name: climber_static1_limit_switch, type: digital_input, local: false}
        - {name: climber_static2_limit_switch, type: digital_input, local: false}
-       - {name: climber_dynamic_arm_leader, type: can_talon_fx, can_id: 90, local: true} # TODO FIX CAN ID
-       - {name: climber_dynamic_arm_follower, type: can_talon_fx, can_id: 91, local: true} # TODO FIX CAN ID
+       - {name: climber_dynamic_arm_leader, type: can_talon_fx, can_id: 30, local: true} # TODO FIX CAN ID
+       - {name: climber_dynamic_arm_follower, type: can_talon_fx, can_id: 31, local: true} # TODO FIX CAN ID
 
        - {name: fl_drive, type: can_talon_fx, can_id: 21, local: true}
        - {name: fl_angle, type: can_talon_srx, can_id: 11, local: true}
