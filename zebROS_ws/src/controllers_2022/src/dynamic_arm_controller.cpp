@@ -12,10 +12,8 @@ bool DynamicArmController::init(hardware_interface::RobotHW *hw,
   hardware_interface::JointStateInterface *const joint_state_iface = hw->get<hardware_interface::JointStateInterface>();
 
   // create handles and variables for the limit switches
-  hardware_interface::JointStateHandle state_handle_l1("climber_dynamic1_limit_switch", &l1_pos_, &l1_vel_, &l1_eff_);
-  joint_state_iface->registerHandle(state_handle_l1);
-  hardware_interface::JointStateHandle state_handle_l2("climber_dynamic2_limit_switch", &l2_pos_, &l2_vel_, &l2_eff_);
-  joint_state_iface->registerHandle(state_handle_l2);
+  state_handle_l1 = joint_state_iface->getHandle("climber_dynamic1_limit_switch");
+  state_handle_l2 = joint_state_iface->getHandle("climber_dynamic2_limit_switch");
 
   //hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
 
@@ -84,7 +82,7 @@ bool DynamicArmController::init(hardware_interface::RobotHW *hw,
   //initialize the dynamic_arm joint
   if(!dynamic_arm_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, dynamic_arm_params))
   {
-    ROS_ERROR("dynamic_arm_controller : Cannot initialize dynamic_arm joint!");dynamic_arm_joint_.setCommand(0.0);
+    ROS_ERROR("dynamic_arm_controller : Cannot initialize dynamic_arm joint!");
   }
 
   dynamic_arm_service_ = controller_nh.advertiseService("dynamic_arm_service", &DynamicArmController::cmdService, this);
@@ -124,7 +122,6 @@ void DynamicArmController::update(const ros::Time &time, const ros::Duration &/*
     last_zeroed_ = false;
   }
 
-
   if (zeroed_) // run normally, seeking to various positions
   {
     // if (dynamic_arm_joint_.getMode() == hardware_interface::TalonMode_Disabled && last_mode_ != hardware_interface::TalonMode_Disabled)
@@ -134,7 +131,10 @@ void DynamicArmController::update(const ros::Time &time, const ros::Duration &/*
     const DynamicArmCommand setpoint = *(command_buffer_.readFromRT());
     switch (setpoint.GetState()) {
       case controllers_2022_msgs::DynamicArmSrv::Request::FULLY_LOWERED:
-        ROS_INFO_STREAM_THROTTLE(0.5, "dynamic_arm_controller: goal = FULLY_LOWERED");
+        if (last_state_ != controllers_2022_msgs::DynamicArmSrv::Request::FULLY_LOWERED)
+        {
+          ROS_INFO_STREAM("dynamic_arm_controller: goal = FULLY_LOWERED");
+        }
         dynamic_arm_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
         dynamic_arm_joint_.setCommand(0.0); // or wherever the static hooks end up being, not sure about design
         last_state_ = controllers_2022_msgs::DynamicArmSrv::Request::FULLY_LOWERED;
@@ -143,21 +143,24 @@ void DynamicArmController::update(const ros::Time &time, const ros::Duration &/*
         if (last_state_ != controllers_2022_msgs::DynamicArmSrv::Request::FULLY_LOWERED)
         {
           dynamic_arm_joint_.setMode(hardware_interface::TalonMode_PercentOutput);
-          ROS_INFO_STREAM_THROTTLE(0.5, "dynamic_arm_controller: goal = TOUCHING_RUNG");
-          if((l1_pos_ == 1) ^ (l2_pos_ == 1)) { // if one hook has touched but the other has not,
+          if (last_state_ != controllers_2022_msgs::DynamicArmSrv::Request::TOUCHING_RUNG)
+          {
+            ROS_INFO_STREAM("dynamic_arm_controller: goal = TOUCHING_RUNG");
+          }
+          if((state_handle_l1.getPosition() == 1) ^ (state_handle_l2.getPosition() == 1)) { // if one hook has touched but the other has not,
             if (last_imbalanced_.toSec() == 0) {
               last_imbalanced_ = time;
             } else if ((time - last_imbalanced_).toSec() >= 2) { // and it has been more than 2 seconds,
               ROS_ERROR_STREAM("dynamic_arm_controller : The robot is imbalanced. Aborting command.");
             }
-          } else if (l1_pos_ && l2_pos_)
+          } else if (state_handle_l1.getPosition() && state_handle_l2.getPosition())
           {
             last_imbalanced_ = ros::Time(0);
             dynamic_arm_joint_.setCommand(0.0);
           } else
           {
             last_imbalanced_ = ros::Time(0);
-            dynamic_arm_joint_.setCommand(setpoint.GetGoSlow() ? config_.motion_magic_velocity_slow : config_.motion_magic_velocity_fast);
+            dynamic_arm_joint_.setCommand(setpoint.GetGoSlow() ? -config_.motion_magic_velocity_slow : -config_.motion_magic_velocity_fast);
           }
           last_state_ = controllers_2022_msgs::DynamicArmSrv::Request::TOUCHING_RUNG;
         } else
@@ -166,8 +169,11 @@ void DynamicArmController::update(const ros::Time &time, const ros::Duration &/*
         }
         break;
       case controllers_2022_msgs::DynamicArmSrv::Request::A_BIT_ABOVE_RUNG:
-        if (l1_pos_ && l2_pos_) {
-          ROS_INFO_STREAM_THROTTLE(0.5, "dynamic_arm_controller: goal = A_BIT_ABOVE_RUNG");
+        if (state_handle_l1.getPosition() && state_handle_l2.getPosition()) {
+          if (last_state_ != controllers_2022_msgs::DynamicArmSrv::Request::A_BIT_ABOVE_RUNG)
+          {
+            ROS_INFO_STREAM("dynamic_arm_controller: goal = A_BIT_ABOVE_RUNG");
+          }
           dynamic_arm_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
           dynamic_arm_joint_.setCommand(dynamic_arm_joint_.getPosition() + config_.distance_above_rung);
           last_state_ = controllers_2022_msgs::DynamicArmSrv::Request::A_BIT_ABOVE_RUNG;
@@ -176,7 +182,10 @@ void DynamicArmController::update(const ros::Time &time, const ros::Duration &/*
         }
         break;
       case controllers_2022_msgs::DynamicArmSrv::Request::FULLY_RAISED:
-        ROS_INFO_STREAM_THROTTLE(0.5, "dynamic_arm_controller: goal = FULLY_RAISED");
+        if (last_state_ != controllers_2022_msgs::DynamicArmSrv::Request::FULLY_RAISED)
+        {
+          ROS_INFO_STREAM("dynamic_arm_controller: goal = FULLY_RAISED");
+        }
         dynamic_arm_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
         dynamic_arm_joint_.setCommand(config_.full_height);
         last_state_ = controllers_2022_msgs::DynamicArmSrv::Request::FULLY_RAISED;

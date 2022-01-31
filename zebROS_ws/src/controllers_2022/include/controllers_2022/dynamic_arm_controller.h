@@ -76,13 +76,8 @@ namespace dynamic_arm_controller
   DynamicReconfigureWrapper<DynamicArmConfig> dynamic_reconfigure_server_;
   DynamicArmConfig config_;
 
-  double l1_pos_;
-  double l1_vel_; // not needed, but required for function
-  double l1_eff_; // not needed, but required for function
-
-  double l2_pos_;
-  double l2_vel_; // not needed, but required for function
-  double l2_eff_; // not needed, but required for function
+  hardware_interface::JointStateHandle state_handle_l1;
+  hardware_interface::JointStateHandle state_handle_l2;
 
   ros::Time last_imbalanced_;
   ros::Time last_time_down_;
