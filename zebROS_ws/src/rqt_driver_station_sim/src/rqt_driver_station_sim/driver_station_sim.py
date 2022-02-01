@@ -5,7 +5,7 @@ import argparse
 import rospy
 import rospkg
 import threading
-from PyQt5.QtWidgets import QWidget, QCheckBox, QApplication, QHBoxLayout, QVBoxLayout
+from PyQt5.QtWidgets import QWidget, QCheckBox, QApplication, QHBoxLayout, QVBoxLayout, QLabel
 from PyQt5 import QtCore, QtWidgets
 #from PyQt5 import QtGui
 from qt_gui.plugin import Plugin
@@ -14,6 +14,7 @@ from python_qt_binding.QtWidgets import QWidget
 
 from behavior_actions.msg import AutoMode, AutoState
 from frc_msgs.msg import MatchSpecificData
+from talon_state_msgs.msg import TalonState
 from ros_control_boilerplate.srv import LineBreakSensors, set_limit_switch
 
 class DriverStationSim(Plugin):
@@ -27,12 +28,12 @@ class DriverStationSim(Plugin):
                 continue
             if ('local_hardware' in jp) and (jp['local_hardware'] == False):
                 continue
-            if (jp['type'] != 'can_talon_srx') and (jp['type'] != 'analog_input') and (jp['type'] != 'digital_input'):
+            if ('can_talon' not in jp['type']) and (jp['type'] != 'analog_input') and (jp['type'] != 'digital_input'):
                continue
             entry = {}
             entry['where'] = where
             entry['name'] = jp['name']
-            if (jp['type'] == 'can_talon_srx'):
+            if ('can_talon' in jp['type']):
                 talons.append(entry)
             if jp['type'] == 'analog_input':
                 ains.append(entry)
@@ -77,6 +78,10 @@ class DriverStationSim(Plugin):
     def _auto_state_callback(self, msg):
         self.auto_state_signal.emit(int(msg.id));
 
+    def _talon_state_callback(self, msg):
+        # name + ": " + percent_output + "%, set to " + setpoint
+        for i in range(len(self._widget.talon_state_widgets)):
+            self._widget.talon_state_widgets[i].setText(str(msg.name[i])+" (in "+str(msg.talon_mode[i])+" mode): "+str(msg.motor_output_percent[i])+"%, setpoint: "+str(msg.set_point[i]))
 
     def auto_state_slot(self, state):
         if(self.auto_state != state):
@@ -210,7 +215,20 @@ class DriverStationSim(Plugin):
             self._widget.ain_buttons[i].setFixedHeight(fh)
             self._widget.ain_buttons[i].where = ains[i]['where']
             self._widget.ain_vertical_layout.addWidget(self._widget.ain_buttons[i])
-        self._widget.sim_input_horizontal_layout.addLayout(self._widget.ain_vertical_layout)
+            self._widget.sim_input_horizontal_layout.addLayout(self._widget.ain_vertical_layout)
+
+            fh = 17 # Set fixed height to prevent ugly auto-spacing
+
+        self._widget.talon_state_layout_widget = QtWidgets.QWidget(self._widget.tab)
+        self._widget.talon_state_layout_widget.setObjectName("talon_state_layout_widget")
+        self._widget.talon_state_vertical_layout = QtWidgets.QVBoxLayout(self._widget.talon_state_layout_widget)
+        self._widget.talon_state_vertical_layout.setObjectName("talon_state_vertical_layout")
+        # Name, mode, motor output percent, setpoint
+        talon_states_sub = rospy.Subscriber("/frcrobot_jetson/talon_states", TalonState, self._talon_state_callback)
+        self._widget.talon_state_widgets = []
+        for i in range(len(talons)):
+            self._widget.talon_state_widgets.append(QLabel("Talon"))
+            self._widget.talon_state_vertical_layout.addWidget(self._widget.talon_state_widgets[i])
 
         match_pub = rospy.Publisher("/frcrobot_rio/match_data_in", MatchSpecificData, queue_size=2)
         auto_mode_pub = rospy.Publisher("/auto/auto_mode", AutoMode, queue_size=1)

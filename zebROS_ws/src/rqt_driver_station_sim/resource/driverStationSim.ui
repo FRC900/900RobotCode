@@ -344,7 +344,7 @@ background-color: rgba(255, 255, 255, 0);</string>
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="tab_3">
     <attribute name="title">
@@ -674,6 +674,11 @@ p, li { white-space: pre-wrap; }
    <widget class="QWidget" name="tab_4">
     <attribute name="title">
      <string>Simulated Inputs</string>
+    </attribute>
+   </widget>
+   <widget class="QWidget" name="tab">
+    <attribute name="title">
+     <string>Talon Values</string>
     </attribute>
    </widget>
   </widget>
