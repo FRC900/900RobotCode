@@ -19,17 +19,23 @@ namespace dynamic_arm_controller
   public:
     DynamicArmCommand()
     {
-      state_ = 0;
-      go_slow_ = false;
+      set_point_ = 0.0;
+      go_slow_ = false; // only for motion magic
+      use_percent_output_ = true;
     }
-    DynamicArmCommand(uint8_t state, bool go_slow)
+    DynamicArmCommand(double set_point, bool use_percent_output, bool go_slow)
     {
-      state_ = state;
+      set_point_ = set_point;
       go_slow_ = go_slow;
+      use_percent_output_ = use_percent_output;
     }
-    uint8_t GetState() const
+    double GetSetPoint() const
     {
-    return state_;
+    return set_point_;
+    }
+    bool GetUsingPercentOutput() const
+    {
+    return use_percent_output_;
     }
     bool GetGoSlow() const
     {
@@ -38,11 +44,12 @@ namespace dynamic_arm_controller
 
 
   private:
-    uint8_t state_;
+    double set_point_;
+    bool use_percent_output_;
     bool go_slow_;
   };
 
-  class DynamicArmController : public controller_interface::MultiInterfaceController<hardware_interface::TalonCommandInterface, hardware_interface::JointStateInterface>
+  class DynamicArmController : public controller_interface::MultiInterfaceController<hardware_interface::TalonCommandInterface>
   {
   public:
     DynamicArmController()
@@ -69,17 +76,10 @@ namespace dynamic_arm_controller
 
   bool zeroed_;
   bool last_zeroed_;
-  uint8_t last_state_;
-  // double last_setpoint_;
-  hardware_interface::TalonMode last_mode_;
 
   DynamicReconfigureWrapper<DynamicArmConfig> dynamic_reconfigure_server_;
   DynamicArmConfig config_;
 
-  hardware_interface::JointStateHandle state_handle_l1;
-  hardware_interface::JointStateHandle state_handle_l2;
-
-  ros::Time last_imbalanced_;
   ros::Time last_time_down_;
   };
 }

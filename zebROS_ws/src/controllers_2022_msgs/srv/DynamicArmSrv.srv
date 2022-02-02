@@ -1,8 +1,4 @@
-uint8 FULLY_LOWERED=0
-uint8 TOUCHING_RUNG=1
-uint8 A_BIT_ABOVE_RUNG=2
-uint8 FULLY_RAISED=3
-uint8 state # one of the 4 states defined above
-bool go_slow # self-explanatory
+float64 set_point # either percent output or position
+bool use_percent_output # %_out or motion_magic
+bool go_slow # self-explanatory. only for motion magic
 ---
-bool success
