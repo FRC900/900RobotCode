@@ -11,18 +11,6 @@ bool DynamicArmController::init(hardware_interface::RobotHW *hw,
 
   //hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>();
 
-  if (!controller_nh.getParam("full_height", config_.full_height))
-  {
-    ROS_ERROR("dynamic_arm_controller : Could not find full_height");
-    return false;
-  }
-
-  if (!controller_nh.getParam("distance_above_rung", config_.distance_above_rung))
-  {
-    ROS_ERROR("dynamic_arm_controller : Could not find distance_above_rung");
-    return false;
-  }
-
   if (!controller_nh.getParam("dynamic_arm_zeroing_percent_output", config_.dynamic_arm_zeroing_percent_output))
 	{
 		ROS_ERROR("dynamic_arm_controller : Could not find dynamic_arm_zeroing_percent_output");
