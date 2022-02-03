@@ -67,7 +67,7 @@ bool DynamicArmController::init(hardware_interface::RobotHW *hw,
     ROS_ERROR("dynamic_arm_controller : Cannot initialize dynamic_arm joint!");
   }
 
-  dynamic_arm_service_ = controller_nh.advertiseService("dynamic_arm_service", &DynamicArmController::cmdService, this);
+  dynamic_arm_service_ = controller_nh.advertiseService("command", &DynamicArmController::cmdService, this);
 
   dynamic_reconfigure_server_.init(controller_nh, config_);
 
@@ -111,7 +111,7 @@ void DynamicArmController::update(const ros::Time &time, const ros::Duration &/*
       dynamic_arm_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
     }
 
-    dynamic_arm_joint_.setCommand(setpoint.GetSetPoint());
+    dynamic_arm_joint_.setCommand(setpoint.GetData());
 
     //if we're not climbing, add an arbitrary feed forward to hold the dynamic_arm up
     if(!setpoint.GetGoSlow())
@@ -194,7 +194,7 @@ bool DynamicArmController::cmdService(controllers_2022_msgs::DynamicArmSrv::Requ
 {
   if(isRunning())
   {
-    command_buffer_.writeFromNonRT(DynamicArmCommand(req.set_point, req.use_percent_output, req.go_slow));
+    command_buffer_.writeFromNonRT(DynamicArmCommand(req.data, req.use_percent_output, req.go_slow));
   }
   else
   {

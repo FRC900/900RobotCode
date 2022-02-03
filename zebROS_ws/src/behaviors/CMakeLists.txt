@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   #color_spin
   #controllers_2019_msgs
   #controllers_2020_msgs
+  controllers_2022_msgs
   frc_msgs
   field_obj
   geometry_msgs

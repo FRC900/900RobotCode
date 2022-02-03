@@ -19,19 +19,19 @@ namespace dynamic_arm_controller
   public:
     DynamicArmCommand()
     {
-      set_point_ = 0.0;
+      data_ = 0.0;
       go_slow_ = false; // only for motion magic
       use_percent_output_ = true;
     }
-    DynamicArmCommand(double set_point, bool use_percent_output, bool go_slow)
+    DynamicArmCommand(double data, bool use_percent_output, bool go_slow)
     {
-      set_point_ = set_point;
+      data_ = data;
       go_slow_ = go_slow;
       use_percent_output_ = use_percent_output;
     }
-    double GetSetPoint() const
+    double GetData() const
     {
-    return set_point_;
+    return data_;
     }
     bool GetUsingPercentOutput() const
     {
@@ -44,7 +44,7 @@ namespace dynamic_arm_controller
 
 
   private:
-    double set_point_;
+    double data_;
     bool use_percent_output_;
     bool go_slow_;
   };
