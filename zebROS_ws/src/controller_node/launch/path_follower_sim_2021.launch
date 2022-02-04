@@ -16,12 +16,12 @@
 	</node>
 
 	<!--  ************** Nodes to convert output of stage to inputs expected by particle filter ***************  -->
-	<node pkg="pf_localization" type="fake_cmd_vel_out_node" name="fake_cmd_vel_out" >
+	<node pkg="fake_sensors" type="fake_cmd_vel_out_node" name="fake_cmd_vel_out" >
 		<remap from="cmd_vel_out" to="/frcrobot_jetson/swerve_drive_controller/cmd_vel_out"/>
 	</node>
 
 	<group ns="imu">
-		<node pkg="pf_localization" type="fake_imu_node" name="fake_imu" >
+		<node pkg="fake_sensors" type="fake_imu_node" name="fake_imu" >
 			<remap from="imu" to="/imu/imu/data" />
 			<remap from="/imu/base_pose_ground_truth" to="/base_pose_ground_truth" />
 		</node>
@@ -57,7 +57,7 @@
 		<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 	</group>
 
-	<node pkg="pf_localization" type="fake_goal_detect_node" name="fake_goal_detect" >
+	<node pkg="fake_sensors" type="fake_goal_detect_node" name="fake_goal_detect" >
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
 	</node>
 

@@ -49,10 +49,10 @@
 		<remap from="camera_info"   to="$(arg cam_info_topic)" />
 	</node>
 
-	<node pkg="pf_localization" type="ar_msg_to_goal_detect_node" name="ar_msg_to_goal_detect" >
+	<node pkg="fake_sensors" type="ar_msg_to_goal_detect_node" name="ar_msg_to_goal_detect" >
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
 	</node>
-	
+
 	<!--
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_odomtomap" args="0 0 0 0 0 0 1 map odom" />
 	<node pkg="tf2_ros" type="static_transform_publisher" name="link_cameratobase" args="0 0 0 0 0 0 1 zed_camera_center base_link" />
