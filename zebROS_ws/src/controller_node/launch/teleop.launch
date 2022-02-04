@@ -19,6 +19,8 @@
       </node>
       <node name="orient_strafing_node" pkg="teleop_joystick_control" type="orient_strafing_node" output="screen"/>
     </group>
+
+    <node name="imu_zero_node" pkg="imu_zero" type="imu_zero_node"/>
   </group>
 
 </launch>

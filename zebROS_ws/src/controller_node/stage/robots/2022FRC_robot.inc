@@ -51,17 +51,17 @@ define omnidir_robot position
   acceleration_bounds [-4.5 4.5 -4.5 4.5 0 0 -90 90]
 
   # spawn sensors
-  normal_camera(pose [ 0.1 -0.1 0.65 0.0 ] )
+  normal_camera(pose [ 0.0 0.4445 0.0 90.0 ] )
 
-  single_terrabee(pose [0.0 0.4445 0.1 90 ] )
+  single_terrabee(pose [0.4445 0.0 0.0 0.0 ] )
 
-  single_terrabee(pose [0.889 0.4445 0.1 90 ] )
+  single_terrabee(pose [0.0 0.4445 0.0 90.0 ] )
 
 	camera
 (
   # laser properties
   resolution [ 32 32 ]
-  range [ 0.2 8.0 ]
+  range [ 0.0 0.0 ]
   fov [ 70.0 40.0 ]
   pantilt [ 0.0 0.0 ]
 
@@ -69,6 +69,6 @@ define omnidir_robot position
   size [ 0.66675 0.2286 0.15 ]
 	pose [0.0 0.4445 -0.3 0 ]
   color "purple"
-  watts 100.0
+  watts 0.0
 )
 )
