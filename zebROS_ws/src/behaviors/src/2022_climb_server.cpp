@@ -233,7 +233,7 @@ public:
     while (!(d1_ls && d2_ls)) {
       ros::spinOnce();
       if ((d1_ls == 1) ^ (d2_ls == 1)) { // if one hook has touched but the other has not,
-        if (counter >= 200) { // and it has been two seconds since the robot was imbalanced,
+        if (counter >= imbalance_timeout_ * 100) { // and it has been two seconds since the robot was imbalanced,
           exited = true;
           ROS_ERROR_STREAM("2022_climb_server : The robot is imbalanced. Aborting climb.");
           // Turn off motors
@@ -300,7 +300,7 @@ public:
     while (s1_ls || s2_ls) {
       ros::spinOnce();
       if ((s1_ls == 1) ^ (s2_ls == 1)) { // if one hook has touched but the other has not,
-        if (counter >= 200) { // and it has been two seconds since the robot was imbalanced,
+        if (counter >= imbalance_timeout_ * 100) { // and it has been two seconds since the robot was imbalanced,
           exited = true;
           ROS_ERROR_STREAM("2022_climb_server : The robot is imbalanced. Aborting climb.");
           return;
@@ -393,7 +393,7 @@ public:
     while (!(s1_ls && s2_ls)) {
       ros::spinOnce();
       if ((s1_ls == 1) ^ (s2_ls == 1)) { // if one hook has touched but the other has not,
-        if (counter >= 200) { // and it has been two seconds since the robot was imbalanced,
+        if (counter >= imbalance_timeout_ * 100) { // and it has been two seconds since the robot was imbalanced,
           exited = true;
           ROS_ERROR_STREAM("2022_climb_server : The robot is imbalanced. Aborting climb.");
           return;
