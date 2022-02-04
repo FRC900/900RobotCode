@@ -50,7 +50,7 @@ public:
     dynamic_arm_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/dynamic_arm_solenoid_controller/command", 2);
     static_hook_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/static_hook_solenoid_controller/command", 2);
     joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbStateMachine::jointStateCallback, this);
-    talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &ClimbStateMachine::jointStateCallback, this);
+    talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &ClimbStateMachine::talonStateCallback, this);
     dynamic_arm_ = nh_.serviceClient<controllers_2022_msgs::DynamicArmSrv>("/frcrobot_jetson/dynamic_arm_controller/command");
     if (!nh_.getParam("arm_height", arm_height_))
     {
@@ -58,8 +58,9 @@ public:
     }
     if (!nh_.getParam("lowering_hook_speed", lowering_hook_speed_))
     {
-      ROS_ERROR_STREAM("2022_climb_server : Could not find arm_height");
+      ROS_ERROR_STREAM("2022_climb_server : Could not find lowering_hook_speed");
     }
+    dynamic_arm_.waitForExistence();
   }
   void next()
   {
@@ -141,9 +142,16 @@ public:
         leaderIndex = i;
       }
     }
-    while(talon_states_.motor_output_percent[leaderIndex] > 0.01) // to account for floating point errors
+    if (leaderIndex == -1) {
+      exited = true;
+      ROS_ERROR_STREAM("2022_climb_server : Couldn't find talon in /frcrobot_jetson/talon_states. Aborting climb.");
+      return;
+    }
+    ros::Rate r(100);
+    while(talon_states_.position[leaderIndex] < arm_height_-0.05) // wait
     {
-        continue;
+      ros::spinOnce();
+      r.sleep();
     }
     ROS_INFO_STREAM("2022_climb_server : Raised dynamic arms fully");
     ROS_INFO_STREAM("");
@@ -294,16 +302,23 @@ public:
     if (dynamic_arm_.call(srv))
     {
       ROS_INFO_STREAM("2022_climb_server : called dynamic arm service.");
-      nameArray = talon_states_.name;
+      auto nameArray = talon_states_.name;
       int leaderLimitSwitchIndex = -1;
-      for(int i = 0; i < sizeOf(nameArray); i++){
+      for(size_t i = 0; i < size(nameArray); i++){
         if(nameArray[i] == "climber_dynamic_arm_leader"){
           leaderLimitSwitchIndex = i;
         }
       }
+      if (leaderLimitSwitchIndex == -1) {
+        exited = true;
+        ROS_ERROR_STREAM("2022_climb_server : Couldn't find talon in /frcrobot_jetson/talon_states. Aborting climb.");
+        return;
+      }
+      ros::Rate r(100);
       while(talon_states_.reverse_limit_switch[leaderLimitSwitchIndex] /*Limit switch is not pressed*/)
       {
-          continue;
+          ros::spinOnce();
+          r.sleep();
       }
       srv.request.use_percent_output = true; // motion magic
       srv.request.data = 0;
@@ -423,7 +438,7 @@ public:
   }
   void talonStateCallback(const talon_state_msgs::TalonState talon_state)
   {
-    talon_states_ =
+    talon_states_ = talon_state;
   }
 };
 

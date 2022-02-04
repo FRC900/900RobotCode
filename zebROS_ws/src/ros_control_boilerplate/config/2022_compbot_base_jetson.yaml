@@ -116,7 +116,7 @@ dynamic_arm_controller:
     sensor_phase: True
     invert_output: False
 
-    feedback_type: CTRE_MagEncoder_Relative
+    feedback_type: IntegratedSensor
 
     # TODO : bottom limit switch config
     limit_switch_local_reverse_source: "FeedbackConnector"
