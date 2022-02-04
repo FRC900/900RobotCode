@@ -14,5 +14,10 @@ topics:
   topic   : /path_follower/path_follower_pid/swerve_drive_controller/cmd_vel
   timeout : 0.2
   priority: 130
+-
+  name    : hold_position
+  topic   : /hold_position/hold_position_pid/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 130
 
 locks: []

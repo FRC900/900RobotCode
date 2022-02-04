@@ -183,12 +183,14 @@ int main(int argc, char ** argv)
                         cmd_vel_msg.linear.y = x_command * sin(rotate_angle) + y_command * cos(rotate_angle);
 			cmd_vel_pub.publish(cmd_vel_msg);
 		}
+		/*
 		else {
 			cmd_vel_msg.angular.z = 0.0;
 			cmd_vel_msg.linear.x = 0.0;
 			cmd_vel_msg.linear.y = 0.0;
 			cmd_vel_pub.publish(cmd_vel_msg);
 		}
+		*/
 		ros::spinOnce();
 		r.sleep();
 	}
