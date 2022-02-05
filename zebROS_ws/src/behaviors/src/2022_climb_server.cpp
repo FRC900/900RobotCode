@@ -18,7 +18,6 @@ class ClimbStateMachine
 protected:
   ros::NodeHandle nh_;
   boost::function<void()> nextFunction_;
-  bool waitForHuman_ = true;
   ros::Publisher dynamic_arm_piston_;
   ros::Publisher static_hook_piston_;
 
@@ -45,9 +44,8 @@ public:
   uint8_t rung = 0; // 0 = ground, 1 = medium, 2 = high, 3 = traversal
   bool exited = false;
   bool success = false; // whether it exited without errors
-  ClimbStateMachine(bool waitForHuman, actionlib::SimpleActionServer<behavior_actions::Climb2022Action> &as_): as_(as_)
+  ClimbStateMachine(actionlib::SimpleActionServer<behavior_actions::Climb2022Action> &as_): as_(as_)
   {
-    waitForHuman_ = waitForHuman;
     nextFunction_ = boost::bind(&ClimbStateMachine::state1, this);
     dynamic_arm_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/dynamic_arm_solenoid_controller/command", 2);
     static_hook_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/static_hook_solenoid_controller/command", 2);
@@ -80,6 +78,15 @@ public:
     }
     dynamic_arm_.waitForExistence();
   }
+  void reset(bool singleStep) {
+    if (!singleStep) {
+      state = 0;
+      nextFunction_ = boost::bind(&ClimbStateMachine::state1, this);
+      rung = 0;
+    }
+    exited = false;
+    success = false;
+  }
   void next()
   {
     nextFunction_();
@@ -91,6 +98,7 @@ public:
     {
       ros::spinOnce();
       if (as_.isPreemptRequested() || !ros::ok()) {
+        exited = true;
         return true;
       }
       r.sleep();
@@ -123,6 +131,7 @@ public:
     ROS_INFO_STREAM("2022_climb_server : Extending dynamic arm pistons");
     ros::spinOnce();
     if (as_.isPreemptRequested() || !ros::ok()) {
+      exited = true;
       return;
     }
     std_msgs::Float64 dpMsg;
@@ -168,8 +177,12 @@ public:
     ros::Rate r(100);
     while(talon_states_.position[leaderIndex] < arm_height_-0.05) // wait
     {
-      ros::spinOnce();
       r.sleep();
+      ros::spinOnce();
+      if (as_.isPreemptRequested() || !ros::ok()) {
+        exited = true;
+        return;
+      }
     }
     ROS_INFO_STREAM("2022_climb_server : Raised dynamic arms fully");
     ROS_INFO_STREAM("");
@@ -189,6 +202,7 @@ public:
       ROS_INFO_STREAM("2022_climb_server : Extending dynamic arm pistons to hit next rung");
       ros::spinOnce();
       if (as_.isPreemptRequested() || !ros::ok()) {
+        exited = true;
         return;
       }
       std_msgs::Float64 dpMsg;
@@ -250,6 +264,7 @@ public:
             exited = true;
             return;
           }
+          exited = true;
           return;
         } else {
           counter++;
@@ -290,6 +305,7 @@ public:
     ROS_INFO_STREAM("2022_climb_server : Detaching static hooks");
     ros::spinOnce();
     if (as_.isPreemptRequested() || !ros::ok()) {
+      exited = true;
       return;
     }
     std_msgs::Float64 spMsg;
@@ -353,8 +369,12 @@ public:
       ros::Rate r(100);
       while(talon_states_.reverse_limit_switch[leaderIndex] /*Limit switch is not pressed*/)
       {
-          ros::spinOnce();
-          r.sleep();
+        r.sleep();
+        ros::spinOnce();
+        if (as_.isPreemptRequested() || !ros::ok()) {
+          exited = true;
+          return;
+        }
       }
       srv.request.use_percent_output = true; // motion magic
       srv.request.data = 0;
@@ -383,6 +403,7 @@ public:
     ROS_INFO_STREAM("2022_climb_server : Attaching static hooks");
     ros::spinOnce();
     if (as_.isPreemptRequested() || !ros::ok()) {
+      exited = true;
       return;
     }
     std_msgs::Float64 spMsg;
@@ -468,6 +489,7 @@ public:
     ROS_INFO_STREAM("2022_climb_server : Retracting dynamic arm pistons");
     ros::spinOnce();
     if (as_.isPreemptRequested() || !ros::ok()) {
+      exited = true;
       return;
     }
     std_msgs::Float64 dpMsg;
@@ -506,6 +528,24 @@ public:
   {
     talon_states_ = talon_state;
   }
+  void stopMotors() {
+    // TODO may need to add stop condition to controller to make robot stay up
+    // Construct service call
+    controllers_2022_msgs::DynamicArmSrv srv;
+    srv.request.use_percent_output = true; // percent output
+    srv.request.data = 0;
+    srv.request.go_slow = true; // irrelevant
+
+    // Call service
+    if (dynamic_arm_.call(srv))
+    {
+      ROS_INFO_STREAM("2022_climb_server : called dynamic arm service to stop motors.");
+    }
+    else
+    {
+      ROS_ERROR_STREAM("2022_climb_server : failed to call dynamic arm service.");
+    }
+  }
 };
 
 class ClimbAction2022
@@ -518,12 +558,14 @@ protected:
   // create messages that are used to publish feedback/result
   behavior_actions::Climb2022Feedback feedback_;
   behavior_actions::Climb2022Result result_;
+  ClimbStateMachine sm;
 
 public:
 
   ClimbAction2022(std::string name) :
     as_(nh_, name, boost::bind(&ClimbAction2022::executeCB, this, _1), false),
-    action_name_(name)
+    action_name_(name),
+    sm(as_)
   {
     as_.start();
   }
@@ -534,7 +576,7 @@ public:
 
   void executeCB(const behavior_actions::Climb2022GoalConstPtr &goal)
   {
-    ClimbStateMachine sm(true, as_);
+    sm.reset(goal->single_step);
     // start executing the action
     while (!sm.exited)
     {
@@ -560,20 +602,24 @@ public:
       feedback_.state = sm.state;
       feedback_.rung = sm.rung;
       as_.publishFeedback(feedback_);
-      if (goal->waitingforhuman)
+      if (goal->single_step)
       {
-        ROS_INFO_STREAM("2022_climb_server : Waiting for human...");
-        // REPLACE WITH JOYSTICK TEMPLATE
-        ROS_INFO_STREAM("2022_climb_server : Thank you human, proceeding :)");
+        break;
       }
     }
 
+    sm.success = sm.success || !sm.exited;
+    if ((!goal->single_step) || (!sm.success))
+    {
+      sm.stopMotors();
+    }
     result_.success = sm.success;
     if (result_.success)
     {
       ROS_INFO("%s: Succeeded", action_name_.c_str());
     } else
     {
+      sm.reset(false);
       ROS_INFO("%s: Failed", action_name_.c_str());
     }
     // set the action state to success or not

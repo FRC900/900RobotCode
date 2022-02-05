@@ -228,7 +228,7 @@ class DriverStationSim(Plugin):
         talon_states_sub = rospy.Subscriber("/frcrobot_jetson/talon_states", TalonState, self._talon_state_callback)
         self._widget.talon_state_widgets = []
         for i in range(len(talons)):
-            self._widget.talon_state_widgets.append(QLabel("Talon" + " "*180))
+            self._widget.talon_state_widgets.append(QLabel("Talon" + " "*360))
             self._widget.talon_state_vertical_layout.addWidget(self._widget.talon_state_widgets[i])
 
         match_pub = rospy.Publisher("/frcrobot_rio/match_data_in", MatchSpecificData, queue_size=2)
