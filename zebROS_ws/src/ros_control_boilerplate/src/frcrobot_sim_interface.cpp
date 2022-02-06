@@ -210,8 +210,23 @@ bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::R
         if((!req.target_joint_name.length() && (ts.getCANID() == req.target_joint_id)) ||
 		   (req.target_joint_name == can_ctre_mc_names_[joint_id]))
 		{
-            ts.setForwardLimitSwitch(req.forward);
-			ts.setReverseLimitSwitch(req.reverse);
+			auto talonsrx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mcs_[joint_id]);
+			if (talonsrx)
+			{
+				auto &collection = talonsrx->GetSimCollection();
+				collection.SetLimitFwd(req.forward);
+				collection.SetLimitRev(req.reverse);
+			}
+			else
+			{
+				auto talonfx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mcs_[joint_id]);
+				if (talonfx)
+				{
+					auto &collection = talonfx->GetSimCollection();
+					collection.SetLimitFwd(req.forward);
+					collection.SetLimitRev(req.reverse);
+				}
+			}
         }
     }
 	return true;
@@ -224,7 +239,7 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " line: " << __LINE__);
 
 	// Work around CTRE sim bug?
-	skip_bus_voltage_temperature_ = true;
+	//skip_bus_voltage_temperature_ = true;
 	if (!FRCRobotInterface::init(root_nh, robot_hw_nh))
 	{
 		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " failed");
@@ -343,22 +358,23 @@ void FRCRobotSimInterface::setSimCollectionTalonFX(std::shared_ptr<ctre::phoenix
 {
 	auto &collection = talon_fx->GetSimCollection();
 	if (delta_position)
-		collection.SetIntegratedSensorRawPosition(position);
+		collection.AddIntegratedSensorPosition(delta_position);
 	else
-		collection.AddIntegratedSensorPosition(position);
+		collection.SetIntegratedSensorRawPosition(position);
 	collection.SetIntegratedSensorVelocity(velocity);
+	collection.SetBusVoltage(12.5);
 }
 
 void FRCRobotSimInterface::setSimCollectionTalonSRX(std::shared_ptr<ctre::phoenix::motorcontrol::can::TalonSRX> talon_srx, double position, double velocity, double delta_position) const
 {
 	auto &collection = talon_srx->GetSimCollection();
 	if (delta_position)
-		collection.SetQuadratureRawPosition(position);
+		collection.AddQuadraturePosition(delta_position);
 	else
-		collection.AddQuadraturePosition(position);
+		collection.SetQuadratureRawPosition(position);
 	collection.SetQuadratureVelocity(velocity);
+	collection.SetBusVoltage(12.5);
 }
-
 
 void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& period)
 {

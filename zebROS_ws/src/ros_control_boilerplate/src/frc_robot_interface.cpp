@@ -132,8 +132,6 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 		// Note that this isn't a complete list - only the values
 		// used by the read thread are copied over.  Update
 		// as needed when more are read
-		double bus_voltage;
-		double temperature;
 		{
 			std::lock_guard<std::mutex> l(*mutex);
 			if (!state->getEnableReadThread())
@@ -142,8 +140,6 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 			encoder_feedback = state->getEncoderFeedback();
 			encoder_ticks_per_rotation = state->getEncoderTicksPerRotation();
 			conversion_factor = state->getConversionFactor();
-			bus_voltage = state->getBusVoltage();
-			temperature = state->getTemperature();
 		}
 
 		// TODO : in main read() loop copy status from talon being followed
@@ -179,14 +175,11 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 		ctre::phoenix::motorcontrol::StickyFaults sticky_faults;
 		safeTalonCall(victor->GetStickyFaults(sticky_faults), "GetStickyFault", state->getCANID());
 
-		if (!skip_bus_voltage_temperature_)
-		{
-			bus_voltage = victor->GetBusVoltage();
-			safeTalonCall(victor->GetLastError(), "GetBusVoltage", state->getCANID());
+		const double bus_voltage = victor->GetBusVoltage();
+		safeTalonCall(victor->GetLastError(), "GetBusVoltage", state->getCANID());
 
-			temperature = victor->GetTemperature(); //returns in Celsius
-			safeTalonCall(victor->GetLastError(), "GetTemperature", state->getCANID());
-		}
+		const double temperature = victor->GetTemperature(); //returns in Celsius
+		safeTalonCall(victor->GetLastError(), "GetTemperature", state->getCANID());
 
 		const double output_voltage = victor->GetMotorOutputVoltage();
 		safeTalonCall(victor->GetLastError(), "GetMotorOutputVoltage", state->getCANID());

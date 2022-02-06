@@ -8,8 +8,11 @@ generic_hw_control_loop:
   #some processes have lower frequencies than the main control loop
   ctre_mc_read_hz: 100
   pcm_read_hz: 20
+  pdh_read_hz: 20
   pdp_read_hz: 20
+  ph_read_hz: 20
   robot_iteration_hz: 20
+  spark_max_read_hz: 20
   joystick_read_hz: 50
   match_data_read_hz: 2
   robot_controller_read_hz: 20
