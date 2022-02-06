@@ -42,7 +42,6 @@
 #ifdef __linux__
 #include <pthread.h>                                  // for pthread_self
 #include <sched.h>                                    // for sched_get_prior...
-#include <sstream>
 #endif
 #include <algorithm>                                  // for max, all_of
 #include <cmath>                                      // for M_PI
@@ -50,6 +49,7 @@
 #include <cstring>                                    // for size_t, strerror
 #include <cstdint>                                    // for uint8_t, int32_t
 #include <iostream>                                   // for operator<<, bas...
+#include <sstream>
 #include "AHRS.h"                                     // for AHRS
 #include "CTREPDP.h"
 #include "ctre/phoenix/motorcontrol/can/WPI_TalonFX.h"
@@ -1164,12 +1164,14 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 		{
 			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
 
-			const int solenoid_channel = readIntParam(joint_params, local_hardware, "channel", joint_name);
+			// These don't matter for remote hardware
 			frc::PneumaticsModuleType solenoid_module_type = frc::PneumaticsModuleType::CTREPCM;
+			int solenoid_channel = -1;
 			int solenoid_module_id = -1;
 
 			if (local_hardware)
 			{
+				solenoid_channel = readIntParam(joint_params, local_hardware, "channel", joint_name);
 				solenoid_module_type = readSolenoidModuleType(joint_params, local_hardware, joint_name);
 				solenoid_module_id = readIntParam(joint_params, local_hardware, "module_id", joint_name);
 				for (size_t j = 0; j < solenoid_module_ids_.size(); j++)
@@ -1197,14 +1199,15 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 		else if (joint_type == "double_solenoid")
 		{
 			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
-
-			const int double_solenoid_forward_channel = readIntParam(joint_params, local_hardware, "forward_channel", joint_name);
-			const int double_solenoid_reverse_channel = readIntParam(joint_params, local_hardware, "reverse_channel", joint_name);
+			int double_solenoid_forward_channel = -1;
+			int double_solenoid_reverse_channel = -1;
 			frc::PneumaticsModuleType double_solenoid_module_type = frc::PneumaticsModuleType::CTREPCM;
 			int double_solenoid_module_id = -1;
 
 			if (local_hardware)
 			{
+				double_solenoid_forward_channel = readIntParam(joint_params, local_hardware, "forward_channel", joint_name);
+				double_solenoid_reverse_channel = readIntParam(joint_params, local_hardware, "reverse_channel", joint_name);
 				double_solenoid_module_type = readSolenoidModuleType(joint_params, local_hardware, joint_name);
 				double_solenoid_module_id = readIntParam(joint_params, local_hardware, "solenoid", joint_name);
 				if (double_solenoid_forward_channel == double_solenoid_reverse_channel)
@@ -1808,11 +1811,19 @@ void FRCRobotInterface::createInterfaces(void)
 	prev_solenoid_mode_.resize(num_solenoids_);
 	for (size_t i = 0; i < num_solenoids_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : "
-				<< solenoid_names_[i] <<
-				" at channel " << solenoid_channels_[i] <<
+		std::stringstream s;
+		s <<  "FRCRobotInterface: Registering interface for : " << solenoid_names_[i];
+		if (solenoid_local_hardwares_[i])
+		{
+			s << " at channel " << solenoid_channels_[i] <<
 				" at " << (solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
-				" id " << solenoid_module_ids_[i]);
+				" id " << solenoid_module_ids_[i];
+		}
+		else
+		{
+			s << " on remote hardware";
+		}
+		ROS_INFO_STREAM_NAMED(name_, s.str());
 
 		solenoid_state_[i] = std::numeric_limits<double>::max();
 		solenoid_pwm_state_[i] = 0;
@@ -1839,12 +1850,20 @@ void FRCRobotInterface::createInterfaces(void)
 	double_solenoid_command_.resize(num_double_solenoids_);
 	for (size_t i = 0; i < num_double_solenoids_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering interface for : "
-				<< double_solenoid_names_[i] <<
-				" at forward channel " << double_solenoid_forward_channels_[i] <<
+		std::stringstream s;
+		s << "FRCRobotInterface: Registering interface for : " << double_solenoid_names_[i];
+		if (double_solenoid_local_hardwares_[i])
+		{
+			s << " at forward channel " << double_solenoid_forward_channels_[i] <<
 				" & reverse channel " << double_solenoid_reverse_channels_[i] <<
 				" at " << (double_solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
-				" id " << double_solenoid_module_ids_[i]);
+				" id " << double_solenoid_module_ids_[i];
+		}
+		else
+		{
+			s << " on remote hardware";
+		}
+		ROS_INFO_STREAM_NAMED(name_, s.str());
 
 		double_solenoid_state_[i] = std::numeric_limits<double>::max();
 		double_solenoid_command_[i] = 0;
@@ -2493,20 +2512,28 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 
 	for (size_t i = 0; i < num_solenoids_; i++)
 	{
-		ROS_INFO_STREAM_NAMED("frc_robot_interface",
-							  "Loading joint " << i << "=" << solenoid_names_[i] <<
-							  (solenoid_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (solenoid_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as solenoid at channel " << solenoid_channels_[i] <<
-							  " at " << (solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
-							  " id " << solenoid_module_ids_[i]);
+		std::stringstream s;
+		s << "Loading joint " << i << "=" << solenoid_names_[i] <<
+			(solenoid_local_updates_[i] ? " local" : " remote") << " update, " <<
+			(solenoid_local_hardwares_[i] ? "local" : "remote") << " hardware";
+		if (solenoid_local_hardwares_[i])
+		{
+			s << " as solenoid at channel " << solenoid_channels_[i] <<
+				" at " << (solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
+				" id " << solenoid_module_ids_[i];
+		}
+		else
+		{
+			s << " on remote hardware";
+		}
+
+		ROS_INFO_STREAM_NAMED("frc_robot_interface", s.str());
 
 		// Need to have 1 solenoid instantiated on the Rio to get
 		// support for compressor and so on loaded?
 		if (solenoid_local_hardwares_[i])
 		{
 			solenoids_.emplace_back(std::make_unique<frc::Solenoid>(solenoid_module_ids_[i], solenoid_module_types_[i], solenoid_channels_[i]));
-			ROS_INFO_STREAM("solenoid : channel = " << solenoids_.back()->GetChannel());
 		}
 		else
 		{
@@ -2516,14 +2543,23 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 
 	for (size_t i = 0; i < num_double_solenoids_; i++)
 	{
-		ROS_INFO_STREAM_NAMED("frc_robot_interface",
-							  "Loading joint " << i << "=" << double_solenoid_names_[i] <<
-							  (double_solenoid_local_updates_[i] ? " local" : " remote") << " update, " <<
-							  (double_solenoid_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " as double solenoid at forward channel " << double_solenoid_forward_channels_[i] <<
-							  " & reverse channel " << double_solenoid_reverse_channels_[i] <<
-							  " at " << (double_solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
-							  " id " << double_solenoid_module_ids_[i]);
+		std::stringstream s;
+		s << "Loading joint " << i << "=" << double_solenoid_names_[i] <<
+			(double_solenoid_local_updates_[i] ? " local" : " remote") << " update, " <<
+			(double_solenoid_local_hardwares_[i] ? "local" : "remote") << " hardware";
+
+		if (solenoid_local_hardwares_[i])
+		{
+			s << " as double solenoid at forward channel " << double_solenoid_forward_channels_[i] <<
+				" & reverse channel " << double_solenoid_reverse_channels_[i] <<
+				" at " << (double_solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
+				" id " << double_solenoid_module_ids_[i];
+		}
+		else
+		{
+			s << " on remote hardware";
+		}
+		ROS_INFO_STREAM_NAMED("frc_robot_interface", s.str());
 
 		if (double_solenoid_local_hardwares_[i])
 		{
@@ -3818,7 +3854,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			{
 				if (safeTalonCall(victor->ConfigAuxPIDPolarity(aux_pid_polarity, timeoutMs), "ConfigAuxPIDPolarity", ts.getCANID()))
 				{
-					ROS_INFO_STREAM("Updated joint " << joint_id << " PIDF polarity to " << aux_pid_polarity << std::endl);
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<
+							" AUX PIDF polarity to " << aux_pid_polarity << std::endl);
 					ts.setAuxPidPolarity(aux_pid_polarity);
 				}
 				else
@@ -3831,7 +3868,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			{
 				if (safeTalonCall(victor->SelectProfileSlot(slot, pidIdx), "SelectProfileSlot", ts.getCANID()))
 				{
-					ROS_INFO_STREAM("Updated joint " << joint_id << " PIDF slot to " << slot << std::endl);
+					ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] <<
+							" PIDF slot to " << slot << std::endl);
 					ts.setSlot(slot);
 				}
 				else
@@ -4692,7 +4730,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			if (digital_output_local_hardwares_[i])
 				digital_outputs_[i]->Set(converted_command);
 			digital_output_state_[i] = converted_command;
-			ROS_INFO_STREAM("Wrote digital output " << i << "=" << converted_command);
+			ROS_INFO_STREAM("Wrote digital output " << digital_output_names_[i] <<
+					" index " << i << "=" << converted_command);
 		}
 	}
 
@@ -4725,10 +4764,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 					solenoids_[i]->Set(on);
 				}
 				solenoid_state_[i] = on;
-				ROS_INFO_STREAM_NAMED(name_, "Solenoid " << solenoid_names_[i] <<
-						" at channel " << solenoid_channels_[i] <<
-						" at " << (solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
-						" id " << solenoid_module_ids_[i] <<
+				ROS_INFO_STREAM_NAMED(name_, "Write solenoid " << solenoid_names_[i] <<
 						" = " << static_cast<int>(on));
 			}
 		}
@@ -4743,10 +4779,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 					solenoids_[i]->SetPulseDuration(static_cast<units::second_t>(solenoid_command_[i]));
 					solenoids_[i]->StartPulse();
 				}
-				ROS_INFO_STREAM_NAMED(name_, "Solenoid one shot " << solenoid_names_[i] <<
-						" at channel " << solenoid_channels_[i] <<
-						" at " << (solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
-						" id " << solenoid_module_ids_[i] <<
+				ROS_INFO_STREAM_NAMED(name_, "Wrote solenoid one shot " << solenoid_names_[i] <<
 						" = " << solenoid_command_[i]);
 				// TODO - should we re-load this saved pwm command after the previous
 				// one expires, or require a controller to monitor and reload?
@@ -4784,11 +4817,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				double_solenoids_[i]->Set(value);
 			}
 			double_solenoid_state_[i] = double_solenoid_command_[i];
-			ROS_INFO_STREAM_NAMED(name_, "Double solenoid " << double_solenoid_names_[i] <<
-					" at forward channel " << double_solenoid_forward_channels_[i] <<
-					" & reverse channel " << double_solenoid_reverse_channels_[i] <<
-					" at " << (double_solenoid_module_types_[i] == frc::PneumaticsModuleType::CTREPCM ? "ctrepcm" : "revph") <<
-					" id " << double_solenoid_module_ids_[i] <<
+			ROS_INFO_STREAM_NAMED(name_, "Wrote double solenoid " << double_solenoid_names_[i] <<
 					" = " << double_solenoid_command_[i]);
 		}
 	}
@@ -4804,7 +4833,10 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			if (rumble_local_hardwares_[i])
 				HAL_SetJoystickOutputs(rumble_ports_[i], 0, left_rumble, right_rumble);
 			rumble_state_[i] = rumble_command_[i];
-			ROS_INFO_STREAM("Wrote rumble " << i << "=" << rumble_command_[i]);
+			ROS_INFO_STREAM("Wrote rumble " << rumble_names_[i] << " index " << i <<
+					"=" << rumble_command_[i] <<
+					" left=" << left_rumble <<
+					" right=" << right_rumble);
 		}
 	}
 
