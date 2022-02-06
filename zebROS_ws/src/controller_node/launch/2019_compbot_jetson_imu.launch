@@ -1,13 +1,16 @@
 <?xml version="1.0"?>
 <launch>
+	<arg name="hw_or_sim" default="hw" />
 	<arg name="primary_imu" default="ADI" />
-	<node if="$(eval arg('primary_imu')=='NAVX')" name="navx_publisher" pkg="navx_publisher" type="navx_publisher_node" output="screen">
-		<param name="device" value="/dev/NAVX"/>
-	</node>
-	<include if="$(eval arg('primary_imu')=='ADI')" file="$(find controller_node)/launch/adis16495.launch"> 
-		<arg name="device" value="/dev/ADI" />
-		<arg name="publish_tf" value="false" />
-	</include>
+	<group if="$(eval arg('hw_or_sim')=='hw')">
+		<node if="$(eval arg('primary_imu')=='NAVX')" name="navx_publisher" pkg="navx_publisher" type="navx_publisher_node" output="screen">
+			<param name="device" value="/dev/NAVX"/>
+		</node>
+		<include if="$(eval arg('primary_imu')=='ADI')" file="$(find controller_node)/launch/adis16495.launch">
+			<arg name="device" value="/dev/ADI" />
+			<arg name="publish_tf" value="false" />
+		</include>
+	</group>
 	<node name="imu_zero" pkg="imu_zero" type="imu_zero_node" output="screen">
 		<remap if="$(eval arg('primary_imu')=='NAVX')" from="imu/data" to="navx/data" />
 	</node>

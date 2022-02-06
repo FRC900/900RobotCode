@@ -54,6 +54,7 @@
 
 	<group ns="imu">
 		<include file="$(find controller_node)/launch/2019_compbot_jetson_imu.launch">
+			<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
 			<arg name="primary_imu" value="$(arg primary_imu)" />
 		</include>
 	</group>
@@ -114,7 +115,7 @@
 		<arg name="camera_model" value="zed2" />
 	</include>
 	-->
-	<include file="$(find tf_object_detection)/launch/test_detection.launch">
+	<include file="$(find tf_object_detection)/launch/detection.launch">
 		<arg name="input_type" value="live_camera" />
 	</include>
 
