@@ -134,11 +134,8 @@ include_directories(
 ## Declare a C++ library
 ## TODO - uncomment and add source files here
 add_library(controllers_2022
-<<<<<<< HEAD
   src/intake_controller.cpp
-=======
   src/dynamic_arm_controller.cpp
->>>>>>> b6f4cc1b (Started creating a controller for the dynamic arm)
 )
 
 ## Add cmake target dependencies of the library
