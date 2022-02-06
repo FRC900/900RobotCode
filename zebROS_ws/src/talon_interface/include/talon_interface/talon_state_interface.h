@@ -163,22 +163,22 @@ enum StatusFrame
 	Status_Brushless_Current,
 	Status_Last
 };
-static const uint8_t status_1_general_default = 10;
-static const uint8_t status_2_feedback0_default = 20;
-static const uint8_t status_3_quadrature_default = 160;
-static const uint8_t status_4_aintempvbat_default = 160;
-static const uint8_t status_6_misc_default = 0;
-static const uint8_t status_7_commstatus_default = 0;
-static const uint8_t status_8_pulsewidth_default = 160;
-static const uint8_t status_9_motprofbuffer_default = 50;
-static const uint8_t status_10_motionmagic_default = 160;
-static const uint8_t status_11_uartgadgeteer_default = 250;
-static const uint8_t status_12_feedback1_default = 250;
-static const uint8_t status_13_base_pidf0_default = 160;
-static const uint8_t status_14_turn_pidf1_default = 250;
-static const uint8_t status_15_firmwareapistatus_default = 160;
-static const uint8_t status_17_targets1_default = 0;
-static const uint8_t status_brushless_current_default = 0;
+constexpr uint8_t status_1_general_default = 10;
+constexpr uint8_t status_2_feedback0_default = 20;
+constexpr uint8_t status_3_quadrature_default = 160;
+constexpr uint8_t status_4_aintempvbat_default = 160;
+constexpr uint8_t status_6_misc_default = 0;
+constexpr uint8_t status_7_commstatus_default = 0;
+constexpr uint8_t status_8_pulsewidth_default = 160;
+constexpr uint8_t status_9_motprofbuffer_default = 50;
+constexpr uint8_t status_10_motionmagic_default = 160;
+constexpr uint8_t status_11_uartgadgeteer_default = 250;
+constexpr uint8_t status_12_feedback1_default = 250;
+constexpr uint8_t status_13_base_pidf0_default = 160;
+constexpr uint8_t status_14_turn_pidf1_default = 250;
+constexpr uint8_t status_15_firmwareapistatus_default = 160;
+constexpr uint8_t status_17_targets1_default = 0;
+constexpr uint8_t status_brushless_current_default = 0;
 
 enum ControlFrame
 {
@@ -189,10 +189,10 @@ enum ControlFrame
 	Control_Last
 };
 // TODO : what should these defaults be?
-static const uint8_t control_3_general_default = 0;
-static const uint8_t control_4_advanced_default = 0;
-static const uint8_t control_5_feedbackoutputoverride_default = 0;
-static const uint8_t control_6_motprofaddtrajpoint_default = 0;
+constexpr uint8_t control_3_general_default = 0;
+constexpr uint8_t control_4_advanced_default = 0;
+constexpr uint8_t control_5_feedbackoutputoverride_default = 0;
+constexpr uint8_t control_6_motprofaddtrajpoint_default = 0;
 
 // Match up with CTRE Motion profile struct
 enum SetValueMotionProfile

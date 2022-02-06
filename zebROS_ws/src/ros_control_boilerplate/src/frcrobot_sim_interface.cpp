@@ -238,8 +238,6 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 	// used by both the real and sim interfaces
 	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " line: " << __LINE__);
 
-	// Work around CTRE sim bug?
-	//skip_bus_voltage_temperature_ = true;
 	if (!FRCRobotInterface::init(root_nh, robot_hw_nh))
 	{
 		ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " failed");
