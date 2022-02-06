@@ -17,6 +17,7 @@ catkin config --profile cross -x _isolated --install --blacklist \
 	controllers_2019 \
 	controllers_2019_msgs \
 	demo_tf_node \
+	fake_sensors \
 	goal_detection \
 	pf_localization \
 	realsense2_camera \

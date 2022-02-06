@@ -1,21 +1,20 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(fake_sensors)
 
-## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+include("../cmake_modules/CMakeOpt.cmake")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  ar_track_alvar_msgs
+  field_obj
+  geometry_msgs
   nav_msgs
+  marker_msgs
   roscpp
   sensor_msgs
   std_msgs
-  geometry_msgs
-  marker_msgs
-  ar_track_alvar_msgs
-  field_obj
   tf2
   tf2_geometry_msgs
   tf2_ros
