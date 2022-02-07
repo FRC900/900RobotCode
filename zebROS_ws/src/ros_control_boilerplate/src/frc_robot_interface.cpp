@@ -5027,8 +5027,7 @@ double FRCRobotInterface::getConversionFactor(int encoder_ticks_per_rotation,
 			case hardware_interface::FeedbackDevice_RemoteSensor0:
 			case hardware_interface::FeedbackDevice_RemoteSensor1:
 			case hardware_interface::FeedbackDevice_SoftwareEmulatedSensor:
-				//ROS_WARN_STREAM("Unable to convert units.");
-				return 1.;
+				return 2. * M_PI / encoder_ticks_per_rotation;
 			default:
 				ROS_WARN_STREAM("Invalid encoder feedback device (mode = " << talon_mode << " feedback = " << encoder_feedback << ". Unable to convert units.");
 				return 1.;
@@ -5039,7 +5038,7 @@ double FRCRobotInterface::getConversionFactor(int encoder_ticks_per_rotation,
 		switch (encoder_feedback)
 		{
 			case hardware_interface::FeedbackDevice_Uninitialized:
-				return 1.;
+				return .1;
 			case hardware_interface::FeedbackDevice_QuadEncoder:
 			case hardware_interface::FeedbackDevice_PulseWidthEncodedPosition:
 				return 2. * M_PI / encoder_ticks_per_rotation / .1;
@@ -5053,11 +5052,10 @@ double FRCRobotInterface::getConversionFactor(int encoder_ticks_per_rotation,
 			case hardware_interface::FeedbackDevice_RemoteSensor0:
 			case hardware_interface::FeedbackDevice_RemoteSensor1:
 			case hardware_interface::FeedbackDevice_SoftwareEmulatedSensor:
-				//ROS_WARN_STREAM("Unable to convert units.");
-				return 1.;
+				return 2. * M_PI / encoder_ticks_per_rotation / .1;
 			default:
 				ROS_WARN_STREAM("Invalid encoder feedback device (mode = " << talon_mode << " feedback = " << encoder_feedback << ". Unable to convert units.");
-				return 1.;
+				return .1;
 		}
 	}
 	else
