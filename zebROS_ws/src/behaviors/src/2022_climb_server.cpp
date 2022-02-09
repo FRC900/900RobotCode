@@ -9,9 +9,18 @@
 #include "actionlib_msgs/GoalID.h"
 #include "talon_state_msgs/TalonState.h"
 
-// How to launch hardware in simulation: roslaunch controller_node 2022_compbot_combined.launch hw_or_sim:=sim
-// Driver station (contains simulated inputs): rosrun rqt_driver_station_sim rqt_driver_station_sim &
-// axclient.py (actionlib client GUI): rosrun actionlib axclient.py /climb_server_2022 &
+// How to simulate this:
+/*
+--ENTER DOCKER--
+roslaunch controller_node 2022_compbot_combined.launch hw_or_sim:=sim
+--in a separate terminal--
+rosrun rqt_driver_station_sim rqt_driver_station_sim & # Enable reverse limit switch on the climber leader talon, disable it once the climb server node is running and good
+rosrun actionlib axclient.py /climb_server_2022 &
+--in a separate terminal--
+rosparam set / 'arm_height: 1.0
+distance_above_rung: 0.2'
+rosrun behaviors 2022_climb_server_node
+*/
 
 class ClimbStateMachine
 {
@@ -196,7 +205,7 @@ public:
     if (rung == 0)
     {
       ROS_INFO_STREAM("2022_climb_server : Driving Backwards");
-      if (sleepCheckingForPreempt(1)) return;
+      if (sleepCheckingForPreempt(1)) return; // TODO replace with drivetrain stuff
     } else
     {
       ROS_INFO_STREAM("2022_climb_server : Extending dynamic arm pistons to hit next rung");
