@@ -42,6 +42,15 @@ hardware_interface:
 
          # - {name: control_panel_joint, type: can_talon_srx, can_id: 34, local: true}
 
+       - {name: climber_dynamic_arm_solenoid_joint, type: solenoid, module_type: ctrepcm, local_hardware: false, local_update: true}
+       - {name: climber_static_hook_solenoid_joint, type: solenoid, module_type: ctrepcm, local_hardware: false, local_update: true}
+       - {name: climber_dynamic1_limit_switch, type: digital_input, local: false}
+       - {name: climber_dynamic2_limit_switch, type: digital_input, local: false}
+       - {name: climber_static1_limit_switch, type: digital_input, local: false}
+       - {name: climber_static2_limit_switch, type: digital_input, local: false}
+       - {name: climber_dynamic_arm_leader, type: can_talon_fx, can_id: 30, local: true} # TODO FIX CAN ID
+       - {name: climber_dynamic_arm_follower, type: can_talon_fx, can_id: 31, local: true} # TODO FIX CAN ID
+
        - {name: fl_drive, type: can_talon_fx, can_id: 21, local: true}
        - {name: fl_angle, type: can_talon_srx, can_id: 11, local: true}
        - {name: fr_drive, type: can_talon_fx, can_id: 22, local: true}
@@ -71,7 +80,64 @@ hardware_interface:
 # /frcrobot/talon_states
 
 #Set up controllers for main robot mechanisms
-# Insert 2022 controllers
+dynamic_arm_solenoid_controller:
+  type: position_controllers/JointPositionController
+  joint: climber_dynamic_arm_solenoid_joint
+
+static_hook_solenoid_controller:
+  type: position_controllers/JointPositionController
+  joint: climber_static_hook_solenoid_joint
+
+dynamic_arm_controller:
+  type: dynamic_arm_controller/DynamicArmController
+  dynamic_arm_joint: ['dynamic_arm_leader', 'dynamic_arm_follower']
+
+  dynamic_arm_zeroing_percent_output: -0.2 # TODO : tune me
+  # If there are no negative velocity readings while zeroing
+  # for this amount of time, assume the dynamic arm is stuck
+  # or has hit bottom and the limit switch is broken.  Stop
+  # trying to drive down to prevent killing the motor
+  dynamic_arm_zeroing_timeout: 2.0
+
+  motion_magic_velocity_fast: 1.7
+  motion_magic_acceleration_fast: 3.5
+
+  motion_magic_velocity_slow: 0.25
+  motion_magic_acceleration_slow: 0.4
+
+  dynamic_arm_leader:
+    type: talon_controllers/TalonControllerInterface
+    joint: climber_dynamic_arm_leader
+    # TODO Actually define PID, this is from 2019
+    close_loop_values:
+        - {p: 0.275, i: 0.00001, d: 6.25, f: 0.28, i_zone: 0, closed_loop_peak_output: 1.0}
+        - {p: 0.25, i: 0.0, d: 0, f: 0.58, i_zone: 4096, closed_loop_peak_output: 1.0}
+
+    sensor_phase: True
+    invert_output: False
+
+    feedback_type: IntegratedSensor
+
+    # TODO : bottom limit switch config
+    limit_switch_local_reverse_source: "FeedbackConnector"
+    limit_switch_local_reverse_normal: "NormallyOpen"
+
+    # TODO Change this for 2022, this is from 2019
+    # softlimit_forward_threshold: 1.5 #1.66755
+    # softlimit_forward_enable: False
+
+    voltage_compensation_enable: True
+    voltage_compensation_saturation: 12
+
+    conversion_factor: 0.02959
+    neutral_deadband: 0.001
+
+    dynamic_reconfigure: true
+    motion_s_curve_strength: 0
+  dynamic_arm_follower:
+    joint: climber_dynamic_arm_follower
+    invert_output: False
+
 
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal

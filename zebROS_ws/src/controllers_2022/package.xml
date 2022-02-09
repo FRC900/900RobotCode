@@ -51,6 +51,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>controller_interface</build_depend>
   <build_depend>ddynamic_reconfigure</build_depend>
+  <build_depend>dynamic_reconfigure_wrapper</build_depend>
   <build_depend>hardware_interface</build_depend>
   <build_depend>pluginlib</build_depend>
   <build_depend>realtime_tools</build_depend>

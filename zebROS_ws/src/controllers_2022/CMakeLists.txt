@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   controllers_2022_msgs
   controller_interface
   ddynamic_reconfigure
+  dynamic_reconfigure_wrapper
   hardware_interface
   pluginlib
   realtime_tools
@@ -17,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   std_srvs
   talon_controllers
+  talon_interface
 )
 
 ## System dependencies are found with CMake's conventions
@@ -98,10 +100,9 @@ find_package(catkin REQUIRED COMPONENTS
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/DynamicArm.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -134,12 +135,13 @@ include_directories(
 ## TODO - uncomment and add source files here
 add_library(controllers_2022
   src/intake_controller.cpp
+  src/dynamic_arm_controller.cpp
 )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-# TODO - uncomment me add_dependencies(controllers_2022 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(controllers_2022 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -154,10 +156,10 @@ add_library(controllers_2022
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-#add_dependencies(controllers_2022 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(controllers_2022 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# TODO - uncomment me target_link_libraries(controllers_2022 ${catkin_LIBRARIES})
+target_link_libraries(controllers_2022 ${catkin_LIBRARIES})
 
 #############
 ## Install ##

@@ -1,0 +1,9 @@
+# goal
+bool single_step
+---
+# result
+bool success
+---
+# feedback
+uint8 state
+uint8 rung # 0 = ground, 1 = medium, 2 = high, 3 = traversal

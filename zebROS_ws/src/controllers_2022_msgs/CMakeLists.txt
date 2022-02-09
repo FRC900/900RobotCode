@@ -58,6 +58,7 @@ add_service_files(
    FILES
    IntakeArmSrv.srv
    IntakeRollerSrv.srv
+   DynamicArmSrv.srv
 )
 
 ## Generate actions in the 'action' folder

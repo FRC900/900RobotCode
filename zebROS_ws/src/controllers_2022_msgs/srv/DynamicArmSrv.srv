@@ -1,0 +1,4 @@
+float64 data # either percent output (0-1) or position (radians I think?)
+bool use_percent_output # %_out or motion_magic
+bool go_slow # self-explanatory. only for motion magic
+---

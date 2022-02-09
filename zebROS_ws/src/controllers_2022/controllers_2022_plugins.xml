@@ -1,10 +1,16 @@
 <library path="lib/libcontrollers_2022">
 
 
-        <class name="intake_controller/IntakeController" type="intake_controller::IntakeController" base_class_type="controller_interface::ControllerBase">
-                <description>
-                        Sets up the intake controller with an arm and roller.
-                </description>
-        </class>
+  <class name="intake_controller/IntakeController" type="intake_controller::IntakeController" base_class_type="controller_interface::ControllerBase">
+          <description>
+                  Sets up the intake controller with an arm and roller.
+          </description>
+  </class>
+
+  <class name="dynamic_arm_controller/DynamicArmController" type="dynamic_arm_controller::DynamicArmController" base_class_type="controller_interface::ControllerBase">
+          <description>
+                  2022 Climber: Dynamic Arm
+          </description>
+  </class>
 
 </library>
