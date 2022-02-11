@@ -495,7 +495,6 @@ bool frc::RobotBase::IsOperatorControl() const
 	ROS_ERROR("Called RobotBase::IsOperatorControl() const on unsupported platform");
 	return false;
 }
-#include <frc/DriverStation.h>
 frc::RobotBase::RobotBase()
 {
 	ROS_ERROR("Called RobotBase::RobotBase() on unsupported platform");

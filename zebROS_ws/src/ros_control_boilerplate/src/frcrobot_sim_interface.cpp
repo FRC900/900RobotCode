@@ -41,8 +41,6 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 
 #include "ctre/phoenix/unmanaged/Unmanaged.h"
 #include "frc/DriverStation.h"
-#include "frc/simulation/BatterySim.h"
-#include "frc/simulation/RoboRioSim.h"
 #include "hal/HALBase.h"
 #include "hal/simulation/DIOData.h"
 #include "hal/simulation/DriverStationData.h"

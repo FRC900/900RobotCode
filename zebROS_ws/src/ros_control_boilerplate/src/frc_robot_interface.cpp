@@ -49,7 +49,6 @@
 #include <cstring>                                    // for size_t, strerror
 #include <cstdint>                                    // for uint8_t, int32_t
 #include <iostream>                                   // for operator<<, bas...
-#include <sstream>
 #include "AHRS.h"                                     // for AHRS
 #include "CTREPDP.h"
 #include "ctre/phoenix/motorcontrol/can/WPI_TalonFX.h"
@@ -68,12 +67,10 @@
 #include "frc/Solenoid.h"
 #include "frc/PWM.h"                                  // for PWM
 #include "hal/CAN.h"                                  // for HAL_CAN_GetCANS...
-#include "hal/CTREPCM.h"
 #include "hal/DriverStation.h"                        // for HAL_GetAlliance...
 #include "hal/DriverStationTypes.h"                   // for HAL_ControlWord
 #include "hal/HALBase.h"                              // for HAL_GetErrorMes...
 #include "hal/Power.h"                                // for HAL_GetVinVoltage
-#include "hal/REVPH.h"
 #include "REVPDH.h"
 #include "tf2/LinearMath/Quaternion.h"                // for Quaternion
 

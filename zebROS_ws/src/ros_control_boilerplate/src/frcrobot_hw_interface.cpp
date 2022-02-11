@@ -79,10 +79,6 @@
 #include <ctre/phoenix/platform/can/PlatformCAN.h>           // for SetCANInterface
 //#include <ctre/phoenix/cci/Unmanaged_CCI.h>
 
-#ifdef __linux__
-#include <sched.h>
-#endif
-
 extern "C" { void HALSIM_SetControlWord(HAL_ControlWord); }
 void HAL_SetCANBusString(const std::string &bus);
 //

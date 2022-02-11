@@ -729,8 +729,6 @@ units::second_t frc::Timer::GetFPGATimestamp()
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
-#include "hal/handles/HandlesInternal.h"
-#include "hal/CAN.h"
 #include "hal/Errors.h"
 #include "../sim/ErrorsInternal.h"
 //#include "ctre/ctre.h"
