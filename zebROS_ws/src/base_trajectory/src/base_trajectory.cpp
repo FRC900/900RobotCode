@@ -1534,6 +1534,7 @@ bool NLOPT(
 #ifdef WRITE_OPTIMIZATION_MOVIE
 	writeMatlabMovieScript(nloptParams.frameCounter_, "OptimizationMovie");
 #endif
+	return true;
 }
 
 // Algorithm to optimize parameters using the sign
