@@ -32,8 +32,8 @@ define floorplan model
 )
 
 resolution 0.02
-interval_sim 10 # simulation timestep in milliseconds
-interval_real 10
+interval_sim 5 # simulation timestep in milliseconds
+interval_real 5
 threads 2
 
 window
@@ -59,7 +59,7 @@ floorplan
 omnidir_robot
 (
   # Everything but slalom
-  pose [ 1.041 2.286 0.000 -90.000 ]
+  pose [ 1.041 2.286 0.000 0.000 ]
   # Slalom pose [ 1.0414 .762 0.0 0.0 ]
   name "robot"
 )

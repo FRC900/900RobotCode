@@ -38,7 +38,7 @@ define omnidir_robot position
   localization "odom"
   odom_error [ 0.02 0.02 0.0 0.002 ]
 
-  size [ 0.889 0.889 0.30 ]
+  size [ 0.889 0.889 0.60 ]
   origin [ 0.0 0.0 0.0 0.0 ]
   gui_nose 1
   color "red"
@@ -51,24 +51,24 @@ define omnidir_robot position
   acceleration_bounds [-4.5 4.5 -4.5 4.5 0 0 -90 90]
 
   # spawn sensors
-  normal_camera(pose [ 0.0 0.4445 0.0 90.0 ] )
+  normal_camera(pose [ 0.0 0.4445 0.0 0.0 ] )
 
   single_terrabee(pose [0.4445 0.0 0.0 0.0 ] )
 
   single_terrabee(pose [0.0 0.4445 0.0 90.0 ] )
 
 	camera
-(
-  # laser properties
-  resolution [ 32 32 ]
-  range [ 0.0 0.0 ]
-  fov [ 70.0 40.0 ]
-  pantilt [ 0.0 0.0 ]
+	(
+	  # laser properties
+	  resolution [ 32 32 ]
+	  range [ 0.0 0.0 ]
+	  fov [ 70.0 40.0 ]
+	  pantilt [ 0.0 0.0 ]
 
-  # model properties
-  size [ 0.66675 0.2286 0.15 ]
-	pose [0.0 0.4445 -0.3 0 ]
-  color "purple"
-  watts 0.0
-)
+	  # model properties
+	  size [0.2286 0.66675 0.15 ]
+	  pose [0.4445 0.0 -0.3 0 ]
+	  color "purple"
+	  watts 0.0
+	)
 )
