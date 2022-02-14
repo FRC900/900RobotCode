@@ -10,6 +10,6 @@ hold_position:
     # uses ZED pose
     #use_pose_for_odom : true # true == use PoseStamped subscriber (e.g. zed camera pose) for odom rather than Odometry subscriber
     ros_rate: 100
-    server_timeout: 1000000000
+    server_timeout: 10
     start_point_radius: 0.05
     time_offset: 0.0

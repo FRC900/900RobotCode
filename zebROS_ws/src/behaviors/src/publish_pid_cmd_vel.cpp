@@ -41,8 +41,7 @@ bool ratio_imposed = false;
 double current_angle = 0;
 double x_command = 0;
 double y_command = 0;
-std::vector<bool> state_transitions;
-bool always_false;
+bool still_active = false;
 
 void orientCB(const std_msgs::Float64& msg)
 {
@@ -63,7 +62,7 @@ void enableCB(const std_msgs::Bool& msg)
 {
 	time_since_pid_enable = ros::Time::now();
 	pid_enable = msg.data;
-	state_transitions.push_back(pid_enable);
+	still_active = true;
 }
 void ratio_xyCB(const std_msgs::Float64& msg) {
 	ratio_xy = msg.data;
@@ -146,7 +145,7 @@ int main(int argc, char ** argv)
 	while(ros::ok())
 	{
 		current_time = ros::Time::now();
-		if((current_time - time_since_command).toSec() < command_timeout && !always_false)
+		if((current_time - time_since_command).toSec() < command_timeout && pid_enable)
 		{
 			if((current_time - time_since_orient).toSec() > 0.1)
 				cmd_vel_msg.angular.z = 0.0;
@@ -185,24 +184,20 @@ int main(int argc, char ** argv)
                         cmd_vel_msg.linear.x = x_command * cos(rotate_angle) - y_command * sin(rotate_angle);
                         cmd_vel_msg.linear.y = x_command * sin(rotate_angle) + y_command * cos(rotate_angle);
 			cmd_vel_pub.publish(cmd_vel_msg);
-			for (int i = 0; i < state_transitions.size(); i++) {
-				if (state_transitions[i] = state_transitions[i-1] && state_transitions[i] == false) {
-					always_false = true;
-				}
-			}
-			state_transitions.clear();
 
 		}
-		/*
+
 		else {
-			cmd_vel_msg.angular.z = 0.0;
-			cmd_vel_msg.linear.x = 0.0;
-			cmd_vel_msg.linear.y = 0.0;
-			cmd_vel_pub.publish(cmd_vel_msg);
+			if (still_active == true) {
+				cmd_vel_msg.angular.z = 0.0;
+				cmd_vel_msg.linear.x = 0.0;
+				cmd_vel_msg.linear.y = 0.0;
+				cmd_vel_pub.publish(cmd_vel_msg);
+				still_active = false;
+			}
 		}
-		*/
-		ros::spinOnce();
 		r.sleep();
+		ros::spinOnce();
 	}
 	return 0;
 }

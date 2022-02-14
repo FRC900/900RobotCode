@@ -248,6 +248,11 @@ class holdPosition
 				ROS_INFO_STREAM("    delta pose_ = " << pose_.pose.position.x - starting_pose.pose.position.x
 					<< ", " << pose_.pose.position.y - starting_pose.pose.position.y);
 
+				if (!use_odom_orientation_)
+				{
+					odom_.pose.pose.orientation = orientation_;
+				}
+
 				std_msgs::Bool enable_msg;
 				enable_msg.data = true;
 				std_msgs::Float64 command_msg;
