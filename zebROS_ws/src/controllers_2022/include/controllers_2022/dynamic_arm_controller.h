@@ -8,7 +8,7 @@
 #include <talon_controllers/talon_controller_interface.h> // "
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include "controllers_2022_msgs/DynamicArmSrv.h"
-#include <dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h>
+#include <dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h> // TODO change to use ddynamic_reconfigure
 #include <controllers_2022/DynamicArmConfig.h>
 
 namespace dynamic_arm_controller
