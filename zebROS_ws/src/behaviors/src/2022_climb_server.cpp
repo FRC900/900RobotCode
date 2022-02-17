@@ -2,11 +2,9 @@
 #include <actionlib/server/simple_action_server.h>
 #include "behavior_actions/Climb2022Action.h"
 #include "controllers_2022_msgs/DynamicArmSrv.h"
-#include <functional>
 #include <std_msgs/Float64.h>
 #include "sensor_msgs/JointState.h"
 #include <map>
-#include "actionlib_msgs/GoalID.h"
 #include "talon_state_msgs/TalonState.h"
 
 // How to simulate this:

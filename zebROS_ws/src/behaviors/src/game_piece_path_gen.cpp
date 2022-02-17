@@ -1,6 +1,5 @@
 #include <ros/ros.h>
 #include <cmath>
-#include <std_srvs/Trigger.h>
 #include <algorithm>
 #include "base_trajectory_msgs/GenerateSpline.h"
 #include "behavior_actions/DynamicPath.h"
