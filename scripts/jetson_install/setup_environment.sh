@@ -385,7 +385,7 @@ cd slim
 sudo python -m pip install --ignore-installed .
 
 cd
-export PATH=$PATH:/usr/local/cuda/bin
+export PATH=\$PATH:/usr/local/cuda/bin
 git clone https://github.com/NVIDIA/TensorRT.git 
 cd TensorRT 
 git submodule update --init --recursive 
@@ -395,7 +395,7 @@ cd build
 cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF .. 
 ninja
 
-echo "export PATH=$PATH:/home/ubuntu/.local/bin:/home/ubuntu/tensorflow_workspace/tools:/usr/local/cuda/bin" >> /home/ubuntu/.bashrc
+echo "export PATH=\$PATH:/home/ubuntu/.local/bin:/home/ubuntu/tensorflow_workspace/tools:/usr/local/cuda/bin" >> /home/ubuntu/.bashrc
 
 # Set up Gold linker - speed up libPCL links
 # Do this after building protoc, since that fails with ld.gold
@@ -407,3 +407,5 @@ echo 0 | sudo update-alternatives --config ld
 sudo ccache -C
 sudo ccache -c
 sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
+
+echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev/linux/aarch64bionic/shared"

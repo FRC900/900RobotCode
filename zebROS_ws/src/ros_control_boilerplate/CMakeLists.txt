@@ -220,15 +220,18 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
 		)
 	endif()
 
+	add_library(ntcore  src/dummy_library.cpp)
 	add_library(wpilibc src/dummy_library.cpp)
 	add_library(wpiHal  src/dummy_library.cpp)
 	add_library(wpimath src/dummy_library.cpp)
 	add_library(wpiutil src/dummy_library.cpp)
 	install(TARGETS
+		ntcore
 		wpilibc
 		wpiHal
 		wpimath
 		wpiutil
+
 	  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 	)

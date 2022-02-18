@@ -16,10 +16,12 @@ fi
 ssh -p 22 ubuntu@$1 'rm -rf /home/ubuntu/wpilib/2022'
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/ctre'
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/navx'
+ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/rev '
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/wpilib'
 rsync -avru -e 'ssh -p 22' $HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/ $1:/home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/
 
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ctre'
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx'
+ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev'
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/wpilib'
 rsync -avzu -e 'ssh -p 22' --exclude '*.debug' --exclude 'athena' $HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ $1:/home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/

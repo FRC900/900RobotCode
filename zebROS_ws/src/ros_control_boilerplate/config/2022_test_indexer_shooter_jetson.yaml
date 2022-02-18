@@ -1,0 +1,126 @@
+# ros_control_boilerplate Settings -----------------------
+# Settings for ros_control control loop
+generic_hw_control_loop:
+  loop_hz: 100
+  cycle_time_error_threshold: 0.01
+  canifier_read_hz: 100
+  cancoder_read_hz: 100
+  #some processes have lower frequencies than the main control loop
+  ctre_mc_read_hz: 100
+  pcm_read_hz: 20
+  pdh_read_hz: 20
+  pdp_read_hz: 20
+  ph_read_hz: 20
+  robot_iteration_hz: 20
+  spark_max_read_hz: 100
+  joystick_read_hz: 50
+  match_data_read_hz: 2
+  robot_controller_read_hz: 20
+  as726x_read_hz: 7
+
+
+# Settings for ros_control hardware interface
+# Map a name for each valid joint to a CAN id
+# For future expansion, change hw_id to specify one
+# of several types of HW interface : CAN_id, PWM_id, DIO_id, AIO_id, etc.
+hardware_interface:
+   # Identify this as a non-Rio controller using Linux
+   # socketCan device can0 to communicate
+   run_hal_robot: false
+   can_interface: can0
+
+   joints:
+       - {name: shooter_leader, type: can_talon_fx, can_id: 40, local: true} # TODO Fix CAN id
+       - {name: shooter_follower, type: can_talon_fx, can_id: 41, local: true} # TODO Fix CAN id
+       - {name: intake_straight, type: can_talon_fx, can_id: 50, local: true} # TODO Fix CAN id
+       - {name: intake_arc, type: can_talon_fx, can_id: 51, local: true} # TODO Fix CAN id
+
+       - {name: robot_code_ready_jetson, local: true, type: ready}
+       - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
+
+# Create controllers for each joint
+#
+# Entry is the name of the controller. It can be anything.
+# It will create a namespace with that name under the main
+# controller namespace. Subscribed topics for that controller
+# will be most often show up under
+# <top level controller manager ns>/<controller ns>/topic
+# e.g.
+# /frcrobot/joint1_talon_controller/command
+# /frcrobot/joint2_talon_controller/command
+# /frcrobot/talon_states
+
+#Set up controllers for main robot mechanisms
+shooter_controller:
+  joint: shooter_leader
+  type: talon_controllers/TalonVelocityCloseLoopController
+  feedback_type: IntegratedSensor
+  # TODO FIX ALL BELOW VALUES (these are from 2020)
+  close_loop_values:
+      - {p: 0.00, i: 0.000, d: 0.0, f: 0, i_zone: 0}
+  invert_output: false
+  sensor_phase: false
+  peak_output_forward: 1.0
+  peak_output_reverse: -1.0
+  nominal_output_forward: 0.0
+  nominal_output_reverse: 0.0
+  voltage_compensation_enable: true
+  dynamic_reconfigure: True
+  neutral_mode: Coast
+
+shooter_follower_controller:
+    type: talon_controllers/TalonFollowerController
+    joint: shooter_follower
+    invert_output: False
+    follow_joint: shooter_leader
+    voltage_compensation_enable: true
+
+intake_straight_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: intake_straight
+    invert_output: false
+    voltage_compensation_enable: true
+    
+intake_arc_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: intake_arc
+    invert_output: false
+    voltage_compensation_enable: true
+
+# This one creates the /talon_states topic necessary in ROS
+# It doesn't actually control anything, just takes the internal
+# encoder state used by the hw manager and publishes it as
+# a ROS topic.  This is generic ROS stuff, so we'll have
+# to figure out what to map e.g. effort to in the Talon world
+talon_state_controller_jetson:
+   type:         talon_state_controller/TalonStateController
+   publish_rate: 100
+talon_config_controller:
+   type:         talon_config_controller/TalonConfigController
+   publish_rate: 5
+
+# Similar to above, but this one prints non-Talon state
+# (stuff that fits into the more standard ROS position/
+# speed/effort paradigm)
+joint_state_controller_jetson:
+   type:         joint_state_controller/JointStateController
+   publish_rate: 100
+
+# Used to listen for remote joint states published from the given topic
+# (in this case the Rio) and copy them to internal copies of
+# joint data
+joint_state_listener_controller:
+    type:      state_listener_controller/JointStateListenerController
+    topic:     /frcrobot_rio/joint_states
+
+match_state_listener_controller:
+    type:      state_listener_controller/MatchStateListenerController
+    topic:     /frcrobot_rio/match_data
+
+orchestra_controller:
+    type:      orchestra_controller/OrchestraController
+
+# These controllers are defined for testing indivudal motors
+# but are not actually used for normal swerve drive control
+# TODO Sensor phase default for angle motors is good
+

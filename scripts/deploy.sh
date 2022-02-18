@@ -8,6 +8,7 @@ ROBORIO_ADDR=10.9.0.2
 #ROBORIO_ADDR=192.168.0.169
 
 # This can be an array of IP address if there are multiple Jetsons
+#JETSON_ADDR=( )
 JETSON_ADDR=(10.9.0.8)
 #JETSON_ADDR=(10.9.0.8 10.9.0.9)
 #JETSON_ADDR=(192.168.0.183)
@@ -145,8 +146,10 @@ echo "Synchronizing local changes TO $INSTALL_ENV environment."
 for i in "${JETSON_ADDR[@]}"
 do
     scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $i:$JETSON_ROS_CODE_LOCATION
+    scp $ROS_CODE_LOCATION/ROSRioMaster.sh $i:$JETSON_ROS_CODE_LOCATION
 done
 scp $ROS_CODE_LOCATION/ROSJetsonMaster.sh $ROBORIO_ADDR:$RIO_ROS_CODE_LOCATION
+scp $ROS_CODE_LOCATION/ROSRioMaster.sh $ROBORIO_ADDR:$RIO_ROS_CODE_LOCATION
 
 # If two-way syncing is enabled, copy newer files from the Jetson(s)
 # to the dev laptop
