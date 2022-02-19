@@ -1,0 +1,12 @@
+#!/bin/bash
+
+dev_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+dev_dir="$( dirname "$dev_dir" )"
+
+set -e
+set -o pipefail
+
+docker run "$@" -it --net=host -v  /tmp/.X11-unix:/tmp/.X11-unix \
+ -v $HOME/2022RobotCode:/home/ubuntu/2022RobotCode \
+ --device=/dev/input/js0 \
+ -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-2022-dev:latest /bin/bash

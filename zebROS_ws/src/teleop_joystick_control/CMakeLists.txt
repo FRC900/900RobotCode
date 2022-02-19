@@ -103,24 +103,28 @@ add_dependencies(teleop_joystick_comp_2020
 	)
 
 add_executable(orient_strafing_node src/orient_strafing.cpp)
-set_target_properties(orient_strafing_node PROPERTIES OUTPUT_NAME 
-	orient_strafing_node PREFIX "")
 target_link_libraries(orient_strafing_node
 	${catkin_LIBRARIES}
 	)
-
 add_dependencies(orient_strafing_node
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 	)
 
 add_executable(teleop_joints_keyboard src/teleop_joints_keyboard.cpp)
-set_target_properties(teleop_joints_keyboard PROPERTIES OUTPUT_NAME
-	teleop_joints_keyboard PREFIX "")
 target_link_libraries(teleop_joints_keyboard
 	${catkin_LIBRARIES}
 	)
 add_dependencies(teleop_joints_keyboard
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS}
+	)
+
+add_executable(basic_mechanism_test_node src/basic_mechanism_test.cpp)
+target_link_libraries(basic_mechanism_test_node
+	${catkin_LIBRARIES}
+	)
+add_dependencies(basic_mechanism_test_node
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 	)

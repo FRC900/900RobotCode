@@ -72,27 +72,27 @@ void JoystickStateController::update(const ros::Time &time, const ros::Duration 
 			m.stickLeftButton    = js->getButton(8);
 			m.stickRightButton   = js->getButton(9);
 
-			m.buttonAPress       = !prev_joystick_msg_.buttonAPress     && m.buttonAPress;
-			m.buttonBPress       = !prev_joystick_msg_.buttonBPress     && m.buttonBPress;
-			m.buttonXPress       = !prev_joystick_msg_.buttonXPress     && m.buttonXPress;
-			m.buttonYPress       = !prev_joystick_msg_.buttonYPress     && m.buttonYPress;
-			m.bumperLeftPress    = !prev_joystick_msg_.bumperLeftPress  && m.bumperLeftPress;
-			m.bumperRightPress   = !prev_joystick_msg_.bumperRightPress && m.bumperRightPress;
-			m.buttonBackPress    = !prev_joystick_msg_.buttonBackPress  && m.buttonBackPress;
-			m.buttonStartPress   = !prev_joystick_msg_.buttonStartPress && m.buttonStartPress;
-			m.stickLeftPress     = !prev_joystick_msg_.stickLeftPress   && m.stickLeftPress;
-			m.stickRightPress    = !prev_joystick_msg_.stickRightPress  && m.stickRightPress;
+			m.buttonAPress       = !prev_joystick_msg_.buttonAButton     && m.buttonAButton;
+			m.buttonBPress       = !prev_joystick_msg_.buttonBButton     && m.buttonBButton;
+			m.buttonXPress       = !prev_joystick_msg_.buttonXButton     && m.buttonXButton;
+			m.buttonYPress       = !prev_joystick_msg_.buttonYButton     && m.buttonYButton;
+			m.bumperLeftPress    = !prev_joystick_msg_.bumperLeftButton  && m.bumperLeftButton;
+			m.bumperRightPress   = !prev_joystick_msg_.bumperRightButton && m.bumperRightButton;
+			m.buttonBackPress    = !prev_joystick_msg_.buttonBackButton  && m.buttonBackButton;
+			m.buttonStartPress   = !prev_joystick_msg_.buttonStartButton && m.buttonStartButton;
+			m.stickLeftPress     = !prev_joystick_msg_.stickLeftButton   && m.stickLeftButton;
+			m.stickRightPress    = !prev_joystick_msg_.stickRightButton  && m.stickRightButton;
 
-			m.buttonARelease     = prev_joystick_msg_.buttonAPress     && !m.buttonAPress;
-			m.buttonBRelease     = prev_joystick_msg_.buttonBPress     && !m.buttonBPress;
-			m.buttonXRelease     = prev_joystick_msg_.buttonXPress     && !m.buttonXPress;
-			m.buttonYRelease     = prev_joystick_msg_.buttonYPress     && !m.buttonYPress;
-			m.bumperLeftRelease  = prev_joystick_msg_.bumperLeftPress  && !m.bumperLeftPress;
-			m.bumperRightRelease = prev_joystick_msg_.bumperRightPress && !m.bumperRightPress;
-			m.buttonBackRelease  = prev_joystick_msg_.buttonBackPress  && !m.buttonBackPress;
-			m.buttonStartRelease = prev_joystick_msg_.buttonStartPress && !m.buttonStartPress;
-			m.stickLeftRelease   = prev_joystick_msg_.stickLeftPress   && !m.stickLeftPress;
-			m.stickRightRelease  = prev_joystick_msg_.stickRightPress  && !m.stickRightPress;
+			m.buttonARelease     = prev_joystick_msg_.buttonAButton     && !m.buttonAButton;
+			m.buttonBRelease     = prev_joystick_msg_.buttonBButton     && !m.buttonBButton;
+			m.buttonXRelease     = prev_joystick_msg_.buttonXButton     && !m.buttonXButton;
+			m.buttonYRelease     = prev_joystick_msg_.buttonYButton     && !m.buttonYButton;
+			m.bumperLeftRelease  = prev_joystick_msg_.bumperLeftButton  && !m.bumperLeftButton;
+			m.bumperRightRelease = prev_joystick_msg_.bumperRightButton && !m.bumperRightButton;
+			m.buttonBackRelease  = prev_joystick_msg_.buttonBackButton  && !m.buttonBackButton;
+			m.buttonStartRelease = prev_joystick_msg_.buttonStartButton && !m.buttonStartButton;
+			m.stickLeftRelease   = prev_joystick_msg_.stickLeftButton   && !m.stickLeftButton;
+			m.stickRightRelease  = prev_joystick_msg_.stickRightButton  && !m.stickRightButton;
 
 			bool joystick_up = false;
 			bool joystick_down = false;
