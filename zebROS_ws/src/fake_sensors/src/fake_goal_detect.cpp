@@ -57,6 +57,7 @@ class FakeGoalDetection
 		{
 			field_obj::Detection msgOut;
 			msgOut.header = msgIn->header;
+			static tf2_ros::TransformBroadcaster br;
 			for(size_t i = 0; i < msgIn->markers.size(); i++)
 			{
 				if (msgIn->markers[i].ids[0] == -1) // stage publishes odom as marker -1
@@ -72,6 +73,29 @@ class FakeGoalDetection
 					obj.confidence = msgIn->markers[i].ids_confidence[0];
 					obj.id = objMap_[msgIn->markers[i].ids[0]];
 					msgOut.objects.push_back(obj);
+
+					geometry_msgs::TransformStamped transformStamped;
+
+					transformStamped.header.stamp = msgOut.header.stamp;
+					transformStamped.header.frame_id = msgOut.header.frame_id;
+					std::stringstream child_frame;
+					child_frame << obj.id << "_" << i;
+					transformStamped.child_frame_id = child_frame.str();
+
+					transformStamped.transform.translation.x = obj.location.x;
+					transformStamped.transform.translation.y = obj.location.y;
+					transformStamped.transform.translation.z = obj.location.z;
+
+					// Can't detect rotation yet, so publish 0 instead
+					tf2::Quaternion q;
+					q.setRPY(0, 0, 0);
+
+					transformStamped.transform.rotation.x = q.x();
+					transformStamped.transform.rotation.y = q.y();
+					transformStamped.transform.rotation.z = q.z();
+					transformStamped.transform.rotation.w = q.w();
+
+					br.sendTransform(transformStamped);
 				} else {
 					field_obj::Object dummy;
 
