@@ -3,13 +3,18 @@
 		<!-- allow us to hook up sim odom topics for stage sim testing -->
 		<arg name="odom_topic" default="/frcrobot_jetson/swerve_drive_controller/odom"/>
 		<arg name="use_pose_for_odom" default="true"/>
-
-        <group ns="hold_position">
+		
+		<group ns="hold_position">
             <rosparam file="$(find path_follower)/config/hold_position_config.yaml" command="load"/>
 
 			<group ns="hold_position">
 				<param name="odom_topic" value="$(arg odom_topic)"/>
 				<param name="use_pose_for_odom" value="$(arg use_pose_for_odom)"/>
+				
+				<!-- In meters and radians -->
+		        <param name="dist_threshold" value="0.06"/>
+       			<param name="angle_threshold" value="0.036"/>
+
 			</group>
             <node name="hold_position_server" pkg="path_follower" type="hold_position_server" output="screen">
 			</node>
