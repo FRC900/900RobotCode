@@ -435,7 +435,7 @@ int main(int argc, char **argv)
 	nh.getParam("/hold_position/hold_position/use_pose_for_odom", use_pose_for_odom);
 	nh.getParam("/hold_position/hold_position/dist_threshold", dist_threshold);
 	nh.getParam("/hold_position/hold_position/angle_threshold", angle_threshold);
-	ROS_WARN("DistanceThreshold: " << dist_threshold_ << " Angle Thresh:" << angle_threshold_);
+	ROS_WARN_STREAM("DistanceThreshold: " << dist_threshold << " Angle Thresh:" << angle_threshold);
 	holdPosition hold_position_server("hold_position_server", nh,
 								  server_timeout,
 								  ros_rate,
