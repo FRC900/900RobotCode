@@ -68,12 +68,22 @@ shooter_controller:
   dynamic_reconfigure: True
   neutral_mode: Coast
 
+#Set up controllers for main robot mechanisms
+shooter_percent_out_controller:
+  joint: shooter_leader
+  type: talon_controllers/TalonPercentOutputController
+  invert_output: false
+  voltage_compensation_enable: true
+  dynamic_reconfigure: True
+  neutral_mode: Coast
+
 shooter_follower_controller:
     type: talon_controllers/TalonFollowerController
     joint: shooter_follower
-    invert_output: False
+    invert_output: True
     follow_joint: shooter_leader
     voltage_compensation_enable: true
+    dynamic_reconfigure: False
 
 intake_straight_controller:
     type: talon_controllers/TalonPercentOutputController

@@ -35,6 +35,7 @@ hardware_interface:
          #- {name: intake_straight, type: can_talon_fx, can_id: 50, local: true} # TODO Fix CAN id
          #- {name: intake_arc, type: can_talon_fx, can_id: 51, local: true} # TODO Fix CAN id
        - {name: joystick0, type: joystick, id: 0, local: true}
+      #- {name: joystick2, type: joystick, id: 2, local: true}
 
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
