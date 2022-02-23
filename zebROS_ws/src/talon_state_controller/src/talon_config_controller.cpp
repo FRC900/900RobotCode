@@ -148,6 +148,8 @@ bool TalonConfigController::init(hardware_interface::TalonStateInterface *hw,
 		m.limit_switch_remote_reverse_source.push_back("");
 		m.limit_switch_remote_reverse_normal.push_back("");
 		m.limit_switch_remote_reverse_id.push_back(0);
+		m.clear_position_on_limit_f.push_back(false);
+		m.clear_position_on_limit_r.push_back(false);
 		m.softlimit_forward_threshold.push_back(0);
 		m.softlimit_forward_enable.push_back(false);
 		m.softlimit_reverse_threshold.push_back(0);
@@ -499,6 +501,9 @@ void TalonConfigController::update(const ros::Time &time, const ros::Duration & 
 				m.limit_switch_remote_reverse_source[i] = remoteLimitSwitchSourceToString(remote_ls_source);
 				m.limit_switch_remote_reverse_normal[i] = limitSwitchNormalToString(ls_normal);
 				m.limit_switch_remote_reverse_id[i] = remote_ls_id;
+
+				m.clear_position_on_limit_f[i] = ts->getClearPositionOnLimitF();
+				m.clear_position_on_limit_f[i] = ts->getClearPositionOnLimitR();
 
 				m.softlimit_forward_threshold[i] = ts->getForwardSoftLimitThreshold();
 				m.softlimit_forward_enable[i] = ts->getForwardSoftLimitEnable();

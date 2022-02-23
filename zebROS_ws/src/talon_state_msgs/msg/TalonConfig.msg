@@ -77,6 +77,8 @@ uint8[]   limit_switch_remote_forward_id
 string[]  limit_switch_remote_reverse_source
 string[]  limit_switch_remote_reverse_normal
 uint8[]   limit_switch_remote_reverse_id
+bool[]    clear_position_on_limit_f
+bool[]    clear_position_on_limit_r
 float64[] softlimit_forward_threshold
 bool[]    softlimit_forward_enable
 float64[] softlimit_reverse_threshold

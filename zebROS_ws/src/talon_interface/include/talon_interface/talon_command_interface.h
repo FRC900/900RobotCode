@@ -370,6 +370,16 @@ class TalonHWCommand
 		bool getClearStickyFaults(void) const;
 		bool clearStickyFaultsChanged(void);
 
+		void setClearPositionOnLimitF(bool clear_position_on_limit_f);
+		bool getClearPositionOnLimitF(void) const;
+		bool clearPositionOnLimitFChanged(bool &clear_position_on_limit_f);
+		void resetClearPositionOnLimitF(void);
+
+		void setClearPositionOnLimitR(bool clear_position_on_limit_r);
+		bool getClearPositionOnLimitR(void) const;
+		bool clearPositionOnLimitRChanged(bool &clear_position_on_limit_r);
+		void resetClearPositionOnLimitR(void);
+
 		void setConversionFactor(double conversion_factor);
 		double getConversionFactor(void) const;
 
@@ -559,6 +569,11 @@ class TalonHWCommand
 		bool   aux_pid_polarity_changed_;
 
 		double conversion_factor_;
+
+		bool clear_position_on_limit_f_{false};
+		bool clear_position_on_limit_f_changed_{false};
+		bool clear_position_on_limit_r_{false};
+		bool clear_position_on_limit_r_changed_{false};
 
 		// TalonFX / Falcon500 specific
 		hardware_interface::MotorCommutation motor_commutation_;

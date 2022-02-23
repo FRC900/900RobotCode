@@ -235,6 +235,9 @@ class TalonCIParams
 			limit_switch_remote_reverse_normal_ = static_cast<hardware_interface::LimitSwitchNormal>(config.limit_switch_remote_reverse_normal);
 			limit_switch_remote_reverse_id_     = config.limit_switch_remote_reverse_id;
 
+			clear_position_on_limit_f_          = config.clear_position_on_limit_f;
+			clear_position_on_limit_r_          = config.clear_position_on_limit_r;
+
 			softlimit_forward_threshold_ = config.softlimit_forward_threshold;
 			softlimit_forward_enable_ = config.softlimit_forward_enable;
 			softlimit_reverse_threshold_ = config.softlimit_reverse_threshold;
@@ -371,6 +374,8 @@ class TalonCIParams
 			config.limit_switch_remote_reverse_source = limit_switch_remote_reverse_source_;
 			config.limit_switch_remote_reverse_normal = limit_switch_remote_reverse_normal_;
 			config.limit_switch_remote_reverse_id     = limit_switch_remote_reverse_id_;
+			config.clear_position_on_limit_f          = clear_position_on_limit_f_;
+			config.clear_position_on_limit_r          = clear_position_on_limit_r_;
 			config.softlimit_forward_threshold = softlimit_forward_threshold_;
 			config.softlimit_forward_enable = softlimit_forward_enable_;
 			config.softlimit_reverse_threshold = softlimit_reverse_threshold_;
@@ -776,6 +781,8 @@ class TalonCIParams
 					return false;
 				limit_switch_remote_reverse_normal_ = limit_switch_normal;
 			}
+			n.getParam("clear_position_on_limit_f", clear_position_on_limit_f_);
+			n.getParam("clear_position_on_limit_r", clear_position_on_limit_r_);
 			return true;
 		}
 
@@ -941,6 +948,8 @@ class TalonCIParams
 		hardware_interface::RemoteLimitSwitchSource limit_switch_remote_reverse_source_;
 		hardware_interface::LimitSwitchNormal limit_switch_remote_reverse_normal_;
 		unsigned int                          limit_switch_remote_reverse_id_;
+		bool                                  clear_position_on_limit_f_{false};
+		bool                                  clear_position_on_limit_r_{false};
 
 		double softlimit_forward_threshold_;
 		bool   softlimit_forward_enable_;
@@ -1964,6 +1973,8 @@ class TalonControllerInterface
 			talon->setForwardSoftLimitEnable(params.softlimit_forward_enable_);
 			talon->setReverseSoftLimitThreshold(params.softlimit_reverse_threshold_);
 			talon->setReverseSoftLimitEnable(params.softlimit_reverse_enable_);
+			talon->setClearPositionOnLimitF(params.clear_position_on_limit_f_);
+			talon->setClearPositionOnLimitR(params.clear_position_on_limit_r_);
 
 			talon->setPeakCurrentLimit(params.current_limit_peak_amps_);
 			talon->setPeakCurrentDuration(params.current_limit_peak_msec_);

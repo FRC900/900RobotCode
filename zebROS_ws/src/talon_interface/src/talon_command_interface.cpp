@@ -1832,6 +1832,54 @@ void TalonHWCommand::resetMotionProfileTrajectoryPeriod(void)
 	motion_profile_profile_trajectory_period_changed_ = true;
 }
 
+void TalonHWCommand::setClearPositionOnLimitF(bool clear_position_on_limit_f)
+{
+	if (clear_position_on_limit_f != clear_position_on_limit_f_)
+	{
+		clear_position_on_limit_f_ = clear_position_on_limit_f;
+		clear_position_on_limit_f_changed_ = true;
+	}
+}
+bool TalonHWCommand::getClearPositionOnLimitF(void) const
+{
+	return clear_position_on_limit_f_;
+}
+bool TalonHWCommand::clearPositionOnLimitFChanged(bool &clear_position_on_limit_f)
+{
+	clear_position_on_limit_f = clear_position_on_limit_f_;
+	const auto ret = clear_position_on_limit_f_changed_;
+	clear_position_on_limit_f_changed_ = false;
+	return ret;
+}
+void TalonHWCommand::resetClearPositionOnLimitF(void)
+{
+	clear_position_on_limit_f_changed_ = true;
+}
+
+void TalonHWCommand::setClearPositionOnLimitR(bool clear_position_on_limit_r)
+{
+	if (clear_position_on_limit_r != clear_position_on_limit_r_)
+	{
+		clear_position_on_limit_r_ = clear_position_on_limit_r;
+		clear_position_on_limit_r_changed_ = true;
+	}
+}
+bool TalonHWCommand::getClearPositionOnLimitR(void) const
+{
+	return clear_position_on_limit_r_;
+}
+bool TalonHWCommand::clearPositionOnLimitRChanged(bool &clear_position_on_limit_r)
+{
+	clear_position_on_limit_r = clear_position_on_limit_r_;
+	const auto ret = clear_position_on_limit_r_changed_;
+	clear_position_on_limit_r_changed_ = false;
+	return ret;
+}
+void TalonHWCommand::resetClearPositionOnLimitR(void)
+{
+	clear_position_on_limit_r_changed_ = true;
+}
+
 void TalonHWCommand::setClearStickyFaults(void)
 {
 	clear_sticky_faults_ = true;

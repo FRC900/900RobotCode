@@ -1159,6 +1159,24 @@ void TalonHWState::setConversionFactor(double conversion_factor)
 	conversion_factor_ = conversion_factor;
 }
 
+void TalonHWState::setClearPositionOnLimitF(bool clear_position_on_limit_f)
+{
+	clear_position_on_limit_f_ = clear_position_on_limit_f;
+}
+bool TalonHWState::getClearPositionOnLimitF(void) const
+{
+	return clear_position_on_limit_f_;
+}
+
+void TalonHWState::setClearPositionOnLimitR(bool clear_position_on_limit_r)
+{
+	clear_position_on_limit_r_ = clear_position_on_limit_r;
+}
+bool TalonHWState::getClearPositionOnLimitR(void) const
+{
+	return clear_position_on_limit_r_;
+}
+
 //TalonFX only
 void TalonHWState::setMotorCommutation(hardware_interface::MotorCommutation motor_commutation)
 {

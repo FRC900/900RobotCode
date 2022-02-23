@@ -3667,6 +3667,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			tc.resetMotorCommutation();
 			tc.resetAbsoluteSensorRange();
 			tc.resetSensorInitializationStrategy();
+			tc.resetClearPositionOnLimitF();
+			tc.resetClearPositionOnLimitR();
 		}
 
 		if (bool enable_read_thread; tc.enableReadThreadChanged(enable_read_thread))
@@ -4107,6 +4109,38 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			{
 				tc.resetRemoteLimitSwitchesSource();
 			}
+		}
+
+		bool clear_position_on_limit_f;
+		if (tc.clearPositionOnLimitFChanged(clear_position_on_limit_f))
+		{
+			if (safeTalonCall(victor->ConfigClearPositionOnLimitF(clear_position_on_limit_f, timeoutMs), "ConfigClearPositionOnLimitF", ts.getCANID()))
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id]
+						<< " clear position on limit F = " << clear_position_on_limit_f);
+				ts.setClearPositionOnLimitF(clear_position_on_limit_f);
+			}
+			else
+			{
+				tc.resetClearPositionOnLimitF();
+			}
+
+		}
+
+		bool clear_position_on_limit_r;
+		if (tc.clearPositionOnLimitRChanged(clear_position_on_limit_r))
+		{
+			if (safeTalonCall(victor->ConfigClearPositionOnLimitR(clear_position_on_limit_f, timeoutMs), "ConfigClearPositionOnLimitR", ts.getCANID()))
+			{
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id]
+						<< " clear position on limit R = " << clear_position_on_limit_r);
+				ts.setClearPositionOnLimitR(clear_position_on_limit_r);
+			}
+			else
+			{
+				tc.resetClearPositionOnLimitR();
+			}
+
 		}
 
 		double softlimit_forward_threshold;

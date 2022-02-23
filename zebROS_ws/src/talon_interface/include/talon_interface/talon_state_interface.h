@@ -474,6 +474,11 @@ class TalonHWState
 		void setStickyFaults(unsigned int sticky_faults);
 		void setConversionFactor(double conversion_factor);
 
+		void setClearPositionOnLimitF(bool clear_position_on_limit_f);
+		bool getClearPositionOnLimitF(void) const;
+		void setClearPositionOnLimitR(bool clear_position_on_limit_r);
+		bool getClearPositionOnLimitR(void) const;
+
 		//TalonFX only
 		void setMotorCommutation(hardware_interface::MotorCommutation motor_commutation);
 		hardware_interface::MotorCommutation getMotorCommutation(void) const;
@@ -621,6 +626,9 @@ class TalonHWState
 		unsigned int sticky_faults_;
 
 		double conversion_factor_;
+
+		bool clear_position_on_limit_f_{false};
+		bool clear_position_on_limit_r_{false};
 
 		// TalonFX / Falcon500 specific
 		hardware_interface::MotorCommutation motor_commutation_;
