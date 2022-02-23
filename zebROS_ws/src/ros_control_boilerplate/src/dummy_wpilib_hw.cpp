@@ -881,17 +881,6 @@ const char* HAL_GetErrorMessage(int32_t code) {
 
 } // extern "C"
 
-namespace wpi {
-
-std::string GetStackTrace(int /*offset*/)
-{
-	ROS_ERROR("Called wpi::GetStackTrace(int offset) const on unsupported platform");
-	return std::string{};
-}
-
-}  // namespace wpi
-
-
 #include "hal/Notifier.h"
 HAL_NotifierHandle HAL_InitializeNotifier(int32_t* status) {
 	*status = 0;

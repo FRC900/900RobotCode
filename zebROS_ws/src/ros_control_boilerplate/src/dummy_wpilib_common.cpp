@@ -1125,3 +1125,14 @@ uint16_t rev::CANSparkMax::GetStickyFaults()
 	return 0xFFFF;
 }
 #endif
+
+namespace wpi {
+
+std::string GetStackTrace(int /*offset*/)
+{
+	ROS_ERROR("Called wpi::GetStackTrace(int offset) const on unsupported platform");
+	return std::string{};
+}
+
+}  // namespace wpi
+

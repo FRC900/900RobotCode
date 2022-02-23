@@ -9,7 +9,7 @@
 
 which docker | grep -q docker
 if [ $? -ne 1 ] ; then
-	echo "This script must be run from inside a docker conatiner"
+	echo "This script must be run from inside a docker container"
 	return
 fi
 
