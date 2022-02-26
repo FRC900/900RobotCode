@@ -1206,7 +1206,7 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 				double_solenoid_forward_channel = readIntParam(joint_params, local_hardware, "forward_channel", joint_name);
 				double_solenoid_reverse_channel = readIntParam(joint_params, local_hardware, "reverse_channel", joint_name);
 				double_solenoid_module_type = readSolenoidModuleType(joint_params, local_hardware, joint_name);
-				double_solenoid_module_id = readIntParam(joint_params, local_hardware, "solenoid", joint_name);
+				double_solenoid_module_id = readIntParam(joint_params, local_hardware, "module_id", joint_name);
 				if (double_solenoid_forward_channel == double_solenoid_reverse_channel)
 					throw std::runtime_error("Double solenoid " + joint_name +
 							" delcared with the same forward and reverse channel");

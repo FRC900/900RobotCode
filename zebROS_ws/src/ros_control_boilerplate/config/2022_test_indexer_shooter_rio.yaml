@@ -32,8 +32,11 @@ hardware_interface:
        - {name: dummy_talon, type: can_talon_srx, local: false}
          #- {name: shooter_leader, type: can_talon_fx, can_id: 40, local: true} # TODO Fix CAN id
          #- {name: shooter_follower, type: can_talon_fx, can_id: 41, local: true} # TODO Fix CAN id
-         #- {name: intake_straight, type: can_talon_fx, can_id: 50, local: true} # TODO Fix CAN id
-         #- {name: intake_arc, type: can_talon_fx, can_id: 51, local: true} # TODO Fix CAN id
+         #- {name: indexer_straight, type: can_talon_fx, can_id: 50, local: true} # TODO Fix CAN id
+         #- {name: indexer_arc, type: can_talon_fx, can_id: 51, local: true} # TODO Fix CAN id
+       - {name: intake_solenoid_joint, type: solenoid, module_type: ctrepcm, module_id: 0, channel: 0, local_hardware: true, local_update: false}
+       - {name: climber_dynamic_arm_solenoid_joint, type: double_solenoid, module_type: ctrepcm, module_id: 0, forward_channel: 1, reverse_channel: 2, local_hardware: true, local_update: false}
+       - {name: climber_static_hook_solenoid_joint, type: double_solenoid, module_type: ctrepcm, module_id: 0, forward_channel: 3, reverse_channel: 4, local_hardware: true, local_update: false}
        - {name: joystick0, type: joystick, id: 0, local: true}
       #- {name: joystick2, type: joystick, id: 2, local: true}
 
@@ -126,14 +129,14 @@ shooter_follower_controller:
     follow_joint: shooter_leader
     voltage_compensation_enable: true
 
-intake_straight_controller:
+indexer_straight_controller:
     type: talon_controllers/TalonPercentOutputController
-    joint: intake_straight
+    joint: indexer_straight
     invert_output: false
     voltage_compensation_enable: true
     
-intake_arc_controller:
+indexer_arc_controller:
     type: talon_controllers/TalonPercentOutputController
-    joint: intake_arc
+    joint: indexer_arc
     invert_output: false
     voltage_compensation_enable: true

@@ -32,8 +32,13 @@ hardware_interface:
    joints:
        - {name: shooter_leader, type: can_talon_fx, can_id: 40, local: true} # TODO Fix CAN id
        - {name: shooter_follower, type: can_talon_fx, can_id: 41, local: true} # TODO Fix CAN id
-       - {name: intake_straight, type: can_talon_fx, can_id: 50, local: true} # TODO Fix CAN id
-       - {name: intake_arc, type: can_talon_fx, can_id: 51, local: true} # TODO Fix CAN id
+       - {name: indexer_straight, type: can_talon_fx, can_id: 50, local: true} # TODO Fix CAN id
+       - {name: indexer_arc, type: can_talon_fx, can_id: 51, local: true} # TODO Fix CAN id
+       - {name: intake_motor, type: can_talon_fx, can_id: 60, local: true} # TODO Fix CAN id
+       - {name: intake_solenoid_joint, type: solenoid, local_hardware: false, local_update: true}
+       - {name: climber_dynamic_arm_solenoid_joint, type: double_solenoid, local_hardware: false, local_update: true}
+       - {name: climber_static_hook_solenoid_joint, type: double_solenoid, local_hardware: false, local_update: true}
+       - {name: joystick0, type: joystick, id: 0, local: true}
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
@@ -85,17 +90,35 @@ shooter_follower_controller:
     voltage_compensation_enable: true
     dynamic_reconfigure: False
 
-intake_straight_controller:
+indexer_straight_controller:
     type: talon_controllers/TalonPercentOutputController
-    joint: intake_straight
+    joint: indexer_straight
     invert_output: false
     voltage_compensation_enable: true
     
-intake_arc_controller:
+indexer_arc_controller:
     type: talon_controllers/TalonPercentOutputController
-    joint: intake_arc
+    joint: indexer_arc
     invert_output: false
     voltage_compensation_enable: true
+
+intake_motor_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: intake_motor
+    invert_output: false
+    voltage_compensation_enable: true
+
+dynamic_arm_solenoid_controller:
+  type: position_controllers/JointPositionController
+  joint: climber_dynamic_arm_solenoid_joint
+
+static_hook_solenoid_controller:
+  type: position_controllers/JointPositionController
+  joint: climber_static_hook_solenoid_joint
+
+intake_solenoid_controller:
+  type: position_controllers/JointPositionController
+  joint: intake_solenoid_joint
 
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal
@@ -126,9 +149,6 @@ joint_state_listener_controller:
 match_state_listener_controller:
     type:      state_listener_controller/MatchStateListenerController
     topic:     /frcrobot_rio/match_data
-
-orchestra_controller:
-    type:      orchestra_controller/OrchestraController
 
 # These controllers are defined for testing indivudal motors
 # but are not actually used for normal swerve drive control
