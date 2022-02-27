@@ -1,10 +1,9 @@
-# 2022 TODO Set these offsets
 swerve_drive_controller:
     steering_joint_bl:
-        offset: 0.0
+        offset: 6.05309
     steering_joint_br:
-        offset: 0.0
+        offset: -2.41909
     steering_joint_fl:
-        offset: 0.0
+        offset: 0.463262
     steering_joint_fr:
-        offset: 0.0
+        offset: -3.63093

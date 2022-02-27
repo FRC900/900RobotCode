@@ -57,6 +57,22 @@ swerve_drive_controller:
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
+        #status_1_general_period: 10
+        #status_2_feedback0_period: 20
+        status_3_quadrature_period: 250
+        #status_4_aintempvbat_period: 160
+        #status_6_misc_period: 0
+        #status_7_commstatus_period: 0
+        status_8_pulsewidth_period: 250
+        status_9_motprofbuffer_period: 250
+        status_10_motionmagic_period: 250
+        #status_11_uartgadgeteer_period: 250
+        #status_12_feedback1_period: 250
+        #status_13_base_pidf0_period: 160
+        #status_14_turn_pidf1_period: 250
+        status_15_firmwareapistatus_period: 250
+        #status_17_targets1_period: 0
+        #status_17_brushless_current_period: 0
         neutral_deadband: 0.01
     speed_joint_fr:
         joint: fr_drive #fix pid
@@ -73,6 +89,22 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
+        #status_1_general_period: 10
+        #status_2_feedback0_period: 20
+        status_3_quadrature_period: 250
+        #status_4_aintempvbat_period: 160
+        #status_6_misc_period: 0
+        #status_7_commstatus_period: 0
+        status_8_pulsewidth_period: 250
+        status_9_motprofbuffer_period: 250
+        status_10_motionmagic_period: 250
+        #status_11_uartgadgeteer_period: 250
+        #status_12_feedback1_period: 250
+        #status_13_base_pidf0_period: 160
+        #status_14_turn_pidf1_period: 250
+        status_15_firmwareapistatus_period: 250
+        #status_17_targets1_period: 0
+        #status_17_brushless_current_period: 0
     speed_joint_bl:
         joint: bl_drive #fix pid
         close_loop_values:
@@ -88,6 +120,22 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
+        #status_1_general_period: 10
+        #status_2_feedback0_period: 20
+        status_3_quadrature_period: 250
+        #status_4_aintempvbat_period: 160
+        #status_6_misc_period: 0
+        #status_7_commstatus_period: 0
+        status_8_pulsewidth_period: 250
+        status_9_motprofbuffer_period: 250
+        status_10_motionmagic_period: 250
+        #status_11_uartgadgeteer_period: 250
+        #status_12_feedback1_period: 250
+        #status_13_base_pidf0_period: 160
+        #status_14_turn_pidf1_period: 250
+        status_15_firmwareapistatus_period: 250
+        #status_17_targets1_period: 0
+        #status_17_brushless_current_period: 0
     speed_joint_br:
         joint: br_drive #fix pid
         close_loop_values:
@@ -103,6 +151,22 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
+        #status_1_general_period: 10
+        #status_2_feedback0_period: 20
+        status_3_quadrature_period: 250
+        #status_4_aintempvbat_period: 160
+        #status_6_misc_period: 0
+        #status_7_commstatus_period: 0
+        status_8_pulsewidth_period: 250
+        status_9_motprofbuffer_period: 250
+        status_10_motionmagic_period: 250
+        #status_11_uartgadgeteer_period: 250
+        #status_12_feedback1_period: 250
+        #status_13_base_pidf0_period: 160
+        #status_14_turn_pidf1_period: 250
+        status_15_firmwareapistatus_period: 250
+        #status_17_targets1_period: 0
+        #status_17_brushless_current_period: 0
     steering_joint_fl:
         joint: fl_angle
         feedback_type: RemoteSensor0
@@ -119,6 +183,23 @@ swerve_drive_controller:
         motion_cruise_velocity: 45
         motion_acceleration: 153.3
         voltage_compensation_enable: true
+        dynamic_reconfigure: True
+        #status_1_general_period: 10
+        #status_2_feedback0_period: 20
+        status_3_quadrature_period: 250
+        #status_4_aintempvbat_period: 160
+        #status_6_misc_period: 0
+        #status_7_commstatus_period: 0
+        status_8_pulsewidth_period: 250
+        status_9_motprofbuffer_period: 250
+        #status_10_motionmagic_period: 160
+        #status_11_uartgadgeteer_period: 250
+        #status_12_feedback1_period: 250
+        #status_13_base_pidf0_period: 160
+        #status_14_turn_pidf1_period: 250
+        status_15_firmwareapistatus_period: 250
+        #status_17_targets1_period: 0
+        #status_17_brushless_current_period: 0
     steering_joint_fr:
         joint: fr_angle
         feedback_type: RemoteSensor0
@@ -135,6 +216,23 @@ swerve_drive_controller:
         motion_cruise_velocity: 45
         motion_acceleration: 153.3
         voltage_compensation_enable: true
+        dynamic_reconfigure: True
+        #status_1_general_period: 10
+        #status_2_feedback0_period: 20
+        status_3_quadrature_period: 250
+        #status_4_aintempvbat_period: 160
+        #status_6_misc_period: 0
+        #status_7_commstatus_period: 0
+        status_8_pulsewidth_period: 250
+        status_9_motprofbuffer_period: 250
+        #status_10_motionmagic_period: 160
+        #status_11_uartgadgeteer_period: 250
+        #status_12_feedback1_period: 250
+        #status_13_base_pidf0_period: 160
+        #status_14_turn_pidf1_period: 250
+        status_15_firmwareapistatus_period: 250
+        #status_17_targets1_period: 0
+        #status_17_brushless_current_period: 0
     steering_joint_br:
         joint: br_angle
         feedback_type: RemoteSensor0
@@ -151,6 +249,23 @@ swerve_drive_controller:
         motion_cruise_velocity: 45
         motion_acceleration: 153.3
         voltage_compensation_enable: true
+        dynamic_reconfigure: True
+        #status_1_general_period: 10
+        #status_2_feedback0_period: 20
+        status_3_quadrature_period: 250
+        #status_4_aintempvbat_period: 160
+        #status_6_misc_period: 0
+        #status_7_commstatus_period: 0
+        status_8_pulsewidth_period: 250
+        status_9_motprofbuffer_period: 250
+        #status_10_motionmagic_period: 160
+        #status_11_uartgadgeteer_period: 250
+        #status_12_feedback1_period: 250
+        #status_13_base_pidf0_period: 160
+        #status_14_turn_pidf1_period: 250
+        status_15_firmwareapistatus_period: 250
+        #status_17_targets1_period: 0
+        #status_17_brushless_current_period: 0
     steering_joint_bl:
         joint: bl_angle
         feedback_type: RemoteSensor0
@@ -167,3 +282,20 @@ swerve_drive_controller:
         motion_cruise_velocity: 45
         motion_acceleration: 153.3
         voltage_compensation_enable: true
+        dynamic_reconfigure: True
+        #status_1_general_period: 10
+        #status_2_feedback0_period: 20
+        status_3_quadrature_period: 250
+        #status_4_aintempvbat_period: 160
+        #status_6_misc_period: 0
+        #status_7_commstatus_period: 0
+        status_8_pulsewidth_period: 250
+        status_9_motprofbuffer_period: 250
+        #status_10_motionmagic_period: 160
+        #status_11_uartgadgeteer_period: 250
+        #status_12_feedback1_period: 250
+        #status_13_base_pidf0_period: 160
+        #status_14_turn_pidf1_period: 250
+        status_15_firmwareapistatus_period: 250
+        #status_17_targets1_period: 0
+        #status_17_brushless_current_period: 0

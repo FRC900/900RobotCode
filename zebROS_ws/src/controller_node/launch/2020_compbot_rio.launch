@@ -33,7 +33,9 @@
 		<node name="uptime_rio" pkg="uptime" type="uptime_node" output="screen" />
 
 		<include file="$(find cpu_monitor)/launch/cpu_monitor.launch">
-			<arg name="poll_period" value="1"/>
+			<!-- ironcally, this chews up a good bit of CPU time,
+				 so limit the polling period here -->
+			<arg name="poll_period" value="5"/>
 		</include>
 	</group>
 </launch>

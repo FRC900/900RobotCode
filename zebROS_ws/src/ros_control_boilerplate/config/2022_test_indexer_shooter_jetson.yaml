@@ -63,7 +63,7 @@ shooter_controller:
   # TODO FIX ALL BELOW VALUES (these are from 2020)
   close_loop_values:
       - {p: 0.00, i: 0.000, d: 0.0, f: 0, i_zone: 0}
-  invert_output: false
+  invert_output: true
   sensor_phase: false
   peak_output_forward: 1.0
   peak_output_reverse: -1.0
@@ -77,36 +77,111 @@ shooter_controller:
 shooter_percent_out_controller:
   joint: shooter_leader
   type: talon_controllers/TalonPercentOutputController
-  invert_output: false
+  invert_output: true
   voltage_compensation_enable: true
   dynamic_reconfigure: True
   neutral_mode: Coast
-
+  #status_1_general_period: 10
+  #status_2_feedback0_period: 20
+  status_3_quadrature_period: 250
+  #status_4_aintempvbat_period: 160
+  #status_6_misc_period: 0
+  #status_7_commstatus_period: 0
+  status_8_pulsewidth_period: 250
+  status_9_motprofbuffer_period: 250
+  status_10_motionmagic_period: 250
+  #status_11_uartgadgeteer_period: 250
+  #status_12_feedback1_period: 250
+  #status_13_base_pidf0_period: 160
+  #status_14_turn_pidf1_period: 250
+  status_15_firmwareapistatus_period: 250
+  #status_17_brushless_current_period: 50
+  
 shooter_follower_controller:
     type: talon_controllers/TalonFollowerController
     joint: shooter_follower
-    invert_output: True
+    invert_output: false
     follow_joint: shooter_leader
     voltage_compensation_enable: true
     dynamic_reconfigure: False
+    status_1_general_period: 250
+    status_2_feedback0_period: 250
+    status_3_quadrature_period: 250
+    #status_4_aintempvbat_period: 160
+    #status_6_misc_period: 0
+    #status_7_commstatus_period: 0
+    status_8_pulsewidth_period: 250
+    status_9_motprofbuffer_period: 250
+    status_10_motionmagic_period: 250
+    #status_11_uartgadgeteer_period: 250
+    #status_12_feedback1_period: 250
+    #status_13_base_pidf0_period: 160
+    #status_14_turn_pidf1_period: 250
+    status_15_firmwareapistatus_period: 250
+    #status_17_brushless_current_period: 50
 
 indexer_straight_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: indexer_straight
     invert_output: false
     voltage_compensation_enable: true
+    #status_1_general_period: 10
+    #status_2_feedback0_period: 20
+    status_3_quadrature_period: 250
+    #status_4_aintempvbat_period: 160
+    #status_6_misc_period: 0
+    #status_7_commstatus_period: 0
+    status_8_pulsewidth_period: 250
+    status_9_motprofbuffer_period: 250
+    status_10_motionmagic_period: 250
+    #status_11_uartgadgeteer_period: 250
+    #status_12_feedback1_period: 250
+    #status_13_base_pidf0_period: 160
+    #status_14_turn_pidf1_period: 250
+    status_15_firmwareapistatus_period: 250
+    #status_17_brushless_current_period: 50
     
 indexer_arc_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: indexer_arc
     invert_output: false
     voltage_compensation_enable: true
+    #status_1_general_period: 10
+    #status_2_feedback0_period: 20
+    status_3_quadrature_period: 250
+    #status_4_aintempvbat_period: 160
+    #status_6_misc_period: 0
+    #status_7_commstatus_period: 0
+    status_8_pulsewidth_period: 250
+    status_9_motprofbuffer_period: 250
+    status_10_motionmagic_period: 250
+    #status_11_uartgadgeteer_period: 250
+    #status_12_feedback1_period: 250
+    #status_13_base_pidf0_period: 160
+    #status_14_turn_pidf1_period: 250
+    status_15_firmwareapistatus_period: 250
+    #status_17_brushless_current_period: 50
 
 intake_motor_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: intake_motor
     invert_output: false
     voltage_compensation_enable: true
+    #status_1_general_period: 10
+    #status_2_feedback0_period: 20
+    status_3_quadrature_period: 250
+    #status_4_aintempvbat_period: 160
+    #status_6_misc_period: 0
+    #status_7_commstatus_period: 0
+    status_8_pulsewidth_period: 250
+    status_9_motprofbuffer_period: 250
+    status_10_motionmagic_period: 250
+    #status_11_uartgadgeteer_period: 250
+    #status_12_feedback1_period: 250
+    #status_13_base_pidf0_period: 160
+    #status_14_turn_pidf1_period: 250
+    status_15_firmwareapistatus_period: 250
+    #status_17_brushless_current_period: 50
 
 dynamic_arm_solenoid_controller:
   type: position_controllers/JointPositionController

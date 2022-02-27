@@ -170,15 +170,15 @@ constexpr uint8_t status_4_aintempvbat_default = 160;
 constexpr uint8_t status_6_misc_default = 0;
 constexpr uint8_t status_7_commstatus_default = 0;
 constexpr uint8_t status_8_pulsewidth_default = 160;
-constexpr uint8_t status_9_motprofbuffer_default = 50;
+constexpr uint8_t status_9_motprofbuffer_default = 250;
 constexpr uint8_t status_10_motionmagic_default = 160;
 constexpr uint8_t status_11_uartgadgeteer_default = 250;
 constexpr uint8_t status_12_feedback1_default = 250;
 constexpr uint8_t status_13_base_pidf0_default = 160;
 constexpr uint8_t status_14_turn_pidf1_default = 250;
 constexpr uint8_t status_15_firmwareapistatus_default = 160;
-constexpr uint8_t status_17_targets1_default = 0;
-constexpr uint8_t status_brushless_current_default = 0;
+constexpr uint8_t status_17_targets1_default = 250;
+constexpr uint8_t status_brushless_current_default = 50;
 
 enum ControlFrame
 {
