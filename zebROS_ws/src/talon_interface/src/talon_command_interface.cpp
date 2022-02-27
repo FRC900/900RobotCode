@@ -729,7 +729,10 @@ void TalonHWCommand::setEncoderFeedback(FeedbackDevice encoder_feedback)
 		}
 	}
 	else
-		ROS_WARN_STREAM("Invalid feedback device requested");
+	{
+		ROS_WARN_STREAM(__PRETTY_FUNCTION__ << "Invalid feedback device requested " <<
+				static_cast<int>(encoder_feedback));
+	}
 }
 double TalonHWCommand::getFeedbackCoefficient(void) const
 {

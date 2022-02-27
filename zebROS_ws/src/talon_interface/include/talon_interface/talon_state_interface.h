@@ -49,18 +49,18 @@ enum FeedbackDevice
 {
 	FeedbackDevice_Uninitialized,
 	FeedbackDevice_QuadEncoder,
+	FeedbackDevice_CTRE_MagEncoder_Relative = FeedbackDevice_QuadEncoder,
 	FeedbackDevice_IntegratedSensor,
 	FeedbackDevice_Analog,
 	FeedbackDevice_Tachometer,
 	FeedbackDevice_PulseWidthEncodedPosition,
+	FeedbackDevice_CTRE_MagEncoder_Absolute = FeedbackDevice_PulseWidthEncodedPosition,
 	FeedbackDevice_SensorSum,
 	FeedbackDevice_SensorDifference,
 	FeedbackDevice_RemoteSensor0,
 	FeedbackDevice_RemoteSensor1,
 	FeedbackDevice_None,
 	FeedbackDevice_SoftwareEmulatedSensor,
-	FeedbackDevice_CTRE_MagEncoder_Relative = FeedbackDevice_QuadEncoder,
-	FeedbackDevice_CTRE_MagEncoder_Absolute = FeedbackDevice_PulseWidthEncodedPosition,
 	FeedbackDevice_Last
 };
 
