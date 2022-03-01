@@ -2300,6 +2300,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			// which means both reads and writes will be skipped
 			if (run_hal_robot_)
 			{
+				ROS_INFO_STREAM("Fake talon created at can ID " << can_ctre_mc_can_ids_[i]);
 				if (can_ctre_mc_is_talon_fx_[i])
 				{
 					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonFX>(can_ctre_mc_can_ids_[i]));

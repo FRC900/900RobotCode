@@ -61,8 +61,8 @@ hardware_interface:
        - {name: br_angle, type: can_talon_fx, can_id: 14, local: true}
        - {name: bl_drive, type: can_talon_fx, can_id: 23, local: true}
        - {name: bl_angle, type: can_talon_fx, can_id: 13, local: true}
-       - {name: pdh, type: pdh}
-       - {name: pcm, type: pcm, pcm_id: 0}
+       # - {name: pdh, type: pdh}
+       # - {name: pcm, type: pcm, pcm_id: 0}
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?

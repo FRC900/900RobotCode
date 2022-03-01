@@ -77,7 +77,7 @@
 #include <hal/DriverStation.h>
 
 #include <ctre/phoenix/platform/can/PlatformCAN.h>           // for SetCANInterface
-//#include <ctre/phoenix/cci/Unmanaged_CCI.h>
+#include <ctre/phoenix/unmanaged/Unmanaged.h>
 
 extern "C" { void HALSIM_SetControlWord(HAL_ControlWord); }
 void HAL_SetCANBusString(const std::string &bus);
@@ -169,6 +169,7 @@ bool FRCRobotHWInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_
 			HAL_SendError(true, -1, false, "SetCANInterface failed - likely CAN adapter failure", "", "", true);
 		}
 		HAL_SetCANBusString(can_interface_);
+		ctre::phoenix::unmanaged::Unmanaged::SetPhoenixDiagnosticsStartTime(-1);
 	}
 
 	// Do base class init. This loads common interface info

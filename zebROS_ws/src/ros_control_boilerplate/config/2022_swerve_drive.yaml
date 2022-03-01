@@ -16,7 +16,7 @@ swerve_drive_controller:
     ang_accel_conv: 2.0
     max_rotational_vel: 10 # TODO
 
-    f_s: 0.035
+    f_s: 0.0175
     f_a: 0.005 #use torque curve instead? TODO: FIX
     f_v: 0.00315528
 
@@ -46,8 +46,7 @@ swerve_drive_controller:
     speed_joint_fl:
         joint: fl_drive #fix pid
         close_loop_values:
-            - {p: 0.12, i: 0.0, d: 4.0, f: 0.042, i_zone: 650}
-            - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
+            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0.0}
         sensor_phase: true
         invert_output: false
         feedback_type: IntegratedSensor
@@ -57,6 +56,8 @@ swerve_drive_controller:
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
+        status_1_general_period: 100
+        status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -77,8 +78,7 @@ swerve_drive_controller:
     speed_joint_fr:
         joint: fr_drive #fix pid
         close_loop_values:
-            - {p: 0.12, i: 0.0, d: 4.0, f: 0.042, i_zone: 650}
-            - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
+            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0.0}
         sensor_phase: true
         invert_output: false
         feedback_type: IntegratedSensor
@@ -89,6 +89,8 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
+        status_1_general_period: 100
+        status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -108,8 +110,8 @@ swerve_drive_controller:
     speed_joint_bl:
         joint: bl_drive #fix pid
         close_loop_values:
-            - {p: 0.12, i: 0.0, d: 4.0, f: 0.042, i_zone: 650}
-            - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
+            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0.0}
+        sensor_phase: true
         feedback_type: IntegratedSensor
         sensor_phase: true
         invert_output: false
@@ -120,6 +122,8 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
+        status_1_general_period: 100
+        status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -139,8 +143,7 @@ swerve_drive_controller:
     speed_joint_br:
         joint: br_drive #fix pid
         close_loop_values:
-            - {p: 0.12, i: 0.0, d: 4.0, f: 0.042, i_zone: 650}
-            - {p: 0.1, i: 0.0, d: 10.0, f: 0.0, i_zone: 0}
+            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0.0}
         sensor_phase: True
         invert_output: false
         feedback_type: IntegratedSensor
@@ -151,6 +154,8 @@ swerve_drive_controller:
         neutral_mode: "Brake"
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
+        status_1_general_period: 100
+        status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -184,6 +189,8 @@ swerve_drive_controller:
         motion_acceleration: 153.3
         voltage_compensation_enable: true
         dynamic_reconfigure: True
+        status_1_general_period: 100
+        status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -217,6 +224,8 @@ swerve_drive_controller:
         motion_acceleration: 153.3
         voltage_compensation_enable: true
         dynamic_reconfigure: True
+        status_1_general_period: 100
+        status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -250,6 +259,8 @@ swerve_drive_controller:
         motion_acceleration: 153.3
         voltage_compensation_enable: true
         dynamic_reconfigure: True
+        status_1_general_period: 100
+        status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -283,6 +294,8 @@ swerve_drive_controller:
         motion_acceleration: 153.3
         voltage_compensation_enable: true
         dynamic_reconfigure: True
+        status_1_general_period: 100
+        status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
