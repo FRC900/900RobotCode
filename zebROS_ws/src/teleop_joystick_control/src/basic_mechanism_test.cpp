@@ -437,7 +437,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			static bool rightStickCentered{true};
 			const auto rightStickY = joystick_states_array[0].rightStickY;
-			if(rightStickY > 0.5)
+			if(rightStickY < -0.5)
 			{
 				if (rightStickCentered)
 				{
@@ -446,7 +446,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 					rightStickCentered = false;
 				}
 			}
-			else if(rightStickY < -0.5)
+			else if(rightStickY > 0.5)
 			{
 				if (rightStickCentered)
 				{
