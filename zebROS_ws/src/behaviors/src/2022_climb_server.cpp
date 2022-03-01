@@ -20,6 +20,12 @@ distance_above_rung: 0.2'
 rosrun behaviors 2022_climb_server_node
 */
 
+// piston config
+constexpr double DYNAMIC_ARM_UPRIGHT = -1.0;
+constexpr double DYNAMIC_ARM_TILTED  =  1.0;
+constexpr double STATIC_HOOK_OPEN    = -1.0;
+constexpr double STATIC_HOOK_CLOSED  =  1.0;
+
 class ClimbStateMachine
 {
 protected:
@@ -142,7 +148,7 @@ public:
       return;
     }
     std_msgs::Float64 dpMsg;
-    dpMsg.data = 1.0;
+    dpMsg.data = DYNAMIC_ARM_UPRIGHT;
     dynamic_arm_piston_.publish(dpMsg);
     if (sleepCheckingForPreempt(0.8)) return;
     ROS_INFO_STREAM("2022_climb_server : Extended dynamic arm pistons");
@@ -213,7 +219,7 @@ public:
         return;
       }
       std_msgs::Float64 dpMsg;
-      dpMsg.data = 1.0;
+      dpMsg.data = DYNAMIC_ARM_UPRIGHT;
       dynamic_arm_piston_.publish(dpMsg);
       if (sleepCheckingForPreempt(0.8)) return;
       ROS_INFO_STREAM("2022_climb_server : Extended dynamic arm pistons");
@@ -316,7 +322,7 @@ public:
       return;
     }
     std_msgs::Float64 spMsg;
-    spMsg.data = 0.0;
+    spMsg.data = STATIC_HOOK_OPEN;
     static_hook_piston_.publish(spMsg);
     ros::Rate r(100); // 100 Hz loop
     int counter = 0;
@@ -414,7 +420,7 @@ public:
       return;
     }
     std_msgs::Float64 spMsg;
-    spMsg.data = 1.0;
+    spMsg.data = STATIC_HOOK_CLOSED;
     static_hook_piston_.publish(spMsg);
     ros::Rate r(100); // 100 Hz loop
     int counter = 0;
@@ -500,7 +506,7 @@ public:
       return;
     }
     std_msgs::Float64 dpMsg;
-    dpMsg.data = 0.0;
+    dpMsg.data = DYNAMIC_ARM_TILTED;
     dynamic_arm_piston_.publish(dpMsg);
     if (sleepCheckingForPreempt(1)) return;
     ROS_INFO_STREAM("2022_climb_server : Retracted dynamic arm pistons");
