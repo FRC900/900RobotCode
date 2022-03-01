@@ -1624,6 +1624,11 @@ class TalonControllerInterface
 			return talon_.state()->getSpeed();
 		}
 
+		double getOutputCurrent(void) const
+		{
+			return talon_.state()->getOutputCurrent();
+		}
+
 		bool getForwardLimitSwitch(void) const
 		{
 			return talon_.state()->getForwardLimitSwitch();

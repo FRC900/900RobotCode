@@ -101,6 +101,10 @@ dynamic_arm_controller:
   # trying to drive down to prevent killing the motor
   dynamic_arm_zeroing_timeout: 2.0
 
+  # TODO fix these
+  dynamic_arm_max_current_iterations: 10
+  dynamic_arm_current_threshold: 10.0
+
   motion_magic_velocity_fast: 1.7
   motion_magic_acceleration_fast: 3.5
 
