@@ -160,7 +160,7 @@ dynamic_arm_controller:
 
   dynamic_arm_follower:
     joint: climber_dynamic_arm_follower
-    invert_output: False
+    invert_output: True
     status_1_general_period: 250 # default = 10
     status_2_feedback0_period: 250 # Default = 20
     status_3_quadrature_period: 250
@@ -177,6 +177,7 @@ dynamic_arm_controller:
     status_15_firmwareapistatus_period: 250
     #status_17_brushless_current_period: 50
     neutral_mode: Brake
+    dynamic_reconfigure: False
 
 shooter_controller:
   joint: shooter_leader

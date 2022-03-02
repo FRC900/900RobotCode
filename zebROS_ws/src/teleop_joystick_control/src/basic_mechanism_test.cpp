@@ -523,7 +523,7 @@ int main(int argc, char **argv)
 	indexer_straight_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/indexer_straight_controller/command", 1, true);
 	indexer_arc_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/indexer_arc_controller/command", 1, true);
 	shooter_pub = n.advertise<std_msgs::Float64>(shooter_topic_name, 1, true);
-	climber_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/climber_controller/command", 1, true);
+	climber_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/climber_percent_out_controller/command", 1, true);
 	intake_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_motor_controller/command", 1, true);
 
 	zero_all_commands();

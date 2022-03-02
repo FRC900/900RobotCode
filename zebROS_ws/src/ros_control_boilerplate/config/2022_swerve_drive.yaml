@@ -46,7 +46,7 @@ swerve_drive_controller:
     speed_joint_fl:
         joint: fl_drive #fix pid
         close_loop_values:
-            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0.0}
+            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0}
         sensor_phase: true
         invert_output: false
         feedback_type: IntegratedSensor
@@ -54,7 +54,7 @@ swerve_drive_controller:
         current_limit_continuous_amps: 20
         closed_loop_ramp: 0.25
         current_limit_enable: True
-        dynamic_reconfigure: True
+        dynamic_reconfigure: False
         neutral_mode: "Brake"
         status_1_general_period: 100
         status_2_feedback0_period: 100
@@ -78,14 +78,14 @@ swerve_drive_controller:
     speed_joint_fr:
         joint: fr_drive #fix pid
         close_loop_values:
-            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0.0}
+            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0}
         sensor_phase: true
         invert_output: false
         feedback_type: IntegratedSensor
         voltage_compensation_enable: True
         current_limit_continuous_amps: 20
         current_limit_enable: True
-        dynamic_reconfigure: True
+        dynamic_reconfigure: False
         neutral_mode: "Brake"
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
@@ -110,7 +110,7 @@ swerve_drive_controller:
     speed_joint_bl:
         joint: bl_drive #fix pid
         close_loop_values:
-            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0.0}
+            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0}
         sensor_phase: true
         feedback_type: IntegratedSensor
         sensor_phase: true
@@ -118,7 +118,7 @@ swerve_drive_controller:
         voltage_compensation_enable: True
         current_limit_continuous_amps: 20
         current_limit_enable: True
-        dynamic_reconfigure: True
+        dynamic_reconfigure: False
         neutral_mode: "Brake"
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
@@ -143,14 +143,14 @@ swerve_drive_controller:
     speed_joint_br:
         joint: br_drive #fix pid
         close_loop_values:
-            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0.0}
+            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0}
         sensor_phase: True
         invert_output: false
         feedback_type: IntegratedSensor
         voltage_compensation_enable: True
         current_limit_continuous_amps: 20
         current_limit_enable: True
-        dynamic_reconfigure: True
+        dynamic_reconfigure: False
         neutral_mode: "Brake"
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
@@ -188,7 +188,7 @@ swerve_drive_controller:
         motion_cruise_velocity: 45
         motion_acceleration: 153.3
         voltage_compensation_enable: true
-        dynamic_reconfigure: True
+        dynamic_reconfigure: False
         status_1_general_period: 100
         status_2_feedback0_period: 100
         #status_1_general_period: 10
@@ -223,7 +223,7 @@ swerve_drive_controller:
         motion_cruise_velocity: 45
         motion_acceleration: 153.3
         voltage_compensation_enable: true
-        dynamic_reconfigure: True
+        dynamic_reconfigure: False
         status_1_general_period: 100
         status_2_feedback0_period: 100
         #status_1_general_period: 10
@@ -258,7 +258,7 @@ swerve_drive_controller:
         motion_cruise_velocity: 45
         motion_acceleration: 153.3
         voltage_compensation_enable: true
-        dynamic_reconfigure: True
+        dynamic_reconfigure: False
         status_1_general_period: 100
         status_2_feedback0_period: 100
         #status_1_general_period: 10
@@ -293,7 +293,7 @@ swerve_drive_controller:
         motion_cruise_velocity: 45
         motion_acceleration: 153.3
         voltage_compensation_enable: true
-        dynamic_reconfigure: True
+        dynamic_reconfigure: False
         status_1_general_period: 100
         status_2_feedback0_period: 100
         #status_1_general_period: 10

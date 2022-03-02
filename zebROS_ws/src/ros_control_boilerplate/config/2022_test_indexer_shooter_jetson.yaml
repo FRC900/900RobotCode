@@ -64,6 +64,9 @@ hardware_interface:
 # /frcrobot/talon_states
 
 #Set up controllers for main robot mechanisms
+# Once PID is tuned, switch to this, change #define
+# in teleop basic_mechanism_test.cpp to allow larger
+# velocity values to be sent vs. 0-1.0 % output values
 shooter_controller:
   joint: shooter_leader
   type: talon_controllers/TalonVelocityCloseLoopController
@@ -74,20 +77,19 @@ shooter_controller:
   invert_output: true
   sensor_phase: false
   peak_output_forward: 1.0
-  peak_output_reverse: -1.0
+  peak_output_reverse: 0.0
   nominal_output_forward: 0.0
   nominal_output_reverse: 0.0
   voltage_compensation_enable: true
   dynamic_reconfigure: True
   neutral_mode: Coast
 
-#Set up controllers for main robot mechanisms
 shooter_percent_out_controller:
   joint: shooter_leader
   type: talon_controllers/TalonPercentOutputController
   invert_output: true
   voltage_compensation_enable: true
-  dynamic_reconfigure: True
+  dynamic_reconfigure: False
   neutral_mode: Coast
   #status_1_general_period: 10
   #status_2_feedback0_period: 20
@@ -108,7 +110,7 @@ shooter_percent_out_controller:
 shooter_follower_controller:
     type: talon_controllers/TalonFollowerController
     joint: shooter_follower
-    invert_output: false
+    invert_output: False
     follow_joint: shooter_leader
     voltage_compensation_enable: true
     dynamic_reconfigure: False
@@ -132,6 +134,7 @@ indexer_straight_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: indexer_straight
     invert_output: false
+    dynamic_reconfigure: False
     voltage_compensation_enable: true
     #status_1_general_period: 10
     #status_2_feedback0_period: 20
@@ -154,6 +157,7 @@ indexer_arc_controller:
     joint: indexer_arc
     invert_output: false
     voltage_compensation_enable: true
+    dynamic_reconfigure: False
     #status_1_general_period: 10
     #status_2_feedback0_period: 20
     status_3_quadrature_period: 250
@@ -170,10 +174,15 @@ indexer_arc_controller:
     status_15_firmwareapistatus_period: 250
     #status_17_brushless_current_period: 50
 
+intake_solenoid_controller:
+  type: position_controllers/JointPositionController
+  joint: intake_solenoid_joint
+
 intake_motor_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: intake_motor
     invert_output: false
+    dynamic_reconfigure: False
     voltage_compensation_enable: true
     #status_1_general_period: 10
     #status_2_feedback0_period: 20
@@ -202,9 +211,9 @@ static_hook_solenoid_controller:
 climber_percent_out_controller:
     joint: climber_dynamic_arm_leader
     type: talon_controllers/TalonPercentOutputController
-    invert_output: true
+    invert_output: False
     voltage_compensation_enable: true
-    dynamic_reconfigure: True
+    dynamic_reconfigure: False
     neutral_mode: Brake
     #status_1_general_period: 10
     #status_2_feedback0_period: 20
@@ -225,7 +234,7 @@ climber_percent_out_controller:
 climber_follower_controller:
     type: talon_controllers/TalonFollowerController
     joint: climber_dynamic_arm_follower
-    invert_output: false
+    invert_output: True
     follow_joint: climber_dynamic_arm_leader
     neutral_mode: Brake
     voltage_compensation_enable: true
@@ -245,10 +254,6 @@ climber_follower_controller:
     #status_14_turn_pidf1_period: 250
     status_15_firmwareapistatus_period: 250
     #status_17_brushless_current_period: 50
-
-intake_solenoid_controller:
-  type: position_controllers/JointPositionController
-  joint: intake_solenoid_joint
 
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal

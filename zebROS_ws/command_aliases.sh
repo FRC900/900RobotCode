@@ -1,7 +1,7 @@
 # Aliases are short commands to replace long ones.
 
 alias crossbuild='~/2022RobotCode/zebROS_ws/cross_build.sh'
-alias deploy='~/2022RobotCode/deploy.sh'
+alias deploy='~/2022RobotCode/scripts/deploy.sh'
 alias hwlaunch='roslaunch controller_node 2022_compbot_combined.launch'
 alias natbuild='~/2022RobotCode/zebROS_ws/native_build.sh'
 alias rosjet='source ~/2022RobotCode/zebROS_ws/ROSJetsonMaster.sh'

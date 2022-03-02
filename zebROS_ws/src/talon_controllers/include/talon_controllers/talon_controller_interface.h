@@ -1011,7 +1011,7 @@ class TalonCIParams
 				return true;
 			}
 			else
-				throw std::runtime_error("A non-double value was passed for" + param_name);
+				throw std::runtime_error("A non-double value was passed for " + param_name);
 
 			return false;
 		}
@@ -1028,7 +1028,7 @@ class TalonCIParams
 			if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
 				val = (int)param;
 			else
-				throw std::runtime_error("A non-int value was passed for" + param_name);
+				throw std::runtime_error("A non-int value was passed for " + param_name);
 			return false;
 		}
 

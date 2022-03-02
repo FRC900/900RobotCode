@@ -54,6 +54,7 @@
 #include "ctre/phoenix/motorcontrol/can/WPI_TalonFX.h"
 #include "ctre/phoenix/motorcontrol/can/WPI_TalonSRX.h"
 #include "ctre/phoenix/motorcontrol/can/WPI_VictorSPX.h"
+#include <ctre/phoenix/unmanaged/Unmanaged.h>
 #include "frc/AnalogInput.h"                          // for AnalogInput
 #include "frc/DigitalInput.h"                         // for DigitalInput
 #include "frc/DigitalOutput.h"                        // for DigitalOutput
@@ -108,7 +109,7 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 	const auto talonsrx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mc);
 	const auto talonfx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mc);
 
-	for (ros::Rate rate(poll_frequency); ros::ok(); rate.sleep())
+	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
 	{
 		tracer->start("talon read main_loop");
 
@@ -379,10 +380,7 @@ void FRCRobotInterface::cancoder_read_thread(std::shared_ptr<ctre::phoenix::sens
 	}
 #endif
 	ros::Duration(2.452 + state->getDeviceNumber() * 0.07).sleep(); // Sleep for a few seconds to let CAN start up
-	ros::Rate rate(poll_frequency); // TODO : configure me from a file or
-						 // be smart enough to run at the rate of the fastest status update?
-
-	while(ros::ok())
+	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
 	{
 		tracer->start("cancoder read main_loop");
 
@@ -445,7 +443,6 @@ void FRCRobotInterface::cancoder_read_thread(std::shared_ptr<ctre::phoenix::sens
 			state->setStickyFaults(sticky_faults);
 		}
 		tracer->report(60);
-		rate.sleep();
 	}
 }
 
@@ -577,7 +574,6 @@ void FRCRobotInterface::pdh_read_thread(int32_t pdh,
 			std::lock_guard<std::mutex> l(*mutex);
 			*state = pdh_state;
 		}
-
 		tracer->report(60);
 	}
 }
@@ -632,7 +628,6 @@ void FRCRobotInterface::pdp_read_thread(int32_t pdp,
 			std::lock_guard<std::mutex> l(*mutex);
 			*state = pdp_state;
 		}
-
 		tracer->report(60);
 	}
 }
@@ -688,7 +683,6 @@ void FRCRobotInterface::pcm_read_thread(std::shared_ptr<frc::PneumaticsControlMo
 			std::lock_guard<std::mutex> l(*mutex);
 			*state = pcm_state;
 		}
-
 		tracer->report(60);
 	}
 }
@@ -1221,7 +1215,7 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 
 				for (size_t j = 0; j < double_solenoid_module_ids_.size(); j++)
 					if ((double_solenoid_module_ids_[j] == double_solenoid_module_id) &&
-					     (solenoid_module_types_[j] == double_solenoid_module_type) &&
+					     (double_solenoid_module_types_[j] == double_solenoid_module_type) &&
 					   ((double_solenoid_forward_channels_[j] == double_solenoid_forward_channel) ||
 					    (double_solenoid_forward_channels_[j] == double_solenoid_reverse_channel) ||
 					    (double_solenoid_reverse_channels_[j] == double_solenoid_forward_channel) ||
@@ -2248,6 +2242,22 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		// a CAN Talon object to avoid NIFPGA: Resource not initialized
 		// errors? See https://www.chiefdelphi.com/forums/showpost.php?p=1640943&postcount=3
 		robot_ = std::make_unique<ROSIterativeRobot>();
+
+		/**
+		 * Calling this function will load and start
+		 * the Phoenix background tasks.
+		 *
+		 * This can be useful if you need the
+		 * Enable/Disable functionality for CAN devices
+		 * but aren't using any of the CAN device classes.
+		 **/
+		ctre::phoenix::unmanaged::Unmanaged::LoadPhoenix();
+	}
+	else
+	{
+		// Only run Phoenix tuner server on the Rio, disable it here for
+		// the Jetson
+		ctre::phoenix::unmanaged::Unmanaged::SetPhoenixDiagnosticsStartTime(-1);
 	}
 	can_error_count_ = 0;
 
@@ -2281,8 +2291,10 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			// by -1 from firmware version read - somehow tag
 			// the entry in ctre_mcs_[] as uninitialized.
 			// This probably should be a fatal error
+#if 0
 			ROS_INFO_STREAM_NAMED("frc_robot_interface",
 								  "\tMotor controller firmware version " << ctre_mcs_[i]->GetFirmwareVersion());
+#endif
 
 			ctre_mc_read_state_mutexes_.push_back(std::make_shared<std::mutex>());
 			ctre_mc_read_thread_states_.push_back(std::make_shared<hardware_interface::TalonHWState>(can_ctre_mc_can_ids_[i]));
@@ -2298,6 +2310,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			// for that talon to be enabled.  Don't want to do anything with
 			// them, though, so the local flags should be set to false
 			// which means both reads and writes will be skipped
+			// TODO - remove me after testing LoadPhoenix() call works
 			if (run_hal_robot_)
 			{
 				ROS_INFO_STREAM("Fake talon created at can ID " << can_ctre_mc_can_ids_[i]);
@@ -2546,7 +2559,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			(double_solenoid_local_updates_[i] ? " local" : " remote") << " update, " <<
 			(double_solenoid_local_hardwares_[i] ? "local" : "remote") << " hardware";
 
-		if (solenoid_local_hardwares_[i])
+		if (double_solenoid_local_hardwares_[i])
 		{
 			s << " as double solenoid at forward channel " << double_solenoid_forward_channels_[i] <<
 				" & reverse channel " << double_solenoid_reverse_channels_[i] <<
