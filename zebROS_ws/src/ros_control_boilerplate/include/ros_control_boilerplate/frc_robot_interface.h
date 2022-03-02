@@ -180,13 +180,6 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		{
 		}
 
-		/** \brief Helper for debugging a joint's state */
-		virtual void printState();
-		std::string printStateHelper();
-
-		/** \brief Helper for debugging a joint's command */
-		std::string printCommandHelper();
-
 	protected:
 		/** \brief Get the URDF XML from the parameter server */
 		virtual void loadURDF(ros::NodeHandle &nh, std::string param_name);
@@ -516,6 +509,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 												 std::shared_ptr<hardware_interface::TalonHWState> state,
 												 std::shared_ptr<std::mutex> mutex,
 												 std::unique_ptr<Tracer> tracer,
+												 size_t index,
 												 double poll_frequency);
 
 		std::vector<std::shared_ptr<ctre::phoenix::sensors::CANCoder>> cancoders_;
@@ -585,6 +579,9 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 
 		talon_convert::TalonConvert talon_convert_;
 		cancoder_convert::CANCoderConvert cancoder_convert_;
+
+		static constexpr int pidIdx = 0; //0 for primary closed-loop, 1 for cascaded closed-loop
+		static constexpr int timeoutMs = 0; //If nonzero, function will wait for config success and report an error if it times out. If zero, no blocking or checking is performed
 
 };  // class
 

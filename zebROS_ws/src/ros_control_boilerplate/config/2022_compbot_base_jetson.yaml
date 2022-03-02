@@ -135,7 +135,7 @@ dynamic_arm_controller:
     voltage_compensation_enable: True
     voltage_compensation_saturation: 12
 
-    conversion_factor: 0.02959
+    conversion_factor: 0.00108
     neutral_deadband: 0.001
     neutral_mode: Brake
 

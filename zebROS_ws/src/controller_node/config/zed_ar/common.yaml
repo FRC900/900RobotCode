@@ -48,7 +48,7 @@ pos_tracking:
     publish_map_tf:             false                           # publish `map -> odom` TF
     map_frame:                  'zed_ar_map'
     odometry_frame:             'zed_ar_odom'
-    area_memory_db_path:        '/home/ubunut/zed_ar.db'
+    area_memory_db_path:        '/home/ubuntu/zed_ar.db'
     area_memory:                true                            # Enable to detect loop closure
     floor_alignment:            true                            # Enable to automatically calculate camera/floor offset
     initial_base_pose:          [0.0,0.0,0.0, 0.0,0.0,0.0]      # Initial position of the `base_frame` -> [X, Y, Z, R, P, Y]

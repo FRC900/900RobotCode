@@ -67,13 +67,21 @@ catkin_package(
 # interface, regardless of platform being run
 add_library(frc_robot_interface STATIC
 	src/AS726x.cpp
-	src/frc_robot_interface.cpp
-	src/generic_hw_control_loop.cpp
-	src/ros_iterative_robot.cpp
 	src/as726x_convert.cpp
 	src/cancoder_convert.cpp
+	src/cancoder_read_thread.cpp
 	src/canifier_convert.cpp
+	src/create_interfaces.cpp
+	src/ctre_mc_read_thread.cpp
+	src/frc_robot_interface.cpp
+	src/generic_hw_control_loop.cpp
+	src/pcm_read_thread.cpp
+	src/pdh_read_thread.cpp
+	src/pdp_read_thread.cpp
+	src/ph_read_thread.cpp
+	src/read_config.cpp
 	src/rev_convert.cpp
+	src/ros_iterative_robot.cpp
 	src/talon_convert.cpp
 )
 
@@ -180,6 +188,9 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallPtrSet.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallVector.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringMap.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/StackTraceWrap.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/unix/Demangle.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/unix/StackTrace.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/fmtlib/src/format.cpp
 	)
     set(FRC_COMMON_WPILIB frc_common_wpilib)

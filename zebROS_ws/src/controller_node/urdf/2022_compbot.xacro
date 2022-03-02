@@ -1,7 +1,14 @@
 <?xml version="1.0"?>
 
-<robot name="2021_compbot" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="2022_compbot" xmlns:xacro="http://ros.org/wiki/xacro">
 
     <link name="base_link"/>
     <!-- add important transforms for 2022 -->
+    <link name="intake"/>
+    <joint name="intake_joint" type="fixed"> 
+        <parent link="base_link"/>
+        <child link="intake"/>
+        <origin xyz="0.6561 0.0 0.210" rpy="0 0 0"/>
+    </joint>
+	
 </robot>
