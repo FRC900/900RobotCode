@@ -30,22 +30,10 @@ hardware_interface:
    can_interface: can0
 
    joints:
-       #TODO: Get config values of joints
-       #- {name: turret_joint, type: can_talon_srx, can_id: 30, local: true}
-
-         #- {name: shooter_joint, type: can_talon_srx, can_id: 32, local: true}
-         #- {name: shooter_hood_joint, type: solenoid, local_hardware: false, local_update: true}
-
-         #- {name: climber_winch_joint, type: can_talon_srx, can_id: 40, local: true} #TODO fix can id
-         #- {name: climber_deploy_joint, type: double_solenoid, local_hardware: false, local_update: true}
-         #- {name: climber_elevator_brake_joint, type: solenoid, local_hardware: false, local_update: true}
-
-         # - {name: control_panel_joint, type: can_talon_srx, can_id: 34, local: true}
-
        - {name: climber_dynamic_arm_solenoid_joint, type: double_solenoid, module_type: ctrepcm, local_hardware: false, local_update: true}
        - {name: climber_static_hook_solenoid_joint, type: double_solenoid, module_type: ctrepcm, local_hardware: false, local_update: true}
-       - {name: climber_dynamic1_limit_switch, type: digital_input, local: false}
-       - {name: climber_dynamic2_limit_switch, type: digital_input, local: false}
+         #- {name: climber_dynamic1_limit_switch, type: digital_input, local: false}
+         #- {name: climber_dynamic2_limit_switch, type: digital_input, local: false}
        - {name: climber_static1_limit_switch, type: digital_input, local: false}
        - {name: climber_static2_limit_switch, type: digital_input, local: false}
        - {name: climber_dynamic_arm_leader, type: can_talon_fx, can_id: 30, local: true} # TODO FIX CAN ID
@@ -70,8 +58,8 @@ hardware_interface:
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
-
-         #- {name: babys_first_orchestra, type: orchestra, id: 1}
+ 
+       # - {name: babys_first_orchestra, type: orchestra, id: 1}
 
 # Create controllers for each joint
 #
@@ -330,3 +318,27 @@ match_state_listener_controller:
 #orchestra_controller:
     #type:      orchestra_controller/OrchestraController
 
+climber_motion_magic:
+    type: talon_controllers/TalonMotionMagicCloseLoopController
+    joint: climber_dynamic_arm_leader
+    feedback_type: IntegratedSensor
+    close_loop_values:
+        - {p: 0.05, i: 0, d: 0.5, f: 0.055, i_zone: 0} 
+    invert_output: False
+    sensor_phase: False
+    nominal_output_forward: 0.0
+    nominal_output_reverse: 0.0
+    motion_cruise_velocity: 0.25
+    motion_acceleration: 2
+    voltage_compensation_enable: true
+    dynamic_reconfigure: true
+    motion_s_curve_strength: 0
+    conversion_factor: 0.00108
+
+
+climber_follower_controller:
+  type: talon_controllers/TalonFollowerController
+  joint: climber_dynamic_arm_follower
+  feedback_type: IntegratedSensor
+  invert_output: True
+  follow_joint: shooter_leader

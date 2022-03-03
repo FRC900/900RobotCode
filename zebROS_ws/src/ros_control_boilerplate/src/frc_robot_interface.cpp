@@ -190,36 +190,10 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		}
 		else
 		{
-			// Need to have a CAN talon object created on the Rio
-			// for that talon to be enabled.  Don't want to do anything with
-			// them, though, so the local flags should be set to false
-			// which means both reads and writes will be skipped
-			// TODO - remove me after testing LoadPhoenix() call works
-#if 0
-			if (run_hal_robot_)
-			{
-				ROS_INFO_STREAM("Fake talon created at can ID " << can_ctre_mc_can_ids_[i]);
-				if (can_ctre_mc_is_talon_fx_[i])
-				{
-					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonFX>(can_ctre_mc_can_ids_[i]));
-				}
-				else if (can_ctre_mc_is_talon_srx_[i])
-				{
-					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
-				}
-				else
-				{
-					ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(can_ctre_mc_can_ids_[i]));
-				}
-			}
-			else
-#endif
-			{
-				// Add a null pointer as the can ctre_mc for this index - no
-				// actual local hardware identified for it so nothing to create.
-				// Just keep the indexes of all the various can_ctre_mc arrays in sync
-				ctre_mcs_.push_back(nullptr);
-			}
+			// Add a null pointer as the can ctre_mc for this index - no
+			// actual local hardware identified for it so nothing to create.
+			// Just keep the indexes of all the various can_ctre_mc arrays in sync
+			ctre_mcs_.push_back(nullptr);
 			ctre_mc_read_state_mutexes_.push_back(nullptr);
 			ctre_mc_read_thread_states_.push_back(nullptr);
 		}
