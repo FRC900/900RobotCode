@@ -1,13 +1,15 @@
 #include <Eigen/Dense>
 #include <geometry_msgs/Twist.h>
+#include "frc_msgs/JoystickState.h"
 #include "teleop_joystick_control/rate_limiter.h"
 #include "teleop_joystick_control/TeleopJoystickCompConfig.h"
 
+template <class ConfigT>
 class TeleopCmdVel
 {
 	public:
 
-		TeleopCmdVel(const teleop_joystick_control::TeleopJoystickCompConfig &config):
+		TeleopCmdVel(const ConfigT &config):
 			x_rate_limit_(-config.max_speed, config.max_speed, config.drive_rate_limit_time),
 			y_rate_limit_(-config.max_speed, config.max_speed, config.drive_rate_limit_time),
 			rotation_rate_limit_(-config.max_rot, config.max_rot, config.drive_rate_limit_time){}
@@ -23,7 +25,7 @@ class TeleopCmdVel
 			slow_mode_ = slow_mode;
 		}
 
-		geometry_msgs::Twist generateCmdVel(const frc_msgs::JoystickState &event, const double &navX_angle, const teleop_joystick_control::TeleopJoystickCompConfig &config)
+		geometry_msgs::Twist generateCmdVel(const frc_msgs::JoystickState &event, const double &navX_angle, const ConfigT &config)
 		{
 			double max_speed = slow_mode_ ? config.max_speed_slow : config.max_speed;
 			double max_rot = slow_mode_ ? config.max_rot_slow : config.max_rot;

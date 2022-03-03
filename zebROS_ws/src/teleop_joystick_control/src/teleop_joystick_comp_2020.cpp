@@ -44,7 +44,7 @@
 
 #include "teleop_joystick_control/TeleopCmdVel.h"
 
-std::unique_ptr<TeleopCmdVel> teleop_cmd_vel;
+std::unique_ptr<TeleopCmdVel<teleop_joystick_control::TeleopJoystickCompConfig>> teleop_cmd_vel;
 
 bool diagnostics_mode = false;
 bool green_led_on = true;
@@ -1303,7 +1303,7 @@ int main(int argc, char **argv)
 	shooter_offset.speed_offset = 0.0;
 	shooter_offset.turret_offset = 0.0;
 
-	teleop_cmd_vel = std::make_unique<TeleopCmdVel>(config);
+	teleop_cmd_vel = std::make_unique<TeleopCmdVel<teleop_joystick_control::TeleopJoystickCompConfig>>(config);
 
 	imu_angle = M_PI / 2.;
 

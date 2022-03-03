@@ -1,10 +1,8 @@
 #include "ros/ros.h"
-#include <cmath>
 #include <string>
 
 #include "frc_msgs/ButtonBoxState.h"
 #include "frc_msgs/JoystickState.h"
-#include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
 
 #include <vector>
