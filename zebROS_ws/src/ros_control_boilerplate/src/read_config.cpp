@@ -440,7 +440,7 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 							" (previously used in " + solenoid_names_[j] + ")");
 				for (size_t j = 0; j < double_solenoid_module_ids_.size(); j++)
 					if ((double_solenoid_module_ids_[j] == solenoid_module_id) &&
-						(solenoid_module_types_[j] == solenoid_module_type) &&
+						(double_solenoid_module_types_[j] == solenoid_module_type) &&
 					   ((double_solenoid_forward_channels_[j] == solenoid_channel) ||
 						(double_solenoid_reverse_channels_[j] == solenoid_channel) ))
 					throw std::runtime_error("Duplicate solenoid module & channel was reused in joint " + joint_name +

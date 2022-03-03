@@ -1,2 +1,3 @@
 bool intake_arm_extend
+float64 percent_out
 ---

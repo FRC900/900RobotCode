@@ -393,6 +393,8 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 	// Set encoder values for each of our motors.
 	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
 	{
+		if (!ctre_mcs_[i])
+			continue;
 		//ROS_INFO_NAMED("frcrobot_sim_interface", "Begin processing motor %d", (int)i);
 		const auto &talon_state = talon_state_[i];
 		const auto victor_spx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::VictorSPX>(ctre_mcs_[i]);
@@ -407,7 +409,7 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 
 		if (!talon_srx && !talon_fx)
 		{
-			ROS_INFO_NAMED("frcrobot_sim_interface", "Unable to dynamic cast motor %d", (int) i);
+			ROS_INFO_STREAM_NAMED("frcrobot_sim_interface", "Unable to dynamic cast motor " << i << " (" << can_ctre_mc_names_[i] << ")");
 			continue;
 		}
 
