@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 <launch>
 
+  <arg name="year" default="2022" />
   <group ns="teleop">
     <rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
-    <node name="teleop_joystick_comp_2020" pkg="teleop_joystick_control" type="teleop_joystick_comp_2020" output="screen"/>
+    <node name="teleop_joystick_comp_$(arg year)" pkg="teleop_joystick_control" type="teleop_joystick_comp_$(arg year)" output="screen"/>
 
     <group ns="orient_strafing"> <!--TODO Tune these values on a full weight robot -->
-      <rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
+      <rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp_$(arg year).yaml" command="load"/>
       <node name="orient_strafing_pid" pkg="pid" type="controller" >
         <param name="node_name" value="orient_strafing_pid" />
         <param name="Kp" value="4.5" />

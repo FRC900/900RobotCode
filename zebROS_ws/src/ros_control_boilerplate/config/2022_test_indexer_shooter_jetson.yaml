@@ -40,8 +40,8 @@ hardware_interface:
 
        - {name: climber_dynamic_arm_solenoid_joint, type: double_solenoid, local_hardware: false, local_update: true}
        - {name: climber_static_hook_solenoid_joint, type: double_solenoid, local_hardware: false, local_update: true}
-       - {name: climber_dynamic1_limit_switch, type: digital_input, local: false}
-       - {name: climber_dynamic2_limit_switch, type: digital_input, local: false}
+      #- {name: climber_dynamic1_limit_switch, type: digital_input, local: false}
+      #- {name: climber_dynamic2_limit_switch, type: digital_input, local: false}
        - {name: climber_static1_limit_switch, type: digital_input, local: false}
        - {name: climber_static2_limit_switch, type: digital_input, local: false}
        - {name: climber_dynamic_arm_leader, type: can_talon_fx, can_id: 30, local: true} # TODO FIX CAN ID
@@ -71,9 +71,8 @@ shooter_controller:
   joint: shooter_leader
   type: talon_controllers/TalonVelocityCloseLoopController
   feedback_type: IntegratedSensor
-  # TODO FIX ALL BELOW VALUES (these are from 2020)
   close_loop_values:
-      - {p: 0.00, i: 0.000, d: 0.0, f: 0, i_zone: 0}
+      - {p: 0.20, i: 0.000, d: 0.0, f: 0.046, i_zone: 0}
   invert_output: true
   sensor_phase: false
   peak_output_forward: 1.0
@@ -83,6 +82,8 @@ shooter_controller:
   voltage_compensation_enable: true
   dynamic_reconfigure: True
   neutral_mode: Coast
+  velocity_measurement_period: Period_20Ms
+  velocity_measurement_window: 4
 
 shooter_percent_out_controller:
   joint: shooter_leader

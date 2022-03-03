@@ -11,8 +11,9 @@
 	<arg name="hw_or_sim" default="sim" />
 
 	<!--  ************** Including teleop node ***************  -->
-	<include file="$(find controller_node)/launch/teleop.launch"/>
-
+	<include file="$(find controller_node)/launch/teleop.launch">
+		<arg name="year" value="2022" />
+	</include>
 	<group ns="frcrobot_rio">
 
 		<!-- Load controller settings -->

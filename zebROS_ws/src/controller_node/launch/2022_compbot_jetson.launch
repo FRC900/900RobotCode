@@ -32,7 +32,7 @@
 		<!-- Load controller manager-->
 		<!-- Add 2022 controllers, once we know what they are -->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller swerve_drive_controller shooter_controller shooter_follower_controller dynamic_arm_solenoid_controller static_hook_solenoid_controller intake_controller robot_code_ready_controller" />
+			output="screen" args="spawn joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller swerve_drive_controller shooter_controller shooter_follower_controller dynamic_arm_solenoid_controller static_hook_solenoid_controller intake_controller climber_motion_magic_controller climber_follower_controller robot_code_ready_controller" />
 
 		<node name="uptime_jetson" pkg="uptime" type="uptime_node" output="screen" />
 
@@ -60,7 +60,9 @@
 	-->
 	</group>
 
-	<include file="$(find controller_node)/launch/teleop.launch"/>
+	<include file="$(find controller_node)/launch/teleop.launch">
+		<arg name="year" value="2022" />
+	</include>
 	<group ns="cmd_vel_mux">
 		<node name="twist_mux" pkg="twist_mux" type="twist_mux">
 			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/2022_twist_mux.yaml"/>
@@ -74,9 +76,11 @@
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
 	-->
 
+	<!-- Run ZED camera + tensorflow object detection 
 	<include file="$(find tf_object_detection)/launch/detection.launch" if="$(eval arg('hw_or_sim')=='hw')">
 		<arg name="input_type" value="live_camera" />
 	</include>
+	-->
 
 	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
 		<arg name="port" value="5803"/>
