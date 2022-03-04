@@ -1,12 +1,9 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include "behavior_actions/Index2022Action.h"
-#include <functional>
 #include <std_msgs/Float64.h>
 #include "sensor_msgs/JointState.h"
 #include <map>
-#include "actionlib_msgs/GoalID.h"
-
 
 class IndexStateMachine
 {
