@@ -760,7 +760,6 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 
 void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 {
-	
 }
 
 int main(int argc, char **argv)
@@ -770,8 +769,6 @@ int main(int argc, char **argv)
 	ros::NodeHandle n_params(n, "teleop_params");
 	ros::NodeHandle n_diagnostics_params(n, "teleop_diagnostics_params");
 	ros::NodeHandle n_swerve_params(n, "/frcrobot_jetson/swerve_drive_controller");
-
-
 
 	int num_joysticks = 1;
 	if(!n_params.getParam("num_joysticks", num_joysticks))
