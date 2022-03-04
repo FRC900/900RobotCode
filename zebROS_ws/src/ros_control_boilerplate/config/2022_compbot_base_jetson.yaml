@@ -36,14 +36,18 @@ hardware_interface:
          #- {name: climber_dynamic2_limit_switch, type: digital_input, local: false}
        - {name: climber_static1_limit_switch, type: digital_input, local: false}
        - {name: climber_static2_limit_switch, type: digital_input, local: false}
-       - {name: climber_dynamic_arm_leader, type: can_talon_fx, can_id: 30, local: true} # TODO FIX CAN ID
-       - {name: climber_dynamic_arm_follower, type: can_talon_fx, can_id: 31, local: true} # TODO FIX CAN ID
-       - {name: shooter_leader, type: can_talon_fx, can_id: 40, local: true} # TODO Fix CAN id
-       - {name: shooter_follower, type: can_talon_fx, can_id: 41, local: true} # TODO Fix CAN id
+       - {name: climber_dynamic_arm_leader, type: can_talon_fx, can_id: 30, local: true}
+       - {name: climber_dynamic_arm_follower, type: can_talon_fx, can_id: 31, local: true}
+       - {name: shooter_leader, type: can_talon_fx, can_id: 40, local: true}
+       - {name: shooter_follower, type: can_talon_fx, can_id: 41, local: true}
        
-       - {name: intake_motor, type: can_talon_fx, can_id: 60, local: true} # TODO Fix CAN id
-
+       - {name: intake_motor, type: can_talon_fx, can_id: 60, local: true}
        - {name: intake_solenoid, type: solenoid, local_hardware: false, local_update: true}
+
+       - {name: indexer_straight_motor, type: can_talon_fx, can_id: 50, local: true}
+       - {name: indexer_arc_motor, type: can_talon_fx, can_id: 51, local: true}
+       - {name: indexer_straight_linebreak, type: digital_input, local: false}
+       - {name: indexer_arc_linebreak, type: digital_input, local: false}
        
        - {name: fl_drive, type: can_talon_fx, can_id: 21, local: true}
        - {name: fl_angle, type: can_talon_fx, can_id: 11, local: true}
@@ -317,6 +321,22 @@ match_state_listener_controller:
 
 #orchestra_controller:
     #type:      orchestra_controller/OrchestraController
+
+indexer_straight_motor_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: indexer_straight_motor
+    invert: true
+    feedback_type: IntegratedSensor
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
+
+indexer_arc_motor_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: indexer_arc_motor
+    invert: false
+    feedback_type: IntegratedSensor
+    dynamic_reconfigure: True
+    voltage_compensation_Enable: True
 
 climber_motion_magic_controller:
     type: talon_controllers/TalonMotionMagicCloseLoopController

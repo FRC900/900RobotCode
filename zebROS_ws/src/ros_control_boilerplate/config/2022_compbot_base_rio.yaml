@@ -25,6 +25,10 @@ generic_hw_control_loop:
 hardware_interface:
    joints:
        # 2022 joints
+       #
+       # Solenoids which are updated from controllers on the Jetson need
+       # to be configured here so they can write to hardware attached
+       # to the Rio
 
        # Climber
        - {name: climber_dynamic_arm_solenoid_joint, type: double_solenoid, module_type: ctrepcm, module_id: 0, forward_channel: 1, reverse_channel: 2, local_hardware: true, local_update: false}
@@ -35,6 +39,10 @@ hardware_interface:
        - {name: climber_static2_limit_switch, type: digital_input, dio_channel: 3, invert: true, local: true}
        
        - {name: intake_solenoid, type: solenoid, module_type: ctrepcm, module_id: 0, channel: 0, local_hardware: true, local_update: false}
+
+       # Indexer - TODO, set DIO channels once robot is wired
+       - {name: indexer_straight_linebreak, type: digital_input, dio_channel: 8, invert: true, local: true}
+       - {name: indexer_arc_linebreak, type: digital_input, dio_channel: 9, invert: true, local: true}
 
        - {name: joystick0, type: joystick, id: 0, local: true}
          #- {name: button_box, type: joystick, id: 1, local: true}

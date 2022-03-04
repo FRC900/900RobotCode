@@ -1,0 +1,11 @@
+# goal 0 - intake, 1 - eject, 2 - move to shooter
+uint8 INTAKE=0
+uint8 EJECT=1
+uint8 MOVE_TO_SHOOTER=2
+uint8 goal
+---
+# result
+bool success
+---
+# feedback
+uint8 num_of_balls
