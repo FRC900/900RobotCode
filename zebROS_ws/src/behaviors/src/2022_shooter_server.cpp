@@ -36,8 +36,8 @@ public:
 
   ShooterAction2022(std::string name) :
     as_(nh_, name, boost::bind(&ShooterAction2022::executeCB, this, _1), false),
-    action_name_(name),
     nh_params_(nh_, "shooter_server_2022"),
+    action_name_(name),
     ddr_(nh_params_)
   {
     high_goal_speed_ = 25;
