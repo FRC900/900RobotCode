@@ -29,12 +29,12 @@ ros::Publisher intake_pub;
 ros::Time last_header_stamp;
 double trigger_threshold = 0.5;
 
-//#define SHOOTER_VELOCITY_MODE
+#define SHOOTER_VELOCITY_MODE
 #ifdef SHOOTER_VELOCITY_MODE
 const std::string shooter_topic_name = "/frcrobot_jetson/shooter_controller/command";
-constexpr double shooter_increment = 1.0;
+constexpr double shooter_increment = 10.0;
 constexpr double shooter_max_value = std::numeric_limits<double>::max(); // kinda optimistic
-constexpr double shooter_min_value = 0.0
+constexpr double shooter_min_value = 0.0;
 #else // Shooter running in % out mode
 const std::string shooter_topic_name = "/frcrobot_jetson/shooter_percent_out_controller/command";
 constexpr double shooter_increment = 0.1;
