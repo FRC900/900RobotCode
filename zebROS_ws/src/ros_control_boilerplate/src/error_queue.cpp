@@ -39,14 +39,18 @@ void ErrorQueue::error_queue_thread_fn(void)
 		{
 			std::unique_lock<std::mutex> l(error_queue_mutex_);
 			while (error_queue_.empty())
+			{
 				error_queue_condition_variable_.wait(l);
+			}
 			msg_pair = error_queue_.front();
 			error_queue_.pop();
 		}
 		ros_control_boilerplate::DSError msg;
 		// Hack to get the thread to exit when quitting the hwi
 		if (msg_pair.first == -900)
+		{
 			return;
+		}
 		msg.request.error_code = msg_pair.first;
 		msg.request.details    = msg_pair.second;
 		if (!ds_error_client_.call(msg.request, msg.response))

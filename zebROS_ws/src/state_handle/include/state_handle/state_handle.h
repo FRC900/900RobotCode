@@ -23,7 +23,9 @@ class StateHandle
 			state_(state)
 		{
 			if (!state)
+			{
 				throw HardwareInterfaceException("Cannot create state handle '" + name + "'. state pointer is null.");
+			}
 		}
 		std::string getName(void) const
 		{
@@ -52,4 +54,4 @@ class StateHandle
 		T           *state_;
 };
 
-}
+} // namespace hardware_interface

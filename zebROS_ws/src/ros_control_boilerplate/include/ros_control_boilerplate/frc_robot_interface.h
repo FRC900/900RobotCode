@@ -115,7 +115,7 @@ class DummyJoint
 		std::string name_;
 		double *address_;
 };
-#define Dumify(name) ros_control_boilerplate::DummyJoint(#name, &name)
+#define Dumify(name) ros_control_boilerplate::DummyJoint(#name, &(name))
 
 class CustomProfileState
 {
@@ -146,6 +146,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		 * \param urdf - optional pointer to a parsed robot model
 		 */
 		FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_model = NULL);
+		FRCRobotInterface(const FRCRobotInterface &) = delete;
 		~FRCRobotInterface();
 
 		/** \brief Initialize the hardware interface */

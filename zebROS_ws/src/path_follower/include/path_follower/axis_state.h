@@ -1,4 +1,5 @@
-#pragma once
+#ifndef AXIS_STATE_INC
+#define AXIS_STATE_INC
 
 #include "ros/ros.h"
 #include "std_msgs/Bool.h"
@@ -36,8 +37,8 @@ class AlignActionAxisConfig
 class AlignActionAxisState
 {
 	public:
-		AlignActionAxisState(const std::string &name,
-							 ros::NodeHandle &nh,
+		AlignActionAxisState(const std::string &,
+							 ros::NodeHandle nh,
 							 const std::string &enable_pub_topic,
 							 const std::string &command_pub_topic,
 							 const std::string &state_pub_topic,
@@ -75,3 +76,4 @@ class AlignActionAxisState
 		double error_threshold_;
 };
 
+#endif

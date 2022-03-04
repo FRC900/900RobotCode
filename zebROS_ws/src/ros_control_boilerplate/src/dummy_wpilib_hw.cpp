@@ -198,7 +198,7 @@ double frc::AnalogInput::GetSampleRate()
 	ROS_ERROR("Called frc::AnalogInput::GetSampleRate() on unsupported platform");
 	return std::numeric_limits<double>::max();
 }
-void SetSimDevice(HAL_SimDeviceHandle device)
+void SetSimDevice(HAL_SimDeviceHandle)
 {
 	ROS_ERROR("Called frc::AnalogInput::SetSimDevice() on unsupported platform");
 }
@@ -602,7 +602,7 @@ int32_t HAL_GetUserCurrentFaults3V3(int32_t* status)
 	*status = 0;
 	return -1;
 }
-void HAL_SetBrownoutVoltage(double voltage, int32_t* status)
+void HAL_SetBrownoutVoltage(double , int32_t* status)
 {
 	ROS_ERROR("Called HAL_SetBrownoutVoltage(double, int32_t*) on unsupported platform");
 	*status = 0;
@@ -697,7 +697,7 @@ int32_t HAL_SetJoystickOutputs(int32_t, int64_t,
 }
 
 #include <ros_control_boilerplate/error_queue.h>
-int32_t HAL_SendError(HAL_Bool /*isError*/, int32_t errorCode, HAL_Bool /*isLVCode*/, const char *details, const char *location, const char *callStack, HAL_Bool printMsg)
+int32_t HAL_SendError(HAL_Bool /*isError*/, int32_t errorCode, HAL_Bool /*isLVCode*/, const char *details, const char *, const char *, HAL_Bool )
 {
     ROS_ERROR_STREAM("HAL_SendError called : errorCode = " << errorCode
 			<< " = \"" <<  HAL_GetErrorMessage(errorCode)

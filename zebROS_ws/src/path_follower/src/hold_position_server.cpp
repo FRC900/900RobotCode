@@ -54,7 +54,6 @@ class holdPosition
 				   const std::string &pose_topic,
 				   bool use_odom_orientation,
 				   bool use_pose_for_odom,
-				   double time_offset,
 				   double dist_threshold,
 				   double angle_threshold)
 			: nh_(nh)
@@ -241,12 +240,15 @@ class holdPosition
 				{
 					odom_.pose.pose.orientation = orientation_;
 				}
+				// TODO - use axis aligned_ field instead?
 				// If the current position is already close enough to where we want it to be
 				const auto xdif = fabs(next_waypoint.position.x - odom_.pose.pose.position.x);
 				const auto ydif = fabs(next_waypoint.position.y - odom_.pose.pose.position.y);
 				const auto posedif = fabs(getYaw(next_waypoint.orientation) - getYaw(odom_.pose.pose.orientation));
-			// checks if values are less than threshold or are nan, meaning the pose or x,y,z was not provided
-				feedback.isAligned = (xdif < dist_threshold_ || isnan(xdif)   && ydif < dist_threshold_ ||   isnan(ydif)    && posedif < angle_threshold_ || isnan(angle_threshold_));
+				// checks if values are less than threshold or are nan, meaning the pose or x,y,z was not provided
+				feedback.isAligned = (xdif < dist_threshold_ || isnan(xdif)) &&
+					((ydif < dist_threshold_) || isnan(ydif)) &&
+					((posedif < angle_threshold_) || isnan(angle_threshold_));
 				as_.publishFeedback(feedback);
 
 				// This gets the point closest to current time plus lookahead distance
@@ -404,7 +406,6 @@ int main(int argc, char **argv)
 
 	double server_timeout = 15.0;
 	int ros_rate = 20;
-	double time_offset = 0;
 	bool use_odom_orientation = false;
 	bool use_pose_for_odom = false;
 	//meters and radians that the robot can be away from the desired goal
@@ -418,7 +419,6 @@ int main(int argc, char **argv)
 	nh.getParam("/hold_position/hold_position/odom_topic", odom_topic);
 	nh.getParam("/hold_position/hold_position/pose_topic", pose_topic);
 	nh.getParam("/hold_position/hold_position/use_odom_orientation", use_odom_orientation);
-	nh.getParam("/hold_position/hold_position/time_offset", time_offset);
 	nh.getParam("/hold_position/hold_position/use_pose_for_odom", use_pose_for_odom);
 	nh.getParam("/hold_position/hold_position/dist_threshold", dist_threshold);
 	nh.getParam("/hold_position/hold_position/angle_threshold", angle_threshold);
@@ -430,7 +430,6 @@ int main(int argc, char **argv)
 								  pose_topic,
 								  use_odom_orientation,
 								  use_pose_for_odom,
-								  time_offset,
 								  dist_threshold,
 								  angle_threshold);
 

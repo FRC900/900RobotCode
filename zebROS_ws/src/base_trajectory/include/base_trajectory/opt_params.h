@@ -6,8 +6,9 @@
 // the original guess for the spline generation used
 // to improve the overall cost of following the spline
 template <class T>
-struct OptParams
+class OptParams
 {
+public:
 	T posX_{initialPosX_}; // offset from requested waypoint in x and y
 	T minOffX_{0};
 	T maxOffX_{0};

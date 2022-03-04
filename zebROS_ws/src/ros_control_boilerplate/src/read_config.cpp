@@ -62,7 +62,7 @@ frc::PneumaticsModuleType FRCRobotInterface::readSolenoidModuleType(const XmlRpc
 	const bool has_module_type = joint_params.hasMember("module_type");
 	if (!local_hardware && has_module_type)
 		throw std::runtime_error("A module_type was specified for non-local hardware for joint " + joint_name);
-	frc::PneumaticsModuleType solenoid_module_type;
+	frc::PneumaticsModuleType solenoid_module_type = frc::PneumaticsModuleType::CTREPCM;
 	if (local_hardware)
 	{
 		if (!has_module_type)

@@ -20,16 +20,9 @@ class JoystickState
 			, name_(name)
 		{
 		}
-		JoystickState(const JoystickState &other)
-			: id_(other.id_)
-			, name_(other.name_)
-			, axises_(other.axises_)
-			, buttons_(other.buttons_)
-			, povs_(other.povs_)
-		{
-		}
+		JoystickState(const JoystickState &other) = default;
 
-		const JoystickState &operator=(const JoystickState &other)
+		JoystickState &operator=(const JoystickState &other)
 		{
 			if (this != &other)
 			{
@@ -54,20 +47,24 @@ class JoystickState
 		bool setAxis(size_t index, float axis)
 		{
 			if (index >= axises_.size())
+			{
 				ROS_ERROR_STREAM("Error setting axis for JoystickState "
 						<< name_ << " : index out of bounds. Index = "
 						<< index << " vector size = " << axises_.size());
 				return false;
+			}
 			axises_[index] = axis;
 			return true;
 		}
 		bool setButton(size_t index, bool button)
 		{
 			if (index >= buttons_.size())
+			{
 				ROS_ERROR_STREAM("Error setting button for JoystickState "
 						<< name_ << " : index out of bounds. Index = "
 						<< index << " vector size = " << buttons_.size());
 				return false;
+			}
 			buttons_[index] = button;
 			return true;
 		}
@@ -75,10 +72,12 @@ class JoystickState
 		bool setPOV(size_t index, int pov)
 		{
 			if (index >= povs_.size())
+			{
 				ROS_ERROR_STREAM("Error setting pov for JoystickState "
 						<< name_ << " : index out of bounds. Index = "
 						<< index << " vector size = " << povs_.size());
 				return false;
+			}
 			povs_[index] = pov;
 			return true;
 		}
@@ -97,19 +96,25 @@ class JoystickState
 		float getAxis(size_t index) const
 		{
 			if (index >= axises_.size())
+			{
 				return 0.0;
+			}
 			return axises_[index];
 		}
 		bool getButton(size_t index) const
 		{
 			if (index >= buttons_.size())
+			{
 				return false;
+			}
 			return buttons_[index];
 		}
 		int getPOV(size_t index) const
 		{
 			if (index >= povs_.size())
+			{
 				return -1; // Invalid direction, should result in all directions == false
+			}
 			return povs_[index];
 		}
 
