@@ -116,10 +116,15 @@ add_executable(path_follower_server src/path_follower_server.cpp src/path_follow
 add_dependencies(path_follower_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_executable(hold_position_server src/hold_position_server.cpp)
 add_dependencies(hold_position_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_executable(convert_distance_to_pose src/convert_distance_to_pose.cpp)
+add_dependencies(convert_distance_to_pose ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(path_follower_server
   ${catkin_LIBRARIES}
 )
 target_link_libraries(hold_position_server
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(convert_distance_to_pose
   ${catkin_LIBRARIES}
 )
 

@@ -42,7 +42,7 @@ class holdPosition
 
 		// If true, use the subscribed pose topic for odom rather than the odom subscriber
 		bool use_pose_for_odom_;
-		
+
 		double dist_threshold_;
 
 		double angle_threshold_;
@@ -179,7 +179,7 @@ class holdPosition
 		{
 			path_follower_msgs::holdPositionResult result;
             path_follower_msgs::holdPositionFeedback feedback;
-			
+
 			// Resets isAligned
 			feedback.isAligned = false;
 			bool preempted = false;
@@ -236,9 +236,10 @@ class holdPosition
 			geometry_msgs::Pose next_waypoint = goal->pose;
 
 			//ROS_INFO_STREAM("Before transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << getYaw(next_waypoint.orientation) << ")");
-			tf2::doTransform(next_waypoint, next_waypoint, odom_to_base_link_tf);
-			ROS_INFO_STREAM("Next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << getYaw(next_waypoint.orientation) << ")");
-			
+			if (!goal->isAbsoluteCoord) {
+				tf2::doTransform(next_waypoint, next_waypoint, odom_to_base_link_tf);
+			}
+			ROS_INFO_STREAM("After transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << getYaw(next_waypoint.orientation) << ")");
 
 			while (ros::ok() && !preempted && !timed_out && !succeeded)
 			{
@@ -252,15 +253,15 @@ class holdPosition
 				const auto xdif = fabs(next_waypoint.position.x - odom_.pose.pose.position.x);
 				const auto ydif = fabs(next_waypoint.position.y - odom_.pose.pose.position.y);
 				const auto posedif = fabs(getYaw(next_waypoint.orientation) - getYaw(odom_.pose.pose.orientation));
-			// checks if values are less than threshold or are nan, meaning the pose or x,y,z was not provided	
+			// checks if values are less than threshold or are nan, meaning the pose or x,y,z was not provided
 				feedback.isAligned = (xdif < dist_threshold_ || isnan(xdif)   && ydif < dist_threshold_ ||   isnan(ydif)    && posedif < angle_threshold_ || isnan(angle_threshold_));
 				as_.publishFeedback(feedback);
-			
-				
-				
+
+
+
 				// This gets the point closest to current time plus lookahead distance
 				// on the path. We use this to generate a target for the x,y,orientation
-				
+
 				ROS_INFO_STREAM("current_position = " << odom_.pose.pose.position.x
 					<< " " << odom_.pose.pose.position.y
 					<< " " << getYaw(odom_.pose.pose.orientation));	// PID controllers.
@@ -269,7 +270,7 @@ class holdPosition
 				//	<< ", " << odom_.pose.pose.position.y - starting_odom.pose.pose.position.y);
 				//ROS_INFO_STREAM("    delta pose_ = " << pose_.pose.position.x - starting_pose.pose.position.x
 				//	<< ", " << pose_.pose.position.y - starting_pose.pose.position.y);
-				
+
 
 				if (!use_odom_orientation_)
 				{
@@ -383,8 +384,8 @@ class holdPosition
 				as_.setSucceeded(result);
 			}
 
-			
-			
+
+
 ROS_INFO_STREAM("Elapsed time driving = " << ros::Time::now().toSec() - start_time);
 		}
 
