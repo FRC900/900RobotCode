@@ -221,15 +221,6 @@ class holdPosition
 
 			ros::Rate r(ros_rate_);
 
-			// send path to initialize path follower
-			/*
-			if (!path_follower_.loadPath(goal->path))
-			{
-				ROS_ERROR_STREAM("Failed to load path");
-				preempted = true;
-			}
-			*/
-
 			//in loop, send PID enable commands to rotation, x, y
 			const auto start_time = ros::Time::now().toSec();
 
@@ -239,6 +230,7 @@ class holdPosition
 			if (!goal->isAbsoluteCoord) {
 				tf2::doTransform(next_waypoint, next_waypoint, odom_to_base_link_tf);
 			}
+
 			ROS_INFO_STREAM("After transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << getYaw(next_waypoint.orientation) << ")");
 
 			while (ros::ok() && !preempted && !timed_out && !succeeded)
@@ -257,8 +249,6 @@ class holdPosition
 				feedback.isAligned = (xdif < dist_threshold_ || isnan(xdif)   && ydif < dist_threshold_ ||   isnan(ydif)    && posedif < angle_threshold_ || isnan(angle_threshold_));
 				as_.publishFeedback(feedback);
 
-
-
 				// This gets the point closest to current time plus lookahead distance
 				// on the path. We use this to generate a target for the x,y,orientation
 
@@ -270,7 +260,6 @@ class holdPosition
 				//	<< ", " << odom_.pose.pose.position.y - starting_odom.pose.pose.position.y);
 				//ROS_INFO_STREAM("    delta pose_ = " << pose_.pose.position.x - starting_pose.pose.position.x
 				//	<< ", " << pose_.pose.position.y - starting_pose.pose.position.y);
-
 
 				if (!use_odom_orientation_)
 				{
@@ -340,7 +329,6 @@ class holdPosition
 				}
 			}
 
-
 			std_msgs::Bool enable_msg;
 			enable_msg.data = false;
 
@@ -383,8 +371,6 @@ class holdPosition
 				result.success = true;
 				as_.setSucceeded(result);
 			}
-
-
 
 ROS_INFO_STREAM("Elapsed time driving = " << ros::Time::now().toSec() - start_time);
 		}

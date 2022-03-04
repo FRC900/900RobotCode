@@ -19,5 +19,10 @@ topics:
   topic   : /hold_position/hold_position_pid/swerve_drive_controller/cmd_vel
   timeout : 0.2
   priority: 130
+-
+  name    : hold_distance
+  topic   : /hold_distance/hold_position_pid/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 130
 
 locks: []
