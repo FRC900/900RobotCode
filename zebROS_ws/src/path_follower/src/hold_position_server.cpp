@@ -412,7 +412,7 @@ int main(int argc, char **argv)
 
 	double angle_threshold = .036;
 	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
-	std::string pose_topic = "/zed_ar/pose";
+	std::string pose_topic = "/zed_objdet/pose";
 	nh.getParam("/hold_position/hold_position/server_timeout", server_timeout);
 	nh.getParam("/hold_position/hold_position/ros_rate", ros_rate);
 	nh.getParam("/hold_position/hold_position/odom_topic", odom_topic);

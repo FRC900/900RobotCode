@@ -415,7 +415,7 @@ int main(int argc, char **argv)
 	bool use_pose_for_odom = false;
 
 	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
-	std::string pose_topic = "/zed_ar/pose";
+	std::string pose_topic = "/zed_objdet/pose";
 	nh.getParam("/path_follower/path_follower/final_pos_tol", final_pos_tol);
 	nh.getParam("/path_follower/path_follower/final_rot_tol", final_rot_tol);
 	nh.getParam("/path_follower/path_follower/server_timeout", server_timeout);

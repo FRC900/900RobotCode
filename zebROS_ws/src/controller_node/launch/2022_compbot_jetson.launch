@@ -74,6 +74,9 @@
 	<!--
 	<include file="$(find controller_node)/launch/path_follower.launch"/>
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
+	<include file="$(find controller_node)/launch/path_follower.launch"/>
+	<include file="$(find controller_node)/launch/hold_position.launch"/>
+	<include file="$(find controller_node)/launch/distance_to_pose.launch"/>
 	-->
 
 	<!-- Run ZED camera + tensorflow object detection 

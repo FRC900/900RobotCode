@@ -1,6 +1,6 @@
 noise_delta_t: 1.0
 map_frame_id: 'map'
-odom_frame_id: 'zed_ar_odom'
+odom_frame_id: 'zed_objdet_odom'
 
 field_dims:
   x_min: -2.0
