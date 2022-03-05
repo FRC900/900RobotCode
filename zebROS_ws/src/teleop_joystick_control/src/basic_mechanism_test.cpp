@@ -31,11 +31,13 @@ std_msgs::Float64 indexer_straight_cmd;
 std_msgs::Float64 shooter_cmd;
 std_msgs::Float64 climber_cmd;
 std_msgs::Float64 intake_cmd;
+std_msgs::Float64 intake_solenoid_cmd;
 ros::Publisher indexer_straight_pub;
 ros::Publisher indexer_arc_pub;
 ros::Publisher shooter_pub;
 ros::Publisher climber_pub;
 ros::Publisher intake_pub;
+ros::Publisher intake_solenoid_pub;
 
 ros::Time last_header_stamp;
 double trigger_threshold = 0.5;
@@ -118,6 +120,17 @@ void decIntake(void)
 	ROS_INFO_STREAM("Set intake_cmd.data to " << intake_cmd.data);
 }
 
+void extendIntakeSolenoid(void)
+{
+	intake_solenoid_cmd.data = 1;
+	ROS_INFO_STREAM("Set intake_solenoid_cmd.data to " << intake_solenoid_cmd.data);
+}
+void retractIntakeSolenoid(void)
+{
+	intake_solenoid_cmd.data = 0;
+	ROS_INFO_STREAM("Set intake_solenoid_cmd.data to " << intake_solenoid_cmd.data);
+}
+
 void publish_cmds(void)
 {
 	indexer_straight_pub.publish(indexer_straight_cmd);
@@ -125,6 +138,22 @@ void publish_cmds(void)
 	shooter_pub.publish(shooter_cmd);
 	climber_pub.publish(climber_cmd);
 	intake_pub.publish(intake_cmd);
+	intake_solenoid_pub.publish(intake_solenoid_cmd);
+}
+
+void zero_all_commands(void)
+{
+	// TODO - should we leave the intake solenoid alone?
+	indexer_arc_cmd.data = 0.0;
+	indexer_straight_cmd.data = 0.0;
+	shooter_cmd.data = 0.0;
+	climber_cmd.data = 0.0;
+	intake_cmd.data = 0.0;
+	ROS_INFO_STREAM("Set indexer_arc_cmd.data to " << indexer_arc_cmd.data);
+	ROS_INFO_STREAM("Set indexer_straight_cmd.data to " << indexer_straight_cmd.data);
+	ROS_INFO_STREAM("Set shooter_cmd.data to " << shooter_cmd.data);
+	ROS_INFO_STREAM("Set climber_cmd.data to " << climber_cmd.data);
+	ROS_INFO_STREAM("Set intake_cmd.data to " << intake_cmd.data);
 }
 
 void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& event)
@@ -328,19 +357,6 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	publish_cmds();
 }
 
-void zero_all_commands(void)
-{
-	indexer_arc_cmd.data = 0.0;
-	indexer_straight_cmd.data = 0.0;
-	shooter_cmd.data = 0.0;
-	climber_cmd.data = 0.0;
-	intake_cmd.data = 0.0;
-	ROS_INFO_STREAM("Set indexer_arc_cmd.data to " << indexer_arc_cmd.data);
-	ROS_INFO_STREAM("Set indexer_straight_cmd.data to " << indexer_straight_cmd.data);
-	ROS_INFO_STREAM("Set shooter_cmd.data to " << shooter_cmd.data);
-	ROS_INFO_STREAM("Set climber_cmd.data to " << climber_cmd.data);
-	ROS_INFO_STREAM("Set intake_cmd.data to " << intake_cmd.data);
-}
 
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
@@ -550,6 +566,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: stickLeft
 			if(joystick_states_array[0].stickLeftPress)
 			{
+				retractIntakeSolenoid();
 			}
 			else
 			{
@@ -567,6 +584,26 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 			}
 
+			//Joystick1: stickRight
+			if(joystick_states_array[0].stickRightPress)
+			{
+				extendIntakeSolenoid();
+			}
+			else
+			{
+			}
+			if(joystick_states_array[0].stickRightButton)
+			{
+			}
+			else
+			{
+			}
+			if(joystick_states_array[0].stickRightRelease)
+			{
+			}
+			else
+			{
+			}
 #if 0
 			static bool rightStickCentered{true};
 			const auto rightStickY = joystick_states_array[0].rightStickY;
@@ -710,8 +747,10 @@ int main(int argc, char **argv)
 	shooter_pub = n.advertise<std_msgs::Float64>(shooter_topic_name, 1, true);
 	climber_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/climber_percent_out_controller/command", 1, true);
 	intake_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_motor_controller/command", 1, true);
+	intake_solenoid_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_solenoid_controller/command", 1, true);
 
 	zero_all_commands();
+	intake_solenoid_cmd.data = 0.0;
 
 	//Read from _num_joysticks joysticks
 	// Set up this callback last, since it might use all of the various stuff
