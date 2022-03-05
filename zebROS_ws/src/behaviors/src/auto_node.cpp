@@ -265,6 +265,26 @@ bool readFloatParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, 
 	return true;
 }
 
+bool extractFloatVal(XmlRpc::XmlRpcValue &param, double &val)
+{
+	if (!param.valid())
+		throw std::runtime_error("val was not a valid double type");
+	if (param.getType() == XmlRpc::XmlRpcValue::TypeDouble)
+	{
+		val = static_cast<double>(param);
+		return true;
+	}
+	else if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
+	{
+		val = static_cast<int>(param);
+		return true;
+	}
+	else
+		throw std::runtime_error("A non-double value was read for value");
+
+	return true;
+}
+
 bool readBoolParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, bool &val)
 {
 	if (!params.hasMember(param_name))
@@ -354,9 +374,21 @@ bool waitForAutoStart(ros::NodeHandle nh)
 							for (size_t i = 0; i < point_num-1; i++)
 							{
 								spline_gen_srv.request.points[i+1].positions.resize(3);
-								spline_gen_srv.request.points[i+1].positions[0] = (double) points_config[i][0];
-								spline_gen_srv.request.points[i+1].positions[1] = (double) points_config[i][1];
-								spline_gen_srv.request.points[i+1].positions[2] = (double) points_config[i][2];
+								if (!extractFloatVal(points_config[i][0], spline_gen_srv.request.points[i+1].positions[0]))
+								{
+									ROS_INFO_STREAM("Error converting path point[" << i << "].x to double");
+									break;
+								}
+								if (!extractFloatVal(points_config[i][1], spline_gen_srv.request.points[i+1].positions[1]))
+								{
+									ROS_INFO_STREAM("Error converting path point[" << i << "].y to double");
+									break;
+								}
+								if (!extractFloatVal(points_config[i][2], spline_gen_srv.request.points[i+1].positions[2]))
+								{
+									ROS_INFO_STREAM("Error converting path point[" << i << "].orientation to double");
+									break;
+								}
 							}
 
 							std::string frame_id;
