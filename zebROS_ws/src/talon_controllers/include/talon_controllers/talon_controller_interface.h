@@ -663,14 +663,18 @@ class TalonCIParams
 		}
 		bool readVoltageCompensation(ros::NodeHandle &n)
 		{
-			int params_read = 0;
+			bool saturation_read = false;
 			if (n.getParam("voltage_compensation_saturation", voltage_compensation_saturation_))
-				params_read += 1;
+			{
+				saturation_read = true;
+			}
 			if (n.getParam("voltage_measurement_filter", voltage_measurement_filter_))
-				params_read += 1;
 			if (n.getParam("voltage_compensation_enable", voltage_compensation_enable_) &&
-				voltage_compensation_enable_ && (params_read < 2))
-				ROS_WARN("Not all voltage compensation params set before enabling - using defaults might not work as expected");
+				voltage_compensation_enable_ && !saturation_read)
+			{
+				ROS_WARN_STREAM("Using default voltage_compensation_saturation for " << joint_name_ <<
+					   " since value not set in config");
+			}
 			return true;
 		}
 
@@ -793,13 +797,13 @@ class TalonCIParams
 				param_count = 1;
 			if (n.getParam("softlimit_forward_enable", softlimit_forward_enable_) &&
 					softlimit_forward_enable_ && (param_count == 0))
-				ROS_WARN("Enabling forward softlimits without setting threshold");
+				ROS_WARN_STREAM("Enabling forward softlimits for " << joint_name_ << " without setting threshold");
 			param_count = 0;
 			if (n.getParam("softlimit_reverse_threshold", softlimit_reverse_threshold_))
 				param_count = 1;
 			if (n.getParam("softlimit_reverse_enable", softlimit_reverse_enable_) &&
 				softlimit_reverse_enable_ && (param_count == 0))
-					ROS_WARN("Enabling forward softlimits without setting threshold");
+					ROS_WARN_STREAM("Enabling forward softlimits for " << joint_name_ << " without setting threshold");
 			n.getParam("override_limit_switches_enable", override_limit_switches_enable_);
 			return true;
 		}
@@ -815,7 +819,8 @@ class TalonCIParams
 				params_read += 1;
 			if (n.getParam("current_limit_enable", current_limit_enable_) &&
 				current_limit_enable_ && (params_read < 3))
-				ROS_WARN("Not all current limits set before enabling - using defaults might not work as expected");
+				ROS_WARN_STREAM("Not all current limits set for " << joint_name_ <<
+						" before enabling - using defaults might not work as expected");
 			return true;
 		}
 
@@ -830,7 +835,8 @@ class TalonCIParams
 				params_read += 1;
 			if (n.getParam("supply_current_limit_enable", supply_current_limit_enable_) &&
 				current_limit_enable_ && (params_read < 3))
-				ROS_WARN("Not all supply current limits set before enabling - using defaults might not work as expected");
+				ROS_WARN_STREAM("Not all supply current limits set for " << joint_name_
+						<< " before enabling - using defaults might not work as expected");
 			return true;
 		}
 
@@ -845,7 +851,8 @@ class TalonCIParams
 				params_read += 1;
 			if (n.getParam("stator_current_limit_enable", stator_current_limit_enable_) &&
 				current_limit_enable_ && (params_read < 3))
-				ROS_WARN("Not all stator current limits set before enabling - using defaults might not work as expected");
+				ROS_WARN_STREAM("Not all stator current limits set for " << joint_name_ <<
+						" before enabling - using defaults might not work as expected");
 			return true;
 		}
 

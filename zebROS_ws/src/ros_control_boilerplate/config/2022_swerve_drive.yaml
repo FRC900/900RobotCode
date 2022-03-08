@@ -51,9 +51,12 @@ swerve_drive_controller:
         invert_output: false
         feedback_type: IntegratedSensor
         voltage_compensation_enable: True
+        voltage_compensation_saturation: 12
         current_limit_continuous_amps: 20
-        closed_loop_ramp: 0.25
+        current_limit_peak_amps: 40
+        current_limit_peak_msec: 100
         current_limit_enable: True
+        #closed_loop_ramp: 0.25
         dynamic_reconfigure: False
         neutral_mode: "Brake"
         status_1_general_period: 100
@@ -83,12 +86,15 @@ swerve_drive_controller:
         invert_output: false
         feedback_type: IntegratedSensor
         voltage_compensation_enable: True
+        voltage_compensation_saturation: 12
         current_limit_continuous_amps: 20
+        current_limit_peak_amps: 40
+        current_limit_peak_msec: 100
         current_limit_enable: True
         dynamic_reconfigure: False
         neutral_mode: "Brake"
         neutral_deadband: 0.01
-        closed_loop_ramp: 0.25
+        #closed_loop_ramp: 0.25
         status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
@@ -116,12 +122,15 @@ swerve_drive_controller:
         sensor_phase: true
         invert_output: false
         voltage_compensation_enable: True
+        voltage_compensation_saturation: 12
         current_limit_continuous_amps: 20
+        current_limit_peak_amps: 40
+        current_limit_peak_msec: 100
         current_limit_enable: True
         dynamic_reconfigure: False
         neutral_mode: "Brake"
         neutral_deadband: 0.01
-        closed_loop_ramp: 0.25
+        #closed_loop_ramp: 0.25
         status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
@@ -148,12 +157,15 @@ swerve_drive_controller:
         invert_output: false
         feedback_type: IntegratedSensor
         voltage_compensation_enable: True
+        voltage_compensation_saturation: 12
         current_limit_continuous_amps: 20
+        current_limit_peak_amps: 40
+        current_limit_peak_msec: 100
         current_limit_enable: True
         dynamic_reconfigure: False
         neutral_mode: "Brake"
         neutral_deadband: 0.01
-        closed_loop_ramp: 0.25
+        #closed_loop_ramp: 0.25
         status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
@@ -188,6 +200,7 @@ swerve_drive_controller:
         motion_cruise_velocity: 45
         motion_acceleration: 153.3
         voltage_compensation_enable: true
+        voltage_compensation_saturation: 12
         dynamic_reconfigure: False
         status_1_general_period: 100
         #status_2_feedback0_period: 100
@@ -223,6 +236,7 @@ swerve_drive_controller:
         motion_cruise_velocity: 45
         motion_acceleration: 153.3
         voltage_compensation_enable: true
+        voltage_compensation_saturation: 12
         dynamic_reconfigure: False
         status_1_general_period: 100
         #status_2_feedback0_period: 100
@@ -258,6 +272,7 @@ swerve_drive_controller:
         motion_cruise_velocity: 45
         motion_acceleration: 153.3
         voltage_compensation_enable: true
+        voltage_compensation_saturation: 12
         dynamic_reconfigure: False
         status_1_general_period: 100
         #status_2_feedback0_period: 100
@@ -293,6 +308,7 @@ swerve_drive_controller:
         motion_cruise_velocity: 45
         motion_acceleration: 153.3
         voltage_compensation_enable: true
+        voltage_compensation_saturation: 12
         dynamic_reconfigure: False
         status_1_general_period: 100
         #status_2_feedback0_period: 100

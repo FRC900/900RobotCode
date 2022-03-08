@@ -157,6 +157,8 @@ dynamic_arm_controller:
     invert_output: True
     neutral_mode: Brake
     dynamic_reconfigure: False
+    voltage_compensation_enable: True
+    voltage_compensation_saturation: 12
     status_1_general_period: 250 # default = 10
     status_2_feedback0_period: 250 # Default = 20
     status_3_quadrature_period: 250
@@ -187,7 +189,8 @@ shooter_controller:
   nominal_output_forward: 0.0
   nominal_output_reverse: 0.0
   voltage_compensation_enable: true
-  dynamic_reconfigure: True
+  voltage_compensation_saturation: 12
+  dynamic_reconfigure: False
   neutral_mode: Coast
   velocity_measurement_period: Period_20Ms
   velocity_measurement_window: 4
@@ -213,6 +216,9 @@ shooter_follower_controller:
   feedback_type: IntegratedSensor
   invert_output: False
   follow_joint: shooter_leader
+  enable_read_thread: False
+  voltage_compensation_enable: True
+  voltage_compensation_saturation: 12
   status_1_general_period: 250 # Default = 10
   status_2_feedback0_period: 250 # Default = 20
   status_3_quadrature_period: 250
@@ -238,6 +244,7 @@ intake_controller:
       joint: intake_motor
       invert_output: False  
       voltage_compensation_enable: True
+      voltage_compensation_saturation: 12
       dynamic_reconfigure: false
       status_1_general_period: 100 # Default = 10
       status_2_feedback0_period: 100 # Default = 20
@@ -329,6 +336,7 @@ indexer_straight_motor_controller:
     feedback_type: IntegratedSensor
     dynamic_reconfigure: True
     voltage_compensation_Enable: True
+    voltage_compensation_saturation: 12
 
 indexer_arc_motor_controller:
     type: talon_controllers/TalonPercentOutputController
@@ -337,6 +345,7 @@ indexer_arc_motor_controller:
     feedback_type: IntegratedSensor
     dynamic_reconfigure: True
     voltage_compensation_Enable: True
+    voltage_compensation_saturation: 12
 
 climber_motion_magic_controller:
     type: talon_controllers/TalonMotionMagicCloseLoopController
@@ -350,6 +359,7 @@ climber_motion_magic_controller:
     motion_cruise_velocity: 0.25
     motion_acceleration: 2
     voltage_compensation_enable: true
+    voltage_compensation_saturation: 12
     dynamic_reconfigure: true
     motion_s_curve_strength: 0
     conversion_factor: 0.00108
@@ -364,3 +374,5 @@ climber_follower_controller:
   follow_joint: climber_dynamic_arm_leader
   clear_position_on_limit_r: True
   neutral_mode: Brake
+  voltage_compensation_enable: true
+  voltage_compensation_saturation: 12
