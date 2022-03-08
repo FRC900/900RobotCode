@@ -193,6 +193,7 @@ swerve_drive_controller:
             - {p: 2.25, i: 0.000, d: 4.0, f: 0.28, i_zone: 0}
         invert_output: false
         sensor_phase: false
+        neutral_deadband: 0.01
         peak_output_forward: 1.0
         peak_output_reverse: -1.0
         nominal_output_forward: 0.0
@@ -229,6 +230,7 @@ swerve_drive_controller:
             - {p: 2.25, i: 0.000, d: 4.0, f: 0.28, i_zone: 0}
         invert_output: false
         sensor_phase: false
+        neutral_deadband: 0.01
         peak_output_forward: 1.0
         peak_output_reverse: -1.0
         nominal_output_forward: 0.0
@@ -265,6 +267,7 @@ swerve_drive_controller:
             - {p: 2.25, i: 0.000, d: 4.0, f: 0.28, i_zone: 0}
         invert_output: false
         sensor_phase: false
+        neutral_deadband: 0.01
         peak_output_forward: 1.0
         peak_output_reverse: -1.0
         nominal_output_forward: 0.0
@@ -297,6 +300,7 @@ swerve_drive_controller:
         feedback_type: RemoteSensor0
         remote_feedback_filter0: CANCoder
         remote_feedback_device_id0: 13
+        neutral_deadband: 0.01
         close_loop_values:
             - {p: 2.25, i: 0.000, d: 4.0, f: 0.28, i_zone: 0}
         invert_output: false
