@@ -57,7 +57,7 @@ swerve_drive_controller:
         dynamic_reconfigure: False
         neutral_mode: "Brake"
         status_1_general_period: 100
-        status_2_feedback0_period: 100
+        #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -90,7 +90,7 @@ swerve_drive_controller:
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
         status_1_general_period: 100
-        status_2_feedback0_period: 100
+        #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -123,7 +123,7 @@ swerve_drive_controller:
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
         status_1_general_period: 100
-        status_2_feedback0_period: 100
+        #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -155,7 +155,7 @@ swerve_drive_controller:
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
         status_1_general_period: 100
-        status_2_feedback0_period: 100
+        #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
