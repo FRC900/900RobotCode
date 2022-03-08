@@ -190,7 +190,7 @@ swerve_drive_controller:
         voltage_compensation_enable: true
         dynamic_reconfigure: False
         status_1_general_period: 100
-        status_2_feedback0_period: 100
+        #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -225,7 +225,7 @@ swerve_drive_controller:
         voltage_compensation_enable: true
         dynamic_reconfigure: False
         status_1_general_period: 100
-        status_2_feedback0_period: 100
+        #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -260,7 +260,7 @@ swerve_drive_controller:
         voltage_compensation_enable: true
         dynamic_reconfigure: False
         status_1_general_period: 100
-        status_2_feedback0_period: 100
+        #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
@@ -295,7 +295,7 @@ swerve_drive_controller:
         voltage_compensation_enable: true
         dynamic_reconfigure: False
         status_1_general_period: 100
-        status_2_feedback0_period: 100
+        #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
         status_3_quadrature_period: 250
