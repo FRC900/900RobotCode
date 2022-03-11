@@ -68,7 +68,8 @@ public:
     static_hook_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/static_hook_solenoid_controller/command", 2);
     joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbStateMachine::jointStateCallback, this);
     talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &ClimbStateMachine::talonStateCallback, this);
-    dynamic_arm_ = nh_.serviceClient<controllers_2022_msgs::DynamicArmSrv>("/frcrobot_jetson/dynamic_arm_controller/command");
+	const std::map<std::string, std::string> service_connection_header{ {"tcp_nodelay", "1"} };
+    dynamic_arm_ = nh_.serviceClient<controllers_2022_msgs::DynamicArmSrv>("/frcrobot_jetson/dynamic_arm_controller/command", false, service_connection_header);
     if (!nh_.getParam("full_extend_height_ground", full_extend_height_ground_))
     {
       ROS_ERROR_STREAM("2022_climb_server : Could not find full_extend_height_ground");

@@ -347,8 +347,9 @@ int main(int argc, char **argv)
 	ros::Subscriber powercellSubscriber = nh.subscribe("/tf_object_detection/object_detection_world", 1, objectDetectCallback);
 	ros::ServiceServer svc = nh.advertiseService("game_piece_path_gen", genPath);
 
-	spline_gen_cli = nh.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen");
-	dynamic_path_cli = nh.serviceClient<behavior_actions::DynamicPath>("/auto/dynamic_path");
+	const std::map<std::string, std::string> service_connection_header{ {"tcp_nodelay", "1"} };
+	spline_gen_cli = nh.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen", false, service_connection_header);
+	dynamic_path_cli = nh.serviceClient<behavior_actions::DynamicPath>("/auto/dynamic_path", false, service_connection_header);
 
 	ros::spin();
 	return 0;

@@ -23,7 +23,8 @@ void ErrorQueue::error_queue_thread_fn(void)
 #endif
 
 	ros::NodeHandle nh;
-	auto ds_error_client_ = nh.serviceClient<ros_control_boilerplate::DSError>("/frcrobot_rio/ds_error_service");
+	const std::map<std::string, std::string> service_connection_header{ {"tcp_nodelay", "1"} };
+	auto ds_error_client_ = nh.serviceClient<ros_control_boilerplate::DSError>("/frcrobot_rio/ds_error_service", false, service_connection_header);
 	if (!ds_error_client_.waitForExistence(ros::Duration(60)))
 	{
 		ROS_ERROR("Timeout waiting for /frcrobot_rio/ds_error_service");
