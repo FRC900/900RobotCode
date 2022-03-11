@@ -131,12 +131,6 @@ class TalonHWCommand
 		bool getNeutralMode(void);
 		bool neutralModeChanged(NeutralMode &neutral_mode);
 
-		void setNeutralOutput(void);
-		// Set motor controller to neutral output
-		// This should be a one-shot ... only
-		// write it to the motor controller once
-		bool neutralOutputChanged(void);
-
 		void setPidfSlot(int pidf_slot);
 		int getPidfSlot(void)const;
 		bool slotChanged(int &newpidfSlot);
@@ -457,7 +451,6 @@ class TalonHWCommand
 
 		NeutralMode neutral_mode_;
 		bool        neutral_mode_changed_;
-		bool        neutral_output_;
 
 		FeedbackDevice encoder_feedback_;
 		double         feedback_coefficient_;

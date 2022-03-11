@@ -28,7 +28,6 @@ bool[] forward_limit_switch
 bool[] reverse_limit_switch
 bool[] forward_softlimit
 bool[] reverse_softlimit
-bool[] neutral_output
 int32[]   motion_profile_top_level_buffer_count
 bool[]    motion_profile_top_level_buffer_full
 int32[]   motion_profile_status_top_buffer_rem
@@ -44,5 +43,4 @@ string[]  motion_profile_status_output_enable
 int32[]   motion_profile_time_dur_ms
 string[]  faults
 string[]  sticky_faults
-float64[] conversion_factor
 talon_state_msgs/CustomProfileStatus[] custom_profile_status

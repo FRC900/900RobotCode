@@ -316,7 +316,6 @@ class TalonHWState
 		bool getInvert(void) const;
 		bool getSensorPhase(void) const;
 		NeutralMode getNeutralMode(void) const;
-		bool getNeutralOutput(void) const;
 		FeedbackDevice getEncoderFeedback(void) const;
 		RemoteFeedbackDevice getRemoteEncoderFeedback(void) const;
 		double getFeedbackCoefficient(void) const;
@@ -459,7 +458,6 @@ class TalonHWState
 		void setInvert(bool invert);
 		void setSensorPhase(bool sensor_phase);
 		void setNeutralMode(NeutralMode neutral_mode);
-		void setNeutralOutput(bool neutral_output);
 		void setEncoderFeedback(FeedbackDevice encoder_feedback);
 		void setRemoteEncoderFeedback(RemoteFeedbackDevice encoder_feedback_remote);
 		void setFeedbackCoefficient(double feedback_coefficient);
@@ -542,7 +540,6 @@ class TalonHWState
 		bool sensor_phase_;
 
 		NeutralMode neutral_mode_;
-		bool        neutral_output_;
 
 		FeedbackDevice encoder_feedback_;
 		double feedback_coefficient_;

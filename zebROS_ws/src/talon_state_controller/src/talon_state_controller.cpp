@@ -94,7 +94,6 @@ bool TalonStateController::init(hardware_interface::TalonStateInterface *hw,
 		m.reverse_limit_switch.push_back(false);
 		m.forward_softlimit.push_back(false);
 		m.reverse_softlimit.push_back(false);
-		m.neutral_output.push_back(false);
 
 		m.motion_profile_top_level_buffer_count.push_back(0);
 		m.motion_profile_top_level_buffer_full.push_back(false);
@@ -232,7 +231,6 @@ void TalonStateController::update(const ros::Time &time, const ros::Duration & /
 						break;
 				}
 				m.demand1_value[i] = ts->getDemand1Value();
-				m.neutral_output[i] = ts->getNeutralOutput();
 				m.motion_profile_top_level_buffer_count[i] = ts->getMotionProfileTopLevelBufferCount();
 				m.motion_profile_top_level_buffer_full[i] = ts->getMotionProfileTopLevelBufferFull();
 				hardware_interface::MotionProfileStatus mp_status(ts->getMotionProfileStatus());

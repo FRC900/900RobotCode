@@ -54,7 +54,6 @@ TalonHWCommand::TalonHWCommand(void) :
 	invert_changed_(true),
 	neutral_mode_(NeutralMode_Uninitialized),
 	neutral_mode_changed_(false),
-	neutral_output_(false),
 	encoder_feedback_(FeedbackDevice_Uninitialized),
 	feedback_coefficient_(1.0),
 	encoder_feedback_changed_(false),
@@ -644,21 +643,6 @@ bool TalonHWCommand::neutralModeChanged(NeutralMode &neutral_mode)
 	if (!neutral_mode_changed_)
 		return false;
 	neutral_mode_changed_ = false;
-	return true;
-}
-
-void TalonHWCommand::setNeutralOutput(void)
-{
-	neutral_output_ = true;
-}
-// Set motor controller to neutral output
-// This should be a one-shot ... only
-// write it to the motor controller once
-bool TalonHWCommand::neutralOutputChanged(void)
-{
-	if (!neutral_output_)
-		return false;
-	neutral_output_ = false;
 	return true;
 }
 

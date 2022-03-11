@@ -1779,14 +1779,6 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			ts.setNeutralMode(neutral_mode);
 		}
 
-		if (tc.neutralOutputChanged())
-		{
-			ROS_INFO_STREAM("Set joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " neutral output");
-			victor->NeutralOutput();
-			safeTalonCall(victor->GetLastError(), "NeutralOutput", ts.getCANID());
-			ts.setNeutralOutput(true);
-		}
-
 		double iaccum;
 		if (close_loop_mode && tc.integralAccumulatorChanged(iaccum))
 		{
@@ -2356,8 +2348,6 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 							" demand1_type_phoenix = " << static_cast<int>(demand1_type_phoenix) <<
 							" demand1_value = " << demand1_value);
 #endif
-					ts.setNeutralOutput(false); // maybe make this a part of setSetpoint?
-
 					ts.setTalonMode(in_mode);
 					ts.setDemand1Type(demand1_type_internal);
 					ts.setDemand1Value(demand1_value);

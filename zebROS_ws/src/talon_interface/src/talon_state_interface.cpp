@@ -45,7 +45,6 @@ TalonHWState::TalonHWState(int can_id) :
 	invert_(false),
 	sensor_phase_(false),
 	neutral_mode_(NeutralMode_Coast),
-	neutral_output_(false),
 	encoder_feedback_(FeedbackDevice_Uninitialized),
 	feedback_coefficient_(1.0),
 	encoder_feedback_remote_(RemoteFeedbackDevice_None),
@@ -382,10 +381,6 @@ bool TalonHWState::getSensorPhase(void) const
 NeutralMode TalonHWState::getNeutralMode(void) const
 {
 	return neutral_mode_;
-}
-bool TalonHWState::getNeutralOutput(void) const
-{
-	return neutral_output_;
 }
 FeedbackDevice TalonHWState::getEncoderFeedback(void) const
 {
@@ -1064,10 +1059,6 @@ void TalonHWState::setNeutralMode(NeutralMode neutral_mode)
 		neutral_mode_ = neutral_mode;
 	else
 		ROS_WARN_STREAM("Invalid neutral mode requested");
-}
-void TalonHWState::setNeutralOutput(bool neutral_output)
-{
-	neutral_output_ = neutral_output;
 }
 
 void TalonHWState::setEncoderFeedback(FeedbackDevice encoder_feedback)

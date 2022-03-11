@@ -1369,7 +1369,7 @@ class TalonControllerInterface
 		// Pick the config slot (0 or 1) for PIDF/IZone values
 		virtual bool setPIDFSlot(int slot)
 		{
-			if ((slot != 0) && (slot != 1))
+			if ((slot < 0) || (slot > 3))
 			{
 				//ROS_WARN_STREAM("controller set of PID slot:  (false): " << slot);
 				return false;
@@ -1394,7 +1394,7 @@ class TalonControllerInterface
 
 		virtual bool setP(double newP, int slot)
 		{
-			if ((slot != 0) && (slot != 1))
+			if ((slot < 0) || (slot > 3))
 			{
 				//ROS_WARN_STREAM("controller set of PID slot:  (false): " << slot);
 				return false;
@@ -1403,11 +1403,6 @@ class TalonControllerInterface
 
 			talon_->setP(newP, slot);
 			return true;
-		}
-
-		virtual void setNeutralOutput(void)
-		{
-			talon_->setNeutralOutput();
 		}
 
 		virtual void setIntegralAccumulator(double iaccum)
