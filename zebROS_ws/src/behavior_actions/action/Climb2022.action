@@ -1,5 +1,6 @@
 # goal
 bool single_step
+uint8 start_state # 0 = default, 1 = start at state 1, 2 = start at state 2, and so on. Only applies if `single_step` is true.
 ---
 # result
 bool success

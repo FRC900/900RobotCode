@@ -7,6 +7,7 @@
 #include <talon_controllers/talon_controller_interface.h> // "
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include "controllers_2022_msgs/DynamicArmSrv.h"
+#include <std_srvs/Trigger.h>
 #include <dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h> // TODO change to use ddynamic_reconfigure
 #include <controllers_2022/DynamicArmConfig.h>
 
@@ -68,6 +69,8 @@ namespace dynamic_arm_controller
 
     bool cmdService(controllers_2022_msgs::DynamicArmSrv::Request &req,
                     controllers_2022_msgs::DynamicArmSrv::Response &res);
+    bool zeroService(std_srvs::Trigger::Request  &req,
+                     std_srvs::Trigger::Response &res);
 
     // void callback(dynamic_arm_controller::DynamicArmConfig &config, uint32_t level); // This was in the 2019 elevator controller, not sure if we need it
 
@@ -76,9 +79,11 @@ namespace dynamic_arm_controller
 
     realtime_tools::RealtimeBuffer<DynamicArmCommand> command_buffer_; // this is the buffer for ommands to be published
     ros::ServiceServer dynamic_arm_service_; //service for receiving commands
+    ros::ServiceServer dynamic_arm_zeroing_service_; //service for zeroing
 
   bool zeroed_;
   bool last_zeroed_;
+  bool do_zero_ = false;
 
   double current_threshold_;
   int max_current_iterations_;

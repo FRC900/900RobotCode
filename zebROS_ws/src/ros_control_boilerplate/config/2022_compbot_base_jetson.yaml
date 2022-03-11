@@ -90,27 +90,27 @@ dynamic_arm_controller:
   type: dynamic_arm_controller/DynamicArmController
   dynamic_arm_joint: ['dynamic_arm_leader', 'dynamic_arm_follower']
 
-  dynamic_arm_zeroing_percent_output: -0.2 # TODO : tune me
+  dynamic_arm_zeroing_percent_output: -0.1 # TODO : tune me
   # If there are no negative velocity readings while zeroing
   # for this amount of time, assume the dynamic arm is stuck
   # or has hit bottom and the limit switch is broken.  Stop
   # trying to drive down to prevent killing the motor
-  dynamic_arm_zeroing_timeout: 2.0
+  dynamic_arm_zeroing_timeout: 60.0
 
   # TODO fix these
   dynamic_arm_max_current_iterations: 10
   dynamic_arm_current_threshold: 10.0
 
-  motion_magic_velocity_fast: 1.7
-  motion_magic_acceleration_fast: 3.5
+  # NOTE fast is untested as of now
+  motion_magic_velocity_fast: 0.3
+  motion_magic_acceleration_fast: 2.0
 
-  motion_magic_velocity_slow: 0.25
-  motion_magic_acceleration_slow: 0.4
+  motion_magic_velocity_slow: 0.1
+  motion_magic_acceleration_slow: 1.0
 
   dynamic_arm_leader:
     type: talon_controllers/TalonControllerInterface
     joint: climber_dynamic_arm_leader
-    # TODO Actually define PID, this is from 2019
     close_loop_values:
         - {p: 0.05, i: 0, d: 0.5, f: 0.055, i_zone: 0}
 
