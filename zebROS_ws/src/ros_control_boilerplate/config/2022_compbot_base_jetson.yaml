@@ -40,7 +40,7 @@ hardware_interface:
        - {name: climber_dynamic_arm_follower, type: can_talon_fx, can_id: 31, local: true}
        - {name: shooter_leader, type: can_talon_fx, can_id: 40, local: true}
        - {name: shooter_follower, type: can_talon_fx, can_id: 41, local: true}
-       
+
        - {name: intake_motor, type: can_talon_fx, can_id: 60, local: true}
        - {name: intake_solenoid, type: solenoid, local_hardware: false, local_update: true}
 
@@ -48,7 +48,7 @@ hardware_interface:
        - {name: indexer_arc_motor, type: can_talon_fx, can_id: 51, local: true}
        - {name: indexer_straight_linebreak, type: digital_input, local: false}
        - {name: indexer_arc_linebreak, type: digital_input, local: false}
-       
+
        - {name: fl_drive, type: can_talon_fx, can_id: 21, local: true}
        - {name: fl_angle, type: can_talon_fx, can_id: 11, local: true}
        - {name: fr_drive, type: can_talon_fx, can_id: 22, local: true}
@@ -62,7 +62,7 @@ hardware_interface:
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
- 
+
        # - {name: babys_first_orchestra, type: orchestra, id: 1}
 
 # Create controllers for each joint
@@ -112,7 +112,7 @@ dynamic_arm_controller:
     joint: climber_dynamic_arm_leader
     # TODO Actually define PID, this is from 2019
     close_loop_values:
-        - {p: 0.05, i: 0, d: 0.5, f: 0.055, i_zone: 0} 
+        - {p: 0.05, i: 0, d: 0.5, f: 0.055, i_zone: 0}
 
     invert_output: False
 
@@ -242,7 +242,7 @@ intake_controller:
   intake_motor:
       type: talon_controllers/TalonPercentOutputController
       joint: intake_motor
-      invert_output: False  
+      invert_output: False
       voltage_compensation_enable: True
       voltage_compensation_saturation: 12
       dynamic_reconfigure: false
@@ -332,27 +332,29 @@ match_state_listener_controller:
 indexer_straight_motor_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: indexer_straight_motor
-    invert: true
+    invert_output: true
     feedback_type: IntegratedSensor
     dynamic_reconfigure: True
     voltage_compensation_Enable: True
     voltage_compensation_saturation: 12
+    neutral_mode: Brake
 
 indexer_arc_motor_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: indexer_arc_motor
-    invert: false
+    invert_output: false
     feedback_type: IntegratedSensor
     dynamic_reconfigure: True
     voltage_compensation_Enable: True
     voltage_compensation_saturation: 12
+    neutral_mode: Brake
 
 climber_motion_magic_controller:
     type: talon_controllers/TalonMotionMagicCloseLoopController
     joint: climber_dynamic_arm_leader
     feedback_type: IntegratedSensor
     close_loop_values:
-        - {p: 0.05, i: 0, d: 0.5, f: 0.055, i_zone: 0} 
+        - {p: 0.05, i: 0, d: 0.5, f: 0.055, i_zone: 0}
     invert_output: False
     nominal_output_forward: 0.0
     nominal_output_reverse: 0.0

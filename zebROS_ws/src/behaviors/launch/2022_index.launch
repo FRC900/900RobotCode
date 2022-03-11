@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="index">
+		<rosparam file="$(find behaviors)/config/2022_index_server.yaml" command="load"/>
+		<node name="index_server_2022" pkg="behaviors" type="2022_index_server_node" output="screen"/>
+	</group>
+</launch>
