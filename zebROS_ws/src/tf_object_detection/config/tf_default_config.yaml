@@ -1,3 +1,3 @@
 min_confidence: 0.2
-image_topic: "/obj_detection/c920/rect_image"
-#image_topic: '/zed_objdetect/left/image_rect_color'
+#image_topic: "/obj_detection/c920/rect_image"
+image_topic: '/zed_objdetect/left/image_rect_color'

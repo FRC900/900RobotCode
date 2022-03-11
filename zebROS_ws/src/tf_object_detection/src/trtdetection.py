@@ -33,33 +33,23 @@ from config import model_ssd_mobilenet_v2_512x512 as model
 # from config import model_ssd_mobilenet_v1_coco_2018_01_28 as model
 # from config import model_ssd_mobilenet_v2_coco_2018_03_29 as model
 
-
-
-# Dosn't seem to be used
 ctypes.CDLL("/home/ubuntu/TensorRT/build/libnvinfer_plugin.so")
-# CLASS_LABELS = class_labels.CLASSES_LIST
 bridge = CvBridge()
-category_index, detection_graph, sess, pub, pub_debug, vis = None, None, None, None, None, None
+pub, pub_debug, vis = None, None, None
 min_confidence = 0.1
 global rospack, THIS_DIR, PATH_TO_LABELS
 rospack = rospkg.RosPack()
 THIS_DIR = os.path.join(rospack.get_path('tf_object_detection'), 'src/')
-PATH_TO_LABELS = os.path.join(THIS_DIR, '2020Game_label_map.pbtxt')
-# viz = BBoxVisualization(category_dict)
-
-
 
 global init
 init = False
 
-
 def run_inference_for_single_image(msg):
     # TODO Maybe remove all these globals and make a class
-    global viz, init, host_inputs, cuda_inputs, host_outputs, cuda_outputs, stream, context, bindings, host_mem, cuda_mem, cv2gpu, imgResized, imgNorm, gpuimg, finalgpu
+    global viz, init, host_inputs, cuda_inputs, host_outputs, cuda_outputs, stream, context, bindings, host_mem, cuda_mem, cv2gpu, imgResized, imgNorm, gpuimg, finalgpu, category_dict
     
     if init == False:
 
-        init = True
         ori = bridge.imgmsg_to_cv2(msg, "bgr8")
         imgInput = jetson.utils.cudaFromNumpy(ori, isBGR=True)
         rospy.logwarn("Performing init for CUDA")
@@ -71,9 +61,9 @@ def run_inference_for_single_image(msg):
         runtime = trt.Runtime(TRT_LOGGER)
         # compile model into TensorRT
         # This is only done if the output bin file doesn't already exist
-        # TODO - replace this with the MD5 sum check we have for the other TRT detection
-        if file_changed(model.TRTbin):
-            rospy.logwarn("Optimized model not found, generating new one")
+        # or has a different MD5 sum than last time
+        if file_changed(model.name + '.pb'):
+            rospy.logwarn("Regenerating optimized model")
 
             import uff
             import graphsurgeon as gs
@@ -120,13 +110,12 @@ def run_inference_for_single_image(msg):
                 host_outputs.append(host_mem)
                 cuda_outputs.append(cuda_mem)
         
-        
         context = engine.create_execution_context()
         
-       # List of the strings that is used to add correct label for each box.
+        # List of the strings that is used to add correct label for each box.
         rospack = rospkg.RosPack()
         THIS_DIR = os.path.join(rospack.get_path('tf_object_detection'), 'src/')
-        PATH_TO_LABELS = os.path.join(THIS_DIR, '2020Game_label_map.pbtxt')
+        PATH_TO_LABELS = os.path.join(THIS_DIR, '2022Game_label_map.pbtxt')
         rospy.logwarn("Loading labels from " + str(PATH_TO_LABELS))
         category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
         category_dict = {0: 'background'}
@@ -135,6 +124,7 @@ def run_inference_for_single_image(msg):
         
         viz = BBoxVisualization(category_dict)
         rospy.logwarn("Obj detection init complete, starting script")
+        init = True
         
 
     ori = bridge.imgmsg_to_cv2(msg, "bgr8")
@@ -173,8 +163,8 @@ def run_inference_for_single_image(msg):
         if conf < min_confidence:
             continue
 
-        index = int(output[prefix + 0])
-        label = str(output[prefix + 1])
+        index = int(output[prefix + 1])
+        label = str(category_dict[int(output[prefix + 1])])
         #conf = float(output[prefix + 2])
         xmin = float(output[prefix + 3] * width)
         ymin = float(output[prefix + 4] * height)
@@ -199,7 +189,7 @@ def run_inference_for_single_image(msg):
     pub.publish(detection)
     #Visualize 
     if debug == True:
-        viz.draw_bboxes(ori, boxes, confs, clss, 0.42)
+        viz.draw_bboxes(ori, boxes, confs, clss, min_confidence)
         pub_debug.publish(bridge.cv2_to_imgmsg(ori, encoding="bgr8"))
         
         #cv2.imwrite("result.jpg", ori)
@@ -207,12 +197,11 @@ def run_inference_for_single_image(msg):
         #key = cv2.waitKey(.5) & 0x000000FF
 
 
-
 def main():
     
     os.chdir(THIS_DIR)
 
-    global detection_graph, sess, pub, category_index, pub_debug, min_confidence, vis
+    global pub, category_index, pub_debug, min_confidence, vis
     sub_topic = "/obj_detection/c920/rect_image"
     pub_topic = "obj_detection_msg"
     rospy.init_node('tf_object_detection', anonymous=True)

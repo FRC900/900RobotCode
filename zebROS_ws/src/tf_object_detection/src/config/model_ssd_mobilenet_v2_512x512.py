@@ -2,7 +2,8 @@ import graphsurgeon as gs
 import tensorflow as tf
 
 name = 'ssd_mobilenet_v2_512x512'
-path = '~/2020Offseason/zebROS_ws/src/tf_object_detection/src/' + name + '.pb'
+path = '/home/ubuntu/2022RobotCode/zebROS_ws/src/tf_object_detection/src/' + name + '.pb'
+#TRTbin = '/home/ubuntu/2022RobotCode/zebROS_ws/src/tf_object_detection/src/TRT_' + name + '.bin'
 TRTbin = 'TRT_' + name + '.bin'
 output_name = ['NMS']
 dims = [3,512,512]
@@ -43,7 +44,7 @@ def add_plugin(graph):
         nmsThreshold=0.4,
         topK=100,
         keepTopK=100,
-        numClasses=39, # 38 object + 1 for unknown class
+        numClasses=34, # 28 object + 1 for unknown class
         inputOrder=[1, 2, 0],
         confSigmoid=1,
         isNormalized=1

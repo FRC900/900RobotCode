@@ -163,8 +163,8 @@ if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
             --exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2/documents' --exclude 'build' \
             --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
             --exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
-            --exclude 'desmos_js' --exclude '.md5sum' --exclude 'trt_graph.pb'\
-			--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' --exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools' \
+            --exclude 'desmos_js' --exclude '.md5sum*txt' \
+			--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' --exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools' --exclude 'TRT*bin' \
             $i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/../
         if [ $? -ne 0 ]; then
             echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
@@ -186,8 +186,8 @@ do
         --exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2/documents' --exclude 'build' \
         --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
         --exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
-        --exclude 'desmos_js' --exclude '.md5sum' --exclude 'trt_graph.pb'\
-		--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' --exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools' \
+        --exclude 'desmos_js' --exclude '.md5sum*txt' \
+		--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' --exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools'  --exclude 'TRT*bin'\
         $LOCAL_CLONE_LOCATION/../ $i:$JETSON_ENV_LOCATION/
     if [ $? -ne 0 ]; then
         echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"
