@@ -2135,6 +2135,7 @@ int main(int argc, char **argv)
 	ddr.registerVariable<double>("path_dist_between_arc_lengths", &pathDistBetweenArcLengths, "spacing of waypoints along final generated path", 0, 2);
 	ddr.registerVariable<double>("path_dist_between_arc_lengths_epsilon", &pathDistBetweenArcLengthsEpsilon, "error tolerance for final path waypoint spacing", 0, 2);
 
+#if 0  // RPROP not used
 	nh.param("initial_delta_cost_epsilon", initialDeltaCostEpsilon, 0.05);
 	nh.param("min_delta_cost_epsilon", minDeltaCostEpsilon, 0.005);
 	nh.param("initial_best_cost_epsilon", initialBestCostEpsilon, 0.02);
@@ -2142,6 +2143,8 @@ int main(int argc, char **argv)
 	nh.param("max_delta_cost_exit_counter", maxDeltaCostExitCounter, 3);
 	nh.param("initial_dparam", initialDParam, 0.25);
 	nh.param("regularization_lambda", regularizationLambda, 0.01);
+	nh.param("optimization_counter_max", optimizationCounterMax, 500);
+
 	ddr.registerVariable<double>("initial_delta_cost_epsilon", &initialDeltaCostEpsilon, "RPROP initial deltaCostEpsilon value", 0, 1);
 	ddr.registerVariable<double>("min_delta_cost_epsilon", &minDeltaCostEpsilon, "RPROP minimum deltaCost value", 0, 1);
 	ddr.registerVariable<double>("initial_best_cost_epsilon", &initialBestCostEpsilon, "RPROP initial bestCostEpsilon value", 0, 1);
@@ -2149,6 +2152,8 @@ int main(int argc, char **argv)
 	ddr.registerVariable<int>("max_delta_cost_exit_counter", &maxDeltaCostExitCounter, "RPROP inner iteration with low change in code exit criteria", 0, 10);
 	ddr.registerVariable<double>("initial_dparam", &initialDParam, "RPROP initial optimization value change", 0, 2);
 	ddr.registerVariable<double>("regularization_lambda", &regularizationLambda, "RPROP cost multiplier to optparam changes", 0, 2);
+	ddr.registerVariable<int>("optimization_counter_max", &optimizationCounterMax, "Iteration count for breaking out of optimization loop", 0, 500000);
+#endif
 
 	double pathLimitDistance;
 	double maxVel;
@@ -2169,14 +2174,10 @@ int main(int argc, char **argv)
 	ddr.registerVariable<double>("max_linear_dec", maxLinearDecGetCB, maxLinearDecSetCB, "max linear deceleration", 0, 50);
 	ddr.registerVariable<double>("max_cent_acc", maxCentAccGetCB, maxCentAccSetCB, "max centrepital acceleration", 0, 20);
 
-	nh.param("drive_base_radius", driveBaseRadius, 0.40411);
+	nh.param("drive_base_radius", driveBaseRadius, 0.38615);
 	ddr.registerVariable<double>("drive_base_radius", &driveBaseRadius, "robot's drive base radius - half the distance of the diagonal between two opposite wheels", 0, .75);
 
-	nh.param("optimization_counter_max", optimizationCounterMax, 500);
-	ddr.registerVariable<int>("optimization_counter_max", &optimizationCounterMax, "Iteration count for breaking out of optimization loop", 0, 500000);
-
 	nh.param("path_frame_id", pathFrameID, std::string("base_link"));
-	ddr.publishServicesTopics();
 	ros::ServiceServer service = nh.advertiseService("base_trajectory/spline_gen", callback);
 
 	bool useObstacleCost;
@@ -2191,11 +2192,13 @@ int main(int argc, char **argv)
 
 	obstacleCalculator = std::make_unique<ObstacleCalculator<TrajectoryPointType>>(costmap, obstacleCostThreshold);
 	ddr.registerVariable<int>("obstacle_cost_threshold",
-			std::bind(&ObstacleCalculator<TrajectoryPointType>::getThreshold, obstacleCalculator.get()),
-			std::bind(&ObstacleCalculator<TrajectoryPointType>::getThreshold, obstacleCalculator.get()),
+			boost::bind(&ObstacleCalculator<TrajectoryPointType>::getThreshold, obstacleCalculator.get()),
+			boost::bind(&ObstacleCalculator<TrajectoryPointType>::setThreshold, obstacleCalculator.get(), _1),
 			"Costs lower than this are ignored in obstacle gradient calculation", 0, 255);
 
 	local_plan_pub = nh.advertise<nav_msgs::Path>("local_plan", 1, true);
+
+	ddr.publishServicesTopics();
 
 	ros::spin();
 }

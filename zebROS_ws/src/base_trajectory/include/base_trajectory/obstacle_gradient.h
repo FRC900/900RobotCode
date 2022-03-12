@@ -28,8 +28,8 @@ class ObstacleGradient
 		void calculatePotentials(const unsigned char *costs, unsigned int *potential);
 		void setSize(int nx, int ny);
 
-		void setThreshold(uint8_t threshold);
-		uint8_t getThreshold(void) const;
+		void setThreshold(int threshold);
+		int getThreshold(void) const;
 	private:
 		std::unique_ptr<ObstacleGradientImpl> impl_;
 };

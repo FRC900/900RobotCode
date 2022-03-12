@@ -3,6 +3,7 @@
 		<!-- allow us to hook up sim odom topics for stage sim testing -->
 		<arg name="odom_topic" default="/frcrobot_jetson/swerve_drive_controller/odom"/>
 		<arg name="use_pose_for_odom" default="true"/>
+		<arg name="year" default="2022"/>
 
         <group ns="path_follower">
             <rosparam file="$(find path_follower)/config/path_follower_config.yaml" command="load"/>
@@ -22,7 +23,7 @@
 				<param name="frame_id" value="/map"/>
 			</node>
 
-			<rosparam file="$(find base_trajectory)/config/2020_robot_base_trajectory.yaml" command="load"/>
+			<rosparam file="$(find base_trajectory)/config/$(arg year)_robot_base_trajectory.yaml" command="load"/>
 			<node name="base_trajectory_node" pkg="base_trajectory" type="base_trajectory_node" output="screen" >
 		   	</node>
 			<rosparam file="$(find behaviors)/config/game_piece_path_config.yaml" command="load"/>

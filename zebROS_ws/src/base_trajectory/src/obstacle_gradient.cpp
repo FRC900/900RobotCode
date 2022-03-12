@@ -47,12 +47,12 @@ void ObstacleGradient::setSize(int nx, int ny)
     ROS_INFO_STREAM("setSize() took " << ms_double.count() << " mSec");
 }
 
-void ObstacleGradient::setThreshold(uint8_t threshold)
+void ObstacleGradient::setThreshold(int threshold)
 {
 	impl_->setThreshold(threshold);
 }
 
-uint8_t ObstacleGradient::getThreshold(void) const
+int ObstacleGradient::getThreshold(void) const
 {
 	return impl_->getThreshold();
 }
