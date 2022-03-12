@@ -79,17 +79,17 @@ public:
       }
       switch (goal->mode) {
         case behavior_actions::Shooter2022Goal::HIGH_GOAL:
-          feedback_.close_enough = fabs(high_goal_speed_ - current_speed_) < error_margin_;
+          feedback_.close_enough = fabs(high_goal_speed_ - fabs(current_speed_)) < error_margin_;
           msg.data = high_goal_speed_;
           shooter_command_pub_.publish(msg);
           break;
         case behavior_actions::Shooter2022Goal::LOW_GOAL:
-          feedback_.close_enough = fabs(low_goal_speed_ - current_speed_) < error_margin_;
+          feedback_.close_enough = fabs(low_goal_speed_ - fabs(current_speed_)) < error_margin_;
           msg.data = low_goal_speed_;
           shooter_command_pub_.publish(msg);
           break;
         case behavior_actions::Shooter2022Goal::EJECT:
-          feedback_.close_enough = fabs(eject_speed_ - current_speed_) < error_margin_;
+          feedback_.close_enough = fabs(eject_speed_ - fabs(current_speed_)) < error_margin_;
           msg.data = eject_speed_;
           shooter_command_pub_.publish(msg);
           break;

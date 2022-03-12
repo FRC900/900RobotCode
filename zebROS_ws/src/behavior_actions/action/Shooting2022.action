@@ -1,0 +1,12 @@
+# goal
+uint8 num_cargo # 1 or 2 (0 is pointless, 3+ is impossible)
+bool low_goal # if true, shoots in low. if false, shoots in high.
+---
+# result
+bool timed_out
+---
+# feedback
+uint8 WAITING_FOR_SHOOTER=0
+uint8 WAITING_FOR_INDEXER=1
+uint8 state # which state the current cargo is in
+uint8 cargo_shot # how many cargo have been launched
