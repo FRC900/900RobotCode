@@ -40,14 +40,14 @@ public:
     action_name_(name),
     ddr_(nh_params_)
   {
-    high_goal_speed_ = 25;
-    ddr_.registerVariable<double>("high_goal_speed", &high_goal_speed_, "High Goal Shooting Speed", 0, 27);
-    low_goal_speed_ = 20;
-    ddr_.registerVariable<double>("low_goal_speed", &low_goal_speed_, "Low Goal Shooting Speed", 0, 27);
-    eject_speed_ = 7;
-    ddr_.registerVariable<double>("eject_speed", &eject_speed_, "Eject Cargo - Shooting Speed", 0, 27);
-    error_margin_ = 0.25;
-    ddr_.registerVariable<double>("error_margin", &error_margin_, "Shooter margin of error", 0, 2);
+    high_goal_speed_ = 370;
+    ddr_.registerVariable<double>("high_goal_speed", &high_goal_speed_, "High Goal Shooting Speed", 0, 500);
+    low_goal_speed_ = 140;
+    ddr_.registerVariable<double>("low_goal_speed", &low_goal_speed_, "Low Goal Shooting Speed", 0, 500);
+    eject_speed_ = 120;
+    ddr_.registerVariable<double>("eject_speed", &eject_speed_, "Eject Cargo - Shooting Speed", 0, 500);
+    error_margin_ = 5;
+    ddr_.registerVariable<double>("error_margin", &error_margin_, "Shooter margin of error", 0, 50);
     shooter_command_pub_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/shooter_controller/command", 2);
     talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &ShooterAction2022::talonStateCallback, this);
     as_.start();

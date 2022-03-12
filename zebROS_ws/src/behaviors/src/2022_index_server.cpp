@@ -138,6 +138,7 @@ public:
       if (as_.isPreemptRequested() || !ros::ok()) {
         exited_ = true;
         success_ = false;
+        break;
       }
       r.sleep();
       ros::spinOnce();
@@ -165,6 +166,7 @@ public:
       if (as_.isPreemptRequested() || !ros::ok()) {
         exited_ = true;
         success_ = false;
+        break;
       }
       r.sleep();
       ros::spinOnce();
@@ -185,6 +187,7 @@ public:
         if (as_.isPreemptRequested() || !ros::ok()) {
           exited_ = true;
           success_ = false;
+          break;
         }
         r.sleep();
         ros::spinOnce();
@@ -196,6 +199,7 @@ public:
         if (as_.isPreemptRequested() || !ros::ok()) {
           exited_ = true;
           success_ = false;
+          break;
         }
         r.sleep();
         ros::spinOnce();
@@ -216,6 +220,7 @@ public:
       if (as_.isPreemptRequested() || !ros::ok()) {
         exited_ = true;
         success_ = false;
+        break;
       }
       r.sleep();
       ros::spinOnce();
