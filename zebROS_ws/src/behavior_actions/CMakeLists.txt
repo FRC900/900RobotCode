@@ -73,6 +73,8 @@ add_action_files(
 	#Place.action
 	Climb2022.action
   Shooter2022.action
+  Intake2022.action
+  Intaking2022.action
 	#Elevator.action
 	#Align.action
 	AlignToShoot.action
