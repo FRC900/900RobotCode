@@ -10,6 +10,7 @@
 #include <std_srvs/Trigger.h>
 #include <dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h> // TODO change to use ddynamic_reconfigure
 #include <controllers_2022/DynamicArmConfig.h>
+#include <std_msgs/Bool.h>
 
 namespace dynamic_arm_controller
 {
@@ -20,13 +21,13 @@ namespace dynamic_arm_controller
     DynamicArmCommand()
     {
       data_ = 0.0;
-      go_slow_ = false; // only for motion magic
+      profile_ = 0; // only for motion magic
       use_percent_output_ = true;
     }
-    DynamicArmCommand(double data, bool use_percent_output, bool go_slow)
+    DynamicArmCommand(double data, bool use_percent_output, uint8_t profile)
     {
       data_ = data;
-      go_slow_ = go_slow;
+      profile_ = profile;
       use_percent_output_ = use_percent_output;
     }
     double GetData() const
@@ -37,9 +38,9 @@ namespace dynamic_arm_controller
     {
     return use_percent_output_;
     }
-    bool GetGoSlow() const
+    uint8_t GetProfile() const
     {
-    return go_slow_;
+    return profile_;
     }
     void SetData(double data)
     {
@@ -50,7 +51,7 @@ namespace dynamic_arm_controller
   private:
     double data_;
     bool use_percent_output_;
-    bool go_slow_;
+    uint8_t profile_;
   };
 
   class DynamicArmController : public controller_interface::MultiInterfaceController<hardware_interface::TalonCommandInterface>
@@ -81,6 +82,7 @@ namespace dynamic_arm_controller
     ros::ServiceServer dynamic_arm_service_; //service for receiving commands
     ros::ServiceServer dynamic_arm_zeroing_service_; //service for zeroing
 
+    ros::Publisher zeroed_publisher_;
   bool zeroed_;
   bool last_zeroed_;
   bool do_zero_ = false;

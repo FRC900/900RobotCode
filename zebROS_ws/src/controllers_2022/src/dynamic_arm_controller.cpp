@@ -37,6 +37,12 @@ bool DynamicArmController::init(hardware_interface::RobotHW *hw,
     return false;
   }
 
+  if (!controller_nh.getParam("motion_magic_velocity_veryfast", config_.motion_magic_velocity_veryfast))
+  {
+    ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_velocity_veryfast");
+    return false;
+  }
+
   if (!controller_nh.getParam("motion_magic_acceleration_fast", config_.motion_magic_acceleration_fast))
   {
     ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_acceleration_fast");
@@ -46,6 +52,12 @@ bool DynamicArmController::init(hardware_interface::RobotHW *hw,
   if (!controller_nh.getParam("motion_magic_acceleration_slow", config_.motion_magic_acceleration_slow))
   {
     ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_acceleration_slow");
+    return false;
+  }
+
+  if (!controller_nh.getParam("motion_magic_acceleration_veryfast", config_.motion_magic_acceleration_veryfast))
+  {
+    ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_acceleration_veryfast");
     return false;
   }
 
@@ -83,6 +95,7 @@ bool DynamicArmController::init(hardware_interface::RobotHW *hw,
 
   dynamic_arm_service_ = controller_nh.advertiseService("command", &DynamicArmController::cmdService, this);
   dynamic_arm_zeroing_service_ = controller_nh.advertiseService("zero", &DynamicArmController::zeroService, this);
+  zeroed_publisher_ = controller_nh.advertise<std_msgs::Bool>("is_zeroed", 100);
 
   dynamic_reconfigure_server_.init(controller_nh, config_);
 
@@ -134,6 +147,10 @@ void DynamicArmController::update(const ros::Time &time, const ros::Duration &/*
     last_zeroed_ = false;
   }
 
+  std_msgs::Bool zeroed;
+  zeroed.data = zeroed_;
+  zeroed_publisher_.publish(zeroed);
+
   if (zeroed_) // run normally, seeking to various positions
   {
 
@@ -145,48 +162,21 @@ void DynamicArmController::update(const ros::Time &time, const ros::Duration &/*
 
     dynamic_arm_joint_.setCommand(setpoint.GetData());
 
-    //if we're not climbing, add an arbitrary feed forward to hold the dynamic_arm up
-    if(!setpoint.GetGoSlow())
-    {
-      dynamic_arm_joint_.setMotionAcceleration(config_.motion_magic_acceleration_fast);
-      dynamic_arm_joint_.setMotionCruiseVelocity(config_.motion_magic_velocity_fast);
-      dynamic_arm_joint_.setPIDFSlot(0);
-      // Add arbitrary feed forward for upwards motion
-      // We could have arb ff for both up and down, but seems
-      // easier (and good enough) to tune PID for down motion
-      // and add an arb FF correction for up
-
-      // if(dynamic_arm_joint_.getPosition() >= config_.stage_2_height && last_position_ <= config_.stage_2_height) {
-      //   dynamic_arm_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-      //   dynamic_arm_joint_.setDemand1Value(config_.arb_feed_forward_up_high);
-      // }
-      // else if (dynamic_arm_joint_.getPosition() <= config_.stage_2_height && last_position_ >= config_.stage_2_height) {
-      //   dynamic_arm_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-      //   dynamic_arm_joint_.setDemand1Value(config_.arb_feed_forward_up_low);
-      // }
-
-
-      //for now, up and down PID is the same, so slot 1 is used for climbing
-      /*
-      if(last_setpoint_ != setpoint) {
-        if(setpoint > dynamic_arm_joint_.getPosition()) {
-          dynamic_arm_joint_.setPIDFSlot(0);
-        }
-        else {
-          dynamic_arm_joint_.setPIDFSlot(1);
-        }
-      }
-      last_setpoint_ = setpoint;
-      */
-    }
-    else //climbing
-    {
-      dynamic_arm_joint_.setMotionAcceleration(config_.motion_magic_acceleration_slow);
-      dynamic_arm_joint_.setMotionCruiseVelocity(config_.motion_magic_velocity_slow);
-      // dynamic_arm_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-      // dynamic_arm_joint_.setDemand1Value(config_.arb_feed_forward_down);
-      //dynamic_arm_joint_.setPeakOutputForward(0.0);
-      dynamic_arm_joint_.setPIDFSlot(0);
+    switch (setpoint.GetProfile()) {
+      case controllers_2022_msgs::DynamicArmSrv::Request::RETRACT:
+        dynamic_arm_joint_.setMotionAcceleration(config_.motion_magic_acceleration_fast);
+        dynamic_arm_joint_.setMotionCruiseVelocity(config_.motion_magic_velocity_fast);
+        break;
+      case controllers_2022_msgs::DynamicArmSrv::Request::EXTEND:
+        dynamic_arm_joint_.setMotionAcceleration(config_.motion_magic_acceleration_veryfast);
+        dynamic_arm_joint_.setMotionCruiseVelocity(config_.motion_magic_velocity_veryfast);
+        break;
+      case controllers_2022_msgs::DynamicArmSrv::Request::TRANSITION:
+        dynamic_arm_joint_.setMotionAcceleration(config_.motion_magic_acceleration_slow);
+        dynamic_arm_joint_.setMotionCruiseVelocity(config_.motion_magic_velocity_slow);
+        break;
+      default:
+        break;
     }
   }
   else if (do_zero_)
@@ -230,7 +220,7 @@ bool DynamicArmController::cmdService(controllers_2022_msgs::DynamicArmSrv::Requ
       ROS_ERROR_STREAM("dynamic_arm_controller : this command WILL NOT BE RUN until the arm is zeroed");
       ROS_INFO_STREAM("dynamic_arm_controller : If you want to zero now, call the /frcrobot_jetson/dynamic_arm_controller/zero service");
     }
-    command_buffer_.writeFromNonRT(DynamicArmCommand(req.data, req.use_percent_output, req.go_slow));
+    command_buffer_.writeFromNonRT(DynamicArmCommand(req.data, req.use_percent_output, req.profile));
   }
   else
   {

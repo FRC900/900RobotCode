@@ -2,6 +2,7 @@
 // Wait for shooter
 // Get cargo from indexer
 // Repeat `num_cargo` times
+// AS OF NOW, DO NOT RUN TWO CARGO AT ONCE
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
@@ -117,6 +118,7 @@ public:
       ros::spinOnce();
       r.sleep();
     }
+    ros::Duration(0.3).sleep();
     ROS_INFO_STREAM("2022_shooting_server : spun up shooter");
     return ros::ok();
   }
@@ -180,6 +182,7 @@ public:
         success = false;
         break;
       }
+      ros::Duration(0.5).sleep();
     }
 
     ac_shooter_.cancelGoal(); // stop shooter

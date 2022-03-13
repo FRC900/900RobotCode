@@ -78,7 +78,7 @@
 	<include file="$(find controller_node)/launch/hold_position.launch"/>
 	<include file="$(find controller_node)/launch/distance_to_pose.launch"/>
 	-->
-  
+
 	<group ns="index">
 		<node name="index_server_2022" pkg="behaviors" type="2022_index_server_node"/>
 		<rosparam command="load" file="$(find behaviors)/config/2022_index_server.yaml"/>
@@ -86,6 +86,19 @@
 
 	<group ns="shooter">
 		<node name="shooter_server_2022" pkg="behaviors" type="2022_shooter_server_node"/>
+	</group>
+
+	<group ns="intake">
+		<node name="intake_server_2022" pkg="behaviors" type="2022_intake_server_node"/>
+		<rosparam command="load" file="$(find behaviors)/config/2022_intake_config.yaml"/>
+	</group>
+
+	<group ns="intaking">
+		<node name="intaking_server_2022" pkg="behaviors" type="2022_intaking_server_node"/>
+	</group>
+
+	<group ns="shooting">
+		<node name="shooting_server_2022" pkg="behaviors" type="2022_shooting_server_node"/>
 	</group>
 	<include file="$(find behaviors)/launch/2022_climb.launch"/>
 

@@ -52,8 +52,10 @@ public:
 	template<class C, class S>
 	bool waitForResultAndCheckForPreempt(const ros::Duration & timeout, const actionlib::SimpleActionClient<C> & ac, actionlib::SimpleActionServer<S> & as)
 	{
+		bool negative_timeout = false;
 		if (timeout < ros::Duration(0, 0)) {
-			ROS_WARN_NAMED("actionlib", "Timeouts can't be negative. Timeout is [%.2fs]", timeout.toSec());
+			ROS_WARN("waitForResultAndCheckForPreempt : Negative timeout, waiting forever");
+			negative_timeout = true;
 		}
 
 		ros::Time timeout_time = ros::Time::now() + timeout;
@@ -66,7 +68,7 @@ public:
 			ros::Duration time_left = timeout_time - ros::Time::now();
 
 			// Check if we're past the timeout time
-			if (timeout > ros::Duration(0, 0) && time_left <= ros::Duration(0, 0) ) {
+			if (timeout > ros::Duration(0, 0) && time_left <= ros::Duration(0, 0) && !negative_timeout) {
 				break;
 			}
 
@@ -114,7 +116,7 @@ public:
 			behavior_actions::Index2022Goal index_goal;
 			index_goal.goal = index_goal.INTAKE;
 			indexer_ac_.sendGoal(index_goal);
-			bool finished_before_timeout = waitForResultAndCheckForPreempt(ros::Duration(server_timeout_), indexer_ac_, as_);
+			bool finished_before_timeout = waitForResultAndCheckForPreempt(ros::Duration(-1), indexer_ac_, as_);
 			ros::spinOnce();
 			feedback_.cargo_in_indexer = cargo_num_;
 			if (!finished_before_timeout) {

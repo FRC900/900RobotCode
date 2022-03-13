@@ -183,7 +183,7 @@ public:
     // run arc motor
     if(straight_sensor_pressed_ && arc_sensor_pressed_){
       ros::Rate r(100);
-      while(straight_sensor_pressed_){
+      while(arc_sensor_pressed_){
         if (as_.isPreemptRequested() || !ros::ok()) {
           exited_ = true;
           success_ = false;

@@ -32,6 +32,8 @@ protected:
 
   double current_speed_;
 
+  uint64_t close_enough_counter_;
+
 public:
 
   ShooterAction2022(std::string name) :
@@ -40,14 +42,17 @@ public:
     action_name_(name),
     ddr_(nh_params_)
   {
-    high_goal_speed_ = 370;
+    high_goal_speed_ = 325;
     ddr_.registerVariable<double>("high_goal_speed", &high_goal_speed_, "High Goal Shooting Speed", 0, 500);
-    low_goal_speed_ = 140;
+    low_goal_speed_ = 200; // 180 or 200
     ddr_.registerVariable<double>("low_goal_speed", &low_goal_speed_, "Low Goal Shooting Speed", 0, 500);
     eject_speed_ = 120;
     ddr_.registerVariable<double>("eject_speed", &eject_speed_, "Eject Cargo - Shooting Speed", 0, 500);
-    error_margin_ = 5;
+    error_margin_ = 1;
     ddr_.registerVariable<double>("error_margin", &error_margin_, "Shooter margin of error", 0, 50);
+    // change close_enough to operate with multiple samples
+    // error_margin_ = 5;
+    // ddr_.registerVariable<double>("samples_for_close_enough", &error_margin_, "Shooter margin of error", 0, 50);
     shooter_command_pub_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/shooter_controller/command", 2);
     talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &ShooterAction2022::talonStateCallback, this);
     as_.start();
