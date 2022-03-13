@@ -4,6 +4,7 @@
  -->
 <launch>
 	<!-- useful for running sim stuff on a laptop and path follower on a jetson -->
+	<arg name="joy_or_key" default="key" />
 	<arg name="run_path_follower" default="True" />
 	<arg name="run_hold_position" default="True" />
 	<arg name="run_hold_distance" default="True" />
@@ -35,7 +36,9 @@
 		<arg name="port" value="5803"/>
 	</include>
 
-	<include file="$(find controller_node)/launch/joysticks_for_simulator.launch"/>
+	<include file="$(find controller_node)/launch/joysticks_for_simulator.launch">
+		<arg name="joy_or_key" value="$(arg joy_or_key)" />
+	</include>
 
 	<!--
 	<include file="$(find controller_node)/launch/fuse_odom.launch"/>

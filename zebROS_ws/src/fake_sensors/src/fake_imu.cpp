@@ -29,18 +29,18 @@ class FakeIMU
 			sensor_msgs::Imu msgOut;
 			msgOut.header.stamp = msgIn->header.stamp;
 			msgOut.header.frame_id = "imu";
-			tf2::Quaternion myQuaternion(msgIn->pose.pose.orientation.x,
-										 msgIn->pose.pose.orientation.y,
-										 msgIn->pose.pose.orientation.z,
-										 msgIn->pose.pose.orientation.w);
-			tf2::Quaternion randomRot;
-			randomRot.setRPY(normalDistribution_(gen_),
-							 normalDistribution_(gen_),
-							 normalDistribution_(gen_));
-			msgOut.orientation = tf2::toMsg(randomRot * myQuaternion);
-			msgOut.orientation_covariance = { 0.000001, 0.0, 0.0,
-											  0.0, 0.000001, 0.0,
-											  0.0, 0.0, 0.000001};
+			tf2::Quaternion myQuaternion;
+			tf2::fromMsg(msgIn->pose.pose.orientation, myQuaternion);
+			tf2::Matrix3x3 m(myQuaternion);
+			double roll, pitch, yaw;
+			m.getRPY(roll, pitch, yaw);
+			myQuaternion.setRPY(roll  + normalDistribution_(gen_),
+								pitch + normalDistribution_(gen_),
+								yaw   + normalDistribution_(gen_));
+			msgOut.orientation = tf2::toMsg(myQuaternion.normalized());
+			msgOut.orientation_covariance = { zCovariance_, 0.0, 0.0,
+											  0.0, zCovariance_, 0.0,
+											  0.0, 0.0, zCovariance_};
 
 			pub_.publish(msgOut);
 		}

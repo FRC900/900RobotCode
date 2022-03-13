@@ -53,7 +53,7 @@ void zeroCallback(const sensor_msgs::Imu::ConstPtr& raw_msg) {
 }
 
 bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
-             imu_zero::ImuZeroAngle::Response& res) {
+             imu_zero::ImuZeroAngle::Response& /*res*/) {
   double roll, pitch, yaw;
   tf2::Matrix3x3(last_raw).getRPY(roll, pitch, yaw);
 
@@ -75,9 +75,9 @@ bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
 	  zeroPose.request.pose.header.stamp = ros::Time::now();
 	  zeroPose.request.pose.header.frame_id = "odom";
 	  // Needs more pose.pose.pose
-	  zeroPose.request.pose.pose.pose.position.x	= 0;
-	  zeroPose.request.pose.pose.pose.position.y	= 0;
-	  zeroPose.request.pose.pose.pose.position.z	= 0;
+	  zeroPose.request.pose.pose.pose.position.x = 0;
+	  zeroPose.request.pose.pose.pose.position.y = 0;
+	  zeroPose.request.pose.pose.pose.position.z = 0;
 	  tf2::Quaternion tf2_quat;
 	  tf2_quat.setRPY(0,0,0);
 	  tf2_quat.normalize();
