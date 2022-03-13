@@ -5,7 +5,7 @@
 # Dynamic parameters cannot have a namespace
 brightness:                 4                                   # Dynamic
 contrast:                   4                                   # Dynamic
-hue:                        0                                   # Dynamic
+hue:                        6                                   # Dynamic
 saturation:                 4                                   # Dynamic
 sharpness:                  4                                   # Dynamic
 gamma:                      8                                   # Dynamic - Requires SDK >=v3.1
