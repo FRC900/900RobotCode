@@ -599,7 +599,6 @@ public:
       ROS_INFO("%s: Succeeded", action_name_.c_str());
     } else
     {
-      sm.reset(goal->reset);
       ROS_INFO("%s: Failed", action_name_.c_str());
     }
     // set the action state to success or not
