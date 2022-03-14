@@ -700,7 +700,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].leftTrigger > config.trigger_threshold)
 			{
 				// Restart climb
-				if(!left_trigger_pressed)
+				if(!joystick1_left_trigger_pressed)
 				{
 					reset_climb = true;
 					climb_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
