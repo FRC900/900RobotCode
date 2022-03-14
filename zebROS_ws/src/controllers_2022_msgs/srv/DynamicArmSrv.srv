@@ -3,5 +3,6 @@ bool use_percent_output # %_out or motion_magic
 uint8 RETRACT=0
 uint8 EXTEND=1
 uint8 TRANSITION=2
+uint8 TRAVERSAL=3
 uint8 profile # see constants above
 ---

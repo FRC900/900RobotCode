@@ -107,6 +107,9 @@ dynamic_arm_controller:
   motion_magic_velocity_fast: 0.42
   motion_magic_acceleration_fast: 1.0
 
+  motion_magic_velocity_traversal: 0.3
+  motion_magic_acceleration_traversal: 1.0
+
   motion_magic_velocity_slow: 0.1
   motion_magic_acceleration_slow: 1.0
 

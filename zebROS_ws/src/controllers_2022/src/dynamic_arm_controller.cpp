@@ -43,6 +43,18 @@ bool DynamicArmController::init(hardware_interface::RobotHW *hw,
     return false;
   }
 
+  if (!controller_nh.getParam("motion_magic_velocity_traversal", config_.motion_magic_velocity_traversal))
+  {
+    ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_velocity_traversal");
+    return false;
+  }
+
+  if (!controller_nh.getParam("motion_magic_acceleration_traversal", config_.motion_magic_acceleration_traversal))
+  {
+    ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_acceleration_traversal");
+    return false;
+  }
+
   if (!controller_nh.getParam("motion_magic_acceleration_fast", config_.motion_magic_acceleration_fast))
   {
     ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_acceleration_fast");
@@ -174,6 +186,10 @@ void DynamicArmController::update(const ros::Time &time, const ros::Duration &/*
       case controllers_2022_msgs::DynamicArmSrv::Request::TRANSITION:
         dynamic_arm_joint_.setMotionAcceleration(config_.motion_magic_acceleration_slow);
         dynamic_arm_joint_.setMotionCruiseVelocity(config_.motion_magic_velocity_slow);
+        break;
+      case controllers_2022_msgs::DynamicArmSrv::Request::TRAVERSAL:
+        dynamic_arm_joint_.setMotionAcceleration(config_.motion_magic_acceleration_traversal);
+        dynamic_arm_joint_.setMotionCruiseVelocity(config_.motion_magic_velocity_traversal);
         break;
       default:
         break;
