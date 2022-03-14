@@ -13,6 +13,8 @@
 
 #include "std_srvs/Empty.h"
 
+#include "controllers_2022_msgs/DynamicArmSrv.h"
+
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
 #include "teleop_joystick_control/OrientStrafingAngle.h"
@@ -58,11 +60,126 @@ ros::ServiceClient BrakeSrv;
 
 double imu_angle;
 
+bool joystick1_left_trigger_pressed = false;
+bool joystick1_right_trigger_pressed = false;
+
+// Diagnostic mode controls
+std_msgs::Float64 indexer_arc_cmd;
+std_msgs::Float64 indexer_straight_cmd;
+std_msgs::Float64 shooter_cmd;
+controllers_2022_msgs::DynamicArmSrv climber_cmd;
+std_msgs::Float64 intake_cmd;
+std_msgs::Float64 intake_solenoid_cmd;
+ros::Publisher indexer_straight_pub;
+ros::Publisher indexer_arc_pub;
+ros::Publisher shooter_pub;
+ros::ServiceClient climber_srv;
+ros::Publisher intake_pub;
+ros::Publisher intake_solenoid_pub;
+
+// Diagnostic mode controls
+void decIndexerArc(void)
+{
+	indexer_arc_cmd.data = std::max(-1.0, indexer_arc_cmd.data - 0.1);
+	ROS_INFO_STREAM("Set indexer_arc_cmd.data to " << indexer_arc_cmd.data);
+}
+void incIndexerArc(void)
+{
+	indexer_arc_cmd.data = std::min(1.0, indexer_arc_cmd.data + 0.1);
+	ROS_INFO_STREAM("Set indexer_arc_cmd.data to " << indexer_arc_cmd.data);
+}
+void decIndexerStraight(void)
+{
+	indexer_straight_cmd.data = std::max(-1.0, indexer_straight_cmd.data - 0.1);
+	ROS_INFO_STREAM("Set indexer_straight_cmd.data to " << indexer_straight_cmd.data);
+}
+void incIndexerStraight(void)
+{
+	indexer_straight_cmd.data = std::min(1.0, indexer_straight_cmd.data + 0.1);
+	ROS_INFO_STREAM("Set indexer_straight_cmd.data to " << indexer_straight_cmd.data);
+}
+
+void incShooter(void)
+{
+	shooter_cmd.data = shooter_cmd.data + 10.;
+	ROS_INFO_STREAM("Set shooter_cmd.data to " << shooter_cmd.data);
+}
+
+void decShooter(void)
+{
+	shooter_cmd.data = std::max(0.0, shooter_cmd.data - 10.);
+	ROS_INFO_STREAM("Set shooter_cmd.data to " << shooter_cmd.data);
+}
+
+void incIntake(void)
+{
+	intake_cmd.data = std::min(1.0, intake_cmd.data + 0.1);
+	ROS_INFO_STREAM("Set intake_cmd.data to " << intake_cmd.data);
+}
+
+void decIntake(void)
+{
+	intake_cmd.data = std::max(-1.0, intake_cmd.data - 0.1);
+	ROS_INFO_STREAM("Set intake_cmd.data to " << intake_cmd.data);
+}
+
+void extendIntakeSolenoid(void)
+{
+	intake_solenoid_cmd.data = 1;
+	ROS_INFO_STREAM("Set intake_solenoid_cmd.data to " << intake_solenoid_cmd.data);
+}
+void retractIntakeSolenoid(void)
+{
+	intake_solenoid_cmd.data = 0;
+	ROS_INFO_STREAM("Set intake_solenoid_cmd.data to " << intake_solenoid_cmd.data);
+}
+
+void incClimber(void)
+{
+	climber_cmd.request.data = std::min(1.0, climber_cmd.request.data + 0.1);
+	ROS_INFO_STREAM("Set climber_cmd.data to " << climber_cmd.request.data);
+}
+
+void decClimber(void)
+{
+	climber_cmd.request.data = std::max(-1.0, climber_cmd.request.data - 0.1);
+	ROS_INFO_STREAM("Set climber_cmd.data to " << climber_cmd.request.data);
+}
+
+void publish_diag_cmds(void)
+{
+	indexer_straight_pub.publish(indexer_straight_cmd);
+	indexer_arc_pub.publish(indexer_arc_cmd);
+	shooter_pub.publish(shooter_cmd);
+	climber_cmd.request.use_percent_output = true;
+	if (!climber_srv.call(climber_cmd))
+	{
+		ROS_ERROR_THROTTLE(1., "Error calling climber service from teleop joystick comp 2022");
+	}
+	intake_pub.publish(intake_cmd);
+	intake_solenoid_pub.publish(intake_solenoid_cmd);
+}
+
+void zero_all_diag_commands(void)
+{
+	indexer_arc_cmd.data = 0.0;
+	indexer_straight_cmd.data = 0.0;
+	shooter_cmd.data = 0.0;
+	climber_cmd.request.data = 0.0;
+	intake_cmd.data = 0.0;
+	ROS_INFO_STREAM("Set indexer_arc_cmd.data to " << indexer_arc_cmd.data);
+	ROS_INFO_STREAM("Set indexer_straight_cmd.data to " << indexer_straight_cmd.data);
+	ROS_INFO_STREAM("Set shooter_cmd.data to " << shooter_cmd.data);
+	ROS_INFO_STREAM("Set climber_cmd.data to " << climber_cmd.request.data);
+	ROS_INFO_STREAM("Set intake_cmd.data to " << intake_cmd.data);
+}
+
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Climb2022Action>> climb_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Shooting2022Action>> shooting_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2022Action>> intaking_ac;
 bool shoot_in_high_goal = true;
 bool reset_climb = false;
+
 
 void imuCallback(const sensor_msgs::Imu &imuState)
 {
@@ -107,18 +224,39 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.lockingSwitchPress)
 	{
+		// Clear out pressed state when switching modes
+		// so that the press will be seen by the new mode
+		joystick1_left_trigger_pressed = false;
+		joystick1_right_trigger_pressed = false;
+		zero_all_diag_commands();
+
+		// Disable snap-to-angle in diagnostics mode
+		std_msgs::Bool enable_pub_msg;
+		enable_pub_msg.data = false;
+		orient_strafing_enable_pub.publish(enable_pub_msg);
+		diagnostics_mode = true;
 		ROS_WARN_STREAM("Enabling diagnostics mode!");
 	}
+
 	if(button_box.lockingSwitchButton)
 	{
-		diagnostics_mode = true;
 	}
 	else
 	{
-		diagnostics_mode = false;
 	}
+
 	if(button_box.lockingSwitchRelease)
 	{
+		// Clear out pressed state when switching modes
+		// so that the press will be seen by the new mode
+		joystick1_left_trigger_pressed = false;
+		joystick1_right_trigger_pressed = false;
+		// Force a publish 0 to all the diag mode
+		// controllers here before switching out
+		// of diagnostics mode
+		zero_all_diag_commands();
+		publish_diag_cmds();
+		diagnostics_mode = false;
 		ROS_WARN_STREAM("Disabling diagnostics mode!");
 	}
 
@@ -322,6 +460,10 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	}
 
 	last_header_stamp = button_box.header.stamp;
+	if (diagnostics_mode)
+	{
+		publish_diag_cmds();
+	}
 }
 
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
@@ -356,30 +498,30 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		static ros::Time last_header_stamp = joystick_states_array[0].header.stamp;
 
+		static bool sendRobotZero = false;
+
+		geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], imu_angle, config);
+
+		if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (cmd_vel.angular.z == 0.0) && !sendRobotZero)
+		{
+			std_srvs::Empty empty;
+			if (!BrakeSrv.call(empty))
+			{
+				ROS_ERROR("BrakeSrv call failed in sendRobotZero_");
+			}
+			ROS_INFO("BrakeSrv called");
+
+			JoystickRobotVel.publish(cmd_vel);
+			sendRobotZero = true;
+		}
+		else if((cmd_vel.linear.x != 0.0) || (cmd_vel.linear.y != 0.0) || (cmd_vel.angular.z != 0.0))
+		{
+			JoystickRobotVel.publish(cmd_vel);
+			sendRobotZero = false;
+		}
+
 		if(!diagnostics_mode)
 		{
-			static bool sendRobotZero = false;
-
-			geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], imu_angle, config);
-
-			if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (cmd_vel.angular.z == 0.0) && !sendRobotZero)
-			{
-				std_srvs::Empty empty;
-				if (!BrakeSrv.call(empty))
-				{
-					ROS_ERROR("BrakeSrv call failed in sendRobotZero_");
-				}
-				ROS_INFO("BrakeSrv called");
-
-				JoystickRobotVel.publish(cmd_vel);
-				sendRobotZero = true;
-			}
-			else if((cmd_vel.linear.x != 0.0) || (cmd_vel.linear.y != 0.0) || (cmd_vel.angular.z != 0.0))
-			{
-				JoystickRobotVel.publish(cmd_vel);
-				sendRobotZero = false;
-			}
-
 			//Joystick1: buttonA
 			if(joystick_states_array[0].buttonAPress)
 			{
@@ -555,8 +697,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 			}
 
-			static bool left_trigger_pressed = false;
-
 			if(joystick_states_array[0].leftTrigger > config.trigger_threshold)
 			{
 				// Restart climb
@@ -566,58 +706,59 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 					climb_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 
-				left_trigger_pressed = true;
+				joystick1_left_trigger_pressed = true;
 			}
 			else
 			{
-				//
-				if(left_trigger_pressed)
+				//Preempt intake server, but only once
+				if(joystick1_left_trigger_pressed)
 				{
 
 				}
 
-				left_trigger_pressed = false;
+				joystick1_left_trigger_pressed = false;
 			}
 
 			//Joystick1: rightTrigger
 			if(joystick_states_array[0].rightTrigger > config.trigger_threshold)
 			{
 				teleop_cmd_vel->setSlowMode(true);
+				joystick1_right_trigger_pressed = true;
 			}
 			else
 			{
 				teleop_cmd_vel->setSlowMode(false);
+				joystick1_right_trigger_pressed = false;
 			}
 		}
 		else
 		{
+			// Drive in diagnostic mode unconditionally
+	#if 0
 			//Joystick1 Diagnostics: leftStickY
 			if(abs(joystick_states_array[0].leftStickY) > config.stick_threshold)
 			{
-
 			}
 
 			//Joystick1 Diagnostics: leftStickX
 			if(abs(joystick_states_array[0].leftStickX) > config.stick_threshold)
 			{
-
 			}
 
 			//Joystick1 Diagnostics: rightStickY
 			if(abs(joystick_states_array[0].rightStickY) > config.stick_threshold)
 			{
-
 			}
 
 			//Joystick1 Diagnostics: rightStickX
 			if(abs(joystick_states_array[0].rightStickX) > config.stick_threshold)
 			{
 			}
+#endif
 
 			//Joystick1 Diagnostics: stickLeft
 			if(joystick_states_array[0].stickLeftPress)
 			{
-
 			}
 			if(joystick_states_array[0].stickLeftButton)
 			{
@@ -641,7 +782,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1 Diagnostics: buttonA
 			if(joystick_states_array[0].buttonAPress)
 			{
-
+				decIndexerArc();
 			}
 			if(joystick_states_array[0].buttonAButton)
 			{
@@ -653,7 +794,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1 Diagnostics: buttonB
 			if(joystick_states_array[0].buttonBPress)
 			{
-
+				incIndexerStraight();
 			}
 			if(joystick_states_array[0].buttonBButton)
 			{
@@ -665,7 +806,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1 Diagnostics: buttonX
 			if(joystick_states_array[0].buttonXPress)
 			{
-
+				decIndexerStraight();
 			}
 			if(joystick_states_array[0].buttonXButton)
 			{
@@ -677,7 +818,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1 Diagnostics: buttonY
 			if(joystick_states_array[0].buttonYPress)
 			{
-
+				incIndexerArc();
 			}
 			if(joystick_states_array[0].buttonYButton)
 			{
@@ -686,10 +827,34 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 			}
 
+			//Joystick1: buttonBack
+			if(joystick_states_array[0].buttonBackPress)
+			{
+				decIntake();
+			}
+			if(joystick_states_array[0].buttonBackButton)
+			{
+			}
+			if(joystick_states_array[0].buttonBackRelease)
+			{
+			}
+
+			//Joystick1: buttonStart
+			if(joystick_states_array[0].buttonStartPress)
+			{
+				incIntake();
+			}
+			if(joystick_states_array[0].buttonStartButton)
+			{
+			}
+			if(joystick_states_array[0].buttonStartRelease)
+			{
+			}
+
 			//Joystick1 Diagnostics: bumperLeft
 			if(joystick_states_array[0].bumperLeftPress)
 			{
-
+				decClimber();
 			}
 			if(joystick_states_array[0].bumperLeftButton)
 			{
@@ -701,10 +866,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1 Diagnostics: bumperRight
 			if(joystick_states_array[0].bumperRightPress)
 			{
+				incClimber();
 			}
 			if(joystick_states_array[0].bumperRightButton)
 			{
-
 			}
 			if(joystick_states_array[0].bumperRightRelease)
 			{
@@ -713,24 +878,50 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1 Diagnostics: leftTrigger
 			if(joystick_states_array[0].leftTrigger > config.trigger_threshold)
 			{
+				//Call intake server, but only once
+				if(!joystick1_left_trigger_pressed)
+				{
+					zero_all_diag_commands();
+				}
+
+				joystick1_left_trigger_pressed = true;
 			}
 			else
 			{
-			}
+				//Preempt intake server, but only once
+				if(joystick1_left_trigger_pressed)
+				{
 
+				}
+
+				joystick1_left_trigger_pressed = false;
+			}
 			//Joystick1 Diagnostics: rightTrigger
 			if(joystick_states_array[0].rightTrigger > config.trigger_threshold)
 			{
+				//Call intake server, but only once
+				if(!joystick1_right_trigger_pressed)
+				{
+					zero_all_diag_commands();
+				}
 
+				joystick1_right_trigger_pressed = true;
 			}
 			else
 			{
+				//Preempt intake server, but only once
+				if(joystick1_right_trigger_pressed)
+				{
+
+				}
+
+				joystick1_right_trigger_pressed = false;
 			}
 
 			//Joystick1 Diagnostics: directionLeft
 			if(joystick_states_array[0].directionLeftPress)
 			{
-
+				retractIntakeSolenoid();
 			}
 			if(joystick_states_array[0].directionLeftButton)
 			{
@@ -742,7 +933,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1 Diagnostics: directionRight
 			if(joystick_states_array[0].directionRightPress)
 			{
-
+				extendIntakeSolenoid();
 			}
 			if(joystick_states_array[0].directionRightButton)
 			{
@@ -754,27 +945,25 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1 Diagnostics: directionUp
 			if(joystick_states_array[0].directionUpPress)
 			{
-
+				incShooter();
 			}
 			if(joystick_states_array[0].directionUpButton)
 			{
 			}
 			if(joystick_states_array[0].directionUpRelease)
 			{
-
 			}
 
 			//Joystick1 Diagnostics: directionDown
 			if(joystick_states_array[0].directionDownPress)
 			{
-
+				decShooter();
 			}
 			if(joystick_states_array[0].directionDownButton)
 			{
 			}
 			if(joystick_states_array[0].directionDownRelease)
 			{
-
 			}
 		}
 
@@ -783,6 +972,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	else if(joystick_id == 1)
 	{
 		// TODO Add empty button mappings here.
+	}
+	if (diagnostics_mode)
+	{
+		publish_diag_cmds();
 	}
 }
 
@@ -899,6 +1092,13 @@ int main(int argc, char **argv)
 	}
 
 	ros::ServiceServer orient_strafing_angle_service = n.advertiseService("orient_strafing_angle", orientStrafingAngleCallback);
+
+	indexer_straight_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/indexer_straight_controller/command", 1, true);
+	indexer_arc_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/indexer_arc_controller/command", 1, true);
+	shooter_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/shooter_controller/command", 1, true);
+	climber_srv = n.serviceClient<controllers_2022_msgs::DynamicArmSrv>("/frcrobot_jetson/dynamic_arm_controller/command", false, service_connection_header);
+	intake_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_motor_controller/command", 1, true);
+	intake_solenoid_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_solenoid_controller/command", 1, true);
 
 	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickComp2022Config> drw(n_params, config);
 	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompDiagnostics2022Config> diagnostics_drw(n_diagnostics_params, diagnostics_config);

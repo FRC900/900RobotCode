@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
 	cmake_modules
 	control_msgs
 	controllers_2020_msgs
+	controllers_2022_msgs
 	dynamic_reconfigure
 	dynamic_reconfigure_wrapper
 	frc_msgs
