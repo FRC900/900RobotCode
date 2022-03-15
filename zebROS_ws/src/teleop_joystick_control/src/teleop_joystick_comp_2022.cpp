@@ -190,7 +190,14 @@ void imuCallback(const sensor_msgs::Imu &imuState)
 	tf2::Matrix3x3(imuQuat).getRPY(roll, pitch, yaw);
 
 	if (yaw == yaw) // ignore NaN results
+	{
 		imu_angle = -yaw;
+
+		// Pass along yaw state to orient PID node
+		std_msgs::Float64 imu_angle_msg;
+		imu_angle_msg.data = imu_angle;
+		orient_strafing_state_pub.publish(imu_angle_msg);
+	}
 }
 
 void preemptActionlibServers(void)
@@ -231,9 +238,9 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 		zero_all_diag_commands();
 
 		// Disable snap-to-angle in diagnostics mode
-		std_msgs::Bool enable_pub_msg;
-		enable_pub_msg.data = false;
-		orient_strafing_enable_pub.publish(enable_pub_msg);
+		std_msgs::Bool enable_align_msg;
+		enable_align_msg.data = false;
+		orient_strafing_enable_pub.publish(enable_align_msg);
 		diagnostics_mode = true;
 		ROS_WARN_STREAM("Enabling diagnostics mode!");
 	}
@@ -611,7 +618,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 			}
 
-			std_msgs::Bool enable_pub_msg;
+			std_msgs::Bool enable_align_msg;
+			enable_align_msg.data = false;
 
 			//Joystick1: directionLeft
 			if(joystick_states_array[0].directionLeftPress)
@@ -621,25 +629,23 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].directionLeftButton)
 			{
 				// Align for climbing
-				// enable_pub_msg.data = true;
+				// enable_align_msg.data = true;
 			}
 			else
 			{
-				// enable_pub_msg.data = false;
 			}
 			if(joystick_states_array[0].directionLeftRelease)
 			{
 			}
 
-			orient_strafing_enable_pub.publish(enable_pub_msg);
+			// To align the robot to an angle, enable_align_msg.data
+			// needs to be true and the desired angle (in radians)
+			// needs to be published to orient_strafing_setpoint_pub
+			orient_strafing_enable_pub.publish(enable_align_msg);
 
 			std_msgs::Float64 orient_strafing_angle_msg;
 			orient_strafing_angle_msg.data = orient_strafing_angle;
 			orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
-
-			std_msgs::Float64 imu_angle_msg;
-			imu_angle_msg.data = imu_angle;
-			orient_strafing_state_pub.publish(imu_angle_msg);
 
 			//Joystick1: directionRight
 			if(joystick_states_array[0].directionRightPress)
@@ -983,10 +989,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 void jointStateCallback(const sensor_msgs::JointState &joint_state)
 {
+	// TODO - remove this if not used
 }
 
 void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 {
+	// TODO : if in diagnostic mode, zero all outputs on the
+	// transition from enabled to disabled
 }
 
 int main(int argc, char **argv)
