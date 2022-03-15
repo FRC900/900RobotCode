@@ -45,6 +45,7 @@ protected:
 
   double full_extend_height_ground_;
   double full_extend_height_air_;
+  double static_hook_initial_distance_;
   double static_hook_distance_above_rung_;
   double imbalance_timeout_; // seconds
   double static_hook_release_height_;
@@ -71,7 +72,7 @@ public:
   ClimbStateMachine(actionlib::SimpleActionServer<behavior_actions::Climb2022Action> &as_): as_(as_)
   {
     nextFunction_ = boost::bind(&ClimbStateMachine::state1, this);
-    state_functions_ = {boost::bind(&ClimbStateMachine::state1, this), boost::bind(&ClimbStateMachine::state2, this), boost::bind(&ClimbStateMachine::state3, this), boost::bind(&ClimbStateMachine::state4, this), boost::bind(&ClimbStateMachine::state5, this), boost::bind(&ClimbStateMachine::state6, this), boost::bind(&ClimbStateMachine::state7, this), boost::bind(&ClimbStateMachine::state8, this)};
+    state_functions_ = {boost::bind(&ClimbStateMachine::state1, this), boost::bind(&ClimbStateMachine::state2, this), boost::bind(&ClimbStateMachine::state3, this), boost::bind(&ClimbStateMachine::state4, this), boost::bind(&ClimbStateMachine::state5, this), boost::bind(&ClimbStateMachine::state6, this), boost::bind(&ClimbStateMachine::state7, this), boost::bind(&ClimbStateMachine::state8, this), boost::bind(&ClimbStateMachine::state9, this)};
     dynamic_arm_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/dynamic_arm_solenoid_controller/command", 2);
     static_hook_piston_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/static_hook_solenoid_controller/command", 2);
     joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &ClimbStateMachine::jointStateCallback, this);
@@ -96,6 +97,13 @@ public:
     }
     if (!nh_.getParam("static_hook_release_height", static_hook_release_height_)) {
       ROS_ERROR_STREAM("2022_climb_server : Could not find static_hook_release_height");
+      success = false;
+      exited = true;
+      return;
+    }
+    if (!nh_.getParam("static_hook_initial_distance", static_hook_initial_distance_))
+    {
+      ROS_ERROR_STREAM("2022_climb_server : Could not find static_hook_initial_distance");
       success = false;
       exited = true;
       return;
@@ -405,7 +413,7 @@ public:
     state = 7;
     ROS_INFO_STREAM("2022_climb_server : State 7");
     ROS_INFO_STREAM("2022_climb_server : ---");
-    ROS_INFO_STREAM("2022_climb_server : Raising dynamic arms slightly to hang by static hooks");
+    ROS_INFO_STREAM("2022_climb_server : Raising dynamic arms slightly & checking static hook sensors");
     // Find motor index
     int leaderIndex = -1;
     for (size_t i = 0; i < talon_states_.name.size(); i++) {
@@ -422,7 +430,7 @@ public:
     // Construct service call
     controllers_2022_msgs::DynamicArmSrv srv;
     srv.request.use_percent_output = false; // motion magic
-    srv.request.data = static_hook_distance_above_rung_;
+    srv.request.data = static_hook_initial_distance_;
     srv.request.profile = srv.request.TRANSITION;
 
     // Call service
@@ -459,7 +467,7 @@ public:
       r.sleep();
     }
 
-    ROS_INFO_STREAM("2022_climb_server : Raised dynamic arms slightly to hang by static hooks");
+    ROS_INFO_STREAM("2022_climb_server : Raised dynamic arms slightly & checking static hook sensors");
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state8, this);
   }
@@ -467,6 +475,69 @@ public:
   {
     state = 8;
     ROS_INFO_STREAM("2022_climb_server : State 8");
+    ROS_INFO_STREAM("2022_climb_server : ---");
+    ROS_INFO_STREAM("2022_climb_server : Raising dynamic arms slightly to fully hang by static hooks");
+    // Find motor index
+    int leaderIndex = -1;
+    for (size_t i = 0; i < talon_states_.name.size(); i++) {
+      if (talon_states_.name[i] == "climber_dynamic_arm_leader") {
+        leaderIndex = i;
+      }
+    }
+    if (leaderIndex == -1) {
+      exited = true;
+      ROS_ERROR_STREAM("2022_climb_server : Couldn't find talon in /frcrobot_jetson/talon_states. Aborting climb.");
+      return;
+    }
+
+    // Construct service call
+    controllers_2022_msgs::DynamicArmSrv srv;
+    srv.request.use_percent_output = false; // motion magic
+    srv.request.data = static_hook_distance_above_rung_;
+    srv.request.profile = srv.request.TRANSITION;
+
+    // Call service
+    if (dynamic_arm_.call(srv))
+    {
+      ROS_INFO_STREAM("2022_climb_server : called dynamic arm service.");
+    }
+    else
+    {
+      ROS_ERROR_STREAM("2022_climb_server : failed to call dynamic arm service. Aborting.");
+      exited = true;
+      return;
+    }
+
+    ROS_INFO_STREAM("2022_climb_server : confirming static hooks are still attached");
+    ros::Rate r(100); // 100 Hz loop
+    int counter = 0;
+    while (!(s1_ls && s2_ls)) {
+      ROS_INFO_STREAM_THROTTLE(0.25, "2022_climb_server : waiting to hit static hook limit switches");
+      ros::spinOnce();
+      if ((s1_ls == 1) ^ (s2_ls == 1)) { // if one hook has touched but the other has not,
+        if (counter >= imbalance_timeout_ * 100) { // and it has been two seconds since the robot was imbalanced,
+          exited = true;
+          ROS_ERROR_STREAM("2022_climb_server : The robot is imbalanced. Aborting climb.");
+          return;
+        } else {
+          counter++;
+        }
+      }
+      if (as_.isPreemptRequested() || !ros::ok()) {
+        exited = true;
+        return;
+      }
+      r.sleep();
+    }
+
+    ROS_INFO_STREAM("2022_climb_server : Raised dynamic arms slightly to hang by static hooks");
+    ROS_INFO_STREAM("");
+    nextFunction_ = boost::bind(&ClimbStateMachine::state9, this);
+  }
+  void state9()
+  {
+    state = 9;
+    ROS_INFO_STREAM("2022_climb_server : State 9");
     ROS_INFO_STREAM("2022_climb_server : ---");
     ROS_INFO_STREAM("2022_climb_server : Retracting dynamic arm pistons");
     ros::spinOnce();
