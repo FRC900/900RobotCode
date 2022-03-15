@@ -1,17 +1,17 @@
 teleop_params:
     num_joysticks: 2
-    max_rot: 7.5
+    max_rot: 4.0
     max_rot_slow: 2.5
     min_speed: 0.05  # Smallest linear speed which get the robot moving at all
-    max_speed: 5.75
+    max_speed: 3.0
     max_speed_slow: 1.5
-    joystick_pow: 4
-    rotation_pow: 6     #Scaling factors used in teleop_joystick_comp1
-    joystick_deadzone: 0.05
+    joystick_pow: 3
+    rotation_pow: 4     #Scaling factors used in teleop_joystick_comp1
+    joystick_deadzone: 0.1
     limit_switch_debounce_iterations: 2 #Used in teleop_joystick_comp for detecting hatch_panels
     linebreak_debounce_iterations: 2 #Used in actionlib servers for intaking cargo and teleop_joystick_comp for detecting cargo
-    drive_rate_limit_time: 200
-    rotate_rate_limit_time: 150
+    drive_rate_limit_time: 400
+    rotate_rate_limit_time: 300
     climber_align_angle: 1.178097 # -3*pi/8 radians or -67.5 degrees (inverted in teleop)
     climber_time_lock: 30
     trigger_threshold: 0.5

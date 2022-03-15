@@ -525,15 +525,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: buttonA
 			if(joystick_states_array[0].buttonAPress)
 			{
-				behavior_actions::Intaking2022Goal goal;
-				intaking_ac->sendGoal(goal);
+
 			}
 			if(joystick_states_array[0].buttonAButton)
 			{
 			}
 			if(joystick_states_array[0].buttonARelease)
 			{
-				intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+
 			}
 
 			//Joystick1: buttonB
@@ -588,7 +587,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: bumperLeft
 			if(joystick_states_array[0].bumperLeftPress)
 			{
-				shoot_in_high_goal = false;
+
 			}
 			if(joystick_states_array[0].bumperLeftButton)
 			{
@@ -600,7 +599,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: bumperRight
 			if(joystick_states_array[0].bumperRightPress)
 			{
-				shoot_in_high_goal = true;
+				behavior_actions::Shooting2022Goal goal;
+				goal.num_cargo = 2;
+				goal.low_goal = !shoot_in_high_goal;
+				shooting_ac->sendGoal(goal);
 			}
 			if(joystick_states_array[0].bumperRightButton)
 			{
@@ -614,16 +616,16 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: directionLeft
 			if(joystick_states_array[0].directionLeftPress)
 			{
-				ROS_WARN_STREAM("Snapping to angle for climb!");
+				// ROS_WARN_STREAM("Snapping to angle for climb!");
 			}
 			if(joystick_states_array[0].directionLeftButton)
 			{
 				// Align for climbing
-				enable_pub_msg.data = true;
+				// enable_pub_msg.data = true;
 			}
 			else
 			{
-				enable_pub_msg.data = false;
+				// enable_pub_msg.data = false;
 			}
 			if(joystick_states_array[0].directionLeftRelease)
 			{
@@ -654,10 +656,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: directionUp
 			if(joystick_states_array[0].directionUpPress)
 			{
-				behavior_actions::Shooting2022Goal goal;
-				goal.num_cargo = 2;
-				goal.low_goal = !shoot_in_high_goal;
-				shooting_ac->sendGoal(goal);
+
 			}
 			if(joystick_states_array[0].directionUpButton)
 			{
@@ -670,10 +669,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: directionDown
 			if(joystick_states_array[0].directionDownPress)
 			{
-				behavior_actions::Shooting2022Goal goal;
-				goal.num_cargo = 1;
-				goal.low_goal = !shoot_in_high_goal;
-				shooting_ac->sendGoal(goal);
+
 			}
 			if(joystick_states_array[0].directionDownButton)
 			{
@@ -699,21 +695,21 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			if(joystick_states_array[0].leftTrigger > config.trigger_threshold)
 			{
-				// Restart climb
+				// Intake
 				if(!joystick1_left_trigger_pressed)
 				{
-					reset_climb = true;
-					climb_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+					behavior_actions::Intaking2022Goal goal;
+					intaking_ac->sendGoal(goal);
 				}
 
 				joystick1_left_trigger_pressed = true;
 			}
 			else
 			{
-				//Preempt intake server, but only once
+				// Preempt intake server, but only once
 				if(joystick1_left_trigger_pressed)
 				{
-
+					intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 
 				joystick1_left_trigger_pressed = false;
@@ -722,12 +718,18 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: rightTrigger
 			if(joystick_states_array[0].rightTrigger > config.trigger_threshold)
 			{
-				teleop_cmd_vel->setSlowMode(true);
+				// teleop_cmd_vel->setSlowMode(true);
+				if(!joystick1_right_trigger_pressed) {
+					behavior_actions::Shooting2022Goal goal;
+					goal.num_cargo = 1;
+					goal.low_goal = !shoot_in_high_goal;
+					shooting_ac->sendGoal(goal);
+				}
 				joystick1_right_trigger_pressed = true;
 			}
 			else
 			{
-				teleop_cmd_vel->setSlowMode(false);
+				// teleop_cmd_vel->setSlowMode(false);
 				joystick1_right_trigger_pressed = false;
 			}
 		}
