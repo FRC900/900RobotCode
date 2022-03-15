@@ -14,10 +14,10 @@ ExecStartPre=/bin/sh -ec 'sleep 30' ; \
 	     /bin/bash -ec "/home/ubuntu/2022RobotCode/set_freq_tx.sh || true" ; \
 	     /bin/sh -ec 'ifup eth0 || true' ;
 
-ExecStart=/bin/bash -ec "/home/ubuntu/2022RobotCode/jetson_setup/master.sh || true" ; \
+ExecStart=/bin/bash -ec "/home/ubuntu/2022RobotCode/scripts/jetson_setup/master.sh || true" ; \
 		  /bin/bash -ec 'sleep 30' ; \
-	      /bin/bash -ec "/home/ubuntu/2022RobotCode/jetson_setup/kill.sh || true" ; \
-	      /bin/bash -ec "/home/ubuntu/2022RobotCode/jetson_setup/master.sh || true" ;
+	      /bin/bash -ec "/home/ubuntu/2022RobotCode/scripts/jetson_setup/kill.sh || true" ; \
+	      /bin/bash -ec "/home/ubuntu/2022RobotCode/scripts/jetson_setup/master.sh || true" ;
 
 #having issues with kill.sh
 #don't forget to change roscore.xml settings on the jetson

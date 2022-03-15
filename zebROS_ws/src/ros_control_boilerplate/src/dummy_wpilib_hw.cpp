@@ -717,8 +717,8 @@ void frc::DriverStation::ReportWarning(wpi::Twine const & error)
 #include <frc/Timer.h>
 units::second_t frc::Timer::GetFPGATimestamp()
 {
-	ROS_ERROR("Called frc::Timer::GetFPGATimestamp() on unsupported platform");
-	return static_cast<units::second_t>(-1.0);
+	//ROS_ERROR("Called frc::Timer::GetFPGATimestamp() on unsupported platform");
+	return static_cast<units::second_t>(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
 }
 
 

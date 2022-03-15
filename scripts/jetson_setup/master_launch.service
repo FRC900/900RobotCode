@@ -8,11 +8,11 @@ Description=2022 ROS Master Startup Script
 Type=simple
 WorkingDirectory=/mnt/900_2
 
-ExecStartPre=/usr/sbin/nvpmodel -m 0 ; \
+ExecStartPre=/usr/sbin/nvpmodel -m 2 ; \
 			 /usr/bin/jetson_clocks ; \
 			 /bin/sh -ec 'sleep 30' ;
 
-ExecStart=/bin/bash -ec "/home/ubuntu/2022RobotCode/jetson_setup/master.sh || true" 
+ExecStart=/bin/bash -ec "/home/ubuntu/2022RobotCode/scripts/jetson_setup/master.sh || true" 
 
 Restart=on-failure
 
