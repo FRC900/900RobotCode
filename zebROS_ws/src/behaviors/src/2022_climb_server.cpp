@@ -58,6 +58,7 @@ protected:
   ros::Subscriber dynamic_arm_zeroed_sub_;
 
   bool arm_zeroed_ = false;
+  bool driven_backwards_ = false;
 
   actionlib::SimpleActionServer<behavior_actions::Climb2022Action> &as_;
   ros::ServiceClient dynamic_arm_;
@@ -137,6 +138,7 @@ public:
       state = 0;
       nextFunction_ = boost::bind(&ClimbStateMachine::state1, this);
       rung = 0;
+      driven_backwards_ = false;
     }
     exited = false;
     success = false;
@@ -171,13 +173,12 @@ public:
     state = 1;
     ROS_INFO_STREAM("2022_climb_server : State 1");
     ROS_INFO_STREAM("2022_climb_server : ---");
-    ROS_INFO_STREAM("2022_climb_server : Aligning and opening static hooks...");
-    if (sleepCheckingForPreempt(2.0)) return; // simulate aligning
+    ROS_INFO_STREAM("2022_climb_server : Opening static hooks...");
     std_msgs::Float64 spMsg;
     spMsg.data = STATIC_HOOK_OPEN;
     static_hook_piston_.publish(spMsg);
     if (sleepCheckingForPreempt(piston_wait_time_)) return; // wait for pistons
-    ROS_INFO_STREAM("2022_climb_server : Aligned and opened");
+    ROS_INFO_STREAM("2022_climb_server : Opened");
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state2, this);
   }
@@ -270,8 +271,13 @@ public:
     ROS_INFO_STREAM("2022_climb_server : ---");
     if (rung == 0)
     {
-      ROS_INFO_STREAM("2022_climb_server : Driving Backwards");
-      if (sleepCheckingForPreempt(6)) return; // TODO replace with drivetrain stuff
+      if (!driven_backwards_) {
+        ROS_INFO_STREAM("2022_climb_server : Drive me backwards!");
+        exited = true;
+        success = true;
+        driven_backwards_ = true;
+        return;
+      }
     } else
     {
       ROS_INFO_STREAM("2022_climb_server : Extending dynamic arm pistons to hit next rung");

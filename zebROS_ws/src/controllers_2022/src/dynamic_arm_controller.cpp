@@ -250,6 +250,7 @@ bool DynamicArmController::cmdService(controllers_2022_msgs::DynamicArmSrv::Requ
 bool DynamicArmController::zeroService(std_srvs::Trigger::Request  &req,
                   std_srvs::Trigger::Response &/*response*/)
 {
+  zeroed_ = false;
   do_zero_ = true;
   return true;
 }
