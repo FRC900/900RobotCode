@@ -1366,6 +1366,17 @@ class TalonControllerInterface
 			return talon_.state()->getTalonMode();
 		}
 
+
+		// Set the mode of the motor controller
+		void setNeutralMode(hardware_interface::NeutralMode neutral_mode)
+		{
+			if (neutral_mode == params_.neutral_mode_)
+				return;
+			params_.neutral_mode_ = neutral_mode;
+			syncDynamicReconfigure();
+			talon_->setNeutralMode(neutral_mode);
+		}
+
 		// Pick the config slot (0 or 1) for PIDF/IZone values
 		virtual bool setPIDFSlot(int slot)
 		{

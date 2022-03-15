@@ -358,6 +358,14 @@ class TalonSwerveDriveController
 		realtime_tools::RealtimePublisher<tf::tfMessage> odom_tf_pub_;
 		ros::Time last_odom_pub_time_;
 		ros::Time last_odom_tf_pub_time_;
+
+		// Attempt to limit speed of wheels which are pointing further from
+		// their target angle. Should help to reduce the robot being pulled
+		// off course coming out of parking config or when maki
+		bool use_cos_scaling_{false};
+
+		
+		
 };
 
 PLUGINLIB_EXPORT_CLASS(talon_swerve_drive_controller::TalonSwerveDriveController, controller_interface::ControllerBase)

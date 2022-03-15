@@ -80,7 +80,8 @@ class swerve
 														     double angle,
 														     const std::array<double, WHEELCOUNT> &positionsNew,
 														     bool norm,
-														     const Eigen::Vector2d &centerOfRotation = Eigen::Vector2d{0,0});
+														     const Eigen::Vector2d &centerOfRotation = Eigen::Vector2d{0,0},
+															 const bool useCosScaling = false);
 		std::array<double, WHEELCOUNT> parkingAngles(const std::array<double, WHEELCOUNT> &positionsNew) const;
 
 		void saveNewOffsets(bool useVals, std::array<double, WHEELCOUNT> newOffsets, std::array<double, WHEELCOUNT> newPosition); //should these be doubles?

@@ -27,7 +27,8 @@ array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
 												 double angle,
 												 const array<double, WHEELCOUNT> &positionsNew,
 												 bool norm,
-												 const Eigen::Vector2d &centerOfRotation)
+												 const Eigen::Vector2d &centerOfRotation,
+												 const bool useCosScaling)
 {
 	array<Vector2d, WHEELCOUNT> speedsAndAngles;
         static array<bool, WHEELCOUNT> lastReverse;
@@ -76,8 +77,13 @@ array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
                 }
 
 		// ROS_INFO_STREAM("wheel " << i << " currpos: " << currpos << " nearestangle: " << nearestangle << " reverse: " << reverse);
-
-		speedsAndAngles[i][0] *= ((drive_.maxSpeed / drive_.wheelRadius) / ratio_.encodertoRotations) * units_.rotationSetV * (actual_reverse ? -1 : 1);
+		// Slow down wheels the further they are from their target
+		// angle. This will help to prevent wheels which are in the process
+		// of getting to the correct orientation from dragging the robot
+		// in random directions while turning to the expected direction
+		// cos() shouldn't care about +/-, so don't worry about fabs()
+		const double cosScaling = useCosScaling ? cos(currpos - nearestangle) : 1.0;
+		speedsAndAngles[i][0] *= ((drive_.maxSpeed / drive_.wheelRadius) / ratio_.encodertoRotations) * units_.rotationSetV * (actual_reverse ? -1 : 1) * cosScaling;
 		//ROS_INFO_STREAM(" id: " << i << " speed: " << speedsAndAngles[i][0] << " reverse: " << reverse);
 		speedsAndAngles[i][1] = angle_setpoint * units_.steeringSet + offsets_[i];
 		//ROS_INFO_STREAM("pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " << speedsAndAngles[i][1] << " offset: " << offsets_[i] << " steeringSet: " << units_.steeringSet );
