@@ -15,4 +15,4 @@ teleop_params:
     trigger_threshold: 0.5
     stick_threshold: 0.5
 
-teleop_diagnostics_params:
+    #teleop_diagnostics_params:
