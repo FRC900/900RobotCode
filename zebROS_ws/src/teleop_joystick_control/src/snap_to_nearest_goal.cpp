@@ -179,7 +179,7 @@ int main(int argc, char **argv)
 	has_cargo = false;
 
 	ros::Subscriber joint_states_sub_ = nh.subscribe("/frcrobot_jetson/joint_states", 1, jointStateCallback);
-	ros::Subscriber imu_heading  = nh.subscribe("/imu/zeroed_imu", 1, &imuCallback);
+	ros::Subscriber imu_heading  = nh.subscribe("/imu/zeroed_imu", 1, imuCallback);
 	ros::Publisher snapAnglePub = nh.advertise<std_msgs::Float64>("navX_pid/setpoint", 10);
 	ros::Publisher imuStatePub = nh.advertise<std_msgs::Float64>("navX_pid/state", 10);
 	ROS_INFO("snap_to_angle_init");

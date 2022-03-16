@@ -134,10 +134,21 @@ add_executable(basic_mechanism_test_node src/basic_mechanism_test.cpp)
 target_link_libraries(basic_mechanism_test_node
 	${catkin_LIBRARIES}
 	)
+
 add_dependencies(basic_mechanism_test_node
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 	)
+
+add_executable(snap_to_angle_node_2022 src/2022_snap_to_angle.cpp)
+target_link_libraries(snap_to_angle_node_2022
+	${catkin_LIBRARIES}
+	)
+add_dependencies(snap_to_angle_node_2022
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS}
+	)
+
 
 ## TOOLS ------------------------------------------------------
 
