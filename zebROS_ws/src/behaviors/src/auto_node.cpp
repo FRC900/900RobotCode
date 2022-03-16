@@ -9,8 +9,8 @@
 #include "base_trajectory_msgs/PathOffsetLimit.h"
 
 #include <actionlib/client/simple_action_client.h>
-#include <behavior_actions/IntakeAction.h>
-#include <behavior_actions/ShooterAction.h>
+#include <behavior_actions/Shooting2022Action.h>
+#include "behavior_actions/Intaking2022Action.h"
 #include <behavior_actions/DynamicPath.h>
 #include <path_follower_msgs/PathAction.h>
 
@@ -27,8 +27,6 @@ bool enable_teleop = false;
 bool auto_started = false; //set to true when enter auto time period
 bool auto_stopped = false; //set to true if driver stops auto (callback: stopAuto() ) - note: this node will keep doing actions during teleop if not finished and the driver doesn't stop auto
 //All actions check if(auto_started && !auto_stopped) before proceeding.
-
-double goal_to_wall_y_dist = 2.404;
 
 enum AutoStates {
 	NOT_READY,
@@ -48,8 +46,8 @@ std::function<void()> preemptAll; // function to preempt all actions, set in mai
 //FUNCTIONS -------
 
 //server callback for stop autonomous execution
-bool stopAuto(std_srvs::Empty::Request &req,
-			  std_srvs::Empty::Response &res)
+bool stopAuto(std_srvs::Empty::Request &/*req*/,
+			  std_srvs::Empty::Response &/*res*/)
 {
 	ROS_INFO("Auto node - Stopping code");
 	auto_stopped = true;
@@ -75,7 +73,6 @@ void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg)
 void updateAutoMode(const behavior_actions::AutoMode::ConstPtr& msg)
 {
 	auto_mode = msg->auto_mode;
-	distance_from_center = -1 * (goal_to_wall_y_dist - msg->distance_from_wall); // left is positive, right is negative
 }
 
 void enable_auto_in_teleop(const std_msgs::Bool::ConstPtr& msg)
@@ -83,7 +80,7 @@ void enable_auto_in_teleop(const std_msgs::Bool::ConstPtr& msg)
 	enable_teleop = msg->data;
 }
 
-bool dynamic_path_storage(behavior_actions::DynamicPath::Request &req, behavior_actions::DynamicPath::Response &res)
+bool dynamic_path_storage(behavior_actions::DynamicPath::Request &req, behavior_actions::DynamicPath::Response &/*res*/)
 {
 	ROS_INFO_STREAM("auto_node : addding " << req.path_name << " to premade_paths");
 	premade_paths[req.path_name] = req.dynamic_path;
@@ -303,7 +300,7 @@ bool readBoolParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, b
 	return true;
 }
 
-bool waitForAutoEnd(ros::NodeHandle nh) // returns true if no errors
+bool waitForAutoEnd() // returns true if no errors
 {
 	ros::spinOnce();
 
@@ -469,8 +466,8 @@ bool waitForAutoStart(ros::NodeHandle nh)
 	return false;
 }
 
-bool resetMaps(std_srvs::Empty::Request &req,
-			  std_srvs::Empty::Response &res) {
+bool resetMaps(std_srvs::Empty::Request &/*req*/,
+			  std_srvs::Empty::Response &/*res*/) {
 
 	premade_paths.clear();
 	ROS_INFO_STREAM("premade paths were cleared");
@@ -509,20 +506,16 @@ int main(int argc, char** argv)
 
 	//actionlib clients
 	actionlib::SimpleActionClient<path_follower_msgs::PathAction> path_ac("/path_follower/path_follower_server", true); //TODO fix this path
-	actionlib::SimpleActionClient<behavior_actions::ShooterAction> shooter_ac("/shooter/shooter_server", true);
-	actionlib::SimpleActionClient<behavior_actions::IntakeAction> intake_ac("/powercell_intake/powercell_intake_server", true);
-	preemptAll = [&path_ac, &shooter_ac, &intake_ac](){ // must include all actions called
+	actionlib::SimpleActionClient<behavior_actions::Shooting2022Action> shooting_ac("/shooting/shooting_server_2022", true);
+	actionlib::SimpleActionClient<behavior_actions::Intaking2022Action> intaking_ac("/intaking/intaking_server_2022", true);
+	preemptAll = [&path_ac, &shooting_ac, &intaking_ac](){ // must include all actions called
 		path_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
-		shooter_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
-		intake_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
+		shooting_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
+		intaking_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
 	};
 
 	//other variables
 	ros::Rate r(10); //used in various places where we wait TODO: config?
-	if(! nh.getParam("goal_to_wall_y_dist", goal_to_wall_y_dist)){
-		ROS_ERROR_STREAM("Couldn't read goal_to_wall_y_dist in auto node"); //defaults to 2.404
-		return 1;
-	}
 
 	while(true) { // will exit when shutdownNode is called
 		//WAIT FOR MATCH TO START --------------------------------------------------------------------------
@@ -593,36 +586,38 @@ int main(int argc, char** argv)
 						r.sleep();
 					}
 				}
-				else if(action_data_type == "intake_actionlib_server")
+				else if(action_data_type == "intaking_actionlib_server")
 				{
 					//for some reason this is necessary, even if the server has been up and running for a while
-					if(!intake_ac.waitForServer(ros::Duration(5))){
-						shutdownNode(ERROR,"Auto node - couldn't find intake actionlib server");
+					if(!intaking_ac.waitForServer(ros::Duration(5))){
+						shutdownNode(ERROR,"Auto node - couldn't find intaking actionlib server");
 						return 1;
 					}
 
 					if (!action_data.hasMember("goal"))
 					{
-						shutdownNode(ERROR,"Auto node - intake_actionlib_server call missing \"goal\" field");
+						shutdownNode(ERROR,"Auto node - intaking_actionlib_server call missing \"goal\" field");
 						return 1;
 					}
 					if(action_data["goal"] == "stop") {
-						intake_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
+						intaking_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
 					} else {
-						behavior_actions::IntakeGoal goal;
-						intake_ac.sendGoal(goal);
+						behavior_actions::Intaking2022Goal goal;
+						intaking_ac.sendGoal(goal);
 					}
 				}
-				else if(action_data_type == "shooter_actionlib_server")
+				else if(action_data_type == "shooting_actionlib_server")
 				{
-					if(!shooter_ac.waitForServer(ros::Duration(5))){
+					if(!shooting_ac.waitForServer(ros::Duration(5))){
 						return 1;
-						shutdownNode(ERROR, "Auto node - couldn't find shooter actionlib server");
+						shutdownNode(ERROR, "Auto node - couldn't find shooting actionlib server");
 					} //for some reason this is necessary, even if the server has been up and running for a while
-					behavior_actions::ShooterGoal goal;
-					goal.mode = 0;
-					shooter_ac.sendGoal(goal);
-					waitForActionlibServer(shooter_ac, 100, "intake server");
+					behavior_actions::Shooting2022Goal goal;
+					goal.num_cargo = 2;
+					goal.low_goal = false;
+
+					shooting_ac.sendGoal(goal);
+					waitForActionlibServer(shooting_ac, 100, "shooting server");
 				}
 				else if(action_data_type == "path")
 				{
@@ -656,7 +651,7 @@ int main(int argc, char** argv)
 
 		auto_state = DONE;
 		ROS_INFO_STREAM("auto_node completed, waiting for auto to end");
-		if (!waitForAutoEnd(nh)) {
+		if (!waitForAutoEnd()) {
 			shutdownNode(ERROR, "ROS is not ok :(");
 		} else {
 			auto_state = READY;

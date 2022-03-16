@@ -111,6 +111,6 @@ joystick2_controller:
     publish_rate: 50
 
 button_box_controller:
-    type: joystick_state_controller/JoystickStateController
+    type: button_box_state_controller/ButtonBoxStateController
     name: button_box
     publish_rate: 50

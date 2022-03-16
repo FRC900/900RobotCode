@@ -863,6 +863,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 
 		static std::array<Vector2d, WHEELCOUNT> speeds_angles;
 
+		hardware_interface::NeutralMode neutral_mode = hardware_interface::NeutralMode::NeutralMode_Coast;
 		for (size_t i = 0; i < WHEELCOUNT; ++i)
 		{
 			steering_joints_[i].setCustomProfileRun(false);
@@ -877,7 +878,6 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 			}
 
 			speed_joints_[i].setPIDFSlot(0);
-			speed_joints_[i].setNeutralMode(hardware_interface::NeutralMode::NeutralMode_Coast);
 			//speed_joints_[i].setClosedloopRamp(0);
 			//speed_joints_[i].setDemand1Value(0);
 		}
@@ -896,6 +896,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 			if ((time.toSec() - time_before_brake) > .5)
 			{
 				brake();
+				neutral_mode = hardware_interface::NeutralMode::NeutralMode_Brake;
 			}
 			else
 			{
@@ -915,6 +916,10 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 				cmd_vel_pub_->msg_.twist.angular.z = 0;
 				cmd_vel_pub_->unlockAndPublish();
 			}
+			for (size_t i = 0; i < WHEELCOUNT; ++i)
+			{
+				speed_joints_[i].setNeutralMode(neutral_mode);
+			}
 			return;
 		}
 
@@ -933,6 +938,10 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		for (size_t i = 0; !dont_set_angle_mode && (i < WHEELCOUNT); ++i)
 		{
 			steering_joints_[i].setCommand(speeds_angles[i][1]);
+		}
+		for (size_t i = 0; i < WHEELCOUNT; ++i)
+		{
+			speed_joints_[i].setNeutralMode(neutral_mode);
 		}
 
 		// Small delay coming out of parking mode before running

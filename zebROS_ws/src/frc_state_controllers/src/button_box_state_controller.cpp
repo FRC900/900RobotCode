@@ -54,23 +54,23 @@ namespace button_box_state_controller
 
 				m.header.stamp = time;
 
-				m.lockingSwitchButton    = bbs->getButton(1);
-				m.topRedButton           = bbs->getButton(2);
-				m.leftRedButton          = bbs->getButton(3);
-				m.rightRedButton         = bbs->getButton(4);
-				m.leftSwitchUpButton     = bbs->getButton(5);
-				m.leftSwitchDownButton   = bbs->getButton(6);
-				m.rightSwitchUpButton    = bbs->getButton(7);
-				m.rightSwitchDownButton  = bbs->getButton(8);
-				m.leftBlueButton         = bbs->getButton(9);
-				m.rightBlueButton        = bbs->getButton(10);
-				m.yellowButton           = bbs->getButton(11);
-				m.leftGreenButton        = bbs->getButton(12);
-				m.rightGreenButton       = bbs->getButton(13);
-				m.topGreenButton         = bbs->getButton(14);
-				m.bottomGreenButton      = bbs->getButton(15);
-				m.bottomSwitchUpButton   = bbs->getButton(16);
-				m.bottomSwitchDownButton = bbs->getButton(17);
+				m.lockingSwitchButton    = bbs->getButton(0); // ?
+				m.topRedButton           = bbs->getButton(1);
+				m.leftRedButton          = bbs->getButton(2);
+				m.rightRedButton         = bbs->getButton(3);
+				m.leftSwitchUpButton     = bbs->getButton(4);
+				m.leftSwitchDownButton   = bbs->getButton(5);
+				m.rightSwitchUpButton    = bbs->getButton(6);
+				m.rightSwitchDownButton  = bbs->getButton(7);
+				m.leftBlueButton         = bbs->getButton(8);
+				m.rightBlueButton        = bbs->getButton(9);
+				m.yellowButton           = bbs->getButton(10);
+				m.leftGreenButton        = bbs->getButton(11);
+				m.rightGreenButton       = bbs->getButton(12);
+				m.topGreenButton         = bbs->getButton(13);
+				m.bottomGreenButton      = bbs->getButton(14);
+				m.bottomSwitchUpButton   = bbs->getButton(15);
+				m.bottomSwitchDownButton = bbs->getButton(16);
 
 				// Creating press booleans by comparing the last publish to the current one
 				m.lockingSwitchPress        = !prev_button_box_msg_.lockingSwitchButton    && m.lockingSwitchButton;

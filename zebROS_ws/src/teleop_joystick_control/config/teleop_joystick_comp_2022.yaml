@@ -1,30 +1,18 @@
 teleop_params:
     num_joysticks: 2
-    max_rot: 4.0
-    max_rot_slow: 2.5
-    min_speed: 0.05  # Smallest linear speed which get the robot moving at all
+    max_rot: 6.0
+    max_rot_slow: 3.0
+    min_speed: 0.0  # Smallest linear speed which get the robot moving at all
     max_speed: 3.0
     max_speed_slow: 1.5
     joystick_pow: 3
-    rotation_pow: 4     #Scaling factors used in teleop_joystick_comp1
+    rotation_pow: 4     #Scaling factors used in teleop_joystick_comp
     joystick_deadzone: 0.1
-    limit_switch_debounce_iterations: 2 #Used in teleop_joystick_comp for detecting hatch_panels
-    linebreak_debounce_iterations: 2 #Used in actionlib servers for intaking cargo and teleop_joystick_comp for detecting cargo
-    drive_rate_limit_time: 400
-    rotate_rate_limit_time: 300
-    climber_align_angle: 1.178097 # -3*pi/8 radians or -67.5 degrees (inverted in teleop)
+    drive_rate_limit_time: 1000
+    rotate_rate_limit_time: 1000
+    climber_align_angle: 3.14159265 # Intake facing DS wall
     climber_time_lock: 30
     trigger_threshold: 0.5
     stick_threshold: 0.5
-    shooter_turret_offset_rate: 0.0333 #Converts to ~1ft/second on the face of the goal from a 30ft range
-    shooter_speed_offset_rate: 10.0 #TODO Completely arbitrary units, needs tuning
-    control_panel_increment: 0.125 #Number of control panel rotations to increment the control panel
-    climber_percent_out_up: 0.3
-    climber_percent_out_down: -0.4
 
 teleop_diagnostics_params:
-    shooter_setpoint_rate: 10.472 #Rate of change in angular velocity in radians/second^2 (100 rpm/second)
-    turret_setpoint_rate: 0.6981 #Rate of change in position of turret in radians/second
-    turret_angle_limit: 1.047 #Bilateral limit on turret angle in radians
-    intake_setpoint_rate: 0.1 #Rate of change in intake percent out (percent/second)
-    indexer_setpoint_rate: 10.472 #Rate of change in indexer angular velocity in radians/second^2 (100 rpm/second)

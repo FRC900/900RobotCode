@@ -284,9 +284,33 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	}
 	if(button_box.leftRedButton)
 	{
+		geometry_msgs::Twist cmd_vel;
+		cmd_vel.linear.x = -0.2;
+		cmd_vel.linear.y = 0.0;
+		cmd_vel.linear.z = 0.0;
+		cmd_vel.angular.x = 0.0;
+		cmd_vel.angular.y = 0.0;
+		cmd_vel.angular.z = 0.0;
+
+		JoystickRobotVel.publish(cmd_vel);
 	}
 	if(button_box.leftRedRelease)
 	{
+		geometry_msgs::Twist cmd_vel;
+		cmd_vel.linear.x = 0.0;
+		cmd_vel.linear.y = 0.0;
+		cmd_vel.linear.z = 0.0;
+		cmd_vel.angular.x = 0.0;
+		cmd_vel.angular.y = 0.0;
+		cmd_vel.angular.z = 0.0;
+
+		JoystickRobotVel.publish(cmd_vel);
+		std_srvs::Empty empty;
+		if (!BrakeSrv.call(empty))
+		{
+			ROS_ERROR("BrakeSrv call failed in sendRobotZero_");
+		}
+		ROS_INFO("BrakeSrv called");
 	}
 
 	if(button_box.rightRedPress)
@@ -629,7 +653,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].directionLeftButton)
 			{
 				// Align for climbing
-				// enable_align_msg.data = true;
+				enable_align_msg.data = true;
 			}
 			else
 			{

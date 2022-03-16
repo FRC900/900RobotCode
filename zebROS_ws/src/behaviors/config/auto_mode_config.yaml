@@ -1,24 +1,26 @@
 #Config file for configuring autonomous modes and actions
 
-# CONSTANTS -----------------------------------------------------------------------
-goal_to_wall_y_dist: 2.404
-
 # MODES ---------------------------------------------------------------------------
 # arrays of actions (see below) that will be executed in order
 # format: auto_mode_[integer]: array
 #
-auto_mode_1: ["tuning"]
-auto_mode_2: ["map_relative_barrel_racing_path"]
-auto_mode_3: ["map_relative_bounce_path"]
-auto_mode_4: ["map_relative_slalom_path"]
-auto_mode_5: ["dynamic_path"]
-auto_mode_6: ["game_piece_pickup_path"]
+auto_mode_1: ["shoot", "drive_forward"]
+# auto_moe_2: ["shoot", "start_intaking", "path_for_balls_left_hub", "stop_intaking", "shoot", "drive_forward"]
+# auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
 
-#auto_mode_1: ["start_intake", "path_to_trench_face_goal", "stop_intake", "shoot", "pause_2_sec"] #example
+# Examples
+#auto_mode_1: ["tuning"]
+#auto_mode_2: ["map_relative_barrel_racing_path"]
+#auto_mode_3: ["map_relative_bounce_path"]
+#auto_mode_4: ["map_relative_slalom_path"]
+#auto_mode_5: ["dynamic_path"]
+#auto_mode_6: ["game_piece_pickup_path"]
+
+#auto_mode_1: ["start_intaking", "path_to_trench_face_goal", "stop_intaking", "shoot", "pause_2_sec"] #example
 #auto_mode_2: ["pause_2_sec","pause_5_sec"]
 #auto_mode_3: ["drive_back", "path_to_trench_after_drive_back"]
 #auto_mode_4: ["drive_back", "shoot", "path_to_trench_after_drive_back"]
-#auto_mode_5: ["drive_test_angle", "start_intake", "drive_forward", "stop_intake"]
+#auto_mode_5: ["drive_test_angle", "start_intaking", "drive_forward", "stop_intaking"]
 #auto_mode_6: ["drive_path_test_1"]
 
 # ACTIONS ------------------------------------------------------------------------
@@ -140,18 +142,18 @@ galactic_search_path:
 
 #examples:
 
-start_intake:
-    type: "intake_actionlib_server"
+start_intaking:
+    type: "intaking_actionlib_server"
     goal:
         "start"
 
-stop_intake:
-    type: "intake_actionlib_server"
+stop_intaking:
+    type: "intaking_actionlib_server"
     goal:
         "stop"
 
 shoot:
-    type: "shooter_actionlib_server"
+    type: "shooting_actionlib_server"
     goal:
         ""
 
@@ -199,7 +201,7 @@ drive_forward:
     goal:
         apply_offset: false
         points:
-            - [1.5, 0.0, 0.0]
+            - [2.0, 0.0, 0.0]
 
 
 drive_path_test_1:

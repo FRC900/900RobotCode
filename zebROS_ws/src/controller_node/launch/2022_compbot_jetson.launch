@@ -72,12 +72,11 @@
 
 	<!-- 2022 TODO add actionlib servers with namespaces -->
 	<!--
-	<include file="$(find controller_node)/launch/path_follower.launch"/>
-	<include file="$(find behaviors)/launch/auto_node.launch"/>
-	<include file="$(find controller_node)/launch/path_follower.launch"/>
 	<include file="$(find controller_node)/launch/hold_position.launch"/>
 	<include file="$(find controller_node)/launch/distance_to_pose.launch"/>
 	-->
+	<include file="$(find controller_node)/launch/path_follower.launch"/>
+	<include file="$(find behaviors)/launch/auto_node.launch"/>
 
 	<group ns="index">
 		<node name="index_server_2022" pkg="behaviors" type="2022_index_server_node"/>
@@ -102,11 +101,10 @@
 	</group>
 	<include file="$(find behaviors)/launch/2022_climb.launch"/>
 
-	<!-- Run ZED camera + tensorflow object detection
+	<!-- Run ZED camera + tensorflow object detection -->
 	<include file="$(find tf_object_detection)/launch/detection.launch" if="$(eval arg('hw_or_sim')=='hw')">
 		<arg name="input_type" value="live_camera" />
 	</include>
-	-->
 
 	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
 		<arg name="port" value="5803"/>
