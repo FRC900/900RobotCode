@@ -1875,14 +1875,17 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 	// Note first point should be 0,0,0, don't transform this since the starting
 	// point has to be robot-relative and at the robot's current position
 	geometry_msgs::TransformStamped pathToMapTransform;
-	try
+	if (msg.header.frame_id == "map")
 	{
-		pathToMapTransform = tfBuffer->lookupTransform("map", pathFrameID, msg.header.stamp, ros::Duration(0.25));
-	}
-	catch (const tf2::TransformException &ex)
-	{
-		ROS_ERROR_STREAM("base_trajectory : Error getting transfom from map to " << pathFrameID << " : " << ex.what());
-		return false;
+		try
+		{
+			pathToMapTransform = tfBuffer->lookupTransform("map", pathFrameID, msg.header.stamp, ros::Duration(0.25));
+		}
+		catch (const tf2::TransformException &ex)
+		{
+			ROS_ERROR_STREAM("base_trajectory : Error getting transfom from map to " << pathFrameID << " : " << ex.what());
+			return false;
+		}
 	}
 
 #if 0
@@ -1906,11 +1909,16 @@ bool callback(base_trajectory_msgs::GenerateSpline::Request &msg,
 
 	// Calculate inverse of path to map transform to get the map to path frame
 	// transform.
-	tf2::Transform invtf;
-	fromMsg(pathToMapTransform.transform, invtf);
+	// TODO - this assignment might not be necessary since tf2::convert
+	// sets it in the if block below?
 	geometry_msgs::TransformStamped inversePathToMapTransform = pathToMapTransform;
-	tf2::convert(invtf.inverse(), inversePathToMapTransform.transform);
-	ROS_INFO_STREAM("pathToMapTransform = " << pathToMapTransform);
+	if (msg.header.frame_id == "map")
+	{
+		tf2::Transform invtf;
+		fromMsg(pathToMapTransform.transform, invtf);
+		tf2::convert(invtf.inverse(), inversePathToMapTransform.transform);
+		ROS_INFO_STREAM("pathToMapTransform = " << pathToMapTransform);
+	}
 	for (size_t i = 1; i < msg.points.size(); i++)
 	{
 		if (msg.header.frame_id == "map")

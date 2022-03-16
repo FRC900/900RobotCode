@@ -14,6 +14,7 @@
 #include "std_srvs/Empty.h"
 
 #include "controllers_2022_msgs/DynamicArmSrv.h"
+#include "controllers_2022_msgs/Intake.h"
 
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
@@ -67,19 +68,16 @@ bool joystick1_right_trigger_pressed = false;
 std_msgs::Float64 indexer_arc_cmd;
 std_msgs::Float64 indexer_straight_cmd;
 std_msgs::Float64 shooter_cmd;
+controllers_2022_msgs::Intake intake_srv;
 controllers_2022_msgs::DynamicArmSrv climber_cmd;
-std_msgs::Float64 intake_cmd;
-std_msgs::Float64 intake_solenoid_cmd;
 ros::Publisher indexer_straight_pub;
 ros::Publisher indexer_arc_pub;
 ros::Publisher shooter_pub;
-ros::ServiceClient climber_srv;
-ros::Publisher intake_pub;
-ros::Publisher intake_solenoid_pub;
+ros::ServiceClient climber_client;
+ros::ServiceClient intake_client;
 
 //Shooter speed tuner
 std_msgs::Float64 speed_offset;
-speed_offset.data = 0;
 ros::Publisher speed_offset_publisher; //shooter speed offset
 
 // Diagnostic mode controls
@@ -118,25 +116,25 @@ void decShooter(void)
 
 void incIntake(void)
 {
-	intake_cmd.data = std::min(1.0, intake_cmd.data + 0.1);
-	ROS_INFO_STREAM("Set intake_cmd.data to " << intake_cmd.data);
+	intake_srv.request.percent_out = std::min(1.0, intake_srv.request.percent_out + 0.1);
+	ROS_INFO_STREAM("Set intake_srv.request.percent_out to " << intake_srv.request.percent_out);
 }
 
 void decIntake(void)
 {
-	intake_cmd.data = std::max(-1.0, intake_cmd.data - 0.1);
-	ROS_INFO_STREAM("Set intake_cmd.data to " << intake_cmd.data);
+	intake_srv.request.percent_out = std::max(-1.0, intake_srv.request.percent_out - 0.1);
+	ROS_INFO_STREAM("Set intake_srv.request.percent_out to " << intake_srv.request.percent_out);
 }
 
 void extendIntakeSolenoid(void)
 {
-	intake_solenoid_cmd.data = 1;
-	ROS_INFO_STREAM("Set intake_solenoid_cmd.data to " << intake_solenoid_cmd.data);
+	intake_srv.request.intake_arm_extend = true;
+	ROS_INFO_STREAM("Set intake_srv.request.intake_arm_extend to " << intake_srv.request.intake_arm_extend);
 }
 void retractIntakeSolenoid(void)
 {
-	intake_solenoid_cmd.data = 0;
-	ROS_INFO_STREAM("Set intake_solenoid_cmd.data to " << intake_solenoid_cmd.data);
+	intake_srv.request.intake_arm_extend = false;
+	ROS_INFO_STREAM("Set intake_srv.request.intake_arm_extend to " << intake_srv.request.intake_arm_extend);
 }
 
 void incClimber(void)
@@ -157,12 +155,14 @@ void publish_diag_cmds(void)
 	indexer_arc_pub.publish(indexer_arc_cmd);
 	shooter_pub.publish(shooter_cmd);
 	climber_cmd.request.use_percent_output = true;
-	if (!climber_srv.call(climber_cmd))
+	if (!climber_client.call(climber_cmd))
 	{
-		ROS_ERROR_THROTTLE(1., "Error calling climber service from teleop joystick comp 2022");
+		ROS_ERROR_THROTTLE(1., "Error calling climber service from teleop joystick comp 2022 diag code");
 	}
-	intake_pub.publish(intake_cmd);
-	intake_solenoid_pub.publish(intake_solenoid_cmd);
+	if (!intake_client.call(intake_srv))
+	{
+		ROS_ERROR_THROTTLE(1., "Error calling intake service from teleop joystick comp 2022 diag code");
+	}
 }
 
 void zero_all_diag_commands(void)
@@ -171,12 +171,12 @@ void zero_all_diag_commands(void)
 	indexer_straight_cmd.data = 0.0;
 	shooter_cmd.data = 0.0;
 	climber_cmd.request.data = 0.0;
-	intake_cmd.data = 0.0;
+	intake_srv.request.percent_out = 0.0;
 	ROS_INFO_STREAM("Set indexer_arc_cmd.data to " << indexer_arc_cmd.data);
 	ROS_INFO_STREAM("Set indexer_straight_cmd.data to " << indexer_straight_cmd.data);
 	ROS_INFO_STREAM("Set shooter_cmd.data to " << shooter_cmd.data);
 	ROS_INFO_STREAM("Set climber_cmd.data to " << climber_cmd.request.data);
-	ROS_INFO_STREAM("Set intake_cmd.data to " << intake_cmd.data);
+	ROS_INFO_STREAM("Set intake_srv.request.percent_out to " << intake_srv.request.percent_out);
 }
 
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Climb2022Action>> climb_ac;
@@ -1096,8 +1096,7 @@ int main(int argc, char **argv)
 
 	imu_angle = M_PI / 2.;
 
-	std::map<std::string, std::string> service_connection_header;
-	service_connection_header["tcp_nodelay"] = "1";
+	const std::map<std::string, std::string> service_connection_header{{"tcp_nodelay", "1"}};
 
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
@@ -1137,10 +1136,10 @@ int main(int argc, char **argv)
 	indexer_straight_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/indexer_straight_controller/command", 1, true);
 	indexer_arc_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/indexer_arc_controller/command", 1, true);
 	shooter_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/shooter_controller/command", 1, true);
-	climber_srv = n.serviceClient<controllers_2022_msgs::DynamicArmSrv>("/frcrobot_jetson/dynamic_arm_controller/command", false, service_connection_header);
-	intake_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_motor_controller/command", 1, true);
-	intake_solenoid_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_solenoid_controller/command", 1, true);
+	climber_client = n.serviceClient<controllers_2022_msgs::DynamicArmSrv>("/frcrobot_jetson/dynamic_arm_controller/command", false, service_connection_header);
+	intake_client = n.serviceClient<controllers_2022_msgs::Intake>("/frcrobot_jetson/intake_controller/command", false, service_connection_header);
 	speed_offset_publisher = n.advertise<std_msgs::Float64>("/shooter_speed_offset", 1, true);
+	speed_offset.data = 0;
 
 	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickComp2022Config> drw(n_params, config);
 	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompDiagnostics2022Config> diagnostics_drw(n_diagnostics_params, diagnostics_config);

@@ -39,7 +39,8 @@ public:
 			ROS_WARN_STREAM("2022_intake_server : could not find intake_server_timeout, defaulting to 10 seconds");
 			server_timeout_ = 10;
 		}
-		intake_client_ = nh_.serviceClient<controllers_2022_msgs::Intake>("/frcrobot_jetson/intake_controller/command");
+		const std::map<std::string, std::string> service_connection_header{{"tcp_nodelay", "1"}};
+		intake_client_ = nh_.serviceClient<controllers_2022_msgs::Intake>("/frcrobot_jetson/intake_controller/command", false, service_connection_header);
 		as_.start();
 	}
 

@@ -184,7 +184,6 @@ shooter_controller:
   joint: shooter_leader
   type: talon_controllers/TalonVelocityCloseLoopController
   feedback_type: IntegratedSensor
-  # TODO FIX ALL BELOW VALUES (these are from 2020)
   close_loop_values:
       - {p: 0.20, i: 0.000, d: 0.0, f: 0.046, i_zone: 0}
   invert_output: true
