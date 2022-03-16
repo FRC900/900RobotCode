@@ -275,6 +275,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	if(button_box.topRedPress)
 	{
 
+		// TODO - preempt everything
 	}
 	if(button_box.topRedButton)
 	{
@@ -286,7 +287,10 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	if(button_box.leftRedPress)
 	{
 
+		ROS_INFO_STREAM("Driving backwards for climb");
 	}
+	// Drive backwards during climb
+	// TODO - tweak speed
 	if(button_box.leftRedButton)
 	{
 		geometry_msgs::Twist cmd_vel;
@@ -465,6 +469,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	}
 
+	// Auto-mode select?
 	if(button_box.bottomSwitchUpPress)
 	{
 
