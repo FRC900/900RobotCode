@@ -77,6 +77,11 @@ ros::ServiceClient climber_srv;
 ros::Publisher intake_pub;
 ros::Publisher intake_solenoid_pub;
 
+//Shooter speed tuner
+std_msgs::Float64 speed_offset;
+speed_offset.data = 0;
+ros::Publisher speed_offset_publisher; //shooter speed offset
+
 // Diagnostic mode controls
 void decIndexerArc(void)
 {
@@ -999,6 +1004,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 		}
 
+		speed_offset_publisher.publish(speed_offset); //TODO update the speed offset once we know which button it will be
 		last_header_stamp = joystick_states_array[0].header.stamp;
 	}
 	else if(joystick_id == 1)
@@ -1134,6 +1140,7 @@ int main(int argc, char **argv)
 	climber_srv = n.serviceClient<controllers_2022_msgs::DynamicArmSrv>("/frcrobot_jetson/dynamic_arm_controller/command", false, service_connection_header);
 	intake_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_motor_controller/command", 1, true);
 	intake_solenoid_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_solenoid_controller/command", 1, true);
+	speed_offset_publisher = n.advertise<std_msgs::Float64>("/shooter_speed_offset", 1, true);
 
 	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickComp2022Config> drw(n_params, config);
 	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompDiagnostics2022Config> diagnostics_drw(n_diagnostics_params, diagnostics_config);

@@ -29,8 +29,10 @@ protected:
   ros::Publisher shooter_command_pub_;
 
   ros::Subscriber talon_states_sub_;
+  ros::Subscriber speed_offset_sub_;
 
   double current_speed_;
+  double speed_offset_ = 0;
 
   uint64_t close_enough_counter_;
 
@@ -55,6 +57,7 @@ public:
     // ddr_.registerVariable<double>("samples_for_close_enough", &error_margin_, "Shooter margin of error", 0, 50);
     shooter_command_pub_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/shooter_controller/command", 2);
     talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &ShooterAction2022::talonStateCallback, this);
+    speed_offset_sub_ = nh_.subscribe("/shooter_speed_offset", 1, &ShooterAction2022::speedOffsetCallback, this);
     as_.start();
 
     ddr_.publishServicesTopics();
@@ -85,17 +88,17 @@ public:
       switch (goal->mode) {
         case behavior_actions::Shooter2022Goal::HIGH_GOAL:
           feedback_.close_enough = fabs(high_goal_speed_ - fabs(current_speed_)) < error_margin_;
-          msg.data = high_goal_speed_;
+          msg.data = high_goal_speed_ + speed_offset_;
           shooter_command_pub_.publish(msg);
           break;
         case behavior_actions::Shooter2022Goal::LOW_GOAL:
           feedback_.close_enough = fabs(low_goal_speed_ - fabs(current_speed_)) < error_margin_;
-          msg.data = low_goal_speed_;
+          msg.data = low_goal_speed_ + speed_offset_;
           shooter_command_pub_.publish(msg);
           break;
         case behavior_actions::Shooter2022Goal::EJECT:
           feedback_.close_enough = fabs(eject_speed_ - fabs(current_speed_)) < error_margin_;
-          msg.data = eject_speed_;
+          msg.data = eject_speed_ + speed_offset_;
           shooter_command_pub_.publish(msg);
           break;
       }
@@ -113,6 +116,10 @@ public:
       }
     }
     SHOOTER_ERROR("Couldn't find talon in /frcrobot_jetson/talon_states. :(");
+  }
+
+  void speedOffsetCallback(const std_msgs::Float64 speed_offset_msg){
+    speed_offset_ = speed_offset_msg.data;
   }
 
 };
