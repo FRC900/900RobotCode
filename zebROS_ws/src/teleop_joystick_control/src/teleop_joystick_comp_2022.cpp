@@ -324,7 +324,21 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.rightRedPress)
 	{
-
+		behavior_actions::Climb2022Goal goal;
+		ROS_INFO_STREAM("Climbing with reset=" << reset_climb);
+		goal.single_step = false;
+		goal.reset = reset_climb;
+		reset_climb = false;
+		if (!climb_ac->getState().isDone())
+		{
+			// if not done, pause.
+			climb_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		}
+		else
+		{
+			// if done, start/continue.
+			climb_ac->sendGoal(goal);
+		}
 	}
 	if(button_box.rightRedButton)
 	{
@@ -605,18 +619,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: buttonY
 			if(joystick_states_array[0].buttonYPress)
 			{
-				// behavior_actions::Climb2022Goal goal;
-				// ROS_INFO_STREAM("Climbing with reset=" << reset_climb);
-				// goal.single_step = false;
-				// goal.reset = reset_climb;
-				// reset_climb = false;
-				// if (!climb_ac->getState().isDone()) {
-				// 	// if not done, pause.
-				// 	climb_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
-				// } else {
-				// 	// if done, start/continue.
-				// 	climb_ac->sendGoal(goal);
-				// }
 			}
 			if(joystick_states_array[0].buttonYButton)
 			{
@@ -658,7 +660,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: directionLeft
 			if(joystick_states_array[0].directionLeftPress)
 			{
-				// ROS_WARN_STREAM("Snapping to angle for climb!");
+				ROS_INFO_STREAM("Snapping to angle for climb!");
 			}
 			if(joystick_states_array[0].directionLeftButton)
 			{
@@ -667,6 +669,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 			else
 			{
+				sendRobotZero = false;
+				ROS_INFO_STREAM("Stoping snapping to angle for climb!");
 			}
 			if(joystick_states_array[0].directionLeftRelease)
 			{
@@ -684,7 +688,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: directionRight
 			if(joystick_states_array[0].directionRightPress)
 			{
-
 			}
 			if(joystick_states_array[0].directionRightButton)
 			{
@@ -696,27 +699,23 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: directionUp
 			if(joystick_states_array[0].directionUpPress)
 			{
-
 			}
 			if(joystick_states_array[0].directionUpButton)
 			{
 			}
 			if(joystick_states_array[0].directionUpRelease)
 			{
-
 			}
 
 			//Joystick1: directionDown
 			if(joystick_states_array[0].directionDownPress)
 			{
-
 			}
 			if(joystick_states_array[0].directionDownButton)
 			{
 			}
 			if(joystick_states_array[0].directionDownRelease)
 			{
-
 			}
 
 			//Joystick1: stickLeft
@@ -812,7 +811,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1 Diagnostics: stickRight
 			if(joystick_states_array[0].stickRightPress)
 			{
-
 			}
 			if(joystick_states_array[0].stickRightButton)
 			{
@@ -933,7 +931,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				//Preempt intake server, but only once
 				if(joystick1_left_trigger_pressed)
 				{
-
 				}
 
 				joystick1_left_trigger_pressed = false;
@@ -954,7 +951,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				//Preempt intake server, but only once
 				if(joystick1_right_trigger_pressed)
 				{
-
 				}
 
 				joystick1_right_trigger_pressed = false;

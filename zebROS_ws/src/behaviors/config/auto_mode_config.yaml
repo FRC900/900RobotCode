@@ -4,7 +4,9 @@
 # arrays of actions (see below) that will be executed in order
 # format: auto_mode_[integer]: array
 #
-auto_mode_1: ["shoot", "drive_forward"]
+auto_mode_1: ["shoot", "start_intaking", "pause_2_sec", "stop_intaking"]
+auto_mode_2: ["shoot", "drive_forward"]
+auto_mode_3: ["drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_left_hub", "stop_intaking", "shoot", "drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
 

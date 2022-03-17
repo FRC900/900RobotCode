@@ -74,11 +74,15 @@
                 <remap from="pid_enable" to="y_position_pid/pid_enable" />
             </node>
 
+			<!-- TODO - fix the code that requires these to be negative
+				 best guess?  IMU yaw angle is inverted coming from
+				 the sensor
+			 -->
             <node name="orient_pid" pkg="pid" type="controller" >
                 <param name="node_name" value="orient_pid" />
-                <param name="Kp" value="-2.5" />
+                <param name="Kp" value="-3.5" />
                 <param name="Ki" value="0" />
-                <param name="Kd" value="0" />
+                <param name="Kd" value="-0.015" />
                 <param name="upper_limit" value="8" />
                 <param name="lower_limit" value="-8" />
                 <param name="windup_limit" value="10" />
