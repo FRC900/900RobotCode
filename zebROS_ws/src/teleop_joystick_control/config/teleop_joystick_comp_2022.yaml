@@ -11,7 +11,6 @@ teleop_params:
     drive_rate_limit_time: 1000
     rotate_rate_limit_time: 1000
     climber_align_angle: 3.14159265 # Intake facing DS wall
-    climber_time_lock: 30
     trigger_threshold: 0.5
     stick_threshold: 0.5
 

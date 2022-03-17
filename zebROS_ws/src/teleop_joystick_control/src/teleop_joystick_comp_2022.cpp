@@ -1054,14 +1054,6 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read rotation_pow in teleop_joystick_comp");
 	}
-	if(!n_params.getParam("limit_switch_debounce_iterations", config.limit_switch_debounce_iterations))
-	{
-		ROS_ERROR("Could not read limit_switch_debounce_iterations in teleop_joystick_comp");
-	}
-	if(!n_params.getParam("linebreak_debounce_iterations", config.linebreak_debounce_iterations))
-	{
-		ROS_ERROR("Could not read linebreak_debounce_iterations in teleop_joystick_comp");
-	}
 	if(!n_params.getParam("min_speed", config.min_speed))
 	{
 		ROS_ERROR("Could not read min_speed in teleop_joystick_comp");
@@ -1089,6 +1081,18 @@ int main(int argc, char **argv)
 	if(!n_params.getParam("rotate_rate_limit_time", config.rotate_rate_limit_time))
 	{
 		ROS_ERROR("Could not read rotate_rate_limit_time in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("climber_align_angle", config.climber_align_angle))
+	{
+		ROS_ERROR("Could not read climber_align_angle in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("trigger_threshold", config.trigger_threshold))
+	{
+		ROS_ERROR("Could not read trigger_threshold in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("stick_threshold", config.stick_threshold))
+	{
+		ROS_ERROR("Could not read stick_threshold in teleop_joystick_comp");
 	}
 
 	orient_strafing_angle = config.climber_align_angle;
