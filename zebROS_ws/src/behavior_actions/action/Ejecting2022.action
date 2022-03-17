@@ -1,0 +1,11 @@
+# goal
+bool eject_top_cargo
+bool eject_bottom_cargo
+bool speedy # intake only
+---
+# result
+bool ejected_top_cargo
+bool ejected_bottom_cargo
+bool timed_out
+---
+# feedback

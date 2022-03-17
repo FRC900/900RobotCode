@@ -176,6 +176,10 @@ add_executable(2022_intaking_server_node src/2022_intaking_server.cpp)
 target_link_libraries(2022_intaking_server_node ${catkin_LIBRARIES})
 add_dependencies(2022_intaking_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(2022_ejecting_server_node src/2022_ejecting_server.cpp)
+target_link_libraries(2022_ejecting_server_node ${catkin_LIBRARIES})
+add_dependencies(2022_ejecting_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 # 2020 actionlib servers
 if (0)
 add_executable(num_powercells_pub_node src/num_powercells_pub_node.cpp)

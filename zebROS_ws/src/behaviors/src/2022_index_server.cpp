@@ -162,7 +162,8 @@ public:
     // run arc motor backwards
     run_arc_motor(-arc_motor_percent_output_config_);
     ros::Rate r(100);
-    while(arc_sensor_pressed_ || straight_sensor_pressed_){
+    uint8_t cargo_now = arc_sensor_pressed_ + straight_sensor_pressed_;
+    while ((arc_sensor_pressed_ + straight_sensor_pressed_) == cargo_now){ // keep going until there are n-1 cargo
       if (as_.isPreemptRequested() || !ros::ok()) {
         exited_ = true;
         success_ = false;
