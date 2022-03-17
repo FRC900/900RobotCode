@@ -669,11 +669,11 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 			else
 			{
-				sendRobotZero = false;
-				ROS_INFO_STREAM("Stoping snapping to angle for climb!");
 			}
 			if(joystick_states_array[0].directionLeftRelease)
 			{
+				sendRobotZero = false;
+				ROS_INFO_STREAM("Stopping snapping to angle for climb!");
 			}
 
 			// To align the robot to an angle, enable_align_msg.data
