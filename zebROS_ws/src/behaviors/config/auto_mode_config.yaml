@@ -3,9 +3,9 @@
 # MODES ---------------------------------------------------------------------------
 # arrays of actions (see below) that will be executed in order
 # format: auto_mode_[integer]: array
-#
-auto_mode_1: ["shoot", "start_intaking", "cmd_vel_1", "stop_intaking", "cmd_vel_1_reverse", "shoot"]
-auto_mode_2: ["shoot", "start_intaking", "cmd_vel_2", "stop_intaking", "cmd_vel_2_reverse", "shoot"]
+
+auto_mode_1: ["shoot", "start_intaking", "cmd_vel_1", "pause_cmd_vel", "stop_intaking", "cmd_vel_1_reverse", "pause_cmd_vel", "shoot"]
+auto_mode_2: ["shoot", "start_intaking", "cmd_vel_2", "pause_cmd_vel", "stop_intaking", "cmd_vel_2_reverse", "pause_cmd_vel", "shoot"]
 #auto_mode_1: ["shoot", "start_intaking", "pause_2_sec", "stop_intaking"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_left_hub", "stop_intaking", "shoot", "drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
@@ -31,14 +31,14 @@ auto_mode_2: ["shoot", "start_intaking", "cmd_vel_2", "stop_intaking", "cmd_vel_
 
 cmd_vel_1:
     type: cmd_vel
-    duration: 2.75
+    duration: 2.75 # 2.75
     cmd_vel:
-        x: 1.0
-        y: -0.4
+        x: 1.0 #1.0
+        y: -0.4 # -0.4
         z: 0.0
 cmd_vel_1_reverse:
     type: cmd_vel
-    duration: 2.85
+    duration: 2.85 # 2.85
     cmd_vel:
         x: -1.0
         y: 0.4
@@ -211,6 +211,10 @@ path_to_trench_after_drive_back:
         points:
             - [-2.3, -1.69938, 0.0]
             - [-3.5, -1.69938, 0.0]
+
+pause_cmd_vel:
+    type: "pause"
+    duration: 1.5 #sec
 
 pause_2_sec:
     type: "pause"

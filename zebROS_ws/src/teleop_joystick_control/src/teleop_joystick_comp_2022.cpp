@@ -497,6 +497,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 		if (robot_is_disabled)
 		{
 			behavior_actions::AutoMode auto_mode_msg;
+			auto_mode_msg.header.stamp = ros::Time::now();
 			auto_mode_msg.auto_mode = 1;
 			auto_mode_select_pub.publish(auto_mode_msg);
 		}
@@ -513,6 +514,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 		if (robot_is_disabled)
 		{
 			behavior_actions::AutoMode auto_mode_msg;
+			auto_mode_msg.header.stamp = ros::Time::now();
 			auto_mode_msg.auto_mode = 2;
 			auto_mode_select_pub.publish(auto_mode_msg);
 		}
