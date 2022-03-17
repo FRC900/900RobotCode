@@ -2,6 +2,7 @@
 #include <ros/ros.h>
 #include <behavior_actions/AutoMode.h> //msg file
 #include <behavior_actions/AutoState.h> //msg file
+#include "geometry_msgs/Twist.h"
 #include <std_srvs/Empty.h>
 #include <frc_msgs/MatchSpecificData.h>
 
@@ -206,7 +207,7 @@ void shutdownNode(AutoStates state, const std::string &msg)
 bool readStringParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, std::string &val)
 {
 	if (!params.hasMember(param_name))
-		return true;
+		return false;
 	XmlRpc::XmlRpcValue &param = params[param_name];
 	if (!param.valid())
 		throw std::runtime_error(param_name + " was not a valid string type");
@@ -217,13 +218,13 @@ bool readStringParam(const std::string &param_name, XmlRpc::XmlRpcValue &params,
 	}
 	throw std::runtime_error("A non-string value was read for" + param_name);
 
-	return true;
+	return false;
 }
 
 bool readIntParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, int &val)
 {
 	if (!params.hasMember(param_name))
-		return true;
+		return false;
 	XmlRpc::XmlRpcValue &param = params[param_name];
 	if (!param.valid())
 		throw std::runtime_error(param_name + " was not a valid int type");
@@ -235,14 +236,14 @@ bool readIntParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, in
 	else
 		throw std::runtime_error("A non-double value was read for" + param_name);
 
-	return true;
+	return false;
 }
 
 
 bool readFloatParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, double &val)
 {
 	if (!params.hasMember(param_name))
-		return true;
+		return false;
 	XmlRpc::XmlRpcValue &param = params[param_name];
 	if (!param.valid())
 		throw std::runtime_error(param_name + " was not a valid double type");
@@ -259,7 +260,7 @@ bool readFloatParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, 
 	else
 		throw std::runtime_error("A non-double value was read for" + param_name);
 
-	return true;
+	return false;
 }
 
 bool extractFloatVal(XmlRpc::XmlRpcValue &param, double &val)
@@ -279,13 +280,13 @@ bool extractFloatVal(XmlRpc::XmlRpcValue &param, double &val)
 	else
 		throw std::runtime_error("A non-double value was read for value");
 
-	return true;
+	return false;
 }
 
 bool readBoolParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, bool &val)
 {
 	if (!params.hasMember(param_name))
-		return true;
+		return false;
 	XmlRpc::XmlRpcValue &param = params[param_name];
 	if (!param.valid())
 		throw std::runtime_error(param_name + " was not a valid bool type");
@@ -297,7 +298,7 @@ bool readBoolParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, b
 	else
 		throw std::runtime_error("A non-bool value was read for" + param_name);
 
-	return true;
+	return false;
 }
 
 bool waitForAutoEnd() // returns true if no errors
@@ -482,10 +483,16 @@ int main(int argc, char** argv)
 	ros::init(argc, argv, "auto_node");
 	ros::NodeHandle nh;
 
-	std::map<std::string, std::string> service_connection_header;
-	service_connection_header["tcp_nodelay"] = "1";
+	const std::map<std::string, std::string> service_connection_header{{"tcp_nodelay", "1"}};
 	spline_gen_cli_ = nh.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen", false, service_connection_header);
-	spline_gen_cli_.waitForExistence(ros::Duration(30.0));
+
+	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+	ros::ServiceClient brake_srv = nh.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
+
+	if (!spline_gen_cli_.waitForExistence(ros::Duration(15.0)))
+	{
+		ROS_ERROR("Wait (15 sec) timed out, for Spline Gen Service in auto_node");
+	}
 
 	//subscribers
 	//rio match data (to know if we're in auto period)
@@ -554,9 +561,13 @@ int main(int argc, char** argv)
 				//figure out what to do based on the action type, and do it
 				std::string action_data_type;
 				if (action_data.hasMember("type"))
+				{
 					action_data_type = static_cast<std::string>(action_data["type"]);
+				}
 				else
-					action_data_type = "path"; // assume this is a dynamic path, hope for the best
+				{
+					ROS_ERROR_STREAM("Data for action " << auto_steps[i] << " missing 'type' field");
+				}
 
 				if(action_data_type == "pause")
 				{
@@ -640,6 +651,94 @@ int main(int argc, char** argv)
 						waitForActionlibServer(path_ac, 100, "running path");
 						iteration_value --;
 					}
+				}
+				else if(action_data_type == "cmd_vel")
+				{
+#if 0 // doesn't work in sim
+					if(!brake_srv.waitForExistence(ros::Duration(15)))
+					{
+						ROS_ERROR("Wait (15 sec) timed out, for Brake Service in auto_node");
+						break;
+					}
+#endif
+
+					double duration_secs;
+
+					if (!action_data.hasMember("duration"))
+					{
+						ROS_ERROR_STREAM("Auto action " << auto_steps[i] << " missing 'duration' field");
+						break;
+					}
+					if (!readFloatParam("duration", action_data, duration_secs))
+					{
+						ROS_ERROR_STREAM("Auto action " << auto_steps[i] << " error reading 'duration' field");
+						break;
+					}
+					if (!action_data.hasMember("cmd_vel"))
+					{
+						ROS_ERROR_STREAM("Auto action " << auto_steps[i] << " missing 'cmd_vel' field");
+						break;
+					}
+					XmlRpc::XmlRpcValue cmd_vel_data = action_data["cmd_vel"];
+					geometry_msgs::Twist cmd_vel;
+					cmd_vel.linear.z = 0;
+					cmd_vel.angular.x = 0;
+					cmd_vel.angular.y = 0;
+
+					if (!cmd_vel_data.hasMember("x"))
+					{
+						ROS_ERROR_STREAM("Auto action " << auto_steps[i] << " missing cmd_vel 'x' field");
+						break;
+					}
+					if (!readFloatParam("x", cmd_vel_data, cmd_vel.linear.x))
+					{
+						ROS_ERROR_STREAM("Auto action " << auto_steps[i] << " error reading cmd_vel 'x' field");
+						break;
+					}
+					if (!cmd_vel_data.hasMember("y"))
+					{
+						ROS_ERROR_STREAM("Auto action " << auto_steps[i] << " missing cmd_vel 'y' field");
+						break;
+					}
+					if (!readFloatParam("y", cmd_vel_data, cmd_vel.linear.y))
+					{
+						ROS_ERROR_STREAM("Auto action " << auto_steps[i] << " error reading cmd_vel 'y' field");
+						break;
+					}
+					if (!cmd_vel_data.hasMember("z"))
+					{
+						ROS_ERROR_STREAM("Auto action " << auto_steps[i] << " missing cmd_vel 'z' field");
+						break;
+					}
+					if (!readFloatParam("z", cmd_vel_data, cmd_vel.angular.z))
+					{
+						ROS_ERROR_STREAM("Auto action " << auto_steps[i] << " error reading cmd_vel 'z' field");
+						break;
+					}
+					ROS_INFO_STREAM("Auto action cmd_vel x = " << cmd_vel.linear.x <<
+							" y = " << cmd_vel.linear.y <<
+							" z = " << cmd_vel.angular.z <<
+							" for " << duration_secs << " seconds");
+
+					const ros::Duration duration(duration_secs);
+					const ros::Time start_time = ros::Time::now();
+					ros::Rate rate(25);
+
+					while (ros::ok() && !auto_stopped && ((ros::Time::now() - start_time) < duration))
+					{
+						cmd_vel_pub.publish(cmd_vel);
+						rate.sleep();
+					}
+					cmd_vel.linear.x = 0;
+					cmd_vel.linear.y = 0;
+					cmd_vel.angular.z = 0;
+					cmd_vel_pub.publish(cmd_vel);
+					std_srvs::Empty empty;
+					if (!brake_srv.call(empty))
+					{
+						ROS_ERROR_STREAM("BrakeSrv call failed in auto cmd_vel step " << auto_steps[i]);
+					}
+					ROS_INFO_STREAM("Auto action " << auto_steps[i] << " finished");
 				}
 				else
 				{
