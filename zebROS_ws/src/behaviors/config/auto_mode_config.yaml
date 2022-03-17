@@ -5,9 +5,8 @@
 # format: auto_mode_[integer]: array
 #
 auto_mode_1: ["shoot", "start_intaking", "cmd_vel_1", "stop_intaking", "cmd_vel_1_reverse", "shoot"]
+auto_mode_2: ["shoot", "start_intaking", "cmd_vel_2", "stop_intaking", "cmd_vel_2_reverse", "shoot"]
 #auto_mode_1: ["shoot", "start_intaking", "pause_2_sec", "stop_intaking"]
-auto_mode_2: ["shoot", "drive_forward"]
-auto_mode_3: ["drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_left_hub", "stop_intaking", "shoot", "drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
 
@@ -32,17 +31,32 @@ auto_mode_3: ["drive_forward"]
 
 cmd_vel_1:
     type: cmd_vel
-    duration: 2.5
+    duration: 2.75
     cmd_vel:
         x: 1.0
         y: -0.4
         z: 0.0
 cmd_vel_1_reverse:
     type: cmd_vel
-    duration: 2.6
+    duration: 2.85
     cmd_vel:
         x: -1.0
         y: 0.4
+        z: 0.0
+
+cmd_vel_2:
+    type: cmd_vel
+    duration: 2.75
+    cmd_vel:
+        x: 1.0
+        y: 0.4
+        z: 0.0
+cmd_vel_2_reverse:
+    type: cmd_vel
+    duration: 2.85
+    cmd_vel:
+        x: -1.0
+        y: -0.4
         z: 0.0
 
 tuning:

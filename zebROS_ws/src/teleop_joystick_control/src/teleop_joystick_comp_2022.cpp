@@ -30,6 +30,7 @@
 #include "teleop_joystick_control/TeleopJoystickCompDiagnostics2022Config.h"
 
 #include "teleop_joystick_control/TeleopCmdVel.h"
+#include "behavior_actions/AutoMode.h"
 #include "behavior_actions/Climb2022Action.h"
 #include "behavior_actions/Shooting2022Action.h"
 #include "behavior_actions/Intaking2022Action.h"
@@ -60,6 +61,10 @@ ros::Publisher JoystickRobotVel;
 ros::ServiceClient BrakeSrv;
 
 double imu_angle;
+
+
+bool robot_is_disabled{false};
+ros::Publisher auto_mode_select_pub;
 
 bool joystick1_left_trigger_pressed = false;
 bool joystick1_right_trigger_pressed = false;
@@ -486,32 +491,34 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	// Auto-mode select?
 	if(button_box.bottomSwitchUpPress)
 	{
-
 	}
 	if(button_box.bottomSwitchUpButton)
 	{
-
-	}
-	if(button_box.bottomSwitchDownButton)
-	{
-
+		if (robot_is_disabled)
+		{
+			behavior_actions::AutoMode auto_mode_msg;
+			auto_mode_msg.auto_mode = 1;
+			auto_mode_select_pub.publish(auto_mode_msg);
+		}
 	}
 	if(button_box.bottomSwitchUpRelease)
 	{
-
 	}
 
 	if(button_box.bottomSwitchDownPress)
 	{
-
 	}
 	if(button_box.bottomSwitchDownButton)
 	{
-
+		if (robot_is_disabled)
+		{
+			behavior_actions::AutoMode auto_mode_msg;
+			auto_mode_msg.auto_mode = 2;
+			auto_mode_select_pub.publish(auto_mode_msg);
+		}
 	}
 	if(button_box.bottomSwitchDownRelease)
 	{
-
 	}
 
 	last_header_stamp = button_box.header.stamp;
@@ -1027,6 +1034,7 @@ void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 {
 	// TODO : if in diagnostic mode, zero all outputs on the
 	// transition from enabled to disabled
+	robot_is_disabled = msg.Disabled;
 }
 
 int main(int argc, char **argv)
@@ -1118,6 +1126,8 @@ int main(int argc, char **argv)
 
 	ros::Subscriber match_state_sub = n.subscribe("/frcrobot_rio/match_data", 1, matchStateCallback);
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
+
+	auto_mode_select_pub = n.advertise<behavior_actions::AutoMode>("/auto/auto_mode", 1, true);
 
 	climb_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Climb2022Action>>("/climber/climb_server_2022", true);
 	shooting_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Shooting2022Action>>("/shooting/shooting_server_2022", true);
