@@ -101,15 +101,19 @@ dynamic_arm_controller:
   dynamic_arm_max_current_iterations: 10
   dynamic_arm_current_threshold: 10.0
 
-  motion_magic_velocity_veryfast: 1.0
+  # extending
+  motion_magic_velocity_veryfast: 0.8 # was 1.0, slowing down for first few matches
   motion_magic_acceleration_veryfast: 2.0
 
-  motion_magic_velocity_fast: 0.42
+  # retracting
+  motion_magic_velocity_fast: 0.35 # was 0.42, slowing down for first few matches
   motion_magic_acceleration_fast: 1.0
 
-  motion_magic_velocity_traversal: 0.3
+  # retracting to traversal
+  motion_magic_velocity_traversal: 0.2 # was 0.3
   motion_magic_acceleration_traversal: 1.0
 
+  # dynamic hooks -> static hooks
   motion_magic_velocity_slow: 0.1
   motion_magic_acceleration_slow: 1.0
 
