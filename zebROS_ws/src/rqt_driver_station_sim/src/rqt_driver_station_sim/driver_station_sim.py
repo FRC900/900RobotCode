@@ -321,7 +321,6 @@ class DriverStationSim(Plugin):
                 auto_mode_msg = AutoMode()
                 auto_mode_msg.header.stamp = rospy.Time.now()
                 auto_mode_msg.auto_mode = int(self._widget.auto_mode_text.text())
-                auto_mode_msg.distance_from_wall = float(self._widget.distance_from_wall_text.text())
                 auto_mode_pub.publish(auto_mode_msg)
 
                 r.sleep()
