@@ -299,8 +299,10 @@ swerve_drive_controller:
     steering_joint_bl:
         joint: bl_angle
         feedback_type: RemoteSensor0
-        remote_feedback_filter0: CANCoder
-        remote_feedback_device_id0: 13
+        remote_feedback_filter0: TalonSRX_SelectedSensor
+        remote_feedback_device_id0: 3
+        ticks_per_rotation: 4096
+        
         neutral_deadband: 0.01
         close_loop_values:
             - {p: 2.25, i: 0.000, d: 4.0, f: 0.28, i_zone: 0}

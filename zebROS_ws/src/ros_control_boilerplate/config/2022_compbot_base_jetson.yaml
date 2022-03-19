@@ -57,6 +57,7 @@ hardware_interface:
        - {name: br_angle, type: can_talon_fx, can_id: 14, local: true}
        - {name: bl_drive, type: can_talon_fx, can_id: 23, local: true}
        - {name: bl_angle, type: can_talon_fx, can_id: 13, local: true}
+       - {name: bl_angle_encoder, type: can_talon_srx, can_id: 3, local: true}
        # - {name: pdh, type: pdh}
        # - {name: pcm, type: pcm, pcm_id: 0}
 
@@ -346,6 +347,21 @@ indexer_straight_motor_controller:
     voltage_compensation_Enable: True
     voltage_compensation_saturation: 12
     neutral_mode: Brake
+    status_1_general_period: 100 # Default = 10
+    status_2_feedback0_period: 100 # Default = 20
+    status_3_quadrature_period: 250
+    #status_4_aintempvbat_period: 160
+    #status_6_misc_period: 0
+    #status_7_commstatus_period: 0
+    status_8_pulsewidth_period: 250
+    status_9_motprofbuffer_period: 250
+    status_10_motionmagic_period: 250
+    #status_11_uartgadgeteer_period: 250
+    #status_12_feedback1_period: 250
+    status_13_base_pidf0_period: 250
+    #status_14_turn_pidf1_period: 250
+    status_15_firmwareapistatus_period: 250
+    #status_17_brushless_current_period: 50
 
 indexer_arc_motor_controller:
     type: talon_controllers/TalonPercentOutputController
@@ -356,6 +372,21 @@ indexer_arc_motor_controller:
     voltage_compensation_Enable: True
     voltage_compensation_saturation: 12
     neutral_mode: Brake
+    status_1_general_period: 100 # Default = 10
+    status_2_feedback0_period: 100 # Default = 20
+    status_3_quadrature_period: 250
+    #status_4_aintempvbat_period: 160
+    #status_6_misc_period: 0
+    #status_7_commstatus_period: 0
+    status_8_pulsewidth_period: 250
+    status_9_motprofbuffer_period: 250
+    status_10_motionmagic_period: 250
+    #status_11_uartgadgeteer_period: 250
+    #status_12_feedback1_period: 250
+    status_13_base_pidf0_period: 250
+    #status_14_turn_pidf1_period: 250
+    status_15_firmwareapistatus_period: 250
+    #status_17_brushless_current_period: 50
 
 climber_motion_magic_controller:
     type: talon_controllers/TalonMotionMagicCloseLoopController
@@ -386,3 +417,26 @@ climber_follower_controller:
   neutral_mode: Brake
   voltage_compensation_enable: true
   voltage_compensation_saturation: 12
+
+
+bl_angle_encoder_controller:
+    type: talon_controllers/TalonPercentOutputController
+    joint: bl_angle_encoder
+    feedback_type: CTRE_MagEncoder_Relative
+    ticks_per_rotation: 4096
+    dynamic_reconfigure: True
+    status_1_general_period: 100 # Default = 10
+    #status_2_feedback0_period: 100 # Default = 20
+    status_3_quadrature_period: 250
+    #status_4_aintempvbat_period: 160
+    #status_6_misc_period: 0
+    #status_7_commstatus_period: 0
+    status_8_pulsewidth_period: 250
+    status_9_motprofbuffer_period: 250
+    status_10_motionmagic_period: 250
+    #status_11_uartgadgeteer_period: 250
+    #status_12_feedback1_period: 250
+    status_13_base_pidf0_period: 250
+    #status_14_turn_pidf1_period: 250
+    status_15_firmwareapistatus_period: 250
+    #status_17_brushless_current_period: 50

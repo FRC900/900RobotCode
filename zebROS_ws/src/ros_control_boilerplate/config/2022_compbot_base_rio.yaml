@@ -1,7 +1,7 @@
 # ros_control_boilerplate Settings -----------------------
 # Settings for ros_control control loop
 generic_hw_control_loop:
-  loop_hz: 100
+  loop_hz: 50 # 100
   cycle_time_error_threshold: 0.01
   canifier_read_hz: 100
   cancoder_read_hz: 100
@@ -13,9 +13,9 @@ generic_hw_control_loop:
   ph_read_hz: 20
   robot_iteration_hz: 20
   spark_max_read_hz: 20
-  joystick_read_hz: 50
-  match_data_read_hz: 2
-  robot_controller_read_hz: 20
+  joystick_read_hz: 20 # 50
+  match_data_read_hz: 1 # 2
+  robot_controller_read_hz: 10 # 20
   as726x_read_hz: 7
 
 # Settings for ros_control hardware interface
@@ -103,7 +103,7 @@ robot_controller_state_controller:
 joystick_controller:
     type: joystick_state_controller/JoystickStateController
     name: joystick0
-    publish_rate: 50
+    publish_rate: 25
 
 joystick2_controller:
     type: joystick_state_controller/JoystickStateController
@@ -113,4 +113,4 @@ joystick2_controller:
 button_box_controller:
     type: button_box_state_controller/ButtonBoxStateController
     name: button_box
-    publish_rate: 50
+    publish_rate: 25

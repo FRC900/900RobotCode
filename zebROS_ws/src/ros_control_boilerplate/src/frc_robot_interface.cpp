@@ -658,6 +658,7 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw
 			"\trobot_controller_read : " << robot_controller_read_hz_);
 
 #ifdef __linux__
+#if 0
 	struct sched_param schedParam{};
 
 	schedParam.sched_priority = sched_get_priority_min(SCHED_RR);
@@ -672,6 +673,7 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw
 	{
 		ROS_INFO_STREAM("pthread_setschedparam() succeeded");
 	}
+#endif
 	if (pthread_setname_np(pthread_self(), "hwi_main_loop"))
 	{
 		ROS_ERROR_STREAM("Error setting thread name hwi_main_loop " << errno);
@@ -971,8 +973,10 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 				// In sim, the joystick input code will lock this mutex while
 				// it is writing the sim joystick values. If that is in progress
 				// skip the read of the joystick data this iteration
+#ifdef JOYSTICK_LOCK
 				std::unique_lock<std::mutex> l(*(joystick_sim_write_mutex_[joystick]), std::try_to_lock);
 				if (l.owns_lock())
+#endif
 				{
 #if 0
 					ROS_INFO_STREAM_THROTTLE(0.25, "Reading joystick index " << joystick <<
@@ -982,17 +986,22 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 					auto &state = joystick_state_[joystick];
 					const auto &stick = joysticks_[joystick];
 					state.clear();
-					for (auto i = 0; i < stick->GetAxisCount(); i++)
+					const auto axis_count = stick->GetAxisCount();
+					for (auto i = 0; i < axis_count; i++)
 						state.addAxis(stick->GetRawAxis(i));
-					for (auto i = 0; i < stick->GetButtonCount(); i++)
+					const auto button_count = stick->GetButtonCount();
+					for (auto i = 0; i < button_count; i++)
 						state.addButton(stick->GetRawButton(i+1));
-					for (auto i = 0; i < stick->GetPOVCount(); i++)
+					const auto pov_count = stick->GetPOVCount();
+					for (auto i = 0; i < pov_count; i++)
 						state.addPOV(stick->GetPOV(i));
 				}
+#ifdef JOYSTICK_LOCK
 				else
 				{
 					updated_all = false;
 				}
+#endif
 			}
 			if (updated_all)
 				t_prev_joystick_read_ += 1./joystick_read_hz_;
@@ -1001,7 +1010,9 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		int32_t status = 0;
 		read_tracer_.start_unique("match data");
 		//check if sufficient time has passed since last read
+#ifdef MATCH_DATA_LOCK
 		if (match_data_mutex_.try_lock())
+#endif
 		{
 			if(time.toSec() - t_prev_match_data_read_ > (1./match_data_read_hz_))
 			{
@@ -1074,7 +1085,9 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 			match_data_.setDSAttached(controlWord.dsAttached);
 			match_data_.setFMSAttached(controlWord.fmsAttached);
 			match_data_.setEStopped(controlWord.eStop);
+#ifdef MATCH_DATA_LOCK
 			match_data_mutex_.unlock();
+#endif
 		}
 
 		read_tracer_.start_unique("robot controller data");
