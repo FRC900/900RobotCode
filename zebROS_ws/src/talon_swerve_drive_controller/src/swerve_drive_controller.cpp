@@ -376,7 +376,12 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 			ROS_ERROR_STREAM("Can not read offset for " << *it);
 			return false;
 		}
+		ROS_INFO_STREAM("SWERVE: offsets for " << *it << " is " << dbl_val);
 		offsets.push_back(dbl_val);
+	}
+	for (const auto o : offsets)
+	{
+		ROS_INFO_STREAM("\t SWERVE: offset = " << o);
 	}
 
 	profile_queue_num_.init(controller_nh, "profile_queue_num", 1);

@@ -698,6 +698,7 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 												 double setpoint, double fTerm,
 												 int joint_id, int pidSlot, bool zeroPos)
 {
+	return;
 	auto &tc = talon_command_[joint_id];
 	if(zeroPos)
 	{
@@ -732,6 +733,8 @@ void FRCRobotInterface::custom_profile_set_talon(hardware_interface::TalonMode m
 // interpolated from it
 void FRCRobotInterface::custom_profile_write(int joint_id)
 {
+	return;
+
 	// Don't run if the talon isn't local
 	if (!can_ctre_mc_local_hardwares_[joint_id])
 	{
@@ -1458,7 +1461,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		if (!talon_command_[joint_id].try_lock())
 			continue;
 
-		custom_profile_write(joint_id);
+		//custom_profile_write(joint_id);
 
 		//TODO : skip over most or all of this if the talon is in follower mode
 		//       Only do the Set() call and then never do anything else?
@@ -1910,7 +1913,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			if (safeTalonCall(victor->SetSelectedSensorPosition(sensor_position / radians_scale, pidIdx, timeoutMs),
 						"SetSelectedSensorPosition", ts.getCANID()))
 			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " selected sensor position");
+				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " selected sensor position to " << sensor_position / radians_scale);
 			}
 			else
 			{

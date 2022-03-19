@@ -422,9 +422,10 @@ climber_follower_controller:
 bl_angle_encoder_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: bl_angle_encoder
-    feedback_type: CTRE_MagEncoder_Relative
+    feedback_type: CTRE_MagEncoder_Absolute
+    sensor_initialization_strategy: BootToAbsolutePosition
     ticks_per_rotation: 4096
-    dynamic_reconfigure: True
+    dynamic_reconfigure: False
     status_1_general_period: 100 # Default = 10
     #status_2_feedback0_period: 100 # Default = 20
     status_3_quadrature_period: 250
