@@ -382,6 +382,7 @@ public:
       exited = true;
       state = 0;
       rung = 0;
+      driven_backwards_ = false;
       nextFunction_ = boost::bind(&ClimbStateMachine::state1, this);
       ROS_INFO_STREAM("2022_climb_server : RESET STATE");
       return;
@@ -506,6 +507,17 @@ public:
       ROS_ERROR_STREAM("2022_climb_server : failed to call dynamic arm service. Aborting.");
       exited = true;
       return;
+    }
+
+    ros::Rate r(100);
+    while(fabs(talon_states_.position[leaderIndex] - srv.request.data) > 0.01) // wait
+    {
+      r.sleep();
+      ros::spinOnce();
+      if (as_.isPreemptRequested() || !ros::ok()) {
+        exited = true;
+        return;
+      }
     }
 
     ROS_INFO_STREAM("2022_climb_server : confirming static hooks are still attached");
