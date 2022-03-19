@@ -521,7 +521,7 @@ public:
     }
 
     ROS_INFO_STREAM("2022_climb_server : confirming static hooks are still attached");
-    ros::Rate r(100); // 100 Hz loop
+    // ros::Rate r(100); // 100 Hz loop
     int counter = 0;
     while (!(s1_ls && s2_ls)) {
       ROS_INFO_STREAM_THROTTLE(0.25, "2022_climb_server : waiting to hit static hook limit switches");
