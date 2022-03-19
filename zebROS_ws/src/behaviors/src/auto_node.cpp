@@ -22,7 +22,6 @@
 #include "std_msgs/Bool.h"
 //VARIABLES ---------------------------------------------------------
 int auto_mode = -1; //-1 if nothing selected
-double distance_from_center = 0.0; // distance from robot to center of goal; left is positive, right is negative
 std::vector<std::string> auto_steps; //stores string of action names to do, read from the auto mode array in the config file
 bool enable_teleop = false;
 bool auto_started = false; //set to true when enter auto time period
