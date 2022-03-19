@@ -176,6 +176,14 @@ public:
     - State 9: encoder
     Total: encoder, limit switch at bottom, limit switches on dynamic and static hooks
   */
+  template <typename T>
+  bool make_sure_publish(ros::Publisher p, T msg) {
+    ros::Rate r(200);
+    for (int i = 0; i < 10; i++) {
+      p.publish(msg);
+      r.sleep();
+    }
+  }
   void state1()
   {
     state = 1;
@@ -184,7 +192,7 @@ public:
     ROS_INFO_STREAM("2022_climb_server : Opening static hooks...");
     std_msgs::Float64 spMsg;
     spMsg.data = STATIC_HOOK_OPEN;
-    static_hook_piston_.publish(spMsg);
+    make_sure_publish(static_hook_piston_, spMsg);
     if (sleepCheckingForPreempt(piston_wait_time_)) return; // wait for pistons
     ROS_INFO_STREAM("2022_climb_server : Opened");
     ROS_INFO_STREAM("");
@@ -203,7 +211,7 @@ public:
     }
     std_msgs::Float64 dpMsg;
     dpMsg.data = DYNAMIC_ARM_UPRIGHT;
-    dynamic_arm_piston_.publish(dpMsg);
+    make_sure_publish(dynamic_arm_piston_, dpMsg);
     if (sleepCheckingForPreempt(piston_wait_time_)) return;
     ROS_INFO_STREAM("2022_climb_server : zeroing dynamic arms");
     std_srvs::Trigger srv;
@@ -296,7 +304,7 @@ public:
       }
       std_msgs::Float64 dpMsg;
       dpMsg.data = DYNAMIC_ARM_UPRIGHT;
-      dynamic_arm_piston_.publish(dpMsg);
+      make_sure_publish(dynamic_arm_piston_, dpMsg);
       if (sleepCheckingForPreempt(piston_wait_time_)) return;
       ROS_INFO_STREAM("2022_climb_server : Extended dynamic arm pistons");
     }
@@ -358,7 +366,7 @@ public:
         // open hooks
         std_msgs::Float64 spMsg;
         spMsg.data = STATIC_HOOK_OPEN;
-        static_hook_piston_.publish(spMsg);
+        make_sure_publish(static_hook_piston_, spMsg);
         ROS_INFO_STREAM("2022_climb_server : Detached static hooks.");
         ROS_INFO_STREAM("");
         opened_hooks = true;
@@ -403,7 +411,7 @@ public:
     }
     std_msgs::Float64 spMsg;
     spMsg.data = STATIC_HOOK_CLOSED;
-    static_hook_piston_.publish(spMsg);
+    make_sure_publish(static_hook_piston_, spMsg);
     if (sleepCheckingForPreempt(piston_wait_time_)) return;
     ROS_INFO_STREAM("2022_climb_server : Attached static hooks");
     ROS_INFO_STREAM("");
@@ -559,7 +567,7 @@ public:
     }
     std_msgs::Float64 dpMsg;
     dpMsg.data = DYNAMIC_ARM_TILTED;
-    dynamic_arm_piston_.publish(dpMsg);
+    make_sure_publish(dynamic_arm_piston_, dpMsg);
     if (sleepCheckingForPreempt(piston_wait_time_)) return;
     ROS_INFO_STREAM("2022_climb_server : Retracted dynamic arm pistons");
     ROS_INFO_STREAM("");
