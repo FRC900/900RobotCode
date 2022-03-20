@@ -346,8 +346,22 @@ public:
     ros::Rate r(100);
     bool opened_hooks = false;
     while (fabs(talon_states_.speed[leaderIndex]) < fabs(get_to_zero_percent_output_)) {
+	  ROS_INFO_STREAM_THROTTLE(0.2, "2022 Clib server waiting to get up to speed");
       r.sleep();
       ros::spinOnce();
+      if (!opened_hooks && (talon_states_.position[leaderIndex] <= static_hook_release_height_) && !s1_ls && !s2_ls) { // if hooks haven't been opened, height < hook release height, and both hooks aren't touching anything,
+        // open hooks
+        std_msgs::Float64 spMsg;
+        spMsg.data = STATIC_HOOK_OPEN;
+        make_sure_publish(static_hook_piston_, spMsg);
+        ROS_INFO_STREAM("2022_climb_server : Detached static hooks.");
+        ROS_INFO_STREAM("");
+        opened_hooks = true;
+      }
+      if (as_.isPreemptRequested() || !ros::ok()) {
+        exited = true;
+        return;
+      }
       // wait for motors to go up to speed to not fail check in <this line + 6 lines>
     }
     while(!talon_states_.reverse_limit_switch[leaderIndex]) // wait
@@ -362,6 +376,13 @@ public:
         srv.request.profile = srv.request.RETRACT;
         dynamic_arm_.call(srv);
       }
+#if 0
+	  ROS_INFO_STREAM("opened_hooks = " << static_cast<int>(opened_hooks) <<
+			  " talon_states_.position[leaderIndex] " << talon_states_.position[leaderIndex] <<
+			  " static_hook_release_height_ = " << static_hook_release_height_ <<
+			  " s1_ls = " << s1_ls  <<
+			  " s2_ls = " << s2_ls);
+#endif
       if (!opened_hooks && (talon_states_.position[leaderIndex] <= static_hook_release_height_) && !s1_ls && !s2_ls) { // if hooks haven't been opened, height < hook release height, and both hooks aren't touching anything,
         // open hooks
         std_msgs::Float64 spMsg;

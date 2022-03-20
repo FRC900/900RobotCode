@@ -898,7 +898,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
 			}
 
-			if ((time.toSec() - time_before_brake) > .5)
+			if ((time.toSec() - time_before_brake) > .75)
 			{
 				brake();
 				neutral_mode = hardware_interface::NeutralMode::NeutralMode_Brake;
@@ -952,7 +952,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		// Small delay coming out of parking mode before running
 		// speed motors to hopefully let the angle motors get
 		// to position
-		if (((time.toSec() - .1) > brake_last) || ((time.toSec() - .1) > mode_last_time))
+		if (((time.toSec() - .25) > brake_last) || ((time.toSec() - .25) > mode_last_time))
 		{
 			for (size_t i = 0; i < WHEELCOUNT; ++i)
 			{
