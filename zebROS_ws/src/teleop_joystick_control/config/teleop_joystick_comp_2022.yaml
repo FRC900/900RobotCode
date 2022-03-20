@@ -8,8 +8,8 @@ teleop_params:
     joystick_pow: 2
     rotation_pow: 3     #Scaling factors used in teleop_joystick_comp
     joystick_deadzone: 0.125
-    drive_rate_limit_time: 1000
-    rotate_rate_limit_time: 1000
+    drive_rate_limit_time: 1250
+    rotate_rate_limit_time: 1250
     climber_align_angle: 3.14159265 # Intake facing DS wall
     trigger_threshold: 0.5
     stick_threshold: 0.5
