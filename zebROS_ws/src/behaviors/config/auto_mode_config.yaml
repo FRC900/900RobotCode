@@ -31,16 +31,16 @@ auto_mode_2: ["shoot", "start_intaking", "cmd_vel_2", "pause_cmd_vel", "stop_int
 
 cmd_vel_1:
     type: cmd_vel
-    duration: 2.75 # 2.75
+    duration: 2.75
     cmd_vel:
         x: 1.0 #1.0
         y: -0.4 # -0.4
         z: 0.0
 cmd_vel_1_reverse:
     type: cmd_vel
-    duration: 2.50 # 2.85
+    duration: 2.85
     cmd_vel:
-        x: -1.0
+        x: -1.05
         y: 0.4
         z: 0.0
 
@@ -53,9 +53,9 @@ cmd_vel_2:
         z: 0.0
 cmd_vel_2_reverse:
     type: cmd_vel
-    duration: 2.50
+    duration: 2.85
     cmd_vel:
-        x: -1.0
+        x: -1.05
         y: -0.4
         z: 0.0
 

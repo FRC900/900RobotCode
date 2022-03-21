@@ -1,10 +1,10 @@
 teleop_params:
     num_joysticks: 2
     max_rot: 6.0
-    max_rot_slow: 3.0
+    max_rot_slow: 2.0
     min_speed: 0.0  # Smallest linear speed which get the robot moving at all
     max_speed: 3.0
-    max_speed_slow: 1.5
+    max_speed_slow: 1.00
     joystick_pow: 2
     rotation_pow: 3     #Scaling factors used in teleop_joystick_comp
     joystick_deadzone: 0.125

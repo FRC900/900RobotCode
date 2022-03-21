@@ -639,13 +639,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: bumperLeft
 			if(joystick_states_array[0].bumperLeftPress)
 			{
-
+				teleop_cmd_vel->setSlowMode(true);
 			}
 			if(joystick_states_array[0].bumperLeftButton)
 			{
 			}
 			if(joystick_states_array[0].bumperLeftRelease)
 			{
+				teleop_cmd_vel->setSlowMode(false);
 			}
 
 			//Joystick1: bumperRight

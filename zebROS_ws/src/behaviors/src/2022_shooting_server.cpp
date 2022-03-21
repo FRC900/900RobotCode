@@ -183,7 +183,8 @@ public:
         success = false;
         break;
       }
-      ros::Duration(0.5).sleep();
+	  // TODO - only if ball count > 1
+      ros::Duration(0.75).sleep();
 	  ros::spinOnce(); // update ball count, hopefully
     }
 
