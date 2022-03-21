@@ -6,8 +6,9 @@
 #include "talon_state_msgs/TalonState.h"
 
 #define SHOOTER_INFO(x) ROS_INFO_STREAM("2022_shooter_server : " << x)
-#define SHOOTER_INFO_THROTTLE(d,x) ROS_INFO_STREAM_THROTTLE(d, "2022_shooter_server : " << x)
+#define SHOOTER_INFO_THROTTLE(d,x) ROS_INFO_STREAM_THROTTLE((d), "2022_shooter_server : " << x)
 #define SHOOTER_ERROR(x) ROS_ERROR_STREAM("2022_shooter_server : " << x)
+#define SHOOTER_ERROR_THROTTLE(d,x) ROS_ERROR_STREAM_THROTTLE((d), "2022_shooter_server : " << x)
 
 class ShooterAction2022
 {
@@ -69,39 +70,47 @@ public:
 
   void executeCB(const behavior_actions::Shooter2022GoalConstPtr &goal)
   {
-    SHOOTER_INFO("Shooter action called with mode " << std::to_string(goal->mode));
+    SHOOTER_INFO("Shooter action called with mode " << goal->mode);
+	std_msgs::Float64 msg;
+	double shooter_speed;
+	switch (goal->mode) {
+	  case behavior_actions::Shooter2022Goal::HIGH_GOAL:
+	    shooter_speed = high_goal_speed_;
+		break;
+	  case behavior_actions::Shooter2022Goal::LOW_GOAL:
+		shooter_speed = low_goal_speed_;
+		break;
+	  case behavior_actions::Shooter2022Goal::EJECT:
+		shooter_speed = eject_speed_;
+		break;
+	  default:
+		SHOOTER_ERROR("invalid goal mode (" << goal->mode << ")");
+		msg.data = 0;
+		shooter_command_pub_.publish(msg);
+		feedback_.close_enough = false;
+		as_.publishFeedback(feedback_);
+		// set the action state to preempted
+		as_.setPreempted();
+		return;
+	}
+	SHOOTER_INFO("Shooter speed setpoint = " << msg.data);
     ros::Rate r(100);
     while (ros::ok()) {
       ros::spinOnce();
-      std_msgs::Float64 msg;
       if (as_.isPreemptRequested() || !ros::ok())
       {
         msg.data = 0;
         shooter_command_pub_.publish(msg);
         feedback_.close_enough = false;
         as_.publishFeedback(feedback_);
-        ROS_INFO("%s: Preempted", action_name_.c_str());
+        SHOOTER_INFO(" : Preempted");
         // set the action state to preempted
         as_.setPreempted();
         break;
       }
-      switch (goal->mode) {
-        case behavior_actions::Shooter2022Goal::HIGH_GOAL:
-          feedback_.close_enough = fabs(high_goal_speed_ - fabs(current_speed_)) < error_margin_;
-          msg.data = high_goal_speed_ + speed_offset_;
-          shooter_command_pub_.publish(msg);
-          break;
-        case behavior_actions::Shooter2022Goal::LOW_GOAL:
-          feedback_.close_enough = fabs(low_goal_speed_ - fabs(current_speed_)) < error_margin_;
-          msg.data = low_goal_speed_ + speed_offset_;
-          shooter_command_pub_.publish(msg);
-          break;
-        case behavior_actions::Shooter2022Goal::EJECT:
-          feedback_.close_enough = fabs(eject_speed_ - fabs(current_speed_)) < error_margin_;
-          msg.data = eject_speed_ + speed_offset_;
-          shooter_command_pub_.publish(msg);
-          break;
-      }
+	  msg.data = shooter_speed + speed_offset_;
+	  shooter_command_pub_.publish(msg);
+	  feedback_.close_enough = fabs(shooter_speed - fabs(current_speed_)) < error_margin_;
       as_.publishFeedback(feedback_);
       r.sleep();
     }
@@ -115,7 +124,7 @@ public:
         return;
       }
     }
-    SHOOTER_ERROR("Couldn't find talon in /frcrobot_jetson/talon_states. :(");
+    SHOOTER_ERROR_THROTTLE(0.5, "Couldn't find shooter_leader talon in /frcrobot_jetson/talon_states. :(");
   }
 
   void speedOffsetCallback(const std_msgs::Float64 speed_offset_msg){
