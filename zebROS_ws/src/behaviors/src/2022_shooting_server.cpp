@@ -31,6 +31,8 @@ protected:
   ros::Subscriber cargo_state_sub_;
   uint8_t cargo_num_;
 
+  bool is_spinning_fast_;
+
 public:
 
   ShootingServer2022(std::string name) :
@@ -96,16 +98,15 @@ public:
     feedback_.state = feedback_.WAITING_FOR_SHOOTER;
     as_.publishFeedback(feedback_);
     ROS_INFO_STREAM("2022_shooting_server : spinning up shooter");
-    bool isSpinningFast = false;
     behavior_actions::Shooter2022Goal goal;
     goal.mode = low_goal ? goal.LOW_GOAL : goal.HIGH_GOAL;
     ac_shooter_.sendGoal(goal,
                          actionlib::SimpleActionClient<behavior_actions::Shooter2022Action>::SimpleDoneCallback(),
                          actionlib::SimpleActionClient<behavior_actions::Shooter2022Action>::SimpleActiveCallback(),
-                         [&isSpinningFast](const behavior_actions::Shooter2022FeedbackConstPtr &feedback){ isSpinningFast = feedback->close_enough; });
+                         [&](const behavior_actions::Shooter2022FeedbackConstPtr &feedback){ is_spinning_fast_ = feedback->close_enough; });
     ros::Rate r(100);
     ros::Time start = ros::Time::now();
-    while (ros::ok() && !isSpinningFast) {
+    while (ros::ok() && !is_spinning_fast_) {
       if ((ros::Time::now() - start).toSec() >= shooting_timeout_) {
         ROS_INFO_STREAM("2022_shooting_server : shooter timed out :(");
         timedOut = true;
@@ -121,6 +122,28 @@ public:
     ros::Duration(0.3).sleep();
     ROS_INFO_STREAM("2022_shooting_server : spun up shooter");
     return ros::ok();
+  }
+
+  bool waitForShooter(bool &timedOut) {
+    feedback_.state = feedback_.WAITING_FOR_SHOOTER;
+    as_.publishFeedback(feedback_);
+    ros::Rate r(100);
+    ros::Time start = ros::Time::now();
+    while (ros::ok() && !is_spinning_fast_) {
+      if ((ros::Time::now() - start).toSec() >= shooting_timeout_) {
+        ROS_INFO_STREAM("2022_shooting_server : wait for shooter timed out :(");
+        timedOut = true;
+        return false;
+      }
+      if (as_.isPreemptRequested()) {
+        ROS_INFO_STREAM("2022_shooting_server : preempted");
+        return false;
+      }
+      ros::spinOnce();
+      r.sleep();
+    }
+    ROS_INFO_STREAM("2022_shooting_server : shooter is spinning fast enough, continuing");
+    return true;
   }
 
   bool getCargoFromIndexer(bool &timedOut) { // returns false if ros is not ok or timed out, true otherwise
@@ -183,9 +206,18 @@ public:
         success = false;
         break;
       }
-	  // TODO - only if ball count > 1
+      if (goal->num_cargo == 2 && i == 0) {
+        shooterTimedOut = false;
+        if (waitForShooter(shooterTimedOut)) {
+          success = success && true;
+        } else {
+          result_.timed_out = shooterTimedOut;
+          success = false;
+          break;
+        }
+      }
       ros::Duration(0.75).sleep();
-	  ros::spinOnce(); // update ball count, hopefully
+	    ros::spinOnce(); // update ball count, hopefully
     }
 
     ac_shooter_.cancelGoal(); // stop shooter
