@@ -75,6 +75,9 @@
 #include "REVPDH.h"
 #include "tf2/LinearMath/Quaternion.h"                // for Quaternion
 
+#define JOYSTICK_LOCK
+#define MATCH_DATA_LOCK
+
 //PURPOSE: Stuff used by to run both hw and sim interfaces
 namespace ros_control_boilerplate
 {
