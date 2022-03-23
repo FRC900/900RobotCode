@@ -86,7 +86,7 @@ class PathAction
 
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
 		{
-			ROS_INFO_STREAM("odomCallback : msg = " << odom_msg);
+			//ROS_INFO_STREAM("odomCallback : msg = " << odom_msg);
 			if (!use_pose_for_odom_)
 				odom_ = odom_msg;
 			//odom_.pose.pose.position.y *= -1;
@@ -94,7 +94,7 @@ class PathAction
 
 		void poseCallback(const geometry_msgs::PoseStamped &pose_msg)
 		{
-			ROS_INFO_STREAM("poseCallback : msg = " << pose_msg);
+			//ROS_INFO_STREAM("poseCallback : msg = " << pose_msg);
 			pose_ = pose_msg;
 #if 0
 			pose_.pose.position.x *= -1; // TODO - the camera is mounted facing backwards
