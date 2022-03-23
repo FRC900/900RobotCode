@@ -2,6 +2,7 @@
 <launch>
 		<!-- allow us to hook up sim odom topics for stage sim testing -->
 		<arg name="odom_topic" default="/frcrobot_jetson/swerve_drive_controller/odom"/>
+		<arg name="pose_topic" default="/zed_objdetect/pose"/>
 		<arg name="use_pose_for_odom" default="true"/>
 		<arg name="year" default="2022"/>
 
@@ -10,6 +11,7 @@
 
 			<group ns="path_follower">
 				<param name="odom_topic" value="$(arg odom_topic)"/>
+				<param name="pose_topic" value="$(arg pose_topic)"/>
 				<param name="use_pose_for_odom" value="$(arg use_pose_for_odom)"/>
 			</group>
             <node name="path_follower_server" pkg="path_follower" type="path_follower_server" output="screen">

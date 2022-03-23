@@ -31,11 +31,17 @@ constexpr double pi = 3.14159;
 const std::string sub_topic = "imu/data";
 const std::string pub_topic = "zeroed_imu";
 const std::string service_name = "set_imu_zero";
+const std::string bias_service_name = "imu/bias_estimate";
+const std::string ukf_set_pose_name = "/swerve_imu_ukf/set_pose";
+const std::string zed_reset_odometry_name = "/zed_objdetect/reset_odometry";
+const std::string zed_reset_tracking_name = "/zed_objdetect/reset_tracking";
 ros::Publisher pub;
 tf2::Quaternion zero_rot;
 tf2::Quaternion last_raw;
 ros::ServiceClient bias_estimate;
 ros::ServiceClient ukf_zero_pos;
+ros::ServiceClient zed_reset_odometry;
+ros::ServiceClient zed_reset_tracking;
 
 
 double degToRad(double deg) {
@@ -58,6 +64,7 @@ bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
   tf2::Matrix3x3(last_raw).getRPY(roll, pitch, yaw);
 
   // takes zero angle in degrees, converts to radians
+  ROS_INFO_STREAM("Setting IMU zero angle = " << req.angle << " degrees");
   const double a = degToRad(req.angle);
 
   zero_rot.setRPY(0.0, 0.0, a - yaw);
@@ -68,6 +75,20 @@ bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
 	if (!bias_estimate.call(biasCall))
 		ROS_ERROR("imu_zero : bias_estimate call failed");
 	ROS_INFO("Bias estimate: %s", biasCall.response.message.c_str());
+  }
+  if(zed_reset_odometry.exists())
+  {
+	std_srvs::Trigger resetOdomCall;
+	if (!zed_reset_odometry.call(resetOdomCall))
+		ROS_ERROR("imu_zero : zed_reset_odometry call failed");
+	ROS_INFO("Bias estimate: %s", resetOdomCall.response.message.c_str());
+  }
+  if(zed_reset_tracking.exists())
+  {
+	std_srvs::Trigger resetTrackingCall;
+	if (!zed_reset_tracking.call(resetTrackingCall))
+		ROS_ERROR("imu_zero : zed_reset_tracking call failed");
+	ROS_INFO("Bias estimate: %s", resetTrackingCall.response.message.c_str());
   }
   if (ukf_zero_pos.exists())
   {
@@ -96,8 +117,10 @@ int main(int argc, char* argv[]) {
   ros::Subscriber sub = node.subscribe(sub_topic, 1, zeroCallback);
   ros::ServiceServer svc = node.advertiseService(service_name, zeroSet);
   zero_rot.setRPY(0,0,0);
-  bias_estimate = node.serviceClient<std_srvs::Trigger>("imu/bias_estimate");
-  ukf_zero_pos = node.serviceClient<robot_localization::SetPose>("/swerve_imu_ukf/set_pose");
+  bias_estimate = node.serviceClient<std_srvs::Trigger>(bias_service_name);
+  ukf_zero_pos = node.serviceClient<robot_localization::SetPose>(ukf_set_pose_name);
+  zed_reset_odometry = node.serviceClient<std_srvs::Trigger>(zed_reset_odometry_name);
+  zed_reset_tracking = node.serviceClient<std_srvs::Trigger>(zed_reset_tracking_name);
 
   ros::spin();
   return 0;
