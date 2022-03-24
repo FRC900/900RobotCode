@@ -63,7 +63,6 @@ ros::ServiceClient BrakeSrv;
 
 double imu_angle;
 
-
 bool robot_is_disabled{false};
 ros::Publisher auto_mode_select_pub;
 
@@ -118,6 +117,18 @@ void decShooter(void)
 {
 	shooter_cmd.data = std::max(0.0, shooter_cmd.data - 10.);
 	ROS_INFO_STREAM("Set shooter_cmd.data to " << shooter_cmd.data);
+}
+
+void fineIncShooter(void)
+{
+	speed_offset.data += 5;
+	ROS_INFO_STREAM("Set speed_offset.data to " << speed_offset.data);
+}
+
+void fineDecShooter(void)
+{
+	speed_offset.data -= 5;
+	ROS_INFO_STREAM("Set speed_offset.data to " << speed_offset.data);
 }
 
 void incIntake(void)
@@ -189,6 +200,7 @@ std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Climb2022Action>
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Shooting2022Action>> shooting_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2022Action>> intaking_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Ejecting2022Action>> ejecting_ac;
+
 bool shoot_in_high_goal = true;
 bool reset_climb = false;
 
@@ -236,6 +248,8 @@ bool orientStrafingAngleCallback(teleop_joystick_control::OrientStrafingAngle::R
 	orient_strafing_angle = req.angle;
 	return true;
 }
+
+int shooter_offsets = 0;
 
 void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& event)
 {
@@ -360,7 +374,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.leftSwitchUpPress)
 	{
-
+		fineIncShooter();
 	}
 	if(button_box.leftSwitchUpButton)
 	{
@@ -372,7 +386,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.leftSwitchDownPress)
 	{
-
+		fineDecShooter();
 	}
 	if(button_box.leftSwitchDownButton)
 	{
@@ -1169,6 +1183,7 @@ int main(int argc, char **argv)
 	if (!intaking_ac->waitForServer(ros::Duration(15))) {
 		ROS_ERROR("**EJECTING LIKELY WON'T WORK*** Wait (15 sec) timed out, for intaking action in teleop_joystick_comp.cpp");
 	}
+
 	ros::ServiceServer orient_strafing_angle_service = n.advertiseService("orient_strafing_angle", orientStrafingAngleCallback);
 
 	indexer_straight_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/indexer_straight_controller/command", 1, true);
