@@ -57,7 +57,7 @@ hardware_interface:
        - {name: br_angle, type: can_talon_fx, can_id: 14, local: true}
        - {name: bl_drive, type: can_talon_fx, can_id: 23, local: true}
        - {name: bl_angle, type: can_talon_fx, can_id: 13, local: true}
-       - {name: bl_angle_encoder, type: can_talon_srx, can_id: 3, local: true}
+         #- {name: bl_angle_encoder, type: can_talon_srx, can_id: 3, local: true}
        # - {name: pdh, type: pdh}
        # - {name: pcm, type: pcm, pcm_id: 0}
 

@@ -189,7 +189,7 @@ swerve_drive_controller:
         joint: fl_angle
         feedback_type: RemoteSensor0
         remote_feedback_filter0: CANCoder
-        remote_feedback_device_id0: 11
+        remote_feedback_device_id0: 1
         sensor_initialization_strategy: BootToAbsolutePosition
         close_loop_values:
             - {p: 2.25, i: 0.000, d: 4.0, f: 0.28, i_zone: 0}
@@ -227,7 +227,7 @@ swerve_drive_controller:
         joint: fr_angle
         feedback_type: RemoteSensor0
         remote_feedback_filter0: CANCoder
-        remote_feedback_device_id0: 12
+        remote_feedback_device_id0: 2
         sensor_initialization_strategy: BootToAbsolutePosition
         close_loop_values:
             - {p: 2.25, i: 0.000, d: 4.0, f: 0.28, i_zone: 0}
@@ -265,7 +265,7 @@ swerve_drive_controller:
         joint: br_angle
         feedback_type: RemoteSensor0
         remote_feedback_filter0: CANCoder
-        remote_feedback_device_id0: 14
+        remote_feedback_device_id0: 4
         sensor_initialization_strategy: BootToAbsolutePosition
         close_loop_values:
             - {p: 2.25, i: 0.000, d: 4.0, f: 0.28, i_zone: 0}
@@ -302,13 +302,12 @@ swerve_drive_controller:
     steering_joint_bl:
         joint: bl_angle
         feedback_type: RemoteSensor0
-        remote_feedback_filter0: TalonSRX_SelectedSensor
+        remote_feedback_filter0: CANCoder
         remote_feedback_device_id0: 3
-        ticks_per_rotation: 4096
         sensor_initialization_strategy: BootToAbsolutePosition
         neutral_deadband: 0.01
         close_loop_values:
-            - {p: 1.25, i: 0.000, d: 4.0, f: 0.28, i_zone: 0}
+            - {p: 2.25, i: 0.000, d: 4.0, f: 0.28, i_zone: 0}
         invert_output: false
         sensor_phase: false
         peak_output_forward: 1.0
@@ -319,7 +318,7 @@ swerve_drive_controller:
         motion_acceleration: 153.3
         voltage_compensation_enable: true
         voltage_compensation_saturation: 12
-        dynamic_reconfigure: True
+        dynamic_reconfigure: False
         status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10

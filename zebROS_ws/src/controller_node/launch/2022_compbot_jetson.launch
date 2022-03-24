@@ -32,7 +32,7 @@
 		<!-- Load controller manager-->
 		<!-- Add 2022 controllers, once we know what they are -->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller swerve_drive_controller shooter_controller shooter_follower_controller dynamic_arm_solenoid_controller static_hook_solenoid_controller intake_controller indexer_straight_motor_controller indexer_arc_motor_controller dynamic_arm_controller bl_angle_encoder_controller robot_code_ready_controller" />
+			output="screen" args="spawn joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller swerve_drive_controller shooter_controller shooter_follower_controller dynamic_arm_solenoid_controller static_hook_solenoid_controller intake_controller indexer_straight_motor_controller indexer_arc_motor_controller dynamic_arm_controller robot_code_ready_controller" />
 
 		<node name="uptime_jetson" pkg="uptime" type="uptime_node" output="screen" />
 
