@@ -34,6 +34,7 @@
 #include "behavior_actions/Climb2022Action.h"
 #include "behavior_actions/Shooting2022Action.h"
 #include "behavior_actions/Intaking2022Action.h"
+#include <behavior_actions/Ejecting2022Action.h>
 
 std::unique_ptr<TeleopCmdVel<teleop_joystick_control::TeleopJoystickComp2022Config>> teleop_cmd_vel;
 
@@ -187,6 +188,7 @@ void zero_all_diag_commands(void)
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Climb2022Action>> climb_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Shooting2022Action>> shooting_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2022Action>> intaking_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Ejecting2022Action>> ejecting_ac;
 bool shoot_in_high_goal = true;
 bool reset_climb = false;
 
@@ -408,24 +410,34 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.leftBluePress)
 	{
-
+		behavior_actions::Ejecting2022Goal goal;
+		goal.eject_top_cargo = true;
+		goal.eject_bottom_cargo = false;
+		goal.speedy = false;
+		ejecting_ac->sendGoal(goal);
 	}
 	if(button_box.leftBlueButton)
 	{
 	}
 	if(button_box.leftBlueRelease)
 	{
+		ejecting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 
 	if(button_box.rightBluePress)
 	{
-
+		behavior_actions::Ejecting2022Goal goal;
+		goal.eject_top_cargo = false;
+		goal.eject_bottom_cargo = true;
+		goal.speedy = false;
+		ejecting_ac->sendGoal(goal);
 	}
 	if(button_box.rightBlueButton)
 	{
 	}
 	if(button_box.rightBlueRelease)
 	{
+		ejecting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 
 	if(button_box.yellowPress)
@@ -1135,6 +1147,7 @@ int main(int argc, char **argv)
 	climb_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Climb2022Action>>("/climber/climb_server_2022", true);
 	shooting_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Shooting2022Action>>("/shooting/shooting_server_2022", true);
 	intaking_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Intaking2022Action>>("/intaking/intaking_server_2022", true);
+	ejecting_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Ejecting2022Action>>("/ejecting/ejecting_server_2022", true);
 
 	ROS_INFO_STREAM("Waiting for actionlib servers");
 	if (!climb_ac->waitForServer(ros::Duration(15))) {
@@ -1149,6 +1162,9 @@ int main(int argc, char **argv)
 		ROS_ERROR("**INTAKING LIKELY WON'T WORK*** Wait (15 sec) timed out, for intaking action in teleop_joystick_comp.cpp");
 	}
 
+	if (!intaking_ac->waitForServer(ros::Duration(15))) {
+		ROS_ERROR("**EJECTING LIKELY WON'T WORK*** Wait (15 sec) timed out, for intaking action in teleop_joystick_comp.cpp");
+	}
 	ros::ServiceServer orient_strafing_angle_service = n.advertiseService("orient_strafing_angle", orientStrafingAngleCallback);
 
 	indexer_straight_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/indexer_straight_controller/command", 1, true);
