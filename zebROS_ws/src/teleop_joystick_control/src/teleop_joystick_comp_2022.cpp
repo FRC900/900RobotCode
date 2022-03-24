@@ -215,6 +215,10 @@ void imuCallback(const sensor_msgs::Imu &imuState)
 void preemptActionlibServers(void)
 {
 	ROS_WARN_STREAM("Preempting actionlib servers!");
+	climb_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	reset_climb = true;
 }
 
 bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,

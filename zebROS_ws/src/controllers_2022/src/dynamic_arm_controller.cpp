@@ -252,7 +252,11 @@ bool DynamicArmController::zeroService(std_srvs::Trigger::Request  &req,
                   std_srvs::Trigger::Response &/*response*/)
 {
   zeroed_ = false;
+  last_zeroed_ = false;
   do_zero_ = true;
+  std_msgs::Bool zeroed;
+  zeroed.data = zeroed_;
+  zeroed_publisher_.publish(zeroed);
   return true;
 }
 

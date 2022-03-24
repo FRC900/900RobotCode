@@ -60,6 +60,8 @@ protected:
 
   bool arm_zeroed_ = false;
   bool driven_backwards_ = false;
+  bool climb_zeroed_ = false;
+  ros::Time last_received_is_zeroed_;
 
   actionlib::SimpleActionServer<behavior_actions::Climb2022Action> &as_;
   ros::ServiceClient dynamic_arm_;
@@ -80,7 +82,7 @@ public:
 	const std::map<std::string, std::string> service_connection_header{ {"tcp_nodelay", "1"} };
     dynamic_arm_ = nh_.serviceClient<controllers_2022_msgs::DynamicArmSrv>("/frcrobot_jetson/dynamic_arm_controller/command", false, service_connection_header);
     zero_dynamic_arm_client_ = nh_.serviceClient<std_srvs::Trigger>("/frcrobot_jetson/dynamic_arm_controller/zero", false, service_connection_header);
-    dynamic_arm_zeroed_sub_ = nh_.subscribe("/frcrobot_jetson/dynamic_arm_controller/is_zeroed", 2, &ClimbStateMachine::zeroStateCallback, this);
+    dynamic_arm_zeroed_sub_ = nh_.subscribe("/frcrobot_jetson/dynamic_arm_controller/is_zeroed", 1, &ClimbStateMachine::zeroStateCallback, this);
     if (!nh_.getParam("full_extend_height_ground", full_extend_height_ground_))
     {
       ROS_ERROR_STREAM("2022_climb_server : Could not find full_extend_height_ground");
@@ -147,6 +149,7 @@ public:
       nextFunction_ = boost::bind(&ClimbStateMachine::state1, this);
       rung = 0;
       driven_backwards_ = false;
+      climb_zeroed_ = false;
     }
     exited = false;
     success = false;
@@ -213,22 +216,35 @@ public:
     dpMsg.data = DYNAMIC_ARM_UPRIGHT;
     make_sure_publish(dynamic_arm_piston_, dpMsg);
     if (sleepCheckingForPreempt(piston_wait_time_)) return;
-    ROS_INFO_STREAM("2022_climb_server : zeroing dynamic arms");
-    std_srvs::Trigger srv;
-    if (!zero_dynamic_arm_client_.call(srv)) {
-      success = false;
-      exited = true;
-      return;
-    }
-    ros::Rate r(100);
-    while (!arm_zeroed_) {
-      ROS_INFO_STREAM_THROTTLE(0.25, "2022_climb_server : waiting for arm zero");
-      r.sleep();
-      ros::spinOnce();
-      if (as_.isPreemptRequested() || !ros::ok()) {
+    if (!climb_zeroed_) {
+      ROS_INFO_STREAM("2022_climb_server : zeroing dynamic arms");
+      std_srvs::Trigger srv;
+      if (!zero_dynamic_arm_client_.call(srv)) {
+        success = false;
         exited = true;
         return;
       }
+      ros::Rate r(100);
+      ros::Time start_time = ros::Time::now();
+      while (last_received_is_zeroed_ < start_time) {
+        ROS_INFO_STREAM_THROTTLE(0.25, "2022_climb_server : waiting for arm zero timestamp");
+        r.sleep();
+        ros::spinOnce();
+        if (as_.isPreemptRequested() || !ros::ok()) {
+          exited = true;
+          return;
+        }
+      }
+      while (!arm_zeroed_) {
+        ROS_INFO_STREAM_THROTTLE(0.25, "2022_climb_server : waiting for arm zero");
+        r.sleep();
+        ros::spinOnce();
+        if (as_.isPreemptRequested() || !ros::ok()) {
+          exited = true;
+          return;
+        }
+      }
+      climb_zeroed_ = true;
     }
     ROS_INFO_STREAM("2022_climb_server : Extended dynamic arm pistons");
     ROS_INFO_STREAM("");
@@ -407,12 +423,9 @@ public:
     if (rung == 3)
     {
       ROS_INFO_STREAM("2022_climb_server : Climb is done! Woohoo!!");
-      success = true;
+      reset(true);
       exited = true;
-      state = 0;
-      rung = 0;
-      driven_backwards_ = false;
-      nextFunction_ = boost::bind(&ClimbStateMachine::state1, this);
+      success = true;
       ROS_INFO_STREAM("2022_climb_server : RESET STATE");
       return;
     }
@@ -625,6 +638,7 @@ public:
   void zeroStateCallback(const std_msgs::Bool msg)
   {
     arm_zeroed_ = msg.data;
+    last_received_is_zeroed_ = ros::Time::now();
   }
   void stopMotors() {
     // TODO may need to add stop condition to controller to make robot stay up
