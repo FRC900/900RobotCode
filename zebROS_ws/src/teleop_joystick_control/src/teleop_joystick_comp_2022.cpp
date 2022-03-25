@@ -200,6 +200,8 @@ std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Climb2022Action>
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Shooting2022Action>> shooting_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2022Action>> intaking_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Ejecting2022Action>> ejecting_ac;
+ros::Subscriber hub_angle_sub;
+double hub_angle;
 
 bool shoot_in_high_goal = true;
 bool reset_climb = false;
@@ -250,6 +252,8 @@ bool orientStrafingAngleCallback(teleop_joystick_control::OrientStrafingAngle::R
 	return true;
 }
 
+bool sendRobotZero = false;
+bool snappingToAngle = true;
 int shooter_offsets = 0;
 
 void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& event)
@@ -460,14 +464,31 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.yellowPress)
 	{
+		ROS_INFO_STREAM("Snapping to angle for climb!");
+		// Align for climbing
+		std_msgs::Bool enable_align_msg;
+		enable_align_msg.data = true;
+		// To align the robot to an angle, enable_align_msg.data
+		// needs to be true and the desired angle (in radians)
+		// needs to be published to orient_strafing_setpoint_pub
+		orient_strafing_enable_pub.publish(enable_align_msg);
 
+		std_msgs::Float64 orient_strafing_angle_msg;
+		orient_strafing_angle_msg.data = orient_strafing_angle;
+		orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
+		snappingToAngle = true;
 	}
 	if(button_box.yellowButton)
 	{
 	}
 	if(button_box.yellowRelease)
 	{
-
+		std_msgs::Bool enable_align_msg;
+		enable_align_msg.data = false;
+		orient_strafing_enable_pub.publish(enable_align_msg);
+		ROS_INFO_STREAM("Stopping snapping to angle for climb!");
+		snappingToAngle = false;
+		sendRobotZero = false;
 	}
 
 	if(button_box.leftGreenPress)
@@ -508,6 +529,20 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.bottomGreenPress)
 	{
+		ROS_INFO_STREAM("Snapping to angle for shooting!");
+		// Align for shooting
+		std_msgs::Bool enable_align_msg;
+		enable_align_msg.data = true;
+		// To align the robot to an angle, enable_align_msg.data
+		// needs to be true and the desired angle (in radians)
+		// needs to be published to orient_strafing_setpoint_pub
+		orient_strafing_enable_pub.publish(enable_align_msg);
+
+		ros::spinOnce();
+		std_msgs::Float64 orient_strafing_angle_msg;
+		orient_strafing_angle_msg.data = hub_angle;
+		orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
+		snappingToAngle = true;
 	}
 	if(button_box.bottomGreenButton)
 	{
@@ -515,7 +550,12 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	}
 	if(button_box.bottomGreenRelease)
 	{
-
+		std_msgs::Bool enable_align_msg;
+		enable_align_msg.data = false;
+		orient_strafing_enable_pub.publish(enable_align_msg);
+		ROS_INFO_STREAM("Stopping snapping to angle for shooting!");
+		snappingToAngle = false;
+		sendRobotZero = false;
 	}
 
 	// Auto-mode select?
@@ -592,9 +632,23 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		static ros::Time last_header_stamp = joystick_states_array[0].header.stamp;
 
-		static bool sendRobotZero = false;
-
 		geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], imu_angle, config);
+
+		if (cmd_vel.angular.z != 0.0) {
+			if (snappingToAngle) {
+				// Disable angle snapping, if enabled
+				std_msgs::Bool enable_align_msg;
+				enable_align_msg.data = false;
+				orient_strafing_enable_pub.publish(enable_align_msg);
+			}
+		} else {
+			if (snappingToAngle) {
+				// Disable angle snapping, if enabled
+				std_msgs::Bool enable_align_msg;
+				enable_align_msg.data = true;
+				orient_strafing_enable_pub.publish(enable_align_msg);
+			}
+		}
 
 		if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (cmd_vel.angular.z == 0.0) && !sendRobotZero)
 		{
@@ -694,36 +748,22 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 			}
 
-			std_msgs::Bool enable_align_msg;
-			enable_align_msg.data = false;
-
 			//Joystick1: directionLeft
 			if(joystick_states_array[0].directionLeftPress)
 			{
-				ROS_INFO_STREAM("Snapping to angle for climb!");
+
 			}
 			if(joystick_states_array[0].directionLeftButton)
 			{
-				// Align for climbing
-				enable_align_msg.data = true;
+
 			}
 			else
 			{
 			}
 			if(joystick_states_array[0].directionLeftRelease)
 			{
-				sendRobotZero = false;
-				ROS_INFO_STREAM("Stopping snapping to angle for climb!");
+
 			}
-
-			// To align the robot to an angle, enable_align_msg.data
-			// needs to be true and the desired angle (in radians)
-			// needs to be published to orient_strafing_setpoint_pub
-			orient_strafing_enable_pub.publish(enable_align_msg);
-
-			std_msgs::Float64 orient_strafing_angle_msg;
-			orient_strafing_angle_msg.data = orient_strafing_angle;
-			orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
 
 			//Joystick1: directionRight
 			if(joystick_states_array[0].directionRightPress)
@@ -1070,6 +1110,10 @@ void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 	robot_is_disabled = msg.Disabled;
 }
 
+void hubAngleCallback(const std_msgs::Float64 &msg) {
+	hub_angle = msg.data;
+}
+
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "Joystick_controller");
@@ -1192,6 +1236,7 @@ int main(int argc, char **argv)
 	climber_client = n.serviceClient<controllers_2022_msgs::DynamicArmSrv>("/frcrobot_jetson/dynamic_arm_controller/command", false, service_connection_header);
 	intake_client = n.serviceClient<controllers_2022_msgs::Intake>("/frcrobot_jetson/intake_controller/command", false, service_connection_header);
 	speed_offset_publisher = n.advertise<std_msgs::Float64>("/shooter_speed_offset", 1, true);
+	hub_angle_sub = n.subscribe("/imu/nearest_angle", 1, &hubAngleCallback);
 	speed_offset.data = 0;
 
 	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickComp2022Config> drw(n_params, config);
