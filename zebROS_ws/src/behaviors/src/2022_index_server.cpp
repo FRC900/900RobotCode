@@ -4,13 +4,14 @@
 #include <std_msgs/Float64.h>
 #include "sensor_msgs/JointState.h"
 #include <map>
-
+#include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 
 class IndexStateMachine
 {
 protected:
   double straight_motor_percent_output_config_;
   double arc_motor_percent_output_config_;
+  double arc_motor_percent_output_shooting_config_;
   ros::Subscriber joint_states_sub_;
   ros::Publisher straight_motor_publisher_;
   ros::Publisher arc_motor_publisher_;
@@ -23,6 +24,7 @@ protected:
   double straight_sensor_pressed_double_;
   double arc_sensor_pressed_double_;
   ros::Timer publish_ball_count_caller_ = nh_.createTimer(ros::Rate(5),&IndexStateMachine::publish_ball_count, this);
+  ddynamic_reconfigure::DDynamicReconfigure ddr_;
 
 public:
   uint8_t state_ = 0;
@@ -32,7 +34,7 @@ public:
   uint8_t goal_;
 
 
-  IndexStateMachine(actionlib::SimpleActionServer<behavior_actions::Index2022Action> &as_): as_(as_)
+  IndexStateMachine(actionlib::SimpleActionServer<behavior_actions::Index2022Action> &as_): as_(as_), ddr_(nh_)
   {
     joint_states_sub_ = nh_.subscribe("/frcrobot_jetson/joint_states", 1, &IndexStateMachine::jointStateCallback, this);
     straight_motor_publisher_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/indexer_straight_motor_controller/command", 1);
@@ -50,7 +52,16 @@ public:
   		ROS_ERROR("could not read arc_motor_percent_output");
   		arc_motor_percent_output_config_ = 0.5;
   	}
+    if (!indexer_params_nh.getParam("arc_motor_percent_output_shooting", arc_motor_percent_output_shooting_config_))
+  	{
+  		ROS_ERROR("could not read arc_motor_percent_output_shooting");
+  		arc_motor_percent_output_shooting_config_ = 0.5;
+  	}
+    ddr_.registerVariable<double>("arc_motor_percent_output", &arc_motor_percent_output_config_, "Indexer Arc % Output", 0, 1);
+    ddr_.registerVariable<double>("arc_motor_percent_output_shooting", &arc_motor_percent_output_shooting_config_, "Indexer Arc Shooting % Output", 0, 1);
+    ddr_.registerVariable<double>("straight_motor_percent_output", &straight_motor_percent_output_config_, "Indexer Straight % Output", 0, 1);
     nextFunction_ = boost::bind(&IndexStateMachine::state0, this);
+    ddr_.publishServicesTopics();
   }
   void publish_ball_count(const ros::TimerEvent&){
     ros::spinOnce();
@@ -180,7 +191,7 @@ public:
     state_ = 4;
     // run straight motor
     run_straight_motor(straight_motor_percent_output_config_);
-    run_arc_motor(arc_motor_percent_output_config_);
+    run_arc_motor(arc_motor_percent_output_shooting_config_);
     // run arc motor
     if(straight_sensor_pressed_ && arc_sensor_pressed_){
       ros::Rate r(100);
