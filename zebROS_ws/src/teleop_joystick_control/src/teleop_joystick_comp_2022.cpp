@@ -226,10 +226,11 @@ void imuCallback(const sensor_msgs::Imu &imuState)
 
 void preemptActionlibServers(void)
 {
-	ROS_WARN_STREAM("Preempting actionlib servers!");
+	ROS_WARN_STREAM("Preempting ALL actionlib servers!");
 	climb_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	ejecting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	reset_climb = true;
 }
 
@@ -299,8 +300,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.topRedPress)
 	{
-
-		// TODO - preempt everything
+			preemptActionlibServers();
 	}
 	if(button_box.topRedButton)
 	{
