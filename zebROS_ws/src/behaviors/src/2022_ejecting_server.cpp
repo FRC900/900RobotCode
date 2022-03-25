@@ -143,6 +143,7 @@ public:
         ROS_INFO_STREAM("2022_ejecting_server : indexer timed out, aborting");
         result_.timed_out = true;
         as_.setAborted(result_);
+        ac_intake_.cancelGoalsAtAndBeforeTime(ros::Time::now());
         ac_indexer_.cancelGoalsAtAndBeforeTime(ros::Time::now());
         return;
       }
@@ -199,6 +200,7 @@ public:
         ROS_INFO_STREAM("2022_ejecting_server : indexer timed out, aborting");
         result_.timed_out = true;
         as_.setAborted(result_);
+        ac_shooter_.cancelGoalsAtAndBeforeTime(ros::Time::now());
         ac_indexer_.cancelGoalsAtAndBeforeTime(ros::Time::now());
         return;
       }

@@ -79,29 +79,33 @@
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
 
 	<group ns="index">
-		<node name="index_server_2022" pkg="behaviors" type="2022_index_server_node"/>
+		<node name="index_server_2022" pkg="behaviors" type="2022_index_server_node" output="screen"/>
 		<rosparam command="load" file="$(find behaviors)/config/2022_index_server.yaml"/>
 	</group>
 
 	<group ns="shooter">
-		<node name="shooter_server_2022" pkg="behaviors" type="2022_shooter_server_node"/>
+		<node name="shooter_server_2022" pkg="behaviors" type="2022_shooter_server_node" output="screen"/>
 	</group>
 
 	<group ns="intake">
-		<node name="intake_server_2022" pkg="behaviors" type="2022_intake_server_node"/>
+		<node name="intake_server_2022" pkg="behaviors" type="2022_intake_server_node" output="screen"/>
 		<rosparam command="load" file="$(find behaviors)/config/2022_intake_config.yaml"/>
 	</group>
 
 	<group ns="intaking">
-		<node name="intaking_server_2022" pkg="behaviors" type="2022_intaking_server_node"/>
+		<node name="intaking_server_2022" pkg="behaviors" type="2022_intaking_server_node" output="screen"/>
 	</group>
 
 	<group ns="shooting">
-		<node name="shooting_server_2022" pkg="behaviors" type="2022_shooting_server_node"/>
+		<node name="shooting_server_2022" pkg="behaviors" type="2022_shooting_server_node" output="screen"/>
+	</group>
+
+	<group ns="ejecting">
+		<node name="ejecting_server_2022" pkg="behaviors" type="2022_ejecting_server_node" output="screen"/>
 	</group>
 	<include file="$(find behaviors)/launch/2022_climb.launch"/>
 
-	
+
 	<!-- Run ZED camera + tensorflow object detection -->
 	<!--
 	<include file="$(find tf_object_detection)/launch/detection.launch" if="$(eval arg('hw_or_sim')=='hw')">
@@ -117,7 +121,7 @@
 	-->
 
 	<!-- Consider adding 2022 launch file for recording -->
-	<include file="$(find controller_node)/launch/record_2022_compbot.launch" if="$(arg record)" /> 
+	<include file="$(find controller_node)/launch/record_2022_compbot.launch" if="$(arg record)" />
 	<!--
 	<include file="$(find controller_node)/launch/record_2022_no_zed.launch" if="$(arg record)" />
 

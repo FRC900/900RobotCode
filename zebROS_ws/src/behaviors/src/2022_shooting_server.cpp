@@ -98,12 +98,13 @@ public:
     feedback_.state = feedback_.WAITING_FOR_SHOOTER;
     as_.publishFeedback(feedback_);
     ROS_INFO_STREAM("2022_shooting_server : spinning up shooter");
+    is_spinning_fast_ = false;
     behavior_actions::Shooter2022Goal goal;
     goal.mode = low_goal ? goal.LOW_GOAL : goal.HIGH_GOAL;
     ac_shooter_.sendGoal(goal,
                          actionlib::SimpleActionClient<behavior_actions::Shooter2022Action>::SimpleDoneCallback(),
                          actionlib::SimpleActionClient<behavior_actions::Shooter2022Action>::SimpleActiveCallback(),
-                         [&](const behavior_actions::Shooter2022FeedbackConstPtr &feedback){ is_spinning_fast_ = feedback->close_enough; });
+                         [&](const behavior_actions::Shooter2022FeedbackConstPtr &feedback){ ROS_INFO_STREAM_THROTTLE(0.1, "2022_shooting_server : new sample data"); is_spinning_fast_ = feedback->close_enough; });
     ros::Rate r(100);
     ros::Time start = ros::Time::now();
     while (ros::ok() && !is_spinning_fast_) {
@@ -119,7 +120,6 @@ public:
       ros::spinOnce();
       r.sleep();
     }
-    ros::Duration(0.3).sleep();
     ROS_INFO_STREAM("2022_shooting_server : spun up shooter");
     return ros::ok();
   }
@@ -130,6 +130,7 @@ public:
     ros::Rate r(100);
     ros::Time start = ros::Time::now();
     while (ros::ok() && !is_spinning_fast_) {
+      ROS_INFO_STREAM_THROTTLE(0.1, "2022_shooting_server : waiting for shooter");
       if ((ros::Time::now() - start).toSec() >= shooting_timeout_) {
         ROS_INFO_STREAM("2022_shooting_server : wait for shooter timed out :(");
         timedOut = true;
@@ -186,7 +187,6 @@ public:
     bool shooterTimedOut = false;
     bool success = spinUpShooter(shooterTimedOut, goal->low_goal);
     result_.timed_out = shooterTimedOut;
-    uint8_t i = 0;
     for (uint8_t i = 0; (cargo_num_ > 0) && (i < goal->num_cargo) && success; i++)
     {
       bool indexerTimedOut = false;
@@ -216,9 +216,9 @@ public:
           break;
         }
       }
-      ros::Duration(0.75).sleep();
 	    ros::spinOnce(); // update ball count, hopefully
     }
+    ros::Duration(0.75).sleep();
 
     ac_shooter_.cancelGoal(); // stop shooter
     ac_indexer_.cancelGoal(); // stop indexer

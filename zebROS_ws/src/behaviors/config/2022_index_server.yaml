@@ -1,3 +1,3 @@
 indexer_actionlib_params:
     straight_motor_percent_output: 0.7
-    arc_motor_percent_output: 0.4
+    arc_motor_percent_output: 0.3

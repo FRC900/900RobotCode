@@ -52,7 +52,7 @@ public:
     ddr_.registerVariable<double>("low_goal_speed", &low_goal_speed_, "Low Goal Shooting Speed", 0, 500);
     eject_speed_ = 120;
     ddr_.registerVariable<double>("eject_speed", &eject_speed_, "Eject Cargo - Shooting Speed", 0, 500);
-    error_margin_ = 1;
+    error_margin_ = 2;
     ddr_.registerVariable<double>("error_margin", &error_margin_, "Shooter margin of error", 0, 50);
     shooter_wheel_checks_ = 20;
     ddr_.registerVariable<int>("shooter_wheel_checks", &shooter_wheel_checks_, "Number of times to check shooter wheel speed", 0, 50);
