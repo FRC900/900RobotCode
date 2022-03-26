@@ -1,0 +1,12 @@
+hold_position:
+    # Set odom topic from a launch file param to make it easier to use with sim odom
+    # This fuses swerve_drive_controller/odom x&y strafe plus imu roll, pitch, yaw
+    #odom_topic: "/swerve_imu_ukf/odometry/filtered"
+    #odom_topic: "/frcrobot_jetson/swerve_drive_controller/odom"
+    pose_topic: "/hold_distance/distance_as_pose"
+    use_odom_orientation: false # false == get yaw from IMU topic instead
+    # Set this as a param so sim can use fake odom while the real robot
+    # uses ZED pose
+    use_pose_for_odom : true # true == use PoseStamped subscriber (e.g. zed camera pose) for odom rather than Odometry subscriber
+    ros_rate: 100
+    server_timeout: 10

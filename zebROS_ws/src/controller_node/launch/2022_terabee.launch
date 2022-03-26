@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="hw_or_sim" default="hw" />
+
+	<group ns="terabee" if="$(eval arg('hw_or_sim')=='hw')">
+		<node name="terabee_x" pkg="teraranger" type="evo">
+			<param name="portname" value="/dev/ttyACM0"/>
+			<param name="sensor_type" value="Evo_3m"/>
+			<remap from="teraranger_evo" to="terabee_x"/>
+		</node>
+	</group>
+
+</launch>

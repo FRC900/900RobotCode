@@ -165,7 +165,16 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
 			else
 				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(can_ctre_mc_can_ids_[i]));
+		}
+	}
+	ROS_INFO_STREAM("Pausing for CTRE init");
+	ros::Duration(2.).sleep();
+	ROS_INFO_STREAM("Resuming after CTRE init");
 
+	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
+	{
+		if (can_ctre_mc_local_hardwares_[i])
+		{
 			ctre_mcs_[i]->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0,
 							  ctre::phoenix::motorcontrol::DemandType::DemandType_Neutral, 0);
 
@@ -177,9 +186,10 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			// by -1 from firmware version read - somehow tag
 			// the entry in ctre_mcs_[] as uninitialized.
 			// This probably should be a fatal error
-#if 0
+#if 1
 			ROS_INFO_STREAM_NAMED("frc_robot_interface",
-								  "\tMotor controller firmware version " << ctre_mcs_[i]->GetFirmwareVersion());
+								  "Motor " << can_ctre_mc_names_[i] <<
+								  " controller firmware version " << ctre_mcs_[i]->GetFirmwareVersion());
 #endif
 
 			ctre_mc_read_state_mutexes_.push_back(std::make_shared<std::mutex>());

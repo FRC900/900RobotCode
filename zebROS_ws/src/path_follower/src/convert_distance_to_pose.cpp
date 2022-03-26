@@ -24,6 +24,7 @@ int main(int argc, char ** argv)
   fake_pose_pub = nh.advertise<geometry_msgs::PoseStamped>("distance_as_pose", 2);
 
   message_filters::Subscriber<sensor_msgs::Range> x_distance_subscriber(nh, "x_distance_input", 2);
+  // Terrible hack since we only have 1 terabee working right now
   message_filters::Subscriber<sensor_msgs::Range> y_distance_subscriber(nh, "y_distance_input", 2);
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Range, sensor_msgs::Range> MySyncPolicy;
   message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), x_distance_subscriber, y_distance_subscriber);

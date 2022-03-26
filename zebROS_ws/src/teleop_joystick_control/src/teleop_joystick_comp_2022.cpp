@@ -253,7 +253,7 @@ bool orientStrafingAngleCallback(teleop_joystick_control::OrientStrafingAngle::R
 }
 
 bool sendRobotZero = false;
-bool snappingToAngle = true;
+bool snappingToAngle = false;
 int shooter_offsets = 0;
 
 void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& event)
@@ -643,7 +643,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 		} else {
 			if (snappingToAngle) {
-				// Disable angle snapping, if enabled
+				// Re-enable angle snapping, if enabled
 				std_msgs::Bool enable_align_msg;
 				enable_align_msg.data = true;
 				orient_strafing_enable_pub.publish(enable_align_msg);

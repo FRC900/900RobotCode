@@ -73,9 +73,9 @@
 	<!-- 2022 TODO add actionlib servers with namespaces -->
 	<!--
 	<include file="$(find controller_node)/launch/hold_position.launch"/>
-	<include file="$(find controller_node)/launch/distance_to_pose.launch"/>
 	<include file="$(find controller_node)/launch/path_follower.launch"/>
 	-->
+	<include file="$(find controller_node)/launch/distance_to_pose.launch"/>
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
 
 	<group ns="index">
@@ -105,6 +105,8 @@
 	</group>
 	<include file="$(find behaviors)/launch/2022_climb.launch"/>
 
+	<include file="$(find controller_node)/launch/2022_terabee.launch" if="$(eval arg('hw_or_sim')=='hw')">
+	</include>
 
 	<!-- Run ZED camera + tensorflow object detection -->
 	<!--

@@ -2,22 +2,26 @@
 <launch>
 		<!-- allow us to hook up sim odom topics for stage sim testing -->
 		<arg name="odom_topic" default="/frcrobot_jetson/swerve_drive_controller/odom"/>
+		<arg name="pose_topic" default="/hold_distance/distance_as_pose" />
 		<arg name="use_pose_for_odom" default="true"/>
 
-		<group ns="hold_distance">
-            <rosparam file="$(find path_follower)/config/hold_position_config.yaml" command="load"/>
-
-			<group ns="hold_distance">
+		<!-- TODO - fix this, server has /hold_position hard-coded for params -->
+		<group ns="hold_position" >
+			<rosparam file="$(find path_follower)/config/distance_to_pose.yaml" command="load"/>
+			<group ns="hold_position" >
 				<param name="odom_topic" value="$(arg odom_topic)"/>
+				<param name="pose_topic" value="$(arg pose_topic)"/>
 				<param name="use_pose_for_odom" value="$(arg use_pose_for_odom)"/>
 
 				<!-- In meters and radians -->
 		        <param name="dist_threshold" value="0.06"/>
        			<param name="angle_threshold" value="0.036"/>
-
 			</group>
+		</group>
 
-      <node name="hold_position_server" pkg="path_follower" type="hold_position_server" output="screen">
+		<group ns="hold_distance">
+
+			<node name="hold_position_server" pkg="path_follower" type="hold_position_server" output="screen">
 			</node>
 
             <node name="hold_position_publish_pid_cmd_vel_node" pkg="behaviors" type="publish_pid_cmd_vel_node" output="screen">
@@ -32,11 +36,11 @@
 
             <node name="x_position_pid" pkg="pid" type="controller" >
                 <param name="node_name" value="x_position_pid" />
-                <param name="Kp" value="4.25" />
+                <param name="Kp" value="2.5" />
                 <param name="Ki" value="0.0" />
                 <param name="Kd" value="0.0" />
-                <param name="upper_limit" value="10" />
-                <param name="lower_limit" value="-10" />
+                <param name="upper_limit" value="1.5" />
+                <param name="lower_limit" value="-1.5" />
                 <param name="windup_limit" value="10" />
                 <param name="max_loop_frequency" value="100.0" />
                 <param name="min_loop_frequency" value="100.0" />
@@ -52,8 +56,8 @@
                 <param name="Kp" value="4.25" />
                 <param name="Ki" value="0.0" />
                 <param name="Kd" value="0.0" />
-                <param name="upper_limit" value="10" />
-                <param name="lower_limit" value="-10" />
+                <param name="upper_limit" value="0" />
+                <param name="lower_limit" value="-0" />
                 <param name="windup_limit" value="10" />
                 <param name="max_loop_frequency" value="100.0" />
                 <param name="min_loop_frequency" value="100.0" />
@@ -69,8 +73,8 @@
                 <param name="Kp" value="-2.5" />
                 <param name="Ki" value="0" />
                 <param name="Kd" value="0" />
-                <param name="upper_limit" value="8" />
-                <param name="lower_limit" value="-8" />
+                <param name="upper_limit" value="0" />
+                <param name="lower_limit" value="-0" />
                 <param name="windup_limit" value="10" />
                 <param name="angle_error" value="true" />
                 <param name="max_loop_frequency" value="100.0" />
@@ -81,11 +85,13 @@
                 <remap from="pid_debug" to="orient_pid/pid_debug"/>
                 <remap from="pid_enable" to="orient_pid/pid_enable"/>
             </node>
+
+			<node name="convert_distance_to_pose" pkg="path_follower" type="convert_distance_to_pose">
+				<remap from="x_distance_input" to="/terabee/terabee_x" />
+				<!-- Hack since we only have 1 working terabee right now -->
+				<remap from="y_distance_input" to="/terabee/terabee_x" />
+			</node>
         </group>
 
-				<node name="convert_distance_to_pose" pkg="path_follower" type="convert_distance_to_pose">
-					<remap from="x_distance_input" to="/terabee/terabee_x" />
-					<remap from="y_distance_input" to="/terabee/terabee_y" />
-				</node>
 
 </launch>

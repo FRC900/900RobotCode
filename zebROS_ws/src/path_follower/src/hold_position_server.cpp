@@ -251,9 +251,6 @@ class holdPosition
 					((posedif < angle_threshold_) || isnan(angle_threshold_));
 				as_.publishFeedback(feedback);
 
-				// This gets the point closest to current time plus lookahead distance
-				// on the path. We use this to generate a target for the x,y,orientation
-
 				ROS_INFO_STREAM("current_position = " << odom_.pose.pose.position.x
 					<< " " << odom_.pose.pose.position.y
 					<< " " << getYaw(odom_.pose.pose.orientation));	// PID controllers.
@@ -283,12 +280,15 @@ class holdPosition
 				x_axis.enable_pub_.publish(enable_msg);
 				command_msg.data = next_waypoint.position.x;
 				x_axis.command_pub_.publish(command_msg);
+				ROS_INFO_STREAM("x command_pub = " << command_msg.data);
 
+#ifdef SEND_Y_STRAFE
 				auto y_axis_it = axis_states_.find("y");
 				auto &y_axis = y_axis_it->second;
 				y_axis.enable_pub_.publish(enable_msg);
 				command_msg.data = next_waypoint.position.y;
 				y_axis.command_pub_.publish(command_msg);
+#endif
 
 				auto z_axis_it = axis_states_.find("z");
 				auto &z_axis = z_axis_it->second;
@@ -319,9 +319,12 @@ class holdPosition
 					std_msgs::Float64 state_msg;
 					state_msg.data = odom_.pose.pose.position.x;
 					x_axis.state_pub_.publish(state_msg);
+					ROS_INFO_STREAM("x state = " << state_msg.data);
 
+#ifdef SEND_Y_STRAFE
 					state_msg.data = odom_.pose.pose.position.y;
 					y_axis.state_pub_.publish(state_msg);
+#endif
 
 					state_msg.data = orientation_state;
 					z_axis.state_pub_.publish(state_msg);
@@ -340,9 +343,11 @@ class holdPosition
 			auto &x_axis = x_axis_it->second;
 			x_axis.enable_pub_.publish(enable_msg);
 
+#ifdef SEND_Y_STRAFE
 			auto y_axis_it = axis_states_.find("y");
 			auto &y_axis = y_axis_it->second;
 			y_axis.enable_pub_.publish(enable_msg);
+#endif
 
 			auto z_axis_it = axis_states_.find("z");
 			auto &z_axis = z_axis_it->second;
@@ -413,7 +418,7 @@ int main(int argc, char **argv)
 
 	double angle_threshold = .036;
 	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
-	std::string pose_topic = "/zed_objdet/pose";
+	std::string pose_topic = "/hold_distance/distance_as_pose";
 	nh.getParam("/hold_position/hold_position/server_timeout", server_timeout);
 	nh.getParam("/hold_position/hold_position/ros_rate", ros_rate);
 	nh.getParam("/hold_position/hold_position/odom_topic", odom_topic);
