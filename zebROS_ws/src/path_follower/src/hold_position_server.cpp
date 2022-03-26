@@ -183,7 +183,6 @@ class holdPosition
 			feedback.isAligned = false;
 			bool preempted = false;
 			bool timed_out = false;
-			bool succeeded = false;
 			//const size_t num_waypoints = goal->pose;
 
 			// Since paths are robot-centric, the initial odom value is 0,0,0 for the path.
@@ -232,7 +231,7 @@ class holdPosition
 
 			ROS_INFO_STREAM("After transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << getYaw(next_waypoint.orientation) << ")");
 
-			while (ros::ok() && !preempted && !timed_out && !succeeded)
+			while (ros::ok() && !preempted && !timed_out && !feedback.isAligned)
 			{
 				// If using a separate topic for orientation, merge the x+y from odom
 				// with the orientiation from that separate topic here
