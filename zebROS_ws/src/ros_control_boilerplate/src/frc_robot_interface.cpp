@@ -179,19 +179,20 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			ctre_mcs_[i]->Set(ctre::phoenix::motorcontrol::ControlMode::Disabled, 0,
 							  ctre::phoenix::motorcontrol::DemandType::DemandType_Neutral, 0);
 
+			// Clear this out so we only get resets that occur after the controllers
+			// have been initialized
+			ctre_mcs_[i]->HasResetOccurred();
+
 			// Clear sticky faults
 			//safeTalonCall(ctre_mcs_[i]->ClearStickyFaults(timeoutMs), "ClearStickyFaults()", can_ctre_mc_can_ids_[i]);
-
 
 			// TODO : if the motor controller doesn't initialize - maybe known
 			// by -1 from firmware version read - somehow tag
 			// the entry in ctre_mcs_[] as uninitialized.
 			// This probably should be a fatal error
-#if 1
 			ROS_INFO_STREAM_NAMED("frc_robot_interface",
 								  "Motor " << can_ctre_mc_names_[i] <<
 								  " controller firmware version " << ctre_mcs_[i]->GetFirmwareVersion());
-#endif
 
 			ctre_mc_read_state_mutexes_.push_back(std::make_shared<std::mutex>());
 			ctre_mc_read_thread_states_.push_back(std::make_shared<hardware_interface::TalonHWState>(can_ctre_mc_can_ids_[i]));
@@ -1549,6 +1550,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		// to be re-written by the rest of the write() function
 		if (victor->HasResetOccurred())
 		{
+			ROS_WARN_STREAM("Detected reset on CTRE mc " << can_ctre_mc_names_[joint_id]);
 			for (size_t i = 0; i < hardware_interface::TALON_PIDF_SLOTS; i++)
 				tc.resetPIDF(i);
 			tc.resetAuxPidPolarity();
@@ -1563,7 +1565,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			tc.resetOutputShaping();
 			tc.resetVoltageCompensation();
 			tc.resetVelocityMeasurement();
-			tc.resetSensorPosition();
+			//tc.resetSensorPosition();
 			tc.resetLimitSwitchesSource();
 			tc.resetRemoteLimitSwitchesSource();
 			tc.resetSoftLimit();
