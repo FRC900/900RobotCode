@@ -204,6 +204,15 @@ public:
         r.sleep();
         ros::spinOnce();
       }
+      while(!arc_sensor_pressed_){
+        if (as_.isPreemptRequested() || !ros::ok()) {
+          exited_ = true;
+          success_ = false;
+          break;
+        }
+        r.sleep();
+        ros::spinOnce();
+      }
     }
     else{
       ros::Rate r(100);

@@ -1,4 +1,4 @@
 indexer_actionlib_params:
-    straight_motor_percent_output: 0.7
+    straight_motor_percent_output: 0.75
     arc_motor_percent_output: 0.3
-    arc_motor_percent_output_shooting: 0.5
+    arc_motor_percent_output_shooting: 0.3
