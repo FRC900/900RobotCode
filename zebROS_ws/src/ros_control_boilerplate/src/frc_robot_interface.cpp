@@ -169,6 +169,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 	}
 	ROS_INFO_STREAM("Pausing for CTRE init");
 	ros::Duration(2.).sleep();
+	ctre_mc_init_time_ = ros::Time::now();
 	ROS_INFO_STREAM("Resuming after CTRE init");
 
 	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
@@ -1469,10 +1470,18 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 	write_tracer_.start_unique("ctre mc");
 	for (size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
 	{
+		if ((time - ctre_mc_init_time_).toSec() < (3.0 + 0.05 * joint_id))
+		{
+			continue;
+		}
 		if (!can_ctre_mc_local_hardwares_[joint_id])
+		{
 			continue;
+		}
 		if (!talon_command_[joint_id].try_lock())
+		{
 			continue;
+		}
 
 		//custom_profile_write(joint_id);
 

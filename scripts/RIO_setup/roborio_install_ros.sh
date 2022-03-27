@@ -63,7 +63,7 @@ ssh -p 22 admin@$1 'rm tflite_runtime-1.15.2-cp27-none-linux_armv7l.whl'
 ssh -p 22 admin@$1 'rm -rf ~/.cache'
 
 # Copy over ROS tar.bz2 file, extract to / on the Rio
-scp -P 22 ~/2022RobotCode/scripts/RIO_setup/roscore_roborio.tar.bz2 admin@$1:.
+scp -P 22 /home/ubuntu/roscore_roborio.tar.bz2 admin@$1:.
 ssh -p 22 admin@$1 'cd / && tar -xjf ~/roscore_roborio.tar.bz2'
 ssh -p 22 admin@$1 'rm ~/roscore_roborio.tar.bz2'
 #scp -P 22 ~/2022RobotCode/os_detect.py admin@$1:/usr/lib/python2.7/site-packages/rospkg/

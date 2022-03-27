@@ -167,6 +167,10 @@ set (WPILIBSRC
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/raw_socket_istream.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/Base64.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/DataLog.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/json.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/json_pointer.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/json_serializer.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/Logger.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/SafeThread.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/StringExtras.cpp
@@ -177,6 +181,7 @@ set (WPILIBSRC
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPStream.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/fmtlib/src/format.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/raw_ostream.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/raw_os_ostream.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ErrorHandling.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallPtrSet.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallVector.cpp

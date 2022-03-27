@@ -318,10 +318,12 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi") OR
 		${ALLWPILIB}/hal/src/main/native/sim/Threads.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/AnalogInput.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalInput.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/DataLog.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalOutput.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/DriverStation.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/GenericHID.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/IterativeRobotBase.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/Logger.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotState.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/CallbackStore.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/RoboRioSim.cpp
