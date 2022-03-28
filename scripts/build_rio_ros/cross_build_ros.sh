@@ -17,7 +17,7 @@ cd ~/melodic_arm_cross_ws/src
 git clone https://github.com/ros/urdfdom_headers.git
 cd urdfdom_headers
 wget https://raw.githubusercontent.com/ros-gbp/urdfdom_headers-release/master/indigo/package.xml
-# Fix the version in package.xml to read 1.0.0
+# Fix the version in package.xml to read 1.0.5
 sed -i -e 's/:{version}/1.0.5/' package.xml 
 
 cd ~/melodic_arm_cross_ws/src
@@ -74,7 +74,7 @@ rm -rf ~/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/melodic devel_iso
 #./src/catkin/bin/catkin_make_isolated --install --use-ninja -DCMAKE_INSTALL_PREFIX=$HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/melodic -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=~/2022RobotCode/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF
 
 catkin config --install --install-space $HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/melodic 
-catkin build -DCMAKE_TOOLCHAIN_FILE=$HOME/2022RobotCode/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release 
+catkin build -DCMAKE_TOOLCHAIN_FILE=$HOME/2022RobotCode/zebROS_ws/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=17
 
 # Add newly built cross-libs to git repo so they are
 # used for subsequent Rio imagings
