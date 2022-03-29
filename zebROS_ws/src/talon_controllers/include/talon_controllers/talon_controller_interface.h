@@ -1926,7 +1926,7 @@ class TalonControllerInterface
 									 hardware_interface::TalonCommandHandle &talon,
 									 bool update_params = true)
 		{
-			talon->lock();
+			talon->mutex()->lock();
 			// perform additional hardware init here
 			// but don't set mode - either force the caller to
 			// set it or use one of the derived, fixed-mode
@@ -2030,7 +2030,7 @@ class TalonControllerInterface
 			// so they can be queried later?
 			if (update_params)
 				params_ = params;
-			talon->unlock();
+			talon->mutex()->unlock();
 		}
 		static constexpr double double_value_epsilon = 0.0001;
 };

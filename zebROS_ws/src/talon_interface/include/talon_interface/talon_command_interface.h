@@ -428,8 +428,7 @@ class TalonHWCommand
 		bool enableReadThreadChanged(bool &enable_read_thread);
 
 		void lock(void);
-		bool try_lock(void);
-		void unlock(void);
+		std::shared_ptr<std::mutex> mutex(void);
 
 	private:
 		double    command_; // motor setpoint - % vbus, velocity, position, etc

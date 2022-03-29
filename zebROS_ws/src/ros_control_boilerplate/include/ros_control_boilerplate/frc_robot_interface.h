@@ -498,7 +498,10 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 
 		// Count sequential CAN errors
 		size_t can_error_count_{0};
-		bool safeTalonCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name, const int talon_id);
+		int talon_config_count_{0};
+		int talon_config_count_limit_{10};
+		bool safeTalonCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name, const int talon_id, bool config_call = false);
+		bool safeTalonConfigCall(ctre::phoenix::ErrorCode error_code, const std::string &talon_method_name, const int talon_id);
 
 		std::vector<std::shared_ptr<ctre::phoenix::motorcontrol::IMotorController>> ctre_mcs_;
 
@@ -584,6 +587,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 
 		static constexpr int pidIdx = 0; //0 for primary closed-loop, 1 for cascaded closed-loop
 		static constexpr int timeoutMs = 0; //If nonzero, function will wait for config success and report an error if it times out. If zero, no blocking or checking is performed
+		static constexpr int configTimeoutMs = 10;
 
 };  // class
 

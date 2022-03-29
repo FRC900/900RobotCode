@@ -1156,7 +1156,7 @@ void TalonHWCommand::setForwardLimitSwitchSource(LimitSwitchSource source, Limit
 			return;
 		}
 		if ((limit_switch_local_forward_source_ != source) ||
-				(limit_switch_local_forward_normal_ != normal) )
+			(limit_switch_local_forward_normal_ != normal) )
 		{
 			limit_switch_local_forward_source_ = source;
 			limit_switch_local_forward_normal_ = normal;
@@ -2292,13 +2292,10 @@ void TalonHWCommand::lock(void)
 {
 	mutex_->lock();
 }
-bool TalonHWCommand::try_lock(void)
+
+std::shared_ptr<std::mutex> TalonHWCommand::mutex(void)
 {
-	return mutex_->try_lock();
-}
-void TalonHWCommand::unlock(void)
-{
-	mutex_->unlock();
+	return mutex_;
 }
 
 } // namespace
