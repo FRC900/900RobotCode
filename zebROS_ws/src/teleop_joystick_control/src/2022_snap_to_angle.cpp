@@ -19,10 +19,10 @@ void callBack(const sensor_msgs::Imu &imuState) {
   double yaw;
   tf2::Matrix3x3(imuQuat).getRPY(roll, pitch, yaw);
   std::vector<double> nearest_angles;
-  nearest_angles.push_back(std::abs(angles::shortest_angular_distance(yaw, fender_angles[0])));
-  nearest_angles.push_back(std::abs(angles::shortest_angular_distance(yaw, fender_angles[1])));
-  nearest_angles.push_back(std::abs(angles::shortest_angular_distance(yaw, fender_angles[2])));
-  nearest_angles.push_back(std::abs(angles::shortest_angular_distance(yaw, fender_angles[3])));
+  nearest_angles.push_back(std::fabs(angles::shortest_angular_distance(yaw, fender_angles[0])));
+  nearest_angles.push_back(std::fabs(angles::shortest_angular_distance(yaw, fender_angles[1])));
+  nearest_angles.push_back(std::fabs(angles::shortest_angular_distance(yaw, fender_angles[2])));
+  nearest_angles.push_back(std::fabs(angles::shortest_angular_distance(yaw, fender_angles[3])));
   int min_angle_index = std::min_element(nearest_angles.begin(), nearest_angles.end()) - nearest_angles.begin();
   //min_angle.data = 0.1;
   //ROS_INFO_STREAM("Angle 1: " << fender_angles[0] << " Angle 2: " << fender_angles[1] << " Angle 3: " << fender_angles[2] << " Angle 4: " << fender_angles[3]);

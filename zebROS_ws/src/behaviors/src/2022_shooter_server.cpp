@@ -54,7 +54,7 @@ public:
     ddr_.registerVariable<double>("eject_speed", &eject_speed_, "Eject Cargo - Shooting Speed", 0, 500);
     error_margin_ = 2;
     ddr_.registerVariable<double>("error_margin", &error_margin_, "Shooter margin of error", 0, 50);
-    shooter_wheel_checks_ = 20;
+    shooter_wheel_checks_ = 5;
     ddr_.registerVariable<int>("shooter_wheel_checks", &shooter_wheel_checks_, "Number of times to check shooter wheel speed", 0, 50);
     // change close_enough to operate with multiple samples
     // error_margin_ = 5;
@@ -96,6 +96,7 @@ public:
 		as_.setPreempted();
 		return;
 	}
+  shooter_speed += speed_offset_;
 	SHOOTER_INFO("Shooter speed setpoint = " << msg.data);
   int good_samples = 0;
     ros::Rate r(100);
@@ -112,7 +113,7 @@ public:
         as_.setPreempted();
         break;
       }
-	  msg.data = shooter_speed + speed_offset_;
+	  msg.data = shooter_speed;
 	  shooter_command_pub_.publish(msg);
     /* Measure if the sample is close enough to the requested shooter wheel speed */
     if(fabs(shooter_speed - fabs(current_speed_)) < error_margin_) {

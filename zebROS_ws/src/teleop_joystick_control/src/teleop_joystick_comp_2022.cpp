@@ -543,6 +543,12 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	if(button_box.bottomGreenPress)
 	{
 		ROS_INFO_STREAM("Snapping to angle for shooting!");
+		ROS_INFO_STREAM("Angle: " << hub_angle << " radians");
+		ros::spinOnce();
+		std_msgs::Float64 orient_strafing_angle_msg;
+		orient_strafing_angle_msg.data = hub_angle;
+		orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
+
 		// Align for shooting
 		std_msgs::Bool enable_align_msg;
 		enable_align_msg.data = true;
@@ -551,9 +557,6 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 		// needs to be published to orient_strafing_setpoint_pub
 		orient_strafing_enable_pub.publish(enable_align_msg);
 
-		ros::spinOnce();
-		std_msgs::Float64 orient_strafing_angle_msg;
-		orient_strafing_angle_msg.data = hub_angle;
 		orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
 		snappingToAngle = true;
 	}
@@ -1237,8 +1240,8 @@ int main(int argc, char **argv)
 		ROS_ERROR("**INTAKING LIKELY WON'T WORK*** Wait (15 sec) timed out, for intaking action in teleop_joystick_comp.cpp");
 	}
 
-	if (!intaking_ac->waitForServer(ros::Duration(15))) {
-		ROS_ERROR("**EJECTING LIKELY WON'T WORK*** Wait (15 sec) timed out, for intaking action in teleop_joystick_comp.cpp");
+	if (!ejecting_ac->waitForServer(ros::Duration(15))) {
+		ROS_ERROR("**EJECTING LIKELY WON'T WORK*** Wait (15 sec) timed out, for ejecting action in teleop_joystick_comp.cpp");
 	}
 
 	ros::ServiceServer orient_strafing_angle_service = n.advertiseService("orient_strafing_angle", orientStrafingAngleCallback);
