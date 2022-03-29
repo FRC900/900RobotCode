@@ -49,6 +49,18 @@ bool DynamicArmController::init(hardware_interface::RobotHW *hw,
     return false;
   }
 
+  if (!controller_nh.getParam("motion_magic_velocity_ground_to_mid", config_.motion_magic_velocity_ground_to_mid))
+  {
+    ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_velocity_ground_to_mid");
+    return false;
+  }
+
+  if (!controller_nh.getParam("motion_magic_acceleration_ground_to_mid", config_.motion_magic_acceleration_ground_to_mid))
+  {
+    ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_acceleration_ground_to_mid");
+    return false;
+  }
+
   if (!controller_nh.getParam("motion_magic_acceleration_traversal", config_.motion_magic_acceleration_traversal))
   {
     ROS_ERROR("dynamic_arm_controller : Could not find motion_magic_acceleration_traversal");
@@ -191,6 +203,10 @@ void DynamicArmController::update(const ros::Time &time, const ros::Duration &/*
       case controllers_2022_msgs::DynamicArmSrv::Request::TRAVERSAL:
         dynamic_arm_joint_.setMotionAcceleration(config_.motion_magic_acceleration_traversal);
         dynamic_arm_joint_.setMotionCruiseVelocity(config_.motion_magic_velocity_traversal);
+        break;
+      case controllers_2022_msgs::DynamicArmSrv::Request::GROUND_TO_MID:
+        dynamic_arm_joint_.setMotionAcceleration(config_.motion_magic_acceleration_ground_to_mid);
+        dynamic_arm_joint_.setMotionCruiseVelocity(config_.motion_magic_velocity_ground_to_mid);
         break;
       default:
         break;

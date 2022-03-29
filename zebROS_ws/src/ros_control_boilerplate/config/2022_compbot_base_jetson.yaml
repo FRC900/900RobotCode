@@ -110,6 +110,10 @@ dynamic_arm_controller:
   motion_magic_velocity_fast: 0.20 # was 0.42, slowing down for first few matches
   motion_magic_acceleration_fast: 1.0
 
+  # retracting from ground to mid
+  motion_magic_velocity_ground_to_mid: 0.36 # was 0.42, slowing down for first few matches
+  motion_magic_acceleration_ground_to_mid: 1.0
+
   # retracting to traversal
   motion_magic_velocity_traversal: 0.13 # was 0.3
   motion_magic_acceleration_traversal: 1.0

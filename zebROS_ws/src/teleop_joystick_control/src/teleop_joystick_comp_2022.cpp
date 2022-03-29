@@ -85,6 +85,8 @@ ros::ServiceClient intake_client;
 std_msgs::Float64 speed_offset;
 ros::Publisher speed_offset_publisher; //shooter speed offset
 
+ros::Publisher dynamic_arm_piston_;
+
 // Diagnostic mode controls
 void decIndexerArc(void)
 {
@@ -252,9 +254,20 @@ bool orientStrafingAngleCallback(teleop_joystick_control::OrientStrafingAngle::R
 	return true;
 }
 
+void dynamicArmUpright() {
+	std_msgs::Float64 msg;
+	msg.data = 1.0;
+	dynamic_arm_piston_.publish(msg);
+}
+
+void dynamicArmTilted() {
+	std_msgs::Float64 msg;
+	msg.data = -1.0;
+	dynamic_arm_piston_.publish(msg);
+}
+
 bool sendRobotZero = false;
 bool snappingToAngle = false;
-int shooter_offsets = 0;
 
 void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& event)
 {
@@ -323,7 +336,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	if(button_box.leftRedButton)
 	{
 		geometry_msgs::Twist cmd_vel;
-		cmd_vel.linear.x = -0.2;
+		cmd_vel.linear.x = -0.3;
 		cmd_vel.linear.y = 0.0;
 		cmd_vel.linear.z = 0.0;
 		cmd_vel.angular.x = 0.0;
@@ -402,7 +415,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.rightSwitchUpPress)
 	{
-
+		dynamicArmUpright();
 	}
 	if(button_box.rightSwitchUpButton)
 	{
@@ -419,7 +432,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.rightSwitchDownPress)
 	{
-
+		dynamicArmTilted();
 	}
 	if(button_box.rightSwitchDownButton)
 	{
@@ -1233,6 +1246,7 @@ int main(int argc, char **argv)
 	indexer_straight_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/indexer_straight_controller/command", 1, true);
 	indexer_arc_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/indexer_arc_controller/command", 1, true);
 	shooter_pub = n.advertise<std_msgs::Float64>("/frcrobot_jetson/shooter_controller/command", 1, true);
+	dynamic_arm_piston_ = n.advertise<std_msgs::Float64>("/frcrobot_jetson/dynamic_arm_solenoid_controller/command", 1);
 	climber_client = n.serviceClient<controllers_2022_msgs::DynamicArmSrv>("/frcrobot_jetson/dynamic_arm_controller/command", false, service_connection_header);
 	intake_client = n.serviceClient<controllers_2022_msgs::Intake>("/frcrobot_jetson/intake_controller/command", false, service_connection_header);
 	speed_offset_publisher = n.advertise<std_msgs::Float64>("/shooter_speed_offset", 1, true);

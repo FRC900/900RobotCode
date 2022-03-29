@@ -336,7 +336,20 @@ public:
     controllers_2022_msgs::DynamicArmSrv srv;
     srv.request.use_percent_output = false; // motion magic
     srv.request.data = 0;
-    srv.request.profile = rung >= 2 ? srv.request.TRAVERSAL : srv.request.RETRACT;
+    switch (rung) {
+      case 0: // on ground (-> mid)
+        srv.request.profile = srv.request.GROUND_TO_MID;
+        break;
+      case 1: // on mid (-> high)
+        srv.request.profile = srv.request.RETRACT;
+        break;
+      case 2: // on high (-> traversal)
+        srv.request.profile = srv.request.TRAVERSAL;
+        break;
+      default:
+        srv.request.profile = srv.request.RETRACT;
+        break;
+    }
     if (dynamic_arm_.call(srv))
     {
       ROS_INFO_STREAM("2022_climb_server : called dynamic arm service.");

@@ -4,5 +4,6 @@ uint8 RETRACT=0
 uint8 EXTEND=1
 uint8 TRANSITION=2
 uint8 TRAVERSAL=3
+uint8 GROUND_TO_MID=4
 uint8 profile # see constants above
 ---
