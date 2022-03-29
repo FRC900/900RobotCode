@@ -40,6 +40,8 @@ protected:
   // s = static, ls = limit switch
   double s1_ls;
   double s2_ls;
+  double static_hook_piston_state;
+  double dynamic_arm_piston_state;
 
   talon_state_msgs::TalonState talon_states_;
 
@@ -193,10 +195,15 @@ public:
     ROS_INFO_STREAM("2022_climb_server : State 1");
     ROS_INFO_STREAM("2022_climb_server : ---");
     ROS_INFO_STREAM("2022_climb_server : Opening static hooks...");
-    std_msgs::Float64 spMsg;
-    spMsg.data = STATIC_HOOK_OPEN;
-    make_sure_publish(static_hook_piston_, spMsg);
-    if (sleepCheckingForPreempt(piston_wait_time_)) return; // wait for pistons
+    ros::spinOnce();
+    if (static_hook_piston_state != STATIC_HOOK_OPEN) {
+      std_msgs::Float64 spMsg;
+      spMsg.data = STATIC_HOOK_OPEN;
+      make_sure_publish(static_hook_piston_, spMsg);
+      if (sleepCheckingForPreempt(piston_wait_time_)) return; // wait for pistons
+    } else {
+      ROS_INFO_STREAM("2022_climb_server : static hook pistons already open");
+    }
     ROS_INFO_STREAM("2022_climb_server : Opened");
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state2, this);
@@ -212,10 +219,14 @@ public:
       exited = true;
       return;
     }
-    std_msgs::Float64 dpMsg;
-    dpMsg.data = DYNAMIC_ARM_UPRIGHT;
-    make_sure_publish(dynamic_arm_piston_, dpMsg);
-    if (sleepCheckingForPreempt(piston_wait_time_)) return;
+    if (dynamic_arm_piston_state != DYNAMIC_ARM_UPRIGHT) {
+      std_msgs::Float64 dpMsg;
+      dpMsg.data = DYNAMIC_ARM_UPRIGHT;
+      make_sure_publish(dynamic_arm_piston_, dpMsg);
+      if (sleepCheckingForPreempt(piston_wait_time_)) return;
+    } else {
+      ROS_INFO_STREAM("2022_climb_server : dynamic arm pistons already extended");
+    }
     if (!climb_zeroed_) {
       ROS_INFO_STREAM("2022_climb_server : zeroing dynamic arms");
       std_srvs::Trigger srv;
@@ -375,7 +386,7 @@ public:
     ros::Rate r(100);
     bool opened_hooks = false;
     while (fabs(talon_states_.speed[leaderIndex]) < fabs(get_to_zero_percent_output_)) {
-	  ROS_INFO_STREAM_THROTTLE(0.2, "2022 Clib server waiting to get up to speed");
+      ROS_INFO_STREAM_THROTTLE(0.2, "2022_climb_server : waiting to get up to speed");
       r.sleep();
       ros::spinOnce();
       if (!opened_hooks && (talon_states_.position[leaderIndex] <= static_hook_release_height_) && !s1_ls && !s2_ls) { // if hooks haven't been opened, height < hook release height, and both hooks aren't touching anything,
@@ -622,7 +633,7 @@ public:
   }
   void jointStateCallback(const sensor_msgs::JointState joint_state)
   {
-    std::map<std::string, double*> stateNamesToVariables = {{"climber_static1_limit_switch", &s1_ls}, {"climber_static2_limit_switch", &s2_ls}};
+    std::map<std::string, double*> stateNamesToVariables = {{"climber_static1_limit_switch", &s1_ls}, {"climber_static2_limit_switch", &s2_ls}, {"climber_dynamic_arm_solenoid_joint", &dynamic_arm_piston_state}, {"climber_static_hook_solenoid_joint", &static_hook_piston_state}};
     for (auto const &nameVar : stateNamesToVariables)
     {
       // get index of sensor
