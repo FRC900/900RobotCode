@@ -14,7 +14,9 @@ void conversionCB(const sensor_msgs::RangeConstPtr& x_distance, const sensor_msg
   pose.pose.position.x = x_distance->range;
   pose.pose.position.y = y_distance->range;
   ros::NodeHandle nh;
-  fake_pose_pub.publish(pose);
+  if (isfinite(pose.pose.position.x) && isfinite(pose.pose.position.y)) {
+    fake_pose_pub.publish(pose);
+  }
 }
 
 int main(int argc, char ** argv)
