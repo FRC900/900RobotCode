@@ -273,6 +273,7 @@ bool DynamicArmController::zeroService(std_srvs::Trigger::Request  &req,
   std_msgs::Bool zeroed;
   zeroed.data = zeroed_;
   zeroed_publisher_.publish(zeroed);
+  last_time_down_ = ros::Time::now();
   return true;
 }
 
