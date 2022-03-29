@@ -19,7 +19,7 @@ EXTRA_BLACKLIST_PACKAGES=""
 EXTRA_CMD_LINE=""
 uname -a | grep -q x86_64
 if [ $? -eq 1 ]; then
-	EXTRA_BLACKLIST_PACKAGES="demo_tf_node robot_characterization robot_visualizer rosbag_scripts rospy_message_converter rqt_driver_station_sim stage_ros template_controller visualize_profile zms_writer"
+	EXTRA_BLACKLIST_PACKAGES="controllers_2020 demo_tf_node robot_characterization robot_visualizer rosbag_scripts rospy_message_converter rqt_driver_station_sim stage_ros template_controller visualize_profile zms_writer"
 	EXTRA_CMD_LINE="--limit-status-rate 5"
 fi
 

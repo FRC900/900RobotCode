@@ -9,8 +9,17 @@
 		/auto/auto_mode
 		/auto/auto_state
 		/auto/cmd_vel
-		/connected_clients
+		/climber/climb_server_2022/cancel
+		/climber/climb_server_2022/feedback
+		/climber/climb_server_2022/goal
+		/climber/climb_server_2022/result
+		/climber/climb_server_2022/status
 		/diagnostics
+		/ejecting/ejecting_server_2022/cancel
+		/ejecting/ejecting_server_2022/feedback
+		/ejecting/ejecting_server_2022/goal
+		/ejecting/ejecting_server_2022/result
+		/ejecting/ejecting_server_2022/status
 		/enable_auto_in_teleop
 		/frcrobot_jetson/cpu_monitor/auto/auto_node/cpu
 		/frcrobot_jetson/cpu_monitor/auto/auto_node/mem
@@ -18,6 +27,8 @@
 		/frcrobot_jetson/cpu_monitor/climber/climb_server_2022/mem
 		/frcrobot_jetson/cpu_monitor/cmd_vel_mux/twist_mux/cpu
 		/frcrobot_jetson/cpu_monitor/cmd_vel_mux/twist_mux/mem
+		/frcrobot_jetson/cpu_monitor/ejecting/ejecting_server_2022/cpu
+		/frcrobot_jetson/cpu_monitor/ejecting/ejecting_server_2022/mem
 		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/cpu_monitor/cpu
 		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/cpu_monitor/mem
 		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/dump_offsets_service/cpu
@@ -28,6 +39,18 @@
 		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/ros_control_controller_manager/mem
 		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/uptime_jetson/cpu
 		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/uptime_jetson/mem
+		/frcrobot_jetson/cpu_monitor/hold_distance/convert_distance_to_pose/cpu
+		/frcrobot_jetson/cpu_monitor/hold_distance/convert_distance_to_pose/mem
+		/frcrobot_jetson/cpu_monitor/hold_distance/hold_position_publish_pid_cmd_vel_node/cpu
+		/frcrobot_jetson/cpu_monitor/hold_distance/hold_position_publish_pid_cmd_vel_node/mem
+		/frcrobot_jetson/cpu_monitor/hold_distance/hold_position_server/cpu
+		/frcrobot_jetson/cpu_monitor/hold_distance/hold_position_server/mem
+		/frcrobot_jetson/cpu_monitor/hold_distance/orient_pid/cpu
+		/frcrobot_jetson/cpu_monitor/hold_distance/orient_pid/mem
+		/frcrobot_jetson/cpu_monitor/hold_distance/x_position_pid/cpu
+		/frcrobot_jetson/cpu_monitor/hold_distance/x_position_pid/mem
+		/frcrobot_jetson/cpu_monitor/hold_distance/y_position_pid/cpu
+		/frcrobot_jetson/cpu_monitor/hold_distance/y_position_pid/mem
 		/frcrobot_jetson/cpu_monitor/imu/imu/cpu
 		/frcrobot_jetson/cpu_monitor/imu/imu/mem
 		/frcrobot_jetson/cpu_monitor/imu/imu_filter/cpu
@@ -40,28 +63,8 @@
 		/frcrobot_jetson/cpu_monitor/intake/intake_server_2022/mem
 		/frcrobot_jetson/cpu_monitor/intaking/intaking_server_2022/cpu
 		/frcrobot_jetson/cpu_monitor/intaking/intaking_server_2022/mem
-		/frcrobot_jetson/cpu_monitor/path_follower/base_trajectory_node/cpu
-		/frcrobot_jetson/cpu_monitor/path_follower/base_trajectory_node/mem
-		/frcrobot_jetson/cpu_monitor/path_follower/game_piece_path_server/cpu
-		/frcrobot_jetson/cpu_monitor/path_follower/game_piece_path_server/mem
-		/frcrobot_jetson/cpu_monitor/path_follower/map_server/cpu
-		/frcrobot_jetson/cpu_monitor/path_follower/map_server/mem
-		/frcrobot_jetson/cpu_monitor/path_follower/orient_pid/cpu
-		/frcrobot_jetson/cpu_monitor/path_follower/orient_pid/mem
-		/frcrobot_jetson/cpu_monitor/path_follower/path_follower_publish_pid_cmd_vel_node/cpu
-		/frcrobot_jetson/cpu_monitor/path_follower/path_follower_publish_pid_cmd_vel_node/mem
-		/frcrobot_jetson/cpu_monitor/path_follower/path_follower_server/cpu
-		/frcrobot_jetson/cpu_monitor/path_follower/path_follower_server/mem
-		/frcrobot_jetson/cpu_monitor/path_follower/x_position_pid/cpu
-		/frcrobot_jetson/cpu_monitor/path_follower/x_position_pid/mem
-		/frcrobot_jetson/cpu_monitor/path_follower/y_position_pid/cpu
-		/frcrobot_jetson/cpu_monitor/path_follower/y_position_pid/mem
 		/frcrobot_jetson/cpu_monitor/robot_state/robot_state_publisher/cpu
 		/frcrobot_jetson/cpu_monitor/robot_state/robot_state_publisher/mem
-		/frcrobot_jetson/cpu_monitor/rosapi/cpu
-		/frcrobot_jetson/cpu_monitor/rosapi/mem
-		/frcrobot_jetson/cpu_monitor/rosbridge_websocket/cpu
-		/frcrobot_jetson/cpu_monitor/rosbridge_websocket/mem
 		/frcrobot_jetson/cpu_monitor/rosout/cpu
 		/frcrobot_jetson/cpu_monitor/rosout/mem
 		/frcrobot_jetson/cpu_monitor/shooter/shooter_server_2022/cpu
@@ -76,8 +79,8 @@
 		/frcrobot_jetson/cpu_monitor/teleop/orient_strafing/orient_strafing_pid/mem
 		/frcrobot_jetson/cpu_monitor/teleop/teleop_joystick_comp_2022/cpu
 		/frcrobot_jetson/cpu_monitor/teleop/teleop_joystick_comp_2022/mem
-		/frcrobot_jetson/cpu_monitor/tf_object_detection/tf_object_detection/cpu
-		/frcrobot_jetson/cpu_monitor/tf_object_detection/tf_object_detection/mem
+		/frcrobot_jetson/cpu_monitor/terabee/terabee_x/cpu
+		/frcrobot_jetson/cpu_monitor/terabee/terabee_x/mem
 		/frcrobot_jetson/cpu_monitor/total_active_mem
 		/frcrobot_jetson/cpu_monitor/total_available_mem
 		/frcrobot_jetson/cpu_monitor/total_buffers_mem
@@ -87,14 +90,18 @@
 		/frcrobot_jetson/cpu_monitor/total_inactive_mem
 		/frcrobot_jetson/cpu_monitor/total_shared_mem
 		/frcrobot_jetson/cpu_monitor/total_used_mem
-		/frcrobot_jetson/cpu_monitor/zed_objdetect/cpu
-		/frcrobot_jetson/cpu_monitor/zed_objdetect/mem
-		/frcrobot_jetson/cpu_monitor/zed_objdetect_state_publisher/cpu
-		/frcrobot_jetson/cpu_monitor/zed_objdetect_state_publisher/mem
 		/frcrobot_jetson/dynamic_arm_controller/is_zeroed
+		/frcrobot_jetson/dynamic_arm_solenoid_controller/command
+		/frcrobot_jetson/indexer_arc_controller/command
+		/frcrobot_jetson/indexer_arc_motor_controller/command
+		/frcrobot_jetson/indexer_straight_controller/command
+		/frcrobot_jetson/indexer_straight_motor_controller/command
 		/frcrobot_jetson/joint_states
 		/frcrobot_jetson/shooter_controller/command
 		/frcrobot_jetson/static_hook_solenoid_controller/command
+		/frcrobot_jetson/swerve_drive_controller/cmd_vel
+		/frcrobot_jetson/swerve_drive_controller/cmd_vel_out
+		/frcrobot_jetson/swerve_drive_controller/odom
 		/frcrobot_jetson/talon_configs
 		/frcrobot_jetson/talon_states
 		/frcrobot_jetson/uptime
@@ -120,22 +127,78 @@
 		/frcrobot_rio/match_data
 		/frcrobot_rio/robot_controller_states
 		/frcrobot_rio/uptime
+		/hold_distance/distance_as_pose
+		/hold_distance/hold_position_pid/pid_enable
 		/hold_distance/hold_position_pid/swerve_drive_controller/cmd_vel
+		/hold_distance/hold_position_server/cancel
+		/hold_distance/hold_position_server/feedback
+		/hold_distance/hold_position_server/goal
+		/hold_distance/hold_position_server/result
+		/hold_distance/hold_position_server/status
+		/hold_distance/orient_pid/orient_cmd_pub
+		/hold_distance/orient_pid/orient_command
+		/hold_distance/orient_pid/orient_state
+		/hold_distance/orient_pid/pid_debug
+		/hold_distance/orient_pid/pid_enable
+		/hold_distance/x_position_pid/pid_debug
+		/hold_distance/x_position_pid/pid_enable
+		/hold_distance/x_position_pid/x_cmd_pub
+		/hold_distance/x_position_pid/x_command
+		/hold_distance/x_position_pid/x_state_pub
+		/hold_distance/y_position_pid/pid_debug
+		/hold_distance/y_position_pid/pid_enable
+		/hold_distance/y_position_pid/y_cmd_pub
+		/hold_distance/y_position_pid/y_command
+		/hold_distance/y_position_pid/y_state_pub
 		/hold_position/hold_position_pid/swerve_drive_controller/cmd_vel
 		/imu/imu/data
 		/imu/imu/data_raw
+		/imu/imu/temperature
+		/imu/nearest_angle
 		/imu/zeroed_imu
-		/joint_states
+		/index/index_server_2022/cancel
+		/index/index_server_2022/feedback
+		/index/index_server_2022/goal
+		/index/index_server_2022/result
+		/index/index_server_2022/status
+		/intake/intake_server_2022/cancel
+		/intake/intake_server_2022/feedback
+		/intake/intake_server_2022/goal
+		/intake/intake_server_2022/result
+		/intake/intake_server_2022/status
+		/intaking/intaking_server_2022/cancel
+		/intaking/intaking_server_2022/feedback
+		/intaking/intaking_server_2022/goal
+		/intaking/intaking_server_2022/result
+		/intaking/intaking_server_2022/status
+		/path_follower/path_follower_pid/swerve_drive_controller/cmd_vel
+		/path_follower/path_follower_server/cancel
+		/path_follower/path_follower_server/feedback
+		/path_follower/path_follower_server/goal
+		/path_follower/path_follower_server/result
+		/path_follower/path_follower_server/status
 		/robot_state/joint_states
 		/rosout
 		/rosout_agg
+		/shooter/shooter_server_2022/cancel
+		/shooter/shooter_server_2022/feedback
+		/shooter/shooter_server_2022/goal
+		/shooter/shooter_server_2022/result
+		/shooter/shooter_server_2022/status
 		/shooter_speed_offset
+		/shooting/shooting_server_2022/cancel
+		/shooting/shooting_server_2022/feedback
+		/shooting/shooting_server_2022/goal
+		/shooting/shooting_server_2022/result
+		/shooting/shooting_server_2022/status
 		/teleop/orient_strafing/control_effort
 		/teleop/orient_strafing/pid_debug
 		/teleop/orient_strafing/pid_enable
 		/teleop/orient_strafing/setpoint
 		/teleop/orient_strafing/state
+		/teleop/orient_strafing/swerve_drive_controller/cmd_vel
 		/teleop/swerve_drive_controller/cmd_vel
+		/terabee/terabee_x
 		/tf
 		/tf_static
 		/zed_objdetect/imu/data
