@@ -17,6 +17,7 @@
   <depend>control_msgs</depend>
   <depend>controllers_2020_msgs</depend>
   <depend>controllers_2022_msgs</depend>
+  <depend>imu_zero</depend>
   <depend>frc_msgs</depend>
   <depend>std_srvs</depend>
   <depend>roscpp</depend>

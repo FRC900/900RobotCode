@@ -36,6 +36,8 @@
 #include "behavior_actions/Intaking2022Action.h"
 #include <behavior_actions/Ejecting2022Action.h>
 
+#include <imu_zero/ImuZeroAngle.h>
+
 std::unique_ptr<TeleopCmdVel<teleop_joystick_control::TeleopJoystickComp2022Config>> teleop_cmd_vel;
 
 bool diagnostics_mode = false;
@@ -60,6 +62,7 @@ teleop_joystick_control::TeleopJoystickCompDiagnostics2022Config diagnostics_con
 ros::Publisher JoystickRobotVel;
 
 ros::ServiceClient BrakeSrv;
+ros::ServiceClient IMUZeroSrv;
 
 double imu_angle;
 
@@ -75,6 +78,7 @@ std_msgs::Float64 indexer_straight_cmd;
 std_msgs::Float64 shooter_cmd;
 controllers_2022_msgs::Intake intake_srv;
 controllers_2022_msgs::DynamicArmSrv climber_cmd;
+imu_zero::ImuZeroAngle imu_cmd;
 ros::Publisher indexer_straight_pub;
 ros::Publisher indexer_arc_pub;
 ros::Publisher shooter_pub;
@@ -84,6 +88,8 @@ ros::ServiceClient intake_client;
 //Shooter speed tuner
 std_msgs::Float64 speed_offset;
 ros::Publisher speed_offset_publisher; //shooter speed offset
+
+bool imu_service_needed = true;
 
 ros::Publisher dynamic_arm_piston_;
 
@@ -577,6 +583,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	// Auto-mode select?
 	if(button_box.bottomSwitchUpPress)
 	{
+		imu_service_needed = true;
 	}
 	if(button_box.bottomSwitchUpButton)
 	{
@@ -587,13 +594,20 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 			auto_mode_msg.auto_mode = 1;
 			auto_mode_select_pub.publish(auto_mode_msg);
 		}
+		if(imu_service_needed){
+			imu_cmd.request.angle = config.top_position_angle;
+			IMUZeroSrv.call(imu_cmd);
+			imu_service_needed = false;
+		}
 	}
 	if(button_box.bottomSwitchUpRelease)
 	{
+		imu_service_needed = true;
 	}
 
 	if(button_box.bottomSwitchDownPress)
 	{
+		imu_service_needed = true;
 	}
 	if(button_box.bottomSwitchDownButton)
 	{
@@ -604,9 +618,22 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 			auto_mode_msg.auto_mode = 2;
 			auto_mode_select_pub.publish(auto_mode_msg);
 		}
+		if(imu_service_needed){
+			imu_cmd.request.angle = config.bottom_position_angle;
+			IMUZeroSrv.call(imu_cmd);
+			imu_service_needed = false;
+			}
 	}
 	if(button_box.bottomSwitchDownRelease)
 	{
+		imu_service_needed = true;
+	}
+	if(!button_box.bottomSwitchUpButton && !button_box.bottomSwitchDownButton){ //The switch is in the middle position
+		if(imu_service_needed){
+			imu_cmd.request.angle = config.middle_position_angle;
+			IMUZeroSrv.call(imu_cmd);
+			imu_service_needed = false;
+		}
 	}
 
 	last_header_stamp = button_box.header.stamp;
@@ -1205,9 +1232,15 @@ int main(int argc, char **argv)
 	const std::map<std::string, std::string> service_connection_header{{"tcp_nodelay", "1"}};
 
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
+	IMUZeroSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/set_imu_zero", false, service_connection_header);
+
 	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
 	{
 		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");
+	}
+	if(!IMUZeroSrv.waitForExistence(ros::Duration(1)))
+	{
+		ROS_ERROR("Wait (15 sec) timed out, for IMU Zero Service in teleop_joystick_comp.cpp");
 	}
 
 	orient_strafing_enable_pub = n.advertise<std_msgs::Bool>("orient_strafing/pid_enable", 1);
