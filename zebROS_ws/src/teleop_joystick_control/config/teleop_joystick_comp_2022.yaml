@@ -13,5 +13,6 @@ teleop_params:
     climber_align_angle: 3.14159265 # Intake facing DS wall
     trigger_threshold: 0.5
     stick_threshold: 0.5
+    button_move_speed: 0.3
 
     #teleop_diagnostics_params:
