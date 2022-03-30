@@ -9,11 +9,11 @@
 		<group ns="hold_position" >
 			<rosparam file="$(find path_follower)/config/distance_to_pose.yaml" command="load"/>
 			<group ns="hold_position" >
-				<param name="odom_topic" value="$(arg odom_topic)"/>
-				<param name="pose_topic" value="$(arg pose_topic)"/>
-				<param name="use_pose_for_odom" value="$(arg use_pose_for_odom)"/>
+        <param name="odom_topic" value="$(arg odom_topic)"/>
+        <param name="pose_topic" value="$(arg pose_topic)"/>
+        <param name="use_pose_for_odom" value="$(arg use_pose_for_odom)"/>
 
-				<!-- In meters and radians -->
+        <!-- In meters and radians -->
 		        <param name="dist_threshold" value="0.06"/>
        			<param name="angle_threshold" value="0.036"/>
 			</group>
@@ -32,12 +32,12 @@
                 <param name="enable_topic" value="hold_position_pid/pid_enable" />
                 <param name="name" value="hold_position_pid" />
                 <param name="orient_state_topic" value="orient_pid/orient_state"/>
-								<param name="transform_yaw" value=true/>
+                <param name="transform_yaw" value="false"/>
             </node>
 
             <node name="x_position_pid" pkg="pid" type="controller" >
                 <param name="node_name" value="x_position_pid" />
-                <param name="Kp" value="2.5" />
+                <param name="Kp" value="2.3" />
                 <param name="Ki" value="0.0005" />
                 <param name="Kd" value="0.0" />
                 <param name="upper_limit" value="1.5" />
@@ -54,8 +54,8 @@
 
             <node name="y_position_pid" pkg="pid" type="controller" >
                 <param name="node_name" value="y_position_pid" />
-                <param name="Kp" value="4.25" />
-                <param name="Ki" value="0.0" />
+                <param name="Kp" value="2.3" />
+                <param name="Ki" value="0.0005" />
                 <param name="Kd" value="0.0" />
                 <param name="upper_limit" value="0" />
                 <param name="lower_limit" value="-0" />
@@ -71,12 +71,12 @@
 
             <node name="orient_pid" pkg="pid" type="controller" >
                 <param name="node_name" value="orient_pid" />
-                <param name="Kp" value="-2.5" />
-                <param name="Ki" value="0" />
-                <param name="Kd" value="0" />
-                <param name="upper_limit" value="0" />
-                <param name="lower_limit" value="-0" />
-                <param name="windup_limit" value="10" />
+                <param name="Kp" value="-4.2" />
+                <param name="Ki" value="0.0" />
+                <param name="Kd" value="-0.001" />
+                <param name="upper_limit" value="1.25" />
+                <param name="lower_limit" value="-1.25" />
+                <param name="windup_limit" value="0.5" />
                 <param name="angle_error" value="true" />
                 <param name="max_loop_frequency" value="100.0" />
                 <param name="min_loop_frequency" value="100.0" />
@@ -88,9 +88,9 @@
             </node>
 
 			<node name="convert_distance_to_pose" pkg="path_follower" type="convert_distance_to_pose">
-				<remap from="x_distance_input" to="/terabee/terabee_x" />
-				<!-- Hack since we only have 1 working terabee right now -->
-				<remap from="y_distance_input" to="/terabee/terabee_x" />
+        <remap from="x_distance_input" to="/terabee/terabee_x" />
+        <!-- Hack since we only have 1 working terabee right now -->
+        <remap from="y_distance_input" to="/terabee/terabee_x" />
 			</node>
         </group>
 

@@ -294,7 +294,9 @@ class holdPosition
 				auto &z_axis = z_axis_it->second;
 				z_axis.enable_pub_.publish(enable_msg);
 				command_msg.data = getYaw(next_waypoint.orientation);
-				z_axis.command_pub_.publish(command_msg);
+				if (isfinite(command_msg.data)) {
+					z_axis.command_pub_.publish(command_msg);
+				}
 
 				if (as_.isPreemptRequested() || !ros::ok())
 				{
@@ -326,8 +328,10 @@ class holdPosition
 					y_axis.state_pub_.publish(state_msg);
 #endif
 
-					state_msg.data = orientation_state;
-					z_axis.state_pub_.publish(state_msg);
+					if (isfinite(orientation_state)) {
+						state_msg.data = orientation_state;
+						z_axis.state_pub_.publish(state_msg);
+					}
 
 					r.sleep();
 					ros::spinOnce();
