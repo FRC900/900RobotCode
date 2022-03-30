@@ -223,13 +223,13 @@ void imuCallback(const sensor_msgs::Imu &imuState)
 	double yaw;
 	tf2::Matrix3x3(imuQuat).getRPY(roll, pitch, yaw);
 
-	if (yaw == yaw) // ignore NaN results
+	if (std::isfinite(yaw)) // ignore NaN results
 	{
 		imu_angle = -yaw;
 
 		// Pass along yaw state to orient PID node
 		std_msgs::Float64 imu_angle_msg;
-		imu_angle_msg.data = imu_angle;
+		imu_angle_msg.data = yaw; // TBD - invert or not?
 		orient_strafing_state_pub.publish(imu_angle_msg);
 	}
 }
@@ -1232,7 +1232,7 @@ int main(int argc, char **argv)
 	const std::map<std::string, std::string> service_connection_header{{"tcp_nodelay", "1"}};
 
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
-	IMUZeroSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/set_imu_zero", false, service_connection_header);
+	IMUZeroSrv = n.serviceClient<imu_zero::ImuZeroAngle>("/imu/set_imu_zero", false, service_connection_header);
 
 	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
 	{

@@ -37,11 +37,11 @@
             <node name="x_position_pid" pkg="pid" type="controller" >
                 <param name="node_name" value="x_position_pid" />
                 <param name="Kp" value="2.5" />
-                <param name="Ki" value="0.0" />
+                <param name="Ki" value="0.0005" />
                 <param name="Kd" value="0.0" />
                 <param name="upper_limit" value="1.5" />
                 <param name="lower_limit" value="-1.5" />
-                <param name="windup_limit" value="10" />
+                <param name="windup_limit" value="0.3" />
                 <param name="max_loop_frequency" value="100.0" />
                 <param name="min_loop_frequency" value="100.0" />
                 <param name="topic_from_controller" value="x_position_pid/x_command" />
