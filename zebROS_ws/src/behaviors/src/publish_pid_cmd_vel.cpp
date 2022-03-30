@@ -21,6 +21,7 @@ std::string ratio_xy_topic;
 std::string name;
 std::string orient_state_topic;
 
+bool transform_yaw = true; //Default value if param not loaded
 double command_timeout = 0.5; //Default value if param not loaded
 
 ros::Subscriber x_pid_sub;
@@ -79,32 +80,32 @@ int main(int argc, char ** argv)
 {
 	ros::init(argc, argv, "publish_pid_cmd_vel");
 	ros::NodeHandle nh;
-    ros::NodeHandle nh_private_params("~");
+  ros::NodeHandle nh_private_params("~");
 
-    if(!nh_private_params.getParam("orient_topic", orient_topic)) {
-        ROS_INFO("Could not read orient_topic in publish_pid_cmd_vel");
-    }
-    else {
+  if(!nh_private_params.getParam("orient_topic", orient_topic)) {
+    ROS_INFO("Could not read orient_topic in publish_pid_cmd_vel");
+  }
+  else {
 		ROS_WARN_STREAM("Subscribing to: " << orient_topic);
-        orient_pid_sub = nh.subscribe(orient_topic, 1, &orientCB);
+    orient_pid_sub = nh.subscribe(orient_topic, 1, &orientCB);
 		orient_sub = true;
-    }
-    if(!nh_private_params.getParam("x_topic", x_topic)) {
-        ROS_ERROR("Could not read x topic in publish_pid_cmd_vel");
-    }
-    else {
+  }
+  if(!nh_private_params.getParam("x_topic", x_topic)) {
+    ROS_ERROR("Could not read x topic in publish_pid_cmd_vel");
+  }
+  else {
 		ROS_WARN_STREAM("Subscribing to: " << x_topic);
-        x_pid_sub = nh.subscribe(x_topic, 1, &xCB);
+    x_pid_sub = nh.subscribe(x_topic, 1, &xCB);
 		x_sub = true;
-    }
-    if(!nh_private_params.getParam("y_topic", y_topic)) {
-        ROS_INFO("Could not read y_topic in publish_pid_cmd_vel");
-    }
-    else {
+  }
+  if(!nh_private_params.getParam("y_topic", y_topic)) {
+  	ROS_INFO("Could not read y_topic in publish_pid_cmd_vel");
+  }
+  else {
 		ROS_WARN_STREAM("Subscribing to: " << y_topic);
-        y_pid_sub = nh.subscribe(y_topic, 1, &yCB);
+    y_pid_sub = nh.subscribe(y_topic, 1, &yCB);
 		y_sub = true;
-    }
+  }
 	if(!nh_private_params.getParam("enable_topic", enable_topic))
 	{
 		ROS_ERROR("Could not read enable_topic in publish_pid_cmd_vel");
@@ -122,20 +123,24 @@ int main(int argc, char ** argv)
 		ratio_imposed = false;
 	}
 	else {
-        ratio_xy_sub = nh.subscribe(ratio_xy_topic, 1, &ratio_xyCB);
+    ratio_xy_sub = nh.subscribe(ratio_xy_topic, 1, &ratio_xyCB);
 		ratio_imposed = true;
 	}
 	if(!nh_private_params.getParam("name", name))
 	{
 		ROS_ERROR("Could not read name in publish_pid_cmd_vel");
 	}
-        if(!nh_private_params.getParam("orient_state_topic", orient_state_topic))
-        {
-            ROS_ERROR("Could not read orient_state_topic in publish_pid_cmd_vel. Assuming robot_centric.");
-        }
-        else {
-            orient_state_sub = nh.subscribe(orient_state_topic, 1, &orientStateCB);
-        }
+  if(!nh_private_params.getParam("orient_state_topic", orient_state_topic))
+  {
+      ROS_ERROR("Could not read orient_state_topic in publish_pid_cmd_vel. Assuming robot_centric.");
+  }
+  else {
+      orient_state_sub = nh.subscribe(orient_state_topic, 1, &orientStateCB);
+  }
+	if(!nh_private_params.getParam("transform_yaw", transform_yaw))
+	{
+		ROS_ERROR("Could not read transform_yaw in publish_pid_cmd_vel");
+	}
 
 	ros::Publisher cmd_vel_pub = nh.advertise<geometry_msgs::Twist>(name + "/swerve_drive_controller/cmd_vel", 1);
 
@@ -172,19 +177,24 @@ int main(int argc, char ** argv)
 				}
 			}
 			time_since_x = time_since_y = ros::Time::now();
-                        double rotate_angle;
-                        if((current_time - time_at_last_orient_state).toSec() < command_timeout)
-                        {
-                            rotate_angle = -1 * current_angle;
-                        }
-                        else
-                        {
-                            rotate_angle = 0;
-                        }
-                        cmd_vel_msg.linear.x = x_command * cos(rotate_angle) - y_command * sin(rotate_angle);
-                        cmd_vel_msg.linear.y = x_command * sin(rotate_angle) + y_command * cos(rotate_angle);
+		  double rotate_angle;
+		  if((current_time - time_at_last_orient_state).toSec() < command_timeout)
+		  {
+		  	rotate_angle = -1 * current_angle;
+		  }
+		  else
+		  {
+		  	rotate_angle = 0;
+		  }
+			if (transform_yaw) {
+			  cmd_vel_msg.linear.x = x_command * cos(rotate_angle) - y_command * sin(rotate_angle);
+			  cmd_vel_msg.linear.y = x_command * sin(rotate_angle) + y_command * cos(rotate_angle);
+			}
+			else {
+				cmd_vel_msg.linear.x = x_command;
+				cmd_vel_msg.linear.y = y_command;
+			}
 			cmd_vel_pub.publish(cmd_vel_msg);
-
 		}
 
 		else {
