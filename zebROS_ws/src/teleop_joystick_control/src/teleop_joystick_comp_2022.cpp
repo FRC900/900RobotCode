@@ -1233,6 +1233,18 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read stick_threshold in teleop_joystick_comp");
 	}
+	if(!n_params.getParam("bottom_position_angle", config.bottom_position_angle))
+	{
+		ROS_ERROR("Could not read bottom_position_angle in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("middle_position_angle", config.middle_position_angle))
+	{
+		ROS_ERROR("Could not read middle_position_angle in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("top_position_angle", config.top_position_angle))
+	{
+		ROS_ERROR("Could not read top_position_angle in teleop_joystick_comp");
+	}
 
 	orient_strafing_angle = config.climber_align_angle;
 

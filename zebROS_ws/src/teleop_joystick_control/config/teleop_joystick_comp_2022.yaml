@@ -14,5 +14,8 @@ teleop_params:
     trigger_threshold: 0.5
     stick_threshold: 0.5
     button_move_speed: 0.3
+    bottom_position_angle: -110.0
+    middle_position_angle: -0.0
+    top_position_angle: -200.0
 
     #teleop_diagnostics_params:
