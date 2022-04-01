@@ -385,7 +385,7 @@ public:
     }
     ros::Rate r(100);
     bool opened_hooks = false;
-    while (fabs(talon_states_.speed[leaderIndex]) < fabs(get_to_zero_percent_output_)) {
+    while (fabs(talon_states_.speed[leaderIndex]) < fabs(get_to_zero_percent_output_) && !talon_states_.reverse_limit_switch[leaderIndex]) {
       ROS_INFO_STREAM_THROTTLE(0.2, "2022_climb_server : waiting to get up to speed");
       r.sleep();
       ros::spinOnce();
@@ -444,15 +444,6 @@ public:
     ROS_INFO_STREAM("2022_climb_server : called dynamic arm service to hold up in air.");
     rung++;
     ROS_INFO_STREAM("2022_climb_server : Lowered dynamic arms fully and released static hooks. Robot is fully supported by rung " << std::to_string(rung) << ".");
-    if (rung == 3)
-    {
-      ROS_INFO_STREAM("2022_climb_server : Climb is done! Woohoo!!");
-      reset(true);
-      exited = true;
-      success = true;
-      ROS_INFO_STREAM("2022_climb_server : RESET STATE");
-      return;
-    }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state6, this);
   }
@@ -535,6 +526,15 @@ public:
     }
 
     ROS_INFO_STREAM("2022_climb_server : Raised dynamic arms slightly & checking static hook sensors");
+    if (rung == 3)
+    {
+      ROS_INFO_STREAM("2022_climb_server : Climb is done! Woohoo!!");
+      reset(true);
+      exited = true;
+      success = true;
+      ROS_INFO_STREAM("2022_climb_server : RESET STATE");
+      return;
+    }
     ROS_INFO_STREAM("");
     nextFunction_ = boost::bind(&ClimbStateMachine::state8, this);
   }
