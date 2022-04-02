@@ -61,10 +61,10 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 		// Get the distance to the object by finding contours within the depth data inside the
 		// object's bounding rectangle.
 		const float objDistance = usefulDepthMat(cvDepth->image, rect, false, algorithm);
-		if (objDistance < 0)
+		if (objDistance < 0 || isnan(objDistance))
 		{
-			ROS_ERROR_STREAM("Depth of object at " << objRectCenter << " with bounding rect " << rect << " objDistance < 0 : " << objDistance);
-			continue;
+			ROS_ERROR_STREAM_THROTTLE(2, "Depth of object at " << objRectCenter << " with bounding rect " << rect << " invalid : " << objDistance);
+			return;
 		}
 		const cv::Point3f world_coord_scaled = cc.screen_to_world(rect, worldObject.id, objDistance);
 
@@ -103,7 +103,7 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 
 			// Can't detect rotation yet, so publish 0 instead
 			tf2::Quaternion q;
-			q.setRPY(0, 0, out_msg.objects[i].angle);
+			q.setRPY(0, 0, 0);
 
 			transformStamped.transform.rotation.x = q.x();
 			transformStamped.transform.rotation.y = q.y();
@@ -136,7 +136,7 @@ int main (int argc, char **argv)
 	std::unique_ptr<message_filters::Synchronizer<ObjDepthSyncPolicy>> obj_depth_sync;
 	obj_depth_sync = std::make_unique<message_filters::Synchronizer<ObjDepthSyncPolicy>>(ObjDepthSyncPolicy(10), *obsub, *depth_sub);
 
-	// obj_depth_sync->setMaxIntervalDuration(ros::Duration(1, 0)); // for testing rosbags
+	obj_depth_sync->setMaxIntervalDuration(ros::Duration(0.05));
 	obj_depth_sync->registerCallback(boost::bind(callback, _1, _2));
 
 	// Set up a simple subscriber to capture camera info

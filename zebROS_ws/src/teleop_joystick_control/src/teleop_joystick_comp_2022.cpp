@@ -34,7 +34,8 @@
 #include "behavior_actions/Climb2022Action.h"
 #include "behavior_actions/Shooting2022Action.h"
 #include "behavior_actions/Intaking2022Action.h"
-#include <behavior_actions/Ejecting2022Action.h>
+#include "behavior_actions/Ejecting2022Action.h"
+#include "path_follower_msgs/holdPositionAction.h"
 
 #include <imu_zero/ImuZeroAngle.h>
 
@@ -239,6 +240,7 @@ std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Climb2022Action>
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Shooting2022Action>> shooting_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2022Action>> intaking_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Ejecting2022Action>> ejecting_ac;
+std::shared_ptr<actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>> distance_ac;
 ros::Subscriber hub_angle_sub;
 double hub_angle;
 
@@ -365,8 +367,8 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.leftRedPress)
 	{
-		ROS_INFO_STREAM("Snapping to angle for shooting!");
-		// Align for shooting
+		ROS_INFO_STREAM("Snapping to angle for climb!");
+		// Align for climbing
 		std_msgs::Bool enable_align_msg;
 		enable_align_msg.data = true;
 		// To align the robot to an angle, enable_align_msg.data
@@ -374,9 +376,8 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 		// needs to be published to orient_strafing_setpoint_pub
 		orient_strafing_enable_pub.publish(enable_align_msg);
 
-		ros::spinOnce();
 		std_msgs::Float64 orient_strafing_angle_msg;
-		orient_strafing_angle_msg.data = hub_angle;
+		orient_strafing_angle_msg.data = orient_strafing_angle;
 		orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
 		snappingToAngle = true;
 	}
@@ -390,7 +391,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 		std_msgs::Bool enable_align_msg;
 		enable_align_msg.data = false;
 		orient_strafing_enable_pub.publish(enable_align_msg);
-		ROS_INFO_STREAM("Stopping snapping to angle for shooting!");
+		ROS_INFO_STREAM("Stopping snapping to angle for climb!");
 		snappingToAngle = false;
 		sendRobotZero = false;
 	}
@@ -508,30 +509,25 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.yellowPress)
 	{
-		ROS_INFO_STREAM("Snapping to angle for climb!");
-		// Align for climbing
-		std_msgs::Bool enable_align_msg;
-		enable_align_msg.data = true;
-		// To align the robot to an angle, enable_align_msg.data
-		// needs to be true and the desired angle (in radians)
-		// needs to be published to orient_strafing_setpoint_pub
-		orient_strafing_enable_pub.publish(enable_align_msg);
-
-		std_msgs::Float64 orient_strafing_angle_msg;
-		orient_strafing_angle_msg.data = orient_strafing_angle;
-		orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
-		snappingToAngle = true;
+		ROS_INFO_STREAM("Driving to fender at correct angle!");
+		path_follower_msgs::holdPositionGoal goal;
+		goal.pose.position.x = 0.3;
+		goal.pose.position.y = 0.3;
+		goal.pose.position.z = 0.0;
+		tf2::Quaternion q;
+		q.setRPY(0, 0, hub_angle);
+		goal.pose.orientation.x = q.x();
+		goal.pose.orientation.y = q.y();
+		goal.pose.orientation.z = q.z();
+		goal.pose.orientation.w = q.w();
+		distance_ac->sendGoal(goal);
 	}
 	if(button_box.yellowButton)
 	{
 	}
 	if(button_box.yellowRelease)
 	{
-		std_msgs::Bool enable_align_msg;
-		enable_align_msg.data = false;
-		orient_strafing_enable_pub.publish(enable_align_msg);
-		ROS_INFO_STREAM("Stopping snapping to angle for climb!");
-		snappingToAngle = false;
+		distance_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		sendRobotZero = false;
 	}
 
@@ -736,7 +732,19 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: buttonB
 			if(joystick_states_array[0].buttonBPress)
 			{
+				ROS_INFO_STREAM("Snapping to angle for shooting!");
+				// Align for shooting
+				std_msgs::Bool enable_align_msg;
+				enable_align_msg.data = true;
+				// To align the robot to an angle, enable_align_msg.data
+				// needs to be true and the desired angle (in radians)
+				// needs to be published to orient_strafing_setpoint_pub
+				orient_strafing_enable_pub.publish(enable_align_msg);
 
+				std_msgs::Float64 orient_strafing_angle_msg;
+				orient_strafing_angle_msg.data = hub_angle;
+				orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
+				snappingToAngle = true;
 			}
 
 			if(joystick_states_array[0].buttonBButton)
@@ -744,19 +752,37 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 			if(joystick_states_array[0].buttonBRelease)
 			{
-
+				std_msgs::Bool enable_align_msg;
+				enable_align_msg.data = false;
+				orient_strafing_enable_pub.publish(enable_align_msg);
+				ROS_INFO_STREAM("Stopping snapping to angle for shooting!");
+				snappingToAngle = false;
+				sendRobotZero = false;
 			}
 
 			//Joystick1: buttonX
 			if(joystick_states_array[0].buttonXPress)
 			{
-
+				ROS_INFO_STREAM("Driving to fender at correct angle!");
+				path_follower_msgs::holdPositionGoal goal;
+				goal.pose.position.x = 0.3;
+				goal.pose.position.y = 0.3;
+				goal.pose.position.z = 0.0;
+				tf2::Quaternion q;
+				q.setRPY(0, 0, hub_angle);
+				goal.pose.orientation.x = q.x();
+				goal.pose.orientation.y = q.y();
+				goal.pose.orientation.z = q.z();
+				goal.pose.orientation.w = q.w();
+				distance_ac->sendGoal(goal);
 			}
 			if(joystick_states_array[0].buttonXButton)
 			{
 			}
 			if(joystick_states_array[0].buttonXRelease)
 			{
+				distance_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+				sendRobotZero = false;
 			}
 
 			//Joystick1: buttonY
@@ -1282,22 +1308,27 @@ int main(int argc, char **argv)
 	shooting_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Shooting2022Action>>("/shooting/shooting_server_2022", true);
 	intaking_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Intaking2022Action>>("/intaking/intaking_server_2022", true);
 	ejecting_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Ejecting2022Action>>("/ejecting/ejecting_server_2022", true);
+	distance_ac = std::make_shared<actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>>("/hold_distance/hold_position_server", true);
 
 	ROS_INFO_STREAM("Waiting for actionlib servers");
 	if (!climb_ac->waitForServer(ros::Duration(15))) {
 		ROS_ERROR("**CLIMB LIKELY WON'T WORK*** Wait (15 sec) timed out, for climb action in teleop_joystick_comp.cpp");
 	}
 
-	if (!shooting_ac->waitForServer(ros::Duration(15))) {
-		ROS_ERROR("**SHOOTING LIKELY WON'T WORK*** Wait (15 sec) timed out, for shooting action in teleop_joystick_comp.cpp");
+	if (!shooting_ac->waitForServer(ros::Duration(1))) {
+		ROS_ERROR("**SHOOTING LIKELY WON'T WORK*** Wait (1 sec) timed out, for shooting action in teleop_joystick_comp.cpp");
 	}
 
-	if (!intaking_ac->waitForServer(ros::Duration(15))) {
-		ROS_ERROR("**INTAKING LIKELY WON'T WORK*** Wait (15 sec) timed out, for intaking action in teleop_joystick_comp.cpp");
+	if (!intaking_ac->waitForServer(ros::Duration(1))) {
+		ROS_ERROR("**INTAKING LIKELY WON'T WORK*** Wait (1 sec) timed out, for intaking action in teleop_joystick_comp.cpp");
 	}
 
-	if (!ejecting_ac->waitForServer(ros::Duration(15))) {
-		ROS_ERROR("**EJECTING LIKELY WON'T WORK*** Wait (15 sec) timed out, for ejecting action in teleop_joystick_comp.cpp");
+	if (!ejecting_ac->waitForServer(ros::Duration(1))) {
+		ROS_ERROR("**EJECTING LIKELY WON'T WORK*** Wait (1 sec) timed out, for ejecting action in teleop_joystick_comp.cpp");
+	}
+
+	if (!distance_ac->waitForServer(ros::Duration(1))) {
+		ROS_ERROR("**HOLD DISTANCE LIKELY WON'T WORK*** Wait (1 sec) timed out, for hold distance action in teleop_joystick_comp.cpp");
 	}
 
 	ros::ServiceServer orient_strafing_angle_service = n.advertiseService("orient_strafing_angle", orientStrafingAngleCallback);

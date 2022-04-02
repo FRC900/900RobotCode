@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	std_srvs
 	talon_state_msgs
+	path_follower_msgs
 	imu_zero
 	)
 

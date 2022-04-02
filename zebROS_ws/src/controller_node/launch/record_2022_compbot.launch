@@ -3,7 +3,7 @@
 <launch>
 
   <node name="rosbag_record_node" pkg="rosbag" type="record"
-	  launch-prefix="nice" 
+	  launch-prefix="nice"
 	  args="record -o /mnt/900_2/
 		/2022_index_server/ball_state
 		/auto/auto_mode
@@ -206,5 +206,10 @@
 		/zed_objdetect/imu/mag
 		/zed_objdetect/odom
 		/zed_objdetect/pose
+    /zed_objdetect/left/image_rect_color
+    /zed_objdetect/depth/depth_registered
+    /zed_objdetect/left/camera_info
+    /zed_objdetect/depth/camera_info
+    /zed_objdetect/right/camera_info
 		"/>
 </launch>
