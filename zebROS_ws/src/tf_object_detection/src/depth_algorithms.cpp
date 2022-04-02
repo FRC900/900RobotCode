@@ -41,12 +41,10 @@ float contoursDepthMat(const cv::Mat& depth_, const cv::Rect& bound_rect, bool d
 	float nan_ = std::numeric_limits<float>::quiet_NaN();
 	cv::Mat inf = depth>=900;
 	cv::Mat neg_inf = depth<=-900;
-	cv::Mat nan = depth==nan_;
-	cv::Mat neg_nan = depth==-nan_;
+	cv::Mat nan = depth!=depth;
 	depth.setTo(0, inf);
 	depth.setTo(0, neg_inf);
 	depth.setTo(0, nan);
-	depth.setTo(0, neg_nan);
 
 	if (debug) {
 		double min, max; // cv::minMaxLoc requires doubles which is why a double is used here. Also, this is only enabled when debug==true.
