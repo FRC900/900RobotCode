@@ -520,6 +520,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 		goal.pose.orientation.y = q.y();
 		goal.pose.orientation.z = q.z();
 		goal.pose.orientation.w = q.w();
+		goal.isAbsoluteCoord = true;
 		distance_ac->sendGoal(goal);
 	}
 	if(button_box.yellowButton)
@@ -774,6 +775,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				goal.pose.orientation.y = q.y();
 				goal.pose.orientation.z = q.z();
 				goal.pose.orientation.w = q.w();
+				goal.isAbsoluteCoord = true;
 				distance_ac->sendGoal(goal);
 			}
 			if(joystick_states_array[0].buttonXButton)

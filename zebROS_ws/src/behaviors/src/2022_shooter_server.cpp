@@ -46,7 +46,7 @@ public:
     action_name_(name),
     ddr_(nh_params_)
   {
-    high_goal_speed_ = 335; // was 325 at start of UNCA
+    high_goal_speed_ = 345; // was 325 at start of UNCA
     ddr_.registerVariable<double>("high_goal_speed", &high_goal_speed_, "High Goal Shooting Speed", 0, 500);
     low_goal_speed_ = 200; // 180 or 200
     ddr_.registerVariable<double>("low_goal_speed", &low_goal_speed_, "Low Goal Shooting Speed", 0, 500);
