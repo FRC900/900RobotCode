@@ -953,6 +953,17 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		c_FeedEnable(100);
 	}
 #endif
+	// If time moves backwards, reset all of the read timers
+	// so that they continue publishing normally rather than
+	// being stuck waiting until the time increases to be higher
+	// than the pre-reset value
+	if (period < ros::Duration{0.0})
+	{
+		t_prev_joystick_read_ = time.toSec();
+		t_prev_robot_iteration_ = time.toSec();
+		t_prev_match_data_read_ = time.toSec();
+		t_prev_robot_controller_read_ = time.toSec();
+	}
 
 	read_tracer_.start_unique("Check for ready");
 	if (run_hal_robot_ && !robot_code_ready_)
@@ -978,7 +989,7 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		{
 			robot_->OneIteration();
 
-			t_prev_robot_iteration_ += 1./robot_iteration_hz_;
+			t_prev_robot_iteration_ = time.toSec();
 		}
 
 		read_tracer_.start_unique("joysticks");
@@ -1025,7 +1036,9 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 #endif
 			}
 			if (updated_all)
-				t_prev_joystick_read_ += 1./joystick_read_hz_;
+			{
+				t_prev_joystick_read_ = time.toSec();
+			}
 		}
 
 		int32_t status = 0;
@@ -1037,7 +1050,7 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		{
 			if(time.toSec() - t_prev_match_data_read_ > (1./match_data_read_hz_))
 			{
-				t_prev_match_data_read_ += 1./match_data_read_hz_;
+				t_prev_match_data_read_ = time.toSec();
 
 				status = 0;
 				match_data_.setMatchTimeRemaining(HAL_GetMatchTime(&status));
@@ -1115,7 +1128,7 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		//check if sufficient time has passed since last read
 		if(time.toSec() - t_prev_robot_controller_read_ > (1./robot_controller_read_hz_))
 		{
-			t_prev_robot_controller_read_ += 1./robot_controller_read_hz_;
+			t_prev_robot_controller_read_ = time.toSec();
 
 			status = 0;
 			robot_controller_state_.SetFPGAVersion(HAL_GetFPGAVersion(&status));

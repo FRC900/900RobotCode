@@ -94,8 +94,12 @@ void CANCoderStateController::starting(const ros::Time &time)
 	last_publish_time_ = time;
 }
 
-void CANCoderStateController::update(const ros::Time &time, const ros::Duration & /*period*/)
+void CANCoderStateController::update(const ros::Time &time, const ros::Duration & period)
 {
+	if (period < ros::Duration{0})
+	{
+		last_publish_time_ = time;
+	}
 	// limit rate of publishing
 	if (publish_rate_ > 0.0 && last_publish_time_ + ros::Duration(1.0 / publish_rate_) < time)
 	{
@@ -103,7 +107,7 @@ void CANCoderStateController::update(const ros::Time &time, const ros::Duration 
 		if (realtime_pub_->trylock())
 		{
 			// we're actually publishing, so increment time
-			last_publish_time_ = last_publish_time_ + ros::Duration(1.0 / publish_rate_);
+			last_publish_time_ = time;
 
 			// populate joint state message:
 			// - fill only joints that are present in the JointStateInterface, i.e. indices [0, num_hw_joints_)

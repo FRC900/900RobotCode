@@ -27,6 +27,10 @@ elif [ -f /home/admin/rio_bashrc.sh ] ; then
     export LD_LIBRARY_PATH=/home/admin/wpilib:$LD_LIBRARY_PATH
     swapon /dev/sda5
 	ulimit -r unlimited
+	# Update rio time and stop ntpd server to prevent
+	# time updates while robot code is running
+	/etc/init.d/ntpd stop
+	ntpd -gq
 else
     echo "Unknown environment! Trying to proceed anyway using local environment."
     source /opt/ros/melodic/setup.bash

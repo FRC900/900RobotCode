@@ -49,13 +49,36 @@ double degToRad(double deg) {
   return rad;
 }
 
+double getYaw(const geometry_msgs::Quaternion &q)
+{
+	double roll, pitch, yaw;
+	tf2::Quaternion tf_q(
+		q.x,
+		q.y,
+		q.z,
+		q.w);
+	tf2::Matrix3x3(tf_q).getRPY(roll, pitch, yaw);
+	return yaw;
+}
+
 void zeroCallback(const sensor_msgs::Imu::ConstPtr& raw_msg) {
   tf2::convert(raw_msg -> orientation, last_raw);
   tf2::Quaternion zeroed = zero_rot * last_raw;
   zeroed.normalize();
   sensor_msgs::Imu zeroed_imu = *raw_msg;
   zeroed_imu.orientation = tf2::toMsg(zeroed);
-  pub.publish(zeroed_imu);
+  if (!std::isfinite(getYaw(zeroed_imu.orientation)))
+  {
+	  ROS_WARN_STREAM("zeroCallback : NaN yaw result"
+			  << "\n\traw_msg = " << raw_msg
+			  << "\n\tlast_raw = " << last_raw
+			  << "\n\tzeroed = " << zeroed
+			  << "\n\tzeroed_imu = " << zeroed_imu);
+  }
+  else
+  {
+	  pub.publish(zeroed_imu);
+  }
 }
 
 bool zeroSet(imu_zero::ImuZeroAngle::Request& req,

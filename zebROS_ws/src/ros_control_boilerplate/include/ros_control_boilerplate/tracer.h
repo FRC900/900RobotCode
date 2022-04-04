@@ -13,10 +13,16 @@ class TracerEntry
 {
 	public:
 		TracerEntry()
-			: count_(0)
-			, total_time_(0.0)
-			, started_(false)
+			: count_{0}
+			, total_time_{0.0}
+			, started_{false}
 	{
+	}
+
+	void reset()
+	{
+		count_ = 0;
+		total_time_ = std::chrono::duration<double>{0.0};
 	}
 
 	size_t count_;
@@ -107,17 +113,20 @@ class Tracer
 				for (auto &it : map_)
 					if (it.second.started_)
 						stop(it.first);
-			if ((ros::Time::now() - last_report_time_).toSec() >= timeout)
+			const auto now = ros::Time::now();
+			if (((now - last_report_time_).toSec() >= timeout) ||
+				(now < last_report_time_))
 			{
 				std::stringstream s;
 				s << name_ << ":" << std::endl;
 				for (auto &it : map_)
 				{
 					const double avg_time = it.second.total_time_ / std::chrono::duration<double>(it.second.count_);
-					s << "\t" << it.first << " = " << avg_time << std::endl;
+					s << "\t" << it.first << " = " << avg_time << ", count = " << it.second.count_ << std::endl;
+					it.second.reset();
 				}
 				ROS_INFO_STREAM(s.str());
-				last_report_time_ += ros::Duration(timeout);
+				last_report_time_ = now;
 			}
 		}
 

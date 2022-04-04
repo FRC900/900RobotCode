@@ -38,13 +38,17 @@ namespace joint_mode_state_controller
 		last_publish_time_ = time;
     }
 
-    void JointModeStateController::update(const ros::Time &time, const ros::Duration & )
+    void JointModeStateController::update(const ros::Time &time, const ros::Duration &period)
 	{
+		if (period < ros::Duration{0})
+		{
+			last_publish_time_ = time;
+		}
 		if ((publish_rate_ > 0.0) && (last_publish_time_ + ros::Duration(1.0 / publish_rate_) < time))
 		{
 			if (realtime_pub_->trylock())
 			{
-				last_publish_time_ = last_publish_time_ + ros::Duration(1.0 / publish_rate_);
+				last_publish_time_ = time;
 
 				auto &m = realtime_pub_->msg_;
 
