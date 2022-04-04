@@ -41,7 +41,7 @@ cmd_vel_1_reverse:
     duration: 2.65
     cmd_vel:
         x: -1.05
-        y: 0.4
+        y: 0.42
         z: 0.0
 
 cmd_vel_2:
