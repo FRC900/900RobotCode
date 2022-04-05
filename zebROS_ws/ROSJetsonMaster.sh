@@ -27,6 +27,7 @@ elif [ -f /home/admin/rio_bashrc.sh ] ; then
     export LD_LIBRARY_PATH=/home/admin/wpilib:$LD_LIBRARY_PATH
     swapon /dev/sda5
 	ulimit -r unlimited
+	/etc/init.d/nilvrt stop
 	# Update rio time and stop ntpd server to prevent
 	# time updates while robot code is running
 	/etc/init.d/ntpd stop
