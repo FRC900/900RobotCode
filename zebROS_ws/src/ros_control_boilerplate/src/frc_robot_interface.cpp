@@ -2410,6 +2410,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			else
 			{
 				tc.setClearMotionProfileTrajectories();
+				break;
 			}
 		}
 
@@ -2422,6 +2423,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			else
 			{
 				tc.setClearMotionProfileHasUnderrun();
+				break;
 			}
 		}
 
@@ -2470,7 +2472,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			const bool b3 = tc.demand1Changed(demand1_type_internal, demand1_value);
 
 			// ROS_INFO_STREAM("b1 = " << b1 << " b2 = " << b2 << " b3 = " << b3);
-			if (b1 || b2 || b3)
+			//if (b1 || b2 || b3)
 			{
 				ctre::phoenix::motorcontrol::ControlMode out_mode;
 				ctre::phoenix::motorcontrol::DemandType demand1_type_phoenix;
@@ -2504,6 +2506,9 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 					ts.setDemand1Value(demand1_value);
 
 					victor->Set(out_mode, command, demand1_type_phoenix, demand1_value);
+				}
+				else {
+					ROS_ERROR_STREAM("Couldn't convert to the talon enum type");
 				}
 			}
 		}
@@ -3115,7 +3120,7 @@ bool FRCRobotInterface::safeTalonConfigCall(ctre::phoenix::ErrorCode error_code,
 	talon_config_count_ += 1;
 	if (talon_config_count_ > talon_config_count_limit_)
 	{
-		//ROS_INFO_STREAM("Talon config call count for this iteration reached on function " << talon_method_name);
+		ROS_INFO_STREAM("Talon config call count for this iteration reached on function " << talon_method_name);
 		return false;
 	}
 	if (!safeTalonCall(error_code, talon_method_name, talon_id, true))

@@ -890,7 +890,6 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 		static double time_before_brake = 0;
 		if (fabs(curr_cmd.lin[0]) <= 1e-6 && fabs(curr_cmd.lin[1]) <= 1e-6 && fabs(curr_cmd.ang) <= 1e-6)
 		{
-			brake_last = time.toSec();
 
 			for (size_t i = 0; i < WHEELCOUNT; ++i)
 			{
@@ -900,6 +899,7 @@ void TalonSwerveDriveController::update(const ros::Time &time, const ros::Durati
 
 			if ((time.toSec() - time_before_brake) > .75)
 			{
+        brake_last = time.toSec();
 				brake();
 				neutral_mode = hardware_interface::NeutralMode::NeutralMode_Brake;
 			}

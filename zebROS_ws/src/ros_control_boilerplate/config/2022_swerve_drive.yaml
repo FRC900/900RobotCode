@@ -43,7 +43,7 @@ swerve_drive_controller:
     wheel_coords: [[-0.27305, 0.27305], [0.27305, 0.27305], [-0.27305, -0.27305], [0.27305, -0.27305]]
 
     cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
-    use_cos_scaling: True  # scale motor speed by how close angle motors are to setpoints
+    use_cos_scaling: False  # scale motor speed by how close angle motors are to setpoints
     speed_joint_fl:
         joint: fl_drive #fix pid
         close_loop_values:
@@ -90,7 +90,7 @@ swerve_drive_controller:
         voltage_compensation_saturation: 12
         current_limit_continuous_amps: 15
         current_limit_peak_amps: 25
-        current_limit_peak_msec: 50 
+        current_limit_peak_msec: 50
         current_limit_enable: True
         dynamic_reconfigure: False
         neutral_mode: "Brake"
@@ -126,7 +126,7 @@ swerve_drive_controller:
         voltage_compensation_saturation: 12
         current_limit_continuous_amps: 15
         current_limit_peak_amps: 25
-        current_limit_peak_msec: 50 
+        current_limit_peak_msec: 50
         current_limit_enable: True
         dynamic_reconfigure: False
         neutral_mode: "Brake"
@@ -161,7 +161,7 @@ swerve_drive_controller:
         voltage_compensation_saturation: 12
         current_limit_continuous_amps: 15
         current_limit_peak_amps: 25
-        current_limit_peak_msec: 50 
+        current_limit_peak_msec: 50
         current_limit_enable: True
         dynamic_reconfigure: False
         neutral_mode: "Brake"
