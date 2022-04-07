@@ -85,6 +85,7 @@
 	</group>
 
 	<group ns="shooter">
+		<rosparam file="$(find behaviors)/config/2022_shooter_config.yaml" command="load"/>
 		<node name="shooter_server_2022" pkg="behaviors" type="2022_shooter_server_node" output="screen"/>
 	</group>
 

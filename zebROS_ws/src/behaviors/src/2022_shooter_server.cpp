@@ -51,17 +51,47 @@ public:
     action_name_(name),
     ddr_(nh_params_)
   {
-    high_goal_speed_ = 348; // was 325 at start of UNCA, 343 at UNCP
+    if (!nh_params_.getParam("high_goal_speed", high_goal_speed_))
+    {
+      high_goal_speed_ = 348; // was 325 at start of UNCA, 343 at UNCP
+      ROS_ERROR_STREAM("2022_intake_server : could not find high_goal_speed, defaulting to " << high_goal_speed_);
+      return;
+    }
     ddr_.registerVariable<double>("high_goal_speed", &high_goal_speed_, "High Goal Shooting Speed", 0, 500);
-    downtown_high_goal_speed_ = 410;
+    if (!nh_params_.getParam("downtown_high_goal_speed", downtown_high_goal_speed_))
+    {
+      downtown_high_goal_speed_ = 410;
+      ROS_ERROR_STREAM("2022_intake_server : could not find downtown_high_goal_speed, defaulting to " << downtown_high_goal_speed_);
+      return;
+    }
     ddr_.registerVariable<double>("downtown_high_goal_speed", &downtown_high_goal_speed_, "Downtown High Goal Shooting Speed", 0, 500);
-    low_goal_speed_ = 200; // 180 or 200
+    if (!nh_params_.getParam("low_goal_speed", low_goal_speed_))
+    {
+      low_goal_speed_ = 200;
+      ROS_ERROR_STREAM("2022_intake_server : could not find low_goal_speed, defaulting to " << low_goal_speed_);
+      return;
+    } // 180 or 200
     ddr_.registerVariable<double>("low_goal_speed", &low_goal_speed_, "Low Goal Shooting Speed", 0, 500);
-    eject_speed_ = 120;
+    if (!nh_params_.getParam("eject_speed", eject_speed_))
+    {
+      eject_speed_ = 120;
+      ROS_ERROR_STREAM("2022_intake_server : could not find eject_speed, defaulting to " << eject_speed_);
+      return;
+    }
     ddr_.registerVariable<double>("eject_speed", &eject_speed_, "Eject Cargo - Shooting Speed", 0, 500);
-    error_margin_ = 2;
+    if (!nh_params_.getParam("error_margin", error_margin_))
+    {
+      error_margin_ = 2;
+      ROS_ERROR_STREAM("2022_intake_server : could not find error_margin, defaulting to " << error_margin_);
+      return;
+    }
     ddr_.registerVariable<double>("error_margin", &error_margin_, "Shooter margin of error", 0, 50);
-    shooter_wheel_checks_ = 8;
+    if (!nh_params_.getParam("shooter_wheel_checks", shooter_wheel_checks_))
+    {
+      shooter_wheel_checks_ = 8;
+      ROS_ERROR_STREAM("2022_intake_server : could not find shooter_wheel_checks, defaulting to " << shooter_wheel_checks_);
+      return;
+    }
     ddr_.registerVariable<int>("shooter_wheel_checks", &shooter_wheel_checks_, "Number of times to check shooter wheel speed", 0, 50);
     // change close_enough to operate with multiple samples
     // error_margin_ = 5;
