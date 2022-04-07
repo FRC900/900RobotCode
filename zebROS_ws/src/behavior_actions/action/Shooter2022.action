@@ -2,6 +2,7 @@
 uint8 HIGH_GOAL=0
 uint8 LOW_GOAL=1
 uint8 EJECT=2
+uint8 DOWNTOWN=3
 uint8 mode
 ---
 # result

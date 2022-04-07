@@ -40,6 +40,7 @@ hardware_interface:
        - {name: climber_dynamic_arm_follower, type: can_talon_fx, can_id: 31, local: true}
        - {name: shooter_leader, type: can_talon_fx, can_id: 40, local: true}
        - {name: shooter_follower, type: can_talon_fx, can_id: 41, local: true}
+       - {name: shooter_downtown_solenoid_joint, type: solenoid, local_hardware: false, local_update: true}
 
        - {name: intake_motor, type: can_talon_fx, can_id: 60, local: true}
        - {name: intake_solenoid, type: solenoid, local_hardware: false, local_update: true}
@@ -86,6 +87,10 @@ dynamic_arm_solenoid_controller:
 static_hook_solenoid_controller:
   type: position_controllers/JointPositionController
   joint: climber_static_hook_solenoid_joint
+
+downtown_solenoid_controller:
+  type: position_controllers/JointPositionController
+  joint: shooter_downtown_solenoid_joint
 
 dynamic_arm_controller:
   type: dynamic_arm_controller/DynamicArmController

@@ -94,13 +94,13 @@ public:
     cargo_num_ = msg.data;
   }
 
-  bool spinUpShooter(bool &timedOut, bool low_goal) { // returns false if ros is not ok or timed out, true otherwise
+  bool spinUpShooter(bool &timedOut, bool low_goal, bool downtown) { // returns false if ros is not ok or timed out, true otherwise
     feedback_.state = feedback_.WAITING_FOR_SHOOTER;
     as_.publishFeedback(feedback_);
     ROS_INFO_STREAM("2022_shooting_server : spinning up shooter");
     is_spinning_fast_ = false;
     behavior_actions::Shooter2022Goal goal;
-    goal.mode = low_goal ? goal.LOW_GOAL : goal.HIGH_GOAL;
+    goal.mode = downtown ? goal.DOWNTOWN : (low_goal ? goal.LOW_GOAL : goal.HIGH_GOAL);
     ac_shooter_.sendGoal(goal,
                          actionlib::SimpleActionClient<behavior_actions::Shooter2022Action>::SimpleDoneCallback(),
                          actionlib::SimpleActionClient<behavior_actions::Shooter2022Action>::SimpleActiveCallback(),
@@ -185,7 +185,7 @@ public:
       return;
     }
     bool shooterTimedOut = false;
-    bool success = spinUpShooter(shooterTimedOut, goal->low_goal);
+    bool success = spinUpShooter(shooterTimedOut, goal->low_goal, goal->downtown);
     result_.timed_out = shooterTimedOut;
     for (uint8_t i = 0; (cargo_num_ > 0) && (i < goal->num_cargo) && success; i++)
     {

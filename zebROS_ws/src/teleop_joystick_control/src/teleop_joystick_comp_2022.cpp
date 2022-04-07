@@ -245,6 +245,7 @@ ros::Subscriber hub_angle_sub;
 double hub_angle;
 
 bool shoot_in_high_goal = true;
+bool shoot_from_downtown = false;
 bool reset_climb = false;
 
 
@@ -790,12 +791,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: buttonY
 			if(joystick_states_array[0].buttonYPress)
 			{
+				shoot_from_downtown = true;
 			}
 			if(joystick_states_array[0].buttonYButton)
 			{
 			}
 			if(joystick_states_array[0].buttonYRelease)
 			{
+				shoot_from_downtown = false;
 			}
 
 			//Joystick1: bumperLeft
@@ -817,6 +820,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				behavior_actions::Shooting2022Goal goal;
 				goal.num_cargo = 2;
 				goal.low_goal = !shoot_in_high_goal;
+				goal.downtown = shoot_from_downtown;
 				shooting_ac->sendGoal(goal);
 			}
 			if(joystick_states_array[0].bumperRightButton)
@@ -920,6 +924,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 					behavior_actions::Shooting2022Goal goal;
 					goal.num_cargo = 1;
 					goal.low_goal = !shoot_in_high_goal;
+					goal.downtown = shoot_from_downtown;
 					shooting_ac->sendGoal(goal);
 				}
 				joystick1_right_trigger_pressed = true;

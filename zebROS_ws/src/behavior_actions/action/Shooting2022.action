@@ -1,6 +1,7 @@
 # goal
 uint8 num_cargo # 1 or 2 (0 is pointless, 3+ is impossible)
 bool low_goal # if true, shoots in low. if false, shoots in high.
+bool downtown # if true, will shoot in high goal from downtown (and ignore `low_goal`).
 ---
 # result
 bool success
