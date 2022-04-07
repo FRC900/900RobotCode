@@ -531,6 +531,12 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	}
 	controller_nh.param("use_cos_scaling", use_cos_scaling_, use_cos_scaling_);
 
+	// Grab current initial steering angles
+	for (size_t k = 0; k < WHEELCOUNT; k++)
+	{
+		steer_angles_[k] = steering_joints_[k].getPosition();
+	}
+
 	return true;
 }
 

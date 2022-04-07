@@ -203,6 +203,7 @@ TalonHWCommand::TalonHWCommand(void) :
 	status_frame_periods_changed_[Status_10_MotionMagic] = true;
 	status_frame_periods_changed_[Status_11_UartGadgeteer] = true;
 	status_frame_periods_changed_[Status_12_Feedback1] = true;
+	status_frame_periods_changed_[Status_13_Base_PIDF0] = true;
 	status_frame_periods_changed_[Status_14_Turn_PIDF1] = true;
 	status_frame_periods_changed_[Status_15_FirmwareApiStatus] = true;
 	status_frame_periods_changed_[Status_17_Targets1] = true;

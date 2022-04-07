@@ -1631,6 +1631,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_WARN_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " feedback");
 				tc.resetEncoderFeedback();
 				break;
 			}
@@ -1651,6 +1652,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " remote feedback sensor");
 				tc.resetRemoteEncoderFeedback();
 				break;
 			}
@@ -1680,6 +1682,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " remote feedback filters");
 				tc.resetRemoteFeedbackFilters();
 				break;
 			}
@@ -1716,6 +1719,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " sensor terms");
 				tc.resetSensorTerms();
 				break;
 			}
@@ -1800,6 +1804,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " PIDF slot " << slot << " config values");
 				tc.resetPIDF(slot);
 				break;
 			}
@@ -1816,6 +1821,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " AUX PIDF polarity");
 				tc.resetAuxPidPolarity();
 				break;
 			}
@@ -1831,6 +1837,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " PIDF slot");
 				tc.resetPidfSlot();
 				break;
 			}
@@ -1873,6 +1880,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " integral accumulator");
 				tc.resetIntegralAccumulator();
 				break;
 			}
@@ -1939,6 +1947,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " output shaping");
 				tc.resetOutputShaping();
 				break;
 			}
@@ -1970,6 +1979,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " voltage compensation");
 				tc.resetVoltageCompensation();
 				break;
 			}
@@ -1998,6 +2008,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				}
 				else
 				{
+					ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " velocity measurement period / window");
 					tc.resetVelocityMeasurement();
 					break;
 				}
@@ -2014,6 +2025,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " selected sensor position to " << sensor_position / radians_scale);
 				tc.resetSensorPosition();
 				break;
 			}
@@ -2053,6 +2065,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				}
 				else
 				{
+					ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " limit switches");
 					tc.resetLimitSwitchesSource();
 					break;
 				}
@@ -2093,6 +2106,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " remote limit switches");
 				tc.resetRemoteLimitSwitchesSource();
 				break;
 			}
@@ -2109,6 +2123,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id]
+						<< " clear position on limit F");
 				tc.resetClearPositionOnLimitF();
 				break;
 			}
@@ -2126,6 +2142,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id]
+						<< " clear position on limit R");
 				tc.resetClearPositionOnLimitR();
 				break;
 			}
@@ -2175,6 +2193,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " soft limits");
 				tc.resetSoftLimit();
 				break;
 			}
@@ -2209,6 +2228,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				}
 				else
 				{
+					ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " peak current");
 					tc.resetCurrentLimit();
 					break;
 				}
@@ -2233,6 +2253,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				}
 				else
 				{
+					ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " supply current limit");
 					tc.resetSupplyCurrentLimit();
 					break;
 				}
@@ -2249,6 +2270,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				}
 				else
 				{
+					ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " stator current limit");
 					tc.resetStatorCurrentLimit();
 					break;
 				}
@@ -2266,6 +2288,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				}
 				else
 				{
+					ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " motor commutation");
 					tc.resetMotorCommutation();
 					break;
 				}
@@ -2283,6 +2306,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				}
 				else
 				{
+					ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " absolute sensor range");
 					tc.resetAbsoluteSensorRange();
 					break;
 				}
@@ -2300,6 +2324,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				}
 				else
 				{
+					ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " absolute sensor range");
 					tc.resetSensorInitializationStrategy();
 					break;
 				}
@@ -2308,8 +2333,9 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 
 		if (mc_enhanced)
 		{
+			bool exit_loop = false;
 			// TODO : fix for Victor non-enhanced status frames
-			for (int i = hardware_interface::Status_1_General; i < hardware_interface::Status_Last; i++)
+			for (int i = hardware_interface::Status_1_General; !exit_loop && (i < hardware_interface::Status_Last); i++)
 			{
 				uint8_t period;
 				const auto status_frame = static_cast<hardware_interface::StatusFrame>(i);
@@ -2325,15 +2351,21 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 						}
 						else
 						{
+							ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " status_frame " << i);
 							tc.resetStatusFramePeriod(status_frame);
-							break;
+							exit_loop = true;
 						}
 					}
 				}
 			}
+			if (exit_loop)
+			{
+				break;
+			}
 		}
 
-		for (int i = hardware_interface::Control_3_General; i < hardware_interface::Control_Last; i++)
+		bool exit_loop = false;
+		for (int i = hardware_interface::Control_3_General; !exit_loop && (i < hardware_interface::Control_Last); i++)
 		{
 			uint8_t period;
 			const auto control_frame = static_cast<hardware_interface::ControlFrame>(i);
@@ -2349,12 +2381,16 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 					}
 					else
 					{
+						ROS_INFO_STREAM("Faile to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " control_frame " << i);
 						tc.resetControlFramePeriod(control_frame);
-						break;
+						exit_loop = true;
 					}
 				}
-
 			}
+		}
+		if (exit_loop)
+		{
+			break;
 		}
 
 		double motion_cruise_velocity;
@@ -2382,6 +2418,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " cruise velocity / acceleration");
 				tc.resetMotionCruise();
 				break;
 			}
@@ -2396,6 +2433,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to update joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " motion profile trajectory period");
 				tc.resetMotionProfileTrajectoryPeriod();
 				break;
 			}
@@ -2409,6 +2447,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to clear joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " motion profile trajectories");
 				tc.setClearMotionProfileTrajectories();
 				break;
 			}
@@ -2422,6 +2461,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to Clear joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " motion profile underrun changed");
 				tc.setClearMotionProfileHasUnderrun();
 				break;
 			}
@@ -2472,7 +2512,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			const bool b3 = tc.demand1Changed(demand1_type_internal, demand1_value);
 
 			// ROS_INFO_STREAM("b1 = " << b1 << " b2 = " << b2 << " b3 = " << b3);
-			//if (b1 || b2 || b3)
+			// if (b1 || b2 || b3)
 			{
 				ctre::phoenix::motorcontrol::ControlMode out_mode;
 				ctre::phoenix::motorcontrol::DemandType demand1_type_phoenix;
@@ -2507,7 +2547,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 
 					victor->Set(out_mode, command, demand1_type_phoenix, demand1_value);
 				}
-				else {
+				else
+				{
 					ROS_ERROR_STREAM("Couldn't convert to the talon enum type");
 				}
 			}
@@ -2541,6 +2582,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			else
 			{
+				ROS_INFO_STREAM("Failed to clear joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " sticky_faults");
 				tc.setClearStickyFaults();
 				break;
 			}

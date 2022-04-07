@@ -61,6 +61,7 @@ array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
 		const double nearestangle = leastDistantAngleWithinHalfPi(currpos, speedsAndAngles[i][1], reverse);
                 double angle_setpoint;
                 double actual_reverse;
+#if 0
                 if(reverse != lastReverse[i] && (fabs(currpos - nearestangle) > 85 * M_PI / 180))
                 {
                     // ROS_ERROR_STREAM("setting to last command = " << lastCommand[i]);
@@ -68,6 +69,7 @@ array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
                     actual_reverse = lastReverse[i];
                 }
                 else
+#endif
                 {
                     // ROS_INFO_STREAM("setting to actual command; currpos - nearest angle = " << currpos - nearestangle << " and reverse changed is " << (reverse != lastReverse[i]));
                     angle_setpoint = nearestangle;
@@ -104,12 +106,14 @@ array<double, WHEELCOUNT> swerve::parkingAngles(const array<double, WHEELCOUNT> 
 		bool reverse; // TODO : not used for anything?
 		const double nearestanglep = leastDistantAngleWithinHalfPi(currpos, retAngles[i], reverse);
                 double angle_setpoint;
+#if 0
                 if(reverse != lastReverse[i] && (fabs(currpos - nearestanglep) > 85 * M_PI / 180))
                 {
                     //ROS_ERROR_STREAM("setting to last command = " << lastCommand[i]);
                     angle_setpoint = lastCommand[i];
                 }
                 else
+#endif
                 {
                     //ROS_INFO_STREAM("setting to actual command; currpos - nearest angle = " << currpos - nearestanglep << " and reverse changed is " << (reverse != lastReverse[i]));
                     angle_setpoint = nearestanglep;

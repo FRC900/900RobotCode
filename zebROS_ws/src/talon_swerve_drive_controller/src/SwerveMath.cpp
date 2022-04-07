@@ -1,7 +1,7 @@
 #include <array>
 #include <cmath>
 #include <talon_swerve_drive_controller/SwerveMath.h>
-//#include <ros/ros.h>
+#include <ros/console.h>
 
 using namespace std;
 
@@ -79,6 +79,7 @@ array<double, WHEELCOUNT> swerveDriveMath::parkingAngles(void) const
 {
 	//only must be run once to determine the angles of the wheels in parking config
 	array<double, WHEELCOUNT> angles;
+	ROS_WARN_STREAM("######## " << __PRETTY_FUNCTION__ << " wheelCoordinate_.size() = " << wheelCoordinate_.size());
 	for (size_t i = 0; i < wheelCoordinate_.size(); i++)
 	{
 		angles[i] = atan2(wheelCoordinate_[i][0], wheelCoordinate_[i][1]);
