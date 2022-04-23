@@ -144,6 +144,7 @@ target_link_libraries(${PROJECT_NAME}_node
   ${nlopt_LIBRARY}
 )
 
+if (0)
 add_executable(test_obstacle_cost
 	src/cuda_utils.cu
 	src/obstacle_cost.cpp
@@ -202,6 +203,7 @@ target_link_libraries(test_sample_trajectory
   ${GPERFTOOLS_LIBRARIES}
   ${CUDA_nvToolsExt_LIBRARY}
 )
+endif()
 
 #############
 ## Install ##

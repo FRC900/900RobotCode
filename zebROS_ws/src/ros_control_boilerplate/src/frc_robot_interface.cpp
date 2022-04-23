@@ -1742,30 +1742,30 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		int slot;
 		const bool slot_changed = tc.slotChanged(slot);
 
-		double p;
-		double i;
-		double d;
-		double f;
+		double pval;
+		double ival;
+		double dval;
+		double fval;
 		int    iz;
 		int    allowable_closed_loop_error;
 		double max_integral_accumulator;
 		double closed_loop_peak_output;
 		int    closed_loop_period;
 
-		if (tc.pidfChanged(p, i, d, f, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period, slot))
+		if (tc.pidfChanged(pval, ival, dval, fval, iz, allowable_closed_loop_error, max_integral_accumulator, closed_loop_peak_output, closed_loop_period, slot))
 		{
-			bool rc = safeTalonConfigCall(victor->Config_kP(slot, p, configTimeoutMs), "Config_kP", ts.getCANID());
+			bool rc = safeTalonConfigCall(victor->Config_kP(slot, pval, configTimeoutMs), "Config_kP", ts.getCANID());
 			if (rc)
 			{
-				rc = safeTalonConfigCall(victor->Config_kI(slot, i, configTimeoutMs), "Config_kI", ts.getCANID());
+				rc = safeTalonConfigCall(victor->Config_kI(slot, ival, configTimeoutMs), "Config_kI", ts.getCANID());
 			}
 			if (rc)
 			{
-				rc = safeTalonConfigCall(victor->Config_kD(slot, d, configTimeoutMs), "Config_kD", ts.getCANID());
+				rc = safeTalonConfigCall(victor->Config_kD(slot, dval, configTimeoutMs), "Config_kD", ts.getCANID());
 			}
 			if (rc)
 			{
-				rc = safeTalonConfigCall(victor->Config_kF(slot, f, configTimeoutMs), "Config_kF", ts.getCANID());
+				rc = safeTalonConfigCall(victor->Config_kF(slot, fval, configTimeoutMs), "Config_kF", ts.getCANID());
 			}
 			if (rc)
 			{
@@ -1792,10 +1792,10 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			if (rc)
 			{
 				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " PIDF slot " << slot << " config values");
-				ts.setPidfP(p, slot);
-				ts.setPidfI(i, slot);
-				ts.setPidfD(d, slot);
-				ts.setPidfF(f, slot);
+				ts.setPidfP(pval, slot);
+				ts.setPidfI(ival, slot);
+				ts.setPidfD(dval, slot);
+				ts.setPidfF(fval, slot);
 				ts.setPidfIzone(iz, slot);
 				ts.setAllowableClosedLoopError(allowable_closed_loop_error, slot);
 				ts.setMaxIntegralAccumulator(max_integral_accumulator, slot);
@@ -2337,17 +2337,17 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			// TODO : fix for Victor non-enhanced status frames
 			for (int i = hardware_interface::Status_1_General; !exit_loop && (i < hardware_interface::Status_Last); i++)
 			{
-				uint8_t period;
+				uint8_t status_frame_period;
 				const auto status_frame = static_cast<hardware_interface::StatusFrame>(i);
-				if (tc.statusFramePeriodChanged(status_frame, period) && (period != 0))
+				if (tc.statusFramePeriodChanged(status_frame, status_frame_period) && (status_frame_period != 0))
 				{
 					ctre::phoenix::motorcontrol::StatusFrameEnhanced status_frame_enhanced;
 					if (talon_convert_.statusFrame(status_frame, status_frame_enhanced))
 					{
-						if (safeTalonConfigCall(mc_enhanced->SetStatusFramePeriod(status_frame_enhanced, period), "SetStatusFramePeriod", ts.getCANID()))
+						if (safeTalonConfigCall(mc_enhanced->SetStatusFramePeriod(status_frame_enhanced, status_frame_period), "SetStatusFramePeriod", ts.getCANID()))
 						{
-							ts.setStatusFramePeriod(status_frame, period);
-							ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " status_frame " << i << "=" << static_cast<int>(period) << "mSec");
+							ts.setStatusFramePeriod(status_frame, status_frame_period);
+							ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " status_frame " << i << "=" << static_cast<int>(status_frame_period) << "mSec");
 						}
 						else
 						{
@@ -2367,17 +2367,17 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		bool exit_loop = false;
 		for (int i = hardware_interface::Control_3_General; !exit_loop && (i < hardware_interface::Control_Last); i++)
 		{
-			uint8_t period;
+			uint8_t control_frame_period;
 			const auto control_frame = static_cast<hardware_interface::ControlFrame>(i);
-			if (tc.controlFramePeriodChanged(control_frame, period) && (period != 0))
+			if (tc.controlFramePeriodChanged(control_frame, control_frame_period) && (control_frame_period != 0))
 			{
 				ctre::phoenix::motorcontrol::ControlFrame control_frame_phoenix;
 				if (talon_convert_.controlFrame(control_frame, control_frame_phoenix))
 				{
-					if (safeTalonConfigCall(victor->SetControlFramePeriod(control_frame_phoenix, period), "SetControlFramePeriod", ts.getCANID()))
+					if (safeTalonConfigCall(victor->SetControlFramePeriod(control_frame_phoenix, control_frame_period), "SetControlFramePeriod", ts.getCANID()))
 					{
-						ts.setControlFramePeriod(control_frame, period);
-						ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " control_frame " << i << "=" << static_cast<int>(period) << "mSec");
+						ts.setControlFramePeriod(control_frame, control_frame_period);
+						ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " control_frame " << i << "=" << static_cast<int>(control_frame_period) << "mSec");
 					}
 					else
 					{
@@ -2820,9 +2820,10 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 		const bool converted_command = (digital_output_command_[i] > 0) ^ (digital_output_inverts_[i] && digital_output_local_updates_[i]);
 		if (converted_command != digital_output_state_[i])
 		{
+			const double double_command = converted_command ? 1.0 : 0.0;
 			if (digital_output_local_hardwares_[i])
-				digital_outputs_[i]->Set(converted_command);
-			digital_output_state_[i] = converted_command;
+				digital_outputs_[i]->Set(double_command);
+			digital_output_state_[i] = double_command ? 1.0 : 0.0;
 			ROS_INFO_STREAM("Wrote digital output " << digital_output_names_[i] <<
 					" index " << i << "=" << converted_command);
 		}

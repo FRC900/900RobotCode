@@ -33,7 +33,7 @@ class GPIOPin
 	public:
 		GPIOPin(
 				uint8_t            linuxPin,
-				std::string        sysfsDir,
+				const std::string &sysfsDir,
 				uint8_t            boardPin,
 				uint8_t            bcmPin,
 				const std::string &pinNameCVM,

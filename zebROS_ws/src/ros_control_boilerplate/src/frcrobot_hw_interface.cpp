@@ -1242,16 +1242,16 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 			}
 		}
 
-		hardware_interface::canifier::CANifierVelocityMeasPeriod period;
+		hardware_interface::canifier::CANifierVelocityMeasPeriod hwi_period;
 		ctre::phoenix::CANifierVelocityMeasPeriod                ctre_period;
-		if (cc.velocityMeasurementPeriodChanged(period) &&
-			canifier_convert_.velocityMeasurementPeriod(period, ctre_period))
+		if (cc.velocityMeasurementPeriodChanged(hwi_period) &&
+			canifier_convert_.velocityMeasurementPeriod(hwi_period, ctre_period))
 		{
 			if (safeTalonCall(canifier->ConfigVelocityMeasurementPeriod(ctre_period), "canifier->ConfigVelocityMeasurementPeriod", cs.getCANId()))
 			{
 				ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
-						<< " : Set velocity measurement Period to " << period);
-				cs.setVelocityMeasurementPeriod(period);
+						<< " : Set velocity measurement Period to " << hwi_period);
+				cs.setVelocityMeasurementPeriod(hwi_period);
 			}
 			else
 			{
@@ -1365,15 +1365,15 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		{
 			const auto frame_id = static_cast<hardware_interface::canifier::CANifierStatusFrame>(i);
 			ctre::phoenix::CANifierStatusFrame ctre_frame_id;
-			int period;
-			if (cc.statusFramePeriodChanged(frame_id, period) &&
+			int hwi_frame_period;
+			if (cc.statusFramePeriodChanged(frame_id, hwi_frame_period) &&
 				canifier_convert_.statusFrame(frame_id, ctre_frame_id))
 			{
-				if (safeTalonCall(canifier->SetStatusFramePeriod(ctre_frame_id, period), "canifier->SetStatusFramePeriod", cs.getCANId()))
+				if (safeTalonCall(canifier->SetStatusFramePeriod(ctre_frame_id, hwi_frame_period), "canifier->SetStatusFramePeriod", cs.getCANId()))
 				{
 					ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
-							<< " : Set frame_id " << i << " status period to " << period);
-					cs.setStatusFramePeriod(frame_id, period);
+							<< " : Set frame_id " << i << " status period to " << hwi_frame_period);
+					cs.setStatusFramePeriod(frame_id, hwi_frame_period);
 				}
 				else
 				{
@@ -1386,15 +1386,15 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		{
 			const auto frame_id = static_cast<hardware_interface::canifier::CANifierControlFrame>(i);
 			ctre::phoenix::CANifierControlFrame ctre_frame_id;
-			int period;
-			if (cc.controlFramePeriodChanged(frame_id, period) &&
+			int hwi_frame_period;
+			if (cc.controlFramePeriodChanged(frame_id, hwi_frame_period) &&
 				canifier_convert_.controlFrame(frame_id, ctre_frame_id))
 			{
-				if (safeTalonCall(canifier->SetControlFramePeriod(ctre_frame_id, period), "canifier->SetControlFramePeriod", cs.getCANId()))
+				if (safeTalonCall(canifier->SetControlFramePeriod(ctre_frame_id, hwi_frame_period), "canifier->SetControlFramePeriod", cs.getCANId()))
 				{
 					ROS_INFO_STREAM("CANifier " << canifier_names_[joint_id]
-							<< " : Set frame_id " << i << " control period to " << period);
-					cs.setControlFramePeriod(frame_id, period);
+							<< " : Set frame_id " << i << " control period to " << hwi_frame_period);
+					cs.setControlFramePeriod(frame_id, hwi_frame_period);
 				}
 				else
 				{
