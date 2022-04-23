@@ -1572,7 +1572,10 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			tc.resetDemand1();
 			tc.resetPidfSlot();
 			tc.resetEncoderFeedback();
-			tc.resetRemoteEncoderFeedback();
+			// This should be deprecated anyway -
+			// for now, comment it out to prevent it from overwriting
+			// the main encoder feedback source above
+			// tc.resetRemoteEncoderFeedback();
 			tc.resetRemoteFeedbackFilters();
 			tc.resetSensorTerms();
 			tc.resetOutputShaping();
