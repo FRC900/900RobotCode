@@ -217,7 +217,7 @@ public:
         }
       }
 	    ros::spinOnce(); // update ball count, hopefully
-      ros::Duration(0.25).sleep();
+      ros::Duration(goal->downtown ? 0.75 : 0.25).sleep();
     }
     ros::Duration(0.75).sleep();
 

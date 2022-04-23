@@ -4,8 +4,12 @@
 # arrays of actions (see below) that will be executed in order
 # format: auto_mode_[integer]: array
 
-auto_mode_1: ["shoot", "start_intaking", "cmd_vel_1", "pause_cmd_vel", "stop_intaking", "cmd_vel_1_reverse", "cmd_vel_3", "pause_cmd_vel", "shoot"]
-auto_mode_2: ["shoot", "start_intaking", "cmd_vel_2", "pause_cmd_vel", "stop_intaking", "cmd_vel_2_reverse", "cmd_vel_3", "pause_cmd_vel", "shoot"]
+auto_mode_1: ["shoot", "start_intaking", "cmd_vel_1", "pause_cmd_vel", "stop_intaking", "cmd_vel_1_reverse", "cmd_vel_3", "pause_short", "shoot"]
+#auto_mode_2: ["shoot", "start_intaking", "cmd_vel_2", "pause_cmd_vel", "stop_intaking", "cmd_vel_2_reverse", "cmd_vel_3", "pause_short", "shoot"]
+#auto_mode_21: ["shoot", "start_intaking", "cmd_vel_21", "pause_3_sec", "stop_intaking", "cmd_vel_21_reverse", "cmd_vel_3", "pause_short", "shoot"]
+# new auto below
+# auto_mode_2: ["shoot", "start_intaking", "cmd_vel_21", "cmd_vel_4_forward", "pause_1_sec", "cmd_vel_5_forward", "cmd_vel_5_reverse", "cmd_vel_4_reverse", "stop_intaking", "cmd_vel_21_reverse", "cmd_vel_3", "pause_short", "shoot"]
+auto_mode_2: ["shoot", "start_intaking", "cmd_vel_21", "cmd_vel_4_forward", "pause_2_sec", "cmd_vel_4_reverse", "stop_intaking", "cmd_vel_21_reverse", "cmd_vel_3", "pause_short", "shoot"]
 #auto_mode_1: ["shoot", "start_intaking", "pause_2_sec", "stop_intaking"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_left_hub", "stop_intaking", "shoot", "drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
@@ -41,7 +45,7 @@ cmd_vel_1_reverse:
     duration: 2.65
     cmd_vel:
         x: -1.05
-        y: 0.42
+        y: 0.4
         z: 0.0
 
 cmd_vel_2:
@@ -56,8 +60,23 @@ cmd_vel_2_reverse:
     duration: 2.65
     cmd_vel:
         x: -1.05
-        y: -0.4
+        y: -0.42
         z: 0.0
+
+cmd_vel_21:
+    type: cmd_vel
+    duration: 1.9
+    cmd_vel:
+        x: 1.0
+        y: -0.3
+        z: -0.54
+cmd_vel_21_reverse:
+    type: cmd_vel
+    duration: 1.9
+    cmd_vel:
+        x: -1.0
+        y: 0.3
+        z: 0.54
 
 cmd_vel_3:
     type: cmd_vel
@@ -66,6 +85,36 @@ cmd_vel_3:
         x: -0.35
         y: 0.0
         z: 0.0
+
+cmd_vel_4_reverse:
+    type: cmd_vel
+    duration: 1.0
+    cmd_vel:
+        x: -1.35
+        y: 0.0
+        z: 0.0
+cmd_vel_4_forward:
+    type: cmd_vel
+    duration: 1.0
+    cmd_vel:
+        x: 1.3
+        y: 0.0
+        z: 0.0
+
+# cmd_vel_5_reverse:
+#     type: cmd_vel
+#     duration: 0.5
+#     cmd_vel:
+#         x: -1.3
+#         y: 0.0
+#         z: 0.0
+# cmd_vel_5_forward:
+#     type: cmd_vel
+#     duration: 0.5
+#     cmd_vel:
+#         x: 1.3
+#         y: 0.0
+#         z: 0.0
 
 tuning:
   type: "path"
@@ -220,13 +269,25 @@ path_to_trench_after_drive_back:
             - [-2.3, -1.69938, 0.0]
             - [-3.5, -1.69938, 0.0]
 
+pause_short:
+    type: "pause"
+    duration: 0.8 #sec
+
 pause_cmd_vel:
     type: "pause"
     duration: 1.5 #sec
 
+pause_1_sec:
+    type: "pause"
+    duration: 1.0 #sec
+
 pause_2_sec:
     type: "pause"
-    duration: 2 #sec
+    duration: 2.0 #sec
+
+pause_3_sec:
+    type: "pause"
+    duration: 3.0 #sec
 
 pause_5_sec:
     type: "pause"

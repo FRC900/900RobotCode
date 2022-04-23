@@ -319,18 +319,20 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.lockingSwitchPress)
 	{
-		// Clear out pressed state when switching modes
-		// so that the press will be seen by the new mode
-		joystick1_left_trigger_pressed = false;
-		joystick1_right_trigger_pressed = false;
-		zero_all_diag_commands();
-
-		// Disable snap-to-angle in diagnostics mode
-		std_msgs::Bool enable_align_msg;
-		enable_align_msg.data = false;
-		orient_strafing_enable_pub.publish(enable_align_msg);
-		diagnostics_mode = true;
-		ROS_WARN_STREAM("Enabling diagnostics mode!");
+		// // Clear out pressed state when switching modes
+		// // so that the press will be seen by the new mode
+		// joystick1_left_trigger_pressed = false;
+		// joystick1_right_trigger_pressed = false;
+		// zero_all_diag_commands();
+		//
+		// // Disable snap-to-angle in diagnostics mode
+		// std_msgs::Bool enable_align_msg;
+		// enable_align_msg.data = false;
+		// orient_strafing_enable_pub.publish(enable_align_msg);
+		// diagnostics_mode = true;
+		// ROS_WARN_STREAM("Enabling diagnostics mode!");
+		teleop_cmd_vel->setRobotOrient(true, 0.0);
+		ROS_WARN_STREAM("Robot relative mode!");
 	}
 
 	if(button_box.lockingSwitchButton)
@@ -342,17 +344,19 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.lockingSwitchRelease)
 	{
-		// Clear out pressed state when switching modes
-		// so that the press will be seen by the new mode
-		joystick1_left_trigger_pressed = false;
-		joystick1_right_trigger_pressed = false;
-		// Force a publish 0 to all the diag mode
-		// controllers here before switching out
-		// of diagnostics mode
-		zero_all_diag_commands();
-		publish_diag_cmds();
-		diagnostics_mode = false;
-		ROS_WARN_STREAM("Disabling diagnostics mode!");
+		// // Clear out pressed state when switching modes
+		// // so that the press will be seen by the new mode
+		// joystick1_left_trigger_pressed = false;
+		// joystick1_right_trigger_pressed = false;
+		// // Force a publish 0 to all the diag mode
+		// // controllers here before switching out
+		// // of diagnostics mode
+		// zero_all_diag_commands();
+		// publish_diag_cmds();
+		// diagnostics_mode = false;
+		// ROS_WARN_STREAM("Disabling diagnostics mode!");
+		teleop_cmd_vel->setRobotOrient(false, 0.0);
+		ROS_WARN_STREAM("Field relative mode!");
 	}
 
 	if(button_box.topRedPress)
@@ -721,14 +725,16 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: buttonA
 			if(joystick_states_array[0].buttonAPress)
 			{
-
+				ROS_WARN_STREAM("Robot relative mode!");
+				teleop_cmd_vel->setRobotOrient(true, 0.0);
 			}
 			if(joystick_states_array[0].buttonAButton)
 			{
 			}
 			if(joystick_states_array[0].buttonARelease)
 			{
-
+				ROS_WARN_STREAM("Field relative mode!");
+				teleop_cmd_vel->setRobotOrient(false, 0.0);
 			}
 
 			//Joystick1: buttonB

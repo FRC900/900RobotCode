@@ -125,9 +125,7 @@
 	-->
 
 	<!-- Consider adding 2022 launch file for recording -->
-	<!--
 	<include file="$(find controller_node)/launch/record_2022_compbot.launch" if="$(arg record)" />
-	-->
 	<!--
 	<include file="$(find controller_node)/launch/record_2022_no_zed.launch" if="$(arg record)" />
 

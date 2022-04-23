@@ -1,6 +1,6 @@
 shooter_server_2022:
   high_goal_speed: 348.0
-  downtown_high_goal_speed: 410.0
+  downtown_high_goal_speed: 373.0
   low_goal_speed: 200.0
   eject_speed: 120.0
   error_margin: 2.0
