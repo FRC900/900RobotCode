@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="zed_name"      default="zed_ar" />
+	<arg name="zed_node_name" default="zed_ar" />
+	<arg name="camera_model"  default="zed2" />
+
+	<include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml">
+		<arg name="common_params_file"   value="$(find apriltag_launch)/config/zed/common.yaml" />
+		<arg name="camera_params_file"   value="$(find apriltag_launch)/config/zed/$(arg camera_model).yaml" />
+		<arg name="node_name"            value="$(arg zed_node_name)" />
+		<arg name="publish_urdf"         value="true" />
+		<arg name="camera_name"          value="$(arg zed_name)" />
+		<arg name="camera_model"         value="$(arg camera_model)" />
+		<arg name="base_frame"           value="base_link" />
+		<arg name="cam_pos_x"            value="0.1588" />
+		<arg name="cam_pos_y"            value="-0.1226" />
+		<arg name="cam_pos_z"            value="0.605155" />
+		<arg name="cam_roll"             value="0.0" />
+		<arg name="cam_pitch"            value="0.0" />
+		<arg name="cam_yaw"              value="3.14159265" />
+	</include>
+
+	<arg name="cam_image_topic" default="left/image_rect_gray" />
+	<arg name="cam_info_topic" default="left/camera_info" />
+	<arg name="output_frame" default="/zed_ar_left_camera_frame" />
+
+	<include file="$(find apriltag_launch)/launch/apriltag_continuous_detection.launch">
+		<arg name="camera_name"            value="$(arg zed_name)" />
+		<arg name="image_topic"            value="$(arg cam_image_topic)" />
+	</include>
+
+	<!--
+	<node pkg="fake_sensors" type="ar_msg_to_goal_detect_node" name="ar_msg_to_goal_detect" >
+		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
+	</node>
+	-->
+
+	<!--
+	<node pkg="tf2_ros" type="static_transform_publisher" name="link_odomtomap" args="0 0 0 0 0 0 1 map odom" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="link_cameratobase" args="0 0 0 0 0 0 1 zed_camera_center base_link" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="link_cameratobase" args="0 0 0 0 0 0 1 odom map" />
+
+	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetoarmfront" args="0 0 0.8 0 0 0 1 base_frame arm_frame" />
+
+	<node pkg="tf2_ros" type="static_transform_publisher" name="link_basetoarmback" args="0 0 -0.8 0 0 0 1 base_frame arm_frame" />
+
+	<node pkg="tf2_ros" type="static_transform_publisher" name="link_artoexchange" args="0 -1.17 0 0 0 0 1 ar_marker_0 exchange_frame" />
+	-->
+
+</launch>
