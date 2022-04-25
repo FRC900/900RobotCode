@@ -8,6 +8,9 @@
 #include "talon_state_msgs/TalonState.h"
 #include <std_srvs/Trigger.h>
 #include <std_msgs/Bool.h>
+#include "talon_controller_msgs/LoadInstrumentsSrv.h"
+#include "talon_controller_msgs/LoadMusicSrv.h"
+#include "talon_controller_msgs/SetOrchestraStateSrv.h"
 
 // How to simulate this:
 /*
@@ -54,10 +57,15 @@ protected:
   double get_to_zero_percent_output_;
   double piston_wait_time_;
   double swinging_wait_time_;
+  std::vector<std::string> falcons_for_finale_;
+  std::string finale_track_;
 
   std::vector<boost::function<void()>> state_functions_;
 
   ros::ServiceClient zero_dynamic_arm_client_;
+  ros::ServiceClient orchestra_instrument_client_;
+  ros::ServiceClient orchestra_state_client_;
+  ros::ServiceClient orchestra_music_client_;
   ros::Subscriber dynamic_arm_zeroed_sub_;
 
   bool arm_zeroed_ = false;
@@ -83,6 +91,9 @@ public:
     talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &ClimbStateMachine::talonStateCallback, this);
 	const std::map<std::string, std::string> service_connection_header{ {"tcp_nodelay", "1"} };
     dynamic_arm_ = nh_.serviceClient<controllers_2022_msgs::DynamicArmSrv>("/frcrobot_jetson/dynamic_arm_controller/command", false, service_connection_header);
+    orchestra_instrument_client_ = nh_.serviceClient<talon_controller_msgs::LoadInstrumentsSrv>("/frcrobot_jetson/orchestra_controller/load_instruments", false, service_connection_header);
+    orchestra_state_client_ = nh_.serviceClient<talon_controller_msgs::SetOrchestraStateSrv>("/frcrobot_jetson/orchestra_controller/set_state", false, service_connection_header);
+    orchestra_music_client_ = nh_.serviceClient<talon_controller_msgs::LoadMusicSrv>("/frcrobot_jetson/orchestra_controller/load_music", false, service_connection_header);
     zero_dynamic_arm_client_ = nh_.serviceClient<std_srvs::Trigger>("/frcrobot_jetson/dynamic_arm_controller/zero", false, service_connection_header);
     dynamic_arm_zeroed_sub_ = nh_.subscribe("/frcrobot_jetson/dynamic_arm_controller/is_zeroed", 1, &ClimbStateMachine::zeroStateCallback, this);
     if (!nh_.getParam("full_extend_height_ground", full_extend_height_ground_))
@@ -143,7 +154,20 @@ public:
       ROS_WARN_STREAM("2022_climb_server : Could not find swinging_wait_time, defaulting to 1 second");
       swinging_wait_time_ = 1.0;
     }
+    if (!nh_.getParam("falcons_for_finale", falcons_for_finale_))
+    {
+      // Does follower follow the leader for the mode this uses? I'm assuming so but if not the shooter follower should be here too
+      ROS_WARN_STREAM("2022_climb_server : Could not find falcons_for_finale, defaulting to {indexer_straight_motor, indexer_arc_motor, shooter_leader}");
+      falcons_for_finale_ = {"indexer_straight_motor", "indexer_arc_motor", "shooter_leader"};
+    }
+    if (!nh_.getParam("finale_track", finale_track_))
+    {
+      // Does follower follow the leader for the mode this uses? I'm assuming so but if not the shooter follower should be here too
+      ROS_WARN_STREAM("2022_climb_server : Could not find finale_track, defaulting to \"/home/ubuntu/2022RobotCode/zebROS_ws/src/behaviors/chirp/mario.chrp\"");
+      finale_track_ = "/home/ubuntu/2022RobotCode/zebROS_ws/src/behaviors/chirp/mario.chrp";
+    }
     dynamic_arm_.waitForExistence();
+    setupFinale();
   }
   void reset(bool reset_fully) {
     if (reset_fully) {
@@ -189,8 +213,29 @@ public:
       r.sleep();
     }
   }
+  void setupFinale() {
+    orchestra_instrument_client_.waitForExistence();
+    orchestra_music_client_.waitForExistence();
+    orchestra_state_client_.waitForExistence();
+    talon_controller_msgs::LoadInstrumentsSrv srv;
+    srv.request.instruments = falcons_for_finale_;
+    orchestra_instrument_client_.call(srv);
+    talon_controller_msgs::LoadMusicSrv srv_music;
+    srv_music.request.music_path = finale_track_;
+    orchestra_music_client_.call(srv_music);
+    talon_controller_msgs::SetOrchestraStateSrv srv_state;
+    srv_state.request.state = srv_state.request.STOP;
+    orchestra_state_client_.call(srv_state);
+  }
+  void climbFinale() {
+    talon_controller_msgs::SetOrchestraStateSrv srv_state;
+    srv_state.request.state = srv_state.request.PLAY;
+    orchestra_state_client_.call(srv_state);
+    ROS_INFO_STREAM("Hopefully this doesn't violate R203(b)");
+  }
   void state1()
   {
+    setupFinale();
     state = 1;
     ROS_INFO_STREAM("2022_climb_server : State 1");
     ROS_INFO_STREAM("2022_climb_server : ---");
@@ -397,6 +442,10 @@ public:
         ROS_INFO_STREAM("2022_climb_server : Detached static hooks.");
         ROS_INFO_STREAM("");
         opened_hooks = true;
+        if (rung == 2) {
+          // actually on traversal not high now given that we've released the static hooks
+          climbFinale();
+        }
       }
       if (as_.isPreemptRequested() || !ros::ok()) {
         exited = true;
@@ -431,6 +480,10 @@ public:
         ROS_INFO_STREAM("2022_climb_server : Detached static hooks.");
         ROS_INFO_STREAM("");
         opened_hooks = true;
+        if (rung == 2) {
+          // actually on traversal not high now given that we've released the static hooks
+          climbFinale();
+        }
       }
       if (as_.isPreemptRequested() || !ros::ok()) {
         exited = true;

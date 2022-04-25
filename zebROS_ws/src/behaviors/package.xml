@@ -78,6 +78,7 @@
   <depend>field_obj</depend>
   <depend>base_trajectory_msgs</depend>
   <depend>controllers_2022_msgs</depend>
+  <depend>talon_controller_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

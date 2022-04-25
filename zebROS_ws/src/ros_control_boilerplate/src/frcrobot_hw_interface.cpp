@@ -1598,7 +1598,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
                         else if(can_ctre_mc_is_talon_fx_[can_index])
                         {
                             if(safeTalonCall(talon_orchestras_[i]->AddInstrument(*(std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mcs_[can_index]))), "AddInstrument", 0))
-                                ROS_INFO_STREAM("Talon Orchestra " <<  talon_orchestra_names_[i] << " added Falcon " << "falcon_name");
+                                ROS_INFO_STREAM("Talon Orchestra " <<  talon_orchestra_names_[i] << " added Falcon " << instruments[j]);
                             else{
                                 ROS_ERROR_STREAM("Failed to add instrument to orchestra");
                                 oc.resetInstruments();

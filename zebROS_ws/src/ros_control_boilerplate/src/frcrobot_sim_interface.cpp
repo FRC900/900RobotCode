@@ -816,7 +816,7 @@ void FRCRobotSimInterface::write(const ros::Time& time, const ros::Duration& per
 					}
 					else if(can_ctre_mc_is_talon_fx_[can_index])
 					{
-						ROS_INFO_STREAM("Talon Orchestra " <<  talon_orchestra_names_[i] << " added Falcon " << "falcon_name");
+						ROS_INFO_STREAM("Talon Orchestra " <<  talon_orchestra_names_[i] << " added Falcon " << instruments[j]);
 					}
 					else
 						ROS_INFO_STREAM("Talon Orchestra " <<  talon_orchestra_names_[i] << " failed to add " << instruments[j] << " because it is not a TalonFX");

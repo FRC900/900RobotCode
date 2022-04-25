@@ -2515,7 +2515,7 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			const bool b3 = tc.demand1Changed(demand1_type_internal, demand1_value);
 
 			// ROS_INFO_STREAM("b1 = " << b1 << " b2 = " << b2 << " b3 = " << b3);
-			// if (b1 || b2 || b3)
+			if (b1 || b2 || b3)
 			{
 				ctre::phoenix::motorcontrol::ControlMode out_mode;
 				ctre::phoenix::motorcontrol::DemandType demand1_type_phoenix;
