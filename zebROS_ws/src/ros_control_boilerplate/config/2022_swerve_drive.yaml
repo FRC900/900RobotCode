@@ -57,7 +57,7 @@ swerve_drive_controller:
         current_limit_peak_amps: 25
         current_limit_peak_msec: 50
         current_limit_enable: True
-        #closed_loop_ramp: 0.25
+        closed_loop_ramp: 0.25
         dynamic_reconfigure: False
         neutral_mode: "Brake"
         status_1_general_period: 100
@@ -95,7 +95,7 @@ swerve_drive_controller:
         dynamic_reconfigure: False
         neutral_mode: "Brake"
         neutral_deadband: 0.01
-        #closed_loop_ramp: 0.25
+        closed_loop_ramp: 0.25
         status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
@@ -131,7 +131,7 @@ swerve_drive_controller:
         dynamic_reconfigure: False
         neutral_mode: "Brake"
         neutral_deadband: 0.01
-        #closed_loop_ramp: 0.25
+        closed_loop_ramp: 0.25
         status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
@@ -166,7 +166,7 @@ swerve_drive_controller:
         dynamic_reconfigure: False
         neutral_mode: "Brake"
         neutral_deadband: 0.01
-        #closed_loop_ramp: 0.25
+        closed_loop_ramp: 0.25
         status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
