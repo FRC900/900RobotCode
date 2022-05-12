@@ -4,6 +4,9 @@
     uri: https://github.com/FRC900/adi_driver.git
     version: bias_16495
 - git:
+    local-name: adi_pico_driver
+    uri: https://github.com/FRC900/adi_pico_driver.git
+- git:
     local-name: control_toolbox
     uri: https://github.com/ros-gbp/control_toolbox-release.git
     version: release/melodic/control_toolbox/1.18.2-1
