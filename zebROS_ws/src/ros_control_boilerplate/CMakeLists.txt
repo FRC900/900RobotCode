@@ -340,6 +340,7 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi") OR
 		src/frcrobot_sim_interface.cpp
 		src/dummy_powerdistribution.cpp
 		src/dummy_wpilib_common.cpp
+		src/dummy_wpilib_sim.cpp
 	)
 
 	target_link_libraries(frcrobot_sim_main

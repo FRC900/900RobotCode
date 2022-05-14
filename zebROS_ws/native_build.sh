@@ -24,6 +24,7 @@ if [ $? -eq 1 ]; then
 fi
 
 catkin config --blacklist \
+	ar_track_alvar \
 	color_spin \
 	controllers_2019 \
 	controllers_2019_msgs \
