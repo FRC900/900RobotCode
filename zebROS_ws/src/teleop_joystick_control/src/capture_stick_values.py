@@ -1,4 +1,23 @@
 #!/usr/bin/env python3
+
+'''
+Script to capture and print gamepad stick values seen while running
+
+Press A to clear the buffer
+Press left bumper to dump values seen since last clear
+
+This is used to check the values reported at the limits of stick
+travel.  The general idea
+
+- move the stick to the edge of travel
+- press A to clear previous results
+- move the stick in a circle around the edge of travel a few times
+- press left bumper to dump results
+
+Results are comma-separated, so they should copy-paste into a 
+spreadsheet with little problem.
+
+'''
 import math
 import rospy
 from frc_msgs.msg import JoystickState
@@ -31,7 +50,7 @@ def callback(data):
     direction = axis_data.direction()
 
     if direction not in axis_data_map:
-        axis_data_map[direction] = AxisData(x, y)
+        axis_data_map[direction] = axis_data
     elif axis_data.magnitude() > axis_data_map[direction].magnitude():
         axis_data_map[direction] = axis_data
 
