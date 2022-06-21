@@ -4,11 +4,11 @@ cd ~/2022RobotCode/zebROS_ws/
 echo INCOMPLETE > .native_build.status
 
 if [ -z $ROS_ROOT ]; then
-	source /opt/ros/melodic/setup.bash
+	source /opt/ros/noetic/setup.bash
 	if [ ! -z devel/setup.bash ]; then
 		source devel/setup.bash
 	fi
-elif [[ ! $ROS_ROOT = "/opt/ros/melodic/share/ros" ]]; then
+elif [[ ! $ROS_ROOT = "/opt/ros/noetic/share/ros" ]]; then
 	echo "ROS is not configured for a native build (maybe set up for a cross build instead?)"
 	echo "Run ./native_build.sh in a new terminal window"
 	exit 1
@@ -23,11 +23,13 @@ if [ $? -eq 1 ]; then
 	EXTRA_CMD_LINE="--limit-status-rate 5"
 fi
 
-catkin config --blacklist \
+catkin config --skiplist \
 	ar_track_alvar \
 	color_spin \
 	controllers_2019 \
 	controllers_2019_msgs \
+	controllers_2020 \
+	controllers_2020_msgs \
 	realsense2_camera \
 	realsense2_description \
 	velocity_controllers \

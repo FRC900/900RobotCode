@@ -206,7 +206,7 @@ public:
     Total: encoder, limit switch at bottom, limit switches on dynamic and static hooks
   */
   template <typename T>
-  bool make_sure_publish(ros::Publisher p, T msg) {
+  void make_sure_publish(ros::Publisher p, T msg) {
     ros::Rate r(200);
     for (int i = 0; i < 10; i++) {
       p.publish(msg);

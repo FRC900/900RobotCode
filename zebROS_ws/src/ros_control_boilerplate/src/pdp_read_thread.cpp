@@ -27,7 +27,9 @@ void FRCRobotInterface::pdp_read_thread(int32_t pdp,
 	HAL_ClearPDPStickyFaults(pdp, &status);
 	HAL_ResetPDPTotalEnergy(pdp, &status);
 	if (status)
+	{
 		ROS_ERROR_STREAM("pdp_read_thread error clearing sticky faults : status = " << status);
+	}
 	hardware_interface::PDPHWState pdp_state;
 	for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
 	{
@@ -45,7 +47,9 @@ void FRCRobotInterface::pdp_read_thread(int32_t pdp,
 			pdp_state.setCurrent(HAL_GetPDPChannelCurrent(pdp, channel, &status), channel);
 		}
 		if (status)
-			ROS_ERROR_STREAM("pdp_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
+		{
+			ROS_ERROR_STREAM("pdp_read_thread error : status = " << status << " : " << HAL_GetErrorMessage(status));
+		}
 
 		{
 			// Copy to state shared with read() thread

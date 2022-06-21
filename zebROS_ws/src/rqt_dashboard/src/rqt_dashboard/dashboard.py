@@ -232,8 +232,8 @@ class Dashboard(Plugin):
     def start_execute_path(self):
         rospy.loginfo('Execute path')
         coords = self.draw_pad.GetWorldCoordsRobotCentric()
-        print 'Map centric coordinates:', self.draw_pad.GetWorldCoords()
-        print 'Robot centric coordinates:', coords
+        print(f'Map centric coordinates: {self.draw_pad.GetWorldCoords()}')
+        print(f'Robot centric coordinates: {coords}')
 
         # Note the first point must always be (0, 0, 0) so modify it manually.
         coords[0] = scribble.Point(coords[0].x, coords[0].y)

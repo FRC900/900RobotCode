@@ -263,6 +263,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<bool>        can_ctre_mc_local_hardwares_;
 		std::vector<bool>        can_ctre_mc_is_talon_fx_;
 		std::vector<bool>        can_ctre_mc_is_talon_srx_;
+		std::vector<std::string> can_ctre_mc_can_busses_;
 		std::size_t              num_can_ctre_mcs_{0};
 
 		std::vector<std::string> canifier_names_;
@@ -275,6 +276,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<int>         cancoder_can_ids_;
 		std::vector<bool>        cancoder_local_updates_;
 		std::vector<bool>        cancoder_local_hardwares_;
+		std::vector<std::string> cancoder_can_busses_;
 		std::size_t              num_cancoders_{0};
 
 		// Configuration

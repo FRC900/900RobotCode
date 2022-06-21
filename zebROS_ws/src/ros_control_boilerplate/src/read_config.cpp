@@ -133,6 +133,7 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 				throw std::runtime_error("A CAN Talon SRX / Victor SPX / Talon FX can_id was specified with local_hardware == false for joint " + joint_name);
 
 			int can_id = 0;
+			std::string can_bus;
 			if (local_hardware)
 			{
 				if (!has_can_id)
@@ -145,6 +146,21 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 				auto it = std::find(can_ctre_mc_can_ids_.cbegin(), can_ctre_mc_can_ids_.cend(), can_id);
 				if (it != can_ctre_mc_can_ids_.cend())
 					throw std::runtime_error("A duplicate can_id was specified for joint " + joint_name);
+
+				if (joint_params.hasMember("can_bus"))
+				{
+					if (joint_type != "can_talon_fx")
+					{
+						throw std::runtime_error("Only can_talon_fx motor controllers can specify can_bus (joint name = " + joint_name);
+					}
+					XmlRpc::XmlRpcValue &xml_can_bus = joint_params["can_bus"];
+					if (!xml_can_bus.valid() ||
+						xml_can_bus.getType() != XmlRpc::XmlRpcValue::TypeString)
+					{
+						throw std::runtime_error("An invalid joint can_bus was specified (expecting a string) for joint " + joint_name);
+					}
+					can_bus = static_cast<std::string>(xml_can_bus);
+				}
 			}
 			can_ctre_mc_names_.push_back(joint_name);
 			can_ctre_mc_can_ids_.push_back(can_id);
@@ -152,6 +168,7 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 			can_ctre_mc_local_hardwares_.push_back(local_hardware);
 			can_ctre_mc_is_talon_srx_.push_back(joint_type == "can_talon_srx");
 			can_ctre_mc_is_talon_fx_.push_back(joint_type == "can_talon_fx");
+			can_ctre_mc_can_busses_.push_back(can_bus);
 		}
 		else if (joint_type == "canifier")
 		{
@@ -189,6 +206,7 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 				throw std::runtime_error("A CANCoder can_id was specified with local_hardware == false for joint " + joint_name);
 
 			int can_id = 0;
+			std::string can_bus;
 			if (local_hardware)
 			{
 				if (!has_can_id)
@@ -201,11 +219,20 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 				auto it = std::find(cancoder_can_ids_.cbegin(), cancoder_can_ids_.cend(), can_id);
 				if (it != cancoder_can_ids_.cend())
 					throw std::runtime_error("A duplicate can_id was specified for joint " + joint_name);
+				if (joint_params.hasMember("can_bus"))
+				{
+					XmlRpc::XmlRpcValue &xml_can_bus = joint_params["can_bus"];
+					if (!xml_can_bus.valid() ||
+						xml_can_bus.getType() != XmlRpc::XmlRpcValue::TypeString)
+					throw std::runtime_error("An invalid joint can_bus was specified (expecting a string) for joint " + joint_name);
+					can_bus = static_cast<std::string>(xml_can_bus);
+				}
 			}
 			cancoder_names_.push_back(joint_name);
 			cancoder_can_ids_.push_back(can_id);
 			cancoder_local_updates_.push_back(local_update);
 			cancoder_local_hardwares_.push_back(local_hardware);
+			cancoder_can_busses_.push_back(can_bus);
 		}
 		else if (joint_type == "can_spark_max")
 		{

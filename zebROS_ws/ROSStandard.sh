@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Setup ROS for Local Development
-source /opt/ros/melodic/setup.bash
+source /opt/ros/noetic/setup.bash
 source ~/2022RobotCode/zebROS_ws/devel/setup.bash
 export ROS_MASTER_URI=http://localhost:5802
 export ROSLAUNCH_SSH_UNKNOWN=1

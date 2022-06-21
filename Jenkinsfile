@@ -48,7 +48,7 @@ node {
                         ./install_ros_desktop_packages.sh
                         cd zebROS_ws
                         wstool update -t src --continue-on-error
-                        source /opt/ros/melodic/setup.bash
+                        source /opt/ros/noetic/setup.bash
                         catkin_make
                         source devel/setup.bash
                         timeout -k 30 --preserve-status 60 roslaunch controller_node 2019_compbot_combined.launch hw_or_sim:=sim 
@@ -61,7 +61,7 @@ node {
                     sh '''#!/bin/bash
                         cd zebROS_ws
                         wstool update -t src --continue-on-error
-                        source /opt/ros/melodic/setup.bash
+                        source /opt/ros/noetic/setup.bash
                         source devel/setup.bash
                         catkin_make run_tests
                     '''
@@ -77,7 +77,7 @@ node {
                     // tests. This has the effect of failing the build, which we don't want.
                     test_results = sh(returnStdout: true, script: '''#!/bin/bash
                             cd zebROS_ws
-                            source /opt/ros/melodic/setup.bash
+                            source /opt/ros/noetic/setup.bash
                             catkin_test_results build/test_results
                             exit 0
                         '''

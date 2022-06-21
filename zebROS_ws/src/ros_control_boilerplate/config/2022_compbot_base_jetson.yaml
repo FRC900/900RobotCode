@@ -36,28 +36,28 @@ hardware_interface:
          #- {name: climber_dynamic2_limit_switch, type: digital_input, local: false}
        - {name: climber_static1_limit_switch, type: digital_input, local: false}
        - {name: climber_static2_limit_switch, type: digital_input, local: false}
-       - {name: climber_dynamic_arm_leader, type: can_talon_fx, can_id: 30, local: true}
-       - {name: climber_dynamic_arm_follower, type: can_talon_fx, can_id: 31, local: true}
-       - {name: shooter_leader, type: can_talon_fx, can_id: 40, local: true}
-       - {name: shooter_follower, type: can_talon_fx, can_id: 41, local: true}
+       - {name: climber_dynamic_arm_leader, type: can_talon_fx, can_bus: CANivore, can_id: 30, local: true}
+       - {name: climber_dynamic_arm_follower, type: can_talon_fx, can_bus: CANivore, can_id: 31, local: true}
+       - {name: shooter_leader, type: can_talon_fx, can_bus: CANivore, can_id: 40, local: true}
+       - {name: shooter_follower, type: can_talon_fx, can_bus: CANivore, can_id: 41, local: true}
        - {name: shooter_downtown_solenoid_joint, type: solenoid, local_hardware: false, local_update: true}
 
-       - {name: intake_motor, type: can_talon_fx, can_id: 60, local: true}
+       - {name: intake_motor, type: can_talon_fx, can_bus: CANivore, can_id: 60, local: true}
        - {name: intake_solenoid, type: solenoid, local_hardware: false, local_update: true}
 
-       - {name: indexer_straight_motor, type: can_talon_fx, can_id: 50, local: true}
-       - {name: indexer_arc_motor, type: can_talon_fx, can_id: 51, local: true}
+       - {name: indexer_straight_motor, type: can_talon_fx, can_bus: CANivore, can_id: 50, local: true}
+       - {name: indexer_arc_motor, type: can_talon_fx, can_bus: CANivore, can_id: 51, local: true}
        - {name: indexer_straight_linebreak, type: digital_input, local: false}
        - {name: indexer_arc_linebreak, type: digital_input, local: false}
 
-       - {name: fl_drive, type: can_talon_fx, can_id: 21, local: true}
-       - {name: fl_angle, type: can_talon_fx, can_id: 11, local: true}
-       - {name: fr_drive, type: can_talon_fx, can_id: 22, local: true}
-       - {name: fr_angle, type: can_talon_fx, can_id: 12, local: true}
-       - {name: br_drive, type: can_talon_fx, can_id: 24, local: true}
-       - {name: br_angle, type: can_talon_fx, can_id: 14, local: true}
-       - {name: bl_drive, type: can_talon_fx, can_id: 23, local: true}
-       - {name: bl_angle, type: can_talon_fx, can_id: 13, local: true}
+       - {name: fl_drive, type: can_talon_fx, can_bus: CANivore, can_id: 21, local: true}
+       - {name: fl_angle, type: can_talon_fx, can_bus: CANivore, can_id: 11, local: true}
+       - {name: fr_drive, type: can_talon_fx, can_bus: CANivore, can_id: 22, local: true}
+       - {name: fr_angle, type: can_talon_fx, can_bus: CANivore, can_id: 12, local: true}
+       - {name: br_drive, type: can_talon_fx, can_bus: CANivore, can_id: 24, local: true}
+       - {name: br_angle, type: can_talon_fx, can_bus: CANivore, can_id: 14, local: true}
+       - {name: bl_drive, type: can_talon_fx, can_bus: CANivore, can_id: 23, local: true}
+       - {name: bl_angle, type: can_talon_fx, can_bus: CANivore, can_id: 13, local: true}
          #- {name: bl_angle_encoder, type: can_talon_srx, can_id: 3, local: true}
        # - {name: pdh, type: pdh}
        # - {name: pcm, type: pcm, pcm_id: 0}

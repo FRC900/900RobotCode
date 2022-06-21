@@ -70,6 +70,7 @@
   <depend>actionlib_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>path_follower_msgs</depend>
+  <depend>ddynamic_reconfigure</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

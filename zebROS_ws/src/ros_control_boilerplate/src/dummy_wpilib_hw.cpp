@@ -40,6 +40,31 @@ extern "C"
 		// For some reason, CANAPI uses a weird timeStamp. Emulate it here
 		*timeStamp = GetPacketBaseTime();
 	}
+	void HAL_CAN_OpenStreamSession(uint32_t* sessionHandle, uint32_t messageID,
+						   uint32_t messageIDMask, uint32_t maxMessages,
+						   int32_t* status) {
+			ctre::phoenix::platform::can::CANComm_OpenStreamSession(
+							sessionHandle, messageID, messageIDMask, maxMessages, status, canBus.c_str());
+	}
+	void HAL_CAN_CloseStreamSession(uint32_t sessionHandle) {
+			ctre::phoenix::platform::can::CANComm_CloseStreamSession(sessionHandle, canBus.c_str());
+	}
+	void HAL_CAN_ReadStreamSession(uint32_t sessionHandle,
+					struct HAL_CANStreamMessage* messages,
+					uint32_t messagesToRead, uint32_t* messagesRead,
+					int32_t* status) {
+			ctre::phoenix::platform::can::canframe_t localMessages[messagesToRead];
+			ctre::phoenix::platform::can::CANComm_ReadStreamSession(
+							sessionHandle, localMessages,
+							messagesToRead, messagesRead, status, canBus.c_str());
+			for (uint32_t i = 0; i < *messagesRead; i++)
+			{
+					messages[i].messageID = localMessages[i].arbID;
+					messages[i].timeStamp = localMessages[i].timeStampUs;
+					memcpy(messages[i].data, localMessages[i].data, sizeof(localMessages[i].data));
+					messages[i].dataSize = localMessages[i].len;
+			}
+	}
 }
 
 
@@ -73,6 +98,12 @@ frc::DriverStation & frc::DriverStation::GetInstance()
 }
 
 #include <hal/DriverStation.h>
+bool frc::DriverStation::IsEnabled(void)
+{
+        HAL_ControlWord controlWord;
+        HAL_GetControlWord(&controlWord);
+        return controlWord.enabled && controlWord.dsAttached;
+}
 bool frc::DriverStation::IsDisabled() {
 	HAL_ControlWord controlWord;
 	HAL_GetControlWord(&controlWord);
@@ -539,3 +570,29 @@ const char* HAL_GetErrorMessage(int32_t code) {
 
 } // extern "C"
 
+#include "hal/Notifier.h"
+HAL_NotifierHandle HAL_InitializeNotifier(int32_t* status) {
+        *status = 0;
+        return 1;
+}
+void HAL_StopNotifier(HAL_NotifierHandle notifierHandle, int32_t* status) {
+        (void)notifierHandle;
+        *status = 0;
+}
+
+void HAL_CleanNotifier(HAL_NotifierHandle notifierHandle, int32_t* status) {
+        (void)notifierHandle;
+        *status = 0;
+}
+void HAL_UpdateNotifierAlarm(HAL_NotifierHandle notifierHandle,
+                             uint64_t triggerTime, int32_t* status) {
+        (void)notifierHandle;
+        (void)triggerTime;
+        *status = 0;
+}
+uint64_t HAL_WaitForNotifierAlarm(HAL_NotifierHandle notifierHandle,
+                                  int32_t* status) {
+        (void)notifierHandle;
+        *status = 0;
+        return 1;
+}

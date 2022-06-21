@@ -155,16 +155,22 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 							  (can_ctre_mc_local_updates_[i] ? " local" : " remote") << " update, " <<
 							  (can_ctre_mc_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
 							  " as " << (can_ctre_mc_is_talon_fx_[i] ? "TalonFX" : (can_ctre_mc_is_talon_srx_[i] ? "TalonSRX" : "VictorSPX"))
-							  << " CAN id " << can_ctre_mc_can_ids_[i]);
+							  << " CAN id " << can_ctre_mc_can_ids_[i] << " on CAN bus \"" << can_ctre_mc_can_busses_[i] << "\"");
 
 		if (can_ctre_mc_local_hardwares_[i])
 		{
 			if (can_ctre_mc_is_talon_fx_[i])
-				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonFX>(can_ctre_mc_can_ids_[i]));
+			{
+				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonFX>(can_ctre_mc_can_ids_[i], can_ctre_mc_can_busses_[i]));
+			}
 			else if (can_ctre_mc_is_talon_srx_[i])
+			{
 				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(can_ctre_mc_can_ids_[i]));
+			}
 			else
+			{
 				ctre_mcs_.push_back(std::make_shared<ctre::phoenix::motorcontrol::can::WPI_VictorSPX>(can_ctre_mc_can_ids_[i]));
+			}
 		}
 	}
 	ROS_INFO_STREAM("Pausing for CTRE init");
@@ -220,11 +226,11 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 							  "Loading joint " << i << "=" << cancoder_names_[i] <<
 							  (cancoder_local_updates_[i] ? " local" : " remote") << " update, " <<
 							  (cancoder_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
-							  " at CAN id " << cancoder_can_ids_[i]);
+							  " at CAN id " << cancoder_can_ids_[i] << " on CAN bus \"" << cancoder_can_busses_[i] << "\"");
 
 		if (cancoder_local_hardwares_[i])
 		{
-			cancoders_.emplace_back(std::make_shared<ctre::phoenix::sensors::CANCoder>(cancoder_can_ids_[i]));
+			cancoders_.emplace_back(std::make_shared<ctre::phoenix::sensors::CANCoder>(cancoder_can_ids_[i], cancoder_can_busses_[i]));
 			cancoder_read_state_mutexes_.emplace_back(std::make_shared<std::mutex>());
 			cancoder_read_thread_states_.emplace_back(std::make_shared<hardware_interface::cancoder::CANCoderHWState>(cancoder_can_ids_[i]));
 			cancoder_read_threads_.emplace_back(std::thread(&FRCRobotInterface::cancoder_read_thread, this,
@@ -560,33 +566,26 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 	{
 		ROS_INFO_STREAM_NAMED("frc_robot_interface",
 							  "Loading joint " << i << "=" << pdp_names_[i] <<
-							  " local = " << pdp_locals_[i] <<
-							  " as PDP");
+							  " local=" << pdp_locals_[i] <<
+							  " as PDP module " << pdp_modules_[i]);
 
 		if (pdp_locals_[i])
 		{
-			if (!HAL_CheckPDPModule(pdp_modules_[i]))
+			int32_t status = 0;
+			const auto pdp_handle = HAL_InitializePDP(pdp_modules_[i], __FUNCTION__, &status);
+			pdp_read_thread_state_.push_back(std::make_shared<hardware_interface::PDPHWState>());
+			if ((pdp_handle == HAL_kInvalidHandle) || status)
 			{
-				ROS_ERROR_STREAM("Invalid PDP module number" << pdp_modules_[i]);
+				ROS_ERROR_STREAM("Could not initialize PDP module, status = " << status);
 			}
 			else
 			{
-				int32_t status = 0;
-				const auto pdp_handle = HAL_InitializePDP(pdp_modules_[i], __FUNCTION__, &status);
-				pdp_read_thread_state_.push_back(std::make_shared<hardware_interface::PDPHWState>());
-				if ((pdp_handle == HAL_kInvalidHandle) || status)
-				{
-					ROS_ERROR_STREAM("Could not initialize PDP module, status = " << status);
-				}
-				else
-				{
-					pdp_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
-					pdp_threads_.emplace_back(std::thread(&FRCRobotInterface::pdp_read_thread, this,
-											  pdp_handle, pdp_read_thread_state_[i], pdp_read_thread_mutexes_[i],
-											  std::make_unique<Tracer>("PDP " + pdp_names_[i] + " " + root_nh.getNamespace()),
-											  pdp_read_hz_));
-					HAL_Report(HALUsageReporting::kResourceType_PDP, pdp_modules_[i]);
-				}
+				pdp_read_thread_mutexes_.push_back(std::make_shared<std::mutex>());
+				pdp_threads_.emplace_back(std::thread(&FRCRobotInterface::pdp_read_thread, this,
+										  pdp_handle, pdp_read_thread_state_[i], pdp_read_thread_mutexes_[i],
+										  std::make_unique<Tracer>("PDP " + pdp_names_[i] + " " + root_nh.getNamespace()),
+										  pdp_read_hz_));
+				HAL_Report(HALUsageReporting::kResourceType_PDP, pdp_modules_[i]);
 			}
 		}
 		else

@@ -4,19 +4,21 @@ cd ~/2022RobotCode/zebROS_ws/
 
 if [ -z $ROS_ROOT ]; then
 	#PATH=$PATH:$HOME/wpilib/2022/roborio/bin
-	source ~/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/melodic/setup.bash
-elif [[ ! $ROS_ROOT = "$HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/melodic/share/ros" ]]; then
+	source ~/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/noetic/setup.bash
+elif [[ ! $ROS_ROOT = "$HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/noetic/share/ros" ]]; then
 	echo "ROS is not configured for a cross build (maybe set up for a native build instead?)"
 	echo "Run ./cross_build.sh in a new terminal window"
 	exit 1
 fi
 
-catkin config --profile cross -x _isolated --install --blacklist \
+catkin config --profile cross -x _isolated --install --skiplist \
 	ar_track_alvar \
 	base_trajectory \
 	color_spin \
 	controllers_2019 \
 	controllers_2019_msgs \
+	controllers_2020 \
+	controllers_2020_msgs \
 	demo_tf_node \
 	fake_sensors \
 	goal_detection \

@@ -10,7 +10,7 @@ using namespace std;
 using namespace cv;
 using namespace boost::filesystem;
 
-// Call the base class constructor plus init some 
+// Call the base class constructor plus init some
 // local class members
 AVIOut::AVIOut(const char *outFile, const Size &size, int framesPerFile, int frameSkip):
 	MediaOut(frameSkip, framesPerFile),
@@ -41,8 +41,8 @@ bool AVIOut::write(const Mat &frame, const Mat &depth)
 }
 
 // Open the next file in the sequence.  The code is
-// set by default to split outputs into multiple 
-// files. This way if we have corruption on one 
+// set by default to split outputs into multiple
+// files. This way if we have corruption on one
 // because we powered off we don't lose all of them.
 bool AVIOut::openNext(int fileCounter)
 {
@@ -56,7 +56,7 @@ bool AVIOut::openNext(int fileCounter)
 	}
 	stringstream ofName;
 	ofName << change_extension(fileName_, "").string() << "_" << fileCounter << ".avi";
-	writer_ = new VideoWriter(ofName.str(), CV_FOURCC('M','J','P','G'), 30, size_, true);
+	writer_ = new VideoWriter(ofName.str(), cv::VideoWriter::fourcc('M','J','P','G'), 30, size_, true);
 	if(!writer_ || !writer_->isOpened())
 	{
 		std::cerr << "AVIOut() : Could not open output video " << ofName.str() << std::endl;

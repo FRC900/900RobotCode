@@ -3,11 +3,11 @@
 cd ~/2022RobotCode/zebROS_ws/
 
 if [ -z $ROS_ROOT ]; then
-	source /opt/ros/melodic/setup.bash
+	source /opt/ros/noetic/setup.bash
 	if [ ! -z devel/setup.bash ]; then
 		source devel/setup.bash
 	fi
-elif [[ ! $ROS_ROOT = "/opt/ros/melodic/share/ros" ]]; then
+elif [[ ! $ROS_ROOT = "/opt/ros/noetic/share/ros" ]]; then
 	echo "ROS is not configured for a native build (maybe set up for a cross build instead?)"
 	echo "Run ./native_build.sh in a new terminal window"
 	exit 1

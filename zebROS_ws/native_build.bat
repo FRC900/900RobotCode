@@ -21,7 +21,11 @@ if [ $? -eq 1 ]; then
 	EXTRA_BLACKLIST_PACKAGES="robot_characterization robot_visualizer rosbag_scripts rospy_message_converter rqt_driver_station_sim visualize_profile zms_writer"
 fi
 
-catkin config --blacklist \
+catkin config --skiplist \
+	controllers_2019 \
+	controllers_2019_msgs \
+	controllers_2020 \
+	controllers_2020_msgs \
 	velocity_controllers \
 	zed_ar_track_alvar_example \
 	zed_display_rviz \

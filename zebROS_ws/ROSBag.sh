@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Launch rqt_plot and input rosbag data from rosbag_rqt_graphing.launch data
-source /opt/ros/melodic/setup.bash
+source /opt/ros/noetic/setup.bash
 source ~/2022RobotCode/zebROS_ws/devel/setup.bash
 
 export ROS_MASTER_URI=http://localhost:11311

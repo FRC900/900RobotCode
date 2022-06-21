@@ -208,6 +208,10 @@ void SendableRegistry::AddLW(Sendable* /*sendable*/, std::string_view /*moduleTy
 	//ROS_ERROR("Called SendableRegistry::AddLW(Sendable *, std::string_view, int, int) on unsupported platform");
 }
 
+void SendableRegistry::SetName(Sendable* /*sendable*/, std::string_view /*moduleType*/, int /*channel*/)
+{
+}
+
 bool SendableRegistry::Remove(Sendable* /*sendable*/)
 {
 return true;

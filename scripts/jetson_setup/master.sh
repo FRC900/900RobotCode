@@ -6,6 +6,10 @@ sudo sysctl -p
 sudo rfkill block wifi  
 sudo rfkill block bluetooth
 
+# 20.04 change - CAN doesn't autostart, bring it up manually
+sudo systemctl start systemd-networkd
+sudo systemctl enable systemd-networkd
+
 # Allow scheduling of RT threads without cgroups
 sysctl -w kernel.sched_rt_runtime_us=-1
 ulimit -r unlimited

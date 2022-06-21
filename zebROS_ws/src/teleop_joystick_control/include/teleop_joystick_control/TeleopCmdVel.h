@@ -37,7 +37,7 @@ class TeleopCmdVel
 			// Raw joystick values for X & Y translation
 			const double leftStickX = event.leftStickX;
 			const double leftStickY = event.leftStickY;
-			//ROS_INFO_STREAM(__LINE__ << " "  << leftStickX << " " << leftStickY);
+			//ROS_INFO_STREAM(__LINE__ << " x:"  << leftStickX << " y:" << leftStickY);
 
 			// Convert to polar coordinates
 			double direction = atan2(leftStickY, leftStickX);
@@ -50,15 +50,15 @@ class TeleopCmdVel
 			// output needed to move the robot and 100% to the max
 			// configured speed
 			double magnitude = dead_zone_check(hypot(leftStickX, leftStickY), config.joystick_deadzone);
-			//ROS_INFO_STREAM(__LINE__ << " "  << magnitude);
+			//ROS_INFO_STREAM(__LINE__ << " magnitude:"  << magnitude);
 			if (magnitude != 0)
 			{
 				magnitude = pow(magnitude, config.joystick_pow);
-				//ROS_INFO_STREAM(__LINE__ << " "  << magnitude << " " << direction);
+				//ROS_INFO_STREAM(__LINE__ << " magnitude:"  << magnitude << " direction:" << direction);
 				magnitude *= max_speed - config.min_speed;
-				//ROS_INFO_STREAM(__LINE__ << " "  << magnitude);
+				//ROS_INFO_STREAM(__LINE__ << " magnitude:"  << magnitude);
 				magnitude += config.min_speed;
-				//ROS_INFO_STREAM(__LINE__ << " "  << magnitude);
+				//ROS_INFO_STREAM(__LINE__ << " magnitude:"  << magnitude);
 			}
 
 			// This applies a ramp to the output - it limits the amount of change per
@@ -89,6 +89,7 @@ class TeleopCmdVel
 			vel.angular.x = 0;
 			vel.angular.y = 0;
 
+			//ROS_INFO_STREAM(__LINE__ << " xSpeed: " << xSpeed << " ySpeed: " << ySpeed);
 			if (xSpeed == 0.0 && ySpeed == 0.0 && rotation == 0.0)
 			{
 				vel.linear.x = 0;
@@ -104,6 +105,7 @@ class TeleopCmdVel
 
 				const Eigen::Rotation2Dd rotate(robot_orient_ ? -offset_angle_ : -navX_angle);
 				const Eigen::Vector2d rotatedJoyVector = rotate.toRotationMatrix() * joyVector;
+				//ROS_INFO_STREAM(__LINE__ << " vel.linear.x: " << vel.linear.x << " vel.linear.y: " << vel.linear.y);
 
 				vel.linear.x = rotatedJoyVector[1];
 				vel.linear.y = rotatedJoyVector[0];

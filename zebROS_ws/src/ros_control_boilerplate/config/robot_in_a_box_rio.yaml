@@ -3,6 +3,21 @@
 generic_hw_control_loop:
   loop_hz: 100
   cycle_time_error_threshold: 0.01
+  cycle_time_error_threshold: 0.01
+  canifier_read_hz: 100
+  cancoder_read_hz: 100
+  #some processes have lower frequencies than the main control loop
+  ctre_mc_read_hz: 100
+  pcm_read_hz: 20
+  pdh_read_hz: 20
+  pdp_read_hz: 20
+  ph_read_hz: 20
+  robot_iteration_hz: 20
+  spark_max_read_hz: 20
+  joystick_read_hz: 50
+  match_data_read_hz: 2
+  robot_controller_read_hz: 10 # 20
+  as726x_read_hz: 7
 
 # Settings for ros_control hardware interface
 # Map a name for each valid joint to a CAN id
@@ -11,21 +26,25 @@ generic_hw_control_loop:
 hardware_interface:
    joints:
        # Add a single unused talon on the rio to make sure keepalive signals are sent
-       - {name: dummy_talon, local: false, type: can_talon_srx}
-         #- {name: talon9, local: false, type: can_talon_srx, can_id: 9}
-         #- {name: pdp, local: true, type: pdp }
-         #- {name: pcm, local: true, type: pcm, pcm_id: 0}
-       - {name: as726x, local: true, type: as726x, port: mxp, address: 73 } # 73 = 0x49
-       - {name: robot_code_ready_jetson, local: false, type: ready}
-       - {name: robot_code_ready_rio, local: true, type: ready}
+       #- {name: pdp, local: true, type: pdp }
+       #- {name: pcm, local: true, type: pcm, pcm_id: 0}
+       #- {name: as726x, local: true, type: as726x, port: mxp, address: 73 } # 73 = 0x49
        - {name: do1, local: true, type: digital_output, dio_channel: 1}
        - {name: do2, local_update: false, local_hardware: true, type: digital_output, dio_channel: 2}
-       - {name: joystick, type: joystick, id: 0 }
+       - {name: joystick0, type: joystick, id: 0 }
        - {name: green_led, local: true, type: digital_output, dio_channel: 4}
+
+       - {name: robot_code_ready_jetson, local: false, type: ready}
+       - {name: robot_code_ready_rio, local: true, type: ready}
        
 joint_state_controller:
    type:         joint_state_controller/JointStateController
    publish_rate: 100
+
+joystick_controller:
+    type: joystick_state_controller/JoystickStateController
+    name: joystick0
+    publish_rate: 50
 
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal

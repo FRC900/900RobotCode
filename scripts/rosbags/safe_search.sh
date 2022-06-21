@@ -1,6 +1,6 @@
 #also the organization is horrible. TODO please please fix
 
-source /opt/ros/melodic/setup.bash
+source /opt/ros/noetic/setup.bash
 
 IFS='
 '

@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
 	behavior_actions
 	cmake_modules
 	control_msgs
-	controllers_2020_msgs
 	controllers_2022_msgs
 	dynamic_reconfigure
 	dynamic_reconfigure_wrapper
@@ -99,6 +98,7 @@ add_dependencies(snap_to_nearest_goal
 	${catkin_EXPORTED_TARGETS}
 	)
 
+if (0) # 2020 code, left for reference if needed
 add_executable(teleop_joystick_comp_2020 src/teleop_joystick_comp_2020.cpp)
 target_link_libraries(teleop_joystick_comp_2020
 	${catkin_LIBRARIES}
@@ -112,6 +112,7 @@ add_dependencies(teleop_joystick_comp_2020
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 	)
+endif()
 
 
 add_executable(orient_strafing_node src/orient_strafing.cpp)

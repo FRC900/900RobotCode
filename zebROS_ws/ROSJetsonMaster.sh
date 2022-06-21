@@ -4,13 +4,13 @@
 if [ -f /.dockerenv ] ; then
     # Docker-specific configuration
     echo "Sourcing Docker environment"
-    source /opt/ros/melodic/setup.bash
+    source /opt/ros/noetic/setup.bash
     source /home/ubuntu/2022RobotCode/zebROS_ws/devel/setup.bash
 	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
 elif [ -f /home/ubuntu/2022RobotCode/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Jetson / native Linux environment"
-    source /opt/ros/melodic/setup.bash
+    source /opt/ros/noetic/setup.bash
     source /home/ubuntu/2022RobotCode/zebROS_ws/devel/setup.bash
     #export ROS_IP=10.9.0.8
 	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
@@ -28,13 +28,15 @@ elif [ -f /home/admin/rio_bashrc.sh ] ; then
     swapon /dev/sda5
 	ulimit -r unlimited
 	/etc/init.d/nilvrt stop
-	# Update rio time and stop ntpd server to prevent
+	# Force update to Rio time, hopefully will prevent
 	# time updates while robot code is running
-	/etc/init.d/ntpd stop
-	ntpd -gq
+	#/etc/init.d/ntpd stop
+	#ntpdate 10.9.0.8
+	#ntpd -gq
+	#/etc/init.d/ntpd restart
 else
     echo "Unknown environment! Trying to proceed anyway using local environment."
-    source /opt/ros/melodic/setup.bash
+    source /opt/ros/noetic/setup.bash
     source $HOME/2022RobotCode/zebROS_ws/devel/setup.bash
 	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
 fi

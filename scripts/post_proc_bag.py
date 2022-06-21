@@ -118,8 +118,8 @@ mkdir_p('done')
 for i in range(len(enable_times)):
     # Any one should indicate an enable when the robot was not
     # connected to the field, but check all to be sure
-    if int(match_types[i]) == 0:
-       continue
+    #if int(match_types[i]) == 0: # match type 0 could be a practice match, maybe?
+       #continue
     if int(match_numbers[i]) == 0:
        continue
     if int(replay_numbers[i]) == 0:

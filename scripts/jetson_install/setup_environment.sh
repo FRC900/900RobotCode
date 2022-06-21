@@ -14,6 +14,7 @@ sudo apt install -y \
     can-utils \
     ccache \
     chromium-browser \
+	clang-12 \
     cmake \
     cowsay \
     dbus-x11 \
@@ -23,12 +24,14 @@ sudo apt install -y \
     gfortran \
     git \
     gstreamer1.0-plugins-* \
+	hdf5-tools \
     htop \
     libatlas-base-dev \
     libboost-all-dev \
+	libblas-dev \
     libcanberra-gtk-module \
     libcanberra-gtk3-module \
-    libclang-9-dev \
+    libclang-12-dev \
     libclang1-9 \
     libeigen3-dev \
     libflann-dev \
@@ -39,32 +42,37 @@ sudo apt install -y \
     libgtk2.0-dev \
     libhdf5-dev \
     libhdf5-serial-dev \
+	libjpeg8-dev \
+	liblapack-dev \
     libleveldb-dev \
     liblmdb-dev \
     liblua5.3-dev \
+	libnlopt-cxx-dev \
 	libnlopt-dev \
     libpcl-dev \
     libproj-dev \
+    libqt5designer5 \
+    libqt5designercomponents5 \
     libsnappy-dev \
     libsuitesparse-dev \
     libtinyxml2-dev \
     net-tools \
     ninja-build \
     nmap \
+	ntp \
     ntpdate \
     openssh-client \
     pkg-config \
     pyqt5-dev-tools \
-    python-dev \
-    python-matplotlib \
-    python-numpy \
-    python-opencv \
-    python-pip \
-    python-pyqt5 \
-    python-pyqtgraph \
-    python-scipy \
+    python3-dev \
+    python3-matplotlib \
+    python3-numpy \
+    python3-opencv \
+    python3-pip \
+    python3-pyqt5 \
+    python3-pyqtgraph \
+    python3-scipy \
     python3 \
-    qt4-designer \
     rsync \
     software-properties-common \
     terminator \
@@ -74,7 +82,8 @@ sudo apt install -y \
     vim-gtk \
     wget \
     xfonts-scalable
-
+	zip \
+	zlib1g-dev \
 
 #TensorRT requires a newer version of cmake than standard apt repos provide
 cd
@@ -122,23 +131,38 @@ cd ../..
 sudo rm -rf tinyxml2
 
 #install zed sdk
-wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.7/jp45/jetsons
+wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.7/l4t34.1/jetsons
 chmod 755 jetsons
 ./jetsons
 rm ./jetsons
 
 #mount and setup autostart script
 sudo mkdir /mnt/900_2
+cd
+git clone https://github.com/FRC900/2022RobotCode.git
 cd ~/2022RobotCode
 
 # Set up can0 network interface
 cd
-echo "auto can0" > can0
-echo "iface can0 inet manual" >> can0
-echo "  pre-up /sbin/ip link set can0 type can bitrate 1000000" >> can0
-echo "  up /sbin/ifconfig can0 up" >> can0
-echo "  down /sbin/ifconfig can0 down" >> can0
-sudo mv can0 /etc/network/interfaces.d
+#echo "auto can0" > can0
+#echo "iface can0 inet manual" >> can0
+#echo "  pre-up /sbin/ip link set can0 type can bitrate 1000000" >> can0
+#echo "  up /sbin/ifconfig can0 up" >> can0
+#echo "  down /sbin/ifconfig can0 down" >> can0
+#sudo mv can0 /etc/network/interfaces.d
+
+sudo curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg"
+sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr.list "https://deb.ctr-electronics.com/ctr.list"
+sudo apt update
+sudo apt install canivore-usb
+
+sudo bash -c "echo \"[Match\"] >> /etc/systemd/network/80-can.network"
+sudo bash -c "echo \"Name=can\"* >> /etc/systemd/network/80-can.network"
+sudo bash -c "echo \\"" >> /etc/systemd/network/80-can.network"
+sudo bash -c "echo \"[CAN\"] >> /etc/systemd/network/80-can.network"
+sudo bash -c "echo \"BitRate=1000K\" >> /etc/systemd/network/80-can.network"
+sudo systemctl enable systemd-networkd
+sudo systemctl restart systemd-networkd
 
 sudo bash -c "echo \"# Modules for CAN interface\" >> /etc/modules"
 sudo bash -c "echo can >> /etc/modules"
@@ -158,8 +182,9 @@ sudo systemctl stop nv-l4t-usb-device-mode.service
 # Set up ssh host config (add port 5801) 
 sudo sed "s/#Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && sudo mv sshd_config /etc/ssh
 
-sudo bash -c "echo NTP=10.9.0.2 >> /etc/systemd/timesyncd.conf"
-sudo bash -c "echo FallbackNTP=ntp.ubuntu.com >> /etc/systemd/timesyncd.conf"
+#sudo bash -c "echo NTP=us.pool.ntp.org >> /etc/systemd/timesyncd.conf"
+#sudo bash -c "echo FallbackNTP=ntp.ubuntu.com >> /etc/systemd/timesyncd.conf"
+sudo cp ~/2022RobotCode/scripts/jetson_install/ntp.conf /etc/ntp.conf
     
 # and keys for connections to Rio
 mkdir -p ~/.ssh
@@ -181,14 +206,13 @@ sleep 2
 sudo service udev restart
 
 # Clean up Jetson
-sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/TensorRT /home/nvidia/libvisionworks*
+sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/libvisionworks*
 # Save ~400MB
 sudo apt remove --purge -y thunderbird libreoffice-*
 # Disable automatic updates
 sudo sed -i -e 's/APT::Periodic::Update-Package-Lists "1"/APT::Periodic::Update-Package-Lists "0"/' /etc/apt/apt.conf.d/10periodic
 
 # Install CTRE & navX libs
-# TODO - redo using zip from ctre web site
 mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include
 mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ctre
 mkdir -p /home/ubuntu/ctre
@@ -198,25 +222,26 @@ cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include
 find /home/ubuntu/ctre -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o
 cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ctre
 find /home/ubuntu/ctre -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o
-rm -rf /home/ubuntu/ctre /home/ubuntu/download_maven.py
+rm -rf /home/ubuntu/ctre
 
-cd /home/ubuntu 
-wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-headers.zip 
-mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/navx 
-cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/navx 
-unzip -o /home/ubuntu/navx-cpp-3.1.400-headers.zip 
-rm /home/ubuntu/navx-cpp-3.1.400-headers.zip 
-cd /home/ubuntu 
-wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-linuxathena.zip 
-mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx 
-cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx 
-unzip -o /home/ubuntu/navx-cpp-3.1.400-linuxathena.zip 
-rm /home/ubuntu/navx-cpp-3.1.400-linuxathena.zip 
-cd /home/ubuntu 
-wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/3.1.400/navx-cpp-3.1.400-linuxathenastatic.zip 
-cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx 
-unzip -o /home/ubuntu/navx-cpp-3.1.400-linuxathenastatic.zip 
-rm /home/ubuntu/navx-cpp-3.1.400-linuxathenastatic.zip 
+cd /home/ubuntu
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/4.0.433/navx-cpp-4.0.433-headers.zip
+mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/navx
+cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/navx
+unzip -o /home/ubuntu/navx-cpp-4.0.433-headers.zip
+rm /home/ubuntu/navx-cpp-4.0.433-headers.zip
+cd /home/ubuntu
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/4.0.433/navx-cpp-4.0.433-linuxathena.zip
+mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx
+cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx
+unzip -o /home/ubuntu/navx-cpp-4.0.433-linuxathena.zip
+rm /home/ubuntu/navx-cpp-4.0.433-linuxathena.zip
+cd /home/ubuntu
+wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/4.0.433/navx-cpp-4.0.433-linuxathenastatic.zip
+mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx
+cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx
+unzip -o /home/ubuntu/navx-cpp-4.0.433-linuxathenastatic.zip
+rm /home/ubuntu/navx-cpp-4.0.433-linuxathenastatic.zip
 
 # And Rev sparkmax stuff
 cd /home/ubuntu
@@ -228,7 +253,7 @@ find /home/ubuntu/sparkmax -name \*header\*zip | grep -v debug | xargs -n 1 unzi
 mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev
 cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev
 find /home/ubuntu/sparkmax -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o
-rm -rf /home/ubuntu/sparkmax /home/ubuntu/download_maven.py
+rm -rf /home/ubuntu/sparkmax
 
 # Install wpilib headers by copying them from the local maven dir
 cd /home/ubuntu 
@@ -261,7 +286,7 @@ sudo cp ~/2022RobotCode/scripts/jetson_install/calibration_files/*.conf /usr/loc
 sudo chmod 644 /usr/local/zed/settings/*
 
 cp ~/2022RobotCode/.vimrc ~/2022RobotCode/.gvimrc ~
-sudo cp ~/2022RobotCode/kjaget.vim /usr/share/vim/vim80/colors
+sudo cp ~/2022RobotCode/kjaget.vim /usr/share/vim/vim81/colors
 
 cd
 wget https://github.com/git-lfs/git-lfs/releases/download/v3.0.1/git-lfs-linux-arm64-v3.0.1.tar.gz
@@ -305,73 +330,16 @@ vim +PluginInstall +qall
 ln -sf /home/ubuntu/.vim/bundle/vim-ros-ycm/.ycm_extra_conf.py /home/ubuntu/.vim/bundle/vim-ros-ycm/ycm_extra_conf.py
 cd /home/ubuntu/.vim/bundle/YouCompleteMe
 git fetch origin
-git checkout legacy-py2
 git submodule update --init --recursive
-python2.7 ./install.py --clang-completer --system-libclang --ninja 
+python3 ./install.py --clang-completer --system-libclang --ninja 
 
 # Install tensorflow on Jetson
-#sudo apt update
-#sudo apt install libhdf5-serial-dev hdf5-tools libhdf5-dev zlib1g-dev zip libjpeg8-dev liblapack-dev libblas-dev gfortran python3-pip python3-opencv python3-pil python3-matplotlib
-#sudo pip3 install --install-option="--jobs=6" -U pip testresources setuptools
-#sudo pip3 install --install-option="--jobs=6" -U numpy==1.16.1 future==0.17.1 mock==3.0.5 h5py==2.9.0 keras_preprocessing==1.0.5 keras_applications==1.0.8 gast==0.2.2 futures pybind11
-#sudo pip3 install --install-option="--jobs=6" --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v44 tensorflow==1.15.2+nv20.04
-
-#Build working version of protobuf from source
-mkdir -p ~/src
-cd ~/src
-sudo apt-get install -y autoconf libtool
-if [ ! -f protobuf-python-3.12.3.zip ]; then
-  wget https://github.com/protocolbuffers/protobuf/releases/download/v3.12.3/protobuf-all-3.12.3.zip
-fi
-if [ ! -f protoc-3.12.3-linux-aarch_64.zip ]; then
-  wget https://github.com/protocolbuffers/protobuf/releases/download/v3.12.3/protoc-3.12.3-linux-aarch_64.zip
-fi
-
-echo "** Install protoc"
-unzip protobuf-all-3.12.3.zip
-unzip protoc-3.12.3-linux-aarch_64.zip -d protoc-3.12.3
-sudo cp protoc-3.12.3/bin/protoc /usr/local/bin/protoc
-echo "** Build and install protobuf-3.12.3 libraries"
-export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=cpp
-cd protobuf-3.12.3/
-#cd cmake
-#mkdir build
-#cd build
-#cmake -DCMAKE_BUILD_TYPE=Release -Dprotobuf_BUILD_TESTS=OFF ..
-
-wget https://raw.githubusercontent.com/openembedded/meta-openembedded/master/meta-oe/recipes-devtools/protobuf/protobuf/0001-protobuf-fix-configure-error.patch
-patch < 0001-protobuf-fix-configure-error.patch
-./autogen.sh
-./configure --prefix=/usr/local
-
-sed -i 's/-g -O2/-g -O2 -fPIC/' Makefile
-find . -name \*.map | xargs -n1 sed -i 's/    };/    };\n    scc_info_*;\n    descriptor_table_*;/' 
-LDFLAGS="-pthread -Wl,--no-as-needed" make -j`nproc --all`
-#make -j`nproc --all` check
-sudo LDFLAGS="-pthread -Wl,--no-as-needed" make -j`nproc --all` install
-sudo ldconfig
-#cd ../..
-
-echo "** Update python protobuf module"
-# remove previous installation of python protobuf module
-sudo python -m pip uninstall -y protobuf
-sudo python -m pip install Cython
-cd python/
-# force compilation with c++11 standard
-python setup.py build --cpp_implementation
-# Probably fails?
-python setup.py test --cpp_implementation
-sudo python setup.py install --cpp_implementation
-cd
-sudo rm -rf src
-
-cd ~/2022RobotCode/scripts/jetson_install
-sudo apt-get install -y libhdf5-serial-dev hdf5-tools
-sudo dpkg -i libnccl*arm64.deb
-sudo python -m pip install --upgrade pip six numpy wheel setuptools mock h5py
-sudo python -m pip install --upgrade keras_applications
-sudo python -m pip install --upgrade keras_preprocessing
-sudo python -m pip install tensorflow-1.15.3-*.whl
+sudo pip3 install -U pip testresources setuptools==49.6.0
+sudo pip3 install --ignore-installed -U cython
+sudo pip3 install --install-option="--jobs=6" -U --no-deps numpy>=1.20 future==0.18.2 mock==3.0.5
+sudo pip3 install -U --no-deps keras_preprocessing==1.1.2 keras_applications==1.0.8 gast==0.4.0 protobuf pybind11 pkgconfig
+sudo env H5PY_SETUP_REQUIRES=0 pip3 install --install-option="--jobs=6" -U h5py==3.1.0
+sudo pip3 install --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v50 tensorflow==2.8.0
 
 cd /home/ubuntu
 git clone https://github.com/tensorflow/models.git
@@ -380,22 +348,37 @@ git submodule update --init --recursive
 cd /home/ubuntu/models/research
 git checkout c787baad4fcf3e008107be0662a4138194b24522^
 protoc object_detection/protos/*.proto --python_out=.
-sudo python -m pip install --ignore-installed .
+sudo pip3 install --ignore-installed .
 cd slim
-sudo python -m pip install --ignore-installed .
+sudo pip3 install --ignore-installed .
 
 cd
-export PATH=\$PATH:/usr/local/cuda/bin
+export PATH=$PATH:/usr/local/cuda/bin
 git clone https://github.com/NVIDIA/TensorRT.git 
 cd TensorRT 
 git submodule update --init --recursive 
 git checkout 20.11
 mkdir build 
 cd build 
-cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF .. 
-ninja
+cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DGPU_ARCHS="72" -DCMAKE_CXX_STANDARD=17 .. 
+sudo ninja install
 
-sudo python -m pip install --global-option=build_ext --global-option="-I/usr/local/cuda/include" --global-option="-L/usr/local/cuda/lib64" pycuda
+sudo pip3 install --install-option="--jobs=6" --global-option=build_ext --global-option="-I/usr/local/cuda/include" --global-option="-L/usr/local/cuda/lib64" pycuda
+
+cd
+git clone git@github.com:FRC900/jetson-utils.git
+cd jetson-utils
+git checkout dev
+mkdir build
+cd build
+sed -i -e 's/set(PYTHON_BINDING_VERSIONS 2.7 3.6 3.7)/set(PYTHON_BINDING_VERSIONS 2.7 3.8)/' ../python/CMakeLists.txt
+sed -i -e 's/-gencode arch=compute_37,code=sm_37/#-gencode arch=compute_37,code=sm_37/' ../CMakeLists.txt
+sed -i -e 's/-gencode arch=compute_53,code=sm_53/#-gencode arch=compute_53,code=sm_53/' ../CMakeLists.txt
+sed -i -e 's/-gencode arch=compute_60,code=sm_60/#-gencode arch=compute_60,code=sm_60/' ../CMakeLists.txt
+sed -i -e 's/-gencode arch=compute_61,code=sm_61/#-gencode arch=compute_61,code=sm_61/' ../CMakeLists.txt
+sed -i -e 's/-gencode arch=compute_62,code=sm_62/#-gencode arch=compute_62,code=sm_62/' ../CMakeLists.txt
+cmake -GNinja ..
+sudo ninja install
 
 echo "export PATH=\$PATH:/home/ubuntu/.local/bin:/home/ubuntu/tensorflow_workspace/tools:/usr/local/cuda/bin" >> /home/ubuntu/.bashrc
 
@@ -410,4 +393,5 @@ sudo ccache -C
 sudo ccache -c
 sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 
-echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev/linux/aarch64bionic/shared"
+echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev/linux/aarch64bionic/shared:/usr/local/lib" >> /home/ubuntu/.bashrc
+
