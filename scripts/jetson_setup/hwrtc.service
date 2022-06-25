@@ -1,0 +1,15 @@
+[Unit]
+Description=Synchronise System clock to hardware RTC
+DefaultDependencies=no
+After=systemd-modules-load.service
+Before=systemd-journald.service time-sync.target sysinit.target shutdown.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/sbin/hwclock --hctosys --utc --noadjfile
+RestrictRealtime=yes
+
+[Install]
+WantedBy=sysinit.target

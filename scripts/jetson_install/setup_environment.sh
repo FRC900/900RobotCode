@@ -185,6 +185,9 @@ sudo sed "s/#Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config &&
 #sudo bash -c "echo NTP=us.pool.ntp.org >> /etc/systemd/timesyncd.conf"
 #sudo bash -c "echo FallbackNTP=ntp.ubuntu.com >> /etc/systemd/timesyncd.conf"
 sudo cp ~/2022RobotCode/scripts/jetson_install/ntp.conf /etc/ntp.conf
+sudo cp ~/2022RobotCode/scripts/jetson_setup/hwrtc.service /etc/systemd/system
+sudo chmod 664 /etc/systemd/system/hwrtc.service
+sudo systemctl enable hwrtc
     
 # and keys for connections to Rio
 mkdir -p ~/.ssh
