@@ -7,3 +7,6 @@
 [submodule "navXTimeSync"]
 	path = navXTimeSync
 	url = https://github.com/FRC900/navXTimeSync.git
+[submodule "ni-libraries"]
+	path = ni-libraries
+	url = https://github.com/wpilibsuite/ni-libraries.git
