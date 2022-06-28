@@ -29,7 +29,6 @@ find_package(Eigen3 REQUIRED)
 
 add_service_files (
   FILES
-  MotionProfile.srv
   SetXY.srv
 )
 
@@ -84,6 +83,18 @@ add_dependencies(dump_offsets_service
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS}
 )
+
+# Need to find a better way of testing "is this an x86 Linux build"
+if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2020-linux-gnueabi") OR
+	     ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
+		 ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") )) 
+	add_executable(test_filtering src/test_filtering.cpp src/Swerve.cpp src/SwerveMath.cpp src/900Math.cpp)
+	target_link_libraries(test_filtering ${catkin_LIBRARIES})
+	add_dependencies(test_filtering
+		${${PROJECT_NAME}_EXPORTED_TARGETS}
+		${catkin_EXPORTED_TARGETS}
+	)
+endif()
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION})
 

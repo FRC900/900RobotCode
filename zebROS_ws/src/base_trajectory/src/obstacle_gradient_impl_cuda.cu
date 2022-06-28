@@ -1,6 +1,6 @@
 #include <limits>
 #include "ros/console.h"
-#include "cuda_profiler_api.h"
+//#include "cuda_profiler_api.h"
 #include "base_trajectory/cuda_utils.h"
 #include "base_trajectory/obstacle_gradient_impl_cuda.h"
 

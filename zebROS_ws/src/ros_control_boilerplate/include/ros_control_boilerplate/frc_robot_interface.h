@@ -117,24 +117,6 @@ class DummyJoint
 };
 #define Dumify(name) ros_control_boilerplate::DummyJoint(#name, &(name))
 
-class CustomProfileState
-{
-	public:
-		CustomProfileState()
-			: time_start_(ros::Time::now().toSec())
-			, iteration_count_(0)
-			, points_run_(0)
-	{
-	}
-
-	double time_start_;
-	int iteration_count_;
-	int points_run_;
-	hardware_interface::CustomProfileStatus status_;
-	std::vector<std::vector<hardware_interface::CustomProfilePoint>> saved_points_;
-	std::vector<std::vector<double>> saved_times_;
-};
-
 /// \brief Hardware interface for a robot
 class FRCRobotInterface : public hardware_interface::RobotHW
 {
@@ -234,11 +216,6 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 
 		hardware_interface::JointModeInterface            joint_mode_interface_;
 		hardware_interface::RemoteJointModeInterface      joint_mode_remote_interface_;
-
-		std::vector<CustomProfileState> custom_profile_state_;
-
-		void custom_profile_write(int joint_id);
-		void custom_profile_set_talon(hardware_interface::TalonMode mode, double setpoint, double fTerm, int joint_id, int pidSlot, bool zeroPos);
 
 		void readJointLocalParams(const XmlRpc::XmlRpcValue &joint_params,
 								  const bool local,

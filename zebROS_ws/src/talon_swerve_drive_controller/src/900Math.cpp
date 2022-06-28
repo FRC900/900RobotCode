@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 #include "talon_swerve_drive_controller/900Math.h"
 
 double leastDistantAngleWithinHalfPi(double currentAngle, double targetAngle, bool &reverse)

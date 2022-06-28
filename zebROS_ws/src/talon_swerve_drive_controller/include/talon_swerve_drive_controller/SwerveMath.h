@@ -3,14 +3,9 @@
 #include <vector>
 #include <Eigen/Dense>
 
-// TODO - remove this and use std::vectors instead?
-constexpr size_t WHEELCOUNT = 4;
+template <size_t WHEELCOUNT>
 class swerveDriveMath
 {
-		//WHEELCOUNT is defined so arrays can be used.
-		//Arrays are used over vectors for optimization, which may be invalid
-		//There is likely a better way to handle WHEELCOUNT
-		//  TODO : yes, use vectors
 	public:
 		swerveDriveMath(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate);
 		swerveDriveMath() {};
@@ -19,22 +14,16 @@ class swerveDriveMath
 		//for non field centric set angle to pi/2
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheelSpeedsAngles(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelMultipliersXY, const Eigen::Vector2d &velocityVector, double rotation, double angle, bool norm) const;
 
-		//Variables which need to be used externally
-		std::array<double, WHEELCOUNT> parkingAngle_;
+		double getParkingAngle(size_t wheel) const;
 		//Wheel multipliers would need to be rerun if wheels somehow get moved around
 
 	private:
 		//only must be run once to determine the angles of the wheels in parking config
 		std::array<double, WHEELCOUNT> parkingAngles(void) const;
 
-		//movement wheelAverage(std::array<Eigen::Vector2d, WHEELCOUNT> wheelMove, double angle, bool rotation);
+		void normalize(std::array<double, WHEELCOUNT> &input, const bool force_norm = false) const;
 
 		//All variables here which don't need to be accessed externally
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinate_;
-		void normalize(std::array<double, WHEELCOUNT> &input, const bool force_norm = false) const;
-		struct movement
-		{
-			Eigen::Vector2d translation;
-			double rotation;
-		};
+		std::array<double, WHEELCOUNT> parkingAngle_;
 };

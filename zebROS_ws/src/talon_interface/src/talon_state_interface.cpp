@@ -879,14 +879,6 @@ int TalonHWState::getMotionProfileTrajectoryPeriod(void) const
 {
 	return motion_profile_trajectory_period_;
 }
-CustomProfileStatus TalonHWState::getCustomProfileStatus(void) const
-{
-	return custom_profile_status_;
-}
-void TalonHWState::setCustomProfileStatus(const CustomProfileStatus &status)
-{
-	custom_profile_status_ = status;
-}
 void TalonHWState::setPidfP(double pidf_p, size_t index)
 {
 	if (index < TALON_PIDF_SLOTS)

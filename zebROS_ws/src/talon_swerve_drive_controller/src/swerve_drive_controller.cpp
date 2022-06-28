@@ -35,154 +35,46 @@
  */
 
 #include <cmath>
+
+#include <ros/ros.h>
+
 #include <angles/angles.h>
-
+#include <controller_interface/controller.h>
+#include <geometry_msgs/TwistStamped.h>
+#include <nav_msgs/Odometry.h>
+#include <realtime_tools/realtime_buffer.h>
+#include <realtime_tools/realtime_publisher.h>
+#include <std_msgs/Bool.h>
+#include <std_srvs/Empty.h>
+#include <std_srvs/SetBool.h>
+#include <tf/tfMessage.h>
 #include <tf/transform_datatypes.h>
+#include <tf2_ros/transform_broadcaster.h>
 
-#include <talon_swerve_drive_controller/swerve_drive_controller.h>
+#include <talon_controllers/talon_controller_interface.h>
 
-//TODO: include swerve stuff from C-Control
-using Eigen::Vector2d;
-using std::array;
-using Eigen::Affine2d;
-using Eigen::Matrix2d;
-using Eigen::Vector2d;
-
-using ros::Time;
-using geometry_msgs::TwistConstPtr;
-using ros::Duration;
-
-const double talon_swerve_drive_controller::TalonSwerveDriveController::DEF_ODOM_PUB_FREQ = 100.;
-const bool talon_swerve_drive_controller::TalonSwerveDriveController::DEF_PUB_ODOM_TO_BASE = false;
-const std::string talon_swerve_drive_controller::TalonSwerveDriveController::DEF_ODOM_FRAME = "odom";
-const std::string talon_swerve_drive_controller::TalonSwerveDriveController::DEF_BASE_FRAME = "base_link";
-const double talon_swerve_drive_controller::TalonSwerveDriveController::DEF_INIT_X = 0.;
-const double talon_swerve_drive_controller::TalonSwerveDriveController::DEF_INIT_Y = 0.;
-const double talon_swerve_drive_controller::TalonSwerveDriveController::DEF_INIT_YAW = 0.;
-const double talon_swerve_drive_controller::TalonSwerveDriveController::DEF_SD = 0.01;
-
-#if 0
-static double euclideanOfVectors(const urdf::Vector3& vec1, const urdf::Vector3& vec2)
-{
-  return std::sqrt(std::pow(vec1.x-vec2.x,2) +
-                   std::pow(vec1.y-vec2.y,2) +
-                   std::pow(vec1.z-vec2.z,2));
-}
-/*
-* \brief Check that a link exists and has a geometry collision.
-* \param link The link
-* \return true if the link has a collision element with geometry
-*/
-static bool hasCollisionGeometry(const urdf::LinkConstSharedPtr &link)
-{
-	if (!link)
-	{
-		ROS_ERROR("Link == NULL.");
-		return false;
-	}
-
-	if (!link->collision)
-	{
-		ROS_ERROR_STREAM("Link " << link->name << " does not have collision description. Add collision description for link to urdf.");
-		return false;
-	}
-
-	if (!link->collision->geometry)
-	{
-		ROS_ERROR_STREAM("Link " << link->name << " does not have collision geometry description. Add collision geometry description for link to urdf.");
-		return false;
-	}
-	return true;
-}
-/*
- * \brief Check if the link is modeled as a cylinder
- * \param link Link
- * \return true if the link is modeled as a Cylinder; false otherwise
- */
-static bool isCylinder(const urdf::LinkConstSharedPtr &link)
-{
-	if (!hasCollisionGeometry(link))
-	{
-		return false;
-	}
-
-	if (link->collision->geometry->type != urdf::Geometry::CYLINDER)
-	{
-		ROS_DEBUG_STREAM("Link " << link->name << " does not have cylinder geometry");
-		return false;
-	}
-
-	return true;
-}
-
-/*
- * \brief Check if the link is modeled as a sphere
- * \param link Link
- * \return true if the link is modeled as a Sphere; false otherwise
- *
- * \param link Link
- * \return true if the link is modeled as a Sphere; false otherwise
- */
-static bool isSphere(const urdf::LinkConstSharedPtr &link)
-{
-	if (!hasCollisionGeometry(link))
-	{
-		return false;
-	}
-
-	if (link->collision->geometry->type != urdf::Geometry::SPHERE)
-	{
-		ROS_DEBUG_STREAM("Link " << link->name << " does not have sphere geometry");
-		return false;
-	}
-
-	return true;
-}
-#endif
-
-/*
- * \brief Get the wheel radius
- * \param [in]  wheel_link   Wheel link
- * \param [out] wheel_radius Wheel radius [m]
- * \return true if the wheel radius was found; false otherwise
- */
-#if 0
-static bool getWheelRadius(const urdf::LinkConstSharedPtr &wheel_link, double &wheel_radius)
-{
-	if (isCylinder(wheel_link))
-	{
-		wheel_radius = (static_cast<urdf::Cylinder *>(wheel_link->collision->geometry.get()))->radius;
-		return true;
-	}
-	else if (isSphere(wheel_link))
-	{
-		wheel_radius = (static_cast<urdf::Sphere *>(wheel_link->collision->geometry.get()))->radius;
-		return true;
-	}
-
-	ROS_ERROR_STREAM("Wheel link " << wheel_link->name << " is NOT modeled as a cylinder or sphere!");
-	return false;
-}
-#endif
+#include "talon_swerve_drive_controller/SetXY.h"
+#include <talon_swerve_drive_controller/Swerve.h>
 
 namespace talon_swerve_drive_controller
 {
 
-TalonSwerveDriveController::TalonSwerveDriveController() :
-	wheel_radius_(0.0),
-	cmd_vel_timeout_(0.5), //Change to 5.0 for auto path planning testing
-	allow_multiple_cmd_vel_publishers_(true),
-	base_frame_id_("base_link"),
-	odom_frame_id_("odom")
+template <size_t WHEELCOUNT>
+class TalonSwerveDriveController
+	: public controller_interface::Controller<hardware_interface::TalonCommandInterface>
+{
+	public:
+
+TalonSwerveDriveController()
 {
 }
 
-bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface *hw,
-									  ros::NodeHandle &/*root_nh*/,
-									  ros::NodeHandle &controller_nh)
+bool init(hardware_interface::TalonCommandInterface *hw,
+		ros::NodeHandle &/*root_nh*/,
+		ros::NodeHandle &controller_nh)
 {
 	const std::string complete_ns = controller_nh.getNamespace();
-	std::size_t id = complete_ns.find_last_of('/');
+	const size_t id = complete_ns.find_last_of('/');
 	name_ = complete_ns.substr(id + 1);
 
 	// Get joint names from the parameter server
@@ -209,17 +101,8 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 		return false;
 	}
 
-	/*ros::NodeHandle n; //Is this bad?
-
-	ros::NodeHandle n_params_behaviors(n, "auto_params");
-
-	if (!n_params_behaviors.getParam("num_profile_slots", num_profile_slots_))
-	        ROS_ERROR("Didn't read param num_profile_slots in talon_swerve");
-	*/
-	num_profile_slots_ = 20;
-
 	// Publish limited velocity:
-	controller_nh.param("publish_cmd", publish_cmd_, true);
+	controller_nh.param("publish_cmd", publish_cmd_, publish_cmd_);
 
 	// TODO : see if model_, driveRatios, units can be local instead of member vars
 	// If either parameter is not available, we need to look up the value in the URDF
@@ -343,6 +226,11 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	    ROS_ERROR("talon_swerve_drive_controller : param 'wheel_coords' is not a list");
 		return false;
 	}
+	if (wheel_coords.size() != WHEELCOUNT)
+	{
+	    ROS_ERROR_STREAM("talon_swerve_drive_controller : param 'wheel_coords' is not correct length (expecting WHEELCOUNT = " << WHEELCOUNT << ")");
+		return false;
+	}
 	for(int i=0; i < wheel_coords.size(); ++i)
 	{
 		if(wheel_coords[i].getType() != XmlRpc::XmlRpcValue::TypeArray )
@@ -361,34 +249,26 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 			ROS_ERROR("talon_swerve_drive_controller : param wheel_coords[%d] is not a pair of doubles", i);
 			return false;
 		}
-			wheel_coords_[i][0] = wheel_coords[i][0];
-			wheel_coords_[i][1] = wheel_coords[i][1];
+		wheel_coords_[i][0] = wheel_coords[i][0];
+		wheel_coords_[i][1] = wheel_coords[i][1];
 	}
 
 	ROS_INFO_STREAM("Coords: " << wheel_coords_[0] << "   " << wheel_coords_[1] << "   " << wheel_coords_[2] << "   " << wheel_coords_[3]);
-	std::vector<double> offsets;
-	for (auto it = steering_names.cbegin(); it != steering_names.cend(); ++it)
+	std::array<double, WHEELCOUNT> offsets;
+	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
-		ros::NodeHandle nh(controller_nh, *it);
-		double dbl_val = 0;
-		if (!nh.getParam("offset", dbl_val))
+		ros::NodeHandle nh(controller_nh, steering_names[i]);
+		if (!nh.getParam("offset", offsets[i]))
 		{
-			ROS_ERROR_STREAM("Can not read offset for " << *it);
+			ROS_ERROR_STREAM("Can not read offset for " << steering_names[i]);
 			return false;
 		}
-		ROS_INFO_STREAM("SWERVE: offsets for " << *it << " is " << dbl_val);
-		offsets.push_back(dbl_val);
 	}
 	for (const auto o : offsets)
 	{
 		ROS_INFO_STREAM("\t SWERVE: offset = " << o);
 	}
 
-	profile_queue_num_.init(controller_nh, "profile_queue_num", 1);
-
-	cmd_vel_mode_.store(true, std::memory_order_relaxed);
-	dont_set_angle_mode_.store(false, std::memory_order_relaxed);
-	percent_out_drive_mode_.store(false, std::memory_order_relaxed);
 	center_of_rotation_.writeFromNonRT(Eigen::Vector2d{0,0});
 	/*
 	if (!setOdomParamsFromUrdf(root_nh,
@@ -405,10 +285,6 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	// to set the odometry parameters
 	//setOdomPubFields(root_nh, controller_nh);
 
-	if (publish_cmd_)
-	{
-	  cmd_vel_pub_.reset(new realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped>(controller_nh, "cmd_vel_out", 5));
-	}
 	// Get the joint object to use in the realtime loop
 
 	// TODO : all of these need to be read from params
@@ -419,14 +295,14 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	model.motorStallTorque = 2.41;
 	model.motorQuantity = 4;
 	*/
-	model_.wheelRadius =  wheel_radius_;
+	model_.wheelRadius = wheel_radius_;
 
 	/*
 	swerveVar::ratios driveRatios({20, 7, 7});
 	swerveVar::encoderUnits units({1,1,1,1,1,1});
 	*/
 
-	swerveC_ = std::make_shared<swerve>(wheel_coords_, offsets, driveRatios_, units_, model_);
+	swerveC_ = std::make_unique<swerve<WHEELCOUNT>>(wheel_coords_, offsets, driveRatios_, units_, model_);
 	for (size_t i = 0; i < WHEELCOUNT; ++i)
 	{
 		ROS_INFO_STREAM_NAMED(name_,
@@ -440,24 +316,26 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 	}
 
 	sub_command_ = controller_nh.subscribe("cmd_vel", 1, &TalonSwerveDriveController::cmdVelCallback, this);
+	if (publish_cmd_)
+	{
+	  cmd_vel_pub_ = std::make_unique<realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped>>(controller_nh, "cmd_vel_out", 2);
+	}
 	brake_serv_ = controller_nh.advertiseService("brake", &TalonSwerveDriveController::brakeService, this);
 	reset_odom_serv_ = controller_nh.advertiseService("reset_odom", &TalonSwerveDriveController::resetOdomService, this);
 	dont_set_angle_mode_serv_ = controller_nh.advertiseService("dont_set_angle", &TalonSwerveDriveController::dontSetAngleModeService, this);
 	percent_out_drive_mode_serv_ = controller_nh.advertiseService("percent_out_drive_mode", &TalonSwerveDriveController::percentOutDriveModeService, this);
-	motion_profile_serv_ = controller_nh.advertiseService("run_profile", &TalonSwerveDriveController::motionProfileService, this);
 	change_center_of_rotation_serv_ = controller_nh.advertiseService("change_center_of_rotation", &TalonSwerveDriveController::changeCenterOfRotationService, this);
 
 	double odom_pub_freq;
 	controller_nh.param("odometry_publishing_frequency", odom_pub_freq, DEF_ODOM_PUB_FREQ);
 
-	reset_odom_.writeFromNonRT(false);
 	comp_odom_ = odom_pub_freq > 0;
 	//ROS_WARN("COMPUTING ODOM");
 	if (comp_odom_)
 	{
-		odom_pub_period_ = Duration(1 / odom_pub_freq);
+		odom_pub_period_ = ros::Duration(1 / odom_pub_freq);
 		controller_nh.param("publish_odometry_to_base_transform", pub_odom_to_base_,
-							DEF_PUB_ODOM_TO_BASE);
+							pub_odom_to_base_);
 
 		double init_x, init_y, init_yaw;
 		controller_nh.param("initial_x", init_x, DEF_INIT_X);
@@ -474,7 +352,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 
 		init_odom_to_base_.setIdentity();
 		init_odom_to_base_.rotate(init_yaw);
-		init_odom_to_base_.translation() = Vector2d(init_x, init_y);
+		init_odom_to_base_.translation() = Eigen::Vector2d(init_x, init_y);
 		odom_to_base_ = init_odom_to_base_;
 		odom_rigid_transf_.setIdentity();
 
@@ -484,7 +362,7 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 			wheel_pos_.col(i) = wheel_coords_[i];
 		}
 
-		const Vector2d centroid = wheel_pos_.rowwise().mean();
+		const auto centroid = wheel_pos_.rowwise().mean();
 		wheel_pos_.colwise() -= centroid;
 		neg_wheel_centroid_ = -centroid;
 
@@ -526,21 +404,202 @@ bool TalonSwerveDriveController::init(hardware_interface::TalonCommandInterface 
 		for (size_t row = 0; row < WHEELCOUNT; row++)
 		{
 			last_wheel_rot_[row] = speed_joints_[row].getPosition();
-			last_wheel_angle_[row] = steering_joints_[row].getPosition();
 		}
 	}
 	controller_nh.param("use_cos_scaling", use_cos_scaling_, use_cos_scaling_);
 
-	// Grab current initial steering angles
-	for (size_t k = 0; k < WHEELCOUNT; k++)
-	{
-		steer_angles_[k] = steering_joints_[k].getPosition();
-	}
+	controller_nh.param("parking_config_time_delay", parking_config_time_delay_, parking_config_time_delay_);
+	controller_nh.param("drive_speed_time_delay", drive_speed_time_delay_, parking_config_time_delay_);
+	controller_nh.param("use_cos_scaling", use_cos_scaling_, use_cos_scaling_);
 
 	return true;
 }
 
-double TalonSwerveDriveController::angle_midpoint(double start_angle, double end_angle) const
+void starting(const ros::Time &time)
+{
+	std::array<double, WHEELCOUNT> steer_angles;
+	for (size_t k = 0; k < WHEELCOUNT; k++)
+	{
+		steer_angles[k] = steering_joints_[k].getPosition();
+	}
+	brake(steer_angles);
+	// Assume we braked infinitely long ago - this will keep the
+	// drive base in parking config until a non-zero command comes in
+	time_before_brake_ = 0;
+
+	// Register starting time used to keep fixed rate
+	if (comp_odom_)
+	{
+		last_odom_pub_time_ = time;
+		last_odom_tf_pub_time_ = time;
+	}
+	//odometry_.init(time);
+}
+
+void stopping(const ros::Time & time)
+{
+	brake_last_ = time.toSec();
+	time_before_brake_ = 0;
+	std::array<double, WHEELCOUNT> steer_angles;
+	for (size_t k = 0; k < WHEELCOUNT; k++)
+	{
+		steer_angles[k] = steering_joints_[k].getPosition();
+	}
+	brake(steer_angles);
+}
+
+void update(const ros::Time &time, const ros::Duration &period)
+{
+	// Grab current steering angle
+	std::array<double, WHEELCOUNT> steer_angles;
+	for (size_t k = 0; k < WHEELCOUNT; k++)
+	{
+		steer_angles[k] = steering_joints_[k].getPosition();
+	}
+
+	if (comp_odom_) compOdometry(time, 1.0 / period.toSec(), steer_angles);
+
+	Commands curr_cmd = *(command_.readFromRT());
+	const double dt = (time - curr_cmd.stamp).toSec();
+	const bool dont_set_angle_mode = dont_set_angle_mode_.load(std::memory_order_relaxed);
+	const bool percent_out_drive_mode = percent_out_drive_mode_.load(std::memory_order_relaxed);
+
+	//ROS_INFO_STREAM("ang_vel_tar: " << curr_cmd.ang << " lin_vel_tar: " << curr_cmd.lin);
+
+	// Brake if cmd_vel has timeout:
+	if (dt > cmd_vel_timeout_)
+	{
+		curr_cmd.lin = {0.0, 0.0};
+		curr_cmd.ang = 0.0;
+	}
+
+	for (size_t i = 0; i < WHEELCOUNT; ++i)
+	{
+		if (!dont_set_angle_mode_)
+		{
+			steering_joints_[i].setPIDFSlot(0);
+			steering_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_MotionMagic);
+			steering_joints_[i].setDemand1Value(0);
+		}
+		speed_joints_[i].setPIDFSlot(0);
+	}
+
+	// Special case for when the drive base is stopped
+	if (fabs(curr_cmd.lin[0]) <= 1e-6 && fabs(curr_cmd.lin[1]) <= 1e-6 && fabs(curr_cmd.ang) <= 1e-6)
+	{
+		for (size_t i = 0; i < WHEELCOUNT; ++i)
+		{
+			speed_joints_[i].setCommand(0);
+			speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
+		}
+		if ((time.toSec() - time_before_brake_) > parking_config_time_delay_)
+		{
+			brake(steer_angles);
+		}
+		else
+		{
+			for (size_t i = 0; i < WHEELCOUNT; ++i)
+			{
+				if (!dont_set_angle_mode)
+					steering_joints_[i].setCommand(speeds_angles_[i][1]);
+				speed_joints_[i].setNeutralMode(hardware_interface::NeutralMode::NeutralMode_Coast);
+			}
+		}
+		if (publish_cmd_ && cmd_vel_pub_->trylock())
+		{
+			cmd_vel_pub_->msg_.header.stamp = time;
+			cmd_vel_pub_->msg_.twist.linear.x = 0;
+			cmd_vel_pub_->msg_.twist.linear.y = 0;
+			cmd_vel_pub_->msg_.twist.linear.z = 0;
+			cmd_vel_pub_->msg_.twist.angular.x = 0;
+			cmd_vel_pub_->msg_.twist.angular.y = 0;
+			cmd_vel_pub_->msg_.twist.angular.z = 0;
+			cmd_vel_pub_->unlockAndPublish();
+		}
+		return;
+	}
+
+	// We are not stopped, so reset the time which we were
+	// last not-stopped here. This is used later to give
+	// a delay between stopping and moving into parking config
+	time_before_brake_ = time.toSec();
+
+	// Compute wheels velocities:
+	//Parse curr_cmd to get velocity vector and rotation (z axis)
+	speeds_angles_ = swerveC_->motorOutputs(curr_cmd.lin, curr_cmd.ang, M_PI / 2.0, steer_angles, true, *(center_of_rotation_.readFromRT()), use_cos_scaling_);
+
+	// Set wheel steering angles, as long as dont_set_angle_mode is false
+	for (size_t i = 0; !dont_set_angle_mode && (i < WHEELCOUNT); ++i)
+	{
+		steering_joints_[i].setCommand(speeds_angles_[i][1]);
+	}
+
+	// Wait a bit after coming out of parking
+	// config before setting wheel velocity
+	if ((time.toSec() - brake_last_) > drive_speed_time_delay_)
+	{
+		for (size_t i = 0; i < WHEELCOUNT; ++i)
+		{
+			if (!percent_out_drive_mode)
+			{
+				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_Velocity);
+
+				// Add static feed forward in direction of current velocity
+				if(fabs(speeds_angles_[i][0]) > 1e-5)
+				{
+					speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_ArbitraryFeedForward);
+					speed_joints_[i].setDemand1Value(copysign(f_s_, speeds_angles_[i][0]));
+				}
+				else
+				{
+					speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
+					speed_joints_[i].setDemand1Value(0);
+				}
+
+				speed_joints_[i].setCommand(speeds_angles_[i][0]);
+			}
+			else
+			{
+				// Debugging mode - used for robot characterization by sweeping
+				// from 0-100% output and measuring response
+				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
+				speed_joints_[i].setCommand(hypot(curr_cmd.lin[0], curr_cmd.lin[1]));
+				speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
+				speed_joints_[i].setDemand1Value(0);
+			}
+		}
+	}
+	else
+	{
+		for (size_t i = 0; i < WHEELCOUNT; ++i)
+		{
+			speed_joints_[i].setCommand(0);
+			speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
+			speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
+			speed_joints_[i].setDemand1Value(0);
+		}
+	}
+	for (size_t i = 0; i < WHEELCOUNT; ++i)
+	{
+		speed_joints_[i].setNeutralMode(hardware_interface::NeutralMode::NeutralMode_Coast);
+	}
+
+	if (publish_cmd_ && cmd_vel_pub_->trylock())
+	{
+		cmd_vel_pub_->msg_.header.stamp = time;
+		cmd_vel_pub_->msg_.twist.linear.x = curr_cmd.lin[0];
+		cmd_vel_pub_->msg_.twist.linear.y = curr_cmd.lin[1];
+		cmd_vel_pub_->msg_.twist.linear.z = 0;
+		cmd_vel_pub_->msg_.twist.angular.x = 0;
+		cmd_vel_pub_->msg_.twist.angular.y = 0;
+		cmd_vel_pub_->msg_.twist.angular.z = curr_cmd.ang;
+		cmd_vel_pub_->unlockAndPublish();
+	}
+}
+
+private:
+
+double angle_midpoint(double start_angle, double end_angle) const
 {
 	double deltaAngle = end_angle - start_angle;
 	while (deltaAngle < -M_PI)
@@ -552,10 +611,9 @@ double TalonSwerveDriveController::angle_midpoint(double start_angle, double end
 	return angles::normalize_angle(start_angle + deltaAngle / 2.0);
 }
 
-void TalonSwerveDriveController::compOdometry(const Time &time, const double inv_delta_t, const std::array<double, WHEELCOUNT> &steer_angles)
+void compOdometry(const ros::Time &time, const double inv_delta_t, const std::array<double, WHEELCOUNT> &steer_angles)
 {
-	const auto reset_odom = *(reset_odom_.readFromRT());
-	if (reset_odom)
+	if (reset_odom_.exchange(false))
 	{
 		odom_to_base_.setIdentity();
 	}
@@ -620,9 +678,9 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 	const Eigen::RowVector2d new_wheel_centroid = new_wheel_pos.colwise().mean();
 	new_wheel_pos.rowwise() -= new_wheel_centroid;
 
-	const Matrix2d h = wheel_pos_ * new_wheel_pos;
-	const Eigen::JacobiSVD<Matrix2d> svd(h, Eigen::ComputeFullU | Eigen::ComputeFullV);
-	Matrix2d rot = svd.matrixV() * svd.matrixU().transpose();
+	const Eigen::Matrix2d h = wheel_pos_ * new_wheel_pos;
+	const Eigen::JacobiSVD<Eigen::Matrix2d> svd(h, Eigen::ComputeFullU | Eigen::ComputeFullV);
+	Eigen::Matrix2d rot = svd.matrixV() * svd.matrixU().transpose();
 	if (rot.determinant() < 0)
 		rot.col(1) *= -1;
 
@@ -684,422 +742,12 @@ void TalonSwerveDriveController::compOdometry(const Time &time, const double inv
 	}
 }
 
-void TalonSwerveDriveController::update(const ros::Time &time, const ros::Duration &period)
-{
-	const double inv_delta_t = 1.0 / period.toSec();
 
-	// Grab current steering angle, store it
-	// for other code to use
-	std::array<double, WHEELCOUNT> steer_angles;
-	for (size_t k = 0; k < WHEELCOUNT; k++)
-	{
-		steer_angles[k] = steering_joints_[k].getPosition();
-	}
-	{
-		std::lock_guard<std::mutex> lock(steer_angles_mutex_);
-		steer_angles_ = steer_angles;
-	}
 
-	if (comp_odom_) compOdometry(time, inv_delta_t, steer_angles);
-
-	// MOVE ROBOT
-	// Retreive current velocity command and time step:
-
-	//ROS_INFO_STREAM("mode: " << cmd_vel_mode_);
-
-	static bool set_profile_run = false;
-
-	size_t full_profile_buffer_size = 0;
-	full_profile_cmd cur_prof_cmd;
-
-	// Protect access to full_profile_buffer_
-	// with a mutex to enforce thread safety
-	{
-		std::unique_lock<std::mutex> l(profile_mutex_, std::try_to_lock);
-		if (l.owns_lock())
-		{
-			full_profile_buffer_size = full_profile_buffer_.size();
-			if (full_profile_buffer_size != 0)
-			{
-				cur_prof_cmd = full_profile_buffer_.front();
-				full_profile_buffer_.pop_front();
-			}
-		}
-	}
-
-	if (full_profile_buffer_size != 0)
-	{
-		if (cur_prof_cmd.brake)
-		{
-			ROS_WARN("profile_reset");
-			//required for reset
-			for (size_t k = 0; k < WHEELCOUNT; k++)
-			{
-				steering_joints_[k].setCustomProfileRun(false);
-				speed_joints_[k].setCustomProfileRun(false);
-				set_profile_run = false;
-			}
-			Commands brake_struct;
-			brake_struct.lin[0] = 0;
-			brake_struct.lin[1] = 0;
-			brake_struct.ang = 0;
-			brake_struct.stamp = time;
-			ROS_WARN("called in controller");
-			command_.writeFromNonRT(brake_struct);
-			cmd_vel_mode_.store(true, std::memory_order_relaxed);
-		}
-
-		if (cur_prof_cmd.wipe_all)
-		{
-			ROS_WARN("profile_wipe");
-			for (int i = 0; i < num_profile_slots_; i++)
-			{
-				for (size_t k = 0; k < WHEELCOUNT; k++)
-				{
-					full_profile_[k][0].clear();
-					full_profile_[k][1].clear();
-					speed_joints_[k].overwriteCustomProfilePoints(full_profile_[k][0], i);
-					steering_joints_[k].overwriteCustomProfilePoints(full_profile_[k][1], i);
-				}
-			}
-		}
-
-		if (cur_prof_cmd.buffer)
-		{
-			ROS_WARN("buffer in controller - pre loop");
-			for (const auto &profile : cur_prof_cmd.profiles)
-			{
-				ROS_WARN("buffer in controller");
-				const int point_count2 = profile.drive_pos.size();
-				ROS_INFO_STREAM("points: " << point_count2);
-				for (size_t i = 0; i < WHEELCOUNT; i++)
-				{
-					holder_points_[i][0].mode = profile.hold[0][i] ? hardware_interface::TalonMode_PercentOutput : hardware_interface::TalonMode_Position;
-					holder_points_[i][1].mode = profile.hold[0][i] ? hardware_interface::TalonMode_MotionMagic : hardware_interface::TalonMode_Position;
-
-					holder_points_[i][0].pidSlot = 1;
-					holder_points_[i][1].pidSlot = profile.hold[0][i] ? 0 : 1; //0 and 1 are the same right now
-
-					holder_points_[i][0].setpoint = profile.hold[0][i] ? 0 : profile.drive_pos[0][i];
-					holder_points_[i][1].setpoint = profile.steer_pos[0][i];
-
-					holder_points_[i][0].fTerm = profile.hold[0][i] ? 0 : profile.drive_f[0][i];
-					holder_points_[i][1].fTerm = profile.hold[0][i] ? 0 : profile.steer_f[0][i];
-
-					holder_points_[i][0].duration = profile.dt;
-					holder_points_[i][1].duration = profile.dt;
-
-					holder_points_[i][0].zeroPos = true;
-					holder_points_[i][1].zeroPos = false;
-
-					full_profile_[i][0].clear();
-					full_profile_[i][1].clear();
-
-					full_profile_[i][0].push_back(holder_points_[i][0]); //Rather than buffering like this we should write directly to full profile at some point
-					full_profile_[i][1].push_back(holder_points_[i][1]); //Rather than buffering like this we should write directly to full profile at some point
-
-					holder_points_[i][0].zeroPos = false;
-				}
-
-				const int point_count = profile.drive_pos.size();
-				ROS_INFO_STREAM("points: " << point_count);
-				for (int i = 1; i < point_count; i++)
-				{
-					for (size_t k = 0; k < WHEELCOUNT; k++)
-					{
-						holder_points_[k][0].mode = profile.hold[i][k] ? hardware_interface::TalonMode_PercentOutput : hardware_interface::TalonMode_Position;
-						holder_points_[k][1].mode = profile.hold[i][k] ? hardware_interface::TalonMode_MotionMagic : hardware_interface::TalonMode_Position;
-
-						holder_points_[k][0].setpoint = profile.hold[i][k] ? 0 : profile.drive_pos[i][k];
-						holder_points_[k][1].setpoint = profile.steer_pos[i][k];
-
-						holder_points_[k][0].fTerm = profile.hold[i][k] ? 0 : profile.drive_f[i][k];
-						holder_points_[k][1].fTerm = profile.hold[i][k] ? 0 : profile.steer_f[i][k];
-						//ROS_INFO_STREAM("f: " << holder_points_[k][0].fTerm);
-
-						holder_points_[k][1].pidSlot = profile.hold[i][k] ? 0 : 1;
-
-						full_profile_[k][0].push_back(holder_points_[k][0]); //Rather than buffering like this we should write directly to full profile at some point
-						full_profile_[k][1].push_back(holder_points_[k][1]); //Rather than buffering like this we should write directly to full profile at some point
-					}
-				}
-				ROS_WARN("done1");
-				for (size_t k = 0; k < WHEELCOUNT; k++)
-				{
-					speed_joints_[k].overwriteCustomProfilePoints(full_profile_[k][0], profile.slot);
-					steering_joints_[k].overwriteCustomProfilePoints(full_profile_[k][1], profile.slot);
-				}
-
-				ROS_WARN("done");
-			}
-		}
-
-		if (cur_prof_cmd.run)
-		{
-			ROS_WARN("running from  controller");
-			cmd_vel_mode_.store(false, std::memory_order_relaxed);
-			for (size_t k = 0; k < WHEELCOUNT; k++)
-			{
-				steering_joints_[k].setCustomProfileSlot(cur_prof_cmd.run_slot);
-				speed_joints_[k].setCustomProfileSlot(cur_prof_cmd.run_slot);
-			}
-		}
-
-		if (cur_prof_cmd.change_queue)
-		{
-			for (size_t k = 0; k < WHEELCOUNT; k++)
-			{
-				steering_joints_[k].setCustomProfileNextSlot(cur_prof_cmd.new_queue);
-				speed_joints_[k].setCustomProfileNextSlot(cur_prof_cmd.new_queue);
-			}
-		}
-
-	}
-	static double mode_last_time = time.toSec();
-	if (cmd_vel_mode_.load(std::memory_order_relaxed))
-	{
-		Commands curr_cmd = *(command_.readFromRT());
-		const double dt = (time - curr_cmd.stamp).toSec();
-		const bool dont_set_angle_mode = dont_set_angle_mode_.load(std::memory_order_relaxed);
-		const bool percent_out_drive_mode = percent_out_drive_mode_.load(std::memory_order_relaxed);
-
-		//ROS_INFO_STREAM("ang_vel_tar: " << curr_cmd.ang << " lin_vel_tar: " << curr_cmd.lin);
-
-		// Brake if cmd_vel has timeout:
-		if (dt > cmd_vel_timeout_)
-		{
-			curr_cmd.lin = {0.0, 0.0};
-			curr_cmd.ang = 0.0;
-		}
-
-		static std::array<Vector2d, WHEELCOUNT> speeds_angles;
-
-		hardware_interface::NeutralMode neutral_mode = hardware_interface::NeutralMode::NeutralMode_Coast;
-		for (size_t i = 0; i < WHEELCOUNT; ++i)
-		{
-			steering_joints_[i].setCustomProfileRun(false);
-			speed_joints_[i].setCustomProfileRun(false);
-			set_profile_run = false;
-
-			if (!dont_set_angle_mode_)
-			{
-				steering_joints_[i].setPIDFSlot(0);
-				steering_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_MotionMagic);
-				steering_joints_[i].setDemand1Value(0);
-			}
-
-			speed_joints_[i].setPIDFSlot(0);
-			//speed_joints_[i].setClosedloopRamp(0);
-			//speed_joints_[i].setDemand1Value(0);
-		}
-		static double brake_last = time.toSec();
-		static double time_before_brake = 0;
-		if (fabs(curr_cmd.lin[0]) <= 1e-6 && fabs(curr_cmd.lin[1]) <= 1e-6 && fabs(curr_cmd.ang) <= 1e-6)
-		{
-
-			for (size_t i = 0; i < WHEELCOUNT; ++i)
-			{
-				speed_joints_[i].setCommand(0);
-				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
-			}
-
-			if ((time.toSec() - time_before_brake) > .75)
-			{
-        brake_last = time.toSec();
-				brake();
-				neutral_mode = hardware_interface::NeutralMode::NeutralMode_Brake;
-			}
-			else
-			{
-				for (size_t i = 0; !dont_set_angle_mode && (i < WHEELCOUNT); ++i)
-				{
-					steering_joints_[i].setCommand(speeds_angles[i][1]);
-				}
-			}
-			if (publish_cmd_ && cmd_vel_pub_->trylock())
-			{
-				cmd_vel_pub_->msg_.header.stamp = time;
-				cmd_vel_pub_->msg_.twist.linear.x = 0;
-				cmd_vel_pub_->msg_.twist.linear.y = 0;
-				cmd_vel_pub_->msg_.twist.linear.z = 0;
-				cmd_vel_pub_->msg_.twist.angular.x = 0;
-				cmd_vel_pub_->msg_.twist.angular.y = 0;
-				cmd_vel_pub_->msg_.twist.angular.z = 0;
-				cmd_vel_pub_->unlockAndPublish();
-			}
-			for (size_t i = 0; i < WHEELCOUNT; ++i)
-			{
-				speed_joints_[i].setNeutralMode(neutral_mode);
-			}
-			return;
-		}
-
-		time_before_brake = time.toSec();
-
-		// Limit velocities and accelerations:
-		//const double cmd_dt(period.toSec());
-
-		// Compute wheels velocities:
-		//Parse curr_cmd to get velocity vector and rotation (z axis)
-		//TODO: check unit conversions/coordinate frames
-
-		speeds_angles = swerveC_->motorOutputs(curr_cmd.lin, curr_cmd.ang, M_PI / 2.0, steer_angles, true, *(center_of_rotation_.readFromRT()), use_cos_scaling_);
-
-		// Set wheel steering angles, as long as dont_set_angle_mode is false
-		for (size_t i = 0; !dont_set_angle_mode && (i < WHEELCOUNT); ++i)
-		{
-			steering_joints_[i].setCommand(speeds_angles[i][1]);
-		}
-		for (size_t i = 0; i < WHEELCOUNT; ++i)
-		{
-			speed_joints_[i].setNeutralMode(neutral_mode);
-		}
-
-		// Small delay coming out of parking mode before running
-		// speed motors to hopefully let the angle motors get
-		// to position
-		if (((time.toSec() - .25) > brake_last) || ((time.toSec() - .25) > mode_last_time))
-		{
-			for (size_t i = 0; i < WHEELCOUNT; ++i)
-			{
-				if (!percent_out_drive_mode)
-				{
-					speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_Velocity);
-
-					// Add static feed forward in direction of current velocity
-					if(fabs(speeds_angles[i][0]) > 1e-5)
-					{
-						speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_ArbitraryFeedForward);
-						speed_joints_[i].setDemand1Value(copysign(f_s_, speeds_angles[i][0]));
-					}
-					else
-					{
-						speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
-						speed_joints_[i].setDemand1Value(0);
-					}
-
-					speed_joints_[i].setCommand(speeds_angles[i][0]);
-				}
-				else
-				{
-					// Debugging mode - used for robot characterization by sweeping
-					// from 0-100% output and measuring response
-					speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
-					speed_joints_[i].setCommand(hypot(curr_cmd.lin[0], curr_cmd.lin[1]));
-                                        speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
-                                        speed_joints_[i].setDemand1Value(0);
-				}
-			}
-		}
-		else
-		{
-			for (size_t i = 0; i < WHEELCOUNT; ++i)
-			{
-				speed_joints_[i].setCommand(0);
-				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
-                                speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
-                                speed_joints_[i].setDemand1Value(0);
-			}
-		}
-		if (publish_cmd_ && cmd_vel_pub_->trylock())
-		{
-			cmd_vel_pub_->msg_.header.stamp = time;
-			cmd_vel_pub_->msg_.twist.linear.x = curr_cmd.lin[0];
-			cmd_vel_pub_->msg_.twist.linear.y = curr_cmd.lin[1];
-			cmd_vel_pub_->msg_.twist.linear.z = 0;
-			cmd_vel_pub_->msg_.twist.angular.x = 0;
-			cmd_vel_pub_->msg_.twist.angular.y = 0;
-			cmd_vel_pub_->msg_.twist.angular.z = curr_cmd.ang;
-			cmd_vel_pub_->unlockAndPublish();
-		}
-	}
-	else
-	{
-		ROS_INFO_STREAM_THROTTLE(.5, "out of points = " << steering_joints_[0].getCustomProfileStatus().outOfPoints);
-		mode_last_time =::Time::now().toSec();
-		for (size_t i = 0; !set_profile_run && (i < WHEELCOUNT); ++i)
-		{
-			steering_joints_[i].setCustomProfileRun(true);
-			speed_joints_[i].setCustomProfileRun(true);
-		}
-		// Make controller only set CustomProfileRun once, so that it can
-		// be cleared out by the hwi if needed when e.g. disabling the robot
-		set_profile_run = true;
-
-		// Assume all joints are running the same length profile and thus have
-		// the same outOfPoints status
-		if(steering_joints_[0].getCustomProfileStatus().outOfPoints)
-		{
-			ROS_WARN("profile_reset");
-			//required for reset
-			for (size_t k = 0; k < WHEELCOUNT; k++)
-			{
-				steering_joints_[k].setCustomProfileRun(false);
-				speed_joints_[k].setCustomProfileRun(false);
-			}
-			set_profile_run = false;
-			Commands brake_struct;
-			brake_struct.lin[0] = 0;
-			brake_struct.lin[1] = 0;
-			brake_struct.ang = 0;
-			brake_struct.stamp = time;
-			ROS_WARN("called in controller");
-			command_.writeFromNonRT(brake_struct);
-			cmd_vel_mode_.store(true, std::memory_order_relaxed);
-		}
-	}
-
-	static uint16_t slot_ret = 0;
-	static int slot_ret_diff_last_sum;
-
-	for (size_t i = 0; i < WHEELCOUNT; ++i)
-	{
-		if (slot_ret != steering_joints_[i].getCustomProfileSlot()) slot_ret_diff_last_sum += 1;
-
-		slot_ret = steering_joints_[i].getCustomProfileSlot();
-
-		//ROS_ERROR_STREAM(slot_local);
-	}
-
-	if (profile_queue_num_.trylock())
-	{
-		profile_queue_num_.msg_.data = slot_ret;
-		profile_queue_num_.unlockAndPublish();
-	}
-
-	if (slot_ret_diff_last_sum > 20)
-	{
-		ROS_ERROR("potential profile slot issue with swerve");
-	}
-}
-
-void TalonSwerveDriveController::starting(const ros::Time &time)
-{
-	brake();
-
-	// Register starting time used to keep fixed rate
-	if (comp_odom_)
-	{
-		last_odom_pub_time_ = time;
-		last_odom_tf_pub_time_ = time;
-	}
-	//odometry_.init(time);
-}
-
-void TalonSwerveDriveController::stopping(const ros::Time & /*time*/)
-{
-	brake();
-}
-
-void TalonSwerveDriveController::brake()
+void brake(const std::array<double, WHEELCOUNT> &steer_angles)
 {
 	//Use parking config
 	const bool dont_set_angle_mode = dont_set_angle_mode_.load(std::memory_order_relaxed);
-	std::array<double, WHEELCOUNT> steer_angles;
-	{
-		std::lock_guard<std::mutex> lock(steer_angles_mutex_);
-		steer_angles = steer_angles_;
-	}
 	const std::array<double, WHEELCOUNT> park_angles = swerveC_->parkingAngles(steer_angles);
 	for (size_t i = 0; i < WHEELCOUNT; ++i)
 	{
@@ -1110,19 +758,28 @@ void TalonSwerveDriveController::brake()
 		if (!dont_set_angle_mode)
 			steering_joints_[i].setCommand(park_angles[i]);
 	}
+	// Reset the timer which delays drive wheel velocity a bit after
+	// the robot's been stopped
+	brake_last_ = ros::Time::now().toSec();
 }
 
-void TalonSwerveDriveController::cmdVelCallback(const geometry_msgs::Twist &command)
+void cmdVelCallback(const geometry_msgs::Twist &command)
 {
 	if (isRunning())
 	{
+		const auto now = ros::Time::now();
 		// check that we don't have multiple publishers on the command topic
 		//ROS_WARN("Time Difference: %f", ros::Time::now().toSec() - command->header.stamp.toSec());
 		if (!allow_multiple_cmd_vel_publishers_ && sub_command_.getNumPublishers() > 1)
 		{
 			ROS_ERROR_STREAM_THROTTLE_NAMED(1.0, name_, "Detected " << sub_command_.getNumPublishers()
 											<< " publishers. Only 1 publisher is allowed. Going to brake.");
-			brake();
+			Commands brake_struct;
+			brake_struct.lin[0] = 0;
+			brake_struct.lin[1] = 0;
+			brake_struct.ang = 0;
+			brake_struct.stamp = now;
+			command_.writeFromNonRT(brake_struct);
 			return;
 		}
 
@@ -1146,10 +803,8 @@ void TalonSwerveDriveController::cmdVelCallback(const geometry_msgs::Twist &comm
 		command_struct.ang = command.angular.z;
 		command_struct.lin[0] = command.linear.x;
 		command_struct.lin[1] = command.linear.y;
-		command_struct.stamp = ros::Time::now();
+		command_struct.stamp = now;
 		command_.writeFromNonRT (command_struct);
-
-		cmd_vel_mode_.store(true, std::memory_order_relaxed);
 
 #if 0
 		//TODO fix debug
@@ -1167,159 +822,7 @@ void TalonSwerveDriveController::cmdVelCallback(const geometry_msgs::Twist &comm
 	}
 }
 
-bool TalonSwerveDriveController::motionProfileService(talon_swerve_drive_controller::MotionProfile::Request &req, talon_swerve_drive_controller::MotionProfile::Response &/*res*/)
-{
-	ROS_INFO_STREAM("running motionProfileService");
-	if (isRunning())
-	{
-		//ros::message_operations::Printer< ::talon_swerve_drive_controller::MotionProfileRequest_<std::allocator<void>> >::stream(std::cout, "", req);
-		//ROS_INFO("------------------------------------");
-		// Generate MotionProfilePoints (testing)
-		// fill in full_profile_cmd
-		// lock
-		// push to full_profile_buf
-		// unlock
-		std::array<double, WHEELCOUNT> steer_angles;
-		{
-			std::lock_guard<std::mutex> lock(steer_angles_mutex_);
-			steer_angles = steer_angles_;
-		}
-
-		std::array<double, WHEELCOUNT> prev_vels;
-		for (size_t i = 0; i < WHEELCOUNT; i++)
-		{
-			ROS_INFO_STREAM("Steer angle : " << i <<  "=" << steer_angles[i]);
-			prev_vels[i] = 0;
-		}
-		const auto &points = req.joint_trajectory.points;
-		const size_t point_count = req.joint_trajectory.points.size();
-		if (point_count < 2)
-		{
-			ROS_ERROR("Need more than 1 point for a motion profile");
-			return false;
-		}
-		const double defined_dt = (points[1].time_from_start - points[0].time_from_start).toSec();
-		full_profile_cmd full_profile_struct;
-		if (req.buffer)
-		{
-			full_profile_struct.profiles.resize(1);
-			auto &fps = full_profile_struct.profiles[0];
-
-			fps.drive_pos.resize(point_count - 1);
-			fps.drive_f.resize(point_count - 1);
-			fps.steer_pos.resize(point_count - 1);
-			fps.steer_f.resize(point_count - 1);
-			fps.hold.resize(point_count - 1);
-			fps.dt = req.dt;
-			fps.slot = req.slot;
-
-			bool holding = false;
-			std::array<Eigen::Vector2d, WHEELCOUNT> angles_positions;
-			std::array<Eigen::Vector2d, WHEELCOUNT> angles_velocities;
-			std::array<double,WHEELCOUNT> prev_drive_pos;
-			for (size_t k = 0; k < WHEELCOUNT; k++)
-			{
-				prev_drive_pos[k] = 0;
-			}
-			for (size_t i = 0; i < point_count - 1; i++)
-			{
-				//ROS_INFO_STREAM("pos_0:" << points[i].positions[0] << " pos_1:" << points[i].positions[1] <<" pos_2:" <<  points[i].positions[2] << " counts: " << point_count << " i: "<< i << " wheels: " << WHEELCOUNT);
-				//ROS_INFO_STREAM("pos_0:" << points[i+1].positions[0] << " pos_1:" << points[i+1].positions[1] <<" pos_2:" <<  points[i+1].positions[2] << " counts: " << point_count << " i: "<< i << " wheels: " << WHEELCOUNT);
-
-				// When transitioning from not-hold to hold, calculate
-				// the necessary angles once. Reuse them until hold is released
-				// This will keep the wheels pointed in the correct direction
-				// the entire duration of the requested hold duration
-				if (!(holding && req.hold[i]))
-				{
-					angles_positions =
-						swerveC_->motorOutputs({points[i + 1].positions[0] - points[i].positions[0],
-								points[i + 1].positions[1] - points[i].positions[1]},
-								points[i + 1].positions[2] - points[i].positions[2],
-								points[i + 1].positions[2],
-								steer_angles,
-								false);
-
-
-					angles_velocities =
-						swerveC_->motorOutputs({points[i + 1].velocities[0], points[i + 1].velocities[1]},
-								points[i + 1].velocities[2],
-								points[i + 1].positions[2],
-								steer_angles,
-								false);
-
-					for (size_t k = 0; (i > 0) && (k < WHEELCOUNT); k++)
-					{
-						prev_drive_pos[k] = fps.drive_pos[i - 1][k];
-					}
-				}
-				// Don't drive while hold is active
-				for (size_t k = 0; req.hold[i] && (k < WHEELCOUNT); k++)
-				{
-					angles_positions[k][0] = 0;
-				}
-
-				holding = req.hold[i];
-
-				for (size_t k = 0; k < WHEELCOUNT; k++)
-				{
-					fps.hold[i].push_back(req.hold[i]);
-					//ROS_INFO_STREAM("a_p : " << angles_positions[k][0] << " " << angles_positions[k][1] << "hold: " << (bool)req.hold[i]);
-					fps.drive_pos[i].push_back(angles_positions[k][0] + prev_drive_pos[k]);
-					fps.steer_pos[i].push_back(angles_positions[k][1]);
-
-					if ((i > point_count - 2) || req.hold[i])
-					{
-						fps.drive_f[i].push_back(0);
-						fps.steer_f[i].push_back(0);
-					}
-					else
-					{
-						int sign_v = (angles_velocities[k][0] < 0) ? -1 : ((angles_velocities[k][0] > 0) ? 1 : 0);
-						fps.drive_f[i].push_back(angles_velocities[k][0] * f_v_ + sign_v * f_s_ + f_a_ /* / ( -fabs(angles_velocities[k][0]) / (model.maxSpeed * 1.2) + 1.05 ) */ * (angles_velocities[k][0] - prev_vels[k]) / defined_dt);
-						prev_vels[k] = angles_velocities[k][0];
-
-						const double prev_steer_pos = (i > 0) ? fps.steer_pos[i - 1][k] : steer_angles[k];
-						const double steer_v = (angles_positions[k][1] - prev_steer_pos) / defined_dt;
-						const int sign_steer_v = (steer_v < 0) ? -1 : ((steer_v > 0) ? 1 : 0);
-						fps.steer_f[i].push_back(steer_v * f_s_v_ + sign_steer_v * f_s_s_);
-					}
-
-					steer_angles[k] = angles_positions[k][1]; // update for next iteration of the loop
-				}
-			}
-		}
-
-		full_profile_struct.buffer         = req.buffer;
-		full_profile_struct.wipe_all		= req.wipe_all;
-		full_profile_struct.run			= req.run;
-		full_profile_struct.brake			= req.brake;
-		full_profile_struct.run_slot		= req.run_slot;
-		full_profile_struct.change_queue	= req.change_queue;
-		full_profile_struct.newly_set		= true;
-		for (size_t i = 0; i < req.new_queue.size(); i++)
-		{
-			full_profile_struct.new_queue.push_back(req.new_queue[i]);
-		}
-		ROS_WARN("serv points called");
-
-		full_profile_struct.Print();
-
-		// TODO : use shared_ptr to prevent copies when queuing
-		// Guard access to full_profile_buffer with a lock
-		std::lock_guard<std::mutex> l(profile_mutex_);
-		full_profile_buffer_.push_back(full_profile_struct);
-
-		return true;
-	}
-	else
-	{
-		ROS_ERROR_STREAM_NAMED(name_, __PRETTY_FUNCTION__ << " : Can't accept new commands. Controller is not running.");
-		return false;
-	}
-}
-
-bool TalonSwerveDriveController::changeCenterOfRotationService(talon_swerve_drive_controller::SetXY::Request& req, talon_swerve_drive_controller::SetXY::Response &/*res*/)
+bool changeCenterOfRotationService(talon_swerve_drive_controller::SetXY::Request& req, talon_swerve_drive_controller::SetXY::Response &/*res*/)
 {
 	if(isRunning())
 	{
@@ -1336,24 +839,22 @@ bool TalonSwerveDriveController::changeCenterOfRotationService(talon_swerve_driv
 	}
 }
 
-
-bool TalonSwerveDriveController::resetOdomService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+bool resetOdomService(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*res*/)
 {
 	if (isRunning())
 	{
-		reset_odom_.writeFromNonRT(req.data);
-		res.success = true;
+		reset_odom_.exchange(true);
 		return true;
 	}
 	else
 	{
-		res.success = false;
 		ROS_ERROR_NAMED(name_, "resetOdom service cann't accept new commands. Controller is not running.");
 		return false;
 	}
 
 }
-bool TalonSwerveDriveController::brakeService(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*res*/)
+
+bool brakeService(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*res*/)
 {
 	if (isRunning())
 	{
@@ -1364,7 +865,6 @@ bool TalonSwerveDriveController::brakeService(std_srvs::Empty::Request &/*req*/,
 		brake_struct.stamp = ros::Time::now();
 		ROS_WARN("brakeService called in controller");
 		command_.writeFromNonRT(brake_struct);
-		cmd_vel_mode_.store(true, std::memory_order_relaxed);
 
 		return true;
 	}
@@ -1375,7 +875,7 @@ bool TalonSwerveDriveController::brakeService(std_srvs::Empty::Request &/*req*/,
 	}
 }
 
-bool TalonSwerveDriveController::dontSetAngleModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+bool dontSetAngleModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
 {
 	if (isRunning())
 	{
@@ -1394,7 +894,7 @@ bool TalonSwerveDriveController::dontSetAngleModeService(std_srvs::SetBool::Requ
 	}
 }
 
-bool TalonSwerveDriveController::percentOutDriveModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+bool percentOutDriveModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
 {
 	if (isRunning())
 	{
@@ -1412,88 +912,8 @@ bool TalonSwerveDriveController::percentOutDriveModeService(std_srvs::SetBool::R
 		return false;
 	}
 }
-/*
-void TalonSwerveDriveController::cmdCallback(const talon_swerve_drive_controller::CompleteCmd &command)
-{
-	if (isRunning())
-	{
-		// check that we don't have multiple publishers on the command topic
-		if (sub_command_.getNumPublishers() > 1)
-		{
-			ROS_ERROR_STREAM_THROTTLE_NAMED(1.0, name_, "Detected " << sub_command_.getNumPublishers()
-											<< " publishers. Only 1 publisher is allowed. Going to brake.");
-			brake();
-			return;
-		}
-		cmd_vel_mode_.store(command.cmd_vel_or_points, std::memory_order_relaxed);
-		if(command.cmd_vel_or_points)
-		{
-			command_struct_.ang = command.twist_.angular.z;
-			command_struct_.lin[0] = command.twist_.linear.x;
-			command_struct_.lin[1] = command.twist_.linear.y;
-			command_struct_.stamp = ros::Time::now();
-			command_.writeFromNonRT (command_struct_);
-		}
-		else
-		{
-			points_struct_.lin_points_pos.clear();
-			points_struct_.lin_points_vel.clear();
-			points_struct_.ang_pos.clear();
-			points_struct_.ang_vel.clear();
-			double duration = command.joint_trajectory.points[1].time_from_start.toSec()
-			- command.joint_trajectory.points[0].time_from_start.toSec();
 
-			if(duration < .0025)
-			{
-			     points_struct_.dt = hardware_interface::TrajectoryDuration::TrajectoryDuration_0ms;
-			}
-			else if(duration < .0075)
-			{
-			     points_struct_.dt = hardware_interface::TrajectoryDuration::TrajectoryDuration_5ms;
-			}
-			else if(duration < .015)
-			{
-			     points_struct_.dt = hardware_interface::TrajectoryDuration::TrajectoryDuration_10ms;
-			}
-			else if(duration < .025)
-			{
-			     points_struct_.dt = hardware_interface::TrajectoryDuration::TrajectoryDuration_20ms;
-			}
-			else if(duration < .035)
-			{
-			     points_struct_.dt = hardware_interface::TrajectoryDuration::TrajectoryDuration_30ms;
-			}
-			else if(duration < .045)
-			{
-			     points_struct_.dt = hardware_interface::TrajectoryDuration::TrajectoryDuration_40ms;
-			}
-			else if(duration < .075)
-			{
-			     points_struct_.dt = hardware_interface::TrajectoryDuration::TrajectoryDuration_50ms;
-			}
-			else
-			{
-			     points_struct_.dt = hardware_interface::TrajectoryDuration::TrajectoryDuration_100ms;
-			}
-			for(size_t i = 0; i < command.joint_trajectory.points.size(); i++)
-			{
-				points_struct_.lin_points_pos.push_back({command.joint_trajectory.points[i].positions[0], command.joint_trajectory.points[i].positions[1]});
-				points_struct_.lin_points_vel.push_back({command.joint_trajectory.points[i].velocities[0], command.joint_trajectory.points[i].velocities[1]});
-				points_struct_.ang_pos.push_back(command.joint_trajectory.points[i].positions[2]);
-				points_struct_.ang_vel.push_back(command.joint_trajectory.points[i].velocities[2]);
-			}
-			command_points_.writeFromNonRT(points_struct_);
-		}
-	}
-	else
-	{
-		ROS_ERROR_NAMED(name_, "Can't accept new commands. Controller is not running.");
-	}
-}
-
-*/
-
-bool TalonSwerveDriveController::getWheelNames(ros::NodeHandle &controller_nh,
+bool getWheelNames(ros::NodeHandle &controller_nh,
 		const std::string &wheel_param,
 		std::array<std::string, WHEELCOUNT> &wheel_names)
 {
@@ -1547,77 +967,124 @@ bool TalonSwerveDriveController::getWheelNames(ros::NodeHandle &controller_nh,
 
 	return true;
 }
-}
-/*
-  bool TalonSwerveDriveController::setOdomParamsFromUrdf(ros::NodeHandle& root_nh,
-                             const std::string& steering_name,
-                             const std::string& speed_name,
-                             bool lookup_wheel_radius)
-  //{
-    if (!(lookup_wheel_radius))
-    {
-      // Short-circuit in case we don't need to look up anything, so we don't have to parse the URDF
-      return true;
-    }
 
-    // Parse robot description
-    const std::string model_param_name = "robot_description";
-    bool res = root_nh.hasParam(model_param_name);
-    std::string robot_model_str="";
-    if (!res || !root_nh.getParam(model_param_name,robot_model_str))
-    {
-      ROS_ERROR_NAMED(name_, "Robot descripion couldn't be retrieved from param server.");
-      return false;
-    }
+bool comp_odom_;
+Eigen::Matrix2Xd wheel_pos_;
+Eigen::Vector2d neg_wheel_centroid_;
+std::array<double, WHEELCOUNT> last_wheel_rot_;	    // used for odom calcs
+std::array<double, WHEELCOUNT> last_wheel_angle_;	//
 
-    urdf::ModelInterfaceSharedPtr model(urdf::parseURDF(robot_model_str));
+std::string name_;
 
-    //TODO: replace with swerve equivalent
-    //urdf::JointConstSharedPtr left_wheel_joint(model->getJoint(left_wheel_name));
-    //urdf::JointConstSharedPtr right_wheel_joint(model->getJoint(right_wheel_name));
+std::unique_ptr<swerve<WHEELCOUNT>> swerveC_;
 
-    if(lookup_wheel_radius)
-    {
-      // Get wheel radius
-      if (!getWheelRadius(model->getLink(left_wheel_joint->child_link_name), wheel_radius_))
-      {
-        ROS_ERROR_STREAM_NAMED(name_, "Couldn't retrieve " << left_wheel_name << " wheel radius");
-        return false;
-      }
-    XmlRpc::XmlRpcValue twist_cov_list;
-    controller_nh.getParam("twist_covariance_diagonal", twist_cov_list);
-    ROS_ASSERT(twist_cov_list.getType() == XmlRpc::XmlRpcValue::TypeArray);
-    ROS_ASSERT(twist_cov_list.size() == 6);
-    for (int i = 0; i < twist_cov_list.size(); ++i)
-      ROS_ASSERT(twist_cov_list[i].getType() == XmlRpc::XmlRpcValue::TypeDouble);
+/// Hardware handles:
+std::array<talon_controllers::TalonControllerInterface, WHEELCOUNT> speed_joints_;
+std::array<talon_controllers::TalonControllerInterface, WHEELCOUNT> steering_joints_;
 
-    // Setup odometry realtime publisher + odom message constant fields
-    odom_pub_.reset(new realtime_tools::RealtimePublisher<nav_msgs::Odometry>(controller_nh, "odom", 100));
-    odom_pub_->msg_.header.frame_id = odom_frame_id_;
-    odom_pub_->msg_.child_frame_id = base_frame_id_;
-    odom_pub_->msg_.pose.pose.position.z = 0;
-    odom_pub_->msg_.pose.covariance = boost::assign::list_of
-        (static_cast<double>(pose_cov_list[0])) (0)  (0)  (0)  (0)  (0)
-        (0)  (static_cast<double>(pose_cov_list[1])) (0)  (0)  (0)  (0)
-        (0)  (0)  (static_cast<double>(pose_cov_list[2])) (0)  (0)  (0)
-        (0)  (0)  (0)  (static_cast<double>(pose_cov_list[3])) (0)  (0)
-        (0)  (0)  (0)  (0)  (static_cast<double>(pose_cov_list[4])) (0)
-        (0)  (0)  (0)  (0)  (0)  (static_cast<double>(pose_cov_list[5]));
-    odom_pub_->msg_.twist.twist.linear.z  = 0;
-    odom_pub_->msg_.twist.twist.angular.x = 0;
-    odom_pub_->msg_.twist.twist.angular.y = 0;
-    odom_pub_->msg_.twist.covariance = boost::assign::list_of
-        (static_cast<double>(twist_cov_list[0])) (0)  (0)  (0)  (0)  (0)
-        (0)  (static_cast<double>(twist_cov_list[1])) (0)  (0)  (0)  (0)
-        (0)  (0)  (static_cast<double>(twist_cov_list[2])) (0)  (0)  (0)
-        (0)  (0)  (0)  (static_cast<double>(twist_cov_list[3])) (0)  (0)
-        (0)  (0)  (0)  (0)  (static_cast<double>(twist_cov_list[4])) (0)
-        (0)  (0)  (0)  (0)  (0)  (static_cast<double>(twist_cov_list[5]));
-    tf_odom_pub_.reset(new realtime_tools::RealtimePublisher<tf::tfMessage>(root_nh, "/tf", 100));
-    tf_odom_pub_->msg_.transforms.resize(1);
-    tf_odom_pub_->msg_.transforms[0].transform.translation.z = 0.0;
-    tf_odom_pub_->msg_.transforms[0].child_frame_id = base_frame_id_;
-    tf_odom_pub_->msg_.transforms[0].header.frame_id = odom_frame_id_;
-  }
-*/
-//}
+/// Velocity command related:
+struct Commands
+{
+	Eigen::Vector2d lin;
+	double ang;
+	ros::Time stamp;
+
+	Commands() : lin(
+	{
+		0.0, 0.0
+	}), ang(0.0), stamp(0.0) {}
+};
+
+realtime_tools::RealtimeBuffer<Commands> command_;
+
+std::atomic<bool> dont_set_angle_mode_; // used to lock wheels into place
+std::atomic<bool> percent_out_drive_mode_; // run drive wheels in open-loop mode
+double brake_last_{ros::Time::now().toSec()};
+double time_before_brake_{0};
+double parking_config_time_delay_{0.1};
+double drive_speed_time_delay_{0.1};
+std::array<Eigen::Vector2d, WHEELCOUNT> speeds_angles_;
+
+ros::Subscriber sub_command_;
+
+ros::ServiceServer change_center_of_rotation_serv_;
+realtime_tools::RealtimeBuffer<Eigen::Vector2d> center_of_rotation_;
+
+ros::ServiceServer brake_serv_;
+ros::ServiceServer dont_set_angle_mode_serv_;
+ros::ServiceServer percent_out_drive_mode_serv_;
+
+ros::ServiceServer reset_odom_serv_;
+std::atomic<bool> reset_odom_{false};
+
+/// Publish executed commands
+std::unique_ptr<realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped> > cmd_vel_pub_;
+
+/// Wheel radius (assuming it's the same for the left and right wheels):
+double wheel_radius_{};
+
+swerveVar::driveModel model_;
+
+swerveVar::ratios driveRatios_;
+
+swerveVar::encoderUnits units_;
+
+// Feed forward terms
+double f_s_;
+double f_a_;
+double f_v_;
+double f_s_v_;
+double f_s_s_;
+
+/// Timeout to consider cmd_vel commands old:
+double cmd_vel_timeout_{0.5};
+
+/// Whether to allow multiple publishers on cmd_vel topic or not:
+bool allow_multiple_cmd_vel_publishers_{true};
+
+/// Whether to publish odometry to tf or not:
+//bool enable_odom_tf_;
+
+/// Number of wheel joints:
+size_t wheel_joints_size_{0};
+
+/// Publish limited velocity:
+bool publish_cmd_{true};
+
+static constexpr double DEF_ODOM_PUB_FREQ{100.};
+static const std::string DEF_ODOM_FRAME;
+static const std::string DEF_BASE_FRAME;
+static constexpr double DEF_INIT_X{0};
+static constexpr double DEF_INIT_Y{0};
+static constexpr double DEF_INIT_YAW{0};
+static constexpr double DEF_SD{0.01};
+
+std::array<Eigen::Vector2d, WHEELCOUNT> wheel_coords_;
+
+bool pub_odom_to_base_{false};       // Publish the odometry to base frame transform
+ros::Duration odom_pub_period_;      // Odometry publishing period
+Eigen::Affine2d init_odom_to_base_;  // Initial odometry to base frame transform
+Eigen::Affine2d odom_to_base_;       // Odometry to base frame transform
+Eigen::Affine2d odom_rigid_transf_;
+
+realtime_tools::RealtimePublisher<nav_msgs::Odometry> odom_pub_;
+tf2_ros::TransformBroadcaster odom_tf_;
+realtime_tools::RealtimePublisher<tf::tfMessage> odom_tf_pub_;
+ros::Time last_odom_pub_time_;
+ros::Time last_odom_tf_pub_time_;
+
+// Attempt to limit speed of wheels which are pointing further from
+// their target angle. Should help to reduce the robot being pulled
+// off course coming out of parking config or when maki
+bool use_cos_scaling_{false};
+
+}; // class definition
+
+template <size_t WHEELCOUNT> const std::string TalonSwerveDriveController<WHEELCOUNT>::DEF_ODOM_FRAME = "odom";
+template <size_t WHEELCOUNT> const std::string TalonSwerveDriveController<WHEELCOUNT>::DEF_BASE_FRAME = "base_link";
+
+} // namespace talon_swerve_drive_controller
+
+#include <pluginlib/class_list_macros.h>
+template class talon_swerve_drive_controller::TalonSwerveDriveController<4>;
+PLUGINLIB_EXPORT_CLASS(talon_swerve_drive_controller::TalonSwerveDriveController<4>, controller_interface::ControllerBase)

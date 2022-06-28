@@ -63,13 +63,12 @@ struct driveModel
 }; //more info should be added to this struct
 }
 
-// TODO : remove WHEELCOUNT, use vectors
-
+template <size_t WHEELCOUNT>
 class swerve
 {
 	public:
 		swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinates,
-			   const std::vector<double> &offsets,
+			   const std::array<double, WHEELCOUNT> &offsets,
 			   const swerveVar::ratios &ratio,
 			   const swerveVar::encoderUnits &units,
 			   const swerveVar::driveModel &drive);
@@ -84,19 +83,30 @@ class swerve
 															 const bool useCosScaling = false);
 		std::array<double, WHEELCOUNT> parkingAngles(const std::array<double, WHEELCOUNT> &positionsNew) const;
 
-		void saveNewOffsets(bool useVals, std::array<double, WHEELCOUNT> newOffsets, std::array<double, WHEELCOUNT> newPosition); //should these be doubles?
-		//Note that unless you pass vals in and set useVals to true, it will use the current wheel positions, wheels should be pointing to the right.
-
-		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinates_;
-		swerveDriveMath swerveMath_; //this should be public
-
 		double getWheelAngle(int index, double pos) const;
 	private:
+		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinates_;
+		swerveDriveMath<WHEELCOUNT> swerveMath_; //this should be public
 		//should we get them together instead?
 		//the angle it passes out isn't normalized
 		double furthestWheel(const Eigen::Vector2d &centerOfRotation) const;
 
 		std::array<double, WHEELCOUNT> offsets_;
+
+		enum COMMAND_STATE
+		{
+			COMMAND_INVALID,
+			COMMAND_DRIVING,
+			COMMAND_PARKING
+		};
+
+		// Used for filtering jittery encoder values - cache previous direction
+		// and continue moving that way even if the wheel pos temporarily glitches
+		// over a value which would reverse the nearest-90-degree calculation
+		mutable std::array<bool, WHEELCOUNT> lastReverse_{false};
+		mutable std::array<double, WHEELCOUNT> lastCommand_{0};
+		mutable std::array<COMMAND_STATE, WHEELCOUNT> lastCommandState_{COMMAND_INVALID};
+
 		//Second piece of data is here just for physics/modeling
 
 		//std::array<double, WHEELCOUNT> savedEncoderVals_;

@@ -1,38 +1,35 @@
 //#include <ros/ros.h>
 #include <talon_swerve_drive_controller/900Math.h>
 #include <talon_swerve_drive_controller/Swerve.h>
-#include <fstream>
 
-using namespace std;
+#include <ros/console.h>
+
 using namespace Eigen;
 
-swerve::swerve(const array<Vector2d, WHEELCOUNT> &wheelCoordinates,
-			   const std::vector<double> &offsets,
+template<size_t WHEELCOUNT>
+swerve<WHEELCOUNT>::swerve(const std::array<Vector2d, WHEELCOUNT> &wheelCoordinates,
+			   const std::array<double, WHEELCOUNT> &offsets,
 			   const swerveVar::ratios &ratio,
 			   const swerveVar::encoderUnits &units,
 			   const swerveVar::driveModel &drive)
 	: wheelCoordinates_(wheelCoordinates)
 	, swerveMath_(swerveDriveMath(wheelCoordinates_))
+	, offsets_(offsets)
 	, ratio_(ratio)
 	, units_(units)
 	, drive_(drive)
 {
-	assert(offsets.size() == WHEELCOUNT);
-	for (size_t i = 0; i < offsets.size() && i < WHEELCOUNT; i++)
-		offsets_[i] = offsets[i];
 }
 
-array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
+template<size_t WHEELCOUNT>
+std::array<Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Vector2d velocityVector,
 												 double rotation,
 												 double angle,
-												 const array<double, WHEELCOUNT> &positionsNew,
+												 const std::array<double, WHEELCOUNT> &positionsNew,
 												 bool norm,
 												 const Eigen::Vector2d &centerOfRotation,
 												 const bool useCosScaling)
 {
-	array<Vector2d, WHEELCOUNT> speedsAndAngles;
-        static array<bool, WHEELCOUNT> lastReverse;
-        static array<double, WHEELCOUNT> lastCommand;
 	// See if the current centerOfRotation coords have been used before
 	// If not, calculate the multiplers and matRotRate for them
 	// If so, just reuse previously saved values
@@ -52,31 +49,31 @@ array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
 
 	//ROS_WARN_STREAM("max rate r/s: " <<  multiplierSets_[rotationCenterID].maxRotRate_);
 	//ROS_INFO_STREAM("vel: " << velocityVector[0] << " " << velocityVector[1] << " rot: " << rotation);
+	std::array<Vector2d, WHEELCOUNT> speedsAndAngles;
 	speedsAndAngles = swerveMath_.wheelSpeedsAngles(mult_it->second.multipliers_, velocityVector, rotation, angle, norm);
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
-		//ROS_INFO_STREAM("PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
+		//ROS_INFO_STREAM("id: " << i << " PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
 		const double currpos = getWheelAngle(i, positionsNew[i]);
 		bool reverse;
-		const double nearestangle = leastDistantAngleWithinHalfPi(currpos, speedsAndAngles[i][1], reverse);
-                double angle_setpoint;
-                double actual_reverse;
-#if 0
-                if(reverse != lastReverse[i] && (fabs(currpos - nearestangle) > 85 * M_PI / 180))
-                {
-                    // ROS_ERROR_STREAM("setting to last command = " << lastCommand[i]);
-                    angle_setpoint = lastCommand[i];
-                    actual_reverse = lastReverse[i];
-                }
-                else
-#endif
-                {
-                    // ROS_INFO_STREAM("setting to actual command; currpos - nearest angle = " << currpos - nearestangle << " and reverse changed is " << (reverse != lastReverse[i]));
-                    angle_setpoint = nearestangle;
-                    actual_reverse = reverse;
-                    lastReverse[i] = reverse;
-                    lastCommand[i] = nearestangle;
-                }
+		double nearestangle = leastDistantAngleWithinHalfPi(currpos, speedsAndAngles[i][1], reverse);
+		// In some cases when the wheels are near 90 degrees off from where they are commanded
+		// noise from the encoder will have them jump back and forth trying to go
+		// one direction then then next as the noise changes which side of the 90 degree
+		// offset they are at.  Add hystersis here to prevent the oscillation
+		if ((lastCommandState_[i] == COMMAND_DRIVING) && (reverse != lastReverse_[i]) && (fabs(currpos - nearestangle) > 85 * M_PI / 180))
+		{
+			//ROS_ERROR_STREAM("setting to last command = " << lastCommand_[i]);
+			reverse = lastReverse_[i];
+			nearestangle = lastCommand_[i];
+		}
+		else
+		{
+			//ROS_INFO_STREAM("setting to actual command; currpos - nearest angle = " << currpos - nearestangle << " and reverse changed is " << (reverse != lastReverse_[i]));
+			lastReverse_[i] = reverse;
+			lastCommand_[i] = nearestangle;
+			lastCommandState_[i] = COMMAND_DRIVING;
+		}
 
 		// ROS_INFO_STREAM("wheel " << i << " currpos: " << currpos << " nearestangle: " << nearestangle << " reverse: " << reverse);
 		// Slow down wheels the further they are from their target
@@ -85,86 +82,58 @@ array<Vector2d, WHEELCOUNT> swerve::motorOutputs(Vector2d velocityVector,
 		// in random directions while turning to the expected direction
 		// cos() shouldn't care about +/-, so don't worry about fabs()
 		const double cosScaling = useCosScaling ? cos(currpos - nearestangle) : 1.0;
-		speedsAndAngles[i][0] *= ((drive_.maxSpeed / drive_.wheelRadius) / ratio_.encodertoRotations) * units_.rotationSetV * (actual_reverse ? -1 : 1) * cosScaling;
-		//ROS_INFO_STREAM(" id: " << i << " speed: " << speedsAndAngles[i][0] << " reverse: " << reverse);
-		speedsAndAngles[i][1] = angle_setpoint * units_.steeringSet + offsets_[i];
-		//ROS_INFO_STREAM("pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " << speedsAndAngles[i][1] << " offset: " << offsets_[i] << " steeringSet: " << units_.steeringSet );
+
+		speedsAndAngles[i][0] *= ((drive_.maxSpeed / drive_.wheelRadius) / ratio_.encodertoRotations) * units_.rotationSetV * (reverse ? -1 : 1) * cosScaling;
+		speedsAndAngles[i][1] = nearestangle * units_.steeringSet + offsets_[i];
+		//ROS_INFO_STREAM("pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " << speedsAndAngles[i][1] << " offset: " << offsets_[i] << " steeringSet: " << units_.steeringSet << " reverse: " << reverse);
 	}
 	return speedsAndAngles;
 }
 
-array<double, WHEELCOUNT> swerve::parkingAngles(const array<double, WHEELCOUNT> &positionsNew) const
+template<size_t WHEELCOUNT>
+std::array<double, WHEELCOUNT> swerve<WHEELCOUNT>::parkingAngles(const std::array<double, WHEELCOUNT> &positionsNew) const
 {
-	array<double, WHEELCOUNT> retAngles;
-        static array<bool, WHEELCOUNT> lastReverse;
-        static array<double, WHEELCOUNT> lastCommand;
+	std::array<double, WHEELCOUNT> retAngles;
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
-		retAngles[i] = swerveMath_.parkingAngle_[i]; // TODO : find a way not to access member of swervemath here
-
 		const double currpos = getWheelAngle(i, positionsNew[i]);
-		bool reverse; // TODO : not used for anything?
-		const double nearestanglep = leastDistantAngleWithinHalfPi(currpos, retAngles[i], reverse);
-                double angle_setpoint;
-#if 0
-                if(reverse != lastReverse[i] && (fabs(currpos - nearestanglep) > 85 * M_PI / 180))
-                {
-                    //ROS_ERROR_STREAM("setting to last command = " << lastCommand[i]);
-                    angle_setpoint = lastCommand[i];
-                }
-                else
-#endif
-                {
-                    //ROS_INFO_STREAM("setting to actual command; currpos - nearest angle = " << currpos - nearestanglep << " and reverse changed is " << (reverse != lastReverse[i]));
-                    angle_setpoint = nearestanglep;
-                    lastReverse[i] = reverse;
-                    lastCommand[i] = nearestanglep;
-                }
+		bool reverse;
+		double nearestanglep = leastDistantAngleWithinHalfPi(currpos, swerveMath_.getParkingAngle(i), reverse);
+		if ((lastCommandState_[i] == COMMAND_PARKING) && (reverse != lastReverse_[i]) && (fabs(currpos - nearestanglep) > 85 * M_PI / 180))
+		{
+			//ROS_ERROR_STREAM("setting to last command = " << lastCommand_[i]);
+			nearestanglep = lastCommand_[i];
+		}
+		else
+		{
+			//ROS_INFO_STREAM("setting to actual command; currpos - nearest angle = " << currpos - nearestanglep << " and reverse changed is " << (reverse != lastReverse_[i]));
+			lastReverse_[i] = reverse;
+			lastCommand_[i] = nearestanglep;
+			lastCommandState_[i] = COMMAND_PARKING;
+		}
 
-		//ROS_INFO_STREAM(" id: " << i << " currpos: " << currpos << "target" <<nearestanglep);
-		retAngles[i] = angle_setpoint * units_.steeringSet + offsets_[i];
-		//ROS_INFO_STREAM("park[i]:" << swerveMath_.parkingAngle_[i] << " " << retAngles[i]);
+		retAngles[i] = nearestanglep * units_.steeringSet + offsets_[i];
+		//ROS_INFO_STREAM(" id: " << i << " currpos: " << currpos << " target: " << nearestanglep);
+		//ROS_INFO_STREAM("park[i]: " << swerveMath_.getParkingAngle(i) << " " << retAngles[i]);
 	}
 	return retAngles;
 }
 
-void swerve::saveNewOffsets(bool /*useVals*/, array<double, WHEELCOUNT> /*newOffsets*/, array<double, WHEELCOUNT> /*newPosition*/)
-{
-#if 0
-	encoderPosition_ = newPosition;
-	if (!useVals)
-	{
-		for (int i = 0; i < WHEELCOUNT; i++)
-		{
-			newOffsets[i] = encoderPosition_[i];
-		}
-	}
-	offsets_ = newOffsets;
-
-	// TODO : Uncondtionally open in out|trunc mode?
-	ofstream offsetFile(fileName_);
-	if (offsetFile)
-	{
-		offsetFile.close();
-		offsetFile.open(fileName_, ios::out | ios::trunc);
-
-	}
-	for (int i = 0; i < WHEELCOUNT; i++)
-	{
-		offsetFile << offsets_[i] << endl;
-	}
-#endif
-}
-
-double swerve::getWheelAngle(int index, double pos) const
+// Apply encoder offset and steering ratio to calculate desired
+// measured wheel angle from a wheel angle setpoint
+template<size_t WHEELCOUNT>
+double swerve<WHEELCOUNT>::getWheelAngle(int index, double pos) const
 {
 	return (pos - offsets_[index]) * units_.steeringGet;
 }
 
-double swerve::furthestWheel(const Vector2d &centerOfRotation) const
+template<size_t WHEELCOUNT>
+double swerve<WHEELCOUNT>::furthestWheel(const Vector2d &centerOfRotation) const
 {
 	double maxD = 0;
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 		maxD = std::max(maxD, hypot(wheelCoordinates_[i][0] - centerOfRotation[0], wheelCoordinates_[i][1] - centerOfRotation[1]));
 	return maxD;
 }
+
+template class swerve<4>;

@@ -1,19 +1,20 @@
 #include <array>
 #include <cmath>
 #include <talon_swerve_drive_controller/SwerveMath.h>
-#include <ros/console.h>
+//#include <ros/console.h> // for debugging ROS_*_STREAM functions when needed
 
 using namespace std;
 
-swerveDriveMath::swerveDriveMath(const array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate)
+template<size_t WHEELCOUNT>
+swerveDriveMath<WHEELCOUNT>::swerveDriveMath(const array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate)
 	: wheelCoordinate_(wheelCoordinate)
+	, parkingAngle_(parkingAngles()) // Has to be run after wheelCoordinates are set
 {
-	// Has to be run after wheelCoordinates are set
-	parkingAngle_ = parkingAngles();
 }
 
 //used for varying center of rotation and must be run once for initialization
-array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelMultipliersXY(const Eigen::Vector2d &rotationCenter) const
+template<size_t WHEELCOUNT>
+array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::wheelMultipliersXY(const Eigen::Vector2d &rotationCenter) const
 {
 	array<double, WHEELCOUNT> wheelAngles;
 	array<double, WHEELCOUNT> wheelMultipliers;
@@ -39,7 +40,8 @@ array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelMultipliersXY(const Eig
 //Angle is the angle of the gyro for field centric driving
 //In radians, 0 is horizontal, increases counterclockwise
 //For non field centric set angle to pi/2
-array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelSpeedsAngles(const array<Eigen::Vector2d, WHEELCOUNT> &wheelMultipliersXY, const Eigen::Vector2d &velocityVector, double rotation, double angle, bool norm) const
+template<size_t WHEELCOUNT>
+array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::wheelSpeedsAngles(const array<Eigen::Vector2d, WHEELCOUNT> &wheelMultipliersXY, const Eigen::Vector2d &velocityVector, double rotation, double angle, bool norm) const
 {
 	//Rotate the target velocity by the robots angle to make it field centric
 	const Eigen::Rotation2Dd r(M_PI / 2 - angle);
@@ -52,7 +54,6 @@ array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelSpeedsAngles(const arra
 
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
-		//int inverterD = (i%2==0) ? -1 : 1;
 		//Only the rotation of the robot differently effects each wheel
 		const double x = wheelMultipliersXY[i][0] * rotation + rotatedVelocity[0];
 		const double y = wheelMultipliersXY[i][1] * rotation - rotatedVelocity[1];
@@ -75,11 +76,12 @@ array<Eigen::Vector2d, WHEELCOUNT> swerveDriveMath::wheelSpeedsAngles(const arra
 	return speedsAngles;
 }
 
-array<double, WHEELCOUNT> swerveDriveMath::parkingAngles(void) const
+template<size_t WHEELCOUNT>
+array<double, WHEELCOUNT> swerveDriveMath<WHEELCOUNT>::parkingAngles(void) const
 {
 	//only must be run once to determine the angles of the wheels in parking config
 	array<double, WHEELCOUNT> angles;
-	ROS_WARN_STREAM("######## " << __PRETTY_FUNCTION__ << " wheelCoordinate_.size() = " << wheelCoordinate_.size());
+	//ROS_WARN_STREAM("######## " << __PRETTY_FUNCTION__ << " wheelCoordinate_.size() = " << wheelCoordinate_.size());
 	for (size_t i = 0; i < wheelCoordinate_.size(); i++)
 	{
 		angles[i] = atan2(wheelCoordinate_[i][0], wheelCoordinate_[i][1]);
@@ -87,7 +89,14 @@ array<double, WHEELCOUNT> swerveDriveMath::parkingAngles(void) const
 	return angles;
 }
 
-void swerveDriveMath::normalize(array<double, WHEELCOUNT> &input, const bool force_norm) const
+template<size_t WHEELCOUNT>
+double swerveDriveMath<WHEELCOUNT>::getParkingAngle(size_t wheel) const
+{
+	return parkingAngle_[wheel];
+}
+
+template<size_t WHEELCOUNT>
+void swerveDriveMath<WHEELCOUNT>::normalize(array<double, WHEELCOUNT> &input, const bool force_norm) const
 {
 	//Note that this function only works on arrays of size WHEELCOUNT
 	const double maxi = fabs(*max_element(input.begin(), input.end()));
@@ -98,34 +107,4 @@ void swerveDriveMath::normalize(array<double, WHEELCOUNT> &input, const bool for
 			input[i] /= absoluteMax;
 }
 
-//odometry/foward kinematic functions below, TODO, use ROS function
-/*
-swerveDriveMath::movement swerveDriveMath::wheelAverage(array<Eigen::Vector2d, WHEELCOUNT> wheelMove, double angle, bool rotation)
-{
-	Eigen::Vector2d avgMove = (wheelMove[0] +  wheelMove[1] +  wheelMove[2] +  wheelMove[3])/4;
-
-	Eigen::Rotation2Dd r(angle - M_PI/2);
-	Eigen::Vector2d rotatedMove = r.toRotationMatrix()*avgMove; //Should this instead be a function in 900Math of the form: rotate(vector, angle) rather than 2 lines of eigen stuff?
-	double dRotation;
-	if(rotation)
-	{
-		//TODO: put code here to calculate rotation
-	}
-	else
-	{
-		dRotation  = 0;
-	}
-	movement delta;
-	delta.translation = rotatedMove;
-	delta.rotation = dRotation;
-	return delta;
-
-}
-*/
-/*
-movement threeWheelAvg( array<Eigen::Vector2d, WHEELCOUNT> wheelMove, double angle, bool rotation?)
-{
-	//use horizontally adjacent wheels somehow?, needs to be generalized
-	//Is this needed?
-}
-*/
+template class swerveDriveMath<4>;

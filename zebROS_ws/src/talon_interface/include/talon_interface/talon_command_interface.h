@@ -8,37 +8,22 @@
 namespace hardware_interface
 {
 
-//Below struct contains all the info we want for our profile
-//Later it might include some more complex settings (current limits?, peak output limits?,
-//some f params to calc on the fly based on sensor data?)
-struct CustomProfilePoint
-{
-	CustomProfilePoint(void);
-	TalonMode mode;
-	int pidSlot;
-	double setpoint;
-	double fTerm;
-	double duration;
-	bool zeroPos;
-};
-
 struct TrajectoryPoint
 {
-	// Sane? defaults
 	TrajectoryPoint(void);
-	double   position;
-	double   velocity;
-	double   headingRad;
-	double   arbFeedFwd;
-	double   auxiliaryPos;
-	double   auxiliaryVel;
-	double   auxiliaryArbFeedFwd;
-	uint32_t profileSlotSelect0;
-	uint32_t profileSlotSelect1;
-	bool     isLastPoint;
-	bool     zeroPos;
-	int      timeDur;
-	bool     useAuxPID;
+	double   position{0};
+	double   velocity{0};
+	double   headingRad{0};
+	double   arbFeedFwd{0};
+	double   auxiliaryPos{0};
+	double   auxiliaryVel{0};
+	double   auxiliaryArbFeedFwd{0};
+	uint32_t profileSlotSelect0{0};
+	uint32_t profileSlotSelect1{0};
+	bool     isLastPoint{false};
+	bool     zeroPos{false};
+	int      timeDur{0};
+	bool     useAuxPID{false};
 };
 
 // Class to buffer data needed to set the state of the
@@ -395,33 +380,6 @@ class TalonHWCommand
 		bool sensorInitializationStrategyChanged(hardware_interface::SensorInitializationStrategy &sensor_initialization_strategy);
 		void resetSensorInitializationStrategy(void);
 
-		void setCustomProfileDisable(bool disable);
-		bool getCustomProfileDisable(void) const;
-
-		std::vector<int> getCustomProfileNextSlot(void) const;
-		void setCustomProfileNextSlot(const std::vector<int> &next_slot);
-		double getCustomProfileHz(void) const;
-		void setCustomProfileHz(const double &hz);
-		void setCustomProfileRun(const bool &run);
-		bool getCustomProfileRun(void);
-		void setCustomProfileSlot(const int &slot);
-		int getCustomProfileSlot(void) const;
-
-		void pushCustomProfilePoint(const CustomProfilePoint &point, size_t slot);
-		void pushCustomProfilePoints(const std::vector<CustomProfilePoint> &points, size_t slot);
-
-		void overwriteCustomProfilePoints(const std::vector<CustomProfilePoint> &points, size_t slot);
-
-		std::vector<CustomProfilePoint> getCustomProfilePoints(size_t slot);
-
-		std::vector<bool> getCustomProfilePointsTimesChanged(std::vector<std::vector<CustomProfilePoint>> &ret_points, std::vector<std::vector<double>> &ret_times);
-		std::vector<double> getCustomProfileTime(size_t slot);
-		double getCustomProfileEndTime(size_t slot);
-		// TODO : TimeCount and ProfileCount should always
-		// be the same?
-		size_t getCustomProfileTimeCount(size_t slot);
-		size_t getCustomProfileCount(size_t slot);
-
 		void setEnableReadThread(bool enable_read_thread);
 		bool getEnableReadThread(void) const;
 
@@ -576,17 +534,6 @@ class TalonHWCommand
 
 		hardware_interface::SensorInitializationStrategy sensor_initialization_strategy_;
 		bool                                             sensor_initialization_strategy_changed_;
-
-		bool custom_profile_disable_;
-		bool custom_profile_run_;
-		int custom_profile_slot_;
-		std::vector<int> custom_profile_next_slot_;
-		double custom_profile_hz_;
-
-		std::vector<std::vector<CustomProfilePoint>> custom_profile_points_;
-		std::vector<std::vector<double>> custom_profile_total_time_;
-
-		std::vector<bool> custom_profile_points_changed_;
 
 		bool enable_read_thread_;
 		bool enable_read_thread_changed_;

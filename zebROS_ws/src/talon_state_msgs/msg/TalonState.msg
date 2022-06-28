@@ -43,4 +43,3 @@ string[]  motion_profile_status_output_enable
 int32[]   motion_profile_time_dur_ms
 string[]  faults
 string[]  sticky_faults
-talon_state_msgs/CustomProfileStatus[] custom_profile_status

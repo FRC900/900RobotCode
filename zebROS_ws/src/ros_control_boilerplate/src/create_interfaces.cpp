@@ -42,7 +42,6 @@ void FRCRobotInterface::createInterfaces(void)
 			hardware_interface::TalonWritableStateHandle twsh(can_ctre_mc_names_[i], &talon_state_[i]); /// writing directly to state?
 			talon_remote_state_interface_.registerHandle(twsh);
 		}
-		custom_profile_state_.emplace_back(CustomProfileState());
 	}
 
 	num_canifiers_ = canifier_names_.size();
@@ -132,7 +131,6 @@ void FRCRobotInterface::createInterfaces(void)
 			hardware_interface::SparkMaxWritableStateHandle smwsh(spark_max_names_[i], &spark_max_state_[i]); /// writing directly to state?
 			spark_max_remote_state_interface_.registerHandle(smwsh);
 		}
-		custom_profile_state_.push_back(CustomProfileState());
 	}
 
 	// Set vectors to correct size to hold data

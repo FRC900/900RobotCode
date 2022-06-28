@@ -235,23 +235,6 @@ struct MotionProfileStatus
 
 };
 
-struct CustomProfileStatus
-{
-	bool running;
-	int slotRunning;
-	std::vector<int> remainingPoints;
-	double remainingTime;	//Should this be a ROS duration?
-							//Note: will be set based on slotRunning
-	bool outOfPoints;
-	CustomProfileStatus():
-		running(false),
-		slotRunning(-1),
-		remainingTime(0.0),
-		outOfPoints(false)
-	{
-	}
-};
-
 constexpr size_t TALON_PIDF_SLOTS = 4;
 
 // Class which contains state information
@@ -423,8 +406,6 @@ class TalonHWState
 		uint8_t getControlFramePeriod(ControlFrame control_frame) const;
 		void setMotionProfileTrajectoryPeriod(int msec);
 		int getMotionProfileTrajectoryPeriod(void) const;
-		CustomProfileStatus getCustomProfileStatus(void) const;
-		void setCustomProfileStatus(const CustomProfileStatus &status);
 		void setPidfP(double pidf_p, size_t index);
 		void setPidfI(double pidf_i, size_t index);
 		void setPidfD(double pidf_d, size_t index);
@@ -613,7 +594,6 @@ class TalonHWState
 		int motion_profile_top_level_buffer_count_;
 		bool motion_profile_top_level_buffer_full_;
 		MotionProfileStatus motion_profile_status_;
-		CustomProfileStatus custom_profile_status_;
 		int motion_profile_trajectory_period_;
 
 		std::array<uint8_t, Status_Last> status_frame_periods_;

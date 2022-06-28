@@ -49,7 +49,6 @@ add_message_files(
   FILES
   CANCoderState.msg
   CANifierState.msg
-  CustomProfileStatus.msg
   TalonConfig.msg
   TalonState.msg
   InstrumentList.msg
