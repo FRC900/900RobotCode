@@ -28,6 +28,7 @@ elif [ -f /home/admin/rio_bashrc.sh ] ; then
     swapon /dev/sda5
 	ulimit -r unlimited
 	/etc/init.d/nilvrt stop
+	killall PhoenixDiagnosticsProgram
 	# Force update to Rio time, hopefully will prevent
 	# time updates while robot code is running
 	#/etc/init.d/ntpd stop
