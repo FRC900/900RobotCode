@@ -10,6 +10,11 @@
 			Read joystick info from hardware interface and publish it
 		</description>
 	</class>
+	<class name="spacemouse_state_controller/SpacemouseStateController" type="spacemouse_state_controller::SpacemouseStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read spacemouse info from hardware interface and publish it
+		</description>
+	</class>
 	<class name="joint_mode_state_controller/JointModeStateController" type="joint_mode_state_controller::JointModeStateController" base_class_type="controller_interface::ControllerBase">
 		<description>
 			Read joint_mode info from hardware interface and publish it

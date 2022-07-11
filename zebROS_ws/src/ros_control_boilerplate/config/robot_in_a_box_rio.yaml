@@ -46,6 +46,11 @@ joystick_controller:
     name: joystick0
     publish_rate: 50
 
+spacemouse_controller:
+    type: spacemouse_state_controller/SpacemouseStateController
+    name: joystick0
+    publish_rate: 50
+
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal
 # encoder state used by the hw manager and publishes it as

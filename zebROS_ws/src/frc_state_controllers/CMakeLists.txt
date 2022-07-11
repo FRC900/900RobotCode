@@ -136,6 +136,7 @@ add_library(frc_state_controller
    	src/ph_state_controller.cpp
 	src/match_state_controller.cpp
    	src/robot_controller_state_controller.cpp
+	src/spacemouse_state_controller.cpp
 )
 target_link_libraries(frc_state_controller ${catkin_LIBRARIES})
 add_dependencies(frc_state_controller
