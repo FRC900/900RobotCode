@@ -41,13 +41,14 @@ swerve_drive_controller:
     encoder_steering_set_units: 1
 
     wheel_coords: [[-0.27305, 0.27305], [0.27305, 0.27305], [-0.27305, -0.27305], [0.27305, -0.27305]]
-
+    parking_config_time_delay: 0.75
+    drive_speed_time_delay: 0.125
     cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
     use_cos_scaling: True # scale motor speed by how close angle motors are to setpoints
     speed_joint_fl:
         joint: fl_drive #fix pid
         close_loop_values:
-            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0}
+            - {p: 0.15, i: 0.0, d: 8.0, f: 0.043, i_zone: 0}
         sensor_phase: true
         invert_output: false
         feedback_type: IntegratedSensor
@@ -58,9 +59,11 @@ swerve_drive_controller:
         current_limit_peak_msec: 50
         current_limit_enable: True
         closed_loop_ramp: 0.25
-        dynamic_reconfigure: False
+        dynamic_reconfigure: True
         neutral_mode: "Brake"
-        status_1_general_period: 100
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
+        #status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
@@ -82,7 +85,7 @@ swerve_drive_controller:
     speed_joint_fr:
         joint: fr_drive #fix pid
         close_loop_values:
-            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0}
+            - {p: 0.15, i: 0.0, d: 8.0, f: 0.043, i_zone: 0}
         sensor_phase: true
         invert_output: false
         feedback_type: IntegratedSensor
@@ -92,11 +95,13 @@ swerve_drive_controller:
         current_limit_peak_amps: 25
         current_limit_peak_msec: 50
         current_limit_enable: True
-        dynamic_reconfigure: False
+        dynamic_reconfigure: True
         neutral_mode: "Brake"
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
-        status_1_general_period: 100
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
+        #status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
@@ -117,7 +122,7 @@ swerve_drive_controller:
     speed_joint_bl:
         joint: bl_drive #fix pid
         close_loop_values:
-            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0}
+            - {p: 0.15, i: 0.0, d: 8.0, f: 0.043, i_zone: 0}
         sensor_phase: true
         feedback_type: IntegratedSensor
         sensor_phase: true
@@ -128,11 +133,13 @@ swerve_drive_controller:
         current_limit_peak_amps: 25
         current_limit_peak_msec: 50
         current_limit_enable: True
-        dynamic_reconfigure: False
+        dynamic_reconfigure: True
         neutral_mode: "Brake"
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
-        status_1_general_period: 100
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
+        #status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
@@ -153,7 +160,7 @@ swerve_drive_controller:
     speed_joint_br:
         joint: br_drive #fix pid
         close_loop_values:
-            - {p: 0.15, i: 0.0, d: 1.0, f: 0.043, i_zone: 0}
+            - {p: 0.15, i: 0.0, d: 8.0, f: 0.043, i_zone: 0}
         sensor_phase: True
         invert_output: false
         feedback_type: IntegratedSensor
@@ -163,11 +170,13 @@ swerve_drive_controller:
         current_limit_peak_amps: 25
         current_limit_peak_msec: 50
         current_limit_enable: True
-        dynamic_reconfigure: False
+        dynamic_reconfigure: True
         neutral_mode: "Brake"
         neutral_deadband: 0.01
         closed_loop_ramp: 0.25
-        status_1_general_period: 100
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
+        #status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
@@ -205,7 +214,7 @@ swerve_drive_controller:
         voltage_compensation_enable: true
         voltage_compensation_saturation: 12
         dynamic_reconfigure: False
-        status_1_general_period: 100
+        #status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
@@ -243,7 +252,7 @@ swerve_drive_controller:
         voltage_compensation_enable: true
         voltage_compensation_saturation: 12
         dynamic_reconfigure: False
-        status_1_general_period: 100
+        #status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
@@ -281,7 +290,7 @@ swerve_drive_controller:
         voltage_compensation_enable: true
         voltage_compensation_saturation: 12
         dynamic_reconfigure: False
-        status_1_general_period: 100
+        #status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20
@@ -319,7 +328,7 @@ swerve_drive_controller:
         voltage_compensation_enable: true
         voltage_compensation_saturation: 12
         dynamic_reconfigure: False
-        status_1_general_period: 100
+        #status_1_general_period: 100
         #status_2_feedback0_period: 100
         #status_1_general_period: 10
         #status_2_feedback0_period: 20

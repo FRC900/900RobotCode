@@ -12,7 +12,7 @@ namespace rate_limiter
 class RateLimiter
 {
 	public:
-		RateLimiter(double min_val, double max_val, double rise_time_in_msec)
+		RateLimiter(const double min_val, const double max_val, const double rise_time_in_msec)
 			: rise_time_in_msec_(rise_time_in_msec)
 		    , last_value_(0)
 			, last_update_time_(ros::Time::now())
@@ -20,10 +20,13 @@ class RateLimiter
 			updateMinMax(min_val, max_val);
 		}
 
-		double applyLimit(double value, const ros::Time &now)
+		double applyLimit(const double value, const ros::Time &now)
 		{
+			const double max_change_per_msec = (rise_time_in_msec_ < 0) ?
+				std::numeric_limits<double>::max() :
+				fabs(max_val_ - min_val_) / rise_time_in_msec_;
 			const double delta_msec = (now - last_update_time_).toSec() * 1000.;
-			const double delta_value = delta_msec * max_change_per_msec_;
+			const double delta_value = delta_msec * max_change_per_msec;
 #if 0
 			ROS_INFO_STREAM(__LINE__ << " applyLimit value:" << value
 					<< " now:" << now
@@ -65,22 +68,36 @@ class RateLimiter
 			return last_value_;
 		}
 
-		void updateMinMax(double min_val, double max_val)
+		void updateMinMax(const double min_val, const double max_val)
 		{
 			if (min_val > max_val)
 			{
 				ROS_ERROR_STREAM("min_val greater than max value in rate limiter : "
 						<< min_val << max_val);
 			}
-			if (rise_time_in_msec_ < 0)
-				max_change_per_msec_ = std::numeric_limits<double>::max();
-			else
-				max_change_per_msec_ = fabs(max_val - min_val) / rise_time_in_msec_;
+			min_val_ = min_val;
+			max_val_ = max_val;
+		}
+
+		void updateRiseTimeInMsec(const double rise_time_in_msec)
+		{
+			// Don't reset everything if the requested value
+			// is the same as the current one
+			if (rise_time_in_msec_ != rise_time_in_msec)
+			{
+				rise_time_in_msec_ = rise_time_in_msec;
+				last_update_time_ = ros::Time::now();
+			}
+		}
+		double getRiseTimeInMsec(void) const
+		{
+			return rise_time_in_msec_;
 		}
 
 	private:
 			double    rise_time_in_msec_;
-			double    max_change_per_msec_;
+			double    min_val_;
+			double    max_val_;
 			double    last_value_;
 			ros::Time last_update_time_;
 };

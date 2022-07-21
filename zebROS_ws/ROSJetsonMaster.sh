@@ -31,7 +31,7 @@ elif [ -f /home/admin/rio_bashrc.sh ] ; then
 	killall PhoenixDiagnosticsProgram
 	# Force update to Rio time, hopefully will prevent
 	# time updates while robot code is running
-	#/etc/init.d/ntpd stop
+	/etc/init.d/ntpd stop
 	#ntpdate 10.9.0.8
 	#ntpd -gq
 	#/etc/init.d/ntpd restart
@@ -49,3 +49,7 @@ export ROSLAUNCH_SSH_UNKNOWN=1
 echo "ROS_IP set to $ROS_IP"
 
 exec "$@"
+
+if [ -f /home/admin/rio_bashrc.sh ] ; then
+	/etc/init.d/ntpd restart
+fi

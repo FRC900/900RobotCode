@@ -6,10 +6,10 @@ teleop_params:
     max_speed: 3.0
     max_speed_slow: 0.75
     joystick_pow: 1.5
-    rotation_pow: 2.0   #Scaling factors used in teleop_joystick_comp
-    joystick_deadzone: 0.07
+    rotation_pow: 1.0   #Scaling factors used in teleop_joystick_comp
+    joystick_deadzone: 0.05
     drive_rate_limit_time: 200
-    rotate_rate_limit_time: 200
+    rotate_rate_limit_time: 500
     climber_align_angle: 3.14159265 # Intake facing DS wall
     trigger_threshold: 0.5
     stick_threshold: 0.5

@@ -1,3 +1,7 @@
+// Toggle between rotation using rightStickX and rightTrigger - leftTrigger
+#define ROTATION_WITH_STICK
+
+
 #include "ros/ros.h"
 #include "frc_msgs/JoystickState.h"
 #include "sensor_msgs/JointState.h"
@@ -684,6 +688,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		static ros::Time last_header_stamp = joystick_states_array[0].header.stamp;
 
+		teleop_cmd_vel->updateRateLimit(config);
 		geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], imu_angle, config);
 
 		if (cmd_vel.angular.z != 0.0) {
@@ -900,6 +905,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 			}
 
+#ifdef ROTATION_WITH_STICK
 			if(joystick_states_array[0].leftTrigger > config.trigger_threshold)
 			{
 				// Intake
@@ -940,6 +946,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				// teleop_cmd_vel->setSlowMode(false);
 				joystick1_right_trigger_pressed = false;
 			}
+#endif
 		}
 		else
 		{

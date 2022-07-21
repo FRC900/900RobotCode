@@ -65,8 +65,8 @@ void update(const ros::Time &time, const ros::Duration &period) override
 
 			m.header.stamp = time;
 
-			m.leftStickX         = -js->getAxis(1);
-			m.leftStickY         = js->getAxis(0);
+			m.leftStickX         = js->getAxis(0);
+			m.leftStickY         = js->getAxis(1);
 			m.leftTrigger        = 0;
 			m.rightTrigger       = 0;
 			m.rightStickX        = js->getAxis(5);
