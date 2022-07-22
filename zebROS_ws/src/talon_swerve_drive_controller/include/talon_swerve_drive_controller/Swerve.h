@@ -93,20 +93,6 @@ class swerve
 
 		std::array<double, WHEELCOUNT> offsets_;
 
-		enum COMMAND_STATE
-		{
-			COMMAND_INVALID,
-			COMMAND_DRIVING,
-			COMMAND_PARKING
-		};
-
-		// Used for filtering jittery encoder values - cache previous direction
-		// and continue moving that way even if the wheel pos temporarily glitches
-		// over a value which would reverse the nearest-90-degree calculation
-		mutable std::array<bool, WHEELCOUNT> lastReverse_{false};
-		mutable std::array<double, WHEELCOUNT> lastCommand_{0};
-		mutable std::array<COMMAND_STATE, WHEELCOUNT> lastCommandState_{COMMAND_INVALID};
-
 		//Second piece of data is here just for physics/modeling
 
 		//std::array<double, WHEELCOUNT> savedEncoderVals_;

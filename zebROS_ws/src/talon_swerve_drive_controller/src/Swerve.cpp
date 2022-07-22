@@ -56,26 +56,9 @@ std::array<Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Vector2d veloc
 		//ROS_INFO_STREAM("id: " << i << " PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
 		const double currpos = getWheelAngle(i, positionsNew[i]);
 		bool reverse;
-		double nearestangle = leastDistantAngleWithinHalfPi(currpos, speedsAndAngles[i][1], reverse);
-		// In some cases when the wheels are near 90 degrees off from where they are commanded
-		// noise from the encoder will have them jump back and forth trying to go
-		// one direction then then next as the noise changes which side of the 90 degree
-		// offset they are at.  Add hystersis here to prevent the oscillation
-		if ((lastCommandState_[i] == COMMAND_DRIVING) && (reverse != lastReverse_[i]) && (fabs(currpos - nearestangle) > 85 * M_PI / 180))
-		{
-			//ROS_ERROR_STREAM("setting to last command = " << lastCommand_[i]);
-			reverse = lastReverse_[i];
-			nearestangle = lastCommand_[i];
-		}
-		else
-		{
-			//ROS_INFO_STREAM("setting to actual command; currpos - nearest angle = " << currpos - nearestangle << " and reverse changed is " << (reverse != lastReverse_[i]));
-			lastReverse_[i] = reverse;
-			lastCommand_[i] = nearestangle;
-			lastCommandState_[i] = COMMAND_DRIVING;
-		}
+		const double nearestangle = leastDistantAngleWithinHalfPi(currpos, speedsAndAngles[i][1], reverse);
 
-		// ROS_INFO_STREAM("wheel " << i << " currpos: " << currpos << " nearestangle: " << nearestangle << " reverse: " << reverse);
+		//ROS_INFO_STREAM("wheel " << i << " currpos: " << currpos << " nearestangle: " << nearestangle << " reverse: " << reverse);
 		// Slow down wheels the further they are from their target
 		// angle. This will help to prevent wheels which are in the process
 		// of getting to the correct orientation from dragging the robot
@@ -98,19 +81,7 @@ std::array<double, WHEELCOUNT> swerve<WHEELCOUNT>::parkingAngles(const std::arra
 	{
 		const double currpos = getWheelAngle(i, positionsNew[i]);
 		bool reverse;
-		double nearestanglep = leastDistantAngleWithinHalfPi(currpos, swerveMath_.getParkingAngle(i), reverse);
-		if ((lastCommandState_[i] == COMMAND_PARKING) && (reverse != lastReverse_[i]) && (fabs(currpos - nearestanglep) > 85 * M_PI / 180))
-		{
-			//ROS_ERROR_STREAM("setting to last command = " << lastCommand_[i]);
-			nearestanglep = lastCommand_[i];
-		}
-		else
-		{
-			//ROS_INFO_STREAM("setting to actual command; currpos - nearest angle = " << currpos - nearestanglep << " and reverse changed is " << (reverse != lastReverse_[i]));
-			lastReverse_[i] = reverse;
-			lastCommand_[i] = nearestanglep;
-			lastCommandState_[i] = COMMAND_PARKING;
-		}
+		const double nearestanglep = leastDistantAngleWithinHalfPi(currpos, swerveMath_.getParkingAngle(i), reverse);
 
 		retAngles[i] = nearestanglep * units_.steeringSet + offsets_[i];
 		//ROS_INFO_STREAM(" id: " << i << " currpos: " << currpos << " target: " << nearestanglep);
