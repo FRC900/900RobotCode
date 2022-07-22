@@ -6,4 +6,5 @@ ACTION=="add", ATTRS{idVendor}=="046D", ATTRS{idProduct}=="082d", SYMLINK+="C920
 ACTION=="add", ATTRS{idVendor}=="046D", ATTRS{idProduct}=="085c", SYMLINK+="C922", MODE="0777"
 ACTION=="add", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="ffee", SYMLINK+="ADI", MODE="0777"
 ACTION=="add", ATTRS{idVendor}=="2e8a", ATTRS{idProduct}=="000a", SYMLINK+="PICO", MODE="0777"
+ACTION=="add", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="5722", SYMLINK+="TURING", MODE="0777"
 ACTION=="add", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="5740", SYMLINK+="TERABEE", MODE="0777"
