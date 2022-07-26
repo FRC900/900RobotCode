@@ -143,7 +143,7 @@ git clone https://github.com/FRC900/2022RobotCode.git
 cd ~/2022RobotCode
 
 # Set up can0 network interface
-cd
+#cd
 #echo "auto can0" > can0
 #echo "iface can0 inet manual" >> can0
 #echo "  pre-up /sbin/ip link set can0 type can bitrate 1000000" >> can0
@@ -154,7 +154,7 @@ cd
 sudo curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg"
 sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr.list "https://deb.ctr-electronics.com/ctr.list"
 sudo apt update
-sudo apt install canivore-usb
+sudo apt install -y canivore-usb
 
 sudo bash -c "echo \"[Match\"] >> /etc/systemd/network/80-can.network"
 sudo bash -c "echo \"Name=can\"* >> /etc/systemd/network/80-can.network"
@@ -292,13 +292,14 @@ cp ~/2022RobotCode/.vimrc ~/2022RobotCode/.gvimrc ~
 sudo cp ~/2022RobotCode/kjaget.vim /usr/share/vim/vim81/colors
 
 cd
-wget https://github.com/git-lfs/git-lfs/releases/download/v3.0.1/git-lfs-linux-arm64-v3.0.1.tar.gz
+wget https://github.com/git-lfs/git-lfs/releases/download/v3.2.0/git-lfs-linux-arm64-v3.2.0.tar.gz
 mkdir git-lfs-install
 cd git-lfs-install
-tar -xzf ../git-lfs-linux-arm64-v3.0.1.tar.gz
+tar -xzf ../git-lfs-linux-arm64-v3.2.0.tar.gz
+cd git-lfs-3.2.0
 sudo ./install.sh
 cd
-rm -rf git-lfs-linux-arm64-v3.0.1.tar.gz git-lfs-install
+rm -rf git-lfs-linux-arm64-v3.2.0.tar.gz git-lfs-install
 git lfs install
 cd ~/2022RobotCode
 git lfs pull
@@ -341,7 +342,7 @@ sudo pip3 install -U pip testresources setuptools==49.6.0
 sudo pip3 install --ignore-installed -U cython
 sudo pip3 install --install-option="--jobs=6" -U --no-deps numpy>=1.20 future==0.18.2 mock==3.0.5
 sudo pip3 install -U --no-deps keras_preprocessing==1.1.2 keras_applications==1.0.8 gast==0.4.0 protobuf pybind11 pkgconfig
-sudo env H5PY_SETUP_REQUIRES=0 pip3 install --install-option="--jobs=6" -U h5py==3.1.0
+sudo env H5PY_SETUP_REQUIRES=0 pip3 install -U h5py==3.1.0
 sudo pip3 install --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v50 tensorflow==2.8.0
 
 cd /home/ubuntu
@@ -366,7 +367,11 @@ cd build
 cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DGPU_ARCHS="72" -DCMAKE_CXX_STANDARD=17 .. 
 sudo ninja install
 
-sudo pip3 install --install-option="--jobs=6" --global-option=build_ext --global-option="-I/usr/local/cuda/include" --global-option="-L/usr/local/cuda/lib64" pycuda
+#sudo pip3 install --install-option="--jobs=6" --global-option=build_ext --global-option="-I/usr/local/cuda/include" --global-option="-L/usr/local/cuda/lib64" pycuda
+sudo -H bash
+export PATH=$PATH:/usr/local/cuda/bin
+export CUDA_ROOT=/usr/local/cuda
+sudo pip3 install pycuda
 
 cd
 git clone git@github.com:FRC900/jetson-utils.git
