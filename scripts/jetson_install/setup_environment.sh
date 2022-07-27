@@ -211,7 +211,7 @@ sudo service udev restart
 # Clean up Jetson
 sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/libvisionworks*
 # Save ~400MB
-sudo apt remove --purge -y thunderbird libreoffice-*
+sudo apt remove --purge -y thunderbird libreoffice-* nsight-graphics-for-embeddedlinux-2022.2.0.0
 # Disable automatic updates
 sudo sed -i -e 's/APT::Periodic::Update-Package-Lists "1"/APT::Periodic::Update-Package-Lists "0"/' /etc/apt/apt.conf.d/10periodic
 
@@ -274,7 +274,7 @@ find ../../../.. -name \*athena\*zip | grep -v debug | xargs -n1 unzip -o
 mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/wpilib
 cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/wpilib
 find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
-rm -rf /home/ubuntu/wpilib/2022/maven /home/ubuntu/wpilib/frc2022/jdk /home/ubuntu/wpilib/2022/WPILib_Linux-2022.2.1 /home/ubuntu/wpilb2022/utility
+rm -rf /home/ubuntu/wpilib/2022/maven /home/ubuntu/wpilib/2022/jdk /home/ubuntu/wpilib/2022/WPILib_Linux-2022.2.1 /home/ubuntu/wpilb/2022/utility /home/ubuntu/wpilib/2022/tools /home/ubuntu/wpilib/2022/documentation /home/ubuntu/wpilib/2022/installUtils /home/ubuntu/wpilib/2022/vsCodeExtensions
 sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 
 # Set up prereqs for deploy script

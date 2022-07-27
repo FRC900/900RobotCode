@@ -163,3 +163,8 @@ rosdep install --from-paths . --ignore-src --rosdistro=noetic -y
 
 #cd ~/2022RobotCode/zebROS_ws
 #catkin_make
+
+
+sudo apt clean
+sudo apt autoclean
+sudo apt clean
