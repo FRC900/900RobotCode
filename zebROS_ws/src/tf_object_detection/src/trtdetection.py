@@ -1,4 +1,4 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python3
 """
 Adaped from	https://github.com/AastaNV/TRT_object_detection.git
 A faster way to optimize models to run on the Jetson
@@ -69,21 +69,29 @@ def run_inference_for_single_image(msg):
             import graphsurgeon as gs
             dynamic_graph = model.add_plugin(gs.DynamicGraph(model.path))
             uff_model = uff.from_tensorflow(dynamic_graph.as_graph_def(), model.output_name, output_filename='tmp.uff')
-            with trt.Builder(TRT_LOGGER) as builder, builder.create_network() as network, trt.UffParser() as parser:
-                builder.max_workspace_size = 1 << 29
-                builder.max_batch_size = 1
-                # builder.fp16_mode = True
+            # Passing this to create_network() causes uff parser.parse() to core dump :/
+            #explicit_batch_flag = 1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
+            with trt.Builder(TRT_LOGGER) as builder, builder.create_network() as network, builder.create_builder_config() as builder_config, trt.UffParser() as parser:
+                builder_config.set_memory_pool_limit(trt.MemoryPoolType.WORKSPACE, 1<<30)
+                builder_config.set_flag(trt.BuilderFlag.FP16)
+                # TODO - potentially trade model precision for speed
+                #builder_config.set_flag(trt.BuilderFlag.INT8)
+
+                # speed up the engine build for trt major version >= 8
+                # disable cudnn tactic, still getting > camera frame rate on model run
+                tactic_source = builder_config.get_tactic_sources() & ~(1 << int(trt.TacticSource.CUDNN))
+                builder_config.set_tactic_sources(tactic_source)
+
                 parser.register_input('Input', model.dims)
                 parser.register_output('MarkOutput_0')
                 parser.parse('tmp.uff', network)
-                engine = builder.build_cuda_engine(network)
-                buf = engine.serialize()
+                engine = builder.build_serialized_network(network, builder_config)
                 with open(model.TRTbin, 'wb') as f:
-                    f.write(buf)
+                    f.write(engine)
             rospy.logwarn("Optimized model generated successfully, filename=" + str(model.TRTbin))
 
         # Start of inference code
-        # create engine
+        # create engine, loading it from generated TRT model file
 
         with open(model.TRTbin, 'rb') as f:
             buf = f.read()
