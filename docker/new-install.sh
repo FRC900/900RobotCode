@@ -27,17 +27,17 @@ sudo gpasswd -a $USER docker
 
 # log out, log back in (probably also need a restart anyway after apt upgrade)
 
-docker pull frc900/zebros-2021-dev:latest
+docker pull frc900/zebros-noetic-dev:latest
 
 # Install git-lfs
 cd &&\
-    wget https://github.com/git-lfs/git-lfs/releases/download/v2.11.0/git-lfs-linux-amd64-v2.11.0.tar.gz &&\
+    wget https://github.com/git-lfs/git-lfs/releases/download/v3.2.0/git-lfs-linux-amd64-v3.2.0.tar.gz &&\
 	mkdir git-lfs-install &&\
 	cd git-lfs-install &&\
-	tar -xzf ../git-lfs-linux-amd64-v2.11.0.tar.gz &&\
+	tar -xzf ../git-lfs-linux-amd64-v3.2.0.tar.gz &&\
 	sudo ./install.sh &&\
 	cd &&\
-	rm -rf git-lfs-linux-amd64-v2.11.0.tar.gz git-lfs-install &&\
+	rm -rf git-lfs-linux-amd64-v3.2.0.tar.gz git-lfs-install &&\
 	git lfs install
 
 # Install repo - perhaps ssh version inside container, worry about SSH keys?
@@ -47,7 +47,7 @@ cd 2022RobotCode
 git submodule update --init --recursive
 docker run --net=host -v  /tmp/.X11-unix:/tmp/.X11-unix \
  -v $HOME/2022RobotCode:/home/ubuntu/2022RobotCode \
- -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-2021-dev:latest "wstool update -t /home/ubuntu/2022RobotCode/zebROS_ws/src -j2"
+ -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-noetic-dev:latest "wstool update -t /home/ubuntu/2022RobotCode/zebROS_ws/src -j2"
 
 cd
 wget https://downloads.slack-edge.com/linux_releases/slack-desktop-4.0.2-amd64.deb
