@@ -4,7 +4,9 @@ import cv2
 import numpy as np
 from os.path import join
 import rospkg
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 
 import rospy
 from sensor_msgs.msg import Image
@@ -174,7 +176,7 @@ def hard_neg_mine(output_dict, image_np):
 def main():
     global detection_graph, sess, pub, category_index, pub_debug, min_confidence, vis
 
-    sub_topic = "/c920/rect_image"
+    sub_topic = "/obj_detection/c920/rect_image/"
     pub_topic = "obj_detection_msg"
 
     rospy.init_node('tf_object_detection', anonymous = True)
@@ -184,12 +186,13 @@ def main():
 
     if rospy.has_param('image_topic'):
         sub_topic = rospy.get_param('image_topic')
+        print(f"Sub topic={sub_topic}")
 
     # Path to frozen detection graph. This is the actual model that is used for the object detection.
     # This shouldn't need to change
     rospack = rospkg.RosPack()
     THIS_DIR = join(rospack.get_path('tf_object_detection'), 'src/')
-    PATH_TO_FROZEN_GRAPH = join(THIS_DIR, 'ssd_mobilenet_vs_512x512.pb')
+    PATH_TO_FROZEN_GRAPH = join(THIS_DIR, 'ssd_mobilenet_v2_512x512.pb')
     #PATH_TO_FROZEN_GRAPH = join(THIS_DIR, 'trt_ssd_mobilenet_v2.pb')
     rospy.logwarn("Loading graph from " + str(PATH_TO_FROZEN_GRAPH))
 
@@ -219,7 +222,7 @@ def main():
     sub = rospy.Subscriber(sub_topic, Image, run_inference_for_single_image)
     pub = rospy.Publisher(pub_topic, TFDetection, queue_size=2)
     pub_debug = rospy.Publisher("debug_image", Image, queue_size=1)
-
+    print("Spinning")
     try:
         rospy.spin()
     except KeyboardInterrupt:

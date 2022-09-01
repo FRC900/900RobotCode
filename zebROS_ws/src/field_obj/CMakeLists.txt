@@ -51,6 +51,8 @@ find_package(catkin REQUIRED COMPONENTS
    Object.msg
    TFDetection.msg
    TFObject.msg
+   TrackDetection.msg
+   TrackObject.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -67,7 +69,7 @@ find_package(catkin REQUIRED COMPONENTS
 #   Action2.action
 # )
 
-## Generate added messages and services with any dependencies listed here
+#### Generate added messages and services with any dependencies listed here
  generate_messages(
    DEPENDENCIES
    geometry_msgs

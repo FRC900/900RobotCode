@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 import sys
@@ -15,7 +15,7 @@ class Video2ROS:
         rospy.on_shutdown(self.cleanup)
         
         #Default config
-        self.filename = "testvid.mp4"
+        self.filename = "testvid1.mp4"
         self.pub_topic = "/obj_detection/c920/rect_image"
         self.framerate = 30
         self.show_video = True
@@ -55,18 +55,18 @@ class Video2ROS:
 
             try:
                 image_pub.publish(bridge.cv2_to_imgmsg(frame, encoding="bgr8"))
-            except CvBridgeError, e:
-                print e
+            except CvBridgeError as e:
+                print(e)
 
             if show_video:
                 display_image = frame.copy()
                 cv2.imshow("Video Playback", display_image)
 
-            self.keystroke = cv2.waitKey(1000 / self.framerate)
+            self.keystroke = cv2.waitKey(round(1000 / self.framerate))
 
     def cleanup(self):
-            print "Shutting down video pub node."
-            cv2.destroyAllWindows()
+        print("Shutting down video pub node.")
+        cv2.destroyAllWindows()
 
 def main(args):
     try:
@@ -76,4 +76,3 @@ def main(args):
 
 if __name__ == '__main__':
     main(sys.argv)
-
