@@ -49,6 +49,18 @@ sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 # 
 # Keep each package on a separate line to aid in git merging
 # Try to keep them in alphabetic order to make it easier to find duplicates
+
+# Pin stock ubuntu 20.04 opencv (version 4.2.0) instead of jetpack version 4.5.4
+sudo bash -c "echo Package: libopencv >> /etc/apt/preferences.d/libopencv"
+sudo bash -c "echo Pin: release a=* >> /etc/apt/preferences.d/libopencv"
+sudo bash -c "echo Pin-Priority: -10 >> /etc/apt/preferences.d/libopencv"
+sudo apt purge -y libopencv
+
+
+sudo bash -c "Package: libopencv-dev >> /etc/apt/preferences.d/libopencv-dev"
+sudo bash -c "Pin: version 4.2* >> /etc/apt/preferences.d/libopencv-dev"
+sudo bash -c "Pin-Priority: 1000 >> /etc/apt/preferences.d/libopencv-dev"
+
 sudo apt install -y \
 	ros-noetic-ros-base \
 	liblua5.3-dev \

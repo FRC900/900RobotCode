@@ -32,6 +32,7 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	stage_ros \
 	template_controller \
 	tf_object_detection \
+	turing_smart_screen \
 	velocity_controllers \
 	visualize_profile \
 	zed_nodelets \

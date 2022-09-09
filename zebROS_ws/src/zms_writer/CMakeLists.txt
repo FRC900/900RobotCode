@@ -101,7 +101,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## Build ##
 ###########
 ## System dependencies are found with CMake's conventions
-find_package(OpenCV REQUIRED)
 find_package(Boost COMPONENTS filesystem system serialization iostreams thread REQUIRED)
 
 catkin_package(
@@ -113,10 +112,8 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  ${OpenCV_INCLUDE_DIRS} 
   ../../../common
 )
 
@@ -139,7 +136,6 @@ add_dependencies(zms_writer_node
 ## Specify libraries to link a library or executable target against
 target_link_libraries(zms_writer_node
   ${catkin_LIBRARIES}
-  ${OpenCV_LIBS} 
   ${Boost_LIBRARIES}
 )
 
@@ -162,7 +158,6 @@ add_dependencies(mjpeg_writer_node
 ## Specify libraries to link a library or executable target against
 target_link_libraries(mjpeg_writer_node
   ${catkin_LIBRARIES}
-  ${OpenCV_LIBS} 
   ${Boost_LIBRARIES}
 )
 

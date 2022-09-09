@@ -121,15 +121,11 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-find_package(OpenCV REQUIRED)
-list(FILTER catkin_LIBRARIES EXCLUDE REGEX "opencv_freetype")
-list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
 	${catkin_INCLUDE_DIRS}
-	${OpenCV_INCLUDE_DIRS}
 	../../../common
 	include
 )
@@ -142,7 +138,6 @@ add_executable(goal_detection_node
 ## Specify libraries to link a library or executable target against
 target_link_libraries(goal_detection_node
 	${catkin_LIBRARIES}
-	${OpenCV_LIBS}
 )
 
 ## Add cmake target dependencies of the executable
@@ -161,7 +156,6 @@ add_library(GoalDetection
 
 target_link_libraries(GoalDetection
 	${catkin_LIBRARIES}
-	${OpenCV_LIBS}
 )
 
 add_dependencies(GoalDetection

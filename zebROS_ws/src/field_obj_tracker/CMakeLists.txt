@@ -13,9 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-find_package(OpenCV REQUIRED)
-list(FILTER catkin_LIBRARIES EXCLUDE REGEX "opencv_freetype")
-list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed

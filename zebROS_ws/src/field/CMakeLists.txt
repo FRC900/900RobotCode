@@ -110,8 +110,6 @@ catkin_package(
 ## Build ##
 ###########
 find_package(OpenCV REQUIRED)
-list(FILTER catkin_LIBRARIES EXCLUDE REGEX "opencv_freetype")
-list(FILTER OpenCV_LIBS EXCLUDE REGEX "opencv_freetype")
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(

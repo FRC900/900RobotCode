@@ -10,12 +10,12 @@ from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget, QGraphicsView, QPushButton, QRadioButton, QMessageBox, QHBoxLayout, QLabel, QButtonGroup, QSpacerItem, QSizePolicy
 from python_qt_binding.QtCore import QCoreApplication
 from python_qt_binding.QtGui import QPixmap
-import resource_rc
+from . import resource_rc
 
 from behavior_actions.msg import AutoState, AutoMode
-from pf_localization.msg import pf_pose
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from imu_zero.srv import ImuZeroAngle
-from behavior_actions.srv import resetBallSrv, DynamicPath
+from behavior_actions.srv import DynamicPath
 from base_trajectory_msgs.srv import GenerateSpline
 import std_msgs.msg
 import roslibpy

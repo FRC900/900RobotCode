@@ -33,6 +33,7 @@ catkin config --skiplist \
 	realsense2_camera \
 	realsense2_description \
 	robot_visualizer \
+	turing_smart_screen \
 	velocity_controllers \
 	zed_ros \
 	$EXTRA_BLACKLIST_PACKAGES

@@ -345,6 +345,7 @@ sudo pip3 install -U --no-deps numpy>=1.20 future==0.18.2 mock==3.0.5
 sudo pip3 install -U --no-deps keras_preprocessing==1.1.2 keras_applications==1.0.8 gast==0.4.0 'protobuf<4.0.0,>=3.6.1' pybind11 pkgconfig
 sudo env H5PY_SETUP_REQUIRES=0 pip3 install -U h5py==3.1.0
 sudo pip3 install --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v50 tensorflow==1.15.5+nv22.6
+sudo pip3 install matplotlib
 
 # Fails with error install grpcio?
 #sudo pip3 install protobuf-compiler 
