@@ -54,13 +54,12 @@ sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 sudo bash -c "echo Package: libopencv >> /etc/apt/preferences.d/libopencv"
 sudo bash -c "echo Pin: release a=* >> /etc/apt/preferences.d/libopencv"
 sudo bash -c "echo Pin-Priority: -10 >> /etc/apt/preferences.d/libopencv"
+
+sudo bash -c "echo Package: libopencv-dev >> /etc/apt/preferences.d/libopencv-dev"
+sudo bash -c "echo Pin: version 4.2* >> /etc/apt/preferences.d/libopencv-dev"
+sudo bash -c "echo Pin-Priority: 1000 >> /etc/apt/preferences.d/libopencv-dev"
+
 sudo apt purge -y libopencv
-
-
-sudo bash -c "Package: libopencv-dev >> /etc/apt/preferences.d/libopencv-dev"
-sudo bash -c "Pin: version 4.2* >> /etc/apt/preferences.d/libopencv-dev"
-sudo bash -c "Pin-Priority: 1000 >> /etc/apt/preferences.d/libopencv-dev"
-
 sudo apt install -y \
 	ros-noetic-ros-base \
 	liblua5.3-dev \

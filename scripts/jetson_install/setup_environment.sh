@@ -14,7 +14,7 @@ sudo apt install -y \
     can-utils \
     ccache \
     chromium-browser \
-	clang-12 \
+    clang-12 \
     cmake \
     cowsay \
     dbus-x11 \
@@ -24,11 +24,11 @@ sudo apt install -y \
     gfortran \
     git \
     gstreamer1.0-plugins-* \
-	hdf5-tools \
+    hdf5-tools \
     htop \
     libatlas-base-dev \
     libboost-all-dev \
-	libblas-dev \
+    libblas-dev \
     libcanberra-gtk-module \
     libcanberra-gtk3-module \
     libclang-12-dev \
@@ -42,13 +42,13 @@ sudo apt install -y \
     libgtk2.0-dev \
     libhdf5-dev \
     libhdf5-serial-dev \
-	libjpeg8-dev \
-	liblapack-dev \
+    libjpeg8-dev \
+    liblapack-dev \
     libleveldb-dev \
     liblmdb-dev \
     liblua5.3-dev \
-	libnlopt-cxx-dev \
-	libnlopt-dev \
+    libnlopt-cxx-dev \
+    libnlopt-dev \
     libpcl-dev \
     libproj-dev \
     libqt5designer5 \
@@ -59,7 +59,7 @@ sudo apt install -y \
     net-tools \
     ninja-build \
     nmap \
-	ntp \
+    ntp \
     ntpdate \
     openssh-client \
     pkg-config \
@@ -76,15 +76,15 @@ sudo apt install -y \
     rsync \
     software-properties-common \
     terminator \
-	tree \
+    tree \
     unzip \
     v4l-conf \
     v4l-utils \
     vim-gtk \
     wget \
     xfonts-scalable
-	zip \
-	zlib1g-dev \
+    zip \
+    zlib1g-dev \
 
 #TensorRT requires a newer version of cmake than standard apt repos provide
 cd
