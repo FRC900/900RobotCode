@@ -5,13 +5,10 @@ set -o pipefail
 
 # IP addresses of the roboRIO and Jetson to deploy code on.
 ROBORIO_ADDR=10.9.0.2
-#ROBORIO_ADDR=192.168.0.169
 
 # This can be an array of IP address if there are multiple Jetsons
 #JETSON_ADDR=( )
-JETSON_ADDR=(10.9.0.8)
-#JETSON_ADDR=(10.9.0.8 10.9.0.9)
-#JETSON_ADDR=(192.168.0.183)
+JETSON_ADDR=(10.9.0.8 10.9.0.9)
 
 # Environment to deploy to (prod or dev).
 INSTALL_ENV=dev
@@ -157,14 +154,16 @@ if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
     echo "Synchronizing remote changes FROM $INSTALL_ENV environment."
     for i in "${JETSON_ADDR[@]}"
     do
-        rsync -avzru --ignore-times --exclude '.git' --exclude 'zebROS_ws/build*' \
+        rsync -avzru --checksum --exclude '.git' --exclude 'zebROS_ws/build*' \
             --exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' --exclude 'zebROS_ws/logs*' \
-            --exclude '*~' --exclude '*.sw[op]'  --exclude '*CMakeFiles*' \
-            --exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2/documents' --exclude 'build' \
-            --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
-            --exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
-            --exclude 'desmos_js' --exclude '.md5sum*txt' \
-			--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' --exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools' --exclude 'TRT*bin' \
+            --exclude '*~' --exclude '*.sw[lmnop]'  --exclude '*CMakeFiles*' \
+            --exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2' --exclude 'build' \
+            --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' \
+            --exclude 'zebROS_ws/.catkin_tools' \
+            --exclude '.md5sum*txt' \
+			--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
+		   	--exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools' --exclude 'TRT*bin' \
+			--exclude '*.pyc' \
             $i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/../
         if [ $? -ne 0 ]; then
             echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
@@ -180,14 +179,16 @@ fi
 # versions of code
 for i in "${JETSON_ADDR[@]}"
 do
-    rsync -avzr $RSYNC_OPTIONS --ignore-times --exclude '.git' --exclude 'zebROS_ws/build*' \
+    rsync -avzr $RSYNC_OPTIONS --checksum --exclude '.git' --exclude 'zebROS_ws/build*' \
         --exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' --exclude 'zebROS_ws/logs*' \
-        --exclude '*~' --exclude '*.sw[op]' --exclude '*CMakeFiles*' \
-        --exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2/documents' --exclude 'build' \
-        --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' --exclude 'roscore_roborio.tar.bz2' \
-        --exclude 'j120_hardware_dtb_l4t32-2-3-1.tbz2' --exclude 'zebROS_ws/.catkin_tools' \
-        --exclude 'desmos_js' --exclude '.md5sum*txt' \
-		--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' --exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools'  --exclude 'TRT*bin'\
+        --exclude '*~' --exclude '*.sw[lmnop]' --exclude '*CMakeFiles*' \
+        --exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2' --exclude 'build' \
+        --exclude '*.zms' --exclude '*.stl' --exclude '*.dae'  \
+        --exclude 'zebROS_ws/.catkin_tools' \
+        --exclude '.md5sum*txt' \
+		--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
+	   	--exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools'  --exclude 'TRT*bin'\
+		--exclude '*.pyc' \
         $LOCAL_CLONE_LOCATION/../ $i:$JETSON_ENV_LOCATION/
     if [ $? -ne 0 ]; then
         echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"
