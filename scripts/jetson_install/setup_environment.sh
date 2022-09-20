@@ -277,6 +277,10 @@ cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/wpilib
 find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
 rm -rf /home/ubuntu/wpilib/2022/maven /home/ubuntu/wpilib/2022/jdk /home/ubuntu/wpilib/2022/WPILib_Linux-2022.2.1 /home/ubuntu/wpilb/2022/utility /home/ubuntu/wpilib/2022/tools /home/ubuntu/wpilib/2022/documentation /home/ubuntu/wpilib/2022/installUtils /home/ubuntu/wpilib/2022/vsCodeExtensions
 sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
+find ~/wpilib -name \*.debug | xargs rm -rf
+find ~/wpilib -name athena | xargs rm -rf
+find ~/wpilib -name x86-64| xargs rm -rf
+find ~/wpilib -name raspbian | xargs rm -rf
 
 # Set up prereqs for deploy script
 mv ~/2022RobotCode ~/2022RobotCode.orig

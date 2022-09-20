@@ -24,4 +24,4 @@ ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx'
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev'
 ssh -p 22 ubuntu@$1 'mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/wpilib'
-rsync -avzu -e 'ssh -p 22' --exclude '*.debug' --exclude 'athena' $HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ $1:/home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/
+rsync -avzu -e 'ssh -p 22' --exclude '*.debug' --exclude 'athena' --exclude 'raspbian' --exclude 'x86-64' $HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ $1:/home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/
