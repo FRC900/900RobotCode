@@ -9,4 +9,4 @@ set -o pipefail
 docker run "$@" -it --gpus all --net=host -v  /tmp/.X11-unix:/tmp/.X11-unix \
  -v $HOME/2022RobotCode:/home/ubuntu/2022RobotCode \
  -v /dev:/dev --privileged \
- -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-noetic-dev:latest /bin/bash
+ -e DISPLAY=$DISPLAY -e NVIDIA_DRIVER_CAPABILITIES=all --user ubuntu frc900/zebros-noetic-dev:latest /bin/bash
