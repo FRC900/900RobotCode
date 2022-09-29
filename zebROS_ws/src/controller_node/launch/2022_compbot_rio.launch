@@ -6,6 +6,7 @@
 	<arg name="joy_or_key" default="joy" />
 	<arg name="button_box" default="true"/>
 	<arg name="hw_or_sim" default="hw" />
+	<arg name="launch_prefix" default="" />
 
 	<group ns="frcrobot_rio">
 

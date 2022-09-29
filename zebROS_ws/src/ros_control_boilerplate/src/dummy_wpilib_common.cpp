@@ -264,3 +264,12 @@ wpi::detail::type_error wpi::detail::type_error::create(int,std::string_view , s
 	ROS_ERROR("Called static wpi::detail::type_error::create(int, std::string_view, std::string_view) const on unsupported platform");
 }
 
+
+#include <FRC_NetworkCommunication/FRCComm.h>
+
+
+int FRC_NetworkCommunication_getJoystickAxes(uint8_t joystickNum, struct JoystickAxes_t *axes, uint8_t maxAxes) 
+{	
+	axes->count = 0;
+	return 1;
+}
