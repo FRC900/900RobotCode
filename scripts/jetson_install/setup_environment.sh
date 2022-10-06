@@ -60,7 +60,6 @@ sudo apt install -y \
     ninja-build \
     nmap \
     ntp \
-    ntpdate \
     openssh-client \
     pkg-config \
     pyqt5-dev-tools \
@@ -188,7 +187,10 @@ sudo sed "s/#Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config &&
 sudo cp ~/2022RobotCode/scripts/jetson_install/ntp.conf /etc/ntp.conf
 sudo cp ~/2022RobotCode/scripts/jetson_setup/hwrtc.service /etc/systemd/system
 sudo chmod 664 /etc/systemd/system/hwrtc.service
-sudo systemctl enable hwrtc
+# The ntp config should read from hwrtc -> system clock if it can't
+# get to the internet to read from pool time servers
+#sudo systemctl enable hwrtc
+
     
 # and keys for connections to Rio
 mkdir -p ~/.ssh

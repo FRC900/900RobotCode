@@ -114,7 +114,9 @@ check_clockdiff() {
         echo -e "\e[1m\e[31mError\e[0m : Clock difference greater than 10 minutes."
         echo "    Local time: `date`"
         echo "    Time on $2: $REMOTE_TIME"
-        exit 1
+		echo "    Setting remote time to current host local time"
+		echo ubuntu | ssh -tt $1 sudo date -s @$(date -u +"%s")
+		echo ubuntu | ssh -tt $1 sudo hwclock -w
     fi
 }
 
@@ -163,7 +165,7 @@ if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
             --exclude '.md5sum*txt' \
 			--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
 		   	--exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools' --exclude 'TRT*bin' \
-			--exclude '*.pyc' \
+			--exclude '*.pyc' --exclude '__pycache__' \
             $i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/../
         if [ $? -ne 0 ]; then
             echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
@@ -188,7 +190,7 @@ do
         --exclude '.md5sum*txt' \
 		--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
 	   	--exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools'  --exclude 'TRT*bin'\
-		--exclude '*.pyc' \
+		--exclude '*.pyc'  --exclude '__pycache__' \
         $LOCAL_CLONE_LOCATION/../ $i:$JETSON_ENV_LOCATION/
     if [ $? -ne 0 ]; then
         echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"
