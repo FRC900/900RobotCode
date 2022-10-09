@@ -26,6 +26,8 @@ Zero point in degrees is set using service call.
 #include <imu_zero/ImuZeroAngle.h>
 #include <std_srvs/Trigger.h>
 #include <robot_localization/SetPose.h>
+#include <zed_interfaces/reset_tracking.h>
+#include <zed_interfaces/reset_odometry.h>
 
 constexpr double pi = 3.14159;
 const std::string sub_topic = "imu/data";
@@ -142,8 +144,8 @@ int main(int argc, char* argv[]) {
   zero_rot.setRPY(0,0,0);
   bias_estimate = node.serviceClient<std_srvs::Trigger>(bias_service_name);
   ukf_zero_pos = node.serviceClient<robot_localization::SetPose>(ukf_set_pose_name);
-  zed_reset_odometry = node.serviceClient<std_srvs::Trigger>(zed_reset_odometry_name);
-  zed_reset_tracking = node.serviceClient<std_srvs::Trigger>(zed_reset_tracking_name);
+  zed_reset_odometry = node.serviceClient<zed_interfaces::reset_odometry>(zed_reset_odometry_name);
+  zed_reset_tracking = node.serviceClient<zed_interfaces::reset_tracking>(zed_reset_tracking_name);
 
   ros::spin();
   return 0;

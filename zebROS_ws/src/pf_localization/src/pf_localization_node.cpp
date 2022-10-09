@@ -22,7 +22,7 @@
 #include <cmath>
 #include <memory>
 
-#include<std_srvs/Empty.h>
+#include <std_srvs/Empty.h>
 
 #define VERBOSE
 // #define EXTREME_VERBOSE
@@ -34,7 +34,7 @@ const std::string goal_pos_topic = "/goal_detection/goal_detect_msg";
 const std::string pub_debug_topic = "pf_debug";
 const std::string pub_topic = "predicted_pose";
 
-const std::string reinit_pf_service = "/re_init_pf";
+const std::string reinit_pf_service = "re_init_pf";
 
 std::string odom_frame_id = "odom";
 std::string map_frame_id = "map";
@@ -45,7 +45,7 @@ ros::Publisher pub_debug;
 
 tf2_ros::Buffer tf_buffer_;
 
-ros::Time last_time;
+ros::Time last_cmd_vel;
 ros::Time last_measurement;
 double rot = 0;
 double noise_delta_t = 0;  // if the time since the last measurement is greater than this, positional noise will not be applied
@@ -97,7 +97,7 @@ void publish_prediction(const ros::TimerEvent &/*event*/)
 
       geometry_msgs::PoseStamped baselink_to_map;
       baselink_to_map.header.frame_id = "base_link";
-      baselink_to_map.header.stamp = last_time;
+      baselink_to_map.header.stamp = last_cmd_vel;
       tf2::toMsg(tmp_tf.inverse(), baselink_to_map.pose);
 
       // baselink_to_map transformed from base_link to odom == odom->map
@@ -105,7 +105,7 @@ void publish_prediction(const ros::TimerEvent &/*event*/)
 
       geometry_msgs::TransformStamped transformStamped;
 
-      transformStamped.header.stamp = last_time + tf_tolerance;
+      transformStamped.header.stamp = last_cmd_vel + tf_tolerance;
       transformStamped.header.frame_id = map_frame_id;
       transformStamped.child_frame_id = odom_frame_id;
 
@@ -156,7 +156,7 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg, const bool bearingO
 	tf2::doTransform(p.location, location,zed_to_baselink);
     if(bearingOnly) {
       measurement.push_back(std::make_shared<BearingBeacon>(location.x, location.y, p.id));
-    } else {
+    } else { 
       measurement.push_back(std::make_shared<PositionBeacon>(location.x, location.y, p.id));
     }
   }
@@ -172,15 +172,14 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg, const bool bearingO
 }
 
 void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
-  double timestep = (msg->header.stamp - last_time).toSec();
+  double timestep = (msg->header.stamp - last_cmd_vel).toSec();
   double x_vel = msg->twist.linear.x;
   double y_vel = msg->twist.linear.y;
 
   double delta_x = x_vel * timestep;
   double delta_y = y_vel * timestep;
 
-  last_time = msg->header.stamp;
-
+  last_cmd_vel = msg->header.stamp;
   // TODO - check return code
   pf->motion_update(delta_x, delta_y, 0);
   if ((ros::Time::now() - last_measurement).toSec() < noise_delta_t) {
@@ -318,7 +317,7 @@ int main(int argc, char **argv) {
   auto pubTimer = nh_.createTimer(ros::Duration(1./ publish_rate), publish_prediction);
 
   const auto now = ros::Time::now();
-  last_time = now;
+  last_cmd_vel = now;
   last_measurement = now;
   ros::spin();
 

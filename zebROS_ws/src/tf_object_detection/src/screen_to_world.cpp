@@ -40,7 +40,15 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 	// Initialize published message with header info from objDetectionMsg
 	field_obj::Detection out_msg;
 	out_msg.header = objDetectionMsg->header;
-
+	// Remove _optical_frame from the camera frame ID if present
+	std::string frame_id = objDetectionMsg->header.frame_id;
+	const size_t idx = frame_id.rfind("_optical_frame");
+	if (idx != std::string::npos)
+	{
+		frame_id.erase(idx);
+		frame_id += "_frame";
+	}
+	out_msg.header.frame_id = frame_id;
 	// Create objects needed to convert from 2d screen to 3d world coords
 	const ConvertCoords cc(caminfo);
 	// Iterate over each object. Convert from camera to world coords.
@@ -73,6 +81,7 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 		worldObject.location.x = world_coord_scaled.z;
 		worldObject.location.y = -world_coord_scaled.x;
 		worldObject.location.z = world_coord_scaled.y;
+
 		worldObject.angle = atan2(worldObject.location.y, worldObject.location.x) * 180. / M_PI;
 
 		// Add the 3d object info to the list of objects in the output message
@@ -92,6 +101,10 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 			transformStamped.header.stamp = out_msg.header.stamp;
 			transformStamped.header.frame_id = out_msg.header.frame_id;
 			std::stringstream child_frame;
+			// tf gets messed up if a transform name starts with a number
+  			if (isdigit(out_msg.objects[i].id[0])) {
+				child_frame << "obj_";
+			}
 			child_frame << out_msg.objects[i].id;
 			child_frame << "_";
 			child_frame << i;

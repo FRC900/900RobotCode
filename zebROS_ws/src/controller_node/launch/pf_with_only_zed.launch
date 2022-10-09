@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!--
+	 Test pf localization using only a zed camera.
+	Uses ZED cam data -> apritags -> pf localization, plus
+         ZED odom data -> imu_zero -> pf localization, plus
+         PF fake cmd_vel -> pf localization (this never mimcs motion, just keeps the internal PF timestamp up to date
+-->
+<launch>
+	<!-- Should be false -->
+	<arg name="vis" default="True" />
+
+	<!-- Run ZED camera + tensorflow object detection + cuda apriltags, etc etc etc -->
+	<include file="$(find tf_object_detection)/launch/detection.launch">
+		<arg name="input_type" value="live_camera" />
+	</include>
+
+	<group ns="imu">
+		<include file="$(find controller_node)/launch/2019_compbot_jetson_imu.launch">
+			<arg name="hw_or_sim" value="hw" />
+			<arg name="primary_imu" value="ZED" />
+			<arg name="zed_name" value="zed_objdetect" />
+		</include>
+	</group>
+	<group ns="pf_localization">
+		<rosparam command="load" file="$(find pf_localization)/config/test2_params.yaml" />
+		<node name="pf_localization" pkg="pf_localization" type="pf_localization_node" output= "screen">
+		</node>
+		<node name="pf_visualization" pkg="pf_localization" type="pf_vis.py" output="screen" if="$(arg vis)">
+		</node>
+		<node name="pf_dummy_cmd_vel" pkg="pf_localization" type="dummy_cmd_vel.py" output="screen" if="$(arg vis)">
+		</node>
+	</group>
+
+
+</launch>

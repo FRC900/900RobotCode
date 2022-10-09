@@ -5,14 +5,17 @@
 # format: auto_mode_[integer]: array
 
 auto_mode_1: ["shoot", "start_intaking", "cmd_vel_1", "pause_cmd_vel", "stop_intaking", "cmd_vel_1_reverse", "cmd_vel_3", "pause_short", "shoot"]
-#auto_mode_2: ["shoot", "start_intaking", "cmd_vel_2", "pause_cmd_vel", "stop_intaking", "cmd_vel_2_reverse", "cmd_vel_3", "pause_short", "shoot"]
+auto_mode_2: ["shoot", "start_intaking", "cmd_vel_2", "pause_cmd_vel", "stop_intaking", "cmd_vel_2_reverse", "cmd_vel_3", "pause_short", "shoot"]
 #auto_mode_21: ["shoot", "start_intaking", "cmd_vel_21", "pause_3_sec", "stop_intaking", "cmd_vel_21_reverse", "cmd_vel_3", "pause_short", "shoot"]
 # new auto below
 # auto_mode_2: ["shoot", "start_intaking", "cmd_vel_21", "cmd_vel_4_forward", "pause_1_sec", "cmd_vel_5_forward", "cmd_vel_5_reverse", "cmd_vel_4_reverse", "stop_intaking", "cmd_vel_21_reverse", "cmd_vel_3", "pause_short", "shoot"]
-auto_mode_2: ["shoot", "start_intaking", "cmd_vel_21", "cmd_vel_4_forward", "pause_2_sec", "cmd_vel_4_reverse", "stop_intaking", "cmd_vel_21_reverse", "cmd_vel_3", "pause_short", "shoot"]
+# actual auto: auto_mode_2: ["shoot", "start_intaking", "cmd_vel_21", "cmd_vel_4_forward", "pause_2_sec", "cmd_vel_4_reverse", "stop_intaking", "cmd_vel_21_reverse", "cmd_vel_3", "pause_short", "shoot"]
 #auto_mode_1: ["shoot", "start_intaking", "pause_2_sec", "stop_intaking"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_left_hub", "stop_intaking", "shoot", "drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
+
+#auto_mode_1: ["mini_drive_test"]
+#auto_mode_2: ["mini_drive_test"]
 
 # Examples
 #auto_mode_1: ["tuning"]
@@ -317,6 +320,20 @@ drive_path_test_1:
       - [1.0, 0.0, 0.0]
       - [2.0, 3.0, 0.0]
       - [1.0, 4.0, 0.0]
+    frame_id: ""
+    point_frame_id: []
+    path_offset_limit:
+      - {min_x: 0, max_x: 0, min_y: 0, max_y: 0}
+    optimize_final_velocity: true
+
+mini_drive_test:
+  type: "path"
+  goal:
+    apply_offset: false
+    points:
+      - [1.0, 1.0, 0.0]
+      - [2.0, -1.0, 0.0]
+      - [3.0, 0.0, 0.0]
     frame_id: ""
     point_frame_id: []
     path_offset_limit:

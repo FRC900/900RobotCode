@@ -3,5 +3,6 @@
 	<group ns="snap_to_angle">
 		<rosparam file="$(find teleop_joystick_control)/config/2022_goal_angle.yaml" command="load"/>
 		<node name="snap_to_angle_node_2022" pkg="teleop_joystick_control" type="snap_to_angle_node_2022" output="screen"/>
+		<node name="snap_to_cargo_node_2022" pkg="teleop_joystick_control" type="snap_to_cargo_node_2022" output="screen"/>
 	</group>
 </launch>

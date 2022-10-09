@@ -181,6 +181,7 @@ target_link_libraries(cargo_detection_filter
    src/trtdetection.py
    src/pub_video.py
    src/test_detection.py
+   src/check_depth.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 import matplotlib.pyplot as plt
 
@@ -9,8 +9,8 @@ from geometry_msgs.msg import Quaternion
 from tf.transformations import euler_from_quaternion
 from geometry_msgs.msg import PoseArray, PoseWithCovarianceStamped
 
-particles_topic = "/pf_debug"
-pf_pose_topic = "/predicted_pose"
+particles_topic = "pf_debug"
+pf_pose_topic = "predicted_pose"
 ground_truth_topic = "/base_pose_ground_truth"
 
 x_data = []
@@ -44,7 +44,10 @@ def update_particles(pose_array):
 
 def update_pose(pose_msg):
     global predicted_x, predicted_y
+    max_pose_points = 30
 
+    predicted_x = predicted_x[-(max_pose_points - 1):]
+    predicted_y = predicted_y[-(max_pose_points - 1):]
     predicted_x.append(pose_msg.pose.pose.position.x)
     predicted_y.append(pose_msg.pose.pose.position.y)
     pln.set_data(predicted_x, predicted_y)

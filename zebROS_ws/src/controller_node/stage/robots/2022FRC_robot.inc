@@ -4,9 +4,9 @@
 define normal_camera fiducial
 (
 	range_min 0.0
-	range_max 10.0
-	range_max_id 10.0
-	fov 359
+	range_max 7.0
+	range_max_id 7.0
+	fov 100
 	ignore_zloc 1
 	size [ 0.2 0.2 0.2 ]
 	color "purple"
@@ -51,24 +51,24 @@ define omnidir_robot position
   acceleration_bounds [-4.5 4.5 -4.5 4.5 0 0 -90 90]
 
   # spawn sensors
-  normal_camera(pose [ 0.0 0.4445 0.0 0.0 ] )
+  normal_camera(pose [ 0.1 -0.1 0.65 0.0 ] )
 
   single_terrabee(pose [0.4445 0.0 0.0 0.0 ] )
 
   single_terrabee(pose [0.0 0.4445 0.0 90.0 ] )
 
-	camera
-	(
-	  # laser properties
-	  resolution [ 32 32 ]
-	  range [ 0.0 0.0 ]
-	  fov [ 70.0 40.0 ]
-	  pantilt [ 0.0 0.0 ]
+	#camera
+	#(
+	#  # laser properties
+	#  resolution [ 100 100 ]
+	#  range [ 0.2 8.0 ]
+	#  fov [ 80.0 50.0 ]
+	#  pantilt [ 0.0 0.0 ]
 
 	  # model properties
-	  size [0.2286 0.66675 0.15 ]
-	  pose [0.4445 0.0 -0.3 0 ]
-	  color "purple"
-	  watts 0.0
-	)
+	#  size [0.2286 0.66675 0.15 ]
+	#  pose [0.4445 0.0 -0.3 0 ]
+	#  color "blue"
+	#  watts 0.0
+	#)
 )

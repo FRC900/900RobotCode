@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import math
 import rospy
 from geometry_msgs.msg import Twist
-from goal_detection.msg import GoalDetection
+from field_obj.msg import Detection
 import numpy as np
 from scipy.cluster.vq import kmeans2,vq
 
@@ -21,9 +21,9 @@ def twist_callback(data):
     if ((data.linear.x != 0) or (data.linear.y != 0) or (data.angular.z != 0)):
         print("Non-zero cmd_vel found, done!")
         for i in range(len(avg_loc)):
-            print("===========================")
-            print(i)
-            print(dist_angle_measurements[i])
+            print ("===========================")
+            print (i)
+            print (dist_angle_measurements[i])
             if (i == 0):
                 all_dist_measurements = dist_angle_measurements[i]
             else:
@@ -32,20 +32,23 @@ def twist_callback(data):
 
         dists = np.linalg.norm(all_dist_measurements, axis=1)
         angles = np.arctan2(all_dist_measurements[:,1], all_dist_measurements[:,0])
-        print all_dist_measurements[:,1]
-        print all_dist_measurements[:,0]
-        print angles
+        print (all_dist_measurements[:,1])
+        print (all_dist_measurements[:,0])
+        print (angles)
+        print (f"std_dev : {np.std(all_dist_measurements, axis=0) }")
 
+        '''
         print ("cov", np.cov(dists, angles))
         centers, labels = kmeans2(all_dist_measurements, int(len(avg_loc)))
-        print centers
-        print labels
+        print(centers)
+        print(labels)
 
         for i in range(len(avg_loc)):
             d = dists[labels == i]
             a = angles[labels == i]
-            print("len = ", len(d))
+            print ("len = ", len(d))
             print ("cov", np.cov(d, a))
+        '''
         sys.exit(0)
 
 def goal_detection_callback(data):
@@ -58,9 +61,12 @@ def goal_detection_callback(data):
     # add to that list, or a new one if not matched
     #print ("dist_angle_measurements", dist_angle_measurements)
     #print ("avg_loc", avg_loc)
-    for i in range(len(data.location)):
-        x = data.location[i].x
-        y = data.location[i].y
+    for i in range(len(data.objects)):
+        if "cargo" in data.objects[i].id:
+            continue
+
+        x = data.objects[i].location.x
+        y = data.objects[i].location.y
         #print("data.location[", i, "]", data.location[i])
         #d = math.hypot(x, y)
         #a = math.atan2(y, x)
@@ -93,10 +99,13 @@ def listener():
     rospy.init_node('measure_variance', anonymous=True)
 
     rospy.Subscriber("/frcrobot_jetson/swerve_drive_controller/cmd_vel", Twist, twist_callback)
-    rospy.Subscriber("/goal_detect/goal_detect_msg", GoalDetection, goal_detection_callback)
+    rospy.Subscriber("/goal_detection/goal_detect_msg", Detection, goal_detection_callback)
+    #rospy.Subscriber("/tf_object_detection/object_detection_world", Detection, goal_detection_callback)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
 
 if __name__ == '__main__':
     listener()
+
+

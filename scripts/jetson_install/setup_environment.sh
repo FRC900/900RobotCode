@@ -3,7 +3,7 @@
 # with slight modifications on other Jetson hardware
 
 #install basic dependencies
-#sudo apt-add-repository ppa:ubuntu-toolchain-r/test -y 
+#sudo apt-add-repository ppa:ubuntu-toolchain-r/test -y
 sudo apt update
 sudo apt -y upgrade
 
@@ -88,7 +88,7 @@ sudo apt install -y \
 #TensorRT requires a newer version of cmake than standard apt repos provide
 cd
 #wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
-wget https://github.com/Kitware/CMake/releases/download/v3.21.3/cmake-3.21.3.tar.gz 
+wget https://github.com/Kitware/CMake/releases/download/v3.21.3/cmake-3.21.3.tar.gz
 tar -xf cmake-3.21.3.tar.gz
 cd cmake-3.21.3
 cmake -GNinja -DCMAKE_BUILD_TYPE:STRING=Release .
@@ -172,14 +172,14 @@ sudo bash -c "echo gs_usb >> /etc/modules"
 #sudo bash -c "echo mttcan >> /etc/modules"
 
 # This shouldn't be the least bit dangerous
-#sudo rm /etc/modprobe.d/blacklist-mttcan.conf 
+#sudo rm /etc/modprobe.d/blacklist-mttcan.conf
 
 # Disable l4tbridge - https://devtalk.nvidia.com/default/topic/1042511/is-it-safe-to-remove-l4tbr0-bridge-network-on-jetson-xavier-/
 # sudo rm /etc/systemd/system/nv-l4t-usb-device-mode.sh /etc/systemd/system/multi-user.target.wants/nv-l4t-usb-device-mode.service
 sudo systemctl disable nv-l4t-usb-device-mode.service
 sudo systemctl stop nv-l4t-usb-device-mode.service
 
-# Set up ssh host config (add port 5801) 
+# Set up ssh host config (add port 5801)
 sudo sed "s/#Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config && sudo mv sshd_config /etc/ssh
 
 #sudo bash -c "echo NTP=us.pool.ntp.org >> /etc/systemd/timesyncd.conf"
@@ -190,12 +190,11 @@ sudo chmod 664 /etc/systemd/system/hwrtc.service
 # The ntp config should read from hwrtc -> system clock if it can't
 # get to the internet to read from pool time servers
 #sudo systemctl enable hwrtc
-
     
 # and keys for connections to Rio
 mkdir -p ~/.ssh
 cd ~/.ssh
-tar -xjf ~/2022RobotCode/scripts/jetson_setup/jetson_dot_ssh.tar.bz2 
+tar -xjf ~/2022RobotCode/scripts/jetson_setup/jetson_dot_ssh.tar.bz2
 chmod 640 authorized_keys
 cd ~
 chmod 700 .ssh
@@ -262,7 +261,7 @@ find /home/ubuntu/sparkmax -name \*linux\*zip | grep -v debug | xargs -n 1 unzip
 rm -rf /home/ubuntu/sparkmax
 
 # Install wpilib headers by copying them from the local maven dir
-cd /home/ubuntu 
+cd /home/ubuntu
 wget https://github.com/wpilibsuite/allwpilib/releases/download/v2022.2.1/WPILib_Linux-2022.2.1.tar.gz
 mkdir -p /home/ubuntu/wpilib/2022
 cd /home/ubuntu/wpilib/2022
@@ -333,7 +332,7 @@ sudo make -j`nproc --all` install
 cd
 sudo rm -rf make-4.3*
 
-# Give the ubuntu user dialout permission, which is used by the ADI IMU 
+# Give the ubuntu user dialout permission, which is used by the ADI IMU
 sudo adduser ubuntu dialout
 
 git clone https://github.com/VundleVim/Vundle.vim.git /home/ubuntu/.vim/bundle/Vundle.vim
@@ -342,7 +341,7 @@ ln -sf /home/ubuntu/.vim/bundle/vim-ros-ycm/.ycm_extra_conf.py /home/ubuntu/.vim
 cd /home/ubuntu/.vim/bundle/YouCompleteMe
 git fetch origin
 git submodule update --init --recursive
-python3 ./install.py --clang-completer --system-libclang --ninja 
+python3 ./install.py --clang-completer --system-libclang --ninja
 
 # Install tensorflow on Jetson
 sudo pip3 install -U pip testresources setuptools==49.6.0
@@ -354,7 +353,7 @@ sudo pip3 install --extra-index-url https://developer.download.nvidia.com/comput
 sudo pip3 install matplotlib
 
 # Fails with error install grpcio?
-#sudo pip3 install protobuf-compiler 
+#sudo pip3 install protobuf-compiler
 sudo apt install -y protobuf-compiler
 cd /home/ubuntu
 git clone https://github.com/tensorflow/models.git
@@ -369,13 +368,13 @@ sudo pip3 install --ignore-installed .
 
 cd
 export PATH=$PATH:/usr/local/cuda/bin
-git clone https://github.com/NVIDIA/TensorRT.git 
-cd TensorRT 
-git submodule update --init --recursive 
+git clone https://github.com/NVIDIA/TensorRT.git
+cd TensorRT
+git submodule update --init --recursive
 git checkout 20.11
-mkdir build 
-cd build 
-cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DGPU_ARCHS="72" -DCMAKE_CXX_STANDARD=17 .. 
+mkdir build
+cd build
+cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DGPU_ARCHS="72" -DCMAKE_CXX_STANDARD=17 ..
 sudo ninja install
 
 #sudo pip3 install --install-option="--jobs=6" --global-option=build_ext --global-option="-I/usr/local/cuda/include" --global-option="-L/usr/local/cuda/lib64" pycuda
@@ -413,4 +412,3 @@ sudo ccache -c
 sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 
 echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev/linux/aarch64bionic/shared:/usr/local/lib" >> /home/ubuntu/.bashrc
-

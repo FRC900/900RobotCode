@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<launch>
+  <arg name="usb_cam" default="false"/>
+  
+  <group ns="cuda_apriltag">
+  <!-- Set parameters -->
+  <rosparam command="load" file="$(find cuda_apriltag_ros)/config/settings.yaml"/>
+  <group if="$(arg usb_cam)">
+    <include file="$(find usb_cam)/launch/usb_cam-test.launch"/>
+    
+    <node pkg="cuda_apriltag_ros" type="cuda_continuous_detector" name="cuda_continuous_detector" output="screen">
+    <remap from="/usb_cam/image_raw" to="/cuda_apriltag/usb_cam/image_raw"/>
+	  <remap from="/usb_cam/camera_info" to="/cuda_apriltag/usb_cam/camera_info"/>
+    </node>
+
+  </group>
+
+  <group unless="$(arg usb_cam)">
+  <node pkg="cuda_apriltag_ros" type="cuda_continuous_detector" name="cuda_continuous_detector" output="screen">
+
+	  <remap from="/usb_cam/image_raw" to="/zed_objdetect/left/image_rect_color"/>
+	  <remap from="/usb_cam/camera_info" to="/zed_objdetect/left/camera_info"/>
+  </node>
+  </group>
+
+
+
+  </group>
+</launch>

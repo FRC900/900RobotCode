@@ -29,16 +29,35 @@
 	<rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
     <node pkg="tf_object_detection" name="tf_object_detection" type="trtdetection.py" output="screen">
     </node>
-<!--
+    <node pkg="tf_object_detection" name="check_depth" type="check_depth.py" output="screen">
+    </node>
     <node pkg="tf_object_detection" name="tf_object_screen_to_world" type="tf_object_screen_to_world" output="screen">
     </node>
     <node pkg="tf_object_detection" name="cargo_detection_filter" type="cargo_detection_filter" output="screen">
     </node>
--->
+  
 
 	   <!--Possible that this should not be in namespace?-->
     <node pkg="tf_object_detection" name="pub_video" type="pub_video.py" output="screen" if="$(eval input_type == 'video')">
       <rosparam command="load" file="$(find tf_object_detection)/config/pub_video_config.yaml" />
     </node>
   </group>
+  <arg name="cam_image_topic" default="left/image_rect_gray" />
+	<arg name="cam_info_topic" default="left/camera_info" />
+	<arg name="output_frame" default="/zed_ar_left_camera_frame" />
+
+	<!--
+	<include file="$(find apriltag_launch)/launch/apriltag_continuous_detection.launch">
+		<arg name="camera_name"            value="$(arg zed_name)" />
+		<arg name="image_topic"            value="$(arg cam_image_topic)" />
+	</include>
+	-->
+  <group ns="goal_detection">
+  <node pkg="apriltag_launch" name="apriltag_to_pf_node" type="apriltag_to_pf_node" output="screen">
+    </node>
+  </group>
+  
+  <!-- Launch apriltags-->
+  <include file="$(find cuda_apriltag_ros)/launch/cuda_continuous_detection.launch">
+	</include>
 </launch>

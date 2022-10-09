@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<package>
+  <name>cuda_apriltag_ros</name>
+  <version>1.0.0</version>
+  <description>
+    Hacking together the ros2 nvidia_isaac_ros apriltags package to work with ros1
+  </description>
+
+  <author>Christopher Holley</author>
+  <maintainer email="programmers@team900.org">FRC Team 900 Programmers</maintainer>
+  <license>GPL</license>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>apriltag</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>image_transport</build_depend>
+  <build_depend>image_geometry</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>eigen</build_depend>
+  <build_depend>libopencv-dev</build_depend>
+  <build_depend>cmake_modules</build_depend>
+  
+  <run_depend>tf</run_depend>
+  <run_depend>apriltag</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>image_transport</run_depend>
+  <run_depend>image_geometry</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>eigen</run_depend>
+  <run_depend>libopencv-dev</run_depend>
+
+</package>

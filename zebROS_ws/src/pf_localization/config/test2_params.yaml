@@ -1,0 +1,27 @@
+noise_delta_t: 1.0
+map_frame_id: 'map'
+odom_frame_id: 'zed_objdet_odom'
+
+field_dims:
+  x_min: -2.5
+  x_max: 2.5
+  y_min: -2.5
+  y_max: 2.5
+
+init_dims:
+  x_min: -2.5
+  x_max: 2.5
+  y_min: -2.5
+  y_max: 2.5
+
+num_particles: 200
+
+noise_stdev:
+  position: 0.01
+  rotation: 0.01
+
+beacons:
+  - [0.0, 0.0, "3"]
+  - [0.02, 1.37, "11"]
+  - [0.01, -0.3556, "17"]
+  - [1.35, -0.87, "51"]

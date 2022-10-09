@@ -12,6 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
 	dynamic_reconfigure
 	dynamic_reconfigure_wrapper
 	frc_msgs
+	field_obj
+	tf2_ros
+	tf2
 	roscpp
 	std_srvs
 	talon_state_msgs
@@ -152,6 +155,14 @@ add_dependencies(snap_to_angle_node_2022
 	${catkin_EXPORTED_TARGETS}
 	)
 
+add_executable(snap_to_cargo_node_2022 src/2022_snap_to_nearest_cargo.cpp)
+target_link_libraries(snap_to_cargo_node_2022
+	${catkin_LIBRARIES}
+	)
+add_dependencies(snap_to_cargo_node_2022
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS}
+	)
 
 ## TOOLS ------------------------------------------------------
 

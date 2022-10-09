@@ -6,9 +6,10 @@
 
 ros::Publisher pub;
 
-std::string friendlyCargo;
-std::string opponentCargo;
-bool allianceKnown = false;
+// default to red, in case match data isn't coming through (e.g. we are practicing)
+std::string friendlyCargo = "red_cargo";
+std::string opponentCargo = "blue_cargo";
+bool allianceKnown = true;
 
 void detectionCallback(const field_obj::DetectionConstPtr objDetectionMsg) {
     field_obj::Detection copy = *objDetectionMsg;
@@ -57,7 +58,7 @@ int main(int argc, char *argv[]) {
 
     pub = nh.advertise<field_obj::Detection>("object_detection_world_filtered", 2);
     ros::Subscriber detections = nh.subscribe("object_detection_world", 2, detectionCallback);
-    ros::Subscriber matchData = nh.subscribe("/frcrobot_rio/match_data_in", 2, matchCallback);
+    ros::Subscriber matchData = nh.subscribe("/frcrobot_rio/match_data", 2, matchCallback);
 
     ros::spin();
 

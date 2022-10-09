@@ -5,7 +5,7 @@ path_follower:
     #odom_topic: "/swerve_imu_ukf/odometry/filtered"
     #odom_topic: "/frcrobot_jetson/swerve_drive_controller/odom"
     #pose_topic
-    use_odom_orientation: false # false == get yaw from IMU topic instead
+    use_odom_orientation: true # false == get yaw from IMU topic instead
     # Set this as a param so sim can use fake odom while the real robot
     # uses ZED pose
     #use_pose_for_odom : true # true == use PoseStamped subscriber (e.g. zed camera pose) for odom rather than Odometry subscriber

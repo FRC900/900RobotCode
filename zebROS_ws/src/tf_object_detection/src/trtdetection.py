@@ -47,7 +47,7 @@ init = False
 def run_inference_for_single_image(msg):
     # TODO Maybe remove all these globals and make a class
     global viz, init, host_inputs, cuda_inputs, host_outputs, cuda_outputs, stream, context, bindings, host_mem, cuda_mem, cv2gpu, imgResized, imgNorm, gpuimg, finalgpu, category_dict
-    
+
     if init == False:
 
         ori = bridge.imgmsg_to_cv2(msg, "bgr8")
@@ -102,9 +102,9 @@ def run_inference_for_single_image(msg):
         host_outputs = []
         cuda_outputs = []
         bindings = []
-        finalgpu = jetson.utils.cudaAllocMapped(width=model.dims[1], height=model.dims[2], format='rgb32f') 
+        finalgpu = jetson.utils.cudaAllocMapped(width=model.dims[1], height=model.dims[2], format='rgb32f')
         stream = cuda.Stream()
-        
+
         for binding in engine:
             if engine.binding_is_input(binding):
                 # Should only be 1 input, the post-processed image
@@ -114,12 +114,12 @@ def run_inference_for_single_image(msg):
                 host_mem = cuda.pagelocked_empty(size, np.float32)
                 cuda_mem = cuda.mem_alloc(host_mem.nbytes)
                 bindings.append(int(cuda_mem))
-                #print("Host mem=", host_mem, "CUDA mem", cuda_mem ,"Bindings=", bindings) 
+                #print("Host mem=", host_mem, "CUDA mem", cuda_mem ,"Bindings=", bindings)
                 host_outputs.append(host_mem)
                 cuda_outputs.append(cuda_mem)
-        
+
         context = engine.create_execution_context()
-        
+
         # List of the strings that is used to add correct label for each box.
         rospack = rospkg.RosPack()
         THIS_DIR = os.path.join(rospack.get_path('tf_object_detection'), 'src/')
@@ -129,11 +129,11 @@ def run_inference_for_single_image(msg):
         category_dict = {0: 'background'}
         for k in category_index.keys():
             category_dict[k] = category_index[k]['name']
-        
+
         viz = BBoxVisualization(category_dict)
         rospy.logwarn("Obj detection init complete, starting script")
         init = True
-        
+
 
     ori = bridge.imgmsg_to_cv2(msg, "bgr8")
     # Trying with gpu
@@ -144,7 +144,7 @@ def run_inference_for_single_image(msg):
     jetson.utils.cudaTensorConvert(imgInput, finalgpu, imagerange)
 
     context.execute_async(bindings=bindings, stream_handle=stream.handle)
-    
+
     # host_outputs[1] is not needed
     # cuda.memcpy_dtoh_async(host_outputs[1], cuda_outputs[1], stream)
     cuda.memcpy_dtoh_async(host_outputs[0], cuda_outputs[0], stream)
@@ -157,16 +157,18 @@ def run_inference_for_single_image(msg):
     clss = []
     detection = TFDetection()
     detection.header = msg.header
-    detection.header.frame_id = detection.header.frame_id.replace("_optical_frame", "_frame")
+    # Will end transformed to optical frame in screen to world
+    # detection.header.frame_id = detection.header.frame_id.replace("_optical_frame", "_frame")
+    
     # Converts numpy array to list becuase extracting indviual items from a list is faster than numpy array
-    # Might be a more optimized way but this takes negligible time 
+    # Might be a more optimized way but this takes negligible time
     output = output.tolist()
     debug = False
     if pub_debug.get_num_connections() > 0:
         debug = True
     for i in range(int(len(output) / model.layout)):
         prefix = i * model.layout
-        
+
         conf = float(output[prefix + 2])
         if conf < min_confidence:
             continue
@@ -189,24 +191,24 @@ def run_inference_for_single_image(msg):
         obj.id = index
         obj.label = label
         detection.objects.append(obj)
-        if debug == True: 
+        if debug == True:
             boxes.append([output[prefix + 4], output[prefix + 3], output[prefix + 6], output[prefix + 5]])
             clss.append(int(output[prefix + 1]))
             confs.append(output[prefix + 2])
-    
+
     pub.publish(detection)
-    #Visualize 
+    #Visualize
     if debug == True:
         viz.draw_bboxes(ori, boxes, confs, clss, min_confidence)
         pub_debug.publish(bridge.cv2_to_imgmsg(ori, encoding="bgr8"))
-        
+
         #cv2.imwrite("result.jpg", ori)
         #cv2.imshow("result", ori)
         #key = cv2.waitKey(.5) & 0x000000FF
 
 
 def main():
-    
+
     os.chdir(THIS_DIR)
 
     global pub, category_index, pub_debug, min_confidence, vis
@@ -214,13 +216,13 @@ def main():
     pub_topic = "obj_detection_msg"
     rospy.init_node('tf_object_detection', anonymous=True)
     min_confidence = 0.1
-    
+
     if rospy.has_param('min_confidence'):
         min_confidence = rospy.get_param('min_confidence')
         rospy.loginfo("Min confidence of " + str(min_confidence) + " loaded from config")
     else:
         rospy.logwarn("Unable to get min confidence, defaulting to 0.1")
-    
+
     if rospy.has_param('image_topic'):
         sub_topic = rospy.get_param('image_topic')
         rospy.loginfo("Image topic of " + str(sub_topic) + " loaded from config")
@@ -239,4 +241,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

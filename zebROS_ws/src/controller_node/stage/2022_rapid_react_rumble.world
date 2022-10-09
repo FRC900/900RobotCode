@@ -1,0 +1,91 @@
+# Top-level world file for the rapid react field stage simulation
+include "robots/2022FRC_robot.inc"
+
+# Object detection model - used as a base for each target
+# we can detect using tensorflow object detection
+# TODO - maybe also retro targets?
+define objdet_target model
+(
+ size [ 0.200 0.200 0.050 ]
+ gui_move 0
+ gui_nose 0
+ gripper_return 1
+ ranger_return -1.000
+)
+
+# Model for the basic floorplan - walls, and field obstacles
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 1
+
+  gui_nose 0
+  gui_grid 0
+  gui_move 0
+  gui_outline 0
+  gripper_return 1
+  fiducial_return -1
+  ranger_return 1.000
+)
+
+resolution 0.02
+interval_sim 5 # simulation timestep in milliseconds
+interval_real 5
+threads 2
+
+window
+(
+  size [ 1299  609 ]
+  center [ 0.000 0.000 ]
+  rotate [ 0.000 0.000 ]
+  scale 60.000
+)
+
+# Size determines how pixels map to meters
+# Pose fixes the center of the field
+# PNG is black and white image
+floorplan
+(
+  name "rapid_react_field_map"
+  bitmap "../maps/rapid_react_field_cad_cropped.png"
+  size [16.5 8.205 1.000] #[24.6888 33.5274 4] x, y, size of the map (meters)
+  pose [ 8.2296  4.1148  0.000 0.000 ] #[  4.1148 8.5341  0.0 0.0 ] x, y, z, rotation
+)
+
+# throw in a robot
+omnidir_robot
+(
+  # Everything but slalom
+  pose [ 1.041 2.286 0.000 0.000 ]
+  # Slalom pose [ 1.0414 .762 0.0 0.0 ]
+  name "robot"
+)
+
+# stage doesn't like tag with fiducial_return 0, so it is 111 here
+objdet_target ( pose [ 0.004 7.579 2.5 0 ] fiducial_return 111 color "cyan")
+objdet_target ( pose [ 3.233 5.487 2.5 0 ] fiducial_return 1 color "cyan")
+objdet_target ( pose [ 3.068 5.331 2.5 0 ] fiducial_return 2 color "cyan")
+objdet_target ( pose [ 0.004 5.059 2.5 0 ] fiducial_return 3 color "cyan")
+objdet_target ( pose [ 0.004 0.004 2.5 0 ] fiducial_return 4 color "cyan")
+objdet_target ( pose [ 0.121 1.718 2.5 0 ] fiducial_return 5 color "cyan")
+objdet_target ( pose [ 0.873 0.941 2.5 0 ] fiducial_return 6 color "cyan")
+objdet_target ( pose [ 1.615 0.157 2.5 0 ] fiducial_return 7 color "cyan")
+objdet_target ( pose [ 16.463 0.651 2.5 0 ] fiducial_return 10 color "cyan")
+objdet_target ( pose [ 13.235 2.743 2.5 0 ] fiducial_return 11 color "cyan")
+objdet_target ( pose [ 13.391 2.9 2.5 0 ] fiducial_return 12 color "cyan")
+objdet_target ( pose [ 16.455 3.176 2.5 0 ] fiducial_return 13 color "cyan")
+objdet_target ( pose [ 16.455 4.717 2.5 0 ] fiducial_return 14 color "cyan")
+objdet_target ( pose [ 16.335 6.515 2.5 0 ] fiducial_return 15 color "cyan")
+objdet_target ( pose [ 15.59 7.293 2.5 0 ] fiducial_return 16 color "cyan")
+objdet_target ( pose [ 14.847 8.069 2.5 0 ] fiducial_return 17 color "cyan")
+objdet_target ( pose [ 7.874 4.913 2.5 0 ] fiducial_return 40 color "cyan")
+objdet_target ( pose [ 7.431 3.759 2.5 0 ] fiducial_return 41 color "cyan")
+objdet_target ( pose [ 8.585 3.316 2.5 0 ] fiducial_return 42 color "cyan")
+objdet_target ( pose [ 9.028 4.47 2.5 0 ] fiducial_return 43 color "cyan")
+objdet_target ( pose [ 7.679 4.326 2.5 0 ] fiducial_return 50 color "cyan")
+objdet_target ( pose [ 8.018 3.564 2.5 0 ] fiducial_return 51 color "cyan")
+objdet_target ( pose [ 8.78 3.903 2.5 0 ] fiducial_return 52 color "cyan")
+objdet_target ( pose [ 8.441 4.665 2.5 0 ] fiducial_return 53 color "cyan")

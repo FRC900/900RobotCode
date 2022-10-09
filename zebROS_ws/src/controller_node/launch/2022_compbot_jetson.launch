@@ -10,7 +10,7 @@
 	<arg name="joy_or_key" default="joy" />
 	<arg name="button_box" default="true"/>
 	<arg name="record" default="false" />
-	<arg name="primary_imu" default="ADI" />
+	<arg name="primary_imu" default="ZED" />
 
 	<group ns="frcrobot_jetson">
 		<rosparam file="$(find ros_control_boilerplate)/config/2022_compbot_base_jetson.yaml" command="load"/>
@@ -60,10 +60,10 @@
 	-->
 	</group>
 
+	<include file="$(find teleop_joystick_control)/launch/2022_snap_to_angle.launch"/>
 	<include file="$(find controller_node)/launch/teleop.launch">
 		<arg name="year" value="2022" />
 	</include>
-	<include file="$(find teleop_joystick_control)/launch/2022_snap_to_angle.launch"/>
 
 	<group ns="cmd_vel_mux">
 		<node name="twist_mux" pkg="twist_mux" type="twist_mux">
@@ -119,18 +119,19 @@
 	-->
 
 
-	<!--
+	
 	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
 		<arg name="port" value="5803"/>
 	</include>
-	-->
+	
 
 	<!-- Consider adding 2022 launch file for recording -->
 	<include file="$(find controller_node)/launch/record_2022_compbot.launch" if="$(arg record)" />
 	<!--
 	<include file="$(find controller_node)/launch/record_2022_no_zed.launch" if="$(arg record)" />
+	-->
 
 	<include file="$(find controller_node)/launch/pf_localization.launch"/>
-	-->
+	
 
 </launch>
