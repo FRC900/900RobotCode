@@ -136,41 +136,44 @@ class ShooterAction {
 		bool getHoodAndVelocity(bool& hood_extended, double& shooter_speed)
 		{
 			field_obj::Detection local_goal_msg;
-			std::lock_guard<std::mutex> l(goal_msg_mutex_);
-			local_goal_msg = goal_msg_;
+			{
+				std::lock_guard<std::mutex> l(goal_msg_mutex_);
+				local_goal_msg = goal_msg_;
+			}
 
 			//get the goal position
 			bool found_goal = false;
-			geometry_msgs::Point goal_pos_;
+			geometry_msgs::Point goal_pos;
 			for (const field_obj::Object &obj : local_goal_msg.objects)
 			{
 				if(obj.id == "power_port")
 				{
-					goal_pos_ = obj.location;
+					goal_pos = obj.location;
 					found_goal = true;
+					break;
 				}
 			}
 
 			if(found_goal)
 			{
 				// find transformed goal position
-				geometry_msgs::PointStamped goal_pos_from_zed;
-				goal_pos_from_zed.header = local_goal_msg.header;
-				goal_pos_from_zed.point.x = goal_pos_.x;
-				goal_pos_from_zed.point.y = goal_pos_.y;
-				goal_pos_from_zed.point.z = goal_pos_.z;
+				geometry_msgs::PointStamped goal_posfrom_zed;
+				goal_posfrom_zed.header = local_goal_msg.header;
+				goal_posfrom_zed.point.x = goal_pos.x;
+				goal_posfrom_zed.point.y = goal_pos.y;
+				goal_posfrom_zed.point.z = goal_pos.z;
 
 				geometry_msgs::PointStamped transformed_goal_pos;
 				geometry_msgs::TransformStamped zed_to_turret_transform;
 				try {
-					zed_to_turret_transform = tf_buffer_.lookupTransform("turret_center", "zed_camera_center", ros::Time::now());
-					tf2::doTransform(goal_pos_from_zed, transformed_goal_pos, zed_to_turret_transform);
+					zed_to_turret_transform = tf_buffer_.lookupTransform("turret_center", local_goal_msg.header.frame_id, ros::Time::now());
+					tf2::doTransform(goal_posfrom_zed, transformed_goal_pos, zed_to_turret_transform);
 				}
 				catch (tf2::TransformException &ex) {
 					ROS_WARN("Shooter actionlib server failed to do ZED->turret transform - %s", ex.what());
 					return false;
 				}
-				ROS_INFO_STREAM("shooter server - original goal_pos: (" << goal_pos_.x << ", " << goal_pos_.y << ", " << goal_pos_.z << ")");
+				ROS_INFO_STREAM("shooter server - original goal_pos: (" << goal_pos.x << ", " << goal_pos.y << ", " << goal_pos.z << ")");
 				ROS_INFO_STREAM("shooter server - transformed goal_pos: (" << transformed_goal_pos.point.x << ", " << transformed_goal_pos.point.y << ", " << transformed_goal_pos.point.z << ")");
 
 				//obtain distance via trig
@@ -227,8 +230,6 @@ class ShooterAction {
 				as_.setPreempted();
 				return;
 			}
-
-
 
 			//align the turret
 			behavior_actions::AlignToShootGoal align_goal;
@@ -461,11 +462,12 @@ class ShooterAction {
 
 	public:
 		//thread to publish if target is visible/within range
+		// TODO - run this via a ROS timer instead
 		void publishInRangeThread()
 		{
 		#ifdef __linux__
 			//give the thread a name
-			pthread_setname_np(pthread_self(), "shooter_in_range_pub_thread");
+			pthread_setname_np(pthread_self(), "s_in_range");
 		#endif
 
 			ros::Publisher in_range_pub = nh_.advertise<std_msgs::Bool>("shooter_in_range", 1);
