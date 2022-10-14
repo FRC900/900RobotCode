@@ -6,8 +6,8 @@ if [ -z $ROS_ROOT ]; then
 	#PATH=$PATH:$HOME/wpilib/2022/roborio/bin
 	source ~/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/noetic/setup.bash
 elif [[ ! $ROS_ROOT = "$HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/ros/noetic/share/ros" ]]; then
-	echo "ROS is not configured for a cross build (maybe set up for a native build instead?)"
-	echo "Run ./cross_build.sh in a new terminal window"
+	echo -e "\e[1m\e[31mROS is not configured for a cross build (maybe set up for a native build instead?)\e[0m"
+	echo -e "\e[1m\e[31mRun ./cross_build.sh in a new terminal window\e[0m"
 	exit 1
 fi
 
@@ -42,4 +42,4 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	zed_ros \
 	zed_wrapper \
 	zms_writer
-catkin build --profile cross -DCMAKE_TOOLCHAIN_FILE=`pwd`/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF "$@"
+catkin build --profile cross -DCMAKE_TOOLCHAIN_FILE=`pwd`/rostoolchain.cmake -DCATKIN_ENABLE_TESTING=OFF -DSETUPTOOLS_DEB_LAYOUT=OFF "$@"

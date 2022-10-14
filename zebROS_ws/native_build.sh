@@ -9,8 +9,8 @@ if [ -z $ROS_ROOT ]; then
 		source devel/setup.bash
 	fi
 elif [[ ! $ROS_ROOT = "/opt/ros/noetic/share/ros" ]]; then
-	echo "ROS is not configured for a native build (maybe set up for a cross build instead?)"
-	echo "Run ./native_build.sh in a new terminal window"
+	echo -e "\e[1m\e[31mROS is not configured for a native build (maybe set up for a cross build instead?)\e[0m"
+	echo -e "\e[1m\e[31mRun ./native_build.sh in a new terminal window\e[0m"
 	exit 1
 fi
 export PATH=$PATH:/usr/local/cuda/bin
@@ -38,7 +38,9 @@ catkin config --skiplist \
 	zed_ros \
 	$EXTRA_BLACKLIST_PACKAGES
 
-catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON -DCMAKE_CXX_STANDARD=17 $EXTRA_CMD_LINE "$@"
+catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON -DCMAKE_CXX_STANDARD=17 -DSETUPTOOLS_DEB_LAYOUT=OFF  $EXTRA_CMD_LINE "$@"
+
+./merge_compile_commands.sh
 
 if [ $? -ne 0 ] ; then
 	echo FAIL > .native_build.status

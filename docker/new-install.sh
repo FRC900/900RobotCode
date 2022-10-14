@@ -8,8 +8,8 @@ sudo apt upgrade
 sudo apt install -y terminator
 
 # Docker setup
-sudo apt-get remove docker docker-engine docker.io containerd runc
-sudo apt-get install -y \
+sudo apt remove docker docker-engine docker.io containerd runc
+sudo apt install -y \
     apt-transport-https \
     ca-certificates \
     curl \
