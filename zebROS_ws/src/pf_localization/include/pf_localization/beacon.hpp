@@ -13,18 +13,28 @@
 #include <string>
 #include <vector>
 
+//#include <ros/console.h>
+
 struct PositionBeacon;
 struct BeaconBase {
 	const std::string type_;
 	BeaconBase(const std::string &type) : type_(type) {}
 	// Get the distance from this beacon (a detected field object) to a list of
-	// known beacon locations (the rel vector).  Returns a vector with a distance
-	// measurements, each one corresponding to the distance (or cost) to the
-	// beacon position in the rel vector
+	// measured beacon locations (the rel vector, for camera-relative measurements).  Returns
+	// a vector with a distance value, each one corresponding to the distance from
+	// this map beacon to a measured beacon position
 	virtual std::vector<double> distances(const std::vector<PositionBeacon>& rel) const = 0;
+	// Calculate a measurement's contribution to total particle weight. The weight is
+	// the probability we'd get this measurement given the mapping from measurements to map
+	// beacons. This function calculates the weight of one beacon->measurement mapping.
+	// The object is the camera-relative measurement, and the b arg is camera-relative map beacon location
+	// Sigmas holds the std dev expected from the measurement
+	virtual double weight(const PositionBeacon &b, const std::vector<double> &sigmas) const = 0;
 	virtual double debugSum(void) const = 0;
 };
 
+struct PositionBeacon;
+std::ostream& operator<<(std::ostream &os, const PositionBeacon& b);
 struct PositionBeacon : BeaconBase {
   const double x_;
   const double y_;
@@ -37,10 +47,24 @@ struct PositionBeacon : BeaconBase {
 	  }
 	  return res;
   }
+  double weight(const PositionBeacon &b, const std::vector<double> &sigmas) const override
+  {
+	  const double dx = b.x_ - x_;
+	  const double dy = b.y_ - y_;
+#if 0
+	  ROS_INFO_STREAM("weight");
+	  ROS_INFO_STREAM("this = " << *this);
+	  ROS_INFO_STREAM("b = " << b);
+	  ROS_INFO_STREAM("dx = " << dx << " dy = " << dy);
+	  ROS_INFO_STREAM("sigmas = " << sigmas[0] << " " << sigmas[1]);
+#endif
+	  return exp(-(dx * dx) / (sigmas[0] * sigmas[0])) *
+	         exp(-(dy * dy) / (sigmas[1] * sigmas[1]));
+
+  }
   double debugSum(void) const override { return x_ + y_; }
 };
 
-std::ostream& operator<<(std::ostream &os, const PositionBeacon& b);
 
 struct BearingBeacon : BeaconBase {
   const double angle_;
@@ -55,6 +79,14 @@ struct BearingBeacon : BeaconBase {
 		  res.push_back(diff);
 	  }
 	  return res;
+  }
+  double weight(const PositionBeacon &b, const std::vector<double> &sigmas) const override
+  {
+	  BearingBeacon ba {b.x_, b.y_, b.type_};
+	  double diff = std::abs(fmod(angle_, (2 * M_PI)) - fmod(ba.angle_, (2 * M_PI)));
+	  if (diff > M_PI) diff -= 2 * M_PI;
+	  return exp(-(diff * diff) / (sigmas[0] * sigmas[0]));
+
   }
   double debugSum(void) const override { return angle_; }
 };

@@ -3,7 +3,6 @@
 #include "pf_localization/particle_filter.hpp"
 #include "pf_localization/world_model.hpp"
 #include <geometry_msgs/PoseWithCovariance.h>
-#include <tf2/LinearMath/Quaternion.h>
 #include <cmath>
 #include <angles/angles.h>
 #include <ros/console.h>
@@ -75,13 +74,18 @@ void ParticleFilter::reinit(){
 
 //Normalize weights to sum to 1
 void ParticleFilter::normalize() {
-  double sum = 0;
+  double sum = 0.0;
   for (const Particle& p : particles_) {
     sum += p.weight_;
   }
-  for (Particle& p : particles_) {
-    if (sum != 0) p.weight_ /= sum;
-    else p.weight_ = 1.0 / particles_.size();
+  if (sum == 0.0) {
+    for (Particle& p : particles_) {
+      p.weight_ = 1.0 / particles_.size();
+    }
+  } else {
+    for (Particle& p : particles_) {
+      p.weight_ /= sum;
+	}
   }
 }
 
@@ -109,7 +113,7 @@ void ParticleFilter::resample() {
     for (const Particle& p : particles_) {
       a += p.weight_;
       if (a > r) {
-        new_particles.push_back(p);
+        new_particles.emplace_back(p);
         break;
       }
     }
@@ -187,7 +191,7 @@ bool ParticleFilter::motion_update(double delta_x, double delta_y, double delta_
     // that case. Remove the return false here to the particles which do
     // pass are constrained properly
 #ifdef CHECK_NAN
-    if (std::isnan(delta_rot + abs_delta_x + abs_delta_y) || std::isinf(delta_rot + abs_delta_x + abs_delta_y)) {
+    if (!std::isfinite(delta_rot + abs_delta_x + abs_delta_y)) {
       return false;
     }
 #endif
@@ -201,7 +205,7 @@ bool ParticleFilter::motion_update(double delta_x, double delta_y, double delta_
 
 bool ParticleFilter::set_rotation(double rot) {
 #ifdef CHECK_NAN
-  if (std::isnan(rot) || std::isinf(rot)) {
+  if (!std::isfinite(rot)) {
     return false;
   }
 #endif
@@ -212,29 +216,26 @@ bool ParticleFilter::set_rotation(double rot) {
   return true;
 }
 
-//assigns the reciprocal of the computed error of each particles assignment vector to the respective particle
-bool ParticleFilter::assign_weights(const std::vector<std::shared_ptr<BeaconBase>> &mBeacons) {
-  if (mBeacons.size() == 0)
+//assigns a weight to each particle. The weight is the probability we'd see the given
+//measurements given the std deviation of measurement noise and each particle location is correct
+bool ParticleFilter::assign_weights(const std::vector<std::shared_ptr<BeaconBase>> &measurements,
+		const std::vector<double> &sigmas) {
+  if (measurements.empty()) {
 	return false;
+  }
 
 #ifdef CHECK_NAN
-  double test_sum = offset.x_ + offset.y_ + offset.rot_;
-  for (const auto& b : mBeacons) {
+  double test_sum = 0;
+  for (const auto& b : measurements) {
     test_sum += b->debugSum();
   }
-  if (std::isnan(test_sum) || std::isinf(test_sum)) {
+  if (!std::isfinite(test_sum)) {
     return false;
   }
 #endif
 
-  std::vector<double> total_distances;
   for (Particle& p : particles_) {
-    total_distances.push_back(world_.total_distance(p, mBeacons));
-    if (total_distances.back() == 0)
-      return false;
-  }
-  for (size_t i = 0; i < particles_.size(); i++) {
-    particles_[i].weight_ = 1.0 / total_distances[i];
+	p.weight_ = world_.total_distance(p, measurements, sigmas);
   }
   normalize();
   return true;

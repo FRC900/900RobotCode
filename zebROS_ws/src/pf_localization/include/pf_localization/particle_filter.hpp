@@ -7,7 +7,12 @@
 #include "world_model.hpp"
 #include <geometry_msgs/PoseWithCovariance.h>
 
+// Run checks that each particle hasn't ended up with NaN or Inf
+// values - useful for debugging but a lot of overhead for normal use
+// Currently there shouldn't be any checks in the code, but this macro
+// can be used to add them if needed
 #define CHECK_PARTICLES(o) o->check_particles(__FILE__, __LINE__);
+//#define CHECK_PARTICLES(o)
 class ParticleFilter {
 private:
   const size_t num_particles_;
@@ -29,7 +34,7 @@ public:
   void noise_pos();
   bool motion_update(double delta_x, double delta_y, double delta_rot);
   bool set_rotation(double rot);
-  bool assign_weights(const std::vector<std::shared_ptr<BeaconBase>> &mBeacons);
+  bool assign_weights(const std::vector<std::shared_ptr<BeaconBase>> &measurements, const std::vector<double> &sigmas);
   void resample();
   std::vector<Particle> get_particles() const;
   void check_particles(const char *file, int line) const;

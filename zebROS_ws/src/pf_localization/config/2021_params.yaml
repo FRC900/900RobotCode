@@ -18,6 +18,8 @@ noise_stdev:
   position: 0.02
   rotation: 0.02
 
+camera_sigmas: [ 0.025, 0.025 ]
+
 beacons:
   - [13.2364734, 0.298196, "blue_launchpad"]
   - [13.2364734, 2.749296, "blue_launchpad"]

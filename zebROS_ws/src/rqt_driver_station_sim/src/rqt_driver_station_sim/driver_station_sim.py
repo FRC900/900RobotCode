@@ -1,5 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
+from cgitb import enable
 import os
 import argparse
 import rospy
@@ -61,7 +62,7 @@ class DriverStationSim(Plugin):
             #print "Calling service %s:  %d %s %d %d" %('/frcrobot_' + sender.where +'/set_limit_switch', 0, obj_name[:-2], forward, reverse)
             limit_switch_service(0, obj_name[:-2], forward, reverse)
         except rospy.ServiceException, e:
-            print "set_limit_switch service call failed: %s"%e
+            print ("set_limit_switch service call failed: %s"%enable)
 
 
     def _din_checkbox_handler(self, data = None):
@@ -72,7 +73,7 @@ class DriverStationSim(Plugin):
             #print "Calling service %s:  %d %s %d " %('/frcrobot_' + sender.where +'/linebreak_service_set', 0, sender.objectName(), sender.isChecked())
             linebreak_service(0, sender.objectName(), sender.isChecked())
         except rospy.ServiceException, e:
-            print "linebreak_service call failed: %s"%e
+            print ("linebreak_service call failed: %s"%e)
 
 
     def _auto_state_callback(self, msg):

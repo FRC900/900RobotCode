@@ -67,11 +67,12 @@
 	<node pkg="fake_sensors" type="fake_goal_detect_node" name="fake_goal_detect" >
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
 	</node>
-	<!-- 
-	<rosparam file="$(find pf_localization)/config/2022_rapid_react_rumble.yaml" command="load"/>
+	
+	<rosparam file="$(find pf_localization)/config/2022Rumble_params.yaml" command="load"/>
 	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" output="screen" >
 	</node>
 	
+	<!--
 	set up cargo filter (red/blue -> friendly/opponent)
 	-->
 	<group ns="tf_object_detection">

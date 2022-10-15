@@ -14,11 +14,11 @@ init_dims:
   y_min: 0.0
   y_max: 6.0
 
-num_particles: 100
+num_particles: 200
 
 noise_stdev:
-  position: 0.01
-  rotation: 0.01
+  position: 0.025
+  rotation: 0.005
 
 # Found from https://docs.google.com/document/d/1-2Ebfz2yhGaKKjmjrVtmT4BOiicFtyhzod6RbWLc5N0/view#
 # "tagID" in family Tag36h11

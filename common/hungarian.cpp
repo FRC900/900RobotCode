@@ -20,6 +20,15 @@ double AssignmentProblemSolver::Solve(vector<vector<double>>& DistMatrix,vector<
 	int N=DistMatrix.size(); // number of columns (tracks)
 	int M=DistMatrix[0].size(); // number of rows (measurements)
 
+	// Optimization - if there's only one track and 1 measurement, there's only
+	// one assigment option possible. Early out in that case.
+	if ((N == 1) && (M == 1))
+	{
+		Assignment.clear();
+		Assignment.push_back(0);
+		return DistMatrix[0][0];
+	}
+
 	int *assignment		=new int[N];
 	double *distIn		=new double[N*M];
 

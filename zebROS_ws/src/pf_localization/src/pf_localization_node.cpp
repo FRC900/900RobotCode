@@ -49,6 +49,7 @@ ros::Time last_cmd_vel;
 ros::Time last_measurement;
 double rot = 0;
 double noise_delta_t = 0;  // if the time since the last measurement is greater than this, positional noise will not be applied
+std::vector<double> sigmas; // std.dev for each dimension of detected beacon position (x&y for depth camera, angle for bearing-only)
 std::unique_ptr<ParticleFilter> pf;
 
 void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
@@ -84,7 +85,7 @@ void publish_prediction(const ros::TimerEvent &/*event*/)
     0.0);
 
   const double tmp = pos.getX() + pos.getY() + pos.getZ() + q.getX() + q.getY() + q.getZ() + q.getW();
-  if (!std::isnan(tmp) && !std::isinf(tmp))
+  if (std::isfinite(tmp))
   {
     geometry_msgs::PoseStamped odom_to_map;
     try
@@ -127,7 +128,7 @@ void publish_prediction(const ros::TimerEvent &/*event*/)
     geometry_msgs::PoseArray debug;
 
     for (const Particle& p : pf->get_particles()) {
-      debug.poses.push_back(p.poseFrom2D(p.x_, p.y_, p.rot_));
+      debug.poses.push_back(Particle::poseFrom2D(p.x_, p.y_, p.rot_));
     }
 
     debug.header.frame_id = map_frame_id;
@@ -161,7 +162,7 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg, const bool bearingO
     }
   }
 
-  if (pf->assign_weights(measurement)) {
+  if (pf->assign_weights(measurement, sigmas)) {
     pf->resample();
     last_measurement = ros::Time::now();
   }
@@ -176,6 +177,7 @@ void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
   double x_vel = msg->twist.linear.x;
   double y_vel = msg->twist.linear.y;
 
+  // TODO - use the average of the previous and current velocity?
   double delta_x = x_vel * timestep;
   double delta_y = y_vel * timestep;
 
@@ -266,10 +268,13 @@ int main(int argc, char **argv) {
   ROS_INFO("initialization dims assigned");
 
   if (!nh_.param("noise_stdev/position", p_stdev, 0.1)) {
-    ROS_WARN("no position stdev specified, using defalut");
+    ROS_WARN("no position stdev specified, using default");
   }
   if (!nh_.param("noise_stdev/rotation", r_stdev, 0.1)) {
-    ROS_WARN("no rotation stdev specified, using defalut");
+    ROS_WARN("no rotation stdev specified, using default");
+  }
+  if (!nh_.param("camera_sigmas", sigmas, {0.1, 0.1})) {
+    ROS_WARN("no camera stdev specified, using default");
   }
 
   ROS_INFO("noise stdevs assigned");

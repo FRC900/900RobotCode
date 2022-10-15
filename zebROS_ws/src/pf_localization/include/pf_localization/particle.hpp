@@ -16,7 +16,7 @@ struct Particle {
   bool isValid(void) const
   {
 	  const double sum = x_ + y_ + rot_ + weight_;
-	  return !std::isnan(sum) && !std::isinf(sum);
+	  return std::isfinite(sum);
   }
 
   static geometry_msgs::Pose poseFrom2D(double x, double y, double rot) {
