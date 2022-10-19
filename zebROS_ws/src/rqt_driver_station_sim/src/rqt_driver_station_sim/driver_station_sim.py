@@ -61,8 +61,8 @@ class DriverStationSim(Plugin):
             limit_switch_service = rospy.ServiceProxy('/frcrobot_' + sender.where +'/set_limit_switch', set_limit_switch)
             #print "Calling service %s:  %d %s %d %d" %('/frcrobot_' + sender.where +'/set_limit_switch', 0, obj_name[:-2], forward, reverse)
             limit_switch_service(0, obj_name[:-2], forward, reverse)
-        except rospy.ServiceException, e:
-            print ("set_limit_switch service call failed: %s"%enable)
+        except rospy.ServiceException as e:
+            print(f"set_limit_switch service call failed: {e}")
 
 
     def _din_checkbox_handler(self, data = None):
@@ -72,8 +72,9 @@ class DriverStationSim(Plugin):
             linebreak_service = rospy.ServiceProxy('/frcrobot_' + sender.where +'/linebreak_service_set', LineBreakSensors)
             #print "Calling service %s:  %d %s %d " %('/frcrobot_' + sender.where +'/linebreak_service_set', 0, sender.objectName(), sender.isChecked())
             linebreak_service(0, sender.objectName(), sender.isChecked())
-        except rospy.ServiceException, e:
-            print ("linebreak_service call failed: %s"%e)
+
+        except rospy.ServiceException as e:
+            print(f"linebreak_service call failed: {e}")
 
 
     def _auto_state_callback(self, msg):

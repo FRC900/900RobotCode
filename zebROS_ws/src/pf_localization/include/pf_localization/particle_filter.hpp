@@ -20,7 +20,7 @@ private:
   std::normal_distribution<double> pos_dist_;
   std::normal_distribution<double> rot_dist_;
   std::vector<Particle> particles_;
-  const WorldModel world_;
+  WorldModel world_;
   void normalize();
   void init(const double x_min, const double x_max, const double y_min, const double y_max);
   void constrain_particles();
@@ -38,6 +38,10 @@ public:
   void resample();
   std::vector<Particle> get_particles() const;
   void check_particles(const char *file, int line) const;
+  // need access to world functions so this allows that
+  bool allianceColorCheck(bool amIBlueAlliance) {
+    return world_.allianceColorCheck(amIBlueAlliance);
+  }
   void reinit();
 };
 

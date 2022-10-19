@@ -8,9 +8,9 @@
 
 #include "pf_localization/world_model.hpp"
 
-WorldModel::WorldModel(const std::vector<PositionBeacon>& beacons,
+WorldModel::WorldModel(std::vector<PositionBeacon>& beacons, const std::vector<PositionBeacon>& red_beacons,
                        double x_min, double x_max, double y_min, double y_max) :
-  beacons_(beacons), x_min_(x_min), x_max_(x_max), y_min_(y_min), y_max_(y_max) {}
+  beacons_(beacons), blue_beacons_(beacons), red_beacons_(red_beacons), x_min_(x_min), x_max_(x_max), y_min_(y_min), y_max_(y_max) {}
 
 void WorldModel::get_boundaries(double &x_min, double &x_max, double &y_min, double &y_max) const {
   x_min = x_min_;
@@ -31,6 +31,32 @@ bool WorldModel::is_in_world(const Particle& p) const {
   return true;
 }
 #endif
+
+// Returns true if it switched the beacon color
+bool WorldModel::allianceColorCheck(bool amIBlueAlliance) {
+  // match data says we have changed colors
+  if (amIBlueAlliance != amIBlueAlliance_) {
+    amIBlueAlliance_ = amIBlueAlliance;
+    if (amIBlueAlliance_) {
+      beacons_.clear();
+      // itterate over the blue beacons and add them to the beacons_ vector
+      // probably a better way to do this, but beacons_ = blue_beacons_ doesn't work
+      // shouldn't be running this often so it probably won't slow anything down
+      for (auto it = blue_beacons_.begin(); it != blue_beacons_.end(); ++it) {
+        beacons_.push_back(*it);
+      }
+    } 
+    else {
+      beacons_.clear();
+      // copy red beacons in to beacons
+      for (auto it = red_beacons_.begin(); it != red_beacons_.end(); ++it) {
+        beacons_.push_back(*it);
+      }
+    }
+    return true;
+  }
+  return false;
+}
 
 //moves a given particle to the nearest position that is within the defined boundaries
 void WorldModel::constrain_to_world(Particle& p) const {

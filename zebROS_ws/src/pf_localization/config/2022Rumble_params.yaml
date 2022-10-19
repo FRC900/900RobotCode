@@ -4,15 +4,15 @@ map_frame_id: 'map'
 odom_frame_id: 'zed_objdet_odom'
 field_dims:
   x_min: 0.0
-  x_max: 6.0
+  x_max: 16.458
   y_min: 0.0
-  y_max: 6.0
+  y_max: 8.228
 
 init_dims:
   x_min: 0.0
-  x_max: 6.0
+  x_max: 16.458
   y_min: 0.0
-  y_max: 6.0
+  y_max: 8.228
 
 num_particles: 200
 
@@ -23,14 +23,13 @@ noise_stdev:
 # Found from https://docs.google.com/document/d/1-2Ebfz2yhGaKKjmjrVtmT4BOiicFtyhzod6RbWLc5N0/view#
 # "tagID" in family Tag36h11
 beacons:
-  # For sim, can't use 0
-  - [-0.004, 7.579, "111"]
-
+  #  center of field is (8.229,4.114) from blue bottom left terminal (also where these cords are relative to)
+   # top right from this 0,0 (16.458, 8.228)
   - [-0.004, 7.579, "0"]
   - [3.233, 5.487, "1"]
   - [3.068 , 5.331, "2"]
   - [0.004, 5.059, "3"]
-  - [0.004, 0.004, "4"]
+  - [0.004, 3.512, "4"]
   - [0.121, 1.718, "5"]
   - [0.873, 0.941, "6"]
   - [1.615, 0.157, "7"]

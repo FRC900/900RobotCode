@@ -62,6 +62,21 @@ class FakeGoalDetection
 			{
 				if (msgIn->markers[i].ids[0] == -1) // stage publishes odom as marker -1
 					continue;                       // ignore it here
+				// check if the id - 100 is a positive number, sim only hack for apriltags
+				if (msgIn->markers[i].ids[0] >= 100) {
+					field_obj::Object dummy;
+
+					const auto &p = msgIn->markers[i].pose.position;
+					dummy.location.x = p.x + normalDistribution_(gen_);
+					dummy.location.y = p.y + normalDistribution_(gen_);
+					dummy.location.z = p.z + normalDistribution_(gen_);
+					dummy.angle = atan2(dummy.location.y, dummy.location.x) * 180. / M_PI;
+					dummy.confidence = msgIn->markers[i].ids_confidence[0];
+					dummy.id = std::to_string(msgIn->markers[i].ids[0] - 100);
+					msgOut.objects.push_back(dummy);
+					continue;
+				}
+
 				if (objMap_.find(msgIn->markers[i].ids[0]) != objMap_.end()) { // if ID in map
 					field_obj::Object obj;
 

@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_srvs
   tf2
   tf2_ros
+  frc_msgs
 )
 
 
@@ -107,7 +108,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
    INCLUDE_DIRS include
 #  LIBRARIES pf_localization
-   CATKIN_DEPENDS roscpp message_runtime std_msgs geometry_msgs
+   CATKIN_DEPENDS roscpp message_runtime std_msgs geometry_msgs frc_msgs
 #  DEPENDS system_lib
 )
 

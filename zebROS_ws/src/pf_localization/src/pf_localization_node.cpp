@@ -21,7 +21,7 @@
 #include <XmlRpcValue.h>
 #include <cmath>
 #include <memory>
-
+#include <frc_msgs/MatchSpecificData.h>
 #include <std_srvs/Empty.h>
 
 #define VERBOSE
@@ -30,6 +30,7 @@
 const std::string rot_topic = "/imu/zeroed_imu";
 const std::string cmd_topic = "/frcrobot_jetson/swerve_drive_controller/cmd_vel_out";
 const std::string goal_pos_topic = "/goal_detection/goal_detect_msg";
+const std::string match_topic = "/frcrobot_rio/match_data";
 
 const std::string pub_debug_topic = "pf_debug";
 const std::string pub_topic = "predicted_pose";
@@ -51,7 +52,6 @@ double rot = 0;
 double noise_delta_t = 0;  // if the time since the last measurement is greater than this, positional noise will not be applied
 std::vector<double> sigmas; // std.dev for each dimension of detected beacon position (x&y for depth camera, angle for bearing-only)
 std::unique_ptr<ParticleFilter> pf;
-
 void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
   double roll, pitch, yaw;
   tf2::Quaternion raw;
@@ -194,6 +194,27 @@ void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
   #endif
 }
 
+void matchCallback(const frc_msgs::MatchSpecificData::ConstPtr &MatchData)
+{
+  if (MatchData->allianceColor) // 1 = blue
+	{
+    ROS_INFO("Blue Alliance");
+		if (pf->allianceColorCheck(true)) {
+      pf->reinit();
+      ROS_WARN_STREAM("PF Alliance Color Changed to Blue... reinit");
+    }
+	}
+	else // 0 = red
+	{
+    ROS_INFO("Red Alliance");
+		// if true, means that beacons have changed so pf should reinit
+    if (pf->allianceColorCheck(false)) {
+      pf->reinit();
+      ROS_WARN_STREAM("PF Alliance Color Changed to Red... reinit");
+    }
+	}
+}
+
 bool handle_re_init_pf(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res){
   pf->reinit();
   return true;
@@ -214,7 +235,8 @@ int main(int argc, char **argv) {
   double tmp_tolerance = 0.1;
 
   std::vector<PositionBeacon> beacons;
-
+  std::vector<PositionBeacon> red_beacons;
+  //ros::topic::waitForMessage() 	
   if (!nh_.getParam("noise_delta_t", noise_delta_t)) {
     ROS_ERROR("noise_delta_t not specified");
     return -1;
@@ -285,14 +307,34 @@ int main(int argc, char **argv) {
   nh_.param("odom_frame_id", odom_frame_id, std::string("odom"));
   nh_.param("tf_tolerance", tmp_tolerance, 0.1);
   tf_tolerance.fromSec(tmp_tolerance);
-
+  
+  geometry_msgs::TransformStamped blue2red_tf = tf_buffer_.lookupTransform("blue0", "red0", ros::Time::now(), ros::Duration(1.0));
   // TODO - I think this fails if a beacon is specified as an int
+  // Transforms the blue relative beacons to red relative beacons using the static transform blue0 -> red0
   for (size_t i = 0; i < (unsigned) xml_beacons.size(); i++) {
     PositionBeacon b {xml_beacons[i][0], xml_beacons[i][1], xml_beacons[i][2]};
+    // beacons is blue_beacons
     beacons.push_back(b);
+    geometry_msgs::PoseStamped b_red;
+    b_red.header.frame_id = "blue0";
+    b_red.header.stamp = ros::Time::now();
+    b_red.pose.position.x = xml_beacons[i][0];
+    b_red.pose.position.y = xml_beacons[i][1];
+    geometry_msgs::PoseStamped b_red_transformed; 
+    tf2::doTransform(b_red, b_red_transformed, blue2red_tf);
+    PositionBeacon b_r {b_red_transformed.pose.position.x, b_red_transformed.pose.position.y, xml_beacons[i][2]};
+    red_beacons.push_back(b_r);
   }
+  ROS_INFO_STREAM("BLUE BEACONS");
+  // itterate over blue_beacons vector and print each one out
+  for (auto i = beacons.begin(); i != beacons.end(); i++)
+    std::cout << i->x_ << ' ' << i->y_ << ' ' << i->type_ << std::endl;
+  ROS_INFO_STREAM("RED BEACONS");
+  // do the same thing for red 
+  for (auto i = red_beacons.begin(); i != red_beacons.end(); i++)
+    std::cout << i->x_ << ' ' << i->y_ << ' ' << i->type_ << std::endl;
 
-  WorldModel world(beacons, f_x_min, f_x_max, f_y_min, f_y_max);
+  WorldModel world(beacons, red_beacons, f_x_min, f_x_max, f_y_min, f_y_max);
   pf = std::make_unique<ParticleFilter>(world,
                                         i_x_min, i_x_max, i_y_min, i_y_max,
                                         p_stdev, r_stdev,
@@ -310,6 +352,7 @@ int main(int argc, char **argv) {
   ros::Subscriber rot_sub = nh_.subscribe(rot_topic, 1, rotCallback);
   ros::Subscriber odom_sub = nh_.subscribe(cmd_topic, 1, cmdCallback);
   ros::Subscriber goal_sub = nh_.subscribe<field_obj::Detection>(goal_pos_topic, 1, boost::bind(goalCallback, _1, false));
+  ros::Subscriber match_sub = nh_.subscribe(match_topic, 1, matchCallback);
 
   pub = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>(pub_topic, 1);
   ros::ServiceServer re_init_pf_server = nh_.advertiseService(reinit_pf_service, handle_re_init_pf);

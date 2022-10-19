@@ -59,6 +59,9 @@
 		<include file="$(find controller_node)/launch/fuse_odom.launch"/>
 	-->
 	</group>
+	
+	<!--From blue 0,0 to red 0,0 is the field lenght plus a 180 turn-->
+	<node pkg="tf" type="static_transform_publisher" name="blue0_to_red0" args="16.458 8.228 0 3.1415927 0 0 blue0 red0 100" />
 
 	<include file="$(find teleop_joystick_control)/launch/2022_snap_to_angle.launch"/>
 	<include file="$(find controller_node)/launch/teleop.launch">

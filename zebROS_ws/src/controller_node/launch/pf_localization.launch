@@ -5,7 +5,7 @@
   <arg name="pf" default="True" />
 
   <group ns="pf_localization">
-	   <rosparam command="load" file="$(find pf_localization)/config/lab_apriltags.yaml" />
+	   <rosparam command="load" file="$(find pf_localization)/config/2022Rumble_params_center.yaml" />
 	   <node name="pf_localization" pkg="pf_localization" type="pf_localization_node" output= "screen" if="$(arg pf)">
     </node>
     <node name="pf_visualization" pkg="pf_localization" type="pf_vis.py" output="screen" if="$(arg vis)">

@@ -49,7 +49,8 @@
 
 	-->
 	<node pkg="tf" type="static_transform_publisher" name="link_basetoimu" args="0 0 0 0 0 0 1 base_link imu 100" />
-
+	<!--From blue 0,0 to red 0,0 is the field lenght plus a 180 turn-->
+	<node pkg="tf" type="static_transform_publisher" name="blue0_to_red0" args="16.458 8.228 0 3.1415926 0 0 blue0 red0 100" />
 	<!-- stage publishes an odom->base_footprint transform.  Link zed_objdet_odom to odom using an identity transform.
 		 Same with base_footprint to base_link
          This makes the map->zed_objdet_odom->base_link relationship from the real robot the same here, with some extra
@@ -68,7 +69,7 @@
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
 	</node>
 	
-	<rosparam file="$(find pf_localization)/config/2022Rumble_params.yaml" command="load"/>
+	<rosparam file="$(find pf_localization)/config/2022Rumble_params_center.yaml" command="load"/>
 	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" output="screen" >
 	</node>
 	
