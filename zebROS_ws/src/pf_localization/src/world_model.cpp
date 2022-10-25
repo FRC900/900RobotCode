@@ -6,26 +6,25 @@
 #include <string>
 #include <utility>
 
+#include <ros/console.h>
+
 #include "pf_localization/world_model.hpp"
 
 WorldModel::WorldModel(std::vector<PositionBeacon>& beacons, const std::vector<PositionBeacon>& red_beacons,
-                       double x_min, double x_max, double y_min, double y_max) :
-  beacons_(beacons), blue_beacons_(beacons), red_beacons_(red_beacons), x_min_(x_min), x_max_(x_max), y_min_(y_min), y_max_(y_max) {}
+                       const WorldModelBoundaries &boundaries) :
+  beacons_(beacons), blue_beacons_(beacons), red_beacons_(red_beacons), boundaries_(boundaries) {}
 
-void WorldModel::get_boundaries(double &x_min, double &x_max, double &y_min, double &y_max) const {
-  x_min = x_min_;
-  x_max = x_max_;
-  y_min = y_min_;
-  y_max = y_max_;
+const WorldModelBoundaries& WorldModel::get_boundaries() const {
+  return boundaries_;
 }
 
 #if 0
 //checks if a given particle is within the defined boundaries
 bool WorldModel::is_in_world(const Particle& p) const {
-  if(p.x_ < x_min_ || p.x_ > x_max_){
+  if(p.x_ < boundaries_.x_min_ || p.x_ > boundaries_.x_max_){
     return false;
   }
-  if(p.y_ < y_min_ || p.y_ > y_max_){
+  if(p.y_ < boundaries_.y_min_ || p.y_ > boundaries_.y_max_){
     return false;
   }
   return true;
@@ -60,8 +59,8 @@ bool WorldModel::allianceColorCheck(bool amIBlueAlliance) {
 
 //moves a given particle to the nearest position that is within the defined boundaries
 void WorldModel::constrain_to_world(Particle& p) const {
-  p.x_ = std::min(x_max_, std::max(x_min_, p.x_));
-  p.y_ = std::min(y_max_, std::max(y_min_, p.y_));
+  p.x_ = std::min(boundaries_.x_max_, std::max(boundaries_.x_min_, p.x_));
+  p.y_ = std::min(boundaries_.y_max_, std::max(boundaries_.y_min_, p.y_));
 }
 
 static PositionBeacon particle_relative_beacon(const Particle &p, const PositionBeacon &b) {
@@ -168,7 +167,7 @@ double WorldModel::total_distance(const Particle& p,
       if (assignment[i] >= 0) {
         const double w = pair.second.meas[i]->weight(pair.second.rel[assignment[i]], sigmas);
         total_res *= w;
-      }
+       }
     }
   }
 
@@ -176,4 +175,3 @@ double WorldModel::total_distance(const Particle& p,
   // TODO: is it possible for no weights to be assigned and the result be 1?
   return total_res;
 }
-

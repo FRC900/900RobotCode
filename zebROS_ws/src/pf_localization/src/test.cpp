@@ -1,6 +1,5 @@
 // TODO - make me use gtests to actually test
 // the output is correct
-#include "tf2/LinearMath/Transform.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "pf_localization/particle_filter.hpp"
@@ -13,7 +12,7 @@ std::vector<PositionBeacon> getRedBeacons(const std::vector<PositionBeacon> &blu
 	constexpr double field_width = 16.458;
 	constexpr double field_height = 8.228; 
 	ros::Time now;
-	now.fromSec(0);
+	now.fromSec(0); // dummy time for testing
 	geometry_msgs::TransformStamped transformStamped;
 	transformStamped.header.frame_id = "blue0";
 	transformStamped.header.stamp = now;
@@ -64,9 +63,9 @@ void test1(void)
 	beacons.emplace_back(PositionBeacon{0.0, 0.0, "1"});
 	beacons.emplace_back(PositionBeacon{1.0, 1.0, "1"});
 
-	WorldModel world(beacons, getRedBeacons(beacons), f_x_min, f_x_max, f_y_min, f_y_max);
+	WorldModel world(beacons, getRedBeacons(beacons), WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max));
 	auto pf = std::make_unique<ParticleFilter>(world,
-			i_x_min, i_x_max, i_y_min, i_y_max,
+			WorldModelBoundaries(i_x_min, i_x_max, i_y_min, i_y_max),
 			p_stdev, r_stdev,
 			num_particles);
 
@@ -80,7 +79,15 @@ void test1(void)
 	if (pf->assign_weights(measurement, sigmas))
 	{
 		pf->resample();
-		std::cout << pf->predict().pose.position;
+		const auto p = pf->predict();
+		if (p)
+		{ 
+			std::cout << p->pose.position;
+		}
+		else
+		{
+			std::cout << "No valid prediction";
+		}
 	}
 	std::cout << "************************* DONE *****************************" << std::endl;
 }
@@ -113,9 +120,9 @@ void test2()
 	beacons.emplace_back(PositionBeacon{0.0, -0.24, "17"});
 	beacons.emplace_back(PositionBeacon{-0.68, 1.55, "3"});
 
-	WorldModel world(beacons, getRedBeacons(beacons), f_x_min, f_x_max, f_y_min, f_y_max);
+	WorldModel world(beacons, getRedBeacons(beacons), WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max));
 	auto pf = std::make_unique<ParticleFilter>(world,
-			i_x_min, i_x_max, i_y_min, i_y_max,
+			WorldModelBoundaries(i_x_min, i_x_max, i_y_min, i_y_max),
 			p_stdev, r_stdev,
 			num_particles);
 
@@ -149,7 +156,15 @@ void test2()
 		{
 			pf->resample();
 			std::cout << "i=" << i << " ====================" << std::endl;
-			std::cout << pf->predict().pose.position;
+			const auto p = pf->predict();
+			if (p)
+			{
+				std::cout << p->pose.position;
+			}
+			else
+			{
+				std::cout << "No valid prediction";
+			}
 		}
 	}
 	std::cout << "************************* DONE *****************************" << std::endl;

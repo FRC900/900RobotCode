@@ -20,6 +20,8 @@ noise_stdev:
   position: 0.025
   rotation: 0.005
 
+camera_sigmas: [ 1.000, 1.000 ]
+
 # Found from https://docs.google.com/document/d/1-2Ebfz2yhGaKKjmjrVtmT4BOiicFtyhzod6RbWLc5N0/view#
 # "tagID" in family Tag36h11
 beacons:

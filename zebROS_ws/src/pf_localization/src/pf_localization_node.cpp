@@ -65,7 +65,12 @@ void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
 
 void publish_prediction(const ros::TimerEvent &/*event*/)
 {
-  const geometry_msgs::PoseWithCovariance prediction = pf->predict();
+  const auto p = pf->predict();
+  if (!p) {
+    ROS_WARN_THROTTLE(1, "PF Prediction returned null");
+    return;
+  }
+  const geometry_msgs::PoseWithCovariance &prediction = *p;
   geometry_msgs::PoseWithCovarianceStamped predictionStamped;
 
   predictionStamped.pose = prediction;
@@ -198,7 +203,7 @@ void matchCallback(const frc_msgs::MatchSpecificData::ConstPtr &MatchData)
 {
   if (MatchData->allianceColor) // 1 = blue
 	{
-    ROS_INFO("Blue Alliance");
+    //ROS_INFO("Blue Alliance");
 		if (pf->allianceColorCheck(true)) {
       pf->reinit();
       ROS_WARN_STREAM("PF Alliance Color Changed to Blue... reinit");
@@ -206,7 +211,7 @@ void matchCallback(const frc_msgs::MatchSpecificData::ConstPtr &MatchData)
 	}
 	else // 0 = red
 	{
-    ROS_INFO("Red Alliance");
+    //ROS_INFO("Red Alliance");
 		// if true, means that beacons have changed so pf should reinit
     if (pf->allianceColorCheck(false)) {
       pf->reinit();
@@ -308,6 +313,8 @@ int main(int argc, char **argv) {
   nh_.param("tf_tolerance", tmp_tolerance, 0.1);
   tf_tolerance.fromSec(tmp_tolerance);
   
+  ros::Rate r(.25);
+  r.sleep();
   geometry_msgs::TransformStamped blue2red_tf = tf_buffer_.lookupTransform("blue0", "red0", ros::Time::now(), ros::Duration(1.0));
   // TODO - I think this fails if a beacon is specified as an int
   // Transforms the blue relative beacons to red relative beacons using the static transform blue0 -> red0
@@ -334,9 +341,9 @@ int main(int argc, char **argv) {
   for (auto i = red_beacons.begin(); i != red_beacons.end(); i++)
     std::cout << i->x_ << ' ' << i->y_ << ' ' << i->type_ << std::endl;
 
-  WorldModel world(beacons, red_beacons, f_x_min, f_x_max, f_y_min, f_y_max);
+  WorldModel world(beacons, red_beacons, WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max));
   pf = std::make_unique<ParticleFilter>(world,
-                                        i_x_min, i_x_max, i_y_min, i_y_max,
+                                        WorldModelBoundaries(i_x_min, i_x_max, i_y_min, i_y_max),
                                         p_stdev, r_stdev,
                                         num_particles);
 
@@ -345,7 +352,10 @@ int main(int argc, char **argv) {
 	ROS_INFO_STREAM(p);
   }
   ROS_INFO_STREAM("\n\n");
-  ROS_INFO_STREAM(pf->predict());
+  const auto prediction = pf->predict();
+  if (prediction) {
+    ROS_INFO_STREAM(*prediction);
+  }
   ROS_INFO("pf localization initialized");
   #endif
 

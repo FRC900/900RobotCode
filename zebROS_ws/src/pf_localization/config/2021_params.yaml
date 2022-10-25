@@ -15,10 +15,10 @@ init_dims:
 num_particles: 200
 
 noise_stdev:
-  position: 0.02
-  rotation: 0.02
+  position: 0.025
+  rotation: 0.001
 
-camera_sigmas: [ 0.025, 0.025 ]
+camera_sigmas: [ 0.500, 0.500 ]
 
 beacons:
   - [13.2364734, 0.298196, "blue_launchpad"]

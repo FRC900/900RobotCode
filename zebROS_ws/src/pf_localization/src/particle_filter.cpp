@@ -24,14 +24,14 @@ std::ostream& operator<<(std::ostream &os, const BearingBeacon& b)
 }
 
 ParticleFilter::ParticleFilter(const WorldModel& w,
-                               double x_min, double x_max, double y_min, double y_max,
+                               const WorldModelBoundaries &boundaries,
                                double ns, double rs, size_t n) :
                                num_particles_(n),
                                rng_(std::mt19937(0)),
                                pos_dist_(0, ns),
                                rot_dist_(0, rs),
                                world_(w) {
-  init(x_min, x_max, y_min, y_max);
+  init(boundaries);
 }
 
 void ParticleFilter::constrain_particles() {
@@ -40,19 +40,16 @@ void ParticleFilter::constrain_particles() {
   }
 }
 
-void ParticleFilter::init(const double x_min, const double x_max, const double y_min, const double y_max) {
-  double world_x_min;
-  double world_x_max;
-  double world_y_min;
-  double world_y_max;
-  world_.get_boundaries(world_x_min, world_x_max, world_y_min, world_y_max);
-  const double x_l = std::max(x_min, world_x_min);
-  const double x_u = std::min(x_max, world_x_max);
-  const double y_l = std::max(y_min, world_y_min);
-  const double y_u = std::min(y_max, world_y_max);
+void ParticleFilter::init(const WorldModelBoundaries &boundaries) {
+  const auto worldBoundaries = world_.get_boundaries();
+  const double x_l = std::max(boundaries.x_min_, worldBoundaries.x_min_);
+  const double x_u = std::min(boundaries.x_max_, worldBoundaries.x_max_);
+  const double y_l = std::max(boundaries.y_min_, worldBoundaries.y_min_);
+  const double y_u = std::min(boundaries.y_max_, worldBoundaries.y_max_);
   std::uniform_real_distribution<double> x_distribution(x_l, x_u);
   std::uniform_real_distribution<double> y_distribution(y_l, y_u);
   std::uniform_real_distribution<double> rot_distribution(0, 2 * M_PI);
+  particles_.clear();
   for (size_t i = 0; i < num_particles_; i++) {
     const double x = x_distribution(rng_);
     const double y = y_distribution(rng_);
@@ -64,12 +61,7 @@ void ParticleFilter::init(const double x_min, const double x_max, const double y
 
 void ParticleFilter::reinit(){
   particles_.clear();
-  double world_x_min;
-  double world_x_max;
-  double world_y_min;
-  double world_y_max;
-  world_.get_boundaries(world_x_min, world_x_max, world_y_min, world_y_max);
-  init(world_x_min, world_x_max, world_y_min, world_y_max);
+  init(world_.get_boundaries());
 }
 
 //Normalize weights to sum to 1
@@ -79,13 +71,24 @@ void ParticleFilter::normalize() {
     sum += p.weight_;
   }
   if (sum == 0.0) {
-    for (Particle& p : particles_) {
-      p.weight_ = 1.0 / particles_.size();
+    // If more than X camera observations come in and
+    // we don't get any particles which even remotely
+    // match, reinit the particles
+    if (++resetCounter_ > 10) { // TODO : make me a config item
+      ROS_WARN("Particle Filter : reinitializing due to bad convergence");
+      resetCounter_ = 0;
+      reinit();
+    }
+    else
+    {
+      for (Particle& p : particles_) {
+        p.weight_ = 1.0 / particles_.size();
+      }
     }
   } else {
     for (Particle& p : particles_) {
       p.weight_ /= sum;
-	}
+	  }
   }
 }
 
@@ -119,10 +122,9 @@ void ParticleFilter::resample() {
     }
   }
   particles_ = new_particles;
-  normalize();
 }
 
-geometry_msgs::PoseWithCovariance ParticleFilter::predict() {
+std::optional<geometry_msgs::PoseWithCovariance> ParticleFilter::predict() {
   double weight = 0;
   double x = 0;
   double y = 0;
@@ -136,6 +138,10 @@ geometry_msgs::PoseWithCovariance ParticleFilter::predict() {
     c += cos(p.rot_) * p.weight_;
     s += sin(p.rot_) * p.weight_;
     weight += p.weight_;
+  }
+  // TODO - config item? tune me.
+  if (fabs(weight) < 1e-6) {
+    return std::nullopt;
   }
 
   // Divide by weight to get the weighted average
@@ -235,7 +241,7 @@ bool ParticleFilter::assign_weights(const std::vector<std::shared_ptr<BeaconBase
 #endif
 
   for (Particle& p : particles_) {
-	p.weight_ = world_.total_distance(p, measurements, sigmas);
+	  p.weight_ = world_.total_distance(p, measurements, sigmas);
   }
   normalize();
   return true;

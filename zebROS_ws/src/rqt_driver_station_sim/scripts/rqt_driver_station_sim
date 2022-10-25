@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 
 from rqt_driver_station_sim.driver_station_sim import DriverStationSim

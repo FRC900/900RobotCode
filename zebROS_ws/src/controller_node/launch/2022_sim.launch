@@ -69,7 +69,7 @@
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
 	</node>
 	
-	<rosparam file="$(find pf_localization)/config/2022Rumble_params_center.yaml" command="load"/>
+	<rosparam file="$(find pf_localization)/config/2022Rumble_params.yaml" command="load"/>
 	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" output="screen" >
 	</node>
 	

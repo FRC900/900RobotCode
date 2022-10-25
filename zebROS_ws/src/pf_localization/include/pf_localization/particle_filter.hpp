@@ -2,6 +2,7 @@
 #define PARTICLE_FILTER_HEADER
 
 #include <memory>
+#include <optional>
 #include <random>
 #include "particle.hpp"
 #include "world_model.hpp"
@@ -21,15 +22,16 @@ private:
   std::normal_distribution<double> rot_dist_;
   std::vector<Particle> particles_;
   WorldModel world_;
+  size_t resetCounter_{0};
   void normalize();
-  void init(const double x_min, const double x_max, const double y_min, const double y_max);
+  void init(const WorldModelBoundaries &boundaries);
   void constrain_particles();
 
 public:
   ParticleFilter(const WorldModel& w,
-                 double x_min, double x_max, double y_min, double y_max,
+                 const WorldModelBoundaries &boundaries,
                  double ns, double rs, size_t n);
-  geometry_msgs::PoseWithCovariance predict();
+  std::optional<geometry_msgs::PoseWithCovariance> predict();
   void noise_rot();
   void noise_pos();
   bool motion_update(double delta_x, double delta_y, double delta_rot);
