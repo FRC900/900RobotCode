@@ -11,17 +11,16 @@ project(cuda_apriltag_ros LANGUAGES C CXX CUDA)
 include("../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED COMPONENTS
   angles
-  rospy
-  roscpp
-  field_obj
+  cv_bridge
   geometry_msgs
   marker_msgs
   message_generation
   nav_msgs
+  roscpp
+  rospy
   sensor_msgs
   std_msgs
   std_srvs
-  cv_bridge
   tf2
   tf2_ros
   trajectory_msgs
@@ -41,7 +40,6 @@ generate_messages(
    nav_msgs
    std_msgs
    trajectory_msgs
-   field_obj
 )
 
 
