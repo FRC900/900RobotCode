@@ -45,7 +45,7 @@
 		</description>
 	</class>
 
-	<class name="pdh_controller/PDHStateController" type="pdh_controller::PDHController" base_class_type="controller_interface::ControllerBase">
+	<class name="pdh_controller/PDHController" type="pdh_controller::PDHController" base_class_type="controller_interface::ControllerBase">
 		<description>
 			Interface for setting PDH switchable channel, and for triggering clear faults and identify PDH actions
 		</description>

@@ -40,8 +40,6 @@ catkin config --skiplist \
 
 catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON -DCMAKE_CXX_STANDARD=17 -DSETUPTOOLS_DEB_LAYOUT=OFF  $EXTRA_CMD_LINE "$@"
 
-./merge_compile_commands.sh
-
 if [ $? -ne 0 ] ; then
 	echo FAIL > .native_build.status
 	uname -a | grep -q x86_64
@@ -53,5 +51,11 @@ if [ $? -ne 0 ] ; then
 else
 	echo SUCCESS > .native_build.status
 	/bin/true
+fi
+
+uname -a | grep -q x86_64
+if [ $? -ne 1 ]; then
+  ./merge_compile_commands.sh
+  echo "build/compile_commands.json created"
 fi
 
