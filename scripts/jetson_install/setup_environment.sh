@@ -60,6 +60,7 @@ sudo apt install -y \
     ninja-build \
     nmap \
     ntp \
+	ntpstat \
     openssh-client \
     pkg-config \
     pyqt5-dev-tools \
@@ -185,11 +186,14 @@ sudo sed "s/#Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config &&
 #sudo bash -c "echo NTP=us.pool.ntp.org >> /etc/systemd/timesyncd.conf"
 #sudo bash -c "echo FallbackNTP=ntp.ubuntu.com >> /etc/systemd/timesyncd.conf"
 sudo cp ~/2022RobotCode/scripts/jetson_install/ntp.conf /etc/ntp.conf
+# On 10.9.0.9, uncommment last few lines of ntp.conf
+
 sudo cp ~/2022RobotCode/scripts/jetson_setup/hwrtc.service /etc/systemd/system
 sudo chmod 664 /etc/systemd/system/hwrtc.service
 # The ntp config should read from hwrtc -> system clock if it can't
 # get to the internet to read from pool time servers
-#sudo systemctl enable hwrtc
+sudo systemctl enable hwrtc
+
     
 # and keys for connections to Rio
 mkdir -p ~/.ssh
@@ -201,6 +205,7 @@ chmod 700 .ssh
 
 sudo mkdir -p /root/.ssh
 sudo tar -xjf /home/ubuntu/2022RobotCode/scripts/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
+sudo chown root:root /root/.ssh/*
 sudo chmod 640 /root/.ssh/authorized_keys
 sudo chmod 700 /root/.ssh
 

@@ -1,8 +1,8 @@
 [Unit]
-Description=Synchronise System clock to hardware RTC
+Description=Load system clock from hardware RTC
 DefaultDependencies=no
 After=systemd-modules-load.service
-Before=systemd-journald.service time-sync.target sysinit.target shutdown.target
+Before=systemd-journald.service time-sync.target sysinit.target shutdown.target ntp.service
 Conflicts=shutdown.target
 
 [Service]
