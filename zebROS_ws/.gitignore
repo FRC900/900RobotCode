@@ -11,7 +11,6 @@ devel_native
 install_native
 .rosinstall.bak
 .rosinstall
-.vscode
 .catkin_tools
 callgrind.out.*
 .native_build.status
