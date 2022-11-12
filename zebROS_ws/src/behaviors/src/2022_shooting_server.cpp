@@ -12,24 +12,27 @@
 #include <std_msgs/Float64.h>
 #include <behaviors/interpolating_map.h>
 #include <XmlRpcValue.h>
-#include <XmlRpcExeception.h>
+//#include <XmlRpcExeception.h>
 
-bool checkFloatArray(XmlRpc::XmlRpcValue &param, &double val0, &double val1, &double val2)
+#if 0
+bool checkFloatArray(XmlRpc::XmlRpcValue &param, double &val0, double &val1, double &val2)
 {
-	if (!params.hasMember(0) || !params.hasMember(1), || !params.hasMember(2))
-		ROS_ERROR_STREAM("SHOOTING ARRAY DOES NOT HAVE THREE ELEMENTS")
-    return false;
+	if (!param.hasMember(0) || !param.hasMember(1) || !param.hasMember(2))
+	{
+		ROS_ERROR_STREAM("SHOOTING ARRAY DOES NOT HAVE THREE ELEMENTS");
+		return false;
+	}
 
-	if (!param.valid())
-    throw std::runtime_error(param_name + " was not a valid double type in shooting server");
+	//if (!param.valid())
+		//throw std::runtime_error("Invalid valid double type in shooting server");
 	if (param.getType() == XmlRpc::XmlRpcValue::TypeDouble)
 	{
-		val = static_cast<double>(param);
+		val0 = static_cast<double>(param[0]);
 		return true;
 	}
 	else if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
 	{
-		val = static_cast<int>(param);
+		val0 = static_cast<int>(param[0]);
 		return true;
 	}
 	else
@@ -37,6 +40,7 @@ bool checkFloatArray(XmlRpc::XmlRpcValue &param, &double val0, &double val1, &do
 
 	return false;
 }
+#endif
 
 struct ShooterData {
       double wheel_speed;
@@ -45,7 +49,7 @@ struct ShooterData {
         wheel_speed = inp_wheel_speed;
         hood_wheel_speed = inp_hood_wheel_speed;
       }
-      ShooterData operator +(const ShooterData& add) const {
+      ShooterData operator+(const ShooterData& add) const {
         ShooterData res(wheel_speed + add.wheel_speed, hood_wheel_speed + add.hood_wheel_speed);
         return res;
       }
@@ -129,6 +133,7 @@ public:
     else {
       
       for (size_t i = 0; i < (unsigned) shooter_speed_map_xml_.size(); i++) {
+#if 0
         if (!shooter_speed_map_[i].hasMember()) {
           while (true) {
             ROS_ERROR_STREAM_THROTTLE(2, "SHOOTER IS NOT WORKING, XML ERROR")
@@ -141,6 +146,7 @@ public:
 
         }
         ROS_INFO_STREAM("Here");
+#endif
         shooter_speed_map_.insert((double) shooter_speed_map_xml_[i][0], ShooterData((double) shooter_speed_map_xml_[i][1], (double) shooter_speed_map_xml_[i][2]));
         //ROS_INFO_STREAM("2022_shooting_server : Inserted " << s[0] << " " << s[1] << " " << s[2]);
       }
