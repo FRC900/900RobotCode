@@ -53,9 +53,6 @@
     uri: https://github.com/ros-gbp/ros_controllers-release.git
     version: release/noetic/velocity_controllers/0.21.0-1
 - git:
-    local-name: rospy_message_converter
-    uri: https://github.com/FRC900/rospy_message_converter.git
-- git:
     local-name: stage_ros
     uri: https://github.com/FRC900/stage_ros
 - git:

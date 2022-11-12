@@ -22,7 +22,7 @@
 		</include>
 	</group>
 	<group ns="pf_localization">
-		<rosparam command="load" file="$(find pf_localization)/config/test2_params.yaml" />
+		<rosparam command="load" file="$(find pf_localization)/config/2022Rumble_params.yaml" />
 		<node name="pf_localization" pkg="pf_localization" type="pf_localization_node" output= "screen">
 		</node>
 		<node name="pf_visualization" pkg="pf_localization" type="pf_vis.py" output="screen" if="$(arg vis)">

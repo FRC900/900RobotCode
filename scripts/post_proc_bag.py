@@ -41,7 +41,7 @@ if filename[0] == '_':
 
 if (extension == '.active') or (bagfile_name[0] == '_'):
     if os.path.isfile(filename):
-        print 'Both ' + bagfile_name + ' and ' + filename + ' exist, exiting instead of overwiting on rename'
+        print('Both ' + bagfile_name + ' and ' + filename + ' exist, exiting instead of overwiting on rename')
         sys.exit(-1)
 
     os.rename(bagfile_name, filename)
@@ -51,7 +51,7 @@ if (extension == '.active') or (bagfile_name[0] == '_'):
 try: 
     bag = rosbag.Bag(bagfile_name)
 except rosbag.bag.ROSBagUnindexedException:
-    print "Reindexing bag file " + str(bagfile_name)
+    print("Reindexing bag file " + str(bagfile_name))
     os.system("rosbag reindex " + str(bagfile_name))
     bag = rosbag.Bag(bagfile_name)
 
@@ -70,6 +70,7 @@ this_time = -1
 #Reads through the bagfile until it sees that the robot is enabled then breaks.
 #That means that the last message in each list is the first message since robot enable
 for topic, msg, t in bag.read_messages([match_topic]):
+    #print(f"Topic = {topic}, msg = {msg}, t={t}")
     m = message_converter.convert_ros_message_to_dictionary(msg)
     this_time = t.to_sec()
 
@@ -144,7 +145,7 @@ for i in range(len(enable_times)):
     print("Elapsed time = " + str(disable_times[i] - enable_times[i]))
 
     if os.path.isfile(os.path.join('trimmed', file_name)):
-        print "Output file exists - exiting instead of overwriting"
+        print("Output file exists - exiting instead of overwriting")
         sys.exit()
 
     print("Time of Enable: " + str(enable_times[i]) + " (or " + str(enable_times[i]-first_time) + "s)")
