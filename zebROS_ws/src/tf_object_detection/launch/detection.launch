@@ -22,10 +22,11 @@
   </include>
 
   <group ns="tf_object_detection">
+  <!--
 	<rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
     <node pkg="tf_object_detection" name="tf_object_tracker" type="tracker.py" output="screen">
     </node>
-  
+  -->
 	<rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
     <node pkg="tf_object_detection" name="tf_object_detection" type="trtdetection.py" output="screen">
     </node>

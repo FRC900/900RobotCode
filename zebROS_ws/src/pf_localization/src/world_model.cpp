@@ -5,14 +5,46 @@
 #include <unordered_map>
 #include <string>
 #include <utility>
-
-#include <ros/console.h>
-
 #include "pf_localization/world_model.hpp"
+#include "geometry_msgs/PoseStamped.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "pf_localization/particle_filter.hpp"
+// Given a list of beacons relative to the blue corner of the field,
+// generate the same list of beacons but translated so the origin is
+// the red corner of the field.
+std::vector<PositionBeacon> WorldModel::getRedBeacons(const std::vector<PositionBeacon> &blueBeacons)
+{
+	constexpr double field_width = 16.458;
+	constexpr double field_height = 8.228; 
+	ros::Time now;
+	now.fromSec(0); // dummy time for testing
+	geometry_msgs::TransformStamped transformStamped;
+	transformStamped.header.frame_id = "blue0";
+	transformStamped.header.stamp = now;
+	transformStamped.child_frame_id = "red0";
+	transformStamped.transform.translation.x = field_width;
+	transformStamped.transform.translation.y = field_height;
+	tf2::Quaternion q;
+	q.setRPY(0, 0, M_PI);
+	transformStamped.transform.rotation = tf2::toMsg(q);
 
-WorldModel::WorldModel(std::vector<PositionBeacon>& beacons, const std::vector<PositionBeacon>& red_beacons,
-                       const WorldModelBoundaries &boundaries) :
-  beacons_(beacons), blue_beacons_(beacons), red_beacons_(red_beacons), boundaries_(boundaries) {}
+	std::vector<PositionBeacon> redBeacons;
+	for (const auto & blueBeacon : blueBeacons)
+	{
+		geometry_msgs::PoseStamped b_red;
+		b_red.header.frame_id = "blue0";
+		b_red.header.stamp = now;
+		b_red.pose.position.x = blueBeacon.x_;
+		b_red.pose.position.y = blueBeacon.y_;
+		tf2::doTransform(b_red, b_red, transformStamped);
+		PositionBeacon b_r{b_red.pose.position.x, b_red.pose.position.y, blueBeacon.type_};
+		redBeacons.push_back(b_r);
+	}
+	return redBeacons;
+}
+
+WorldModel::WorldModel(std::vector<PositionBeacon>& beacons, const WorldModelBoundaries &boundaries) :
+  beacons_(beacons), blue_beacons_(beacons), red_beacons_(getRedBeacons(beacons)), boundaries_(boundaries) {}
 
 const WorldModelBoundaries& WorldModel::get_boundaries() const {
   return boundaries_;
@@ -30,6 +62,7 @@ bool WorldModel::is_in_world(const Particle& p) const {
   return true;
 }
 #endif
+
 
 // Returns true if it switched the beacon color
 bool WorldModel::allianceColorCheck(bool amIBlueAlliance) {

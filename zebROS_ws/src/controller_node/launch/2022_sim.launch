@@ -32,10 +32,6 @@
 		</node>
 	</group>
 
-	<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
-		<arg name="port" value="5803"/>
-	</include>
-
 	<include file="$(find controller_node)/launch/joysticks_for_simulator.launch">
 		<arg name="joy_or_key" value="$(arg joy_or_key)" />
 	</include>
@@ -50,7 +46,7 @@
 	-->
 	<node pkg="tf" type="static_transform_publisher" name="link_basetoimu" args="0 0 0 0 0 0 1 base_link imu 100" />
 	<!--From blue 0,0 to red 0,0 is the field lenght plus a 180 turn-->
-	<node pkg="tf" type="static_transform_publisher" name="blue0_to_red0" args="16.458 8.228 0 3.1415926 0 0 blue0 red0 100" />
+	<node pkg="tf" type="static_transform_publisher" name="blue0_to_red0" args="16.458 8.228 0 3.1415926 0 0 blue0 red0 10" />
 	<!-- stage publishes an odom->base_footprint transform.  Link zed_objdet_odom to odom using an identity transform.
 		 Same with base_footprint to base_link
          This makes the map->zed_objdet_odom->base_link relationship from the real robot the same here, with some extra
@@ -69,10 +65,11 @@
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
 	</node>
 	
+	<group ns="pf_localization">
 	<rosparam file="$(find pf_localization)/config/2022Rumble_params.yaml" command="load"/>
 	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" output="screen" >
 	</node>
-	
+	</group>
 	<!--
 	set up cargo filter (red/blue -> friendly/opponent)
 	-->
@@ -80,9 +77,14 @@
 		<node pkg="tf_object_detection" name="cargo_detection_filter" type="cargo_detection_filter" output="screen">
 		</node>
 	</group>
-
+	<!-- 
+	<include file="$(find controller_node)/launch/rosbridge_websocket.launch">
+		<arg name="port" value="5803"/>
+	</include>
+	-->
 	<!-- set up auto node to create paths -->
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
+	<include file="$(find behaviors)/launch/2022_apriltag_shooting.launch"/>
 
 	<include file="$(find teleop_joystick_control)/launch/2022_snap_to_angle.launch"/>
 

@@ -74,6 +74,7 @@ add_action_files(
 	Climb2022.action
   Shooter2022.action
   Shooting2022.action
+  AlignedShooting2022.action
   Intake2022.action
   Intaking2022.action
   Ejecting2022.action

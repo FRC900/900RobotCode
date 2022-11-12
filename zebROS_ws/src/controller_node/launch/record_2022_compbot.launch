@@ -9,11 +9,15 @@
 		/auto/auto_mode
 		/auto/auto_state
 		/auto/cmd_vel
+		/clicked_point
+		/client_count
 		/climber/climb_server_2022/cancel
 		/climber/climb_server_2022/feedback
 		/climber/climb_server_2022/goal
 		/climber/climb_server_2022/result
 		/climber/climb_server_2022/status
+		/connected_clients
+		/cuda_tag_detections
 		/diagnostics
 		/ejecting/ejecting_server_2022/cancel
 		/ejecting/ejecting_server_2022/feedback
@@ -21,82 +25,16 @@
 		/ejecting/ejecting_server_2022/result
 		/ejecting/ejecting_server_2022/status
 		/enable_auto_in_teleop
-		/frcrobot_jetson/cpu_monitor/auto/auto_node/cpu
-		/frcrobot_jetson/cpu_monitor/auto/auto_node/mem
-		/frcrobot_jetson/cpu_monitor/climber/climb_server_2022/cpu
-		/frcrobot_jetson/cpu_monitor/climber/climb_server_2022/mem
-		/frcrobot_jetson/cpu_monitor/cmd_vel_mux/twist_mux/cpu
-		/frcrobot_jetson/cpu_monitor/cmd_vel_mux/twist_mux/mem
-		/frcrobot_jetson/cpu_monitor/ejecting/ejecting_server_2022/cpu
-		/frcrobot_jetson/cpu_monitor/ejecting/ejecting_server_2022/mem
-		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/cpu_monitor/cpu
-		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/cpu_monitor/mem
-		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/dump_offsets_service/cpu
-		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/dump_offsets_service/mem
-		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/frcrobot_hw_interface/cpu
-		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/frcrobot_hw_interface/mem
-		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/ros_control_controller_manager/cpu
-		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/ros_control_controller_manager/mem
-		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/uptime_jetson/cpu
-		/frcrobot_jetson/cpu_monitor/frcrobot_jetson/uptime_jetson/mem
-		/frcrobot_jetson/cpu_monitor/hold_distance/convert_distance_to_pose/cpu
-		/frcrobot_jetson/cpu_monitor/hold_distance/convert_distance_to_pose/mem
-		/frcrobot_jetson/cpu_monitor/hold_distance/hold_position_publish_pid_cmd_vel_node/cpu
-		/frcrobot_jetson/cpu_monitor/hold_distance/hold_position_publish_pid_cmd_vel_node/mem
-		/frcrobot_jetson/cpu_monitor/hold_distance/hold_position_server/cpu
-		/frcrobot_jetson/cpu_monitor/hold_distance/hold_position_server/mem
-		/frcrobot_jetson/cpu_monitor/hold_distance/orient_pid/cpu
-		/frcrobot_jetson/cpu_monitor/hold_distance/orient_pid/mem
-		/frcrobot_jetson/cpu_monitor/hold_distance/x_position_pid/cpu
-		/frcrobot_jetson/cpu_monitor/hold_distance/x_position_pid/mem
-		/frcrobot_jetson/cpu_monitor/hold_distance/y_position_pid/cpu
-		/frcrobot_jetson/cpu_monitor/hold_distance/y_position_pid/mem
-		/frcrobot_jetson/cpu_monitor/imu/imu/cpu
-		/frcrobot_jetson/cpu_monitor/imu/imu/mem
-		/frcrobot_jetson/cpu_monitor/imu/imu_filter/cpu
-		/frcrobot_jetson/cpu_monitor/imu/imu_filter/mem
-		/frcrobot_jetson/cpu_monitor/imu/imu_zero/cpu
-		/frcrobot_jetson/cpu_monitor/imu/imu_zero/mem
-		/frcrobot_jetson/cpu_monitor/index/index_server_2022/cpu
-		/frcrobot_jetson/cpu_monitor/index/index_server_2022/mem
-		/frcrobot_jetson/cpu_monitor/intake/intake_server_2022/cpu
-		/frcrobot_jetson/cpu_monitor/intake/intake_server_2022/mem
-		/frcrobot_jetson/cpu_monitor/intaking/intaking_server_2022/cpu
-		/frcrobot_jetson/cpu_monitor/intaking/intaking_server_2022/mem
-		/frcrobot_jetson/cpu_monitor/robot_state/robot_state_publisher/cpu
-		/frcrobot_jetson/cpu_monitor/robot_state/robot_state_publisher/mem
-		/frcrobot_jetson/cpu_monitor/rosout/cpu
-		/frcrobot_jetson/cpu_monitor/rosout/mem
-		/frcrobot_jetson/cpu_monitor/shooter/shooter_server_2022/cpu
-		/frcrobot_jetson/cpu_monitor/shooter/shooter_server_2022/mem
-		/frcrobot_jetson/cpu_monitor/shooting/shooting_server_2022/cpu
-		/frcrobot_jetson/cpu_monitor/shooting/shooting_server_2022/mem
-		/frcrobot_jetson/cpu_monitor/swerve_imu_ukf/base_link_to_imu/cpu
-		/frcrobot_jetson/cpu_monitor/swerve_imu_ukf/base_link_to_imu/mem
-		/frcrobot_jetson/cpu_monitor/teleop/orient_strafing/orient_strafing_node/cpu
-		/frcrobot_jetson/cpu_monitor/teleop/orient_strafing/orient_strafing_node/mem
-		/frcrobot_jetson/cpu_monitor/teleop/orient_strafing/orient_strafing_pid/cpu
-		/frcrobot_jetson/cpu_monitor/teleop/orient_strafing/orient_strafing_pid/mem
-		/frcrobot_jetson/cpu_monitor/teleop/teleop_joystick_comp_2022/cpu
-		/frcrobot_jetson/cpu_monitor/teleop/teleop_joystick_comp_2022/mem
-		/frcrobot_jetson/cpu_monitor/terabee/terabee_x/cpu
-		/frcrobot_jetson/cpu_monitor/terabee/terabee_x/mem
-		/frcrobot_jetson/cpu_monitor/total_active_mem
-		/frcrobot_jetson/cpu_monitor/total_available_mem
-		/frcrobot_jetson/cpu_monitor/total_buffers_mem
-		/frcrobot_jetson/cpu_monitor/total_cached_mem
-		/frcrobot_jetson/cpu_monitor/total_cpu
-		/frcrobot_jetson/cpu_monitor/total_free_mem
-		/frcrobot_jetson/cpu_monitor/total_inactive_mem
-		/frcrobot_jetson/cpu_monitor/total_shared_mem
-		/frcrobot_jetson/cpu_monitor/total_used_mem
+		/frcrobot_jetson/downtown_solenoid_controller/command
 		/frcrobot_jetson/dynamic_arm_controller/is_zeroed
 		/frcrobot_jetson/dynamic_arm_solenoid_controller/command
+		/frcrobot_jetson/hood_shooter_controller/command
 		/frcrobot_jetson/indexer_arc_controller/command
 		/frcrobot_jetson/indexer_arc_motor_controller/command
 		/frcrobot_jetson/indexer_straight_controller/command
 		/frcrobot_jetson/indexer_straight_motor_controller/command
 		/frcrobot_jetson/joint_states
+		/frcrobot_jetson/orchestra_states
 		/frcrobot_jetson/shooter_controller/command
 		/frcrobot_jetson/static_hook_solenoid_controller/command
 		/frcrobot_jetson/swerve_drive_controller/cmd_vel
@@ -110,6 +48,8 @@
 		/frcrobot_rio/cpu_monitor/frcrobot_rio/cpu_monitor/mem
 		/frcrobot_rio/cpu_monitor/frcrobot_rio/frcrobot_hw_interface/cpu
 		/frcrobot_rio/cpu_monitor/frcrobot_rio/frcrobot_hw_interface/mem
+		/frcrobot_rio/cpu_monitor/frcrobot_rio/ros_control_controller_manager/cpu
+		/frcrobot_rio/cpu_monitor/frcrobot_rio/ros_control_controller_manager/mem
 		/frcrobot_rio/cpu_monitor/frcrobot_rio/uptime_rio/cpu
 		/frcrobot_rio/cpu_monitor/frcrobot_rio/uptime_rio/mem
 		/frcrobot_rio/cpu_monitor/total_active_mem
@@ -125,8 +65,10 @@
 		/frcrobot_rio/joystick_states1
 		/frcrobot_rio/joystick_states2
 		/frcrobot_rio/match_data
+		/frcrobot_rio/pdh_states
 		/frcrobot_rio/robot_controller_states
 		/frcrobot_rio/uptime
+		/goal_detection/goal_detect_msg
 		/hold_distance/distance_as_pose
 		/hold_distance/hold_position_pid/pid_enable
 		/hold_distance/hold_position_pid/swerve_drive_controller/cmd_vel
@@ -150,10 +92,30 @@
 		/hold_distance/y_position_pid/y_cmd_pub
 		/hold_distance/y_position_pid/y_command
 		/hold_distance/y_position_pid/y_state_pub
+		/hold_position/hold_position_pid/pid_enable
 		/hold_position/hold_position_pid/swerve_drive_controller/cmd_vel
+		/hold_position/hold_position_server/cancel
+		/hold_position/hold_position_server/feedback
+		/hold_position/hold_position_server/goal
+		/hold_position/hold_position_server/result
+		/hold_position/hold_position_server/status
+		/hold_position/orient_pid/orient_cmd_pub
+		/hold_position/orient_pid/orient_command
+		/hold_position/orient_pid/orient_state
+		/hold_position/orient_pid/pid_debug
+		/hold_position/orient_pid/pid_enable
+		/hold_position/x_position_pid/pid_debug
+		/hold_position/x_position_pid/pid_enable
+		/hold_position/x_position_pid/x_cmd_pub
+		/hold_position/x_position_pid/x_command
+		/hold_position/x_position_pid/x_state_pub
+		/hold_position/y_position_pid/pid_debug
+		/hold_position/y_position_pid/pid_enable
+		/hold_position/y_position_pid/y_cmd_pub
+		/hold_position/y_position_pid/y_command
+		/hold_position/y_position_pid/y_state_pub
+		/hood_shooter_speed_offset
 		/imu/imu/data
-		/imu/imu/data_raw
-		/imu/imu/temperature
 		/imu/nearest_angle
 		/imu/zeroed_imu
 		/index/index_server_2022/cancel
@@ -171,12 +133,34 @@
 		/intaking/intaking_server_2022/goal
 		/intaking/intaking_server_2022/result
 		/intaking/intaking_server_2022/status
+		/joint_states
+		/path_follower/local_plan
+		/path_follower/map
+		/path_follower/map_metadata
+		/path_follower/orient_pid/orient_cmd_pub
+		/path_follower/orient_pid/orient_command
+		/path_follower/orient_pid/orient_state
+		/path_follower/orient_pid/pid_debug
+		/path_follower/orient_pid/pid_enable
+		/path_follower/path_follower_pid/pid_enable
 		/path_follower/path_follower_pid/swerve_drive_controller/cmd_vel
 		/path_follower/path_follower_server/cancel
 		/path_follower/path_follower_server/feedback
 		/path_follower/path_follower_server/goal
 		/path_follower/path_follower_server/result
 		/path_follower/path_follower_server/status
+		/path_follower/x_position_pid/pid_debug
+		/path_follower/x_position_pid/pid_enable
+		/path_follower/x_position_pid/x_cmd_pub
+		/path_follower/x_position_pid/x_command
+		/path_follower/x_position_pid/x_state_pub
+		/path_follower/y_position_pid/pid_debug
+		/path_follower/y_position_pid/pid_enable
+		/path_follower/y_position_pid/y_cmd_pub
+		/path_follower/y_position_pid/y_command
+		/path_follower/y_position_pid/y_state_pub
+		/pf_localization/predicted_pose
+		/power_info
 		/robot_state/joint_states
 		/rosout
 		/rosout_agg
@@ -186,11 +170,23 @@
 		/shooter/shooter_server_2022/result
 		/shooter/shooter_server_2022/status
 		/shooter_speed_offset
+		/shooting/apriltag_shooting_server_2022/cancel
+		/shooting/apriltag_shooting_server_2022/feedback
+		/shooting/apriltag_shooting_server_2022/goal
+		/shooting/apriltag_shooting_server_2022/result
+		/shooting/apriltag_shooting_server_2022/status
+		/shooting/pf_apriltag_shooting_server_2022/cancel
+		/shooting/pf_apriltag_shooting_server_2022/feedback
+		/shooting/pf_apriltag_shooting_server_2022/goal
+		/shooting/pf_apriltag_shooting_server_2022/result
+		/shooting/pf_apriltag_shooting_server_2022/status
 		/shooting/shooting_server_2022/cancel
 		/shooting/shooting_server_2022/feedback
 		/shooting/shooting_server_2022/goal
 		/shooting/shooting_server_2022/result
 		/shooting/shooting_server_2022/status
+		/snap_to_angle/nearest_cargo_angle
+		/snap_to_angle/nearest_opponent_cargo_angle
 		/teleop/orient_strafing/control_effort
 		/teleop/orient_strafing/pid_debug
 		/teleop/orient_strafing/pid_enable
@@ -200,6 +196,10 @@
 		/teleop/swerve_drive_controller/cmd_vel
 		/terabee/terabee_x
 		/tf
+		/tf_object_detection/debug_image
+		/tf_object_detection/obj_detection_msg
+		/tf_object_detection/object_detection_world
+		/tf_object_detection/object_detection_world_filtered
 		/tf_static
 		/zed_objdetect/imu/data
 		/zed_objdetect/imu/data_raw

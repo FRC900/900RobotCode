@@ -6,6 +6,10 @@
 
 auto_mode_1: ["shoot", "start_intaking", "cmd_vel_1", "pause_cmd_vel", "stop_intaking", "cmd_vel_1_reverse", "cmd_vel_3", "pause_short", "shoot"]
 auto_mode_2: ["shoot", "start_intaking", "cmd_vel_2", "pause_cmd_vel", "stop_intaking", "cmd_vel_2_reverse", "cmd_vel_3", "pause_short", "shoot"]
+
+# auto_mode_1: ["shoot", "start_intaking", "cmd_vel_1", "pause_cmd_vel", "stop_intaking", "cmd_vel_1_reverse", "cmd_vel_3", "pause_short", "shoot"]
+#
+
 #auto_mode_21: ["shoot", "start_intaking", "cmd_vel_21", "pause_3_sec", "stop_intaking", "cmd_vel_21_reverse", "cmd_vel_3", "pause_short", "shoot"]
 # new auto below
 # auto_mode_2: ["shoot", "start_intaking", "cmd_vel_21", "cmd_vel_4_forward", "pause_1_sec", "cmd_vel_5_forward", "cmd_vel_5_reverse", "cmd_vel_4_reverse", "stop_intaking", "cmd_vel_21_reverse", "cmd_vel_3", "pause_short", "shoot"]
@@ -73,6 +77,7 @@ cmd_vel_21:
         x: 1.0
         y: -0.3
         z: -0.54
+        
 cmd_vel_21_reverse:
     type: cmd_vel
     duration: 1.9
@@ -248,13 +253,14 @@ shoot:
     type: "shooting_actionlib_server"
     goal:
         ""
-
+        
 drive_back:
     type: "path"
     goal:
         apply_offset: false
         points:
             - [-0.7, 0.0, 0.0] # move back length of robot
+
 
 path_to_trench_from_starting:
     type: "path"

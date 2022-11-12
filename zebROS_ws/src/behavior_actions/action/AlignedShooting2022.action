@@ -1,7 +1,6 @@
 # goal
 uint8 num_cargo # 1 or 2 (0 is pointless, 3+ is impossible)
-float64 distance # how far are we from the goal
-bool eject # should cargo be ejected
+bool eject
 ---
 # result
 bool success
@@ -13,4 +12,4 @@ uint8 WAITING_FOR_INDEXER=1
 uint8 WAITING_FOR_ROTATION=2
 uint8 WAITING_FOR_SHOOTER_AND_ROTATION=3 # If shooter is not up to speed and not aligned correctly
 uint8 state # which state the current cargo is in
-uint8 cargo_shot # how many cargo have been launched
+uint8 cargo_shot # how many cargo have been launched 

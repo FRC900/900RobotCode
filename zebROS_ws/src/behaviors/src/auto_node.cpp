@@ -622,10 +622,14 @@ int main(int argc, char** argv)
 						return 1;
 						shutdownNode(ERROR, "Auto node - couldn't find shooting actionlib server");
 					} //for some reason this is necessary, even if the server has been up and running for a while
+					
+					// TODO: Need to find distance when we are right up against the goal
+					// could also shoot farther away and call aligned shooting action
 					behavior_actions::Shooting2022Goal goal;
 					goal.num_cargo = 2;
-					goal.low_goal = false;
-
+					// guess
+					goal.distance = 0.5;
+					goal.eject = false;
 					shooting_ac.sendGoal(goal);
 					waitForActionlibServer(shooting_ac, 100, "shooting server");
 				}

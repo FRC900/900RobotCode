@@ -37,6 +37,7 @@
 #include "behavior_actions/AutoMode.h"
 #include "behavior_actions/Climb2022Action.h"
 #include "behavior_actions/Shooting2022Action.h"
+#include "behavior_actions/AlignedShooting2022Action.h"
 #include "behavior_actions/Intaking2022Action.h"
 #include "behavior_actions/Ejecting2022Action.h"
 #include "path_follower_msgs/holdPositionAction.h"
@@ -244,6 +245,7 @@ void zero_all_diag_commands(void)
 
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Climb2022Action>> climb_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Shooting2022Action>> shooting_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::AlignedShooting2022Action>> align_shooting_pf_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2022Action>> intaking_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Ejecting2022Action>> ejecting_ac;
 std::shared_ptr<actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>> distance_ac;
@@ -253,7 +255,6 @@ double hub_angle;
 double cargo_angle;
 
 bool shoot_in_high_goal = true;
-bool shoot_from_downtown = false;
 bool reset_climb = false;
 
 
@@ -281,6 +282,7 @@ void preemptActionlibServers(void)
 	ROS_WARN_STREAM("Preempting ALL actionlib servers!");
 	climb_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+	align_shooting_pf_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	ejecting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	reset_climb = true;
@@ -825,14 +827,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: buttonY
 			if(joystick_states_array[0].buttonYPress)
 			{
-				shoot_from_downtown = true;
+
 			}
 			if(joystick_states_array[0].buttonYButton)
 			{
 			}
 			if(joystick_states_array[0].buttonYRelease)
 			{
-				shoot_from_downtown = false;
+
 			}
 
 			//Joystick1: bumperLeft
@@ -852,9 +854,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].bumperRightPress)
 			{
 				behavior_actions::Shooting2022Goal goal;
+				// feels like we should always shoot all of our cargo, so num_cargo might be uneeded, just get it from indexer and shoot it all
+				// for testing this is fine
 				goal.num_cargo = 2;
-				goal.low_goal = !shoot_in_high_goal;
-				goal.downtown = shoot_from_downtown;
+				// fake value for hub shot, will get checked and used
+				goal.distance = 1.48;
+				goal.eject = false;
 				shooting_ac->sendGoal(goal);
 			}
 			if(joystick_states_array[0].bumperRightButton)
@@ -862,6 +867,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 			if(joystick_states_array[0].bumperRightRelease)
 			{
+				shooting_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 			}
 
 			//Joystick1: directionLeft
@@ -954,18 +960,25 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: rightTrigger
 			if(joystick_states_array[0].rightTrigger > config.trigger_threshold)
 			{
+				
 				// teleop_cmd_vel->setSlowMode(true);
 				if(!joystick1_right_trigger_pressed) {
-					behavior_actions::Shooting2022Goal goal;
-					goal.num_cargo = 1;
-					goal.low_goal = !shoot_in_high_goal;
-					goal.downtown = shoot_from_downtown;
-					shooting_ac->sendGoal(goal);
+					behavior_actions::AlignedShooting2022Goal goal;
+					// feels like we should always shoot all of our cargo, so num_cargo might be uneeded, just get it from indexer and shoot it all
+					// for testing this is fine
+					goal.num_cargo = 2;
+					goal.eject = false;
+					align_shooting_pf_ac->sendGoal(goal);
 				}
 				joystick1_right_trigger_pressed = true;
+				
 			}
 			else
-			{
+			{	
+				if(joystick1_right_trigger_pressed){
+					align_shooting_pf_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+				}
+
 				// teleop_cmd_vel->setSlowMode(false);
 				joystick1_right_trigger_pressed = false;
 			}
@@ -1353,6 +1366,7 @@ int main(int argc, char **argv)
 
 	climb_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Climb2022Action>>("/climber/climb_server_2022", true);
 	shooting_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Shooting2022Action>>("/shooting/shooting_server_2022", true);
+	align_shooting_pf_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::AlignedShooting2022Action>>("/shooting/pf_apriltag_shooting_server_2022", true);	
 	intaking_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Intaking2022Action>>("/intaking/intaking_server_2022", true);
 	ejecting_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Ejecting2022Action>>("/ejecting/ejecting_server_2022", true);
 	distance_ac = std::make_shared<actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>>("/hold_distance/hold_position_server", true);
@@ -1361,11 +1375,12 @@ int main(int argc, char **argv)
 	if (!climb_ac->waitForServer(ros::Duration(15))) {
 		ROS_ERROR("**CLIMB LIKELY WON'T WORK*** Wait (15 sec) timed out, for climb action in teleop_joystick_comp.cpp");
 	}
-
+	if (!align_shooting_pf_ac->waitForServer(ros::Duration(1))) {
+		ROS_ERROR("**ALIGN SHOOTING LIKELY WON'T WORK*** Wait (1 sec) timed out, for shooting action in teleop_joystick_comp.cpp");
+	}
 	if (!shooting_ac->waitForServer(ros::Duration(1))) {
 		ROS_ERROR("**SHOOTING LIKELY WON'T WORK*** Wait (1 sec) timed out, for shooting action in teleop_joystick_comp.cpp");
 	}
-
 	if (!intaking_ac->waitForServer(ros::Duration(1))) {
 		ROS_ERROR("**INTAKING LIKELY WON'T WORK*** Wait (1 sec) timed out, for intaking action in teleop_joystick_comp.cpp");
 	}

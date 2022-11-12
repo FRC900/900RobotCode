@@ -266,7 +266,9 @@ class holdPosition
 				}
 
 				std_msgs::Bool enable_msg;
+				std_msgs::Bool disable_msg;
 				enable_msg.data = true;
+				disable_msg.data = false;
 				std_msgs::Float64 command_msg;
 
 				combine_cmd_vel_pub_.publish(enable_msg);
@@ -277,7 +279,7 @@ class holdPosition
 				// TODO - see if we can enable once at the start of the callback instead?
 				auto x_axis_it = axis_states_.find("x");
 				auto &x_axis = x_axis_it->second;
-				x_axis.enable_pub_.publish(enable_msg);
+				x_axis.enable_pub_.publish(disable_msg);
 				command_msg.data = next_waypoint.position.x;
 				x_axis.command_pub_.publish(command_msg);
 				ROS_INFO_STREAM("x command_pub = " << command_msg.data);
@@ -419,7 +421,7 @@ int main(int argc, char **argv)
 	bool use_pose_for_odom = false;
 	//meters and radians that the robot can be away from the desired goal
 	double dist_threshold = .05;
-
+	// TODO make 0.01
 	double angle_threshold = .036;
 	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
 	std::string pose_topic = "/hold_distance/distance_as_pose";

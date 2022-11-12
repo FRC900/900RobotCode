@@ -23,23 +23,29 @@ protected:
   std::string action_name_;
   // create message that is used to publish feedback
   behavior_actions::Shooter2022Feedback feedback_;
-
-  double high_goal_speed_;
-  double low_goal_speed_;
+  // speed is now an input, these can be used for debugging with DDR
+  // Not used unless they are a non zero value
+  double absolute_wheel_speed_ = 0;
+  double absolute_hood_wheel_speed_ = 0;
   double eject_speed_;
   double error_margin_;
-  double downtown_high_goal_speed_;
+  bool hood_state_;
   ddynamic_reconfigure::DDynamicReconfigure ddr_;
 
   ros::Publisher shooter_command_pub_;
+  ros::Publisher hood_shooter_command_pub_;
   ros::Publisher downtown_command_pub_;
 
   ros::Subscriber talon_states_sub_;
+
   ros::Subscriber speed_offset_sub_;
+  ros::Subscriber hood_speed_offset_sub_;
 
   double current_speed_;
+  double hood_current_speed_;
   double speed_offset_ = 0;
-
+  double hood_speed_offset_ = 0;
+  bool hood_state_override_ = false;
   uint64_t close_enough_counter_;
   int shooter_wheel_checks_ = 20;
 
@@ -51,27 +57,22 @@ public:
     action_name_(name),
     ddr_(nh_params_)
   {
-    if (!nh_params_.getParam("high_goal_speed", high_goal_speed_))
+    if (!nh_params_.getParam("absolute_wheel_speed", absolute_wheel_speed_))
     {
-      high_goal_speed_ = 348; // was 325 at start of UNCA, 343 at UNCP
-      ROS_ERROR_STREAM("2022_shooter_server : could not find high_goal_speed, defaulting to " << high_goal_speed_);
+      absolute_wheel_speed_ = 0; // was 325 at start of UNCA, 343 at UNCP
+      ROS_ERROR_STREAM("2022_shooter_server : could not find absolute_wheel_speed, defaulting to " << absolute_wheel_speed_);
       return;
     }
-    ddr_.registerVariable<double>("high_goal_speed", &high_goal_speed_, "High Goal Shooting Speed", 0, 500);
-    if (!nh_params_.getParam("downtown_high_goal_speed", downtown_high_goal_speed_))
+    ddr_.registerVariable<double>("absolute_wheel_speed", &absolute_wheel_speed_, "Speed of lower wheel (formerly high_goal_speed)", 0, 500);
+
+    if (!nh_params_.getParam("absolute_hood_wheel_speed", absolute_hood_wheel_speed_))
     {
-      downtown_high_goal_speed_ = 373;
-      ROS_ERROR_STREAM("2022_shooter_server : could not find downtown_high_goal_speed, defaulting to " << downtown_high_goal_speed_);
-      return;
-    }
-    ddr_.registerVariable<double>("downtown_high_goal_speed", &downtown_high_goal_speed_, "Downtown High Goal Shooting Speed", 0, 500);
-    if (!nh_params_.getParam("low_goal_speed", low_goal_speed_))
-    {
-      low_goal_speed_ = 200;
-      ROS_ERROR_STREAM("2022_shooter_server : could not find low_goal_speed, defaulting to " << low_goal_speed_);
+      absolute_hood_wheel_speed_ = 0;
+      ROS_ERROR_STREAM("2022_shooter_server : could not find absolute_hood_wheel_speed_, defaulting to " << absolute_hood_wheel_speed_);
       return;
     } // 180 or 200
-    ddr_.registerVariable<double>("low_goal_speed", &low_goal_speed_, "Low Goal Shooting Speed", 0, 500);
+    ddr_.registerVariable<double>("absolute_hood_wheel_speed", &absolute_hood_wheel_speed_, "Hood wheel shooting speed for testing", 0, 500);
+
     if (!nh_params_.getParam("eject_speed", eject_speed_))
     {
       eject_speed_ = 120;
@@ -79,6 +80,7 @@ public:
       return;
     }
     ddr_.registerVariable<double>("eject_speed", &eject_speed_, "Eject Cargo - Shooting Speed", 0, 500);
+
     if (!nh_params_.getParam("error_margin", error_margin_))
     {
       error_margin_ = 2;
@@ -86,6 +88,7 @@ public:
       return;
     }
     ddr_.registerVariable<double>("error_margin", &error_margin_, "Shooter margin of error", 0, 50);
+
     if (!nh_params_.getParam("shooter_wheel_checks", shooter_wheel_checks_))
     {
       shooter_wheel_checks_ = 8;
@@ -93,16 +96,20 @@ public:
       return;
     }
     ddr_.registerVariable<int>("shooter_wheel_checks", &shooter_wheel_checks_, "Number of times to check shooter wheel speed", 0, 50);
+    ddr_.registerVariable<bool>("hood_state_override_", &hood_state_override_, "Hood state, must set absolute shooter speeds for this to be used", 0, 1);
     // change close_enough to operate with multiple samples
     // error_margin_ = 5;
     // ddr_.registerVariable<double>("samples_for_close_enough", &error_margin_, "Shooter margin of error", 0, 50);
+
+    ddr_.publishServicesTopics();
+
     shooter_command_pub_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/shooter_controller/command", 2);
+    hood_shooter_command_pub_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/hood_shooter_controller/command", 2);
     downtown_command_pub_ = nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/downtown_solenoid_controller/command", 2);
     talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &ShooterAction2022::talonStateCallback, this);
     speed_offset_sub_ = nh_.subscribe("/shooter_speed_offset", 1, &ShooterAction2022::speedOffsetCallback, this);
+    hood_speed_offset_sub_ = nh_.subscribe("/hood_shooter_speed_offset", 1, &ShooterAction2022::hoodSpeedOffsetCallback, this);
     as_.start();
-
-    ddr_.publishServicesTopics();
   }
 
   ~ShooterAction2022(void)
@@ -112,44 +119,58 @@ public:
   void executeCB(const behavior_actions::Shooter2022GoalConstPtr &goal)
   {
     SHOOTER_INFO("Shooter action called with mode " << goal->mode);
-    std_msgs::Float64 msg;
+
+    std_msgs::Float64 msg; // for lower wheels
+    std_msgs::Float64 hood_msg;
     std_msgs::Float64 downtown_msg;
     downtown_msg.data = DOWNTOWN_INACTIVE;
     double shooter_speed;
+    double hood_shooter_speed;
     switch (goal->mode) {
       case behavior_actions::Shooter2022Goal::HIGH_GOAL:
-        shooter_speed = high_goal_speed_;
-        break;
-      case behavior_actions::Shooter2022Goal::LOW_GOAL:
-        shooter_speed = low_goal_speed_;
+        shooter_speed = goal->wheel_speed;
+        hood_shooter_speed = goal->hood_wheel_speed;
+        if (goal->hood_position) {
+          downtown_msg.data = DOWNTOWN_ACTIVE;
+        }
         break;
       case behavior_actions::Shooter2022Goal::EJECT:
         shooter_speed = eject_speed_;
         break;
-      case behavior_actions::Shooter2022Goal::DOWNTOWN:
-        downtown_msg.data = DOWNTOWN_ACTIVE;
-        shooter_speed = downtown_high_goal_speed_;
-        break;
       default:
         SHOOTER_ERROR("invalid goal mode (" << goal->mode << ")");
         msg.data = 0;
+        hood_msg.data = 0;
         shooter_command_pub_.publish(msg);
+        hood_shooter_command_pub_.publish(hood_msg);
         feedback_.close_enough = false;
         as_.publishFeedback(feedback_);
         // set the action state to preempted
         as_.setPreempted();
         return;
     }
+      if (absolute_wheel_speed_ && absolute_hood_wheel_speed_) {
+        downtown_msg.data = hood_state_override_;
+        ROS_ERROR_STREAM_THROTTLE(1, "Using absolute shooter speeds, THIS SHOULD ONLY BE USED DURING TESTING");
+      }
     downtown_command_pub_.publish(downtown_msg);
+    /* Offsets commented out until we need them
     shooter_speed += speed_offset_;
-    SHOOTER_INFO("Shooter speed setpoint = " << msg.data);
+    hood_shooter_speed += hood_speed_offset_;
+    */
+    SHOOTER_INFO("Shooter speed setpoint = " << shooter_speed);
+    SHOOTER_INFO("Hood shooter speed setpoint = " << hood_shooter_speed);
     int good_samples = 0;
+    current_speed_ = std::numeric_limits<double>::max();
+    hood_current_speed_ = std::numeric_limits<double>::max();
     ros::Rate r(100);
     while (ros::ok()) {
       ros::spinOnce();
       if (as_.isPreemptRequested() || !ros::ok())
       {
         msg.data = 0;
+        hood_msg.data = 0;
+        hood_shooter_command_pub_.publish(hood_msg);
         shooter_command_pub_.publish(msg);
         downtown_msg.data = DOWNTOWN_INACTIVE;
         downtown_command_pub_.publish(downtown_msg);
@@ -160,10 +181,22 @@ public:
         as_.setPreempted();
         break;
       }
-      msg.data = shooter_speed;
+      if (absolute_wheel_speed_ && absolute_hood_wheel_speed_) {
+        msg.data = absolute_wheel_speed_;
+        hood_msg.data = absolute_hood_wheel_speed_;
+        ROS_ERROR_STREAM_THROTTLE(1, "Using absolute shooter speeds, THIS SHOULD ONLY BE USED DURING TESTING");
+      }
+      else {
+        msg.data = shooter_speed;
+        hood_msg.data = hood_shooter_speed;
+      }
       shooter_command_pub_.publish(msg);
+      hood_shooter_command_pub_.publish(hood_msg);
+      
       /* Measure if the sample is close enough to the requested shooter wheel speed */
-      if(fabs(shooter_speed - fabs(current_speed_)) < error_margin_) {
+      // Maybe add diffrent error margins?
+      ROS_INFO_STREAM_THROTTLE(2, "SHOOTER SERVER shooter speed: " << msg.data << " CURRENT SHOOTER SPEED " << current_speed_ << " CURRENT HOOD SPEED " << " HOOD SPEED " << hood_current_speed_);
+      if((fabs(msg.data - fabs(current_speed_)) < error_margin_) && (fabs(hood_msg.data - fabs(hood_current_speed_)) < error_margin_)) {
         good_samples++;
       } else {
         good_samples = 0;
@@ -176,21 +209,31 @@ public:
 
   void talonStateCallback(const talon_state_msgs::TalonState talon_state)
   {
+    bool checked_speed = false;
     for (size_t i = 0; i < talon_state.name.size(); i++) {
+      // not sure which one will get found first, checked_speed makes sure not to return to early
       if (talon_state.name[i] == "shooter_leader") {
         current_speed_ = talon_state.speed[i];
-        return;
+        if (checked_speed) {return;}
+        checked_speed = true;
+      }
+      if (talon_state.name[i] == "hood_shooter") {
+        hood_current_speed_ = talon_state.speed[i];
+        if (checked_speed) {return;}
+        checked_speed = true;
       }
     }
-    SHOOTER_ERROR_THROTTLE(0.5, "Couldn't find shooter_leader talon in /frcrobot_jetson/talon_states. :(");
+    SHOOTER_ERROR_THROTTLE(0.5, "Couldn't find shooter_leader or hood_shooter talon in /frcrobot_jetson/talon_states. :(");
   }
 
   void speedOffsetCallback(const std_msgs::Float64 speed_offset_msg){
     speed_offset_ = speed_offset_msg.data;
   }
+  void hoodSpeedOffsetCallback(const std_msgs::Float64 hood_speed_offset_msg) {
+    hood_speed_offset_ = hood_speed_offset_msg.data;
+  }
 
 };
-
 
 int main(int argc, char** argv)
 {

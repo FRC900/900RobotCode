@@ -63,7 +63,7 @@ void test1(void)
 	beacons.emplace_back(PositionBeacon{0.0, 0.0, "1"});
 	beacons.emplace_back(PositionBeacon{1.0, 1.0, "1"});
 
-	WorldModel world(beacons, getRedBeacons(beacons), WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max));
+	WorldModel world(beacons, WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max));
 	auto pf = std::make_unique<ParticleFilter>(world,
 			WorldModelBoundaries(i_x_min, i_x_max, i_y_min, i_y_max),
 			p_stdev, r_stdev,
@@ -120,7 +120,7 @@ void test2()
 	beacons.emplace_back(PositionBeacon{0.0, -0.24, "17"});
 	beacons.emplace_back(PositionBeacon{-0.68, 1.55, "3"});
 
-	WorldModel world(beacons, getRedBeacons(beacons), WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max));
+	WorldModel world(beacons, WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max));
 	auto pf = std::make_unique<ParticleFilter>(world,
 			WorldModelBoundaries(i_x_min, i_x_max, i_y_min, i_y_max),
 			p_stdev, r_stdev,

@@ -1,7 +1,7 @@
 shooter_server_2022:
-  high_goal_speed: 348.0
-  downtown_high_goal_speed: 373.0
-  low_goal_speed: 200.0
+  absolute_wheel_speed: 0.0 # since speed is dynamic now based on distance this is just for debugging and quickly chaning the speeds
+  absolute_hood_wheel_speed: 0.0
   eject_speed: 120.0
-  error_margin: 2.0
+  error_margin: 7.0
   shooter_wheel_checks: 8
+  

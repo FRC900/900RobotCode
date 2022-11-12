@@ -10,6 +10,59 @@
 #include <behavior_actions/Shooter2022Action.h>
 #include <behavior_actions/Index2022Action.h>
 #include <std_msgs/Float64.h>
+#include <behaviors/interpolating_map.h>
+#include <XmlRpcValue.h>
+#include <XmlRpcExeception.h>
+
+bool checkFloatArray(XmlRpc::XmlRpcValue &param, &double val0, &double val1, &double val2)
+{
+	if (!params.hasMember(0) || !params.hasMember(1), || !params.hasMember(2))
+		ROS_ERROR_STREAM("SHOOTING ARRAY DOES NOT HAVE THREE ELEMENTS")
+    return false;
+
+	if (!param.valid())
+    throw std::runtime_error(param_name + " was not a valid double type in shooting server");
+	if (param.getType() == XmlRpc::XmlRpcValue::TypeDouble)
+	{
+		val = static_cast<double>(param);
+		return true;
+	}
+	else if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
+	{
+		val = static_cast<int>(param);
+		return true;
+	}
+	else
+		throw std::runtime_error("Shooting server, A non-double value was read for" + param_name);
+
+	return false;
+}
+
+struct ShooterData {
+      double wheel_speed;
+      double hood_wheel_speed;
+      ShooterData(double inp_wheel_speed, double inp_hood_wheel_speed) {
+        wheel_speed = inp_wheel_speed;
+        hood_wheel_speed = inp_hood_wheel_speed;
+      }
+      ShooterData operator +(const ShooterData& add) const {
+        ShooterData res(wheel_speed + add.wheel_speed, hood_wheel_speed + add.hood_wheel_speed);
+        return res;
+      }
+      ShooterData operator*(const double mul) const {
+        ShooterData res(wheel_speed * mul, hood_wheel_speed * mul);
+        return res;
+      }
+};
+
+ShooterData operator*(const double& a, const ShooterData& obj) {
+  ShooterData res(obj.wheel_speed * a, obj.hood_wheel_speed * a);
+  /*
+  res.wheel_speed = obj.wheel_speed * a;
+  res.hood_wheel_speed = obj.hood_wheel_speed * a;
+  */
+  return res;
+}
 
 class ShootingServer2022
 {
@@ -17,6 +70,7 @@ protected:
 
   ros::NodeHandle nh_;
   actionlib::SimpleActionServer<behavior_actions::Shooting2022Action> as_;
+  // looks unused?
   std::string action_name_;
   // create messages that are used to publish feedback/result
   behavior_actions::Shooting2022Feedback feedback_;
@@ -27,7 +81,13 @@ protected:
 
   double shooting_timeout_;
   double indexing_timeout_;
-
+  // maybe 2 meters for hood down v up?
+  double MAGIC_CONSTANT_ = 2;
+  // data was recorded to edge of robot, robot is 17.661 inches from center to edge
+  // fender shot, 1.031m to edge + 0.4485894m to center = 1.4795894m to center
+  // from center of field to center of robot
+  wpi::interpolating_map<double, ShooterData>  shooter_speed_map_;
+  XmlRpc::XmlRpcValue shooter_speed_map_xml_;
   ros::Subscriber cargo_state_sub_;
   uint8_t cargo_num_;
 
@@ -51,13 +111,52 @@ public:
       ROS_WARN_STREAM("2022_shooting_server : Could not find indexing_timeout, defaulting to 5 seconds");
       indexing_timeout_ = 5.0;
     }
+    if (!nh_.getParam("/shooting/shooter_speed_map", shooter_speed_map_xml_))
+    {
+      ROS_WARN_STREAM("2022_shooting_server : COULD NOT FIND SHOOTER SPEED MAP SHOOTING WILL FAIL, defaulting to hardcoded values");
+
+      /* no equality operator for interpolating_map, just make sure the config works
+      shooter_speed_map_ = {
+        {1.48, ShooterData(175, 200)}, // hood up
+        {2.48, ShooterData(120, 280)}, // hood down
+        {3.48, ShooterData(140, 260)}, // down
+        {3.98, ShooterData(145, 275)}, // ceiling too strong, these are guesses
+        {4.48, ShooterData(150, 280)}
+      }; 
+      */
+    }
+    // kinda pointless, we are in trouble if the read fails, but this prevents a out of bounds crash
+    else {
+      
+      for (size_t i = 0; i < (unsigned) shooter_speed_map_xml_.size(); i++) {
+        if (!shooter_speed_map_[i].hasMember()) {
+          while (true) {
+            ROS_ERROR_STREAM_THROTTLE(2, "SHOOTER IS NOT WORKING, XML ERROR")
+          }
+        }
+        double val0, val1, val2;
+
+        if (checkFloatArray(shooter_speed_map_[i], &double val0, &double val1, &double val2)) {
+          
+
+        }
+        ROS_INFO_STREAM("Here");
+        shooter_speed_map_.insert((double) shooter_speed_map_xml_[i][0], ShooterData((double) shooter_speed_map_xml_[i][1], (double) shooter_speed_map_xml_[i][2]));
+        //ROS_INFO_STREAM("2022_shooting_server : Inserted " << s[0] << " " << s[1] << " " << s[2]);
+      }
+    
+    }
+    shooter_speed_map_.insert(1.48, ShooterData(175, 200));
     cargo_state_sub_ = nh_.subscribe("/2022_index_server/ball_state", 2, &ShootingServer2022::cargoStateCallback, this);
     as_.start();
+
   }
 
   ~ShootingServer2022(void)
   {
   }
+
+  
 
   template<class C, class S>
 	bool waitForResultAndCheckForPreempt(const ros::Duration & timeout, const actionlib::SimpleActionClient<C> & ac, actionlib::SimpleActionServer<S> & as)
@@ -94,13 +193,22 @@ public:
     cargo_num_ = msg.data;
   }
 
-  bool spinUpShooter(bool &timedOut, bool low_goal, bool downtown) { // returns false if ros is not ok or timed out, true otherwise
+  bool spinUpShooter(bool &timedOut, bool eject, double distance) { // returns false if ros is not ok or timed out, true otherwise
     feedback_.state = feedback_.WAITING_FOR_SHOOTER;
     as_.publishFeedback(feedback_);
     ROS_INFO_STREAM("2022_shooting_server : spinning up shooter");
     is_spinning_fast_ = false;
     behavior_actions::Shooter2022Goal goal;
-    goal.mode = downtown ? goal.DOWNTOWN : (low_goal ? goal.LOW_GOAL : goal.HIGH_GOAL);
+    if (eject) {
+      goal.mode = goal.EJECT;}
+    else {
+      goal.mode = goal.HIGH_GOAL;}
+
+    goal.wheel_speed = shooter_speed_map_[distance].wheel_speed;
+    goal.hood_wheel_speed = shooter_speed_map_[distance].hood_wheel_speed;
+    ROS_INFO_STREAM("2022_shooting_server : using wheel speed " << goal.wheel_speed << " and hood speed " << goal.hood_wheel_speed);
+    // sets hood position to down if less than some constant up otherwise
+    goal.hood_position = distance >= MAGIC_CONSTANT_;
     ac_shooter_.sendGoal(goal,
                          actionlib::SimpleActionClient<behavior_actions::Shooter2022Action>::SimpleDoneCallback(),
                          actionlib::SimpleActionClient<behavior_actions::Shooter2022Action>::SimpleActiveCallback(),
@@ -178,14 +286,15 @@ public:
       ROS_ERROR_STREAM("2022_shooting_server : shooter server not running!!! this is unlikely to work");
     }
     result_.timed_out = false;
-	result_.success = false;
+	  result_.success = false;
     if (goal->num_cargo == 0) {
       ROS_ERROR_STREAM("2022_shooting_server : invalid number of cargo - must be a positive number. ");
       as_.setAborted(result_); // set the action state to aborted
       return;
     }
+
     bool shooterTimedOut = false;
-    bool success = spinUpShooter(shooterTimedOut, goal->low_goal, goal->downtown);
+    bool success = spinUpShooter(shooterTimedOut, goal->eject, goal->distance);
     result_.timed_out = shooterTimedOut;
     for (uint8_t i = 0; (cargo_num_ > 0) && (i < goal->num_cargo) && success; i++)
     {
@@ -217,14 +326,14 @@ public:
         }
       }
 	    ros::spinOnce(); // update ball count, hopefully
-      ros::Duration(goal->downtown ? 0.75 : 0.25).sleep();
+      ros::Duration(goal->distance < MAGIC_CONSTANT_ ? 0.25 : 0.5).sleep();
     }
     ros::Duration(0.75).sleep();
 
     ac_shooter_.cancelGoal(); // stop shooter
     ac_indexer_.cancelGoal(); // stop indexer
 
-	result_.success = success;
+	  result_.success = success;
     if (success)
     {
       ROS_INFO_STREAM("2022_shooting_server : succeeded! yay!!");
@@ -247,7 +356,10 @@ public:
 
 int main(int argc, char** argv)
 {
+  
   ros::init(argc, argv, "shooting_server_2022");
+  // read ros param for interpolating map
+
 
   ShootingServer2022 server("shooting_server_2022");
   ros::spin();

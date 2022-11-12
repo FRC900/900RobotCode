@@ -59,7 +59,7 @@ swerve_drive_controller:
         current_limit_peak_msec: 50
         current_limit_enable: True
         closed_loop_ramp: 0.25
-        dynamic_reconfigure: True
+        dynamic_reconfigure: false
         neutral_mode: "Brake"
         velocity_measurement_period: Period_10Ms
         velocity_measurement_window: 4

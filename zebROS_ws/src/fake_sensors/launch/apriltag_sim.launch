@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<!--<group ns="sim_apriltags">-->
+		<rosparam file="$(find behaviors)/config/2022_rumble_apriltag_locations.yaml" command="load"/>
+		<node name="sim_apriltag_publisher" pkg="fake_sensors" type="publish_apriltags_from_sim" output="screen"/>
+	<!--</group>-->
+</launch>

@@ -38,8 +38,10 @@ hardware_interface:
        - {name: climber_static2_limit_switch, type: digital_input, local: false}
        - {name: climber_dynamic_arm_leader, type: can_talon_fx, can_bus: CANivore, can_id: 30, local: true}
        - {name: climber_dynamic_arm_follower, type: can_talon_fx, can_bus: CANivore, can_id: 31, local: true}
+
        - {name: shooter_leader, type: can_talon_fx, can_bus: CANivore, can_id: 40, local: true}
        - {name: shooter_follower, type: can_talon_fx, can_bus: CANivore, can_id: 41, local: true}
+       - {name: hood_shooter, type: can_talon_fx, can_bus: CANivore, can_id: 42, local: true}
        - {name: shooter_downtown_solenoid_joint, type: solenoid, local_hardware: false, local_update: true}
 
        - {name: intake_motor, type: can_talon_fx, can_bus: CANivore, can_id: 60, local: true}
@@ -59,7 +61,6 @@ hardware_interface:
        - {name: bl_drive, type: can_talon_fx, can_bus: CANivore, can_id: 23, local: true}
        - {name: bl_angle, type: can_talon_fx, can_bus: CANivore, can_id: 13, local: true}
          #- {name: bl_angle_encoder, type: can_talon_srx, can_id: 3, local: true}
-       # - {name: pdh, type: pdh}
        # - {name: pcm, type: pcm, pcm_id: 0}
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
@@ -112,11 +113,11 @@ dynamic_arm_controller:
   motion_magic_acceleration_veryfast: 2.0
 
   # retracting
-  motion_magic_velocity_fast: 0.30 # was 0.42, slowing down for first few matches
+  motion_magic_velocity_fast: 0.20 # was 0.42, slowing down for first few matches
   motion_magic_acceleration_fast: 1.0
 
   # retracting from ground to mid
-  motion_magic_velocity_ground_to_mid: 0.40 # was 0.42, slowing down for first few matches
+  motion_magic_velocity_ground_to_mid: 0.36 # was 0.42, slowing down for first few matches
   motion_magic_acceleration_ground_to_mid: 1.0
 
   # retracting to traversal
@@ -193,6 +194,42 @@ dynamic_arm_controller:
     #status_14_turn_pidf1_period: 250
     status_15_firmwareapistatus_period: 250
     #status_17_brushless_current_period: 50
+
+hood_shooter_controller:
+  joint: hood_shooter
+  type: talon_controllers/TalonVelocityCloseLoopController
+  feedback_type: IntegratedSensor
+  close_loop_values:
+      - {p: 0.5, i: 0.00, d: 0.0, f: 0.065, i_zone: 0}
+  invert_output: false 
+  sensor_phase: false
+  peak_output_forward: 1.0
+  peak_output_reverse: 0.0
+  nominal_output_forward: 0.0
+  nominal_output_reverse: 0.0
+  voltage_compensation_enable: true
+  voltage_compensation_saturation: 12
+  dynamic_reconfigure: True
+  neutral_mode: Coast
+  #closed_loop_ramp: 0.1
+  neutral_deadband: 0.01
+  velocity_measurement_period: Period_20Ms
+  velocity_measurement_window: 4
+  #status_1_general_period: 10
+  #status_2_feedback0_period: 20
+  status_3_quadrature_period: 250
+  #status_4_aintempvbat_period: 160
+  #status_6_misc_period: 0
+  #status_7_commstatus_period: 0
+  status_8_pulsewidth_period: 250
+  status_9_motprofbuffer_period: 250
+  status_10_motionmagic_period: 250
+  #status_11_uartgadgeteer_period: 250
+  #status_12_feedback1_period: 250
+  #status_13_base_pidf0_period: 160
+  #status_14_turn_pidf1_period: 250
+  status_15_firmwareapistatus_period: 250
+  #status_17_brushless_current_period: 50
 
 shooter_controller:
   joint: shooter_leader
@@ -307,36 +344,6 @@ joint_state_controller_jetson:
 joint_state_listener_controller:
     type:      state_listener_controller/JointStateListenerController
     topic:     /frcrobot_rio/joint_states
-
-pdh_state_controller:
-   type:         pdh_state_controller/PDHStateController
-   publish_rate: 20
-   things_plugged_in_pdh_channel:
-        ["", #id 1
-         "", #id 2
-         "", #id 3
-         "", #id 4
-         "", #id 5
-         "", #id 6
-         "", #id 7
-         "", #id 8
-         "", #id 9
-         "", #id 10
-         "", #id 11
-         "", #id 12
-         "", #id 13
-         "", #id 14
-         "", #id 15
-         "", #id 16
-         "", #id 17
-         "", #id 18
-         "", #id 19
-         "", #id 20
-         "", #id 21
-         "", #id 22
-         "", #id 23
-         ""  #id 24
-        ]
 
 pcm_state_controller:
    type:         pcm_state_controller/PCMStateController

@@ -3,6 +3,7 @@ rplidar_ros
 teleop_twist_joy
 zed-ros-wrapper
 /CMakeLists.txt
+rosserial
 px_ros_pkg
 ros_controllers
 control_toolbox

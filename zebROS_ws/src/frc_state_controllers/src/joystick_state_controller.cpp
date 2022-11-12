@@ -105,10 +105,10 @@ void JoystickStateController::update(const ros::Time &time, const ros::Duration 
 				m.rightStickY        = js->getAxis(5);
 			}
 
-			m.buttonAButton      = js->getButton(0);
-			m.buttonBButton      = js->getButton(1);
-			m.buttonXButton      = js->getButton(2);
-			m.buttonYButton      = js->getButton(3);
+			m.buttonAButton      = js->getButton(1);
+			m.buttonBButton      = js->getButton(0);
+			m.buttonXButton      = js->getButton(3);
+			m.buttonYButton      = js->getButton(2);
 			m.bumperLeftButton   = js->getButton(4);
 			m.bumperRightButton  = js->getButton(5);
 			m.buttonBackButton   = js->getButton(6);

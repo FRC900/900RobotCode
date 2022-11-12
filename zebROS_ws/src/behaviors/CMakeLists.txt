@@ -157,6 +157,14 @@ add_executable(2022_shooting_server_node src/2022_shooting_server.cpp)
 target_link_libraries(2022_shooting_server_node ${catkin_LIBRARIES})
 add_dependencies(2022_shooting_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(2022_apriltag_shooting_server_pf_node src/2022_apriltag_shooting_server_pf.cpp)
+target_link_libraries(2022_apriltag_shooting_server_pf_node ${catkin_LIBRARIES})
+add_dependencies(2022_apriltag_shooting_server_pf_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(2022_apriltag_shooting_server_node src/2022_apriltag_shooting_server.cpp)
+target_link_libraries(2022_apriltag_shooting_server_node ${catkin_LIBRARIES})
+add_dependencies(2022_apriltag_shooting_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_executable(2022_climb_server_node src/2022_climb_server.cpp)
 target_link_libraries(2022_climb_server_node ${catkin_LIBRARIES})
 add_dependencies(2022_climb_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

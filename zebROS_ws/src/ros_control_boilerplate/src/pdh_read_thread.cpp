@@ -48,10 +48,22 @@ void FRCRobotInterface::pdh_read_thread(int32_t pdh,
 		//read info from the PDH hardware
 		status = 0;
 		pdh_state.setVoltage(HAL_GetREVPDHVoltage(pdh, &status));
+		if (status)
+		{
+			ROS_ERROR_STREAM("voltage pdh_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
+		}
 		HAL_PowerDistributionFaults faults;
 		HAL_GetREVPDHFaults(pdh, &faults, &status);
+		if (status)
+		{
+			ROS_ERROR_STREAM("faults pdh_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
+		}
 		HAL_PowerDistributionStickyFaults sticky_faults;
 		HAL_GetREVPDHStickyFaults(pdh, &sticky_faults, &status);
+		if (status)
+		{
+			ROS_ERROR_STREAM("sticky pdh_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
+		}
 
 
 #if 0
@@ -113,11 +125,19 @@ void FRCRobotInterface::pdh_read_thread(int32_t pdh,
 		pdh_state.setStickyChannelBreakerFault(sticky_faults.channel23BreakerFault, 23);
 		pdh_state.setStickyHasReset(sticky_faults.hasReset);
 		pdh_state.setTotalCurrent(HAL_GetREVPDHTotalCurrent(pdh, &status));
+		if (status)
+		{
+			ROS_ERROR_STREAM("line 130 pdh_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
+		}
 		pdh_state.setSwitchableChannelState(HAL_GetREVPDHSwitchableChannelState(pdh, &status));
 
 		for (size_t channel = 0; channel < 20; channel++)
 		{
 			pdh_state.setChannelCurrent(HAL_GetREVPDHChannelCurrent(pdh, channel, &status), channel);
+			if (status)
+		{
+			ROS_ERROR_STREAM("line 130 pdh_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
+		}
 		}
 		if (status)
 		{

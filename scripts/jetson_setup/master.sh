@@ -49,7 +49,7 @@ if sudo mount /dev/nvme0n1p1 /mnt/900_2; then
 		roslaunch controller_node 2022_compbot_combined.launch record:=true
 else
 		echo did not mount >> /home/ubuntu/mounted.txt
-		roslaunch controller_node 2022_compbot_combined.launch
+		roslaunch controller_node 2022_compbot_combined.launch record:=true 
 fi
 
 top -b > /mnt/900_2/$(date +%Y%m%d%H%M%S)_top_log.txt

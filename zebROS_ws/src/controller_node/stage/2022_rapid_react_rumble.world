@@ -38,7 +38,7 @@ threads 2
 
 window
 (
-  size [ 1299  609 ]
+  size [ 956  1154 ]
   center [ 0.000 0.000 ]
   rotate [ 0.000 0.000 ]
   scale 60.000
@@ -51,8 +51,8 @@ floorplan
 (
   name "rapid_react_field_map"
   bitmap "../maps/rapid_react_field_cad_cropped.png"
-  size [16.5 8.205 1.000] #[24.6888 33.5274 4] x, y, size of the map (meters)
-  pose [ 8.2296  4.1148  0.000 0.000 ] #[  4.1148 8.5341  0.0 0.0 ] x, y, z, rotation
+  size [16.500 8.205 1.000] #[24.6888 33.5274 4] x, y, size of the map (meters)
+  pose [ 8.230  4.115  0.000 0.000 ] #[  4.1148 8.5341  0.0 0.0 ] x, y, z, rotation
 )
 
 # throw in a robot
@@ -65,27 +65,27 @@ omnidir_robot
 )
 
 # stage doesn't like tag with fiducial_return 0, so it is 111 here
-objdet_target ( pose [ 0.004 7.579 2.5 0 ] fiducial_return 100 color "cyan")
-objdet_target ( pose [ 3.233 5.487 2.5 0 ] fiducial_return 101 color "cyan")
-objdet_target ( pose [ 3.068 5.331 2.5 0 ] fiducial_return 102 color "cyan")
-objdet_target ( pose [ 0.004 5.059 2.5 0 ] fiducial_return 103 color "cyan")
-objdet_target ( pose [ 0.004 3.512  2.5 0 ] fiducial_return 104 color "cyan")
-objdet_target ( pose [ 0.121 1.718 2.5 0 ] fiducial_return 105 color "cyan")
-objdet_target ( pose [ 0.873 0.941 2.5 0 ] fiducial_return 106 color "cyan")
-objdet_target ( pose [ 1.615 0.157 2.5 0 ] fiducial_return 107 color "cyan")
-objdet_target ( pose [ 16.463 0.651 2.5 0 ] fiducial_return 110 color "cyan")
-objdet_target ( pose [ 13.235 2.743 2.5 0 ] fiducial_return 111 color "cyan")
-objdet_target ( pose [ 13.391 2.9 2.5 0 ] fiducial_return 112 color "cyan")
-objdet_target ( pose [ 16.455 3.176 2.5 0 ] fiducial_return 113 color "cyan")
-objdet_target ( pose [ 16.455 4.717 2.5 0 ] fiducial_return 114 color "cyan")
-objdet_target ( pose [ 16.335 6.515 2.5 0 ] fiducial_return 115 color "cyan")
-objdet_target ( pose [ 15.59 7.293 2.5 0 ] fiducial_return 116 color "cyan")
-objdet_target ( pose [ 14.847 8.069 2.5 0 ] fiducial_return 117 color "cyan")
-objdet_target ( pose [ 7.874 4.913 2.5 0 ] fiducial_return 140 color "cyan")
-objdet_target ( pose [ 7.431 3.759 2.5 0 ] fiducial_return 141 color "cyan")
-objdet_target ( pose [ 8.585 3.316 2.5 0 ] fiducial_return 142 color "cyan")
-objdet_target ( pose [ 9.028 4.47 2.5 0 ] fiducial_return 143 color "cyan")
-objdet_target ( pose [ 7.679 4.326 2.5 0 ] fiducial_return 150 color "cyan")
-objdet_target ( pose [ 8.018 3.564 2.5 0 ] fiducial_return 151 color "cyan")
-objdet_target ( pose [ 8.78 3.903 2.5 0 ] fiducial_return 152 color "cyan")
-objdet_target ( pose [ 8.441 4.665 2.5 0 ] fiducial_return 153 color "cyan")
+objdet_target ( pose [ 0.004 7.579 2.500 0.000 ] fiducial_return 100 color "cyan")
+objdet_target ( pose [ 3.233 5.487 2.500 0.000 ] fiducial_return 101 color "cyan")
+objdet_target ( pose [ 3.068 5.331 2.500 0.000 ] fiducial_return 102 color "cyan")
+objdet_target ( pose [ 0.004 5.059 2.500 0.000 ] fiducial_return 103 color "cyan")
+objdet_target ( pose [ 0.004 3.512  2.500 0.000 ] fiducial_return 104 color "cyan")
+objdet_target ( pose [ 0.121 1.718 2.500 0.000 ] fiducial_return 105 color "cyan")
+objdet_target ( pose [ 0.873 0.941 2.500 0.000 ] fiducial_return 106 color "cyan")
+objdet_target ( pose [ 1.615 0.157 2.500 0.000 ] fiducial_return 107 color "cyan")
+objdet_target ( pose [ 16.463 0.651 2.500 0.000 ] fiducial_return 110 color "cyan")
+objdet_target ( pose [ 13.235 2.743 2.500 0.000 ] fiducial_return 111 color "cyan")
+objdet_target ( pose [ 13.391 2.900 2.500 0.000 ] fiducial_return 112 color "cyan")
+objdet_target ( pose [ 16.455 3.176 2.500 0.000 ] fiducial_return 113 color "cyan")
+objdet_target ( pose [ 16.455 4.717 2.500 0.000 ] fiducial_return 114 color "cyan")
+objdet_target ( pose [ 16.335 6.515 2.500 0.000 ] fiducial_return 115 color "cyan")
+objdet_target ( pose [ 15.590 7.293 2.500 0.000 ] fiducial_return 116 color "cyan")
+objdet_target ( pose [ 14.847 8.069 2.500 0.000 ] fiducial_return 117 color "cyan")
+objdet_target ( pose [ 7.874 4.913 2.500 0.000 ] fiducial_return 140 color "cyan")
+objdet_target ( pose [ 7.431 3.759 2.500 0.000 ] fiducial_return 141 color "cyan")
+objdet_target ( pose [ 8.585 3.316 2.500 0.000 ] fiducial_return 142 color "cyan")
+objdet_target ( pose [ 9.028 4.470 2.500 0.000 ] fiducial_return 143 color "cyan")
+objdet_target ( pose [ 7.679 4.326 2.500 0.000 ] fiducial_return 150 color "cyan")
+objdet_target ( pose [ 8.018 3.564 2.500 0.000 ] fiducial_return 151 color "cyan")
+objdet_target ( pose [ 8.780 3.903 2.500 0.000 ] fiducial_return 152 color "cyan")
+objdet_target ( pose [ 8.441 4.665 2.500 0.000 ] fiducial_return 153 color "cyan")

@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="shooting">
+		<rosparam file="$(find behaviors)/config/2022_rumble_apriltag_locations.yaml" command="load"/>
+		<node name="apriltag_shooting_server_2022" pkg="behaviors" type="2022_apriltag_shooting_server_node" output="screen"/>
+		<node name="apriltag_shooting_server_pf_2022" pkg="behaviors" type="2022_apriltag_shooting_server_pf_node" output="screen"/>
+	</group>
+</launch>

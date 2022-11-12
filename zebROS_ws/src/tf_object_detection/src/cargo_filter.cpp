@@ -46,9 +46,11 @@ void matchCallback(const frc_msgs::MatchSpecificDataConstPtr matchDataMsg) {
             allianceKnown = true;
             break;
         default:
-            ROS_ERROR_STREAM("Invalid alliance color in MatchSpecificData msg: "
+            break; 
+            /*ROS_ERROR_STREAM("Invalid alliance color in MatchSpecificData msg: "
                              << matchDataMsg->allianceColor);
             allianceKnown = false;
+            */
     }
 }
 
