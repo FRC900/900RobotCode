@@ -71,11 +71,12 @@ void zeroCallback(const sensor_msgs::Imu::ConstPtr& raw_msg) {
   zeroed_imu.orientation = tf2::toMsg(zeroed);
   if (!std::isfinite(getYaw(zeroed_imu.orientation)))
   {
-	  ROS_WARN_STREAM("zeroCallback : NaN yaw result"
-			  << "\n\traw_msg = " << raw_msg
-			  << "\n\tlast_raw = " << last_raw
-			  << "\n\tzeroed = " << zeroed
-			  << "\n\tzeroed_imu = " << zeroed_imu);
+	  ROS_WARN_STREAM_THROTTLE(5., "zeroCallback : NaN yaw result"
+			  << "\n\traw_msg.orientation = " << raw_msg->orientation
+			  << "\n\tlast_raw = " << last_raw[0] << " " << last_raw[1] << " " << last_raw[2] << " " << last_raw[3]
+			  << "\n\tzero_rot = " << zero_rot[0] << " " << zero_rot[1] << " " << zero_rot[2] << " " << zero_rot[3]
+			  << "\n\tzeroed = " << zeroed[0] << " " << zeroed[1] << " " << zeroed[2] << " " << zeroed[3]
+			  << "\n\tzeroed_imu.orientation = " << zeroed_imu.orientation);
   }
   else
   {
@@ -103,17 +104,15 @@ bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
   }
   if(zed_reset_odometry.exists())
   {
-	std_srvs::Trigger resetOdomCall;
+  zed_interfaces::reset_odometry resetOdomCall;
 	if (!zed_reset_odometry.call(resetOdomCall))
 		ROS_ERROR("imu_zero : zed_reset_odometry call failed");
-	ROS_INFO("Bias estimate: %s", resetOdomCall.response.message.c_str());
   }
   if(zed_reset_tracking.exists())
   {
-	std_srvs::Trigger resetTrackingCall;
+  zed_interfaces::reset_tracking resetTrackingCall;
 	if (!zed_reset_tracking.call(resetTrackingCall))
 		ROS_ERROR("imu_zero : zed_reset_tracking call failed");
-	ROS_INFO("Bias estimate: %s", resetTrackingCall.response.message.c_str());
   }
   if (ukf_zero_pos.exists())
   {
