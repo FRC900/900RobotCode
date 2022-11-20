@@ -1,6 +1,7 @@
 #ifndef PARTICLE_FILTER_HEADER
 #define PARTICLE_FILTER_HEADER
 
+#include <set>
 #include <memory>
 #include <optional>
 #include <random>
@@ -20,9 +21,12 @@ private:
   std::mt19937 rng_;
   std::normal_distribution<double> pos_dist_;
   std::normal_distribution<double> rot_dist_;
+  size_t resetCounter_{0};
+  double rotation_threshold_;
   std::vector<Particle> particles_;
   WorldModel world_;
-  size_t resetCounter_{0};
+  std::normal_distribution<double> rot_thresh_dist_;
+  std::set<std::string> beacons_seen_;
   void normalize();
   void init(const WorldModelBoundaries &boundaries);
   void constrain_particles();
@@ -30,7 +34,7 @@ private:
 public:
   ParticleFilter(const WorldModel& w,
                  const WorldModelBoundaries &boundaries,
-                 double ns, double rs, size_t n);
+                 double ns, double rs, double rt, size_t n);
   std::optional<geometry_msgs::PoseWithCovariance> predict();
   void noise_rot();
   void noise_pos();
@@ -38,7 +42,9 @@ public:
   bool set_rotation(double rot);
   bool assign_weights(const std::vector<std::shared_ptr<BeaconBase>> &measurements, const std::vector<double> &sigmas);
   void resample();
-  std::vector<Particle> get_particles() const;
+  const std::vector<Particle> &get_particles() const;
+  const std::set<std::string> &get_beacons_seen() const;
+  void clear_beacons_seen();
   void check_particles(const char *file, int line) const;
   // need access to world functions so this allows that
   bool allianceColorCheck(bool amIBlueAlliance) {

@@ -30,6 +30,6 @@ for topic, msg, t in bag.read_messages([tf_static_topic]):
             rot_y = t['transform']['rotation']['y']
             rot_z = t['transform']['rotation']['z']
 
-            print(f'<node pkg="tf" type="static_transform_publisher" name="{from_name}_to_{to_name}" args="{trans_x} {trans_y} {trans_z} {rot_w} {rot_x} {rot_y} {rot_z} {from_name} {to_name} 100')
+            print(f'<node pkg="tf" type="static_transform_publisher" name="{from_name}_to_{to_name}" args="{trans_x} {trans_y} {trans_z} {rot_w} {rot_x} {rot_y} {rot_z} {from_name} {to_name} 100" />')
 
 

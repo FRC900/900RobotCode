@@ -25,11 +25,13 @@ std::ostream& operator<<(std::ostream &os, const BearingBeacon& b)
 
 ParticleFilter::ParticleFilter(const WorldModel& w,
                                const WorldModelBoundaries &boundaries,
-                               double ns, double rs, size_t n) :
+                               double ns, double rs, double rt, size_t n) :
                                num_particles_(n),
                                rng_(std::mt19937(0)),
                                pos_dist_(0, ns),
                                rot_dist_(0, rs),
+                               rotation_threshold_(rt),
+                               rot_thresh_dist_(0, rt / 2.), // divide by 2 so ~95% of set particles are within rt radians of the imu yaw
                                world_(w) {
   init(boundaries);
 }
@@ -184,10 +186,15 @@ std::optional<geometry_msgs::PoseWithCovariance> ParticleFilter::predict() {
 
 bool ParticleFilter::motion_update(double delta_x, double delta_y, double delta_rot) {
   for (Particle& p : particles_) {
-    // p.x_ += delta_x;
-    // p.y_ += delta_y;
-    const double abs_delta_x = delta_x * cos(p.rot_) + delta_y * sin(p.rot_);
-    const double abs_delta_y = delta_x * sin(p.rot_) + delta_y * cos(p.rot_);
+    // delta x and y are robot relative, since they come from the 
+    // drive base twist message.  Particle coords are map centric,
+    // so rotate the delta x, y values by the robot yaw in map
+    // space to get map-centric x and y offsets this timestep
+    const double c = cos(p.rot_ + delta_rot / 2.0);
+    const double s = sin(p.rot_ + delta_rot / 2.0);
+    const double abs_delta_x = delta_x * c - delta_y * s;
+    const double abs_delta_y = delta_x * s + delta_y * c;
+#ifdef CHECK_NAN
     // TODO - do we really want to return here, or should it try to
     // motion update the rest of the particles?
     // Maybe split the check - if d_x or d_y are inf/nan, nothing we can do
@@ -196,7 +203,6 @@ bool ParticleFilter::motion_update(double delta_x, double delta_y, double delta_
     // Then hoist the check for d_x, d_y outside the loop, return false for
     // that case. Remove the return false here to the particles which do
     // pass are constrained properly
-#ifdef CHECK_NAN
     if (!std::isfinite(delta_rot + abs_delta_x + abs_delta_y)) {
       return false;
     }
@@ -209,6 +215,12 @@ bool ParticleFilter::motion_update(double delta_x, double delta_y, double delta_
   return true;
 }
 
+// Use rotation data from the IMU to update particles
+// rotation component. Only do so if the particle's current
+// rotation is > a configurable threshold. This allows particles
+// to use camera data to correct orientation if the robot 
+// IMU zero is slightly off and at the same time corrects for
+// particles where the orientation is clearly wrong.
 bool ParticleFilter::set_rotation(double rot) {
 #ifdef CHECK_NAN
   if (!std::isfinite(rot)) {
@@ -216,7 +228,9 @@ bool ParticleFilter::set_rotation(double rot) {
   }
 #endif
   for (Particle& p : particles_) {
-    p.rot_ = rot;
+    if (fabs(angles::shortest_angular_distance(p.rot_, rot)) > rotation_threshold_) {
+      p.rot_ = rot + rot_thresh_dist_(rng_);
+    }
   }
   noise_rot();
   return true;
@@ -227,7 +241,11 @@ bool ParticleFilter::set_rotation(double rot) {
 bool ParticleFilter::assign_weights(const std::vector<std::shared_ptr<BeaconBase>> &measurements,
 		const std::vector<double> &sigmas) {
   if (measurements.empty()) {
-	return false;
+    return false;
+  }
+
+  for (auto m: measurements) {
+    beacons_seen_.insert(m->type_);
   }
 
 #ifdef CHECK_NAN
@@ -247,8 +265,16 @@ bool ParticleFilter::assign_weights(const std::vector<std::shared_ptr<BeaconBase
   return true;
 }
 
-std::vector<Particle> ParticleFilter::get_particles() const {
+const std::vector<Particle> &ParticleFilter::get_particles() const {
   return particles_;
+}
+
+const std::set<std::string> &ParticleFilter::get_beacons_seen() const {
+  return beacons_seen_;
+}
+
+void ParticleFilter::clear_beacons_seen() {
+  beacons_seen_.clear();
 }
 
 void ParticleFilter::check_particles(const char *file, int line) const {

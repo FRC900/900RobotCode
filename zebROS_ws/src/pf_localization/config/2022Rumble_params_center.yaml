@@ -86,5 +86,6 @@ noise_delta_t: 1.0
 noise_stdev:
   position: 0.01
   rotation: 0.01
+rotation_threshold: 0.25
 num_particles: 100
 odom_frame_id: zed_objdet_odom

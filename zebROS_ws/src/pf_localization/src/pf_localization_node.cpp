@@ -2,6 +2,7 @@
 #include "pf_localization/particle_filter.hpp"
 #include "pf_localization/world_model.hpp"
 #include "pf_localization/particle.hpp"
+#include "pf_localization/PFDebug.h"
 #include "field_obj/Detection.h"
 
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -44,14 +45,15 @@ ros::Duration tf_tolerance;
 ros::Publisher pub;
 ros::Publisher pub_debug;
 
-tf2_ros::Buffer tf_buffer_;
+tf2_ros::Buffer tf_buffer;
 
 ros::Time last_cmd_vel;
-ros::Time last_measurement;
-double rot = 0;
+ros::Time last_camera_data;
+ros::Time last_camera_stamp;
 double noise_delta_t = 0;  // if the time since the last measurement is greater than this, positional noise will not be applied
 std::vector<double> sigmas; // std.dev for each dimension of detected beacon position (x&y for depth camera, angle for bearing-only)
 std::unique_ptr<ParticleFilter> pf;
+
 void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
   double roll, pitch, yaw;
   tf2::Quaternion raw;
@@ -63,7 +65,7 @@ void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
   #endif
 }
 
-void publish_prediction(const ros::TimerEvent &/*event*/)
+void publish_prediction(const ros::TimerEvent &event)
 {
   const auto p = pf->predict();
   if (!p) {
@@ -74,7 +76,7 @@ void publish_prediction(const ros::TimerEvent &/*event*/)
   geometry_msgs::PoseWithCovarianceStamped predictionStamped;
 
   predictionStamped.pose = prediction;
-  predictionStamped.header.stamp = ros::Time::now();
+  predictionStamped.header.stamp = event.current_real;
   predictionStamped.header.frame_id = map_frame_id;
 
   pub.publish(predictionStamped);
@@ -93,8 +95,7 @@ void publish_prediction(const ros::TimerEvent &/*event*/)
   if (std::isfinite(tmp))
   {
     geometry_msgs::PoseStamped odom_to_map;
-    try
-    {
+    try {
       // Subtract out odom->base_link from calculated prediction map->base_link,
       // leaving a map->odom transform to broadcast
       // Borrowed from similar code in
@@ -103,11 +104,11 @@ void publish_prediction(const ros::TimerEvent &/*event*/)
 
       geometry_msgs::PoseStamped baselink_to_map;
       baselink_to_map.header.frame_id = "base_link";
-      baselink_to_map.header.stamp = last_cmd_vel;
+      baselink_to_map.header.stamp = last_camera_stamp;
       tf2::toMsg(tmp_tf.inverse(), baselink_to_map.pose);
 
       // baselink_to_map transformed from base_link to odom == odom->map
-      tf_buffer_.transform(baselink_to_map, odom_to_map, odom_frame_id, ros::Duration(0.02));
+      tf_buffer.transform(baselink_to_map, odom_to_map, odom_frame_id);
 
       geometry_msgs::TransformStamped transformStamped;
 
@@ -122,22 +123,29 @@ void publish_prediction(const ros::TimerEvent &/*event*/)
       tf2::convert(odom_to_map_tf.inverse(), transformStamped.transform);
 
       tfbr->sendTransform(transformStamped);
-    }
-    catch (const tf2::TransformException &ex)
-    {
+    } catch (const tf2::TransformException &ex) {
       ROS_ERROR_STREAM_THROTTLE(5, "pf_localization : transform from base_link to " << odom_frame_id << " failed in map->odom broadcaser : " << ex.what());
     }
   }
 
   if(pub_debug.getNumSubscribers() > 0){
-    geometry_msgs::PoseArray debug;
+    pf_localization::PFDebug debug;
 
-    for (const Particle& p : pf->get_particles()) {
+    const auto part = pf->get_particles();
+    for (const Particle& p : part) {
       debug.poses.push_back(Particle::poseFrom2D(p.x_, p.y_, p.rot_));
     }
 
+    const auto beacons = pf->get_beacons_seen();
+    for (const auto &b : beacons) {
+      debug.beacons.push_back(b);
+    }
+    pf->clear_beacons_seen();
+
+    debug.predicted_pose = prediction.pose;
+
     debug.header.frame_id = map_frame_id;
-    debug.header.stamp = ros::Time::now();
+    debug.header.stamp = event.current_real;
     pub_debug.publish(debug);
   }
 }
@@ -145,21 +153,22 @@ void publish_prediction(const ros::TimerEvent &/*event*/)
 // Extra arg here allows for switching between bearing only vs. 2d x,y position
 // detection messages based on how the subscribe call is defined
 void goalCallback(const field_obj::Detection::ConstPtr& msg, const bool bearingOnly){
+  last_camera_stamp = msg->header.stamp;
   // TODO - just transform all of the detection coords to base_link here,
   // remove the need to do so inside the particle filter
   geometry_msgs::TransformStamped zed_to_baselink;
   try {
-    zed_to_baselink = tf_buffer_.lookupTransform("base_link", msg->header.frame_id, ros::Time::now(), ros::Duration(0.02));
+    zed_to_baselink = tf_buffer.lookupTransform("base_link", msg->header.frame_id, ros::Time::now(), ros::Duration(0.02));
   }
   catch (const tf2::TransformException &ex) {
-	ROS_ERROR_STREAM_THROTTLE(5, "PF localization not running - fix base_link to " << msg->header.frame_id << " transform");
+    ROS_ERROR_STREAM_THROTTLE(5, "PF localization not running - fix base_link to " << msg->header.frame_id << " transform");
     return;
   }
 
   std::vector<std::shared_ptr<BeaconBase>> measurement;
   geometry_msgs::Point location;
   for(const field_obj::Object& p : msg->objects) {
-	tf2::doTransform(p.location, location,zed_to_baselink);
+	tf2::doTransform(p.location, location, zed_to_baselink);
     if(bearingOnly) {
       measurement.push_back(std::make_shared<BearingBeacon>(location.x, location.y, p.id));
     } else { 
@@ -169,7 +178,7 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg, const bool bearingO
 
   if (pf->assign_weights(measurement, sigmas)) {
     pf->resample();
-    last_measurement = ros::Time::now();
+    last_camera_data = ros::Time::now();
   }
 
   #ifdef EXTREME_VERBOSE
@@ -181,15 +190,17 @@ void cmdCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
   double timestep = (msg->header.stamp - last_cmd_vel).toSec();
   double x_vel = msg->twist.linear.x;
   double y_vel = msg->twist.linear.y;
+  double z_ang_velocity = msg->twist.angular.z;
 
   // TODO - use the average of the previous and current velocity?
   double delta_x = x_vel * timestep;
   double delta_y = y_vel * timestep;
+  double delta_angular_z = z_ang_velocity * timestep;
 
   last_cmd_vel = msg->header.stamp;
   // TODO - check return code
-  pf->motion_update(delta_x, delta_y, 0);
-  if ((ros::Time::now() - last_measurement).toSec() < noise_delta_t) {
+  pf->motion_update(delta_x, delta_y, delta_angular_z);
+  if ((ros::Time::now() - last_camera_data).toSec() < noise_delta_t) {
     pf->noise_pos();
     pf->noise_rot();
   }
@@ -228,14 +239,14 @@ bool handle_re_init_pf(std_srvs::Empty::Request &req, std_srvs::Empty::Response 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "pf_localization_node");
   ros::NodeHandle nh_;
-  tf2_ros::TransformListener tf_listener_(tf_buffer_);
+  tf2_ros::TransformListener tf_listener(tf_buffer);
 
   #ifdef VERBOSE
   ROS_INFO_STREAM(nh_.getNamespace());
   #endif
 
   XmlRpc::XmlRpcValue xml_beacons;
-  double f_x_min, f_x_max, f_y_min, f_y_max, i_x_min, i_x_max, i_y_min, i_y_max, p_stdev, r_stdev;
+  double f_x_min, f_x_max, f_y_min, f_y_max, i_x_min, i_x_max, i_y_min, i_y_max, p_stdev, r_stdev, rotation_threshold;
   int num_particles;
   double tmp_tolerance = 0.1;
 
@@ -299,6 +310,9 @@ int main(int argc, char **argv) {
   if (!nh_.param("noise_stdev/rotation", r_stdev, 0.1)) {
     ROS_WARN("no rotation stdev specified, using default");
   }
+  if (!nh_.param("rotation_threshold", rotation_threshold, 0.25)) {
+    ROS_WARN("no rotation_threshold specified, using default");
+  }
   if (!nh_.param("camera_sigmas", sigmas, {0.1, 0.1})) {
     ROS_WARN("no camera stdev specified, using default");
   }
@@ -327,7 +341,7 @@ int main(int argc, char **argv) {
   WorldModel world(beacons, WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max));
   pf = std::make_unique<ParticleFilter>(world,
                                         WorldModelBoundaries(i_x_min, i_x_max, i_y_min, i_y_max),
-                                        p_stdev, r_stdev,
+                                        p_stdev, r_stdev, rotation_threshold,
                                         num_particles);
 
   #ifdef VERBOSE
@@ -342,24 +356,26 @@ int main(int argc, char **argv) {
   ROS_INFO("pf localization initialized");
   #endif
 
-  ros::Subscriber rot_sub = nh_.subscribe(rot_topic, 1, rotCallback);
-  ros::Subscriber odom_sub = nh_.subscribe(cmd_topic, 1, cmdCallback);
-  ros::Subscriber goal_sub = nh_.subscribe<field_obj::Detection>(goal_pos_topic, 1, boost::bind(goalCallback, _1, false));
-  ros::Subscriber match_sub = nh_.subscribe(match_topic, 1, matchCallback);
+  ros::Subscriber rot_sub = nh_.subscribe(rot_topic, 10, rotCallback);
+  ros::Subscriber odom_sub = nh_.subscribe(cmd_topic, 10, cmdCallback);
+  ros::Subscriber goal_sub = nh_.subscribe<field_obj::Detection>(goal_pos_topic, 10, boost::bind(goalCallback, _1, false));
+  ros::Subscriber match_sub = nh_.subscribe(match_topic, 10, matchCallback);
 
   pub = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>(pub_topic, 1);
   ros::ServiceServer re_init_pf_server = nh_.advertiseService(reinit_pf_service, handle_re_init_pf);
 
-  pub_debug = nh_.advertise<geometry_msgs::PoseArray>(pub_debug_topic, 1);
+  pub_debug = nh_.advertise<pf_localization::PFDebug>(pub_debug_topic, 10);
 
   tfbr = std::make_unique<tf2_ros::TransformBroadcaster>();
   double publish_rate;
   nh_.param("publish_rate", publish_rate, 10.);
   auto pubTimer = nh_.createTimer(ros::Duration(1./ publish_rate), publish_prediction);
 
+  ros::Duration(1).sleep(); // for data replay, needed to get time >= 0 using rosbag clock
   const auto now = ros::Time::now();
   last_cmd_vel = now;
-  last_measurement = now;
+  last_camera_data = now;
+  last_camera_stamp = now;
   ros::spin();
 
   return 0;

@@ -1,4 +1,4 @@
-noise_delta_t: 1.0
+noise_delta_t: 10.0
 map_frame_id: 'map'
 #odom_frame_id: 'odom'
 odom_frame_id: 'zed_objdet_odom'
@@ -19,6 +19,8 @@ num_particles: 200
 noise_stdev:
   position: 0.025
   rotation: 0.005
+
+rotation_threshold: 0.25
 
 camera_sigmas: [ 1.000, 1.000 ]
 
