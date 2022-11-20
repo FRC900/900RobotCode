@@ -67,7 +67,6 @@
 #include <AHRS.h>
 
 #include "frc_interfaces/robot_controller_interface.h"
-#include "frc_msgs/MatchSpecificData.h"
 
 #include "ros_control_boilerplate/AS726x.h"
 #include "ros_control_boilerplate/as726x_convert.h"

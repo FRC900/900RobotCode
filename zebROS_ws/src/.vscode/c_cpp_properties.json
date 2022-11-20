@@ -1,7 +1,7 @@
 {
     "configurations": [
         {
-            "name": "ROS",
+            "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**"
             ],
