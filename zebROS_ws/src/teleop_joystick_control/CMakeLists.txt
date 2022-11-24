@@ -164,6 +164,13 @@ add_dependencies(snap_to_cargo_node_2022
 	${catkin_EXPORTED_TARGETS}
 	)
 
+#add_executable(test_interpolated_map src/test_interpolated_map.cpp)
+#target_link_libraries(test_interpolated_map
+#	${catkin_LIBRARIES})
+#add_dependencies(test_interpolated_map
+#	${${PROJECT_NAME}_EXPORTED_TARGETS}
+#	${catkin_EXPORTED_TARGETS})
+
 ## TOOLS ------------------------------------------------------
 
 # Install ------------------------------------------------------------

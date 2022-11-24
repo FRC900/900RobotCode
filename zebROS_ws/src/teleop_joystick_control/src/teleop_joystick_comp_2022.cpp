@@ -44,6 +44,8 @@
 
 #include <imu_zero/ImuZeroAngle.h>
 
+#include <math.h>
+
 std::unique_ptr<TeleopCmdVel<teleop_joystick_control::TeleopJoystickComp2022Config>> teleop_cmd_vel;
 
 bool diagnostics_mode = false;
@@ -696,8 +698,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		static ros::Time last_header_stamp = joystick_states_array[0].header.stamp;
 
+		//ROS_INFO_STREAM("leftStick = " << joystick_states_array[0].leftStickX << " " << joystick_states_array[0].leftStickY);
 		teleop_cmd_vel->updateRateLimit(config);
 		geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], imu_angle, config);
+		//ROS_INFO_STREAM("cmd_vel out " << cmd_vel.linear.x << " " << cmd_vel.linear.y << " " << cmd_vel.linear.z);
 
 		if (cmd_vel.angular.z != 0.0) {
 			if (snappingToAngle) {
@@ -729,6 +733,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		else if((cmd_vel.linear.x != 0.0) || (cmd_vel.linear.y != 0.0) || (cmd_vel.angular.z != 0.0))
 		{
+			//ROS_INFO_STREAM("Publishing " << cmd_vel.linear.x << " " << cmd_vel.linear.y << " " << cmd_vel.linear.z);
 			JoystickRobotVel.publish(cmd_vel);
 			sendRobotZero = false;
 		}
@@ -1343,15 +1348,6 @@ int main(int argc, char **argv)
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 	IMUZeroSrv = n.serviceClient<imu_zero::ImuZeroAngle>("/imu/set_imu_zero", false, service_connection_header);
 
-	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
-	{
-		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");
-	}
-	if(!IMUZeroSrv.waitForExistence(ros::Duration(1)))
-	{
-		ROS_ERROR("Wait (15 sec) timed out, for IMU Zero Service in teleop_joystick_comp.cpp");
-	}
-
 	orient_strafing_enable_pub = n.advertise<std_msgs::Bool>("orient_strafing/pid_enable", 1);
 	orient_strafing_setpoint_pub = n.advertise<std_msgs::Float64>("orient_strafing/setpoint", 1);
 	orient_strafing_state_pub = n.advertise<std_msgs::Float64>("orient_strafing/state", 1);
@@ -1371,25 +1367,49 @@ int main(int argc, char **argv)
 	ejecting_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Ejecting2022Action>>("/ejecting/ejecting_server_2022", true);
 	distance_ac = std::make_shared<actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>>("/hold_distance/hold_position_server", true);
 
-	ROS_INFO_STREAM("Waiting for actionlib servers");
-	if (!climb_ac->waitForServer(ros::Duration(15))) {
-		ROS_ERROR("**CLIMB LIKELY WON'T WORK*** Wait (15 sec) timed out, for climb action in teleop_joystick_comp.cpp");
+	const ros::Duration startup_wait_time_secs(15);
+	const ros::Time startup_start_time = ros::Time::now();
+	ros::Duration startup_wait_time;
+	startup_wait_time = std::max(startup_wait_time_secs - (ros::Time::now() - startup_start_time), ros::Duration(0.1));
+	if(!BrakeSrv.waitForExistence(startup_wait_time))
+	{
+		ROS_ERROR("Wait (15 sec) timed out, for Brake Service in teleop_joystick_comp.cpp");
 	}
-	if (!align_shooting_pf_ac->waitForServer(ros::Duration(1))) {
+
+	startup_wait_time = std::max(startup_wait_time_secs - (ros::Time::now() - startup_start_time), ros::Duration(0.1));
+	if(!IMUZeroSrv.waitForExistence(startup_wait_time))
+	{
+		ROS_ERROR("Wait (1 sec) timed out, for IMU Zero Service in teleop_joystick_comp.cpp");
+	}
+
+	ROS_INFO_STREAM("Waiting for actionlib servers");
+	startup_wait_time = std::max(startup_wait_time_secs - (ros::Time::now() - startup_start_time), ros::Duration(0.1));
+	if (!climb_ac->waitForServer(startup_wait_time)) {
+		ROS_ERROR("**CLIMB LIKELY WON'T WORK*** Wait (1 sec) timed out, for climb action in teleop_joystick_comp.cpp");
+	}
+
+	startup_wait_time = std::max(startup_wait_time_secs - (ros::Time::now() - startup_start_time), ros::Duration(0.1));
+	if (!align_shooting_pf_ac->waitForServer(startup_wait_time)) {
 		ROS_ERROR("**ALIGN SHOOTING LIKELY WON'T WORK*** Wait (1 sec) timed out, for shooting action in teleop_joystick_comp.cpp");
 	}
-	if (!shooting_ac->waitForServer(ros::Duration(1))) {
+
+	startup_wait_time = std::max(startup_wait_time_secs - (ros::Time::now() - startup_start_time), ros::Duration(0.1));
+	if (!shooting_ac->waitForServer(startup_wait_time)) {
 		ROS_ERROR("**SHOOTING LIKELY WON'T WORK*** Wait (1 sec) timed out, for shooting action in teleop_joystick_comp.cpp");
 	}
-	if (!intaking_ac->waitForServer(ros::Duration(1))) {
+
+	startup_wait_time = std::max(startup_wait_time_secs - (ros::Time::now() - startup_start_time), ros::Duration(0.1));
+	if (!intaking_ac->waitForServer(startup_wait_time)) {
 		ROS_ERROR("**INTAKING LIKELY WON'T WORK*** Wait (1 sec) timed out, for intaking action in teleop_joystick_comp.cpp");
 	}
 
-	if (!ejecting_ac->waitForServer(ros::Duration(1))) {
+	startup_wait_time = std::max(startup_wait_time_secs - (ros::Time::now() - startup_start_time), ros::Duration(0.1));
+	if (!ejecting_ac->waitForServer(startup_wait_time)) {
 		ROS_ERROR("**EJECTING LIKELY WON'T WORK*** Wait (1 sec) timed out, for ejecting action in teleop_joystick_comp.cpp");
 	}
 
-	if (!distance_ac->waitForServer(ros::Duration(1))) {
+	startup_wait_time = std::max(startup_wait_time_secs - (ros::Time::now() - startup_start_time), ros::Duration(0.1));
+	if (!distance_ac->waitForServer(startup_wait_time)) {
 		ROS_ERROR("**HOLD DISTANCE LIKELY WON'T WORK*** Wait (1 sec) timed out, for hold distance action in teleop_joystick_comp.cpp");
 	}
 
