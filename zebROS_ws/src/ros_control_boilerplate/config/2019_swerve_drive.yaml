@@ -140,6 +140,8 @@ swerve_drive_controller:
         motion_acceleration: 120
         voltage_compensation_enable: true
         voltage_compensation_saturation: 12
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
         dynamic_reconfigure: false
     steering_joint_fr:
         joint: fr_angle
@@ -158,6 +160,8 @@ swerve_drive_controller:
         motion_acceleration: 120
         voltage_compensation_enable: true
         voltage_compensation_saturation: 12
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
         dynamic_reconfigure: false
     steering_joint_br:
         joint: br_angle
@@ -176,6 +180,8 @@ swerve_drive_controller:
         motion_acceleration: 120
         voltage_compensation_enable: true
         voltage_compensation_saturation: 12
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
         dynamic_reconfigure: false
     steering_joint_bl:
         joint: bl_angle
@@ -194,4 +200,6 @@ swerve_drive_controller:
         motion_acceleration: 85
         voltage_compensation_enable: true
         voltage_compensation_saturation: 12
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
         dynamic_reconfigure: false
