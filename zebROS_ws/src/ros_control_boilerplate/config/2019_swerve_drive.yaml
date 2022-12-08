@@ -60,10 +60,15 @@ swerve_drive_controller:
         invert_output: false 
         feedback_type: CTRE_MagEncoder_Relative
         voltage_compensation_enable: True
+        voltage_compensation_saturation: 12
         current_limit_continuous_amps: 30
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
+        closed_loop_ramp: 0.25
+        dynamic_reconfigure: false
     speed_joint_fr:
         joint: fr_drive #fix pid
         close_loop_values:
@@ -73,10 +78,15 @@ swerve_drive_controller:
         invert_output: false 
         feedback_type: CTRE_MagEncoder_Relative
         voltage_compensation_enable: True
+        voltage_compensation_saturation: 12
         current_limit_continuous_amps: 30
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
+        closed_loop_ramp: 0.25
+        dynamic_reconfigure: false
     speed_joint_bl:
         joint: bl_drive #fix pid
         close_loop_values: 
@@ -86,10 +96,15 @@ swerve_drive_controller:
         sensor_phase: true  
         invert_output: false 
         voltage_compensation_enable: True
+        voltage_compensation_saturation: 12
         current_limit_continuous_amps: 30
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
+        closed_loop_ramp: 0.25
+        dynamic_reconfigure: false
     speed_joint_br:
         joint: br_drive #fix pid
         close_loop_values:
@@ -99,10 +114,15 @@ swerve_drive_controller:
         invert_output: false 
         feedback_type: CTRE_MagEncoder_Relative
         voltage_compensation_enable: True
+        voltage_compensation_saturation: 12
         current_limit_continuous_amps: 30
         current_limit_enable: True
         dynamic_reconfigure: True
         neutral_mode: "Brake"
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
+        closed_loop_ramp: 0.25
+        dynamic_reconfigure: false
     steering_joint_fl:
         joint: fl_angle
         feedback_type: CTRE_MagEncoder_Absolute
@@ -119,6 +139,8 @@ swerve_drive_controller:
         motion_cruise_velocity: 18
         motion_acceleration: 120
         voltage_compensation_enable: true
+        voltage_compensation_saturation: 12
+        dynamic_reconfigure: false
     steering_joint_fr:
         joint: fr_angle
         feedback_type: CTRE_MagEncoder_Absolute
@@ -135,6 +157,8 @@ swerve_drive_controller:
         motion_cruise_velocity: 18
         motion_acceleration: 120
         voltage_compensation_enable: true
+        voltage_compensation_saturation: 12
+        dynamic_reconfigure: false
     steering_joint_br:
         joint: br_angle
         feedback_type: CTRE_MagEncoder_Absolute
@@ -151,6 +175,8 @@ swerve_drive_controller:
         motion_cruise_velocity: 18
         motion_acceleration: 120
         voltage_compensation_enable: true
+        voltage_compensation_saturation: 12
+        dynamic_reconfigure: false
     steering_joint_bl:
         joint: bl_angle
         feedback_type: CTRE_MagEncoder_Absolute
@@ -167,3 +193,5 @@ swerve_drive_controller:
         motion_cruise_velocity: 15
         motion_acceleration: 85
         voltage_compensation_enable: true
+        voltage_compensation_saturation: 12
+        dynamic_reconfigure: false
