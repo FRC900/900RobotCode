@@ -51,6 +51,8 @@ swerve_drive_controller:
     wheel_coords: [[-0.26035, 0.26035], [0.26035, 0.26035], [-0.26035, -0.26035], [0.26035, -0.26035]]
  
     cmd_vel_timeout: 0.5 # we test this separately, give plenty for the other tests
+    use_cos_scaling: True # scale motor speed by how close angle motors are to setpoints
+
     speed_joint_fl:
         joint: fl_drive #fix pid
         close_loop_values:
