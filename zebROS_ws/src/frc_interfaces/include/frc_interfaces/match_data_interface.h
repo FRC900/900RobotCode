@@ -17,6 +17,7 @@ class MatchHWState
         std::vector<uint8_t> getGameSpecificData(void)const {return game_specific_data_;}
         std::string getEventName(void)                const {return event_name_;}
 
+        uint32_t getRawControlWordValue(void)            const {return raw_control_word_value;}
         int getAllianceColor(void)                    const {return alliance_color_;}
         int getMatchType(void)                        const {return match_type_;}
         int getDriverStationLocation(void)            const {return driver_station_location_;}
@@ -44,6 +45,7 @@ class MatchHWState
 
         void setEventName(const std::string &event_name)                {event_name_ = event_name;}
 
+        void setRawControlWordValue(uint32_t raw_control_word_value)                                 {raw_control_word_value_ = raw_control_word_value;}
         void setAllianceColor(int alliance_color)                       {alliance_color_ = alliance_color;}
         void setMatchType(int match_type)                               {match_type_ = match_type;}
         void setDriverStationLocation(int driver_station_location)      {driver_station_location_ = driver_station_location;}
@@ -71,6 +73,7 @@ class MatchHWState
 		std::vector<uint8_t> game_specific_data_;
 		std::string event_name_;
 
+        uint32_t    raw_control_word_value_{0};
 		int         alliance_color_{0};
 		int         match_type_{0};
 		int         driver_station_location_{0};

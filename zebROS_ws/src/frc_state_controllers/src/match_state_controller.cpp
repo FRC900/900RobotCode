@@ -30,6 +30,7 @@ namespace match_state_controller
 
 		auto &m = realtime_pub_->msg_;
 
+		m.rawControlWordValue = 0.0;
 		m.matchTimeRemaining = 0.0;
 		m.gameSpecificData.clear();
 		m.eventName = "";
@@ -82,6 +83,7 @@ namespace match_state_controller
 				const auto &ms = match_state_;
 
 				//read from the object and stuff it in a msg
+				m.rawControlWordValue = ms->getRawControlWordValue();
 				m.matchTimeRemaining = ms->getMatchTimeRemaining();
 				m.gameSpecificData = ms->getGameSpecificData();
 				m.eventName = ms->getEventName();
@@ -161,6 +163,9 @@ void MatchStateListenerController::update(const ros::Time & /*time*/, const ros:
 void MatchStateListenerController::commandCB(const frc_msgs::MatchSpecificDataConstPtr &msg)
 {
 	hardware_interface::MatchHWState data;
+
+	data.setRawControlWordValue(msg->rawControlWordValue);
+
 	data.setMatchTimeRemaining(msg->matchTimeRemaining);
 
 	data.setGameSpecificData(msg->gameSpecificData);

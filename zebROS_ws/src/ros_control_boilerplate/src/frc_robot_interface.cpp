@@ -893,6 +893,7 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 			//read control word match data at full speed - contains enable info, and reads should be v fast
 			HAL_ControlWord controlWord;
 			HAL_GetControlWord(&controlWord);
+			uint32_t raw_control_word = *(reinterpret_cast<uint32_t *>(&controlWord));
 			match_data_.setEnabled(controlWord.enabled && controlWord.dsAttached);
 			match_data_.setDisabled(!(controlWord.enabled && controlWord.dsAttached));
 			match_data_.setAutonomous(controlWord.autonomous);

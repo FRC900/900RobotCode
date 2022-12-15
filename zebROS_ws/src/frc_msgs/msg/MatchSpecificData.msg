@@ -1,6 +1,7 @@
 Header header
 
 string eventName
+uint32 rawControlWordValue
 int8 matchType
 int8 matchNumber
 int8 replayNumber
