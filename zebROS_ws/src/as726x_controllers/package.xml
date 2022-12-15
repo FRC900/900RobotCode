@@ -67,7 +67,7 @@
   <depend>as726x_msgs</depend>
   <depend>as726x_interface</depend>
   <depend>ddynamic_reconfigure</depend>
-
+  <depend>periodic_interval_counter</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

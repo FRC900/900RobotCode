@@ -29,117 +29,143 @@
  * Original joint_state_controller Author: Wim Meeussen
  */
 
-#include <algorithm>
-#include <cstddef>
-
+#include <controller_interface/controller.h>
+#include <realtime_tools/realtime_publisher.h>
+#include <frc_interfaces/pcm_state_interface.h>
+#include <frc_msgs/PCMState.h>
 #include <pluginlib/class_list_macros.h>
-#include "frc_state_controllers/pcm_state_controller.h"
+#include "periodic_interval_counter/periodic_interval_counter.h"
 
 namespace pcm_state_controller
 {
-
-bool PCMStateController::init(hardware_interface::PCMStateInterface *hw,
-							  ros::NodeHandle                       &root_nh,
-							  ros::NodeHandle                       &controller_nh)
+/**
+ * \brief Controller that publishes the state of all PCMs in a robot.
+ *
+ * This controller publishes the state of all resources registered to a \c hardware_interface::PCMStateInterface to a
+ * topic of type \c pcm_state_controller/PCMState. The following is a basic configuration of the controller.
+ *
+ * \code
+ * pcm_state_controller:
+ *   type: pcm_state_controller/PCMStateController
+ *   publish_rate: 50
+ * \endcode
+ *
+ */
+class PCMStateController: public controller_interface::Controller<hardware_interface::PCMStateInterface>
 {
-	ROS_INFO_NAMED("pcm_state_controller", "PCMStateController::init() called");
-	// get all joint names from the hardware interface
-	const std::vector<std::string> &pcm_names = hw->getNames();
-	num_pcms_ = pcm_names.size();
-	if (num_pcms_ < 1)
+private:
+	std::vector<hardware_interface::PCMStateHandle> pcm_state_;
+	std::unique_ptr<realtime_tools::RealtimePublisher<frc_msgs::PCMState> > realtime_pub_;
+	std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
+	double publish_rate_{20};
+	size_t num_pcms_{0};
+
+public:
+	bool init(hardware_interface::PCMStateInterface *hw,
+			ros::NodeHandle                       &root_nh,
+			ros::NodeHandle                       &controller_nh)
 	{
-		ROS_ERROR_STREAM("Cannot initialize zero PCMs - need to add a compressor joint def?");
-		return false;
-	}
-	for (size_t i = 0; i < num_pcms_; i++)
-		ROS_DEBUG("Got joint %s", pcm_names[i].c_str());
-
-	// get publishing period
-	if (!controller_nh.getParam("publish_rate", publish_rate_))
-	{
-		ROS_ERROR("Parameter 'publish_rate' not set");
-		return false;
-	}
-
-	// realtime publisher
-	realtime_pub_.reset(new
-						realtime_tools::RealtimePublisher<frc_msgs::PCMState>(root_nh, "pcm_states", 4));
-
-	// get joints and allocate message
-	auto &m = realtime_pub_->msg_;
-	for (size_t i = 0; i < num_pcms_; i++)
-	{
-		m.name.push_back(pcm_names[i]);
-		m.id.push_back(-1);
-		m.compressor_enabled.push_back(false);
-		m.pressure_switch.push_back(false);
-		m.compressor_current.push_back(0.0);
-		m.closed_loop_control.push_back(false);
-		m.current_too_high.push_back(false);
-		m.current_too_high_sticky.push_back(false);
-		m.shorted.push_back(false);
-		m.shorted_sticky.push_back(false);
-		m.not_connected.push_back(false);
-		m.not_connected_sticky.push_back(false);
-		m.voltage_fault.push_back(false);
-		m.voltage_sticky_fault.push_back(false);
-		m.solenoid_disabled_list.push_back(0);
-
-		pcm_state_.push_back(hw->getHandle(pcm_names[i]));
-	}
-
-	return true;
-}
-
-void PCMStateController::starting(const ros::Time &time)
-{
-	// initialize time
-	last_publish_time_ = time;
-}
-
-void PCMStateController::update(const ros::Time &time, const ros::Duration &period)
-{
-	if (period < ros::Duration{0})
-	{
-		last_publish_time_ = time;
-	}
-	// limit rate of publishing
-	if (publish_rate_ > 0.0 && last_publish_time_ + ros::Duration(1.0 / publish_rate_) < time)
-	{
-		// try to publish
-		if (realtime_pub_->trylock())
+		ROS_INFO_NAMED("pcm_state_controller", "PCMStateController::init() called");
+		// get all joint names from the hardware interface
+		const std::vector<std::string> &pcm_names = hw->getNames();
+		num_pcms_ = pcm_names.size();
+		if (num_pcms_ < 1)
 		{
-			// we're actually publishing, so increment time
-			last_publish_time_ = time;
+			ROS_ERROR_STREAM("Cannot initialize zero PCMs - need to add a compressor joint def?");
+			return false;
+		}
+		for (size_t i = 0; i < num_pcms_; i++)
+		{
+			ROS_DEBUG("Got joint %s", pcm_names[i].c_str());
+		}
 
-			auto &m = realtime_pub_->msg_;
-			m.header.stamp = time;
-			for (unsigned i = 0; i < num_pcms_; i++)
+		// get publishing period
+		if (!controller_nh.getParam("publish_rate", publish_rate_))
+		{
+			ROS_WARN_STREAM("Parameter 'publish_rate' not set, using default " << publish_rate_);
+		}
+		else if (publish_rate_ <= 0.0)
+		{
+			ROS_ERROR_STREAM("Invalid publish_rate in pcm controller (" << publish_rate_ << ")");
+			return false;
+		}
+		interval_counter_ = std::make_unique<PeriodicIntervalCounter>(publish_rate_);
+
+		// realtime publisher
+		realtime_pub_ = std::make_unique<realtime_tools::RealtimePublisher<frc_msgs::PCMState>>(root_nh, "pcm_states", 2);
+
+		// get joints and allocate message
+		auto &m = realtime_pub_->msg_;
+		for (size_t i = 0; i < num_pcms_; i++)
+		{
+			m.name.push_back(pcm_names[i]);
+			m.id.push_back(-1);
+			m.compressor_enabled.push_back(false);
+			m.pressure_switch.push_back(false);
+			m.compressor_current.push_back(0.0);
+			m.closed_loop_control.push_back(false);
+			m.current_too_high.push_back(false);
+			m.current_too_high_sticky.push_back(false);
+			m.shorted.push_back(false);
+			m.shorted_sticky.push_back(false);
+			m.not_connected.push_back(false);
+			m.not_connected_sticky.push_back(false);
+			m.voltage_fault.push_back(false);
+			m.voltage_sticky_fault.push_back(false);
+			m.solenoid_disabled_list.push_back(0);
+
+			pcm_state_.push_back(hw->getHandle(pcm_names[i]));
+		}
+
+		return true;
+	}
+
+	void starting(const ros::Time &time)
+	{
+		interval_counter_->reset();
+	}
+
+	void update(const ros::Time &time, const ros::Duration &period)
+	{
+		// limit rate of publishing
+		if (interval_counter_->update(period))
+		{
+			// try to publish
+			if (realtime_pub_->trylock())
 			{
-				auto &pcms = pcm_state_[i];
-				m.id[i] = pcms->getId();
-				m.compressor_enabled[i] = pcms->getCompressorEnabled();
-				m.pressure_switch[i] = pcms->getPressureSwitch();
-				m.compressor_current[i] = pcms->getCompressorCurrent();
-				m.closed_loop_control[i] = pcms->getClosedLoopControl();
-				m.current_too_high[i] = pcms->getCurrentTooHigh();
-				m.current_too_high_sticky[i] = pcms->getCurrentTooHighSticky();
-				m.shorted[i] = pcms->getShorted();
-				m.shorted_sticky[i] = pcms->getShortedSticky();
-				m.not_connected[i] = pcms->getNotConnected();
-				m.not_connected_sticky[i] = pcms->getNotConnectedSticky();
-				m.voltage_fault[i] = pcms->getVoltageFault();
-				m.voltage_sticky_fault[i] = pcms->getVoltageSticky();
-				m.solenoid_disabled_list[i] = pcms->getSolenoidDisabledList();
+				auto &m = realtime_pub_->msg_;
+				m.header.stamp = time;
+				for (unsigned i = 0; i < num_pcms_; i++)
+				{
+					auto &pcms = pcm_state_[i];
+					m.id[i] = pcms->getId();
+					m.compressor_enabled[i] = pcms->getCompressorEnabled();
+					m.pressure_switch[i] = pcms->getPressureSwitch();
+					m.compressor_current[i] = pcms->getCompressorCurrent();
+					m.closed_loop_control[i] = pcms->getClosedLoopControl();
+					m.current_too_high[i] = pcms->getCurrentTooHigh();
+					m.current_too_high_sticky[i] = pcms->getCurrentTooHighSticky();
+					m.shorted[i] = pcms->getShorted();
+					m.shorted_sticky[i] = pcms->getShortedSticky();
+					m.not_connected[i] = pcms->getNotConnected();
+					m.not_connected_sticky[i] = pcms->getNotConnectedSticky();
+					m.voltage_fault[i] = pcms->getVoltageFault();
+					m.voltage_sticky_fault[i] = pcms->getVoltageSticky();
+					m.solenoid_disabled_list[i] = pcms->getSolenoidDisabledList();
+				}
+				realtime_pub_->unlockAndPublish();
 			}
-			realtime_pub_->unlockAndPublish();
+			else
+			{
+				interval_counter_->force_publish();
+			}
 		}
 	}
-}
 
-void PCMStateController::stopping(const ros::Time & /*time*/)
-{}
+	void stopping(const ros::Time & /*time*/)
+	{}
+}; // class
 
-}
+} // namespace
 
 PLUGINLIB_EXPORT_CLASS(pcm_state_controller::PCMStateController, controller_interface::ControllerBase)

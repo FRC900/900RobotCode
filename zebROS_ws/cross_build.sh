@@ -12,6 +12,7 @@ elif [[ ! $ROS_ROOT = "$HOME/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/opt/r
 fi
 
 catkin config --profile cross -x _isolated --install --skiplist \
+	ackermann_steering_controller \
 	ar_track_alvar \
 	apriltag_launch \
     apriltag_ros \
@@ -23,8 +24,13 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	controllers_2020_msgs \
 	cuda_apriltag_ros \
 	demo_tf_node \
+	diff_drive_controller \
+	effort_controllers \
 	fake_sensors \
+	force_torque_sensor_controller \
+	four_wheel_steering_controller \
 	goal_detection \
+	gripper_action_controller \
 	pf_localization \
 	realsense2_camera \
 	realsense2_description \
@@ -32,6 +38,7 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	rosbag_scripts \
 	rospy_message_converter \
 	rqt_driver_station_sim \
+	rqt_joint_trajectory_controller \
 	stage_ros \
 	template_controller \
 	tf_object_detection \

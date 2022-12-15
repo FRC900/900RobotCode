@@ -1,43 +1,41 @@
-///////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2012, hiDOF INC.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//   * Redistributions of source code must retain the above copyright notice,
-//     this list of conditions and the following disclaimer.
-//   * Redistributions in binary form must reproduce the above copyright
-//     notice, this list of conditions and the following disclaimer in the
-//     documentation and/or other materials provided with the distribution.
-//   * Neither the name of hiDOF Inc nor the names of its
-//     contributors may be used to endorse or promote products derived from
-//     this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//////////////////////////////////////////////////////////////////////////////
-
 /*
  * Original joint_state_controller Author: Wim Meeussen
  */
 
-#include <pluginlib/class_list_macros.h>
-#include "talon_state_controller/talon_config_controller.h"
+#include <controller_interface/controller.h>
+#include <realtime_tools/realtime_publisher.h>
+#include <talon_interface/talon_state_interface.h>
+#include <talon_state_msgs/TalonConfig.h>
+#include <periodic_interval_counter/periodic_interval_counter.h>
 
 namespace talon_config_controller
 {
+/**
+ * \brief Controller that publishes the config of all talons in a robot.
+ *
+ * This controller publishes the config of all resources registered to a \c hardware_interface::TalonStateInterface to a
+ * topic of type \c sensor_msgs/TalonConfig. The following is a basic configuration of the controller.
+ *
+ * \code
+ * talon_config_controller:
+ *   type: talon_config_controller/TalonConfigController
+ *   publish_rate: 50
+ * \endcode
+ *
+ */
+class TalonConfigController: public controller_interface::Controller<hardware_interface::TalonStateInterface>
+{
+private:
+	std::vector<hardware_interface::TalonStateHandle> talon_state_;
+	std::unique_ptr<realtime_tools::RealtimePublisher<talon_state_msgs::TalonConfig> > realtime_pub_;
+	std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
+	double publish_rate_;
+	size_t num_hw_joints_; ///< Number of joints present in the TalonInterface
 
-bool TalonConfigController::init(hardware_interface::TalonStateInterface *hw,
-								 ros::NodeHandle                         &root_nh,
-								 ros::NodeHandle                         &controller_nh)
+public: 
+	bool init(hardware_interface::TalonStateInterface *hw,
+			  ros::NodeHandle                         &root_nh,
+			  ros::NodeHandle                         &controller_nh)
 {
 	// get all joint names from the hardware interface
 	const std::vector<std::string> &joint_names = hw->getNames();
@@ -48,13 +46,18 @@ bool TalonConfigController::init(hardware_interface::TalonStateInterface *hw,
 	// get publishing period
 	if (!controller_nh.getParam("publish_rate", publish_rate_))
 	{
-		ROS_ERROR("Parameter 'publish_rate' not set");
+		ROS_ERROR("Parameter 'publish_rate' not set in talon config controller");
 		return false;
 	}
+	else if (publish_rate_ <= 0.0)
+	{
+		ROS_ERROR_STREAM("Invalid publish rate in talon config controller (" << publish_rate_ << ")");
+		return false;
+	}
+	interval_counter_ = std::make_unique<PeriodicIntervalCounter>(publish_rate_);
 
 	// realtime publisher
-	realtime_pub_.reset(new
-						realtime_tools::RealtimePublisher<talon_state_msgs::TalonConfig>(root_nh, "talon_configs", 1));
+	realtime_pub_ = std::make_unique<realtime_tools::RealtimePublisher<talon_state_msgs::TalonConfig>>(root_nh, "talon_configs", 1);
 
 	auto &m = realtime_pub_->msg_;
 
@@ -210,150 +213,21 @@ bool TalonConfigController::init(hardware_interface::TalonStateInterface *hw,
 	return true;
 }
 
-void TalonConfigController::starting(const ros::Time &time)
+void starting(const ros::Time &time)
 {
-	// initialize time
-	last_publish_time_ = time;
+	interval_counter_->reset();
 }
 
-std::string TalonConfigController::limitSwitchSourceToString(const hardware_interface::LimitSwitchSource source) const
-{
-	switch (source)
-	{
-		case hardware_interface::LimitSwitchSource_Uninitialized:
-			return "Uninitialized";
-		case hardware_interface::LimitSwitchSource_FeedbackConnector:
-			return "FeedbackConnector";
-		case hardware_interface::LimitSwitchSource_RemoteTalonSRX:
-			return "RemoteTalonSRX";
-		case hardware_interface::LimitSwitchSource_RemoteCANifier:
-			return "RemoteCANifier";
-		case hardware_interface::LimitSwitchSource_Deactivated:
-			return "Deactivated";
-		default:
-			return "Unknown";
-	}
-}
 
-std::string TalonConfigController::remoteLimitSwitchSourceToString(const hardware_interface::RemoteLimitSwitchSource source) const
-{
-	switch (source)
-	{
-		case hardware_interface::RemoteLimitSwitchSource_Uninitialized:
-			return "Uninitialized";
-		case hardware_interface::RemoteLimitSwitchSource_RemoteTalonSRX:
-			return "RemoteTalonSRX";
-		case hardware_interface::RemoteLimitSwitchSource_RemoteCANifier:
-			return "RemoteCANifier";
-		case hardware_interface::RemoteLimitSwitchSource_Deactivated:
-			return "Deactivated";
-		default:
-			return "Unknown";
-	}
-}
 
-std::string TalonConfigController::limitSwitchNormalToString(const hardware_interface::LimitSwitchNormal normal) const
+void update(const ros::Time &time, const ros::Duration &period)
 {
-	switch (normal)
-	{
-		case hardware_interface::LimitSwitchNormal_Uninitialized:
-			return "Uninitialized";
-		case hardware_interface::LimitSwitchNormal_NormallyOpen:
-			return "NormallyOpen";
-		case hardware_interface::LimitSwitchNormal_NormallyClosed:
-			return "NormallyClosed";
-		case hardware_interface::LimitSwitchNormal_Disabled:
-			return "Disabled";
-		default:
-			return "Unknown";
-	}
-}
-
-std::string TalonConfigController::feedbackDeviceToString(const hardware_interface::FeedbackDevice feedback_device) const
-{
-	switch (feedback_device)
-	{
-		case hardware_interface::FeedbackDevice_Uninitialized:
-			return "Uninitialized";
-		case hardware_interface::FeedbackDevice_QuadEncoder:
-			return "QuadEncoder/CTRE_MagEncoder_Relative";
-		case hardware_interface::FeedbackDevice_IntegratedSensor:
-			return "IntegratedSensor";
-		case hardware_interface::FeedbackDevice_Analog:
-			return "Analog";
-		case hardware_interface::FeedbackDevice_Tachometer:
-			return "Tachometer";
-		case hardware_interface::FeedbackDevice_PulseWidthEncodedPosition:
-			return "PusleWidthEncodedPosition/CTRE_MagEncoder_Absolute";
-		case hardware_interface::FeedbackDevice_SensorSum:
-			return  "SensorSum";
-		case hardware_interface::FeedbackDevice_SensorDifference:
-			return "SensorDifference";
-		case hardware_interface::FeedbackDevice_RemoteSensor0:
-			return  "RemoteSensor0";
-		case hardware_interface::FeedbackDevice_RemoteSensor1:
-			return  "RemoteSensor1";
-		case hardware_interface::FeedbackDevice_None:
-			return "None";
-		case hardware_interface::FeedbackDevice_SoftwareEmulatedSensor:
-			return "SoftwareEmulatedSensor";
-		default:
-			return "Unknown";
-	}
-}
-
-std::string TalonConfigController::remoteSensorSourceToString(const hardware_interface::RemoteSensorSource remote_sensor_source) const
-{
-	switch (remote_sensor_source)
-	{
-		case hardware_interface::RemoteSensorSource_Off:
-			return "Off";
-		case hardware_interface::RemoteSensorSource_TalonSRX_SelectedSensor:
-			return "TalonSRX_SelectedSensor";
-		case hardware_interface::RemoteSensorSource_Pigeon_Yaw:
-			return "Pigeon_Yaw";
-		case hardware_interface::RemoteSensorSource_Pigeon_Pitch:
-			return "Pigeon_Pitch";
-		case hardware_interface::RemoteSensorSource_Pigeon_Roll:
-			return "Pigeon_Roll";
-		case hardware_interface::RemoteSensorSource_CANifier_Quadrature:
-			return "CANifier_Quadrature";
-		case hardware_interface::RemoteSensorSource_CANifier_PWMInput0:
-			return "CANifier_PWMInput0";
-		case hardware_interface::RemoteSensorSource_CANifier_PWMInput1:
-			return "CANifier_PWMInput1";
-		case hardware_interface::RemoteSensorSource_CANifier_PWMInput2:
-			return "CANifier_PWMInput2";
-		case hardware_interface::RemoteSensorSource_CANifier_PWMInput3:
-			return "CANifier_PWMInput3";
-		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Yaw:
-			return "GadgeteerPigeon_Yaw";
-		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Pitch:
-			return "GadgeteerPigeon_Pitch";
-		case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Roll:
-			return "GadgeteerPigeon_Roll";
-		case hardware_interface::RemoteSensorSource_CANCoder:
-			return "CANCoder";
-		default:
-			return "Unknown";
-	}
-}
-
-void TalonConfigController::update(const ros::Time &time, const ros::Duration &period)
-{
-	if (period < ros::Duration{0})
-	{
-		last_publish_time_ = time;
-	}
 	// limit rate of publishing
-	if (publish_rate_ > 0.0 && last_publish_time_ + ros::Duration(1.0 / publish_rate_) < time)
+	if (interval_counter_->update(period))
 	{
 		// try to publish
 		if (realtime_pub_->trylock())
 		{
-			// we're actually publishing, so increment time
-			last_publish_time_ = time;
-
 			// populate joint state message:
 			// - fill only joints that are present in the JointStateInterface, i.e. indices [0, num_hw_joints_)
 			// - leave unchanged extra joints, which have static values, i.e. indices from num_hw_joints_ onwards
@@ -609,12 +483,142 @@ void TalonConfigController::update(const ros::Time &time, const ros::Duration &p
 			}
 			realtime_pub_->unlockAndPublish();
 		}
+		else
+		{
+			interval_counter_->force_publish();
+		}
 	}
 }
 
-void TalonConfigController::stopping(const ros::Time & /*time*/)
+void stopping(const ros::Time & /*time*/)
 {}
 
-}
+private:
+	std::string limitSwitchSourceToString(const hardware_interface::LimitSwitchSource source) const
+	{
+		switch (source)
+		{
+			case hardware_interface::LimitSwitchSource_Uninitialized:
+				return "Uninitialized";
+			case hardware_interface::LimitSwitchSource_FeedbackConnector:
+				return "FeedbackConnector";
+			case hardware_interface::LimitSwitchSource_RemoteTalonSRX:
+				return "RemoteTalonSRX";
+			case hardware_interface::LimitSwitchSource_RemoteCANifier:
+				return "RemoteCANifier";
+			case hardware_interface::LimitSwitchSource_Deactivated:
+				return "Deactivated";
+			default:
+				return "Unknown";
+		}
+	}
 
+	std::string remoteLimitSwitchSourceToString(const hardware_interface::RemoteLimitSwitchSource source) const
+	{
+		switch (source)
+		{
+			case hardware_interface::RemoteLimitSwitchSource_Uninitialized:
+				return "Uninitialized";
+			case hardware_interface::RemoteLimitSwitchSource_RemoteTalonSRX:
+				return "RemoteTalonSRX";
+			case hardware_interface::RemoteLimitSwitchSource_RemoteCANifier:
+				return "RemoteCANifier";
+			case hardware_interface::RemoteLimitSwitchSource_Deactivated:
+				return "Deactivated";
+			default:
+				return "Unknown";
+		}
+	}
+
+	std::string limitSwitchNormalToString(const hardware_interface::LimitSwitchNormal normal) const
+	{
+		switch (normal)
+		{
+			case hardware_interface::LimitSwitchNormal_Uninitialized:
+				return "Uninitialized";
+			case hardware_interface::LimitSwitchNormal_NormallyOpen:
+				return "NormallyOpen";
+			case hardware_interface::LimitSwitchNormal_NormallyClosed:
+				return "NormallyClosed";
+			case hardware_interface::LimitSwitchNormal_Disabled:
+				return "Disabled";
+			default:
+				return "Unknown";
+		}
+	}
+
+	std::string feedbackDeviceToString(const hardware_interface::FeedbackDevice feedback_device) const
+	{
+		switch (feedback_device)
+		{
+			case hardware_interface::FeedbackDevice_Uninitialized:
+				return "Uninitialized";
+			case hardware_interface::FeedbackDevice_QuadEncoder:
+				return "QuadEncoder/CTRE_MagEncoder_Relative";
+			case hardware_interface::FeedbackDevice_IntegratedSensor:
+				return "IntegratedSensor";
+			case hardware_interface::FeedbackDevice_Analog:
+				return "Analog";
+			case hardware_interface::FeedbackDevice_Tachometer:
+				return "Tachometer";
+			case hardware_interface::FeedbackDevice_PulseWidthEncodedPosition:
+				return "PusleWidthEncodedPosition/CTRE_MagEncoder_Absolute";
+			case hardware_interface::FeedbackDevice_SensorSum:
+				return  "SensorSum";
+			case hardware_interface::FeedbackDevice_SensorDifference:
+				return "SensorDifference";
+			case hardware_interface::FeedbackDevice_RemoteSensor0:
+				return  "RemoteSensor0";
+			case hardware_interface::FeedbackDevice_RemoteSensor1:
+				return  "RemoteSensor1";
+			case hardware_interface::FeedbackDevice_None:
+				return "None";
+			case hardware_interface::FeedbackDevice_SoftwareEmulatedSensor:
+				return "SoftwareEmulatedSensor";
+			default:
+				return "Unknown";
+		}
+	}
+
+	std::string remoteSensorSourceToString(const hardware_interface::RemoteSensorSource remote_sensor_source) const
+	{
+		switch (remote_sensor_source)
+		{
+			case hardware_interface::RemoteSensorSource_Off:
+				return "Off";
+			case hardware_interface::RemoteSensorSource_TalonSRX_SelectedSensor:
+				return "TalonSRX_SelectedSensor";
+			case hardware_interface::RemoteSensorSource_Pigeon_Yaw:
+				return "Pigeon_Yaw";
+			case hardware_interface::RemoteSensorSource_Pigeon_Pitch:
+				return "Pigeon_Pitch";
+			case hardware_interface::RemoteSensorSource_Pigeon_Roll:
+				return "Pigeon_Roll";
+			case hardware_interface::RemoteSensorSource_CANifier_Quadrature:
+				return "CANifier_Quadrature";
+			case hardware_interface::RemoteSensorSource_CANifier_PWMInput0:
+				return "CANifier_PWMInput0";
+			case hardware_interface::RemoteSensorSource_CANifier_PWMInput1:
+				return "CANifier_PWMInput1";
+			case hardware_interface::RemoteSensorSource_CANifier_PWMInput2:
+				return "CANifier_PWMInput2";
+			case hardware_interface::RemoteSensorSource_CANifier_PWMInput3:
+				return "CANifier_PWMInput3";
+			case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Yaw:
+				return "GadgeteerPigeon_Yaw";
+			case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Pitch:
+				return "GadgeteerPigeon_Pitch";
+			case hardware_interface::RemoteSensorSource_GadgeteerPigeon_Roll:
+				return "GadgeteerPigeon_Roll";
+			case hardware_interface::RemoteSensorSource_CANCoder:
+				return "CANCoder";
+			default:
+				return "Unknown";
+		}
+	}
+}; // class
+
+} // namespace
+
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(talon_config_controller::TalonConfigController, controller_interface::ControllerBase)

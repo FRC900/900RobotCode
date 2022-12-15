@@ -422,7 +422,7 @@ void starting(const ros::Time &time)
 	{
 		steer_angles[k] = steering_joints_[k].getPosition();
 	}
-	brake(steer_angles);
+	brake(steer_angles, time);
 	// Assume we braked infinitely long ago - this will keep the
 	// drive base in parking config until a non-zero command comes in
 	time_before_brake_ = 0;
@@ -438,14 +438,13 @@ void starting(const ros::Time &time)
 
 void stopping(const ros::Time & time)
 {
-	brake_last_ = time.toSec();
 	time_before_brake_ = 0;
 	std::array<double, WHEELCOUNT> steer_angles;
 	for (size_t k = 0; k < WHEELCOUNT; k++)
 	{
 		steer_angles[k] = steering_joints_[k].getPosition();
 	}
-	brake(steer_angles);
+	brake(steer_angles, time);
 }
 
 void update(const ros::Time &time, const ros::Duration &period)
@@ -494,7 +493,7 @@ void update(const ros::Time &time, const ros::Duration &period)
 		}
 		if ((time.toSec() - time_before_brake_) > parking_config_time_delay_)
 		{
-			brake(steer_angles);
+			brake(steer_angles, time);
 		}
 		else
 		{
@@ -742,9 +741,7 @@ void compOdometry(const ros::Time &time, const double inv_delta_t, const std::ar
 	}
 }
 
-
-
-void brake(const std::array<double, WHEELCOUNT> &steer_angles)
+void brake(const std::array<double, WHEELCOUNT> &steer_angles, const ros::Time &time)
 {
 	//Use parking config
 	const bool dont_set_angle_mode = dont_set_angle_mode_.load(std::memory_order_relaxed);
@@ -760,7 +757,7 @@ void brake(const std::array<double, WHEELCOUNT> &steer_angles)
 	}
 	// Reset the timer which delays drive wheel velocity a bit after
 	// the robot's been stopped
-	brake_last_ = ros::Time::now().toSec();
+	brake_last_ = time.toSec();
 }
 
 void cmdVelCallback(const geometry_msgs::Twist &command)

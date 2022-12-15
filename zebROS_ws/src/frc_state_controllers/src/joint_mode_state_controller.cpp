@@ -1,11 +1,25 @@
-#include "frc_state_controllers/joint_mode_state_controller.h"
+#include <controller_interface/controller.h>
+#include <realtime_tools/realtime_publisher.h>
+#include <hardware_interface/joint_mode_interface.h>
+#include "frc_msgs/JointMode.h"
 #include <pluginlib/class_list_macros.h>
+#include "periodic_interval_counter/periodic_interval_counter.h"
 
 namespace joint_mode_state_controller
 {
-    bool JointModeStateController::init(hardware_interface::JointModeInterface *hw,
-										ros::NodeHandle                        &root_nh,
-										ros::NodeHandle                        &controller_nh)
+class JointModeStateController: public controller_interface::Controller<hardware_interface::JointModeInterface>
+{
+
+private:
+	std::vector<hardware_interface::JointModeHandle> joint_modes_;
+	std::unique_ptr<realtime_tools::RealtimePublisher<frc_msgs::JointMode>> realtime_pub_;
+	std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
+	double publish_rate_{100};
+
+public:
+    bool init(hardware_interface::JointModeInterface *hw,
+			  ros::NodeHandle                        &root_nh,
+			  ros::NodeHandle                        &controller_nh)
 
 	{
 		ROS_INFO_STREAM_NAMED("joint_mode_controller", "init is running");
@@ -15,10 +29,18 @@ namespace joint_mode_state_controller
 
 		//get publish rate from config file
 		if (!controller_nh.getParam("publish_rate", publish_rate_))
-			ROS_ERROR("Could not read publish_rate in match state controller");
+		{
+			ROS_WARN("Could not read publish_rate in joint mode state controller");
+		}
+		else if (publish_rate_ <= 0.0)
+		{
+			ROS_ERROR_STREAM("Invalid pusblish_rate in joint mode state controller (" << publish_rate_ << ")");
+			return false;
+		}
+		interval_counter_ = std::make_unique<PeriodicIntervalCounter>(publish_rate_);
 
 		//set up publisher
-		realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::JointMode>(root_nh, "joint_modes", 4));
+		realtime_pub_ = std::make_unique<realtime_tools::RealtimePublisher<frc_msgs::JointMode>>(root_nh, "joint_modes", 4);
 
 		auto &m = realtime_pub_->msg_;
 
@@ -29,27 +51,20 @@ namespace joint_mode_state_controller
 			joint_modes_.push_back(hw->getHandle(n));
 		}
 
-
 		return true;
 	}
 
-    void JointModeStateController::starting(const ros::Time &time)
+    void starting(const ros::Time &time)
     {
-		last_publish_time_ = time;
+		interval_counter_->reset();
     }
 
-    void JointModeStateController::update(const ros::Time &time, const ros::Duration &period)
+    void update(const ros::Time &time, const ros::Duration &period)
 	{
-		if (period < ros::Duration{0})
-		{
-			last_publish_time_ = time;
-		}
-		if ((publish_rate_ > 0.0) && (last_publish_time_ + ros::Duration(1.0 / publish_rate_) < time))
+		if (interval_counter_->update(period))
 		{
 			if (realtime_pub_->trylock())
 			{
-				last_publish_time_ = time;
-
 				auto &m = realtime_pub_->msg_;
 
 				m.header.stamp = time;
@@ -60,11 +75,17 @@ namespace joint_mode_state_controller
 				}
 				realtime_pub_->unlockAndPublish();
 			}
+			else
+			{
+				interval_counter_->force_publish();
+			}
 		}
 	}
 
-    void JointModeStateController::stopping(const ros::Time & )
+    void stopping(const ros::Time & )
     {}
-}
+}; // class
+
+} // namespace
 
 PLUGINLIB_EXPORT_CLASS(joint_mode_state_controller::JointModeStateController, controller_interface::ControllerBase)

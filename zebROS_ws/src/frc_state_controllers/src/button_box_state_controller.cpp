@@ -1,11 +1,28 @@
-#include "frc_state_controllers/button_box_state_controller.h"
+#include <controller_interface/controller.h>
+#include <hardware_interface/joint_state_interface.h>
+#include <realtime_tools/realtime_buffer.h>
+#include <realtime_tools/realtime_publisher.h>
+#include <frc_msgs/ButtonBoxState.h>
+#include <frc_interfaces/joystick_interface.h>
+#include <pluginlib/class_list_macros.h>
+#include "periodic_interval_counter/periodic_interval_counter.h"
 
 namespace button_box_state_controller
 {
+class ButtonBoxStateController: public controller_interface::Controller<hardware_interface::JoystickStateInterface>
+{
+private:
+	hardware_interface::JoystickStateHandle button_box_state_;
+	std::unique_ptr<realtime_tools::RealtimePublisher<frc_msgs::ButtonBoxState>> realtime_pub_;
+	std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
+	double publish_rate_{50};
+	frc_msgs::ButtonBoxState prev_button_box_msg_;
+public:
 
-	bool ButtonBoxStateController::init(hardware_interface::JoystickStateInterface *hw,
-			ros::NodeHandle						           &root_nh,
-			ros::NodeHandle						           &controller_nh)
+	ButtonBoxStateController() = default;
+	bool init(hardware_interface::JoystickStateInterface *hw,
+			 ros::NodeHandle						     &root_nh,
+			 ros::NodeHandle						     &controller_nh)
 	{
 		ROS_INFO_STREAM_NAMED("button_box_state_controller", "init is running");
 		std::string name;
@@ -15,6 +32,17 @@ namespace button_box_state_controller
 			return false;
 		}
 
+		if (!controller_nh.getParam("publish_rate", publish_rate_))
+		{
+			ROS_WARN_STREAM("Could not read publish_rate in ButtonBox state controller, using default " << publish_rate_);
+		}
+		else if (publish_rate_ <= 0.0)
+		{
+			ROS_ERROR_STREAM("Invliad publish_rate in ButtonBox state controller (" << publish_rate_ << ")");
+			return false;
+		}
+		interval_counter_ = std::make_unique<PeriodicIntervalCounter>(publish_rate_);
+
 		std::vector<std::string> button_box_names = hw->getNames();
 		const auto it = std::find(button_box_names.begin(), button_box_names.end(), name);
 		if (it == button_box_names.cend())
@@ -22,37 +50,29 @@ namespace button_box_state_controller
 			ROS_ERROR_STREAM("Could not find requested name " << name << " in button box interface list");
 			return false;
 		}
+
 		button_box_state_ = hw->getHandle(*it);
 		const auto id = button_box_state_->getId();
 		std::stringstream pub_name;
 		// TODO : maybe use pub_names instead, or joy id unconditionally?
 		pub_name << "js" << id;
 
-		realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::ButtonBoxState>(root_nh, pub_name.str(), 1));
-
-		if (!controller_nh.getParam("publish_rate", publish_rate_))
-			ROS_WARN_STREAM("Could not read publish_rate in ButtonBox state controller, using default " << publish_rate_);
+		realtime_pub_ = std::make_unique<realtime_tools::RealtimePublisher<frc_msgs::ButtonBoxState>>(root_nh, pub_name.str(), 1);
 
 		return true;
 	}
 
-	void ButtonBoxStateController::starting(const ros::Time &time)
+	void starting(const ros::Time &time)
 	{
-		last_publish_time_ = time;
+		interval_counter_->reset();
 	}
 
-	void ButtonBoxStateController::update(const ros::Time &time, const ros::Duration &period)
+	void update(const ros::Time &time, const ros::Duration &period)
 	{
-		if (period < ros::Duration{0})
-		{
-			last_publish_time_ = time;
-		}
-		if ((publish_rate_ > 0.0) && (last_publish_time_ + ros::Duration(1.0 / publish_rate_) < time))
+		if (interval_counter_->update(period))
 		{
 			if (realtime_pub_->trylock())
 			{
-				last_publish_time_ = time;
-
 				const auto &bbs = button_box_state_;
 				auto &m = realtime_pub_->msg_;
 
@@ -117,11 +137,19 @@ namespace button_box_state_controller
 				realtime_pub_->unlockAndPublish();
 				prev_button_box_msg_ = m;
 			}
+			else
+			{
+				interval_counter_->force_publish();
+			}
 		}
-}
+	}
 
-void ButtonBoxStateController::stopping(const ros::Time & )
-{}
+	void stopping(const ros::Time & )
+	{
+	}
+
+}; //class
+
 } // namespace
 
 PLUGINLIB_EXPORT_CLASS(button_box_state_controller::ButtonBoxStateController, controller_interface::ControllerBase)

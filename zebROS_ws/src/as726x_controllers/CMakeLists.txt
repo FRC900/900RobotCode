@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   controller_interface
   ddynamic_reconfigure
   hardware_interface
+  periodic_interval_counter
   pluginlib
   realtime_tools
   roscpp

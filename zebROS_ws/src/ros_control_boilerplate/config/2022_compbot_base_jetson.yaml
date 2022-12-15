@@ -30,14 +30,14 @@ hardware_interface:
    can_interface: can0
 
    joints:
-       - {name: climber_dynamic_arm_solenoid_joint, type: double_solenoid, module_type: ctrepcm, local_hardware: false, local_update: true}
-       - {name: climber_static_hook_solenoid_joint, type: double_solenoid, module_type: ctrepcm, local_hardware: false, local_update: true}
+       #- {name: climber_dynamic_arm_solenoid_joint, type: double_solenoid, module_type: ctrepcm, local_hardware: false, local_update: true}
+       #- {name: climber_static_hook_solenoid_joint, type: double_solenoid, module_type: ctrepcm, local_hardware: false, local_update: true}
          #- {name: climber_dynamic1_limit_switch, type: digital_input, local: false}
          #- {name: climber_dynamic2_limit_switch, type: digital_input, local: false}
-       - {name: climber_static1_limit_switch, type: digital_input, local: false}
-       - {name: climber_static2_limit_switch, type: digital_input, local: false}
-       - {name: climber_dynamic_arm_leader, type: can_talon_fx, can_bus: CANivore, can_id: 30, local: true}
-       - {name: climber_dynamic_arm_follower, type: can_talon_fx, can_bus: CANivore, can_id: 31, local: true}
+       #- {name: climber_static1_limit_switch, type: digital_input, local: false}
+       #- {name: climber_static2_limit_switch, type: digital_input, local: false}
+       #- {name: climber_dynamic_arm_leader, type: can_talon_fx, can_bus: CANivore, can_id: 30, local: true}
+       #- {name: climber_dynamic_arm_follower, type: can_talon_fx, can_bus: CANivore, can_id: 31, local: true}
 
        - {name: shooter_leader, type: can_talon_fx, can_bus: CANivore, can_id: 40, local: true}
        - {name: shooter_follower, type: can_talon_fx, can_bus: CANivore, can_id: 41, local: true}

@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   frc_msgs
   frc_interfaces
   message_generation
+  periodic_interval_counter
 )
 
 ## System dependencies are found with CMake's conventions

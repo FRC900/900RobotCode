@@ -642,26 +642,22 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw
 	if(! param_nh.param("as726x_read_hz", as726x_read_hz_, as726x_read_hz_)) {
 		ROS_ERROR("Failed to read as726x_read_hz in frc_robot_interface");
 	}
-	const double t_now = ros::Time::now().toSec();
-	t_prev_robot_iteration_ = t_now;
 	if(! param_nh.param("robot_iteration_hz", robot_iteration_hz_, robot_iteration_hz_)) {
 		ROS_ERROR("Failed to read robot_iteration_hz in frc_robot_interface");
 	}
-
-	t_prev_joystick_read_ = t_now;
 	if(! param_nh.param("joystick_read_hz", joystick_read_hz_, joystick_read_hz_)) {
 		ROS_ERROR("Failed to read joystick_read_hz in frc_robot_interface");
 	}
-
-	t_prev_match_data_read_ = t_now;
 	if(! param_nh.param("match_data_read_hz", match_data_read_hz_, match_data_read_hz_)) {
 		ROS_ERROR("Failed to read match_data_read_hz in frc_robot_interface");
 	}
-
-	t_prev_robot_controller_read_ = t_now;
 	if(! param_nh.param("robot_controller_read_hz", robot_controller_read_hz_, robot_controller_read_hz_)) {
 		ROS_ERROR("Failed to read robot_controller_read_hz in frc_robot_interface");
 	}
+	joystick_read_interval_ = std::make_unique<PeriodicIntervalCounter>(joystick_read_hz_);
+	match_data_read_interval_ = std::make_unique<PeriodicIntervalCounter>(match_data_read_hz_);
+	robot_controller_read_interval_ = std::make_unique<PeriodicIntervalCounter>(robot_controller_read_hz_);
+	robot_iteration_interval_ = std::make_unique<PeriodicIntervalCounter>(robot_iteration_hz_);
 
 	ROS_INFO_STREAM("Controller Frequencies:" << std::endl <<
 			"\tctre_mc_read : " << ctre_mc_read_hz_ << std::endl <<
@@ -724,17 +720,6 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		c_FeedEnable(100);
 	}
 #endif
-	// If time moves backwards, reset all of the read timers
-	// so that they continue publishing normally rather than
-	// being stuck waiting until the time increases to be higher
-	// than the pre-reset value
-	if (period < ros::Duration{0.0})
-	{
-		t_prev_joystick_read_ = time.toSec();
-		t_prev_robot_iteration_ = time.toSec();
-		t_prev_match_data_read_ = time.toSec();
-		t_prev_robot_controller_read_ = time.toSec();
-	}
 
 	read_tracer_.start_unique("Check for ready");
 	if (run_hal_robot_ && !robot_code_ready_)
@@ -756,15 +741,13 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 	{
 		read_tracer_.start_unique("OneIteration");
 		//check if sufficient time has passed since last read
-		if(time.toSec() - t_prev_robot_iteration_ > (1./robot_iteration_hz_))
+		if(robot_iteration_interval_->update(period))
 		{
 			robot_->OneIteration();
-
-			t_prev_robot_iteration_ = time.toSec();
 		}
 
 		read_tracer_.start_unique("joysticks");
-		if(time.toSec() - t_prev_joystick_read_ > (1./joystick_read_hz_))
+		if (joystick_read_interval_->update(period))
 		{
 			// Only update the time count if all joystick state date is updated
 			// This will force another update next time through this loop if some
@@ -817,9 +800,9 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 				}
 #endif
 			}
-			if (updated_all)
+			if (!updated_all)
 			{
-				t_prev_joystick_read_ = time.toSec();
+				joystick_read_interval_->force_publish();
 			}
 		}
 
@@ -828,16 +811,14 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		//check if sufficient time has passed since last read
 #ifdef MATCH_DATA_LOCK
 		if (match_data_mutex_.try_lock())
-#endif
 		{
-			if(time.toSec() - t_prev_match_data_read_ > (1./match_data_read_hz_))
+#endif
+			if (match_data_read_interval_->update(period))
 			{
-				t_prev_match_data_read_ = time.toSec();
-
 				status = 0;
 				match_data_.setMatchTimeRemaining(HAL_GetMatchTime(&status));
 				match_data_.setGetMatchTimeStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));
-				HAL_MatchInfo info;
+				HAL_MatchInfo info{};
 				HAL_GetMatchInfo(&info);
 
 				match_data_.setGameSpecificData(std::vector<uint8_t>(info.gameSpecificMessage, info.gameSpecificMessage + info.gameSpecificMessageSize));
@@ -903,15 +884,13 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 			match_data_.setEStopped(controlWord.eStop);
 #ifdef MATCH_DATA_LOCK
 			match_data_mutex_.unlock();
-#endif
 		}
+#endif
 
 		read_tracer_.start_unique("robot controller data");
 		//check if sufficient time has passed since last read
-		if(time.toSec() - t_prev_robot_controller_read_ > (1./robot_controller_read_hz_))
+		if (robot_controller_read_interval_->update(period))
 		{
-			t_prev_robot_controller_read_ = time.toSec();
-
 			status = 0;
 			robot_controller_state_.SetFPGAVersion(HAL_GetFPGAVersion(&status));
 			robot_controller_state_.SetFPGAVersionStatus(std::to_string(status) + ": " + HAL_GetErrorMessage(status));

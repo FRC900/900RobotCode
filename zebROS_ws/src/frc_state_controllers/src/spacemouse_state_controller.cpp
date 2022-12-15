@@ -5,6 +5,7 @@
 #include <frc_msgs/JoystickState.h>
 #include <frc_interfaces/joystick_interface.h>
 #include <pluginlib/class_list_macros.h>
+#include <periodic_interval_counter/periodic_interval_counter.h>
 
 namespace spacemouse_state_controller
 {
@@ -21,6 +22,16 @@ bool init(hardware_interface::JoystickStateInterface *hw,
 		ROS_ERROR("Could not read joystick name parameter in Spacemouse State Controller");
 		return false;
 	}
+	if (!controller_nh.getParam("publish_rate", publish_rate_))
+	{
+		ROS_WARN_STREAM("Could not read publish_rate in Spacemouse State Controller, using default " << publish_rate_);
+	}
+	else if (publish_rate_ <= 0.0)
+	{
+		ROS_ERROR_STREAM("Invalid publish rate in Spacemouse State Controller (" << publish_rate_ << ")");
+		return false;
+	}
+	interval_counter_ = std::make_unique<PeriodicIntervalCounter>(publish_rate_);
 
 	std::vector<std::string> joystick_names = hw->getNames();
 	const auto it = std::find(joystick_names.begin(), joystick_names.end(), name);
@@ -35,31 +46,22 @@ bool init(hardware_interface::JoystickStateInterface *hw,
 	// TODO : maybe use pub_names instead, or joy id unconditionally?
 	pub_name << "js" << id;
 
-	realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::JoystickState>(root_nh, pub_name.str(), 1));
-
-	if (!controller_nh.getParam("publish_rate", publish_rate_))
-		ROS_WARN_STREAM("Could not read publish_rate in Spacemouse State Controller, using default " << publish_rate_);
+	realtime_pub_ = std::make_unique<realtime_tools::RealtimePublisher<frc_msgs::JoystickState>>(root_nh, pub_name.str(), 1);
 
 	return true;
 }
 
 void starting(const ros::Time &time) override
 {
-	last_publish_time_ = time;
+	interval_counter_->reset();
 }
 
 void update(const ros::Time &time, const ros::Duration &period) override
 {
-	if (period < ros::Duration{0})
-	{
-		last_publish_time_ = time;
-	}
-	if ((publish_rate_ > 0.0) && (last_publish_time_ + ros::Duration(1.0 / publish_rate_) < time))
+	if (interval_counter_->update(period))
 	{
 		if (realtime_pub_->trylock())
 		{
-			last_publish_time_ = time;
-
 			const auto &js = joystick_state_;
 			auto &m = realtime_pub_->msg_;
 
@@ -125,6 +127,10 @@ void update(const ros::Time &time, const ros::Duration &period) override
 
 			prev_left_bumper_ = m.bumperLeftButton;
 		}
+		else
+		{
+			interval_counter_->force_publish();
+		}
 	}
 }
 
@@ -133,8 +139,8 @@ void stopping(const ros::Time & ) override
 
 private:
 		hardware_interface::JoystickStateHandle joystick_state_;
-		std::shared_ptr<realtime_tools::RealtimePublisher<frc_msgs::JoystickState>> realtime_pub_;
-		ros::Time last_publish_time_;
+		std::unique_ptr<realtime_tools::RealtimePublisher<frc_msgs::JoystickState>> realtime_pub_;
+		std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
 		double publish_rate_{50};
 		bool prev_left_bumper_{false};
 }; // class

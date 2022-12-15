@@ -24,12 +24,19 @@ if [ $? -eq 1 ]; then
 fi
 
 catkin config --skiplist \
+	ackermann_steering_controller \
 	ar_track_alvar \
 	color_spin \
 	controllers_2019 \
 	controllers_2019_msgs \
 	controllers_2020 \
 	controllers_2020_msgs \
+	diff_drive_controller \
+	effort_controllers \
+	force_torque_sensor_controller \
+	four_wheel_steering_controller \
+	gripper_action_controller \
+	rqt_joint_trajectory_controller \
 	realsense2_camera \
 	realsense2_description \
 	robot_visualizer \

@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   frc_interfaces
   hardware_interface
   message_generation
+  periodic_interval_counter
   realtime_tools
   remote_joint_interface
   roscpp

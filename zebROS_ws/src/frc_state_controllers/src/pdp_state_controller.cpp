@@ -1,161 +1,192 @@
-#include "frc_state_controllers/pdp_state_controller.h"
+#include <controller_interface/controller.h>
+#include <realtime_tools/realtime_buffer.h>
+#include <realtime_tools/realtime_publisher.h>
+#include <frc_msgs/PDPData.h>
+#include <frc_interfaces/pdp_state_interface.h>
 #include "frc_msgs/PDPData.h"
+#include "periodic_interval_counter/periodic_interval_counter.h"
 
 namespace pdp_state_controller
 {
-
-bool PDPStateController::init(hardware_interface::PDPStateInterface *hw,
-								ros::NodeHandle						&root_nh,
-								ros::NodeHandle						&controller_nh)
+class PDPStateController: public controller_interface::Controller<hardware_interface::PDPStateInterface>
 {
-	ROS_INFO_STREAM_NAMED("pdp_state_controller", "init is running");
 
-	std::vector<std::string> pdp_names = hw->getNames();
-	if (pdp_names.size() > 1) {
-		ROS_ERROR_STREAM("Cannot initialize multiple PDPs.");
-		return false; }
-	else if (pdp_names.size() < 1) {
-		ROS_ERROR_STREAM("Cannot initialize zero PDPs.");
-		return false; }
+private:
+	hardware_interface::PDPStateHandle pdp_state_;
+	std::unique_ptr<realtime_tools::RealtimePublisher<frc_msgs::PDPData>> realtime_pub_;
+	std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
+	double publish_rate_{20};
 
-	const std::string pdp_name = pdp_names[0];
-
-	if (!controller_nh.getParam("publish_rate", publish_rate_))
-                ROS_ERROR("Could not read publish_rate in PDP state controller");
-
-	realtime_pub_.reset(new realtime_tools::RealtimePublisher<frc_msgs::PDPData>(root_nh, "pdp_states", 4));
-
-	auto &m = realtime_pub_->msg_;
-
-	m.voltage = 0.0;
-	m.temperature = 0.0;
-	m.totalCurrent = 0.0;
-	m.totalPower = 0.0;
-	m.totalEnergy = 0.0;
-
-    XmlRpc::XmlRpcValue thingsPluggedIn;
-    if(!controller_nh.getParam("things_plugged_in_pdp_channel", thingsPluggedIn)){
-        ROS_ERROR("No things plugged in specified");
-	}
-
-	for(size_t channel = 0; channel < m.current.size(); channel++)
+public:
+	bool init(hardware_interface::PDPStateInterface *hw,
+			  ros::NodeHandle						&root_nh,
+			  ros::NodeHandle						&controller_nh)
 	{
-		m.current[channel] = 0;
-		XmlRpc::XmlRpcValue thing_plugged_in = thingsPluggedIn[channel];
-		if(!thing_plugged_in.valid() || thing_plugged_in.getType() != XmlRpc::XmlRpcValue::TypeString)
-			ROS_ERROR("An invalid thing_plugged_in name was specified (expecting a string)");
-		else {
-			std::string thing_string = thing_plugged_in;
-			m.thingsPluggedIn[channel] = thing_string;
-		}
-	}
+		ROS_INFO_STREAM_NAMED("pdp_state_controller", "init is running");
 
-	pdp_state_ = hw->getHandle(pdp_name);
+		std::vector<std::string> pdp_names = hw->getNames();
+		if (pdp_names.size() > 1) {
+			ROS_ERROR_STREAM("Cannot initialize multiple PDPs.");
+			return false; }
+		else if (pdp_names.size() < 1) {
+			ROS_ERROR_STREAM("Cannot initialize zero PDPs.");
+			return false; }
 
-	return true;
-}
+		const std::string pdp_name = pdp_names[0];
 
-void PDPStateController::starting(const ros::Time &time)
-{
-	last_publish_time_ = time;
-}
-
-void PDPStateController::update(const ros::Time &time, const ros::Duration &period)
-{
-	if (period < ros::Duration{0})
-	{
-		last_publish_time_ = time;
-	}
-	//ROS_INFO_STREAM("pdp pub: " << publish_rate_);
-	if ((publish_rate_ > 0.0) && (last_publish_time_ + ros::Duration(1.0 / publish_rate_) < time))
-	{
-		if (realtime_pub_->trylock())
+		if (!controller_nh.getParam("publish_rate", publish_rate_))
 		{
-			last_publish_time_ = time;
+			ROS_WARN("Could not read publish_rate in PDP state controller");
+		}
+		else if (publish_rate_ <= 0.0)
+		{
+			ROS_ERROR_STREAM("Invalid publish_rate in PDP state controller (" << publish_rate_ << ")");
+		}
+		interval_counter_ = std::make_unique<PeriodicIntervalCounter>(publish_rate_);
 
-			auto &m = realtime_pub_->msg_;
+		realtime_pub_ = std::make_unique<realtime_tools::RealtimePublisher<frc_msgs::PDPData>>(root_nh, "pdp_states", 4);
 
-			m.header.stamp = time;
+		auto &m = realtime_pub_->msg_;
 
-			auto &ps = pdp_state_;
+		m.voltage = 0.0;
+		m.temperature = 0.0;
+		m.totalCurrent = 0.0;
+		m.totalPower = 0.0;
+		m.totalEnergy = 0.0;
 
-			//read from the object and stuff it in a msg
-			m.voltage = ps->getVoltage();
-			m.temperature = ps->getTemperature();
-			m.totalCurrent = ps->getTotalCurrent();
-			m.totalPower = ps->getTotalPower();
-			m.totalEnergy = ps->getTotalEnergy();
+		XmlRpc::XmlRpcValue thingsPluggedIn;
+		if(!controller_nh.getParam("things_plugged_in_pdp_channel", thingsPluggedIn)){
+			ROS_ERROR("No things plugged in specified");
+		}
 
-			for(size_t channel = 0; channel < m.current.size(); channel++)
-			{
-				m.current[channel] = ps->getCurrent(channel);
+		for(size_t channel = 0; channel < m.current.size(); channel++)
+		{
+			m.current[channel] = 0;
+			XmlRpc::XmlRpcValue thing_plugged_in = thingsPluggedIn[channel];
+			if(!thing_plugged_in.valid() || thing_plugged_in.getType() != XmlRpc::XmlRpcValue::TypeString)
+				ROS_ERROR("An invalid thing_plugged_in name was specified (expecting a string)");
+			else {
+				std::string thing_string = thing_plugged_in;
+				m.thingsPluggedIn[channel] = thing_string;
 			}
+		}
 
-			realtime_pub_->unlockAndPublish();
+		pdp_state_ = hw->getHandle(pdp_name);
+
+		return true;
+	}
+
+	void starting(const ros::Time &time)
+	{
+		interval_counter_->reset();
+	}
+
+	void update(const ros::Time &time, const ros::Duration &period)
+	{
+		if (interval_counter_->update(period))
+		{
+			if (realtime_pub_->trylock())
+			{
+				auto &m = realtime_pub_->msg_;
+
+				m.header.stamp = time;
+
+				auto &ps = pdp_state_;
+
+				//read from the object and stuff it in a msg
+				m.voltage = ps->getVoltage();
+				m.temperature = ps->getTemperature();
+				m.totalCurrent = ps->getTotalCurrent();
+				m.totalPower = ps->getTotalPower();
+				m.totalEnergy = ps->getTotalEnergy();
+
+				for(size_t channel = 0; channel < m.current.size(); channel++)
+				{
+					m.current[channel] = ps->getCurrent(channel);
+				}
+
+				realtime_pub_->unlockAndPublish();
+			}
+			else
+			{
+				interval_counter_->force_publish();
+			}
 		}
 	}
-}
 
-void PDPStateController::stopping(const ros::Time & )
-{}
+	void stopping(const ros::Time & )
+	{}
+}; // class
 } // namespace
 
 namespace state_listener_controller
 {
-bool PDPStateListenerController::init(hardware_interface::RemotePDPStateInterface *hw, ros::NodeHandle &n)
+class PDPStateListenerController :
+	public controller_interface::Controller<hardware_interface::RemotePDPStateInterface>
 {
-	// Read list of hw, make a list, grab handles for them, plus allocate storage space
-	auto joint_names = hw->getNames();
-	if (joint_names.size() == 0)
+private:
+	ros::Subscriber sub_command_;
+	hardware_interface::PDPWritableStateHandle handle_;
+
+	// Real-time buffer holds the last command value read from the "command" topic.
+	realtime_tools::RealtimeBuffer<hardware_interface::PDPHWState> command_buffer_;
+
+	// Iterate through each desired joint state.  If it is found in
+	// the message, save the value here in the realtime buffer.
+	virtual void commandCB(const frc_msgs::PDPDataConstPtr &msg)
 	{
-		ROS_ERROR("PDP State Listener Controller : no remote pdp joints defined");
+		hardware_interface::PDPHWState data;
+
+		data.setVoltage(msg->voltage);
+		data.setTemperature(msg->temperature);
+		data.setTotalCurrent(msg->totalCurrent);
+		data.setTotalPower(msg->totalPower);
+		data.setTotalEnergy(msg->totalEnergy);
+		for (size_t channel = 0; channel < msg->current.size() ; channel++)
+		{
+			data.setCurrent(msg->current[channel], channel);
+		}
+		command_buffer_.writeFromNonRT(data);
 	}
-	ROS_INFO_STREAM("PDP State Listener Controller got joint " << joint_names[0]);
-	handle_ = hw->getHandle(joint_names[0]);
-
-	std::string topic;
-
-	// get topic to subscribe to
-	if (!n.getParam("topic", topic))
+public:
+	bool init(hardware_interface::RemotePDPStateInterface *hw, ros::NodeHandle &n)
 	{
-		ROS_ERROR("PDP State Listener Controller parameter 'topic' not set");
-		return false;
+
+		// Read list of hw, make a list, grab handles for them, plus allocate storage space
+		auto joint_names = hw->getNames();
+		if (joint_names.size() == 0)
+		{
+			ROS_ERROR("PDP State Listener Controller : no remote pdp joints defined");
+		}
+		ROS_INFO_STREAM("PDP State Listener Controller got joint " << joint_names[0]);
+		handle_ = hw->getHandle(joint_names[0]);
+
+		std::string topic;
+
+		// get topic to subscribe to
+		if (!n.getParam("topic", topic))
+		{
+			ROS_ERROR("PDP State Listener Controller parameter 'topic' not set");
+			return false;
+		}
+
+		sub_command_ = n.subscribe<frc_msgs::PDPData>(topic, 1, &PDPStateListenerController::commandCB, this);
+		return true;
 	}
 
-	sub_command_ = n.subscribe<frc_msgs::PDPData>(topic, 1, &PDPStateListenerController::commandCB, this);
-	return true;
-}
-
-void PDPStateListenerController::starting(const ros::Time & /*time*/)
-{
-}
-void PDPStateListenerController::stopping(const ros::Time & /*time*/)
-{
-}
-
-void PDPStateListenerController::update(const ros::Time & /*time*/, const ros::Duration & /*period*/)
-{
-	// Quick way to do a shallow copy of the entire HW state
-	*(handle_.operator->()) = *command_buffer_.readFromRT();
-}
-
-// Iterate through each desired joint state.  If it is found in
-// the message, save the value here in the realtime buffer.
-void PDPStateListenerController::commandCB(const frc_msgs::PDPDataConstPtr &msg)
-{
-	hardware_interface::PDPHWState data;
-
-	data.setVoltage(msg->voltage);
-	data.setTemperature(msg->temperature);
-	data.setTotalCurrent(msg->totalCurrent);
-	data.setTotalPower(msg->totalPower);
-	data.setTotalEnergy(msg->totalEnergy);
-	for (size_t channel = 0; channel < msg->current.size() ; channel++)
+	void starting(const ros::Time & /*time*/)
 	{
-		data.setCurrent(msg->current[channel], channel);
 	}
-	command_buffer_.writeFromNonRT(data);
-}
+	void stopping(const ros::Time & /*time*/)
+	{
+	}
+
+	void update(const ros::Time & /*time*/, const ros::Duration & /*period*/)
+	{
+		// Quick way to do a shallow copy of the entire HW state
+		*(handle_.operator->()) = *command_buffer_.readFromRT();
+	}
+}; // class
 
 } // namespace state_listener_controller
 

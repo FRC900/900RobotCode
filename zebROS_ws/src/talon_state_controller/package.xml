@@ -23,6 +23,7 @@
   <depend>std_msgs</depend>
   <depend>talon_interface</depend>
   <depend>talon_state_msgs</depend>
+  <depend>periodic_interval_counter</depend>
   <test_depend>rostest</test_depend>
 
   <export>

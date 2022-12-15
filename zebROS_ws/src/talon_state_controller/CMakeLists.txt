@@ -7,6 +7,7 @@ include("../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED COMPONENTS
 	controller_interface
 	hardware_interface
+  periodic_interval_counter
 	pluginlib
 	realtime_tools
 	roscpp
@@ -20,11 +21,11 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   CATKIN_DEPENDS realtime_tools roscpp hardware_interface pluginlib
   controller_interface sensor_msgs talon_state_msgs
-  INCLUDE_DIRS include
+  #INCLUDE_DIRS include
   #LIBRARIES ${PROJECT_NAME}
   )
 
-include_directories(include ${catkin_INCLUDE_DIRS})
+include_directories(${catkin_INCLUDE_DIRS})
 add_library(${PROJECT_NAME}
 	src/cancoder_state_controller.cpp
    	src/canifier_state_controller.cpp

@@ -24,7 +24,6 @@
 #include "base_trajectory/obstacle_calculator.h"
 #include "base_trajectory/opt_params_list.h"
 #include "base_trajectory/sample_trajectory_impl_cpu.h"
-#include "base_trajectory/thread_pool.h"
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 #include "spline_util/spline_util.h"
 
@@ -913,7 +912,6 @@ void pathDistanceWorker(std::vector<T> &arcSegCostsPathDistance,
 		arcSegCostsPathDistance[i] = expf(static_cast<T>(25.0) * ((distanceToPathMidpoint / kinematics[i].getPathLimitDistance()) - static_cast<T>(0.9)));
 	}
 }
-ThreadPool pathDistanceThreadPool{1};
 
 template <class T>
 struct SegCosts
@@ -1133,7 +1131,6 @@ bool evaluateTrajectory(T &cost,
 	segCosts.time           = std::vector<T>(segCostsLength, 0.0);
 	segCosts.obstacles      = std::vector<T>(segCostsLength, 0.0);
 	segCosts.pathDistance   = std::vector<T>(segCostsLength, 0.0);
-	pathDistanceThreadPool.waitFinished();
 	obstacleCalculator->waitForCompletion();
 	for (size_t i = 0; i < equalArcLengthTimes.size(); i++)
 	{

@@ -73,6 +73,8 @@
 
 #include "ros_control_boilerplate/tracer.h"
 
+#include "periodic_interval_counter/periodic_interval_counter.h"
+
 // WPILIB stuff
 #include "frc/PneumaticsModuleType.h"
 #include <hal/CTREPCM.h>
@@ -460,17 +462,15 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		double pdh_read_hz_{20};
 		double pdp_read_hz_{20};
 		double as726x_read_hz_{7};
-		double t_prev_robot_iteration_;
 		double robot_iteration_hz_{50};
-
-		double t_prev_joystick_read_;
 		double joystick_read_hz_{50};
-
-		double t_prev_match_data_read_;
 		double match_data_read_hz_{2};
-
-		double t_prev_robot_controller_read_;
 		double robot_controller_read_hz_{20};
+
+		std::unique_ptr<PeriodicIntervalCounter> joystick_read_interval_;
+		std::unique_ptr<PeriodicIntervalCounter> match_data_read_interval_;
+		std::unique_ptr<PeriodicIntervalCounter> robot_controller_read_interval_;
+		std::unique_ptr<PeriodicIntervalCounter> robot_iteration_interval_;
 
 		/* Get conversion factor for position, velocity, and closed-loop stuff */
 		double getConversionFactor(int encoder_ticks_per_rotation, hardware_interface::FeedbackDevice encoder_feedback, hardware_interface::TalonMode talon_mode) const;
