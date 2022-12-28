@@ -46,7 +46,7 @@ init = False
 
 def run_inference_for_single_image(msg):
     # TODO Maybe remove all these globals and make a class
-    global viz, init, host_inputs, cuda_inputs, host_outputs, cuda_outputs, stream, context, bindings, host_mem, cuda_mem, cv2gpu, imgResized, imgNorm, gpuimg, finalgpu, category_dict
+    global viz, init, host_inputs, cuda_inputs, host_outputs, cuda_outputs, context, bindings, host_mem, cuda_mem, cv2gpu, imgResized, imgNorm, gpuimg, finalgpu, category_dict
 
     if init == False:
 
@@ -103,7 +103,6 @@ def run_inference_for_single_image(msg):
         cuda_outputs = []
         bindings = []
         finalgpu = jetson.utils.cudaAllocMapped(width=model.dims[1], height=model.dims[2], format='rgb32f')
-        stream = cuda.Stream()
 
         for binding in engine:
             if engine.binding_is_input(binding):
@@ -143,12 +142,11 @@ def run_inference_for_single_image(msg):
     #Custom function, no documentation
     jetson.utils.cudaTensorConvert(imgInput, finalgpu, imagerange)
 
-    context.execute_async(bindings=bindings, stream_handle=stream.handle)
+    context.execute(bindings=bindings)
 
     # host_outputs[1] is not needed
-    # cuda.memcpy_dtoh_async(host_outputs[1], cuda_outputs[1], stream)
-    cuda.memcpy_dtoh_async(host_outputs[0], cuda_outputs[0], stream)
-    stream.synchronize()
+    # cuda.memcpy_dtoh(host_outputs[1], cuda_outputs[1])
+    cuda.memcpy_dtoh(host_outputs[0], cuda_outputs[0])
     output = host_outputs[0]
 
     height, width, channels = ori.shape
@@ -230,7 +228,7 @@ def main():
         rospy.logwarn("Unable to get image topic, defaulting to c920/rect_image")
 
     sub = rospy.Subscriber(sub_topic, Image, run_inference_for_single_image)
-    pub = rospy.Publisher(pub_topic, TFDetection, queue_size=2)
+    pub = rospy.Publisher(pub_topic, TFDetection, queue_size=1)
     pub_debug = rospy.Publisher("debug_image", Image, queue_size=1)
 
     try:
