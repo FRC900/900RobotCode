@@ -1,9 +1,8 @@
-#!/bin/bash
-# Script to setup Jetson TX2 environment. Probably would also work
+# Script to setup Jetson Xavier NX environment. Probably would also work
 # with slight modifications on other Jetson hardware
 
 #install basic dependencies
-#sudo apt-add-repository ppa:ubuntu-toolchain-r/test -y
+sudo apt-add-repository ppa:ubuntu-toolchain-r/test -y
 sudo apt update
 sudo apt -y upgrade
 
@@ -20,6 +19,8 @@ sudo apt install -y \
     dbus-x11 \
     exfat-fuse \
     exfat-utils \
+    gcc-11 \
+    g++-11 \
     gdb \
     gfortran \
     git \
@@ -60,7 +61,7 @@ sudo apt install -y \
     ninja-build \
     nmap \
     ntp \
-	ntpstat \
+    ntpstat \
     openssh-client \
     pkg-config \
     pyqt5-dev-tools \
@@ -85,6 +86,12 @@ sudo apt install -y \
     xfonts-scalable
     zip \
     zlib1g-dev \
+    zstd
+
+
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9
+sudo update-alternatives --auto gcc
 
 #TensorRT requires a newer version of cmake than standard apt repos provide
 cd
@@ -137,7 +144,7 @@ cd ../..
 sudo rm -rf tinyxml2
 
 #install zed sdk
-wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.7/l4t34.1/jetsons
+wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.8/l4t35.1/jetsons
 chmod 755 jetsons
 ./jetsons
 rm ./jetsons
@@ -308,14 +315,14 @@ cp ~/2022RobotCode/.vimrc ~/2022RobotCode/.gvimrc ~
 sudo cp ~/2022RobotCode/kjaget.vim /usr/share/vim/vim81/colors
 
 cd
-wget https://github.com/git-lfs/git-lfs/releases/download/v3.2.0/git-lfs-linux-arm64-v3.2.0.tar.gz
+wget https://github.com/git-lfs/git-lfs/releases/download/v3.3.0/git-lfs-linux-arm64-v3.3.0.tar.gz
 mkdir git-lfs-install
 cd git-lfs-install
-tar -xzf ../git-lfs-linux-arm64-v3.2.0.tar.gz
-cd git-lfs-3.2.0
+tar -xzf ../git-lfs-linux-arm64-v3.3.0.tar.gz
+cd git-lfs-3.3.0
 sudo ./install.sh
 cd
-rm -rf git-lfs-linux-arm64-v3.2.0.tar.gz git-lfs-install
+rm -rf git-lfs-linux-arm64-v3.3.0.tar.gz git-lfs-install
 git lfs install
 cd ~/2022RobotCode
 git lfs pull
@@ -356,10 +363,9 @@ python3 ./install.py --clang-completer --system-libclang --ninja
 # Install tensorflow on Jetson
 sudo pip3 install -U pip testresources setuptools==49.6.0
 sudo pip3 install --ignore-installed -U cython
-sudo pip3 install -U --no-deps numpy>=1.20 future==0.18.2 mock==3.0.5
-sudo pip3 install -U --no-deps keras_preprocessing==1.1.2 keras_applications==1.0.8 gast==0.4.0 'protobuf<4.0.0,>=3.6.1' pybind11 pkgconfig
-sudo env H5PY_SETUP_REQUIRES=0 pip3 install -U h5py==3.1.0
-sudo pip3 install --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v50 tensorflow==1.15.5+nv22.6
+sudo pip3 install -U --no-deps numpy==1.21.1 future==0.18.2 mock==3.0.5 h5py=3.6.0 keras_preprocessing==1.1.2 keras_applications==1.0.8 gast==0.4.0 'protobuf<4.0.0,>=3.6.1' pybind11 pkgconfig h5py=3.6.0
+#sudo env H5PY_SETUP_REQUIRES=0 pip3 install -U h5py==3.1.0
+sudo pip3 install --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v502 tensorflow==1.15.5+nv22.12
 sudo pip3 install matplotlib
 
 # Fails with error install grpcio?
@@ -391,10 +397,10 @@ sudo ninja install
 sudo -H bash
 export PATH=$PATH:/usr/local/cuda/bin
 export CUDA_ROOT=/usr/local/cuda
-sudo pip3 install pycuda
+pip3 install pycuda
 
 cd
-git clone git@github.com:FRC900/jetson-utils.git
+git clone https://github.com/FRC900/jetson-utils.git
 cd jetson-utils
 git checkout dev
 mkdir build
@@ -414,8 +420,7 @@ echo "export PATH=\$PATH:/home/ubuntu/.local/bin:/home/ubuntu/tensorflow_workspa
 # Do this after building protoc, since that fails with ld.gold
 sudo update-alternatives --install "/usr/bin/ld" "ld" "/usr/bin/ld.gold" 20
 sudo update-alternatives --install "/usr/bin/ld" "ld" "/usr/bin/ld.bfd" 10
-
-echo 0 | sudo update-alternatives --config ld
+sudo update-alternatives --auto ld
 
 sudo ccache -C
 sudo ccache -c
