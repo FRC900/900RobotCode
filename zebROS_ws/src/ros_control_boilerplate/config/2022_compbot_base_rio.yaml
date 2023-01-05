@@ -38,10 +38,10 @@ hardware_interface:
        - {name: dummy_talon, type: can_talon_srx, local: false}
 
        # Climber
-       - {name: climber_dynamic_arm_solenoid_joint, type: double_solenoid, module_type: ctrepcm, module_id: 0, forward_channel: 1, reverse_channel: 2, local_hardware: true, local_update: false}
-       - {name: climber_static_hook_solenoid_joint, type: double_solenoid, module_type: ctrepcm, module_id: 0, forward_channel: 3, reverse_channel: 4, local_hardware: true, local_update: false}
-       - {name: climber_static1_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
-       - {name: climber_static2_limit_switch, type: digital_input, dio_channel: 9, invert: true, local: true}
+       #- {name: climber_dynamic_arm_solenoid_joint, type: double_solenoid, module_type: ctrepcm, module_id: 0, forward_channel: 1, reverse_channel: 2, local_hardware: true, local_update: false}
+       #- {name: climber_static_hook_solenoid_joint, type: double_solenoid, module_type: ctrepcm, module_id: 0, forward_channel: 3, reverse_channel: 4, local_hardware: true, local_update: false}
+       #- {name: climber_static1_limit_switch, type: digital_input, dio_channel: 8, invert: true, local: true}
+       #- {name: climber_static2_limit_switch, type: digital_input, dio_channel: 9, invert: true, local: true}
 
        - {name: intake_solenoid, type: solenoid, module_type: ctrepcm, module_id: 0, channel: 0, local_hardware: true, local_update: false}
 
