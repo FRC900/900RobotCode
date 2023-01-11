@@ -12,25 +12,26 @@
       --clock 
       -s 0 
       --topics 
-        /cuda_tag_detections 
         /frcrobot_jetson/swerve_drive_controller/cmd_vel_out
         /frcrobot_rio/match_data
         /imu/zeroed_imu
         /goal_detection/goal_detect_msg
-        /tf_object_detection/object_detection_world
+        /tf_object_detection/debug_image
+        /tf_object_detection/obj_detection_msg
         /zed_objdetect/imu/data 
         /tf
         /tf_static" 
   />
+        <!--
+        /cuda_tag_detections 
+        /tf_object_detection/object_detection_world
+        -->
 <!--
     <group ns="imu">
         <node name="imu_zero" pkg="imu_zero" type="imu_zero_node" output="screen">
             <remap from="imu/data" to="/zed_objdetect/imu/data" />
         </node>
     </group>
-
-
-        /imu/zeroed_imu
 -->
 
   <node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0.0 0.0 0.0 1.0 0.0 0.0 0.0 base_link imu 100" />
@@ -46,10 +47,17 @@
   <node pkg="tf" type="static_transform_publisher" name="zed_objdetect_left_camera_frame_to_zed_objdetect_temp_left_link" args="0.0 0.0 0.0 1.0 0.0 0.0 0.0 zed_objdetect_left_camera_frame zed_objdetect_temp_left_link 100" />
   <node pkg="tf" type="static_transform_publisher" name="zed_objdetect_right_camera_frame_to_zed_objdetect_temp_right_link" args="0.0 0.0 0.0 1.0 0.0 0.0 0.0 zed_objdetect_right_camera_frame zed_objdetect_temp_right_link 100" />
   <node pkg="tf" type="static_transform_publisher" name="zed_objdetect_left_camera_frame_to_zed_objdetect_imu_link" args="-0.0020000000949949026 -0.023000003769993782 0.0002200000308221206 0.9999977350234985 -0.00021143197955098003 -0.0003662109375 -0.002078782534226775 zed_objdetect_left_camera_frame zed_objdetect_imu_link 100" />
+  <node pkg="pf_localization" name="log_detections" type="log_detections.py" output="screen"/>
   <include file="$(find controller_node)/launch/pf_localization.launch">
     <arg name="vis" value="True"/>
     <arg name="pf_camera_topic" value="/tf_object_detection/object_detection_world" />
   </include>
 
+  <group ns="tf_object_detection">
+    <node pkg="tf_object_detection" name="tf_object_screen_to_world" type="tf_object_screen_to_world" output="screen">
+      <param name="depth_algorithm" type="string" value="TWO_D_ONLY" />
+    </node>
+  </group>
+  <node pkg="tf_object_detection" name="dummy_camerainfo" type="dummy_camerainfo" output="screen"/>
 
 </launch>

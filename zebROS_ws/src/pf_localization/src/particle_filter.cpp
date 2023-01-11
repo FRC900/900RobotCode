@@ -2,26 +2,11 @@
 
 #include "pf_localization/particle_filter.hpp"
 #include "pf_localization/world_model.hpp"
+#include "pf_localization/pf_msgs.hpp"
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <cmath>
 #include <angles/angles.h>
 #include <ros/console.h>
-
-std::ostream& operator<<(std::ostream& os, const Particle &p)
-{
-    os << "Particle(" << p.x_ << ", " << p.y_ << ", " << p.rot_ << ", " << p.weight_ << ")";
-    return os;
-}
-std::ostream& operator<<(std::ostream &os, const PositionBeacon& b)
-{
-    os << "Beacon(" << b.x_ << ", " << b.y_ << ", " << b.type_ << ")";
-    return os;
-}
-std::ostream& operator<<(std::ostream &os, const BearingBeacon& b)
-{
-    os << "Beacon(" << b.angle_ << ", " << b.type_ << ")";
-    return os;
-}
 
 ParticleFilter::ParticleFilter(const WorldModel& w,
                                const WorldModelBoundaries &boundaries,
@@ -151,7 +136,7 @@ std::optional<geometry_msgs::PoseWithCovariance> ParticleFilter::predict() {
   y /= weight;
   c /= weight;
   s /= weight;
-  double rot = atan2(s, c);
+  const double rot = atan2(s, c);
 
   double covariance[9] = {0};
   for (const Particle& p : particles_) {
@@ -179,7 +164,7 @@ std::optional<geometry_msgs::PoseWithCovariance> ParticleFilter::predict() {
     }
   }
 
-  pose.pose = Particle::poseFrom2D(x, y, rot);
+  pose.pose = toPose(Particle(x, y, rot));
 
   return pose;
 }
@@ -244,10 +229,6 @@ bool ParticleFilter::assign_weights(const std::vector<std::shared_ptr<BeaconBase
     return false;
   }
 
-  for (auto m: measurements) {
-    beacons_seen_.insert(m->type_);
-  }
-
 #ifdef CHECK_NAN
   double test_sum = 0;
   for (const auto& b : measurements) {
@@ -269,12 +250,12 @@ const std::vector<Particle> &ParticleFilter::get_particles() const {
   return particles_;
 }
 
-const std::set<std::string> &ParticleFilter::get_beacons_seen() const {
-  return beacons_seen_;
+const std::set<Particle> &ParticleFilter::get_beacons_seen() const {
+  return world_.get_beacons_seen();
 }
 
 void ParticleFilter::clear_beacons_seen() {
-  beacons_seen_.clear();
+  world_.clear_beacons_seen();
 }
 
 void ParticleFilter::check_particles(const char *file, int line) const {
@@ -286,4 +267,8 @@ void ParticleFilter::check_particles(const char *file, int line) const {
       return;
     }
   }
+}
+
+bool ParticleFilter::is_valid_beacon(const std::string &beacon_name) const {
+  return world_.is_valid_beacon(beacon_name);
 }

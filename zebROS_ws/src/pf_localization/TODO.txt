@@ -1,0 +1,4 @@
+use test code to derive ds number, light locations
+add orientation and fov to beacons
+test camera fov code
+heatmap colors for pf vis beacon lines

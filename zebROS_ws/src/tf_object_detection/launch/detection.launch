@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="input_type"    default="video" /> <!-- video, bag, or live_camera -->
-  <arg name="zed_name"      default="zed_objdetect" />
-  <arg name="zed_node_name" default="zed_objdetect" />
-  <arg name="camera_model"  default="zed2" />
+  <arg name="input_type"      default="video" /> <!-- video, bag, or live_camera -->
+  <arg name="zed_name"        default="zed_objdetect" />
+  <arg name="zed_node_name"   default="zed_objdetect" />
+  <arg name="camera_model"    default="zed2" />
+  <arg name="depth_algorithm" default="CONTOURS" />
 
   <include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml" if="$(eval input_type != 'video')">
     <arg name="common_params_file"   value="$(find controller_node)/config/zed_objdet/common.yaml" />
@@ -17,17 +18,16 @@
     <arg name="cam_pos_y"            value="0.0" />
     <arg name="cam_pos_z"            value="0.4917" />
     <arg name="cam_roll"             value="0.0" />
-	<arg name="cam_pitch"            value="0.0" />
+	  <arg name="cam_pitch"            value="0.0" />
     <arg name="cam_yaw"              value="0.0" />
   </include>
 
   <group ns="tf_object_detection">
   <!--
-	<rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
     <node pkg="tf_object_detection" name="tf_object_tracker" type="tracker.py" output="screen">
     </node>
   -->
-	<rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
+	  <rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
     <node pkg="tf_object_detection" name="tf_object_detection" type="trtdetection.py" output="screen">
     </node>
     <!--
@@ -35,6 +35,7 @@
     </node>
     -->
     <node pkg="tf_object_detection" name="tf_object_screen_to_world" type="tf_object_screen_to_world" output="screen">
+      <param name="depth_algorithm" type="string" value="$(arg detection_algorithm)" />
     </node>
     <node pkg="tf_object_detection" name="cargo_detection_filter" type="cargo_detection_filter" output="screen">
     </node>
@@ -56,7 +57,7 @@
 	</include>
 	-->
   <group ns="goal_detection">
-  <node pkg="apriltag_launch" name="apriltag_to_pf_node" type="apriltag_to_pf_node" output="screen">
+    <node pkg="apriltag_launch" name="apriltag_to_pf_node" type="apriltag_to_pf_node" output="screen">
     </node>
   </group>
   

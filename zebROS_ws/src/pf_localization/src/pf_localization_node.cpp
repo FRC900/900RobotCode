@@ -2,6 +2,7 @@
 #include "pf_localization/particle_filter.hpp"
 #include "pf_localization/world_model.hpp"
 #include "pf_localization/particle.hpp"
+#include "pf_localization/pf_msgs.hpp"
 #include "pf_localization/PFDebug.h"
 #include "field_obj/Detection.h"
 
@@ -52,6 +53,7 @@ ros::Time last_camera_data;
 ros::Time last_camera_stamp;
 double noise_delta_t = 0;  // if the time since the last measurement is greater than this, positional noise will not be applied
 std::vector<double> sigmas; // std.dev for each dimension of detected beacon position (x&y for depth camera, angle for bearing-only)
+double min_detection_confidence = 0;
 std::unique_ptr<ParticleFilter> pf;
 
 void rotCallback(const sensor_msgs::Imu::ConstPtr& msg) {
@@ -133,12 +135,12 @@ void publish_prediction(const ros::TimerEvent &event)
 
     const auto part = pf->get_particles();
     for (const Particle& p : part) {
-      debug.poses.push_back(Particle::poseFrom2D(p.x_, p.y_, p.rot_));
+      debug.poses.push_back(toPose(p));
     }
 
     const auto beacons = pf->get_beacons_seen();
     for (const auto &b : beacons) {
-      debug.beacons.push_back(b);
+      debug.beacons.push_back(toPose(b));
     }
     pf->clear_beacons_seen();
 
@@ -168,7 +170,19 @@ void goalCallback(const field_obj::Detection::ConstPtr& msg, const bool bearingO
   std::vector<std::shared_ptr<BeaconBase>> measurement;
   geometry_msgs::Point location;
   for(const field_obj::Object& p : msg->objects) {
-	tf2::doTransform(p.location, location, zed_to_baselink);
+    if (p.confidence < min_detection_confidence)
+    {
+      continue;
+    }
+    // Filter out detections for which there is no beacon info.  This could be because
+    // the object doesn't have a fixed position (game pieces or robots, etc) or maybe
+    // we just don't have that beacon defined. Filtering those detections out here
+    // saves a lot of time processing them later
+    if (!pf->is_valid_beacon(p.id))
+    {
+      continue;
+    }
+    tf2::doTransform(p.location, location, zed_to_baselink);
     if(bearingOnly) {
       measurement.push_back(std::make_shared<BearingBeacon>(location.x, location.y, p.id));
     } else { 
@@ -249,6 +263,7 @@ int main(int argc, char **argv) {
   double f_x_min, f_x_max, f_y_min, f_y_max, i_x_min, i_x_max, i_y_min, i_y_max, p_stdev, r_stdev, rotation_threshold;
   int num_particles;
   double tmp_tolerance = 0.1;
+  bool bearing_only = false;
 
   std::vector<PositionBeacon> beacons;
   //ros::topic::waitForMessage() 	
@@ -324,7 +339,15 @@ int main(int argc, char **argv) {
   nh_.param("map_frame_id", map_frame_id, std::string("map"));
   nh_.param("odom_frame_id", odom_frame_id, std::string("odom"));
   nh_.param("tf_tolerance", tmp_tolerance, 0.1);
+  double camera_fov = angles::from_degrees(110.);
+  if (!nh_.param("camera_fov", camera_fov, camera_fov)) {
+    ROS_WARN("no camera_fov specified, using default");
+  }
+
   tf_tolerance.fromSec(tmp_tolerance);
+
+  nh_.param("bearing_only", bearing_only, false);
+  nh_.param("min_detection_confidence", min_detection_confidence, 0.3);
   
   // TODO - I think this fails if a beacon is specified as an int
   // Transforms the blue relative beacons to red relative beacons using the static transform blue0 -> red0
@@ -338,7 +361,7 @@ int main(int argc, char **argv) {
   for (auto i = beacons.begin(); i != beacons.end(); i++)
     std::cout << i->x_ << ' ' << i->y_ << ' ' << i->type_ << std::endl;
 
-  WorldModel world(beacons, WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max));
+  WorldModel world(beacons, WorldModelBoundaries(f_x_min, f_x_max, f_y_min, f_y_max), camera_fov);
   pf = std::make_unique<ParticleFilter>(world,
                                         WorldModelBoundaries(i_x_min, i_x_max, i_y_min, i_y_max),
                                         p_stdev, r_stdev, rotation_threshold,
@@ -358,7 +381,7 @@ int main(int argc, char **argv) {
 
   ros::Subscriber rot_sub = nh_.subscribe(rot_topic, 10, rotCallback);
   ros::Subscriber odom_sub = nh_.subscribe(cmd_topic, 10, cmdCallback);
-  ros::Subscriber goal_sub = nh_.subscribe<field_obj::Detection>(goal_pos_topic, 10, boost::bind(goalCallback, _1, false));
+  ros::Subscriber goal_sub = nh_.subscribe<field_obj::Detection>(goal_pos_topic, 10, boost::bind(goalCallback, _1, bearing_only));
   ros::Subscriber match_sub = nh_.subscribe(match_topic, 10, matchCallback);
 
   pub = nh_.advertise<geometry_msgs::PoseWithCovarianceStamped>(pub_topic, 1);

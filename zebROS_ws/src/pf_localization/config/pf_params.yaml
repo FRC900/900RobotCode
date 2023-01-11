@@ -20,6 +20,8 @@ rotation_threshold: 0.25
 
 camera_sigmas: [ 0.500, 0.500 ]
 
+bearing_only: false
+
 beacons:
   - [2.40, 0.0]
   - [6.50, 0.0]

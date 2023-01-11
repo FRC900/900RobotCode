@@ -26,7 +26,6 @@ private:
   std::vector<Particle> particles_;
   WorldModel world_;
   std::normal_distribution<double> rot_thresh_dist_;
-  std::set<std::string> beacons_seen_;
   void normalize();
   void init(const WorldModelBoundaries &boundaries);
   void constrain_particles();
@@ -43,7 +42,7 @@ public:
   bool assign_weights(const std::vector<std::shared_ptr<BeaconBase>> &measurements, const std::vector<double> &sigmas);
   void resample();
   const std::vector<Particle> &get_particles() const;
-  const std::set<std::string> &get_beacons_seen() const;
+  const std::set<Particle> &get_beacons_seen() const;
   void clear_beacons_seen();
   void check_particles(const char *file, int line) const;
   // need access to world functions so this allows that
@@ -51,7 +50,7 @@ public:
     return world_.allianceColorCheck(amIBlueAlliance);
   }
   void reinit();
+  bool is_valid_beacon(const std::string &beacon_name) const;
 };
-
 
 #endif

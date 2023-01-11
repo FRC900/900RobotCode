@@ -132,7 +132,7 @@ float contoursDepthMat(const cv::Mat& depth_, const cv::Rect& bound_rect, bool d
 	// sort vector
 	std::sort(vec.begin(), vec.end());
 
-	return (vec.size() != 0 ? vec[(size_t)(percent_from_bottom_contours * vec.size())] : usefulDepthMat(depth_, bound_rect, debug, K_MEANS)); // return lowest value after throwing out the bottom <percent_from_bottom_contours>%.
+	return (vec.size() != 0 ? vec[(size_t)(percent_from_bottom_contours * vec.size())] : usefulDepthMat(depth_, bound_rect, K_MEANS, debug)); // return lowest value after throwing out the bottom <percent_from_bottom_contours>%.
 	// If there are no values, fall back to k-means.
 
 	/* Test results (adaptive thresholding):
@@ -264,7 +264,7 @@ float kMeansDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, bool debu
 
 // Get the most useful depth value in the cv::Mat depth contained within
 // the supplied bounding rectangle
-float usefulDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, bool debug, DepthCalculationAlgorithm algorithm, int k, float tolerance)
+float usefulDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, DepthCalculationAlgorithm algorithm, bool debug, int k, float tolerance)
 {
 	switch (algorithm) {
 		case CONTOURS:
@@ -273,5 +273,7 @@ float usefulDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, bool debu
 			return contoursDepthMat(depth, bound_rect, debug, false);
 		case K_MEANS:
 			return kMeansDepthMat(depth, bound_rect, debug, k, tolerance);
+		case TWO_D_ONLY:
+			return 1.;
 	}
 }

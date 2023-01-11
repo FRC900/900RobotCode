@@ -45,7 +45,8 @@ int main(int argc, char **argv)
 
 	// Sync up timestamps to find image and depth
 	// data from the same frame
-	auto sub = nh.subscribe("/c920_camera/image_raw", 5, callback);
+	//auto sub = nh.subscribe("/c920_camera/image_raw", 5, callback);
+	auto sub = nh.subscribe("/tf_object_detection/debug_image", 5, callback);
 	//auto sub = nh.subscribe("/zed_goal/left/image_rect_color", 5, callback);
 
 	ros::spin();

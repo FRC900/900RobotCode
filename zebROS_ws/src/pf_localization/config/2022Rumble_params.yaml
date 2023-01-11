@@ -24,6 +24,8 @@ rotation_threshold: 0.25
 
 camera_sigmas: [ 1.000, 1.000 ]
 
+bearing_only: false
+
 # Found from https://docs.google.com/document/d/1-2Ebfz2yhGaKKjmjrVtmT4BOiicFtyhzod6RbWLc5N0/view#
 # "tagID" in family Tag36h11
 beacons:

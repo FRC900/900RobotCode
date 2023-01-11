@@ -75,7 +75,7 @@ pln, = ax.plot([], [], 'r.', markersize=2)
 dir, = ax.plot([], [], 'r-,')
 ln,  = ax.plot([], [], 'b.', markersize=.15)
 gtn, = ax.plot([], [], 'g.', markersize=2)
-dtns = {}
+dtns = []
 
 def update_debug(debug_msg):
     global ln, pln, dir, dtns, predicted_x, predicted_y, beacon_locations
@@ -86,7 +86,7 @@ def update_debug(debug_msg):
     for p in debug_msg.poses:
         x_data.append(p.position.x)
         y_data.append(p.position.y)
-        angles = euler_from_quaternion([p.orientation.x, p.orientation.y, p.orientation.z, p.orientation.w]);
+        angles = euler_from_quaternion([p.orientation.x, p.orientation.y, p.orientation.z, p.orientation.w])
         rot_data.append(angles[2])
 
     this_x = debug_msg.predicted_pose.position.x
@@ -97,18 +97,14 @@ def update_debug(debug_msg):
     o = debug_msg.predicted_pose.orientation
     angle = euler_from_quaternion([o.x, o.y, o.z, o.w])[2]
 
-    detections = set()
-    for o in debug_msg.beacons:
-        detections.add(o)
-
     plt_mutex.acquire()
-    for d in dtns:
-        if d in detections and d in beacon_locations:
-            xs = [predicted_x.newest(), beacon_locations[d][0]]
-            ys = [predicted_y.newest(), beacon_locations[d][1]]
-            dtns[d].set_data(xs,ys)
+    for i in range(len(dtns)) :
+        if i < len(debug_msg.beacons):
+            xs = [predicted_x.newest(), debug_msg.beacons[i].position.x]
+            ys = [predicted_y.newest(), debug_msg.beacons[i].position.y]
+            dtns[i].set_data(xs,ys)
         else:
-            dtns[d].set_data([], [])
+            dtns[i].set_data([], [])
 
     ln.set_data(x_data, y_data)
     pln.set_data(predicted_x.get(), predicted_y.get())
@@ -141,8 +137,9 @@ def update_match_data(match_data_msg):
             a.remove()
         beacon_annotations[:] = []
         
-        for id, p in beacon_locations.items():
-            beacon_annotations.append(ax.annotate(id, (p[0], p[1]), textcoords="offset points", xytext=(0,10), ha='center'))
+        for id, ps in beacon_locations.items():
+            for p in ps:
+                beacon_annotations.append(ax.annotate(id, (p[0], p[1]), textcoords="offset points", xytext=(0,10), ha='center'))
 
         plt.draw()
         plt_mutex.release()
@@ -184,10 +181,13 @@ def main():
         beacon_x.append(b[0])
         beacon_y.append(b[1])
         # Set up a map of beacon_id -> [beacon x, beacon y] tuples
-        beacon_locations_blue[b[2]] = [b[0], b[1]]
+        if b[2] not in beacon_locations_blue:
+            beacon_locations_blue[b[2]] = []
+        beacon_locations_blue[b[2]].append([b[0], b[1]])
 
         # And a placeholder for each potential predicted_pose->beacon line
-        dtns[b[2]], = ax.plot([], [], 'r-')
+        dtn, = ax.plot([], [], 'r-')
+        dtns.append(dtn)
 
     # Create mirror image beacon positions for robot
     # on red alliance
@@ -201,19 +201,22 @@ def main():
     trans.transform.rotation = Quaternion(*q)
 
     for k, v in beacon_locations_blue.items():
-        pose_s = PoseStamped()
-        pose_s.header = trans.header
-        pose_s.pose.position.x = v[0]
-        pose_s.pose.position.y = v[1]
-        pose_t = tf2_geometry_msgs.do_transform_pose(pose_s, trans)
-        beacon_locations_red[k] = [pose_t.pose.position.x, pose_t.pose.position.y]
+        beacon_locations_red[k] = []
+        for vv in v:
+            pose_s = PoseStamped()
+            pose_s.header = trans.header
+            pose_s.pose.position.x = vv[0]
+            pose_s.pose.position.y = vv[1]
+            pose_t = tf2_geometry_msgs.do_transform_pose(pose_s, trans)
+            beacon_locations_red[k].append([pose_t.pose.position.x, pose_t.pose.position.y])
 
     current_alliance_color = 1
     beacon_locations = beacon_locations_blue
 
     ax.plot(beacon_x, beacon_y, 'ko')
-    for id, p in beacon_locations.items():
-        beacon_annotations.append(ax.annotate(id, (p[0], p[1]), textcoords="offset points", xytext=(0,10), ha='center'))
+    for id, ps in beacon_locations.items():
+        for p in ps:
+            beacon_annotations.append(ax.annotate(id, (p[0], p[1]), textcoords="offset points", xytext=(0,10), ha='center'))
 
     sub_debug = rospy.Subscriber(debug_topic, PFDebug, update_debug)
     sub_ground_truth = rospy.Subscriber(ground_truth_topic, Odometry, update_ground_truth)

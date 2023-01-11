@@ -162,11 +162,11 @@ include_directories(
    ${catkin_LIBRARIES}
  )
 
-## add_executable(pf_test src/test.cpp ../../../common/hungarian.cpp src/particle_filter.cpp src/world_model.cpp)
-## add_dependencies(pf_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-## target_link_libraries(pf_test
-##   ${catkin_LIBRARIES}
-## )
+add_executable(pf_test src/test.cpp ../../../common/hungarian.cpp src/particle_filter.cpp src/world_model.cpp)
+add_dependencies(pf_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(pf_test
+  ${catkin_LIBRARIES}
+)
 #############
 ## Install ##
 #############

@@ -2,8 +2,6 @@
 #define PARTICLE_HEADER
 #include <cmath>
 #include <ostream>
-#include <tf2/LinearMath/Quaternion.h>
-#include <geometry_msgs/Pose.h>
 // #define CHECK_NAN
 struct Particle {
   double x_;
@@ -18,23 +16,27 @@ struct Particle {
 	  const double sum = x_ + y_ + rot_ + weight_;
 	  return std::isfinite(sum);
   }
+  bool operator<(const Particle &rhs) const {
+    if (x_ < rhs.x_) {
+      return true;
+    }
+    if (x_ == rhs.x_) {
+      if (y_ < rhs.y_) {
+        return true;
+      }
+      if ((y_ == rhs.y_) && (rot_< rhs.rot_)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
-  static geometry_msgs::Pose poseFrom2D(double x, double y, double rot) {
-    geometry_msgs::Pose pose;
-    pose.position.x = x;
-    pose.position.y = y;
-    pose.position.z = 0;
-
-    tf2::Quaternion q;
-    q.setRPY(0, 0, rot);
-    pose.orientation.x = q.getX();
-    pose.orientation.y = q.getY();
-    pose.orientation.z = q.getZ();
-    pose.orientation.w = q.getW();
-    return pose;
+  friend std::ostream &operator<<(std::ostream &os, const Particle &p)
+  {
+    os << "Particle(" << p.x_ << ", " << p.y_ << ", " << p.rot_ << ", " << p.weight_ << ")";
+    return os;
   }
 };
 
-std::ostream& operator<<(std::ostream& os, const Particle &p);
 
 #endif

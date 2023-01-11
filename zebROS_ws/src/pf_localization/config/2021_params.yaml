@@ -1,93 +1,104 @@
 noise_delta_t: 1.0
 
 field_dims:
-  x_min: -1.0
-  x_max:  6.0
-  y_min: -1.0
-  y_max:  4.0
+  x_min: 0.0
+  x_max: 16.458
+  y_min: 0.0
+  y_max: 8.228
 
 init_dims:
   x_min: 0.0
-  x_max: 5.5
+  x_max: 16.458
   y_min: 0.0
-  y_max: 5.0
+  y_max: 8.220
 
 num_particles: 200
 
 noise_stdev:
-  position: 0.025
+  position: 0.010
   rotation: 0.001
 
 rotation_threshold: 0.25
 
-camera_sigmas: [ 0.500, 0.500 ]
+camera_sigmas: [ 0.250, 0.250 ]
+
+bearing_only: true
+
+min_detection_confidence: 0.2
 
 beacons:
-  - [13.2364734, 0.298196, "blue_launchpad"]
-  - [13.2364734, 2.749296, "blue_launchpad"]
-  - [3.2283654, 7.930896, "red_launchpad"]
-  - [3.2283654, 5.479796, "red_launchpad"]
-  - [7.9238348, 3.310763, "rapid_react_hub_logo"]
-  - [8.5410167, 4.918837, "rapid_react_hub_logo"]
-  - [9.5978472, 1.5085568, "blue_tape_corners"]
-  - [11.0461298, 3.0347158, "blue_tape_corners"]
-  - [10.9910626, 5.1379628, "blue_tape_corners"]
-  - [10.838688, 5.4802278, "blue_tape_corners"]
-  - [9.2927932, 6.877177, "blue_tape_corners"]
-  - [7.2092542632, 6.8734367992, "blue_tape_corners"]
-  - [9.2556076, 1.3561568, "red_tape_corners"]
-  - [7.1523352, 1.3010896, "red_tape_corners"]
-  - [5.6261762, 2.7493722, "red_tape_corners"]
-  - [5.4738016, 3.0916372, "red_tape_corners"]
-  - [5.418709, 5.1948842, "red_tape_corners"]
-  - [6.8514976, 6.6309300325, "red_tape_corners"]
-  - [8.9537032, 2.9553662, "hub_fender_corner"]
-  - [8.6114382, 2.8029916, "hub_fender_corner"]
-  - [7.0672007754, 3.3909556768, "hub_fender_corner"]
-  - [6.914816879, 3.7332154698, "hub_fender_corner"]
-  - [7.5143824312, 5.2826077482, "hub_fender_corner"]
-  - [7.8450402154, 5.4298260974, "hub_fender_corner"]
-  - [9.3976507246, 4.8386443232, "hub_fender_corner"]
-  - [9.5474518474, 4.5021855346, "hub_fender_corner"]
-  - [13.1684268, 0.206121, "blue_truss_segment"]
-  - [13.1684268, 2.825496, "blue_truss_segment"]
-  - [3.309112, 8.022971, "red_truss_segment"]
-  - [3.309112, 5.394071, "red_truss_segment"]
-  - [13.2396484, 2.615946, "pipe_ending "]
-  - [13.2396484, 2.869946, "pipe_ending"]
-  - [13.2396484, 2.869946, "pipe_ending"]
-  - [13.2396484, 2.615946, "pipe_ending"]
-  - [13.2396484, 0.171196, "pipe_ending"]
-  - [13.2396484, 0.425196, "pipe_ending"]
-  - [13.2396484, 0.425196, "pipe_ending"]
-  - [13.2396484, 0.171196, "pipe_ending"]
-  - [3.2378904, 5.613146, "pipe_ending"]
-  - [3.2378904, 5.359146, "pipe_ending"]
-  - [3.2378904, 5.359146, "pipe_ending"]
-  - [3.2378904, 5.613146, "pipe_ending"]
-  - [3.2378904, 8.057896, "pipe_ending"]
-  - [3.2378904, 7.803896, "pipe_ending"]
-  - [3.2378904, 7.803896, "pipe_ending"]
-  - [3.2378904, 8.057896, "pipe_ending"]
-  - [10.4816656, 0.9411716, "red_cargo_starting_position"]
-  - [7.5806554, 0.284734, "red_cargo_starting_position"]
-  - [5.065141, 1.8719038, "red_cargo_starting_position"]
-  - [4.952111, 6.1885322, "red_cargo_starting_position"]
-  - [7.381113, 7.9051658, "red_cargo_starting_position"]
-  - [12.0291606, 4.9724818, "red_cargo_starting_position"]
-  - [1.0739374, 1.124585, "red_cargo_starting_position"]
-  - [2.2151481478, 5.334, "red_truss_segment"]
-  - [11.5254432178, 2.0410678, "blue_cargo_starting_position"]
-  - [9.0964512, 0.3244342, "blue_cargo_starting_position"]
-  - [4.4484036, 3.2571182, "blue_cargo_starting_position"]
-  - [5.9958732, 7.2884284, "blue_cargo_starting_position"]
-  - [8.8969088, 7.944866, "blue_cargo_starting_position"]
-  - [11.4123978, 6.3576962, "blue_cargo_starting_position"]
-  - [15.4036268, 7.105015, "blue_cargo_starting_position"]
-  - [14.2497033268, 2.8956, "blue_truss_segment"]
-  - [16.4567362, 6.0534328639, "terminal_base_corner"]
-  - [14.4016476, 8.2001106, "terminal_base_corner"]
-  - [2.0632166, 0.0294894, "terminal_base_corner"]
-  - [0.0081280000000028, 2.1761671361, "terminal_base_corner"]
-  - [5.4724049556, 4.1148, "red_black_tape_intersect"]
-  - [10.9924465444, 4.1148, "blue_black_tape_intersect"]
+  - [3.2435266, 7.901804, blue_launchpad]
+  - [3.2435266, 5.450704, blue_launchpad]
+  - [13.2516346, 0.269104, red_launchpad]
+  - [13.2516346, 2.720204, red_launchpad]
+  #- [8.5561652, 4.889237, rapid_react_hub_logo]
+  #- [7.9389833, 3.281163, rapid_react_hub_logo]
+  #- [6.8821528, 6.6914432, blue_tape_corners]
+  #- [5.4338702, 5.1652842, blue_tape_corners]
+  #- [5.4889374, 3.0620372, blue_tape_corners]
+  #- [5.641312, 2.7197722, blue_tape_corners]
+  #- [7.1872068, 1.322823, blue_tape_corners]
+  #- [9.2707457368, 1.3265632008, blue_tape_corners]
+  #- [7.2243924, 6.8438432, red_tape_corners]
+  #- [9.3276648, 6.8989104, red_tape_corners]
+  #- [10.8538238, 5.4506278, red_tape_corners]
+  #- [11.0061984, 5.1083628, red_tape_corners]
+  #- [11.061291, 3.0051158, red_tape_corners]
+  #- [9.6285024, 1.5690699675, red_tape_corners]
+  #- [7.5262968, 5.2446338, hub_fender_corner]
+  #- [7.8685618, 5.3970084, hub_fender_corner]
+  #- [9.4127992246, 4.8090443232, hub_fender_corner]
+  #- [9.565183121, 4.4667845302, hub_fender_corner]
+  #- [8.9656175688, 2.9173922518, hub_fender_corner]
+  #- [8.6349597846, 2.7701739026, hub_fender_corner]
+  #- [7.0823492754, 3.3613556768, hub_fender_corner]
+  #- [6.9325481526, 3.6978144654, hub_fender_corner]
+  #- [3.3115732, 7.993879, blue_truss_segment]
+  #- [3.3115732, 5.374504, blue_truss_segment]
+  #- [13.170888, 0.177028999999999, red_truss_segment]
+  #- [13.170888, 2.805929, red_truss_segment]
+  ##- [3.2403516, 5.584054, pipe_ending]
+  ##- [3.2403516, 5.330054, pipe_ending]
+  ##- [3.2403516, 5.330054, pipe_ending]
+  ##- [3.2403516, 5.584054, pipe_ending]
+  ##- [3.2403516, 8.028804, pipe_ending]
+  ##- [3.2403516, 7.774804, pipe_ending]
+  ##- [3.2403516, 7.774804, pipe_ending]
+  ###- [3.2403516, 8.028804, pipe_ending]
+  ##- [13.2421096, 2.586854, pipe_ending]
+  ##- [13.2421096, 2.840854, pipe_ending]
+  ##- [13.2421096, 2.840854, pipe_ending]
+  ##- [13.2421096, 2.586854, pipe_ending]
+  ##- [13.2421096, 0.142104, pipe_ending]
+  ##- [13.2421096, 0.396103999999999, pipe_ending]
+  ##- [13.2421096, 0.396103999999999, pipe_ending]
+  #- [13.2421096, 0.142104, pipe_ending]
+  #- [5.9983344, 7.2588284, red_cargo_starting_position]
+  #- [8.8993446, 7.915266, red_cargo_starting_position]
+  #- [11.414859, 6.3280962, red_cargo_starting_position]
+  #- [11.527889, 2.0114678, red_cargo_starting_position]
+  #- [9.098887, 0.2948342, red_cargo_starting_position]
+  #- [4.4508394, 3.2275182, red_cargo_starting_position]
+  #- [15.4060626, 7.075415, red_cargo_starting_position]
+  #- [4.9545567822, 6.1589322, blue_cargo_starting_position]
+  #- [7.3835488, 7.8755658, blue_cargo_starting_position]
+  #- [12.0315964, 4.9428818, blue_cargo_starting_position]
+  #- [10.4841268, 0.911571599999999, blue_cargo_starting_position]
+  #- [7.5830912, 0.255133999999999, blue_cargo_starting_position]
+  #- [5.0676022, 1.8423038, blue_cargo_starting_position]
+  #- [1.0763732, 1.094985, blue_cargo_starting_position]
+  #- [0.0232637999999987, 2.1465671361, terminal_base_corner]
+  #- [2.0783524, -0.000110600000001071, terminal_base_corner]
+  #- [14.4167834, 8.1705106, terminal_base_corner]
+  #- [16.471872, 6.0238328639, terminal_base_corner]
+  #- [11.0075950444, 4.0852, red_black_tape_intersect]
+  #- [5.4875534556, 4.0852, blue_black_tape_intersect]
+  #- [-0.01, 5.719, ds_numbers]
+  #- [-0.01, 4.4855, ds_numbers]
+  #- [-0.01, 2.615, ds_numbers]
+  #- [16.468, 2.509, ds_numbers]
+  #- [16.468, 3.7425, ds_numbers]
+  #- [16.468, 5.613, ds_numbers]
+
+  #- [14.2648518522, 2.866, red_truss_segment]
+  #- [2.2302966732, 5.3044, blue_truss_segment]

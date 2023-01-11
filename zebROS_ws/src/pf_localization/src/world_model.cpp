@@ -16,8 +16,7 @@ std::vector<PositionBeacon> WorldModel::getRedBeacons(const std::vector<Position
 {
 	constexpr double field_width = 16.458;
 	constexpr double field_height = 8.228; 
-	ros::Time now;
-	now.fromSec(0); // dummy time for testing
+	ros::Time now = ros::Time::now();
 	geometry_msgs::TransformStamped transformStamped;
 	transformStamped.header.frame_id = "blue0";
 	transformStamped.header.stamp = now;
@@ -43,8 +42,12 @@ std::vector<PositionBeacon> WorldModel::getRedBeacons(const std::vector<Position
 	return redBeacons;
 }
 
-WorldModel::WorldModel(std::vector<PositionBeacon>& beacons, const WorldModelBoundaries &boundaries) :
-  beacons_(beacons), blue_beacons_(beacons), red_beacons_(getRedBeacons(beacons)), boundaries_(boundaries) {}
+WorldModel::WorldModel(std::vector<PositionBeacon>& beacons, const WorldModelBoundaries &boundaries, const double camera_fov) :
+  beacons_(beacons), blue_beacons_(beacons), red_beacons_(getRedBeacons(beacons)), boundaries_(boundaries), camera_fov_(camera_fov) {
+    for (const auto &b: beacons) {
+      beacon_names_.insert(b.type_);
+    }
+  }
 
 const WorldModelBoundaries& WorldModel::get_boundaries() const {
   return boundaries_;
@@ -96,115 +99,82 @@ void WorldModel::constrain_to_world(Particle& p) const {
   p.y_ = std::min(boundaries_.y_max_, std::max(boundaries_.y_min_, p.y_));
 }
 
-static PositionBeacon particle_relative_beacon(const Particle &p, const PositionBeacon &b) {
-    double x = b.x_ - p.x_;
-    double y = b.y_ - p.y_;
-    double r = hypot(x, y);
-    double theta = atan2(y, x);
-    theta -= p.rot_;
-    x = r * cos(theta);
-    y = r * sin(theta);
-    return PositionBeacon{x, y, b.type_};
+std::optional<PositionBeacon> WorldModel::particle_relative_beacon(const Particle &p, const PositionBeacon &b) const {
+  double x = b.x_ - p.x_;
+  double y = b.y_ - p.y_;
+  double r = hypot(x, y);
+  double theta = atan2(y, x);
+  theta = angles::normalize_angle(theta - p.rot_);
+  // Filter out beacons which aren't visible given the particle's orientation
+  // and the camera's FoV
+  // TODO - what if the center of the fov isn't 0?
+  if (std::abs(theta) > (camera_fov_ / 2.))
+  {
+    return std::nullopt;
+  }
+  x = r * cos(theta);
+  y = r * sin(theta);
+  return PositionBeacon{x, y, b.type_};
 }
 
-//gets the coordinates of all the field beacons of a given type relative to a given particle
-//returns - a vector, one entry per beacon of matching type. each entry is the offset (x,y)
-//from the input particle position p and the corresponding beacon position
-static std::vector<PositionBeacon> single_particle_relative(const Particle& p, const std::vector<PositionBeacon> &bcns, const std::string &type) {
-  std::vector<PositionBeacon> res;
-  for (const PositionBeacon& b : bcns) {
-    if (b.type_ != type) {
-      continue;
-    }
-    res.emplace_back(particle_relative_beacon(p, b));
-  }
-  return res;
-}
-
-// A struct holding data about particles and their position relative to map beacons
-// A map of this struct is filled in in total_distance, where each entry
-// holds data about one type of beacon.
-struct beacons {
-  // List of positions of each beacon of a given type relative to a given particle
-  std::vector<PositionBeacon> rel;
-  // 2-d array of distances between measurements and beacons
-  // each column is the distance between a given measurement and each beacon of
-  //   that measurement's type
-  // there's a row added for each measurement of that type
-  std::vector<std::vector<double>> dists;
-  // The measurement associated with each row of dists, used later to compute
-  // the particle weight, based on the difference between the measurement and
-  // expected beacon position).
-  std::vector<std::shared_ptr<BeaconBase>> meas;
-};
-std::ostream& operator<<(std::ostream &os, const beacons& b)
-{
-  os << "rel" << std::endl;
-  for (const auto &r : b.rel) {
-    os << "\t" << r;
-  }
-  os << "dists" << std::endl;
-  for (const auto &d : b.dists) {
-    os << "\t";
-    for (const auto &v : d) {
-      os << " " << v;
-    }
-    os << std::endl;
-  }
-  os << "meas" << std::endl;
-  for (const auto &m : b.meas) {
-    os << "\t" << *std::dynamic_pointer_cast<PositionBeacon>(m) << std::endl;
-  }
-  return os;
-}
-
-//Uses hungarian algorithm to pair particle relative beacons and robot relative beacons and returns the
-//weight for that particular particle.  Weights are calculated based on how likely the measurement is given
-//the std.deviation for the camera detection, passed in the sigmas array.
 double WorldModel::total_distance(const Particle& p,
                                   const std::vector<std::shared_ptr<BeaconBase>>& measurements,
                                   const std::vector<double> &sigmas) const {
-  std::unordered_map<std::string, beacons> beacons_by_type;
-
-  // Put relative distances of field beacons into beacons_by_type
+  // List of positions of each beacon of a given type relative to this particle
+  std::vector<std::optional<PositionBeacon>> rel;
   for (const auto &b : beacons_) {
-    beacons_by_type[b.type_].rel.push_back(particle_relative_beacon(p, b));
+    rel.push_back(particle_relative_beacon(p, b));
   }
-
-  // For each detection of this type, create a list of distances from
-  // that detection to each field beacon of that same type
+  // 2-d array of distances between measurements and beacons
+  // each column is the distance between a given measurement and each beacon
+  // there's a row added for each measurement
+  std::vector<std::vector<double>> dists;
   for (const auto &m : measurements) {
-    const auto it = beacons_by_type.find(m->type_);
-    if (it != beacons_by_type.cend()) {
-        it->second.dists.push_back(m->distances(it->second.rel));
-        it->second.meas.push_back(m);
-    }
+    dists.push_back(m->distances(rel));
   }
 
-  // Loop over each detection type. For that, do an optimal assigment
-  // of measurements with beacons of the same type as the detection
+  // Match up measurements with the most likely mapping to a beacon.
+  std::vector<int> assignment;
+  solver_.Solve(dists, assignment, AssignmentProblemSolver::many_forbidden_assignments);
+
   double total_res = 1.;
-  for (auto &pair: beacons_by_type) {
-    if (pair.second.dists.empty()) {
-      continue;
+  size_t num_matches = 0;
+  // For each match from measurements to beacon, update the weight
+  // based on how likely this measurement would be if the particle
+  // were in the correct location
+  // i is the i-th measurement, assigments[i] is the corresponding beacon index
+  for (size_t i = 0; i < assignment.size(); i++) {
+    if (assignment[i] >= 0) {
+      const double w = measurements[i]->weight(*rel[assignment[i]], sigmas);
+      total_res *= w;
+      num_matches += 1;
+      const auto &b = beacons_[assignment[i]];
+      beacons_seen_.insert({b.x_, b.y_, 0});
     }
-    // Match up measurements with the most likely mapping to a beacon.
-    std::vector<int> assignment;
-    solver_.Solve(pair.second.dists, assignment);
-    // For each match from measurements to beacon, update the weight
-    // based on how likely this measurement would be if the particle
-    // were in the correct location
-    // i is the i-th measurement with the current type, assigments[i] is the corresponding
-    // camera-relative beacon position
-    for (size_t i = 0; i < assignment.size(); i++) {
-      if (assignment[i] >= 0) {
-        const double w = pair.second.meas[i]->weight(pair.second.rel[assignment[i]], sigmas);
-        total_res *= w;
-       }
-    }
+  }
+  // If any measurements are filtered out, return a low weight since this
+  // particle isn't in a position which can even see the targets
+  // given the particle's orientation
+  if (num_matches < measurements.size()) {
+    return 0.01;
   }
 
   // TODO: perhaps a lower limit on total_res
-  // TODO: is it possible for no weights to be assigned and the result be 1?
-  return total_res;
+  return pow(total_res, 1.0 / num_matches);
+}
+
+const std::set<Particle> &WorldModel::get_beacons_seen(void) const {
+  return beacons_seen_;
+}
+
+void WorldModel::clear_beacons_seen(void) {
+  beacons_seen_.clear();
+}
+
+bool WorldModel::is_valid_beacon(const std::string &beacon_name) const {
+  return beacon_names_.count(beacon_name) > 0;
+}
+
+void WorldModel::set_camera_fov(const double camera_fov) {
+  camera_fov_ = camera_fov;
 }
