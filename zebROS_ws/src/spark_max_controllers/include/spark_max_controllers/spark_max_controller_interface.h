@@ -1,6 +1,8 @@
-#pragma once
+#ifndef INC_SMARK_MAX_CONTROLLER_INTERFACE__
+#define INC_SMARK_MAX_CONTROLLER_INTERFACE__
 
 #include <algorithm>
+#include <atomic>
 #include <thread>
 #ifdef __linux__
 #include <sched.h>
@@ -1084,3 +1086,4 @@ j
 };
 }
 
+#endif

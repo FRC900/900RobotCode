@@ -15,3 +15,4 @@ install_native
 callgrind.out.*
 .native_build.status
 .catkin_workspace
+allwpilib/ntcore/generated

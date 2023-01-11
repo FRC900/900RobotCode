@@ -36,6 +36,7 @@ catkin config --skiplist \
 	force_torque_sensor_controller \
 	four_wheel_steering_controller \
 	gripper_action_controller \
+	robot_characterization \
 	rqt_joint_trajectory_controller \
 	realsense2_camera \
 	realsense2_description \

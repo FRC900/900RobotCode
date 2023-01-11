@@ -1,6 +1,8 @@
 #ifndef SPARK_MAX_STATE_INTERFACE_INC_
 #define SPARK_MAX_STATE_INTERFACE_INC_
 
+#include <array>
+
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include <state_handle/state_handle.h>
 

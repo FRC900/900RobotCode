@@ -1,4 +1,7 @@
-#pragma once
+#ifndef INC_STATE_LISTENER_CONTROLLER__
+#define INC_STATE_LISTENER_CONTROLLER__
+
+#include <optional>
 
 #include <controller_interface/controller.h>
 #include <ros/node_handle.h>
@@ -292,3 +295,5 @@ class IMUStateListenerController :
 };
 
 } // namespace
+
+#endif

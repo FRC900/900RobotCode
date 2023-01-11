@@ -1,7 +1,7 @@
 // Functions referenced by various WPILIB code used on non-Rio targets but not actually
 // called. These functions let us build wpilib-dependent code on x86 and Jetson targets
 // by stubbing out functions which aren't actually used
-#include <ctre/phoenix/platform/Platform.h>
+#include <ctre/phoenix/platform/Platform.hpp>
 #include <ros/console.h>
 #include <chrono>
 
@@ -17,10 +17,6 @@ extern "C"
 	static constexpr uint32_t PCM_CONTROL_2 = 0x09041C40;	/* PCM_SupplemControl */
 	static constexpr uint32_t PCM_CONTROL_3 = 0x09041C80;	/* PcmControlSetOneShotDur_t */
 
-	static uint32_t GetPacketBaseTime() {
-		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-	}
-
 	// This is the path for calls going through the new CANAPI.  Accesses
 	// via these functions have already been through the CAN status
 	// cache and were not found
@@ -32,13 +28,16 @@ extern "C"
 		if ((arbId == PCM_CONTROL_1) || (arbId == PCM_CONTROL_2) || (arbId == PCM_CONTROL_3))
 			return;
 
-		ctre::phoenix::platform::can::CANComm_SendMessage(messageID, data, dataSize, periodMs, status, canBus.c_str());
+		ctre::phoenix::platform::can::CANComm_SendMessage(messageID, data, dataSize, status, canBus.c_str());
 	}
 	void HAL_CAN_ReceiveMessage(uint32_t *messageID, uint32_t messageIDMask, uint8_t *data, uint8_t *dataSize, uint32_t *timeStamp, int32_t *status)
 	{
-		ctre::phoenix::platform::can::CANComm_ReceiveMessage(messageID, messageIDMask, data, dataSize, timeStamp, status, canBus.c_str());
-		// For some reason, CANAPI uses a weird timeStamp. Emulate it here
-		*timeStamp = GetPacketBaseTime();
+		ctre::phoenix::platform::can::canframe_t canframe{};
+		ctre::phoenix::platform::can::CANComm_ReceiveMessage(*messageID, canframe, status, canBus.c_str());
+		*dataSize = canframe.len;
+		std::memcpy(data, canframe.data, *dataSize);
+
+		*timeStamp = canframe.swTimestampUs / 1000;
 	}
 	void HAL_CAN_OpenStreamSession(uint32_t* sessionHandle, uint32_t messageID,
 						   uint32_t messageIDMask, uint32_t maxMessages,
@@ -60,13 +59,12 @@ extern "C"
 			for (uint32_t i = 0; i < *messagesRead; i++)
 			{
 					messages[i].messageID = localMessages[i].arbID;
-					messages[i].timeStamp = localMessages[i].timeStampUs;
+					messages[i].timeStamp = localMessages[i].swTimestampUs;
 					memcpy(messages[i].data, localMessages[i].data, sizeof(localMessages[i].data));
 					messages[i].dataSize = localMessages[i].len;
 			}
 	}
 }
-
 
 #include <frc/AnalogInput.h>
 frc::AnalogInput::AnalogInput(int)
@@ -88,16 +86,9 @@ void frc::AnalogInput::InitSendable(wpi::SendableBuilder&)
 {
 	ROS_ERROR("Called frc::AnalogInput::InitSendable(SendableBuilder& builder) on unsupported platform");
 }
-#include <frc/DriverStation.h>
-
-frc::DriverStation & frc::DriverStation::GetInstance()
-{
-	ROS_ERROR("Called DriverStation::GetInstance() on unsupported platform");
-	static frc::DriverStation d;
-	return d;
-}
 
 #include <hal/DriverStation.h>
+#include <frc/DriverStation.h>
 bool frc::DriverStation::IsEnabled(void)
 {
         HAL_ControlWord controlWord;
@@ -114,16 +105,29 @@ bool frc::DriverStation::IsAutonomous() {
 	HAL_GetControlWord(&controlWord);
 	return controlWord.autonomous;
 }
-bool frc::DriverStation::IsOperatorControl() {
-	HAL_ControlWord controlWord;
-	HAL_GetControlWord(&controlWord);
-	return !(controlWord.autonomous || controlWord.test);
+bool frc::DriverStation::IsTeleop() {
+  HAL_ControlWord controlWord;
+  HAL_GetControlWord(&controlWord);
+  return !(controlWord.autonomous || controlWord.test);
 }
 bool frc::DriverStation::IsTest() {
   HAL_ControlWord controlWord;
   HAL_GetControlWord(&controlWord);
   return controlWord.test;
 }
+void frc::DriverStation::RefreshData() {
+	ROS_ERROR_STREAM("frc::DriverStation::RefreshData() called on unsupported platform");
+}
+
+void HAL_ProvideNewDataEventHandle(WPI_EventHandle handle)
+{
+	ROS_ERROR_STREAM("HAL_ProvideNewDataEventHandle() called on unspported platform");
+}
+void HAL_RemoveNewDataEventHandle(WPI_EventHandle handle)
+{
+	ROS_ERROR_STREAM("HAL_RemoveNewDataEventHandle() called on unspported platform");
+}
+
 
 #include <frc/GenericHID.h>
 frc::GenericHID::GenericHID(int)
@@ -340,6 +344,7 @@ int64_t HAL_Report(int32_t resource, int32_t instanceNumber,
 	return -1;
 }
 
+#include "frc/DSControlWord.h"
 static HAL_ControlWord HALSIM_controlword = {0,0,0,0,0,0,0};
 int32_t HAL_GetControlWord(HAL_ControlWord *controlword)
 {
@@ -373,7 +378,6 @@ int32_t HAL_GetMatchInfo(HAL_MatchInfo*)
 	return -1;
 }
 
-} /// extern "C"
 
 
 void HAL_ObserveUserProgramAutonomous(void)
@@ -402,9 +406,12 @@ int32_t HAL_SetJoystickOutputs(int32_t, int64_t,
 	ROS_ERROR("Called HAL_SetJoystickOutputs(int32_t joystickNum, int64_t outputs, int32_t leftRumble, int32_t rightRumble) on unsupported device");
 	return -1;
 }
+} /// extern "C"
 
 #include <ros_control_boilerplate/error_queue.h>
 #include <hal/HALBase.h>
+extern "C"
+{
 int32_t HAL_SendError(HAL_Bool /*isError*/, int32_t errorCode, HAL_Bool /*isLVCode*/, const char *details, const char *, const char *, HAL_Bool )
 {
     ROS_ERROR_STREAM("HAL_SendError called : errorCode = " << errorCode
@@ -413,6 +420,7 @@ int32_t HAL_SendError(HAL_Bool /*isError*/, int32_t errorCode, HAL_Bool /*isLVCo
 
 	errorQueue->enqueue(errorCode, std::string(details));
 	return 0;
+}
 }
 
 #include <frc/Timer.h>
@@ -438,23 +446,10 @@ units::second_t frc::Timer::GetFPGATimestamp()
 //#include "visa/visa.h"
 
 extern "C" {
-
 const char* HAL_GetErrorMessage(int32_t code) {
   switch (code) {
     case 0:
       return "";
-    case CTR_RxTimeout:
-      return CTR_RxTimeout_MESSAGE;
-    case CTR_TxTimeout:
-      return CTR_TxTimeout_MESSAGE;
-    case CTR_InvalidParamValue:
-      return CTR_InvalidParamValue_MESSAGE;
-    case CTR_UnexpectedArbId:
-      return CTR_UnexpectedArbId_MESSAGE;
-    case CTR_TxFailed:
-      return CTR_TxFailed_MESSAGE;
-    case CTR_SigNotUpdated:
-      return CTR_SigNotUpdated_MESSAGE;
     case NiFpga_Status_FifoTimeout:
       return NiFpga_Status_FifoTimeout_MESSAGE;
     case NiFpga_Status_TransferAborted:
@@ -563,6 +558,14 @@ const char* HAL_GetErrorMessage(int32_t code) {
       return HAL_CAN_BUFFER_OVERRUN_MESSAGE;
     case HAL_LED_CHANNEL_ERROR:
       return HAL_LED_CHANNEL_ERROR_MESSAGE;
+    case HAL_INVALID_DMA_STATE:
+      return HAL_INVALID_DMA_STATE_MESSAGE;
+    case HAL_INVALID_DMA_ADDITION:
+      return HAL_INVALID_DMA_ADDITION_MESSAGE;
+    case HAL_USE_LAST_ERROR:
+      return HAL_USE_LAST_ERROR_MESSAGE;
+    case HAL_CONSOLE_OUT_ENABLED_ERROR:
+      return HAL_CONSOLE_OUT_ENABLED_ERROR_MESSAGE;
     default:
       return "Unknown error status";
   }
@@ -596,3 +599,14 @@ uint64_t HAL_WaitForNotifierAlarm(HAL_NotifierHandle notifierHandle,
         *status = 0;
         return 1;
 }
+
+size_t HAL_GetSerialNumber(char* buffer, size_t size) {
+		*buffer = '\0';
+		return 0;
+}
+
+size_t HAL_GetComments(char* buffer, size_t size) {
+		*buffer = '\0';
+		return 0;
+}
+

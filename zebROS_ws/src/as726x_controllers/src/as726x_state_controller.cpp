@@ -6,6 +6,7 @@
 #include <as726x_interface/as726x_interface.h>
 #include <as726x_msgs/AS726xState.h>
 #include "periodic_interval_counter/periodic_interval_counter.h"
+#include <optional>
 
 namespace as726x_state_controller
 {

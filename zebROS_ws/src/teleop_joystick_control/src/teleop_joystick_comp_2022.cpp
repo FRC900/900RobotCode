@@ -184,9 +184,9 @@ void decClimber(void)
 	ROS_INFO_STREAM("Set climber_cmd.data to " << climber_cmd.request.data);
 }
 
-int direction_x;
-int direction_y;
-int direction_z;
+int direction_x{};
+int direction_y{};
+int direction_z{};
 
 void moveDirection(int x, int y, int z) {
 	geometry_msgs::Twist cmd_vel;

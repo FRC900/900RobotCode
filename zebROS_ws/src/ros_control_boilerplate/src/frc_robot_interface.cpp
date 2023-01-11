@@ -76,6 +76,8 @@
 #include "tf2/LinearMath/Quaternion.h"                // for Quaternion
 #include <FRC_NetworkCommunication/FRCComm.h>
 
+#include "ros_control_boilerplate/ros_math_shared.hpp"
+
 struct HAL_JoystickAxesInt {
   int16_t count;
   int16_t axes[HAL_kMaxJoystickAxes];
@@ -129,6 +131,8 @@ FRCRobotInterface::~FRCRobotInterface()
 
 bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 {
+	wpi::math::MathSharedStore::SetMathShared(std::make_unique<ROSMathShared>());
+
 	if (run_hal_robot_)
 	{
 		// Make sure to initialize WPIlib code before creating
@@ -469,6 +473,7 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		}
 	}
 
+#if 0
 	//RIGHT NOW THIS WILL ONLY WORK IF THERE IS ONLY ONE NAVX INSTANTIATED
 	for(size_t i = 0; i < num_navX_; i++)
 	{
@@ -490,6 +495,8 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 		break; // TODO : only support 1 for now - if we need more, need to define
 		       // the interface in config files somehow
 	}
+#endif
+
 	for (size_t i = 0; i < num_analog_inputs_; i++)
 	{
 		ROS_INFO_STREAM_NAMED("frc_robot_interface",
@@ -1127,6 +1134,7 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		if (analog_input_locals_[i])
 			analog_input_state_[i] = analog_inputs_[i]->GetValue() *analog_input_a_[i] + analog_input_b_[i];
 	}
+#if 0
 	read_tracer_.start_unique("navX");
 	//navX read here
 	for (size_t i = 0; i < num_navX_; i++)
@@ -1176,6 +1184,7 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 			//TODO: add setter functions
 		}
 	}
+#endif
 
 	read_tracer_.start_unique("pcms");
 	for (size_t i = 0; i < num_pcms_; i++)

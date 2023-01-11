@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(robot_characterization)
 
+unset(CMAKE_CXX_STANDARD CACHE)
+set(CMAKE_CXX_STANDARD 20)
 include ("../cmake_modules/CMakeOpt.cmake")
+set (ALLWPILIB ../../../allwpilib)
+execute_process(COMMAND python3 ${ALLWPILIB}/ntcore/generate_topics.py ${ALLWPILIB}/ntcore RESULT_VARIABLE generateResult)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -138,59 +142,86 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 
 # Add network table source code
-set (ALLWPILIB ../../../allwpilib)
+include_directories(${ALLWPILIB}/ntcore/src/main/native/cpp)
+include_directories(${ALLWPILIB}/ntcore/src/main/native/include)
+include_directories(${ALLWPILIB}/ntcore/generated/main/native/include)
+include_directories(${ALLWPILIB}/wpinet/src/main/native/include)
+include_directories(${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/include)
+include_directories(${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src)
+include_directories(${ALLWPILIB}/wpinet/src/main/native/thirdparty/tcpsockets/include)
 include_directories(${ALLWPILIB}/wpiutil/src/main/native/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/fmtlib/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/json/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/mpack/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/sigslot/include)
+file(GLOB WPILIBSRC
+    ${ALLWPILIB}/ntcore/src/main/native/cpp/*.cpp
+    ${ALLWPILIB}/ntcore/generated/main/native/cpp/*.cpp
+    ${ALLWPILIB}/ntcore/src/main/native/cpp/net/*.cpp
+    ${ALLWPILIB}/ntcore/src/main/native/cpp/net3/*.cpp
+    ${ALLWPILIB}/ntcore/src/main/native/cpp/networktables/*.cpp
+    ${ALLWPILIB}/ntcore/src/main/native/cpp/tables/*.cpp
+	${ALLWPILIB}/wpinet/src/main/native/cpp/*.cpp
+	${ALLWPILIB}/wpinet/src/main/native/cpp/uv/*.cpp
+	${ALLWPILIB}/wpinet/src/main/native/linux/*.cpp
+	${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/*.cpp)
 
 set (WPILIBSRC
-	${ALLWPILIB}/ntcore/src/main/native/cpp/Message.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/LoggerImpl.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/Storage_save.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/WireDecoder.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/NetworkConnection.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/Storage_load.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/InstanceImpl.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/ntcore_cpp.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/WireEncoder.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/ntcore_c.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/Value.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/Dispatcher.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/Storage.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/SequenceNumber.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/EntryNotifier.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/ConnectionNotifier.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/RpcServer.cpp
-	${ALLWPILIB}/ntcore/src/main/native/cpp/DsClient.cpp
+	${WPILIBSRC}
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/async.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/core.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/epoll.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/fs.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/fsevents.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/getaddrinfo.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/linux-core.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/linux-inotify.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/linux-syscalls.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/loop.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/loop-watcher.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/pipe.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/posix-hrtime.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/process.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/proctitle.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/poll.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/signal.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/stream.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/tcp.cpp
+	${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/thread.cpp
+	${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/tty.cpp
+    ${ALLWPILIB}/wpinet/src/main/native/thirdparty/libuv/src/unix/udp.cpp
 
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/fs.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/leb128.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/raw_istream.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/raw_socket_istream.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/Base64.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/DataLog.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/json.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/json_pointer.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/json_serializer.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/future.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/Logger.cpp
 	${ALLWPILIB}/wpiutil/src/main/native/cpp/SafeThread.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/StringExtras.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/SocketError.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPAcceptor.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPConnector.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPConnector_parallel.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/TCPStream.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/fmtlib/src/format.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/raw_ostream.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/raw_os_ostream.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ErrorHandling.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallPtrSet.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallVector.cpp
-	${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringMap.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/sha1.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/cpp/Synchronization.cpp
+
+	${ALLWPILIB}/wpiutil/src/main/native/thirdparty/fmtlib/src/format.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/thirdparty/json/cpp/json.cpp
+    ${ALLWPILIB}/wpiutil/src/main/native/thirdparty/json/cpp/json_parser.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/thirdparty/json/cpp/json_pointer.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/thirdparty/json/cpp/json_serializer.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/raw_ostream.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/raw_os_ostream.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ErrorHandling.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/MemAlloc.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/SmallVector.cpp
+    ${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/StringExtras.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/StringMap.cpp
+	${ALLWPILIB}/wpiutil/src/main/native/thirdparty/mpack/src/mpack.cpp
 )
 
+add_library(wpilib_net STATIC ${WPILIBSRC} )
 add_executable(robot_characterization 
 	src/robot_characterization.cpp
-	${WPILIBSRC}
 )
 
 ## Rename C++ executable without prefix
@@ -206,11 +237,11 @@ add_dependencies(robot_characterization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${ca
 ## Specify libraries to link a library or executable target against
 target_link_libraries(robot_characterization
   ${catkin_LIBRARIES}
+  wpilib_net
 )
 
 add_executable(robot_characterization_singlemotor 
 	src/robot_characterization_singlemotor.cpp
-	${WPILIBSRC}
 )
 
 ## Rename C++ executable without prefix
@@ -226,6 +257,7 @@ add_dependencies(robot_characterization_singlemotor ${${PROJECT_NAME}_EXPORTED_T
 ## Specify libraries to link a library or executable target against
 target_link_libraries(robot_characterization_singlemotor
   ${catkin_LIBRARIES}
+  wpilib_net
 )
 
 #############

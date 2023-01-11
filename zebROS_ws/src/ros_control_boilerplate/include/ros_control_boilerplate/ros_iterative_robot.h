@@ -1,5 +1,5 @@
-#pragma once
-namespace frc { class DriverStation; }
+#ifndef INC_ROS_ITERATRIVE_ROBOT__
+#define INC_ROS_ITERATRIVE_ROBOT__
 
 //Stuff from frcrobot_hw_interface
 namespace ros_control_boilerplate
@@ -11,7 +11,7 @@ class ROSIterativeRobot
 		void StartCompetition(void) const;
 		void OneIteration(void) const;
 	private:
-		frc::DriverStation& m_ds;
 };
 
 } // namespace ros_control_boilerplate
+#endif

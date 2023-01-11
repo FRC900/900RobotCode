@@ -1,4 +1,7 @@
-#pragma once
+#ifndef INC_TALON_CONTROLLER_INTERFACE__
+#define INC_TALON_CONTROLLER_INTERFACE__
+
+#include <atomic>
 #include <thread>
 #ifdef __linux__
 #include <sched.h>
@@ -2112,3 +2115,5 @@ class TalonMotionMagicCloseLoopControllerInterface : public TalonCloseLoopContro
 };
 
 } // namespace
+
+#endif

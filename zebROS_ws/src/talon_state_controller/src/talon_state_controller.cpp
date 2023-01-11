@@ -1,7 +1,7 @@
 /*
  * Original joint_state_controller Author: Wim Meeussen
  */
-
+#include <optional>
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_buffer.h>
 #include <realtime_tools/realtime_publisher.h>

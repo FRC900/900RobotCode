@@ -9,7 +9,7 @@
 //  See http://www.boost.org for updates, documentation, and revision history.
 
 #include <ostream>
-#include <boost/detail/endian.hpp>
+#include <boost/endian.hpp>
 #include "portable_binary_oarchive.hpp"
 
 void 

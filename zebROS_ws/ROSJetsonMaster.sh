@@ -32,6 +32,7 @@ elif [ -f /home/admin/rio_bashrc.sh ] ; then
     source /home/admin/rio_bashrc.sh
     export ROS_IP=10.9.0.2
     export LD_LIBRARY_PATH=/home/admin/wpilib:$LD_LIBRARY_PATH
+	export PYTHONPATH=/opt/ros/noetic/local/lib/python3.10/dist-packages
     swapon /dev/sda5 > /dev/null
 	ulimit -r unlimited
 	/etc/init.d/nilvrt stop
@@ -50,7 +51,7 @@ else
 fi
 
 # Common configuration
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ctre/linux/aarch64bionic/shared:/home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev/linux/aarch64bionic/shared:/usr/local/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/ctre/linux/arm64/shared:/home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/rev/linux/arm64/shared:/usr/local/lib
 export ROS_MASTER_URI=http://10.9.0.8:5802
 export ROSLAUNCH_SSH_UNKNOWN=1
 echo "ROS_IP set to $ROS_IP"

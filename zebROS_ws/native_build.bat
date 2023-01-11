@@ -26,6 +26,7 @@ catkin config --skiplist \
 	controllers_2019_msgs \
 	controllers_2020 \
 	controllers_2020_msgs \
+	robot_characterization \
 	velocity_controllers \
 	zed_ar_track_alvar_example \
 	zed_display_rviz \

@@ -5,8 +5,10 @@
 // The command class holds commands written to hardware by the hardware interface
 //   ::write() method. Controllers can write to this class to send commands to
 //   the hardware itself
-#pragma once
+#ifndef INC_AS726X_INTERFACE__
+#define INC_AS726X_INTERFACE__
 
+#include <array>
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include "state_handle/command_handle.h"
 
@@ -200,3 +202,5 @@ class AS726xCommandInterface : public HardwareResourceManager<AS726xCommandHandl
 
 } // namespace as726x
 } // namespace hardware_interface
+
+#endif

@@ -6,9 +6,10 @@
 const char* GetWPILibVersion(void)
 {
 	ROS_ERROR("Called GetWPILibVersion on unsupported platform");
-	return "900.2022";
+	return "900.2023";
 }
 
+#if 0
 #include <AHRS.h>
 AHRS::AHRS(frc::SPI::Port)
 {
@@ -83,6 +84,7 @@ void AHRS::Calibrate()
 {
 	ROS_ERROR("Called AHRS::Calibrate() on unsupported platform");
 }
+#endif
 
 #include <frc/motorcontrol/NidecBrushless.h>
 frc::NidecBrushless::NidecBrushless(int pwmChannel, int dioChannel) : m_dio(dioChannel), m_pwm(pwmChannel)
@@ -171,23 +173,6 @@ void frc::PWM::SetDisabled()
 void frc::PWM::InitSendable(wpi::SendableBuilder&)
 {
 	ROS_ERROR("Called PWM::InitSendable(wpi::SendableBuilder& builder) on unsupported platform");
-}
-
-#include <frc/PIDSource.h>
-void frc::PIDSource::SetPIDSourceType(PIDSourceType)
-{
-	ROS_ERROR("Called frc::PIDSource::SetPIDSourceType(PIDSourceType pidSource) on unsupported platform");
-}
-frc::PIDSourceType frc::PIDSource::GetPIDSourceType() const
-{
-	ROS_ERROR("Called frc::PIDSource::GetPIDSourceType() on unsupported platform");
-	return frc::PIDSourceType::kDisplacement;
-}
-
-#include <frc/SpeedController.h>
-void frc::SpeedController::SetVoltage(units::volt_t /*output*/)
-{
-	ROS_ERROR("Called frc::SpeedController::Set(volt_t output) on unsupported platform");
 }
 
 // Code to stub out various Senable implementations. These should quietly do nothing.

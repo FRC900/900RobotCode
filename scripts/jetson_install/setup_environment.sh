@@ -99,8 +99,13 @@ sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
 cd ..
 sudo rm -rf cmake-3.21.3*
 
-#sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 30 --slave /usr/bin/g++ g++ /usr/bin/g++-10
-#sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 90 --slave /usr/bin/g++ g++ /usr/bin/g++-7
+sudo apt install build-essential manpages-dev software-properties-common
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+sudo apt update 
+sudo apt install gcc-11 g++-11
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 20 --slave /usr/bin/g++ g++ /usr/bin/g++-11
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 10 --slave /usr/bin/g++ g++ /usr/bin/g++-9
+sudo update-alternatives --auto gcc
 
 #install caffe
 # cd

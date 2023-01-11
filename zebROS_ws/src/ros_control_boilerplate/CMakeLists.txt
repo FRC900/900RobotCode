@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(ros_control_boilerplate)
 
+unset(CMAKE_CXX_STANDARD CACHE)
+set(CMAKE_CXX_STANDARD 20)
 include ("../cmake_modules/CMakeOpt.cmake")
 
 find_package(catkin REQUIRED COMPONENTS
@@ -8,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   controller_manager
   control_msgs
+  eigen_conversions
   frc_msgs
   frc_interfaces
   hardware_interface
@@ -83,6 +86,7 @@ add_library(frc_robot_interface STATIC
 	src/read_config.cpp
 	src/rev_convert.cpp
 	src/ros_iterative_robot.cpp
+	src/ros_math_shared.cpp
 	src/talon_convert.cpp
 )
 
@@ -97,7 +101,7 @@ set (FRCROBOT_HW_MAIN_SRCS
 )
 
 set (ALLWPILIB ../../../allwpilib)
-set (WPI_SYSROOT $ENV{HOME}/wpilib/2022/roborio/arm-frc2022-linux-gnueabi)
+set (WPI_SYSROOT $ENV{HOME}/wpilib/2023/roborio/arm-frc2023-linux-gnueabi)
 include_directories(
 	include
 	${catkin_INCLUDE_DIRS}
@@ -109,7 +113,7 @@ include_directories(
 set (WPI_BASE_LIB_DIR ${WPI_SYSROOT}/lib/wpilib/linux)
 
 # Rio-only code
-if ("${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
+if ("${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/athena/shared)
 	set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/athena/shared)
 
@@ -121,24 +125,25 @@ if ("${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
 		${WPI_SHARED_LIB_DIR}/libwpilibc.so
 		${WPI_SHARED_LIB_DIR}/libwpiHal.so
 		${WPI_SHARED_LIB_DIR}/libwpimath.so
+		${WPI_SHARED_LIB_DIR}/libwpinet.so
 		${WPI_SHARED_LIB_DIR}/libwpiutil.so
-		${WPI_SHARED_LIB_DIR}/libvisa.so.21.0.0
+		${WPI_SHARED_LIB_DIR}/libvisa.so.22.5.0
 		${WPI_SHARED_LIB_DIR}/libembcanshim.so
 		${WPI_SHARED_LIB_DIR}/libfpgalvshim.so
-		${WPI_SHARED_LIB_DIR}/libFRC_NetworkCommunication.so.22.0.0
-		${WPI_SHARED_LIB_DIR}/libRoboRIO_FRC_ChipObject.so.22.0.0
+		${WPI_SHARED_LIB_DIR}/libFRC_NetworkCommunication.so.23.0.0
+		${WPI_SHARED_LIB_DIR}/libRoboRIO_FRC_ChipObject.so.23.0.0
 		${WPI_SYSROOT}/lib/navx/linux/athena/static/libnavx_frc.a
 	)
 	set (FRCROBOT_HW_MAIN_SRCS ${FRCROBOT_HW_MAIN_SRCS}
 		src/dummy_wpilib_rio.cpp
 	)
 elseif ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") # Jetson TK1
-	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/raspbian/shared)    # Who knows if this will work
-	set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/raspbian/shared)
+	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/arm32/shared)    # Who knows if this will work
+	set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/arm32/shared)
 	find_library(LIB_GPIOD libgpiod.a)
 elseif ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") # Jetson TX1/TX2/Xavier AGX/Xavier NX
-	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/aarch64bionic/shared)
-	set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/aarch64bionic/shared)
+	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/arm64/shared)
+	set (REV_LIB_DIR ${WPI_SYSROOT}/lib/rev/linux/arm64/shared)
 	find_library(LIB_GPIOD libgpiod.a)
 else() # x86-64, hopefully. First person to try and build native on a Mac gets kicked off the team
 	set (CTRE_LIB_DIR ${WPI_SYSROOT}/lib/ctre/linux/x86-64/shared)
@@ -157,12 +162,16 @@ include_directories(${ALLWPILIB}/hal/src/main/native/include)
 include_directories(${ALLWPILIB}/wpilibc/src/main/native/include)
 include_directories(${ALLWPILIB}/wpimath/src/main/native/include)
 include_directories(${ALLWPILIB}/wpiutil/src/main/native/include)
-include_directories(${ALLWPILIB}/wpiutil/src/main/native/fmtlib/include)
+include_directories(${ALLWPILIB}/wpimath/src/main/native/thirdparty/gcem/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/json/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/fmtlib/include)
+include_directories(${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/include)
+
 include_directories(${WPI_SYSROOT}/include/wpilib)
 
 # Non-rio builds are more complex - we have to grab appropriate
 # parts of WPIlib source and include it manually
-if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
+if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
 	# WPIlib code common to both hardware and sim interfaces.
 	# Create it as a library to avoid building all of these twice
 	add_library(frc_common_wpilib STATIC
@@ -180,19 +189,26 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotController.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/SensorUtil.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Solenoid.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/event/BooleanEvent.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/event/EventLoop.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/motorcontrol/MotorController.cpp
+		${ALLWPILIB}/wpimath/src/main/native/cpp/MathShared.cpp
+		${ALLWPILIB}/wpimath/src/main/native/cpp/filter/Debouncer.cpp
 		${ALLWPILIB}/wpimath/src/main/native/cpp/geometry/Rotation2d.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/fs.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ErrorHandling.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/Hashing.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ManagedStatic.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/raw_ostream.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallPtrSet.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/SmallVector.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/StringMap.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/StackTraceWrap.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/Synchronization.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/fmtlib/src/format.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/Hashing.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/raw_ostream.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ErrorHandling.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/MemAlloc.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/SmallPtrSet.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/SmallVector.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/StringMap.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/unix/Demangle.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/unix/StackTrace.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/fmtlib/src/format.cpp
 	)
     set(FRC_COMMON_WPILIB frc_common_wpilib)
 
@@ -222,8 +238,8 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalInput.cpp
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalOutput.cpp
 			${ALLWPILIB}/wpilibc/src/main/native/cpp/I2C.cpp
-			${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ConvertUTF.cpp
-			${ALLWPILIB}/wpiutil/src/main/native/cpp/llvm/ConvertUTFWrapper.cpp
+			${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ConvertUTF.cpp
+			${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ConvertUTFWrapper.cpp
 		)
 	else() # anything we don't want to support GPIO access on - x86, older Jetson, etc
 		set (FRCROBOT_HW_MAIN_SRCS ${FRCROBOT_HW_MAIN_SRCS}
@@ -236,12 +252,14 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi")
 	add_library(wpilibc src/dummy_library.cpp)
 	add_library(wpiHal  src/dummy_library.cpp)
 	add_library(wpimath src/dummy_library.cpp)
+	add_library(wpinet  src/dummy_library.cpp)
 	add_library(wpiutil src/dummy_library.cpp)
 	install(TARGETS
 		ntcore
 		wpilibc
 		wpiHal
 		wpimath
+		wpinet
 		wpiutil
 
 	  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -252,7 +270,7 @@ endif()
 # Don't build sim code for the Rio or Jetson -
 # saves time and space for something which will
 # never be run
-if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi") OR
+if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi") OR
 	     ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "arm-linux-gnueabihf") OR
 		 ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") )) 
     # Sim version of main control executable.  This hooks into
@@ -319,7 +337,6 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi") OR
 		${ALLWPILIB}/hal/src/main/native/sim/Threads.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/AnalogInput.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalInput.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/DataLog.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalOutput.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/DriverStation.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/GenericHID.cpp
@@ -330,7 +347,9 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi") OR
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/RoboRioSim.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Timer.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Watchdog.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/StringExtras.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/DataLog.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/SafeThread.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/StringExtras.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/unix/Demangle.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/unix/StackTrace.cpp
@@ -346,12 +365,17 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2022-linux-gnueabi") OR
 
 	target_link_libraries(frcrobot_sim_main
 		frc_robot_interface
-		frc_sim_wpilib
 		${FRC_COMMON_WPILIB}
+		frc_sim_wpilib
+		frc_robot_interface
+		${FRC_COMMON_WPILIB}
+		frc_sim_wpilib
 		${CTRE_LIB_DIR}/libCTRE_PhoenixSim.so
 		${CTRE_LIB_DIR}/libCTRE_PhoenixCCISim.so
+		${CTRE_LIB_DIR}/libCTRE_PhoenixTools_Sim.so
 		${CTRE_LIB_DIR}/libCTRE_Phoenix_WPISim.so
 		${CTRE_LIB_DIR}/libCTRE_SimCANCoder.so
+        ${CTRE_LIB_DIR}/libCTRE_SimPigeonIMU.so
 		${CTRE_LIB_DIR}/libCTRE_SimTalonFX.so
 		${CTRE_LIB_DIR}/libCTRE_SimTalonSRX.so
 		${CTRE_LIB_DIR}/libCTRE_SimVictorSPX.so
@@ -384,6 +408,7 @@ target_link_libraries(frcrobot_hw_main
 	${FRC_COMMON_WPILIB}
 	${CTRE_LIB_DIR}/libCTRE_Phoenix.so
 	${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.so
+	${CTRE_LIB_DIR}/libCTRE_PhoenixTools.so
 	${CTRE_LIB_DIR}/libCTRE_Phoenix_WPI.so
 	${PLATFORM_SPECIFIC_LIBS}
 	${catkin_LIBRARIES}

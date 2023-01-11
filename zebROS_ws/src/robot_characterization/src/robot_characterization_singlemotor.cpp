@@ -73,9 +73,9 @@ int main(int argc, char **argv)
 
 	// Set up a network tables server
 	auto ntInst = nt::NetworkTableInstance::GetDefault();
-	ntInst.SetNetworkIdentity("Robot");
+	// ntInst.SetNetworkIdentity("Robot");
 	ntInst.StartServer("/home/ubuntu/networktables.ini");
-	ntInst.SetUpdateRate(0.01); // 100hz
+	//ntInst.SetUpdateRate(0.01); // 100hz
 	// Get the entries for the input and output tables
 	auto autoSpeedEntry = ntInst.GetEntry("/robot/autospeed");
 	auto telemetryEntry = ntInst.GetEntry("/robot/telemetry");

@@ -1,4 +1,7 @@
-#pragma once
+#ifndef INC_CANIFIER_STATE_INTERFACE__
+#define INC_CANIFIER_STATE_INTERFACE__
+
+#include <array>
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include <state_handle/state_handle.h>
 namespace hardware_interface
@@ -205,3 +208,5 @@ class RemoteCANifierStateInterface : public HardwareResourceManager<canifier::CA
 
 } // namespace canifier
 } // namespace hardware_interface
+
+#endif
