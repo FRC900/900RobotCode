@@ -426,4 +426,5 @@ sudo ccache -C
 sudo ccache -c
 sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 
-echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev/linux/aarch64bionic/shared:/usr/local/lib" >> /home/ubuntu/.bashrc
+# This is handled by the ROS*.sh scripts
+#echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/rev/linux/aarm64/shared:/usr/local/lib" >> /home/ubuntu/.bashrc

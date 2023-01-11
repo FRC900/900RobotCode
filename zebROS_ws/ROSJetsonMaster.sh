@@ -6,21 +6,21 @@ if [ -f /.dockerenv ] ; then
     echo "Sourcing Docker environment"
     source /opt/ros/noetic/setup.bash
     source /home/ubuntu/2022RobotCode/zebROS_ws/devel/setup.bash
-	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
+    export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
 elif [ -f /home/ubuntu/2022RobotCode/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Jetson / native Linux environment"
     source /opt/ros/noetic/setup.bash
     source /home/ubuntu/2022RobotCode/zebROS_ws/devel/setup.bash
     #export ROS_IP=10.9.0.8
-	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
+    export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
 
-#	if [ $ROS_IP == "10.9.0.9" ] ; then
-#		echo "Resetting time on secondary Jetson"
-#		echo ubuntu | sudo -S systemctl stop ntp.service
-#		echo ubuntu | sudo -S ntpd -gqx
-#		echo ubuntu | sudo -S systemctl restart ntp.service
-#	fi
+#    if [ $ROS_IP == "10.9.0.9" ] ; then
+#        echo "Resetting time on secondary Jetson"
+#        echo ubuntu | sudo -S systemctl stop ntp.service
+#        echo ubuntu | sudo -S ntpd -gqx
+#        echo ubuntu | sudo -S systemctl restart ntp.service
+#    fi
 elif [ -f /home/ofugikawa/2022RobotCode/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Olivia / native Linux environment"
@@ -32,22 +32,22 @@ elif [ -f /home/admin/rio_bashrc.sh ] ; then
     source /home/admin/rio_bashrc.sh
     export ROS_IP=10.9.0.2
     export LD_LIBRARY_PATH=/home/admin/wpilib:$LD_LIBRARY_PATH
-	export PYTHONPATH=/opt/ros/noetic/local/lib/python3.10/dist-packages
+    export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/dist-packages
     swapon /dev/sda5 > /dev/null
-	ulimit -r unlimited
-	/etc/init.d/nilvrt stop
-	killall PhoenixDiagnosticsProgram
-	# Force update to Rio time, hopefully will prevent
-	# time updates while robot code is running
-	# Moved to systemd startup script on master Jetson for now
-	#/etc/init.d/ntpd stop
-	#ntpd -gqx
-	#/etc/init.d/ntpd restart
+    ulimit -r unlimited
+    /etc/init.d/nilvrt stop
+    killall PhoenixDiagnosticsProgram
+    # Force update to Rio time, hopefully will prevent
+    # time updates while robot code is running
+    # Moved to systemd startup script on master Jetson for now
+    #/etc/init.d/ntpd stop
+    #ntpd -gqx
+    #/etc/init.d/ntpd restart
 else
     echo "Unknown environment! Trying to proceed anyway using local environment."
     source /opt/ros/noetic/setup.bash
     source $HOME/2022RobotCode/zebROS_ws/devel/setup.bash
-	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
+    export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
 fi
 
 # Common configuration
@@ -59,5 +59,5 @@ echo "ROS_IP set to $ROS_IP"
 exec "$@"
 
 if [ -f /home/admin/rio_bashrc.sh ] ; then
-	/etc/init.d/ntpd restart
+    /etc/init.d/ntpd restart
 fi

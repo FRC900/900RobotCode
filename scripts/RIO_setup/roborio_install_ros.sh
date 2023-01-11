@@ -67,6 +67,9 @@ ssh -p 22 admin@$1 'rm -rf ~/.cache'
 scp -P 22 /home/ubuntu/roscore_roborio.tar.bz2 admin@$1:.
 ssh -p 22 admin@$1 'cd / && tar -xjf ~/roscore_roborio.tar.bz2'
 ssh -p 22 admin@$1 'rm ~/roscore_roborio.tar.bz2'
+ssh -p 22 admin@$1 'rsync -arv /opt/ros/noetic/lib/python3.10/site-packages/. /opt/ros/noetic/local/lib/python3.10/dist-packages'
+ssh -p 22 admin@$1 'rm -rf /opt/ros/noetic/lib/python3.10/site-packages'
+
 cd /home/ubuntu/wpilib/2023/roborio/arm-nilrt-linux-gnueabi/sysroot/usr/local/lib
 scp -P 22 libboost_atomic.so.1.74.0 libboost_chrono.so.1.74.0 libboost_program_options.so.1.74.0 libboost_regex.so.1.74.0 libboost_system.so.1.74.0 libboost_filesystem.so.1.74.0 libboost_thread.so.1.74.0 libboost_date_time.so.1.74.0 admin@$1:/usr/lib
 #ssh -p 22 admin@$1 ln -sf /usr/lib/libboost_atomic.so.1.74 /usr/lib/libboost_atomic.so.1.74.0

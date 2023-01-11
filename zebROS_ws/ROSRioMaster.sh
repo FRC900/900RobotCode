@@ -6,14 +6,14 @@ if [ -f /.dockerenv ] ; then
     echo "Sourcing Docker environment"
     source /opt/ros/noetic/setup.bash
     source /home/ubuntu/2022RobotCode/zebROS_ws/devel/setup.bash
-	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
+    export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
 elif [ -f /home/ubuntu/2022RobotCode/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Jetson / native Linux environment"
     source /opt/ros/noetic/setup.bash
     source /home/ubuntu/2022RobotCode/zebROS_ws/devel/setup.bash
     #export ROS_IP=10.9.0.8
-	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
+    export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
 elif [ -f /home/ofugikawa/2022RobotCode/zebROS_ws/devel/setup.bash ] ; then
     # Jetson-specific configuration
     echo "Sourcing Olivia / native Linux environment"
@@ -23,16 +23,19 @@ elif [ -f /home/admin/rio_bashrc.sh ] ; then
     # roboRIO-specific configuration
     echo "Sourcing roboRIO environment"
     source /home/admin/rio_bashrc.sh
+    export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/dist-packages
     export ROS_IP=10.9.0.2
     export LD_LIBRARY_PATH=/home/admin/wpilib:$LD_LIBRARY_PATH
 	export PYTHONPATH=/opt/ros/noetic/local/lib/python3.10/dist-packages
     swapon /dev/sda5
-	ulimit -r unlimited
+    ulimit -r unlimited
+    /etc/init.d/nilvrt stop
+    killall PhoenixDiagnosticsProgram
 else
     echo "Unknown environment! Trying to proceed anyway using local environment."
     source /opt/ros/noetic/setup.bash
     source $HOME/2022RobotCode/zebROS_ws/devel/setup.bash
-	export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
+    export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
 fi
 
 # Common configuration
