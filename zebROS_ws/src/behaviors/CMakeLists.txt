@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   base_trajectory_msgs
   behavior_actions
   #color_spin
-  #controllers_2019_msgs
+  controllers_2019_msgs
   #controllers_2020_msgs
   controllers_2022_msgs
   ddynamic_reconfigure
@@ -228,9 +228,6 @@ add_executable(intake_cargo_server src/intake_cargo_server.cpp)
 target_link_libraries(intake_cargo_server ${catkin_LIBRARIES})
 add_dependencies(intake_cargo_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(elevator_server src/elevator_server.cpp)
-target_link_libraries(elevator_server ${catkin_LIBRARIES})
-add_dependencies(elevator_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 #
 add_executable(intake_hatch_panel_server src/intake_hatch_panel_server.cpp)
 target_link_libraries(intake_hatch_panel_server ${catkin_LIBRARIES})
@@ -253,6 +250,9 @@ target_link_libraries(test_actionlib ${catkin_LIBRARIES})
 add_dependencies(test_actionlib ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 endif()
+add_executable(elevator_server src/elevator_server.cpp)
+target_link_libraries(elevator_server ${catkin_LIBRARIES})
+add_dependencies(elevator_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 #add_executable(dummy src/dummy.cpp)
 #target_link_libraries(

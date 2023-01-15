@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
 	behavior_actions
 	cmake_modules
 	control_msgs
+    controllers_2019_msgs
 	controllers_2022_msgs
 	dynamic_reconfigure
 	dynamic_reconfigure_wrapper
@@ -79,7 +80,7 @@ add_dependencies(teleop_joystick_comp_2022
 	${${PROJECT_NAME}_EXPORTED_TARGETS}
 	${catkin_EXPORTED_TARGETS})
 
-if (0) # 2019 code, left for reference if needed
+if (1) # 2019 code, left for reference if needed
 	add_executable(teleop_joystick_comp src/teleop_joystick_comp.cpp)
 	target_link_libraries(teleop_joystick_comp
 		${catkin_LIBRARIES}

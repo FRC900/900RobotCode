@@ -40,7 +40,7 @@
 
 #include "teleop_joystick_control/TeleopCmdVel.h"
 
-std::unique_ptr<TeleopCmdVel> teleop_cmd_vel;
+std::unique_ptr<TeleopCmdVel<teleop_joystick_control::TeleopJoystickCompConfig>> teleop_cmd_vel;
 
 int elevator_cur_setpoint_idx;
 int climber_cur_step;
@@ -889,7 +889,7 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read rotate_rate_limit_time in teleop_joystick_comp");
 	}
 
-	teleop_cmd_vel = std::make_unique<TeleopCmdVel>(config);
+	teleop_cmd_vel = std::make_unique<TeleopCmdVel<teleop_joystick_control::TeleopJoystickCompConfig>>(config);
 
     imu_angle = M_PI / 2.;
 

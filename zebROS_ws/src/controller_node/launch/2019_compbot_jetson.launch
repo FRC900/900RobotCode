@@ -11,7 +11,7 @@
 	<arg name="button_box" default="true"/>
 	<arg name="static_map" default="True"/>
 	<arg name="record" default="false" />
-	<arg name="primary_imu" default="ADI" />
+	<arg name="primary_imu" default="ZED" />
 
 	<group ns="frcrobot_jetson">
 		<rosparam file="$(find ros_control_boilerplate)/config/2019_compbot_base_jetson.yaml" command="load"/>
@@ -21,7 +21,7 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 		<!--
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
--->
+		-->
 		<rosparam file="$(find behaviors)/config/alignmentOffsets.yaml" command="load"/>
 
 		<!--
@@ -36,12 +36,11 @@
 
 		<!-- Load controller manager-->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn cargo_intake_controller climber_controller panel_intake_controller joint_state_controller joint_state_listener_controller talon_state_controller talon_config_controller match_state_listener_controller pcm_state_controller pdp_state_controller elevator_controller swerve_drive_controller robot_code_ready_controller" />
-
+			output="screen" args="spawn joint_state_controller joint_state_listener_controller talon_state_controller talon_config_controller match_state_listener_controller pdp_state_controller elevator_controller swerve_drive_controller robot_code_ready_controller" />
 
 		<node name="uptime_jetson" pkg="uptime" type="uptime_node" output="screen" />
 	</group>
-
+	
 	<group ns="imu">
 		<include file="$(find controller_node)/launch/2019_compbot_jetson_imu.launch">
 			<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
@@ -49,13 +48,16 @@
 		</include>
 	</group>
 
+	<!--
 	<group ns="swerve_imu_ukf">
 		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu" />
 		<include file="$(find controller_node)/launch/fuse_odom.launch"/>
 	</group>
 
 	<include file="$(find controller_node)/launch/path_follower.launch"/>
+	-->
 
+<!--
 	<group ns="teleop">
 		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
 		<node name="teleop_joystick_comp_2020" pkg="teleop_joystick_control" type="teleop_joystick_comp_2020" output="screen" >
@@ -78,14 +80,18 @@
 			</node>
 		</group>
 	</group>
+	-->
 
 	<!-- Actionlib servers!!! -->
 	<!-- Include this at the top level so all actionlib servers can find it -->
+	<!--
 	<rosparam file="$(find behaviors)/config/autoInterpreterServer.yaml" command="load"/>
+	-->
 	<group ns="elevator">
 		<rosparam file="$(find behaviors)/config/elevatorServer.yaml" command="load"/>
 		<node name="elevator_ac_server" pkg="behaviors" type="elevator_server" output="screen" />
 	</group>
+	<!--
 	<group ns="climber">
 		<rosparam file="$(find behaviors)/config/climberServer.yaml" command="load"/>
 		<node name="climber_ac_server" pkg="behaviors" type="climber_server" output="screen" />
@@ -106,6 +112,7 @@
 		<rosparam file="$(find behaviors)/config/outtakeHatchPanelServer.yaml" command="load"/>
 		<node name="outtake_hatch_ac_server" pkg="behaviors" type="outtake_hatch_panel_server" output="screen" />
 	</group>
+	-->
 
 	<!-- <group ns="path_to_goal">
 		<rosparam file="$(find robot_visualizer)/config/robot_visualize.yaml" command="load"/>
@@ -134,6 +141,7 @@
 	<!--group ns="align_server_common "!-->
 
 	<!-- vision align -->
+	<!--
 	<include file="$(find controller_node)/launch/tape_detection.launch">
 		<arg name="camera_model" value="zed2" />
 	</include>
@@ -141,6 +149,7 @@
 	<include file="$(find controller_node)/launch/2019_compbot_jetson_hatch_orient.launch"/>
 
 	<include file="$(find controller_node)/launch/tape_detection_c920.launch" />
+	-->
         <!--
 	<group ns="align_cargo_rocketship">
 		<node name="cargo_distance_pid" pkg="pid" type="controller" >
@@ -257,15 +266,17 @@
 	</group>
         -->
 
-	<include file="$(find realsense2_camera)/launch/rs_t265.launch" >
 		<!-- didn't seem to work, retest
-		-->
+	<include file="$(find realsense2_camera)/launch/rs_t265.launch" >
 		<arg name="camera" value="rs_t265" />
 	</include>
+		-->
 
 	<include file="$(find controller_node)/launch/record_2019_compbot.launch" if="$(arg record)" />
 	<include file="$(find controller_node)/launch/record_2019_no_zed.launch" if="$(arg record)" />
 
+	<!--
 	<include file="$(find controller_node)/launch/pf_localization.launch"/>
+	-->
 
 </launch>
