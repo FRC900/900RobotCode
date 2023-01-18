@@ -95,7 +95,7 @@ class PathFollower
 		}
 
 		// load nav_msgs::Path
-		bool loadPath(const nav_msgs::Path &path);
+		bool loadPath(const nav_msgs::Path &path, double &final_distace);
 
 		// get yaw from geometry_msgs quaternion
 		double getYaw(const geometry_msgs::Quaternion &q) const;
@@ -107,6 +107,6 @@ class PathFollower
 		double interpolate(double start_t, double end_t, double start_x, double end_x, double current_t) const;
 
 		// contains the main control loop
-		geometry_msgs::Pose run(double &distance_travelled);
+		geometry_msgs::Pose run(double &distance_travelled, int &current_index);
 };
 

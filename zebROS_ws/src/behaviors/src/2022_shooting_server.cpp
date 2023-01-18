@@ -14,33 +14,41 @@
 #include <XmlRpcValue.h>
 //#include <XmlRpcExeception.h>
 
-#if 0
-bool checkFloatArray(XmlRpc::XmlRpcValue &param, double &val0, double &val1, double &val2)
-{
-	if (!param.hasMember(0) || !param.hasMember(1) || !param.hasMember(2))
-	{
-		ROS_ERROR_STREAM("SHOOTING ARRAY DOES NOT HAVE THREE ELEMENTS");
-		return false;
-	}
+// takes in array of three elements 
+bool checkFloatArray(XmlRpc::XmlRpcValue &param)
+{ 
+  // checks if type is array 
+  if (!param.getType() == XmlRpc::XmlRpcValue::TypeArray) {
+    ROS_ERROR("Shooting Server - Parameter is not an array");
+    return false;
+  }
 
-	//if (!param.valid())
-		//throw std::runtime_error("Invalid valid double type in shooting server");
+  if (!param.size() == 3) {
+    ROS_ERROR("Shooting Server - array is not of len 3");
+    return false;
+  }
+  return true;
+}
+
+double readFloatParam(XmlRpc::XmlRpcValue &param)
+{
+  double val = -999;
+  // can assume that array is of len 3 
+	if (!param.valid())
+		throw std::runtime_error("2022 Shooting Server - readFloatParam : param was not a valid type");
 	if (param.getType() == XmlRpc::XmlRpcValue::TypeDouble)
 	{
-		val0 = static_cast<double>(param[0]);
-		return true;
+		val = static_cast<double>(param);
+		return val;
 	}
 	else if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
 	{
-		val0 = static_cast<int>(param[0]);
-		return true;
+		val = static_cast<int>(param);
+		return val;
 	}
 	else
-		throw std::runtime_error("Shooting server, A non-double value was read for" + param_name);
-
-	return false;
+		throw std::runtime_error("2022 Shooting Server - readFloatParam : A non-double value was read for param");
 }
-#endif
 
 struct ShooterData {
       double wheel_speed;
@@ -117,8 +125,11 @@ public:
     }
     if (!nh_.getParam("/shooting/shooter_speed_map", shooter_speed_map_xml_))
     {
-      ROS_WARN_STREAM("2022_shooting_server : COULD NOT FIND SHOOTER SPEED MAP SHOOTING WILL FAIL, defaulting to hardcoded values");
-
+      ROS_WARN_STREAM("2022_shooting_server : COULD NOT FIND SHOOTER SPEED MAP SHOOTING WILL FAIL");
+      while (true) {
+        // last time this failed along with a lot of other stuff, hopefully if that happens, we can see more easily whats going on.
+        ROS_ERROR_STREAM_THROTTLE(5, "2022_shooting_server : NOT RUNNING - SHOOTER SPEED MAP NOT FOUND");
+      }
       /* no equality operator for interpolating_map, just make sure the config works
       shooter_speed_map_ = {
         {1.48, ShooterData(175, 200)}, // hood up
@@ -131,24 +142,14 @@ public:
     }
     // kinda pointless, we are in trouble if the read fails, but this prevents a out of bounds crash
     else {
-      
+      ROS_INFO_STREAM("2022_shooting_server : Found shooter speed map");
       for (size_t i = 0; i < (unsigned) shooter_speed_map_xml_.size(); i++) {
-#if 0
-        if (!shooter_speed_map_[i].hasMember()) {
-          while (true) {
-            ROS_ERROR_STREAM_THROTTLE(2, "SHOOTER IS NOT WORKING, XML ERROR")
-          }
+        auto s = shooter_speed_map_xml_[i];
+        if (!checkFloatArray(s)) {
+          throw std::runtime_error("Shooter Speed Map is not an array or not of len 3");
         }
-        double val0, val1, val2;
-
-        if (checkFloatArray(shooter_speed_map_[i], &double val0, &double val1, &double val2)) {
-          
-
-        }
-        ROS_INFO_STREAM("Here");
-#endif
-        shooter_speed_map_.insert((double) shooter_speed_map_xml_[i][0], ShooterData((double) shooter_speed_map_xml_[i][1], (double) shooter_speed_map_xml_[i][2]));
-        //ROS_INFO_STREAM("2022_shooting_server : Inserted " << s[0] << " " << s[1] << " " << s[2]);
+        shooter_speed_map_.insert(readFloatParam(s[0]), ShooterData(readFloatParam(s[1]), readFloatParam(s[2])));
+        ROS_INFO_STREAM("2022_shooting_server : Inserted " << s[0] << " " << s[1] << " " << s[2]);
       }
     
     }

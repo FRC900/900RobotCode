@@ -90,7 +90,7 @@ find_package(Gperftools REQUIRED)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES ${PROJECT_NAME}
-	CATKIN_DEPENDS roscpp ddynamic_reconfigure
+	CATKIN_DEPENDS roscpp ddynamic_reconfigure nav_msgs
 #  DEPENDS system_lib
 )
 find_package(CUDA REQUIRED)

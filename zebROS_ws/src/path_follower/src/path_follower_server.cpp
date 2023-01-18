@@ -10,6 +10,8 @@
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
+#include <vector>
+#include <algorithm>
 
 class PathAction
 {
@@ -172,6 +174,7 @@ class PathAction
 
 			const size_t num_waypoints = goal->path.poses.size();
 
+			std::vector<int> waypointsIdx = goal->waypointsIdx;
 			// Spin once to get the most up to date odom and yaw info
 			ros::spinOnce();
 
@@ -207,19 +210,24 @@ class PathAction
 			ROS_INFO_STREAM(goal->path.poses[num_waypoints - 1].pose.position.x << ", " << goal->path.poses[num_waypoints - 1].pose.position.y << ", " << path_follower_.getYaw(goal->path.poses[num_waypoints - 1].pose.orientation));
 
 			ros::Rate r(ros_rate_);
-
+			double final_distace = 0;
 			// send path to initialize path follower
-			if (!path_follower_.loadPath(goal->path))
+			if (!path_follower_.loadPath(goal->path, final_distace))
 			{
 				ROS_ERROR_STREAM("Failed to load path");
 				preempted = true;
 			}
 
+			int current_index = 0;
+
 			//in loop, send PID enable commands to rotation, x, y
 			double distance_travelled = 0;
+
 			const auto start_time = ros::Time::now().toSec();
+
 			while (ros::ok() && !preempted && !timed_out && !succeeded)
 			{
+				path_follower_msgs::PathFeedback feedback;
 				// Spin once to get the most up to date odom and yaw info
 				ros::spinOnce();
 
@@ -235,7 +243,26 @@ class PathAction
 				ROS_INFO_STREAM("current_position = " << odom_.pose.pose.position.x
 					<< " " << odom_.pose.pose.position.y
 					<< " " << path_follower_.getYaw(odom_.pose.pose.orientation));	// PID controllers.
-				geometry_msgs::Pose next_waypoint = path_follower_.run(distance_travelled);
+
+				geometry_msgs::Pose next_waypoint = path_follower_.run(distance_travelled, current_index);
+
+				int current_waypoint = waypointsIdx[current_index];
+				feedback.current_waypoint = current_waypoint;
+
+				// gets total distance of the path, then finds how far we have traveled so far
+				feedback.percent_complete = (distance_travelled != 0) ? (distance_travelled / final_distace) : 0.0;
+
+				// The path's have even spacing so if you find the total amount of path waypoints and then divide by which on you are on
+				// The result is pretty close to how far you are along to the next waypoint
+				// Can be off by at most by the total number of poses in the generated path / 100
+				typedef std::vector<int>::iterator iter;
+				iter low = std::lower_bound(waypointsIdx.begin(), waypointsIdx.end(), current_waypoint);
+				iter high = std::upper_bound(waypointsIdx.begin(), waypointsIdx.end(), current_waypoint);
+				int lowidx = low - waypointsIdx.begin();
+				int highidx = high - waypointsIdx.begin();
+				int waypoint_size = highidx - lowidx;
+				feedback.percent_next_waypoint = double((current_index - lowidx)) / waypoint_size;
+				as_.publishFeedback(feedback);
 
 				ROS_INFO_STREAM("Before transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << path_follower_.getYaw(next_waypoint.orientation) << ")");
 				tf2::doTransform(next_waypoint, next_waypoint, odom_to_base_link_tf);
@@ -317,6 +344,7 @@ class PathAction
 					r.sleep();
 				}
 			}
+
 			ROS_INFO_STREAM("    delta odom_ = " << odom_.pose.pose.position.x - starting_odom.pose.pose.position.x
 					<< ", " << odom_.pose.pose.position.y - starting_odom.pose.pose.position.y);
 			ROS_INFO_STREAM("    delta pose_ = " << pose_.pose.position.x - starting_pose.pose.position.x

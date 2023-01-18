@@ -39,6 +39,7 @@ auto_mode_2: ["shoot", "start_intaking", "cmd_vel_2", "pause_cmd_vel", "stop_int
 # ACTIONS ------------------------------------------------------------------------
 # must have a value for "type", other stuff varies
 #valid action types: "intake_actionlib_server", "pause", "elevator_actionlib_server"
+ros_rate: 10 # in ms, used for all ros rate calls
 
 cmd_vel_1:
     type: cmd_vel

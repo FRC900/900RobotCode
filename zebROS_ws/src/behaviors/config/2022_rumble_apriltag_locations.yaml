@@ -28,7 +28,8 @@ hub: [8.25, 4.13]
 
 # array of arrays with [dist, main_speed_rad/s, hood_speed_rad/s]
 # first element is for fender shot, what we did last season
-shooter_speed_map: [[1.48, 250., 150.], [2.48, 120., 280.], 
-                    [3.98, 145., 275.], [4.8, 250., 280.], [5.35, 300., 280.], [6.95, 350., 310.], [10.5, 300., 300.]]
+# decimal points after whole numbers no longer required bc of better handling
+shooter_speed_map: [[1.48, 250, 150], [2.48, 120, 280], 
+                    [3.98, 145, 275], [4.8, 250, 280], [5.35, 300, 280], [6.95, 350, 310], [10.5, 300, 300]]
 
 #40-53 = hub

@@ -5,7 +5,7 @@
 #include "path_follower/path_follower.h"
 #include "ros/ros.h"
 
-bool PathFollower::loadPath(const nav_msgs::Path &path)
+bool PathFollower::loadPath(const nav_msgs::Path &path, double &final_distace)
 {
 	path_ = path;
 	num_waypoints_ = path_.poses.size();
@@ -26,7 +26,9 @@ bool PathFollower::loadPath(const nav_msgs::Path &path)
 
 		path_length_ += hypot(end_x - start_x, end_y - start_y);
 		vec_path_length_.push_back(path_length_);
+		ROS_INFO_STREAM("ADDING " << path_length_ );
 	}
+	final_distace = vec_path_length_.back();
 	start_time_offset_ = ros::Duration(ros::Time::now().toSec());
 	return true;
 }
@@ -61,7 +63,7 @@ double PathFollower::interpolate(double start_t, double end_t, double start_x, d
 // position and passing it in to run. run would then return a pose (x_pos, y_pos,
 // orientation) and whoever called run would be responsible for sending that
 // where it needs to go.
-geometry_msgs::Pose PathFollower::run(double &total_distance_travelled)
+geometry_msgs::Pose PathFollower::run(double &total_distance_travelled, int &current_index)
 {
 	if (num_waypoints_ == 0)
 	{
@@ -77,7 +79,6 @@ geometry_msgs::Pose PathFollower::run(double &total_distance_travelled)
 		return target_pos; //TODO: better way to handle errors? This will just time out the server
 	}
 
-	size_t current_waypoint_index = 0; //the index BEFORE the point on the path
 	// Timestamps in path are relative to when they were created.
 	// Offset them here to be relative the time the path starts running
 	const ros::Time current_time = ros::Time::now() - start_time_offset_ + ros::Duration(path_.poses[0].header.stamp.toSec());
@@ -158,8 +159,10 @@ geometry_msgs::Pose PathFollower::run(double &total_distance_travelled)
 	target_pos.position.z = 0;
 	target_pos.orientation = q_final;
 
-	total_distance_travelled = vec_path_length_[current_waypoint_index];
-
+	// Should actually return total distance now
+	total_distance_travelled = vec_path_length_[now_index - 1];
+	current_index = now_index - 1;
 	ROS_INFO_STREAM("Successfully returned target position and orientation");
+
 	return target_pos;
 }
