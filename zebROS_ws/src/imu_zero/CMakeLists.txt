@@ -7,9 +7,10 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  angles
+  geometry_msgs
   roscpp
   std_msgs
-  geometry_msgs
   tf2
   tf2_geometry_msgs
   zed_interfaces

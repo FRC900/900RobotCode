@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="hw_or_sim" default="hw" />
+
+    <include file="$(find controller_node)/launch/zed_objdetect.launch" />
+	<group ns="imu">
+		<include file="$(find controller_node)/launch/2019_compbot_jetson_imu.launch">
+			<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
+			<arg name="primary_imu" value="ZED" />
+		</include>
+	</group>
+
+</launch>
