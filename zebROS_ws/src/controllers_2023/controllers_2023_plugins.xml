@@ -1,0 +1,7 @@
+<library path="lib/libcontrollers_2023">
+	<class name="elevator_controller/ElevatorController" type="elevator_controller_2023::ElevatorController2023" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Library file. Does stuff to make elevator_controller exist.
+		</description>
+	</class>
+</library>
