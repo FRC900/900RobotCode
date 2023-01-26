@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd ~/2022Offseason/zebROS_ws/
+cd ~/2023RobotCode/zebROS_ws/
 
 if [ -z $ROS_ROOT ]; then
 	source /opt/ros/melodic/setup.bash

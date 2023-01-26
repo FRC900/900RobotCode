@@ -58,7 +58,7 @@ ssh -p 22 admin@$1 'pip3 --no-cache-dir install catkin_pkg catkin_tools rospkg r
 ssh -p 22 admin@$1 'opkg remove --autoremove gcc gcc-symlinks cpp-symlinks libgcc-s-dev binutils'
 ssh -p 22 admin@$1 'rm -rf ~/.cache'
 
-#scp -P 22 ~/2022RobotCode/scripts/RIO_setup/tflite_runtime-1.15.2-cp27-none-linux_armv7l.whl admin@$1:.
+#scp -P 22 ~/2023RobotCode/scripts/RIO_setup/tflite_runtime-1.15.2-cp27-none-linux_armv7l.whl admin@$1:.
 #ssh -p 22 admin@$1 'pip --no-cache-dir install tflite_runtime-1.15.2-cp27-none-linux_armv7l.whl'
 #ssh -p 22 admin@$1 'rm tflite_runtime-1.15.2-cp27-none-linux_armv7l.whl'
 #ssh -p 22 admin@$1 'rm -rf ~/.cache'
@@ -86,7 +86,7 @@ scp -P 22 libboost_atomic.so.1.74.0 libboost_chrono.so.1.74.0 libboost_program_o
 #ssh -p 22 admin@$1 'opkg clean'
 #ssh -p 22 admin@$1 'opkg install python3-setuptools python3-pyyaml python3-docutils python3-misc python3-xmlrpc python3-json python3-pydoc'
 #ssh -p 22 admin@$1 'opkg clean'
-#scp -P 22 ~/2022RobotCode/os_detect.py admin@$1:/usr/lib/python3.5/site-packages/rospkg/
+#scp -P 22 ~/2023RobotCode/os_detect.py admin@$1:/usr/lib/python3.5/site-packages/rospkg/
 
 # Try to simulate what the cross-build environment looks like 
 # This will prevent weird bugs where sourcing install_isolated/setup.bash
@@ -101,13 +101,13 @@ ssh -p 22 admin@$1 'ln -s /usr/include /include'
 
 # Create workspace. Do a build in the empty workspace to set
 # up various scripts for later use. TODO : See if this is needed?
-ssh -p 22 admin@$1 'mkdir -p 2022RobotCode/zebROS_ws/src'
-ssh -p 22 admin@$1 'source /opt/ros/noetic/setup.bash && cd 2022RobotCode/zebROS_ws && PYTHONPATH=/opt/ros/noetic/local/lib/python3.10/dist-packages catkin_make_isolated --install'
+ssh -p 22 admin@$1 'mkdir -p 2023RobotCode/zebROS_ws/src'
+ssh -p 22 admin@$1 'source /opt/ros/noetic/setup.bash && cd 2023RobotCode/zebROS_ws && PYTHONPATH=/opt/ros/noetic/local/lib/python3.10/dist-packages catkin_make_isolated --install'
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
 ##################-----------------------------#################
-#Edit /etc/ntp.conf to be a copy of ntpClient in 2022RobotCode#
-scp -P 22 ~/2022RobotCode/scripts/RIO_setup/ntp.conf admin@$1:/etc/ntp.conf
+#Edit /etc/ntp.conf to be a copy of ntpClient in 2023RobotCode#
+scp -P 22 ~/2023RobotCode/scripts/RIO_setup/ntp.conf admin@$1:/etc/ntp.conf
 
 # Copy wpilib to roborio
 ssh -p 22 admin@$1 mkdir wpilib
@@ -121,7 +121,7 @@ scp -P 22 *.so admin@$1:wpilib
 ssh -p 22 admin@$1 rm wpilib/*d.so wpilib/*jni.so wpilib/*java*so
 
 # Set up ssh keys
-scp -P 22 ~/2022RobotCode/scripts/jetson_setup/roborio_dot_ssh.tar.bz2 admin@$1:.
+scp -P 22 ~/2023RobotCode/scripts/jetson_setup/roborio_dot_ssh.tar.bz2 admin@$1:.
 ssh -p 22 admin@$1 'mkdir .ssh'
 ssh -p 22 admin@$1 'cd .ssh && tar -xjf ../roborio_dot_ssh.tar.bz2'
 ssh -p 22 admin@$1 'rm roborio_dot_ssh.tar.bz2'
@@ -135,11 +135,11 @@ ssh -p 22 admin@$1 "/etc/init.d/sshd restart"
 sleep 5
 
 # Copy rio_bashrc.sh, ROSJetsonMaster.sh to /home/admin
-scp -P 22 ~/2022RobotCode/scripts/RIO_setup/rio_bashrc.sh admin@$1:.
-#scp -P 22 ~/2022RobotCode/zebROS_ws/ROSJetsonMaster.sh admin@$1:.
+scp -P 22 ~/2023RobotCode/scripts/RIO_setup/rio_bashrc.sh admin@$1:.
+#scp -P 22 ~/2023RobotCode/zebROS_ws/ROSJetsonMaster.sh admin@$1:.
 
 # Set up prereqs for deploy script
-ssh -p 22 admin@$1 'mv ~/2022RobotCode ~/2022RobotCode.orig'
-ssh -p 22 admin@$1 'ln -s ~/2022RobotCode.orig ~/2022RobotCode'
-ssh -p 22 admin@$1 'mkdir -p ~/2022RobotCode.prod/zebROS_ws'
-ssh -p 22 admin@$1 'mkdir -p ~/2022RobotCode.dev/zebROS_ws'
+ssh -p 22 admin@$1 'mv ~/2023RobotCode ~/2023RobotCode.orig'
+ssh -p 22 admin@$1 'ln -s ~/2023RobotCode.orig ~/2023RobotCode'
+ssh -p 22 admin@$1 'mkdir -p ~/2023RobotCode.prod/zebROS_ws'
+ssh -p 22 admin@$1 'mkdir -p ~/2023RobotCode.dev/zebROS_ws'

@@ -61,7 +61,7 @@ fi
 #tar xzvf tensorflow-1.15.3.tar.gz
 cd tensorflow-1.15.3
 
-patch -N -p1 < /home/ubuntu/2022RobotCode/patches/tensorflow-1.15.3.patch && echo "tensorflow-1.15.0 source tree appears to be patched already.  Continue..."
+patch -N -p1 < /home/ubuntu/2023RobotCode/patches/tensorflow-1.15.3.patch && echo "tensorflow-1.15.0 source tree appears to be patched already.  Continue..."
 # Replace cudnn.h with cudnn_version.h in third_party/gpus/find_cuda_config.py
 # remove ./third_party/nccl/build_defs.bzl.tpl:            "--bin2c-path=%s" % bin2c.dirname,
 

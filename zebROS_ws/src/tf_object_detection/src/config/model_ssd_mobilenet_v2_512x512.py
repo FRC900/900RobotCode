@@ -2,8 +2,8 @@ import graphsurgeon as gs
 import tensorflow as tf
 
 name = 'ssd_mobilenet_v2_512x512'
-path = '/home/ubuntu/2022RobotCode/zebROS_ws/src/tf_object_detection/src/' + name + '.pb'
-#TRTbin = '/home/ubuntu/2022RobotCode/zebROS_ws/src/tf_object_detection/src/TRT_' + name + '.bin'
+path = '/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/' + name + '.pb'
+#TRTbin = '/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/TRT_' + name + '.bin'
 TRTbin = 'TRT_' + name + '.bin'
 output_name = ['NMS']
 dims = [3,512,512]

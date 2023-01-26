@@ -152,8 +152,8 @@ rm ./jetsons
 #mount and setup autostart script
 sudo mkdir /mnt/900_2
 cd
-git clone https://github.com/FRC900/2022RobotCode.git
-cd ~/2022RobotCode
+git clone https://github.com/FRC900/2023RobotCode.git
+cd ~/2023RobotCode
 
 # Set up can0 network interface
 #cd
@@ -197,10 +197,10 @@ sudo sed "s/#Port 22/Port 22\nPort 5801/g" /etc/ssh/sshd_config > sshd_config &&
 
 #sudo bash -c "echo NTP=us.pool.ntp.org >> /etc/systemd/timesyncd.conf"
 #sudo bash -c "echo FallbackNTP=ntp.ubuntu.com >> /etc/systemd/timesyncd.conf"
-sudo cp ~/2022RobotCode/scripts/jetson_install/ntp.conf /etc/ntp.conf
+sudo cp ~/2023RobotCode/scripts/jetson_install/ntp.conf /etc/ntp.conf
 # On 10.9.0.9, uncommment last few lines of ntp.conf
 
-sudo cp ~/2022RobotCode/scripts/jetson_setup/hwrtc.service /etc/systemd/system
+sudo cp ~/2023RobotCode/scripts/jetson_setup/hwrtc.service /etc/systemd/system
 sudo chmod 664 /etc/systemd/system/hwrtc.service
 # The ntp config should read from hwrtc -> system clock if it can't
 # get to the internet to read from pool time servers
@@ -210,18 +210,18 @@ sudo systemctl enable hwrtc
 # and keys for connections to Rio
 mkdir -p ~/.ssh
 cd ~/.ssh
-tar -xjf ~/2022RobotCode/scripts/jetson_setup/jetson_dot_ssh.tar.bz2
+tar -xjf ~/2023RobotCode/scripts/jetson_setup/jetson_dot_ssh.tar.bz2
 chmod 640 authorized_keys
 cd ~
 chmod 700 .ssh
 
 sudo mkdir -p /root/.ssh
-sudo tar -xjf /home/ubuntu/2022RobotCode/scripts/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
+sudo tar -xjf /home/ubuntu/2023RobotCode/scripts/jetson_setup/jetson_dot_ssh.tar.bz2 -C /root/.ssh
 sudo chown root:root /root/.ssh/*
 sudo chmod 640 /root/.ssh/authorized_keys
 sudo chmod 700 /root/.ssh
 
-cd ~/2022RobotCode/scripts
+cd ~/2023RobotCode/scripts
 sudo cp ./jetson_setup/10-local.rules ./jetson_setup/99-gpio.rules /etc/udev/rules.d/
 sudo service udev reload
 sleep 2
@@ -239,7 +239,7 @@ mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include
 mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ctre
 mkdir -p /home/ubuntu/ctre
 cd /home/ubuntu/ctre
-python3 /home/ubuntu/2022RobotCode/scripts/jetson_install/download_maven.py https://maven.ctr-electronics.com/release/com/ctre/phoenix/Phoenix-frc2022-latest.json
+python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://maven.ctr-electronics.com/release/com/ctre/phoenix/Phoenix-frc2022-latest.json
 cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include
 find /home/ubuntu/ctre -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o
 cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ctre
@@ -269,7 +269,7 @@ rm /home/ubuntu/navx-cpp-4.0.433-linuxathenastatic.zip
 cd /home/ubuntu
 mkdir sparkmax
 cd sparkmax
-python3 /home/ubuntu/2022RobotCode/scripts/jetson_install/download_maven.py https://software-metadata.revrobotics.com/REVLib.json
+python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://software-metadata.revrobotics.com/REVLib.json
 cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include
 find /home/ubuntu/sparkmax -name \*header\*zip | grep -v debug | xargs -n 1 unzip -o
 mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev
@@ -301,18 +301,18 @@ find ~/wpilib -name x86-64| xargs rm -rf
 find ~/wpilib -name raspbian | xargs rm -rf
 
 # Set up prereqs for deploy script
-mv ~/2022RobotCode ~/2022RobotCode.orig
-ln -s ~/2022RobotCode.orig ~/2022RobotCode
-mkdir -p ~/2022RobotCode.prod/zebROS_ws
-mkdir -p ~/2022RobotCode.dev/zebROS_ws
+mv ~/2023RobotCode ~/2023RobotCode.orig
+ln -s ~/2023RobotCode.orig ~/2023RobotCode
+mkdir -p ~/2023RobotCode.prod/zebROS_ws
+mkdir -p ~/2023RobotCode.dev/zebROS_ws
 
 sudo mkdir -p /usr/local/zed/settings
 sudo chmod 755 /usr/local/zed/settings
-sudo cp ~/2022RobotCode/scripts/jetson_install/calibration_files/*.conf /usr/local/zed/settings
+sudo cp ~/2023RobotCode/scripts/jetson_install/calibration_files/*.conf /usr/local/zed/settings
 sudo chmod 644 /usr/local/zed/settings/*
 
-cp ~/2022RobotCode/.vimrc ~/2022RobotCode/.gvimrc ~
-sudo cp ~/2022RobotCode/kjaget.vim /usr/share/vim/vim81/colors
+cp ~/2023RobotCode/.vimrc ~/2023RobotCode/.gvimrc ~
+sudo cp ~/2023RobotCode/kjaget.vim /usr/share/vim/vim81/colors
 
 cd
 wget https://github.com/git-lfs/git-lfs/releases/download/v3.3.0/git-lfs-linux-arm64-v3.3.0.tar.gz
@@ -324,7 +324,7 @@ sudo ./install.sh
 cd
 rm -rf git-lfs-linux-arm64-v3.3.0.tar.gz git-lfs-install
 git lfs install
-cd ~/2022RobotCode
+cd ~/2023RobotCode
 git lfs pull
 
 git config --global user.email "progammers@team900.org"
@@ -336,7 +336,7 @@ sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 
 sudo ln -s /usr/include/opencv4 /usr/include/opencv
 
-echo "source /home/ubuntu/2022RobotCode/zebROS_ws/command_aliases.sh" >> /home/ubuntu/.bashrc
+echo "source /home/ubuntu/2023RobotCode/zebROS_ws/command_aliases.sh" >> /home/ubuntu/.bashrc
 
 # Install make 4.3 (>4.2 is required for -flto=jobserver support
 cd

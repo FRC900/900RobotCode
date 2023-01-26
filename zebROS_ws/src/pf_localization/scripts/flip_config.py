@@ -1,5 +1,5 @@
 import yaml
-config_root = "/home/ubuntu/2022RobotCode/zebROS_ws/src/pf_localization/config"
+config_root = "/home/ubuntu/2023RobotCode/zebROS_ws/src/pf_localization/config"
 
 with open(config_root + "/2022Rumble_params.yaml") as file_:
     data = yaml.load(file_, Loader=yaml.Loader)

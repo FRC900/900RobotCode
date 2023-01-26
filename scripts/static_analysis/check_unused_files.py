@@ -34,7 +34,7 @@ On a teminator command line,
 clean.sh
 Use natbuild to build the binary in question
 Run this script. The 2 arguments are the root of the project output in build and the binary name from devel/.private
-    python3 check_unused_files.py /home/ubuntu/2022RobotCode/zebROS_ws/build/robot_characterization/CMakeFiles/robot_characterization.dir ~/2022RobotCode/zebROS_ws/devel/.private/robot_characterization/lib/robot_characterization/robot_characterization
+    python3 check_unused_files.py /home/ubuntu/2023RobotCode/zebROS_ws/build/robot_characterization/CMakeFiles/robot_characterization.dir ~/2023RobotCode/zebROS_ws/devel/.private/robot_characterization/lib/robot_characterization/robot_characterization
    
 Output includes some debugging, then a list of the before/after count of used functions in each object file
 Those with 0 used functions after processing will be listed after a ===== line at the bottom of the output.

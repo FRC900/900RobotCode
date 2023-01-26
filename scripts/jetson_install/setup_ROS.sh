@@ -110,8 +110,8 @@ sudo apt install -y \
 
 # Patch catkin tools/pkg for faster builds
 cd /usr/lib/python3/dist-packages
-sudo patch -p0 < ~/2022RobotCode/scripts/jetson_install/catkin_pkg.patch
-#sudo patch -p0 < ~/2022RobotCode/scripts/jetson_install/catkin_tools.patch
+sudo patch -p0 < ~/2023RobotCode/scripts/jetson_install/catkin_pkg.patch
+#sudo patch -p0 < ~/2023RobotCode/scripts/jetson_install/catkin_tools.patch
 
 # Fix bug in released version of catkin_tools - TODO check me
 #sudo sed -i 's/ errno.EINTR/ errno.EINTR and e.errno != errno.EAGAIN/'  /usr/lib/python2.7/dist-packages/catkin_tools/execution/job_server.py
@@ -135,12 +135,12 @@ sudo rosdep init
 # To find available packages, use:
 rosdep update
 
-cd ~/2022RobotCode/zebROS_ws/src
+cd ~/2023RobotCode/zebROS_ws/src
 #wstool init
 #cd ..
 
 # These should all be merged in the GIT repo version
-# of the code.  Check 2022RobotCode/zebROS_ws/src/.rosinstall to
+# of the code.  Check 2023RobotCode/zebROS_ws/src/.rosinstall to
 # verify.  Leaving the commands here just in case we need to recreate
 # a workspace elsewhere
 
@@ -172,7 +172,7 @@ rosdep install --from-paths . --ignore-src --rosdistro=noetic -y
 
 #source /opt/ros/noetic/setup.bash
 
-#cd ~/2022RobotCode/zebROS_ws
+#cd ~/2023RobotCode/zebROS_ws
 #catkin_make
 
 
