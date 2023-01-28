@@ -43,8 +43,10 @@ generate_messages (
 generate_dynamic_reconfigure_options(
 	cfg/TeleopJoystickComp.cfg
 	cfg/TeleopJoystickComp2022.cfg
+	cfg/TeleopJoystickComp2023.cfg
 	cfg/TeleopJoystickCompDiagnostics.cfg
 	cfg/TeleopJoystickCompDiagnostics2022.cfg
+	cfg/TeleopJoystickCompDiagnostics2023.cfg
 	)
 
 ## System dependencies are found with CMake's conventions
@@ -72,6 +74,13 @@ include_directories(
 	${catkin_INCLUDE_DIRS}
 	${Eigen3_INCLUDE_DIRS}
 	)
+
+add_executable(teleop_joystick_comp_2023 src/teleop_joystick_comp_2023.cpp)
+target_link_libraries(teleop_joystick_comp_2023
+	${catkin_LIBRARIES})
+add_dependencies(teleop_joystick_comp_2023
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS})
 
 add_executable(teleop_joystick_comp_2022 src/teleop_joystick_comp_2022.cpp)
 target_link_libraries(teleop_joystick_comp_2022
@@ -176,7 +185,7 @@ add_dependencies(snap_to_cargo_node_2022
 
 # Install ------------------------------------------------------------
 # Install header files
-install(TARGETS teleop_joystick_comp_2022 teleop_joints_keyboard orient_strafing_node
+install(TARGETS teleop_joystick_comp_2022 teleop_joystick_comp_2023 teleop_joints_keyboard orient_strafing_node
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

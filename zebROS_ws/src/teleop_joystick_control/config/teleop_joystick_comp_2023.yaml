@@ -1,0 +1,21 @@
+teleop_params:
+    num_joysticks: 2
+    max_rot: 4.0
+    max_rot_slow: 2.0
+    min_speed: 0.0  # Smallest linear speed which get the robot moving at all
+    max_speed: 2.0
+    max_speed_slow: 0.75
+    joystick_pow: 1.5
+    rotation_pow: 1.0   #Scaling factors used in teleop_joystick_comp
+    joystick_deadzone: 0.05
+    drive_rate_limit_time: 200
+    rotate_rate_limit_time: 500
+    climber_align_angle: 3.14159265 # Intake facing DS wall
+    trigger_threshold: 0.5
+    stick_threshold: 0.5
+    button_move_speed: 0.9
+    bottom_position_angle: -110.0
+    middle_position_angle: -0.0
+    top_position_angle: -200.0
+
+    #teleop_diagnostics_params:

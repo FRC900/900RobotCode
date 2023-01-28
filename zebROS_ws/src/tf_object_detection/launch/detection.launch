@@ -35,7 +35,7 @@
     </node>
     -->
     <node pkg="tf_object_detection" name="tf_object_screen_to_world" type="tf_object_screen_to_world" output="screen">
-      <param name="depth_algorithm" type="string" value="$(arg detection_algorithm)" />
+      <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
     </node>
     <node pkg="tf_object_detection" name="cargo_detection_filter" type="cargo_detection_filter" output="screen">
     </node>
