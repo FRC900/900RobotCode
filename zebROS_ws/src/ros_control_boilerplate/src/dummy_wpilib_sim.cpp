@@ -36,7 +36,7 @@ bool SetString(unsigned int, std::string_view, long)
 }
 
 NT_Publisher Publish(NT_Topic , NT_Type , std::string_view ,
-                     nt::PubSubOptions const & ) {
+                     std::span<nt::PubSubOption const>) {
   return {};
 }
 
