@@ -1,0 +1,9 @@
+# goal
+uint32 id
+float64 tagRotation # RADIANS
+geometry_msgs/Pose offset # facing tag: +x = forward, +y = left. relative to base_link (center of robot)
+string frame_id # frame id to touch the apriltag with
+---
+# result
+---
+# feedback

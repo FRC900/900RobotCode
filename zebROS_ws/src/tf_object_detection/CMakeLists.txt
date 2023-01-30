@@ -186,7 +186,7 @@ target_link_libraries(dummy_camerainfo
    src/trtdetection.py
    src/pub_video.py
    src/test_detection.py
-   src/check_depth.py
+   src/tag_depth.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
  )
 

@@ -30,11 +30,18 @@
 	  <rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
     <node pkg="tf_object_detection" name="tf_object_detection" type="trtdetection.py" output="screen">
     </node>
-    <!--
-    <node pkg="tf_object_detection" name="check_depth" type="check_depth.py" output="screen">
+    
+    <node pkg="tf_object_detection" name="tag_depth" type="tag_depth.py" output="screen">
     </node>
-    -->
+   
     <node pkg="tf_object_detection" name="tf_object_screen_to_world" type="tf_object_screen_to_world" output="screen">
+      <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
+    </node>
+    <!-- separate screen to world instance for apriltags -->
+    <node pkg="tf_object_detection" name="tf_object_screen_to_world_tags" type="tf_object_screen_to_world" output="screen">
+      <remap from="obj_detection_msg" to="tag_detection_msg"/>
+      <remap from="object_detection_world" to="tag_detection_world"/>
+      <param name="timeout" type="double" value="0.2" /> <!-- apriltag detector is slow (~6fps on Xavier NX) so we have to allow for messages further out of sync -->
       <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
     </node>
     <node pkg="tf_object_detection" name="cargo_detection_filter" type="cargo_detection_filter" output="screen">
@@ -62,6 +69,12 @@
   </group>
   
   <!-- Launch apriltags-->
-  <include file="$(find cuda_apriltag_ros)/launch/cuda_continuous_detection.launch">
+  <!-- <include file="$(find cuda_apriltag_ros)/launch/cuda_continuous_detection.launch">
+	</include> -->
+  <!-- 2023 are 16h5, not CUDA, so... -->
+  <include file="$(find apriltag_launch)/launch/apriltag_continuous_detection.launch">
+		<arg name="camera_name"            value="/zed_objdetect/left" />
+		<arg name="image_topic"            value="/image_rect_gray" />
 	</include>
+
 </launch>

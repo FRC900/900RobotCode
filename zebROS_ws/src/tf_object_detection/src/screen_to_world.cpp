@@ -58,6 +58,15 @@ void callback(const field_obj::TFDetectionConstPtr &objDetectionMsg, const senso
 	// Iterate over each object. Convert from camera to world coords.
 	for (const auto &camObject : objDetectionMsg->objects)
 	{
+		if (fabs(camObject.br.x - camObject.tl.x) < 1) {
+			ROS_INFO_STREAM("less than 1 x");
+			return;
+		}
+
+		if (fabs(camObject.br.y - camObject.tl.y) < 1) {
+			ROS_INFO_STREAM("less than 1 x");
+			return;
+		}
 		// Create an output object, copy over info from the object detection info
 		field_obj::Object worldObject;
 		worldObject.id = camObject.label;
@@ -140,8 +149,13 @@ int main (int argc, char **argv)
 	image_transport::ImageTransport it(nh);
 
 	std::string algorithm_str;
+	double timeout;
 
 	nh_param.param<std::string>("depth_algorithm", algorithm_str, "CONTOURS");
+	nh_param.param<double>("timeout", timeout, 0.05);
+
+	ROS_INFO_STREAM("[screen_to_world] algorithm=" << algorithm_str << ", timeout=" << timeout);
+
 	if (algorithm_str == "CONTOURS")
 	{
 		algorithm = CONTOURS;
@@ -198,7 +212,7 @@ int main (int argc, char **argv)
 		// TODO - try this with an exact synchronizer?
 		obj_depth_sync = std::make_unique<message_filters::Synchronizer<ObjDepthSyncPolicy>>(ObjDepthSyncPolicy(10), *obsub, *depth_sub);
 
-		obj_depth_sync->setMaxIntervalDuration(ros::Duration(0.05));
+		obj_depth_sync->setMaxIntervalDuration(ros::Duration(timeout));
 		obj_depth_sync->registerCallback(boost::bind(callback, _1, _2));
 	}
 	else

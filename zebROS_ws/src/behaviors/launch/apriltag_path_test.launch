@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+	<include file="$(find apriltag_launch)/launch/apriltag_continuous_detection.launch">
+		<arg name="camera_name"            value="/zed_objdetect/left" />
+		<arg name="image_topic"            value="/image_rect_gray" />
+	</include>
+
+    <node name="path_to_apriltag" pkg="behaviors" type="path_to_apriltag" output="screen">
+
+    </node>
+</launch>

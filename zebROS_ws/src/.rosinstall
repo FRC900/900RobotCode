@@ -7,6 +7,9 @@
     local-name: adi_pico_driver
     uri: https://github.com/FRC900/adi_pico_driver.git
 - git:
+    local-name: apriltag_ros
+    uri: https://github.com/FRC900/apriltag_ros.git
+- git:
     local-name: control_toolbox
     uri: https://github.com/ros-gbp/control_toolbox-release.git
     version: release/noetic/control_toolbox/1.19.0-1

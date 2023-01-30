@@ -4,11 +4,11 @@
 
     <link name="base_link"/>
     <!-- add important transforms for 2023 -->
-    <link name="intake"/>
-    <joint name="intake_joint" type="fixed"> 
+    <link name="front_bumper"/>
+    <joint name="front_bumper" type="fixed"> 
         <parent link="base_link"/>
-        <child link="intake"/>
-        <origin xyz="0.6561 0.0 0.210" rpy="0 0 0"/>
+        <child link="front_bumper"/>
+        <origin xyz="0.4445 0.0 0.0" rpy="0 0 0"/>
     </joint>
 	
 </robot>

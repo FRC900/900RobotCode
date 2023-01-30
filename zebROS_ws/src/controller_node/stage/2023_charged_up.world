@@ -1,0 +1,75 @@
+# Top-level world file for the rapid react field stage simulation
+include "robots/2023FRC_robot.inc"
+
+# Object detection model - used as a base for each target
+# we can detect using tensorflow object detection
+# TODO - maybe also retro targets?
+define objdet_target model
+(
+ size [ 0.200 0.200 0.050 ]
+ gui_move 0
+ gui_nose 0
+ gripper_return 1
+ ranger_return -1.000
+)
+
+# Model for the basic floorplan - walls, and field obstacles
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 1
+
+  gui_nose 0
+  gui_grid 0
+  gui_move 0
+  gui_outline 0
+  gripper_return 1
+  fiducial_return -1
+  ranger_return 1.000
+)
+
+resolution 0.02
+interval_sim 15 # simulation timestep in milliseconds, was 5
+interval_real 15 # was 5
+threads 4
+
+window
+(
+  size [ 1299  609 ]
+  center [ 0.000 0.000 ]
+  rotate [ 0.000 0.000 ]
+  scale 60.000
+)
+
+# Size determines how pixels map to meters
+# Pose fixes the center of the field
+# PNG is black and white image
+floorplan
+(
+  name "charged_up_field"
+  bitmap "../maps/charged_up_field.png"
+  size [16.525875 8.028877135 1.000] #[24.6888 33.5274 4] x, y, size of the map (meters)
+  pose [ 8.2629375  4.0144385675  0.000 0.000 ] #[  4.1148 8.5341  0.0 0.0 ] x, y, z, rotation
+)
+
+# throw in a robot
+omnidir_robot
+(
+  # Everything but slalom
+  pose [ 1.041 2.286 0.000 0.000 ]
+  # Slalom pose [ 1.0414 .762 0.0 0.0 ]
+  name "robot"
+)
+
+# Note: team update 01 is being used here since it has a correction for apriltags (transposed #s)
+objdet_target ( pose [ 15.513558 1.071626 0.462788 180 ] fiducial_return 101 color "red")
+objdet_target ( pose [ 15.513558 2.748026 0.462788 180 ] fiducial_return 102 color "red")
+objdet_target ( pose [ 15.513558 4.424426 0.462788 180 ] fiducial_return 103 color "red")
+objdet_target ( pose [ 16.178784 6.749796 0.695452 180 ] fiducial_return 104 color "red") # x is 16.kjdskjgh
+objdet_target ( pose [ 0.36195 6.749796 0.695452 0 ] fiducial_return 105 color "blue")
+objdet_target ( pose [ 1.02743 4.424426 0.462788 0 ] fiducial_return 106 color "blue")
+objdet_target ( pose [ 1.02743 2.748026 0.462788 0 ] fiducial_return 107 color "blue")
+objdet_target ( pose [ 1.02743 1.071626 0.462788 0 ] fiducial_return 108 color "blue")

@@ -1,0 +1,19 @@
+#onshape origin: x=325.375000, y=158.048750, z=19 inches
+grid_locations:
+  # {type, y}
+  # rotation = 180 for red, 0 for blue
+  # closest to origin
+  pos1: ["cone", 0.519] # cone
+  pos2: ["cube", 1.078] # cube, tag id 8 blue or 1 red
+  pos3: ["cone", 1.637] # cone
+  # coop grid
+  pos4: ["cone", 2.195] # cone
+  pos5: ["cube", 2.754] # cube, tag id 7 blue or 2 red
+  pos6: ["cone", 3.313] # cone
+  # third grid
+  pos7: ["cone", 3.872] # cone
+  pos8: ["cube", 4.431] # cube, tag id 6 blue or 3 red
+  pos9: ["cone", 4.989] # cone
+
+# x distance from the apriltag on the cube node to the end of the things that stick out between nodes
+offset_from_cube_tag_to_end: 0.35
