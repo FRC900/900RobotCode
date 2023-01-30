@@ -86,6 +86,8 @@ add_action_files(
 	Indexer.action
   Index2022.action
 	Eject.action
+  Balancer2023.action
+  Balancing2023.action
 	#GoToColor.action
 	#RotatePanel.action
 )

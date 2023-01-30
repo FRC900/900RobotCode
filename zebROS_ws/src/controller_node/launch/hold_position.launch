@@ -27,7 +27,7 @@
                 <param name="enable_topic" value="hold_position_pid/pid_enable" />
                 <param name="name" value="hold_position_pid" />
                 <param name="orient_state_topic" value="orient_pid/orient_state"/>
-								<param name="transform_yaw" value="true"/>
+				<param name="transform_yaw" value="true"/>
             </node>
 
             <node name="x_position_pid" pkg="pid" type="controller" >

@@ -134,8 +134,8 @@ include_directories(
 catkin_package(
    #INCLUDE_DIRS include
    #LIBRARIES behaviors
-   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower_msgs nav_msgs roscpp rospy std_msgs tf2_ros geometry_msgs frc_msgs
-   DEPENDS
+   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower_msgs nav_msgs roscpp rospy std_msgs tf2_ros geometry_msgs frc_msgs std_srvs
+   DEPENDS 
 )
 
 # Generic actionlib code
@@ -333,10 +333,11 @@ endif()
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# install(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+install(PROGRAMS
+   src/2023_balancer_server.py 
+   src/2023_balancing_server.py
+   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+ )
 
 ## Mark executables and/or libraries for installation
 install(TARGETS

@@ -1,0 +1,9 @@
+# goal
+float64 angle_offset # will add this to the actual angle when publishing to the PID node, you want this because it will drive up the ramp
+# implied that if you are calling this, you want to balance
+---
+# result
+---
+# feedback
+float64 error # how far away we are from 0, might not be used
+bool stable_and_balanced # if we are stable and balanced we could maybe stop the server or lock wheels or something

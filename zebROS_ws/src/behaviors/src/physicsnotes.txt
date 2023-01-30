@@ -1,0 +1,34 @@
+x, y of where wheel touches ramp
+velocity -> convert to radians per second, should be a constant conversion
+v / R # of rotations per second
+circumference of wheel = 2 * pi * R
+angle of ramp = 31.5 degrees
+length of robot = const
+timestep = 
+distance_between_wheels = const
+
+
+Process:
+timestep * rotations/second = rotations 
+circumference * rotations = distance traveled on ramp = hypot
+y_diff = hypot * sin(angle of ramp)
+x_diff = hypot * cos(angle of ramp)
+x_new = x + x_diff
+y_new = y + y_diff
+
+# calculate new angle
+sin^-1(y_new / distance_between_wheels) = new angle
+
+x1_new = x_new - sqrt(w^2 - y_new^2)
+y1_new = 0
+
+
+
+
+--------------------
+
+v / R = rotations/second
+circumference of wheel = 2 * pi * R
+x1_new = rotations/second * dT * circumference
+y1_new = 0
+
