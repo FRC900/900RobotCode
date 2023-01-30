@@ -90,7 +90,8 @@ add_action_files(
 		Balancer2023.action
 		Balancing2023.action
 		Elevater2023.action
-    PathToAprilTag.action
+		AlignToGrid2023.action
+		PathToAprilTag.action
 		#GoToColor.action
 		#RotatePanel.action
 )
