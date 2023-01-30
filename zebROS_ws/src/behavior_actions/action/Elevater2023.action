@@ -1,0 +1,21 @@
+# elevatER!
+# goal, 4x4 possibilites, some might be the same
+# heights defined in behaviors/config 
+# remember offset topic also exists and is applied to whatever the height is
+uint8 INTAKE=0
+uint8 LOW_NODE=1
+uint8 MIDDLE_NODE=2
+uint8 HIGH_NODE=3
+uint8 mode
+
+uint8 CUBE=0
+uint8 VERTICAL_CONE=1
+uint8 BASE_TOWARDS_US_CONE=2 
+uint8 BASE_AWAY_US_CONE=3
+uint8 piece
+---
+#result
+bool success # if we got there
+---
+#feedback
+bool success # if we got there

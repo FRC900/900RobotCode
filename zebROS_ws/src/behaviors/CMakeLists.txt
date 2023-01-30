@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   controllers_2019_msgs
   #controllers_2020_msgs
   controllers_2022_msgs
+  controllers_2023_msgs
   ddynamic_reconfigure
   frc_msgs
   field_obj
@@ -151,6 +152,11 @@ target_link_libraries(publish_pid_cmd_vel_node ${catkin_LIBRARIES})
 add_executable(game_piece_path_server src/game_piece_path_gen.cpp)
 target_link_libraries(game_piece_path_server ${catkin_LIBRARIES})
 add_dependencies(game_piece_path_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+# 2023 actionlib servers
+add_executable(2023_updown_elevater_server src/2023_updown_elevater_server.cpp)
+target_link_libraries(2023_updown_elevater_server ${catkin_LIBRARIES})
+add_dependencies(2023_updown_elevater_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # 2022 actionlib servers
 add_executable(2022_shooting_server_node src/2022_shooting_server.cpp)
@@ -344,7 +350,7 @@ install(TARGETS
 	auto_node
 	publish_pid_cmd_vel_node
 	game_piece_path_server
-
+  2023_updown_elevater_server
 	#align_to_shoot_server
 	#align_hatch_server
 	#align_with_camera

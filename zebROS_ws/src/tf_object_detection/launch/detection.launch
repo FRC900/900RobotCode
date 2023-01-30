@@ -4,7 +4,7 @@
   <arg name="zed_name"        default="zed_objdetect" />
   <arg name="zed_node_name"   default="zed_objdetect" />
   <arg name="camera_model"    default="zed2" />
-  <arg name="detection_algorithm" default="CONTOURS" />
+  <arg name="depth_algorithm" default="CONTOURS" />
 
   <include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml" if="$(eval input_type != 'video')">
     <arg name="common_params_file"   value="$(find controller_node)/config/zed_objdet/common.yaml" />

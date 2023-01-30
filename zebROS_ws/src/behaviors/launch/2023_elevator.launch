@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="elevator">
+		<rosparam file="$(find behaviors)/config/2023_elevator_config.yaml" command="load"/>
+		<node name="elevater_server_2023" pkg="behaviors" type="2023_updown_elevater_server" output="screen"/>
+	</group>
+
+</launch>
