@@ -1,0 +1,8 @@
+# goal
+bool go_fast # default false. fast is *very fast*
+bool outtake # if false, the motor intakes. if true, the motor outtakes.
+---
+# result
+bool timed_out
+---
+# feedback

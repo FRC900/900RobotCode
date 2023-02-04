@@ -92,6 +92,7 @@ add_action_files(
 		Elevater2023.action
 		AlignToGrid2023.action
 		PathToAprilTag.action
+		Intake2023.action
 		#GoToColor.action
 		#RotatePanel.action
 )
