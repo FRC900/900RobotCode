@@ -213,6 +213,11 @@ bool init(hardware_interface::TalonCommandInterface *hw,
 		ROS_ERROR("Could not read f_s_s in talon swerve drive controller");
 		return false;
 	}
+	if (!controller_nh.getParam("stoping_ff", stopping_ff_))
+	{
+		ROS_ERROR("Could not read stoping_ff in talon swerve drive controller");
+		return false;
+	}
 
 	XmlRpc::XmlRpcValue wheel_coords;
 
@@ -325,6 +330,7 @@ bool init(hardware_interface::TalonCommandInterface *hw,
 	dont_set_angle_mode_serv_ = controller_nh.advertiseService("dont_set_angle", &TalonSwerveDriveController::dontSetAngleModeService, this);
 	percent_out_drive_mode_serv_ = controller_nh.advertiseService("percent_out_drive_mode", &TalonSwerveDriveController::percentOutDriveModeService, this);
 	change_center_of_rotation_serv_ = controller_nh.advertiseService("change_center_of_rotation", &TalonSwerveDriveController::changeCenterOfRotationService, this);
+	set_neutral_mode_serv_ = controller_nh.advertiseService("set_neutral_mode", &TalonSwerveDriveController::setNeturalModeService, this);
 
 	double odom_pub_freq;
 	controller_nh.param("odometry_publishing_frequency", odom_pub_freq, DEF_ODOM_PUB_FREQ);
@@ -490,6 +496,10 @@ void update(const ros::Time &time, const ros::Duration &period)
 		{
 			speed_joints_[i].setCommand(0);
 			speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
+			
+			// commented out for testing
+			speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
+			speed_joints_[i].setDemand1Value(copysign(stopping_ff_, last_wheel_sign_[i]));
 		}
 		if ((time.toSec() - time_before_brake_) > parking_config_time_delay_)
 		{
@@ -501,7 +511,7 @@ void update(const ros::Time &time, const ros::Duration &period)
 			{
 				if (!dont_set_angle_mode)
 					steering_joints_[i].setCommand(speeds_angles_[i][1]);
-				speed_joints_[i].setNeutralMode(hardware_interface::NeutralMode::NeutralMode_Coast);
+				speed_joints_[i].setNeutralMode(neutral_mode_);
 			}
 		}
 		if (publish_cmd_ && cmd_vel_pub_->trylock())
@@ -548,12 +558,15 @@ void update(const ros::Time &time, const ros::Duration &period)
 				{
 					speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_ArbitraryFeedForward);
 					speed_joints_[i].setDemand1Value(copysign(f_s_, speeds_angles_[i][0]));
+					last_wheel_sign_[i] = copysign(1, speeds_angles_[i][0]);
 				}
 				else
-				{
+				{	
+					ROS_WARN_STREAM("============Swerve drive controller, probably never here but if you see this.....");
 					speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
 					speed_joints_[i].setDemand1Value(0);
 				}
+
 
 				speed_joints_[i].setCommand(speeds_angles_[i][0]);
 			}
@@ -580,7 +593,7 @@ void update(const ros::Time &time, const ros::Duration &period)
 	}
 	for (size_t i = 0; i < WHEELCOUNT; ++i)
 	{
-		speed_joints_[i].setNeutralMode(hardware_interface::NeutralMode::NeutralMode_Coast);
+		speed_joints_[i].setNeutralMode(neutral_mode_);
 	}
 
 	if (publish_cmd_ && cmd_vel_pub_->trylock())
@@ -836,6 +849,26 @@ bool changeCenterOfRotationService(talon_swerve_drive_controller::SetXY::Request
 	}
 }
 
+bool setNeturalModeService(std_srvs::SetBool::Request& req, std_srvs::SetBool::Response&/*res*/)
+{
+	if(isRunning())
+	{
+		if (req.data) {
+			neutral_mode_ = hardware_interface::NeutralMode::NeutralMode_Coast;
+		}
+		else {
+			neutral_mode_ = hardware_interface::NeutralMode::NeutralMode_Brake;
+		}	
+	}
+	else
+	{
+		ROS_ERROR_STREAM_NAMED(name_, __PRETTY_FUNCTION__ << " : Can't accept new commands. Controller is not running.");
+		return false;
+	}
+	return true;
+	
+}
+
 bool resetOdomService(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*res*/)
 {
 	if (isRunning())
@@ -970,6 +1003,9 @@ Eigen::Matrix2Xd wheel_pos_;
 Eigen::Vector2d neg_wheel_centroid_;
 std::array<double, WHEELCOUNT> last_wheel_rot_;	    // used for odom calcs
 std::array<double, WHEELCOUNT> last_wheel_angle_;	//
+std::array<double, WHEELCOUNT> last_wheel_sign_;
+
+std::atomic<hardware_interface::NeutralMode> neutral_mode_ = hardware_interface::NeutralMode::NeutralMode_Coast;
 
 std::string name_;
 
@@ -1002,9 +1038,12 @@ double parking_config_time_delay_{0.1};
 double drive_speed_time_delay_{0.1};
 std::array<Eigen::Vector2d, WHEELCOUNT> speeds_angles_;
 
+
 ros::Subscriber sub_command_;
 
 ros::ServiceServer change_center_of_rotation_serv_;
+ros::ServiceServer set_neutral_mode_serv_;
+
 realtime_tools::RealtimeBuffer<Eigen::Vector2d> center_of_rotation_;
 
 ros::ServiceServer brake_serv_;
@@ -1015,7 +1054,7 @@ ros::ServiceServer reset_odom_serv_;
 std::atomic<bool> reset_odom_{false};
 
 /// Publish executed commands
-std::unique_ptr<realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped> > cmd_vel_pub_;
+std::unique_ptr<realtime_tools::RealtimePublisher<geometry_msgs::TwistStamped>> cmd_vel_pub_;
 
 /// Wheel radius (assuming it's the same for the left and right wheels):
 double wheel_radius_{};
@@ -1032,7 +1071,7 @@ double f_a_;
 double f_v_;
 double f_s_v_;
 double f_s_s_;
-
+double stopping_ff_;
 /// Timeout to consider cmd_vel commands old:
 double cmd_vel_timeout_{0.5};
 

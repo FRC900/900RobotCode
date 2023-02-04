@@ -32,6 +32,7 @@ private:
 	std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
 	double publish_rate_;
 	size_t num_hw_joints_; ///< Number of joints present in the TalonStateInterface
+	std::atomic<hardware_interface::NeutralMode> neutral_mode_;
 
 public:
 	bool init(hardware_interface::TalonStateInterface *hw,
@@ -55,6 +56,7 @@ public:
 			ROS_ERROR_STREAM("Invalid publish_rate in talon state controller (" << publish_rate_ << ")");
 			return false;
 		}
+		neutral_mode_ = hardware_interface::NeutralMode::NeutralMode_Coast;
 		interval_counter_ = std::make_unique<PeriodicIntervalCounter>(publish_rate_);
 
 		// realtime publisher
