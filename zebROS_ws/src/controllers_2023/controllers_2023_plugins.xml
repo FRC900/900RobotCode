@@ -4,4 +4,9 @@
 			Library file. Does stuff to make elevator_controller exist.
 		</description>
 	</class>
+	<class name="four_bar_controller_2023/FourBarController_2023" type="four_bar_controller_2023::FourBarController_2023" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Library file. Does stuff to make four_bar_controller_2023 exist.
+		</description>
+	</class>
 </library>

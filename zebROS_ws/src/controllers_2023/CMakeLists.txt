@@ -130,6 +130,7 @@ include_directories(
 
 add_library(controllers_2023 
   src/elevator_controller.cpp
+  src/four_bar_controller.cpp
 )
 
 ## Add cmake target dependencies of the library

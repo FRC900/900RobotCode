@@ -1,0 +1,4 @@
+float64 position # x distance outward (negative is backwards and may be invalid)
+bool below # if four bar can flip down, this being set to true makes it do that
+---
+
