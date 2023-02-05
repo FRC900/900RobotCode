@@ -139,6 +139,7 @@ wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.8/l4t35.1/j
 chmod 755 jetsons
 ./jetsons
 rm ./jetsons
+rm -rf /home/ubuntu/.local/lib/python3.8/site-packages/numpy
 
 #mount and setup autostart script
 sudo mkdir /mnt/900_2
@@ -401,8 +402,8 @@ sed -i -e 's/set(PYTHON_BINDING_VERSIONS 2.7 3.6 3.7)/set(PYTHON_BINDING_VERSION
 sed -i -e 's/-gencode arch=compute_37,code=sm_37/#-gencode arch=compute_37,code=sm_37/' ../CMakeLists.txt
 sed -i -e 's/-gencode arch=compute_53,code=sm_53/#-gencode arch=compute_53,code=sm_53/' ../CMakeLists.txt
 sed -i -e 's/-gencode arch=compute_60,code=sm_60/#-gencode arch=compute_60,code=sm_60/' ../CMakeLists.txt
-sed -i -e 's/-gencode arch=compute_62,code=sm_61/-gencode arch=compute_72,code=sm_72/' ../CMakeLists.txt
-sed -i -e 's/-gencode arch=compute_61,code=sm_62/-gencode arch=compute_87,code=sm_87/' ../CMakeLists.txt
+sed -i -e 's/-gencode arch=compute_61,code=sm_61/-gencode arch=compute_72,code=sm_72/' ../CMakeLists.txt
+sed -i -e 's/-gencode arch=compute_62,code=sm_62/-gencode arch=compute_87,code=sm_87/' ../CMakeLists.txt
 cmake -GNinja ..
 sudo ninja install
 

@@ -11,7 +11,9 @@
 "set noguipty
 
 " set the X11 font to use
-set guifont=Courier\ 10\ Pitch\ 10
+" set guifont=Courier\ 10\ Pitch\ 10
+set encoding=utf-8
+set guifont=Liberation\ Mono\ 9
 
 " Make command line two lines high
 set ch=2
