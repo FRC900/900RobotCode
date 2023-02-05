@@ -88,7 +88,6 @@ sudo apt install -y \
     zlib1g-dev \
     zstd
 
-
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9
 sudo update-alternatives --auto gcc
@@ -105,14 +104,6 @@ sudo mv /usr/bin/cmake /usr/bin/cmake.old
 sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
 cd ..
 sudo rm -rf cmake-3.21.3*
-
-sudo apt install build-essential manpages-dev software-properties-common
-sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-sudo apt update 
-sudo apt install gcc-11 g++-11
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 20 --slave /usr/bin/g++ g++ /usr/bin/g++-11
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 10 --slave /usr/bin/g++ g++ /usr/bin/g++-9
-sudo update-alternatives --auto gcc
 
 #install caffe
 # cd
@@ -230,38 +221,38 @@ sudo service udev restart
 # Clean up Jetson
 sudo rm -rf /home/nvidia/cudnn /home/nvidia/OpenCV /home/nvidia/libvisionworks*
 # Save ~400MB
-sudo apt remove --purge -y thunderbird libreoffice-* nsight-graphics-for-embeddedlinux-2022.2.0.0
+sudo apt remove --purge -y thunderbird libreoffice-* nsight-graphics-for-embeddedlinux-*
 # Disable automatic updates
 sudo sed -i -e 's/APT::Periodic::Update-Package-Lists "1"/APT::Periodic::Update-Package-Lists "0"/' /etc/apt/apt.conf.d/10periodic
 
 # Install CTRE & navX libs
-mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include
-mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ctre
+mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include
+mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/ctre
 mkdir -p /home/ubuntu/ctre
 cd /home/ubuntu/ctre
-python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://maven.ctr-electronics.com/release/com/ctre/phoenix/Phoenix-frc2022-latest.json
-cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include
+python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://maven.ctr-electronics.com/release/com/ctre/phoenixpro/PhoenixProAnd5-frc2023-latest.json 
+cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include
 find /home/ubuntu/ctre -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o
-cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/ctre
+cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/ctre
 find /home/ubuntu/ctre -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o
 rm -rf /home/ubuntu/ctre
 
 cd /home/ubuntu
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/4.0.433/navx-cpp-4.0.433-headers.zip
-mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/navx
-cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/navx
+mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/navx
+cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/navx
 unzip -o /home/ubuntu/navx-cpp-4.0.433-headers.zip
 rm /home/ubuntu/navx-cpp-4.0.433-headers.zip
 cd /home/ubuntu
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/4.0.433/navx-cpp-4.0.433-linuxathena.zip
-mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx
-cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx
+mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/navx
+cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/navx
 unzip -o /home/ubuntu/navx-cpp-4.0.433-linuxathena.zip
 rm /home/ubuntu/navx-cpp-4.0.433-linuxathena.zip
 cd /home/ubuntu
 wget http://www.kauailabs.com/maven2/com/kauailabs/navx/frc/navx-cpp/4.0.433/navx-cpp-4.0.433-linuxathenastatic.zip
-mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx
-cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/navx
+mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/navx
+cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/navx
 unzip -o /home/ubuntu/navx-cpp-4.0.433-linuxathenastatic.zip
 rm /home/ubuntu/navx-cpp-4.0.433-linuxathenastatic.zip
 
@@ -269,32 +260,32 @@ rm /home/ubuntu/navx-cpp-4.0.433-linuxathenastatic.zip
 cd /home/ubuntu
 mkdir sparkmax
 cd sparkmax
-python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://software-metadata.revrobotics.com/REVLib.json
-cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include
+python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://software-metadata.revrobotics.com/REVLib-2023.json
+cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include
 find /home/ubuntu/sparkmax -name \*header\*zip | grep -v debug | xargs -n 1 unzip -o
-mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev
-cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/rev
+mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/rev
+cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/rev
 find /home/ubuntu/sparkmax -name \*linux\*zip | grep -v debug | xargs -n 1 unzip -o
 rm -rf /home/ubuntu/sparkmax
 
 # Install wpilib headers by copying them from the local maven dir
 cd /home/ubuntu
-wget https://github.com/wpilibsuite/allwpilib/releases/download/v2022.2.1/WPILib_Linux-2022.2.1.tar.gz
-mkdir -p /home/ubuntu/wpilib/2022
-cd /home/ubuntu/wpilib/2022
-tar -xzf /home/ubuntu/WPILib_Linux-2022.2.1.tar.gz
-tar -xzf WPILib_Linux-2022.2.1/WPILib_Linux-2022.2.1-artifacts.tar.gz
-rm /home/ubuntu/WPILib_Linux-2022.2.1.tar.gz
-cd /home/ubuntu/wpilib/2022/tools
+wget https://github.com/wpilibsuite/allwpilib/releases/download/v2023.2.1/WPILib_Linux-2023.2.1.tar.gz
+mkdir -p /home/ubuntu/wpilib/2023
+cd /home/ubuntu/wpilib/2023
+tar -xzf /home/ubuntu/WPILib_Linux-2023.2.1.tar.gz
+tar -xzf WPILib_Linux-2023.2.1/WPILib_Linux-2023.2.1-artifacts.tar.gz
+rm /home/ubuntu/WPILib_Linux-2023.2.1.tar.gz
+cd /home/ubuntu/wpilib/2023/tools
 python3 ToolsUpdater.py
-mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/wpilib
-cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/lib/wpilib
+mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/wpilib
+cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/wpilib
 find ../../../.. -name \*athena\*zip | grep -v debug | xargs -n1 unzip -o
-mkdir -p /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/wpilib
-cd /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/wpilib
+mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/wpilib
+cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/wpilib
 find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
-rm -rf /home/ubuntu/wpilib/2022/maven /home/ubuntu/wpilib/2022/jdk /home/ubuntu/wpilib/2022/WPILib_Linux-2022.2.1 /home/ubuntu/wpilb/2022/utility /home/ubuntu/wpilib/2022/tools /home/ubuntu/wpilib/2022/documentation /home/ubuntu/wpilib/2022/installUtils /home/ubuntu/wpilib/2022/vsCodeExtensions
-sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2022/roborio/arm-frc2022-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
+rm -rf /home/ubuntu/wpilib/2023/maven /home/ubuntu/wpilib/2023/jdk /home/ubuntu/wpilib/2023/WPILib_Linux-2023.2.1 /home/ubuntu/wpilb/2023/utility /home/ubuntu/wpilib/2023/tools /home/ubuntu/wpilib/2023/documentation /home/ubuntu/wpilib/2023/installUtils /home/ubuntu/wpilib/2023/vsCodeExtensions
+sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 find ~/wpilib -name \*.debug | xargs rm -rf
 find ~/wpilib -name athena | xargs rm -rf
 find ~/wpilib -name x86-64| xargs rm -rf
@@ -363,7 +354,7 @@ python3 ./install.py --clang-completer --system-libclang --ninja
 # Install tensorflow on Jetson
 sudo pip3 install -U pip testresources setuptools==49.6.0
 sudo pip3 install --ignore-installed -U cython
-sudo pip3 install -U --no-deps numpy==1.21.1 future==0.18.2 mock==3.0.5 h5py=3.6.0 keras_preprocessing==1.1.2 keras_applications==1.0.8 gast==0.4.0 'protobuf<4.0.0,>=3.6.1' pybind11 pkgconfig h5py=3.6.0
+sudo pip3 install -U --no-deps numpy==1.21.1 future==0.18.2 mock==3.0.5 h5py==3.6.0 keras_preprocessing==1.1.2 keras_applications==1.0.8 gast==0.4.0 'protobuf<4.0.0,>=3.6.1' pybind11 pkgconfig
 #sudo env H5PY_SETUP_REQUIRES=0 pip3 install -U h5py==3.1.0
 sudo pip3 install --extra-index-url https://developer.download.nvidia.com/compute/redist/jp/v502 tensorflow==1.15.5+nv22.12
 sudo pip3 install matplotlib
@@ -386,11 +377,12 @@ cd
 export PATH=$PATH:/usr/local/cuda/bin
 git clone https://github.com/NVIDIA/TensorRT.git
 cd TensorRT
+git checkout 8.5.2
 git submodule update --init --recursive
-git checkout 20.11
+# comment out fcplugin?
 mkdir build
 cd build
-cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DGPU_ARCHS="72" -DCMAKE_CXX_STANDARD=17 ..
+cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DCMAKE_CUDA_ARCHITECTURES="87" -DCMAKE_CXX_STANDARD=17 ..
 sudo ninja install
 
 #sudo pip3 install --install-option="--jobs=6" --global-option=build_ext --global-option="-I/usr/local/cuda/include" --global-option="-L/usr/local/cuda/lib64" pycuda
@@ -409,8 +401,8 @@ sed -i -e 's/set(PYTHON_BINDING_VERSIONS 2.7 3.6 3.7)/set(PYTHON_BINDING_VERSION
 sed -i -e 's/-gencode arch=compute_37,code=sm_37/#-gencode arch=compute_37,code=sm_37/' ../CMakeLists.txt
 sed -i -e 's/-gencode arch=compute_53,code=sm_53/#-gencode arch=compute_53,code=sm_53/' ../CMakeLists.txt
 sed -i -e 's/-gencode arch=compute_60,code=sm_60/#-gencode arch=compute_60,code=sm_60/' ../CMakeLists.txt
-sed -i -e 's/-gencode arch=compute_61,code=sm_61/#-gencode arch=compute_61,code=sm_61/' ../CMakeLists.txt
-sed -i -e 's/-gencode arch=compute_62,code=sm_62/-gencode arch=compute_72,code=sm_72/' ../CMakeLists.txt
+sed -i -e 's/-gencode arch=compute_62,code=sm_61/-gencode arch=compute_72,code=sm_72/' ../CMakeLists.txt
+sed -i -e 's/-gencode arch=compute_61,code=sm_62/-gencode arch=compute_87,code=sm_87/' ../CMakeLists.txt
 cmake -GNinja ..
 sudo ninja install
 

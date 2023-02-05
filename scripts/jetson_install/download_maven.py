@@ -64,7 +64,7 @@ def download_files(download_urls):
 def main():
   url = argv[1]
   json_file = import_json(url)
-  archs = ['linuxathena', 'linuxx86-64', 'linuxaarch64bionic', 'linuxraspbian']
+  archs = ['linuxathena', 'linuxx86-64', 'linuxarm64', 'linuxarm32']
   download_links = construct_download_urls(json_file, archs)
   download_files(download_links)
 
