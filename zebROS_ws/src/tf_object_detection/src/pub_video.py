@@ -4,6 +4,7 @@ import rospy
 import sys
 import rospkg
 import cv2
+import numpy as np
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -19,6 +20,7 @@ class Video2ROS:
         self.pub_topic = "/obj_detection/c920/rect_image"
         self.framerate = 30
         self.show_video = True
+        self.empty_video = False
         #added ~ to all the topics
         if rospy.has_param('~pub_topic'):
             self.pub_topic = rospy.get_param('~pub_topic')
@@ -31,16 +33,25 @@ class Video2ROS:
             rospy.loginfo("Framerate being used is " + str( self.framerate))
         if rospy.has_param('~show_video'):
             self.show_video = rospy.get_param('~show_video')
+        if rospy.has_param('~empty_video'):
+            self.empty_video = rospy.get_param('~empty_video')
 
-        rospack = rospkg.RosPack()
-        image_path = rospack.get_path('tf_object_detection') + '/src/'
-        self.capture = cv2.VideoCapture(image_path + str(self.filename))
+        if not self.empty_video:
+            rospack = rospkg.RosPack()
+            image_path = rospack.get_path('tf_object_detection') + '/src/'
+            self.capture = cv2.VideoCapture(image_path + str(self.filename))
         bridge = CvBridge()
 
         image_pub = rospy.Publisher(self.pub_topic, Image, queue_size=10)
         retfail = 0
         while not rospy.is_shutdown():
-            ret, frame = self.capture.read()
+            if not self.empty_video:
+                ret, frame = self.capture.read()
+            else:
+                ret = True
+                size = 1080, 1920, 3
+                frame = np.zeros(size, dtype=np.uint8)
+
             #If it fails a few times just restarts the video, defintly not to be used on the real robot
             if retfail > 3:
                 self.capture = cv2.VideoCapture(image_path + str(self.filename))
