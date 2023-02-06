@@ -378,12 +378,12 @@ cd
 export PATH=$PATH:/usr/local/cuda/bin
 git clone https://github.com/NVIDIA/TensorRT.git
 cd TensorRT
-git checkout 8.5.2
+git checkout ef7713ca67435690f0b28dc9a50ee4021ae3651d
 git submodule update --init --recursive
-# comment out fcplugin?
+patch -p0 < /home/ubuntu/2023RobotCode/scripts/jetson_install/tensorrt.patch
 mkdir build
 cd build
-cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DCMAKE_CUDA_ARCHITECTURES="87" -DCMAKE_CXX_STANDARD=17 ..
+cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DCMAKE_CXX_STANDARD=17 ..
 sudo ninja install
 
 #sudo pip3 install --install-option="--jobs=6" --global-option=build_ext --global-option="-I/usr/local/cuda/include" --global-option="-L/usr/local/cuda/lib64" pycuda

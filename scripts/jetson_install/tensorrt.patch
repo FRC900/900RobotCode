@@ -1,0 +1,89 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 358b6f3..436e84a 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -159,6 +159,7 @@ else()
+   if (IS_ARM)
+     # Xavier (SM72) only supported for aarch64.
+     list(APPEND GPU_ARCHS 72)
++    list(APPEND GPU_ARCHS 87)
+   endif()
+ 
+   if (CUDA_VERSION VERSION_GREATER_EQUAL 11.0)
+diff --git a/plugin/common/kernels/decodeBBoxes.cu b/plugin/common/kernels/decodeBBoxes.cu
+index f688cef..d59cb57 100644
+--- a/plugin/common/kernels/decodeBBoxes.cu
++++ b/plugin/common/kernels/decodeBBoxes.cu
+@@ -77,6 +77,25 @@ inline __device__ float div_fb(const float & a, const float & b) {
+     return a / b;
+ }
+ 
++
++template <typename T_BBOX>
++static __device__ T_BBOX saturate(T_BBOX v)
++{
++    return max(min(v, T_BBOX(1)), T_BBOX(0));
++}
++
++template <>
++__device__ __half saturate(__half v)
++{
++#if __CUDA_ARCH__ >= 800
++    return __hmax(__hmin(v, __half(1)), __half(0));
++#elif __CUDA_ARCH__ >= 530
++    return __hge(v, __half(1)) ? __half(1) : (__hle(v, __half(0)) ? __half(0) : v);
++#else
++    return max(min(v, float(1)), float(0));
++#endif
++}
++
+ template <typename T_BBOX, unsigned nthds_per_cta>
+ __launch_bounds__(nthds_per_cta)
+     __global__ void decodeBBoxes_kernel(
+diff --git a/plugin/fcPlugin/fcPlugin.cpp b/plugin/fcPlugin/fcPlugin.cpp
+index 66b604c..5d41dad 100644
+--- a/plugin/fcPlugin/fcPlugin.cpp
++++ b/plugin/fcPlugin/fcPlugin.cpp
+@@ -168,9 +168,11 @@ void LtGemmSearch(cublasLtHandle_t ltHandle, cublasOperation_t transa, cublasOpe
+     PLUGIN_CUBLASASSERT(cublasLtMatmulPreferenceSetAttribute(
+         preference, CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &workSpaceSize, sizeof(workSpaceSize)));
+ 
++#if 0
+     const int mathMode = Ctype == CUDA_R_16F ? 1 : 0;
+     PLUGIN_CUBLASASSERT(cublasLtMatmulPreferenceSetAttribute(
+         preference, CUBLASLT_MATMUL_PREF_MATH_MODE_MASK, &mathMode, sizeof(mathMode)));
++#endif
+     // Create operation descriptor; see cublasLtMatmulDescAttributes_t for details
+     // about defaults; here we just need to set the transforms for A and B
+ #if CUBLAS_VER_MAJOR < 11
+@@ -215,6 +217,7 @@ void LtGemmSearch(cublasLtHandle_t ltHandle, cublasOperation_t transa, cublasOpe
+             continue;
+         }
+ 
++#if 0
+         int mathMode = -1;
+         PLUGIN_CUBLASASSERT(cublasLtMatmulAlgoCapGetAttribute(
+             &algo, CUBLASLT_ALGO_CAP_MATHMODE_IMPL, &mathMode, sizeof(mathMode), nullptr));
+@@ -224,6 +227,7 @@ void LtGemmSearch(cublasLtHandle_t ltHandle, cublasOperation_t transa, cublasOpe
+             // if mathMode is 1, cublasLt chooses automatically to run in mixed precision for certain sizes
+             continue;
+         }
++#endif
+ 
+         // Query the tiles enums supported by that algo
+         PLUGIN_CUBLASASSERT(
+diff --git a/plugin/fcPlugin/fcPlugin.h b/plugin/fcPlugin/fcPlugin.h
+index 0129e8d..4b75cd9 100644
+--- a/plugin/fcPlugin/fcPlugin.h
++++ b/plugin/fcPlugin/fcPlugin.h
+@@ -371,8 +371,10 @@ struct AlgoProps
+             matmulAlgo, CUBLASLT_ALGO_CONFIG_CTA_SWIZZLING, &swizzle, sizeof(swizzle), nullptr));
+         PLUGIN_CUBLASASSERT(cublasLtMatmulAlgoConfigGetAttribute(
+             matmulAlgo, CUBLASLT_ALGO_CONFIG_CUSTOM_OPTION, &customOption, sizeof(customOption), nullptr));
++#if 0
+         PLUGIN_CUBLASASSERT(cublasLtMatmulAlgoCapGetAttribute(
+             matmulAlgo, CUBLASLT_ALGO_CAP_MATHMODE_IMPL, &mathMode, sizeof(mathMode), nullptr));
++#endif
+     }
+ };
+ 
