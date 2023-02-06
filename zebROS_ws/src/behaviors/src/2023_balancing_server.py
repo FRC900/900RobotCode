@@ -103,7 +103,7 @@ class AutoBalancing:
                 self._as.set_preempted()
                 break
 
-            if (self.current_pitch >= math.radians(10) or self.current_pitch <= math.radians(-10)) and self.state == States.NO_WEELS_ON:
+            if abs(self.current_pitch) >= math.radians(10) and self.state == States.NO_WEELS_ON:
                 rospy.logwarn("Recalled balancer with 0 offset=======================")
                 self.balancer_client.cancel_all_goals()
                 r.sleep()

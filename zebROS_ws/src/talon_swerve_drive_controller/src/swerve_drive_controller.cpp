@@ -213,7 +213,7 @@ bool init(hardware_interface::TalonCommandInterface *hw,
 		ROS_ERROR("Could not read f_s_s in talon swerve drive controller");
 		return false;
 	}
-	if (!controller_nh.getParam("stoping_ff", stopping_ff_))
+	if (!controller_nh.getParam("stopping_ff", stopping_ff_))
 	{
 		ROS_ERROR("Could not read stoping_ff in talon swerve drive controller");
 		return false;
@@ -484,6 +484,9 @@ void update(const ros::Time &time, const ros::Duration &period)
 		{
 			steering_joints_[i].setPIDFSlot(0);
 			steering_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_MotionMagic);
+			// TODO - don't think this is ever set to any other value, might be OK to move it
+			// to init or starting or something
+			steering_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
 			steering_joints_[i].setDemand1Value(0);
 		}
 		speed_joints_[i].setPIDFSlot(0);
@@ -492,26 +495,40 @@ void update(const ros::Time &time, const ros::Duration &period)
 	// Special case for when the drive base is stopped
 	if (fabs(curr_cmd.lin[0]) <= 1e-6 && fabs(curr_cmd.lin[1]) <= 1e-6 && fabs(curr_cmd.ang) <= 1e-6)
 	{
-		for (size_t i = 0; i < WHEELCOUNT; ++i)
-		{
-			speed_joints_[i].setCommand(0);
-			speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
-			
-			// commented out for testing
-			speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
-			speed_joints_[i].setDemand1Value(copysign(stopping_ff_, last_wheel_sign_[i]));
-		}
 		if ((time.toSec() - time_before_brake_) > parking_config_time_delay_)
 		{
+			// If the time since we last moved is long enough, go into parking config
 			brake(steer_angles, time);
 		}
 		else
 		{
+			// Otherwise, leave the wheels pointed in the same direction they were
+			// previously and either coast or brake to a stop depending on how
+			// the drive base is currently configured.
 			for (size_t i = 0; i < WHEELCOUNT; ++i)
 			{
-				if (!dont_set_angle_mode)
-					steering_joints_[i].setCommand(speeds_angles_[i][1]);
+				speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
+				speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
+				speed_joints_[i].setDemand1Value(0);
+
+				if (neutral_mode_ == hardware_interface::NeutralMode::NeutralMode_Coast)
+				{
+					// coast mode is now just ff term like before.  The small force commanded
+					// from the motor will slow the robot gradually vs. brake mode's immediate stop
+					speed_joints_[i].setCommand(last_wheel_sign_[i] * stopping_ff_);
+				}
+				else
+				{
+					// if we are in brake mode it is time to stop immediately.
+					// Setting speed to 0 will trigger brake mode
+					speed_joints_[i].setCommand(0);
+				}
 				speed_joints_[i].setNeutralMode(neutral_mode_);
+
+				if (!dont_set_angle_mode)
+				{
+					steering_joints_[i].setCommand(speeds_angles_[i][1]);
+				}
 			}
 		}
 		if (publish_cmd_ && cmd_vel_pub_->trylock())
@@ -558,15 +575,14 @@ void update(const ros::Time &time, const ros::Duration &period)
 				{
 					speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_ArbitraryFeedForward);
 					speed_joints_[i].setDemand1Value(copysign(f_s_, speeds_angles_[i][0]));
-					last_wheel_sign_[i] = copysign(1, speeds_angles_[i][0]);
+					last_wheel_sign_[i] = copysign(1., speeds_angles_[i][0]);
 				}
 				else
-				{	
+				{
 					ROS_WARN_STREAM("============Swerve drive controller, probably never here but if you see this.....");
 					speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
 					speed_joints_[i].setDemand1Value(0);
 				}
-
 
 				speed_joints_[i].setCommand(speeds_angles_[i][0]);
 			}
@@ -583,6 +599,10 @@ void update(const ros::Time &time, const ros::Duration &period)
 	}
 	else
 	{
+		// For a small time after coming out of parking config keep the drive motors
+		// stopped.
+		// TODO - experiment with coast mode, and perhaps position PID at the current
+		// position?
 		for (size_t i = 0; i < WHEELCOUNT; ++i)
 		{
 			speed_joints_[i].setCommand(0);
@@ -761,6 +781,7 @@ void brake(const std::array<double, WHEELCOUNT> &steer_angles, const ros::Time &
 	const std::array<double, WHEELCOUNT> park_angles = swerveC_->parkingAngles(steer_angles);
 	for (size_t i = 0; i < WHEELCOUNT; ++i)
 	{
+		speed_joints_[i].setMode(hardware_interface::TalonMode::TalonMode_PercentOutput);
 		speed_joints_[i].setCommand(0.0);
 		speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
 		speed_joints_[i].setDemand1Value(0);
@@ -858,7 +879,7 @@ bool setNeturalModeService(std_srvs::SetBool::Request& req, std_srvs::SetBool::R
 		}
 		else {
 			neutral_mode_ = hardware_interface::NeutralMode::NeutralMode_Brake;
-		}	
+		}
 	}
 	else
 	{
@@ -866,7 +887,6 @@ bool setNeturalModeService(std_srvs::SetBool::Request& req, std_srvs::SetBool::R
 		return false;
 	}
 	return true;
-	
 }
 
 bool resetOdomService(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &/*res*/)

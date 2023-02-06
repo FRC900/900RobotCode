@@ -22,6 +22,7 @@ swerve_drive_controller:
     #  f_v is velocity feed forward term (currently only used in motion profile follower mode, talon vel feed forward term is used for normal driving
     #
     f_s: 0.115
+    stopping_ff: 0.115
     f_a: 0.005 #use torque curve instead? TODO: FIX
     f_v: 0.00315528
 

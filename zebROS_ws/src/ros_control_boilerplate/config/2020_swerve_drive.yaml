@@ -16,6 +16,7 @@ swerve_drive_controller:
     max_rotational_vel: 10 # TODO
     
     f_s: 0.035
+    stopping_ff: 0.035
     f_a: 0.005 #use torque curve instead? TODO: FIX
     f_v: 0.00315528
 

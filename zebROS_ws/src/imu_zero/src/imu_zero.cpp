@@ -233,11 +233,13 @@ bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
 int main(int argc, char* argv[]) {
   ros::init(argc, argv, "imu_zero_node");
   ros::NodeHandle node;
+  zero_rot.setRPY(0.,0.,0.);
+  zero_rot.normalize();
+
   tfListener = std::make_unique<tf2_ros::TransformListener>(tfBuffer);
   pub = node.advertise<sensor_msgs::Imu>(pub_topic, 1);
   ros::Subscriber sub = node.subscribe(sub_topic, 1, zeroCallback);
   ros::ServiceServer svc = node.advertiseService(service_name, zeroSet);
-  zero_rot.setRPY(0,0,0);
   bias_estimate = node.serviceClient<std_srvs::Trigger>(bias_service_name);
   ukf_zero_pos = node.serviceClient<robot_localization::SetPose>(ukf_set_pose_name);
   zed_reset_odometry = node.serviceClient<zed_interfaces::reset_odometry>(zed_reset_odometry_name);
