@@ -83,7 +83,7 @@ sudo apt install -y \
     v4l-utils \
     vim-gtk \
     wget \
-    xfonts-scalable
+    xfonts-scalable \
     zip \
     zlib1g-dev \
     zstd
@@ -374,13 +374,22 @@ sudo pip3 install --ignore-installed .
 cd slim
 sudo pip3 install --ignore-installed .
 
+
+
+# Install cuda manually for now?
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/arm64/cuda-keyring_1.0-1_all.deb
+sudo dpkg -i cuda-keyring_1.0-1_all.deb
+sudo apt-get update
+sudo apt-get -y install cuda nvidia-cudnn8 nvidia-cudnn8-dev libnvinfer-dev libnvinfer-plugin-dev libnvinfer-plugin
+
+
 cd
 export PATH=$PATH:/usr/local/cuda/bin
 git clone https://github.com/NVIDIA/TensorRT.git
 cd TensorRT
 git checkout ef7713ca67435690f0b28dc9a50ee4021ae3651d
 git submodule update --init --recursive
-patch -p0 < /home/ubuntu/2023RobotCode/scripts/jetson_install/tensorrt.patch
+patch -p1 < /home/ubuntu/2023RobotCode/scripts/jetson_install/tensorrt.patch
 mkdir build
 cd build
 cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DCMAKE_CXX_STANDARD=17 ..
