@@ -33,6 +33,7 @@ catkin config --skiplist \
 	effort_controllers \
 	force_torque_sensor_controller \
 	four_wheel_steering_controller \
+	goal_detection \
 	gripper_action_controller \
 	robot_characterization \
 	rqt_joint_trajectory_controller \
