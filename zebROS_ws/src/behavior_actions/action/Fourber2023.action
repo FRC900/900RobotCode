@@ -1,0 +1,24 @@
+# Fourber = 
+uint8 CUBE=0
+uint8 VERTICAL_CONE=1
+uint8 BASE_TOWARDS_US_CONE=2 
+uint8 BASE_AWAY_US_CONE=3
+uint8 piece
+
+uint8 INTAKE=0
+uint8 LOW_NODE=1
+uint8 MIDDLE_NODE=2
+uint8 HIGH_NODE=3
+uint8 mode
+ 
+uint8 NO_SAFETY=0 # if you are not the elevater server, set this
+uint8 SAFETY_INTAKE_LOW=1 # should be just two places that we need to call safety with: when intaking and when going above a certain height
+uint8 SAFETY_HIGH=2
+uint8 SAFETY_TO_NO_SAFETY=3 # basically we need a way for the elevater actionlib to tell the fourber server that is is ok to transition to NO_SAFTEY, and still let other nodes pass in NO_SAFTEY and not mess it up
+uint8 safety_position # looks up config value on where to go based on this, ignored if safety is false
+---
+#result
+bool success # if we got there
+---
+#feedback
+bool success # if we got there

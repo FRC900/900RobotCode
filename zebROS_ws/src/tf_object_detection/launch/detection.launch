@@ -49,9 +49,11 @@
   
 
 	   <!--Possible that this should not be in namespace?-->
+    <!-- 
     <node pkg="tf_object_detection" name="pub_video" type="pub_video.py" output="screen" if="$(eval input_type == 'video')">
       <rosparam command="load" file="$(find tf_object_detection)/config/pub_video_config.yaml" />
     </node>
+    -->
   </group>
   <arg name="cam_image_topic" default="left/image_rect_gray" />
 	<arg name="cam_info_topic" default="left/camera_info" />

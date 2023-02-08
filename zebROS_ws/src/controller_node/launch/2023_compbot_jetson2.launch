@@ -13,13 +13,17 @@
 	<arg name="primary_imu" default="ADI" />
 	<include file="$(find controller_node)/launch/record_2023_compbot.launch" if="$(arg record)" />
 
-	<node name="teensy_power_info" pkg="rosserial_python" type="serial_node.py" args="_port:=/dev/ttyACM0 _baud:=115200"/>
 	<include file="$(find tf_object_detection)/launch/detection.launch">
-		<arg name="input_type" value="live_camera" />
+		<group if="$(eval arg('hw_or_sim')=='hw')">
+			<arg name="input_type" value="live_camera" />
+		</group>
+
 	</include>
 	
+	<!-- 
 	<include file="$(find controller_node)/launch/rosbridge_websocket.launch">
 		<arg name="port" value="5803"/>
 
 	</include>
+	-->
 </launch>

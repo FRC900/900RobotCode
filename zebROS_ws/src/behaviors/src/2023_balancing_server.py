@@ -59,6 +59,8 @@ class AutoBalancing:
         self.current_pitch_time = -1000
         self.state = States.NO_WEELS_ON 
         self.sub_imu = rospy.Subscriber(imu_sub_topic, sensor_msgs.msg.Imu, self.imu_callback)
+        self.down_measurements = 0
+        self.threshold = math.radians(0.5) # how much a measurement must change by to be counted
         
         rospy.loginfo("Finished initalizing balancing server")
 

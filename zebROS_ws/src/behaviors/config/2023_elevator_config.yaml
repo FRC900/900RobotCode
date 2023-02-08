@@ -22,3 +22,9 @@ base_away_us_cone:
   low_node: 2.00
   middle_node: 3.00
   high_node: 4.00
+
+saftey_high_min: 2.00 # minimum position when fourbar must be at least a certain amount extended up high
+saftey_high_max: 2.5 # maximum position when fourbar must be at least a certain amount extended up high
+
+saftey_intake_max: 0.5 # when below this we must be out a certain distance
+saftey_intake_min: 0.0 # should never be called below zero

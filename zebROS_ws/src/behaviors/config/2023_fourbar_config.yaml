@@ -1,0 +1,68 @@
+# all numbers currently random
+
+position_tolerance: 0.02 # meters, if fourbar position is +/- than the server set success
+
+# distance that the server should be called with
+
+# purposly capitlized, same terminolgy in the elevater
+# all XXX_below is if the service call to the fourbar should have the "below" field set to
+cube:
+  intake: 1.00
+  intake_below: true
+
+  low_node: 2.05
+  low_node_below: false
+
+  middle_node: 2.00
+  middle_node_below: false
+
+  high_node: 2.00
+  high_node_below: false
+
+vertical_cone:
+  intake: 0.20
+  intake_below: true
+
+  low_node: 2.00
+  low_node_below: false
+
+  middle_node: 2.00
+  middle_node_below: false
+
+  high_node: 2.10
+  high_node_below: false
+
+base_towards_us_cone:
+  intake: 1.00
+  intake_below: true
+
+  low_node: 2.00
+  low_node_below: false
+
+  middle_node: 2.00
+  middle_node_below: false
+
+  high_node: 2.00
+  high_node_below: false
+
+base_away_us_cone:
+  intake: 1.00
+  intake_below: true
+
+  low_node: 2.00
+  low_node_below: false
+
+  middle_node: 2.00
+  middle_node_below: false
+
+  high_node: 2.00
+  high_node_below: false
+
+# minimum distance out the intake 
+safety_high: 
+  min_distace: 2.00
+  below: false
+
+safety_intake:
+  min_distance: 2.00
+  below: true
