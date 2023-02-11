@@ -29,12 +29,13 @@
 #-------------------------------------------------------
 # ip address and hardware connnected on the internet side
 # TODO - try to grab one of these pieces of info from the other
-INTERNET_IP=192.168.0.168
-INTERNET_HW=wlp3s0
+#INTERNET_IP=192.168.0.168
+INTERNET_IP=172.31.251.246
+INTERNET_HW=wlp0s20f3
 
 # IP address and hardware connected to the private Rio network side
 PRIVATE_IP=10.9.0.1
-PRIVATE_HW=enp2s0
+PRIVATE_HW=enp111s0
 
 sudo sysctl net.ipv4.ip_forward=1
 

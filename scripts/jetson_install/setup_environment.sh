@@ -380,7 +380,7 @@ sudo pip3 install --ignore-installed .
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/arm64/cuda-keyring_1.0-1_all.deb
 sudo dpkg -i cuda-keyring_1.0-1_all.deb
 sudo apt-get update
-sudo apt-get -y install cuda nvidia-cudnn8 nvidia-cudnn8-dev libnvinfer-dev libnvinfer-plugin-dev libnvinfer-plugin
+sudo apt-get -y install cuda nvidia-cudnn8 nvidia-cudnn8-dev libnvinfer-dev libnvinfer-plugin-dev
 
 
 cd
