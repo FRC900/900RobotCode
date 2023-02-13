@@ -64,7 +64,7 @@ public:
 	{
 		bool success = true;
 
-		if(!intake_pub_.getNumSubscribers() > 0)
+		if (intake_pub_.getNumSubscribers() <= 0)
 		{
 			ROS_ERROR_STREAM("2023_intake_server : intake controller does not exist. exiting.");
 			result_.timed_out = true;
