@@ -12,3 +12,4 @@ alias simlaunch='roslaunch controller_node 2023_compbot_combined.launch hw_or_si
 alias ls='ls --color'
 alias driversim='rqt --standalone rqt_driver_station_sim'
 alias driverdash='rqt --standalone rqt_dashboard --qt-binding pyqt'
+alias axclient='rosrun actionlib_tools axclient.py'
