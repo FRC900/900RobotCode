@@ -43,7 +43,7 @@ class RestrictedEvaluator(object):
             return variables[node.id]
         elif isinstance(node, ast.Subscript) and node.value.id in variables:
             var = variables[node.value.id]
-            idx = node.slice.value.n
+            idx = node.slice.value#.n
             try:
                 return var[idx]
             except IndexError:

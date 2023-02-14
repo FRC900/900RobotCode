@@ -5,8 +5,9 @@
   <arg name="zed_node_name"   default="zed_objdetect" />
   <arg name="camera_model"    default="zed2" />
   <arg name="depth_algorithm" default="CONTOURS" />
+  <arg name="cpu"             default="false" />
 
-  <include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml" if="$(eval input_type != 'video')">
+  <include file="$(find zed_wrapper)/launch/include/zed_camera.launch.xml" if="$(eval input_type != 'video' and not cpu)">
     <arg name="common_params_file"   value="$(find controller_node)/config/zed_objdet/common.yaml" />
     <arg name="camera_params_file"   value="$(find controller_node)/config/zed_objdet/$(arg camera_model).yaml" />
     <arg name="node_name"            value="$(arg zed_node_name)" />
@@ -28,7 +29,9 @@
     </node>
   -->
 	  <rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
-    <node pkg="tf_object_detection" name="tf_object_detection" type="trtdetection.py" output="screen">
+    <node pkg="tf_object_detection" name="tf_object_detection" type="trtdetection.py" output="screen" unless="$(arg cpu)">
+    </node>
+    <node pkg="tf_object_detection" name="tf_object_detection" type="test_detection.py" output="screen" if="$(arg cpu)">
     </node>
     
     <node pkg="tf_object_detection" name="tag_depth" type="tag_depth.py" output="screen">

@@ -1,7 +1,7 @@
 import graphsurgeon as gs
 import tensorflow as tf
 
-name = 'ssd_mobilenet_v2_512x512'
+name = '2023_ssd_mobilenet_v2'
 path = '/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/' + name + '.pb'
 #TRTbin = '/home/ubuntu/2023RobotCode/zebROS_ws/src/tf_object_detection/src/TRT_' + name + '.bin'
 TRTbin = 'TRT_' + name + '.bin'
@@ -44,7 +44,7 @@ def add_plugin(graph):
         nmsThreshold=0.4,
         topK=100,
         keepTopK=100,
-        numClasses=29, # 28 object + 1 for unknown class
+        numClasses=25, # 24 object + 1 for unknown class
         inputOrder=[1, 2, 0],
         confSigmoid=1,
         isNormalized=1

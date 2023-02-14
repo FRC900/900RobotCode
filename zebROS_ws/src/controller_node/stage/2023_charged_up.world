@@ -73,3 +73,4 @@ objdet_target ( pose [ 0.36195 6.749796 0.695452 0 ] fiducial_return 105 color "
 objdet_target ( pose [ 1.02743 4.424426 0.462788 0 ] fiducial_return 106 color "blue")
 objdet_target ( pose [ 1.02743 2.748026 0.462788 0 ] fiducial_return 107 color "blue")
 objdet_target ( pose [ 1.02743 1.071626 0.462788 0 ] fiducial_return 108 color "blue")
+objdet_target ( pose [ 8.0 4.0 0.0 0.0 ] fiducial_return 9 color "yellow" )

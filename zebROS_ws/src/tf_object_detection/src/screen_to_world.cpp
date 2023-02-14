@@ -217,14 +217,14 @@ int main (int argc, char **argv)
 	}
 	else
 	{
-		sub = nh.subscribe<field_obj::TFDetection>("obj_detection_msg", 2, boost::bind(callback, _1, dummy_image_ptr));
+		sub = nh.subscribe<field_obj::TFDetection>("obj_detection_msg", 1, boost::bind(callback, _1, dummy_image_ptr));
 	}
 
 	// Set up a simple subscriber to capture camera info
-	ros::Subscriber camera_info_sub_ = nh.subscribe("/zed_objdetect/left/camera_info", 2, camera_info_callback);
+	ros::Subscriber camera_info_sub_ = nh.subscribe("/zed_objdetect/left/camera_info", 1, camera_info_callback);
 
 	// And a publisher to published converted 3d coords
-	pub = nh.advertise<field_obj::Detection>("object_detection_world", 2);
+	pub = nh.advertise<field_obj::Detection>("object_detection_world", 1);
 
 	ros::spin();
 }

@@ -17,5 +17,6 @@ teleop_params:
     bottom_position_angle: -110.0
     middle_position_angle: -0.0
     top_position_angle: -200.0
+    cone_cube_timeout: 1.0
 
     #teleop_diagnostics_params:

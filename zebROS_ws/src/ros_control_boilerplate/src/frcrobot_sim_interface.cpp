@@ -114,6 +114,7 @@ void FRCRobotSimInterface::match_data_callback(const frc_msgs::MatchSpecificData
 
 	hal_match_info.gameSpecificMessageSize = match_data.gameSpecificData.size();
 	HALSIM_SetMatchInfo(&hal_match_info);
+	HALSIM_NotifyDriverStationNewData();
 }
 
 void FRCRobotSimInterface::joystickCallback(const sensor_msgs::JoyConstPtr &msg, int32_t joystick_num) {
@@ -196,6 +197,7 @@ void FRCRobotSimInterface::joystickCallback(const sensor_msgs::JoyConstPtr &msg,
 	HALSIM_SetJoystickAxes(joystick_num, &hal_axes);
 	HALSIM_SetJoystickButtons(joystick_num,
 			&hal_buttons);
+	HALSIM_NotifyDriverStationNewData();
 }
 
 bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,ros_control_boilerplate::set_limit_switch::Response &/*res*/)

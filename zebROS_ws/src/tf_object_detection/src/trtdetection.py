@@ -122,7 +122,7 @@ def run_inference_for_single_image(msg):
         # List of the strings that is used to add correct label for each box.
         rospack = rospkg.RosPack()
         THIS_DIR = os.path.join(rospack.get_path('tf_object_detection'), 'src/')
-        PATH_TO_LABELS = os.path.join(THIS_DIR, '2022Game_label_map.pbtxt')
+        PATH_TO_LABELS = os.path.join(THIS_DIR, '2023Game_label_map.pbtxt')
         rospy.logwarn("Loading labels from " + str(PATH_TO_LABELS))
         category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
         category_dict = {0: 'background'}
@@ -227,7 +227,7 @@ def main():
     else:
         rospy.logwarn("Unable to get image topic, defaulting to c920/rect_image")
 
-    sub = rospy.Subscriber(sub_topic, Image, run_inference_for_single_image)
+    sub = rospy.Subscriber(sub_topic, Image, run_inference_for_single_image, queue_size=1)
     pub = rospy.Publisher(pub_topic, TFDetection, queue_size=1)
     pub_debug = rospy.Publisher("debug_image", Image, queue_size=1)
 

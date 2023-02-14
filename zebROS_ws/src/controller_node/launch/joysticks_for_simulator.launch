@@ -12,7 +12,7 @@
 
 	<!--  ************** Including teleop node ***************  -->
 	<include file="$(find controller_node)/launch/teleop.launch">
-		<arg name="year" value="2022" />
+		<arg name="year" value="2023" />
 	</include>
 	<group ns="frcrobot_rio">
 

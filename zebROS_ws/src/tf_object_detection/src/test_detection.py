@@ -195,12 +195,12 @@ def main():
     # This shouldn't need to change
     rospack = rospkg.RosPack()
     THIS_DIR = join(rospack.get_path('tf_object_detection'), 'src/')
-    PATH_TO_FROZEN_GRAPH = join(THIS_DIR, 'ssd_mobilenet_v2_512x512.pb')
+    PATH_TO_FROZEN_GRAPH = join(THIS_DIR, '2023_ssd_mobilenet_v2.pb')
     #PATH_TO_FROZEN_GRAPH = join(THIS_DIR, 'trt_ssd_mobilenet_v2.pb')
     rospy.logwarn("Loading graph from " + str(PATH_TO_FROZEN_GRAPH))
 
     # List of the strings that is used to add correct label for each box.
-    PATH_TO_LABELS = join(THIS_DIR, '2022Game_label_map.pbtxt')
+    PATH_TO_LABELS = join(THIS_DIR, '2023Game_label_map.pbtxt')
 
     # Init TF detection graph and session
     detection_graph = tf.Graph()
