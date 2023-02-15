@@ -4,7 +4,7 @@
 
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_publisher.h>
-#include <talon_interface/cancoder_state_interface.h>
+#include <ctre_interfaces/cancoder_state_interface.h>
 #include <talon_state_msgs/CANCoderState.h>
 #include <periodic_interval_counter/periodic_interval_counter.h>
 

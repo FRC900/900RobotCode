@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
     realtime_tools
 	roscpp
     talon_controllers
-    talon_interface
+    ctre_interfaces
 	talon_state_msgs
     tf
     trajectory_msgs

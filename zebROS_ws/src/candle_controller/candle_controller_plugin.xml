@@ -1,0 +1,7 @@
+<library path="lib/libcandle_controller">
+    <class name="candle_controller/CANdleController" type="candle_controller::CANdleController" base_class_type="controller_interface::ControllerBase">
+        <description>
+            Controls CTRE CANdles
+        </description>
+    </class>
+</library>

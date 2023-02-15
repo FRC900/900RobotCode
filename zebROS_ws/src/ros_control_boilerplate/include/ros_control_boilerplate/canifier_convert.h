@@ -1,7 +1,7 @@
 #pragma once
 #include <ctre/phoenix/CANifier.h>
 
-#include "talon_interface/canifier_state_interface.h"
+#include "ctre_interfaces/canifier_state_interface.h"
 
 namespace canifier_convert
 {

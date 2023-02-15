@@ -1,6 +1,6 @@
 #pragma once
 
-#include "talon_interface/cancoder_state_interface.h"
+#include "ctre_interfaces/cancoder_state_interface.h"
 #include "state_handle/command_handle.h"
 
 namespace hardware_interface

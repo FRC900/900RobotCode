@@ -1,0 +1,30 @@
+# Fields for any animation
+float64 speed
+uint32 start
+uint32 count
+uint8 animation_type
+
+# Base2 Animations
+uint8 red
+uint8 green
+uint8 blue
+uint8 white
+uint8 direction
+
+# BaseStandard Animations
+float64 brightness
+bool reversed
+float64 param4
+float64 param5
+
+# Animation type enum
+uint8 ANIMATION_TYPE_COLOURFLOW = 0
+uint8 ANIMATION_TYPE_FIRE = 1
+uint8 ANIMATION_TYPE_LARSON = 2
+uint8 ANIMATION_TYPE_RAINBOW = 3
+uint8 ANIMATION_TYPE_RGB_FADE = 4
+uint8 ANIMATION_TYPE_SINGLE_FADE = 5
+uint8 ANIMATION_TYPE_STROBE = 6
+uint8 ANIMATION_TYPE_TWINKLE = 7
+uint8 ANIMATION_TYPE_TWINKLE_OFF = 8
+---

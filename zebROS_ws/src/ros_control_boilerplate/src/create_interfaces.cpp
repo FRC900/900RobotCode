@@ -102,6 +102,33 @@ void FRCRobotInterface::createInterfaces(void)
 		}
 	}
 
+	this->num_candles_ = this->candle_names_.size();
+	this->candle_command_.resize(this->num_candles_);
+
+	for (size_t i = 0; i < this->num_candles_; i++)
+	{
+		ROS_INFO_STREAM_NAMED(this->name_, "FRCRobotInterface: Registering CANdle Interface for : " << candle_names_[i] << " at hw ID " << candle_can_ids_[i]);
+		candle_state_.emplace_back(hardware_interface::candle::CANdleHWState(candle_can_ids_[i]));
+	}
+	for (size_t i = 0; i < this->num_candles_; i++)
+	{
+		// Create state interface for the given CANdle
+		// and point it to the data stored in the
+		// corresponding candle_state array entry
+		hardware_interface::candle::CANdleStateHandle csh(candle_names_[i], &candle_state_[i]);
+		candle_state_interface_.registerHandle(csh);
+
+		// Do the same for a command interface for
+		// the same CANdle
+		hardware_interface::candle::CANdleCommandHandle cch(csh, &candle_command_[i]);
+		candle_command_interface_.registerHandle(cch);
+		if (!candle_local_updates_[i])
+		{
+			hardware_interface::candle::CANdleWritableStateHandle cwsh(candle_names_[i], &candle_state_[i]); /// writing directly to state?
+			candle_remote_state_interface_.registerHandle(cwsh);
+		}
+	}
+
 	num_spark_maxs_ = spark_max_names_.size();
 	// Create vectors of the correct size for
 	// Spark Max HW state and commands
@@ -617,6 +644,8 @@ void FRCRobotInterface::createInterfaces(void)
 	registerInterface(&canifier_command_interface_);
 	registerInterface(&cancoder_state_interface_);
 	registerInterface(&cancoder_command_interface_);
+	registerInterface(&candle_state_interface_);
+	registerInterface(&candle_command_interface_);
 	registerInterface(&spark_max_state_interface_);
 	registerInterface(&spark_max_command_interface_);
 	registerInterface(&joint_state_interface_);
@@ -641,6 +670,7 @@ void FRCRobotInterface::createInterfaces(void)
 	registerInterface(&talon_remote_state_interface_);
 	registerInterface(&canifier_remote_state_interface_);
 	registerInterface(&cancoder_remote_state_interface_);
+	registerInterface(&candle_remote_state_interface_);
 	registerInterface(&spark_max_remote_state_interface_);
 	registerInterface(&joint_remote_interface_); // list of Joints defined as remote
 	registerInterface(&pcm_remote_state_interface_);

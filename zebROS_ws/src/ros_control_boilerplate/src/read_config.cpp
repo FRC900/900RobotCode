@@ -234,6 +234,44 @@ void FRCRobotInterface::readConfig(ros::NodeHandle rpnh)
 			cancoder_local_hardwares_.push_back(local_hardware);
 			cancoder_can_busses_.push_back(can_bus);
 		}
+		else if (joint_type == "candle") {
+			readJointLocalParams(joint_params, local, saw_local_keyword, local_update, local_hardware);
+
+			const bool has_can_id = joint_params.hasMember("can_id");
+			if (!local_hardware && has_can_id)
+				throw std::runtime_error("A CANCoder can_id was specified with local_hardware == false for joint " + joint_name);
+
+			int can_id;
+			std::string can_bus;
+
+			if (local_hardware) {
+				if (!has_can_id)
+					throw std::runtime_error("A CANdle can_id wasn't specified");
+				
+				XmlRpc::XmlRpcValue& xml_can_id = joint_params["can_id"];
+				if (!xml_can_id.valid() || xml_can_id.getType() != XmlRpc::XmlRpcValue::TypeInt)
+					throw std::runtime_error("Invalid can_id: can_id for joint " + joint_name + " needs to be an int!");
+				
+				can_id = xml_can_id;
+				auto exists = std::find(this->candle_can_ids_.cbegin(), this->candle_can_ids_.cend(), can_id);
+				if (exists != this->candle_can_ids_.cend())
+					throw std::runtime_error("CANdle " + joint_name + " has a duplicate CAN ID!");
+				
+				if (joint_params.hasMember("can_bus")) {
+					XmlRpc::XmlRpcValue& xml_can_bus = joint_params["can_bus"];
+					if (!xml_can_bus.valid() || xml_can_bus.getType() != XmlRpc::XmlRpcValue::TypeString)
+						throw std::runtime_error("CANdle " + joint_name + " has an invalid can_bus! (can_bus should be a string)");
+					
+					can_bus = static_cast<std::string>(xml_can_bus);
+				}
+
+				this->candle_names_.push_back(joint_name);
+				this->candle_can_ids_.push_back(can_id);
+				this->candle_local_updates_.push_back(local_update);
+				this->candle_local_hardwares_.push_back(local_hardware);
+				this->candle_can_busses_.push_back(can_bus);
+			}
+		}
 		else if (joint_type == "can_spark_max")
 		{
 			if (!joint_params.hasMember("can_id"))

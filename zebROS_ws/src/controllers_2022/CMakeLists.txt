@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   std_srvs
   talon_controllers
-  talon_interface
+  ctre_interfaces
 )
 
 ## System dependencies are found with CMake's conventions

@@ -4,7 +4,7 @@
 #include <mutex>
 #include "canifier_controller_msgs/CanifierLED.h"
 #include "ddr_updater/ddr_updater.h"
-#include "talon_interface/canifier_command_interface.h"
+#include "ctre_interfaces/canifier_command_interface.h"
 
 namespace canifier_controller_interface
 {

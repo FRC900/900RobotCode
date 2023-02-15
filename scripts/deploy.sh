@@ -66,6 +66,10 @@ while [[ $# -gt 0 ]] ; do
         UPDATE_LINKS_ONLY=1
         shift
     ;;
+    -b|--box)
+        JETSON_ADDR=(10.9.0.8)
+        shift
+    ;;
     *) # unknown option
         POSITIONAL+=("$1") # save it in an array for later
         shift # past argument

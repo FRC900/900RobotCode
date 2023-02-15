@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   ddynamic_reconfigure
   realtime_tools
   roscpp
-  talon_interface
+  ctre_interfaces
 )
 
 ## System dependencies are found with CMake's conventions
@@ -108,7 +108,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES canifier_controller_interface
-  CATKIN_DEPENDS controller_interface ddynamic_reconfigure realtime_tools talon_interface
+  CATKIN_DEPENDS controller_interface ddynamic_reconfigure realtime_tools ctre_interfaces
 #  DEPENDS system_lib
 )
 

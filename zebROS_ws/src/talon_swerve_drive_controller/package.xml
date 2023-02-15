@@ -20,7 +20,7 @@
   <depend>std_srvs</depend>
   <depend>realtime_tools</depend>
   <depend>talon_controllers</depend>
-  <depend>talon_interface</depend>
+  <depend>ctre_interfaces</depend>
   <depend>talon_state_msgs</depend>
   <depend>tf</depend>
   <depend>trajectory_msgs</depend>

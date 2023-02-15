@@ -7,7 +7,7 @@
 #include <talon_controller_msgs/LoadInstrumentsSrv.h>
 #include <talon_controller_msgs/LoadMusicSrv.h>
 #include <talon_controller_msgs/SetOrchestraStateSrv.h>
-#include <talon_interface/orchestra_command_interface.h>
+#include <ctre_interfaces/orchestra_command_interface.h>
 
 namespace orchestra_controller
 {

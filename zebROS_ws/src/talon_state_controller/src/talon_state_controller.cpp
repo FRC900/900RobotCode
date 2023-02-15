@@ -5,7 +5,7 @@
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_buffer.h>
 #include <realtime_tools/realtime_publisher.h>
-#include <talon_interface/talon_state_interface.h>
+#include <ctre_interfaces/talon_state_interface.h>
 #include <talon_state_msgs/TalonState.h>
 #include <periodic_interval_counter/periodic_interval_counter.h>
 

@@ -5,8 +5,8 @@
 
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include <state_handle/state_handle.h>
-#include "talon_interface/absolute_sensor_range.h"
-#include "talon_interface/sensor_initialization_strategy.h"
+#include "ctre_interfaces/absolute_sensor_range.h"
+#include "ctre_interfaces/sensor_initialization_strategy.h"
 
 namespace hardware_interface
 {

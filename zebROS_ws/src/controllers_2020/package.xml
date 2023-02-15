@@ -57,7 +57,7 @@
   <build_depend>roscpp</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>talon_controllers</build_depend>
-  <build_depend>talon_interface</build_depend>
+  <build_depend>ctre_interfaces</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>std_srvs</build_depend>
   <build_export_depend>controller_interface</build_export_depend>
@@ -68,7 +68,7 @@
   <build_export_depend>roscpp</build_export_depend>
   <build_export_depend>std_msgs</build_export_depend>
   <build_export_depend>talon_controllers</build_export_depend>
-  <build_export_depend>talon_interface</build_export_depend>
+  <build_export_depend>ctre_interfaces</build_export_depend>
   <exec_depend>controller_interface</exec_depend>
   <exec_depend>controllers_2020_msgs</exec_depend>
   <exec_depend>hardware_interface</exec_depend>

@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	sensor_msgs
 	std_msgs
-	talon_interface
+	ctre_interfaces
 	talon_state_msgs
 )
 

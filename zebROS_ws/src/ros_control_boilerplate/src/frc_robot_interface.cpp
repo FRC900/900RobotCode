@@ -53,6 +53,7 @@
 #include "ctre/phoenix/motorcontrol/can/WPI_TalonFX.h"
 #include "ctre/phoenix/motorcontrol/can/WPI_TalonSRX.h"
 #include "ctre/phoenix/motorcontrol/can/WPI_VictorSPX.h"
+#include "ctre/phoenix/led/CANdle.h"
 #include <ctre/phoenix/unmanaged/Unmanaged.h>
 #include "CTREPDP.h"
 #include "frc/AnalogInput.h"                          // for AnalogInput
@@ -254,6 +255,20 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			cancoders_.push_back(nullptr);
 			cancoder_read_state_mutexes_.push_back(nullptr);
 			cancoder_read_thread_states_.push_back(nullptr);
+		}
+	}
+
+	for (size_t i = 0; i < this->num_candles_; i++) {
+		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
+			"Loading joint (CANdle) " << i << "=" << this->candle_names_[i] <<
+			(this->candle_local_updates_[i] ? " local" : " remote") << " update, " <<
+			(this->candle_local_hardwares_[i] ? "local" : "remote") << " hardware"
+		);
+
+		if (candle_local_hardwares_[i]) {
+			this->candles_.emplace_back(std::make_unique<ctre::phoenix::led::CANdle>(this->candle_can_ids_[i], this->candle_can_busses_[i]));
+		} else {
+			this->candles_.push_back(nullptr);
 		}
 	}
 
@@ -2566,6 +2581,185 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			else
 			{
 				cc.setClearStickyFaults();
+			}
+		}
+	}
+
+	this->write_tracer_.start_unique("candle");
+	for (size_t candle_id = 0; candle_id < this->num_candles_; candle_id++) {
+		if (!(this->candle_local_hardwares_[candle_id]))
+			continue;
+		
+		// Get candle, state, and command interfaces
+		auto &candle = this->candles_[candle_id];
+		auto &candle_state = this->candle_state_[candle_id];
+		auto &candle_command = this->candle_command_[candle_id];
+
+		// For each Command property, check if it changed
+		//  if it did change, update the actual CANdle, and update the state
+
+		// Brightness
+		double brightness;
+		if (candle_command.brightnessChanged(brightness)) {
+			if (safeTalonCall(
+				candle->ConfigBrightnessScalar(brightness),
+				"candle->ConfigBrightnessScalar",
+				candle_state.getDeviceID()
+			)) {
+				ROS_INFO_STREAM("CANdle " << this->candle_names_[candle_id]
+						<< " : Set brightness to " << brightness);
+				candle_state.setBrightness(brightness);
+			} else {
+				candle_command.resetBrightnessChanged();
+			}
+		}
+
+		// Show status LED when active
+		bool status_led_when_active;
+		if (candle_command.statusLEDWhenActiveChanged(status_led_when_active)) {
+			if (safeTalonCall(
+				candle->ConfigStatusLedState(!status_led_when_active),
+				"candle->ConfigStatusLedState",
+				candle_state.getDeviceID()
+			)) {
+				ROS_INFO_STREAM("CANdle " << this->candle_names_[candle_id]
+						<< " : Set status led when active to " << status_led_when_active);
+				candle_state.setStatusLEDWhenActive(status_led_when_active);
+			} else {
+				candle_command.resetStatusLEDWhenActiveChanged();
+			}
+		}
+
+		// Enabled
+		bool enabled;
+		if (candle_command.enabledChanged(enabled)) {
+			if (safeTalonCall(
+				candle->configV5Enabled(enabled),
+				"candle->configV5Enabled",
+				candle_state.getDeviceID()
+			)) {
+				ROS_INFO_STREAM("CANdle " << this->candle_names_[candle_id]
+						<< " : Set enabled to " << enabled);
+				candle_state.setEnabled(enabled);
+			} else {
+				candle_command.resetEnabledChanged();
+			}
+		}
+
+		// Stop animations
+		bool stop_animations;
+		if (candle_command.stopAnimationsChanged(stop_animations)) {
+			size_t max_animations = (size_t)candle->GetMaxSimultaneousAnimationCount();
+			for (size_t i = 0; i < max_animations; i++) {
+				candle->ClearAnimation(i);
+			}
+
+			candle_command.drainAnimations();
+			candle_state.setMaxAnimations(max_animations);
+			candle_state.clearAnimations();
+		}
+
+		// Animation
+		std::vector<hardware_interface::candle::Animation> candle_animations;
+		if (candle_command.animationsChanged(candle_animations)) {
+			for (hardware_interface::candle::Animation& candle_animation : candle_animations) {
+				// Clear any old animations
+				size_t group_max = (size_t)(candle_animation.start + candle_animation.count);
+				for (size_t led_id = candle_animation.start; led_id < group_max; led_id++) {
+					std::optional<hardware_interface::candle::LED> led = candle_state.getLED(led_id);
+					if (led.has_value() && led->type == hardware_interface::candle::LEDType::Animated) {
+						int animation_id = led->getAnimationID().value();
+						candle->ClearAnimation(animation_id);
+
+						hardware_interface::candle::Animation existing_animation = candle_state.getAnimation(animation_id).value();
+						candle->SetLEDs(
+							0,
+							0,
+							0,
+							0,
+							existing_animation.start,
+							existing_animation.count
+						);
+
+						candle_state.clearAnimation(animation_id);
+					}
+				}
+
+				// A pointer to the animation, after it gets converted
+				std::shared_ptr<ctre::phoenix::led::Animation> animation;
+
+				// Convert from Animation to the appropriate CTRE animation class
+				if (candle_animation.class_type == hardware_interface::candle::AnimationClass::BaseStandard) {
+					animation = candle_convert::convertBaseStandardAnimation(candle_animation);
+				} else {
+					animation = candle_convert::convertBaseTwoAnimation(candle_animation);
+				}
+
+				size_t slot = candle_state.getNextAnimationSlot();
+
+				if (safeTalonCall(
+					candle->Animate(*animation, slot),
+					"candle->Animate",
+					candle_state.getDeviceID()
+				)) {
+					ROS_INFO_STREAM("CANdle " << this->candle_names_[candle_id] << " : Changed its animation");
+					candle_state.setAnimation(candle_animation);
+				} else {
+					// If we fail to animate, just re-add the animation to the queue
+					candle_command.setAnimation(candle_animation);
+				}
+			}
+			candle_command.drainAnimations();
+		}
+
+		// LEDs
+		std::vector<hardware_interface::candle::LEDGroup> led_groups;
+		if (candle_command.ledGroupsChanged(led_groups)) {
+			candle_command.drainLEDGroups();
+			for (hardware_interface::candle::LEDGroup group : led_groups) {
+				size_t group_max = (size_t)(group.start + group.count);
+
+				for (size_t led_id = group.start; led_id < group_max; led_id++) {
+					std::optional<hardware_interface::candle::LED> led = candle_state.getLED(led_id);
+					if (led.has_value() && led->type == hardware_interface::candle::LEDType::Animated) {
+						int animation_id = led->getAnimationID().value();
+						candle->ClearAnimation(animation_id);
+
+						hardware_interface::candle::Animation animation = candle_state.getAnimation(animation_id).value();
+						candle->SetLEDs(
+							0,
+							0,
+							0,
+							0,
+							animation.start,
+							animation.count
+						);
+
+						candle_state.clearAnimation(animation_id);
+					}
+				}
+
+				if (safeTalonCall(
+					candle->SetLEDs(
+						group.colour.red,
+						group.colour.green,
+						group.colour.blue,
+						group.colour.white,
+						group.start,
+						group.count
+					),
+					"candle->SetLEDs",
+					candle_state.getDeviceID()
+				)) {
+					for (size_t led_id = group.start; led_id < group_max; led_id++) {
+						candle_state.setLED(led_id, group.colour);
+					}
+
+					ROS_INFO_STREAM("CANdle " << this->candle_names_[candle_id]
+							<< " : Changed colours");
+				} else {
+					candle_command.setLEDGroup(group);
+				}
 			}
 		}
 	}

@@ -62,14 +62,18 @@
 #include "frc_interfaces/pdp_state_interface.h"
 #include "frc_interfaces/robot_controller_interface.h"
 #include "remote_joint_interface/remote_joint_interface.h"
-#include "ros_control_boilerplate/cancoder_convert.h"
 #include "ros_control_boilerplate/ros_iterative_robot.h"
-#include "ros_control_boilerplate/talon_convert.h"
 #include "spark_max_interface/spark_max_command_interface.h"
-#include "talon_interface/cancoder_command_interface.h"
-#include "talon_interface/canifier_command_interface.h"
-#include "talon_interface/orchestra_command_interface.h"
-#include "talon_interface/talon_command_interface.h"
+#include "ctre_interfaces/cancoder_command_interface.h"
+#include "ctre_interfaces/canifier_command_interface.h"
+#include "ctre_interfaces/orchestra_command_interface.h"
+#include "ctre_interfaces/talon_command_interface.h"
+#include "ctre_interfaces/candle_command_interface.h"
+
+// Converters
+#include "ros_control_boilerplate/talon_convert.h"
+#include "ros_control_boilerplate/cancoder_convert.h"
+#include "ros_control_boilerplate/candle_convert.h"
 
 #include "ros_control_boilerplate/tracer.h"
 
@@ -196,6 +200,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		hardware_interface::RemoteMatchStateInterface          match_remote_state_interface_;
 		hardware_interface::as726x::AS726xStateInterface       as726x_state_interface_;
 		hardware_interface::as726x::RemoteAS726xStateInterface as726x_remote_state_interface_;
+		hardware_interface::candle::CANdleStateInterface		candle_state_interface_;
+		hardware_interface::candle::RemoteCANdleStateInterface	candle_remote_state_interface_;
                 hardware_interface::OrchestraStateInterface            talon_orchestra_state_interface_;
 
 		hardware_interface::JointCommandInterface          joint_command_interface_;
@@ -212,6 +218,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		hardware_interface::as726x::AS726xCommandInterface as726x_command_interface_;
 		hardware_interface::ImuSensorInterface             imu_interface_;
 		hardware_interface::RemoteImuSensorInterface       imu_remote_interface_;
+		hardware_interface::candle::CANdleCommandInterface		candle_command_interface_;
                 hardware_interface::OrchestraCommandInterface      talon_orchestra_command_interface_;
 
 		hardware_interface::RobotControllerStateInterface  robot_controller_state_interface_;
@@ -257,6 +264,13 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<bool>        cancoder_local_hardwares_;
 		std::vector<std::string> cancoder_can_busses_;
 		std::size_t              num_cancoders_{0};
+
+		std::vector<std::string> 	candle_names_;
+		std::vector<int>		 	candle_can_ids_;
+		std::vector<std::string>	candle_can_busses_;
+		std::vector<bool>		 	candle_local_updates_;
+		std::vector<bool>		 	candle_local_hardwares_;
+		std::size_t					num_candles_{0};
 
 		// Configuration
 		std::vector<std::string>                   spark_max_names_;
@@ -386,6 +400,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<hardware_interface::TalonHWState> talon_state_;
 		std::vector<hardware_interface::canifier::CANifierHWState> canifier_state_;
 		std::vector<hardware_interface::cancoder::CANCoderHWState> cancoder_state_;
+		std::vector<hardware_interface::candle::CANdleHWState> candle_state_;
 		std::vector<hardware_interface::SparkMaxHWState> spark_max_state_;
 		std::vector<double> brushless_vel_;
 
@@ -426,6 +441,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<hardware_interface::TalonHWCommand> talon_command_;
 		std::vector<hardware_interface::canifier::CANifierHWCommand> canifier_command_;
 		std::vector<hardware_interface::cancoder::CANCoderHWCommand> cancoder_command_;
+		std::vector<hardware_interface::candle::CANdleHWCommand> candle_command_;
 		std::vector<hardware_interface::PDHHWCommand> pdh_command_;
 		std::vector<hardware_interface::SparkMaxHWCommand> spark_max_command_;
 		std::vector<double> brushless_command_;
@@ -505,6 +521,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 				std::shared_ptr<std::mutex> mutex,
 				std::unique_ptr<Tracer> tracer,
 				double poll_frequency);
+		
+		std::vector<std::shared_ptr<ctre::phoenix::led::CANdle>> candles_;
 
 		std::vector<std::shared_ptr<frc::NidecBrushless>> nidec_brushlesses_;
 		std::vector<std::shared_ptr<frc::DigitalInput>> digital_inputs_;

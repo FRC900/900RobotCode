@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <mutex>
-#include "talon_interface/talon_state_interface.h"
+#include "ctre_interfaces/talon_state_interface.h"
 #include "state_handle/command_handle.h"
 
 namespace hardware_interface

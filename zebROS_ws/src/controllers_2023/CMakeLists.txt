@@ -17,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   std_srvs
   talon_controllers
-  talon_interface
+  ctre_interfaces
   ddynamic_reconfigure
 )
 
@@ -113,7 +113,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES controllers_2019
-#  CATKIN_DEPENDS controller_interface dynamic_reconfigure_wrapper hardware_interface message_generation pluginlib realtime_tools roscpp std_msgs talon_controllers talon_interface
+#  CATKIN_DEPENDS controller_interface dynamic_reconfigure_wrapper hardware_interface message_generation pluginlib realtime_tools roscpp std_msgs talon_controllers ctre_interfaces
 #  DEPENDS system_lib
 )
 

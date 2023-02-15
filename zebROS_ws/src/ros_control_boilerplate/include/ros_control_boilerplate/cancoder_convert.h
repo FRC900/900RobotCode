@@ -4,7 +4,7 @@
 #include <ctre/phoenix/sensors/SensorInitializationStrategy.h>
 #include <ctre/phoenix/sensors/SensorVelocityMeasPeriod.h>
 #include <ctre/phoenix/sensors/SensorTimeBase.h>
-#include "talon_interface/cancoder_state_interface.h"
+#include "ctre_interfaces/cancoder_state_interface.h"
 
 namespace cancoder_convert
 {

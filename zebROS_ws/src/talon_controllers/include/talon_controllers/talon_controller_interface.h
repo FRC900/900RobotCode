@@ -10,7 +10,7 @@
 #include <dynamic_reconfigure/server.h>
 #include <XmlRpcValue.h>
 
-#include "talon_interface/talon_command_interface.h"
+#include "ctre_interfaces/talon_command_interface.h"
 #include "talon_controllers/TalonConfigConfig.h"
 
 namespace talon_controllers

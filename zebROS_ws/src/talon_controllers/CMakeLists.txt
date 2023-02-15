@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   realtime_tools
   roscpp
-  talon_interface
+  ctre_interfaces
   talon_controller_msgs
   pluginlib
 )
@@ -24,7 +24,7 @@ catkin_package(
 	dynamic_reconfigure
 	message_runtime
     realtime_tools
-	talon_interface
+	ctre_interfaces
   INCLUDE_DIRS include
   #LIBRARIES ${PROJECT_NAME}
 )
