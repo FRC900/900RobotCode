@@ -68,7 +68,6 @@ public:
 		{
 			ROS_ERROR_STREAM("2023_intake_server : intake controller does not exist. exiting.");
 			result_.timed_out = true;
-			success = false;
 			as_.setAborted(result_);
 			return;
 		}

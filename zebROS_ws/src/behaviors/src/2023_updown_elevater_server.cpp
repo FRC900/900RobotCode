@@ -50,9 +50,9 @@ class ElevaterAction2023
     protected:
 
         ros::NodeHandle nh_;
-        ros::NodeHandle nh_params_;
         actionlib::SimpleActionServer<behavior_actions::Elevater2023Action> as_;
         actionlib::SimpleActionClient<behavior_actions::Fourber2023Action> ac_fourber_;
+        ros::NodeHandle nh_params_;
 
         ros::ServiceClient elevator_srv_;
         std::string action_name_;
@@ -255,7 +255,7 @@ class ElevaterAction2023
             else if (fourber_safety_state_ == SafteyState::SAFTEY_HIGH || fourber_safety_state_ == SafteyState::SAFTEY_LOW)
             {
                 fourber_goal.safety_position = behavior_actions::Fourber2023Goal::SAFETY_TO_NO_SAFETY;
-                fourber_safety_state_ == SafteyState::NONE;
+                fourber_safety_state_ = SafteyState::NONE;
             }
             else
             {
@@ -264,7 +264,7 @@ class ElevaterAction2023
 
             // have a meaningful message to send
             bool fourber_success = false;
-            if (!fourber_goal.safety_position == behavior_actions::Fourber2023Goal::NO_SAFETY)
+            if (!(fourber_goal.safety_position == behavior_actions::Fourber2023Goal::NO_SAFETY))
             {
                 auto fourbar_result = ac_fourber_.sendGoalAndWait(fourber_goal, ros::Duration(5), ros::Duration(3));
                 if (!(fourbar_result == actionlib::SimpleClientGoalState::SUCCEEDED))
@@ -346,7 +346,7 @@ class ElevaterAction2023
                 }
                 ElevaterERR("Can not find talong with name = " << "elevater_master");
             }
-            if (!elevater_master_idx == std::numeric_limits<size_t>::max())
+            if (!(elevater_master_idx == std::numeric_limits<size_t>::max())) 
             {
                 elev_cur_position_ = talon_state.position[elevater_master_idx];
             }

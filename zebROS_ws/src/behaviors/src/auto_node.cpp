@@ -58,7 +58,7 @@ class AutoNode {
 		ros::Subscriber enable_auto_in_teleop_sub_;
 		
 		// auto mode and state
-		int auto_mode_ = -1; //-1 if nothing selected
+		signed char auto_mode_ = -1; //-1 if nothing selected
 		std::vector<std::string> auto_steps_; //stores string of action names to do, read from the auto mode array in the config file
 		bool enable_teleop_ = false;
 		bool auto_started_ = false; //set to true when enter auto time period

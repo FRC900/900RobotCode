@@ -64,8 +64,8 @@ class FourberAction2023
     protected:
 
         ros::NodeHandle nh_;
-        ros::NodeHandle nh_params_;
         actionlib::SimpleActionServer<behavior_actions::Fourber2023Action> as_;
+        ros::NodeHandle nh_params_;
 
         double safety_high_distance_;
         double safety_low_distance_;
@@ -337,7 +337,7 @@ class FourberAction2023
             // case where we have move back to where we were
             if (goal->safety_position == fourber_ns::SAFETY_TO_NO_SAFETY)
             {
-                saftey_state_ == SafteyState::NONE;
+                saftey_state_ = SafteyState::NONE;
                 controllers_2023_msgs::FourBarSrv go_to_previous_req;
                 go_to_previous_req.request.position = previous_setpoint_;
                 // should be good to hardcode this because the only time we want this to be true is when we are intaking which is in a restricted zone
@@ -441,7 +441,7 @@ class FourberAction2023
                 }
                 FourberERR("Can not find talong with name = " << "four_bar_leader");
             }
-            if (!fourbar_master_idx == std::numeric_limits<size_t>::max())
+            if (!(fourbar_master_idx == std::numeric_limits<size_t>::max()))
             {
                 fourbar_cur_setpoint_ = talon_state.set_point[fourbar_master_idx];
                 fourbar_cur_position_ = talon_state.position[fourbar_master_idx];
