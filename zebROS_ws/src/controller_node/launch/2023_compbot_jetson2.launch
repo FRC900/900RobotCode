@@ -14,10 +14,7 @@
 	<include file="$(find controller_node)/launch/record_2023_compbot.launch" if="$(arg record)" />
 
 	<include file="$(find tf_object_detection)/launch/detection.launch">
-		<group if="$(eval arg('hw_or_sim')=='hw')">
-			<arg name="input_type" value="live_camera" />
-		</group>
-
+		<arg name="input_type" value="live_camera" if="$(eval hw_or_sim == 'hw')"/>
 	</include>
 	
 	<!-- 
