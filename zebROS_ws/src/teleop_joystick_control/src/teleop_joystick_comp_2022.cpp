@@ -44,8 +44,6 @@
 
 #include <imu_zero/ImuZeroAngle.h>
 
-#include <math.h>
-
 std::unique_ptr<TeleopCmdVel<teleop_joystick_control::TeleopJoystickComp2022Config>> teleop_cmd_vel;
 
 bool diagnostics_mode = false;

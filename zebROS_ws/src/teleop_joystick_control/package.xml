@@ -17,6 +17,7 @@
   <depend>control_msgs</depend>
   <depend>controllers_2019_msgs</depend>
   <depend>controllers_2022_msgs</depend>
+  <depend>field_obj</depend>
   <depend>imu_zero</depend>
   <depend>frc_msgs</depend>
   <depend>std_srvs</depend>

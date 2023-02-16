@@ -37,8 +37,6 @@
 
 #include <imu_zero/ImuZeroAngle.h>
 
-#include <math.h>
-#include <angles/angles.h>
 
 std::unique_ptr<TeleopCmdVel<teleop_joystick_control::TeleopJoystickComp2023Config>> teleop_cmd_vel;
 
