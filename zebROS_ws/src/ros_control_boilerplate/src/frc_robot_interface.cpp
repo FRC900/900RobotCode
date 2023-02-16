@@ -36,12 +36,12 @@
    Desc:   Helper ros_control hardware interface that loads configurations
 */
 #include <ros/ros.h>
+#include <angles/angles.h>
 #include <ros_control_boilerplate/frc_robot_interface.h>
 #include "hardware_interface/joint_mode_interface.h"  // for JointCommandModes
-#include <ext/alloc_traits.h>                         // for __alloc_traits<...
 #ifdef __linux__
 #include <pthread.h>                                  // for pthread_self
-#include <sched.h>                                    // for sched_get_prior...
+//#include <sched.h>                                    // for sched_get_prior...
 #endif
 #include <algorithm>                                  // for max, all_of
 #include <cmath>                                      // for M_PI
@@ -49,7 +49,7 @@
 #include <cstring>                                    // for size_t, strerror
 #include <cstdint>                                    // for uint8_t, int32_t
 #include <iostream>                                   // for operator<<, bas...
-#include "AHRS.h"                                     // for AHRS
+//#include "AHRS.h"                                     // for AHRS
 #include "ctre/phoenix/motorcontrol/can/WPI_TalonFX.h"
 #include "ctre/phoenix/motorcontrol/can/WPI_TalonSRX.h"
 #include "ctre/phoenix/motorcontrol/can/WPI_VictorSPX.h"
@@ -74,7 +74,7 @@
 #include "hal/HALBase.h"                              // for HAL_GetErrorMes...
 #include "hal/Power.h"                                // for HAL_GetVinVoltage
 #include "REVPDH.h"
-#include "tf2/LinearMath/Quaternion.h"                // for Quaternion
+//#include "tf2/LinearMath/Quaternion.h"                // for Quaternion
 #include <FRC_NetworkCommunication/FRCComm.h>
 
 #include "ros_control_boilerplate/ros_math_shared.hpp"
@@ -124,6 +124,7 @@ FRCRobotInterface::~FRCRobotInterface()
 	};
 	join_threads(ctre_mc_read_threads_);
 	join_threads(cancoder_read_threads_);
+	join_threads(pigeon2_read_threads_);
 	join_threads(pcm_threads_);
 	join_threads(pdp_threads_);
 	join_threads(pdh_threads_);
@@ -269,6 +270,33 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 			this->candles_.emplace_back(std::make_unique<ctre::phoenix::led::CANdle>(this->candle_can_ids_[i], this->candle_can_busses_[i]));
 		} else {
 			this->candles_.push_back(nullptr);
+		}
+	}
+
+	for (size_t i = 0; i < num_pigeon2s_; i++)
+	{
+		ROS_INFO_STREAM_NAMED("frcrobot_hw_interface",
+							  "Loading joint " << i << "=" << pigeon2_names_[i] <<
+							  (pigeon2_local_updates_[i] ? " local" : " remote") << " update, " <<
+							  (pigeon2_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
+							  " at CAN id " << pigeon2_can_ids_[i] << " on CAN bus \"" << pigeon2_can_busses_[i] << "\"");
+
+		if (pigeon2_local_hardwares_[i])
+		{
+			pigeon2s_.emplace_back(std::make_shared<ctre::phoenix::sensors::Pigeon2>(pigeon2_can_ids_[i], pigeon2_can_busses_[i]));
+			pigeon2_read_state_mutexes_.emplace_back(std::make_shared<std::mutex>());
+			pigeon2_read_thread_states_.emplace_back(std::make_shared<hardware_interface::pigeon2::Pigeon2HWState>(pigeon2_can_ids_[i]));
+			pigeon2_read_threads_.emplace_back(std::thread(&FRCRobotInterface::pigeon2_read_thread, this,
+												pigeon2s_[i], pigeon2_read_thread_states_[i],
+												pigeon2_read_state_mutexes_[i],
+												std::make_unique<Tracer>("pigeon2_read_" + pigeon2_names_[i] + " " + root_nh.getNamespace()),
+												pigeon2_read_hz_));
+		}
+		else
+		{
+			pigeon2s_.push_back(nullptr);
+			pigeon2_read_state_mutexes_.push_back(nullptr);
+			pigeon2_read_thread_states_.push_back(nullptr);
 		}
 	}
 
@@ -646,6 +674,9 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw
 	if(! param_nh.param("canifier_read_hz", canifier_read_hz_, canifier_read_hz_)) {
 		ROS_ERROR("Failed to read canifier_read_hz in frc_robot_interface");
 	}
+	if(! param_nh.param("pigeon2_read_hz", pigeon2_read_hz_, pigeon2_read_hz_)) {
+		ROS_ERROR("Failed to read pigeon2_read_hz in frc_robot_interface");
+	}
 	if(! param_nh.param("spark_max_read_hz", spark_max_read_hz_, spark_max_read_hz_)) {
 		ROS_ERROR("Failed to read spark_max_read_hz in frc_robot_interface");
 	}
@@ -685,6 +716,7 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw
 			"\tctre_mc_read : " << ctre_mc_read_hz_ << std::endl <<
 			"\tcancoder_read : " << cancoder_read_hz_ << std::endl <<
 			"\tcanifier_read : " << canifier_read_hz_ << std::endl <<
+			"\tpigeon2_read : " << pigeon2_read_hz_ << std::endl <<
 			"\tpcm_read : " << pcm_read_hz_ << std::endl <<
 			"\tpdh_read : " << pdh_read_hz_ << std::endl <<
 			"\tpdp_read : " << pdp_read_hz_ << std::endl <<
@@ -1093,12 +1125,61 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 			cs.setStickyFaults(crts->getStickyFaults());
 		}
 	}
+
+	read_tracer_.start_unique("pigeon2");
+	for (size_t joint_id = 0; joint_id < num_pigeon2s_; ++joint_id)
+	{
+		if (pigeon2_local_hardwares_[joint_id])
+		{
+			// Fill in the full pigeon2 state using the last
+			// data read from the pigeon2 read thread for this hardware
+			{
+				std::unique_lock<std::mutex> l(*pigeon2_read_state_mutexes_[joint_id], std::try_to_lock);
+				if (!l.owns_lock())
+				{
+					continue;
+				}
+				pigeon2_state_[joint_id] = *pigeon2_read_thread_states_[joint_id];
+			}
+
+			// also, fill in the standard ROS imu state info
+			// for this.  We really only care about orientation,
+			// but do a best effort for the rest
+			size_t i = num_navX_ + joint_id;
+			const auto ps = &pigeon2_state_[joint_id];
+
+			const auto q = ps->get6dQuatention();
+			imu_orientations_[i][3] = q[0];
+			imu_orientations_[i][0] = q[1];
+			imu_orientations_[i][1] = q[2];
+			imu_orientations_[i][2] = q[3];
+
+			auto from_q2_14 = [](uint16_t in)
+			{
+				double ret = in >> 14;
+				ret += (in & 0x3fff) / static_cast<double>(1U << 14);
+
+				return in / 9.80665;
+			};
+			const auto biased_accelerometer = ps->getBiasedAccelerometer();
+			imu_linear_accelerations_[i][0] = from_q2_14(biased_accelerometer[0]);
+			imu_linear_accelerations_[i][1] = from_q2_14(biased_accelerometer[1]);
+			imu_linear_accelerations_[i][2] = from_q2_14(biased_accelerometer[2]);
+
+			// TODO - figure out how to read this
+			imu_angular_velocities_[i][0] = 0;
+			imu_angular_velocities_[i][1] = 0;
+			imu_angular_velocities_[i][2] = 0;
+		}
+	}
+
 	read_tracer_.start_unique("nidec");
 	for (size_t i = 0; i < num_nidec_brushlesses_; i++)
 	{
 		if (nidec_brushless_local_updates_[i])
 			brushless_vel_[i] = nidec_brushlesses_[i]->Get();
 	}
+
 	read_tracer_.start_unique("digital in");
 	for (size_t i = 0; i < num_digital_inputs_; i++)
 	{
@@ -2760,6 +2841,230 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 				} else {
 					candle_command.setLEDGroup(group);
 				}
+			}
+		}
+	}
+
+	write_tracer_.start_unique("pigeon2");
+	for (size_t joint_id = 0; joint_id < num_pigeon2s_; ++joint_id)
+	{
+		if (!pigeon2_local_hardwares_[joint_id])
+			continue;
+
+		// Save some typing by making references to commonly
+		// used variables
+		auto &pigeon2 = pigeon2s_[joint_id];
+		auto &ps = pigeon2_state_[joint_id];
+		auto &pc = pigeon2_command_[joint_id];
+		if (pigeon2->HasResetOccurred())
+		{
+			pc.resetMountPoseAxis();
+			pc.resetMountPoseRPY();
+			pc.resetXAxisGyroError();
+			pc.resetYAxisGyroError();
+			pc.resetZAxisGyroError();
+			pc.resetCompassEnable();
+			pc.resetDisableTemperatureCompensation();
+			pc.resetDisableNoMotionCalibration();
+			pc.resetSetYaw();
+			pc.resetAddYaw();
+		}
+		hardware_interface::pigeon2::AxisDirection forward;
+		hardware_interface::pigeon2::AxisDirection up;
+		ctre::phoenix::sensors::AxisDirection forward_phoenix;
+		ctre::phoenix::sensors::AxisDirection up_phoenix;
+		if (pc.mountPoseAxisChanged(forward, up) &&
+			(forward != hardware_interface::pigeon2::AxisDirection::Undefined) &&
+		    (up != hardware_interface::pigeon2::AxisDirection::Undefined) &&
+			pigeon2_convert_.axisDirection(forward, forward_phoenix) &&
+			pigeon2_convert_.axisDirection(up, up_phoenix) )
+		{
+			if (safeTalonCall(pigeon2->ConfigMountPose(forward_phoenix, up_phoenix, configTimeoutMs), "pigeon2->ConfigMountPose(axis)", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pigeon2 " << pigeon2_names_[joint_id] << " : ConfigMountPose(axis) set");
+				ps.setMountPoseForward(forward);
+				ps.setMountPoseUp(up);
+				ps.setMountPoseRoll(0);
+				ps.setMountPosePitch(0);
+				ps.setMountPoseYaw(0);
+			}
+			else
+			{
+				pc.resetMountPoseAxis();
+			}
+		}
+
+		double roll;
+		double pitch;
+		double yaw;
+		if (pc.mountPoseRPYChanged(roll, pitch, yaw))
+		{
+			if (safeTalonCall(pigeon2->ConfigMountPose(roll, pitch, yaw, configTimeoutMs), "pigeon2->ConfigMountPose(rpy)", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pigeon2 " << pigeon2_names_[joint_id] << " : ConfigMountPose(rpy) set");
+				ps.setMountPoseForward(hardware_interface::pigeon2::AxisDirection::Undefined);
+				ps.setMountPoseUp(hardware_interface::pigeon2::AxisDirection::Undefined);
+				ps.setMountPoseRoll(angles::to_degrees(roll));
+				ps.setMountPosePitch(angles::to_degrees(pitch));
+				ps.setMountPoseYaw(angles::to_degrees(yaw));
+			}
+			else
+			{
+				pc.resetMountPoseRPY();
+			}
+		}
+
+		double x_axis_gyro_error;
+		if (pc.xAxisGyroErrorChanged(x_axis_gyro_error))
+		{
+			if (safeTalonCall(pigeon2->ConfigXAxisGyroError(x_axis_gyro_error), "pigeon2->ConfigXAxisGyroError()", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pogeon2 " << pigeon2_names_[joint_id] << " ConfigXAxisGyroError = " << x_axis_gyro_error);
+				ps.setXAxisGyroError(angles::to_degrees(x_axis_gyro_error));
+			}
+			else
+			{
+				pc.resetXAxisGyroError();
+			}
+		}
+		double y_axis_gyro_error;
+		if (pc.yAxisGyroErrorChanged(y_axis_gyro_error))
+		{
+			if (safeTalonCall(pigeon2->ConfigYAxisGyroError(y_axis_gyro_error), "pigeon2->ConfigYAxisGyroError()", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pogeon2 " << pigeon2_names_[joint_id] << " ConfigYAxisGyroError = " << y_axis_gyro_error);
+				ps.setYAxisGyroError(angles::to_degrees(y_axis_gyro_error));
+			}
+			else
+			{
+				pc.resetYAxisGyroError();
+			}
+		}
+		double z_axis_gyro_error;
+		if (pc.zAxisGyroErrorChanged(z_axis_gyro_error))
+		{
+			if (safeTalonCall(pigeon2->ConfigXAxisGyroError(z_axis_gyro_error), "pigeon2->ConfigZAxisGyroError()", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pogeon2 " << pigeon2_names_[joint_id] << " ConfigZAxisGyroError = " << z_axis_gyro_error);
+				ps.setZAxisGyroError(angles::to_degrees(z_axis_gyro_error));
+			}
+			else
+			{
+				pc.resetZAxisGyroError();
+			}
+		}
+
+		bool compass_enable;
+		if (pc.compassEnableChanged(compass_enable))
+		{
+			if (safeTalonCall(pigeon2->ConfigEnableCompass(compass_enable, configTimeoutMs), "pigeon2->ConfigEnableCommpass", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pigeon2 " << pigeon2_names_[joint_id] << " ConfigEnableCompass = " << compass_enable);
+				ps.setCompassEnable(compass_enable);
+			}
+			else
+			{
+				pc.resetCompassEnable();
+			}
+		}
+
+		bool disable_temperature_compensation;
+		if (pc.disableTemperatureCompensationChanged(disable_temperature_compensation))
+		{
+			if (safeTalonCall(pigeon2->ConfigDisableTemperatureCompensation(disable_temperature_compensation, configTimeoutMs), "pigeon2->ConfigDisableTemperatureCompensation", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pigeon2 " << pigeon2_names_[joint_id] << " ConfigDisableTemperatureCompensation = " << disable_temperature_compensation);
+				ps.setDisableTemperatureCompensation(disable_temperature_compensation);
+			}
+			else
+			{
+				pc.resetDisableTemperatureCompensation();
+			}
+		}
+		bool disable_no_motion_compensation;
+		if (pc.disableNoMotionCalibrationChanged(disable_no_motion_compensation))
+		{
+			if (safeTalonCall(pigeon2->ConfigDisableNoMotionCalibration(disable_no_motion_compensation, configTimeoutMs), "pigeon2->ConfigDisableNoMotionCalibration", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pigeon2 " << pigeon2_names_[joint_id] << " ConfigDisableNoMotionCalibration = " << disable_no_motion_compensation);
+				ps.setDisableNoMotionCalibration(disable_no_motion_compensation);
+			}
+			else
+			{
+				pc.resetDisableNoMotionCalibration();
+			}
+		}
+		
+		if (pc.zeroGyroBiasNowChanged())
+		{
+			if (safeTalonCall(pigeon2->ZeroGyroBiasNow(), "pigeon2->ZeroGyroBiasNow()", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pigeon2 " << pigeon2_names_[joint_id] << " ZeroGyroBiasNow");
+			}
+			else
+			{
+				pc.setZeroGyroBiasNow();
+			}
+		}
+		if (pc.clearStickyFaultsChanged())
+		{
+			if (safeTalonCall(static_cast<ctre::phoenix::ErrorCode>(pigeon2->ClearStickyFaults(timeoutMs)), "pigeon2->SetYawToCompass()", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pigeon2 " << pigeon2_names_[joint_id] << " ClearStickyFaults");
+			}
+			else
+			{
+				pc.setClearStickyFaults();
+			}
+		}
+
+		double set_yaw;
+		if (pc.setYawChanged(set_yaw))
+		{
+			if (safeTalonCall(static_cast<ctre::phoenix::ErrorCode>(pigeon2->SetYaw(angles::to_degrees(set_yaw), timeoutMs)), "pigeon2->SetYaw()", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pigeon2 " << pigeon2_names_[joint_id] << " SetYaw to " << set_yaw);
+			}
+			else
+			{
+				pc.resetSetYaw();
+			}
+		}
+
+		double add_yaw;
+		if (pc.addYawChanged(add_yaw))
+		{
+			if (safeTalonCall(static_cast<ctre::phoenix::ErrorCode>(pigeon2->AddYaw(angles::to_degrees(add_yaw), timeoutMs)), "pigeon2->AddYaw()", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pigeon2 " << pigeon2_names_[joint_id] << " AddYaw to " << add_yaw);
+			}
+			else
+			{
+				pc.resetAddYaw();
+			}
+		}
+
+		if (pc.setYawToCompassChanged())
+		{
+			if (safeTalonCall(static_cast<ctre::phoenix::ErrorCode>(pigeon2->SetYawToCompass(timeoutMs)), "pigeon2->SetYawToCompass()", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pigeon2 " << pigeon2_names_[joint_id] << " SetYawToCompass");
+			}
+			else
+			{
+				pc.setSetYawToCompass();
+			}
+		}
+
+		if (pc.setAccumZAngleChanged())
+		{
+			if (safeTalonCall(static_cast<ctre::phoenix::ErrorCode>(pigeon2->SetAccumZAngle(timeoutMs)), "pigeon2->SetAccumZAngle()", ps.getDeviceNumber()))
+			{
+				ROS_INFO_STREAM("Pigeon2 " << pigeon2_names_[joint_id] << " SetAccumZAngle");
+			}
+			else
+			{
+				pc.setSetAccumZAngle();
 			}
 		}
 	}

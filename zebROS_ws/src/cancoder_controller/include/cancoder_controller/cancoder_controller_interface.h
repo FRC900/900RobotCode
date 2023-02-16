@@ -112,6 +112,7 @@ class CANCoderCIParams : public ddr_updater::DDRUpdater
 					<< " didn't match list of valid types");
 			return false;
 		}
+
 };
 class CANCoderControllerInterface
 {

@@ -37,8 +37,10 @@
            For a more detailed simulation example, see sim_hw_interface.h
 */
 
-#pragma once
+#ifndef INC_FRCROBOT_SIM_INTERFACE
+#define INC_FRCROBOT_SIM_INTERFACE
 
+#include <nav_msgs/Odometry.h>
 #include <sensor_msgs/Joy.h>
 #include "ctre/phoenix/motorcontrol/can/TalonFX.h"
 #include "ctre/phoenix/motorcontrol/can/TalonSRX.h"
@@ -80,6 +82,7 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 		std::vector<ros::Subscriber> joystick_subs_;
         void match_data_callback(const frc_msgs::MatchSpecificData &match_data);
 		void joystickCallback(const sensor_msgs::JoyConstPtr &msg, int32_t joystick_num);
+		void imuOdomCallback(const nav_msgs::OdometryConstPtr &msg, int32_t imu_num);
 		bool evaluateDigitalInput(ros_control_boilerplate::LineBreakSensors::Request &req, ros_control_boilerplate::LineBreakSensors::Response &res);
 
 		void setSimCollection(
@@ -97,6 +100,11 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		//std::unique_ptr<frc::sim::FlywheelSim> shooter_sim_;
 		size_t shooter_sim_joint_index_;
+
+		std::vector<std::shared_ptr<std::atomic<double>>> imu_sim_yaws_;
+		std::vector<ros::Subscriber> imu_sim_subs_;
 };  // class
 
 }  // namespace
+
+#endif

@@ -10,14 +10,9 @@
 #include <path_follower_msgs/holdPositionAction.h>
 #include <path_follower_msgs/holdPositionGoal.h>
 #include <path_follower_msgs/holdPositionFeedback.h>
-#include <std_msgs/Float64.h>
-#include <behaviors/interpolating_map.h>
-#include <XmlRpcValue.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <geometry_msgs/PoseWithCovariance.h>
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2_ros/transform_listener.h>
-#include <tf2_ros/transform_broadcaster.h>
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include <angles/angles.h>
 #include "sensor_msgs/Imu.h"

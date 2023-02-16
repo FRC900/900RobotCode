@@ -16,7 +16,6 @@
 #include <path_follower_msgs/PathAction.h>
 #include <path_follower_msgs/PathFeedback.h>
 #include <string>
-#include <thread>
 #include <atomic>
 #include <functional>
 #include <utility>

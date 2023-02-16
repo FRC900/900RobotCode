@@ -14,13 +14,13 @@
   <build_depend>message_generation</build_depend>
 
   <depend>roscpp</depend>
+  <depend>angles</depend>
   <depend>as726x_interface</depend>
   <depend>cmake_modules</depend>
   <depend>hardware_interface</depend>
   <depend>controller_manager</depend>
   <depend>control_msgs</depend>
   <depend>trajectory_msgs</depend>
-  <depend>actionlib</depend>
   <depend>urdf</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
@@ -33,6 +33,7 @@
   <depend>frc_msgs</depend>
   <depend>remote_joint_interface</depend>
   <depend>periodic_interval_counter</depend>
+  <depend>pigeon2_interface</depend>
 
   <export>
   </export>

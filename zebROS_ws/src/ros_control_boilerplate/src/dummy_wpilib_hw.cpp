@@ -344,7 +344,6 @@ int64_t HAL_Report(int32_t resource, int32_t instanceNumber,
 	return -1;
 }
 
-#include "frc/DSControlWord.h"
 static HAL_ControlWord HALSIM_controlword = {0,0,0,0,0,0,0};
 int32_t HAL_GetControlWord(HAL_ControlWord *controlword)
 {

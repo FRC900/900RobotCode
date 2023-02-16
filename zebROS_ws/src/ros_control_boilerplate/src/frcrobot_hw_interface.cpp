@@ -817,6 +817,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 			cw.eStop = match_data_.isEStopped();
 			cw.fmsAttached = match_data_.isFMSAttached();
 			cw.dsAttached = match_data_.isDSAttached();
+			cw.control_reserved = 0;
 			HALSIM_SetControlWord(cw);
 
 			// For spark max - move to frc_robot_interface if possible

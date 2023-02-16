@@ -2,6 +2,38 @@
 
 namespace ros_control_boilerplate
 {
+void FRCRobotInterface::createIMUInterface(size_t i, const std::string &name, const std::string &frame_id, bool local)
+{
+		// Create state interface for the given IMU
+		// and point it to the data stored in the
+		// corresponding imu arrays
+		hardware_interface::ImuSensorHandle::Data imu_data;
+		imu_data.name = name;
+		imu_data.frame_id = frame_id;
+		for (size_t j = 0; j < 3; j++)
+		{
+			imu_orientations_[i][j] = 0;
+			imu_angular_velocities_[i][j] = 0;
+			imu_linear_accelerations_[i][j] = 0;
+		}
+		imu_orientations_[i][3] = 1;
+		imu_data.orientation = &imu_orientations_[i][0];
+		imu_data.orientation_covariance = &imu_orientation_covariances_[i][0];
+		imu_data.angular_velocity = &imu_angular_velocities_[i][0];
+		imu_data.angular_velocity_covariance = &imu_angular_velocity_covariances_[i][0];
+		imu_data.linear_acceleration = &imu_linear_accelerations_[i][0];
+		imu_data.linear_acceleration_covariance = &imu_linear_acceleration_covariances_[i][0];
+
+		hardware_interface::ImuSensorHandle imuh(imu_data);
+		imu_interface_.registerHandle(imuh);
+
+		if (!local)
+		{
+			hardware_interface::ImuWritableSensorHandle ish(imu_data);
+			imu_remote_interface_.registerHandle(ish);
+		}
+
+}
 
 void FRCRobotInterface::createInterfaces(void)
 {
@@ -126,6 +158,35 @@ void FRCRobotInterface::createInterfaces(void)
 		{
 			hardware_interface::candle::CANdleWritableStateHandle cwsh(candle_names_[i], &candle_state_[i]); /// writing directly to state?
 			candle_remote_state_interface_.registerHandle(cwsh);
+		}
+	}
+
+	num_pigeon2s_ = pigeon2_names_.size();
+	// Create vectors of the correct size for
+	// pigeon2 HW state and commands
+	pigeon2_command_.resize(num_pigeon2s_);
+
+	for (size_t i = 0; i < num_pigeon2s_; i++)
+	{
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering Pigeon2 Interface for : " << pigeon2_names_[i] << " at hw ID " << pigeon2_can_ids_[i]);
+		pigeon2_state_.emplace_back(hardware_interface::pigeon2::Pigeon2HWState(pigeon2_can_ids_[i]));
+	}
+	for (size_t i = 0; i < num_pigeon2s_; i++)
+	{
+		// Create state interface for the given Pigeon2
+		// and point it to the data stored in the
+		// corresponding pigeon2_state array entry
+		hardware_interface::pigeon2::Pigeon2StateHandle psh(pigeon2_names_[i], &pigeon2_state_[i]);
+		pigeon2_state_interface_.registerHandle(psh);
+
+		// Do the same for a command interface for
+		// the same Pigeon2
+		hardware_interface::pigeon2::Pigeon2CommandHandle pch(psh, &pigeon2_command_[i]);
+		pigeon2_command_interface_.registerHandle(pch);
+		if (!pigeon2_local_updates_[i])
+		{
+			hardware_interface::pigeon2::Pigeon2WritableStateHandle pwsh(pigeon2_names_[i], &pigeon2_state_[i]); /// writing directly to state?
+			pigeon2_remote_state_interface_.registerHandle(pwsh);
 		}
 	}
 
@@ -362,45 +423,23 @@ void FRCRobotInterface::createInterfaces(void)
 	// data sized to hold results from all IMU
 	// hardware rather than just navX size
 	num_navX_ = navX_names_.size();
-	imu_orientations_.resize(num_navX_);
-	imu_orientation_covariances_.resize(num_navX_);
-	imu_angular_velocities_.resize(num_navX_);
-	imu_angular_velocity_covariances_.resize(num_navX_);
-	imu_linear_accelerations_.resize(num_navX_);
-	imu_linear_acceleration_covariances_.resize(num_navX_);
+	imu_orientations_.resize(num_navX_ + num_pigeon2s_);
+	imu_orientation_covariances_.resize(num_navX_ + num_pigeon2s_);
+	imu_angular_velocities_.resize(num_navX_ + num_pigeon2s_);
+	imu_angular_velocity_covariances_.resize(num_navX_ + num_pigeon2s_);
+	imu_linear_accelerations_.resize(num_navX_ + num_pigeon2s_);
+	imu_linear_acceleration_covariances_.resize(num_navX_ + num_pigeon2s_);
 
 	for (size_t i = 0; i < num_navX_; i++)
 	{
-		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering navX interface for : " << navX_names_[i] << " at id " << navX_ids_[i]);
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering IMU navX interface for : " << navX_names_[i] << " at id " << navX_ids_[i]);
+		createIMUInterface(i, navX_names_[i], navX_frame_ids_[i], navX_locals_[i]);
+	}
 
-		// Create state interface for the given IMU
-		// and point it to the data stored in the
-		// corresponding imu arrays
-		hardware_interface::ImuSensorHandle::Data imu_data;
-		imu_data.name = navX_names_[i];
-		imu_data.frame_id = navX_frame_ids_[i];
-		for (size_t j = 0; j < 3; j++)
-		{
-			imu_orientations_[i][j] = 0;
-			imu_angular_velocities_[i][j] = 0;
-			imu_linear_accelerations_[i][j] = 0;
-		}
-		imu_orientations_[i][3] = 1;
-		imu_data.orientation = &imu_orientations_[i][0];
-		imu_data.orientation_covariance = &imu_orientation_covariances_[i][0];
-		imu_data.angular_velocity = &imu_angular_velocities_[i][0];
-		imu_data.angular_velocity_covariance = &imu_angular_velocity_covariances_[i][0];
-		imu_data.linear_acceleration = &imu_linear_accelerations_[i][0];
-		imu_data.linear_acceleration_covariance = &imu_linear_acceleration_covariances_[i][0];
-
-		hardware_interface::ImuSensorHandle imuh(imu_data);
-		imu_interface_.registerHandle(imuh);
-
-		if (!navX_locals_[i])
-		{
-			hardware_interface::ImuWritableSensorHandle ish(imu_data);
-			imu_remote_interface_.registerHandle(ish);
-		}
+	for (size_t i = 0; i < num_pigeon2s_; i++)
+	{
+		ROS_INFO_STREAM_NAMED(name_, "FRCRobotInterface: Registering IMU pigeon2 interface for : " << pigeon2_names_[i] << " at CAN id " << pigeon2_can_ids_[i]);
+		createIMUInterface(i + num_navX_, pigeon2_names_[i], pigeon2_frame_ids_[i], pigeon2_local_hardwares_[i]);
 	}
 
 	num_analog_inputs_ = analog_input_names_.size();
@@ -646,6 +685,8 @@ void FRCRobotInterface::createInterfaces(void)
 	registerInterface(&cancoder_command_interface_);
 	registerInterface(&candle_state_interface_);
 	registerInterface(&candle_command_interface_);
+	registerInterface(&pigeon2_state_interface_);
+	registerInterface(&pigeon2_command_interface_);
 	registerInterface(&spark_max_state_interface_);
 	registerInterface(&spark_max_command_interface_);
 	registerInterface(&joint_state_interface_);

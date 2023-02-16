@@ -206,7 +206,6 @@ return true;
 }  // namespace wpi
 
 #include "networktables/NetworkTable.h"
-#include "networktables/NetworkTableEntry.inc"
 namespace nt
 {
 

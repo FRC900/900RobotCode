@@ -61,7 +61,10 @@
 #include "frc_interfaces/pdh_command_interface.h"
 #include "frc_interfaces/pdp_state_interface.h"
 #include "frc_interfaces/robot_controller_interface.h"
+#include "pigeon2_interface/pigeon2_command_interface.h"
 #include "remote_joint_interface/remote_joint_interface.h"
+#include "ros_control_boilerplate/cancoder_convert.h"
+#include "ros_control_boilerplate/pigeon2_convert.h"
 #include "ros_control_boilerplate/ros_iterative_robot.h"
 #include "spark_max_interface/spark_max_command_interface.h"
 #include "ctre_interfaces/cancoder_command_interface.h"
@@ -88,6 +91,7 @@
 
 // CTRE
 #include <ctre/phoenix/motorcontrol/IMotorController.h>
+#include <ctre/phoenix/sensors/Pigeon2.h>
 
 // Use forward declarations to avoid including a whole bunch of
 // WPIlib headers we don't care about - this speeds up the build process
@@ -185,6 +189,8 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		hardware_interface::canifier::RemoteCANifierStateInterface canifier_remote_state_interface_;
 		hardware_interface::cancoder::CANCoderStateInterface   cancoder_state_interface_;
 		hardware_interface::cancoder::RemoteCANCoderStateInterface cancoder_remote_state_interface_;
+		hardware_interface::pigeon2::Pigeon2StateInterface     pigeon2_state_interface_;
+		hardware_interface::pigeon2::RemotePigeon2StateInterface pigeon2_remote_state_interface_;
 		hardware_interface::SparkMaxStateInterface             spark_max_state_interface_;
 		hardware_interface::RemoteSparkMaxStateInterface       spark_max_remote_state_interface_;
 		hardware_interface::PCMStateInterface	               pcm_state_interface_;
@@ -212,6 +218,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		hardware_interface::TalonCommandInterface          talon_command_interface_;
 		hardware_interface::canifier::CANifierCommandInterface canifier_command_interface_;
 		hardware_interface::cancoder::CANCoderCommandInterface cancoder_command_interface_;
+		hardware_interface::pigeon2::Pigeon2CommandInterface pigeon2_command_interface_;
 		hardware_interface::SparkMaxCommandInterface       spark_max_command_interface_;
 		hardware_interface::PDHCommandInterface            pdh_command_interface_;
 		hardware_interface::PHCommandInterface             ph_command_interface_;
@@ -240,6 +247,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 														 const std::string &joint_name);
 		void readConfig(ros::NodeHandle rpnh);
 		void createInterfaces(void);
+		void createIMUInterface(size_t i, const std::string &name, const std::string &frame_id, bool local);
 		bool initDevices(ros::NodeHandle root_nh);
 
 		// Configuration
@@ -271,6 +279,14 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<bool>		 	candle_local_updates_;
 		std::vector<bool>		 	candle_local_hardwares_;
 		std::size_t					num_candles_{0};
+
+		std::vector<std::string> pigeon2_names_;
+		std::vector<std::string> pigeon2_frame_ids_;
+		std::vector<int>         pigeon2_can_ids_;
+		std::vector<bool>        pigeon2_local_updates_;
+		std::vector<bool>        pigeon2_local_hardwares_;
+		std::vector<std::string> pigeon2_can_busses_;
+		std::size_t              num_pigeon2s_{0};
 
 		// Configuration
 		std::vector<std::string>                   spark_max_names_;
@@ -401,6 +417,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<hardware_interface::canifier::CANifierHWState> canifier_state_;
 		std::vector<hardware_interface::cancoder::CANCoderHWState> cancoder_state_;
 		std::vector<hardware_interface::candle::CANdleHWState> candle_state_;
+		std::vector<hardware_interface::pigeon2::Pigeon2HWState> pigeon2_state_;
 		std::vector<hardware_interface::SparkMaxHWState> spark_max_state_;
 		std::vector<double> brushless_vel_;
 
@@ -442,6 +459,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		std::vector<hardware_interface::canifier::CANifierHWCommand> canifier_command_;
 		std::vector<hardware_interface::cancoder::CANCoderHWCommand> cancoder_command_;
 		std::vector<hardware_interface::candle::CANdleHWCommand> candle_command_;
+		std::vector<hardware_interface::pigeon2::Pigeon2HWCommand> pigeon2_command_;
 		std::vector<hardware_interface::PDHHWCommand> pdh_command_;
 		std::vector<hardware_interface::SparkMaxHWCommand> spark_max_command_;
 		std::vector<double> brushless_command_;
@@ -471,6 +489,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		//robot iteration calls - sending stuff to driver station
 		double ctre_mc_read_hz_{100};
 		double cancoder_read_hz_{100};
+		double pigeon2_read_hz_{100};
 		double canifier_read_hz_{100};
 		double spark_max_read_hz_{100};
 		double pcm_read_hz_{20};
@@ -523,6 +542,16 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 				double poll_frequency);
 		
 		std::vector<std::shared_ptr<ctre::phoenix::led::CANdle>> candles_;
+
+		std::vector<std::shared_ptr<ctre::phoenix::sensors::Pigeon2>> pigeon2s_;
+		std::vector<std::shared_ptr<std::mutex>> pigeon2_read_state_mutexes_;
+		std::vector<std::shared_ptr<hardware_interface::pigeon2::Pigeon2HWState>> pigeon2_read_thread_states_;
+		std::vector<std::thread> pigeon2_read_threads_;
+		void pigeon2_read_thread(std::shared_ptr<ctre::phoenix::sensors::Pigeon2> pigeon2,
+				std::shared_ptr<hardware_interface::pigeon2::Pigeon2HWState> state,
+				std::shared_ptr<std::mutex> mutex,
+				std::unique_ptr<Tracer> tracer,
+				double poll_frequency);
 
 		std::vector<std::shared_ptr<frc::NidecBrushless>> nidec_brushlesses_;
 		std::vector<std::shared_ptr<frc::DigitalInput>> digital_inputs_;
@@ -581,6 +610,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 
 		talon_convert::TalonConvert talon_convert_;
 		cancoder_convert::CANCoderConvert cancoder_convert_;
+		pigeon2_convert::Pigeon2Convert pigeon2_convert_;
 
 		static constexpr int pidIdx = 0; //0 for primary closed-loop, 1 for cascaded closed-loop
 		static constexpr int timeoutMs = 0; //If nonzero, function will wait for config success and report an error if it times out. If zero, no blocking or checking is performed

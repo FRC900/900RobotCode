@@ -1,3 +1,4 @@
+#include <ros/console.h>
 #include "ros_control_boilerplate/candle_convert.h"
 
 using namespace hardware_interface::candle;
@@ -46,6 +47,10 @@ std::shared_ptr<BaseStandardAnimation> convertBaseStandardAnimation(hardware_int
                 animation.count,
                 animation.start
             );
+        }
+        default: {
+            ROS_ERROR_STREAM("Invalid animation type in " << __FUNCTION__ << " " << static_cast<int>(animation.type));
+            return {};
         }
     }
 }
@@ -130,6 +135,10 @@ std::shared_ptr<BaseTwoSizeAnimation> convertBaseTwoAnimation(hardware_interface
                 TwinkleOffAnimation::TwinkleOffPercent::Percent100,
                 animation.start
             );
+        }
+        default: {
+            ROS_ERROR_STREAM("Invalid animation type in " << __FUNCTION__ << " " << static_cast<int>(animation.type));
+            return {};
         }
     }
 }

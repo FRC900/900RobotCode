@@ -9,8 +9,6 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "sensor_msgs/Imu.h"
-#include <std_msgs/Bool.h>
-#include <std_msgs/Float64.h>
 #include <path_follower_msgs/holdPositionAction.h>
 
 class Tag {

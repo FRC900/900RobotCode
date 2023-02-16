@@ -41,10 +41,12 @@ hardware_interface:
        - {name: bl_drive, type: can_talon_fx, can_bus: CANivore, can_id: 23, local: true}
        - {name: bl_angle, type: can_talon_fx, can_bus: CANivore, can_id: 13, local: true}
 
-       - {name: four_bar_leader, type: can_talon_fx, can_bus: CANivore, can_id: 31, local: true}
-       - {name: intake_leader, type: can_talon_fx, can_bus: CANivore, can_id: 41, local: true}
-         #- {name: bl_angle_encoder, type: can_talon_srx, can_id: 3, local: true}
-       # - {name: pcm, type: pcm, pcm_id: 0}
+       - {name: elevator_leader, type: can_talon_fx, can_bus: CANivore, can_id: 31, local: true}
+       - {name: elevator_follower, type: can_talon_fx, can_bus: CANivore, can_id: 32, local: true}
+       #- {name: four_bar, type: can_talon_fx, can_bus: CANivore, can_id: 41, local: true}
+       #- {name: intake_leader, type: can_talon_fx, can_bus: CANivore, can_id: 51, local: true}
+       #- {name: pcm, type: pcm, pcm_id: 0}
+       - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
@@ -128,3 +130,19 @@ orchestra_controller:
 orchestra_state_controller:
     type:   orchestra_state_controller/OrchestraStateController
     publish_rate: 10
+
+pigeon2_state_controller:
+    type: pigeon2_state_controller/Pigeon2StateController
+    publish_rate: 100
+    joint_name: pigeon2
+    compass_enable: false
+
+pigeon2_controller:
+    type: pigeon2_controller/Pigeon2Controller
+    publish_rate: 20
+    joint_name: pigeon2
+
+pigeon2_imu_state_controller:
+    type: imu_sensor_controller/ImuSensorController
+    joint_name: pigeon2
+    publish_rate: 100

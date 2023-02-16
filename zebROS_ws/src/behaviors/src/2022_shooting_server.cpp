@@ -18,12 +18,12 @@
 bool checkFloatArray(XmlRpc::XmlRpcValue &param)
 { 
   // checks if type is array 
-  if (!param.getType() == XmlRpc::XmlRpcValue::TypeArray) {
+  if (param.getType() != XmlRpc::XmlRpcValue::TypeArray) {
     ROS_ERROR("Shooting Server - Parameter is not an array");
     return false;
   }
 
-  if (!param.size() == 3) {
+  if (param.size() != 3) {
     ROS_ERROR("Shooting Server - array is not of len 3");
     return false;
   }

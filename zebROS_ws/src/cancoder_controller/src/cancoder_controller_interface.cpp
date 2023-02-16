@@ -28,6 +28,7 @@ CANCoderCIParams::CANCoderCIParams(ros::NodeHandle n)
 	readIntoEnum(n, "initialization_strategy", sensor_initialization_strategy_enum_map_, initialization_strategy_);
 	readIntoScalar(n, "feedback_coefficient", feedback_coefficient_);
 	std::string tmp;
+	n.param("unit_string", tmp, unit_string_);
 	setUnitString(tmp);
 	readIntoEnum(n, "time_base", sensor_time_base_enum_map_, time_base_);
 	readIntoScalar(n, "direction", direction_);
@@ -43,6 +44,8 @@ CANCoderCIParams::CANCoderCIParams(ros::NodeHandle n)
 	ddr_.registerEnumVariable<int>("sensor_initialization_strategy", boost::bind(&CANCoderCIParams::getInitializationStrategy, this), boost::bind(&CANCoderCIParams::setInitializationStrategy, this, _1, false), "Sensor Initialization Strategy", sensor_initialization_strategy_enum_map_);
 	ddr_.registerVariable<double>("feedback_coefficient", boost::bind(&CANCoderCIParams::getFeedbackCoefficient, this), boost::bind(&CANCoderCIParams::setFeedbackCoefficient, this, _1, false), "Feedback Coefficient", 0., 4096.);
 	ddr_.registerVariable<std::string>("unit_string", boost::bind(&CANCoderCIParams::getUnitString, this), boost::bind(&CANCoderCIParams::setUnitString, this, _1, false), "Unit String");
+	ddr_.registerEnumVariable<int>("time_base", boost::bind(&CANCoderCIParams::getTimeBase, this), boost::bind(&CANCoderCIParams::setTimeBase, this, _1, false), "Sensor Time Base", sensor_time_base_enum_map_);
+    ddr_.registerVariable<bool>("direction", boost::bind(&CANCoderCIParams::getDirection, this), boost::bind(&CANCoderCIParams::setDirection, this, _1, false), "Direction");
 	ddr_.registerVariable<int>("sensor_data_status_frame_period", boost::bind(&CANCoderCIParams::getSensorDataStatusFramePeriod, this), boost::bind(&CANCoderCIParams::setSensorDataStatusFramePeriod, this, _1, false), "Sensor Data Status Frame Period", 0, 255);
 	ddr_.registerVariable<int>("vbat_and_faults_status_frame_period", boost::bind(&CANCoderCIParams::getVBatAndFaultsStatusFramePeriod, this), boost::bind(&CANCoderCIParams::setVBatAndFaultsStatusFramePeriod, this, _1, false), "VBat and Faults Status Frame Period", 0, 255);
 	ddr_.registerVariable<double>("conversion_factor", boost::bind(&CANCoderCIParams::getConversionFactor, this), boost::bind(&CANCoderCIParams::setConversionFactor, this, _1, false), "Conversion Factor", 0., 100.);
@@ -331,4 +334,3 @@ void CANCoderControllerInterface::setConversionFactor(double conversion_factor)
 	params_.setConversionFactor(conversion_factor);
 }
 } // namespace cancoder_controller_interface
-

@@ -38,6 +38,8 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 */
 #include <memory> // for make_unique()
 #include <ros/ros.h>
+#include "tf2/LinearMath/Matrix3x3.h"                         // for Matrix3x3
+#include "tf2/LinearMath/Quaternion.h"                        // for Quaternion
 
 #include "ctre/phoenix/unmanaged/Unmanaged.h"
 #include "frc/DriverStation.h"
@@ -200,6 +202,25 @@ void FRCRobotSimInterface::joystickCallback(const sensor_msgs::JoyConstPtr &msg,
 	HALSIM_NotifyDriverStationNewData();
 }
 
+void FRCRobotSimInterface::imuOdomCallback(const nav_msgs::OdometryConstPtr &msg, int32_t imu_num) {
+	if (static_cast<size_t>(imu_num) >= imu_sim_yaws_.size())
+	{
+		ROS_WARN_STREAM_THROTTLE(2, "Sim imu input for index " << imu_num
+				<< " is bigger than configured imu count ( " << imu_sim_yaws_.size() << ")");
+		return;
+	}
+
+	double roll, pitch, yaw;
+	const geometry_msgs::Quaternion &q = msg->pose.pose.orientation;
+	tf2::Quaternion tf_q(
+		q.x,
+		q.y,
+		q.z,
+		q.w);
+	tf2::Matrix3x3(tf_q).getRPY(roll, pitch, yaw);
+	imu_sim_yaws_[imu_num]->store(yaw);
+}
+
 bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,ros_control_boilerplate::set_limit_switch::Response &/*res*/)
 {
 	for (std::size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
@@ -252,6 +273,14 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 							  (canifier_local_updates_[i] ? " local" : " remote") << " update, " <<
 							  (canifier_local_hardwares_[i] ? "local" : "remote") << " hardware" <<
 							  " at CAN id " << canifier_can_ids_[i]);
+	}
+
+	for (size_t i = 0; i < num_pigeon2s_; i++) 
+	{
+		imu_sim_yaws_.emplace_back(std::make_shared<std::atomic<double>>(0));
+		std::stringstream s;
+		s << "imu_" << i << "_in";
+		imu_sim_subs_.push_back(root_nh.subscribe<nav_msgs::Odometry>(s.str(), 1, boost::bind(&FRCRobotSimInterface::imuOdomCallback, this, _1, i)));
 	}
 
 	// TODO - merge me into frc robot interface, add a sim setting, etc.
@@ -462,6 +491,16 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 		}
 	}
 
+	read_tracer_.start_unique("Update sim CTRE encoders");
+	for (size_t joint_id = 0; joint_id < num_pigeon2s_; ++joint_id)
+	{
+		if (!pigeon2_local_hardwares_[joint_id])
+		{
+			continue;
+		}
+		auto &sim_collection = pigeon2s_[joint_id]->GetSimCollection();
+		sim_collection.SetRawHeading(*(imu_sim_yaws_[joint_id]));
+	}
 #if 0
 	read_tracer_.start_unique("ShooterSim");
 	// This needs work.  It kinda takes commands but ends up at the wrong

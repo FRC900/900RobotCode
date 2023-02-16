@@ -3,8 +3,6 @@
 #include "ros/console.h"
 #include "WPILibVersion.h"          // for GetWPILibVersion
 #include "frc/DriverStation.h"
-#include "frc/DSControlWord.h"
-#include "frc/Notifier.h"
 #include "hal/DriverStation.h"      // for HAL_ObserveUserProgramAutonomous
 #include "hal/FRCUsageReporting.h"  // for HAL_Report, kFramework_ROS, kReso...
 #include "hal/HALBase.h"            // for HAL_Initialize

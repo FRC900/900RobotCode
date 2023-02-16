@@ -33,6 +33,8 @@ uint8 BASE_TOWARDS_US_CONE=2
 uint8 BASE_AWAY_US_CONE=3
 uint8 piece
 */
+//constexpr std::array<const char *, 4> mode_to_string {"INTAKE", "LOW_NODE", "MIDDLE_NODE", "HIGH_NODE"};
+//constexpr std::array<const char *, 4> piece_to_string {"CUBE", "VERTICAL_CONE", "BASE_TOWARDS_US_CONE", "BASE_AWAY_US_CONE"};
 
 template <class T>
 void load_param_helper(const ros::NodeHandle &nh, std::string name, T &result, T default_val)

@@ -212,8 +212,8 @@ public:
 					}
 					const auto faults = cs->getFaults();
 					m.faults[i] = "";
-					unsigned mask = 0;
-					if (faults & mask) m.faults[i] += "HardwareFault, ";
+					unsigned mask = 1;
+					if (faults & mask) m.faults[i] += "HardwareFault ";
 					mask <<= 1;
 					if (faults & mask) m.faults[i] += "APIError ";
 					mask <<= 1;
@@ -225,8 +225,8 @@ public:
 
 					const auto sticky_faults = cs->getStickyFaults();
 					m.sticky_faults[i] = "";
-					mask = 0;
-					if (sticky_faults & mask) m.sticky_faults[i] += "HardwareFault, ";
+					mask = 1;
+					if (sticky_faults & mask) m.sticky_faults[i] += "HardwareFault ";
 					mask <<= 1;
 					if (sticky_faults & mask) m.sticky_faults[i] += "APIError ";
 					mask <<= 1;

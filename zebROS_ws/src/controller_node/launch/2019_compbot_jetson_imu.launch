@@ -17,8 +17,10 @@
 		</include>
 	</group>
 	<!-- Assume ZED camera is launched somewhere else -->
+	<!-- Pigeon2 will be launched as a hardware interface controller -->
 	<node name="imu_zero" pkg="imu_zero" type="imu_zero_node" output="screen">
 		<remap if="$(eval arg('primary_imu')=='NAVX')" from="imu/data" to="navx/data" />
 		<remap if="$(eval arg('primary_imu')=='ZED')" from="imu/data" to="/$(arg zed_name)/imu/data" />
+		<remap if="$(eval arg('primary_imu')=='PIGEON2')" from="imu/data" to="/frcrobot_jetson/pigeon2" />
 	</node>
 </launch>
