@@ -10,7 +10,7 @@
 	<arg name="joy_or_key" default="joy" />
 	<arg name="button_box" default="true"/>
 	<arg name="record" default="false" />
-	<arg name="primary_imu" default="PIGEON2" />
+	<arg name="primary_imu" default="ZED" />
 
 	<group ns="frcrobot_jetson">
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_compbot_base_jetson.yaml" command="load"/>
