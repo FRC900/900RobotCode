@@ -1,0 +1,2 @@
+float64 leftDistance
+float64 rightDistance

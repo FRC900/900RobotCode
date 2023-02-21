@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="intake/reader">
+    <rosparam file="$(find behaviors)/config/2023_intake_reader_config.yaml" command="load"/>
+		<node name="intake_reader_2023" pkg="behaviors" type="2023_intake_reader.py" output="screen"/>
+	</group>
+
+    <group ns="game_piece">
+		<rosparam file="$(find behaviors)/config/2023_game_piece_state_config.yaml" command="load"/>
+		<node name="game_piece_state_2023" pkg="behaviors" type="2023_game_piece_state.py" output="screen"/>
+	</group>
+</launch>
