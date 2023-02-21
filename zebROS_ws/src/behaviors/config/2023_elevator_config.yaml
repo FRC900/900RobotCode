@@ -1,30 +1,33 @@
 position_tolerance: 0.02 # meters, if elevator position is +/- than the server set success
-cube:
-  intake: 1.00
-  low_node: 2.05
-  middle_node: 3.00
-  high_node: 4.00
+cube: # 0
+  intake: 1.00 # 0
+  low_node: 2.05 # 1
+  middle_node: 3.00 # 2
+  high_node: 4.00 # 3
 
-vertical_cone:
+vertical_cone: # 1
   intake: 0.20
   low_node: 2.00
   middle_node: 3.00
   high_node: 4.10
 
-base_towards_us_cone:
+base_towards_us_cone: # 2
   intake: 1.00
   low_node: 2.00
   middle_node: 3.00
   high_node: 4.00
 
-base_away_us_cone:
+base_away_us_cone: # 3
   intake: 1.00
   low_node: 2.00
   middle_node: 3.00
   high_node: 4.00
 
-saftey_high_min: 2.00 # minimum position when fourbar must be at least a certain amount extended up high
-saftey_high_max: 2.5 # maximum position when fourbar must be at least a certain amount extended up high
+safety_high_min: 2.00 # minimum position when fourbar must be at least a certain amount extended up high
+safety_high_max: 2.5 # maximum position when fourbar must be at least a certain amount extended up high
 
-saftey_intake_max: 0.5 # when below this we must be out a certain distance
-saftey_intake_min: 0.0 # should never be called below zero
+safety_mid_min: 0.6
+safety_mid_max: 1.0
+
+safety_intake_max: 0.5 # when below this we must be out a certain distance
+safety_intake_min: 0.0 # should never be called below zero

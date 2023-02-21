@@ -77,14 +77,17 @@ class ElevaterAction2023
         double safety_intake_position_min_;
         double safety_intake_position_max_;
 
+        double safety_mid_position_min_;
+        double safety_mid_position_max_;
+
         size_t elevater_master_idx;
-        SafteyState fourber_safety_state_; // feels bad to also hold fourber state here but it is needed to be able to properly send transition state vs no safety
+        bool previously_limited_;
 
     public:
 
         ElevaterAction2023(std::string name) :
             as_(nh_, name, boost::bind(&ElevaterAction2023::executeCB, this, _1), false),
-            ac_fourber_("/elevator/fourber_server_2023", true),
+            ac_fourber_("/fourber/fourber_server_2023", true),
             nh_params_(nh_, "elevater_server_2023"),
             action_name_(name),
             ddr_(nh_params_)
@@ -138,8 +141,11 @@ class ElevaterAction2023
             game_piece_lookup_[PieceMode(elevater_ns::BASE_AWAY_US_CONE, elevater_ns::HIGH_NODE)] = res;
 
 
-            load_param_helper(nh_, "saftey_high_min", safety_high_position_min_, 2.0);
-            load_param_helper(nh_, "saftey_high_max", safety_high_position_max_, 2.5);
+            load_param_helper(nh_, "safety_high_min", safety_high_position_min_, 2.0);
+            load_param_helper(nh_, "safety_high_max", safety_high_position_max_, 2.5);
+
+            load_param_helper(nh_, "safety_mid_min", safety_mid_position_min_, 0.6);
+            load_param_helper(nh_, "safety_mid_max", safety_mid_position_max_, 1.0);
 
             load_param_helper(nh_, "safety_intake_min", safety_intake_position_min_, 0.0);
             load_param_helper(nh_, "safety_intake_max", safety_intake_position_max_, 0.5);
@@ -242,32 +248,48 @@ class ElevaterAction2023
             assert(req_position >= 0); // probably done in elevator server also
             behavior_actions::Fourber2023Goal fourber_goal;
 
+            // ex. going from 0 to 1
+            // zones at [0.25, 0.5], [0.7, 0.8], and [-1, 2]
+            // 0.25 within [0, 1]
+            // 0.7 within [0, 1]
+
+            bool leaving_safety_zone = false;
+            double low = std::min(req_position, elev_cur_position_);
+            double high = std::max(req_position, elev_cur_position_);
+            ElevaterINFO(low << " to " << high);
+
             // high and low range checks
-            if (safety_high_position_min_ <= req_position && req_position <= safety_high_position_max_)
+            if ((safety_high_position_min_ <= req_position && req_position <= safety_high_position_max_) || (low <= safety_high_position_min_ && safety_high_position_min_ <= high))
             {
-                fourber_goal.safety_position = behavior_actions::Fourber2023Goal::SAFETY_HIGH;
-                fourber_safety_state_ = SafteyState::SAFTEY_HIGH;
+                ROS_INFO_STREAM("High safety zone");
+                fourber_goal.safety_positions.push_back(fourber_goal.SAFETY_HIGH);
+                previously_limited_ = true;
             }
-            else if (safety_intake_position_min_ <= req_position && req_position <= safety_intake_position_max_)
+            if ((safety_intake_position_min_ <= req_position && req_position <= safety_intake_position_max_) || (low <= safety_intake_position_min_ && safety_intake_position_min_ <= high))
             {
-                fourber_goal.safety_position = behavior_actions::Fourber2023Goal::SAFETY_INTAKE_LOW;
-                fourber_safety_state_ = SafteyState::SAFTEY_LOW;
+                ROS_INFO_STREAM("Intake safety zone");
+                fourber_goal.safety_positions.push_back(fourber_goal.SAFETY_INTAKE_LOW);
+                previously_limited_ = true;
+            }
+            if ((safety_mid_position_min_ <= req_position && req_position <= safety_mid_position_max_) || (low <= safety_mid_position_min_ && safety_mid_position_min_ <= high))
+            {
+                ROS_INFO_STREAM("Mid safety zone");
+                fourber_goal.safety_positions.push_back(fourber_goal.SAFETY_MID);
+                previously_limited_ = true;
             }
             // not going within eaither of those, so if the safety state is set, we can trainsition to it being unset
-            else if (fourber_safety_state_ == SafteyState::SAFTEY_HIGH || fourber_safety_state_ == SafteyState::SAFTEY_LOW)
+            if (fourber_goal.safety_positions.size() == 0 && previously_limited_)
             {
-                fourber_goal.safety_position = behavior_actions::Fourber2023Goal::SAFETY_TO_NO_SAFETY;
-                fourber_safety_state_ = SafteyState::NONE;
+                leaving_safety_zone = true;
+                previously_limited_ = false;
             }
-            else
-            {
-                fourber_goal.safety_position = behavior_actions::Fourber2023Goal::NO_SAFETY;
-            }
+            // leave the list empty otherwise
 
             // have a meaningful message to send
-            bool fourber_success = false;
-            if (!(fourber_goal.safety_position == behavior_actions::Fourber2023Goal::NO_SAFETY))
-            {
+            if (fourber_goal.safety_positions.size() != 0) {
+                // don't send unless changing safety
+                bool fourber_success = false;
+                ElevaterINFO("Setting safety to " << std::to_string(fourber_goal.safety_positions.size()) << " zones");
                 auto fourbar_result = ac_fourber_.sendGoalAndWait(fourber_goal, ros::Duration(5), ros::Duration(3));
                 if (!(fourbar_result == actionlib::SimpleClientGoalState::SUCCEEDED))
                 {
@@ -321,6 +343,13 @@ class ElevaterAction2023
             }
 
             ElevaterINFO("Succeeded moving elevator!");
+
+            if (leaving_safety_zone) {
+                ElevaterINFO("Setting safety to no safety needed");
+                fourber_goal.safety_positions.assign({fourber_goal.SAFETY_TO_NO_SAFETY});
+                ac_fourber_.sendGoal(fourber_goal);
+            }
+
             publishSuccess();
             // print_map();
             ros::spinOnce();
@@ -336,21 +365,23 @@ class ElevaterAction2023
         void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
         {
             // fourbar_master_idx == max of size_t at the start
-            if (elevater_master_idx >= talon_state.name.size()) // could maybe just check for > 0
+            if (elevater_master_idx == std::numeric_limits<size_t>::max()) // could maybe just check for > 0
             {
                 for (size_t i = 0; i < talon_state.name.size(); i++)
                 {
-                    if (talon_state.name[i] == "elevater_master")
+                    if (talon_state.name[i] == "elevator_leader")
                     {
                         elevater_master_idx = i;
                         break;
                     }
                 }
-                ElevaterERR("Can not find talong with name = " << "elevater_master");
             }
             if (!(elevater_master_idx == std::numeric_limits<size_t>::max())) 
             {
                 elev_cur_position_ = talon_state.position[elevater_master_idx];
+            }
+            else {
+                ElevaterERR("Can not find talon with name = " << "elevator_leader");
             }
         }
 

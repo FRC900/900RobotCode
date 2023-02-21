@@ -70,7 +70,7 @@ intake_leader_controller:
     joint: intake_leader
     invert_output: False # tbd find this out
     feedback_type: IntegratedSensor
-    dynamic_reconfigure: True
+    dynamic_reconfigure: False
     voltage_compensation_Enable: True
     voltage_compensation_saturation: 12
     neutral_mode: Brake

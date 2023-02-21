@@ -1,8 +1,8 @@
 elevator_controller_2023:
     type: elevator_controller_2023/ElevatorController_2023
 
-    elevator_joint: [ 'elevator_master', 'elevator_follower1', 'elevator_follower2', 'elevator_follower3' ]
-    max_height_val: 1.7
+    elevator_joint: [ 'elevator_leader', 'elevator_follower' ]
+    max_height_val: 4.0
 
     arb_feed_forward_high: 0.052
     arb_feed_forward_low: 0.032
@@ -23,17 +23,18 @@ elevator_controller_2023:
     # trying to drive down to prevent killing the motor
     elevator_zeroing_timeout:  2.0
     stage_2_height: 0.8
-    elevator_master:
+    elevator_leader:
         type: talon_controllers/TalonControllerInterface 
-        joint: elevator_master
+        joint: elevator_leader
         close_loop_values:
             - {p: 0.275, i: 0.00001, d: 6.25, f: 0.28, i_zone: 0, closed_loop_peak_output: 1.0}
             - {p: 0.25, i: 0.0, d: 0, f: 0.58, i_zone: 4096, closed_loop_peak_output: 1.0}
-              
-        sensor_phase: True 
+
         invert_output: False
 
-        feedback_type: CTRE_MagEncoder_Relative
+        feedback_type: IntegratedSensor
+
+        neutral_mode: Brake
 
         # TODO : bottom limit switch config
         limit_switch_local_reverse_source: "FeedbackConnector"
@@ -51,22 +52,9 @@ elevator_controller_2023:
         conversion_factor: 0.02959
         neutral_deadband: 0.001
 
-        dynamic_reconfigure: true
-        motion_s_curve_strength: 0 
-    elevator_follower1: 
-        joint: elevator_follower1
-        sensor_phase: True 
+        dynamic_reconfigure: False
+        motion_s_curve_strength: 0
+    
+    elevator_follower:
+        joint: elevator_follower
         invert_output: False
-        #feedback_type: CTRE_MagEncoder_Relative
-        #conversion_factor: 0.02959
-
-        #dynamic_reconfigure: true
-
-    elevator_follower2: 
-        joint: elevator_follower2
-        invert_output: True
-
-    elevator_follower3: 
-        joint: elevator_follower3
-        invert_output: True
-

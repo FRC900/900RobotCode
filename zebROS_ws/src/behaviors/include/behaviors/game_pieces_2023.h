@@ -1,10 +1,17 @@
 #ifndef GAMEPIECES_H
 #define GAMEPIECES_H
 
-enum SafteyState {
-  NONE,
-  SAFTEY_HIGH,
-  SAFTEY_LOW
+struct SafetyState {
+  double min_distance_above;
+  double min_distance_below;
+  SafetyState() {
+    min_distance_above = 0;
+    min_distance_below = 0;
+  }
+  SafetyState(double above, double below) {
+    min_distance_above = above;
+    min_distance_below = below;
+  }
 };
 
 struct PieceMode {

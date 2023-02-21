@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-	<group ns="elevator">
+	<group ns="fourber">
 		<rosparam file="$(find behaviors)/config/2023_fourbar_config.yaml" command="load"/>
 		<node name="fourber_server_2023" pkg="behaviors" type="2023_fourber_server" output="screen"/>
 	</group>

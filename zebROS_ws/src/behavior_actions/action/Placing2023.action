@@ -1,0 +1,12 @@
+# goal
+uint8 HYBRID=0
+uint8 MID=1
+uint8 HIGH=2
+uint8 node
+
+bool align_intake # if this is true, move sideways: centered to the node -> game piece in intake centered to node (using terabees or something)
+---
+# result
+bool timed_out
+---
+# feedback
