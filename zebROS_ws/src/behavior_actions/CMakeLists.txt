@@ -98,6 +98,7 @@ add_action_files(
 		Intake2023.action
 		Fourber2023.action
 		Placing2023.action
+		Intaking2023.action
 		#GoToColor.action
 		#RotatePanel.action
 )

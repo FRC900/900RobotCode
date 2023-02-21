@@ -32,7 +32,7 @@ struct PieceMode {
 
   PieceMode() {}
 
-  bool operator< (PieceMode const &rhs) const { 
+  bool operator< (PieceMode const &rhs) const {
     if (piece < rhs.piece) {
       return true;
     }

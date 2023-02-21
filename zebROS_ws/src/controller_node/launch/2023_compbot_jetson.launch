@@ -102,6 +102,12 @@ elevator_controller_2023 four_bar_controller_2023 intake_leader_controller
 	<include file="$(find behaviors)/launch/2023_elevator.launch">
 	</include>
 
+	<include file="$(find behaviors)/launch/2023_intaking.launch">
+	</include>
+
+	<include file="$(find behaviors)/launch/2023_game_piece_state.launch">
+	</include>
+
 	<include file="$(find controller_node)/launch/2023_terabee.launch" if="$(eval arg('hw_or_sim')=='hw')">
 	</include>
 	
