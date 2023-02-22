@@ -16,4 +16,8 @@ grid_locations:
   pos9: ["cone", 4.989] # cone
 
 # x distance from the apriltag on the cube node to the end of the things that stick out between nodes
-offset_from_cube_tag_to_end: 0.35
+# aka the distance to be back from the tag
+# if this is too low we will hit the wall
+offset_from_cube_tag_to_end: 0.5
+
+hold_position_timeout: 0.5 # seconds

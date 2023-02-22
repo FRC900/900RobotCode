@@ -89,9 +89,16 @@ public:
         ac_("/path_follower/path_follower_server", true),
         client_(nh_.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen")),
         sub_(nh_.subscribe<field_obj::Detection>("/tf_object_detection/tag_detection_world", 1, boost::bind(&PathToAprilTagAction::callback, this, _1))),
-        subImu_(nh_.subscribe<sensor_msgs::Imu>("/imu/zeroed_imu", 1, boost::bind(&PathToAprilTagAction::imuCallback, this, _1))),
-        timeout_(nh_params_.param<double>("timeout", timeout_, 0.2)) // roughly equal to apriltag detector fps
+        subImu_(nh_.subscribe<sensor_msgs::Imu>("/imu/zeroed_imu", 1, boost::bind(&PathToAprilTagAction::imuCallback, this, _1)))
     {
+        if (!nh_params_.hasParam("timeout")) {
+            timeout_ = 0.5;
+            ROS_INFO_STREAM("path_to_apriltag : timeout defaulting to 0.5 seconds");
+        }
+        else {
+            nh_params_.getParam("timeout", timeout_);
+        }
+        
         as_.start();
     }
 
@@ -100,7 +107,11 @@ public:
     }
 
     std::optional<tf2::Transform> getTransformToTag(uint32_t id, double rotation) {
-        if (latest_.objects.size() == 0 || ros::Time::now() - latest_.header.stamp > ros::Duration(timeout_)) {
+        ros::spinOnce();
+        if (latest_.objects.size() == 0 || ((ros::Time::now() - latest_.header.stamp) > ros::Duration(timeout_))) {
+            if ((ros::Time::now() - latest_.header.stamp) > ros::Duration(timeout_)) {
+                ROS_ERROR_STREAM("path_to_apriltag : timed out for tag " << std::to_string(id) << " :( now = " << ros::Time::now() << ", stamp = " << latest_.header.stamp << " diff is " << (ros::Time::now() - latest_.header.stamp));
+            }
             return std::nullopt;
         }
         else {
@@ -123,7 +134,8 @@ public:
         }
     }
 
-    std::optional<trajectory_msgs::JointTrajectoryPoint> applyOffset(uint32_t id, const geometry_msgs::Pose &offset, double tagRotation) {
+    std::optional<trajectory_msgs::JointTrajectoryPoint> applyOffset(uint32_t id, geometry_msgs::Pose offset, double tagRotation, const std::string &targetFrame) {
+        ros::spinOnce();
         std::optional<tf2::Transform> transform_ = getTransformToTag(id, tagRotation);
 
         if (!transform_.has_value()) {
@@ -132,6 +144,18 @@ public:
         }
 
         tf2::Transform transform = transform_.value();
+
+        auto t = tf_buffer_.lookupTransform(targetFrame, "base_link", ros::Time::now());
+        offset.position.x += t.transform.translation.x;
+        offset.position.y += t.transform.translation.y;
+        offset.position.z += t.transform.translation.z;
+        tf2::Quaternion q;
+        tf2::fromMsg(offset.orientation, q);
+        tf2::Quaternion q2;
+        tf2::fromMsg(t.transform.rotation, q2);
+        q = q2 * q;
+        offset.orientation = tf2::toMsg(q);
+        // offset should REALLY be a geometry_msgs::Transform since that's what we are using it as
 
         geometry_msgs::Transform gmt = tf2::toMsg(transform); // now tag -> base_link
         geometry_msgs::TransformStamped gmts;
@@ -159,9 +183,10 @@ public:
 
     void executeCB(const behavior_actions::PathToAprilTagGoalConstPtr &goal)
     {
+        ros::spinOnce();
         uint32_t id = goal->id;
         double tagRot = goal->tagRotation;
-        auto pt_ = applyOffset(id, goal->offset, tagRot);
+        auto pt_ = applyOffset(id, goal->offset, tagRot, goal->frame_id);
 
         if (!pt_.has_value()) {
             as_.setAborted(result_);
@@ -179,13 +204,15 @@ public:
         spline_gen_srv.request.points.resize(2);
         spline_gen_srv.request.point_frame_id.resize(2);
         spline_gen_srv.request.points[0] = generateTrajectoryPoint(0, 0, 0);
+        spline_gen_srv.request.point_frame_id[0] = "base_link";
         //ROS_INFO_STREAM(position.x << "," << position.y << " " << zRot << " " << latestImuZ << " " << zRot - latestImuZ);
         // angle now relative to apriltag
         spline_gen_srv.request.points[1] = pt;
-        spline_gen_srv.request.point_frame_id[0] = "base_link";
-        spline_gen_srv.request.point_frame_id[1] = goal->frame_id;
+        spline_gen_srv.request.point_frame_id[1] = "base_link";
         base_trajectory_msgs::PathOffsetLimit path_offset_limit;
         spline_gen_srv.request.path_offset_limit.push_back(path_offset_limit);
+
+        ROS_INFO_STREAM("path_to_apriltag : going to " << pt << " in frame id " << goal->frame_id);
 
         if (client_.call(spline_gen_srv))
         {
@@ -194,6 +221,7 @@ public:
         else
         {
             ROS_ERROR("Failed to call service");
+            // note: this is failing with "Duration is out of dual 32-bit range" when we are extremely close/already there
             return;
         }
 

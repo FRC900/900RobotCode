@@ -161,6 +161,9 @@ float contoursDepthMat(const cv::Mat& depth_, const cv::Rect& bound_rect, bool d
 // the supplied bounding rectangle, using k-means
 float kMeansDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, bool debug, size_t maximumK, float tolerance)
 {
+	if (bound_rect.size().area() == 0) { // if the ROI is zero, return -1 (no depth)
+		return -1;
+	}
 	// setup randomizing (for initialization of k-means)
 	std::random_device seeder;
 	std::mt19937 engine(seeder());
@@ -266,6 +269,10 @@ float kMeansDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, bool debu
 // the supplied bounding rectangle
 float usefulDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, DepthCalculationAlgorithm algorithm, bool debug, int k, float tolerance)
 {
+	if (bound_rect.size().area() == 0 || bound_rect.x < 0 || bound_rect.y < 0 || bound_rect.width + bound_rect.x > depth.size().width || bound_rect.height + bound_rect.y > depth.size().height) {
+		ROS_ERROR_STREAM("invalid bounding box!!!!!");
+		return -1;
+	}
 	switch (algorithm) {
 		case CONTOURS:
 			return contoursDepthMat(depth, bound_rect, debug);

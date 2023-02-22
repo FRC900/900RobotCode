@@ -14,6 +14,8 @@
 #include <actionlib/client/simple_action_client.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <path_follower_msgs/holdPositionAction.h>
+#include <sensor_msgs/Imu.h>
 
 geometry_msgs::Point operator-(const geometry_msgs::Point& lhs, const geometry_msgs::Point& rhs) {
     geometry_msgs::Point p;
@@ -29,6 +31,15 @@ geometry_msgs::Point operator+(const geometry_msgs::Point& lhs, const geometry_m
     p.y = lhs.y + rhs.y;
     p.z = lhs.z + rhs.z;
     return p;
+}
+
+double getYaw(const geometry_msgs::Quaternion &o) {
+    tf2::Quaternion q;
+    tf2::fromMsg(o, q);
+    tf2::Matrix3x3 m(q);
+    double r, p, y;
+    m.getRPY(r, p, y);
+    return y;
 }
 
 double distance(const geometry_msgs::Point &pt) {
@@ -76,10 +87,14 @@ protected:
   behavior_actions::AlignToGrid2023Result result_;
   field_obj::Detection latest_;
   ros::Subscriber sub_;
+  ros::Subscriber imu_sub_;
   std::map<int, Tag> tags_;
   std::map<int, GridLocation> gridLocations_; // should probably be uint8_t
   actionlib::SimpleActionClient<behavior_actions::PathToAprilTagAction> client_;
+  actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction> ac_hold_position_;
   double xOffset_;
+  double holdPosTimeout_;
+  double latest_yaw_;
 
 public:
 
@@ -87,8 +102,10 @@ public:
     as_(nh_, name, boost::bind(&AlignToGridAction::executeCB, this, _1), false),
     action_name_(name),
     sub_(nh_.subscribe<field_obj::Detection>("/tf_object_detection/tag_detection_world", 1, &AlignToGridAction::callback, this)),
-    client_("/path_to_apriltag", true)
+    client_("/path_to_apriltag", true),
+    ac_hold_position_("/hold_position/hold_position_server", true)
   {
+    imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/zeroed_imu", 1, &AlignToGridAction::imuCb, this);
     XmlRpc::XmlRpcValue tagList;
     nh_.getParam("tags", tagList);
 
@@ -96,6 +113,8 @@ public:
     nh_.getParam("grid_locations", gridList);
 
     nh_.getParam("offset_from_cube_tag_to_end", xOffset_);
+
+    nh_.getParam("hold_position_timeout", holdPosTimeout_);
 
     for (XmlRpc::XmlRpcValue::iterator tag=tagList.begin(); tag!=tagList.end(); ++tag) {
       Tag t;
@@ -106,6 +125,7 @@ public:
       t.location = p;
       t.rotation = tag->second[3];
       tags_[std::stoi(tag->first.substr(3))] = t;
+      ROS_INFO_STREAM("tag " << p.x << " " << p.y << " " << p.z << " #" << tag->first.substr(3));
     }
 
     for (XmlRpc::XmlRpcValue::iterator grid=gridList.begin(); grid!=gridList.end(); ++grid) {
@@ -123,6 +143,10 @@ public:
 
   ~AlignToGridAction(void)
   {
+  }
+
+  void imuCb(const sensor_msgs::ImuConstPtr &msg) {
+    latest_yaw_ = getYaw(msg->orientation);
   }
 
   void callback(const field_obj::DetectionConstPtr& msg) {
@@ -163,7 +187,7 @@ public:
     auto closestTag = findClosestApriltag(latest_);
     if (closestTag == std::nullopt) {
       as_.setAborted(result_); // no tag found
-      ROS_ERROR_STREAM("[2023_align_to_grid] No AprilTags found :(");
+      ROS_ERROR_STREAM("2023_align_to_grid : No AprilTags found :(");
       return;
     }
     int closestId = closestTag.value();
@@ -187,6 +211,7 @@ public:
       offset.y = -(gridLocation.y - tag.location.y);
     }
     offset.z = 0;
+    ROS_INFO_STREAM("grid " << gridLocation.y << " tag " << tag.location.y);
     ROS_INFO_STREAM("ydif: " << gridLocation.y - tag.location.y);
 
     geometry_msgs::Pose pose;
@@ -217,6 +242,25 @@ public:
         }
         r.sleep();
     }
+
+    path_follower_msgs::holdPositionGoal holdPosGoal;
+    holdPosGoal.pose.position.x = goal->alliance == 0 ? 0.5 : -0.5;
+    q.setRPY(0, 0, tag.rotation - latest_yaw_);
+    holdPosGoal.pose.orientation = tf2::toMsg(q);
+
+    ac_hold_position_.sendGoal(holdPosGoal);
+    ros::Time start = ros::Time::now();
+
+    while (!ac_hold_position_.getState().isDone() && (ros::Time::now() - start < ros::Duration(holdPosTimeout_))) {
+        if (as_.isPreemptRequested() || !ros::ok())
+        {
+            ac_hold_position_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+            as_.setPreempted();
+            return;
+        }
+        r.sleep();
+    }
+    ac_hold_position_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 
     as_.setSucceeded(result_);
   }

@@ -1,0 +1,111 @@
+# maximum error for each segment when parameterizing spline arclength (meters)
+seg_length_epsilon: .001
+
+# equal-spaced arc length distance sampled from parameterized spline (meters)
+dist_between_arc_lengths: 0.035
+# error tolerance for above (meters)
+dist_between_arc_lengths_epsilon: 0.01
+
+# multiplier to prev distance for picking midpoint of
+# next distance searched in arc length subdivision
+mid_time_inflation: 1.25
+
+# spacing of waypoints along final generated path (meters)
+path_dist_between_arc_lengths: 0.025
+# error tolerance for final path waypoint spacing (meters)
+path_dist_between_arc_lengths_epsilon: 0.01
+
+# RPROP initial deltaCost value
+initial_delta_cost_epsilon: 0.05
+
+# RPROP minimum deltaCost value
+min_delta_cost_epsilon: 0.0075
+
+# RPROP initial bestCost value
+# Cost improvments of less than this value won't trigger a rerun
+# of another loop at the current deltaCostEpsilon value
+initial_best_cost_epsilon: 0.02
+
+# RPROP - how many improvements in cost before moving on to the next variable
+momentum_counter: 4
+
+# RPROP max consecutive inner loop iterations where change in cost is < delta cost before exiting
+max_delta_cost_exit_counter: 3
+
+# RPROP initial optimization value change
+initial_dparam: 0.5
+
+# RPROP Number of iterations of consecutive huge costs before 
+# moving on to the next variable
+optimization_counter_max: 100
+
+# RPROP Cost includes L2 sum of squares of changes in parameters
+# from their initial values. This is a multiplier to that
+# additional cost to reduce the impact it has relative to
+# path drive time cost.
+regularization_lambda: 0.0025
+
+# how far robot can diverge from straight-line path between waypoints (meters)
+path_distance_limit: 1.0
+
+# Max robot translational velocity (meters/sec)
+max_vel: 0.5
+
+# Maximum robot linear acceleration (meters/sec^2)
+max_linear_acc: 3.0
+
+# Maximum robot linear deceleration (meters/sec^2)
+max_linear_dec: 3.0
+
+# max centrepital acceleration (meters/sec^2)
+max_cent_acc: 4.0
+
+# Robot drivebase radius (meters)
+drive_base_radius: 0.38615
+
+# what frame to generate the path coords in
+path_frame_id: "base_link"
+
+# Load and use a map of field obstacles to avoid
+use_obstacle_cost: false
+
+# Constmap costs lower than this are ignored in obstacle gradient calculation
+obstacle_cost_threshold: 50
+
+base_trajectory_node:
+    costmap:
+        footprint:
+            - [-0.56, 0.56]
+            - [-0.56, -0.56]
+            - [0.56, -0.56]
+            - [0.56, 0.56]
+        global_frame: map
+        robot_base_frame: base_link
+        update_frequency: 1.0
+        publish_frequency: 0.5
+        transform_tolerance: 10.
+        rolling_window: false # use absolute position in static map
+      # These should be set when the static layer loads a map
+      # width: 5.0
+      # height: 5.0
+      # resolution: 0.05
+      # origin_x: 2.0
+      # origin_y: 2.0
+
+        # Static layer comes from the map topic.  Inflation increases
+        # obstacle sizes by robot footprint to detect collisions based
+        # on robot size
+        plugins:
+           - {name: static_layer,    type: "costmap_2d::StaticLayer"}
+          #- {name: obstacle_layer,  type: "costmap_2d::ObstacleLayer"} # For dynamic obstacle detection
+           - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
+
+        inflation_layer:
+            enabled:              true
+            cost_scaling_factor:  10.0  # exponential rate at which the obstacle cost drops off (default: 10)
+            inflation_radius:     1.10  # max. distance from an obstacle at which costs are incurred for planning paths.
+
+        static_layer:
+            enabled: true
+            map_topic: /path_follower/map
+

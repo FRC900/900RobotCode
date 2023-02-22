@@ -9,7 +9,7 @@ path_follower:
     # Set this as a param so sim can use fake odom while the real robot
     # uses ZED pose
     #use_pose_for_odom : true # true == use PoseStamped subscriber (e.g. zed camera pose) for odom rather than Odometry subscriber
-    final_pos_tol: 0.05
+    final_pos_tol: 0.01
     final_rot_tol: 0.005
     ros_rate: 100
     server_timeout: 15
