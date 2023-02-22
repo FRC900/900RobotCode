@@ -26,9 +26,7 @@
 
 #include "actionlib/client/simple_action_client.h"
 
-#include "dynamic_reconfigure_wrapper/dynamic_reconfigure_wrapper.h"
-#include "teleop_joystick_control/TeleopJoystickComp2023Config.h"
-#include "teleop_joystick_control/TeleopJoystickCompDiagnostics2023Config.h"
+#include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 
 #include "teleop_joystick_control/TeleopCmdVel.h"
 #include "behavior_actions/AutoMode.h"
@@ -37,8 +35,26 @@
 
 #include <imu_zero/ImuZeroAngle.h>
 
+struct DynamicReconfigVars
+{
+	double joystick_deadzone{0};          // "Joystick deadzone, in percent",
+	double min_speed{0};                  // "Min linear speed to get robot to overcome friction, in m/s"
+	double max_speed{2.0};                // "Max linear speed, in m/s"
+	double max_speed_slow{0.75};          // "Max linear speed in slow mode, in m/s"
+	double max_rot{4.0};                  // "Max angular speed"
+	double max_rot_slow{2.0};             // "Max angular speed in slow mode"
+	double button_move_speed{0.9};        // "Linear speed when move buttons are pressed, in m/s"
+	double joystick_pow{1.5};             // "Joystick Scaling Power, linear"
+	double rotation_pow{1.0};             // "Joystick Scaling Power, rotation"
+	double drive_rate_limit_time{200};    // "msec to go from full back to full forward"
+	double rotate_rate_limit_time{500};   // "msec to go from full counterclockwise to full clockwise"
+	double trigger_threshold{0.5};        // "Amount trigger has to be pressed to trigger action"
+	double stick_threshold{0.5};          // "Amount stick has to be moved to trigger diag mode action"
+	double imu_zero_angle{0.0};           // "Value to pass to imu/set_zero when zeroing"
+	double cone_cube_timeout{1.0};        // "Ignore game pieces older than this when aligning to them"
+} config;
 
-std::unique_ptr<TeleopCmdVel<teleop_joystick_control::TeleopJoystickComp2023Config>> teleop_cmd_vel;
+std::unique_ptr<TeleopCmdVel<DynamicReconfigVars>> teleop_cmd_vel;
 
 bool diagnostics_mode = false;
 
@@ -53,9 +69,6 @@ std::vector <std::string> topic_array;
 ros::Publisher orient_strafing_enable_pub;
 ros::Publisher orient_strafing_setpoint_pub;
 ros::Publisher orient_strafing_state_pub;
-
-teleop_joystick_control::TeleopJoystickComp2023Config config;
-teleop_joystick_control::TeleopJoystickCompDiagnostics2023Config diagnostics_config;
 
 ros::Publisher JoystickRobotVel;
 
@@ -431,7 +444,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 			auto_mode_select_pub.publish(auto_mode_msg);
 		}
 		if(imu_service_needed){
-			imu_cmd.request.angle = config.top_position_angle;
+			imu_cmd.request.angle = config.imu_zero_angle;
 			IMUZeroSrv.call(imu_cmd);
 			imu_service_needed = false;
 		}
@@ -455,7 +468,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 			auto_mode_select_pub.publish(auto_mode_msg);
 		}
 		if(imu_service_needed){
-			imu_cmd.request.angle = config.bottom_position_angle;
+			imu_cmd.request.angle = config.imu_zero_angle;
 			IMUZeroSrv.call(imu_cmd);
 			imu_service_needed = false;
 			}
@@ -466,7 +479,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	}
 	if(!button_box.bottomSwitchUpButton && !button_box.bottomSwitchDownButton){ //The switch is in the middle position
 		if(imu_service_needed){
-			imu_cmd.request.angle = config.middle_position_angle;
+			imu_cmd.request.angle = config.imu_zero_angle;
 			IMUZeroSrv.call(imu_cmd);
 			imu_service_needed = false;
 		}
@@ -1115,24 +1128,35 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read stick_threshold in teleop_joystick_comp");
 	}
-	if(!n_params.getParam("bottom_position_angle", config.bottom_position_angle))
+	if(!n_params.getParam("imu_zero_angle", config.imu_zero_angle))
 	{
-		ROS_ERROR("Could not read bottom_position_angle in teleop_joystick_comp");
-	}
-	if(!n_params.getParam("middle_position_angle", config.middle_position_angle))
-	{
-		ROS_ERROR("Could not read middle_position_angle in teleop_joystick_comp");
-	}
-	if(!n_params.getParam("top_position_angle", config.top_position_angle))
-	{
-		ROS_ERROR("Could not read top_position_angle in teleop_joystick_comp");
+		ROS_ERROR("Could not read imu_zero_angle in teleop_joystick_comp");
 	}
 	if(!n_params.getParam("cone_cube_timeout", config.cone_cube_timeout))
 	{
 		ROS_ERROR("Could not read cone_cube_timeout in teleop_joystick_comp");
 	}
 
-	teleop_cmd_vel = std::make_unique<TeleopCmdVel<teleop_joystick_control::TeleopJoystickComp2023Config>>(config);
+	ddynamic_reconfigure::DDynamicReconfigure ddr(n_params);
+
+	ddr.registerVariable<double>("joystick_deadzone", &config.joystick_deadzone, "Joystick deadzone, in percent", 0., 1.);
+	ddr.registerVariable<double>("min_speed", &config.min_speed, "Min linear speed to get robot to overcome friction, in m/s", 0, 1);
+	ddr.registerVariable<double>("max_speed", &config.max_speed, "Max linear speed, in m/s", 0, 10.);
+	ddr.registerVariable<double>("max_speed_slow", &config.max_speed_slow, "Max linear speed in slow mode, in m/s", 0., 5.);
+	ddr.registerVariable<double>("max_rot", &config.max_rot, "Max angular speed", 0., 13.);
+	ddr.registerVariable<double>("max_rot_slow", &config.max_rot_slow, "Max angular speed in slow mode", 0., 3.);
+	ddr.registerVariable<double>("button_move_speed", &config.button_move_speed, "Linear speed when move buttons are pressed, in m/s", 0, 5);
+	ddr.registerVariable<double>("joystick_pow", &config.joystick_pow, "Joystick Scaling Power, linear", 0., 5.);
+	ddr.registerVariable<double>("rotation_pow", &config.rotation_pow, "Joystick Scaling Power, rotation", 0., 5.);
+	ddr.registerVariable<double>("drive_rate_limit_time", &config.drive_rate_limit_time, "msec to go from full back to full forward", 0., 2000.);
+	ddr.registerVariable<double>("rotate_rate_limit_time", &config.rotate_rate_limit_time, "msec to go from full counterclockwise to full clockwise", 0., 2000.);
+	ddr.registerVariable<double>("trigger_threshold", &config.trigger_threshold, "Amount trigger has to be pressed to trigger action", 0., 1.);
+	ddr.registerVariable<double>("stick_threshold", &config.stick_threshold, "Amount stick has to be moved to trigger diag mode action", 0., 1.);
+	ddr.registerVariable<double>("imu_zero_angle", &config.imu_zero_angle, "Value to pass to imu/set_zero when zeroing", -360., 360.);
+	ddr.registerVariable<double>("cone_cube_timeout", &config.cone_cube_timeout, "Ignore game pieces older than this when aligning to them", 0., 10.);
+	ddr.publishServicesTopics();
+
+	teleop_cmd_vel = std::make_unique<TeleopCmdVel<DynamicReconfigVars>>(config);
 
 	imu_angle = M_PI / 2.;
 
@@ -1172,9 +1196,6 @@ int main(int argc, char **argv)
 	}
 
 	ros::ServiceServer orient_strafing_angle_service = n.advertiseService("orient_strafing_angle", orientStrafingAngleCallback);
-
-	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickComp2023Config> drw(n_params, config);
-	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompDiagnostics2023Config> diagnostics_drw(n_diagnostics_params, diagnostics_config);
 
 	//Read from _num_joysticks joysticks
 	// Set up this callback last, since it might use all of the various stuff

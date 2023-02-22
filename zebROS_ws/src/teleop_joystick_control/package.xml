@@ -17,14 +17,18 @@
   <depend>control_msgs</depend>
   <depend>controllers_2019_msgs</depend>
   <depend>controllers_2022_msgs</depend>
-  <depend>field_obj</depend>
-  <depend>imu_zero</depend>
-  <depend>frc_msgs</depend>
-  <depend>std_srvs</depend>
-  <depend>roscpp</depend>
-  <depend>talon_state_msgs</depend>
+  <depend>ddynamic_reconfigure</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>dynamic_reconfigure_wrapper</depend>
+  <depend>field_obj</depend>
+  <depend>frc_msgs</depend>
+  <depend>imu_zero</depend>
+  <depend>path_follower_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>std_srvs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>talon_state_msgs</depend>
 
   <export>
   </export>

@@ -5,24 +5,24 @@ include ("../cmake_modules/CMakeOpt.cmake")
 
 find_package(catkin REQUIRED COMPONENTS
 	actionlib
+	angles
 	behavior_actions
 	cmake_modules
 	control_msgs
     controllers_2019_msgs
 	controllers_2022_msgs
+	ddynamic_reconfigure
 	dynamic_reconfigure
 	dynamic_reconfigure_wrapper
-	ddynamic_reconfigure
 	field_obj
 	frc_msgs
+	imu_zero
+	path_follower_msgs
+	std_srvs
+	roscpp
 	tf2_ros
 	tf2
-	roscpp
-	std_srvs
 	talon_state_msgs
-	path_follower_msgs
-	imu_zero
-	angles
 	)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -45,10 +45,8 @@ generate_messages (
 generate_dynamic_reconfigure_options(
 	cfg/TeleopJoystickComp.cfg
 	cfg/TeleopJoystickComp2022.cfg
-	cfg/TeleopJoystickComp2023.cfg
 	cfg/TeleopJoystickCompDiagnostics.cfg
 	cfg/TeleopJoystickCompDiagnostics2022.cfg
-	cfg/TeleopJoystickCompDiagnostics2023.cfg
 	)
 
 ## System dependencies are found with CMake's conventions
