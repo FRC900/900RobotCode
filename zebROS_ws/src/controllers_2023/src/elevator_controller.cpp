@@ -1,9 +1,3 @@
-//HPP CONTENTS INTO CPP
-#ifndef ELEVATOR_CONTROLLER_2023
-#define ELEVATOR_CONTROLLER_2023
-
-//added _2023 to the two lines above ^
-
 #include <ros/ros.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <realtime_tools/realtime_buffer.h>
@@ -59,7 +53,6 @@ class ElevatorController_2023 : public controller_interface::MultiInterfaceContr
         bool cmdService(controllers_2023_msgs::ElevatorSrv::Request &req,
                         controllers_2023_msgs::ElevatorSrv::Response &res);
 
-
     private:
         ros::Time last_time_down_;
         talon_controllers::TalonControllerInterface elevator_joint_; //interface for the talon joint
@@ -73,10 +66,6 @@ class ElevatorController_2023 : public controller_interface::MultiInterfaceContr
         //double last_setpoint_;
         hardware_interface::TalonMode last_mode_;
 
-    
-
-
-
         std::atomic<double> arb_feed_forward_high;
         std::atomic<double> arb_feed_forward_low;
         std::atomic<double> elevator_zeroing_percent_output;
@@ -87,10 +76,6 @@ class ElevatorController_2023 : public controller_interface::MultiInterfaceContr
         std::atomic<int> motion_s_curve_strength;
 
         ddynamic_reconfigure::DDynamicReconfigure ddr_;
-
-        
-
-
 
 }; //class
 
@@ -111,6 +96,7 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
                                    ros::NodeHandle             &/*root_nh*/,
                                    ros::NodeHandle             &controller_nh)
 {
+    ROS_INFO_STREAM("INIT CALLED FOR ELEVATOR CONTROLLER============");
     //create the interface used to initialize the talon joint
     hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
 
@@ -151,20 +137,17 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
         return false;
     }
 
-
     if (!readIntoScalar(controller_nh, "motion_magic_acceleration", motion_magic_acceleration_fast))
     {
         ROS_ERROR("Could not find motion_magic_acceleration");
         return false;
     }
 
-
     if (!readIntoScalar(controller_nh, "motion_s_curve_strength", motion_s_curve_strength))
-    {
-    	ROS_ERROR("Could not find motion_s_curve_strength");
-    	return false;
-    }
-
+	{
+		ROS_ERROR("Could not find motion_s_curve_strength");
+		return false;
+	}
 
     //get config values for the elevator talon
     XmlRpc::XmlRpcValue elevator_params;
@@ -178,7 +161,6 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     {
         ROS_ERROR("Could not find max_height_val");
         return false;
-    
     }
 
     if (!elevator_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, elevator_params))
@@ -186,6 +168,7 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
         ROS_ERROR("Cannot initialize elevator joint!");
         return false;
     }
+
     ddr_.registerVariable<double>
     ("arb_feed_forward_high",
      [this]()
@@ -274,23 +257,17 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
         motion_s_curve_strength.store(b);
     },
     "S Curve Strength");
-    
+
     ddr_.publishServicesTopics();
 
-    //initialize the elevator joint
-    if (!elevator_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, elevator_params))
-    {
-        ROS_ERROR("Cannot initialize elevator joint!");
-        return false;
-    }
-
     elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController_2023::cmdService, this);
-
+    ROS_INFO_STREAM("===========ELEVATOR INIT RETURNS TRUE================");
     return true;
 }
 
 void ElevatorController_2023::starting(const ros::Time &time)
 {
+    ROS_INFO_STREAM("CALLED STARTING ELEVATOR==============");
     zeroed_ = false;
     last_zeroed_  = false;
     last_mode_ = hardware_interface::TalonMode_Disabled;
@@ -330,14 +307,14 @@ void ElevatorController_2023::update(const ros::Time &time, const ros::Duration 
         elevator_joint_.setCommand(setpoint.GetPosition());
 
         //if we're not climbing, add an arbitrary feed forward to hold the elevator up
-       
+
         elevator_joint_.setMotionAcceleration(motion_magic_acceleration_fast);
         elevator_joint_.setMotionCruiseVelocity(motion_magic_velocity_fast);
         elevator_joint_.setPIDFSlot(0);
         // Add arbitrary feed forward for upwards motion
         // We could have arb ff for both up and down, but seems
         // easier (and good enough) to tune PID for down motion
-        // and add an arb FF correction for u   
+		// and add an arb FF correction for u
         if (elevator_joint_.getPosition() >= stage_2_height && last_position_ <= stage_2_height)
         {
             elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
@@ -347,7 +324,7 @@ void ElevatorController_2023::update(const ros::Time &time, const ros::Duration 
         {
             elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
             elevator_joint_.setDemand1Value(arb_feed_forward_low);
-        
+
         //for now, up and down PID is the same, so slot 1 is used for climbing
         /*
         if(last_setpoint_ != setpoint) {
@@ -361,7 +338,6 @@ void ElevatorController_2023::update(const ros::Time &time, const ros::Duration 
         last_setpoint_ = setpoint;
         */
         
-
         }
     }
     else
@@ -394,10 +370,6 @@ void ElevatorController_2023::update(const ros::Time &time, const ros::Duration 
     last_mode_ = elevator_joint_.getMode();
 }
 
-
-
-
-
 void ElevatorController_2023::stopping(const ros::Time &/*time*/)
 {
 }
@@ -405,7 +377,7 @@ void ElevatorController_2023::stopping(const ros::Time &/*time*/)
 //Command Service Function
 bool ElevatorController_2023::cmdService(controllers_2023_msgs::ElevatorSrv::Request  &req,
         controllers_2023_msgs::ElevatorSrv::Response &/*response*/)
-{   
+{
     if (req.position > MAX_HEIGHT_VAL) // TODO : get real measurement, make a param
     {
         ROS_ERROR_STREAM("Elevator controller: req.position too large : " << req.position);
@@ -426,10 +398,7 @@ bool ElevatorController_2023::cmdService(controllers_2023_msgs::ElevatorSrv::Req
     return true;
 }
 
-}
+}//namespace
 
 //DON'T FORGET TO EXPORT THE CLASS SO CONTROLLER_MANAGER RECOGNIZES THIS AS A TYPE
 PLUGINLIB_EXPORT_CLASS(elevator_controller_2023::ElevatorController_2023, controller_interface::ControllerBase)
-
-
-#endif

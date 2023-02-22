@@ -1,7 +1,4 @@
 //HPP CONTENTS INTO CPP
-#ifndef FOUR_BAR_CONTROLLER_2023
-#define FOUR_BAR_CONTROLLER_2023
-
 //added _2023 to the two lines above ^
 
 #include <ros/ros.h>
@@ -22,7 +19,6 @@ namespace four_bar_controller_2023
 //this is the actual controller, so it stores all of the  update() functions and the actual handle from the joint interface
 //if it was only one type, controller_interface::Controller<TalonCommandInterface> here
 class FourBarController_2023 : public controller_interface::MultiInterfaceController<hardware_interface::TalonCommandInterface>
-
 {
     public:
         FourBarController_2023()
@@ -124,8 +120,6 @@ class FourBarController_2023 : public controller_interface::MultiInterfaceContro
 
 // Set the conversion_factor so that 1 rad = 1 turn of the 4bar
 
-//namespace
-
 //END OF HPP CONTENTS
 template<typename T>
 bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> &scalar)
@@ -216,20 +210,17 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
         return false;
     }
 
-
     if (!readIntoScalar(controller_nh, "motion_magic_acceleration", motion_magic_acceleration))
     {
         ROS_ERROR("Could not find motion_magic_acceleration");
         return false;
     }
 
-
     if (!readIntoScalar(controller_nh, "motion_s_curve_strength", motion_s_curve_strength))
     {
         ROS_ERROR("Could not find motion_s_curve_strength");
         return false;
     }
-
 
     //get config values for the four_bar talon
     XmlRpc::XmlRpcValue four_bar_params;
@@ -388,12 +379,6 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
 
     ddr_.publishServicesTopics();
 
-    //initialize the four_bar joint
-    if (!four_bar_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, four_bar_params))
-    {
-        ROS_ERROR("Cannot initialize four_bar joint!");
-    }
-
     four_bar_service_ = controller_nh.advertiseService("four_bar_service", &FourBarController_2023::cmdService, this);
     realtime_pub_.reset(new realtime_tools::RealtimePublisher<controllers_2023_msgs::FourBarState>(controller_nh, "state", 1));
 
@@ -525,4 +510,3 @@ bool FourBarController_2023::cmdService(controllers_2023_msgs::FourBarSrv::Reque
 
 //DON'T FORGET TO EXPORT THE CLASS SO CONTROLLER_MANAGER RECOGNIZES THIS AS A TYPE
 PLUGINLIB_EXPORT_CLASS(four_bar_controller_2023::FourBarController_2023, controller_interface::ControllerBase)
-#endif

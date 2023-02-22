@@ -53,6 +53,8 @@ hardware_interface:
 
        - {name: babys_first_orchestra, type: orchestra, id: 1}
 
+       - {name: candle1, can_id: 0, can_bus: CANivore, type: candle, local: true}
+
 # Create controllers for each joint
 #
 # Entry is the name of the controller. It can be anything.
@@ -146,3 +148,7 @@ pigeon2_imu_state_controller:
     type: imu_sensor_controller/ImuSensorController
     joint_name: pigeon2
     publish_rate: 100
+
+candle_controller:
+    type: candle_controller/CANdleController
+    name: candle1
