@@ -382,6 +382,8 @@ sudo dpkg -i cuda-keyring_1.0-1_all.deb
 sudo apt-get update
 sudo apt-get -y install cuda nvidia-cudnn8 nvidia-cudnn8-dev libnvinfer-dev libnvinfer-plugin-dev
 
+echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-12.0/compat" >> /home/ubuntu/.bashrc
+echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-11.4/targets/aarch64-linux/lib" >> /home/ubuntu/.bashrc
 
 cd
 export PATH=$PATH:/usr/local/cuda/bin
