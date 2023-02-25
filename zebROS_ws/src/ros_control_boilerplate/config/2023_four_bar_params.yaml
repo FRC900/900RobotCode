@@ -8,7 +8,8 @@ four_bar_controller_2023:
     parallel_bar_length: 0.205
     diagonal_bar_length: 0.355
     intake_length: 0.065
-
+    
+    # 0.11-0.12 worked well for holding max extension
     arb_feed_forward_maximum: 0.05
     arb_feed_forward_angle: 0.04
 
