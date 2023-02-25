@@ -64,7 +64,7 @@ class FourBarController_2023 : public controller_interface::MultiInterfaceContro
         std::atomic<double> motion_magic_acceleration;
         std::atomic<int> motion_s_curve_strength;
 
-        ddynamic_reconfigure::DDynamicReconfigure ddr_;
+        std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
 
         bool cmdService(controllers_2023_msgs::FourBarSrv::Request &req,
                         controllers_2023_msgs::FourBarSrv::Response &res);
@@ -139,6 +139,8 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
                                   ros::NodeHandle             &/*root_nh*/,
                                   ros::NodeHandle             &controller_nh)
 {
+    
+    ddr_ = std::make_unique<ddynamic_reconfigure::DDynamicReconfigure>(controller_nh);
     //create the interface used to initialize the talon joint
     hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
 
@@ -244,9 +246,9 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
         ROS_ERROR("Cannot initialize four_bar joint!");
     }
 
-    ddr_.registerVariable<double>
+    ddr_->registerVariable<double>
     ("max_extension",
-     [this]()
+    [this]()
     {
         return max_extension_.load();
     },
@@ -261,11 +263,12 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
             ROS_WARN_STREAM("ddr: max_extension_ set to greater than the theoretical maximum. setting to calculated maximum instead.");
         }
     },
-    "Max extension");
+    "Max extension",
+    0.0, math_max_extension_); //idk might be 3? i'm not really sure, 2 to be safe
 
-    ddr_.registerVariable<double>
+    ddr_->registerVariable<double>
     ("min_extension",
-     [this]()
+    [this]()
     {
         return min_extension_.load();
     },
@@ -280,9 +283,10 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
             ROS_WARN_STREAM("ddr: min_extension_ set to less than the theoretical minimum. setting to calculated minimum instead.");
         }
     },
-    "Min extension");
+    "Min extension",
+    0.0, math_min_extension_);
 
-    ddr_.registerVariable<double>
+    ddr_->registerVariable<double>
     ("parallel_bar_length",
      [this]()
     {
@@ -292,9 +296,10 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         parallel_bar_length_.store(b);
     },
-    "Parallel bar length");
+    "Parallel bar length",
+    0.0, 1.0);
 
-    ddr_.registerVariable<double>
+    ddr_->registerVariable<double>
     ("diagonal_bar_length",
      [this]()
     {
@@ -304,9 +309,10 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         diagonal_bar_length_.store(b);
     },
-    "Diagonal bar length");
+    "Diagonal bar length",
+    0.0, 1.0);
 
-    ddr_.registerVariable<double>
+    ddr_->registerVariable<double>
     ("intake_length",
      [this]()
     {
@@ -316,11 +322,12 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         intake_length_.store(b);
     },
-    "Intake/static attachment length");
+    "Intake/static attachment length",
+    0.0, 1.0);
 
-    ddr_.registerVariable<double>
+    ddr_->registerVariable<double>
     ("arb_feed_forward_maximum",
-     [this]()
+    [this]()
     {
         return arb_feed_forward_maximum.load();
     },
@@ -328,9 +335,9 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         arb_feed_forward_maximum.store(b);
     },
-    "Arb feedforward maximum (maximum horizontal length)");
+    "Arb feedforward maximum (maximum horizontal length)", -1.0, 1.0);
 
-    ddr_.registerVariable<double>
+    ddr_->registerVariable<double>
     ("arb_feed_forward_angle",
      [this]()
     {
@@ -340,9 +347,9 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         arb_feed_forward_angle.store(b);
     },
-    "Arb feedforward angle. calculation: ff_max - |sin(angle)| * this");
+    "Arb feedforward angle. calculation: ff_max - |sin(angle)| * this", -1.0, 1.0);
 
-    ddr_.registerVariable<double>
+    ddr_->registerVariable<double>
     ("four_bar_zeroing_percent_output",
      [this]()
     {
@@ -353,7 +360,7 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
         four_bar_zeroing_percent_output.store(b);
     },
     "FourBar Zeroing Percent Output");
-    ddr_.registerVariable<double>
+    ddr_->registerVariable<double>
     ("four_bar_zeroing_timeout",
      [this]()
     {
@@ -363,8 +370,10 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         four_bar_zeroing_timeout.store(b);
     },
-    "FourBar Zeroing Timeout");
-    ddr_.registerVariable<double>
+    "FourBar Zeroing Timeout",
+    0.0, 15.0);
+    
+    ddr_->registerVariable<double>
     ("motion_magic_velocity",
      [this]()
     {
@@ -374,8 +383,10 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         motion_magic_velocity.store(b);
     },
-    "Motion Magic Velocity");
-    ddr_.registerVariable<double>
+    "Motion Magic Velocity",
+    0.0, 20.0);
+
+    ddr_->registerVariable<double>
     ("motion_magic_acceleration",
      [this]()
     {
@@ -385,8 +396,10 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         motion_magic_acceleration.store(b);
     },
-    "Motion Magic Acceleration");
-    ddr_.registerVariable<int>
+    "Motion Magic Acceleration",
+    0.0, 200.0); //20?
+    
+    ddr_->registerVariable<int>
     ("motion_s_curve_strength",
      [this]()
     {
@@ -396,9 +409,9 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         motion_s_curve_strength.store(b);
     },
-    "S Curve Strength");
+    "S Curve Strength", 0, 8);
 
-    ddr_.publishServicesTopics();
+    ddr_->publishServicesTopics();
 
     four_bar_service_ = controller_nh.advertiseService("four_bar_service", &FourBarController_2023::cmdService, this);
     realtime_pub_.reset(new realtime_tools::RealtimePublisher<controllers_2023_msgs::FourBarState>(controller_nh, "state", 1));

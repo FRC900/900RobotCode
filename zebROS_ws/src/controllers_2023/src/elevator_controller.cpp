@@ -80,7 +80,7 @@ class ElevatorController_2023 : public controller_interface::MultiInterfaceContr
         std::atomic<double> motion_magic_acceleration_fast;
         std::atomic<int> motion_s_curve_strength;
 
-        ddynamic_reconfigure::DDynamicReconfigure ddr_;
+        std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
 
 }; //class
 
@@ -100,8 +100,12 @@ bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> 
 bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
                                    ros::NodeHandle             &/*root_nh*/,
                                    ros::NodeHandle             &controller_nh)
+
 {
+    ddr_ = std::make_unique<ddynamic_reconfigure::DDynamicReconfigure>(controller_nh);
+
     ROS_INFO_STREAM("INIT CALLED FOR ELEVATOR CONTROLLER============");
+
     //create the interface used to initialize the talon joint
     hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
     hardware_interface::TalonStateInterface *const talon_state_iface = hw->get<hardware_interface::TalonStateInterface>();
@@ -196,7 +200,7 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
         return false;
     }
 
-    ddr_.registerVariable<double>
+    ddr_->registerVariable<double>
     ("arb_feed_forward_high",
      [this]()
     {
@@ -206,8 +210,12 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     {
         arb_feed_forward_high.store(b);
     },
-    "Arb feedforward high");
-    ddr_.registerVariable<double>
+
+    "Arb feedforward high",
+    0.0, 0.5
+    );
+
+    ddr_->registerVariable<double>
     ("arb_feed_forward_low",
      [this]()
     {
@@ -217,8 +225,10 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     {
         arb_feed_forward_low.store(b);
     },
-    "Arb feedforward low");
-    ddr_.registerVariable<double>
+    "Arb feedforward low",
+    0.0, 1.0);
+    
+    ddr_->registerVariable<double>
     ("arb_feed_forward_maximum",
      [this]()
     {
@@ -228,8 +238,8 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     {
         arb_feed_forward_maximum.store(b);
     },
-    "Arb feedforward maximum (maximum horizontal length)");
-    ddr_.registerVariable<double>
+    "Arb feedforward maximum (maximum horizontal length)", -1.0, 1.0);
+    ddr_->registerVariable<double>
     ("arb_feed_forward_angle",
      [this]()
     {
@@ -239,8 +249,9 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     {
         arb_feed_forward_angle.store(b);
     },
-    "Arb feedforward angle. calculation: arb_ff_low_or_high + ff_max - |sin(four bar angle)| * this");
-    ddr_.registerVariable<double>
+    "Arb feedforward angle. calculation: arb_ff_low_or_high + ff_max - |sin(four bar angle)| * this",
+    -1.0, 1.0);
+    ddr_->registerVariable<double>
     ("elevator_zeroing_percent_output",
      [this]()
     {
@@ -250,8 +261,10 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     {
         elevator_zeroing_percent_output.store(b);
     },
-    "Elevator Zeroing Percent Output");
-    ddr_.registerVariable<double>
+    "Elevator Zeroing Percent Output",
+    -1.0, 0.0);
+    
+    ddr_->registerVariable<double>
     ("elevator_zeroing_timeout",
      [this]()
     {
@@ -261,8 +274,10 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     {
         elevator_zeroing_timeout.store(b);
     },
-    "Elevator Zeroing Timeout");
-    ddr_.registerVariable<double>
+    "Elevator Zeroing Timeout",
+    0.0, 15.0);
+    
+    ddr_->registerVariable<double>
     ("stage_2_height",
      [this]()
     {
@@ -272,8 +287,10 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     {
         stage_2_height.store(b);
     },
-    "Stage 2 Height");
-    ddr_.registerVariable<double>
+    "Stage 2 Height",
+    0.0, 2.0);
+
+    ddr_->registerVariable<double>
     ("motion_magic_velocity_fast",
      [this]()
     {
@@ -283,8 +300,10 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     {
         motion_magic_velocity_fast.store(b);
     },
-    "fast Motion Magic Velocity");
-    ddr_.registerVariable<double>
+    "fast Motion Magic Velocity",
+    0.0, 10); 
+    
+    ddr_->registerVariable<double>
     ("motion_magic_acceleration_fast",
      [this]()
     {
@@ -294,8 +313,10 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     {
         motion_magic_acceleration_fast.store(b);
     },
-    "Fast Motion Magic Acceleration");
-    ddr_.registerVariable<int>
+    "Fast Motion Magic Acceleration",
+    0.0, 20.0);
+    
+    ddr_->registerVariable<int>
     ("motion_s_curve_strength",
      [this]()
     {
@@ -305,9 +326,9 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     {
         motion_s_curve_strength.store(b);
     },
-    "S Curve Strength");
-
-    ddr_.publishServicesTopics();
+    "S Curve Strength", 0, 8);
+   
+    ddr_->publishServicesTopics();
 
     elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController_2023::cmdService, this);
     ROS_INFO_STREAM("===========ELEVATOR INIT RETURNS TRUE================");
@@ -452,3 +473,4 @@ bool ElevatorController_2023::cmdService(controllers_2023_msgs::ElevatorSrv::Req
 
 //DON'T FORGET TO EXPORT THE CLASS SO CONTROLLER_MANAGER RECOGNIZES THIS AS A TYPE
 PLUGINLIB_EXPORT_CLASS(elevator_controller_2023::ElevatorController_2023, controller_interface::ControllerBase)
+
