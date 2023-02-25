@@ -15,11 +15,39 @@ elif [[ ! $ROS_ROOT = "/opt/ros/noetic/share/ros" ]]; then
 fi
 export PATH=$PATH:/usr/local/cuda/bin
 
-EXTRA_BLACKLIST_PACKAGES=""
+EXTRA_SKIPLIST_PACKAGES=""
 EXTRA_CMD_LINE=""
 uname -a | grep -q x86_64
 if [ $? -eq 1 ]; then
-	EXTRA_BLACKLIST_PACKAGES="controllers_2020 demo_tf_node robot_characterization robot_visualizer rosbag_scripts rospy_message_converter rqt_driver_station_sim stage_ros template_controller visualize_profile zms_writer"
+	EXTRA_SKIPLIST_PACKAGES="
+		adi_driver \
+		adi_pico_driver \
+		as726x_controllers \
+		cancoder_controller \
+		canifier_controller \
+		cuda_apriltag_ros \
+		demo_tf_node \
+		navx_publishe \
+		robot_characterization \
+		robot_visualizer \
+		rosbag_scripts \
+		rospy_message_converter \
+		rosserial_arduino \
+		rosserial_chibios \
+		rosserial_embeddedlinux \
+		rosserial_mbed \
+		rosserial_server \
+		rosserial_test \
+		rosserial_tivac \
+		rosserial_vex_cortex \
+		rosserial_vex_v5 \
+		rosserial_windows \
+		rosserial_xbee \
+		rqt_driver_station_sim \
+		stage_ros \
+		template_controller \
+		visualize_profile \
+		zms_writer"
 	EXTRA_CMD_LINE="--limit-status-rate 5"
 fi
 
@@ -43,7 +71,7 @@ catkin config --skiplist \
 	turing_smart_screen \
 	velocity_controllers \
 	zed_ros \
-	$EXTRA_BLACKLIST_PACKAGES
+	$EXTRA_SKIPLIST_PACKAGES
 
 catkin build -DCATKIN_ENABLE_TESTING=OFF -DBUILD_WITH_OPENMP=ON -DCMAKE_CXX_STANDARD=17 -DSETUPTOOLS_DEB_LAYOUT=OFF  $EXTRA_CMD_LINE "$@"
 

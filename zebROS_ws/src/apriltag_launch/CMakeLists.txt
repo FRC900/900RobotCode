@@ -11,7 +11,6 @@ include("../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
-  cuda_apriltag_ros
   field_obj
   geometry_msgs
   nav_msgs
@@ -141,6 +140,7 @@ include_directories(
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+if (0)
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
@@ -166,6 +166,7 @@ add_dependencies(apriltag_to_pf_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catki
  target_link_libraries(apriltag_to_pf_node
    ${catkin_LIBRARIES}
  )
+ endif()
 
 #############
 ## Install ##

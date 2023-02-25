@@ -69,10 +69,12 @@
 		<arg name="image_topic"            value="$(arg cam_image_topic)" />
 	</include>
 	-->
+	<!--
   <group ns="goal_detection">
     <node pkg="apriltag_launch" name="apriltag_to_pf_node" type="apriltag_to_pf_node" output="screen">
     </node>
   </group>
+	-->
   
   <!-- Launch apriltags-->
   <!-- <include file="$(find cuda_apriltag_ros)/launch/cuda_continuous_detection.launch">

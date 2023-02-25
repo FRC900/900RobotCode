@@ -150,9 +150,6 @@ add_executable(publish_pid_cmd_vel_node src/publish_pid_cmd_vel.cpp)
 add_dependencies(publish_pid_cmd_vel_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(publish_pid_cmd_vel_node ${catkin_LIBRARIES})
 
-add_executable(game_piece_path_server src/game_piece_path_gen.cpp)
-target_link_libraries(game_piece_path_server ${catkin_LIBRARIES})
-add_dependencies(game_piece_path_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # 2023 actionlib servers
 add_executable(path_to_apriltag src/path_to_apriltag.cpp)
@@ -188,6 +185,7 @@ add_executable(2022_shooting_server_node src/2022_shooting_server.cpp)
 target_link_libraries(2022_shooting_server_node ${catkin_LIBRARIES})
 add_dependencies(2022_shooting_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+if (0)
 add_executable(2022_apriltag_shooting_server_pf_node src/2022_apriltag_shooting_server_pf.cpp)
 target_link_libraries(2022_apriltag_shooting_server_pf_node ${catkin_LIBRARIES})
 add_dependencies(2022_apriltag_shooting_server_pf_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -199,6 +197,7 @@ add_dependencies(2022_apriltag_shooting_server_node ${behaviors_EXPORTED_TARGETS
 add_executable(2022_climb_server_node src/2022_climb_server.cpp)
 target_link_libraries(2022_climb_server_node ${catkin_LIBRARIES})
 add_dependencies(2022_climb_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+endif()
 
 add_executable(2022_shooter_server_node src/2022_shooter_server.cpp)
 target_link_libraries(2022_shooter_server_node ${catkin_LIBRARIES})
@@ -219,6 +218,12 @@ add_dependencies(2022_intaking_server_node ${behaviors_EXPORTED_TARGETS} ${catki
 add_executable(2022_ejecting_server_node src/2022_ejecting_server.cpp)
 target_link_libraries(2022_ejecting_server_node ${catkin_LIBRARIES})
 add_dependencies(2022_ejecting_server_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+if (0)
+add_executable(game_piece_path_server src/game_piece_path_gen.cpp)
+target_link_libraries(game_piece_path_server ${catkin_LIBRARIES})
+add_dependencies(game_piece_path_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+endif()
 
 # 2020 actionlib servers
 if (0)
@@ -374,8 +379,8 @@ install(PROGRAMS
 install(TARGETS
 	auto_node
 	publish_pid_cmd_vel_node
-	game_piece_path_server
-  2023_updown_elevater_server
+	#game_piece_path_server
+	2023_updown_elevater_server
 	#align_to_shoot_server
 	#align_hatch_server
 	#align_with_camera
