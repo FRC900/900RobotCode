@@ -95,6 +95,8 @@ class FourberAction2023
         std::mutex safety_state_lock_;
         double previous_setpoint_;
 
+        std::string joint;
+
         size_t fourbar_master_idx = std::numeric_limits<size_t>::max();
 
     public:
@@ -117,6 +119,8 @@ class FourberAction2023
             fourbar_state_sub_ = nh_.subscribe("/frcrobot_jetson/four_bar_controller_2023/state", 1, &FourberAction2023::currentStateCallback, this);
 
             load_param_helper(nh_, "position_tolerance", position_tolerance_, 0.02);
+
+            load_param_helper(nh_, "joint", joint, std::string("four_bar"));
 
             // default values are guesses
             double res = -1;
@@ -489,7 +493,7 @@ class FourberAction2023
             {
                 for (size_t i = 0; i < talon_state.name.size(); i++)
                 {
-                    if (talon_state.name[i] == "four_bar_leader")
+                    if (talon_state.name[i] == joint)
                     {
                         fourbar_master_idx = i;
                         break;
@@ -503,7 +507,7 @@ class FourberAction2023
                 fourbar_cur_speed_ = talon_state.speed[fourbar_master_idx];
             }
             else {
-                FourberERR("Can not find talon with name = " << "four_bar_leader");
+                FourberERR("Can not find talon with name = " << joint);
             }
         }
 }; // FourberAction2023

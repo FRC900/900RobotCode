@@ -2,6 +2,8 @@
 
 position_tolerance: 0.02 # meters, if fourbar position is +/- than the server set success
 
+joint: four_bar
+
 # distance that the server should be called with
 
 # purposly capitlized, same terminolgy in the elevater

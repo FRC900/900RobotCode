@@ -2,12 +2,13 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <realtime_tools/realtime_buffer.h>
 #include <controller_interface/multi_interface_controller.h>
-#include <talon_controllers/talon_controller_interface.h> // "
+#include <talon_controllers/talon_controller_interface.h>
+#include <ctre_interfaces/talon_state_interface.h>
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include "controllers_2023_msgs/ElevatorSrv.h"
 
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
-double MAX_HEIGHT_VAL = 1.7;
+double MAX_HEIGHT_VAL = 1.2;
 namespace elevator_controller_2023
 {
 
@@ -33,7 +34,7 @@ class ElevatorCommand_2023
 };
 //this is the actual controller, so it stores all of the  update() functions and the actual handle from the joint interface
 //if it was only one type, controller_interface::Controller<TalonCommandInterface> here
-class ElevatorController_2023 : public controller_interface::MultiInterfaceController<hardware_interface::TalonCommandInterface>
+class ElevatorController_2023 : public controller_interface::MultiInterfaceController<hardware_interface::TalonCommandInterface, hardware_interface::TalonStateInterface>
 
 {
     public:
@@ -56,6 +57,7 @@ class ElevatorController_2023 : public controller_interface::MultiInterfaceContr
     private:
         ros::Time last_time_down_;
         talon_controllers::TalonControllerInterface elevator_joint_; //interface for the talon joint
+        hardware_interface::TalonStateHandle fourbar_joint_; //interface for the fourbar joint, used to calculate feed forward
 
         realtime_tools::RealtimeBuffer<ElevatorCommand_2023> position_command_; //this is the buffer for percent output commands to be published
         ros::ServiceServer elevator_service_; //service for receiving commands
@@ -68,6 +70,9 @@ class ElevatorController_2023 : public controller_interface::MultiInterfaceContr
 
         std::atomic<double> arb_feed_forward_high;
         std::atomic<double> arb_feed_forward_low;
+        std::atomic<double> arb_feed_forward_maximum;
+        std::atomic<double> arb_feed_forward_angle;
+        // feed forward calculation: low_or_high_ff + maximum - |sin(four bar angular position)|*ff_angle
         std::atomic<double> elevator_zeroing_percent_output;
         std::atomic<double> elevator_zeroing_timeout;
         std::atomic<double> stage_2_height;
@@ -99,6 +104,7 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     ROS_INFO_STREAM("INIT CALLED FOR ELEVATOR CONTROLLER============");
     //create the interface used to initialize the talon joint
     hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
+    hardware_interface::TalonStateInterface *const talon_state_iface = hw->get<hardware_interface::TalonStateInterface>();
 
     //hardware_interface::PositionJointInterface *const pos_joint_iface = hw->get<hardware_interface::PositionJointInterface>()
     if (!readIntoScalar(controller_nh, "arb_feed_forward_low", arb_feed_forward_low))
@@ -110,6 +116,18 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
     if (!readIntoScalar(controller_nh, "arb_feed_forward_high", arb_feed_forward_high))
     {
         ROS_ERROR("Could not find arb_feed_forward_hgih");
+        return false;
+    }
+
+    if (!readIntoScalar(controller_nh, "arb_feed_forward_maximum", arb_feed_forward_maximum))
+    {
+        ROS_ERROR("Could not find arb_feed_forward_maximum");
+        return false;
+    }
+
+    if (!readIntoScalar(controller_nh, "arb_feed_forward_angle", arb_feed_forward_angle))
+    {
+        ROS_ERROR("Could not find arb_feed_forward_angle");
         return false;
     }
 
@@ -163,6 +181,15 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
         return false;
     }
 
+    std::string fourbar_name;
+    if (!controller_nh.getParam("fourbar_joint", fourbar_name))
+    {
+        ROS_ERROR("Could not find fourbar_joint");
+        return false;
+    }
+
+    fourbar_joint_ = talon_state_iface->getHandle(fourbar_name);
+
     if (!elevator_joint_.initWithNode(talon_command_iface, nullptr, controller_nh, elevator_params))
     {
         ROS_ERROR("Cannot initialize elevator joint!");
@@ -191,6 +218,28 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
         arb_feed_forward_low.store(b);
     },
     "Arb feedforward low");
+    ddr_.registerVariable<double>
+    ("arb_feed_forward_maximum",
+     [this]()
+    {
+        return arb_feed_forward_maximum.load();
+    },
+    [this](double b)
+    {
+        arb_feed_forward_maximum.store(b);
+    },
+    "Arb feedforward maximum (maximum horizontal length)");
+    ddr_.registerVariable<double>
+    ("arb_feed_forward_angle",
+     [this]()
+    {
+        return arb_feed_forward_angle.load();
+    },
+    [this](double b)
+    {
+        arb_feed_forward_angle.store(b);
+    },
+    "Arb feedforward angle. calculation: arb_ff_low_or_high + ff_max - |sin(four bar angle)| * this");
     ddr_.registerVariable<double>
     ("elevator_zeroing_percent_output",
      [this]()
@@ -277,6 +326,7 @@ void ElevatorController_2023::starting(const ros::Time &time)
 
 void ElevatorController_2023::update(const ros::Time &time, const ros::Duration &/*duration*/)
 {
+    double fourbar_ff = arb_feed_forward_maximum - fabs(sin(fourbar_joint_->getPosition())) * arb_feed_forward_angle;
     // If we hit the limit switch, (re)zero the position.
     if (elevator_joint_.getReverseLimitSwitch())
     {
@@ -287,7 +337,7 @@ void ElevatorController_2023::update(const ros::Time &time, const ros::Duration 
             last_zeroed_ = true;
             elevator_joint_.setSelectedSensorPosition(0);
             elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-            elevator_joint_.setDemand1Value(arb_feed_forward_low);
+            elevator_joint_.setDemand1Value(arb_feed_forward_low + fourbar_ff);
         }
     }
     else
@@ -315,15 +365,15 @@ void ElevatorController_2023::update(const ros::Time &time, const ros::Duration 
         // We could have arb ff for both up and down, but seems
         // easier (and good enough) to tune PID for down motion
 		// and add an arb FF correction for u
-        if (elevator_joint_.getPosition() >= stage_2_height && last_position_ <= stage_2_height)
+        if (elevator_joint_.getPosition() >= stage_2_height)
         {
             elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-            elevator_joint_.setDemand1Value(arb_feed_forward_high);
+            elevator_joint_.setDemand1Value(arb_feed_forward_high + fourbar_ff);
         }
-        else if (elevator_joint_.getPosition() <= stage_2_height && last_position_ >= stage_2_height)
+        else if (elevator_joint_.getPosition() <= stage_2_height)
         {
             elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-            elevator_joint_.setDemand1Value(arb_feed_forward_low);
+            elevator_joint_.setDemand1Value(arb_feed_forward_low + fourbar_ff);
 
         //for now, up and down PID is the same, so slot 1 is used for climbing
         /*
