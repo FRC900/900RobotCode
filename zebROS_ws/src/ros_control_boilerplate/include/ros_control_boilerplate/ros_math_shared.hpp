@@ -7,6 +7,7 @@ class ROSMathShared : public wpi::math::MathShared {
   void ReportErrorV(fmt::string_view format, fmt::format_args args) override;
   void ReportWarningV(fmt::string_view format, fmt::format_args args) override;
   void ReportUsage(wpi::math::MathUsageId id, int count) override;
+  units::second_t GetTimestamp() override;
 };
 
 #endif

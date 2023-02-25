@@ -54,3 +54,9 @@ void ROSMathShared::ReportUsage(wpi::math::MathUsageId id, int count)
         break;
     }
 }
+
+units::second_t ROSMathShared::GetTimestamp()
+{
+	return units::second_t(ros::Time::now().toSec());
+}
+
