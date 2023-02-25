@@ -30,7 +30,7 @@
 
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
-#include "teleop_joystick_control/OrientStrafingAngle.h"
+#include "teleop_joystick_control/SnapStrafingAngle.h"
 
 #include "controllers_2019_msgs/PanelIntakeSrv.h"
 //#include "controllers_2019_msgs/CargoIntakeSrv.h"
@@ -54,7 +54,7 @@ bool panel_push_extend = false;
 const int climber_num_steps = 4;
 const int elevator_num_setpoints = 4;
 
-double orient_strafing_angle = 0.0;
+double snap_strafing_angle = 0.0;
 
 // array of joystick_states messages for multiple joysticks
 std::vector <frc_msgs::JoystickState> joystick_states_array;
@@ -134,10 +134,10 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 	return true;
 }
 
-bool orientStrafingAngleCallback(teleop_joystick_control::OrientStrafingAngle::Request& req,
-										teleop_joystick_control::OrientStrafingAngle::Response&/* res*/)
+bool snapStrafingAngleCallback(teleop_joystick_control::SnapStrafingAngle::Request& req,
+										teleop_joystick_control::SnapStrafingAngle::Response&/* res*/)
 {
-	orient_strafing_angle = req.angle;
+	snap_strafing_angle = req.angle;
 	return true;
 }
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
@@ -170,7 +170,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	{
 		static bool sendRobotZero = false;
 
-		geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], imu_angle, config);
+		const geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0].leftStickX, joystick_states_array[0].leftStickY, imu_angle, joystick_states_array[0].header.stamp, config);
 
 		if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (cmd_vel.angular.z == 0.0) && !sendRobotZero)
 		{
@@ -421,7 +421,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		orient_strafing_enable_pub.publish(enable_pub_msg);
 
 		std_msgs::Float64 orient_strafing_angle_msg;
-		orient_strafing_angle_msg.data = orient_strafing_angle;
+		orient_strafing_angle_msg.data = snap_strafing_angle;
 		orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
 
 		std_msgs::Float64 imu_angle_msg;
@@ -936,7 +936,7 @@ int main(int argc, char **argv)
 
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 
-	ros::ServiceServer orient_strafing_angle_service = n.advertiseService("orient_strafing_angle", orientStrafingAngleCallback);
+	ros::ServiceServer snap_strafing_angle_service = n.advertiseService("snap_strafing_angle", snapStrafingAngleCallback);
 
 	DynamicReconfigureWrapper<teleop_joystick_control::TeleopJoystickCompConfig> drw(n_params, config);
 

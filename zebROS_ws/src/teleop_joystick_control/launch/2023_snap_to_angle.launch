@@ -4,5 +4,6 @@
 		<rosparam file="$(find teleop_joystick_control)/config/2022_goal_angle.yaml" command="load"/>
 		<node name="snap_to_angle_node_2022" pkg="teleop_joystick_control" type="snap_to_angle_node_2022" output="screen"/>
 		<node name="snap_to_conecube_node_2023" pkg="teleop_joystick_control" type="snap_to_conecube_node_2023" output="screen"/>
+		<param name="timeout" type="double" value="0.5"/>
 	</group>
 </launch>

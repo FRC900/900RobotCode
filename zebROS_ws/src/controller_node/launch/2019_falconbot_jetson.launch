@@ -34,7 +34,6 @@
 	<group ns="imu">
 		<include file="$(find controller_node)/launch/2019_compbot_jetson_imu.launch">
 			<arg name="hw_or_sim" value="$(arg hw_or_sim)" />
-
 			<arg name="primary_imu" value="$(arg primary_imu)" />
 		</include>
 	</group>
@@ -49,7 +48,9 @@
 	
 	<group ns="teleop">
 		<rosparam file="$(find teleop_joystick_control)/config/teleop_joystick_comp.yaml" command="load"/>
-                <node name="teleop_joystick_comp" pkg="teleop_joystick_control" type="teleop_joystick_comp" output="screen" />
+		<node name="teleop_joystick_comp_2020" pkg="teleop_joystick_control" type="teleop_joystick_comp_2020" output="screen" >
+			<remap from="navx_mxp" to="/navx_jetson/zeroed_imu"/>
+		</node>
 
 		<group ns="translator0">
 			<node name="translate_joystick_data_node" pkg="teleop_joystick_control" type="translate_joystick_data_node" output="screen"/>

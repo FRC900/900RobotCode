@@ -10,12 +10,13 @@
 
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
+#include "std_msgs/Int8.h"
 
 #include "std_srvs/Empty.h"
 
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
-#include "teleop_joystick_control/OrientStrafingAngle.h"
+#include "teleop_joystick_control/SnapStrafingAngle.h"
 
 #include "frc_msgs/ButtonBoxState.h"
 #include "frc_msgs/MatchSpecificData.h"
@@ -42,15 +43,19 @@
 #include "teleop_joystick_control/TeleopJoystickCompConfig.h"
 #include "teleop_joystick_control/TeleopJoystickCompDiagnosticsConfig.h"
 
+#include "teleop_joystick_control/RobotOrientationDriver.h"
 #include "teleop_joystick_control/TeleopCmdVel.h"
 
 std::unique_ptr<TeleopCmdVel<teleop_joystick_control::TeleopJoystickCompConfig>> teleop_cmd_vel;
+std::unique_ptr<RobotOrientationDriver> robot_orientation_driver;
+ros::ServiceClient BrakeSrv;
 
 bool diagnostics_mode = false;
 bool green_led_on = true;
 bool can_climb = false;
 
-double orient_strafing_angle;
+double orient_strafing_angle = 0.0; // For orienting to climb
+double snap_strafing_angle = 0.0;
 
 enum ControlPanelMode{ rotation, increment, position };
 ControlPanelMode control_panel_mode = increment;
@@ -64,10 +69,6 @@ frc_msgs::ButtonBoxState button_box;
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 
-ros::Publisher orient_strafing_enable_pub;
-ros::Publisher orient_strafing_setpoint_pub;
-ros::Publisher orient_strafing_state_pub;
-
 ros::Publisher green_led_pub;
 
 ros::Publisher shooter_offset_pub;
@@ -76,8 +77,6 @@ teleop_joystick_control::TeleopJoystickCompConfig config;
 teleop_joystick_control::TeleopJoystickCompDiagnosticsConfig diagnostics_config;
 
 ros::Publisher JoystickRobotVel;
-
-ros::ServiceClient BrakeSrv;
 
 ros::ServiceClient climber_controller_client;
 ros::ServiceClient control_panel_controller_client;
@@ -115,7 +114,10 @@ void imuCallback(const sensor_msgs::Imu &imuState)
 	tf2::Matrix3x3(imuQuat).getRPY(roll, pitch, yaw);
 
 	if (yaw == yaw) // ignore NaN results
+	{
 		imu_angle = -yaw;
+		robot_orientation_driver->setRobotOrientation(yaw);
+	}
 }
 
 void preemptActionlibServers(void)
@@ -137,10 +139,10 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 	return true;
 }
 
-bool orientStrafingAngleCallback(teleop_joystick_control::OrientStrafingAngle::Request& req,
-		teleop_joystick_control::OrientStrafingAngle::Response&/* res*/)
+bool snapStrafingAngleCallback(teleop_joystick_control::SnapStrafingAngle::Request& req,
+		teleop_joystick_control::SnapStrafingAngle::Response&/* res*/)
 {
-	orient_strafing_angle = req.angle;
+	snap_strafing_angle = req.angle;
 	return true;
 }
 
@@ -581,26 +583,78 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 		if(!diagnostics_mode)
 		{
-			static bool sendRobotZero = false;
-
-			geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], imu_angle, config);
-
-			if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (cmd_vel.angular.z == 0.0) && !sendRobotZero)
+			const StrafeSpeeds strafe_speeds = teleop_cmd_vel->generateCmdVel(joystick_states_array[0].leftStickX, joystick_states_array[0].leftStickY, imu_angle, joystick_states_array[0].header.stamp, config);
+			if(joystick_states_array[0].directionLeftButton)
 			{
-				std_srvs::Empty empty;
-				if (!BrakeSrv.call(empty))
-				{
-					ROS_ERROR("BrakeSrv call failed in sendRobotZero_");
-				}
-				ROS_INFO("BrakeSrv called");
-
-				JoystickRobotVel.publish(cmd_vel);
-				sendRobotZero = true;
+				// Align for climbing
+				robot_orientation_driver->setTargetOrientation(orient_strafing_angle);
 			}
-			else if((cmd_vel.linear.x != 0.0) || (cmd_vel.linear.y != 0.0) || (cmd_vel.angular.z != 0.0))
+			else if(joystick_states_array[0].leftTrigger >= 0.5) // TODO : config value
 			{
-				JoystickRobotVel.publish(cmd_vel);
-				sendRobotZero = false;
+				// Align to previously-requested snap angle
+				robot_orientation_driver->setTargetOrientation(snap_strafing_angle);
+			}
+			else
+			{
+				// Rotate the robot in response to a joystick request.
+				const double rotation_increment = teleop_cmd_vel->generateAngleIncrement(joystick_states_array[0].rightStickX, joystick_states_array[0].header.stamp, config);
+				if (rotation_increment != 0.0)
+				{
+					robot_orientation_driver->incrementTargetOrientation(rotation_increment);
+				}
+			}
+
+
+			// Only send cmd_vel message from teleop if the PID loop is
+			// responding to a setpoint from the teleop node.  This will
+			// prevent command generated from setpoints from other nodes
+			// being processed in here instead of there.
+			if (robot_orientation_driver->mostRecentCommandIsFromTeleop())
+			{
+				const double rotation_velocity = robot_orientation_driver->getOrientationVelocityPIDOutput();
+				static bool already_called_brake_srv = false;
+				// If x and y inputs are 0 and the PID controls have settled on a final orientation,
+				// trigger brake mode in the swerve controller
+				if ((strafe_speeds.x_ == 0) && (strafe_speeds.y_ == 0) && (fabs(rotation_velocity) < 0.001)) // TODO : config item
+				{
+					// Only send this once and then stop publishing
+					// This will let other, lower priority cmd_vel messages
+					// from auto code move to the highest priority in the
+					// cmd vel mux rather than overriding them with higher
+					// priority 0,0,0 speeds from the teleop code
+					if (!already_called_brake_srv)
+					{
+						geometry_msgs::Twist cmd_vel;
+						cmd_vel.linear.x = 0.0;
+						cmd_vel.linear.y = 0.0;
+						cmd_vel.linear.z = 0.0;
+						cmd_vel.angular.x = 0.0;
+						cmd_vel.angular.y = 0.0;
+						cmd_vel.angular.z = 0.0;
+						JoystickRobotVel.publish(cmd_vel);
+
+						std_srvs::Empty empty;
+						if (!BrakeSrv.call(empty))
+						{
+							ROS_ERROR("BrakeSrv call failed in sendRobotZero");
+						}
+						ROS_INFO("BrakeSrv called");
+						already_called_brake_srv = true;
+					}
+				}
+				else
+				{
+					geometry_msgs::Twist cmd_vel;
+					cmd_vel.linear.x = strafe_speeds.x_;
+					cmd_vel.linear.y = strafe_speeds.y_;
+					cmd_vel.linear.z = 0.0;
+					cmd_vel.angular.x = 0.0;
+					cmd_vel.angular.y = 0.0;
+					cmd_vel.angular.z = rotation_velocity;
+
+					JoystickRobotVel.publish(cmd_vel);
+					already_called_brake_srv = false;
+				}
 			}
 
 			//Joystick1: buttonA
@@ -720,8 +774,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 			}
 
-			std_msgs::Bool enable_pub_msg;
-
 			//Joystick1: directionLeft
 			if(joystick_states_array[0].directionLeftPress)
 			{
@@ -729,26 +781,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 			if(joystick_states_array[0].directionLeftButton)
 			{
-				// Align for climbing
-				enable_pub_msg.data = true;
+				// Align for climbing - handled at start of joystick code
 			}
 			else
 			{
-				enable_pub_msg.data = false;
 			}
 			if(joystick_states_array[0].directionLeftRelease)
 			{
 			}
-
-			orient_strafing_enable_pub.publish(enable_pub_msg);
-
-			std_msgs::Float64 orient_strafing_angle_msg;
-			orient_strafing_angle_msg.data = orient_strafing_angle;
-			orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
-
-			std_msgs::Float64 imu_angle_msg;
-			imu_angle_msg.data = imu_angle;
-			orient_strafing_state_pub.publish(imu_angle_msg);
 
 			//Joystick1: directionRight
 			if(joystick_states_array[0].directionRightPress)
@@ -1152,6 +1192,7 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 {
 	can_climb = msg.matchTimeRemaining <= config.climber_time_lock && !msg.Autonomous;
+	robot_orientation_driver->setRobotEnabled(msg.Enabled);
 }
 
 int main(int argc, char **argv)
@@ -1161,8 +1202,6 @@ int main(int argc, char **argv)
 	ros::NodeHandle n_params(n, "teleop_params");
 	ros::NodeHandle n_diagnostics_params(n, "teleop_diagnostics_params");
 	ros::NodeHandle n_swerve_params(n, "/frcrobot_jetson/swerve_drive_controller");
-
-
 
 	int num_joysticks = 1;
 	if(!n_params.getParam("num_joysticks", num_joysticks))
@@ -1304,11 +1343,10 @@ int main(int argc, char **argv)
 	shooter_offset.turret_offset = 0.0;
 
 	teleop_cmd_vel = std::make_unique<TeleopCmdVel<teleop_joystick_control::TeleopJoystickCompConfig>>(config);
+	robot_orientation_driver = std::make_unique<RobotOrientationDriver>(n);
 
 	imu_angle = M_PI / 2.;
-
-	std::map<std::string, std::string> service_connection_header;
-	service_connection_header["tcp_nodelay"] = "1";
+	std::map<std::string, std::string> service_connection_header {{"tcp_nodelay", "1"}};
 
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 	if(!BrakeSrv.waitForExistence(ros::Duration(15)))
@@ -1324,9 +1362,6 @@ int main(int argc, char **argv)
 	shooter_offset_pub = n.advertise<behavior_actions::ShooterOffset>("teleop_shooter_offsets", 1, true);
 	shooter_offset_pub.publish(shooter_offset);
 
-	orient_strafing_enable_pub = n.advertise<std_msgs::Bool>("orient_strafing/pid_enable", 1);
-	orient_strafing_setpoint_pub = n.advertise<std_msgs::Float64>("orient_strafing/setpoint", 1);
-	orient_strafing_state_pub = n.advertise<std_msgs::Float64>("orient_strafing/state", 1);
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	ros::Subscriber imu_heading = n.subscribe("/imu/zeroed_imu", 1, &imuCallback);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
@@ -1334,7 +1369,7 @@ int main(int argc, char **argv)
 	ros::Subscriber match_state_sub = n.subscribe("/frcrobot_rio/match_data", 1, matchStateCallback);
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 
-	ros::ServiceServer orient_strafing_angle_service = n.advertiseService("orient_strafing_angle", orientStrafingAngleCallback);
+	ros::ServiceServer snap_strafing_angle_service = n.advertiseService("snap_strafing_angle", snapStrafingAngleCallback);
 
 	align_shooter_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::AlignToShootAction>>("/align_to_shoot/align_to_shoot_server", true);
 	eject_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::EjectAction>>("/eject/eject_server", true);

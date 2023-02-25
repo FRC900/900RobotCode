@@ -84,7 +84,6 @@
 	-->
 	<!-- set up auto node to create paths -->
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
-	<include file="$(find behaviors)/launch/2022_apriltag_shooting.launch"/>
 
 	<include file="$(find teleop_joystick_control)/launch/2023_snap_to_angle.launch"/>
 
@@ -105,7 +104,7 @@
 	-->
 	<group ns="cmd_vel_mux">
 		<node name="twist_mux" pkg="twist_mux" type="twist_mux">
-			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/2022_twist_mux.yaml"/>
+			<rosparam command="load" file="$(find talon_swerve_drive_controller)/config/2023_twist_mux.yaml"/>
 			<remap from="cmd_vel_out" to="/cmd_vel"/>
 		</node>
 

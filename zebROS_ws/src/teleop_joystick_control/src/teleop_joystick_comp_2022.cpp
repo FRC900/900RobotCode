@@ -725,7 +725,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				ROS_ERROR("BrakeSrv call failed in sendRobotZero_");
 			}
 			ROS_INFO("BrakeSrv called");
-
+			
 			JoystickRobotVel.publish(cmd_vel);
 			sendRobotZero = true;
 		}

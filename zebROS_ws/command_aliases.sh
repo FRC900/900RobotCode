@@ -2,8 +2,8 @@
 
 alias crossbuild='~/2023RobotCode/zebROS_ws/cross_build.sh'
 alias deploy='~/2023RobotCode/scripts/deploy.sh'
-alias diaglaunch='roslaunch controller_node 2022_test_indexer_intake_combined.launch'
-alias hwlaunch='roslaunch controller_node 2022_compbot_combined.launch'
+alias diaglaunch='echo "Not implmented yet! Check command_aliases.sh"'
+alias hwlaunch='roslaunch controller_node 2023_compbot_combined.launch'
 alias killros='~/2023RobotCode/zebROS_ws/kill_ros_.sh'
 alias natbuild='~/2023RobotCode/zebROS_ws/native_build.sh'
 alias rosjet='source ~/2023RobotCode/zebROS_ws/ROSJetsonMaster.sh'

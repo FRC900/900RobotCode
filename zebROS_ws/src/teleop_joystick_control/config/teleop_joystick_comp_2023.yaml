@@ -2,6 +2,8 @@ teleop_params:
     num_joysticks: 2
     max_rot: 4.0
     max_rot_slow: 2.0
+    rotation_axis_scale: 1.0
+    rotation_epsilon: 0.1 # Z-velocities lower than this indicate robot is stopped
     min_speed: 0.0  # Smallest linear speed which get the robot moving at all
     max_speed: 2.0
     max_speed_slow: 0.75

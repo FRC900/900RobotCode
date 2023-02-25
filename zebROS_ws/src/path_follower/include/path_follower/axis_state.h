@@ -37,23 +37,13 @@ class AlignActionAxisConfig
 class AlignActionAxisState
 {
 	public:
-		AlignActionAxisState(const std::string &,
-							 ros::NodeHandle nh,
+		AlignActionAxisState(ros::NodeHandle &nh,
 							 const std::string &enable_pub_topic,
 							 const std::string &command_pub_topic,
-							 const std::string &state_pub_topic,
-							 const std::string &error_sub_topic,
-							 const boost::function<void(const std_msgs::Float64MultiArrayConstPtr &msg)> &error_sub_cb,
-							 const double timeout,
-							 const double error_threshold)
+							 const std::string &state_pub_topic)
 			: enable_pub_(nh.advertise<std_msgs::Bool>(enable_pub_topic, 1, true))
 			, command_pub_(nh.advertise<std_msgs::Float64>(command_pub_topic, 1, true))
 			, state_pub_(nh.advertise<std_msgs::Float64>(state_pub_topic, 1, true))
-			, error_sub_(nh.subscribe(error_sub_topic, 1, error_sub_cb))
-			, aligned_(false)
-			, error_(0.0)
-			, timeout_(timeout)
-			, error_threshold_(error_threshold)
 		{
 			// Set defaults for PID node topics to prevent
 			// spam of "Waiting for first setpoint message."
@@ -66,14 +56,28 @@ class AlignActionAxisState
 			command_pub_.publish(float64_msg);
 			state_pub_.publish(float64_msg);
 		}
+		void setEnable(bool enable_state)
+		{
+			std_msgs::Bool enable_msg;
+			enable_msg.data = enable_state;
+			enable_pub_.publish(enable_msg);
+		}
+		void setCommand(double command)
+		{
+			std_msgs::Float64 command_msg;
+			command_msg.data = command;
+			command_pub_.publish(command_msg);
+		}
+		void setState(double state)
+		{
+			std_msgs::Float64 state_msg;
+			state_msg.data = state;
+			state_pub_.publish(state_msg);
+		}
+	private:
 		ros::Publisher enable_pub_;
 		ros::Publisher command_pub_;
 		ros::Publisher state_pub_;
-		ros::Subscriber error_sub_;
-		bool aligned_;
-		double error_;
-		double timeout_;
-		double error_threshold_;
 };
 
 #endif

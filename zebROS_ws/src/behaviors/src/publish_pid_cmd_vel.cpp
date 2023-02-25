@@ -33,7 +33,7 @@ ros::Subscriber orient_state_sub;
 
 geometry_msgs::Twist cmd_vel_msg;
 
-std::atomic<double> ratio_xy(0.0);
+double ratio_xy= 0.0;
 bool pid_enable = false;
 bool orient_sub = false;
 bool x_sub = false;
@@ -47,7 +47,7 @@ bool still_active = false;
 void orientCB(const std_msgs::Float64& msg)
 {
 	time_since_command = time_since_orient = ros::Time::now();
-	cmd_vel_msg.angular.z = -1*((msg.data == msg.data) ? msg.data : 0.0);
+	cmd_vel_msg.angular.z = (msg.data == msg.data) ? msg.data : 0.0;
 }
 void xCB(const std_msgs::Float64& msg)
 {
@@ -63,7 +63,6 @@ void enableCB(const std_msgs::Bool& msg)
 {
 	time_since_pid_enable = ros::Time::now();
 	pid_enable = msg.data;
-	still_active = true;
 }
 void ratio_xyCB(const std_msgs::Float64& msg) {
 	ratio_xy = msg.data;
@@ -150,7 +149,7 @@ int main(int argc, char ** argv)
 	while(ros::ok())
 	{
 		current_time = ros::Time::now();
-		if((current_time - time_since_command).toSec() < command_timeout && pid_enable)
+		if(((current_time - time_since_command).toSec() < command_timeout) && pid_enable)
 		{
 			if((current_time - time_since_orient).toSec() > 0.1)
 				cmd_vel_msg.angular.z = 0.0;
@@ -177,24 +176,25 @@ int main(int argc, char ** argv)
 				}
 			}
 			time_since_x = time_since_y = ros::Time::now();
-		  double rotate_angle;
-		  if((current_time - time_at_last_orient_state).toSec() < command_timeout)
-		  {
-		  	rotate_angle = -1 * current_angle;
-		  }
-		  else
-		  {
-		  	rotate_angle = 0;
-		  }
+			double rotate_angle;
+			if((current_time - time_at_last_orient_state).toSec() < command_timeout)
+			{
+				rotate_angle = -current_angle;
+			}
+			else
+			{
+				rotate_angle = 0;
+			}
 			if (transform_yaw) {
-			  cmd_vel_msg.linear.x = x_command * cos(rotate_angle) - y_command * sin(rotate_angle);
-			  cmd_vel_msg.linear.y = x_command * sin(rotate_angle) + y_command * cos(rotate_angle);
+				cmd_vel_msg.linear.x = x_command * cos(rotate_angle) - y_command * sin(rotate_angle);
+				cmd_vel_msg.linear.y = x_command * sin(rotate_angle) + y_command * cos(rotate_angle);
 			}
 			else {
 				cmd_vel_msg.linear.x = x_command;
 				cmd_vel_msg.linear.y = y_command;
 			}
 			cmd_vel_pub.publish(cmd_vel_msg);
+			still_active = true;
 		}
 
 		else {

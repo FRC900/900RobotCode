@@ -1,16 +1,12 @@
 // Toggle between rotation using rightStickX and rightTrigger - leftTrigger
 #define ROTATION_WITH_STICK
 
-
 #include "ros/ros.h"
 #include "frc_msgs/JoystickState.h"
 #include "sensor_msgs/JointState.h"
 #include "geometry_msgs/Twist.h"
 #include <string>
 #include <cmath>
-#include <sensor_msgs/Imu.h>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
 
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
@@ -19,21 +15,23 @@
 
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
-#include "teleop_joystick_control/OrientStrafingAngle.h"
 
 #include "frc_msgs/ButtonBoxState.h"
-#include "frc_msgs/MatchSpecificData.h"
 
 #include "actionlib/client/simple_action_client.h"
 
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 
-#include "teleop_joystick_control/TeleopCmdVel.h"
+#include "teleop_joystick_control/TeleopCmdVel2023.h"
 #include "behavior_actions/AutoMode.h"
 
 #include "path_follower_msgs/holdPositionAction.h"
 
 #include <imu_zero/ImuZeroAngle.h>
+#include <angles/angles.h>
+#include <math.h>
+#include "teleop_joystick_control/RobotOrientationDriver.h"
+#include <teleop_joystick_control/SnapConeCube.h>
 
 struct DynamicReconfigVars
 {
@@ -51,14 +49,15 @@ struct DynamicReconfigVars
 	double trigger_threshold{0.5};        // "Amount trigger has to be pressed to trigger action"
 	double stick_threshold{0.5};          // "Amount stick has to be moved to trigger diag mode action"
 	double imu_zero_angle{0.0};           // "Value to pass to imu/set_zero when zeroing"
-	double cone_cube_timeout{1.0};        // "Ignore game pieces older than this when aligning to them"
+	double rotation_epsilon{0.01};		  // "Threshold Z-speed deciding if the robot is stopped"
+	double rotation_axis_scale{1.0};      // "Scale factor for rotation axis stick input"
 } config;
 
 std::unique_ptr<TeleopCmdVel<DynamicReconfigVars>> teleop_cmd_vel;
 
-bool diagnostics_mode = false;
+std::unique_ptr<RobotOrientationDriver> robot_orientation_driver;
 
-double orient_strafing_angle = 0; // set from service call anyway
+bool diagnostics_mode = false;
 
 frc_msgs::ButtonBoxState button_box;
 
@@ -66,45 +65,27 @@ frc_msgs::ButtonBoxState button_box;
 std::vector <frc_msgs::JoystickState> joystick_states_array;
 std::vector <std::string> topic_array;
 
-ros::Publisher orient_strafing_enable_pub;
-ros::Publisher orient_strafing_setpoint_pub;
-ros::Publisher orient_strafing_state_pub;
-
 ros::Publisher JoystickRobotVel;
 
 ros::ServiceClient BrakeSrv;
 ros::ServiceClient IMUZeroSrv;
 
-double imu_angle;
-
-bool robot_is_disabled{false};
 ros::Publisher auto_mode_select_pub;
 
 bool joystick1_left_trigger_pressed = false;
 bool joystick1_right_trigger_pressed = false;
 
-// Diagnostic mode controls
-imu_zero::ImuZeroAngle imu_cmd;
-
-
 bool imu_service_needed = true;
 
-ros::Publisher dynamic_arm_piston_;
 double last_offset;
 bool last_robot_orient;
 
 // Diagnostic mode controls
-
-
 int direction_x{};
 int direction_y{};
 int direction_z{};
 
-ros::Time last_cube;
-double cube_angle;
-
-ros::Time last_cone;
-double cone_angle;
+ros::ServiceClient snapConeCubeSrv;
 
 void moveDirection(int x, int y, int z) {
 	geometry_msgs::Twist cmd_vel;
@@ -145,26 +126,6 @@ void zero_all_diag_commands(void)
 
 std::shared_ptr<actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>> distance_ac;
 
-
-void imuCallback(const sensor_msgs::Imu &imuState)
-{
-	const tf2::Quaternion imuQuat(imuState.orientation.x, imuState.orientation.y, imuState.orientation.z, imuState.orientation.w);
-	double roll;
-	double pitch;
-	double yaw;
-	tf2::Matrix3x3(imuQuat).getRPY(roll, pitch, yaw);
-
-	if (std::isfinite(yaw)) // ignore NaN results
-	{
-		imu_angle = -yaw;
-
-		// Pass along yaw state to orient PID node
-		std_msgs::Float64 imu_angle_msg;
-		imu_angle_msg.data = yaw; // TBD - invert or not?
-		orient_strafing_state_pub.publish(imu_angle_msg);
-	}
-}
-
 void preemptActionlibServers(void)
 {
 	ROS_WARN_STREAM("Preempting ALL actionlib servers!");
@@ -182,15 +143,7 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 	return true;
 }
 
-bool orientStrafingAngleCallback(teleop_joystick_control::OrientStrafingAngle::Request& req,
-		teleop_joystick_control::OrientStrafingAngle::Response&/* res*/)
-{
-	orient_strafing_angle = req.angle;
-	return true;
-}
-
 bool sendRobotZero = false;
-bool snappingToAngle = false;
 
 void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& event)
 {
@@ -208,11 +161,8 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 		// joystick1_right_trigger_pressed = false;
 		// zero_all_diag_commands();
 		//
-		// // Disable snap-to-angle in diagnostics mode
-		// std_msgs::Bool enable_align_msg;
-		// enable_align_msg.data = false;
-		// orient_strafing_enable_pub.publish(enable_align_msg);
 		// diagnostics_mode = true;
+		// robot_orientation_driver->stopRotation();
 		// ROS_WARN_STREAM("Enabling diagnostics mode!");
 		teleop_cmd_vel->setRobotOrient(true, 0.0);
 		ROS_WARN_STREAM("Robot relative mode!");
@@ -237,7 +187,9 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 		// zero_all_diag_commands();
 		// publish_diag_cmds();
 		// diagnostics_mode = false;
+		// robot_orientation_driver->stopRotation();
 		// ROS_WARN_STREAM("Disabling diagnostics mode!");
+
 		teleop_cmd_vel->setRobotOrient(false, 0.0);
 		ROS_WARN_STREAM("Field relative mode!");
 	}
@@ -330,9 +282,15 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.leftBluePress)
 	{
+		ROS_INFO_STREAM("Left blue button callback!");
+		// 10 degrees
+		// say its not from teleop so it acutally runs pid on the angle
+		// reasoning is that if we know where we want to go, then pid is good, but if not it sucks
+		robot_orientation_driver->setTargetOrientation(robot_orientation_driver->getCurrentOrientation() + angles::from_degrees(10.), false);
 	}
 	if(button_box.leftBlueButton)
 	{
+
 	}
 	if(button_box.leftBlueRelease)
 	{
@@ -340,6 +298,8 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 
 	if(button_box.rightBluePress)
 	{
+		ROS_INFO_STREAM("Right blue button callback!");
+		robot_orientation_driver->setTargetOrientation(robot_orientation_driver->getCurrentOrientation() - angles::from_degrees(10.), false);
 	}
 	if(button_box.rightBlueButton)
 	{
@@ -436,14 +396,16 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	}
 	if(button_box.bottomSwitchUpButton)
 	{
-		if (robot_is_disabled)
+		if (!robot_orientation_driver->getRobotEnabled())
 		{
 			behavior_actions::AutoMode auto_mode_msg;
 			auto_mode_msg.header.stamp = ros::Time::now();
 			auto_mode_msg.auto_mode = 1;
 			auto_mode_select_pub.publish(auto_mode_msg);
 		}
-		if(imu_service_needed){
+		if(imu_service_needed)
+		{
+			imu_zero::ImuZeroAngle imu_cmd;
 			imu_cmd.request.angle = config.imu_zero_angle;
 			IMUZeroSrv.call(imu_cmd);
 			imu_service_needed = false;
@@ -460,25 +422,30 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	}
 	if(button_box.bottomSwitchDownButton)
 	{
-		if (robot_is_disabled)
+		if (!robot_orientation_driver->getRobotEnabled())
 		{
 			behavior_actions::AutoMode auto_mode_msg;
 			auto_mode_msg.header.stamp = ros::Time::now();
 			auto_mode_msg.auto_mode = 2;
 			auto_mode_select_pub.publish(auto_mode_msg);
 		}
-		if(imu_service_needed){
+		if(imu_service_needed)
+		{
+			imu_zero::ImuZeroAngle imu_cmd;
 			imu_cmd.request.angle = config.imu_zero_angle;
 			IMUZeroSrv.call(imu_cmd);
 			imu_service_needed = false;
-			}
+		}
 	}
 	if(button_box.bottomSwitchDownRelease)
 	{
 		imu_service_needed = true;
 	}
-	if(!button_box.bottomSwitchUpButton && !button_box.bottomSwitchDownButton){ //The switch is in the middle position
-		if(imu_service_needed){
+	if(!button_box.bottomSwitchUpButton && !button_box.bottomSwitchDownButton)
+	{ //The switch is in the middle position
+		if(imu_service_needed)
+		{
+			imu_zero::ImuZeroAngle imu_cmd;
 			imu_cmd.request.angle = config.imu_zero_angle;
 			IMUZeroSrv.call(imu_cmd);
 			imu_service_needed = false;
@@ -520,28 +487,29 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	//Only do this for the first joystick
 	if(joystick_id == 0)
 	{
-		//ROS_INFO_STREAM("js0 callback running!");
-
+		//ROS_INFO_STREAM_THROTTLE(3, "2023 js0 callback running!");
+		
 		static ros::Time last_header_stamp = joystick_states_array[0].header.stamp;
 
-		//ROS_INFO_STREAM("leftStick = " << joystick_states_array[0].leftStickX << " " << joystick_states_array[0].leftStickY);
 		teleop_cmd_vel->updateRateLimit(config);
-		geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], imu_angle, config);
-		//ROS_INFO_STREAM("cmd_vel out " << cmd_vel.linear.x << " " << cmd_vel.linear.y << " " << cmd_vel.linear.z);
-
-		if (cmd_vel.angular.z != 0.0) {
-			if (snappingToAngle) {
-				// Disable angle snapping, if enabled
-				std_msgs::Bool enable_align_msg;
-				enable_align_msg.data = false;
-				orient_strafing_enable_pub.publish(enable_align_msg);
-			}
-		} else {
-			if (snappingToAngle) {
-				// Re-enable angle snapping, if enabled
-				std_msgs::Bool enable_align_msg;
-				enable_align_msg.data = true;
-				orient_strafing_enable_pub.publish(enable_align_msg);
+		// TODO : make swerve invert the yaw so we can deal in ccw-positive angles
+		// everywhere outside of that code
+		geometry_msgs::Twist cmd_vel = teleop_cmd_vel->generateCmdVel(joystick_states_array[0], -robot_orientation_driver->getCurrentOrientation(), config);
+		
+		/* 
+		if (!rotation_increment) {
+			robot_orientation_driver->stopRotation();
+		}
+		*/
+		//ROS_INFO_STREAM_THROTTLE(1, "Angular z " << cmd_vel.angular.z); 
+		double original_angular_z = cmd_vel.angular.z; 
+		if (cmd_vel.angular.z == 0.0) {
+			//ROS_INFO_STREAM_THROTTLE(1, "Sending a not from teleop");
+			// enables pid
+			robot_orientation_driver->setTargetOrientation(robot_orientation_driver->getTargetOrientation(), false /* from telop */);
+			double output = robot_orientation_driver->getOrientationVelocityPIDOutput();
+			if (fabs(output) > config.rotation_epsilon) {
+				cmd_vel.angular.z = output;
 			}
 		}
 
@@ -559,9 +527,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		}
 		else if((cmd_vel.linear.x != 0.0) || (cmd_vel.linear.y != 0.0) || (cmd_vel.angular.z != 0.0))
 		{
-			//ROS_INFO_STREAM("Publishing " << cmd_vel.linear.x << " " << cmd_vel.linear.y << " " << cmd_vel.linear.z);
+			//ROS_INFO_STREAM("2023-Publishing " << cmd_vel.linear.x << " " << cmd_vel.linear.y << " " << cmd_vel.linear.z);
 			JoystickRobotVel.publish(cmd_vel);
 			sendRobotZero = false;
+			// if the original command was not zero, then teleop was controlling rotation
+			if (original_angular_z != 0.0) {
+				robot_orientation_driver->setTargetOrientation(robot_orientation_driver->getCurrentOrientation(), true /* from telop */);
+			}
 		}
 
 		if(!diagnostics_mode)
@@ -570,93 +542,37 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: buttonA
 			if(joystick_states_array[0].buttonAPress)
 			{
-				if (ros::Time::now() - last_cone > ros::Duration(config.cone_cube_timeout)) {
-					ROS_ERROR_STREAM("Data too old! Can't snap to cone!");
-				} else {
-					ROS_INFO_STREAM("Snapping to nearest cone and enabling robot relative driving mode!");
-					// Align for cargo
-					ros::spinOnce();
-					std_msgs::Float64 orient_strafing_angle_msg;
-					orient_strafing_angle_msg.data = /*angles::shortest_angular_distance(imu_angle, */cone_angle;//);
-					orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
-					std_msgs::Bool enable_align_msg;
-					enable_align_msg.data = true;
-					// To align the robot to an angle, enable_align_msg.data
-					// needs to be true and the desired angle (in radians)
-					// needs to be published to orient_strafing_setpoint_pub
-					orient_strafing_enable_pub.publish(enable_align_msg);
-					teleop_cmd_vel->setRobotOrient(true, 0);
-					snappingToAngle = true;
-				}
+				teleop_joystick_control::SnapConeCube srv;
+				srv.request.piece = srv.request.VERTICAL_CONE; // can use any cone
+				ROS_INFO_STREAM("teleop_joystick_comp_2023 : snapping to nearest cone and enabling robot relative driving mode!");
+				teleop_cmd_vel->setRobotOrient(true, 0);
+				snapConeCubeSrv.call(srv);
 			}
 			if(joystick_states_array[0].buttonAButton)
 			{
-				// if (ros::Time::now() - last_cone > ros::Duration(config.cone_cube_timeout)) {
-				// 	ROS_ERROR_STREAM("Data too old! Can't snap to cone!");
-				// } else {
-				// 	ROS_INFO_STREAM_THROTTLE(0.1, "Updating cone");
-				// 	// Align for cargo
-				// 	ros::spinOnce();
-				// 	std_msgs::Float64 orient_strafing_angle_msg;
-				// 	orient_strafing_angle_msg.data = cone_angle;
-				// 	orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
-				// }
+				
 			}
 			if(joystick_states_array[0].buttonARelease)
 			{
-				std_msgs::Bool enable_align_msg;
-				enable_align_msg.data = false;
-				orient_strafing_enable_pub.publish(enable_align_msg);
-				teleop_cmd_vel->setRobotOrient(last_robot_orient, last_offset);
-				ROS_INFO_STREAM("Stopping snapping to nearest cone and disabling robot relative driving mode!");
-				snappingToAngle = false;
-				sendRobotZero = false;
+				
 			}
 
 			//Joystick1: buttonB
 			if(joystick_states_array[0].buttonBPress)
 			{
-				if (ros::Time::now() - last_cube > ros::Duration(config.cone_cube_timeout)) {
-					ROS_ERROR_STREAM("Data too old! Can't snap to cube!");
-				} else {
-					ROS_INFO_STREAM("Snapping to nearest cube and enabling robot relative driving mode!");
-					// Align for cargo
-					ros::spinOnce();
-					std_msgs::Float64 orient_strafing_angle_msg;
-					orient_strafing_angle_msg.data = /*angles::shortest_angular_distance(imu_angle, */cube_angle;//);
-					orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
-					std_msgs::Bool enable_align_msg;
-					enable_align_msg.data = true;
-					// To align the robot to an angle, enable_align_msg.data
-					// needs to be true and the desired angle (in radians)
-					// needs to be published to orient_strafing_setpoint_pub
-					orient_strafing_enable_pub.publish(enable_align_msg);
-					teleop_cmd_vel->setRobotOrient(true, 0);
-					snappingToAngle = true;
-				}
+				teleop_joystick_control::SnapConeCube srv;
+				srv.request.piece = srv.request.CUBE;
+				ROS_INFO_STREAM("teleop_joystick_comp_2023 : snapping to nearest cube and enabling robot relative driving mode!");
+				teleop_cmd_vel->setRobotOrient(true, 0);
+				snapConeCubeSrv.call(srv);
 			}
 			if(joystick_states_array[0].buttonBButton)
 			{
-				// if (ros::Time::now() - last_cube > ros::Duration(config.cone_cube_timeout)) {
-				// 	ROS_ERROR_STREAM("Data too old! Can't snap to cube!");
-				// } else {
-				// 	ROS_INFO_STREAM_THROTTLE(0.1, "Updating cube");
-				// 	// Align for cargo
-				// 	ros::spinOnce();
-				// 	std_msgs::Float64 orient_strafing_angle_msg;
-				// 	orient_strafing_angle_msg.data = cube_angle;
-				// 	orient_strafing_setpoint_pub.publish(orient_strafing_angle_msg);
-				// }
+
 			}
 			if(joystick_states_array[0].buttonBRelease)
 			{
-				std_msgs::Bool enable_align_msg;
-				enable_align_msg.data = false;
-				orient_strafing_enable_pub.publish(enable_align_msg);
-				teleop_cmd_vel->setRobotOrient(last_robot_orient, last_offset);
-				ROS_INFO_STREAM("Stopping snapping to nearest cube and disabling robot relative driving mode!");
-				snappingToAngle = false;
-				sendRobotZero = false;
+				
 			}
 
 			//Joystick1: buttonX
@@ -1039,30 +955,6 @@ void jointStateCallback(const sensor_msgs::JointState &joint_state)
 	// TODO - remove this if not used
 }
 
-void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
-{
-	// TODO : if in diagnostic mode, zero all outputs on the
-	// transition from enabled to disabled
-	robot_is_disabled = msg.Disabled;
-}
-
-void coneAngleCallback(const std_msgs::Float64 &msg) {
-	cone_angle = msg.data;
-	last_cone = ros::Time::now();
-}
-
-void cubeAngleCallback(const std_msgs::Float64 &msg) {
-	cube_angle = msg.data;
-	last_cube = ros::Time::now();
-}
-
-/*
-void hubAngleCallback(const std_msgs::Float64 &msg) {
-	hub_angle = msg.data;
-}
-*/
-ros::Subscriber cone_angle_sub;
-ros::Subscriber cube_angle_sub;
 int main(int argc, char **argv)
 {
 	ros::init(argc, argv, "Joystick_controller");
@@ -1132,9 +1024,13 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read imu_zero_angle in teleop_joystick_comp");
 	}
-	if(!n_params.getParam("cone_cube_timeout", config.cone_cube_timeout))
+	if(!n_params.getParam("rotation_axis_scale", config.rotation_axis_scale))
 	{
-		ROS_ERROR("Could not read cone_cube_timeout in teleop_joystick_comp");
+		ROS_ERROR("Could not read rotation_axis_scale in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("rotation_epsilon", config.rotation_epsilon))
+	{
+		ROS_ERROR("Could not read rotation_epsilon in teleop_joystick_comp");
 	}
 
 	ddynamic_reconfigure::DDynamicReconfigure ddr(n_params);
@@ -1153,32 +1049,23 @@ int main(int argc, char **argv)
 	ddr.registerVariable<double>("trigger_threshold", &config.trigger_threshold, "Amount trigger has to be pressed to trigger action", 0., 1.);
 	ddr.registerVariable<double>("stick_threshold", &config.stick_threshold, "Amount stick has to be moved to trigger diag mode action", 0., 1.);
 	ddr.registerVariable<double>("imu_zero_angle", &config.imu_zero_angle, "Value to pass to imu/set_zero when zeroing", -360., 360.);
-	ddr.registerVariable<double>("cone_cube_timeout", &config.cone_cube_timeout, "Ignore game pieces older than this when aligning to them", 0., 10.);
 	ddr.publishServicesTopics();
 
 	teleop_cmd_vel = std::make_unique<TeleopCmdVel<DynamicReconfigVars>>(config);
-
-	imu_angle = M_PI / 2.;
+	robot_orientation_driver = std::make_unique<RobotOrientationDriver>(n);
 
 	const std::map<std::string, std::string> service_connection_header{{"tcp_nodelay", "1"}};
 
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 	IMUZeroSrv = n.serviceClient<imu_zero::ImuZeroAngle>("/imu/set_imu_zero", false, service_connection_header);
+	snapConeCubeSrv = n.serviceClient<teleop_joystick_control::SnapConeCube>("/snap_to_angle/snap_cone_cube", false, service_connection_header);
 
-	orient_strafing_enable_pub = n.advertise<std_msgs::Bool>("orient_strafing/pid_enable", 1);
-	orient_strafing_setpoint_pub = n.advertise<std_msgs::Float64>("orient_strafing/setpoint", 1);
-	orient_strafing_state_pub = n.advertise<std_msgs::Float64>("orient_strafing/state", 1);
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
-	ros::Subscriber imu_heading = n.subscribe("/imu/zeroed_imu", 1, &imuCallback);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
-	ros::Subscriber match_state_sub = n.subscribe("/frcrobot_rio/match_data", 1, matchStateCallback);
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 
 	auto_mode_select_pub = n.advertise<behavior_actions::AutoMode>("/auto/auto_mode", 1, true);
-
-	cone_angle_sub = n.subscribe("/snap_to_angle/nearest_cone_angle", 1, &coneAngleCallback);
-	cube_angle_sub = n.subscribe("/snap_to_angle/nearest_cube_angle", 1, &cubeAngleCallback);
 
 	const ros::Duration startup_wait_time_secs(15);
 	const ros::Time startup_start_time = ros::Time::now();
@@ -1194,8 +1081,6 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Wait (1 sec) timed out, for IMU Zero Service in teleop_joystick_comp.cpp");
 	}
-
-	ros::ServiceServer orient_strafing_angle_service = n.advertiseService("orient_strafing_angle", orientStrafingAngleCallback);
 
 	//Read from _num_joysticks joysticks
 	// Set up this callback last, since it might use all of the various stuff

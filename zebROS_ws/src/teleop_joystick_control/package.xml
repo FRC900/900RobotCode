@@ -12,6 +12,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>actionlib</depend>
+  <depend>angles</depend>
   <depend>behavior_actions</depend>
   <depend>cmake_modules</depend>
   <depend>control_msgs</depend>

@@ -180,6 +180,15 @@ class AutoNode {
 	//subscriber callback for match data
 	void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg)
 	{
+		// have to do this check here because otherwise it will be modified in the check below
+		// all of the cases where auto_stopped_ gets set to true are bad, preempt/aborted/timeout no real way to recover
+		if (auto_stopped_) {
+			shutdownNode(AutoStates::ERROR, "auto_stopped_ set to true");
+			return;
+		}
+		// must be in auto and enabled and have never had auto_stopped_ set to true 
+		// diffrent than before where we should hit the first block of being enabled in auto mode
+		// not sure if we rely on this for actual auto which is only 15 seconds or if it is just when it runs forever in sim
 		if((msg->Autonomous && msg->Enabled) || (msg->Enabled && enable_teleop_))
 		{
 			auto_stopped_ = false;
@@ -304,7 +313,10 @@ class AutoNode {
 		auto_state_ = state;
 		publish_autostate_ = false; // publish last message and exit from autostate publisher thread
 		preemptAll_();
-		r_.sleep();
+		// make 100% sure that it has published last auto state
+		for (int i=0; i < 5; i++) {
+			r_.sleep();
+		}
 		exit(0);
 	}
 

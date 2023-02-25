@@ -27,6 +27,8 @@ class PathAction
 		ros::Subscriber yaw_sub_;
 		geometry_msgs::Quaternion orientation_;
 
+		ros::Publisher orientation_command_pub_;
+
 		std::map<std::string, AlignActionAxisState> axis_states_;
 		ros::Publisher combine_cmd_vel_pub_;
 
@@ -60,6 +62,10 @@ class PathAction
 			: nh_(nh)
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
+			, odom_sub_(nh_.subscribe(odom_topic, 1, &PathAction::odomCallback, this))
+			, pose_sub_(nh_.subscribe(pose_topic, 1, &PathAction::poseCallback, this))
+			, orientation_command_pub_(nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1))
+			, combine_cmd_vel_pub_(nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true))
 			, path_follower_(time_offset)
 			, final_pos_tol_(final_pos_tol)
 			, final_rot_tol_(final_rot_tol)
@@ -69,16 +75,11 @@ class PathAction
 			, use_odom_orientation_(use_odom_orientation)
 			, use_pose_for_odom_(use_pose_for_odom)
 		{
-
-			// TODO - not sure which namespace base_trajectory should go in
-			odom_sub_ = nh_.subscribe(odom_topic, 1, &PathAction::odomCallback, this);
 			if (!use_odom_orientation_)
 			{
 				yaw_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this);
 			}
-			pose_sub_ = nh_.subscribe(pose_topic, 1, &PathAction::poseCallback, this);
 
-			combine_cmd_vel_pub_ = nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true);
 			std_msgs::Bool bool_msg;
 			bool_msg.data = false;
 			combine_cmd_vel_pub_.publish(bool_msg);
@@ -91,17 +92,12 @@ class PathAction
 			//ROS_INFO_STREAM("odomCallback : msg = " << odom_msg);
 			if (!use_pose_for_odom_)
 				odom_ = odom_msg;
-			//odom_.pose.pose.position.y *= -1;
 		}
 
 		void poseCallback(const geometry_msgs::PoseStamped &pose_msg)
 		{
 			//ROS_INFO_STREAM("poseCallback : msg = " << pose_msg);
 			pose_ = pose_msg;
-#if 0
-			pose_.pose.position.x *= -1; // TODO - the camera is mounted facing backwards
-			pose_.pose.position.y *= -1; // make this better - pass in the source frame and do a tf
-#endif
 			if (use_pose_for_odom_)
 			{
 				odom_.header = pose_msg.header;
@@ -135,35 +131,11 @@ class PathAction
 			}
 
 			axis_states_.emplace(std::make_pair(axis_config.name_,
-												AlignActionAxisState(axis_config.name_,
-														nh_,
+												AlignActionAxisState(nh_,
 														axis_config.enable_pub_topic_,
 														axis_config.command_pub_topic_,
-														axis_config.state_pub_topic_,
-														axis_config.error_sub_topic_,
-														boost::bind(&PathAction::error_term_cb, this, _1, axis_config.name_),
-														timeout,
-														error_threshold)));
+														axis_config.state_pub_topic_)));
 			return true;
-		}
-
-		// Callback for error term from PID node.  Compares error
-		// reported from PID vs. threshhold for the given axis and
-		// sets both the saved error as well as the aligned flag for that axis
-		void error_term_cb(const std_msgs::Float64MultiArrayConstPtr &msg, const std::string &name)
-		{
-			auto axis_it = axis_states_.find(name);
-			if (axis_it == axis_states_.end())
-			{
-				ROS_ERROR_STREAM("Could not find align axis " << name << " in error_term_cb");
-				return;
-			}
-			auto &axis = axis_it->second;
-			//Check if error less than threshold
-			axis.aligned_ = fabs(msg->data[0]) < axis.error_threshold_;
-			axis.error_ = msg->data[0];
-			if (debug_)
-				ROS_WARN_STREAM_THROTTLE(1, name << " error: " << axis.error_ << " aligned: " << axis.aligned_);
 		}
 
 		void executeCB(const path_follower_msgs::PathGoalConstPtr &goal)
@@ -217,9 +189,15 @@ class PathAction
 				ROS_ERROR_STREAM("Failed to load path");
 				preempted = true;
 			}
-
+			
 			int current_index = 0;
 
+			std_msgs::Bool enable_msg;
+			std_msgs::Float64 command_msg;
+			auto x_axis_it = axis_states_.find("x");
+			auto &x_axis = x_axis_it->second;
+			auto y_axis_it = axis_states_.find("y");
+			auto &y_axis = y_axis_it->second;
 			//in loop, send PID enable commands to rotation, x, y
 			double distance_travelled = 0;
 
@@ -268,35 +246,22 @@ class PathAction
 				tf2::doTransform(next_waypoint, next_waypoint, odom_to_base_link_tf);
 				ROS_INFO_STREAM("After transform: next_waypoint = (" << next_waypoint.position.x << ", " << next_waypoint.position.y << ", " << path_follower_.getYaw(next_waypoint.orientation) << ")");
 
-				std_msgs::Bool enable_msg;
 				enable_msg.data = true;
-				std_msgs::Float64 command_msg;
-
 				combine_cmd_vel_pub_.publish(enable_msg);
 
 				// For each axis of motion, publish the corresponding next
 				// waypoint coordinate to each of the PID controllers
 				// And also make sure they continue to be enabled
-				// TODO - see if we can enable once at the start of the callback instead?
-				auto x_axis_it = axis_states_.find("x");
-				auto &x_axis = x_axis_it->second;
-				x_axis.enable_pub_.publish(enable_msg);
-				command_msg.data = next_waypoint.position.x;
-				x_axis.command_pub_.publish(command_msg);
+				x_axis.setEnable(true);
+				x_axis.setCommand(next_waypoint.position.x);
 
-				auto y_axis_it = axis_states_.find("y");
-				auto &y_axis = y_axis_it->second;
-				y_axis.enable_pub_.publish(enable_msg);
-				command_msg.data = next_waypoint.position.y;
-				y_axis.command_pub_.publish(command_msg);
+				y_axis.setEnable(true);
+				y_axis.setCommand(next_waypoint.position.y);
 
-				auto z_axis_it = axis_states_.find("z");
-				auto &z_axis = z_axis_it->second;
-				z_axis.enable_pub_.publish(enable_msg);
 				command_msg.data = path_follower_.getYaw(next_waypoint.orientation);
 				if (std::isfinite(command_msg.data))
 				{
-					z_axis.command_pub_.publish(command_msg);
+					orientation_command_pub_.publish(command_msg);
 				}
 
 				if (as_.isPreemptRequested() || !ros::ok())
@@ -326,20 +291,12 @@ class PathAction
 				}
 				else if (!preempted && !timed_out)
 				{
-					// Pass along the current x, y and orient robot states
+					// Pass along the current x, y robot states
 					// to the PID controllers for each axis
-					std_msgs::Float64 state_msg;
-					state_msg.data = odom_.pose.pose.position.x;
-					x_axis.state_pub_.publish(state_msg);
-
-					state_msg.data = odom_.pose.pose.position.y;
-					y_axis.state_pub_.publish(state_msg);
-
-					if (std::isfinite(orientation_state))
-					{
-						state_msg.data = orientation_state;
-						z_axis.state_pub_.publish(state_msg);
-					}
+					// Orient is handled from combined orient
+					// node in teleop code
+					x_axis.setState(odom_.pose.pose.position.x);
+					y_axis.setState(odom_.pose.pose.position.y);
 
 					r.sleep();
 				}
@@ -350,22 +307,11 @@ class PathAction
 			ROS_INFO_STREAM("    delta pose_ = " << pose_.pose.position.x - starting_pose.pose.position.x
 					<< ", " << pose_.pose.position.y - starting_pose.pose.position.y);
 
-			std_msgs::Bool enable_msg;
 			enable_msg.data = false;
-
 			combine_cmd_vel_pub_.publish(enable_msg);
 
-			auto x_axis_it = axis_states_.find("x");
-			auto &x_axis = x_axis_it->second;
-			x_axis.enable_pub_.publish(enable_msg);
-
-			auto y_axis_it = axis_states_.find("y");
-			auto &y_axis = y_axis_it->second;
-			y_axis.enable_pub_.publish(enable_msg);
-
-			auto z_axis_it = axis_states_.find("z");
-			auto &z_axis = z_axis_it->second;
-			z_axis.enable_pub_.publish(enable_msg);
+			x_axis.setEnable(false);
+			y_axis.setEnable(false);
 
 			//log result and set actionlib server state appropriately
 			path_follower_msgs::PathResult result;
@@ -475,7 +421,6 @@ int main(int argc, char **argv)
 
 	AlignActionAxisConfig x_axis("x", "x_position_pid/pid_enable", "x_position_pid/x_cmd_pub", "x_position_pid/x_state_pub", "x_position_pid/pid_debug", "x_timeout_param", "x_error_threshold_param");
 	AlignActionAxisConfig y_axis("y", "y_position_pid/pid_enable", "y_position_pid/y_cmd_pub", "y_position_pid/y_state_pub", "y_position_pid/pid_debug", "y_timeout_param", "y_error_threshold_param");
-	AlignActionAxisConfig z_axis("z", "orient_pid/pid_enable", "orient_pid/orient_cmd_pub", "orient_pid/orient_state", "orient_pid/pid_debug", "z_timeout_param", "z_error_threshold_param");
 
 	if (!path_action_server.addAxis(x_axis))
 	{
@@ -485,11 +430,6 @@ int main(int argc, char **argv)
 	if (!path_action_server.addAxis(y_axis))
 	{
 		ROS_ERROR_STREAM("Error adding y_axis to path_action_server.");
-		return -1;
-	}
-	if (!path_action_server.addAxis(z_axis))
-	{
-		ROS_ERROR_STREAM("Error adding z_axis to path_action_server.");
 		return -1;
 	}
 

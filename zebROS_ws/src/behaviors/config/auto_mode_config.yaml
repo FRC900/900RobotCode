@@ -18,8 +18,9 @@
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_left_hub", "stop_intaking", "shoot", "drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
 
-auto_mode_1: ["mini_drive_test"]
-#auto_mode_2: ["mini_drive_test"]
+auto_mode_1: ["mini_drive_test_with_rotation"]
+auto_mode_2: ["mini_drive_test"]
+auto_mode_3: ["test_orientation"]
 
 # Examples
 #auto_mode_1: ["tuning"]
@@ -140,6 +141,15 @@ tuning:
       - {min_x: -1, max_x: 1, min_y: 0, max_y: 5}
       - {min_x: 0, max_x: 0, min_y: 0, max_y: 0}
         #frame_id: "map"
+
+test_orientation:
+  type: "path"
+  goal:
+    apply_offset: false
+    points:
+      - [1.0, 0.0, 0.0]
+      - [1.5, 1.0, 1.5]
+      - [2.0, 1.0, 1.5]
 
 map_relative_barrel_racing_path:
   type: "path"
@@ -346,3 +356,17 @@ mini_drive_test:
     path_offset_limit:
       - {min_x: 0, max_x: 0, min_y: 0, max_y: 0}
     optimize_final_velocity: true
+
+mini_drive_test_with_rotation:
+  type: "path"
+  goal:
+    apply_offset: false
+    points:
+      - [1.0, 1.0, 0.0]
+      - [2.0, 2.0, 0.78539816339]
+      - [3.0, 3.0, 0.0]
+    frame_id: ""
+    point_frame_id: []
+    path_offset_limit:
+      - {min_x: 0, max_x: 0, min_y: 0, max_y: 0}
+    optimize_final_velocity: false

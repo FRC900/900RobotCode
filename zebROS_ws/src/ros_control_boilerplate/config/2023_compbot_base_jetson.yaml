@@ -40,6 +40,9 @@ hardware_interface:
        - {name: br_angle, type: can_talon_fx, can_bus: CANivore, can_id: 14, local: true}
        - {name: bl_drive, type: can_talon_fx, can_bus: CANivore, can_id: 23, local: true}
        - {name: bl_angle, type: can_talon_fx, can_bus: CANivore, can_id: 13, local: true}
+       
+       #- {name: elevator_leader, type: can_talon_fx, can_bus: CANivore, can_id: 31, local: true}
+       #- {name: elevator_follower, type: can_talon_fx, can_bus: CANivore, can_id: 32, local: true}
 
        - {name: elevator_leader, type: can_talon_fx, can_bus: CANivore, can_id: 31, local: true}
        - {name: elevator_follower, type: can_talon_fx, can_bus: CANivore, can_id: 32, local: true}
