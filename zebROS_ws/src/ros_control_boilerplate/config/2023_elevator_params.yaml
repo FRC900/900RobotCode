@@ -2,16 +2,16 @@ elevator_controller_2023:
     type: elevator_controller_2023/ElevatorController_2023
 
     elevator_joint: [ 'elevator_leader', 'elevator_follower']
-    max_height_val: 1.4917 
+    max_height_val: 1.2
 
-    arb_feed_forward_high: 0.052
-    arb_feed_forward_low: 0.032
+    arb_feed_forward_high: 0.032
+    arb_feed_forward_low: 0.025
     
-    motion_magic_velocity: 1.7
-    motion_magic_acceleration: 3.5
+    motion_magic_velocity: 2.1
+    motion_magic_acceleration: 11.0
 
     # not sure if this needs to be here and below
-    motion_s_curve_strength: 0 
+    motion_s_curve_strength: 8
 
     # How quickly the elevator moves down when zeroing itself
     elevator_zeroing_percent_output: -0.2 # TODO : tune me
@@ -26,7 +26,7 @@ elevator_controller_2023:
         type: talon_controllers/TalonControllerInterface 
         joint: elevator_leader
         close_loop_values:
-            - {p: 0.275, i: 0.00001, d: 6.25, f: 0.28, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: 0.25, i: 0.00000, d: 0.001, f: 0.05, i_zone: 0, closed_loop_peak_output: 1.0}
               
         sensor_phase: False 
         invert_output: True
@@ -35,12 +35,14 @@ elevator_controller_2023:
         #conversion_factor: 0.00231984
         #conversion_factor: 0.00215745
         #conversion_factor: 0.0021143
-        conversion_factor: 0.00213544
+
+        # linear position along 
+        conversion_factor: 0.00360258
         # TODO : figure out what value this should be
         # Only need one direction, to
         # prevent the elevator from running off the top
-        softlimit_forward_threshold: 1.5 #1.66755
-        softlimit_forward_enable: False
+        softlimit_forward_threshold: 1.21 #1.66755
+        softlimit_forward_enable: True
 
         voltage_compensation_enable: True
         voltage_compensation_saturation: 12
@@ -58,7 +60,7 @@ elevator_controller_2023:
         neutral_deadband: 0.001
 
         dynamic_reconfigure: True
-        motion_s_curve_strength: 0
+        motion_s_curve_strength: 8
 
     elevator_follower: 
         #conversion_factor: 0.0108

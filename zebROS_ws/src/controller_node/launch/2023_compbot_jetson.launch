@@ -35,7 +35,7 @@
 
 		<!-- Load controller manager-->
 		<node name="ros_control_controller_manager" pkg="controller_manager" type="controller_manager" respawn="false"
-			output="screen" args="spawn elevator_controller_2023 candle_controller swerve_drive_controller joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller orchestra_controller orchestra_state_controller  pigeon2_imu_state_controller robot_code_ready_controller" />
+			output="screen" args="spawn intake_leader_controller four_bar_controller_2023 elevator_controller_2023 candle_controller swerve_drive_controller joint_state_controller_jetson joint_state_listener_controller talon_state_controller_jetson talon_config_controller match_state_listener_controller orchestra_controller orchestra_state_controller  pigeon2_imu_state_controller robot_code_ready_controller" />
 		<!--
 			To be added once hw exists
 elevator_controller_2023 four_bar_controller_2023 intake_leader_controller

@@ -34,8 +34,9 @@ four_bar_controller_2023:
             - {p: 1.0, i: 0.00001, d: 0.0, f: 0.0, i_zone: 0, closed_loop_peak_output: 1.0}
             - {p: 0.25, i: 0.0, d: 0, f: 0.58, i_zone: 4096, closed_loop_peak_output: 1.0}
 
-        invert_output: False # idk anymore
-
+        invert_output: True
+        sensor_phase: True
+        
         neutral_mode: Brake
 
         feedback_type: IntegratedSensor
