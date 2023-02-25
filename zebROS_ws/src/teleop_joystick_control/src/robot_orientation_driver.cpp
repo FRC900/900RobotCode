@@ -38,22 +38,22 @@ void RobotOrientationDriver::setTargetOrientation(double angle, bool from_teleop
 	std_msgs::Float64 pid_setpoint_msg;
 	target_orientation_ = angles::normalize_angle(target_orientation_);
 	pid_setpoint_msg.data = target_orientation_;
-	ROS_INFO_STREAM_THROTTLE(2, "Publishing pid setpoid with value " << pid_setpoint_msg);
+	//ROS_INFO_STREAM_THROTTLE(2, "Publishing pid setpoid with value " << pid_setpoint_msg);
 	pid_setpoint_pub_.publish(pid_setpoint_msg);
 
-	ROS_INFO_STREAM(__FUNCTION__ << "pub setpoint = " << pid_setpoint_msg.data );
+	//ROS_INFO_STREAM(__FUNCTION__ << "pub setpoint = " << pid_setpoint_msg.data );
 	// Make sure the PID node is enabled
 	std_msgs::Bool enable_pub_msg;
 	// only run pid if not teleop
 	if (from_teleop) {
 		enable_pub_msg.data = false;
-		ROS_INFO_STREAM("Enable pub is false");
+		//ROS_INFO_STREAM("Enable pub is false");
 	}
 	else {
-		ROS_INFO_STREAM("Enable pub is true");
+		//ROS_INFO_STREAM("Enable pub is true");
 		enable_pub_msg.data = true;
 	}
-	ROS_INFO_STREAM("Target orientation = " << target_orientation_ << " state = " << robot_orientation_);
+	//ROS_INFO_STREAM("Target orientation = " << target_orientation_ << " state = " << robot_orientation_);
 	pid_enable_pub_.publish(enable_pub_msg);
 	//ROS_INFO_STREAM(__FUNCTION__ << "pub enable = " << (int)enable_pub_msg.data );
 }
