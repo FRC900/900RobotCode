@@ -5,11 +5,18 @@ elevator_controller_2023:
     fourbar_joint: 'four_bar'
     max_height_val: 1.2
 
+    four_bar_max_extension: 0.65 # tbd, in meters
+    four_bar_min_extension: 0.24 # tbd, in meters
+
+    four_bar_parallel_bar_length: 0.205
+    four_bar_diagonal_bar_length: 0.355
+    four_bar_intake_length: 0.065
+
     arb_feed_forward_high: 0.032
     arb_feed_forward_low: 0.025
 
-    arb_feed_forward_maximum: 0.05
     arb_feed_forward_angle: 0.04
+    straight_up_angle: 0.52
     
     motion_magic_velocity: 2.1
     motion_magic_acceleration: 11.0

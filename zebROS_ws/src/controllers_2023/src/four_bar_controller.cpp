@@ -55,9 +55,9 @@ class FourBarController_2023 : public controller_interface::MultiInterfaceContro
         std::atomic<double> diagonal_bar_length_;
         std::atomic<double> intake_length_;
 
-        std::atomic<double> arb_feed_forward_maximum;
         std::atomic<double> arb_feed_forward_angle;
-        // feed forward calculation: maximum - |sin(angular position)|*ff_angle
+        std::atomic<double> straight_up_angle;
+        // cos(angular position)*ff_angle
         std::atomic<double> four_bar_zeroing_percent_output;
         std::atomic<double> four_bar_zeroing_timeout;
         std::atomic<double> motion_magic_velocity;
@@ -190,15 +190,15 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
         min_extension_ = math_min_extension_;
     }
 
-    if (!readIntoScalar(controller_nh, "arb_feed_forward_maximum", arb_feed_forward_maximum))
-    {
-        ROS_ERROR("Could not find arb_feed_forward_maximum");
-        return false;
-    }
-
     if (!readIntoScalar(controller_nh, "arb_feed_forward_angle", arb_feed_forward_angle))
     {
         ROS_ERROR("Could not find arb_feed_forward_angle");
+        return false;
+    }
+
+    if (!readIntoScalar(controller_nh, "straight_up_angle", straight_up_angle))
+    {
+        ROS_ERROR("Could not find straight_up_angle");
         return false;
     }
 
@@ -322,20 +322,7 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         intake_length_.store(b);
     },
-    "Intake/static attachment length",
-    0.0, 1.0);
-
-    ddr_->registerVariable<double>
-    ("arb_feed_forward_maximum",
-    [this]()
-    {
-        return arb_feed_forward_maximum.load();
-    },
-    [this](double b)
-    {
-        arb_feed_forward_maximum.store(b);
-    },
-    "Arb feedforward maximum (maximum horizontal length)", -1.0, 1.0);
+    "Intake/static attachment length", 0.0, 1.0);
 
     ddr_->registerVariable<double>
     ("arb_feed_forward_angle",
@@ -347,7 +334,19 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         arb_feed_forward_angle.store(b);
     },
-    "Arb feedforward angle. calculation: ff_max - |sin(angle)| * this", -1.0, 1.0);
+    "Arb feedforward angle. calculation: cos(angle) * this", -1.0, 1.0);
+
+    ddr_->registerVariable<double>
+    ("straight_up_angle",
+     [this]()
+    {
+        return straight_up_angle.load();
+    },
+    [this](double b)
+    {
+        straight_up_angle.store(b);
+    },
+    "Angle which makes the four bar straight up", 0.0, 3.14159265);
 
     ddr_->registerVariable<double>
     ("four_bar_zeroing_percent_output",
@@ -359,7 +358,7 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         four_bar_zeroing_percent_output.store(b);
     },
-    "FourBar Zeroing Percent Output");
+    "FourBar Zeroing Percent Output", -1.0, 1.0);
     ddr_->registerVariable<double>
     ("four_bar_zeroing_timeout",
      [this]()
@@ -440,7 +439,7 @@ void FourBarController_2023::update(const ros::Time &time, const ros::Duration &
             last_zeroed_ = true;
             four_bar_joint_.setSelectedSensorPosition(0); // relative to min position
             four_bar_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-            four_bar_joint_.setDemand1Value(arb_feed_forward_maximum - arb_feed_forward_angle);
+            four_bar_joint_.setDemand1Value(sin(four_bar_joint_.getPosition() - straight_up_angle) * arb_feed_forward_angle);
         }
     }
     else
@@ -464,7 +463,7 @@ void FourBarController_2023::update(const ros::Time &time, const ros::Duration &
         four_bar_joint_.setPIDFSlot(0);
 
         four_bar_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-        four_bar_joint_.setDemand1Value(arb_feed_forward_maximum - fabs(sin(four_bar_joint_.getPosition())) * arb_feed_forward_angle);
+        four_bar_joint_.setDemand1Value(sin(four_bar_joint_.getPosition() - straight_up_angle) * arb_feed_forward_angle);
     }
     else
     {
