@@ -266,6 +266,8 @@ class TalonHWState
 		double getOutputVoltage(void) const;
 		int    getCANID(void) const;
 		double getOutputCurrent(void) const;
+		double getStatorCurrent(void) const;
+		double getSupplyCurrent(void) const;
 		double getBusVoltage(void) const;
 		double getMotorOutputPercent(void) const;
 		double getTemperature(void) const;
@@ -318,6 +320,8 @@ class TalonHWState
 		void setSpeed(double speed);
 		void setOutputVoltage(double output_voltage);
 		void setOutputCurrent(double output_current);
+		void setStatorCurrent(double stator_current);
+		void setSupplyCurrent(double supply_current);
 		void setBusVoltage(double bus_voltage);
 		void setMotorOutputPercent(double motor_output_percent);
 		void setTemperature(double temperature);
@@ -483,6 +487,8 @@ class TalonHWState
 		double speed_;
 		double output_voltage_;
 		double output_current_;
+		double stator_current_;
+		double supply_current_;
 		double bus_voltage_;
 		double motor_output_percent_;
 		double temperature_;

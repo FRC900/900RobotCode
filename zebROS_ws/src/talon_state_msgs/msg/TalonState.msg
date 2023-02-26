@@ -8,6 +8,8 @@ float64[] position
 float64[] speed
 float64[] output_voltage
 float64[] output_current
+float64[] stator_current
+float64[] supply_current
 float64[] bus_voltage
 float64[] motor_output_percent
 float64[] temperature

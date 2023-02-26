@@ -74,6 +74,8 @@ public:
 			m.speed.push_back(0.0);
 			m.output_voltage.push_back(0.0);
 			m.output_current.push_back(0.0);
+			m.stator_current.push_back(0.0);
+			m.supply_current.push_back(0.0);
 			m.bus_voltage.push_back(0.0);
 			m.motor_output_percent.push_back(0.0);
 			m.temperature.push_back(0.0);
@@ -145,6 +147,8 @@ public:
 					m.speed[i] = ts->getSpeed();
 					m.output_voltage[i] = ts->getOutputVoltage();
 					m.output_current[i] = ts->getOutputCurrent();
+					m.stator_current[i] = ts->getStatorCurrent();
+					m.supply_current[i] = ts->getSupplyCurrent();
 					m.bus_voltage[i] = ts->getBusVoltage();
 					m.motor_output_percent[i] = ts->getMotorOutputPercent();
 					m.temperature[i] = ts->getTemperature();

@@ -8,6 +8,8 @@ TalonHWState::TalonHWState(int can_id) :
 	speed_(0),
 	output_voltage_(0),
 	output_current_(0),
+	stator_current_(0),
+	supply_current_(0),
 	bus_voltage_(0),
 	motor_output_percent_(0),
 	temperature_(0),
@@ -181,6 +183,14 @@ int    TalonHWState::getCANID(void) const
 double TalonHWState::getOutputCurrent(void) const
 {
 	return output_current_;
+}
+double TalonHWState::getStatorCurrent(void) const
+{
+	return stator_current_;
+}
+double TalonHWState::getSupplyCurrent(void) const
+{
+	return supply_current_;
 }
 double TalonHWState::getBusVoltage(void) const
 {
@@ -459,6 +469,14 @@ void TalonHWState::setOutputVoltage(double output_voltage)
 void TalonHWState::setOutputCurrent(double output_current)
 {
 	output_current_ = output_current;
+}
+void TalonHWState::setStatorCurrent(double stator_current)
+{
+	stator_current_ = stator_current;
+}
+void TalonHWState::setSupplyCurrent(double supply_current)
+{
+	supply_current_ = supply_current;
 }
 void TalonHWState::setBusVoltage(double bus_voltage)
 {

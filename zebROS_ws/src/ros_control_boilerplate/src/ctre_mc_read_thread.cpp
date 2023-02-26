@@ -102,6 +102,15 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 			output_current = talon->GetOutputCurrent();
 			safeTalonCall(victor->GetLastError(), "GetOutputCurrent", state->getCANID());
 		}
+		double stator_current = -1;
+		double supply_current = -1;
+		if (talonsrx)
+		{
+			stator_current = talonsrx->GetStatorCurrent();
+			safeTalonCall(victor->GetLastError(), "GetStatorCurrent", state->getCANID());
+			supply_current = talonsrx->GetSupplyCurrent();
+			safeTalonCall(victor->GetLastError(), "GetSupplyCurrent", state->getCANID());
+		}
 
 		ctre::phoenix::motorcontrol::StickyFaults sticky_faults;
 		safeTalonCall(victor->GetStickyFaults(sticky_faults), "GetStickyFault", state->getCANID());
@@ -228,7 +237,14 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 			state->setPosition(position);
 			state->setSpeed(velocity);
 			if (talon)
+			{
 				state->setOutputCurrent(output_current);
+			}
+			if (talonsrx)
+			{
+				state->setStatorCurrent(stator_current);
+				state->setSupplyCurrent(supply_current);
+			}
 			state->setStickyFaults(sticky_faults.ToBitfield());
 
 			state->setBusVoltage(bus_voltage);
