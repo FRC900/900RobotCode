@@ -196,14 +196,15 @@
 		/teleop/swerve_drive_controller/cmd_vel
 		/terabee/terabee_x
 		/tf
-		/tf_object_detection/debug_image
 		/tf_object_detection/obj_detection_msg
 		/tf_object_detection/object_detection_world
 		/tf_object_detection/object_detection_world_filtered
 		/tf_static
+		/zed_objdetect/depth_registered/camera_info
 		/zed_objdetect/imu/data
 		/zed_objdetect/imu/data_raw
 		/zed_objdetect/imu/mag
+		/zed_objdetect/left/camera_info
 		/zed_objdetect/odom
 		/zed_objdetect/pose
 		"/>

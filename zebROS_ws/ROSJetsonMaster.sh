@@ -33,7 +33,7 @@ elif [ -f /home/admin/rio_bashrc.sh ] ; then
     export ROS_IP=10.9.0.2
     export LD_LIBRARY_PATH=/home/admin/wpilib:$LD_LIBRARY_PATH
     export PYTHONPATH=$PYTHONPATH:/opt/ros/noetic/local/lib/python3.10/dist-packages
-    swapon /dev/sda5 > /dev/null
+    #swapon /dev/sda5 > /dev/null
     ulimit -r unlimited
     /etc/init.d/nilvrt stop
     killall PhoenixDiagnosticsProgram
@@ -58,6 +58,6 @@ echo "ROS_IP set to $ROS_IP"
 
 exec "$@"
 
-if [ -f /home/admin/rio_bashrc.sh ] ; then
-    /etc/init.d/ntpd restart
-fi
+#if [ -f /home/admin/rio_bashrc.sh ] ; then
+    #/etc/init.d/ntpd restart
+#fi

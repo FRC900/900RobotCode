@@ -4,7 +4,7 @@
 
   <node name="rosbag_record_node" pkg="rosbag" type="record"
 	  launch-prefix="nice"
-	  args="record -o /mnt/900_2/
+	  args="record -o /home/ubuntu/bagfiles/
 		/auto/auto_mode
 		/auto/auto_state
 		/auto/cmd_vel

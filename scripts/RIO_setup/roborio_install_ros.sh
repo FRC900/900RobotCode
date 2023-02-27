@@ -14,19 +14,15 @@ ssh -p 22 admin@$1 'swapon /dev/sda5'
 
 # Set date on Rio. This should prevent weird auth errors
 # from pip install commands below.
-ssh -p 22 admin@$1 'opkg update'
-ssh -p 22 admin@$1 'opkg install ntp ntp-tickadj ntp-utils ntpdate'
-ssh -p 22 admin@$1 '/etc/init.d/ntpd stop'
-ssh -p 22 admin@$1 'ntpdate us.pool.ntp.org'
+ssh -p 22 admin@$1 'date -s @$(date -u +"%s")'
+#ssh -p 22 admin@$1 'opkg update'
+#ssh -p 22 admin@$1 'opkg install ntp ntp-tickadj ntp-utils ntpdate'
+#ssh -p 22 admin@$1 '/etc/init.d/ntpd stop'
+#ssh -p 22 admin@$1 'ntpdate us.pool.ntp.org'
 
 # Split these up so the disk doesn't fill up with temp files
 # Also need to install pyyaml first for some reason to avoid
 # weird dependency hell issues with opkg (fixed in 2019 or 2020?)
-#python3-argparse python3-netifaces
-
-# i2c-tools, probably not needed anymore
-# gperftools-dev, probably not needed anymore
-
 ssh -p 22 admin@$1 'opkg install python3-pyyaml'
 ssh -p 22 admin@$1 'opkg install python3-dev libpython3 python3-core python3-logging'
 ssh -p 22 admin@$1 'opkg install python3-setuptools python3-pycrypto python3-pycrypto-dev python3-fcntl'
@@ -96,7 +92,6 @@ ssh -p 22 admin@$1 'mkdir -p /home/ubuntu/wpilib/2023/roborio'
 ssh -p 22 admin@$1 'ln -s / /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi'
 ssh -p 22 admin@$1 'mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-nilrt-linux-gnueabi'
 ssh -p 22 admin@$1 'ln -s / /home/ubuntu/wpilib/2023/roborio/arm-nilrt-linux-gnueabi/sysroot'
-# TODO -is this needed?
 ssh -p 22 admin@$1 'ln -s /usr/include /include'
 
 # Create workspace. Do a build in the empty workspace to set
@@ -107,7 +102,7 @@ ssh -p 22 admin@$1 'source /opt/ros/noetic/setup.bash && cd 2023RobotCode/zebROS
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!#
 ##################-----------------------------#################
 #Edit /etc/ntp.conf to be a copy of ntpClient in 2023RobotCode#
-scp -P 22 ~/2023RobotCode/scripts/RIO_setup/ntp.conf admin@$1:/etc/ntp.conf
+#scp -P 22 ~/2023RobotCode/scripts/RIO_setup/ntp.conf admin@$1:/etc/ntp.conf
 
 # Copy wpilib to roborio
 ssh -p 22 admin@$1 mkdir wpilib
@@ -136,7 +131,6 @@ sleep 5
 
 # Copy rio_bashrc.sh, ROSJetsonMaster.sh to /home/admin
 scp -P 22 ~/2023RobotCode/scripts/RIO_setup/rio_bashrc.sh admin@$1:.
-#scp -P 22 ~/2023RobotCode/zebROS_ws/ROSJetsonMaster.sh admin@$1:.
 
 # Set up prereqs for deploy script
 ssh -p 22 admin@$1 'mv ~/2023RobotCode ~/2023RobotCode.orig'
