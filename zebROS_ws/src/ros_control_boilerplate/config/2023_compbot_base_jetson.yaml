@@ -74,7 +74,7 @@ hardware_interface:
 intake_leader_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: intake_leader
-    invert_output: False # tbd find this out
+    invert_output: True
     feedback_type: IntegratedSensor
     dynamic_reconfigure: False
     voltage_compensation_Enable: True
@@ -95,6 +95,7 @@ intake_leader_controller:
     #status_14_turn_pidf1_period: 250
     status_15_firmwareapistatus_period: 250
     #status_17_brushless_current_period: 50
+    neutral_deadband: 0.01
 
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal

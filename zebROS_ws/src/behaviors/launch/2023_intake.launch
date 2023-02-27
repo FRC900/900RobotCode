@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="intake">
+		<node name="intake_server_2023" pkg="behaviors" type="2023_intake_server" output="screen"/>
+		<rosparam command="load" file="$(find behaviors)/config/2023_intake_config.yaml"/>
+	</group>
+</launch>

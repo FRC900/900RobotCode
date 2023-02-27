@@ -1,3 +1,4 @@
-intake_speed: 0.40
-intake_fast_speed: 0.5
+intake_speed: 0.5
+intake_fast_speed: 0.6 # don't use
 intake_timeout: 10.0
+intake_small_speed: 0.03

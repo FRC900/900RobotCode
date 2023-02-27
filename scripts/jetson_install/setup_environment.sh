@@ -214,7 +214,7 @@ sudo chmod 640 /root/.ssh/authorized_keys
 sudo chmod 700 /root/.ssh
 
 cd ~/2023RobotCode/scripts
-sudo cp ./jetson_setup/10-local.rules ./jetson_setup/99-gpio.rules /etc/udev/rules.d/
+sudo cp ./jetson_setup/10-local.rules ./jetson_setup/99-gpio.rules ./jetson_setup/99-terabee-pico.rules /etc/udev/rules.d/
 sudo service udev reload
 sleep 2
 sudo service udev restart
@@ -432,3 +432,6 @@ sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 
 # This is handled by the ROS*.sh scripts
 #echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/rev/linux/aarm64/shared:/usr/local/lib" >> /home/ubuntu/.bashrc
+
+# Install pyserial (for 2023 intake reader)
+sudo pip3 install pyserial

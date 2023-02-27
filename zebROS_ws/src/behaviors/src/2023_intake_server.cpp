@@ -15,6 +15,7 @@ protected:
 
 	double speed_;
 	double fast_speed_;
+	double small_speed_; // for holding cube/cone in
 	ros::Duration timeout_;
 
 	ros::Publisher intake_pub_;
@@ -44,6 +45,11 @@ public:
 		if (!nh_.getParam("intake_fast_speed", fast_speed_))
 		{
 			ROS_ERROR_STREAM("2023_intake_server : could not find intake_fast_speed");
+			return;
+		}
+		if (!nh_.getParam("intake_small_speed", small_speed_))
+		{
+			ROS_ERROR_STREAM("2023_intake_server : could not find intake_small_speed");
 			return;
 		}
 		double temp_timeout_;
@@ -100,7 +106,7 @@ public:
 				// 	return;
 				// }
 				std_msgs::Float64 percent_out;
-				percent_out.data = 0.0;
+				percent_out.data = goal->outtake ? 0.0 : small_speed_;
 				make_sure_publish(intake_pub_, percent_out);
 				return;
 			}
@@ -110,7 +116,7 @@ public:
 		if (ros::Time::now() - start > timeout_) {
 			ROS_INFO_STREAM("2023_intake_server: timed out!");
 			std_msgs::Float64 percent_out;
-			percent_out.data = 0.0;
+			percent_out.data = goal->outtake ? 0.0 : small_speed_;
 			make_sure_publish(intake_pub_, percent_out);
 			success = false;
 			as_.setAborted(result_);

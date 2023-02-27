@@ -32,6 +32,8 @@
 #include <math.h>
 #include "teleop_joystick_control/RobotOrientationDriver.h"
 #include <teleop_joystick_control/SnapConeCube.h>
+#include <behavior_actions/Intaking2023Action.h>
+#include <behavior_actions/Intake2023Action.h>
 
 struct DynamicReconfigVars
 {
@@ -125,6 +127,8 @@ void zero_all_diag_commands(void)
 }
 
 std::shared_ptr<actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>> distance_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2023Action>> intaking_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intake2023Action>> intake_ac;
 
 void preemptActionlibServers(void)
 {
@@ -693,6 +697,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 				if(!joystick1_left_trigger_pressed)
 				{
+					behavior_actions::Intaking2023Goal goal;
+					intaking_ac->sendGoal(goal);
 				}
 
 				joystick1_left_trigger_pressed = true;
@@ -701,6 +707,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 				if(joystick1_left_trigger_pressed)
 				{
+					intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 
 				joystick1_left_trigger_pressed = false;
@@ -710,10 +717,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].rightTrigger > config.trigger_threshold)
 			{
 				// RIP aligned shooting... worked awesome on the practice field
+				behavior_actions::Intake2023Goal goal;
+				goal.outtake = true;
+				intake_ac->sendGoal(goal);
 			}
 			else
 			{	
 				if(joystick1_right_trigger_pressed){
+					intake_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 
 				// teleop_cmd_vel->setSlowMode(false);
@@ -1066,6 +1077,9 @@ int main(int argc, char **argv)
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 
 	auto_mode_select_pub = n.advertise<behavior_actions::AutoMode>("/auto/auto_mode", 1, true);
+
+	intaking_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Intaking2023Action>>("/intaking/intaking_server_2023", true);
+	intake_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Intake2023Action>>("/intake/intake_server_2023", true);
 
 	const ros::Duration startup_wait_time_secs(15);
 	const ros::Time startup_start_time = ros::Time::now();

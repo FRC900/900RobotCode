@@ -87,10 +87,9 @@ elevator_controller_2023 four_bar_controller_2023 intake_leader_controller
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
 
 	<!-- Add 2023 actionlib servers here -->
-	<group ns="intake">
-		<node name="intake_server_2023" pkg="behaviors" type="2023_intake_server" output="screen"/>
-		<rosparam command="load" file="$(find behaviors)/config/2023_intake_config.yaml"/>
-	</group>
+	
+	<include file="$(find behaviors)/launch/2023_intake.launch">
+	</include>
 
 	<group ns="placing">
 		<node name="placing_server_2023" pkg="behaviors" type="2023_placing_server" output="screen"/>

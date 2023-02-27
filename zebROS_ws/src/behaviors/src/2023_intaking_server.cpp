@@ -7,6 +7,7 @@
 #include <behavior_actions/Fourber2023Action.h>
 #include <behavior_actions/GamePieceState2023.h>
 #include <std_msgs/UInt8.h>
+#include <talon_state_msgs/TalonState.h>
 
 class IntakingServer2023
 {
@@ -31,9 +32,18 @@ protected:
 	ros::Subscriber game_piece_sub_;
 	ros::Subscriber requested_game_piece_sub_;
 
+	size_t intake_idx;
+	std::string joint_;
+	double current_current_;
+	double current_threshold_;
+
 	actionlib::SimpleActionClient<behavior_actions::Intake2023Action> intake_ac_;
 	actionlib::SimpleActionClient<behavior_actions::Elevater2023Action> elevater_ac_;
 	actionlib::SimpleActionClient<behavior_actions::Fourber2023Action> fourber_ac_;
+
+	ros::Subscriber talon_states_sub_;
+
+	// output_current in talon states
 
 public:
 	void gamePieceStateCallback(const behavior_actions::GamePieceState2023 &msg) {
@@ -42,6 +52,29 @@ public:
 
 	void requestedPieceCallback(const std_msgs::UInt8 &msg) {
 		requested_game_piece_ = msg.data;
+	}
+
+	void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
+	{
+		// fourbar_master_idx == max of size_t at the start
+		if (intake_idx == std::numeric_limits<size_t>::max()) // could maybe just check for > 0
+		{
+			for (size_t i = 0; i < talon_state.name.size(); i++)
+			{
+				if (talon_state.name[i] == joint_)
+				{
+					intake_idx = i;
+					break;
+				}
+			}
+		}
+		if (!(intake_idx == std::numeric_limits<size_t>::max()))
+		{
+			current_current_ = talon_state.output_current[intake_idx];
+		}
+		else {
+			ROS_ERROR_STREAM("2023_intaking_server : Can not find talon with name = " << joint_);
+		}
 	}
 
 	IntakingServer2023(std::string name) :
@@ -53,6 +86,9 @@ public:
 		elevater_ac_("/elevater/elevater_server_2023", true),
 		fourber_ac_("/fourber/fourber_server_2023", true)
 	{
+		intake_idx = std::numeric_limits<size_t>::max();
+		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &IntakingServer2023::talonStateCallback, this);
+		game_piece_state_.game_piece = game_piece_state_.NONE; // default to no game piece
 		if (!nh_.getParam("cube_time", cube_time_))
 		{
 			ROS_ERROR_STREAM("2023_intaking_server : could not find cube_time");
@@ -66,6 +102,16 @@ public:
 		if (!nh_.getParam("server_timeout", server_timeout_)) {
 			ROS_WARN_STREAM("2023_intaking_server : could not find server_timeout, defaulting to 10 seconds");
 			server_timeout_ = 10;
+		}
+		if (!nh_.getParam("joint", joint_))
+		{
+			ROS_ERROR_STREAM("2023_intaking_server : could not find joint");
+			return;
+		}
+		if (!nh_.getParam("current_threshold", current_threshold_))
+		{
+			ROS_ERROR_STREAM("2023_intaking_server : could not find current_threshold");
+			return;
 		}
 		const std::map<std::string, std::string> service_connection_header{{"tcp_nodelay", "1"}};
 		as_.start();
@@ -152,10 +198,12 @@ public:
 		as_.publishFeedback(feedback_);
 
 		intake_ac_.sendGoal(intakeGoal);
+
+		ROS_INFO_STREAM("current: " << current_current_ << " threshold: " << current_threshold_ << " state: " << intake_ac_.getState().state_ << " aka " << intake_ac_.getState().getText() << " isdone? " << intake_ac_.getState().isDone());
 		
-		while (game_piece_state_.game_piece == behavior_actions::GamePieceState2023::NONE && !intake_ac_.getState().isDone()) {
+		while (/*game_piece_state_.game_piece == behavior_actions::GamePieceState2023::NONE && */!(intake_ac_.getState().isDone()) && current_current_ < current_threshold_) {
 			ros::spinOnce();
-			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for a game piece...");
+			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for a game piece... current = " << current_current_);
 			if (as_.isPreemptRequested() || !ros::ok()) {
 				ROS_INFO_STREAM("2023_intaking_server : preempted.");
 				as_.setPreempted(result_);
@@ -165,14 +213,18 @@ public:
 			r.sleep();
 		}
 
+		ROS_INFO_STREAM("current: " << current_current_ << " threshold: " << current_threshold_ << " state: " << intake_ac_.getState().state_ << " aka " << intake_ac_.getState().getText() << ". gp " << std::to_string(game_piece_state_.game_piece) << " isdone? " << intake_ac_.getState().isDone());
+		bool current_exceeded_ = current_current_ >= current_threshold_;
+
 		if (intake_ac_.getState() != intake_ac_.getState().SUCCEEDED && intake_ac_.getState() != intake_ac_.getState().ACTIVE) {
 			ROS_ERROR_STREAM("2023_intaking_server : intake server failed, aborting!");
+			intake_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			as_.setAborted(result_);
 			return;
 		}
 
-		if (game_piece_state_.game_piece == behavior_actions::GamePieceState2023::CUBE) {
-			ROS_INFO_STREAM("2023_intaking_server : cube detected, waiting " << cube_time_ << " seconds");
+		if (game_piece_state_.game_piece == behavior_actions::GamePieceState2023::CUBE || current_exceeded_) {
+			ROS_INFO_STREAM("2023_intaking_server : " << (current_exceeded_ ? "current exceeded" : "cube detected") << ", waiting " << cube_time_ << " seconds");
 			ros::Time start = ros::Time::now();
 			while (ros::Time::now() - start < ros::Duration(cube_time_)) {
 				ros::spinOnce();

@@ -1,4 +1,4 @@
-port: /dev/ttyACM0
+port: /dev/PICOBEE
 baud: 921600
 samples: 2
 min_range: 0.05

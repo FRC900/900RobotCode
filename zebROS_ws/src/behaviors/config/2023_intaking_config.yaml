@@ -1,3 +1,5 @@
-cube_time: 0.5
-cone_time: 2.0
+cube_time: 0.8
+cone_time: 1.6
 server_timeout: 10.0
+current_threshold: 100.0 # some arbitrary unit
+joint: intake_leader # for current sensing
