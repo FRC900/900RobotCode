@@ -12,27 +12,6 @@ double MAX_HEIGHT_VAL = 1.2;
 namespace elevator_controller_2023
 {
 
-class ElevatorCommand_2023
-{
-    public:
-        ElevatorCommand_2023()
-        {
-            position_ = 0;
-        }
-        ElevatorCommand_2023(double position)
-        {
-            position_ = position;
-        }
-        double GetPosition() const
-        {
-            return position_;
-        }
-
-
-    private:
-        double position_;
-};
-
 double getFourBarLength(double angle, double min_extension, double parallel_bar_length, double diagonal_bar_length, double intake_length)
 {
     double minAngle = acos((min_extension - intake_length - parallel_bar_length) / diagonal_bar_length);
@@ -72,14 +51,11 @@ class ElevatorController_2023 : public controller_interface::MultiInterfaceContr
         talon_controllers::TalonControllerInterface elevator_joint_; //interface for the talon joint
         hardware_interface::TalonStateHandle fourbar_joint_; //interface for the fourbar joint, used to calculate feed forward
 
-        realtime_tools::RealtimeBuffer<ElevatorCommand_2023> position_command_; //this is the buffer for percent output commands to be published
+        std::atomic<double> position_command_;
         ros::ServiceServer elevator_service_; //service for receiving commands
 
         bool zeroed_;
         bool last_zeroed_;
-        double last_position_;
-        //double last_setpoint_;
-        hardware_interface::TalonMode last_mode_;
 
         std::atomic<double> arb_feed_forward_high;
         std::atomic<double> arb_feed_forward_low;
@@ -112,15 +88,11 @@ bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> 
     return false;
 }
 
-//#include "controllers_2019/elevator_controller.h"
-// ^ not needed since the hpp contents is literally:   controllers_2019/elevator_controller.h
-
 bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
                                    ros::NodeHandle             &/*root_nh*/,
                                    ros::NodeHandle             &controller_nh)
 
 {
-    ddr_ = std::make_unique<ddynamic_reconfigure::DDynamicReconfigure>(controller_nh);
 
     ROS_INFO_STREAM("INIT CALLED FOR ELEVATOR CONTROLLER============");
 
@@ -243,185 +215,113 @@ bool ElevatorController_2023::init(hardware_interface::RobotHW *hw,
         return false;
     }
 
-    ddr_->registerVariable<double>
-    ("arb_feed_forward_high",
-     [this]()
-    {
-        return arb_feed_forward_high.load();
-    },
-    [this](double b)
-    {
-        arb_feed_forward_high.store(b);
-    },
+    bool dynamic_reconfigure = true;
+    controller_nh.param("dynamic_reconfigure", dynamic_reconfigure, dynamic_reconfigure);
 
-    "Arb feedforward high",
-    0.0, 0.5
-    );
+    if (dynamic_reconfigure)
+    {
+        ddr_ = std::make_unique<ddynamic_reconfigure::DDynamicReconfigure>(controller_nh);
 
-    ddr_->registerVariable<double>
-    ("max_extension",
-    [this]()
-    {
-        return max_extension_.load();
-    },
-    [this](double b)
-    {
-        max_extension_.store(b);
-    },
-    "Max extension",
-    0.0, 1.0);
+        ddr_->registerVariable<double>
+            ("arb_feed_forward_high",
+            [this]() { return arb_feed_forward_high.load(); },
+            [this](double b) { arb_feed_forward_high.store(b); },
+            "Arb feedforward high",
+            0.0, 0.5);
 
-    ddr_->registerVariable<double>
-    ("min_extension",
-    [this]()
-    {
-        return min_extension_.load();
-    },
-    [this](double b)
-    {
-        min_extension_.store(b);
-    },
-    "Min extension",
-    0.0, 1.0);
+        ddr_->registerVariable<double>
+            ("max_extension",
+            [this]() { return max_extension_.load(); },
+            [this](double b) { max_extension_.store(b); },
+            "Max extension",
+            0.0, 1.0);
 
-    ddr_->registerVariable<double>
-    ("parallel_bar_length",
-     [this]()
-    {
-        return parallel_bar_length_.load();
-    },
-    [this](double b)
-    {
-        parallel_bar_length_.store(b);
-    },
-    "Parallel bar length",
-    0.0, 1.0);
+        ddr_->registerVariable<double>
+            ("min_extension",
+            [this]() { return min_extension_.load(); },
+            [this](double b) { min_extension_.store(b); },
+            "Min extension",
+            0.0, 1.0);
 
-    ddr_->registerVariable<double>
-    ("diagonal_bar_length",
-     [this]()
-    {
-        return diagonal_bar_length_.load();
-    },
-    [this](double b)
-    {
-        diagonal_bar_length_.store(b);
-    },
-    "Diagonal bar length",
-    0.0, 1.0);
+        ddr_->registerVariable<double>
+            ("parallel_bar_length",
+            [this]() { return parallel_bar_length_.load(); },
+            [this](double b) { parallel_bar_length_.store(b); },
+            "Parallel bar length",
+            0.0, 1.0);
 
-    ddr_->registerVariable<double>
-    ("intake_length",
-     [this]()
-    {
-        return intake_length_.load();
-    },
-    [this](double b)
-    {
-        intake_length_.store(b);
-    },
-    "Intake/static attachment length", 0.0, 1.0);
+        ddr_->registerVariable<double>
+            ("diagonal_bar_length",
+            [this]() { return diagonal_bar_length_.load(); },
+            [this](double b) { diagonal_bar_length_.store(b); },
+            "Diagonal bar length",
+            0.0, 1.0);
 
-    ddr_->registerVariable<double>
-    ("arb_feed_forward_low",
-     [this]()
-    {
-        return arb_feed_forward_low.load();
-    },
-    [this](double b)
-    {
-        arb_feed_forward_low.store(b);
-    },
-    "Arb feedforward low", 0.0, 1.0);
-    ddr_->registerVariable<double>
-    ("arb_feed_forward_angle",
-     [this]()
-    {
-        return arb_feed_forward_angle.load();
-    },
-    [this](double b)
-    {
-        arb_feed_forward_angle.store(b);
-    },
-    "Arb feedforward angle. calculation: arb_ff_low_or_high + ff_max - |sin(four bar angle)| * this", -1.0, 1.0);
-    ddr_->registerVariable<double>
-    ("elevator_zeroing_percent_output",
-     [this]()
-    {
-        return elevator_zeroing_percent_output.load();
-    },
-    [this](double b)
-    {
-        elevator_zeroing_percent_output.store(b);
-    },
-    "Elevator Zeroing Percent Output",
-    -1.0, 0.0);
+        ddr_->registerVariable<double>
+            ("intake_length",
+            [this]() { return intake_length_.load(); },
+            [this](double b) { intake_length_.store(b); },
+            "Intake/static attachment length",
+             0.0, 1.0);
+
+        ddr_->registerVariable<double>
+            ("arb_feed_forward_low",
+            [this]() { return arb_feed_forward_low.load(); },
+            [this](double b) { arb_feed_forward_low.store(b); },
+            "Arb feedforward low",
+             0.0, 1.0);
+
+        ddr_->registerVariable<double>
+            ("arb_feed_forward_angle",
+            [this]() { return arb_feed_forward_angle.load(); },
+            [this](double b) { arb_feed_forward_angle.store(b); },
+            "Arb feedforward angle. calculation: arb_ff_low_or_high + ff_max - |sin(four bar angle)| * this",
+             -1.0, 1.0);
+
+        ddr_->registerVariable<double>
+            ("elevator_zeroing_percent_output",
+            [this]() { return elevator_zeroing_percent_output.load(); },
+            [this](double b) { elevator_zeroing_percent_output.store(b); },
+            "Elevator Zeroing Percent Output",
+            -1.0, 0.0);
+        
+        ddr_->registerVariable<double>
+            ("elevator_zeroing_timeout",
+            [this]() { return elevator_zeroing_timeout.load(); },
+            [this](double b) { elevator_zeroing_timeout.store(b); },
+            "Elevator Zeroing Timeout",
+            0.0, 15.0);
+        
+        ddr_->registerVariable<double>
+            ("stage_2_height",
+            [this]() { return stage_2_height.load(); },
+            [this](double b) { stage_2_height.store(b); },
+            "Stage 2 Height",
+            0.0, 2.0);
+
+        ddr_->registerVariable<double>
+            ("motion_magic_velocity_fast",
+            [this]() { return motion_magic_velocity_fast.load(); },
+            [this](double b) { motion_magic_velocity_fast.store(b); },
+            "fast Motion Magic Velocity",
+            0.0, 10); 
+        
+        ddr_->registerVariable<double>
+            ("motion_magic_acceleration_fast",
+            [this]() { return motion_magic_acceleration_fast.load(); },
+            [this](double b) { motion_magic_acceleration_fast.store(b); },
+            "Fast Motion Magic Acceleration",
+            0.0, 20.0);
+        
+        ddr_->registerVariable<int>
+            ("motion_s_curve_strength",
+            [this]() { return motion_s_curve_strength.load(); },
+            [this](int b) { motion_s_curve_strength.store(b); },
+            "S Curve Strength",
+             0, 8);
     
-    ddr_->registerVariable<double>
-    ("elevator_zeroing_timeout",
-     [this]()
-    {
-        return elevator_zeroing_timeout.load();
-    },
-    [this](double b)
-    {
-        elevator_zeroing_timeout.store(b);
-    },
-    "Elevator Zeroing Timeout",
-    0.0, 15.0);
-    
-    ddr_->registerVariable<double>
-    ("stage_2_height",
-     [this]()
-    {
-        return stage_2_height.load();
-    },
-    [this](double b)
-    {
-        stage_2_height.store(b);
-    },
-    "Stage 2 Height",
-    0.0, 2.0);
-
-    ddr_->registerVariable<double>
-    ("motion_magic_velocity_fast",
-     [this]()
-    {
-        return motion_magic_velocity_fast.load();
-    },
-    [this](double b)
-    {
-        motion_magic_velocity_fast.store(b);
-    },
-    "fast Motion Magic Velocity",
-    0.0, 10); 
-    
-    ddr_->registerVariable<double>
-    ("motion_magic_acceleration_fast",
-     [this]()
-    {
-        return motion_magic_acceleration_fast.load();
-    },
-    [this](double b)
-    {
-        motion_magic_acceleration_fast.store(b);
-    },
-    "Fast Motion Magic Acceleration",
-    0.0, 20.0);
-    
-    ddr_->registerVariable<int>
-    ("motion_s_curve_strength",
-     [this]()
-    {
-        return motion_s_curve_strength.load();
-    },
-    [this](int b)
-    {
-        motion_s_curve_strength.store(b);
-    },
-    "S Curve Strength", 0, 8);
-   
-    ddr_->publishServicesTopics();
+        ddr_->publishServicesTopics();
+    }
 
     elevator_service_ = controller_nh.advertiseService("elevator_service", &ElevatorController_2023::cmdService, this);
     ROS_INFO_STREAM("===========ELEVATOR INIT RETURNS TRUE================");
@@ -432,10 +332,8 @@ void ElevatorController_2023::starting(const ros::Time &time)
 {
     ROS_INFO_STREAM("CALLED STARTING ELEVATOR==============");
     zeroed_ = false;
-    last_zeroed_  = false;
-    last_mode_ = hardware_interface::TalonMode_Disabled;
-    last_position_ = -1; // give nonsense position to force update on first time through update()
-    position_command_.writeFromNonRT(ElevatorCommand_2023());
+    last_zeroed_ = false;
+    position_command_ = 0;
 }
 
 void ElevatorController_2023::update(const ros::Time &time, const ros::Duration &/*duration*/)
@@ -459,16 +357,14 @@ void ElevatorController_2023::update(const ros::Time &time, const ros::Duration 
         last_zeroed_ = false;
     }
 
-
     if (zeroed_) // run normally, seeking to various positions
     {
         elevator_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
-        if (((elevator_joint_.getMode()) == (hardware_interface::TalonMode_Disabled)) && ((last_mode_) == (hardware_interface::TalonMode_Disabled)))
+        if (elevator_joint_.getMode() == hardware_interface::TalonMode_Disabled)
         {
-            position_command_.writeFromNonRT(ElevatorCommand_2023 (elevator_joint_.getPosition()));
+            position_command_ = elevator_joint_.getPosition();
         }
-        const ElevatorCommand_2023 setpoint = *(position_command_.readFromRT());
-        elevator_joint_.setCommand(setpoint.GetPosition());
+        elevator_joint_.setCommand(position_command_);
 
         //if we're not climbing, add an arbitrary feed forward to hold the elevator up
 
@@ -484,41 +380,26 @@ void ElevatorController_2023::update(const ros::Time &time, const ros::Duration 
             elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
             elevator_joint_.setDemand1Value(arb_feed_forward_high + fourbar_ff);
         }
-        else if (elevator_joint_.getPosition() <= stage_2_height)
+        else
         {
             elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
             elevator_joint_.setDemand1Value(arb_feed_forward_low + fourbar_ff);
-
-        //for now, up and down PID is the same, so slot 1 is used for climbing
-        /*
-        if(last_setpoint_ != setpoint) {
-        	if(setpoint > elevator_joint_.getPosition()) {
-        		elevator_joint_.setPIDFSlot(0);
-        	}
-        	else {
-        		elevator_joint_.setPIDFSlot(1);
-        	}
-        }
-        last_setpoint_ = setpoint;
-        */
-        
         }
     }
     else
     {
         elevator_joint_.setMode(hardware_interface::TalonMode_PercentOutput);
-        if ((ros::Time::now() - last_time_down_).toSec() < elevator_zeroing_timeout)
+        if ((time - last_time_down_).toSec() < elevator_zeroing_timeout)
         {
             // Not yet zeroed. Run the elevator down slowly until the limit switch is set.
             ROS_INFO_STREAM_THROTTLE(0.25, "Zeroing elevator with percent output: "
                                      << elevator_zeroing_percent_output);
             elevator_joint_.setCommand(elevator_zeroing_percent_output);
         }
-        //check stream
         else
         {
             // Stop moving to prevent motor from burning out
-            ROS_INFO_STREAM_THROTTLE(0.25, "Elevator timed out");
+            ROS_INFO_STREAM_THROTTLE(1, "Elevator timed out");
             elevator_joint_.setCommand(0);
         }
 
@@ -527,11 +408,9 @@ void ElevatorController_2023::update(const ros::Time &time, const ros::Duration 
                 (elevator_joint_.getSpeed() < 0)) // TODO : param
         {
             // If moving down, or disabled and thus not expected to move down, reset the timer
-            last_time_down_ = ros::Time::now();
+            last_time_down_ = time;
         }
     }
-    last_position_ = elevator_joint_.getPosition();
-    last_mode_ = elevator_joint_.getMode();
 }
 
 void ElevatorController_2023::stopping(const ros::Time &/*time*/)
@@ -551,7 +430,7 @@ bool ElevatorController_2023::cmdService(controllers_2023_msgs::ElevatorSrv::Req
     {
         //adjust talon mode, arb feed forward, and PID slot appropriately
 
-        position_command_.writeFromNonRT(ElevatorCommand_2023 (req.position));
+        position_command_ = req.position;
         ROS_INFO_STREAM("writing " << std::to_string(req.position) << " to elevator controller");
     }
     else
@@ -566,4 +445,3 @@ bool ElevatorController_2023::cmdService(controllers_2023_msgs::ElevatorSrv::Req
 
 //DON'T FORGET TO EXPORT THE CLASS SO CONTROLLER_MANAGER RECOGNIZES THIS AS A TYPE
 PLUGINLIB_EXPORT_CLASS(elevator_controller_2023::ElevatorController_2023, controller_interface::ControllerBase)
-

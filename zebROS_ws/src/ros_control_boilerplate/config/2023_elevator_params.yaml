@@ -3,6 +3,8 @@ elevator_controller_2023:
 
     elevator_joint: [ 'elevator_leader', 'elevator_follower']
     fourbar_joint: 'four_bar'
+
+    dynamic_reconfigure: true
     max_height_val: 1.2
 
     four_bar_max_extension: 0.65 # tbd, in meters

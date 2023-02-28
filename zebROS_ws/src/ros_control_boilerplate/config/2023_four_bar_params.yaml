@@ -2,6 +2,7 @@ four_bar_controller_2023:
     type: four_bar_controller_2023/FourBarController_2023
 
     four_bar_joint: [ 'four_bar' ]
+    dynamic_reconfigure: True
     min_angle: 0.0 # for sure. this is slightly less than vertical (it's where the limit switch hits)
     max_angle: 3.95 # measured
 

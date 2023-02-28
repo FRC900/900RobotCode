@@ -1,6 +1,3 @@
-//HPP CONTENTS INTO CPP
-//added _2023 to the two lines above ^
-
 #include <ros/ros.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <realtime_tools/realtime_buffer.h>
@@ -8,7 +5,6 @@
 #include <talon_controllers/talon_controller_interface.h> // "
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include "controllers_2023_msgs/FourBarSrv.h"
-#include "controllers_2023_msgs/FourBarState.h"
 
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 
@@ -43,16 +39,12 @@ class FourBarController_2023 : public controller_interface::MultiInterfaceContro
 
         bool zeroed_;
         bool last_zeroed_;
-        double last_angle_;
-        //double last_setpoint_;
-        hardware_interface::TalonMode last_mode_;
 
         std::atomic<double> max_angle_;
         std::atomic<double> min_angle_;
 
         std::atomic<double> arb_feed_forward_angle;
         std::atomic<double> straight_up_angle;
-        // cos(angular position)*ff_angle
         std::atomic<double> four_bar_zeroing_percent_output;
         std::atomic<double> four_bar_zeroing_timeout;
         std::atomic<double> motion_magic_velocity;
@@ -66,9 +58,6 @@ class FourBarController_2023 : public controller_interface::MultiInterfaceContro
 
 }; //class
 
-// Set the conversion_factor so that 1 rad = 1 turn of the 4bar
-
-//END OF HPP CONTENTS
 template<typename T>
 bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> &scalar)
 {
@@ -86,7 +75,6 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
                                   ros::NodeHandle             &controller_nh)
 {
     
-    ddr_ = std::make_unique<ddynamic_reconfigure::DDynamicReconfigure>(controller_nh);
     //create the interface used to initialize the talon joint
     hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
 
@@ -157,119 +145,77 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         ROS_ERROR("Cannot initialize four_bar joint!");
     }
+    bool dynamic_reconfigure = true;
+    controller_nh.param("dynamic_reconfigure", dynamic_reconfigure, dynamic_reconfigure);
 
-    ddr_->registerVariable<double>
-    ("max_angle",
-    [this]()
+    if (dynamic_reconfigure)
     {
-        return max_angle_.load();
-    },
-    [this](double b)
-    {
-        max_angle_.store(b);
-    },
-    "Max angle",
-    0.0, 6.28);
+        ddr_ = std::make_unique<ddynamic_reconfigure::DDynamicReconfigure>(controller_nh);
 
-    ddr_->registerVariable<double>
-    ("min_angle",
-    [this]()
-    {
-        return min_angle_.load();
-    },
-    [this](double b)
-    {
-        min_angle_.store(b);
-    },
-    "Min angle", 0.0, 3.14);
+        ddr_->registerVariable<double>
+            ("max_angle",
+            [this]() { return max_angle_.load(); },
+            [this](double b) { max_angle_.store(b); },
+            "Max angle",
+            0.0, 6.28);
 
-    ddr_->registerVariable<double>
-    ("arb_feed_forward_angle",
-     [this]()
-    {
-        return arb_feed_forward_angle.load();
-    },
-    [this](double b)
-    {
-        arb_feed_forward_angle.store(b);
-    },
-    "Arb feedforward angle. calculation: cos(angle) * this", -1.0, 1.0);
+        ddr_->registerVariable<double>
+            ("min_angle",
+            [this]() { return min_angle_.load(); },
+            [this](double b) { min_angle_.store(b); },
+            "Min angle", 0.0, 3.14);
 
-    ddr_->registerVariable<double>
-    ("straight_up_angle",
-     [this]()
-    {
-        return straight_up_angle.load();
-    },
-    [this](double b)
-    {
-        straight_up_angle.store(b);
-    },
-    "Angle which makes the four bar straight up", 0.0, 3.14159265);
+        ddr_->registerVariable<double>
+            ("arb_feed_forward_angle",
+            [this]() { return arb_feed_forward_angle.load(); },
+            [this](double b) { arb_feed_forward_angle.store(b); },
+            "Arb feedforward angle. calculation: cos(angle) * this",
+             -1.0, 1.0);
 
-    ddr_->registerVariable<double>
-    ("four_bar_zeroing_percent_output",
-     [this]()
-    {
-        return four_bar_zeroing_percent_output.load();
-    },
-    [this](double b)
-    {
-        four_bar_zeroing_percent_output.store(b);
-    },
-    "FourBar Zeroing Percent Output", -1.0, 1.0);
-    ddr_->registerVariable<double>
-    ("four_bar_zeroing_timeout",
-     [this]()
-    {
-        return four_bar_zeroing_timeout.load();
-    },
-    [this](double b)
-    {
-        four_bar_zeroing_timeout.store(b);
-    },
-    "FourBar Zeroing Timeout",
-    0.0, 15.0);
-    
-    ddr_->registerVariable<double>
-    ("motion_magic_velocity",
-     [this]()
-    {
-        return motion_magic_velocity.load();
-    },
-    [this](double b)
-    {
-        motion_magic_velocity.store(b);
-    },
-    "Motion Magic Velocity",
-    0.0, 20.0);
+        ddr_->registerVariable<double>
+            ("straight_up_angle",
+            [this]() { return straight_up_angle.load(); },
+            [this](double b) { straight_up_angle.store(b); },
+            "Angle which makes the four bar straight up",
+             0.0, 3.14159265);
 
-    ddr_->registerVariable<double>
-    ("motion_magic_acceleration",
-     [this]()
-    {
-        return motion_magic_acceleration.load();
-    },
-    [this](double b)
-    {
-        motion_magic_acceleration.store(b);
-    },
-    "Motion Magic Acceleration",
-    0.0, 200.0); //20?
-    
-    ddr_->registerVariable<int>
-    ("motion_s_curve_strength",
-     [this]()
-    {
-        return motion_s_curve_strength.load();
-    },
-    [this](int b)
-    {
-        motion_s_curve_strength.store(b);
-    },
-    "S Curve Strength", 0, 8);
+        ddr_->registerVariable<double>
+            ("four_bar_zeroing_percent_output",
+            [this]() { return four_bar_zeroing_percent_output.load(); },
+            [this](double b) { four_bar_zeroing_percent_output.store(b); },
+            "FourBar Zeroing Percent Output",
+             -1.0, 1.0);
 
-    ddr_->publishServicesTopics();
+        ddr_->registerVariable<double>
+            ("four_bar_zeroing_timeout",
+            [this]() { return four_bar_zeroing_timeout.load(); },
+            [this](double b) { four_bar_zeroing_timeout.store(b); },
+            "FourBar Zeroing Timeout",
+            0.0, 15.0);
+        
+        ddr_->registerVariable<double>
+            ("motion_magic_velocity",
+            [this]() { return motion_magic_velocity.load(); },
+            [this](double b) { motion_magic_velocity.store(b); },
+            "Motion Magic Velocity",
+            0.0, 20.0);
+
+        ddr_->registerVariable<double>
+            ("motion_magic_acceleration",
+            [this]() { return motion_magic_acceleration.load(); },
+            [this](double b) { motion_magic_acceleration.store(b); },
+            "Motion Magic Acceleration",
+            0.0, 200.0);
+        
+        ddr_->registerVariable<int>
+            ("motion_s_curve_strength",
+            [this]() { return motion_s_curve_strength.load(); },
+            [this](int b) { motion_s_curve_strength.store(b); },
+            "S Curve Strength",
+             0, 8);
+
+        ddr_->publishServicesTopics();
+    }
 
     four_bar_service_ = controller_nh.advertiseService("four_bar_service", &FourBarController_2023::cmdService, this);
 
@@ -279,9 +225,7 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
 void FourBarController_2023::starting(const ros::Time &time)
 {
     zeroed_ = false;
-    last_zeroed_  = false;
-    last_mode_ = hardware_interface::TalonMode_Disabled;
-    last_angle_ = -1; // give nonsense position to force update on first time through update()
+    last_zeroed_ = false;
     position_command_ = 0.0; // 0 is when we are fully retracted
 }
 
@@ -308,14 +252,13 @@ void FourBarController_2023::update(const ros::Time &time, const ros::Duration &
     if (zeroed_) // run normally, seeking to various positions
     {
         four_bar_joint_.setMode(hardware_interface::TalonMode_MotionMagic);
-        if (four_bar_joint_.getMode() == hardware_interface::TalonMode_Disabled && last_mode_ == hardware_interface::TalonMode_Disabled)
+        if (four_bar_joint_.getMode() == hardware_interface::TalonMode_Disabled)
         {
             position_command_ = four_bar_joint_.getPosition();
         }
         four_bar_joint_.setCommand(position_command_);
 
-        //if we're not climbing, add an arbitrary feed forward to hold the four_bar up
-
+        //if we're not zeroing, add an arbitrary feed forward to hold the four_bar up
         four_bar_joint_.setMotionAcceleration(motion_magic_acceleration);
         four_bar_joint_.setMotionCruiseVelocity(motion_magic_velocity);
         four_bar_joint_.setPIDFSlot(0);
@@ -325,9 +268,8 @@ void FourBarController_2023::update(const ros::Time &time, const ros::Duration &
     }
     else
     {
-
         four_bar_joint_.setMode(hardware_interface::TalonMode_PercentOutput);
-        if ((ros::Time::now() - last_time_down_).toSec() < four_bar_zeroing_timeout)
+        if ((time - last_time_down_).toSec() < four_bar_zeroing_timeout)
         {
             // Not yet zeroed. Run the four_bar down slowly until the limit switch is set.
             ROS_INFO_STREAM_THROTTLE(0.25, "Zeroing four_bar with percent output: "
@@ -338,7 +280,7 @@ void FourBarController_2023::update(const ros::Time &time, const ros::Duration &
         else
         {
             // Stop moving to prevent motor from burning out
-            ROS_INFO_STREAM_THROTTLE(0.25, "FourBar timed out");
+            ROS_INFO_STREAM_THROTTLE(1.00, "FourBar timed out");
             four_bar_joint_.setCommand(0);
         }
 
@@ -347,12 +289,9 @@ void FourBarController_2023::update(const ros::Time &time, const ros::Duration &
                 (four_bar_joint_.getSpeed() < 0)) // TODO : param
         {
             // If moving down, or disabled and thus not expected to move down, reset the timer
-            last_time_down_ = ros::Time::now();
+            last_time_down_ = time;
         }
     }
-    last_angle_ = four_bar_joint_.getPosition();
-    last_mode_ = four_bar_joint_.getMode();
-
 }
 
 void FourBarController_2023::stopping(const ros::Time &/*time*/)
