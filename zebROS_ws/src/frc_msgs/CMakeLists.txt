@@ -48,6 +48,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   ButtonBoxState.msg
+  ButtonBoxState2023.msg
   JointMode.msg
   JoystickState.msg
   MatchSpecificData.msg

@@ -5,6 +5,11 @@
 			Read button box info from hardware interface and publish it
 		</description>
 	</class>
+	<class name="button_box_state_controller_2023/ButtonBoxStateController_2023" type="button_box_state_controller::ButtonBoxStateController_2023" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read button box info from hardware interface and publish it (2023 buttonbox)
+		</description>
+	</class>
 	<class name="joystick_state_controller/JoystickStateController" type="joystick_state_controller::JoystickStateController" base_class_type="controller_interface::ControllerBase">
 		<description>
 			Read joystick info from hardware interface and publish it

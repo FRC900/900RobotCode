@@ -36,6 +36,12 @@ hardware_interface:
 
        - {name: robot_code_ready_jetson, local: false, type: ready}
        - {name: robot_code_ready_rio, local: true, type: ready}
+       - {name: button_box, type: joystick, id: 1, local: true}
+
+button_box_controller:
+    type: button_box_state_controller_2023/ButtonBoxStateController_2023
+    name: button_box
+    publish_rate: 50
        
 joint_state_controller:
    type:         joint_state_controller/JointStateController

@@ -128,15 +128,16 @@ include_directories(
 ## Declare a C++ library
 add_library(frc_state_controller
 	src/button_box_state_controller.cpp
+	src/button_box_state_controller_2023.cpp
 	src/joint_mode_state_controller.cpp
 	src/joystick_state_controller.cpp
-   	src/pcm_state_controller.cpp
+  src/pcm_state_controller.cpp
 	src/pdh_controller.cpp
 	src/pdh_state_controller.cpp
-   	src/pdp_state_controller.cpp
-   	src/ph_state_controller.cpp
+  src/pdp_state_controller.cpp
+  src/ph_state_controller.cpp
 	src/match_state_controller.cpp
-   	src/robot_controller_state_controller.cpp
+  src/robot_controller_state_controller.cpp
 	src/spacemouse_state_controller.cpp
 )
 target_link_libraries(frc_state_controller ${catkin_LIBRARIES})
