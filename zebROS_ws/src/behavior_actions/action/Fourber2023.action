@@ -21,6 +21,9 @@ uint8[] safety_positions # looks up config value on where to go based on this, i
 #result
 bool success # if we got there
 string message # debugging for errors
+uint8 CONTROLLER_ERROR=0
+uint8 UNSAFE_ANGLE=1
+uint8 error_code
 ---
 #feedback
 bool success # if we got there

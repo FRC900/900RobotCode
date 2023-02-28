@@ -8,67 +8,42 @@ joint: four_bar
 
 # purposly capitlized, same terminolgy in the elevater
 # all XXX_below is if the service call to the fourbar should have the "below" field set to
+# all VREY wrong, need to be angles
 cube:
   intake: 0.3
-  intake_below: true
-
   low_node: 0.6
-  low_node_below: false
-
   middle_node: 0.5
-  middle_node_below: false
-
   high_node: 0.55
-  high_node_below: false
 
 vertical_cone:
   intake: 0.3
-  intake_below: true
-
   low_node: 0.6
-  low_node_below: false
-
   middle_node: 0.5
-  middle_node_below: false
-
   high_node: 0.5
-  high_node_below: false
 
 base_towards_us_cone:
   intake: 0.4
-  intake_below: true
-
   low_node: 0.3
-  low_node_below: false
-
   middle_node: 0.25
-  middle_node_below: false
-
   high_node: 0.5
-  high_node_below: false
 
 base_away_us_cone:
   intake: 0.3
-  intake_below: true
-
   low_node: 0.6
-  low_node_below: false
-
   middle_node: 0.5
-  middle_node_below: false
-
   high_node: 0.5
-  high_node_below: false
 
-# minimum distance out the intake 
-safety_high: 
-  min_distance_below: 0.24 # min of four bar
-  min_distance_above: 0.3
+# minimum distance of fourbar
+# will clamp angles within this amount
+# there should be an overlap between all three states, if not that is bad
+safety_high:
+  min_angle: 0.0
+  max_angle: 1.57
 
 safety_mid:
-  min_distance_below: 0.5
-  min_distance_above: 0.5
+  min_angle: 0.6
+  max_angle: 0.9
 
 safety_intake:
-  min_distance_below: 0.3
-  min_distance_above: 0.24 # min of four bar
+  min_angle: 0.7
+  max_angle: 0.8

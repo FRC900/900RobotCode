@@ -722,12 +722,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				intake_ac->sendGoal(goal);
 			}
 			else
-			{	
-				if(joystick1_right_trigger_pressed){
+			{
+				if(joystick1_right_trigger_pressed)
+				{
 					intake_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 
-				// teleop_cmd_vel->setSlowMode(false);
 				joystick1_right_trigger_pressed = false;
 			}
 #endif
@@ -872,6 +872,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			{
 				if(!joystick1_left_trigger_pressed)
 				{
+
 					//zero_all_diag_commands();
 				}
 

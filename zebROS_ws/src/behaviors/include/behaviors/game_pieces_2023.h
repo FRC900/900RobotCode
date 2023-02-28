@@ -2,15 +2,15 @@
 #define GAMEPIECES_H
 
 struct SafetyState {
-  double min_distance_above;
-  double min_distance_below;
+  double max_angle;
+  double min_angle;
   SafetyState() {
-    min_distance_above = 0;
-    min_distance_below = 0;
+    max_angle = std::numeric_limits<double>::max();
+    min_angle = std::numeric_limits<double>::min();
   }
   SafetyState(double above, double below) {
-    min_distance_above = above;
-    min_distance_below = below;
+    max_angle = above;
+    min_angle = below;
   }
 };
 
