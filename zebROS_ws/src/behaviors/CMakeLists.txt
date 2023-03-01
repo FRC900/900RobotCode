@@ -180,6 +180,10 @@ add_executable(2023_intaking_server src/2023_intaking_server.cpp)
 target_link_libraries(2023_intaking_server ${catkin_LIBRARIES})
 add_dependencies(2023_intaking_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(2023_fourbar_elevator_path_server src/2023_fourbar_elevator_pather.cpp)
+target_link_libraries(2023_fourbar_elevator_path_server ${catkin_LIBRARIES})
+add_dependencies(2023_fourbar_elevator_path_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 # 2022 actionlib servers
 add_executable(2022_shooting_server_node src/2022_shooting_server.cpp)
 target_link_libraries(2022_shooting_server_node ${catkin_LIBRARIES})

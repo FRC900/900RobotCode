@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+    <group ns="placing">
+        <rosparam file="$(find behaviors)/config/2023_placing_config.yaml" command="load"/>
+        <node name="placing_server_2023" pkg="behaviors" type="2023_placing_server" output="screen"/>
+    </group>
+</launch>

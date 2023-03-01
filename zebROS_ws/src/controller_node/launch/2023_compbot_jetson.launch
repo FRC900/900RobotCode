@@ -91,11 +91,13 @@ elevator_controller_2023 four_bar_controller_2023 intake_leader_controller
 	<include file="$(find behaviors)/launch/2023_intake.launch">
 	</include>
 
-	<group ns="placing">
-		<node name="placing_server_2023" pkg="behaviors" type="2023_placing_server" output="screen"/>
-	</group>
+	<include file="$(find behaviors)/launch/2023_fourbar_elevator_path.launch">
+	</include>
 
 	<include file="$(find behaviors)/launch/2023_fourbar.launch">
+	</include>
+
+	<include file="$(find behaviors)/launch/2023_placing.launch">
 	</include>
 
 	<include file="$(find behaviors)/launch/2023_elevator.launch">

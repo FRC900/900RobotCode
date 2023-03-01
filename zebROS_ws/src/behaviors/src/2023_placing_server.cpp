@@ -2,8 +2,7 @@
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/Intake2023Action.h>
-#include <behavior_actions/Fourber2023Action.h>
-#include <behavior_actions/Elevater2023Action.h>
+#include <behavior_actions/FourbarElevatorPath2023Action.h>
 #include <behavior_actions/Placing2023Action.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/UInt8.h>
@@ -27,25 +26,28 @@ protected:
 	ros::Subscriber game_piece_sub_;
 	ros::Subscriber game_piece_position_sub_;
 
-	actionlib::SimpleActionClient<behavior_actions::Fourber2023Action> ac_fourber_;
+	actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action> path_ac_;
 	actionlib::SimpleActionClient<behavior_actions::Intake2023Action> ac_intake_;
-	actionlib::SimpleActionClient<behavior_actions::Elevater2023Action> ac_elevater_;
 	actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction> ac_hold_position_;
 
 	double server_timeout_;
 	double game_piece_timeout_;
 	double outtake_time_;
+	double time_before_reverse_;
 
 public:
 
 	PlacingServer2023(std::string name) :
 		as_(nh_, name, boost::bind(&PlacingServer2023::executeCB, this, _1), false),
 		action_name_(name),
-		ac_fourber_("/fourber/fourber_server_2023", true),
    		ac_intake_("/intake/intake_server_2023", true),
-		ac_elevater_("/elevater/elevater_server_2023", true),
+		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true),
 		ac_hold_position_("/hold_position/hold_position_server", true)
 	{
+		if (!nh_.getParam("time_before_reverse", time_before_reverse_)) {
+			ROS_WARN_STREAM("2023_placing_server : could not find time_before_reverse, defaulting to 1 seconds");
+			time_before_reverse_ = 1;
+		}
 		if (!nh_.getParam("server_timeout", server_timeout_)) {
 			ROS_WARN_STREAM("2023_placing_server : could not find server_timeout, defaulting to 10 seconds");
 			server_timeout_ = 10;
@@ -112,57 +114,64 @@ public:
 		latest_game_piece_position_time_ = ros::Time::now();
 	}
 
-	using pl = behavior_actions::Placing2023Goal;
-	using fb = behavior_actions::Fourber2023Goal;
-	behavior_actions::Fourber2023Goal::_mode_type nodeToMode(behavior_actions::Placing2023Goal::_node_type node) {
-		switch (node) {
-			case pl::HIGH:
-				return fb::HIGH_NODE;
-			case pl::MID:
-				return fb::MIDDLE_NODE;
-			case pl::HYBRID:
-				return fb::LOW_NODE;
-			default:
-				ROS_ERROR_STREAM("2023_placing_server : invalid node to convert to mode");
-				return 255;
+	std::string pathForGamePiece(uint8_t game_piece, uint8_t location) {
+		std::string location_str;
+		if (location == behavior_actions::Placing2023Goal::HYBRID) {
+			ROS_ERROR_STREAM("2023_placing_server : hybrid nodes not supported yet for pathing!");
+			location_str = "hybrid";
 		}
+		else if (location == behavior_actions::Placing2023Goal::MID) {
+			location_str = "mid";
+		}
+		else {
+			location_str = "high";
+		}
+
+		std::string piece_str;
+		if (game_piece == behavior_actions::Placing2023Goal::CUBE) {
+			ROS_ERROR_STREAM("2023_placing_server : cubes not supported yet for pathing!");
+			piece_str = "cube";
+		}
+		else {
+			piece_str = "cone";
+		}
+
+		return location_str + "_" + piece_str;
 	}
 
 	void executeCB(const behavior_actions::Placing2023GoalConstPtr &goal)
 	{
-		if (!ac_fourber_.waitForServer(ros::Duration(server_timeout_))) {
-			ROS_ERROR_STREAM("2023_placing_server : timed out connecting to fourber server, aborting");
-			result_.timed_out = true;
-			as_.setAborted(result_);
-			return;
-		}
+		if (goal)
 
-		if (!ac_elevater_.waitForServer(ros::Duration(server_timeout_))) {
-			ROS_ERROR_STREAM("2023_placing_server : timed out connecting to elevater server, aborting");
-			result_.timed_out = true;
+		result_.success = true; // default to true, set to false if fails
+		if (!path_ac_.waitForServer(ros::Duration(server_timeout_))) {
+			ROS_ERROR_STREAM("2023_placing_server : timed out connecting to fourbar elevator path server, aborting");
+			result_.success = false;
 			as_.setAborted(result_);
 			return;
 		}
 
 		if (!ac_intake_.waitForServer(ros::Duration(server_timeout_))) {
 			ROS_ERROR_STREAM("2023_placing_server : timed out connecting to intake server, aborting");
-			result_.timed_out = true;
+			result_.success = false;
 			as_.setAborted(result_);
 			return;
 		}
 
-		if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
-			ROS_ERROR_STREAM("2023_placing_server : game piece data too old, aborting");
-			result_.timed_out = true;
-			as_.setAborted(result_);
-			return;
-		}
+		if ((!(goal->override_game_piece)) && goal->align_intake) {
+			if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
+				ROS_ERROR_STREAM("2023_placing_server : game piece data too old, aborting");
+				result_.success = false;
+				as_.setAborted(result_);
+				return;
+			}
 
-		if (ros::Time::now() - latest_game_piece_position_time_ > ros::Duration(game_piece_timeout_)) {
-			ROS_ERROR_STREAM("2023_placing_server : game piece position data too old, aborting");
-			result_.timed_out = true;
-			as_.setAborted(result_);
-			return;
+			if (ros::Time::now() - latest_game_piece_position_time_ > ros::Duration(game_piece_timeout_)) {
+				ROS_ERROR_STREAM("2023_placing_server : game piece position data too old, aborting");
+				result_.success = false;
+				as_.setAborted(result_);
+				return;
+			}
 		}
 
 		if (goal->align_intake) {
@@ -184,38 +193,35 @@ public:
 
 			if (!waitForResultAndCheckForPreempt(ros::Duration(-1), ac_hold_position_, as_)) {
 				ROS_INFO_STREAM("2023_placing_server : hold position server timed out, aborting");
-				result_.timed_out = true;
+				result_.success = false;
 				as_.setAborted(result_);
 				ac_hold_position_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				return;
 			}
 		}
 
-		behavior_actions::Fourber2023Goal fourber_goal;
-		fourber_goal.piece = latest_game_piece_;
-		fourber_goal.mode = nodeToMode(goal->node); // please don't change the actionlib files
-		ac_fourber_.sendGoal(fourber_goal);
+		uint8_t game_piece;
 
-		if (!(waitForResultAndCheckForPreempt(ros::Duration(-1), ac_fourber_, as_) && ac_fourber_.getState() == ac_fourber_.getState().SUCCEEDED)) {
-			ROS_INFO_STREAM("2023_placing_server : fourber timed out, aborting");
-			result_.timed_out = true;
-			as_.setAborted(result_);
-			ac_fourber_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-			ac_elevater_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-			return;
+		if (!goal->override_game_piece) {
+			game_piece = latest_game_piece_;
+			ROS_INFO_STREAM("2023_placing_server : detected game piece = " << std::to_string(latest_game_piece_));
 		}
+		else {
+			game_piece = goal->piece;
+			ROS_INFO_STREAM("2023_placing_server : game piece override. detected = " << std::to_string(latest_game_piece_) << ", requested = " << std::to_string(goal->piece) << ". using requested value");
+		}
+		
+		behavior_actions::FourbarElevatorPath2023Goal pathGoal;
+		pathGoal.path = pathForGamePiece(game_piece, goal->node);
+		pathGoal.reverse = false;
 
-		behavior_actions::Elevater2023Goal elevater_goal;
-		elevater_goal.piece = latest_game_piece_;
-		elevater_goal.mode = nodeToMode(goal->node); // please don't change the actionlib files
-		ac_elevater_.sendGoal(elevater_goal);
+		path_ac_.sendGoal(pathGoal);
 
-		if (!(waitForResultAndCheckForPreempt(ros::Duration(-1), ac_elevater_, as_) && ac_elevater_.getState() == ac_elevater_.getState().SUCCEEDED)) {
-			ROS_INFO_STREAM("2023_placing_server : elevater timed out, aborting");
-			result_.timed_out = true;
+		if (!(waitForResultAndCheckForPreempt(ros::Duration(-1), path_ac_, as_) && path_ac_.getState() == path_ac_.getState().SUCCEEDED)) {
+			ROS_INFO_STREAM("2023_placing_server : pather timed out, aborting");
+			result_.success = false;
 			as_.setAborted(result_);
-			ac_fourber_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-			ac_elevater_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+			path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			return;
 		}
 
@@ -230,11 +236,27 @@ public:
 				ac_intake_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			} else {
 				ROS_ERROR_STREAM("2023_placing_server : error with intake server! aborting!");
-				result_.timed_out = true;
+				result_.success = false;
 				as_.setAborted(result_);
 				ac_intake_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				return;
 			}
+		}
+
+		ros::Duration(time_before_reverse_).sleep();
+
+		ROS_INFO_STREAM("2023_placing_server : reversing path!");
+
+		pathGoal.reverse = true;
+
+		path_ac_.sendGoal(pathGoal);
+
+		if (!(waitForResultAndCheckForPreempt(ros::Duration(-1), path_ac_, as_) && path_ac_.getState() == path_ac_.getState().SUCCEEDED)) {
+			ROS_INFO_STREAM("2023_placing_server : pather timed out, aborting");
+			result_.success = false;
+			as_.setAborted(result_);
+			path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+			return;
 		}
 
 		as_.setSucceeded(result_);

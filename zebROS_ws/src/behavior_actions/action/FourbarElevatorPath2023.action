@@ -1,0 +1,6 @@
+string path # see config file for names
+bool reverse
+---
+bool timed_out
+bool success
+---

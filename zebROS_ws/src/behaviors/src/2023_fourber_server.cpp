@@ -225,7 +225,7 @@ class FourberAction2023
                 {
                     FourberWARN("Fourber Preemepted");
                     controllers_2023_msgs::FourBarSrv last_req;
-                    last_req.request.angle = fourbar_cur_setpoint_;
+                    last_req.request.angle = fourbar_cur_setpoint_; // shouldn't this set to current position instead of setpoint?
                     if (!fourbar_srv_.call(last_req))
                     {
                         FourberERR("Could not set fourbar to the current setpoint!");

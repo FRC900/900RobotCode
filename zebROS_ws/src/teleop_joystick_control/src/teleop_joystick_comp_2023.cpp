@@ -16,7 +16,8 @@
 #include <vector>
 #include "teleop_joystick_control/RobotOrient.h"
 
-#include "frc_msgs/ButtonBoxState.h"
+#include "frc_msgs/ButtonBoxState2023.h"
+#include "frc_msgs/MatchSpecificData.h"
 
 #include "actionlib/client/simple_action_client.h"
 
@@ -33,6 +34,7 @@
 #include "teleop_joystick_control/RobotOrientationDriver.h"
 #include <teleop_joystick_control/SnapConeCube.h>
 #include <behavior_actions/Intaking2023Action.h>
+#include <behavior_actions/Placing2023Action.h>
 #include <behavior_actions/Intake2023Action.h>
 
 struct DynamicReconfigVars
@@ -41,7 +43,7 @@ struct DynamicReconfigVars
 	double min_speed{0};                  // "Min linear speed to get robot to overcome friction, in m/s"
 	double max_speed{2.0};                // "Max linear speed, in m/s"
 	double max_speed_slow{0.75};          // "Max linear speed in slow mode, in m/s"
-	double max_rot{4.0};                  // "Max angular speed"
+	double max_rot{6.0};                  // "Max angular speed"
 	double max_rot_slow{2.0};             // "Max angular speed in slow mode"
 	double button_move_speed{0.9};        // "Linear speed when move buttons are pressed, in m/s"
 	double joystick_pow{1.5};             // "Joystick Scaling Power, linear"
@@ -61,7 +63,7 @@ std::unique_ptr<RobotOrientationDriver> robot_orientation_driver;
 
 bool diagnostics_mode = false;
 
-frc_msgs::ButtonBoxState button_box;
+frc_msgs::ButtonBoxState2023 button_box;
 
 // array of joystick_states messages for multiple joysticks
 std::vector <frc_msgs::JoystickState> joystick_states_array;
@@ -77,6 +79,9 @@ ros::Publisher auto_mode_select_pub;
 bool joystick1_left_trigger_pressed = false;
 bool joystick1_right_trigger_pressed = false;
 
+bool up_down_switch_mid = false;
+bool left_right_switch_mid = false;
+
 bool imu_service_needed = true;
 
 double last_offset;
@@ -86,6 +91,34 @@ bool last_robot_orient;
 int direction_x{};
 int direction_y{};
 int direction_z{};
+
+bool robot_is_disabled{false};
+
+uint8_t grid;
+uint8_t game_piece;
+uint8_t node;
+
+uint8_t auto_starting_pos = 1; // 1 indexed
+uint8_t auto_mode = 0; // 0 indexed
+
+imu_zero::ImuZeroAngle imu_cmd;
+
+uint8_t autoMode() {
+	// if ignoring starting positions, set the same auto modes for the three listed next to the switch position
+	//      L  M      R
+	// up = 1, 2, and 3
+	// mid = 4, 5, and 6
+	// down = 7, 8, and 9
+	ROS_INFO_STREAM("teleop_joystick_comp_2023 : auto_mode = " << std::to_string(auto_mode * 3 + auto_starting_pos));
+	return auto_mode * 3 + auto_starting_pos;
+}
+
+void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
+{
+	// TODO : if in diagnostic mode, zero all outputs on the
+	// transition from enabled to disabled
+	robot_is_disabled = msg.Disabled;
+}
 
 ros::ServiceClient snapConeCubeSrv;
 
@@ -128,6 +161,7 @@ void zero_all_diag_commands(void)
 
 std::shared_ptr<actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>> distance_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2023Action>> intaking_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>> placing_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intake2023Action>> intake_ac;
 
 void preemptActionlibServers(void)
@@ -149,7 +183,16 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 
 bool sendRobotZero = false;
 
-void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& event)
+void place() {
+	behavior_actions::Placing2023Goal goal;
+	goal.node = node;
+	goal.piece = game_piece;
+	goal.override_game_piece = true;
+	goal.align_intake = false;
+	placing_ac->sendGoal(goal);
+}
+
+void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 const>& event)
 {
 	//ROS_INFO_STREAM("Button Box callback running!");
 
@@ -198,147 +241,190 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 		ROS_WARN_STREAM("Field relative mode!");
 	}
 
-	if(button_box.topRedPress)
-	{
-			preemptActionlibServers();
+	if(button_box.redButton) {
 	}
-	if(button_box.topRedButton)
-	{
+	if(button_box.redPress) {
+		placing_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		intake_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
-	if(button_box.topRedRelease)
-	{
-	}
-
-	if(button_box.leftRedPress)
-	{
-
+	if(button_box.redRelease) {
 	}
 
-	if(button_box.leftRedButton)
-	{
-
+	if(button_box.topLeftConeButton) {
 	}
-	if(button_box.leftRedRelease)
-	{
+	if(button_box.topLeftConePress) {
 	}
-
-	if(button_box.rightRedPress)
-	{
-
-
-	}
-	if(button_box.rightRedButton)
-	{
-	}
-	if(button_box.rightRedRelease)
-	{
+	if(button_box.topLeftConeRelease) {
 	}
 
-	if(button_box.leftSwitchUpPress)
-	{
+	if(button_box.topMiddleConeButton) {
 	}
-	if(button_box.leftSwitchUpButton)
-	{
+	if(button_box.topMiddleConePress) {
 	}
-	if(button_box.leftSwitchUpRelease)
-	{
-
+	if(button_box.topMiddleConeRelease) {
 	}
 
-	if(button_box.leftSwitchDownPress)
-	{
+	if(button_box.topRightCubeButton) {
 	}
-	if(button_box.leftSwitchDownButton)
-	{
+	if(button_box.topRightCubePress) {
 	}
-	if(button_box.leftSwitchDownRelease)
-	{
-
+	if(button_box.topRightCubeRelease) {
 	}
 
-	if(button_box.rightSwitchUpPress)
-	{
+	if(button_box.gridSelectConeLeftButton) {
 	}
-	if(button_box.rightSwitchUpButton)
-	{
-
+	if(button_box.gridSelectConeLeftPress) {
+		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE; // type doesn't matter for placing
+		place();
 	}
-	if(button_box.rightSwitchDownButton)
-	{
-
-	}
-	if(button_box.rightSwitchUpRelease)
-	{
-
+	if(button_box.gridSelectConeLeftRelease) {
 	}
 
-	if(button_box.rightSwitchDownPress)
-	{
+	if(button_box.gridSelectCubeButton) {
 	}
-	if(button_box.rightSwitchDownButton)
-	{
-
+	if(button_box.gridSelectCubePress) {
+		game_piece = behavior_actions::Placing2023Goal::CUBE;
+		place();
 	}
-	if(button_box.rightSwitchDownRelease)
-	{
-
+	if(button_box.gridSelectCubeRelease) {
 	}
 
-	if(button_box.leftBluePress)
-	{
-		ROS_INFO_STREAM("Left blue button callback!");
-		// 10 degrees
-		// say its not from teleop so it acutally runs pid on the angle
-		// reasoning is that if we know where we want to go, then pid is good, but if not it sucks
-		robot_orientation_driver->setTargetOrientation(robot_orientation_driver->getCurrentOrientation() + angles::from_degrees(10.), false);
+	if(button_box.gridSelectConeRightButton) {
 	}
-	if(button_box.leftBlueButton)
-	{
-
+	if(button_box.gridSelectConeRightPress) {
+		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE; // type doesn't matter for placing
+		place();
 	}
-	if(button_box.leftBlueRelease)
-	{
+	if(button_box.gridSelectConeRightRelease) {
 	}
 
-	if(button_box.rightBluePress)
-	{
-		ROS_INFO_STREAM("Right blue button callback!");
-		robot_orientation_driver->setTargetOrientation(robot_orientation_driver->getCurrentOrientation() - angles::from_degrees(10.), false);
+	if(button_box.heightSelectSwitchUpButton) {
 	}
-	if(button_box.rightBlueButton)
-	{
+	if(button_box.heightSelectSwitchUpPress) {
+		if (robot_is_disabled)
+		{
+			auto_mode = 0;
+			// should we be worried about messages being dropped here?
+			behavior_actions::AutoMode auto_mode_msg;
+			auto_mode_msg.header.stamp = ros::Time::now();
+			auto_mode_msg.auto_mode = autoMode();
+			auto_mode_select_pub.publish(auto_mode_msg);
+		}
+		node = behavior_actions::Placing2023Goal::HIGH;
 	}
-	if(button_box.rightBlueRelease)
-	{
+	if(button_box.heightSelectSwitchUpRelease) {
 	}
 
-	if(button_box.yellowPress)
-	{
-		/* 
-		ROS_INFO_STREAM("Driving to fender at correct angle!");
-		path_follower_msgs::holdPositionGoal goal;
-		goal.pose.position.x = 0.3;
-		goal.pose.position.y = 0.3;
-		goal.pose.position.z = 0.0;
-		tf2::Quaternion q;
-		q.setRPY(0, 0, hub_angle);
-		goal.pose.orientation.x = q.x();
-		goal.pose.orientation.y = q.y();
-		goal.pose.orientation.z = q.z();
-		goal.pose.orientation.w = q.w();
-		goal.isAbsoluteCoord = true;
-		distance_ac->sendGoal(goal);
-		*/
+	if(!(button_box.heightSelectSwitchUpButton || button_box.heightSelectSwitchDownButton)) {
+		if (!up_down_switch_mid) {
+			node = behavior_actions::Placing2023Goal::MID;
+			if (robot_is_disabled)
+			{
+				auto_mode = 1;
+				// should we be worried about messages being dropped here?
+				behavior_actions::AutoMode auto_mode_msg;
+				auto_mode_msg.header.stamp = ros::Time::now();
+				auto_mode_msg.auto_mode = autoMode();
+				auto_mode_select_pub.publish(auto_mode_msg);
+			}
+		}
+
+		up_down_switch_mid = true;
+	} else {
+		up_down_switch_mid = false;
 	}
-	if(button_box.yellowButton)
-	{
+
+	if(button_box.heightSelectSwitchDownButton) {
 	}
-	if(button_box.yellowRelease)
-	{	
-		/* 
-		distance_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
-		sendRobotZero = false;
-		*/
+	if(button_box.heightSelectSwitchDownPress) {
+		node = behavior_actions::Placing2023Goal::HYBRID;
+		if (robot_is_disabled)
+		{
+			auto_mode = 2;
+			// should we be worried about messages being dropped here?
+			behavior_actions::AutoMode auto_mode_msg;
+			auto_mode_msg.header.stamp = ros::Time::now();
+			auto_mode_msg.auto_mode = autoMode();
+			auto_mode_select_pub.publish(auto_mode_msg);
+		}
+	}
+	if(button_box.heightSelectSwitchDownRelease) {
+	}
+
+	if(button_box.heightSelectSwitchLeftButton) {
+	}
+	if(button_box.heightSelectSwitchLeftPress) {
+		if (robot_is_disabled)
+		{
+			auto_starting_pos = 1;
+			// should we be worried about messages being dropped here?
+			behavior_actions::AutoMode auto_mode_msg;
+			auto_mode_msg.header.stamp = ros::Time::now();
+			auto_mode_msg.auto_mode = autoMode();
+			auto_mode_select_pub.publish(auto_mode_msg);
+		}
+	}
+	if(button_box.heightSelectSwitchLeftRelease) {
+	}
+
+	if(!(button_box.heightSelectSwitchLeftButton || button_box.heightSelectSwitchRightButton)) {
+		if (!left_right_switch_mid) {
+			node = behavior_actions::Placing2023Goal::MID;
+			if (robot_is_disabled)
+			{
+				auto_starting_pos = 2;
+				// should we be worried about messages being dropped here?
+				behavior_actions::AutoMode auto_mode_msg;
+				auto_mode_msg.header.stamp = ros::Time::now();
+				auto_mode_msg.auto_mode = autoMode();
+				auto_mode_select_pub.publish(auto_mode_msg);
+			}
+		}
+
+		left_right_switch_mid = true;
+	} else {
+		left_right_switch_mid = false;
+	}
+
+	if(button_box.heightSelectSwitchRightButton) {
+	}
+	if(button_box.heightSelectSwitchRightPress) {
+		if (robot_is_disabled)
+		{
+			auto_starting_pos = 3;
+			// should we be worried about messages being dropped here?
+			behavior_actions::AutoMode auto_mode_msg;
+			auto_mode_msg.header.stamp = ros::Time::now();
+			auto_mode_msg.auto_mode = autoMode();
+			auto_mode_select_pub.publish(auto_mode_msg);
+		}
+	}
+	if(button_box.heightSelectSwitchRightRelease) {
+	}
+
+	if(button_box.centralYellowButton) {
+	}
+	if(button_box.centralYellowPress) {
+	}
+	if(button_box.centralYellowRelease) {
+	}
+
+	if(button_box.bottomLeftYellowButton) {
+	}
+	if(button_box.bottomLeftYellowPress) {
+	}
+	if(button_box.bottomLeftYellowRelease) {
+	}
+
+	if(button_box.bottomRightWhiteButton) {
+	}
+	if(button_box.bottomRightWhitePress) {
+		ROS_INFO_STREAM("teleop_joystick_comp_2023 : zeroing IMU");
+		imu_cmd.request.angle = 0.0;
+		IMUZeroSrv.call(imu_cmd);
+	}
+	if(button_box.bottomRightWhiteRelease) {
 	}
 
 	if(button_box.leftGreenPress)
@@ -391,75 +477,6 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState const>& 
 	if(button_box.bottomGreenRelease)
 	{
 		moveDirection(1, 0, 0);
-	}
-
-	// Auto-mode select?
-	if(button_box.bottomSwitchUpPress)
-	{
-		imu_service_needed = true;
-	}
-	if(button_box.bottomSwitchUpButton)
-	{
-		if (!robot_orientation_driver->getRobotEnabled())
-		{
-			behavior_actions::AutoMode auto_mode_msg;
-			auto_mode_msg.header.stamp = ros::Time::now();
-			auto_mode_msg.auto_mode = 1;
-			auto_mode_select_pub.publish(auto_mode_msg);
-		}
-		if(imu_service_needed)
-		{
-			imu_zero::ImuZeroAngle imu_cmd;
-			imu_cmd.request.angle = config.imu_zero_angle;
-			IMUZeroSrv.call(imu_cmd);
-			imu_service_needed = false;
-		}
-	}
-	if(button_box.bottomSwitchUpRelease)
-	{
-		imu_service_needed = true;
-	}
-
-	if(button_box.bottomSwitchDownPress)
-	{
-		imu_service_needed = true;
-	}
-	if(button_box.bottomSwitchDownButton)
-	{
-		if (!robot_orientation_driver->getRobotEnabled())
-		{
-			behavior_actions::AutoMode auto_mode_msg;
-			auto_mode_msg.header.stamp = ros::Time::now();
-			auto_mode_msg.auto_mode = 2;
-			auto_mode_select_pub.publish(auto_mode_msg);
-		}
-		if(imu_service_needed)
-		{
-			imu_zero::ImuZeroAngle imu_cmd;
-			imu_cmd.request.angle = config.imu_zero_angle;
-			IMUZeroSrv.call(imu_cmd);
-			imu_service_needed = false;
-		}
-	}
-	if(button_box.bottomSwitchDownRelease)
-	{
-		imu_service_needed = true;
-	}
-	if(!button_box.bottomSwitchUpButton && !button_box.bottomSwitchDownButton)
-	{ //The switch is in the middle position
-		if(imu_service_needed)
-		{
-			imu_zero::ImuZeroAngle imu_cmd;
-			imu_cmd.request.angle = config.imu_zero_angle;
-			IMUZeroSrv.call(imu_cmd);
-			imu_service_needed = false;
-		}
-	}
-
-	last_header_stamp = button_box.header.stamp;
-	if (diagnostics_mode)
-	{
-		publish_diag_cmds();
 	}
 }
 
@@ -698,6 +715,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				if(!joystick1_left_trigger_pressed)
 				{
 					behavior_actions::Intaking2023Goal goal;
+					goal.piece = goal.CUBE;
 					intaking_ac->sendGoal(goal);
 				}
 
@@ -716,16 +734,20 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: rightTrigger
 			if(joystick_states_array[0].rightTrigger > config.trigger_threshold)
 			{
-				// RIP aligned shooting... worked awesome on the practice field
-				behavior_actions::Intake2023Goal goal;
-				goal.outtake = true;
-				intake_ac->sendGoal(goal);
+				if(!joystick1_right_trigger_pressed)
+				{
+					behavior_actions::Intaking2023Goal goal;
+					goal.piece = goal.VERTICAL_CONE;
+					intaking_ac->sendGoal(goal);
+				}
+
+				joystick1_right_trigger_pressed = true;
 			}
 			else
 			{
 				if(joystick1_right_trigger_pressed)
 				{
-					intake_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+					intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 				}
 
 				joystick1_right_trigger_pressed = false;
@@ -1075,12 +1097,14 @@ int main(int argc, char **argv)
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
+	ros::Subscriber match_state_sub = n.subscribe("/frcrobot_rio/match_data", 1, matchStateCallback);
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 
 	auto_mode_select_pub = n.advertise<behavior_actions::AutoMode>("/auto/auto_mode", 1, true);
 
 	intaking_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Intaking2023Action>>("/intaking/intaking_server_2023", true);
 	intake_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Intake2023Action>>("/intake/intake_server_2023", true);
+	placing_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>>("/placing/placing_server_2023", true);
 
 	const ros::Duration startup_wait_time_secs(15);
 	const ros::Time startup_start_time = ros::Time::now();

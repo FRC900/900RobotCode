@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+    <group ns="fourbar_elevator_path">
+		<rosparam file="$(find behaviors)/config/2023_fourbar_elevator_paths.yaml" command="load"/>
+		<node name="fourbar_elevator_path_server_2023" pkg="behaviors" type="2023_fourbar_elevator_path_server" output="screen"/>
+	</group>
+</launch>

@@ -28,13 +28,13 @@
     <node pkg="tf_object_detection" name="tf_object_tracker" type="tracker.py" output="screen">
     </node>
   -->
-  <!-- 
+
 	  <rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
     <node pkg="tf_object_detection" name="tf_object_detection" type="trtdetection.py" output="screen" unless="$(arg cpu)">
     </node>
-    <node pkg="tf_object_detection" name="tf_object_detection" type="test_detection.py" output="screen" if="$(arg cpu)">
-    </node>
-  -->
+
+    <!-- <node pkg="tf_object_detection" name="tf_object_detection" type="test_detection.py" output="screen" if="$(arg cpu)">
+    </node> -->
     <node pkg="tf_object_detection" name="tag_depth" type="tag_depth.py" output="screen">
     </node>
    

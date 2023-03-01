@@ -20,8 +20,8 @@ elevator_controller_2023:
     arb_feed_forward_angle: 0.01
     straight_up_angle: 0.52
     
-    motion_magic_velocity: 2.1
-    motion_magic_acceleration: 11.0
+    motion_magic_velocity: 1.5
+    motion_magic_acceleration: 6.0
 
     # not sure if this needs to be here and below
     motion_s_curve_strength: 8

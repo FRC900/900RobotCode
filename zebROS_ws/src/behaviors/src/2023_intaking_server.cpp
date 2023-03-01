@@ -3,8 +3,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/Intaking2023Action.h>
 #include <behavior_actions/Intake2023Action.h>
-#include <behavior_actions/Elevater2023Action.h>
-#include <behavior_actions/Fourber2023Action.h>
+#include <behavior_actions/FourbarElevatorPath2023Action.h>
 #include <behavior_actions/GamePieceState2023.h>
 #include <std_msgs/UInt8.h>
 #include <talon_state_msgs/TalonState.h>
@@ -38,10 +37,11 @@ protected:
 	double current_threshold_;
 
 	actionlib::SimpleActionClient<behavior_actions::Intake2023Action> intake_ac_;
-	actionlib::SimpleActionClient<behavior_actions::Elevater2023Action> elevater_ac_;
-	actionlib::SimpleActionClient<behavior_actions::Fourber2023Action> fourber_ac_;
+	actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action> path_ac_;
 
 	ros::Subscriber talon_states_sub_;
+
+	double time_before_reverse_;
 
 	// output_current in talon states
 
@@ -83,12 +83,15 @@ public:
 		game_piece_sub_(nh_.subscribe("/game_piece/game_piece_state", 1, &IntakingServer2023::gamePieceStateCallback, this)),
 		requested_game_piece_sub_(nh_.subscribe("/game_piece/requested_game_piece", 1, &IntakingServer2023::requestedPieceCallback, this)),
 		intake_ac_("/intake/intake_server_2023", true),
-		elevater_ac_("/elevater/elevater_server_2023", true),
-		fourber_ac_("/fourber/fourber_server_2023", true)
+		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true)
 	{
 		intake_idx = std::numeric_limits<size_t>::max();
 		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &IntakingServer2023::talonStateCallback, this);
 		game_piece_state_.game_piece = game_piece_state_.NONE; // default to no game piece
+		if (!nh_.getParam("time_before_reverse", time_before_reverse_)) {
+			ROS_WARN_STREAM("2023_intaking_server : could not find time_before_reverse, defaulting to 1 seconds");
+			time_before_reverse_ = 1;
+		}
 		if (!nh_.getParam("cube_time", cube_time_))
 		{
 			ROS_ERROR_STREAM("2023_intaking_server : could not find cube_time");
@@ -100,8 +103,8 @@ public:
 			return;
 		}
 		if (!nh_.getParam("server_timeout", server_timeout_)) {
-			ROS_WARN_STREAM("2023_intaking_server : could not find server_timeout, defaulting to 10 seconds");
-			server_timeout_ = 10;
+			ROS_WARN_STREAM("2023_intaking_server : could not find server_timeout, defaulting to 20 seconds");
+			server_timeout_ = 20;
 		}
 		if (!nh_.getParam("joint", joint_))
 		{
@@ -123,15 +126,8 @@ public:
 
 	void executeCB(const behavior_actions::Intaking2023GoalConstPtr &goal)
 	{
-		if (!elevater_ac_.waitForServer(ros::Duration(server_timeout_))) {
-			ROS_ERROR_STREAM("2023_intaking_server : timed out connecting to elevater server, aborting");
-			result_.timed_out = true;
-			as_.setAborted(result_);
-			return;
-		}
-
-		if (!fourber_ac_.waitForServer(ros::Duration(server_timeout_))) {
-			ROS_ERROR_STREAM("2023_intaking_server : timed out connecting to fourber server, aborting");
+		if (!path_ac_.waitForServer(ros::Duration(server_timeout_))) {
+			ROS_ERROR_STREAM("2023_intaking_server : timed out connecting to fourbar elevator path server, aborting");
 			result_.timed_out = true;
 			as_.setAborted(result_);
 			return;
@@ -144,47 +140,24 @@ public:
 			return;
 		}
 
-		behavior_actions::Fourber2023Goal fourberGoal;
-		fourberGoal.piece = requested_game_piece_;
-		fourberGoal.mode = fourberGoal.INTAKE;
-		fourberGoal.safety_positions = {};
-
-		feedback_.status = feedback_.FOURBER;
-		as_.publishFeedback(feedback_);
-
-		fourber_ac_.sendGoal(fourberGoal);
-
 		ros::Rate r(10);
-		while (!fourber_ac_.getState().isDone()) {
-			ros::spinOnce();
-			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for fourber...");
-			if (as_.isPreemptRequested() || !ros::ok()) {
-				ROS_INFO_STREAM("2023_intaking_server : preempted.");
-				as_.setPreempted(result_);
-				fourber_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-				return;
-			}
-			r.sleep();
-		}
 
-		ROS_INFO_STREAM("2023_intaking_server : fourber moved");
+		behavior_actions::FourbarElevatorPath2023Goal pathGoal;
+		pathGoal.path = (goal->piece == goal->VERTICAL_CONE) ? "intake_vertical_cone" : "intake_cone_cube";
+		pathGoal.reverse = false;
 
-		behavior_actions::Elevater2023Goal elevaterGoal;
-		elevaterGoal.piece = requested_game_piece_;
-		elevaterGoal.mode = elevaterGoal.INTAKE;
-
-		feedback_.status = feedback_.ELEVATER;
+		feedback_.status = feedback_.PATHER;
 		as_.publishFeedback(feedback_);
 
-		elevater_ac_.sendGoal(elevaterGoal);
+		path_ac_.sendGoal(pathGoal);
 
-		while (!elevater_ac_.getState().isDone()) {
+		while (!path_ac_.getState().isDone()) {
 			ros::spinOnce();
-			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for elevater...");
+			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for pather...");
 			if (as_.isPreemptRequested() || !ros::ok()) {
 				ROS_INFO_STREAM("2023_intaking_server : preempted.");
 				as_.setPreempted(result_);
-				elevater_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				return;
 			}
 			r.sleep();
@@ -206,8 +179,27 @@ public:
 			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for a game piece... current = " << current_current_);
 			if (as_.isPreemptRequested() || !ros::ok()) {
 				ROS_INFO_STREAM("2023_intaking_server : preempted.");
-				as_.setPreempted(result_);
 				intake_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				ROS_INFO_STREAM("2023_intaking_server : reversing path");
+				pathGoal.reverse = true;
+
+				feedback_.status = feedback_.PATHER;
+				as_.publishFeedback(feedback_);
+
+				path_ac_.sendGoal(pathGoal);
+
+				while (!path_ac_.getState().isDone() && ros::ok()) {
+					ros::spinOnce();
+					ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for pather...");
+					// if (as_.isPreemptRequested() || !ros::ok()) {
+					// 	ROS_INFO_STREAM("2023_intaking_server : preempted.");
+					// 	as_.setPreempted(result_);
+					// 	path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+					// 	return;
+					// }
+					r.sleep();
+				}
+				as_.setPreempted(result_);
 				return;
 			}
 			r.sleep();
@@ -219,6 +211,26 @@ public:
 		if (intake_ac_.getState() != intake_ac_.getState().SUCCEEDED && intake_ac_.getState() != intake_ac_.getState().ACTIVE) {
 			ROS_ERROR_STREAM("2023_intaking_server : intake server failed, aborting!");
 			intake_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+
+			ROS_INFO_STREAM("2023_intaking_server : reversing path");
+			pathGoal.reverse = true;
+
+			feedback_.status = feedback_.PATHER;
+			as_.publishFeedback(feedback_);
+
+			path_ac_.sendGoal(pathGoal);
+
+			while (!path_ac_.getState().isDone() && ros::ok()) {
+				ros::spinOnce();
+				ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for pather...");
+				// if (as_.isPreemptRequested() || !ros::ok()) {
+				// 	ROS_INFO_STREAM("2023_intaking_server : preempted.");
+				// 	as_.setPreempted(result_);
+				// 	path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				// 	return;
+				// }
+				r.sleep();
+			}
 			as_.setAborted(result_);
 			return;
 		}
@@ -239,6 +251,30 @@ public:
 		}
 
 		intake_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+
+		ros::Duration(time_before_reverse_).sleep();
+		
+		// move back to zeroed
+
+		pathGoal.reverse = true;
+
+		feedback_.status = feedback_.PATHER;
+		as_.publishFeedback(feedback_);
+
+		path_ac_.sendGoal(pathGoal);
+
+		while (!path_ac_.getState().isDone()) {
+			ros::spinOnce();
+			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for pather...");
+			if (as_.isPreemptRequested() || !ros::ok()) {
+				ROS_INFO_STREAM("2023_intaking_server : preempted.");
+				as_.setPreempted(result_);
+				path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				return;
+			}
+			r.sleep();
+		}
+
 		feedback_.status = feedback_.DONE;
 		as_.publishFeedback(feedback_);
 		

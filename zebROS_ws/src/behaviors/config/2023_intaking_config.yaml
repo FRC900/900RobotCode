@@ -1,5 +1,6 @@
 cube_time: 0.8
 cone_time: 1.6
-server_timeout: 10.0
+server_timeout: 20.0
 current_threshold: 100.0 # some arbitrary unit
 joint: intake_leader # for current sensing
+time_before_reverse: 1.0

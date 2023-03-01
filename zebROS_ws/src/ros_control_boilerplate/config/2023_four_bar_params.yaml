@@ -13,7 +13,7 @@ four_bar_controller_2023:
     straight_up_angle: 0.537 
 
     motion_magic_velocity: 4.0
-    motion_magic_acceleration: 10.0
+    motion_magic_acceleration: 6.0 # was 10.0
 
     # How quickly the four bar moves down when zeroing itself
     four_bar_zeroing_percent_output: 0.0 # TODO : tune me
@@ -28,7 +28,7 @@ four_bar_controller_2023:
         type: talon_controllers/TalonControllerInterface 
         joint: four_bar
         close_loop_values:
-            - {p: 0.04, i: 0.0000, d: 0.0, f: 0.0755, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: 0.1, i: 0.0002, d: 0.0, f: 0.0755, i_zone: 500, closed_loop_peak_output: 1.0, max_integral_accumulator: 0.05}
 
         invert_output: True
         sensor_phase: True
