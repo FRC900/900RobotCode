@@ -1,5 +1,6 @@
 # goal
 float64 angle_offset # will add this to the actual angle when publishing to the PID node, you want this because it will drive up the ramp
+bool towards_charging_station
 # implied that if you are calling this, you want to balance
 ---
 # result

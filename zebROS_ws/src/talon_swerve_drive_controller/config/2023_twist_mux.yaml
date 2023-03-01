@@ -29,5 +29,10 @@ topics:
   topic   : /hold_distance/hold_position_pid/swerve_drive_controller/cmd_vel
   timeout : 0.2
   priority: 130
+-
+  name    : balancing
+  topic   : /balance_position/balancer_server/swerve_drive_controller/cmd_vel
+  timeout : 0.2
+  priority: 130
 
 locks: []

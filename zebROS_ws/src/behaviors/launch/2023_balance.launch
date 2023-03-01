@@ -25,7 +25,7 @@
 
             <node name="x_position_balance_pid" pkg="pid" type="controller" output="screen" >
                 <param name="node_name" value="x_position_balance_pid" />
-                <param name="Kp" value="1" />
+                <param name="Kp" value="0.5" />
                 <param name="Ki" value="0.0" />
                 <param name="Kd" value="0.0" /> 
                 <param name="upper_limit" value="2" />

@@ -12,6 +12,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/Shooting2022Action.h>
 #include "behavior_actions/Intaking2022Action.h"
+#include <behavior_actions/Balancing2023Action.h>
 #include <behavior_actions/DynamicPath.h>
 #include <path_follower_msgs/PathAction.h>
 #include <path_follower_msgs/PathFeedback.h>
@@ -85,6 +86,7 @@ class AutoNode {
 		actionlib::SimpleActionClient<path_follower_msgs::PathAction> path_ac_; //TODO fix this path
 		actionlib::SimpleActionClient<behavior_actions::Shooting2022Action> shooting_ac_;
 		actionlib::SimpleActionClient<behavior_actions::Intaking2022Action> intaking_ac_;
+		actionlib::SimpleActionClient<behavior_actions::Balancing2023Action> balancing_ac;
 
 		// path follower and feedback
 		std::map<std::string, nav_msgs::Path> premade_paths_;
@@ -104,6 +106,7 @@ class AutoNode {
 		, path_ac_("/path_follower/path_follower_server", true)
 		, shooting_ac_("/shooting2022/shooting2022_server", true)
 		, intaking_ac_("/intaking2022/intaking2022_server", true)
+		, balancing_ac("/balance_position/balancing_server", true)
 
 	// Constructor
 	{
@@ -151,12 +154,14 @@ class AutoNode {
 		functionMap_["shooting_actionlib_server"] = &AutoNode::shootfn;
 		functionMap_["path"] = &AutoNode::pathfn;
 		functionMap_["cmd_vel"] = &AutoNode::cmdvelfn;
+		functionMap_["balancing_actionlib_server"] = &AutoNode::autoBalancefn;
 
 		// cool trick to bring all class variables into scope of lambda
 		preemptAll_ = [this](){ // must include all actions called
 			path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			shooting_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			intaking_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+			balancing_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
 		};
 		// END change year to year
 	}
@@ -667,6 +672,26 @@ class AutoNode {
 			r_.sleep();
 		}
 		return true;
+	}
+
+
+	bool autoBalancefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		ROS_INFO_STREAM("Running auto balance!==============");
+		if (!action_data.hasMember("goal"))
+		{
+			shutdownNode(ERROR,"Auto node - intaking_actionlib_server call missing \"goal\" field");
+			return false;
+		}
+		behavior_actions::Balancing2023Goal goal;
+		if(action_data["goal"] == "true") {
+			goal.towards_charging_station = true;
+		}
+		if(action_data["goal"] == "false") {
+			goal.towards_charging_station = false;
+		}
+		balancing_ac.sendGoal(goal);
+		ROS_INFO_STREAM("Success!");
+		
 	}
 
 	bool intakefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {

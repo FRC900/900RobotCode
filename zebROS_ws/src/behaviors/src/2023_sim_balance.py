@@ -16,6 +16,7 @@ import sensor_msgs.msg
 from tf.transformations import quaternion_from_euler
 from sim_balance_base import *
 import std_srvs.srv
+import geometry_msgs.msg
 
 global n
 n=0
@@ -27,8 +28,8 @@ def step(msg):
     #print(f"Callback {n}")
     n +=1
     ##print(f"angle {charging_station.angle*180/np.pi}")
-    charging_station.step(msg.data, TIME_STEP)
-    charging_station.x_cmd_vel = msg.data
+    charging_station.step(msg.linear.x, TIME_STEP)
+    charging_station.x_cmd_vel = msg.linear.x
     #sim_clock.clock = rospy.Time.from_sec(charging_station.time)
     #clock_pub.publish(sim_clock)
     #pub.publish(charging_station.angle)
@@ -48,7 +49,7 @@ if __name__ == "__main__":
     #sim_clock = rosgraph_msgs.msg.Clock()
     zero_time = rospy.get_time()
 
-    sub = rospy.Subscriber("/balance_position/position_balance_pid/x_command", std_msgs.msg.Float64, step, queue_size=1)
+    sub = rospy.Subscriber("/balance_position/balancer_server/swerve_drive_controller/cmd_vel", geometry_msgs.msg.Twist, step, queue_size=1)
     #clock_pub = rospy.Publisher("/clock", rosgraph_msgs.msg.Clock, queue_size=0)
     pub = rospy.Publisher("/imu/zeroed_imu", sensor_msgs.msg.Imu, queue_size=1)
     reset_service = rospy.Service("reset", std_srvs.srv.Empty, reset_charging)
@@ -70,6 +71,7 @@ if __name__ == "__main__":
         roll, pitch, yaw = 0, angle_to_pub, 0
         q = quaternion_from_euler(roll, pitch, yaw)
         msg = sensor_msgs.msg.Imu()
+        msg.header.stamp = rospy.Time.now()
         msg.orientation.x = q[0]
         msg.orientation.y = q[1]
         msg.orientation.z = q[2]

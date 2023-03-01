@@ -33,7 +33,7 @@ class Balancer:
         self._as = actionlib.SimpleActionServer(self._action_name, behavior_actions.msg.Balancer2023Action,
                                                 execute_cb=self.balancer_callback, auto_start=False)
         self._as.start()
-        rospy.logerr("Finished started actionlib server ")
+        rospy.loginfo("Finished started actionlib server ")
         res = handle_param_load("~angle_threshold")
         self.angle_threshold = res if res else math.radians(2) 
 
@@ -77,7 +77,20 @@ class Balancer:
         self.cmd_vel_topic = "/balance_position/balancer_server/swerve_drive_controller/cmd_vel"
         self.pub_cmd_vel = rospy.Publisher(self.cmd_vel_topic, geometry_msgs.msg.Twist, queue_size=1)
         self.sub_imu = rospy.Subscriber(imu_sub_topic, sensor_msgs.msg.Imu, self.imu_callback)
-        rospy.logerr("Finished initalizing 2023_balancer_server")
+
+        self.sub_effort = rospy.Subscriber("/teleop/orient_strafing/control_effort", std_msgs.msg.Float64, self.robot_orientation_effort_callback)
+        self.state = rospy.Subscriber("/teleop/orient_strafing/setpoint", std_msgs.msg.Float64, self.state_callback)
+        self.current_orient_effort = 0
+        self.current_orient_setpoint = 0
+        self.current_yaw = 0
+        self.multipler = 1
+        rospy.loginfo("Finished initalizing 2023_balancer_server")
+    
+    def state_callback(self, msg):
+        self.current_orient_setpoint = msg.data
+
+    def robot_orientation_effort_callback(self, msg):
+        self.current_orient_effort = msg.data
 
     # painful to fill out all of the fields with 0, saves some code repetition
     def make_zero_twist(self):
@@ -96,6 +109,7 @@ class Balancer:
         # send to motors, @TODO
         msg = self.make_zero_twist()
         msg.linear.x = float(x_command.data)
+        msg.angular.z = float(self.current_orient_effort) if abs(self.current_orient_setpoint - self.current_yaw) > 0.1 else 0
         self.pub_cmd_vel.publish(msg)
 
     def imu_callback(self, imu_msg):
@@ -103,12 +117,13 @@ class Balancer:
         euler = euler_from_quaternion([q.x, q.y, q.z, q.w]) 
         #roll = euler[0]
         pitch = euler[1]
-        #yaw = euler[2]
-        self.current_pitch = pitch
+        yaw = euler[2]
+        self.current_yaw = yaw
+        self.current_pitch = pitch * self.multipler
         self.current_pitch_time = imu_msg.header.stamp.secs
         if self.debug:
-            rospy.loginfo_throttle(0.5, f"Balancer server - Pitch in degrees {round(pitch*(180/math.pi), 4)}\nBalancer server - offset {round(self.pitch_offset, 4)}")
-        
+            #rospy.loginfo_throttle(0.5, f"Balancer server - Pitch in degrees {round(pitch*(180/math.pi), 4)}\nBalancer server - offset {round(self.pitch_offset, 4)}")
+            pass
         self.pub_pitch_state.publish(pitch - self.pitch_offset)
 
     def preempt(self):
@@ -122,6 +137,10 @@ class Balancer:
         self.pub_cmd_vel.publish(twist_msg)
 
     def balancer_callback(self, goal):
+        if not goal.towards_charging_station:
+            self.multipler = -1
+        else:
+            self.multipler = 1
         rospy.loginfo(f"Balancer Actionlib called with goal {goal}")
         self.pitch_offset = goal.angle_offset
         rospy.loginfo(f"Pitch offset={self.pitch_offset}")
@@ -140,7 +159,8 @@ class Balancer:
                 rospy.logwarn('%s: Preempted' % self._action_name)
                 self.preempt() # stop pid
                 self._as.set_preempted()
-                break
+                self._as.publish_feedback(self._feedback)
+                return
             
             error = abs(self.current_pitch - self.desired_pitch)
             self._feedback.error = error

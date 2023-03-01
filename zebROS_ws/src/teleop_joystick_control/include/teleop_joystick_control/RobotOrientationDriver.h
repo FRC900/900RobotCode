@@ -38,6 +38,25 @@
 #include "frc_msgs/MatchSpecificData.h"
 
 constexpr double INITIAL_ROBOT_ORIENTATION = M_PI / 2.0;
+
+// Wait this long for a gap in non-teleop published messages 
+// before having the telop node take over publishing cmd_vel
+// to hold the robot orientation.  
+// The goal here is to allow outside nodes to publish a 
+// desired setpoint (e.g. path follower) and then grab the
+// output of the orientation PID and be responsible for
+// publishing the full cmd_vel message using whatever other
+// velocities needed.  During this time, the teleop
+// node should stop publishing.
+// After this timeout of no outside orientiation requests,
+// we want the telop node to take over publishing cmd_vel
+// messages. The assumption is that the other node is done
+// publishing cmd_vel so something needs to take over the role
+// of holding orientation.  This way, nodes don't have to 
+// explicitly give up control, we just let the timeout happen
+// and teleop naturally takes back over.
+const ros::Duration RESET_TO_TELEOP_CMDVEL_TIMEOUT{0.5};
+
 class RobotOrientationDriver
 {
 public:
@@ -63,7 +82,6 @@ public:
 	// Publisher to publish orientation? Or can this be read from PID node?
 	// Timer to publish to PID nodes? Or only in callbacks from odom yaw or in response to set/inc orientation?
 	// match data subscriber
-	//
 	bool mostRecentCommandIsFromTeleop(void) const;
 
 private:
@@ -90,12 +108,14 @@ private:
 	bool robot_enabled_{false};
 
 	// True if most recent target sent to PID is from teleop commands
-	bool most_recent_is_teleop_{false};
+	bool most_recent_is_teleop_{true};
+	ros::Timer most_recent_teleop_timer_;
 
 	void orientationCmdCallback(const std_msgs::Float64::ConstPtr &orientation_cmd);
 	void controlEffortCallback(const std_msgs::Float64::ConstPtr &control_effort);
 	void imuCallback(const sensor_msgs::Imu &imuState);
 	void matchStateCallback(const frc_msgs::MatchSpecificData &msg);
+	void checkFromTeleopTimeout(const ros::TimerEvent &/*event*/);
 };
 
 #endif

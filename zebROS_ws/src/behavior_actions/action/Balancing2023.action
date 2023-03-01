@@ -1,6 +1,5 @@
 # goal
-bool isAlignedWithChargingStation # must be true for anything to happen, just here to make sure the caller also realizes that
-bool solo # true if the robot is alone (auto), false if it is with other robots (endgame)
+bool towards_charging_station # if forward is towards charging station
 ---
 # result
 ---

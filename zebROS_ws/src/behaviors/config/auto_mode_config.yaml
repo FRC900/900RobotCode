@@ -18,7 +18,7 @@
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_left_hub", "stop_intaking", "shoot", "drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
 
-auto_mode_1: ["mini_drive_test_with_rotation"]
+auto_mode_1: ["drive_forward"]
 auto_mode_2: ["mini_drive_test"]
 auto_mode_3: ["test_orientation"]
 
@@ -41,6 +41,7 @@ auto_mode_3: ["test_orientation"]
 # must have a value for "type", other stuff varies
 #valid action types: "intake_actionlib_server", "pause", "elevator_actionlib_server"
 ros_rate: 10 # in ms, used for all ros rate calls
+
 
 cmd_vel_1:
     type: cmd_vel
@@ -249,6 +250,15 @@ galactic_search_path:
   drive_path_test_1
 
 #examples:
+balance_facing_away:
+    type: "balancing_actionlib_server"
+    goal:
+        "false" # if we are facing away from the station
+
+balance_facing_towards:
+    type: "balancing_actionlib_server"
+    goal:
+        "true" # if we are facing away from the charging station
 
 start_intaking:
     type: "intaking_actionlib_server"
