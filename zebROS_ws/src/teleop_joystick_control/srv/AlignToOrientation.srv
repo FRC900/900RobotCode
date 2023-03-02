@@ -1,0 +1,3 @@
+# used when a node wants to go to one orientation and then just hold there, and not wait for the 0.5 second timeout for teleop to regain control
+float64 angle
+---

@@ -34,7 +34,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <std_msgs/Float64.h>
-
+#include <teleop_joystick_control/AlignToOrientation.h>
 #include "frc_msgs/MatchSpecificData.h"
 
 constexpr double INITIAL_ROBOT_ORIENTATION = M_PI / 2.0;
@@ -83,6 +83,7 @@ public:
 	// Timer to publish to PID nodes? Or only in callbacks from odom yaw or in response to set/inc orientation?
 	// match data subscriber
 	bool mostRecentCommandIsFromTeleop(void) const;
+	
 
 private:
 	ros::NodeHandle nh_;
@@ -94,6 +95,7 @@ private:
 	ros::Subscriber pid_control_effort_sub_; // PID output - angular Z velocity
 	ros::Subscriber imu_sub_; // subscriber to zereod yaw output
 	ros::Subscriber match_data_sub_; // subscriber to match data, used to get enable/disable
+	ros::ServiceServer robot_orient_service_;
 
 	// The current orientation (angular-Z) setpoint for the drive base
 	double target_orientation_{INITIAL_ROBOT_ORIENTATION};
@@ -116,6 +118,8 @@ private:
 	void imuCallback(const sensor_msgs::Imu &imuState);
 	void matchStateCallback(const frc_msgs::MatchSpecificData &msg);
 	void checkFromTeleopTimeout(const ros::TimerEvent &/*event*/);
+	bool holdTargetOrientation(teleop_joystick_control::AlignToOrientation::Request& req,
+						   teleop_joystick_control::AlignToOrientation::Response&/* res*/);
 };
 
 #endif

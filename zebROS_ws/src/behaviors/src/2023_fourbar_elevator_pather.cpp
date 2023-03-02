@@ -248,7 +248,8 @@ public:
 		if (goal->reverse) {
 			std::reverse(path.begin(), path.end());
 		}
-		for (const ElevatorFourbarPoint &pt : path) {
+		for (int i = 1; i < path.size(); i++) {
+			auto pt = path[i];
 			controllers_2023_msgs::FourBarSrv f;
 			f.request.angle = pt.fourbar;
 			ROS_INFO_STREAM("2023_fourbar_elevator_path_server : calling fourbar with " << pt.fourbar);

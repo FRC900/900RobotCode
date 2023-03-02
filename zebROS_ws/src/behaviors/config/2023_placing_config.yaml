@@ -1,4 +1,4 @@
-time_before_reverse: 1.0
+time_before_reverse: 0.0
 server_timeout: 10.0
 game_piece_timeout: 1.0
 outtake_time: 1.0

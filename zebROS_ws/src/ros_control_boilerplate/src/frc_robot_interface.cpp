@@ -1076,6 +1076,8 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 			ts.setPosition(trts->getPosition());
 			ts.setSpeed(trts->getSpeed());
 			ts.setOutputCurrent(trts->getOutputCurrent());
+			ts.setStatorCurrent(trts->getStatorCurrent());
+			ts.setSupplyCurrent(trts->getSupplyCurrent());
 			ts.setBusVoltage(trts->getBusVoltage());
 			ts.setMotorOutputPercent(trts->getMotorOutputPercent());
 			ts.setOutputVoltage(trts->getOutputVoltage());
@@ -1096,6 +1098,10 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 			ts.setReverseSoftlimitHit(trts->getReverseSoftlimitHit());
 			ts.setStickyFaults(trts->getStickyFaults());
 			ts.setFirmwareVersion(trts->getFirmwareVersion());
+			ts.setPTerm(trts->getPTerm());
+			ts.setITerm(trts->getITerm());
+			ts.setDTerm(trts->getDTerm());
+			ts.setFTerm(trts->getFTerm());
 		}
 	}
 

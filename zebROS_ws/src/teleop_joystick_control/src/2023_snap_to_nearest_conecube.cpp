@@ -12,6 +12,7 @@
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <angles/angles.h>
 #include <teleop_joystick_control/SnapConeCube.h>
+#include <teleop_joystick_control/AlignToOrientation.h>
 
 struct StampedAngle {
     double angle;
@@ -39,7 +40,7 @@ class SnapToConeCube2023
         ddynamic_reconfigure::DDynamicReconfigure ddr_;
         double zed_time_offset_;
         ros::ServiceServer server_;
-        ros::Publisher angle_pub_;
+        ros::ServiceClient angle_srv_;
         double timeout_;
 
     public:
@@ -57,7 +58,7 @@ class SnapToConeCube2023
             object_detection_sub_ = nh_.subscribe("/tf_object_detection/object_detection_world_filtered", 1, &SnapToConeCube2023::objectDetectionCallback, this);
             cmd_vel_sub_ = nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", 1, &SnapToConeCube2023::cmdVelSub, this);
             imu_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &SnapToConeCube2023::imuCallback, this);
-            angle_pub_ = nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1);
+            angle_srv_ = nh_.serviceClient<teleop_joystick_control::AlignToOrientation>("/teleop/set_teleop_orient");
             server_ = nh_.advertiseService("snap_cone_cube", &SnapToConeCube2023::snap, this);
             if(!nh_.getParam("timeout", timeout_))
             {
@@ -72,10 +73,10 @@ class SnapToConeCube2023
         bool snap(teleop_joystick_control::SnapConeCube::Request  &req,
                   teleop_joystick_control::SnapConeCube::Response &res)
         {
-            std_msgs::Float64 msg;
+            double target_angle;
             if (req.piece == req.CUBE) {
                 if ((ros::Time::now() - nearest_cube_angle_.time) < ros::Duration(timeout_)) {
-                    msg.data = nearest_cube_angle_.angle;
+                    target_angle = nearest_cube_angle_.angle;
                 } else {
                     ROS_ERROR_STREAM("snap_to_nearest_conecube_2023 : cube data too old! delta = " << (ros::Time::now() - nearest_cube_angle_.time));
                     res.success = false;
@@ -83,16 +84,24 @@ class SnapToConeCube2023
                 }
             } else {
                 if ((ros::Time::now() - nearest_cone_angle_.time) < ros::Duration(timeout_)) {
-                    msg.data = nearest_cone_angle_.angle;
+                    target_angle = nearest_cone_angle_.angle;
                 } else {
                     ROS_ERROR_STREAM("snap_to_nearest_conecube_2023 : cone data too old! delta = " << (ros::Time::now() - nearest_cone_angle_.time));
                     res.success = false;
                     return false;
                 }
             }
-            angle_pub_.publish(msg);
-            res.success = true;
-            return true;
+            teleop_joystick_control::AlignToOrientation srv_angle;
+            srv_angle.request.angle = target_angle;
+            if (!angle_srv_.call(srv_angle)) {
+                res.success = false;
+                ROS_ERROR_STREAM("Could not call angle service in snap to cone/cube!");
+                return false;
+            }
+            else {
+                res.success = true;
+                return true;
+            }
         }
 
         void imuCallback(const sensor_msgs::Imu &imuState)

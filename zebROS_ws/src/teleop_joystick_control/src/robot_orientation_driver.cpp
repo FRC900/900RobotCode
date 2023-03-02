@@ -20,6 +20,7 @@ RobotOrientationDriver::RobotOrientationDriver(const ros::NodeHandle &nh)
 	// one_shot = true, auto_start = false
 	// inversting that
 	, most_recent_teleop_timer_{nh_.createTimer(RESET_TO_TELEOP_CMDVEL_TIMEOUT, &RobotOrientationDriver::checkFromTeleopTimeout, this, false, true)}
+    , robot_orient_service_{nh_.advertiseService("set_teleop_orient", &RobotOrientationDriver::holdTargetOrientation, this)}
 {
 	std_msgs::Bool enable_pub_msg;
 	enable_pub_msg.data = true;
@@ -166,4 +167,11 @@ void RobotOrientationDriver::matchStateCallback(const frc_msgs::MatchSpecificDat
 void RobotOrientationDriver::checkFromTeleopTimeout(const ros::TimerEvent & /*event*/)
 {
 	most_recent_is_teleop_ = true;
+}
+
+bool RobotOrientationDriver::holdTargetOrientation(teleop_joystick_control::AlignToOrientation::Request& req,
+						   teleop_joystick_control::AlignToOrientation::Response&/* res*/) 
+{
+	setTargetOrientation(req.angle, true /* from telop */);
+	return true;
 }

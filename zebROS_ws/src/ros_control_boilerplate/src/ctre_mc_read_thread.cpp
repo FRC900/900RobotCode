@@ -111,6 +111,13 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 			supply_current = talonsrx->GetSupplyCurrent();
 			safeTalonCall(victor->GetLastError(), "GetSupplyCurrent", state->getCANID());
 		}
+		else if (talonfx)
+		{
+			stator_current = talonfx->GetStatorCurrent();
+			safeTalonCall(victor->GetLastError(), "GetStatorCurrent", state->getCANID());
+			supply_current = talonfx->GetSupplyCurrent();
+			safeTalonCall(victor->GetLastError(), "GetSupplyCurrent", state->getCANID());
+		}
 
 		ctre::phoenix::motorcontrol::StickyFaults sticky_faults;
 		safeTalonCall(victor->GetStickyFaults(sticky_faults), "GetStickyFault", state->getCANID());
@@ -240,7 +247,7 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 			{
 				state->setOutputCurrent(output_current);
 			}
-			if (talonsrx)
+			if (talonsrx || talonfx)
 			{
 				state->setStatorCurrent(stator_current);
 				state->setSupplyCurrent(supply_current);

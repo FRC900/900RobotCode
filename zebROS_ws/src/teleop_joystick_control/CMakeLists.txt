@@ -39,6 +39,7 @@ add_service_files (
 	RobotOrient.srv
 	OrientStrafingAngle.srv
 	SnapConeCube.srv
+	AlignToOrientation.srv
 	)
 
 generate_messages (

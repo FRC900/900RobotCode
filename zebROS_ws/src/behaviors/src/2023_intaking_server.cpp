@@ -7,6 +7,7 @@
 #include <behavior_actions/GamePieceState2023.h>
 #include <std_msgs/UInt8.h>
 #include <talon_state_msgs/TalonState.h>
+#include <std_msgs/Float64.h>
 
 class IntakingServer2023
 {
@@ -25,6 +26,7 @@ protected:
 	double server_timeout_;
 	double cube_time_; // time to keep intaking after we see a cube
 	double cone_time_; // time to keep intaking after we see a cone
+	double path_zero_timeout_;
 
 	// shouldn't need to worry about the intake timeout since the intaker server handles that
 
@@ -36,16 +38,30 @@ protected:
 	double current_current_;
 	double current_threshold_;
 
-	actionlib::SimpleActionClient<behavior_actions::Intake2023Action> intake_ac_;
+	double speed_;
+	double fast_speed_;
+	double small_speed_; // for holding cube/cone in
+
 	actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action> path_ac_;
 
 	ros::Subscriber talon_states_sub_;
+
+	ros::Publisher intake_pub_;
 
 	double time_before_reverse_;
 
 	// output_current in talon states
 
 public:
+	template <typename T>
+	void make_sure_publish(ros::Publisher p, T msg) {
+		ros::Rate r(200);
+		for (int i = 0; i < 10; i++) {
+			p.publish(msg);
+			r.sleep();
+		}
+	}
+
 	void gamePieceStateCallback(const behavior_actions::GamePieceState2023 &msg) {
 		game_piece_state_ = msg;
 	}
@@ -82,7 +98,7 @@ public:
 		action_name_(name),
 		game_piece_sub_(nh_.subscribe("/game_piece/game_piece_state", 1, &IntakingServer2023::gamePieceStateCallback, this)),
 		requested_game_piece_sub_(nh_.subscribe("/game_piece/requested_game_piece", 1, &IntakingServer2023::requestedPieceCallback, this)),
-		intake_ac_("/intake/intake_server_2023", true),
+		intake_pub_(nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_leader_controller/command", 1, true)),
 		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true)
 	{
 		intake_idx = std::numeric_limits<size_t>::max();
@@ -95,6 +111,11 @@ public:
 		if (!nh_.getParam("cube_time", cube_time_))
 		{
 			ROS_ERROR_STREAM("2023_intaking_server : could not find cube_time");
+			return;
+		}
+		if (!nh_.getParam("path_zero_timeout", path_zero_timeout_))
+		{
+			ROS_ERROR_STREAM("2023_intaking_server : could not find path_zero_timeout");
 			return;
 		}
 		if (!nh_.getParam("cone_time", cone_time_))
@@ -116,6 +137,21 @@ public:
 			ROS_ERROR_STREAM("2023_intaking_server : could not find current_threshold");
 			return;
 		}
+		if (!nh_.getParam("intake_speed", speed_))
+		{
+			ROS_ERROR_STREAM("2023_intake_server : could not find intake_speed");
+			return;
+		}
+		if (!nh_.getParam("intake_fast_speed", fast_speed_))
+		{
+			ROS_ERROR_STREAM("2023_intake_server : could not find intake_fast_speed");
+			return;
+		}
+		if (!nh_.getParam("intake_small_speed", small_speed_))
+		{
+			ROS_ERROR_STREAM("2023_intake_server : could not find intake_small_speed");
+			return;
+		}
 		const std::map<std::string, std::string> service_connection_header{{"tcp_nodelay", "1"}};
 		as_.start();
 	}
@@ -133,13 +169,6 @@ public:
 			return;
 		}
 
-		if (!intake_ac_.waitForServer(ros::Duration(server_timeout_))) {
-			ROS_ERROR_STREAM("2023_intaking_server : timed out connecting to intake server, aborting");
-			result_.timed_out = true;
-			as_.setAborted(result_);
-			return;
-		}
-
 		ros::Rate r(10);
 
 		behavior_actions::FourbarElevatorPath2023Goal pathGoal;
@@ -151,52 +180,34 @@ public:
 
 		path_ac_.sendGoal(pathGoal);
 
+		std_msgs::Float64 percent_out;
+		percent_out.data = speed_;
+		make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
+
 		while (!path_ac_.getState().isDone()) {
 			ros::spinOnce();
-			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for pather...");
+			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for forward pather...");
 			if (as_.isPreemptRequested() || !ros::ok()) {
 				ROS_INFO_STREAM("2023_intaking_server : preempted.");
-				as_.setPreempted(result_);
+
 				path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-				return;
-			}
-			r.sleep();
-		}
 
-		behavior_actions::Intake2023Goal intakeGoal;
-		intakeGoal.outtake = false;
-		intakeGoal.go_fast = false;
+				percent_out.data = 0.0;
+				make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 
-		feedback_.status = feedback_.INTAKE;
-		as_.publishFeedback(feedback_);
-
-		intake_ac_.sendGoal(intakeGoal);
-
-		ROS_INFO_STREAM("current: " << current_current_ << " threshold: " << current_threshold_ << " state: " << intake_ac_.getState().state_ << " aka " << intake_ac_.getState().getText() << " isdone? " << intake_ac_.getState().isDone());
-		
-		while (/*game_piece_state_.game_piece == behavior_actions::GamePieceState2023::NONE && */!(intake_ac_.getState().isDone()) && current_current_ < current_threshold_) {
-			ros::spinOnce();
-			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for a game piece... current = " << current_current_);
-			if (as_.isPreemptRequested() || !ros::ok()) {
-				ROS_INFO_STREAM("2023_intaking_server : preempted.");
-				intake_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-				ROS_INFO_STREAM("2023_intaking_server : reversing path");
-				pathGoal.reverse = true;
+				ROS_INFO_STREAM("2023_intaking_server : zeroing");
+				pathGoal.path = "zero";
+				pathGoal.reverse = false;
 
 				feedback_.status = feedback_.PATHER;
 				as_.publishFeedback(feedback_);
 
 				path_ac_.sendGoal(pathGoal);
 
-				while (!path_ac_.getState().isDone() && ros::ok()) {
+				ros::Time start = ros::Time::now();
+				while (!path_ac_.getState().isDone() && ros::ok() && (ros::Time::now() - start) < ros::Duration(path_zero_timeout_)) {
 					ros::spinOnce();
-					ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for pather...");
-					// if (as_.isPreemptRequested() || !ros::ok()) {
-					// 	ROS_INFO_STREAM("2023_intaking_server : preempted.");
-					// 	as_.setPreempted(result_);
-					// 	path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-					// 	return;
-					// }
+					ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : zeroing");
 					r.sleep();
 				}
 				as_.setPreempted(result_);
@@ -205,35 +216,45 @@ public:
 			r.sleep();
 		}
 
-		ROS_INFO_STREAM("current: " << current_current_ << " threshold: " << current_threshold_ << " state: " << intake_ac_.getState().state_ << " aka " << intake_ac_.getState().getText() << ". gp " << std::to_string(game_piece_state_.game_piece) << " isdone? " << intake_ac_.getState().isDone());
-		bool current_exceeded_ = current_current_ >= current_threshold_;
+		feedback_.status = feedback_.INTAKE;
+		as_.publishFeedback(feedback_);
 
-		if (intake_ac_.getState() != intake_ac_.getState().SUCCEEDED && intake_ac_.getState() != intake_ac_.getState().ACTIVE) {
-			ROS_ERROR_STREAM("2023_intaking_server : intake server failed, aborting!");
-			intake_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+		ROS_INFO_STREAM("current: " << current_current_ << " threshold: " << current_threshold_);
+		
+		while (/*game_piece_state_.game_piece == behavior_actions::GamePieceState2023::NONE && */current_current_ < current_threshold_) {
+			ros::spinOnce();
+			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for a game piece... current = " << current_current_);
+			if (as_.isPreemptRequested() || !ros::ok()) {
+				ROS_INFO_STREAM("2023_intaking_server : preempted.");
 
-			ROS_INFO_STREAM("2023_intaking_server : reversing path");
-			pathGoal.reverse = true;
+				path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 
-			feedback_.status = feedback_.PATHER;
-			as_.publishFeedback(feedback_);
+				percent_out.data = 0.0;
+				make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 
-			path_ac_.sendGoal(pathGoal);
+				ROS_INFO_STREAM("2023_intaking_server : zeroing");
+				pathGoal.path = "zero";
+				pathGoal.reverse = false;
 
-			while (!path_ac_.getState().isDone() && ros::ok()) {
-				ros::spinOnce();
-				ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for pather...");
-				// if (as_.isPreemptRequested() || !ros::ok()) {
-				// 	ROS_INFO_STREAM("2023_intaking_server : preempted.");
-				// 	as_.setPreempted(result_);
-				// 	path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-				// 	return;
-				// }
-				r.sleep();
+				feedback_.status = feedback_.PATHER;
+				as_.publishFeedback(feedback_);
+
+				path_ac_.sendGoal(pathGoal);
+
+				ros::Time start = ros::Time::now();
+				while (!path_ac_.getState().isDone() && ros::ok() && (ros::Time::now() - start) < ros::Duration(path_zero_timeout_)) {
+					ros::spinOnce();
+					ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : zeroing");
+					r.sleep();
+				}
+				as_.setPreempted(result_);
+				return;
 			}
-			as_.setAborted(result_);
-			return;
+			r.sleep();
 		}
+
+		ROS_INFO_STREAM("current: " << current_current_ << " threshold: " << current_threshold_);
+		bool current_exceeded_ = current_current_ >= current_threshold_;
 
 		if (game_piece_state_.game_piece == behavior_actions::GamePieceState2023::CUBE || current_exceeded_) {
 			ROS_INFO_STREAM("2023_intaking_server : " << (current_exceeded_ ? "current exceeded" : "cube detected") << ", waiting " << cube_time_ << " seconds");
@@ -250,7 +271,8 @@ public:
 			}
 		}
 
-		intake_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+		percent_out.data = small_speed_;
+		make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 
 		ros::Duration(time_before_reverse_).sleep();
 		
@@ -265,11 +287,10 @@ public:
 
 		while (!path_ac_.getState().isDone()) {
 			ros::spinOnce();
-			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for pather...");
+			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for reverse pather...");
 			if (as_.isPreemptRequested() || !ros::ok()) {
-				ROS_INFO_STREAM("2023_intaking_server : preempted.");
+				ROS_INFO_STREAM("2023_intaking_server : preempted. why?????");
 				as_.setPreempted(result_);
-				path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				return;
 			}
 			r.sleep();

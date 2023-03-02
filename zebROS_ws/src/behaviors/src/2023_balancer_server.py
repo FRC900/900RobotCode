@@ -27,7 +27,7 @@ class Balancer:
     _result = behavior_actions.msg.Balancer2023Result()
 
     def __init__(self, name):
-        self.debug = True
+        self.debug = False
         self._action_name = name
 
         self._as = actionlib.SimpleActionServer(self._action_name, behavior_actions.msg.Balancer2023Action,
