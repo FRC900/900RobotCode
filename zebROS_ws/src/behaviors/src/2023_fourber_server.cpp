@@ -6,7 +6,6 @@
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <std_msgs/Float64.h>
 #include <controllers_2023_msgs/FourBarSrv.h>
-#include <controllers_2023_msgs/FourBarState.h>
 #include <iostream>
 #include <atomic>
 #include <behaviors/game_pieces_2023.h>
