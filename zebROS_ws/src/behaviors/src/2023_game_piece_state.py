@@ -22,7 +22,6 @@ class GamePieceState:
         self.terabees_sub = rospy.Subscriber("/intake/reader/state", IntakeState2023, callback=self.terabeeCB, queue_size=1)
 
         self.game_piece_pub = rospy.Publisher("game_piece_state", GamePieceState2023, queue_size=1)
-        self.game_piece_offset_pub = rospy.Publisher("game_piece_center_offset", std_msgs.msg.Float64, queue_size=1)
 
         server = Server(GamePieceState2023Config, self.drCallback)
 

@@ -107,7 +107,6 @@ public:
 	std::string pathForGamePiece(uint8_t game_piece, uint8_t location) {
 		std::string location_str;
 		if (location == behavior_actions::Placing2023Goal::HYBRID) {
-			ROS_ERROR_STREAM("2023_placing_server : hybrid nodes not supported yet for pathing!");
 			location_str = "hybrid";
 		}
 		else if (location == behavior_actions::Placing2023Goal::MID) {
@@ -119,7 +118,6 @@ public:
 
 		std::string piece_str;
 		if (game_piece == behavior_actions::Placing2023Goal::CUBE) {
-			ROS_ERROR_STREAM("2023_placing_server : cubes not supported yet for pathing!");
 			piece_str = "cube";
 		}
 		else {

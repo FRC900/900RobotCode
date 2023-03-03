@@ -39,7 +39,7 @@ def main():
     pub = rospy.Publisher("state", IntakeState2023, queue_size=1)
     rospy.init_node("intake_reader_2023", anonymous=True)
 
-    port = serial.Serial(rospy.get_param("port"), rospy.get_param("baud"), dsrdtr=True, rtscts=True)
+    port = serial.Serial(rospy.get_param("port"), rospy.get_param("baud"))#, dsrdtr=True, rtscts=True)
     samples = rospy.get_param("samples")
     min_range = rospy.get_param("min_range")
     max_range = rospy.get_param("max_range")
@@ -50,8 +50,10 @@ def main():
     while not rospy.is_shutdown():
         if crc_error_count >= restart_errors_count:
             # should restart board
-            port.dtr = True
-            port.rts = True
+            # not sure about dtr/rts, i think i put it in programming mode maybe?
+            # leaving it out for now and hopefully a close/open will do the trick for a restart
+            # port.dtr = True
+            # port.rts = True
             port.close()
             port.open()
             rospy.loginfo("intake_reader_2023 : restarted RP2040")
