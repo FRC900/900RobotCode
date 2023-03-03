@@ -4,8 +4,7 @@
 #include <behavior_actions/Intake2023Action.h>
 #include <behavior_actions/FourbarElevatorPath2023Action.h>
 #include <behavior_actions/Placing2023Action.h>
-#include <std_msgs/Float64.h>
-#include <std_msgs/UInt8.h>
+#include <behavior_actions/GamePieceState2023.h>
 #include <path_follower_msgs/holdPositionAction.h>
 
 class PlacingServer2023
@@ -18,13 +17,10 @@ protected:
 	// create messages that are used to published result
 	behavior_actions::Placing2023Result result_;
 
-	double latest_game_piece_position_; // left = -(1/2 width of intake), right = (1/2 width of intake). this is the center of the game piece
-	uint8_t latest_game_piece_; // corresponds to the enums in various action files
+	behavior_actions::GamePieceState2023 game_piece_state_;
 	ros::Time latest_game_piece_time_;
-	ros::Time latest_game_piece_position_time_;
 
 	ros::Subscriber game_piece_sub_;
-	ros::Subscriber game_piece_position_sub_;
 
 	actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action> path_ac_;
 	actionlib::SimpleActionClient<behavior_actions::Intake2023Action> ac_intake_;
@@ -60,8 +56,7 @@ public:
 			ROS_WARN_STREAM("2023_placing_server : could not find outtake_time, defaulting to 1 second");
 			outtake_time_ = 1;
 		}
-		game_piece_sub_ = nh_.subscribe("/game_piece", 1, &PlacingServer2023::gamePieceCallback, this);
-		game_piece_position_sub_ = nh_.subscribe("/game_piece_position", 1, &PlacingServer2023::gamePiecePositionCallback, this);
+		game_piece_sub_ = nh_.subscribe("/game_piece/game_piece_state", 1, &PlacingServer2023::gamePieceCallback, this);
 		as_.start();
 	}
 
@@ -104,14 +99,9 @@ public:
 		return ac.getState().isDone();
 	}
 
-	void gamePieceCallback(const std_msgs::UInt8 msg) {
-		latest_game_piece_ = msg.data;
+	void gamePieceCallback(const behavior_actions::GamePieceState2023ConstPtr &msg) {
+		game_piece_state_ = *msg;
 		latest_game_piece_time_ = ros::Time::now();
-	}
-
-	void gamePiecePositionCallback(const std_msgs::Float64 msg) {
-		latest_game_piece_position_ = msg.data;
-		latest_game_piece_position_time_ = ros::Time::now();
 	}
 
 	std::string pathForGamePiece(uint8_t game_piece, uint8_t location) {
@@ -158,16 +148,39 @@ public:
 			return;
 		}
 
-		if ((!(goal->override_game_piece)) && goal->align_intake) {
-			if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
-				ROS_ERROR_STREAM("2023_placing_server : game piece data too old, aborting");
+		uint8_t game_piece;
+
+		if (!goal->override_game_piece) {
+			game_piece = game_piece_state_.game_piece;
+			ROS_INFO_STREAM("2023_placing_server : detected game piece = " << std::to_string(game_piece_state_.game_piece));
+		}
+		else {
+			game_piece = goal->piece;
+			ROS_INFO_STREAM("2023_placing_server : game piece override. detected = " << std::to_string(game_piece_state_.game_piece) << ", requested = " << std::to_string(goal->piece) << ". using requested value");
+		}
+
+		behavior_actions::FourbarElevatorPath2023Goal pathGoal;
+		pathGoal.path = pathForGamePiece(game_piece, goal->node);
+		pathGoal.reverse = false;
+
+		if (goal->step == goal->MOVE) {
+			ROS_INFO_STREAM("2023_placing_server : moving to placing position");
+
+			path_ac_.sendGoal(pathGoal);
+
+			if (!(waitForResultAndCheckForPreempt(ros::Duration(-1), path_ac_, as_) && path_ac_.getState() == path_ac_.getState().SUCCEEDED)) {
+				ROS_INFO_STREAM("2023_placing_server : pather failed, aborting");
 				result_.success = false;
 				as_.setAborted(result_);
+				path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				return;
 			}
+			return;
+		}
 
-			if (ros::Time::now() - latest_game_piece_position_time_ > ros::Duration(game_piece_timeout_)) {
-				ROS_ERROR_STREAM("2023_placing_server : game piece position data too old, aborting");
+		if (!(goal->override_game_piece)) {
+			if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
+				ROS_ERROR_STREAM("2023_placing_server : game piece data too old, aborting");
 				result_.success = false;
 				as_.setAborted(result_);
 				return;
@@ -175,6 +188,12 @@ public:
 		}
 
 		if (goal->align_intake) {
+			if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
+				ROS_ERROR_STREAM("2023_placing_server : game piece position data too old, aborting");
+				result_.success = false;
+				as_.setAborted(result_);
+				return;
+			}
 			path_follower_msgs::holdPositionGoal hold_position_goal_;
 			hold_position_goal_.pose.orientation.x = 0.0;
 			hold_position_goal_.pose.orientation.y = 0.0;
@@ -182,7 +201,7 @@ public:
 			hold_position_goal_.pose.orientation.w = 1.0;
 
 			hold_position_goal_.pose.position.x = 0.0;
-			hold_position_goal_.pose.position.y = -latest_game_piece_position_;
+			hold_position_goal_.pose.position.y = -game_piece_state_.offset_from_center;
 			hold_position_goal_.pose.position.z = 0.0;
 
 			hold_position_goal_.isAbsoluteCoord = false;
@@ -200,33 +219,8 @@ public:
 			}
 		}
 
-		uint8_t game_piece;
-
-		if (!goal->override_game_piece) {
-			game_piece = latest_game_piece_;
-			ROS_INFO_STREAM("2023_placing_server : detected game piece = " << std::to_string(latest_game_piece_));
-		}
-		else {
-			game_piece = goal->piece;
-			ROS_INFO_STREAM("2023_placing_server : game piece override. detected = " << std::to_string(latest_game_piece_) << ", requested = " << std::to_string(goal->piece) << ". using requested value");
-		}
-		
-		behavior_actions::FourbarElevatorPath2023Goal pathGoal;
-		pathGoal.path = pathForGamePiece(game_piece, goal->node);
-		pathGoal.reverse = false;
-
-		path_ac_.sendGoal(pathGoal);
-
-		if (!(waitForResultAndCheckForPreempt(ros::Duration(-1), path_ac_, as_) && path_ac_.getState() == path_ac_.getState().SUCCEEDED)) {
-			ROS_INFO_STREAM("2023_placing_server : pather timed out, aborting");
-			result_.success = false;
-			as_.setAborted(result_);
-			path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-			return;
-		}
-
 		behavior_actions::Intake2023Goal intake_goal_;
-		intake_goal_.go_fast = false; // TODO change this? idk if we still want to have multiple speeds
+		intake_goal_.go_fast = true;
 		intake_goal_.outtake = true; // don't change this
 		ac_intake_.sendGoal(intake_goal_);
 
@@ -247,7 +241,8 @@ public:
 
 		ROS_INFO_STREAM("2023_placing_server : reversing path!");
 
-		pathGoal.reverse = true;
+		pathGoal.path = pathForGamePiece(game_piece, goal->node) + "_reverse";
+		pathGoal.reverse = false;
 
 		path_ac_.sendGoal(pathGoal);
 

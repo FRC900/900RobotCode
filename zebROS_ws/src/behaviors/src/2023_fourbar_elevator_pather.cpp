@@ -248,6 +248,7 @@ public:
 		if (goal->reverse) {
 			std::reverse(path.begin(), path.end());
 		}
+
 		for (int i = 1; i < path.size(); i++) {
 			auto pt = path[i];
 			controllers_2023_msgs::FourBarSrv f;

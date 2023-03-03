@@ -14,6 +14,10 @@ uint8 VERTICAL_CONE=1
 uint8 BASE_TOWARDS_US_CONE=2 
 uint8 BASE_AWAY_US_CONE=3
 uint8 piece
+
+uint8 MOVE=0
+uint8 PLACE_RETRACT=1
+uint8 step
 ---
 # result
 bool success

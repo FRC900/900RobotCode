@@ -22,10 +22,9 @@ struct StampedAngle {
 class SnapToConeCube2023
 {
     protected:
-
         ros::NodeHandle nh_;
         ros::Subscriber object_detection_sub_;
-        ros::Subscriber cmd_vel_sub_;
+        //ros::Subscriber cmd_vel_sub_;
         ros::Publisher nearest_cone_pub_;
         ros::Publisher nearest_cube_pub_;
         // think about adding a timeout
@@ -33,19 +32,18 @@ class SnapToConeCube2023
         StampedAngle nearest_cube_angle_;
         tf2_ros::Buffer tf_buffer_;
         tf2_ros::TransformListener tf_listener_;
-        geometry_msgs::TwistStamped cmd_vel_out_;
+        //geometry_msgs::TwistStamped cmd_vel_out_;
         ros::Subscriber imu_sub_;
         boost::circular_buffer<std::pair<ros::Time, double>> imu_cb_;
         std::mutex buffer_mutex_;
         ddynamic_reconfigure::DDynamicReconfigure ddr_;
         double zed_time_offset_;
         ros::ServiceServer server_;
-        ros::ServiceClient angle_srv_;
         double timeout_;
 
     public:
 
-        SnapToConeCube2023() : tf_listener_(tf_buffer_), imu_cb_(200), zed_time_offset_(0.01)
+        SnapToConeCube2023(ros::NodeHandle &nh) : nh_(nh), tf_listener_(tf_buffer_), imu_cb_(200), zed_time_offset_(0.01)
         {
 
         }
@@ -55,10 +53,9 @@ class SnapToConeCube2023
             // topics now just used for logging
             nearest_cone_pub_ = nh_.advertise<std_msgs::Float64>("nearest_cone_angle", 1);
             nearest_cube_pub_ = nh_.advertise<std_msgs::Float64>("nearest_cube_angle", 1);
-            object_detection_sub_ = nh_.subscribe("/tf_object_detection/object_detection_world_filtered", 1, &SnapToConeCube2023::objectDetectionCallback, this);
-            cmd_vel_sub_ = nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", 1, &SnapToConeCube2023::cmdVelSub, this);
+            object_detection_sub_ = nh_.subscribe("/tf_object_detection/object_detection_world", 1, &SnapToConeCube2023::objectDetectionCallback, this);
+            //cmd_vel_sub_ = nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/cmd_vel_out", 1, &SnapToConeCube2023::cmdVelSub, this);
             imu_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &SnapToConeCube2023::imuCallback, this);
-            angle_srv_ = nh_.serviceClient<teleop_joystick_control::AlignToOrientation>("/teleop/set_teleop_orient");
             server_ = nh_.advertiseService("snap_cone_cube", &SnapToConeCube2023::snap, this);
             if(!nh_.getParam("timeout", timeout_))
             {
@@ -79,6 +76,7 @@ class SnapToConeCube2023
                     target_angle = nearest_cube_angle_.angle;
                 } else {
                     ROS_ERROR_STREAM("snap_to_nearest_conecube_2023 : cube data too old! delta = " << (ros::Time::now() - nearest_cube_angle_.time));
+                    res.target_angle = std::numeric_limits<double>::quiet_NaN();
                     res.success = false;
                     return false;
                 }
@@ -87,21 +85,14 @@ class SnapToConeCube2023
                     target_angle = nearest_cone_angle_.angle;
                 } else {
                     ROS_ERROR_STREAM("snap_to_nearest_conecube_2023 : cone data too old! delta = " << (ros::Time::now() - nearest_cone_angle_.time));
+                    res.target_angle = std::numeric_limits<double>::quiet_NaN();
                     res.success = false;
                     return false;
                 }
             }
-            teleop_joystick_control::AlignToOrientation srv_angle;
-            srv_angle.request.angle = target_angle;
-            if (!angle_srv_.call(srv_angle)) {
-                res.success = false;
-                ROS_ERROR_STREAM("Could not call angle service in snap to cone/cube!");
-                return false;
-            }
-            else {
-                res.success = true;
-                return true;
-            }
+            res.target_angle = target_angle;
+            res.success = true;
+            return true;
         }
 
         void imuCallback(const sensor_msgs::Imu &imuState)
@@ -119,9 +110,11 @@ class SnapToConeCube2023
             }
         }
 
+#if 0
         void cmdVelSub(const geometry_msgs::TwistStamped &msg) {
             cmd_vel_out_ = msg;
         }
+#endif
 
         void objectDetectionCallback(const field_obj::Detection &msg)
         {
@@ -220,8 +213,9 @@ class SnapToConeCube2023
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "snap_to_nearest_conecube_2023");
+    ros::NodeHandle nh;
 
-    SnapToConeCube2023 conecube;
+    SnapToConeCube2023 conecube(nh);
     conecube.init();
     ros::spin();
 

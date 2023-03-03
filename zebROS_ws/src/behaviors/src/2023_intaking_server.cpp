@@ -34,9 +34,11 @@ protected:
 	ros::Subscriber requested_game_piece_sub_;
 
 	size_t intake_idx;
+	size_t elevator_idx;
 	std::string joint_;
 	double current_current_;
 	double current_threshold_;
+	double elev_pos_;
 
 	double speed_;
 	double fast_speed_;
@@ -91,6 +93,25 @@ public:
 		else {
 			ROS_ERROR_STREAM("2023_intaking_server : Can not find talon with name = " << joint_);
 		}
+
+		if (elevator_idx == std::numeric_limits<size_t>::max()) // could maybe just check for > 0
+		{
+			for (size_t i = 0; i < talon_state.name.size(); i++)
+			{
+				if (talon_state.name[i] == "elevator_leader")
+				{
+					elevator_idx = i;
+					break;
+				}
+			}
+		}
+		if (!(elevator_idx == std::numeric_limits<size_t>::max()))
+		{
+			elev_pos_ = talon_state.position[elevator_idx];
+		}
+		else {
+			ROS_ERROR_STREAM("2023_intaking_server : Can not find talon with name = elevator_leader");
+		}
 	}
 
 	IntakingServer2023(std::string name) :
@@ -101,6 +122,7 @@ public:
 		intake_pub_(nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_leader_controller/command", 1, true)),
 		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true)
 	{
+		elevator_idx = std::numeric_limits<size_t>::max();
 		intake_idx = std::numeric_limits<size_t>::max();
 		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &IntakingServer2023::talonStateCallback, this);
 		game_piece_state_.game_piece = game_piece_state_.NONE; // default to no game piece
@@ -171,6 +193,45 @@ public:
 
 		ros::Rate r(10);
 
+		bool elevator_is_ok = elev_pos_ < 0.2;
+		ROS_INFO_STREAM("pos is  " << elev_pos_ << (elevator_is_ok ? " ok" : " no"));
+
+		if (goal->unflip_outtake || !elevator_is_ok) {
+			behavior_actions::FourbarElevatorPath2023Goal pathGoal;
+			pathGoal.path = "unflip_fourbar";
+			pathGoal.reverse = false;
+
+			feedback_.status = feedback_.PATHER;
+			as_.publishFeedback(feedback_);
+
+			path_ac_.sendGoal(pathGoal);
+
+			std_msgs::Float64 percent_out;
+			percent_out.data = 0.0;
+			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
+
+			while (!path_ac_.getState().isDone()) {
+				ros::spinOnce();
+				ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for unflipping...");
+				if (as_.isPreemptRequested() || !ros::ok()) {
+					ROS_INFO_STREAM("2023_intaking_server : preempted.");
+
+					ros::Time start = ros::Time::now();
+					while (!path_ac_.getState().isDone() && ros::ok() && (ros::Time::now() - start) < ros::Duration(path_zero_timeout_)) {
+						ros::spinOnce();
+						ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : unflipping");
+						r.sleep();
+					}
+					as_.setPreempted(result_);
+					return;
+				}
+				r.sleep();
+			}
+			if (goal->unflip_outtake) {
+				return;
+			}
+		}
+
 		behavior_actions::FourbarElevatorPath2023Goal pathGoal;
 		pathGoal.path = (goal->piece == goal->VERTICAL_CONE) ? "intake_vertical_cone" : "intake_cone_cube";
 		pathGoal.reverse = false;
@@ -183,6 +244,8 @@ public:
 		std_msgs::Float64 percent_out;
 		percent_out.data = speed_;
 		make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
+
+		ros::Duration(0.25).sleep();
 
 		while (!path_ac_.getState().isDone()) {
 			ros::spinOnce();
@@ -276,23 +339,20 @@ public:
 
 		ros::Duration(time_before_reverse_).sleep();
 		
-		// move back to zeroed
+		// move back to holding position
 
-		pathGoal.reverse = true;
+		pathGoal.path = "flip_fourbar_after_intaking";
+		pathGoal.reverse = false;
 
 		feedback_.status = feedback_.PATHER;
 		as_.publishFeedback(feedback_);
 
 		path_ac_.sendGoal(pathGoal);
 
-		while (!path_ac_.getState().isDone()) {
+		ros::Time start = ros::Time::now();
+		while (!path_ac_.getState().isDone()  && (ros::Time::now() - start) < ros::Duration(path_zero_timeout_)) {
 			ros::spinOnce();
-			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for reverse pather...");
-			if (as_.isPreemptRequested() || !ros::ok()) {
-				ROS_INFO_STREAM("2023_intaking_server : preempted. why?????");
-				as_.setPreempted(result_);
-				return;
-			}
+			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : bringing game piece back... timing out after " << (ros::Time::now() - start).toSec() << " seconds");
 			r.sleep();
 		}
 

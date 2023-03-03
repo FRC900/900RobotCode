@@ -45,7 +45,7 @@ struct DynamicReconfigVars
 	double max_speed_slow{0.75};          // "Max linear speed in slow mode, in m/s"
 	double max_rot{6.0};                  // "Max angular speed"
 	double max_rot_slow{2.0};             // "Max angular speed in slow mode"
-	double button_move_speed{0.9};        // "Linear speed when move buttons are pressed, in m/s"
+	double button_move_speed{0.5};        // "Linear speed when move buttons are pressed, in m/s"
 	double joystick_pow{1.5};             // "Joystick Scaling Power, linear"
 	double rotation_pow{1.0};             // "Joystick Scaling Power, rotation"
 	double drive_rate_limit_time{200};    // "msec to go from full back to full forward"
@@ -188,13 +188,17 @@ bool sendRobotZero = false;
 bool sendSetAngle = false;
 double old_angular_z = 0.0;
 
+bool moved = false;
+
 void place() {
 	behavior_actions::Placing2023Goal goal;
 	goal.node = node;
 	goal.piece = game_piece;
 	goal.override_game_piece = true;
 	goal.align_intake = false;
+	goal.step = moved ? goal.PLACE_RETRACT : goal.MOVE;
 	placing_ac->sendGoal(goal);
+	moved = !moved;
 }
 
 void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 const>& event)
@@ -216,8 +220,9 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 		// diagnostics_mode = true;
 		// robot_orientation_driver->stopRotation();
 		// ROS_WARN_STREAM("Enabling diagnostics mode!");
-		teleop_cmd_vel->setRobotOrient(true, 0.0);
-		ROS_WARN_STREAM("Robot relative mode!");
+
+		//teleop_cmd_vel->setRobotOrient(true, 0.0);
+		//ROS_WARN_STREAM("Robot relative mode!");
 	}
 
 	if(button_box.lockingSwitchButton)
@@ -260,6 +265,10 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.topLeftConeButton) {
 	}
 	if(button_box.topLeftConePress) {
+		ROS_WARN_STREAM("teleop : unflipping outtake! really hope you're actually flipped!");
+		behavior_actions::Intaking2023Goal goal;
+		goal.unflip_outtake = true;
+		intaking_ac->sendGoal(goal);
 	}
 	if(button_box.topLeftConeRelease) {
 	}
@@ -283,6 +292,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.gridSelectConeLeftPress) {
 		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE; // type doesn't matter for placing
 		place();
+		// slow mode
 	}
 	if(button_box.gridSelectConeLeftRelease) {
 	}
@@ -292,6 +302,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.gridSelectCubePress) {
 		game_piece = behavior_actions::Placing2023Goal::CUBE;
 		place();
+		// slow mode
 	}
 	if(button_box.gridSelectCubeRelease) {
 	}
@@ -301,6 +312,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.gridSelectConeRightPress) {
 		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE; // type doesn't matter for placing
 		place();
+		// slow mode
 	}
 	if(button_box.gridSelectConeRightRelease) {
 	}
@@ -430,8 +442,8 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.bottomRightWhiteButton) {
 	}
 	if(button_box.bottomRightWhitePress) {
-		ROS_INFO_STREAM("teleop_joystick_comp_2023 : zeroing IMU");
-		imu_cmd.request.angle = 0.0;
+		ROS_INFO_STREAM("teleop_joystick_comp_2023 : zeroing IMU to 180");
+		imu_cmd.request.angle = 180.0;
 		IMUZeroSrv.call(imu_cmd);
 	}
 	if(button_box.bottomRightWhiteRelease) {
@@ -534,7 +546,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 		*/
 		//ROS_INFO_STREAM_THROTTLE(1, "Angular z " << cmd_vel.angular.z);
 
-		ROS_INFO_STREAM_THROTTLE(1, "From teleop=" << robot_orientation_driver->mostRecentCommandIsFromTeleop());
+		//ROS_INFO_STREAM_THROTTLE(1, "From teleop=" << robot_orientation_driver->mostRecentCommandIsFromTeleop());
 		if (robot_orientation_driver->mostRecentCommandIsFromTeleop() || cmd_vel.angular.z != 0.0) {
 			double original_angular_z = cmd_vel.angular.z;
 
@@ -597,7 +609,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				srv.request.piece = srv.request.VERTICAL_CONE; // can use any cone
 				ROS_INFO_STREAM("teleop_joystick_comp_2023 : snapping to nearest cone and enabling robot relative driving mode!");
 				teleop_cmd_vel->setRobotOrient(true, 0);
-				snapConeCubeSrv.call(srv);
+				if (snapConeCubeSrv.call(srv))
+				{
+					robot_orientation_driver->setTargetOrientation(srv.response.target_angle, true /*from teleop*/);
+				}
 			}
 			if(joystick_states_array[0].buttonAButton)
 			{
@@ -605,7 +620,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 			if(joystick_states_array[0].buttonARelease)
 			{
-
+				teleop_cmd_vel->setRobotOrient(false, 0);
 			}
 
 			//Joystick1: buttonB
@@ -615,7 +630,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				srv.request.piece = srv.request.CUBE;
 				ROS_INFO_STREAM("teleop_joystick_comp_2023 : snapping to nearest cube and enabling robot relative driving mode!");
 				teleop_cmd_vel->setRobotOrient(true, 0);
-				snapConeCubeSrv.call(srv);
+				if (snapConeCubeSrv.call(srv))
+				{
+					robot_orientation_driver->setTargetOrientation(srv.response.target_angle, true /*from teleop*/);
+				}
 			}
 			if(joystick_states_array[0].buttonBButton)
 			{
@@ -623,7 +641,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 			if(joystick_states_array[0].buttonBRelease)
 			{
-
+				teleop_cmd_vel->setRobotOrient(false, 0);
 			}
 
 			//Joystick1: buttonX
@@ -667,6 +685,10 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: bumperRight
 			if(joystick_states_array[0].bumperRightPress)
 			{
+				behavior_actions::Intake2023Goal goal;
+				goal.outtake = true;
+				goal.go_fast = false;
+				intake_ac->sendGoal(goal);
 			}
 			if(joystick_states_array[0].bumperRightButton)
 			{
@@ -1178,6 +1200,8 @@ int main(int argc, char **argv)
 	ros::Subscriber button_box_sub = n.subscribe("/frcrobot_rio/button_box_states", 1, &buttonBoxCallback);
 
 	ROS_WARN("joy_init");
+
+	teleop_cmd_vel->setRobotOrient(false, 0.0);
 
 	ros::spin();
 	return 0;

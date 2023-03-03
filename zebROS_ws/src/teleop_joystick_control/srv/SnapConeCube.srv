@@ -5,4 +5,5 @@ uint8 BASE_TOWARDS_US_CONE=2
 uint8 BASE_AWAY_US_CONE=3
 uint8 piece
 ---
+float64 target_angle
 bool success

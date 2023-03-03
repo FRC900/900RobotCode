@@ -169,8 +169,8 @@ void RobotOrientationDriver::checkFromTeleopTimeout(const ros::TimerEvent & /*ev
 	most_recent_is_teleop_ = true;
 }
 
-bool RobotOrientationDriver::holdTargetOrientation(teleop_joystick_control::AlignToOrientation::Request& req,
-						   teleop_joystick_control::AlignToOrientation::Response&/* res*/) 
+bool RobotOrientationDriver::holdTargetOrientation(teleop_joystick_control::AlignToOrientation::Request &req,
+												   teleop_joystick_control::AlignToOrientation::Response & /* res*/)
 {
 	setTargetOrientation(req.angle, true /* from telop */);
 	return true;
