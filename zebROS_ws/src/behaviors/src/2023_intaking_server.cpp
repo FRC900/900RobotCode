@@ -29,6 +29,8 @@ protected:
 	double cone_time_; // time to keep intaking after we see a cone
 	double path_zero_timeout_;
 
+	bool dynamic_reconfigure_;
+
 	// shouldn't need to worry about the intake timeout since the intaker server handles that
 
 	ros::Subscriber game_piece_sub_;
@@ -53,9 +55,9 @@ protected:
 
 	double time_before_reverse_;
 
-	ddynamic_reconfigure::DDynamicReconfigure ddr_;
-
 	ros::NodeHandle nh_params_;
+
+	ddynamic_reconfigure::DDynamicReconfigure ddr_;
 
 	// output_current in talon states
 
@@ -134,38 +136,38 @@ public:
 		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &IntakingServer2023::talonStateCallback, this);
 		game_piece_state_.game_piece = game_piece_state_.NONE; // default to no game piece
 
+		if (!nh_.getParam("dynamic_reconfigure", dynamic_reconfigure_)) {
+			ROS_WARN_STREAM("2023_intaking_server : could not find dynamic_reconfigure, defaulting to false");
+			dynamic_reconfigure_ = false;
+		}
+
 		if (!nh_.getParam("time_before_reverse", time_before_reverse_)) {
 			ROS_WARN_STREAM("2023_intaking_server : could not find time_before_reverse, defaulting to 0 seconds");
 			time_before_reverse_ = 0;
 		}
-		ddr_.registerVariable<double>("time_before_reverse", &time_before_reverse_, "Time before reversing", 0, 10);
 
 		if (!nh_.getParam("cube_time", cube_time_))
 		{
 			ROS_ERROR_STREAM("2023_intaking_server : could not find cube_time");
 			return;
 		}
-		ddr_.registerVariable<double>("cube_time", &cube_time_, "Time for intaking cubes (currently used for both because no terabees)", 0, 5);
 
 		if (!nh_.getParam("path_zero_timeout", path_zero_timeout_))
 		{
 			ROS_ERROR_STREAM("2023_intaking_server : could not find path_zero_timeout");
 			return;
 		}
-		ddr_.registerVariable<double>("path_zero_timeout", &path_zero_timeout_, "Timeout before preempting zeroing path after we are preempted", 0, 10);
 
 		if (!nh_.getParam("cone_time", cone_time_))
 		{
 			ROS_ERROR_STREAM("2023_intaking_server : could not find cone_time");
 			return;
 		}
-		ddr_.registerVariable<double>("cone_time", &cone_time_, "Time for intaking cones (currently used for neither because no terabees)", 0, 5);
 
 		if (!nh_.getParam("server_timeout", server_timeout_)) {
 			ROS_WARN_STREAM("2023_intaking_server : could not find server_timeout, defaulting to 20 seconds");
 			server_timeout_ = 20;
 		}
-		ddr_.registerVariable<double>("server_timeout", &server_timeout_, "Server timeout", 0, 30);
 
 		if (!nh_.getParam("joint", joint_))
 		{
@@ -179,28 +181,36 @@ public:
 			ROS_ERROR_STREAM("2023_intaking_server : could not find current_threshold");
 			return;
 		}
-		ddr_.registerVariable<double>("current_threshold", &current_threshold_, "Current threshold before stopping intake, some weird unit", 0, 300);
 
 		if (!nh_.getParam("intake_speed", speed_))
 		{
 			ROS_ERROR_STREAM("2023_intake_server : could not find intake_speed");
 			return;
 		}
-		ddr_.registerVariable<double>("intake_speed", &speed_, "Intake speed (percent output)", 0, 1);
 
 		if (!nh_.getParam("outtake_speed", outtake_speed_))
 		{
 			ROS_ERROR_STREAM("2023_intake_server : could not find outtake_speed");
 			return;
 		}
-		ddr_.registerVariable<double>("outtake_speed", &outtake_speed_, "Outtake speed (percent output)", 0, 1);
 		
 		if (!nh_.getParam("intake_small_speed", small_speed_))
 		{
 			ROS_ERROR_STREAM("2023_intake_server : could not find intake_small_speed");
 			return;
 		}
-		ddr_.registerVariable<double>("intake_small_speed", &small_speed_, "Intake small speed for holding game piece in (percent output)", 0, 1);
+
+		if (dynamic_reconfigure_) {
+			ddr_.registerVariable<double>("time_before_reverse", &time_before_reverse_, "Time before reversing", 0, 10);
+			ddr_.registerVariable<double>("cube_time", &cube_time_, "Time for intaking cubes (currently used for both because no terabees)", 0, 5);
+			ddr_.registerVariable<double>("path_zero_timeout", &path_zero_timeout_, "Timeout before preempting zeroing path after we are preempted", 0, 10);
+			ddr_.registerVariable<double>("cone_time", &cone_time_, "Time for intaking cones (currently used for neither because no terabees)", 0, 5);
+			ddr_.registerVariable<double>("server_timeout", &server_timeout_, "Server timeout", 0, 30);
+			ddr_.registerVariable<double>("current_threshold", &current_threshold_, "Current threshold before stopping intake, some weird unit", 0, 300);
+			ddr_.registerVariable<double>("intake_speed", &speed_, "Intake speed (percent output)", 0, 1);
+			ddr_.registerVariable<double>("outtake_speed", &outtake_speed_, "Outtake speed (percent output)", 0, 1);
+			ddr_.registerVariable<double>("intake_small_speed", &small_speed_, "Intake small speed for holding game piece in (percent output)", 0, 1);
+		}
 
 		ddr_.publishServicesTopics();
 
@@ -229,7 +239,7 @@ public:
 		if (goal->outtake) {
 			ROS_INFO_STREAM("2023_intaking_server : outtaking");
 			std_msgs::Float64 percent_out;
-			percent_out.data = -1.0 * outtake_speed_;
+			percent_out.data = -outtake_speed_;
 			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 
 			while (true) {
@@ -249,7 +259,8 @@ public:
 			return;
 		}
 
-		if (goal->unflip_fourbar || !elevator_is_ok) {
+		if (!elevator_is_ok) {
+			ROS_INFO_STREAM("2023_intaking_server : elevator is not ok, unflipping fourbar!");
 			behavior_actions::FourbarElevatorPath2023Goal pathGoal;
 			pathGoal.path = "unflip_fourbar";
 			pathGoal.reverse = false;
@@ -280,9 +291,10 @@ public:
 				}
 				r.sleep();
 			}
-			if (goal->unflip_fourbar) {
-				return;
-			}
+		}
+
+		if (goal->unflip_fourbar) {
+			return;
 		}
 
 		behavior_actions::FourbarElevatorPath2023Goal pathGoal;
