@@ -13,6 +13,7 @@
 #include <angles/angles.h>
 #include <teleop_joystick_control/SnapConeCube.h>
 #include <teleop_joystick_control/AlignToOrientation.h>
+#include <geometry_msgs/Point.h>
 
 struct StampedAngle {
     double angle;
@@ -30,6 +31,9 @@ class SnapToConeCube2023
         // think about adding a timeout
         StampedAngle nearest_cone_angle_;
         StampedAngle nearest_cube_angle_;
+        geometry_msgs::Point nearest_cone_point_;
+        geometry_msgs::Point nearest_cube_point_;
+
         tf2_ros::Buffer tf_buffer_;
         tf2_ros::TransformListener tf_listener_;
         //geometry_msgs::TwistStamped cmd_vel_out_;
@@ -71,26 +75,16 @@ class SnapToConeCube2023
                   teleop_joystick_control::SnapConeCube::Response &res)
         {
             double target_angle;
-            if (req.piece == req.CUBE) {
-                if ((ros::Time::now() - nearest_cube_angle_.time) < ros::Duration(timeout_)) {
-                    target_angle = nearest_cube_angle_.angle;
-                } else {
-                    ROS_ERROR_STREAM("snap_to_nearest_conecube_2023 : cube data too old! delta = " << (ros::Time::now() - nearest_cube_angle_.time));
-                    res.target_angle = std::numeric_limits<double>::quiet_NaN();
-                    res.success = false;
-                    return false;
-                }
-            } else {
-                if ((ros::Time::now() - nearest_cone_angle_.time) < ros::Duration(timeout_)) {
-                    target_angle = nearest_cone_angle_.angle;
-                } else {
-                    ROS_ERROR_STREAM("snap_to_nearest_conecube_2023 : cone data too old! delta = " << (ros::Time::now() - nearest_cone_angle_.time));
-                    res.target_angle = std::numeric_limits<double>::quiet_NaN();
-                    res.success = false;
-                    return false;
-                }
+            if ((ros::Time::now() - nearest_cube_angle_.time) < ros::Duration(timeout_)) {
+                res.nearest_cube_angle = nearest_cube_angle_.angle;
+                res.cube_point = nearest_cube_point_;
             }
-            res.target_angle = target_angle;
+
+            if ((ros::Time::now() - nearest_cone_angle_.time) < ros::Duration(timeout_)) {
+                res.nearest_cone_angle  = nearest_cone_angle_.angle;
+                res.cone_point = nearest_cone_point_;
+            } 
+    
             res.success = true;
             return true;
         }
@@ -159,6 +153,7 @@ class SnapToConeCube2023
                     }
                 }
             }
+
             if (shortest_cone_distance != std::numeric_limits<double>::max()) {
                 std_msgs::Float64 msg1;
                 try
@@ -172,6 +167,9 @@ class SnapToConeCube2023
                     p1s.pose.orientation = q1m;
                     p1s = tf_buffer_.transform(p1s, "base_link", ros::Duration(0.05));
                     msg1.data = angles::shortest_angular_distance(imu_angle, atan2(p1s.pose.position.y, p1s.pose.position.x));
+                    nearest_cone_point_.x = p1s.pose.position.x;
+                    nearest_cone_point_.y = p1s.pose.position.y;
+                    nearest_cone_point_.z = p1s.pose.position.z;
                 }
                 catch (...)
                 {
@@ -195,6 +193,9 @@ class SnapToConeCube2023
                     p2s.pose.orientation = q2m;
                     p2s = tf_buffer_.transform(p2s, "base_link", ros::Duration(0.05));
                     msg2.data = angles::shortest_angular_distance(imu_angle, atan2(p2s.pose.position.y, p2s.pose.position.x));
+                    nearest_cube_point_.x = p2s.pose.position.x;
+                    nearest_cube_point_.y = p2s.pose.position.y;
+                    nearest_cube_point_.z = p2s.pose.position.z;
                 }
                 catch (...)
                 {

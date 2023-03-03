@@ -36,6 +36,7 @@
 #include <behavior_actions/Intaking2023Action.h>
 #include <behavior_actions/Placing2023Action.h>
 #include <behavior_actions/Intake2023Action.h>
+#include <talon_swerve_drive_controller/SetXY.h>
 
 struct DynamicReconfigVars
 {
@@ -121,6 +122,7 @@ void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 }
 
 ros::ServiceClient snapConeCubeSrv;
+ros::ServiceClient setCenterSrv;
 
 void moveDirection(int x, int y, int z) {
 	geometry_msgs::Twist cmd_vel;
@@ -606,12 +608,18 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].buttonAPress)
 			{
 				teleop_joystick_control::SnapConeCube srv;
-				srv.request.piece = srv.request.VERTICAL_CONE; // can use any cone
 				ROS_INFO_STREAM("teleop_joystick_comp_2023 : snapping to nearest cone and enabling robot relative driving mode!");
-				teleop_cmd_vel->setRobotOrient(true, 0);
 				if (snapConeCubeSrv.call(srv))
 				{
-					robot_orientation_driver->setTargetOrientation(srv.response.target_angle, true /*from teleop*/);
+					ROS_INFO_STREAM("Using angle of " << srv.response.nearest_cone_angle);
+					robot_orientation_driver->setTargetOrientation(srv.response.nearest_cone_angle, true /*from teleop*/);
+					teleop_cmd_vel->setRobotOrient(true, 0);
+					talon_swerve_drive_controller::SetXY center_srv;
+					center_srv.request.x = srv.response.cube_point.x;
+					center_srv.request.y = srv.response.cube_point.y;
+					if (!setCenterSrv.call(center_srv)) {
+						ROS_ERROR_STREAM("Unable to set center of rotation");
+					}
 				}
 			}
 			if(joystick_states_array[0].buttonAButton)
@@ -621,18 +629,31 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].buttonARelease)
 			{
 				teleop_cmd_vel->setRobotOrient(false, 0);
+				talon_swerve_drive_controller::SetXY center_srv;
+				center_srv.request.x = 0;
+				center_srv.request.y = 0;
+				if (!setCenterSrv.call(center_srv)) {
+					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
+					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
+				}
 			}
 
 			//Joystick1: buttonB
 			if(joystick_states_array[0].buttonBPress)
 			{
 				teleop_joystick_control::SnapConeCube srv;
-				srv.request.piece = srv.request.CUBE;
 				ROS_INFO_STREAM("teleop_joystick_comp_2023 : snapping to nearest cube and enabling robot relative driving mode!");
-				teleop_cmd_vel->setRobotOrient(true, 0);
 				if (snapConeCubeSrv.call(srv))
 				{
-					robot_orientation_driver->setTargetOrientation(srv.response.target_angle, true /*from teleop*/);
+					ROS_INFO_STREAM("Using angle of " << srv.response.nearest_cube_angle);
+					robot_orientation_driver->setTargetOrientation(srv.response.nearest_cube_angle, true /*from teleop*/);
+					teleop_cmd_vel->setRobotOrient(true, 0);
+					talon_swerve_drive_controller::SetXY center_srv;
+					center_srv.request.x = srv.response.cube_point.x;
+					center_srv.request.y = srv.response.cube_point.y;
+					if (!setCenterSrv.call(center_srv)) {
+						ROS_ERROR_STREAM("Unable to set center of rotation");
+					}
 				}
 			}
 			if(joystick_states_array[0].buttonBButton)
@@ -642,6 +663,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].buttonBRelease)
 			{
 				teleop_cmd_vel->setRobotOrient(false, 0);
+				talon_swerve_drive_controller::SetXY center_srv;
+				center_srv.request.x = 0;
+				center_srv.request.y = 0;
+				if (!setCenterSrv.call(center_srv)) {
+					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
+					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
+				}
 			}
 
 			//Joystick1: buttonX
@@ -1154,7 +1182,7 @@ int main(int argc, char **argv)
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 	IMUZeroSrv = n.serviceClient<imu_zero::ImuZeroAngle>("/imu/set_imu_zero", false, service_connection_header);
 	snapConeCubeSrv = n.serviceClient<teleop_joystick_control::SnapConeCube>("/snap_to_angle/snap_cone_cube", false, service_connection_header);
-
+	setCenterSrv = n.serviceClient<talon_swerve_drive_controller::SetXY>("/frcrobot_jetson/swerve_drive_controller/change_center_of_rotation", false, service_connection_header);	
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
