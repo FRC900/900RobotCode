@@ -10,9 +10,11 @@
 #include "base_trajectory_msgs/GenerateSpline.h"
 #include "base_trajectory_msgs/PathOffsetLimit.h"
 #include <actionlib/client/simple_action_client.h>
+#include <behavior_actions/Placing2023Action.h>
 #include <behavior_actions/Shooting2022Action.h>
 #include "behavior_actions/Intaking2022Action.h"
 #include <behavior_actions/Balancing2023Action.h>
+#include <behavior_actions/GamePieceState2023.h>
 #include <behavior_actions/DynamicPath.h>
 #include <path_follower_msgs/PathAction.h>
 #include <path_follower_msgs/PathFeedback.h>
@@ -87,6 +89,7 @@ class AutoNode {
 		actionlib::SimpleActionClient<behavior_actions::Shooting2022Action> shooting_ac_;
 		actionlib::SimpleActionClient<behavior_actions::Intaking2022Action> intaking_ac_;
 		actionlib::SimpleActionClient<behavior_actions::Balancing2023Action> balancing_ac;
+		actionlib::SimpleActionClient<behavior_actions::Placing2023Action> placing_ac_;
 
 		// path follower and feedback
 		std::map<std::string, nav_msgs::Path> premade_paths_;
@@ -105,6 +108,7 @@ class AutoNode {
 		: nh_(nh)
 		, path_ac_("/path_follower/path_follower_server", true)
 		, shooting_ac_("/shooting2022/shooting2022_server", true)
+		, placing_ac_("/placing/placing_server_2023", true)
 		, intaking_ac_("/intaking2022/intaking2022_server", true)
 		, balancing_ac("/balance_position/balancing_server", true)
 
@@ -152,6 +156,7 @@ class AutoNode {
 		functionMap_["pause"] = &AutoNode::pausefn;
 		functionMap_["intaking_actionlib_server"] = &AutoNode::intakefn;
 		functionMap_["shooting_actionlib_server"] = &AutoNode::shootfn;
+		functionMap_["placing_actionlib_server"] = &AutoNode::placefn;
 		functionMap_["path"] = &AutoNode::pathfn;
 		functionMap_["cmd_vel"] = &AutoNode::cmdvelfn;
 		functionMap_["balancing_actionlib_server"] = &AutoNode::autoBalancefn;
@@ -162,6 +167,7 @@ class AutoNode {
 			shooting_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			intaking_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			balancing_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
+			placing_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 		};
 		// END change year to year
 	}
@@ -674,6 +680,60 @@ class AutoNode {
 		return true;
 	}
 
+	bool placefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		//for some reason this is necessary, even if the server has been up and running for a while
+		if(!placing_ac_.waitForServer(ros::Duration(5))){
+			shutdownNode(ERROR,"Auto node - couldn't find placing actionlib server");
+			return false;
+		}
+
+		behavior_actions::Placing2023Goal goal;
+
+		uint8_t requested_game_piece = 255;
+
+		if (action_data.hasMember("piece"))
+		{
+			if (action_data["piece"] == "cone") {
+				requested_game_piece = behavior_actions::GamePieceState2023::BASE_TOWARDS_US_CONE;
+			}
+			else if (action_data["piece"] == "cube") {
+				requested_game_piece = behavior_actions::GamePieceState2023::CUBE;
+			}
+			else {
+				shutdownNode(ERROR,"Auto node - placing_actionlib_server call \"piece\" field is not \"cone\" or \"cube\". Exiting!");
+				return false;
+			}
+		}
+
+		if (action_data.hasMember("node"))
+		{
+			if (action_data["node"] == "high") {
+				goal.node = goal.HIGH;
+			}
+			else if (action_data["node"] == "mid") {
+				goal.node = goal.MID;
+			}
+			else if (action_data["node"] == "hybrid") {
+				goal.node = goal.HYBRID;
+			}
+			else {
+				shutdownNode(ERROR,"Auto node - placing_actionlib_server call \"node\" field is not \"high\", \"mid\",  or \"hybrid\". Exiting!");
+				return false;
+			}
+		}
+		else {
+			shutdownNode(ERROR, "Auto node - placing_actionlib_server: no node specified");
+			return false;
+		}
+
+		if (requested_game_piece != 255) {
+			goal.override_game_piece = true;
+			goal.piece = requested_game_piece;
+		}
+		placing_ac_.sendGoal(goal);
+		waitForActionlibServer(placing_ac_, 10.0, "placing_server");
+		return true;
+	}
 
 	bool autoBalancefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
 		ROS_INFO_STREAM("Running auto balance!==============");

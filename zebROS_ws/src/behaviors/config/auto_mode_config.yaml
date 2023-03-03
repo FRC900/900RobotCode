@@ -18,9 +18,9 @@
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_left_hub", "stop_intaking", "shoot", "drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
 
-auto_mode_1: ["drive_forward"]
-auto_mode_2: ["mini_drive_test"]
-auto_mode_3: ["test_orientation"]
+auto_mode_1: ["place_cone_high", "drive_out_community"]
+auto_mode_2: ["place_cone_high", "balance_facing_away"]
+auto_mode_3: ["place_cone_high", "drive_out_community"]
 
 # Examples
 #auto_mode_1: ["tuning"]
@@ -42,6 +42,18 @@ auto_mode_3: ["test_orientation"]
 #valid action types: "intake_actionlib_server", "pause", "elevator_actionlib_server"
 ros_rate: 10 # in ms, used for all ros rate calls
 
+drive_out_community:
+    type: cmd_vel
+    duration: 3
+    cmd_vel:
+        x: -1.0
+        y: 0.0 
+        z: 0.0
+
+place_cone_high:
+    type: "placing_actionlib_server"
+    piece: "cone"
+    node: "high"
 
 cmd_vel_1:
     type: cmd_vel
@@ -258,7 +270,7 @@ balance_facing_away:
 balance_facing_towards:
     type: "balancing_actionlib_server"
     goal:
-        "true" # if we are facing away from the charging station
+        "true" # if we are facing towards from the charging station
 
 start_intaking:
     type: "intaking_actionlib_server"

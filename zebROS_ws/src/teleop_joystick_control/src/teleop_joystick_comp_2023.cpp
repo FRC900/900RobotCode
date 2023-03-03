@@ -184,8 +184,6 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 }
 
 
-
-
 bool sendRobotZero = false;
 bool sendSetAngle = false;
 double old_angular_z = 0.0;
@@ -201,6 +199,7 @@ void place() {
 	goal.step = moved ? goal.PLACE_RETRACT : goal.MOVE;
 	placing_ac->sendGoal(goal);
 	moved = !moved;
+	teleop_cmd_vel->setSlowMode(moved);
 }
 
 void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 const>& event)
@@ -269,7 +268,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.topLeftConePress) {
 		ROS_WARN_STREAM("teleop : unflipping outtake! really hope you're actually flipped!");
 		behavior_actions::Intaking2023Goal goal;
-		goal.unflip_outtake = true;
+		goal.unflip_outtake =  true;
 		intaking_ac->sendGoal(goal);
 	}
 	if(button_box.topLeftConeRelease) {

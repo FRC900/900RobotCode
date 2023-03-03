@@ -244,6 +244,8 @@ public:
 			return;
 		}
 
+		ROS_INFO_STREAM("2023_fourbar_elevator_path_server : using path " << goal->path);
+
 		Path path = path_map_[goal->path];
 		if (goal->reverse) {
 			std::reverse(path.begin(), path.end());

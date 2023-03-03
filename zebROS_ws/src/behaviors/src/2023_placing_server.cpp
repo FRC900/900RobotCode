@@ -129,8 +129,6 @@ public:
 
 	void executeCB(const behavior_actions::Placing2023GoalConstPtr &goal)
 	{
-		if (goal)
-
 		result_.success = true; // default to true, set to false if fails
 		if (!path_ac_.waitForServer(ros::Duration(server_timeout_))) {
 			ROS_ERROR_STREAM("2023_placing_server : timed out connecting to fourbar elevator path server, aborting");
@@ -158,8 +156,12 @@ public:
 		}
 
 		behavior_actions::FourbarElevatorPath2023Goal pathGoal;
+
 		pathGoal.path = pathForGamePiece(game_piece, goal->node);
 		pathGoal.reverse = false;
+		if (goal->from_Trex) {
+			pathGoal.path += "_auto";
+		}
 
 		if (goal->step == goal->MOVE) {
 			ROS_INFO_STREAM("2023_placing_server : moving to placing position");
@@ -241,6 +243,7 @@ public:
 
 		pathGoal.path = pathForGamePiece(game_piece, goal->node) + "_reverse";
 		pathGoal.reverse = false;
+		
 
 		path_ac_.sendGoal(pathGoal);
 

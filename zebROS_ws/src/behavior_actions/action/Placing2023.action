@@ -18,6 +18,8 @@ uint8 piece
 uint8 MOVE=0
 uint8 PLACE_RETRACT=1
 uint8 step
+
+bool from_Trex # if we are in the safe position for placing
 ---
 # result
 bool success
