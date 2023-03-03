@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp
     candle_controller_msgs
     frc_msgs
+    behavior_actions
 )
 
 ## System dependencies are found with CMake's conventions

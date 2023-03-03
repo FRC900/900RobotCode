@@ -3,7 +3,7 @@
 #include <ros/ros.h>
 #include <frc_msgs/MatchSpecificData.h>
 #include <frc_msgs/ButtonBoxState2023.h>
-#include <behavior_actions/AutoState.h>
+#include <behavior_actions/AutoMode.h>
 
 constexpr uint8_t MAX_LED = 34;
 constexpr uint8_t MID_START = 0;
@@ -55,13 +55,13 @@ struct NodeCTX {
             this->cube_button_pressed = true;
             this->updated = true;
         } else if (msg.topRightCubeRelease && this->cube_button_pressed) {
-            this->cube_button_pressed bv= false;
+            this->cube_button_pressed = false;
             this->updated = true;
         }
     }
 
-    void auto_mode_callback(const behavior_actions::AutoMode& msg) {
-        auto_mode = msg.auto_mode;
+    void auto_mode_callback(const behavior_actions::AutoModeConstPtr& msg) {
+        auto_mode = msg->auto_mode;
     }
 
 };
