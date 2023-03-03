@@ -5,7 +5,9 @@ uint8 BASE_TOWARDS_US_CONE=2
 uint8 BASE_AWAY_US_CONE=3
 uint8 piece
 
-bool unflip_outtake
+bool unflip_fourbar
+
+bool outtake
 ---
 # result
 bool timed_out

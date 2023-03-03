@@ -164,7 +164,6 @@ void zero_all_diag_commands(void)
 std::shared_ptr<actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>> distance_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2023Action>> intaking_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>> placing_ac;
-std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intake2023Action>> intake_ac;
 
 void preemptActionlibServers(void)
 {
@@ -257,7 +256,6 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.redPress) {
 		ROS_WARN_STREAM("Preempting all actions!");
 		placing_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
-		intake_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 	if(button_box.redRelease) {
@@ -268,7 +266,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.topLeftConePress) {
 		ROS_WARN_STREAM("teleop : unflipping outtake! really hope you're actually flipped!");
 		behavior_actions::Intaking2023Goal goal;
-		goal.unflip_outtake =  true;
+		goal.unflip_fourbar =  true;
 		intaking_ac->sendGoal(goal);
 	}
 	if(button_box.topLeftConeRelease) {
@@ -712,10 +710,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: bumperRight
 			if(joystick_states_array[0].bumperRightPress)
 			{
-				behavior_actions::Intake2023Goal goal;
+				behavior_actions::Intaking2023Goal goal;
 				goal.outtake = true;
-				goal.go_fast = false;
-				intake_ac->sendGoal(goal);
+				intaking_ac->sendGoal(goal);
 			}
 			if(joystick_states_array[0].bumperRightButton)
 			{
@@ -1191,7 +1188,6 @@ int main(int argc, char **argv)
 	auto_mode_select_pub = n.advertise<behavior_actions::AutoMode>("/auto/auto_mode", 1, true);
 
 	intaking_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Intaking2023Action>>("/intaking/intaking_server_2023", true);
-	intake_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Intake2023Action>>("/intake/intake_server_2023", true);
 	placing_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>>("/placing/placing_server_2023", true);
 
 	const ros::Duration startup_wait_time_secs(15);

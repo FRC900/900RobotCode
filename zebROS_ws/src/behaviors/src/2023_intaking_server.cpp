@@ -8,6 +8,7 @@
 #include <std_msgs/UInt8.h>
 #include <talon_state_msgs/TalonState.h>
 #include <std_msgs/Float64.h>
+#include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 
 class IntakingServer2023
 {
@@ -28,6 +29,8 @@ protected:
 	double cone_time_; // time to keep intaking after we see a cone
 	double path_zero_timeout_;
 
+	bool dynamic_reconfigure_;
+
 	// shouldn't need to worry about the intake timeout since the intaker server handles that
 
 	ros::Subscriber game_piece_sub_;
@@ -41,7 +44,7 @@ protected:
 	double elev_pos_;
 
 	double speed_;
-	double fast_speed_;
+	double outtake_speed_;
 	double small_speed_; // for holding cube/cone in
 
 	actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action> path_ac_;
@@ -51,6 +54,10 @@ protected:
 	ros::Publisher intake_pub_;
 
 	double time_before_reverse_;
+
+	ros::NodeHandle nh_params_;
+
+	ddynamic_reconfigure::DDynamicReconfigure ddr_;
 
 	// output_current in talon states
 
@@ -120,60 +127,93 @@ public:
 		game_piece_sub_(nh_.subscribe("/game_piece/game_piece_state", 1, &IntakingServer2023::gamePieceStateCallback, this)),
 		requested_game_piece_sub_(nh_.subscribe("/game_piece/requested_game_piece", 1, &IntakingServer2023::requestedPieceCallback, this)),
 		intake_pub_(nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_leader_controller/command", 1, true)),
-		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true)
+		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true),
+		nh_params_(nh_, "intaking_server_2023"),
+		ddr_(nh_params_)
 	{
 		elevator_idx = std::numeric_limits<size_t>::max();
 		intake_idx = std::numeric_limits<size_t>::max();
 		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &IntakingServer2023::talonStateCallback, this);
 		game_piece_state_.game_piece = game_piece_state_.NONE; // default to no game piece
-		if (!nh_.getParam("time_before_reverse", time_before_reverse_)) {
-			ROS_WARN_STREAM("2023_intaking_server : could not find time_before_reverse, defaulting to 1 seconds");
-			time_before_reverse_ = 1;
+
+		if (!nh_.getParam("dynamic_reconfigure", dynamic_reconfigure_)) {
+			ROS_WARN_STREAM("2023_intaking_server : could not find dynamic_reconfigure, defaulting to false");
+			dynamic_reconfigure_ = false;
 		}
+
+		if (!nh_.getParam("time_before_reverse", time_before_reverse_)) {
+			ROS_WARN_STREAM("2023_intaking_server : could not find time_before_reverse, defaulting to 0 seconds");
+			time_before_reverse_ = 0;
+		}
+
 		if (!nh_.getParam("cube_time", cube_time_))
 		{
 			ROS_ERROR_STREAM("2023_intaking_server : could not find cube_time");
 			return;
 		}
+
 		if (!nh_.getParam("path_zero_timeout", path_zero_timeout_))
 		{
 			ROS_ERROR_STREAM("2023_intaking_server : could not find path_zero_timeout");
 			return;
 		}
+
 		if (!nh_.getParam("cone_time", cone_time_))
 		{
 			ROS_ERROR_STREAM("2023_intaking_server : could not find cone_time");
 			return;
 		}
+
 		if (!nh_.getParam("server_timeout", server_timeout_)) {
 			ROS_WARN_STREAM("2023_intaking_server : could not find server_timeout, defaulting to 20 seconds");
 			server_timeout_ = 20;
 		}
+
 		if (!nh_.getParam("joint", joint_))
 		{
 			ROS_ERROR_STREAM("2023_intaking_server : could not find joint");
 			return;
 		}
+		// not dynamic reconfigurable, doesn't really make sense to do that
+
 		if (!nh_.getParam("current_threshold", current_threshold_))
 		{
 			ROS_ERROR_STREAM("2023_intaking_server : could not find current_threshold");
 			return;
 		}
+
 		if (!nh_.getParam("intake_speed", speed_))
 		{
 			ROS_ERROR_STREAM("2023_intake_server : could not find intake_speed");
 			return;
 		}
-		if (!nh_.getParam("intake_fast_speed", fast_speed_))
+
+		if (!nh_.getParam("outtake_speed", outtake_speed_))
 		{
-			ROS_ERROR_STREAM("2023_intake_server : could not find intake_fast_speed");
+			ROS_ERROR_STREAM("2023_intake_server : could not find outtake_speed");
 			return;
 		}
+		
 		if (!nh_.getParam("intake_small_speed", small_speed_))
 		{
 			ROS_ERROR_STREAM("2023_intake_server : could not find intake_small_speed");
 			return;
 		}
+
+		if (dynamic_reconfigure_) {
+			ddr_.registerVariable<double>("time_before_reverse", &time_before_reverse_, "Time before reversing", 0, 10);
+			ddr_.registerVariable<double>("cube_time", &cube_time_, "Time for intaking cubes (currently used for both because no terabees)", 0, 5);
+			ddr_.registerVariable<double>("path_zero_timeout", &path_zero_timeout_, "Timeout before preempting zeroing path after we are preempted", 0, 10);
+			ddr_.registerVariable<double>("cone_time", &cone_time_, "Time for intaking cones (currently used for neither because no terabees)", 0, 5);
+			ddr_.registerVariable<double>("server_timeout", &server_timeout_, "Server timeout", 0, 30);
+			ddr_.registerVariable<double>("current_threshold", &current_threshold_, "Current threshold before stopping intake, some weird unit", 0, 300);
+			ddr_.registerVariable<double>("intake_speed", &speed_, "Intake speed (percent output)", 0, 1);
+			ddr_.registerVariable<double>("outtake_speed", &outtake_speed_, "Outtake speed (percent output)", 0, 1);
+			ddr_.registerVariable<double>("intake_small_speed", &small_speed_, "Intake small speed for holding game piece in (percent output)", 0, 1);
+		}
+
+		ddr_.publishServicesTopics();
+
 		const std::map<std::string, std::string> service_connection_header{{"tcp_nodelay", "1"}};
 		as_.start();
 	}
@@ -196,7 +236,31 @@ public:
 		bool elevator_is_ok = elev_pos_ < 0.2;
 		ROS_INFO_STREAM("pos is  " << elev_pos_ << (elevator_is_ok ? " ok" : " no"));
 
-		if (goal->unflip_outtake || !elevator_is_ok) {
+		if (goal->outtake) {
+			ROS_INFO_STREAM("2023_intaking_server : outtaking");
+			std_msgs::Float64 percent_out;
+			percent_out.data = -outtake_speed_;
+			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
+
+			while (true) {
+				ros::spinOnce();
+				ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : outtaking until preempted...");
+				if (as_.isPreemptRequested() || !ros::ok()) {
+					ROS_INFO_STREAM("2023_intaking_server : preempted.");
+
+					percent_out.data = 0.0;
+					make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
+
+					as_.setPreempted(result_);
+					return;
+				}
+				r.sleep();
+			}
+			return;
+		}
+
+		if (!elevator_is_ok) {
+			ROS_INFO_STREAM("2023_intaking_server : elevator is not ok, unflipping fourbar!");
 			behavior_actions::FourbarElevatorPath2023Goal pathGoal;
 			pathGoal.path = "unflip_fourbar";
 			pathGoal.reverse = false;
@@ -227,9 +291,10 @@ public:
 				}
 				r.sleep();
 			}
-			if (goal->unflip_outtake) {
-				return;
-			}
+		}
+
+		if (goal->unflip_fourbar) {
+			return;
 		}
 
 		behavior_actions::FourbarElevatorPath2023Goal pathGoal;

@@ -1,7 +1,7 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
-#include <behavior_actions/Intake2023Action.h>
+#include <behavior_actions/Intaking2023Action.h>
 #include <behavior_actions/FourbarElevatorPath2023Action.h>
 #include <behavior_actions/Placing2023Action.h>
 #include <behavior_actions/GamePieceState2023.h>
@@ -23,7 +23,7 @@ protected:
 	ros::Subscriber game_piece_sub_;
 
 	actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action> path_ac_;
-	actionlib::SimpleActionClient<behavior_actions::Intake2023Action> ac_intake_;
+	actionlib::SimpleActionClient<behavior_actions::Intaking2023Action> ac_intaking_;
 	actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction> ac_hold_position_;
 
 	double server_timeout_;
@@ -36,7 +36,7 @@ public:
 	PlacingServer2023(std::string name) :
 		as_(nh_, name, boost::bind(&PlacingServer2023::executeCB, this, _1), false),
 		action_name_(name),
-   		ac_intake_("/intake/intake_server_2023", true),
+   		ac_intaking_("/intaking/intaking_server_2023", true),
 		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true),
 		ac_hold_position_("/hold_position/hold_position_server", true)
 	{
@@ -137,8 +137,8 @@ public:
 			return;
 		}
 
-		if (!ac_intake_.waitForServer(ros::Duration(server_timeout_))) {
-			ROS_ERROR_STREAM("2023_placing_server : timed out connecting to intake server, aborting");
+		if (!ac_intaking_.waitForServer(ros::Duration(server_timeout_))) {
+			ROS_ERROR_STREAM("2023_placing_server : timed out connecting to intaking server, aborting");
 			result_.success = false;
 			as_.setAborted(result_);
 			return;
@@ -219,20 +219,19 @@ public:
 			}
 		}
 
-		behavior_actions::Intake2023Goal intake_goal_;
-		intake_goal_.go_fast = true;
-		intake_goal_.outtake = true; // don't change this
-		ac_intake_.sendGoal(intake_goal_);
+		behavior_actions::Intaking2023Goal intaking_goal_;
+		intaking_goal_.outtake = true; // don't change this
+		ac_intaking_.sendGoal(intaking_goal_);
 
-		if (!(waitForResultAndCheckForPreempt(ros::Duration(outtake_time_), ac_intake_, as_, true) && ac_intake_.getState() == ac_intake_.getState().SUCCEEDED)) {
-			if (ac_intake_.getState() == actionlib::SimpleClientGoalState::ACTIVE || ac_intake_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+		if (!(waitForResultAndCheckForPreempt(ros::Duration(outtake_time_), ac_intaking_, as_, true) && ac_intaking_.getState() == ac_intaking_.getState().SUCCEEDED)) {
+			if (ac_intaking_.getState() == actionlib::SimpleClientGoalState::ACTIVE || ac_intaking_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
 				ROS_INFO_STREAM("2023_placing_server : stopping outtaking");
-				ac_intake_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				ac_intaking_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			} else {
 				ROS_ERROR_STREAM("2023_placing_server : error with intake server! aborting!");
 				result_.success = false;
 				as_.setAborted(result_);
-				ac_intake_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				ac_intaking_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				return;
 			}
 		}
