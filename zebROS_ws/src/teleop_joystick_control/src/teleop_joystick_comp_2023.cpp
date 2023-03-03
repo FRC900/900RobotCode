@@ -106,9 +106,9 @@ imu_zero::ImuZeroAngle imu_cmd;
 
 uint8_t autoMode() {
 	// if ignoring starting positions, set the same auto modes for the three listed next to the switch position
-	//      L  M      R
-	// up = 1, 2, and 3
-	// mid = 4, 5, and 6
+	//        L  M      R
+	// up =   1, 2, and 3
+	// mid =  4, 5, and 6
 	// down = 7, 8, and 9
 	ROS_INFO_STREAM("teleop_joystick_comp_2023 : auto_mode = " << std::to_string(auto_mode * 3 + auto_starting_pos));
 	return auto_mode * 3 + auto_starting_pos;

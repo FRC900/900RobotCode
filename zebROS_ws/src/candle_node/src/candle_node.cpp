@@ -3,20 +3,24 @@
 #include <ros/ros.h>
 #include <frc_msgs/MatchSpecificData.h>
 #include <frc_msgs/ButtonBoxState2023.h>
+#include <behavior_actions/AutoState.h>
 
-#define MAX_LED 34
-#define MID_START 0
-#define MID_COUNT 8
-#define RIGHT_START 8
-#define RIGHT_COUNT 13
-#define LEFT_START 21
-#define LEFT_COUNT 13
+constexpr uint8_t MAX_LED = 34;
+constexpr uint8_t MID_START = 0;
+constexpr uint8_t MID_COUNT = 8;
+constexpr uint8_t RIGHT_START = 8;
+constexpr uint8_t RIGHT_COUNT = 13;
+constexpr uint8_t LEFT_START = 21;
+constexpr uint8_t LEFT_COUNT = 13;
 
 struct NodeCTX {
     uint8_t team_colour;
     bool cone_button_pressed;
     bool cube_button_pressed;
     bool updated;
+    bool disabled;
+    uint8_t auto_mode;
+
 
     NodeCTX() :
         team_colour{3},
@@ -26,13 +30,21 @@ struct NodeCTX {
     {}
 
     void team_colour_callback(const frc_msgs::MatchSpecificData& msg) {
+        disabled = msg.Disabled;
         if (msg.allianceColor != this->team_colour) {
             ROS_INFO_STREAM("Updating alliance colour LEDs...");
             this->team_colour = msg.allianceColor;
             this->updated = true;
         }
     }
+
     void button_box_callback(const frc_msgs::ButtonBoxState2023& msg) {
+        if (disabled) {
+            if (1 <= auto_mode && auto_mode <= 3) {
+                
+            }
+        }
+
         if (msg.topMiddleConePress && !this->cone_button_pressed) {
             this->cone_button_pressed = true;
             this->updated = true;
@@ -43,10 +55,15 @@ struct NodeCTX {
             this->cube_button_pressed = true;
             this->updated = true;
         } else if (msg.topRightCubeRelease && this->cube_button_pressed) {
-            this->cube_button_pressed = false;
+            this->cube_button_pressed bv= false;
             this->updated = true;
         }
     }
+
+    void auto_mode_callback(const behavior_actions::AutoMode& msg) {
+        auto_mode = msg.auto_mode;
+    }
+
 };
 
 int main(int argc, char **argv) {

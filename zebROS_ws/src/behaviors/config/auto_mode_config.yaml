@@ -22,8 +22,16 @@ auto_mode_1: ["place_cone_high", "drive_out_community"]
 auto_mode_2: ["place_cone_high", "balance_facing_away"]
 auto_mode_3: ["place_cone_high", "drive_out_community"]
 
+auto_mode_4: ["drive_out_community"]
+auto_mode_5: ["balance_facing_away"]
+auto_mode_6: ["drive_out_community"]
+
+auto_mode_7: []
+auto_mode_8: []
+auto_mode_9: []
+
 # Examples
-#auto_mode_1: ["tuning"]
+#auto_mode_1: ["tunin9g"]
 #auto_mode_2: ["map_relative_barrel_racing_path"]
 #auto_mode_3: ["map_relative_bounce_path"]
 #auto_mode_4: ["map_relative_slalom_path"]
