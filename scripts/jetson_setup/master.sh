@@ -47,7 +47,7 @@ export CUDA_CACHE_MAXSIZE=104857600
 export CUDA_CACHE_PATH=/home/ubuntu/.nv/ComputeCache
 
 echo "mounted / recording" >> /home/ubuntu/bagfiles/mounted.txt
-/home/ubuntu/2023RobotCode/zebROS_ws/ROSJetsonMaster.sh roslaunch controller_node 2023_compbot_combined.launch 
+/home/ubuntu/2023RobotCode/zebROS_ws/ROSJetsonMaster.sh roslaunch controller_node 2023_compbot_combined.launch record:=true
 # TODO - enable recording for comp
 #record:=true
 
