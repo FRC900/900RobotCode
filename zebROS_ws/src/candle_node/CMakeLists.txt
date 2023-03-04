@@ -14,6 +14,11 @@ find_package(catkin REQUIRED COMPONENTS
     candle_controller_msgs
     frc_msgs
     behavior_actions
+    sensor_msgs
+    tf2_ros
+    tf2_geometry_msgs
+    tf2
+    angles
 )
 
 ## System dependencies are found with CMake's conventions
