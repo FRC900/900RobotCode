@@ -26,7 +26,8 @@ struct NodeCTX {
         team_colour{3},
         cone_button_pressed{false},
         cube_button_pressed{false},
-        updated{false}
+        updated{false},
+        disabled{false}
     {}
 
     void team_colour_callback(const frc_msgs::MatchSpecificData& msg) {
@@ -36,15 +37,14 @@ struct NodeCTX {
             this->team_colour = msg.allianceColor;
             this->updated = true;
         }
+        if (msg.Disabled != this->disabled) {
+            ROS_INFO_STREAM("Updating auto LEDs...");
+            disabled = msg.Disabled;
+            updated = true;
+        }
     }
 
     void button_box_callback(const frc_msgs::ButtonBoxState2023& msg) {
-        if (disabled) {
-            if (1 <= auto_mode && auto_mode <= 3) {
-                
-            }
-        }
-
         if (msg.topMiddleConePress && !this->cone_button_pressed) {
             this->cone_button_pressed = true;
             this->updated = true;
@@ -62,6 +62,7 @@ struct NodeCTX {
 
     void auto_mode_callback(const behavior_actions::AutoModeConstPtr& msg) {
         auto_mode = msg->auto_mode;
+        updated = true;
     }
 
 };
@@ -97,6 +98,48 @@ int main(int argc, char **argv) {
 
     // ROS loop
     while (ros::ok()) {
+        if (ctx.disabled && ctx.updated) {
+            candle_controller_msgs::Colour colour_req;
+            colour_req.request.start = 0;
+            colour_req.request.count = MAX_LED;
+            if (ctx.auto_mode <= 3) {
+                // up (placing autos)
+                candle_controller_msgs::Animation animation_req;
+                animation_req.request.animation_type = animation_req.request.ANIMATION_TYPE_RAINBOW;
+                animation_req.request.brightness = 1.0;
+                animation_req.request.speed = 1.0;
+                if (animation_client.call(animation_req)) {
+                    ROS_INFO_STREAM("Updated LEDs");
+                    ctx.updated = false;
+                } else {
+                    ROS_ERROR_STREAM("Failed to update LEDs");
+                }
+            }
+            else if (ctx.auto_mode <= 6) {
+                // middle (engage/drive back)
+                colour_req.request.red = 0;
+                colour_req.request.green = 0;
+                colour_req.request.blue = 255;
+                if (colour_client.call(colour_req)) {
+                    ROS_INFO_STREAM("Updated LEDs");
+                    ctx.updated = false;
+                } else {
+                    ROS_ERROR_STREAM("Failed to update LEDs");
+                }
+            }
+            else {
+                // no-op
+                colour_req.request.red = 255;
+                colour_req.request.green = 0;
+                colour_req.request.blue = 0;
+                if (colour_client.call(colour_req)) {
+                    ROS_INFO_STREAM("Updated LEDs");
+                    ctx.updated = false;
+                } else {
+                    ROS_ERROR_STREAM("Failed to update LEDs");
+                }
+            }
+        }
         // Robot alliance colour changed
         if (ctx.updated) {
             candle_controller_msgs::Colour colour_req;

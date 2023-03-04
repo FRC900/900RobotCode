@@ -175,6 +175,9 @@ public:
 				path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				return;
 			}
+
+			result_.success = true;
+			as_.setSucceeded(result_);
 			return;
 		}
 
@@ -243,7 +246,6 @@ public:
 		pathGoal.path = pathForGamePiece(game_piece, goal->node) + "_reverse";
 		pathGoal.reverse = false;
 		
-
 		path_ac_.sendGoal(pathGoal);
 
 		if (!(waitForResultAndCheckForPreempt(ros::Duration(-1), path_ac_, as_) && path_ac_.getState() == path_ac_.getState().SUCCEEDED)) {
@@ -254,6 +256,7 @@ public:
 			return;
 		}
 
+		result_.success = true;
 		as_.setSucceeded(result_);
 	}
 

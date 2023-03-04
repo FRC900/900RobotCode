@@ -608,14 +608,16 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				ROS_INFO_STREAM("teleop_joystick_comp_2023 : snapping to nearest cone and enabling robot relative driving mode!");
 				if (snapConeCubeSrv.call(srv))
 				{
-					ROS_INFO_STREAM("Using angle of " << srv.response.nearest_cone_angle);
-					robot_orientation_driver->setTargetOrientation(srv.response.nearest_cone_angle, true /*from teleop*/);
-					teleop_cmd_vel->setRobotOrient(true, 0);
-					talon_swerve_drive_controller::SetXY center_srv;
-					center_srv.request.x = srv.response.cube_point.x;
-					center_srv.request.y = srv.response.cube_point.y;
-					if (!setCenterSrv.call(center_srv)) {
-						ROS_ERROR_STREAM("Unable to set center of rotation");
+					if (srv.response.nearest_cone_angle > -900) {
+						ROS_INFO_STREAM("Using angle of " << srv.response.nearest_cone_angle);
+						robot_orientation_driver->setTargetOrientation(srv.response.nearest_cone_angle, true /*from teleop*/);
+						teleop_cmd_vel->setRobotOrient(true, 0);
+						talon_swerve_drive_controller::SetXY center_srv;
+						center_srv.request.x = srv.response.cube_point.x;
+						center_srv.request.y = srv.response.cube_point.y;
+						if (!setCenterSrv.call(center_srv)) {
+							ROS_ERROR_STREAM("Unable to set center of rotation");
+						}
 					}
 				}
 			}
@@ -632,6 +634,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				if (!setCenterSrv.call(center_srv)) {
 					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
 					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
+				} else {
+					ROS_INFO_STREAM("Set center of rotation to zero");
 				}
 			}
 
@@ -642,14 +646,16 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				ROS_INFO_STREAM("teleop_joystick_comp_2023 : snapping to nearest cube and enabling robot relative driving mode!");
 				if (snapConeCubeSrv.call(srv))
 				{
-					ROS_INFO_STREAM("Using angle of " << srv.response.nearest_cube_angle);
-					robot_orientation_driver->setTargetOrientation(srv.response.nearest_cube_angle, true /*from teleop*/);
-					teleop_cmd_vel->setRobotOrient(true, 0);
-					talon_swerve_drive_controller::SetXY center_srv;
-					center_srv.request.x = srv.response.cube_point.x;
-					center_srv.request.y = srv.response.cube_point.y;
-					if (!setCenterSrv.call(center_srv)) {
-						ROS_ERROR_STREAM("Unable to set center of rotation");
+					if (srv.response.nearest_cube_angle > -900) {
+						ROS_INFO_STREAM("Using angle of " << srv.response.nearest_cube_angle);
+						robot_orientation_driver->setTargetOrientation(srv.response.nearest_cube_angle, true /*from teleop*/);
+						teleop_cmd_vel->setRobotOrient(true, 0);
+						talon_swerve_drive_controller::SetXY center_srv;
+						center_srv.request.x = srv.response.cube_point.x;
+						center_srv.request.y = srv.response.cube_point.y;
+						if (!setCenterSrv.call(center_srv)) {
+							ROS_ERROR_STREAM("Unable to set center of rotation");
+						}
 					}
 				}
 			}
@@ -666,6 +672,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				if (!setCenterSrv.call(center_srv)) {
 					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
 					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
+				} else {
+					ROS_INFO_STREAM("Set center of rotation to zero");
 				}
 			}
 

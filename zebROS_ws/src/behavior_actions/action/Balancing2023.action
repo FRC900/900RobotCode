@@ -2,5 +2,6 @@
 bool towards_charging_station # if forward is towards charging station
 ---
 # result
+bool success
 ---
 # feedback

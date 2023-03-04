@@ -299,5 +299,7 @@
 		/zed_objdetect/temperature/imu
 		/zed_objdetect/temperature/left
 		/zed_objdetect/temperature/right
+		/zed_objdetect/left/image_rect_color
+		/zed_objdetect/depth/depth_registered
 		"/>
 </launch>

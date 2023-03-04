@@ -78,12 +78,16 @@ class SnapToConeCube2023
             if ((ros::Time::now() - nearest_cube_angle_.time) < ros::Duration(timeout_)) {
                 res.nearest_cube_angle = nearest_cube_angle_.angle;
                 res.cube_point = nearest_cube_point_;
+            } else {
+                res.nearest_cube_angle = -900;
             }
 
             if ((ros::Time::now() - nearest_cone_angle_.time) < ros::Duration(timeout_)) {
                 res.nearest_cone_angle  = nearest_cone_angle_.angle;
                 res.cone_point = nearest_cone_point_;
-            } 
+            } else {
+                res.nearest_cone_angle = -900;
+            }
     
             res.success = true;
             return true;

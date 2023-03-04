@@ -18,7 +18,7 @@
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_left_hub", "stop_intaking", "shoot", "drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
 
-auto_mode_1: ["place_cone_high", "drive_out_community"]
+auto_mode_1: ["place_cone_high", "drive_out_community"] # add drive out community
 auto_mode_2: ["place_cone_high", "balance_facing_away"]
 auto_mode_3: ["place_cone_high", "drive_out_community"]
 

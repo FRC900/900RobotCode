@@ -214,7 +214,9 @@ class AutoBalancing:
                     r.sleep()
                 
             # publish the feedback
+            self._result.success = True
             self._as.publish_feedback(self._feedback)
+            self._as.set_succeeded(self._result)
             r.sleep()
             
 

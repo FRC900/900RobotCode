@@ -688,6 +688,9 @@ class AutoNode {
 		}
 
 		behavior_actions::Placing2023Goal goal;
+		goal.from_Trex = true;
+		goal.align_intake = false;
+		goal.step = goal.MOVE;
 
 		uint8_t requested_game_piece = 255;
 
@@ -732,10 +735,19 @@ class AutoNode {
 		}
 		placing_ac_.sendGoal(goal);
 		waitForActionlibServer(placing_ac_, 10.0, "placing_server");
+
+		goal.step = goal.PLACE_RETRACT;
+
+		placing_ac_.sendGoal(goal);
+		waitForActionlibServer(placing_ac_, 10.0, "placing_server");
 		return true;
 	}
 
 	bool autoBalancefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		if(!balancing_ac.waitForServer(ros::Duration(5))){
+			shutdownNode(ERROR,"Auto node - couldn't find balancing actionlib server");
+			return false;
+		}
 		ROS_INFO_STREAM("Running auto balance!==============");
 		if (!action_data.hasMember("goal"))
 		{
@@ -750,6 +762,7 @@ class AutoNode {
 			goal.towards_charging_station = false;
 		}
 		balancing_ac.sendGoal(goal);
+		waitForActionlibServer(balancing_ac, 10.0, "balancing_server");
 		ROS_INFO_STREAM("Success!");
 		
 	}
@@ -915,7 +928,7 @@ class AutoNode {
 
 	int init()
 	{	
-		if (!spline_gen_cli_.waitForExistence(ros::Duration(15.0)))
+		if (!spline_gen_cli_.waitForExistence(ros::Duration(5.0)))
 		{
 			ROS_ERROR("Wait (15 sec) timed out, for Spline Gen Service in auto_node");
 		}
