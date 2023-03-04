@@ -223,7 +223,7 @@ public:
 		}
 
 		behavior_actions::Intaking2023Goal intaking_goal_;
-		intaking_goal_.outtake = true; // don't change this
+		intaking_goal_.outtake = game_piece == goal->CUBE ? intaking_goal_.OUTTAKE_CUBE : intaking_goal_.OUTTAKE_CONE; // don't change this
 		ac_intaking_.sendGoal(intaking_goal_);
 
 		if (!(waitForResultAndCheckForPreempt(ros::Duration(outtake_time_), ac_intaking_, as_, true) && ac_intaking_.getState() == ac_intaking_.getState().SUCCEEDED)) {

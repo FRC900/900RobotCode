@@ -7,7 +7,10 @@ uint8 piece
 
 bool unflip_fourbar
 
-bool outtake
+uint8 INTAKE=0
+uint8 OUTTAKE_CUBE=1
+uint8 OUTTAKE_CONE=2
+uint8 outtake
 ---
 # result
 bool timed_out

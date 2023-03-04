@@ -44,7 +44,8 @@ protected:
 	double elev_pos_;
 
 	double speed_;
-	double outtake_speed_;
+	double cone_outtake_speed_;
+	double cube_outtake_speed_;
 	double small_speed_; // for holding cube/cone in
 
 	actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action> path_ac_;
@@ -188,9 +189,15 @@ public:
 			return;
 		}
 
-		if (!nh_.getParam("outtake_speed", outtake_speed_))
+		if (!nh_.getParam("cone_outtake_speed", cone_outtake_speed_))
 		{
-			ROS_ERROR_STREAM("2023_intake_server : could not find outtake_speed");
+			ROS_ERROR_STREAM("2023_intake_server : could not find cone_outtake_speed");
+			return;
+		}
+
+		if (!nh_.getParam("cube_outtake_speed", cube_outtake_speed_))
+		{
+			ROS_ERROR_STREAM("2023_intake_server : could not find cube_outtake_speed");
 			return;
 		}
 		
@@ -208,7 +215,8 @@ public:
 			ddr_.registerVariable<double>("server_timeout", &server_timeout_, "Server timeout", 0, 30);
 			ddr_.registerVariable<double>("current_threshold", &current_threshold_, "Current threshold before stopping intake, some weird unit", 0, 300);
 			ddr_.registerVariable<double>("intake_speed", &speed_, "Intake speed (percent output)", 0, 1);
-			ddr_.registerVariable<double>("outtake_speed", &outtake_speed_, "Outtake speed (percent output)", 0, 1);
+			ddr_.registerVariable<double>("cone_outtake_speed", &cone_outtake_speed_, "Cone outtake speed (percent output)", 0, 1);
+			ddr_.registerVariable<double>("cube_outtake_speed", &cube_outtake_speed_, "Cube outtake speed (percent output)", 0, 1);
 			ddr_.registerVariable<double>("intake_small_speed", &small_speed_, "Intake small speed for holding game piece in (percent output)", 0, 1);
 		}
 
@@ -236,10 +244,10 @@ public:
 		bool elevator_is_ok = elev_pos_ < 0.2;
 		ROS_INFO_STREAM("pos is  " << elev_pos_ << (elevator_is_ok ? " ok" : " no"));
 
-		if (goal->outtake) {
+		if (goal->outtake != goal->INTAKE) {
 			ROS_INFO_STREAM("2023_intaking_server : outtaking");
 			std_msgs::Float64 percent_out;
-			percent_out.data = -outtake_speed_;
+			percent_out.data = goal->outtake == goal->OUTTAKE_CONE ? -cone_outtake_speed_ : -cube_outtake_speed_;
 			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 
 			while (true) {

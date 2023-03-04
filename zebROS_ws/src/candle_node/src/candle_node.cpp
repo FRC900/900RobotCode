@@ -1,9 +1,11 @@
 #include <candle_controller_msgs/Colour.h>
 #include <candle_controller_msgs/Animation.h>
+#include <candle_controller_msgs/Brightness.h>
 #include <ros/ros.h>
 #include <frc_msgs/MatchSpecificData.h>
 #include <frc_msgs/ButtonBoxState2023.h>
 #include <behavior_actions/AutoMode.h>
+//#include <sensor_msgs/Imu.h>
 
 constexpr uint8_t MAX_LED = 34;
 constexpr uint8_t MID_START = 0;
@@ -20,6 +22,7 @@ struct NodeCTX {
     bool updated;
     bool disabled;
     uint8_t auto_mode;
+    double imu_angle;
 
 
     NodeCTX() :
@@ -61,8 +64,10 @@ struct NodeCTX {
     }
 
     void auto_mode_callback(const behavior_actions::AutoModeConstPtr& msg) {
-        auto_mode = msg->auto_mode;
-        updated = true;
+        if (this->auto_mode != msg->auto_mode) {
+            this->auto_mode = msg->auto_mode;
+            this->updated = true;
+        }
     }
 
 };
@@ -76,11 +81,13 @@ int main(int argc, char **argv) {
 
     // Team colour subscriber/callback
     ros::Subscriber team_colour_subscriber = node.subscribe("/frcrobot_rio/match_data", 0, &NodeCTX::team_colour_callback, &ctx);
-    ros::Subscriber button_box_subscriber = node.subscribe("/frcrobot_rio/js1", 100, &NodeCTX::button_box_callback, &ctx);
+    ros::Subscriber button_box_subscriber = node.subscribe("/frcrobot_rio/button_box_states", 100, &NodeCTX::button_box_callback, &ctx);
+    ros::Subscriber auto_mode_subscriber = node.subscribe("/auto/auto_mode", 100, &NodeCTX::auto_mode_callback, &ctx);
 
     // ROS service clients (setting the CANdle)
-    ros::ServiceClient colour_client = node.serviceClient<candle_controller_msgs::Colour>("candle_controller/colour");
-    ros::ServiceClient animation_client = node.serviceClient<candle_controller_msgs::Animation>("candle_controller/animation");
+    ros::ServiceClient colour_client = node.serviceClient<candle_controller_msgs::Colour>("/frcrobot_jetson/candle_controller/colour");
+    ros::ServiceClient animation_client = node.serviceClient<candle_controller_msgs::Animation>("/frcrobot_jetson/candle_controller/animation");
+    ros::ServiceClient brightness_client = node.serviceClient<candle_controller_msgs::Brightness>("/frcrobot_jetson/candle_controller/brightness");
 
     // Wait for the CANdle services to start
     colour_client.waitForExistence();
@@ -91,6 +98,11 @@ int main(int argc, char **argv) {
     clear_req.request.start = 0;
     clear_req.request.count = MAX_LED;
     while (!colour_client.call(clear_req)) {
+        delay.sleep();
+    }
+    candle_controller_msgs::Brightness brightness_req;
+    brightness_req.request.brightness = 1.0;
+    while (!brightness_client.call(brightness_req)) {
         delay.sleep();
     }
     ROS_INFO_STREAM("Candle node running; cleared LEDs.");
@@ -107,7 +119,9 @@ int main(int argc, char **argv) {
                 candle_controller_msgs::Animation animation_req;
                 animation_req.request.animation_type = animation_req.request.ANIMATION_TYPE_RAINBOW;
                 animation_req.request.brightness = 1.0;
-                animation_req.request.speed = 1.0;
+                animation_req.request.speed = 0.5;
+                animation_req.request.start = 0;
+                animation_req.request.count = MAX_LED;
                 if (animation_client.call(animation_req)) {
                     ROS_INFO_STREAM("Updated LEDs");
                     ctx.updated = false;
@@ -117,8 +131,8 @@ int main(int argc, char **argv) {
             }
             else if (ctx.auto_mode <= 6) {
                 // middle (engage/drive back)
-                colour_req.request.red = 0;
-                colour_req.request.green = 0;
+                colour_req.request.red = 255;
+                colour_req.request.green = 255;
                 colour_req.request.blue = 255;
                 if (colour_client.call(colour_req)) {
                     ROS_INFO_STREAM("Updated LEDs");
@@ -130,7 +144,7 @@ int main(int argc, char **argv) {
             else {
                 // no-op
                 colour_req.request.red = 255;
-                colour_req.request.green = 0;
+                colour_req.request.green = 128;
                 colour_req.request.blue = 0;
                 if (colour_client.call(colour_req)) {
                     ROS_INFO_STREAM("Updated LEDs");
@@ -141,7 +155,7 @@ int main(int argc, char **argv) {
             }
         }
         // Robot alliance colour changed
-        if (ctx.updated) {
+        else if (ctx.updated) {
             candle_controller_msgs::Colour colour_req;
             colour_req.request.start = 0;
             colour_req.request.count = MAX_LED;

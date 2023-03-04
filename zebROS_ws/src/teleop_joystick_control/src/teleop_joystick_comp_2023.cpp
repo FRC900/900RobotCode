@@ -612,12 +612,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 						ROS_INFO_STREAM("Using angle of " << srv.response.nearest_cone_angle);
 						robot_orientation_driver->setTargetOrientation(srv.response.nearest_cone_angle, true /*from teleop*/);
 						teleop_cmd_vel->setRobotOrient(true, 0);
-						talon_swerve_drive_controller::SetXY center_srv;
-						center_srv.request.x = srv.response.cube_point.x;
-						center_srv.request.y = srv.response.cube_point.y;
-						if (!setCenterSrv.call(center_srv)) {
-							ROS_ERROR_STREAM("Unable to set center of rotation");
-						}
+						// talon_swerve_drive_controller::SetXY center_srv;
+						// center_srv.request.x = srv.response.cube_point.x;
+						// center_srv.request.y = srv.response.cube_point.y;
+						// if (!setCenterSrv.call(center_srv)) {
+						// 	ROS_ERROR_STREAM("Unable to set center of rotation");
+						// }
 					}
 				}
 			}
@@ -628,15 +628,15 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].buttonARelease)
 			{
 				teleop_cmd_vel->setRobotOrient(false, 0);
-				talon_swerve_drive_controller::SetXY center_srv;
-				center_srv.request.x = 0;
-				center_srv.request.y = 0;
-				if (!setCenterSrv.call(center_srv)) {
-					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
-					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
-				} else {
-					ROS_INFO_STREAM("Set center of rotation to zero");
-				}
+				// talon_swerve_drive_controller::SetXY center_srv;
+				// center_srv.request.x = 0;
+				// center_srv.request.y = 0;
+				// if (!setCenterSrv.call(center_srv)) {
+				// 	ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
+				// 	ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
+				// } else {
+				// 	ROS_INFO_STREAM("Set center of rotation to zero");
+				// }
 			}
 
 			//Joystick1: buttonB
@@ -650,12 +650,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 						ROS_INFO_STREAM("Using angle of " << srv.response.nearest_cube_angle);
 						robot_orientation_driver->setTargetOrientation(srv.response.nearest_cube_angle, true /*from teleop*/);
 						teleop_cmd_vel->setRobotOrient(true, 0);
-						talon_swerve_drive_controller::SetXY center_srv;
-						center_srv.request.x = srv.response.cube_point.x;
-						center_srv.request.y = srv.response.cube_point.y;
-						if (!setCenterSrv.call(center_srv)) {
-							ROS_ERROR_STREAM("Unable to set center of rotation");
-						}
+						// talon_swerve_drive_controller::SetXY center_srv;
+						// center_srv.request.x = srv.response.cube_point.x;
+						// center_srv.request.y = srv.response.cube_point.y;
+						// if (!setCenterSrv.call(center_srv)) {
+						// 	ROS_ERROR_STREAM("Unable to set center of rotation");
+						// }
 					}
 				}
 			}
@@ -666,15 +666,15 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].buttonBRelease)
 			{
 				teleop_cmd_vel->setRobotOrient(false, 0);
-				talon_swerve_drive_controller::SetXY center_srv;
-				center_srv.request.x = 0;
-				center_srv.request.y = 0;
-				if (!setCenterSrv.call(center_srv)) {
-					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
-					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
-				} else {
-					ROS_INFO_STREAM("Set center of rotation to zero");
-				}
+				// talon_swerve_drive_controller::SetXY center_srv;
+				// center_srv.request.x = 0;
+				// center_srv.request.y = 0;
+				// if (!setCenterSrv.call(center_srv)) {
+				// 	ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
+				// 	ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
+				// } else {
+				// 	ROS_INFO_STREAM("Set center of rotation to zero");
+				// }
 			}
 
 			//Joystick1: buttonX
@@ -719,7 +719,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].bumperRightPress)
 			{
 				behavior_actions::Intaking2023Goal goal;
-				goal.outtake = true;
+				goal.outtake = goal.OUTTAKE_CONE;
 				intaking_ac->sendGoal(goal);
 			}
 			if(joystick_states_array[0].bumperRightButton)

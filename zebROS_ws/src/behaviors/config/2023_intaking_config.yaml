@@ -7,7 +7,8 @@ joint: intake_leader # for current sensing
 time_before_reverse: 0.0
 
 intake_speed: 0.5
-outtake_speed: 0.8
+cone_outtake_speed: 0.8
+cube_outtake_speed: 0.4
 intake_small_speed: 0.05
 
 dynamic_reconfigure: true

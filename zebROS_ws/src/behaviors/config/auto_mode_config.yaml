@@ -52,7 +52,7 @@ ros_rate: 10 # in ms, used for all ros rate calls
 
 drive_out_community:
     type: cmd_vel
-    duration: 3
+    duration: 4.2
     cmd_vel:
         x: -1.0
         y: 0.0 

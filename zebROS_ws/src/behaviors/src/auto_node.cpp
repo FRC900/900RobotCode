@@ -764,7 +764,7 @@ class AutoNode {
 		balancing_ac.sendGoal(goal);
 		waitForActionlibServer(balancing_ac, 10.0, "balancing_server");
 		ROS_INFO_STREAM("Success!");
-		
+		return true;
 	}
 
 	bool intakefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {

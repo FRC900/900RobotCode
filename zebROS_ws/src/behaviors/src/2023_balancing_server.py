@@ -49,8 +49,8 @@ class AutoBalancing:
                                                 execute_cb=self.balancing_callback, auto_start=False)
         self._as.start()
 
-        res = handle_param_load("imu_sub_topic")
-        imu_sub_topic = res if res else "/imu/zeroed_imu"
+        # res = handle_param_load("imu_sub_topic")
+        imu_sub_topic = "/imu/zeroed_imu"
         rospy.loginfo(f"Using imu topic {imu_sub_topic}")
         
         self.balancer_client = actionlib.SimpleActionClient("balancer_server", behavior_actions.msg.Balancer2023Action)
@@ -216,8 +216,8 @@ class AutoBalancing:
             # publish the feedback
             self._result.success = True
             self._as.publish_feedback(self._feedback)
-            self._as.set_succeeded(self._result)
             r.sleep()
+        self._as.set_succeeded(self._result)
             
 
 if __name__ == '__main__':
