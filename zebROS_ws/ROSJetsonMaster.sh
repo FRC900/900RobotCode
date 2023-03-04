@@ -14,7 +14,8 @@ elif [ -f /home/ubuntu/2023RobotCode/zebROS_ws/devel/setup.bash ] ; then
     source /home/ubuntu/2023RobotCode/zebROS_ws/devel/setup.bash
     #export ROS_IP=10.9.0.8
     export ROS_IP=`ip route get 10.9.0.1 | sed 's/ via [[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+\.[[:digit:]]\+//' | sed 's/lo //' | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+' | tail -1`
-
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-12.0/compat
+    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda-11.4/targets/aarch64-linux/lib
 #    if [ $ROS_IP == "10.9.0.9" ] ; then
 #        echo "Resetting time on secondary Jetson"
 #        echo ubuntu | sudo -S systemctl stop ntp.service
