@@ -36,7 +36,8 @@
 #include <behavior_actions/Intaking2023Action.h>
 #include <behavior_actions/Placing2023Action.h>
 #include <behavior_actions/Intake2023Action.h>
-#include <talon_swerve_drive_controller/SetXY.h>
+#include <behavior_actions/FourbarElevatorPath2023Action.h>
+// #include <talon_swerve_drive_controller/SetXY.h>
 
 struct DynamicReconfigVars
 {
@@ -122,7 +123,7 @@ void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 }
 
 ros::ServiceClient snapConeCubeSrv;
-ros::ServiceClient setCenterSrv;
+// ros::ServiceClient setCenterSrv;
 
 void moveDirection(int x, int y, int z) {
 	geometry_msgs::Twist cmd_vel;
@@ -164,6 +165,7 @@ void zero_all_diag_commands(void)
 std::shared_ptr<actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>> distance_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2023Action>> intaking_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>> placing_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action>> pathing_ac;
 
 void preemptActionlibServers(void)
 {
@@ -257,6 +259,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 		ROS_WARN_STREAM("Preempting all actions!");
 		placing_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		pathing_ac->cancelAllGoals();
 	}
 	if(button_box.redRelease) {
 	}
@@ -1188,7 +1191,7 @@ int main(int argc, char **argv)
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 	IMUZeroSrv = n.serviceClient<imu_zero::ImuZeroAngle>("/imu/set_imu_zero", false, service_connection_header);
 	snapConeCubeSrv = n.serviceClient<teleop_joystick_control::SnapConeCube>("/snap_to_angle/snap_cone_cube", false, service_connection_header);
-	setCenterSrv = n.serviceClient<talon_swerve_drive_controller::SetXY>("/frcrobot_jetson/swerve_drive_controller/change_center_of_rotation", false, service_connection_header);	
+	// setCenterSrv = n.serviceClient<talon_swerve_drive_controller::SetXY>("/frcrobot_jetson/swerve_drive_controller/change_center_of_rotation", false, service_connection_header);	
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 
@@ -1199,6 +1202,7 @@ int main(int argc, char **argv)
 
 	intaking_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Intaking2023Action>>("/intaking/intaking_server_2023", true);
 	placing_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>>("/placing/placing_server_2023", true);
+	pathing_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action>>("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true);
 
 	const ros::Duration startup_wait_time_secs(15);
 	const ros::Time startup_start_time = ros::Time::now();

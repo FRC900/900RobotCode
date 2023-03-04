@@ -423,9 +423,14 @@ public:
 		path_ac_.sendGoal(pathGoal);
 
 		ros::Time start = ros::Time::now();
-		while (!path_ac_.getState().isDone()  && (ros::Time::now() - start) < ros::Duration(path_zero_timeout_)) {
+		while (!path_ac_.getState().isDone()) {
 			ros::spinOnce();
-			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : bringing game piece back... timing out after " << (ros::Time::now() - start).toSec() << " seconds");
+			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : bringing game piece back");
+			if ((as_.isPreemptRequested() || !ros::ok()) && (ros::Time::now() - start) > ros::Duration(path_zero_timeout_)) {
+				ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : preempted... has been " << (ros::Time::now() - start).toSec() << " seconds");
+				path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				break;
+			}
 			r.sleep();
 		}
 
