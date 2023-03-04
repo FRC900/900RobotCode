@@ -138,6 +138,7 @@ int main(int argc, char **argv) {
     delay.sleep();
 
     // ROS loop
+    ros::Rate r(10);
     while (ros::ok()) {
         if (ctx.disabled && ctx.updated) {
             candle_controller_msgs::Colour colour_req;
@@ -248,6 +249,7 @@ int main(int argc, char **argv) {
             }
         }
 
+        r.sleep();
         ros::spinOnce();
     }
     return 0;
