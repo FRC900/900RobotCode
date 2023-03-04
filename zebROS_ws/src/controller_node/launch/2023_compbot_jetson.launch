@@ -123,9 +123,8 @@ elevator_controller_2023 four_bar_controller_2023 intake_leader_controller
 	<!--<node name="throttle_zed" pkg="topic_tools" type="throttle"  args="messages /zed_objdetect/left/image_rect_color 4" output="screen"/>-->
 	<!-- Consider adding 2023 launch file for recording -->
 	
-	<!--
-	<include file="$(find controller_node)/launch/record_2023_no_zed.launch" if="$(arg record)" />
-	-->
+	
+	<include file="$(find controller_node)/launch/record_2023_compbot.launch" if="$(arg record)" />
 
 	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
 	

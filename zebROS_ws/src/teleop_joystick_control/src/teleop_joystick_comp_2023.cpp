@@ -448,22 +448,9 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.bottomRightWhiteRelease) {
 	}
 
-	if(button_box.leftGreenPress)
-	{
-		moveDirection(0, 1, 0);
-	}
-	if(button_box.leftGreenButton)
-	{
-		sendDirection();
-	}
-	if(button_box.leftGreenRelease)
-	{
-		moveDirection(0, -1, 0);
-	}
-
 	if(button_box.rightGreenPress)
 	{
-		moveDirection(0, -1, 0);
+		moveDirection(0, 1, 0);
 	}
 	if(button_box.rightGreenButton)
 	{
@@ -471,8 +458,23 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	}
 	if(button_box.rightGreenRelease)
 	{
+		moveDirection(0, -1, 0);
+	}
+
+
+	if(button_box.leftGreenPress)
+	{
+		moveDirection(0, -1, 0);
+	}
+	if(button_box.leftGreenButton)
+	{
+		sendDirection();
+	}
+	if(button_box.leftGreenRelease)
+	{
 		moveDirection(0, 1, 0);
 	}
+
 
 	if(button_box.topGreenPress)
 	{
