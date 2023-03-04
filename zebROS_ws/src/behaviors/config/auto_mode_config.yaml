@@ -26,7 +26,7 @@ auto_mode_4: ["drive_out_community"]
 auto_mode_5: ["balance_facing_away"]
 auto_mode_6: ["drive_out_community"]
 
-auto_mode_7: []
+auto_mode_7: ["place_cone_high"]
 auto_mode_8: []
 auto_mode_9: []
 

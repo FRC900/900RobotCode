@@ -28,13 +28,13 @@ paths:
   # DO NOT REVERSE THESE WHATEVER YOU DO
   # not sure why we go up then down to unfold...
   mid_cone: [[0.45, 4.75], [0.6, 4.75], [0.55, 0.75], [0.7, 0.64]] # will actually start at [0.45, 4.75]
-  high_cone: [[0.45, 4.75], [0.6, 4.75], [1.0, 0.75], [1.2, 1.0]] # maybe fourbar 1.3
+  high_cone: [[0.45, 4.75], [0.6, 4.75], [1.0, 0.75], [1.2, 1.3]] # maybe fourbar 1.3
 
   mid_cone_reverse: [[0.7, 0.64], [0.55, 0.75], [0.0, 0.75], [0.0, 0.0]]
-  high_cone_reverse: [[1.2, 1.0], [1.0, 0.75], [0.0, 0.75], [0.0, 0.0]]
+  high_cone_reverse: [[1.2, 1.3], [1.0, 0.75], [0.0, 0.75], [0.0, 0.0]]
 
   mid_cone_auto: [[0.0, 0.0], [0.0, 0.75], [0.55, 0.75], [0.7, 0.64]]
-  high_cone_auto: [[0.0, 0.0], [0.0, 0.75], [1.0, 0.75], [1.2, 1.0]]
+  high_cone_auto: [[0.0, 0.0], [0.0, 0.75], [1.0, 0.75], [1.2, 1.3]]
 
 
   mid_cube: [[0.45, 4.75], [0.6, 4.75], [0.55, 0.75], [0.7, 0.5]] # this is a guess
