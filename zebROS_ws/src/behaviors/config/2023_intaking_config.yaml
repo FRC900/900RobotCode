@@ -9,6 +9,6 @@ time_before_reverse: 0.0
 intake_speed: 0.5
 cone_outtake_speed: 0.8
 cube_outtake_speed: 0.2
-intake_small_speed: 0.08
+intake_small_speed: 0.09
 
 dynamic_reconfigure: true
