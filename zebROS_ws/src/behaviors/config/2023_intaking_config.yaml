@@ -1,5 +1,5 @@
-cube_time: 0.8
-cone_time: 1.6
+cube_time: 0.0
+cone_time: 0.0
 server_timeout: 20.0
 path_zero_timeout: 5.0
 current_threshold: 150.0 # some arbitrary unit

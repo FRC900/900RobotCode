@@ -323,6 +323,11 @@ public:
 		while (!path_ac_.getState().isDone()) {
 			ros::spinOnce();
 			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for forward pather...");
+			if (current_current_ > current_threshold_) {
+				ROS_INFO_STREAM("2023_intaking_server : current exceeded");
+				path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				break;
+			}
 			if (as_.isPreemptRequested() || !ros::ok()) {
 				ROS_INFO_STREAM("2023_intaking_server : preempted.");
 
@@ -357,6 +362,8 @@ public:
 
 		ROS_INFO_STREAM("current: " << current_current_ << " threshold: " << current_threshold_);
 		
+		ros::Rate fast(50);
+
 		while (/*game_piece_state_.game_piece == behavior_actions::GamePieceState2023::NONE && */current_current_ < current_threshold_) {
 			ros::spinOnce();
 			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for a game piece... current = " << current_current_);
@@ -386,7 +393,8 @@ public:
 				as_.setPreempted(result_);
 				return;
 			}
-			r.sleep();
+			ros::spinOnce();
+			fast.sleep();
 		}
 
 		ROS_INFO_STREAM("current: " << current_current_ << " threshold: " << current_threshold_);

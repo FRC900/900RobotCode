@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
     tf2_geometry_msgs
     tf2
     angles
+    talon_state_msgs
 )
 
 ## System dependencies are found with CMake's conventions

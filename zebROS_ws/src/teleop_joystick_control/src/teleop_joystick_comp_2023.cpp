@@ -267,10 +267,10 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.topLeftConeButton) {
 	}
 	if(button_box.topLeftConePress) {
-		ROS_WARN_STREAM("teleop : unflipping outtake! really hope you're actually flipped!");
-		behavior_actions::Intaking2023Goal goal;
-		goal.unflip_fourbar =  true;
-		intaking_ac->sendGoal(goal);
+		// ROS_WARN_STREAM("teleop : unflipping outtake! really hope you're actually flipped!");
+		// behavior_actions::Intaking2023Goal goal;
+		// goal.unflip_fourbar =  true;
+		// intaking_ac->sendGoal(goal);
 	}
 	if(button_box.topLeftConeRelease) {
 	}
@@ -732,6 +732,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			}
 			if(joystick_states_array[0].bumperRightRelease)
 			{
+				intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 			}
 
 			//Joystick1: directionLeft
