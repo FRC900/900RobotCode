@@ -80,8 +80,8 @@ intake_leader_controller:
     voltage_compensation_Enable: True
     voltage_compensation_saturation: 12
     neutral_mode: Brake
-    status_1_general_period: 100 # Default = 10
-    status_2_feedback0_period: 100 # Default = 20
+    #status_1_general_period: 100 # Default = 10
+    #status_2_feedback0_period: 100 # Default = 20
     status_3_quadrature_period: 250
     #status_4_aintempvbat_period: 160
     #status_6_misc_period: 0
@@ -94,7 +94,7 @@ intake_leader_controller:
     status_13_base_pidf0_period: 250
     #status_14_turn_pidf1_period: 250
     status_15_firmwareapistatus_period: 250
-    #status_17_brushless_current_period: 50
+    status_17_brushless_current_period: 10
     neutral_deadband: 0.01
 
 # This one creates the /talon_states topic necessary in ROS

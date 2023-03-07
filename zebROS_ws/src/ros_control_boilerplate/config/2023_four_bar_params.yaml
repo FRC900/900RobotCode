@@ -52,5 +52,5 @@ four_bar_controller_2023:
         conversion_factor: 0.074906367 # set from chad
         neutral_deadband: 0.01 # set to be higher
 
-        dynamic_reconfigure: True
+        dynamic_reconfigure: False
         motion_s_curve_strength: 8
