@@ -40,11 +40,6 @@ class PathAction
 		bool debug_;
 		int ros_rate_;
 
-		// If true, use odom for x and y position and a separate yaw topic
-		// (from an IMU, perhaps) for the orientation.
-		// If false, use odom for x, y and orientation.
-		bool use_odom_orientation_;
-
 		// If true, use the subscribed pose topic for odom rather than the odom subscriber
 		bool use_pose_for_odom_;
 
@@ -56,30 +51,25 @@ class PathAction
 				   int ros_rate,
 				   const std::string &odom_topic,
 				   const std::string &pose_topic,
-				   bool use_odom_orientation,
 				   bool use_pose_for_odom,
-				   double time_offset)
+				   double time_offset,
+				   bool debug)
 			: nh_(nh)
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
 			, odom_sub_(nh_.subscribe(odom_topic, 1, &PathAction::odomCallback, this))
 			, pose_sub_(nh_.subscribe(pose_topic, 1, &PathAction::poseCallback, this))
+			, yaw_sub_(nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this))
 			, orientation_command_pub_(nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1))
 			, combine_cmd_vel_pub_(nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true))
 			, path_follower_(time_offset)
 			, final_pos_tol_(final_pos_tol)
 			, final_rot_tol_(final_rot_tol)
 			, server_timeout_(server_timeout)
-			, debug_(true) // TODO - config item?
+			, debug_(debug)
 			, ros_rate_(ros_rate)
-			, use_odom_orientation_(use_odom_orientation)
 			, use_pose_for_odom_(use_pose_for_odom)
 		{
-			if (!use_odom_orientation_)
-			{
-				yaw_sub_ = nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this);
-			}
-
 			std_msgs::Bool bool_msg;
 			bool_msg.data = false;
 			combine_cmd_vel_pub_.publish(bool_msg);
@@ -87,16 +77,32 @@ class PathAction
 			as_.start();
 		}
 
+		// "Odom" info can come from several potential sources
+		// One message type would be an actual odom message, e.g.
+		// from wheel odometry
+		// Another might be from something which generates a
+		// pose message, for example, ZED pose info which is fused
+		// odom + mapping info
+		// Support both types here.
+		// TODO - only subscribe to one or the other?  Looks
+		// like the separate pose_ message is just used for debugging
+		// printouts
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
 		{
-			//ROS_INFO_STREAM("odomCallback : msg = " << odom_msg);
+			if (debug_)
+			{
+				ROS_INFO_STREAM("odomCallback : msg = " << odom_msg.pose);
+			}
 			if (!use_pose_for_odom_)
 				odom_ = odom_msg;
 		}
 
 		void poseCallback(const geometry_msgs::PoseStamped &pose_msg)
 		{
-			//ROS_INFO_STREAM("poseCallback : msg = " << pose_msg);
+			if (debug_)
+			{
+				ROS_INFO_STREAM("poseCallback : msg = " << pose_msg.pose);
+			}
 			pose_ = pose_msg;
 			if (use_pose_for_odom_)
 			{
@@ -107,29 +113,21 @@ class PathAction
 
 		void yawCallback(const sensor_msgs::Imu &yaw_msg)
 		{
+			if (debug_)
+			{
+				ROS_INFO_STREAM("yawCallback : msg = " << yaw_msg.orientation);
+			}
 			orientation_ = yaw_msg.orientation;
 		}
 
+        // x & y axis are each controlled by a PID node which
+		// tries to close the error between the current odom / pose
+		// position and the desired location for each time step
+		// along the path.  This is a helper to create a map
+		// of state names to stucts which hold the 
+		// topics for each PID node
 		bool addAxis(const AlignActionAxisConfig &axis_config)
 		{
-			// TODO - give defaults so these aren't random values if getParam fails
-			double timeout = 10;
-			if (!nh_.getParam(axis_config.timeout_param_, timeout))
-			{
-				ROS_ERROR_STREAM("Could not read param "
-								 << axis_config.timeout_param_
-								 << " in align_server");
-				//return false;
-			}
-			double error_threshold = 1; //TODO this is not being used
-			if (!nh_.getParam(axis_config.error_threshold_param_, error_threshold))
-			{
-				ROS_ERROR_STREAM("Could not read param "
-								 << axis_config.error_threshold_param_
-								 << " in align_server");
-				//return false;
-			}
-
 			axis_states_.emplace(std::make_pair(axis_config.name_,
 												AlignActionAxisState(nh_,
 														axis_config.enable_pub_topic_,
@@ -159,15 +157,14 @@ class PathAction
 			odom_to_base_link_tf.transform.translation.x = odom_.pose.pose.position.x;
 			odom_to_base_link_tf.transform.translation.y = odom_.pose.pose.position.y;
 			odom_to_base_link_tf.transform.translation.z = 0;
-			if (use_odom_orientation_)
-			{
-				odom_to_base_link_tf.transform.rotation = odom_.pose.pose.orientation;
-			}
-			else
-			{
-				odom_to_base_link_tf.transform.rotation = orientation_;
-			}
+			odom_to_base_link_tf.transform.rotation = odom_.pose.pose.orientation;
 			//ros::message_operations::Printer< ::geometry_msgs::TransformStamped_<std::allocator<void>> >::stream(std::cout, "", odom_to_base_link_tf);
+
+			const double initial_field_relative_yaw = path_follower_.getYaw(orientation_);
+			ROS_INFO_STREAM("==== initial_field_relative_yaw = " << initial_field_relative_yaw);
+
+			const double initial_pose_yaw = path_follower_.getYaw(odom_.pose.pose.orientation);
+			ROS_INFO_STREAM("==== initial_pose_yaw = " << initial_pose_yaw);
 
 			// Transform the final point from robot to odom coordinates. Used each iteration to
 			// see if we've reached the end point, so do it once here rather than each time through
@@ -209,12 +206,6 @@ class PathAction
 				// Spin once to get the most up to date odom and yaw info
 				ros::spinOnce();
 
-				// If using a separate topic for orientation, merge the x+y from odom
-				// with the orientiation from that separate topic here
-				if (!use_odom_orientation_)
-				{
-					odom_.pose.pose.orientation = orientation_;
-				}
 				// This gets the point closest to current time plus lookahead distance
 				// on the path. We use this to generate a target for the x,y,orientation
 				ROS_INFO_STREAM("----------------------------------------------");
@@ -258,7 +249,7 @@ class PathAction
 				y_axis.setEnable(true);
 				y_axis.setCommand(next_waypoint.position.y);
 
-				command_msg.data = path_follower_.getYaw(next_waypoint.orientation);
+				command_msg.data = path_follower_.getYaw(next_waypoint.orientation) - initial_pose_yaw + initial_field_relative_yaw;
 				if (std::isfinite(command_msg.data))
 				{
 					orientation_command_pub_.publish(command_msg);
@@ -302,11 +293,13 @@ class PathAction
 				}
 			}
 
-			ROS_INFO_STREAM("    delta odom_ = " << odom_.pose.pose.position.x - starting_odom.pose.pose.position.x
+			ROS_INFO_STREAM("    final delta odom_ = " << odom_.pose.pose.position.x - starting_odom.pose.pose.position.x
 					<< ", " << odom_.pose.pose.position.y - starting_odom.pose.pose.position.y);
-			ROS_INFO_STREAM("    delta pose_ = " << pose_.pose.position.x - starting_pose.pose.position.x
+			ROS_INFO_STREAM("    final delta pose_ = " << pose_.pose.position.x - starting_pose.pose.position.x
 					<< ", " << pose_.pose.position.y - starting_pose.pose.position.y);
 
+			// Shut off publishing both combined x+y+rotation messages
+			// along with the combined cmd_vel output generated from them
 			enable_msg.data = false;
 			combine_cmd_vel_pub_.publish(enable_msg);
 
@@ -381,6 +374,16 @@ class PathAction
 		{
 			return ros_rate_;
 		}
+
+		void setDebug(double debug)
+		{
+			debug_ = debug;
+		}
+
+		double getDebug(void) const
+		{
+			return debug_;
+		}
 };
 
 int main(int argc, char **argv)
@@ -393,8 +396,8 @@ int main(int argc, char **argv)
 	double server_timeout = 15.0;
 	int ros_rate = 20;
 	double time_offset = 0;
-	bool use_odom_orientation = false;
 	bool use_pose_for_odom = false;
+	bool debug = false;
 
 	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
 	std::string pose_topic = "/zed_objdetect/pose";
@@ -404,9 +407,9 @@ int main(int argc, char **argv)
 	nh.getParam("/path_follower/path_follower/ros_rate", ros_rate);
 	nh.getParam("/path_follower/path_follower/odom_topic", odom_topic);
 	nh.getParam("/path_follower/path_follower/pose_topic", pose_topic);
-	nh.getParam("/path_follower/path_follower/use_odom_orientation", use_odom_orientation);
 	nh.getParam("/path_follower/path_follower/time_offset", time_offset);
 	nh.getParam("/path_follower/path_follower/use_pose_for_odom", use_pose_for_odom);
+	nh.getParam("/path_follower/path_follower/debug", debug);
 
 	PathAction path_action_server("path_follower_server", nh,
 								  final_pos_tol,
@@ -415,10 +418,11 @@ int main(int argc, char **argv)
 								  ros_rate,
 								  odom_topic,
 								  pose_topic,
-								  use_odom_orientation,
 								  use_pose_for_odom,
-								  time_offset);
+								  time_offset,
+								  debug);
 
+	// Set up structs to access PID nodes tracking x and y position
 	AlignActionAxisConfig x_axis("x", "x_position_pid/pid_enable", "x_position_pid/x_cmd_pub", "x_position_pid/x_state_pub", "x_position_pid/pid_debug", "x_timeout_param", "x_error_threshold_param");
 	AlignActionAxisConfig y_axis("y", "y_position_pid/pid_enable", "y_position_pid/y_cmd_pub", "y_position_pid/y_state_pub", "y_position_pid/pid_debug", "y_timeout_param", "y_error_threshold_param");
 
@@ -433,28 +437,38 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	ddynamic_reconfigure::DDynamicReconfigure ddr;
-	ddr.registerVariable<double>
-		("final_pos_tol",
-		 boost::bind(&PathAction::getFinalPosTol, &path_action_server),
-		 boost::bind(&PathAction::setFinalPosTol, &path_action_server, _1),
-		 "linear tolerance for hitting final waypoint", 0, 1);
-	ddr.registerVariable<double>
-		("final_rot_tol",
-		 boost::bind(&PathAction::getFinalRotTol, &path_action_server),
-		 boost::bind(&PathAction::setFinalRotTol, &path_action_server, _1),
-		 "rotational tolerance for hitting final waypoint", 0, 1);
-	ddr.registerVariable<double>
-		("server_timeout",
-		 boost::bind(&PathAction::getServerTimeout, &path_action_server),
-		 boost::bind(&PathAction::setServerTimeout, &path_action_server, _1),
-		 "how long to wait before timing out", 0, 150);
-	ddr.registerVariable<int>
-		("ros_rate",
-		 boost::bind(&PathAction::getRosRate, &path_action_server),
-		 boost::bind(&PathAction::setRosRate, &path_action_server, _1),
-		 "how far ahead the path follower looks to pick the next point to drive to", 0, 100);
-    ddr.publishServicesTopics();
+	bool dynamic_reconfigure = true;
+	nh.getParam("/path_follower/path_follower/dynamic_reconfigure", dynamic_reconfigure);
+	if (dynamic_reconfigure)
+	{
+		ddynamic_reconfigure::DDynamicReconfigure ddr;
+		ddr.registerVariable<double>
+			("final_pos_tol",
+			boost::bind(&PathAction::getFinalPosTol, &path_action_server),
+			boost::bind(&PathAction::setFinalPosTol, &path_action_server, _1),
+			"linear tolerance for hitting final waypoint", 0, 1);
+		ddr.registerVariable<double>
+			("final_rot_tol",
+			boost::bind(&PathAction::getFinalRotTol, &path_action_server),
+			boost::bind(&PathAction::setFinalRotTol, &path_action_server, _1),
+			"rotational tolerance for hitting final waypoint", 0, 1);
+		ddr.registerVariable<double>
+			("server_timeout",
+			boost::bind(&PathAction::getServerTimeout, &path_action_server),
+			boost::bind(&PathAction::setServerTimeout, &path_action_server, _1),
+			"how long to wait before timing out", 0, 150);
+		ddr.registerVariable<int>
+			("ros_rate",
+			boost::bind(&PathAction::getRosRate, &path_action_server),
+			boost::bind(&PathAction::setRosRate, &path_action_server, _1),
+			"frequency which the path follower loop updates pose -> PID -> motor output callbacks", 0, 200);
+		ddr.registerVariable<bool>
+			("debug",
+			boost::bind(&PathAction::getDebug, &path_action_server),
+			boost::bind(&PathAction::setDebug, &path_action_server, _1),
+			"enable debug messaged");
+		ddr.publishServicesTopics();
+	}
 
 	ros::spin();
 

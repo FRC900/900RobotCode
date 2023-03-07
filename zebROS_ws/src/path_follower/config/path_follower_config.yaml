@@ -1,17 +1,19 @@
 path_follower:
-    lookahead_distance: 0.4
     # Set odom topic from a launch file param to make it easier to use with sim odom
     # This fuses swerve_drive_controller/odom x&y strafe plus imu roll, pitch, yaw
     #odom_topic: "/swerve_imu_ukf/odometry/filtered"
     #odom_topic: "/frcrobot_jetson/swerve_drive_controller/odom"
     #pose_topic
-    use_odom_orientation: true # false == get yaw from IMU topic instead
+
     # Set this as a param so sim can use fake odom while the real robot
-    # uses ZED pose
+    # uses ZED pose. 
+    # TODO : have an external node which translates from odom -> pose
+    # and just have the path follower pull in that pose msg
     #use_pose_for_odom : true # true == use PoseStamped subscriber (e.g. zed camera pose) for odom rather than Odometry subscriber
     final_pos_tol: 0.01
     final_rot_tol: 0.005
     ros_rate: 100
     server_timeout: 15
-    start_point_radius: 0.05
     time_offset: 0.0
+
+    #debug: true
