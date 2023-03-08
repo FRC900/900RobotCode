@@ -528,7 +528,7 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 		}
 	}
 
-	read_tracer_.start_unique("Update sim CTRE encoders");
+	read_tracer_.start_unique("Update sim Pigeon2 yaw");
 	for (size_t joint_id = 0; joint_id < num_pigeon2s_; ++joint_id)
 	{
 		if (!pigeon2_local_hardwares_[joint_id])
