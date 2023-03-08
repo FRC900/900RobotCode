@@ -32,6 +32,8 @@ class PathAction
 		std::map<std::string, AlignActionAxisState> axis_states_;
 		ros::Publisher combine_cmd_vel_pub_;
 
+		ros::Publisher robot_relative_yaw_pub_;
+
 		PathFollower path_follower_;
 		double final_pos_tol_;
 		double final_rot_tol_;
@@ -62,6 +64,7 @@ class PathAction
 			, yaw_sub_(nh_.subscribe("/imu/zeroed_imu", 1, &PathAction::yawCallback, this))
 			, orientation_command_pub_(nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1))
 			, combine_cmd_vel_pub_(nh_.advertise<std_msgs::Bool>("path_follower_pid/pid_enable", 1, true))
+			, robot_relative_yaw_pub_(nh_.advertise<std_msgs::Float64>("robot_relative_yaw", 1, true))
 			, path_follower_(time_offset)
 			, final_pos_tol_(final_pos_tol)
 			, final_rot_tol_(final_rot_tol)
@@ -288,6 +291,10 @@ class PathAction
 					// node in teleop code
 					x_axis.setState(odom_.pose.pose.position.x);
 					y_axis.setState(odom_.pose.pose.position.y);
+
+					std_msgs::Float64 yaw_msg;
+					yaw_msg.data = path_follower_.getYaw(orientation_) - initial_field_relative_yaw;
+					robot_relative_yaw_pub_.publish(yaw_msg);
 
 					r.sleep();
 				}

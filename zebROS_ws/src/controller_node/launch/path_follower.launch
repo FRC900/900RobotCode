@@ -4,7 +4,7 @@
 		<arg name="odom_topic" default="/frcrobot_jetson/swerve_drive_controller/odom"/>
 		<arg name="pose_topic" default="/zed_objdetect/pose"/>
 		<arg name="use_pose_for_odom" default="true"/>
-		<arg name="year" default="2022"/>
+		<arg name="year" default="2023"/>
 
         <group ns="path_follower">
             <rosparam file="$(find path_follower)/config/path_follower_config.yaml" command="load"/>
@@ -39,7 +39,7 @@
                 <param name="command_timeout" value="0.5" />
                 <param name="enable_topic" value="path_follower_pid/pid_enable" />
                 <param name="name" value="path_follower_pid" />
-                <param name="orient_state_topic" value="/teleop/orient_strafing/state"/>
+                <param name="orient_state_topic" value="/path_follower/robot_relative_yaw"/>
             </node>
 
             <node name="x_position_pid" pkg="pid" type="controller" >
