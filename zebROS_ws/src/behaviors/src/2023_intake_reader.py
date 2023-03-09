@@ -18,10 +18,14 @@ def uint16_to_dist(u16: int):
 
 def parse_serial_msg(data: bytes):
     # functional programming is awesome
-    if "CRC error" in data:
+    if b"CRC error" in data:
         return None
     else:
-        return tuple(map(lambda s: uint16_to_dist(int(s)), data.decode().split(",")))
+        try:
+            toReturn = tuple(map(lambda s: uint16_to_dist(int(s)), data.decode().split(",")))
+            return toReturn
+        except:
+            return None
 
 def safeAverage(l: list):
     total = 0
@@ -39,11 +43,11 @@ def main():
     pub = rospy.Publisher("state", IntakeState2023, queue_size=1)
     rospy.init_node("intake_reader_2023", anonymous=True)
 
-    port = serial.Serial(rospy.get_param("port"), rospy.get_param("baud"))#, dsrdtr=True, rtscts=True)
+    port = serial.Serial(rospy.get_param("port"), rospy.get_param("baud"), timeout=1)#, dsrdtr=True, rtscts=True)
     samples = rospy.get_param("samples")
     min_range = rospy.get_param("min_range")
     max_range = rospy.get_param("max_range")
-    rospy.loginfo(f"intake_reader_2023: using to {port.port} @ {port.baudrate} baud. samples is {samples}. range is {min_range}-{max_range}m.")
+    rospy.loginfo(f"intake_reader_2023: using {port.port} @ {port.baudrate} baud. samples is {samples}. range is {min_range}-{max_range}m.")
 
     r = rospy.Rate(50)
 
@@ -79,9 +83,6 @@ def main():
         msg = IntakeState2023(leftDistance=averaged[0], rightDistance=averaged[1])
         pub.publish(msg)
         r.sleep()
+    port.close()
 
-if __name__ == '__main__':
-    try:
-        main()
-    except rospy.ROSInterruptException:
-        pass
+main()
