@@ -10,16 +10,16 @@ include("../cmake_modules/CMakeOpt.cmake")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-    roscpp
+    angles
+    behavior_actions
     candle_controller_msgs
     frc_msgs
-    behavior_actions
+    roscpp
     sensor_msgs
+    talon_state_msgs
     tf2_ros
     tf2_geometry_msgs
     tf2
-    angles
-    talon_state_msgs
 )
 
 ## System dependencies are found with CMake's conventions

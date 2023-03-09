@@ -23,7 +23,7 @@ add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-DNON_POLLING>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wextra>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-psabi>")
 #add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-pedantic>")
-#add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-fPIC>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-fPIC>")
 
 if (DEFINED CMAKE_TOOLCHAIN_FILE)  # Cross-build for Rio
   # Everything is in the toolchain file
