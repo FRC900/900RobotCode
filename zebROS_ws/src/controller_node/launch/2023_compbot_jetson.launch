@@ -80,10 +80,8 @@ elevator_controller_2023 four_bar_controller_2023 intake_leader_controller
 		</node>
 	</group>
 	
-	<!-- 
 	<include file="$(find controller_node)/launch/hold_position.launch"/>
 	<include file="$(find controller_node)/launch/path_follower.launch"/>
-	-->
 	
 	<include file="$(find controller_node)/launch/distance_to_pose.launch"/>
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
@@ -112,6 +110,9 @@ elevator_controller_2023 four_bar_controller_2023 intake_leader_controller
 	</include>
 
 	<include file="$(find behaviors)/launch/2023_game_piece_state.launch">
+	</include>
+
+	<include file="$(find behaviors)/launch/2023_align_to_grid.launch">
 	</include>
 
 	<node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/>
