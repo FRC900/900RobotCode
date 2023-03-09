@@ -256,6 +256,7 @@ class PathAction
 				if (std::isfinite(command_msg.data))
 				{
 					orientation_command_pub_.publish(command_msg);
+					ROS_INFO_STREAM("Orientation: " << command_msg.data);
 				}
 
 				if (as_.isPreemptRequested() || !ros::ok())
@@ -293,7 +294,7 @@ class PathAction
 					y_axis.setState(odom_.pose.pose.position.y);
 
 					std_msgs::Float64 yaw_msg;
-					yaw_msg.data = path_follower_.getYaw(orientation_) - initial_field_relative_yaw;
+					yaw_msg.data = path_follower_.getYaw(odom_.pose.pose.orientation);
 					robot_relative_yaw_pub_.publish(yaw_msg);
 
 					r.sleep();
