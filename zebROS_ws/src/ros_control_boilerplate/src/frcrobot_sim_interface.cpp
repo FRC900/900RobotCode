@@ -484,10 +484,13 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 		}
 		else if (mode == hardware_interface::TalonMode_MotionMagic)
 		{
+			// TODO : maybe apply this to velocity and position PID modes above,
+			// waiting on a motor where we actually need this function to test with
+			const double invert = talon_state.getInvert() ? -1.0 : 1.0;
 			// Do some ~magic~ to figure out position/velocity.
 			setSimCollection(talon_srx, talon_fx,
-					talon_state.getActiveTrajectoryPosition() / radians_scale,
-					talon_state.getActiveTrajectoryVelocity() / radians_per_second_scale);
+					invert * talon_state.getActiveTrajectoryPosition() / radians_scale,
+					invert * talon_state.getActiveTrajectoryVelocity() / radians_per_second_scale);
 		}
 	}
 
