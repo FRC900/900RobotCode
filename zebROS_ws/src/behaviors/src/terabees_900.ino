@@ -19,7 +19,7 @@
 
 #include <Wire.h>
 // For TeraRanger Evo
-#define SENSOR_ADDR 0x31  
+#define SENSOR_ADDR 0x31
 
 // Create a Cyclic Redundancy Checks table used in the "crc8" function
 static const uint8_t crc_table[] = {
@@ -141,6 +141,12 @@ void loop() {
   }
   else {
     Serial.println("!!!!!!!!!!!!!!!CRC error!!!!!!!!!!!!!!!");
+  }
+
+  while (Serial.available()) {
+    if (Serial.read() == 'r') { // *r*estart
+      watchdog_reboot(0, 0, 0);
+    }
   }
 
   delay(inter);                         // This delay is necessary to prevent reading too many times the same measurement (To be adapted depending on the sensor mode)

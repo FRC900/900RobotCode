@@ -13,6 +13,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+#define SEND_Y_STRAFE
+
 class holdPosition
 {
 	protected:

@@ -16,6 +16,7 @@ protected:
 	std::string action_name_;
 	// create messages that are used to published result
 	behavior_actions::Placing2023Result result_;
+	behavior_actions::Placing2023Feedback feedback_;
 
 	behavior_actions::GamePieceState2023 game_piece_state_;
 	ros::Time latest_game_piece_time_;
@@ -65,7 +66,7 @@ public:
 	}
 
 	template<class C, class S>
-	bool waitForResultAndCheckForPreempt(const ros::Duration & timeout, actionlib::SimpleActionClient<C> & ac, actionlib::SimpleActionServer<S> & as, bool preempt_at_timeout = false)
+	bool waitForResultAndCheckForPreempt(const ros::Duration & timeout, actionlib::SimpleActionClient<C> & ac, actionlib::SimpleActionServer<S> & as, bool preempt_at_timeout = false, boost::function<bool()> should_exit = [](){return false;})
 	{
 		bool negative_timeout = false;
 		if (timeout < ros::Duration(0, 0)) {
@@ -92,6 +93,10 @@ public:
 
 			if (ac.getState().isDone()) {
 				break;
+			}
+
+			if (should_exit()) {
+				return true;
 			}
 			r.sleep();
 		}
@@ -155,6 +160,62 @@ public:
 			ROS_INFO_STREAM("2023_placing_server : game piece override. detected = " << std::to_string(game_piece_state_.game_piece) << ", requested = " << std::to_string(goal->piece) << ". using requested value");
 		}
 
+		if (goal->step == goal->ALIGN_INTAKE) {
+			if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
+				ROS_ERROR_STREAM("2023_placing_server : game piece position data too old, aborting");
+				result_.success = false;
+				as_.setAborted(result_);
+				return;
+			}
+			double center_offset = game_piece_state_.offset_from_center;
+			if (isnan(center_offset)) {
+				ROS_ERROR_STREAM("2023_placing_server : game piece offset is NaN, aborting");
+				result_.success = false;
+				as_.setAborted(result_);
+				return;
+			}
+			path_follower_msgs::holdPositionGoal hold_position_goal_;
+			hold_position_goal_.pose.orientation.x = 0.0;
+			hold_position_goal_.pose.orientation.y = 0.0;
+			hold_position_goal_.pose.orientation.z = 0.0;
+			hold_position_goal_.pose.orientation.w = 1.0;
+
+			hold_position_goal_.pose.position.x = 0.0;
+			hold_position_goal_.pose.position.y = -center_offset;
+			hold_position_goal_.pose.position.z = 0.0;
+
+			hold_position_goal_.isAbsoluteCoord = false;
+
+			ROS_INFO_STREAM("2023_placing_server : holding position, y = " << hold_position_goal_.pose.position.y);
+
+			bool aligned = false;
+
+			ac_hold_position_.sendGoal(hold_position_goal_, actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>::SimpleDoneCallback(), actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction>::SimpleActiveCallback(),
+			  						    [&](const path_follower_msgs::holdPositionFeedbackConstPtr &feedback){
+											aligned = feedback->isAligned;
+											feedback_.intake_aligned = aligned;
+											as_.publishFeedback(feedback_);
+										});
+
+			// Ideally we want to enter parking config when we are aligned, but there isn't currently a way to set that from non-teleop
+
+			if (!waitForResultAndCheckForPreempt(ros::Duration(-1), ac_hold_position_, as_, false, [&aligned](){return aligned;})) {
+				if (aligned) {
+					ROS_INFO_STREAM("2023_placing_server : preempted, intake is aligned, returning success");
+					as_.setSucceeded(result_);
+				} else {
+					ROS_INFO_STREAM("2023_placing_server : preempted, intake not aligned, aborting");
+					result_.success = false;
+					as_.setAborted(result_);
+				}
+				ac_hold_position_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				return;
+			}
+
+			as_.setSucceeded(result_);
+			return;
+		}
+
 		behavior_actions::FourbarElevatorPath2023Goal pathGoal;
 
 		pathGoal.path = pathForGamePiece(game_piece, goal->node);
@@ -186,38 +247,6 @@ public:
 				ROS_ERROR_STREAM("2023_placing_server : game piece data too old, aborting");
 				result_.success = false;
 				as_.setAborted(result_);
-				return;
-			}
-		}
-
-		if (goal->align_intake) {
-			if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
-				ROS_ERROR_STREAM("2023_placing_server : game piece position data too old, aborting");
-				result_.success = false;
-				as_.setAborted(result_);
-				return;
-			}
-			path_follower_msgs::holdPositionGoal hold_position_goal_;
-			hold_position_goal_.pose.orientation.x = 0.0;
-			hold_position_goal_.pose.orientation.y = 0.0;
-			hold_position_goal_.pose.orientation.z = 0.0;
-			hold_position_goal_.pose.orientation.w = 1.0;
-
-			hold_position_goal_.pose.position.x = 0.0;
-			hold_position_goal_.pose.position.y = -game_piece_state_.offset_from_center;
-			hold_position_goal_.pose.position.z = 0.0;
-
-			hold_position_goal_.isAbsoluteCoord = false;
-
-			ROS_INFO_STREAM("2023_placing_server : holding position, y = " << hold_position_goal_.pose.position.y);
-
-			ac_hold_position_.sendGoal(hold_position_goal_);
-
-			if (!waitForResultAndCheckForPreempt(ros::Duration(-1), ac_hold_position_, as_)) {
-				ROS_INFO_STREAM("2023_placing_server : hold position server timed out, aborting");
-				result_.success = false;
-				as_.setAborted(result_);
-				ac_hold_position_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				return;
 			}
 		}

@@ -199,7 +199,6 @@ void place() {
 	goal.node = node;
 	goal.piece = game_piece;
 	goal.override_game_piece = true;
-	goal.align_intake = false;
 	goal.step = moved ? goal.PLACE_RETRACT : goal.MOVE;
 	placing_ac->sendGoal(goal);
 	moved = !moved;

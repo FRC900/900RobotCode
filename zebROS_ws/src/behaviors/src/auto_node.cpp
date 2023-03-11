@@ -689,7 +689,6 @@ class AutoNode {
 
 		behavior_actions::Placing2023Goal goal;
 		goal.from_Trex = true;
-		goal.align_intake = false;
 		goal.step = goal.MOVE;
 
 		uint8_t requested_game_piece = 255;

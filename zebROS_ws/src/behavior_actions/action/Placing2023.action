@@ -4,8 +4,6 @@ uint8 MID=1
 uint8 HIGH=2
 uint8 node
 
-bool align_intake # if this is true, move sideways: centered to the node -> game piece in intake centered to node (using terabees or something)
-
 # if override_game_piece is true, will use `piece` instead of the detected game piece
 bool override_game_piece
 
@@ -15,8 +13,9 @@ uint8 BASE_TOWARDS_US_CONE=2
 uint8 BASE_AWAY_US_CONE=3
 uint8 piece
 
-uint8 MOVE=0
-uint8 PLACE_RETRACT=1
+uint8 MOVE=0 # move elevator/fourbar up
+uint8 ALIGN_INTAKE=1 # uses hold position to align the intake (using terabees). runs until preempt
+uint8 PLACE_RETRACT=2 # outtakes and then retracts fourbar/elevator
 uint8 step
 
 bool from_Trex # if we are in the safe position for placing
@@ -25,3 +24,4 @@ bool from_Trex # if we are in the safe position for placing
 bool success
 ---
 # feedback
+bool intake_aligned # for intake aligning
