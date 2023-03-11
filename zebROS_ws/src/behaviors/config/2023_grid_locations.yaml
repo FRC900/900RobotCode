@@ -4,7 +4,7 @@ grid_locations:
   # rotation = 180 for red, 0 for blue
   # closest to origin
   pos1: ["cone", 0.519] # cone
-  pos2: ["cube", 1.078] # cube, tag id 8 blue or 1 red
+  pos2: ["cube", 1.078] # cube, tag id 6 blue or 3 red
   pos3: ["cone", 1.637] # cone
   # coop grid
   pos4: ["cone", 2.195] # cone
@@ -12,7 +12,7 @@ grid_locations:
   pos6: ["cone", 3.313] # cone
   # third grid
   pos7: ["cone", 3.872] # cone
-  pos8: ["cube", 4.431] # cube, tag id 6 blue or 3 red
+  pos8: ["cube", 4.431] # cube, tag id 8 blue or 1 red
   pos9: ["cone", 4.989] # cone
 
 # x distance from the apriltag on the cube node to the end of the things that stick out between nodes

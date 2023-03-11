@@ -15,11 +15,11 @@
     <arg name="camera_name"          value="$(arg zed_name)" />
     <arg name="camera_model"         value="$(arg camera_model)" />
     <arg name="base_frame"           value="base_link" />
-    <arg name="cam_pos_x"            value="0.152" />
-    <arg name="cam_pos_y"            value="-0.224" />
-    <arg name="cam_pos_z"            value="0.802" />
+    <arg name="cam_pos_x"            value="0.2665" />
+    <arg name="cam_pos_y"            value="0.0" />
+    <arg name="cam_pos_z"            value="0.4917" />
     <arg name="cam_roll"             value="0.0" />
-	  <arg name="cam_pitch"            value="0.681" />
+	  <arg name="cam_pitch"            value="-0.052359" />
     <arg name="cam_yaw"              value="0.0" />
   </include>
 
@@ -42,6 +42,7 @@
       <param name="depth_algorithm" type="string" value="$(arg depth_algorithm)" />
     </node>
 
+    <!-- separate screen to world instance for apriltags -->
     <node pkg="tf_object_detection" name="tf_object_screen_to_world_tags" type="tf_object_screen_to_world" output="screen">
       <remap from="obj_detection_msg" to="tag_detection_msg"/>
       <remap from="object_detection_world" to="tag_detection_world"/>

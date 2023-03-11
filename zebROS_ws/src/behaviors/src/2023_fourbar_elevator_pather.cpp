@@ -210,6 +210,7 @@ public:
 					as_.setAborted(result_);
 					return false;
 				}
+				as_.setAborted(result_);
 				return false;
 			}
 

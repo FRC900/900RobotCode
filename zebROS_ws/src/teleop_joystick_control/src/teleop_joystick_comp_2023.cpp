@@ -58,6 +58,9 @@ struct DynamicReconfigVars
 	double rotation_epsilon{0.01};		  // "Threshold Z-speed deciding if the robot is stopped"
 	double rotation_axis_scale{1.0};      // "Scale factor for rotation axis stick input"
 	double angle_to_add{angles::from_degrees(2)};
+	double cone_length{0.3302/2};
+	double cube_length{0.2032/2};
+	double angle_threshold{angles::from_degrees(1)};
 } config;
 
 std::unique_ptr<TeleopCmdVel<DynamicReconfigVars>> teleop_cmd_vel;
@@ -506,6 +509,8 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	}
 }
 
+bool aligned_to_game_piece = false;
+
 void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& event)
 {
 	//So the code can use specific joysticks
@@ -617,30 +622,16 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 						ROS_INFO_STREAM("Using angle of " << srv.response.nearest_cone_angle);
 						robot_orientation_driver->setTargetOrientation(srv.response.nearest_cone_angle, true /*from teleop*/);
 						teleop_cmd_vel->setRobotOrient(true, 0);
-						talon_swerve_drive_controller::SetXY center_srv;
-						center_srv.request.x = 0;
-						center_srv.request.y = srv.response.cone_point.x;
-						if (!setCenterSrv.call(center_srv)) {
-							ROS_ERROR_STREAM("Unable to set center of rotation");
-						}
 					}
 				}
 			}
 			if(joystick_states_array[0].buttonAButton)
 			{
-
+				
 			}
 			if(joystick_states_array[0].buttonARelease)
 			{
 				teleop_cmd_vel->setRobotOrient(false, 0);
-				talon_swerve_drive_controller::SetXY center_srv;
-				center_srv.request.x = 0;
-				center_srv.request.y = 0;
-				if (!setCenterSrv.call(center_srv)) {
-					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
-				} else {
-					ROS_INFO_STREAM("Set center of rotation to zero");
-				}
 			}
 
 			//Joystick1: buttonB
@@ -651,33 +642,18 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				if (snapConeCubeSrv.call(srv))
 				{
 					if (srv.response.nearest_cube_angle > -900) {
-						ROS_INFO_STREAM("Using angle of " << srv.response.nearest_cube_angle);
+						ROS_INFO_STREAM_THROTTLE(1, "Using angle of " << srv.response.nearest_cube_angle);
 						robot_orientation_driver->setTargetOrientation(srv.response.nearest_cube_angle, true /*from teleop*/);
 						teleop_cmd_vel->setRobotOrient(true, 0);
-						talon_swerve_drive_controller::SetXY center_srv;
-						center_srv.request.x = 0;
-						center_srv.request.y = srv.response.cube_point.x;
-						if (!setCenterSrv.call(center_srv)) {
-							ROS_ERROR_STREAM("Unable to set center of rotation");
-						}
 					}
 				}
 			}
 			if(joystick_states_array[0].buttonBButton)
-			{
-
+			{	
 			}
 			if(joystick_states_array[0].buttonBRelease)
 			{
 				teleop_cmd_vel->setRobotOrient(false, 0);
-				talon_swerve_drive_controller::SetXY center_srv;
-				center_srv.request.x = 0;
-				center_srv.request.y = 0;
-				if (!setCenterSrv.call(center_srv)) {
-					ROS_ERROR_STREAM("Unable to set center of rotation to ZERO, BIG PROBLEMS=============");
-				} else {
-					ROS_INFO_STREAM("Set center of rotation to zero");
-				}
 			}
 
 			//Joystick1: buttonX

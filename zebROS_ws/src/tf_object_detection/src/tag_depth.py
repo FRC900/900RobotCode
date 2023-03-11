@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 import rospy
 from field_obj.msg import TFDetection, TFObject
-from cuda_apriltag_ros.msg import AprilTagDetectionArray as CUDAAprilTagDetectionArray
+#from cuda_apriltag_ros.msg import AprilTagDetectionArray as CUDAAprilTagDetectionArray
 from apriltag_ros.msg import AprilTagDetectionArray, AprilTagDetection
 
 
@@ -32,19 +32,19 @@ def depth_check_cb(msg):
 
     pub.publish(TFdet)
 
-def cuda_main():
-    global pub 
-    sub_topic = "/cuda_tag_detections"
-    pub_topic = "tag_detection_msg"
-    rospy.init_node('tag_depth', anonymous=True)
+# def cuda_main():
+#     global pub 
+#     sub_topic = "/cuda_tag_detections"
+#     pub_topic = "tag_detection_msg"
+#     rospy.init_node('tag_depth', anonymous=True)
 
-    sub = rospy.Subscriber(sub_topic, CUDAAprilTagDetectionArray, depth_check_cb)
-    pub = rospy.Publisher(pub_topic, TFDetection, queue_size=3)
+#     sub = rospy.Subscriber(sub_topic, CUDAAprilTagDetectionArray, depth_check_cb)
+#     pub = rospy.Publisher(pub_topic, TFDetection, queue_size=3)
 
-    try:
-        rospy.spin()
-    except KeyboardInterrupt:
-        print("Shutting down")
+#     try:
+#         rospy.spin()
+#     except KeyboardInterrupt:
+#         print("Shutting down")
 
 def regular_main():
     global pub 
@@ -63,7 +63,7 @@ def regular_main():
 cuda = False
 
 if __name__ == "__main__":
-    if cuda:
-        cuda_main()
-    else:
+    # if cuda:
+    #     cuda_main()
+    # else:
         regular_main()

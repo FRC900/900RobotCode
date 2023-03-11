@@ -16,6 +16,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <path_follower_msgs/holdPositionAction.h>
 #include <sensor_msgs/Imu.h>
+#include <frc_msgs/MatchSpecificData.h>
 
 geometry_msgs::Point operator-(const geometry_msgs::Point& lhs, const geometry_msgs::Point& rhs) {
     geometry_msgs::Point p;
@@ -88,6 +89,7 @@ protected:
   field_obj::Detection latest_;
   ros::Subscriber sub_;
   ros::Subscriber imu_sub_;
+  ros::Subscriber match_sub_;
   std::map<int, Tag> tags_;
   std::map<int, GridLocation> gridLocations_; // should probably be uint8_t
   actionlib::SimpleActionClient<behavior_actions::PathToAprilTagAction> client_;
@@ -95,6 +97,7 @@ protected:
   double xOffset_;
   double holdPosTimeout_;
   double latest_yaw_;
+  uint8_t alliance_;
 
 public:
 
@@ -106,6 +109,7 @@ public:
     ac_hold_position_("/hold_position/hold_position_server", true)
   {
     imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/zeroed_imu", 1, &AlignToGridAction::imuCb, this);
+    match_sub_ = nh_.subscribe<frc_msgs::MatchSpecificData>("/frcrobot_rio/match_data", 1, &AlignToGridAction::matchCb, this);
     XmlRpc::XmlRpcValue tagList;
     nh_.getParam("tags", tagList);
 
@@ -149,6 +153,10 @@ public:
     latest_yaw_ = getYaw(msg->orientation);
   }
 
+  void matchCb(const frc_msgs::MatchSpecificDataConstPtr &msg) {
+    alliance_ = msg->allianceColor;
+  }
+
   void callback(const field_obj::DetectionConstPtr& msg) {
     // need to use transforms...
     // oh wait no we don't! we can tell spline srv what frame id it is relevant to
@@ -172,7 +180,7 @@ public:
   }
 
   int getAllianceRelativeStationNumber(int alliance, int gridStation) {
-    // 1 = red alliance, 0 = blue
+    // 0 = red alliance, 1 = blue
     if (alliance == 1) {
       return (8-(gridStation-1))+1;
     }
@@ -193,7 +201,7 @@ public:
     int closestId = closestTag.value();
     Tag tag = tags_[closestId];
 
-    int gridStation = getAllianceRelativeStationNumber(goal->alliance, goal->grid_id);
+    int gridStation = getAllianceRelativeStationNumber(alliance_, goal->grid_id);
     GridLocation gridLocation = gridLocations_[gridStation];
 
 
@@ -205,11 +213,7 @@ public:
     geometry_msgs::Point offset;
     offset.x = -xOffset_; // TODO consider going to a bit behind this and then driving forward for a preset amount of time? (in case we overshoot)
     ROS_INFO_STREAM("xOffset: " << offset.x);
-    if (goal->alliance == 1) {
-      offset.y = gridLocation.y - tag.location.y; // should be gridLocation.y - tag.location.y
-    } else {
-      offset.y = -(gridLocation.y - tag.location.y);
-    }
+    offset.y = (alliance_ == 1 ? -1 : 1) * (gridLocation.y - tag.location.y); // should be gridLocation.y - tag.location.y
     offset.z = 0;
     ROS_INFO_STREAM("grid " << gridLocation.y << " tag " << tag.location.y);
     ROS_INFO_STREAM("ydif: " << gridLocation.y - tag.location.y);
@@ -226,7 +230,7 @@ public:
 
     behavior_actions::PathToAprilTagGoal aprilGoal;
     aprilGoal.id = closestId;
-    aprilGoal.tagRotation = tag.rotation;
+    aprilGoal.tagRotation = M_PI;
     aprilGoal.offset = pose;
     aprilGoal.frame_id = "front_bumper";
 
@@ -243,12 +247,12 @@ public:
         r.sleep();
     }
 
-    path_follower_msgs::holdPositionGoal holdPosGoal;
-    holdPosGoal.pose.position.x = goal->alliance == 0 ? 0.5 : -0.5;
-    q.setRPY(0, 0, tag.rotation - latest_yaw_);
-    holdPosGoal.pose.orientation = tf2::toMsg(q);
+    // path_follower_msgs::holdPositionGoal holdPosGoal;
+    // holdPosGoal.pose.position.x = 0.5; // drive into wall
+    // q.setRPY(0, 0, tag.rotation - latest_yaw_);
+    // holdPosGoal.pose.orientation = tf2::toMsg(q);
 
-    ac_hold_position_.sendGoal(holdPosGoal);
+    // ac_hold_position_.sendGoal(holdPosGoal);
     ros::Time start = ros::Time::now();
 
     while (!ac_hold_position_.getState().isDone() && (ros::Time::now() - start < ros::Duration(holdPosTimeout_))) {
