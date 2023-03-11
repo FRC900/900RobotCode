@@ -7,3 +7,4 @@ string frame_id # frame id to touch the apriltag with
 # result
 ---
 # feedback
+float32 percent_complete

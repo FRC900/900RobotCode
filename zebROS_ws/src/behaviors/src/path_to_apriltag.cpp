@@ -73,8 +73,11 @@ protected:
     tf2_ros::TransformListener tf_listener_;
     double latestImuZ_{0};
     double timeout_;
+    double percent_complete_{};
+    
     field_obj::Detection latest_;
     actionlib::SimpleActionClient<path_follower_msgs::PathAction> ac_;
+
     ros::ServiceClient client_;
     ros::Subscriber sub_;
     ros::Subscriber subImu_;
@@ -178,6 +181,10 @@ public:
 
     void imuCallback(const sensor_msgs::ImuConstPtr& msg) {
         latestImuZ_ = getYaw(msg->orientation);
+    }  
+
+    void feedbackCb(const path_follower_msgs::PathFeedbackConstPtr& feedback) {
+        percent_complete_ = feedback->percent_complete;
     }
 
     void executeCB(const behavior_actions::PathToAprilTagGoalConstPtr &goal)
@@ -236,7 +243,8 @@ public:
         pathGoal.path = path;
         pathGoal.waypointsIdx = spline_gen_srv.response.waypointsIdx;
         pathGoal.waypoints = spline_gen_srv.response.waypoints;
-        ac_.sendGoal(pathGoal);
+        ac_.sendGoal(pathGoal, /* Done cb */ NULL, /*Active*/ NULL, boost::bind(&PathToAprilTagAction::feedbackCb, this, _1));
+
 
         ros::Rate r(30);
         while (!ac_.getState().isDone()) {
@@ -246,6 +254,10 @@ public:
                 as_.setPreempted();
                 return;
             }
+            feedback_.percent_complete = percent_complete_;
+            as_.publishFeedback(feedback_); 
+
+            ros::spinOnce();
             r.sleep();
         }
 

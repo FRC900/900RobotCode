@@ -34,6 +34,7 @@
 #include <behavior_actions/Placing2023Action.h>
 #include <behavior_actions/FourbarElevatorPath2023Action.h>
 #include <talon_swerve_drive_controller/SetXY.h>
+#include <behavior_actions/AlignAndPlaceGrid2023Action.h>
 
 struct DynamicReconfigVars
 {
@@ -114,11 +115,14 @@ uint8_t autoMode() {
 	return auto_mode * 3 + auto_starting_pos;
 }
 
+uint8_t alliance_color{};
+
 void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 {
 	// TODO : if in diagnostic mode, zero all outputs on the
 	// transition from enabled to disabled
 	robot_is_disabled = msg.Disabled;
+	alliance_color = msg.allianceColor;
 }
 
 ros::ServiceClient snapConeCubeSrv;
@@ -165,6 +169,8 @@ std::shared_ptr<actionlib::SimpleActionClient<path_follower_msgs::holdPositionAc
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2023Action>> intaking_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>> placing_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action>> pathing_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndPlaceGrid2023Action>> align_and_place_ac;
+
 
 void preemptActionlibServers(void)
 {
@@ -187,7 +193,8 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 bool sendRobotZero = false;
 bool sendSetAngle = false;
 double old_angular_z = 0.0;
-
+bool use_pathing = false;
+double grid_position = 0;
 bool moved = false;
 
 void place() {
@@ -211,26 +218,20 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 
 	if(button_box.lockingSwitchPress)
 	{
-		// // Clear out pressed state when switching modes
-		// // so that the press will be seen by the new mode
-		// joystick1_left_trigger_pressed = false;
-		// joystick1_right_trigger_pressed = false;
-		// zero_all_diag_commands();
-		//
-		// diagnostics_mode = true;
-		// robot_orientation_driver->stopRotation();
-		// ROS_WARN_STREAM("Enabling diagnostics mode!");
-
-		//teleop_cmd_vel->setRobotOrient(true, 0.0);
-		//ROS_WARN_STREAM("Robot relative mode!");
 	}
 
 	if(button_box.lockingSwitchButton)
 	{
+		ROS_INFO_STREAM_THROTTLE(1, "Use pathing = true");
+		use_pathing = true;
 	}
 	else
 	{
+		ROS_INFO_STREAM_THROTTLE(1, "Use pathing = false");
+		use_pathing = false;
 	}
+	ROS_INFO_STREAM_THROTTLE(2, "Use pathing = " << use_pathing);
+	ROS_INFO_STREAM_THROTTLE(2, "Alliance color = " << alliance_color);
 
 	if(button_box.lockingSwitchRelease)
 	{
@@ -258,6 +259,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 		placing_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		pathing_ac->cancelAllGoals();
+		align_and_place_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 	}
 	if(button_box.redRelease) {
 	}
@@ -290,8 +292,30 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.gridSelectConeLeftButton) {
 	}
 	if(button_box.gridSelectConeLeftPress) {
-		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE; // type doesn't matter for placing
-		place();
+		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE;
+		if (use_pathing) {
+			behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
+			align_goal.alliance = alliance_color;
+			bool success = true;
+		
+			if (success) {
+				moved = true;
+				align_goal.auto_place = false;
+				align_goal.grid_id = 1 + grid_position;
+				ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
+				align_goal.node = node;
+				align_goal.piece = game_piece;
+				align_goal.override_game_piece = false;
+				align_goal.auto_place = false;
+				align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
+				align_and_place_ac->sendGoal(align_goal);
+			}
+		}
+		else if (moved || !use_pathing) {
+			ROS_INFO_STREAM("Placing a cone!");
+			place();
+		}
+
 		// slow mode
 	}
 	if(button_box.gridSelectConeLeftRelease) {
@@ -301,8 +325,28 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	}
 	if(button_box.gridSelectCubePress) {
 		game_piece = behavior_actions::Placing2023Goal::CUBE;
-		place();
-		// slow mode
+		if (use_pathing) {
+			behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
+			align_goal.alliance = alliance_color;
+			bool success = true;
+
+			if (success) {
+				moved = true;
+				align_goal.auto_place = false;
+				align_goal.grid_id = 2 + grid_position;
+				ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
+				align_goal.node = node;
+				align_goal.piece = game_piece;
+				align_goal.override_game_piece = false;
+				align_goal.auto_place = false;
+				align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
+				align_and_place_ac->sendGoal(align_goal);
+			}
+		}
+		else if (moved || !use_pathing) {
+			ROS_INFO_STREAM("Placing a cube!");
+			place();
+		}
 	}
 	if(button_box.gridSelectCubeRelease) {
 	}
@@ -311,7 +355,28 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	}
 	if(button_box.gridSelectConeRightPress) {
 		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE; // type doesn't matter for placing
-		place();
+		if (use_pathing) {
+			behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
+			align_goal.alliance = alliance_color;
+			bool success = true;
+
+			if (success) {
+				moved = true;
+				align_goal.auto_place = false;
+				align_goal.grid_id = 3 + grid_position;
+				ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
+				align_goal.node = node;
+				align_goal.piece = game_piece;
+				align_goal.override_game_piece = false;
+				align_goal.auto_place = false;
+				align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
+				align_and_place_ac->sendGoal(align_goal);
+			}
+		}
+		else if (moved || !use_pathing) {
+			ROS_INFO_STREAM("Placing a cone!");
+			place();
+		}
 		// slow mode
 	}
 	if(button_box.gridSelectConeRightRelease) {
@@ -384,6 +449,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 			auto_mode_msg.auto_mode = autoMode();
 			auto_mode_select_pub.publish(auto_mode_msg);
 		}
+		grid_position = 0;
 	}
 	if(button_box.heightSelectSwitchLeftRelease) {
 	}
@@ -401,7 +467,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 				auto_mode_select_pub.publish(auto_mode_msg);
 			}
 		}
-
+		grid_position = 3;
 		left_right_switch_mid = true;
 	} else {
 		left_right_switch_mid = false;
@@ -419,6 +485,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 			auto_mode_msg.auto_mode = autoMode();
 			auto_mode_select_pub.publish(auto_mode_msg);
 		}
+		grid_position = 6;
 	}
 	if(button_box.heightSelectSwitchRightRelease) {
 	}
@@ -1173,6 +1240,7 @@ int main(int argc, char **argv)
 	intaking_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Intaking2023Action>>("/intaking/intaking_server_2023", true);
 	placing_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>>("/placing/placing_server_2023", true);
 	pathing_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action>>("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true);
+	align_and_place_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::AlignAndPlaceGrid2023Action>>("/frcrobot_jetson/align_and_place_to_grid", true);
 
 	const ros::Duration startup_wait_time_secs(15);
 	const ros::Time startup_start_time = ros::Time::now();

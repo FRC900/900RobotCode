@@ -1,0 +1,36 @@
+# goal
+uint8 HYBRID=0
+uint8 MID=1
+uint8 HIGH=2
+uint8 node
+
+# if override_game_piece is true, will use `piece` instead of the detected game piece
+bool override_game_piece
+
+uint8 CUBE=0
+uint8 VERTICAL_CONE=1
+uint8 BASE_TOWARDS_US_CONE=2 
+uint8 BASE_AWAY_US_CONE=3
+uint8 piece
+
+uint8 MOVE=0 # move elevator/fourbar up
+uint8 ALIGN_INTAKE=1 # uses hold position to align the intake (using terabees). runs until preempt
+uint8 PLACE_RETRACT=2 # outtakes and then retracts fourbar/elevator
+uint8 step
+
+bool from_Trex # if we are in the safe position for placing
+
+uint8 grid_id
+uint8 BLUE=0
+uint8 RED=1
+uint8 alliance
+
+bool auto_place # will place after and retract
+
+float64 percent_to_extend # if percent along path is greater than this, start moving the elevator and fourbar up
+---
+# result
+bool success
+bool timed_out
+---
+# feedback

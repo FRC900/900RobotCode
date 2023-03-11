@@ -18,6 +18,8 @@
 #include <sensor_msgs/Imu.h>
 #include <frc_msgs/MatchSpecificData.h>
 #include <behavior_actions/GamePieceState2023.h>
+#include <path_follower_msgs/PathAction.h>
+
 
 geometry_msgs::Point operator-(const geometry_msgs::Point& lhs, const geometry_msgs::Point& rhs) {
     geometry_msgs::Point p;
@@ -99,6 +101,7 @@ protected:
   double holdPosTimeout_;
   double latest_yaw_{0};
   uint8_t alliance_{0};
+  double percent_complete_{0}; 
 
   behavior_actions::GamePieceState2023 game_piece_state_;
 	ros::Time latest_game_piece_time_;
@@ -207,6 +210,10 @@ public:
     return gridStation;
   }
 
+  void feedbackCb(const behavior_actions::PathToAprilTagFeedbackConstPtr& feedback) {
+      percent_complete_ = feedback->percent_complete;
+  }
+
   void executeCB(const behavior_actions::AlignToGrid2023GoalConstPtr &goal)
   {
     ros::spinOnce(); // grab latest callback data
@@ -271,7 +278,7 @@ public:
     aprilGoal.offset = pose;
     aprilGoal.frame_id = "front_bumper";
 
-    client_.sendGoal(aprilGoal);
+    client_.sendGoal(aprilGoal,  /* Done cb */ NULL, /*Active*/ NULL, boost::bind(&AlignToGridAction::feedbackCb, this, _1));
 
     ros::Rate r(30);
     while (!client_.getState().isDone()) {
@@ -281,6 +288,9 @@ public:
             as_.setPreempted();
             return;
         }
+        feedback_.percent_complete = percent_complete_;
+        as_.publishFeedback(feedback_); 
+        ros::spinOnce();
         r.sleep();
     }
 

@@ -12,3 +12,4 @@ bool success
 bool timed_out
 ---
 # feedback
+float32 percent_complete

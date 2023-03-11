@@ -93,6 +93,7 @@ add_action_files(
 		Balancing2023.action
 		Elevater2023.action
 		AlignToGrid2023.action
+		AlignAndPlaceGrid2023.action
 		Fourber2023.action
 		PathToAprilTag.action
 		Intake2023.action
@@ -100,6 +101,7 @@ add_action_files(
 		Placing2023.action
 		Intaking2023.action
 		FourbarElevatorPath2023.action
+		
 		#GoToColor.action
 		#RotatePanel.action
 )

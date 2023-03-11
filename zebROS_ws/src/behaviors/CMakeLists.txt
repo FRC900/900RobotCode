@@ -156,6 +156,10 @@ add_executable(path_to_apriltag src/path_to_apriltag.cpp)
 target_link_libraries(path_to_apriltag ${catkin_LIBRARIES})
 add_dependencies(path_to_apriltag ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(align_and_place_grid src/2023_align_and_place_grid.cpp)
+target_link_libraries(align_and_place_grid ${catkin_LIBRARIES})
+add_dependencies(align_and_place_grid ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_executable(2023_align_to_grid_node src/2023_align_to_grid.cpp)
 target_link_libraries(2023_align_to_grid_node ${catkin_LIBRARIES})
 add_dependencies(2023_align_to_grid_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
