@@ -17,6 +17,7 @@
 #include <path_follower_msgs/holdPositionAction.h>
 #include <sensor_msgs/Imu.h>
 #include <frc_msgs/MatchSpecificData.h>
+#include <behavior_actions/GamePieceState2023.h>
 
 geometry_msgs::Point operator-(const geometry_msgs::Point& lhs, const geometry_msgs::Point& rhs) {
     geometry_msgs::Point p;
@@ -99,6 +100,13 @@ protected:
   double latest_yaw_{0};
   uint8_t alliance_{0};
 
+  behavior_actions::GamePieceState2023 game_piece_state_;
+	ros::Time latest_game_piece_time_;
+
+	ros::Subscriber game_piece_sub_;
+
+  double game_piece_timeout_;
+
 public:
 
   AlignToGridAction(std::string name) :
@@ -108,6 +116,8 @@ public:
     client_("/path_to_apriltag", true),
     ac_hold_position_("/hold_position/hold_position_server", true)
   {
+    game_piece_sub_ = nh_.subscribe("/game_piece/game_piece_state", 1, &AlignToGridAction::gamePieceCallback, this);
+
     imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/zeroed_imu", 1, &AlignToGridAction::imuCb, this);
     match_sub_ = nh_.subscribe<frc_msgs::MatchSpecificData>("/frcrobot_rio/match_data", 1, &AlignToGridAction::matchCb, this);
     XmlRpc::XmlRpcValue tagList;
@@ -119,6 +129,11 @@ public:
     nh_.getParam("offset_from_cube_tag_to_end", xOffset_);
 
     nh_.getParam("hold_position_timeout", holdPosTimeout_);
+
+    if (!nh_.getParam("game_piece_timeout", game_piece_timeout_)) {
+			ROS_WARN_STREAM("2023_align_to_grid : could not find game_piece_timeout, defaulting to 1 second");
+			game_piece_timeout_ = 1;
+		}
 
     for (XmlRpc::XmlRpcValue::iterator tag=tagList.begin(); tag!=tagList.end(); ++tag) {
       Tag t;
@@ -148,6 +163,11 @@ public:
   ~AlignToGridAction(void)
   {
   }
+
+  void gamePieceCallback(const behavior_actions::GamePieceState2023ConstPtr &msg) {
+		game_piece_state_ = *msg;
+		latest_game_piece_time_ = ros::Time::now();
+	}
 
   void imuCb(const sensor_msgs::ImuConstPtr &msg) {
     latest_yaw_ = getYaw(msg->orientation);
@@ -215,6 +235,22 @@ public:
     offset.x = -xOffset_; // TODO consider going to a bit behind this and then driving forward for a preset amount of time? (in case we overshoot)
     ROS_INFO_STREAM("xOffset: " << offset.x);
     offset.y = (alliance_ == 1 ? -1 : 1) * (gridLocation.y - tag.location.y); // should be gridLocation.y - tag.location.y
+
+    double terabee_offset = 0;
+    if (!(goal->no_terabees)) {
+      if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
+				ROS_ERROR_STREAM("2023_align_to_grid : game piece position data too old, assuming game piece is centered");
+			} else {
+        double center_offset = game_piece_state_.offset_from_center;
+        if (isnan(center_offset)) {
+          ROS_ERROR_STREAM("2023_align_to_grid : game piece offset is NaN, assuming game piece is centered");
+        } else {
+          terabee_offset = center_offset;
+        }
+      }
+    }
+    offset.y -= terabee_offset;
+
     offset.z = 0;
     ROS_INFO_STREAM("grid " << gridLocation.y << " tag " << tag.location.y);
     ROS_INFO_STREAM("ydif: " << gridLocation.y - tag.location.y);
