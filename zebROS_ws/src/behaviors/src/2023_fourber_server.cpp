@@ -110,7 +110,6 @@ class FourberAction2023
 
             // default values are guesses
             double res = -1;
-            bool res_bool = false;
             // cube
             load_param_helper(nh_, "cube/intake", res, 0.0);
             game_piece_lookup_[PieceMode(fourber_ns::CUBE, fourber_ns::INTAKE)] = res;
@@ -290,9 +289,6 @@ class FourberAction2023
             ros::spinOnce();
             FourberINFO("Called with " << goal->safety_positions.size() << " safety_positions");
 
-            double max_max_angle;
-            double min_min_angle;
-
             bool safety_set = false;
 
             if (goal->safety_positions.size() != 0) {
@@ -372,7 +368,6 @@ class FourberAction2023
             // select piece, nice synatax makes loading params worth it
             PieceMode lookup = PieceMode(goal->piece, goal->mode);
             double req_position;
-            bool req_bool;
             if (lookup.isValid()) {
                 req_position = game_piece_lookup_[lookup];
             }

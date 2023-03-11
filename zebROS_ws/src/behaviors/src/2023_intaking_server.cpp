@@ -152,8 +152,8 @@ public:
 		action_name_(name),
 		game_piece_sub_(nh_.subscribe("/game_piece/game_piece_state", 1, &IntakingServer2023::gamePieceStateCallback, this)),
 		requested_game_piece_sub_(nh_.subscribe("/game_piece/requested_game_piece", 1, &IntakingServer2023::requestedPieceCallback, this)),
-		intake_pub_(nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_leader_controller/command", 1, true)),
 		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true),
+		intake_pub_(nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_leader_controller/command", 1, true)),
 		nh_params_(nh_, "intaking_server_2023"),
 		ddr_(nh_params_)
 	{
@@ -367,19 +367,17 @@ public:
 			r.sleep();
 		}
 
-		ros::Time done = ros::Time::now();
+		const ros::Time done = ros::Time::now();
 
 		feedback_.status = feedback_.INTAKE;
 		as_.publishFeedback(feedback_);
 
 		if (game_piece_state_.game_piece == behavior_actions::GamePieceState2023::CUBE || current_exceeded) {
 			ROS_INFO_STREAM("2023_intaking_server : " << (current_exceeded ? "current exceeded" : "cube detected") << ", waiting " << cube_time_ << " seconds");
-			ros::Time start = ros::Time::now();
 			ros::Duration(cube_time_).sleep();
 		}
 		else {
 			ROS_INFO_STREAM("2023_intaking_server : cone detected, waiting " << cone_time_ << " seconds");
-			ros::Time start = ros::Time::now();
 			ros::Duration(cone_time_).sleep();
 		}
 

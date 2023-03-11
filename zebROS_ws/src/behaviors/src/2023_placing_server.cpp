@@ -37,8 +37,8 @@ public:
 	PlacingServer2023(std::string name) :
 		as_(nh_, name, boost::bind(&PlacingServer2023::executeCB, this, _1), false),
 		action_name_(name),
-   		ac_intaking_("/intaking/intaking_server_2023", true),
 		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true),
+   		ac_intaking_("/intaking/intaking_server_2023", true),
 		ac_hold_position_("/hold_position/hold_position_server", true)
 	{
 		if (!nh_.getParam("time_before_reverse", time_before_reverse_)) {

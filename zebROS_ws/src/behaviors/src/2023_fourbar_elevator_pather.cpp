@@ -74,7 +74,7 @@ public:
 			// path->second = [[e,f],[e,f]...]
 			ROS_INFO_STREAM("path name = " << path->first << ". points:");
 			Path p;
-			for (size_t i = 0; i < path->second.size(); i++) {
+			for (int i = 0; i < path->second.size(); i++) {
 				auto pt = ElevatorFourbarPoint();
 				pt.elevator = static_cast<double>(path->second[i][0]);
 				pt.fourbar = static_cast<double>(path->second[i][1]);
@@ -252,7 +252,7 @@ public:
 			std::reverse(path.begin(), path.end());
 		}
 
-		for (int i = 1; i < path.size(); i++) {
+		for (size_t i = 1; i < path.size(); i++) {
 			auto pt = path[i];
 			controllers_2023_msgs::FourBarSrv f;
 			f.request.angle = pt.fourbar;

@@ -288,7 +288,6 @@ class ElevaterAction2023
             // have a meaningful message to send
             if (fourber_goal.safety_positions.size() != 0) {
                 // don't send unless changing safety
-                bool fourber_success = false;
                 ElevaterINFO("Setting safety to " << std::to_string(fourber_goal.safety_positions.size()) << " zones");
                 auto fourbar_result = ac_fourber_.sendGoalAndWait(fourber_goal, ros::Duration(5), ros::Duration(3));
                 if (!(fourbar_result == actionlib::SimpleClientGoalState::SUCCEEDED))

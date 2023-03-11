@@ -108,9 +108,9 @@ class AutoNode {
 		: nh_(nh)
 		, path_ac_("/path_follower/path_follower_server", true)
 		, shooting_ac_("/shooting2022/shooting2022_server", true)
-		, placing_ac_("/placing/placing_server_2023", true)
 		, intaking_ac_("/intaking2022/intaking2022_server", true)
 		, balancing_ac("/balance_position/balancing_server", true)
+		, placing_ac_("/placing/placing_server_2023", true)
 
 	// Constructor
 	{
