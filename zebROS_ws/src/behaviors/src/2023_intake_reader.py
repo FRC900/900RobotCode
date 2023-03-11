@@ -43,8 +43,8 @@ restart_errors_count = 10
 def rebootPico(port: serial.Serial, req = None):
     rospy.logwarn("intake_reader_2023 : rebooting Pico!")
     port.write(b"r\n")
-    rospy.logwarn("intake_reader_2023 : rebooted Pico, waiting 0.5 seconds")
-    rospy.sleep(0.5)
+    rospy.logwarn("intake_reader_2023 : rebooted Pico, waiting 2.5 seconds")
+    rospy.sleep(2.5)
     rospy.logwarn("intake_reader_2023 : finished waiting, closing and reopening port")
     port.close()
     port.open()
@@ -64,6 +64,8 @@ def main():
     srv = rospy.Service("reboot_pico", Empty, lambda req: rebootPico(port, req))
 
     r = rospy.Rate(50)
+
+    rebootPico(port, None)
 
     while not rospy.is_shutdown():
         if crc_error_count >= restart_errors_count:

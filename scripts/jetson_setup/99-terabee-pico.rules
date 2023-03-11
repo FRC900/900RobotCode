@@ -1,1 +1,1 @@
-SUBSYSTEM=="tty",SUBSYSTEMS=="usb",DRIVERS=="usb",ATTRS{idVendor}=="2e8a",ATTRS{idProduct}=="0003",ATTRS{manufacturer}=="Raspberry Pi",ATTRS{product}=="PicoArduino",SYMLINK+="PICOBEE"
+SUBSYSTEM=="tty",SUBSYSTEMS=="usb",DRIVERS=="usb",ATTRS{idVendor}=="2e8a",ATTRS{idProduct}=="0003",ATTRS{manufacturer}=="Raspberry Pi",ATTRS{product}=="PicoArduino",SYMLINK+="PICOBEE",RUN+="/bin/stty -F /dev/PICOBEE raw -echo -hup"
