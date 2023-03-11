@@ -1,4 +1,5 @@
-#pragma once
+#ifndef INC_SPLINE_UTIL_H__
+#define INC_SPLINE_UTIL_H__
 #include <ros/console.h>
 #include <spline_util/simple_spline_segment.h>
 #include <array>
@@ -65,3 +66,5 @@ struct InitSplinePoints
 template <class T, size_t Order, size_t Joints>
 bool initSpline(Trajectory<T, Order> &trajectory,
 				const std::vector<InitSplinePoints<T, Joints>> &points);
+
+#endif

@@ -2,7 +2,6 @@
 #include <std_msgs/Float64.h>
 #include <std_msgs/Bool.h>
 #include <geometry_msgs/Twist.h>
-#include <atomic>
 #include <cmath>
 
 ros::Time time_since_command;

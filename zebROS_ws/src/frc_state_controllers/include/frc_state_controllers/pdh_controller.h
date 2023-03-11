@@ -3,7 +3,6 @@
 
 #include <atomic>
 #include <controller_interface/controller.h>
-#include <realtime_tools/realtime_publisher.h>
 #include <std_srvs/SetBool.h>
 #include <std_srvs/Empty.h>
 

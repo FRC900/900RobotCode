@@ -96,8 +96,8 @@ protected:
   actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction> ac_hold_position_;
   double xOffset_;
   double holdPosTimeout_;
-  double latest_yaw_;
-  uint8_t alliance_;
+  double latest_yaw_{0};
+  uint8_t alliance_{0};
 
 public:
 
@@ -189,6 +189,7 @@ public:
 
   void executeCB(const behavior_actions::AlignToGrid2023GoalConstPtr &goal)
   {
+    ros::spinOnce(); // grab latest callback data
     // TODO: do we want to find the tag closest to *us* or closest to the grid?
     // right now it finds the one closest to the robot
     // I'm not sure what is most accurate
@@ -268,7 +269,6 @@ public:
 
     as_.setSucceeded(result_);
   }
-
 
 };
 

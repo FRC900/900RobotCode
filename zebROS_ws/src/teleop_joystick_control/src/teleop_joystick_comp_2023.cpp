@@ -8,9 +8,6 @@
 #include <string>
 #include <cmath>
 
-#include "std_msgs/Bool.h"
-#include "std_msgs/Float64.h"
-
 #include "std_srvs/Empty.h"
 
 #include <vector>
@@ -35,7 +32,6 @@
 #include <teleop_joystick_control/SnapConeCube.h>
 #include <behavior_actions/Intaking2023Action.h>
 #include <behavior_actions/Placing2023Action.h>
-#include <behavior_actions/Intake2023Action.h>
 #include <behavior_actions/FourbarElevatorPath2023Action.h>
 #include <talon_swerve_drive_controller/SetXY.h>
 

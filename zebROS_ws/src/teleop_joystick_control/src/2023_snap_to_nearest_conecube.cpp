@@ -5,14 +5,12 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/TwistStamped.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <sensor_msgs/Imu.h>
 #include <boost/circular_buffer.hpp>
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <angles/angles.h>
 #include <teleop_joystick_control/SnapConeCube.h>
-#include <teleop_joystick_control/AlignToOrientation.h>
 #include <geometry_msgs/Point.h>
 
 struct StampedAngle {

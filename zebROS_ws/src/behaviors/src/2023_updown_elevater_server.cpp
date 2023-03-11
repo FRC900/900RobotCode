@@ -12,7 +12,6 @@
 #include <std_msgs/Float64.h>
 #include <controllers_2023_msgs/ElevatorSrv.h>
 #include <talon_state_msgs/TalonState.h>
-#include <iostream>
 #include <behaviors/game_pieces_2023.h>
 
 #define ElevaterINFO(x) ROS_INFO_STREAM("2023_elevater_server : " << x)

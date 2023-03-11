@@ -8,7 +8,6 @@
 #include "field_obj/Detection.h"
 #include "field_obj/TFDetection.h"
 #include "field_obj_tracker/convert_coords.h"
-#include "field_obj_tracker/objtype.hpp"
 
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2/LinearMath/Quaternion.h>

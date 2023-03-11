@@ -1,7 +1,6 @@
 #include <controller_interface/controller.h>
 #include <realtime_tools/realtime_buffer.h>
 #include <realtime_tools/realtime_publisher.h>
-#include <frc_msgs/PDHData.h>
 #include <frc_interfaces/pdh_state_interface.h>
 #include "frc_msgs/PDHData.h"
 #include "periodic_interval_counter/periodic_interval_counter.h"

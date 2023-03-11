@@ -1,6 +1,4 @@
 #include <ros/ros.h>
-#include <hardware_interface/joint_command_interface.h>
-#include <realtime_tools/realtime_buffer.h>
 #include <controller_interface/multi_interface_controller.h>
 #include <talon_controllers/talon_controller_interface.h> // "
 #include <pluginlib/class_list_macros.h> //to compile as a controller

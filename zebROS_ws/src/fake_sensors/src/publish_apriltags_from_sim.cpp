@@ -2,7 +2,6 @@
 // transforms that the apriltag detector sends
 // (we aren't using a camera in sim so we can't publish an AprilTagDetectionArray)
 // ... why can't we again?
-#include <random>
 #include <ros/ros.h>
 #include <marker_msgs/MarkerDetection.h>
 
@@ -59,11 +58,7 @@ apriltag_ros::AprilTagDetection createAprilTag(uint32_t id, double x, double y, 
 	return msg;
 }
 
-#include <map>
-#include <regex>
-#include <sstream>
 #include <string>
-#include <fstream>
 
 // see behaviors/config/2022_rumble_apriltag_locations.yaml for Z values
 // maybe create dictionary (tag ID (int) : Z (double)) instead?

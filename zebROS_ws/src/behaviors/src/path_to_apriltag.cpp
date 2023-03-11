@@ -71,7 +71,7 @@ protected:
     behavior_actions::PathToAprilTagResult result_;
     tf2_ros::Buffer tf_buffer_;
     tf2_ros::TransformListener tf_listener_;
-    double latestImuZ_;
+    double latestImuZ_{0};
     double timeout_;
     field_obj::Detection latest_;
     actionlib::SimpleActionClient<path_follower_msgs::PathAction> ac_;
@@ -170,7 +170,6 @@ public:
         return std::optional<trajectory_msgs::JointTrajectoryPoint>{pt};
     }
 
-
     void callback(const field_obj::DetectionConstPtr& msg) {
         // need to use transforms...
         // oh wait no we don't! we can tell spline srv what frame id it is relevant to
@@ -253,7 +252,6 @@ public:
         //wait for the action to return
         as_.setSucceeded(result_);
     }
-
 
 };
 

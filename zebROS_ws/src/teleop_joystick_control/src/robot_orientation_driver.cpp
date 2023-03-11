@@ -1,12 +1,10 @@
 // TODO - consider tying pid enable pub to robot enabled?
 #include <angles/angles.h>
-#include <geometry_msgs/Twist.h>
 #include <std_msgs/Bool.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
 #include "teleop_joystick_control/RobotOrientationDriver.h"
-
 
 RobotOrientationDriver::RobotOrientationDriver(const ros::NodeHandle &nh)
 	: nh_(nh)
