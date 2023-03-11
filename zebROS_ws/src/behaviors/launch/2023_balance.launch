@@ -15,6 +15,12 @@
             <param name="name" value="balance_server_pid" />
 
             <node name="balancing_server" pkg="behaviors" type="2023_balancing_server.py" output="screen">
+                <param name="stage_1_speed" value="1" /> <!-- how fast it drives at the start -->
+                <param name="stage_2_speed" value="0.6" /> <!-- how fast it drives after stage tranistion time -->
+                <param name="stage_transition_time" value="1.25" /> <!-- how long utill stage 2 starts -->
+                <param name="minimum_drive_time_before_angle_check" value="1.0" /> <!-- checks if angle is less than 11deg, will be more than this early when we drive up the ramp, this is how long we must drive forward before that -->
+                <param name="max_drive_time_before_pid" value="2.5" /> <!-- maximum it will drive with command velocity -->
+
             </node>
 
 
@@ -25,11 +31,11 @@
 
             <node name="x_position_balance_pid" pkg="pid" type="controller" output="screen" >
                 <param name="node_name" value="x_position_balance_pid" />
-                <param name="Kp" value="0.5" />
+                <param name="Kp" value="0.4" />
                 <param name="Ki" value="0.0" />
                 <param name="Kd" value="0.0" /> 
-                <param name="upper_limit" value="2" />
-                <param name="lower_limit" value="-2" />
+                <param name="upper_limit" value="0.5" />
+                <param name="lower_limit" value="-0.5" />
                 <param name="windup_limit" value="0.2" />
                 <param name="max_loop_frequency" value="100.0" />
                 <param name="min_loop_frequency" value="100.0" />

@@ -48,8 +48,30 @@ class AutoBalancing:
         self._as = actionlib.SimpleActionServer(self._action_name, behavior_actions.msg.Balancing2023Action,
                                                 execute_cb=self.balancing_callback, auto_start=False)
         self._as.start()
+        '''
+                        <param name="stage_1_speed" value="1" /> <!-- how fast it drives at the start -->
+                <param name="stage_2_speed" value="0.6" /> <!-- how fast it drives after stage tranistion time -->
+                <param name="stage_transition_time" value="1.25" /> <!-- how long utill stage 2 starts -->
+                <param name="minimum_drive_time_before_angle_check" value="1.0" /> <!-- checks if angle is less than 11deg, will be more than this early when we drive up the ramp, this is how long we must drive forward before that -->
+                <param name="max_drive_time_before_pid" value="2.5" /> <!-- maximum it will drive with command velocity -->
+        '''
 
-        # res = handle_param_load("imu_sub_topic")
+        res = handle_param_load("imu_sub_topic")
+        self.stage_1_speed = res if res else 1
+        
+        res = handle_param_load("stage_2_speed")
+        self.stage_2_speed = res if res else 0.6
+
+        res = handle_param_load("stage_transition_time")
+        self.stage_transition_time = res if res else 1.25
+
+        res = handle_param_load("minimum_drive_time_before_angle_check")
+        self.min_drive_t_before_check = res if res else 1.0
+
+        res = handle_param_load("max_drive_time_before_pid")
+        self.max_drive_time = res if res else 2.5
+
+
         imu_sub_topic = "/imu/zeroed_imu"
         rospy.loginfo(f"Using imu topic {imu_sub_topic}")
         
@@ -88,16 +110,14 @@ class AutoBalancing:
         self.current_pitch = pitch
         self.current_yaw = yaw
         rospy.loginfo_throttle(1, f"Balancing server - yaw in degrees {round(yaw*(180/math.pi), 4)}")
-        if self.debug:
-            rospy.loginfo_throttle(1, f"Balancing server - Pitch in degrees {round(pitch*(180/math.pi), 4)}")
+        rospy.loginfo_throttle(1, f"Balancing server - Pitch in degrees {round(pitch*(180/math.pi), 4)}")
 
     def preempt(self):
         rospy.logwarn(f"Called preempt for balancING server")
-        #self.balancer_client.cancel_all_goals()
-        
+        self.balancer_client.cancel_all_goals()
         self.balancer_client.cancel_goal()
         self.state = States.NO_WEELS_ON
-        #self.balancer_client.cancel_goals_at_and_before_time(rospy.Time.now())
+        self.balancer_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
     def balancing_callback(self, goal):
         if not goal.towards_charging_station:
@@ -126,8 +146,7 @@ class AutoBalancing:
  
         r = rospy.Rate(100)
         start_time = rospy.Time.now()
-        print(f"Target angle is {target_angle}=========x")
-
+        
         while True:                
             # I think subscribers should update without spinOnce... it doesn't exist in python
             # check that preempt has not been requested by the client
@@ -140,86 +159,54 @@ class AutoBalancing:
             orientation_msg = std_msgs.msg.Float64()
             orientation_msg.data = target_angle
             self.pub_orient_command.publish(orientation_msg)
-            
 
             if self.state == States.NO_WEELS_ON:
-                if rospy.Time.now() - start_time >= rospy.Duration(3):
-                    rospy.logwarn("2 seconds of driving has not lead to a large enough angle increase, stopping balance!")
-                    self.preempt()
-                    self._as.set_preempted()
-                    return
-                rospy.loginfo_throttle(2, "Sending cmd of 1")
                 cmd_vel_msg = geometry_msgs.msg.Twist()
                 cmd_vel_msg.angular.x = 0 # todo, tune me
                 cmd_vel_msg.angular.y = 0
-                cmd_vel_msg.angular.z = self.current_orient_effort
-                cmd_vel_msg.linear.x = 0.6 * multipler
+                cmd_vel_msg.angular.z = self.current_orient_effort 
+                if rospy.Time.now() - start_time >= rospy.Duration(1.25):
+                    rospy.loginfo_throttle(1, f"Using second stage speed of {self.stage_2_speed}!")
+                    cmd_vel_msg.linear.x = self.stage_2_speed * multipler
+                else:
+                    cmd_vel_msg.linear.x = self.stage_1_speed * multipler
+                    rospy.loginfo_throttle(2, f"Sending cmd of {self.stage_1_speed}")
                 cmd_vel_msg.linear.y = 0
                 cmd_vel_msg.linear.z = 0
                 self.pub_cmd_vel.publish(cmd_vel_msg)
                 self.pub_orient_command.publish(orientation_msg)
                 r.sleep()
 
-            if abs(self.current_pitch) >= math.radians(13) and self.state == States.NO_WEELS_ON:
-                start_time = rospy.Time.now()
-                rospy.logwarn("Moving to stage 1============")
-                while (rospy.Time.now() - start_time <= rospy.Duration(1.5)):
-                    if self._as.is_preempt_requested():
-                        rospy.loginfo('%s: Preempted' % self._action_name)
-                        self.preempt() # stop pid
-                        self._as.set_preempted()
-                        break
+
+                if rospy.Time.now() - start_time >= rospy.Duration(self.max_drive_time) or (abs(self.current_pitch) <= math.radians(10.82) and rospy.Time.now() - start_time >= rospy.Duration(self.min_drive_t_before_check)):
+                    if (rospy.Time.now() - start_time >= rospy.Duration(self.max_drive_time)):
+                        rospy.logwarn("2 seconds of driving")
+                    else:
+                        rospy.logwarn("Angle change2")
+                    # might not need to publish this
                     cmd_vel_msg = geometry_msgs.msg.Twist()
                     cmd_vel_msg.angular.x = 0 # todo, tune me
                     cmd_vel_msg.angular.y = 0
-                    cmd_vel_msg.angular.z = self.current_orient_effort
-                    cmd_vel_msg.linear.x = 0.6 * multipler
+                    cmd_vel_msg.angular.z = self.current_orient_effort 
+                    cmd_vel_msg.linear.x = 0.01 * multipler
                     cmd_vel_msg.linear.y = 0
                     cmd_vel_msg.linear.z = 0
                     self.pub_cmd_vel.publish(cmd_vel_msg)
-                    self.pub_orient_command.publish(orientation_msg)
-                    r.sleep()
-
-                self.state = States.ONE_WHEEL_ON_RAMP
-
-            if self.state == States.ONE_WHEEL_ON_RAMP:
-                rospy.loginfo("Running PID!")
+                    self.state = States.ONE_WHEEL_ON_CENTER            
+             
+            if self.state == States.ONE_WHEEL_ON_CENTER:
+                rospy.logwarn("Sending pid")
                 goal_to_send = behavior_actions.msg.Balancer2023Goal()
                 goal_to_send.angle_offset = 0
                 goal_to_send.towards_charging_station = goal.towards_charging_station
                 self.balancer_client.send_goal(goal_to_send)
+                # publish the feedback
+                self._result.success = True
+                self._as.publish_feedback(self._feedback)
                 self.state = States.TWO_WHEELS_ON_CENTER
-            
-            
-            if self.state == States.TWO_WHEELS_ON_CENTER:
-                if -9 < math.degrees(self.current_pitch) < 9:
-                    rospy.loginfo("Within tolerance, stopping and breaking!")
-                    self.balancer_client.cancel_all_goals()
-                    self.state = States.AFTER_TWO_WHEELS
-                    rospy.sleep(0.25)
-            
-            if self.state == States.AFTER_TWO_WHEELS:
-                rospy.loginfo("running final PID!")
-                goal_to_send = behavior_actions.msg.Balancer2023Goal()
-                goal_to_send.angle_offset = 0
-                goal_to_send.towards_charging_station = goal.towards_charging_station
-                self.balancer_client.send_goal(goal_to_send)
-                while True and not rospy.is_shutdown():
-                    if self._as.is_preempt_requested():
-                        rospy.loginfo('%s: Preempted' % self._action_name)
-                        self.preempt() # stop pid
-                        self._as.set_preempted()
-                        return
-                    self.pub_orient_command.publish(orientation_msg)
-                    r.sleep()
-                
-            # publish the feedback
-            self._result.success = True
-            self._as.publish_feedback(self._feedback)
-            r.sleep()
-        self._as.set_succeeded(self._result)
-            
+                r.sleep()
 
+            
 if __name__ == '__main__':
     rospy.logwarn("Initalizing balancing server")
     rospy.init_node('balancer')

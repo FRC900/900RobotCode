@@ -12,6 +12,7 @@ import math
 import geometry_msgs.msg._Quaternion
 from tf.transformations import euler_from_quaternion # may look like tf1 but is actually tf2
 import geometry_msgs.msg
+import angles
 
 def handle_param_load(name):
     try:
@@ -35,7 +36,7 @@ class Balancer:
         self._as.start()
         rospy.loginfo("Finished started actionlib server ")
         res = handle_param_load("~angle_threshold")
-        self.angle_threshold = res if res else math.radians(2) 
+        self.angle_threshold = res if res else math.radians(1) 
 
 
         # load params, don't care about topics after we have the subs/pubs
@@ -59,7 +60,7 @@ class Balancer:
         rospy.loginfo(f"Using imu topic {imu_sub_topic}")
 
         self.PID_enabled = False
-        self.desired_pitch = 0.0 # just in case we want to change it later, add offset or something
+        self.desired_pitch = 0 # just in case we want to change it later, add offset or something
         self.time_to_balamced = 2 # how many seconds of being within the angle threshold to be considered balanced 
         self.first_balance_time = None
         self.current_pitch = -999
@@ -104,11 +105,10 @@ class Balancer:
         return msg
 
     def x_cmd_cb(self, x_command: std_msgs.msg.Float64):
-        if self.debug:
-            rospy.loginfo_throttle(1, f"X_cmd_callback with {x_command}") 
+        rospy.loginfo_throttle(1, f"X_cmd_callback with {x_command}") 
         # send to motors, @TODO
         msg = self.make_zero_twist()
-        msg.linear.x = float(x_command.data)
+        msg.linear.x = float(x_command.data) * self.multipler
         msg.angular.z = float(self.current_orient_effort) if abs(self.current_orient_setpoint - self.current_yaw) > 0.1 else 0
         self.pub_cmd_vel.publish(msg)
 
@@ -132,6 +132,15 @@ class Balancer:
         msg = std_msgs.msg.Bool()
         msg.data = False
         self.pub_PID_enable.publish(msg)
+        msg = geometry_msgs.msg.Twist()
+        msg.linear.x = -0.05 * self.multipler
+        msg.linear.y = 0
+        msg.linear.z = 0
+        msg.angular.x = 0
+        msg.angular.y = 0
+        msg.angular.z = 0 
+        self.pub_cmd_vel.publish(msg)
+        rospy.sleep(0.25)
         # publish last zero just in case
         twist_msg = self.make_zero_twist()
         self.pub_cmd_vel.publish(twist_msg)
@@ -162,17 +171,9 @@ class Balancer:
                 self._as.publish_feedback(self._feedback)
                 return
             
-            error = abs(self.current_pitch - self.desired_pitch)
+            error = angles.shortest_angular_distance(self.current_pitch, self.desired_pitch)
             self._feedback.error = error
             stable_and_balanced = False
-            if error <= self.angle_threshold:
-                now = rospy.Time.now()
-                if self.first_balance_time is None:
-                    self.first_balance_time = now
-                elif now - self.first_balance_time >= rospy.Duration.from_sec(self.time_to_balamced):
-                    stable_and_balanced = True
-            else:
-                self.first_balance_time = None
             
             self._feedback.stable_and_balanced = stable_and_balanced
             # publish the feedback
