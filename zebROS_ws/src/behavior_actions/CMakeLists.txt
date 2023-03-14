@@ -101,7 +101,7 @@ add_action_files(
 		Placing2023.action
 		Intaking2023.action
 		FourbarElevatorPath2023.action
-		
+		AlignToSubstation2023.action
 		#GoToColor.action
 		#RotatePanel.action
 )

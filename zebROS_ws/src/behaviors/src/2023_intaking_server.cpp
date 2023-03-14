@@ -314,7 +314,13 @@ public:
 		}
 
 		behavior_actions::FourbarElevatorPath2023Goal pathGoal;
-		pathGoal.path = (goal->piece == goal->VERTICAL_CONE) ? "intake_vertical_cone" : "intake_cone_cube";
+		if (goal->piece == goal->VERTICAL_CONE) {
+			pathGoal.path = "intake_vertical_cone";
+		} else if (goal->piece == goal->DOUBLE_SUBSTATION) {
+			pathGoal.path = "intake_double_substation";
+		} else {
+			pathGoal.path = "intake_cone_cube";
+		}
 		pathGoal.reverse = false;
 
 		feedback_.status = feedback_.PATHER;

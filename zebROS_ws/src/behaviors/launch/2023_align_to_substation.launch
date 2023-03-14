@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+    <group ns="substation">
+        <rosparam file="$(find behaviors)/config/2023_align_to_substation_config.yaml" command="load"/>
+        <node name="align_to_substation_2023" pkg="behaviors" type="2023_align_to_substation_server" output="screen"/>
+    </group>
+</launch>

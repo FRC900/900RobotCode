@@ -3,6 +3,7 @@ uint8 CUBE=0
 uint8 VERTICAL_CONE=1
 uint8 BASE_TOWARDS_US_CONE=2 
 uint8 BASE_AWAY_US_CONE=3
+uint8 DOUBLE_SUBSTATION=254 # *caution* moves all the way up, then down when preempted
 uint8 piece
 
 bool unflip_fourbar

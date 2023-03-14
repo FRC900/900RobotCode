@@ -141,6 +141,12 @@ class PathAction
 
 		void executeCB(const path_follower_msgs::PathGoalConstPtr &goal)
 		{
+			path_follower_msgs::PathFeedback initial_feedback;
+			initial_feedback.percent_complete = 0;
+			initial_feedback.percent_next_waypoint = 0;
+			initial_feedback.current_waypoint = 0;
+			as_.publishFeedback(initial_feedback);
+			
 			bool preempted = false;
 			bool timed_out = false;
 			bool succeeded = false;

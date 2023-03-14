@@ -1,0 +1,15 @@
+# goal
+uint8 DOUBLE=0 # only substation supported at the moment
+uint8 substation
+
+uint8 LEFT=0
+uint8 RIGHT=1
+uint8 side # robot-relative facing substation
+
+# paths there and calls intaking server to move elevator/fourbar up and run rollers.
+# does not preempt intaking server, the calling code has to do that.
+---
+# result
+bool success
+---
+# feedback

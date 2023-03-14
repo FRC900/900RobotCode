@@ -80,6 +80,12 @@ public:
 
   void executeCB(const behavior_actions::AlignAndPlaceGrid2023GoalConstPtr &goal)
   {
+    if (!align_to_goal_ac.isServerConnected()) {
+      ROS_ERROR_STREAM("2023_align_and_place_grid : align to grid server not running!!! this is unlikely to work");
+    }
+    if (!placing_ac.isServerConnected()) {
+      ROS_ERROR_STREAM("2023_align_and_place_grid : placing server not running!!! this is unlikely to work");
+    }
     bool started_moving_elevator = false;
     bool path_finished = false;
     ros::Time path_finished_time = ros::Time(0);
@@ -132,6 +138,8 @@ public:
     else {
         ROS_INFO_STREAM("Finished aligned to goal");
     }
+    result_.success = true;
+    as_.setSucceeded(result_);
   }
 };
 

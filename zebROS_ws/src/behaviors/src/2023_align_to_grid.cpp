@@ -216,6 +216,9 @@ public:
 
   void executeCB(const behavior_actions::AlignToGrid2023GoalConstPtr &goal)
   {
+    if (!client_.isServerConnected()) {
+      ROS_ERROR_STREAM("2023_align_to_grid : path to apriltag server not running!!! this is unlikely to work");
+    }
     ros::spinOnce(); // grab latest callback data
     // TODO: do we want to find the tag closest to *us* or closest to the grid?
     // right now it finds the one closest to the robot
@@ -300,18 +303,18 @@ public:
     // holdPosGoal.pose.orientation = tf2::toMsg(q);
 
     // ac_hold_position_.sendGoal(holdPosGoal);
-    ros::Time start = ros::Time::now();
+    // ros::Time start = ros::Time::now();
 
-    while (!ac_hold_position_.getState().isDone() && (ros::Time::now() - start < ros::Duration(holdPosTimeout_))) {
-        if (as_.isPreemptRequested() || !ros::ok())
-        {
-            ac_hold_position_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-            as_.setPreempted();
-            return;
-        }
-        r.sleep();
-    }
-    ac_hold_position_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+    // while (!ac_hold_position_.getState().isDone() && (ros::Time::now() - start < ros::Duration(holdPosTimeout_))) {
+    //     if (as_.isPreemptRequested() || !ros::ok())
+    //     {
+    //         ac_hold_position_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+    //         as_.setPreempted();
+    //         return;
+    //     }
+    //     r.sleep();
+    // }
+    // ac_hold_position_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 
     as_.setSucceeded(result_);
   }
