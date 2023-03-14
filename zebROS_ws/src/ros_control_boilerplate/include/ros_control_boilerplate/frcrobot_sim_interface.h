@@ -53,6 +53,7 @@
 #include "ros_control_boilerplate/frc_robot_interface.h"
 #include "ros_control_boilerplate/LineBreakSensors.h"
 #include "ros_control_boilerplate/set_limit_switch.h"
+#include "ros_control_boilerplate/set_current.h"
 
 namespace ros_control_boilerplate
 {
@@ -77,6 +78,8 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		virtual bool setlimit(ros_control_boilerplate::set_limit_switch::Request &req,ros_control_boilerplate::set_limit_switch::Response &res);
 
+		virtual bool setcurrent(ros_control_boilerplate::set_current::Request &req,ros_control_boilerplate::set_current::Response &res);
+
 	private:
         ros::Subscriber match_data_sub_;
 		std::vector<ros::Subscriber> joystick_subs_;
@@ -97,6 +100,7 @@ class FRCRobotSimInterface : public ros_control_boilerplate::FRCRobotInterface
 
 		ros::ServiceServer linebreak_sensor_srv_;
 		ros::ServiceServer limit_switch_srv_;
+		ros::ServiceServer current_srv_;
 
 		//std::unique_ptr<frc::sim::FlywheelSim> shooter_sim_;
 		size_t shooter_sim_joint_index_;

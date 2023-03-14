@@ -3,14 +3,16 @@ cone_time: 0.0
 server_timeout: 20.0
 path_zero_timeout: 5.0
 current_threshold: 120.0 # some arbitrary unit
-minimum_current_time: 0.2
+minimum_current_time: 0.05
 minimum_fourbar_extension: 0.7 # has to be this amount extended or more before doing current checks
 joint: intake_leader # for current sensing
 time_before_reverse: 0.0
 
-intake_speed: 0.7 # was 0.5
+intake_speed: 0.5
 cone_outtake_speed: 1.0 # was 0.8
 cube_outtake_speed: 0.2
-intake_small_speed: 0.09 # was 0.09
+intake_medium_time: 2.0
+intake_medium_speed: 0.2
+intake_small_speed: 0.09
 
 dynamic_reconfigure: true

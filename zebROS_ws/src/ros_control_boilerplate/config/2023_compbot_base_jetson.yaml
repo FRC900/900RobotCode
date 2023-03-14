@@ -74,7 +74,7 @@ hardware_interface:
 intake_leader_controller:
     type: talon_controllers/TalonPercentOutputController
     joint: intake_leader
-    invert_output: True
+    invert_output: False
     feedback_type: IntegratedSensor
     dynamic_reconfigure: False
     voltage_compensation_Enable: True

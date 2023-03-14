@@ -50,6 +50,7 @@ For a more detailed simulation example, see sim_hw_interface.cpp
 
 #include <ros_control_boilerplate/frcrobot_sim_interface.h>
 #include <ros_control_boilerplate/set_limit_switch.h>
+#include <ros_control_boilerplate/set_current.h>
 
 namespace ros_control_boilerplate
 {
@@ -221,6 +222,38 @@ void FRCRobotSimInterface::imuOdomCallback(const nav_msgs::OdometryConstPtr &msg
 	imu_sim_yaws_[imu_num]->store(yaw);
 }
 
+bool FRCRobotSimInterface::setcurrent(ros_control_boilerplate::set_current::Request &req,ros_control_boilerplate::set_current::Response &/*res*/)
+{
+	for (std::size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
+	{
+		if (!can_ctre_mc_local_hardwares_[joint_id])
+			continue;
+        auto &ts = talon_state_[joint_id];
+        if((!req.target_joint_name.length() && (ts.getCANID() == req.target_joint_id)) ||
+		   (req.target_joint_name == can_ctre_mc_names_[joint_id]))
+		{
+			auto talonsrx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonSRX>(ctre_mcs_[joint_id]);
+			if (talonsrx)
+			{
+				auto &collection = talonsrx->GetSimCollection();
+				collection.SetStatorCurrent(req.current);
+				collection.SetSupplyCurrent(req.current);
+			}
+			else
+			{
+				auto talonfx = std::dynamic_pointer_cast<ctre::phoenix::motorcontrol::can::TalonFX>(ctre_mcs_[joint_id]);
+				if (talonfx)
+				{
+					auto &collection = talonfx->GetSimCollection();
+					collection.SetStatorCurrent(req.current);
+					collection.SetSupplyCurrent(req.current);
+				}
+			}
+        }
+    }
+	return true;
+}
+
 bool FRCRobotSimInterface::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,ros_control_boilerplate::set_limit_switch::Response &/*res*/)
 {
 	for (std::size_t joint_id = 0; joint_id < num_can_ctre_mcs_; ++joint_id)
@@ -352,6 +385,7 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 	// used by them is initialized
 	ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " line: " << __LINE__);
 	limit_switch_srv_ = root_nh.advertiseService("set_limit_switch",&FRCRobotSimInterface::setlimit, this);
+	current_srv_ = root_nh.advertiseService("set_current",&FRCRobotSimInterface::setcurrent, this);
 	linebreak_sensor_srv_ = root_nh.advertiseService("linebreak_service_set",&FRCRobotSimInterface::evaluateDigitalInput, this);
     match_data_sub_ = root_nh.subscribe("/frcrobot_rio/match_data_in", 1, &FRCRobotSimInterface::match_data_callback, this);
 

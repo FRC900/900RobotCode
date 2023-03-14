@@ -47,6 +47,9 @@ protected:
 	double cube_outtake_speed_;
 	double small_speed_; // for holding cube/cone in
 
+	double medium_speed_;
+	double medium_time_;
+
 	double minimum_current_time_;
 	double minimum_fourbar_extension_;
 
@@ -244,6 +247,18 @@ public:
 			return;
 		}
 
+		if (!nh_.getParam("intake_medium_speed", medium_speed_))
+		{
+			ROS_ERROR_STREAM("2023_intake_server : could not find intake_medium_speed");
+			return;
+		}
+
+		if (!nh_.getParam("intake_medium_time", medium_time_))
+		{
+			ROS_ERROR_STREAM("2023_intake_server : could not find intake_medium_time");
+			return;
+		}
+
 		if (dynamic_reconfigure_) {
 			ddr_.registerVariable<double>("time_before_reverse", &time_before_reverse_, "Time before reversing", 0, 10);
 			ddr_.registerVariable<double>("cube_time", &cube_time_, "Time for intaking cubes (currently used for both because no terabees)", 0, 5);
@@ -255,6 +270,8 @@ public:
 			ddr_.registerVariable<double>("cone_outtake_speed", &cone_outtake_speed_, "Cone outtake speed (percent output)", 0, 1);
 			ddr_.registerVariable<double>("cube_outtake_speed", &cube_outtake_speed_, "Cube outtake speed (percent output)", 0, 1);
 			ddr_.registerVariable<double>("intake_small_speed", &small_speed_, "Intake small speed for holding game piece in (percent output)", 0, 1);
+			ddr_.registerVariable<double>("intake_medium_speed", &medium_speed_, "Intake medium speed for holding game piece in (percent output)", 0, 1);
+			ddr_.registerVariable<double>("intake_medium_time", &medium_time_, "Time before switching from medium to small", 0, 10);
 			ddr_.registerVariable<double>("minimum_current_time", &minimum_current_time_, "Time current spiking before retracting intake", 0, 1);
 			ddr_.registerVariable<double>("minimum_fourbar_extension", &minimum_fourbar_extension_, "Amount four bar must be extended before checking for current", 0, 1);
 		}
@@ -386,13 +403,17 @@ public:
 			ros::Duration(cone_time_).sleep();
 		}
 
-		// if got_game_piece is false, then don't run the rollers
-		// so make sure to set the current limit correctly so we don't drop things
-		percent_out.data = got_game_piece ? small_speed_ : 0.0;
-		make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
+		if (got_game_piece) {
+			// if got_game_piece is false, then don't run the rollers
+			// so make sure to set the current limit correctly so we don't drop things
+			percent_out.data = medium_speed_;
+			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 
-		ros::Duration(time_before_reverse_).sleep();
-		
+			ros::Duration(time_before_reverse_).sleep();
+		} else {
+			percent_out.data = 0.0;
+			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
+		}
 		// move back to holding position (basically zero so it's fine if we do this without a game piece)
 
 		pathGoal.reverse = true;
@@ -402,6 +423,12 @@ public:
 
 		path_ac_.cancelGoalsAtAndBeforeTime(done); // cancel old
 		path_ac_.sendGoal(pathGoal); // send new
+
+		if (got_game_piece) {
+			ros::Duration(medium_time_).sleep();
+			percent_out.data = small_speed_;
+			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
+		}
 
 		ros::Time start = ros::Time::now();
 		while (!path_ac_.getState().isDone()) {

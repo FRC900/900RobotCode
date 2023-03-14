@@ -35,6 +35,7 @@ add_service_files (
   set_limit_switch.srv
   LineBreakSensors.srv
   DSError.srv
+  set_current.srv
 )
 
 generate_messages(

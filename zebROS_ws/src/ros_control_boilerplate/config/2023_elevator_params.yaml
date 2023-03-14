@@ -5,14 +5,14 @@ elevator_controller_2023:
     fourbar_joint: 'four_bar'
 
     dynamic_reconfigure: true
-    max_height_val: 1.2
+    max_height_val: 1.35
 
     four_bar_max_extension: 0.65 # tbd, in meters
     four_bar_min_extension: 0.24 # tbd, in meters
 
-    four_bar_parallel_bar_length: 0.18
-    four_bar_diagonal_bar_length: 0.18
-    four_bar_intake_length: 0.065
+    four_bar_parallel_bar_length: 0.127
+    four_bar_diagonal_bar_length: 0.243
+    four_bar_intake_length: 0.22
 
     arb_feed_forward_high: 0.05
     arb_feed_forward_low: 0.05
@@ -54,7 +54,7 @@ elevator_controller_2023:
         # TODO : figure out what value this should be
         # Only need one direction, to
         # prevent the elevator from running off the top
-        softlimit_forward_threshold: 1.21 #1.66755
+        softlimit_forward_threshold: 1.36
         softlimit_forward_enable: True
 
         voltage_compensation_enable: True
