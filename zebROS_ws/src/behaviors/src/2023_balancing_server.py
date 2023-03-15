@@ -59,16 +59,16 @@ class AutoBalancing:
         res = handle_param_load("imu_sub_topic")
         self.stage_1_speed = res if res else 1
         
-        res = handle_param_load("stage_2_speed")
+        res = handle_param_load("~stage_2_speed")
         self.stage_2_speed = res if res else 0.6
 
-        res = handle_param_load("stage_transition_time")
+        res = handle_param_load("~stage_transition_time")
         self.stage_transition_time = res if res else 1.25
 
-        res = handle_param_load("minimum_drive_time_before_angle_check")
+        res = handle_param_load("~minimum_drive_time_before_angle_check")
         self.min_drive_t_before_check = res if res else 1.0
 
-        res = handle_param_load("max_drive_time_before_pid")
+        res = handle_param_load("~max_drive_time_before_pid")
         self.max_drive_time = res if res else 2.5
 
 
