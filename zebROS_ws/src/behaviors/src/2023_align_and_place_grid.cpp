@@ -140,6 +140,8 @@ public:
     }
     result_.success = true;
     as_.setSucceeded(result_);
+
+    moved_ = false; // should end down. TODO replace this with elev height
   }
 };
 

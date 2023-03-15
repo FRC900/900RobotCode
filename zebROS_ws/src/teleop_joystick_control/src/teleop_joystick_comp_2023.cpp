@@ -300,13 +300,13 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 		
 			if (success) {
 				moved = true;
-				align_goal.auto_place = false;
+				align_goal.percent_to_extend = 0.8;
+				align_goal.auto_place = true;
 				align_goal.grid_id = 1 + grid_position;
 				ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
 				align_goal.node = node;
 				align_goal.piece = game_piece;
 				align_goal.override_game_piece = false;
-				align_goal.auto_place = false;
 				align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
 				align_and_place_ac->sendGoal(align_goal);
 			}
@@ -332,13 +332,13 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 
 			if (success) {
 				moved = true;
-				align_goal.auto_place = false;
+				align_goal.percent_to_extend = 0.8;
+				align_goal.auto_place = true;
 				align_goal.grid_id = 2 + grid_position;
 				ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
 				align_goal.node = node;
 				align_goal.piece = game_piece;
 				align_goal.override_game_piece = false;
-				align_goal.auto_place = false;
 				align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
 				align_and_place_ac->sendGoal(align_goal);
 			}
@@ -362,13 +362,13 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 
 			if (success) {
 				moved = true;
-				align_goal.auto_place = false;
+				align_goal.percent_to_extend = 0.8;
+				align_goal.auto_place = true;
 				align_goal.grid_id = 3 + grid_position;
 				ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
 				align_goal.node = node;
 				align_goal.piece = game_piece;
 				align_goal.override_game_piece = false;
-				align_goal.auto_place = false;
 				align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
 				align_and_place_ac->sendGoal(align_goal);
 			}
@@ -1240,7 +1240,7 @@ int main(int argc, char **argv)
 	intaking_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Intaking2023Action>>("/intaking/intaking_server_2023", true);
 	placing_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>>("/placing/placing_server_2023", true);
 	pathing_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action>>("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true);
-	align_and_place_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::AlignAndPlaceGrid2023Action>>("/frcrobot_jetson/align_and_place_to_grid", true);
+	align_and_place_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::AlignAndPlaceGrid2023Action>>("/align_and_place_grid", true);
 
 	const ros::Duration startup_wait_time_secs(15);
 	const ros::Time startup_start_time = ros::Time::now();

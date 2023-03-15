@@ -6,12 +6,12 @@ current_threshold: 120.0 # some arbitrary unit
 minimum_current_time: 0.05
 minimum_fourbar_extension: 0.7 # has to be this amount extended or more before doing current checks
 joint: intake_leader # for current sensing
-time_before_reverse: 0.0
+time_before_reverse: 0.2
 
-intake_speed: 0.5
+intake_speed: 0.4
 cone_outtake_speed: 1.0 # was 0.8
 cube_outtake_speed: 0.2
-intake_medium_time: 2.0
+intake_medium_time: 1.0
 intake_medium_speed: 0.2
 intake_small_speed: 0.09
 

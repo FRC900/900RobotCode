@@ -37,6 +37,7 @@ class FourBarController_2023 : public controller_interface::MultiInterfaceContro
 
         bool zeroed_;
         bool last_zeroed_;
+        bool last_limit_switch_ = false;
 
         std::atomic<double> max_angle_;
         std::atomic<double> min_angle_;
@@ -232,7 +233,21 @@ void FourBarController_2023::update(const ros::Time &time, const ros::Duration &
     // If we hit the limit switch, (re)zero the position.
     if (four_bar_joint_.getReverseLimitSwitch())
     {
+        last_limit_switch_ = true;
         ROS_INFO_THROTTLE(2, "FourBarController_2023 : hit limit switch");
+        if (!last_zeroed_)
+        {
+            zeroed_ = true;
+            last_zeroed_ = true;
+            four_bar_joint_.setSelectedSensorPosition(0); // relative to min position
+            four_bar_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+            four_bar_joint_.setDemand1Value(sin(four_bar_joint_.getPosition() - straight_up_angle) * arb_feed_forward_angle);
+        }
+    }
+    else if (last_limit_switch_) {
+        last_limit_switch_ = false;
+        last_zeroed_ = false;
+        ROS_INFO_THROTTLE(2, "FourBarController_2023 : went off limit switch");
         if (!last_zeroed_)
         {
             zeroed_ = true;
@@ -244,6 +259,7 @@ void FourBarController_2023::update(const ros::Time &time, const ros::Duration &
     }
     else
     {
+        last_limit_switch_ = false;
         last_zeroed_ = false;
     }
     

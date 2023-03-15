@@ -295,7 +295,7 @@ public:
 			return;
 		}
 
-		path_ac_.cancelAllGoals(); // cancel all goals before sending the new one
+		path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now()); // cancel all goals before sending the new one
 		// (we don't want anything else controlling the elevator/fourbar when intaking)
 
 		ros::Rate r(50);
@@ -409,7 +409,7 @@ public:
 			percent_out.data = medium_speed_;
 			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 
-			ros::Duration(time_before_reverse_).sleep();
+			// ros::Duration(time_before_reverse_).sleep();
 		} else {
 			percent_out.data = 0.0;
 			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
@@ -426,6 +426,9 @@ public:
 
 		if (got_game_piece) {
 			ros::Duration(medium_time_).sleep();
+			percent_out.data = 0.0;
+			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
+			ros::Duration(time_before_reverse_).sleep();
 			percent_out.data = small_speed_;
 			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 		}

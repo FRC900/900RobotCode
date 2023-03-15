@@ -71,6 +71,7 @@
   <exec_depend>tf2_geometry_msgs</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <depend>field_obj</depend>
+  <depend>apriltag_ros</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

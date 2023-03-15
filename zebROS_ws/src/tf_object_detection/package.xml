@@ -57,6 +57,7 @@
   <build_export_depend>rospy</build_export_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>cv_bridge</exec_depend>
+  <depend>apriltag_ros</depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -6,6 +6,7 @@
 #include <behavior_actions/Placing2023Action.h>
 #include <behavior_actions/GamePieceState2023.h>
 #include <path_follower_msgs/holdPositionAction.h>
+#include <talon_state_msgs/TalonState.h>
 
 class PlacingServer2023
 {
@@ -32,6 +33,12 @@ protected:
 	double outtake_time_;
 	double time_before_reverse_;
 
+	double elevator_threshold_;
+
+	size_t elevator_idx_;
+	double elevator_position_;
+	ros::Subscriber talon_states_sub_;
+
 public:
 
 	PlacingServer2023(std::string name) :
@@ -41,6 +48,7 @@ public:
    		ac_intaking_("/intaking/intaking_server_2023", true),
 		ac_hold_position_("/hold_position/hold_position_server", true)
 	{
+		elevator_idx_ = std::numeric_limits<size_t>::max();
 		if (!nh_.getParam("time_before_reverse", time_before_reverse_)) {
 			ROS_WARN_STREAM("2023_placing_server : could not find time_before_reverse, defaulting to 1 seconds");
 			time_before_reverse_ = 1;
@@ -57,7 +65,13 @@ public:
 			ROS_WARN_STREAM("2023_placing_server : could not find outtake_time, defaulting to 1 second");
 			outtake_time_ = 1;
 		}
+		if (!nh_.getParam("elevator_threshold", elevator_threshold_)) {
+			// if elevator position < than this, move up. otherwise, place and retract. this only happens if align_intake is not set.
+			ROS_WARN_STREAM("2023_placing_server : could not find elevator_threshold, defaulting to 0.25");
+			elevator_threshold_ = 0.25;
+		}
 		game_piece_sub_ = nh_.subscribe("/game_piece/game_piece_state", 1, &PlacingServer2023::gamePieceCallback, this);
+		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &PlacingServer2023::talonStateCallback, this);
 		as_.start();
 	}
 
@@ -132,6 +146,29 @@ public:
 		return location_str + "_" + piece_str;
 	}
 
+	void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
+	{
+		// elevator_idx_ == max of size_t at the start
+		if (elevator_idx_ == std::numeric_limits<size_t>::max())
+		{
+			for (size_t i = 0; i < talon_state.name.size(); i++)
+			{
+				if (talon_state.name[i] == "elevator_leader")
+				{
+					elevator_idx_ = i;
+					break;
+				}
+			}
+		}
+		if (elevator_idx_ != std::numeric_limits<size_t>::max())
+		{
+			elevator_position_ = talon_state.position[elevator_idx_];
+		}
+		else {
+			ROS_ERROR_STREAM("2023_placing_server: Can't find talon with name = " << "elevator_leader");
+		}
+	}
+
 	void executeCB(const behavior_actions::Placing2023GoalConstPtr &goal)
 	{
 		result_.success = true; // default to true, set to false if fails
@@ -161,6 +198,7 @@ public:
 		}
 
 		if (goal->step == goal->ALIGN_INTAKE) {
+			ROS_INFO_STREAM("2023_placing_server : align intake");
 			if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
 				ROS_ERROR_STREAM("2023_placing_server : game piece position data too old, aborting");
 				result_.success = false;
@@ -216,6 +254,8 @@ public:
 			return;
 		}
 
+		// if the goal was align_intake it has returned by now
+
 		behavior_actions::FourbarElevatorPath2023Goal pathGoal;
 
 		pathGoal.path = pathForGamePiece(game_piece, goal->node);
@@ -224,7 +264,11 @@ public:
 			pathGoal.path += "_auto";
 		}
 
-		if (goal->step == goal->MOVE) {
+		uint8_t actual_step = elevator_position_ < elevator_threshold_ ? goal->MOVE : goal->PLACE_RETRACT;
+
+		ROS_INFO_STREAM("2023_placing_server : step = " << std::to_string(actual_step));
+
+		if (actual_step == goal->MOVE) {
 			ROS_INFO_STREAM("2023_placing_server : moving to placing position");
 
 			path_ac_.sendGoal(pathGoal);
@@ -239,54 +283,53 @@ public:
 
 			result_.success = true;
 			as_.setSucceeded(result_);
-			return;
-		}
+		} else {
+			if (!(goal->override_game_piece)) {
+				if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
+					ROS_ERROR_STREAM("2023_placing_server : game piece data too old, aborting");
+					result_.success = false;
+					as_.setAborted(result_);
+					return;
+				}
+			}
 
-		if (!(goal->override_game_piece)) {
-			if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
-				ROS_ERROR_STREAM("2023_placing_server : game piece data too old, aborting");
+			behavior_actions::Intaking2023Goal intaking_goal_;
+			intaking_goal_.outtake = game_piece == goal->CUBE ? intaking_goal_.OUTTAKE_CUBE : intaking_goal_.OUTTAKE_CONE; // don't change this
+			ac_intaking_.sendGoal(intaking_goal_);
+
+			if (!(waitForResultAndCheckForPreempt(ros::Duration(outtake_time_), ac_intaking_, as_, true) && ac_intaking_.getState() == ac_intaking_.getState().SUCCEEDED)) {
+				if (ac_intaking_.getState() == actionlib::SimpleClientGoalState::ACTIVE || ac_intaking_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
+					ROS_INFO_STREAM("2023_placing_server : stopping outtaking");
+					ac_intaking_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+				} else {
+					ROS_ERROR_STREAM("2023_placing_server : error with intake server! aborting!");
+					result_.success = false;
+					as_.setAborted(result_);
+					ac_intaking_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+					return;
+				}
+			}
+
+			ros::Duration(time_before_reverse_).sleep();
+
+			ROS_INFO_STREAM("2023_placing_server : reversing path!");
+
+			pathGoal.path = pathForGamePiece(game_piece, goal->node) + "_reverse";
+			pathGoal.reverse = false;
+			
+			path_ac_.sendGoal(pathGoal);
+
+			if (!(waitForResultAndCheckForPreempt(ros::Duration(-1), path_ac_, as_) && path_ac_.getState() == path_ac_.getState().SUCCEEDED)) {
+				ROS_INFO_STREAM("2023_placing_server : pather timed out, aborting");
 				result_.success = false;
 				as_.setAborted(result_);
+				path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 				return;
 			}
+
+			result_.success = true;
+			as_.setSucceeded(result_);
 		}
-
-		behavior_actions::Intaking2023Goal intaking_goal_;
-		intaking_goal_.outtake = game_piece == goal->CUBE ? intaking_goal_.OUTTAKE_CUBE : intaking_goal_.OUTTAKE_CONE; // don't change this
-		ac_intaking_.sendGoal(intaking_goal_);
-
-		if (!(waitForResultAndCheckForPreempt(ros::Duration(outtake_time_), ac_intaking_, as_, true) && ac_intaking_.getState() == ac_intaking_.getState().SUCCEEDED)) {
-			if (ac_intaking_.getState() == actionlib::SimpleClientGoalState::ACTIVE || ac_intaking_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED) {
-				ROS_INFO_STREAM("2023_placing_server : stopping outtaking");
-				ac_intaking_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-			} else {
-				ROS_ERROR_STREAM("2023_placing_server : error with intake server! aborting!");
-				result_.success = false;
-				as_.setAborted(result_);
-				ac_intaking_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-				return;
-			}
-		}
-
-		ros::Duration(time_before_reverse_).sleep();
-
-		ROS_INFO_STREAM("2023_placing_server : reversing path!");
-
-		pathGoal.path = pathForGamePiece(game_piece, goal->node) + "_reverse";
-		pathGoal.reverse = false;
-		
-		path_ac_.sendGoal(pathGoal);
-
-		if (!(waitForResultAndCheckForPreempt(ros::Duration(-1), path_ac_, as_) && path_ac_.getState() == path_ac_.getState().SUCCEEDED)) {
-			ROS_INFO_STREAM("2023_placing_server : pather timed out, aborting");
-			result_.success = false;
-			as_.setAborted(result_);
-			path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-			return;
-		}
-
-		result_.success = true;
-		as_.setSucceeded(result_);
 	}
 
 
