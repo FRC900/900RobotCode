@@ -28,7 +28,7 @@ auto_mode_6: ["drive_out_community"]
 
 auto_mode_7: ["place_cone_high"]
 auto_mode_8: ["drive_forward"]
-auto_mode_9: []
+auto_mode_9: ["pick_place_cone_from_grid_1"]
 
 # Examples
 #auto_mode_1: ["tunin9g"]
@@ -49,6 +49,32 @@ auto_mode_9: []
 # must have a value for "type", other stuff varies
 #valid action types: "intake_actionlib_server", "pause", "elevator_actionlib_server"
 ros_rate: 10 # in ms, used for all ros rate calls
+
+pick_place_cone_from_grid_1:
+    type: path
+    goal:
+      frame_id: "base_link"
+      points:
+        - [-0.7, 0.23, -0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.58, 4.758, 3.14]
+        - [-3.99, 0.22, -3.14] # origin: [1.88, 4.989, 3.14], map-relative: [5.87, 4.758, 0.0]
+        - [-4.12, 0.37, -3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.608, 0.0]
+        - [-4.12, 0.37, -3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.608, 0.0]
+        - [-5.32, 0.37, -3.14] # origin: [1.88, 4.989, 3.14], map-relative: [7.2, 4.608, 0.0]
+
+drive_back_over_charging:
+    type: "path"
+    goal:
+        apply_offset: false
+        points:
+            - [-2.65, 0.0, 0.0]
+
+drive_back_cmd_vel_over_charging:
+    type: cmd_vel
+    duration: 2.65
+    cmd_vel:
+        x: -1.0
+        y: 0.0 
+        z: 0.0
 
 drive_out_community:
     type: cmd_vel

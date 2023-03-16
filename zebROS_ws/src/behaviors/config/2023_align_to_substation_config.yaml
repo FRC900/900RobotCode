@@ -1,5 +1,5 @@
 double_substation_offset: 0.792 # meters from center of AprilTag to middle of open space on substation (just y)
 double_substation_red_tag: 5
 double_substation_blue_tag: 4
-double_substation_x_offset: 0.5 # meters from AprilTag to front bumper
-double_substation_intake_percent: 0.8 # when we have gone this amount of the path, start intaking (out of 1 not 100)
+double_substation_x_offset: 0.90 # meters from AprilTag to front bumper
+double_substation_intake_percent: 0.6 # when we have gone this amount of the path, start intaking (out of 1 not 100)

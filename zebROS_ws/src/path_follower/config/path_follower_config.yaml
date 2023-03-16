@@ -10,8 +10,9 @@ path_follower:
     # TODO : have an external node which translates from odom -> pose
     # and just have the path follower pull in that pose msg
     #use_pose_for_odom : true # true == use PoseStamped subscriber (e.g. zed camera pose) for odom rather than Odometry subscriber
-    final_pos_tol: 0.01
-    final_rot_tol: 0.005
+    dynamic_reconfigure: True
+    final_pos_tol: 0.02
+    final_rot_tol: 0.017 # ~1deg
     ros_rate: 100
     server_timeout: 15
     time_offset: 0.0

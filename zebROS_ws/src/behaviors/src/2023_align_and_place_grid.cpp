@@ -62,6 +62,8 @@ public:
     align_to_goal_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
     placing_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
     as_.setPreempted();
+    result_.success = false;
+    as_.setAborted(result_);
   }
 
   void place(uint8_t node, uint8_t game_piece) {
@@ -131,7 +133,7 @@ public:
         r.sleep();
     } 
 
-    if (started_moving_elevator && placing_ac.getState().isDone() && goal->auto_place && path_finished) {
+    if (started_moving_elevator && placing_ac.getState().isDone() && goal->auto_place) {
         ROS_INFO_STREAM("Full auto placing");
         place(node, game_piece);
     }

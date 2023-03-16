@@ -56,8 +56,8 @@ class AutoBalancing:
                 <param name="max_drive_time_before_pid" value="2.5" /> <!-- maximum it will drive with command velocity -->
         '''
 
-        res = handle_param_load("imu_sub_topic")
-        self.stage_1_speed = res if res else 1
+        res = handle_param_load("~stage_1_speed")
+        self.stage_1_speed = res if res else 1.0
         
         res = handle_param_load("~stage_2_speed")
         self.stage_2_speed = res if res else 0.6
@@ -120,10 +120,11 @@ class AutoBalancing:
         self.balancer_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
     def balancing_callback(self, goal):
+        multipler = 1.0
         if not goal.towards_charging_station:
-            multipler = -1
+            multipler = -1.0
         else:
-            multipler = 1
+            multipler = 1.0
         rospy.loginfo(f"Auto Balancing Actionlib called with goal {goal}")
         # snap to 0 or 180, whichever is closer
         zero_dist = abs(angles.shortest_angular_distance(self.current_yaw, 0))
@@ -162,8 +163,8 @@ class AutoBalancing:
 
             if self.state == States.NO_WEELS_ON:
                 cmd_vel_msg = geometry_msgs.msg.Twist()
-                cmd_vel_msg.angular.x = 0 # todo, tune me
-                cmd_vel_msg.angular.y = 0
+                cmd_vel_msg.angular.x = 0.0 # todo, tune me
+                cmd_vel_msg.angular.y = 0.0
                 cmd_vel_msg.angular.z = self.current_orient_effort 
                 if rospy.Time.now() - start_time >= rospy.Duration(1.25):
                     rospy.loginfo_throttle(1, f"Using second stage speed of {self.stage_2_speed}!")
@@ -171,8 +172,8 @@ class AutoBalancing:
                 else:
                     cmd_vel_msg.linear.x = self.stage_1_speed * multipler
                     rospy.loginfo_throttle(2, f"Sending cmd of {self.stage_1_speed}")
-                cmd_vel_msg.linear.y = 0
-                cmd_vel_msg.linear.z = 0
+                cmd_vel_msg.linear.y = 0.0
+                cmd_vel_msg.linear.z = 0.0
                 self.pub_cmd_vel.publish(cmd_vel_msg)
                 self.pub_orient_command.publish(orientation_msg)
                 r.sleep()
@@ -185,12 +186,12 @@ class AutoBalancing:
                         rospy.logwarn("Angle change2")
                     # might not need to publish this
                     cmd_vel_msg = geometry_msgs.msg.Twist()
-                    cmd_vel_msg.angular.x = 0 # todo, tune me
-                    cmd_vel_msg.angular.y = 0
+                    cmd_vel_msg.angular.x = 0.0 # todo, tune me
+                    cmd_vel_msg.angular.y = 0.0
                     cmd_vel_msg.angular.z = self.current_orient_effort 
                     cmd_vel_msg.linear.x = 0.01 * multipler
-                    cmd_vel_msg.linear.y = 0
-                    cmd_vel_msg.linear.z = 0
+                    cmd_vel_msg.linear.y = 0.0
+                    cmd_vel_msg.linear.z = 0.0
                     self.pub_cmd_vel.publish(cmd_vel_msg)
                     self.state = States.ONE_WHEEL_ON_CENTER            
              

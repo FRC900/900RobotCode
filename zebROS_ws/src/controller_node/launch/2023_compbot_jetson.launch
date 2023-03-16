@@ -115,6 +115,9 @@ elevator_controller_2023 four_bar_controller_2023 intake_leader_controller
 	<include file="$(find behaviors)/launch/2023_align_to_grid.launch">
 	</include>
 
+	<include file="$(find behaviors)/launch/2023_align_to_substation.launch">
+	</include>
+
 	<node name="candle_node" pkg="candle_node" type="candle_node" respawn="false" output="screen"/>
 
 	<include file="$(find controller_node)/launch/2023_terabee.launch" if="$(eval arg('hw_or_sim')=='hw')">

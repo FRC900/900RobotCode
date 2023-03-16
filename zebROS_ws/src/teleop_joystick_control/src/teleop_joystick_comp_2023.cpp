@@ -36,6 +36,8 @@
 #include <talon_swerve_drive_controller/SetXY.h>
 #include <behavior_actions/AlignAndPlaceGrid2023Action.h>
 
+#include "behavior_actions/AlignToSubstation2023Action.h"
+
 struct DynamicReconfigVars
 {
 	double joystick_deadzone{0};          // "Joystick deadzone, in percent",
@@ -170,6 +172,7 @@ std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Intaking2023Acti
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>> placing_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action>> pathing_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndPlaceGrid2023Action>> align_and_place_ac;
+std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::AlignToSubstation2023Action>> align_substation_ac;
 
 
 void preemptActionlibServers(void)
@@ -205,7 +208,6 @@ void place() {
 	goal.step = moved ? goal.PLACE_RETRACT : goal.MOVE;
 	placing_ac->sendGoal(goal);
 	moved = !moved;
-	teleop_cmd_vel->setSlowMode(moved);
 }
 
 void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 const>& event)
@@ -721,13 +723,20 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: buttonX
 			if(joystick_states_array[0].buttonXPress)
 			{
-
+				behavior_actions::AlignToSubstation2023Goal substationGoal;
+				substationGoal.side = substationGoal.LEFT;
+				substationGoal.substation = substationGoal.DOUBLE;
+				ROS_INFO_STREAM("teleop_joystick_comp_2023 : pathing to and intaking from double substation!");
+				align_substation_ac->sendGoal(substationGoal);
 			}
 			if(joystick_states_array[0].buttonXButton)
 			{
 			}
 			if(joystick_states_array[0].buttonXRelease)
 			{
+				ROS_INFO_STREAM("teleop_joystick_comp_2023 : stopping pathing and preempting intaking!");
+				align_substation_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+				intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 			}
 
 			//Joystick1: buttonY
@@ -746,14 +755,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: bumperLeft
 			if(joystick_states_array[0].bumperLeftPress)
 			{
-				teleop_cmd_vel->setSlowMode(true);
+				teleop_cmd_vel->setSlowMode(false);
 			}
 			if(joystick_states_array[0].bumperLeftButton)
 			{
 			}
 			if(joystick_states_array[0].bumperLeftRelease)
 			{
-				teleop_cmd_vel->setSlowMode(false);
+				teleop_cmd_vel->setSlowMode(true);
 			}
 
 			//Joystick1: bumperRight
@@ -1241,6 +1250,7 @@ int main(int argc, char **argv)
 	placing_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::Placing2023Action>>("/placing/placing_server_2023", true);
 	pathing_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action>>("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true);
 	align_and_place_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::AlignAndPlaceGrid2023Action>>("/align_and_place_grid", true);
+	align_substation_ac = std::make_shared<actionlib::SimpleActionClient<behavior_actions::AlignToSubstation2023Action>>("/substation/align_to_substation", true);
 
 	const ros::Duration startup_wait_time_secs(15);
 	const ros::Time startup_start_time = ros::Time::now();
@@ -1277,6 +1287,7 @@ int main(int argc, char **argv)
 	ROS_WARN("joy_init");
 
 	teleop_cmd_vel->setRobotOrient(false, 0.0);
+	teleop_cmd_vel->setSlowMode(false);
 
 	ros::spin();
 	return 0;
