@@ -100,11 +100,10 @@ class AutoBalancing:
         #self.balancer_client.cancel_goals_at_and_before_time(rospy.Time.now())
 
     def balancing_callback(self, goal):
-        multipler = 1.0
         if not goal.towards_charging_station:
-            multipler = -1.0
+            multipler = -1
         else:
-            multipler = 1.0
+            multipler = 1
         rospy.loginfo(f"Auto Balancing Actionlib called with goal {goal}")
         # snap to 0 or 180, whichever is closer
         zero_dist = abs(angles.shortest_angular_distance(self.current_yaw, 0))

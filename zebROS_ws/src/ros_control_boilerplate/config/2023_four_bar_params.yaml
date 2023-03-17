@@ -16,7 +16,7 @@ four_bar_controller_2023:
     motion_magic_acceleration: 8.0 # was 10.0
 
     # How quickly the four bar moves down when zeroing itself
-    four_bar_zeroing_percent_output: 0.0 # TODO : tune me
+    four_bar_zeroing_percent_output: -0.05 # TODO : tune me
 
     # If there are no negative velocity readings while zeroing
     # for this amount of time, assume the four bar is stuck
