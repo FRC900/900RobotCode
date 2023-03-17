@@ -15,11 +15,12 @@
  * Frequency is 400Khz on I2C
  * There are Built-in pull-up resistors (on SCL/SDA) so avoid additional pull-up resistors on the same bus to prevent transmission problems)
  */
- 
 
 #include <Wire.h>
 // For TeraRanger Evo
 #define SENSOR_ADDR 0x31
+
+#define CLOCK_SPEED 100000L
 
 // Create a Cyclic Redundancy Checks table used in the "crc8" function
 static const uint8_t crc_table[] = {
@@ -79,6 +80,7 @@ void setupWire0(){
   Wire.setSDA(4);
   Wire.setSCL(5);
   Wire.begin();           // Join I2C bus as master
+  Wire.setClock(CLOCK_SPEED);
   // Set your sensor mode
   Wire.beginTransmission(SENSOR_ADDR);
   //const byte short_mode[2] = {0x02,0x01};
@@ -94,6 +96,7 @@ void setupWire1(){
   Wire1.setSDA(2);
   Wire1.setSCL(3);
   Wire1.begin();           // Join I2C bus as master
+  Wire1.setClock(CLOCK_SPEED);
   // Set your sensor mode
   Wire1.beginTransmission(SENSOR_ADDR);
   Wire1.write(short_mode, 2);
@@ -110,7 +113,6 @@ void setup() {
 
 // The main loop starts here
 void loop() {
-  
   Wire.beginTransmission(SENSOR_ADDR);  // Transmit to Evo Mini (THIS IS THE I2C BASE ADDRESS, CHANGE HERE IN CASE IT IS DIFFERENT)
   Wire.write(0x00);                     // Sends measure trigger byte
   Wire.endTransmission();               // Stop transmitting
@@ -145,7 +147,8 @@ void loop() {
 
   while (Serial.available()) {
     if (Serial.read() == 'r') { // *r*estart
-      watchdog_reboot(0, 0, 0);
+      // watchdog_reboot(0, 0, 0); // Pico
+      SCB_AIRCR = 0x05FA0004; // Teensy... this actually should work which is hilarious https://developer.arm.com/documentation/dui0552/a/Cihehdge
     }
   }
 
