@@ -108,8 +108,14 @@ class AlignToSubstationAction
                 }
                 if (tag == std::nullopt)
                 {
-                    as_.setAborted(result_); // no tag found
                     ROS_ERROR_STREAM("2023_align_to_substation : AprilTag " << std::to_string(double_substation_tag_ids_[alliance_]) << " not found :(");
+                    ROS_INFO_STREAM("2023_align_to_substation : Just intaking! " << percent_complete_ << " > " << double_substation_intake_percent_);
+                    behavior_actions::Intaking2023Goal intakingGoal;
+                    intakingGoal.piece = intakingGoal.DOUBLE_SUBSTATION;
+                    intakingGoal.outtake = false;
+                    ac_intaking_.sendGoal(intakingGoal);
+                    result_.success = true;
+                    as_.setSucceeded(result_);
                     return;
                 }
 

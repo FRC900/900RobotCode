@@ -66,14 +66,18 @@ def main():
 
     r = rospy.Rate(50)
 
+    reboot_count = 0
+    max_reboots = 2
+
     rebootPico(port, None)
 
     while not rospy.is_shutdown():
-        if crc_error_count >= restart_errors_count:
+        if crc_error_count >= restart_errors_count and reboot_count < max_reboots:
             # should restart board
             rospy.loginfo("intake_reader_2023 : restarting RP2040")
             rebootPico(port)
             crc_error_count = 0
+            reboot_count += 1
             continue
         try:
             port.flushInput()
