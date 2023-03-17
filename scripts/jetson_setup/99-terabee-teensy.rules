@@ -1,1 +1,0 @@
-SUBSYSTEM=="tty",SUBSYSTEMS=="usb",DRIVERS=="usb",ATTRS{idVendor}=="16c0",ATTRS{idProduct}=="0483",ATTRS{manufacturer}=="Teensyduino",ATTRS{product}=="USB Serial",SYMLINK+="PICOBEE",RUN+="/bin/stty -F /dev/PICOBEE raw -echo -hup"
