@@ -14,6 +14,7 @@
 #include <behavior_actions/AlignToGrid2023Action.h>
 #include <path_follower_msgs/PathAction.h>
 #include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
 
 class AlignAndPlaceGridAction
 {
@@ -29,6 +30,9 @@ protected:
   actionlib::SimpleActionClient<behavior_actions::AlignToGrid2023Action> align_to_goal_ac;
   actionlib::SimpleActionClient<behavior_actions::Placing2023Action> placing_ac;
   ros::Publisher cmd_vel_pub_;
+  ros::Publisher orientation_command_pub_;
+  ros::Subscriber control_effort_sub_;
+  double orient_effort_;
   double xOffset_;
   double holdPosTimeout_;
   double latest_yaw_;
@@ -38,6 +42,8 @@ protected:
   bool moved_ = false;
   uint8_t alliance_;
 
+  double green_button_time_;
+  double rotate_time_;
 
 public:
 
@@ -47,8 +53,18 @@ public:
     align_to_goal_ac("/align_to_grid", true),
     placing_ac("/placing/placing_server_2023", true),
     // /teleop/swerve_drive_controller/cmd_vel
-    cmd_vel_pub_(nh_.advertise<geometry_msgs::Twist>("/teleop/swerve_drive_controller/cmd_vel", 1))
+    cmd_vel_pub_(nh_.advertise<geometry_msgs::Twist>("/placing/cmd_vel", 1)),
+    orientation_command_pub_(nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1)),
+    control_effort_sub_(nh_.subscribe<std_msgs::Float64>("/teleop/orient_strafing/control_effort", 1, &AlignAndPlaceGridAction::controlEffortCB, this))
   {
+    if (!nh_.getParam("green_button_time", green_button_time_)) {
+			ROS_WARN_STREAM("2023_align_and_place_grid : could not find green_button_time, defaulting to 1 second");
+			green_button_time_ = 1;
+		}
+    if (!nh_.getParam("rotate_time", rotate_time_)) {
+			ROS_WARN_STREAM("2023_align_and_place_grid : could not find rotate_time, defaulting to 0.5 seconds");
+			rotate_time_ = 0.5;
+		}
     //nh_.getParam("tags", tagList);
     as_.start();
   }
@@ -78,6 +94,10 @@ public:
 
   void feedbackCB(const  behavior_actions::AlignToGrid2023FeedbackConstPtr& feedback) {
     percent_complete_ = feedback->percent_complete;
+  }
+
+  void controlEffortCB(const std_msgs::Float64ConstPtr& msg) {
+    orient_effort_ = msg->data;
   }
 
   void executeCB(const behavior_actions::AlignAndPlaceGrid2023GoalConstPtr &goal)
@@ -120,18 +140,39 @@ public:
     }
 
     path_finished_time = ros::Time::now();
-    while (ros::Time::now() - path_finished_time < ros::Duration(1)) {
+    std_msgs::Float64 msg;
+    msg.data = M_PI;
+    orientation_command_pub_.publish(msg);
+    while (ros::Time::now() - path_finished_time < ros::Duration(green_button_time_)) {
+        ros::spinOnce();
         ROS_INFO_STREAM_THROTTLE(0.4, "Green buttoning from align and place!");
+        orientation_command_pub_.publish(msg);
         geometry_msgs::Twist cmd_vel;
         cmd_vel.linear.x = 0.5; // green button states
         cmd_vel.linear.y = 0.0;
         cmd_vel.linear.z = 0.0;
         cmd_vel.angular.x = 0.0;
         cmd_vel.angular.y = 0.0;
-        cmd_vel.angular.z = 0.0;
+        cmd_vel.angular.z = orient_effort_;
         cmd_vel_pub_.publish(cmd_vel);
         r.sleep();
-    } 
+    }
+
+    ros::Time started_orient_time = ros::Time::now();
+    while (orient_effort_ > 0.1 && (ros::Time::now() - started_orient_time) < ros::Duration(rotate_time_)) {
+        ros::spinOnce();
+        ROS_INFO_STREAM_THROTTLE(0.4, "Aligning to wall, we aren't rotated correctly");
+        orientation_command_pub_.publish(msg);
+        geometry_msgs::Twist cmd_vel;
+        cmd_vel.linear.x = 0.0; // green button states
+        cmd_vel.linear.y = 0.0;
+        cmd_vel.linear.z = 0.0;
+        cmd_vel.angular.x = 0.0;
+        cmd_vel.angular.y = 0.0;
+        cmd_vel.angular.z = orient_effort_;
+        cmd_vel_pub_.publish(cmd_vel);
+        r.sleep();
+    }
 
     if (started_moving_elevator && placing_ac.getState().isDone() && goal->auto_place) {
         ROS_INFO_STREAM("Full auto placing");

@@ -59,6 +59,7 @@ def main():
     samples = rospy.get_param("samples")
     min_range = rospy.get_param("min_range")
     max_range = rospy.get_param("max_range")
+    flip_terabees = rospy.get_param("flip_terabees")
     rospy.loginfo(f"intake_reader_2023: using {port.port} @ {port.baudrate} baud. samples is {samples}. range is {min_range}-{max_range}m.")
 
     srv = rospy.Service("reboot_pico", Empty, lambda req: rebootPico(port, req))
@@ -94,7 +95,8 @@ def main():
             averaged = list(map(safeAverage, averages))
             for a in averaged:
                 if a != a: averaged = [a, a] # nan
-            msg = IntakeState2023(leftDistance=averaged[0], rightDistance=averaged[1])
+            if flip_terabees: msg = IntakeState2023(leftDistance=averaged[1], rightDistance=averaged[0])
+            else: msg = IntakeState2023(leftDistance=averaged[0], rightDistance=averaged[1])
             pub.publish(msg)
         except Exception as e:
             rospy.logerr_throttle(0.1, f"intake_reader_2023 : couldn't read from pico, error = {e}")

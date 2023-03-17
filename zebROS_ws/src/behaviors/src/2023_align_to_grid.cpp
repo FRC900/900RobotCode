@@ -187,6 +187,9 @@ public:
   }
 
   std::optional<int> findClosestApriltag(const field_obj::Detection &detection) {
+    std::vector<uint8_t> red_visible_tags{1,2,3,4};
+    std::vector<uint8_t> blue_visible_tags{5,6,7,8};
+    auto our_tags = alliance_ == 0 ? red_visible_tags : blue_visible_tags;
     double minDistance = std::numeric_limits<double>::max();
     int closestTag;
     if (detection.objects.size() == 0) {
@@ -194,7 +197,7 @@ public:
     }
     for (field_obj::Object obj : detection.objects) {
       double d = distance(obj.location);
-      if (d < minDistance) {
+      if (d < minDistance && std::find(our_tags.begin(), our_tags.end(), std::stoi(obj.id)) != our_tags.end()) {
         minDistance = d;
         closestTag = std::stoi(obj.id);
       }

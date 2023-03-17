@@ -199,6 +199,7 @@ double old_angular_z = 0.0;
 bool use_pathing = false;
 double grid_position = 0;
 bool moved = false;
+bool pathed = false;
 
 void place() {
 	behavior_actions::Placing2023Goal goal;
@@ -262,6 +263,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 		intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 		pathing_ac->cancelAllGoals();
 		align_and_place_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
+		pathed = false;
 	}
 	if(button_box.redRelease) {
 	}
@@ -295,13 +297,14 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	}
 	if(button_box.gridSelectConeLeftPress) {
 		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE;
-		if (use_pathing) {
+		if (use_pathing && !pathed) {
 			behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
 			align_goal.alliance = alliance_color;
 			bool success = true;
 		
 			if (success) {
 				moved = true;
+				pathed = true;
 				align_goal.percent_to_extend = 0.8;
 				align_goal.auto_place = false;
 				align_goal.grid_id = 1 + grid_position;
@@ -313,9 +316,10 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 				align_and_place_ac->sendGoal(align_goal);
 			}
 		}
-		else if (moved || !use_pathing) {
+		else if (pathed || moved || !use_pathing) {
 			ROS_INFO_STREAM("Placing a cone!");
 			place();
+			pathed = false;
 		}
 
 		// slow mode
@@ -327,7 +331,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	}
 	if(button_box.gridSelectCubePress) {
 		game_piece = behavior_actions::Placing2023Goal::CUBE;
-		if (use_pathing) {
+		if (use_pathing && !pathed) {
 			behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
 			align_goal.alliance = alliance_color;
 			bool success = true;
@@ -345,9 +349,10 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 				align_and_place_ac->sendGoal(align_goal);
 			}
 		}
-		else if (moved || !use_pathing) {
+		else if (pathed || moved || !use_pathing) {
 			ROS_INFO_STREAM("Placing a cube!");
 			place();
+			pathed = false;
 		}
 	}
 	if(button_box.gridSelectCubeRelease) {
@@ -357,13 +362,14 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	}
 	if(button_box.gridSelectConeRightPress) {
 		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE; // type doesn't matter for placing
-		if (use_pathing) {
+		if (use_pathing && !pathed) {
 			behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
 			align_goal.alliance = alliance_color;
 			bool success = true;
 
 			if (success) {
 				moved = true;
+				pathed = true;
 				align_goal.percent_to_extend = 0.8;
 				align_goal.auto_place = false;
 				align_goal.grid_id = 3 + grid_position;
@@ -375,9 +381,10 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 				align_and_place_ac->sendGoal(align_goal);
 			}
 		}
-		else if (moved || !use_pathing) {
+		else if (pathed || moved || !use_pathing) {
 			ROS_INFO_STREAM("Placing a cone!");
 			place();
+			pathed = false;
 		}
 		// slow mode
 	}

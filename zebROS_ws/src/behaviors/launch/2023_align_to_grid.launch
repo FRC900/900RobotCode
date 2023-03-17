@@ -2,6 +2,7 @@
 <launch>
     <rosparam file="$(find behaviors)/config/2023_apriltag_locations.yaml" command="load"/>
     <rosparam file="$(find behaviors)/config/2023_grid_locations.yaml" command="load"/>
+    <rosparam file="$(find behaviors)/config/2023_grid_alignment_config.yaml" command="load"/>
     <node name="align_and_place_grid" pkg="behaviors" type="align_and_place_grid" output="screen"/>
     <node name="align_to_grid_2023" pkg="behaviors" type="2023_align_to_grid_node" output="screen"/>
     <node name="path_to_apriltag" pkg="behaviors" type="path_to_apriltag" output="screen"/>

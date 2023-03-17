@@ -34,5 +34,10 @@ topics:
   topic   : /balance_position/balancer_server/swerve_drive_controller/cmd_vel
   timeout : 0.2
   priority: 130
+-
+  name    : placing_cmd_vel
+  topic   : /placing/cmd_vel
+  timeout : 0.2
+  priority: 129
 
 locks: []

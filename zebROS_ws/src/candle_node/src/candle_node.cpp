@@ -10,6 +10,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <angles/angles.h>
 #include <talon_state_msgs/TalonState.h>
+#include <geometry_msgs/Twist.h>
 
 constexpr uint8_t MAX_LED = 34;
 constexpr uint8_t MID_START = 0;
@@ -31,6 +32,7 @@ struct NodeCTX {
     size_t intake_idx;
     bool current_exceeded_;
     double intake_current_threshold_;
+    bool pathing;
 
     NodeCTX() :
         team_colour{3},
@@ -78,6 +80,18 @@ struct NodeCTX {
         if (msg.Disabled != this->disabled) {
             ROS_INFO_STREAM("Updating auto LEDs...");
             disabled = msg.Disabled;
+            updated = true;
+        }
+    }
+
+    void path_callback(const geometry_msgs::TwistConstPtr &msg) {
+        bool last_pathing = pathing;
+        if (hypot(msg->linear.x, msg->linear.y) > 0.1 || msg->angular.z > 0.1) {
+            pathing = true;
+        } else {
+            pathing = false;
+        }
+        if (last_pathing != pathing) {
             updated = true;
         }
     }
@@ -140,11 +154,12 @@ int main(int argc, char **argv) {
     node.param<double>("/intaking/current_threshold", ctx.intake_current_threshold_, 100.0);
 
     // Team colour subscriber/callback
-    ros::Subscriber team_colour_subscriber = node.subscribe("/frcrobot_rio/match_data", 0, &NodeCTX::team_colour_callback, &ctx);
-    ros::Subscriber button_box_subscriber = node.subscribe("/frcrobot_rio/button_box_states", 100, &NodeCTX::button_box_callback, &ctx);
-    ros::Subscriber auto_mode_subscriber = node.subscribe("/auto/auto_mode", 100, &NodeCTX::auto_mode_callback, &ctx);
-    ros::Subscriber imu_subscriber = node.subscribe("/imu/zeroed_imu", 100, &NodeCTX::imu_callback, &ctx);
-    ros::Subscriber talon_state_subscriber = node.subscribe("/frcrobot_jetson/talon_states", 100, &NodeCTX::talon_callback, &ctx);
+    ros::Subscriber team_colour_subscriber = node.subscribe("/frcrobot_rio/match_data", 1, &NodeCTX::team_colour_callback, &ctx);
+    ros::Subscriber button_box_subscriber = node.subscribe("/frcrobot_rio/button_box_states", 1, &NodeCTX::button_box_callback, &ctx);
+    ros::Subscriber auto_mode_subscriber = node.subscribe("/auto/auto_mode", 1, &NodeCTX::auto_mode_callback, &ctx);
+    ros::Subscriber imu_subscriber = node.subscribe("/imu/zeroed_imu", 1, &NodeCTX::imu_callback, &ctx);
+    ros::Subscriber talon_state_subscriber = node.subscribe("/frcrobot_jetson/talon_states", 1, &NodeCTX::talon_callback, &ctx);
+    ros::Subscriber path_follower_subscriber = node.subscribe("/path_follower/path_follower_pid/swerve_drive_controller/cmd_vel", 1, &NodeCTX::path_callback, &ctx);
 
     // ROS service clients (setting the CANdle)
     ros::ServiceClient colour_client = node.serviceClient<candle_controller_msgs::Colour>("/frcrobot_jetson/candle_controller/colour", false);
@@ -281,6 +296,19 @@ int main(int argc, char **argv) {
                 }
                 ros::Duration(1.0).sleep();
                 colour_req.request.green = 0;
+            } else if (ctx.pathing) {
+                candle_controller_msgs::Animation animation_req;
+                animation_req.request.animation_type = animation_req.request.ANIMATION_TYPE_RAINBOW;
+                animation_req.request.brightness = 1.0;
+                animation_req.request.speed = 1.0;
+                animation_req.request.start = 0;
+                animation_req.request.count = MAX_LED;
+                if (animation_client.call(animation_req)) {
+                    ROS_INFO_STREAM("Updated LEDs rainbow");
+                    ctx.updated = false;
+                } else {
+                    ROS_ERROR_STREAM("Failed to update LEDs");
+                }
             } else if (ctx.team_colour == 0) {
                 // Red colour
                 colour_req.request.red = 255;
