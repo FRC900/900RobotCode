@@ -49,7 +49,7 @@ regularization_lambda: 0.0025
 path_distance_limit: 1.0
 
 # Max robot translational velocity (meters/sec)
-max_vel: 1.0
+max_vel: 1.25
 
 # Maximum robot linear acceleration (meters/sec^2)
 max_linear_acc: 3.0
