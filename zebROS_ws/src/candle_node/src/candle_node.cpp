@@ -297,6 +297,13 @@ int main(int argc, char **argv) {
                 ros::Duration(1.0).sleep();
                 colour_req.request.green = 0;
             } else if (ctx.pathing) {
+                if (colour_client.call(colour_req)) {
+                    ROS_INFO_STREAM("Updated LEDs");
+                    ctx.updated = false;
+                } else {
+                    ROS_ERROR_STREAM("Failed to update LEDs");
+                }
+                ros::Duration(0.25).sleep();
                 candle_controller_msgs::Animation animation_req;
                 animation_req.request.animation_type = animation_req.request.ANIMATION_TYPE_RAINBOW;
                 animation_req.request.brightness = 1.0;
@@ -309,6 +316,7 @@ int main(int argc, char **argv) {
                 } else {
                     ROS_ERROR_STREAM("Failed to update LEDs");
                 }
+                continue;
             } else if (ctx.team_colour == 0) {
                 // Red colour
                 colour_req.request.red = 255;
