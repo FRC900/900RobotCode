@@ -11,7 +11,7 @@ path_follower:
     # and just have the path follower pull in that pose msg
     #use_pose_for_odom : true # true == use PoseStamped subscriber (e.g. zed camera pose) for odom rather than Odometry subscriber
     dynamic_reconfigure: True
-    final_pos_tol: 0.02
+    final_pos_tol: 0.035
     final_rot_tol: 0.017 # ~1deg
     ros_rate: 100
     server_timeout: 15
