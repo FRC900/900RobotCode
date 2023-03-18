@@ -27,6 +27,7 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	effort_controllers \
 	fake_sensors \
 	force_torque_sensor_controller \
+	four_bar_elevator_2023 \
 	four_wheel_steering_controller \
 	goal_detection \
 	gripper_action_controller \
