@@ -1,6 +1,11 @@
 nav_msgs/Path path
 nav_msgs/Path waypoints
 int32[] waypointsIdx
+
+# Linear and angular tolerances for finishing path
+# Set to non-zero to override config defaults
+float64 final_pos_tol
+float64 final_rot_tol
 ---
 bool timed_out
 bool success
