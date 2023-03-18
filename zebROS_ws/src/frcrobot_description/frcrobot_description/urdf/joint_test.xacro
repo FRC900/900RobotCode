@@ -1,0 +1,8 @@
+<robot name="example">
+    <link name="link_1"/>
+    <link name="link_2"/>
+    <joint name="joint_1" type="fixed">
+        <parent link="link_1"/>
+        <child link="link_2"/>
+    </joint>
+</robot>

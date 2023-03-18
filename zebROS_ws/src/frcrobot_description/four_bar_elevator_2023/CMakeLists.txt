@@ -1,24 +1,16 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(fake_sensors)
+project(four_bar_elevator_2023)
 
-include("../cmake_modules/CMakeOpt.cmake")
+## Compile as C++11, supported in ROS Kinetic and newer
+# add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  field_obj
-  geometry_msgs
-  nav_msgs
-  marker_msgs
-  roscpp
-  sensor_msgs
-  std_msgs
-  talon_state_msgs
-  tf2
-  tf2_geometry_msgs
-  tf2_ros
-  apriltag_ros
+  joint_state_publisher
+  robot_state_publisher
+  rviz
 )
 
 ## System dependencies are found with CMake's conventions
@@ -78,7 +70,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   nav_msgs#   sensor_msgs#   std_msgs#   tf2_geometry_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -112,8 +104,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES fake_sensors
-#  CATKIN_DEPENDS nav_msgs roscpp sensor_msgs std_msgs tf2 tf2_geometry_msgs tf2_ros
+#  LIBRARIES four_bar_elevator_2023
+#  CATKIN_DEPENDS joint_state_publisher robot_state_publisher rviz
 #  DEPENDS system_lib
 )
 
@@ -130,7 +122,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/fake_sensors.cpp
+#   src/${PROJECT_NAME}/four_bar_elevator_2023.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -141,13 +133,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(fake_imu_node src/fake_imu.cpp)
-add_executable(fake_goal_detect_node src/fake_goal_detect.cpp)
-add_executable(fake_cmd_vel_out_node src/fake_cmd_vel_out.cpp)
-#add_executable(ar_msg_to_goal_detect_node src/ar_msg_to_goal_detect.cpp)
-add_executable(fake_terabee_node src/fake_terabee.cpp)
-add_executable(publish_apriltags_from_sim src/publish_apriltags_from_sim.cpp)
-add_executable(talon_state_republisher src/talon_state_republisher.cpp)
+# add_executable(${PROJECT_NAME}_node src/four_bar_elevator_2023_node.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -156,38 +143,12 @@ add_executable(talon_state_republisher src/talon_state_republisher.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(fake_imu_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(fake_goal_detect_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(fake_cmd_vel_out_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-#add_dependencies(ar_msg_to_goal_detect_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(fake_terabee_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(publish_apriltags_from_sim ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(talon_state_republisher ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
+# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(fake_imu_node
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(fake_goal_detect_node
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(fake_cmd_vel_out_node
-  ${catkin_LIBRARIES}
-)
-#target_link_libraries(ar_msg_to_goal_detect_node
-#${catkin_LIBRARIES}
-#)
-target_link_libraries(fake_terabee_node
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(publish_apriltags_from_sim
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(talon_state_republisher
-  ${catkin_LIBRARIES}
-)
-
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -236,7 +197,7 @@ target_link_libraries(talon_state_republisher
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_fake_sensors.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_four_bar_elevator_2023.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

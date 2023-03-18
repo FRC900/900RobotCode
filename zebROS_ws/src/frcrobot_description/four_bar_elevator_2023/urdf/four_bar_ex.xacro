@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="four_bar_elevator">
+    <xacro:property name="theta" value="${pi/6}"/>
+    <xacro:property name="L" value="1.2"/>
+    <xacro:property name="b" value="0.127"/>
+    <xacro:property name="h" value="0.243"/>
+
+    <link name="base_link">
+    </link>
+
+    <link name="four_bar_base">
+        <visual>
+            <origin xyz="0 ${b/2} 0" rpy="${pi/2} 0 0" />
+            <geometry>
+                <cylinder radius="0.02" length="${b}" />
+            </geometry>
+            <material name="blue">
+                <color rgba="0 0 .8 1" />
+            </material>
+        </visual>
+    </link>
+
+    <joint name="four_bar" type="revolute">
+        <parent link="four_bar_base"/>
+        <child link="link1"/>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <axis xyz="1 0 0" />
+        <limit lower="${-pi/2}" upper="${pi/2}" effort="0.5293" velocity="6.159937255" />
+    </joint>
+
+    <link name="link1">
+        <visual>
+            <origin xyz="0 0 ${h/2}" rpy="0 0 0" />
+            <geometry>
+                <cylinder radius="0.02" length="${h}" />
+            </geometry>
+            <material name="yellow">
+                <color rgba=".8 0 .8 1" />
+            </material>
+        </visual>
+    </link>
+
+    <joint name="joint1" type="revolute">
+        <parent link="four_bar_base"/>
+        <child link="link2"/>
+        <origin xyz="0 ${b} 0" rpy="0 0 0" />
+        <axis xyz="1 0 0" />
+        <limit lower="${-pi/2}" upper="${pi/2}" effort="0.5293" velocity="6.159937255" />
+        <mimic joint="four_bar" multiplier="1" offset="0" />
+    </joint>
+
+    <link name="link2">
+        <visual>
+            <origin xyz="0 0 ${h/2}" rpy="0 0 0" />
+            <geometry>
+                <cylinder radius="0.02" length="${h}" />
+            </geometry>
+            <material name="green">
+                <color rgba="0 .8 0 1" />
+            </material>
+        </visual>
+    </link>
+
+    <joint name="joint2" type="revolute">
+        <parent link="link1"/>
+        <child link="link3"/>
+        <origin xyz="0 0 ${h}" rpy="0 0 0" />
+        <axis xyz="1 0 0" />
+        <limit lower="${-pi/2}" upper="${pi/2}" effort="0.5293" velocity="6.159937255" />
+        <mimic joint="four_bar" multiplier="-1" offset="0" />
+    </joint>
+
+    <link name="link3">
+        <visual>
+            <origin xyz="0 ${b/2} 0" rpy="${pi/2} 0 0" />
+            <geometry>
+                <cylinder radius="0.02" length="${b}" />
+            </geometry>
+            <material name="red">
+                <color rgba=".8 0 0 1" />
+            </material>
+        </visual>
+    </link>
+
+    <link name="elevator">
+        <visual>
+            <origin xyz="0 ${L*sin(theta)/2} ${L*cos(theta)/2}" rpy="0 ${theta} ${pi/2}"/>
+            <geometry>
+                <cylinder radius="0.02" length="${L}"/>
+            </geometry>
+            <material name="white">
+                <color rgba="1 1 1 1"/>
+            </material>
+        </visual>
+    </link>
+
+    <joint name="elevator_leader" type="prismatic">
+        <parent link="base_link"/>
+        <child link="four_bar_base"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 ${theta} 1"/>
+        <limit effort="1000.0" lower="0" upper="${L}" velocity="0.5"/>
+    </joint>
+
+    <joint name="elevator_to_base" type="fixed">
+        <parent link="base_link"/>
+        <child link="elevator"/>
+    </joint>
+
+
+</robot>

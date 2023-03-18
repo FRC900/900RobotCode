@@ -1,0 +1,18 @@
+<launch>
+
+  <arg name="model" default="$(find four_bar_elevator_2023)/urdf/four_bar_ex.xacro"/>
+  <arg name="gui" default="true" />
+  <arg name="rvizconfig" default="$(find four_bar_elevator_2023)/rviz/urdf.rviz" />
+
+  <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
+
+  <node if="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" >
+    <param name="source_list" value="talon_joint_states" />
+  </node>
+  <node unless="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+    <remap from="joint_states" to="talon_joint_states" />
+  </node>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+
+</launch>
