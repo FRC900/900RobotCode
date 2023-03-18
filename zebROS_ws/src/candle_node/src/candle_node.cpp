@@ -97,16 +97,16 @@ struct NodeCTX {
     }
 
     void button_box_callback(const frc_msgs::ButtonBoxState2023& msg) {
-        if (msg.topMiddleConePress && !this->cone_button_pressed) {
+        if (msg.topMiddleConeButton && !this->cone_button_pressed) {
             this->cone_button_pressed = true;
             this->updated = true;
-        } else if (msg.topMiddleConeRelease && this->cone_button_pressed) {
+        } else if (!(msg.topMiddleConeButton) && this->cone_button_pressed) {
             this->cone_button_pressed = false;
             this->updated = true;
-        } else if (msg.topRightCubePress && !this->cube_button_pressed) {
+        } else if (msg.topRightCubeButton && !this->cube_button_pressed) {
             this->cube_button_pressed = true;
             this->updated = true;
-        } else if (msg.topRightCubeRelease && this->cube_button_pressed) {
+        } else if (!(msg.topRightCubeButton) && this->cube_button_pressed) {
             this->cube_button_pressed = false;
             this->updated = true;
         }
