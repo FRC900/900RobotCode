@@ -416,7 +416,11 @@ public:
 		}
 		// move back to holding position (basically zero so it's fine if we do this without a game piece)
 
-		pathGoal.reverse = true;
+		if (goal->piece != goal->DOUBLE_SUBSTATION) {
+			pathGoal.reverse = true;
+		} else {
+			pathGoal.path += "_reverse";
+		}
 
 		feedback_.status = feedback_.PATHER;
 		as_.publishFeedback(feedback_);
