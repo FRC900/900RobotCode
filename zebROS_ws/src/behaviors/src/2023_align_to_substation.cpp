@@ -106,6 +106,8 @@ class AlignToSubstationAction
                         ROS_INFO_STREAM("2023_align_to_substation : Found an object with a non-numeric id, skipping");
                     }
                 }
+                ROS_INFO_STREAM("2023_align_to_substation : " << (tag != std::nullopt ? std::string("found a tag") : std::string("didn't find a tag")) << ", ignoring it to just intake");
+                tag = std::nullopt;
                 if (tag == std::nullopt)
                 {
                     ROS_ERROR_STREAM("2023_align_to_substation : AprilTag " << std::to_string(double_substation_tag_ids_[alliance_]) << " not found :(");
