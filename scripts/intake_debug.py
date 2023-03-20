@@ -1,10 +1,8 @@
 # Script to process bag files from matches
 # It reads joystick values and generates a histogram
 # of the magnitude of hypot(x,y) values
-import rospy
 import rosbag
 from rospy_message_converter import message_converter
-import math
 import sys
 import csv
 
@@ -70,7 +68,7 @@ if teleop_start_time is not None:
 
         row = [to_match_time(teleop_start_time, this_time)]
         if topic == joystick_topic:
-            row += [''] * 6
+            row += [''] * 7
             row.append(m['leftTrigger'])
             row.append(m['rightTrigger'])
 
@@ -81,9 +79,10 @@ if teleop_start_time is not None:
             row.append(m['set_point'][8])
             row.append(m['position'][8])
             row.append(m['speed'][8])
+            row.append(m['motor_output_percent'][8])
 
         if topic == intake_cancel:
-            row += [''] * 8
+            row += [''] * 9
             row += ['1']
         
         csv_rows.append(row)
