@@ -14,14 +14,14 @@ elevator_controller_2023:
     four_bar_diagonal_bar_length: 0.243
     four_bar_intake_length: 0.22
 
-    arb_feed_forward_high: 0.05
-    arb_feed_forward_low: 0.05
+    arb_feed_forward_high: 0.04
+    arb_feed_forward_low: 0.03
 
     arb_feed_forward_angle: 0.01
     straight_up_angle: 0.52
     
-    motion_magic_velocity: 1.5
-    motion_magic_acceleration: 6.0
+    motion_magic_velocity: 3.5
+    motion_magic_acceleration: 9.0
 
     # not sure if this needs to be here and below
     motion_s_curve_strength: 8
@@ -39,7 +39,7 @@ elevator_controller_2023:
         type: talon_controllers/TalonControllerInterface 
         joint: elevator_leader
         close_loop_values:
-            - {p: 0.25, i: 0.00000, d: 0.001, f: 0.05, i_zone: 0, closed_loop_peak_output: 1.0}
+            - {p: 0.12, i: 0.00000, d: 0.00, f: 0.05, i_zone: 0, closed_loop_peak_output: 1.0}
               
         sensor_phase: False 
         invert_output: True
@@ -50,7 +50,7 @@ elevator_controller_2023:
         #conversion_factor: 0.0021143
 
         # linear position along 
-        conversion_factor: 0.00360258
+        conversion_factor: 0.00626535
         # TODO : figure out what value this should be
         # Only need one direction, to
         # prevent the elevator from running off the top
@@ -72,7 +72,7 @@ elevator_controller_2023:
 
         neutral_deadband: 0.001
 
-        dynamic_reconfigure: False
+        dynamic_reconfigure: True
         motion_s_curve_strength: 8
 
     elevator_follower: 
