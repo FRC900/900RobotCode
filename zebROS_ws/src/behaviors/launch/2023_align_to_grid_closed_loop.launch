@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<launch>
+    <rosparam file="$(find behaviors)/config/2023_apriltag_locations.yaml" command="load"/>
+    <rosparam file="$(find behaviors)/config/2023_grid_locations.yaml" command="load"/>
+    <rosparam file="$(find behaviors)/config/2023_grid_alignment_config.yaml" command="load"/>
+    <node name="align_to_grid_closed_loop_2023" pkg="behaviors" type="2023_align_to_grid_closed_loop_node" output="screen"/>
+
+    
+    <node name="x_position_align_pid" pkg="pid" type="controller" output="screen" >
+        <param name="node_name" value="x_position_align_pid" />
+        <param name="Kp" value="0.5" />
+        <param name="Ki" value="0.0" />
+        <param name="Kd" value="0.0" /> 
+        <param name="upper_limit" value="0.75" />
+        <param name="lower_limit" value="-0.75" />
+        <param name="windup_limit" value="0.2" />
+        <param name="max_loop_frequency" value="100.0" />
+        <param name="min_loop_frequency" value="100.0" />
+        
+        <param name="topic_from_controller" value="position_balance_pid/x_command" /> <!-- what it wants to do to go closer to desired value -->
+        <param name="setpoint_topic" value="position_balance_pid/pitch_cmd_pub" /> <!-- where we want to be, probably 0-->
+        <param name="topic_from_plant" value="position_balance_pid/pitch_state_pub" /> <!-- current state of sensor -->
+        
+        <remap from="pid_debug" to="x_position_align_pid/pid_debug" />
+        <remap from="pid_enable" to="x_position_align_pid/pid_enable" />
+    </node>
+
+    <node name="y_position_align_pid" pkg="pid" type="controller" output="screen" >
+        <param name="node_name" value="y_position_align_pid" />
+        <param name="Kp" value="0.5" />
+        <param name="Ki" value="0.0" />
+        <param name="Kd" value="0.0" /> 
+        <param name="upper_limit" value="2" />
+        <param name="lower_limit" value="-2" />
+        <param name="windup_limit" value="0.2" />
+        <param name="max_loop_frequency" value="100.0" />
+        <param name="min_loop_frequency" value="100.0" />
+        
+        <param name="topic_from_controller" value="position_balance_pid/x_command" /> <!-- what it wants to do to go closer to desired value -->
+        <param name="setpoint_topic" value="position_balance_pid/pitch_cmd_pub" /> <!-- where we want to be, probably 0-->
+        <param name="topic_from_plant" value="position_balance_pid/pitch_state_pub" /> <!-- current state of sensor -->
+        
+        <remap from="pid_debug" to="y_position_align_pid/pid_debug" />
+        <remap from="pid_enable" to="y_position_align_pid/pid_enable" />
+    </node>
+</launch>

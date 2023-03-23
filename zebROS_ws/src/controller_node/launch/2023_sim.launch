@@ -124,5 +124,7 @@
 	</group>
 
 	<include file="$(find fake_sensors)/launch/apriltag_sim.launch"/>
+	<include file="$(find behaviors)/launch/2023_align_to_grid_closed_loop.launch">
+	</include>
 
 </launch>
