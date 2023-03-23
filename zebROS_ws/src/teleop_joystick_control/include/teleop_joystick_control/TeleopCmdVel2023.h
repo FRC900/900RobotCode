@@ -55,6 +55,11 @@ class TeleopCmdVel
 			}
 		}
 
+		void setSuperSlowMode(const bool super_slow_mode)
+		{
+			super_slow_mode_ = super_slow_mode;
+		}
+
 		void restoreRobotOrient(void)
 		{
 			robot_orient_ = saved_robot_orient_;
@@ -209,7 +214,7 @@ class TeleopCmdVel
 		double offset_angle_{M_PI / 2.0};
 
 		bool slow_mode_{false};
-
+		bool super_slow_mode_{false};
 		bool saved_robot_orient_{false};
 		double saved_offset_angle_{M_PI / 2.0};
 

@@ -35,7 +35,7 @@
 #include <behavior_actions/FourbarElevatorPath2023Action.h>
 #include <talon_swerve_drive_controller/SetXY.h>
 #include <behavior_actions/AlignAndPlaceGrid2023Action.h>
-
+#include <talon_state_msgs/TalonState.h>
 #include "behavior_actions/AlignToSubstation2023Action.h"
 
 struct DynamicReconfigVars
@@ -44,8 +44,10 @@ struct DynamicReconfigVars
 	double min_speed{0};                  // "Min linear speed to get robot to overcome friction, in m/s"
 	double max_speed{2.0};                // "Max linear speed, in m/s"
 	double max_speed_slow{0.75};          // "Max linear speed in slow mode, in m/s"
+	double max_speed_elevator_extended{0.7};
 	double max_rot{6.0};                  // "Max angular speed"
 	double max_rot_slow{2.0};             // "Max angular speed in slow mode"
+	double max_rot_elevator_extended{0.2}; 
 	double button_move_speed{0.5};        // "Linear speed when move buttons are pressed, in m/s"
 	double joystick_pow{1.5};             // "Joystick Scaling Power, linear"
 	double rotation_pow{1.0};             // "Joystick Scaling Power, rotation"
@@ -60,6 +62,7 @@ struct DynamicReconfigVars
 	double cone_length{0.3302/2};
 	double cube_length{0.2032/2};
 	double angle_threshold{angles::from_degrees(1)};
+	double elevator_threshold{0.2};
 } config;
 
 std::unique_ptr<TeleopCmdVel<DynamicReconfigVars>> teleop_cmd_vel;
@@ -97,6 +100,7 @@ int direction_y{};
 int direction_z{};
 
 bool robot_is_disabled{false};
+bool elevator_up = false;
 
 uint8_t grid;
 uint8_t game_piece;
@@ -174,6 +178,40 @@ std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::FourbarElevatorP
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::AlignAndPlaceGrid2023Action>> align_and_place_ac;
 std::shared_ptr<actionlib::SimpleActionClient<behavior_actions::AlignToSubstation2023Action>> align_substation_ac;
 
+size_t elevator_idx = std::numeric_limits<size_t>::max();
+double elevator_height{0};
+double elevator_setpoint{0};
+
+void talonStateCallback(const talon_state_msgs::TalonState talon_state)
+{           
+	// fourbar_master_idx == max of size_t at the start
+	if (elevator_idx == std::numeric_limits<size_t>::max()) // could maybe just check for > 0
+	{
+		for (size_t i = 0; i < talon_state.name.size(); i++)
+		{
+			if (talon_state.name[i] == "elevator_leader")
+			{
+				elevator_idx = i;
+				break;
+			}
+		}
+	}
+	if (!(elevator_idx == std::numeric_limits<size_t>::max()))
+	{
+		elevator_height = talon_state.position[elevator_idx];
+		elevator_setpoint = talon_state.set_point[elevator_idx];
+		// if we are currently above the height or want to go above the height
+		if (elevator_height > config.elevator_threshold || elevator_setpoint > config.elevator_threshold) {
+			elevator_up = true;
+		}
+		else {
+			elevator_up = false;
+		}
+	}
+	else {
+		ROS_ERROR_STREAM("2023_align_to_substation : Can not find talon with name = elevator_leader");
+	}
+}
 
 void preemptActionlibServers(void)
 {
@@ -1160,6 +1198,14 @@ int main(int argc, char **argv)
 	{
 		ROS_ERROR("Could not read min_speed in teleop_joystick_comp");
 	}
+	if(!n_params.getParam("max_speed_elevator_extended", config.max_speed_elevator_extended))
+	{
+		ROS_ERROR("Could not read max_speed_elevator_extended in teleop_joystick_comp");
+	}
+	if(!n_params.getParam("max_rot_elevator_extended", config.max_rot_elevator_extended))
+	{
+		ROS_ERROR("Could not read max_rot_elevator_extended in teleop_joystick_comp");
+	}
 	if(!n_params.getParam("max_speed", config.max_speed))
 	{
 		ROS_ERROR("Could not read max_speed in teleop_joystick_comp");
@@ -1230,7 +1276,8 @@ int main(int argc, char **argv)
 	ddr.registerVariable<double>("trigger_threshold", &config.trigger_threshold, "Amount trigger has to be pressed to trigger action", 0., 1.);
 	ddr.registerVariable<double>("stick_threshold", &config.stick_threshold, "Amount stick has to be moved to trigger diag mode action", 0., 1.);
 	ddr.registerVariable<double>("imu_zero_angle", &config.imu_zero_angle, "Value to pass to imu/set_zero when zeroing", -360., 360.);
-
+	ddr.registerVariable<double>("max_speed_elevator_extended", &config.max_speed_elevator_extended, "Max linear speed in elevator extended mode, in m/s", 0., 2);
+	ddr.registerVariable<double>("max_rot_elevator_extended", &config.max_rot_elevator_extended, "Max angular speed in elevator extended mode", 0., 1.);
 	ddr.registerVariable<double>("rotation_epsilon", &config.rotation_epsilon, "rotation_epsilon", 0.0, 1.0);
 	ddr.registerVariable<double>("angle_to_add", &config.angle_to_add, "angle_to_add", 0.0, 10);
 
@@ -1247,7 +1294,7 @@ int main(int argc, char **argv)
 	setCenterSrv = n.serviceClient<talon_swerve_drive_controller::SetXY>("/frcrobot_jetson/swerve_drive_controller/change_center_of_rotation", false, service_connection_header);	
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
-
+	ros::Subscriber talon_states_sub = n.subscribe("/frcrobot_jetson/talon_states", 1, &talonStateCallback);
 	ros::Subscriber match_state_sub = n.subscribe("/frcrobot_rio/match_data", 1, matchStateCallback);
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 
