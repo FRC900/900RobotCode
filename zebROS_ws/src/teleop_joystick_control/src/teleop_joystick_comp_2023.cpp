@@ -202,10 +202,10 @@ void talonStateCallback(const talon_state_msgs::TalonState talon_state)
 		elevator_setpoint = talon_state.set_point[elevator_idx];
 		// if we are currently above the height or want to go above the height
 		if (elevator_height > config.elevator_threshold || elevator_setpoint > config.elevator_threshold) {
-			elevator_up = true;
+			teleop_cmd_vel->setSuperSlowMode(true);
 		}
 		else {
-			elevator_up = false;
+			teleop_cmd_vel->setSuperSlowMode(false);
 		}
 	}
 	else {

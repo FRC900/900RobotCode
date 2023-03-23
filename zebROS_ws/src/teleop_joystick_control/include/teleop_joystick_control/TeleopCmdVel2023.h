@@ -83,8 +83,16 @@ class TeleopCmdVel
 		// want normal rotation in teleop
 		geometry_msgs::Twist generateCmdVel(const frc_msgs::JoystickState &event, const double &navX_angle, const ConfigT &config)
 		{
-			double max_speed = slow_mode_ ? config.max_speed_slow : config.max_speed;
-			double max_rot = slow_mode_ ? config.max_rot_slow : config.max_rot;
+			double max_speed;
+			double max_rot;
+			if (super_slow_mode_) {
+				max_speed = config.max_speed_elevator_extended;
+				max_rot = config.max_rot_elevator_extended;
+			}
+			else {
+				max_speed = slow_mode_ ? config.max_speed_slow : config.max_speed;
+				max_rot = slow_mode_ ? config.max_rot_slow : config.max_rot;
+			}
 
 			x_rate_limit_.updateMinMax(-max_speed, max_speed);
 			y_rate_limit_.updateMinMax(-max_speed, max_speed);
@@ -183,7 +191,13 @@ class TeleopCmdVel
 
 		double generateAngleIncrement(const double rotationZ, const ros::Time &stamp, ConfigT &config)
 		{
-			const double max_rot = slow_mode_ ? config.max_rot_slow : config.max_rot;
+			double max_rot;
+			if (super_slow_mode_) {
+				max_rot = config.max_rot_elevator_extended;
+			}
+			else {
+				max_rot = slow_mode_ ? config.max_rot_slow : config.max_rot;
+			}
 			//rot_rate_limit_.updateMinMax(-max_rot, max_rot);
 			//rot_rate_limit_.updateRiseTimeInMsec(config.rotate_rate_limit_time);
 
