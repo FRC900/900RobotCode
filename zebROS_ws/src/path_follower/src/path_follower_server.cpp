@@ -292,6 +292,7 @@ class PathAction
 				}
 				else if (!preempted && !timed_out)
 				{
+					ros::spinOnce();
 					// Pass along the current x, y robot states
 					// to the PID controllers for each axis
 					// Orient is handled from combined orient
@@ -300,7 +301,7 @@ class PathAction
 					y_axis.setState(odom_.pose.pose.position.y);
 
 					std_msgs::Float64 yaw_msg;
-					yaw_msg.data = path_follower_.getYaw(odom_.pose.pose.orientation);
+					yaw_msg.data = orientation_state;
 					robot_relative_yaw_pub_.publish(yaw_msg);
 
 					r.sleep();

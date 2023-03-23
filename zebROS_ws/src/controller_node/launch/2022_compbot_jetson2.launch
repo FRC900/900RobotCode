@@ -15,12 +15,11 @@
 
 	<!-- <include file="$(find behaviors)/launch/2022_apriltag_shooting.launch"/> -->
 	<node name="teensy_power_info" pkg="rosserial_python" type="serial_node.py" args="_port:=/dev/ttyACM0 _baud:=115200"/>
-	<include file="$(find tf_object_detection)/launch/detection_2022.launch">
+	<include file="$(find tf_object_detection)/launch/detection_on_2022.launch">
 		<arg name="input_type" value="live_camera" />
 	</include>
 	
 	<!-- <include file="$(find controller_node)/launch/rosbridge_websocket.launch">
 		<arg name="port" value="5803"/> -->
 
-	</include>
 </launch>

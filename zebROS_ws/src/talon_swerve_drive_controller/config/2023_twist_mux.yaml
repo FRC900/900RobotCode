@@ -39,5 +39,10 @@ topics:
   topic   : /placing/cmd_vel
   timeout : 0.2
   priority: 129
+-
+  name    : align_cmd_vel
+  topic   : /align/cmd_vel
+  timeout : 0.2
+  priority: 129
 
 locks: []

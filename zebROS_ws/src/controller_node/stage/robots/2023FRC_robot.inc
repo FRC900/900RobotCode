@@ -36,7 +36,7 @@ define omnidir_robot position
   pose [ 0.0 0.0 0.0 0.0 ]
 
   localization "odom"
-  odom_error [ 0.02 0.02 0.0 0.002 ]
+  odom_error [ 0.02 0.02 0.0 0.0 ]
 
   size [ 0.889 0.889 0.60 ]
   origin [ 0.0 0.0 0.0 0.0 ]

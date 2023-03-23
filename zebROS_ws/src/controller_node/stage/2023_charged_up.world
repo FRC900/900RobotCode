@@ -50,7 +50,7 @@ window
 floorplan
 (
   name "charged_up_field"
-  bitmap "../maps/charged_up_field.png"
+  bitmap "../maps/charged_up_field_no_lexan.png"
   size [16.525875 8.028877135 1.000] #[24.6888 33.5274 4] x, y, size of the map (meters)
   pose [ 8.2629375  4.0144385675  0.000 0.000 ] #[  4.1148 8.5341  0.0 0.0 ] x, y, z, rotation
 )
@@ -59,7 +59,7 @@ floorplan
 omnidir_robot
 (
   # Everything but slalom
-  pose [ 1.041 2.286 0.000 0.000 ]
+  pose [ 1.88 4.989 0.000 180.0 ]
   # Slalom pose [ 1.0414 .762 0.0 0.0 ]
   name "robot"
 )
@@ -73,4 +73,19 @@ objdet_target ( pose [ 0.36195 6.749796 0.695452 0 ] fiducial_return 105 color "
 objdet_target ( pose [ 1.02743 4.424426 0.462788 0 ] fiducial_return 106 color "blue")
 objdet_target ( pose [ 1.02743 2.748026 0.462788 0 ] fiducial_return 107 color "blue")
 objdet_target ( pose [ 1.02743 1.071626 0.462788 0 ] fiducial_return 108 color "blue")
-objdet_target ( pose [ 8.0 4.0 0.0 0.0 ] fiducial_return 9 color "yellow" )
+
+# red
+# right
+objdet_target ( pose [ 7.05 0.92 1.0 0.0 ] fiducial_return 9 color "yellow" )
+objdet_target ( pose [ 7.05 2.14 1.0 0.0 ] fiducial_return 9 color "yellow" )
+objdet_target ( pose [ 7.05 3.35 1.0 0.0 ] fiducial_return 9 color "yellow" )
+objdet_target ( pose [ 7.05 4.56 1.0 0.0 ] fiducial_return 9 color "yellow" )
+# left
+
+# blue
+# left
+objdet_target ( pose [ 9.47 0.92 1.0 0.0 ] fiducial_return 10 color "purple" )
+objdet_target ( pose [ 9.47 2.14 1.0 0.0 ] fiducial_return 10 color "purple" )
+objdet_target ( pose [ 9.47 3.35 1.0 0.0 ] fiducial_return 10 color "purple" )
+objdet_target ( pose [ 9.47 4.56 1.0 0.0 ] fiducial_return 10 color "purple" )
+# right

@@ -288,9 +288,10 @@ public:
 
 	void executeCB(const behavior_actions::Intaking2023GoalConstPtr &goal)
 	{
+		result_.success = true;
 		if (!path_ac_.waitForServer(ros::Duration(server_timeout_))) {
 			ROS_ERROR_STREAM("2023_intaking_server : timed out connecting to fourbar elevator path server, aborting");
-			result_.timed_out = true;
+			result_.success = false;
 			as_.setAborted(result_);
 			return;
 		}
@@ -420,6 +421,7 @@ public:
 			pathGoal.reverse = true;
 		} else {
 			pathGoal.path += "_reverse";
+			ros::Duration(0.25).sleep();
 		}
 
 		feedback_.status = feedback_.PATHER;

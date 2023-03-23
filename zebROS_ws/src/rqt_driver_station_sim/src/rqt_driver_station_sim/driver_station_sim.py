@@ -291,7 +291,7 @@ class DriverStationSim(Plugin):
                     time_diff = int(rospy.get_time()-start_time)
                     minutes = ((150-time_diff)/60)
                     seconds = ((149-time_diff)%60 + (1.0-(rospy.get_time()-start_time)%1))
-                    time = str(minutes) + ":" + str(seconds)
+                    time = str(int(minutes)) + ":" + str(round(seconds, 1))
                     if(not self._widget.timer_pause.isChecked()):
                         self._widget.time.setText(time[:7])
                     match_msg.matchTimeRemaining = 150-time_diff

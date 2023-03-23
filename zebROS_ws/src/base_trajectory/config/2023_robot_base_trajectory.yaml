@@ -11,9 +11,9 @@ dist_between_arc_lengths_epsilon: 0.01
 mid_time_inflation: 1.25
 
 # spacing of waypoints along final generated path (meters)
-path_dist_between_arc_lengths: 0.025
+path_dist_between_arc_lengths: 0.01
 # error tolerance for final path waypoint spacing (meters)
-path_dist_between_arc_lengths_epsilon: 0.01
+path_dist_between_arc_lengths_epsilon: 0.001
 
 # RPROP initial deltaCost value
 initial_delta_cost_epsilon: 0.05
@@ -46,22 +46,22 @@ optimization_counter_max: 100
 regularization_lambda: 0.0025
 
 # how far robot can diverge from straight-line path between waypoints (meters)
-path_distance_limit: 1.0
+path_distance_limit: 0.05
 
 # Max robot translational velocity (meters/sec)
-max_vel: 1.25
+max_vel: 2.0
 
 # Maximum robot linear acceleration (meters/sec^2)
-max_linear_acc: 3.0
+max_linear_acc: 8.0 # SPEEEEED
 
 # Maximum robot linear deceleration (meters/sec^2)
-max_linear_dec: 3.0
+max_linear_dec: 3.0 # SPEEEEED
 
 # max centrepital acceleration (meters/sec^2)
 max_cent_acc: 4.0
 
 # Robot drivebase radius (meters)
-drive_base_radius: 0.38615
+drive_base_radius: 0.354 # center to corner swerve module
 
 # what frame to generate the path coords in
 path_frame_id: "base_link"

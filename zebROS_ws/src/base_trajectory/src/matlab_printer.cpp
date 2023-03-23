@@ -1,4 +1,5 @@
 #include <fstream>
+#include <angles/angles.h>
 #include <ros/console.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -191,7 +192,7 @@ void writeMatlabPath(const std::vector<geometry_msgs::PoseStamped> &poses, int f
 
 		velocities[0].push_back((positions[1][i] - positions[1][i-1]) / dt);
 		velocities[1].push_back((positions[2][i] - positions[2][i-1]) / dt);
-		velocities[2].push_back((positions[3][i] - positions[3][i-1]) / dt);
+		velocities[2].push_back(angles::shortest_angular_distance(positions[3][i-1], positions[3][i]) / dt);
 	}
 	std::array<std::vector<double>, 3> accelerations;
 	for (size_t i = 0; i < accelerations.size(); i++)
@@ -204,7 +205,105 @@ void writeMatlabPath(const std::vector<geometry_msgs::PoseStamped> &poses, int f
 
 		accelerations[0].push_back((velocities[0][i] - velocities[0][i-1]) / dt);
 		accelerations[1].push_back((velocities[1][i] - velocities[1][i-1]) / dt);
-		accelerations[2].push_back((velocities[2][i] - velocities[2][i-1]) / dt);
+		accelerations[2].push_back(angles::shortest_angular_distance(velocities[2][i-1], velocities[2][i]) / dt);
+	}
+
+	std::stringstream str;
+	writeMatlabDoubleArray(str, "path_t", positions[0], figureNum);
+	writeMatlabDoubleArray(str, "path_x", positions[1], figureNum);
+	writeMatlabDoubleArray(str, "path_y", positions[2], figureNum);
+	writeMatlabDoubleArray(str, "path_r", positions[3], figureNum);
+	writeMatlabDoubleArray(str, "path_dx", velocities[0], figureNum);
+	writeMatlabDoubleArray(str, "path_dy", velocities[1], figureNum);
+	writeMatlabDoubleArray(str, "path_dr", velocities[2], figureNum);
+	writeMatlabDoubleArray(str, "path_ddx", accelerations[0], figureNum);
+	writeMatlabDoubleArray(str, "path_ddy", accelerations[1], figureNum);
+	writeMatlabDoubleArray(str, "path_ddr", accelerations[2], figureNum);
+	str << "figure(" << figureNum << ")" << std::endl;
+	str << "subplot(1,1,1)" << std::endl;
+	str << "subplot(2,3,1)" << std::endl;
+	str << "title('" << label << "')" << std::endl;
+	str << "plot(path_t_" << figureNum << ", path_x_" << figureNum << ", path_t_" << figureNum << ", path_y_" << figureNum << ")" << std::endl;
+	str << "xlabel('T(seconds)')" << std::endl;
+	str << "subplot(2,3,2)" << std::endl;
+	str << "plot(path_t_" << figureNum << ", path_r_" << figureNum << ", path_t_" << figureNum << ", path_dr_" << figureNum << ")" << std::endl;
+	str << "xlabel('T(seconds)')" << std::endl;
+	str << "ylabel('Orientation Position/Velocity')" << std::endl;
+	str << "subplot(2,3,3)" << std::endl;
+	str << "plot3(path_x_" << figureNum << ", path_y_" << figureNum << ", path_r_" << figureNum << ")" << std::endl;
+	str << "xlabel('X position')" << std::endl;
+	str << "ylabel('Y position')" << std::endl;
+	str << "zlabel('Orientation')" << std::endl;
+	str << "subplot(2,3,4)" << std::endl;
+	str << "plot(path_t_" << figureNum << ", path_dx_" << figureNum << ", path_t_" << figureNum << ", path_dy_" << figureNum << ")" << std::endl;
+	str << "xlabel('T(seconds)')" << std::endl;
+	str << "ylabel('X / Y Velocity')" << std::endl;
+	str << "subplot(2,3,5)" << std::endl;
+	str << "plot(path_t_" << figureNum << ", path_ddx_" << figureNum << ", path_t_" << figureNum << ", path_ddy_" << figureNum << ")" << std::endl;
+	str << "xlabel('T(seconds)')" << std::endl;
+	str << "ylabel('X / Y Acceleration')" << std::endl;
+	str << "subplot(2,3,6)" << std::endl;
+	str << "plot(path_x_" << figureNum << ", path_y_" << figureNum << ")" << std::endl;
+	str << "xlabel('X position')" << std::endl;
+	str << "ylabel('Y position')" << std::endl;
+	const std::string filename(label + ".m");
+	std::ofstream of(filename);
+	of << str.str();
+
+	//ROS_INFO_STREAM_FILTER(&messageFilter, "Matlab_paths: " << std::endl << str.str());
+}
+
+void writeMatlabPathNew(const std::vector<geometry_msgs::PoseStamped> &poses,
+						const std::vector<geometry_msgs::PoseStamped> &poses_velocity,
+						const std::vector<geometry_msgs::PoseStamped> &poses_acceleration,
+						int figureNum, const std::string &label)
+{
+	if (poses.size() == 0)
+	{
+		ROS_WARN_STREAM("base_trajectory : writeMatlabPath called with empty path");
+		return;
+	}
+	ros::Time first_pose_time = poses[0].header.stamp;
+
+	std::array<std::vector<double>, 4> positions;
+	for (const auto &pose : poses)
+	{
+		positions[0].push_back((pose.header.stamp - first_pose_time).toSec());
+		positions[1].push_back(pose.pose.position.x);
+		positions[2].push_back(pose.pose.position.y);
+		double roll;
+		double pitch;
+		double yaw;
+		const tf2::Quaternion rotQuat(pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w);
+
+		tf2::Matrix3x3(rotQuat).getRPY(roll, pitch, yaw);
+		positions[3].push_back(yaw);
+	}
+	std::array<std::vector<double>, 3> velocities;
+	for (const auto &pose : poses_velocity)
+	{
+		velocities[0].push_back(pose.pose.position.x);
+		velocities[1].push_back(pose.pose.position.y);
+		double roll;
+		double pitch;
+		double yaw;
+		const tf2::Quaternion rotQuat(pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w);
+
+		tf2::Matrix3x3(rotQuat).getRPY(roll, pitch, yaw);
+		velocities[2].push_back(yaw);
+	}
+	std::array<std::vector<double>, 3> accelerations;
+	for (const auto &pose : poses_acceleration)
+	{
+		accelerations[0].push_back(pose.pose.position.x);
+		accelerations[1].push_back(pose.pose.position.y);
+		double roll;
+		double pitch;
+		double yaw;
+		const tf2::Quaternion rotQuat(pose.pose.orientation.x, pose.pose.orientation.y, pose.pose.orientation.z, pose.pose.orientation.w);
+
+		tf2::Matrix3x3(rotQuat).getRPY(roll, pitch, yaw);
+		accelerations[2].push_back(yaw);
 	}
 
 	std::stringstream str;

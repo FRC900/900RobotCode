@@ -12,7 +12,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/Placing2023Action.h>
 #include <behavior_actions/Shooting2022Action.h>
-#include "behavior_actions/Intaking2022Action.h"
+#include <behavior_actions/Intaking2023Action.h>
 #include <behavior_actions/Balancing2023Action.h>
 #include <behavior_actions/GamePieceState2023.h>
 #include <behavior_actions/DynamicPath.h>
@@ -86,8 +86,7 @@ class AutoNode {
 		// START probably changing year to year, mostly year specific actions but also custom stuff based on what is needed
 		//actionlib clients
 		actionlib::SimpleActionClient<path_follower_msgs::PathAction> path_ac_; //TODO fix this path
-		actionlib::SimpleActionClient<behavior_actions::Shooting2022Action> shooting_ac_;
-		actionlib::SimpleActionClient<behavior_actions::Intaking2022Action> intaking_ac_;
+		actionlib::SimpleActionClient<behavior_actions::Intaking2023Action> intaking_ac_;
 		actionlib::SimpleActionClient<behavior_actions::Balancing2023Action> balancing_ac;
 		actionlib::SimpleActionClient<behavior_actions::Placing2023Action> placing_ac_;
 
@@ -107,8 +106,7 @@ class AutoNode {
 		AutoNode(const ros::NodeHandle &nh) 
 		: nh_(nh)
 		, path_ac_("/path_follower/path_follower_server", true)
-		, shooting_ac_("/shooting2022/shooting2022_server", true)
-		, intaking_ac_("/intaking2022/intaking2022_server", true)
+		, intaking_ac_("/intaking/intaking_server_2023", true)
 		, balancing_ac("/balance_position/balancing_server", true)
 		, placing_ac_("/placing/placing_server_2023", true)
 
@@ -155,7 +153,6 @@ class AutoNode {
 		// better way to initalize?
 		functionMap_["pause"] = &AutoNode::pausefn;
 		functionMap_["intaking_actionlib_server"] = &AutoNode::intakefn;
-		functionMap_["shooting_actionlib_server"] = &AutoNode::shootfn;
 		functionMap_["placing_actionlib_server"] = &AutoNode::placefn;
 		functionMap_["path"] = &AutoNode::pathfn;
 		functionMap_["cmd_vel"] = &AutoNode::cmdvelfn;
@@ -164,7 +161,6 @@ class AutoNode {
 		// cool trick to bring all class variables into scope of lambda
 		preemptAll_ = [this](){ // must include all actions called
 			path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-			shooting_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			intaking_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			balancing_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			placing_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
@@ -767,41 +763,38 @@ class AutoNode {
 	}
 
 	bool intakefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
-		
+		ROS_ERROR_STREAM("==============INTAKE SERVER CALLED!!!==========");
 		//for some reason this is necessary, even if the server has been up and running for a while
 		if(!intaking_ac_.waitForServer(ros::Duration(5))){
 			shutdownNode(ERROR,"Auto node - couldn't find intaking actionlib server");
 			return false;
 		}
 
-		if (!action_data.hasMember("goal"))
+		if (!action_data.hasMember("piece"))
 		{
-			shutdownNode(ERROR,"Auto node - intaking_actionlib_server call missing \"goal\" field");
+			shutdownNode(ERROR,"Auto node - intaking_actionlib_server call missing \"piece\" field");
 			return false;
 		}
-		if(action_data["goal"] == "stop") {
+		behavior_actions::Intaking2023Goal goal;
+		if (action_data["piece"] == "retract") {
 			intaking_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-		} else {
-			behavior_actions::Intaking2022Goal goal;
-			intaking_ac_.sendGoal(goal);
+			return true;
 		}
-		return true;
-	}
-	
-	// will never be used again but would be cool to make it AlignedShooting
-	bool shootfn(XmlRpc::XmlRpcValue action_data, const std::string&  auto_step) {
-		if(!shooting_ac_.waitForServer(ros::Duration(5))){
-			
-			shutdownNode(ERROR, "Auto node - couldn't find shooting actionlib server");
+		else if (action_data["piece"] == "vertical_cone") {
+			goal.piece = goal.VERTICAL_CONE;
+		}
+		else if (action_data["piece"] == "cone") {
+			goal.piece = goal.BASE_TOWARDS_US_CONE;
+		}
+		else if (action_data["piece"] == "cube") {
+			goal.piece = goal.CUBE;
+		}
+		else {
+			shutdownNode(ERROR,"Auto node - intaking_actionlib_server call \"piece\" field is not \"cone\", \"vertical_cone\", or \"cube\". Exiting!");
 			return false;
-		} //for some reason this is necessary, even if the server has been up and running for a while
-		behavior_actions::Shooting2022Goal goal;
-		goal.num_cargo = 2;
-		goal.eject = false;
-		goal.distance = 1.48; // hub
-
-		shooting_ac_.sendGoal(goal);
-		waitForActionlibServer(shooting_ac_, 100, "shooting server");
+		}
+		intaking_ac_.sendGoal(goal);
+		waitForActionlibServer(intaking_ac_, 10.0, "intaking_server");
 		return true;
 	}
 
@@ -814,6 +807,23 @@ class AutoNode {
 		if (action_data.hasMember("goal"))
 			// could this fail?
 			readIntParam("iterations", action_data["goal"], iteration_value);
+		
+		std::map<int, std::string> waypoint_actions;
+		if (action_data.hasMember("waypoint_actions")) {
+			XmlRpc::XmlRpcValue wpas = action_data["waypoint_actions"];
+			ROS_INFO_STREAM("Waypoint actions exist! Type is " << wpas.getType());
+			if (wpas.getType() == wpas.TypeStruct) {
+				for(auto it = wpas.begin(); it != wpas.end(); ++it) {
+					std::string str = static_cast<std::string>(it->first);
+					int wp = static_cast<int>(it->second);
+					ROS_INFO_STREAM("** Running " << str << " @ " << wp);
+					waypoint_actions[wp] = str;
+				}
+			}
+		}
+		else {
+			ROS_WARN_STREAM("Could not find a waypoints action, this may be intentional!");
+		}
 
 		while(iteration_value > 0)
 		{
@@ -824,8 +834,25 @@ class AutoNode {
 			goal.path = premade_paths_[auto_step];
 			goal.waypoints = premade_waypoints_[auto_step];
 			goal.waypointsIdx = waypointsIdxs_[auto_step];
-			// Sends the goal and sets feedbackCb to be run when feedback is updated
-			path_ac_.sendGoal(goal, NULL, NULL, boost::bind(&AutoNode::feedbackCb, this, _1));
+
+			int last_waypoint = -1;
+			path_ac_.sendGoal(goal, NULL, NULL, [&](const path_follower_msgs::PathFeedbackConstPtr& feedback){
+				int waypoint = feedback->current_waypoint;
+				if (last_waypoint != waypoint) {
+					ROS_INFO_STREAM_THROTTLE(0.1, "**** WAYPOINT " << std::to_string(waypoint) << " ****");
+					if (waypoint_actions.find(waypoint) == waypoint_actions.end()) {
+						// not found
+						ROS_INFO_STREAM("No waypoint action");
+					} else {
+						// found
+						std::string action_name = waypoint_actions[waypoint];
+						ROS_INFO_STREAM("********** WAYPOINT ACTION " << action_name << " EXISTS!!!");
+						ROS_INFO_STREAM("Running action " << action_name);
+						runStep(action_name);
+					}
+				}
+				last_waypoint = waypoint;
+			});
 
 			// wait for actionlib server to finish
 			waitForActionlibServer(path_ac_, 100, "running path");
@@ -924,6 +951,38 @@ class AutoNode {
 		return true;
 	}
 
+	int runStep(const std::string &name) {
+		//read data from config needed to carry out the action
+		XmlRpc::XmlRpcValue action_data;
+		if(! nh_.getParam(name, action_data)){
+			//shutdownNode(ERROR, "Auto node - Couldn't read data for '" + auto_steps_[i] + "' auto action from config file");
+			//return 1;
+		}
+
+		//figure out what to do based on the action type, and do it
+		std::string action_data_type;
+		if (action_data.hasMember("type"))
+		{
+			action_data_type = static_cast<std::string>(action_data["type"]);
+				ROS_INFO_STREAM("auto_node: Running " << action_data_type);
+			// amazing syntax 
+			// passes in the config data and which auto step is running
+			bool result = (this->*functionMap_[action_data_type])(action_data, std::string(name));
+			if (!result)
+			{
+				std::string error_msg = "Auto node - Error running auto action " + name;
+				ROS_ERROR_STREAM(error_msg);
+				shutdownNode(ERROR, error_msg);
+				return 1;
+			}
+		}
+		else
+		{
+			ROS_ERROR_STREAM("Data for action " << name << " missing 'type' field");
+			return 1;
+		}
+		return 0;
+	}
 
 	int init()
 	{	
@@ -932,7 +991,7 @@ class AutoNode {
 			ROS_ERROR("Wait (15 sec) timed out, for Spline Gen Service in auto_node");
 		}
 
-		while(true) { // will exit when shutdownNode is called
+		while(ros::ok()) { // will exit when shutdownNode is called
 			//WAIT FOR MATCH TO START --------------------------------------------------------------------------
 			ROS_INFO("Auto node - waiting for autonomous to start");
 
@@ -958,36 +1017,10 @@ class AutoNode {
 				{
 					ROS_INFO_STREAM("Auto node - running step " << i << ": " << auto_steps_[i]);
 
-					//read data from config needed to carry out the action
-					XmlRpc::XmlRpcValue action_data;
-					if(! nh_.getParam(auto_steps_[i], action_data)){
-						//shutdownNode(ERROR, "Auto node - Couldn't read data for '" + auto_steps_[i] + "' auto action from config file");
-						//return 1;
+					int result = runStep(auto_steps_[i]);
+					if (result != 0) {
+						return result;
 					}
-					
-					//figure out what to do based on the action type, and do it
-					std::string action_data_type;
-					if (action_data.hasMember("type"))
-					{
-						action_data_type = static_cast<std::string>(action_data["type"]);
-							ROS_INFO_STREAM("auto_node: Running " << action_data_type);
-						// amazing syntax 
-						// passes in the config data and which auto step is running
-						bool result = (this->*functionMap_[action_data_type])(action_data, std::string(auto_steps_[i]));
-						if (!result)
-						{
-							std::string error_msg = "Auto node - Error running auto action " + auto_steps_[i];
-							ROS_ERROR_STREAM(error_msg);
-							shutdownNode(ERROR, error_msg);
-							return 1;
-						}
-					}
-					else
-					{
-						ROS_ERROR_STREAM("Data for action " << auto_steps_[i] << " missing 'type' field");
-					}
-
-
 
 				}
 			}

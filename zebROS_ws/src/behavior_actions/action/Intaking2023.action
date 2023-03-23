@@ -14,7 +14,7 @@ uint8 OUTTAKE_CONE=2
 uint8 outtake
 ---
 # result
-bool timed_out
+bool success
 ---
 # feedback
 uint8 PATHER=0

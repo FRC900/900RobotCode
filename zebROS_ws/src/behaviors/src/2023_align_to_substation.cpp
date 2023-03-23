@@ -13,6 +13,8 @@
 #include <frc_msgs/MatchSpecificData.h>
 #include <path_follower_msgs/PathAction.h>
 #include <optional>
+#include <geometry_msgs/Twist.h>
+#include <talon_state_msgs/TalonState.h>
 
 class AlignToSubstationAction
 {
@@ -36,6 +38,12 @@ class AlignToSubstationAction
         uint8_t alliance_{0};
         double percent_complete_{0};
 
+        ros::Publisher cmd_vel_pub_;
+        double intake_current_threshold_;
+        size_t intake_idx;
+        double current_current_;
+        ros::Subscriber talon_states_sub_;
+
     public:
 
         AlignToSubstationAction(std::string name) :
@@ -47,7 +55,10 @@ class AlignToSubstationAction
         {
 
             match_sub_ = nh_.subscribe<frc_msgs::MatchSpecificData>("/frcrobot_rio/match_data", 1, &AlignToSubstationAction::matchCb, this);
+            cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/align/cmd_vel", 1, false);
+            talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &AlignToSubstationAction::talonStateCallback, this);
 
+            nh_.param<double>("/intaking/current_threshold", intake_current_threshold_, 100.0);
             nh_.getParam("double_substation_x_offset", double_substation_x_offset_);
             nh_.getParam("double_substation_red_tag", double_substation_tag_ids_[0]);
             nh_.getParam("double_substation_blue_tag", double_substation_tag_ids_[1]);
@@ -71,6 +82,29 @@ class AlignToSubstationAction
             // need to use transforms...
             // oh wait no we don't! we can tell spline srv what frame id it is relevant to
             latest_ = *msg;
+        }
+
+        void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
+	    {
+            // fourbar_master_idx == max of size_t at the start
+            if (intake_idx == std::numeric_limits<size_t>::max()) // could maybe just check for > 0
+            {
+                for (size_t i = 0; i < talon_state.name.size(); i++)
+                {
+                    if (talon_state.name[i] == "intake_leader")
+                    {
+                        intake_idx = i;
+                        break;
+                    }
+                }
+            }
+            if (!(intake_idx == std::numeric_limits<size_t>::max()))
+            {
+                current_current_ = talon_state.output_current[intake_idx];
+            }
+            else {
+                ROS_ERROR_STREAM("2023_align_to_substation : Can not find talon with name = intake_leader");
+            }
         }
 
         void feedbackCb(const behavior_actions::PathToAprilTagFeedbackConstPtr &feedback)
@@ -107,7 +141,7 @@ class AlignToSubstationAction
                     }
                 }
                 ROS_INFO_STREAM("2023_align_to_substation : " << (tag != std::nullopt ? std::string("found a tag") : std::string("didn't find a tag")) << ", ignoring it to just intake");
-                tag = std::nullopt;
+                // tag = std::nullopt; // ignore apriltags
                 if (tag == std::nullopt)
                 {
                     ROS_ERROR_STREAM("2023_align_to_substation : AprilTag " << std::to_string(double_substation_tag_ids_[alliance_]) << " not found :(");
@@ -167,6 +201,30 @@ class AlignToSubstationAction
                         intakingGoal.piece = intakingGoal.DOUBLE_SUBSTATION;
                         intakingGoal.outtake = false;
                         ac_intaking_.sendGoal(intakingGoal);
+                        ros::Rate r(25);
+                        while (current_current_ < intake_current_threshold_ && !ac_intaking_.getState().isDone()) {
+                            ROS_INFO_STREAM_THROTTLE(0.1, "2023_align_to_substation : Waiting for game piece...");
+                            if (as_.isPreemptRequested() || !ros::ok())
+                            {
+                                ROS_ERROR_STREAM("2023_align_to_substation : Preempted!");
+                                client_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+                                ac_intaking_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+                                as_.setPreempted();
+                                return;
+                            }
+                            r.sleep();
+                        }
+                        ROS_INFO_STREAM("2023_align_to_substation : hit current limit or intaking finished");
+                        ros::Time start = ros::Time::now();
+                        geometry_msgs::Twist msg;
+                        msg.linear.x = -0.5;
+                        while (ros::Time::now() - start < ros::Duration(0.5)) {
+                            ROS_INFO_STREAM_THROTTLE(0.1, "2023_align_to_substation : Driving backwards...");
+                            cmd_vel_pub_.publish(msg);
+                            r.sleep();
+                        }
+                        msg.linear.x = 0;
+                        cmd_vel_pub_.publish(msg);
                     }
                     ros::spinOnce();
                     r.sleep();
