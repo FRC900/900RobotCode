@@ -63,6 +63,7 @@ protected:
 	ros::Publisher intake_pub_;
 
 	double time_before_reverse_;
+	double time_to_wait_double_substation_; 
 
 	ros::NodeHandle nh_params_;
 
@@ -173,6 +174,11 @@ public:
 		if (!nh_.getParam("time_before_reverse", time_before_reverse_)) {
 			ROS_WARN_STREAM("2023_intaking_server : could not find time_before_reverse, defaulting to 0 seconds");
 			time_before_reverse_ = 0;
+		}
+
+		if (!nh_.getParam("time_to_wait_double_substation", time_to_wait_double_substation_)) {
+			ROS_WARN_STREAM("2023_intaking_server : could not find time_to_wait_double_substation, defaulting to 1.25 seconds");
+			time_to_wait_double_substation_ = 1.25;
 		}
 
 		if (!nh_.getParam("cube_time", cube_time_))
@@ -421,7 +427,7 @@ public:
 			pathGoal.reverse = true;
 		} else {
 			pathGoal.path += "_reverse";
-			ros::Duration(0.25).sleep();
+			ros::Duration(time_to_wait_double_substation_).sleep();
 		}
 
 		feedback_.status = feedback_.PATHER;
