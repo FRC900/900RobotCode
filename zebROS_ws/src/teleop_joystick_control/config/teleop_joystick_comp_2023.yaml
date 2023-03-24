@@ -18,6 +18,8 @@ teleop_params:
     button_move_speed: 0.5
     imu_zero_angle: 0.0
     cone_cube_timeout: 1.0
+    max_speed_elevator_extended: 1.5
+    max_rot_elevator_extended: 0.75
     
 
     #teleop_diagnostics_params:

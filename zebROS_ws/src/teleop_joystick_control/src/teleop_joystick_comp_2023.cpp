@@ -44,7 +44,7 @@ struct DynamicReconfigVars
 	double min_speed{0};                  // "Min linear speed to get robot to overcome friction, in m/s"
 	double max_speed{2.0};                // "Max linear speed, in m/s"
 	double max_speed_slow{0.75};          // "Max linear speed in slow mode, in m/s"
-	double max_speed_elevator_extended{0.7};
+	double max_speed_elevator_extended{1.5};
 	double max_rot{6.0};                  // "Max angular speed"
 	double max_rot_slow{2.0};             // "Max angular speed in slow mode"
 	double max_rot_elevator_extended{0.2}; 

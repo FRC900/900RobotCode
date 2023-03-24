@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
   field_obj
   geometry_msgs
   nav_msgs
+  path_follower
   path_follower_msgs
   roscpp
   rospy
@@ -136,7 +137,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
    #INCLUDE_DIRS include
    #LIBRARIES behaviors
-   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower_msgs nav_msgs roscpp rospy std_msgs tf2_ros geometry_msgs frc_msgs std_srvs
+   CATKIN_DEPENDS actionlib_msgs actionlib behavior_actions path_follower path_follower_msgs nav_msgs roscpp rospy std_msgs tf2_ros geometry_msgs frc_msgs std_srvs
    DEPENDS 
 )
 

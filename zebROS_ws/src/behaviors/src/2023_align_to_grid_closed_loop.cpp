@@ -9,7 +9,7 @@
 #include "geometry_msgs/Point.h"
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-#include "behavior_actions/AlignToGrid2023Action.h"
+#include "behavior_actions/AlignToGridPID2023Action.h"
 #include "behavior_actions/PathToAprilTagAction.h"
 #include <actionlib/client/simple_action_client.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -19,6 +19,84 @@
 #include <frc_msgs/MatchSpecificData.h>
 #include <behavior_actions/GamePieceState2023.h>
 #include <path_follower_msgs/PathAction.h>
+#include "ros/ros.h"
+#include "std_msgs/Bool.h"
+#include "std_msgs/Float64.h"
+#include "std_msgs/Float64MultiArray.h"
+
+class AlignActionAxisConfig
+{
+	public:
+		AlignActionAxisConfig(const std::string &name,
+							  const std::string &enable_pub_topic,
+							  const std::string &command_pub_topic,
+							  const std::string &state_pub_topic,
+							  const std::string &error_sub_topic,
+							  const std::string &timeout_param,
+							  const std::string &error_threshold_param)
+			: name_(name)
+			, enable_pub_topic_(enable_pub_topic)
+			, command_pub_topic_(command_pub_topic)
+			, state_pub_topic_(state_pub_topic)
+			, error_sub_topic_(error_sub_topic)
+			, timeout_param_(timeout_param)
+			, error_threshold_param_(error_threshold_param)
+		{
+		}
+		std::string name_;
+		std::string enable_pub_topic_;
+		std::string command_pub_topic_;
+		std::string state_pub_topic_;
+		std::string error_sub_topic_;
+		std::string timeout_param_;
+		std::string error_threshold_param_;
+};
+
+class AlignActionAxisState
+{
+	public:
+		AlignActionAxisState(ros::NodeHandle &nh,
+							 const std::string &enable_pub_topic,
+							 const std::string &command_pub_topic,
+							 const std::string &state_pub_topic)
+			: enable_pub_(nh.advertise<std_msgs::Bool>(enable_pub_topic, 1, true))
+			, command_pub_(nh.advertise<std_msgs::Float64>(command_pub_topic, 1, true))
+			, state_pub_(nh.advertise<std_msgs::Float64>(state_pub_topic, 1, true))
+		{
+			// Set defaults for PID node topics to prevent
+			// spam of "Waiting for first setpoint message."
+			std_msgs::Bool bool_msg;
+			bool_msg.data = false;
+			enable_pub_.publish(bool_msg);
+
+			std_msgs::Float64 float64_msg;
+			float64_msg.data = 0.0;
+			command_pub_.publish(float64_msg);
+			state_pub_.publish(float64_msg);
+		}
+		void setEnable(bool enable_state)
+		{
+			std_msgs::Bool enable_msg;
+			enable_msg.data = enable_state;
+			enable_pub_.publish(enable_msg);
+		}
+		void setCommand(double command)
+		{
+			std_msgs::Float64 command_msg;
+			command_msg.data = command;
+			command_pub_.publish(command_msg);
+		}
+		void setState(double state)
+		{
+			std_msgs::Float64 state_msg;
+			state_msg.data = state;
+			state_pub_.publish(state_msg);
+		}
+	private:
+		ros::Publisher enable_pub_;
+		ros::Publisher command_pub_;
+		ros::Publisher state_pub_;
+};
 
 
 geometry_msgs::Point operator-(const geometry_msgs::Point& lhs, const geometry_msgs::Point& rhs) {
@@ -58,43 +136,20 @@ bool operator>(const geometry_msgs::Point& lhs, const geometry_msgs::Point& rhs)
     return distance(lhs) > distance(rhs);
 }
 
-class Tag {
-public:
-	geometry_msgs::Point location;
-	double rotation;
-	Tag(geometry_msgs::Point location = geometry_msgs::Point(), bool rotation = 0) {
-		this->location = location;
-		this->rotation = rotation;
-	}
-};
-
-enum GamePiece { CUBE, CONE };
-
-struct GridLocation {
-  double y;
-  GamePiece piece;
-  GridLocation(double y = 0, GamePiece piece = CUBE) {
-    this->y = y;
-    this->piece = piece;
-  }
-};
-
 class AlignToGridAction
 {
 protected:
 
   ros::NodeHandle nh_;
-  actionlib::SimpleActionServer<behavior_actions::AlignToGrid2023Action> as_; // NodeHandle instance must be created before this line. Otherwise strange error occurs.
+  actionlib::SimpleActionServer<behavior_actions::AlignToGridPID2023Action> as_; // NodeHandle instance must be created before this line. Otherwise strange error occurs.
   std::string action_name_;
   // create messages that are used to published feedback/result
-  behavior_actions::AlignToGrid2023Feedback feedback_;
-  behavior_actions::AlignToGrid2023Result result_;
+  behavior_actions::AlignToGridPID2023Feedback feedback_;
+  behavior_actions::AlignToGridPID2023Result result_;
   field_obj::Detection latest_;
   ros::Subscriber sub_;
   ros::Subscriber imu_sub_;
   ros::Subscriber match_sub_;
-  std::map<int, Tag> tags_;
-  std::map<int, GridLocation> gridLocations_; // should probably be uint8_t
   actionlib::SimpleActionClient<path_follower_msgs::holdPositionAction> ac_hold_position_;
   double xOffset_;
   double holdPosTimeout_;
@@ -102,15 +157,15 @@ protected:
   uint8_t alliance_{0};
   double percent_complete_{0}; 
 
-  double x_err{0};
-  double y_err{0};
+  double x_error_{0};
+  double y_error_{0};
 
   behavior_actions::GamePieceState2023 game_piece_state_;
 	ros::Time latest_game_piece_time_;
 
 	ros::Subscriber game_piece_sub_;
 
-  double game_piece_timeout_;
+  std::map<std::string, AlignActionAxisState> axis_states_;
 
 public:
 
@@ -124,39 +179,18 @@ public:
 
     imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/zeroed_imu", 1, &AlignToGridAction::imuCb, this);
     match_sub_ = nh_.subscribe<frc_msgs::MatchSpecificData>("/frcrobot_rio/match_data", 1, &AlignToGridAction::matchCb, this);
-    XmlRpc::XmlRpcValue tagList;
-    nh_.getParam("tags", tagList);
 
-    XmlRpc::XmlRpcValue gridList;
-    nh_.getParam("grid_locations", gridList);
-
-    nh_.getParam("offset_from_cube_tag_to_end", xOffset_);
-
-    nh_.getParam("hold_position_timeout", holdPosTimeout_);
-
-    if (!nh_.getParam("game_piece_timeout", game_piece_timeout_)) {
-			ROS_WARN_STREAM("2023_align_to_grid : could not find game_piece_timeout, defaulting to 1 second");
-			game_piece_timeout_ = 1;
-	}
-
-    for (XmlRpc::XmlRpcValue::iterator tag=tagList.begin(); tag!=tagList.end(); ++tag) {
-      Tag t;
-      geometry_msgs::Point p;
-      p.x = tag->second[0];
-      p.y = tag->second[1];
-      p.z = tag->second[2];
-      t.location = p;
-      t.rotation = tag->second[3];
-      tags_[std::stoi(tag->first.substr(3))] = t;
-      ROS_INFO_STREAM("tag " << p.x << " " << p.y << " " << p.z << " #" << tag->first.substr(3));
+    AlignActionAxisConfig x_axis("x", "x_position_pid/pid_enable", "x_position_pid/x_cmd_pub", "x_position_pid/x_state_pub", "x_position_pid/pid_debug", "x_timeout_param", "x_error_threshold_param");
+	  AlignActionAxisConfig y_axis("y", "y_position_pid/pid_enable", "y_position_pid/y_cmd_pub", "y_position_pid/y_state_pub", "y_position_pid/pid_debug", "y_timeout_param", "y_error_threshold_param");
+    if (!addAxis(x_axis))
+    {
+      ROS_ERROR_STREAM("Error adding x_axis to align to grid closed loop.");
+      return ;
     }
-
-    for (XmlRpc::XmlRpcValue::iterator grid=gridList.begin(); grid!=gridList.end(); ++grid) {
-      GridLocation g;
-      g.piece = grid->second[0] == "cone" ? CONE : CUBE;
-      g.y = grid->second[1];
-      gridLocations_[std::stoi(grid->first.substr(3))] = g;
-      ROS_INFO_STREAM(std::stoi(grid->first.substr(3)) << " " << g.y << " " << g.piece);
+    if (!addAxis(y_axis))
+    {
+      ROS_ERROR_STREAM("Error adding y_axis to align to grid closed loop.");
+      return;
     }
 
     // need to load grid stations here.
@@ -187,6 +221,22 @@ public:
     latest_ = *msg;
   }
 
+  // x & y axis are each controlled by a PID node which
+  // tries to close the error between the current odom / pose
+  // position and the desired location for each time step
+  // along the path.  This is a helper to create a map
+  // of state names to stucts which hold the 
+  // topics for each PID node
+  bool addAxis(const AlignActionAxisConfig &axis_config)
+  {
+    axis_states_.emplace(std::make_pair(axis_config.name_,
+                      AlignActionAxisState(nh_,
+                          axis_config.enable_pub_topic_,
+                          axis_config.command_pub_topic_,
+                          axis_config.state_pub_topic_)));
+    return true;
+  }
+
   std::optional<int> findClosestApriltag(const field_obj::Detection &detection) {
     std::vector<uint8_t> red_visible_tags{1,2,3,4};
     std::vector<uint8_t> blue_visible_tags{5,6,7,8};
@@ -206,76 +256,97 @@ public:
     return closestTag;
   }
 
-  int getAllianceRelativeStationNumber(int alliance, int gridStation) {
-    // 0 = red alliance, 1 = blue
-    if (alliance == 1) {
-      return (8-(gridStation-1))+1;
-    }
-    return gridStation;
-  }
-
   void feedbackCb(const behavior_actions::PathToAprilTagFeedbackConstPtr& feedback) {
       percent_complete_ = feedback->percent_complete;
   }
 
-  void executeCB(const behavior_actions::AlignToGrid2023GoalConstPtr &goal)
+  void executeCB(const behavior_actions::AlignToGridPID2023GoalConstPtr &goal)
   {
     // just to make sure to go through the loop once
-    x_err = 100;
-    y_err = 100;
+    x_error_ = 100;
+    y_error_ = 100;
     ros::Rate r = ros::Rate(30);
     ROS_INFO_STREAM("Execute callback");
-    while (fabs(x_err) > 0.1 || fabs(y_err) > 0.1) {
+    auto x_axis_it = axis_states_.find("x");
+    auto &x_axis = x_axis_it->second;
+    auto y_axis_it = axis_states_.find("y");
+    auto &y_axis = y_axis_it->second;
+    // TODO: do we want to find the tag closest to *us* or closest to the grid?
+    // right now it finds the one closest to the robot
+    // I'm not sure what is most accurate
+    auto closestTag = findClosestApriltag(latest_);
+    if (closestTag == std::nullopt) {
+        ROS_ERROR_STREAM("2023_align_to_grid_closed_loop : No AprilTags found :(");
+        as_.setPreempted();
+        x_axis.setEnable(false);
+        y_axis.setEnable(false);
+        return;
+    }
+    int closestId = closestTag.value();
+
+    geometry_msgs::Point offset;
+    if (goal->location == goal->LEFT_CONE) {
+      offset.y += 0.559;
+    } else if (goal->location == goal->RIGHT_CONE) {
+      offset.y -= 0.559;
+    } else {
+      // do nothing
+    }
+
+    if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(0.5)) {
+      
+    } 
+    else {
+        double center_offset = game_piece_state_.offset_from_center;
+        if (isnan(center_offset)) {
+            //ROS_ERROR_STREAM("2023_align_to_grid : game piece offset is NaN, assuming game piece is centered");
+        } 
+        else {
+            offset.y -= center_offset;
+        }
+    }
+
+    offset.x = 1.0; // base_link not front_bumper
+
+    geometry_msgs::Point tagLocation = offset; // just to start
+
+    x_axis.setEnable(true);
+    y_axis.setEnable(true);
+
+    x_axis.setState(tagLocation.x);
+    y_axis.setState(tagLocation.y);
+
+    x_axis.setCommand(offset.x);
+    y_axis.setCommand(offset.y);
+
+    while (hypot(x_error_, y_error_) < goal->tolerance) {
         ros::spinOnce(); // grab latest callback data
         if (as_.isPreemptRequested() || !ros::ok())
         {
-            ROS_ERROR_STREAM("2023_align_to_grid : Preempted");
+            ROS_ERROR_STREAM("2023_align_to_grid_closed_loop : Preempted");
             as_.setPreempted();
+            x_axis.setEnable(false);
+            y_axis.setEnable(false);
             return;
         }
-        // TODO: do we want to find the tag closest to *us* or closest to the grid?
-        // right now it finds the one closest to the robot
-        // I'm not sure what is most accurate
-        auto closestTag = findClosestApriltag(latest_);
-        if (closestTag == std::nullopt) {
-            ROS_ERROR_STREAM_THROTTLE(3, "2023_align_to_grid : No AprilTags found :(");
-            continue;
-        }
-        int closestId = closestTag.value();
-        // loop through the tags and find the one with the id closestId
-        Tag tag;
+
         for (auto detection : latest_.objects) {
             if (std::stoi(detection.id) == closestId) {
                 //ROS_INFO_STREAM("Found detection " << detection.id);
-                tag.location = detection.location; 
+                tagLocation = detection.location; 
             }
         }
-
-        int gridStation = getAllianceRelativeStationNumber(alliance_, goal->grid_id);
-        GridLocation gridLocation = gridLocations_[gridStation];
         
-        geometry_msgs::Point offset;
-        y_err = (alliance_ == 1 ? -1 : 1) * (gridLocation.y - tag.location.y); // should be gridLocation.y - tag.location.y
-        ROS_INFO_STREAM_THROTTLE(1, "Y_err " << y_err);
-        double terabee_offset = 0; 
-        if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
-                    //ROS_ERROR_STREAM("2023_align_to_grid : game piece position data too old, assuming game piece is centered");
-        } 
-        else {
-            double center_offset = game_piece_state_.offset_from_center;
-            if (isnan(center_offset)) {
-                //ROS_ERROR_STREAM("2023_align_to_grid : game piece offset is NaN, assuming game piece is centered");
-            } 
-            else {
-                terabee_offset = center_offset;
-            }
-        }
-        offset.y -= terabee_offset;
-        ROS_INFO_STREAM_THROTTLE(1, "grid " << gridLocation.y << " tag " << tag.location.y);
-        ROS_INFO_STREAM_THROTTLE(1, "ydif: " << gridLocation.y - tag.location.y);
-        ROS_INFO_STREAM_THROTTLE(1, "xdif: " << xOffset_ - tag.location.x);
+        x_axis.setState(tagLocation.x);
+        y_axis.setState(tagLocation.y);
+
+        x_error_ = fabs(offset.x - tagLocation.x);
+        y_error_ = fabs(offset.y - tagLocation.y);
+
         r.sleep();
     }
+    x_axis.setEnable(false);
+    y_axis.setEnable(false);
   }
 };
 

@@ -44,7 +44,8 @@ auto_mode_17: ["pick_from_grid_3"]
 auto_mode_18: ["pick_place_cone_from_grid_1", "drive_into_grid", "pick_from_grid_3"] # 2.5 piece auto!
 auto_mode_19: ["place_cone_high", "pick_place_cone_from_grid_1", "place_cone_high", "pick_from_grid_3"]
 
-auto_mode_20: ["place_cone_high", "pick_place_cone_from_grid_1_mirrored", "place_cone_high", "pick_from_grid_3_mirrored"]
+auto_mode_20: ["place_cone_high", "pick_place_cube_from_grid_1_mirrored", "place_cube_high"]
+auto_mode_21: ["pick_place_cube_from_grid_1_mirrored"]
 
 # Examples3
 #auto_mode_1: ["tuning"]
@@ -66,43 +67,45 @@ auto_mode_20: ["place_cone_high", "pick_place_cone_from_grid_1_mirrored", "place
 #valid action types: "intake_actionlib_server", "pause", "elevator_actionlib_server"
 ros_rate: 10 # in ms, used for all ros rate calls
 
-pick_place_cone_from_grid_1: # cable
+pick_place_cube_from_grid_1: # cable
     waypoint_actions: {intake_cone: 2, stop_intake: 5}
     type: path
     goal:
       frame_id: "base_link"
       points:
-        - [-0.7, -0.15, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.58, 4.758, 3.14]
-        - [-3.99, -0.14, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [5.87, 4.758, 0.0]
+        - [-0.7, -0.23, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.58, 4.758, 3.14]
+        - [-3.99, -0.23, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [5.87, 4.758, 0.0]
         - [-4.12, -0.37, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.608, 0.0]
         - [-4.62, -0.37, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.5, 4.608, 0.0]
         - [-5.12, -0.37, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [7.0, 4.608, 0.0]
         # - [-4.12, -0.37, -3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.608, 0.0]
         - [-5.32, -0.37, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [7.2, 4.608, 0.0]
-        - [-4.12, -0.0, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.758, 0.0]
-        - [-3.12, -0.0, 2.0]
-        - [-0.2, -0.1, -0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.0, 4.608, 3.14]
-        - [-0.12, -0.7, -0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.0, 3.871, 3.14]
-        - [0.0, -0.7, -0.0]
+        - [-4.12, -0.23, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.758, 0.0]
+        - [-3.12, -0.23, 2.0]
+        - [-0.2, -0.23, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.0, 4.608, 3.14]
+        - [-0.18, -0.424, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.0, 3.871, 3.14]
+        - [0.0, -0.424, 0.0]
 
-pick_place_cone_from_grid_1_mirrored:
+pick_place_cube_from_grid_1_mirrored:
     waypoint_actions: {intake_cone: 2, stop_intake: 5}
     type: path
     goal:
       frame_id: "base_link"
       points:
-        - [-0.7, 0.15, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.58, 4.758, 3.14]
-        - [-3.99, 0.14, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [5.87, 4.758, 0.0]
+        - [-0.7, 0.23, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.58, 4.758, 3.14]
+        - [-3.99, 0.23, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [5.87, 4.758, 0.0]
         - [-4.12, 0.37, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.608, 0.0]
         - [-4.62, 0.37, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.5, 4.608, 0.0]
         - [-5.12, 0.37, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [7.0, 4.608, 0.0]
         # - [-4.12, 0.37, -3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.608, 0.0]
         - [-5.32, 0.37, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [7.2, 4.608, 0.0]
-        - [-4.12, 0.0, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.758, 0.0]
-        - [-3.12, 0.0, 2.0]
-        - [-0.2, 0.1, -0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.0, 4.608, 3.14]
-        - [-0.12, 0.7, -0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.0, 3.871, 3.14]
-        - [0.0, 0.7, -0.0]
+        # - [-4.12, 0.37, 3.5] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.758, 0.0]
+        - [-4.0, 0.23, 3.14]
+        # can't get the path generator to smoothly rotate the other way
+        # so the y is a bit off here (should be 0.559 but I subtracted 1/2 of the robot width)
+        - [-0.2, 0.23, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.0, 4.608, 3.14]
+        - [-0.18, 0.424, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.0, 3.871, 3.14]
+        - [0.0, 0.424, 0.0]
 
 pick_from_grid_3:
   waypoint_actions: {intake_cube: 4}

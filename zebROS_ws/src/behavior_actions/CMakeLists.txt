@@ -93,6 +93,7 @@ add_action_files(
 		Balancing2023.action
 		Elevater2023.action
 		AlignToGrid2023.action
+		AlignToGridPID2023.action
 		AlignAndPlaceGrid2023.action
 		Fourber2023.action
 		PathToAprilTag.action

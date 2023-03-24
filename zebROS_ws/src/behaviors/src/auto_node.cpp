@@ -794,7 +794,7 @@ class AutoNode {
 			return false;
 		}
 		intaking_ac_.sendGoal(goal);
-		waitForActionlibServer(intaking_ac_, 10.0, "intaking_server");
+		// waitForActionlibServer(intaking_ac_, 10.0, "intaking_server");
 		return true;
 	}
 

@@ -1,0 +1,15 @@
+# goal
+uint8 LEFT_CONE=0
+uint8 CENTER=1
+uint8 RIGHT_CONE=2
+uint8 location
+
+float64 tolerance # hypotenuse less than this -> exit
+---
+# result
+bool success
+bool timed_out
+---
+# feedback
+float64 x_error
+float64 y_error
