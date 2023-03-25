@@ -9,8 +9,8 @@ four_bar_controller_2023:
     # don't even care about lenghts because we are using angles
 
     # 0.11-0.12 worked well for holding max extension
-    arb_feed_forward_angle: -0.10 # possibly -0.08 but we have gone back and forth
-    straight_up_angle: 0.537 
+    arb_feed_forward_angle: 0.10
+    straight_up_angle: 0.0
 
     motion_magic_velocity: 6.0
     motion_magic_acceleration: 8.0 # was 10.0
@@ -28,7 +28,7 @@ four_bar_controller_2023:
         type: talon_controllers/TalonControllerInterface 
         joint: four_bar
         close_loop_values:
-            - {p: 0.17, i: 0.0004, d: 0.0, f: 0.0755, i_zone: 125, closed_loop_peak_output: 1.0, max_integral_accumulator: 0.05}
+            - {p: 0.17, i: 0.0008, d: 0.0, f: 0.0755, i_zone: 125, closed_loop_peak_output: 1.0, max_integral_accumulator: 0.1}
 
         invert_output: True
         sensor_phase: True

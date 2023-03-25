@@ -323,7 +323,7 @@ public:
             //ROS_ERROR_STREAM("2023_align_to_grid : game piece offset is NaN, assuming game piece is centered");
         } 
         else {
-            offset.y -= center_offset;
+            offset.y += center_offset; // inverted because where tag is relative to us
         }
     }
 

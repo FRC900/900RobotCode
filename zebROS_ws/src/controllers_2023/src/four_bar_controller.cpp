@@ -239,7 +239,7 @@ void FourBarController_2023::update(const ros::Time &time, const ros::Duration &
             last_zeroed_ = true;
             four_bar_joint_.setSelectedSensorPosition(0); // relative to min position
             four_bar_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-            four_bar_joint_.setDemand1Value(sin(four_bar_joint_.getPosition() - straight_up_angle) * arb_feed_forward_angle);
+            four_bar_joint_.setDemand1Value(cos(four_bar_joint_.getPosition() - straight_up_angle) * arb_feed_forward_angle);
         }
     }
     else
@@ -262,7 +262,7 @@ void FourBarController_2023::update(const ros::Time &time, const ros::Duration &
         four_bar_joint_.setPIDFSlot(0);
 
         four_bar_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-        four_bar_joint_.setDemand1Value(sin(four_bar_joint_.getPosition() - straight_up_angle) * arb_feed_forward_angle);
+        four_bar_joint_.setDemand1Value(cos(four_bar_joint_.getPosition() - straight_up_angle) * arb_feed_forward_angle);
     }
     else
     {
