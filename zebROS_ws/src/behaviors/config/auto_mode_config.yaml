@@ -48,8 +48,7 @@ auto_mode_21: ["place_cone_high", "pick_place_cube_from_grid_1_mirrored", "place
 auto_mode_22: ["place_cone_high", "pick_place_cone_from_grid_1_mirrored", "place_cone_high"] # cone, cone
 auto_mode_23: ["place_cone_high", "pick_place_cone_from_grid_1_mirrored", "place_cone_high", "pick_from_grid_3_mirrored"] # cone, cone, pick
 
-auto_mode_24: ["pick_place_cube_from_grid_1_mirrored", "pick_from_grid_2_mirrored"] # cone, cube, pick (game_piece) in sim
-auto_mode_25: ["pick_place_cone_from_grid_1_mirrored", "pick_from_grid_3_mirrored"] # cone, cone, pick (game_piece) in sim
+auto_mode_24: ["drive_1m_rotate_270"]
 
 # Examples3
 #auto_mode_1: ["tuning"]
@@ -70,6 +69,12 @@ auto_mode_25: ["pick_place_cone_from_grid_1_mirrored", "pick_from_grid_3_mirrore
 # must have a value for "type", other stuff varies
 #valid action types: "intake_actionlib_server", "pause", "elevator_actionlib_server"
 ros_rate: 10 # in ms, used for all ros rate calls
+
+drive_1m_rotate_270:
+  type: path
+  goal:
+    points:
+      - [1.0, 0.0, 4.71]
 
 pick_place_cube_from_grid_1: # cable
     waypoint_actions: {intake_cube: 2, stop_intake: 5}

@@ -438,9 +438,9 @@ public:
 
 		if (got_game_piece) {
 			ros::Duration(medium_time_).sleep();
-			percent_out.data = 0.0;
-			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
-			ros::Duration(time_before_reverse_).sleep();
+			// percent_out.data = 0.0;
+			// make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
+			// ros::Duration(time_before_reverse_).sleep();
 			percent_out.data = small_speed_;
 			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 		}

@@ -300,6 +300,21 @@ class PathAction
 					x_axis.setState(odom_.pose.pose.position.x);
 					y_axis.setState(odom_.pose.pose.position.y);
 
+					// x, y PID inputs are odom-relative
+					// cmd_vel is base link relative
+					// if command = 5.0, current = 4.0 for x
+					// cmd_vel is positive (let's say 1)
+					// e.g. initial odom orientation is 0, current robot orientation is 90
+					// these are both relative to the same frame. so it is -odom orientation.
+					// sending positive here because it is inverted in publish_pid_cmd_vel
+					// should be y of -1, x of 0
+					// cmd_vel_msg.linear.x = x_command * cos(rotate_angle) - y_command * sin(rotate_angle);
+					// 0 = 1.0 * cos(theta) - 0.0 * sin(theta)
+					// cos(theta) = 0
+					// theta = pi/2 or 3pi/2
+					// cmd_vel_msg.linear.y = x_command * sin(rotate_angle) + y_command * cos(rotate_angle);
+					// -1 = 1.0 * sin(theta) + 0.0 * cos(theta)
+					// angle = 3pi/2 aka -90 degrees
 					std_msgs::Float64 yaw_msg;
 					yaw_msg.data = orientation_state;
 					robot_relative_yaw_pub_.publish(yaw_msg);
