@@ -23,6 +23,9 @@
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
 #include "std_msgs/Float64MultiArray.h"
+#include "geometry_msgs/Twist.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "tf2_ros/transform_listener.h"
 
 class AlignActionAxisConfig
 {
@@ -167,18 +170,30 @@ protected:
 
   std::map<std::string, AlignActionAxisState> axis_states_;
 
+  ros::Publisher cmd_vel_pub_;
+  ros::Subscriber x_effort_sub_;
+  double x_eff_;
+  ros::Subscriber y_effort_sub_;
+  double y_eff_;
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+
 public:
 
   AlignToGridAction(std::string name) :
     as_(nh_, name, boost::bind(&AlignToGridAction::executeCB, this, _1), false),
     action_name_(name),
     sub_(nh_.subscribe<field_obj::Detection>("/tf_object_detection/tag_detection_world", 1, &AlignToGridAction::callback, this)),
-    ac_hold_position_("/hold_position/hold_position_server", true)
+    ac_hold_position_("/hold_position/hold_position_server", true),
+    tf_listener_(tf_buffer_)
   {
     game_piece_sub_ = nh_.subscribe("/game_piece/game_piece_state", 1, &AlignToGridAction::gamePieceCallback, this);
 
     imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/zeroed_imu", 1, &AlignToGridAction::imuCb, this);
     match_sub_ = nh_.subscribe<frc_msgs::MatchSpecificData>("/frcrobot_rio/match_data", 1, &AlignToGridAction::matchCb, this);
+    cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/align/cmd_vel", 1, false);
+    x_effort_sub_ = nh_.subscribe<std_msgs::Float64>("x_position_pid/x_command", 1, [&](const std_msgs::Float64ConstPtr &msg) {x_eff_ = msg->data;});
+    y_effort_sub_ = nh_.subscribe<std_msgs::Float64>("y_position_pid/y_command", 1, [&](const std_msgs::Float64ConstPtr &msg) {y_eff_ = msg->data;});
 
     AlignActionAxisConfig x_axis("x", "x_position_pid/pid_enable", "x_position_pid/x_cmd_pub", "x_position_pid/x_state_pub", "x_position_pid/pid_debug", "x_timeout_param", "x_error_threshold_param");
 	  AlignActionAxisConfig y_axis("y", "y_position_pid/pid_enable", "y_position_pid/y_cmd_pub", "y_position_pid/y_state_pub", "y_position_pid/pid_debug", "y_timeout_param", "y_error_threshold_param");
@@ -284,11 +299,17 @@ public:
     }
     int closestId = closestTag.value();
 
+    // tag location and offset have to be inverted (* -1)
+    // e.g. tag detected at 1.25, desired = 1
+    // PID thinks it should move -0.25 but it should really move 0.25
+
     geometry_msgs::Point offset;
+    // this is inverted because it is where the tag is relative to us
+    // so if we are at the left node the tag is to the right and vice versa
     if (goal->location == goal->LEFT_CONE) {
-      offset.y += 0.559;
-    } else if (goal->location == goal->RIGHT_CONE) {
       offset.y -= 0.559;
+    } else if (goal->location == goal->RIGHT_CONE) {
+      offset.y += 0.559;
     } else {
       // do nothing
     }
@@ -313,13 +334,16 @@ public:
     x_axis.setEnable(true);
     y_axis.setEnable(true);
 
-    x_axis.setState(tagLocation.x);
-    y_axis.setState(tagLocation.y);
+    x_axis.setState(-tagLocation.x);
+    y_axis.setState(-tagLocation.y);
 
-    x_axis.setCommand(offset.x);
-    y_axis.setCommand(offset.y);
+    x_axis.setCommand(-offset.x);
+    y_axis.setCommand(-offset.y);
 
-    while (hypot(x_error_, y_error_) < goal->tolerance) {
+    ROS_INFO_STREAM("offset = " << offset.x << " " << offset.y << " " << offset.z);
+    ROS_INFO_STREAM("error = " << x_error_ << ", " << y_error_ << " = " << hypot(x_error_, y_error_));
+
+    while (hypot(x_error_, y_error_) > goal->tolerance) {
         ros::spinOnce(); // grab latest callback data
         if (as_.isPreemptRequested() || !ros::ok())
         {
@@ -330,18 +354,38 @@ public:
             return;
         }
 
+        bool foundTag = false;
         for (auto detection : latest_.objects) {
-            if (std::stoi(detection.id) == closestId) {
-                //ROS_INFO_STREAM("Found detection " << detection.id);
-                tagLocation = detection.location; 
-            }
+          if (std::stoi(detection.id) == closestId) {
+            //ROS_INFO_STREAM("Found detection " << detection.id);
+            // TRANSFORM TO BASE LINK FIRST
+            geometry_msgs::PointStamped point;
+            point.point = detection.location;
+            point.header = latest_.header;
+            geometry_msgs::PointStamped point_out;
+            tf_buffer_.transform(point, point_out, "base_link");
+            tagLocation = point_out.point;
+            foundTag = true;
+          } else {
+            
+          }
+        }
+        if (!foundTag) {
+          continue;
         }
         
-        x_axis.setState(tagLocation.x);
-        y_axis.setState(tagLocation.y);
+        x_axis.setState(-tagLocation.x);
+        y_axis.setState(-tagLocation.y);
 
         x_error_ = fabs(offset.x - tagLocation.x);
         y_error_ = fabs(offset.y - tagLocation.y);
+
+        ROS_INFO_STREAM("x tag = " << tagLocation.x << ", commanded x = " << offset.x << ", effort = " << x_eff_);
+
+        geometry_msgs::Twist t;
+        t.linear.x = x_eff_;
+        t.linear.y = y_eff_;
+        cmd_vel_pub_.publish(t);
 
         r.sleep();
     }
