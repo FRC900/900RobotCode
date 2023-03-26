@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 		<!-- allow us to hook up sim odom topics for stage sim testing -->
-		<arg name="odom_topic" default="/frcrobot_jetson/swerve_drive_controller/odom"/>
+		<arg name="odom_topic" default="/fake_odometry"/>
 		<arg name="pose_topic" default="/zed_objdetect/pose"/>
 		<arg name="use_pose_for_odom" default="true"/>
 		<arg name="year" default="2023"/>

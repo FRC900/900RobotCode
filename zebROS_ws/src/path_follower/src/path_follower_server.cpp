@@ -98,6 +98,8 @@ class PathAction
 		// TODO - only subscribe to one or the other?  Looks
 		// like the separate pose_ message is just used for debugging
 		// printouts
+	
+
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
 		{
 			//ROS_INFO_STREAM("Odom callback");
@@ -145,7 +147,31 @@ class PathAction
 				odom_.pose.pose = out.pose;
 			}
 		}
+		/* 
+		void odomCallback(const nav_msgs::Odometry &odom_msg)
+		{
+			if (debug_)
+			{
+				ROS_INFO_STREAM("odomCallback : msg = " << odom_msg.pose);
+			}
+			if (!use_pose_for_odom_)
+				odom_ = odom_msg;
+		}
 
+		void poseCallback(const geometry_msgs::PoseStamped &pose_msg)
+		{
+			if (debug_)
+			{
+				ROS_INFO_STREAM("poseCallback : msg = " << pose_msg.pose);
+			}
+			pose_ = pose_msg;
+			if (use_pose_for_odom_)
+			{
+				odom_.header = pose_msg.header;
+				odom_.pose.pose = pose_msg.pose;
+			}
+		}
+*/
 		void yawCallback(const sensor_msgs::Imu &yaw_msg)
 		{
 			if (debug_)
@@ -461,7 +487,7 @@ int main(int argc, char **argv)
 	bool use_pose_for_odom = false;
 	bool debug = false;
 
-	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
+	std::string odom_topic = "/fake_odometry";
 	std::string pose_topic = "/zed_objdetect/pose";
 	std::string odom_frame = "zed_objdetect_base_link";
 
