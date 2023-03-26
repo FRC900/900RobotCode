@@ -250,6 +250,24 @@ bool handle_re_init_pf(std_srvs::Empty::Request &req, std_srvs::Empty::Response 
   return true;
 }
 
+bool readFloatVal(XmlRpc::XmlRpcValue &param, double &val)
+{
+  if (param.getType() == XmlRpc::XmlRpcValue::TypeDouble)
+  {
+    val = static_cast<double>(param);
+    return true;
+  }
+  else if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
+  {
+    val = static_cast<int>(param);
+    return true;
+  }
+  else
+    throw std::runtime_error("A non-double value was read for beacon cood");
+
+  return false;
+}
+
 int main(int argc, char **argv) {
   ros::init(argc, argv, "pf_localization_node");
   ros::NodeHandle nh_;
@@ -349,11 +367,13 @@ int main(int argc, char **argv) {
   nh_.param("bearing_only", bearing_only, false);
   nh_.param("min_detection_confidence", min_detection_confidence, 0.3);
   
-  // TODO - I think this fails if a beacon is specified as an int
   // Transforms the blue relative beacons to red relative beacons using the static transform blue0 -> red0
-  for (size_t i = 0; i < (unsigned) xml_beacons.size(); i++) {
-    PositionBeacon b {xml_beacons[i][0], xml_beacons[i][1], xml_beacons[i][2]};
-    // beacons is blue_beacons
+  for (size_t i = 0; i < static_cast<size_t>(xml_beacons.size()); i++) {
+    double x;
+    double y;
+    readFloatVal(xml_beacons[i][0], x);
+    readFloatVal(xml_beacons[i][1], y);
+    PositionBeacon b {x, y, xml_beacons[i][2]};
     beacons.push_back(b);
   }
   ROS_INFO_STREAM("BLUE BEACONS");

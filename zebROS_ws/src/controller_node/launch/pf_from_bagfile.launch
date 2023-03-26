@@ -18,12 +18,16 @@
         /goal_detection/goal_detect_msg
         /tf_object_detection/debug_image
         /tf_object_detection/obj_detection_msg
-        /zed_objdetect/imu/data 
+        /tf_object_detection/object_detection_world
+        /tf_object_detection/tag_detection_world
+        /zed_objdetect/depth/camera_info
+        /zed_objdetect/left/camera_info
         /tf
         /tf_static" 
   />
         <!--
         /cuda_tag_detections 
+        /zed_objdetect/imu/data 
         /tf_object_detection/object_detection_world
         -->
 <!--
@@ -35,9 +39,8 @@
 -->
 
   <node pkg="tf" type="static_transform_publisher" name="base_link_to_imu" args="0.0 0.0 0.0 1.0 0.0 0.0 0.0 base_link imu 100" />
-  <node pkg="tf" type="static_transform_publisher" name="base_link_to_intake" args="0.6561 0.0 0.21 1.0 0.0 0.0 0.0 base_link intake 100" />
   <node pkg="tf" type="static_transform_publisher" name="zed_objdetect_camera_center_to_zed_objdetect_baro_link" args="0.0 0.0 0.0 1.0 0.0 0.0 0.0 zed_objdetect_camera_center zed_objdetect_baro_link 100" />
-  <node pkg="tf" type="static_transform_publisher" name="base_link_to_zed_objdetect_base_link" args="0.2665 0.0 0.4917 1.0 0.0 0.0 0.0 base_link zed_objdetect_base_link 100" />
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_zed_objdetect_base_link" args="0.152 -0.224 0.802 0.0 0.681 0.0 base_link zed_objdetect_base_link 100" />
   <node pkg="tf" type="static_transform_publisher" name="zed_objdetect_base_link_to_zed_objdetect_camera_center" args="0.0 0.0 0.015 0.9996875162757025 0.0 0.024997395914712332 0.0 zed_objdetect_base_link zed_objdetect_camera_center 100" />
   <node pkg="tf" type="static_transform_publisher" name="zed_objdetect_camera_center_to_zed_objdetect_left_camera_frame" args="0.0 0.06 0.0 1.0 0.0 0.0 0.0 zed_objdetect_camera_center zed_objdetect_left_camera_frame 100" />
   <node pkg="tf" type="static_transform_publisher" name="zed_objdetect_left_camera_frame_to_zed_objdetect_left_camera_optical_frame" args="-0.01 0.0 0.0 -0.5000000000000001 0.5 -0.4999999999999999 0.5 zed_objdetect_left_camera_frame zed_objdetect_left_camera_optical_frame 100" />
@@ -46,18 +49,24 @@
   <node pkg="tf" type="static_transform_publisher" name="zed_objdetect_right_camera_frame_to_zed_objdetect_right_camera_optical_frame" args="-0.01 0.0 0.0 -0.5000000000000001 0.5 -0.4999999999999999 0.5 zed_objdetect_right_camera_frame zed_objdetect_right_camera_optical_frame 100" />
   <node pkg="tf" type="static_transform_publisher" name="zed_objdetect_left_camera_frame_to_zed_objdetect_temp_left_link" args="0.0 0.0 0.0 1.0 0.0 0.0 0.0 zed_objdetect_left_camera_frame zed_objdetect_temp_left_link 100" />
   <node pkg="tf" type="static_transform_publisher" name="zed_objdetect_right_camera_frame_to_zed_objdetect_temp_right_link" args="0.0 0.0 0.0 1.0 0.0 0.0 0.0 zed_objdetect_right_camera_frame zed_objdetect_temp_right_link 100" />
-  <node pkg="tf" type="static_transform_publisher" name="zed_objdetect_left_camera_frame_to_zed_objdetect_imu_link" args="-0.0020000000949949026 -0.023000003769993782 0.0002200000308221206 0.9999977350234985 -0.00021143197955098003 -0.0003662109375 -0.002078782534226775 zed_objdetect_left_camera_frame zed_objdetect_imu_link 100" />
   <node pkg="pf_localization" name="log_detections" type="log_detections.py" output="screen"/>
+
   <include file="$(find controller_node)/launch/pf_localization.launch">
     <arg name="vis" value="True"/>
-    <arg name="pf_camera_topic" value="/tf_object_detection/object_detection_world" />
+    <arg name="pf_camera_topic" value="/tf_object_detection/combined_detection_world" />
   </include>
 
+  <group ns="tf_object_detection">
+    <node pkg="tf_object_detection" name="merge_tag_and_objdetct" type="merge_tag_and_objdetect.py" output="screen"/>
+  </group>
+
+<!--
   <group ns="tf_object_detection">
     <node pkg="tf_object_detection" name="tf_object_screen_to_world" type="tf_object_screen_to_world" output="screen">
       <param name="depth_algorithm" type="string" value="TWO_D_ONLY" />
     </node>
   </group>
   <node pkg="tf_object_detection" name="dummy_camerainfo" type="dummy_camerainfo" output="screen"/>
+  -->
 
 </launch>

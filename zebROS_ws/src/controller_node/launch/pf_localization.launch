@@ -8,7 +8,7 @@
   -->
   <arg name="pf_camera_topic" default="/tf_object_detection/object_detection_world_filtered" />
   <group ns="pf_localization">
-	   <rosparam command="load" file="$(find pf_localization)/config/2021_params.yaml" />
+	   <rosparam command="load" file="$(find pf_localization)/config/2023_params.yaml" />
 	   <node name="pf_localization" pkg="pf_localization" type="pf_localization_node" output= "screen" if="$(arg pf)">
       <remap from="/goal_detection/goal_detect_msg" to="$(arg pf_camera_topic)" />
     </node>

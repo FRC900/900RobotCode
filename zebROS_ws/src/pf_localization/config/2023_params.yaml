@@ -27,117 +27,101 @@ camera_sigmas: [ 1.000, 1.000 ]
 bearing_only: false
 
 beacons:
-  - [15.513558, 1.071626, "1"]
-  - [15.513558, 2.748026, "2"]
-  - [15.513558, 4.424426, "3"]
-  - [16.178784, 6.749796, "4"]
-  - [0.36195, 6.749796, "5"]
-  - [1.02743, 4.424426, "6"]
-  - [1.02743, 2.748026, "7"]
-  - [1.02743, 1.071626, "8"]
-
-
-    #red side starting pieces
-  - [7.05, 0.92, "9"]
-  - [7.05, 2.14, "9"]
-  - [7.05, 3.55, "9"]
-  - [7.05, 4.56, "9"]
-
-    #blue side starting pieces
-  - [9.47, 0.92, "10"]
-  - [9.47, 2.14, "10"]
-  - [9.47, 3.35, "10"]
-  - [9.47, 4.56, "10"]
+  - [15.513558, 1.071626, "april_tag_1"]
+  - [15.513558, 2.748026, "april_tag_2"]
+  - [15.513558, 4.424426, "april_tag_3"]
+  - [16.178784, 6.749796, "april_tag_4"]
+  - [0.36195, 6.749796, "april_tag_5"]
+  - [1.02743, 4.424426, "april_tag_6"]
+  - [1.02743, 2.748026, "april_tag_7"]
+  - [1.02743, 1.071626, "april_tag_8"]
 
     #white tape lines
-  - [8.345, 8.02, "16"]
-  - [8.345, .01, "16"]
+  - [8.345, 8.02, "white_tape_line"]
+  - [8.345, 0.01, "white_tape_line"]
 
     #red tape corners
-  - [6.72, 6.80, "12"]
-  - [3.31, 6.76, "12"]
-  - [11.67, 4.06, "12"]
-  - [13.17, 4.12, "12"]
+  - [6.72, 6.80, "red_tape_corners"]
+  - [3.31, 6.76, "red_tape_corners"]
+  - [11.67, 4.06, "red_tape_corners"]
+  - [13.17, 4.12, "red_tape_corners"]
 
-    #blue taper corners
-  - [9.82, 6.8, "11"]
-  - [13.22, 6.76, "11"]
-  - [4.89, 4.11, "11"]
-  - [3.35, 4.11, "11"]
+    #blue tape corners
+  - [9.82, 6.8, "blue_tape_corners"]
+  - [13.22, 6.76, "blue_tape_corners"]
+  - [4.89, 4.11, "blue_tape_corners"]
+  - [3.35, 4.11, "blue_tape_corners"]
 
     #red tape walls
-  - [6.76, 8.034, "23"]
-  - [11.63, .01, "23"]
+  - [6.76, 8.034, "red_tape_to_wall"]
+  - [11.63, 0.01, "red_tape_to_wall"]
 
     #blue tape walls
-  - [9.82, 8.034, "24"]
-  - [4.896, .01, "24"]
+  - [9.82, 8.034, "blue_tape_to_wall"]
+  - [4.896, 0.01, "blue_tape_to_wall"]
 
-    #blakc bottom substation blue
-  - [1.369, 0.076, "15"]
-  - [1.420, 0.797, "15"]
-  - [1.375, 1.356, "15"]
-  - [1.369, 1.915, "15"]
-  - [1.369, 2.474, "15"]
-  - [1.369, 3.032, "15"]
-  - [1.369, 3.591, "15"]
-  - [1.369, 4.150, "15"]
-  - [1.369, 4.709, "15"]
-  - [1.369, 5.452, "15"]
+    #black bottom substation blue
+  #- [1.369, 0.076, "black_bottom_substation"]
+  #- [1.420, 0.797, "black_bottom_substation"]
+  #- [1.375, 1.356, "black_bottom_substation"]
+  #- [1.369, 1.915, "black_bottom_substation"]
+  #- [1.369, 2.474, "black_bottom_substation"]
+  #- [1.369, 3.032, "black_bottom_substation"]
+  #- [1.369, 3.591, "black_bottom_substation"]
+  #- [1.369, 4.150, "black_bottom_substation"]
+  #- [1.369, 4.709, "black_bottom_substation"]
+  #- [1.369, 5.452, "black_bottom_substation"]
   
 
     #blackbottom substation red
-  - [15.179, 0.076, "15"]
-  - [15.179, 0.797, "15"]
-  - [15.179, 1.356, "15"]
-  - [15.179, 1.915, "15"]
-  - [15.179, 2.474, "15"]
-  - [15.179, 3.032, "15"]
-  - [15.179, 3.591, "15"]
-  - [15.179, 4.150, "15"]
-  - [15.179, 4.709, "15"]
-  - [15.179, 5.452, "15"]
-
-
+  #- [15.179, 0.076, "black_bottom_substation"]
+  #- [15.179, 0.797, "black_bottom_substation"]
+  #- [15.179, 1.356, "black_bottom_substation"]
+  #- [15.179, 1.915, "black_bottom_substation"]
+  #- [15.179, 2.474, "black_bottom_substation"]
+  #- [15.179, 3.032, "black_bottom_substation"]
+  #- [15.179, 3.591, "black_bottom_substation"]
+  #- [15.179, 4.150, "black_bottom_substation"]
+  #- [15.179, 4.709, "black_bottom_substation"]
+  #- [15.179, 5.452, "black_bottom_substation"]
 
     #ds light thingies blue side
 
     #dslights b side
-  - [0, .93, "14"]
-  - [0, 2.78, "14"]
-  - [0, 4.52, "14"]
+  - [0, 0.93, "blue_ds_light"]
+  - [0, 2.78, "blue_ds_light"]
+  - [0, 4.52, "blue_ds_light"]
 
     #ds_numbers b side
-  - [0, 1.34, "19"]
-  - [0, 2.38, "19"]
-  - [0, 3.19, "19"]
-  - [0, 5.03, "19"]
+  - [0, 1.34, "ds_numbers"]
+  - [0, 2.38, "ds_numbers"]
+  - [0, 3.19, "ds_numbers"]
+  - [0, 5.03, "ds_numbers"]
 
     #ds light thingies blue side end
 
-
     #dslights r side
-  - [16.52, .95, "13"]
-  - [16.52, 2.78, "13"]
-  - [16.52, 4.59, "13"]
+  - [16.52, 0.95, "red_ds_light"]
+  - [16.52, 2.78, "red_ds_light"]
+  - [16.52, 4.59, "red_ds_light"]
 
     #ds_numbers r side
-  - [16.52, .53, "19"]
-  - [16.52, 2.35, "19"]
-  - [16.52, 3.18, "19"]
-  - [16.52, 4.20, "19"]
+  - [16.52, 0.53, "ds_numbers"]
+  - [16.52, 2.35, "ds_numbers"]
+  - [16.52, 3.18, "ds_numbers"]
+  - [16.52, 4.20, "ds_numbers"]
 
     #ds light thingies red side end
 
-  #orange ds lights when off
-  #red side
-  - [16.52, .95, "22"]
-  - [16.52, 2.78, "22"]
-  - [16.52, 4.59, "22"]
+    #orange ds lights when off
+    #red side
+  - [16.52, 0.95, "ds_light"]
+  - [16.52, 2.78, "ds_light"]
+  - [16.52, 4.59, "ds_light"]
 
-  #blue side
-  - [0, .93, "22"]
-  - [0, 2.78, "22"]
-  - [0, 4.52, "22"]
+    #blue side
+  - [0, 0.93, "ds_light"]
+  - [0, 2.78, "ds_light"]
+  - [0, 4.52, "ds_light"]
 
   #orange ds lights when off end
