@@ -292,7 +292,7 @@ public:
     std::vector<uint8_t> blue_visible_tags{5,6,7,8};
     auto our_tags = alliance_ == 0 ? red_visible_tags : blue_visible_tags;
     double minDistance = std::numeric_limits<double>::max();
-    int closestTag;
+    std::optional<int> closestTag = std::nullopt; 
     if (detection.objects.size() == 0) {
       return std::nullopt;
     }
@@ -389,7 +389,7 @@ public:
             point.header = latest_.header;
             geometry_msgs::PointStamped point_out;
             ROS_INFO_STREAM("Latest header before base_link = " << latest_.header);
-            // NEED TO CHANGE
+            // no need for x to be field relative so get the x value before the transform to map
             tf_buffer_.transform(point, point_out, "base_link", ros::Duration(0.1));
             tagLocation.x = point_out.point.x;
             tf2::doTransform(point_out, point_out, tag_to_map_tfs_[closestId]);

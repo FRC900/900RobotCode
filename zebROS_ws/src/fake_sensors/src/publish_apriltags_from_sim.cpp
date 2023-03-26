@@ -107,7 +107,6 @@ class SimAprilTagPub
 
 				transformStamped.header.stamp = msgIn->header.stamp;
 				transformStamped.header.frame_id = msgIn->header.frame_id;
-				ROS_WARN_STREAM_THROTTLE(2, "Transforming from " << msgIn->header.frame_id << " to tag " << "36h11" + std::to_string(msgIn->markers[i].ids[0]-100)); 
 				transformStamped.child_frame_id = "36h11" + std::to_string(msgIn->markers[i].ids[0]-100);
 
 				transformStamped.transform.translation.x = p.x;
