@@ -103,7 +103,7 @@ class PathAction
 			//ROS_INFO_STREAM("Odom callback");
 			geometry_msgs::TransformStamped zed_to_base_link;
 			try {
-				zed_to_base_link = tf_buffer_.lookupTransform("base_link", "zed_objdetect_base_link", ros::Time(0));
+				zed_to_base_link = tf_buffer_.lookupTransform("base_link", odom_transform_frame_, ros::Time(0));
 			}
 			catch (tf2::TransformException &ex) {
 				ROS_ERROR_STREAM("Could not apply transform to odom in path follower - Dropping message");
@@ -125,7 +125,7 @@ class PathAction
 			//ROS_INFO_STREAM("Pose callback");
 			geometry_msgs::TransformStamped zed_to_base_link;
 			try {
-				zed_to_base_link = tf_buffer_.lookupTransform("base_link", "zed_objdetect_base_link", ros::Time(0));
+				zed_to_base_link = tf_buffer_.lookupTransform("base_link", odom_transform_frame_, ros::Time(0));
 			}
 			catch (tf2::TransformException &ex) {
 				ROS_ERROR_STREAM("Could not apply transform to odom in path follower - Dropping message");
