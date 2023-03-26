@@ -163,10 +163,15 @@ class PathAction
 			// Since we're using odom-centric values to drive against, this simplifies a
 			// lot of the code later.
 			geometry_msgs::TransformStamped odom_to_base_link_tf;
-			odom_to_base_link_tf.transform.translation.x = odom_.pose.pose.position.x;
-			odom_to_base_link_tf.transform.translation.y = odom_.pose.pose.position.y;
-			odom_to_base_link_tf.transform.translation.z = 0;
-			odom_to_base_link_tf.transform.rotation = odom_.pose.pose.orientation;
+			//odom_to_base_link_tf.transform.translation.x = odom_.pose.pose.position.x;
+			//odom_to_base_link_tf.transform.translation.y = odom_.pose.pose.position.y;
+			odom_to_base_link_tf.transform.translation.x = 0.0;
+			odom_to_base_link_tf.transform.translation.y = 0.0;
+			odom_to_base_link_tf.transform.translation.z = 0.0;
+			tf2::Quaternion q2;
+			q2.setRPY(0, 0, 180);
+			geometry_msgs::Quaternion q2m = tf2::toMsg(q2);
+			odom_to_base_link_tf.transform.rotation = q2m;
 			//ros::message_operations::Printer< ::geometry_msgs::TransformStamped_<std::allocator<void>> >::stream(std::cout, "", odom_to_base_link_tf);
 
 			const double initial_field_relative_yaw = path_follower_.getYaw(orientation_);

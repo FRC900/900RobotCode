@@ -55,7 +55,7 @@
          are too old to use?
 	-->
 	<node pkg="tf" type="static_transform_publisher" name="static_objdetzedodom" args="0 0 0 0 0 0 zed_objdet_odom odom 100" />
-	<node pkg="tf" type="static_transform_publisher" name="static_basefootprintlink" args="0 0 0 0 0 0 base_footprint base_link 100" />
+	<node pkg="tf" type="static_transform_publisher" name="static_basefootprintlink" args="0.152 -0.224 0.802 1 45 23 base_footprint base_link 100" />
 	<group ns="robot_state">
 		<param name="robot_description" command="$(find xacro)/xacro '$(find controller_node)/urdf/2023_compbot.xacro'" />
 		<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
@@ -64,12 +64,13 @@
 	<node pkg="fake_sensors" type="fake_goal_detect_node" name="fake_goal_detect" >
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
 	</node>
-	
+	<!-- 
 	<group ns="pf_localization">
 	<rosparam file="$(find pf_localization)/config/2023_params.yaml" command="load"/>
 	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" output="screen" >
 	</node>
 	</group>
+	-->
 	<!--
 	set up cargo filter (red/blue -> friendly/opponent)
 	-->

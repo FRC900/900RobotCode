@@ -28,7 +28,8 @@ four_bar_controller_2023:
         type: talon_controllers/TalonControllerInterface 
         joint: four_bar
         close_loop_values:
-            - {p: 0.17, i: 0.0008, d: 0.0, f: 0.0755, i_zone: 125, closed_loop_peak_output: 1.0, max_integral_accumulator: 0.1}
+            # kinda forgot the tuning from saturdat, but something like this?
+            - {p: 0.1, i: 0.0008, d: 0.6, f: 0.0755, i_zone: 125, closed_loop_peak_output: 1.0, max_integral_accumulator: 0.1}
 
         invert_output: True
         sensor_phase: True

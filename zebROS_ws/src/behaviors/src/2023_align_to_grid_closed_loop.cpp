@@ -27,6 +27,18 @@
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
 
+
+enum GamePiece { CUBE, CONE };
+
+struct GridLocation {
+  double y;
+  GamePiece piece;
+  GridLocation(double y = 0, GamePiece piece = CUBE) {
+    this->y = y;
+    this->piece = piece;
+  }
+};
+
 class AlignActionAxisConfig
 {
 	public:
@@ -178,6 +190,9 @@ protected:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
+  std::map<int, GridLocation> gridLocations_; // should probably be uint8_t
+  std::map<int, geometry_msgs::TransformStamped> tag_to_map_tfs_;
+
 public:
 
   AlignToGridAction(std::string name) :
@@ -206,6 +221,31 @@ public:
     {
       ROS_ERROR_STREAM("Error adding y_axis to align to grid closed loop.");
       return;
+    }
+    XmlRpc::XmlRpcValue tagList;
+    nh_.getParam("tags", tagList); 
+    for (XmlRpc::XmlRpcValue::iterator tag=tagList.begin(); tag!=tagList.end(); ++tag) {
+			geometry_msgs::TransformStamped map_to_tag;
+			map_to_tag.transform.translation.x = tag->second[0];
+			map_to_tag.transform.translation.y = tag->second[1];
+			map_to_tag.transform.translation.z = tag->second[2];
+			tf2::Quaternion q;
+			q.setRPY(0, 0, 0);
+			geometry_msgs::Quaternion q2m = tf2::toMsg(q);
+			map_to_tag.transform.rotation = q2m;     
+      tag_to_map_tfs_[std::stoi(tag->first.substr(3))] = map_to_tag;
+      auto t = map_to_tag.transform.translation;
+      ROS_INFO_STREAM("tag " << t.x << " " << t.y << " " << t.z << " #" << tag->first.substr(3));
+    }
+
+    XmlRpc::XmlRpcValue gridList;
+    nh_.getParam("grid_locations", gridList);
+    for (XmlRpc::XmlRpcValue::iterator grid=gridList.begin(); grid!=gridList.end(); ++grid) {
+      GridLocation g;
+      g.piece = grid->second[0] == "cone" ? CONE : CUBE;
+      g.y = grid->second[1];
+      gridLocations_[std::stoi(grid->first.substr(3))] = g;
+      ROS_INFO_STREAM(std::stoi(grid->first.substr(3)) << " " << g.y << " " << g.piece);
     }
 
     // need to load grid stations here.
@@ -236,12 +276,7 @@ public:
     latest_ = *msg;
   }
 
-  // x & y axis are each controlled by a PID node which
-  // tries to close the error between the current odom / pose
-  // position and the desired location for each time step
-  // along the path.  This is a helper to create a map
-  // of state names to stucts which hold the 
-  // topics for each PID node
+
   bool addAxis(const AlignActionAxisConfig &axis_config)
   {
     axis_states_.emplace(std::make_pair(axis_config.name_,
@@ -275,6 +310,14 @@ public:
       percent_complete_ = feedback->percent_complete;
   }
 
+  int getAllianceRelativeStationNumber(int alliance, int gridStation) {
+    // 0 = red alliance, 1 = blue
+    if (alliance == 1) {
+      return (8-(gridStation-1))+1;
+    }
+    return gridStation;
+  }
+
   void executeCB(const behavior_actions::AlignToGridPID2023GoalConstPtr &goal)
   {
     // just to make sure to go through the loop once
@@ -289,60 +332,22 @@ public:
     // TODO: do we want to find the tag closest to *us* or closest to the grid?
     // right now it finds the one closest to the robot
     // I'm not sure what is most accurate
-    auto closestTag = findClosestApriltag(latest_);
-    if (closestTag == std::nullopt) {
-        ROS_ERROR_STREAM("2023_align_to_grid_closed_loop : No AprilTags found :(");
-        as_.setPreempted();
-        x_axis.setEnable(false);
-        y_axis.setEnable(false);
-        return;
-    }
-    int closestId = closestTag.value();
-
-    // tag location and offset have to be inverted (* -1)
-    // e.g. tag detected at 1.25, desired = 1
-    // PID thinks it should move -0.25 but it should really move 0.25
-
     geometry_msgs::Point offset;
-    // this is inverted because it is where the tag is relative to us
-    // so if we are at the left node the tag is to the right and vice versa
-    if (goal->location == goal->LEFT_CONE) {
-      offset.y -= 0.559;
-    } else if (goal->location == goal->RIGHT_CONE) {
-      offset.y += 0.559;
-    } else {
-      // do nothing
-    }
-
-    if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(0.5)) {
-      
-    } 
-    else {
-        double center_offset = game_piece_state_.offset_from_center;
-        if (isnan(center_offset)) {
-            //ROS_ERROR_STREAM("2023_align_to_grid : game piece offset is NaN, assuming game piece is centered");
-        } 
-        else {
-            offset.y += center_offset; // inverted because where tag is relative to us
-        }
-    }
-
-    offset.x = 1.0; // base_link not front_bumper
+    offset.x = 1; // base_link not front_bumper
 
     geometry_msgs::Point tagLocation = offset; // just to start
 
     x_axis.setEnable(true);
     y_axis.setEnable(true);
-
-    x_axis.setState(-tagLocation.x);
-    y_axis.setState(-tagLocation.y);
-
-    x_axis.setCommand(-offset.x);
-    y_axis.setCommand(-offset.y);
-
-    ROS_INFO_STREAM("offset = " << offset.x << " " << offset.y << " " << offset.z);
-    ROS_INFO_STREAM("error = " << x_error_ << ", " << y_error_ << " = " << hypot(x_error_, y_error_));
-
+    auto closestTag = findClosestApriltag(latest_);
+    if (closestTag == std::nullopt) {
+        ROS_ERROR_STREAM("2023_align_to_grid_closed_loop : Must be able to see an apriltag! :(");
+        as_.setPreempted();
+        x_axis.setEnable(false);
+        y_axis.setEnable(false);
+        return;
+    }
+    int missed_frames = 0;
     while (hypot(x_error_, y_error_) > goal->tolerance) {
         ros::spinOnce(); // grab latest callback data
         if (as_.isPreemptRequested() || !ros::ok())
@@ -354,28 +359,79 @@ public:
             return;
         }
 
+        closestTag = findClosestApriltag(latest_);
+        if (closestTag == std::nullopt) {
+            ROS_ERROR_STREAM("2023_align_to_grid_closed_loop : Could not find apriltag for this frame! :(");
+            missed_frames++;
+            if (missed_frames >= 5) {
+              ROS_ERROR_STREAM("Missed more than 5 frames of tag! Aborting");
+              as_.setPreempted();
+              x_axis.setEnable(false);
+              y_axis.setEnable(false);
+              return;
+            }
+            continue;
+        }
+        else {
+          missed_frames = 0;
+        }
+
+        int closestId = closestTag.value();
+        ROS_INFO_STREAM_THROTTLE(1, "closest id " << closestId);
         bool foundTag = false;
         for (auto detection : latest_.objects) {
+          ROS_INFO_STREAM_THROTTLE(2, "Id" << detection.id);
           if (std::stoi(detection.id) == closestId) {
-            //ROS_INFO_STREAM("Found detection " << detection.id);
+            ROS_INFO_STREAM("Found detection " << detection.id);
             // TRANSFORM TO BASE LINK FIRST
             geometry_msgs::PointStamped point;
             point.point = detection.location;
             point.header = latest_.header;
             geometry_msgs::PointStamped point_out;
-            tf_buffer_.transform(point, point_out, "base_link");
-            tagLocation = point_out.point;
+            ROS_INFO_STREAM("Latest header before base_link = " << latest_.header);
+            // NEED TO CHANGE
+            tf_buffer_.transform(point, point_out, "base_link", ros::Duration(0.1));
+            tagLocation.x = point_out.point.x;
+            tf2::doTransform(point_out, point_out, tag_to_map_tfs_[closestId]);
+            tagLocation.y = point_out.point.y;
             foundTag = true;
-          } else {
-            
-          }
+          } 
         }
         if (!foundTag) {
+          ROS_ERROR_STREAM_THROTTLE(1, "Should be impossible to be here");
           continue;
         }
+
+        int gridStation = getAllianceRelativeStationNumber(alliance_, goal->grid_id);
+        GridLocation gridLocation = gridLocations_[gridStation];
+        // tag location and offset have to be inverted (* -1)
+        // e.g. tag detected at 1.25, desired = 1
+        // PID thinks it should move -0.25 but it should really move 0.25
+
+        // this is inverted because it is where the tag is relative to us
+        // so if we are at the left node the tag is to the right and vice versa
         
+        offset.y = gridLocation.y;
+        ROS_INFO_STREAM("Offset y = " << offset.y);
+
+        if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(0.5)) {
+        } 
+        else {
+            double center_offset = game_piece_state_.offset_from_center;
+            if (isnan(center_offset)) {
+                //ROS_ERROR_STREAM("2023_align_to_grid : game piece offset is NaN, assuming game piece is centered");
+            } 
+            else {
+                offset.y += center_offset; // inverted because where tag is relative to us
+            }
+        }
         x_axis.setState(-tagLocation.x);
         y_axis.setState(-tagLocation.y);
+
+        x_axis.setCommand(-offset.x);
+        y_axis.setCommand(-offset.y);
+
+        ROS_INFO_STREAM("Y axis state = " << tagLocation.y << " command = " << offset.y << ", effort = " << y_eff_); 
 
         x_error_ = fabs(offset.x - tagLocation.x);
         y_error_ = fabs(offset.y - tagLocation.y);
@@ -388,9 +444,13 @@ public:
         cmd_vel_pub_.publish(t);
 
         r.sleep();
+        ROS_INFO_STREAM("offset = " << offset.x << " " << offset.y << " " << offset.z);
+        ROS_INFO_STREAM("error = " << x_error_ << ", " << y_error_ << " = " << hypot(x_error_, y_error_));
     }
     x_axis.setEnable(false);
     y_axis.setEnable(false);
+    result_.success = true;
+    as_.setSucceeded(result_);
   }
 };
 

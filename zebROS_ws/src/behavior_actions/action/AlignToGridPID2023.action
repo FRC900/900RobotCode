@@ -4,6 +4,8 @@ uint8 CENTER=1
 uint8 RIGHT_CONE=2
 uint8 location
 
+uint8 grid_id
+
 float64 tolerance # hypotenuse less than this -> exit
 ---
 # result
