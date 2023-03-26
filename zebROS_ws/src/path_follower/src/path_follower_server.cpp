@@ -78,7 +78,7 @@ class PathAction
 			, ros_rate_(ros_rate)
 			, use_pose_for_odom_(use_pose_for_odom)
 			, tf_listener_(tf_buffer_)
-			, odom_transform_frame_(odom_transform_frame_)
+			, odom_transform_frame_(odom_transform_frame)
 
 		{
 			std_msgs::Bool bool_msg;
@@ -106,8 +106,8 @@ class PathAction
 				zed_to_base_link = tf_buffer_.lookupTransform("base_link", odom_transform_frame_, ros::Time(0));
 			}
 			catch (tf2::TransformException &ex) {
-				ROS_ERROR_STREAM("Could not apply transform to odom in path follower - Dropping message");
-				ROS_ERROR_STREAM(ex.what());
+				ROS_ERROR_STREAM_THROTTLE(2, "Could not apply transform to odom in path follower - Dropping message");
+				ROS_ERROR_STREAM_THROTTLE(2, ex.what());
 				return;
 			}
 			nav_msgs::Odometry out;
@@ -128,8 +128,8 @@ class PathAction
 				zed_to_base_link = tf_buffer_.lookupTransform("base_link", odom_transform_frame_, ros::Time(0));
 			}
 			catch (tf2::TransformException &ex) {
-				ROS_ERROR_STREAM("Could not apply transform to odom in path follower - Dropping message");
-				ROS_ERROR_STREAM(ex.what());
+				ROS_ERROR_STREAM_THROTTLE(2, "Could not apply transform to odom in path follower - Dropping message");
+				ROS_ERROR_STREAM_THROTTLE(2, ex.what());
 				return;
 			}
 			geometry_msgs::PoseStamped out;
@@ -195,15 +195,10 @@ class PathAction
 			// Since we're using odom-centric values to drive against, this simplifies a
 			// lot of the code later.
 			geometry_msgs::TransformStamped odom_to_base_link_tf;
-			//odom_to_base_link_tf.transform.translation.x = odom_.pose.pose.position.x;
-			//odom_to_base_link_tf.transform.translation.y = odom_.pose.pose.position.y;
-			odom_to_base_link_tf.transform.translation.x = 0.0;
-			odom_to_base_link_tf.transform.translation.y = 0.0;
+			odom_to_base_link_tf.transform.translation.x = odom_.pose.pose.position.x;
+			odom_to_base_link_tf.transform.translation.y = odom_.pose.pose.position.y;
 			odom_to_base_link_tf.transform.translation.z = 0.0;
-			tf2::Quaternion q2;
-			q2.setRPY(0, 0, 180);
-			geometry_msgs::Quaternion q2m = tf2::toMsg(q2);
-			odom_to_base_link_tf.transform.rotation = q2m;
+			odom_to_base_link_tf.transform.rotation = odom_.pose.pose.orientation;
 			//ros::message_operations::Printer< ::geometry_msgs::TransformStamped_<std::allocator<void>> >::stream(std::cout, "", odom_to_base_link_tf);
 
 			const double initial_field_relative_yaw = path_follower_.getYaw(orientation_);
