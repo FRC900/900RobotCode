@@ -55,7 +55,7 @@
          are too old to use?
 	-->
 	<node pkg="tf" type="static_transform_publisher" name="static_objdetzedodom" args="0 0 0 0 0 0 zed_objdet_odom odom 100" />
-	<node pkg="tf" type="static_transform_publisher" name="static_basefootprintlink" args="0.152 -0.224 0.802 1 45 23 base_footprint base_link 100" />
+	<node pkg="tf" type="static_transform_publisher" name="static_basefootprintlink" args="0 0 0 0 0 0 base_footprint base_link 100" />
 	<group ns="robot_state">
 		<param name="robot_description" command="$(find xacro)/xacro '$(find controller_node)/urdf/2023_compbot.xacro'" />
 		<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
@@ -87,7 +87,7 @@
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
 
 	<include file="$(find teleop_joystick_control)/launch/2023_snap_to_angle.launch"/>
-
+	<node pkg="tf" type="static_transform_publisher" name="static_zedobjdetect_base" args="0 0 0 0 0 0 base_link zed_objdetect_base_link  100" />
 	<include file="$(find controller_node)/launch/path_follower.launch" if="$(eval arg('run_path_follower'))">
 		<!--
 		<arg name="odom_topic" value="/odom"/>

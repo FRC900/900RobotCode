@@ -16,5 +16,6 @@ path_follower:
     ros_rate: 100
     server_timeout: 15
     time_offset: 0.0
-
+    # will transform the odom and pose messages from this frame to base link before being used, to make odom appear to come from base_link
+    odom_frame: "zed_objdetect_base_link"
     #debug: true

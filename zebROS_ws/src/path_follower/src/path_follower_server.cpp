@@ -12,6 +12,8 @@
 #include <std_msgs/Bool.h>
 #include <vector>
 #include <algorithm>
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "tf2_ros/transform_listener.h"
 
 class PathAction
 {
@@ -19,7 +21,6 @@ class PathAction
 		ros::NodeHandle nh_;
 		actionlib::SimpleActionServer<path_follower_msgs::PathAction> as_;
 		std::string action_name_;
-
 		ros::Subscriber odom_sub_;
 		nav_msgs::Odometry odom_;
 		ros::Subscriber pose_sub_;
@@ -44,6 +45,9 @@ class PathAction
 
 		// If true, use the subscribed pose topic for odom rather than the odom subscriber
 		bool use_pose_for_odom_;
+		tf2_ros::Buffer tf_buffer_;
+		tf2_ros::TransformListener tf_listener_;
+		std::string odom_transform_frame_;
 
 	public:
 		PathAction(const std::string &name, const ros::NodeHandle &nh,
@@ -55,7 +59,8 @@ class PathAction
 				   const std::string &pose_topic,
 				   bool use_pose_for_odom,
 				   double time_offset,
-				   bool debug)
+				   bool debug,
+				   std::string &odom_transform_frame)
 			: nh_(nh)
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
@@ -72,6 +77,9 @@ class PathAction
 			, debug_(debug)
 			, ros_rate_(ros_rate)
 			, use_pose_for_odom_(use_pose_for_odom)
+			, tf_listener_(tf_buffer_)
+			, odom_transform_frame_(odom_transform_frame_)
+
 		{
 			std_msgs::Bool bool_msg;
 			bool_msg.data = false;
@@ -92,25 +100,49 @@ class PathAction
 		// printouts
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
 		{
+			//ROS_INFO_STREAM("Odom callback");
+			geometry_msgs::TransformStamped zed_to_base_link;
+			try {
+				zed_to_base_link = tf_buffer_.lookupTransform("base_link", "zed_objdetect_base_link", ros::Time(0));
+			}
+			catch (tf2::TransformException &ex) {
+				ROS_ERROR_STREAM("Could not apply transform to odom in path follower - Dropping message");
+				ROS_ERROR_STREAM(ex.what());
+				return;
+			}
+			nav_msgs::Odometry out;
+			tf2::doTransform(odom_msg, out, zed_to_base_link);
 			if (debug_)
 			{
-				ROS_INFO_STREAM("odomCallback : msg = " << odom_msg.pose);
+				ROS_INFO_STREAM("odomCallback : msg = " << out.pose);
 			}
 			if (!use_pose_for_odom_)
-				odom_ = odom_msg;
+				odom_ = out;
 		}
 
 		void poseCallback(const geometry_msgs::PoseStamped &pose_msg)
 		{
+			//ROS_INFO_STREAM("Pose callback");
+			geometry_msgs::TransformStamped zed_to_base_link;
+			try {
+				zed_to_base_link = tf_buffer_.lookupTransform("base_link", "zed_objdetect_base_link", ros::Time(0));
+			}
+			catch (tf2::TransformException &ex) {
+				ROS_ERROR_STREAM("Could not apply transform to odom in path follower - Dropping message");
+				ROS_ERROR_STREAM(ex.what());
+				return;
+			}
+			geometry_msgs::PoseStamped out;
+			tf2::doTransform(pose_msg, out, zed_to_base_link);
 			if (debug_)
 			{
-				ROS_INFO_STREAM("poseCallback : msg = " << pose_msg.pose);
+				ROS_INFO_STREAM("poseCallback : msg = " << out.pose);
 			}
-			pose_ = pose_msg;
+			pose_ = out;
 			if (use_pose_for_odom_)
 			{
-				odom_.header = pose_msg.header;
-				odom_.pose.pose = pose_msg.pose;
+				odom_.header = out.header;
+				odom_.pose.pose = out.pose;
 			}
 		}
 
@@ -436,6 +468,8 @@ int main(int argc, char **argv)
 
 	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
 	std::string pose_topic = "/zed_objdetect/pose";
+	std::string odom_frame = "zed_objdetect_base_link";
+
 	nh.getParam("/path_follower/path_follower/final_pos_tol", final_pos_tol);
 	nh.getParam("/path_follower/path_follower/final_rot_tol", final_rot_tol);
 	nh.getParam("/path_follower/path_follower/server_timeout", server_timeout);
@@ -445,6 +479,7 @@ int main(int argc, char **argv)
 	nh.getParam("/path_follower/path_follower/time_offset", time_offset);
 	nh.getParam("/path_follower/path_follower/use_pose_for_odom", use_pose_for_odom);
 	nh.getParam("/path_follower/path_follower/debug", debug);
+	nh.getParam("/path_follower/path_follower/odom_frame", odom_frame);
 
 	PathAction path_action_server("path_follower_server", nh,
 								  final_pos_tol,
@@ -455,7 +490,8 @@ int main(int argc, char **argv)
 								  pose_topic,
 								  use_pose_for_odom,
 								  time_offset,
-								  debug);
+								  debug,
+								  odom_frame);
 
 	// Set up structs to access PID nodes tracking x and y position
 	AlignActionAxisConfig x_axis("x", "x_position_pid/pid_enable", "x_position_pid/x_cmd_pub", "x_position_pid/x_state_pub", "x_position_pid/pid_debug", "x_timeout_param", "x_error_threshold_param");
