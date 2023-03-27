@@ -98,48 +98,64 @@ class PathAction
 		// TODO - only subscribe to one or the other?  Looks
 		// like the separate pose_ message is just used for debugging
 		// printouts
-	
 
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
 		{
-			//ROS_INFO_STREAM("Odom callback");
-			geometry_msgs::TransformStamped zed_to_base_link;
-			try {
-				zed_to_base_link = tf_buffer_.lookupTransform("base_link", odom_transform_frame_, ros::Time(0));
-			}
-			catch (tf2::TransformException &ex) {
-				ROS_ERROR_STREAM_THROTTLE(2, "Could not apply transform to odom in path follower - Dropping message");
-				ROS_ERROR_STREAM_THROTTLE(2, ex.what());
-				return;
-			}
+			tf2::Transform tf;
+			tf.setOrigin(tf2::Vector3(odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y, odom_msg.pose.pose.position.z));
+			tf.setRotation(tf2::Quaternion(odom_msg.pose.pose.orientation.x, odom_msg.pose.pose.orientation.y, odom_msg.pose.pose.orientation.z, odom_msg.pose.pose.orientation.w));
+			tf2::Transform tf_inv = tf.inverse();
+
+			geometry_msgs::Transform t = tf2::toMsg(tf_inv);
+			geometry_msgs::TransformStamped ts;
+			ts.transform = t;
+			ts.header.frame_id = odom_transform_frame_;
+			ts.child_frame_id = "odom";
+			
+			geometry_msgs::TransformStamped ts_base_inv = tf_buffer_.transform(ts, "base_link");
+
+			tf2::Transform tf_base_inv;
+			tf2::fromMsg(ts_base_inv.transform, tf_base_inv);
+			tf2::Transform tf_base = tf_base_inv.inverse();
+
+			geometry_msgs::Transform final_tf_base = tf2::toMsg(tf_base);
+			
 			nav_msgs::Odometry out;
-			tf2::doTransform(odom_msg, out, zed_to_base_link);
-			if (debug_)
-			{
-				ROS_INFO_STREAM("odomCallback : msg = " << out.pose);
-			}
+			out.pose.pose.position.x = final_tf_base.translation.x;
+			out.pose.pose.position.y = final_tf_base.translation.y;
+			out.pose.pose.position.z = final_tf_base.translation.z;
+			out.pose.pose.orientation = final_tf_base.rotation;
+
 			if (!use_pose_for_odom_)
 				odom_ = out;
 		}
 
 		void poseCallback(const geometry_msgs::PoseStamped &pose_msg)
 		{
-			//ROS_INFO_STREAM("Pose callback");
-			geometry_msgs::TransformStamped zed_to_base_link;
-			try {
-				zed_to_base_link = tf_buffer_.lookupTransform("base_link", odom_transform_frame_, ros::Time(0));
-			}
-			catch (tf2::TransformException &ex) {
-				ROS_ERROR_STREAM_THROTTLE(2, "Could not apply transform to odom in path follower - Dropping message");
-				ROS_ERROR_STREAM_THROTTLE(2, ex.what());
-				return;
-			}
+			tf2::Transform tf;
+			tf.setOrigin(tf2::Vector3(pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z));
+			tf.setRotation(tf2::Quaternion(pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z, pose_msg.pose.orientation.w));
+			tf2::Transform tf_inv = tf.inverse();
+
+			geometry_msgs::Transform t = tf2::toMsg(tf_inv);
+			geometry_msgs::TransformStamped ts;
+			ts.transform = t;
+			ts.header.frame_id = odom_transform_frame_;
+			ts.child_frame_id = "odom";
+			
+			geometry_msgs::TransformStamped ts_base_inv = tf_buffer_.transform(ts, "base_link");
+
+			tf2::Transform tf_base_inv;
+			tf2::fromMsg(ts_base_inv.transform, tf_base_inv);
+			tf2::Transform tf_base = tf_base_inv.inverse();
+
+			geometry_msgs::Transform final_tf_base = tf2::toMsg(tf_base);
+			
 			geometry_msgs::PoseStamped out;
-			tf2::doTransform(pose_msg, out, zed_to_base_link);
-			if (debug_)
-			{
-				ROS_INFO_STREAM("poseCallback : msg = " << out.pose);
-			}
+			out.pose.position.x = final_tf_base.translation.x;
+			out.pose.position.y = final_tf_base.translation.y;
+			out.pose.position.z = final_tf_base.translation.z;
+			out.pose.orientation = final_tf_base.rotation;
 			pose_ = out;
 			if (use_pose_for_odom_)
 			{

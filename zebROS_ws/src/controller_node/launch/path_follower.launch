@@ -3,7 +3,7 @@
 		<!-- allow us to hook up sim odom topics for stage sim testing -->
 		<arg name="odom_topic" default="/fake_odometry"/>
 		<arg name="pose_topic" default="/zed_objdetect/pose"/>
-		<arg name="use_pose_for_odom" default="true"/>
+		<arg name="use_pose_for_odom" default="false"/>
 		<arg name="year" default="2023"/>
 
         <group ns="path_follower">
