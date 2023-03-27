@@ -40,7 +40,8 @@ elevator_controller_2023:
         joint: elevator_leader
         close_loop_values:
             - {p: 0.12, i: 0.00000, d: 0.00, f: 0.05, i_zone: 0, closed_loop_peak_output: 1.0}
-              
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
         sensor_phase: False 
         invert_output: True
         #conversion_factor: 0.01822
