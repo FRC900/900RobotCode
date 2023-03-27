@@ -98,7 +98,7 @@ class PathAction
 		// TODO - only subscribe to one or the other?  Looks
 		// like the separate pose_ message is just used for debugging
 		// printouts
-
+		
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
 		{
 			tf2::Transform tf;
@@ -163,7 +163,7 @@ class PathAction
 				odom_.pose.pose = out.pose;
 			}
 		}
-		/* 
+		 /*
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
 		{
 			if (debug_)
@@ -187,7 +187,7 @@ class PathAction
 				odom_.pose.pose = pose_msg.pose;
 			}
 		}
-*/
+		*/
 		void yawCallback(const sensor_msgs::Imu &yaw_msg)
 		{
 			if (debug_)
