@@ -245,6 +245,14 @@ class PathAction
 			//debug
 			ROS_INFO_STREAM(goal->path.poses[num_waypoints - 1].pose.position.x << ", " << goal->path.poses[num_waypoints - 1].pose.position.y << ", " << path_follower_.getYaw(goal->path.poses[num_waypoints - 1].pose.orientation));
 
+			ROS_INFO_STREAM("Current odom values X = " << odom_.pose.pose.position.x << " Y = " << odom_.pose.pose.position.y << " Rot " << path_follower_.getYaw(odom_.pose.pose.orientation)); 
+			for (size_t i = 0; i < num_waypoints - 1; i++) {
+				ROS_INFO_STREAM("Untransformed waypoint: X = " << goal->path.poses[i].pose.position.x << " Y = " << goal->path.poses[i].pose.position.y << " rotation = " << path_follower_.getYaw(goal->path.poses[i].pose.orientation));
+				geometry_msgs::Pose temp_pose = goal->path.poses[i].pose;
+				tf2::doTransform(temp_pose, temp_pose, odom_to_base_link_tf);
+				ROS_INFO_STREAM("Transformed waypoint: X = " << temp_pose.position.x << " Y = " << temp_pose.position.y << " rotation = " << path_follower_.getYaw(temp_pose.orientation));
+			}
+			ROS_INFO_STREAM("========End path follower logs ==========");
 			ros::Rate r(ros_rate_);
 			double final_distace = 0;
 			// send path to initialize path follower
