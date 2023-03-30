@@ -2,7 +2,6 @@
 #include <candle_controller_msgs/Animation.h>
 #include <candle_controller_msgs/Brightness.h>
 #include <ros/ros.h>
-#include <frc_msgs/MatchSpecificData.h>
 #include <frc_msgs/ButtonBoxState2023.h>
 #include <behavior_actions/AutoMode.h>
 #include <sensor_msgs/Imu.h>
@@ -21,7 +20,6 @@ constexpr uint8_t LEFT_START = 21;
 constexpr uint8_t LEFT_COUNT = 13;
 
 struct NodeCTX {
-    uint8_t team_colour;
     bool cone_button_pressed;
     bool cube_button_pressed;
     bool updated;
@@ -35,7 +33,6 @@ struct NodeCTX {
     bool pathing;
 
     NodeCTX() :
-        team_colour{3},
         cone_button_pressed{false},
         cube_button_pressed{false},
         updated{false},
@@ -71,20 +68,6 @@ struct NodeCTX {
 		}
     }
 
-    void team_colour_callback(const frc_msgs::MatchSpecificData& msg) {
-        disabled = msg.Disabled;
-        if (msg.allianceColor != this->team_colour) {
-            ROS_INFO_STREAM("Updating alliance colour LEDs...");
-            this->team_colour = msg.allianceColor;
-            this->updated = true;
-        }
-        if (msg.Disabled != this->disabled) {
-            ROS_INFO_STREAM("Updating auto LEDs...");
-            disabled = msg.Disabled;
-            updated = true;
-        }
-    }
-
     void path_callback(const geometry_msgs::TwistConstPtr &msg) {
         bool last_pathing = pathing;
         if (hypot(msg->linear.x, msg->linear.y) > 0.1 || msg->angular.z > 0.1) {
@@ -101,13 +84,13 @@ struct NodeCTX {
         if (msg.topMiddleConeButton && !this->cone_button_pressed) {
             this->cone_button_pressed = true;
             this->updated = true;
-        } else if (!(msg.topMiddleConeButton) && this->cone_button_pressed) {
+        } else if ((msg.topMiddleConeButtonPress) && this->cone_button_pressed) {
             this->cone_button_pressed = false;
             this->updated = true;
         } else if (msg.topRightCubeButton && !this->cube_button_pressed) {
             this->cube_button_pressed = true;
             this->updated = true;
-        } else if (!(msg.topRightCubeButton) && this->cube_button_pressed) {
+        } else if ((msg.topRightCubeButtonPress) && this->cube_button_pressed) {
             this->cube_button_pressed = false;
             this->updated = true;
         }
@@ -155,7 +138,6 @@ int main(int argc, char **argv) {
     node.param<double>("/intaking/current_threshold", ctx.intake_current_threshold_, 100.0);
 
     // Team colour subscriber/callback
-    ros::Subscriber team_colour_subscriber = node.subscribe("/frcrobot_rio/match_data", 1, &NodeCTX::team_colour_callback, &ctx);
     ros::Subscriber button_box_subscriber = node.subscribe("/frcrobot_rio/button_box_states", 1, &NodeCTX::button_box_callback, &ctx);
     ros::Subscriber auto_mode_subscriber = node.subscribe("/auto/auto_mode", 1, &NodeCTX::auto_mode_callback, &ctx);
     ros::Subscriber imu_subscriber = node.subscribe("/imu/zeroed_imu", 1, &NodeCTX::imu_callback, &ctx);
@@ -318,12 +300,6 @@ int main(int argc, char **argv) {
                     ROS_ERROR_STREAM("Failed to update LEDs");
                 }
                 continue;
-            } else if (ctx.team_colour == 0) {
-                // Red colour
-                colour_req.request.red = 255;
-            } else if (ctx.team_colour == 1) {
-                // Blue colour
-                colour_req.request.blue = 255;
             }
 
             if (colour_client.call(colour_req)) {
