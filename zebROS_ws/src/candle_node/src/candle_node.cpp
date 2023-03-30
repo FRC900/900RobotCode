@@ -84,13 +84,13 @@ struct NodeCTX {
         if (msg.topMiddleConeButton && !this->cone_button_pressed) {
             this->cone_button_pressed = true;
             this->updated = true;
-        } else if ((msg.topMiddleConeButtonPress) && this->cone_button_pressed) {
+        } else if ((msg.topMiddleConePress) && this->cone_button_pressed) {
             this->cone_button_pressed = false;
             this->updated = true;
         } else if (msg.topRightCubeButton && !this->cube_button_pressed) {
             this->cube_button_pressed = true;
             this->updated = true;
-        } else if ((msg.topRightCubeButtonPress) && this->cube_button_pressed) {
+        } else if ((msg.topRightCubePress) && this->cube_button_pressed) {
             this->cube_button_pressed = false;
             this->updated = true;
         }
