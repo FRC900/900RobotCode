@@ -1894,7 +1894,8 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			if (safeTalonConfigCall(victor->SetSelectedSensorPosition(sensor_position / radians_scale, pidIdx, configTimeoutMs),
 						"SetSelectedSensorPosition", ts.getCANID()))
 			{
-				ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " selected sensor position to " << sensor_position / radians_scale);
+				// TODO note we commented this out
+				// ROS_INFO_STREAM("Updated joint " << joint_id << "=" << can_ctre_mc_names_[joint_id] << " selected sensor position to " << sensor_position / radians_scale);
 			}
 			else
 			{

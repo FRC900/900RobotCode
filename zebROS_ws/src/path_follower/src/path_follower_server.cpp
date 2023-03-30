@@ -12,6 +12,8 @@
 #include <std_msgs/Bool.h>
 #include <vector>
 #include <algorithm>
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "tf2_ros/transform_listener.h"
 
 class PathAction
 {
@@ -19,7 +21,6 @@ class PathAction
 		ros::NodeHandle nh_;
 		actionlib::SimpleActionServer<path_follower_msgs::PathAction> as_;
 		std::string action_name_;
-
 		ros::Subscriber odom_sub_;
 		nav_msgs::Odometry odom_;
 		ros::Subscriber pose_sub_;
@@ -44,6 +45,9 @@ class PathAction
 
 		// If true, use the subscribed pose topic for odom rather than the odom subscriber
 		bool use_pose_for_odom_;
+		tf2_ros::Buffer tf_buffer_;
+		tf2_ros::TransformListener tf_listener_;
+		std::string odom_transform_frame_;
 
 	public:
 		PathAction(const std::string &name, const ros::NodeHandle &nh,
@@ -55,7 +59,8 @@ class PathAction
 				   const std::string &pose_topic,
 				   bool use_pose_for_odom,
 				   double time_offset,
-				   bool debug)
+				   bool debug,
+				   std::string &odom_transform_frame)
 			: nh_(nh)
 			, as_(nh_, name, boost::bind(&PathAction::executeCB, this, _1), false)
 			, action_name_(name)
@@ -72,6 +77,9 @@ class PathAction
 			, debug_(debug)
 			, ros_rate_(ros_rate)
 			, use_pose_for_odom_(use_pose_for_odom)
+			, tf_listener_(tf_buffer_)
+			, odom_transform_frame_(odom_transform_frame)
+
 		{
 			std_msgs::Bool bool_msg;
 			bool_msg.data = false;
@@ -90,6 +98,95 @@ class PathAction
 		// TODO - only subscribe to one or the other?  Looks
 		// like the separate pose_ message is just used for debugging
 		// printouts
+		
+		void odomCallback(const nav_msgs::Odometry &odom_msg)
+		{
+			tf2::Transform tf;
+			tf.setOrigin(tf2::Vector3(odom_msg.pose.pose.position.x, odom_msg.pose.pose.position.y, odom_msg.pose.pose.position.z));
+			tf.setRotation(tf2::Quaternion(odom_msg.pose.pose.orientation.x, odom_msg.pose.pose.orientation.y, odom_msg.pose.pose.orientation.z, odom_msg.pose.pose.orientation.w));
+			tf2::Transform tf_inv = tf.inverse();
+
+			geometry_msgs::Transform t = tf2::toMsg(tf_inv);
+			geometry_msgs::TransformStamped ts;
+			ts.transform = t;
+			ts.header.frame_id = odom_transform_frame_;
+			ts.child_frame_id = "odom";
+			
+			geometry_msgs::TransformStamped ts_base_inv;
+
+			geometry_msgs::TransformStamped zed_to_base = tf_buffer_.lookupTransform("base_link", odom_transform_frame_, ros::Time(0));
+			zed_to_base.transform.rotation.x = 0;
+			zed_to_base.transform.rotation.y = 0;
+			zed_to_base.transform.rotation.z = 0;
+			zed_to_base.transform.rotation.w = 1;
+			
+			tf2::doTransform(ts, ts_base_inv, zed_to_base);
+
+			tf2::Transform tf_base_inv;
+			tf2::fromMsg(ts_base_inv.transform, tf_base_inv);
+			tf2::Transform tf_base = tf_base_inv.inverse();
+
+			geometry_msgs::Transform final_tf_base = tf2::toMsg(tf_base);
+			
+			nav_msgs::Odometry out;
+			out.pose.pose.position.x = final_tf_base.translation.x;
+			out.pose.pose.position.y = final_tf_base.translation.y;
+			out.pose.pose.position.z = final_tf_base.translation.z;
+
+			tf2::Quaternion yawQuat;
+			yawQuat.setRPY(0, 0, path_follower_.getYaw(final_tf_base.rotation));
+			out.pose.pose.orientation = tf2::toMsg(yawQuat);
+
+			if (!use_pose_for_odom_)
+				odom_ = out;
+		}
+
+		void poseCallback(const geometry_msgs::PoseStamped &pose_msg)
+		{
+			tf2::Transform tf;
+			tf.setOrigin(tf2::Vector3(pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z));
+			tf.setRotation(tf2::Quaternion(pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z, pose_msg.pose.orientation.w));
+			tf2::Transform tf_inv = tf.inverse();
+
+			geometry_msgs::Transform t = tf2::toMsg(tf_inv);
+			geometry_msgs::TransformStamped ts;
+			ts.transform = t;
+			ts.header.frame_id = odom_transform_frame_;
+			ts.child_frame_id = "odom";
+			
+			geometry_msgs::TransformStamped ts_base_inv;
+
+			geometry_msgs::TransformStamped zed_to_base = tf_buffer_.lookupTransform("base_link", odom_transform_frame_, ros::Time(0));
+			zed_to_base.transform.rotation.x = 0;
+			zed_to_base.transform.rotation.y = 0;
+			zed_to_base.transform.rotation.z = 0;
+			zed_to_base.transform.rotation.w = 1;
+			
+			tf2::doTransform(ts, ts_base_inv, zed_to_base);
+
+			tf2::Transform tf_base_inv;
+			tf2::fromMsg(ts_base_inv.transform, tf_base_inv);
+			tf2::Transform tf_base = tf_base_inv.inverse();
+
+			geometry_msgs::Transform final_tf_base = tf2::toMsg(tf_base);
+			
+			geometry_msgs::PoseStamped out;
+			out.pose.position.x = final_tf_base.translation.x;
+			out.pose.position.y = final_tf_base.translation.y;
+			out.pose.position.z = final_tf_base.translation.z;
+
+			tf2::Quaternion yawQuat;
+			yawQuat.setRPY(0, 0, path_follower_.getYaw(final_tf_base.rotation));
+			out.pose.orientation = tf2::toMsg(yawQuat);
+			pose_ = out;
+
+			if (use_pose_for_odom_)
+			{
+				odom_.header = out.header;
+				odom_.pose.pose = out.pose;
+			}
+		}
+		 /*
 		void odomCallback(const nav_msgs::Odometry &odom_msg)
 		{
 			if (debug_)
@@ -113,7 +210,7 @@ class PathAction
 				odom_.pose.pose = pose_msg.pose;
 			}
 		}
-
+		*/
 		void yawCallback(const sensor_msgs::Imu &yaw_msg)
 		{
 			if (debug_)
@@ -165,7 +262,7 @@ class PathAction
 			geometry_msgs::TransformStamped odom_to_base_link_tf;
 			odom_to_base_link_tf.transform.translation.x = odom_.pose.pose.position.x;
 			odom_to_base_link_tf.transform.translation.y = odom_.pose.pose.position.y;
-			odom_to_base_link_tf.transform.translation.z = 0;
+			odom_to_base_link_tf.transform.translation.z = 0.0;
 			odom_to_base_link_tf.transform.rotation = odom_.pose.pose.orientation;
 			//ros::message_operations::Printer< ::geometry_msgs::TransformStamped_<std::allocator<void>> >::stream(std::cout, "", odom_to_base_link_tf);
 
@@ -187,6 +284,20 @@ class PathAction
 			//debug
 			ROS_INFO_STREAM(goal->path.poses[num_waypoints - 1].pose.position.x << ", " << goal->path.poses[num_waypoints - 1].pose.position.y << ", " << path_follower_.getYaw(goal->path.poses[num_waypoints - 1].pose.orientation));
 
+			ROS_INFO_STREAM("Current odom values X = " << odom_.pose.pose.position.x << " Y = " << odom_.pose.pose.position.y << " Rot " << path_follower_.getYaw(odom_.pose.pose.orientation)); 
+			for (size_t i = 0; i < num_waypoints - 1; i++) {
+				ROS_INFO_STREAM("Untransformed waypoint: X = " << goal->path.poses[i].pose.position.x << " Y = " << goal->path.poses[i].pose.position.y << " rotation = " << path_follower_.getYaw(goal->path.poses[i].pose.orientation));
+				geometry_msgs::Pose temp_pose = goal->path.poses[i].pose;
+				geometry_msgs::Pose new_pose;
+				tf2::doTransform(temp_pose, new_pose, odom_to_base_link_tf);
+				tf2::Quaternion q;
+				tf2::fromMsg(odom_to_base_link_tf.transform.rotation, q);
+				double r, p, y;
+				tf2::Matrix3x3(q).getRPY(r, p, y);
+				ROS_INFO_STREAM("Transforming by the transform x = " << odom_to_base_link_tf.transform.translation.x << ", y = "  << odom_to_base_link_tf.transform.translation.y << ", z = "  << odom_to_base_link_tf.transform.translation.z << ", r = " << r << ", p = " << p << ", y = " << y);
+				ROS_INFO_STREAM("Transformed waypoint: X = " << new_pose.position.x << " Y = " << new_pose.position.y << " rotation = " << path_follower_.getYaw(new_pose.orientation));
+			}
+			ROS_INFO_STREAM("========End path follower logs ==========");
 			ros::Rate r(ros_rate_);
 			double final_distace = 0;
 			// send path to initialize path follower
@@ -281,7 +392,8 @@ class PathAction
 
 				if ((fabs(final_pose_transformed.position.x - odom_.pose.pose.position.x) < final_pos_tol_) &&
 					(fabs(final_pose_transformed.position.y - odom_.pose.pose.position.y) < final_pos_tol_) &&
-					(fabs(path_follower_.getYaw(final_pose_transformed.orientation) - orientation_state) < final_rot_tol_))
+					(fabs(path_follower_.getYaw(final_pose_transformed.orientation) - orientation_state) < final_rot_tol_) &&
+					(current_index >= (goal->path.poses.size() - 2)))
 				{
 					ROS_INFO_STREAM(action_name_ << ": succeeded");
 					ROS_INFO_STREAM("    endpoint_x = " << final_pose_transformed.position.x << ", odom_x = " << odom_.pose.pose.position.x);
@@ -300,6 +412,21 @@ class PathAction
 					x_axis.setState(odom_.pose.pose.position.x);
 					y_axis.setState(odom_.pose.pose.position.y);
 
+					// x, y PID inputs are odom-relative
+					// cmd_vel is base link relative
+					// if command = 5.0, current = 4.0 for x
+					// cmd_vel is positive (let's say 1)
+					// e.g. initial odom orientation is 0, current robot orientation is 90
+					// these are both relative to the same frame. so it is -odom orientation.
+					// sending positive here because it is inverted in publish_pid_cmd_vel
+					// should be y of -1, x of 0
+					// cmd_vel_msg.linear.x = x_command * cos(rotate_angle) - y_command * sin(rotate_angle);
+					// 0 = 1.0 * cos(theta) - 0.0 * sin(theta)
+					// cos(theta) = 0
+					// theta = pi/2 or 3pi/2
+					// cmd_vel_msg.linear.y = x_command * sin(rotate_angle) + y_command * cos(rotate_angle);
+					// -1 = 1.0 * sin(theta) + 0.0 * cos(theta)
+					// angle = 3pi/2 aka -90 degrees
 					std_msgs::Float64 yaw_msg;
 					yaw_msg.data = orientation_state;
 					robot_relative_yaw_pub_.publish(yaw_msg);
@@ -414,8 +541,10 @@ int main(int argc, char **argv)
 	bool use_pose_for_odom = false;
 	bool debug = false;
 
-	std::string odom_topic = "/frcrobot_jetson/swerve_drive_controller/odom";
+	std::string odom_topic = "/fake_odometry";
 	std::string pose_topic = "/zed_objdetect/pose";
+	std::string odom_frame = "zed_objdetect_base_link";
+
 	nh.getParam("/path_follower/path_follower/final_pos_tol", final_pos_tol);
 	nh.getParam("/path_follower/path_follower/final_rot_tol", final_rot_tol);
 	nh.getParam("/path_follower/path_follower/server_timeout", server_timeout);
@@ -425,6 +554,7 @@ int main(int argc, char **argv)
 	nh.getParam("/path_follower/path_follower/time_offset", time_offset);
 	nh.getParam("/path_follower/path_follower/use_pose_for_odom", use_pose_for_odom);
 	nh.getParam("/path_follower/path_follower/debug", debug);
+	nh.getParam("/path_follower/path_follower/odom_frame", odom_frame);
 
 	PathAction path_action_server("path_follower_server", nh,
 								  final_pos_tol,
@@ -435,7 +565,8 @@ int main(int argc, char **argv)
 								  pose_topic,
 								  use_pose_for_odom,
 								  time_offset,
-								  debug);
+								  debug,
+								  odom_frame);
 
 	// Set up structs to access PID nodes tracking x and y position
 	AlignActionAxisConfig x_axis("x", "x_position_pid/pid_enable", "x_position_pid/x_cmd_pub", "x_position_pid/x_state_pub", "x_position_pid/pid_debug", "x_timeout_param", "x_error_threshold_param");

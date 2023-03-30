@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- blue tags, 0,0 is on blue's side 
+    <node pkg="tf" type="static_transform_publisher" name="static_map_36h118" args="1.02743 1.071626 0.462788 0 0 0 map 36h118 1" />
+	<node pkg="tf" type="static_transform_publisher" name="static_map_36h117" args="1.02743 2.748026 0.462788 0 0 0 map 36h117 1" />
+	<node pkg="tf" type="static_transform_publisher" name="static_map_36h116" args="1.02743 4.424426 0.462788 0 0 0 map 36h116 1" />
+    -->
+	<!-- <node pkg="tf" type="static_transform_publisher" name="static_map_36h115" args="0.36195 6.749796 0.695452 0 0 0 36h115 map 1" /> -->
+
+    <!-- red tags-->
+    <!-- 
+	<node pkg="tf" type="static_transform_publisher" name="static_map_36h111" args="15.513558 1.071626 0.462788 0 0 0 map 36h111 1" />
+	<node pkg="tf" type="static_transform_publisher" name="static_map_36h112" args="15.513558 2.748026 0.462788 0 0 0 map 36h112 1" />
+	<node pkg="tf" type="static_transform_publisher" name="static_map_36h113" args="15.513558 4.424426 0.462788 0 0 0 map 36h113 1" />
+	<node pkg="tf" type="static_transform_publisher" name="static_map_36h114" args="16.178784 6.749796 0.695452 0 0 0 map 36h114 1" />
+    -->
+    <group ns="align_to_grid_closed_loop">
+        <rosparam file="$(find behaviors)/config/2023_apriltag_locations.yaml" command="load"/>
+        <rosparam file="$(find behaviors)/config/2023_grid_locations.yaml" command="load"/>
+
+        <node name="align_to_grid_closed_loop_2023" pkg="behaviors" type="2023_align_to_grid_closed_loop_node" output="screen"/>
+
+        <node name="x_position_pid" pkg="pid" type="controller" >
+            <param name="node_name" value="x_position_pid" />
+            <param name="Kp" value="1.5" />
+            <param name="Ki" value="0.0" />
+            <param name="Kd" value="0.0" />
+            <param name="upper_limit" value="0.75" />
+            <param name="lower_limit" value="-0.75" />
+            <param name="windup_limit" value="10" />
+            <param name="max_loop_frequency" value="100.0" />
+            <param name="min_loop_frequency" value="100.0" />
+            <param name="topic_from_controller" value="x_position_pid/x_command" />
+            <param name="setpoint_topic" value="x_position_pid/x_cmd_pub" />
+            <param name="topic_from_plant" value="x_position_pid/x_state_pub" />
+            <remap from="pid_debug" to="x_position_pid/pid_debug" />
+            <remap from="pid_enable" to="x_position_pid/pid_enable" />
+        </node>
+
+        <node name="y_position_pid" pkg="pid" type="controller" >
+            <param name="node_name" value="y_position_pid" />
+            <param name="Kp" value="1.5" />
+            <param name="Ki" value="0.0" />
+            <param name="Kd" value="0.0" />
+            <param name="upper_limit" value="0.75" />
+            <param name="lower_limit" value="-0.75" />
+            <param name="windup_limit" value="10" />
+            <param name="max_loop_frequency" value="100.0" />
+            <param name="min_loop_frequency" value="100.0" />
+            <param name="topic_from_controller" value="y_position_pid/y_command" />
+            <param name="setpoint_topic" value="y_position_pid/y_cmd_pub" />
+            <param name="topic_from_plant" value="y_position_pid/y_state_pub" />
+            <remap from="pid_debug" to="y_position_pid/pid_debug" />
+            <remap from="pid_enable" to="y_position_pid/pid_enable" />
+        </node>
+    </group>
+
+</launch>

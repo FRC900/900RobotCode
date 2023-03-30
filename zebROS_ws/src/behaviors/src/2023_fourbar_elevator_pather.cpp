@@ -9,7 +9,9 @@
 struct ElevatorFourbarPoint {
 	// in that order
 	double elevator;
+	double elevator_tolerance;
 	double fourbar;
+	double fourbar_tolerance;
 };
 
 using Path = std::vector<ElevatorFourbarPoint>;
@@ -77,8 +79,16 @@ public:
 				auto pt = ElevatorFourbarPoint();
 				pt.elevator = static_cast<double>(path->second[i][0]);
 				pt.fourbar = static_cast<double>(path->second[i][1]);
+				if (path->second[i].size() == 4) {
+					// tolerances passed in
+					pt.elevator_tolerance = static_cast<double>(path->second[i][2]);
+					pt.fourbar_tolerance = static_cast<double>(path->second[i][3]);
+				} else {
+					pt.elevator_tolerance = elevator_tolerance_;
+					pt.fourbar_tolerance = fourbar_tolerance_;
+				}
 				p.push_back(pt);
-				ROS_INFO_STREAM("(" << pt.elevator << ", " << pt.fourbar << ")");
+				ROS_INFO_STREAM("(" << pt.elevator << ", " << pt.fourbar << ") @ tolerance (" << pt.elevator_tolerance << ", " << pt.fourbar_tolerance << ")");
 			}
 			path_map_[path->first] = p;
 		}
@@ -179,13 +189,13 @@ public:
 		return ac.getState().isDone();
 	}
 
-	bool waitForFourbarAndElevator(double fourbar_setpoint, double elevator_setpoint) {
-		ros::Rate r = ros::Rate(10);
+	bool waitForFourbarAndElevator(ElevatorFourbarPoint pt) {
+		ros::Rate r = ros::Rate(100);
 
 		while (true)
 		{
 			ros::spinOnce();
-			ROS_INFO_STREAM_THROTTLE(1, "2023_fourbar_elevator_path_server: Waiting for fourbar and elevator, fourbar: " << fourbar_position_ << " vs " << fourbar_setpoint << ", elevator: " << elevator_position_ << " vs " << elevator_setpoint);
+			ROS_INFO_STREAM_THROTTLE(0.1, "2023_fourbar_elevator_path_server: Waiting for fourbar and elevator, fourbar: " << fourbar_position_ << " vs " << pt.fourbar << ", elevator: " << elevator_position_ << " vs " << pt.elevator);
 
 			// essentially just keep fourbar where it is now
 			if (as_.isPreemptRequested() || !ros::ok())
@@ -213,9 +223,9 @@ public:
 				return false;
 			}
 
-			if (fabs(fourbar_position_ - fourbar_setpoint) <= fourbar_tolerance_ && fabs(elevator_position_ - elevator_setpoint) <= elevator_tolerance_) // make this tolerance configurable
+			if (fabs(fourbar_position_ - pt.fourbar) <= pt.fourbar_tolerance && fabs(elevator_position_ - pt.elevator) <= pt.elevator_tolerance) // make this tolerance configurable
 			{
-				ROS_INFO_STREAM("2023_fourbar_elevator_path_server : fourbar and elevator reached position! ");
+				ROS_INFO_STREAM("2023_fourbar_elevator_path_server : fourbar and elevator reached position!");
 				break;
 			}
 			r.sleep();
@@ -271,7 +281,7 @@ public:
 				as_.setAborted(result_);
 				return;
 			}
-			if (!waitForFourbarAndElevator(pt.fourbar, pt.elevator)) {
+			if (!waitForFourbarAndElevator(pt)) {
 				return;
 			}
 		}

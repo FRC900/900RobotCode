@@ -167,6 +167,7 @@ void zeroCallback(const sensor_msgs::Imu::ConstPtr& raw_msg) {
   }
   else
   {
+    zeroed_imu.header = raw_msg->header;
 	  pub.publish(zeroed_imu);
   }
 }
@@ -220,7 +221,7 @@ bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
 	  zeroPose.request.pose.pose.pose.position.y = 0;
 	  zeroPose.request.pose.pose.pose.position.z = 0;
 	  tf2::Quaternion tf2_quat;
-	  tf2_quat.setRPY(0,0,0);
+	  tf2_quat.setRPY(0,0,req.angle);
 	  tf2_quat.normalize();
 	  zeroPose.request.pose.pose.pose.orientation = tf2::toMsg(tf2_quat);
 	  if (!ukf_zero_pos.call(zeroPose))

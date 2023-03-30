@@ -164,6 +164,10 @@ add_executable(2023_align_to_grid_node src/2023_align_to_grid.cpp)
 target_link_libraries(2023_align_to_grid_node ${catkin_LIBRARIES})
 add_dependencies(2023_align_to_grid_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(2023_align_to_grid_closed_loop_node src/2023_align_to_grid_closed_loop.cpp)
+target_link_libraries(2023_align_to_grid_closed_loop_node ${catkin_LIBRARIES})
+add_dependencies(2023_align_to_grid_closed_loop_node ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_executable(2023_updown_elevater_server src/2023_updown_elevater_server.cpp)
 target_link_libraries(2023_updown_elevater_server ${catkin_LIBRARIES})
 add_dependencies(2023_updown_elevater_server ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

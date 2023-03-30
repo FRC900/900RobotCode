@@ -81,6 +81,7 @@
   <depend>controllers_2022_msgs</depend>
   <depend>controllers_2023_msgs</depend>
   <depend>talon_controller_msgs</depend>
+  <depend>path_follower</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -1,4 +1,5 @@
 time_before_reverse: 0.0
 server_timeout: 10.0
 game_piece_timeout: 1.0
-outtake_time: 1.0
+outtake_cone_time: 0.6
+outtake_cube_time: 0.08

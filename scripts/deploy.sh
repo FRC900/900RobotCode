@@ -160,7 +160,7 @@ if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
     echo "Synchronizing remote changes FROM $INSTALL_ENV environment."
     for i in "${JETSON_ADDR[@]}"
     do
-        rsync -avzru --checksum --exclude '.git' --exclude 'zebROS_ws/build*' \
+        rsync -avzru --no-times --checksum --exclude '.git' --exclude 'zebROS_ws/build*' \
             --exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' --exclude 'zebROS_ws/logs*' \
             --exclude '*~' --exclude '*.sw[lmnop]'  --exclude '*CMakeFiles*' \
             --exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2' --exclude 'build' \
@@ -186,7 +186,7 @@ fi
 # versions of code
 for i in "${JETSON_ADDR[@]}"
 do
-    rsync -avzr $RSYNC_OPTIONS --checksum --exclude '.git' --exclude 'zebROS_ws/build*' \
+    rsync -avzr $RSYNC_OPTIONS --no-times --checksum --exclude '.git' --exclude 'zebROS_ws/build*' \
         --exclude 'zebROS_ws/devel*' --exclude 'zebROS_ws/install*' --exclude 'zebROS_ws/logs*' \
         --exclude '*~' --exclude '*.sw[lmnop]' --exclude '*CMakeFiles*' \
         --exclude '*.avi' --exclude '*.exe'  --exclude 'pixy2' --exclude 'build' \

@@ -63,6 +63,7 @@ protected:
 	ros::Publisher intake_pub_;
 
 	double time_before_reverse_;
+	double time_to_wait_double_substation_; 
 
 	ros::NodeHandle nh_params_;
 
@@ -173,6 +174,11 @@ public:
 		if (!nh_.getParam("time_before_reverse", time_before_reverse_)) {
 			ROS_WARN_STREAM("2023_intaking_server : could not find time_before_reverse, defaulting to 0 seconds");
 			time_before_reverse_ = 0;
+		}
+
+		if (!nh_.getParam("time_to_wait_double_substation", time_to_wait_double_substation_)) {
+			ROS_WARN_STREAM("2023_intaking_server : could not find time_to_wait_double_substation, defaulting to 1.25 seconds");
+			time_to_wait_double_substation_ = 1.25;
 		}
 
 		if (!nh_.getParam("cube_time", cube_time_))
@@ -421,7 +427,7 @@ public:
 			pathGoal.reverse = true;
 		} else {
 			pathGoal.path += "_reverse";
-			ros::Duration(0.25).sleep();
+			ros::Duration(time_to_wait_double_substation_).sleep();
 		}
 
 		feedback_.status = feedback_.PATHER;
@@ -432,21 +438,28 @@ public:
 
 		if (got_game_piece) {
 			ros::Duration(medium_time_).sleep();
-			percent_out.data = 0.0;
-			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
-			ros::Duration(time_before_reverse_).sleep();
+			// percent_out.data = 0.0;
+			// make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
+			// ros::Duration(time_before_reverse_).sleep();
 			percent_out.data = small_speed_;
 			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 		}
 
 		ros::Time start = ros::Time::now();
+		bool preempted = false;
 		while (!path_ac_.getState().isDone()) {
 			ros::spinOnce();
 			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : bringing game piece back");
-			if ((as_.isPreemptRequested() || !ros::ok()) && (ros::Time::now() - start) > ros::Duration(path_zero_timeout_)) {
-				ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : preempted... has been " << (ros::Time::now() - start).toSec() << " seconds");
-				path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
-				break;
+			if ((as_.isPreemptRequested() || !ros::ok())) {
+				if (!preempted) {
+					as_.setPreempted();
+					preempted = true;
+				}
+				if ((ros::Time::now() - start) > ros::Duration(path_zero_timeout_)) {
+					ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : preempted... has been " << (ros::Time::now() - start).toSec() << " seconds");
+					path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+					break;
+				}
 			}
 			r.sleep();
 		}

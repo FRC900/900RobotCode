@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 #include "std_msgs/Bool.h"
+#include <behavior_actions/AlignAndPlaceGrid2023Action.h>
 
 enum AutoStates {
 			NOT_READY,
@@ -70,7 +71,7 @@ class AutoNode {
 
 		std::function<void()> preemptAll_;
 		// I don't really see us ever actually needing to config this, but it is pretty easy to do
-		ros::Rate r_ = ros::Rate(10);
+		ros::Rate r_ = ros::Rate(100);
 		// Used to pass in dynamic paths from other nodes
 		// Map of the auto action to the function to be called
 		// Edit here if for changing auto year to year
@@ -89,6 +90,7 @@ class AutoNode {
 		actionlib::SimpleActionClient<behavior_actions::Intaking2023Action> intaking_ac_;
 		actionlib::SimpleActionClient<behavior_actions::Balancing2023Action> balancing_ac;
 		actionlib::SimpleActionClient<behavior_actions::Placing2023Action> placing_ac_;
+		actionlib::SimpleActionClient<behavior_actions::AlignAndPlaceGrid2023Action> align_and_place_ac_;
 
 		// path follower and feedback
 		std::map<std::string, nav_msgs::Path> premade_paths_;
@@ -109,6 +111,7 @@ class AutoNode {
 		, intaking_ac_("/intaking/intaking_server_2023", true)
 		, balancing_ac("/balance_position/balancing_server", true)
 		, placing_ac_("/placing/placing_server_2023", true)
+		, align_and_place_ac_("/align_and_place_grid", true)
 
 	// Constructor
 	{
@@ -157,6 +160,7 @@ class AutoNode {
 		functionMap_["path"] = &AutoNode::pathfn;
 		functionMap_["cmd_vel"] = &AutoNode::cmdvelfn;
 		functionMap_["balancing_actionlib_server"] = &AutoNode::autoBalancefn;
+		functionMap_["grid_align_server"] = &AutoNode::gridalignfn;
 
 		// cool trick to bring all class variables into scope of lambda
 		preemptAll_ = [this](){ // must include all actions called
@@ -164,6 +168,7 @@ class AutoNode {
 			intaking_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			balancing_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			placing_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+			align_and_place_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 		};
 		// END change year to year
 	}
@@ -738,6 +743,78 @@ class AutoNode {
 		return true;
 	}
 
+	bool gridalignfn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
+		//for some reason this is necessary, even if the server has been up and running for a while
+		if(!align_and_place_ac_.waitForServer(ros::Duration(5))){
+			shutdownNode(ERROR,"Auto node - couldn't find align and place actionlib server");
+			return false;
+		}
+
+		behavior_actions::AlignAndPlaceGrid2023Goal goal;
+		goal.auto_place = true;
+		goal.step = 0;
+		goal.tolerance = 0.03;
+		goal.tolerance_for_extend = 1.0;
+
+		uint8_t requested_game_piece = 255;
+
+		if (action_data.hasMember("piece"))
+		{
+			if (action_data["piece"] == "cone") {
+				requested_game_piece = behavior_actions::GamePieceState2023::BASE_TOWARDS_US_CONE;
+			}
+			else if (action_data["piece"] == "cube") {
+				requested_game_piece = behavior_actions::GamePieceState2023::CUBE;
+			}
+			else {
+				shutdownNode(ERROR,"Auto node - placing_actionlib_server call \"piece\" field is not \"cone\" or \"cube\". Exiting!");
+				return false;
+			}
+		}
+
+		if (action_data.hasMember("node"))
+		{
+			if (action_data["node"] == "high") {
+				goal.node = goal.HIGH;
+			}
+			else if (action_data["node"] == "mid") {
+				goal.node = goal.MID;
+			}
+			else if (action_data["node"] == "hybrid") {
+				goal.node = goal.HYBRID;
+			}
+			else {
+				shutdownNode(ERROR,"Auto node - placing_actionlib_server call \"node\" field is not \"high\", \"mid\",  or \"hybrid\". Exiting!");
+				return false;
+			}
+		}
+		else {
+			shutdownNode(ERROR, "Auto node - placing_actionlib_server: no node specified");
+			return false;
+		}
+
+		if (action_data.hasMember("grid_id"))
+		{
+			int temp;
+			readIntParam("grid_id", action_data, temp);
+			goal.grid_id = temp;
+		}
+		else {
+			shutdownNode(ERROR, "Auto node - auto_placing_actionlib_server: no grid id specified");
+			return false;
+		}
+
+		if (requested_game_piece != 255) {
+			goal.override_game_piece = true;
+			goal.piece = requested_game_piece;
+		}
+
+		align_and_place_ac_.sendGoal(goal);
+		waitForActionlibServer(align_and_place_ac_, 10.0, "align_and_place_server");
+
+		return true;
+	}
+
 	bool autoBalancefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
 		if(!balancing_ac.waitForServer(ros::Duration(5))){
 			shutdownNode(ERROR,"Auto node - couldn't find balancing actionlib server");
@@ -794,7 +871,7 @@ class AutoNode {
 			return false;
 		}
 		intaking_ac_.sendGoal(goal);
-		waitForActionlibServer(intaking_ac_, 10.0, "intaking_server");
+		// waitForActionlibServer(intaking_ac_, 10.0, "intaking_server");
 		return true;
 	}
 

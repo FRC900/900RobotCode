@@ -54,8 +54,8 @@
 		 Use the TF broadcaster rather than tf2_ros since costmap2d seems to think that static transform broadcasts
          are too old to use?
 	-->
-	<node pkg="tf" type="static_transform_publisher" name="static_objdetzedodom" args="0 0 0 0 0 0 zed_objdet_odom odom 100" />
-	<node pkg="tf" type="static_transform_publisher" name="static_basefootprintlink" args="0 0 0 0 0 0 base_footprint base_link 100" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="static_objdetzedodom" args="0 0 0 0 0 0 zed_objdet_odom odom" />
+	<node pkg="tf2_ros" type="static_transform_publisher" name="static_basefootprintlink" args="0 0 0 0 0 0 base_footprint base_link" />
 	<group ns="robot_state">
 		<param name="robot_description" command="$(find xacro)/xacro '$(find controller_node)/urdf/2023_compbot.xacro'" />
 		<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
@@ -64,19 +64,16 @@
 	<node pkg="fake_sensors" type="fake_goal_detect_node" name="fake_goal_detect" >
 		<remap from="goal_detect_msg" to="/goal_detection/goal_detect_msg" />
 	</node>
-	
+	<!-- 
 	<group ns="pf_localization">
 	<rosparam file="$(find pf_localization)/config/2023_params.yaml" command="load"/>
 	<node pkg="pf_localization" type="pf_localization_node" name="pf_localization" output="screen" >
 	</node>
 	</group>
+	-->
 	<!--
 	set up cargo filter (red/blue -> friendly/opponent)
 	-->
-	<group ns="tf_object_detection">
-		<node pkg="tf_object_detection" name="cargo_detection_filter" type="cargo_detection_filter" output="screen">
-		</node>
-	</group>
 	<!-- 
 	<include file="$(find controller_node)/launch/rosbridge_websocket.launch">
 		<arg name="port" value="5803"/>
@@ -86,7 +83,6 @@
 	<include file="$(find behaviors)/launch/auto_node.launch"/>
 
 	<include file="$(find teleop_joystick_control)/launch/2023_snap_to_angle.launch"/>
-
 	<include file="$(find controller_node)/launch/path_follower.launch" if="$(eval arg('run_path_follower'))">
 		<!--
 		<arg name="odom_topic" value="/odom"/>
@@ -124,5 +120,12 @@
 	</group>
 
 	<include file="$(find fake_sensors)/launch/apriltag_sim.launch"/>
+	<include file="$(find behaviors)/launch/2023_align_to_grid.launch">
+	</include>
+
+	<node name="fake_odom_publisher" pkg="behaviors" type="publish_fake_odom.py"/>
+	<include file="$(find tf_object_detection)/launch/detection.launch">
+		<arg name="cpu" value="true"/>
+	</include>
 
 </launch>

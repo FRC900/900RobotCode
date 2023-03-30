@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <launch>
 		<!-- allow us to hook up sim odom topics for stage sim testing -->
-		<arg name="odom_topic" default="/frcrobot_jetson/swerve_drive_controller/odom"/>
+		<arg name="odom_topic" default="/frcrobot_jetson/swerve_drive_controller/odom"/> <!-- /frcrobot_jetson/swerve_drive_controller/odom -->
 		<arg name="pose_topic" default="/zed_objdetect/pose"/>
-		<arg name="use_pose_for_odom" default="true"/>
+		<arg name="use_pose_for_odom" default="false"/>
 		<arg name="year" default="2023"/>
 
         <group ns="path_follower">
@@ -47,8 +47,8 @@
                 <param name="Kp" value="2.5" />
                 <param name="Ki" value="0.0" />
                 <param name="Kd" value="0.0" />
-                <param name="upper_limit" value="4.0" />
-                <param name="lower_limit" value="-4.0" />
+                <param name="upper_limit" value="2.5" />
+                <param name="lower_limit" value="-2.5" />
                 <param name="windup_limit" value="10" />
                 <param name="max_loop_frequency" value="100.0" />
                 <param name="min_loop_frequency" value="100.0" />
@@ -64,8 +64,8 @@
                 <param name="Kp" value="2.5" />
                 <param name="Ki" value="0.0" />
                 <param name="Kd" value="0.0" />
-                <param name="upper_limit" value="4.0" />
-                <param name="lower_limit" value="-4.0" />
+                <param name="upper_limit" value="2.5" />
+                <param name="lower_limit" value="-2.5" />
                 <param name="windup_limit" value="10" />
                 <param name="max_loop_frequency" value="100.0" />
                 <param name="min_loop_frequency" value="100.0" />

@@ -1,0 +1,12 @@
+# goal
+uint8 grid_id
+
+float64 tolerance # hypotenuse less than this -> exit
+---
+# result
+bool success
+bool timed_out
+---
+# feedback
+float64 x_error
+float64 y_error

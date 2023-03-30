@@ -3,7 +3,7 @@
 #include <talon_controllers/talon_controller_interface.h> // "
 #include <pluginlib/class_list_macros.h> //to compile as a controller
 #include "controllers_2023_msgs/FourBarSrv.h"
-
+#include "controllers_2023/interpolating_map.h"
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
 
 namespace four_bar_controller_2023
@@ -37,7 +37,8 @@ class FourBarController_2023 : public controller_interface::MultiInterfaceContro
 
         bool zeroed_;
         bool last_zeroed_;
-        bool last_limit_switch_ = false;
+
+        wpi::interpolating_map<double, double> angle_to_feed_forward_;
 
         std::atomic<double> max_angle_;
         std::atomic<double> min_angle_;
@@ -67,6 +68,26 @@ bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> 
         return true;
     }
     return false;
+}
+
+double readFloatParam(XmlRpc::XmlRpcValue &param)
+{
+  double val = -999;
+  // can assume that array is of len 3 
+	if (!param.valid())
+		throw std::runtime_error("2023 Four bar controller - readFloatParam : param was not a valid type");
+	if (param.getType() == XmlRpc::XmlRpcValue::TypeDouble)
+	{
+		val = static_cast<double>(param);
+		return val;
+	}
+	else if (param.getType() == XmlRpc::XmlRpcValue::TypeInt)
+	{
+		val = static_cast<int>(param);
+		return val;
+	}
+	else
+		throw std::runtime_error("2023 Four bar controller - readFloatParam : A non-double value was read for param");
 }
 
 bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
@@ -129,6 +150,19 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     {
         ROS_ERROR("Could not find motion_s_curve_strength");
         return false;
+    }
+
+    XmlRpc::XmlRpcValue feed_forward_map_xml_;
+    if (!controller_nh.getParam("feed_forward_map", feed_forward_map_xml_))
+    {
+      ROS_WARN_STREAM("2023_four_bar_controller : COULD NOT FIND SHOOTER SPEED MAP SHOOTING WILL FAIL");
+      return false;
+    }
+
+    for (size_t i = 0; i < (unsigned) feed_forward_map_xml_.size(); i++) {
+        auto s = feed_forward_map_xml_[i];
+        angle_to_feed_forward_.insert(readFloatParam(s[0]), readFloatParam(s[1]));
+        ROS_INFO_STREAM("2023_four_bar_controller : Inserted " << s[0] << " " << s[1] << " " << s[2]);
     }
 
     //get config values for the four_bar talon
@@ -233,33 +267,18 @@ void FourBarController_2023::update(const ros::Time &time, const ros::Duration &
     // If we hit the limit switch, (re)zero the position.
     if (four_bar_joint_.getReverseLimitSwitch())
     {
-        last_limit_switch_ = true;
         ROS_INFO_THROTTLE(2, "FourBarController_2023 : hit limit switch");
         if (!last_zeroed_)
         {
             zeroed_ = true;
-            last_zeroed_ = true;
+            // last_zeroed_ = true;
             four_bar_joint_.setSelectedSensorPosition(0); // relative to min position
             four_bar_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-            four_bar_joint_.setDemand1Value(sin(four_bar_joint_.getPosition() - straight_up_angle) * arb_feed_forward_angle);
-        }
-    }
-    else if (last_limit_switch_) {
-        last_limit_switch_ = false;
-        last_zeroed_ = false;
-        ROS_INFO_THROTTLE(2, "FourBarController_2023 : went off limit switch");
-        if (!last_zeroed_)
-        {
-            zeroed_ = true;
-            last_zeroed_ = true;
-            four_bar_joint_.setSelectedSensorPosition(0); // relative to min position
-            four_bar_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-            four_bar_joint_.setDemand1Value(sin(four_bar_joint_.getPosition() - straight_up_angle) * arb_feed_forward_angle);
+            four_bar_joint_.setDemand1Value(angle_to_feed_forward_[four_bar_joint_.getPosition()]);
         }
     }
     else
     {
-        last_limit_switch_ = false;
         last_zeroed_ = false;
     }
     
@@ -278,7 +297,7 @@ void FourBarController_2023::update(const ros::Time &time, const ros::Duration &
         four_bar_joint_.setPIDFSlot(0);
 
         four_bar_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-        four_bar_joint_.setDemand1Value(sin(four_bar_joint_.getPosition() - straight_up_angle) * arb_feed_forward_angle);
+        four_bar_joint_.setDemand1Value(angle_to_feed_forward_[four_bar_joint_.getPosition()]);
     }
     else
     {

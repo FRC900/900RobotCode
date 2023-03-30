@@ -7,6 +7,7 @@ uint8 node
 # if override_game_piece is true, will use `piece` instead of the detected game piece
 bool override_game_piece
 
+
 uint8 CUBE=0
 uint8 VERTICAL_CONE=1
 uint8 BASE_TOWARDS_US_CONE=2 
@@ -26,8 +27,8 @@ uint8 RED=1
 uint8 alliance
 
 bool auto_place # will place after and retract
-
-float64 percent_to_extend # if percent along path is greater than this, start moving the elevator and fourbar up
+float64 tolerance
+float64 tolerance_for_extend # if percent along path is greater than this, start moving the elevator and fourbar up
 ---
 # result
 bool success

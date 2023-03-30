@@ -1,11 +1,11 @@
 teleop_params:
     num_joysticks: 2
-    max_rot: 4.125
+    max_rot: 6.28
     max_rot_slow: 2.355
     rotation_axis_scale: 1.0
     rotation_epsilon: 0.2 # Z-velocities lower than this indicate robot is stopped
     min_speed: 0.0  # Smallest linear speed which get the robot moving at all
-    max_speed: 3.7
+    max_speed: 5.0
     max_speed_slow: 1.7
     joystick_pow: 1.5
     rotation_pow: 1.0   #Scaling factors used in teleop_joystick_comp
@@ -18,6 +18,8 @@ teleop_params:
     button_move_speed: 0.5
     imu_zero_angle: 0.0
     cone_cube_timeout: 1.0
+    max_speed_elevator_extended: 1.5
+    max_rot_elevator_extended: 0.75
     
 
     #teleop_diagnostics_params:

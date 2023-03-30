@@ -344,7 +344,7 @@ void ElevatorController_2023::update(const ros::Time &time, const ros::Duration 
         if (!last_zeroed_)
         {
             zeroed_ = true;
-            last_zeroed_ = true;
+            // last_zeroed_ = true;
             elevator_joint_.setSelectedSensorPosition(0);
             elevator_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
             elevator_joint_.setDemand1Value(arb_feed_forward_low + fourbar_ff);

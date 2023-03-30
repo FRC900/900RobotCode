@@ -745,7 +745,7 @@ void compOdometry(const ros::Time &time, const double inv_delta_t, const std::ar
 		odom_tf_trans.transform.translation.x = odom_y; // TODO terrible hacky
 		odom_tf_trans.transform.translation.y = -odom_y; // TODO terrible hacky
 		odom_tf_trans.transform.rotation = orientation;
-		ROS_INFO_STREAM(odom_x);
+		// ROS_INFO_STREAM(odom_x);
 		odom_tf_pub_.unlockAndPublish();
 		last_odom_tf_pub_time_ += odom_pub_period_;
 	}

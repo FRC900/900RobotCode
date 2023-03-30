@@ -15,6 +15,18 @@ grid_locations:
   pos8: ["cube", 4.431] # cube, tag id 8 blue or 1 red
   pos9: ["cone", 4.989] # cone
 
+map_to_tag:
+  # oops this was already made identically in 2023_apriltag_locations...
+  # x,y,z , dont care about rotation I think
+  tag1: [15.513558, 1.071626, 0.462788]
+  tag2: [15.513558, 2.748026, 0.462788]
+  tag3: [15.513558, 4.424426, 0.462788]
+  tag4: [16.178784, 6.749796, 0.695452]
+  tag5: [0.36195, 6.749796, 0.695452]
+  tag6: [1.02743, 4.424426, 0.462788]
+  tag7: [1.02743, 2.748026, 0.462788]
+  tag8: [1.02743, 1.071626, 0.462788]
+
 # x distance from the apriltag on the cube node to the end of the things that stick out between nodes
 # aka the distance to be back from the tag
 # if this is too low we will hit the wall

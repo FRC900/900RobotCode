@@ -1,7 +1,7 @@
 path_follower:
     # Set odom topic from a launch file param to make it easier to use with sim odom
     # This fuses swerve_drive_controller/odom x&y strafe plus imu roll, pitch, yaw
-    #odom_topic: "/swerve_imu_ukf/odometry/filtered"
+    #odom_topic: "/fake_odometry"
     #odom_topic: "/frcrobot_jetson/swerve_drive_controller/odom"
     #pose_topic
 
@@ -11,10 +11,11 @@ path_follower:
     # and just have the path follower pull in that pose msg
     #use_pose_for_odom : true # true == use PoseStamped subscriber (e.g. zed camera pose) for odom rather than Odometry subscriber
     dynamic_reconfigure: True
-    final_pos_tol: 0.035
-    final_rot_tol: 0.017 # ~1deg
+    final_pos_tol: 0.08
+    final_rot_tol: 0.2 # ~1deg = 0.017
     ros_rate: 100
     server_timeout: 15
     time_offset: 0.0
-
+    # will transform the odom and pose messages from this frame to base link before being used, to make odom appear to come from base_link
+    odom_frame: "base_link"
     #debug: true

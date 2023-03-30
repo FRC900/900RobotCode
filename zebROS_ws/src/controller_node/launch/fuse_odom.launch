@@ -4,7 +4,7 @@
 -->
 
 <launch>
-	<node name="swerve_imu_ukf_node" pkg="robot_localization" type="ukf_localization_node">
+	<node name="swerve_imu_ukf_node" pkg="robot_localization" type="ukf_localization_node" output="screen"> 
 		<param name="frequency" value="100" />
 		<!-- 
 			Change the frame parametrs when re-localization
@@ -78,5 +78,9 @@
 		<param name="imu0_relative"     value="false" />
 		<param name="imu0_nodelay"      value="true" />
 		<param name="imu0_remove_gravitational_acceleration" value="false" />
+		<!--
+		<param name="print_diagnostics" value="true"/>
+		<param name="debug" value="true"/>
+		-->
 	</node>
 </launch>
