@@ -100,6 +100,7 @@ int direction_z{};
 
 bool robot_is_disabled{false};
 bool elevator_up = false;
+bool no_driver_input{false};
 
 uint8_t grid;
 uint8_t game_piece;
@@ -329,30 +330,27 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.topRightCubeRelease) {
 	}
 
-	if(button_box.gridSelectConeLeftButton) {
-	}
-	if(button_box.gridSelectConeLeftPress) {
+	if(button_box.gridSelectConeLeftButton && no_driver_input && !pathed) {
 		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE;
 		if (use_pathing && !pathed) {
 			behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
 			align_goal.alliance = alliance_color;
-			bool success = true;
-			if (success) {
-				moved = true;
-				pathed = true;
-				align_goal.tolerance = 0.03;
-				align_goal.tolerance_for_extend = 0.25;
-				align_goal.auto_place = false;
-				align_goal.grid_id = 1 + grid_position;
-				ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
-				align_goal.node = node;
-				align_goal.piece = game_piece;
-				align_goal.override_game_piece = false;
-				align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
-				align_and_place_ac->sendGoal(align_goal);
-			}
+			moved = true;
+			pathed = true;
+			align_goal.tolerance = 0.05;
+			align_goal.tolerance_for_extend = 0.25;
+			align_goal.auto_place = false;
+			align_goal.grid_id = 1 + grid_position;
+			ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
+			align_goal.node = node;
+			align_goal.piece = game_piece;
+			align_goal.override_game_piece = false;
+			align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
+			align_and_place_ac->sendGoal(align_goal);
 		}
-		else if (pathed || moved || !use_pathing) {
+	}
+	if(button_box.gridSelectConeLeftPress) {
+		if (pathed || moved || !use_pathing) {
 			ROS_INFO_STREAM("Placing a cone!");
 			place();
 			pathed = false;
@@ -363,30 +361,26 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.gridSelectConeLeftRelease) {
 	}
 
-	if(button_box.gridSelectCubeButton) {
-	}
-	if(button_box.gridSelectCubePress) {
+	if(button_box.gridSelectCubeButton && no_driver_input && !pathed) {
 		game_piece = behavior_actions::Placing2023Goal::CUBE;
 		if (use_pathing && !pathed) {
 			behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
 			align_goal.alliance = alliance_color;
-			bool success = true;
-
-			if (success) {
-				moved = true;
-				align_goal.tolerance = 0.03;
-				align_goal.tolerance_for_extend = 0.25;
-				align_goal.auto_place = true;
-				align_goal.grid_id = 2 + grid_position;
-				ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
-				align_goal.node = node;
-				align_goal.piece = game_piece;
-				align_goal.override_game_piece = false;
-				align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
-				align_and_place_ac->sendGoal(align_goal);
-			}
+			moved = true;
+			align_goal.tolerance = 0.05;
+			align_goal.tolerance_for_extend = 0.25;
+			align_goal.auto_place = true;
+			align_goal.grid_id = 2 + grid_position;
+			ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
+			align_goal.node = node;
+			align_goal.piece = game_piece;
+			align_goal.override_game_piece = false;
+			align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
+			align_and_place_ac->sendGoal(align_goal);
 		}
-		else if (pathed || moved || !use_pathing) {
+	}
+	if(button_box.gridSelectCubePress) {
+		if (pathed || moved || !use_pathing) {
 			ROS_INFO_STREAM("Placing a cube!");
 			place();
 			pathed = false;
@@ -395,31 +389,28 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.gridSelectCubeRelease) {
 	}
 
-	if(button_box.gridSelectConeRightButton) {
-	}
-	if(button_box.gridSelectConeRightPress) {
+	if(button_box.gridSelectConeRightButton && no_driver_input && !pathed) {
 		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE; // type doesn't matter for placing
 		if (use_pathing && !pathed) {
 			behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
 			align_goal.alliance = alliance_color;
-			bool success = true;
+			moved = true;
+			pathed = true;
+			align_goal.tolerance = 0.05;
+			align_goal.tolerance_for_extend = 0.25;
+			align_goal.auto_place = false;
+			align_goal.grid_id = 3 + grid_position;
+			ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
+			align_goal.node = node;
+			align_goal.piece = game_piece;
+			align_goal.override_game_piece = false;
+			align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
+			align_and_place_ac->sendGoal(align_goal);
 
-			if (success) {
-				moved = true;
-				pathed = true;
-				align_goal.tolerance = 0.03;
-				align_goal.tolerance_for_extend = 0.25;
-				align_goal.auto_place = false;
-				align_goal.grid_id = 3 + grid_position;
-				ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
-				align_goal.node = node;
-				align_goal.piece = game_piece;
-				align_goal.override_game_piece = false;
-				align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
-				align_and_place_ac->sendGoal(align_goal);
-			}
-		}
-		else if (pathed || moved || !use_pathing) {
+		}	
+	}
+	if(button_box.gridSelectConeRightPress) {
+		if (pathed || moved || !use_pathing) {
 			ROS_INFO_STREAM("Placing a cone!");
 			place();
 			pathed = false;
@@ -696,6 +687,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 
 			if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (cmd_vel.angular.z == 0.0) && !sendRobotZero)
 			{
+				no_driver_input = true;
 				std_srvs::Empty empty;
 				if (!BrakeSrv.call(empty))
 				{
@@ -711,6 +703,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				//ROS_INFO_STREAM("2023-Publishing " << cmd_vel.linear.x << " " << cmd_vel.linear.y << " " << cmd_vel.linear.z);
 				JoystickRobotVel.publish(cmd_vel);
 				sendRobotZero = false;
+				no_driver_input = false;
 				// if the original command was not zero, then teleop was controlling rotation
 
 			}

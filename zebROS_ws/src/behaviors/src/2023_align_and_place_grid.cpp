@@ -141,20 +141,23 @@ public:
     std_msgs::Float64 msg;
     msg.data = M_PI;
     orientation_command_pub_.publish(msg);
-    while (ros::Time::now() - path_finished_time < ros::Duration(green_button_time_)) {
-        ros::spinOnce();
-        ROS_INFO_STREAM_THROTTLE(0.4, "Green buttoning from align and place!");
-        orientation_command_pub_.publish(msg);
-        geometry_msgs::Twist cmd_vel;
-        cmd_vel.linear.x = 0.5; // green button states
-        cmd_vel.linear.y = 0.0;
-        cmd_vel.linear.z = 0.0;
-        cmd_vel.angular.x = 0.0;
-        cmd_vel.angular.y = 0.0;
-        cmd_vel.angular.z = orient_effort_;
-        cmd_vel_pub_.publish(cmd_vel);
-        r.sleep();
+    if (game_piece != behavior_actions::AlignAndPlaceGrid2023Goal::CUBE) {
+      while (ros::Time::now() - path_finished_time < ros::Duration(green_button_time_)) {
+          ros::spinOnce();
+          ROS_INFO_STREAM_THROTTLE(0.4, "Green buttoning from align and place!");
+          orientation_command_pub_.publish(msg);
+          geometry_msgs::Twist cmd_vel;
+          cmd_vel.linear.x = 0.5; // green button states
+          cmd_vel.linear.y = 0.0;
+          cmd_vel.linear.z = 0.0;
+          cmd_vel.angular.x = 0.0;
+          cmd_vel.angular.y = 0.0;
+          cmd_vel.angular.z = orient_effort_;
+          cmd_vel_pub_.publish(cmd_vel);
+          r.sleep();
+      }
     }
+
 
     if (started_moving_elevator && goal->auto_place) {
       while (!placing_ac.getState().isDone()) {

@@ -1,2 +1,4 @@
 green_button_time: 0.5
 rotate_time: 0.5
+min_valid_frames: 4
+missed_frames_allowed: 20

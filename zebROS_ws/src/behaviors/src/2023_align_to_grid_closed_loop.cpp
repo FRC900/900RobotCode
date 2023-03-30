@@ -177,6 +177,9 @@ protected:
   double x_error_{0};
   double y_error_{0};
 
+  double valid_frames_config_{4};
+  double missed_frames_before_exit_{20};
+
   behavior_actions::GamePieceState2023 game_piece_state_;
 	ros::Time latest_game_piece_time_;
 
@@ -255,7 +258,9 @@ public:
       gridLocations_[std::stoi(grid->first.substr(3))] = g;
       ROS_INFO_STREAM(std::stoi(grid->first.substr(3)) << " " << g.y << " " << g.piece);
     }
-
+      
+    nh_.getParam("min_valid_frames", valid_frames_config_);
+    nh_.getParam("missed_frames_allowed", missed_frames_before_exit_);
     // need to load grid stations here.
 
     as_.start();
@@ -364,7 +369,7 @@ public:
     msg.data = M_PI;
     orientation_command_pub_.publish(msg);
     uint8_t valid_frames = 0;
-    while (hypot(x_error_, y_error_) > goal->tolerance || valid_frames < 4) {
+    while (hypot(x_error_, y_error_) > goal->tolerance || valid_frames < valid_frames_config_) {
         ros::spinOnce(); // grab latest callback data
         if (as_.isPreemptRequested() || !ros::ok())
         {
@@ -379,8 +384,8 @@ public:
         if (closestTag == std::nullopt) {
             ROS_ERROR_STREAM("2023_align_to_grid_closed_loop : Could not find apriltag for this frame! :(");
             missed_frames++;
-            if (missed_frames >= 20) {
-              ROS_ERROR_STREAM("Missed more than 20 frames of tag! Aborting");
+            if (missed_frames >= missed_frames_before_exit_) {
+              ROS_ERROR_STREAM("Missed more than " << missed_frames_before_exit_ << " frames of tag! Aborting");
               x_axis.setEnable(false);
               y_axis.setEnable(false);
               as_.setPreempted();
