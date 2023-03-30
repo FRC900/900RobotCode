@@ -753,7 +753,7 @@ class AutoNode {
 		behavior_actions::AlignAndPlaceGrid2023Goal goal;
 		goal.auto_place = true;
 		goal.step = 0;
-		goal.tolerance = 0.03;
+		goal.tolerance = 0.05;
 		goal.tolerance_for_extend = 1.0;
 
 		uint8_t requested_game_piece = 255;
