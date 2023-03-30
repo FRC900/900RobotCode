@@ -28,7 +28,7 @@
 #include "geometry_msgs/Twist.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
-
+#include <std_srvs/Empty.h>
 
 enum GamePiece { CUBE, CONE };
 
@@ -200,6 +200,7 @@ protected:
 
   ros::Publisher orientation_command_pub_;
   ros::Subscriber control_effort_sub_;
+  ros::ServiceClient set_leds_green_client_;
   double orient_effort_;
 
 public:
@@ -214,6 +215,8 @@ public:
     control_effort_sub_(nh_.subscribe<std_msgs::Float64>("/teleop/orient_strafing/control_effort", 1, &AlignToGridAction::controlEffortCB, this))
   {
     game_piece_sub_ = nh_.subscribe("/game_piece/game_piece_state", 1, &AlignToGridAction::gamePieceCallback, this);
+    const std::map<std::string, std::string> service_connection_header{ {"tcp_nodelay", "1"} };
+    set_leds_green_client_ = nh_.serviceClient<std_srvs::Empty>("/candle_node/set_leds_green", false, service_connection_header);
 
     imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/zeroed_imu", 1, &AlignToGridAction::imuCb, this);
     match_sub_ = nh_.subscribe<frc_msgs::MatchSpecificData>("/frcrobot_rio/match_data", 1, &AlignToGridAction::matchCb, this);
@@ -476,6 +479,11 @@ public:
         r.sleep();
         ROS_INFO_STREAM("offset = " << offset.x << " " << offset.y << " " << offset.z);
         ROS_INFO_STREAM("error = " << x_error_ << ", " << y_error_ << " = " << hypot(x_error_, y_error_));
+    }
+    std_srvs::Empty empty;
+    if (!set_leds_green_client_.call(empty)) {
+      ROS_ERROR_STREAM("Unable to set leds to green in align to grid closed loop!");
+      // don't really care but good to know about
     }
     x_axis.setEnable(false);
     y_axis.setEnable(false);

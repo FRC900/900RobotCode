@@ -355,8 +355,6 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 			place();
 			pathed = false;
 		}
-
-		// slow mode
 	}
 	if(button_box.gridSelectConeLeftRelease) {
 	}

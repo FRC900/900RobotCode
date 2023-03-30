@@ -10,6 +10,7 @@
 #include <angles/angles.h>
 #include <talon_state_msgs/TalonState.h>
 #include <geometry_msgs/Twist.h>
+#include <std_srvs/Empty.h>
 
 constexpr uint8_t MAX_LED = 34;
 constexpr uint8_t MID_START = 0;
@@ -20,9 +21,11 @@ constexpr uint8_t LEFT_START = 21;
 constexpr uint8_t LEFT_COUNT = 13;
 
 struct NodeCTX {
+    ros::Time last_green_time;
     bool cone_button_pressed;
     bool cube_button_pressed;
     bool updated;
+    bool OVERRIDE_GREEN{false};
     bool disabled;
     uint8_t auto_mode;
     double imu_tolerance{M_PI/18.0}; // 10 deg
@@ -128,12 +131,22 @@ struct NodeCTX {
 
 };
 
+NodeCTX ctx;
+// did not want to try and figure out the syntax for it in a struct, tried 
+// ros::ServiceServer green_srv = node.advertiseService("/candle_node/set_leds_green", boost::bind(&NodeCTX::set_leds_green_callback, &ctx, _1));
+// so just made it global
+bool set_leds_green_callback(std_srvs::Empty::Request &req, std_srvs::Empty::Response &res) {
+    // sets for three seconds, just to make sure operator (me) knows when they have been taking too long to place
+    ctx.updated = true;
+    ctx.OVERRIDE_GREEN = true;
+    ctx.last_green_time = ros::Time::now();
+}
+
 int main(int argc, char **argv) {
     // ROS node
     ros::init(argc, argv, "candle_node");
     ros::NodeHandle node;
     ros::Duration delay(1, 0);
-    NodeCTX ctx;
 
     node.param<double>("/intaking/current_threshold", ctx.intake_current_threshold_, 100.0);
 
@@ -148,7 +161,7 @@ int main(int argc, char **argv) {
     ros::ServiceClient colour_client = node.serviceClient<candle_controller_msgs::Colour>("/frcrobot_jetson/candle_controller/colour", false);
     ros::ServiceClient animation_client = node.serviceClient<candle_controller_msgs::Animation>("/frcrobot_jetson/candle_controller/animation", false);
     ros::ServiceClient brightness_client = node.serviceClient<candle_controller_msgs::Brightness>("/frcrobot_jetson/candle_controller/brightness", false);
-
+    ros::ServiceServer green_srv = node.advertiseService("/candle_node/set_leds_green", &set_leds_green_callback);
     // param = /intaking/current_threshold
 
 
@@ -254,13 +267,19 @@ int main(int argc, char **argv) {
                 }
             }
         }
-        // Robot alliance colour changed
         else if (ctx.updated) {
             candle_controller_msgs::Colour colour_req;
             colour_req.request.start = 0;
             colour_req.request.count = MAX_LED;
+            // shoudl already be zero but just to make sure
+            colour_req.request.red = 0;
+            colour_req.request.green = 0;
+            colour_req.request.blue = 0; 
 
-            if (ctx.cone_button_pressed) {
+            if (ctx.OVERRIDE_GREEN) {
+                colour_req.request.green = 255;
+            }
+            else if (ctx.cone_button_pressed) {
                 // Yellow colour
                 colour_req.request.red = 255;
                 colour_req.request.green = 150;
@@ -309,8 +328,11 @@ int main(int argc, char **argv) {
                 ROS_ERROR_STREAM("Failed to update LEDs");
             }
         }
-
         r.sleep();
+        if (ctx.OVERRIDE_GREEN && (ros::Time::now() - ctx.last_green_time) >= ros::Duration(3)) {
+            ctx.OVERRIDE_GREEN = false;
+            ctx.updated = true;
+        }
         ros::spinOnce();
     }
     return 0;
