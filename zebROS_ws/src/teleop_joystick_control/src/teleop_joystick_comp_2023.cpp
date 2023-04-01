@@ -62,6 +62,8 @@ struct DynamicReconfigVars
 	double cube_length{0.2032/2};
 	double angle_threshold{angles::from_degrees(1)};
 	double elevator_threshold{0.2};
+	double cone_tolerance{0.1};
+	double cube_tolerance{0.05};
 } config;
 
 std::unique_ptr<TeleopCmdVel<DynamicReconfigVars>> teleop_cmd_vel;
@@ -357,7 +359,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 		align_goal.alliance = alliance_color;
 		moved = true;
 		pathed = true;
-		align_goal.tolerance = 0.05;
+		align_goal.tolerance = config.cone_tolerance;
 		align_goal.tolerance_for_extend = 0.25;
 		align_goal.auto_place = false;
 		align_goal.grid_id = 1 + grid_position;
@@ -403,7 +405,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 		align_goal.alliance = alliance_color;
 		moved = true;
 		pathed = true;
-		align_goal.tolerance = 0.05;
+		align_goal.tolerance = config.cube_tolerance;
 		align_goal.tolerance_for_extend = 0.25;
 		align_goal.auto_place = true;
 		align_goal.grid_id = 2 + grid_position;
@@ -442,7 +444,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 		align_goal.alliance = alliance_color;
 		moved = true;
 		pathed = true;
-		align_goal.tolerance = 0.05;
+		align_goal.tolerance = config.cone_tolerance;
 		align_goal.tolerance_for_extend = 0.25;
 		align_goal.auto_place = false;
 		align_goal.grid_id = 3 + grid_position;
@@ -1287,6 +1289,16 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read angle_to_add in teleop_joystick_comp");
 	}
 
+	if(!n_params.getParam("cone_tolerance", config.cone_tolerance))
+	{
+		ROS_ERROR("Could not read cone_tolerance in teleop_joystick_comp");
+	}
+
+	if(!n_params.getParam("cube_tolerance", config.cube_tolerance))
+	{
+		ROS_ERROR("Could not read cube_tolerance in teleop_joystick_comp");
+	}
+
 	ddynamic_reconfigure::DDynamicReconfigure ddr(n_params);
 
 	ddr.registerVariable<double>("joystick_deadzone", &config.joystick_deadzone, "Joystick deadzone, in percent", 0., 1.);
@@ -1307,6 +1319,8 @@ int main(int argc, char **argv)
 	ddr.registerVariable<double>("max_rot_elevator_extended", &config.max_rot_elevator_extended, "Max angular speed in elevator extended mode", 0., 1.);
 	ddr.registerVariable<double>("rotation_epsilon", &config.rotation_epsilon, "rotation_epsilon", 0.0, 1.0);
 	ddr.registerVariable<double>("angle_to_add", &config.angle_to_add, "angle_to_add", 0.0, 10);
+	ddr.registerVariable<double>("cone_tolerance", &config.cone_tolerance, "cone_tolerance", 0.0, 0.5);
+	ddr.registerVariable<double>("cube_tolerance", &config.cube_tolerance, "cube_tolerance", 0.0, 0.5);
 
 	ddr.publishServicesTopics();
 

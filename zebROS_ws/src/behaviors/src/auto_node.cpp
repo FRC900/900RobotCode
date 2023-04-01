@@ -805,6 +805,8 @@ class AutoNode {
 			return false;
 		}
 
+		goal.no_drive_back = true;
+
 		if (requested_game_piece != 255) {
 			goal.override_game_piece = true;
 			goal.piece = requested_game_piece;

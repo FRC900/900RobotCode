@@ -81,12 +81,13 @@ public:
     as_.setAborted(result_);
   }
 
-  void place(uint8_t node, uint8_t game_piece) {
+  void place(uint8_t node, uint8_t game_piece, bool no_drive_back = false) {
     behavior_actions::Placing2023Goal goal;
     goal.node = node;
     goal.piece = game_piece;
     goal.override_game_piece = true;
     goal.step = moved_ ? goal.PLACE_RETRACT : goal.MOVE;
+    goal.no_drive_back = no_drive_back;
     placing_ac.sendGoal(goal);
     moved_ = !moved_;
   }
@@ -133,7 +134,7 @@ public:
         if (current_error_ <= goal->tolerance_for_extend && !started_moving_elevator) {
             ROS_WARN_STREAM("******************************* Sending elevator!");
             started_moving_elevator = true;
-            place(node, game_piece);
+            place(node, game_piece, goal->no_drive_back);
         }
         r.sleep();
     }
@@ -176,7 +177,7 @@ public:
         }
       }
       ROS_INFO_STREAM("Full auto placing");
-      place(node, game_piece);
+      place(node, game_piece, goal->no_drive_back);
     }
     else {
         ROS_INFO_STREAM("Finished aligned to goal");

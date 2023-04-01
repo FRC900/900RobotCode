@@ -331,7 +331,7 @@ int main(int argc, char **argv) {
             }
 
             if (colour_client.call(colour_req)) {
-                ROS_INFO_STREAM("Updated LEDs");
+                ROS_INFO_STREAM("Updated LEDs, R=" << std::to_string(colour_req.request.red) << " G=" << std::to_string(colour_req.request.green) << " B=" << std::to_string(colour_req.request.blue));
                 ctx.updated = false;
             } else {
                 ROS_ERROR_STREAM("Failed to update LEDs");

@@ -42,6 +42,9 @@ while True and not rospy.is_shutdown():
     msg = bindKey(key, 'g', "gridSelectCube", msg)
     msg = bindKey(key, 'h', "gridSelectConeRight", msg)
 
+    msg = bindKey(key, 'z', "topMiddleCone", msg)
+    msg = bindKey(key, 'x', "topRightCube", msg)
+
     msg.lockingSwitchButton = True
     
     if key == ord('q'):
