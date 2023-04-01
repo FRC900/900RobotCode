@@ -96,6 +96,7 @@ struct NodeCTX {
     void button_box_callback(const frc_msgs::ButtonBoxState2023& msg) {
         if (msg.topMiddleConePress) {
             this->cone_button_pressed = !this->cone_button_pressed;
+            ROS_INFO_STREAM("candle node : cone toggle");
             if (this->cone_button_pressed) {
                 this->cube_button_pressed = false;
             }
@@ -103,6 +104,7 @@ struct NodeCTX {
         }
         if (msg.topRightCubePress) {
             this->cube_button_pressed = !this->cube_button_pressed;
+            ROS_INFO_STREAM("candle node : cube toggle");
             if (this->cube_button_pressed) {
                 this->cone_button_pressed = false;
             }
@@ -163,7 +165,7 @@ int main(int argc, char **argv) {
     node.param<double>("/intaking/current_threshold", ctx.intake_current_threshold_, 100.0);
 
     // Team colour subscriber/callback
-    ros::Subscriber button_box_subscriber = node.subscribe("/frcrobot_rio/button_box_states", 1, &NodeCTX::button_box_callback, &ctx);
+    ros::Subscriber button_box_subscriber = node.subscribe("/frcrobot_rio/button_box_states", 25, &NodeCTX::button_box_callback, &ctx);
     ros::Subscriber auto_mode_subscriber = node.subscribe("/auto/auto_mode", 1, &NodeCTX::auto_mode_callback, &ctx);
     ros::Subscriber imu_subscriber = node.subscribe("/imu/zeroed_imu", 1, &NodeCTX::imu_callback, &ctx);
     ros::Subscriber talon_state_subscriber = node.subscribe("/frcrobot_jetson/talon_states", 1, &NodeCTX::talon_callback, &ctx);
@@ -201,6 +203,7 @@ int main(int argc, char **argv) {
     // ROS loop
     ros::Rate r(10);
     while (ros::ok()) {
+        ros::spinOnce();
         if (ctx.disabled && ctx.updated) {
             candle_controller_msgs::Colour colour_req;
             colour_req.request.start = 0;
@@ -342,7 +345,6 @@ int main(int argc, char **argv) {
             ctx.OVERRIDE_GREEN = false;
             ctx.updated = true;
         }
-        ros::spinOnce();
     }
     return 0;
 }

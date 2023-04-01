@@ -114,7 +114,7 @@ pick_place_cube_from_grid_1: # cable
         # - [0.0, -0.424, 0.0]
 
 pick_place_cube_from_grid_1_mirrored:
-    waypoint_actions: {intake_cube: 1, stop_intake: 6}
+    waypoint_actions: {intake_cube: 2, stop_intake: 6} # did intake at 1 but want to test path for practice match
     type: path
     goal:
       frame_id: "base_link"

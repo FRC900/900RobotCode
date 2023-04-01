@@ -83,6 +83,7 @@ ros::Publisher JoystickRobotVel;
 
 ros::ServiceClient BrakeSrv;
 ros::ServiceClient IMUZeroSrv;
+ros::ServiceClient SwerveOdomZeroSrv;
 
 ros::Publisher auto_mode_select_pub;
 
@@ -593,6 +594,9 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 		ROS_INFO_STREAM("teleop_joystick_comp_2023 : zeroing IMU to 180");
 		imu_cmd.request.angle = 180.0;
 		IMUZeroSrv.call(imu_cmd);
+		ROS_INFO_STREAM("teleop_joystick_comp_2023 : zeroing swerve odom");
+		std_srvs::Empty odom_cmd;
+		SwerveOdomZeroSrv.call(odom_cmd);
 	}
 	if(button_box.bottomRightWhiteRelease) {
 	}
@@ -1334,6 +1338,7 @@ int main(int argc, char **argv)
 	snapConeCubeSrv = n.serviceClient<teleop_joystick_control::SnapConeCube>("/snap_to_angle/snap_cone_cube", false, service_connection_header);
 	setCenterSrv = n.serviceClient<talon_swerve_drive_controller::SetXY>("/frcrobot_jetson/swerve_drive_controller/change_center_of_rotation", false, service_connection_header);	
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
+	SwerveOdomZeroSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/reset_odom", false, service_connection_header);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 	ros::Subscriber talon_states_sub = n.subscribe("/frcrobot_jetson/talon_states", 1, &talonStateCallback);
 	ros::Subscriber match_state_sub = n.subscribe("/frcrobot_rio/match_data", 1, matchStateCallback);
