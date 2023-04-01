@@ -18,7 +18,7 @@
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_left_hub", "stop_intaking", "shoot", "drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
 
-auto_mode_1: ["place_cone_high", "pick_place_cube_from_grid_1_mirrored", "align_and_place_cube_grid_2"] # cone, cube
+auto_mode_1: ["place_cone_high", "pause_tiny", "pick_place_cube_from_grid_1_mirrored", "align_and_place_cube_grid_2"] # cone, cube
 auto_mode_2: ["place_cone_high", "balance_facing_away"]
 auto_mode_3: ["place_cone_high", "drive_out_community"]
 
@@ -40,10 +40,10 @@ auto_mode_14: ["pick_place_cone_from_grid_1", "drive_into_grid", "pick_back_from
 auto_mode_15: ["pick_engage_from_grid_3"]
 
 auto_mode_16: ["pick_place_cone_from_grid_1"]
-auto_mode_17: ["pick_from_grid_3"]
+auto_mode_17: ["drive_4_meters"]
 auto_mode_18: ["pick_place_cone_from_grid_1", "drive_into_grid", "pick_from_grid_3"] # 2.5 piece auto!
 
-auto_mode_20: ["place_cone_high", "pick_place_cube_from_grid_1_mirrored", "align_and_place_cube_grid_2"] # cone, cube
+auto_mode_20: ["place_cone_high", "pause_tiny", "pick_place_cube_from_grid_1_mirrored", "align_and_place_cube_grid_2"] # cone, cube
 auto_mode_21: ["place_cone_high", "pick_place_cube_from_grid_1_mirrored", "place_cube_high", "pick_from_grid_2_mirrored"] # cone, cube, pick
 auto_mode_22: ["place_cone_high", "pick_place_cone_from_grid_1_mirrored", "place_cone_high"] # cone, cone
 auto_mode_23: ["place_cone_high", "pick_place_cone_from_grid_1_mirrored", "place_cone_high", "pick_from_grid_3_mirrored"] # cone, cone, pick
@@ -88,6 +88,12 @@ drive_1m_rotate_270:
     points:
       - [1.0, 0.0, 4.71]
 
+drive_4_meters:
+  type: path
+  goal:
+    points:
+      - [4.001, 0.001, 0.001]
+
 pick_place_cube_from_grid_1: # cable
     waypoint_actions: {intake_cube: 2, stop_intake: 6}
     type: path
@@ -108,12 +114,12 @@ pick_place_cube_from_grid_1: # cable
         # - [0.0, -0.424, 0.0]
 
 pick_place_cube_from_grid_1_mirrored:
-    waypoint_actions: {intake_cube: 2, stop_intake: 6}
+    waypoint_actions: {intake_cube: 1, stop_intake: 6}
     type: path
     goal:
       frame_id: "base_link"
       points:
-        - [-0.7, 0.23, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.58, 4.758, 3.14]
+        - [-0.7, 0.3, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.58, 4.758, 3.14]
         # - [-3.99, 0.23, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [5.87, 4.758, 0.0]
         - [-4.12, 0.37, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.608, 0.0]
         - [-4.62, 0.37, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.5, 4.608, 0.0]
@@ -121,10 +127,10 @@ pick_place_cube_from_grid_1_mirrored:
         # - [-4.12, 0.37, -3.14] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.608, 0.0]
         - [-5.52, 0.37, 3.14] # origin: [1.88, 4.989, 3.14], map-relative: [7.2, 4.608, 0.0]
         # - [-4.12, 0.37, 3.5] # origin: [1.88, 4.989, 3.14], map-relative: [6.0, 4.758, 0.0]
-        - [-4.0, 0.23, 3.14]
+        - [-4.0, 0.2, 3.14]
         # can't get the path generator to smoothly rotate the other way
         # so the y is a bit off here (should be 0.559 but I subtracted 1/2 of the robot width)
-        - [-0.5, 0.23, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.0, 4.608, 3.14]
+        - [-0.5, 0.2, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.0, 4.608, 3.14]
         # - [-0.18, 0.424, 0.0] # origin: [1.88, 4.989, 3.14], map-relative: [2.0, 3.871, 3.14]
         # - [0.0, 0.424, 0.0]
 
@@ -604,6 +610,10 @@ path_to_trench_after_drive_back:
         points:
             - [-2.3, -1.69938, 0.0]
             - [-3.5, -1.69938, 0.0]
+
+pause_tiny:
+    type: "pause"
+    duration: 0.15 #sec
 
 pause_short:
     type: "pause"

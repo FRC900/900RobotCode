@@ -11,6 +11,7 @@
 #include <talon_state_msgs/TalonState.h>
 #include <geometry_msgs/Twist.h>
 #include <std_srvs/Empty.h>
+#include <frc_msgs/MatchSpecificData.h>
 
 constexpr uint8_t MAX_LED = 34;
 constexpr uint8_t MID_START = 0;
@@ -43,6 +44,15 @@ struct NodeCTX {
         pathing{false},
         intake_idx{std::numeric_limits<size_t>::max()}
     {}
+
+    void team_colour_callback(const frc_msgs::MatchSpecificData& msg) {
+        disabled = msg.Disabled;
+        if (msg.Disabled != this->disabled) {
+            ROS_INFO_STREAM("Updating auto LEDs...");
+            disabled = msg.Disabled;
+            updated = true;
+        }
+    }
 
     void talon_callback(const talon_state_msgs::TalonState &talon_state)
 	{
@@ -84,17 +94,18 @@ struct NodeCTX {
     }
 
     void button_box_callback(const frc_msgs::ButtonBoxState2023& msg) {
-        if (msg.topMiddleConeButton && !this->cone_button_pressed) {
-            this->cone_button_pressed = true;
+        if (msg.topMiddleConePress) {
+            this->cone_button_pressed = !this->cone_button_pressed;
+            if (this->cone_button_pressed) {
+                this->cube_button_pressed = false;
+            }
             this->updated = true;
-        } else if ((msg.topMiddleConePress) && this->cone_button_pressed) {
-            this->cone_button_pressed = false;
-            this->updated = true;
-        } else if (msg.topRightCubeButton && !this->cube_button_pressed) {
-            this->cube_button_pressed = true;
-            this->updated = true;
-        } else if ((msg.topRightCubePress) && this->cube_button_pressed) {
-            this->cube_button_pressed = false;
+        }
+        if (msg.topRightCubePress) {
+            this->cube_button_pressed = !this->cube_button_pressed;
+            if (this->cube_button_pressed) {
+                this->cone_button_pressed = false;
+            }
             this->updated = true;
         }
     }
@@ -140,6 +151,7 @@ bool set_leds_green_callback(std_srvs::Empty::Request &req, std_srvs::Empty::Res
     ctx.updated = true;
     ctx.OVERRIDE_GREEN = true;
     ctx.last_green_time = ros::Time::now();
+    return true;
 }
 
 int main(int argc, char **argv) {
@@ -156,6 +168,7 @@ int main(int argc, char **argv) {
     ros::Subscriber imu_subscriber = node.subscribe("/imu/zeroed_imu", 1, &NodeCTX::imu_callback, &ctx);
     ros::Subscriber talon_state_subscriber = node.subscribe("/frcrobot_jetson/talon_states", 1, &NodeCTX::talon_callback, &ctx);
     ros::Subscriber path_follower_subscriber = node.subscribe("/path_follower/path_follower_pid/swerve_drive_controller/cmd_vel", 1, &NodeCTX::path_callback, &ctx);
+    ros::Subscriber team_colour_subscriber = node.subscribe("/frcrobot_rio/match_data", 1, &NodeCTX::team_colour_callback, &ctx);
 
     // ROS service clients (setting the CANdle)
     ros::ServiceClient colour_client = node.serviceClient<candle_controller_msgs::Colour>("/frcrobot_jetson/candle_controller/colour", false);
@@ -271,10 +284,6 @@ int main(int argc, char **argv) {
             candle_controller_msgs::Colour colour_req;
             colour_req.request.start = 0;
             colour_req.request.count = MAX_LED;
-            // shoudl already be zero but just to make sure
-            colour_req.request.red = 0;
-            colour_req.request.green = 0;
-            colour_req.request.blue = 0; 
 
             if (ctx.OVERRIDE_GREEN) {
                 colour_req.request.green = 255;

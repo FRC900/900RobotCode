@@ -110,6 +110,14 @@ uint8_t auto_starting_pos = 1; // 1 indexed
 uint8_t auto_mode = 0; // 0 indexed
 
 imu_zero::ImuZeroAngle imu_cmd;
+bool sendRobotZero = false;
+bool sendSetAngle = false;
+double old_angular_z = 0.0;
+bool use_pathing = false;
+double grid_position = 0;
+bool moved = false;
+bool pathed = false;
+bool last_no_driver_input = false;
 
 uint8_t autoMode() {
 	// if ignoring starting positions, set the same auto modes for the three listed next to the switch position
@@ -199,6 +207,8 @@ void talonStateCallback(const talon_state_msgs::TalonState talon_state)
 	{
 		elevator_height = talon_state.position[elevator_idx];
 		elevator_setpoint = talon_state.set_point[elevator_idx];
+
+		pathed = (elevator_height >= config.elevator_threshold);
 		// if we are currently above the height or want to go above the height
 		if (elevator_height > config.elevator_threshold || elevator_setpoint > config.elevator_threshold) {
 			teleop_cmd_vel->setSuperSlowMode(true);
@@ -230,13 +240,6 @@ bool orientCallback(teleop_joystick_control::RobotOrient::Request& req,
 }
 
 
-bool sendRobotZero = false;
-bool sendSetAngle = false;
-double old_angular_z = 0.0;
-bool use_pathing = false;
-double grid_position = 0;
-bool moved = false;
-bool pathed = false;
 
 void place() {
 	behavior_actions::Placing2023Goal goal;
@@ -248,6 +251,18 @@ void place() {
 	moved = !moved;
 }
 
+// start at waiting to align
+// when driver transition becomes true, and we are at waiting to align, then align
+// if aligning and you see press callback, place
+// if on placing and see a press event, go to waiting to align  
+enum AutoPlaceState {
+	WAITING_TO_ALIGN = 0,
+	ALIGNING = 1,
+	PLACING = 2,
+};
+
+AutoPlaceState auto_place_state = AutoPlaceState::WAITING_TO_ALIGN; 
+
 void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 const>& event)
 {
 	//ROS_INFO_STREAM("Button Box callback running!");
@@ -255,7 +270,13 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	button_box = *(event.getMessage());
 
 	static ros::Time last_header_stamp = button_box.header.stamp;
-
+	
+	bool driver_input_changed = false;
+	if (last_no_driver_input != no_driver_input && no_driver_input == true) {
+		driver_input_changed = true; 
+	}
+	ROS_INFO_STREAM_THROTTLE(1, "Auto place state = " << std::to_string(auto_place_state));
+	
 	if(button_box.lockingSwitchPress)
 	{
 	}
@@ -330,27 +351,44 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.topRightCubeRelease) {
 	}
 
-	if(button_box.gridSelectConeLeftButton && no_driver_input && !pathed) {
+	if(button_box.gridSelectConeLeftButton && driver_input_changed && auto_place_state == AutoPlaceState::WAITING_TO_ALIGN && use_pathing) {
 		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE;
-		if (use_pathing && !pathed) {
-			behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
-			align_goal.alliance = alliance_color;
-			moved = true;
-			pathed = true;
-			align_goal.tolerance = 0.05;
-			align_goal.tolerance_for_extend = 0.25;
-			align_goal.auto_place = false;
-			align_goal.grid_id = 1 + grid_position;
-			ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
-			align_goal.node = node;
-			align_goal.piece = game_piece;
-			align_goal.override_game_piece = false;
-			align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
-			align_and_place_ac->sendGoal(align_goal);
-		}
+		behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
+		align_goal.alliance = alliance_color;
+		moved = true;
+		pathed = true;
+		align_goal.tolerance = 0.05;
+		align_goal.tolerance_for_extend = 0.25;
+		align_goal.auto_place = false;
+		align_goal.grid_id = 1 + grid_position;
+		ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
+		align_goal.node = node;
+		align_goal.piece = game_piece;
+		align_goal.override_game_piece = false;
+		align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
+		align_and_place_ac->sendGoal(align_goal);
+		auto_place_state = AutoPlaceState::ALIGNING; 
+		ROS_INFO_STREAM("AutoPlaceState == ALIGNING");
 	}
-	if(button_box.gridSelectConeLeftPress) {
-		if (pathed || moved || !use_pathing) {
+	if(button_box.gridSelectConeLeftPress || button_box.gridSelectConeRightPress) {
+		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE;
+		last_no_driver_input = false;
+		if (use_pathing) {
+			if (auto_place_state == AutoPlaceState::PLACING) {
+				auto_place_state = AutoPlaceState::WAITING_TO_ALIGN;
+				ROS_INFO_STREAM("Auto place state == WAITING_TO_ALIGN"); 
+			}
+			else if (auto_place_state == AutoPlaceState::ALIGNING && elevator_height > config.elevator_threshold) {
+				place();
+				auto_place_state = AutoPlaceState::PLACING;
+				ROS_INFO_STREAM("Auto place state == PLACING"); 
+			}
+			else if (elevator_height <= config.elevator_threshold && auto_place_state == AutoPlaceState::ALIGNING) {
+				auto_place_state = AutoPlaceState::WAITING_TO_ALIGN;
+				ROS_INFO_STREAM("AutoPlaceState set back to waiting to align ");
+			}
+		}
+		if (!use_pathing) {
 			ROS_INFO_STREAM("Placing a cone!");
 			place();
 			pathed = false;
@@ -359,61 +397,66 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.gridSelectConeLeftRelease) {
 	}
 
-	if(button_box.gridSelectCubeButton && no_driver_input && !pathed) {
+	if(button_box.gridSelectCubeButton && driver_input_changed && auto_place_state == AutoPlaceState::WAITING_TO_ALIGN && use_pathing) {
 		game_piece = behavior_actions::Placing2023Goal::CUBE;
-		if (use_pathing && !pathed) {
-			behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
-			align_goal.alliance = alliance_color;
-			moved = true;
-			align_goal.tolerance = 0.05;
-			align_goal.tolerance_for_extend = 0.25;
-			align_goal.auto_place = true;
-			align_goal.grid_id = 2 + grid_position;
-			ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
-			align_goal.node = node;
-			align_goal.piece = game_piece;
-			align_goal.override_game_piece = false;
-			align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
-			align_and_place_ac->sendGoal(align_goal);
-		}
+		behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
+		align_goal.alliance = alliance_color;
+		moved = true;
+		pathed = true;
+		align_goal.tolerance = 0.05;
+		align_goal.tolerance_for_extend = 0.25;
+		align_goal.auto_place = true;
+		align_goal.grid_id = 2 + grid_position;
+		ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
+		align_goal.node = node;
+		align_goal.piece = game_piece;
+		align_goal.override_game_piece = false;
+		align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
+		align_and_place_ac->sendGoal(align_goal);
+		auto_place_state = AutoPlaceState::PLACING;
+		ROS_INFO_STREAM("Auto Place STATE == PLACING");
 	}
 	if(button_box.gridSelectCubePress) {
-		if (pathed || moved || !use_pathing) {
+		last_no_driver_input = false;
+		if (use_pathing) {
+			if (auto_place_state == AutoPlaceState::PLACING) {
+				auto_place_state = AutoPlaceState::WAITING_TO_ALIGN;
+				ROS_INFO_STREAM("Auto place state == WAITING_TO_ALIGN"); 
+			}
+			else if (elevator_height <= config.elevator_threshold && auto_place_state == AutoPlaceState::ALIGNING) {
+				auto_place_state = AutoPlaceState::WAITING_TO_ALIGN;
+				ROS_INFO_STREAM("AutoPlaceState set back to waiting to align");
+			}
+		}
+		if (!use_pathing) {
 			ROS_INFO_STREAM("Placing a cube!");
 			place();
-			pathed = false;
 		}
 	}
 	if(button_box.gridSelectCubeRelease) {
 	}
 
-	if(button_box.gridSelectConeRightButton && no_driver_input && !pathed) {
+	if(button_box.gridSelectConeRightButton && driver_input_changed && auto_place_state == AutoPlaceState::WAITING_TO_ALIGN && use_pathing) {
 		game_piece = behavior_actions::Placing2023Goal::VERTICAL_CONE; // type doesn't matter for placing
-		if (use_pathing && !pathed) {
-			behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
-			align_goal.alliance = alliance_color;
-			moved = true;
-			pathed = true;
-			align_goal.tolerance = 0.05;
-			align_goal.tolerance_for_extend = 0.25;
-			align_goal.auto_place = false;
-			align_goal.grid_id = 3 + grid_position;
-			ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
-			align_goal.node = node;
-			align_goal.piece = game_piece;
-			align_goal.override_game_piece = false;
-			align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
-			align_and_place_ac->sendGoal(align_goal);
-
-		}	
+		behavior_actions::AlignAndPlaceGrid2023Goal align_goal;
+		align_goal.alliance = alliance_color;
+		moved = true;
+		pathed = true;
+		align_goal.tolerance = 0.05;
+		align_goal.tolerance_for_extend = 0.25;
+		align_goal.auto_place = false;
+		align_goal.grid_id = 3 + grid_position;
+		ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
+		align_goal.node = node;
+		align_goal.piece = game_piece;
+		align_goal.override_game_piece = false;
+		align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
+		align_and_place_ac->sendGoal(align_goal);
+		auto_place_state = AutoPlaceState::ALIGNING; 
+		ROS_INFO_STREAM("AutoPlaceState == ALIGNING");
 	}
 	if(button_box.gridSelectConeRightPress) {
-		if (pathed || moved || !use_pathing) {
-			ROS_INFO_STREAM("Placing a cone!");
-			place();
-			pathed = false;
-		}
-		// slow mode
+		// already handled above
 	}
 	if(button_box.gridSelectConeRightRelease) {
 	}

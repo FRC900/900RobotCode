@@ -14,9 +14,11 @@ if received_key == ord('{key}'):
         msg.{field}Button = True
     else:
         msg.{field}Press = True
+        print(f"{field}")
 else:
     if prev_msg.{field}Button:
         msg.{field}Release = True""")
+    
     return msg
 
 rospy.init_node("pubthingy", anonymous=True)
@@ -29,7 +31,7 @@ up_down_mid = "Up"
 last_left_right_mid = "Left"
 left_right_mid = "Left"
 
-while True:
+while True and not rospy.is_shutdown():
     cv2.imshow("button box sim", blank_image)
     key = cv2.waitKey(1000)
 
@@ -39,6 +41,8 @@ while True:
     print(up_down_mid, left_right_mid)
     msg = bindKey(key, 'g', "gridSelectCube", msg)
     msg = bindKey(key, 'h', "gridSelectConeRight", msg)
+
+    msg.lockingSwitchButton = True
     
     if key == ord('q'):
         up_down_mid = "Up"

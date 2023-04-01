@@ -88,7 +88,7 @@ def main():
             parsed = parse_serial_msg(byteData)
             if parsed == None:
                 crc_error_count += 1
-                rospy.logwarn_throttle(0.1, "intake_reader_2023: CRC error")
+                rospy.logwarn_throttle(1, "intake_reader_2023: CRC error")
                 continue
             else:
                 crc_error_count = 0

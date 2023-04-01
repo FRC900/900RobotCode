@@ -19,6 +19,8 @@ uint8 PLACE_RETRACT=2 # outtakes and then retracts fourbar/elevator
 uint8 step
 
 bool from_Trex # if we are in the safe position for placing
+
+bool no_drive_back # set this to true to not drive back
 ---
 # result
 bool success

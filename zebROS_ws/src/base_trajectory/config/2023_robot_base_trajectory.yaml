@@ -52,10 +52,10 @@ path_distance_limit: 0.05
 max_vel: 2.0
 
 # Maximum robot linear acceleration (meters/sec^2)
-max_linear_acc: 8.0 # SPEEEEED
+max_linear_acc: 3.0
 
 # Maximum robot linear deceleration (meters/sec^2)
-max_linear_dec: 3.0 # SPEEEEED
+max_linear_dec: 3.0
 
 # max centrepital acceleration (meters/sec^2)
 max_cent_acc: 4.0

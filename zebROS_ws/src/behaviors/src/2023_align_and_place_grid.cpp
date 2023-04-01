@@ -35,7 +35,7 @@ protected:
   double xOffset_;
   double holdPosTimeout_;
   double latest_yaw_;
-  double current_error_{};
+  double current_error_{900};
   double desired_current_error_;
   bool started_moving_elevator_;
   bool moved_ = false;
@@ -102,6 +102,7 @@ public:
 
   void executeCB(const behavior_actions::AlignAndPlaceGrid2023GoalConstPtr &goal)
   {
+    current_error_ = 900;
     if (!align_to_goal_ac.isServerConnected()) {
       ROS_ERROR_STREAM("2023_align_and_place_grid : align to grid server not running!!! this is unlikely to work");
     }
@@ -137,6 +138,12 @@ public:
         r.sleep();
     }
     
+    if (!(align_to_goal_ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)) {
+      ROS_ERROR_STREAM("Align to goal failed, exiting align and place grid!");
+      result_.success = false;
+      as_.setAborted(result_);
+      return;
+    }
     path_finished_time = ros::Time::now();
     std_msgs::Float64 msg;
     msg.data = M_PI;

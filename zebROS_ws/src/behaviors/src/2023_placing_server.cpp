@@ -7,6 +7,21 @@
 #include <behavior_actions/GamePieceState2023.h>
 #include <path_follower_msgs/holdPositionAction.h>
 #include <talon_state_msgs/TalonState.h>
+#include <std_msgs/Float64.h>
+#include <sensor_msgs/Imu.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <geometry_msgs/Twist.h>
+#include <angles/angles.h>
+
+double getYaw(const geometry_msgs::Quaternion &o) {
+    tf2::Quaternion q;
+    tf2::fromMsg(o, q);
+    tf2::Matrix3x3 m(q);
+    double r, p, y;
+    m.getRPY(r, p, y);
+    return y;
+}
 
 class PlacingServer2023
 {
@@ -40,6 +55,13 @@ protected:
 	double elevator_position_;
 	ros::Subscriber talon_states_sub_;
 
+	double imu_tolerance_;
+	ros::Subscriber imu_sub_;
+	double latest_yaw_;
+
+	double drive_back_time_;
+	ros::Publisher cmd_vel_pub_;
+
 public:
 
 	PlacingServer2023(std::string name) :
@@ -47,7 +69,8 @@ public:
 		action_name_(name),
 		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true),
    		ac_intaking_("/intaking/intaking_server_2023", true),
-		ac_hold_position_("/hold_position/hold_position_server", true)
+		ac_hold_position_("/hold_position/hold_position_server", true),
+		cmd_vel_pub_(nh_.advertise<geometry_msgs::Twist>("/placing/cmd_vel", 1))
 	{
 		elevator_idx_ = std::numeric_limits<size_t>::max();
 		if (!nh_.getParam("time_before_reverse", time_before_reverse_)) {
@@ -75,13 +98,26 @@ public:
 			ROS_WARN_STREAM("2023_placing_server : could not find elevator_threshold, defaulting to 0.25");
 			elevator_threshold_ = 0.25;
 		}
+		if (!nh_.getParam("imu_tolerance", imu_tolerance_)) {
+			ROS_WARN_STREAM("2023_placing_server : could not find imu_tolerance, defaulting to 0.1 radians (~6 degrees)");
+			imu_tolerance_ = 0.1;
+		}
+		if (!nh_.getParam("drive_back_time", drive_back_time_)) {
+			ROS_WARN_STREAM("2023_placing_server : could not find imu_tolerance, defaulting to 0.5 seconds");
+			drive_back_time_ = 0.5;
+		}
 		game_piece_sub_ = nh_.subscribe("/game_piece/game_piece_state", 1, &PlacingServer2023::gamePieceCallback, this);
 		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &PlacingServer2023::talonStateCallback, this);
+		imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/zeroed_imu", 1, &PlacingServer2023::imuCb, this);
 		as_.start();
 	}
 
 	~PlacingServer2023(void)
 	{
+	}
+
+	void imuCb(const sensor_msgs::ImuConstPtr &msg) {
+		latest_yaw_ = getYaw(msg->orientation);
 	}
 
 	template<class C, class S>
@@ -289,6 +325,12 @@ public:
 			result_.success = true;
 			as_.setSucceeded(result_);
 		} else {
+			if (angles::shortest_angular_distance(latest_yaw_, M_PI) > imu_tolerance_) {
+				ROS_ERROR_STREAM("2023_placing_server : IMU too far away (" << latest_yaw_ << "rad) from pi radians! Exiting!");
+				result_.success = false;
+				as_.setAborted(result_);
+				return;
+			}
 			if (!(goal->override_game_piece)) {
 				if (ros::Time::now() - latest_game_piece_time_ > ros::Duration(game_piece_timeout_)) {
 					ROS_ERROR_STREAM("2023_placing_server : game piece data too old, aborting");
@@ -316,9 +358,35 @@ public:
 			}
 
 			ros::Duration(time_before_reverse_).sleep();
+			ros::Rate r(50);
+			ros::Time move_back_time = ros::Time::now();
+
+			if (!goal->no_drive_back) {
+				while ((ros::Time::now() - move_back_time) < ros::Duration(drive_back_time_)) {
+					ros::spinOnce();
+					ROS_INFO_STREAM_THROTTLE(0.1, "2023_placing_server : driving backwards");
+					geometry_msgs::Twist cmd_vel;
+					cmd_vel.linear.x = -0.5; // green button states
+					cmd_vel.linear.y = 0.0;
+					cmd_vel.linear.z = 0.0;
+					cmd_vel.angular.x = 0.0;
+					cmd_vel.angular.y = 0.0;
+					cmd_vel.angular.z = 0.0;
+					cmd_vel_pub_.publish(cmd_vel);
+					r.sleep();
+				}
+				geometry_msgs::Twist cmd_vel;
+				cmd_vel.linear.x = 0.0; 
+				cmd_vel.linear.y = 0.0;
+				cmd_vel.linear.z = 0.0;
+				cmd_vel.angular.x = 0.0;
+				cmd_vel.angular.y = 0.0;
+				cmd_vel.angular.z = 0.0;
+				cmd_vel_pub_.publish(cmd_vel);
+			}
 
 			ROS_INFO_STREAM("2023_placing_server : reversing path!");
-
+			
 			pathGoal.path = pathForGamePiece(game_piece, goal->node) + "_reverse";
 			pathGoal.reverse = false;
 			

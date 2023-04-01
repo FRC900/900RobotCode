@@ -79,7 +79,7 @@ intake_leader_controller:
     dynamic_reconfigure: False
     voltage_compensation_Enable: True
     voltage_compensation_saturation: 12
-    neutral_mode: Brake
+    neutral_mode: Coast
     #status_1_general_period: 100 # Default = 10
     #status_2_feedback0_period: 100 # Default = 20
     status_3_quadrature_period: 250
