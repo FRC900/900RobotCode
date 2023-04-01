@@ -407,7 +407,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 		moved = true;
 		pathed = true;
 		align_goal.tolerance = config.cube_tolerance;
-		align_goal.tolerance_for_extend = 0.25;
+		align_goal.tolerance_for_extend = 2.0;
 		align_goal.auto_place = true;
 		align_goal.grid_id = 2 + grid_position;
 		ROS_INFO_STREAM("Sending align to goal with id " << std::to_string(align_goal.grid_id));
