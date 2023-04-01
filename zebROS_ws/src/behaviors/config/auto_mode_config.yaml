@@ -19,7 +19,7 @@
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
 
 auto_mode_1: ["place_cone_high", "pause_tiny", "pick_place_cube_from_grid_1_mirrored", "align_and_place_cube_grid_2"] # cone, cube
-auto_mode_2: ["place_cone_high", "balance_facing_away"]
+auto_mode_2: ["place_cone_high", "drive_across_charge_station", "balance_facing_towards"]
 auto_mode_3: ["place_cone_high", "drive_out_community"]
 
 auto_mode_4: ["drive_out_community"]
@@ -49,7 +49,8 @@ auto_mode_22: ["place_cone_high", "pick_place_cone_from_grid_1_mirrored", "place
 auto_mode_23: ["place_cone_high", "pick_place_cone_from_grid_1_mirrored", "place_cone_high", "pick_from_grid_3_mirrored"] # cone, cone, pick
 
 auto_mode_24: ["place_cone_high", "pick_place_cube_from_grid_1_mirrored_no_rotation", "pause_0_25", "align_and_place_cube_grid_2", "place_cube_high"]
-
+auto_mode_25: ["place_cone_high", "drive_across_charge_station", "balance_facing_towards"]
+auto_mode_26: ["drive_across_charge_station"]
 # Examples3
 #auto_mode_1: ["tuning"]
 #auto_mode_2: ["map_relative_barrel_racing_path"]
@@ -69,6 +70,14 @@ auto_mode_24: ["place_cone_high", "pick_place_cube_from_grid_1_mirrored_no_rotat
 # must have a value for "type", other stuff varies
 #valid action types: "intake_actionlib_server", "pause", "elevator_actionlib_server"
 ros_rate: 10 # in ms, used for all ros rate calls
+
+drive_across_charge_station:
+    type: cmd_vel
+    duration: 4.25
+    cmd_vel:
+        x: -1.0
+        y: 0.0 
+        z: 0.0
 
 drive_2m_rotate_90l:
   type: path
