@@ -38,7 +38,7 @@ for topic, msg, t in bag.read_messages([top, match, place, out]):
         last_match_time = m["matchTimeRemaining"]
         auto = m["Autonomous"]
     elif topic == out:
-        if "Sending align to goal" in m["msg"] or "AutoPlaceState" in m["msg"]:
+        if "Sending align to goal" in m["msg"] or "AutoPlaceState" in m["msg"] or "IMU too far" in m["msg"]:
             print(f'{m["msg"]} at {t.to_sec()} = {last_match_time}. auto = {auto}')
     else:
         print(f"Auto place at {t.to_sec()} = {last_match_time}. auto = {auto}")

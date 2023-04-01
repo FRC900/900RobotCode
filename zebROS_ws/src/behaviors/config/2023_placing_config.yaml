@@ -3,3 +3,4 @@ server_timeout: 10.0
 game_piece_timeout: 1.0
 outtake_cone_time: 0.8
 outtake_cube_time: 0.08
+imu_tolerance: 0.2 # ~11.5 degrees
