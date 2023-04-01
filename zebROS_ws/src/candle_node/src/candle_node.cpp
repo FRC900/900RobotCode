@@ -290,15 +290,6 @@ int main(int argc, char **argv) {
 
             if (ctx.OVERRIDE_GREEN) {
                 colour_req.request.green = 255;
-            }
-            else if (ctx.cone_button_pressed) {
-                // Yellow colour
-                colour_req.request.red = 255;
-                colour_req.request.green = 150;
-            } else if (ctx.cube_button_pressed) {
-                // Purple colour
-                colour_req.request.red = 150;
-                colour_req.request.blue = 255;
             } else if (ctx.current_exceeded_) {
                 ros::Duration(0.1).sleep();
                 colour_req.request.green = 255;
@@ -310,6 +301,14 @@ int main(int argc, char **argv) {
                 }
                 ros::Duration(1.0).sleep();
                 colour_req.request.green = 0;
+            } else if (ctx.cone_button_pressed) {
+                // Yellow colour
+                colour_req.request.red = 255;
+                colour_req.request.green = 150;
+            } else if (ctx.cube_button_pressed) {
+                // Purple colour
+                colour_req.request.red = 150;
+                colour_req.request.blue = 255;
             } else if (ctx.pathing) {
                 if (colour_client.call(colour_req)) {
                     ROS_INFO_STREAM("Updated LEDs");
