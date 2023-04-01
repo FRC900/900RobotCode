@@ -13,6 +13,6 @@ cone_outtake_speed: 1.0 # was 0.8
 cube_outtake_speed: 0.2
 intake_medium_time: 1.0
 intake_medium_speed: 0.2
-intake_small_speed: 0.09
+intake_small_speed: 0.11
 
 dynamic_reconfigure: true
