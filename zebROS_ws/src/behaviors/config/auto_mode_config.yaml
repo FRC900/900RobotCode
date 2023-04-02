@@ -73,7 +73,7 @@ ros_rate: 10 # in ms, used for all ros rate calls
 
 drive_across_charge_station:
     type: cmd_vel
-    duration: 4.25
+    duration: 4.5
     cmd_vel:
         x: -1.0
         y: 0.0 
