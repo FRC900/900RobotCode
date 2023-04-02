@@ -5,6 +5,7 @@
 #include "controllers_2023_msgs/FourBarSrv.h"
 #include "controllers_2023/interpolating_map.h"
 #include "ddynamic_reconfigure/ddynamic_reconfigure.h"
+#include <std_srvs/Empty.h>
 
 namespace four_bar_controller_2023
 {
@@ -53,8 +54,12 @@ class FourBarController_2023 : public controller_interface::MultiInterfaceContro
 
         std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
 
+        ros::ServiceServer rezero_service_;
+
         bool cmdService(controllers_2023_msgs::FourBarSrv::Request &req,
                         controllers_2023_msgs::FourBarSrv::Response &res);
+
+        bool rezeroService(std_srvs::Empty::Request  &req, std_srvs::Empty::Response &/*response*/);
 
 }; //class
 
@@ -251,6 +256,7 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     }
 
     four_bar_service_ = controller_nh.advertiseService("four_bar_service", &FourBarController_2023::cmdService, this);
+    rezero_service_ = controller_nh.advertiseService("rezero_service", &FourBarController_2023::rezeroService, this);
 
     return true;
 }
@@ -356,6 +362,14 @@ bool FourBarController_2023::cmdService(controllers_2023_msgs::FourBarSrv::Reque
         ROS_ERROR_STREAM("Can't accept new commands. FourBarController_2023 is not running.");
         return false;
     }
+    return true;
+}
+
+bool FourBarController_2023::rezeroService(std_srvs::Empty::Request  &req,
+                                           std_srvs::Empty::Response &/*response*/)
+{
+    zeroed_ = false;
+    last_time_down_ = ros::Time::now();
     return true;
 }
 

@@ -84,6 +84,7 @@ ros::Publisher JoystickRobotVel;
 ros::ServiceClient BrakeSrv;
 ros::ServiceClient IMUZeroSrv;
 ros::ServiceClient SwerveOdomZeroSrv;
+ros::ServiceClient FourbarRezeroSrv;
 
 ros::Publisher auto_mode_select_pub;
 
@@ -332,10 +333,9 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.topLeftConeButton) {
 	}
 	if(button_box.topLeftConePress) {
-		// ROS_WARN_STREAM("teleop : unflipping outtake! really hope you're actually flipped!");
-		// behavior_actions::Intaking2023Goal goal;
-		// goal.unflip_fourbar =  true;
-		// intaking_ac->sendGoal(goal);
+		ROS_INFO_STREAM("teleop : rezero fourbar!");
+		std_srvs::Empty rezero_cmd;
+		FourbarRezeroSrv.call(rezero_cmd);
 	}
 	if(button_box.topLeftConeRelease) {
 	}
@@ -1343,6 +1343,7 @@ int main(int argc, char **argv)
 	setCenterSrv = n.serviceClient<talon_swerve_drive_controller::SetXY>("/frcrobot_jetson/swerve_drive_controller/change_center_of_rotation", false, service_connection_header);	
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	SwerveOdomZeroSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/reset_odom", false, service_connection_header);
+	FourbarRezeroSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/four_bar_controller_2023/rezero_service", false, service_connection_header);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
 	ros::Subscriber talon_states_sub = n.subscribe("/frcrobot_jetson/talon_states", 1, &talonStateCallback);
 	ros::Subscriber match_state_sub = n.subscribe("/frcrobot_rio/match_data", 1, matchStateCallback);
