@@ -332,10 +332,10 @@ public:
 
   int getAllianceRelativeStationNumber(int alliance, int gridStation) {
     // 0 = red alliance, 1 = blue
-    if (alliance == 1) {
+    // if (alliance == 1) {
       return (8-(gridStation-1))+1;
-    }
-    return gridStation;
+    // }
+    // return gridStation;
   }
 
   void executeCB(const behavior_actions::AlignToGridPID2023GoalConstPtr &goal)
