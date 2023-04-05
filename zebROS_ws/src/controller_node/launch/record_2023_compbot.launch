@@ -5,6 +5,7 @@
   <node name="rosbag_record_node" pkg="rosbag" type="record"
 	  launch-prefix="nice"
 	  args="record -o /home/ubuntu/bagfiles/
+		/align/cmd_vel
 		/align_and_place_grid/cancel
         /align_and_place_grid/feedback
         /align_and_place_grid/goal
@@ -15,6 +16,25 @@
         /align_to_grid/goal
         /align_to_grid/result
         /align_to_grid/status
+		/align_to_grid_closed_loop/align_to_grid_closed_loop/cancel
+		/align_to_grid_closed_loop/align_to_grid_closed_loop/feedback
+		/align_to_grid_closed_loop/align_to_grid_closed_loop/goal
+		/align_to_grid_closed_loop/align_to_grid_closed_loop/result
+		/align_to_grid_closed_loop/align_to_grid_closed_loop/status
+		/align_to_grid_closed_loop/x_position_pid/parameter_descriptions
+		/align_to_grid_closed_loop/x_position_pid/parameter_updates
+		/align_to_grid_closed_loop/x_position_pid/pid_debug
+		/align_to_grid_closed_loop/x_position_pid/pid_enable
+		/align_to_grid_closed_loop/x_position_pid/x_cmd_pub
+		/align_to_grid_closed_loop/x_position_pid/x_command
+		/align_to_grid_closed_loop/x_position_pid/x_state_pub
+		/align_to_grid_closed_loop/y_position_pid/parameter_descriptions
+		/align_to_grid_closed_loop/y_position_pid/parameter_updates
+		/align_to_grid_closed_loop/y_position_pid/pid_debug
+		/align_to_grid_closed_loop/y_position_pid/pid_enable
+		/align_to_grid_closed_loop/y_position_pid/y_cmd_pub
+		/align_to_grid_closed_loop/y_position_pid/y_command
+		/align_to_grid_closed_loop/y_position_pid/y_state_pub
 		/auto/auto_mode
 		/auto/auto_state
 		/auto/cmd_vel
@@ -63,6 +83,12 @@
         /frcrobot_jetson/cpu_monitor/align_and_place_grid/mem
         /frcrobot_jetson/cpu_monitor/align_to_grid_2023/cpu
         /frcrobot_jetson/cpu_monitor/align_to_grid_2023/mem
+		/frcrobot_jetson/cpu_monitor/align_to_grid_closed_loop/align_to_grid_closed_loop_2023/cpu
+		/frcrobot_jetson/cpu_monitor/align_to_grid_closed_loop/align_to_grid_closed_loop_2023/mem
+		/frcrobot_jetson/cpu_monitor/align_to_grid_closed_loop/x_position_pid/cpu
+		/frcrobot_jetson/cpu_monitor/align_to_grid_closed_loop/x_position_pid/mem
+		/frcrobot_jetson/cpu_monitor/align_to_grid_closed_loop/y_position_pid/cpu
+		/frcrobot_jetson/cpu_monitor/align_to_grid_closed_loop/y_position_pid/mem
         /frcrobot_jetson/cpu_monitor/apriltag_ros_continuous_node/cpu
         /frcrobot_jetson/cpu_monitor/apriltag_ros_continuous_node/mem
 		/frcrobot_jetson/cpu_monitor/auto/auto_node/cpu
@@ -265,12 +291,29 @@
 		/hold_distance/y_position_pid/y_cmd_pub
 		/hold_distance/y_position_pid/y_command
 		/hold_distance/y_position_pid/y_state_pub
+		/hold_position/hold_position_pid/pid_enable
 		/hold_position/hold_position_pid/swerve_drive_controller/cmd_vel
 		/hold_position/hold_position_server/cancel
 		/hold_position/hold_position_server/feedback
 		/hold_position/hold_position_server/goal
+		/hold_position/hold_position_server/parameter_descriptions
+		/hold_position/hold_position_server/parameter_updates
 		/hold_position/hold_position_server/result
 		/hold_position/hold_position_server/status
+		/hold_position/x_position_pid/parameter_descriptions
+		/hold_position/x_position_pid/parameter_updates
+		/hold_position/x_position_pid/pid_debug
+		/hold_position/x_position_pid/pid_enable
+		/hold_position/x_position_pid/x_cmd_pub
+		/hold_position/x_position_pid/x_command
+		/hold_position/x_position_pid/x_state_pub
+		/hold_position/y_position_pid/parameter_descriptions
+		/hold_position/y_position_pid/parameter_updates
+		/hold_position/y_position_pid/pid_debug
+		/hold_position/y_position_pid/pid_enable
+		/hold_position/y_position_pid/y_cmd_pub
+		/hold_position/y_position_pid/y_command
+		/hold_position/y_position_pid/y_state_pub
 		/imu/zeroed_imu
 		/intake/intake_server_2023/cancel
 		/intake/intake_server_2023/feedback
@@ -285,11 +328,6 @@
 		/intaking/intaking_server_2023/parameter_updates
 		/intaking/intaking_server_2023/result
 		/intaking/intaking_server_2023/status
-		/intaking2022/intaking2022_server/cancel
-		/intaking2022/intaking2022_server/feedback
-		/intaking2022/intaking2022_server/goal
-		/intaking2022/intaking2022_server/result
-		/intaking2022/intaking2022_server/status
 		/joint_states
 		/path_follower/base_trajectory_node/parameter_descriptions
         /path_follower/base_trajectory_node/parameter_updates
@@ -332,11 +370,6 @@
 		/robot_state/joint_states
 		/rosout
 		/rosout_agg
-		/shooting2022/shooting2022_server/cancel
-		/shooting2022/shooting2022_server/feedback
-		/shooting2022/shooting2022_server/goal
-		/shooting2022/shooting2022_server/result
-		/shooting2022/shooting2022_server/status
 		/snap_to_angle/nearest_cone_angle
 		/snap_to_angle/nearest_cube_angle
 		/snap_to_angle/snap_to_conecube_node_2023/parameter_descriptions
@@ -363,6 +396,7 @@
 		/tf
 		/tf_object_detection/obj_detection_msg
 		/tf_object_detection/object_detection_world
+		/tf_object_detection/object_detection_world_filtered
 		/tf_object_detection/tag_detection_msg
         /tf_object_detection/tag_detection_world
 		/tf_static

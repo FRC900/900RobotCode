@@ -5,6 +5,36 @@
   <node name="rosbag_record_node" pkg="rosbag" type="record"
 	  launch-prefix="nice"
 	  args="record -o /home/ubuntu/bagfiles/
+		/align/cmd_vel
+		/align_and_place_grid/cancel
+        /align_and_place_grid/feedback
+        /align_and_place_grid/goal
+        /align_and_place_grid/result
+        /align_and_place_grid/status
+        /align_to_grid/cancel
+        /align_to_grid/feedback
+        /align_to_grid/goal
+        /align_to_grid/result
+        /align_to_grid/status
+		/align_to_grid_closed_loop/align_to_grid_closed_loop/cancel
+		/align_to_grid_closed_loop/align_to_grid_closed_loop/feedback
+		/align_to_grid_closed_loop/align_to_grid_closed_loop/goal
+		/align_to_grid_closed_loop/align_to_grid_closed_loop/result
+		/align_to_grid_closed_loop/align_to_grid_closed_loop/status
+		/align_to_grid_closed_loop/x_position_pid/parameter_descriptions
+		/align_to_grid_closed_loop/x_position_pid/parameter_updates
+		/align_to_grid_closed_loop/x_position_pid/pid_debug
+		/align_to_grid_closed_loop/x_position_pid/pid_enable
+		/align_to_grid_closed_loop/x_position_pid/x_cmd_pub
+		/align_to_grid_closed_loop/x_position_pid/x_command
+		/align_to_grid_closed_loop/x_position_pid/x_state_pub
+		/align_to_grid_closed_loop/y_position_pid/parameter_descriptions
+		/align_to_grid_closed_loop/y_position_pid/parameter_updates
+		/align_to_grid_closed_loop/y_position_pid/pid_debug
+		/align_to_grid_closed_loop/y_position_pid/pid_enable
+		/align_to_grid_closed_loop/y_position_pid/y_cmd_pub
+		/align_to_grid_closed_loop/y_position_pid/y_command
+		/align_to_grid_closed_loop/y_position_pid/y_state_pub
 		/auto/auto_mode
 		/auto/auto_state
 		/auto/cmd_vel
@@ -49,6 +79,18 @@
 		/fourber/fourber_server_2023/result
 		/fourber/fourber_server_2023/status
 		/frcrobot_jetson/button_box_state_controller
+		/frcrobot_jetson/cpu_monitor/align_and_place_grid/cpu
+        /frcrobot_jetson/cpu_monitor/align_and_place_grid/mem
+        /frcrobot_jetson/cpu_monitor/align_to_grid_2023/cpu
+        /frcrobot_jetson/cpu_monitor/align_to_grid_2023/mem
+		/frcrobot_jetson/cpu_monitor/align_to_grid_closed_loop/align_to_grid_closed_loop_2023/cpu
+		/frcrobot_jetson/cpu_monitor/align_to_grid_closed_loop/align_to_grid_closed_loop_2023/mem
+		/frcrobot_jetson/cpu_monitor/align_to_grid_closed_loop/x_position_pid/cpu
+		/frcrobot_jetson/cpu_monitor/align_to_grid_closed_loop/x_position_pid/mem
+		/frcrobot_jetson/cpu_monitor/align_to_grid_closed_loop/y_position_pid/cpu
+		/frcrobot_jetson/cpu_monitor/align_to_grid_closed_loop/y_position_pid/mem
+        /frcrobot_jetson/cpu_monitor/apriltag_ros_continuous_node/cpu
+        /frcrobot_jetson/cpu_monitor/apriltag_ros_continuous_node/mem
 		/frcrobot_jetson/cpu_monitor/auto/auto_node/cpu
 		/frcrobot_jetson/cpu_monitor/auto/auto_node/mem
 		/frcrobot_jetson/cpu_monitor/balance_position/balancer_server/cpu
@@ -57,6 +99,8 @@
 		/frcrobot_jetson/cpu_monitor/balance_position/balancing_server/mem
 		/frcrobot_jetson/cpu_monitor/balance_position/x_position_balance_pid/cpu
 		/frcrobot_jetson/cpu_monitor/balance_position/x_position_balance_pid/mem
+		/frcrobot_jetson/cpu_monitor/candle_node/cpu
+        /frcrobot_jetson/cpu_monitor/candle_node/mem
 		/frcrobot_jetson/cpu_monitor/cmd_vel_mux/twist_mux/cpu
 		/frcrobot_jetson/cpu_monitor/cmd_vel_mux/twist_mux/mem
 		/frcrobot_jetson/cpu_monitor/elevater/elevater_server_2023/cpu
@@ -89,6 +133,14 @@
 		/frcrobot_jetson/cpu_monitor/hold_distance/x_position_pid/mem
 		/frcrobot_jetson/cpu_monitor/hold_distance/y_position_pid/cpu
 		/frcrobot_jetson/cpu_monitor/hold_distance/y_position_pid/mem
+		/frcrobot_jetson/cpu_monitor/hold_position/hold_position_publish_pid_cmd_vel_node/cpu
+        /frcrobot_jetson/cpu_monitor/hold_position/hold_position_publish_pid_cmd_vel_node/mem
+        /frcrobot_jetson/cpu_monitor/hold_position/hold_position_server/cpu
+        /frcrobot_jetson/cpu_monitor/hold_position/hold_position_server/mem
+        /frcrobot_jetson/cpu_monitor/hold_position/x_position_pid/cpu
+        /frcrobot_jetson/cpu_monitor/hold_position/x_position_pid/mem
+        /frcrobot_jetson/cpu_monitor/hold_position/y_position_pid/cpu
+        /frcrobot_jetson/cpu_monitor/hold_position/y_position_pid/mem
 		/frcrobot_jetson/cpu_monitor/imu/imu_zero/cpu
 		/frcrobot_jetson/cpu_monitor/imu/imu_zero/mem
 		/frcrobot_jetson/cpu_monitor/intake/intake_server_2023/cpu
@@ -97,14 +149,32 @@
 		/frcrobot_jetson/cpu_monitor/intake/reader/intake_reader_2023/mem
 		/frcrobot_jetson/cpu_monitor/intaking/intaking_server_2023/cpu
 		/frcrobot_jetson/cpu_monitor/intaking/intaking_server_2023/mem
+		/frcrobot_jetson/cpu_monitor/path_follower/base_trajectory_node/cpu
+        /frcrobot_jetson/cpu_monitor/path_follower/base_trajectory_node/mem
+        /frcrobot_jetson/cpu_monitor/path_follower/map_server/cpu
+        /frcrobot_jetson/cpu_monitor/path_follower/map_server/mem
+        /frcrobot_jetson/cpu_monitor/path_follower/path_follower_publish_pid_cmd_vel_node/cpu
+        /frcrobot_jetson/cpu_monitor/path_follower/path_follower_publish_pid_cmd_vel_node/mem
+        /frcrobot_jetson/cpu_monitor/path_follower/path_follower_server/cpu
+        /frcrobot_jetson/cpu_monitor/path_follower/path_follower_server/mem
+        /frcrobot_jetson/cpu_monitor/path_follower/x_position_pid/cpu
+        /frcrobot_jetson/cpu_monitor/path_follower/x_position_pid/mem
+        /frcrobot_jetson/cpu_monitor/path_follower/y_position_pid/cpu
+        /frcrobot_jetson/cpu_monitor/path_follower/y_position_pid/mem
+        /frcrobot_jetson/cpu_monitor/path_to_apriltag/cpu
+        /frcrobot_jetson/cpu_monitor/path_to_apriltag/mem
 		/frcrobot_jetson/cpu_monitor/placing/placing_server_2023/cpu
 		/frcrobot_jetson/cpu_monitor/placing/placing_server_2023/mem
 		/frcrobot_jetson/cpu_monitor/robot_state/robot_state_publisher/cpu
 		/frcrobot_jetson/cpu_monitor/robot_state/robot_state_publisher/mem
+		/frcrobot_jetson/cpu_monitor/rosbag_record_node/cpu
+        /frcrobot_jetson/cpu_monitor/rosbag_record_node/mem
 		/frcrobot_jetson/cpu_monitor/rosout/cpu
 		/frcrobot_jetson/cpu_monitor/rosout/mem
 		/frcrobot_jetson/cpu_monitor/snap_to_angle/snap_to_conecube_node_2023/cpu
 		/frcrobot_jetson/cpu_monitor/snap_to_angle/snap_to_conecube_node_2023/mem
+		/frcrobot_jetson/cpu_monitor/substation/align_to_substation_2023/cpu
+        /frcrobot_jetson/cpu_monitor/substation/align_to_substation_2023/mem
 		/frcrobot_jetson/cpu_monitor/swerve_imu_ukf/base_link_to_imu/cpu
 		/frcrobot_jetson/cpu_monitor/swerve_imu_ukf/base_link_to_imu/mem
 		/frcrobot_jetson/cpu_monitor/swerve_imu_ukf/base_link_to_pigeon2/cpu
@@ -113,10 +183,16 @@
 		/frcrobot_jetson/cpu_monitor/teleop/orient_strafing/orient_strafing_pid/mem
 		/frcrobot_jetson/cpu_monitor/teleop/teleop_joystick_comp_2023/cpu
 		/frcrobot_jetson/cpu_monitor/teleop/teleop_joystick_comp_2023/mem
+		/frcrobot_jetson/cpu_monitor/tf_object_detection/cargo_detection_filter/cpu
+        /frcrobot_jetson/cpu_monitor/tf_object_detection/cargo_detection_filter/mem
+        /frcrobot_jetson/cpu_monitor/tf_object_detection/tag_depth/cpu
+        /frcrobot_jetson/cpu_monitor/tf_object_detection/tag_depth/mem
 		/frcrobot_jetson/cpu_monitor/tf_object_detection/tf_object_detection/cpu
 		/frcrobot_jetson/cpu_monitor/tf_object_detection/tf_object_detection/mem
 		/frcrobot_jetson/cpu_monitor/tf_object_detection/tf_object_screen_to_world/cpu
 		/frcrobot_jetson/cpu_monitor/tf_object_detection/tf_object_screen_to_world/mem
+		/frcrobot_jetson/cpu_monitor/tf_object_detection/tf_object_screen_to_world_tags/cpu
+        /frcrobot_jetson/cpu_monitor/tf_object_detection/tf_object_screen_to_world_tags/mem
 		/frcrobot_jetson/cpu_monitor/total_active_mem
 		/frcrobot_jetson/cpu_monitor/total_available_mem
 		/frcrobot_jetson/cpu_monitor/total_buffers_mem
@@ -215,12 +291,29 @@
 		/hold_distance/y_position_pid/y_cmd_pub
 		/hold_distance/y_position_pid/y_command
 		/hold_distance/y_position_pid/y_state_pub
+		/hold_position/hold_position_pid/pid_enable
 		/hold_position/hold_position_pid/swerve_drive_controller/cmd_vel
 		/hold_position/hold_position_server/cancel
 		/hold_position/hold_position_server/feedback
 		/hold_position/hold_position_server/goal
+		/hold_position/hold_position_server/parameter_descriptions
+		/hold_position/hold_position_server/parameter_updates
 		/hold_position/hold_position_server/result
 		/hold_position/hold_position_server/status
+		/hold_position/x_position_pid/parameter_descriptions
+		/hold_position/x_position_pid/parameter_updates
+		/hold_position/x_position_pid/pid_debug
+		/hold_position/x_position_pid/pid_enable
+		/hold_position/x_position_pid/x_cmd_pub
+		/hold_position/x_position_pid/x_command
+		/hold_position/x_position_pid/x_state_pub
+		/hold_position/y_position_pid/parameter_descriptions
+		/hold_position/y_position_pid/parameter_updates
+		/hold_position/y_position_pid/pid_debug
+		/hold_position/y_position_pid/pid_enable
+		/hold_position/y_position_pid/y_cmd_pub
+		/hold_position/y_position_pid/y_command
+		/hold_position/y_position_pid/y_state_pub
 		/imu/zeroed_imu
 		/intake/intake_server_2023/cancel
 		/intake/intake_server_2023/feedback
@@ -235,18 +328,40 @@
 		/intaking/intaking_server_2023/parameter_updates
 		/intaking/intaking_server_2023/result
 		/intaking/intaking_server_2023/status
-		/intaking2022/intaking2022_server/cancel
-		/intaking2022/intaking2022_server/feedback
-		/intaking2022/intaking2022_server/goal
-		/intaking2022/intaking2022_server/result
-		/intaking2022/intaking2022_server/status
 		/joint_states
+		/path_follower/base_trajectory_node/parameter_descriptions
+        /path_follower/base_trajectory_node/parameter_updates
+        /path_follower/local_plan
+        /path_follower/map
+        /path_follower/map_metadata
+        /path_follower/path_follower_pid/pid_enable
 		/path_follower/path_follower_pid/swerve_drive_controller/cmd_vel
 		/path_follower/path_follower_server/cancel
 		/path_follower/path_follower_server/feedback
 		/path_follower/path_follower_server/goal
 		/path_follower/path_follower_server/result
 		/path_follower/path_follower_server/status
+		/path_follower/robot_relative_yaw
+        /path_follower/x_position_pid/parameter_descriptions
+        /path_follower/x_position_pid/parameter_updates
+        /path_follower/x_position_pid/pid_debug
+        /path_follower/x_position_pid/pid_enable
+        /path_follower/x_position_pid/x_cmd_pub
+        /path_follower/x_position_pid/x_command
+        /path_follower/x_position_pid/x_state_pub
+        /path_follower/y_position_pid/parameter_descriptions
+        /path_follower/y_position_pid/parameter_updates
+        /path_follower/y_position_pid/pid_debug
+        /path_follower/y_position_pid/pid_enable
+        /path_follower/y_position_pid/y_cmd_pub
+        /path_follower/y_position_pid/y_command
+        /path_follower/y_position_pid/y_state_pub
+        /path_to_apriltag/cancel
+        /path_to_apriltag/feedback
+        /path_to_apriltag/goal
+        /path_to_apriltag/result
+        /path_to_apriltag/status
+        /placing/cmd_vel
 		/placing/placing_server_2023/cancel
 		/placing/placing_server_2023/feedback
 		/placing/placing_server_2023/goal
@@ -255,15 +370,16 @@
 		/robot_state/joint_states
 		/rosout
 		/rosout_agg
-		/shooting2022/shooting2022_server/cancel
-		/shooting2022/shooting2022_server/feedback
-		/shooting2022/shooting2022_server/goal
-		/shooting2022/shooting2022_server/result
-		/shooting2022/shooting2022_server/status
 		/snap_to_angle/nearest_cone_angle
 		/snap_to_angle/nearest_cube_angle
 		/snap_to_angle/snap_to_conecube_node_2023/parameter_descriptions
 		/snap_to_angle/snap_to_conecube_node_2023/parameter_updates
+		/substation/align_to_substation/cancel
+        /substation/align_to_substation/feedback
+        /substation/align_to_substation/goal
+        /substation/align_to_substation/result
+        /substation/align_to_substation/status
+        /tag_detections
 		/teleop/orient_strafing/control_effort
 		/teleop/orient_strafing/orient_strafing_pid/parameter_descriptions
 		/teleop/orient_strafing/orient_strafing_pid/parameter_updates
@@ -280,6 +396,9 @@
 		/tf
 		/tf_object_detection/obj_detection_msg
 		/tf_object_detection/object_detection_world
+		/tf_object_detection/object_detection_world_filtered
+		/tf_object_detection/tag_detection_msg
+        /tf_object_detection/tag_detection_world
 		/tf_static
 		/zed_objdetect/atm_press
 		/zed_objdetect/depth/camera_info
