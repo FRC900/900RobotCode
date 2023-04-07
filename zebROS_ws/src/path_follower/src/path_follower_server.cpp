@@ -254,6 +254,10 @@ class PathAction
 			// Spin once to get the most up to date odom and yaw info
 			ros::spinOnce();
 
+			const double final_pos_tol = (goal->final_pos_tol > 0) ? goal->final_pos_tol : final_pos_tol_;
+			const double final_rot_tol = (goal->final_rot_tol > 0) ? goal->final_rot_tol : final_rot_tol_;
+			ROS_INFO_STREAM("Path following with final_pos_tol = " << final_pos_tol << " final_rot_tol = " << final_rot_tol);
+
 			// Since paths are robot-centric, the initial odom value is 0,0,0 for the path.
 			// Set this up as a transfrom to apply to each point in the path. This has the
 			// effect of changing robot centric coordinates into odom-centric coordinates
@@ -390,9 +394,9 @@ class PathAction
 				const double orientation_state = path_follower_.getYaw(odom_.pose.pose.orientation);
 				//ROS_INFO_STREAM("orientation_state = " << orientation_state);
 
-				if ((fabs(final_pose_transformed.position.x - odom_.pose.pose.position.x) < final_pos_tol_) &&
-					(fabs(final_pose_transformed.position.y - odom_.pose.pose.position.y) < final_pos_tol_) &&
-					(fabs(path_follower_.getYaw(final_pose_transformed.orientation) - orientation_state) < final_rot_tol_) &&
+				if ((fabs(final_pose_transformed.position.x - odom_.pose.pose.position.x) < final_pos_tol) &&
+					(fabs(final_pose_transformed.position.y - odom_.pose.pose.position.y) < final_pos_tol) &&
+					(fabs(path_follower_.getYaw(final_pose_transformed.orientation) - orientation_state) < final_rot_tol) &&
 					(current_index >= (goal->path.poses.size() - 2)))
 				{
 					ROS_INFO_STREAM(action_name_ << ": succeeded");
