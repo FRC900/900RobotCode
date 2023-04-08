@@ -36,6 +36,7 @@
 #include <talon_swerve_drive_controller/SetXY.h>
 #include <behavior_actions/AlignAndPlaceGrid2023Action.h>
 #include <talon_state_msgs/TalonState.h>
+#include <std_srvs/SetBool.h>
 
 struct DynamicReconfigVars
 {
@@ -64,6 +65,7 @@ struct DynamicReconfigVars
 	double elevator_threshold{0.5};
 	double cone_tolerance{0.1};
 	double cube_tolerance{0.1};
+	double match_time_to_park{20}; // enable auto-parking after the 0.75 second timeout if the match time left < this value
 } config;
 
 std::unique_ptr<TeleopCmdVel<DynamicReconfigVars>> teleop_cmd_vel;
@@ -82,6 +84,7 @@ std::vector <std::string> topic_array;
 ros::Publisher JoystickRobotVel;
 
 ros::ServiceClient BrakeSrv;
+ros::ServiceClient ParkSrv;
 ros::ServiceClient IMUZeroSrv;
 ros::ServiceClient SwerveOdomZeroSrv;
 ros::ServiceClient FourbarRezeroSrv;
@@ -134,6 +137,7 @@ uint8_t autoMode() {
 }
 
 uint8_t alliance_color{};
+bool called_park_endgame = false;
 
 void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 {
@@ -141,6 +145,18 @@ void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 	// transition from enabled to disabled
 	robot_is_disabled = msg.Disabled;
 	alliance_color = msg.allianceColor;
+	if (!called_park_endgame && msg.matchTimeRemaining < config.match_time_to_park && msg.Autonomous == false && msg.Enabled == true && msg.matchTimeRemaining > 0) {
+		// check for enabled and time != 0 so we don't trigger when the node starts (time defaults to 0, auto defaults to false)
+		std_srvs::SetBool setBool;
+		setBool.request.data = true;
+		if (!ParkSrv.call(setBool))
+		{
+			ROS_ERROR("ParkSrv call failed in matchStateCallback");
+		} else {
+			called_park_endgame = true;
+			ROS_INFO("ParkSrv called");
+		}
+	}
 }
 
 ros::ServiceClient snapConeCubeSrv;
@@ -840,14 +856,14 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: bumperLeft
 			if(joystick_states_array[0].bumperLeftPress)
 			{
-				teleop_cmd_vel->setSlowMode(false);
+				teleop_cmd_vel->setSlowMode(true);
 			}
 			if(joystick_states_array[0].bumperLeftButton)
 			{
 			}
 			if(joystick_states_array[0].bumperLeftRelease)
 			{
-				teleop_cmd_vel->setSlowMode(true);
+				teleop_cmd_vel->setSlowMode(false);
 			}
 
 			//Joystick1: bumperRight
@@ -1310,6 +1326,11 @@ int main(int argc, char **argv)
 		ROS_ERROR("Could not read cube_tolerance in teleop_joystick_comp");
 	}
 
+	if(!n_params.getParam("match_time_to_park", config.match_time_to_park))
+	{
+		ROS_ERROR("Could not read match_time_to_park in teleop_joystick_comp");
+	}
+
 	ddynamic_reconfigure::DDynamicReconfigure ddr(n_params);
 
 	ddr.registerVariable<double>("joystick_deadzone", &config.joystick_deadzone, "Joystick deadzone, in percent", 0., 1.);
@@ -1332,6 +1353,7 @@ int main(int argc, char **argv)
 	ddr.registerVariable<double>("angle_to_add", &config.angle_to_add, "angle_to_add", 0.0, 10);
 	ddr.registerVariable<double>("cone_tolerance", &config.cone_tolerance, "cone_tolerance", 0.0, 0.5);
 	ddr.registerVariable<double>("cube_tolerance", &config.cube_tolerance, "cube_tolerance", 0.0, 0.5);
+	ddr.registerVariable<double>("match_time_to_park", &config.match_time_to_park, "match_time_to_park", 0.0, 60.0);
 
 	ddr.publishServicesTopics();
 
@@ -1341,6 +1363,7 @@ int main(int argc, char **argv)
 	const std::map<std::string, std::string> service_connection_header{{"tcp_nodelay", "1"}};
 
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
+	ParkSrv = n.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/swerve_drive_controller/toggle_park", false, service_connection_header);
 	IMUZeroSrv = n.serviceClient<imu_zero::ImuZeroAngle>("/imu/set_imu_zero", false, service_connection_header);
 	snapConeCubeSrv = n.serviceClient<teleop_joystick_control::SnapConeCube>("/snap_to_angle/snap_cone_cube", false, service_connection_header);
 	setCenterSrv = n.serviceClient<talon_swerve_drive_controller::SetXY>("/frcrobot_jetson/swerve_drive_controller/change_center_of_rotation", false, service_connection_header);	

@@ -26,6 +26,7 @@
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
 #include "angles/angles.h"
+#include <std_srvs/SetBool.h>
 #include <behavior_actions/AlignAndPlaceGrid2023Action.h>
 
 enum AutoStates {
@@ -55,6 +56,8 @@ class AutoNode {
 		ros::ServiceClient spline_gen_cli_;
 		ros::Publisher cmd_vel_pub_;
 		ros::ServiceClient brake_srv_;
+		ros::ServiceClient park_srv_;
+		bool park_enabled = false;
 
 		//subscribers
 		//rio match data (to know if we're in auto period)
@@ -126,6 +129,7 @@ class AutoNode {
 		spline_gen_cli_ = nh_.serviceClient<base_trajectory_msgs::GenerateSpline>("/path_follower/base_trajectory/spline_gen", false, service_connection_header);
 		cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("cmd_vel", 1);
 		brake_srv_ = nh_.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
+		park_srv_ = nh_.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/swerve_drive_controller/toggle_park", false, service_connection_header);
 		//subscribers
 		//rio match data (to know if we're in auto period)
 		match_data_sub_ = nh_.subscribe("/frcrobot_rio/match_data", 1, &AutoNode::matchDataCallback, this);
@@ -185,6 +189,16 @@ class AutoNode {
 			balancing_ac.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			placing_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
 			align_and_place_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
+			if (park_enabled) {
+				std_srvs::SetBool srv;
+				srv.request.data = false;
+				if (!park_srv_.call(srv)) {
+					ROS_INFO_STREAM("Failed to call park service in auto node! :(");
+				} else {
+					ROS_INFO_STREAM("Swerve will now not park during teleop when stopped");
+					park_enabled = false;
+				}
+			}
 		};
 		// END change year to year
 	}
@@ -225,6 +239,16 @@ class AutoNode {
 		{
 			auto_stopped_ = false;
 			auto_started_ = true; //only want to set this to true, never set it to false afterwards
+			if (!park_enabled) {
+				std_srvs::SetBool srv;
+				srv.request.data = true;
+				if (!park_srv_.call(srv)) {
+					ROS_INFO_STREAM("Failed to call park service in auto node! :(");
+				} else {
+					ROS_INFO_STREAM("Swerve will now park during auto when stopped");
+					park_enabled = true;
+				}
+			}
 		}
 		if((auto_started_ && !msg->Enabled))
 		{
@@ -353,6 +377,16 @@ class AutoNode {
 		// make 100% sure that it has published last auto state
 		for (int i=0; i < 5; i++) {
 			r_.sleep();
+		}
+		if (park_enabled) {
+			std_srvs::SetBool srv;
+			srv.request.data = false;
+			if (!park_srv_.call(srv)) {
+				ROS_INFO_STREAM("Failed to call park service in auto node! :(");
+			} else {
+				ROS_INFO_STREAM("Swerve will now not park during teleop when stopped");
+				park_enabled = false;
+			}
 		}
 		exit(0);
 	}

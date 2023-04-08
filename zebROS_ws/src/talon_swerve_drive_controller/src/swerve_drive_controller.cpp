@@ -327,6 +327,7 @@ bool init(hardware_interface::TalonCommandInterface *hw,
 	}
 	brake_serv_ = controller_nh.advertiseService("brake", &TalonSwerveDriveController::brakeService, this);
 	reset_odom_serv_ = controller_nh.advertiseService("reset_odom", &TalonSwerveDriveController::resetOdomService, this);
+	park_serv_ = controller_nh.advertiseService("toggle_park", &TalonSwerveDriveController::parkService, this);
 	dont_set_angle_mode_serv_ = controller_nh.advertiseService("dont_set_angle", &TalonSwerveDriveController::dontSetAngleModeService, this);
 	percent_out_drive_mode_serv_ = controller_nh.advertiseService("percent_out_drive_mode", &TalonSwerveDriveController::percentOutDriveModeService, this);
 	change_center_of_rotation_serv_ = controller_nh.advertiseService("change_center_of_rotation", &TalonSwerveDriveController::changeCenterOfRotationService, this);
@@ -428,7 +429,7 @@ void starting(const ros::Time &time)
 	{
 		steer_angles[k] = steering_joints_[k].getPosition();
 	}
-	brake(steer_angles, time);
+	brake(steer_angles, time, true);
 	// Assume we braked infinitely long ago - this will keep the
 	// drive base in parking config until a non-zero command comes in
 	time_before_brake_ = 0;
@@ -450,7 +451,7 @@ void stopping(const ros::Time & time)
 	{
 		steer_angles[k] = steering_joints_[k].getPosition();
 	}
-	brake(steer_angles, time);
+	brake(steer_angles, time, true);
 }
 
 void update(const ros::Time &time, const ros::Duration &period)
@@ -774,7 +775,7 @@ void compOdometry(const ros::Time &time, const double inv_delta_t, const std::ar
 	}
 }
 
-void brake(const std::array<double, WHEELCOUNT> &steer_angles, const ros::Time &time)
+void brake(const std::array<double, WHEELCOUNT> &steer_angles, const ros::Time &time, bool force_parking_mode = false)
 {
 	//Use parking config
 	const bool dont_set_angle_mode = dont_set_angle_mode_.load(std::memory_order_relaxed);
@@ -786,7 +787,7 @@ void brake(const std::array<double, WHEELCOUNT> &steer_angles, const ros::Time &
 		speed_joints_[i].setDemand1Type(hardware_interface::DemandType::DemandType_Neutral);
 		speed_joints_[i].setDemand1Value(0);
 		speed_joints_[i].setNeutralMode(hardware_interface::NeutralMode::NeutralMode_Brake);
-		if (!dont_set_angle_mode)
+		if (!dont_set_angle_mode && (park_when_stopped_ || force_parking_mode))
 			steering_joints_[i].setCommand(park_angles[i]);
 	}
 	// Reset the timer which delays drive wheel velocity a bit after
@@ -925,6 +926,23 @@ bool brakeService(std_srvs::Empty::Request &/*req*/, std_srvs::Empty::Response &
 	}
 }
 
+bool parkService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
+{
+	if (isRunning())
+	{
+		ROS_WARN_STREAM("swerve_drive_controller : park when stopped = " << std::to_string(req.data));
+		park_when_stopped_.store(req.data, std::memory_order_relaxed);
+		res.success = true;
+		res.message = "zebracones!"; // 2023-specific message
+		return true;
+	}
+	else
+	{
+		ROS_ERROR_NAMED(name_, "brakeService can't accept new commands. Controller is not running.");
+		return false;
+	}
+}
+
 bool dontSetAngleModeService(std_srvs::SetBool::Request &req, std_srvs::SetBool::Response &res)
 {
 	if (isRunning())
@@ -1052,6 +1070,7 @@ realtime_tools::RealtimeBuffer<Commands> command_;
 
 std::atomic<bool> dont_set_angle_mode_; // used to lock wheels into place
 std::atomic<bool> percent_out_drive_mode_; // run drive wheels in open-loop mode
+std::atomic<bool> park_when_stopped_;
 double brake_last_{ros::Time::now().toSec()};
 double time_before_brake_{0};
 double parking_config_time_delay_{0.1};
@@ -1069,6 +1088,7 @@ realtime_tools::RealtimeBuffer<Eigen::Vector2d> center_of_rotation_;
 ros::ServiceServer brake_serv_;
 ros::ServiceServer dont_set_angle_mode_serv_;
 ros::ServiceServer percent_out_drive_mode_serv_;
+ros::ServiceServer park_serv_;
 
 ros::ServiceServer reset_odom_serv_;
 std::atomic<bool> reset_odom_{false};
