@@ -3,7 +3,7 @@ teleop_params:
     max_rot: 6.28
     max_rot_slow: 2.355
     rotation_axis_scale: 1.0
-    rotation_epsilon: 0.2 # Z-velocities lower than this indicate robot is stopped
+    rotation_epsilon: 0.1 # Z-velocities lower than this indicate robot is stopped  # WAS 0.2 if things look wrong!! 
     min_speed: 0.0  # Smallest linear speed which get the robot moving at all
     max_speed: 5.0
     max_speed_slow: 1.7

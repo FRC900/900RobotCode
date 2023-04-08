@@ -57,11 +57,11 @@ struct DynamicReconfigVars
 	double imu_zero_angle{0.0};           // "Value to pass to imu/set_zero when zeroing"
 	double rotation_epsilon{0.01};		  // "Threshold Z-speed deciding if the robot is stopped"
 	double rotation_axis_scale{1.0};      // "Scale factor for rotation axis stick input"
-	double angle_to_add{angles::from_degrees(2)};
+	double angle_to_add{0.135};
 	double cone_length{0.3302/2};
 	double cube_length{0.2032/2};
 	double angle_threshold{angles::from_degrees(1)};
-	double elevator_threshold{0.2};
+	double elevator_threshold{0.5};
 	double cone_tolerance{0.1};
 	double cube_tolerance{0.1};
 } config;
@@ -266,6 +266,7 @@ enum AutoPlaceState {
 };
 
 AutoPlaceState auto_place_state = AutoPlaceState::WAITING_TO_ALIGN; 
+uint8_t intake_piece = 0;
 
 void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 const>& event)
 {
@@ -343,6 +344,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.topMiddleConeButton) {
 	}
 	if(button_box.topMiddleConePress) {
+		intake_piece = behavior_actions::Intaking2023Goal::BASE_TOWARDS_US_CONE;
 	}
 	if(button_box.topMiddleConeRelease) {
 	}
@@ -350,6 +352,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	if(button_box.topRightCubeButton) {
 	}
 	if(button_box.topRightCubePress) {
+		intake_piece = behavior_actions::Intaking2023Goal::CUBE;
 	}
 	if(button_box.topRightCubeRelease) {
 	}
@@ -932,7 +935,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				if(!joystick1_left_trigger_pressed)
 				{
 					behavior_actions::Intaking2023Goal goal;
-					goal.piece = goal.CUBE;
+					goal.piece = intake_piece;
 					intaking_ac->sendGoal(goal);
 				}
 

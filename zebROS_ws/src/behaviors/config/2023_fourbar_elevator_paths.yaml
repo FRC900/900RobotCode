@@ -11,8 +11,9 @@ paths:
 
   # TODO assert that the starting point is where we are within epsilon.
 
-  intake_cone_cube: [[0.05, 0.35], [0.0, 1.75]]
-  intake_vertical_cone: [[0.05, 0.35], [0.18, 1.7]] # was [0.0, 1.1] for second
+  intake_cone: [[0.05, 0.35], [0.0, 1.75]] # fallen cone
+  intake_cube: [[0.05, 0.35], [0.0, 1.57]]
+  intake_vertical_cone: [[0.05, 0.35], [0.06, 1.47]] # [0.2, 1.7] worked great. changed to [0.06, 1.47]. both work, trying to find which one is better
   intake_double_substation: [[0.0, 0.35], [0.0, 0.77], [1.4, 1.7]] # change this (it's currently high cone)
   intake_double_substation_reverse: [[1.4, 1.7], [1.4, 0.77], [0.0, 0.77], [0.0, 0.35]] # change this (it's currently high cone)
 

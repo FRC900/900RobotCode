@@ -14,5 +14,5 @@ cube_outtake_speed: 0.2
 intake_medium_time: 1.0
 intake_medium_speed: 0.2
 intake_small_speed: 0.12
-
+max_speed_for_scale: 10.0
 dynamic_reconfigure: true

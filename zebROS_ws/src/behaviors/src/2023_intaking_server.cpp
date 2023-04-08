@@ -8,6 +8,7 @@
 #include <talon_state_msgs/TalonState.h>
 #include <std_msgs/Float64.h>
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
+#include <geometry_msgs/Twist.h>
 
 class IntakingServer2023
 {
@@ -29,7 +30,7 @@ protected:
 	double path_zero_timeout_;
 
 	bool dynamic_reconfigure_;
-
+	bool dynamic_intake_speeds_; 
 	// shouldn't need to worry about the intake timeout since the intaker server handles that
 
 	ros::Subscriber game_piece_sub_;
@@ -42,6 +43,7 @@ protected:
 	double current_threshold_;
 	double elev_pos_;
 
+	double inital_speed_;
 	double speed_;
 	double cone_outtake_speed_;
 	double cube_outtake_speed_;
@@ -52,14 +54,14 @@ protected:
 
 	double minimum_current_time_;
 	double minimum_fourbar_extension_;
-
+	double max_speed_for_scale_;
 	double fourbar_cur_position_;
 	size_t fourbar_idx;
 
 	actionlib::SimpleActionClient<behavior_actions::FourbarElevatorPath2023Action> path_ac_;
 
 	ros::Subscriber talon_states_sub_;
-
+	ros::Subscriber current_speed_sub_;
 	ros::Publisher intake_pub_;
 
 	double time_before_reverse_;
@@ -87,6 +89,12 @@ public:
 
 	void requestedPieceCallback(const std_msgs::UInt8 &msg) {
 		requested_game_piece_ = msg.data;
+	}
+
+    void currentSpeedCallback(const geometry_msgs::Twist &msg) {
+		// at full throttle (5m/s) should be 1 and when almost not moving should be pretty normal
+		speed_ = inital_speed_ + (hypot(msg.linear.x, msg.linear.y) / max_speed_for_scale_) * (1-inital_speed_);
+		speed_ = speed_ > 0.95 ? 0.95 : speed_; 
 	}
 
 	void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
@@ -154,6 +162,7 @@ public:
 		as_(nh_, name, boost::bind(&IntakingServer2023::executeCB, this, _1), false),
 		action_name_(name),
 		game_piece_sub_(nh_.subscribe("/game_piece/game_piece_state", 1, &IntakingServer2023::gamePieceStateCallback, this)),
+		current_speed_sub_(nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/cmd_vel", 1, &IntakingServer2023::currentSpeedCallback, this)),
 		requested_game_piece_sub_(nh_.subscribe("/game_piece/requested_game_piece", 1, &IntakingServer2023::requestedPieceCallback, this)),
 		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true),
 		intake_pub_(nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_leader_controller/command", 1, true)),
@@ -184,6 +193,12 @@ public:
 		if (!nh_.getParam("cube_time", cube_time_))
 		{
 			ROS_ERROR_STREAM("2023_intaking_server : could not find cube_time");
+			return;
+		}
+		
+		if (!nh_.getParam("max_speed_for_scale", max_speed_for_scale_))
+		{
+			ROS_ERROR_STREAM("2023_intaking_server : could not find max_speed_for_scale_");
 			return;
 		}
 
@@ -228,6 +243,7 @@ public:
 			ROS_ERROR_STREAM("2023_intake_server : could not find intake_speed");
 			return;
 		}
+		inital_speed_ = speed_;
 
 		if (!nh_.getParam("minimum_current_time", minimum_current_time_))
 		{
@@ -272,7 +288,7 @@ public:
 			ddr_.registerVariable<double>("cone_time", &cone_time_, "Time for intaking cones (currently used for neither because no terabees)", 0, 5);
 			ddr_.registerVariable<double>("server_timeout", &server_timeout_, "Server timeout", 0, 30);
 			ddr_.registerVariable<double>("current_threshold", &current_threshold_, "Current threshold before stopping intake, some weird unit", 0, 300);
-			ddr_.registerVariable<double>("intake_speed", &speed_, "Intake speed (percent output)", 0, 1);
+			ddr_.registerVariable<double>("intake_speed", &inital_speed_, "Intake speed base (percent output)", 0, 1);
 			ddr_.registerVariable<double>("cone_outtake_speed", &cone_outtake_speed_, "Cone outtake speed (percent output)", 0, 1);
 			ddr_.registerVariable<double>("cube_outtake_speed", &cube_outtake_speed_, "Cube outtake speed (percent output)", 0, 1);
 			ddr_.registerVariable<double>("intake_small_speed", &small_speed_, "Intake small speed for holding game piece in (percent output)", 0, 1);
@@ -280,6 +296,8 @@ public:
 			ddr_.registerVariable<double>("intake_medium_time", &medium_time_, "Time before switching from medium to small", 0, 10);
 			ddr_.registerVariable<double>("minimum_current_time", &minimum_current_time_, "Time current spiking before retracting intake", 0, 1);
 			ddr_.registerVariable<double>("minimum_fourbar_extension", &minimum_fourbar_extension_, "Amount four bar must be extended before checking for current", 0, 1);
+			ddr_.registerVariable<double>("max_speed_for_scale", &max_speed_for_scale_, "Speed / this", 0, 20);
+			
 		}
 
 		ddr_.publishServicesTopics();
@@ -291,6 +309,7 @@ public:
 	~IntakingServer2023(void)
 	{
 	}
+	
 
 	void executeCB(const behavior_actions::Intaking2023GoalConstPtr &goal)
 	{
@@ -342,8 +361,10 @@ public:
 			pathGoal.path = "intake_vertical_cone";
 		} else if (goal->piece == goal->DOUBLE_SUBSTATION) {
 			pathGoal.path = "intake_double_substation";
+		} else if (goal->piece == goal->CUBE) {
+			pathGoal.path = "intake_cube";
 		} else {
-			pathGoal.path = "intake_cone_cube";
+			pathGoal.path = "intake_cone";
 		}
 		pathGoal.reverse = false;
 
@@ -355,17 +376,21 @@ public:
 		ros::Duration(0.25).sleep();
 
 		std_msgs::Float64 percent_out;
-		percent_out.data = speed_;
+		ros::spinOnce();
+		percent_out.data = goal->piece == goal->VERTICAL_CONE ? speed_ : inital_speed_;
+		ROS_ERROR_STREAM("Publish intake speed of " << (goal->piece == goal->VERTICAL_CONE ? speed_ : inital_speed_) * 100 << " percent.");
 		make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
-
+		dynamic_intake_speeds_ = true;
 		ros::Time last_sample_above = ros::TIME_MAX;
 
 		bool current_exceeded = false;
 		bool got_game_piece = false;
-
 		while (true) {
 			ros::spinOnce();
 			ROS_INFO_STREAM_THROTTLE(0.1, "2023_intaking_server : waiting for game piece... current = " << current_current_ << ", threshold = " << current_threshold_ << ", path state = " << path_ac_.getState().getText());
+			percent_out.data = goal->piece == goal->VERTICAL_CONE ? speed_ : inital_speed_;
+			ROS_ERROR_STREAM_THROTTLE(0.1, "DYNAMIC INTAKE SPEEDS with speed of " << (goal->piece == goal->VERTICAL_CONE ? speed_ : inital_speed_) * 100 << " percent.");
+			intake_pub_.publish(percent_out);
 			if (current_current_ > current_threshold_ && fourbar_cur_position_ > minimum_fourbar_extension_) {
 				if (last_sample_above == ros::TIME_MAX) {
 					last_sample_above = ros::Time::now();
@@ -374,6 +399,7 @@ public:
 					ROS_INFO_STREAM("2023_intaking_server : current limit hit for >= " << minimum_current_time_ << " seconds! Retracting intake!");
 					current_exceeded = true;
 					got_game_piece = true; // to the best of our knowledge
+					dynamic_intake_speeds_ = false;
 					break;
 				}
 			} else {
@@ -389,12 +415,13 @@ public:
 				} else {
 					ROS_WARN_STREAM("2023_intaking_server : no game piece detected, not running at small speed");
 				}
-
+				dynamic_intake_speeds_ = false; 
 				as_.setPreempted(result_);
 				break;
 			}
 			r.sleep();
 		}
+		dynamic_intake_speeds_ = false; 
 
 		const ros::Time done = ros::Time::now();
 
@@ -413,11 +440,15 @@ public:
 		if (got_game_piece) {
 			// if got_game_piece is false, then don't run the rollers
 			// so make sure to set the current limit correctly so we don't drop things
+			dynamic_intake_speeds_ = false;
+			ros::spinOnce(); 
 			percent_out.data = medium_speed_;
 			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 
 			// ros::Duration(time_before_reverse_).sleep();
 		} else {
+			dynamic_intake_speeds_ = false;
+			ros::spinOnce();
 			percent_out.data = 0.0;
 			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 		}
@@ -441,9 +472,11 @@ public:
 			// percent_out.data = 0.0;
 			// make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 			// ros::Duration(time_before_reverse_).sleep();
+			dynamic_intake_speeds_ = false; 
 			percent_out.data = small_speed_;
 			make_sure_publish(intake_pub_, percent_out); // replace with service based JointPositionController once we write it
 		}
+		dynamic_intake_speeds_ = false; 
 
 		ros::Time start = ros::Time::now();
 		bool preempted = false;
@@ -470,6 +503,7 @@ public:
 		ROS_INFO_STREAM("2023_intaking_server : Succeeded");
 		// set the action state to succeeded
 		as_.setSucceeded(result_);
+		dynamic_intake_speeds_ = false; //just to make sure
 	}
 
 

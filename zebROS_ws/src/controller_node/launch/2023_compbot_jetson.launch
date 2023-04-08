@@ -62,7 +62,7 @@ elevator_controller_2023 four_bar_controller_2023 intake_leader_controller
 
 	<group ns="swerve_imu_ukf">
 		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_imu" args="0 0 0 0 0 0 base_link imu" />
-		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_pigeon2" args="0 0 0 0 0 0 base_link pigeon2_frame" />
+		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_pigeon2" args="0 0 0 0 0.0096 0 base_link pigeon2_frame" />
 	<!--
 		<include file="$(find controller_node)/launch/fuse_odom.launch"/>
 	-->

@@ -24,6 +24,8 @@
 #include <utility>
 #include <vector>
 #include "std_msgs/Bool.h"
+#include "std_msgs/Float64.h"
+#include "angles/angles.h"
 #include <behavior_actions/AlignAndPlaceGrid2023Action.h>
 
 enum AutoStates {
@@ -42,6 +44,7 @@ class AutoNode {
 
 		ros::Timer auto_state_timer_;
 		ros::Publisher auto_state_pub_; // publish auto state with ros_timer
+		ros::Publisher orient_command_pub_;
 		std::atomic<int> auto_state_; //This state is published by the publish thread
 		std::atomic<bool> publish_autostate_{true};
 		//servers
@@ -59,7 +62,9 @@ class AutoNode {
 		//dashboard (to get auto mode)
 		ros::Subscriber auto_mode_sub_;
 		ros::Subscriber enable_auto_in_teleop_sub_;
-		
+		ros::Subscriber orientation_effort_sub_; 
+		ros::Subscriber current_yaw_sub_;
+
 		// auto mode and state
 		signed char auto_mode_ = -1; //-1 if nothing selected
 		std::vector<std::string> auto_steps_; //stores string of action names to do, read from the auto mode array in the config file
@@ -68,7 +73,9 @@ class AutoNode {
 		bool auto_stopped_ = false; //set to true if driver stops auto (callback: stopAuto() ) - note: this node will keep doing actions during teleop if not finished and the driver doesn't stop auto
 		//All actions check if(auto_started && !auto_stopped) before proceeding.
 		// define preemptAll_
-
+        double current_orient_effort_{0};
+		double angle_tolerance_{angles::from_degrees(0.5)}; // +/- this is allowed error
+		double current_yaw_;
 		std::function<void()> preemptAll_;
 		// I don't really see us ever actually needing to config this, but it is pretty easy to do
 		ros::Rate r_ = ros::Rate(100);
@@ -125,9 +132,18 @@ class AutoNode {
 		//dashboard (to get auto mode)
 		auto_mode_sub_ = nh_.subscribe("auto_mode", 1, &AutoNode::updateAutoMode, this); //TODO get correct topic name (namespace)
 		enable_auto_in_teleop_sub_ = nh_.subscribe("/enable_auto_in_teleop", 1, &AutoNode::enable_auto_in_teleop, this);
+		orientation_effort_sub_ = nh_.subscribe("/teleop/orient_strafing/control_effort", 1, &AutoNode::orientation_effort_callback, this);
 
 		// Used to pass in dynamic paths from other nodes
 		path_finder_ = nh_.advertiseService("dynamic_path", &AutoNode::dynamic_path_storage, this);
+        orient_command_pub_ = nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1);
+		current_yaw_sub_ = nh_.subscribe("/teleop/orient_strafing/state", 1, &AutoNode::yaw_callback, this);
+		if (!nh_.getParam("angle_tolerance", angle_tolerance_))
+		{
+			ROS_ERROR_STREAM("Could not read param "
+								<< "angle_tolerance_"
+								<< " in auto_node");
+		}
 
 		//auto state
 		auto_state_ = NOT_READY;
@@ -161,7 +177,7 @@ class AutoNode {
 		functionMap_["cmd_vel"] = &AutoNode::cmdvelfn;
 		functionMap_["balancing_actionlib_server"] = &AutoNode::autoBalancefn;
 		functionMap_["grid_align_server"] = &AutoNode::gridalignfn;
-
+		functionMap_["snap_to_orientation"] = &AutoNode::snapanglefn;
 		// cool trick to bring all class variables into scope of lambda
 		preemptAll_ = [this](){ // must include all actions called
 			path_ac_.cancelGoalsAtAndBeforeTime(ros::Time::now());
@@ -189,6 +205,10 @@ class AutoNode {
 		return true;
 	}
 
+	void yaw_callback(const std_msgs::Float64::ConstPtr& msg) {
+		current_yaw_ = msg->data; 
+	}
+
 	//subscriber callback for match data
 	void matchDataCallback(const frc_msgs::MatchSpecificData::ConstPtr& msg)
 	{
@@ -211,6 +231,11 @@ class AutoNode {
 			auto_started_ = false;
 			preemptAll_();
 		}
+	}
+
+	void orientation_effort_callback(const std_msgs::Float64& msg) 
+	{
+		current_orient_effort_ = msg.data;
 	}
 
 	//subscriber callback for dashboard data
@@ -744,6 +769,44 @@ class AutoNode {
 		return true;
 	}
 
+	bool snapanglefn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) { 
+		double angle_in_rad;
+		if (!action_data.hasMember("angle"))
+		{
+			ROS_ERROR_STREAM("Auto action " << auto_step << " missing 'duration' field");
+			return false;
+		}
+		if (!readFloatParam("angle", action_data, angle_in_rad))
+		{
+			shutdownNode(ERROR, "Auto node - duration is not a double or int in pause action");
+			return false;
+		}
+
+		std_msgs::Float64 target_angle_msg;
+		target_angle_msg.data = angle_in_rad;
+		orient_command_pub_.publish(target_angle_msg);
+		ros::Rate rate(25);
+		rate.sleep(); // just to give orientation control time to update current_orient_effort_
+		geometry_msgs::Twist cmd_vel;
+		cmd_vel.linear.z = 0;
+		cmd_vel.linear.x = 0;
+		cmd_vel.linear.y = 0;
+		cmd_vel.angular.x = 0;
+		cmd_vel.angular.y = 0;
+		ros::spinOnce();
+
+		while (fabs(angles::shortest_angular_distance(angle_in_rad, current_yaw_)) > angle_tolerance_) {
+			ROS_INFO_STREAM_THROTTLE(2, "Current yaw (deg) = " << angles::to_degrees(current_yaw_) << " target angle (deg) = " << angles::to_degrees(angle_in_rad) << " current effort = " << current_orient_effort_);
+			orient_command_pub_.publish(target_angle_msg);
+			cmd_vel.angular.z = current_orient_effort_;
+			cmd_vel_pub_.publish(cmd_vel);
+			ros::spinOnce(); 	
+			rate.sleep();
+		}
+		ROS_INFO_STREAM("Auto node : Done with snap - Current yaw (deg) = " << angles::to_degrees(current_yaw_) << " target angle (deg) = " << angles::to_degrees(angle_in_rad) << " current effort = " << current_orient_effort_);
+		return true;
+	}
+
 	bool gridalignfn(XmlRpc::XmlRpcValue action_data, const std::string& auto_step) {
 		//for some reason this is necessary, even if the server has been up and running for a while
 		if(!align_and_place_ac_.waitForServer(ros::Duration(5))){
@@ -941,6 +1004,7 @@ class AutoNode {
 		return true;
 	}
 
+	// now ignores z and will just hold whatever orientation it starts in
 	bool cmdvelfn(XmlRpc::XmlRpcValue action_data, const std::string&  auto_step) {
 		#if 0 // doesn't work in sim
 		if(!brake_srv_.waitForExistence(ros::Duration(15)))
@@ -1012,11 +1076,17 @@ class AutoNode {
 		const ros::Duration duration(duration_secs);
 		const ros::Time start_time = ros::Time::now();
 		ros::Rate rate(25);
-
+		double starting_rotation = current_yaw_;
+		std_msgs::Float64 orient_msg;
+		orient_msg.data = starting_rotation;
 		while (ros::ok() && !auto_stopped_ && ((ros::Time::now() - start_time) < duration))
 		{
+			orient_command_pub_.publish(orient_msg); // need to do this to keep control of rotation
+			cmd_vel.angular.z = current_orient_effort_;
 			cmd_vel_pub_.publish(cmd_vel);
+			ros::spinOnce();
 			rate.sleep();
+
 		}
 		cmd_vel.linear.x = 0;
 		cmd_vel.linear.y = 0;

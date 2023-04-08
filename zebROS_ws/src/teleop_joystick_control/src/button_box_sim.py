@@ -18,7 +18,6 @@ if received_key == ord('{key}'):
 else:
     if prev_msg.{field}Button:
         msg.{field}Release = True""")
-    
     return msg
 
 rospy.init_node("pubthingy", anonymous=True)
