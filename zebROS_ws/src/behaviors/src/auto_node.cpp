@@ -11,7 +11,6 @@
 #include "base_trajectory_msgs/PathOffsetLimit.h"
 #include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/Placing2023Action.h>
-#include <behavior_actions/Shooting2022Action.h>
 #include <behavior_actions/Intaking2023Action.h>
 #include <behavior_actions/Balancing2023Action.h>
 #include <behavior_actions/GamePieceState2023.h>

@@ -8,10 +8,8 @@
 #include <actionlib/server/simple_action_server.h>
 #include "behavior_actions/AlignToGridPID2023Action.h"
 #include "behavior_actions/AlignAndPlaceGrid2023Action.h"
-#include "behavior_actions/PathToAprilTagAction.h"
 #include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/Placing2023Action.h>
-#include <path_follower_msgs/PathAction.h>
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/Float64.h>
 
@@ -31,13 +29,8 @@ protected:
   ros::Publisher cmd_vel_pub_;
   ros::Publisher orientation_command_pub_;
   ros::Subscriber control_effort_sub_;
-  double orient_effort_;
-  double xOffset_;
-  double holdPosTimeout_;
-  double latest_yaw_;
+  double orient_effort_{0};
   double current_error_{900};
-  double desired_current_error_;
-  bool started_moving_elevator_;
   bool moved_ = false;
   uint8_t alliance_;
 
@@ -111,7 +104,6 @@ public:
       ROS_ERROR_STREAM("2023_align_and_place_grid : placing server not running!!! this is unlikely to work");
     }
     bool started_moving_elevator = false;
-    bool path_finished = false;
     ros::Time path_finished_time = ros::Time(0);
     uint8_t game_piece = goal->piece;
     uint8_t node = goal->node;

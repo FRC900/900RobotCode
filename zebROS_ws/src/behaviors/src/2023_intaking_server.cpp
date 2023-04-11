@@ -162,9 +162,10 @@ public:
 		as_(nh_, name, boost::bind(&IntakingServer2023::executeCB, this, _1), false),
 		action_name_(name),
 		game_piece_sub_(nh_.subscribe("/game_piece/game_piece_state", 1, &IntakingServer2023::gamePieceStateCallback, this)),
-		current_speed_sub_(nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/cmd_vel", 1, &IntakingServer2023::currentSpeedCallback, this)),
 		requested_game_piece_sub_(nh_.subscribe("/game_piece/requested_game_piece", 1, &IntakingServer2023::requestedPieceCallback, this)),
 		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true),
+		talon_states_sub_(nh_.subscribe("/frcrobot_jetson/talon_states", 1, &IntakingServer2023::talonStateCallback, this),
+		current_speed_sub_(nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/cmd_vel", 1, &IntakingServer2023::currentSpeedCallback, this)),
 		intake_pub_(nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_leader_controller/command", 1, true)),
 		nh_params_(nh_, "intaking_server_2023"),
 		ddr_(nh_params_)
@@ -172,7 +173,6 @@ public:
 		elevator_idx = std::numeric_limits<size_t>::max();
 		intake_idx = std::numeric_limits<size_t>::max();
 		fourbar_idx = std::numeric_limits<size_t>::max();
-		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &IntakingServer2023::talonStateCallback, this);
 		game_piece_state_.game_piece = game_piece_state_.NONE; // default to no game piece
 
 		if (!nh_.getParam("dynamic_reconfigure", dynamic_reconfigure_)) {
@@ -297,12 +297,11 @@ public:
 			ddr_.registerVariable<double>("minimum_current_time", &minimum_current_time_, "Time current spiking before retracting intake", 0, 1);
 			ddr_.registerVariable<double>("minimum_fourbar_extension", &minimum_fourbar_extension_, "Amount four bar must be extended before checking for current", 0, 1);
 			ddr_.registerVariable<double>("max_speed_for_scale", &max_speed_for_scale_, "Speed / this", 0, 20);
-			
+
+			ddr_.publishServicesTopics();
 		}
 
-		ddr_.publishServicesTopics();
 
-		const std::map<std::string, std::string> service_connection_header{{"tcp_nodelay", "1"}};
 		as_.start();
 	}
 
