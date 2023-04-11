@@ -1,9 +1,9 @@
 four_bar_controller_2023:
     type: four_bar_controller_2023/FourBarController_2023
 
-    feed_forward_map: [[0, 0.048876], [0.05, 0.048876], [0.1, 0.050831], [0.2, 0.05767], [0.4, 0.06647116325], [0.6, 0.06549364614], 
-                       [0.8, 0.074], [1, 0.06744868035], [1.2, 0.0596285435], [1.4, 0.03812316716], [1.499, 0.02737047898], [1.575, 0.01955034213], 
-                       [1.6, -0.01857282502], [1.65, -0.02639296188], [1.7, -0.02052785924], [1.719, 0], [1.8, 0]] 
+    feed_forward_map: [[0, 0.0], [0.05, 0.03], [0.1, 0.041], [0.2, 0.0469], [0.4, 0.0528], [0.6, 0.0469], 
+                       [0.8, 0.057], [1, 0.056], [1.2, 0.045], [1.4, 0.033], [1.499, 0.022], [1.575, -0.01955034213], 
+                       [1.6, -0.022], [1.65, -0.028], [1.7, -0.04], [1.725, -0.037], [1.8, 0]] 
 
     four_bar_joint: [ 'four_bar' ]
     dynamic_reconfigure: True
@@ -34,7 +34,8 @@ four_bar_controller_2023:
         joint: four_bar
         close_loop_values:
             # kinda forgot the tuning from saturday, but something like this?
-            - {p: 1.6, i: 0.000, d: 0.0, f: 0.065, i_zone: 125, closed_loop_peak_output: 1.0, max_integral_accumulator: 0.1}
+            #- {p: 0.45, i: 0.0001, d: 4.0, f: 0.065, i_zone: 300, closed_loop_peak_output: 1.0, max_integral_accumulator: 600}
+            - {p: 1.2, i: 0.000, d: 2.0, f: 0.065, i_zone: 125, closed_loop_peak_output: 1.0, max_integral_accumulator: 0.1}
         velocity_measurement_period: Period_10Ms
         velocity_measurement_window: 4
         invert_output: True
