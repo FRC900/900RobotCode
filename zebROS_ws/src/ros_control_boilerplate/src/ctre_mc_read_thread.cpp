@@ -148,10 +148,10 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 			closed_loop_error = victor->GetClosedLoopError(pidIdx) * closed_loop_scale;
 			safeTalonCall(victor->GetLastError(), "GetClosedLoopError", state->getCANID());
 
-			integral_accumulator = victor->GetIntegralAccumulator(pidIdx) * closed_loop_scale;
+			integral_accumulator = victor->GetIntegralAccumulator(pidIdx);
 			safeTalonCall(victor->GetLastError(), "GetIntegralAccumulator", state->getCANID());
 
-			error_derivative = victor->GetErrorDerivative(pidIdx) * closed_loop_scale;
+			error_derivative = victor->GetErrorDerivative(pidIdx);
 			safeTalonCall(victor->GetLastError(), "GetErrorDerivative", state->getCANID());
 
 			closed_loop_target = victor->GetClosedLoopTarget(pidIdx) * closed_loop_scale;
@@ -280,15 +280,10 @@ void FRCRobotInterface::ctre_mc_read_thread(std::shared_ptr<ctre::phoenix::motor
 				state->setPTerm(native_closed_loop_error * kp);
 				state->setITerm(integral_accumulator * ki);
 				state->setDTerm(error_derivative * kd);
-				if ((talon_mode != hardware_interface::TalonMode_MotionProfile) &&
-					(talon_mode != hardware_interface::TalonMode_MotionMagic) &&
-					(talon_mode != hardware_interface::TalonMode_MotionProfileArc))
-				{
-					state->setClosedLoopTarget(closed_loop_target);
+				state->setClosedLoopTarget(closed_loop_target);
 
-					const double kf = state->getPidfF(pidf_slot);
-					state->setFTerm(closed_loop_target / closed_loop_scale * kf);
-				}
+				const double kf = state->getPidfF(pidf_slot);
+				state->setFTerm(closed_loop_target / closed_loop_scale * kf);
 			}
 
 			if ((talon_mode == hardware_interface::TalonMode_MotionProfile) ||

@@ -529,7 +529,6 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 												 std::unique_ptr<Tracer> tracer,
 												 size_t index,
 												 double poll_frequency);
-		ros::Time ctre_mc_init_time_;
 
 		std::vector<std::shared_ptr<ctre::phoenix::sensors::CANCoder>> cancoders_;
 		std::vector<std::shared_ptr<std::mutex>> cancoder_read_state_mutexes_;

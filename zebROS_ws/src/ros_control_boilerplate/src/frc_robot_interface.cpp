@@ -187,7 +187,6 @@ bool FRCRobotInterface::initDevices(ros::NodeHandle root_nh)
 	}
 	ROS_INFO_STREAM("Pausing for CTRE init");
 	ros::Duration(.25).sleep();
-	ctre_mc_init_time_ = ros::Time::now();
 	ROS_INFO_STREAM("Resuming after CTRE init");
 
 	for (size_t i = 0; i < num_can_ctre_mcs_; i++)
@@ -1067,8 +1066,8 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 			// There looks like a bug in sim which requires us to read these
 			// more slowly.  Pass the previously-read value in to use as
 			// a default for iterations where the value isn't read
-			trts->setBusVoltage(ts.getBusVoltage());
-			trts->setTemperature(ts.getTemperature());
+			//trts->setBusVoltage(ts.getBusVoltage());
+			//trts->setTemperature(ts.getTemperature());
 
 			// Copy talon state values read in the read thread into the
 			// talon state shared globally with the rest of the hardware
@@ -1642,12 +1641,11 @@ void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period
 			}
 			if (rc)
 			{
-				rc = safeTalonConfigCall(victor->Config_IntegralZone(slot, iz, configTimeoutMs), "Config_IntegralZone", ts.getCANID());
+				rc = safeTalonConfigCall(victor->Config_IntegralZone(slot, iz / closed_loop_scale, configTimeoutMs), "Config_IntegralZone", ts.getCANID());
 			}
-			// TODO : Scale these two?
 			if (rc)
 			{
-				rc = safeTalonConfigCall(victor->ConfigAllowableClosedloopError(slot, allowable_closed_loop_error, configTimeoutMs), "ConfigAllowableClosedloopError", ts.getCANID());
+				rc = safeTalonConfigCall(victor->ConfigAllowableClosedloopError(slot, allowable_closed_loop_error / closed_loop_scale, configTimeoutMs), "ConfigAllowableClosedloopError", ts.getCANID());
 			}
 			if (rc)
 			{
