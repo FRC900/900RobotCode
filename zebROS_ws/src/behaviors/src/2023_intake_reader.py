@@ -38,7 +38,7 @@ def safeAverage(l: list):
     return total / len(l)
 
 crc_error_count = 0
-restart_errors_count = 10
+restart_errors_count = 100
 
 def rebootPico(port: serial.Serial, req = None):
     rospy.logwarn("intake_reader_2023 : rebooting Pico!")
@@ -47,6 +47,7 @@ def rebootPico(port: serial.Serial, req = None):
     rospy.sleep(2.5)
     rospy.logwarn("intake_reader_2023 : finished waiting, closing and reopening port")
     port.close()
+    rospy.sleep(2.5)
     port.open()
     return EmptyResponse()
 
@@ -69,16 +70,16 @@ def main():
     reboot_count = 0
     max_reboots = 2
 
-    rebootPico(port, None)
+    # rebootPico(port, None)
 
     while not rospy.is_shutdown():
-        if crc_error_count >= restart_errors_count and reboot_count < max_reboots:
-            # should restart board
-            rospy.loginfo("intake_reader_2023 : restarting RP2040")
-            rebootPico(port)
-            crc_error_count = 0
-            reboot_count += 1
-            continue
+        # if crc_error_count >= restart_errors_count and reboot_count < max_reboots:
+        #     # should restart board
+        #     rospy.loginfo("intake_reader_2023 : restarting RP2040")
+        #     rebootPico(port)
+        #     crc_error_count = 0
+        #     reboot_count += 1
+        #     continue
         try:
             port.flushInput()
             _ = port.readline() # if we flush the buffer between printing the first number and the second, we get "##\r\n"
@@ -104,7 +105,14 @@ def main():
             pub.publish(msg)
         except Exception as e:
             rospy.logerr_throttle(0.1, f"intake_reader_2023 : couldn't read from pico, error = {e}")
-            r.sleep()
+            rospy.loginfo("intake_reader_2023 : trying to close/reopen port")
+            try:
+                port.close()
+                rospy.sleep(2.5)
+                port.open()
+            except Exception as e:
+                rospy.logerr("intake_reader_2023 : error closing/reopening port!")
+        r.sleep()
     port.close()
 
 main()

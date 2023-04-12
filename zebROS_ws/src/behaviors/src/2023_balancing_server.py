@@ -220,7 +220,7 @@ class AutoBalancing:
             r.sleep()
         
         start_time = rospy.Time.now()
-        while (rospy.Time.now() - start_time <= rospy.Duration(0.5)):
+        while (rospy.Time.now() - start_time <= rospy.Duration(0.2)):
             cmd_vel_msg = geometry_msgs.msg.Twist()
             cmd_vel_msg.angular.x = 0 # todo, tune me
             cmd_vel_msg.angular.y = 0
@@ -230,6 +230,7 @@ class AutoBalancing:
             cmd_vel_msg.linear.z = 0
             self.pub_cmd_vel.publish(cmd_vel_msg)
             self.pub_orient_command.publish(orientation_msg) 
+            r.sleep()
 
         # finding out when we are on the floor
         start_time = rospy.Time.now()
@@ -282,13 +283,19 @@ class AutoBalancing:
         goal_to_send.angle_offset = 0
         goal_to_send.towards_charging_station = goal.towards_charging_station
         self.balancer_client.send_goal(goal_to_send)
-        ''' 
-        if -9 < math.degrees(self.current_pitch) < 9:
-            rospy.loginfo("Within tolerance, stopping and breaking!")
-            self.balancer_client.cancel_all_goals()
-            self.state = States.AFTER_TWO_WHEELS
-            rospy.sleep(0.25)
-        '''
+        while not (-9 < math.degrees(self.current_pitch) < 9):
+            if self._as.is_preempt_requested():
+                rospy.loginfo('%s: Preempted' % self._action_name)
+                self.preempt() # stop pid
+                self._as.set_preempted()
+                return
+            r.sleep()
+            
+        rospy.loginfo("Within tolerance, stopping and breaking!")
+        self.balancer_client.cancel_all_goals()
+        self.state = States.AFTER_TWO_WHEELS
+        rospy.sleep(0.25)
+    
         rospy.loginfo("running final PID!")
         goal_to_send = behavior_actions.msg.Balancer2023Goal()
         goal_to_send.angle_offset = 0
@@ -300,11 +307,6 @@ class AutoBalancing:
                 self.preempt() # stop pid
                 self._as.set_preempted()
                 return
-            if -2 <= math.degrees(self.current_pitch) <= 2: 
-                self.balancer_client.cancel_all_goals()
-                self.preempt()
-                rospy.logwarn("Canceling balancer")
-                break
             self.pub_orient_command.publish(orientation_msg)
             r.sleep()
             

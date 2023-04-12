@@ -52,6 +52,8 @@ class FourBarController_2023 : public controller_interface::MultiInterfaceContro
         std::atomic<double> motion_magic_acceleration;
         std::atomic<int> motion_s_curve_strength;
 
+        std::atomic<bool> want_to_zero_;
+
         std::unique_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddr_;
 
         ros::ServiceServer rezero_service_;
@@ -266,22 +268,27 @@ void FourBarController_2023::starting(const ros::Time &time)
     zeroed_ = false;
     last_zeroed_ = false;
     position_command_ = 0.0; // 0 is when we are fully retracted
+    want_to_zero_ = true;
 }
 
 void FourBarController_2023::update(const ros::Time &time, const ros::Duration &/*duration*/)
 {
     // If we hit the limit switch, (re)zero the position.
-    if (four_bar_joint_.getReverseLimitSwitch())
+    if (four_bar_joint_.getReverseLimitSwitch() && want_to_zero_)
     {
         ROS_INFO_THROTTLE(2, "FourBarController_2023 : hit limit switch");
-        if (!last_zeroed_)
-        {
-            zeroed_ = true;
-            // last_zeroed_ = true;
-            four_bar_joint_.setSelectedSensorPosition(0); // relative to min position
-            four_bar_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
-            four_bar_joint_.setDemand1Value(angle_to_feed_forward_[four_bar_joint_.getPosition()]);
-        }
+        // if (!last_zeroed_)
+        // {
+        zeroed_ = true;
+        last_zeroed_ = true;
+        four_bar_joint_.setSelectedSensorPosition(0); // relative to min position
+        four_bar_joint_.setDemand1Type(hardware_interface::DemandType_ArbitraryFeedForward);
+        four_bar_joint_.setDemand1Value(angle_to_feed_forward_[four_bar_joint_.getPosition()]);
+        // }
+    }
+    else if (last_zeroed_) {
+        want_to_zero_ = false;
+        last_zeroed_ = false;
     }
     else
     {
@@ -370,6 +377,7 @@ bool FourBarController_2023::rezeroService(std_srvs::Empty::Request  &req,
 {
     zeroed_ = false;
     last_time_down_ = ros::Time::now();
+    want_to_zero_ = true;
     return true;
 }
 

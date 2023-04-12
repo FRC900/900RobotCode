@@ -933,7 +933,7 @@ class AutoNode {
 			goal.towards_charging_station = false;
 		}
 		balancing_ac.sendGoal(goal);
-		waitForActionlibServer(balancing_ac, 10.0, "balancing_server");
+		waitForActionlibServer(balancing_ac, 16.0, "balancing_server");
 		ROS_INFO_STREAM("Success!");
 		return true;
 	}

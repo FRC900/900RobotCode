@@ -374,6 +374,7 @@ public:
     uint8_t valid_frames = 0;
     while (hypot(x_error_, y_error_) > goal->tolerance || valid_frames < valid_frames_config_) {
         ros::spinOnce(); // grab latest callback data
+        orientation_command_pub_.publish(msg);
         if (as_.isPreemptRequested() || !ros::ok())
         {
             ROS_ERROR_STREAM("2023_align_to_grid_closed_loop : Preempted");
