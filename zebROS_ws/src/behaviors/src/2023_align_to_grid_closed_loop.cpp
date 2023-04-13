@@ -465,7 +465,6 @@ public:
         y_error_ = fabs(offset.y - tagLocation.y);
 
         ROS_INFO_STREAM("x tag = " << tagLocation.x << ", commanded x = " << offset.x << ", effort = " << x_eff_);
-
         geometry_msgs::Twist t;
         t.linear.x = x_eff_;
         t.linear.y = y_eff_;

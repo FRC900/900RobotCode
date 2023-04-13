@@ -12,6 +12,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <geometry_msgs/Twist.h>
 #include <angles/angles.h>
+#include <std_msgs/Float64.h>
 
 double getYaw(const geometry_msgs::Quaternion &o) {
     tf2::Quaternion q;
@@ -49,6 +50,7 @@ protected:
 	double time_before_reverse_;
 
 	double elevator_threshold_;
+	double orient_effort_;
 
 	size_t elevator_idx_;
 	double elevator_position_;
@@ -60,6 +62,8 @@ protected:
 
 	double drive_back_time_;
 	ros::Publisher cmd_vel_pub_;
+	ros::Publisher orientation_command_pub_;
+	ros::Subscriber control_effort_sub_;
 
 public:
 
@@ -69,7 +73,10 @@ public:
 		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true),
    		ac_intaking_("/intaking/intaking_server_2023", true),
 		ac_hold_position_("/hold_position/hold_position_server", true),
-		cmd_vel_pub_(nh_.advertise<geometry_msgs::Twist>("/placing/cmd_vel", 1))
+		cmd_vel_pub_(nh_.advertise<geometry_msgs::Twist>("/placing/cmd_vel", 1)),
+		orientation_command_pub_(nh_.advertise<std_msgs::Float64>("/teleop/orientation_command", 1)),
+    	control_effort_sub_(nh_.subscribe<std_msgs::Float64>("/teleop/orient_strafing/control_effort", 1, &PlacingServer2023::controlEffortCB, this))
+
 	{
 		elevator_idx_ = std::numeric_limits<size_t>::max();
 		if (!nh_.getParam("time_before_reverse", time_before_reverse_)) {
@@ -156,6 +163,10 @@ public:
 		}
 
 		return ac.getState().isDone();
+	}
+
+	void controlEffortCB(const std_msgs::Float64ConstPtr& msg) {
+		orient_effort_ = msg->data;
 	}
 
 	void gamePieceCallback(const behavior_actions::GamePieceState2023ConstPtr &msg) {
@@ -361,7 +372,10 @@ public:
 			ros::Time move_back_time = ros::Time::now();
 
 			if (!goal->no_drive_back) {
+				std_msgs::Float64 msg;
+				msg.data = M_PI;
 				while ((ros::Time::now() - move_back_time) < ros::Duration(drive_back_time_)) {
+					orientation_command_pub_.publish(msg);
 					ros::spinOnce();
 					ROS_INFO_STREAM_THROTTLE(0.1, "2023_placing_server : driving backwards");
 					geometry_msgs::Twist cmd_vel;
@@ -370,7 +384,7 @@ public:
 					cmd_vel.linear.z = 0.0;
 					cmd_vel.angular.x = 0.0;
 					cmd_vel.angular.y = 0.0;
-					cmd_vel.angular.z = 0.0;
+					cmd_vel.angular.z = orient_effort_;
 					cmd_vel_pub_.publish(cmd_vel);
 					r.sleep();
 				}

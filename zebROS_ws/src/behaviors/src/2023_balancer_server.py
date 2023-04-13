@@ -109,7 +109,7 @@ class Balancer:
         # send to motors, @TODO
         msg = self.make_zero_twist()
         msg.linear.x = float(x_command.data) if abs(math.degrees(self.current_pitch)) > 1.5 else 0
-        msg.angular.z = float(self.current_orient_effort) if abs(self.current_orient_setpoint - self.current_yaw) > 0.1 else 0
+        msg.angular.z = float(self.current_orient_effort)
         self.pub_cmd_vel.publish(msg)
 
     def imu_callback(self, imu_msg):

@@ -5,7 +5,7 @@
   <arg name="rvizconfig" default="$(find four_bar_elevator_2023)/rviz/urdf.rviz" />
 
   <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
-
+  <node name="fake_sensors_node" pkg="fake_sensors" type="talon_state_republisher"/>
   <node if="$(arg gui)" name="joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" >
     <param name="source_list" value="talon_joint_states" />
   </node>

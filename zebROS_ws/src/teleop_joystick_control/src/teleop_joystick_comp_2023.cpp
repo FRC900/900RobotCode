@@ -138,14 +138,12 @@ uint8_t autoMode() {
 
 uint8_t alliance_color{};
 bool called_park_endgame = false;
-bool operator_control = false;
 
 void matchStateCallback(const frc_msgs::MatchSpecificData &msg)
 {
 	// TODO : if in diagnostic mode, zero all outputs on the
 	// transition from enabled to disabled
 	robot_is_disabled = msg.Disabled;
-	operator_control = msg.OperatorControl && msg.Enabled;
 	alliance_color = msg.allianceColor;
 	if (!called_park_endgame && msg.matchTimeRemaining < config.match_time_to_park && msg.Autonomous == false && msg.Enabled == true && msg.matchTimeRemaining > 0) {
 		// check for enabled and time != 0 so we don't trigger when the node starts (time defaults to 0, auto defaults to false)
@@ -734,12 +732,6 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if (original_angular_z == 0.0 && old_angular_z != 0.0) {
 				ROS_WARN_STREAM_THROTTLE(1, "Send set angle = false");
 				sendSetAngle = false;
-			}
-
-			if (!operator_control) {
-				ROS_WARN_STREAM_THROTTLE(1, "Operator control callback, sendSetAngle = true and old_angular_z = 0");
-				sendSetAngle = true;
-				old_angular_z = 0;
 			}
 
 			if (original_angular_z == 0.0 && !sendSetAngle) {

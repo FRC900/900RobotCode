@@ -91,7 +91,7 @@ class AutoBalancing:
         yaw = euler[2]
         self.current_pitch = pitch
         self.current_yaw = yaw
-        rospy.loginfo_throttle(0.25, f"Balancing server - pitch in degrees {round(pitch*(180/math.pi), 4)}")
+        #rospy.loginfo_throttle(0.25, f"Balancing server - pitch in degrees {round(pitch*(180/math.pi), 4)}")
         if self.debug:
             rospy.loginfo_throttle(1, f"Balancing server - Pitch in degrees {round(pitch*(180/math.pi), 4)}")
 
@@ -289,6 +289,7 @@ class AutoBalancing:
                 self.preempt() # stop pid
                 self._as.set_preempted()
                 return
+            self.pub_orient_command.publish(orientation_msg)
             r.sleep()
             
         rospy.loginfo("Within tolerance, stopping and breaking!")
