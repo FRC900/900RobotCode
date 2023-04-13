@@ -10,6 +10,11 @@ topics:
   timeout : 0.2
   priority: 175
 -
+  name    : placing_cmd_vel
+  topic   : /placing/cmd_vel
+  timeout : 0.2
+  priority: 148
+-
   name    : auto_cmd_vel
   topic   : /auto/cmd_vel
   timeout : 0.2
@@ -34,11 +39,6 @@ topics:
   topic   : /balance_position/balancer_server/swerve_drive_controller/cmd_vel
   timeout : 0.2
   priority: 130
--
-  name    : placing_cmd_vel
-  topic   : /placing/cmd_vel
-  timeout : 0.2
-  priority: 129
 -
   name    : align_cmd_vel
   topic   : /align/cmd_vel
