@@ -1,7 +1,7 @@
 port: /dev/PICOBEE
 baud: 921600
 samples: 2
-min_range: 0.05
-max_range: 1.0
+min_range: 0.02
+max_range: 0.6
 flip_terabees: False # if this is true, left is right and right is left (in case they are wired backwards)
 # 2.011

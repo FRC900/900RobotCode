@@ -14,6 +14,12 @@ averages = [[],[]]
 def uint16_to_dist(u16: int):
     if u16 == 65535:
         return float("inf")
+    if u16 == 0:
+        rospy.logwarn_throttle(0.5, "intake_reader_2023 : distance too close on terabee!")
+        return 0.03 # minimum distance
+    if u16 == 1:
+        rospy.logwarn_throttle(0.5, "intake_reader_2023 : invalid reading on terabee!")
+        return float("inf")
     else:
         return u16 / 1000.0 # measured in millimeters
 
