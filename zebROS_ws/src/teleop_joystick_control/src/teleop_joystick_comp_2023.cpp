@@ -756,7 +756,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				}
 			}
 
-			if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (cmd_vel.angular.z == 0.0) && !sendRobotZero)
+			if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (original_angular_z == 0.0) && !sendRobotZero)
 			{
 				no_driver_input = true;
 				std_srvs::Empty empty;
