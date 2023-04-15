@@ -203,6 +203,8 @@ protected:
   ros::ServiceClient set_leds_green_client_;
   double orient_effort_;
 
+  double max_terabee_distance_; // to avoid rotating when we drive forward
+
 public:
 
   AlignToGridAction(std::string name) :
@@ -264,6 +266,7 @@ public:
       
     nh_.getParam("min_valid_frames", valid_frames_config_);
     nh_.getParam("missed_frames_allowed", missed_frames_before_exit_);
+    nh_.param<double>("max_terabee_distance", max_terabee_distance_, 0.15);
     // need to load grid stations here.
 
     as_.start();
@@ -450,6 +453,9 @@ public:
                 //ROS_ERROR_STREAM("2023_align_to_grid : game piece offset is NaN, assuming game piece is centered");
             } 
             else {
+                if (fabs(center_offset) > max_terabee_distance_) {
+                  center_offset = (center_offset > 0) ? max_terabee_distance_ : -max_terabee_distance_;
+                }
                 offset.y += center_offset; // inverted because where tag is relative to us
             }
         }
