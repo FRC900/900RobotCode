@@ -477,6 +477,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 		align_goal.piece = game_piece;
 		align_goal.override_game_piece = false;
 		align_goal.from_Trex = false; // maybe should be true since that is what we do in auto?
+		
 		align_and_place_ac->sendGoal(align_goal);
 		auto_place_state = AutoPlaceState::ALIGNING; 
 		ROS_INFO_STREAM("AutoPlaceState == ALIGNING");
@@ -882,10 +883,13 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 				intaking_ac->cancelGoalsAtAndBeforeTime(ros::Time::now());
 			}
 
+
+			// Should be the dpad right here
+
 			//Joystick1: directionLeft
 			if(joystick_states_array[0].directionLeftPress)
 			{
-
+				
 			}
 			if(joystick_states_array[0].directionLeftButton)
 			{
@@ -931,6 +935,9 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if(joystick_states_array[0].directionDownRelease)
 			{
 			}
+
+			// end dpad
+
 
 			//Joystick1: stickLeft
 			if(joystick_states_array[0].stickLeftPress)

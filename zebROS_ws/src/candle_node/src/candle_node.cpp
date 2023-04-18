@@ -12,6 +12,7 @@
 #include <geometry_msgs/Twist.h>
 #include <std_srvs/Empty.h>
 #include <frc_msgs/MatchSpecificData.h>
+#include <frc_msgs/JoystickState.h>
 
 constexpr uint8_t MAX_LED = 34;
 constexpr uint8_t MID_START = 0;
@@ -35,6 +36,10 @@ struct NodeCTX {
     bool current_exceeded_;
     double intake_current_threshold_;
     bool pathing;
+    bool DPADLEFT;
+    bool DPADRIGHT;
+    bool DPADUP; 
+    bool DPADDOWN;
 
     NodeCTX() :
         cone_button_pressed{false},
@@ -90,6 +95,56 @@ struct NodeCTX {
         }
         if (last_pathing != pathing) {
             updated = true;
+        }
+    }
+    
+    void joystick_callback(const frc_msgs::JoystickState& msg) {
+        ROS_INFO_STREAM_THROTTLE(2, "Joystick callback!");
+        if(msg.directionLeftPress)
+        {
+            DPADLEFT = true;
+            DPADRIGHT = false;
+            DPADUP = false; 
+            DPADDOWN = false;
+            this->updated = true;
+        }
+
+        //Joystick1: directionRight
+        if(msg.directionRightPress)
+        {
+            DPADRIGHT = true;
+            DPADLEFT = false;
+            DPADUP = false; 
+            DPADDOWN = false;
+            this->updated = true;
+        }
+
+        //Joystick1: directionUp
+        if(msg.directionUpPress)
+        {
+            DPADUP = true;
+            DPADLEFT = false;
+            DPADRIGHT = false;
+            DPADDOWN = false;
+            this->updated = true;
+        }
+
+        //Joystick1: directionDown
+        if(msg.directionDownPress)
+        {
+            DPADDOWN = true;
+            DPADLEFT = false;
+            DPADRIGHT = false;
+            DPADUP = false; 
+            this->updated = true;
+        }
+        if(msg.buttonXPress)
+        {
+            DPADDOWN = false;
+            DPADLEFT = false;
+            DPADRIGHT = false;
+            DPADUP = false; 
+            this->updated = true; 
         }
     }
 
@@ -171,6 +226,7 @@ int main(int argc, char **argv) {
     ros::Subscriber talon_state_subscriber = node.subscribe("/frcrobot_jetson/talon_states", 1, &NodeCTX::talon_callback, &ctx);
     ros::Subscriber path_follower_subscriber = node.subscribe("/path_follower/path_follower_pid/swerve_drive_controller/cmd_vel", 1, &NodeCTX::path_callback, &ctx);
     ros::Subscriber team_colour_subscriber = node.subscribe("/frcrobot_rio/match_data", 1, &NodeCTX::team_colour_callback, &ctx);
+    ros::Subscriber joystick_state_sub = node.subscribe("/frcrobot_rio/joystick_states/1", 1, &NodeCTX::joystick_callback, &ctx);
 
     // ROS service clients (setting the CANdle)
     ros::ServiceClient colour_client = node.serviceClient<candle_controller_msgs::Colour>("/frcrobot_jetson/candle_controller/colour", false);
@@ -215,8 +271,63 @@ int main(int argc, char **argv) {
             imu_colour_req.request.red = ctx.imu_zeroed ? 0 : 128;
             imu_colour_req.request.green = ctx.imu_zeroed ? 128 : 0;
             imu_colour_req.request.blue = 0;
+            if (ctx.DPADDOWN) {
+                // down 
+                ros::Duration(0.25).sleep();
 
-            if (ctx.auto_mode <= 3) {
+                if (colour_client.call(imu_colour_req)) {
+                    ROS_INFO_STREAM("Updated LEDs imu zero");
+                    ctx.updated = false;
+                } else {
+                    ROS_ERROR_STREAM("Failed to update LEDs");
+                }
+
+                candle_controller_msgs::Animation animation_req;
+                animation_req.request.animation_type = animation_req.request.ANIMATION_TYPE_RAINBOW;
+                animation_req.request.brightness = 1.0;
+                animation_req.request.speed = 1.0;
+                animation_req.request.start = 0;
+                animation_req.request.count = MAX_LED;
+                if (animation_client.call(animation_req)) {
+                    ROS_INFO_STREAM("Updated LEDs rainbow");
+                    ctx.updated = false;
+                } else {
+                    ROS_ERROR_STREAM("Failed to update LEDs");
+                }
+            }
+            else if (ctx.DPADUP) {
+                // down 
+                ros::Duration(0.25).sleep();
+
+                if (colour_client.call(imu_colour_req)) {
+                    ROS_INFO_STREAM("Updated LEDs imu zero");
+                    ctx.updated = false;
+                } else {
+                    ROS_ERROR_STREAM("Failed to update LEDs");
+                }
+
+                candle_controller_msgs::Animation animation_req;
+                animation_req.request.animation_type = animation_req.request.ANIMATION_TYPE_LARSON;
+                animation_req.request.brightness = 1.0;
+                animation_req.request.red = 255;
+                animation_req.request.blue = 255;
+                animation_req.request.speed = 0.5;
+                animation_req.request.start = 0;
+                animation_req.request.count = MAX_LED;
+                if (animation_client.call(animation_req)) {
+                    ROS_INFO_STREAM("Updated LEDs rainbow");
+                    ctx.updated = false;
+                } else {
+                    ROS_ERROR_STREAM("Failed to update LEDs");
+                }
+            }
+            else if (ctx.DPADRIGHT) {
+
+            }
+            else if (ctx.DPADLEFT) {
+
+            }
+            else if (ctx.auto_mode <= 3) {
                 // up (placing autos)
                 ros::Duration(0.25).sleep();
 
