@@ -354,6 +354,8 @@ python3 ./install.py --clang-completer --system-libclang --ninja
 
 # Install tensorflow on Jetson
 sudo pip3 install -U pip testresources setuptools==49.6.0
+sudo pip3 install nvidia-pyindex
+sudo pip3 install uff graphsurgeon
 sudo pip3 install --ignore-installed -U cython
 sudo pip3 install -U --no-deps numpy==1.21.1 future==0.18.2 mock==3.0.5 h5py==3.6.0 keras_preprocessing==1.1.2 keras_applications==1.0.8 gast==0.4.0 'protobuf<4.0.0,>=3.6.1' pybind11 pkgconfig
 #sudo env H5PY_SETUP_REQUIRES=0 pip3 install -U h5py==3.1.0
@@ -380,7 +382,7 @@ sudo pip3 install --ignore-installed .
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/arm64/cuda-keyring_1.0-1_all.deb
 sudo dpkg -i cuda-keyring_1.0-1_all.deb
 sudo apt-get update
-sudo apt-get -y install cuda nvidia-cudnn8 nvidia-cudnn8-dev libnvinfer-dev libnvinfer-plugin-dev
+sudo apt-get -y install cuda nvidia-cudnn8 nvidia-cudnn8-dev libnvinfer-dev libnvinfer-plugin-dev python3-libnvinfer-dev
 
 echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-12.0/compat" >> /home/ubuntu/.bashrc
 echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-11.4/targets/aarch64-linux/lib" >> /home/ubuntu/.bashrc
