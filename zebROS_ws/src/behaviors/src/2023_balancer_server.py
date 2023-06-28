@@ -1,5 +1,9 @@
 #! /usr/bin/env python3
 
+# of the balancer and balancing nodes, this one is dumb and just runs PID on whatever angle it is told to
+# the balancing server keeps track of where we are on the charge station, and eventually calls this to do the final balance
+# seperation is just because the node would be really big if it contained all the logic for both and hypothetically this can be resused if we need balance some other year
+
 # 2023 balancing server, runs PID on the pitch angle from the IMU (ZED) and 0s it
 
 # imports for actionlib server and messages
