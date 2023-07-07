@@ -12,6 +12,14 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
 
+execute_process(COMMAND pgrep -f rosetta OUTPUT_VARIABLE OUT RESULT_VARIABLE NOT_APPLE_SILICON)
+# Printouts removed to avoid spam
+# if(NOT_APPLE_SILICON)
+#   message("Not Apple Silicon")
+# else()
+#   message("Apple Silicon, skipping -flto")
+# endif()
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-declarations>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-switch>")
@@ -31,7 +39,12 @@ else() # Native builds
   set (CMAKE_RANLIB "gcc-ranlib" )
   set (CMAKE_AR     "gcc-ar"     )
   
-  set (OPT_FLAGS "${OPT_FLAGS} -O3 -fno-finite-math-only -flto=auto -fno-fat-lto-objects -fuse-linker-plugin -ffunction-sections -fdata-sections -Wl,-gc-sections")
+  set (OPT_FLAGS "${OPT_FLAGS} -O3 -fno-finite-math-only -fno-fat-lto-objects -fuse-linker-plugin -ffunction-sections -fdata-sections -Wl,-gc-sections")
+  
+  if (NOT_APPLE_SILICON)
+    set (OPT_FLAGS "${OPT_FLAGS} -flto=auto")
+  endif()
+
   if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf") # Jetson TK1
 	set (OPT_FLAGS "${OPT_FLAGS} -mcpu=cortex-a15 -mfpu=neon-vfpv4 -fvect-cost-model")
     unset(CUDA_USE_STATIC_CUDA_RUNTIME CACHE)
