@@ -95,15 +95,15 @@ sudo update-alternatives --auto gcc
 #TensorRT requires a newer version of cmake than standard apt repos provide
 cd
 #wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | sudo tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null
-wget https://github.com/Kitware/CMake/releases/download/v3.21.3/cmake-3.21.3.tar.gz
-tar -xf cmake-3.21.3.tar.gz
-cd cmake-3.21.3
+wget https://github.com/Kitware/CMake/releases/download/v3.27.0/cmake-3.27.0.tar.gz
+tar -xf cmake-3.27.0.tar.gz
+cd cmake-3.27.0
 cmake -GNinja -DCMAKE_BUILD_TYPE:STRING=Release .
 sudo ninja install
 sudo mv /usr/bin/cmake /usr/bin/cmake.old
 sudo ln -s /usr/local/bin/cmake /usr/bin/cmake
 cd ..
-sudo rm -rf cmake-3.21.3*
+sudo rm -rf cmake-3.27.0*
 
 #install caffe
 # cd
@@ -135,7 +135,7 @@ cd ../..
 sudo rm -rf tinyxml2
 
 #install zed sdk
-wget --no-check-certificate https://download.stereolabs.com/zedsdk/3.8/l4t35.1/jetsons
+wget --no-check-certificate https://download.stereolabs.com/zedsdk/4.0/l4t35.3/jetsons
 chmod 755 jetsons
 ./jetsons
 rm ./jetsons
@@ -158,11 +158,12 @@ cd ~/2023RobotCode
 
 sudo curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr-electronics.com/ctr-pubkey.gpg"
 sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr.list "https://deb.ctr-electronics.com/ctr.list"
+sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr2023.list "https://deb.ctr-electronics.com/ctr2023.list"
 sudo apt update
 sudo apt install -y canivore-usb
 
 sudo bash -c "echo \"[Match\"] >> /etc/systemd/network/80-can.network"
-sudo bash -c "echo \"Name=can\"* >> /etc/systemd/network/80-can.network"
+sudo bash -c "echo \"Name=can0\" >> /etc/systemd/network/80-can.network"
 sudo bash -c "echo \\"" >> /etc/systemd/network/80-can.network"
 sudo bash -c "echo \"[CAN\"] >> /etc/systemd/network/80-can.network"
 sudo bash -c "echo \"BitRate=1000K\" >> /etc/systemd/network/80-can.network"
@@ -231,7 +232,7 @@ mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include
 mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/ctre
 mkdir -p /home/ubuntu/ctre
 cd /home/ubuntu/ctre
-python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://maven.ctr-electronics.com/release/com/ctre/phoenixpro/PhoenixProAnd5-frc2023-latest.json 
+python3 /home/ubuntu/2023RobotCode/scripts/jetson_install/download_maven.py https://maven.ctr-electronics.com/release/com/ctre/phoenix6/latest/Phoenix6And5-frc2023-latest.json 
 cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include
 find /home/ubuntu/ctre -name \*headers\*zip | grep -v debug | xargs -n 1 unzip -o
 cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/ctre
@@ -271,12 +272,12 @@ rm -rf /home/ubuntu/sparkmax
 
 # Install wpilib headers by copying them from the local maven dir
 cd /home/ubuntu
-wget https://github.com/wpilibsuite/allwpilib/releases/download/v2023.2.1/WPILib_Linux-2023.2.1.tar.gz
+wget https://github.com/wpilibsuite/allwpilib/releases/download/v2023.4.3/WPILib_Linux-2023.4.3.tar.gz
 mkdir -p /home/ubuntu/wpilib/2023
 cd /home/ubuntu/wpilib/2023
-tar -xzf /home/ubuntu/WPILib_Linux-2023.2.1.tar.gz
-tar -xzf WPILib_Linux-2023.2.1/WPILib_Linux-2023.2.1-artifacts.tar.gz
-rm /home/ubuntu/WPILib_Linux-2023.2.1.tar.gz
+tar -xzf /home/ubuntu/WPILib_Linux-2023.4.3.tar.gz
+tar -xzf WPILib_Linux-2023.4.3/WPILib_Linux-2023.4.3-artifacts.tar.gz
+rm /home/ubuntu/WPILib_Linux-2023.4.3.tar.gz
 cd /home/ubuntu/wpilib/2023/tools
 python3 ToolsUpdater.py
 mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/lib/wpilib
@@ -285,7 +286,7 @@ find ../../../.. -name \*athena\*zip | grep -v debug | xargs -n1 unzip -o
 mkdir -p /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/wpilib
 cd /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/wpilib
 find ../../../.. -name \*headers\*zip | xargs -n1 unzip -o
-rm -rf /home/ubuntu/wpilib/2023/maven /home/ubuntu/wpilib/2023/jdk /home/ubuntu/wpilib/2023/WPILib_Linux-2023.2.1 /home/ubuntu/wpilb/2023/utility /home/ubuntu/wpilib/2023/tools /home/ubuntu/wpilib/2023/documentation /home/ubuntu/wpilib/2023/installUtils /home/ubuntu/wpilib/2023/vsCodeExtensions
+rm -rf /home/ubuntu/wpilib/2023/maven /home/ubuntu/wpilib/2023/jdk /home/ubuntu/wpilib/2023/WPILib_Linux-2023.4.3 /home/ubuntu/wpilb/2023/utility /home/ubuntu/wpilib/2023/tools /home/ubuntu/wpilib/2023/documentation /home/ubuntu/wpilib/2023/installUtils /home/ubuntu/wpilib/2023/vsCodeExtensions
 sed -i -e 's/   || defined(__thumb__) \\/   || defined(__thumb__) \\\n   || defined(__aarch64__) \\/' /home/ubuntu/wpilib/2023/roborio/arm-frc2023-linux-gnueabi/include/wpilib/FRC_FPGA_ChipObject/fpgainterfacecapi/NiFpga.h
 find ~/wpilib -name \*.debug | xargs rm -rf
 find ~/wpilib -name athena | xargs rm -rf
@@ -379,10 +380,10 @@ sudo pip3 install --ignore-installed .
 
 
 # Install cuda manually for now?
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/arm64/cuda-keyring_1.0-1_all.deb
-sudo dpkg -i cuda-keyring_1.0-1_all.deb
-sudo apt-get update
-sudo apt-get -y install cuda nvidia-cudnn8 nvidia-cudnn8-dev libnvinfer-dev libnvinfer-plugin-dev python3-libnvinfer-dev
+#wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/arm64/cuda-keyring_1.0-1_all.deb
+#sudo dpkg -i cuda-keyring_1.0-1_all.deb
+#sudo apt-get update
+#sudo apt-get -y install cuda nvidia-cudnn8 nvidia-cudnn8-dev libnvinfer-dev libnvinfer-plugin-dev python3-libnvinfer-dev
 
 echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-12.0/compat" >> /home/ubuntu/.bashrc
 echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda-11.4/targets/aarch64-linux/lib" >> /home/ubuntu/.bashrc
@@ -391,34 +392,78 @@ cd
 export PATH=$PATH:/usr/local/cuda/bin
 git clone https://github.com/NVIDIA/TensorRT.git
 cd TensorRT
-git checkout ef7713ca67435690f0b28dc9a50ee4021ae3651d
+git checkout 8.5.2
 git submodule update --init --recursive
-patch -p1 < /home/ubuntu/2023RobotCode/scripts/jetson_install/tensorrt.patch
 mkdir build
 cd build
 cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DCMAKE_CXX_STANDARD=17 ..
+cmake -GNinja -DBUILD_PARSERS=OFF -DBUILD_SAMPLES=OFF -DGPU_ARCHS="72 87" -DCUDA_VERSION=11.4 -DCUDNN_VERSION=8.6.0 ..
+
 sudo ninja install
 
-#sudo pip3 install --install-option="--jobs=6" --global-option=build_ext --global-option="-I/usr/local/cuda/include" --global-option="-L/usr/local/cuda/lib64" pycuda
 sudo -H bash
 export PATH=$PATH:/usr/local/cuda/bin
 export CUDA_ROOT=/usr/local/cuda
 pip3 install pycuda
 
+sudo apt install -y  libsoup2.4-dev libjson-glib-dev libgstrtspserver-1.0-dev
 cd
 git clone https://github.com/FRC900/jetson-utils.git
 cd jetson-utils
-git checkout dev
+git checkout -t origin/ssd_norm
 mkdir build
 cd build
-sed -i -e 's/set(PYTHON_BINDING_VERSIONS 2.7 3.6 3.7)/set(PYTHON_BINDING_VERSIONS 2.7 3.8)/' ../python/CMakeLists.txt
-sed -i -e 's/-gencode arch=compute_37,code=sm_37/#-gencode arch=compute_37,code=sm_37/' ../CMakeLists.txt
-sed -i -e 's/-gencode arch=compute_53,code=sm_53/#-gencode arch=compute_53,code=sm_53/' ../CMakeLists.txt
-sed -i -e 's/-gencode arch=compute_60,code=sm_60/#-gencode arch=compute_60,code=sm_60/' ../CMakeLists.txt
-sed -i -e 's/-gencode arch=compute_61,code=sm_61/-gencode arch=compute_72,code=sm_72/' ../CMakeLists.txt
-sed -i -e 's/-gencode arch=compute_62,code=sm_62/-gencode arch=compute_87,code=sm_87/' ../CMakeLists.txt
 cmake -GNinja ..
 sudo ninja install
+
+# Ultralytics YOLOv8 prereqs here
+sudo python3 -m pip install --no-cache-dir --upgrade pascal_voc
+sudo python3 -m pip install --no-cache-dir --upgrade 'matplotlib>=3.2.2'
+sudo python3 -m pip install --no-cache-dir --upgrade 'opencv-python>=4.6.0'
+sudo python3 -m pip install --no-cache-dir --upgrade 'Pillow>=7.1.2'
+sudo python3 -m pip install --no-cache-dir --upgrade 'PyYAML>=5.3.1'
+sudo python3 -m pip install --no-cache-dir --upgrade 'requests>=2.23.0'
+sudo python3 -m pip install --no-cache-dir --upgrade 'scipy>=1.4.1'
+sudo python3 -m pip install --no-cache-dir --upgrade 'tqdm>=4.64.0'
+sudo python3 -m pip install --no-cache-dir --upgrade 'pandas>=1.1.4'
+sudo python3 -m pip install --no-cache-dir --upgrade 'seaborn>=0.11.0'
+sudo python3 -m pip install --no-cache-dir --upgrade psutil
+
+sudo python3 -m pip install --no-cache-dir --upgrade 'onnx>=1.12'
+sudo python3 -m pip install --no-cache-dir --upgrade 'onnxsim>=0.4.1'
+
+wget https://nvidia.box.com/shared/static/mvdcltm9ewdy2d5nurkiqorofz1s53ww.whl -O onnxruntime_gpu-1-15.0-cp38-cp38-linux_aarch64.whl
+sudo pip3 install onnxruntime_gpu-1-15.0-cp38-cp38-linux_aarch64.whl
+rm onnxruntime_gpu-1-15.0-cp38-cp38-linux_aarch64.whl
+
+# cpu-only version : sudo python3 -m pip install --no-cache-dir --upgrade 'onnxruntime'
+# not available sudo python3 -m pip install --no-cache-dir --upgrade onnxruntime-gpu
+#sudo python3 -m pip install --no-cache-dir --upgrade nvidia-pyindex
+#sudo python3 -m pip install --no-cache-dir --upgrade nvidia-tensorrt
+
+#export PYTORCH_URL=https://nvidia.box.com/shared/static/rehpfc4dwsxuhpv4jgqv8u6rzpgb64bq.whl 
+#export PYTORCH_WHL=torch-2.0.0a0+ec3941ad.nv23.2-cp38-cp38-linux_aarch64.whl 
+export PYTORCH_URL=https://nvidia.box.com/shared/static/i8pukc49h3lhak4kkn67tg9j4goqm0m7.whl
+export PYTORCH_WHL=torch-2.0.0+nv23.05-cp38-cp38-linux_aarch64.whl
+
+sudo apt-get install -y libopenblas-base libopenmpi-dev
+wget --quiet --show-progress --progress=bar:force:noscroll --no-check-certificate ${PYTORCH_URL} -O ${PYTORCH_WHL}
+sudo pip3 install --no-cache-dir --verbose ${PYTORCH_WHL}
+rm ${PYTORCH_WHL}
+
+
+export TORCHVISION_VERSION=v0.15.0
+export TORCH_CUDA_ARCH_LIST=7.2;8.7 
+sudo apt install -y libjpeg-dev libpng-dev zlib1g-dev
+git clone --branch ${TORCHVISION_VERSION} --recursive --depth=1 https://github.com/pytorch/vision torchvision
+cd torchvision
+git checkout ${TORCHVISION_VERSION}
+sudo python3 setup.py install
+cd ..
+sudo rm -rf torchvision
+
+sudo python3 -m pip install --no-cache-dir --upgrade ultralytics
+# End of ultralytics YOLOv8 deps
 
 echo "export PATH=\$PATH:/home/ubuntu/.local/bin:/home/ubuntu/tensorflow_workspace/tools:/usr/local/cuda/bin" >> /home/ubuntu/.bashrc
 

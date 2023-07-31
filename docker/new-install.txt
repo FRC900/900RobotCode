@@ -1,0 +1,76 @@
+# Run this to configure a brand new ubuntu install for using our code
+# This could be after creating a new WSL2 setup under windows, a VM image
+# from scratch or in a new native install
+# Should only have to run this once
+
+
+# https://learn.microsoft.com/en-us/windows/wsl/install
+# Windows WSL2 install should be just this from a command prompt
+#
+#  wsl --install
+
+sudo apt update
+
+# Docker setup
+sudo apt install -y curl
+curl https://get.docker.com | sh
+
+# Make sure docker auto-starts on boot
+# For native linux / VM images :
+sudo systemctl --now enable docker
+
+# For Win 11 WSL2:
+#
+# add to /etc/wsl.conf
+
+# [boot]
+# systemd=true
+
+# For Win 10 WSL2:
+
+# add to ~/.profile:
+# if service docker status 2>&1 | grep -q "is not running"; then
+#     wsl.exe -d "${WSL_DISTRO_NAME}" -u root -e /usr/sbin/service docker start >/dev/null 2>&1
+# fi
+
+# Back to steps for all installs
+
+# Allow non-root users to run docker commands
+sudo gpasswd -a $USER docker
+
+# Random updates
+sudo apt upgrade -y
+sudo apt install -y terminator
+
+# log out, log back in (probably also need a restart anyway after apt upgrade)
+
+# Install git-lfs
+sudo apt install -y wget
+cd &&\
+    wget https://github.com/git-lfs/git-lfs/releases/download/v3.3.0/git-lfs-linux-amd64-v3.3.0.tar.gz &&\
+	mkdir git-lfs-install &&\
+	cd git-lfs-install &&\
+	tar -xzf ../git-lfs-linux-amd64-v3.3.0.tar.gz &&\
+	cd git-lfs-3.3.0 &&\
+	sudo ./install.sh &&\
+	cd &&\
+	rm -rf git-lfs-linux-amd64-v3.3.0.tar.gz git-lfs-install &&\
+	git lfs install
+
+# Set up student's git ssh keys here
+# Generate a key here, skip using a passphrase and adding to ssh-agent : https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent
+# Then add it to student's github account : https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account
+
+
+# Install repo - perhaps ssh version inside container, worry about SSH keys?
+cd 
+git clone https://github.com/FRC900/2023RobotCode.git
+cd 2023RobotCode
+git submodule update --init
+docker run --net=host -v /tmp/.X11-unix:/tmp/.X11-unix \
+ -v $HOME/2023RobotCode:/home/ubuntu/.2023RobotCode.readonly \
+ --ipc=host \
+ --shm-size=8G \
+ -e DISPLAY=$DISPLAY --privileged --user ubuntu frc900/zebros-2023-dev:latest /bin/bash -c 'wstool update -t /home/ubuntu/2023RobotCode/zebROS_ws/src -j2'
+
+sudo apt autoremove
