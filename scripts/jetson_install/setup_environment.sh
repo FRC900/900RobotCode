@@ -19,7 +19,9 @@ sudo apt install -y \
     dbus-x11 \
     exfat-fuse \
     exfat-utils \
+	gcc-10 \
     gcc-11 \
+	g++-10 \
     g++-11 \
     gdb \
     gfortran \
@@ -89,6 +91,7 @@ sudo apt install -y \
     zstd
 
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 --slave /usr/bin/g++ g++ /usr/bin/g++-10
 sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 90 --slave /usr/bin/g++ g++ /usr/bin/g++-9
 sudo update-alternatives --auto gcc
 
@@ -160,7 +163,8 @@ sudo curl -s --compressed -o /usr/share/keyrings/ctr-pubkey.gpg "https://deb.ctr
 sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr.list "https://deb.ctr-electronics.com/ctr.list"
 sudo curl -s --compressed -o /etc/apt/sources.list.d/ctr2023.list "https://deb.ctr-electronics.com/ctr2023.list"
 sudo apt update
-sudo apt install -y canivore-usb
+sudo apt install -y canivore-usb=1.11
+sudo apt-mark hold canivore-usb
 
 sudo bash -c "echo \"[Match\"] >> /etc/systemd/network/80-can.network"
 sudo bash -c "echo \"Name=can0\" >> /etc/systemd/network/80-can.network"
@@ -482,3 +486,4 @@ sudo rm -rf /home/ubuntu/.cache /home/ubuntu/.ccache
 
 # Install pyserial (for 2023 intake reader)
 sudo pip3 install pyserial
+sudo pip3 install cupy-cuda11x
