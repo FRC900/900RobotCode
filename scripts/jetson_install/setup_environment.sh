@@ -435,7 +435,7 @@ sudo python3 -m pip install --no-cache-dir --upgrade psutil
 
 sudo python3 -m pip install --no-cache-dir --upgrade 'onnx>=1.12'
 sudo python3 -m pip install --no-cache-dir --upgrade 'onnxsim>=0.4.1'
-
+sudo python3 -m pip install --no-cache-dir --upgrade 'pytorch_pfn_extras'
 wget https://nvidia.box.com/shared/static/mvdcltm9ewdy2d5nurkiqorofz1s53ww.whl -O onnxruntime_gpu-1-15.0-cp38-cp38-linux_aarch64.whl
 sudo pip3 install onnxruntime_gpu-1-15.0-cp38-cp38-linux_aarch64.whl
 rm onnxruntime_gpu-1-15.0-cp38-cp38-linux_aarch64.whl
