@@ -1,3 +1,0 @@
-shooter_controller:
-    time_to_raise_hood: 0.05
-    speed_threshhold: 25

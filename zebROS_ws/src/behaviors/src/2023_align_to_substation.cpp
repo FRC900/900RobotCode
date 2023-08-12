@@ -1,7 +1,6 @@
-#include "ros/ros.h"
+#include <ros/ros.h>
 #include "field_obj/Detection.h"
 #include "geometry_msgs/Point.h"
-#include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include "behavior_actions/AlignToSubstation2023Action.h"
 #include "behavior_actions/PathToAprilTagAction.h"
@@ -9,9 +8,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <sensor_msgs/Imu.h>
 #include <frc_msgs/MatchSpecificData.h>
-#include <path_follower_msgs/PathAction.h>
 #include <optional>
 #include <geometry_msgs/Twist.h>
 #include <talon_state_msgs/TalonState.h>

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.20)
 project(pf_localization)
 
 include("../cmake_modules/CMakeOpt.cmake")

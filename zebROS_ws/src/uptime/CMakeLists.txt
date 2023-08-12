@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.20)
 project(uptime)
 
 include ("../cmake_modules/CMakeOpt.cmake")
@@ -8,7 +8,6 @@ include ("../cmake_modules/CMakeOpt.cmake")
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
-  rospy
   std_msgs
 )
 

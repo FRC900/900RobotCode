@@ -1,10 +1,11 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-#include <actionlib/client/simple_action_client.h>
+//#include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/FourbarElevatorPath2023Action.h>
 #include <talon_state_msgs/TalonState.h>
 #include <controllers_2023_msgs/ElevatorSrv.h>
 #include <controllers_2023_msgs/FourBarSrv.h>
+namespace actionlib { template <class ActionSpec> class SimpleActionClient; }
 
 struct ElevatorFourbarPoint {
 	// in that order

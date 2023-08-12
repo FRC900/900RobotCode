@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.20)
 project(behaviors)
 
 include ("../cmake_modules/CMakeOpt.cmake")
@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   base_trajectory_msgs
   behavior_actions
   #color_spin
-  controllers_2019_msgs
+  #controllers_2019_msgs
   #controllers_2020_msgs
   controllers_2022_msgs
   controllers_2023_msgs
@@ -301,10 +301,10 @@ add_executable(test_actionlib src/test_actionlib.cpp)
 target_link_libraries(test_actionlib ${catkin_LIBRARIES})
 add_dependencies(test_actionlib ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-endif()
 add_executable(elevator_server src/elevator_server.cpp)
 target_link_libraries(elevator_server ${catkin_LIBRARIES})
 add_dependencies(elevator_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+endif()
 
 #add_executable(dummy src/dummy.cpp)
 #target_link_libraries(
@@ -330,6 +330,7 @@ add_dependencies(elevator_server ${behaviors_EXPORTED_TARGETS} ${catkin_EXPORTED
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+# 2018 behaviors
 if (0)
 add_executable(state_setpoint_publisher_node src/state_setpoint_publisher.cpp)
 add_dependencies(state_setpoint_publisher_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )

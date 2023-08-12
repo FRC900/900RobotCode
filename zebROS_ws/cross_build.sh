@@ -14,11 +14,15 @@ fi
 
 catkin config --profile cross -x _isolated --install --skiplist \
 	ackermann_steering_controller \
+	adi_driver \
+	adi_pico_driver \
 	ar_track_alvar \
 	apriltag_launch \
     apriltag_ros \
 	base_trajectory \
 	color_spin \
+	controllers_2019 \
+	controllers_2019_msgs \
 	controllers_2020 \
 	controllers_2020_msgs \
 	cuda_apriltag_ros \
@@ -26,10 +30,14 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	diff_drive_controller \
 	effort_controllers \
 	fake_sensors \
+	field \
 	force_torque_sensor_controller \
 	four_bar_elevator_2023 \
 	four_wheel_steering_controller \
+	frcrobot_description \
+	frcrobot_gazebo \
 	goal_detection \
+	navx_publisher \
 	gripper_action_controller \
 	pf_localization \
 	realsense2_camera \
@@ -38,10 +46,23 @@ catkin config --profile cross -x _isolated --install --skiplist \
 	robot_visualizer \
 	rosbag_scripts \
 	rospy_message_converter \
+	rosserial_arduino \
+	rosserial_chibios \
+	rosserial_embeddedlinux \
+	rosserial_mbed \
+	rosserial_server \
+	rosserial_test \
+	rosserial_tivac \
+	rosserial_vex_cortex \
+	rosserial_vex_v5 \
+	rosserial_windows \
+	rosserial_xbee \
 	rqt_driver_station_sim \
 	rqt_joint_trajectory_controller \
 	stage_ros \
 	template_controller \
+	teraranger_array \
+	teraranger_array_converter \
 	tf_object_detection \
 	turing_smart_screen \
 	velocity_controllers \

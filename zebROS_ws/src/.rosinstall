@@ -3,13 +3,6 @@
     local-name: actionlib
     uri: https://github.com/FRC900/actionlib.git
 - git:
-    local-name: adi_driver
-    uri: https://github.com/FRC900/adi_driver.git
-    version: bias_16495
-- git:
-    local-name: adi_pico_driver
-    uri: https://github.com/FRC900/adi_pico_driver.git
-- git:
     local-name: apriltag_ros
     uri: https://github.com/FRC900/apriltag_ros.git
 - git:
@@ -27,9 +20,6 @@
     local-name: pid
     uri: https://github.com/FRC900/pid.git
     version: feed_forward
-- git:
-    local-name: realsense
-    uri: https://github.com/FRC900/realsense.git
 - git:
     local-name: rosserial
     uri: https://github.com/FRC900/FRC900-rosserial
@@ -49,14 +39,6 @@
     local-name: teraranger
     uri: https://github.com/Terabee/teraranger-release.git
     version: release/melodic/teraranger/2.1.0-1
-- git:
-    local-name: teraranger_array
-    uri: https://github.com/Terabee/teraranger_array-release.git
-    version: release/melodic/teraranger_array/2.0.0-1
-- git:
-    local-name: teraranger_array_converter
-    uri: https://github.com/Terabee/teraranger_array_converter-release.git
-    version: release/kinetic/teraranger_array_converter/1.1.1-0
 - git:
     local-name: teraranger_description
     uri: https://github.com/Terabee/teraranger_description-release.git

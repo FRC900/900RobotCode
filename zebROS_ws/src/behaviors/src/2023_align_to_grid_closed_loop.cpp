@@ -9,10 +9,8 @@
 #include "ros/ros.h"
 #include "field_obj/Detection.h"
 #include "geometry_msgs/Point.h"
-#include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include "behavior_actions/AlignToGridPID2023Action.h"
-#include "behavior_actions/PathToAprilTagAction.h"
 #include <actionlib/client/simple_action_client.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -20,11 +18,8 @@
 #include <sensor_msgs/Imu.h>
 #include <frc_msgs/MatchSpecificData.h>
 #include <behavior_actions/GamePieceState2023.h>
-#include <path_follower_msgs/PathAction.h>
-#include "ros/ros.h"
 #include "std_msgs/Bool.h"
 #include "std_msgs/Float64.h"
-#include "std_msgs/Float64MultiArray.h"
 #include "geometry_msgs/Twist.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/transform_listener.h"
@@ -172,7 +167,6 @@ protected:
   double holdPosTimeout_;
   double latest_yaw_{0};
   uint8_t alliance_{0};
-  double percent_complete_{0}; 
 
   double x_error_{0};
   double y_error_{0};
@@ -327,10 +321,6 @@ public:
       }
     }
     return closestTag;
-  }
-
-  void feedbackCb(const behavior_actions::PathToAprilTagFeedbackConstPtr& feedback) {
-      percent_complete_ = feedback->percent_complete;
   }
 
   int getAllianceRelativeStationNumber(int alliance, int gridStation) {

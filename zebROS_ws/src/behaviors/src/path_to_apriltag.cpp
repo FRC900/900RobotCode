@@ -1,14 +1,11 @@
 #include "ros/ros.h"
-#include "behavior_actions/GamePiecePickup.h"
 #include <nav_msgs/Path.h>
 #include <actionlib/client/simple_action_client.h>
-#include <actionlib/client/terminal_state.h>
 #include <path_follower_msgs/PathAction.h>
 #include "base_trajectory_msgs/GenerateSpline.h"
 #include <field_obj/Detection.h>
 #include "tf2_ros/transform_listener.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "geometry_msgs/PoseWithCovarianceStamped.h"
 #include <optional>
 #include "behavior_actions/PathToAprilTagAction.h"
 #include <sensor_msgs/Imu.h>

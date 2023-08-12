@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(base_trajectory LANGUAGES CXX CUDA)
 
 include ("../cmake_modules/CMakeOpt.cmake")
@@ -127,10 +127,12 @@ add_executable(${PROJECT_NAME}_node
 	src/sample_trajectory_impl_cpu.cpp
 	)
 
-add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_61>")
+#add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-arch=sm_61>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-gencode=arch=compute_61,code=sm_61>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-gencode=arch=compute_62,code=sm_62>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-gencode=arch=compute_72,code=sm_72>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-gencode=arch=compute_86,code=sm_86>")
+add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-gencode=arch=compute_87,code=sm_87>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-std=gnu++11>")
 add_compile_options("$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-O3>")
 ## Add cmake target dependencies of the executable

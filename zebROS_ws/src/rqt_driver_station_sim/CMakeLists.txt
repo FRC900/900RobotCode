@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.20)
 project(rqt_driver_station_sim)
 
 include("../cmake_modules/CMakeOpt.cmake")

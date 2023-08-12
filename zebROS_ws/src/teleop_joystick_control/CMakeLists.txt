@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.20)
 project(teleop_joystick_control)
 
 include ("../cmake_modules/CMakeOpt.cmake")
@@ -9,7 +9,6 @@ find_package(catkin REQUIRED COMPONENTS
 	behavior_actions
 	cmake_modules
 	control_msgs
-    controllers_2019_msgs
 	controllers_2022_msgs
 	ddynamic_reconfigure
 	dynamic_reconfigure

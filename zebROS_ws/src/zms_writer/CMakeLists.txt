@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.19)
 project(zms_writer)
 
 include("../cmake_modules/CMakeOpt.cmake")

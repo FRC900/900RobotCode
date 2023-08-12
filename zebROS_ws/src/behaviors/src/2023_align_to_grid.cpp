@@ -7,7 +7,6 @@
 #include "ros/ros.h"
 #include "field_obj/Detection.h"
 #include "geometry_msgs/Point.h"
-#include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
 #include "behavior_actions/AlignToGrid2023Action.h"
 #include "behavior_actions/PathToAprilTagAction.h"
@@ -18,8 +17,6 @@
 #include <sensor_msgs/Imu.h>
 #include <frc_msgs/MatchSpecificData.h>
 #include <behavior_actions/GamePieceState2023.h>
-#include <path_follower_msgs/PathAction.h>
-
 
 geometry_msgs::Point operator-(const geometry_msgs::Point& lhs, const geometry_msgs::Point& rhs) {
     geometry_msgs::Point p;

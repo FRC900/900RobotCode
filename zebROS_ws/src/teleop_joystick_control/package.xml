@@ -16,7 +16,6 @@
   <depend>behavior_actions</depend>
   <depend>cmake_modules</depend>
   <depend>control_msgs</depend>
-  <depend>controllers_2019_msgs</depend>
   <depend>controllers_2022_msgs</depend>
   <depend>ddynamic_reconfigure</depend>
   <depend>dynamic_reconfigure</depend>

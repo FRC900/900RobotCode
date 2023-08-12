@@ -1,6 +1,6 @@
 #CURRENTLY THIS FILE IS NOT EDITED. USE AN ACTUAL CONTROLLER CMAKE FILE TO FIGURE OUT HOW TO COMPILE
 
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.20)
 project(template_controller)
 
 include ("../cmake_modules/CMakeOpt.cmake")

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.20)
 project(behavior_actions)
 
 include("../cmake_modules/CMakeOpt.cmake")
@@ -82,7 +82,7 @@ add_action_files(
 		Intake2022.action
 		Intaking2022.action
 		Ejecting2022.action
-		Elevator.action
+		#Elevator.action
 		#Align.action
 		#AlignToShoot.action
 		#Shooter.action

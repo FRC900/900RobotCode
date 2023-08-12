@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-
-    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_laser" args="12.85 -28.35 30 0 0 0 base_link laser" /> <!--sick-->
-
-  <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_to_rplidar" args="-14.85 -30.5 27.5 0 0 0 base_link rplidar" />
-
-</launch>

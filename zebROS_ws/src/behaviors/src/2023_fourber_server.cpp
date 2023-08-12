@@ -1,13 +1,10 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-#include <actionlib/client/simple_action_client.h>
 #include <talon_state_msgs/TalonState.h>
 #include <behavior_actions/Fourber2023Action.h>
-#include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <std_msgs/Float64.h>
 #include <controllers_2023_msgs/FourBarSrv.h>
 #include <iostream>
-#include <atomic>
 #include <behaviors/game_pieces_2023.h>
 
 #define FourberINFO(x) ROS_INFO_STREAM("2023_fourber_server : " << x)

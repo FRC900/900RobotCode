@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.20)
 project(rqt_dashboard)
 
 include("../cmake_modules/CMakeOpt.cmake")

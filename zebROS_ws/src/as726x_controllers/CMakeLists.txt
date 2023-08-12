@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.20)
 project(as726x_controllers)
 
 include ("../cmake_modules/CMakeOpt.cmake")
