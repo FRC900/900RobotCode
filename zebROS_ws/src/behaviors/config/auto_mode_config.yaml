@@ -18,17 +18,18 @@
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_left_hub", "stop_intaking", "shoot", "drive_forward"]
 # auto_moe_2: ["shoot", "start_intaking", "path_for_balls_right_hub", "stop_intaking", "shoot", "drive_forward"]
 
-auto_mode_1: ["place_cone_high", "pause_tiny", "pick_place_cube_from_grid_1_mirrored", "align_and_place_cube_grid_2"] # cone, cube
+#auto_mode_1: ["place_cone_high", "pause_tiny", "pick_place_cube_from_grid_1_mirrored", "align_and_place_cube_grid_2"] # cone, cube
+auto_mode_1: ["place_cone_high", "drive_out_community"]
 auto_mode_2: ["place_cone_high", "balance_facing_away", "snap_0_before_intake"] # should test this, I don't think the balancing server exits
 auto_mode_3: ["place_cone_high", "drive_out_community"]
 
 auto_mode_4: ["drive_out_community", "snap_0_before_intake"] # we now face the pieces at the end of this auto,
-auto_mode_5: ["drive_back_cmd_vel_over_charging"]
+auto_mode_5: [""]
 auto_mode_6: ["drive_out_community", "snap_0_before_intake"]
 
 auto_mode_7: ["place_cone_high"]
-auto_mode_8: ["drive_forward"]
-auto_mode_9: ["place_pick_place_engage"]
+auto_mode_8: [""]
+auto_mode_9: [""]
 
 auto_mode_10: ["pick_place_cone_from_grid_1"]
 auto_mode_11: ["pick_place_cube_from_grid_3"]

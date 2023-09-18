@@ -167,10 +167,11 @@ if [ ${#RSYNC_OPTIONS} -eq 0 ] ; then
             --exclude '*.zms' --exclude '*.stl' --exclude '*.dae' \
             --exclude 'zebROS_ws/.catkin_tools' \
             --exclude '.md5sum*txt' \
-			--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
-		   	--exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools' --exclude 'TRT*bin' \
-			--exclude '*.pyc' --exclude '__pycache__' \
-			--exclude 'bagfiles' --exclude '*.bag' --exclude '*.active' \
+            --exclude '*.pt' --exclude '*.engine' \
+	    --exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
+	    --exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools' --exclude 'TRT*bin' \
+	    --exclude '*.pyc' --exclude '__pycache__' \
+	    --exclude 'bagfiles' --exclude '*.bag' --exclude '*.active' \
             $i:$JETSON_ENV_LOCATION/ $LOCAL_CLONE_LOCATION/../
         if [ $? -ne 0 ]; then
             echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code FROM $INSTALL_ENV on Jetson!"
@@ -193,10 +194,11 @@ do
         --exclude '*.zms' --exclude '*.stl' --exclude '*.dae'  \
         --exclude 'zebROS_ws/.catkin_tools' \
         --exclude '.md5sum*txt' \
-		--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
-	   	--exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools'  --exclude 'TRT*bin'\
-		--exclude '*.pyc'  --exclude '__pycache__' \
-		--exclude 'bagfiles' --exclude '*.bag' --exclude '*.active' \
+        --exclude '*.pt' --exclude '*.engine' \
+	--exclude '*.deb' --exclude '*.whl' --exclude '*.tbz2' --exclude '*.dmg' --exclude '*.zip' \
+	--exclude '*.nvvp' --exclude '*.qdrep' --exclude 'zebROS_ws/.catkin_tools'  --exclude 'TRT*bin'\
+	--exclude '*.pyc'  --exclude '__pycache__' \
+	--exclude 'bagfiles' --exclude '*.bag' --exclude '*.active' \
         $LOCAL_CLONE_LOCATION/../ $i:$JETSON_ENV_LOCATION/
     if [ $? -ne 0 ]; then
         echo -e "\e[1m\e[31mERROR\e[0m : Failed to synchronize source code TO $INSTALL_ENV on Jetson $i!"

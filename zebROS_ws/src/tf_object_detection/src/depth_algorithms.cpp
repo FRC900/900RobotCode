@@ -270,7 +270,7 @@ float kMeansDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, bool debu
 float usefulDepthMat(const cv::Mat& depth, const cv::Rect& bound_rect, DepthCalculationAlgorithm algorithm, bool debug, int k, float tolerance)
 {
 	if (bound_rect.size().area() == 0 || bound_rect.x < 0 || bound_rect.y < 0 || bound_rect.width + bound_rect.x > depth.size().width || bound_rect.height + bound_rect.y > depth.size().height) {
-		ROS_ERROR_STREAM("invalid bounding box!!!!!");
+		//ROS_ERROR_STREAM("invalid bounding box!!!!!");
 		return -1;
 	}
 	switch (algorithm) {

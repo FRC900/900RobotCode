@@ -238,7 +238,7 @@ void talonStateCallback(const talon_state_msgs::TalonState talon_state)
 		}
 	}
 	else {
-		ROS_ERROR_STREAM("2023_align_to_substation : Can not find talon with name = elevator_leader");
+		ROS_ERROR_STREAM_THROTTLE(0.1, "teleop_joystick_comp_2023 : Can not find talon with name = elevator_leader");
 	}
 }
 

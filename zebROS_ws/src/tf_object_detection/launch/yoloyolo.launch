@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<launch>
+
+  <group ns="tf_object_detection">
+  <!--
+    <node pkg="tf_object_detection" name="tf_object_tracker" type="tracker.py" output="screen">
+    </node>
+  -->
+	  <rosparam command="load" file="$(find tf_object_detection)/config/tf_default_config.yaml" />
+    <node pkg="tf_object_detection" name="tf_object_detection" type="fastYOLO.py" output="screen">
+    </node>
+
+  <!--
+    <node pkg="tf_object_detection" name="simple_static_img_pub" type="simple_static_img_pub.py" output="screen" >
+    </node>
+  -->
+
+
+
+	   <!--Possible that this should not be in namespace?-->
+    <!-- 
+    <node pkg="tf_object_detection" name="pub_video" type="pub_video.py" output="screen" if="$(eval input_type == 'video')">
+      <rosparam command="load" file="$(find tf_object_detection)/config/pub_video_config.yaml" />
+    </node>
+    -->
+  </group>
+
+</launch>

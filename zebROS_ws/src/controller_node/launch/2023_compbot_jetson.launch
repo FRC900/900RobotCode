@@ -129,7 +129,7 @@ elevator_controller_2023 four_bar_controller_2023 intake_leader_controller
 
 	<!-- <include file="$(find controller_node)/launch/pf_localization.launch"/> -->
 	
-	<include file="$(find tf_object_detection)/launch/detection.launch">
+	<include file="$(find tf_object_detection)/launch/yolo_detection.launch">
 		<arg name="input_type" value="live_camera" if="$(eval hw_or_sim == 'hw')"/>
 	</include>
 	

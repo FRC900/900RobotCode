@@ -44,8 +44,6 @@ class FourBarController_2023 : public controller_interface::MultiInterfaceContro
         std::atomic<double> max_angle_;
         std::atomic<double> min_angle_;
 
-        std::atomic<double> arb_feed_forward_angle;
-        std::atomic<double> straight_up_angle;
         std::atomic<double> four_bar_zeroing_percent_output;
         std::atomic<double> four_bar_zeroing_timeout;
         std::atomic<double> motion_magic_velocity;
@@ -114,18 +112,6 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
     if (!readIntoScalar(controller_nh, "min_angle", min_angle_))
     {
         ROS_WARN("Could not find min_angle");
-        return false;
-    }
-
-    if (!readIntoScalar(controller_nh, "arb_feed_forward_angle", arb_feed_forward_angle))
-    {
-        ROS_ERROR("Could not find arb_feed_forward_angle");
-        return false;
-    }
-
-    if (!readIntoScalar(controller_nh, "straight_up_angle", straight_up_angle))
-    {
-        ROS_ERROR("Could not find straight_up_angle");
         return false;
     }
 
@@ -204,20 +190,6 @@ bool FourBarController_2023::init(hardware_interface::RobotHW *hw,
             [this]() { return min_angle_.load(); },
             [this](double b) { min_angle_.store(b); },
             "Min angle", 0.0, 3.14);
-
-        ddr_->registerVariable<double>
-            ("arb_feed_forward_angle",
-            [this]() { return arb_feed_forward_angle.load(); },
-            [this](double b) { arb_feed_forward_angle.store(b); },
-            "Arb feedforward angle. calculation: cos(angle) * this",
-             -1.0, 1.0);
-
-        ddr_->registerVariable<double>
-            ("straight_up_angle",
-            [this]() { return straight_up_angle.load(); },
-            [this](double b) { straight_up_angle.store(b); },
-            "Angle which makes the four bar straight up",
-             0.0, 3.14159265);
 
         ddr_->registerVariable<double>
             ("four_bar_zeroing_percent_output",

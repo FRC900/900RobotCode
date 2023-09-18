@@ -8,6 +8,7 @@ set -o pipefail
 
 docker run "$@" -it --net=host -v  /tmp/.X11-unix:/tmp/.X11-unix \
  -v $HOME/2023RobotCode:/home/ubuntu/.2023RobotCode.readonly \
+ -v $HOME/tensorflow_workspace:/home/ubuntu/.tensorflow_workspace.readonly \
  --ipc=host \
  --shm-size=8G \
  -e DISPLAY=host.docker.internal:0 -e NVIDIA_DRIVER_CAPABILITIES=all --privileged --user ubuntu frc900/zebros-2023-dev:latest /bin/bash

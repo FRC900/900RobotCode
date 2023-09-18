@@ -32,7 +32,7 @@ def file_changed(f):
         rospy.logwarn("Match")
         return False
     with open(sum_path, 'w') as sum_out:
-        sum_out.write(text_sum);
+        sum_out.write(text_sum)
         rospy.logwarn("Mismatch")
         return True
 
