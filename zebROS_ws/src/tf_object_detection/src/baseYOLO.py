@@ -7,7 +7,7 @@ path.append('/home/ubuntu/YOLOv8-TensorRT')
 from models import TRTModule  # isort:skip
 from models.torch_utils import det_postprocess
 from models.utils import blob, letterbox
-import timing
+from cuda_event_timing import Timings
 from pathlib import Path
 import pytorch_pfn_extras as ppe
 from collections import namedtuple
@@ -143,14 +143,14 @@ def iDivUp(a, b):
 class YOLO900:
 
 
-    def __init__(self, engine_path="FRC2023m.engine", device_str="cuda:0", use_timings=False, onyx_path="FRC2023m.onnx", regen_trt=True) -> None:
+    def __init__(self, engine_path="FRC2023m.engine", device_str="cuda:0", use_timings=False, onnx_path="FRC2023m.onnx", regen_trt=True) -> None:
         self.device = torch.device(device_str)
 
         # @TODO check if this will ever not be 0's
         self.dwdh = torch.tensor([0, 0, 0, 0], device=self.device)
         self.ratio = None
         if regen_trt:
-            self.check_and_regen_engine(onyx_path)
+            self.check_and_regen_engine(onnx_path)
         self.Engine = TRTModule(engine_path, self.device)
         self.engine_H, self.engine_W = self.Engine.inp_info[0].shape[-2:]
 
@@ -164,11 +164,9 @@ class YOLO900:
         self.gpu_output_buffer = None
         self.last_preprocess_was_gpu = False
         self.pixels_to_shift_down = 0
-        self.use_timings = use_timings
-        self.gpu_has_been_run = False # gpu has compile time + overhead for first run so don't count it in average
         self.tensor = None
-        if use_timings:
-            self.t = timing.Timings()
+        self.t = Timings(self.Engine.stream)
+        self.t.set_enabled(use_timings)
     
     def check_and_regen_engine(self, onnx_path):
         from file_changed import file_changed
@@ -197,8 +195,7 @@ class YOLO900:
 
     # assumes img is bgr
     def cpu_preprocess(self, img, debug=False):
-        if self.use_timings:
-            self.t.start("cpu_preproc")
+        self.t.start("cpu_preproc")
 
         if debug:
             self.debug_image = img.copy()
@@ -209,8 +206,7 @@ class YOLO900:
         self.tensor = tensor
         self.input_tensor = torch.asarray(tensor, device=self.device)
         
-        if self.use_timings:
-            self.t.end("cpu_preproc")
+        self.t.end("cpu_preproc")
         
         self.dwdh = torch.asarray(self.dwdh * 2, dtype=torch.float32, device=self.device)
         self.last_preprocess_was_gpu = False
@@ -227,8 +223,7 @@ class YOLO900:
         if debug:
             self.debug_image = img.copy()
 
-        if self.use_timings and self.gpu_has_been_run:
-            self.t.start("gpu_preproc")
+        self.t.start("gpu_preproc")
 
         height, width = img.shape[:2]
         with ppe.cuda.stream(self.Engine.stream):
@@ -261,10 +256,8 @@ class YOLO900:
 
             self.input_tensor = torch.from_dlpack(self.gpu_output_buffer)
         
-        if self.use_timings and self.gpu_has_been_run:
-            self.t.end("gpu_preproc")
+        self.t.end("gpu_preproc")
         
-        self.gpu_has_been_run = True
         self.last_preprocess_was_gpu = True
         
         #print(f"{self.gpu_output_buffer}")
@@ -278,16 +271,16 @@ class YOLO900:
         return cupy.asnumpy(self.gpu_output_buffer), self.tensor
     
     def infer(self) -> Detections:
-        if self.use_timings:
-            self.t.start("infer")
+        self.t.start("infer")
         
         data = self.Engine(self.input_tensor)
         
-        if self.use_timings:
-            self.t.end("infer")
+        self.t.end("infer")
+        self.t.start("det_postprocess")
         self.bboxes, self.scores, self.labels = det_postprocess(data)
         self.bboxes -= self.dwdh
         self.bboxes /= self.ratio
+        self.t.end("det_postprocess")
 
         return Detections(self.bboxes, self.scores, self.labels)
 

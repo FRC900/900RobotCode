@@ -2,7 +2,6 @@
 
 # Ordering imports by length is cool
 import os
-import cv2
 import rospy
 import rospkg
 from sys import path
@@ -27,17 +26,21 @@ FILE_PREFIX = '/home/ubuntu/tags/tag8_'
 last_write_time = 0
 '''
 
+frame_counter = 0
 # // all caps to show its important
 DETECTRON: YOLO900 = None
 
 def run_inference_for_single_image(msg):
+    DETECTRON.t.start("callback")
     global min_confidence
     # rospy.logwarn("Callback recived!")
     debug = False
     if pub_debug.get_num_connections() > 0:
         debug = True
     
+    DETECTRON.t.start("imgmsg_to_cv2")
     ori = bridge.imgmsg_to_cv2(msg, "bgr8")
+    DETECTRON.t.end("imgmsg_to_cv2")
     
     # type hinting is really nice here
     # also looks so much nicer having the logic somewhere else from the ros code
@@ -48,10 +51,11 @@ def run_inference_for_single_image(msg):
         debug_image = DETECTRON.draw_bboxes()    
         pub_debug.publish(bridge.cv2_to_imgmsg(debug_image, encoding="bgr8"))
 
+    DETECTRON.t.start("pub")
     detection = TFDetection()
     detection.header = msg.header
 
-    apriltag_seen = False
+    #apriltag_seen = False
     d_bboxes, d_scores, d_labels = detections.bboxes, detections.scores, detections.labels  
     for (bbox, score, label) in zip(d_bboxes, d_scores, d_labels):
         if not (score > min_confidence):
@@ -70,7 +74,14 @@ def run_inference_for_single_image(msg):
         detection.objects.append(obj)
 
     pub.publish(detection)
+    DETECTRON.t.end("pub")
+    global frame_counter
+    frame_counter += 1
+    if frame_counter >= 3600:
+        print(f'{DETECTRON.t}')
+        frame_counter = 0
 
+    DETECTRON.t.end("callback")
     '''
     if not apriltag_seen:
         global last_write_time
@@ -87,7 +98,7 @@ def main():
     global pub, pub_debug, min_confidence, DETECTRON
 
     os.chdir(OBJ_DET_SRC_DIR)
-    DETECTRON = YOLO900()
+    DETECTRON = YOLO900(use_timings=False)
 
     sub_topic = "/obj_detection/c920/rect_image"
     pub_topic = "obj_detection_msg"

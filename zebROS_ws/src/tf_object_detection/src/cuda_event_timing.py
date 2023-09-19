@@ -5,9 +5,9 @@ Module to do basic timing of various events in code
 
 import cupy
 
-class CudaEventTiming(object):
+class Timing(object):
     __total_time = 0.0
-    __count = -1 # Skip first frame to avoid dll load overhead
+    __count = -5 # Skip first frames to avoid startup overhead
     __name = None
 
     def __init__(self, name, stream):
@@ -35,7 +35,10 @@ class CudaEventTiming(object):
                 
     def start(self):
         if self.__start_event_seen:
-            print(f"Error : duplicate start event {self.__name} seen")
+            if self.__end_event_seen:
+                self.end_frame()
+            else:
+                print(f"Error : duplicate start event {self.__name} seen")
 
         cupy.cuda.runtime.eventRecord(self.__start_event, self.__stream)
         cupy.cuda.nvtx.RangePush(self.__name)
@@ -45,7 +48,7 @@ class CudaEventTiming(object):
         if self.__end_event_seen:
             print(f"Error : duplicate end event {self.__name} seen")
         cupy.cuda.runtime.eventRecord(self.__end_event, self.__stream)
-        cupy.cuda.nvtx.RangePop(self.__name)
+        cupy.cuda.nvtx.RangePop()
         self.__end_event_seen = True
 
     def __str__(self):
@@ -54,29 +57,39 @@ class CudaEventTiming(object):
         return f"{self.__name} : {self.__count} events. Total time = {self.__total_time}, average time = {self.__total_time / self.__count}"
 
 
-class CudaEventTimings(object):
+class Timings(object):
     __timings = {}
+    __enabled = True
 
     def __init__(self, stream):
-        print(f"stream = {stream}")
+        #print(f"stream = {stream}")
         self.__stream = stream.cuda_stream
 
     def __del__(self):
         self.end_frame()
         print(str(self))
 
+    def set_enabled(self, enabled):
+        self.__enabled = enabled
+
     def start(self, name):
+        if not self.__enabled:
+            return
         if name not in self.__timings:
-            self.__timings[name] = CudaEventTiming(name, self.__stream)
+            self.__timings[name] = Timing(name, self.__stream)
         self.__timings[name].start()
 
     def end(self, name):
+        if not self.__enabled:
+            return
         if name not in self.__timings:
             print("Error - end called before start for " + name)
             return
         self.__timings[name].end()
 
     def end_frame(self):
+        if not self.__enabled:
+            return
         for t in self.__timings.values():
             t.end_frame()
 
