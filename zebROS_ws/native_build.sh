@@ -23,7 +23,6 @@ if [ $? -eq 1 ]; then
 		as726x_controllers \
 		cancoder_controller \
 		canifier_controller \
-		cuda_apriltag_ros \
 		demo_tf_node \
 		field \
 		frcrobot_description \
