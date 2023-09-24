@@ -2,7 +2,7 @@ image_topic: "/usb_cam/image_raw"
 camera_info: "/usb_cam/camera_info"
 pub_topic: "/cuda_tag_detections"
 #tag_size: 0.042 # In meters of a side of the rectangle
-tag_size: 0.16 # In meters of a side of the rectangle
+tag_size: 0.152 # In meters of a side of the rectangle
 # Code will filter out any tags not in this list
-tag_ids: [ 0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 17, 40, 41, 42, 43, 50, 51, 52, 53 ]
+tag_ids: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 40, 41, 42, 43, 50, 51, 52, 53 ]
 

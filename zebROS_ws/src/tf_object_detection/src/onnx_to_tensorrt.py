@@ -46,6 +46,16 @@ def onnx_to_tensorrt(onnx_model,
     if batch_size_max is None:
         batch_size_max = batch_size
 
+    if input_width_min is None:
+        input_width_min = input_width
+    if input_width_max is None:
+        input_width_max = input_width
+
+    if input_height_min is None:
+        input_height_min = input_height
+    if input_height_max is None:
+        input_height_max = input_height
+
     if input_shapes[0][2] != 0:
         input_height = input_shapes[0][2]
         input_height_min = input_height

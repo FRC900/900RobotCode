@@ -10,6 +10,8 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from field_obj.msg import TFDetection, TFObject
 
+from cv2 import imwrite
+
 bridge = CvBridge()
 pub, pub_debug = None, None
 min_confidence = 0.1
@@ -21,9 +23,9 @@ OBJ_DET_SRC_DIR = os.path.join(rospack.get_path('tf_object_detection'), 'src/')
 '''
 Use this to capture images which don't have tags in them
 (good for finding images in which known objects aren't detected correctly)
-SECONDS_PER_WRITE = 1.1
-FILE_PREFIX = '/home/ubuntu/tags/tag8_'
 last_write_time = 0
+SECONDS_PER_WRITE = 5
+FILE_PREFIX = '/home/ubuntu/tags/tags_1080p_36h11_'
 '''
 
 frame_counter = 0
@@ -55,7 +57,7 @@ def run_inference_for_single_image(msg):
     detection = TFDetection()
     detection.header = msg.header
 
-    #apriltag_seen = False
+    apriltag_seen = False
     d_bboxes, d_scores, d_labels = detections.bboxes, detections.scores, detections.labels  
     for (bbox, score, label) in zip(d_bboxes, d_scores, d_labels):
         if not (score > min_confidence):
@@ -71,6 +73,10 @@ def run_inference_for_single_image(msg):
         obj.br.y = bbox[3]
         obj.id = cls_id # number
         obj.label = DETECTRON.name_from_cls_id(cls_id) # string
+        '''
+        if 'april_tag' in obj.label:
+            apriltag_seen = True
+        '''
         detection.objects.append(obj)
 
     pub.publish(detection)
@@ -89,7 +95,7 @@ def run_inference_for_single_image(msg):
         global FILE_PREFIX
         if (rospy.get_time() - last_write_time) > SECONDS_PER_WRITE:
             time = msg.header.stamp
-            cv2.imwrite(FILE_PREFIX+str(int(time.to_sec()))+'.png', ori)
+            imwrite(FILE_PREFIX+str(int(time.to_sec()))+'.png', ori)
             rospy.loginfo('Saving image')
             last_write_time = rospy.get_time()
     '''

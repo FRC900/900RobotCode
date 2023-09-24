@@ -252,7 +252,7 @@ class CudaApriltagDetector
 
                 if (tag_ids_.count(detection.id) != 1)
                 {
-                    ROS_WARN_STREAM("Skipping tag with ID=" << detection.id);
+                    ROS_WARN_STREAM_THROTTLE(0.2,"Skipping tag with ID=" << detection.id);
                     continue;
                 }
 
