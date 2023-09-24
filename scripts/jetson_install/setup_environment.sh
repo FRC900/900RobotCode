@@ -467,6 +467,8 @@ cd ..
 sudo rm -rf torchvision
 
 sudo python3 -m pip install --no-cache-dir --upgrade ultralytics
+cd /home/ubuntu
+git clone https://github.com/triple-Mu/YOLOv8-TensorRT.git
 # End of ultralytics YOLOv8 deps
 
 echo "export PATH=\$PATH:/home/ubuntu/.local/bin:/home/ubuntu/tensorflow_workspace/tools:/usr/local/cuda/bin" >> /home/ubuntu/.bashrc
