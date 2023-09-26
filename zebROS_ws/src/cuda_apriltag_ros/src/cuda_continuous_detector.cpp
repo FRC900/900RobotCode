@@ -61,9 +61,6 @@ struct AprilTagsImpl
     // CUDA buffers to store the input image.
     cuAprilTagsImageInput_st input_image;
 
-    // CUDA memory buffer container for RGBA images.
-    uchar4 *input_image_buffer = nullptr;
-
     // Size of image buffer
     size_t input_image_buffer_size = 0;
 
@@ -81,6 +78,8 @@ struct AprilTagsImpl
         cam_intrinsics = {fx, fy, cx, cy};
 
         // Create AprilTags detector instance and get handle
+        // TODO : test different values of 4 for tile size, that's a new parameter
+        //        that hasn't had much investigation
         const int error = nvCreateAprilTagsDetector(
                               &april_tags_handle, width, height, 4, cuAprilTagsFamily::NVAT_TAG36H11,
                               &cam_intrinsics, tag_edge_size_);
@@ -99,7 +98,7 @@ struct AprilTagsImpl
         max_tags = max_tags_;
         // Setup input image CUDA buffer.
         const cudaError_t cuda_error =
-            cudaMalloc(&input_image_buffer, image_buffer_size);
+            cudaMalloc(&input_image.dev_ptr, image_buffer_size);
         if (cuda_error != cudaSuccess)
         {
             throw std::runtime_error("Could not allocate CUDA memory (error code " +
@@ -110,7 +109,6 @@ struct AprilTagsImpl
         input_image_buffer_size = image_buffer_size;
         input_image.width = width;
         input_image.height = height;
-        input_image.dev_ptr = reinterpret_cast<uchar3 *>(input_image_buffer);
         input_image.pitch = pitch_bytes;
     }
 
@@ -120,7 +118,7 @@ struct AprilTagsImpl
         {
             cudaStreamDestroy(main_stream);
             cuAprilTagsDestroy(april_tags_handle);
-            cudaFree(input_image_buffer);
+            cudaFree(input_image.dev_ptr);
         }
     }
 };
@@ -189,7 +187,7 @@ class CudaApriltagDetector
             // TODO : remove sub_ check, since if we're getting the callback the subscriber
             //        has a publisher
             if (pub_.getNumSubscribers() == 0 &&
-                    sub_.getNumPublishers() == 0)
+                sub_.getNumPublishers() == 0)
             {
                 ROS_INFO_STREAM("No subscribers and no tf publishing, skip processing.");
                 return;
@@ -217,7 +215,7 @@ class CudaApriltagDetector
 
             //   ROS_ERROR_STREAM("CUDA Apriltag callback ");
             const cudaError_t cuda_error =
-                cudaMemcpyAsync(impl_->input_image_buffer, (uchar4 *)img.ptr<unsigned char>(0),
+                cudaMemcpyAsync(impl_->input_image.dev_ptr, img.data,
                                 impl_->input_image_buffer_size, cudaMemcpyHostToDevice, impl_->main_stream);
 
             if (cuda_error != cudaSuccess)
