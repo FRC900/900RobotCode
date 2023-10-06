@@ -113,7 +113,7 @@ class TalonHWCommand
 		void resetDemand1(void);
 
 		void setNeutralMode(NeutralMode neutral_mode);
-		bool getNeutralMode(void);
+		NeutralMode getNeutralMode(void);
 		bool neutralModeChanged(NeutralMode &neutral_mode);
 
 		void setPidfSlot(int pidf_slot);
@@ -285,7 +285,7 @@ class TalonHWCommand
 				bool &supply_current_limit_enable);
 		void  resetSupplyCurrentLimit(void);
 
-		void setStatorCurrentLimit(bool stator_current_limit);
+		void setStatorCurrentLimit(double stator_current_limit);
 		double getStatorCurrentLimit(void) const;
 		void setStatorCurrentTriggerThresholdCurrent(double stator_current_trigger_threshold_current);
 		double getStatorCurrentTriggerThresholdCurrent(void) const;

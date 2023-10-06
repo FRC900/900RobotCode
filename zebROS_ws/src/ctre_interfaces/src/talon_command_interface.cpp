@@ -601,7 +601,7 @@ void TalonHWCommand::setNeutralMode(NeutralMode neutral_mode)
 		neutral_mode_changed_ = true;
 	}
 }
-bool TalonHWCommand::getNeutralMode(void)
+NeutralMode TalonHWCommand::getNeutralMode(void)
 {
 	return neutral_mode_;
 }
@@ -1486,7 +1486,7 @@ void  TalonHWCommand::resetSupplyCurrentLimit(void)
 	supply_current_limit_changed_ = true;
 }
 
-void TalonHWCommand::setStatorCurrentLimit(bool stator_current_limit)
+void TalonHWCommand::setStatorCurrentLimit(double stator_current_limit)
 {
 	if (stator_current_limit_ != stator_current_limit)
 	{
