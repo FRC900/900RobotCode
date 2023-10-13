@@ -5,7 +5,7 @@
 #include <behavior_actions/FourbarElevatorPath2023Action.h>
 #include <behavior_actions/GamePieceState2023.h>
 #include <std_msgs/UInt8.h>
-#include <talon_state_msgs/TalonState.h>
+#include <talon_state_msgs/TalonFXProState.h>
 #include <std_msgs/Float64.h>
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <geometry_msgs/Twist.h>
@@ -97,7 +97,7 @@ public:
 		speed_ = speed_ > 0.95 ? 0.95 : speed_; 
 	}
 
-	void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
+	void talonFXProStateCallback(const talon_state_msgs::TalonFXProState &talon_state)
 	{
 		// fourbar_master_idx == max of size_t at the start
 		if (intake_idx == std::numeric_limits<size_t>::max()) // could maybe just check for > 0
@@ -113,10 +113,10 @@ public:
 		}
 		if (!(intake_idx == std::numeric_limits<size_t>::max()))
 		{
-			current_current_ = talon_state.output_current[intake_idx];
+			current_current_ = talon_state.stator_current[intake_idx];
 		}
 		else {
-			ROS_ERROR_STREAM("2023_intaking_server : Can not find talon with name = " << joint_);
+			ROS_ERROR_STREAM("2023_intaking_server : Can not find talonfxpro with name = " << joint_);
 		}
 
 		if (elevator_idx == std::numeric_limits<size_t>::max()) // could maybe just check for > 0
@@ -135,7 +135,7 @@ public:
 			elev_pos_ = talon_state.position[elevator_idx];
 		}
 		else {
-			ROS_ERROR_STREAM("2023_intaking_server : Can not find talon with name = elevator_leader");
+			ROS_ERROR_STREAM("2023_intaking_server : Can not find talonfxpro with name = elevator_leader");
 		}
 
 		if (fourbar_idx == std::numeric_limits<size_t>::max()) // could maybe just check for > 0
@@ -154,7 +154,7 @@ public:
 			fourbar_cur_position_ = talon_state.position[fourbar_idx];
 		}
 		else {
-			ROS_ERROR_STREAM("2023_intaking_server : Can not find talon with name = four_bar");
+			ROS_ERROR_STREAM("2023_intaking_server : Can not find talonfxpro with name = four_bar");
 		}
 	}
 
@@ -164,7 +164,7 @@ public:
 		game_piece_sub_(nh_.subscribe("/game_piece/game_piece_state", 1, &IntakingServer2023::gamePieceStateCallback, this)),
 		requested_game_piece_sub_(nh_.subscribe("/game_piece/requested_game_piece", 1, &IntakingServer2023::requestedPieceCallback, this)),
 		path_ac_("/fourbar_elevator_path/fourbar_elevator_path_server_2023", true),
-		talon_states_sub_(nh_.subscribe("/frcrobot_jetson/talon_states", 1, &IntakingServer2023::talonStateCallback, this)),
+		talon_states_sub_(nh_.subscribe("/frcrobot_jetson/talonfxpro_states", 1, &IntakingServer2023::talonFXProStateCallback, this)),
 		current_speed_sub_(nh_.subscribe("/frcrobot_jetson/swerve_drive_controller/cmd_vel", 1, &IntakingServer2023::currentSpeedCallback, this)),
 		intake_pub_(nh_.advertise<std_msgs::Float64>("/frcrobot_jetson/intake_leader_controller/command", 1, true)),
 		nh_params_(nh_, "intaking_server_2023"),

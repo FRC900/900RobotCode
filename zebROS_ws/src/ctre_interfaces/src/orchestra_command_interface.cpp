@@ -8,15 +8,7 @@ namespace hardware_interface
 // changed_ values to true, because if you
 // call orchestra commands without music
 // loaded then it's an invalid action
-OrchestraCommand::OrchestraCommand() :
-	pause_changed_(false),
-	play_changed_(false),
-	stop_changed_(false),
-	file_path_(""),
-	load_music_changed_(false),
-	instruments_{},
-	instruments_changed_(false),
-	clear_instruments_changed_(false)
+OrchestraCommand::OrchestraCommand() 
 {
 }
 
@@ -137,9 +129,9 @@ void OrchestraCommand::clearInstruments()
 {
     clear_instruments_changed_ = true;
 }
-bool OrchestraCommand::getInstrumentsCleared() const
+bool OrchestraCommand::getClearInstruments() const
 {
-    return true;
+    return clear_instruments_changed_;
 }
 bool OrchestraCommand::clearInstrumentsChanged()
 {
@@ -149,10 +141,6 @@ bool OrchestraCommand::clearInstrumentsChanged()
         return true;
     }
     return false;
-}
-void OrchestraCommand::resetClearInstruments()
-{
-    clear_instruments_changed_ = true;
 }
 
 } // namespace

@@ -1,6 +1,6 @@
-#pragma once
+#ifndef CANCODER_STATE_INTERFACE_INC__
+#define CANCODER_STATE_INTERFACE_INC__
 
-#include <string>
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include "state_handle/state_handle.h"
 
@@ -9,160 +9,129 @@ namespace hardware_interface
 namespace cancoder
 {
 
-enum SensorVelocityMeasPeriod
+enum class SensorDirection
 {
-	Sensor_Period_1Ms = 1,
-	Sensor_Period_2Ms = 2,
-	Sensor_Period_5Ms = 5,
-	Sensor_Period_10Ms = 10,
-	Sensor_Period_20Ms = 20,
-	Sensor_Period_25Ms = 25,
-	Sensor_Period_50Ms = 50,
-	Sensor_Period_100Ms = 100,
+	CounterClockwise_Positive,
+	Clockwise_Positive
 };
-enum AbsoluteSensorRange
+enum class AbsoluteSensorRange
 {
-	/**
-	 * Express the absolute position as an unsigned value.
-	 * E.g. [0,+1) rotations or [0,360) deg.
-	 */
-	Unsigned_0_to_360 = 0,
-	/**
-	 * Express the absolute position as an signed value.
-	 * E.g. [-0.5,+0.5) rotations or [-180,+180) deg.
-	 */
-	Signed_PlusMinus180 = 1,
+	Unsigned_0To1,
+	Signed_PlusMinusHalf
 };
-enum SensorInitializationStrategy
+enum class MagnetHealth
 {
-	/**
-	 * On boot up, set position to zero.
-	 */
-	BootToZero = 0,
-	/**
-	 * On boot up, sync to the Absolute Position signal.  The Absolute position signal will be signed according to the selected Absolute Sensor Range.
-	 */
-	BootToAbsolutePosition = 1,
-};
-enum SensorTimeBase
-{
-	/**
-	 * Legacy Mode
-	 */
-	Per100Ms_Legacy = 0,
-	/**
-	 * Per-Second Velocities
-	 */
-	PerSecond = 1,
-	/**
-	 * Per-Minute Velocities
-	 */
-	PerMinute = 2,
-};
-enum MagnetFieldStrength
-{
-	/** Magnet Field strength cannot be determined */
-	Invalid_Unknown = 0,
-	/** Magnet field is far too low (too far) or far too high (too close). */
-	BadRange_RedLED = 1,
-	/** Magnet field is adequate, sensor can be used in this range with slightly reduced accuracy. */
-	Adequate_OrangeLED = 2,
-	/** Magnet field is ideal */
-	Good_GreenLED = 3,
+	Red,
+	Orange,
+	Green,
+	Invalid
 };
 
 class CANCoderHWState
 {
 	public:
-		CANCoderHWState(int device_number);
+		CANCoderHWState(const int device_number);
 		int getDeviceNumber(void) const;
 
-		double getPosition(void) const;
-		void setPosition(double position);
-
-		double getVelocity(void) const;
-		void setVelocity(double velocity);
-
-		double getAbsolutePosition(void) const;
-		void setAbsolutePosition(double absolute_position);
-
-		SensorVelocityMeasPeriod getVelocityMeasPeriod(void) const;
-		void setVelocityMeasPeriod(SensorVelocityMeasPeriod velocity_meas_period);
-
-		int getVelocityMeasWindow(void) const;
-		void setVelocityMeasWindow(int velocity_meas_window);
-
-		AbsoluteSensorRange getAbsoluteSensorRange(void) const;
-		void setAbsoluteSensorRange(AbsoluteSensorRange absolute_sensor_range);
+		SensorDirection getSensorDirection(void) const;
+		void setSensorDirection(const SensorDirection sensor_direction);
 
 		double getMagnetOffset(void) const;
-		void setMagnetOffset(double magnet_offset);
+		void setMagnetOffset(const double magnet_offset);
 
-		SensorInitializationStrategy getInitializationStrategy(void) const;
-		void setInitializationStrategy(SensorInitializationStrategy initialization_strategy);
+		AbsoluteSensorRange getAbsoluteSensorRange(void) const;
+		void setAbsoluteSensorRange(const AbsoluteSensorRange absolute_sensor_range);
 
-		double getFeedbackCoefficient(void) const;
-		void setFeedbackCoefficient(double feedback_coefficient);
-
-		std::string getUnitString(void) const;
-		void setUnitString(const std::string &unit_string);
-
-		SensorTimeBase getTimeBase(void) const;
-		void setTimeBase(SensorTimeBase time_base);
-
-		double getBusVoltage(void) const;
-		void setBusVoltage(double bus_voltage);
-
-		MagnetFieldStrength getMagnetFieldStrength(void) const;
-		void setMagnetFieldStrength(MagnetFieldStrength magnet_field_strength);
-
-		bool getDirection(void) const;
-		void setDirection(bool direction);
-
-		double getLastTimestamp(void) const;
-		void setLastTimestamp(double last_timestamp);
-
-		int getSensorDataStatusFramePeriod(void) const;
-		void setSensorDataStatusFramePeriod(int sensor_data_status_frame_period);
-
-		int getVbatAndFaultsStatusFramePeriod(void) const;
-		void setVbatAndFaultsStatusFramePeriod(int vbat_and_faults_status_frame_period);
-
-		int getFirmwareVersion(void) const;
-		void setFirmwareVersion(int firmware_version);
-
-		int getFaults(void) const;
-		void setFaults(int faults);
-
-		int getStickyFaults(void) const;
-		void setStickyFaults(int sticky_faults);
-
-		void   setConversionFactor(double conversion_factor);
+		void   setConversionFactor(const double conversion_factor);
 		double getConversionFactor(void) const;
 
+		void setVersionMajor(const int version_major);
+		int  getVersionMajor(void) const;
+
+		void setVersionMinor(const int version_minor);
+		int  getVersionMinor(void) const;
+
+		void setVersionBugfix(const int version_bugfix);
+		int  getVersionBugfix(void) const;
+
+		void setVersionBuild(const int version_build);
+		int  getVersionBuild(void) const;
+
+		double getVelocity(void) const;
+		void setVelocity(const double velocity);
+
+		double getPosition(void) const;
+		void setPosition(const double position);
+
+		double getAbsolutePosition(void) const;
+		void setAbsolutePosition(const double absolute_position);
+
+		double getUnfilteredVelocity(void) const;
+		void setUnfilteredVelocity(const double unfiltered_velocity);
+
+		double getPositionSinceBoot(void) const;
+		void setPositionSinceBoot(const double position_since_boot);
+
+		double getSupplyVoltage(void) const;
+		void setSupplyVoltage(const double supply_voltage);
+
+		MagnetHealth getMagnetHealth(void) const;
+		void setMagnetHealth(const MagnetHealth magnet_health);
+
+		void setFaultHardware(const bool fault_hardware);
+		bool getFaultHardware(void) const;
+		void setFaultUndervoltage(const bool fault_undervolage);
+		bool getFaultUndervoltage(void) const;
+		void setFaultBootDuringEnable(const bool fault_boot_during_enable);
+		bool getFaultBootDuringEnable(void) const;
+		void setFaultUnlicensedFeatureInUse(const bool fault_unlicensed_feature_in_use);
+		bool getFaultUnlicensedFeatureInUse(void) const;
+		void setFaultBadMagnet(const bool bad_magnet);
+		bool getFaultBadMagnet(void) const;
+
+		void setStickyFaultHardware(const bool sticky_fault_hardware);
+		bool getStickyFaultHardware(void) const;
+		void setStickyFaultUndervoltage(const bool sticky_fault_undervolage);
+		bool getStickyFaultUndervoltage(void) const;
+		void setStickyFaultBootDuringEnable(const bool sticky_fault_boot_during_enable);
+		bool getStickyFaultBootDuringEnable(void) const;
+		void setStickyFaultUnlicensedFeatureInUse(const bool sticky_fault_unlicensed_feature_in_use);
+		bool getStickyFaultUnlicensedFeatureInUse(void) const;
+		void setStickyFaultBadMagnet(const bool sticky_fault_bad_magnet);
+		bool getStickyFaultBadMagnet(void) const;
 	private :
-		int                          device_number_;
-		double                       position_;
-		double                       velocity_;
-		double                       absolute_position_;
-		SensorVelocityMeasPeriod     velocity_meas_period_;
-		int                          velocity_meas_window_;
-		AbsoluteSensorRange          absolute_sensor_range_;
-		double                       magnet_offset_;
-		SensorInitializationStrategy initialization_strategy_;
-		double                       feedback_coefficient_;
-		std::string                  unit_string_;
-		SensorTimeBase               time_base_;
-		double                       bus_voltage_;
-		MagnetFieldStrength          magnet_field_strength_;
-		bool                         direction_;
-		double                       last_timestamp_;
-		int                          sensor_data_status_frame_period_;
-		int                          vbat_and_faults_status_frame_period_;
-		int                          firmware_version_;
-		int                          faults_;
-		int                          sticky_faults_;
-		double                       conversion_factor_;
+		int                 device_number_{};
+
+		SensorDirection     sensor_direction_{SensorDirection::CounterClockwise_Positive};
+		double              magnet_offset_{0.0};
+		AbsoluteSensorRange absolute_sensor_range_{AbsoluteSensorRange::Unsigned_0To1};
+
+		double              conversion_factor_{1.0};
+
+		int                 version_major_{0};
+		int                 version_minor_{0};
+		int                 version_bugfix_{0};
+		int                 version_build_{0};
+		double              velocity_{0.0};
+		double              position_{0.0};
+		double              absolute_position_{0.0};
+		double              unfiltered_velocity_{0.0};
+		double              position_since_boot_{0.0};
+		double              supply_voltage_{0.0};
+		MagnetHealth        magnet_health_{MagnetHealth::Invalid};
+
+		bool                fault_hardware_{false};
+		bool                fault_undervolage_{false};
+		bool                fault_boot_during_enable_{false};
+		bool                fault_unlicensed_feature_in_use_{false};
+		bool                fault_bad_magnet_{false};
+                      
+		bool                sticky_fault_hardware_{false};
+		bool                sticky_fault_undervolage_{false};
+		bool                sticky_fault_boot_during_enable_{false};
+		bool                sticky_fault_unlicensed_feature_in_use_{false};
+		bool                sticky_fault_bad_magnet_{false};
+
 };
 // Glue code to let this be registered in the list of
 // hardware resources on the robot.  Since state is
@@ -170,7 +139,9 @@ class CANCoderHWState
 typedef StateHandle<const CANCoderHWState> CANCoderStateHandle;
 typedef StateHandle<CANCoderHWState>       CANCoderWritableStateHandle;
 class CANCoderStateInterface : public HardwareResourceManager<CANCoderStateHandle> {};
-class RemoteCANCoderStateInterface : public HardwareResourceManager<CANCoderWritableStateHandle> {};
+class RemoteCANCoderStateInterface : public HardwareResourceManager<CANCoderWritableStateHandle, ClaimResources> {};
 
 } // namespace cancoder
 } // namespace hardware_interface
+
+#endif

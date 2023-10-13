@@ -35,6 +35,13 @@ void DDRUpdater::triggerDDRUpdate(void)
 	ddr_update_thread_flag_.clear();
 }
 
+// Stop the DDR update thread. Useful if dynamic reconfigure
+// has been disabled for this node / controller
+void DDRUpdater::shutdownDDRUpdater(void)
+{
+	ddr_update_thread_active_ = false;
+}
+
 // Loop forever, periodically checking for requests from the main thread
 // to update values from this class to the DDR server.
 void DDRUpdater::DDRUpdateThread(void)

@@ -25,7 +25,6 @@
  *
  */
 
-#include "ros/ros.h"
 #include "ros_control_boilerplate/AS726x.h"
 
 namespace as726x
@@ -372,25 +371,6 @@ void AS726x::virtualWrite(uint8_t addr, uint8_t value)
 	// Send the data to complete the operation.
 	write8(AS726X_SLAVE_WRITE_REG, value);
 	//Serial.print(" = 0x"); Serial.println(value, HEX);
-}
-
-roboRIO_AS726x::roboRIO_AS726x(const frc::I2C::Port &port, int deviceAddress)
-	: AS726x()
-	, i2c_(port, deviceAddress)
-{
-}
-
-void roboRIO_AS726x::read(uint8_t reg, uint8_t *buf, uint8_t num)
-{
-	auto rc = i2c_.Read(reg, num, buf);
-	//ROS_INFO_STREAM("roboRIO_AS726x::" << __FUNCTION__ << ":" << __LINE__ << " reg=" << std::hex << static_cast<int>(reg) << std::dec << static_cast<int>(num) << " *buf=" << std::hex << static_cast<int>(*buf) << " rc=" << rc);
-}
-void roboRIO_AS726x::write(uint8_t reg, uint8_t *buf, uint8_t num)
-{
-	if (num > 1)
-		ROS_ERROR_STREAM("Invalid write count " << num << " in " << __FUNCTION__ << ":" << __LINE__);
-	auto rc = i2c_.Write(reg, *buf);
-	//ROS_INFO_STREAM("roboRIO_AS726x::" << __FUNCTION__ << ":" << __LINE__ << " reg=" << std::hex << static_cast<int>(reg) << " num=" << std::dec << static_cast<int>(num) << " *buf=" << std::hex << static_cast<int>(*buf) << " rc=" << rc);
 }
 
 } // namespace

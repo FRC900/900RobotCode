@@ -359,6 +359,106 @@ void HALSIM_SetControlWord(HAL_ControlWord controlword)
 	HALSIM_controlword = controlword;
 }
 
+void HALSIM_SetDIOValue(int32_t index, HAL_Bool value)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetDIOValue() from hardware interface?");
+}
+
+void HALSIM_SetAnalogInVoltage(int32_t index, double value)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetAnalogInVoltage() from hardware interface?");
+}
+
+void HALSIM_SetDriverStationAllianceStationId(HAL_AllianceStationID allianceStationId)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetDriverStationAllianceStationId on unsupported platform?");
+}
+
+void HALSIM_SetDriverStationEnabled(HAL_Bool enabled)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetDriverStationEnabled on unsupported platform?");
+}
+
+void HALSIM_SetDriverStationAutonomous(HAL_Bool enabled)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetDriverStationAutonomous on unsupported platform?");
+}
+
+void HALSIM_SetDriverStationDsAttached(HAL_Bool enabled)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetDriverStationDsAttached on unsupported platform?");
+}
+
+void HALSIM_SetDriverStationFmsAttached(HAL_Bool enabled)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetDriverStationFmsAttached on unsupported platform?");
+}
+
+void HALSIM_SetDriverStationTest(HAL_Bool enabled)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetDriverStationTest on unsupported platform?");
+}
+
+void HALSIM_SetDriverStationEStop(HAL_Bool enabled)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetDriverStationEStop on unsupported platform?");
+}
+
+void HALSIM_SetMatchInfo(const HAL_MatchInfo* info)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetMatchInfo on unsupported platform?");
+}
+
+void HALSIM_NotifyDriverStationNewData(void)
+{
+	ROS_INFO_STREAM("Called HALSIM_NotifyDriverStationNewData on unsupported platform?");
+}
+
+void HALSIM_SetDriverStationMatchTime(double matchTime)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetDriverStationMatchTime on unsupported platform?");
+}
+
+void HALSIM_SetJoystickPOVs(int32_t joystickNum, const HAL_JoystickPOVs* povs)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetJoystickPOVs on unsupported platform?");
+}
+
+void HALSIM_SetJoystickAxes(int32_t joystickNum, const HAL_JoystickAxes* povs)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetJoystickAxes on unsupported platform?");
+}
+
+void HALSIM_SetJoystickButtons(int32_t joystickNum, const HAL_JoystickButtons* povs)
+{
+	ROS_INFO_STREAM("Called HALSIM_SetJoystickButtons on unsupported platform?");
+}
+
+
+HAL_Bool HAL_SetCurrentThreadPriority(HAL_Bool realTime, int32_t priority,
+									  int32_t *status)
+{
+	ROS_ERROR_STREAM("Call to " << __PRETTY_FUNCTION__ << " on unsupported platform");
+	return true;
+}
+
+HAL_Bool HAL_SetNotifierThreadPriority(HAL_Bool realTime, int32_t priority,
+									   int32_t *status)
+{
+	return true;
+}
+
+void HAL_SetNotifierName(HAL_NotifierHandle notifierHandle, const char *name,
+						 int32_t *status)
+{
+	ROS_ERROR_STREAM("Call to " << __PRETTY_FUNCTION__ << " on unsupported platform");
+}
+void HAL_CancelNotifierAlarm(HAL_NotifierHandle notifierHandle,
+							 int32_t *status)
+
+{
+	ROS_ERROR_STREAM("Call to " << __PRETTY_FUNCTION__ << " on unsupported platform");
+}
 HAL_AllianceStationID HAL_GetAllianceStation(int32_t* status)
 {
 	ROS_INFO_STREAM("Called HAL_GetAllianceStation() on unsupported platform");
@@ -376,8 +476,6 @@ int32_t HAL_GetMatchInfo(HAL_MatchInfo*)
 	ROS_INFO_STREAM("Called HAL_GetMatchInfo() on unsupported platform");
 	return -1;
 }
-
-
 
 void HAL_ObserveUserProgramAutonomous(void)
 {
@@ -608,4 +706,3 @@ size_t HAL_GetComments(char* buffer, size_t size) {
 		*buffer = '\0';
 		return 0;
 }
-

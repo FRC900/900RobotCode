@@ -1,6 +1,8 @@
 #ifndef PDH_STATE_INTERFACE_INC_
 #define PDH_STATE_INTERFACE_INC_
 
+#include <array>
+
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include <state_handle/state_handle.h>
 
@@ -130,7 +132,7 @@ typedef StateHandle<const PDHHWState> PDHStateHandle;
 typedef StateHandle<PDHHWState> PDHWritableStateHandle;
 
 class PDHStateInterface       : public HardwareResourceManager<PDHStateHandle> {};
-class RemotePDHStateInterface : public HardwareResourceManager<PDHWritableStateHandle,   ClaimResources> {};
+class RemotePDHStateInterface : public HardwareResourceManager<PDHWritableStateHandle, ClaimResources> {};
 }
 
 #endif

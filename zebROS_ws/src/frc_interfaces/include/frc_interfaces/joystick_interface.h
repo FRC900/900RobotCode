@@ -20,7 +20,9 @@ class JoystickState
 			, name_(name)
 		{
 		}
-		JoystickState(const JoystickState &other) = default;
+		JoystickState(const JoystickState &other) = delete;
+		JoystickState(JoystickState &&other) noexcept = delete;
+		~JoystickState() = default;
 
 		JoystickState &operator=(const JoystickState &other)
 		{
@@ -33,6 +35,7 @@ class JoystickState
 			}
 			return *this;
 		}
+		JoystickState &operator=(JoystickState &&) = delete;
 
 		size_t getId(void) const      { return id_; }
 

@@ -173,8 +173,7 @@ private:
 	}
 
 public:
-	MatchStateListenerController() = default;
-	~MatchStateListenerController()
+	virtual ~MatchStateListenerController()
 	{
 		sub_command_.shutdown();
 	}

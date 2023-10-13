@@ -4,6 +4,7 @@ namespace hardware_interface {
 namespace candle {
 
 CANdleHWCommand::CANdleHWCommand() :
+    leds_changed{false},
     brightness{1.0},
     brightness_changed{true},
     show_status_led_when_active{true},

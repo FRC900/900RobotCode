@@ -11,7 +11,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>message_generation</build_depend>
+  <depend>message_generation</depend>
 
   <depend>roscpp</depend>
   <depend>angles</depend>
@@ -24,7 +24,6 @@
   <depend>urdf</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>realtime_tools</depend>
   <depend>rosparam_shortcuts</depend>
   <depend>ctre_interfaces</depend>
   <depend>message_runtime</depend>

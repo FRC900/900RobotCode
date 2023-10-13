@@ -23,7 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
 	tf2
 	talon_state_msgs
 	geometry_msgs
-	talon_swerve_drive_controller
+	talon_swerve_drive_controller_msgs
 	)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)

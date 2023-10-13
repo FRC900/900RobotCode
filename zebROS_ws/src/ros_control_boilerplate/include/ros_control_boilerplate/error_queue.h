@@ -12,7 +12,13 @@ class ErrorQueue
 {
 	public:
 		ErrorQueue(void);
+		ErrorQueue(const ErrorQueue &) = delete;
+		ErrorQueue(ErrorQueue &&) noexcept = delete;
 		~ErrorQueue();
+
+		ErrorQueue &operator=(const ErrorQueue &) = delete;
+		ErrorQueue &operator=(ErrorQueue &&) noexcept = delete;
+
 		void enqueue(int32_t errorCode, const std::string &details);
 	private:
 		void error_queue_thread_fn(void);

@@ -10,11 +10,16 @@ namespace ddr_updater
 class DDRUpdater
 {
 	public:
-		DDRUpdater(ros::NodeHandle nh);
-		~DDRUpdater();
+		DDRUpdater(ros::NodeHandle n);
+		DDRUpdater(const DDRUpdater &) = delete;
+		DDRUpdater(DDRUpdater &&) = delete;
+		virtual ~DDRUpdater();
 
-	protected:
+		DDRUpdater &operator=(const DDRUpdater &) = delete;
+		DDRUpdater &operator=(DDRUpdater &&) = delete;
+
 		void                                      triggerDDRUpdate(void);
+		void                                      shutdownDDRUpdater(void);
 		ddynamic_reconfigure::DDynamicReconfigure ddr_;
 
 	private:

@@ -86,4 +86,22 @@
 		</description>
 	</class>
 
+	<class name="rumble_state_controller/RumbleStateController" type="rumble_state_controller::RumbleStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Read joystick rubble state info from hardware interface and publish it
+		</description>
+	</class>
+
+	<class name="state_listener_controller/RumbleStateListenerController" type="state_listener_controller::RumbleStateListenerController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Copy remote rumble state into local hardware interface
+		</description>
+	</class>
+
+	<class name="rumble_controller/RumbleController" type="rumble_controller::RumbleController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			Send commands to joystick rumble
+		</description>
+	</class>
+
 </library>

@@ -69,7 +69,6 @@ class GenericHWControlLoop
 			ros::NodeHandle &nh,
 			std::shared_ptr<ros_control_boilerplate::FRCRobotInterface> hardware_interface);
 
-
 		// Run the control loop (blocking)
 		void run();
 

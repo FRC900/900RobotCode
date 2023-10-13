@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   controller_manager
   control_msgs
+  ctre_interfaces
   eigen_conversions
   frc_msgs
   frc_interfaces
@@ -18,16 +19,14 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   periodic_interval_counter
   pigeon2_interface
-  realtime_tools
   remote_joint_interface
   roscpp
   rosparam_shortcuts
   sensor_msgs
+  spark_max_interface
   std_msgs
-  ctre_interfaces
   trajectory_msgs
   urdf
-  spark_max_interface
 )
 
 add_service_files (
@@ -40,8 +39,8 @@ add_service_files (
 
 generate_messages(
   DEPENDENCIES
-  std_msgs
   ros_control_boilerplate
+  std_msgs
 )
 
 #set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -73,27 +72,63 @@ catkin_package(
 # Various source which is common to both sim and hardware
 # interface, regardless of platform being run
 add_library(frc_robot_interface STATIC
+    src/analog_input_device.cpp
+	src/analog_input_devices.cpp
 	src/AS726x.cpp
-	src/as726x_convert.cpp
-	src/cancoder_convert.cpp
-	src/cancoder_read_thread.cpp
-	src/canifier_convert.cpp
-	src/create_interfaces.cpp
-	src/ctre_mc_read_thread.cpp
+	src/candle_device.cpp
+	src/candle_devices.cpp
+	src/cancoder_device.cpp
+	src/cancoder_devices.cpp
+	src/canifier_device.cpp
+	src/canifier_devices.cpp
+    src/ctre_v5_device.cpp
+    src/ctre_v5_motor_controller.cpp
+	src/ctre_v5_motor_controllers.cpp
+    src/ctre_v6_device.cpp
+    src/digital_input_device.cpp
+	src/digital_input_devices.cpp
+    src/digital_output_device.cpp
+	src/digital_output_devices.cpp
+	src/double_solenoid_device.cpp
+	src/double_solenoid_devices.cpp
 	src/frc_robot_interface.cpp
 	src/generic_hw_control_loop.cpp
-	src/pcm_read_thread.cpp
-	src/pdh_read_thread.cpp
-	src/pdp_read_thread.cpp
-	src/ph_read_thread.cpp
-	src/pigeon2_convert.cpp
-	src/pigeon2_read_thread.cpp
-	src/read_config.cpp
-	src/rev_convert.cpp
+	src/get_conversion_factor.cpp
+	src/latency_compensation_group.cpp
+	src/latency_compensation_groups.cpp
+    src/pcm_device.cpp
+	src/pcm_devices.cpp
+    src/pdh_device.cpp
+	src/pdh_devices.cpp
+    src/pdp_device.cpp
+	src/pdp_devices.cpp
+    src/ph_device.cpp
+	src/ph_devices.cpp
+	src/pigeon2_device.cpp
+	src/pigeon2_devices.cpp
+    src/pwm_device.cpp
+	src/pwm_devices.cpp
+	src/read_config_utils.cpp
+    src/robot_controller_device.cpp
+	src/robot_controller_devices.cpp
 	src/ros_iterative_robot.cpp
+	src/ros_iterative_robot_devices.cpp
 	src/ros_math_shared.cpp
-	src/talon_convert.cpp
-	src/candle_convert.cpp
+	src/ready_device.cpp
+	src/ready_devices.cpp
+	src/rumble_device.cpp
+	src/rumble_devices.cpp
+	src/solenoid_device.cpp
+	src/solenoid_devices.cpp
+	src/talonfxpro_device.cpp
+	src/talonfxpro_devices.cpp
+	src/talon_orchestra_device.cpp
+	src/talon_orchestra_devices.cpp
+)
+
+add_dependencies(frc_robot_interface
+	${${PROJECT_NAME}_EXPORTED_TARGETS}
+	${catkin_EXPORTED_TARGETS}
 )
 
 # Main control executable
@@ -101,9 +136,13 @@ add_library(frc_robot_interface STATIC
 # for - x86 has access to much less real hardware than the Jetson, so
 # some files which make sense for one case don't for the other
 set (FRCROBOT_HW_MAIN_SRCS 
+	src/as726x_hw_device.cpp
 	src/error_queue.cpp
 	src/frcrobot_hw_main.cpp
 	src/frcrobot_hw_interface.cpp
+    src/joystick_hw_device.cpp
+	src/match_data_hw_device.cpp
+	src/sparkmax_hw_device.cpp
 )
 
 set (ALLWPILIB ../../../allwpilib)
@@ -189,6 +228,7 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Errors.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Joystick.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/MotorSafety.cpp
+		${ALLWPILIB}/wpilibc/src/main/native/cpp/Notifier.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/PneumaticsBase.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/PneumaticsControlModule.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/PneumaticHub.cpp
@@ -202,10 +242,13 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
 		${ALLWPILIB}/wpimath/src/main/native/cpp/filter/Debouncer.cpp
 		${ALLWPILIB}/wpimath/src/main/native/cpp/geometry/Rotation2d.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/fs.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/SafeThread.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/StackTraceWrap.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/Synchronization.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/fmtlib/src/format.cpp
+        ${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ConvertUTF.cpp
+        ${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ConvertUTFWrapper.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/Hashing.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/raw_ostream.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/ErrorHandling.cpp
@@ -217,6 +260,11 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
 		${ALLWPILIB}/wpiutil/src/main/native/unix/StackTrace.cpp
 	)
     set(FRC_COMMON_WPILIB frc_common_wpilib)
+
+	add_dependencies(frc_common_wpilib
+		${${PROJECT_NAME}_EXPORTED_TARGETS}
+		${catkin_EXPORTED_TARGETS}
+	)
 
 	set (FRCROBOT_HW_MAIN_SRCS ${FRCROBOT_HW_MAIN_SRCS} 
 		src/dummy_wpilib_common.cpp
@@ -231,7 +279,6 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
 		${ALLWPILIB}/hal/src/main/native/athena/rev/PHFrames.cpp
 		${ALLWPILIB}/hal/src/main/native/athena/SimDevice.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Tracer.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/SafeThread.cpp
 	)
 
 	if ("${CMAKE_LIBRARY_ARCHITECTURE}" STREQUAL "aarch64-linux-gnu") # Jetson TX1/TX2/Xaver AGX/Xavier NX
@@ -271,6 +318,7 @@ if (NOT "${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi")
 	  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 	)
+	link_directories(../../devel/.private/ros_control_boilerplate/lib)
 endif()
 
 # Don't build sim code for the Rio or Jetson -
@@ -346,45 +394,52 @@ if (NOT (("${ARM_PREFIX}" STREQUAL "arm-frc2023-linux-gnueabi") OR
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/DigitalOutput.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/DriverStation.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/GenericHID.cpp
+        ${ALLWPILIB}/wpilibc/src/main/native/cpp/I2C.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/IterativeRobotBase.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/Logger.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/RobotState.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/CallbackStore.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/simulation/RoboRioSim.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Timer.cpp
 		${ALLWPILIB}/wpilibc/src/main/native/cpp/Watchdog.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/DataLog.cpp
-		${ALLWPILIB}/wpiutil/src/main/native/cpp/SafeThread.cpp
+		${ALLWPILIB}/wpiutil/src/main/native/cpp/Logger.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/thirdparty/llvm/cpp/llvm/StringExtras.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/cpp/timestamp.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/unix/Demangle.cpp
 		${ALLWPILIB}/wpiutil/src/main/native/unix/StackTrace.cpp
 	)
+	add_dependencies(frc_sim_wpilib
+		${${PROJECT_NAME}_EXPORTED_TARGETS}
+		${catkin_EXPORTED_TARGETS}
+	)
 
 	add_executable(frcrobot_sim_main 
+		src/as726x_sim_device.cpp
 		src/frcrobot_sim_main.cpp
 		src/frcrobot_sim_interface.cpp
 		src/dummy_powerdistribution.cpp
 		src/dummy_wpilib_common.cpp
 		src/dummy_wpilib_sim.cpp
+		src/joystick_sim_device.cpp
+		src/match_data_sim_device.cpp
+		src/sparkmax_sim_device.cpp
 	)
 
 	target_link_libraries(frcrobot_sim_main
 		frc_robot_interface
-		${FRC_COMMON_WPILIB}
 		frc_sim_wpilib
-		frc_robot_interface
 		${FRC_COMMON_WPILIB}
-		frc_sim_wpilib
 		${CTRE_LIB_DIR}/libCTRE_PhoenixSim.so
 		${CTRE_LIB_DIR}/libCTRE_PhoenixCCISim.so
 		${CTRE_LIB_DIR}/libCTRE_PhoenixTools_Sim.so
 		${CTRE_LIB_DIR}/libCTRE_Phoenix_WPISim.so
+		${CTRE_LIB_DIR}/libCTRE_Phoenix6_WPISim.so
 		${CTRE_LIB_DIR}/libCTRE_SimCANCoder.so
         ${CTRE_LIB_DIR}/libCTRE_SimPigeonIMU.so
 		${CTRE_LIB_DIR}/libCTRE_SimTalonFX.so
 		${CTRE_LIB_DIR}/libCTRE_SimTalonSRX.so
 		${CTRE_LIB_DIR}/libCTRE_SimVictorSPX.so
+		${REV_USER_LIBS}
 		${catkin_LIBRARIES}
 	)
 
@@ -411,12 +466,13 @@ target_link_libraries(frcrobot_hw_main
 	${LIB_GPIOD}
 	${REV_USER_LIBS}
 	frc_robot_interface
-	${FRC_COMMON_WPILIB}
 	${CTRE_LIB_DIR}/libCTRE_Phoenix.so
 	${CTRE_LIB_DIR}/libCTRE_PhoenixCCI.so
 	${CTRE_LIB_DIR}/libCTRE_PhoenixTools.so
 	${CTRE_LIB_DIR}/libCTRE_Phoenix_WPI.so
+	${CTRE_LIB_DIR}/libCTRE_Phoenix6_WPI.so
 	${PLATFORM_SPECIFIC_LIBS}
+	${FRC_COMMON_WPILIB}
 	${catkin_LIBRARIES}
 )
 

@@ -77,6 +77,4 @@ ErrorQueue::~ErrorQueue(void)
 	}
 }
 
-
 std::unique_ptr<ErrorQueue> errorQueue;
-

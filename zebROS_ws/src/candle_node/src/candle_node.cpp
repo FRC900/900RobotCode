@@ -8,7 +8,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <angles/angles.h>
-#include <talon_state_msgs/TalonState.h>
+#include <talon_state_msgs/TalonFXProState.h>
 #include <geometry_msgs/Twist.h>
 #include <std_srvs/Empty.h>
 #include <frc_msgs/MatchSpecificData.h>
@@ -59,23 +59,23 @@ struct NodeCTX {
         }
     }
 
-    void talon_callback(const talon_state_msgs::TalonState &talon_state)
+    void talon_callback(const talon_state_msgs::TalonFXProState &talon_state)
 	{
 		// fourbar_master_idx == max of size_t at the start
 		if (intake_idx == std::numeric_limits<size_t>::max()) // could maybe just check for > 0
 		{
 			for (size_t i = 0; i < talon_state.name.size(); i++)
 			{
-				if (talon_state.name[i] == "intake_leader")
+				if (talon_state.name[i] == "intake")
 				{
 					intake_idx = i;
 					break;
 				}
 			}
 		}
-		if (!(intake_idx == std::numeric_limits<size_t>::max()))
+		if (intake_idx != std::numeric_limits<size_t>::max())
 		{
-			bool new_exceeded = talon_state.output_current[intake_idx] > intake_current_threshold_;
+			bool new_exceeded = talon_state.stator_current[intake_idx] > intake_current_threshold_;
             if (new_exceeded != current_exceeded_) {
                 current_exceeded_ = new_exceeded;
                 updated = true;
@@ -223,7 +223,7 @@ int main(int argc, char **argv) {
     ros::Subscriber button_box_subscriber = node.subscribe("/frcrobot_rio/button_box_states", 25, &NodeCTX::button_box_callback, &ctx);
     ros::Subscriber auto_mode_subscriber = node.subscribe("/auto/auto_mode", 1, &NodeCTX::auto_mode_callback, &ctx);
     ros::Subscriber imu_subscriber = node.subscribe("/imu/zeroed_imu", 1, &NodeCTX::imu_callback, &ctx);
-    ros::Subscriber talon_state_subscriber = node.subscribe("/frcrobot_jetson/talon_states", 1, &NodeCTX::talon_callback, &ctx);
+    ros::Subscriber talon_state_subscriber = node.subscribe("/frcrobot_jetson/talonfxpro_states", 1, &NodeCTX::talon_callback, &ctx);
     ros::Subscriber path_follower_subscriber = node.subscribe("/path_follower/path_follower_pid/swerve_drive_controller/cmd_vel", 1, &NodeCTX::path_callback, &ctx);
     ros::Subscriber team_colour_subscriber = node.subscribe("/frcrobot_rio/match_data", 1, &NodeCTX::team_colour_callback, &ctx);
     ros::Subscriber joystick_state_sub = node.subscribe("/frcrobot_rio/joystick_states/1", 1, &NodeCTX::joystick_callback, &ctx);

@@ -38,8 +38,8 @@ namespace swerveVar
 struct ratios
 {
 	double encodertoRotations;
-	double motortoRotations;
-	double motortoSteering;
+	//double motortoRotations;
+	//double motortoSteering;
 };
 
 struct encoderUnits
@@ -55,11 +55,11 @@ struct driveModel
 {
 	double maxSpeed;
 	double wheelRadius;
-	double mass;
-	double motorFreeSpeed;
-	double motorStallTorque;
-	int motorQuantity;
-	double speedLossConstant = .81; // Don't set this here
+	//double mass;
+	//double motorFreeSpeed;
+	//double motorStallTorque;
+	//int motorQuantity;
+	//double speedLossConstant = .81; // Don't set this here
 }; //more info should be added to this struct
 }
 

@@ -126,7 +126,7 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(candle_controller
+add_library(${PROJECT_NAME}
   src/candle_controller.cpp
 )
 

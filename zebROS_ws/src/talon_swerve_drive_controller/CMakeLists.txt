@@ -6,16 +6,16 @@ include ("../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED COMPONENTS
     cmake_modules
     controller_interface
+    ctre_interfaces
     geometry_msgs
-    message_generation
     nav_msgs
     std_msgs
-	std_srvs
+	  std_srvs
     realtime_tools
-	roscpp
+	  roscpp
     talon_controllers
-    ctre_interfaces
-	talon_state_msgs
+	  talon_state_msgs
+    talon_swerve_drive_controller_msgs
     tf
     trajectory_msgs
     urdf
@@ -27,18 +27,18 @@ find_package(Eigen3 REQUIRED)
 #FILES
 #)
 
-add_service_files (
-  FILES
-  SetXY.srv
-)
+#add_service_files (
+  #FILES
+  #SetXY.srv
+#)
 
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-  trajectory_msgs
-  talon_swerve_drive_controller
-)
+#generate_messages(
+  #DEPENDENCIES
+  #std_msgs
+  #geometry_msgs
+  #trajectory_msgs
+  #talon_swerve_drive_controller
+#)
 
 catkin_package(
   CATKIN_DEPENDS
@@ -65,7 +65,6 @@ add_library(${PROJECT_NAME}
 add_dependencies(${PROJECT_NAME}
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
-  talon_swerve_drive_controller_generate_messages_cpp
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
@@ -106,4 +105,3 @@ install(TARGETS ${PROJECT_NAME}
 
 install(FILES ${PROJECT_NAME}_plugins.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-

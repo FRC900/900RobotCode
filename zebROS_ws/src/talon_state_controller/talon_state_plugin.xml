@@ -9,10 +9,19 @@
 			Listens to talon_state messages for talons marked as remote, writes their value to the local controller
 		</description>
 	</class>
-
 	<class name="talon_config_controller/TalonConfigController" type="talon_config_controller::TalonConfigController" base_class_type="controller_interface::ControllerBase">
 		<description>
 			The talon config controller publishes the current talon config as a talon_state_msgs/TalonConfig message. The talon config controller expects a TalonStateInterface type of hardware interface.
+		</description>
+	</class>
+	<class name="talonfxpro_state_controller/TalonFXProStateController" type="talonfxpro_state_controller::TalonFXProStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			The talonfxpro state controller publishes the current talonfxpro state as a talonfxpro_state_msgs/TalonFXProState message. The talonfxpro state controller expects a TalonFXProStateInterface type of hardware interface.
+		</description>
+	</class>
+	<class name="talonfxpro_config_controller/TalonFXProConfigController" type="talonfxpro_config_controller::TalonFXProConfigController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			The talonfxpro config controller publishes the current talonfxpro config as a talonfxpro_config_msgs/TalonFXProConfig message. The talonfxpro config controller expects a TalonFXProConfigInterface type of hardware interface.
 		</description>
 	</class>
 	<class name="canifier_state_controller/CANifierStateController" type="canifier_state_controller::CANifierStateController" base_class_type="controller_interface::ControllerBase">
@@ -28,6 +37,11 @@
 	<class name="orchestra_state_controller/OrchestraStateController" type="orchestra_state_controller::OrchestraStateController" base_class_type="controller_interface::ControllerBase">
 		<description>
 			The Orchestra state controller publishes the current Orchestra State as a talon_state_msgs/OrchestraState message. The OrchestraState controller expects a OrchestraStateInterface type of hardware interface.
+		</description>
+	</class>
+	<class name="latency_compensation_state_controller/LatencyCompensationStateController" type="latency_compensation_state_controller::LatencyCompensationStateController" base_class_type="controller_interface::ControllerBase">
+		<description>
+			The Latency Compensation state controller publishes the current LatencyCompensation State as a talon_state_msgs/LatencyCompensationState message. The LatencyCompensationState controller expects a LatencyCompensationStateInterface type of hardware interface.
 		</description>
 	</class>
 </library>

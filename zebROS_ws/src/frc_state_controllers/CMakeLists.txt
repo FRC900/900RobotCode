@@ -108,7 +108,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
+  #INCLUDE_DIRS include
   #  LIBRARIES frc_state_controllers
   CATKIN_DEPENDS controller_interface hardware_interface pluginlib realtime_tools roscpp std_msgs frc_interfaces frc_msgs
   #DEPENDS system_lib
@@ -121,7 +121,6 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -138,6 +137,8 @@ add_library(frc_state_controller
   src/ph_state_controller.cpp
 	src/match_state_controller.cpp
   src/robot_controller_state_controller.cpp
+  src/rumble_controller.cpp
+  src/rumble_state_controller.cpp
 	src/spacemouse_state_controller.cpp
 )
 target_link_libraries(frc_state_controller ${catkin_LIBRARIES})

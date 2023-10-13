@@ -36,8 +36,8 @@ namespace orchestra_controller
 			hardware_interface::OrchestraCommandHandle orchestra_command_handle_;
 			realtime_tools::RealtimeBuffer<std::string> music_file_path_;
 			realtime_tools::RealtimeBuffer<std::vector<std::string>> instruments_;
-			realtime_tools::RealtimeBuffer<int> state_;
-			int previous_state_;
+			realtime_tools::RealtimeBuffer<int> orchestra_state_;
+			int previous_state_{2};
 
 			ros::ServiceServer load_music_server_;
 			ros::ServiceServer set_state_server_;

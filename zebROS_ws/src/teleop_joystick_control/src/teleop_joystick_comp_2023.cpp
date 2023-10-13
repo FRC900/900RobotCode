@@ -33,9 +33,9 @@
 #include <behavior_actions/Intaking2023Action.h>
 #include <behavior_actions/Placing2023Action.h>
 #include <behavior_actions/FourbarElevatorPath2023Action.h>
-#include <talon_swerve_drive_controller/SetXY.h>
+#include <talon_swerve_drive_controller_msgs/SetXY.h>
 #include <behavior_actions/AlignAndPlaceGrid2023Action.h>
-#include <talon_state_msgs/TalonState.h>
+#include <talon_state_msgs/TalonFXProState.h>
 #include <std_srvs/SetBool.h>
 
 struct DynamicReconfigVars
@@ -209,7 +209,7 @@ size_t elevator_idx = std::numeric_limits<size_t>::max();
 double elevator_height{0};
 double elevator_setpoint{0};
 
-void talonStateCallback(const talon_state_msgs::TalonState talon_state)
+void talonFXProStateCallback(const talon_state_msgs::TalonFXProState talon_state)
 {           
 	// fourbar_master_idx == max of size_t at the start
 	if (elevator_idx == std::numeric_limits<size_t>::max()) // could maybe just check for > 0
@@ -223,10 +223,10 @@ void talonStateCallback(const talon_state_msgs::TalonState talon_state)
 			}
 		}
 	}
-	if (!(elevator_idx == std::numeric_limits<size_t>::max()))
+	if (elevator_idx != std::numeric_limits<size_t>::max())
 	{
 		elevator_height = talon_state.position[elevator_idx];
-		elevator_setpoint = talon_state.set_point[elevator_idx];
+		elevator_setpoint = talon_state.control_position[elevator_idx];
 
 		pathed = (elevator_height >= config.elevator_threshold);
 		// if we are currently above the height or want to go above the height
@@ -1374,12 +1374,12 @@ int main(int argc, char **argv)
 	ParkSrv = n.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/swerve_drive_controller/toggle_park", false, service_connection_header);
 	IMUZeroSrv = n.serviceClient<imu_zero::ImuZeroAngle>("/imu/set_imu_zero", false, service_connection_header);
 	snapConeCubeSrv = n.serviceClient<teleop_joystick_control::SnapConeCube>("/snap_to_angle/snap_cone_cube", false, service_connection_header);
-	setCenterSrv = n.serviceClient<talon_swerve_drive_controller::SetXY>("/frcrobot_jetson/swerve_drive_controller/change_center_of_rotation", false, service_connection_header);	
+	setCenterSrv = n.serviceClient<talon_swerve_drive_controller_msgs::SetXY>("/frcrobot_jetson/swerve_drive_controller/change_center_of_rotation", false, service_connection_header);	
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	SwerveOdomZeroSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/reset_odom", false, service_connection_header);
 	FourbarRezeroSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/four_bar_controller_2023/rezero_service", false, service_connection_header);
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
-	ros::Subscriber talon_states_sub = n.subscribe("/frcrobot_jetson/talon_states", 1, &talonStateCallback);
+	ros::Subscriber talon_states_sub = n.subscribe("/frcrobot_jetson/talonfxpro_states", 1, &talonFXProStateCallback);
 	ros::Subscriber match_state_sub = n.subscribe("/frcrobot_rio/match_data", 1, matchStateCallback);
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);
 

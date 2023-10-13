@@ -1,5 +1,7 @@
-#pragma once
+#ifndef PH_STATE_INTERFACE_INC__
+#define PH_STATE_INTERFACE_INC__
 
+#include <array>
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include <state_handle/state_handle.h>
 
@@ -13,6 +15,9 @@ class PHHWState
 			: id_(id)
 		{
 		}
+		PHHWState(const PHHWState &) = delete;
+		PHHWState(PHHWState &&) noexcept = delete;
+		~PHHWState() = default;
 
 		// Override operator= to only copy fields actually
 		// read from ph - write() will set vales of
@@ -33,6 +38,7 @@ class PHHWState
 			}
 			return *this;
 		}
+		PHHWState& operator=(PHHWState &&) noexcept = delete;
 
 		int32_t getId(void)                         const { return id_; }
 		bool    getCompressorEnabled(void)          const { return compressor_enabled_; }
@@ -100,9 +106,11 @@ class PHHWState
 		std::array<double, 2> pressure_{0, 0};
 };
 
-typedef StateHandle<const PHHWState> PHStateHandle;
-typedef StateHandle<PHHWState> PHWritableStateHandle;
+using PHStateHandle = StateHandle<const PHHWState>;
+using PHWritableStateHandle = StateHandle<PHHWState>;
 class PHStateInterface       : public HardwareResourceManager<PHStateHandle> {};
 class RemotePHStateInterface : public HardwareResourceManager<PHWritableStateHandle, ClaimResources> {};
 
 } // namespace
+
+#endif

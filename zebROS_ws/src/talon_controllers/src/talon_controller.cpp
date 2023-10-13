@@ -1,4 +1,4 @@
-#include <talon_controllers/talon_controller.h>
+#include "talon_controllers/talon_controller.h"
 #include <pluginlib/class_list_macros.h>
 
 PLUGINLIB_EXPORT_CLASS(talon_controllers::TalonPercentOutputController,

@@ -2,7 +2,7 @@
 #include <actionlib/server/simple_action_server.h>
 //#include <actionlib/client/simple_action_client.h>
 #include <behavior_actions/FourbarElevatorPath2023Action.h>
-#include <talon_state_msgs/TalonState.h>
+#include <talon_state_msgs/TalonFXProState.h>
 #include <controllers_2023_msgs/ElevatorSrv.h>
 #include <controllers_2023_msgs/FourBarSrv.h>
 namespace actionlib { template <class ActionSpec> class SimpleActionClient; }
@@ -50,7 +50,7 @@ public:
 	{
 		fourbar_idx_ = std::numeric_limits<size_t>::max();
 		elevator_idx_ = std::numeric_limits<size_t>::max();
-		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &FourbarElevatorPathServer2023::talonStateCallback, this);
+		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talonfxpro_states", 1, &FourbarElevatorPathServer2023::talonFXProStateCallback, this);
 		XmlRpc::XmlRpcValue pathList;
     	nh_.getParam("paths", pathList);
 
@@ -114,7 +114,7 @@ public:
 	{
 	}
 
-	void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
+	void talonFXProStateCallback(const talon_state_msgs::TalonFXProState &talon_state)
 	{
 		if (fourbar_idx_ == std::numeric_limits<size_t>::max()) // could maybe just check for > 0
 		{

@@ -6,7 +6,7 @@
 #include <behavior_actions/Placing2023Action.h>
 #include <behavior_actions/GamePieceState2023.h>
 #include <path_follower_msgs/holdPositionAction.h>
-#include <talon_state_msgs/TalonState.h>
+#include <talon_state_msgs/TalonFXProState.h>
 #include <sensor_msgs/Imu.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -113,7 +113,7 @@ public:
 			drive_back_time_ = 0.5;
 		}
 		game_piece_sub_ = nh_.subscribe("/game_piece/game_piece_state", 1, &PlacingServer2023::gamePieceCallback, this);
-		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &PlacingServer2023::talonStateCallback, this);
+		talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talonfxpro_states", 1, &PlacingServer2023::talonFXProStateCallback, this);
 		imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/zeroed_imu", 1, &PlacingServer2023::imuCb, this);
 		as_.start();
 	}
@@ -197,7 +197,7 @@ public:
 		return location_str + "_" + piece_str;
 	}
 
-	void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
+	void talonFXProStateCallback(const talon_state_msgs::TalonFXProState &talon_state)
 	{
 		// elevator_idx_ == max of size_t at the start
 		if (elevator_idx_ == std::numeric_limits<size_t>::max())

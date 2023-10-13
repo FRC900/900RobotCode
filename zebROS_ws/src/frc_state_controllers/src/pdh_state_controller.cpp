@@ -171,7 +171,7 @@ private:
 	hardware_interface::PDHWritableStateHandle handle_;
 
 	// Real-time buffer holds the last command value read from the "command" topic.
-	realtime_tools::RealtimeBuffer<hardware_interface::PDHHWState> command_buffer_;
+	realtime_tools::RealtimeBuffer<hardware_interface::PDHHWState> command_buffer_{hardware_interface::PDHHWState(-1)};
 
 	// Iterate through each desired joint state.  If it is found in
 	// the message, save the value here in the realtime buffer.
@@ -205,12 +205,7 @@ private:
 
 
 public:
-	PDHStateListenerController()
-		: command_buffer_(hardware_interface::PDHHWState(-1))
-	{
-	}
-
-	~PDHStateListenerController()
+	virtual ~PDHStateListenerController()
 	{
 		sub_command_.shutdown();
 	}

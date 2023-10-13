@@ -44,7 +44,7 @@ class JointStateListenerController :
 		{
 			// Read list of hw, make a list, grab handles for them, plus allocate storage space
 			joint_names_ = hw->getNames();
-			for (auto j : joint_names_)
+			for (const auto &j : joint_names_)
 			{
 				ROS_INFO_STREAM("Joint State Listener Controller got joint " << j);
 				handles_.push_back(hw->getHandle(j));

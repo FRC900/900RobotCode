@@ -5,6 +5,8 @@
 #include <realtime_tools/realtime_buffer.h>
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
+
+#include "ctre_interfaces/talon_command_interface.h"
 #include <talon_controllers/talon_controller_interface.h>
 #include <talon_controller_msgs/PidfSlot.h>
 
@@ -35,11 +37,16 @@ class TalonController:
 	public controller_interface::Controller<hardware_interface::TalonCommandInterface>
 {
 	public:
-		TalonController() {}
-		~TalonController()
+		TalonController() =default;
+        TalonController(const TalonController &) = delete;
+        TalonController(TalonController &&) = delete;
+		virtual ~TalonController()
 		{
 			sub_command_.shutdown();
 		}
+
+        TalonController &operator=(const TalonController &other) = delete;
+        TalonController &operator=(TalonController &&other) = delete;
 
 		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n)
 		{
@@ -91,10 +98,7 @@ class TalonController:
 		}
 };
 
-class TalonPercentOutputController: public TalonController<TalonPercentOutputControllerInterface>
-{
-	// Override or add methods different from the base class here
-};
+using TalonPercentOutputController = TalonController<TalonPercentOutputControllerInterface>;
 
 // Add a service to set PIDF config slot for all close-loop controllers
 template <class TALON_IF>
@@ -102,8 +106,13 @@ class TalonCloseLoopController :
 	public TalonController<TALON_IF>
 {
 	public:
-		TalonCloseLoopController() { }
-		~TalonCloseLoopController() { }
+		TalonCloseLoopController() =default;
+        TalonCloseLoopController(const TalonCloseLoopController &) = delete;
+        TalonCloseLoopController(TalonCloseLoopController &&) = delete;
+		virtual ~TalonCloseLoopController() = default;
+
+        TalonCloseLoopController &operator=(const TalonCloseLoopController &other) = delete;
+        TalonCloseLoopController &operator=(TalonCloseLoopController &&other) = delete;
 
 		virtual bool init(hardware_interface::TalonCommandInterface *hw, ros::NodeHandle &n) override
 		{
@@ -125,18 +134,9 @@ class TalonCloseLoopController :
 
 };
 
-class TalonPositionCloseLoopController: public TalonCloseLoopController<TalonPositionCloseLoopControllerInterface>
-{
-		// Override or add methods here
-};
-class TalonMotionMagicCloseLoopController: public TalonCloseLoopController<TalonMotionMagicCloseLoopControllerInterface>
-{
-		// Override or add methods here
-};
-class TalonVelocityCloseLoopController: public TalonCloseLoopController<TalonVelocityCloseLoopControllerInterface>
-{
-		// Override or add methods here
-};
+using TalonPositionCloseLoopController    = TalonCloseLoopController<TalonPositionCloseLoopControllerInterface>;
+using TalonMotionMagicCloseLoopController = TalonCloseLoopController<TalonMotionMagicCloseLoopControllerInterface>;
+using TalonVelocityCloseLoopController    = TalonCloseLoopController<TalonVelocityCloseLoopControllerInterface>;
 
 // Follower controller sets up a Talon to mirror the actions
 // of another talon. This talon is defined by joint name in
@@ -146,8 +146,13 @@ class TalonFollowerController:
 														  hardware_interface::TalonStateInterface>
 {
 	public:
-		TalonFollowerController() {}
-		~TalonFollowerController() {}
+		TalonFollowerController() =default;
+        TalonFollowerController(const TalonFollowerController &) = delete;
+        TalonFollowerController(TalonFollowerController &&) = delete;
+		virtual ~TalonFollowerController() = default;
+
+        TalonFollowerController &operator=(const TalonFollowerController &other) = delete;
+        TalonFollowerController &operator=(TalonFollowerController &&other) = delete;
 
 		bool init(hardware_interface::RobotHW *hw, ros::NodeHandle &n) override
 		{

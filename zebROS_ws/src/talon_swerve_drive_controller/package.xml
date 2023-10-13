@@ -8,7 +8,6 @@
   <license>BSD</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <build_depend>message_generation</build_depend>
   <build_depend>cmake_modules</build_depend>
 
   <depend>roscpp</depend>
@@ -22,6 +21,7 @@
   <depend>talon_controllers</depend>
   <depend>ctre_interfaces</depend>
   <depend>talon_state_msgs</depend>
+  <depend>talon_swerve_drive_controller_msgs</depend>
   <depend>tf</depend>
   <depend>trajectory_msgs</depend>
   <depend>urdf</depend>

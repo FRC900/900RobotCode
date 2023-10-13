@@ -1,8 +1,8 @@
 Header header
 
-string[] name
-string[] talon_mode
-string[] demand1_type
+string[]  name
+string[]  talon_mode
+string[]  demand1_type
 float64[] demand1_value
 float64[] position
 float64[] speed
@@ -26,10 +26,10 @@ float64[] active_trajectory_position
 float64[] active_trajectory_velocity
 float64[] active_trajectory_arbitrary_feed_forward
 float64[] active_trajectory_heading
-bool[] forward_limit_switch
-bool[] reverse_limit_switch
-bool[] forward_softlimit
-bool[] reverse_softlimit
+bool[]    forward_limit_switch
+bool[]    reverse_limit_switch
+bool[]    forward_softlimit
+bool[]    reverse_softlimit
 int32[]   motion_profile_top_level_buffer_count
 bool[]    motion_profile_top_level_buffer_full
 int32[]   motion_profile_status_top_buffer_rem

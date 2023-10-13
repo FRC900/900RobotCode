@@ -8,6 +8,13 @@ class ROSIterativeRobot
 {
 	public:
 		ROSIterativeRobot(void);
+		ROSIterativeRobot(const ROSIterativeRobot &) = delete;
+		ROSIterativeRobot(ROSIterativeRobot &&) noexcept = delete;
+		~ROSIterativeRobot() = default;
+
+		ROSIterativeRobot &operator=(const ROSIterativeRobot &) = delete;
+		ROSIterativeRobot &operator=(ROSIterativeRobot &&) noexcept = delete;
+
 		void StartCompetition(void) const;
 		void OneIteration(void) const;
 	private:

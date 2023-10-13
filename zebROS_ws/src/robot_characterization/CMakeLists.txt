@@ -219,7 +219,8 @@ set (WPILIBSRC
 	${ALLWPILIB}/wpiutil/src/main/native/thirdparty/mpack/src/mpack.cpp
 )
 
-add_library(wpilib_net STATIC ${WPILIBSRC} )
+add_library(wpilib_net STATIC ${WPILIBSRC})
+add_dependencies(wpilib_net ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_executable(robot_characterization 
 	src/robot_characterization.cpp
 )

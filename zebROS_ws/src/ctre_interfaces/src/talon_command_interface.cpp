@@ -13,7 +13,7 @@ TalonHWCommand::TalonHWCommand(void) :
 	command_(0),
 	command_changed_(true),
 	mode_(TalonMode_Disabled),
-	mode_changed_(false),
+	mode_changed_(true),
 	demand1_type_(DemandType_Neutral),
 	demand1_value_(0.0),
 	demand1_changed_(true),
@@ -601,7 +601,7 @@ void TalonHWCommand::setNeutralMode(NeutralMode neutral_mode)
 		neutral_mode_changed_ = true;
 	}
 }
-NeutralMode TalonHWCommand::getNeutralMode(void)
+NeutralMode TalonHWCommand::getNeutralMode(void) const
 {
 	return neutral_mode_;
 }

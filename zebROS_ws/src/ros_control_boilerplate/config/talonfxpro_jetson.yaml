@@ -1,0 +1,205 @@
+# ros_control_boilerplate Settings -----------------------
+# Settings for ros_control control loop
+generic_hw_control_loop:
+  loop_hz: 250
+  cycle_time_error_threshold: 0.01
+  canifier_read_hz: 100
+  cancoder_read_hz: 100
+  #some processes have lower frequencies than the main control loop
+  ctre_mc_read_hz: 100
+  talonfxpro_read_hz: 100
+  pcm_read_hz: 20
+  pdh_read_hz: 20
+  pdp_read_hz: 20
+  ph_read_hz: 20
+  robot_iteration_hz: 20
+  spark_max_read_hz: 20
+  joystick_read_hz: 50
+  match_data_read_hz: 2
+  robot_controller_read_hz: 20
+  as726x_read_hz: 7
+  pigeon2_read_hz: 250
+  talonfxpro_read_hz: 100
+
+hardware_interface:
+   run_hal_robot: false
+   can_interface: can0
+   joints:
+       #- {name: terrance, type: can_talon_fx, can_bus: CANivore, can_id: 1, local: true}
+       #- {name: phillip, type: can_talon_fx, can_bus: CANivore, can_id: 2, local: true}
+       #- {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 1, local: true}
+       #- {name: pdp, local: true, type: pdp, module: 0, local: true}
+       #- {name: pdh, local: true, type: pdh, module: 1, local: true}
+       #- {name: ph, local: true, type: ph, ph_id: 1, local: true}
+       #- {name: pcm, local: true, type: pcm, pcm_id: 0}
+       #- {name: solenoid, type: solenoid, local_hardware: false, local_update: true}
+       #- {name: double_solenoid, type: double_solenoid, local_hardware: false, local_update: true} 
+
+       #- {name: ph_solenoid, type: solenoid, module_type: revph, module_id: 1, channel: 1, local: true}
+       #- {name: ph_double_solenoid, type: double_solenoid, module_type: revph, module_id: 1, forward_channel: 2, reverse_channel: 3, local: true}
+
+       #- {name: talonfx, type: can_talon_fx, can_bus: CANivore, can_id: 1, local: true}
+       - {name: talonfxpro1, type: talonfxpro, can_bus: CANivore, can_id: 1, local: true}
+       - {name: talonfxpro2, type: talonfxpro, can_bus: CANivore, can_id: 2, local: true}
+       - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: talonfxpro1, type: talonfx}, {name: talonfxpro2, type: talonfx} ] }
+       #- {name: elevator_leader, type: can_talon_fx, can_bus: CANivore, can_id: 31, local: true}
+       #- {name: elevator_follower, type: can_talon_fx, can_bus: CANivore, can_id: 32, local: true}
+       #- {name: four_bar, type: can_talon_fx, can_bus: CANivore, can_id: 41, local: true}
+       #- {name: four_bar, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
+       #- {name: fl_drive, type: can_talon_fx, can_bus: CANivore, can_id: 21, local: true}
+       #- {name: fl_angle, type: can_talon_fx, can_bus: CANivore, can_id: 11, local: true}
+       #- {name: fr_drive, type: can_talon_fx, can_bus: CANivore, can_id: 22, local: true}
+       #- {name: fr_angle, type: can_talon_fx, can_bus: CANivore, can_id: 12, local: true}
+       #- {name: br_drive, type: can_talon_fx, can_bus: CANivore, can_id: 24, local: true}
+       #- {name: br_angle, type: can_talon_fx, can_bus: CANivore, can_id: 14, local: true}
+       #- {name: bl_drive, type: can_talon_fx, can_bus: CANivore, can_id: 23, local: true}
+       #- {name: bl_angle, type: can_talon_fx, can_bus: CANivore, can_id: 13, local: true}
+       
+       #- {name: candle1, can_id: 5, can_bus: CANivore, type: candle, local: true}
+
+       - {name: robot_code_ready_jetson, local: true, type: ready}
+       - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
+       
+# Create controllers for each joint
+#
+# Entry is the name of the controller. It can be anything.  
+# It will create a namespace with that name under the main
+# controller namespace. Subscribed topics for that controller
+# will be most often show up under 
+# <top level controller manager ns>/<controller ns>/topic
+# e.g.
+# /frcrobot/joint1_talon_controller/command
+# /frcrobot/joint2_talon_controller/command
+# /frcrobot/talon_states
+joint_state_controller:
+   type:         joint_state_controller/JointStateController
+   publish_rate: 100
+
+# Used to listen for joint state published from the given topic
+# (in this case the rio) and copy them to internal copies of 
+# joint data
+joint_state_listener_controller:
+    type:      state_listener_controller/JointStateListenerController
+    topic:     /frcrobot_rio/joint_states
+
+match_state_listener_controller:
+    type:      state_listener_controller/MatchStateListenerController
+    topic:     /frcrobot_rio/match_data
+
+#
+# This one creates the /talon_states topic necessary in ROS
+# It doesn't actually control anything, just takes the internal
+# encoder state used by the hw manager and publishes it as
+# a ROS topic.  This is generic ROS stuff, so we'll have
+# to figure out what to map e.g. effort to in the Talon world
+talon_state_controller:
+   type:         talon_state_controller/TalonStateController
+   publish_rate: 100
+talon_config_controller:
+   type:         talon_config_controller/TalonConfigController
+   publish_rate: 5
+
+talonfxpro_state_controller:
+   type:         talonfxpro_state_controller/TalonFXProStateController
+   publish_rate: 100
+talonfxpro_config_controller:
+   type:         talonfxpro_config_controller/TalonFXProConfigController
+   publish_rate: 5
+
+pdp_state_controller:
+   type:         pdp_state_controller/PDPStateController
+   publish_rate: 20
+
+pdh_state_controller:
+   type:         pdh_state_controller/PDHStateController
+   publish_rate: 20
+
+pcm_state_controller:
+   type : pcm_state_controller/PCMStateController
+
+ph_state_controller:
+   type:         ph_state_controller/PHStateController
+   publish_rate: 20
+
+# Similar to above, but this one prints non-Talon state
+# (stuff that fits into the more standard ROS position/
+
+# Create a controller called talon3_controller
+#  That name is used by spawner in the launch file to 
+#  actually start this controller
+# The joint it controls is talon3. This should match
+# up with one of the names in the top-level joints list
+# above.  
+# The type is a talon_controllers/TalonController
+talonfxpro_controller:
+    type: talonfxpro_controllers/TalonFXProDutyCycleOutController
+    joint: talonfxpro
+    dynamic_reconfigure: True
+
+talonfxpro2_controller:
+    type: talonfxpro_controllers/TalonFXProDutyCycleOutController
+    joint: talonfxpro2
+    dynamic_reconfigure: True
+
+talonfxpro1_motionmagicvoltage_controller:
+    type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
+    joint: talonfxpro1
+    motion_magic_cruise_velocity: 8.0
+    motion_magic_acceleration: 16.0
+    motion_magic_jerk: 24.0
+    sensor_to_mechanism_ratio: 1.0
+    rotor_to_sensor_ratio: 1.0
+    close_loop_values:
+        - {kP: 65, kI: 1, kD: 0.00, kV: 0.085, kS: 0}
+    dynamic_reconfigure: True
+
+talonfxpro2_motionmagicvoltage_controller:
+    type: talonfxpro_controllers/TalonFXProMotionMagicVoltageController
+    joint: talonfxpro2
+    motion_magic_cruise_velocity: 8.0
+    motion_magic_acceleration: 16.0
+    motion_magic_jerk: 24.0
+    sensor_to_mechanism_ratio: 1.0
+    rotor_to_sensor_ratio: 1.0
+    close_loop_values:
+        - {kP: 65, kI: 1, kD: 0.00, kV: 0.085, kS: 0}
+    dynamic_reconfigure: True
+candle_controller:
+    type: candle_controller/CANdleController
+    name: candle1
+
+pigeon2_state_controller:
+    type: pigeon2_state_controller/Pigeon2StateController
+    publish_rate: 100
+    joint_name: pigeon2
+    compass_enable: false
+
+pigeon2_controller:
+    type: pigeon2_controller/Pigeon2Controller
+    publish_rate: 20
+    joint_name: pigeon2
+
+pigeon2_imu_state_controller:
+    type: imu_sensor_controller/ImuSensorController
+    joint_name: pigeon2
+    publish_rate: 100
+
+solenoid_controller:
+  type: position_controllers/JointPositionController
+  joint: solenoid
+
+double_solenoid_controller:
+  type: position_controllers/JointPositionController
+  joint: double_solenoid
+
+ph_solenoid_controller:
+  type: position_controllers/JointPositionController
+  joint: ph_solenoid
+
+ph_double_solenoid_controller:
+  type: position_controllers/JointPositionController
+  joint: ph_double_solenoid
+
+latency_compensation_state_controller:
+  type: latency_compensation_state_controller/LatencyCompensationStateController
+  publish_rate: 250

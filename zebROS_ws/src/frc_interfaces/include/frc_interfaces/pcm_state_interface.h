@@ -1,4 +1,5 @@
-#pragma once
+#ifndef PCM_STATE_INTERFACE_INC__
+#define PCM_STATE_INTERFACE_INC__
 
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include <state_handle/state_handle.h>
@@ -66,3 +67,5 @@ class PCMStateInterface       : public HardwareResourceManager<PCMStateHandle> {
 class RemotePCMStateInterface : public HardwareResourceManager<PCMWritableStateHandle, ClaimResources> {};
 
 } // namespace
+
+#endif

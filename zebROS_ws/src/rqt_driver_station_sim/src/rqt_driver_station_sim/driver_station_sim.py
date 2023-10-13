@@ -16,11 +16,12 @@ from python_qt_binding.QtWidgets import QWidget
 from behavior_actions.msg import AutoMode, AutoState
 from frc_msgs.msg import MatchSpecificData
 from talon_state_msgs.msg import TalonState
+from talon_state_msgs.msg import TalonFXProState
 from ros_control_boilerplate.srv import LineBreakSensors, set_limit_switch
 
 class DriverStationSim(Plugin):
     auto_state_signal = QtCore.pyqtSignal(int)
-    def _read_joint_param(self, param_key, where, talons, ains, dins):
+    def _read_joint_param(self, param_key, where, talons, talonfxpros, ains, dins):
         if not rospy.has_param(param_key):
             return
         joint_param = rospy.get_param(param_key)
@@ -29,13 +30,15 @@ class DriverStationSim(Plugin):
                 continue
             if ('local_hardware' in jp) and (jp['local_hardware'] == False):
                 continue
-            if ('can_talon' not in jp['type']) and (jp['type'] != 'analog_input') and (jp['type'] != 'digital_input'):
+            if ('can_talon' not in jp['type']) and (jp['type'] != 'talonfxpro') and (jp['type'] != 'analog_input') and (jp['type'] != 'digital_input'): 
                continue
             entry = {}
             entry['where'] = where
             entry['name'] = jp['name']
             if ('can_talon' in jp['type']):
                 talons.append(entry)
+            if ('talonfxpro' in jp['type']):
+                talonfxpros.append(entry)
             if jp['type'] == 'analog_input':
                 ains.append(entry)
             if jp['type'] == 'digital_input':
@@ -50,7 +53,9 @@ class DriverStationSim(Plugin):
         obj_name = sender.objectName()
         obj_state = sender.isChecked()
         other_obj_state = sender.other_button.isChecked()
-        if (obj_name[-2:] == "%F"): # Forward button checked
+
+        args = obj_name.split("%")
+        if (args[1] == "F"): # Forward button checked
             forward = obj_state
             reverse = other_obj_state
         else:
@@ -58,9 +63,9 @@ class DriverStationSim(Plugin):
             reverse = obj_state
 
         try:
-            limit_switch_service = rospy.ServiceProxy('/frcrobot_' + sender.where +'/set_limit_switch', set_limit_switch)
+            limit_switch_service = rospy.ServiceProxy('/frcrobot_' + sender.where + '/' + args[2], set_limit_switch)
             #print "Calling service %s:  %d %s %d %d" %('/frcrobot_' + sender.where +'/set_limit_switch', 0, obj_name[:-2], forward, reverse)
-            limit_switch_service(0, obj_name[:-2], forward, reverse)
+            limit_switch_service(0, args[0], forward, reverse)
         except rospy.ServiceException as e:
             print(f"set_limit_switch service call failed: {e}")
 
@@ -82,8 +87,14 @@ class DriverStationSim(Plugin):
 
     def _talon_state_callback(self, msg):
         # name + ": " + percent_output + "%, set to " + setpoint
-        for i in range(len(self._widget.talon_state_widgets)):
-            self._widget.talon_state_widgets[i].setText(str(msg.name[i])+" (in "+str(msg.talon_mode[i])+" mode): "+str(msg.motor_output_percent[i])+"%, position: "+str(msg.position[i])+", speed: "+str(msg.speed[i])+", setpoint: "+str(msg.set_point[i]))
+        for i in range(len(msg.name)):
+            self._widget.talon_state_widgets[i].setText(str(msg.name[i])+" (in "+str(msg.talon_mode[i])+" mode): "+str(round(float(msg.motor_output_percent[i]), 4))+"%, position: "+str(round(float(msg.position[i]), 4))+", speed: "+str(round(float(msg.speed[i]), 4)) +", setpoint: "+str(round(float(msg.set_point[i]), 4)))
+            # self._widget.talon_state_widgets[i].adjustSize()
+
+    def _talonfxpro_state_callback(self, msg):
+        # name + ": " + percent_output + "%, set to " + setpoint
+        for i in range(len(msg.name)):
+            self._widget.talon_state_widgets[i + self.num_talons].setText(str(msg.name[i])+" (in "+str(msg.control_mode[i])+" mode): "+str(round(float(msg.duty_cycle[i]), 4))+"%, position: "+str(round(float(msg.position[i]), 4))+", speed: "+str(round(float(msg.velocity[i]), 4))+", control_output: "+str(round(float(msg.control_output[i]), 4)))
             # self._widget.talon_state_widgets[i].adjustSize()
 
     def auto_state_slot(self, state):
@@ -155,11 +166,12 @@ class DriverStationSim(Plugin):
         # plugin at once, these lines add number to make it easy to
         # tell from pane to pane.
 
-        talons = []
-        dins   = []
-        ains   = []
-        self._read_joint_param('/frcrobot_rio/hardware_interface/joints', 'rio', talons, ains, dins)
-        self._read_joint_param('/frcrobot_jetson/hardware_interface/joints', 'jetson', talons, ains, dins)
+        talons      = []
+        talonfxpros = []
+        dins        = []
+        ains        = []
+        self._read_joint_param('/frcrobot_rio/hardware_interface/joints', 'rio', talons, talonfxpros, ains, dins)
+        self._read_joint_param('/frcrobot_jetson/hardware_interface/joints', 'jetson', talons, talonfxpros, ains, dins)
 
         #self._widget.talons_tab = QtWidgets.QWidget(self._widget)
         #self._widget.talons_tab.setObjectName("talons_tab")
@@ -178,17 +190,33 @@ class DriverStationSim(Plugin):
             self._widget.talon_f_buttons.append(QCheckBox("F", self._widget.sim_input_layout_widget))
             self._widget.talon_r_buttons.append(QCheckBox("R | " + talons[i]['name'], self._widget.sim_input_layout_widget))
 
-            self._widget.talon_f_buttons[i].setObjectName(talons[i]['name'] + "%F")
-            self._widget.talon_f_buttons[i].setFixedHeight(fh)
-            self._widget.talon_f_buttons[i].where = talons[i]['where']
-            self._widget.talon_f_buttons[i].other_button = self._widget.talon_r_buttons[i]
-            self._widget.talon_f_buttons[i].stateChanged.connect(self._talon_checkbox_handler)
-            self._widget.talon_f_vertical_layout.addWidget(self._widget.talon_f_buttons[i])
-            self._widget.talon_r_buttons[i].setObjectName(talons[i]['name'] + "%R")
-            self._widget.talon_r_buttons[i].setFixedHeight(fh)
-            self._widget.talon_r_buttons[i].where = talons[i]['where']
-            self._widget.talon_r_buttons[i].other_button = self._widget.talon_f_buttons[i]
-            self._widget.talon_r_buttons[i].stateChanged.connect(self._talon_checkbox_handler)
+            self._widget.talon_f_buttons[-1].setObjectName(talons[i]['name'] + "%F%set_limit_switch")
+            self._widget.talon_f_buttons[-1].setFixedHeight(fh)
+            self._widget.talon_f_buttons[-1].where = talons[i]['where']
+            self._widget.talon_f_buttons[-1].other_button = self._widget.talon_r_buttons[i]
+            self._widget.talon_f_buttons[-1].stateChanged.connect(self._talon_checkbox_handler)
+            self._widget.talon_f_vertical_layout.addWidget(self._widget.talon_f_buttons[-1])
+            self._widget.talon_r_buttons[-1].setObjectName(talons[i]['name'] + "%R%set_limit_switch")
+            self._widget.talon_r_buttons[-1].setFixedHeight(fh)
+            self._widget.talon_r_buttons[-1].where = talons[i]['where']
+            self._widget.talon_r_buttons[-1].other_button = self._widget.talon_f_buttons[i]
+            self._widget.talon_r_buttons[-1].stateChanged.connect(self._talon_checkbox_handler)
+            self._widget.talon_r_vertical_layout.addWidget(self._widget.talon_r_buttons[-1])
+        for i in range(len(talonfxpros)):
+            self._widget.talon_f_buttons.append(QCheckBox("F", self._widget.sim_input_layout_widget))
+            self._widget.talon_r_buttons.append(QCheckBox("R | " + talonfxpros[i]['name'], self._widget.sim_input_layout_widget))
+
+            self._widget.talon_f_buttons[-1].setObjectName(talonfxpros[i]['name'] + "%F%set_talonfxpro_limit_switch")
+            self._widget.talon_f_buttons[-1].setFixedHeight(fh)
+            self._widget.talon_f_buttons[-1].where = talonfxpros[i]['where']
+            self._widget.talon_f_buttons[-1].other_button = self._widget.talon_r_buttons[i]
+            self._widget.talon_f_buttons[-1].stateChanged.connect(self._talon_checkbox_handler)
+            self._widget.talon_f_vertical_layout.addWidget(self._widget.talon_f_buttons[-1])
+            self._widget.talon_r_buttons[-1].setObjectName(talonfxpros[i]['name'] + "%R%set_talonfxpro_limit_switch")
+            self._widget.talon_r_buttons[-1].setFixedHeight(fh)
+            self._widget.talon_r_buttons[-1].where = talonfxpros[i]['where']
+            self._widget.talon_r_buttons[-1].other_button = self._widget.talon_f_buttons[i]
+            self._widget.talon_r_buttons[-1].stateChanged.connect(self._talon_checkbox_handler)
             self._widget.talon_r_vertical_layout.addWidget(self._widget.talon_r_buttons[i])
         self._widget.sim_input_horizontal_layout.addLayout(self._widget.talon_f_vertical_layout)
         self._widget.sim_input_horizontal_layout.addLayout(self._widget.talon_r_vertical_layout)
@@ -228,10 +256,15 @@ class DriverStationSim(Plugin):
         self._widget.talon_state_vertical_layout.setObjectName("talon_state_vertical_layout")
         # Name, mode, motor output percent, setpoint
         talon_states_sub = rospy.Subscriber("/frcrobot_jetson/talon_states", TalonState, self._talon_state_callback)
+        talonfxpro_states_sub = rospy.Subscriber("/frcrobot_jetson/talonfxpro_states", TalonFXProState, self._talonfxpro_state_callback)
         self._widget.talon_state_widgets = []
         for i in range(len(talons)):
             self._widget.talon_state_widgets.append(QLabel("Talon" + " "*540))
-            self._widget.talon_state_vertical_layout.addWidget(self._widget.talon_state_widgets[i])
+            self._widget.talon_state_vertical_layout.addWidget(self._widget.talon_state_widgets[-1])
+        self.num_talons = len(talons)
+        for i in range(len(talonfxpros)):
+            self._widget.talon_state_widgets.append(QLabel("TalonFXPro" + " "*540))
+            self._widget.talon_state_vertical_layout.addWidget(self._widget.talon_state_widgets[-1])
 
         match_pub = rospy.Publisher("/frcrobot_rio/match_data_in", MatchSpecificData, queue_size=2)
         auto_mode_pub = rospy.Publisher("/auto/auto_mode", AutoMode, queue_size=1)

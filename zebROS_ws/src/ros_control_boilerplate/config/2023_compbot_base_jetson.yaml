@@ -7,6 +7,8 @@ generic_hw_control_loop:
   cancoder_read_hz: 100
   #some processes have lower frequencies than the main control loop
   ctre_mc_read_hz: 100
+  talonfxpro_read_hz: 100
+  pigeon2_read_hz: 100
   pcm_read_hz: 20
   pdh_read_hz: 20
   pdp_read_hz: 20
@@ -17,6 +19,8 @@ generic_hw_control_loop:
   match_data_read_hz: 2
   robot_controller_read_hz: 20
   as726x_read_hz: 7
+
+  talon_config_count_limit: 10
 
 
 # Settings for ros_control hardware interface
@@ -30,34 +34,31 @@ hardware_interface:
    can_interface: can0
 
    joints:
-       # add mechanisms here
+       - {name: fl_drive, type: talonfxpro, can_bus: CANivore, can_id: 21, local: true}
+       - {name: fl_angle, type: talonfxpro, can_bus: CANivore, can_id: 11, local: true}
+       - {name: fr_drive, type: talonfxpro, can_bus: CANivore, can_id: 22, local: true}
+       - {name: fr_angle, type: talonfxpro, can_bus: CANivore, can_id: 12, local: true}
+       - {name: br_drive, type: talonfxpro, can_bus: CANivore, can_id: 24, local: true}
+       - {name: br_angle, type: talonfxpro, can_bus: CANivore, can_id: 14, local: true}
+       - {name: bl_drive, type: talonfxpro, can_bus: CANivore, can_id: 23, local: true}
+       - {name: bl_angle, type: talonfxpro, can_bus: CANivore, can_id: 13, local: true}
 
-       - {name: fl_drive, type: can_talon_fx, can_bus: CANivore, can_id: 21, local: true}
-       - {name: fl_angle, type: can_talon_fx, can_bus: CANivore, can_id: 11, local: true}
-       - {name: fr_drive, type: can_talon_fx, can_bus: CANivore, can_id: 22, local: true}
-       - {name: fr_angle, type: can_talon_fx, can_bus: CANivore, can_id: 12, local: true}
-       - {name: br_drive, type: can_talon_fx, can_bus: CANivore, can_id: 24, local: true}
-       - {name: br_angle, type: can_talon_fx, can_bus: CANivore, can_id: 14, local: true}
-       - {name: bl_drive, type: can_talon_fx, can_bus: CANivore, can_id: 23, local: true}
-       - {name: bl_angle, type: can_talon_fx, can_bus: CANivore, can_id: 13, local: true}
-       
-       #- {name: elevator_leader, type: can_talon_fx, can_bus: CANivore, can_id: 31, local: true}
-       #- {name: elevator_follower, type: can_talon_fx, can_bus: CANivore, can_id: 32, local: true}
+       - {name: elevator_leader, type: talonfxpro, can_bus: CANivore, can_id: 31, local: true}
+       - {name: elevator_follower, type: talonfxpro, can_bus: CANivore, can_id: 32, local: true}
+       - {name: four_bar, type: talonfxpro, can_bus: CANivore, can_id: 41, local: true}
 
-       - {name: elevator_leader, type: can_talon_fx, can_bus: CANivore, can_id: 31, local: true}
-       - {name: elevator_follower, type: can_talon_fx, can_bus: CANivore, can_id: 32, local: true}
-       - {name: four_bar, type: can_talon_fx, can_bus: CANivore, can_id: 41, local: true}
-       - {name: intake_leader, type: can_talon_fx, can_bus: CANivore, can_id: 51, local: true}
+       - {name: intake, type: talonfxpro, can_bus: CANivore, can_id: 51, local: true}
        
        #- {name: pcm, type: pcm, pcm_id: 0}
-       - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
+       #- {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 0, local: true}
+
+       - {name: candle1, can_id: 0, can_bus: CANivore, type: candle, local: true}
+
+       - {name: babys_first_orchestra, type: orchestra, id: 1}
 
        - {name: robot_code_ready_jetson, local: true, type: ready}
        - {name: robot_code_ready_rio, local: false, type: ready} # Probably not really needed?
 
-       - {name: babys_first_orchestra, type: orchestra, id: 1}
-
-       - {name: candle1, can_id: 0, can_bus: CANivore, type: candle, local: true}
 
 # Create controllers for each joint
 #
@@ -71,31 +72,13 @@ hardware_interface:
 # /frcrobot/joint2_talon_controller/command
 # /frcrobot/talon_states
 
-intake_leader_controller:
-    type: talon_controllers/TalonPercentOutputController
-    joint: intake_leader
-    invert_output: False
-    feedback_type: IntegratedSensor
-    dynamic_reconfigure: False
-    voltage_compensation_Enable: True
-    voltage_compensation_saturation: 12
+
+intake_talonfxpro_controller:
+    type: talonfxpro_controllers/TalonFXProDutyCycleOutController
+    joint: intake
+    invert: counterclockwise_positive
+    dynamic_reconfigure: True
     neutral_mode: Coast
-    #status_1_general_period: 100 # Default = 10
-    #status_2_feedback0_period: 100 # Default = 20
-    status_3_quadrature_period: 250
-    #status_4_aintempvbat_period: 160
-    #status_6_misc_period: 0
-    #status_7_commstatus_period: 0
-    status_8_pulsewidth_period: 250
-    status_9_motprofbuffer_period: 250
-    status_10_motionmagic_period: 250
-    #status_11_uartgadgeteer_period: 250
-    #status_12_feedback1_period: 250
-    status_13_base_pidf0_period: 250
-    #status_14_turn_pidf1_period: 250
-    status_15_firmwareapistatus_period: 250
-    status_17_brushless_current_period: 10
-    neutral_deadband: 0.01
 
 # This one creates the /talon_states topic necessary in ROS
 # It doesn't actually control anything, just takes the internal
@@ -107,6 +90,13 @@ talon_state_controller_jetson:
    publish_rate: 100
 talon_config_controller:
    type:         talon_config_controller/TalonConfigController
+   publish_rate: 5
+
+talonfxpro_state_controller:
+   type:         talonfxpro_state_controller/TalonFXProStateController
+   publish_rate: 100
+talonfxpro_config_controller:
+   type:         talonfxpro_config_controller/TalonFXProConfigController
    publish_rate: 5
 
 # Similar to above, but this one prints non-Talon state

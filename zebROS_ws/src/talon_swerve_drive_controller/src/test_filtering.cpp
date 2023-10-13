@@ -22,8 +22,6 @@ int main(void)
 	}
 	swerveVar::ratios ratios;
 	ratios.encodertoRotations = 1;
-	ratios.motortoRotations = 1;
-	ratios.motortoSteering = 1;
 	swerveVar::encoderUnits encoderUnits;
 	encoderUnits.rotationGetP = 1;
 	encoderUnits.rotationGetV = 1;

@@ -58,14 +58,14 @@ add_message_files(
   PHState.msg
   RobotControllerData.msg
   RobotControllerCANData.msg
+  RumbleState.msg
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  RumbleCommand.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TALON_COMMAND_INTERFACE_INC__
+#define TALON_COMMAND_INTERFACE_INC__
 
 #include <memory>
 #include <mutex>
@@ -45,7 +46,11 @@ class TalonHWCommand
 {
 	public:
 		TalonHWCommand(void);
+		TalonHWCommand(const TalonHWCommand &) = default;
+		TalonHWCommand(TalonHWCommand &&) = default;
 		~TalonHWCommand();
+		TalonHWCommand &operator=(const TalonHWCommand &) = default;
+		TalonHWCommand &operator=(TalonHWCommand &&) = default;
 
 		bool commandChanged(double &command);
 		double get(void) const;
@@ -113,7 +118,7 @@ class TalonHWCommand
 		void resetDemand1(void);
 
 		void setNeutralMode(NeutralMode neutral_mode);
-		NeutralMode getNeutralMode(void);
+		NeutralMode getNeutralMode(void) const;
 		bool neutralModeChanged(NeutralMode &neutral_mode);
 
 		void setPidfSlot(int pidf_slot);
@@ -554,3 +559,5 @@ typedef CommandHandle<TalonHWCommand, TalonHWState, TalonStateHandle> TalonComma
 // to be able to access a given Talon at any particular time
 class TalonCommandInterface : public HardwareResourceManager<TalonCommandHandle, ClaimResources> {};
 }
+
+#endif

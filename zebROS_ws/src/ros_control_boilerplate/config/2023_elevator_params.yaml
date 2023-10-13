@@ -22,8 +22,6 @@ elevator_controller_2023:
     
     motion_magic_velocity: 3.0 # could be 3.5 or 3 
     motion_magic_acceleration: 7.0 # could be 9.0 or 7
-
-    # not sure if this needs to be here and below
     motion_s_curve_strength: 8
 
     # How quickly the elevator moves down when zeroing itself
@@ -74,15 +72,10 @@ elevator_controller_2023:
         neutral_deadband: 0.001
 
         dynamic_reconfigure: True
-        motion_s_curve_strength: 8
 
     elevator_follower: 
-        #conversion_factor: 0.0108
-
         joint: elevator_follower
         sensor_phase: False 
         invert_output: False
-        #feedback_type: CTRE_MagEncoder_Relative
-        #conversion_factor: 0.02959
 
         dynamic_reconfigure: false

@@ -37,22 +37,11 @@ class PDHHWCommand
 			return true;
 		}
 
-		void setIdentifyPDH(void) { identify_pdh_ = true; }
-		bool getIdentifyPDH(void) const { return identify_pdh_; }
-		bool identifyPDHChanged(void)
-		{
-			if (!identify_pdh_)
-				return false;
-			identify_pdh_ = false;
-			return true;
-		}
-
 	private:
 		bool switchable_channel_enable_{false};
 		bool switchable_Channel_enable_changed_{true};
 
 		bool clear_sticky_faults_{false};
-		bool identify_pdh_{false};
 };
 
 // Create a handle pointing to a type PDHHWCommand / PDHHWState pair

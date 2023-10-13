@@ -217,6 +217,7 @@
 		/frcrobot_jetson/four_bar_controller_2023/parameter_updates
 		/frcrobot_jetson/intake_leader_controller/command
 		/frcrobot_jetson/joint_states
+		/frcrobot_jetson/latency_compensation_states
 		/frcrobot_jetson/orchestra_states
 		/frcrobot_jetson/pigeon2
 		/frcrobot_jetson/swerve_drive_controller/cmd_vel
@@ -232,6 +233,8 @@
 		/frcrobot_jetson/swerve_drive_controller/speed_joint_fr/parameter_updates
 		/frcrobot_jetson/talon_configs
 		/frcrobot_jetson/talon_states
+		/frcrobot_jetson/talonfxpro_configs
+		/frcrobot_jetson/talonfxpro_states
 		/frcrobot_jetson/uptime
 		/frcrobot_rio/button_box_states
 		/frcrobot_rio/cpu_monitor/frcrobot_rio/cpu_monitor/cpu

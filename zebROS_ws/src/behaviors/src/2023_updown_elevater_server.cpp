@@ -11,7 +11,7 @@
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <std_msgs/Float64.h>
 #include <controllers_2023_msgs/ElevatorSrv.h>
-#include <talon_state_msgs/TalonState.h>
+#include <talon_state_msgs/TalonFXProState.h>
 #include <behaviors/game_pieces_2023.h>
 
 #define ElevaterINFO(x) ROS_INFO_STREAM("2023_elevater_server : " << x)
@@ -159,7 +159,7 @@ class ElevaterAction2023
                 ElevaterERR("=======Could not find elevator service========");
             }
             elevator_offset_sub_ = nh_.subscribe("/elevator_position_offset", 1, &ElevaterAction2023::heightOffsetCallback, this);
-            talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &ElevaterAction2023::talonStateCallback, this);
+            talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talonfxpro_states", 1, &ElevaterAction2023::talonFXProStateCallback, this);
 
             ddr_.registerVariable<double>("safety_high_position", &game_piece_lookup_[PieceMode(elevater_ns::CUBE, elevater_ns::INTAKE)], "If elevator high requester greater than this, saftey mode called for fourbar", 0, 4);
             ddr_.registerVariable<double>("safety_low_position", &game_piece_lookup_[PieceMode(elevater_ns::CUBE, elevater_ns::INTAKE)], "If elevator height requester less than this, saftey low mode called for fourbar", 0, 4);
@@ -360,7 +360,7 @@ class ElevaterAction2023
         }
 
         // "borrowed" from 2019 climb server
-        void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
+        void talonFXProStateCallback(const talon_state_msgs::TalonFXProState &talon_state)
         {
             // fourbar_master_idx == max of size_t at the start
             if (elevater_master_idx == std::numeric_limits<size_t>::max()) // could maybe just check for > 0

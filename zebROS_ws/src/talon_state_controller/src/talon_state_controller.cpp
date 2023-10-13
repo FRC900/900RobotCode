@@ -15,11 +15,11 @@ namespace talon_state_controller
  * \brief Controller that publishes the state of all talon&victor motor controller on a robot.
  *
  * This controller publishes the state of all resources registered to a \c hardware_interface::TalonStateInterface to a
- * topic of type \c sensor_msgs/TalonState. The following is a basic configuration of the controller.
+ * topic of type \c talon_state_msgs/TalonState. The following is a basic configuration of the controller.
  *
  * \code
  * talon_state_controller:
- *   type: talon_state_controller/JointStateController
+ *   type: talon_state_controller/TalonStateController
  *   publish_rate: 50
  * \endcode
  *
@@ -64,7 +64,7 @@ public:
 		// get joints and allocate message
 		for (size_t i = 0; i < num_hw_joints_; i++)
 		{
-			m.name.push_back(joint_names[i]);
+			m.name.emplace_back(joint_names[i]);
 			m.talon_mode.push_back("");
 			m.demand1_type.push_back("");
 			m.demand1_value.push_back(0);
@@ -373,7 +373,9 @@ private:
 				data.push_back(hardware_interface::TalonHWState(0)); // dummy CAN ID since it isn't used
 				data[i]->setPosition(msg->position[j]);
 				data[i]->setSpeed(msg->speed[j]);
-				data[i]->setOutputCurrent(msg->output_voltage[j]);
+				data[i]->setOutputCurrent(msg->output_current[j]);
+				data[i]->setStatorCurrent(msg->stator_current[j]);
+				data[i]->setSupplyCurrent(msg->supply_current[j]);
 				data[i]->setBusVoltage(msg->bus_voltage[j]);
 				data[i]->setMotorOutputPercent(msg->motor_output_percent[j]);
 				data[i]->setOutputVoltage(msg->output_voltage[j]);
@@ -403,10 +405,15 @@ private:
 
 public:
 	TalonStateListenerController() = default;
-	~TalonStateListenerController()
+    TalonStateListenerController(const TalonStateListenerController &) = delete;
+    TalonStateListenerController(TalonStateListenerController &&) noexcept = delete;
+	virtual ~TalonStateListenerController()
 	{
 		sub_command_.shutdown();
 	}
+
+    TalonStateListenerController &operator=(const TalonStateListenerController &) = delete;
+    TalonStateListenerController &operator=(TalonStateListenerController &&) noexcept = delete;
 
 	bool init(hardware_interface::RemoteTalonStateInterface *hw, ros::NodeHandle &n)
 	{

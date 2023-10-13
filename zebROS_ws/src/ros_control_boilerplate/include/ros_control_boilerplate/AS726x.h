@@ -15,11 +15,13 @@
  *
  */
 
-#pragma once
+#ifndef AS726X_INC__
+#define AS726X_INC__
 
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include "ros/console.h"
 #include "frc/I2C.h"
 
 namespace as726x
@@ -172,10 +174,15 @@ class AS726x {
 		  @brief  Class constructor
 		  @param addr Optional I2C address the sensor can be found on. Defaults to 0x49.
 		  */
-		AS726x(void) :
-			mutex_(std::make_shared<std::mutex>())
+		AS726x(void)
+			: mutex_{std::make_shared<std::mutex>()}
 		{}
-		~AS726x(void) {}
+		AS726x(const AS726x &) = delete;
+		AS726x(AS726x &&) = default;
+		virtual ~AS726x(void) {}
+
+        AS726x &operator=(const AS726x &) = default;
+		AS726x &operator=(AS726x &&) = default;
 
 		bool begin(void);
 
@@ -390,15 +397,77 @@ class AS726x {
 		std::shared_ptr<std::mutex> mutex_;
 };
 
+template <bool SIMFLAG>
 class roboRIO_AS726x : public AS726x
 {
 	public:
 		roboRIO_AS726x(const frc::I2C::Port &port, int deviceAddress = AS726x_ADDRESS);
-		virtual ~roboRIO_AS726x() { }
+		roboRIO_AS726x(const roboRIO_AS726x &);
+		roboRIO_AS726x(roboRIO_AS726x &&) noexcept;
+		virtual ~roboRIO_AS726x() = default;
+		roboRIO_AS726x &operator=(const roboRIO_AS726x &);
+		roboRIO_AS726x &operator=(roboRIO_AS726x &&) noexcept;
 	private:
 		virtual void read(uint8_t reg, uint8_t *buf, uint8_t num) override;
 		virtual void write(uint8_t reg, uint8_t *buf, uint8_t num) override;
-		frc::I2C i2c_;
+};
+
+template <>
+class roboRIO_AS726x<false> : public AS726x
+{
+	public:
+		roboRIO_AS726x(const frc::I2C::Port &port, int deviceAddress = AS726x_ADDRESS)
+		: AS726x()
+		, i2c_{std::make_shared<frc::I2C>(port, deviceAddress)}
+		{
+		}
+		roboRIO_AS726x(const roboRIO_AS726x &) = delete;
+		roboRIO_AS726x(roboRIO_AS726x &&) noexcept = delete;
+		virtual ~roboRIO_AS726x() = default;
+		roboRIO_AS726x &operator=(const roboRIO_AS726x &) = delete;
+		roboRIO_AS726x &operator=(roboRIO_AS726x &&) noexcept = delete;
+	private:
+		virtual void read(uint8_t reg, uint8_t *buf, uint8_t num)
+		{
+			auto rc = i2c_->Read(reg, num, buf);
+			// ROS_INFO_STREAM("roboRIO_AS726x::" << __FUNCTION__ << ":" << __LINE__ << " reg=" << std::hex << static_cast<int>(reg) << std::dec << static_cast<int>(num) << " *buf=" << std::hex << static_cast<int>(*buf) << " rc=" << rc);
+		}
+		virtual void write(uint8_t reg, uint8_t *buf, uint8_t num)
+		{
+			if (num > 1)
+			{
+				ROS_ERROR_STREAM("Invalid write count " << num << " in " << __FUNCTION__ << ":" << __LINE__);
+			}
+			auto rc = i2c_->Write(reg, *buf);
+			// ROS_INFO_STREAM("roboRIO_AS726x::" << __FUNCTION__ << ":" << __LINE__ << " reg=" << std::hex << static_cast<int>(reg) << " num=" << std::dec << static_cast<int>(num) << " *buf=" << std::hex << static_cast<int>(*buf) << " rc=" << rc);
+		}
+		std::shared_ptr<frc::I2C> i2c_;
+};
+
+template <>
+class roboRIO_AS726x<true> : public AS726x
+{
+	public:
+		roboRIO_AS726x(const frc::I2C::Port &port, int deviceAddress = AS726x_ADDRESS) 
+		    :AS726x()
+		{}
+		roboRIO_AS726x(const roboRIO_AS726x &) = delete;
+		roboRIO_AS726x(roboRIO_AS726x &&) noexcept = delete;
+		virtual ~roboRIO_AS726x() = default;
+		roboRIO_AS726x &operator=(const roboRIO_AS726x &) = delete;
+		roboRIO_AS726x &operator=(roboRIO_AS726x &&) noexcept = delete;
+
+	private:
+		virtual void read(uint8_t reg, uint8_t *buf, uint8_t num)
+		{
+			*buf = AS726X_SLAVE_RX_VALID;
+			// ROS_INFO_STREAM("roboRIO_AS726x::" << __FUNCTION__ << ":" << __LINE__ << " reg=" << std::hex << static_cast<int>(reg) << std::dec << static_cast<int>(num) << " *buf=" << std::hex << static_cast<int>(*buf));
+		}
+		virtual void write(uint8_t reg, uint8_t *buf, uint8_t num)
+		{
+			// ROS_INFO_STREAM("roboRIO_AS726x::" << __FUNCTION__ << ":" << __LINE__ << " reg=" << std::hex << static_cast<int>(reg) << " num=" << std::dec << static_cast<int>(num) << " *buf=" << std::hex << static_cast<int>(*buf));
+		}
 };
 } //namespace
 
+#endif

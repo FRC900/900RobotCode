@@ -1,7 +1,8 @@
 // Simple class to track cumulative / average execution
 // time of a block of code
 
-#pragma once
+#ifndef TRACER_INC__
+#define TRACER_INC__
 
 #include <chrono>
 #include <unordered_map>
@@ -16,30 +17,39 @@ class TracerEntry
 			: count_{0}
 			, total_time_{0.0}
 			, started_{false}
-	{
-	}
+		{
+		}
+		TracerEntry(const TracerEntry &) = delete;
+		TracerEntry(TracerEntry &&) = default;
+		~TracerEntry() = default;
+		TracerEntry operator=(const TracerEntry &) = delete;
+		TracerEntry &operator=(TracerEntry &&) = delete;
 
-	void reset()
-	{
-		count_ = 0;
-		total_time_ = std::chrono::duration<double>{0.0};
-	}
+		void reset()
+		{
+			count_ = 0;
+			total_time_ = std::chrono::duration<double>{0.0};
+		}
 
-	size_t count_;
-	std::chrono::duration<double> total_time_;
-	std::chrono::high_resolution_clock::time_point start_time_;
-	bool started_;
+		size_t count_;
+		std::chrono::duration<double> total_time_;
+		std::chrono::high_resolution_clock::time_point start_time_;
+		bool started_;
 };
 
 class Tracer
 {
 	public:
 		Tracer(const std::string &name)
-			:name_(name)
+			: name_(name)
 			, last_report_time_(ros::Time::now())
 		{
 		}
+		Tracer(const Tracer &) = delete;
+		Tracer(Tracer &&) = default;
 		~Tracer() = default;
+		Tracer operator=(const Tracer &) = delete;
+		Tracer &operator=(Tracer &&) = delete;
 
 		// Mark the start of an event to time.  If the named event exists,
 		// use it. Otherwise create a new event entry in the map of events
@@ -51,7 +61,7 @@ class Tracer
 			// If not found, create a new entry for this label
 			if (entry == map_.end())
 			{
-				map_[label] = TracerEntry();
+				map_.emplace(label, TracerEntry());
 				entry = map_.find(label);
 			}
 
@@ -94,25 +104,27 @@ class Tracer
 				ROS_WARN_STREAM("Tracer::stop : label " << label << " not started");
 				return;
 			}
-			entry->second.total_time_ += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - entry->second.start_time_);
-			entry->second.count_ += 1;
-			entry->second.started_ = false;
+			stopEntry(entry->second);
 		}
 
 		// Stop all previously started timers
 		void stop(void)
 		{
 			for (auto &it : map_)
+			{
 				if (it.second.started_)
-					stop(it.first);
+				{
+					stopEntry(it.second);
+				}
+			}
 		}
 
 		void report(const double timeout, const bool auto_stop = true)
 		{
 			if (auto_stop)
-				for (auto &it : map_)
-					if (it.second.started_)
-						stop(it.first);
+			{
+				stop();
+			}
 			const auto now = ros::Time::now();
 			if (((now - last_report_time_).toSec() >= timeout) ||
 				(now < last_report_time_))
@@ -131,7 +143,17 @@ class Tracer
 		}
 
 	private:
+
+		void stopEntry(TracerEntry &entry)
+		{
+			entry.total_time_ += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - entry.start_time_);
+			entry.count_ += 1;
+			entry.started_ = false;
+
+		}
 		std::string name_;
 		std::unordered_map<std::string, TracerEntry> map_;
 		ros::Time last_report_time_;
 };
+
+#endif

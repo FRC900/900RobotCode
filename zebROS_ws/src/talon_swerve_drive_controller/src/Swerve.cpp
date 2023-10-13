@@ -4,10 +4,8 @@
 
 #include <ros/console.h>
 
-using namespace Eigen;
-
 template<size_t WHEELCOUNT>
-swerve<WHEELCOUNT>::swerve(const std::array<Vector2d, WHEELCOUNT> &wheelCoordinates,
+swerve<WHEELCOUNT>::swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinates,
 			   const std::array<double, WHEELCOUNT> &offsets,
 			   const swerveVar::ratios &ratio,
 			   const swerveVar::encoderUnits &units,
@@ -22,7 +20,7 @@ swerve<WHEELCOUNT>::swerve(const std::array<Vector2d, WHEELCOUNT> &wheelCoordina
 }
 
 template<size_t WHEELCOUNT>
-std::array<Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Vector2d velocityVector,
+std::array<Eigen::Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Eigen::Vector2d velocityVector,
 												 double rotation,
 												 double angle,
 												 const std::array<double, WHEELCOUNT> &positionsNew,
@@ -49,8 +47,7 @@ std::array<Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Vector2d veloc
 
 	//ROS_WARN_STREAM("max rate r/s: " <<  multiplierSets_[rotationCenterID].maxRotRate_);
 	//ROS_INFO_STREAM("vel: " << velocityVector[0] << " " << velocityVector[1] << " rot: " << rotation);
-	std::array<Vector2d, WHEELCOUNT> speedsAndAngles;
-	speedsAndAngles = swerveMath_.wheelSpeedsAngles(mult_it->second.multipliers_, velocityVector, rotation, angle, norm);
+	auto speedsAndAngles = swerveMath_.wheelSpeedsAngles(mult_it->second.multipliers_, velocityVector, rotation, angle, norm);
 	for (size_t i = 0; i < WHEELCOUNT; i++)
 	{
 		//ROS_INFO_STREAM("id: " << i << " PRE NORMalIZE pos/vel in direc: " << speedsAndAngles[i][0] << " rot: " <<speedsAndAngles[i][1] );
@@ -99,7 +96,7 @@ double swerve<WHEELCOUNT>::getWheelAngle(int index, double pos) const
 }
 
 template<size_t WHEELCOUNT>
-double swerve<WHEELCOUNT>::furthestWheel(const Vector2d &centerOfRotation) const
+double swerve<WHEELCOUNT>::furthestWheel(const Eigen::Vector2d &centerOfRotation) const
 {
 	double maxD = 0;
 	for (size_t i = 0; i < WHEELCOUNT; i++)

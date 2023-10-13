@@ -101,7 +101,7 @@ private:
 
 					instrument_list_holder.instruments = os->getInstruments();
 					m.instrument_list[i] = instrument_list_holder;
-					m.chirp_file_path[i] = os->getChirpFilePath();
+					m.chirp_file_path[i] = os->getMusic();
 					m.is_playing[i] = os->getIsPlaying();
 					m.is_paused[i] = os->getIsPaused();
 				}

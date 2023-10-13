@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
-#include <talon_state_msgs/TalonState.h>
+#include <talon_state_msgs/TalonFXProState.h>
 #include <behavior_actions/Fourber2023Action.h>
 #include <std_msgs/Float64.h>
 #include <controllers_2023_msgs/FourBarSrv.h>
@@ -99,7 +99,7 @@ class FourberAction2023
                 FourberERR("========Could not find fourbar service========");
             }
             fourbar_offset_sub_ = nh_.subscribe("/fourbar_position_offset", 1, &FourberAction2023::heightOffsetCallback, this);
-            talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &FourberAction2023::talonStateCallback, this);
+            talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talonfxpro_states", 1, &FourberAction2023::talonFXProStateCallback, this);
 
             load_param_helper(nh_, "position_tolerance", position_tolerance_, 0.02);
 
@@ -425,7 +425,7 @@ class FourberAction2023
         }
 
         // "borrowed" from 2019 climb server
-        void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
+        void talonFXProStateCallback(const talon_state_msgs::TalonFXProState &talon_state)
         {
             // fourbar_master_idx == max of size_t at the start
             if (fourbar_master_idx == std::numeric_limits<size_t>::max())
@@ -439,10 +439,10 @@ class FourberAction2023
                     }
                 }
             }
-            if (!(fourbar_master_idx == std::numeric_limits<size_t>::max())) 
+            if (fourbar_master_idx != std::numeric_limits<size_t>::max()) 
             {
                 fourbar_cur_position_ = talon_state.position[fourbar_master_idx];
-                fourbar_cur_setpoint_ = talon_state.set_point[fourbar_master_idx];
+                fourbar_cur_setpoint_ = talon_state.control_position[fourbar_master_idx];
             }
             else {
                 FourberERR("Can not find talon with name = " << "four_bar");

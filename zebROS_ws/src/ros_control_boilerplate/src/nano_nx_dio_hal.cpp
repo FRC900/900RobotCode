@@ -463,6 +463,13 @@ HAL_Bool HAL_GetDIODirection(HAL_DigitalHandle dioPortHandle, int32_t* status)
 }
 
 
+void HAL_SetDigitalPWMPPS(HAL_DigitalPWMHandle pwmGenerator, double dutyCycle,
+                          int32_t* status) 
+{
+	ROS_INFO_STREAM("Called " << __PRETTY_FUNCTION__ << " on unsupported platform");
+}
+			
+
 void HAL_Pulse(HAL_DigitalHandle dioPortHandle, double pulseLength,
                int32_t* status)
 {

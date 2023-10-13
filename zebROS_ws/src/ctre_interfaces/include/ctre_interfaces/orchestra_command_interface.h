@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ORCHESTRA_COMMAND_INTERFACE_INC__
+#define ORCHESTRA_COMMAND_INTERFACE_INC__
 
 #include <ctre_interfaces/orchestra_state_interface.h>
 #include "state_handle/command_handle.h"
@@ -9,7 +10,11 @@ class OrchestraCommand
 {
 	public:
 		OrchestraCommand();
+		OrchestraCommand(const OrchestraCommand &) = delete;
+		OrchestraCommand(OrchestraCommand &&) = delete;
 		~OrchestraCommand();
+        OrchestraCommand operator=(const OrchestraCommand &) = delete;
+        OrchestraCommand &operator=(OrchestraCommand &&) = delete;
 
                 void pause();
                 bool getPause() const;
@@ -34,21 +39,19 @@ class OrchestraCommand
                 void resetInstruments();
 
                 void clearInstruments();
-                bool getInstrumentsCleared() const;
+                bool getClearInstruments() const;
                 bool clearInstrumentsChanged();
-                void resetClearInstruments();
 
 	private:
-                bool pause_changed_;
-                bool play_changed_;
-                bool stop_changed_;
+                bool pause_changed_{false};
+                bool play_changed_{false};
+                bool stop_changed_{false};
 
-                std::string file_path_;
-                bool load_music_changed_;
-				std::vector<std::string> instruments_;
-                bool instruments_changed_;
-                bool instruments_cleared_;
-                bool clear_instruments_changed_;
+                std::string file_path_{""};
+                bool load_music_changed_{false};
+				std::vector<std::string> instruments_{};
+                bool instruments_changed_{false};
+                bool clear_instruments_changed_{false};
 };
 
 // Create a handle pointing to a type TalonHWCommand / TalonHWState pair
@@ -58,3 +61,5 @@ typedef CommandHandle<OrchestraCommand, OrchestraState, OrchestraStateHandle> Or
 // to be able to access a given Orchestra at any particular time
 class OrchestraCommandInterface : public HardwareResourceManager<OrchestraCommandHandle, ClaimResources> {};
 }
+
+#endif

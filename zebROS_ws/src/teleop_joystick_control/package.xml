@@ -29,7 +29,7 @@
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>talon_state_msgs</depend>
-  <depend>talon_swerve_drive_controller</depend>
+  <depend>talon_swerve_drive_controller_msgs</depend>
   
   <export>
   </export>

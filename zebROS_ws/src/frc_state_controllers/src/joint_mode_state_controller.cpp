@@ -17,7 +17,7 @@ private:
 	double publish_rate_{100};
 
 public:
-    bool init(hardware_interface::JointModeInterface *hw,
+	bool init(hardware_interface::JointModeInterface *hw,
 			  ros::NodeHandle                        &root_nh,
 			  ros::NodeHandle                        &controller_nh)
 

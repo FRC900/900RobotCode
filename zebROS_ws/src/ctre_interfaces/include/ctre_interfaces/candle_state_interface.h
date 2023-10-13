@@ -177,7 +177,7 @@ class CANdleHWState {
 typedef StateHandle<const CANdleHWState> CANdleStateHandle;
 typedef StateHandle<CANdleHWState>       CANdleWritableStateHandle;
 class CANdleStateInterface : public HardwareResourceManager<CANdleStateHandle> {};
-class RemoteCANdleStateInterface : public HardwareResourceManager<CANdleWritableStateHandle> {};
+class RemoteCANdleStateInterface : public HardwareResourceManager<CANdleWritableStateHandle, ClaimResources> {};
 
 } // namespace candle
 } // namespace hardware_interface

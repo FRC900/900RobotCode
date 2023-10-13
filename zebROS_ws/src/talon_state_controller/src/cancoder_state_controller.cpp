@@ -13,16 +13,16 @@ namespace cancoder_state_controller
 class CANCoderStateController: public controller_interface::Controller<hardware_interface::cancoder::CANCoderStateInterface>
 {
 private:
-		std::vector<hardware_interface::cancoder::CANCoderStateHandle> cancoder_state_;
-		std::unique_ptr<realtime_tools::RealtimePublisher<talon_state_msgs::CANCoderState>> realtime_pub_;
-		std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
-		double publish_rate_;
-		size_t num_hw_joints_; ///< Number of joints present in the CANCoderStateInterface
+	std::vector<hardware_interface::cancoder::CANCoderStateHandle> cancoder_state_;
+	std::unique_ptr<realtime_tools::RealtimePublisher<talon_state_msgs::CANCoderState>> realtime_pub_;
+	std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
+	double publish_rate_;
+	size_t num_hw_joints_; ///< Number of joints present in the CANCoderStateInterface
 
 public:
 	bool init(hardware_interface::cancoder::CANCoderStateInterface *hw,
-			  ros::NodeHandle                                      &root_nh,
-			  ros::NodeHandle                                      &controller_nh)
+			  ros::NodeHandle &root_nh,
+			  ros::NodeHandle &controller_nh)
 	{
 		// get all joint names from the hardware interface
 		const std::vector<std::string> &joint_names = hw->getNames();
@@ -55,27 +55,36 @@ public:
 			cancoder_state_.push_back(hw->getHandle(joint_names[i]));
 
 			m.device_number.push_back(cancoder_state_.back()->getDeviceNumber());
-			m.position.push_back(0);
-			m.velocity.push_back(0);
-			m.absolute_position.push_back(0);
-			m.velocity_meas_period.push_back("");
-			m.velocity_meas_window.push_back(0);
-			m.absolute_sensor_range.push_back("");
-			m.magnet_offset.push_back(0);
-			m.initialization_strategy.push_back("");
-			m.feedback_coefficient.push_back(0);
-			m.unit_string.push_back("");
-			m.time_base.push_back("");
-			m.bus_voltage.push_back(0);
-			m.magnet_field_strength.push_back("");
-			m.direction.push_back(false);
-			m.last_timestamp.push_back(0);
-			m.sensor_data_status_frame_period.push_back(0);
-			m.vbat_and_faults_status_frame_period.push_back(0);
-			m.firmware_version.push_back("");
-			m.faults.push_back("");
-			m.sticky_faults.push_back("");
-			m.conversion_factor.push_back(0);
+
+			m.sensor_direction.push_back({});
+			m.magnet_offset.push_back({0.0});
+			m.absolute_sensor_range.push_back({});
+
+			m.conversion_factor.push_back({1.0});
+
+			m.version_major.push_back({});
+			m.version_minor.push_back({});
+			m.version_bugfix.push_back({});
+			m.version_build.push_back({});
+			m.velocity.push_back({});
+			m.position.push_back({});
+			m.absolute_position.push_back({});
+			m.unfiltered_velocity.push_back({});
+			m.position_since_boot.push_back({});
+			m.supply_voltage.push_back({});
+			m.magnet_health.push_back({});
+
+			m.fault_hardware.push_back({});
+			m.fault_undervolage.push_back({});
+			m.fault_boot_during_enable.push_back({});
+			m.fault_unlicensed_feature_in_use.push_back({});
+			m.fault_bad_magnet.push_back({});
+
+			m.sticky_fault_hardware.push_back({});
+			m.sticky_fault_undervolage.push_back({});
+			m.sticky_fault_boot_during_enable.push_back({});
+			m.sticky_fault_unlicensed_feature_in_use.push_back({});
+			m.sticky_fault_bad_magnet.push_back({});
 		}
 
 		return true;
@@ -103,138 +112,75 @@ public:
 				{
 					auto &cs = cancoder_state_[i];
 
-					m.position[i] = cs->getPosition();
-					m.velocity[i] = cs->getVelocity();
-					m.absolute_position[i] = cs->getAbsolutePosition();
-					switch (cs->getVelocityMeasPeriod())
+					switch (cs->getSensorDirection())
 					{
-						case hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_1Ms:
-							m.velocity_meas_period[i] = "1Ms";
-							break;
-						case hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_2Ms:
-							m.velocity_meas_period[i] = "2Ms";
-							break;
-						case hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_5Ms:
-							m.velocity_meas_period[i] = "5Ms";
-							break;
-						case hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_10Ms:
-							m.velocity_meas_period[i] = "10Ms";
-							break;
-						case hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_20Ms:
-							m.velocity_meas_period[i] = "20Ms";
-							break;
-						case hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_25Ms:
-							m.velocity_meas_period[i] = "25Ms";
-							break;
-						case hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_50Ms:
-							m.velocity_meas_period[i] = "50Ms";
-							break;
-						case hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_100Ms:
-							m.velocity_meas_period[i] = "100Ms";
-							break;
-						default:
-							m.velocity_meas_period[i] = "Unknown";
-							break;
-					}
-					m.velocity_meas_window[i] = cs->getVelocityMeasWindow();
-					switch (cs->getAbsoluteSensorRange())
-					{
-						case hardware_interface::cancoder::AbsoluteSensorRange::Unsigned_0_to_360:
-							m.absolute_sensor_range[i] = "Unsigned_0_to_360";
-							break;
-						case hardware_interface::cancoder::AbsoluteSensorRange::Signed_PlusMinus180:
-							m.absolute_sensor_range[i] = "Signed_PlusMinus180";
-							break;
-						default:
-							m.absolute_sensor_range[i] = "Unknown";
-							break;
+					case hardware_interface::cancoder::SensorDirection::CounterClockwise_Positive:
+						m.absolute_sensor_range[i] = "CounterClockwise_Positive";
+						break;
+					case hardware_interface::cancoder::SensorDirection::Clockwise_Positive:
+						m.absolute_sensor_range[i] = "Clockwise_Positive";
+						break;
+					default:
+						m.absolute_sensor_range[i] = "Unknown";
+						break;
 					}
 					m.magnet_offset[i] = cs->getMagnetOffset();
-					switch(cs->getInitializationStrategy())
+					switch (cs->getAbsoluteSensorRange())
 					{
-						case hardware_interface::cancoder::SensorInitializationStrategy::BootToAbsolutePosition:
-							m.initialization_strategy[i] = "BootToAbsolutePosition";
-							break;
-						case hardware_interface::cancoder::SensorInitializationStrategy::BootToZero:
-							m.initialization_strategy[i] = "BootToZero";
-							break;
-						default:
-							m.initialization_strategy[i] = "Unknown";
-							break;
+					case hardware_interface::cancoder::AbsoluteSensorRange::Unsigned_0To1:
+						m.absolute_sensor_range[i] = "Unsigned_0To1";
+						break;
+					case hardware_interface::cancoder::AbsoluteSensorRange::Signed_PlusMinusHalf:
+						m.absolute_sensor_range[i] = "Signed_PlusMinusHalf";
+						break;
+					default:
+						m.absolute_sensor_range[i] = "Unknown";
+						break;
 					}
-					m.feedback_coefficient[i] = cs->getFeedbackCoefficient();
-					m.unit_string[i] = cs->getUnitString();
-					switch (cs->getTimeBase())
-					{
-						case hardware_interface::cancoder::SensorTimeBase::Per100Ms_Legacy:
-							m.time_base[i] = "Per100Ms_Legacy";
-							break;
-						case hardware_interface::cancoder::SensorTimeBase::PerSecond:
-							m.time_base[i] = "PerSecond";
-							break;
-						case hardware_interface::cancoder::SensorTimeBase::PerMinute:
-							m.time_base[i] = "PerMinute";
-							break;
-						default:
-							m.time_base[i] = "Unknown";
-							break;
-					}
-					m.bus_voltage[i] = cs->getBusVoltage();
-					switch (cs->getMagnetFieldStrength())
-					{
-						case hardware_interface::cancoder::MagnetFieldStrength::BadRange_RedLED:
-							m.magnet_field_strength[i] = "BadRange_RedLED";
-							break;
-						case hardware_interface::cancoder::MagnetFieldStrength::Adequate_OrangeLED:
-							m.magnet_field_strength[i] = "Adequate_OrangeLED";
-							break;
-						case hardware_interface::cancoder::MagnetFieldStrength::Good_GreenLED:
-							m.magnet_field_strength[i] = "Good_GreenLED";
-							break;
-						case hardware_interface::cancoder::MagnetFieldStrength::Invalid_Unknown:
-							m.magnet_field_strength[i] = "Invalid_Unknown";
-							break;
-						default:
-							m.magnet_field_strength[i] = "Unknown";
-							break;
-					}
-					m.direction[i] = cs->getDirection();
-					m.last_timestamp[i] = cs->getLastTimestamp();
-					m.sensor_data_status_frame_period[i] = cs->getSensorDataStatusFramePeriod();
-					m.vbat_and_faults_status_frame_period[i] = cs->getVbatAndFaultsStatusFramePeriod();
-					const int fw_ver = cs->getFirmwareVersion();
 
-					if (fw_ver >= 0)
-					{
-						char str[256];
-						sprintf(str, "2.2%d.%2.2d", (fw_ver >> 8) & 0xFF, fw_ver & 0xFF);
-						m.firmware_version[i] = str;
-					}
-					const auto faults = cs->getFaults();
-					m.faults[i] = "";
-					unsigned mask = 1;
-					if (faults & mask) m.faults[i] += "HardwareFault ";
-					mask <<= 1;
-					if (faults & mask) m.faults[i] += "APIError ";
-					mask <<= 1;
-					if (faults & mask) m.faults[i] += "UnderVoltage ";
-					mask <<= 1;
-					if (faults & mask) m.faults[i] += "ResetDuringEn ";
-					mask <<= 4; // 1 + 3 unused faults
-					if (faults & mask) m.faults[i] += "MagnetTooWeak ";
+					m.conversion_factor[i] = cs->getConversionFactor();
 
-					const auto sticky_faults = cs->getStickyFaults();
-					m.sticky_faults[i] = "";
-					mask = 1;
-					if (sticky_faults & mask) m.sticky_faults[i] += "HardwareFault ";
-					mask <<= 1;
-					if (sticky_faults & mask) m.sticky_faults[i] += "APIError ";
-					mask <<= 1;
-					if (sticky_faults & mask) m.sticky_faults[i] += "UnderVoltage ";
-					mask <<= 1;
-					if (sticky_faults & mask) m.sticky_faults[i] += "ResetDuringEn ";
-					mask <<= 4; // 1 + 3 unused sticky_faults
-					if (sticky_faults & mask) m.sticky_faults[i] += "MagnetTooWeak ";
+					m.version_major[i] = cs->getVersionMajor();
+					m.version_minor[i] = cs->getVersionMinor();
+					m.version_bugfix[i] = cs->getVersionBugfix();
+					m.version_build[i] = cs->getVersionBuild();
+					m.velocity[i] = cs->getVelocity();
+					m.position[i] = cs->getPosition();
+					m.absolute_position[i] = cs->getAbsolutePosition();
+					m.unfiltered_velocity[i] = cs->getUnfilteredVelocity();
+					m.position_since_boot[i] = cs->getPositionSinceBoot();
+					m.supply_voltage[i] = cs->getSupplyVoltage();
+					switch(cs->getMagnetHealth())
+					{
+						case hardware_interface::cancoder::MagnetHealth::Invalid:
+							m.magnet_health[i] = "Invalid";
+							break;
+						case hardware_interface::cancoder::MagnetHealth::Green:
+							m.magnet_health[i] = "Green";
+							break;
+						case hardware_interface::cancoder::MagnetHealth::Orange:
+							m.magnet_health[i] = "Orange";
+							break;
+						case hardware_interface::cancoder::MagnetHealth::Red:
+							m.magnet_health[i] = "Red";
+							break;
+						default:
+							m.magnet_health[i] = "Unknown";
+							break;
+					}
+
+					m.fault_hardware[i] = cs->getFaultHardware();
+					m.fault_undervolage[i] = cs->getFaultUndervoltage();
+					m.fault_boot_during_enable[i] = cs->getFaultBootDuringEnable();
+					m.fault_unlicensed_feature_in_use[i] = cs->getFaultUnlicensedFeatureInUse();
+					m.fault_bad_magnet[i] = cs->getFaultBadMagnet();
+
+					m.sticky_fault_hardware[i] = cs->getStickyFaultHardware();
+					m.sticky_fault_undervolage[i] = cs->getStickyFaultUndervoltage();
+					m.sticky_fault_boot_during_enable[i] = cs->getStickyFaultBootDuringEnable();
+					m.sticky_fault_unlicensed_feature_in_use[i] = cs->getStickyFaultUnlicensedFeatureInUse();
+					m.sticky_fault_bad_magnet[i] = cs->getFaultBadMagnet();
+					m.magnet_offset[i] = cs->getMagnetOffset();
 				}
 				realtime_pub_->unlockAndPublish();
 			}

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CANCODER_CONTROLLER_INTERFACE_INC__
+#define CANCODER_CONTROLLER_INTERFACE_INC__
 
 #include <atomic>
 #include <mutex>
@@ -12,73 +13,31 @@ class CANCoderCIParams : public ddr_updater::DDRUpdater
 	public:
 		CANCoderCIParams(ros::NodeHandle n);
 
-		void setVelocityMeasPeriod(int velocity_meas_period, bool update_dynamic = true);
-		void setVelocityMeasWindow(int velocity_meas_window, bool update_dynamic = true);
-		void setAbsoluteSensorRange(int absolute_sensor_range, bool update_dynamic = true);
-		void setMagnetOffset(double magnet_offset, bool update_dynamic = true);
-		void setInitializationStrategy(int initialization_strategy, bool update_dynamic = true);
-		void setFeedbackCoefficient(double feedback_coefficient, bool update_dynamic = true);
-		void setUnitString(const std::string &unit_string, bool update_dynamic = true);
-		void setTimeBase(int time_base, bool update_dynamic = true);
-		void setDirection(bool direction, bool update_dynamic = true);
-		void setSensorDataStatusFramePeriod(int sensor_data_status_frame_period, bool update_dynamic = true);
-		void setVBatAndFaultsStatusFramePeriod(int vbat_and_faults_status_frame_period, bool update_dynamic = true);
-		void setConversionFactor(double conversion_factor, bool update_dynamic = true);
+		void setSensorDirection(const int sensor_direction, bool update_dynamic = true);
+		void setMagnetOffset(const double magnet_offset, bool update_dynamic = true);
+		void setAbsoluteSensorRange(const int absolute_sensor_range, bool update_dynamic = true);
+		void setConversionFactor(const double conversion_factor, bool update_dynamic = true);
 
-		hardware_interface::cancoder::SensorVelocityMeasPeriod     getVelocityMeasPeriod(void) const;
-		int                                                        getVelocityMeasWindow(void) const;
-		hardware_interface::cancoder::AbsoluteSensorRange          getAbsoluteSensorRange(void) const;
-		double                                                     getMagnetOffset(void) const;
-		hardware_interface::cancoder::SensorInitializationStrategy getInitializationStrategy(void) const;
-		double                                                     getFeedbackCoefficient(void) const;
-		std::string                                                getUnitString(void);
-		hardware_interface::cancoder::SensorTimeBase               getTimeBase(void) const;
-		double                                                     getDirection(void) const;
-		int                                                        getSensorDataStatusFramePeriod(void) const;
-		int                                                        getVBatAndFaultsStatusFramePeriod(void) const;
-		double                                                     getConversionFactor(void) const;
+		hardware_interface::cancoder::SensorDirection     getSensorDirection(void) const;
+		double                                            getMagnetOffset(void) const;
+		hardware_interface::cancoder::AbsoluteSensorRange getAbsoluteSensorRange(void) const;
+		double                                            getConversionFactor(void) const;
 
 	private:
-		std::atomic<hardware_interface::cancoder::SensorVelocityMeasPeriod>     velocity_meas_period_;
-		std::atomic<int>                                                        velocity_meas_window_;
-		std::atomic<hardware_interface::cancoder::AbsoluteSensorRange>          absolute_sensor_range_;
-		std::atomic<double>                                                     magnet_offset_;
-		std::atomic<hardware_interface::cancoder::SensorInitializationStrategy> initialization_strategy_;
-		std::atomic<double>                                                     feedback_coefficient_;
-		std::mutex                                                              unit_string_mutex_;
-		std::string                                                             unit_string_;
-		std::atomic<hardware_interface::cancoder::SensorTimeBase>               time_base_;
-		std::atomic<bool>                                                       direction_;
-		std::atomic<int>                                                        sensor_data_status_frame_period_;
-		std::atomic<int>                                                        vbat_and_faults_status_frame_period_;
-		std::atomic<double>                                                     conversion_factor_;
+		std::atomic<hardware_interface::cancoder::SensorDirection>     sensor_direction_{hardware_interface::cancoder::SensorDirection::CounterClockwise_Positive};
+		std::atomic<double>                                            magnet_offset_{0.0};
+		std::atomic<hardware_interface::cancoder::AbsoluteSensorRange> absolute_sensor_range_{hardware_interface::cancoder::AbsoluteSensorRange::Unsigned_0To1};
+		std::atomic<double>                                            conversion_factor_{1.0};
 
-		const std::map<std::string, int> velocity_measurement_period_enum_map_ =
+		const std::map<std::string, int> sensor_direction_enum_map_ =
 		{
-			{"1Ms", static_cast<int>(hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_1Ms)},
-			{"2Ms", static_cast<int>(hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_2Ms)},
-			{"5Ms", static_cast<int>(hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_5Ms)},
-			{"10Ms", static_cast<int>(hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_10Ms)},
-			{"20Ms", static_cast<int>(hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_20Ms)},
-			{"25Ms", static_cast<int>(hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_25Ms)},
-			{"50Ms", static_cast<int>(hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_50Ms)},
-			{"100Ms", static_cast<int>(hardware_interface::cancoder::SensorVelocityMeasPeriod::Sensor_Period_100Ms)}
+			{"CounterClockwise_Positive", static_cast<int>(hardware_interface::cancoder::SensorDirection::CounterClockwise_Positive)},
+			{"Clockwise_Positive", static_cast<int>(hardware_interface::cancoder::SensorDirection::Clockwise_Positive)}
 		};
 		const std::map<std::string, int> absolute_sensor_range_enum_map_ =
 		{
-			{"Unsigned_0_to_360", static_cast<int>(hardware_interface::cancoder::AbsoluteSensorRange::Unsigned_0_to_360)},
-			{"Signed_PlusMinus180", static_cast<int>(hardware_interface::cancoder::AbsoluteSensorRange::Signed_PlusMinus180)}
-		};
-		const std::map<std::string, int> sensor_initialization_strategy_enum_map_ =
-		{
-			{"BootToAbsolutePosition", static_cast<int>(hardware_interface::cancoder::SensorInitializationStrategy::BootToAbsolutePosition)},
-			{"BootToZero", static_cast<int>(hardware_interface::cancoder::SensorInitializationStrategy::BootToZero)}
-		};
-		const std::map<std::string, int> sensor_time_base_enum_map_ =
-		{
-			{"Per100Ms_Legacy", static_cast<int>(hardware_interface::cancoder::SensorTimeBase::Per100Ms_Legacy)},
-			{"PerSecond", static_cast<int>(hardware_interface::cancoder::SensorTimeBase::PerSecond)},
-			{"PerMinute", static_cast<int>(hardware_interface::cancoder::SensorTimeBase::PerMinute)}
+			{"Unsigned_0To1", static_cast<int>(hardware_interface::cancoder::AbsoluteSensorRange::Unsigned_0To1)},
+			{"Signed_PlusMinusHalf", static_cast<int>(hardware_interface::cancoder::AbsoluteSensorRange::Signed_PlusMinusHalf)}
 		};
 
 		template <typename T>
@@ -91,9 +50,9 @@ class CANCoderCIParams : public ddr_updater::DDRUpdater
 
 		template <typename T>
 		bool readIntoEnum(ros::NodeHandle &n,
-				const std::string &param_name,
-				const std::map<std::string, int> &mymap,
-				std::atomic<T>&out) const
+						  const std::string &param_name,
+						  const std::map<std::string, int> &mymap,
+						  std::atomic<T> &out) const
 		{
 			std::string param_str;
 			if (!n.getParam(param_name, param_str))
@@ -120,31 +79,23 @@ class CANCoderControllerInterface
 		CANCoderControllerInterface(ros::NodeHandle &n, const std::string &joint_name, hardware_interface::cancoder::CANCoderCommandHandle handle);
 
 		void update(void);
-		void setPosition(double new_position);
-		void setPositionToAbsolute(void);
+		void setPosition(const double new_position);
 		void setClearStickyFaults(void);
 
-		void setVelocityMeasPeriod(hardware_interface::cancoder::SensorVelocityMeasPeriod velocity_meas_period);
-		void setVelocityMeasWindow(int velocity_meas_window);
-		void setAbsoluteSensorRange(hardware_interface::cancoder::AbsoluteSensorRange absolute_sensor_range);
-		void setMagnetOffset(double magnet_offset);
-		void setInitializationStrategy(hardware_interface::cancoder::SensorInitializationStrategy initialization_strategy);
-		void setFeedbackCoefficient(double feedback_coefficient);
-		void setUnitString(const std::string &unit_string);
-		void setTimeBase(hardware_interface::cancoder::SensorTimeBase time_base);
-		void setDirection(bool direction);
-		void setSensorDataStatusFramePeriod(int sensor_data_status_frame_period);
-		void setVBatAndFaultsStatusFramePeriod(int vbat_and_faults_status_frame_period);
-		void setConversionFactor(double conversion_factor);
+		void setSensorDirection(const hardware_interface::cancoder::SensorDirection sensor_direction);
+		void setMagnetOffset(const double magnet_offset);
+		void setAbsoluteSensorRange(const hardware_interface::cancoder::AbsoluteSensorRange absolute_sensor_range);
+		void setConversionFactor(const double conversion_factor);
 
 	private:
 		CANCoderCIParams                                    params_;
 		hardware_interface::cancoder::CANCoderCommandHandle handle_;
 		std::mutex                                          set_position_mutex_;
-		bool                                                set_position_;
-		double                                              new_position_;
-		std::atomic<bool>                                   set_position_to_absolute_;
-		std::atomic<bool>                                   clear_sticky_faults_;
+		bool                                                set_position_flag_{false};
+		double                                              set_position_value_{};
+		std::atomic<bool>                                   clear_sticky_faults_{false};
 };
 
 } // namespace cancoder_controller_interfac
+
+#endif

@@ -3,12 +3,7 @@
 namespace hardware_interface
 {
 
-OrchestraState::OrchestraState(int orchestra_id) :
-        orchestra_id_(orchestra_id),
-        instruments_{},
-        chirp_file_path_(""),
-        is_playing_(false),
-        is_paused_(false)
+OrchestraState::OrchestraState()
 {
 }
 
@@ -16,13 +11,13 @@ OrchestraState::~OrchestraState()
 {
 }
 
-void OrchestraState::setChirpFilePath(const std::string &chirp_file_path)
+void OrchestraState::setMusic(const std::string &music)
 {
-    chirp_file_path_ = chirp_file_path;
+    music_ = music;
 }
-std::string OrchestraState::getChirpFilePath() const
+std::string OrchestraState::getMusic() const
 {
-    return chirp_file_path_;
+    return music_;
 }
 
 void OrchestraState::setInstruments(const std::vector<std::string> &instruments)
@@ -63,4 +58,14 @@ bool OrchestraState::getIsStopped() const
 {
     return !is_playing_ && !is_paused_;
 }
+
+void OrchestraState::setCurrentTime(const double current_time)
+{
+    current_time_ = current_time;
+}
+double OrchestraState::getCurrentTime(void) const
+{
+    return current_time_;
+}
+
 }

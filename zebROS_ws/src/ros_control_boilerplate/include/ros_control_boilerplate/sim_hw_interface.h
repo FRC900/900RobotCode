@@ -55,6 +55,9 @@ class SimHWInterface : public GenericHWInterface
 		 */
 		SimHWInterface(ros::NodeHandle &nh, urdf::Model *urdf_model = NULL);
 
+		/** \brief Destructor */
+		virtual ~SimHWInterface() = default;
+
 		/** \brief Initialize the robot hardware interface */
 		virtual void init();
 

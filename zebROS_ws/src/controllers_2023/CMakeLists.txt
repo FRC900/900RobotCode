@@ -9,7 +9,8 @@ include("../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED COMPONENTS
   controller_interface
   controllers_2023_msgs
-  dynamic_reconfigure_wrapper
+  ctre_interfaces
+  ddynamic_reconfigure
   hardware_interface
   pluginlib
   realtime_tools
@@ -17,8 +18,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   std_srvs
   talon_controllers
-  ctre_interfaces
-  ddynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -97,9 +96,9 @@ find_package(catkin REQUIRED COMPONENTS
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-generate_dynamic_reconfigure_options(
-  
-)
+#generate_dynamic_reconfigure_options(
+  #
+#)
 
 ###################################
 ## catkin specific configuration ##
@@ -112,7 +111,7 @@ generate_dynamic_reconfigure_options(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES controllers_2019
+#  LIBRARIES controllers_2023
 #  CATKIN_DEPENDS controller_interface dynamic_reconfigure_wrapper hardware_interface message_generation pluginlib realtime_tools roscpp std_msgs talon_controllers ctre_interfaces
 #  DEPENDS system_lib
 )

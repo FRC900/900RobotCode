@@ -5,7 +5,7 @@ path_zero_timeout: 5.0
 current_threshold: 120.0 # some arbitrary unit
 minimum_current_time: 0.05
 minimum_fourbar_extension: 0.7 # has to be this amount extended or more before doing current checks
-joint: intake_leader # for current sensing
+joint: intake # for current sensing
 time_before_reverse: 0.01
 
 intake_speed: 0.4

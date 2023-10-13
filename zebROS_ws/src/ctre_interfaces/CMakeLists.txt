@@ -125,8 +125,11 @@ add_library(${PROJECT_NAME} STATIC
   src/cancoder_command_interface.cpp
   src/canifier_command_interface.cpp
   src/canifier_state_interface.cpp
+  src/latency_compensation_state_interface.cpp
   src/talon_command_interface.cpp
   src/talon_state_interface.cpp
+  src/talonfxpro_command_interface.cpp
+  src/talonfxpro_state_interface.cpp
   src/orchestra_command_interface.cpp
   src/orchestra_state_interface.cpp
   src/candle_state_interface.cpp

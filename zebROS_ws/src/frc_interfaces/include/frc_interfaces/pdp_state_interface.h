@@ -1,6 +1,7 @@
 #ifndef PDP_STATE_INTERFACE_INC_
 #define PDP_STATE_INTERFACE_INC_
 
+#include <array>
 #include <hardware_interface/internal/hardware_resource_manager.h>
 #include <state_handle/state_handle.h>
 
@@ -53,6 +54,6 @@ typedef StateHandle<const PDPHWState> PDPStateHandle;
 typedef StateHandle<PDPHWState> PDPWritableStateHandle;
 
 class PDPStateInterface       : public HardwareResourceManager<PDPStateHandle> {};
-class RemotePDPStateInterface : public HardwareResourceManager<PDPWritableStateHandle,   ClaimResources> {};
+class RemotePDPStateInterface : public HardwareResourceManager<PDPWritableStateHandle, ClaimResources> {};
 }
 #endif

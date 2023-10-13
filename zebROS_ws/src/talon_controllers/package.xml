@@ -14,15 +14,17 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>controller_interface</depend>
-  <depend>dynamic_reconfigure</depend>
+  <depend>ctre_interfaces</depend>
+  <depend>ddynamic_reconfigure</depend>
+  <depend>ddr_updater</depend>
   <depend>realtime_tools</depend>
   <depend>talon_controller_msgs</depend>
-  <depend>ctre_interfaces</depend>
   <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>
 
   <export>
     <controller_interface plugin="${prefix}/talon_controllers_plugins.xml"/>
+    <controller_interface plugin="${prefix}/talonfxpro_controllers_plugins.xml"/>
     <controller_interface plugin="${prefix}/orchestra_controller_plugins.xml"/>
   </export>
 </package>

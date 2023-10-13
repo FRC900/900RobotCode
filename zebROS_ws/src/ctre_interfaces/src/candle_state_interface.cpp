@@ -76,8 +76,10 @@ bool Animation::operator!=(const Animation& rhs) {
 
 CANdleHWState::CANdleHWState(int id) :
     device_id{id},
+    leds(8),
     brightness{1},
-    leds(8)
+    show_led_when_active{false},
+    enabled{false}
 {
     for (int i = 0; i < 8; i++) {
         this->leds[i] = Colour(255, 255, 255, 255);

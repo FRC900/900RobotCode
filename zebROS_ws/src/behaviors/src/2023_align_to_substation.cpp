@@ -11,7 +11,7 @@
 #include <frc_msgs/MatchSpecificData.h>
 #include <optional>
 #include <geometry_msgs/Twist.h>
-#include <talon_state_msgs/TalonState.h>
+#include <talon_state_msgs/TalonFXProState.h>
 
 class AlignToSubstationAction
 {
@@ -53,7 +53,7 @@ class AlignToSubstationAction
 
             match_sub_ = nh_.subscribe<frc_msgs::MatchSpecificData>("/frcrobot_rio/match_data", 1, &AlignToSubstationAction::matchCb, this);
             cmd_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/align/cmd_vel", 1, false);
-            talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talon_states", 1, &AlignToSubstationAction::talonStateCallback, this);
+            talon_states_sub_ = nh_.subscribe("/frcrobot_jetson/talonfxpro_states", 1, &AlignToSubstationAction::talonFXProStateCallback, this);
 
             nh_.param<double>("/intaking/current_threshold", intake_current_threshold_, 100.0);
             nh_.getParam("double_substation_x_offset", double_substation_x_offset_);
@@ -81,7 +81,7 @@ class AlignToSubstationAction
             latest_ = *msg;
         }
 
-        void talonStateCallback(const talon_state_msgs::TalonState &talon_state)
+        void talonFXProStateCallback(const talon_state_msgs::TalonFXProState &talon_state)
 	    {
             // fourbar_master_idx == max of size_t at the start
             if (intake_idx == std::numeric_limits<size_t>::max()) // could maybe just check for > 0
@@ -95,9 +95,9 @@ class AlignToSubstationAction
                     }
                 }
             }
-            if (!(intake_idx == std::numeric_limits<size_t>::max()))
+            if (intake_idx != std::numeric_limits<size_t>::max())
             {
-                current_current_ = talon_state.output_current[intake_idx];
+                current_current_ = talon_state.stator_current[intake_idx];
             }
             else {
                 ROS_ERROR_STREAM("2023_align_to_substation : Can not find talon with name = intake_leader");
