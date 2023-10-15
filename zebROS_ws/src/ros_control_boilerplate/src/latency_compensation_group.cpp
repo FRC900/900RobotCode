@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include "ros/ros.h"
 
 #include "ctre/phoenix6/StatusSignal.hpp"
@@ -225,8 +227,7 @@ void LatencyCompensationGroup::read_thread()
     ros::Duration(2.63).sleep();
     Tracer tracer("latency compensation " + name_);
     ROS_INFO_STREAM("Starting latency compensation read thread for " << name_ << " at " << ros::Time::now());
-    ROS_INFO_STREAM("CTRE time = " << ctre:: phoenix6::GetCurrentTimeSeconds());
-    ros::Duration time_offset{ros::Time::now().toSec() - ctre::phoenix6::GetCurrentTimeSeconds()};
+    ROS_INFO_STREAM("CTRE / steady clock time = " << ctre:: phoenix6::GetCurrentTimeSeconds());
     while (ros::ok())
     {
         tracer.start("WaitForAll");
@@ -234,6 +235,9 @@ void LatencyCompensationGroup::read_thread()
         tracer.start_unique("Update state");
         if (status.IsOK())
         {
+            // Redo this offset from steady-clock time to wall clock time
+            // each iteration in case system time changes.
+            const ros::Duration time_offset{ros::Time::now().toSec() - ctre::phoenix6::GetCurrentTimeSeconds()};
             std::scoped_lock l{read_state_mutex_};
 
             for (const auto &entry : entries_)
