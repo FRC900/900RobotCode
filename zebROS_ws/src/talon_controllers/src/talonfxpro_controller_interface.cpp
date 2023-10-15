@@ -744,477 +744,474 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
     {
         return false;
     }
-    ROS_WARN_STREAM(__PRETTY_FUNCTION__ << "init past readParams for " << params_.joint_name_);
+    ROS_WARN_STREAM(__PRETTY_FUNCTION__ << "init past readParams for " << params.joint_name_);
     talon = tci->getHandle(params.getJointName());
     writeParamsToHW(params, talon);
-    // If this isn't a follower, meaning it is the leader, use
-    // this namespace's params to initialize the TalonFXProCIParams
-    // member var for the class. This hooks those config params up
-    // to dynamic reconfigure and this class's set functions
-    if (!follower)
-    {
-        params_ = params;
-    }
 
-    bool dynamic_reconfigure = false;
     // Only allow dynamic reconfigure to be active for non-follower talons
     if (!follower)
     {
+        // If this isn't a follower, meaning it is the leader, use
+        // this namespace's params to initialize the TalonFXProCIParams
+        // member var for the class. This hooks those config params up
+        // to dynamic reconfigure and this class's set functions
+        params_ = params;
+        bool dynamic_reconfigure = false;
         n.param<bool>("dynamic_reconfigure", dynamic_reconfigure, dynamic_reconfigure);
-    }
-    ddr_updater_ = std::make_unique<ddr_updater::DDRUpdater>(n);
-    if (!dynamic_reconfigure)
-    {
-        ddr_updater_->shutdownDDRUpdater();
-    }
-    else
-    {
-        ddr_updater_->ddr_.registerVariable<double>("kP_0",
-                                                    [this]() { return params_.kP_[0].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkP, this, _1, 0, false),
-                                                    "Proportial PID constant for slot 0", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kI_0",
-                                                    [this]() { return params_.kI_[0].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkI, this, _1, 0, false),
-                                                    "Integral PID constant for slot 0", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kD_0",
-                                                    [this]() { return params_.kD_[0].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkD, this, _1, 0, false),
-                                                    "Derivative PID constant for slot 0", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kS_0",
-                                                    [this]() { return params_.kS_[0].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkS, this, _1, 0, false),
-                                                    "Static PID constant for slot 0", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kV_0",
-                                                    [this]() { return params_.kV_[0].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkV, this, _1, 0, false),
-                                                    "Velocity PID constant for slot 0", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kA_0",
-                                                    [this]() { return params_.kA_[0].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkA, this, _1, 0, false),
-                                                    "Acceleration PID constant for slot 0", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kG_0",
-                                                    [this]() { return params_.kG_[0].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkG, this, _1, 0, false),
-                                                    "Gravity PID constant for slot 0", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerEnumVariable<int>("gravity_type_0",
-                                                     [this]() { return static_cast<int>(params_.gravity_type_[0].load());},
-                                                     [this](const int gravity_type_int) { this->setGravityType(static_cast<hardware_interface::talonfxpro::GravityType>(gravity_type_int, 0), false);},
-                                                     "Gravity type for slot 0 kG term", 
-                                                     std::map<std::string, int>{
-                                                        {"Elevator Static", static_cast<int>(hardware_interface::talonfxpro::GravityType::Elevator_Static)},
-                                                        {"Arm Cosine", static_cast<int>(hardware_interface::talonfxpro::GravityType::Arm_Cosine)}
-                                                     }
-                                                    );
-        ddr_updater_->ddr_.registerVariable<double>("kP_1",
-                                                    [this]() { return params_.kP_[1].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkP, this, _1, 1, false),
-                                                    "Proportial PID constant for slot 1", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kI_1",
-                                                    [this]() { return params_.kI_[1].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkI, this, _1, 1, false),
-                                                    "Integral PID constant for slot 1", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kD_1",
-                                                    [this]() { return params_.kD_[1].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkD, this, _1, 1, false),
-                                                    "Derivative PID constant for slot 1", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kS_1",
-                                                    [this]() { return params_.kS_[1].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkS, this, _1, 1, false),
-                                                    "Static PID constant for slot 1", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kV_1",
-                                                    [this]() { return params_.kV_[1].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkV, this, _1, 1, false),
-                                                    "Velocity PID constant for slot 1", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kA_1",
-                                                    [this]() { return params_.kA_[1].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkA, this, _1, 1, false),
-                                                    "Acceleration PID constant for slot 1", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kG_1",
-                                                    [this]() { return params_.kG_[1].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkG, this, _1, 1, false),
-                                                    "Gravity PID constant for slot 1", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerEnumVariable<int>("gravity_type_1",
-                                                     [this]() { return static_cast<int>(params_.gravity_type_[1].load());},
-                                                     [this](const int gravity_type_int) { this->setGravityType(static_cast<hardware_interface::talonfxpro::GravityType>(gravity_type_int, 1), false);},
-                                                     "Gravity type for slot 1 kG term", 
-                                                     std::map<std::string, int>{
-                                                        {"Elevator Static", static_cast<int>(hardware_interface::talonfxpro::GravityType::Elevator_Static)},
-                                                        {"Arm Cosine", static_cast<int>(hardware_interface::talonfxpro::GravityType::Arm_Cosine)}
-                                                     }
-                                                    );
-        ddr_updater_->ddr_.registerVariable<double>("kP_2",
-                                                    [this]() { return params_.kP_[2].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkP, this, _1, 2, false),
-                                                    "Proportial PID constant for slot 2", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kI_2",
-                                                    [this]() { return params_.kI_[2].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkI, this, _1, 2, false),
-                                                    "Integral PID constant for slot 2", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kD_2",
-                                                    [this]() { return params_.kD_[2].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkD, this, _1, 2, false),
-                                                    "Derivative PID constant for slot 2", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kS_2",
-                                                    [this]() { return params_.kS_[2].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkS, this, _1, 2, false),
-                                                    "Static PID constant for slot 2", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kV_2",
-                                                    [this]() { return params_.kV_[2].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkV, this, _1, 2, false),
-                                                    "Velocity PID constant for slot 2", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kA_2",
-                                                    [this]() { return params_.kA_[2].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkA, this, _1, 2, false),
-                                                    "Acceleration PID constant for slot 2", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("kG_2",
-                                                    [this]() { return params_.kG_[2].load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setkG, this, _1, 2, false),
-                                                    "Gravity PID constant for slot 2", 
-                                                    0, 1000);
-        ddr_updater_->ddr_.registerEnumVariable<int>("gravity_type_2",
-                                                     [this]() { return static_cast<int>(params_.gravity_type_[2].load());},
-                                                     [this](const int gravity_type_int) { this->setGravityType(static_cast<hardware_interface::talonfxpro::GravityType>(gravity_type_int, 2), false);},
-                                                     "Gravity type for slot 2 kG term", 
-                                                     std::map<std::string, int>{
-                                                        {"Elevator Static", static_cast<int>(hardware_interface::talonfxpro::GravityType::Elevator_Static)},
-                                                        {"Arm Cosine", static_cast<int>(hardware_interface::talonfxpro::GravityType::Arm_Cosine)}
-                                                     }
-                                                    );
-        ddr_updater_->ddr_.registerEnumVariable<int>("invert",
-                                                     [this]() { return static_cast<int>(params_.invert_.load());},
-                                                     [this](const int invert_int) { this->setInvert(static_cast<hardware_interface::talonfxpro::Inverted>(invert_int), false);},
-                                                     "Motor invert direction",
-                                                     std::map<std::string, int>{
-                                                        {"CounterClockwise Positive", static_cast<int>(hardware_interface::talonfxpro::Inverted::CounterClockwise_Positive)},
-                                                        {"Clockwise Positive", static_cast<int>(hardware_interface::talonfxpro::Inverted::Clockwise_Positive)}
-                                                     }
-                                                    );
-        ddr_updater_->ddr_.registerEnumVariable<int>("neutral_mode",
-                                                     [this]() { return static_cast<int>(params_.neutral_mode_.load());},
-                                                     [this](const int neutral_mode_int) { this->setNeutralMode(static_cast<hardware_interface::talonfxpro::NeutralMode>(neutral_mode_int), false);},
-                                                     "Motor neutral mode", 
-                                                     std::map<std::string, int>{
-                                                        {"Coast", static_cast<int>(hardware_interface::talonfxpro::NeutralMode::Coast)},
-                                                        {"Brake", static_cast<int>(hardware_interface::talonfxpro::NeutralMode::Brake)}
-                                                     }
-                                                    );
-        ddr_updater_->ddr_.registerVariable<double>("duty_cycle_netural_deadband",
-                                                    [this]() { return params_.duty_cycle_neutral_deadband_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setDutyCycleNeutralDeadband, this, _1, false),
-                                                    "Values less than this magnitue set motor output to 0",
-                                                    0, 1);
-        ddr_updater_->ddr_.registerVariable<double>("peak_forward_duty_cycle",
-                                                    [this]() { return params_.peak_forward_duty_cycle_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setPeakForwardDutyCycle, this, _1, false),
-                                                    "Max %% output forward",
-                                                    0, 1);
-        ddr_updater_->ddr_.registerVariable<double>("peak_reverse_duty_cycle",
-                                                    [this]() { return params_.peak_reverse_duty_cycle_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setPeakReverseDutyCycle, this, _1, false),
-                                                    "Max %% output reverse",
-                                                    0, 1);
-        ddr_updater_->ddr_.registerVariable<double>("stator_current_limit",
-                                                    [this]() { return params_.stator_current_limit_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setStatorCurrentLimit, this, _1, false),
-                                                    "Stator current limit in amps",
-                                                    0, 800);
-        ddr_updater_->ddr_.registerVariable<bool>  ("stator_current_limit_enable",
-                                                    [this]() { return params_.stator_current_limit_enable_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setStatorCurrentLimitEnable, this, _1, false),
-                                                    "Enable stator current limit");
-        ddr_updater_->ddr_.registerVariable<double>("supply_current_limit",
-                                                    [this]() { return params_.supply_current_limit_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setSupplyCurrentLimit, this, _1, false),
-                                                    "Supply current limit in amps",
-                                                    0, 800);
-        ddr_updater_->ddr_.registerVariable<bool>  ("supply_current_limit_enable",
-                                                    [this]() { return params_.supply_current_limit_enable_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setSupplyCurrentLimitEnable, this, _1, false),
-                                                    "Enable supply current limit");
-        ddr_updater_->ddr_.registerVariable<double>("supply_voltage_time_constraint",
-                                                    [this]() { return params_.supply_voltage_time_constant_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setSupplyVoltageTimeConstraint, this, _1, false),
-                                                    "The time constant (in seconds) of the low-pass filter for  the supply voltage",
-                                                    0, 0.1);
-        ddr_updater_->ddr_.registerVariable<double>("peak_forward_voltage",
-                                                    [this]() { return params_.peak_forward_voltage_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setPeakForwardVoltage, this, _1, false),
-                                                    "Maximum (forward) output during voltage based control modes",
-                                                    -16, 16);
-        ddr_updater_->ddr_.registerVariable<double>("peak_reverse_voltage",
-                                                    [this]() { return params_.peak_reverse_voltage_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setPeakReverseVoltage, this, _1, false),
-                                                    "Maximum (reverse) output during voltage based control modes",
-                                                    -16, 16);
-        ddr_updater_->ddr_.registerVariable<double>("peak_forward_torque_current",
-                                                    [this]() { return params_.peak_forward_torque_current_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setPeakForwardTorqueCurrent, this, _1, false),
-                                                    "Maximum (forward) output during torque-current based control modes",
-                                                    -800, 800);
-        ddr_updater_->ddr_.registerVariable<double>("peak_reverse_torque_current",
-                                                    [this]() { return params_.peak_reverse_torque_current_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setPeakReverseTorqueCurrent, this, _1, false),
-                                                    "Maximum (reverse) output during torque-current based control modes",
-                                                    -800, 800);
-        ddr_updater_->ddr_.registerVariable<double>("torque_neutral_deadband",
-                                                    [this]() { return params_.torque_neutral_deadband_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setTorqueNeutralDeadband, this, _1, false),
-                                                    "output deadband during torque-current based control modes",
-                                                    0, 25);
-        ddr_updater_->ddr_.registerVariable<double>("feedback_rotor_offset",
-                                                    [this]() { return params_.feedback_rotor_offset_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setFeedbackRotorOffset, this, _1, false),
-                                                    "offset is applied to the absolute integrated rotor sensor",
-                                                    -1, 1);
-        ddr_updater_->ddr_.registerVariable<double>("sensor_to_mechanism_ratio",
-                                                    [this]() { return params_.sensor_to_mechanism_ratio_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setSensorToMechanismRatio, this, _1, false),
-                                                    "The ratio of sensor rotations to the mechanism's output", 
-                                                    -1000, 1000);
-        ddr_updater_->ddr_.registerVariable<double>("rotor_to_sensor_ratio",
-                                                    [this]() { return params_.rotor_to_sensor_ratio_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setRotorToSensorRatio, this, _1, false),
-                                                    "the ratio between the remote sensor and the motor rotor",
-                                                    -1000, 1000);
+        ddr_updater_ = std::make_unique<ddr_updater::DDRUpdater>(n);
+        if (!dynamic_reconfigure)
+        {
+            ddr_updater_->shutdownDDRUpdater();
+        }
+        else
+        {
+            ddr_updater_->ddr_.registerVariable<double>("kP_0",
+                                                        [this]() { return params_.kP_[0].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkP, this, _1, 0, false),
+                                                        "Proportial PID constant for slot 0", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kI_0",
+                                                        [this]() { return params_.kI_[0].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkI, this, _1, 0, false),
+                                                        "Integral PID constant for slot 0", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kD_0",
+                                                        [this]() { return params_.kD_[0].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkD, this, _1, 0, false),
+                                                        "Derivative PID constant for slot 0", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kS_0",
+                                                        [this]() { return params_.kS_[0].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkS, this, _1, 0, false),
+                                                        "Static PID constant for slot 0", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kV_0",
+                                                        [this]() { return params_.kV_[0].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkV, this, _1, 0, false),
+                                                        "Velocity PID constant for slot 0", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kA_0",
+                                                        [this]() { return params_.kA_[0].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkA, this, _1, 0, false),
+                                                        "Acceleration PID constant for slot 0", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kG_0",
+                                                        [this]() { return params_.kG_[0].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkG, this, _1, 0, false),
+                                                        "Gravity PID constant for slot 0", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerEnumVariable<int>("gravity_type_0",
+                                                        [this]() { return static_cast<int>(params_.gravity_type_[0].load());},
+                                                        [this](const int gravity_type_int) { this->setGravityType(static_cast<hardware_interface::talonfxpro::GravityType>(gravity_type_int, 0), false);},
+                                                        "Gravity type for slot 0 kG term", 
+                                                        std::map<std::string, int>{
+                                                            {"Elevator Static", static_cast<int>(hardware_interface::talonfxpro::GravityType::Elevator_Static)},
+                                                            {"Arm Cosine", static_cast<int>(hardware_interface::talonfxpro::GravityType::Arm_Cosine)}
+                                                        }
+                                                        );
+            ddr_updater_->ddr_.registerVariable<double>("kP_1",
+                                                        [this]() { return params_.kP_[1].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkP, this, _1, 1, false),
+                                                        "Proportial PID constant for slot 1", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kI_1",
+                                                        [this]() { return params_.kI_[1].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkI, this, _1, 1, false),
+                                                        "Integral PID constant for slot 1", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kD_1",
+                                                        [this]() { return params_.kD_[1].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkD, this, _1, 1, false),
+                                                        "Derivative PID constant for slot 1", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kS_1",
+                                                        [this]() { return params_.kS_[1].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkS, this, _1, 1, false),
+                                                        "Static PID constant for slot 1", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kV_1",
+                                                        [this]() { return params_.kV_[1].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkV, this, _1, 1, false),
+                                                        "Velocity PID constant for slot 1", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kA_1",
+                                                        [this]() { return params_.kA_[1].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkA, this, _1, 1, false),
+                                                        "Acceleration PID constant for slot 1", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kG_1",
+                                                        [this]() { return params_.kG_[1].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkG, this, _1, 1, false),
+                                                        "Gravity PID constant for slot 1", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerEnumVariable<int>("gravity_type_1",
+                                                        [this]() { return static_cast<int>(params_.gravity_type_[1].load());},
+                                                        [this](const int gravity_type_int) { this->setGravityType(static_cast<hardware_interface::talonfxpro::GravityType>(gravity_type_int, 1), false);},
+                                                        "Gravity type for slot 1 kG term", 
+                                                        std::map<std::string, int>{
+                                                            {"Elevator Static", static_cast<int>(hardware_interface::talonfxpro::GravityType::Elevator_Static)},
+                                                            {"Arm Cosine", static_cast<int>(hardware_interface::talonfxpro::GravityType::Arm_Cosine)}
+                                                        }
+                                                        );
+            ddr_updater_->ddr_.registerVariable<double>("kP_2",
+                                                        [this]() { return params_.kP_[2].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkP, this, _1, 2, false),
+                                                        "Proportial PID constant for slot 2", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kI_2",
+                                                        [this]() { return params_.kI_[2].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkI, this, _1, 2, false),
+                                                        "Integral PID constant for slot 2", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kD_2",
+                                                        [this]() { return params_.kD_[2].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkD, this, _1, 2, false),
+                                                        "Derivative PID constant for slot 2", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kS_2",
+                                                        [this]() { return params_.kS_[2].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkS, this, _1, 2, false),
+                                                        "Static PID constant for slot 2", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kV_2",
+                                                        [this]() { return params_.kV_[2].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkV, this, _1, 2, false),
+                                                        "Velocity PID constant for slot 2", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kA_2",
+                                                        [this]() { return params_.kA_[2].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkA, this, _1, 2, false),
+                                                        "Acceleration PID constant for slot 2", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("kG_2",
+                                                        [this]() { return params_.kG_[2].load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setkG, this, _1, 2, false),
+                                                        "Gravity PID constant for slot 2", 
+                                                        0, 1000);
+            ddr_updater_->ddr_.registerEnumVariable<int>("gravity_type_2",
+                                                        [this]() { return static_cast<int>(params_.gravity_type_[2].load());},
+                                                        [this](const int gravity_type_int) { this->setGravityType(static_cast<hardware_interface::talonfxpro::GravityType>(gravity_type_int, 2), false);},
+                                                        "Gravity type for slot 2 kG term", 
+                                                        std::map<std::string, int>{
+                                                            {"Elevator Static", static_cast<int>(hardware_interface::talonfxpro::GravityType::Elevator_Static)},
+                                                            {"Arm Cosine", static_cast<int>(hardware_interface::talonfxpro::GravityType::Arm_Cosine)}
+                                                        }
+                                                        );
+            ddr_updater_->ddr_.registerEnumVariable<int>("invert",
+                                                        [this]() { return static_cast<int>(params_.invert_.load());},
+                                                        [this](const int invert_int) { this->setInvert(static_cast<hardware_interface::talonfxpro::Inverted>(invert_int), false);},
+                                                        "Motor invert direction",
+                                                        std::map<std::string, int>{
+                                                            {"CounterClockwise Positive", static_cast<int>(hardware_interface::talonfxpro::Inverted::CounterClockwise_Positive)},
+                                                            {"Clockwise Positive", static_cast<int>(hardware_interface::talonfxpro::Inverted::Clockwise_Positive)}
+                                                        }
+                                                        );
+            ddr_updater_->ddr_.registerEnumVariable<int>("neutral_mode",
+                                                        [this]() { return static_cast<int>(params_.neutral_mode_.load());},
+                                                        [this](const int neutral_mode_int) { this->setNeutralMode(static_cast<hardware_interface::talonfxpro::NeutralMode>(neutral_mode_int), false);},
+                                                        "Motor neutral mode", 
+                                                        std::map<std::string, int>{
+                                                            {"Coast", static_cast<int>(hardware_interface::talonfxpro::NeutralMode::Coast)},
+                                                            {"Brake", static_cast<int>(hardware_interface::talonfxpro::NeutralMode::Brake)}
+                                                        }
+                                                        );
+            ddr_updater_->ddr_.registerVariable<double>("duty_cycle_netural_deadband",
+                                                        [this]() { return params_.duty_cycle_neutral_deadband_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setDutyCycleNeutralDeadband, this, _1, false),
+                                                        "Values less than this magnitue set motor output to 0",
+                                                        0, 1);
+            ddr_updater_->ddr_.registerVariable<double>("peak_forward_duty_cycle",
+                                                        [this]() { return params_.peak_forward_duty_cycle_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setPeakForwardDutyCycle, this, _1, false),
+                                                        "Max %% output forward",
+                                                        0, 1);
+            ddr_updater_->ddr_.registerVariable<double>("peak_reverse_duty_cycle",
+                                                        [this]() { return params_.peak_reverse_duty_cycle_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setPeakReverseDutyCycle, this, _1, false),
+                                                        "Max %% output reverse",
+                                                        0, 1);
+            ddr_updater_->ddr_.registerVariable<double>("stator_current_limit",
+                                                        [this]() { return params_.stator_current_limit_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setStatorCurrentLimit, this, _1, false),
+                                                        "Stator current limit in amps",
+                                                        0, 800);
+            ddr_updater_->ddr_.registerVariable<bool>  ("stator_current_limit_enable",
+                                                        [this]() { return params_.stator_current_limit_enable_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setStatorCurrentLimitEnable, this, _1, false),
+                                                        "Enable stator current limit");
+            ddr_updater_->ddr_.registerVariable<double>("supply_current_limit",
+                                                        [this]() { return params_.supply_current_limit_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setSupplyCurrentLimit, this, _1, false),
+                                                        "Supply current limit in amps",
+                                                        0, 800);
+            ddr_updater_->ddr_.registerVariable<bool>  ("supply_current_limit_enable",
+                                                        [this]() { return params_.supply_current_limit_enable_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setSupplyCurrentLimitEnable, this, _1, false),
+                                                        "Enable supply current limit");
+            ddr_updater_->ddr_.registerVariable<double>("supply_voltage_time_constraint",
+                                                        [this]() { return params_.supply_voltage_time_constant_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setSupplyVoltageTimeConstraint, this, _1, false),
+                                                        "The time constant (in seconds) of the low-pass filter for  the supply voltage",
+                                                        0, 0.1);
+            ddr_updater_->ddr_.registerVariable<double>("peak_forward_voltage",
+                                                        [this]() { return params_.peak_forward_voltage_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setPeakForwardVoltage, this, _1, false),
+                                                        "Maximum (forward) output during voltage based control modes",
+                                                        -16, 16);
+            ddr_updater_->ddr_.registerVariable<double>("peak_reverse_voltage",
+                                                        [this]() { return params_.peak_reverse_voltage_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setPeakReverseVoltage, this, _1, false),
+                                                        "Maximum (reverse) output during voltage based control modes",
+                                                        -16, 16);
+            ddr_updater_->ddr_.registerVariable<double>("peak_forward_torque_current",
+                                                        [this]() { return params_.peak_forward_torque_current_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setPeakForwardTorqueCurrent, this, _1, false),
+                                                        "Maximum (forward) output during torque-current based control modes",
+                                                        -800, 800);
+            ddr_updater_->ddr_.registerVariable<double>("peak_reverse_torque_current",
+                                                        [this]() { return params_.peak_reverse_torque_current_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setPeakReverseTorqueCurrent, this, _1, false),
+                                                        "Maximum (reverse) output during torque-current based control modes",
+                                                        -800, 800);
+            ddr_updater_->ddr_.registerVariable<double>("torque_neutral_deadband",
+                                                        [this]() { return params_.torque_neutral_deadband_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setTorqueNeutralDeadband, this, _1, false),
+                                                        "output deadband during torque-current based control modes",
+                                                        0, 25);
+            ddr_updater_->ddr_.registerVariable<double>("feedback_rotor_offset",
+                                                        [this]() { return params_.feedback_rotor_offset_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setFeedbackRotorOffset, this, _1, false),
+                                                        "offset is applied to the absolute integrated rotor sensor",
+                                                        -1, 1);
+            ddr_updater_->ddr_.registerVariable<double>("sensor_to_mechanism_ratio",
+                                                        [this]() { return params_.sensor_to_mechanism_ratio_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setSensorToMechanismRatio, this, _1, false),
+                                                        "The ratio of sensor rotations to the mechanism's output", 
+                                                        -1000, 1000);
+            ddr_updater_->ddr_.registerVariable<double>("rotor_to_sensor_ratio",
+                                                        [this]() { return params_.rotor_to_sensor_ratio_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setRotorToSensorRatio, this, _1, false),
+                                                        "the ratio between the remote sensor and the motor rotor",
+                                                        -1000, 1000);
 
-        ddr_updater_->ddr_.registerEnumVariable<int>("differential_sensor_source",
-                                                     [this]() { return static_cast<int>(params_.differential_sensor_source_.load());},
-                                                     [this](const int differential_sensor_source_int) { this->setDifferentialSensorSource(static_cast<hardware_interface::talonfxpro::DifferentialSensorSource>(differential_sensor_source_int), false);},
-                                                     "Differential sensor source", 
-                                                     std::map<std::string, int>{
-                                                        {"Diabled", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::Disabled)},
-                                                        {"RemoteTalonFX_Diff", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemoteTalonFX_Diff)},
-                                                        {"RemotePigeon2_Yaw", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemotePigeon2_Yaw)},
-                                                        {"RemotePigeon2_Pitch", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemotePigeon2_Pitch)},
-                                                        {"RemotePigeon2_Roll", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemotePigeon2_Roll)},
-                                                        {"RemoteCANcoder", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemoteCANcoder)}
-                                                     }
-                                                    );
-        ddr_updater_->ddr_.registerVariable<int>   ("differential_talonfx_sensor_id_",
-                                                    [this]() { return params_.differential_talonfx_sensor_id_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setDifferentialTalonFXSensorId, this, _1, false),
-                                                    "differential talon fx sensor id",
-                                                    0, 63);
-        ddr_updater_->ddr_.registerVariable<int>   ("differential_remote_sensor_id_",
-                                                    [this]() { return params_.differential_remote_sensor_id_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setDifferentialRemoteSensorId, this, _1, false),
-                                                    "differential talon fx sensor id",
-                                                    0, 63);
-        ddr_updater_->ddr_.registerVariable<double>("peak_differential_duty_cycle",
-                                                    [this]() { return params_.peak_differential_duty_cycle_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setPeakDifferentialDutyCycle, this, _1, false),
-                                                    "Maximum differential output during duty cycle based differential control modes",
-                                                    0, 2);
-        ddr_updater_->ddr_.registerVariable<double>("peak_differential_voltage",
-                                                    [this]() { return params_.peak_differential_voltage_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setPeakDifferentialVoltage, this, _1, false),
-                                                    "Maximum differential output during voltage based differential control modes",
-                                                    0, 32);
-        ddr_updater_->ddr_.registerVariable<double>("peak_differential_torque_current",
-                                                    [this]() { return params_.peak_differential_torque_current_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setPeakDifferentialTorqueCurrent, this, _1, false),
-                                                    "Maximum differential output during torque_current based differential control modes",
-                                                    0, 1600);
-        ddr_updater_->ddr_.registerVariable<double>("duty_cycle_open_loop_ramp_period",
-                                                    [this]() { return params_.duty_cycle_open_loop_ramp_period_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setDutyCycleOpenLoopRampPeriod, this, _1, false),
-                                                    "If non-zero, this determines how much time to ramp from 0%% output to 100%% during open-loop modes",
-                                                    0, 1);
-        ddr_updater_->ddr_.registerVariable<double>("voltage_open_loop_ramp_period",
-                                                    [this]() { return params_.voltage_open_loop_ramp_period_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setVoltageOpenLoopRampPeriod, this, _1, false),
-                                                    "If non-zero, this determines how much time to ramp from 0V to 12V during open-loop modes",
-                                                    0, 1);
-        ddr_updater_->ddr_.registerVariable<double>("torque_open_loop_ramp_period",
-                                                    [this]() { return params_.torque_open_loop_ramp_period_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setTorqueOpenLoopRampPeriod, this, _1, false),
-                                                    "If non-zero, this determines how much time to ramp from 0A to 300A during open-loop modes",
-                                                    0, 1);
-        ddr_updater_->ddr_.registerVariable<double>("duty_cycle_closed_loop_ramp_period",
-                                                    [this]() { return params_.duty_cycle_closed_loop_ramp_period_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setDutyCycleClosedLoopRampPeriod, this, _1, false),
-                                                    "If non-zero, this determines how much time to ramp from 0%% output to 100%% during closed-loop modes",
-                                                    0, 1);
-        ddr_updater_->ddr_.registerVariable<double>("voltage_closed_loop_ramp_period",
-                                                    [this]() { return params_.voltage_closed_loop_ramp_period_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setVoltageClosedLoopRampPeriod, this, _1, false),
-                                                    "If non-zero, this determines how much time to ramp from 0V to 12V during closed-loop modes",
-                                                    0, 1);
-        ddr_updater_->ddr_.registerVariable<double>("torque_closed_loop_ramp_period",
-                                                    [this]() { return params_.torque_closed_loop_ramp_period_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setTorqueClosedLoopRampPeriod, this, _1, false),
-                                                    "If non-zero, this determines how much time to ramp from 0A to 300A during closed-loop modes",
-                                                    0, 1);
-        ddr_updater_->ddr_.registerEnumVariable<int>("forward_limit_type",
-                                                    [this]() { return static_cast<int>(params_.forward_limit_type_.load());},
-                                                    boost::bind(&TalonFXProControllerInterface::setForwardLimitType, this, _1, false),
-                                                    "Forward limit switch polarity",
-                                                    limit_type_enum_map_);
-        ddr_updater_->ddr_.registerVariable<bool>  ("forward_limit_autoset_position_enable",
-                                                    [this]() { return params_.forward_limit_autoset_position_enable_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setForwardLimitAutosetPositionEnable, this, _1, false),
-                                                    "Forward Limit Autoset Position Enable");
-        ddr_updater_->ddr_.registerVariable<double>("forward_limit_autoset_position_value",
-                                                    [this]() { return params_.forward_limit_autoset_position_value_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setForwardLimitAutosetPositionValue, this, _1, false),
-                                                    "Forward Limit Autoset Position Value",
-                                                    -100, 100);
-        ddr_updater_->ddr_.registerVariable<bool>  ("forward_limit_enable",
-                                                    [this]() { return params_.forward_limit_enable_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setForwardLimitEnable, this, _1, false),
-                                                    "Forward Limit Enable");
-        ddr_updater_->ddr_.registerEnumVariable<int>("forward_limit_source",
-                                                    [this]() { return static_cast<int>(params_.forward_limit_source_.load());},
-                                                    boost::bind(&TalonFXProControllerInterface::setForwardLimitSource, this, _1, false),
-                                                    "Forward limit switch source",
-                                                    limit_source_enum_map_);
-        ddr_updater_->ddr_.registerVariable<int>   ("forward_limit_remote_sensor_id",
-                                                    [this]() { return params_.forward_limit_remote_sensor_id_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setForwardLimitRemoteSensorID, this, _1, false),
-                                                    "Forward Limit Remote Sensor ID",
-                                                    0, 63);
-        ddr_updater_->ddr_.registerEnumVariable<int>("reverse_limit_type",
-                                                    [this]() { return static_cast<int>(params_.reverse_limit_type_.load());},
-                                                    boost::bind(&TalonFXProControllerInterface::setReverseLimitType, this, _1, false),
-                                                    "Reverse limit switch polarity",
-                                                    limit_type_enum_map_);
-        ddr_updater_->ddr_.registerVariable<bool>  ("reverse_limit_autoset_position_enable",
-                                                    [this]() { return params_.reverse_limit_autoset_position_enable_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setReverseLimitAutosetPositionEnable, this, _1, false),
-                                                    "Reverse Limit Autoset Position Enable");
-        ddr_updater_->ddr_.registerVariable<double>("reverse_limit_autoset_position_value",
-                                                    [this]() { return params_.reverse_limit_autoset_position_value_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setReverseLimitAutosetPositionValue, this, _1, false),
-                                                    "Reverse Limit Autoset Position Value",
-                                                    -100, 100);
-        ddr_updater_->ddr_.registerVariable<bool>  ("reverse_limit_enable",
-                                                    [this]() { return params_.reverse_limit_enable_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setReverseLimitEnable, this, _1, false),
-                                                    "Reverse Limit Enable");
-        ddr_updater_->ddr_.registerEnumVariable<int>("reverse_limit_source",
-                                                    [this]() { return static_cast<int>(params_.reverse_limit_source_.load());},
-                                                    boost::bind(&TalonFXProControllerInterface::setReverseLimitSource, this, _1, false),
-                                                    "Reverse limit switch source",
-                                                    limit_source_enum_map_);
-        ddr_updater_->ddr_.registerVariable<int>   ("reverse_limit_remote_sensor_id",
-                                                    [this]() { return params_.reverse_limit_remote_sensor_id_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setReverseLimitRemoteSensorID, this, _1, false),
-                                                    "Reverse Limit Remote Sensor ID",
-                                                    0, 63);
-        ddr_updater_->ddr_.registerVariable<bool>  ("beep_on_boot",
-                                                    [this]() { return params_.beep_on_boot_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setBeepOnBoot, this, _1, false),
-                                                    "Beep on Boot");
-        ddr_updater_->ddr_.registerVariable<bool>  ("beep_on_config",
-                                                    [this]() { return params_.beep_on_config_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setBeepOnConfig, this, _1, false),
-                                                    "Beep on config");
-        ddr_updater_->ddr_.registerVariable<bool>  ("allow_music_dur_disable",
-                                                    [this]() { return params_.allow_music_dur_disable_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setAllowMusicDurDisable, this, _1, false),
-                                                    "Allow talons to play music while robot is disabled");
-        ddr_updater_->ddr_.registerVariable<bool>  ("forward_softlimit_enable",
-                                                    [this]() { return params_.softlimit_forward_enable_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setForwardSoftLimitEnable, this, _1, false),
-                                                    "Enable forward softlimit");
-        ddr_updater_->ddr_.registerVariable<double>("forward_softlimit_threshold",
-                                                    [this]() { return params_.softlimit_forward_threshold_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setForwardSoftLimitThreshold, this, _1, false),
-                                                    "Forward Softlimit Threshold",
-                                                    -100, 100);
-        ddr_updater_->ddr_.registerVariable<bool>  ("reverse_softlimit_enable",
-                                                    [this]() { return params_.softlimit_reverse_enable_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setReverseSoftLimitEnable, this, _1, false),
-                                                    "Enable reverse softlimit");
-        ddr_updater_->ddr_.registerVariable<double>("reverse_softlimit_threshold",
-                                                    [this]() { return params_.softlimit_reverse_threshold_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setReverseSoftLimitThreshold, this, _1, false),
-                                                    "Reverse Softlimit Threshold",
-                                                    -100, 100);
-        ddr_updater_->ddr_.registerVariable<double>("motion_magic_cruise_velocity",
-                                                    [this]() { return params_.motion_magic_cruise_velocity_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setMotionMagicCruiseVelocity, this, _1, false),
-                                                    "Motion Magic Cruise Velocity",
-                                                    0, 9999);
-        ddr_updater_->ddr_.registerVariable<double>("motion_magic_acceleration",
-                                                    [this]() { return params_.motion_magic_acceleration_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setMotionMagicAcceleration, this, _1, false),
-                                                    "Motion Magic Acceleration",
-                                                    0, 9999);
-        ddr_updater_->ddr_.registerVariable<double>("motion_magic_jerk",
-                                                    [this]() { return params_.motion_magic_jerk_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setMotionMagicJerk, this, _1, false),
-                                                    "Motion Magic Jerk",
-                                                    0, 9999);
-        ddr_updater_->ddr_.registerVariable<bool>  ("continuous_wrap",
-                                                    [this]() { return params_.continuous_wrap_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setContinuousWrap, this, _1, false),
-                                                    "Continouous Wrap");
-        ddr_updater_->ddr_.registerVariable<bool>  ("control_enable_foc",
-                                                    [this]() { return params_.control_enable_foc_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setControlEnableFOC, this, _1, false),
-                                                    "Control Enable FOC");
-        ddr_updater_->ddr_.registerVariable<bool>  ("control_override_brake_dur_neutral",
-                                                    [this]() { return params_.control_override_brake_dur_neutral_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setControlOverrideBrakeDurNeutral, this, _1, false),
-                                                    "Control Override Brake Dur Neutral");
-        ddr_updater_->ddr_.registerVariable<double>("control_deadband",
-                                                    [this]() { return params_.control_deadband_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setControlDeadband, this, _1, false),
-                                                    "Control Deadband",
-                                                    0, 1);
-        ddr_updater_->ddr_.registerVariable<double>("control_feedforward",
-                                                    [this]() { return params_.control_feedforward_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setControlFeedforward, this, _1, false),
-                                                    "Control Feedforward",
-                                                    0, 1);
-        ddr_updater_->ddr_.registerVariable<int>   ("control_slot",
-                                                    [this]() { return params_.control_slot_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setControlSlot, this, _1, false),
-                                                    "Control Slot",
-                                                    0, 2);
-        ddr_updater_->ddr_.registerVariable<bool>  ("control_oppose_master_direction",
-                                                    [this]() { return params_.control_oppose_master_direction_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setControlOpposeMasterDirection, this, _1, false),
-                                                    "Control oppose master direction");
-        ddr_updater_->ddr_.registerVariable<int>   ("control_differential_slot",
-                                                    [this]() { return params_.control_differential_slot_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setControlDifferentialSlot, this, _1, false),
-                                                    "Control Differential Slot",
-                                                    0, 2);
-        ddr_updater_->ddr_.registerVariable<bool>  ("enable_read_thread",
-                                                    [this]() { return params_.enable_read_thread_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setEnableReadThread, this, _1, false),
-                                                    "Clear to disable this motor's read thread");
-        ddr_updater_->ddr_.registerVariable<double>("set_position",
-                                                    [this]() { return params_.set_position_.load();},
-                                                    boost::bind(&TalonFXProControllerInterface::setRotorPosition, this, _1, false),
-                                                    "Immediately set motor position",
-                                                    -std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
-        ddr_updater_->ddr_.PublishServicesTopics();
+            ddr_updater_->ddr_.registerEnumVariable<int>("differential_sensor_source",
+                                                        [this]() { return static_cast<int>(params_.differential_sensor_source_.load());},
+                                                        [this](const int differential_sensor_source_int) { this->setDifferentialSensorSource(static_cast<hardware_interface::talonfxpro::DifferentialSensorSource>(differential_sensor_source_int), false);},
+                                                        "Differential sensor source", 
+                                                        std::map<std::string, int>{
+                                                            {"Diabled", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::Disabled)},
+                                                            {"RemoteTalonFX_Diff", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemoteTalonFX_Diff)},
+                                                            {"RemotePigeon2_Yaw", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemotePigeon2_Yaw)},
+                                                            {"RemotePigeon2_Pitch", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemotePigeon2_Pitch)},
+                                                            {"RemotePigeon2_Roll", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemotePigeon2_Roll)},
+                                                            {"RemoteCANcoder", static_cast<int>(hardware_interface::talonfxpro::DifferentialSensorSource::RemoteCANcoder)}
+                                                        }
+                                                        );
+            ddr_updater_->ddr_.registerVariable<int>   ("differential_talonfx_sensor_id_",
+                                                        [this]() { return params_.differential_talonfx_sensor_id_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setDifferentialTalonFXSensorId, this, _1, false),
+                                                        "differential talon fx sensor id",
+                                                        0, 63);
+            ddr_updater_->ddr_.registerVariable<int>   ("differential_remote_sensor_id_",
+                                                        [this]() { return params_.differential_remote_sensor_id_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setDifferentialRemoteSensorId, this, _1, false),
+                                                        "differential talon fx sensor id",
+                                                        0, 63);
+            ddr_updater_->ddr_.registerVariable<double>("peak_differential_duty_cycle",
+                                                        [this]() { return params_.peak_differential_duty_cycle_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setPeakDifferentialDutyCycle, this, _1, false),
+                                                        "Maximum differential output during duty cycle based differential control modes",
+                                                        0, 2);
+            ddr_updater_->ddr_.registerVariable<double>("peak_differential_voltage",
+                                                        [this]() { return params_.peak_differential_voltage_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setPeakDifferentialVoltage, this, _1, false),
+                                                        "Maximum differential output during voltage based differential control modes",
+                                                        0, 32);
+            ddr_updater_->ddr_.registerVariable<double>("peak_differential_torque_current",
+                                                        [this]() { return params_.peak_differential_torque_current_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setPeakDifferentialTorqueCurrent, this, _1, false),
+                                                        "Maximum differential output during torque_current based differential control modes",
+                                                        0, 1600);
+            ddr_updater_->ddr_.registerVariable<double>("duty_cycle_open_loop_ramp_period",
+                                                        [this]() { return params_.duty_cycle_open_loop_ramp_period_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setDutyCycleOpenLoopRampPeriod, this, _1, false),
+                                                        "If non-zero, this determines how much time to ramp from 0%% output to 100%% during open-loop modes",
+                                                        0, 1);
+            ddr_updater_->ddr_.registerVariable<double>("voltage_open_loop_ramp_period",
+                                                        [this]() { return params_.voltage_open_loop_ramp_period_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setVoltageOpenLoopRampPeriod, this, _1, false),
+                                                        "If non-zero, this determines how much time to ramp from 0V to 12V during open-loop modes",
+                                                        0, 1);
+            ddr_updater_->ddr_.registerVariable<double>("torque_open_loop_ramp_period",
+                                                        [this]() { return params_.torque_open_loop_ramp_period_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setTorqueOpenLoopRampPeriod, this, _1, false),
+                                                        "If non-zero, this determines how much time to ramp from 0A to 300A during open-loop modes",
+                                                        0, 1);
+            ddr_updater_->ddr_.registerVariable<double>("duty_cycle_closed_loop_ramp_period",
+                                                        [this]() { return params_.duty_cycle_closed_loop_ramp_period_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setDutyCycleClosedLoopRampPeriod, this, _1, false),
+                                                        "If non-zero, this determines how much time to ramp from 0%% output to 100%% during closed-loop modes",
+                                                        0, 1);
+            ddr_updater_->ddr_.registerVariable<double>("voltage_closed_loop_ramp_period",
+                                                        [this]() { return params_.voltage_closed_loop_ramp_period_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setVoltageClosedLoopRampPeriod, this, _1, false),
+                                                        "If non-zero, this determines how much time to ramp from 0V to 12V during closed-loop modes",
+                                                        0, 1);
+            ddr_updater_->ddr_.registerVariable<double>("torque_closed_loop_ramp_period",
+                                                        [this]() { return params_.torque_closed_loop_ramp_period_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setTorqueClosedLoopRampPeriod, this, _1, false),
+                                                        "If non-zero, this determines how much time to ramp from 0A to 300A during closed-loop modes",
+                                                        0, 1);
+            ddr_updater_->ddr_.registerEnumVariable<int>("forward_limit_type",
+                                                        [this]() { return static_cast<int>(params_.forward_limit_type_.load());},
+                                                        boost::bind(&TalonFXProControllerInterface::setForwardLimitType, this, _1, false),
+                                                        "Forward limit switch polarity",
+                                                        limit_type_enum_map_);
+            ddr_updater_->ddr_.registerVariable<bool>  ("forward_limit_autoset_position_enable",
+                                                        [this]() { return params_.forward_limit_autoset_position_enable_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setForwardLimitAutosetPositionEnable, this, _1, false),
+                                                        "Forward Limit Autoset Position Enable");
+            ddr_updater_->ddr_.registerVariable<double>("forward_limit_autoset_position_value",
+                                                        [this]() { return params_.forward_limit_autoset_position_value_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setForwardLimitAutosetPositionValue, this, _1, false),
+                                                        "Forward Limit Autoset Position Value",
+                                                        -100, 100);
+            ddr_updater_->ddr_.registerVariable<bool>  ("forward_limit_enable",
+                                                        [this]() { return params_.forward_limit_enable_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setForwardLimitEnable, this, _1, false),
+                                                        "Forward Limit Enable");
+            ddr_updater_->ddr_.registerEnumVariable<int>("forward_limit_source",
+                                                        [this]() { return static_cast<int>(params_.forward_limit_source_.load());},
+                                                        boost::bind(&TalonFXProControllerInterface::setForwardLimitSource, this, _1, false),
+                                                        "Forward limit switch source",
+                                                        limit_source_enum_map_);
+            ddr_updater_->ddr_.registerVariable<int>   ("forward_limit_remote_sensor_id",
+                                                        [this]() { return params_.forward_limit_remote_sensor_id_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setForwardLimitRemoteSensorID, this, _1, false),
+                                                        "Forward Limit Remote Sensor ID",
+                                                        0, 63);
+            ddr_updater_->ddr_.registerEnumVariable<int>("reverse_limit_type",
+                                                        [this]() { return static_cast<int>(params_.reverse_limit_type_.load());},
+                                                        boost::bind(&TalonFXProControllerInterface::setReverseLimitType, this, _1, false),
+                                                        "Reverse limit switch polarity",
+                                                        limit_type_enum_map_);
+            ddr_updater_->ddr_.registerVariable<bool>  ("reverse_limit_autoset_position_enable",
+                                                        [this]() { return params_.reverse_limit_autoset_position_enable_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setReverseLimitAutosetPositionEnable, this, _1, false),
+                                                        "Reverse Limit Autoset Position Enable");
+            ddr_updater_->ddr_.registerVariable<double>("reverse_limit_autoset_position_value",
+                                                        [this]() { return params_.reverse_limit_autoset_position_value_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setReverseLimitAutosetPositionValue, this, _1, false),
+                                                        "Reverse Limit Autoset Position Value",
+                                                        -100, 100);
+            ddr_updater_->ddr_.registerVariable<bool>  ("reverse_limit_enable",
+                                                        [this]() { return params_.reverse_limit_enable_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setReverseLimitEnable, this, _1, false),
+                                                        "Reverse Limit Enable");
+            ddr_updater_->ddr_.registerEnumVariable<int>("reverse_limit_source",
+                                                        [this]() { return static_cast<int>(params_.reverse_limit_source_.load());},
+                                                        boost::bind(&TalonFXProControllerInterface::setReverseLimitSource, this, _1, false),
+                                                        "Reverse limit switch source",
+                                                        limit_source_enum_map_);
+            ddr_updater_->ddr_.registerVariable<int>   ("reverse_limit_remote_sensor_id",
+                                                        [this]() { return params_.reverse_limit_remote_sensor_id_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setReverseLimitRemoteSensorID, this, _1, false),
+                                                        "Reverse Limit Remote Sensor ID",
+                                                        0, 63);
+            ddr_updater_->ddr_.registerVariable<bool>  ("beep_on_boot",
+                                                        [this]() { return params_.beep_on_boot_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setBeepOnBoot, this, _1, false),
+                                                        "Beep on Boot");
+            ddr_updater_->ddr_.registerVariable<bool>  ("beep_on_config",
+                                                        [this]() { return params_.beep_on_config_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setBeepOnConfig, this, _1, false),
+                                                        "Beep on config");
+            ddr_updater_->ddr_.registerVariable<bool>  ("allow_music_dur_disable",
+                                                        [this]() { return params_.allow_music_dur_disable_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setAllowMusicDurDisable, this, _1, false),
+                                                        "Allow talons to play music while robot is disabled");
+            ddr_updater_->ddr_.registerVariable<bool>  ("forward_softlimit_enable",
+                                                        [this]() { return params_.softlimit_forward_enable_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setForwardSoftLimitEnable, this, _1, false),
+                                                        "Enable forward softlimit");
+            ddr_updater_->ddr_.registerVariable<double>("forward_softlimit_threshold",
+                                                        [this]() { return params_.softlimit_forward_threshold_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setForwardSoftLimitThreshold, this, _1, false),
+                                                        "Forward Softlimit Threshold",
+                                                        -100, 100);
+            ddr_updater_->ddr_.registerVariable<bool>  ("reverse_softlimit_enable",
+                                                        [this]() { return params_.softlimit_reverse_enable_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setReverseSoftLimitEnable, this, _1, false),
+                                                        "Enable reverse softlimit");
+            ddr_updater_->ddr_.registerVariable<double>("reverse_softlimit_threshold",
+                                                        [this]() { return params_.softlimit_reverse_threshold_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setReverseSoftLimitThreshold, this, _1, false),
+                                                        "Reverse Softlimit Threshold",
+                                                        -100, 100);
+            ddr_updater_->ddr_.registerVariable<double>("motion_magic_cruise_velocity",
+                                                        [this]() { return params_.motion_magic_cruise_velocity_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setMotionMagicCruiseVelocity, this, _1, false),
+                                                        "Motion Magic Cruise Velocity",
+                                                        0, 9999);
+            ddr_updater_->ddr_.registerVariable<double>("motion_magic_acceleration",
+                                                        [this]() { return params_.motion_magic_acceleration_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setMotionMagicAcceleration, this, _1, false),
+                                                        "Motion Magic Acceleration",
+                                                        0, 9999);
+            ddr_updater_->ddr_.registerVariable<double>("motion_magic_jerk",
+                                                        [this]() { return params_.motion_magic_jerk_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setMotionMagicJerk, this, _1, false),
+                                                        "Motion Magic Jerk",
+                                                        0, 9999);
+            ddr_updater_->ddr_.registerVariable<bool>  ("continuous_wrap",
+                                                        [this]() { return params_.continuous_wrap_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setContinuousWrap, this, _1, false),
+                                                        "Continouous Wrap");
+            ddr_updater_->ddr_.registerVariable<bool>  ("control_enable_foc",
+                                                        [this]() { return params_.control_enable_foc_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setControlEnableFOC, this, _1, false),
+                                                        "Control Enable FOC");
+            ddr_updater_->ddr_.registerVariable<bool>  ("control_override_brake_dur_neutral",
+                                                        [this]() { return params_.control_override_brake_dur_neutral_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setControlOverrideBrakeDurNeutral, this, _1, false),
+                                                        "Control Override Brake Dur Neutral");
+            ddr_updater_->ddr_.registerVariable<double>("control_deadband",
+                                                        [this]() { return params_.control_deadband_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setControlDeadband, this, _1, false),
+                                                        "Control Deadband",
+                                                        0, 1);
+            ddr_updater_->ddr_.registerVariable<double>("control_feedforward",
+                                                        [this]() { return params_.control_feedforward_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setControlFeedforward, this, _1, false),
+                                                        "Control Feedforward",
+                                                        0, 1);
+            ddr_updater_->ddr_.registerVariable<int>   ("control_slot",
+                                                        [this]() { return params_.control_slot_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setControlSlot, this, _1, false),
+                                                        "Control Slot",
+                                                        0, 2);
+            ddr_updater_->ddr_.registerVariable<bool>  ("control_oppose_master_direction",
+                                                        [this]() { return params_.control_oppose_master_direction_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setControlOpposeMasterDirection, this, _1, false),
+                                                        "Control oppose master direction");
+            ddr_updater_->ddr_.registerVariable<int>   ("control_differential_slot",
+                                                        [this]() { return params_.control_differential_slot_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setControlDifferentialSlot, this, _1, false),
+                                                        "Control Differential Slot",
+                                                        0, 2);
+            ddr_updater_->ddr_.registerVariable<bool>  ("enable_read_thread",
+                                                        [this]() { return params_.enable_read_thread_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setEnableReadThread, this, _1, false),
+                                                        "Clear to disable this motor's read thread");
+            ddr_updater_->ddr_.registerVariable<double>("set_position",
+                                                        [this]() { return params_.set_position_.load();},
+                                                        boost::bind(&TalonFXProControllerInterface::setRotorPosition, this, _1, false),
+                                                        "Immediately set motor position",
+                                                        -std::numeric_limits<double>::max(), std::numeric_limits<double>::max());
+            ddr_updater_->ddr_.PublishServicesTopics();
+        }
     }
-    ROS_WARN_STREAM(__PRETTY_FUNCTION__ << "init past ddynamic_reconfigure init for " << params_.joint_name_);
+    ROS_WARN_STREAM(__PRETTY_FUNCTION__ << "init past ddynamic_reconfigure init for " << params.joint_name_);
     return true;
 }
 
