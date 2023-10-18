@@ -40,13 +40,13 @@ protected:
     template <class T>
     std::optional<T> safeRead(const ctre::phoenix6::StatusSignal<T> &status_signal, const std::string &method_name)
     {
-        if (status_signal.GetError() == ctre::phoenix::StatusCode::OK)
+        if (status_signal.GetStatus() == ctre::phoenix::StatusCode::OK)
         {
             can_error_count_ = 0;
             can_error_sent_ = false;
             return status_signal.GetValue();
         }
-        ROS_ERROR_STREAM("Error : " << device_type_ << " " << name_ << " id = " << id_ << " calling " << method_name << " : " << status_signal.GetError().GetName() << " (" << status_signal.GetError() << ")");
+        ROS_ERROR_STREAM("Error : " << device_type_ << " " << name_ << " id = " << id_ << " calling " << method_name << " : " << status_signal.GetStatus().GetName() << " (" << status_signal.GetStatus() << ")");
         can_error_count_++;
         if ((can_error_count_ > 1000) && !can_error_sent_)
         {
