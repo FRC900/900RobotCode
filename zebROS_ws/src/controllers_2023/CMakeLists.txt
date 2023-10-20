@@ -131,6 +131,7 @@ add_library(controllers_2023
   src/elevator_controller.cpp
   src/four_bar_controller.cpp
   src/four_bar_common.cpp
+  src/turret_controller.cpp
 )
 
 ## Add cmake target dependencies of the library

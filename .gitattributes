@@ -3,6 +3,7 @@
 roscore_roborio.tar.bz2 filter=lfs diff=lfs merge=lfs -text
 libnccl2_2.7.6-1+cuda10.2_arm64.deb filter=lfs diff=lfs merge=lfs -text
 libnccl-dev_2.7.6-1+cuda10.2_arm64.deb filter=lfs diff=lfs merge=lfs -text
+*.dae filter=lfs diff=lfs merge=lfs -text
 *.bz2 filter=lfs diff=lfs merge=lfs -text
 *.tbz2 filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
@@ -14,7 +15,6 @@ libnccl-dev_2.7.6-1+cuda10.2_arm64.deb filter=lfs diff=lfs merge=lfs -text
 *.a filter=lfs diff=lfs merge=lfs -text
 smac_ros filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
-*.dae filter=lfs diff=lfs merge=lfs -text
 *.38-tegra filter=lfs diff=lfs merge=lfs -text
 *.pdf filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text

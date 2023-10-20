@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<!-- Simple swerve base -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="frcrobot">
+
+	<!-- base width and depth -->
+	<xacro:property name="base_height" value=".15" /> 
+	<xacro:property name="base_width" value=".75" /> 
+	<xacro:property name="base_depth" value=".75" /> 
+
+	<xacro:property name="swerve_box_size" value=".075" /> 
+	<xacro:property name="wheel_diameter" value=".0675" />
+	
+	<link name="base_link"/>
+
+	<xacro:macro name="swerve_module" params="prefix x y">
+		<link name="${prefix}_angle_link">
+			<visual>
+				<geometry>
+					<box size="${swerve_box_size} ${swerve_box_size} ${swerve_box_size}"/>
+				</geometry>
+				<origin xyz="0 0 -${swerve_box_size / 2}" rpy="0 0 0"/>
+				<material name="red">
+					<color rgba="1 0 0 .5"/>
+				</material>
+			</visual>
+			<origin xyz="0 0 -${swerve_box_size / 2}" rpy="0 0 0"/>
+			<geometry>
+				<box size="${swerve_box_size} ${swerve_box_size} ${swerve_box_size}"/>
+			</geometry>
+		</link> 
+
+		<joint name="${prefix}_angle" type="continuous">
+			<parent link="base_link"/>
+			<child link="${prefix}_angle_link"/>
+			<origin xyz="${x} ${y} -${base_height/2}" rpy="0 0 0"/>
+			<axis xyz="0 0 1" />
+		</joint>
+	</xacro:macro>
+
+	<!-- 
+	<link name="base_plate">
+		<visual>
+			<geometry>
+				<box size="${base_width} ${base_depth} ${base_height}"/>
+			</geometry>
+			<material name="blue">
+				<color rgba="0 0 1 1"/>
+			</material>
+		</visual>
+		<geometry>
+			<box size="${base_width} ${base_depth} ${base_height}"/>
+		</geometry>
+	</link>
+
+	<joint name="base_plate_to_base_link" type="fixed">
+		<parent link="base_link"/>
+		<child link="base_plate"/>
+		<origin xyz="0 0 ${wheel_diameter + base_height/2}" rpy="0 0 0"/>
+	</joint>
+	-->
+	<!-- NAMES ARE GUESSES -->
+	<xacro:swerve_module prefix="bl" x="${base_width/2 - swerve_box_size/2}" y="${base_depth/2 - swerve_box_size/2}"/>
+	<xacro:swerve_module prefix="br" x="${base_width/2 - swerve_box_size/2}" y="-${base_depth/2 - swerve_box_size/2}"/>
+	<xacro:swerve_module prefix="fl" x="-${base_width/2 - swerve_box_size/2}" y="${base_depth/2 - swerve_box_size/2}"/>
+	<xacro:swerve_module prefix="fr" x="-${base_width/2 - swerve_box_size/2}" y="-${base_depth/2 - swerve_box_size/2}"/>
+</robot>

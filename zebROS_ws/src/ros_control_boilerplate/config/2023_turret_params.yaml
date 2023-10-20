@@ -1,0 +1,41 @@
+turret_controller_2023:
+    type: turret_controller/TurretController
+    cancoder_offset_from_0: 0
+    
+    dynamic_reconfigure: true
+    lower_angle_bound: -2.0
+    upper_angle_bound: 2.0
+
+    turret_leader:
+        type: talon_controllers/TalonControllerInterface 
+        joint: turret_joint
+        close_loop_values:
+            - {p: 1.0, i: 0.00000, d: 0.00, f: 0.00, i_zone: 0, closed_loop_peak_output: 1.0}
+        velocity_measurement_period: Period_10Ms
+        velocity_measurement_window: 4
+
+        sensor_phase: False 
+        invert_output: True
+
+        # THIS MAY MAKE 0 SENSE IN REAL LIFE
+        motion_cruise_velocity: 1
+        motion_acceleration: 1
+
+        # linear position along 
+        conversion_factor: 0.000061187
+
+        # TODO : figure out what value this should be
+        # Only need one direction, to
+        # prevent the elevator from running off the top
+
+        # SET THESE AND REVERSE SOFTLIMIT
+        # softlimit_forward_threshold: 1.412 
+        # softlimit_forward_enable: True
+
+        voltage_compensation_enable: True
+        voltage_compensation_saturation: 12
+
+        neutral_deadband: 0.001
+
+        dynamic_reconfigure: True
+        motion_s_curve_strength: 8
