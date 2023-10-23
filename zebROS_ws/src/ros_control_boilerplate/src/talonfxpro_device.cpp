@@ -641,10 +641,6 @@ void TalonFXProDevice::simRead(const ros::Time &/*time*/, const ros::Duration &p
         const double invert = state_->getInvert() == hardware_interface::talonfxpro::Inverted::Clockwise_Positive ? -1.0 : 1.0;
         units::radian_t target_position{invert * state_->getClosedLoopReference() * state_->getSensorToMechanismRatio()};
         units::angular_velocity::radians_per_second_t target_velocity{invert * state_->getClosedLoopReferenceSlope() * state_->getSensorToMechanismRatio()};
-        if (state_->getClosedLoopReferenceSlope() != 0)
-        {
-            ROS_INFO_STREAM_THROTTLE(0.1, "target_position = " << target_position.value() << " target_velocity = " << target_velocity.value());
-        }
         sim_state.SetRawRotorPosition(target_position);
         sim_state.SetRotorVelocity(target_velocity);
         sim_state.SetSupplyVoltage(units::voltage::volt_t{12.5});
@@ -1388,7 +1384,7 @@ void TalonFXProDevice::write(const ros::Time & /*time*/,
     {
         if (control_changed)
         {
-            ROS_INFO_STREAM(getName() << " curr_robot_enabled = " << (int)curr_robot_enabled << " control_changed = " << control_changed << " control_mode = " << (int)control_mode);
+            //ROS_INFO_STREAM(getName() << " curr_robot_enabled = " << (int)curr_robot_enabled << " control_changed = " << control_changed << " control_mode = " << (int)control_mode);
             bool success = true; // only update state_ on a successful SetControl call
             switch (control_mode)
             {
