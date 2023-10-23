@@ -73,6 +73,7 @@ public:
 			m.control_jerk.push_back(0);
 			m.control_enable_foc.push_back(false);
 			m.control_override_brake_dur_neutral.push_back(false);
+			m.control_oppose_master_direction.push_back(false);
 			m.control_max_abs_duty_cycle.push_back(0);
 			m.control_deadband.push_back(0);
 			m.control_feedforward.push_back(0);
@@ -83,6 +84,7 @@ public:
 			m.version_minor.push_back(0);
 			m.version_bugfix.push_back(0);
 			m.version_build.push_back(0);
+			m.motor_voltage.push_back(0);
 			m.forward_limit.push_back(false);
 			m.reverse_limit.push_back(false);
 			m.applied_rotor_polarity.push_back("");
@@ -99,6 +101,7 @@ public:
 			m.rotor_position.push_back(0);
 			m.velocity.push_back(0);
 			m.position.push_back(0);
+			m.acceleration.push_back(0);
 
 			m.motion_magic_is_running.push_back(false);
 
@@ -297,6 +300,7 @@ public:
 					m.control_jerk[i] = ts->getControlJerk();
 					m.control_enable_foc[i] = ts->getControlEnableFOC();
 					m.control_override_brake_dur_neutral[i] = ts->getControlOverrideBrakeDurNeutral();
+					m.control_oppose_master_direction[i] = ts->getControlOpposeMasterDirection();
 					m.control_max_abs_duty_cycle[i] = ts->getControlMaxAbsDutyCycle();
 					m.control_deadband[i] = ts->getControlDeadband();
 					m.control_feedforward[i] = ts->getControlFeedforward();
@@ -307,6 +311,7 @@ public:
 					m.version_minor[i] = ts->getVersionMinor();
 					m.version_bugfix[i] = ts->getVersionBugfix();
 					m.version_build[i] = ts->getVersionBuild();
+					m.motor_voltage[i] = ts->getMotorVoltage();
 					m.forward_limit[i] = ts->getForwardLimit();
 					m.reverse_limit[i] = ts->getReverseLimit();
 					switch(ts->getAppliedRotorPolarity())
@@ -334,6 +339,7 @@ public:
 					m.rotor_position[i] = ts->getRotorPosition();
 					m.velocity[i] = ts->getVelocity();
 					m.position[i] = ts->getPosition();
+					m.acceleration[i] = ts->getAcceleration();
 
 					m.motion_magic_is_running[i] = ts->getMotionMagicIsRunning();
 

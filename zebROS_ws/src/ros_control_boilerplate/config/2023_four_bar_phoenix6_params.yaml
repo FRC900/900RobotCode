@@ -53,9 +53,9 @@ four_bar_controller_2023:
     #motion_magic_velocity: 15.0
     #motion_magic_acceleration: 8.0
     #motion_magic_jerk: 20.0
-    motion_magic_velocity: 6.0
-    motion_magic_acceleration: 10.0
-    motion_s_curve_strength: 30.0 # Maps to v6 motion magic jerk value
+    motion_magic_velocity: 8.0
+    motion_magic_acceleration: 50.0
+    motion_s_curve_strength: 200.0 # Maps to v6 motion magic jerk value
 
     # How quickly the four bar moves down when zeroing itself
     four_bar_zeroing_percent_output: -0.10
@@ -69,7 +69,7 @@ four_bar_controller_2023:
         type: talon_controllers/TalonFXProControllerInterface 
         joint: four_bar
         close_loop_values:
-            - {kP: 120.0, kI: 0.000, kD: 6.0, kV: 0.2, kS: 0.0}
+            - {kP: 400.0, kI: 0.000, kD: 0.0, kV: 7.5, kS: 0.0}
         invert: clockwise_positive
         
         neutral_mode: Brake

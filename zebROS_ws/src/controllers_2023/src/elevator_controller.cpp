@@ -285,7 +285,7 @@ public:
                 [this](double b)
                 { motion_magic_acceleration_fast.store(b); },
                 "Fast Motion Magic Acceleration",
-                0.0, 20.0);
+                0.0, 50.0);
 
             ddr_->registerVariable<double>(
                 "motion_s_curve_strength",
@@ -294,7 +294,7 @@ public:
                 [this](int b)
                 { motion_s_curve_strength.store(b); },
                 "S Curve Strength",
-                0, 50);
+                0, 500);
 
             ddr_->publishServicesTopics();
         }

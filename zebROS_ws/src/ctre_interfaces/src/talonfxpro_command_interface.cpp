@@ -217,7 +217,7 @@ bool TalonFXProHWCommand::slotChanged(double &kP,
 									  double &kA,
 									  double &kG,
 									  GravityType &gravity_type,
-									  size_t index)
+									  size_t index) const
 {
 	if (index >= TALON_PIDF_SLOTS)
 	{
@@ -333,7 +333,7 @@ bool TalonFXProHWCommand::motorOutputConfigChanged(Inverted &invert,
 												   NeutralMode &neutral_mode,
 												   double &duty_cycle_neutral_deadband,
 												   double &peak_forward_duty_cycle,
-												   double &peak_reverse_duty_cycle)
+												   double &peak_reverse_duty_cycle) const
 {
 	invert = invert_;
 	neutral_mode = neutral_mode_;
@@ -403,7 +403,7 @@ bool TalonFXProHWCommand::getSupplyCurrentLimitEnable(void) const
 bool TalonFXProHWCommand::currentLimitChanged(double &stator_current_limit,
 											  bool &stator_current_limit_enable,
 											  double &supply_current_limit,
-											  bool &supply_current_limit_enable)
+											  bool &supply_current_limit_enable) const
 {
 	stator_current_limit = stator_current_limit_;
 	stator_current_limit_enable = stator_current_limit_enable_;
@@ -459,7 +459,7 @@ double TalonFXProHWCommand::getPeakReverseVoltage(void) const
 
 bool TalonFXProHWCommand::voltageConfigsChanged(double &supply_voltage_time_constant,
 												double &peak_forward_voltage,
-												double &peak_reverse_voltage)
+												double &peak_reverse_voltage) const
 {
 	supply_voltage_time_constant = supply_voltage_time_constant_;
 	peak_forward_voltage = peak_forward_voltage_;
@@ -512,7 +512,7 @@ double TalonFXProHWCommand::getTorqueNeutralDeadband(void) const
 
 bool TalonFXProHWCommand::torqueCurrentChanged(double &peak_forward_torque_current,
 											   double &peak_reverse_torque_current,
-											   double &torque_neutral_deadband)
+											   double &torque_neutral_deadband) const
 {
 	peak_forward_torque_current = peak_forward_torque_current_;
 	peak_reverse_torque_current = peak_reverse_torque_current_;
@@ -595,7 +595,7 @@ bool TalonFXProHWCommand::feebackChanged(double &feedback_rotor_offset,
 										 double &sensor_to_mechanism_ratio,
 										 double &rotor_to_sensor_ratio,
 										 FeedbackSensorSource &feedback_sensor_source,
-										 int &feedback_remote_sensor_id)
+										 int &feedback_remote_sensor_id) const
 {
 	feedback_rotor_offset = feedback_rotor_offset_;
 	sensor_to_mechanism_ratio = sensor_to_mechanism_ratio_;
@@ -659,7 +659,7 @@ int  TalonFXProHWCommand::getDifferentialRemoteSensorID(void) const
 
 bool TalonFXProHWCommand::differentialSensorsChanged(DifferentialSensorSource &differential_sensor_source,
 													 int &differential_talonfx_sensor_id,
-													 int &differential_remote_sensor_id)
+													 int &differential_remote_sensor_id) const
 {
 	differential_sensor_source = differential_sensor_source_;
 	differential_talonfx_sensor_id = differential_talonfx_sensor_id_;
@@ -714,7 +714,7 @@ double TalonFXProHWCommand::getPeakDifferentialTorqueCurrent(void) const
 }
 bool TalonFXProHWCommand::differentialConstantsChanged(double &peak_differential_duty_cycle,
 													   double &peak_differential_voltage,
-													   double &peak_differential_torque_current)
+													   double &peak_differential_torque_current) const
 {
 	peak_differential_duty_cycle = peak_differential_duty_cycle_;
 	peak_differential_voltage = peak_differential_voltage_;
@@ -769,7 +769,7 @@ double TalonFXProHWCommand::getTorqueOpenLoopRampPeriod(void) const
 
 bool TalonFXProHWCommand::openLoopRampsChanged(double &duty_cycle_open_loop_ramp_period,
 											   double &voltage_open_loop_ramp_period,
-											   double &torque_open_loop_ramp_period)
+											   double &torque_open_loop_ramp_period) const
 {
 	duty_cycle_open_loop_ramp_period = duty_cycle_open_loop_ramp_period_;
 	voltage_open_loop_ramp_period = voltage_open_loop_ramp_period_;
@@ -825,7 +825,7 @@ double TalonFXProHWCommand::getTorqueClosedLoopRampPeriod(void) const
 
 bool TalonFXProHWCommand::closedLoopRampsChanged(double &duty_cycle_closed_loop_ramp_period,
 												 double &voltage_closed_loop_ramp_period,
-												 double &torque_closed_loop_ramp_period)
+												 double &torque_closed_loop_ramp_period) const
 {
 	duty_cycle_closed_loop_ramp_period = duty_cycle_closed_loop_ramp_period_;
 	voltage_closed_loop_ramp_period = voltage_closed_loop_ramp_period_;
@@ -1007,7 +1007,7 @@ bool TalonFXProHWCommand::limitChanged(LimitType &forward_limit_type,
 									   double &reverse_limit_autoset_position_value,
 									   bool &reverse_limit_enable,
 									   LimitSource &reverse_limit_source,
-									   int &reverse_limit_remote_sensor_id)
+									   int &reverse_limit_remote_sensor_id) const
 {
 	forward_limit_type = forward_limit_type_;
 	forward_limit_autoset_position_enable = forward_limit_autoset_position_enable_;
@@ -1068,11 +1068,11 @@ bool TalonFXProHWCommand::getAllowMusicDurDisable(void) const
 }
 bool TalonFXProHWCommand::audioChanged(bool &beep_on_boot,
 									   bool &beep_on_config,
-									   bool &allow_music_dur_disable)
+									   bool &allow_music_dur_disable) const
 {
 	beep_on_boot = beep_on_boot_;
 	beep_on_config = beep_on_config_;
-	allow_music_dur_disable_ = allow_music_dur_disable;
+	allow_music_dur_disable = allow_music_dur_disable_;
 	const auto rc = audio_changed_;
 	audio_changed_ = false;
 	return rc;
@@ -1132,7 +1132,7 @@ double TalonFXProHWCommand::getReverseSoftLimitThreshold(void) const
 	return softlimit_reverse_threshold_;
 }
 
-bool TalonFXProHWCommand::softLimitChanged(bool &forward_enable, bool &reverse_enable, double &forward_threshold, double &reverse_threshold)
+bool TalonFXProHWCommand::softLimitChanged(bool &forward_enable, bool &reverse_enable, double &forward_threshold, double &reverse_threshold) const
 {
 	forward_enable = softlimit_forward_enable_;
 	reverse_enable = softlimit_reverse_enable_;
@@ -1184,7 +1184,7 @@ double TalonFXProHWCommand::getMotionMagicJerk(void) const
 	return motion_magic_jerk_;
 }
 
-bool TalonFXProHWCommand::motionMagicChanged(double &motion_magic_cruise_velocity, double &motion_magic_acceleration, double &motion_magic_jerk)
+bool TalonFXProHWCommand::motionMagicChanged(double &motion_magic_cruise_velocity, double &motion_magic_acceleration, double &motion_magic_jerk) const
 {
 	motion_magic_cruise_velocity = motion_magic_cruise_velocity_;
 	motion_magic_acceleration = motion_magic_acceleration_;
@@ -1210,7 +1210,7 @@ bool TalonFXProHWCommand::getContinuousWrap(void) const
 {
 	return continuous_wrap_;
 }
-bool TalonFXProHWCommand::continuousWrapChanged(bool &continuous_wrap)
+bool TalonFXProHWCommand::continuousWrapChanged(bool &continuous_wrap) const
 {
 	continuous_wrap = continuous_wrap_;
 	const auto rc = continuous_wrap_changed_;
@@ -1230,7 +1230,7 @@ bool TalonFXProHWCommand::getClearStickyFaults(void) const
 {
 	return clear_sticky_faults_;
 }
-bool TalonFXProHWCommand::clearStickyFaultsChanged(void)
+bool TalonFXProHWCommand::clearStickyFaultsChanged(void) const
 {
 	const auto rc = clear_sticky_faults_;
 	clear_sticky_faults_ = false;
@@ -1246,7 +1246,7 @@ double TalonFXProHWCommand::getSetPosition(void) const
 {
 	return set_position_;
 }
-bool TalonFXProHWCommand::setPositionChanged(double &position)
+bool TalonFXProHWCommand::setPositionChanged(double &position) const
 {
 	position = set_position_;
 	const bool ret = set_position_changed_;
@@ -1262,6 +1262,7 @@ void TalonFXProHWCommand::setControlMode(const TalonMode control_mode)
 {
 	if (control_mode != control_mode_)
 	{
+		ROS_INFO_STREAM("setControlMode : mode = " << (int)control_mode);
 		control_mode_ = control_mode;
 		control_changed_ = true;
 	}
@@ -1477,7 +1478,7 @@ bool TalonFXProHWCommand::controlChanged(TalonMode &control_mode,
 										 int &control_slot,
 										 double &control_differential_position,
 										 int &control_differential_slot,
-										 bool &control_oppose_master_direction)
+										 bool &control_oppose_master_direction) const
 {
 	control_mode = control_mode_;
 	control_output = control_output_;
@@ -1493,7 +1494,7 @@ bool TalonFXProHWCommand::controlChanged(TalonMode &control_mode,
 	control_slot = control_slot_;
 	control_differential_position = control_differential_position_;
 	control_differential_slot = control_differential_slot_;
-	control_oppose_master_direction_ = control_oppose_master_direction;
+	control_oppose_master_direction = control_oppose_master_direction_;
 	const auto rc = control_changed_;
 	control_changed_ = false;
 	return rc;

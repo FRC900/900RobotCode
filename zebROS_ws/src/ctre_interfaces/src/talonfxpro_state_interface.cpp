@@ -899,6 +899,15 @@ int TalonFXProHWState::getVersionBuild(void) const
 	return version_build_;
 }
 
+void TalonFXProHWState::setMotorVoltage(const double motor_voltage)
+{
+	motor_voltage_ = motor_voltage;
+}
+double TalonFXProHWState::getMotorVoltage(void) const
+{
+	return motor_voltage_;
+}
+
 void TalonFXProHWState::setForwardLimit(const bool forward_limit)
 {
 	forward_limit_ = forward_limit;
@@ -1023,6 +1032,15 @@ void TalonFXProHWState::setPosition(const double position)
 double TalonFXProHWState::getPosition(void) const
 {
 	return position_;
+}
+
+void TalonFXProHWState::setAcceleration(const double acceleration)
+{
+	acceleration_ = acceleration;
+}
+double TalonFXProHWState::getAcceleration(void) const
+{
+	return acceleration_;
 }
 
 void TalonFXProHWState::setMotionMagicIsRunning(const bool motion_magic_is_running)

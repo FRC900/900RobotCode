@@ -108,9 +108,9 @@ swerve_drive_controller:
             - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
         invert: clockwise_positive
         #neutral_deadband: 0.01
-        motion_magic_cruise_velocity: 5.0
-        motion_magic_acceleration: 50.0
-        motion_magic_jerk: 350.0
+        motion_magic_cruise_velocity: 35.0
+        motion_magic_acceleration: 300.0
+        motion_magic_jerk: 1200.0
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
@@ -122,9 +122,9 @@ swerve_drive_controller:
             - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
         invert: clockwise_positive
         #neutral_deadband: 0.01
-        motion_magic_cruise_velocity: 5.0
-        motion_magic_acceleration: 50.0
-        motion_magic_jerk: 350.0
+        motion_magic_cruise_velocity: 35.0
+        motion_magic_acceleration: 300.0
+        motion_magic_jerk: 1200.0
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
@@ -136,9 +136,9 @@ swerve_drive_controller:
             - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
         invert: clockwise_positive
         #neutral_deadband: 0.01
-        motion_magic_cruise_velocity: 5.0
-        motion_magic_acceleration: 50.0
-        motion_magic_jerk: 350.0
+        motion_magic_cruise_velocity: 35.0
+        motion_magic_acceleration: 300.0
+        motion_magic_jerk: 1200.0
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True
@@ -151,9 +151,9 @@ swerve_drive_controller:
             - {kP: 80, kI: 0.000, kD: 0.0, kV: 2.85, kS: 0}
         invert: clockwise_positive
         neutral_deadband: 0.01
-        motion_magic_cruise_velocity: 5.0
-        motion_magic_acceleration: 50.0
-        motion_magic_jerk: 350.0
+        motion_magic_cruise_velocity: 35.0
+        motion_magic_acceleration: 300.0
+        motion_magic_jerk: 1200.0
         forward_limit_enable: False
         reverse_limit_enable: False
         dynamic_reconfigure: True

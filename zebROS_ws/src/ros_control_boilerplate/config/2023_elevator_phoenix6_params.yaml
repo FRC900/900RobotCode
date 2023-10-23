@@ -8,24 +8,24 @@ elevator_controller_2023:
     dynamic_reconfigure: true
     max_height_val: 1.4
 
-    four_bar_max_extension: 0.65 # tbd, in meters
+    four_bar_max_extension: 0.65 # tbd, in meter
     four_bar_min_extension: 0.24 # tbd, in meters
 
     four_bar_parallel_bar_length: 0.127
     four_bar_diagonal_bar_length: 0.243
     four_bar_intake_length: 0.22
 
-    arb_feed_forward_high: 0.4
     arb_feed_forward_low: 0.37
+    arb_feed_forward_high: 0.40
 
-    arb_feed_forward_angle: 0.01
+    arb_feed_forward_angle: 0.0 #0.01
     straight_up_angle: 0.52
     
     # Think I heard skipping at this speed at the start of a path
     # but needs more testing
-    motion_magic_velocity: 1.5 # could be 3.5 or 3 
-    motion_magic_acceleration: 3.0 # could be 9.0 or 7
-    motion_s_curve_strength: 10.0 # Maps to v6 motion magic jerk value
+    motion_magic_velocity: 2 # could be 3.5 or 3 
+    motion_magic_acceleration: 15.0 # could be 9.0 or 7
+    motion_s_curve_strength: 100.0 # Maps to v6 motion magic jerk value
 
     # How quickly the elevator moves down when zeroing itself
     elevator_zeroing_percent_output: -0.2 # TODO : tune me
@@ -40,7 +40,7 @@ elevator_controller_2023:
         type: talon_controllers/TalonFXProControllerInterface 
         joint: elevator_leader
         close_loop_values:
-            - {kP: 550, kI: 0.000, kD: 0.00, kV: 20, kS: 0}
+            - {kP: 550, kI: 0.000, kD: 0.00, kV: 19, kS: 0, kA: 0, kG: 0.0, gravity_type: elevator_static}
         invert: clockwise_positive
 
         # linear position along 
@@ -54,13 +54,14 @@ elevator_controller_2023:
         softlimit_forward_enable: True
 
         # CHECK THIS
-        feedback_type: IntegratedSensor
+        #feedback_type: IntegratedSensor
 
         # TODO : bottom limit switch config
         reverse_limit_switch_type: "NormallyOpen"
         reverse_limit_enable: True
+        forward_limit_enable: False
 
-        neutral_deadband: 0.001
+        #neutral_deadband: 0.001
 
         neutral_mode: Brake
 
@@ -69,6 +70,7 @@ elevator_controller_2023:
     elevator_follower: 
         joint: elevator_follower
 
+        sensor_to_mechanism_ratio: 159.61
         #invert_output: counterclockwise_positive
         control_oppose_master_direction: True
         neutral_mode: Brake

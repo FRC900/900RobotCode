@@ -662,6 +662,7 @@ bool TalonFXProControllerInterface::initWithNode(hardware_interface::talonfxpro:
         {
             return false;
         }
+        ROS_WARN_STREAM("Setting follower control mode");
         follower_talons_[i-1]->setControlMode(hardware_interface::talonfxpro::TalonMode::Follower);
         follower_talons_[i-1]->setControlOutput(follow_can_id);
         ROS_INFO_STREAM("Set up talon FX pro " << follower_talons_[i-1].getName() << " to follow CAN ID " << follow_can_id << " (" << talon_.getName() << ")");
@@ -789,7 +790,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         [this]() { return params_.kV_[0].load();},
                                                         boost::bind(&TalonFXProControllerInterface::setkV, this, _1, 0, false),
                                                         "Velocity PID constant for slot 0", 
-                                                        0, 1000);
+                                                        0, 2000);
             ddr_updater_->ddr_.registerVariable<double>("kA_0",
                                                         [this]() { return params_.kA_[0].load();},
                                                         boost::bind(&TalonFXProControllerInterface::setkA, this, _1, 0, false),
@@ -833,7 +834,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         [this]() { return params_.kV_[1].load();},
                                                         boost::bind(&TalonFXProControllerInterface::setkV, this, _1, 1, false),
                                                         "Velocity PID constant for slot 1", 
-                                                        0, 1000);
+                                                        0, 2000);
             ddr_updater_->ddr_.registerVariable<double>("kA_1",
                                                         [this]() { return params_.kA_[1].load();},
                                                         boost::bind(&TalonFXProControllerInterface::setkA, this, _1, 1, false),
@@ -877,7 +878,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         [this]() { return params_.kV_[2].load();},
                                                         boost::bind(&TalonFXProControllerInterface::setkV, this, _1, 2, false),
                                                         "Velocity PID constant for slot 2", 
-                                                        0, 1000);
+                                                        0, 2000);
             ddr_updater_->ddr_.registerVariable<double>("kA_2",
                                                         [this]() { return params_.kA_[2].load();},
                                                         boost::bind(&TalonFXProControllerInterface::setkA, this, _1, 2, false),
@@ -1964,7 +1965,7 @@ void TalonFXProControllerInterface::setRotorPosition(const double set_position, 
 // TODO - make this dynamically reconfigurable?
 void TalonFXProControllerInterface::setControlMode(const hardware_interface::talonfxpro::TalonMode control_mode)
 {
-    //ROS_INFO_STREAM(__FUNCTION__ << " control_mode = " << (int)control_mode);
+    //ROS_WARN_STREAM(__FUNCTION__ << " " << talon_.state()->getCANID() << " control_mode = " << (int)control_mode);
     talon_->setControlMode(control_mode);
 }
 

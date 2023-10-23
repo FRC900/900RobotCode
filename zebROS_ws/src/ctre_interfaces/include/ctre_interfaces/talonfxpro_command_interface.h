@@ -68,7 +68,7 @@ public:
 					 double &kA,
 					 double &kG,
 					 GravityType &gravity_type,
-					 size_t index);
+					 size_t index) const;
 	void resetSlot(size_t index);
 
 	void setInvert(const Inverted invert);
@@ -88,7 +88,7 @@ public:
 								  NeutralMode &neutral_mode,
 								  double &duty_cycle_neutral_deadband,
 								  double &peak_forward_duty_cycle,
-								  double &peak_reverse_duty_cycle);
+								  double &peak_reverse_duty_cycle) const;
 	void resetMotorOutputConfig(void);
 
 	void setStatorCurrentLimit(const double stator_current_limit);
@@ -103,7 +103,7 @@ public:
 	bool currentLimitChanged(double &stator_current_limit,
 							 bool &stator_current_limit_enable,
 							 double &supply_current_limit,
-							 bool &supply_current_limit_enable);
+							 bool &supply_current_limit_enable) const;
 	void resetCurrentLimit(void);
 
 	void setSupplyVoltageTimeConstant(const double supply_voltage_time_constant);
@@ -117,7 +117,7 @@ public:
 
 	bool voltageConfigsChanged(double &supply_voltage_time_constant,
 							   double &peak_voltage_forward,
-							   double &peak_voltage_reverse);
+							   double &peak_voltage_reverse) const;
 	void resetVoltageConfigs(void);
 
 	void setPeakForwardTorqueCurrent(const double peak_forward_torque_current);
@@ -129,7 +129,7 @@ public:
 
 	bool torqueCurrentChanged(double &peak_forward_torque_current,
 							  double &peak_reverse_torque_current,
-							  double &torque_neutral_deadband);
+							  double &torque_neutral_deadband) const;
 	void resetTorqueCurrent(void);
 
 	void setFeedbackRotorOffset(const double feedback_rotor_offset);
@@ -151,7 +151,7 @@ public:
 						double &sensor_to_mechanism_ratio,
 						double &rotor_to_sensor_ratio,
 						FeedbackSensorSource &feedback_sensor_source,
-						int &feedback_remote_sensor_id);
+						int &feedback_remote_sensor_id) const;
 	void resetFeedback(void);
 
 	void setDifferentialSensorSource(const DifferentialSensorSource differential_sensor_source);
@@ -165,7 +165,7 @@ public:
 
 	bool differentialSensorsChanged(DifferentialSensorSource &differential_sensor_source,
 									int &differential_talonfx_sensor_id,
-									int &differential_remote_sensor_id);
+									int &differential_remote_sensor_id) const;
 	void resetDifferentialSensors(void);
 
 	void setPeakDifferentialDutyCycle(const double peak_differential_duty_cycle);
@@ -179,7 +179,7 @@ public:
 
 	bool differentialConstantsChanged(double &peak_differential_duty_cycle,
 									  double &peak_differential_voltage,
-									  double &peak_differential_torque_current);
+									  double &peak_differential_torque_current) const;
 	void resetDifferentialConstants(void);
 
 	void setDutyCycleOpenLoopRampPeriod(const double duty_cycle_open_loop_ramp_period);
@@ -193,7 +193,7 @@ public:
 
 	bool openLoopRampsChanged(double &duty_cycle_open_loop_ramp_period,
 							  double &voltage_open_loop_ramp_period,
-							  double &torque_open_loop_ramp_period);
+							  double &torque_open_loop_ramp_period) const;
 	void resetOpenLoopRamps(void);
 
 	void setDutyCycleClosedLoopRampPeriod(const double duty_cycle_closed_loop_ramp_period);
@@ -207,7 +207,7 @@ public:
 
 	bool closedLoopRampsChanged(double &duty_cycle_closed_loop_ramp_period,
 								double &voltage_closed_loop_ramp_period,
-								double &torque_closed_loop_ramp_period);
+								double &torque_closed_loop_ramp_period) const;
 	void resetClosedLoopRamps(void);
 
 	void setForwardLimitType(const LimitType forward_limit_type);
@@ -257,7 +257,7 @@ public:
 					  double &reverse_limit_autoset_position_value,
 					  bool &reverse_limit_enable,
 					  LimitSource &reverse_limit_source,
-					  int &reverse_limit_remote_sensor_id);
+					  int &reverse_limit_remote_sensor_id) const;
 	void resetLimit(void);
 
 	void setBeepOnBoot(const bool beep_on_boot);
@@ -266,7 +266,7 @@ public:
 	bool getBeepOnConfig(void) const;
 	void setAllowMusicDurDisable(const bool allow_music_dur_disable);
 	bool getAllowMusicDurDisable(void) const;
-	bool audioChanged(bool &beep_on_boot, bool &beep_on_config, bool &allow_music_dur_disable);
+	bool audioChanged(bool &beep_on_boot, bool &beep_on_config, bool &allow_music_dur_disable) const;
 	void resetAudio(void);
 
 	void setForwardSoftLimitEnable(const bool enable);
@@ -279,7 +279,7 @@ public:
 	void setReverseSoftLimitThreshold(const double threshold);
 	double getReverseSoftLimitThreshold(void) const;
 
-	bool softLimitChanged(bool &forward_enable, bool &reverse_enable, double &forward_threshold, double &reverse_threshold);
+	bool softLimitChanged(bool &forward_enable, bool &reverse_enable, double &forward_threshold, double &reverse_threshold) const;
 	void resetSoftLimit(void);
 
 	void setMotionMagicCruiseVelocity(const double motion_magic_cruise_velocity);
@@ -289,21 +289,21 @@ public:
 	void setMotionMagicJerk(const double motion_magic_jerk);
 	double getMotionMagicJerk(void) const;
 
-	bool motionMagicChanged(double &motion_magic_cruise_velocity, double &motion_magic_acceleration, double &motion_magic_jerk);
+	bool motionMagicChanged(double &motion_magic_cruise_velocity, double &motion_magic_acceleration, double &motion_magic_jerk) const;
 	void resetMotionMagic(void);
 
 	void setContinuousWrap(const bool continuous_wrap);
 	bool getContinuousWrap(void) const;
-	bool continuousWrapChanged(bool &continuous_wrap);
+	bool continuousWrapChanged(bool &continuous_wrap) const;
 	void resetContinuousWrap(void);
 
 	void setClearStickyFaults(void);
 	bool getClearStickyFaults(void) const;
-	bool clearStickyFaultsChanged(void);
+	bool clearStickyFaultsChanged(void) const;
 
 	void setSetPosition(const double position);
 	double getSetPosition(void) const;
-	bool setPositionChanged(double &position);
+	bool setPositionChanged(double &position) const;
 	void resetSetPosition(void);
 
 	void setControlMode(const TalonMode mode);
@@ -365,7 +365,7 @@ public:
 						int &control_slot,
 						double &control_differential_position,
 						int &control_differential_slot,
-						bool &oppose_master_direction);
+						bool &oppose_master_direction) const;
 	void resetControl(void);
 						
 	void setEnableReadThread(const bool enable_read_thread);
@@ -381,7 +381,7 @@ private :
 	std::array<double, TALON_PIDF_SLOTS> kA_{0.0, 0.0, 0.0};
 	std::array<double, TALON_PIDF_SLOTS> kG_{0.0, 0.0, 0.0};
 	std::array<GravityType, TALON_PIDF_SLOTS> gravity_type_{GravityType::Elevator_Static, GravityType::Elevator_Static, GravityType::Elevator_Static};
-	std::array<bool,   TALON_PIDF_SLOTS> slot_changed_{true, true, true};
+	mutable std::array<bool, TALON_PIDF_SLOTS> slot_changed_{true, true, true};
 	
 	// MotorOutputConfigs
 	Inverted    invert_{Inverted::CounterClockwise_Positive};
@@ -391,50 +391,50 @@ private :
 	double duty_cycle_neutral_deadband_{0.};
 	double peak_forward_duty_cycle_{1.};
 	double peak_reverse_duty_cycle_{-1.};
-	bool   motor_output_config_changed_{true};
+	mutable bool motor_output_config_changed_{true};
 
 	double stator_current_limit_{0.};
 	bool   stator_current_limit_enable_{false};
 	double supply_current_limit_{0.};
 	bool   supply_current_limit_enable_{false};
-	bool   current_limit_changed_{false};
+	mutable bool current_limit_changed_{true};
 
 	double supply_voltage_time_constant_{0.};
 	double peak_forward_voltage_{16.};
 	double peak_reverse_voltage_{-16.};
-	bool   voltage_configs_changed_{true};
+	mutable bool voltage_configs_changed_{true};
 
 	double peak_forward_torque_current_{800.};
 	double peak_reverse_torque_current_{800.};
 	double torque_neutral_deadband_{0.0};
-	bool   torque_current_changed_{true};
+	mutable bool   torque_current_changed_{true};
 
 	double feedback_rotor_offset_{0.0};
 	double sensor_to_mechanism_ratio_{1.0};
 	double rotor_to_sensor_ratio_{1.0};
 	FeedbackSensorSource feedback_sensor_source_{FeedbackSensorSource::RotorSensor};
 	int    feedback_remote_sensor_id_{0};
-	bool   feedback_changed_{true};
+	mutable bool feedback_changed_{true};
 
 	DifferentialSensorSource differential_sensor_source_{DifferentialSensorSource::Disabled};
 	int  differential_talonfx_sensor_id_{0};
 	int  differential_remote_sensor_id_{0};
-	bool differential_sensors_changed_{true};
+	mutable bool differential_sensors_changed_{true};
 
 	double peak_differential_duty_cycle_{2.};
 	double peak_differential_voltage_{32.};
 	double peak_differential_torque_current_{1600.};
-	bool   differential_constants_changed_{true};
+	mutable bool differential_constants_changed_{true};
 
 	double duty_cycle_open_loop_ramp_period_{0.};
 	double voltage_open_loop_ramp_period_{0.};
 	double torque_open_loop_ramp_period_{0.};
-	bool   open_loop_ramps_changed_{true};
+	mutable bool open_loop_ramps_changed_{true};
 
 	double duty_cycle_closed_loop_ramp_period_{0.};
 	double voltage_closed_loop_ramp_period_{0.};
 	double torque_closed_loop_ramp_period_{0.};
-	bool   closed_loop_ramps_changed_{true};
+	mutable bool closed_loop_ramps_changed_{true};
 
 	LimitType forward_limit_type_{LimitType::NormallyOpen};
 	bool forward_limit_autoset_position_enable_{false};
@@ -448,31 +448,31 @@ private :
 	bool reverse_limit_enable_{true};
 	LimitSource reverse_limit_source_{LimitSource::LimitSwitchPin};
 	int reverse_limit_remote_sensor_id_{0};
-	bool limit_changed_{true};
+	mutable bool limit_changed_{true};
 
 	bool beep_on_boot_{true};
 	bool beep_on_config_{true};
 	bool allow_music_dur_disable_{false};
-	bool audio_changed_{true};
+	mutable bool audio_changed_{true};
 
 	bool   softlimit_forward_enable_{false};
 	bool   softlimit_reverse_enable_{false};
 	double softlimit_forward_threshold_{0.0};
 	double softlimit_reverse_threshold_{0.0};
-	bool   softlimit_changed_{true};
+	mutable bool softlimit_changed_{true};
 
 	double motion_magic_cruise_velocity_{0.0};
 	double motion_magic_acceleration_{0.0};
 	double motion_magic_jerk_{0.0};
-	bool motion_magic_changed_{true};
+	mutable bool motion_magic_changed_{true};
 
 	bool continuous_wrap_{false};
-	bool continuous_wrap_changed_{true};
+	mutable bool continuous_wrap_changed_{true};
 
-	bool clear_sticky_faults_{false};
+	mutable bool clear_sticky_faults_{false};
 
 	double set_position_{0};
-	bool set_position_changed_{false};
+	mutable bool set_position_changed_{false};
 
 	TalonMode control_mode_{TalonMode::CoastOut}; 
 	double control_output_{0.0};
@@ -489,7 +489,7 @@ private :
 	bool control_oppose_master_direction_{false};
 	double control_differential_position_{0.0};
 	int control_differential_slot_{0};
-	bool control_changed_{false};
+	mutable bool control_changed_{false};
 
 	bool enable_read_thread_{true};
 

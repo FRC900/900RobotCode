@@ -9,12 +9,16 @@ float64[] control_acceleration
 float64[] control_jerk
 bool[]    control_enable_foc
 bool[]    control_override_brake_dur_neutral
+bool[]    control_oppose_master_direction
 float64[] control_max_abs_duty_cycle
 float64[] control_deadband
 float64[] control_feedforward
 int8[]    control_slot
 float64[] control_differential_position
 int8[]    control_differential_slot
+
+float64[] motor_voltage
+
 uint8[]   version_major
 uint8[]   version_minor
 uint8[]   version_bugfix
@@ -35,6 +39,7 @@ float64[] rotor_velocity
 float64[] rotor_position
 float64[] velocity
 float64[] position
+float64[] acceleration
 
 bool[]    motion_magic_is_running
 

@@ -17,7 +17,7 @@ def callback(talon_state_msg : TalonFXProState):
     global talon_motor_output
 
     talon_position = talon_state_msg.position[i]
-    talon_motor_output = talon_state_msg.closed_loop_output[i]
+    talon_motor_output = talon_state_msg.motor_voltage[i]
 
 
 def main():
