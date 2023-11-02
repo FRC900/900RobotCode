@@ -84,7 +84,7 @@ SparkMaxDevices<SIMFLAG>::~SparkMaxDevices() = default;
 template <bool SIMFLAG>
 hardware_interface::InterfaceManager *SparkMaxDevices<SIMFLAG>::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*spark_max_state_interface_, *spark_max_command_interface_, *remote_spark_max_state_interface_);
     }
@@ -98,7 +98,7 @@ template <bool SIMFLAG>
 void SparkMaxDevices<SIMFLAG>::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("SparkMaxs");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }
@@ -108,7 +108,7 @@ template <bool SIMFLAG>
 void SparkMaxDevices<SIMFLAG>::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("SparkMaxs");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period);
     }

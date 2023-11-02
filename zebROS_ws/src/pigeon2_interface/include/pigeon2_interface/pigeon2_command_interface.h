@@ -4,9 +4,7 @@
 #include "pigeon2_interface/pigeon2_state_interface.h"
 #include "state_handle/command_handle.h"
 
-namespace hardware_interface
-{
-namespace pigeon2
+namespace hardware_interface::pigeon2
 {
 class Pigeon2HWCommand
 {
@@ -79,14 +77,12 @@ class Pigeon2HWCommand
 // Handle - used by each controller to get, by name of the
 // corresponding joint, an interface with which to send commands
 // to a Pigeon2
-typedef CommandHandle<Pigeon2HWCommand, Pigeon2HWState, Pigeon2StateHandle> Pigeon2CommandHandle;
-
+using Pigeon2CommandHandle = CommandHandle<Pigeon2HWCommand, Pigeon2HWState, Pigeon2StateHandle>;
 
 // Use ClaimResources here since we only want 1 controller
 // to be able to access a given Pigeon2 at any particular time
 class Pigeon2CommandInterface : public HardwareResourceManager<Pigeon2CommandHandle, ClaimResources> {};
 
-} // namespace pigeon2
-} // namespace hardware_interface
+} // namespace
 
 #endif

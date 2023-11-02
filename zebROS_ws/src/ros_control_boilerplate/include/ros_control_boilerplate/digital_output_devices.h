@@ -16,10 +16,10 @@ class DigitalOutputDevices : public Devices
 {
 
 public:
-    DigitalOutputDevices(ros::NodeHandle &root_nh);
+    explicit DigitalOutputDevices(ros::NodeHandle &root_nh);
     DigitalOutputDevices(const DigitalOutputDevices &) = delete;
     DigitalOutputDevices(DigitalOutputDevices &&) = delete;
-    virtual ~DigitalOutputDevices();
+    ~DigitalOutputDevices() override;
 
     DigitalOutputDevices &operator=(const DigitalOutputDevices &) = delete;
     DigitalOutputDevices &operator=(DigitalOutputDevices &&) noexcept = delete;

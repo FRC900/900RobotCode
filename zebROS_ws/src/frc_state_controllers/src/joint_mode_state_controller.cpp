@@ -2,7 +2,7 @@
 #include <realtime_tools/realtime_publisher.h>
 #include <hardware_interface/joint_mode_interface.h>
 #include "frc_msgs/JointMode.h"
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 #include "periodic_interval_counter/periodic_interval_counter.h"
 
 namespace joint_mode_state_controller
@@ -19,7 +19,7 @@ private:
 public:
 	bool init(hardware_interface::JointModeInterface *hw,
 			  ros::NodeHandle                        &root_nh,
-			  ros::NodeHandle                        &controller_nh)
+			  ros::NodeHandle                        &controller_nh) override
 
 	{
 		ROS_INFO_STREAM_NAMED("joint_mode_controller", "init is running");
@@ -54,12 +54,12 @@ public:
 		return true;
 	}
 
-    void starting(const ros::Time &time)
+    void starting(const ros::Time &time) override
     {
 		interval_counter_->reset();
     }
 
-    void update(const ros::Time &time, const ros::Duration &period)
+    void update(const ros::Time &time, const ros::Duration &period) override
 	{
 		if (interval_counter_->update(period))
 		{
@@ -82,7 +82,7 @@ public:
 		}
 	}
 
-    void stopping(const ros::Time & )
+    void stopping(const ros::Time & ) override
     {}
 }; // class
 

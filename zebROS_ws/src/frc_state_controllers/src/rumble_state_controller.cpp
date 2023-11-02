@@ -39,7 +39,7 @@ private:
 public:
 	bool init(hardware_interface::RumbleStateInterface *hw,
 			  ros::NodeHandle                       &root_nh,
-			  ros::NodeHandle                       &controller_nh)
+			  ros::NodeHandle                       &controller_nh) override
 	{
 		// get all joint names from the hardware interface
 		const std::vector<std::string> &rumble_names = hw->getNames();
@@ -83,12 +83,12 @@ public:
 		return true;
 	}
 
-	void starting(const ros::Time &time)
+	void starting(const ros::Time &time) override
 	{
 		interval_counter_->reset();
 	}
 
-	void update(const ros::Time &time, const ros::Duration &period)
+	void update(const ros::Time &time, const ros::Duration &period) override
 	{
 		// limit rate of publishing
 		if (interval_counter_->update(period))
@@ -100,7 +100,7 @@ public:
 				m.header.stamp = time;
 				for (unsigned i = 0; i < num_rumbles_; i++)
 				{
-					auto &rumbles = rumble_state_[i];
+					const auto &rumbles = rumble_state_[i];
 					m.left[i] = rumbles->getLeft();
 					m.right[i] = rumbles->getRight();
 				}
@@ -113,7 +113,7 @@ public:
 		}
 	}
 
-	void stopping(const ros::Time & /*time*/)
+	void stopping(const ros::Time & /*time*/) override
 	{}
 }; // class
 
@@ -158,16 +158,14 @@ private:
 
 
 public:
-	RumbleStateListenerController()
-	{
-	}
+	RumbleStateListenerController() = default;
 
-	~RumbleStateListenerController()
+	~RumbleStateListenerController() override
 	{
 		sub_command_.shutdown();
 	}
 
-	bool init(hardware_interface::RemoteRumbleStateInterface *hw, ros::NodeHandle &n)
+	bool init(hardware_interface::RemoteRumbleStateInterface *hw, ros::NodeHandle &n) override
 	{
 		// Read list of hw, make a list, grab handles for them, plus allocate storage space
 		joint_names_ = hw->getNames();
@@ -189,14 +187,14 @@ public:
 		return true;
 	}
 
-	void starting(const ros::Time & /*time*/)
+	void starting(const ros::Time & /*time*/) override
 	{
 	}
-	void stopping(const ros::Time & /*time*/)
+	void stopping(const ros::Time & /*time*/) override
 	{
 	}
 
-	void update(const ros::Time & /*time*/, const ros::Duration & /*period*/)
+	void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
 	{
 		const auto vals = *command_buffer_.readFromRT();
 		for (size_t i = 0; i < vals.size(); i++)

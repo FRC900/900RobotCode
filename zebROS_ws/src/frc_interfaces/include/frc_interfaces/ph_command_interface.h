@@ -73,7 +73,7 @@ class PHHWCommand
 };
 
 // Create a handle pointing to a type PHHWCommand / PHHWState pair
-typedef CommandHandle<PHHWCommand, PHHWState, PHStateHandle> PHCommandHandle;
+using PHCommandHandle = CommandHandle<PHHWCommand, PHHWState, PHStateHandle>;
 
 // Use ClaimResources here since we only want 1 controller
 // to be able to access a given PH at any particular time

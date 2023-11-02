@@ -1,4 +1,4 @@
-// Single node which holds the targer orientation
+// Single node which holds the target orientation
 // of the robot drive base and runs a velocity
 // PID loop to turn that desired orientation into
 // a Z-orientation velocity which can be fed to the
@@ -60,7 +60,7 @@ const ros::Duration RESET_TO_TELEOP_CMDVEL_TIMEOUT{0.5};
 class RobotOrientationDriver
 {
 public:
-	RobotOrientationDriver(const ros::NodeHandle &nh);
+	explicit RobotOrientationDriver(const ros::NodeHandle &nh);
 
 	void setTargetOrientation(double angle, bool from_teleop = true);
 	void stopRotation(void);
@@ -118,8 +118,8 @@ private:
 	void imuCallback(const sensor_msgs::Imu &imuState);
 	void matchStateCallback(const frc_msgs::MatchSpecificData &msg);
 	void checkFromTeleopTimeout(const ros::TimerEvent &/*event*/);
-	bool holdTargetOrientation(teleop_joystick_control::AlignToOrientation::Request& req,
-						   teleop_joystick_control::AlignToOrientation::Response&/* res*/);
+	bool holdTargetOrientation(teleop_joystick_control::AlignToOrientation::Request &req,
+							   teleop_joystick_control::AlignToOrientation::Response & /* res*/);
 };
 
 #endif

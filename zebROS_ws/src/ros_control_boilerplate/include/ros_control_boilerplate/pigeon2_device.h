@@ -42,7 +42,7 @@ public:
                   const double read_hz);
     Pigeon2Device(const Pigeon2Device &) = delete;
     Pigeon2Device(Pigeon2Device &&other) noexcept = delete;
-    virtual ~Pigeon2Device();
+    ~Pigeon2Device() override;
 
     Pigeon2Device &operator=(const Pigeon2Device &) = delete;
     Pigeon2Device &operator=(Pigeon2Device &&) noexcept = delete;
@@ -74,11 +74,11 @@ private:
     std::array<double, 9> imu_linear_acceleration_covariance_{};
     std::unique_ptr<hardware_interface::pigeon2::Pigeon2HWState> read_thread_state_;
     std::unique_ptr<std::mutex> read_state_mutex_;
-    std::unique_ptr<std::thread> read_thread_;
+    std::unique_ptr<std::jthread> read_thread_;
     void read_thread(std::unique_ptr<Tracer> tracer,
                      const double poll_frequency);
 
-    std::atomic<double> sim_yaw_{0};
+    std::atomic<double> sim_yaw_{0.};
     ros::Subscriber sim_sub_;
     void imuOdomCallback(const nav_msgs::OdometryConstPtr &msg);
 };

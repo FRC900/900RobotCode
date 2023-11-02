@@ -24,10 +24,10 @@ namespace ctre::phoenix6::hardware
 class Pigeon2Devices : public Devices
 {
 public:
-    Pigeon2Devices(ros::NodeHandle &root_nh);
+    explicit Pigeon2Devices(ros::NodeHandle &root_nh);
     Pigeon2Devices(const Pigeon2Devices &) = delete;
     Pigeon2Devices(Pigeon2Devices &&) noexcept = delete;
-    virtual ~Pigeon2Devices();
+    ~Pigeon2Devices() override;
 
     Pigeon2Devices &operator=(const Pigeon2Devices &) = delete;
     Pigeon2Devices &operator=(Pigeon2Devices &&) noexcept = delete;
@@ -35,7 +35,7 @@ public:
     hardware_interface::InterfaceManager *registerInterface() override;
     void read(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
     void write(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
-    void simInit(ros::NodeHandle nh) override;
+    void simInit(ros::NodeHandle &nh) override;
     void simRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
 
     void appendDeviceMap(std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> &device_map) const;

@@ -77,7 +77,7 @@ Pigeon2Devices::~Pigeon2Devices() = default;
 
 hardware_interface::InterfaceManager *Pigeon2Devices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_, *remote_state_interface_, *imu_interface_, *imu_remote_interface_);
     }
@@ -92,7 +92,7 @@ hardware_interface::InterfaceManager *Pigeon2Devices::registerInterface()
 void Pigeon2Devices::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("pigeon2");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }
@@ -101,13 +101,13 @@ void Pigeon2Devices::read(const ros::Time& time, const ros::Duration& period, Tr
 void Pigeon2Devices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("pigeon2");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period);
     }
 }
 
-void Pigeon2Devices::simInit(ros::NodeHandle nh)
+void Pigeon2Devices::simInit(ros::NodeHandle &nh)
 {
     for (size_t i = 0; i < devices_.size(); i++)
     {
@@ -118,7 +118,7 @@ void Pigeon2Devices::simInit(ros::NodeHandle nh)
 void Pigeon2Devices::simRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("Update sim Pigeon2 yaw");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }

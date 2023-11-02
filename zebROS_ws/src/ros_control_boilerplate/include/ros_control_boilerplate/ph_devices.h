@@ -15,10 +15,10 @@ class PHDevices : public Devices
 {
 
 public:
-    PHDevices(ros::NodeHandle &root_nh);
+    explicit PHDevices(ros::NodeHandle &root_nh);
     PHDevices(const PHDevices &) = delete;
     PHDevices(PHDevices &&) noexcept = delete;
-    virtual ~PHDevices();
+    ~PHDevices() override;
 
     PHDevices &operator=(const PHDevices &) = delete;
     PHDevices &operator=(PHDevices &&) noexcept = delete;

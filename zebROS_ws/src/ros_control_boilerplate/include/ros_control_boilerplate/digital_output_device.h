@@ -24,7 +24,7 @@ public:
                         const bool local_update);
     DigitalOutputDevice(const DigitalOutputDevice &) = delete;
     DigitalOutputDevice(DigitalOutputDevice &&other) noexcept = delete;
-    ~DigitalOutputDevice();
+    virtual ~DigitalOutputDevice();
 
     DigitalOutputDevice &operator=(const DigitalOutputDevice &) = delete;
     DigitalOutputDevice &operator=(DigitalOutputDevice &&) noexcept = delete;

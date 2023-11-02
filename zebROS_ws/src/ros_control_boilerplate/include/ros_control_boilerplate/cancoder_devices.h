@@ -20,10 +20,10 @@ namespace ctre::phoenix6::hardware
 class CANCoderDevices : public Devices
 {
 public:
-    CANCoderDevices(ros::NodeHandle &root_nh);
+    explicit CANCoderDevices(ros::NodeHandle &root_nh);
     CANCoderDevices(const CANCoderDevices &) = delete;
     CANCoderDevices(CANCoderDevices &&) noexcept = delete;
-    virtual ~CANCoderDevices();
+    ~CANCoderDevices() override;
 
     CANCoderDevices &operator=(const CANCoderDevices &) = delete;
     CANCoderDevices &operator=(CANCoderDevices &&) noexcept = delete;

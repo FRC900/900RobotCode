@@ -14,7 +14,7 @@ RobotControllerDevices::~RobotControllerDevices() = default;
 
 hardware_interface::InterfaceManager *RobotControllerDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_);
     }
@@ -27,7 +27,7 @@ void RobotControllerDevices::read(const ros::Time& time, const ros::Duration& pe
     tracer.start_unique("robot controller data");
     if (isReady())
     {
-        for (auto &d : devices_)
+        for (const auto &d : devices_)
         {
             d->read(time, period);
         }

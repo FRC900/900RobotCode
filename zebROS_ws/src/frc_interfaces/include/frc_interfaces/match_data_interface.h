@@ -93,8 +93,8 @@ class MatchHWState
 		std::string get_vin_voltage_status_{"0: "};
 };
 
-typedef StateHandle<const MatchHWState> MatchStateHandle;
-typedef StateHandle<MatchHWState> MatchStateWritableHandle;
+using MatchStateHandle = StateHandle<const MatchHWState>;
+using MatchStateWritableHandle = StateHandle<MatchHWState>;
 
 class MatchStateInterface       : public HardwareResourceManager<MatchStateHandle> {};
 class RemoteMatchStateInterface : public HardwareResourceManager<MatchStateWritableHandle, ClaimResources> {};

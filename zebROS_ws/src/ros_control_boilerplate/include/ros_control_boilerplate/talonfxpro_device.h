@@ -34,13 +34,13 @@ public:
                      double read_hz);
     TalonFXProDevice(const TalonFXProDevice &) = delete;
     TalonFXProDevice(TalonFXProDevice &&other) noexcept = delete;
-    ~TalonFXProDevice();
+    ~TalonFXProDevice() override;
 
     TalonFXProDevice &operator=(const TalonFXProDevice &) = delete;
     TalonFXProDevice &operator=(TalonFXProDevice &&) noexcept = delete;
 
     void registerInterfaces(hardware_interface::talonfxpro::TalonFXProStateInterface &state_interface,
-                            hardware_interface::talonfxpro::TalonFXProCommandInterface &command_interface);
+                            hardware_interface::talonfxpro::TalonFXProCommandInterface &command_interface) const;
     void read(const ros::Time& time, const ros::Duration& period);
     void write(const ros::Time& time, const ros::Duration& period, const bool curr_robot_enabled, const bool prev_robot_enabled);
 
@@ -60,7 +60,7 @@ private:
     std::unique_ptr<std::mutex> read_state_mutex_;
     std::unique_ptr<hardware_interface::talonfxpro::TalonFXProHWState> read_thread_state_;
     std::unique_ptr<ctre::phoenix6::hardware::core::CoreTalonFX> talonfxpro_;
-    std::unique_ptr<std::thread> read_thread_;
+    std::unique_ptr<std::jthread> read_thread_;
 
     void read_thread(std::unique_ptr<Tracer> tracer,
                      const int joint_idx,

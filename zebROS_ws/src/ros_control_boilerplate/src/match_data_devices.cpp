@@ -42,7 +42,7 @@ void MatchDataDevices<DEVICE_TYPE>::read(const ros::Time& time, const ros::Durat
 }
 
 template <class DEVICE_TYPE>
-void MatchDataDevices<DEVICE_TYPE>::simInit(ros::NodeHandle nh)
+void MatchDataDevices<DEVICE_TYPE>::simInit(ros::NodeHandle &nh)
 {
     devices_[0]->simInit(nh);
 }

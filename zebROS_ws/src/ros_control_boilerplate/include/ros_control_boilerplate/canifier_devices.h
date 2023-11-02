@@ -16,10 +16,10 @@ class CANifierDevices : public Devices
 {
 
 public:
-    CANifierDevices(ros::NodeHandle &root_nh);
+    explicit CANifierDevices(ros::NodeHandle &root_nh);
     CANifierDevices(const CANifierDevices &) = delete;
     CANifierDevices(CANifierDevices &&) noexcept = delete;
-    ~CANifierDevices();
+    ~CANifierDevices() override;
 
     CANifierDevices &operator=(const CANifierDevices &) = delete;
     CANifierDevices &operator=(CANifierDevices &&) noexcept = delete;

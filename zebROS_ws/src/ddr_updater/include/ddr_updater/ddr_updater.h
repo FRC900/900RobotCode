@@ -10,7 +10,7 @@ namespace ddr_updater
 class DDRUpdater
 {
 	public:
-		DDRUpdater(ros::NodeHandle n);
+		explicit DDRUpdater(const ros::NodeHandle &n);
 		DDRUpdater(const DDRUpdater &) = delete;
 		DDRUpdater(DDRUpdater &&) = delete;
 		virtual ~DDRUpdater();

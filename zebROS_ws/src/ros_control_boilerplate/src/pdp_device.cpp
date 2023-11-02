@@ -28,11 +28,11 @@ PDPDevice::PDPDevice(const std::string &name_space,
         int32_t status = 0;
         const auto pdp_handle = HAL_InitializePDP(pdp_module_, __FUNCTION__, &status);
 
-        read_thread_ = std::make_unique<std::thread>(&PDPDevice::read_thread,
-                                                     this,
-                                                     pdp_handle,
-                                                     std::make_unique<Tracer>("pdp_read_" + joint_name + " " + name_space),
-                                                     read_hz_);
+        read_thread_ = std::make_unique<std::jthread>(&PDPDevice::read_thread,
+                                                      this,
+                                                      pdp_handle,
+                                                      std::make_unique<Tracer>("pdp_read_" + joint_name + " " + name_space),
+                                                      read_hz_);
         HAL_Report(HALUsageReporting::kResourceType_PDP, pdp_module_);
     }
 
@@ -41,16 +41,10 @@ PDPDevice::PDPDevice(const std::string &name_space,
                     " as PDP module " << pdp_module_);
 }
 
-PDPDevice::~PDPDevice(void)
-{
-    if (read_thread_ && read_thread_->joinable())
-    {
-        read_thread_->join();
-    }
-}
+PDPDevice::~PDPDevice(void) = default;
 
 void PDPDevice::registerInterfaces(hardware_interface::PDPStateInterface &state_interface,
-                                   hardware_interface::RemotePDPStateInterface &remote_state_interface)
+                                   hardware_interface::RemotePDPStateInterface &remote_state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for PDP : " << name_ << " as pdp module " << pdp_module_);
 
@@ -68,7 +62,7 @@ void PDPDevice::read(const ros::Time &/*time*/, const ros::Duration &/*period*/)
 {
     if (local_)
     {
-        std::unique_lock<std::mutex> l(*read_state_mutex_, std::try_to_lock);
+        std::unique_lock l(*read_state_mutex_, std::try_to_lock);
         if (l.owns_lock())
         {
             *state_ = *read_thread_state_;
@@ -155,7 +149,7 @@ void PDPDevice::read_thread(int32_t pdp,
 			// Copy to state shared with read() thread
 			// Put this in a separate scope so lock_guard is released
 			// as soon as the state is finished copying
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
 			*read_thread_state_ = pdp_state;
 		}
 		tracer->report(60);

@@ -16,10 +16,10 @@ class DoubleSolenoidDevices : public Devices
 {
 
 public:
-    DoubleSolenoidDevices(ros::NodeHandle &root_nh);
+    explicit DoubleSolenoidDevices(ros::NodeHandle &root_nh);
     DoubleSolenoidDevices(const DoubleSolenoidDevices &) = delete;
     DoubleSolenoidDevices(DoubleSolenoidDevices &&) noexcept = delete;
-    virtual ~DoubleSolenoidDevices();
+    ~DoubleSolenoidDevices() override;
 
     DoubleSolenoidDevices &operator=(const DoubleSolenoidDevices &) = delete;
     DoubleSolenoidDevices &operator=(DoubleSolenoidDevices &&) noexcept = delete;

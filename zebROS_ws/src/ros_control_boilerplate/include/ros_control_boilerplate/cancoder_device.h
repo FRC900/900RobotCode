@@ -33,13 +33,13 @@ public:
                    const double read_hz);
     CANCoderDevice(const CANCoderDevice &) = delete;
     CANCoderDevice(CANCoderDevice &&other) noexcept = delete;
-    ~CANCoderDevice();
+    ~CANCoderDevice() override;
     CANCoderDevice &operator=(const CANCoderDevice &) = delete;
     CANCoderDevice &operator=(CANCoderDevice &&) noexcept = delete;
 
     void registerInterfaces(hardware_interface::cancoder::CANCoderStateInterface &state_interface,
                             hardware_interface::cancoder::CANCoderCommandInterface &command_interface,
-                            hardware_interface::cancoder::RemoteCANCoderStateInterface &remote_state_interface);
+                            hardware_interface::cancoder::RemoteCANCoderStateInterface &remote_state_interface) const;
     void read(const ros::Time &time, const ros::Duration &period);
     void write(const ros::Time &time, const ros::Duration &period);
 
@@ -47,14 +47,14 @@ private:
     const bool local_hardware_;
     const bool local_update_;
 
-    std::unique_ptr<ctre::phoenix6::hardware::core::CoreCANcoder> cancoder_;
+    std::unique_ptr<ctre::phoenix6::hardware::core::CoreCANcoder> cancoder_{};
 
     std::unique_ptr<hardware_interface::cancoder::CANCoderHWState> state_;
-    std::unique_ptr<hardware_interface::cancoder::CANCoderHWCommand> command_;
+    std::unique_ptr<hardware_interface::cancoder::CANCoderHWCommand> command_{std::make_unique<hardware_interface::cancoder::CANCoderHWCommand>()};
 
-    std::unique_ptr<hardware_interface::cancoder::CANCoderHWState> read_thread_state_;
-    std::unique_ptr<std::mutex> read_state_mutex_;
-    std::unique_ptr<std::thread> read_thread_;
+    std::unique_ptr<hardware_interface::cancoder::CANCoderHWState> read_thread_state_{};
+    std::unique_ptr<std::mutex> read_state_mutex_{};
+    std::unique_ptr<std::jthread> read_thread_{};
     void read_thread(std::unique_ptr<Tracer> tracer,
                      const double poll_frequency);
 };

@@ -36,7 +36,7 @@ TalonOrchestraDevices<SIMFLAG>::~TalonOrchestraDevices() = default;
 template <bool SIMFLAG>
 hardware_interface::InterfaceManager *TalonOrchestraDevices<SIMFLAG>::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_);
     }
@@ -49,7 +49,7 @@ template <bool SIMFLAG>
 void TalonOrchestraDevices<SIMFLAG>::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("talon orchestras");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }
@@ -59,7 +59,7 @@ template <bool SIMFLAG>
 void TalonOrchestraDevices<SIMFLAG>::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("talon orchestras");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period, talonfxs_);
     }

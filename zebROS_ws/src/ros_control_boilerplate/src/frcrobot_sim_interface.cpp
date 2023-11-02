@@ -75,16 +75,16 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 
 	// Create devices which have different code for HW vs. Sim
 	// (hw interface has a similar block, but using HW vs Sim devices)
-	devices_.emplace_back(std::make_shared<SimAS726xDevices>(root_nh));
-	devices_.emplace_back(std::make_shared<SimCANifierDevices>(root_nh));
-    devices_.emplace_back(std::make_shared<SimJoystickDevices>(root_nh));
-	devices_.emplace_back(std::make_shared<SimMatchDataDevices>(root_nh));
-	devices_.emplace_back(std::make_shared<SimSparkMaxDevices>(root_nh));
-	devices_.emplace_back(std::make_shared<SimTalonOrchestraDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<SimAS726xDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<SimCANifierDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<SimJoystickDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<SimMatchDataDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<SimSparkMaxDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<SimTalonOrchestraDevices>(root_nh));
 
 	// Orchestra needs a set of previously created TalonFXs to use as instruments
 	const auto orchestra_devices = getDevicesOfType<SimTalonOrchestraDevices>(devices_);
-    const auto talonfxpro_devices = getDevicesOfType<TalonFXProDevices>(devices_);
+	const auto talonfxpro_devices = getDevicesOfType<TalonFXProDevices>(devices_);
 	if (talonfxpro_devices && orchestra_devices)
 	{
 		std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> talonfxs;
@@ -92,14 +92,14 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 		orchestra_devices->setTalonFXData(talonfxs);
 	}
 
-	for (auto &d : devices_)
+	for (const auto &d : devices_)
 	{
 		d->simInit(root_nh);
 	}
 	// Need to do this here rather than in the base class so
 	// registerInterface isn't called twice for devices
 	// created in the base init().
-	for (auto &d : devices_)
+	for (const auto &d : devices_)
 	{
 		registerInterfaceManager(d->registerInterface());
 	}
@@ -109,7 +109,7 @@ bool FRCRobotSimInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &robot
 	return true;
 }
 
-void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& period)
+void FRCRobotSimInterface::read(const ros::Time &time, const ros::Duration &period)
 {
 	// Run WPIlib physics sim for each mechanism.
 	// Right now those mechanisms are hard-coded, but in the future make
@@ -121,7 +121,7 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 	read_tracer_.start_unique("HAL_SimPeriodicBefore");
 	HAL_SimPeriodicBefore();
 
-	for (auto &d : devices_)
+	for (const auto &d : devices_)
 	{
 		d->simRead(time, period, read_tracer_);
 	}
@@ -133,12 +133,11 @@ void FRCRobotSimInterface::read(const ros::Time& time, const ros::Duration& peri
 }
 
 template <class T>
-static bool read_device_enabled(const std::vector<std::shared_ptr<Devices>> &devices_, bool &val)
+static bool read_device_enabled(const std::vector<std::unique_ptr<Devices>> &devices, bool &val)
 {
-	const auto devices = getDevicesOfType<T>(devices_);
-	if (devices)
+	if (const auto d = getDevicesOfType<T>(devices))
 	{
-		const auto isEnabled = devices->isEnabled();
+		const auto isEnabled = d->isEnabled();
 		if (isEnabled)
 		{
 			val = *isEnabled;
@@ -152,13 +151,12 @@ void FRCRobotSimInterface::write(const ros::Time& time, const ros::Duration& per
 {
 	// Was the robot enabled last time write was run?
 	write_tracer_.start_unique("read robot enabled");
-	bool robot_enabled = false;
-	if (read_device_enabled<SimMatchDataDevices>(devices_, robot_enabled))
+	if (bool robot_enabled = false; read_device_enabled<SimMatchDataDevices>(devices_, robot_enabled))
 	{
 		Devices::setEnabled(robot_enabled);
 	}
 
-	for (auto &d: devices_)
+	for (const auto &d: devices_)
 	{
 		d->simWrite(time, period, write_tracer_);
 	}

@@ -6,7 +6,7 @@
 #include "ros_control_boilerplate/cancoder_device.h"
 #include "ros_control_boilerplate/tracer.h"
 
-static bool convertMagnetHealth(ctre::phoenix6::signals::MagnetHealthValue input,
+static bool convertMagnetHealth(const ctre::phoenix6::signals::MagnetHealthValue & input,
                                        hardware_interface::cancoder::MagnetHealth &output);
 static bool convertSensorDirection(hardware_interface::cancoder::SensorDirection input,
                                    ctre::phoenix6::signals::SensorDirectionValue &output);
@@ -24,12 +24,7 @@ CANCoderDevice::CANCoderDevice(const std::string &name_space,
     : CTREV6Device("CANCoder", joint_name, can_id)
     , local_hardware_{local_hardware}
     , local_update_{local_update}
-    , cancoder_{nullptr}
     , state_{std::make_unique<hardware_interface::cancoder::CANCoderHWState>(can_id)}
-    , command_{std::make_unique<hardware_interface::cancoder::CANCoderHWCommand>()}
-    , read_thread_state_{nullptr}
-    , read_state_mutex_{nullptr}
-    , read_thread_{nullptr}
 {
     // TODO : old code had a check for duplicate use of DIO channels? Needed?
     ROS_INFO_STREAM_NAMED("frc_robot_interface",
@@ -44,23 +39,17 @@ CANCoderDevice::CANCoderDevice(const std::string &name_space,
         setParentDevice(cancoder_.get());
         read_thread_state_ = std::make_unique<hardware_interface::cancoder::CANCoderHWState>(can_id);
         read_state_mutex_ = std::make_unique<std::mutex>();
-        read_thread_ = std::make_unique<std::thread>(&CANCoderDevice::read_thread, this,
-                                                     std::make_unique<Tracer>("cancoder_read_" + joint_name + " " + name_space),
-                                                     read_hz_);
+        read_thread_ = std::make_unique<std::jthread>(&CANCoderDevice::read_thread, this,
+                                                      std::make_unique<Tracer>("cancoder_read_" + joint_name + " " + name_space),
+                                                      read_hz_);
     }
 }
 
-CANCoderDevice::~CANCoderDevice(void)
-{
-    if (read_thread_ && read_thread_->joinable())
-    {
-        read_thread_->join();
-    }
-}
+CANCoderDevice::~CANCoderDevice(void) = default;
 
 void CANCoderDevice::registerInterfaces(hardware_interface::cancoder::CANCoderStateInterface &state_interface,
                                         hardware_interface::cancoder::CANCoderCommandInterface &command_interface,
-                                        hardware_interface::cancoder::RemoteCANCoderStateInterface &remote_state_interface)
+                                        hardware_interface::cancoder::RemoteCANCoderStateInterface &remote_state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for CANCoder : " << getName() << " at CAN id " << getId());
 
@@ -81,7 +70,7 @@ void CANCoderDevice::read(const ros::Time &/*time*/, const ros::Duration &/*peri
 {
     if (local_update_)
     {
-        std::unique_lock<std::mutex> l(*read_state_mutex_, std::try_to_lock);
+        std::unique_lock l(*read_state_mutex_, std::try_to_lock);
         if (l.owns_lock())
         {
             // These are used to convert position and velocity units - make sure the
@@ -157,8 +146,7 @@ void CANCoderDevice::write(const ros::Time &/*time*/, const ros::Duration &/*per
         }
     }
 
-    double position;
-    if (command_->setPositionChanged(position))
+    if (double position; command_->setPositionChanged(position))
     {
         if (safeCall(cancoder_->SetPosition(units::radian_t{position / state_->getConversionFactor()}), "cancoder_->SetPosition"))
         {
@@ -189,19 +177,13 @@ void CANCoderDevice::write(const ros::Time &/*time*/, const ros::Duration &/*per
 #define SAFE_READ(var, function) \
 const auto var = safeRead(function, #function); \
 if (!var) { tracer->stop() ; continue; }
-/*
-std::shared_ptr<ctre::phoenix6::hardware::core::CoreCANcoder> cancoder,
-                                 std::shared_ptr<hardware_interface::cancoder::CANCoderHWState> state,
-                                 std::shared_ptr<std::mutex> mutex,
-                                 */
 
 void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
                                  const double poll_frequency)
 {
 #ifdef __linux__
-	std::stringstream thread_name{"cancdr_read_"};
 
-	if (pthread_setname_np(pthread_self(), thread_name.str().c_str()))
+	if (std::stringstream thread_name{"cancdr_read_"}; pthread_setname_np(pthread_self(), thread_name.str().c_str()))
 	{
 		ROS_ERROR_STREAM("Error setting thread name " << thread_name.str() << " " << errno);
 	}
@@ -226,34 +208,34 @@ void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
 		// used by the read thread are copied over.  Update
 		// as needed when more are read
 		{
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
 			conversion_factor = read_thread_state_->getConversionFactor();
 		}
 
-        SAFE_READ(version_major, cancoder_->GetVersionMajor());
-        SAFE_READ(version_minor, cancoder_->GetVersionMinor());
-        SAFE_READ(version_bugfix, cancoder_->GetVersionBugfix());
-        SAFE_READ(version_build, cancoder_->GetVersionBuild());
+        SAFE_READ(version_major, cancoder_->GetVersionMajor())
+        SAFE_READ(version_minor, cancoder_->GetVersionMinor())
+        SAFE_READ(version_bugfix, cancoder_->GetVersionBugfix())
+        SAFE_READ(version_build, cancoder_->GetVersionBuild())
 
-        SAFE_READ(velocity, cancoder_->GetVelocity());
-        SAFE_READ(position, cancoder_->GetPosition());
-        SAFE_READ(absolute_position, cancoder_->GetAbsolutePosition());
-        SAFE_READ(unfilitered_vecloity, cancoder_->GetUnfilteredVelocity());
-        SAFE_READ(position_since_boot, cancoder_->GetPositionSinceBoot());
-        SAFE_READ(supply_voltage, cancoder_->GetSupplyVoltage());
-        SAFE_READ(magnet_health, cancoder_->GetMagnetHealth());
+        SAFE_READ(velocity, cancoder_->GetVelocity())
+        SAFE_READ(position, cancoder_->GetPosition())
+        SAFE_READ(absolute_position, cancoder_->GetAbsolutePosition())
+        SAFE_READ(unfilitered_vecloity, cancoder_->GetUnfilteredVelocity())
+        SAFE_READ(position_since_boot, cancoder_->GetPositionSinceBoot())
+        SAFE_READ(supply_voltage, cancoder_->GetSupplyVoltage())
+        SAFE_READ(magnet_health, cancoder_->GetMagnetHealth())
 
-        SAFE_READ(fault_hardware, cancoder_->GetFault_Hardware());
-        SAFE_READ(fault_undervoltage, cancoder_->GetFault_Undervoltage());
-        SAFE_READ(fault_bootduringenable, cancoder_->GetFault_BootDuringEnable());
-        SAFE_READ(fault_unlicensed_feature_in_use, cancoder_->GetFault_UnlicensedFeatureInUse());
-        SAFE_READ(fault_bad_magnet, cancoder_->GetFault_BadMagnet());
+        SAFE_READ(fault_hardware, cancoder_->GetFault_Hardware())
+        SAFE_READ(fault_undervoltage, cancoder_->GetFault_Undervoltage())
+        SAFE_READ(fault_bootduringenable, cancoder_->GetFault_BootDuringEnable())
+        SAFE_READ(fault_unlicensed_feature_in_use, cancoder_->GetFault_UnlicensedFeatureInUse())
+        SAFE_READ(fault_bad_magnet, cancoder_->GetFault_BadMagnet())
 
-        SAFE_READ(sticky_fault_hardware, cancoder_->GetStickyFault_Hardware());
-        SAFE_READ(sticky_fault_undervoltage, cancoder_->GetStickyFault_Undervoltage());
-        SAFE_READ(sticky_fault_bootduringenable, cancoder_->GetStickyFault_BootDuringEnable());
-        SAFE_READ(sticky_fault_unlicensed_feature_in_use, cancoder_->GetStickyFault_UnlicensedFeatureInUse());
-        SAFE_READ(sticky_fault_bad_magnet, cancoder_->GetStickyFault_BadMagnet());
+        SAFE_READ(sticky_fault_hardware, cancoder_->GetStickyFault_Hardware())
+        SAFE_READ(sticky_fault_undervoltage, cancoder_->GetStickyFault_Undervoltage())
+        SAFE_READ(sticky_fault_bootduringenable, cancoder_->GetStickyFault_BootDuringEnable())
+        SAFE_READ(sticky_fault_unlicensed_feature_in_use, cancoder_->GetStickyFault_UnlicensedFeatureInUse())
+        SAFE_READ(sticky_fault_bad_magnet, cancoder_->GetStickyFault_BadMagnet())
 
 		// Actually update the CANCoderHWread_thread_state_ shared between
 		// this thread and read()
@@ -263,7 +245,7 @@ void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
 			// Lock the read_thread_state_ entry to make sure writes
 			// are atomic - reads won't grab data in
 			// the middle of a write
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
             read_thread_state_->setVersionMajor(*version_major);
             read_thread_state_->setVersionMinor(*version_minor);
             read_thread_state_->setVersionBugfix(*version_bugfix);
@@ -295,7 +277,7 @@ void CANCoderDevice::read_thread(std::unique_ptr<Tracer> tracer,
 	}
 }
 
-static bool convertMagnetHealth(ctre::phoenix6::signals::MagnetHealthValue input,
+static bool convertMagnetHealth(const ctre::phoenix6::signals::MagnetHealthValue & input,
                                 hardware_interface::cancoder::MagnetHealth &output)
 {
     switch (input.value)

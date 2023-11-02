@@ -18,10 +18,10 @@
 class SimMatchDataDevice : public MatchDataDevice
 {
 public:
-    SimMatchDataDevice(ros::NodeHandle &nh);
+    explicit SimMatchDataDevice(ros::NodeHandle &nh);
     SimMatchDataDevice(const SimMatchDataDevice &) = delete;
     SimMatchDataDevice(SimMatchDataDevice &&other) noexcept = delete;
-    ~SimMatchDataDevice();
+    virtual ~SimMatchDataDevice();
 
     SimMatchDataDevice &operator=(const SimMatchDataDevice &) = delete;
     SimMatchDataDevice &operator=(SimMatchDataDevice &&) noexcept = delete;

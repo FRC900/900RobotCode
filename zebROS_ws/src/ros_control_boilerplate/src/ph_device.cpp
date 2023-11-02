@@ -24,7 +24,7 @@ PHDevice::PHDevice(const std::string &name_space,
     , command_{std::make_unique<hardware_interface::PHHWCommand>()}
     , read_thread_state_{local_read_ ? std::make_unique<hardware_interface::PHHWState>(ph_id) : nullptr}
     , read_state_mutex_{local_read_ ? std::make_unique<std::mutex>() : nullptr}
-    , read_thread_{local_read_ || local_write_? std::make_unique<std::thread>(&PHDevice::read_thread, this, std::make_unique<Tracer>("ph_read_" + joint_name + " " + name_space), read_hz_) : nullptr}
+    , read_thread_{local_read_ || local_write_? std::make_unique<std::jthread>(&PHDevice::read_thread, this, std::make_unique<Tracer>("ph_read_" + joint_name + " " + name_space), read_hz_) : nullptr}
 {
     // TODO : old code had a check for duplicate use of DIO channels? Needed?
     ROS_INFO_STREAM_NAMED("frc_robot_interface",
@@ -34,13 +34,7 @@ PHDevice::PHDevice(const std::string &name_space,
                         " as PH " << ph_id_);
 }
 
-PHDevice::~PHDevice(void)
-{
-    if (read_thread_ && read_thread_->joinable())
-    {
-        read_thread_->join();
-    }
-}
+PHDevice::~PHDevice(void) = default;
 
 void PHDevice::registerInterfaces(hardware_interface::PHStateInterface &state_interface,
                                   hardware_interface::PHCommandInterface &command_interface,
@@ -65,7 +59,7 @@ void PHDevice::read(const ros::Time &/*time*/, const ros::Duration &/*period*/)
 {
     if (local_read_)
     {
-        std::unique_lock<std::mutex> l(*read_state_mutex_, std::try_to_lock);
+        std::unique_lock l(*read_state_mutex_, std::try_to_lock);
         if (l.owns_lock())
         {
             *state_ = *read_thread_state_;
@@ -122,8 +116,8 @@ void PHDevice::read_thread(std::unique_ptr<Tracer> tracer,
 		ROS_ERROR_STREAM("Error setting thread name " << s.str() << " " << errno);
 	}
 #endif
-	ros::Duration(1.7 + ph_id /10.).sleep(); // Sleep for a few seconds to let CAN start up
-	ROS_INFO_STREAM("Starting ph " << ph_id << " read thread at " << ros::Time::now());
+    ros::Duration(1.7 + ph_id / 10.).sleep(); // Sleep for a few seconds to let CAN start up
+    ROS_INFO_STREAM("Starting ph " << ph_id << " read thread at " << ros::Time::now());
     hardware_interface::PHHWState state(ph_id);
     for (ros::Rate r(poll_frequency); ros::ok(); r.sleep())
 	{
@@ -131,18 +125,18 @@ void PHDevice::read_thread(std::unique_ptr<Tracer> tracer,
 
 		state.setCompressorEnabled(ph_->GetCompressor());
 		state.setPressureSwitch(ph_->GetPressureSwitch());
-		state.setCompressorCurrent(static_cast<double>(ph_->GetCompressorCurrent().value()));
-		for (size_t i = 0; i < 2; i++)
+		state.setCompressorCurrent(ph_->GetCompressorCurrent().value());
+		for (int i = 0; i < 2; i++)
 		{
-			state.setAnalogVoltage(static_cast<double>(ph_->GetAnalogVoltage(i).value()), i);
-			state.setPressure(static_cast<double>(ph_->GetPressure(i).value()), i);
+			state.setAnalogVoltage(ph_->GetAnalogVoltage(i).value(), i);
+			state.setPressure(ph_->GetPressure(i).value(), i);
 		}
 
 		{
 			// Copy to state shared with read() thread
 			// Put this in a separate scope so lock_guard is released
 			// as soon as the state is finished copying
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
 			*read_thread_state_ = state;
 		}
 

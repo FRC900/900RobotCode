@@ -69,7 +69,7 @@ hardware_interface::InterfaceManager *PHDevices::registerInterface()
 void PHDevices::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("PHs");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }
@@ -78,7 +78,7 @@ void PHDevices::read(const ros::Time& time, const ros::Duration& period, Tracer 
 void PHDevices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("PHs");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period);
     }

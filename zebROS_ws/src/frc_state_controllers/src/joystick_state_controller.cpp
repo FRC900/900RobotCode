@@ -38,9 +38,10 @@ private:
 	}
 #endif
 
+public:
 	bool init(hardware_interface::JoystickStateInterface *hw,
-									ros::NodeHandle						&root_nh,
-									ros::NodeHandle						&controller_nh)
+			  ros::NodeHandle                            &root_nh,
+			  ros::NodeHandle                            &controller_nh) override
 	{
 		ROS_INFO_STREAM_NAMED("joystick_state_controller", "init is running");
 
@@ -81,12 +82,12 @@ private:
 		return true;
 	}
 
-	void starting(const ros::Time &time)
+	void starting(const ros::Time &time) override
 	{
 		interval_counter_->reset();
 	}
 
-	void update(const ros::Time &time, const ros::Duration &period)
+	void update(const ros::Time &time, const ros::Duration &period) override
 	{
 		if (interval_counter_->update(period))
 		{
@@ -238,7 +239,7 @@ private:
 		}
 	}
 
-	void stopping(const ros::Time & )
+	void stopping(const ros::Time & ) override
 	{}
 
 }; // class

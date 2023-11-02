@@ -18,7 +18,7 @@ class PeriodicIntervalCounter;
 class MatchDataDevice
 {
 public:
-    MatchDataDevice(ros::NodeHandle &nh);
+    explicit MatchDataDevice(const ros::NodeHandle &nh);
     MatchDataDevice(const MatchDataDevice &) = delete;
     MatchDataDevice(MatchDataDevice &&other) noexcept = delete;
     virtual ~MatchDataDevice();
@@ -27,10 +27,10 @@ public:
     MatchDataDevice &operator=(MatchDataDevice &&) noexcept = delete;
 
     void registerInterfaces(hardware_interface::MatchStateInterface &state_interface,
-                            hardware_interface::RemoteMatchStateInterface &remote_state_interface);
+                            hardware_interface::RemoteMatchStateInterface &remote_state_interface) const;
     virtual void read(const ros::Time& /*time*/, const ros::Duration& period);
 
-    virtual void simInit(ros::NodeHandle nh) {};
+    virtual void simInit(ros::NodeHandle &nh) {};
 
     virtual std::optional<bool> isEnabled(void) const;
     virtual bool getControlWord(HAL_ControlWord &cw) const;

@@ -15,7 +15,7 @@ struct HAL_JoystickAxesInt
 
 JoystickDevice::JoystickDevice(const int joint_index,
                                const std::string &name,
-                               const int id,
+                               const uint8_t id,
                                const double read_hz)
     : name_{name}
     , id_{id}
@@ -30,7 +30,7 @@ JoystickDevice::JoystickDevice(const int joint_index,
 
 JoystickDevice::~JoystickDevice() = default;
 
-void JoystickDevice::registerInterfaces(hardware_interface::JoystickStateInterface &state_interface)
+void JoystickDevice::registerInterfaces(hardware_interface::JoystickStateInterface &state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering Joystick interface for : " << name_ << " at hw ID " << id_);
     hardware_interface::JoystickStateHandle state_handle(name_, state_.get());
@@ -66,7 +66,7 @@ void JoystickDevice::read(const ros::Time &/*time*/, const ros::Duration &period
                                                               HAL_kMaxJoystickAxes);
         for (auto i = 0; i < axesInt.count; i++)
         {
-            uint8_t value = axesInt.axes[i];
+            const auto value = axesInt.axes[i];
             // ROS_INFO_STREAM("Stick=" << joystick_ids_[joystick] << " axis=" << i << " value=" << std::hex << (((unsigned int)value) &0xff));
             state_->addRawAxis(value);
         }

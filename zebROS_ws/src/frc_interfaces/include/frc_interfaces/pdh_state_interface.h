@@ -14,7 +14,7 @@ class PDHHWState
 {
     public:
         //access and set
-		PDHHWState(uint32_t module_number)
+		explicit PDHHWState(uint32_t module_number)
 			: module_number_(module_number)
 		{
 		}
@@ -128,8 +128,8 @@ class PDHHWState
 
 };
 
-typedef StateHandle<const PDHHWState> PDHStateHandle;
-typedef StateHandle<PDHHWState> PDHWritableStateHandle;
+using PDHStateHandle = StateHandle<const PDHHWState>;
+using PDHWritableStateHandle = StateHandle<PDHHWState>;
 
 class PDHStateInterface       : public HardwareResourceManager<PDHStateHandle> {};
 class RemotePDHStateInterface : public HardwareResourceManager<PDHWritableStateHandle, ClaimResources> {};

@@ -61,7 +61,7 @@ DoubleSolenoidDevices::~DoubleSolenoidDevices() = default;
 
 hardware_interface::InterfaceManager *DoubleSolenoidDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_, *position_joint_interface_, *remote_joint_interface_);
     }
@@ -75,7 +75,7 @@ hardware_interface::InterfaceManager *DoubleSolenoidDevices::registerInterface()
 void DoubleSolenoidDevices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("double solenoids");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period);
     }

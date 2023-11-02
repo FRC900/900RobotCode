@@ -17,8 +17,8 @@ RobotOrientationDriver::RobotOrientationDriver(const ros::NodeHandle &nh)
 	, match_data_sub_{nh_.subscribe("/frcrobot_rio/match_data", 1, &RobotOrientationDriver::matchStateCallback, this)}
 	// one_shot = true, auto_start = false
 	// inversting that
-	, most_recent_teleop_timer_{nh_.createTimer(RESET_TO_TELEOP_CMDVEL_TIMEOUT, &RobotOrientationDriver::checkFromTeleopTimeout, this, false, true)}
     , robot_orient_service_{nh_.advertiseService("set_teleop_orient", &RobotOrientationDriver::holdTargetOrientation, this)}
+	, most_recent_teleop_timer_{nh_.createTimer(RESET_TO_TELEOP_CMDVEL_TIMEOUT, &RobotOrientationDriver::checkFromTeleopTimeout, this, false, true)}
 {
 	std_msgs::Bool enable_pub_msg;
 	enable_pub_msg.data = true;

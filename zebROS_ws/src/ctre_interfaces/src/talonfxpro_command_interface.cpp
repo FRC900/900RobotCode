@@ -1,8 +1,6 @@
 #include "ctre_interfaces/talonfxpro_command_interface.h"
 
-namespace hardware_interface
-{
-namespace talonfxpro
+namespace hardware_interface::talonfxpro
 {
 
 // Set up default values
@@ -11,13 +9,9 @@ namespace talonfxpro
 // That should put the talon in a known state
 // rather than relying on them being setup to
 // a certain state previously
-TalonFXProHWCommand::TalonFXProHWCommand(void) 
-{
-}
+TalonFXProHWCommand::TalonFXProHWCommand(void) = default;
 
-TalonFXProHWCommand::~TalonFXProHWCommand()
-{
-}
+TalonFXProHWCommand::~TalonFXProHWCommand() = default;
 
 void TalonFXProHWCommand::setkP(const double kP, const size_t index)
 {
@@ -1514,5 +1508,3 @@ bool TalonFXProHWCommand::getEnableReadThread(void) const
 }
 
 } // namespace talonfxpro
-
-} // namespace hardware_interface

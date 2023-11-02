@@ -28,7 +28,7 @@ public:
                          const bool local_update);
     DoubleSolenoidDevice(const DoubleSolenoidDevice &) = delete;
     DoubleSolenoidDevice(DoubleSolenoidDevice &&other) noexcept = delete;
-    ~DoubleSolenoidDevice();
+    virtual ~DoubleSolenoidDevice();
 
     DoubleSolenoidDevice &operator=(const DoubleSolenoidDevice &) = delete;
     DoubleSolenoidDevice &operator=(DoubleSolenoidDevice &&) noexcept = delete;

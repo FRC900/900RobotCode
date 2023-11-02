@@ -35,7 +35,7 @@ private:
 public:
 	bool init(hardware_interface::talonfxpro::TalonFXProStateInterface *hw,
 			  ros::NodeHandle                                          &root_nh,
-			  ros::NodeHandle                                          &controller_nh)
+			  ros::NodeHandle                                          &controller_nh) override
 	{
 		// get all joint names from the hardware interface
 		const std::vector<std::string> &joint_names = hw->getNames();
@@ -72,7 +72,7 @@ public:
 			m.kv0.push_back(0);
 			m.ka0.push_back(0);
 			m.kg0.push_back(0);
-			m.gravity_type0.push_back("Unknown");
+			m.gravity_type0.emplace_back("Unknown");
 			m.kp1.push_back(0);
 			m.ki1.push_back(0);
 			m.kd1.push_back(0);
@@ -80,7 +80,7 @@ public:
 			m.kv1.push_back(0);
 			m.ka1.push_back(0);
 			m.kg1.push_back(0);
-			m.gravity_type1.push_back("Unknown");
+			m.gravity_type1.emplace_back("Unknown");
 			m.kp2.push_back(0);
 			m.ki2.push_back(0);
 			m.kd2.push_back(0);
@@ -88,9 +88,9 @@ public:
 			m.kv2.push_back(0);
 			m.ka2.push_back(0);
 			m.kg2.push_back(0);
-			m.gravity_type2.push_back("Unknown");
-			m.invert.push_back("");
-			m.neutral_mode.push_back("");
+			m.gravity_type2.emplace_back("Unknown");
+			m.invert.emplace_back("");
+			m.neutral_mode.emplace_back("");
 			m.duty_cycle_neutral_deadband.push_back(0);
 			m.peak_forward_duty_cycle.push_back(0);
 			m.peak_reverse_duty_cycle.push_back(0);
@@ -112,10 +112,10 @@ public:
 			m.feedback_rotor_offset.push_back(0);
 			m.sensor_to_mechanism_ratio.push_back(0);
 			m.rotor_to_sensor_ratio.push_back(0);
-			m.feedback_sensor_source.push_back("");
+			m.feedback_sensor_source.emplace_back("");
 			m.feedback_remote_sensor_id.push_back(0);
 
-			m.differential_sensor_source.push_back("");
+			m.differential_sensor_source.emplace_back("");
 			m.differential_talonfx_sensor_id.push_back(0);
 			m.differential_remote_sensor_id.push_back(0);
 
@@ -131,18 +131,18 @@ public:
 			m.voltage_closed_loop_ramp_period.push_back(0);
 			m.torque_closed_loop_ramp_period.push_back(0);
 
-			m.forward_limit_type.push_back("");
+			m.forward_limit_type.emplace_back("");
 			m.forward_limit_autoset_position_enable.push_back(false);
 			m.forward_limit_autoset_position_value.push_back(0);
 			m.forward_limit_enable.push_back(false);
-			m.forward_limit_source.push_back("");
+			m.forward_limit_source.emplace_back("");
 			m.forward_limit_remote_sensor_id.push_back(0);
 
-			m.reverse_limit_type.push_back("");
+			m.reverse_limit_type.emplace_back("");
 			m.reverse_limit_autoset_position_enable.push_back(false);
 			m.reverse_limit_autoset_position_value.push_back(0);
 			m.reverse_limit_enable.push_back(false);
-			m.reverse_limit_source.push_back("");
+			m.reverse_limit_source.emplace_back("");
 			m.reverse_limit_remote_sensor_id.push_back(0);
 
 			m.beep_on_boot.push_back(false);
@@ -165,7 +165,7 @@ public:
 		return true;
 	}
 
-	void starting(const ros::Time &time)
+	void starting(const ros::Time &time) override
 	{
 		interval_counter_->reset();
 	}
@@ -203,7 +203,7 @@ public:
 		return "Unknown";
 	}
 
-	void update(const ros::Time &time, const ros::Duration &period)
+	void update(const ros::Time &time, const ros::Duration &period) override
 	{
 		// limit rate of publishing
 		if (interval_counter_->update(period))
@@ -216,7 +216,7 @@ public:
 				m.header.stamp = time;
 				for (size_t i = 0; i < num_hw_joints_; i++)
 				{
-					auto &ts = talonfxpro_state_[i];
+					auto const &ts = talonfxpro_state_[i];
 					m.can_id[i] = ts->getCANID();
 					m.kp0[i] = ts->getkP(0);
 					m.ki0[i] = ts->getkI(0);
@@ -380,7 +380,7 @@ public:
 		}
 	}
 
-	void stopping(const ros::Time & /*time*/)
+	void stopping(const ros::Time & /*time*/) override
 	{}
 
 }; // class

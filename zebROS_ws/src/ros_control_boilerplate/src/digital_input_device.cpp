@@ -53,7 +53,7 @@ const std::string &DigitalInputDevice::getName(void) const
     return name_;
 }
 
-void DigitalInputDevice::setSimValue(const bool value)
+void DigitalInputDevice::setSimValue(const bool value) const
 {
     HALSIM_SetDIOValue(dio_channel_, static_cast<int32_t>(value ^ invert_));
 }

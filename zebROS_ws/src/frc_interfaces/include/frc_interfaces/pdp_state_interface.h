@@ -50,8 +50,8 @@ class PDPHWState
 		std::array<double, 16> current_{0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.};
 };
 
-typedef StateHandle<const PDPHWState> PDPStateHandle;
-typedef StateHandle<PDPHWState> PDPWritableStateHandle;
+using PDPStateHandle = StateHandle<const PDPHWState>;
+using PDPWritableStateHandle = StateHandle<PDPHWState>;
 
 class PDPStateInterface       : public HardwareResourceManager<PDPStateHandle> {};
 class RemotePDPStateInterface : public HardwareResourceManager<PDPWritableStateHandle, ClaimResources> {};

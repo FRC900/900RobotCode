@@ -52,7 +52,7 @@ PDPDevices::~PDPDevices() = default;
 
 hardware_interface::InterfaceManager *PDPDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *remote_state_interface_);
     }
@@ -64,7 +64,7 @@ hardware_interface::InterfaceManager *PDPDevices::registerInterface()
 void PDPDevices::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("PDPs");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }

@@ -11,7 +11,7 @@ class PeriodicIntervalCounter
 {
 public:
     // Create a counter which updates at the requested frequency
-    PeriodicIntervalCounter(const double frequency)
+    explicit PeriodicIntervalCounter(const double frequency)
         : desired_period_{ros::Duration{1. / frequency}}
     {
         // Crash early if the frequency passed in is invalid
@@ -44,7 +44,7 @@ public:
             return true;
         }
         current_interval_ += increment;
-        if (current_interval_ > desired_period_)
+        if (current_interval_ >= desired_period_)
         {
             current_interval_ -= desired_period_;
             return true;
@@ -59,11 +59,13 @@ public:
         current_interval_ = ros::Duration{0};
     }
 
-    // Update the current accumulated time to equal the desired
+    // Update the current accumulated time to greater than or equal the desired
     // update period, forcing a publish on the next update call
+    // This should preserve whatever fractional accumulated period duration
+    // is the in the counter, hopefully keeping the update() code more accurate
     void force_publish(void)
     {
-        current_interval_ = desired_period_;
+        current_interval_ += desired_period_;
     }
 private:
     // How often update() should return true, in seconds

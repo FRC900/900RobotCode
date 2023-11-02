@@ -19,8 +19,8 @@ float64[] pid_p0
 float64[] pid_i0
 float64[] pid_d0
 float64[] pid_f0
-int32[] pid_izone0
-int32[] pid_allowable_closed_loop_error0
+float64[] pid_izone0
+float64[] pid_allowable_closed_loop_error0
 float64[] pid_max_integral_accumulator0
 float64[] pid_closed_loop_peak_output0
 int32[]   pid_closed_loop_period0
@@ -28,8 +28,8 @@ float64[] pid_p1
 float64[] pid_i1
 float64[] pid_d1
 float64[] pid_f1
-int32[] pid_izone1
-int32[] pid_allowable_closed_loop_error1
+float64[] pid_izone1
+float64[] pid_allowable_closed_loop_error1
 float64[] pid_max_integral_accumulator1
 float64[] pid_closed_loop_peak_output1
 int32[]   pid_closed_loop_period1
@@ -37,8 +37,8 @@ float64[] pid_p2
 float64[] pid_i2
 float64[] pid_d2
 float64[] pid_f2
-int32[] pid_izone2
-int32[] pid_allowable_closed_loop_error2
+float64[] pid_izone2
+float64[] pid_allowable_closed_loop_error2
 float64[] pid_max_integral_accumulator2
 float64[] pid_closed_loop_peak_output2
 int32[]   pid_closed_loop_period2
@@ -46,8 +46,8 @@ float64[] pid_p3
 float64[] pid_i3
 float64[] pid_d3
 float64[] pid_f3
-int32[] pid_izone3
-int32[] pid_allowable_closed_loop_error3
+float64[] pid_izone3
+float64[] pid_allowable_closed_loop_error3
 float64[] pid_max_integral_accumulator3
 float64[] pid_closed_loop_peak_output3
 int32[]   pid_closed_loop_period3

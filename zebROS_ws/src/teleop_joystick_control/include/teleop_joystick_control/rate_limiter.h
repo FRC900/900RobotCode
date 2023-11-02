@@ -14,8 +14,6 @@ class RateLimiter
 	public:
 		RateLimiter(const double min_val, const double max_val, const double rise_time_in_msec)
 			: rise_time_in_msec_(rise_time_in_msec)
-		    , last_value_(0)
-			, last_update_time_(ros::Time::now())
 		{
 			updateMinMax(min_val, max_val);
 		}
@@ -98,8 +96,8 @@ class RateLimiter
 			double    rise_time_in_msec_;
 			double    min_val_;
 			double    max_val_;
-			double    last_value_;
-			ros::Time last_update_time_;
+			double    last_value_{0};
+			ros::Time last_update_time_{ros::Time::now()};
 };
 
 }

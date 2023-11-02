@@ -19,7 +19,9 @@
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_compbot_offsets.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_elevator_phoenix6_params.yaml" command="load"/>
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_four_bar_phoenix6_params.yaml" command="load"/>
+		<!--
 		<rosparam file="$(find ros_control_boilerplate)/config/2023_angle_swerve_tuning.yaml" command="load"/>
+		-->
 		
 		<rosparam file="$(find ros_control_boilerplate)/config/robot_code_ready_controller_jetson.yaml" command="load"/>
 
@@ -42,7 +44,7 @@
 		 	 intake_talonfxpro_controller
 			 swerve_drive_controller
 			 joint_state_controller_jetson
-			 joint_state_listener_controller
+			 joint_state_listener_controller_jetson
 			 talon_state_controller_jetson
 			 talon_config_controller
 			 match_state_listener_controller
@@ -54,6 +56,8 @@
 			 pigeon2_imu_state_controller
 			 pigeon2_state_controller
 			 robot_code_ready_controller" />
+			 <!--
+			-->
 
 		<node name="uptime_jetson" pkg="uptime" type="uptime_node" output="screen" />
 

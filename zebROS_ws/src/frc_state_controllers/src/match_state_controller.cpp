@@ -17,7 +17,7 @@ private:
 public:
     bool init(hardware_interface::MatchStateInterface *hw,
               ros::NodeHandle                         &root_nh,
-              ros::NodeHandle                         &controller_nh)
+              ros::NodeHandle                         &controller_nh) override
 
 	{
 		ROS_INFO_STREAM_NAMED("match_state_controller", "init is running");
@@ -76,12 +76,12 @@ public:
 		return true;
 	}
 
-    void starting(const ros::Time &time)
+    void starting(const ros::Time &time) override
     {
 		interval_counter_->reset();
     }
 
-    void update(const ros::Time &time, const ros::Duration &period)
+    void update(const ros::Time &time, const ros::Duration &period) override
 	{
 		if (interval_counter_->update(period))
 		{
@@ -124,7 +124,7 @@ public:
 		}
 	}
 
-    void stopping(const ros::Time & )
+    void stopping(const ros::Time & ) override
     {}
 }; // class
 } // namespace
@@ -159,10 +159,11 @@ private:
 		data.setEnabled(msg->Enabled);
 		data.setDisabled(msg->Disabled);
 		data.setAutonomous(msg->Autonomous);
-		data.setFMSAttached(msg->FMSAttached);
 		data.setDSAttached(msg->DSAttached);
+		data.setFMSAttached(msg->FMSAttached);
 		data.setOperatorControl(msg->OperatorControl);
 		data.setTest(msg->Test);
+		data.setEStopped(msg->EStopped);
 
 		data.setBatteryVoltage(msg->BatteryVoltage);
 
@@ -173,16 +174,16 @@ private:
 	}
 
 public:
-	virtual ~MatchStateListenerController()
+	~MatchStateListenerController() override
 	{
 		sub_command_.shutdown();
 	}
 
-	bool init(hardware_interface::RemoteMatchStateInterface *hw, ros::NodeHandle &n)
+	bool init(hardware_interface::RemoteMatchStateInterface *hw, ros::NodeHandle &n) override
 	{
 		// Read list of hw, make a list, grab handles for them, plus allocate storage space
 		auto joint_names = hw->getNames();
-		if (joint_names.size() == 0)
+		if (joint_names.empty())
 		{
 			ROS_ERROR("Match State Listener Controller : no remote match joints defined. Don't run this on a roboRio");
 		}
@@ -202,14 +203,14 @@ public:
 		return true;
 	}
 
-	void starting(const ros::Time & /*time*/)
+	void starting(const ros::Time & /*time*/) override
 	{
 	}
-	void stopping(const ros::Time & /*time*/)
+	void stopping(const ros::Time & /*time*/) override
 	{
 	}
 
-	void update(const ros::Time & /*time*/, const ros::Duration & /*period*/)
+	void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
 	{
 		// Quick way to do a shallow copy of the entire HW state
 		*(handle_.operator->()) = *command_buffer_.readFromRT();

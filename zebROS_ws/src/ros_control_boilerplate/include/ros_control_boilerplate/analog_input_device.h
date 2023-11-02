@@ -30,7 +30,7 @@ public:
                             hardware_interface::RemoteJointInterface &remote_joint_interface);
     void read(const ros::Time& /*time*/, const ros::Duration& /*period*/);
     const std::string &getName(void) const;
-    void setSimValue(const double value);
+    void setSimValue(const double value) const;
 
 private:
     std::string name_;

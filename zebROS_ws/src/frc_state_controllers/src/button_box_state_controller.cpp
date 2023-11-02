@@ -15,12 +15,12 @@ private:
 	std::unique_ptr<PeriodicIntervalCounter> interval_counter_;
 	double publish_rate_{50};
 	frc_msgs::ButtonBoxState prev_button_box_msg_;
-public:
 
+public:
 	ButtonBoxStateController() = default;
 	bool init(hardware_interface::JoystickStateInterface *hw,
 			 ros::NodeHandle						     &root_nh,
-			 ros::NodeHandle						     &controller_nh)
+			 ros::NodeHandle						     &controller_nh) override
 	{
 		ROS_INFO_STREAM_NAMED("button_box_state_controller", "init is running");
 		std::string name;
@@ -60,12 +60,12 @@ public:
 		return true;
 	}
 
-	void starting(const ros::Time &time)
+	void starting(const ros::Time &time) override
 	{
 		interval_counter_->reset();
 	}
 
-	void update(const ros::Time &time, const ros::Duration &period)
+	void update(const ros::Time &time, const ros::Duration &period) override
 	{
 		if (interval_counter_->update(period))
 		{
@@ -142,7 +142,7 @@ public:
 		}
 	}
 
-	void stopping(const ros::Time & )
+	void stopping(const ros::Time & ) override
 	{
 	}
 

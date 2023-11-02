@@ -23,13 +23,11 @@ TalonOrchestraDevice<SIMFLAG>::TalonOrchestraDevice(const std::string &name_spac
 }
 
 template <bool SIMFLAG>
-TalonOrchestraDevice<SIMFLAG>::~TalonOrchestraDevice(void)
-{
-}
+TalonOrchestraDevice<SIMFLAG>::~TalonOrchestraDevice(void) = default;
 
 template <bool SIMFLAG>
 void TalonOrchestraDevice<SIMFLAG>::registerInterfaces(hardware_interface::OrchestraStateInterface &state_interface,
-                                                       hardware_interface::OrchestraCommandInterface &command_interface)
+                                                       hardware_interface::OrchestraCommandInterface &command_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for TalonOrchestra : " << getName());
 
@@ -38,7 +36,6 @@ void TalonOrchestraDevice<SIMFLAG>::registerInterfaces(hardware_interface::Orche
 
     hardware_interface::OrchestraCommandHandle command_handle(state_handle, command_.get());
     command_interface.registerHandle(command_handle);
-
 }
 
 template <bool SIMFLAG>

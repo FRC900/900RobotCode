@@ -58,7 +58,7 @@ CANdleDevices::~CANdleDevices() = default;
 
 hardware_interface::InterfaceManager *CANdleDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_, *remote_state_interface_);
     }
@@ -71,7 +71,7 @@ hardware_interface::InterfaceManager *CANdleDevices::registerInterface()
 void CANdleDevices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("candle");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period);
     }

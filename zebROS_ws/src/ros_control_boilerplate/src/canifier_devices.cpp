@@ -54,9 +54,7 @@ CANifierDevices<SIMFLAG>::CANifierDevices(ros::NodeHandle &root_nh)
 }
 
 template <bool SIMFLAG>
-CANifierDevices<SIMFLAG>::~CANifierDevices()
-{
-}
+CANifierDevices<SIMFLAG>::~CANifierDevices() = default;
 
 template <bool SIMFLAG>
 hardware_interface::InterfaceManager *CANifierDevices<SIMFLAG>::registerInterface()

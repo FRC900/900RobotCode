@@ -13,10 +13,10 @@ class PeriodicIntervalCounter;
 class ROSIterativeRobotDevices : public Devices
 {
 public:
-    ROSIterativeRobotDevices(ros::NodeHandle &root_nh);
+    explicit ROSIterativeRobotDevices(ros::NodeHandle &root_nh);
     ROSIterativeRobotDevices(const ROSIterativeRobotDevices &) = delete;
     ROSIterativeRobotDevices(ROSIterativeRobotDevices &&) noexcept = delete;
-    virtual ~ROSIterativeRobotDevices();
+    ~ROSIterativeRobotDevices() override;
 
     ROSIterativeRobotDevices &operator=(const ROSIterativeRobotDevices &) = delete;
     ROSIterativeRobotDevices &operator=(ROSIterativeRobotDevices &&) noexcept = delete;

@@ -45,7 +45,7 @@ PDHDevice::PDHDevice(const std::string &name_space,
             {
                 if (local_read_)
                 {
-                    read_thread_ = std::make_unique<std::thread>(&PDHDevice::read_thread, this, std::make_unique<Tracer>("pdh_read_" + joint_name + " " + name_space), read_hz_);
+                    read_thread_ = std::make_unique<std::jthread>(&PDHDevice::read_thread, this, std::make_unique<Tracer>("pdh_read_" + joint_name + " " + name_space), read_hz_);
                 }
                 //HAL_Report(HALUsageReporting::kResourceType_PDH, pdh_modules_[i]);
             }
@@ -57,17 +57,11 @@ PDHDevice::PDHDevice(const std::string &name_space,
                     " as PDH " << pdh_module_);
 }
 
-PDHDevice::~PDHDevice()
-{
-    if (read_thread_ && read_thread_->joinable())
-    {
-        read_thread_->join();
-    }
-}
+PDHDevice::~PDHDevice() = default;
 
 void PDHDevice::registerInterfaces(hardware_interface::PDHStateInterface &state_interface,
                                   hardware_interface::PDHCommandInterface &command_interface,
-                                  hardware_interface::RemotePDHStateInterface &remote_state_interface)
+                                  hardware_interface::RemotePDHStateInterface &remote_state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for PDH : " << name_ << " as pdh module " << pdh_module_);
 
@@ -88,7 +82,7 @@ void PDHDevice::read(const ros::Time &/*time*/, const ros::Duration &/*period*/)
 {
     if (local_read_)
     {
-        std::unique_lock<std::mutex> l(*read_state_mutex_, std::try_to_lock);
+        std::unique_lock l(*read_state_mutex_, std::try_to_lock);
         if (l.owns_lock())
         {
             *state_ = *read_thread_state_;
@@ -273,7 +267,7 @@ void PDHDevice::read_thread(std::unique_ptr<Tracer> tracer,
             ROS_ERROR_STREAM("line " << __LINE__ << " pdh_read_thread error : status = " << status << ":" << HAL_GetErrorMessage(status));
         }
 
-        for (size_t channel = 0; channel < 20; channel++)
+        for (int32_t channel = 0; channel < 24; channel++)
         {
             status = 0;
             pdh_state.setChannelCurrent(HAL_GetREVPDHChannelCurrent(pdh_handle_, channel, &status), channel);
@@ -287,7 +281,7 @@ void PDHDevice::read_thread(std::unique_ptr<Tracer> tracer,
             // Copy to state shared with read() thread
             // Put this in a separate scope so lock_guard is released
             // as soon as the state is finished copying
-            std::lock_guard<std::mutex> l(*read_state_mutex_);
+            std::lock_guard l(*read_state_mutex_);
             *read_thread_state_ = pdh_state;
         }
         tracer->report(60);

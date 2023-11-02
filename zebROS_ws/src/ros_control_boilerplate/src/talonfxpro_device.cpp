@@ -17,10 +17,10 @@ TalonFXProDevice::TalonFXProDevice(const std::string &name_space,
 , read_state_mutex_{std::make_unique<std::mutex>()}
 , read_thread_state_{std::make_unique<hardware_interface::talonfxpro::TalonFXProHWState>(can_id)}
 , talonfxpro_{std::make_unique<ctre::phoenix6::hardware::core::CoreTalonFX>(can_id, can_bus)}
-, read_thread_{std::make_unique<std::thread>(&TalonFXProDevice::read_thread, this,
-                                             std::make_unique<Tracer>("tfxpro_read_" + joint_name + " " + name_space),
-                                             joint_index,
-                                             read_hz)}
+, read_thread_{std::make_unique<std::jthread>(&TalonFXProDevice::read_thread, this,
+                                              std::make_unique<Tracer>("tfxpro_read_" + joint_name + " " + name_space),
+                                              joint_index,
+                                              read_hz)}
 {
 		ROS_INFO_STREAM_NAMED("frc_robot_interface",
 							  "Loading joint " << joint_index << "=" << joint_name <<
@@ -31,16 +31,10 @@ TalonFXProDevice::TalonFXProDevice(const std::string &name_space,
         setParentDevice(talonfxpro_.get());
 }
 
-TalonFXProDevice::~TalonFXProDevice()
-{
-    if (read_thread_ && read_thread_->joinable())
-    {
-        read_thread_->join();
-    }
-}
+TalonFXProDevice::~TalonFXProDevice() = default;
 
 void TalonFXProDevice::registerInterfaces(hardware_interface::talonfxpro::TalonFXProStateInterface &state_interface,
-                                          hardware_interface::talonfxpro::TalonFXProCommandInterface &command_interface)
+                                          hardware_interface::talonfxpro::TalonFXProCommandInterface &command_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for TalonFXPro : " << getName() << " at hw ID " << getId() << " on bus " << can_bus_);
     hardware_interface::talonfxpro::TalonFXProStateHandle state_handle(getName(), state_.get());
@@ -51,7 +45,7 @@ void TalonFXProDevice::registerInterfaces(hardware_interface::talonfxpro::TalonF
 
 void TalonFXProDevice::read(const ros::Time &/*time*/, const ros::Duration &/*period*/)
 {
-    std::unique_lock<std::mutex> l(*read_state_mutex_, std::try_to_lock);
+    std::unique_lock l(*read_state_mutex_, std::try_to_lock);
     if (!l.owns_lock())
     {
         return;
@@ -190,7 +184,7 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
         
         hardware_interface::talonfxpro::DifferentialSensorSource differential_sensor_source{hardware_interface::talonfxpro::DifferentialSensorSource::Disabled};
 		{
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
 			if (!read_thread_state_->getEnableReadThread())
             {
 				return;
@@ -199,17 +193,17 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
 		}
         const bool in_differential_mode = differential_sensor_source != hardware_interface::talonfxpro::DifferentialSensorSource::Disabled;
 
-        SAFE_READ(version_major, talonfxpro_->GetVersionMajor());
-        SAFE_READ(version_minor, talonfxpro_->GetVersionMinor());
-        SAFE_READ(version_bugfix, talonfxpro_->GetVersionBugfix());
-        SAFE_READ(version_build, talonfxpro_->GetVersionBuild());
+        SAFE_READ(version_major, talonfxpro_->GetVersionMajor())
+        SAFE_READ(version_minor, talonfxpro_->GetVersionMinor())
+        SAFE_READ(version_bugfix, talonfxpro_->GetVersionBugfix())
+        SAFE_READ(version_build, talonfxpro_->GetVersionBuild())
 
-        SAFE_READ(motor_voltage, talonfxpro_->GetMotorVoltage());
+        SAFE_READ(motor_voltage, talonfxpro_->GetMotorVoltage())
 
-        SAFE_READ(forward_limit, talonfxpro_->GetForwardLimit());
-        SAFE_READ(reverse_limit, talonfxpro_->GetReverseLimit());
+        SAFE_READ(forward_limit, talonfxpro_->GetForwardLimit())
+        SAFE_READ(reverse_limit, talonfxpro_->GetReverseLimit())
 
-        SAFE_READ(ctre_applied_rotor_polarity, talonfxpro_->GetAppliedRotorPolarity());
+        SAFE_READ(ctre_applied_rotor_polarity, talonfxpro_->GetAppliedRotorPolarity())
         hardware_interface::talonfxpro::Inverted applied_rotor_polarity{-1};
         if (ctre_applied_rotor_polarity == ctre::phoenix6::signals::AppliedRotorPolarityValue::PositiveIsCounterClockwise)
         {
@@ -220,20 +214,20 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             applied_rotor_polarity = hardware_interface::talonfxpro::Inverted::Clockwise_Positive;
         }
 
-        SAFE_READ(duty_cycle, talonfxpro_->GetDutyCycle());
-        SAFE_READ(torque_current, talonfxpro_->GetTorqueCurrent());
-        SAFE_READ(stator_current, talonfxpro_->GetStatorCurrent());
-        SAFE_READ(supply_current, talonfxpro_->GetSupplyCurrent());
-        SAFE_READ(supply_voltage, talonfxpro_->GetSupplyVoltage());
-        SAFE_READ(device_temp, talonfxpro_->GetDeviceTemp());
-        SAFE_READ(processor_temp, talonfxpro_->GetProcessorTemp());
-        SAFE_READ(rotor_velocity, talonfxpro_->GetRotorVelocity());
-        SAFE_READ(rotor_position, talonfxpro_->GetRotorPosition());
-        SAFE_READ(velocity, talonfxpro_->GetVelocity());
-        SAFE_READ(position, talonfxpro_->GetPosition());
-        SAFE_READ(acceleration, talonfxpro_->GetAcceleration());
-        SAFE_READ(device_enable, talonfxpro_->GetDeviceEnable());
-        SAFE_READ(motion_magic_is_running, talonfxpro_->GetMotionMagicIsRunning());
+        SAFE_READ(duty_cycle, talonfxpro_->GetDutyCycle())
+        SAFE_READ(torque_current, talonfxpro_->GetTorqueCurrent())
+        SAFE_READ(stator_current, talonfxpro_->GetStatorCurrent())
+        SAFE_READ(supply_current, talonfxpro_->GetSupplyCurrent())
+        SAFE_READ(supply_voltage, talonfxpro_->GetSupplyVoltage())
+        SAFE_READ(device_temp, talonfxpro_->GetDeviceTemp())
+        SAFE_READ(processor_temp, talonfxpro_->GetProcessorTemp())
+        SAFE_READ(rotor_velocity, talonfxpro_->GetRotorVelocity())
+        SAFE_READ(rotor_position, talonfxpro_->GetRotorPosition())
+        SAFE_READ(velocity, talonfxpro_->GetVelocity())
+        SAFE_READ(position, talonfxpro_->GetPosition())
+        SAFE_READ(acceleration, talonfxpro_->GetAcceleration())
+        SAFE_READ(device_enable, talonfxpro_->GetDeviceEnable())
+        SAFE_READ(motion_magic_is_running, talonfxpro_->GetMotionMagicIsRunning())
 
         hardware_interface::talonfxpro::DifferentialControlMode differential_control_mode{hardware_interface::talonfxpro::DifferentialControlMode::DisabledOutput};
 
@@ -326,10 +320,10 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
                 differential_control_mode = hardware_interface::talonfxpro::DifferentialControlMode::CoastOut;
                 break;
             }
-            SAFE_READ(ctre_differential_average_velocity, talonfxpro_->GetDifferentialAverageVelocity());
-            SAFE_READ(ctre_differential_average_position, talonfxpro_->GetDifferentialAveragePosition());
-            SAFE_READ(ctre_differential_difference_velocity, talonfxpro_->GetDifferentialDifferenceVelocity());
-            SAFE_READ(ctre_differential_difference_position, talonfxpro_->GetDifferentialDifferencePosition());
+            SAFE_READ(ctre_differential_average_velocity, talonfxpro_->GetDifferentialAverageVelocity())
+            SAFE_READ(ctre_differential_average_position, talonfxpro_->GetDifferentialAveragePosition())
+            SAFE_READ(ctre_differential_difference_velocity, talonfxpro_->GetDifferentialDifferenceVelocity())
+            SAFE_READ(ctre_differential_difference_position, talonfxpro_->GetDifferentialDifferencePosition())
             differential_average_velocity = *ctre_differential_average_velocity;
             differential_average_position = *ctre_differential_average_position;
             differential_difference_velocity = *ctre_differential_average_velocity;
@@ -366,47 +360,47 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
                 break;
         }
 
-        SAFE_READ(fault_hardware, talonfxpro_->GetFault_Hardware());
-        SAFE_READ(fault_proctemp, talonfxpro_->GetFault_ProcTemp());
-        SAFE_READ(fault_devicetemp, talonfxpro_->GetFault_DeviceTemp());
-        SAFE_READ(fault_undervoltage, talonfxpro_->GetFault_Undervoltage());
-        SAFE_READ(fault_bootduringenable, talonfxpro_->GetFault_BootDuringEnable());
-        SAFE_READ(fault_bridgebrownout, talonfxpro_->GetFault_BridgeBrownout());
-        SAFE_READ(fault_unlicensed_feature_in_use, talonfxpro_->GetFault_UnlicensedFeatureInUse());
-        SAFE_READ(fault_remotesensorreset, talonfxpro_->GetFault_RemoteSensorReset());
-        SAFE_READ(fault_missingdifferentialfx, talonfxpro_->GetFault_MissingDifferentialFX());
-        SAFE_READ(fault_remotesensorposoverflow, talonfxpro_->GetFault_RemoteSensorPosOverflow());
-        SAFE_READ(fault_oversupplyv, talonfxpro_->GetFault_OverSupplyV());
-        SAFE_READ(fault_unstablesupplyv, talonfxpro_->GetFault_UnstableSupplyV());
-        SAFE_READ(fault_reversehardlimit, talonfxpro_->GetFault_ReverseHardLimit());
-        SAFE_READ(fault_forwardhardlimit, talonfxpro_->GetFault_ForwardHardLimit());
-        SAFE_READ(fault_reversesoftlimit, talonfxpro_->GetFault_ReverseSoftLimit());
-        SAFE_READ(fault_forwardsoftlimit, talonfxpro_->GetFault_ForwardSoftLimit());
-        SAFE_READ(fault_remotesensordatainvalid, talonfxpro_->GetFault_RemoteSensorDataInvalid());
-        SAFE_READ(fault_fusedsensoroutofsync, talonfxpro_->GetFault_FusedSensorOutOfSync());
-        SAFE_READ(fault_statorcurrlimit, talonfxpro_->GetFault_StatorCurrLimit());
-        SAFE_READ(fault_supplycurrlimit, talonfxpro_->GetFault_SupplyCurrLimit());
+        SAFE_READ(fault_hardware, talonfxpro_->GetFault_Hardware())
+        SAFE_READ(fault_proctemp, talonfxpro_->GetFault_ProcTemp())
+        SAFE_READ(fault_devicetemp, talonfxpro_->GetFault_DeviceTemp())
+        SAFE_READ(fault_undervoltage, talonfxpro_->GetFault_Undervoltage())
+        SAFE_READ(fault_bootduringenable, talonfxpro_->GetFault_BootDuringEnable())
+        SAFE_READ(fault_bridgebrownout, talonfxpro_->GetFault_BridgeBrownout())
+        SAFE_READ(fault_unlicensed_feature_in_use, talonfxpro_->GetFault_UnlicensedFeatureInUse())
+        SAFE_READ(fault_remotesensorreset, talonfxpro_->GetFault_RemoteSensorReset())
+        SAFE_READ(fault_missingdifferentialfx, talonfxpro_->GetFault_MissingDifferentialFX())
+        SAFE_READ(fault_remotesensorposoverflow, talonfxpro_->GetFault_RemoteSensorPosOverflow())
+        SAFE_READ(fault_oversupplyv, talonfxpro_->GetFault_OverSupplyV())
+        SAFE_READ(fault_unstablesupplyv, talonfxpro_->GetFault_UnstableSupplyV())
+        SAFE_READ(fault_reversehardlimit, talonfxpro_->GetFault_ReverseHardLimit())
+        SAFE_READ(fault_forwardhardlimit, talonfxpro_->GetFault_ForwardHardLimit())
+        SAFE_READ(fault_reversesoftlimit, talonfxpro_->GetFault_ReverseSoftLimit())
+        SAFE_READ(fault_forwardsoftlimit, talonfxpro_->GetFault_ForwardSoftLimit())
+        SAFE_READ(fault_remotesensordatainvalid, talonfxpro_->GetFault_RemoteSensorDataInvalid())
+        SAFE_READ(fault_fusedsensoroutofsync, talonfxpro_->GetFault_FusedSensorOutOfSync())
+        SAFE_READ(fault_statorcurrlimit, talonfxpro_->GetFault_StatorCurrLimit())
+        SAFE_READ(fault_supplycurrlimit, talonfxpro_->GetFault_SupplyCurrLimit())
 
-        SAFE_READ(sticky_fault_hardware, talonfxpro_->GetStickyFault_Hardware());
-        SAFE_READ(sticky_fault_proctemp, talonfxpro_->GetStickyFault_ProcTemp());
-        SAFE_READ(sticky_fault_devicetemp, talonfxpro_->GetStickyFault_DeviceTemp());
-        SAFE_READ(sticky_fault_undervoltage, talonfxpro_->GetStickyFault_Undervoltage());
-        SAFE_READ(sticky_fault_bootduringenable, talonfxpro_->GetStickyFault_BootDuringEnable());
-        SAFE_READ(sticky_fault_bridgebrownout, talonfxpro_->GetStickyFault_BridgeBrownout());
-        SAFE_READ(sticky_fault_unlicensed_feature_in_use, talonfxpro_->GetStickyFault_UnlicensedFeatureInUse());
-        SAFE_READ(sticky_fault_remotesensorreset, talonfxpro_->GetStickyFault_RemoteSensorReset());
-        SAFE_READ(sticky_fault_missingdifferentialfx, talonfxpro_->GetStickyFault_MissingDifferentialFX());
-        SAFE_READ(sticky_fault_remotesensorposoverflow, talonfxpro_->GetStickyFault_RemoteSensorPosOverflow());
-        SAFE_READ(sticky_fault_oversupplyv, talonfxpro_->GetStickyFault_OverSupplyV());
-        SAFE_READ(sticky_fault_unstablesupplyv, talonfxpro_->GetStickyFault_UnstableSupplyV());
-        SAFE_READ(sticky_fault_reversehardlimit, talonfxpro_->GetStickyFault_ReverseHardLimit());
-        SAFE_READ(sticky_fault_forwardhardlimit, talonfxpro_->GetStickyFault_ForwardHardLimit());
-        SAFE_READ(sticky_fault_reversesoftlimit, talonfxpro_->GetStickyFault_ReverseSoftLimit());
-        SAFE_READ(sticky_fault_forwardsoftlimit, talonfxpro_->GetStickyFault_ForwardSoftLimit());
-        SAFE_READ(sticky_fault_remotesensordatainvalid, talonfxpro_->GetStickyFault_RemoteSensorDataInvalid());
-        SAFE_READ(sticky_fault_fusedsensoroutofsync, talonfxpro_->GetStickyFault_FusedSensorOutOfSync());
-        SAFE_READ(sticky_fault_statorcurrlimit, talonfxpro_->GetStickyFault_StatorCurrLimit());
-        SAFE_READ(sticky_fault_supplycurrlimit, talonfxpro_->GetStickyFault_SupplyCurrLimit());
+        SAFE_READ(sticky_fault_hardware, talonfxpro_->GetStickyFault_Hardware())
+        SAFE_READ(sticky_fault_proctemp, talonfxpro_->GetStickyFault_ProcTemp())
+        SAFE_READ(sticky_fault_devicetemp, talonfxpro_->GetStickyFault_DeviceTemp())
+        SAFE_READ(sticky_fault_undervoltage, talonfxpro_->GetStickyFault_Undervoltage())
+        SAFE_READ(sticky_fault_bootduringenable, talonfxpro_->GetStickyFault_BootDuringEnable())
+        SAFE_READ(sticky_fault_bridgebrownout, talonfxpro_->GetStickyFault_BridgeBrownout())
+        SAFE_READ(sticky_fault_unlicensed_feature_in_use, talonfxpro_->GetStickyFault_UnlicensedFeatureInUse())
+        SAFE_READ(sticky_fault_remotesensorreset, talonfxpro_->GetStickyFault_RemoteSensorReset())
+        SAFE_READ(sticky_fault_missingdifferentialfx, talonfxpro_->GetStickyFault_MissingDifferentialFX())
+        SAFE_READ(sticky_fault_remotesensorposoverflow, talonfxpro_->GetStickyFault_RemoteSensorPosOverflow())
+        SAFE_READ(sticky_fault_oversupplyv, talonfxpro_->GetStickyFault_OverSupplyV())
+        SAFE_READ(sticky_fault_unstablesupplyv, talonfxpro_->GetStickyFault_UnstableSupplyV())
+        SAFE_READ(sticky_fault_reversehardlimit, talonfxpro_->GetStickyFault_ReverseHardLimit())
+        SAFE_READ(sticky_fault_forwardhardlimit, talonfxpro_->GetStickyFault_ForwardHardLimit())
+        SAFE_READ(sticky_fault_reversesoftlimit, talonfxpro_->GetStickyFault_ReverseSoftLimit())
+        SAFE_READ(sticky_fault_forwardsoftlimit, talonfxpro_->GetStickyFault_ForwardSoftLimit())
+        SAFE_READ(sticky_fault_remotesensordatainvalid, talonfxpro_->GetStickyFault_RemoteSensorDataInvalid())
+        SAFE_READ(sticky_fault_fusedsensoroutofsync, talonfxpro_->GetStickyFault_FusedSensorOutOfSync())
+        SAFE_READ(sticky_fault_statorcurrlimit, talonfxpro_->GetStickyFault_StatorCurrLimit())
+        SAFE_READ(sticky_fault_supplycurrlimit, talonfxpro_->GetStickyFault_SupplyCurrLimit())
 
         double closed_loop_proportional_output{0};
         double closed_loop_integrated_output{0};
@@ -435,16 +429,16 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::VelocityTorqueCurrentFOC) ||
             (*control_mode == ctre::phoenix6::signals::ControlModeValue::MotionMagicTorqueCurrentFOC))
         {
-            SAFE_READ_INTO(closed_loop_proportional_output, talonfxpro_->GetClosedLoopProportionalOutput());
-            SAFE_READ_INTO(closed_loop_integrated_output, talonfxpro_->GetClosedLoopIntegratedOutput());
-            SAFE_READ_INTO(closed_loop_feed_forward, talonfxpro_->GetClosedLoopFeedForward());
-            SAFE_READ_INTO(closed_loop_derivative_output, talonfxpro_->GetClosedLoopDerivativeOutput());
-            SAFE_READ_INTO(closed_loop_output, talonfxpro_->GetClosedLoopOutput());
-            SAFE_READ(closed_loop_reference_local, talonfxpro_->GetClosedLoopReference());
+            SAFE_READ_INTO(closed_loop_proportional_output, talonfxpro_->GetClosedLoopProportionalOutput())
+            SAFE_READ_INTO(closed_loop_integrated_output, talonfxpro_->GetClosedLoopIntegratedOutput())
+            SAFE_READ_INTO(closed_loop_feed_forward, talonfxpro_->GetClosedLoopFeedForward())
+            SAFE_READ_INTO(closed_loop_derivative_output, talonfxpro_->GetClosedLoopDerivativeOutput())
+            SAFE_READ_INTO(closed_loop_output, talonfxpro_->GetClosedLoopOutput())
+            SAFE_READ(closed_loop_reference_local, talonfxpro_->GetClosedLoopReference())
             closed_loop_reference = units::turn_t{*closed_loop_reference_local};
-            SAFE_READ(closed_loop_reference_slope_local, talonfxpro_->GetClosedLoopReferenceSlope());
+            SAFE_READ(closed_loop_reference_slope_local, talonfxpro_->GetClosedLoopReferenceSlope())
             closed_loop_reference_slope = units::turns_per_second_t{*closed_loop_reference_slope_local};
-            SAFE_READ_INTO(closed_loop_error, talonfxpro_->GetClosedLoopError());
+            SAFE_READ_INTO(closed_loop_error, talonfxpro_->GetClosedLoopError())
         }
 
         // TODO : either read these only if diff mode is active,
@@ -461,17 +455,17 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
 
         if (in_differential_mode)
         {
-            SAFE_READ_INTO(differential_output, talonfxpro_->GetDifferentialOutput());
-            SAFE_READ_INTO(differential_closed_loop_proportional_output, talonfxpro_->GetDifferentialClosedLoopProportionalOutput());
-            SAFE_READ_INTO(differential_closed_loop_integrated_output, talonfxpro_->GetDifferentialClosedLoopIntegratedOutput());
-            SAFE_READ_INTO(differential_closed_loop_feed_forward, talonfxpro_->GetDifferentialClosedLoopFeedForward());
-            SAFE_READ_INTO(differential_closed_loop_derivative_output, talonfxpro_->GetDifferentialClosedLoopDerivativeOutput());
-            SAFE_READ_INTO(differential_closed_loop_output, talonfxpro_->GetDifferentialClosedLoopOutput());
-            SAFE_READ(differential_closed_loop_reference_local, talonfxpro_->GetDifferentialClosedLoopReference());
+            SAFE_READ_INTO(differential_output, talonfxpro_->GetDifferentialOutput())
+            SAFE_READ_INTO(differential_closed_loop_proportional_output, talonfxpro_->GetDifferentialClosedLoopProportionalOutput())
+            SAFE_READ_INTO(differential_closed_loop_integrated_output, talonfxpro_->GetDifferentialClosedLoopIntegratedOutput())
+            SAFE_READ_INTO(differential_closed_loop_feed_forward, talonfxpro_->GetDifferentialClosedLoopFeedForward())
+            SAFE_READ_INTO(differential_closed_loop_derivative_output, talonfxpro_->GetDifferentialClosedLoopDerivativeOutput())
+            SAFE_READ_INTO(differential_closed_loop_output, talonfxpro_->GetDifferentialClosedLoopOutput())
+            SAFE_READ(differential_closed_loop_reference_local, talonfxpro_->GetDifferentialClosedLoopReference())
             differential_closed_loop_reference = units::turn_t{*differential_closed_loop_reference_local};
-            SAFE_READ(differential_closed_loop_reference_slope_local, talonfxpro_->GetDifferentialClosedLoopReferenceSlope());
+            SAFE_READ(differential_closed_loop_reference_slope_local, talonfxpro_->GetDifferentialClosedLoopReferenceSlope())
             differential_closed_loop_reference_slope = units::turns_per_second_t{*differential_closed_loop_reference_slope_local};
-            SAFE_READ_INTO(differential_closed_loop_error, talonfxpro_->GetDifferentialClosedLoopError());
+            SAFE_READ_INTO(differential_closed_loop_error, talonfxpro_->GetDifferentialClosedLoopError())
         }
 
         // Actually update the TalonHWState shared between
@@ -482,7 +476,7 @@ void TalonFXProDevice::read_thread(std::unique_ptr<Tracer> tracer,
 			// Lock the state entry to make sure writes
 			// are atomic - reads won't grab data in
 			// the middle of a write
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
 
             read_thread_state_->setVersionMajor(*version_major);
             read_thread_state_->setVersionMinor(*version_minor);
@@ -675,7 +669,7 @@ bool TalonFXProDevice::setSimLimitSwitches(const bool forward_limit, const bool 
 
 bool TalonFXProDevice::setSimCurrent(const double /*stator_current*/, const double /*supply_current*/)
 {
-    ROS_ERROR_STREAM("Error settings sim current on TalonFXPro device " << getName() << " : Not supported");
+    ROS_ERROR_STREAM("Error setting sim current on TalonFXPro device " << getName() << " : Not supported");
     return false;
 }
 

@@ -17,10 +17,10 @@ namespace hardware_interface
 class PCMDevices : public Devices
 {
 public:
-    PCMDevices(ros::NodeHandle &root_nh);
+    explicit PCMDevices(ros::NodeHandle &root_nh);
     PCMDevices(const PCMDevices &) = delete;
     PCMDevices(PCMDevices &&) noexcept = delete;
-    virtual ~PCMDevices();
+    ~PCMDevices() override;
 
     PCMDevices &operator=(const PCMDevices &) = delete;
     PCMDevices &operator=(PCMDevices &&) noexcept = delete;

@@ -45,7 +45,7 @@ class PDHHWCommand
 };
 
 // Create a handle pointing to a type PDHHWCommand / PDHHWState pair
-typedef CommandHandle<PDHHWCommand, PDHHWState, PDHStateHandle> PDHCommandHandle;
+using PDHCommandHandle = CommandHandle<PDHHWCommand, PDHHWState, PDHStateHandle>;
 
 // Use ClaimResources here since we only want 1 controller
 // to be able to access a given PDH at any particular time

@@ -10,22 +10,22 @@ template <class ConfigT>
 class TeleopCmdVel
 {
 	public:
-		wpi::interpolating_map<double, store_xy> joystick_values;
+		wpi::interpolating_map<double, store_xy> joystick_values_;
 
-		TeleopCmdVel(const ConfigT &config):
+		explicit TeleopCmdVel(const ConfigT &config):
 			x_rate_limit_(-config.max_speed, config.max_speed, config.drive_rate_limit_time),
 			y_rate_limit_(-config.max_speed, config.max_speed, config.drive_rate_limit_time),
 			rotation_rate_limit_(-config.max_rot, config.max_rot, config.rotate_rate_limit_time){
-				joystick_values.insert(atan2(-0.5, -1.0), store_xy(-1.0, -0.5));
-				joystick_values.insert(atan2(0.5, -1.0), store_xy(-1.0, 0.5));
-				joystick_values.insert(atan2(-0.5, 1.0), store_xy(1.0, -0.5));
-				joystick_values.insert(atan2(0.5, 1.0), store_xy(1.0, 0.5));
-				joystick_values.insert(atan2(-1.0, -0.5), store_xy(-0.5, -1.0));
-				joystick_values.insert(atan2(1.0, -0.5), store_xy(-0.5, 1.0));
-				joystick_values.insert(atan2(-1.0, 0.5), store_xy(0.5, -1.0));
-				joystick_values.insert(atan2(1.0, 0.5), store_xy(0.5, 1.0));
-				joystick_values.insert(M_PI, store_xy(-1.0, 0.0));
-				joystick_values.insert(-M_PI, store_xy(-1.0, 0.0));
+				joystick_values_.insert(atan2(-0.5, -1.0), store_xy(-1.0, -0.5));
+				joystick_values_.insert(atan2(0.5, -1.0), store_xy(-1.0, 0.5));
+				joystick_values_.insert(atan2(-0.5, 1.0), store_xy(1.0, -0.5));
+				joystick_values_.insert(atan2(0.5, 1.0), store_xy(1.0, 0.5));
+				joystick_values_.insert(atan2(-1.0, -0.5), store_xy(-0.5, -1.0));
+				joystick_values_.insert(atan2(1.0, -0.5), store_xy(-0.5, 1.0));
+				joystick_values_.insert(atan2(-1.0, 0.5), store_xy(0.5, -1.0));
+				joystick_values_.insert(atan2(1.0, 0.5), store_xy(0.5, 1.0));
+				joystick_values_.insert(M_PI, store_xy(-1.0, 0.0));
+				joystick_values_.insert(-M_PI, store_xy(-1.0, 0.0));
 			}
 
 		void setRobotOrient(const bool &robot_orient, const double &offset_angle)
@@ -75,7 +75,7 @@ class TeleopCmdVel
 			// configured speed
 			double magnitude = dead_zone_check(hypot(leftStickX, leftStickY), config.joystick_deadzone);
 			//ROS_INFO_STREAM(__LINE__ << " magnitude:"  << magnitude);
-			magnitude /= joystick_values[direction].hypot();
+			magnitude /= joystick_values_[direction].hypot();
 			//ROS_INFO_STREAM(__LINE__ << " magnitude:"  << magnitude);
 			if (magnitude != 0)
 			{

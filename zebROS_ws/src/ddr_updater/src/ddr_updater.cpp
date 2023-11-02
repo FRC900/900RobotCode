@@ -8,7 +8,7 @@
 namespace ddr_updater
 {
 
-DDRUpdater::DDRUpdater(ros::NodeHandle n)
+DDRUpdater::DDRUpdater(const ros::NodeHandle &n)
 	: ddr_(n)
 	, ddr_update_thread_(std::bind(&DDRUpdater::DDRUpdateThread, this))
 {

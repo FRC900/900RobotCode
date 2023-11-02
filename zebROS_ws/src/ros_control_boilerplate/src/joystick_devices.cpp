@@ -67,7 +67,7 @@ void JoystickDevices<DEVICE_TYPE>::read(const ros::Time& time, const ros::Durati
 }
 
 template <class DEVICE_TYPE>
-void JoystickDevices<DEVICE_TYPE>::simInit(ros::NodeHandle nh)
+void JoystickDevices<DEVICE_TYPE>::simInit(ros::NodeHandle &nh)
 {
     for (size_t i = 0; i < devices_.size(); i++)
     {

@@ -21,7 +21,7 @@ class MatchDataDevices : public Devices
 {
 
 public:
-    MatchDataDevices(ros::NodeHandle &root_nh);
+    explicit MatchDataDevices(ros::NodeHandle &root_nh);
     MatchDataDevices(const MatchDataDevices &) = delete;
     MatchDataDevices(MatchDataDevices &&) noexcept = delete;
     virtual ~MatchDataDevices();
@@ -32,7 +32,7 @@ public:
     hardware_interface::InterfaceManager *registerInterface() override;
     void read(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
 
-    void simInit(ros::NodeHandle nh) override;
+    void simInit(ros::NodeHandle &nh) override;
 
     std::optional<bool> isEnabled(void) const;
     bool getControlWord(HAL_ControlWord &cw) const;
@@ -44,7 +44,6 @@ private:
     hardware_interface::InterfaceManager interface_manager_;
 };
 
-class MatchDataDevice;
 class SimMatchDataDevice;
 
 using HWMatchDataDevices = MatchDataDevices<MatchDataDevice>;

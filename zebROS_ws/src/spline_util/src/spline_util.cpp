@@ -34,8 +34,8 @@ bool initSpline(Trajectory<T, Order> &trajectory, const std::vector<InitSplinePo
 		{
 			const auto next_it = it + 1;
 			// Segment actually creates the spline segment between points it and next_it
-			trajectory[joint_id].emplace_back(Segment<T, Order>(it->time_from_start, it->state[joint_id],
-																next_it->time_from_start, next_it->state[joint_id]));
+			trajectory[joint_id].emplace_back(it->time_from_start, it->state[joint_id],
+											  next_it->time_from_start, next_it->state[joint_id]);
 			++it;
 		}
 		if (trajectory[joint_id].size() == 0)

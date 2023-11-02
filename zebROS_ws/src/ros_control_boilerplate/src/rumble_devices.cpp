@@ -49,7 +49,7 @@ RumbleDevices::~RumbleDevices() = default;
 
 hardware_interface::InterfaceManager *RumbleDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_, *remote_state_interface_);
     }
@@ -62,7 +62,7 @@ hardware_interface::InterfaceManager *RumbleDevices::registerInterface()
 void RumbleDevices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("rumbles");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period);
     }

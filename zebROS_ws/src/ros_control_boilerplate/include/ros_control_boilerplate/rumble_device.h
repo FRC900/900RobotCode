@@ -23,14 +23,14 @@ public:
                  const bool local_update);
     RumbleDevice(const RumbleDevice &) = delete;
     RumbleDevice(RumbleDevice &&other) noexcept = delete;
-    ~RumbleDevice();
+    virtual ~RumbleDevice();
 
     RumbleDevice &operator=(const RumbleDevice &) = delete;
     RumbleDevice &operator=(RumbleDevice &&) noexcept = delete;
 
     void registerInterfaces(hardware_interface::RumbleStateInterface &state_interface,
                             hardware_interface::RumbleCommandInterface &command_interface,
-                            hardware_interface::RemoteRumbleStateInterface &remote_state_interface);
+                            hardware_interface::RemoteRumbleStateInterface &remote_state_interface) const;
     void write(const ros::Time &time, const ros::Duration &period);
 
 private:

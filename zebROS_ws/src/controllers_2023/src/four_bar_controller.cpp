@@ -11,7 +11,7 @@
 namespace four_bar_controller_2023
 {
 template<typename T>
-bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> &scalar)
+static bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> &scalar)
 {
     T val;
     if (n.getParam(name, val))
@@ -22,7 +22,7 @@ bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> 
     return false;
 }
 
-double readFloatParam(XmlRpc::XmlRpcValue &param)
+static double readFloatParam(const XmlRpc::XmlRpcValue &param)
 {
 	if (!param.valid())
     {

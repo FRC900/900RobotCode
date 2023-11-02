@@ -16,20 +16,15 @@ CTREV5Device::CTREV5Device(const std::string &name_space,
 {
     ros::NodeHandle root_nh(name_space);
     ros::NodeHandle param_nh(root_nh, "generic_hw_control_loop"); // TODO : this shouldn't be hard-coded?
-    int can_config_count_limit = can_config_count_limit_;
-    if (!param_nh.param("talon_config_count_limit", can_config_count_limit, can_config_count_limit))
+    if (!param_nh.param("talon_config_count_limit", can_config_count_limit_, can_config_count_limit_))
     {
-        ROS_ERROR("Failed to read talon_config_count_limit in frc_robot_interface");
-    }
-    else
-    {
-        can_config_count_limit_ = can_config_count_limit;
+        ROS_WARN("Failed to read talon_config_count_limit in frc_robot_interface");
     }
 }
 
 CTREV5Device::~CTREV5Device() = default;
 
-bool CTREV5Device::safeCall(ctre::phoenix::ErrorCode error_code, const std::string &method_name)
+bool CTREV5Device::safeCall(ctre::phoenix::ErrorCode error_code, const std::string &method_name) const
 {
     const auto error_string = phoenixErrorCodeToString(error_code);
     if (!error_string)
@@ -51,7 +46,7 @@ bool CTREV5Device::safeCall(ctre::phoenix::ErrorCode error_code, const std::stri
     return false;
 }
 
-bool CTREV5Device::safeConfigCall(ctre::phoenix::ErrorCode error_code, const std::string &method_name)
+bool CTREV5Device::safeConfigCall(ctre::phoenix::ErrorCode error_code, const std::string &method_name) const
 {
 	can_config_count_ += 1;
 	if (can_config_count_ > can_config_count_limit_)

@@ -9,7 +9,7 @@
 #include "periodic_interval_counter/periodic_interval_counter.h"
 #include "ros_control_boilerplate/match_data_device.h"
 
-MatchDataDevice::MatchDataDevice(ros::NodeHandle &nh)
+MatchDataDevice::MatchDataDevice(const ros::NodeHandle &nh)
     : state_{std::make_unique<hardware_interface::MatchHWState>()}
 {
     ros::NodeHandle hwi_nh(nh, "hardware_interface");
@@ -37,7 +37,7 @@ MatchDataDevice::MatchDataDevice(ros::NodeHandle &nh)
 MatchDataDevice::~MatchDataDevice() = default;
 
 void MatchDataDevice::registerInterfaces(hardware_interface::MatchStateInterface &state_interface,
-                                         hardware_interface::RemoteMatchStateInterface &remote_state_interface)
+                                         hardware_interface::RemoteMatchStateInterface &remote_state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for Match Data");
     hardware_interface::MatchStateHandle state_handle("match_data", state_.get());

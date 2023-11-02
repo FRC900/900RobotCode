@@ -24,16 +24,16 @@ class StaticController:
 	public controller_interface::Controller<hardware_interface::JointCommandInterface>
 {
 	public:
-		StaticController(void) : value_(0) {}
-		~StaticController() {}
+		StaticController(void) = default;
+		~StaticController() override = default;
 
-		virtual bool init(hardware_interface::JointCommandInterface *hw, ros::NodeHandle &n) override;
+		bool init(hardware_interface::JointCommandInterface *hw, ros::NodeHandle &n) override;
 
-		virtual void starting(const ros::Time & /*time*/) override;
-		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override;
+		void starting(const ros::Time & /*time*/) override;
+		void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override;
 
 	private:
 		hardware_interface::JointHandle handle_;
-		double value_;
+		double value_{0};
 };
 }

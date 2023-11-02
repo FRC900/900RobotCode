@@ -15,7 +15,7 @@ CTREV6Device::CTREV6Device(const std::string &device_type,
 
 CTREV6Device::~CTREV6Device() = default;
 
-bool CTREV6Device::safeCall(ctre::phoenix::StatusCode status_code, const std::string &method_name)
+bool CTREV6Device::safeCall(ctre::phoenix::StatusCode status_code, const std::string &method_name) const
 {
     if (status_code.IsOK())
     {

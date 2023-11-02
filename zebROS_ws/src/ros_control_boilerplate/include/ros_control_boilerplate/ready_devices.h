@@ -13,12 +13,11 @@ namespace hardware_interface
 
 class ReadyDevices : public Devices
 {
-
 public:
-    ReadyDevices(ros::NodeHandle &root_nh);
+    explicit ReadyDevices(ros::NodeHandle &root_nh);
     ReadyDevices(const ReadyDevices &) = delete;
     ReadyDevices(ReadyDevices &&) noexcept = delete;
-    virtual ~ReadyDevices();
+    ~ReadyDevices() override;
 
     ReadyDevices &operator=(const ReadyDevices &) = delete;
     ReadyDevices &operator=(ReadyDevices &&) noexcept = delete;

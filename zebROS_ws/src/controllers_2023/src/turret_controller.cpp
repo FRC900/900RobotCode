@@ -18,11 +18,9 @@ namespace turret_controller
 class TurretController : public controller_interface::MultiInterfaceController<hardware_interface::cancoder::CANCoderCommandInterface, hardware_interface::TalonCommandInterface>
 {
     public:
-        TurretController()
-        {
-        }
+        TurretController() = default;
 
-        bool init(hardware_interface::RobotHW *hw, ros::NodeHandle &root_nh, ros::NodeHandle &controller_nh) {
+        bool init(hardware_interface::RobotHW *hw, ros::NodeHandle &root_nh, ros::NodeHandle &controller_nh) override {
             
             //get interface
             hardware_interface::TalonCommandInterface *const talon_command_iface = hw->get<hardware_interface::TalonCommandInterface>();
@@ -66,19 +64,19 @@ class TurretController : public controller_interface::MultiInterfaceController<h
                                 
         }
 
-        void starting(const ros::Time &time) {
+        void starting(const ros::Time &time) override {
             position_command_ = getTurretRelativeAngle();
             ROS_WARN_STREAM("Setting turret on init to " << position_command_);
         }
 
 
-        double getTurretRelativeAngle() {
+        double getTurretRelativeAngle() const {
             double intial_angle = inital_cancoder_angle_ + cancoder_offset_from_0_;
             double current_angle = turret_joint_.getPosition();
             return intial_angle + current_angle; // should be in radians here
         }
 
-        void update(const ros::Time & time, const ros::Duration& period) {
+        void update(const ros::Time & time, const ros::Duration& period) override {
             ROS_INFO_STREAM_THROTTLE(0.5, "Moving turret to " << position_command_);
             if (turret_joint_.getMode() == hardware_interface::TalonMode_Disabled)
             {
@@ -96,7 +94,7 @@ class TurretController : public controller_interface::MultiInterfaceController<h
             }
         }
 
-        void stopping(const ros::Time &time) {
+        void stopping(const ros::Time &time) override {
 
         }
 
@@ -131,7 +129,7 @@ class TurretController : public controller_interface::MultiInterfaceController<h
         ros::ServiceServer turret_service_;
         std::shared_ptr<realtime_tools::RealtimePublisher<std_msgs::Float64>> turret_relative_angle_pub_; // so other code can see the angle of the turret without also doing the conversion 
 
-        double encoder_ticks_to_turret_rel_;
+        //double encoder_ticks_to_turret_rel_;
         double cancoder_offset_from_0_;
         double inital_cancoder_angle_;
         double lower_angle_bound_;

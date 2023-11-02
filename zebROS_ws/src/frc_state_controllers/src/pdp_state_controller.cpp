@@ -19,7 +19,7 @@ private:
 public:
 	bool init(hardware_interface::PDPStateInterface *hw,
 			  ros::NodeHandle						&root_nh,
-			  ros::NodeHandle						&controller_nh)
+			  ros::NodeHandle						&controller_nh) override
 	{
 		ROS_INFO_STREAM_NAMED("pdp_state_controller", "init is running");
 
@@ -75,12 +75,12 @@ public:
 		return true;
 	}
 
-	void starting(const ros::Time &time)
+	void starting(const ros::Time &time) override
 	{
 		interval_counter_->reset();
 	}
 
-	void update(const ros::Time &time, const ros::Duration &period)
+	void update(const ros::Time &time, const ros::Duration &period) override
 	{
 		if (interval_counter_->update(period))
 		{
@@ -90,7 +90,7 @@ public:
 
 				m.header.stamp = time;
 
-				auto &ps = pdp_state_;
+				const auto &ps = pdp_state_;
 
 				//read from the object and stuff it in a msg
 				m.voltage = ps->getVoltage();
@@ -113,7 +113,7 @@ public:
 		}
 	}
 
-	void stopping(const ros::Time & )
+	void stopping(const ros::Time & ) override
 	{}
 }; // class
 } // namespace
@@ -148,12 +148,12 @@ private:
 		command_buffer_.writeFromNonRT(data);
 	}
 public:
-	bool init(hardware_interface::RemotePDPStateInterface *hw, ros::NodeHandle &n)
+	bool init(hardware_interface::RemotePDPStateInterface *hw, ros::NodeHandle &n) override
 	{
 
 		// Read list of hw, make a list, grab handles for them, plus allocate storage space
 		auto joint_names = hw->getNames();
-		if (joint_names.size() == 0)
+		if (joint_names.empty())
 		{
 			ROS_ERROR("PDP State Listener Controller : no remote pdp joints defined");
 		}
@@ -173,14 +173,14 @@ public:
 		return true;
 	}
 
-	void starting(const ros::Time & /*time*/)
+	void starting(const ros::Time & /*time*/) override
 	{
 	}
-	void stopping(const ros::Time & /*time*/)
+	void stopping(const ros::Time & /*time*/) override
 	{
 	}
 
-	void update(const ros::Time & /*time*/, const ros::Duration & /*period*/)
+	void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
 	{
 		// Quick way to do a shallow copy of the entire HW state
 		*(handle_.operator->()) = *command_buffer_.readFromRT();

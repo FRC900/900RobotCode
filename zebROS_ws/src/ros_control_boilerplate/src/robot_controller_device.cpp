@@ -22,7 +22,7 @@ RobotControllerDevice::RobotControllerDevice(ros::NodeHandle &nh)
 
 RobotControllerDevice::~RobotControllerDevice() = default;
 
-void RobotControllerDevice::registerInterfaces(hardware_interface::RobotControllerStateInterface &state_interface)
+void RobotControllerDevice::registerInterfaces(hardware_interface::RobotControllerStateInterface &state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for Robot Controller");
     hardware_interface::RobotControllerStateHandle state_handle("robot_controller_name", state_.get());

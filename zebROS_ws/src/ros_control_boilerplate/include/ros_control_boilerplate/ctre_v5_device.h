@@ -28,8 +28,8 @@ public:
     int getId(void) const;
 
 protected:
-    bool safeCall(ctre::phoenix::ErrorCode error_code, const std::string &method_name);
-    bool safeConfigCall(ctre::phoenix::ErrorCode error_code, const std::string &method_name);
+    bool safeCall(ctre::phoenix::ErrorCode error_code, const std::string &method_name) const;
+    bool safeConfigCall(ctre::phoenix::ErrorCode error_code, const std::string &method_name) const;
 
 private:
     const std::string device_type_;
@@ -39,8 +39,8 @@ private:
     // have to be atomic vars to avoid undefined behavior
     static inline std::atomic<size_t> can_error_count_{0};
     static inline std::atomic<bool> can_error_sent_{false};
-    static inline size_t can_config_count_{0};
-    static inline size_t can_config_count_limit_{10};
+    static inline int can_config_count_{0};
+    static inline int can_config_count_limit_{10};
 };
 
 #endif

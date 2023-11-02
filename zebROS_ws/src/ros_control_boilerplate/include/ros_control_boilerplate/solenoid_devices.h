@@ -16,12 +16,11 @@ namespace hardware_interface
 
 class SolenoidDevices : public Devices
 {
-
 public:
-    SolenoidDevices(ros::NodeHandle &root_nh);
+    explicit SolenoidDevices(ros::NodeHandle &root_nh);
     SolenoidDevices(const SolenoidDevices &) = delete;
     SolenoidDevices(SolenoidDevices &&) noexcept = delete;
-    virtual ~SolenoidDevices();
+    ~SolenoidDevices() override;
 
     SolenoidDevices &operator=(const SolenoidDevices &) = delete;
     SolenoidDevices &operator=(SolenoidDevices &&) noexcept = delete;

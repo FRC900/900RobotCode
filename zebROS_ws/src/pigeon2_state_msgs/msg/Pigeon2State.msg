@@ -27,7 +27,7 @@ float64[] gravity_vector_x
 float64[] gravity_vector_y
 float64[] gravity_vector_z
 float64[] temperature
-uint32[]  uptime
+float64[] uptime
 float64[] accum_gyro_x
 float64[] accum_gyro_y
 float64[] accum_gyro_z

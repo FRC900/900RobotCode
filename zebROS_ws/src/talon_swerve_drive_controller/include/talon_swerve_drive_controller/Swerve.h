@@ -3,16 +3,9 @@
 #include <array>
 #include <cmath>
 #include <functional>
-#include <string>
 #include <map>
-#include <vector>
 #include <Eigen/Dense>
 #include "SwerveMath.h"
-
-//meters, radians, newtons, kg
-//This class will need access to the swerve drive talons
-//Gets should be rotations/encoder unit
-//Sets should be encoder unit/rotation (or rotations/second)
 
 // Create an ordering function for Vectors to use them in a map
 namespace std
@@ -33,6 +26,9 @@ struct less<Eigen::Vector2d>
 };
 }
 
+//meters, radians, newtons, kg
+//Gets should be rotations/encoder unit
+//Sets should be encoder unit/rotation (or rotations/second)
 namespace swerveVar
 {
 struct ratios
@@ -83,7 +79,7 @@ class swerve
 															 const bool useCosScaling = false);
 		std::array<double, WHEELCOUNT> parkingAngles(const std::array<double, WHEELCOUNT> &positionsNew) const;
 
-		double getWheelAngle(int index, double pos) const;
+		double getWheelAngle(size_t index, double pos) const;
 	private:
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheelCoordinates_;
 		swerveDriveMath<WHEELCOUNT> swerveMath_; //this should be public

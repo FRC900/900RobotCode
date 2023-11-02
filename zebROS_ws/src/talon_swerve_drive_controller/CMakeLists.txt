@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
     nav_msgs
     std_msgs
 	  std_srvs
+    periodic_interval_counter
     realtime_tools
 	  roscpp
     talon_controllers

@@ -40,7 +40,7 @@ LatencyCompensationGroups::~LatencyCompensationGroups() = default;
 
 hardware_interface::InterfaceManager *LatencyCompensationGroups::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_);
     }
@@ -51,7 +51,7 @@ hardware_interface::InterfaceManager *LatencyCompensationGroups::registerInterfa
 void LatencyCompensationGroups::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("latencycompensation");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read();
     }

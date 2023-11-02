@@ -166,12 +166,12 @@ bool FRCRobotHWInterface::init(ros::NodeHandle &root_nh, ros::NodeHandle &robot_
 
 	// Create devices which have different code for HW vs. Sim
 	// (sim interface has a similar block, but using Sim vs HW devices)
-	devices_.emplace_back(std::make_shared<HWAS726xDevices>(root_nh));
-	devices_.emplace_back(std::make_shared<HWCANifierDevices>(root_nh));
-	devices_.emplace_back(std::make_shared<HWJoystickDevices>(root_nh));
-	devices_.emplace_back(std::make_shared<HWMatchDataDevices>(root_nh));
-	devices_.emplace_back(std::make_shared<HWSparkMaxDevices>(root_nh));
-	devices_.emplace_back(std::make_shared<HWTalonOrchestraDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<HWAS726xDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<HWCANifierDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<HWJoystickDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<HWMatchDataDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<HWSparkMaxDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<HWTalonOrchestraDevices>(root_nh));
 
 	// Orchestra needs a set of previously created TalonFXs to use as instruments
 	const auto orchestra_devices = getDevicesOfType<HWTalonOrchestraDevices>(devices_);
@@ -183,11 +183,11 @@ bool FRCRobotHWInterface::init(ros::NodeHandle &root_nh, ros::NodeHandle &robot_
 		orchestra_devices->setTalonFXData(talonfxs);
 	}
 
-	for (auto &d : devices_)
+	for (const auto &d : devices_)
 	{
 		d->hwInit(root_nh);
 	}
-	for (auto &d : devices_)
+	for (const auto &d : devices_)
 	{
 		registerInterfaceManager(d->registerInterface());
 	}
@@ -198,7 +198,7 @@ bool FRCRobotHWInterface::init(ros::NodeHandle &root_nh, ros::NodeHandle &robot_
 
 void FRCRobotHWInterface::read(const ros::Time& time, const ros::Duration& period)
 {
-	for (auto &d : devices_)
+	for (const auto &d : devices_)
 	{
 		d->hwRead(time, period, read_tracer_);
 	}
@@ -206,10 +206,10 @@ void FRCRobotHWInterface::read(const ros::Time& time, const ros::Duration& perio
 }
 
 template <class T>
-static bool read_control_word(const std::vector<std::shared_ptr<Devices>> &devices_, HAL_ControlWord &cw)
+static bool read_control_word(const std::vector<std::unique_ptr<Devices>> &devices, HAL_ControlWord &cw)
 {
-	const auto devices = getDevicesOfType<T>(devices_);
-	return devices && devices->getControlWord(cw);
+	const auto d = getDevicesOfType<T>(devices);
+	return d && d->getControlWord(cw);
 }
 
 //#define DEBUG_WRITE
@@ -225,8 +225,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 	// For the Rio, the HALSIM_SetControlWord() call does nothing, since in
 	// that case the real frc::DriverStation code is used which is actually
 	// hooked up directly to the real driver station.
-	HAL_ControlWord cw;
-	if (read_control_word<HWMatchDataDevices>(devices_, cw))
+	if (HAL_ControlWord cw; read_control_word<HWMatchDataDevices>(devices_, cw))
 	{
 		HALSIM_SetControlWord(cw);
 
@@ -236,7 +235,7 @@ void FRCRobotHWInterface::write(const ros::Time& time, const ros::Duration& peri
 		Devices::setEnabled(cw.enabled);
 	}
 
-	for (auto &d : devices_)
+	for (const auto &d : devices_)
 	{
 		d->hwWrite(time, period, write_tracer_);
 	}

@@ -399,7 +399,7 @@ TalonConfigConfig TalonCIParams::toConfig(void) const
 }
 
 // Read a joint name from the given nodehandle's params
-bool TalonCIParams::readJointName(ros::NodeHandle &n)
+bool TalonCIParams::readJointName(const ros::NodeHandle &n)
 {
     if (!n.getParam("joint", joint_name_))
     {
@@ -409,13 +409,13 @@ bool TalonCIParams::readJointName(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonCIParams::readConversion(ros::NodeHandle &n)
+bool TalonCIParams::readConversion(const ros::NodeHandle &n)
 {
     n.getParam("conversion_factor", conversion_factor_);
     return true;
 }
 
-bool TalonCIParams::readTalonFXSensorConfig(ros::NodeHandle &n)
+bool TalonCIParams::readTalonFXSensorConfig(const ros::NodeHandle &n)
 {
     std::string str;
     if (n.getParam("motor_commutation", str))
@@ -459,10 +459,9 @@ bool TalonCIParams::readTalonFXSensorConfig(ros::NodeHandle &n)
 };
 
 // Read a joint name from the given nodehandle's params
-bool TalonCIParams::readNeutralMode(ros::NodeHandle &n)
+bool TalonCIParams::readNeutralMode(const ros::NodeHandle &n)
 {
-    std::string mode_string;
-    if (n.getParam("neutral_mode", mode_string))
+    if (std::string mode_string; n.getParam("neutral_mode", mode_string))
     {
         if (mode_string == "EEPROM")
             neutral_mode_ = hardware_interface::NeutralMode_EEPROM_Setting;
@@ -480,7 +479,7 @@ bool TalonCIParams::readNeutralMode(ros::NodeHandle &n)
     return true;
 }
 // TODO: create a method that reads the feedback settings enum
-bool TalonCIParams::readFeedbackType(ros::NodeHandle &n)
+bool TalonCIParams::readFeedbackType(const ros::NodeHandle &n)
 {
     std::string str;
     if (n.getParam("feedback_type", str) && !stringToFeedbackDevice(str, feedback_type_))
@@ -564,14 +563,14 @@ bool TalonCIParams::readFeedbackType(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonCIParams::readInverts(ros::NodeHandle &n)
+bool TalonCIParams::readInverts(const ros::NodeHandle &n)
 {
     n.getParam("invert_output", invert_output_);
     n.getParam("sensor_phase", sensor_phase_);
     return true;
 }
 
-bool TalonCIParams::readCloseLoopParams(ros::NodeHandle &n)
+bool TalonCIParams::readCloseLoopParams(const ros::NodeHandle &n)
 {
     XmlRpc::XmlRpcValue pid_param_list;
 
@@ -605,8 +604,8 @@ bool TalonCIParams::readCloseLoopParams(ros::NodeHandle &n)
             findFloatParam("i", pidparams, i_[i]);
             findFloatParam("d", pidparams, d_[i]);
             findFloatParam("f", pidparams, f_[i]);
-            findIntParam("i_zone", pidparams, izone_[i]);
-            findIntParam("allowable_closed_loop_error", pidparams, allowable_closed_loop_error_[i]);
+            findFloatParam("i_zone", pidparams, izone_[i]);
+            findFloatParam("allowable_closed_loop_error", pidparams, allowable_closed_loop_error_[i]);
             findFloatParam("max_integral_accumulator", pidparams, max_integral_accumulator_[i]);
             findFloatParam("closed_loop_peak_output", pidparams, closed_loop_peak_output_[i]);
             findIntParam("closed_loop_period", pidparams, closed_loop_period_[i]);
@@ -620,7 +619,7 @@ bool TalonCIParams::readCloseLoopParams(ros::NodeHandle &n)
     return false;
 }
 
-bool TalonCIParams::readOutputShaping(ros::NodeHandle &n)
+bool TalonCIParams::readOutputShaping(const ros::NodeHandle &n)
 {
     n.getParam("closed_loop_ramp", closed_loop_ramp_);
     n.getParam("open_loop_ramp", open_loop_ramp_);
@@ -631,7 +630,7 @@ bool TalonCIParams::readOutputShaping(ros::NodeHandle &n)
     n.getParam("neutral_deadband", neutral_deadband_);
     return true;
 }
-bool TalonCIParams::readVoltageCompensation(ros::NodeHandle &n)
+bool TalonCIParams::readVoltageCompensation(const ros::NodeHandle &n)
 {
     bool saturation_read = false;
     if (n.getParam("voltage_compensation_saturation", voltage_compensation_saturation_))
@@ -647,7 +646,7 @@ bool TalonCIParams::readVoltageCompensation(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonCIParams::readVelocitySignalConditioning(ros::NodeHandle &n)
+bool TalonCIParams::readVelocitySignalConditioning(const ros::NodeHandle &n)
 {
     std::string str_val;
     n.getParam("velocity_measurement_period", str_val);
@@ -680,7 +679,7 @@ bool TalonCIParams::readVelocitySignalConditioning(ros::NodeHandle &n)
     return true;
 };
 
-bool TalonCIParams::readLimitSwitches(ros::NodeHandle &n)
+bool TalonCIParams::readLimitSwitches(const ros::NodeHandle &n)
 {
     std::string str_val;
     hardware_interface::LimitSwitchSource limit_switch_source;
@@ -759,7 +758,7 @@ bool TalonCIParams::readLimitSwitches(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonCIParams::readSoftLimits(ros::NodeHandle &n)
+bool TalonCIParams::readSoftLimits(const ros::NodeHandle &n)
 {
     int param_count = 0;
     if (n.getParam("softlimit_forward_threshold", softlimit_forward_threshold_))
@@ -777,7 +776,7 @@ bool TalonCIParams::readSoftLimits(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonCIParams::readCurrentLimits(ros::NodeHandle &n)
+bool TalonCIParams::readCurrentLimits(const ros::NodeHandle &n)
 {
     size_t params_read = 0;
     if (n.getParam("current_limit_peak_amps", current_limit_peak_amps_))
@@ -792,7 +791,7 @@ bool TalonCIParams::readCurrentLimits(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonCIParams::readSupplyCurrentLimits(ros::NodeHandle &n)
+bool TalonCIParams::readSupplyCurrentLimits(const ros::NodeHandle &n)
 {
     int params_read = 0;
     if (n.getParam("supply_current_limit", supply_current_limit_))
@@ -808,7 +807,7 @@ bool TalonCIParams::readSupplyCurrentLimits(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonCIParams::readStatorCurrentLimits(ros::NodeHandle &n)
+bool TalonCIParams::readStatorCurrentLimits(const ros::NodeHandle &n)
 {
     int params_read = 0;
     if (n.getParam("stator_current_limit", stator_current_limit_))
@@ -823,7 +822,7 @@ bool TalonCIParams::readStatorCurrentLimits(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonCIParams::readMotionControl(ros::NodeHandle &n)
+bool TalonCIParams::readMotionControl(const ros::NodeHandle &n)
 {
     n.getParam("motion_cruise_velocity", motion_cruise_velocity_);
     n.getParam("motion_acceleration", motion_acceleration_);
@@ -832,7 +831,7 @@ bool TalonCIParams::readMotionControl(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonCIParams::readStatusFramePeriods(ros::NodeHandle &n)
+bool TalonCIParams::readStatusFramePeriods(const ros::NodeHandle &n)
 {
     n.getParam("status_1_general_period", status_frame_periods_[hardware_interface::Status_1_General]);
     n.getParam("status_2_feedback0_period", status_frame_periods_[hardware_interface::Status_2_Feedback0]);
@@ -853,7 +852,7 @@ bool TalonCIParams::readStatusFramePeriods(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonCIParams::readControlFramePeriods(ros::NodeHandle &n)
+bool TalonCIParams::readControlFramePeriods(const ros::NodeHandle &n)
 {
     n.getParam("control_3_general_period", control_frame_periods_[hardware_interface::Control_3_General]);
     n.getParam("control_4_advanced_period", control_frame_periods_[hardware_interface::Control_4_Advanced]);
@@ -863,7 +862,7 @@ bool TalonCIParams::readControlFramePeriods(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonCIParams::readTalonThread(ros::NodeHandle &n)
+bool TalonCIParams::readTalonThread(const ros::NodeHandle &n)
 {
     n.getParam("enable_read_thread", enable_read_thread_);
     return true;
@@ -871,7 +870,7 @@ bool TalonCIParams::readTalonThread(ros::NodeHandle &n)
 
 // Read a double named <param_type> from the array/map
 // in params
-bool TalonCIParams::findFloatParam(std::string param_name, XmlRpc::XmlRpcValue &params, double &val) const
+bool TalonCIParams::findFloatParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, double &val) const
 {
     if (!params.hasMember(param_name))
         return false;
@@ -896,7 +895,7 @@ bool TalonCIParams::findFloatParam(std::string param_name, XmlRpc::XmlRpcValue &
 
 // Read an integer named <param_name> from the array/map
 // in params
-bool TalonCIParams::findIntParam(std::string param_name, XmlRpc::XmlRpcValue &params, int &val) const
+bool TalonCIParams::findIntParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, int &val) const
 {
     if (!params.hasMember(param_name))
         return false;
@@ -1001,7 +1000,7 @@ bool TalonCIParams::stringToFeedbackDevice(const std::string &str,
 }
 
 bool TalonCIParams::stringToRemoteSensorSource(const std::string &str,
-                                               hardware_interface::RemoteSensorSource &source)
+                                               hardware_interface::RemoteSensorSource &source) const
 {
     if (str == "Off")
         source = hardware_interface::RemoteSensorSource_Off;
@@ -1149,13 +1148,13 @@ bool TalonControllerInterface::initWithNode(hardware_interface::TalonCommandInte
         }
 
         for (int i = 0; i < param.size(); ++i)
-            joint_nodes.push_back(ros::NodeHandle(controller_nh,
-                        static_cast<std::string>(param[i])));
+        {
+            joint_nodes.emplace_back(controller_nh, static_cast<std::string>(param[i]));
+        }
     }
     else if (param.getType() == XmlRpc::XmlRpcValue::TypeString)
     {
-        joint_nodes.push_back(ros::NodeHandle(controller_nh,
-                    static_cast<std::string>(param)));
+        joint_nodes.emplace_back(controller_nh, static_cast<std::string>(param));
     }
     else
     {
@@ -1692,7 +1691,9 @@ void TalonControllerInterface::srvUpdateThread(std::shared_ptr<dynamic_reconfigu
     ROS_INFO_STREAM("srvUpdateThread started for joint " << params_.joint_name_);
     // Early out if ddr isn't used for this controller
     if (!srv)
+    {
         return;
+    }
 #ifdef __linux__
     struct sched_param sp;
     sp.sched_priority = 0;

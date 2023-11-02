@@ -38,14 +38,14 @@ public:
                    const double read_hz);
     SparkMaxDevice(const SparkMaxDevice &) = delete;
     SparkMaxDevice(SparkMaxDevice &&other) noexcept = delete;
-    ~SparkMaxDevice();
+    virtual ~SparkMaxDevice();
 
     SparkMaxDevice &operator=(const SparkMaxDevice &) = delete;
     SparkMaxDevice &operator=(SparkMaxDevice &&) noexcept = delete;
 
     void registerInterfaces(hardware_interface::SparkMaxStateInterface &state_interface,
                             hardware_interface::SparkMaxCommandInterface &command_interface,
-                            hardware_interface::RemoteSparkMaxStateInterface &remote_state_interface);
+                            hardware_interface::RemoteSparkMaxStateInterface &remote_state_interface) const;
     void read(const ros::Time &time, const ros::Duration &period);
     void write(const ros::Time &time, const ros::Duration &period);
 
@@ -65,7 +65,7 @@ private:
 
     std::unique_ptr<hardware_interface::SparkMaxHWState> read_thread_state_;
     std::unique_ptr<std::mutex> read_state_mutex_;
-    std::unique_ptr<std::thread> read_thread_;
+    std::unique_ptr<std::jthread> read_thread_;
     void read_thread(std::unique_ptr<Tracer> tracer,
                      double poll_frequency);
 

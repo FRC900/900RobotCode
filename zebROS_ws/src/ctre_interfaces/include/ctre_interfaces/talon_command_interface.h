@@ -69,19 +69,19 @@ class TalonHWCommand
 		void setF(double ff, size_t index);
 		double getF(size_t index);
 
-		void setIZ(int i_zone, size_t index);
-		int getIZ(size_t index) const;
+		void setIZ(double i_zone, size_t index);
+		double getIZ(size_t index) const;
 
-		void setAllowableClosedloopError(int allowable_closed_loop_error, size_t index);
-		int getAllowableClosedloopError(size_t index) const;
-		void setMaxIntegralAccumulator(int max_integral_accumulator, size_t index);
-		int getMaxIntegralAccumulator(size_t index) const;
+		void setAllowableClosedloopError(double allowable_closed_loop_error, size_t index);
+		double getAllowableClosedloopError(size_t index) const;
+		void setMaxIntegralAccumulator(double max_integral_accumulator, size_t index);
+		double getMaxIntegralAccumulator(size_t index) const;
 		void setClosedLoopPeakOutput(double closed_loop_peak_output, size_t index);
 		double getClosedLoopPeakOutput(size_t index) const;
 
 		void setClosedLoopPeriod(int closed_loop_period, size_t index);
 		int getClosedLoopPeriod(size_t index) const;
-		bool pidfChanged(double &p, double &i, double &d, double &f, int &iz, int &allowable_closed_loop_error, double &max_integral_accumulator, double &closed_loop_peak_output, int &closed_loop_period, size_t index);
+		bool pidfChanged(double &p, double &i, double &d, double &f, double &iz, double &allowable_closed_loop_error, double &max_integral_accumulator, double &closed_loop_peak_output, int &closed_loop_period, size_t index);
 		void resetPIDF(size_t index);
 
 		void setAuxPidPolarity(bool aux_pid_polarity);
@@ -514,8 +514,8 @@ class TalonHWCommand
 		std::array<double, TALON_PIDF_SLOTS> i_;
 		std::array<double, TALON_PIDF_SLOTS> d_;
 		std::array<double, TALON_PIDF_SLOTS> f_;
-		std::array<int, TALON_PIDF_SLOTS>    i_zone_;
-		std::array<int, TALON_PIDF_SLOTS>    allowable_closed_loop_error_;
+		std::array<double, TALON_PIDF_SLOTS> i_zone_;
+		std::array<double, TALON_PIDF_SLOTS> allowable_closed_loop_error_;
 		std::array<double, TALON_PIDF_SLOTS> max_integral_accumulator_;
 		std::array<double, TALON_PIDF_SLOTS> closed_loop_peak_output_;
 		std::array<int, TALON_PIDF_SLOTS>    closed_loop_period_;
@@ -549,11 +549,11 @@ class TalonHWCommand
 		// that talon's controller is being initialized
 		std::shared_ptr<std::mutex> mutex_;
 
-		static constexpr double double_value_epsilon = 0.0001;
+		static constexpr double double_value_epsilon = 0.00001;
 };
 
 // Create a handle pointing to a type TalonHWCommand / TalonHWState pair
-typedef CommandHandle<TalonHWCommand, TalonHWState, TalonStateHandle> TalonCommandHandle;
+using TalonCommandHandle = CommandHandle<TalonHWCommand, TalonHWState, TalonStateHandle>;
 
 // Use ClaimResources here since we only want 1 controller
 // to be able to access a given Talon at any particular time

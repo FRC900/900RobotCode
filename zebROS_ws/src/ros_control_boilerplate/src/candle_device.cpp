@@ -40,7 +40,7 @@ CANdleDevice::~CANdleDevice() = default;
 
 void CANdleDevice::registerInterfaces(hardware_interface::candle::CANdleStateInterface &state_interface,
                                       hardware_interface::candle::CANdleCommandInterface &command_interface,
-                                      hardware_interface::candle::RemoteCANdleStateInterface &remote_state_interface)
+                                      hardware_interface::candle::RemoteCANdleStateInterface &remote_state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for CANdle : " << getName() << " at CAN id " << getId());
 
@@ -68,8 +68,7 @@ void CANdleDevice::write(const ros::Time &/*time*/, const ros::Duration &/*perio
     //  if it did change, update the actual CANdle, and update the state
 
     // Brightness
-    double brightness;
-    if (command_->brightnessChanged(brightness)) {
+    if (double brightness; command_->brightnessChanged(brightness)) {
         if (safeCall(
             candle_->ConfigBrightnessScalar(brightness),
             "candle_->ConfigBrightnessScalar"
@@ -82,8 +81,7 @@ void CANdleDevice::write(const ros::Time &/*time*/, const ros::Duration &/*perio
     }
 
     // Show status LED when active
-    bool status_led_when_active;
-    if (command_->statusLEDWhenActiveChanged(status_led_when_active)) {
+    if (bool status_led_when_active; command_->statusLEDWhenActiveChanged(status_led_when_active)) {
         if (safeCall(
             candle_->ConfigStatusLedState(!status_led_when_active),
             "candle_->ConfigStatusLedState"
@@ -96,8 +94,7 @@ void CANdleDevice::write(const ros::Time &/*time*/, const ros::Duration &/*perio
     }
 
     // Enabled
-    bool enabled;
-    if (command_->enabledChanged(enabled)) {
+    if (bool enabled; command_->enabledChanged(enabled)) {
         if (safeCall(
             candle_->configV5Enabled(enabled),
             "candle_->configV5Enabled"
@@ -110,8 +107,7 @@ void CANdleDevice::write(const ros::Time &/*time*/, const ros::Duration &/*perio
     }
 
     // Stop animations
-    bool stop_animations;
-    if (command_->stopAnimationsChanged(stop_animations)) {
+    if (bool stop_animations; command_->stopAnimationsChanged(stop_animations)) {
         size_t max_animations = (size_t)candle_->GetMaxSimultaneousAnimationCount();
         for (size_t i = 0; i < max_animations; i++) {
             candle_->ClearAnimation(i);
@@ -123,8 +119,8 @@ void CANdleDevice::write(const ros::Time &/*time*/, const ros::Duration &/*perio
     }
 
     // Animation
-    std::vector<hardware_interface::candle::Animation> candle_animations;
-    if (command_->animationsChanged(candle_animations)) {
+    if (std::vector<hardware_interface::candle::Animation> candle_animations;
+        command_->animationsChanged(candle_animations)) {
         for (hardware_interface::candle::Animation& candle_animation : candle_animations) {
             // Clear any old animations
             size_t group_max = (size_t)(candle_animation.start + candle_animation.count);

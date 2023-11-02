@@ -14,9 +14,8 @@ namespace hardware_interface
 template <bool SIMFLAG>
 class SparkMaxDevices : public Devices
 {
-
 public:
-    SparkMaxDevices(ros::NodeHandle &root_nh);
+    explicit SparkMaxDevices(ros::NodeHandle &root_nh);
     SparkMaxDevices(const SparkMaxDevices &) = delete;
     SparkMaxDevices(SparkMaxDevices &&) noexcept = delete;
     virtual ~SparkMaxDevices();

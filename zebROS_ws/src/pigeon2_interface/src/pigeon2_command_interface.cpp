@@ -1,13 +1,9 @@
 #include "pigeon2_interface/pigeon2_command_interface.h"
 
-namespace hardware_interface
-{
-namespace pigeon2
+namespace hardware_interface::pigeon2
 {
 
-Pigeon2HWCommand::Pigeon2HWCommand(void)
-{
-}
+Pigeon2HWCommand::Pigeon2HWCommand(void) = default;
 
 void Pigeon2HWCommand::setMountPoseYaw(const double direction)
 {
@@ -211,5 +207,4 @@ bool Pigeon2HWCommand::clearStickyFaultsChanged(void)
 	return ret;
 }
 
-} // namespace hardware_interface
-} // namespace cancoder
+} // namespace

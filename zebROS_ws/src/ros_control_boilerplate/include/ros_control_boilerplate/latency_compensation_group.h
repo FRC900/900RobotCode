@@ -47,7 +47,7 @@ public:
     LatencyCompensationGroup &operator=(const LatencyCompensationGroup &) = delete;
     LatencyCompensationGroup &operator=(LatencyCompensationGroup &&) noexcept = delete;
 
-    void registerInterfaces(hardware_interface::latency_compensation::CTRELatencyCompensationStateInterface &state_interface);
+    void registerInterfaces(hardware_interface::latency_compensation::CTRELatencyCompensationStateInterface &state_interface) const;
     void read(void);
 
 private:
@@ -64,7 +64,7 @@ private:
 
     std::mutex read_state_mutex_;
     std::unique_ptr<hardware_interface::latency_compensation::CTRELatencyCompensationState> read_thread_state_;
-    std::thread read_thread_;
+    std::jthread read_thread_;
 };
 
 #endif

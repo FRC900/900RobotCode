@@ -16,10 +16,10 @@ class PWMDevices : public Devices
 {
 
 public:
-    PWMDevices(ros::NodeHandle &root_nh);
+    explicit PWMDevices(ros::NodeHandle &root_nh);
     PWMDevices(const PWMDevices &) = delete;
     PWMDevices(PWMDevices &&) noexcept = delete;
-    virtual ~PWMDevices();
+    ~PWMDevices() override;
 
     PWMDevices &operator=(const PWMDevices &) = delete;
     PWMDevices &operator=(PWMDevices &&) noexcept = delete;

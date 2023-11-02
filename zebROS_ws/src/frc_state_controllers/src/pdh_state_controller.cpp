@@ -18,7 +18,7 @@ private:
 public:	
 	bool init(hardware_interface::PDHStateInterface *hw,
 			  ros::NodeHandle                       &root_nh,
-			  ros::NodeHandle                       &controller_nh)
+			  ros::NodeHandle                       &controller_nh) override
 	{
 		ROS_INFO_STREAM_NAMED("pdh_state_controller", "init is running");
 

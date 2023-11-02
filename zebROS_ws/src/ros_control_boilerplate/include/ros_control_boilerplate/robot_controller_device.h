@@ -16,15 +16,15 @@ class PeriodicIntervalCounter;
 class RobotControllerDevice
 {
 public:
-    RobotControllerDevice(ros::NodeHandle &nh);
+    explicit RobotControllerDevice(ros::NodeHandle &nh);
     RobotControllerDevice(const RobotControllerDevice &) = delete;
     RobotControllerDevice(RobotControllerDevice &&other) noexcept = delete;
-    ~RobotControllerDevice();
+    virtual ~RobotControllerDevice();
 
     RobotControllerDevice &operator=(const RobotControllerDevice &) = delete;
     RobotControllerDevice &operator=(RobotControllerDevice &&) noexcept = delete;
 
-    void registerInterfaces(hardware_interface::RobotControllerStateInterface &state_interface);
+    void registerInterfaces(hardware_interface::RobotControllerStateInterface &state_interface) const;
     void read(const ros::Time& time, const ros::Duration& period);
 
 private:

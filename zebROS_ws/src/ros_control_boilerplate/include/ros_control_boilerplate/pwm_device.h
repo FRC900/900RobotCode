@@ -24,7 +24,7 @@ public:
               const bool local_update);
     PWMDevice(const PWMDevice &) = delete;
     PWMDevice(PWMDevice &&other) noexcept = delete;
-    ~PWMDevice();
+    virtual ~PWMDevice();
 
     PWMDevice &operator=(const PWMDevice &) = delete;
     PWMDevice &operator=(PWMDevice &&) noexcept = delete;

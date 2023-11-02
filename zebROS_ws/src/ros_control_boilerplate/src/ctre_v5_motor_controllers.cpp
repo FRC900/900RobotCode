@@ -61,7 +61,7 @@ CTREV5MotorControllers::~CTREV5MotorControllers() = default;
 
 hardware_interface::InterfaceManager *CTREV5MotorControllers::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_, *remote_state_interface_);
     }
@@ -74,7 +74,7 @@ hardware_interface::InterfaceManager *CTREV5MotorControllers::registerInterface(
 void CTREV5MotorControllers::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("ctre v5 motor controllers");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }
@@ -84,14 +84,14 @@ void CTREV5MotorControllers::write(const ros::Time& time, const ros::Duration& p
 {
     tracer.start_unique("ctre v5 motor controllers");
     CTREV5MotorController::resetCanConfigCount();
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period, isEnabled(), prev_robot_enabled_);
     }
     prev_robot_enabled_ = isEnabled();
 }
 
-void CTREV5MotorControllers::simInit(ros::NodeHandle nh)
+void CTREV5MotorControllers::simInit(ros::NodeHandle &nh)
 {
     if (devices_.size() > 0)
     {
@@ -101,9 +101,9 @@ void CTREV5MotorControllers::simInit(ros::NodeHandle nh)
 }
 
 bool CTREV5MotorControllers::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,
-                             ros_control_boilerplate::set_limit_switch::Response & /*res*/)
+                                      ros_control_boilerplate::set_limit_switch::Response & /*res*/)
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
 	{
         if(((req.target_joint_name.length() == 0) && (d->getId() == req.target_joint_id)) ||
 		   (req.target_joint_name == d->getName()))
@@ -115,9 +115,9 @@ bool CTREV5MotorControllers::setlimit(ros_control_boilerplate::set_limit_switch:
 }
 
 bool CTREV5MotorControllers::setcurrent(ros_control_boilerplate::set_current::Request &req,
-                               ros_control_boilerplate::set_current::Response & /*res*/)
+                                        ros_control_boilerplate::set_current::Response & /*res*/)
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
 	{
         if(((req.target_joint_name.length() == 0) && (d->getId() == req.target_joint_id)) ||
 		   (req.target_joint_name == d->getName()))
@@ -136,7 +136,7 @@ void CTREV5MotorControllers::simRead(const ros::Time &time, const ros::Duration 
         ctre::phoenix::unmanaged::Unmanaged::FeedEnable(2 * 1000. / read_hz_);
     }
     tracer.start_unique("Update sim CTRE values");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->updateSimValues(time, period);
     }

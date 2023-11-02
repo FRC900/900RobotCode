@@ -1,4 +1,4 @@
-float32 percentBusUtilization
+float64 percentBusUtilization
 int32 busOffCount
 int32 txFullCount
 int32 receiveErrorCount

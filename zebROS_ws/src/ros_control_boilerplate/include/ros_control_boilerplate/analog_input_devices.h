@@ -14,10 +14,10 @@ class AnalogInputDevices : public Devices
 {
 
 public:
-    AnalogInputDevices(ros::NodeHandle &root_nh);
+    explicit AnalogInputDevices(ros::NodeHandle &root_nh);
     AnalogInputDevices(const AnalogInputDevices &) = delete;
     AnalogInputDevices(AnalogInputDevices &&) noexcept = delete;
-    virtual ~AnalogInputDevices();
+    ~AnalogInputDevices() override;
 
     AnalogInputDevices &operator=(const AnalogInputDevices &) = delete;
     AnalogInputDevices &operator=(AnalogInputDevices &&) noexcept = delete;

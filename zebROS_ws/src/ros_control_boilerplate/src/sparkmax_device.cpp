@@ -67,26 +67,20 @@ SparkMaxDevice<SIMFLAG>::SparkMaxDevice(const std::string &name_space,
         read_thread_state_ = std::make_unique<hardware_interface::SparkMaxHWState>(can_id_, motor_type);
         if constexpr (!SIMFLAG)
         {
-            read_thread_ = std::make_unique<std::thread>(&SparkMaxDevice::read_thread, this,
-                                                         std::make_unique<Tracer>("read_" + name_ + " " + name_space),
-                                                         read_hz_);
+            read_thread_ = std::make_unique<std::jthread>(&SparkMaxDevice::read_thread, this,
+                                                          std::make_unique<Tracer>("read_" + name_ + " " + name_space),
+                                                          read_hz_);
         }
     }
 }
 
 template <bool SIMFLAG>
-SparkMaxDevice<SIMFLAG>::~SparkMaxDevice(void)
-{
-    if (read_thread_ && read_thread_->joinable())
-    {
-        read_thread_->join();
-    }
-}
+SparkMaxDevice<SIMFLAG>::~SparkMaxDevice(void) = default;
 
 template <bool SIMFLAG>
 void SparkMaxDevice<SIMFLAG>::registerInterfaces(hardware_interface::SparkMaxStateInterface &state_interface,
                                                  hardware_interface::SparkMaxCommandInterface &command_interface,
-                                                 hardware_interface::RemoteSparkMaxStateInterface &remote_state_interface)
+                                                 hardware_interface::RemoteSparkMaxStateInterface &remote_state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for SparkMax : " << name_ << " at CAN id " << can_id_);
 
@@ -108,7 +102,7 @@ void SparkMaxDevice<SIMFLAG>::read(const ros::Time &/*time*/, const ros::Duratio
 {
     if (local_hardware_)
     {
-        std::unique_lock<std::mutex> l(*read_state_mutex_, std::try_to_lock);
+        std::unique_lock l(*read_state_mutex_, std::try_to_lock);
         if (!l.owns_lock())
         {
             return;
@@ -145,8 +139,7 @@ void SparkMaxDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Durati
         return;
     }
 
-    bool inverted;
-    if (command_->changedInverted(inverted))
+    if (bool inverted; command_->changedInverted(inverted))
     {
         can_spark_max_->SetInverted(inverted);
         ROS_INFO_STREAM("Set spark max " << name_ << " invert = " << inverted);
@@ -271,8 +264,7 @@ void SparkMaxDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Durati
         }
     }
 
-    unsigned int current_limit;
-    if (command_->changedCurrentLimitOne(current_limit))
+    if (unsigned int current_limit; command_->changedCurrentLimitOne(current_limit))
     {
         if (safeSparkMaxCall(can_spark_max_->SetSmartCurrentLimit(current_limit), "SetSmartCurrentLimit(1)"))
         {
@@ -337,7 +329,6 @@ void SparkMaxDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Durati
 
     bool voltage_compensation_enable;
     double voltage_compensation_nominal_voltage;
-
     if (command_->changedVoltageCompensation(voltage_compensation_enable, voltage_compensation_nominal_voltage))
     {
         bool rc = false;
@@ -363,8 +354,7 @@ void SparkMaxDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Durati
         }
     }
 
-    double open_loop_ramp_rate;
-    if (command_->changedOpenLoopRampRate(open_loop_ramp_rate))
+    if (double open_loop_ramp_rate; command_->changedOpenLoopRampRate(open_loop_ramp_rate))
     {
         if (safeSparkMaxCall(can_spark_max_->SetOpenLoopRampRate(open_loop_ramp_rate), "SetOpenLoopRampRate"))
         {
@@ -377,8 +367,7 @@ void SparkMaxDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Durati
         }
     }
 
-    double closed_loop_ramp_rate;
-    if (command_->changedClosedLoopRampRate(closed_loop_ramp_rate))
+    if (double closed_loop_ramp_rate; command_->changedClosedLoopRampRate(closed_loop_ramp_rate))
     {
         if (safeSparkMaxCall(can_spark_max_->SetClosedLoopRampRate(closed_loop_ramp_rate), "SetClosedLoopRampRate"))
         {
@@ -445,8 +434,7 @@ void SparkMaxDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Durati
         }
     }
 
-    double set_point;
-    if (command_->changedSetPoint(set_point))
+    if (double set_point; command_->changedSetPoint(set_point))
     {
         can_spark_max_->Set(set_point);
         state_->setSetPoint(set_point);
@@ -550,7 +538,7 @@ void SparkMaxDevice<SIMFLAG>::read_thread(std::unique_ptr<Tracer> tracer,
 			// Lock the state entry to make sure writes
 			// are atomic - reads won't grab data in
 			// the middle of a write
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
 			read_thread_state_->setSetPoint(set_point);
 			read_thread_state_->setPosition(position);
 			read_thread_state_->setVelocity(velocity);

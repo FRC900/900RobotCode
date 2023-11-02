@@ -3,7 +3,10 @@
 
 #include "ros/ros.h"
 #include "frc_msgs/JoystickState.h"
+//#define NEED_JOINT_STATES
+#ifdef NEED_JOINT_STATES
 #include "sensor_msgs/JointState.h"
+#endif
 #include "geometry_msgs/Twist.h"
 #include <string>
 #include <cmath>
@@ -27,7 +30,6 @@
 
 #include <imu_zero/ImuZeroAngle.h>
 #include <angles/angles.h>
-#include <math.h>
 #include "teleop_joystick_control/RobotOrientationDriver.h"
 #include <teleop_joystick_control/SnapConeCube.h>
 #include <behavior_actions/Intaking2023Action.h>
@@ -121,7 +123,7 @@ bool sendRobotZero = false;
 bool sendSetAngle = true;
 double old_angular_z = 0.0;
 bool use_pathing = false;
-double grid_position = 0;
+uint8_t grid_position = 0;
 bool moved = false;
 bool pathed = false;
 bool last_no_driver_input = false;
@@ -760,8 +762,7 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			if((cmd_vel.linear.x == 0.0) && (cmd_vel.linear.y == 0.0) && (original_angular_z == 0.0) && !sendRobotZero)
 			{
 				no_driver_input = true;
-				std_srvs::Empty empty;
-				if (!BrakeSrv.call(empty))
+				if (std_srvs::Empty empty; !BrakeSrv.call(empty))
 				{
 					ROS_ERROR("BrakeSrv call failed in sendRobotZero_");
 				}
@@ -788,9 +789,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: buttonA
 			if(joystick_states_array[0].buttonAPress)
 			{
-				teleop_joystick_control::SnapConeCube srv;
 				ROS_INFO_STREAM("teleop_joystick_comp_2023 : snapping to nearest cone and enabling robot relative driving mode!");
-				if (snapConeCubeSrv.call(srv))
+				if (teleop_joystick_control::SnapConeCube srv; snapConeCubeSrv.call(srv))
 				{
 					if (srv.response.nearest_cone_angle > -900) {
 						ROS_INFO_STREAM("Using angle of " << srv.response.nearest_cone_angle);
@@ -811,9 +811,8 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 			//Joystick1: buttonB
 			if(joystick_states_array[0].buttonBPress)
 			{
-				teleop_joystick_control::SnapConeCube srv;
 				ROS_INFO_STREAM("teleop_joystick_comp_2023 : snapping to nearest cube and enabling robot relative driving mode!");
-				if (snapConeCubeSrv.call(srv))
+				if (teleop_joystick_control::SnapConeCube srv; snapConeCubeSrv.call(srv))
 				{
 					if (srv.response.nearest_cube_angle > -900) {
 						ROS_INFO_STREAM_THROTTLE(1, "Using angle of " << srv.response.nearest_cube_angle);
@@ -1228,10 +1227,12 @@ void evaluateCommands(const ros::MessageEvent<frc_msgs::JoystickState const>& ev
 	}
 }
 
+#ifdef NEED_JOINT_STATES
 void jointStateCallback(const sensor_msgs::JointState &joint_state)
 {
 	// TODO - remove this if not used
 }
+#endif
 
 int main(int argc, char **argv)
 {
@@ -1378,7 +1379,9 @@ int main(int argc, char **argv)
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);
 	SwerveOdomZeroSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/reset_odom", false, service_connection_header);
 	FourbarRezeroSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/four_bar_controller_2023/rezero_service", false, service_connection_header);
+#ifdef NEED_JOINT_STATES
 	ros::Subscriber joint_states_sub = n.subscribe("/frcrobot_jetson/joint_states", 1, &jointStateCallback);
+#endif
 	ros::Subscriber talon_states_sub = n.subscribe("/frcrobot_jetson/talonfxpro_states", 1, &talonFXProStateCallback);
 	ros::Subscriber match_state_sub = n.subscribe("/frcrobot_rio/match_data", 1, matchStateCallback);
 	ros::ServiceServer robot_orient_service = n.advertiseService("robot_orient", orientCallback);

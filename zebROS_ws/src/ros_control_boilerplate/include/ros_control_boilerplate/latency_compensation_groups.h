@@ -21,7 +21,7 @@ public:
                               const std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> &devices);
     LatencyCompensationGroups(const LatencyCompensationGroups &) = delete;
     LatencyCompensationGroups(LatencyCompensationGroups &&) noexcept = delete;
-    virtual ~LatencyCompensationGroups();
+    ~LatencyCompensationGroups() override;
 
     LatencyCompensationGroups &operator=(const LatencyCompensationGroups &) = delete;
     LatencyCompensationGroups &operator=(LatencyCompensationGroups &&) noexcept = delete;

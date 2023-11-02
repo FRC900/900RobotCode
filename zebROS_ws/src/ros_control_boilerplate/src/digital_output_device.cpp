@@ -28,9 +28,9 @@ DigitalOutputDevice::DigitalOutputDevice(const int joint_index,
 DigitalOutputDevice::~DigitalOutputDevice() = default;
 
 void DigitalOutputDevice::registerInterfaces(hardware_interface::JointStateInterface &state_interface,
-                                            hardware_interface::JointCommandInterface &command_interface,
-                                            hardware_interface::PositionJointInterface &position_joint_interface,
-                                            hardware_interface::RemoteJointInterface &remote_joint_interface)
+                                             hardware_interface::JointCommandInterface &command_interface,
+                                             hardware_interface::PositionJointInterface &position_joint_interface,
+                                             hardware_interface::RemoteJointInterface &remote_joint_interface)
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for Digital Output " << name_ << " at channel " << dio_channel_ << " / invert = " << invert_);
     hardware_interface::JointStateHandle state_handle(name_, &state_, &state_, &state_);

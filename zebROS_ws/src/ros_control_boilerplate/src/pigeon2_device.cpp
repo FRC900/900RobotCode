@@ -31,7 +31,6 @@ Pigeon2Device::Pigeon2Device(const std::string &name_space,
     , read_state_mutex_{nullptr}
     , read_thread_{nullptr}
 {
-    // TODO : old code had a check for duplicate use of DIO channels? Needed?
     ROS_INFO_STREAM_NAMED("frc_robot_interface",
                         "Loading joint " << joint_index << "=" << joint_name <<
                         (local_update_ ? " local" : " remote") << " update, " <<
@@ -40,25 +39,17 @@ Pigeon2Device::Pigeon2Device(const std::string &name_space,
 
     if (local_hardware_)
     {
-    ROS_INFO_STREAM(__PRETTY_FUNCTION__ << " : " << __LINE__ << " id = " << can_id << " can_bus = " << can_bus);
         pigeon2_ = std::make_unique<ctre::phoenix6::hardware::core::CorePigeon2>(can_id, can_bus);
         setParentDevice(pigeon2_.get());
-    ROS_INFO_STREAM(__PRETTY_FUNCTION__ << " : " << __LINE__);
         read_thread_state_ = std::make_unique<hardware_interface::pigeon2::Pigeon2HWState>(can_id);
         read_state_mutex_ = std::make_unique<std::mutex>();
-        read_thread_ = std::make_unique<std::thread>(&Pigeon2Device::read_thread, this,
-                                                     std::make_unique<Tracer>("pigeon2_read_" + joint_name + " " + name_space),
-                                                     read_hz_);
+        read_thread_ = std::make_unique<std::jthread>(&Pigeon2Device::read_thread, this,
+                                                      std::make_unique<Tracer>("pigeon2_read_" + joint_name + " " + name_space),
+                                                      read_hz_);
     }
 }
 
-Pigeon2Device::~Pigeon2Device(void)
-{
-    if (read_thread_ && read_thread_->joinable())
-    {
-        read_thread_->join();
-    }
-}
+Pigeon2Device::~Pigeon2Device(void) = default;
 
 void Pigeon2Device::registerInterfaces(hardware_interface::pigeon2::Pigeon2StateInterface &state_interface,
                                        hardware_interface::pigeon2::Pigeon2CommandInterface &command_interface,
@@ -116,9 +107,13 @@ void Pigeon2Device::registerInterfaces(hardware_interface::pigeon2::Pigeon2State
 // Create a subscriber reading simulated yaw values
 void Pigeon2Device::simInit(ros::NodeHandle nh, size_t joint_index)
 {
-    std::stringstream s;
-    s << "imu_" << joint_index << "_in";
-    sim_sub_ = nh.subscribe<nav_msgs::Odometry>(s.str(), 1, &Pigeon2Device::imuOdomCallback, this);
+    if (local_hardware_)
+    {
+        std::stringstream s;
+        s << "imu_" << joint_index << "_in";
+        sim_sub_ = nh.subscribe<nav_msgs::Odometry>(s.str(), 1, &Pigeon2Device::imuOdomCallback, this);
+        pigeon2_->GetSimState().SetSupplyVoltage(units::volt_t{12.5});
+    }
 }
 
 void Pigeon2Device::imuOdomCallback(const nav_msgs::OdometryConstPtr &msg)
@@ -263,8 +258,10 @@ void Pigeon2Device::write(const ros::Time & /*time*/, const ros::Duration & /*pe
         //command_->resetSetYaw(); // TODO, not sure about this, there's no telling how long ago this value was correct
     }
 
-    ctre::phoenix6::configs::MountPoseConfigs mount_pose_configs;
-    if (command_->mountPoseRPYChanged(mount_pose_configs.MountPoseYaw, mount_pose_configs.MountPosePitch, mount_pose_configs.MountPoseRoll))
+    if (ctre::phoenix6::configs::MountPoseConfigs mount_pose_configs;
+        command_->mountPoseRPYChanged(mount_pose_configs.MountPoseYaw,
+                                      mount_pose_configs.MountPosePitch,
+                                      mount_pose_configs.MountPoseRoll))
     {
         mount_pose_configs.MountPoseYaw = angles::to_degrees(mount_pose_configs.MountPoseYaw);
         mount_pose_configs.MountPosePitch = angles::to_degrees(mount_pose_configs.MountPosePitch);
@@ -283,8 +280,8 @@ void Pigeon2Device::write(const ros::Time & /*time*/, const ros::Duration & /*pe
         }
     }
 
-    ctre::phoenix6::configs::GyroTrimConfigs gyro_trim_configs;
-    if (command_->gyroTrimChanged(gyro_trim_configs.GyroScalarX,
+    if (ctre::phoenix6::configs::GyroTrimConfigs gyro_trim_configs;
+        command_->gyroTrimChanged(gyro_trim_configs.GyroScalarX,
                                   gyro_trim_configs.GyroScalarY,
                                   gyro_trim_configs.GyroScalarZ))
     {
@@ -305,8 +302,8 @@ void Pigeon2Device::write(const ros::Time & /*time*/, const ros::Duration & /*pe
         }
     }
 
-    ctre::phoenix6::configs::Pigeon2FeaturesConfigs pigeon2_features_configs;
-    if (command_->pigeon2FeaturesChanged(pigeon2_features_configs.EnableCompass,
+    if (ctre::phoenix6::configs::Pigeon2FeaturesConfigs pigeon2_features_configs;
+        command_->pigeon2FeaturesChanged(pigeon2_features_configs.EnableCompass,
                                          pigeon2_features_configs.DisableTemperatureCompensation,
                                          pigeon2_features_configs.DisableNoMotionCalibration))
     {
@@ -372,78 +369,78 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
 	{
 		tracer->start("pigeon2 read main_loop");
 
-        SAFE_READ(version_major, pigeon2_->GetVersionMajor());
-        SAFE_READ(version_minor, pigeon2_->GetVersionMinor());
-        SAFE_READ(version_bugfix, pigeon2_->GetVersionBugfix());
-        SAFE_READ(version_build, pigeon2_->GetVersionBuild());
+        SAFE_READ(version_major, pigeon2_->GetVersionMajor())
+        SAFE_READ(version_minor, pigeon2_->GetVersionMinor())
+        SAFE_READ(version_bugfix, pigeon2_->GetVersionBugfix())
+        SAFE_READ(version_build, pigeon2_->GetVersionBuild())
 
-        SAFE_READ(yaw, pigeon2_->GetYaw());
-        SAFE_READ(pitch, pigeon2_->GetPitch());
-        SAFE_READ(roll, pigeon2_->GetRoll());
+        SAFE_READ(yaw, pigeon2_->GetYaw())
+        SAFE_READ(pitch, pigeon2_->GetPitch())
+        SAFE_READ(roll, pigeon2_->GetRoll())
 
-        SAFE_READ(quat_w, pigeon2_->GetQuatW());
-        SAFE_READ(quat_x, pigeon2_->GetQuatX());
-        SAFE_READ(quat_y, pigeon2_->GetQuatY());
-        SAFE_READ(quat_z, pigeon2_->GetQuatZ());
+        SAFE_READ(quat_w, pigeon2_->GetQuatW())
+        SAFE_READ(quat_x, pigeon2_->GetQuatX())
+        SAFE_READ(quat_y, pigeon2_->GetQuatY())
+        SAFE_READ(quat_z, pigeon2_->GetQuatZ())
 
-        SAFE_READ(gravity_vector_x, pigeon2_->GetGravityVectorX());
-        SAFE_READ(gravity_vector_y, pigeon2_->GetGravityVectorY());
-        SAFE_READ(gravity_vector_z, pigeon2_->GetGravityVectorZ());
+        SAFE_READ(gravity_vector_x, pigeon2_->GetGravityVectorX())
+        SAFE_READ(gravity_vector_y, pigeon2_->GetGravityVectorY())
+        SAFE_READ(gravity_vector_z, pigeon2_->GetGravityVectorZ())
 
-        SAFE_READ(temperature, pigeon2_->GetTemperature());
-        SAFE_READ(uptime, pigeon2_->GetUpTime());
+        SAFE_READ(temperature, pigeon2_->GetTemperature())
+        SAFE_READ(uptime, pigeon2_->GetUpTime())
 
-        SAFE_READ(no_motion_count, pigeon2_->GetNoMotionCount());
+        SAFE_READ(no_motion_count, pigeon2_->GetNoMotionCount())
 
-        SAFE_READ(accum_gyro_x, pigeon2_->GetAccumGyroX());
-        SAFE_READ(accum_gyro_y, pigeon2_->GetAccumGyroY());
-        SAFE_READ(accum_gyro_z, pigeon2_->GetAccumGyroZ());
+        SAFE_READ(accum_gyro_x, pigeon2_->GetAccumGyroX())
+        SAFE_READ(accum_gyro_y, pigeon2_->GetAccumGyroY())
+        SAFE_READ(accum_gyro_z, pigeon2_->GetAccumGyroZ())
 
-        SAFE_READ(angular_velocity_x, pigeon2_->GetAngularVelocityX());
-        SAFE_READ(angular_velocity_y, pigeon2_->GetAngularVelocityY());
-        SAFE_READ(angular_velocity_z, pigeon2_->GetAngularVelocityZ());
+        SAFE_READ(angular_velocity_x, pigeon2_->GetAngularVelocityX())
+        SAFE_READ(angular_velocity_y, pigeon2_->GetAngularVelocityY())
+        SAFE_READ(angular_velocity_z, pigeon2_->GetAngularVelocityZ())
 
-        SAFE_READ(acceleration_x, pigeon2_->GetAccelerationX());
-        SAFE_READ(acceleration_y, pigeon2_->GetAccelerationY());
-        SAFE_READ(acceleration_z, pigeon2_->GetAccelerationZ());
+        SAFE_READ(acceleration_x, pigeon2_->GetAccelerationX())
+        SAFE_READ(acceleration_y, pigeon2_->GetAccelerationY())
+        SAFE_READ(acceleration_z, pigeon2_->GetAccelerationZ())
 
-        SAFE_READ(supply_voltage, pigeon2_->GetSupplyVoltage());
+        SAFE_READ(supply_voltage, pigeon2_->GetSupplyVoltage())
 
-        SAFE_READ(magnetic_field_x, pigeon2_->GetMagneticFieldX());
-        SAFE_READ(magnetic_field_y, pigeon2_->GetMagneticFieldY());
-        SAFE_READ(magnetic_field_z, pigeon2_->GetMagneticFieldZ());
+        SAFE_READ(magnetic_field_x, pigeon2_->GetMagneticFieldX())
+        SAFE_READ(magnetic_field_y, pigeon2_->GetMagneticFieldY())
+        SAFE_READ(magnetic_field_z, pigeon2_->GetMagneticFieldZ())
 
-        SAFE_READ(raw_magnetic_field_x, pigeon2_->GetRawMagneticFieldX());
-        SAFE_READ(raw_magnetic_field_y, pigeon2_->GetRawMagneticFieldY());
-        SAFE_READ(raw_magnetic_field_z, pigeon2_->GetRawMagneticFieldZ());
+        SAFE_READ(raw_magnetic_field_x, pigeon2_->GetRawMagneticFieldX())
+        SAFE_READ(raw_magnetic_field_y, pigeon2_->GetRawMagneticFieldY())
+        SAFE_READ(raw_magnetic_field_z, pigeon2_->GetRawMagneticFieldZ())
 
-        SAFE_READ(fault_hardware, pigeon2_->GetFault_Hardware());
-        SAFE_READ(fault_undervoltage, pigeon2_->GetFault_Undervoltage());
-        SAFE_READ(fault_boot_during_enable, pigeon2_->GetFault_BootDuringEnable());
-        SAFE_READ(fault_unlicensed_feature_in_use, pigeon2_->GetFault_UnlicensedFeatureInUse());
-        SAFE_READ(fault_bootup_accelerometer, pigeon2_->GetFault_BootupAccelerometer());
-        SAFE_READ(fault_bootup_gyroscope, pigeon2_->GetFault_BootupGyroscope());
-        SAFE_READ(fault_bootup_magnetometer, pigeon2_->GetFault_BootupMagnetometer());
-        SAFE_READ(fault_boot_into_motion, pigeon2_->GetFault_BootIntoMotion());
-        SAFE_READ(fault_data_acquired_late, pigeon2_->GetFault_DataAcquiredLate());
-        SAFE_READ(fault_loop_time_slow, pigeon2_->GetFault_LoopTimeSlow());
-        SAFE_READ(fault_saturated_magnetometer, pigeon2_->GetFault_SaturatedMagnetometer());
-        SAFE_READ(fault_saturated_accelometer, pigeon2_->GetFault_SaturatedAccelometer());
-        SAFE_READ(fault_saturated_gyroscope, pigeon2_->GetFault_SaturatedGyroscope());
+        SAFE_READ(fault_hardware, pigeon2_->GetFault_Hardware())
+        SAFE_READ(fault_undervoltage, pigeon2_->GetFault_Undervoltage())
+        SAFE_READ(fault_boot_during_enable, pigeon2_->GetFault_BootDuringEnable())
+        SAFE_READ(fault_unlicensed_feature_in_use, pigeon2_->GetFault_UnlicensedFeatureInUse())
+        SAFE_READ(fault_bootup_accelerometer, pigeon2_->GetFault_BootupAccelerometer())
+        SAFE_READ(fault_bootup_gyroscope, pigeon2_->GetFault_BootupGyroscope())
+        SAFE_READ(fault_bootup_magnetometer, pigeon2_->GetFault_BootupMagnetometer())
+        SAFE_READ(fault_boot_into_motion, pigeon2_->GetFault_BootIntoMotion())
+        SAFE_READ(fault_data_acquired_late, pigeon2_->GetFault_DataAcquiredLate())
+        SAFE_READ(fault_loop_time_slow, pigeon2_->GetFault_LoopTimeSlow())
+        SAFE_READ(fault_saturated_magnetometer, pigeon2_->GetFault_SaturatedMagnetometer())
+        SAFE_READ(fault_saturated_accelometer, pigeon2_->GetFault_SaturatedAccelometer())
+        SAFE_READ(fault_saturated_gyroscope, pigeon2_->GetFault_SaturatedGyroscope())
 
-        SAFE_READ(sticky_fault_hardware, pigeon2_->GetStickyFault_Hardware());
-        SAFE_READ(sticky_fault_undervoltage, pigeon2_->GetStickyFault_Undervoltage());
-        SAFE_READ(sticky_fault_boot_during_enable, pigeon2_->GetStickyFault_BootDuringEnable());
-        SAFE_READ(sticky_fault_unlicensed_feature_in_use, pigeon2_->GetStickyFault_UnlicensedFeatureInUse());
-        SAFE_READ(sticky_fault_bootup_accelerometer, pigeon2_->GetStickyFault_BootupAccelerometer());
-        SAFE_READ(sticky_fault_bootup_gyroscope, pigeon2_->GetStickyFault_BootupGyroscope());
-        SAFE_READ(sticky_fault_bootup_magnetometer, pigeon2_->GetStickyFault_BootupMagnetometer());
-        SAFE_READ(sticky_fault_boot_into_motion, pigeon2_->GetStickyFault_BootIntoMotion());
-        SAFE_READ(sticky_fault_data_acquired_late, pigeon2_->GetStickyFault_DataAcquiredLate());
-        SAFE_READ(sticky_fault_loop_time_slow, pigeon2_->GetStickyFault_LoopTimeSlow());
-        SAFE_READ(sticky_fault_saturated_magnetometer, pigeon2_->GetStickyFault_SaturatedMagnetometer());
-        SAFE_READ(sticky_fault_saturated_accelometer, pigeon2_->GetStickyFault_SaturatedAccelometer());
-        SAFE_READ(sticky_fault_saturated_gyroscope, pigeon2_->GetStickyFault_SaturatedGyroscope());
+        SAFE_READ(sticky_fault_hardware, pigeon2_->GetStickyFault_Hardware())
+        SAFE_READ(sticky_fault_undervoltage, pigeon2_->GetStickyFault_Undervoltage())
+        SAFE_READ(sticky_fault_boot_during_enable, pigeon2_->GetStickyFault_BootDuringEnable())
+        SAFE_READ(sticky_fault_unlicensed_feature_in_use, pigeon2_->GetStickyFault_UnlicensedFeatureInUse())
+        SAFE_READ(sticky_fault_bootup_accelerometer, pigeon2_->GetStickyFault_BootupAccelerometer())
+        SAFE_READ(sticky_fault_bootup_gyroscope, pigeon2_->GetStickyFault_BootupGyroscope())
+        SAFE_READ(sticky_fault_bootup_magnetometer, pigeon2_->GetStickyFault_BootupMagnetometer())
+        SAFE_READ(sticky_fault_boot_into_motion, pigeon2_->GetStickyFault_BootIntoMotion())
+        SAFE_READ(sticky_fault_data_acquired_late, pigeon2_->GetStickyFault_DataAcquiredLate())
+        SAFE_READ(sticky_fault_loop_time_slow, pigeon2_->GetStickyFault_LoopTimeSlow())
+        SAFE_READ(sticky_fault_saturated_magnetometer, pigeon2_->GetStickyFault_SaturatedMagnetometer())
+        SAFE_READ(sticky_fault_saturated_accelometer, pigeon2_->GetStickyFault_SaturatedAccelometer())
+        SAFE_READ(sticky_fault_saturated_gyroscope, pigeon2_->GetStickyFault_SaturatedGyroscope())
 
         // Actually update the Pigeon2HWState shared between
 		// this thread and read()
@@ -453,7 +450,7 @@ void Pigeon2Device::read_thread(std::unique_ptr<Tracer> tracer,
 			// Lock the state entry to make sure writes
 			// are atomic - reads won't grab data in
 			// the middle of a write
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
             read_thread_state_->setVersionMajor(*version_major);
             read_thread_state_->setVersionMinor(*version_minor);
             read_thread_state_->setVersionBugfix(*version_bugfix);

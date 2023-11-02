@@ -51,10 +51,10 @@ template<class ScalarType, size_t Order>
 class SimpleSplineSegment
 {
 public:
-  typedef ScalarType                    Scalar;
-  typedef Scalar                        Time;
-  typedef SimplePosVelAccState<Scalar>  State;
-  typedef std::array<Scalar, Order + 1> SplineCoefficients;
+  using Scalar = ScalarType;
+  using Time = Scalar;
+  using State = SimplePosVelAccState<Scalar>;
+  using SplineCoefficients = std::array<Scalar, Order + 1>;
 
   /**
    * \brief Creates an empty segment.
@@ -62,11 +62,7 @@ public:
    * \note Calling <tt> size() </tt> on an empty segment will yield zero, and sampling it will yield a state with empty
    * data.
    */
-  SimpleSplineSegment()
-    : coefs_{},
-      duration_(static_cast<Scalar>(0)),
-      start_time_(static_cast<Scalar>(0))
-  {}
+  SimpleSplineSegment() = default;
 
   /**
    * \brief Construct segment from start and end states (boundary conditions).
@@ -188,12 +184,12 @@ private:
    *
    * <tt> coefs_[0] + coefs_[1]*x + coefs_[2]*x^2 + coefs_[3]*x^3 + coefs_[4]*x^4 + coefs_[5]*x^5 </tt>
    */
-  SplineCoefficients coefs_;
-  Time duration_;
-  Time start_time_;
+  SplineCoefficients coefs_{};
+  Time duration_{static_cast<Scalar>(0)};
+  Time start_time_{static_cast<Scalar>(0)};
 
   // These methods are borrowed from the previous controller's implementation
-  static void generatePowers(const Scalar& x, Scalar* powers)
+  static void generatePowers(const Scalar& x, std::array<Scalar, Order> &powers)
   {
     powers[0] = x;
     for (size_t i = 1; i < Order; ++i)
@@ -204,7 +200,7 @@ private:
 
   // Specialization for Linear (order 1) splines
   template <size_t O = Order>
-  static typename std::enable_if<O == 1, void>::type
+  static typename std::enable_if_t<O == 1, void>
   computeCoefficients(const Scalar& start_pos, const Scalar& /*start_vel*/, const Scalar& /*start_acc*/,
 					  const Scalar& end_pos,   const Scalar& /*end_vel*/,   const Scalar& /*end_acc*/,
 					  const Scalar& time,
@@ -225,7 +221,7 @@ private:
 
   // Specalization for Linear (order 1) splines
   template <size_t O = Order>
-  static typename std::enable_if<O == 1, void>::type
+  static typename std::enable_if_t<O == 1, void>
   samplePosition(const SplineCoefficients& coefficients, const Scalar& time, Scalar& position)
   {
     position =      coefficients[0] +
@@ -233,7 +229,7 @@ private:
   }
 
   template <size_t O = Order>
-  static typename std::enable_if<O == 1, void>::type
+  static typename std::enable_if_t<O == 1, void>
   sampleVelocity(const SplineCoefficients& coefficients, const Scalar& time, Scalar& velocity)
   {
 	static_cast<void>(time);
@@ -241,7 +237,7 @@ private:
   }
 
   template <size_t O = Order>
-  static typename std::enable_if<O == 1, void>::type
+  static typename std::enable_if_t<O == 1, void>
   sampleAcceleration(const SplineCoefficients& coefficients, const Scalar& time, Scalar& acceleration)
   {
 	static_cast<void>(coefficients);
@@ -252,7 +248,7 @@ private:
 
   // Specializations for Cubic (order 3) splines
   template <size_t O = Order>
-  static typename std::enable_if<O == 3, void>::type
+  static typename std::enable_if_t<O == 3, void>
   computeCoefficients(const Scalar& start_pos, const Scalar& start_vel, const Scalar& /*start_acc*/,
 					  const Scalar& end_pos,   const Scalar& end_vel,   const Scalar& /*end_acc*/,
 					  const Scalar& time,
@@ -267,7 +263,7 @@ private:
     }
     else
     {
-	  Scalar T[O];
+    std::array<Scalar, O> T;
 	  generatePowers(time, T);
 
 	  coefficients[0] = start_pos;
@@ -278,21 +274,21 @@ private:
   }
 
   template <size_t O = Order>
-  static typename std::enable_if<O == 3, void>::type
+  static typename std::enable_if_t<O == 3, void>
   samplePosition(const SplineCoefficients& coefficients, const Scalar& time, Scalar& position)
   {
 	position = ((coefficients[3] * time + coefficients[2]) * time + coefficients[1]) * time + coefficients[0];
   }
 
   template <size_t O = Order>
-  static typename std::enable_if<O == 3, void>::type
+  static typename std::enable_if_t<O == 3, void>
   sampleVelocity(const SplineCoefficients& coefficients, const Scalar& time, Scalar& velocity)
   {
 	velocity = (Scalar(3.0) * coefficients[3] * time + coefficients[2]) * time + coefficients[1];
   }
 
   template <size_t O = Order>
-  static typename std::enable_if<O == 3, void>::type
+  static typename std::enable_if_t<O == 3, void>
   sampleAcceleration(const SplineCoefficients& coefficients, const Scalar& time, Scalar& acceleration)
   {
 	acceleration =
@@ -302,7 +298,7 @@ private:
 
   // Specialization for Qunitic (order 5) splines
   template <size_t O = Order>
-  static typename std::enable_if<O == 5, void>::type
+  static typename std::enable_if_t<O == 5, void>
   computeCoefficients(const Scalar& start_pos, const Scalar& start_vel, const Scalar& start_acc,
 					  const Scalar& end_pos,   const Scalar& end_vel,   const Scalar& end_acc,
 					  const Scalar& time,
@@ -319,7 +315,7 @@ private:
     }
     else
     {
-	  Scalar T[5];
+    std::array<Scalar, O> T;
 	  generatePowers(time, T);
 
 	  coefficients[0] = start_pos;
@@ -335,7 +331,7 @@ private:
   }
 
   template <size_t O = Order>
-  static typename std::enable_if<O == 5, void>::type
+  static typename std::enable_if_t<O == 5, void>
   samplePosition(const SplineCoefficients& coefficients, const Scalar& time, Scalar& position)
   {
 	position = ((((time * coefficients[5] + coefficients[4]) *
@@ -346,7 +342,7 @@ private:
   }
 
   template <size_t O = Order>
-  static typename std::enable_if<O == 5, void>::type
+  static typename std::enable_if_t<O == 5, void>
   sampleVelocity(const SplineCoefficients& coefficients, const Scalar& time, Scalar& velocity)
   {
 	velocity = (((time * Scalar(5.0) * coefficients[5] + Scalar(4.0) * coefficients[4]) *
@@ -356,7 +352,7 @@ private:
   }
 
   template <size_t O = Order>
-  static typename std::enable_if<O == 5, void>::type
+  static typename std::enable_if_t<O == 5, void>
   sampleAcceleration(const SplineCoefficients& coefficients, const Scalar& time, Scalar& acceleration)
   {
 	acceleration = ((time * Scalar(20.0) * coefficients[5] + Scalar(12.0) * coefficients[4]) *

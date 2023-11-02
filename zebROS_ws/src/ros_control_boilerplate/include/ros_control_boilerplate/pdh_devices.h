@@ -15,10 +15,10 @@ class PDHDevices : public Devices
 {
 
 public:
-    PDHDevices(ros::NodeHandle &root_nh);
+    explicit PDHDevices(ros::NodeHandle &root_nh);
     PDHDevices(const PDHDevices &) = delete;
     PDHDevices(PDHDevices &&) noexcept = delete;
-    virtual ~PDHDevices();
+    ~PDHDevices() override;
 
     PDHDevices &operator=(const PDHDevices &) = delete;
     PDHDevices &operator=(PDHDevices &&) noexcept = delete;

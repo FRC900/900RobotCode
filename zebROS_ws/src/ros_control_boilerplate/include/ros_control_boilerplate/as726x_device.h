@@ -32,13 +32,13 @@ public:
                  const double read_hz);
     AS726xDevice(AS726xDevice &&other) noexcept = delete;
     AS726xDevice(const AS726xDevice &) = delete;
-    ~AS726xDevice();
+    virtual ~AS726xDevice();
     AS726xDevice &operator=(const AS726xDevice &) = delete;
     AS726xDevice &operator=(AS726xDevice &&) noexcept = delete;
 
     void registerInterfaces(hardware_interface::as726x::AS726xStateInterface &state_interface,
                             hardware_interface::as726x::AS726xCommandInterface &command_interface,
-                            hardware_interface::as726x::RemoteAS726xStateInterface &remote_state_interface);
+                            hardware_interface::as726x::RemoteAS726xStateInterface &remote_state_interface) const;
     void read(const ros::Time &/*time*/, const ros::Duration &/*period*/);
     void write(const ros::Time &/*time*/, const ros::Duration &/*period*/);
 
@@ -56,7 +56,7 @@ private:
 
     std::unique_ptr<hardware_interface::as726x::AS726xState> read_thread_state_;
     std::unique_ptr<std::mutex> read_state_mutex_;
-    std::unique_ptr<std::thread> read_thread_;
+    std::unique_ptr<std::jthread> read_thread_;
     void read_thread(std::unique_ptr<Tracer> tracer,
                      double poll_frequency);
 };

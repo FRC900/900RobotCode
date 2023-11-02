@@ -41,20 +41,20 @@ public:
                           const double read_hz);
     CTREV5MotorController(CTREV5MotorController &&other) noexcept = delete;
     CTREV5MotorController(const CTREV5MotorController &) = delete;
-    ~CTREV5MotorController();
+    ~CTREV5MotorController() override;
     CTREV5MotorController &operator=(const CTREV5MotorController &) = delete;
     CTREV5MotorController &operator=(CTREV5MotorController &&) noexcept = delete;
 
     void registerInterfaces(hardware_interface::TalonStateInterface &state_interface,
                             hardware_interface::TalonCommandInterface &command_interface,
-                            hardware_interface::RemoteTalonStateInterface &remote_state_interface);
+                            hardware_interface::RemoteTalonStateInterface &remote_state_interface) const;
     void read(const ros::Time &time, const ros::Duration &period);
     void write(const ros::Time &time, const ros::Duration &period, const bool robot_enabled, const bool prev_robot_enabled);
 
-    void updateSimValues(const ros::Time &/*time*/, const ros::Duration &period);
+    void updateSimValues(const ros::Time &/*time*/, const ros::Duration &period) const;
 
-    bool setSimLimitSwitches(const bool forward_limit, const bool reverse_limit);
-    bool setSimCurrent(const double stator_current, const double supply_current);
+    bool setSimLimitSwitches(const bool forward_limit, const bool reverse_limit) const;
+    bool setSimCurrent(const double stator_current, const double supply_current) const;
 
 private:
     const bool local_;
@@ -70,16 +70,13 @@ private:
 
     std::unique_ptr<hardware_interface::TalonHWState> read_thread_state_;
     std::unique_ptr<std::mutex> read_state_mutex_;
-    std::unique_ptr<std::thread> read_thread_;
+    std::unique_ptr<std::jthread> read_thread_;
     void read_thread(std::unique_ptr<Tracer> tracer,
                      const double poll_frequency);
 
-
-    void setSimCollection(double position, double velocity, double delta_position = 0) const;
-    void setSimCollectionTalonSRX(double position, double velocity, double delta_position) const;
-    void setSimCollectionTalonFX(double position, double velocity, double delta_position) const;
-
-
+    void setSimCollection(int position, int velocity, int delta_position = 0) const;
+    void setSimCollectionTalonSRX(int position, int velocity, int delta_position) const;
+    void setSimCollectionTalonFX(int position, int velocity, int delta_position) const;
 
     static constexpr int pidIdx{0};    // 0 for primary closed-loop, 1 for cascaded closed-loop
     static constexpr int timeoutMs{0}; // If nonzero, function will wait for config success and report an error if it times out. If zero, no blocking or checking is performed

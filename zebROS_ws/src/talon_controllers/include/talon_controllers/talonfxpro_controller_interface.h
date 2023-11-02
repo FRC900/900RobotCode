@@ -54,7 +54,6 @@ namespace talonfxpro_controllers
 
 class TalonFXProCIParams
 {
-
 public:
     TalonFXProCIParams() =default;
     TalonFXProCIParams(const TalonFXProCIParams &) = delete;
@@ -64,28 +63,28 @@ public:
     TalonFXProCIParams& operator=(const TalonFXProCIParams &other);
     TalonFXProCIParams& operator=(TalonFXProCIParams &&other) noexcept = delete;
 
-    bool readJointName(ros::NodeHandle &n);
-    bool readCloseLoopParams(ros::NodeHandle &n);
-    bool readInvert(ros::NodeHandle &n);
-    bool readNeutralMode(ros::NodeHandle &n);
-    bool readStatorCurrentLimits(ros::NodeHandle &n);
-    bool readSupplyCurrentLimits(ros::NodeHandle &n);
-    bool readVoltageLimits(ros::NodeHandle &n);
-    bool readTorqueLimits(ros::NodeHandle &n);
-    bool readFeedback(ros::NodeHandle &n);
-    bool readDifferentialConfig(ros::NodeHandle &n);
-    bool readDifferentialConstants(ros::NodeHandle &n);
-    bool readOpenLoopRamps(ros::NodeHandle &n);
-    bool readClosedLoopRamps(ros::NodeHandle &n);
-    bool readDutyCycleOutputShaping(ros::NodeHandle &n);
-    bool readLimitSwitches(ros::NodeHandle &n);
-    bool readAudio(ros::NodeHandle &n);
-    bool readSoftLimits(ros::NodeHandle &n);
-    bool readMotionMagic(ros::NodeHandle &n);
-    bool readContinuousWrap(ros::NodeHandle &n);
-    bool readControl(ros::NodeHandle &n);
+    bool readJointName(const ros::NodeHandle &n);
+    bool readCloseLoopParams(const ros::NodeHandle &n);
+    bool readInvert(const ros::NodeHandle &n);
+    bool readNeutralMode(const ros::NodeHandle &n);
+    bool readStatorCurrentLimits(const ros::NodeHandle &n);
+    bool readSupplyCurrentLimits(const ros::NodeHandle &n);
+    bool readVoltageLimits(const ros::NodeHandle &n);
+    bool readTorqueLimits(const ros::NodeHandle &n);
+    bool readFeedback(const ros::NodeHandle &n);
+    bool readDifferentialConfig(const ros::NodeHandle &n);
+    bool readDifferentialConstants(const ros::NodeHandle &n);
+    bool readOpenLoopRamps(const ros::NodeHandle &n);
+    bool readClosedLoopRamps(const ros::NodeHandle &n);
+    bool readDutyCycleOutputShaping(const ros::NodeHandle &n);
+    bool readLimitSwitches(const ros::NodeHandle &n);
+    bool readAudio(const ros::NodeHandle &n);
+    bool readSoftLimits(const ros::NodeHandle &n);
+    bool readMotionMagic(const ros::NodeHandle &n);
+    bool readContinuousWrap(const ros::NodeHandle &n);
+    bool readControl(const ros::NodeHandle &n);
 
-    bool readEnableReadThread(ros::NodeHandle &n);
+    bool readEnableReadThread(const ros::NodeHandle &n);
 
     const std::string &getJointName(void) const;
 
@@ -188,19 +187,6 @@ public:
     std::atomic<bool> enable_read_thread_{true};
 
     std::atomic<double> set_position_{0};
-
-private:
-    template <typename T>
-    bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> &scalar)
-    {
-        T val;
-        if (n.getParam(name, val))
-        {
-            scalar = val;
-            return true;
-        }
-        return false;
-    }
 };
 
 class TalonFXProControllerInterface
@@ -250,6 +236,8 @@ public:
     virtual void setControlVelocity(const double control_velocity);
     virtual void setControlAcceleration(const double control_acceleration);
     virtual void setControlJerk(const double control_jerk);
+
+    virtual void setControlDifferentialPosition(const double control_differential_position);
 
     // Functions which handle dynamic reconfigurable config vars
     void setkP(const double kP, const size_t index, const bool update_ddr = true);
@@ -320,7 +308,6 @@ public:
     void setControlFeedforward(const double control_feedforward, const bool update_ddr = true);
     void setControlSlot(const int control_slot, const bool update_ddr = true);
     void setControlOpposeMasterDirection(const bool control_oppose_master_direction, const bool update_ddr = true);
-    void setControlDifferentialPosition(const double control_differential_position, const bool update_ddr = true);
     void setControlDifferentialSlot(const int control_differential_slot, const bool update_ddr = true);
     void setEnableReadThread(const bool enable_read_thread, const bool update_ddr = true);
     void setRotorPosition(const double set_position, const bool update_ddr = true);
@@ -335,163 +322,163 @@ public:
     double getkA(const int index) const { return talon_.state()->getkA(index); }
     double getkG(const int index) const { return talon_.state()->getkG(index); }
     hardware_interface::talonfxpro::GravityType getGravityType(const size_t index) const { return talon_.state()->getGravityType(index); }
-	STATE_PASSTHRU_FN(getInvert);
-	STATE_PASSTHRU_FN(getNeutralMode);
-	STATE_PASSTHRU_FN(getDutyCycleNeutralDeadband);
-	STATE_PASSTHRU_FN(getPeakForwardDutyCycle);
-	STATE_PASSTHRU_FN(getPeakReverseDutyCycle);
-	STATE_PASSTHRU_FN(getStatorCurrentLimit);
-	STATE_PASSTHRU_FN(getStatorCurrentLimitEnable);
-	STATE_PASSTHRU_FN(getSupplyCurrentLimit);
-	STATE_PASSTHRU_FN(getSupplyCurrentLimitEnable);
-	STATE_PASSTHRU_FN(getSupplyVoltageTimeConstant);
-	STATE_PASSTHRU_FN(getPeakForwardVoltage);
-	STATE_PASSTHRU_FN(getPeakReverseVoltage);
-	STATE_PASSTHRU_FN(getPeakForwardTorqueCurrent);
-	STATE_PASSTHRU_FN(getPeakReverseTorqueCurrent);
-	STATE_PASSTHRU_FN(getTorqueNeutralDeadband);
-	STATE_PASSTHRU_FN(getFeedbackRotorOffset);
-	STATE_PASSTHRU_FN(getSensorToMechanismRatio);
-	STATE_PASSTHRU_FN(getRotorToSensorRatio);
-	STATE_PASSTHRU_FN(getFeedbackSensorSource);
-	STATE_PASSTHRU_FN(getFeedbackRemoteSensorID);
-	STATE_PASSTHRU_FN(getDutyCycleOpenLoopRampPeriod);
-	STATE_PASSTHRU_FN(getVoltageOpenLoopRampPeriod);
-	STATE_PASSTHRU_FN(getTorqueOpenLoopRampPeriod);
-	STATE_PASSTHRU_FN(getDutyCycleClosedLoopRampPeriod);
-	STATE_PASSTHRU_FN(getVoltageClosedLoopRampPeriod);
-	STATE_PASSTHRU_FN(getTorqueClosedLoopRampPeriod);
-	STATE_PASSTHRU_FN(getForwardLimitType);
-	STATE_PASSTHRU_FN(getForwardLimitAutosetPositionEnable);
-	STATE_PASSTHRU_FN(getForwardLimitAutosetPositionValue);
-	STATE_PASSTHRU_FN(getForwardLimitEnable);
-	STATE_PASSTHRU_FN(getForwardLimitSource);
-	STATE_PASSTHRU_FN(getForwardLimitRemoteSensorID);
-	STATE_PASSTHRU_FN(getReverseLimitType);
-	STATE_PASSTHRU_FN(getReverseLimitAutosetPositionEnable);
-	STATE_PASSTHRU_FN(getReverseLimitAutosetPositionValue);
-	STATE_PASSTHRU_FN(getReverseLimitEnable);
-	STATE_PASSTHRU_FN(getReverseLimitSource);
-	STATE_PASSTHRU_FN(getReverseLimitRemoteSensorID);
-	STATE_PASSTHRU_FN(getBeepOnBoot);
-	STATE_PASSTHRU_FN(getBeepOnConfig);
-	STATE_PASSTHRU_FN(getAllowMusicDurDisable);
-	STATE_PASSTHRU_FN(getForwardSoftLimitEnable);
-	STATE_PASSTHRU_FN(getReverseSoftLimitEnable);
-	STATE_PASSTHRU_FN(getForwardSoftLimitThreshold);
-	STATE_PASSTHRU_FN(getReverseSoftLimitThreshold);
-	STATE_PASSTHRU_FN(getMotionMagicCruiseVelocity);
-	STATE_PASSTHRU_FN(getMotionMagicAcceleration);
-	STATE_PASSTHRU_FN(getMotionMagicJerk);
-	STATE_PASSTHRU_FN(getContinuousWrap);
-	STATE_PASSTHRU_FN(getClearStickyFaults);
-	STATE_PASSTHRU_FN(getControlMode);
-	STATE_PASSTHRU_FN(getControlOutput);
-	STATE_PASSTHRU_FN(getControlPosition);
-	STATE_PASSTHRU_FN(getControlVelocity);
-	STATE_PASSTHRU_FN(getControlAcceleration);
-	STATE_PASSTHRU_FN(getControlEnableFOC);
-	STATE_PASSTHRU_FN(getControlOverrideBrakeDurNeutral);
-	STATE_PASSTHRU_FN(getControlMaxAbsDutyCycle);
-	STATE_PASSTHRU_FN(getControlDeadband);
-	STATE_PASSTHRU_FN(getControlFeedforward);
-	STATE_PASSTHRU_FN(getControlSlot);
-	STATE_PASSTHRU_FN(getControlOpposeMasterDirection);
-    STATE_PASSTHRU_FN(getControlDifferentialPosition);
-	STATE_PASSTHRU_FN(getControlDifferentialSlot);
-	STATE_PASSTHRU_FN(getEnableReadThread);
-	STATE_PASSTHRU_FN(getHasResetOccurred);
-	STATE_PASSTHRU_FN(getVersionMajor);
-	STATE_PASSTHRU_FN(getVersionMinor);
-	STATE_PASSTHRU_FN(getVersionBugfix);
-	STATE_PASSTHRU_FN(getVersionBuild);
-	STATE_PASSTHRU_FN(getMotorVoltage);
-	STATE_PASSTHRU_FN(getForwardLimit);
-	STATE_PASSTHRU_FN(getReverseLimit);
-	STATE_PASSTHRU_FN(getAppliedRotorPolarity);
-	STATE_PASSTHRU_FN(getDutyCycle);
-	STATE_PASSTHRU_FN(getTorqueCurrent);
-	STATE_PASSTHRU_FN(getStatorCurrent);
-	STATE_PASSTHRU_FN(getSupplyCurrent);
-	STATE_PASSTHRU_FN(getSupplyVoltage);
-    STATE_PASSTHRU_FN(getDeviceTemp);
-    STATE_PASSTHRU_FN(getProcessorTemp);
-    STATE_PASSTHRU_FN(getRotorVelocity);
-    STATE_PASSTHRU_FN(getRotorPosition);
-    STATE_PASSTHRU_FN(getVelocity);
-    STATE_PASSTHRU_FN(getPosition);
-    STATE_PASSTHRU_FN(getAcceleration);
-    STATE_PASSTHRU_FN(getMotionMagicIsRunning);
-    STATE_PASSTHRU_FN(getDeviceEnable);
-    STATE_PASSTHRU_FN(getDifferentialControlMode);
-    STATE_PASSTHRU_FN(getDifferentialAverageVelocity);
-    STATE_PASSTHRU_FN(getDifferentialAveragePosition);
-    STATE_PASSTHRU_FN(getDifferentialDifferenceVelocity);
-    STATE_PASSTHRU_FN(getDifferentialDifferencePosition);
-    STATE_PASSTHRU_FN(getBridgeOutput);
-    STATE_PASSTHRU_FN(getFaultHardware);
-    STATE_PASSTHRU_FN(getFaultProcTemp);
-    STATE_PASSTHRU_FN(getFaultDeviceTemp);
-    STATE_PASSTHRU_FN(getFaultUndervoltage);
-    STATE_PASSTHRU_FN(getFaultBootDuringEnable);
-    STATE_PASSTHRU_FN(getFaultBridgeBrownout);
-    STATE_PASSTHRU_FN(getFaultUnlicensedFeatureInUse);
-    STATE_PASSTHRU_FN(getFaultRemoteSensorReset);
-    STATE_PASSTHRU_FN(getFaultMissingDifferentialFX);
-    STATE_PASSTHRU_FN(getFaultRemoteSensorPosOverfow);
-    STATE_PASSTHRU_FN(getFaultOverSupplyV);
-    STATE_PASSTHRU_FN(getFaultUnstableSupplyV);
-    STATE_PASSTHRU_FN(getFaultReverseHardLimit);
-    STATE_PASSTHRU_FN(getFaultForwardHardLimit);
-    STATE_PASSTHRU_FN(getFaultReverseSoftLimit);
-    STATE_PASSTHRU_FN(getFaultForwardSoftLimit);
-    STATE_PASSTHRU_FN(getFaultRemoteSensorDataInvalid);
-    STATE_PASSTHRU_FN(getFaultFusedSensorOutOfSync);
-    STATE_PASSTHRU_FN(getFaultStatorCurrLimit);
-    STATE_PASSTHRU_FN(getFaultSupplyCurrLimit);
-    STATE_PASSTHRU_FN(getStickyFaultHardware);
-    STATE_PASSTHRU_FN(getStickyFaultProcTemp);
-    STATE_PASSTHRU_FN(getStickyFaultDeviceTemp);
-    STATE_PASSTHRU_FN(getStickyFaultUndervoltage);
-    STATE_PASSTHRU_FN(getStickyFaultBootDuringEnable);
-    STATE_PASSTHRU_FN(getStickyFaultBridgeBrownout);
-    STATE_PASSTHRU_FN(getStickyFaultUnlicensedFeatureInUse);
-    STATE_PASSTHRU_FN(getStickyFaultRemoteSensorReset);
-    STATE_PASSTHRU_FN(getStickyFaultMissingDifferentialFX);
-    STATE_PASSTHRU_FN(getStickyFaultRemoteSensorPosOverfow);
-    STATE_PASSTHRU_FN(getStickyFaultOverSupplyV);
-    STATE_PASSTHRU_FN(getStickyFaultUnstableSupplyV);
-    STATE_PASSTHRU_FN(getStickyFaultReverseHardLimit);
-    STATE_PASSTHRU_FN(getStickyFaultForwardHardLimit);
-    STATE_PASSTHRU_FN(getStickyFaultReverseSoftLimit);
-    STATE_PASSTHRU_FN(getStickyFaultForwardSoftLimit);
-    STATE_PASSTHRU_FN(getStickyFaultRemoteSensorDataInvalid);
-    STATE_PASSTHRU_FN(getStickyFaultFusedSensorOutOfSync);
-    STATE_PASSTHRU_FN(getStickyFaultStatorCurrLimit);
-    STATE_PASSTHRU_FN(getStickyFaultSupplyCurrLimit);
-    STATE_PASSTHRU_FN(getClosedLoopProportionalOutput);
-    STATE_PASSTHRU_FN(getClosedLoopIntegratedOutput);
-    STATE_PASSTHRU_FN(getClosedLoopFeedForward);
-    STATE_PASSTHRU_FN(getClosedLoopDerivativeOutput);
-    STATE_PASSTHRU_FN(getClosedLoopOutput);
-    STATE_PASSTHRU_FN(getClosedLoopReference);
-    STATE_PASSTHRU_FN(getClosedLoopReferenceSlope);
-    STATE_PASSTHRU_FN(getClosedLoopError);
-    STATE_PASSTHRU_FN(getDifferentialOutput);
-    STATE_PASSTHRU_FN(getDifferentialClosedLoopProportionalOutput);
-    STATE_PASSTHRU_FN(getDifferentialClosedLoopIntegratedOutput);
-    STATE_PASSTHRU_FN(getDifferentialClosedLoopFeedForward);
-    STATE_PASSTHRU_FN(getDifferentialClosedLoopDerivativeOutput);
-    STATE_PASSTHRU_FN(getDifferentialClosedLoopOutput);
-    STATE_PASSTHRU_FN(getDifferentialClosedLoopReference);
-    STATE_PASSTHRU_FN(getDifferentialClosedLoopReferenceSlope);
-    STATE_PASSTHRU_FN(getDifferentialClosedLoopError);
+	STATE_PASSTHRU_FN(getInvert)
+	STATE_PASSTHRU_FN(getNeutralMode)
+	STATE_PASSTHRU_FN(getDutyCycleNeutralDeadband)
+	STATE_PASSTHRU_FN(getPeakForwardDutyCycle)
+	STATE_PASSTHRU_FN(getPeakReverseDutyCycle)
+	STATE_PASSTHRU_FN(getStatorCurrentLimit)
+	STATE_PASSTHRU_FN(getStatorCurrentLimitEnable)
+	STATE_PASSTHRU_FN(getSupplyCurrentLimit)
+	STATE_PASSTHRU_FN(getSupplyCurrentLimitEnable)
+	STATE_PASSTHRU_FN(getSupplyVoltageTimeConstant)
+	STATE_PASSTHRU_FN(getPeakForwardVoltage)
+	STATE_PASSTHRU_FN(getPeakReverseVoltage)
+	STATE_PASSTHRU_FN(getPeakForwardTorqueCurrent)
+	STATE_PASSTHRU_FN(getPeakReverseTorqueCurrent)
+	STATE_PASSTHRU_FN(getTorqueNeutralDeadband)
+	STATE_PASSTHRU_FN(getFeedbackRotorOffset)
+	STATE_PASSTHRU_FN(getSensorToMechanismRatio)
+	STATE_PASSTHRU_FN(getRotorToSensorRatio)
+	STATE_PASSTHRU_FN(getFeedbackSensorSource)
+	STATE_PASSTHRU_FN(getFeedbackRemoteSensorID)
+	STATE_PASSTHRU_FN(getDutyCycleOpenLoopRampPeriod)
+	STATE_PASSTHRU_FN(getVoltageOpenLoopRampPeriod)
+	STATE_PASSTHRU_FN(getTorqueOpenLoopRampPeriod)
+	STATE_PASSTHRU_FN(getDutyCycleClosedLoopRampPeriod)
+	STATE_PASSTHRU_FN(getVoltageClosedLoopRampPeriod)
+	STATE_PASSTHRU_FN(getTorqueClosedLoopRampPeriod)
+	STATE_PASSTHRU_FN(getForwardLimitType)
+	STATE_PASSTHRU_FN(getForwardLimitAutosetPositionEnable)
+	STATE_PASSTHRU_FN(getForwardLimitAutosetPositionValue)
+	STATE_PASSTHRU_FN(getForwardLimitEnable)
+	STATE_PASSTHRU_FN(getForwardLimitSource)
+	STATE_PASSTHRU_FN(getForwardLimitRemoteSensorID)
+	STATE_PASSTHRU_FN(getReverseLimitType)
+	STATE_PASSTHRU_FN(getReverseLimitAutosetPositionEnable)
+	STATE_PASSTHRU_FN(getReverseLimitAutosetPositionValue)
+	STATE_PASSTHRU_FN(getReverseLimitEnable)
+	STATE_PASSTHRU_FN(getReverseLimitSource)
+	STATE_PASSTHRU_FN(getReverseLimitRemoteSensorID)
+	STATE_PASSTHRU_FN(getBeepOnBoot)
+	STATE_PASSTHRU_FN(getBeepOnConfig)
+	STATE_PASSTHRU_FN(getAllowMusicDurDisable)
+	STATE_PASSTHRU_FN(getForwardSoftLimitEnable)
+	STATE_PASSTHRU_FN(getReverseSoftLimitEnable)
+	STATE_PASSTHRU_FN(getForwardSoftLimitThreshold)
+	STATE_PASSTHRU_FN(getReverseSoftLimitThreshold)
+	STATE_PASSTHRU_FN(getMotionMagicCruiseVelocity)
+	STATE_PASSTHRU_FN(getMotionMagicAcceleration)
+	STATE_PASSTHRU_FN(getMotionMagicJerk)
+	STATE_PASSTHRU_FN(getContinuousWrap)
+	STATE_PASSTHRU_FN(getClearStickyFaults)
+	STATE_PASSTHRU_FN(getControlMode)
+	STATE_PASSTHRU_FN(getControlOutput)
+	STATE_PASSTHRU_FN(getControlPosition)
+	STATE_PASSTHRU_FN(getControlVelocity)
+	STATE_PASSTHRU_FN(getControlAcceleration)
+	STATE_PASSTHRU_FN(getControlEnableFOC)
+	STATE_PASSTHRU_FN(getControlOverrideBrakeDurNeutral)
+	STATE_PASSTHRU_FN(getControlMaxAbsDutyCycle)
+	STATE_PASSTHRU_FN(getControlDeadband)
+	STATE_PASSTHRU_FN(getControlFeedforward)
+	STATE_PASSTHRU_FN(getControlSlot)
+	STATE_PASSTHRU_FN(getControlOpposeMasterDirection)
+    STATE_PASSTHRU_FN(getControlDifferentialPosition)
+	STATE_PASSTHRU_FN(getControlDifferentialSlot)
+	STATE_PASSTHRU_FN(getEnableReadThread)
+	STATE_PASSTHRU_FN(getHasResetOccurred)
+	STATE_PASSTHRU_FN(getVersionMajor)
+	STATE_PASSTHRU_FN(getVersionMinor)
+	STATE_PASSTHRU_FN(getVersionBugfix)
+	STATE_PASSTHRU_FN(getVersionBuild)
+	STATE_PASSTHRU_FN(getMotorVoltage)
+	STATE_PASSTHRU_FN(getForwardLimit)
+	STATE_PASSTHRU_FN(getReverseLimit)
+	STATE_PASSTHRU_FN(getAppliedRotorPolarity)
+	STATE_PASSTHRU_FN(getDutyCycle)
+	STATE_PASSTHRU_FN(getTorqueCurrent)
+	STATE_PASSTHRU_FN(getStatorCurrent)
+	STATE_PASSTHRU_FN(getSupplyCurrent)
+	STATE_PASSTHRU_FN(getSupplyVoltage)
+    STATE_PASSTHRU_FN(getDeviceTemp)
+    STATE_PASSTHRU_FN(getProcessorTemp)
+    STATE_PASSTHRU_FN(getRotorVelocity)
+    STATE_PASSTHRU_FN(getRotorPosition)
+    STATE_PASSTHRU_FN(getVelocity)
+    STATE_PASSTHRU_FN(getPosition)
+    STATE_PASSTHRU_FN(getAcceleration)
+    STATE_PASSTHRU_FN(getMotionMagicIsRunning)
+    STATE_PASSTHRU_FN(getDeviceEnable)
+    STATE_PASSTHRU_FN(getDifferentialControlMode)
+    STATE_PASSTHRU_FN(getDifferentialAverageVelocity)
+    STATE_PASSTHRU_FN(getDifferentialAveragePosition)
+    STATE_PASSTHRU_FN(getDifferentialDifferenceVelocity)
+    STATE_PASSTHRU_FN(getDifferentialDifferencePosition)
+    STATE_PASSTHRU_FN(getBridgeOutput)
+    STATE_PASSTHRU_FN(getFaultHardware)
+    STATE_PASSTHRU_FN(getFaultProcTemp)
+    STATE_PASSTHRU_FN(getFaultDeviceTemp)
+    STATE_PASSTHRU_FN(getFaultUndervoltage)
+    STATE_PASSTHRU_FN(getFaultBootDuringEnable)
+    STATE_PASSTHRU_FN(getFaultBridgeBrownout)
+    STATE_PASSTHRU_FN(getFaultUnlicensedFeatureInUse)
+    STATE_PASSTHRU_FN(getFaultRemoteSensorReset)
+    STATE_PASSTHRU_FN(getFaultMissingDifferentialFX)
+    STATE_PASSTHRU_FN(getFaultRemoteSensorPosOverfow)
+    STATE_PASSTHRU_FN(getFaultOverSupplyV)
+    STATE_PASSTHRU_FN(getFaultUnstableSupplyV)
+    STATE_PASSTHRU_FN(getFaultReverseHardLimit)
+    STATE_PASSTHRU_FN(getFaultForwardHardLimit)
+    STATE_PASSTHRU_FN(getFaultReverseSoftLimit)
+    STATE_PASSTHRU_FN(getFaultForwardSoftLimit)
+    STATE_PASSTHRU_FN(getFaultRemoteSensorDataInvalid)
+    STATE_PASSTHRU_FN(getFaultFusedSensorOutOfSync)
+    STATE_PASSTHRU_FN(getFaultStatorCurrLimit)
+    STATE_PASSTHRU_FN(getFaultSupplyCurrLimit)
+    STATE_PASSTHRU_FN(getStickyFaultHardware)
+    STATE_PASSTHRU_FN(getStickyFaultProcTemp)
+    STATE_PASSTHRU_FN(getStickyFaultDeviceTemp)
+    STATE_PASSTHRU_FN(getStickyFaultUndervoltage)
+    STATE_PASSTHRU_FN(getStickyFaultBootDuringEnable)
+    STATE_PASSTHRU_FN(getStickyFaultBridgeBrownout)
+    STATE_PASSTHRU_FN(getStickyFaultUnlicensedFeatureInUse)
+    STATE_PASSTHRU_FN(getStickyFaultRemoteSensorReset)
+    STATE_PASSTHRU_FN(getStickyFaultMissingDifferentialFX)
+    STATE_PASSTHRU_FN(getStickyFaultRemoteSensorPosOverfow)
+    STATE_PASSTHRU_FN(getStickyFaultOverSupplyV)
+    STATE_PASSTHRU_FN(getStickyFaultUnstableSupplyV)
+    STATE_PASSTHRU_FN(getStickyFaultReverseHardLimit)
+    STATE_PASSTHRU_FN(getStickyFaultForwardHardLimit)
+    STATE_PASSTHRU_FN(getStickyFaultReverseSoftLimit)
+    STATE_PASSTHRU_FN(getStickyFaultForwardSoftLimit)
+    STATE_PASSTHRU_FN(getStickyFaultRemoteSensorDataInvalid)
+    STATE_PASSTHRU_FN(getStickyFaultFusedSensorOutOfSync)
+    STATE_PASSTHRU_FN(getStickyFaultStatorCurrLimit)
+    STATE_PASSTHRU_FN(getStickyFaultSupplyCurrLimit)
+    STATE_PASSTHRU_FN(getClosedLoopProportionalOutput)
+    STATE_PASSTHRU_FN(getClosedLoopIntegratedOutput)
+    STATE_PASSTHRU_FN(getClosedLoopFeedForward)
+    STATE_PASSTHRU_FN(getClosedLoopDerivativeOutput)
+    STATE_PASSTHRU_FN(getClosedLoopOutput)
+    STATE_PASSTHRU_FN(getClosedLoopReference)
+    STATE_PASSTHRU_FN(getClosedLoopReferenceSlope)
+    STATE_PASSTHRU_FN(getClosedLoopError)
+    STATE_PASSTHRU_FN(getDifferentialOutput)
+    STATE_PASSTHRU_FN(getDifferentialClosedLoopProportionalOutput)
+    STATE_PASSTHRU_FN(getDifferentialClosedLoopIntegratedOutput)
+    STATE_PASSTHRU_FN(getDifferentialClosedLoopFeedForward)
+    STATE_PASSTHRU_FN(getDifferentialClosedLoopDerivativeOutput)
+    STATE_PASSTHRU_FN(getDifferentialClosedLoopOutput)
+    STATE_PASSTHRU_FN(getDifferentialClosedLoopReference)
+    STATE_PASSTHRU_FN(getDifferentialClosedLoopReferenceSlope)
+    STATE_PASSTHRU_FN(getDifferentialClosedLoopError)
 
 // Shim functions to hook up V5 calls from controllers to updated V6 functions
 #ifdef TALONCI_BACKWARDS_COMPATIBILITY
-    COPY_TALONFX_FN(getForwardLimit, getForwardLimitSwitch);
-    COPY_TALONFX_FN(getReverseLimit, getReverseLimitSwitch);
-    COPY_TALONFX_FN(getVelocity, getSpeed);
+    COPY_TALONFX_FN(getForwardLimit, getForwardLimitSwitch)
+    COPY_TALONFX_FN(getReverseLimit, getReverseLimitSwitch)
+    COPY_TALONFX_FN(getVelocity, getSpeed)
 
     void setDemand1Type(const hardware_interface::DemandType demand_type) const;
     void setDemand1Value(const double demand_value);
@@ -512,8 +499,8 @@ private:
               ros::NodeHandle &n,
               hardware_interface::talonfxpro::TalonFXProCommandHandle &talon,
               bool follower);
-    bool readParams(ros::NodeHandle &n, TalonFXProCIParams &params);
-    void writeParamsToHW(TalonFXProCIParams &params, hardware_interface::talonfxpro::TalonFXProCommandHandle &talon);
+    bool readParams(const ros::NodeHandle &n, TalonFXProCIParams &params) const;
+    void writeParamsToHW(TalonFXProCIParams &params, hardware_interface::talonfxpro::TalonFXProCommandHandle &talon) const;
 
     std::unique_ptr<ddr_updater::DDRUpdater> ddr_updater_;
 
@@ -545,17 +532,17 @@ public:
     TalonFXProFixedModeControllerInterface() : TalonFXProControllerInterface() {}
     TalonFXProFixedModeControllerInterface(const TalonFXProFixedModeControllerInterface &) = delete; 
     TalonFXProFixedModeControllerInterface(TalonFXProFixedModeControllerInterface &&) noexcept = delete;
-    virtual ~TalonFXProFixedModeControllerInterface() = default;
+    ~TalonFXProFixedModeControllerInterface() override = default;
 
     TalonFXProFixedModeControllerInterface &operator=(const TalonFXProFixedModeControllerInterface &other) = delete;
     TalonFXProFixedModeControllerInterface &operator=(TalonFXProFixedModeControllerInterface &&other) noexcept = delete;
 
-    virtual void setControlMode(const hardware_interface::talonfxpro::TalonMode mode) override;
-    virtual void setControlJerk(const double control_jerk) override;
+    void setControlMode(const hardware_interface::talonfxpro::TalonMode mode) override;
+    void setControlJerk(const double control_jerk) override;
 
 protected:
     // Disable changing mode for controllers derived from this class
-    virtual bool setInitialControlMode(void) override;
+    bool setInitialControlMode(void) override;
 };
 
 // A derived class which emits a warning on potentially invalid control output calls
@@ -571,9 +558,9 @@ public:
     TalonFXProPositionControllerInterface &operator=(const TalonFXProPositionControllerInterface &other) = delete;
     TalonFXProPositionControllerInterface &operator=(TalonFXProPositionControllerInterface &&other) noexcept = delete;
 
-    virtual void setControlMode(const hardware_interface::talonfxpro::TalonMode mode) override;
-    virtual void setControlOutput(const double control_output) override;
-    virtual void setControlAcceleration(const double control_acceleration) override;
+    void setControlMode(const hardware_interface::talonfxpro::TalonMode mode) override;
+    void setControlOutput(const double control_output) override;
+    void setControlAcceleration(const double control_acceleration) override;
 };
 
 // A derived class which emits a warning on potentially invalid control output calls
@@ -589,8 +576,8 @@ public:
     TalonFXProVelocityControllerInterface &operator=(const TalonFXProVelocityControllerInterface &other) = delete;
     TalonFXProVelocityControllerInterface &operator=(TalonFXProVelocityControllerInterface &&other) noexcept = delete;
 
-    virtual void setControlOutput(const double control_output) override;
-    virtual void setControlPosition(const double control_position) override;
+    void setControlOutput(const double control_output) override;
+    void setControlPosition(const double control_position) override;
 };
 
 // Derived classes which emits a warning on potentially invalid control output calls
@@ -606,9 +593,9 @@ public:
     TalonFXProMotionMagicControllerInterface &operator=(const TalonFXProMotionMagicControllerInterface &other) = delete;
     TalonFXProMotionMagicControllerInterface &operator=(TalonFXProMotionMagicControllerInterface &&other) noexcept = delete;
 
-    virtual void setControlOutput(const double control_output) override;
-    virtual void setControlVelocity(const double control_velocity) override;
-    virtual void setControlAcceleration(const double control_acceleration) override;
+    void setControlOutput(const double control_output) override;
+    void setControlVelocity(const double control_velocity) override;
+    void setControlAcceleration(const double control_acceleration) override;
 };
 
 template<typename hardware_interface::talonfxpro::TalonMode TALON_MODE, const char *TALON_MODE_NAME>
@@ -623,9 +610,9 @@ public:
     TalonFXProMotionMagicVelocityControllerInterface &operator=(const TalonFXProMotionMagicVelocityControllerInterface &other) = delete;
     TalonFXProMotionMagicVelocityControllerInterface &operator=(TalonFXProMotionMagicVelocityControllerInterface &&other) noexcept = delete;
 
-    virtual void setControlOutput(const double control_output) override;
-    virtual void setControlPosition(const double control_position) override;
-    virtual void setControlAcceleration(const double control_acceleration) override;
+    void setControlOutput(const double control_output) override;
+    void setControlPosition(const double control_position) override;
+    void setControlAcceleration(const double control_acceleration) override;
 };
 
 template<typename hardware_interface::talonfxpro::TalonMode TALON_MODE, const char *TALON_MODE_NAME>
@@ -640,8 +627,8 @@ public:
     TalonFXProDynamicMotionMagicControllerInterface &operator=(const TalonFXProDynamicMotionMagicControllerInterface &other) = delete;
     TalonFXProDynamicMotionMagicControllerInterface &operator=(TalonFXProDynamicMotionMagicControllerInterface &&other) noexcept = delete;
 
-    virtual void setControlOutput(const double control_output) override;
-    virtual void setControlJerk(const double control_jerk) override;
+    void setControlOutput(const double control_output) override;
+    void setControlJerk(const double control_jerk) override;
 };
 
 extern const char DUTY_CYCLE_NAME[];
@@ -688,7 +675,7 @@ public:
     TalonFXProFollowerControllerInterfaceBase()  : TalonFXProControllerInterface() {}
     TalonFXProFollowerControllerInterfaceBase(const TalonFXProFollowerControllerInterfaceBase &) = delete;
     TalonFXProFollowerControllerInterfaceBase(TalonFXProFollowerControllerInterfaceBase &&) noexcept = delete;
-    virtual ~TalonFXProFollowerControllerInterfaceBase() = default;
+    ~TalonFXProFollowerControllerInterfaceBase() override = default;
 
     TalonFXProFollowerControllerInterfaceBase &operator=(const TalonFXProFollowerControllerInterfaceBase &other) = delete;
     TalonFXProFollowerControllerInterfaceBase &operator=(TalonFXProFollowerControllerInterfaceBase &&other) noexcept = delete;

@@ -57,19 +57,19 @@ class FRCRobotHWInterface : public ros_control_boilerplate::FRCRobotInterface
 		FRCRobotHWInterface(ros::NodeHandle &nh, urdf::Model *urdf_model = NULL);
 		FRCRobotHWInterface(const FRCRobotHWInterface &) = delete;
 		FRCRobotHWInterface(const FRCRobotHWInterface &&) noexcept = delete;
-		virtual ~FRCRobotHWInterface() = default;
+		~FRCRobotHWInterface() override = default;
 
 		FRCRobotHWInterface& operator=(const FRCRobotHWInterface &) = delete;
 		FRCRobotHWInterface& operator=(const FRCRobotHWInterface &&) noexcept = delete;
 
 		/** \brief Initialize the hardware interface */
-		virtual bool init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh) override;
+		bool init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh) override;
 
 		/** \brief Read the state from the robot hardware. */
-		virtual void read(const ros::Time& time, const ros::Duration& period) override;
+		void read(const ros::Time& time, const ros::Duration& period) override;
 
 		/** \brief Write the command to the robot hardware. */
-		virtual void write(const ros::Time& time, const ros::Duration& period) override;
+		void write(const ros::Time& time, const ros::Duration& period) override;
 
 	private:
 		bool DSErrorCallback(ros_control_boilerplate::DSError::Request &req, ros_control_boilerplate::DSError::Response &res);

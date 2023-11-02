@@ -14,10 +14,10 @@ class PDPDevices : public Devices
 {
 
 public:
-    PDPDevices(ros::NodeHandle &root_nh);
+    explicit PDPDevices(ros::NodeHandle &root_nh);
     PDPDevices(const PDPDevices &) = delete;
     PDPDevices(PDPDevices &&) noexcept = delete;
-    virtual ~PDPDevices();
+    ~PDPDevices() override;
 
     PDPDevices &operator=(const PDPDevices &) = delete;
     PDPDevices &operator=(PDPDevices &&) noexcept = delete;

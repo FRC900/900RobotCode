@@ -1,32 +1,26 @@
-//#include <ros/ros.h>
 #include <talon_swerve_drive_controller/900Math.h>
 #include <talon_swerve_drive_controller/Swerve.h>
 
-#include <ros/console.h>
+//#include <ros/console.h>
 
-template<size_t WHEELCOUNT>
+template <size_t WHEELCOUNT>
 swerve<WHEELCOUNT>::swerve(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinates,
-			   const std::array<double, WHEELCOUNT> &offsets,
-			   const swerveVar::ratios &ratio,
-			   const swerveVar::encoderUnits &units,
-			   const swerveVar::driveModel &drive)
-	: wheelCoordinates_(wheelCoordinates)
-	, swerveMath_(swerveDriveMath(wheelCoordinates_))
-	, offsets_(offsets)
-	, ratio_(ratio)
-	, units_(units)
-	, drive_(drive)
+						   const std::array<double, WHEELCOUNT> &offsets,
+						   const swerveVar::ratios &ratio,
+						   const swerveVar::encoderUnits &units,
+						   const swerveVar::driveModel &drive)
+	: wheelCoordinates_(wheelCoordinates), swerveMath_(swerveDriveMath<WHEELCOUNT>(wheelCoordinates_)), offsets_(offsets), ratio_(ratio), units_(units), drive_(drive)
 {
 }
 
-template<size_t WHEELCOUNT>
+template <size_t WHEELCOUNT>
 std::array<Eigen::Vector2d, WHEELCOUNT> swerve<WHEELCOUNT>::motorOutputs(Eigen::Vector2d velocityVector,
-												 double rotation,
-												 double angle,
-												 const std::array<double, WHEELCOUNT> &positionsNew,
-												 bool norm,
-												 const Eigen::Vector2d &centerOfRotation,
-												 const bool useCosScaling)
+																		 double rotation,
+																		 double angle,
+																		 const std::array<double, WHEELCOUNT> &positionsNew,
+																		 bool norm,
+																		 const Eigen::Vector2d &centerOfRotation,
+																		 const bool useCosScaling)
 {
 	// See if the current centerOfRotation coords have been used before
 	// If not, calculate the multiplers and matRotRate for them
@@ -90,7 +84,7 @@ std::array<double, WHEELCOUNT> swerve<WHEELCOUNT>::parkingAngles(const std::arra
 // Apply encoder offset and steering ratio to calculate desired
 // measured wheel angle from a wheel angle setpoint
 template<size_t WHEELCOUNT>
-double swerve<WHEELCOUNT>::getWheelAngle(int index, double pos) const
+double swerve<WHEELCOUNT>::getWheelAngle(size_t index, double pos) const
 {
 	return (pos - offsets_[index]) * units_.steeringGet;
 }

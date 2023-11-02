@@ -143,8 +143,7 @@ static void readDoubleCommon(const XmlRpc::XmlRpcValue &joint_params,
                              double &value,
                              const std::string &joint_name = "")
 {
-    const XmlRpc::XmlRpcValue &xml_val = joint_params[key];
-    if (xml_val.valid())
+    if (const XmlRpc::XmlRpcValue &xml_val = joint_params[key]; xml_val.valid())
     {
         if (xml_val.getType() == XmlRpc::XmlRpcValue::TypeInt)
         {

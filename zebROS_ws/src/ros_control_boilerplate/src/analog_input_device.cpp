@@ -30,7 +30,7 @@ AnalogInputDevice::AnalogInputDevice(const int joint_index,
 AnalogInputDevice::~AnalogInputDevice() = default;
 
 void AnalogInputDevice::registerInterfaces(hardware_interface::JointStateInterface &state_interface,
-                                            hardware_interface::RemoteJointInterface &remote_joint_interface)
+                                           hardware_interface::RemoteJointInterface &remote_joint_interface)
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for Analog Input : " << name_ << " at channel " << ain_channel_);
     hardware_interface::JointStateHandle state_handle(name_, &state_, &state_, &state_);
@@ -55,7 +55,7 @@ const std::string &AnalogInputDevice::getName(void) const
     return name_;
 }
 
-void AnalogInputDevice::setSimValue(const double value)
+void AnalogInputDevice::setSimValue(const double value) const
 {
     HALSIM_SetAnalogInVoltage(ain_channel_, static_cast<int32_t>((value - b_) / a_));
 }

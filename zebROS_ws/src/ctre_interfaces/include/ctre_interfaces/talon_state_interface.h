@@ -28,7 +28,7 @@ namespace hardware_interface
 class TalonHWState
 {
 	public:
-		TalonHWState(int can_id);
+		explicit TalonHWState(int can_id);
 		TalonHWState(const TalonHWState &) = default;
 		TalonHWState(TalonHWState &&) = default;
 		~TalonHWState();
@@ -51,8 +51,8 @@ class TalonHWState
 		double getPidfI(size_t index) const;
 		double getPidfD(size_t index) const;
 		double getPidfF(size_t index) const;
-		int getPidfIzone(size_t index) const;
-		int getAllowableClosedLoopError(size_t index) const;
+		double getPidfIzone(size_t index) const;
+		double getAllowableClosedLoopError(size_t index) const;
 		double getMaxIntegralAccumulator(size_t index) const;
 		double getClosedLoopPeakOutput(size_t index) const;
 		int getClosedLoopPeriod(size_t index) const;
@@ -193,11 +193,11 @@ class TalonHWState
 		void setPidfI(double pidf_i, size_t index);
 		void setPidfD(double pidf_d, size_t index);
 		void setPidfF(double pidf_f, size_t index);
-		void setPidfIzone(int pidf_izone, size_t index);
-		void setAllowableClosedLoopError(int allowable_closed_loop_error, size_t index);
+		void setPidfIzone(double pidf_izone, size_t index);
+		void setAllowableClosedLoopError(double allowable_closed_loop_error, size_t index);
 		void setMaxIntegralAccumulator(double max_integral_accumulator, size_t index);
 		void setClosedLoopPeakOutput(double closed_loop_peak_output, size_t index);
-		void setClosedLoopPeriod(double closed_loop_period, size_t index);
+		void setClosedLoopPeriod(int closed_loop_period, size_t index);
 		void setAuxPidPolarity(bool aux_pid_polarity);
 		void setClosedLoopError(double closed_loop_error);
 		void setIntegralAccumulator(double integral_accumulator);
@@ -272,8 +272,8 @@ class TalonHWState
 		std::array<double, TALON_PIDF_SLOTS> pidf_i_;
 		std::array<double, TALON_PIDF_SLOTS> pidf_d_;
 		std::array<double, TALON_PIDF_SLOTS> pidf_f_;
-		std::array<int, TALON_PIDF_SLOTS>    pidf_izone_;
-		std::array<int, TALON_PIDF_SLOTS>    allowable_closed_loop_error_;
+		std::array<double, TALON_PIDF_SLOTS> pidf_izone_;
+		std::array<double, TALON_PIDF_SLOTS> allowable_closed_loop_error_;
 		std::array<double, TALON_PIDF_SLOTS> max_integral_accumulator_;
 		std::array<double, TALON_PIDF_SLOTS> closed_loop_peak_output_;
 		std::array<int, TALON_PIDF_SLOTS>    closed_loop_period_;
@@ -405,8 +405,8 @@ class TalonHWState
 // Glue code to let this be registered in the list of
 // hardware resources on the robot.  Since state is
 // read-only, allow multiple controllers to register it.
-typedef StateHandle<const TalonHWState> TalonStateHandle;
-typedef StateHandle<TalonHWState> TalonWritableStateHandle;
+using TalonStateHandle = StateHandle<const TalonHWState>;
+using TalonWritableStateHandle = StateHandle<TalonHWState>;
 class TalonStateInterface : public HardwareResourceManager<TalonStateHandle> {};
 class RemoteTalonStateInterface : public HardwareResourceManager<TalonWritableStateHandle, ClaimResources> {};
 

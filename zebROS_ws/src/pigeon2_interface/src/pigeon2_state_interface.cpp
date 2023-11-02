@@ -238,11 +238,11 @@ double Pigeon2HWState::getTemperature(void) const
 	return temperature_;
 }
 
-void Pigeon2HWState::setUptime(const uint32_t uptime)
+void Pigeon2HWState::setUptime(const double uptime)
 {
 	uptime_ = uptime;
 }
-uint32_t Pigeon2HWState::getUptime(void) const
+double Pigeon2HWState::getUptime(void) const
 {
 	return uptime_;
 }

@@ -100,7 +100,7 @@ void SimJoystickDevice::joystickCallback(const sensor_msgs::JoyConstPtr &msg)
     // TODO check default pov?
     // TODO do you need to set JoystickDescriptor?
 
-    std::lock_guard<std::mutex> l(*mutex_);
+    std::lock_guard l(*mutex_);
     HALSIM_SetJoystickPOVs(getId(), &hal_povs);
     HALSIM_SetJoystickAxes(getId(), &hal_axes);
     HALSIM_SetJoystickButtons(getId(), &hal_buttons);

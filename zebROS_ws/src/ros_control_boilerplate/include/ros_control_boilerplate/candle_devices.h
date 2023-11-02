@@ -14,10 +14,10 @@ namespace hardware_interface::candle
 class CANdleDevices : public Devices
 {
 public:
-    CANdleDevices(ros::NodeHandle &root_nh);
+    explicit CANdleDevices(ros::NodeHandle &root_nh);
     CANdleDevices(const CANdleDevices &) = delete;
     CANdleDevices(CANdleDevices &&) noexcept = delete;
-    virtual ~CANdleDevices();
+    ~CANdleDevices() override;
 
     CANdleDevices &operator=(const CANdleDevices &) = delete;
     CANdleDevices &operator=(CANdleDevices &&) noexcept = delete;

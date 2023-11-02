@@ -15,10 +15,10 @@ class DigitalInputDevices : public Devices
 {
 
 public:
-    DigitalInputDevices(ros::NodeHandle &root_nh);
+    explicit DigitalInputDevices(ros::NodeHandle &root_nh);
     DigitalInputDevices(const DigitalInputDevices &) = delete;
     DigitalInputDevices(DigitalInputDevices &&) noexcept = delete;
-    virtual ~DigitalInputDevices();
+    ~DigitalInputDevices() override;
 
     DigitalInputDevices &operator=(const DigitalInputDevices &) = delete;
     DigitalInputDevices &operator=(DigitalInputDevices &&) noexcept = delete;
@@ -26,7 +26,7 @@ public:
     hardware_interface::InterfaceManager *registerInterface() override;
     void read(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
 
-    void simInit(ros::NodeHandle nh) override;
+    void simInit(ros::NodeHandle &nh) override;
 
 private:
     std::vector<std::unique_ptr<DigitalInputDevice>> devices_;

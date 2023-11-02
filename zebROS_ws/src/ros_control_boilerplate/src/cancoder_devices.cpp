@@ -63,7 +63,7 @@ CANCoderDevices::~CANCoderDevices() = default;
 
 hardware_interface::InterfaceManager *CANCoderDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_, *remote_state_interface_);
     }
@@ -76,7 +76,7 @@ hardware_interface::InterfaceManager *CANCoderDevices::registerInterface()
 void CANCoderDevices::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("cancoder");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }
@@ -85,7 +85,7 @@ void CANCoderDevices::read(const ros::Time& time, const ros::Duration& period, T
 void CANCoderDevices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("cancoder");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period);
     }

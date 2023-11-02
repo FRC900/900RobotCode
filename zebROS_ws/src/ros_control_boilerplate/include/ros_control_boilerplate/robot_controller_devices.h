@@ -13,10 +13,10 @@ class RobotControllerDevices : public Devices
 {
 
 public:
-    RobotControllerDevices(ros::NodeHandle &root_nh);
+    explicit RobotControllerDevices(ros::NodeHandle &root_nh);
     RobotControllerDevices(const RobotControllerDevices &) = delete;
     RobotControllerDevices(RobotControllerDevices &&) noexcept = delete;
-    virtual ~RobotControllerDevices();
+    ~RobotControllerDevices() override;
 
     RobotControllerDevices &operator=(const RobotControllerDevices &) = delete;
     RobotControllerDevices &operator=(RobotControllerDevices &&) noexcept = delete;

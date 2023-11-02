@@ -156,9 +156,7 @@ TalonHWState::TalonHWState(int can_id) :
 	control_frame_periods_[Control_6_MotProfAddTrajPoint] = control_6_motprofaddtrajpoint_default;
 }
 
-TalonHWState::~TalonHWState()
-{
-}
+TalonHWState::~TalonHWState() = default;
 
 double TalonHWState::getSetpoint(void) const
 {
@@ -244,7 +242,7 @@ double TalonHWState::getPidfF(size_t index) const
 		return 0.0;
 	}
 }
-int TalonHWState::getPidfIzone(size_t index) const
+double TalonHWState::getPidfIzone(size_t index) const
 {
 	if (index < TALON_PIDF_SLOTS)
 		return pidf_izone_[index];
@@ -254,7 +252,7 @@ int TalonHWState::getPidfIzone(size_t index) const
 		return 0;
 	}
 }
-int TalonHWState::getAllowableClosedLoopError(size_t index) const
+double TalonHWState::getAllowableClosedLoopError(size_t index) const
 {
 	if (index < TALON_PIDF_SLOTS)
 		return allowable_closed_loop_error_[index];
@@ -925,14 +923,14 @@ void TalonHWState::setPidfF(double pidf_f, size_t index)
 	else
 		ROS_WARN_STREAM("Invalid index in talon_state setPidfF. Must be < TALON_PIDF_SLOTS.");
 }
-void TalonHWState::setPidfIzone(int pidf_izone, size_t index)
+void TalonHWState::setPidfIzone(double pidf_izone, size_t index)
 {
 	if (index < TALON_PIDF_SLOTS)
 		pidf_izone_[index] = pidf_izone;
 	else
 		ROS_WARN_STREAM("Invalid index in talon_state setPidfIzone. Must be < TALON_PIDF_SLOTS.");
 }
-void TalonHWState::setAllowableClosedLoopError(int allowable_closed_loop_error, size_t index)
+void TalonHWState::setAllowableClosedLoopError(double allowable_closed_loop_error, size_t index)
 {
 	if (index < TALON_PIDF_SLOTS)
 		allowable_closed_loop_error_[index] = allowable_closed_loop_error;
@@ -953,7 +951,7 @@ void TalonHWState::setClosedLoopPeakOutput(double closed_loop_peak_output, size_
 	else
 		ROS_WARN_STREAM("Invalid index in talon_state setClosedLoopPeakOutput. Must be < TALON_PIDF_SLOTS.");
 }
-void TalonHWState::setClosedLoopPeriod(double closed_loop_period, size_t index)
+void TalonHWState::setClosedLoopPeriod(int closed_loop_period, size_t index)
 {
 	if (index < TALON_PIDF_SLOTS)
 		closed_loop_period_[index] = closed_loop_period;

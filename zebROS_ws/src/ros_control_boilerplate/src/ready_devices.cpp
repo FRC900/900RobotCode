@@ -38,7 +38,7 @@ ReadyDevices::~ReadyDevices() = default;
 
 hardware_interface::InterfaceManager *ReadyDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_, *remote_joint_interface_);
     }

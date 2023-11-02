@@ -38,7 +38,7 @@ void ErrorQueue::error_queue_thread_fn(void)
 		// after getting data from the queue and
 		// not held during the service call itself
 		{
-			std::unique_lock<std::mutex> l(error_queue_mutex_);
+			std::unique_lock l(error_queue_mutex_);
 			while (error_queue_.empty())
 			{
 				error_queue_condition_variable_.wait(l);
@@ -64,7 +64,7 @@ void ErrorQueue::error_queue_thread_fn(void)
 void ErrorQueue::enqueue(int32_t errorCode, const std::string &details)
 {
 	std::scoped_lock l(error_queue_mutex_);
-    error_queue_.push(std::make_pair(errorCode, std::string(details)));
+    error_queue_.emplace(errorCode, std::string(details));
 	error_queue_condition_variable_.notify_one();
 }
 

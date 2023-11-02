@@ -1,14 +1,13 @@
 #pragma once
 #include <array>
-#include <vector>
 #include <Eigen/Dense>
 
 template <size_t WHEELCOUNT>
 class swerveDriveMath
 {
 	public:
-		swerveDriveMath(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate);
-		swerveDriveMath() {};
+		explicit swerveDriveMath(const std::array<Eigen::Vector2d, WHEELCOUNT> &wheelCoordinate);
+		swerveDriveMath() = default;
 		std::array<Eigen::Vector2d, WHEELCOUNT> wheelMultipliersXY(const Eigen::Vector2d &rotationCenter) const;
 
 		//for non field centric set angle to pi/2

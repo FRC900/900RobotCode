@@ -9,6 +9,7 @@ namespace spacemouse_state_controller
 {
 class SpacemouseStateController: public controller_interface::Controller<hardware_interface::JoystickStateInterface>
 {
+public:
 bool init(hardware_interface::JoystickStateInterface *hw,
 		  ros::NodeHandle							 &root_nh,
 		  ros::NodeHandle							 &controller_nh) override

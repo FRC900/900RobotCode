@@ -13,12 +13,11 @@ namespace hardware_interface
 
 class RumbleDevices : public Devices
 {
-
 public:
-    RumbleDevices(ros::NodeHandle &root_nh);
+    explicit RumbleDevices(ros::NodeHandle &root_nh);
     RumbleDevices(const RumbleDevices &) = delete;
     RumbleDevices(RumbleDevices &&) noexcept = delete;
-    virtual ~RumbleDevices();
+    ~RumbleDevices() override;
 
     RumbleDevices &operator=(const RumbleDevices &) = delete;
     RumbleDevices &operator=(RumbleDevices &&) noexcept = delete;

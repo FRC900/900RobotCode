@@ -45,12 +45,12 @@ class JoystickState
 		void   clearRawAxises(void)   { raw_axises_.clear();}
 		void   clear(void)            { clearAxises(); clearButtons(); clearPOVs(); clearRawAxises();}
 
-		void   addAxis(float axis)      { axises_.push_back(axis);     }
-		void   addButton(bool button)   { buttons_.push_back(button);  }
-		void   addPOV(int pov)          { povs_.push_back(pov);        }
-		void   addRawAxis(uint8_t axis) { raw_axises_.push_back(axis); }
+		void   addAxis(const double axis)      { axises_.push_back(axis);     }
+		void   addButton(const bool button)    { buttons_.push_back(button);  }
+		void   addPOV(const int pov)           { povs_.push_back(pov);        }
+		void   addRawAxis(const uint16_t axis) { raw_axises_.push_back(axis); }
 
-		bool setAxis(size_t index, float axis)
+		bool setAxis(size_t index, double axis)
 		{
 			if (index >= axises_.size())
 			{
@@ -88,7 +88,7 @@ class JoystickState
 			return true;
 		}
 
-		bool setRawAxis(size_t index, uint8_t axis)
+		bool setRawAxis(size_t index, uint16_t axis)
 		{
 			if (index >= raw_axises_.size())
 			{
@@ -101,19 +101,19 @@ class JoystickState
 			return true;
 		}
 
-		const std::vector<float>&   getAxises()  const { return axises_;     }
-		const std::vector<bool>&    getButtons() const { return buttons_;    }
-		const std::vector<int>&     getPOVs()    const { return povs_;       }
-		const std::vector<uint8_t>& getRawAxis() const { return raw_axises_; }
+		const std::vector<double>&  getAxises()   const { return axises_;     }
+		const std::vector<bool>&    getButtons()  const { return buttons_;    }
+		const std::vector<int>&     getPOVs()     const { return povs_;       }
+		const std::vector<uint16_t>& getRawAxis() const { return raw_axises_; }
 
-		size_t getAxisCount(void)              const { return axises_.size();	  };
-		size_t getButtonCount(void)            const { return buttons_.size();	  };
-		size_t getPOVCount(void)               const { return povs_.size();		  };
-		size_t getRawAxisCount(void)           const { return raw_axises_.size(); };
+		size_t getAxisCount(void)                 const { return axises_.size();	 };
+		size_t getButtonCount(void)               const { return buttons_.size();	 };
+		size_t getPOVCount(void)                  const { return povs_.size();		 };
+		size_t getRawAxisCount(void)              const { return raw_axises_.size(); };
 		// For these, don't flag an error, just return 0/false
 		// That gives a reasonable default when an
 		// axis / button / pov is missing
-		float getAxis(size_t index) const
+		double getAxis(size_t index) const
 		{
 			if (index >= axises_.size())
 			{
@@ -137,7 +137,7 @@ class JoystickState
 			}
 			return povs_[index];
 		}
-		uint8_t getRawAxis(size_t index) const
+		uint16_t getRawAxis(size_t index) const
 		{
 			if (index >= raw_axises_.size())
 			{
@@ -147,19 +147,19 @@ class JoystickState
 		}
 
 	private:
-		const size_t         id_;
-		const std::string    name_;
+		const size_t          id_;
+		const std::string     name_;
 		// Store these as a raw vector mimicing the WPI HAL view
 		// of joysticks. State controllers are responsible for translating
 		// them to our joystick / button box / whatever message types
-		std::vector<float>   axises_;
-		std::vector<bool>    buttons_;
-		std::vector<int>     povs_;
-		std::vector<uint8_t> raw_axises_;
+		std::vector<double>   axises_;
+		std::vector<bool>     buttons_;
+		std::vector<int>      povs_;
+		std::vector<uint16_t> raw_axises_;
 };
 
-typedef StateHandle<const JoystickState> JoystickStateHandle;
-typedef StateHandle<JoystickState>       JoystickWritableStateHandle;
+using JoystickStateHandle = StateHandle<const JoystickState>;
+using JoystickWritableStateHandle = StateHandle<JoystickState>;
 
 class JoystickStateInterface       : public HardwareResourceManager<JoystickStateHandle> {};
 class RemoteJoystickIStatenterface : public HardwareResourceManager<JoystickWritableStateHandle, ClaimResources> {};

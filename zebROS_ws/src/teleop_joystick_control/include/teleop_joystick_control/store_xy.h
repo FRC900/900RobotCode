@@ -14,15 +14,15 @@ class store_xy {
             y = input_y;
         }
 
-        store_xy operator+(const store_xy& lower) {
+        store_xy operator+(const store_xy& lower) const {
             store_xy added(0.0, 0.0);
             added.x = x + lower.x;
             added.y = y + lower.y;
             return added; 
         }
 
-        double hypot(){
-            return std::sqrt(std::pow(x, 2) + std::pow(y, 2));
+        double hypot() const{
+            return std::hypot(x, y);
         }
 };
 

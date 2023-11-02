@@ -187,9 +187,7 @@ TalonHWCommand::TalonHWCommand(void) :
 	control_frame_periods_changed_[Control_6_MotProfAddTrajPoint] = false;
 }
 
-TalonHWCommand::~TalonHWCommand()
-{
-}
+TalonHWCommand::~TalonHWCommand() = default;
 
 // This gets the requested setpoint, not the
 // status actually read from the controller
@@ -305,7 +303,7 @@ double TalonHWCommand::getF(size_t index)
 	return f_[index];
 }
 
-void TalonHWCommand::setIZ(int i_zone, size_t index)
+void TalonHWCommand::setIZ(double i_zone, size_t index)
 {
 	if (index >= TALON_PIDF_SLOTS)
 	{
@@ -318,7 +316,7 @@ void TalonHWCommand::setIZ(int i_zone, size_t index)
 		i_zone_[index] = i_zone;
 	}
 }
-int TalonHWCommand::getIZ(size_t index) const
+double TalonHWCommand::getIZ(size_t index) const
 {
 	if (index >= TALON_PIDF_SLOTS)
 	{
@@ -328,7 +326,7 @@ int TalonHWCommand::getIZ(size_t index) const
 	return i_zone_[index];
 }
 
-void TalonHWCommand::setAllowableClosedloopError(int allowable_closed_loop_error, size_t index)
+void TalonHWCommand::setAllowableClosedloopError(double allowable_closed_loop_error, size_t index)
 {
 	if (index >= TALON_PIDF_SLOTS)
 	{
@@ -341,7 +339,7 @@ void TalonHWCommand::setAllowableClosedloopError(int allowable_closed_loop_error
 		allowable_closed_loop_error_[index] = allowable_closed_loop_error;
 	}
 }
-int TalonHWCommand::getAllowableClosedloopError(size_t index) const
+double TalonHWCommand::getAllowableClosedloopError(size_t index) const
 {
 	if (index >= TALON_PIDF_SLOTS)
 	{
@@ -350,7 +348,7 @@ int TalonHWCommand::getAllowableClosedloopError(size_t index) const
 	}
 	return allowable_closed_loop_error_[index];
 }
-void TalonHWCommand::setMaxIntegralAccumulator(int max_integral_accumulator, size_t index)
+void TalonHWCommand::setMaxIntegralAccumulator(double max_integral_accumulator, size_t index)
 {
 	if (index >= TALON_PIDF_SLOTS)
 	{
@@ -363,7 +361,7 @@ void TalonHWCommand::setMaxIntegralAccumulator(int max_integral_accumulator, siz
 		max_integral_accumulator_[index] = max_integral_accumulator;
 	}
 }
-int TalonHWCommand::getMaxIntegralAccumulator(size_t index) const
+double TalonHWCommand::getMaxIntegralAccumulator(size_t index) const
 {
 	if (index >= TALON_PIDF_SLOTS)
 	{
@@ -417,7 +415,7 @@ int TalonHWCommand::getClosedLoopPeriod(size_t index) const
 	}
 	return closed_loop_period_[index];
 }
-bool TalonHWCommand::pidfChanged(double &p, double &i, double &d, double &f, int &iz, int &allowable_closed_loop_error, double &max_integral_accumulator, double &closed_loop_peak_output, int &closed_loop_period, size_t index)
+bool TalonHWCommand::pidfChanged(double &p, double &i, double &d, double &f, double &iz, double &allowable_closed_loop_error, double &max_integral_accumulator, double &closed_loop_peak_output, int &closed_loop_period, size_t index)
 {
 	if (index >= TALON_PIDF_SLOTS)
 	{
@@ -1001,7 +999,7 @@ void TalonHWCommand::setVoltageMeasurementFilter(int filterWindowSamples)
 }
 int TalonHWCommand::getVoltageMeasurementFilter(void) const
 {
-	return voltage_compensation_saturation_;
+	return voltage_measurement_filter_;
 }
 
 void TalonHWCommand::setVoltageCompensationEnable(bool enable)
@@ -1634,13 +1632,13 @@ std::vector<TrajectoryPoint> TalonHWCommand::getMotionProfileTrajectories(void) 
 }
 bool TalonHWCommand::motionProfileTrajectoriesChanged(std::vector<TrajectoryPoint> &points)
 {
-	if (motion_profile_trajectory_points_.size() != 0)
+	if (!motion_profile_trajectory_points_.empty())
 	{
 		//ROS_WARN_STREAM("motionProfileTraectoriesChanged, mptp.size()=" << motion_profile_trajectory_points_.size());
 		// Return up to 20 points at a time - too
 		// many really slows down the hardware interface
 		auto start = motion_profile_trajectory_points_.begin();
-		auto end   = start + std::min((size_t)motion_profile_trajectory_points_.size(), (size_t)4000); //Intentionally very large
+		auto end   = start + std::min(motion_profile_trajectory_points_.size(), (size_t)4000); //Intentionally very large
 		points = std::vector<TrajectoryPoint>(start, end);
 		motion_profile_trajectory_points_.erase(start, end);
 		//ROS_WARN_STREAM("  returning points.size()=" << points.size());

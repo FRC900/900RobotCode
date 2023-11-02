@@ -55,7 +55,7 @@ PDHDevices::~PDHDevices() = default;
 
 hardware_interface::InterfaceManager *PDHDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_, *remote_state_interface_);
     }
@@ -68,7 +68,7 @@ hardware_interface::InterfaceManager *PDHDevices::registerInterface()
 void PDHDevices::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("PDHs");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }
@@ -77,7 +77,7 @@ void PDHDevices::read(const ros::Time& time, const ros::Duration& period, Tracer
 void PDHDevices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("PDHs");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period);
     }

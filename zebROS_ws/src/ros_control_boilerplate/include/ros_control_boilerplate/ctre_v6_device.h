@@ -36,7 +36,7 @@ public:
     ctre::phoenix6::hardware::ParentDevice *getParentDevice(void) const;
 
 protected:
-    bool safeCall(ctre::phoenix::StatusCode status_code, const std::string &method_name);
+    bool safeCall(ctre::phoenix::StatusCode status_code, const std::string &method_name) const;
     template <class T>
     std::optional<T> safeRead(const ctre::phoenix6::StatusSignal<T> &status_signal, const std::string &method_name)
     {

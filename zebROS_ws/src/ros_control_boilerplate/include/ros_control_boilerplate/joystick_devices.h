@@ -12,7 +12,7 @@ template <class DEVICE_TYPE>
 class JoystickDevices : public Devices
 {
 public:
-    JoystickDevices(ros::NodeHandle &root_nh);
+    explicit JoystickDevices(ros::NodeHandle &root_nh);
     JoystickDevices(const JoystickDevices &) = delete;
     JoystickDevices(JoystickDevices &&) noexcept = delete;
     virtual ~JoystickDevices();
@@ -21,9 +21,9 @@ public:
     JoystickDevices &operator=(JoystickDevices &&) noexcept = delete;
 
     hardware_interface::InterfaceManager *registerInterface() override;
-    virtual void read(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
+    void read(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
 
-    void simInit(ros::NodeHandle nh) override;
+    void simInit(ros::NodeHandle &nh) override;
 
 private:
     double read_hz_{50};

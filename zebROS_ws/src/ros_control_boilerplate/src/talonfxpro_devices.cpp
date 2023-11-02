@@ -76,7 +76,7 @@ void TalonFXProDevices::write(const ros::Time& time, const ros::Duration& period
     prev_robot_enabled_ = isEnabled();
 }
 
-void TalonFXProDevices::simInit(ros::NodeHandle nh)
+void TalonFXProDevices::simInit(ros::NodeHandle &nh)
 {
     if (devices_.size() > 0)
     {
@@ -93,7 +93,7 @@ void TalonFXProDevices::simRead(const ros::Time& time, const ros::Duration& peri
         ctre::phoenix::unmanaged::FeedEnable(2. * 1000. / read_hz_);
     }
     tracer.start_unique("talonfxpro sim");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->simRead(time, period);
     }

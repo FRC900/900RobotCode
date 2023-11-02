@@ -17,7 +17,7 @@ private:
 public:
 	bool init(hardware_interface::RobotControllerStateInterface *hw,
 			  ros::NodeHandle                                   &root_nh,
-			  ros::NodeHandle                                   &controller_nh)
+			  ros::NodeHandle                                   &controller_nh) override
 	{
 
 		// get publishing period
@@ -52,12 +52,12 @@ public:
 		return true;
 	}
 
-	void starting(const ros::Time &time)
+	void starting(const ros::Time &time) override
 	{
 		interval_counter_->reset();
 	}
 
-	void update(const ros::Time &time, const ros::Duration &period)
+	void update(const ros::Time &time, const ros::Duration &period) override
 	{
 		if (interval_counter_->update(period))
 		{
@@ -67,7 +67,7 @@ public:
 
 				m.header.stamp = time;
 
-				auto &rcs = rc_state_;
+				const auto &rcs = rc_state_;
 
 				m.fpgaVersion = rcs->GetFPGAVersion();
 				m.fpgaRevision = rcs->GetFPGARevision();
@@ -126,7 +126,7 @@ public:
 		}
 	}
 
-	void stopping(const ros::Time & )
+	void stopping(const ros::Time & ) override
 	{
 	}
 

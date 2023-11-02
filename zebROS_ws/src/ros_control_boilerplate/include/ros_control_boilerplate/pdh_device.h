@@ -4,8 +4,8 @@
 #include <mutex>
 #include <thread>
 
-typedef int32_t HAL_Handle;
-typedef HAL_Handle HAL_REVPDHHandle;
+using HAL_Handle = int32_t;
+using HAL_REVPDHHandle = HAL_Handle;
 
 #include <string>
 
@@ -35,14 +35,14 @@ public:
               const double read_hz);
     PDHDevice(const PDHDevice &) = delete;
     PDHDevice(PDHDevice &&other) noexcept = delete;
-    ~PDHDevice();
+    virtual ~PDHDevice();
 
     PDHDevice &operator=(const PDHDevice &) = delete;
     PDHDevice &operator=(PDHDevice &&) noexcept = delete;
 
     void registerInterfaces(hardware_interface::PDHStateInterface &state_interface,
                             hardware_interface::PDHCommandInterface &command_interface,
-                            hardware_interface::RemotePDHStateInterface &remote_state_interface);
+                            hardware_interface::RemotePDHStateInterface &remote_state_interface) const;
     void read(const ros::Time &/*time*/, const ros::Duration &/*period*/);
     void write(const ros::Time &/*time*/, const ros::Duration &/*&period*/);
 
@@ -58,7 +58,7 @@ private:
 
     std::unique_ptr<hardware_interface::PDHHWState> read_thread_state_;
     std::unique_ptr<std::mutex> read_state_mutex_;
-    std::unique_ptr<std::thread> read_thread_;
+    std::unique_ptr<std::jthread> read_thread_;
     void read_thread(std::unique_ptr<Tracer> tracer,
                      const double poll_frequency);
 };

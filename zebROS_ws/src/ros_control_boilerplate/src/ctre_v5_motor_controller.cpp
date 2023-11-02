@@ -94,26 +94,20 @@ CTREV5MotorController::CTREV5MotorController(const std::string &name_space,
 
         read_thread_state_ = std::make_unique<hardware_interface::TalonHWState>(can_id);
         read_state_mutex_ = std::make_unique<std::mutex>();
-        read_thread_ = std::make_unique<std::thread>(&CTREV5MotorController::read_thread, this,
-                                                     std::make_unique<Tracer>("ctre_mc_read_" + joint_name + " " + name_space),
-                                                     read_hz_);
+        read_thread_ = std::make_unique<std::jthread>(&CTREV5MotorController::read_thread, this,
+                                                      std::make_unique<Tracer>("ctre_mc_read_" + joint_name + " " + name_space),
+                                                      read_hz_);
 
         // Clear this out so we only get resets that occur after the controllers have been initialized
         ctre_mc_->HasResetOccurred();
     }
 }
 
-CTREV5MotorController::~CTREV5MotorController(void)
-{
-    if (read_thread_ && read_thread_->joinable())
-    {
-        read_thread_->join();
-    }
-}
+CTREV5MotorController::~CTREV5MotorController(void) = default;
 
 void CTREV5MotorController::registerInterfaces(hardware_interface::TalonStateInterface &state_interface,
                                                hardware_interface::TalonCommandInterface &command_interface,
-                                               hardware_interface::RemoteTalonStateInterface &remote_state_interface)
+                                               hardware_interface::RemoteTalonStateInterface &remote_state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for CTREV5 : " << getName() << " at CAN id " << getId());
 
@@ -134,7 +128,7 @@ void CTREV5MotorController::read(const ros::Time &/*time*/, const ros::Duration 
 {
     if (local_)
     {
-        std::unique_lock<std::mutex> l(*read_state_mutex_, std::try_to_lock);
+        std::unique_lock l(*read_state_mutex_, std::try_to_lock);
         if (!l.owns_lock())
         {
             return;
@@ -197,7 +191,7 @@ void CTREV5MotorController::write(const ros::Time &/*time*/, const ros::Duration
         return;
     }
 
-    std::unique_lock<std::mutex> l(*(command_->mutex()), std::try_to_lock);
+    std::unique_lock l(*(command_->mutex()), std::try_to_lock);
     if (!l.owns_lock())
     {
         return;
@@ -406,8 +400,8 @@ void CTREV5MotorController::write(const ros::Time &/*time*/, const ros::Duration
     double ival;
     double dval;
     double fval;
-    int    iz;
-    int    allowable_closed_loop_error;
+    double iz;
+    double allowable_closed_loop_error;
     double max_integral_accumulator;
     double closed_loop_peak_output;
     int    closed_loop_period;
@@ -553,12 +547,12 @@ void CTREV5MotorController::write(const ros::Time &/*time*/, const ros::Duration
     double nominal_output_reverse;
     double neutral_deadband;
     if (command_->outputShapingChanged(closed_loop_ramp,
-                                open_loop_ramp,
-                                peak_output_forward,
-                                peak_output_reverse,
-                                nominal_output_forward,
-                                nominal_output_reverse,
-                                neutral_deadband))
+                                       open_loop_ramp,
+                                       peak_output_forward,
+                                       peak_output_reverse,
+                                       nominal_output_forward,
+                                       nominal_output_reverse,
+                                       neutral_deadband))
     {
         bool rc = safeConfigCall(victor_spx_->ConfigOpenloopRamp(open_loop_ramp, configTimeoutMs),"ConfigOpenloopRamp");
         if (rc)
@@ -1072,8 +1066,7 @@ void CTREV5MotorController::write(const ros::Time &/*time*/, const ros::Duration
             return;
         }
     }
-    int motion_profile_trajectory_period;
-    if (command_->motionProfileTrajectoryPeriodChanged(motion_profile_trajectory_period))
+    if (int motion_profile_trajectory_period; command_->motionProfileTrajectoryPeriodChanged(motion_profile_trajectory_period))
     {
         if (safeConfigCall(victor_spx_->ConfigMotionProfileTrajectoryPeriod(motion_profile_trajectory_period, configTimeoutMs),"ConfigMotionProfileTrajectoryPeriod"))
         {
@@ -1122,8 +1115,7 @@ void CTREV5MotorController::write(const ros::Time &/*time*/, const ros::Duration
     // list of requesstate_->
 
     // TODO : rewrite this using BufferedTrajectoryPointStream
-    std::vector<hardware_interface::TrajectoryPoint> trajectory_points;
-    if (command_->motionProfileTrajectoriesChanged(trajectory_points))
+    if (std::vector<hardware_interface::TrajectoryPoint> trajectory_points; command_->motionProfileTrajectoriesChanged(trajectory_points))
     {
         //int i = 0;
         for (auto it = trajectory_points.cbegin(); it != trajectory_points.cend(); ++it)
@@ -1274,7 +1266,7 @@ void CTREV5MotorController::read_thread(std::unique_ptr<Tracer> tracer,
 		// used by the read thread are copied over.  Update
 		// as needed when more are read
 		{
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
 			if (!read_thread_state_->getEnableReadThread())
             {
                 return;
@@ -1441,7 +1433,7 @@ void CTREV5MotorController::read_thread(std::unique_ptr<Tracer> tracer,
 			// Lock the state entry to make sure writes
 			// are atomic - reads won't grab data in
 			// the middle of a write
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
 
 			if (talon_mode == hardware_interface::TalonMode_MotionProfile)
 			{
@@ -1525,9 +1517,9 @@ void CTREV5MotorController::read_thread(std::unique_ptr<Tracer> tracer,
 }
 
 // These always come from the main write thread
-void CTREV5MotorController::setSimCollection(double position,
-                                             double velocity,
-                                             double delta_position) const
+void CTREV5MotorController::setSimCollection(int position,
+                                             int velocity,
+                                             int delta_position) const
 {
 	if (talon_fx_)
     {
@@ -1539,9 +1531,9 @@ void CTREV5MotorController::setSimCollection(double position,
     }
 }
 
-void CTREV5MotorController::setSimCollectionTalonFX(double position,
-                                                    double velocity,
-                                                    double delta_position) const
+void CTREV5MotorController::setSimCollectionTalonFX(int position,
+                                                    int velocity,
+                                                    int delta_position) const
 {
 	auto &collection = talon_fx_->GetSimCollection();
 	if (delta_position)
@@ -1552,9 +1544,9 @@ void CTREV5MotorController::setSimCollectionTalonFX(double position,
 	collection.SetBusVoltage(12.5);
 }
 
-void CTREV5MotorController::setSimCollectionTalonSRX(double position,
-                                                     double velocity,
-                                                     double delta_position) const
+void CTREV5MotorController::setSimCollectionTalonSRX(int position,
+                                                     int velocity,
+                                                     int delta_position) const
 {
 	auto &collection = talon_srx_->GetSimCollection();
 	if (delta_position)
@@ -1564,7 +1556,7 @@ void CTREV5MotorController::setSimCollectionTalonSRX(double position,
 	collection.SetQuadratureVelocity(velocity);
 	collection.SetBusVoltage(12.5);
 }
-void CTREV5MotorController::updateSimValues(const ros::Time &/*time*/, const ros::Duration &period)
+void CTREV5MotorController::updateSimValues(const ros::Time &/*time*/, const ros::Duration &period) const
 {
     if (!talon_srx_ && !talon_fx_)
     {
@@ -1573,16 +1565,14 @@ void CTREV5MotorController::updateSimValues(const ros::Time &/*time*/, const ros
     hardware_interface::FeedbackDevice encoder_feedback = state_->getEncoderFeedback();
     const int encoder_ticks_per_rotation = state_->getEncoderTicksPerRotation();
     const double conversion_factor = state_->getConversionFactor();
-    const double radians_scale = getConversionFactor(
-                                     encoder_ticks_per_rotation,
-                                     encoder_feedback,
-                                     hardware_interface::TalonMode_Position) *
+    const double radians_scale = getConversionFactor(encoder_ticks_per_rotation,
+                                                     encoder_feedback,
+                                                     hardware_interface::TalonMode_Position) *
                                  conversion_factor;
 
-    const double radians_per_second_scale = getConversionFactor(
-                                                encoder_ticks_per_rotation,
-                                                encoder_feedback,
-                                                hardware_interface::TalonMode_Velocity) *
+    const double radians_per_second_scale = getConversionFactor(encoder_ticks_per_rotation,
+                                                                encoder_feedback,
+                                                                hardware_interface::TalonMode_Velocity) *
                                             conversion_factor;
 
     // Get current mode of the motor controller.
@@ -1594,15 +1584,15 @@ void CTREV5MotorController::updateSimValues(const ros::Time &/*time*/, const ros
     {
         // Set encoder position to set point.
         // Set velocity to 0.
-        setSimCollection(state_->getSetpoint() / radians_scale, 0);
+        setSimCollection(static_cast<int>(state_->getSetpoint() / radians_scale), 0);
     }
     else if (mode == hardware_interface::TalonMode_Velocity)
     {
         // Set velocity to set point
         // Set encoder position to current position + velocity * dt
         setSimCollection(0,
-                         state_->getSetpoint() / radians_per_second_scale,
-                         state_->getSpeed() * radians_per_second_scale * period.toSec());
+                         static_cast<int>(state_->getSetpoint() / radians_per_second_scale),
+                         static_cast<int>(state_->getSpeed() * radians_per_second_scale * period.toSec()));
     }
     else if (mode == hardware_interface::TalonMode_MotionMagic)
     {
@@ -1610,12 +1600,12 @@ void CTREV5MotorController::updateSimValues(const ros::Time &/*time*/, const ros
         // waiting on a motor where we actually need this function to test with
         const double invert = state_->getInvert() ? -1.0 : 1.0;
         // Do some ~magic~ to figure out position/velocity.
-        setSimCollection(invert * state_->getActiveTrajectoryPosition() / radians_scale,
-                         invert * state_->getActiveTrajectoryVelocity() / radians_per_second_scale);
+        setSimCollection(static_cast<int>(invert * state_->getActiveTrajectoryPosition() / radians_scale),
+                         static_cast<int>(invert * state_->getActiveTrajectoryVelocity() / radians_per_second_scale));
     }
 }
 
-bool CTREV5MotorController::setSimLimitSwitches(const bool forward_limit, const bool reverse_limit)
+bool CTREV5MotorController::setSimLimitSwitches(const bool forward_limit, const bool reverse_limit) const
 {
     if (!local_)
     {
@@ -1640,7 +1630,7 @@ bool CTREV5MotorController::setSimLimitSwitches(const bool forward_limit, const 
     return false;
 }
 
-bool CTREV5MotorController::setSimCurrent(const double stator_current, const double supply_current)
+bool CTREV5MotorController::setSimCurrent(const double stator_current, const double supply_current) const
 {
     if (!local_)
     {

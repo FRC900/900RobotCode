@@ -20,7 +20,7 @@ struct StampedAngle {
 
 class SnapToConeCube2023
 {
-    protected:
+    private:
         ros::NodeHandle nh_;
         ros::Subscriber object_detection_sub_;
         //ros::Subscriber cmd_vel_sub_;
@@ -45,7 +45,7 @@ class SnapToConeCube2023
 
     public:
 
-        SnapToConeCube2023(ros::NodeHandle &nh) : nh_(nh), tf_listener_(tf_buffer_), imu_cb_(200), zed_time_offset_(0.01)
+        explicit SnapToConeCube2023(const ros::NodeHandle &nh) : nh_(nh), tf_listener_(tf_buffer_), imu_cb_(200), zed_time_offset_(0.01)
         {
 
         }
@@ -72,7 +72,6 @@ class SnapToConeCube2023
         bool snap(teleop_joystick_control::SnapConeCube::Request  &req,
                   teleop_joystick_control::SnapConeCube::Response &res)
         {
-            double target_angle;
             if ((ros::Time::now() - nearest_cube_angle_.time) < ros::Duration(timeout_)) {
                 res.nearest_cube_angle = nearest_cube_angle_.angle;
                 res.cube_point = nearest_cube_point_;
@@ -101,7 +100,7 @@ class SnapToConeCube2023
 
             if (std::isfinite(yaw)) // ignore NaN results
             {
-                std::unique_lock<std::mutex> lock_that_is_unique(buffer_mutex_);
+                std::unique_lock lock_that_is_unique(buffer_mutex_);
                 imu_cb_.push_back({imuState.header.stamp, -yaw});
             }
         }
@@ -116,9 +115,9 @@ class SnapToConeCube2023
         {
             double imu_angle = -1;
             ros::spinOnce();
-            if (imu_cb_.size() != 0) {
-                std::unique_lock<std::mutex> lock_that_is_unique(buffer_mutex_);
-                for (boost::circular_buffer<std::pair<ros::Time, double>>::reverse_iterator it = imu_cb_.rbegin(); it != imu_cb_.rend(); it++) {
+            if (!imu_cb_.empty()) {
+                std::unique_lock lock_that_is_unique(buffer_mutex_);
+                for (auto it = imu_cb_.rbegin(); it != imu_cb_.rend(); it++) {
                     auto angle = *it;
                     if (angle.first <= msg.header.stamp - ros::Duration(zed_time_offset_)) {
                         imu_angle = angle.second;
@@ -134,7 +133,7 @@ class SnapToConeCube2023
             field_obj::Object closest_cube;
             double shortest_cone_distance = std::numeric_limits<double>::max();
             double shortest_cube_distance = std::numeric_limits<double>::max();
-            for (auto obj : msg.objects)
+            for (auto const& obj : msg.objects)
             {
                 if (obj.id == "cone")
                 {

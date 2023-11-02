@@ -22,7 +22,7 @@ private:
 public:
 	bool init(hardware_interface::pigeon2::Pigeon2StateInterface *hw,
 			  ros::NodeHandle                                      &root_nh,
-			  ros::NodeHandle                                      &controller_nh)
+			  ros::NodeHandle                                      &controller_nh) override
 	{
 		// get all joint names from the hardware interface
 		const std::vector<std::string> &joint_names = hw->getNames();
@@ -131,12 +131,12 @@ public:
 		return true;
 	}
 
-	void starting(const ros::Time &/*time*/)
+	void starting(const ros::Time &/*time*/) override
 	{
 		interval_counter_->reset();
 	}
 
-	void update(const ros::Time &time, const ros::Duration & period)
+	void update(const ros::Time &time, const ros::Duration & period) override
 	{
 		// limit rate of publishing
 		if (interval_counter_->update(period))
@@ -151,7 +151,7 @@ public:
 				m.header.stamp = time;
 				for (size_t i = 0; i < num_hw_joints_; i++)
 				{
-					auto &ps = pigeon2_state_[i];
+					const auto &ps = pigeon2_state_[i];
 
 					m.mount_pose_yaw[i] = ps->getMountPoseYaw();
 					m.mount_pose_pitch[i] = ps->getMountPosePitch();
@@ -233,7 +233,7 @@ public:
 		}
 	}
 
-	void stopping(const ros::Time & /*time*/)
+	void stopping(const ros::Time & /*time*/) override
 	{
 	}
 

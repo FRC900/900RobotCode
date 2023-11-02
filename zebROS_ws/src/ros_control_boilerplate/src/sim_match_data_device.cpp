@@ -18,7 +18,7 @@ SimMatchDataDevice::~SimMatchDataDevice() = default;
 
 void SimMatchDataDevice::read(const ros::Time &time, const ros::Duration &period)
 {
-    std::unique_lock<std::mutex> l(*mutex_, std::try_to_lock);
+    std::unique_lock l(*mutex_, std::try_to_lock);
     if (l.owns_lock())
     {
         MatchDataDevice::read(time, period);
@@ -35,7 +35,7 @@ void SimMatchDataDevice::simInit(ros::NodeHandle nh)
 }
 
 void SimMatchDataDevice::matchDataCallback(const frc_msgs::MatchSpecificData &match_data) {
-    std::unique_lock<std::mutex> l(*mutex_);
+    std::unique_lock l(*mutex_);
 	HALSIM_SetDriverStationMatchTime(match_data.matchTimeRemaining);
 	HAL_AllianceStationID alliance_station_id = HAL_AllianceStationID_kRed1;
 	if (match_data.allianceColor == frc::DriverStation::kRed)
@@ -94,7 +94,7 @@ void SimMatchDataDevice::matchDataCallback(const frc_msgs::MatchSpecificData &ma
 
 std::optional<bool> SimMatchDataDevice::isEnabled(void) const
 {
-    std::unique_lock<std::mutex> l(*mutex_, std::try_to_lock);
+    std::unique_lock l(*mutex_, std::try_to_lock);
     if (l.owns_lock())
     {
         return MatchDataDevice::isEnabled();
@@ -104,7 +104,7 @@ std::optional<bool> SimMatchDataDevice::isEnabled(void) const
 
 bool SimMatchDataDevice::getControlWord(HAL_ControlWord &cw) const
 {
-    std::unique_lock<std::mutex> l(*mutex_, std::try_to_lock);
+    std::unique_lock l(*mutex_, std::try_to_lock);
     if (l.owns_lock())
     {
         return MatchDataDevice::getControlWord(cw);

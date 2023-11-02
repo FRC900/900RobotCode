@@ -42,8 +42,6 @@
 
 #include <thread>
 
-// ROS
-//#include <controller_manager/controller_manager.h>
 #include <hardware_interface/robot_hw.h>
 #include <ros/ros.h>
 #include <urdf/model.h>
@@ -68,21 +66,18 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_model = NULL);
 		FRCRobotInterface(const FRCRobotInterface &) = delete;
 		FRCRobotInterface(const FRCRobotInterface &&) noexcept = delete;
-		virtual ~FRCRobotInterface() = default;
+		~FRCRobotInterface() override;
 		FRCRobotInterface& operator=(const FRCRobotInterface &) = delete;
 		FRCRobotInterface& operator=(const FRCRobotInterface &&) noexcept = delete;
 
 		/** \brief Initialize the hardware interface */
-		virtual bool init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh) override;
+		bool init(ros::NodeHandle& root_nh, ros::NodeHandle &robot_hw_nh) override;
 
 		/** \brief Read the state from the robot hardware. */
-		virtual void read(const ros::Time& time, const ros::Duration& period) override = 0;
+		void read(const ros::Time& time, const ros::Duration& period) override;
 
 		/** \brief Write the command to the robot hardware. */
-		virtual void write(const ros::Time& time, const ros::Duration& period) override = 0;
-
-		/** \brief Set all members to default values */
-		virtual void reset();
+		void write(const ros::Time& time, const ros::Duration& period) override;
 
 		//******
 		/**
@@ -91,7 +86,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		 * with regard to necessary hardware interface switches. Start and stop list are disjoint.
 		 * This is just a check, the actual switch is done in doSwitch()
 		 */
-		virtual bool prepareSwitch(const std::list<hardware_interface::ControllerInfo> &/*start_list*/,
+		bool prepareSwitch(const std::list<hardware_interface::ControllerInfo> &/*start_list*/,
 							       const std::list<hardware_interface::ControllerInfo> &/*stop_list*/) override;
 
 		/**
@@ -99,7 +94,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		 * and stop the given controllers.
 		 * Start and stop list are disjoint. The feasability was checked in canSwitch() beforehand.
 		 */
-		virtual void doSwitch(const std::list<hardware_interface::ControllerInfo> &/*start_list*/,
+		void doSwitch(const std::list<hardware_interface::ControllerInfo> &/*start_list*/,
 							  const std::list<hardware_interface::ControllerInfo> &/*stop_list*/) override
 		{
 		}
@@ -122,7 +117,7 @@ class FRCRobotInterface : public hardware_interface::RobotHW
 		Tracer read_tracer_;
 		Tracer write_tracer_;
 
-		std::vector<std::shared_ptr<Devices>> devices_;
+		std::vector<std::unique_ptr<Devices>> devices_;
 };  // class
 
 }  // namespace

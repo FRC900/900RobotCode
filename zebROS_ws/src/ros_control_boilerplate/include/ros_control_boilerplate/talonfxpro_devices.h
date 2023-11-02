@@ -22,10 +22,10 @@ class TalonFXProDevices : public Devices
 {
 
 public:
-    TalonFXProDevices(ros::NodeHandle &root_nh);
+    explicit TalonFXProDevices(ros::NodeHandle &root_nh);
     TalonFXProDevices(const TalonFXProDevices &) = delete;
     TalonFXProDevices(TalonFXProDevices &&) noexcept = delete;
-    virtual ~TalonFXProDevices();
+    ~TalonFXProDevices() override;
 
     TalonFXProDevices &operator=(const TalonFXProDevices &) = delete;
     TalonFXProDevices &operator=(TalonFXProDevices &&) noexcept = delete;
@@ -34,7 +34,7 @@ public:
     void read(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
     void write(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
 
-    void simInit(ros::NodeHandle nh) override;
+    void simInit(ros::NodeHandle &nh) override;
     // simRead hooks up to CTRE simulation code and updates motor state each control cycle
     void simRead(const ros::Time &time, const ros::Duration &period, Tracer &tracer) override;
 

@@ -21,7 +21,7 @@ public:
                        const bool local);
     DigitalInputDevice(const DigitalInputDevice &) = delete;
     DigitalInputDevice(DigitalInputDevice &&other) noexcept = delete;
-    ~DigitalInputDevice();
+    virtual ~DigitalInputDevice();
 
     DigitalInputDevice &operator=(const DigitalInputDevice &) = delete;
     DigitalInputDevice &operator=(DigitalInputDevice &&) noexcept = delete;
@@ -30,7 +30,7 @@ public:
                             hardware_interface::RemoteJointInterface &remote_joint_interface);
     void read(const ros::Time& /*time*/, const ros::Duration& /*period*/);
     const std::string &getName(void) const;
-    void setSimValue(const bool value);
+    void setSimValue(const bool value) const;
 
 private:
     const std::string name_;

@@ -63,7 +63,7 @@ private:
 public:
 	bool init(hardware_interface::PCMStateInterface *hw,
 			ros::NodeHandle                       &root_nh,
-			ros::NodeHandle                       &controller_nh)
+			ros::NodeHandle                       &controller_nh) override
 	{
 		ROS_INFO_NAMED("pcm_state_controller", "PCMStateController::init() called");
 		// get all joint names from the hardware interface
@@ -120,12 +120,12 @@ public:
 		return true;
 	}
 
-	void starting(const ros::Time &time)
+	void starting(const ros::Time &time) override
 	{
 		interval_counter_->reset();
 	}
 
-	void update(const ros::Time &time, const ros::Duration &period)
+	void update(const ros::Time &time, const ros::Duration &period) override
 	{
 		// limit rate of publishing
 		if (interval_counter_->update(period))
@@ -137,7 +137,7 @@ public:
 				m.header.stamp = time;
 				for (unsigned i = 0; i < num_pcms_; i++)
 				{
-					auto &pcms = pcm_state_[i];
+					auto const &pcms = pcm_state_[i];
 					m.id[i] = pcms->getId();
 					m.compressor_enabled[i] = pcms->getCompressorEnabled();
 					m.pressure_switch[i] = pcms->getPressureSwitch();
@@ -162,7 +162,7 @@ public:
 		}
 	}
 
-	void stopping(const ros::Time & /*time*/)
+	void stopping(const ros::Time & /*time*/) override
 	{}
 }; // class
 

@@ -162,6 +162,6 @@ class RobotControllerState
 		std::string can_data_status_{"0: "};
 };
 
-typedef StateHandle<const RobotControllerState> RobotControllerStateHandle;
+using RobotControllerStateHandle = StateHandle<const RobotControllerState>;
 class RobotControllerStateInterface: public HardwareResourceManager<RobotControllerStateHandle> {};
 }

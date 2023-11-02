@@ -61,8 +61,8 @@ class PCMState
 		uint32_t solenoid_disabled_list_{0};
 };
 
-typedef StateHandle<const PCMState> PCMStateHandle;
-typedef StateHandle<PCMState> PCMWritableStateHandle;
+using PCMStateHandle = StateHandle<const PCMState>;
+using PCMWritableStateHandle = StateHandle<PCMState>;
 class PCMStateInterface       : public HardwareResourceManager<PCMStateHandle> {};
 class RemotePCMStateInterface : public HardwareResourceManager<PCMWritableStateHandle, ClaimResources> {};
 

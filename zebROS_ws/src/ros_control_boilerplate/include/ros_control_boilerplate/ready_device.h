@@ -18,7 +18,7 @@ public:
                 const bool local);
     ReadyDevice(const ReadyDevice &) = delete;
     ReadyDevice(ReadyDevice &&other) noexcept = delete;
-    ~ReadyDevice();
+    virtual ~ReadyDevice();
 
     ReadyDevice &operator=(const ReadyDevice &) = delete;
     ReadyDevice &operator=(ReadyDevice &&) noexcept = delete;

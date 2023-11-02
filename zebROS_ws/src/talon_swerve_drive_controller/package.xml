@@ -13,13 +13,14 @@
   <depend>roscpp</depend>
 
   <depend>controller_interface</depend>
+  <depend>ctre_interfaces</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
+  <depend>periodic_interval_counter</depend>
+  <depend>realtime_tools</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
-  <depend>realtime_tools</depend>
   <depend>talon_controllers</depend>
-  <depend>ctre_interfaces</depend>
   <depend>talon_state_msgs</depend>
   <depend>talon_swerve_drive_controller_msgs</depend>
   <depend>tf</depend>

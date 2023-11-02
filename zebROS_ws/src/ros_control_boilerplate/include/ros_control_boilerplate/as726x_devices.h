@@ -14,9 +14,8 @@ namespace hardware_interface::as726x
 template <bool SIMFLAG>
 class AS726xDevices : public Devices
 {
-
 public:
-    AS726xDevices(ros::NodeHandle &root_nh);
+    explicit AS726xDevices(ros::NodeHandle &root_nh);
     AS726xDevices(const AS726xDevices &) = delete;
     AS726xDevices(AS726xDevices &&) = delete;
     virtual ~AS726xDevices();

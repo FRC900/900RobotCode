@@ -71,9 +71,9 @@ AS726xDevice<SIMFLAG>::AS726xDevice(const std::string &name_space,
         as726x_ = std::make_unique<as726x::roboRIO_AS726x<SIMFLAG>>(i2c_port, address_);
         if (as726x_)
         {
-            read_thread_ = std::make_unique<std::thread>(&AS726xDevice::read_thread, this,
-                                                         std::make_unique<Tracer>("AS726x:" + name_ + " " + name_space),
-                                                         read_hz_);
+            read_thread_ = std::make_unique<std::jthread>(&AS726xDevice::read_thread, this,
+                                                          std::make_unique<Tracer>("AS726x:" + name_ + " " + name_space),
+                                                          read_hz_);
         }
         else
         {
@@ -85,18 +85,12 @@ AS726xDevice<SIMFLAG>::AS726xDevice(const std::string &name_space,
 }
 
 template <bool SIMFLAG>
-AS726xDevice<SIMFLAG>::~AS726xDevice(void)
-{
-    if (read_thread_ && read_thread_->joinable())
-    {
-        read_thread_->join();
-    }
-}
+AS726xDevice<SIMFLAG>::~AS726xDevice(void) = default;
 
 template <bool SIMFLAG>
 void AS726xDevice<SIMFLAG>::registerInterfaces(hardware_interface::as726x::AS726xStateInterface &state_interface,
-                                  hardware_interface::as726x::AS726xCommandInterface &command_interface,
-                                  hardware_interface::as726x::RemoteAS726xStateInterface &remote_state_interface)
+                                               hardware_interface::as726x::AS726xCommandInterface &command_interface,
+                                               hardware_interface::as726x::RemoteAS726xStateInterface &remote_state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for AS726x : " << name_ << " at port " << port_ << " address " << address_);
 
@@ -118,7 +112,7 @@ void AS726xDevice<SIMFLAG>::read(const ros::Time &/*time*/, const ros::Duration 
 {
     if (local_update_)
     {
-        std::lock_guard<std::mutex> l(*read_state_mutex_);
+        std::lock_guard l(*read_state_mutex_);
         state_->setTemperature(read_thread_state_->getTemperature());
         state_->setRawChannelData(read_thread_state_->getRawChannelData());
         state_->setCalibratedChannelData(read_thread_state_->getCalibratedChannelData());
@@ -158,7 +152,7 @@ void AS726xDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Duration
         // continue on to the next sensor in the loop one.  This way the code won't be waiting
         // for a mutex to be released - it'll move on and try again next
         // iteration of write()
-        std::unique_lock<std::mutex> l(*(as726x_->getMutex()), std::defer_lock);
+        std::unique_lock l(*(as726x_->getMutex()), std::defer_lock);
         if (!l.try_lock())
         {
             // If we can't get a lock this iteration, reset and try again next time through
@@ -310,7 +304,7 @@ void AS726xDevice<SIMFLAG>::read_thread(std::unique_ptr<Tracer> tracer,
 		tracer->start("main loop");
 		// Create a scope for the lock protecting hardware accesses
 		{
-			std::lock_guard<std::mutex> l(*(as726x_->getMutex()));
+			std::lock_guard l(*(as726x_->getMutex()));
 			temperature = as726x_->readTemperature();
 			as726x_->startMeasurement();
 			auto data_ready_start = ros::Time::now();
@@ -335,7 +329,7 @@ void AS726xDevice<SIMFLAG>::read_thread(std::unique_ptr<Tracer> tracer,
 		}
 		// Create a new scope for the lock protecting the shared state
 		{
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
 			read_thread_state_->setTemperature(temperature);
 			read_thread_state_->setRawChannelData(raw_channel_data);
 			read_thread_state_->setCalibratedChannelData(calibrated_channel_data);

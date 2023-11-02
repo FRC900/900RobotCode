@@ -36,12 +36,8 @@ CANifierDevice<SIMFLAG>::CANifierDevice(const std::string &name_space,
     : CTREV5Device{name_space, "CANifier", joint_name, can_id}
     , local_hardware_{local_hardware}
     , local_update_{local_update}
-    , canifier_{nullptr}
     , state_{std::make_unique<hardware_interface::canifier::CANifierHWState>(can_id)}
     , command_{std::make_unique<hardware_interface::canifier::CANifierHWCommand>()}
-    , read_thread_state_{nullptr}
-    , read_state_mutex_{nullptr}
-    , read_thread_{nullptr}
 {
     // TODO : old code had a check for duplicate use of DIO channels? Needed?
     ROS_INFO_STREAM_NAMED("frc_robot_interface",
@@ -57,7 +53,7 @@ CANifierDevice<SIMFLAG>::CANifierDevice(const std::string &name_space,
             canifier_ = std::make_unique<ctre::phoenix::CANifier>(can_id);
             read_thread_state_ = std::make_unique<hardware_interface::canifier::CANifierHWState>(can_id);
             read_state_mutex_ = std::make_unique<std::mutex>();
-            read_thread_ = std::make_unique<std::thread>(&CANifierDevice<SIMFLAG>::read_thread, this,
+            read_thread_ = std::make_unique<std::jthread>(&CANifierDevice<SIMFLAG>::read_thread, this,
                                                          std::make_unique<Tracer>("canifier_read_" + joint_name + " " + name_space),
                                                          read_hz_);
         }
@@ -65,18 +61,12 @@ CANifierDevice<SIMFLAG>::CANifierDevice(const std::string &name_space,
 }
 
 template <bool SIMFLAG>
-CANifierDevice<SIMFLAG>::~CANifierDevice(void)
-{
-    if (read_thread_ && read_thread_->joinable())
-    {
-        read_thread_->join();
-    }
-}
+CANifierDevice<SIMFLAG>::~CANifierDevice(void) = default;
 
 template <bool SIMFLAG>
 void CANifierDevice<SIMFLAG>::registerInterfaces(hardware_interface::canifier::CANifierStateInterface &state_interface,
                                                  hardware_interface::canifier::CANifierCommandInterface &command_interface,
-                                                 hardware_interface::canifier::RemoteCANifierStateInterface &remote_state_interface)
+                                                 hardware_interface::canifier::RemoteCANifierStateInterface &remote_state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for CANifier : " << getName() << " at CAN id " << getId());
 
@@ -98,7 +88,7 @@ void CANifierDevice<SIMFLAG>::read(const ros::Time &/*time*/, const ros::Duratio
 {
     if (local_update_)
     {
-        std::lock_guard<std::mutex> l(*read_state_mutex_);
+        std::lock_guard l(*read_state_mutex_);
 
         // These are used to convert position and velocity units - make sure the
         // read thread's local copy of state is kept up to date
@@ -211,8 +201,7 @@ void CANifierDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Durati
     // from command to state each time through the write call
     state_->setEncoderTicksPerRotation(command_->getEncoderTicksPerRotation());
     state_->setConversionFactor(command_->getConversionFactor());
-    double position;
-    if (command_->quadraturePositionChanged(position))
+    if (double position; command_->quadraturePositionChanged(position))
     {
         const double radian_scale = getConversionFactor(state_->getEncoderTicksPerRotation(), hardware_interface::FeedbackDevice_QuadEncoder, hardware_interface::TalonMode_Position) * state_->getConversionFactor();
         if (safeTalonCall(canifier_->SetQuadraturePosition(position / radian_scale), "canifier->SetQuadraturePosition"))
@@ -244,8 +233,7 @@ void CANifierDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Durati
         }
     }
 
-    int window;
-    if (command_->velocityMeasurementWindowChanged(window))
+    if (int window; command_->velocityMeasurementWindowChanged(window))
     {
         if (safeTalonCall(canifier_->ConfigVelocityMeasurementWindow(window), "canifier->ConfigVelocityMeasurementWindow"))
         {
@@ -259,8 +247,7 @@ void CANifierDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Durati
         }
     }
 
-    bool clear_position_on_limit_f;
-    if (command_->clearPositionOnLimitFChanged(clear_position_on_limit_f))
+    if (bool clear_position_on_limit_f; command_->clearPositionOnLimitFChanged(clear_position_on_limit_f))
     {
         if (safeTalonCall(canifier_->ConfigClearPositionOnLimitF(clear_position_on_limit_f), "canifier->ConfigClearPositionOnLimitF"))
         {
@@ -274,8 +261,7 @@ void CANifierDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Durati
         }
     }
 
-    bool clear_position_on_limit_r;
-    if (command_->clearPositionOnLimitRChanged(clear_position_on_limit_r))
+    if (bool clear_position_on_limit_r; command_->clearPositionOnLimitRChanged(clear_position_on_limit_r))
     {
         if (safeTalonCall(canifier_->ConfigClearPositionOnLimitR(clear_position_on_limit_r), "canifier->ConfigClearPositionOnLimitR"))
         {
@@ -289,8 +275,7 @@ void CANifierDevice<SIMFLAG>::write(const ros::Time &/*time*/, const ros::Durati
         }
     }
 
-    bool clear_position_on_quad_idx;
-    if (command_->clearPositionOnQuadIdxChanged(clear_position_on_quad_idx))
+    if (bool clear_position_on_quad_idx; command_->clearPositionOnQuadIdxChanged(clear_position_on_quad_idx))
     {
         if (safeTalonCall(canifier_->ConfigClearPositionOnQuadIdx(clear_position_on_quad_idx), "canifier->ConfigClearPositionOnQuadIdx"))
         {
@@ -436,7 +421,7 @@ void CANifierDevice<SIMFLAG>::read_thread(std::unique_ptr<Tracer> tracer,
 		// used by the read thread are copied over.  Update
 		// as needed when more are read
 		{
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
 			encoder_ticks_per_rotation = read_thread_state_->getEncoderTicksPerRotation();
 			conversion_factor = read_thread_state_->getConversionFactor();
 		}
@@ -484,7 +469,7 @@ void CANifierDevice<SIMFLAG>::read_thread(std::unique_ptr<Tracer> tracer,
 			// Lock the read_thread_state_ entry to make sure writes
 			// are atomic - reads won't grab data in
 			// the middle of a write
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
 
 			for (size_t i = hardware_interface::canifier::GeneralPin::GeneralPin_FIRST + 1; i < hardware_interface::canifier::GeneralPin::GeneralPin_LAST; i++)
 			{

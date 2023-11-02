@@ -31,13 +31,13 @@ public:
                  const bool local_update);
     CANdleDevice(CANdleDevice &&other) noexcept = delete;
     CANdleDevice(const CANdleDevice &) = delete;
-    ~CANdleDevice();
+    ~CANdleDevice() override;
     CANdleDevice &operator=(const CANdleDevice &) = delete;
     CANdleDevice &operator=(CANdleDevice &&) noexcept = delete;
 
     void registerInterfaces(hardware_interface::candle::CANdleStateInterface &state_interface,
                             hardware_interface::candle::CANdleCommandInterface &command_interface,
-                            hardware_interface::candle::RemoteCANdleStateInterface &remote_state_interface);
+                            hardware_interface::candle::RemoteCANdleStateInterface &remote_state_interface) const;
     void write(const ros::Time &/*time*/, const ros::Duration &/*period*/);
 
 private:

@@ -70,7 +70,7 @@ AnalogInputDevices::~AnalogInputDevices() = default;
 
 hardware_interface::InterfaceManager *AnalogInputDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *remote_joint_interface_);
     }
@@ -82,7 +82,7 @@ hardware_interface::InterfaceManager *AnalogInputDevices::registerInterface()
 void AnalogInputDevices::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("analog inputs");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }
@@ -94,7 +94,7 @@ bool AnalogInputDevices::setSimValue(const std::string &name, const size_t index
 {
     if (name.size())
     {
-        for (auto &d : devices_)
+        for (const auto &d : devices_)
         {
             if (d->getName() == name)
             {

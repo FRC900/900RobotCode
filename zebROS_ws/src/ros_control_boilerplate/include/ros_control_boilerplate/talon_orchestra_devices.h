@@ -18,12 +18,11 @@ namespace ctre::phoenix6::hardware
 template <bool SIMFLAG>
 class TalonOrchestraDevices : public Devices
 {
-
 public:
-    TalonOrchestraDevices(ros::NodeHandle &root_nh);
+    explicit TalonOrchestraDevices(ros::NodeHandle &root_nh);
     TalonOrchestraDevices(const TalonOrchestraDevices &) = delete;
     TalonOrchestraDevices(TalonOrchestraDevices &&) noexcept = delete;
-    virtual ~TalonOrchestraDevices();
+    ~TalonOrchestraDevices() override;
 
     TalonOrchestraDevices &operator=(const TalonOrchestraDevices &) = delete;
     TalonOrchestraDevices &operator=(TalonOrchestraDevices &&) noexcept = delete;

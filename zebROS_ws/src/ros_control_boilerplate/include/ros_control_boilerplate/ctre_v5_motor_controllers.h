@@ -21,10 +21,10 @@ namespace ctre::phoenix::motorcontrol::can
 class CTREV5MotorControllers : public Devices
 {
 public:
-    CTREV5MotorControllers(ros::NodeHandle &root_nh);
+    explicit CTREV5MotorControllers(ros::NodeHandle &root_nh);
     CTREV5MotorControllers(const CTREV5MotorControllers &) = delete;
     CTREV5MotorControllers(CTREV5MotorControllers &&) noexcept = delete;
-    virtual ~CTREV5MotorControllers();
+    ~CTREV5MotorControllers() override;
 
     CTREV5MotorControllers &operator=(const CTREV5MotorControllers &) = delete;
     CTREV5MotorControllers &operator=(CTREV5MotorControllers &&) noexcept = delete;
@@ -33,7 +33,7 @@ public:
     void read(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
     void write(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
 
-    void simInit(ros::NodeHandle nh) override;
+    void simInit(ros::NodeHandle &nh) override;
     void simRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer) override;
 
 private:

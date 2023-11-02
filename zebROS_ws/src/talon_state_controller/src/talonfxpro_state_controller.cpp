@@ -36,7 +36,7 @@ private:
 public:
 	bool init(hardware_interface::talonfxpro::TalonFXProStateInterface *hw,
 			  ros::NodeHandle                                          &root_nh,
-			  ros::NodeHandle                                          &controller_nh)
+			  ros::NodeHandle                                          &controller_nh) override
 	{
 		// get all joint names from the hardware interface
 		const std::vector<std::string> &joint_names = hw->getNames();
@@ -65,7 +65,7 @@ public:
 		for (size_t i = 0; i < num_hw_joints_; i++)
 		{
 			m.name.push_back(joint_names[i]);
-			m.control_mode.push_back("");
+			m.control_mode.emplace_back("");
 			m.control_output.push_back(0);
 			m.control_position.push_back(0);
 			m.control_velocity.push_back(0);
@@ -87,7 +87,7 @@ public:
 			m.motor_voltage.push_back(0);
 			m.forward_limit.push_back(false);
 			m.reverse_limit.push_back(false);
-			m.applied_rotor_polarity.push_back("");
+			m.applied_rotor_polarity.emplace_back("");
 
 			m.duty_cycle.push_back(0);
 			m.torque_current.push_back(0);
@@ -107,13 +107,13 @@ public:
 
 			m.device_enable.push_back(false);
 
-			m.differential_control_mode.push_back("");
+			m.differential_control_mode.emplace_back("");
 			m.differential_average_velocity.push_back(0);
 			m.differential_average_position.push_back(0);
 			m.differential_difference_velocity.push_back(0);
 			m.differential_difference_position.push_back(0);
 
-			m.bridge_output_value.push_back("");
+			m.bridge_output_value.emplace_back("");
 
 			m.fault_hardware.push_back(false);
 			m.fault_proctemp.push_back(false);
@@ -182,12 +182,12 @@ public:
 		return true;
 	}
 
-	void starting(const ros::Time &time)
+	void starting(const ros::Time &time) override
 	{
 		interval_counter_->reset();
 	}
 
-	void update(const ros::Time &time, const ros::Duration &period)
+	void update(const ros::Time &time, const ros::Duration &period) override
 	{
 		// limit rate of publishing
 		if (interval_counter_->update(period))
@@ -202,7 +202,7 @@ public:
 				m.header.stamp = time;
 				for (size_t i = 0; i < num_hw_joints_; i++)
 				{
-					auto &ts = talonfxpro_state_[i];
+					auto const &ts = talonfxpro_state_[i];
 					switch(ts->getControlMode())
 					{
 					case hardware_interface::talonfxpro::TalonMode::DutyCycleOut:
@@ -509,7 +509,7 @@ public:
 		}
 	}
 
-	void stopping(const ros::Time & /*time*/)
+	void stopping(const ros::Time & /*time*/) override
 	{}
 
 }; // class

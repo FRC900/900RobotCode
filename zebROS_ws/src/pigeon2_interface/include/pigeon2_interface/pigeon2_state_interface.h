@@ -80,8 +80,8 @@ class Pigeon2HWState
 		void   setTemperature(const double temperature);
 		double getTemperature(void) const;
 
-		void setUptime(const uint32_t uptime);
-		uint32_t getUptime(void) const;
+		void setUptime(const double uptime);
+		double getUptime(void) const;
 
 		void   setAccumGyroX(const double accum_gyro_x);
 		double getAccumGyroX(void) const;
@@ -202,7 +202,7 @@ class Pigeon2HWState
 		double   gravity_vector_y_{0};
 		double   gravity_vector_z_{0};
 		double   temperature_{0};
-		uint32_t uptime_{0};
+		double   uptime_{0};
 		double   accum_gyro_x_{0};
 		double   accum_gyro_y_{0};
 		double   accum_gyro_z_{0};

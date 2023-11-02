@@ -23,10 +23,9 @@ const char DYNAMIC_MOTION_MAGIC_VOLTAGE_NAME[] = "DynamicMotionMagicVoltage";
 const char DYNAMIC_MOTION_MAGIC_TORQUE_CURRENT_FOC_NAME[] = "DynamicMotionMagicTorqueCurrentFOC";
 
 template <typename T>
-bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> &scalar)
+static bool readIntoScalar(const ros::NodeHandle &n, const char *name, std::atomic<T> &scalar)
 {
-    T val;
-    if (n.getParam(name, val))
+    if (T val; n.getParam(name, val))
     {
         scalar = val;
         return true;
@@ -36,7 +35,7 @@ bool readIntoScalar(ros::NodeHandle &n, const std::string &name, std::atomic<T> 
 
 // Read a double named <param_type> from the array/map
 // in params
-bool findFloatParam(std::string param_name, XmlRpc::XmlRpcValue &params, std::atomic<double> &val)
+bool findFloatParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, std::atomic<double> &val)
 {
     if (!params.hasMember(param_name))
     {
@@ -67,7 +66,7 @@ bool findFloatParam(std::string param_name, XmlRpc::XmlRpcValue &params, std::at
 
 // Read an integer named <param_name> from the array/map
 // in params
-bool findIntParam(std::string param_name, XmlRpc::XmlRpcValue &params, std::atomic<int> &val)
+bool findIntParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, std::atomic<int> &val)
 {
     if (!params.hasMember(param_name))
     {
@@ -211,7 +210,7 @@ TalonFXProCIParams& TalonFXProCIParams::operator=(const TalonFXProCIParams &othe
 // Read a joint name from the given nodehandle's params
 // This needs to be present for the code to work, so 
 // return true / false for success / failure
-bool TalonFXProCIParams::readJointName(ros::NodeHandle &n)
+bool TalonFXProCIParams::readJointName(const ros::NodeHandle &n)
 {
     if (!n.getParam("joint", joint_name_))
     {
@@ -220,7 +219,7 @@ bool TalonFXProCIParams::readJointName(ros::NodeHandle &n)
     }
     return true;
 }
-bool TalonFXProCIParams::readCloseLoopParams(ros::NodeHandle &n)
+bool TalonFXProCIParams::readCloseLoopParams(const ros::NodeHandle &n)
 {
     XmlRpc::XmlRpcValue pid_param_list;
 
@@ -252,8 +251,7 @@ bool TalonFXProCIParams::readCloseLoopParams(ros::NodeHandle &n)
             findFloatParam("kV", pidparams, kV_[i]);
             findFloatParam("kA", pidparams, kA_[i]);
             findFloatParam("kG", pidparams, kG_[i]);
-            std::string str;
-            if (n.getParam("gravity_type", str))
+            if (std::string str; n.getParam("gravity_type", str))
             {
                 if (str == "elevator_static")
                 {
@@ -269,8 +267,8 @@ bool TalonFXProCIParams::readCloseLoopParams(ros::NodeHandle &n)
                     return false;
                 }
             }
-            return true;
         }
+        return true;
     }
     else
     {
@@ -279,10 +277,9 @@ bool TalonFXProCIParams::readCloseLoopParams(ros::NodeHandle &n)
     return false;
 }
 
-bool TalonFXProCIParams::readInvert(ros::NodeHandle &n)
+bool TalonFXProCIParams::readInvert(const ros::NodeHandle &n)
 {
-    std::string str;
-    if (n.getParam("invert", str))
+    if (std::string str; n.getParam("invert", str))
     {
         if (str == "counterclockwise_positive")
         {
@@ -301,10 +298,9 @@ bool TalonFXProCIParams::readInvert(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readNeutralMode(ros::NodeHandle &n)
+bool TalonFXProCIParams::readNeutralMode(const ros::NodeHandle &n)
 {
-    std::string mode_string;
-    if (n.getParam("neutral_mode", mode_string))
+    if (std::string mode_string; n.getParam("neutral_mode", mode_string))
     {
         if (mode_string == "Coast")
             neutral_mode_ = hardware_interface::talonfxpro::NeutralMode::Coast;
@@ -321,7 +317,7 @@ bool TalonFXProCIParams::readNeutralMode(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readDutyCycleOutputShaping(ros::NodeHandle &n)
+bool TalonFXProCIParams::readDutyCycleOutputShaping(const ros::NodeHandle &n)
 {
 #ifdef TALONCI_BACKWARDS_COMPATIBILITY
     readIntoScalar(n, "peak_output_forward", peak_forward_duty_cycle_);
@@ -334,7 +330,7 @@ bool TalonFXProCIParams::readDutyCycleOutputShaping(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readSupplyCurrentLimits(ros::NodeHandle &n)
+bool TalonFXProCIParams::readSupplyCurrentLimits(const ros::NodeHandle &n)
 {
     const bool current_limit_read = readIntoScalar(n, "supply_current_limit", supply_current_limit_);
     if (readIntoScalar(n, "supply_current_limit_enable", supply_current_limit_enable_) &&
@@ -346,7 +342,7 @@ bool TalonFXProCIParams::readSupplyCurrentLimits(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readStatorCurrentLimits(ros::NodeHandle &n)
+bool TalonFXProCIParams::readStatorCurrentLimits(const ros::NodeHandle &n)
 {
     const bool current_limit_read = readIntoScalar(n, "stator_current_limit", stator_current_limit_);
     if (readIntoScalar(n, "stator_current_limit_enable", stator_current_limit_enable_) &&
@@ -358,7 +354,7 @@ bool TalonFXProCIParams::readStatorCurrentLimits(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readVoltageLimits(ros::NodeHandle &n)
+bool TalonFXProCIParams::readVoltageLimits(const ros::NodeHandle &n)
 {
     // Perhaps map to voltage compensation value?
     readIntoScalar(n, "supply_voltage_time_constant", supply_voltage_time_constant_);
@@ -367,7 +363,7 @@ bool TalonFXProCIParams::readVoltageLimits(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readTorqueLimits(ros::NodeHandle &n)
+bool TalonFXProCIParams::readTorqueLimits(const ros::NodeHandle &n)
 {
     readIntoScalar(n, "peak_forward_torque_current", peak_forward_torque_current_);
     readIntoScalar(n, "peak_reverse_torque_current", peak_reverse_torque_current_);
@@ -375,7 +371,7 @@ bool TalonFXProCIParams::readTorqueLimits(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readFeedback(ros::NodeHandle &n)
+bool TalonFXProCIParams::readFeedback(const ros::NodeHandle &n)
 {
 #ifdef TALONCI_BACKWARDS_COMPATIBILITY
     double conversion_factor{};
@@ -424,7 +420,7 @@ bool TalonFXProCIParams::readFeedback(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readDifferentialConfig(ros::NodeHandle &n)
+bool TalonFXProCIParams::readDifferentialConfig(const ros::NodeHandle &n)
 {
     std::string str;
     if (n.getParam("differential_sensor_source", str))
@@ -464,7 +460,7 @@ bool TalonFXProCIParams::readDifferentialConfig(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readDifferentialConstants(ros::NodeHandle &n)
+bool TalonFXProCIParams::readDifferentialConstants(const ros::NodeHandle &n)
 {
     readIntoScalar(n, "peak_differential_duty_cycle", peak_differential_duty_cycle_);
     readIntoScalar(n, "peak_differential_voltage", peak_differential_voltage_);
@@ -472,7 +468,7 @@ bool TalonFXProCIParams::readDifferentialConstants(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readOpenLoopRamps(ros::NodeHandle &n)
+bool TalonFXProCIParams::readOpenLoopRamps(const ros::NodeHandle &n)
 {
 #ifdef TALONCI_BACKWARDS_COMPATIBILITY
     readIntoScalar(n, "open_loop_ramp", duty_cycle_open_loop_ramp_period_);
@@ -485,7 +481,7 @@ bool TalonFXProCIParams::readOpenLoopRamps(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readClosedLoopRamps(ros::NodeHandle &n)
+bool TalonFXProCIParams::readClosedLoopRamps(const ros::NodeHandle &n)
 {
 #ifdef TALONCI_BACKWARDS_COMPATIBILITY
     readIntoScalar(n, "closed_loop_ramp", duty_cycle_closed_loop_ramp_period_);
@@ -498,7 +494,7 @@ bool TalonFXProCIParams::readClosedLoopRamps(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readLimitSwitches(ros::NodeHandle &n)
+bool TalonFXProCIParams::readLimitSwitches(const ros::NodeHandle &n)
 {
     // For now, looks like source is just local?
     std::string str;
@@ -555,7 +551,7 @@ bool TalonFXProCIParams::readLimitSwitches(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readAudio(ros::NodeHandle &n)
+bool TalonFXProCIParams::readAudio(const ros::NodeHandle &n)
 {
     readIntoScalar(n, "beep_on_boot", beep_on_boot_);
     readIntoScalar(n, "beep_on_config", beep_on_config_);
@@ -563,7 +559,7 @@ bool TalonFXProCIParams::readAudio(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readSoftLimits(ros::NodeHandle &n)
+bool TalonFXProCIParams::readSoftLimits(const ros::NodeHandle &n)
 {
     const bool forward_threshold_set = readIntoScalar(n, "softlimit_forward_threshold", softlimit_forward_threshold_);
     if (readIntoScalar(n, "softlimit_forward_enable", softlimit_forward_enable_) &&
@@ -580,7 +576,7 @@ bool TalonFXProCIParams::readSoftLimits(ros::NodeHandle &n)
     return true;
 }
 
-bool TalonFXProCIParams::readMotionMagic(ros::NodeHandle &n)
+bool TalonFXProCIParams::readMotionMagic(const ros::NodeHandle &n)
 {
 #ifdef TALONCI_BACKWARDS_COMPATIBILITY
     readIntoScalar(n, "motion_cruise_velocity", motion_magic_cruise_velocity_);
@@ -591,7 +587,7 @@ bool TalonFXProCIParams::readMotionMagic(ros::NodeHandle &n)
     readIntoScalar(n, "motion_magic_jerk", motion_magic_jerk_);
     return true;
 }
-bool TalonFXProCIParams::readControl(ros::NodeHandle &n)
+bool TalonFXProCIParams::readControl(const ros::NodeHandle &n)
 {
 #ifdef TALONCI_BACKWARDS_COMPATIBILITY
 // TODO : maybe demand1 value into feedforward?
@@ -607,13 +603,13 @@ bool TalonFXProCIParams::readControl(ros::NodeHandle &n)
     readIntoScalar(n, "control_differential_slot", control_differential_slot_);
     return true;
 }
-bool TalonFXProCIParams::readContinuousWrap(ros::NodeHandle &n)
+bool TalonFXProCIParams::readContinuousWrap(const ros::NodeHandle &n)
 {
     readIntoScalar(n, "continuous_wrap", continuous_wrap_);
     return true;
 }
 
-bool TalonFXProCIParams::readEnableReadThread(ros::NodeHandle &n)
+bool TalonFXProCIParams::readEnableReadThread(const ros::NodeHandle &n)
 {
     readIntoScalar(n, "enable_read_thread", enable_read_thread_);
     return true;
@@ -621,10 +617,7 @@ bool TalonFXProCIParams::readEnableReadThread(ros::NodeHandle &n)
 
 const std::string& TalonFXProCIParams::getJointName(void) const { return joint_name_;}
 
-TalonFXProControllerInterface::TalonFXProControllerInterface()
-{
-
-}
+TalonFXProControllerInterface::TalonFXProControllerInterface() = default;
 
 // Read params from config file and use them to
 // initialize the Talon hardware
@@ -657,7 +650,7 @@ bool TalonFXProControllerInterface::initWithNode(hardware_interface::talonfxpro:
     follower_talons_.resize(n.size() - 1);
     for (size_t i = 1; i < n.size(); i++)
     {
-        ROS_INFO_STREAM("i = " << i << "n[i] = " << n[i].getNamespace());
+        ROS_INFO_STREAM("follower n[" << i << "] = " << n[i].getNamespace());
         if (!init(tci, n[i], follower_talons_[i-1], true))
         {
             return false;
@@ -698,16 +691,14 @@ bool TalonFXProControllerInterface::initWithNode(hardware_interface::talonfxpro:
             }
         }
 
-        for (int i = 0; i < param.size(); ++i)
+        for (int i = 0; i < param.size(); i++)
         {
-            joint_nodes.push_back(ros::NodeHandle(controller_nh,
-                        static_cast<std::string>(param[i])));
+            joint_nodes.emplace_back(controller_nh, static_cast<const std::string>(param[i]));
         }
     }
     else if (param.getType() == XmlRpc::XmlRpcValue::TypeString)
     {
-        joint_nodes.push_back(ros::NodeHandle(controller_nh,
-                    static_cast<std::string>(param)));
+        joint_nodes.emplace_back(controller_nh, static_cast<std::string>(param));
     }
     else
     {
@@ -803,7 +794,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         0, 1000);
             ddr_updater_->ddr_.registerEnumVariable<int>("gravity_type_0",
                                                         [this]() { return static_cast<int>(params_.gravity_type_[0].load());},
-                                                        [this](const int gravity_type_int) { this->setGravityType(static_cast<hardware_interface::talonfxpro::GravityType>(gravity_type_int, 0), false);},
+                                                        [this](const int gravity_type_int) { this->setGravityType(static_cast<hardware_interface::talonfxpro::GravityType>(gravity_type_int), 0, false);},
                                                         "Gravity type for slot 0 kG term", 
                                                         std::map<std::string, int>{
                                                             {"Elevator Static", static_cast<int>(hardware_interface::talonfxpro::GravityType::Elevator_Static)},
@@ -847,7 +838,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         0, 1000);
             ddr_updater_->ddr_.registerEnumVariable<int>("gravity_type_1",
                                                         [this]() { return static_cast<int>(params_.gravity_type_[1].load());},
-                                                        [this](const int gravity_type_int) { this->setGravityType(static_cast<hardware_interface::talonfxpro::GravityType>(gravity_type_int, 1), false);},
+                                                        [this](const int gravity_type_int) { this->setGravityType(static_cast<hardware_interface::talonfxpro::GravityType>(gravity_type_int), 1, false);},
                                                         "Gravity type for slot 1 kG term", 
                                                         std::map<std::string, int>{
                                                             {"Elevator Static", static_cast<int>(hardware_interface::talonfxpro::GravityType::Elevator_Static)},
@@ -891,7 +882,7 @@ bool TalonFXProControllerInterface::init(hardware_interface::talonfxpro::TalonFX
                                                         0, 1000);
             ddr_updater_->ddr_.registerEnumVariable<int>("gravity_type_2",
                                                         [this]() { return static_cast<int>(params_.gravity_type_[2].load());},
-                                                        [this](const int gravity_type_int) { this->setGravityType(static_cast<hardware_interface::talonfxpro::GravityType>(gravity_type_int, 2), false);},
+                                                        [this](const int gravity_type_int) { this->setGravityType(static_cast<hardware_interface::talonfxpro::GravityType>(gravity_type_int), 2, false);},
                                                         "Gravity type for slot 2 kG term", 
                                                         std::map<std::string, int>{
                                                             {"Elevator Static", static_cast<int>(hardware_interface::talonfxpro::GravityType::Elevator_Static)},
@@ -1242,7 +1233,7 @@ void TalonFXProControllerInterface::setControlJerk(const double control_jerk)
     talon_->setControlJerk(control_jerk);
 }
 
-void TalonFXProControllerInterface::setControlDifferentialPosition(const double control_differential_position, const bool update_ddr)
+void TalonFXProControllerInterface::setControlDifferentialPosition(const double control_differential_position)
 {
     talon_->setControlDifferentialPosition(control_differential_position);
 }
@@ -1630,7 +1621,7 @@ void TalonFXProControllerInterface::setTorqueClosedLoopRampPeriod(const double t
 
 void TalonFXProControllerInterface::setForwardLimitType(const int forward_limit_type, const bool update_ddr)
 {
-    const hardware_interface::talonfxpro::LimitType forward_limit_type_enum = static_cast<hardware_interface::talonfxpro::LimitType>(forward_limit_type);
+    const auto forward_limit_type_enum = static_cast<hardware_interface::talonfxpro::LimitType>(forward_limit_type);
     params_.forward_limit_type_ = forward_limit_type_enum;
     talon_->setForwardLimitType(forward_limit_type_enum);
     if (update_ddr)
@@ -1671,7 +1662,7 @@ void TalonFXProControllerInterface::setForwardLimitEnable(const bool forward_lim
 
 void TalonFXProControllerInterface::setForwardLimitSource(const int forward_limit_source, const bool update_ddr)
 {
-    const hardware_interface::talonfxpro::LimitSource forward_limit_source_enum = static_cast<hardware_interface::talonfxpro::LimitSource>(forward_limit_source);
+    const auto forward_limit_source_enum = static_cast<hardware_interface::talonfxpro::LimitSource>(forward_limit_source);
     params_.forward_limit_source_ = forward_limit_source_enum;
     talon_->setForwardLimitSource(forward_limit_source_enum);
     if (update_ddr)
@@ -1692,7 +1683,7 @@ void TalonFXProControllerInterface::setForwardLimitRemoteSensorID(const int forw
 
 void TalonFXProControllerInterface::setReverseLimitType(const int reverse_limit_type, const bool update_ddr)
 {
-    const hardware_interface::talonfxpro::LimitType reverse_limit_type_enum = static_cast<hardware_interface::talonfxpro::LimitType>(reverse_limit_type);
+    const auto reverse_limit_type_enum = static_cast<hardware_interface::talonfxpro::LimitType>(reverse_limit_type);
     params_.reverse_limit_type_ = reverse_limit_type_enum;
     talon_->setReverseLimitType(reverse_limit_type_enum);
     if (update_ddr)
@@ -1733,7 +1724,7 @@ void TalonFXProControllerInterface::setReverseLimitEnable(const bool reverse_lim
 
 void TalonFXProControllerInterface::setReverseLimitSource(const int reverse_limit_source, const bool update_ddr)
 {
-    const hardware_interface::talonfxpro::LimitSource reverse_limit_source_enum = static_cast<hardware_interface::talonfxpro::LimitSource>(reverse_limit_source);
+    const auto reverse_limit_source_enum = static_cast<hardware_interface::talonfxpro::LimitSource>(reverse_limit_source);
     params_.reverse_limit_source_ = reverse_limit_source_enum;
     talon_->setReverseLimitSource(reverse_limit_source_enum);
     if (update_ddr)
@@ -1962,7 +1953,6 @@ void TalonFXProControllerInterface::setRotorPosition(const double set_position, 
     }
 }
 
-// TODO - make this dynamically reconfigurable?
 void TalonFXProControllerInterface::setControlMode(const hardware_interface::talonfxpro::TalonMode control_mode)
 {
     //ROS_WARN_STREAM(__FUNCTION__ << " " << talon_.state()->getCANID() << " control_mode = " << (int)control_mode);
@@ -2140,7 +2130,7 @@ void TalonFXProControllerInterface::setControlMode(const hardware_interface::tal
             talon_->setControlPosition(0);
             talon_->setControlVelocity(0);
             talon_->setControlAcceleration(0);
-            ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " : Invalid control mode : NeutralOut / CoastOut / StaticBrake");
+            //ROS_ERROR_STREAM(__PRETTY_FUNCTION__ << " : Invalid control mode : NeutralOut / CoastOut / StaticBrake");
             break;
         case hardware_interface::talonfxpro::TalonMode::Disabled:
             return;
@@ -2167,7 +2157,7 @@ void TalonFXProControllerInterface::setControlMode(const hardware_interface::tal
     }
 #endif
 
-bool TalonFXProControllerInterface::readParams(ros::NodeHandle &n, TalonFXProCIParams &params)
+bool TalonFXProControllerInterface::readParams(const ros::NodeHandle &n, TalonFXProCIParams &params) const
 {
     // Call each params read function
     return params.readJointName(n) &&
@@ -2194,7 +2184,7 @@ bool TalonFXProControllerInterface::readParams(ros::NodeHandle &n, TalonFXProCIP
 }
 
 void TalonFXProControllerInterface::writeParamsToHW(TalonFXProCIParams &params,
-                                                    hardware_interface::talonfxpro::TalonFXProCommandHandle &talon)
+                                                    hardware_interface::talonfxpro::TalonFXProCommandHandle &talon) const
 {
     // For each entry in params, write the value to the cooresponding
     // talon set() config call

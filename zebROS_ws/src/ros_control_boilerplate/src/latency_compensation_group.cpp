@@ -1,5 +1,3 @@
-#include <chrono>
-
 #include "ros/ros.h"
 
 #include "ctre/phoenix6/StatusSignal.hpp"
@@ -11,7 +9,6 @@
 #include "ros_control_boilerplate/latency_compensation_group.h"
 #include "ros_control_boilerplate/read_config_utils.h"
 #include "ros_control_boilerplate/tracer.h"
-
 
 // Need a map which handles several different types of particular
 // instances of the LatencyCompensationGroupEntry type.
@@ -51,7 +48,7 @@ public:
     }
     LatencyCompensationGroupEntry(const LatencyCompensationGroupEntry &) = delete;
     LatencyCompensationGroupEntry(LatencyCompensationGroupEntry &&other) noexcept = delete;
-    virtual ~LatencyCompensationGroupEntry() = default;
+    ~LatencyCompensationGroupEntry() override = default;
 
     LatencyCompensationGroupEntry &operator=(const LatencyCompensationGroupEntry &) = delete;
     LatencyCompensationGroupEntry &operator=(LatencyCompensationGroupEntry &&) noexcept = delete;
@@ -93,8 +90,8 @@ LatencyCompensationGroup::LatencyCompensationGroup(const XmlRpc::XmlRpcValue &en
 
         auto check_for_correct_pointer_entry = [&]<typename T>()
         {
-            const auto map_entries = devices.equal_range(entry_name);
-            for (auto map_entry = map_entries.first; map_entry != map_entries.second; ++map_entry)
+            const auto &[map_begin, map_end] = devices.equal_range(entry_name);
+            for (auto map_entry = map_begin; map_entry != map_end; ++map_entry)
             {
                 const auto pointer = dynamic_cast<T *>(map_entry->second);
                 if (pointer)
@@ -172,18 +169,12 @@ LatencyCompensationGroup::LatencyCompensationGroup(const XmlRpc::XmlRpcValue &en
         ROS_WARN_STREAM("Setting update frequency to " << update_frequency << " for signal " << signal->GetName());
         signal->SetUpdateFrequency(units::frequency::hertz_t{update_frequency});
     }
-    read_thread_ = std::thread(&LatencyCompensationGroup::read_thread, this);
+    read_thread_ = std::jthread(&LatencyCompensationGroup::read_thread, this);
 }
 
-LatencyCompensationGroup::~LatencyCompensationGroup()
-{
-    if (read_thread_.joinable())
-    {
-        read_thread_.join();
-    }
-}
+LatencyCompensationGroup::~LatencyCompensationGroup() = default;
 
-void LatencyCompensationGroup::registerInterfaces(hardware_interface::latency_compensation::CTRELatencyCompensationStateInterface &state_interface)
+void LatencyCompensationGroup::registerInterfaces(hardware_interface::latency_compensation::CTRELatencyCompensationStateInterface &state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for LatencyInterface : " << name_);
     hardware_interface::latency_compensation::CTRELatencyCompensationStateHandle state_handle(name_, state_.get());
@@ -206,18 +197,18 @@ void LatencyCompensationGroup::create_group_entry(const std::string &name,
 
 void LatencyCompensationGroup::read(void)
 {
-    std::unique_lock<std::mutex> l(read_state_mutex_, std::try_to_lock);
+    std::unique_lock l(read_state_mutex_, std::try_to_lock);
     if (l.owns_lock())
     {
         // Copy from the most recent value read from hardware
         // into the state buffer accessable by the rest of the code
-        for (const auto &entry : entries_)
+        for (const auto &[name, val] : entries_)
         {
             ros::Time timestamp;
             double value;
             double slope;
-            read_thread_state_->getEntry(entry.first, timestamp, value, slope);
-            state_->setEntry(entry.first, timestamp, value, slope);
+            read_thread_state_->getEntry(name, timestamp, value, slope);
+            state_->setEntry(name, timestamp, value, slope);
         }
     }
 }
@@ -240,12 +231,12 @@ void LatencyCompensationGroup::read_thread()
             const ros::Duration time_offset{ros::Time::now().toSec() - ctre::phoenix6::GetCurrentTimeSeconds()};
             std::scoped_lock l{read_state_mutex_};
 
-            for (const auto &entry : entries_)
+            for (const auto &[name, val]: entries_)
             {
-                read_thread_state_->setEntry(entry.first,
-                                             entry.second->getTimestamp() + time_offset,
-                                             entry.second->getValue(),
-                                             entry.second->getSlope());
+                read_thread_state_->setEntry(name,
+                                             val->getTimestamp() + time_offset,
+                                             val->getValue(),
+                                             val->getSlope());
             }
         }
         else

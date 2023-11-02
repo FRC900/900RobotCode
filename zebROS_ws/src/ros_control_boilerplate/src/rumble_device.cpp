@@ -27,7 +27,7 @@ RumbleDevice::~RumbleDevice(void) = default;
 
 void RumbleDevice::registerInterfaces(hardware_interface::RumbleStateInterface &state_interface,
                                       hardware_interface::RumbleCommandInterface &command_interface,
-                                      hardware_interface::RemoteRumbleStateInterface &remote_state_interface)
+                                      hardware_interface::RemoteRumbleStateInterface &remote_state_interface) const
 {
     ROS_INFO_STREAM("FRCRobotInterface: Registering interface for Rumble : " << name_ << " at port " << port_);
 

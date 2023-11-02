@@ -25,7 +25,7 @@ PCMDevice::PCMDevice(const std::string &name_space,
     , state_{std::make_unique<hardware_interface::PCMState>(pcm_id)}
     , read_thread_state_{local_hardware ? std::make_unique<hardware_interface::PCMState>(pcm_id) : nullptr}
     , read_state_mutex_{local_hardware ? std::make_unique<std::mutex>() : nullptr}
-    , read_thread_{local_hardware ? std::make_unique<std::thread>(&PCMDevice::read_thread, this, std::make_unique<Tracer>("pcm_read_" + joint_name + " " + name_space), read_hz_) : nullptr}
+    , read_thread_{local_hardware ? std::make_unique<std::jthread>(&PCMDevice::read_thread, this, std::make_unique<Tracer>("pcm_read_" + joint_name + " " + name_space), read_hz_) : nullptr}
 {
     // TODO : old code had a check for duplicate use of DIO channels? Needed?
     ROS_INFO_STREAM_NAMED("frc_robot_interface",
@@ -35,13 +35,7 @@ PCMDevice::PCMDevice(const std::string &name_space,
                         " as PCM " << pcm_id_);
 }
 
-PCMDevice::~PCMDevice(void)
-{
-    if (read_thread_ && read_thread_->joinable())
-    {
-        read_thread_->join();
-    }
-}
+PCMDevice::~PCMDevice(void) = default;
 
 void PCMDevice::registerInterfaces(hardware_interface::JointStateInterface &state_interface,
                                    hardware_interface::JointCommandInterface &command_interface,
@@ -101,7 +95,7 @@ void PCMDevice::read(const ros::Time &/*time*/, const ros::Duration &/*period*/)
 {
     if (local_hardware_)
     {
-        std::unique_lock<std::mutex> l(*read_state_mutex_, std::try_to_lock);
+        std::unique_lock l(*read_state_mutex_, std::try_to_lock);
         if (l.owns_lock())
         {
             *state_ = *read_thread_state_;
@@ -153,7 +147,7 @@ void PCMDevice::read_thread(std::unique_ptr<Tracer> tracer,
 		hardware_interface::PCMState pcm_state(pcm_id);
 		pcm_state.setCompressorEnabled(pcm_->GetCompressor());
 		pcm_state.setPressureSwitch(pcm_->GetPressureSwitch());
-		pcm_state.setCompressorCurrent(static_cast<double>(pcm_->GetCompressorCurrent().value()));
+		pcm_state.setCompressorCurrent(pcm_->GetCompressorCurrent().value());
 		pcm_state.setClosedLoopControl(pcm_->GetCompressorConfigType() != frc::CompressorConfigType::Disabled);
 		pcm_state.setCurrentTooHigh(pcm_->GetCompressorCurrentTooHighFault());
 		pcm_state.setCurrentTooHighSticky(pcm_->GetCompressorCurrentTooHighStickyFault());
@@ -170,7 +164,7 @@ void PCMDevice::read_thread(std::unique_ptr<Tracer> tracer,
 			// Copy to state shared with read() thread
 			// Put this in a separate scope so lock_guard is released
 			// as soon as the state is finished copying
-			std::lock_guard<std::mutex> l(*read_state_mutex_);
+			std::lock_guard l(*read_state_mutex_);
 			*read_thread_state_ = pcm_state;
 		}
 		tracer->report(60);

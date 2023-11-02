@@ -58,51 +58,51 @@ class TalonCIParams
 		TalonConfigConfig toConfig(void) const;
 
 		// Read a joint name from the given nodehandle's params
-		bool readJointName(ros::NodeHandle &n);
+		bool readJointName(const ros::NodeHandle &n);
 
-		bool readConversion(ros::NodeHandle &n);
+		bool readConversion(const ros::NodeHandle &n);
 
-		bool readTalonFXSensorConfig(ros::NodeHandle &n);
+		bool readTalonFXSensorConfig(const ros::NodeHandle &n);
 
 		// Read a joint name from the given nodehandle's params
-		bool readNeutralMode(ros::NodeHandle &n);
-		//TODO: create a method that reads the feedback settings enum
-		bool readFeedbackType(ros::NodeHandle &n);
+		bool readNeutralMode(const ros::NodeHandle &n);
 
-		bool readInverts(ros::NodeHandle &n);
+		bool readFeedbackType(const ros::NodeHandle &n);
 
-		bool readCloseLoopParams(ros::NodeHandle &n);
+		bool readInverts(const ros::NodeHandle &n);
 
-		bool readOutputShaping(ros::NodeHandle &n);
-		bool readVoltageCompensation(ros::NodeHandle &n);
+		bool readCloseLoopParams(const ros::NodeHandle &n);
 
-		bool readVelocitySignalConditioning(ros::NodeHandle &n);
+		bool readOutputShaping(const ros::NodeHandle &n);
+		bool readVoltageCompensation(const ros::NodeHandle &n);
 
-		bool readLimitSwitches(ros::NodeHandle &n);
+		bool readVelocitySignalConditioning(const ros::NodeHandle &n);
 
-		bool readSoftLimits(ros::NodeHandle &n);
+		bool readLimitSwitches(const ros::NodeHandle &n);
 
-		bool readCurrentLimits(ros::NodeHandle &n);
+		bool readSoftLimits(const ros::NodeHandle &n);
 
-		bool readSupplyCurrentLimits(ros::NodeHandle &n);
+		bool readCurrentLimits(const ros::NodeHandle &n);
 
-		bool readStatorCurrentLimits(ros::NodeHandle &n);
+		bool readSupplyCurrentLimits(const ros::NodeHandle &n);
 
-		bool readMotionControl(ros::NodeHandle &n);
+		bool readStatorCurrentLimits(const ros::NodeHandle &n);
 
-		bool readStatusFramePeriods(ros::NodeHandle &n);
+		bool readMotionControl(const ros::NodeHandle &n);
 
-		bool readControlFramePeriods(ros::NodeHandle &n);
+		bool readStatusFramePeriods(const ros::NodeHandle &n);
 
-		bool readTalonThread(ros::NodeHandle &n);
+		bool readControlFramePeriods(const ros::NodeHandle &n);
+
+		bool readTalonThread(const ros::NodeHandle &n);
 
 		std::string joint_name_;
 		std::array<double, hardware_interface::TALON_PIDF_SLOTS> p_;
 		std::array<double, hardware_interface::TALON_PIDF_SLOTS> i_;
 		std::array<double, hardware_interface::TALON_PIDF_SLOTS> d_;
 		std::array<double, hardware_interface::TALON_PIDF_SLOTS> f_;
-		std::array<int, hardware_interface::TALON_PIDF_SLOTS>    izone_;
-		std::array<int, hardware_interface::TALON_PIDF_SLOTS>    allowable_closed_loop_error_;
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> izone_;
+		std::array<double, hardware_interface::TALON_PIDF_SLOTS> allowable_closed_loop_error_;
 		std::array<double, hardware_interface::TALON_PIDF_SLOTS> max_integral_accumulator_;
 		std::array<double, hardware_interface::TALON_PIDF_SLOTS> closed_loop_peak_output_;
 		std::array<int, hardware_interface::TALON_PIDF_SLOTS>    closed_loop_period_;
@@ -169,7 +169,7 @@ class TalonCIParams
 
 		double motion_cruise_velocity_;
 		double motion_acceleration_;
-		double motion_s_curve_strength_;
+		int    motion_s_curve_strength_;
 		int    motion_profile_trajectory_period_;
 		std::array<int, hardware_interface::Status_Last> status_frame_periods_;
 		std::array<int, hardware_interface::Control_Last> control_frame_periods_;
@@ -186,11 +186,11 @@ class TalonCIParams
 	private:
 		// Read a double named <param_type> from the array/map
 		// in params
-		bool findFloatParam(std::string param_name, XmlRpc::XmlRpcValue &params, double &val) const;
+		bool findFloatParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, double &val) const;
 
 		// Read an integer named <param_name> from the array/map
 		// in params
-		bool findIntParam(std::string param_name, XmlRpc::XmlRpcValue &params, int &val) const;
+		bool findIntParam(const std::string &param_name, XmlRpc::XmlRpcValue &params, int &val) const;
 
 		bool stringToLimitSwitchSource(const std::string &str,
 									   hardware_interface::LimitSwitchSource &limit_switch_source) const;
@@ -203,7 +203,7 @@ class TalonCIParams
 				hardware_interface::FeedbackDevice &feedback_device) const;
 
 		bool stringToRemoteSensorSource(const std::string &str,
-				hardware_interface::RemoteSensorSource &source);
+				hardware_interface::RemoteSensorSource &source) const;
 };
 
 // Base class for controller interface types. This class
@@ -437,7 +437,7 @@ class TalonFixedModeControllerInterface : public TalonControllerInterface
 		TalonFixedModeControllerInterface(const TalonFixedModeControllerInterface &other) = delete;
 		TalonFixedModeControllerInterface(TalonFixedModeControllerInterface &&other) noexcept = delete;
 
-		virtual ~TalonFixedModeControllerInterface();
+		~TalonFixedModeControllerInterface() override;
 
 		TalonFixedModeControllerInterface& operator=(const TalonFixedModeControllerInterface &other) = delete;
 		TalonFixedModeControllerInterface& operator=(TalonFixedModeControllerInterface &&other) noexcept = delete;
@@ -464,7 +464,7 @@ class TalonFollowerControllerInterface : public TalonControllerInterface
 		TalonFollowerControllerInterface(const TalonFollowerControllerInterface &other) = delete;
 		TalonFollowerControllerInterface(TalonFollowerControllerInterface &&other) noexcept = delete;
 
-		virtual ~TalonFollowerControllerInterface();
+		~TalonFollowerControllerInterface() override;
 
 		TalonFollowerControllerInterface& operator=(const TalonFollowerControllerInterface &other) = delete;
 		TalonFollowerControllerInterface& operator=(TalonFollowerControllerInterface &&other) noexcept = delete;

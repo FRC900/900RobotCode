@@ -61,7 +61,7 @@ PCMDevices::~PCMDevices() = default;
 
 hardware_interface::InterfaceManager *PCMDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_, *position_joint_interface_, *remote_joint_interface_, *pcm_state_interface_, *remote_pcm_state_interface_);
     }
@@ -77,7 +77,7 @@ hardware_interface::InterfaceManager *PCMDevices::registerInterface()
 void PCMDevices::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("PCMs");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }
@@ -86,7 +86,7 @@ void PCMDevices::read(const ros::Time& time, const ros::Duration& period, Tracer
 void PCMDevices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("PCMs");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period);
     }

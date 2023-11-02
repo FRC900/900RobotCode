@@ -101,8 +101,12 @@ void swerveDriveMath<WHEELCOUNT>::normalize(std::array<double, WHEELCOUNT> &inpu
 	const double mini = fabs(*std::min_element(input.begin(), input.end()));
 	const double absoluteMax = std::max(maxi, mini);
 	if (absoluteMax > 1 || force_norm)
-		for (size_t i = 0; i < input.size(); i++)
-			input[i] /= absoluteMax;
+	{
+		for (auto &i : input)
+		{
+			i /= absoluteMax;
+		}
+	}
 }
 
 template class swerveDriveMath<4>;

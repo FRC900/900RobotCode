@@ -94,6 +94,8 @@ FRCRobotInterface::FRCRobotInterface(ros::NodeHandle &nh, urdf::Model *urdf_mode
 	can_interface_ = rpnh.param<std::string>("can_interface", can_interface_);
 }
 
+FRCRobotInterface::~FRCRobotInterface() = default;
+
 bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*robot_hw_nh*/)
 {
 #ifdef __linux__
@@ -126,7 +128,7 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*robot_
 		// Make sure to initialize WPIlib code before creating
 		// a CAN Talon object to avoid NIFPGA: Resource not initialized
 		// errors? See https://www.chiefdelphi.com/forums/showpost.php?p=1640943&postcount=3
-		devices_.emplace_back(std::make_shared<ROSIterativeRobotDevices>(root_nh));
+		devices_.emplace_back(std::make_unique<ROSIterativeRobotDevices>(root_nh));
 		/**
 		 * Calling this function will load and start
 		 * the Phoenix background tasks.
@@ -145,27 +147,27 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*robot_
 	ROS_INFO_STREAM("Phoenix Version String : " << ctre::phoenix::unmanaged::Unmanaged::GetPhoenixVersion());
 
 	// Create all the devices specified in the yaml joint list, one type at a time
-	devices_.emplace_back(std::make_shared<AnalogInputDevices>(root_nh));
-    devices_.emplace_back(std::make_shared<CANCoderDevices>(root_nh));
-    devices_.emplace_back(std::make_shared<CANdleDevices>(root_nh));
-    devices_.emplace_back(std::make_shared<CTREV5MotorControllers>(root_nh));
-    devices_.emplace_back(std::make_shared<DigitalInputDevices>(root_nh));
-    devices_.emplace_back(std::make_shared<DigitalOutputDevices>(root_nh));
-    devices_.emplace_back(std::make_shared<DoubleSolenoidDevices>(root_nh));
-	devices_.emplace_back(std::make_shared<PCMDevices>(root_nh));
-    devices_.emplace_back(std::make_shared<PDHDevices>(root_nh));
-    devices_.emplace_back(std::make_shared<PDPDevices>(root_nh));
-    devices_.emplace_back(std::make_shared<PHDevices>(root_nh));
-    devices_.emplace_back(std::make_shared<Pigeon2Devices>(root_nh));
-    devices_.emplace_back(std::make_shared<PWMDevices>(root_nh));
-	devices_.emplace_back(std::make_shared<ReadyDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<AnalogInputDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<CANCoderDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<CANdleDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<CTREV5MotorControllers>(root_nh));
+	devices_.emplace_back(std::make_unique<DigitalInputDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<DigitalOutputDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<DoubleSolenoidDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<PCMDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<PDHDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<PDPDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<PHDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<Pigeon2Devices>(root_nh));
+	devices_.emplace_back(std::make_unique<PWMDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<ReadyDevices>(root_nh));
 	if (run_hal_robot_)
 	{
-		devices_.emplace_back(std::make_shared<RobotControllerDevices>(root_nh));
+		devices_.emplace_back(std::make_unique<RobotControllerDevices>(root_nh));
 	}
-    devices_.emplace_back(std::make_shared<RumbleDevices>(root_nh));
-    devices_.emplace_back(std::make_shared<SolenoidDevices>(root_nh));
-	devices_.emplace_back(std::make_shared<TalonFXProDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<RumbleDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<SolenoidDevices>(root_nh));
+	devices_.emplace_back(std::make_unique<TalonFXProDevices>(root_nh));
 
 	// Grab a collection of all the ctre V6 device types, pass them
 	// into the Latency Compensation Groups constructor
@@ -182,7 +184,7 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*robot_
 	append_device_map.operator()<CANCoderDevices>(); // C++ 20 templated lamba call syntax is dumb if there's no function parameter to deduce the types from
 	append_device_map.operator()<Pigeon2Devices>();
 	append_device_map.operator()<TalonFXProDevices>();
-	devices_.emplace_back(std::make_shared<LatencyCompensationGroups>(root_nh, ctrev6_devices));
+	devices_.emplace_back(std::make_unique<LatencyCompensationGroups>(root_nh, ctrev6_devices));
 
 	ROS_INFO_STREAM_NAMED("frc_robot_interface", "FRCRobotInterface Ready on " << root_nh.getNamespace());
 
@@ -208,7 +210,7 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 		}
 	}
 
-	for (auto &d: devices_)
+	for (const auto &d: devices_)
 	{
 		d->read(time, period, read_tracer_);
 	}
@@ -217,16 +219,12 @@ void FRCRobotInterface::read(const ros::Time &time, const ros::Duration &period)
 
 void FRCRobotInterface::write(const ros::Time& time, const ros::Duration& period)
 {
-	for (auto &d: devices_)
+	for (const auto &d: devices_)
 	{
 		d->write(time, period, write_tracer_);
 	}
 
 	write_tracer_.report(60);
-}
-
-void FRCRobotInterface::reset()
-{
 }
 
 bool FRCRobotInterface::prepareSwitch(const std::list<hardware_interface::ControllerInfo> &/*start_list*/,

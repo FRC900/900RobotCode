@@ -18,7 +18,7 @@ namespace hardware_interface
 	{
 		public:
 		ImuWritableSensorHandle() : ImuSensorHandle() {}
-		ImuWritableSensorHandle(const Data &data) : ImuSensorHandle(data) {}
+		explicit ImuWritableSensorHandle(const Data &data) : ImuSensorHandle(data) {}
 		void setFrameId(const std::string &frame_id)
 		{
 			frame_id_ = frame_id;

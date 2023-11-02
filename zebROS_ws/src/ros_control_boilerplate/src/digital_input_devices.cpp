@@ -66,7 +66,7 @@ DigitalInputDevices::~DigitalInputDevices() = default;
 
 hardware_interface::InterfaceManager *DigitalInputDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *remote_joint_interface_);
     }
@@ -78,24 +78,25 @@ hardware_interface::InterfaceManager *DigitalInputDevices::registerInterface()
 void DigitalInputDevices::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("digital inputs");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }
 }
 
-void DigitalInputDevices::simInit(ros::NodeHandle nh)
+void DigitalInputDevices::simInit(ros::NodeHandle &nh)
 {
     sim_srv_ = nh.advertiseService("linebreak_service_set", &DigitalInputDevices::simCallback, this);
 }
 
 // Set the HAL sim value for the requested device
 // If name is set, set that named digital input. Else set the index-th entry in devices_
-bool DigitalInputDevices::simCallback(ros_control_boilerplate::LineBreakSensors::Request &req, ros_control_boilerplate::LineBreakSensors::Response &/*res*/)
+bool DigitalInputDevices::simCallback(ros_control_boilerplate::LineBreakSensors::Request &req,
+                                      ros_control_boilerplate::LineBreakSensors::Response & /*res*/)
 {
     if (req.name.size())
     {
-        for (auto &d : devices_)
+        for (const auto &d : devices_)
         {
             if (d->getName() == req.name)
             {

@@ -34,13 +34,13 @@ public:
                          const std::string &joint_name);
     TalonOrchestraDevice(const TalonOrchestraDevice &) = delete;
     TalonOrchestraDevice(TalonOrchestraDevice &&other) noexcept = delete;
-    ~TalonOrchestraDevice();
+    ~TalonOrchestraDevice() override;
 
     TalonOrchestraDevice &operator=(const TalonOrchestraDevice &) = delete;
     TalonOrchestraDevice &operator=(TalonOrchestraDevice &&) noexcept = delete;
 
     void registerInterfaces(hardware_interface::OrchestraStateInterface &state_interface,
-                            hardware_interface::OrchestraCommandInterface &command_interface);
+                            hardware_interface::OrchestraCommandInterface &command_interface) const;
 
     void read(const ros::Time &/*time*/, const ros::Duration &/*period*/);
     void write(const ros::Time &/*time*/, const ros::Duration &/*period*/,

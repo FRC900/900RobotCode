@@ -38,30 +38,30 @@ class TalonFXProController:
 		TalonFXProController() =default;
         TalonFXProController(const TalonFXProController &) = delete;
         TalonFXProController(TalonFXProController &&) noexcept = delete;
-        virtual ~TalonFXProController() = default;
+        ~TalonFXProController() override = default;
 
         TalonFXProController &operator=(const TalonFXProController &other) = delete;
         TalonFXProController &operator=(TalonFXProController &&other) noexcept = delete;
 
-		virtual bool init(hardware_interface::talonfxpro::TalonFXProCommandInterface *hw, ros::NodeHandle &n)
+		bool init(hardware_interface::talonfxpro::TalonFXProCommandInterface *hw, ros::NodeHandle &n) override
 		{
 			// Read params from command line / config file
 			if (!talon_if_.initWithNode(hw, nullptr, n))
 				return false;
 
-			// Might wantt to make message type a template
+			// Might want to make message type a template
 			// parameter as well?
 			sub_command_ = n.subscribe<std_msgs::Float64>("command", 1, &TalonFXProController::commandCB, this);
 			return true;
 		}
 
-		virtual void starting(const ros::Time & /*time*/)
+		void starting(const ros::Time & /*time*/) override
 		{
 			// Start controller with motor stopped
 			// for great safety
 			command_buffer_.writeFromNonRT(0.0);
 		}
-		virtual void update(const ros::Time & /*time*/, const ros::Duration & /*period*/)
+		void update(const ros::Time & /*time*/, const ros::Duration & /*period*/) override
 		{
 			// Take the most recent value stored in the command
 			// buffer (the most recent value read from the "command"
@@ -111,7 +111,7 @@ class TalonFXProCloseLoopController :
         TalonFXProCloseLoopController &operator=(const TalonFXProCloseLoopController &other) = default;
         TalonFXProCloseLoopController &operator=(TalonFXProCloseLoopController &&other) noexcept = default;
 
-		virtual bool init(hardware_interface::talonfxpro::TalonFXProCommandInterface *hw, ros::NodeHandle &n) override
+		bool init(hardware_interface::talonfxpro::TalonFXProCommandInterface *hw, ros::NodeHandle &n) override
 		{
 			// Read params from command line / config file
 			if (!TalonFXProController<TALON_IF, UPDATE_FN>::init(hw,n))
@@ -158,7 +158,7 @@ class TalonFXProFollowerControllerBase:
 		TalonFXProFollowerControllerBase() =default;
         TalonFXProFollowerControllerBase(const TalonFXProFollowerControllerBase &) = default;
         TalonFXProFollowerControllerBase(TalonFXProFollowerControllerBase &&) noexcept = default;
-        virtual ~TalonFXProFollowerControllerBase() = default;
+        ~TalonFXProFollowerControllerBase() override = default;
 
         TalonFXProFollowerControllerBase &operator=(const TalonFXProFollowerControllerBase &other) = default;
         TalonFXProFollowerControllerBase &operator=(TalonFXProFollowerControllerBase &&other) noexcept = default;

@@ -56,7 +56,7 @@ SolenoidDevices::~SolenoidDevices() = default;
 
 hardware_interface::InterfaceManager *SolenoidDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_, *position_joint_interface_, *remote_joint_interface_, *mode_interface_, *remote_mode_interface_);
     }
@@ -72,7 +72,7 @@ hardware_interface::InterfaceManager *SolenoidDevices::registerInterface()
 void SolenoidDevices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("solenoids");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period);
     }

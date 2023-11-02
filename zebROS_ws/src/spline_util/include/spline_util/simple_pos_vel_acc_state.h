@@ -26,12 +26,9 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //////////////////////////////////////////////////////////////////////////////
 
-/// \author Adolfo Rodriguez Tsouroukdissian
+/// \original author Adolfo Rodriguez Tsouroukdissian
 
 #pragma once
-
-
-#include <array>
 
 namespace trajectory_interface
 {
@@ -42,18 +39,13 @@ namespace trajectory_interface
 template <class ScalarType>
 struct SimplePosVelAccState
 {
-  typedef ScalarType Scalar;
+  using Scalar = ScalarType;
 
-  SimplePosVelAccState()
-	  : position(static_cast<Scalar>(0))
-	  , velocity(static_cast<Scalar>(0))
-      , acceleration(static_cast<Scalar>(0))
-  {
-  }
+  SimplePosVelAccState() = default;
 
-  Scalar position;
-  Scalar velocity;
-  Scalar acceleration;
+  Scalar position{static_cast<Scalar>(0)};
+  Scalar velocity{static_cast<Scalar>(0)};
+  Scalar acceleration{static_cast<Scalar>(0)};
 };
 
 } // namespace
