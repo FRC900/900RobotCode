@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="steering_option" default="False" />
+    <arg name="speed_option" default="False" />
+
+    <!-- testing -->
+    <!-- true or false values -->
+
+    <node pkg="talon_controllers" type="reconfigure_client.py" name="reconfigure_client" output="screen"> 
+        <param name="steering_option" value="$(arg steering_option)" />
+    </node>
+
+    <node pkg="talon_controllers" type="reconfigure_server.py" name="reconfigure_server" output="screen">
+        <param name="speed_option" value="$(arg speed_option)" />
+    </node>
+
+    
+
+
+</launch>
