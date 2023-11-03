@@ -22,7 +22,7 @@
   <depend>dynamic_reconfigure_wrapper</depend>
   <depend>field_obj</depend>
   <depend>frc_msgs</depend>
-  <depend>imu_zero</depend>
+  <depend>imu_zero_msgs</depend>
   <depend>path_follower_msgs</depend>
   <depend>roscpp</depend>
   <depend>std_srvs</depend>

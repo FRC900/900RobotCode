@@ -14,7 +14,7 @@ from . import resource_rc
 
 from behavior_actions.msg import AutoState, AutoMode
 from geometry_msgs.msg import PoseWithCovarianceStamped
-from imu_zero.srv import ImuZeroAngle
+from imu_zero_msgs.srv import ImuZeroAngle
 from behavior_actions.srv import DynamicPath
 from base_trajectory_msgs.srv import GenerateSpline
 import std_msgs.msg

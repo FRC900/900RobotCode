@@ -5,23 +5,19 @@
 #define TRACER_INC__
 
 #include <chrono>
-#include <unordered_map>
+#include <iostream>
 #include <string>
+#include <unordered_map>
 
 #include <ros/console.h>
 
 class TracerEntry
 {
 	public:
-		TracerEntry()
-			: count_{0}
-			, total_time_{0.0}
-			, started_{false}
-		{
-		}
+		TracerEntry() = default;
 		TracerEntry(const TracerEntry &) = delete;
 		TracerEntry(TracerEntry &&) = default;
-		~TracerEntry() = default;
+		virtual ~TracerEntry() = default;
 		TracerEntry operator=(const TracerEntry &) = delete;
 		TracerEntry &operator=(TracerEntry &&) = delete;
 
@@ -31,23 +27,56 @@ class TracerEntry
 			total_time_ = std::chrono::duration<double>{0.0};
 		}
 
-		size_t count_;
-		std::chrono::duration<double> total_time_;
+		void start(const std::string &label)
+		{
+			if (started_)
+			{
+				ROS_WARN_STREAM("Tracer::start : start called on already started label " << label);
+				return;
+			}
+			start_time_ = std::chrono::high_resolution_clock::now();
+			started_ = true;
+		}
+
+		void stop(const std::string &label, bool report_unstarted)
+		{
+			if (!started_)
+			{
+				if (report_unstarted)
+				{
+					ROS_WARN_STREAM("Tracer::stop : label " << label << " not started");
+				}
+				return;
+			}
+			total_time_ += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - start_time_);
+			count_ += 1;
+			started_ = false;
+		}
+
+		friend std::ostream& operator<<(std::ostream &os, const TracerEntry &tracer_entry)
+		{
+			const double avg_time = tracer_entry.total_time_ / std::chrono::duration<double>(tracer_entry.count_);
+			os << avg_time << ", count = " << tracer_entry.count_;
+			return os;
+		}
+
+	private:
+		size_t count_{0};
+		std::chrono::duration<double> total_time_{0.0};
 		std::chrono::high_resolution_clock::time_point start_time_;
-		bool started_;
+		bool started_{false};
 };
 
 class Tracer
 {
 	public:
-		Tracer(const std::string &name)
+		explicit Tracer(const std::string &name)
 			: name_(name)
-			, last_report_time_(ros::Time::now())
 		{
 		}
 		Tracer(const Tracer &) = delete;
 		Tracer(Tracer &&) = default;
-		~Tracer() = default;
+		virtual ~Tracer() = default;
 		Tracer operator=(const Tracer &) = delete;
 		Tracer &operator=(Tracer &&) = delete;
 
@@ -56,14 +85,10 @@ class Tracer
 		// tracked by this Tracer object
 		void start(const std::string &label)
 		{
-			auto entry = map_.find(label);
-
-			// If not found, create a new entry for this label
-			if (entry == map_.end())
-			{
-				map_.emplace(label, TracerEntry());
-				entry = map_.find(label);
-			}
+			// try_emplace returns an iterator, bool pair.
+			// iterator points either to the existing entry with
+			// this label or to the new entry if one didn't exist
+			auto [entry, placed] = map_.try_emplace(label);
 
 			if (entry == map_.end())
 			{
@@ -71,13 +96,7 @@ class Tracer
 				return;
 			}
 
-			if (entry->second.started_)
-			{
-				ROS_WARN_STREAM("Tracer::start : start called on already started label " << label);
-				return;
-			}
-			entry->second.start_time_ = std::chrono::high_resolution_clock::now();
-			entry->second.started_ = true;
+			entry->second.start(label);
 		}
 
 		// Stop all previously started timers,
@@ -99,23 +118,15 @@ class Tracer
 				return;
 			}
 
-			if (!entry->second.started_)
-			{
-				ROS_WARN_STREAM("Tracer::stop : label " << label << " not started");
-				return;
-			}
-			stopEntry(entry->second);
+			entry->second.stop(label, true);
 		}
 
 		// Stop all previously started timers
 		void stop(void)
 		{
-			for (auto &it : map_)
+			for (auto &[label, tracer_entry] : map_)
 			{
-				if (it.second.started_)
-				{
-					stopEntry(it.second);
-				}
+				tracer_entry.stop(label, false);
 			}
 		}
 
@@ -131,11 +142,10 @@ class Tracer
 			{
 				std::stringstream s;
 				s << name_ << ":" << std::endl;
-				for (auto &it : map_)
+				for (auto &[name, tracer_entry] : map_)
 				{
-					const double avg_time = it.second.total_time_ / std::chrono::duration<double>(it.second.count_);
-					s << "\t" << it.first << " = " << avg_time << ", count = " << it.second.count_ << std::endl;
-					it.second.reset();
+					s << "\t" << name << " = " << tracer_entry << std::endl;
+					tracer_entry.reset();
 				}
 				ROS_INFO_STREAM(s.str());
 				last_report_time_ = now;
@@ -143,17 +153,9 @@ class Tracer
 		}
 
 	private:
-
-		void stopEntry(TracerEntry &entry)
-		{
-			entry.total_time_ += std::chrono::duration_cast<std::chrono::duration<double>>(std::chrono::high_resolution_clock::now() - entry.start_time_);
-			entry.count_ += 1;
-			entry.started_ = false;
-
-		}
 		std::string name_;
 		std::unordered_map<std::string, TracerEntry> map_;
-		ros::Time last_report_time_;
+		ros::Time last_report_time_{ros::Time::now()};
 };
 
 #endif

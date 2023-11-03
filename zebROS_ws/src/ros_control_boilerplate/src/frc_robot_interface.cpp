@@ -173,7 +173,7 @@ bool FRCRobotInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle &/*robot_
 	// into the Latency Compensation Groups constructor
 	std::multimap<std::string, ctre::phoenix6::hardware::ParentDevice *> ctrev6_devices;
 
-	auto append_device_map = [&]<typename T>(void)
+	auto append_device_map = [&ctrev6_devices, this]<typename T>(void)
 	{
 		const auto device_ptr = getDevicesOfType<T>(devices_);
 		if (device_ptr)

@@ -15,7 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
 	dynamic_reconfigure_wrapper
 	field_obj
 	frc_msgs
-	imu_zero
+	imu_zero_msgs
 	path_follower_msgs
 	std_srvs
 	roscpp

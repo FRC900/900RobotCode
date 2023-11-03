@@ -9,8 +9,9 @@ include("../cmake_modules/CMakeOpt.cmake")
 find_package(catkin REQUIRED COMPONENTS
   angles
   geometry_msgs
+  imu_zero_msgs
   roscpp
-  std_msgs
+  sensor_msgs
   tf2
   tf2_geometry_msgs
   zed_interfaces
@@ -57,10 +58,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate services in the 'srv' folder
-add_service_files(
- FILES
- ImuZeroAngle.srv
-)
+#add_service_files(
+# FILES
+# ImuZeroAngle.srv
+#)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -70,13 +71,13 @@ add_service_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  roscpp
-  std_msgs
-  geometry_msgs
-  imu_zero
-)
+# generate_messages(
+#  DEPENDENCIES
+#  roscpp
+#  std_msgs
+#  geometry_msgs
+#  imu_zero
+#)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##

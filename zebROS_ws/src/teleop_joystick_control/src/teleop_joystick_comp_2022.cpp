@@ -42,7 +42,7 @@
 #include "behavior_actions/Ejecting2022Action.h"
 #include "path_follower_msgs/holdPositionAction.h"
 
-#include <imu_zero/ImuZeroAngle.h>
+#include <imu_zero_msgs/ImuZeroAngle.h>
 
 std::unique_ptr<TeleopCmdVel<teleop_joystick_control::TeleopJoystickComp2022Config>> teleop_cmd_vel;
 
@@ -84,7 +84,7 @@ std_msgs::Float64 indexer_straight_cmd;
 std_msgs::Float64 shooter_cmd;
 controllers_2022_msgs::Intake intake_srv;
 controllers_2022_msgs::DynamicArmSrv climber_cmd;
-imu_zero::ImuZeroAngle imu_cmd;
+imu_zero_msgs::ImuZeroAngle imu_cmd;
 ros::Publisher indexer_straight_pub;
 ros::Publisher indexer_arc_pub;
 ros::Publisher shooter_pub;
@@ -1344,7 +1344,7 @@ int main(int argc, char **argv)
 	const std::map<std::string, std::string> service_connection_header{{"tcp_nodelay", "1"}};
 
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
-	IMUZeroSrv = n.serviceClient<imu_zero::ImuZeroAngle>("/imu/set_imu_zero", false, service_connection_header);
+	IMUZeroSrv = n.serviceClient<imu_zero_msgs::ImuZeroAngle>("/imu/set_imu_zero", false, service_connection_header);
 
 	orient_strafing_enable_pub = n.advertise<std_msgs::Bool>("orient_strafing/pid_enable", 1);
 	orient_strafing_setpoint_pub = n.advertise<std_msgs::Float64>("orient_strafing/setpoint", 1);

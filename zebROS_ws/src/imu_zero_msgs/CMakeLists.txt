@@ -1,16 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
-project(rqt_dashboard)
+project(imu_zero_msgs)
 
 include("../cmake_modules/CMakeOpt.cmake")
+
+## Compile as C++11, supported in ROS Kinetic and newer
+# add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  rospy
-  rqt_gui
-  rqt_gui_py
-  imu_zero_msgs
+  message_generation
+  std_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -20,7 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-catkin_python_setup()
+# catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -54,11 +55,10 @@ catkin_python_setup()
 # )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+ FILES
+ ImuZeroAngle.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -68,10 +68,10 @@ catkin_python_setup()
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -104,8 +104,8 @@ catkin_python_setup()
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES rqt_dashboard
-#  CATKIN_DEPENDS rospy rqt_gui rqt_gui_py
+#  LIBRARIES imu_zero_msgs
+#  CATKIN_DEPENDS message_generation std_msgs
 #  DEPENDS system_lib
 )
 
@@ -122,7 +122,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/rqt_dashboard.cpp
+#   src/${PROJECT_NAME}/imu_zero_msgs.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -133,7 +133,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/rqt_dashboard_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/imu_zero_msgs_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -159,10 +159,10 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-install(PROGRAMS
-	scripts/rqt_dashboard
-	DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
- )
+# catkin_install_python(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
@@ -179,25 +179,25 @@ install(PROGRAMS
 # )
 
 ## Mark cpp header files for installation
-install(DIRECTORY 
-	resource
-	DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# install(DIRECTORY include/${PROJECT_NAME}/
+#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 #   FILES_MATCHING PATTERN "*.h"
 #   PATTERN ".svn" EXCLUDE
- )
+# )
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
-install(FILES
-   plugin.xml
-   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
- )
+# install(FILES
+#   # myfile1
+#   # myfile2
+#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
 
 #############
 ## Testing ##
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_rqt_dashboard.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_imu_zero_msgs.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

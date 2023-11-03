@@ -48,7 +48,7 @@ TalonFXProDevices::~TalonFXProDevices() = default;
 //  registerInterfaceManager(devices->registerInterface());
 hardware_interface::InterfaceManager *TalonFXProDevices::registerInterface()
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->registerInterfaces(*state_interface_, *command_interface_);
     }
@@ -60,7 +60,7 @@ hardware_interface::InterfaceManager *TalonFXProDevices::registerInterface()
 void TalonFXProDevices::read(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("talonfxpro");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->read(time, period);
     }
@@ -69,7 +69,7 @@ void TalonFXProDevices::read(const ros::Time& time, const ros::Duration& period,
 void TalonFXProDevices::write(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("talonfxpro");
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         d->write(time, period, isEnabled(), prev_robot_enabled_);
     }
@@ -78,7 +78,7 @@ void TalonFXProDevices::write(const ros::Time& time, const ros::Duration& period
 
 void TalonFXProDevices::simInit(ros::NodeHandle &nh)
 {
-    if (devices_.size() > 0)
+    if (!devices_.empty())
     {
         sim_limit_switch_srv_ = nh.advertiseService("set_talonfxpro_limit_switch", &TalonFXProDevices::setlimit, this);
         sim_current_srv_ = nh.advertiseService("set_talonfxpro_current", &TalonFXProDevices::setcurrent, this);
@@ -88,7 +88,7 @@ void TalonFXProDevices::simInit(ros::NodeHandle &nh)
 void TalonFXProDevices::simRead(const ros::Time& time, const ros::Duration& period, Tracer &tracer)
 {
     tracer.start_unique("talonfxpro FeedEnable");
-    if (devices_.size() > 0)
+    if (!devices_.empty())
     {
         ctre::phoenix::unmanaged::FeedEnable(2. * 1000. / read_hz_);
     }
@@ -102,7 +102,7 @@ void TalonFXProDevices::simRead(const ros::Time& time, const ros::Duration& peri
 bool TalonFXProDevices::setlimit(ros_control_boilerplate::set_limit_switch::Request &req,
                                  ros_control_boilerplate::set_limit_switch::Response & /*res*/)
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
     {
         if (((req.target_joint_name.length() == 0) && (d->getCANID() == req.target_joint_id)) ||
             (req.target_joint_name == d->getName()))
@@ -116,7 +116,7 @@ bool TalonFXProDevices::setlimit(ros_control_boilerplate::set_limit_switch::Requ
 bool TalonFXProDevices::setcurrent(ros_control_boilerplate::set_current::Request &req,
                                    ros_control_boilerplate::set_current::Response & /*res*/)
 {
-    for (auto &d : devices_)
+    for (const auto &d : devices_)
 	{
         if(((req.target_joint_name.length() == 0) && (d->getCANID() == req.target_joint_id)) ||
 		   (req.target_joint_name == d->getName()))

@@ -34,10 +34,11 @@
 				latency_compensation_state_controller
 				match_state_listener_controller
 				talonfxpro1_motionmagicvoltage_controller
-				talonfxpro2_motionmagicvoltage_controller
+				pigeon2_imu_state_controller
 				robot_code_ready_controller"
 			/>
 			<!--
+				talonfxpro2_motionmagicvoltage_controller
 				solenoid_controller
 				double_solenoid_controller
 				ph_double_solenoid_controller

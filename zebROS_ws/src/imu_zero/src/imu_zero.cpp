@@ -29,7 +29,7 @@ Zero point in degrees is set using service call.
 
 #include <tf2_ros/transform_listener.h>
 
-#include <imu_zero/ImuZeroAngle.h>
+#include <imu_zero_msgs/ImuZeroAngle.h>
 #include <std_srvs/Trigger.h>
 #include <robot_localization/SetPose.h>
 #include <zed_interfaces/reset_tracking.h>
@@ -172,8 +172,8 @@ void zeroCallback(const sensor_msgs::Imu::ConstPtr& raw_msg) {
   }
 }
 
-bool zeroSet(imu_zero::ImuZeroAngle::Request& req,
-             imu_zero::ImuZeroAngle::Response& /*res*/) {
+bool zeroSet(imu_zero_msgs::ImuZeroAngle::Request& req,
+             imu_zero_msgs::ImuZeroAngle::Response& /*res*/) {
   double roll, pitch, yaw;
   tf2::Matrix3x3(last_raw).getRPY(roll, pitch, yaw);
 

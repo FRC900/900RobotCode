@@ -28,7 +28,7 @@
 
 #include "path_follower_msgs/holdPositionAction.h"
 
-#include <imu_zero/ImuZeroAngle.h>
+#include <imu_zero_msgs/ImuZeroAngle.h>
 #include <angles/angles.h>
 #include "teleop_joystick_control/RobotOrientationDriver.h"
 #include <teleop_joystick_control/SnapConeCube.h>
@@ -118,7 +118,6 @@ uint8_t node;
 uint8_t auto_starting_pos = 1; // 1 indexed
 uint8_t auto_mode = 0; // 0 indexed
 
-imu_zero::ImuZeroAngle imu_cmd;
 bool sendRobotZero = false;
 bool sendSetAngle = true;
 double old_angular_z = 0.0;
@@ -618,6 +617,7 @@ void buttonBoxCallback(const ros::MessageEvent<frc_msgs::ButtonBoxState2023 cons
 	}
 	if(button_box.bottomRightWhitePress) {
 		ROS_INFO_STREAM("teleop_joystick_comp_2023 : zeroing IMU to 180");
+		imu_zero_msgs::ImuZeroAngle imu_cmd;
 		imu_cmd.request.angle = 180.0;
 		IMUZeroSrv.call(imu_cmd);
 		ROS_INFO_STREAM("teleop_joystick_comp_2023 : zeroing swerve odom");
@@ -1373,7 +1373,7 @@ int main(int argc, char **argv)
 
 	BrakeSrv = n.serviceClient<std_srvs::Empty>("/frcrobot_jetson/swerve_drive_controller/brake", false, service_connection_header);
 	ParkSrv = n.serviceClient<std_srvs::SetBool>("/frcrobot_jetson/swerve_drive_controller/toggle_park", false, service_connection_header);
-	IMUZeroSrv = n.serviceClient<imu_zero::ImuZeroAngle>("/imu/set_imu_zero", false, service_connection_header);
+	IMUZeroSrv = n.serviceClient<imu_zero_msgs::ImuZeroAngle>("/imu/set_imu_zero", false, service_connection_header);
 	snapConeCubeSrv = n.serviceClient<teleop_joystick_control::SnapConeCube>("/snap_to_angle/snap_cone_cube", false, service_connection_header);
 	setCenterSrv = n.serviceClient<talon_swerve_drive_controller_msgs::SetXY>("/frcrobot_jetson/swerve_drive_controller/change_center_of_rotation", false, service_connection_header);	
 	JoystickRobotVel = n.advertise<geometry_msgs::Twist>("swerve_drive_controller/cmd_vel", 1);

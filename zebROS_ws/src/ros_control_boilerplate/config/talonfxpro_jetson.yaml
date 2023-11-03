@@ -18,7 +18,7 @@ generic_hw_control_loop:
   match_data_read_hz: 2
   robot_controller_read_hz: 20
   as726x_read_hz: 7
-  pigeon2_read_hz: 250
+  pigeon2_read_hz: 100
   talonfxpro_read_hz: 100
 
 hardware_interface:
@@ -27,7 +27,7 @@ hardware_interface:
    joints:
        #- {name: terrance, type: can_talon_fx, can_bus: CANivore, can_id: 1, local: true}
        #- {name: phillip, type: can_talon_fx, can_bus: CANivore, can_id: 2, local: true}
-       #- {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 1, local: true}
+       - {name: pigeon2, type: pigeon2, frame_id: pigeon2_frame, can_bus: CANivore, can_id: 1, local: true}
        #- {name: pdp, local: true, type: pdp, module: 0, local: true}
        #- {name: pdh, local: true, type: pdh, module: 1, local: true}
        #- {name: ph, local: true, type: ph, ph_id: 1, local: true}
@@ -40,8 +40,9 @@ hardware_interface:
 
        #- {name: talonfx, type: can_talon_fx, can_bus: CANivore, can_id: 1, local: true}
        - {name: talonfxpro1, type: talonfxpro, can_bus: CANivore, can_id: 1, local: true}
-       - {name: talonfxpro2, type: talonfxpro, can_bus: CANivore, can_id: 2, local: true}
-       - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: talonfxpro1, type: talonfx}, {name: talonfxpro2, type: talonfx} ] }
+       #- {name: talonfxpro2, type: talonfxpro, can_bus: CANivore, can_id: 2, local: true}
+       #- {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: talonfxpro1, type: talonfx}, {name: talonfxpro2, type: talonfx} ] }
+       - {name: latency_compensation, type: latency_compensation, update_frequency: 250, entries: [ {name: talonfxpro1, type: talonfx}] }
        #- {name: elevator_leader, type: can_talon_fx, can_bus: CANivore, can_id: 31, local: true}
        #- {name: elevator_follower, type: can_talon_fx, can_bus: CANivore, can_id: 32, local: true}
        #- {name: four_bar, type: can_talon_fx, can_bus: CANivore, can_id: 41, local: true}

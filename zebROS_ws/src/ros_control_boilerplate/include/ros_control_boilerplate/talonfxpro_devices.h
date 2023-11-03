@@ -55,6 +55,9 @@ private:
     ros::ServiceServer sim_limit_switch_srv_;
     ros::ServiceServer sim_current_srv_;
 
+    // Set this to true so the first time through ::write there will
+    // be a forced true->false transition. This will be used to force the
+    // devices into a disabled state.
     bool prev_robot_enabled_{true};
 };
 
