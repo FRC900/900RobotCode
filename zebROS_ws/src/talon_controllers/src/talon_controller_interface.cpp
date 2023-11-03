@@ -1733,7 +1733,7 @@ void TalonControllerInterface::writeParamsToHW(const TalonCIParams &params,
                                 hardware_interface::TalonCommandHandle &talon,
                                 bool update_params)
 {
-    talon->mutex()->lock();
+    std::lock_guard l{*talon};
     // perform additional hardware init here
     // but don't set mode - either force the caller to
     // set it or use one of the derived, fixed-mode
@@ -1835,7 +1835,6 @@ void TalonControllerInterface::writeParamsToHW(const TalonCIParams &params,
     // so they can be queried later?
     if (update_params)
         params_ = params;
-    talon->mutex()->unlock();
 }
 
 template<typename hardware_interface::TalonMode TALON_MODE, const char *TALON_MODE_NAME>

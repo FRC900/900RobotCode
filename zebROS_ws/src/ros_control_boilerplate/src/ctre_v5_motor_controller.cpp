@@ -191,7 +191,7 @@ void CTREV5MotorController::write(const ros::Time &/*time*/, const ros::Duration
         return;
     }
 
-    std::unique_lock l(*(command_->mutex()), std::try_to_lock);
+    std::unique_lock l{*command_, std::try_to_lock};
     if (!l.owns_lock())
     {
         return;

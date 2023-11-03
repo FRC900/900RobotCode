@@ -42,6 +42,11 @@ class CommandHandle: public StateHandle
 			assert(cmd_);
 			return cmd_;
 		}
+		HWCommand &operator*()
+		{
+			assert(cmd_);
+			return *cmd_;
+		}
 
 		// Get a pointer to the HW state associated with
 		// this command.  Since CommandHandle is derived

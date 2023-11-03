@@ -1956,10 +1956,14 @@ void TalonHWCommand::lock(void)
 {
 	mutex_->lock();
 }
-
-std::shared_ptr<std::mutex> TalonHWCommand::mutex(void)
+bool TalonHWCommand::try_lock(void)
 {
-	return mutex_;
+	return mutex_->try_lock();
 }
+void TalonHWCommand::unlock(void)
+{
+	mutex_->unlock();
+}
+
 
 } // namespace
